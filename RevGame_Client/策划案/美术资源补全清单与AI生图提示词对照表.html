@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>围棋史莱姆 · 美术资源补全清单与 AI 生图提示词对照表</title>
+<style>
+  :root{
+    --paper:#fbfaf7; --card:#ffffff; --ink:#1c2024; --ink2:#3d4852; --sub:#6b7785;
+    --line:#e8e4dc; --line2:#f1eee8;
+    --cream:#FFCA89; --orange:#E6886F; --brown:#482911; --gold:#FFCC14; --parch:#D5B692;
+    --blue:#2c4a5e; --jade:#2f7a63; --red:#c0392b; --amber:#b7791f;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:15.5px/1.85 "Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .page{max-width:1220px;margin:0 auto;padding:48px 26px 90px}
+
+  header{border-bottom:2px solid var(--ink);padding-bottom:22px}
+  .kicker{font-size:12.5px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase}
+  h1{font:600 30px/1.35 Georgia,"Songti SC","STSong",serif;margin:10px 0 4px}
+  h1 .en{display:block;font-size:14px;font-weight:400;color:var(--sub);margin-top:8px;font-family:Georgia,serif;letter-spacing:.04em}
+  .lede{font-size:16px;color:var(--ink2);margin:16px 0 0;max-width:88ch}
+  .lede b{color:var(--red)}
+  .meta{font-size:13px;color:var(--sub);margin-top:16px;display:flex;flex-wrap:wrap;gap:8px 18px}
+
+  h2.sec{font:600 22px/1.4 Georgia,"Songti SC","STSong",serif;margin:52px 0 6px;padding-top:20px;
+         border-top:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+  h2.sec .n{font-size:14px;color:var(--red);font-family:Georgia,serif;letter-spacing:.05em}
+  h2.sec + .sub{color:var(--sub);font-size:13.5px;margin:0 0 16px}
+  h3{font-size:16.5px;margin:28px 0 10px;padding-left:11px;border-left:3px solid var(--blue);font-weight:600}
+  h4{font-size:15px;margin:20px 0 8px;color:var(--ink2)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0 10px 22px;padding:0}
+  li{margin:5px 0}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin:16px 0;
+        box-shadow:0 1px 2px rgba(28,32,36,.03)}
+  .warn{background:#fff8f0;border:1px solid #f0d9bd;border-left:4px solid var(--amber);border-radius:var(--radius);padding:16px 20px;margin:16px 0}
+  .warn b{color:#9a6415}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0;background:var(--card)}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--sub);padding-bottom:8px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:top}
+  thead th{background:#f7f5f0;color:var(--ink2);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:hover{background:#fdfcf9}
+  td.nm{font-weight:600;color:var(--ink);white-space:nowrap}
+  td.sz{white-space:nowrap;color:var(--ink2);font-family:Consolas,Monaco,monospace;font-size:12.5px}
+  td.base{color:var(--sub);font-size:12.5px}
+  .pm{font-family:Consolas,Monaco,"Courier New",monospace;font-size:12.5px;color:#1f4e3d;background:#f4faf7;
+      padding:6px 8px;border-radius:6px;display:block;line-height:1.7;word-break:break-word}
+  .code{font-family:Consolas,Monaco,"Courier New",monospace;font-size:12.5px;background:#f7f5f0;border:1px solid var(--line);
+        border-radius:8px;padding:12px 14px;display:block;white-space:pre-wrap;line-height:1.8;color:#1f4e3d}
+  .code .c{color:#8a8577}
+
+  .chip{display:inline-block;padding:1.5px 9px;border-radius:99px;font-size:12px;font-weight:600;line-height:1.7;white-space:nowrap}
+  .c-red{background:#fbeae8;color:var(--red)}
+  .c-amber{background:#fbf3e3;color:var(--amber)}
+  .c-blue{background:#e8f0f7;color:var(--blue)}
+  .c-jade{background:#e6f4ee;color:var(--jade)}
+  .c-gray{background:#f0f1f3;color:var(--sub)}
+
+  .sw{display:inline-flex;align-items:center;gap:6px;margin:3px 10px 3px 0;font-size:12.5px;font-family:Consolas,monospace;color:var(--ink2)}
+  .sw i{width:15px;height:15px;border-radius:4px;border:1px solid rgba(0,0,0,.28);display:inline-block}
+  .swbar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:14px 0}
+
+  figure{margin:20px 0}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+  figcaption{font-size:12.5px;color:var(--sub);margin-top:8px;text-align:center}
+
+  .road{position:relative;margin:20px 0 8px;padding-left:26px}
+  .road:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .road .step{position:relative;margin:0 0 16px}
+  .road .step:before{content:"";position:absolute;left:-24px;top:7px;width:11px;height:11px;border-radius:50%;background:#fff;border:2.5px solid var(--jade)}
+  .road .step h4{margin:0 0 4px;font-size:15px}
+  .road .step p{margin:0;color:var(--ink2);font-size:13.5px}
+
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="kicker">Art Asset Gap List · 沿用现有素材版</div>
+    <h1>美术资源补全清单 与 AI 生图提示词对照表
+      <span class="en">Weiqi Slime — Missing Assets &amp; AI Prompt Mapping (based on existing art)</span></h1>
+    <p class="lede">
+      基于 <b>ArtRes 现有素材</b>重新盘点：先列出<b>已有什么、能直接复用</b>，再列出<b>真正还缺的 52 项</b>，
+      并为每一项给出<b>可直接复制的提示词</b>（提示词以现有素材采样出的色板与描边为风格基线，保证新图与旧图同源）。
+    </p>
+    <div class="meta">
+      <span>提示词语言：<b>中文</b></span>
+      <span>规格基线：现有素材实测</span>
+      <span>棋子 128×128 · 按钮 204×86 · 弹窗 816×576 · 背景 1080×2160（竖屏）</span>
+      <span>配套：玩法拓展策划案 v18</span>
+    </div>
+  </header>
+
+  <div class="warn">
+    <b>本文件为新增文档，未修改你原来的《美术资源需求清单.html》。</b><br>
+    原清单按「生活化日常物件像素风」编写（要求"不直接沿用旧材质、优先重画 6 种核心职业"），而本版方向是
+    <b>沿用现有史莱姆素材、在其基础上补全</b>，两者结论相反，因此单独出一份对照表，原文件保持原样。
+  </div>
+
+  <h2 class="sec" id="s1"><span class="n">01</span>结论先行：缺什么</h2>
+  <p class="sub">现有素材已覆盖「角色 / 棋盘 / 特效 / 弹窗 / 页面」五大块，<b>真正缺的是「规则的可视化」与「新玩法的 UI」</b>。</p>
+  <div class="card">
+    <table>
+      <caption>表 1 · 缺口总览（详细提示词见 §04）</caption>
+      <thead><tr><th>优先级</th><th>模块</th><th>缺口数量</th><th>为什么必须做</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip c-red">P0</span></td><td>战斗状态标记（连/断/围/眼）</td><td>7</td><td>围棋内核"看得见"的唯一手段，量小作用最大</td></tr>
+        <tr><td><span class="chip c-red">P0</span></td><td>棋盘网格层与落子交互</td><td>6</td><td>现有 map 是整屏背景，没有 9×9 网格与可落子提示</td></tr>
+        <tr><td><span class="chip c-red">P0</span></td><td>战斗 HUD 与三选一界面</td><td>9</td><td>缺口最大的一块：手牌、回合、阶段、按钮</td></tr>
+        <tr><td><span class="chip c-red">P0</span></td><td>战斗事件图标（8）+ 奖励图标（4）</td><td>12</td><td>玩法拓展的新增反馈全靠它们</td></tr>
+        <tr><td><span class="chip c-amber">P1</span></td><td>Boss / 大棋子 / 底座</td><td>6</td><td>"擒王"的视觉焦点，星级强度一眼可见</td></tr>
+        <tr><td><span class="chip c-amber">P1</span></td><td>走法提示（象棋借入）</td><td>5</td><td>决定"自动移动能否被读懂"</td></tr>
+        <tr><td><span class="chip c-amber">P1</span></td><td>特效补充</td><td>2</td><td>提子破碎 + 三合一升光</td></tr>
+        <tr><td><span class="chip c-amber">P1</span></td><td>局外（图鉴 / 徽章 / 无尽入口）</td><td>5</td><td>长线留存</td></tr>
+        <tr><td colspan="2"><b>合计</b></td><td><b>52 项</b>（其中 34 项 P0）</td><td>另有 5 类可程序化批量出、无需 AI</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="sec" id="s2"><span class="n">02</span>现有素材盘点（可复用基线）</h2>
+  <p class="sub">下表为 <code>Assets/ArtRes/</code> 实测内容。<b>这些资源全部保留复用</b>，新增资源必须在尺寸与画风上与它们对齐。</p>
+  <table>
+    <caption>表 2 · 现有素材清单与复用方式</caption>
+    <thead><tr><th>模块</th><th>现有内容</th><th>实测规格</th><th>复用方式</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">棋子动画</td><td class="base">刺客 / 剑士 / 弓箭 / 法师 / 牧师 / 盾战 / 重剑 / 重弩 / 耄耋，共 9 系（每系 18 帧，法师 36）</td><td class="sz">128×128 / 帧</td><td>直接复用；新增职业照此尺寸与帧序扩展</td></tr>
+      <tr><td class="nm">史莱姆</td><td class="base">史莱姆待机 33 帧 + d1~d3 / ed1~ed3 共 6 个</td><td class="sz">128×128</td><td>主角 / 杂兵通用；<b>全项目画风基准</b></td></tr>
+      <tr><td class="nm">血条</td><td class="base">血条底 / 填充条 / down 数字 1~3 / down2 数字 / 围</td><td class="sz">26×40 等</td><td>复用；Boss 血条照此按比例加粗</td></tr>
+      <tr><td class="nm">特效 atan</td><td class="base">31 个（弹道 / 法阵 / 下落特效）</td><td class="sz">150×141 等</td><td>复用；属性变体走色相偏移，不重画</td></tr>
+      <tr><td class="nm">棋盘与地图</td><td class="base">map/2.png、map1.png</td><td class="sz">1080×2160 竖屏</td><td>复用为场景底；<b>网格层需新增</b></td></tr>
+      <tr><td class="nm">UI 图集</td><td class="base">ui/ 26 个 + ui an/ 15 个</td><td class="sz">204×86 等</td><td>复用；按钮类可直接换字复用</td></tr>
+      <tr><td class="nm">弹窗</td><td class="base">tanchuang/ 9 个</td><td class="sz">816×576</td><td>九宫格复用；三选一弹窗照此换材质</td></tr>
+      <tr><td class="nm">页面切图</td><td class="base">93魔法围棋素材切图：主城 14 / 酒馆 6 / 设置 3 / 开局金币 4 / 下棋页面 21 / 选关 6 / 玩家对战 4</td><td class="sz">整页切图</td><td>复用为局外界面；仅补缺口元件</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec" id="s3"><span class="n">03</span>风格基线（Style DNA）</h2>
+  <p class="sub">以下数值由现有素材<b>逐像素采样</b>得出。所有提示词都以此为准，这是"新图与旧图同源"的唯一保证。</p>
+
+  <h4>色板（采样自现有素材）</h4>
+  <div class="swbar">
+    <span class="sw"><i style="background:#000000"></i>#000000 硬黑描边</span>
+    <span class="sw"><i style="background:#FFCA89"></i>#FFCA89 奶油主体</span>
+    <span class="sw"><i style="background:#FFC678"></i>#FFC678 奶油暗部</span>
+    <span class="sw"><i style="background:#FFE89C"></i>#FFE89C 奶油高光</span>
+    <span class="sw"><i style="background:#FFA450"></i>#FFA450 暖橙</span>
+    <span class="sw"><i style="background:#E6886F"></i>#E6886F 暖粉橙</span>
+    <span class="sw"><i style="background:#DA7747"></i>#DA7747 橙棕</span>
+    <span class="sw"><i style="background:#482911"></i>#482911 深棕暗部</span>
+    <span class="sw"><i style="background:#3D2107"></i>#3D2107 最暗棕</span>
+    <span class="sw"><i style="background:#FFCC14"></i>#FFCC14 金（强调/安全）</span>
+    <span class="sw"><i style="background:#4C3C03"></i>#4C3C03 暗金</span>
+    <span class="sw"><i style="background:#DF9FFF"></i>#DF9FFF 法术紫</span>
+    <span class="sw"><i style="background:#D5B692"></i>#D5B692 羊皮纸 UI</span>
+    <span class="sw"><i style="background:#141414"></i>#141414 血条深底</span>
+    <span class="sw"><i style="background:#DDDDFF"></i>#DDDDFF 特效冷白</span>
+  </div>
+
+  <h4>画风规则</h4>
+  <div class="card">
+    <ul>
+      <li><b>描边</b>：纯黑 <code>#000000</code> / 近黑 <code>#050505</code> 硬描边，1~2px，<b>等宽</b>，不做粗细变化。</li>
+      <li><b>色数</b>：单个精灵 4~8 色平涂为主，<b>无渐变、无抗锯齿</b>，靠色块分层表现体积。</li>
+      <li><b>光源</b>：统一左上打光，暗部用深棕 <code>#482911</code>/<code>#3D2107</code>，不用纯黑做阴影。</li>
+      <li><b>造型</b>：圆润、夸张表情、轮廓优先——缩到 128×128 遮住细节仍能一眼认出。</li>
+      <li><b>金色</b> = 安全 / 活棋 / 奖励；<b>红色</b> = 危险 / 被吃 / 禁止；<b>紫色</b> = 敌方施法；<b>冷白</b> = 我方特效。</li>
+      <li><b>视角</b>：角色为正面（略俯视），棋盘为垂直俯视，UI 为纯正面平面。</li>
+    </ul>
+  </div>
+
+  <h4>尺寸基线（现有素材实测，务必对齐）</h4>
+  <table>
+    <caption>表 3 · 尺寸与图集规格</caption>
+    <thead><tr><th>类型</th><th>尺寸</th><th>来源</th></tr></thead>
+    <tbody>
+      <tr><td>普通棋子</td><td class="sz">128×128</td><td class="base">棋子动画 / slime 实测</td></tr>
+      <tr><td>2×2 大棋子</td><td class="sz">256×256</td><td class="base">按 128 翻倍</td></tr>
+      <tr><td>3×3 Boss</td><td class="sz">384×384</td><td class="base">按 128 三倍</td></tr>
+      <tr><td>UI 按钮</td><td class="sz">204×86（或九宫格）</td><td class="base">ui/1.png 实测</td></tr>
+      <tr><td>弹窗</td><td class="sz">816×576（九宫格）</td><td class="base">tanchuang/1.png 实测</td></tr>
+      <tr><td>场景背景</td><td class="sz">1080×2160 竖屏</td><td class="base">map/2.png 实测</td></tr>
+      <tr><td>小图标</td><td class="sz">48×48 / 64×64</td><td class="base">新增，与血条 26×40 同层级</td></tr>
+      <tr><td>状态标记</td><td class="sz">24×24 ~ 96×96</td><td class="base">新增，叠加在 128 棋子上</td></tr>
+      <tr><td>图集</td><td class="sz">1024 / 2048 SpriteAtlas</td><td class="base">沿用现有图集</td></tr>
+      <tr><td>透明通道</td><td class="sz">必须带 Alpha，禁止白底</td><td class="base">硬性</td></tr>
+      <tr><td>命名</td><td class="sz">沿用 ArtRes 中文体系</td><td class="base">棋子_阵营_兵种_星级_用途_序号.png</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec" id="s4"><span class="n">04</span>AI 生图提示词对照表（中文）</h2>
+  <p class="sub">用法：<b>通用风格前缀 + 本行提示词主体 + 通用负向词</b>，三段直接拼接粘贴。示例见本节的「拼装示例」。</p>
+
+  <h4>① 通用风格前缀（每条都要带，固定不变）</h4>
+  <span class="code"><span class="c">/* 通用风格前缀 —— 粘贴在每条主体之前 */</span>
+可爱 2D 像素风游戏素材，手绘 16-bit 像素质感，与现有史莱姆角色设定保持一致：
+纯黑硬描边 1~2 像素、粗细等宽；身体主体为奶油黄平涂（#FFCA89 #FFC678 #FFE89C）；
+暗部用暖橙（#FFA450 #E6886F #DA7747）；最深处用深棕（#482911 #3D2107）；
+金色（#FFCC14）只用于安全、活棋、奖励类状态；光源统一来自左上方；
+单张只用 4~8 个平涂色，无渐变、无抗锯齿；轮廓粗壮、缩小后仍可辨认；
+透明背景、居中构图、正面视角、像素边缘干净锐利</span>
+
+  <h4>② 通用负向词（每条都要带，固定不变）</h4>
+  <span class="code"><span class="c">/* 通用负向词 */</span>
+文字、字母、数字、水印、签名、标志、3D 渲染、写实、真实光影、
+平滑渐变、高斯模糊、抗锯齿、柔和投影、白色背景、JPEG 压缩痕迹、
+霓虹赛博朋克、科幻机械、恐怖、血腥、欧美卡通粗细不均描边、多余肢体、畸形手、
+多个物体、拼贴、画框、边框、样机、截图、其它游戏的 UI 面板</span>
+
+  <h4>③ 拼装示例（照此格式用）</h4>
+  <span class="code"><span class="c">/* 最终提示词 = ① + 本行主体 + ② */</span>
+［通用风格前缀］＋ 一枚小巧的金色"安全屋"标记图标：金色屋顶的小房子、奶油色墙面，
+粗黑描边，单独悬浮在透明背景上 ＋ ［通用负向词］</span>
+
+  <h4>④ P0 · 战斗状态标记（7 项）</h4>
+  <p class="sub" style="font-size:13px">基线素材：<code>血条/围_0001.png</code>（#FFCC14 金环 + #141414 深底）。<b>只靠颜色和形状表达含义，绝不出文字。</b></p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:96px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">标记_眼_金色.png</td><td class="sz">24×24</td>
+        <td><span class="pm">一枚小巧的金色"安全屋"标记图标，金色（#FFCC14）屋顶的小房子、奶油色墙面，粗黑描边，单独悬浮在透明背景上</span></td></tr>
+      <tr><td class="nm">标记_活棋_光环.png</td><td class="sz">96×96</td>
+        <td><span class="pm">一圈纤细明亮的金色光环，用来罩住一整块棋子，圆环带轻微内发光、暖金色，粗黑描边，正中心完全透明</span></td></tr>
+      <tr><td class="nm">标记_围困_锁链.png</td><td class="sz">32×32</td>
+        <td><span class="pm">一段铁灰色锁链绕着一个圆滚滚的小团块缠绕一圈，链条为低饱和灰色、粗黑描边，整体呈现被锁住、无法动弹的感觉</span></td></tr>
+      <tr><td class="nm">标记_叫吃_脉冲_01~03.png</td><td class="sz">32×32 ×3帧</td>
+        <td><span class="pm">一枚棋子外围的红色危险脉冲环，3 帧动画表现圆环由内向外扩散，危险红（#c0392b）配暗红内芯、粗黑描边</span></td></tr>
+      <tr><td class="nm">标记_连_金色_上下左右.png</td><td class="sz">32×32 ×4向</td>
+        <td><span class="pm">一根短而粗的金色连接条，把两枚棋子连在一起，两端圆头，亮金（#FFCC14）配暗金（#4C3C03）下缘，粗黑描边；按上、下、左、右四个方向分别出图</span></td></tr>
+      <tr><td class="nm">标记_断_红色裂痕.png</td><td class="sz">24×24</td>
+        <td><span class="pm">孤立棋子脚下的一道红色锯齿裂痕，3~4 条分叉裂纹，危险红配暗红内芯、粗黑描边，纯俯视平面视角</span></td></tr>
+      <tr><td class="nm">气数小圆点_白蓝橙红.png</td><td class="sz">8×8 ×4色</td>
+        <td><span class="pm">一颗极小的 8×8 实心圆点（表示"气"），造型极简、1 像素黑描边，白、天蓝、橙、危险红四种颜色版本，无高光无明暗</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑤ P0 · 棋盘网格层与落子交互（6 项）</h4>
+  <p class="sub" style="font-size:13px">基线素材：<code>map/2.png</code>（1080×2160 竖屏背景，粉紫调）。<b>网格层独立成图，叠在背景之上</b>，方便换主题。</p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:110px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">棋盘_网格层_9x9.png</td><td class="sz">1080×1080<br>单格 120px</td>
+        <td><span class="pm">一张干净的 9×9 围棋空棋盘网格层，深棕色细网格线画在全透明背景上，2 像素直角线条，无棋子、无装饰，格子间距完全均匀</span></td></tr>
+      <tr><td class="nm">棋盘_星位点.png</td><td class="sz">24×24 ×5</td>
+        <td><span class="pm">围棋交叉点上的一个小巧深棕色星位点，简洁实心圆，粗黑描边，透明背景</span></td></tr>
+      <tr><td class="nm">棋盘_可落子高亮.png</td><td class="sz">120×120</td>
+        <td><span class="pm">一个柔和的暖黄色半透明方格高亮，配一圈细虚线金色边框、轻微发亮，填充基本透明，表示此处可以落子</span></td></tr>
+      <tr><td class="nm">棋盘_不可落红框.png</td><td class="sz">120×120</td>
+        <td><span class="pm">单个棋盘格的红色"禁止落子"覆盖层，粗红边框加一道对角红线，半透明，一眼看出是禁止</span></td></tr>
+      <tr><td class="nm">棋盘_中线_河界.png</td><td class="sz">1080×12</td>
+        <td><span class="pm">一条横贯棋盘的分界色带，暖棕色平涂（无渐变）、中央带一枚小金色徽记，透明背景</span></td></tr>
+      <tr><td class="nm">棋盘_布阵半场高亮.png</td><td class="sz">1080×540</td>
+        <td><span class="pm">一块大面积的"半场布阵区"高亮，柔和暖金半透明铺底、配细虚线边框，透明背景</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑥ P0 · 战斗 HUD 与三选一界面（9 项）</h4>
+  <p class="sub" style="font-size:13px">基线素材：<code>tanchuang/1.png</code>（816×576 羊皮纸 #D5B692 + 黑描边）、<code>ui/1.png</code>（204×86 按钮）。<b>缺口的最大一块。</b>九宫格资源请要求"四边边距均匀可拉伸"。</p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:110px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">UI_手牌栏_底框.png</td><td class="sz">九宫格<br>1024×220</td>
+        <td><span class="pm">一个横向长条卡槽底框，羊皮纸棕（#D5B692）面板、粗黑描边、四角带小木质铆钉，内部留大片空白，四边边距均匀、便于九宫格拉伸</span></td></tr>
+      <tr><td class="nm">UI_卡牌底_默认.png</td><td class="sz">300×400</td>
+        <td><span class="pm">一张空的收集卡牌边框，羊皮纸底、粗黑描边、四角带装饰性包角，内部空白，底部留一排小星星槽位，四边边距均匀</span></td></tr>
+      <tr><td class="nm">UI_卡牌底_选中.png</td><td class="sz">300×400</td>
+        <td><span class="pm">与默认卡牌边框同一造型的"选中态"：亮金（#FFCC14）边框发光，羊皮纸底不变，内部空白</span></td></tr>
+      <tr><td class="nm">UI_回合进度条.png</td><td class="sz">720×64</td>
+        <td><span class="pm">顶部章节进度条，带分段刻度，羊皮纸底配粗黑描边，金色空填充轨道，无文字无数字，四边边距均匀</span></td></tr>
+      <tr><td class="nm">UI_阶段指示_准备_战斗_结算.png</td><td class="sz">96×96 ×3</td>
+        <td><span class="pm">三枚圆形阶段指示徽章，透明背景，每枚是带粗黑描边的圆形图标牌，本图输出"未激活的灰色"版本</span></td></tr>
+      <tr><td class="nm">UI_准备按钮.png</td><td class="sz">360×120<br>2 态</td>
+        <td><span class="pm">一个大而醒目的圆角功能按钮，羊皮纸棕（#D5B692）面、粗黑描边、下缘一道金色斜面，按钮面无文字；另附一个按下的深色版本；四边边距均匀</span></td></tr>
+      <tr><td class="nm">UI_决死加速_图标.png</td><td class="sz">64×64</td>
+        <td><span class="pm">一个沙漏与小骷髅结合的小图标，暖骨白配深棕暗部、粗黑描边，传达紧迫感，透明背景</span></td></tr>
+      <tr><td class="nm">UI_战斗日志_弹条.png</td><td class="sz">九宫格<br>640×140</td>
+        <td><span class="pm">一条横向战斗日志弹出条，羊皮纸长条配粗黑描边，左侧留一个小缺口用于放图标，内部空白，四边边距均匀</span></td></tr>
+      <tr><td class="nm">UI_三选一_弹窗底.png</td><td class="sz">816×576<br>九宫格</td>
+        <td><span class="pm">一个大型"三选一"奖励弹窗，华丽羊皮纸棕（#D5B692）边框配粗黑描边、四角木质装饰，内部大片空白并隐约留出三个等宽卡槽的凹槽，无文字，四边边距均匀</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑦ P0 · 战斗事件图标（8 项，统一 48×48）</h4>
+  <p class="sub" style="font-size:13px">基线素材：现有 <code>ui/</code> 中的小图标。统一规格、统一描边、统一光照角。</p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:96px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">图标_事件_天降援兵.png</td><td class="sz">48×48</td><td><span class="pm">一道明亮光柱从天而降，落下一枚小小的可爱史莱姆棋子，暖金色光柱，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_回气.png</td><td class="sz">48×48</td><td><span class="pm">一只可爱史莱姆正在深呼吸，一圈天蓝色小圆点被吸进身体，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_疗愈雨.png</td><td class="sz">48×48</td><td><span class="pm">绿色治疗雨滴落在小史莱姆身上，柔和草绿（#7FB77E）雨滴，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_连击.png</td><td class="sz">48×48</td><td><span class="pm">两个简洁的圆拳头先后出击，背后配双重速度线，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_补眼.png</td><td class="sz">48×48</td><td><span class="pm">棋盘空交叉点上浮现一座小小的金色安全屋，金色（#FFCC14）屋顶，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_断链.png</td><td class="sz">48×48</td><td><span class="pm">一条铁链被解开、断成两截掉落，灰色链环配一点金色火花，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_瞬移潮.png</td><td class="sz">48×48</td><td><span class="pm">一小串脚印痕迹配一道弧形箭头，淡紫色魔法色调，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_事件_炮火支援.png</td><td class="sz">48×48</td><td><span class="pm">一把小木弹弓从上方弹出一串小圆弹丸，粗黑描边</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑧ P0 · 三选一奖励图标（4 项，统一 48×48）</h4>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:96px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">图标_奖励_新棋子.png</td><td class="sz">48×48</td><td><span class="pm">一个未知的神秘棋子剪影，配一个大问号，深暖棕剪影配金色描边，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_奖励_同名牌.png</td><td class="sz">48×48</td><td><span class="pm">两枚完全相同的可爱史莱姆棋子略微重叠，两者都完整可见，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_奖励_眼位石.png</td><td class="sz">48×48</td><td><span class="pm">一颗金色的眼形宝石，亮金（#FFCC14）边缘配一点白色闪光，粗黑描边</span></td></tr>
+      <tr><td class="nm">图标_奖励_全队强化.png</td><td class="sz">48×48</td><td><span class="pm">一支粗壮向上的金色箭头，外围一圈金色光环，粗黑描边</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑨ P1 · Boss / 大棋子 / 底座（6 项）</h4>
+  <p class="sub" style="font-size:13px">基线素材：现有棋子 128×128（<code>棋子动画/</code>）。<b>Boss 必须是现有棋子造型语言的放大版</b>，不要另起画风。</p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:110px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">棋子_Boss_大棋_2x2.png</td><td class="sz">256×256 ×3帧</td>
+        <td><span class="pm">一只超大号的 Boss 版可爱史莱姆，脸和身体比例与小棋子完全一致，只是体量大得多、更有压迫感，头上戴一顶小金色皇冠，表情夸张、略带生气，粗黑描边，3 帧待机</span></td></tr>
+      <tr><td class="nm">棋子_Boss_大棋_3x3.png</td><td class="sz">384×384 ×3帧</td>
+        <td><span class="pm">一只巨大的 Boss 史莱姆，延续同一造型再放大，皇冠更大，身上多两道暗红战损，依旧可爱、不恐怖，粗黑描边，3 帧待机</span></td></tr>
+      <tr><td class="nm">UI_王冠.png</td><td class="sz">48×48</td>
+        <td><span class="pm">一顶单独的像素小皇冠，亮金（#FFCC14）配暗金（#4C3C03）切面、镶嵌三颗小红宝石，粗黑描边，透明背景</span></td></tr>
+      <tr><td class="nm">棋子_Boss_底座光环.png</td><td class="sz">192×192</td>
+        <td><span class="pm">一座华丽底座配一圈红色危险光环，石质底座为暖棕色，地面上一圈红色（#c0392b）脉冲光环，纯俯视平面视角，粗黑描边</span></td></tr>
+      <tr><td class="nm">UI_Boss血条框.png</td><td class="sz">九宫格<br>760×72</td>
+        <td><span class="pm">一个厚重粗壮的 Boss 血条外框，深色（#141414）内槽配粗黑描边、外缘金色包边，明显比普通血条更粗壮，无文字，四边边距均匀</span></td></tr>
+      <tr><td class="nm">棋子_底座_1星_2星_3星.png</td><td class="sz">128 / 256 / 384</td>
+        <td><span class="pm">一个简洁的棋子石质底座，纯俯视平面视角、暖棕石材配粗黑描边，三个版本分别在前方刻有 1 星、2 星、3 颗金星，底座上不放角色</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑩ P1 · 走法提示（5 项）</h4>
+  <p class="sub" style="font-size:13px">全部用线框 / 虚影，<b>零新立绘</b>。决定"自动移动能不能被读懂"。</p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:110px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">提示_走法_兵.png</td><td class="sz">120×120</td><td><span class="pm">单个棋盘格的简单向前箭头走法指示，暖金色平涂箭头配细黑描边，整体大部分透明</span></td></tr>
+      <tr><td class="nm">提示_走法_马.png</td><td class="sz">360×360</td><td><span class="pm">覆盖 3×3 区域的"马走日"折线走法指示，半透明虚影轨迹配一个小小的马头剪影，细黑描边，大部分透明</span></td></tr>
+      <tr><td class="nm">提示_走法_车.png</td><td class="sz">360×360</td><td><span class="pm">覆盖 3×3 区域的十字直线走法指示，沿行与列方向的半透明虚影轨迹，细黑描边，大部分透明</span></td></tr>
+      <tr><td class="nm">提示_炮架.png</td><td class="sz">48×48</td><td><span class="pm">一枚小巧的"炮架"标记图标，表示隔子攻击，简洁木质框架配一点金色火花，粗黑描边</span></td></tr>
+      <tr><td class="nm">提示_占格虚影_2x2_3x3.png</td><td class="sz">240 / 360</td><td><span class="pm">半透明的落子占格预览虚影，分别展示 2×2 与 3×3 的被占格，柔和暖金半透明方块配细虚线边框，另附一个红色版本表示无法放置</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑪ P1 · 特效补充（2 项）</h4>
+  <p class="sub" style="font-size:13px">其余特效变体走<b>程序化色相偏移</b>，不用 AI 重画（见 §05）。</p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:110px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">特效_提子破碎_01~06.png</td><td class="sz">128×128 ×6帧</td>
+        <td><span class="pm">一枚棋子被提走时的碎裂特效，6 帧动画：金色眼碎裂、锁链崩断，暖金与奶油色碎片向外飞散，透明背景，粗黑描边</span></td></tr>
+      <tr><td class="nm">特效_三合一升星_01~08.png</td><td class="sz">256×256 ×8帧</td>
+        <td><span class="pm">升星爆发特效，8 帧动画：一道暖金色垂直光柱向上冲出、伴随奶油色闪光，中心最亮，透明背景</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>⑫ P1 · 局外（5 项）</h4>
+  <p class="sub" style="font-size:13px">基线素材：现有 <code>93魔法围棋素材切图</code> 里的主城 / 选关 / 酒馆页面切图。<b>只补缺口元件，不重做整页。</b></p>
+  <table>
+    <thead><tr><th style="width:150px">资源命名</th><th style="width:110px">规格</th><th>AI 提示词主体（中文 · 接在通用前缀后）</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">图鉴_格子.png</td><td class="sz">128×128</td><td><span class="pm">一个空的图鉴格子边框，羊皮纸方块配粗黑描边、四角小铆钉，内部空白</span></td></tr>
+      <tr><td class="nm">图鉴_未解锁剪影.png</td><td class="sz">128×128</td><td><span class="pm">一个深暖棕的"未知"剪影，形状是一只可爱的史莱姆，纯色平涂配一圈淡淡金边，看不到任何细节</span></td></tr>
+      <tr><td class="nm">徽章_难度_普通_困难_噩梦.png</td><td class="sz">64×64 ×3</td><td><span class="pm">三枚圆形难度徽章并排，分别是铜、银、金质感，中心一颗星，粗黑描边，透明背景</span></td></tr>
+      <tr><td class="nm">图标_无尽模式入口.png</td><td class="sz">64×64</td><td><span class="pm">一个由两个圆形箭头组成的无限循环符号，暖金色，中间一张小小的史莱姆脸，粗黑描边</span></td></tr>
+      <tr><td class="nm">UI_通用滑块_进度条.png</td><td class="sz">九宫格<br>420×40</td><td><span class="pm">一套通用的横向滑块与进度条，深色内凹空轨道配金色填充条，粗黑描边，无文字，四边边距均匀</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec" id="s5"><span class="n">05</span>不需要 AI 的部分（程序化 / 手工）</h2>
+  <p class="sub">这几类用现有素材<b>批量处理</b>即可，交给脚本比 AI 出图更准、更快、更一致。</p>
+  <table>
+    <caption>表 4 · 程序化与手工项</caption>
+    <thead><tr><th>资源</th><th>做法</th><th>参照现有</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">敌方配色变体（全部棋子）</td><td>色相偏移 / 换阵营主色，脚本批量导出</td><td class="base">棋子动画/ 全 9 系</td></tr>
+      <tr><td class="nm">弹道 / 法阵属性变体</td><td>色相偏移（火/水/光/暗四属性）</td><td class="base">atan/ 31 个</td></tr>
+      <tr><td class="nm">血量数字 1~9</td><td>现有 down 数字扩展</td><td class="base">血条/down_0001.png</td></tr>
+      <tr><td class="nm">攻击 / 受击 / 死亡动作</td><td>优先复用现有 18 帧序列；不足再补关键帧</td><td class="base">棋子动画/ 每系 18 帧</td></tr>
+      <tr><td class="nm">敌方布阵半场标记</td><td>纯色矩形 + 虚线边框，引擎内绘制</td><td class="base">—</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec" id="s6"><span class="n">06</span>制作顺序（建议）</h2>
+  <div class="road">
+    <div class="step"><h4>第 1 批（1~2 天，收益最高）· 状态标记 7 项</h4><p>量最小、作用最大。做完立刻能让"围 / 气 / 眼"在屏幕上看得见。</p></div>
+    <div class="step"><h4>第 2 批（2~3 天）· 棋盘网格层 + 落子交互 6 项</h4><p>没有它落子玩法无法试玩。做完即可跑通"能下的一局"。</p></div>
+    <div class="step"><h4>第 3 批（3~5 天）· 战斗 HUD 9 项 + 图标 12 项</h4><p>缺口最大的一块。图标可与 HUD 并行出。</p></div>
+    <div class="step"><h4>第 4 批 · Boss 与底座 6 项</h4><p>"擒王"的视觉焦点，也是强度最直观的表达。</p></div>
+    <div class="step"><h4>第 5 批 · 走法提示 / 特效 / 局外 12 项</h4><p>可后置，不影响核心循环成立。</p></div>
+  </div>
+  <div class="card">
+    <p style="margin:0"><b>AI 图的使用边界</b>：以上提示词产出的图<b>只能作为草稿与方向稿</b>，不能直接进 Unity 当 Sprite——
+    必须按 §03 的尺寸基线手工重绘 / 清理像素、重排图集并补透明边缘，否则会出现像素糊、描边粗细不一、图集爆掉的问题。</p>
+  </div>
+
+  <footer>
+    围棋史莱姆 · 美术资源补全清单与 AI 生图提示词对照表 ｜ 配套《玩法拓展策划案 v18》｜
+    风格基线由 <code>Assets/ArtRes</code> 现有素材逐像素采样得出 ｜ 本文件为新增文档，未修改原有《美术资源需求清单.html》
+  </footer>
+
+</div>
+</body>
+</html>

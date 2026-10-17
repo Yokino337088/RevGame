@@ -1,0 +1,19 @@
+{
+    "name": "Revolution.Editor",
+    "rootNamespace": "Revolution.Editor",
+    "references": [
+        "Revolution.Runtime",
+        "Revolution.Generation"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

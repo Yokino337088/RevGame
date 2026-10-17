@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>围棋史莱姆 · 美术资源需求清单（生活化日常物件像素风）</title>
+<style>
+  :root{
+    --paper:#fbfaf7; --card:#ffffff; --ink:#1c2024; --ink2:#3d4852; --sub:#6b7785;
+    --line:#e8e4dc; --line2:#f1eee8;
+    --ink-blue:#2c4a5e; --jade:#2f7a63; --cinnabar:#c0392b; --amber:#b7791f;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:15.5px/1.85 "Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .page{max-width:1060px;margin:0 auto;padding:48px 26px 80px}
+
+  header{border-bottom:2px solid var(--ink);padding-bottom:22px}
+  .kicker{font-size:12.5px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase}
+  h1{font:600 32px/1.35 Georgia,"Songti SC","STSong",serif;margin:10px 0 4px}
+  h1 .en{display:block;font-size:14.5px;font-weight:400;color:var(--sub);margin-top:8px;font-family:Georgia,serif;letter-spacing:.04em}
+  .lede{font-size:16.5px;color:var(--ink2);margin:16px 0 0;max-width:74ch}
+  .lede b{color:var(--cinnabar)}
+  .meta{font-size:13px;color:var(--sub);margin-top:16px;display:flex;flex-wrap:wrap;gap:8px 18px}
+
+  h2.sec{font:600 23px/1.4 Georgia,"Songti SC","STSong",serif;margin:52px 0 6px;padding-top:20px;
+         border-top:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+  h2.sec .n{font-size:14px;color:var(--cinnabar);font-family:Georgia,serif;letter-spacing:.05em}
+  h2.sec + .sub{color:var(--sub);font-size:13.5px;margin:0 0 18px}
+  h3{font-size:17px;margin:28px 0 10px;padding-left:11px;border-left:3px solid var(--ink-blue);font-weight:600}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0 10px 22px;padding:0}
+  li{margin:5px 0}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 24px;margin:16px 0;
+        box-shadow:0 1px 2px rgba(28,32,36,.03)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0;background:var(--card)}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--sub);padding-bottom:8px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:top}
+  thead th{background:#f7f5f0;color:var(--ink2);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:hover{background:#fdfcf9}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+
+  code{background:#f2efe9;padding:1px 6px;border-radius:5px;font:13px/1.6 Consolas,"Courier New",monospace;color:#4a3728}
+  .chip{display:inline-block;padding:1.5px 9px;border-radius:99px;font-size:12.5px;font-weight:600;line-height:1.7;white-space:nowrap}
+  .c-blue{background:#e8f0f7;color:var(--ink-blue)}
+  .c-jade{background:#e6f4ee;color:var(--jade)}
+  .c-red{background:#fbeae8;color:var(--cinnabar)}
+  .c-amber{background:#fbf3e3;color:var(--amber)}
+  .c-gray{background:#f0f1f3;color:var(--sub)}
+
+  blockquote{margin:16px 0;padding:12px 18px;background:#f9f8f4;border-left:3px solid var(--amber);color:var(--ink2);font-size:14.5px}
+  blockquote p{margin:6px 0}
+  .note{font-size:13px;color:var(--sub)}
+  .cut{color:var(--cinnabar);font-weight:600}
+
+  figure{margin:20px 0}
+  figure img{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+  figcaption{font-size:12.5px;color:var(--sub);margin-top:8px;text-align:center}
+
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="kicker">Art Asset Checklist · 生活化日常物件像素风</div>
+  <h1>围棋史莱姆 · 美术资源需求清单
+    <span class="en">Style：Everyday Objects · Friendly Pixel Art</span>
+  </h1>
+  <p class="lede">
+    配套 <b>玩法拓展策划案 v18</b>。按模块列出还缺的美术、规格与优先级。<b>原科技主题的概念图已停用</b>；所有新资源先过“非开发者不看说明能认出原型和作用”检查，再制作 Sprite。
+  </p>
+  <div class="meta">
+    <span><b>风格</b> 日常物件 · 轻松搞笑 · 像素</span>
+    <span><b>棋盘</b> 9×9 · 单格 32px</span>
+    <span><b>范围</b> 原 96 项清单按新风格重审</span>
+    <span><b>配套</b> 玩法拓展策划案 v18</span>
+  </div>
+</header>
+
+<!-- 1 -->
+<h2 class="sec" id="s1"><span class="n">01</span>风格基准与交付规格（先读这个）</h2>
+<p class="sub">所有资源都必须满足这一节，否则进 Unity 会对不齐、大小不一、图集爆掉。</p>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">风格基准</h3>
+    <ul style="margin-bottom:0">
+      <li><b>生活化</b>：以扫帚、跑鞋、弹弓、茶壶、雨伞、闹钟等熟悉物件拟人化；不画专业设备，不用行话解释身份。</li>
+      <li><b>作用一眼可见</b>：跑鞋跑得快、弹弓打得远、雨伞护队友；棋子只画一个主动作和一个夸张表情。</li>
+      <li><b>像素</b>：棋子基准 <b>32×32 像素</b>（像素比 1:1），UI 允许 16~32px 细节，<b>不做 3D 渲染、不做透视场景</b>。</li>
+      <li><b>配色</b>：奶油白背景、暖棕色描边，天空蓝 / 活力橙 / 叶绿 / 危险红为状态色；最多 <b>4 个主色 + 1 个高亮色</b>。</li>
+      <li><b>轮廓优先</b>：缩到 32×32，遮住文字仍能认出物件；邀请至少 3 位非开发者测试，不能猜出用途则重画。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">交付规格（硬性）</h3>
+    <table style="margin-bottom:0">
+      <tbody>
+        <tr><td>棋子单帧</td><td class="num">32×32 / 64×64 / 96×96</td></tr>
+        <tr><td>Pixels Per Unit</td><td class="num">32（1 格 = 32px）</td></tr>
+        <tr><td>大棋子</td><td class="num">2×2 = 64×64 · 3×3 = 96×96</td></tr>
+        <tr><td>锚点</td><td class="num">脚底中心</td></tr>
+        <tr><td>UI 九宫格</td><td class="num">四边边距 ≥ 8px</td></tr>
+        <tr><td>图集</td><td class="num">SpriteAtlas 1024 / 2048</td></tr>
+        <tr><td>透明通道</td><td class="num">必须带 Alpha，禁止白底</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h3>命名规范（沿用现有 ArtRes 的中文体系）</h3>
+<div class="card">
+  <table style="margin-bottom:0">
+    <thead><tr><th style="width:180px">类型</th><th>命名模板</th><th>示例</th></tr></thead>
+    <tbody>
+      <tr><td>棋子</td><td><code>棋子_阵营_兵种_星级_用途_序号.png</code></td><td><code>棋子_玩家方_剑士_3星_待机_01.png</code></td></tr>
+      <tr><td>大棋子</td><td><code>棋子_阵营_兵种_3星_大棋_2x2_序号.png</code></td><td><code>棋子_敌方_Boss_终局_大棋_3x3.png</code></td></tr>
+      <tr><td>状态标记</td><td><code>标记_名称_颜色.png</code></td><td><code>标记_眼_金色.png</code> / <code>标记_围困_锁链.png</code></td></tr>
+      <tr><td>走法提示</td><td><code>提示_走法_兵马车炮士.png</code></td><td><code>提示_走法_马_日字.png</code></td></tr>
+      <tr><td>UI</td><td><code>UI_模块_部件_状态.png</code></td><td><code>UI_手牌栏_卡牌底_默认.png</code></td></tr>
+      <tr><td>图标</td><td><code>图标_模块_名称.png</code></td><td><code>图标_事件_补眼.png</code></td></tr>
+      <tr><td>特效</td><td><code>特效_名称_序号.png</code></td><td><code>特效_弹道_火_01.png</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 2 -->
+<h2 class="sec" id="s2"><span class="n">02</span>棋子（玩家方 / 敌方）<span class="chip c-red">P0</span></h2>
+<p class="sub">现有角色的帧序与尺寸可以参考，但新角色以<b>生活中熟悉的物件</b>为原型，优先重做 6 种核心职业（扫帚 / 跑鞋 / 弹弓 / 茶壶 / 雨伞 / 闹钟），验收后再扩展角色池。不直接把概念图缩成 32px 使用。</p>
+
+<table>
+  <caption>棋子美术清单</caption>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>1★ 棋子立绘（待机帧）</td><td>32×32 × 3 帧</td><td class="num">19 系 × 3</td><td><span class="chip c-blue">AI 重绘</span></td><td>先以生活用品出概念，再按原生尺寸手工绘制和逐帧对齐；不要直接用旧史莱姆 img2img</td></tr>
+    <tr><td>2★ 棋子立绘（待机帧）</td><td>32×32 × 3 帧</td><td class="num">19 系 × 3</td><td><span class="chip c-blue">AI 重绘</span></td><td>同上，装备与体型略升级</td></tr>
+    <tr><td>3★ 棋子立绘（待机帧）</td><td><b>64×64</b> × 3 帧</td><td class="num">19 系 × 3</td><td><span class="chip c-amber">AI + 手工</span></td><td><b>3★ 占 2×2</b>，分辨率翻倍，需要手工检查像素对齐</td></tr>
+    <tr><td>敌方配色变体</td><td>同上</td><td class="num">全部</td><td><span class="chip c-jade">程序化</span></td><td><b>不重绘</b>，用色相偏移 / 换阵营主色，脚本批量出</td></tr>
+    <tr><td>攻击 / 受击 / 死亡帧</td><td>同星级</td><td class="num">按需</td><td><span class="chip c-amber">骨骼动画</span></td><td><b>不逐帧画</b>：一张关键帧 + Spine / Unity 2D IK，动作随便加且 2×2 / 3×3 不糊</td></tr>
+    <tr><td>棋子底座（石台）</td><td>32 / 64 / 96</td><td class="num">3</td><td><span class="chip c-blue">AI 生成</span></td><td>简洁的浅木色或奶油白底座，按星级增加星星和小彩旗，不遮挡物件轮廓</td></tr>
+  </tbody>
+</table>
+
+<!-- 3 -->
+<h2 class="sec" id="s3"><span class="n">03</span>Boss 与大棋子<span class="chip c-red">P0</span></h2>
+<p class="sub">Boss 是每章第 11 回合的<b>唯一视觉焦点</b>，也是"擒王"的靶子，必须一眼认出。</p>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>Boss 大棋子（2×2）</td><td>64×64 × 3 帧</td><td class="num">6 章 × 1</td><td><span class="chip c-blue">AI 生成</span></td><td>每章一个熟悉的大物件（闹钟 / 大书包 / 雨靴 / 饭盒等），保留皇冠与夸张表情</td></tr>
+    <tr><td>Boss 大棋子（3×3）</td><td><b>96×96</b> × 3 帧</td><td class="num">6 章 × 1</td><td><span class="chip c-amber">AI + 手工</span></td><td>第 5、6 章使用，体量占棋盘 1/9</td></tr>
+    <tr><td>王冠图标</td><td>24×24</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>悬浮在 Boss 头顶，金框深底，血条最粗</td></tr>
+    <tr><td>Boss 专属底座 / 光环</td><td>96×96</td><td class="num">2</td><td><span class="chip c-blue">AI 生成</span></td><td>浅木色底座 + 大小清晰的红色响铃光环</td></tr>
+    <tr><td>Boss 血条框</td><td>长条九宫格</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>明显粗于普通棋子血条</td></tr>
+  </tbody>
+</table>
+
+<!-- 4 -->
+<h2 class="sec" id="s4"><span class="n">04</span>战斗状态标记（围棋内核的"看得见"）<span class="chip c-red">P0</span></h2>
+<p class="sub">四件套（连 / 断 / 围 / 眼）全部<b>只靠颜色和图标，不出文字</b>。这一组是<b>性价比最高的一批资源</b>，量小、作用大。</p>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>标记_眼_金色</td><td>24×24</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>空点上的暖黄色小安全屋，含义是这里受到保护；不依赖“眼”字</td></tr>
+    <tr><td>标记_活棋_光环</td><td>96×96</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>两眼棋块的罩圈</td></tr>
+    <tr><td>标记_围困_锁链</td><td>32×32</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>棋子变灰 + 锁链环</td></tr>
+    <tr><td>标记_叫吃_脉冲</td><td>32×32 × 3 帧</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>气 = 1 的红色脉冲</td></tr>
+    <tr><td>标记_连_金色连线</td><td>32×32 线段</td><td class="num">4 方向</td><td><span class="chip c-blue">AI 生成</span></td><td>同块棋子之间的金色连线（上下左右各一段）</td></tr>
+    <tr><td>标记_断_红色裂痕</td><td>24×24</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>孤棋脚下的裂痕</td></tr>
+    <tr><td>气数小圆点</td><td>8×8</td><td class="num">4 色</td><td><span class="chip c-amber">手工</span></td><td>脚下显示气数，极小</td></tr>
+  </tbody>
+</table>
+
+<!-- 5 -->
+<h2 class="sec" id="s5"><span class="n">05</span>走法提示（象棋借入的那一套）<span class="chip c-amber">P1</span></h2>
+<p class="sub">走法<b>全部用线框 / 虚影，零新立绘</b>。量小但决定"自动移动能不能被读懂"。</p>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>提示_走法_兵（向前箭头）</td><td>32×32</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>近战</td></tr>
+    <tr><td>提示_走法_马（日字虚影）</td><td>96×96</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>刺客</td></tr>
+    <tr><td>提示_走法_车（十字直线）</td><td>96×96</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>弓箭 / 法师</td></tr>
+    <tr><td>提示_炮架图标</td><td>24×24</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>法师隔子打的"炮架"标记</td></tr>
+    <tr><td>提示_士象（半场高亮）</td><td>整块</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>牧师 / 补给车的活动范围</td></tr>
+    <tr><td>占格虚影（2×2 / 3×3）</td><td>64 / 96</td><td class="num">2</td><td><span class="chip c-amber">手工</span></td><td>落子预览，放不下要能变红</td></tr>
+  </tbody>
+</table>
+
+<!-- 6 -->
+<h2 class="sec" id="s6"><span class="n">06</span>棋盘与地形<span class="chip c-red">P0</span></h2>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>棋盘底图（石制 9×9）</td><td>288×288</td><td class="num">2 套主题</td><td><span class="chip c-blue">AI 生成</span></td><td>浅木色 / 奶油白棋盘；格子线清晰、不遮挡棋子</td></tr>
+    <tr><td>中线（河界）</td><td>288×8</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>兵"过河"的可视化分界</td></tr>
+    <tr><td>可落子高亮 / 不可落红框</td><td>32×32</td><td class="num">2</td><td><span class="chip c-amber">手工</span></td><td>配合占格虚影</td></tr>
+    <tr><td>敌方布阵半场标记</td><td>整块</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>准备阶段亮敌方布阵时的高亮</td></tr>
+    <tr><td>背景（战斗场景）</td><td>1920×1080</td><td class="num">6 章 × 1</td><td><span class="chip c-blue">AI 生成</span></td><td>书桌 / 厨房 / 花园 / 玄关等熟悉场所，每章一张 2D 平面背景</td></tr>
+  </tbody>
+</table>
+
+<!-- 7 -->
+<h2 class="sec" id="s7"><span class="n">07</span>战斗 UI<span class="chip c-red">P0</span></h2>
+<p class="sub">三段式回合（准备 / 战斗 / 结算）需要一套全新的 HUD，这是<b>目前缺口最大的一块</b>。</p>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>手牌栏底框</td><td>九宫格</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>浅色卡片盒，简洁大间距，可容纳 2~4 张</td></tr>
+    <tr><td>卡牌底框（默认 / 选中）</td><td>96×128 九宫格</td><td class="num">2</td><td><span class="chip c-blue">AI 生成</span></td><td>要能标注 2×2 / 3×3 占格</td></tr>
+    <tr><td>回合 HUD（章进度 + 回合 N/11）</td><td>横条</td><td class="num">1</td><td><span class="chip c-amber">手工</span></td><td>顶部进度条</td></tr>
+    <tr><td>阶段指示（准备 / 战斗 / 结算）</td><td>3 态图标</td><td class="num">3</td><td><span class="chip c-blue">AI 生成</span></td><td>当前阶段高亮</td></tr>
+    <tr><td>「准备」按钮</td><td>九宫格 · 2 态</td><td class="num">2</td><td><span class="chip c-blue">AI 生成</span></td><td>全 UI 最显眼的一个按钮</td></tr>
+    <tr><td>决死加速 HUD</td><td>图标 + 数字</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>沙漏 / 骷髅，叠加层数显示</td></tr>
+    <tr><td>三选一界面整套</td><td>弹窗 + 3 卡</td><td class="num">1 套</td><td><span class="chip c-blue">AI 生成</span></td><td>可复用现有 <code>tanchuang</code> 的九宫格换材质</td></tr>
+    <tr><td>战斗日志 / 事件弹条</td><td>九宫格</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>战斗事件弹出用</td></tr>
+  </tbody>
+</table>
+
+<!-- 8 -->
+<h2 class="sec" id="s8"><span class="n">08</span>战斗事件图标（8 个）<span class="chip c-red">P0</span></h2>
+<p class="sub">规格统一 <b>48×48</b>，奶油白底、暖棕描边，蓝 / 橙 / 绿 / 红区分作用。图标以生活化动作表达效果；AI 图仅作草稿，正式图标须手工整理像素和透明边缘。</p>
+<table>
+  <thead><tr><th style="width:190px">图标</th><th>视觉要点</th><th style="width:90px">稀有度</th></tr></thead>
+  <tbody>
+    <tr><td><b>天降援兵</b></td><td>光柱落下一颗棋子</td><td>普通</td></tr>
+    <tr><td><b>回气</b></td><td>棋子深呼吸，旁边出现蓝色小圆点</td><td>普通</td></tr>
+    <tr><td><b>疗愈雨</b></td><td>绿色雨滴落在小雨伞上</td><td>普通</td></tr>
+    <tr><td><b>连击</b></td><td>两个拳头先后击打，配双重速度线</td><td>普通</td></tr>
+    <tr><td><b>补眼</b> <span class="chip c-jade">稀有</span></td><td>棋盘空位出现一间金色小安全屋</td><td>稀有</td></tr>
+    <tr><td><b>断链</b> <span class="chip c-jade">稀有</span></td><td>被解开的绳结，表示摆脱围困</td><td>稀有</td></tr>
+    <tr><td><b>瞬移潮</b> <span class="chip c-jade">稀有</span></td><td>跑鞋留下一道短短的脚印和箭头</td><td>稀有</td></tr>
+    <tr><td><b>炮火支援</b> <span class="chip c-jade">稀有</span></td><td>玩具弹弓从上方弹出一串小弹丸</td><td>稀有</td></tr>
+  </tbody>
+</table>
+
+<!-- 9 -->
+<h2 class="sec" id="s9"><span class="n">09</span>三选一奖励图标（4 类）<span class="chip c-red">P0</span></h2>
+<table>
+  <thead><tr><th style="width:190px">图标</th><th>视觉要点</th><th style="width:90px">规格</th></tr></thead>
+  <tbody>
+    <tr><td><b>新棋子</b></td><td>未开封的棋子剪影 + 问号</td><td class="num">48×48</td></tr>
+    <tr><td><b>同名牌</b></td><td>两张重叠的相同棋子</td><td class="num">48×48</td></tr>
+    <tr><td><b>眼位石</b></td><td>金色眼形宝石</td><td class="num">48×48</td></tr>
+    <tr><td><b>全队强化</b></td><td>向上的金箭 + 光环</td><td class="num">48×48</td></tr>
+  </tbody>
+</table>
+
+<!-- 10 -->
+<h2 class="sec" id="s10"><span class="n">10</span>特效与弹道（复用 + 变体）<span class="chip c-jade">P1</span></h2>
+<p class="sub">现有 <code>atan</code> 有火 / 水 / 光弹道与下落特效，可复用帧序；将色彩调为暖橙 / 天空蓝 / 柔黄 / 叶绿，暗紫法阵仅在缩小后不抢主角时保留。</p>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>弹道变体（火 / 水 / 光 / 暗）</td><td>5 帧序列</td><td class="num">4 属性</td><td><span class="chip c-jade">程序化</span></td><td>色相偏移批量出</td></tr>
+    <tr><td>法阵特效变体</td><td>13 帧序列</td><td class="num">3 色</td><td><span class="chip c-jade">程序化</span></td><td>同上</td></tr>
+    <tr><td>提子 / 围困破碎特效</td><td>6 帧</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>金色眼碎裂、锁链崩断</td></tr>
+    <tr><td>三合一升星光效</td><td>8 帧</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>升到 3★"长个儿"时的光柱</td></tr>
+  </tbody>
+</table>
+
+<!-- 11 -->
+<h2 class="sec" id="s11"><span class="n">11</span>局外（图鉴 / 主城 / 难度徽章）<span class="chip c-amber">P1</span></h2>
+<table>
+  <thead><tr><th style="width:190px">资源</th><th style="width:150px">规格</th><th style="width:110px">数量</th><th style="width:120px">来源</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>主城 / 主菜单背景</td><td>1920×1080</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td>明亮的家中小桌子或庭院；闯关和图鉴用大图标直达</td></tr>
+    <tr><td>图鉴格子 + 未解锁剪影</td><td>64×64</td><td class="num">2</td><td><span class="chip c-amber">手工</span></td><td>65 格通用</td></tr>
+    <tr><td>难度阶级徽章（普通/困难/噩梦）</td><td>48×48</td><td class="num">3</td><td><span class="chip c-blue">AI 生成</span></td><td>铜 / 银 / 金</td></tr>
+    <tr><td>无尽模式入口图标</td><td>48×48</td><td class="num">1</td><td><span class="chip c-blue">AI 生成</span></td><td></td></tr>
+  </tbody>
+</table>
+
+<!-- 12 -->
+<h2 class="sec" id="s12"><span class="n">12</span>制作优先级与分工</h2>
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">P0 · 没有就玩不了（约 1 周）</h3>
+    <ul style="margin-bottom:0">
+      <li>战斗 UI 全套（§07）</li>
+      <li>战斗状态标记（§04）</li>
+      <li>棋子 1★ / 2★ 重绘（§02）</li>
+      <li>棋盘 + 战斗事件图标（§06 / §08）</li>
+      <li>三选一图标（§09）</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">P1 / P2 · 让它变好</h3>
+    <ul style="margin-bottom:0">
+      <li>3★ / Boss 大棋子（§02 / §03）</li>
+      <li>走法提示线框（§05）</li>
+      <li>特效变体（§10，程序化）</li>
+      <li>局外图鉴 / 主城 / 徽章（§11）</li>
+      <li>攻击 / 受击 / 死亡骨骼动画（§02）</li>
+    </ul>
+  </div>
+</div>
+
+<blockquote>
+  <p><b>一句话</b>：<b>先做"看得见的规则"（标记 / HUD / 图标，量小作用大），再做"看得见的强度"（棋子 / Boss 重绘），最后做"看得见的爽"（特效 / 动画）。</b></p>
+</blockquote>
+
+<!-- 13 -->
+<h2 class="sec" id="s13"><span class="n">13</span>概念图（AI 生成 · 风格探索稿）</h2>
+<p class="sub"><b>当前方向：</b>熟悉的日常物件，动作比细节重要。以下仅为 AI 探索稿，不能直接用作正式 Sprite；原 <code>概念图_01～13_*.png</code> 为已停用的科技方向历史文件，不再在任务单展示或用作出图参考。</p>
+<figure>
+  <img src="美术概念图/concept_everyday_characters.png" alt="扫帚、跑鞋、弹弓、茶壶、雨伞、闹钟生活化角色探索">
+  <figcaption>新方向 · 6 个常见物件：近战扫帚、快跑鞋子、远程弹弓、喷水茶壶、保护雨伞和闹钟 Boss；先用缩略图测试是否一眼看懂。</figcaption>
+</figure>
+
+<footer>
+  围棋史莱姆 · 美术资源需求清单（生活化日常物件 · 2D 像素）｜ 配套《玩法拓展策划案 v18》｜ 概念图为 AI 风格探索稿，非最终资源<br>
+  复用建议：现有 <code>atan</code>（仅帧序）、<code>slime</code>（仅尺寸参考）、<code>tanchuang</code>（九宫格切图）、<code>血条</code>（功能结构）；实际视觉需按新画风复核，不直接沿用旧材质
+</footer>
+
+</div>
+</body>
+</html>

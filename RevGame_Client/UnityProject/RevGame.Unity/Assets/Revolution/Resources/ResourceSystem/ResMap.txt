@@ -1,0 +1,6 @@
+﻿# 自动生成，请勿手改。格式：逻辑名|包名|资源名
+# 逻辑名 = 资源相对资源根目录的路径（去扩展名）；包名由你在资源上自行设置
+Data/testdata|data|testdata
+UI/MyTestPanel|mytestpanel|MyTestPanel
+RevHotDemo/revhot_demo|revhotdemo|revhot_demo
+RevUIDemo/RevUIDemoPanel|revuidemo|RevUIDemoPanel

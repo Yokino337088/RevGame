@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>围棋史莱姆 · 原版美术资源（已分类重命名）</title>
+<style>
+  :root{ --paper:#fbfaf7; --card:#fff; --ink:#1c2024; --ink2:#3d4852; --sub:#6b7785;
+         --line:#e8e4dc; --line2:#f1eee8; --blue:#2c4a5e; --jade:#2f7a63; --red:#c0392b; --amber:#b7791f; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.8 "Microsoft YaHei",system-ui,sans-serif}
+  .page{max-width:1000px;margin:0 auto;padding:44px 26px 72px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px}
+  h1{font:600 28px/1.4 Georgia,"Songti SC",serif;margin:8px 0 6px}
+  .meta{font-size:13px;color:var(--sub);display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px}
+  h2{font:600 19px/1.4 Georgia,"Songti SC",serif;margin:38px 0 10px;padding-left:10px;border-left:4px solid var(--blue)}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);margin:12px 0}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:top}
+  thead th{background:#f7f5f0;color:var(--ink2);border-bottom:1px solid var(--line)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  code{background:#f2efe9;padding:1px 6px;border-radius:5px;font:13px Consolas,monospace;color:#4a3728}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0}
+  .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12.5px;font-weight:600}
+  .c-blue{background:#e8f0f7;color:var(--blue)} .c-jade{background:#e6f4ee;color:var(--jade)}
+  .c-red{background:#fbeae8;color:var(--red)} .c-amber{background:#fbf3e3;color:var(--amber)}
+  pre{background:#f7f5f0;border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow:auto;
+      font:13px/1.75 Consolas,monospace;color:#3d4852}
+  ul{margin:8px 0 8px 20px;padding:0} li{margin:4px 0}
+  .note{font-size:13px;color:var(--sub)}
+  footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="note">ART ARCHIVE · 分类重命名版</div>
+  <h1>围棋史莱姆 · 原版美术资源</h1>
+  <div class="meta">
+    <span><b>来源工程</b> 围棋史莱姆（Unity 2022.3.15f1c1）· <code>Assets/ArtRes</code></span>
+    <span><b>导出时间</b> 2026-10-14</span>
+    <span><b>文件总数</b> 435 个</span>
+    <span><b>合计体积</b> 181.6 MB</span>
+  </div>
+  <p class="note" style="margin-top:12px">
+    本目录由脚本从源工程 <b>复制</b> 而来：源工程 <code>Assets/ArtRes</code> 未做任何改名、移动或删除，
+    仍然保持原样可用。下方的分类与文件名是本归档目录专用的。
+  </p>
+</header>
+
+<h2>一、目录结构与数量</h2>
+<table>
+  <thead><tr><th>分类目录</th><th class="num">数量</th><th>内容说明</th></tr></thead>
+  <tbody>
+    <tr><td><b>01_序列帧动画/</b></td><td class="num">209</td><td>
+      棋子待机帧、史莱姆帧序列、特效帧。子目录：<code>棋子_近战</code> 60 · <code>棋子_法师</code> 45 ·
+      <code>棋子_史莱姆</code> 39 · <code>特效</code> 31 · <code>棋子_弓箭</code> 30 · <code>棋子_特殊</code> 4
+    </td></tr>
+    <tr><td><b>02_精灵图片/</b></td><td class="num">41</td><td>
+      棋子立绘（单张首帧）27 · 状态与血条 9 · 棋盘地图 3 · 应用图标 2
+    </td></tr>
+    <tr><td><b>03_UI图片/</b></td><td class="num">149</td><td>
+      按功能界面分：<code>主界面与通用</code> 47 · <code>战斗界面</code> 41 · <code>UI序列帧</code> 30 ·
+      <code>酒馆与弹窗</code> 15 · <code>选关与关卡</code> 8 · <code>对战准备</code> 5 · <code>结算与成就</code> 3
+    </td></tr>
+    <tr><td><b>04_效果图与设计稿/</b></td><td class="num">22</td><td>整页界面效果稿（主城、酒馆、选关、结算、战斗等）</td></tr>
+    <tr><td><b>05_音频/奶龙/</b></td><td class="num">8</td><td>外部歌曲 mp3（非本作原创，商用前需替换）</td></tr>
+    <tr><td><b>06_字体/</b></td><td class="num">1</td><td>I.Ming-8.00.ttf</td></tr>
+    <tr><td><b>07_数据表/</b></td><td class="num">3</td><td>关卡表 / 成就表 / 角色属性表（xlsx 源表）</td></tr>
+    <tr><td><b>08_配置与其它/</b></td><td class="num">2</td><td>被围标识.overrideController（动画配置）· 规则.txt</td></tr>
+  </tbody>
+</table>
+
+<pre>
+原版美术资源/
+├── 01_序列帧动画/          棋子_近战 · 棋子_弓箭 · 棋子_法师 · 棋子_特殊 · 棋子_史莱姆 · 特效
+├── 02_精灵图片/            棋子立绘 · 状态与血条 · 棋盘地图 · 图标
+├── 03_UI图片/              主界面与通用 · 战斗界面 · 选关与关卡 · 酒馆与弹窗 · 结算与成就 · 对战准备 · UI序列帧
+├── 04_效果图与设计稿/       界面效果图
+├── 05_音频/                奶龙
+├── 06_字体/
+├── 07_数据表/
+├── 08_配置与其它/
+├── 重命名对照表.csv         ← 每一个文件的「原路径 → 新路径」全量明细
+└── 说明_README.html         ← 本文件
+</pre>
+
+<h2>二、命名规则</h2>
+<p>统一格式：<code>&lt;模块&gt;_&lt;对象&gt;_&lt;用途/状态&gt;_&lt;序号&gt;.png</code></p>
+<table>
+  <thead><tr><th>模块</th><th>示例</th><th>来源与规则</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip c-jade">棋子_</span></td><td><code>棋子_刺客1_待机_0002.png</code><br><code>棋子_敌_盾战2_待机_0001.png</code><br><code>棋子_刺客1_立绘.png</code></td>
+        <td>棋子动画。原命名形如「刺客1待机_0002」「敌刺客1待机_0001」，已拆成 角色+档位+状态+帧号；<b>不带帧号的单张图 = 立绘（首帧）</b>，归入 02_精灵图片</td></tr>
+    <tr><td><span class="chip c-jade">棋子_史莱姆_</span></td><td><code>棋子_史莱姆_f1_0002.png</code></td>
+        <td>史莱姆帧序列。<b>原帧代号 f/s/d/ed 原样保留</b>（源图未标注含义，不臆造）</td></tr>
+    <tr><td><span class="chip c-amber">状态_</span></td><td><code>状态_被围标识_0001.png</code><br><code>状态_受伤数字_0002.png</code></td>
+        <td>血条与状态。原命名「围_0001」「down_0001」「down2_0001」</td></tr>
+    <tr><td><span class="chip c-amber">特效_</span></td><td><code>特效_下落特效_下落特效.png</code></td>
+        <td>atan 目录的帧图，通过工程引用反查确认为特效；无帧序号，故出现重复段（对象名与预制体同名）</td></tr>
+    <tr><td><span class="chip c-blue">UI_</span></td><td><code>UI_Begin_btnAdventure.png</code><br><code>UI_Buy_btnClose.png</code><br><code>UI_Game_imgEnemyMobility.png</code></td>
+        <td><b>通过 prefab 引用反查命名</b>：用图片的 GUID 在界面预制体里找到引用它的对象，取「界面名 + 对象名」。这是本批图能摆脱「1.png / 12.png」的关键</td></tr>
+    <tr><td><span class="chip c-blue">UI_</span></td><td><code>UI_主城页面_成就.png</code><br><code>UI_酒馆_辣条1.png</code></td>
+        <td>测试图片目录：<b>拼音转中文</b>（chengjiu→成就、jiuguan→酒馆、shezhi→设置…）</td></tr>
+    <tr><td><span class="chip c-red">效果图_</span></td><td><code>效果图_1主城页面.png</code></td>
+        <td>切图目录里<b>以数字开头</b>的整页稿 = 界面效果图，归入 04_效果图与设计稿</td></tr>
+  </tbody>
+</table>
+
+<h2>三、需要注意的几点</h2>
+<div class="card">
+  <ul>
+    <li><b>44 张图未能反查到 prefab 引用</b>：命名为 <code>UI_编号N.png</code> 或保留原中文名。它们没有被任何界面预制体直接引用，
+        可能是走代码动态加载、或已废弃的备用稿。明细见 <code>重命名对照表.csv</code> 中「备注」含「未能反查引用」的行。</li>
+    <li><b>50 组内容完全重复的文件</b>：源工程里本身就存在成套重复（例如 <code>围棋\ui\ui an</code> 与 <code>正式图片\ui\ui an</code> 是同一套图）。
+        归档<b>全部保留、未做去重</b>，重复关系记录在 CSV 的「内容哈希」列（同哈希即完全相同），由你决定留哪一份。</li>
+    <li><b>史莱姆帧代号（f/s/d/ed）与部分特效文件名保留了原始代号</b>：源图没有语义标注，避免臆造含义。</li>
+    <li><b>05_音频/奶龙 是从外部引入的歌曲</b>（非本作原创），若涉及商业化发行需要替换为原创或授权音乐。</li>
+    <li><b>源工程零改动</b>：<code>Assets/ArtRes</code> 下 435 个文件的数量、路径、内容均未变化。</li>
+  </ul>
+</div>
+
+<h2>四、对照表字段说明</h2>
+<table>
+  <thead><tr><th>列</th><th>含义</th></tr></thead>
+  <tbody>
+    <tr><td><code>原路径</code></td><td>源工程内的相对路径（可直接回溯到 <code>Assets/ArtRes/...</code>）</td></tr>
+    <tr><td><code>分类</code></td><td>本归档下的分类目录</td></tr>
+    <tr><td><code>新文件名 / 新相对路径</code></td><td>归档中的最终位置</td></tr>
+    <tr><td><code>体积KB</code></td><td>文件大小</td></tr>
+    <tr><td><code>内容哈希</code></td><td>MD5 前 8 位；<b>相同即内容完全一致</b>，用于识别重复图</td></tr>
+    <tr><td><code>备注</code></td><td>来源目录、是否反查成功、名称处理方式</td></tr>
+  </tbody>
+</table>
+
+<h2>五、下一步可选</h2>
+<ul>
+  <li>把归档直接拖进新工程时，建议保持 <code>&lt;模块&gt;_</code> 前缀做图集分组（棋子一图集、UI 一图集），便于合批。</li>
+  <li>如需<b>把源工程 <code>Assets/ArtRes</code> 里的文件也同步改名</b>：可以做到（改名时同步改名 <code>.meta</code> 即可保持 GUID 与所有引用不变），告诉一声即可执行。</li>
+  <li>44 张未反查的图若要继续追查，可结合代码里的动态加载路径（AB 包按名字加载）进一步确认用途。</li>
+</ul>
+
+<footer>
+  围棋史莱姆 · 原版美术资源归档 ｜ 分类与重命名由脚本自动完成（GUID 反查 prefab 引用 + 拼音转中文 + 结构化命名）｜
+  明细见同目录 <code>重命名对照表.csv</code>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "com.yokino.revolution",
+  "version": "0.1.0",
+  "displayName": "Revolution",
+  "description": "Unity 游戏框架：资源加载与 AB 打包工具、对象池、UI 系统、动作序列、状态机、音效系统、事件系统、GM 指令、配置表、服务定位器、异步任务。内核尽量不依赖引擎（纯 C# 部分可脱离 Unity 跑断言）。",
+  "unity": "2022.3",
+  "keywords": [
+    "framework",
+    "resource",
+    "assetbundle",
+    "object-pool",
+    "ui",
+    "state-machine",
+    "action-sequence",
+    "sound",
+    "event",
+    "gm"
+  ],
+  "author": {
+    "name": "Yokino337088",
+    "url": "https://github.com/Yokino337088"
+  },
+  "license": "MIT",
+  "documentationUrl": "https://github.com/Yokino337088/Revolution/tree/main/Revolution.Document",
+  "changelogUrl": "https://github.com/Yokino337088/Revolution/blob/main/RevolutionFrameWork_Unity/Assets/Revolution/CHANGELOG.md"
+}

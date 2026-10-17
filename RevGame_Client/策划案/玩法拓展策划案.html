@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>围棋史莱姆 · 玩法拓展策划案（精简版 v18）</title>
+<style>
+  :root{
+    --paper:#fbfaf7; --card:#ffffff; --ink:#1c2024; --ink2:#3d4852; --sub:#6b7785;
+    --line:#e8e4dc; --line2:#f1eee8;
+    --ink-blue:#2c4a5e; --jade:#2f7a63; --cinnabar:#c0392b; --amber:#b7791f;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:15.5px/1.85 "Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .page{max-width:1060px;margin:0 auto;padding:48px 26px 80px}
+
+  header{border-bottom:2px solid var(--ink);padding-bottom:22px}
+  .kicker{font-size:12.5px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase}
+  h1{font:600 32px/1.35 Georgia,"Songti SC","STSong",serif;margin:10px 0 4px}
+  h1 .en{display:block;font-size:14.5px;font-weight:400;color:var(--sub);margin-top:8px;font-family:Georgia,serif;letter-spacing:.04em}
+  .lede{font-size:16.5px;color:var(--ink2);margin:16px 0 0;max-width:74ch}
+  .lede b{color:var(--cinnabar)}
+  .meta{font-size:13px;color:var(--sub);margin-top:16px;display:flex;flex-wrap:wrap;gap:8px 18px}
+
+  h2.sec{font:600 23px/1.4 Georgia,"Songti SC","STSong",serif;margin:52px 0 6px;padding-top:20px;
+         border-top:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+  h2.sec .n{font-size:14px;color:var(--cinnabar);font-family:Georgia,serif;letter-spacing:.05em}
+  h2.sec + .sub{color:var(--sub);font-size:13.5px;margin:0 0 18px}
+  h3{font-size:17px;margin:28px 0 10px;padding-left:11px;border-left:3px solid var(--ink-blue);font-weight:600}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0 10px 22px;padding:0}
+  li{margin:5px 0}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 24px;margin:16px 0;
+        box-shadow:0 1px 2px rgba(28,32,36,.03)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0;background:var(--card)}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--sub);padding-bottom:8px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:top}
+  thead th{background:#f7f5f0;color:var(--ink2);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:hover{background:#fdfcf9}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+
+  code{background:#f2efe9;padding:1px 6px;border-radius:5px;font:13px/1.6 Consolas,"Courier New",monospace;color:#4a3728}
+  .chip{display:inline-block;padding:1.5px 9px;border-radius:99px;font-size:12.5px;font-weight:600;line-height:1.7;white-space:nowrap}
+  .c-blue{background:#e8f0f7;color:var(--ink-blue)}
+  .c-jade{background:#e6f4ee;color:var(--jade)}
+  .c-red{background:#fbeae8;color:var(--cinnabar)}
+  .c-amber{background:#fbf3e3;color:var(--amber)}
+  .c-gray{background:#f0f1f3;color:var(--sub)}
+
+  /* 三件事 / 两件事 */
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:22px 0 8px}
+  @media(max-width:820px){.three{grid-template-columns:1fr}}
+  .three .t{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--ink-blue);border-radius:var(--radius);padding:20px 22px}
+  .three .t:nth-child(2){border-top-color:var(--jade)}
+  .three .t:nth-child(3){border-top-color:var(--cinnabar)}
+  .three .idx{font:600 13px/1 Georgia,serif;color:var(--sub);letter-spacing:.14em}
+  .three .big{font:600 21px/1.45 Georgia,"Songti SC",serif;margin:10px 0 6px}
+  .three .exp{font-size:13.5px;color:var(--ink2)}
+
+  /* 两件事 */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0 8px}
+  @media(max-width:820px){.two{grid-template-columns:1fr}}
+  .two .t{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--ink-blue);border-radius:var(--radius);padding:20px 22px}
+  .two .t:nth-child(2){border-top-color:var(--jade)}
+  .two .idx{font:600 13px/1 Georgia,serif;color:var(--sub);letter-spacing:.14em}
+  .two .big{font:600 21px/1.45 Georgia,"Songti SC",serif;margin:10px 0 6px}
+  .two .exp{font-size:13.5px;color:var(--ink2)}
+
+  blockquote{margin:16px 0;padding:12px 18px;background:#f9f8f4;border-left:3px solid var(--amber);color:var(--ink2);font-size:14.5px}
+  blockquote p{margin:6px 0}
+  .note{font-size:13px;color:var(--sub)}
+  .cut{color:var(--cinnabar);font-weight:600}
+
+  figure{margin:20px 0}
+  figure svg{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+  figcaption{font-size:12.5px;color:var(--sub);margin-top:8px;text-align:center}
+
+  .road{position:relative;margin:24px 0 8px;padding-left:26px}
+  .road:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .road .step{position:relative;margin:0 0 20px}
+  .road .step:before{content:"";position:absolute;left:-24px;top:7px;width:11px;height:11px;border-radius:50%;background:#fff;border:2.5px solid var(--jade)}
+  .road .step.p1:before{border-color:var(--amber)}
+  .road .step h4{margin:0 0 4px;font-size:15.5px}
+  .road .step .dur{font-size:12.5px;color:var(--sub)}
+
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="kicker">Game Design Document · 精简版 v18</div>
+  <h1>围棋史莱姆 · 玩法拓展策划案
+    <span class="en">傻瓜式：局内一个动作，局外一条线</span>
+  </h1>
+  <p class="lede">
+    <b>局内</b>每个回合都是清晰的三段：<b>准备（先亮出敌方布阵 → 你落 2~4 张牌）→ 战斗（15~20 秒全自动；Boss 回合不限时）→ 结算（布局与状态全部保留）</b>。棋子落地后<b>自己会走、自己会打</b>，战斗阶段玩家不用操作。只保留围棋最精华的攻防：<b>围住就锁死（攻）</b>与<b>做眼求活（守）</b>，再加<b>连与断</b>——被围不直接消灭，胜负仍看血条。<b>局外</b>只有一条线：<b>推关卡 → 自动解锁新棋子 → 自动变强</b>。
+    一局的终点清清楚楚：<b>6 章、每章 10 个普通回合 + 1 个 Boss 生死回合，打完第 6 章就是"通关"</b>（结构参考《小丑牌》）。
+    不做商店、不做多页签选人、不做装备 / 遗物 / 天赋树 / 天梯 / 打劫。
+  </p>
+  <div class="meta">
+    <span><b>工程</b> 围棋史莱姆</span>
+    <span><b>棋盘</b> 9×9 / 81 格（沿用）</span>
+    <span><b>角色</b> 65 个 · 4 职业 · 3 档（沿用）</span>
+    <span><b>一局时长</b> 约 40 分钟（6 章 × 11 回合）</span>
+    <span><b>一个回合</b> 准备 → 战斗 15~20 秒 → 结算</span>
+    <span><b>Boss 回合</b> 战斗不限时，直到一方倒下</span>
+    <span><b>局内要记的事</b> 2 件</span>
+    <span><b>行动力条</b> 已彻底删除</span>
+    <span><b>新增美术</b> 0 张立绘 · 仅少量 UI</span>
+  </div>
+</header>
+
+<!-- 1 -->
+<h2 class="sec" id="s1"><span class="n">01</span>玩家只需要记住两件事</h2>
+<p class="sub">整个玩法的全部教学内容。凡是不能用一句话说清的，都不做。</p>
+
+<div class="two">
+  <div class="t">
+    <div class="idx">01 · 围棋</div>
+    <div class="big">围住就锁死；做出两只眼，就锁不死</div>
+    <div class="exp">棋子的「气」被对方填满（气＝0），整块棋立刻被锁死：不能移动、不能攻击，还挨双倍伤害。但如果你用棋子围出一个空点——那就是一只<b>「眼」</b>，对方不能往里落子；做出<b>两只眼</b>，这块棋就彻底围不死。<b>攻是围，守是眼。</b></div>
+  </div>
+  <div class="t">
+    <div class="idx">02 · 成长</div>
+    <div class="big">同名三合一，变强一档</div>
+    <div class="exp">三个同名棋子合成高一档（1★→2★→3★）。立绘本身就是三档，玩家一眼就能看出变强了。</div>
+  </div>
+</div>
+
+<p class="note">其余的东西<b>一律不用记</b>：<b>连与断</b>由系统自动标记颜色（§06）、同职业凑够会自动亮（§07）、每章结束只要"看图标选一个"（§08）、气数由棋子脚下的小点自动显示。</p>
+
+<blockquote>
+  <p><b>检验标准</b>：找三个没玩过的人，讲完上面两句话后让他们复述。三个人都能说对，方案才算合格；任何一个说不出来，就说明该砍。</p>
+</blockquote>
+
+<!-- 2 -->
+<h2 class="sec" id="s2"><span class="n">02</span>设计原则：四条铁律</h2>
+<div class="card">
+  <ol style="margin-bottom:0">
+    <li><b>傻瓜式优先。</b>局内只有<b>一个必须做的操作</b>（点手牌）——移动、攻击、气数全部自动，手动挪棋只是"可选福利"而不是"必须的负担"。局外只有<b>一条线</b>。任何要求玩家"记规则 / 算数值 / 翻列表 / 管资源"的设计，一律不做。</li>
+    <li><b>一条规则 &gt; 十个数值。</b>新增系统必须能让玩家"围住对手"这件事更有变化，否则不做。</li>
+    <li><b>一眼看懂。</b>任何需要读说明才明白的机制，直接砍。气数用脚下小点表示，被围困用灰色锁链 + 红色脉冲表示——不写文字教程。</li>
+    <li><b>不做替换，只做加法。</b>保留原有的关卡模式，新增「远征模式」。老玩家不影响，新玩家从远征模式的第一关开始学。</li>
+  </ol>
+</div>
+
+<!-- 3 -->
+<h2 class="sec" id="s3"><span class="n">03</span>傻瓜式：棋子自己会走会打，局外只有一条线</h2>
+<p class="sub">本版最重要的一节。新手能不能留下来，只取决于这两句话是否成立。</p>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">局内 · 每回合只做两件事</h3>
+    <ul style="margin-bottom:0">
+      <li><b>① 准备阶段</b>：先看到敌方这一回合的布阵 → 把手牌（<b>2~4 张</b>）打到棋盘上 → 点「准备」。</li>
+      <li><b>② 战斗阶段</b>：<b>15~20 秒全自动</b>——棋子自己走、自己打，玩家不操作（可以加速）；<b>Boss 回合不限时，打到一方倒下为止</b>。</li>
+      <li>然后自动<b>结算</b>，棋盘上的布局与血量 / 气 / 眼 / 围困状态<b>原样保留</b>到下一回合。</li>
+      <li>棋子按各自的<b>走法</b>移动（兵 / 马 / 车 / 炮 / 士象），偶尔还会瞬移；不用记，看不懂就不看。</li>
+      <li>气、眼、围困<b>自动显示</b>（小点 / 金色眼字 / 变灰锁链），玩家不用算。</li>
+      <li>想微操也可以：<b>点自己的棋子 → 点一个空位</b>，它就走过去（可选，不教学）。</li>
+      <li>没有行动力条、没有落子花费、没有选牌列表；每章结束只有一次<b>三选一</b>。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">局外 · 只有一条线</h3>
+    <ul style="margin-bottom:0">
+      <li><b>一条线</b>：推关卡 → 自动解锁新棋子 → 自动变强。</li>
+      <li>没有商店、没有"在 65 个角色里挑着解锁"、没有多页签分类。</li>
+      <li>局外只有两个入口：<b>关卡选择</b> + <b>图鉴</b>（收集展示）。</li>
+      <li>唯一的长期目标：<b>打通 6 章</b>（见 §04），通关后解锁更高难度阶级与图鉴收集。</li>
+      <li>棋子是"通关就白给"，不需要攒钱、比价、做取舍。</li>
+    </ul>
+  </div>
+</div>
+
+<table>
+  <caption>同一件事，复杂做法 vs 本作做法</caption>
+  <thead><tr><th style="width:150px">环节</th><th>常见做法（复杂）</th><th>本作（傻瓜式）</th></tr></thead>
+  <tbody>
+    <tr><td><b>出棋子</b></td><td>打开列表 → 翻 4 个页签 → 从 65 个里挑 → 比价格</td><td>手牌随机发，点一下打出去</td></tr>
+    <tr><td><b>操作棋子</b></td><td>选中 → 算移动力 → 挪格 → 再点攻击</td><td>自动移动（偶尔瞬移）；想动手就点一下棋子</td></tr>
+    <tr><td><b>看气</b></td><td>自己数周围空位</td><td>脚下小点自动显示</td></tr>
+    <tr><td><b>局内资源</b></td><td>金币 + 行动力两套条，要算着花</td><td>都没有：落子零成本，行动力条已删除</td></tr>
+    <tr><td><b>成长</b></td><td>商店买角色 / 装备 / 遗物 / 天赋树</td><td>推关卡自动解锁与升级</td></tr>
+    <tr><td><b>局外入口</b></td><td>酒馆 / 商店 / 背包 / 天赋 / 师门…</td><td>关卡 + 图鉴，共 2 个</td></tr>
+  </tbody>
+</table>
+
+<h3>棋子的移动：三种，但都不需要玩家操心</h3>
+<table>
+  <caption>移动方式（三种共用同一套落格逻辑，移动后照常重算气与围困）</caption>
+  <thead><tr><th style="width:130px">方式</th><th style="width:110px">谁来做</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><b>自动移动</b> <span class="chip c-jade">默认</span></td><td>系统</td><td>玩家和敌人的棋子都会自己走：补气、贴敌、占位，节奏随血量与包围情况变化</td></tr>
+    <tr><td><b>瞬移</b> <span class="chip c-amber">偶发</span></td><td>系统</td><td>低概率直接闪现到另一个格子，制造战场变化与惊喜；<b>不需要玩家理解触发条件</b></td></tr>
+    <tr><td><b>手动移动</b> <span class="chip c-gray">可选</span></td><td>玩家</td><td>点自己的棋子 → 点一个空位即可移动；<b>不消耗行动力</b>，随时可用，不教学、不提示</td></tr>
+  </tbody>
+</table>
+<p class="note">设计意图：<b>自动移动保证"傻瓜式"，手动移动保证"我想管的时候能管"。</b>两者并存，谁都不会被惩罚。</p>
+
+<blockquote>
+  <p><b>一句话验收</b>：一个没玩过的人，<b>不需要任何文字说明</b>，只看一眼屏幕就知道"哦，点下面那张牌，放到棋盘上"。做不到就继续删。</p>
+</blockquote>
+
+<!-- 4 -->
+<h2 class="sec" id="s4"><span class="n">04</span>闯关系统：6 章 · 每章 10 回合 + 1 个 Boss 回合</h2>
+<p class="sub">结构参考《小丑牌 / Balatro》的"底注(Ante)"：把一局拆成 <b>6 个难度台阶（章）</b>，每章是<b>一盘棋</b>——先打 <b>10 个普通回合</b>（每回合战斗 15~20 秒），<b>第 11 回合是 Boss 回合：不限时，要么 Boss 死、要么你死</b>。玩家随时看得见"打到第几章"，也随时知道"还差多少通关"。</p>
+
+<figure>
+  <svg viewBox="0 0 1000 170" role="img" aria-label="6 章闯关结构">
+    <g font-size="12.5" text-anchor="middle">
+      <rect x="48"  y="40" width="140" height="50" rx="10" fill="#f4f8fb" stroke="#d6e3ee"/>
+      <text x="118" y="62" fill="#2c4a5e" font-weight="600">第 1 章</text><text x="118" y="79" fill="#6b7785">10 回合 + Boss</text>
+
+      <rect x="202" y="40" width="140" height="50" rx="10" fill="#f4f8fb" stroke="#d6e3ee"/>
+      <text x="272" y="62" fill="#2c4a5e" font-weight="600">第 2 章</text><text x="272" y="79" fill="#6b7785">10 回合 + Boss</text>
+
+      <rect x="356" y="40" width="140" height="50" rx="10" fill="#f4f8fb" stroke="#d6e3ee"/>
+      <text x="426" y="62" fill="#2c4a5e" font-weight="600">第 3 章</text><text x="426" y="79" fill="#6b7785">10 回合 + Boss</text>
+
+      <rect x="510" y="40" width="140" height="50" rx="10" fill="#fbf3e3" stroke="#efe0c4"/>
+      <text x="580" y="62" fill="#b7791f" font-weight="600">第 4 章</text><text x="580" y="79" fill="#6b7785">10 回合 + Boss</text>
+
+      <rect x="664" y="40" width="140" height="50" rx="10" fill="#fbf3e3" stroke="#efe0c4"/>
+      <text x="734" y="62" fill="#b7791f" font-weight="600">第 5 章</text><text x="734" y="79" fill="#6b7785">10 回合 + Boss</text>
+
+      <rect x="818" y="40" width="140" height="50" rx="10" fill="#f3faf6" stroke="#d5eade"/>
+      <text x="888" y="62" fill="#2f7a63" font-weight="600">第 6 章 · 终局</text><text x="888" y="79" fill="#6b7785">通关！</text>
+    </g>
+    <text x="500" y="122" font-size="13" fill="#3d4852" text-anchor="middle">每章 = 一盘棋 · 10 个普通回合 + 第 11 回合的 Boss 生死局；打完第 6 章就是"通关"，之后可继续无尽刷分</text>
+    <text x="500" y="148" font-size="12.5" fill="#6b7785" text-anchor="middle">普通回合 ≈ 30 秒（准备 → 战斗 15~20 秒 → 结算）· Boss 回合战斗不限时 · 失败即结束（可花 1 次广告复活续命）</text>
+  </svg>
+  <figcaption>图 1：一局的骨架。横着看是 6 个台阶，竖着看每章都是"一盘棋：10 个普通回合 + 1 个 Boss 回合"——玩家永远看得见自己的进度。</figcaption>
+</figure>
+
+<h3>一个回合 = 准备 → 战斗 → 结算</h3>
+<p class="sub">本作最核心的一处设计：<b>每个回合都先亮牌、再让你布阵、然后才自动开打</b>。战斗阶段棋子自己走自己打，玩家只需要看。</p>
+
+<table>
+  <caption>一回合 ≈ 30 秒</caption>
+  <thead><tr><th style="width:110px">阶段</th><th style="width:130px">时长</th><th>发生什么</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>① 准备</b> <span class="chip c-blue">玩家</span></td>
+      <td>不限时（熟练后约 5~10 秒）</td>
+      <td><b>先在棋盘上亮出敌方 AI 这一回合的排兵布阵</b>，玩家根据它来落子——把这回合手牌里的 <b>2~4 张</b>打到棋盘上，落完点「准备」。</td>
+    </tr>
+    <tr>
+      <td><b>② 战斗</b> <span class="chip c-red">自动</span></td>
+      <td><b>15~20 秒</b><br>（Boss 回合<b>不限时</b>）</td>
+      <td>双方棋子按各自<b>走法</b>自动移动、自动攻击；气、眼、围困、连断实时结算并显示。<b>玩家不操作</b>（可以加速）。<b>Boss 回合一直打到一方倒下为止</b>，并且每 60 秒触发一次<b>"决死加速"</b>（全场伤害 +10%，可叠加）。</td>
+    </tr>
+    <tr>
+      <td><b>③ 结算</b> <span class="chip c-gray">自动</span></td>
+      <td>约 3 秒</td>
+      <td>结算血量与阵亡；<b>棋盘布局与全部战斗状态（血量 / 气 / 眼 / 围困）原样保留</b>，进入下一回合。</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><b>为什么"先亮牌"是关键</b>：象棋正是双方都看得见才成立。先亮出敌方布阵，玩家的决策就只剩"<b>我该把这几个子放在哪</b>"——<b>随机性只来自手牌，不来自"未知"</b>，新手不会因为"不知道为什么就输了"而弃游。</p>
+</blockquote>
+
+<h3>战斗事件：战斗里随机天降的"帮手"</h3>
+<p class="sub">战斗阶段会随机冒出<b>对玩家有利的事件</b>，<b>全自动生效、不需要任何操作</b>——它是"这一回合运气不错"的那点惊喜，也是对随机手牌的补偿。</p>
+
+<table>
+  <caption>事件池（战斗阶段随机触发，全部自动生效）</caption>
+  <thead><tr><th style="width:130px">事件</th><th>效果（自动）</th><th style="width:80px">稀有度</th></tr></thead>
+  <tbody>
+    <tr><td><b>天降援兵</b></td><td>1 张手牌自动落到棋盘上（系统挑气最多的空位）</td><td>普通</td></tr>
+    <tr><td><b>回气</b></td><td>己方全体 +1 气，并<b>立刻解除 1 处围困</b></td><td>普通</td></tr>
+    <tr><td><b>疗愈雨</b></td><td>己方全体回复 10% 血量</td><td>普通</td></tr>
+    <tr><td><b>连击</b></td><td>本回合己方攻速 +20%</td><td>普通</td></tr>
+    <tr><td><b>补眼</b> <span class="chip c-jade">稀有</span></td><td>在"差 1 格就能成眼"的位置自动补一颗子 → <b>立刻成眼</b>（免费的眼位石）</td><td>稀有</td></tr>
+    <tr><td><b>断链</b> <span class="chip c-jade">稀有</span></td><td>把敌人最大的连通块<b>切成两半</b>，两块各自重新算气</td><td>稀有</td></tr>
+    <tr><td><b>瞬移潮</b> <span class="chip c-jade">稀有</span></td><td>2 个己方棋子自动瞬移到气更多的好位置</td><td>稀有</td></tr>
+    <tr><td><b>炮火支援</b> <span class="chip c-jade">稀有</span></td><td>对敌方最密集的区域来一次范围伤害</td><td>稀有</td></tr>
+  </tbody>
+</table>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">触发规则</h3>
+    <ul style="margin-bottom:0">
+      <li>每个回合的战斗阶段，<b>30% 概率触发 1 次</b>；触发时稀有事件占 25%。</li>
+      <li><b>Boss 回合必触发 1 次</b>，并且卡在擒王时刻——把"最后一击"的戏剧性拉满。</li>
+      <li>表现：屏幕中央弹出事件名 + 图标 + 闪光，1.5 秒内自动生效，<b>没有按钮、没有选择</b>。</li>
+      <li>只出增益、不出负面：它是"运气好"的奖励，不是新的失败来源。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">为什么这样设计</h3>
+    <ul style="margin-bottom:0">
+      <li><b>零操作</b>：完全符合傻瓜式——玩家战斗阶段本来就在看戏，事件让"看戏"有了期待。</li>
+      <li><b>补偿随机手牌</b>：手气差的时候，"天降援兵 / 补眼"就是系统递给你的台阶。</li>
+      <li><b>强化围棋内核</b>：补眼、断链、回气三条直接作用于"眼"和"连断"，让四件套多一层变数。</li>
+      <li><b>天然适配回合制</b>：事件发生在"战斗阶段"这个时间片里，有明确的开始与结束，不会和准备阶段抢注意力。</li>
+    </ul>
+  </div>
+</div>
+
+<h3>章内结构：每章一盘棋 · 10 个普通回合 + 1 个 Boss 回合</h3>
+<table>
+  <caption>一局 = 6 章 × 11 回合 = 66 回合（一局约 35~45 分钟）</caption>
+  <thead><tr><th style="width:130px">回合</th><th style="width:110px">可落手牌</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><b>第 1~3 回合</b></td><td><b>2 张</b></td><td>棋盘最空，先把关键棋子摆到能连、能做眼的位置</td></tr>
+    <tr><td><b>第 4~7 回合</b></td><td><b>3 张</b></td><td>手牌变多，着手凑同职业；棋盘开始挤，得留出做眼的空位</td></tr>
+    <tr><td><b>第 8~10 回合</b></td><td><b>4 张</b></td><td>铺开期：围困、破眼、战斗事件都开始高发</td></tr>
+    <tr><td><b>第 11 回合 · Boss</b></td><td><b>4 张</b></td><td><b>生死局</b>：Boss 的大棋子登场，<b>战斗不限时，要么它死、要么你死</b>；打完结算本章胜负</td></tr>
+  </tbody>
+</table>
+<p class="note"><b>可落手牌阶梯递增（2 → 3 → 4）是刻意的节奏设计</b>：开局少而精、中期铺开、后期拥挤——把"越打越激烈"做成一条看得见的曲线，同时给"眼"和"大棋子"留出必要空间（每方整章累计约 30 格）。章与章之间棋盘重开，但<b>棋子池与强化保留</b>。</p>
+
+<h3>跳过：少打一轮，换一档强化</h3>
+<div class="card">
+  <p style="margin-top:0">借自《小丑牌》的"跳过盲注换标签"：<b>跳过第 10 回合</b>（最后一轮普通回合），直接进入 Boss 回合。</p>
+  <ul style="margin-bottom:0">
+    <li><b>跳过 = 直接拿一次"全队强化"，但第 10 回合不打（也少落 4 张牌），直接进第 11 回合的 Boss 生死局。</b></li>
+    <li>一句话理解：<b>"少打一轮，换一档强化"</b>——想快点通关就跳，想稳就慢慢打。</li>
+    <li>Boss 回合<b>不能跳</b>：它是章节门槛，也是进度感的来源。</li>
+    <li>这是个零学习成本的小赌注：按钮就两个字"跳过"，旁边写着"换 +10% 攻击"。</li>
+  </ul>
+</div>
+
+<h3>Boss 回合（每章第 11 回合）：一条"改变规则"的负面效果</h3>
+<p class="sub">借自《小丑牌》的首领盲注：不是把敌人数值调高，而是<b>换一条规则</b>，逼玩家换打法。每条都用一句话能说清。</p>
+<table>
+  <thead><tr><th style="width:80px">章</th><th>Boss 负面效果</th><th>玩家要做的调整</th></tr></thead>
+  <tbody>
+    <tr><td><b>第 1 章</b></td><td>只是血更厚（教学 Boss）</td><td>无——先熟悉"点手牌"</td></tr>
+    <tr><td><b>第 2 章</b></td><td>人多：敌人开局多 2 个棋子</td><td>靠法师范围伤害清场</td></tr>
+    <tr><td><b>第 3 章</b></td><td>少气：全队气上限 −1</td><td>站位更保守，别被反围</td></tr>
+    <tr><td><b>第 4 章</b></td><td>手牌收紧：手牌只有 2 张</td><td>每一次落子都更值钱</td></tr>
+    <tr><td><b>第 5 章</b></td><td>克星：敌人职业专门克制你场上的阵容</td><td>主动换职业搭配</td></tr>
+    <tr><td><b>第 6 章</b></td><td><b>终局</b>：Boss 血量 ×2，并随机带上前面两条效果</td><td>把这五章学到的全用上</td></tr>
+  </tbody>
+</table>
+<p class="note">备选规则池（先不做，留给"难度阶级"和后续加章）：敌速 +30% / 我方血量 −20% / 敌人攻速叠加 / 双 Boss 连打 / <b>破眼者（敌人优先拆你的眼）</b>。加章时从这里取，不用重新设计。</p>
+
+<h3>难度阶梯：让"越打越难"变成看得见的一个数字</h3>
+<table>
+  <thead><tr><th>每过一章</th><th class="num">变化</th></tr></thead>
+  <tbody>
+    <tr><td>敌人棋子数量</td><td class="num">+1</td></tr>
+    <tr><td>Boss 血量</td><td class="num">+25%</td></tr>
+    <tr><td>敌人阵容档位</td><td class="num">每 2 章提高 1 档（1★ → 2★ → 3★）</td></tr>
+  </tbody>
+</table>
+<p class="note">玩家不需要记这三条——他只需要看顶部那个「第 N / 6 章」的进度条。所有难度都压在"章数"这一个数字上。</p>
+
+<h3>Boss 的大棋子：体积随章数长大</h3>
+<table>
+  <caption>Boss 棋子占格（越大越难缠，也越占地方）</caption>
+  <thead><tr><th style="width:130px">章</th><th>Boss 的大棋子</th></tr></thead>
+  <tbody>
+    <tr><td><b>第 1~2 章</b></td><td>2×2 × <b>1 个</b></td></tr>
+    <tr><td><b>第 3~4 章</b></td><td>2×2 × <b>2 个</b></td></tr>
+    <tr><td><b>第 5 章</b></td><td>2×2 × 2 个 ＋ <b>3×3 × 1 个</b></td></tr>
+    <tr><td><b>第 6 章 · 终局</b></td><td><b>3×3 × 2 个</b></td></tr>
+  </tbody>
+</table>
+<p class="note">一个 3×3 的 Boss 棋子就占了 9×9 棋盘整整 1/9 的面积，是这一关里"最显眼、最想打掉、也最难围"的目标。<b>难度阶级</b>（困难 / 噩梦）再往上加一档：多 1 个 2×2，或把已有的 2×2 升成 3×3。</p>
+
+<h3>Boss 回合 = 擒王回合：打死或围死它就直接通关本章</h3>
+<div class="card">
+  <p style="margin-top:0">借象棋最爽的那一下——<b>擒贼先擒王</b>。每章 Boss 的那颗大棋子就是敌方的「将」（头顶王冠图标、血条最粗）。</p>
+  <ul style="margin-bottom:0">
+    <li><b>胜利条件</b>：<b>打死它</b> 或 <b>把它围死（气 = 0）</b> → <b>直接赢下本章</b>，不需要清光全场。</li>
+    <li><b>不限时、必须分出胜负</b>：Boss 回合的战斗阶段<b>没有时长上限</b>——<b>要么 Boss 死（你赢），要么你的棋子被杀光（你输）</b>；分出胜负后再做本章的胜利结算。</li>
+    <li><b>决死加速（保证收得了尾）</b>：Boss 回合每过 <b>60 秒</b>，全场伤害 <b>+10%</b>（可叠加、上不封顶）——时间越长崩得越快，<b>必然分出胜负</b>。它专门用来堵住"双方都做出一堆眼 + 反复吃疗愈雨"导致的无限对峙。</li>
+    <li><b>为什么它立得住</b>：大棋子本身气就多（2×2 最多 8 口、3×3 最多 12 口），想围死它必须依次做 <b>断连 → 破眼 → 紧气</b>——四件套全部用上。</li>
+    <li><b>傻瓜式</b>：目标极其显眼——头顶王冠、血条最粗的那一颗就是，玩家不用读文字也知道该打谁。</li>
+  </ul>
+</div>
+<p class="note">好处是它给 Boss 关一个<b>清晰的靶子</b>：不是"把这一关打完"，而是"把那个大家伙干掉"——心理上比清场强得多。</p>
+
+<h3>过关之后：让玩家"输了也想再来一局"</h3>
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">一局之内：输了也不亏</h3>
+    <ul style="margin-bottom:0">
+      <li>一局 6 章，<b>中途随时能停</b>（每个回合结束都是天然存档点），输了也能马上再来。</li>
+      <li>每一局的<b>三选一组合都不一样</b>，这就是"再试一把"的钩子。</li>
+      <li>达成终点＝打完第 6 章 Boss；通关后可选<b>无尽模式</b>，章数继续往上加，纯刷分。</li>
+      <li>通常会在"离通关只差 1~2 章"时失败——这是最强的重开动机。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">一局之外：三条长线</h3>
+    <ul style="margin-bottom:0">
+      <li><b>收集线</b>：棋子图鉴——打得越多解锁越多（共 65 个），"还差几个"永远勾着你。</li>
+      <li><b>挑战线</b>：通关后解锁更高<b>难度阶级</b>（普通 → 困难 → 噩梦），每档只改一条规则。</li>
+      <li><b>新鲜线</b>：每通关一次，解锁 1 条新的 Boss 规则 + 1 个新棋子，保证下一局打法不一样。</li>
+    </ul>
+  </div>
+</div>
+
+<h3>《小丑牌》取用对照：只取骨架，不取内脏</h3>
+<table>
+  <thead><tr><th style="width:210px">《小丑牌》的做法</th><th style="width:150px">本作</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr><td><b>底注(Ante) 8 级 + 章末 Boss</b></td><td><b>取</b>：6 章 + 章末 Boss</td><td>给出清晰的"打通关"终点与进度感，是"一直玩下去"的主骨架；原作 8 章，本作压到 6 章、每章 11 回合</td></tr>
+    <tr><td><b>首领盲注的特殊规则</b></td><td><b>取</b>：每章 1 条负面规则</td><td>用"换规则"代替"加数值"，逼玩家换打法，且一句话能说清</td></tr>
+    <tr><td><b>跳过盲注换标签</b></td><td><b>取</b>：跳过一轮换强化</td><td>零学习成本的风险决策，是"再来一把"的微钩子</td></tr>
+    <tr><td><b>通关后解锁更高底注(Stake)</b></td><td><b>取</b>：3 档难度阶级</td><td>长线留存里成本最低的一招</td></tr>
+    <tr><td>商店 / 重抽 / 利息经济</td><td>不取</td><td>要玩家算钱，与"傻瓜式"冲突；奖励已由"三选一"承担</td></tr>
+    <tr><td>小丑牌（遗物）5 个槽位</td><td>不取</td><td>每条遗物都是一条新规则，是认知负担最重的部分（P1 再议，上限 12 条）</td></tr>
+    <tr><td>卡包 / 星球牌 / 塔罗牌 / 优惠券</td><td>不取</td><td>多一层界面与图标，玩家要先看说明</td></tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><b>一句话总结</b>：《小丑牌》的"上瘾"来自<b>清晰到残忍的终点（8 章）＋ 每局都不一样的构筑 ＋ 通关后还有下一档难度</b>。我们取它的<b>骨架</b>（章 / Boss / 跳过 / 难度阶级）但把章数压到 6，丢掉它的<b>内脏</b>（商店 / 遗物 / 经济）——骨架负责上瘾，内脏负责复杂。</p>
+</blockquote>
+
+<!-- 5 -->
+<h2 class="sec" id="s5"><span class="n">05</span>手牌：随机补给，直接打出</h2>
+<p class="sub">不再让玩家在几十个棋子里翻列表。战斗界面下方是一条手牌栏，随机发牌，抽到什么就打什么——玩家的决策从"选哪个棋子"变成"打在哪一格"。</p>
+
+<table>
+  <caption>手牌规则（准备阶段落牌，战斗阶段不操作）</caption>
+  <thead><tr><th style="width:120px">项</th><th>规则</th><th>为什么这么定</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>手牌容量</b></td>
+      <td><b>每回合 2~4 张，阶梯递增</b>（第 1~3 回合 2 张 → 第 4~7 回合 3 张 → 第 8~11 回合 4 张）</td>
+      <td>开局少而精、后期铺开；<b>牌数本身就是节奏曲线</b>，同时不给棋盘塞满（见 §04）</td>
+    </tr>
+    <tr>
+      <td><b>补牌</b></td>
+      <td>每回合<b>准备阶段</b>开始自动补满到当回合额度；回合结束手牌清空</td>
+      <td>不需要玩家手动"抽牌"，节奏不中断</td>
+    </tr>
+    <tr>
+      <td><b>重抽</b> <span class="chip c-amber">可选</span></td>
+      <td>每回合 1 次免费重抽。<b>不用也完全不影响</b>，不进教学</td>
+      <td>给愿意动脑的玩家一点可控感；新手可以完全无视它</td>
+    </tr>
+    <tr>
+      <td><b>落子</b></td>
+      <td>准备阶段点手牌 → 点棋盘即可打出，<b>不花金币、不耗任何资源</b>；大棋子（2×2 / 3×3）落子时会跟着手指显示占格预览</td>
+      <td>把"翻列表 + 比价格 + 算金币"整段操作删掉</td>
+    </tr>
+    <tr>
+      <td><b>随机池</b></td>
+      <td>只出已解锁角色；权重按场上已有职业轻微倾斜</td>
+      <td>让玩家自然凑到同职业，而不是彻底看天吃饭</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><b>手牌栏只有一个交互：点。</b>没有拖拽、没有长按、没有二级菜单、没有详情弹窗。</p>
+  <p><b>手牌负责随机，奖励负责确定。</b>三合一升星与同职业加成靠"三选一奖励"补齐（§08），不靠手气——既保住随机带来的轻负担，又保住"能凑齐"。</p>
+</blockquote>
+
+<!-- 6 -->
+<h2 class="sec" id="s6"><span class="n">06</span>围棋内核：连 · 断 · 围 · 眼</h2>
+<p class="sub">这是本作唯一的护城河，也是围棋最精华的四件套——<b>连＝和同伴连成一块，断＝孤棋挨打，围＝填满对方的气，眼＝给自己造一个填不掉的气</b>。全部建立在工程里已有的「连通块 + 气」计算之上，不是重写；而且<b>四件套全部由系统自动判定，玩家只需要看颜色</b>。</p>
+
+<h3>四件套总览</h3>
+<table>
+  <caption>连、断、围、眼——一攻一守，一对基础</caption>
+  <thead><tr><th style="width:80px">概念</th><th style="width:70px">攻 / 守</th><th>一句话</th><th>效果</th><th style="width:170px">表现（看颜色就懂）</th></tr></thead>
+  <tbody>
+    <tr><td><b>连</b> <span class="chip c-jade">基础</span></td><td>守</td><td>和同伴相邻就连成一块，<b>共享气</b></td><td>块里每多 1 个同伴，全块 <b>攻击 +5%</b>（上限 +25%）</td><td>连成一片的棋块脚下浮起<b>金色连线</b>，块越大越亮</td></tr>
+    <tr><td><b>断</b> <span class="chip c-red">基础</span></td><td>攻</td><td>四周没有同伴的棋子是「孤棋」</td><td>受到的伤害 <b>+20%</b></td><td>孤棋脚下显示<b>红色裂痕</b></td></tr>
+    <tr><td><b>围困</b> <span class="chip c-red">攻</span></td><td>攻</td><td>气被填满 → 锁死</td><td>不能移动 / 不能攻击，受伤 <b>×2</b></td><td>变灰 + 锁链环 + 红色脉冲</td></tr>
+    <tr><td><b>眼</b> <span class="chip c-jade">守</span></td><td>守</td><td>相邻格全己方的空点，对方不能落子</td><td>1 眼免围困；2 眼活棋（+ 每 5 秒回 5% 血）</td><td>金色「眼」字 / 金色光环</td></tr>
+  </tbody>
+</table>
+<p class="note"><b>一句话把四件套串起来</b>：<b>连起来更猛，落单更脆；围住就锁死，做眼就活。</b>这四句就是围棋的全部战术直觉，也是玩家唯一需要"体感"到的内容——不需要记任何数字。</p>
+
+<h3>规则细节</h3>
+<table>
+  <caption>四件套 + 破眼 + 两个自动提示</caption>
+  <thead><tr><th style="width:130px">项</th><th>一句话说明</th><th>表现</th><th>实现（复用现有）</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>连</b> <span class="chip c-jade">基础</span></td>
+      <td>棋子与同伴上下左右相邻就连成一块，<b>共享同一份气</b>——块越大，越难被围死</td>
+      <td>连成一片的棋块脚下浮起金色连线，块头越大越亮</td>
+      <td>连通块本来就在算（现有洪水填充），这里只是多读一次块的大小</td>
+    </tr>
+    <tr>
+      <td><b>断</b> <span class="chip c-red">基础</span></td>
+      <td>四周没有同伴的棋子是「孤棋」：气少、而且挨打更疼</td>
+      <td>孤棋脚下显示红色裂痕图标</td>
+      <td>连通块大小为 1 即可判定，零新增计算</td>
+    </tr>
+    <tr>
+      <td><b>围困</b> <span class="chip c-red">攻</span></td>
+      <td>气被填满（气 = 0），整块棋被<b>锁死</b>：不能移动、不能攻击，且受到的伤害翻倍——<b>但不会死</b></td>
+      <td>棋子变灰 + 锁链环 + 红色脉冲；一旦重新获得气立刻恢复</td>
+      <td>把现有"被围 ×4 伤害"改成"×2 伤害 + 禁用行动"</td>
+    </tr>
+    <tr>
+      <td><b>眼</b> <span class="chip c-jade">守</span> <span class="chip c-blue">围棋灵魂</span></td>
+      <td>一个空点，<b>它在棋盘内的每一个相邻格都是自己人</b>，它就是一只「眼」（内部要 4 格、边上只要 3 格、角上只要 2 格）；<b>对方不能往眼里落子</b>（围棋里那是自杀）</td>
+      <td>空点上浮起一枚金色「眼」字；<b>摆出来才亮，不用玩家去记怎么算</b></td>
+      <td>在现有"气"的遍历上加一层"棋盘内相邻格"判定，纯读数据，零新增开销</td>
+    </tr>
+    <tr>
+      <td><b>活棋（两眼）</b> <span class="chip c-jade">守</span></td>
+      <td>同一块棋有 <b>2 只眼</b>，对方永远填不满它的气 → <b>彻底围不死</b></td>
+      <td>整块棋罩上金色光环 + 每 5 秒回 5% 血</td>
+      <td>在连通块上统计归属的眼数量即可</td>
+    </tr>
+    <tr>
+      <td><b>破眼</b> <span class="chip c-red">攻</span></td>
+      <td>打死 / 围困"围成这只眼的 4 个棋子"中的任意一个，眼立刻破掉</td>
+      <td>金色眼碎裂 + 碎裂音效；该棋块恢复"可被围困"</td>
+      <td>眼是算出来的——围眼的棋子一变动，重算时自然失效，不需要额外状态</td>
+    </tr>
+    <tr>
+      <td><b>气</b> <span class="chip c-gray">自动显示</span></td>
+      <td>棋块周围还剩几个空位，就是它的气（<b>眼本身也算 1 口气</b>）</td>
+      <td>棋子脚下小圆点，玩家不用自己数</td>
+      <td>已有连通块遍历与气计数，直接可视化</td>
+    </tr>
+    <tr>
+      <td><b>叫吃</b> <span class="chip c-amber">自动提示</span></td>
+      <td>气 = 1 时自动提醒，留一回合救棋的机会</td>
+      <td>棋子闪红 + 提示音</td>
+      <td>用现有气数直接驱动，不新增结算</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><b>为什么"眼"必须留</b>：围棋最精华的就是这一组攻防——<b>做眼求活、破眼杀棋</b>。如果只有"围住就锁死"，这游戏就只有"攻"没有"守"，棋盘上不会出现"我想在这儿安个家"的念头。有了眼，玩家落子时才会开始盘算：<b>"这几个子能不能围出一个安全屋？"</b>——这一念，才是围棋。</p>
+</blockquote>
+
+<h3>眼怎么融进战斗（玩家其实什么都不用学）</h3>
+<table>
+  <thead><tr><th style="width:150px">场景</th><th>系统自动做的事</th><th>玩家感知到的</th></tr></thead>
+  <tbody>
+    <tr><td>摆出 <b>1 只眼</b></td><td>识别空点的棋盘内相邻格全为己方 → 标记为眼 → 该棋块气永远 ≥ 1，<b>不会被围困</b></td><td>空点上"啪"地浮起一枚金色「眼」字 + 上扬音效</td></tr>
+    <tr><td>摆出 <b>2 只眼</b></td><td>判定该棋块为「活棋」→ 免疫围困 + 每 5 秒回 5% 血</td><td>整块棋亮起金色光环</td></tr>
+    <tr><td>眼被<b>破</b>（围眼的棋子被打死 / 被围困）</td><td>重算时眼自动消失 → 棋块恢复"可被围困"</td><td>金色眼碎裂 + 碎裂音效，光环熄灭</td></tr>
+    <tr><td>想主动<b>破对方的眼</b></td><td>把围成它眼的那 4 个棋子打掉任意一个即可</td><td>看到对方光环碎掉，就知道"它的安全屋没了"</td></tr>
+  </tbody>
+</table>
+<p class="note"><b>与"自动移动"的冲突必须处理</b>：眼依赖"4 格全是自己人"的静态棋形，而棋子会自动移动、偶尔瞬移——不处理的话，玩家的眼会被自己的棋子走散。规则：<b>参与围眼的棋子一旦成眼，就进入"定形"状态，不再自动移动、不再瞬移</b>（玩家仍可手动点击把它挪走，但那样眼就破了）。这样"自动移动"和"眼"不会互相打架。</p>
+<p class="note">放宽判定：只判定"<b>棋盘内的相邻格是否全是自己人</b>"，并且<b>越靠边越好做</b>——内部要 4 格、边上只要 3 格、角上只要 2 格（这也正好对应围棋"角部最容易成活"的特性）。仍然<b>不做斜角的假眼判定</b>：让新手随手就能摆出眼、拿到正反馈，"假眼陷阱"这类进阶内容不进本作。</p>
+<p class="note"><b>大棋子同样适用</b>：占 2×2 / 3×3 的棋子就是"一个棋子占了 N 格"（见 §07 · C），气、围困、眼、连断全部按<b>占格</b>计算——上面这些规则一条都不用改。</p>
+
+<h3>借象棋一手：炮 · 隔子打（只给法师）</h3>
+<div class="card">
+  <p style="margin-top:0">象棋最有辨识度的一手是<b>炮要隔着棋子才能打</b>。我们把它给法师——<b>法师攻击时，弹道中间必须正好隔 1 个棋子</b>（任意阵营，就是"炮架"）；中间没有垫子，就打不到。</p>
+  <ul style="margin-bottom:0">
+    <li><b>没有垫子 → 打不到</b>：法师的射程不变，但需要一颗棋子当"炮架"。</li>
+    <li><b>垫子是双刃剑</b>：你可以用一颗便宜棋子给自家法师当炮架，也能用同样的方式<b>堵掉对方的炮</b>。</li>
+    <li><b>看画面就懂</b>：法师弹道会"穿过"中间那颗棋子后再炸开；没垫子时弹道在中途就熄灭。</li>
+    <li>它和围棋的"占位"本就是同一件事，<b>不新增任何概念</b>。</li>
+  </ul>
+</div>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">血条与气的关系（两层压制）</h3>
+    <ul style="margin-bottom:0">
+      <li><b>血条</b>：攻击削血——<b>唯一决定生死的线</b>（保留现有的弓箭/法师/子弹表现）</li>
+      <li><b>气</b>：压制线——围住就把对手锁死、打成活靶子，但不直接消灭</li>
+      <li>于是每局有两条赢法：<b>正面打死它</b>，或 <b>先围死再打死它</b>。围困是加速器，不是处决——<b>不会一步崩盘</b>。</li>
+      <li><b>连与断</b>是这两层之上的放大器：连成一块攻得猛、扛得住；落单的孤棋又脆又容易被围——所以<b>"往哪落子"永远比"落什么子"更重要</b>。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0" class="cut">明确砍掉</h3>
+    <ul style="margin-bottom:0">
+      <li class="cut">提子处决（v2 的"围住即吃"：容错太低，改为"围困"）</li>
+      <li class="cut">手动挑选棋子（旧的大列表选牌，改由"随机手牌"替代）</li>
+      <li class="cut">行动力条（<b>彻底删除</b>：移动不再消耗任何资源、也没有次数限制）</li>
+      <li class="cut">"手动挪棋"作为唯一移动方式（改为自动移动为主；手动点击移动作为可选项保留）</li>
+      <li class="cut">局内的金币管理（远征模式不做）</li>
+      <li class="cut">复杂死活（打劫、劫争、假眼陷阱——只保留"眼"这一条，且已进核心）</li>
+      <li class="cut">打劫 / 地盘计分 / 棋形加成 / 盘面变体</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 7 -->
+<h2 class="sec" id="s7"><span class="n">07</span>成长与体积：升星 · 职业加成 · 大棋子</h2>
+<p class="sub">工程里 65 个角色正好是 <b>19 个系 × 3 个档位</b>（刺客1/2/3），三档立绘、帧动画、底座、被围标识都已经画完了，所以成长完全零新美术。三条成长线里有两条要记、一条纯自动，而"变大"是它们共同的、看得见的出口。</p>
+
+<h3>A · 同名三合一升星（要记的那一个）</h3>
+<table>
+  <thead><tr><th>合成</th><th>结果</th><th class="num">属性</th><th>表现（零新美术）</th></tr></thead>
+  <tbody>
+    <tr><td>3 × 同名 1★</td><td>1 个 2★（占 <b>1×1</b>）</td><td class="num">攻击 ×1.8 · 生命 ×2.0</td><td>自动切到第 2 档立绘帧序列</td></tr>
+    <tr><td>3 × 同名 2★</td><td>1 个 3★（占 <b>2×2</b>）</td><td class="num">攻击 ×3.2 · 生命 ×3.6</td><td>第 3 档立绘 + 底座光环，<b>立绘整体放大 2 倍</b></td></tr>
+  </tbody>
+</table>
+<p class="note">升星材料来自"三选一奖励"里<b>明确给的「同名牌」</b>，而不是指望手牌里慢慢凑——手牌负责随机，奖励负责确定。</p>
+
+<h3>B · 同职业加成（不用记的那一个）</h3>
+<div class="card">
+  <p style="margin-top:0"><b>一条规则，凑到就自动亮：</b>场上同职业凑够 <b>3 个</b>，全队 +10% 攻击；凑够 <b>5 个</b>，再 +10%。</p>
+  <ul style="margin-bottom:0">
+    <li>不教学、不显示规则表、不需要玩家主动操作——凑到了界面上自动亮一个图标。</li>
+    <li>相比 v3 的 4 职业 × 2 档共 8 条：<b>从"要背 8 条"降到"一条都不用背"</b>。</li>
+    <li>它只是让"乱点"也有正反馈：玩家随手打三个同职业，就发现自己变强了。</li>
+  </ul>
+</div>
+
+<h3>C · 大棋子：占 2×2 / 3×3 格</h3>
+<p class="sub">有些棋子不占 1 格，而是占 <b>2×2（4 格）</b>甚至 <b>3×3（9 格）</b>。<b>体积就是强度</b>——占地越大，气越多、连加成越高、越难被围死；但棋盘会变挤，而且被围住就是<b>整块一起报废</b>。</p>
+
+<table>
+  <caption>体积从哪来</caption>
+  <thead><tr><th style="width:150px">来源</th><th>规则</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><b>玩家 · 升星</b></td><td>1★ / 2★ 占 <b>1×1</b>；<b>3★ 占 2×2</b></td><td>三合一升到 3★ 时棋子"长个儿"，立绘整体放大 2 倍——玩家一眼看出自己变强了</td></tr>
+    <tr><td><b>Boss · 关卡难度</b></td><td>随章数变大：<b>2×2 → 3×3</b></td><td>Boss 的大棋子就是"关卡的压迫感"，章数越高它越大（见 §04）</td></tr>
+  </tbody>
+</table>
+
+<h4>体积带来什么 / 不带来什么（关键平衡）</h4>
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">体积<b>带来</b></h3>
+    <ul style="margin-bottom:0">
+      <li><b>气更多</b>：2×2 最多 8 口气、3×3 最多 12 口 → <b>更难被围困</b></li>
+      <li><b>连加成更高</b>：按占格数算，2×2 单独站着就 +15%，3×3 +25% 封顶</li>
+      <li><b>占地控制</b>：挡住对方的落子与连通，等于一个小路障</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">体积<b>不带来</b>（防双重膨胀）</h3>
+    <ul style="margin-bottom:0">
+      <li><b>攻击范围不放大</b>：永远按棋子本身的射程（<code>f_block</code>）算，1 格就是 1 格——<b>大棋子是肉盾与路障，不是全屏炮台</b></li>
+      <li><b>攻击力 / 血量不再额外乘体积系数</b>：强度全部来自"三合一升星"的数值（3★：攻 ×3.2 / 血 ×3.6），<b>不叠第二层</b></li>
+    </ul>
+  </div>
+</div>
+<p class="note">若实测发现 3×3 仍然过强，再往上削的备选（挑一条即可）：<b>①大棋子自动移动频率减半</b>（笨重）｜<b>②大棋子被贴住时受伤加成更高</b>（放大"一死死一大片"）。</p>
+
+<table>
+  <caption>大棋子怎么算——规则一条都不用改，只是"1 个棋子 = N 格"</caption>
+  <thead><tr><th style="width:110px">规则</th><th>怎么算</th></tr></thead>
+  <tbody>
+    <tr><td><b>气</b></td><td>整块占格<b>外侧</b>的相邻空位（同一个空格只算 1 口气）——跟围棋里"一块棋共享气"完全一致</td></tr>
+    <tr><td><b>围困</b></td><td>气 = 0 → <b>整块一起锁死</b>（不能动、不能打、受伤 ×2）</td></tr>
+    <tr><td><b>眼</b></td><td>大棋子的每一格都算"己方棋子"，照样参与围眼；<b>一个 2×2 的大棋子自己就顶 4 颗子</b>，做眼反而更容易</td></tr>
+    <tr><td><b>连 / 断</b></td><td>"连"按<b>占格数</b>算：一个 2×2 单独站着就已经是 4 格 = 攻击 +15%；3×3 = +25%（封顶）。"断"（孤棋）只适用于 1×1</td></tr>
+    <tr><td><b>移动 / 瞬移</b></td><td>整块一起走；目标区域必须整块为空</td></tr>
+  </tbody>
+</table>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">落子还是"点一下"（傻瓜式不破）</h3>
+    <ul style="margin-bottom:0">
+      <li>点手牌后，棋盘上会<b>跟着手指显示占格预览</b>（2×2 显示 4 格虚影），放不下的位置直接<b>变红</b>。</li>
+      <li>玩家不需要知道"占格"这个概念——<b>看到 2×2 的虚影，放下去就行</b>。</li>
+      <li>手牌上也直接画出占格大小，一眼看出哪张牌是大棋子。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">零新美术</h3>
+    <ul style="margin-bottom:0">
+      <li>大棋子用的就是<b>同一张立绘，整体放大 2 倍 / 3 倍</b>，不需要重画。</li>
+      <li>棋盘上只需在占格范围画一圈<b>描边 + 阴影</b>，让玩家看清它占了哪几格。</li>
+      <li>星级越高、立绘越大 ="变强了"这件事<b>看得见</b>，比数字直观得多。</li>
+    </ul>
+  </div>
+</div>
+
+<blockquote>
+  <p><b>为什么值得做</b>：① 它把"三合一升星"从"数值变大"变成<b>"体积变大"</b>——不用看数字就能懂；② 它让 Boss 关有了<b>看得见的压迫感</b>，比单纯加数值更有戏；③ 它天然制造取舍：大棋子占 4~9 格，<b>棋盘会变挤</b>，玩家得决定"要一个大块"还是"多留空间做眼"。</p>
+</blockquote>
+<p class="note"><b>新工程架构建议</b>：棋盘索引直接做成"<b>1 个棋子 → N 格</b>"（多格写同一个引用，整块移动、整块释放）；落子合法性、气计算、移动与瞬移一律按 <b>footprint</b> 处理。不要先做成"1 格 1 棋子"再打补丁。</p>
+
+<h3>D · 棋子走法（借象棋）：把"自动移动"从玄学变成可预判</h3>
+<p class="sub">借象棋最核心的一条——<b>每种棋子有自己的走法</b>。现在我们棋子是笼统寻路，玩家看不懂它要去哪；改成固定棋形之后，落子时就能算到"它三步后会到哪"，<b>反而强化了落子的策略性</b>。</p>
+
+<table>
+  <caption>走法映射（全部自动执行，玩家不学也能玩）</caption>
+  <thead><tr><th style="width:150px">我们的棋子</th><th style="width:90px">象棋对应</th><th>走的形</th><th style="width:180px">脚下提示（零新美术）</th></tr></thead>
+  <tbody>
+    <tr><td><b>剑士 / 盾战 / 重剑</b>（近战）</td><td><b>兵 / 卒</b></td><td>只能朝敌方前进 1 格；<b>越过中线后可横走</b></td><td>一个向前的小箭头</td></tr>
+    <tr><td><b>刺客</b></td><td><b>马</b></td><td>走日字，<b>可越子</b></td><td>日字格虚影</td></tr>
+    <tr><td><b>弓箭</b></td><td><b>车</b></td><td>直线任意格（机动性最强）</td><td>十字直线</td></tr>
+    <tr><td><b>法师</b></td><td><b>炮</b></td><td>移动同"车"（直线）；<b>攻击必须隔 1 个子</b>（见 §06）</td><td>十字直线 + 炮架图标</td></tr>
+    <tr><td><b>牧师 / 补给车</b></td><td><b>士 / 象</b></td><td>只能在己方半场活动，专职后勤</td><td>己方半场高亮</td></tr>
+  </tbody>
+</table>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">为什么这条值得做</h3>
+    <ul style="margin-bottom:0">
+      <li><b>把"看不懂"变成"能预判"</b>：自动移动最大的毛病是玩家不知道它为什么跑那儿；固定走法之后，玩家自己就能算。</li>
+      <li><b>强化落子</b>：不再只是"把棋子放上去"，而是"把它放在一条会走到好位置的线路上"。</li>
+      <li><b>零教学成本</b>：移动是自动的，不学也能玩；脚下提示只给愿意深挖的玩家看。</li>
+      <li><b>零新美术</b>：提示全部用线框 / 虚影，不出一张新图。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">和围棋内核怎么共存</h3>
+    <ul style="margin-bottom:0">
+      <li>走法只作用于<b>非眼棋子</b>——<b>围眼的棋子进入"定形"、不再自动移动</b>（v8 已定），所以"眼"不会被走法走散。</li>
+      <li>"连 / 断"照常：走法改变的是"怎么走到一起"，不改"连在一起才强"。</li>
+      <li>大棋子（3★ / Boss）按<b>车</b>（直线）走，但整块一起移动。</li>
+    </ul>
+  </div>
+</div>
+<p class="note"><b>新工程架构建议</b>：移动不要写成"笼统寻路"，而是"<b>按棋子类型产出候选格</b>"（兵 / 马 / 车 / 炮 / 士象各一套规则），再由一个统一的<b>回合驱动器</b>按阶段推进（准备 → 战斗 → 结算）。这样走法、回合计时与自动战斗三者天然解耦，后续加棋子类型也只是加一套候选格规则。</p>
+
+<!-- 8 -->
+<h2 class="sec" id="s8"><span class="n">08</span>唯一的决策：每章三选一</h2>
+<p class="sub">全局唯一的决策界面——"看三个图标，点一个"。它同时承担两个职责：提供随机性，以及补偿随机手牌的"确定性补给"。</p>
+
+<table>
+  <caption>奖励池（随机出 3 个不同的给你选 1 个；全部没有经济、没有数值计算）</caption>
+  <thead><tr><th>奖励</th><th class="num">权重</th><th>效果</th><th>作用</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip c-blue">新棋子</span></td><td class="num">25%</td><td>随机 1 个你还没有的棋子</td><td>丰富手牌池</td></tr>
+    <tr><td><span class="chip c-jade">同名牌</span></td><td class="num">30%</td><td>直接给你手牌池里某个棋子的"同名牌"</td><td><b>补偿手牌随机</b>，让玩家稳定做三合一</td></tr>
+    <tr><td><span class="chip c-amber">眼位石</span> <span class="chip c-gray">第 5 局后</span></td><td class="num">20%</td><td>给你一颗棋子，放到"眼位"上<b>立刻成眼</b></td><td>把"做眼"从<b>碰巧摆出来</b>变成<b>可以主动追求</b></td></tr>
+    <tr><td><span class="chip c-gray">全队强化</span></td><td class="num">25%</td><td>随机一项永久增益：攻击 +10% / 攻速 +10% / 全队 +1 气</td><td>不需要选的"简单变强"</td></tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><b>为什么这里不用玩家做复杂判断</b>：三个选项的图标本身就是答案（新棋子＝新脸、同名牌＝重复的脸、眼位石＝金色的眼、强化＝向上的箭头）。<b>不需要读文字，也不需要算数值。</b></p>
+</blockquote>
+
+<h3>眼位石：让"做眼"变成可以主动追求的事</h3>
+<div class="card">
+  <p style="margin-top:0">随机手牌很难凑出"4 个棋子围 1 个空点"，如果"眼"只能碰巧摆出来，它就只是个摆设。<b>眼位石就是解法</b>：三选一里给你一颗眼位石，它能把一个"只差 1 格"的空点当场变成眼。</p>
+  <ul style="margin-bottom:0">
+    <li><b>怎么用</b>：选中眼位石后，棋盘上所有"放上去就能立刻成眼"的格子会<b>自动金色高亮</b>，点一下就成眼。</li>
+    <li><b>玩家不需要理解"眼位怎么算"</b>——只要看到金色格子，点它就行。</li>
+    <li>它把"眼"从<b>随机事件</b>变成<b>可主动选择的策略</b>：想守，就选眼位石造安全屋；想攻，就选同名牌去三合一滚雪球。</li>
+    <li>第 5 局（解锁眼的那一局）之后才会进奖励池，符合渐进式解锁节奏。</li>
+  </ul>
+</div>
+<p class="note">保底规则：如果上一章结束时有生力量落后对方一半，本章"同名牌"与"眼位石"的权重各 +20%——避免运气差滚雪球。</p>
+
+<!-- 9 -->
+<h2 class="sec" id="s9"><span class="n">09</span>AI 只做三种性格</h2>
+<p class="sub">不改 AI 的架构（还是一个状态机），只换权重表：让它"想做什么"不同。每个回合随机出现一种，Boss 回合用混合。</p>
+
+<table>
+  <thead><tr><th style="width:110px">性格</th><th>行为特征</th><th>玩家怎么破</th><th>一句话印象</th></tr></thead>
+  <tbody>
+    <tr><td><b>围地型</b> <span class="chip c-blue">守</span></td><td>优先占角守边、抱团做眼，很少主动进攻</td><td>切开它的连通块，把主力围困住</td><td>"我先活下来"</td></tr>
+    <tr><td><b>抢气型</b> <span class="chip c-red">攻</span></td><td>贴着你落子、疯狂叫吃</td><td>它经济差，稳住血线后反包围它</td><td>"我要围死你"</td></tr>
+    <tr><td><b>铺场型</b> <span class="chip c-jade">多</span></td><td>低费棋子铺满棋盘，靠数量抢气</td><td>法师范围伤害 + 一次大围困清场</td><td>"我比你多"</td></tr>
+  </tbody>
+</table>
+<p class="note">性格差异只体现在"AI 自己的落子偏好"上，<b>不产生需要玩家额外学习的新规则</b>——玩家始终只需要"把手上的牌打在好位置"。</p>
+
+<!-- 10 -->
+<h2 class="sec" id="s10"><span class="n">10</span>渐进式解锁：第一局只学一件事</h2>
+<p class="sub">针对"概念太多玩家就跑"这个核心问题——不是把规则讲清楚，而是<b>分几局慢慢给</b>。复用工程里现成的 <code>isUnlock</code> 机制即可。</p>
+
+<table>
+  <thead><tr><th style="width:90px">第几局</th><th>本局只教这一件事</th><th>此时不开的功能</th></tr></thead>
+  <tbody>
+    <tr><td><b>第 1 局</b></td><td>准备阶段：看敌方布阵 → 落 1 张牌 → 点「准备」→ 看自动战斗（围住会锁死，系统自动显示）</td><td>三选一、三合一、同职业加成全部锁住</td></tr>
+    <tr><td><b>第 2 局</b></td><td>每章结束的"三选一"（只给棋子）</td><td>三合一、同职业加成</td></tr>
+    <tr><td><b>第 3 局</b></td><td>同名三合一升星</td><td>同职业加成</td></tr>
+    <tr><td><b>第 4 局</b></td><td>同职业凑够会变强（自动亮，不用记）</td><td>眼与活棋</td></tr>
+    <tr><td><b>第 5 局</b></td><td>眼与活棋（做出来自己会亮）＋ 三选一里出现"眼位石"</td><td>—（此时局内规则已全开）</td></tr>
+  </tbody>
+</table>
+<p class="note">每解锁一件新东西时，用一次"全屏提示 + 高亮 + 免费试用"的方式给到，并只讲一句话。第 1 局全程<b>只允许玩家做"落牌 + 点准备"这两个动作</b>，而且每回合只落 1 张。</p>
+
+<!-- 11 -->
+<h2 class="sec" id="s11"><span class="n">11</span>砍掉清单（v1 ~ v16 → v17 对照）</h2>
+<p class="sub">下面是历次方案里删掉或降级的内容。不是为了否定它们，而是它们各自都要"读一段说明、或算一次数值"。</p>
+
+<table>
+  <thead><tr><th style="width:210px">改动</th><th>为什么</th><th style="width:170px">什么时候值得加回</th></tr></thead>
+  <tbody>
+    <tr><td><b>职业羁绊 8 条 → 1 条自动加成</b>（v4）</td><td>8 条羁绊 = 8 条要背的规则，是局内最大的认知负担</td><td>若玩家长线留存好，再考虑加第 2 条（仍不教学）</td></tr>
+    <tr><td><b>行动力条 → 彻底删除</b>（v5）</td><td>"移动要花行动力"逼玩家做资源规划，与"傻瓜式"直接冲突；既然棋子会自动移动，这条资源就没有存在意义了</td><td>不再加回。要限制节奏就调"自动移动频率"，不要恢复条</td></tr>
+    <tr><td><b>"手动挪棋"为唯一移动方式 → 自动移动 + 瞬移为主</b>（v5）</td><td>选中 → 算移动力 → 挪格，是多出来的操作；让棋子自己走，玩家只需要管落子</td><td>已是正式设计；"点击棋子手动移动"作为可选福利保留</td></tr>
+    <tr><td><b>局内金币 → 移除</b>（v4）</td><td>要玩家算着花，与"傻瓜式"直接冲突</td><td>暂不加</td></tr>
+    <tr><td><b>局外酒馆选人解锁 → 推关卡自动解锁</b>（v4）</td><td>在 65 个角色里挑着买，还要比价格，新手第一眼就劝退</td><td>老玩家的"关卡模式"保留原样，远征模式不做</td></tr>
+    <tr><td>提子处决 → 围困（v3）</td><td>"围住即吃"容错太低，一步不慎整块被提＝直接崩盘</td><td>若数据证明太软，再考虑"气亏到 −3 才可处决"之类的保底规则</td></tr>
+    <tr><td>大列表选牌 → 随机手牌（v3）</td><td>65 个棋子翻 4 个页签找半天，决策负担全花在"找"上</td><td>若玩家抱怨"手气差"，优先加重抽次数，而不是把列表加回来</td></tr>
+    <tr><td>装备与三合一装备</td><td>多一层界面与图标，玩家要先理解"部位/合成表"</td><td>暂不加</td></tr>
+    <tr><td>遗物（50+）</td><td>每条遗物都是一条新规则，认知负担最重</td><td><b>第一个考虑加回的</b>，但最多 12 条且每条一句话</td></tr>
+    <tr><td>天赋树（12 级三选一）</td><td>与三选一奖励重复，且要反复进出界面</td><td>暂不加</td></tr>
+    <tr><td>节点地图（商店 / 铁匠铺 / 残局房 / 宝箱）</td><td>玩家要在"路线选择"上花心思，偏离棋盘</td><td>若留存差，用"奖励房"最少代价加回</td></tr>
+    <tr><td>种族羁绊（第二轴）</td><td>两条羁绊轴 = 双倍记忆量</td><td>P1 之后作为老玩家的进阶内容</td></tr>
+    <tr><td>师门 / 棋谱树 / 每日棋局 / 天梯</td><td>局外系统与首局体验无关，先不做</td><td>上线后按留存数据决定</td></tr>
+    <tr><td>打劫 / 地盘计分 / 棋形 / 盘面变体</td><td>都是"围棋加分项"，但需要额外教学</td><td>不做（"<b>眼</b>"已进核心，见 §06）</td></tr>
+    <tr><td>一局 60 分钟以上</td><td>单次会话太长，与轻量定位冲突</td><td>约 35~45 分钟（6 章 × 11 回合），且每回合结束都可中断续玩</td></tr>
+  </tbody>
+</table>
+
+<!-- 12 -->
+<h2 class="sec" id="s12"><span class="n">12</span>节奏与数值（保持简单）</h2>
+<div class="grid2">
+  <div>
+    <table style="margin-top:0">
+      <caption>单回合节奏（普通回合约 30 秒 / Boss 回合不限时）</caption>
+      <thead><tr><th>时间</th><th>事件</th></tr></thead>
+      <tbody>
+        <tr><td>0–10 秒</td><td>准备：先亮敌方布阵 → 玩家落 2~4 张牌 → 点「准备」</td></tr>
+        <tr><td>10–30 秒</td><td>战斗：全自动攻防，气 / 眼 / 围困 / 连断实时显示</td></tr>
+        <tr><td>30–33 秒</td><td>结算：血量与阵亡结算，布局与状态保留到下一回合</td></tr>
+        <tr><td>Boss 回合</td><td>战斗<b>不限时</b>，打到 Boss 死、或玩家棋子被杀光为止；<b>每 60 秒触发一次"决死加速"（全场伤害 +10%，可叠加）</b>，然后做本章胜利结算</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table style="margin-top:0">
+      <caption>数值一览（全部是"看着就懂"的整数百分比）</caption>
+      <thead><tr><th>项目</th><th class="num">数值</th></tr></thead>
+      <tbody>
+        <tr><td>一局结构</td><td class="num">6 章 × 11 回合 = 66 回合（≈35~45 分钟）</td></tr>
+        <tr><td>单回合</td><td class="num">准备 → 战斗 15~20 秒 → 结算</td></tr>
+        <tr><td>Boss 回合</td><td class="num">战斗不限时（生死局）</td></tr>
+        <tr><td>决死加速</td><td class="num">Boss 回合每 60 秒，全场伤害 +10%（叠加，不封顶）</td></tr>
+        <tr><td>战斗事件</td><td class="num">每回合 30% 触发 1 次（稀有占 25%）；Boss 回合必触发</td></tr>
+        <tr><td>手牌容量</td><td class="num">每回合 2~4 张（阶梯递增：1~3 回合 2 张 / 4~7 回合 3 张 / 8~11 回合 4 张）</td></tr>
+        <tr><td>棋子体积</td><td class="num">1★ / 2★ = 1×1；<b>3★ = 2×2</b></td></tr>
+        <tr><td>Boss 棋子体积</td><td class="num">第 1~2 章 2×2×1；第 3~4 章 2×2×2；第 5 章 +3×3×1；终局 3×3×2</td></tr>
+        <tr><td>大棋子攻击范围</td><td class="num">不放大（仍按棋子本身射程 <code>f_block</code>）</td></tr>
+        <tr><td>法师攻击</td><td class="num">必须隔 1 个棋子（炮架），否则打不到</td></tr>
+        <tr><td>Boss 关胜利条件</td><td class="num">斩将：打死或围死 Boss 大棋子即通关</td></tr>
+        <tr><td>落子花费</td><td class="num">0（不花钱）</td></tr>
+        <tr><td>移动消耗</td><td class="num">0（行动力条已删除）</td></tr>
+        <tr><td>瞬移</td><td class="num">随机触发（低概率）</td></tr>
+        <tr><td>连（每多 1 个同伴）</td><td class="num">全块攻击 +5%（上限 +25%）</td></tr>
+        <tr><td>断（孤棋）</td><td class="num">受到伤害 +20%</td></tr>
+        <tr><td>围困效果</td><td class="num">受伤 ×2 + 禁用行动</td></tr>
+        <tr><td>眼的判定</td><td class="num">棋盘内相邻格全己方（内部 4 格 / 边上 3 格 / 角上 2 格）</td></tr>
+        <tr><td>眼（1 只）</td><td class="num">该棋块免疫围困（眼被破即失效）</td></tr>
+        <tr><td>眼（2 只 / 活棋）</td><td class="num">免疫围困 + 每 5 秒回 5% 血</td></tr>
+        <tr><td>眼位石</td><td class="num">三选一奖励（第 5 局后），落到眼位即成眼</td></tr>
+        <tr><td>三合一升星</td><td class="num">1★→2★：攻 ×1.8 / 血 ×2.0<br>2★→3★：攻 ×3.2 / 血 ×3.6</td></tr>
+        <tr><td>同职业加成</td><td class="num">凑 3 个 +10% 攻击 / 凑 5 个 再 +10%</td></tr>
+        <tr><td>全队强化（三选一）</td><td class="num">攻击 +10% / 攻速 +10% / 全队 +1 气</td></tr>
+      </tbody>
+    </table>
+    <p class="note">没有经济系统、没有利息、没有连败补偿、<b>没有行动力条</b>——所有数字都是<b>整数百分比或小整数</b>，玩家不需要计算器。</p>
+  </div>
+</div>
+
+<!-- 13 -->
+<h2 class="sec" id="s13"><span class="n">13</span>路线图：只分两段</h2>
+<div class="road">
+  <div class="step">
+    <h4>P0 · 核心体验（2 周 · 零新美术）</h4>
+    <div class="dur">做完这一段，玩法的观感就已经完全不同了</div>
+    <ul>
+      <li><b>三段式回合</b>（准备 → 战斗 15~20 秒 → 结算）+ <b>回合间继承棋盘布局与全部战斗状态</b></li>
+      <li><b>战斗事件：8 条全自动增益</b>（天降援兵 / 回气 / 疗愈雨 / 连击 / 补眼 / 断链 / 瞬移潮 / 炮火支援）</li>
+      <li>手牌系统（每回合 2~4 张阶梯递增 + 准备阶段落牌 + 每回合 1 次可选重抽）</li>
+      <li><b>连与断（连＝攻击 +5%/同伴，断＝受伤 +20%）</b> + 围困（禁用行动 + 双倍伤害）+ <b>眼与活棋（1 眼免围困 / 2 眼回血）+ 破眼 + 眼位石奖励</b> + 气数显示 + 叫吃预警</li>
+      <li><b>大棋子：3★ 占 2×2、Boss 棋子 2×2~3×3</b>（占格索引 + 落子占格预览 + 整块移动/瞬移）</li>
+      <li><b>借象棋三条：棋子走法（兵 / 马 / 车 / 炮 / 士象）+ 法师"隔子打" + Boss 关"擒王"胜利条件</b></li>
+      <li>棋子自动移动 + 偶发瞬移 + 攻防全自动（<b>删除行动力条</b>，保留"点击棋子手动移动"）</li>
+      <li>三合一升星（复用 3 档立绘）</li>
+      <li>同职业自动加成 1 条</li>
+      <li>每章三选一奖励（新棋子 / 同名牌 / 眼位石 / 全队强化）</li>
+      <li>闯关结构：6 章 × （10 普通回合 + 1 个不限时的 Boss 生死回合）+ Boss 回合规则（6 条）+ 章进度条 + "跳过第 10 回合换强化"</li>
+      <li>通关判定与无尽模式；通关后解锁 3 档难度阶级（普通 / 困难 / 噩梦）</li>
+      <li>局外一条线：推关卡自动解锁棋子 + 图鉴</li>
+      <li>AI 三种性格（现有状态机换权重表）</li>
+      <li>渐进式解锁（第 1~4 局的教学节奏）</li>
+    </ul>
+  </div>
+  <div class="step p1">
+    <h4>P1 · 可选强化（视数据决定）</h4>
+    <div class="dur">只有当 P0 的留存数据达标时才做</div>
+    <ul>
+      <li>远征地图（把 7 个节点做成有分岔的路线）</li>
+      <li>12 条以内的遗物（每条一句话）</li>
+      <li>Boss 专属性格与棋盘规则</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 14 -->
+<h2 class="sec" id="s14"><span class="n">14</span>验收标准</h2>
+<table>
+  <thead><tr><th>检查项</th><th>目标</th></tr></thead>
+  <tbody>
+    <tr><td><b>两句话复述测试</b></td><td>3 个没玩过的人，听完两句话都能复述出"围锁＋做眼 / 三合一"</td></tr>
+    <tr><td><b>零文字上手</b></td><td>不给任何说明，玩家 5 秒内自己点出第一颗棋子</td></tr>
+    <tr><td><b>首局求助次数</b></td><td>≤ 1 次（第 1 局只有"落牌 + 点准备"两个动作）</td></tr>
+    <tr><td>局内必要操作</td><td><b>= 2</b>（准备阶段落牌 + 点「准备」）；战斗阶段 <b>0 操作</b></td></tr>
+    <tr><td><b>准备阶段耗时</b></td><td>熟练后 ≤ 5 秒 / 回合（"不限时"是福利，不该变成拖时间）</td></tr>
+    <tr><td>行动力条数量</td><td><b>= 0</b>（彻底删除）</td></tr>
+    <tr><td>局外入口数量</td><td><b>= 2</b>（关卡选择 / 图鉴）</td></tr>
+    <tr><td>首局完成率</td><td>≥ 70%</td></tr>
+    <tr><td>首局围困触发次数</td><td>≥ 3 次（第一次围困必须在前 60 秒内发生）</td></tr>
+    <tr><td><b>做眼 / 破眼发生次数</b></td><td>每局 ≥ 3 次（保证"眼"不是摆设，而是玩家真打出来的）</td></tr>
+    <tr><td><b>连 / 断 可读性</b></td><td>不给任何文字说明，10 个人里 ≥ 8 个能指出"哪个是孤棋"（金色连线 / 红色裂痕要够明显）</td></tr>
+    <tr><td><b>大棋子落子预览</b></td><td>占格虚影与实际落点 100% 一致；放不下的位置必须变红（2×2 / 3×3 都要测）</td></tr>
+    <tr><td><b>Boss 关"将"的可识别性</b></td><td>不给说明，10 人里 ≥ 9 人能指出"这一关要打的是哪一个"（王冠要够显眼）</td></tr>
+    <tr><td>单局时长</td><td>约 35~45 分钟（6 章 × 11 回合 = 66 回合）</td></tr>
+    <tr><td><b>Boss 回合必分胜负</b></td><td>不限时但必须有"决死加速"兜底；<b>中位耗时 ≤ 3 分钟</b>，且绝不出现"打不完"</td></tr>
+    <tr><td><b>首局到达章数</b></td><td>中位数 ≥ 第 3 章（前 3 章必须"能赢"，先给甜头）</td></tr>
+    <tr><td><b>通关率（熟练玩家）</b></td><td>≥ 10%（有难度才有"再试一把"，但不能是 0）</td></tr>
+    <tr><td><b>平均重开次数（单次会话）</b></td><td>≥ 2 次（验证"输了立刻再来"的钩子成立）</td></tr>
+    <tr><td>界面术语数量</td><td>≤ 6 个（手牌 / 气 / 围困 / 眼 / 三合一 / 事件）；连与断<b>只靠颜色，不出文字</b></td></tr>
+    <tr><td>满盘帧耗时</td><td>主线程 &lt; 8 ms（当前 4.2~4.8 ms，围困特效加进去仍有余量）</td></tr>
+  </tbody>
+</table>
+
+<footer>
+  围棋史莱姆 · 玩法拓展策划案 精简版 v17 ｜ 2026-10-13 ｜ v17 变更：给 Boss 回合补上<b>「决死加速」兜底</b>——Boss 回合<b>每 60 秒全场伤害 +10%（可叠加、不封顶）</b>，专门堵住"双方都做出一堆眼 + 反复吃疗愈雨"导致的无限对峙，保证"不限时"的生死局一定收得了尾（验收加了"中位耗时 ≤ 3 分钟"） ｜ v16 变更：<b>每章改为「10 个普通回合 + 1 个 Boss 生死回合」</b>——一局 = 6 章 × 11 回合 = 66 回合（约 35~45 分钟）；<b>Boss 回合战斗不限时，要么 Boss 死、要么玩家棋子被杀光，之后才做本章胜利结算</b>；可落手牌由 2~6 递增改为 <b>2~4 阶梯递增</b>（第 1~3 回合 2 张 / 第 4~7 回合 3 张 / 第 8~11 回合 4 张）以控住棋盘占用；"跳过"改为跳过第 10 回合 ｜ v15 变更：新增<b>战斗事件</b>——战斗阶段随机天降<b>全自动、零操作的增益事件</b>（8 条：天降援兵 / 回气 / 疗愈雨 / 连击 / 补眼 / 断链 / 瞬移潮 / 炮火支援）；每回合 30% 概率触发 1 次（稀有占 25%），Boss 回合必触发且卡在擒王时刻；只出增益不出负面，用来补偿随机手牌、并给"眼"与"连断"多一层变数 ｜ v14 变更：<b>把"实时战斗"重构为"三段式回合"</b>——一局改为 <b>6 章 × 5 回合 = 30 回合 ≈ 15 分钟</b>；每个回合 <b>准备（先亮敌方布阵 → 玩家落 2~6 张牌 → 点「准备」）→ 战斗（15~20 秒全自动）→ 结算（布局与血量/气/眼/围困状态原样保留到下一回合）</b>；<b>可落手牌数随回合递增 2→6</b>；章内继承棋盘、章间重开棋盘但保留棋子池与强化；Boss 放在每章第 5 回合（擒王回合）；"跳过普通关"改为"跳过第 4 回合换一档强化"；文档中的旧工程侧提示改写为「新工程架构建议」 ｜ v13 变更：<b>借入象棋内核三条</b>——① <b>棋子走法</b>（近战＝兵/卒、刺客＝马、弓箭＝车、法师＝炮、牧师/补给车＝士/象），把"自动移动"从玄学变成可预判（§07 · D）；② <b>法师"隔子打"</b>，弹道必须隔 1 个棋子才有伤害，"垫子"成为新的站位维度（§06）；③ <b>Boss 关＝擒王关</b>，打死或围死 Boss 大棋子即直接通关，给 Boss 关一个清晰靶子（§04） ｜ v12 变更：给大棋子定下<b>"放大什么、不放大什么"</b>的平衡边界——体积<b>带来</b>气更多（2×2 最多 8 口 / 3×3 最多 12 口）、连加成更高（按占格数）、占地控制；体积<b>不带来</b>攻击范围放大（永远按棋子本身射程 <code>f_block</code>，大棋子是肉盾与路障、不是全屏炮台），攻击力 / 血量也不再额外乘体积系数（避免与升星数值双重膨胀） ｜ v11 变更：新增<b>大棋子（占多格）</b>——玩家的 <b>3★ 棋子占 2×2</b>，<b>Boss 棋子按章数从 2×2 长到 3×3</b>（第 1~2 章 2×2×1、第 3~4 章 2×2×2、第 5 章 +3×3×1、终局 3×3×2）；气 / 围困 / 眼 / 连断全部按"占格"计算，规则一条不改，立绘整体放大即可、零新美术；落子跟着手指显示占格虚影 ｜ v10 变更：补上围棋最核心的<b>「连与断」</b>，与围困、眼并成<b>连 · 断 · 围 · 眼 四件套</b>——<b>连</b>（同伴相邻成块）每多 1 个同伴全块攻击 +5%（上限 +25%）、<b>断</b>（四周无同伴的孤棋）受到伤害 +20%；两者全部复用现有连通块计算，零新增系统、零文字教学（只靠金色连线 / 红色裂痕区分）｜ v9 变更：让"眼"真正打得出来——①<b>放宽成眼判定</b>（棋盘内相邻格全己方即可：内部 4 格 / 边上 3 格 / 角上 2 格，越靠边越好做眼）；②三选一新增<b>「眼位石」</b>奖励（第 5 局后进池，选中后所有"放上即能成眼"的格子自动金色高亮，点一下即成眼），奖励权重调整为 新棋子 25% / 同名牌 30% / 眼位石 20% / 全队强化 25% ｜ v8 变更：把围棋最精华的<b>「眼」</b>从"P1 进阶内容"提升为<b>局内核心攻防</b>——眼＝4 邻全己方的空点，对方不能落子；<b>1 眼＝免疫围困、2 眼＝活棋（免疫围困 + 每 5 秒回 5% 血）</b>；新增<b>破眼</b>解法（打死围眼的棋子即破眼），构成"围困 ↔ 眼"的完整攻防；并规定"围眼的棋子进入定形、不再自动移动"以避免与 v5 的自动移动冲突 ｜ v7 变更：<b>一局时长从 25~35 分钟压到约 15 分钟</b>——章数 8 → 6，单关时长 2 分钟 → 普通关约 1 分钟 / Boss 关约 1.5 分钟，Boss 规则由 8 条精简为 6 条（其余进"备选规则池"，留给难度阶级与后续加章） ｜ v6 变更：重做<b>闯关系统</b>（参考《小丑牌》）——一局改为 8 章 × 2 关、章末必打 Boss（每章 1 条"改变规则"的负面效果）、普通关可"跳过换强化"、打完第 8 章即通关并解锁 3 档难度阶级 ｜ v5 变更：<b>行动力条彻底删除</b>（移动不消耗任何资源）；棋子改为<b>自动移动（偶发瞬移）+ 可手动点击移动</b> ｜ v4 变更：确立"傻瓜式"为第一铁律——局内只保留 1 个必要操作（点手牌）、移除局内金币；职业羁绊 8 条 → 1 条自动加成；局外改为"推关卡自动解锁"一条线，入口只剩关卡 + 图鉴 ｜ v3 变更：提子处决 → 围困，大列表选牌 → 随机手牌 ｜ v1 全量方案（肉鸽 × 自走棋）存档于 <code>Assets/玩法拓展/玩法拓展策划案_v1_完整版存档.html</code><br>
+  依据工程实测数据撰写：棋盘 9×9 · 65 角色（19 系 × 3 档）· 4 职业 · 现成连通块与气算法 · 满盘 60 棋子主线程 4.2~4.8 ms
+</footer>
+
+</div>
+</body>
+</html>

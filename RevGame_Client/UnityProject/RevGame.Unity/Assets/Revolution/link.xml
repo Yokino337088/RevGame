@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ★★★ 先读这一段 ★★★
+  本框架的【主推方案是：直接把 Managed Stripping Level 关掉】（Disabled，或至少 Minimal），
+  然后重新出包。理由、代价实测方法（3 分钟）见：
+      Revolution.Document/代码裁剪/代码裁剪使用说明.md
+
+  那这个文件是干什么的？—— 它是【万一你确实要开裁剪】时的护栏。
+  开着裁剪时，下面这些类型会被裁掉，而它们的失效方式恰恰是【不报错、只是不工作】，
+  是最难查的一类故障。留着本文件是零成本的（只多几 KB wrapper 代码），没理由不留。
+
+  ─────────────────────────────────────────────────────────────
+  Revolution 框架：IL2CPP 托管代码裁剪保护（框架侧）
+
+  【这个文件是干什么的】
+    Unity 出包（IL2CPP + Player Settings 里 Managed Stripping Level 调到 Medium 以上）时，
+    会"裁掉没有被代码直接引用的成员"。而本框架的 UI 全靠**反射**装配：
+      · [RevBind] 字段            → 由 FieldInfo.SetValue 写入
+      · [RevUIPanel] / [RevUIPart] → 由 GetCustomAttributes 读取
+      · [RevUIxxx] 事件方法        → 由 GetMethods 扫描 + MethodInfo.Invoke 调用
+      · RevSingleton(T) 派生类     → 由 GetConstructor + ctor.Invoke 创建
+    这些成员在编译器眼里"没人用"，一裁就是"编辑器全好、真机上面板空白 / 按钮点不动 / 单例建不出来"。
+    所以必须在这里显式保下来。
+
+  ★ Unity 会自动读取工程内**所有**名为 link.xml 的文件（本文件、以及你自己 Assets/link.xml 里的条目
+    是合并关系，不是覆盖）。本文件只保框架自己的类型。
+
+  【业务自己的面板 / 服务怎么办】
+    框架保不了业务类型。用菜单生成业务侧那一份：
+      Revolution.Tools / 平台 / 生成 IL2CPP 裁剪保护 (link.xml)
+    它会扫描工程里所有 RevUIPanel / RevUIPart / RevSingleton 派生类并写成 Assets/link.xml。
+    新增或改名面板后重新生成一次即可（生成的文件不要手改，会被覆盖）。
+
+  【不想用它？】
+    Managed Stripping Level 保持 Disabled / Minimal 时，上述成员本来不会被裁，本文件不产生任何影响。
+    一旦调高（小游戏为了压代码包体积通常都要调高），就必须靠它 + 业务侧那份兜底。
+-->
+<linker>
+  <!-- ===== 框架运行时：UI 反射装配链 + 单例反射构造 ===== -->
+  <assembly fullname="Revolution.Runtime">
+    <!-- 面板 / Part 基类：字段反射写入、特性解析都以它们为根 -->
+    <type fullname="Revolution.RevUIPanel" preserve="all"/>
+    <type fullname="Revolution.RevUIPanel`1" preserve="all"/>
+    <type fullname="Revolution.RevUIPart" preserve="all"/>
+    <!-- 元数据与绑定计划：GetFields / GetMethods / GetCustomAttributes 的实现方 -->
+    <type fullname="Revolution.RevUIPanelMeta" preserve="all"/>
+    <type fullname="Revolution.RevUIPartMeta" preserve="all"/>
+    <type fullname="Revolution.RevUIBindPlan" preserve="all"/>
+    <type fullname="Revolution.RevUIBinder" preserve="all"/>
+    <type fullname="Revolution.RevUIWidgetEvents" preserve="all"/>
+    <!-- 单例：私有构造函数只被反射调用，不保就会被裁成"没有无参构造函数" -->
+    <type fullname="Revolution.RevSingleton`1" preserve="all"/>
+    <type fullname="Revolution.RevSingletonMono`1" preserve="all"/>
+    <type fullname="Revolution.RevSingletonAutoMono`1" preserve="all"/>
+    <type fullname="Revolution.RevResBootstrap" preserve="all"/>
+  </assembly>
+
+  <!-- ===== 输入：枚举名到 KeyCode 的还原 =====
+       RevInputUnityDevice 用 Enum.TryParse(key.ToString()) 建键位表，
+       枚举成员的名字一旦被裁，全部键位会静默失效（只留一条警告）。 -->
+  <assembly fullname="UnityEngine.CoreModule">
+    <type fullname="UnityEngine.KeyCode" preserve="all"/>
+  </assembly>
+
+  <!-- ===== ★★★ 原生模块（native binding）：代码裁剪的头号坑 ★★★
+       物理 / UI / 动画 / 音频 / 粒子这些模块，"真实现"在引擎原生侧（C++），
+       托管层只是一层薄薄的 wrapper（包装类）。
+
+       为什么必须显式保留：
+         Unity 的托管代码裁剪只看"谁在代码里调用过这些 C# 类"。
+         一旦你的业务没直接 new / 没直接调，裁剪器就认定"没人用"，
+         连 wrapper 类一起裁掉 —— 而场景 / Prefab 上挂着的原生组件（那半边在 native 侧）
+         还好好地在那儿，于是就成了最难查的一类故障：
+             · Rigidbody 变"空壳"：有字段、不报错、就是不响应重力与碰撞；
+             · Physics.Raycast 恒返回 false：射线检测全废；
+             · Animator 不驱动动画、AudioSource 不出声、粒子不冒。
+         典型现场是"编辑器里跑得好好的，真机上玩法彻底瘫掉"，
+         而十有八九想不到是代码裁剪干的。
+
+       代价对比：不保 → 真机功能静默失效；保 → 只多几 KB wrapper 代码。 -->
+  <assembly fullname="UnityEngine.PhysicsModule" preserve="all"/>      <!-- PhysX：Rigidbody / Collider / Physics 静态 API -->
+  <assembly fullname="UnityEngine.Physics2DModule" preserve="all"/>    <!-- 2D 物理：Rigidbody2D / Collider2D -->
+  <assembly fullname="UnityEngine.UIModule" preserve="all"/>           <!-- Canvas / Graphic：框架 UI 系统直接依赖 -->
+  <assembly fullname="UnityEngine.AnimationModule" preserve="all"/>    <!-- Animator / AnimationClip -->
+  <assembly fullname="UnityEngine.AudioModule" preserve="all"/>         <!-- AudioSource：RevSound 的播放通道 -->
+  <assembly fullname="UnityEngine.ParticleSystemModule" preserve="all"/>
+
+  <!-- ★ 其它"同一类坑"的模块（本工程没默认保，用到就照上面的写法加一行）：
+         UnityEngine.AIModule           NavMeshAgent / NavMesh
+         UnityEngine.TerrainModule      Terrain / WindZone
+         UnityEngine.TerrainPhysicsModule  TerrainCollider
+         UnityEngine.VideoModule        VideoPlayer
+         UnityEngine.TimelineModule     Timeline
+         UnityEngine.VFXModule          VisualEffect
+         UnityEngine.InputLegacyModule   旧输入（Input 类）
+         UnityEngine.InputSystem         新输入系统（InputSystem 包）
+         Unity.TextMeshPro              TextMeshPro（TMP 是源码包，最容易被裁）
+       ★ 不想手工判断？用菜单「Revolution.Tools/平台/生成 IL2CPP 裁剪保护 (link.xml)」——
+         它会扫你工程里的代码用到了哪些原生模块，自动把对应条目写进 Assets/link.xml。 -->
+
+  <!-- ===== 可选：新输入系统 =====
+       若你的工程装了 Input System 包、且代码里没有直接引用 InputSystemUIInputModule
+       （即完全靠 RevUIRoot 的反射查找装配 EventSystem），请把下面两行取消注释。
+       没装这个包时保持注释状态即可（避免解析不到程序集）。 -->
+  <!--
+  <assembly fullname="Unity.InputSystem">
+    <type fullname="UnityEngine.InputSystem.UI.InputSystemUIInputModule" preserve="all"/>
+  </assembly>
+  -->
+</linker>

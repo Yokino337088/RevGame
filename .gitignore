@@ -1,0 +1,73 @@
+# ============================================================
+#  RevGame · 围棋史莱姆 —— 仓库排除规则
+#
+#  原则：只提交「工程源码 / 项目设置 / 策划案 / 美术资源」；
+#        Unity 自动生成的缓存与 IDE 临时文件一律不入库。
+#        美术资源（美术/）与 Assets 里的资源是要提交的。
+# ============================================================
+
+# ---------------- Unity 自动生成 / 本机状态（任意层级） ----------------
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+ExportedObj/
+crashlytics-build.properties
+sysinfo.txt
+
+# ---------------- 打包 / 热更产物（工具生成，不入库） ----------------
+[Uu]nityProject/[Aa]sset[Bb]undles/
+[Aa]sset[Bb]undles/
+[Ll]ocalCDN/
+[Ll]ocal[Bb]uild/
+
+# ---------------- Unity / IDE 生成的工程文件（重新打开会自动重建） ----------------
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.opendb
+*.VC.db
+*.VC.opendb
+*.suo
+*.userprefs
+
+# ---------------- .NET / 调试产物 ----------------
+bin/
+pdb/
+*.pdb
+*.mdb
+*.exp
+*.lib
+
+# ---------------- 构建产物 / 安装包 ----------------
+*.apk
+*.aab
+*.ipa
+*.unitypackage
+*.app/
+
+# ---------------- IDE / 编辑器配置 ----------------
+.vs/
+.idea/
+.vscode/
+.consulo/
+.vsconfig
+
+# ---------------- 操作系统垃圾 ----------------
+Thumbs.db
+desktop.ini
+.DS_Store
+~$*
+
+# ---------------- 本机备份 / 临时文件 ----------------
+*.bak
+*.bak-*
+*.tmp
