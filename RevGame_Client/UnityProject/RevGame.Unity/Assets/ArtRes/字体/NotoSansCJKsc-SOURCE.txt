@@ -1,0 +1,5 @@
+Noto Sans CJK SC Bold / 简体中文黑体粗体
+Source: https://github.com/notofonts/noto-cjk/tree/main/Sans/OTF/SimplifiedChinese
+Font download: https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Bold.otf
+License: SIL Open Font License 1.1, see NotoSansCJKsc-OFL.txt
+Imported via Unity MCP on 2026-10-18. Original font file is unmodified.

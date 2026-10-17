@@ -1,0 +1,1 @@
+Official free DOTween; https://github.com/Demigiant/dotween; commit bfb02b05551a45204352dc43bdc15b882147891a; retrieved 2026-10-17. Core DLL + official Modules; animations use DOTween.To and Sequence.

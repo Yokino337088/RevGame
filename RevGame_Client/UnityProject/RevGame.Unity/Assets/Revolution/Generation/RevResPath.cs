@@ -18,12 +18,13 @@ namespace Revolution
     /// <summary>资源目录前缀常量（值均以 "/" 结尾；与资源名一起传给 RevResManager）</summary>
     public static class RevResPath
     {
+        public const string Audio = "Audio/";
+        public const string Audio_Bgm = "Audio/Bgm/";
+        public const string Audio_Sfx = "Audio/Sfx/";
+        public const string Board = "Board/";
         public const string Data = "Data/";
-        public const string RevHotDemo = "RevHotDemo/";
-        public const string RevUIDemo = "RevUIDemo/";
-        public const string Sound = "Sound/";
-        public const string Sound_BGM = "Sound/BGM/";
-        public const string Sound_SFX = "Sound/SFX/";
+        public const string Effects = "Effects/";
+        public const string Pieces = "Pieces/";
         public const string UI = "UI/";
     }
 }

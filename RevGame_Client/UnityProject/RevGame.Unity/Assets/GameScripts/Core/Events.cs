@@ -1,0 +1,65 @@
+// ============================================================
+// Events.cs
+// 事件名和参数契约集中维护；发出方不依赖界面，监听方按 owner 管理订阅生存期。
+// ============================================================
+namespace RevGame.Core
+{
+    /// <summary>
+    /// 全局事件名常量。
+    ///
+    /// 铁律（Revolution 规范）：**事件名必须是字符串常量，且集中在一个类里**；
+    /// 同一个事件名只能有一种签名。写在业务代码里手打的字符串（"OnHpChanged"）迟早拼错、
+    /// 而且改了没人知道，所以统一放这里，谁用谁引用常量。
+    /// </summary>
+    public static class Events
+    {
+        /// <summary>无参数：准备期整批手牌重抽完成，UI 应播放翻牌后换正面。</summary>
+        public const string HandRerolled = "RevGame.Hand.Rerolled";
+        /// <summary>唯一签名 PieceAttackInfo：每次真实攻击的起点与棋种快照。</summary>
+        public const string PieceAttacked = "RevGame.Piece.Attacked";
+        // ---------------- 流程 ----------------
+        /// <summary>一个回合进入"准备"阶段。参数：回合号（int）。</summary>
+        public const string PhaseEnterPrepare = "RevGame.Phase.Prepare";
+        /// <summary>一个回合进入"战斗"阶段。参数：回合号（int）。</summary>
+        public const string PhaseEnterBattle = "RevGame.Phase.Battle";
+        /// <summary>一个回合进入"结算"阶段。参数：本回合胜方（GameSide）。</summary>
+        public const string PhaseEnterSettle = "RevGame.Phase.Settle";
+        /// <summary>整章通关 / 整局结束。参数：是否通关（bool）。</summary>
+        public const string GameFinished = "RevGame.Game.Finished";
+        // ---------------- 棋盘 / 棋子 ----------------
+        /// <summary>有棋子落下。参数：棋子的整数 Id。</summary>
+        public const string PiecePlaced = "RevGame.Piece.Placed";
+        /// <summary>有棋子移动。参数：棋子 Id。</summary>
+        public const string PieceMoved = "RevGame.Piece.Moved";
+        /// <summary>有棋子死亡（被吃掉）。参数：棋子 Id。</summary>
+        public const string PieceDied = "RevGame.Piece.Died";
+        /// <summary>棋子血量变化。参数：棋子 Id。</summary>
+        public const string PieceHpChanged = "RevGame.Piece.HpChanged";
+        /// <summary>棋块的围棋状态刷新完毕（气数/叫吃/锁死/连断都算完了）。</summary>
+        public const string GoStateRefreshed = "RevGame.Board.GoStateRefreshed";
+        /// <summary>三个同名棋子合成升星。参数：棋子 Id（升星后的那个）。</summary>
+        public const string PieceMerged = "RevGame.Piece.Merged";
+        // ---------------- 战斗表现 ----------------
+        /// <summary>一次伤害结算完成。参数：受击棋子 Id。</summary>
+        public const string DamageResolved = "RevGame.Battle.DamageResolved";
+        /// <summary>完整的单次受击快照，参数 BattleHitInfo；供弹道和飘字使用，不从下一帧血量反推。</summary>
+        public const string BattleHit = "RevGame.Battle.Hit";
+        /// <summary>战斗结束（限时到 / 一方全灭 / Boss 被擒）。参数：胜方（GameSide）。</summary>
+        public const string BattleEnded = "RevGame.Battle.Ended";
+        /// <summary>战斗事件（随机"天降帮手"）触发。参数：事件 Id（string）。</summary>
+        public const string BattleEventTriggered = "RevGame.Battle.EventTriggered";
+        // ---------------- UI ----------------
+        /// <summary>手牌变化（抽牌/打牌）。无参数，UI 自己去拉最新手牌。</summary>
+        public const string HandChanged = "RevGame.UI.HandChanged";
+        /// <summary>选牌或落子失败提示变化。无参数，界面重新读取服务。</summary>
+        public const string SelectionChanged = "RevGame.UI.SelectionChanged";
+        /// <summary>奖励候选已生成，界面读取三项选项。无参数。</summary>
+        public const string PhaseEnterReward = "RevGame.Phase.Reward";
+        /// <summary>整局强化/解锁发生变化，局外保存和界面刷新共用。无参数。</summary>
+        public const string ProgressChanged = "RevGame.Progress.Changed";
+        /// <summary>局外/战斗切换完毕，参数为 GameScreen。表现层在新域开放后装配面板。</summary>
+        public const string ScreenChanged = "RevGame.Flow.ScreenChanged";
+        /// <summary>需要弹一条战斗日志。参数：文本（string）。</summary>
+        public const string BattleLog = "RevGame.UI.BattleLog";
+    }
+}

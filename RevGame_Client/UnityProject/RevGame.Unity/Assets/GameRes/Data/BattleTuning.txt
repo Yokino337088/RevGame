@@ -1,0 +1,4 @@
+#BattleTuning
+#Id	Value
+#玩法表现参数编号；代码按此名称读取	参数值；下行参数表示我方远程每个逻辑步的攻击次数
+PlayerRangedActionsPerTick	2

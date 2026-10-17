@@ -1,0 +1,24 @@
+#BattleText
+#Id	Text	Detail	ColorHex	FontSize	Duration	PeakScale
+#唯一编号，代码按它查找；请勿随意改名	弹幕标题；升级支持{piece}与{star}，伤害支持{damage}	UI提示第二行说明；攻击可留空	十六进制颜色，如#FFD84A	文字字号；攻击/伤害是世界文字，升级/事件是UI文字	显示总时长，单位秒	冲击放大倍率，1为原大小
+Attack_Swordman	剑气斩！		#BDEEFF	54	1.05	1.2
+Attack_Shield	盾击！		#BDEEFF	54	1.05	1.2
+Attack_HeavySword	重剑破阵！		#BDEEFF	54	1.05	1.2
+Attack_Archer	穿云箭！		#BDEEFF	54	1.05	1.2
+Attack_Crossbow	连弩齐射！		#BDEEFF	54	1.05	1.2
+Attack_MageWater	水浪冲击！		#BDEEFF	54	1.05	1.2
+Attack_MageFire	烈焰弹！		#BDEEFF	54	1.05	1.2
+Attack_Priest	圣光冲击！		#BDEEFF	54	1.05	1.2
+Attack_Assassin	疾影突袭！		#BDEEFF	54	1.05	1.2
+Upgrade_2	升星！{piece} 升至 {star} 星	三枚同名同星棋子合为更强棋子	#FFD84A	46	2.8	1.18
+Upgrade_3	三星觉醒！{piece}	身体扩大为2×2，继续守住阵型	#FFB347	48	3.1	1.24
+Damage	-{damage}		#FFE52E	64	1.6	1.35
+Event_天降援兵	天降援兵	援军已加入战场，协助守住阵型	#FFD84A	48	2.8	1.12
+Event_回气	回气	全队气数增加，阵型更加稳固	#FFD84A	48	2.8	1.12
+Event_疗愈雨	疗愈雨	我方棋子恢复生命，继续坚守	#FFD84A	48	2.8	1.12
+Event_连击	连击	全队攻击更快，阵位保持不变	#FFD84A	48	2.8	1.12
+Event_补眼	补眼	补强眼位，保护成型棋群	#FFD84A	48	2.8	1.12
+Event_断链	断链	敌方阵型受到干扰	#FFD84A	48	2.8	1.12
+Event_守阵回气	守阵回气	全队气数增加，阵型更加稳固	#FFD84A	48	2.8	1.12
+Event_炮火支援	炮火支援	支援火力命中敌人	#FFD84A	48	2.8	1.12
+Event_决胜支援	决胜支援	援军总攻！清除剩余敌人	#FFD84A	48	2.8	1.12

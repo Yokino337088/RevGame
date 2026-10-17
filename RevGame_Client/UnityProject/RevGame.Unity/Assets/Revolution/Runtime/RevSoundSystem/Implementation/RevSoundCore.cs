@@ -645,6 +645,12 @@ namespace Revolution
                 _requiresTarget[i] = false;
                 _is3D[i] = false;
                 _positions[i] = Vector3.zero;
+            }
+
+            // ★ 声音槽位有 64 个，音量分类只有 4 个，两者不是同一种编号。
+            //   按槽位数清分类数组会在第 5 次写入时越界，使首次进入 Play 就中断复位。
+            for (int i = 0; i < _kindVolumes.Length; i++)
+            {
                 _kindVolumes[i] = 1f;
             }
 
