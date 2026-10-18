@@ -36,6 +36,8 @@ namespace RevGame.View
         private float _fadeAlpha = 1f, _occlusionAlpha = 1f;
         private float _baseTextScale = 1f, _textPeak = 1f, _textRise;
         private Renderer _textRenderer;
+        /// <summary>只在首次实例化时查找描边Renderer；反复出入池不再查找或分配数组。</summary>
+        private Renderer[] _outlineRenderers;
         private Color _projectileColor;
         // 弹道额外持有寿命上限。即使外部意外 Kill/Pause 了 Tween，也不能留一根永远不动的黄条。
         // 使用游戏时间：正常暂停时整个战斗一起停，恢复后再继续回收。
@@ -85,14 +87,25 @@ namespace RevGame.View
         public void SetTextOrder(int order)
         {
             TextOrder = order;
-            damageText.GetComponent<Renderer>().sortingOrder = 100 + order * 2;
-            foreach (TextMesh outline in damageOutlines) { outline.GetComponent<Renderer>().sortingOrder = 99 + order * 2; }
+            _textRenderer.sortingOrder = 100 + order * 2;
+            foreach (Renderer outline in _outlineRenderers) { outline.sortingOrder = 99 + order * 2; }
+        }
+
+        /// <summary>缓存组件不复制材质；TextMesh及其描边继续共享字体材质，保留动态合批条件。</summary>
+        private void Awake()
+        {
+            _textRenderer = damageText.GetComponent<Renderer>();
+            _outlineRenderers = new Renderer[damageOutlines.Length];
+            for (int i = 0; i < damageOutlines.Length; i++) { _outlineRenderers[i] = damageOutlines[i].GetComponent<Renderer>(); }
         }
 
         /// <summary>空间不足时，下面那条提示降至35%透明度；动画本身的淡出比例仍然保留。</summary>
         public void SetTextOccluded(bool covered)
         {
-            _occlusionAlpha = covered ? 0.35f : 1f;
+            float alpha = covered ? 0.35f : 1f;
+            // 遮挡关系没有变化就不重复写5份TextMesh颜色。Tween淡出仍由SetNumberAlpha逐帧更新。
+            if (Mathf.Approximately(alpha, _occlusionAlpha)) { return; }
+            _occlusionAlpha = alpha;
             ApplyNumberAlpha();
         }
         /// <summary>供开发验收读取；不参与战斗规则。</summary>

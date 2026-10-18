@@ -10,6 +10,7 @@ Shader "RevGame/Background/ArcaneBackdrop"
         _Strength ("效果强度", Range(0,1)) = 0.22
         _Speed ("流动速度", Range(0,1)) = 0.15
         _ArtBlend ("背景保留原图比例", Range(0,1)) = 1
+        _ArtUvRect ("背景在图集内的矩形（xy起点 zw尺寸）", Vector) = (0,0,1,1)
         // 以下与UGUI默认Shader一致，供Mask/RectMask2D及图集批处理使用。
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0

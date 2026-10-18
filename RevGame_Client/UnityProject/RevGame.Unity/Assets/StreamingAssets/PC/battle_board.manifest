@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3319015491
+CRC: 2149486658
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6721a7839862f0e0379ef2a1f9c320e5
+    Hash: 642416f28e3613f70417dc5e5d3f2a74
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 64553c4c19da8db9db78b35198247052
+    Hash: 6e2f7c073a115800f8a51676f394a879
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6721a7839862f0e0379ef2a1f9c320e5
+    Hash: 642416f28e3613f70417dc5e5d3f2a74
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -17,8 +17,6 @@ ClassTypes:
 - Class: 4
   Script: {instanceID: 0}
 - Class: 21
-  Script: {instanceID: 0}
-- Class: 28
   Script: {instanceID: 0}
 - Class: 48
   Script: {instanceID: 0}
@@ -39,4 +37,5 @@ Assets:
 - Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab
 - Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/art_ui"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"

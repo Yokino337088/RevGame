@@ -33,6 +33,11 @@ namespace RevGame.View
         private readonly HashSet<int> _queuedAttackIds = new HashSet<int>();
         // 遍历字典时不能直接删除，用复用列表先收集过期编号，遍历结束后再移除。
         private readonly List<int> _expiredDamageIds = new List<int>();
+        // 每个棋盘独占固定长度缓冲。上限20条，因此不需要每帧new List/ToArray，也不共享静态可变数组。
+        // Rect是值类型，缓存的是本次动画推进后的快照；下一帧重新采样，缩放/移动不会用到旧矩形。
+        private readonly BattleEffectView[] _textSnapshot = new BattleEffectView[MaxFloatingTexts];
+        private readonly Rect[] _textRects = new Rect[MaxFloatingTexts];
+        private readonly Rect[] _reservationRects = new Rect[MaxFloatingTexts];
         // 已申请但还没加载好的名额也算占用；否则异步加载完成的同一帧会突然挤出大量飘字。
         private int _pendingTextLoads, _pendingProjectileLoads;
         // 下次允许显示的游戏时间；只限制表现生成速度，不影响模型中的攻击冷却或伤害结算。
@@ -156,16 +161,27 @@ namespace RevGame.View
             FlushProjectiles();
             FlushOneDamageText();
             FlushAttackText();
-            // 最多二十条文字，成对比较不超过400次；下层文字淡化，不能为了增量把旧字盖成一团。
-            foreach (BattleEffectView older in _textEffects)
+            // 最多二十条文字。把昂贵的Renderer.bounds/WorldToScreenPoint从两重循环里提出来：
+            // 原来最多读取约800次矩形，现在只读取20次；两两比较仍保留，避免为省CPU改变遮挡规则。
+            int count = 0;
+            foreach (BattleEffectView effect in _textEffects)
             {
+                _textSnapshot[count] = effect;
+                _textRects[count] = effect.TextScreenRect;
+                count++;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                BattleEffectView older = _textSnapshot[i];
                 bool covered = false;
-                foreach (BattleEffectView newer in _textEffects)
+                for (int j = 0; j < count; j++)
                 {
-                    if (newer.TextOrder > older.TextOrder && newer.TextScreenRect.Overlaps(older.TextScreenRect)) { covered = true; break; }
+                    if (_textSnapshot[j].TextOrder > older.TextOrder && _textRects[j].Overlaps(_textRects[i])) { covered = true; break; }
                 }
                 older.SetTextOccluded(covered);
             }
+            // 计算完就清引用，不让工作数组在回池之后还持有上一回合的视图。
+            System.Array.Clear(_textSnapshot, 0, count);
         }
 
         /// <summary>每0.035秒至多发起一条数字，密集交战可达15~20条；稀疏交战不伪造伤害凑数。</summary>
@@ -211,6 +227,12 @@ namespace RevGame.View
             Rect allowed = FeedbackScreenRect(camera);
             float bestCost = float.PositiveInfinity;
             Vector2 best = Vector2.zero;
+            // 同一次选点过程中其它文字不移动，预留矩形只需采样一次，不必在25个候选点里重复计算。
+            int occupiedCount = 0;
+            foreach (BattleEffectView other in _textEffects)
+            {
+                if (other != text) { _reservationRects[occupiedCount++] = other.TextReservationRect; }
+            }
             for (int i = 0; i < 25; i++)
             {
                 int row = i / 5;
@@ -226,10 +248,9 @@ namespace RevGame.View
                 candidate.position += delta;
                 // 重叠面积的权重远大于移动距离；先争取不挡字，再尽量贴近受击棋子。
                 float cost = delta.sqrMagnitude * 0.001f;
-                foreach (BattleEffectView other in _textEffects)
+                for (int j = 0; j < occupiedCount; j++)
                 {
-                    if (other == text) { continue; }
-                    Rect occupied = other.TextReservationRect;
+                    Rect occupied = _reservationRects[j];
                     float width = Mathf.Max(0f, Mathf.Min(candidate.xMax, occupied.xMax) - Mathf.Max(candidate.xMin, occupied.xMin));
                     float height = Mathf.Max(0f, Mathf.Min(candidate.yMax, occupied.yMax) - Mathf.Max(candidate.yMin, occupied.yMin));
                     cost += width * height * 100f;

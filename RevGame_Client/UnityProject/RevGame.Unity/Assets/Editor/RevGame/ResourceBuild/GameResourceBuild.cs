@@ -4,6 +4,7 @@
 // 文件夹名表达用途，AB名表达加载边界；共享UI图片和大字体单独打包，避免每个面板重复包含它们。
 // ============================================================
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Revolution.Editor;
 using UnityEditor;
@@ -17,14 +18,13 @@ namespace RevGame.Editor
         private static readonly string[,] Groups =
         {
             { "UI/Panel", "ui_panels" }, { "UI/Item", "ui_items" },
-            { "Art/UI", "art_ui" }, { "Fonts/CJK", "font_cjk" },
+            { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
             { "Effects/Combat", "battle_feedback" }, { "Data", "data_tables" },
             { "Material/Cards", "material_cards" }, { "Material/UI", "material_ui" },
             { "Material/Background", "material_background" },
             { "Material/Pieces", "material_pieces" },
-            { "Art/Pieces", "shared_piece_frames" }, { "Art/Status", "shared_status" },
             { "Audio/Bgm", "audio_bgm" }, { "Audio/Sfx", "audio_sfx" }
         };
 
@@ -56,6 +56,9 @@ namespace RevGame.Editor
             {
                 AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)).SetAssetBundleNameAndVariant("shared_shaders", string.Empty);
             }
+            // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被上面的粗目录标记覆盖。
+            GameSpriteAtlasBuild.Configure();
+            string atlasReport = GameSpriteAtlasBuild.Validate();
             AssetDatabase.RemoveUnusedAssetBundleNames();
             AssetDatabase.SaveAssets();
             ABCollectResult collect = ABCollector.Collect();
@@ -71,7 +74,7 @@ namespace RevGame.Editor
             ABResPathGenerator.Generate();
             ABSoundPathGenerator.Generate();
             AssetDatabase.SaveAssets();
-            return count + "条映射，" + validation.bundleCount + "个包，隐式重复/循环/漏标/重名/Android Shader错误均0条";
+            return count + "条映射，" + validation.bundleCount + "个包，" + atlasReport + "；隐式重复/循环/漏标/重名/Android Shader错误均0条";
         }
 
         /// <summary>实际构建二进制并记录清单。供MCP调用，不调用会退出Unity的CI入口。</summary>
@@ -80,8 +83,33 @@ namespace RevGame.Editor
             Configure();
             ABBuildResult built = ABBuilderCore.Build(target);
             if (!built.success) { throw new InvalidOperationException("AB构建失败：" + target); }
+            PruneObsoleteBundles(built);
             ABManifestWriter.WriteBuildManifest(built);
             return target + "：" + built.manifest.allBundles.Length + "个包 → " + Path.GetFullPath(built.outputDir);
+        }
+
+        /// <summary>
+        /// 增量构建不会自动删除已改名的旧包。若直接复制整个目录，旧散图包仍占安装空间。
+        /// 这里只清理“输出目录内、有同名.manifest、但不在本次主清单”的文件对；不递归删除目录。
+        /// </summary>
+        private static void PruneObsoleteBundles(ABBuildResult built)
+        {
+            string output = Path.GetFullPath(built.outputDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string allowed = Path.GetFullPath("AssetBundles") + Path.DirectorySeparatorChar;
+            if (!output.StartsWith(allowed, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("旧包清理只允许项目AssetBundles平台子目录：" + output);
+            }
+            var keep = new HashSet<string>(built.manifest.allBundles, StringComparer.OrdinalIgnoreCase);
+            keep.Add(Path.GetFileName(output)); // PC/Android主Manifest不是普通业务包，必须保留。
+            foreach (string candidate in Directory.GetFiles(output))
+            {
+                string name = Path.GetFileName(candidate);
+                if (Path.HasExtension(name) || keep.Contains(name) || !File.Exists(candidate + ".manifest")) { continue; }
+                // candidate来自已验证目录的非递归枚举，不能带外部用户路径；仅删除可再生成的旧二进制和清单。
+                File.Delete(candidate);
+                File.Delete(candidate + ".manifest");
+            }
         }
 
         /// <summary>构建并使用框架工具发布到允许入库的StreamingAssets；外部AssetBundles仍是可再生成产物。</summary>

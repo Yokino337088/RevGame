@@ -1,0 +1,42 @@
+ManifestFileVersion: 0
+CRC: 3870036745
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: fa9e794ba555fa2ca66454c1644be0b3
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: fa9e794ba555fa2ca66454c1644be0b3
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/UI_Game_imgBK_Alt.png
+- Assets/GameRes/Art/UI/UI_Setting_Background.png
+- Assets/GameRes/Art/UI/UI_Tavern_ScrollbarVertical.png
+- Assets/GameRes/Art/UI/UI_Begin_btnTavern.png
+- Assets/GameRes/Art/UI/UI_Buy_btnClose.png
+- Assets/GameRes/Art/UI/UI_achieveItem_imgBK.png
+- Assets/GameRes/Art/UI/UI_Begin_imgAdvertise.png
+- Assets/GameRes/Atlases/UIReserve.spriteatlasv2
+- Assets/GameRes/Art/UI/UI_Settlement_imgBK.png
+- Assets/GameRes/Art/UI/UI_ChooseLevel_btnSetting.png
+- Assets/GameRes/Art/UI/UI_Begin_imgSetting.png
+- Assets/GameRes/Art/UI/UI_ChooseLevel_imgTip2.png
+- Assets/GameRes/Art/UI/UI_Tavern_Checkmark.png
+- Assets/GameRes/Art/UI/UI_Begin_btnTrain.png
+- Assets/GameRes/Art/UI/UI_Begin_imgAchieve.png
+- Assets/GameRes/Art/UI/UI_ChooseLevel_imgCoin.png
+- Assets/GameRes/Art/UI/UI_Pvp_btnSetting.png
+- Assets/GameRes/Art/UI/UI_Tavern_Handle.png
+- Assets/GameRes/Art/UI/UI_Begin_btnWar.png
+Dependencies: []

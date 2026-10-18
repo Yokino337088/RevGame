@@ -61,6 +61,13 @@ namespace RevGame.Editor
 
                 Pieces.Piece target = battle.EnemyPieces[0];
                 int hp = target.Hp;
+                // AB冷启动需要磁盘读取，60ms断言验证的是齐射调度，而不是磁盘速度。
+                // 先通过真实对象池预热一个对象；冷加载取消/回收由资源与跨回合测试另外覆盖。
+                var warm = new RevTaskCompletionSource<BattleEffectView>();
+                RevPool.GetAsync<BattleEffectView>(effect => warm.SetResult(effect));
+                BattleEffectView warmed = await warm.Task;
+                Require(warmed != null, "实际AB弹道预制体预热成功");
+                RevPool.Return(warmed, 0);
                 for (int i = 0; i < 120; i++)
                 {
                     RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, new PieceAttackInfo(player.Id, player.Def.Kind, player.Pos, player.Size, player.Side));

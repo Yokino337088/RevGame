@@ -29,6 +29,8 @@ namespace RevGame.Bootstrap
             // 结算与奖励是必经步骤，点遮罩不能把唯一的继续入口关掉。
             RevUISetting.ClickMaskClosesTop = false;
             RevInitialize.Initialize();
+            // 图集必须在任何面板/棋子加载前接上Unity回调；通过RevServices统一注销，重复Play不累积监听。
+            RevServices.Register<View.GameSpriteAtlasService, View.GameSpriteAtlasService>(owner: this);
 #if UNITY_ANDROID || UNITY_EDITOR
             // ★ 手机画面必须全屏。SetResolution(..., false) 中的 false 表示“窗口模式”，不是“不旋转”。
             // Android / Simulator 会因此预留系统导航栏；横屏时它会变成右侧深灰条，放大背景也填不到那里。
@@ -58,6 +60,7 @@ namespace RevGame.Bootstrap
             {
                 // 让场景表现先订阅 ScreenChanged，避免表已缓存时同步完成而漏掉首页事件。
                 await RevTask.Yield();
+                await RevServices.GetRequired<View.GameSpriteAtlasService>().PreloadSceneAsync();
                 await RevDataTableManager.LoadAsync<BattleTextTable>();
                 await RevDataTableManager.LoadAsync<BattleTuningTable>();
                 if (_released)

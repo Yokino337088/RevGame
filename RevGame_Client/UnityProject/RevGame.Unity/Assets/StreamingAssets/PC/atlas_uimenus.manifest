@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 3633103543
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f199d927bb5da645c08eca1cc97f8ab7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f199d927bb5da645c08eca1cc97f8ab7
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/UI_Tavern_btnClose.png
+- Assets/GameRes/Art/UI/UI_Begin_btnAdventure.png
+- Assets/GameRes/Art/UI/UI_Tip_imgBK.png
+- Assets/GameRes/Art/UI/UI_Tavern_Background.png
+- Assets/GameRes/Atlases/UIMenus.spriteatlasv2
+Dependencies: []

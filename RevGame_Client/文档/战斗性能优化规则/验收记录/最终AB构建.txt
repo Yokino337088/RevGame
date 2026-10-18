@@ -1,0 +1,4 @@
+StandaloneWindows64：25个包 → D:\AAAAAAA王者荣耀项目组工作日志\RevGame\RevGame_Client\UnityProject\RevGame.Unity\AssetBundles\PC；已复制到 D:\AAAAAAA王者荣耀项目组工作日志\RevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\StreamingAssets\PC
+Android：25个包 → D:\AAAAAAA王者荣耀项目组工作日志\RevGame\RevGame_Client\UnityProject\RevGame.Unity\AssetBundles\Android；已复制到 D:\AAAAAAA王者荣耀项目组工作日志\RevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\StreamingAssets\Android
+PC：旧包残留0
+Android：旧包残留0

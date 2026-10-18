@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 903210888
+CRC: 1234143845
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 37b49e16458a8780d5b1986e66798cbc
+    Hash: b8a8ed23b844d265fac0b87126649471
   TypeTreeHash:
     serializedVersion: 2
     Hash: af7721d5d539f58b12de807bd7318680
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 37b49e16458a8780d5b1986e66798cbc
+    Hash: b8a8ed23b844d265fac0b87126649471
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -65,7 +65,8 @@ Assets:
 - Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab
 - Assets/GameRes/UI/Item/Card/CardItem.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/art_ui"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_cards"

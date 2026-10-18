@@ -42,7 +42,10 @@ namespace RevGame.Editor
                     if (root.StartsWith("Material/")) { group = RevResGroup.Scene; }
                     if (root.StartsWith("Data/") || root.StartsWith("Config/")) { group = RevResGroup.Config; }
                     if (root.StartsWith("Audio/")) { group = RevResGroup.Sound; }
-                    RevResManager.LoadAsync(root, name, AssetDatabase.GetMainAssetTypeAtPath(path), h => source.SetResult(h), group);
+                    // 入图集后AB会剥离源Texture2D像素，只保留Sprite元数据和图集页面。
+                    // 因此图片必须按Sprite加载；用Texture2D测试会强求本就应该被剥离的散图副本。
+                    Type contentType = AssetImporter.GetAtPath(path) is TextureImporter ? typeof(Sprite) : AssetDatabase.GetMainAssetTypeAtPath(path);
+                    RevResManager.LoadAsync(root, name, contentType, h => source.SetResult(h), group);
                     RevResHandle handle = await source.Task;
                     try
                     {

@@ -24,6 +24,10 @@ namespace RevGame.View
         // 材质属于整个场景，不能归入Battle组；否则第一次返回大厅就会被战斗域卸载。
         private bool _backgroundMaterialRequested;
         private Material _originalBackgroundMaterial;
+        /// <summary>背景只有一张，允许独立参数块；棋子/弹道仍共享参数以保留合批。</summary>
+        private MaterialPropertyBlock _backgroundProperties;
+        private Vector4 _lastBackgroundUv;
+        private static readonly int ArtUvRectId = Shader.PropertyToID("_ArtUvRect");
         private void OnEnable()
         {
             // 相机真正渲染前再核对一次布局：拖动窗口时不能等 0.25 秒计时器才适配新尺寸。
@@ -86,6 +90,7 @@ namespace RevGame.View
             boardCamera.transform.position = cameraPosition;
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
             {
+                UpdateBackgroundAtlasUv();
                 // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
                 // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。
                 backgroundRenderer.drawMode = SpriteDrawMode.Simple;
@@ -100,6 +105,22 @@ namespace RevGame.View
                 Vector3 pivotOffset = backgroundRenderer.sprite.bounds.center * scale;
                 backgroundRenderer.transform.position = new Vector3(cameraPosition.x - pivotOffset.x, cameraPosition.y - pivotOffset.y, 5f);
             }
+        }
+
+        /// <summary>
+        /// 图集异步绑定后Sprite对象没换，但UV会改变。每次取四个数比较，只有变化才上传参数。
+        /// 不访问sprite.uv数组（它会分配），也不访问renderer.material（它会克隆材质）。
+        /// </summary>
+        private void UpdateBackgroundAtlasUv()
+        {
+            Vector4 outer = UnityEngine.Sprites.DataUtility.GetOuterUV(backgroundRenderer.sprite);
+            Vector4 rect = new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y);
+            if (_backgroundProperties != null && rect == _lastBackgroundUv) { return; }
+            if (_backgroundProperties == null) { _backgroundProperties = new MaterialPropertyBlock(); }
+            _lastBackgroundUv = rect;
+            backgroundRenderer.GetPropertyBlock(_backgroundProperties);
+            _backgroundProperties.SetVector(ArtUvRectId, rect);
+            backgroundRenderer.SetPropertyBlock(_backgroundProperties);
         }
 
         private void OnScreen(GameScreen screen)

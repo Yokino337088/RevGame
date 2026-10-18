@@ -33,7 +33,8 @@ namespace RevGame.Editor
                     foreach (Image image in root.GetComponentsInChildren<Image>(true))
                     {
                         string spritePath = AssetDatabase.GetAssetPath(image.sprite);
-                        if (image.name == "screenBackground" || spritePath.StartsWith("Assets/ArtRes/背景/", StringComparison.Ordinal))
+                        if (image.name == "screenBackground" || spritePath.StartsWith("Assets/ArtRes/背景/", StringComparison.Ordinal)
+                            || spritePath.StartsWith("Assets/GameRes/Art/Background/", StringComparison.Ordinal))
                         {
                             StyleBackdrop(image, backdrop);
                         }

@@ -32,9 +32,13 @@
 
 ## 战斗性能与模块目录（2026-10-18 起）
 
-- 后续战斗修改遵循 `RevGame_Client/项目进度分析/RevGame-战斗性能与资源规范-2026-10-18.md`；先用固定输入测量，再优化，不承诺未经实测的零GC或手机帧率。
+- 后续战斗修改先读 `RevGame_Client/文档/战斗性能优化规则/战斗性能优化规则.md`（同目录HTML为浅色交互阅读版）；先用固定输入测量，再优化，不承诺未经实测的零GC或手机帧率。
 - 占格只通过 `BoardModel.Place/Move/Remove/Reset` 修改；气眼只在占格版本、加气或围困免疫变化时刷新。不能为了优化漏掉致死、补子、换位后的规则更新。
 - 高频查询使用调用方自有缓冲区；AI一轮查询复用一张独立深快照，不共享全局可变草稿，不移动实战棋子来试算。
 - 战斗视图/飘字/弹道走 `RevPool`；动画和异步回调必须有回收/过期检查。棋子用共享材质，禁止在每帧访问 `renderer.material`。
 - 保留现有层级，层内按功能细分（如 `Battle/AI`、`Services/Battle/Preparation`、`View/Combat/Effects`、`UI/Panels/Battle`）；Editor仍统一放 `Assets/Editor/RevGame`。生成目录不擅自搬迁。
 - AB配置通过项目 `GameResourceBuild.Configure` 串联框架工具；共享帧/Shader显式分包，重复依赖与循环依赖必须在构建前解决。
+- 进入AB的项目Sprite图片必须通过 `GameSpriteAtlasBuild` 纳入唯一的Sprite Atlas V2；按实际使用范围/寿命区分常用与备用图集，禁止重新加载散图Texture2D。引擎生成字形纹理、内置UISprite和非Sprite采样纹理需按规范区分，不能错误打包。
+- 图集通过 `GameSpriteAtlasService` + `RevResManager` 绑定；新代码不得逐棋子/逐帧GetSprite、克隆材质或绕开框架引用计数。必须验收真实AB、背景UV、动画与重复进出战斗。
+- 核心类、接口契约、字段、方法和算法关键步骤写中文新手注释：说明用途、单位/范围、所有者、生命周期、失败路径及“为什么这样做”，不只逐句翻译代码。
+- GPU实例化、动态合批、UGUI合批分别测量；不能把Shader实例化关键字或开启一个开关当作优化成功证据。禁止为合批破坏透明排序与玩法。

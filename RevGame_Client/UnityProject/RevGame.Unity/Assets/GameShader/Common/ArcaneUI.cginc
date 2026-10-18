@@ -22,6 +22,7 @@ sampler2D _MainTex;
 fixed4 _Color, _TextureSampleAdd, _GlowColor;
 float4 _ClipRect;
 float _Strength, _Speed, _ArtBlend;
+float4 _ArtUvRect;
 v2f vert(appdata input)
 {
     v2f output;
@@ -71,7 +72,10 @@ fixed4 frag(v2f input) : SV_Target
     #elif defined(ARCANE_BACKDROP)
     // 两层旋转波场形成低速“墨水/星雾”流动；不使用全屏模糊、GrabPass或额外RenderTexture。
     // UI无图时直接显示程序背景；Sprite背景则混合已有场景画，只让画面轻微流动。
-    float2 p = (input.uv - 0.5) * float2(1.78, 1.0);
+    // 图集UV只占整张贴图的一小块。先恢复原图0~1坐标，再扭曲，最后映回图集，防止读到邻图。
+    float2 rectSize = max(_ArtUvRect.zw, float2(0.0001, 0.0001));
+    float2 localUV = (input.uv - _ArtUvRect.xy) / rectSize;
+    float2 p = (localUV - 0.5) * float2(1.78, 1.0);
     float radius = length(p);
     float angle = atan2(p.y, p.x);
     float field = sin(radius * 10.0 - time + sin(angle * 3.0 + time * 0.4) * 1.6);
@@ -81,7 +85,8 @@ fixed4 frag(v2f input) : SV_Target
     // 双层扭曲让原画产生可见的液态流动；先内缩采样域，再扭曲，最后钳在半个像素内。
     // 原图即使有透明边，也不会随着扭曲把相机底色带进屏幕；这里只对全屏背景强制不透明。
     float2 warp = float2(sin(p.y * 6.0 + field + time), cos(p.x * 5.0 + field - time * 0.7)) * _Strength * 0.038;
-    float2 artUV = clamp(lerp(float2(0.05, 0.05), float2(0.95, 0.95), input.uv) + warp, 0.005, 0.995);
+    float2 artUV = clamp(lerp(float2(0.05, 0.05), float2(0.95, 0.95), localUV) + warp, 0.005, 0.995);
+    artUV = _ArtUvRect.xy + artUV * rectSize;
     fixed4 art = tex2D(_MainTex, artUV) + _TextureSampleAdd;
     float ribbons = pow(1.0 - abs(field), 3.0);
     float3 magic = lerp(float3(0.18, 0.38, 0.46), float3(0.49, 0.22, 0.48), mist);

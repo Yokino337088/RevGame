@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4243511238
+CRC: 3642421530
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e79b93fdc07f9a7e3269b649102ddcc1
+    Hash: d824f86bc7fc0df954d0445463e7a6f2
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0cd52914ecd8f51a2b1f14efa836de6c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e79b93fdc07f9a7e3269b649102ddcc1
+    Hash: d824f86bc7fc0df954d0445463e7a6f2
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,4 +40,5 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Effects/Combat/BattleEffect.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/art_ui"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"

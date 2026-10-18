@@ -1,0 +1,13 @@
+通过：9张实际AB图集、191张Sprite、3次战斗重入与引用释放
+BoardStatus：11张Sprite，1页，131688字节
+CombatFrames：14张Sprite，1页，1049192字节
+PieceFrames：135张Sprite，1页，4194920字节
+SceneBackdrop_0fc7e394Atlas：1张Sprite，1页，2097768字节
+UIBattle：6张Sprite，1页，1049192字节
+UIMenus：4张Sprite，1页，524904字节
+UIReserve：18张Sprite，1页，2097768字节
+UI_Tavern_imgBKAtlas：1张Sprite，1页，2097768字节
+UI_chessBoard_chessBoardAtlas：1张Sprite，1页，4194920字节
+重入0：Renderer=110，贴图=5，批次=13
+重入1：Renderer=110，贴图=5，批次=13
+重入2：Renderer=110，贴图=5，批次=13

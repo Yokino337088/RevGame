@@ -583,6 +583,8 @@ namespace RevGame.Editor
 
         public static Sprite Load(string path)
         {
+            // 图集整理只搬迁资产，不改变GUID；旧制作配方必须查迁移表，不能重新复制旧目录的散图。
+            path = GameArtPaths.Resolve(path);
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             if (sprite == null)
             {
@@ -594,6 +596,7 @@ namespace RevGame.Editor
 
         private static void ImportSprite(string source, string target)
         {
+            target = GameArtPaths.Resolve(target);
             File.Copy(source, target, true);
             AssetDatabase.ImportAsset(target, ImportAssetOptions.ForceSynchronousImport);
             var importer = (TextureImporter)AssetImporter.GetAtPath(target);

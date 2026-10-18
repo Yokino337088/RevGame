@@ -35,8 +35,8 @@ Material:
     m_Floats:
     - PixelSnap: 0
     - _EnableExternalAlpha: 0
-    - _Speed: 0.24
-    - _Strength: 0.28
+    - _Speed: 0.5
+    - _Strength: 0.5
     m_Colors:
     - _ArcaneColor: {r: 0.21999997, g: 0.78999996, b: 0.72, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}

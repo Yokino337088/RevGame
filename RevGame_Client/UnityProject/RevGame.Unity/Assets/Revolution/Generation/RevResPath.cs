@@ -19,6 +19,9 @@ namespace Revolution
     public static class RevResPath
     {
         public const string Art = "Art/";
+        public const string Art_Background = "Art/Background/";
+        public const string Art_Board = "Art/Board/";
+        public const string Art_Combat = "Art/Combat/";
         public const string Art_Pieces = "Art/Pieces/";
         public const string Art_Pieces_Enemy = "Art/Pieces/Enemy/";
         public const string Art_Pieces_Enemy_Archer = "Art/Pieces/Enemy/Archer/";
@@ -43,6 +46,7 @@ namespace Revolution
         public const string Art_Status = "Art/Status/";
         public const string Art_Status_Encircled = "Art/Status/Encircled/";
         public const string Art_UI = "Art/UI/";
+        public const string Atlases = "Atlases/";
         public const string Audio = "Audio/";
         public const string Audio_Bgm = "Audio/Bgm/";
         public const string Audio_Sfx = "Audio/Sfx/";

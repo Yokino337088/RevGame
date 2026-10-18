@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 173386753
+CRC: 4188472705
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: de028da03db23615dcee1c6c2a6f5ae8
+    Hash: dd14ad0200991fe3ae4abc39a2b9ddbe
   TypeTreeHash:
     serializedVersion: 2
     Hash: e823eca0bb9db6702c1f77a8f23962cc
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: de028da03db23615dcee1c6c2a6f5ae8
+    Hash: dd14ad0200991fe3ae4abc39a2b9ddbe
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -83,7 +83,8 @@ Assets:
 - Assets/GameRes/UI/Panel/BattleHudPanel.prefab
 - Assets/GameRes/UI/Panel/SettlePanel.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/art_ui"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background"

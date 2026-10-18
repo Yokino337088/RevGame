@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 1339888231
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 55d397fd1797c6c67d07324505d9e249
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 55d397fd1797c6c67d07324505d9e249
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/UI_Tavern_imgBK.png
+- Assets/GameRes/Atlases/UI_Tavern_imgBKAtlas.spriteatlasv2
+Dependencies: []

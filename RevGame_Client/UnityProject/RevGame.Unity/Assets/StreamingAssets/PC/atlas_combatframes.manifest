@@ -1,0 +1,38 @@
+ManifestFileVersion: 0
+CRC: 1120143673
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: af5755510287cc521f8019455407c788
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: af5755510287cc521f8019455407c788
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Combat/CombatFrame_5a79e758.png
+- Assets/GameRes/Art/Combat/CombatFrame_879159c5.png
+- Assets/GameRes/Art/Combat/CombatFrame_086cb9b4.png
+- Assets/GameRes/Art/Combat/CombatFrame_b5b32890.png
+- Assets/GameRes/Art/Combat/CombatFrame_f869f0da.png
+- Assets/GameRes/Art/Combat/CombatFrame_a323e4a1.png
+- Assets/GameRes/Art/Combat/CombatFrame_c9f24a20.png
+- Assets/GameRes/Art/Combat/CombatFrame_2da5a9bd.png
+- Assets/GameRes/Atlases/CombatFrames.spriteatlasv2
+- Assets/GameRes/Art/Combat/CombatFrame_2ddb09b0.png
+- Assets/GameRes/Art/Combat/CombatFrame_d413fc59.png
+- Assets/GameRes/Art/Combat/CombatFrame_203f54cd.png
+- Assets/GameRes/Art/Combat/CombatFrame_fb400a28.png
+- Assets/GameRes/Art/Combat/CombatFrame_9e33cda5.png
+- Assets/GameRes/Art/Combat/CombatFrame_092fd5ee.png
+Dependencies: []

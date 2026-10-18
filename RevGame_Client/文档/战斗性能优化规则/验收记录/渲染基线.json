@@ -1,0 +1,24 @@
+{
+  "sprites": 110,
+  "textures": 13,
+  "textureBytes": 2270676,
+  "materials": 4,
+  "batches": 24,
+  "drawCalls": 24,
+  "setPass": 17,
+  "textureNames": [
+    "UISprite",
+    "Enemy_Crossbow_1_Idle_003",
+    "Enemy_Archer_1_Idle_003",
+    "Enemy_MageFire_1_Idle_003",
+    "Enemy_Shield_1_Idle_003",
+    "Enemy_HeavySword_1_Idle_003",
+    "Enemy_Swordman_1_Idle_003",
+    "棋子_Boss_底座光环",
+    "Player_HeavySword_3_Idle_001",
+    "棋盘_单格底_平铺用",
+    "UI_Setting_Checkmark",
+    "棋盘_星位点",
+    "棋盘_新手教学_背景"
+  ]
+}

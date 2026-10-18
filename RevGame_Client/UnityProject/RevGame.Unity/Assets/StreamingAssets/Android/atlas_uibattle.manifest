@@ -1,0 +1,30 @@
+ManifestFileVersion: 0
+CRC: 617278002
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f08cb61afae831ed777e39b5e561cc1a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f08cb61afae831ed777e39b5e561cc1a
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/UI_Game_imgMobilityBK.png
+- Assets/GameRes/Art/UI/UI_Pvp_imgBK.png
+- Assets/GameRes/Art/UI/UI_Game_imgEnemyMobility.png
+- Assets/GameRes/Art/UI/UI_roleItem_roleItem.png
+- Assets/GameRes/Art/UI/UI_roleItem_imgBK.png
+- Assets/GameRes/Atlases/UIBattle.spriteatlasv2
+- Assets/GameRes/Art/UI/UI_Setting_Checkmark.png
+Dependencies: []

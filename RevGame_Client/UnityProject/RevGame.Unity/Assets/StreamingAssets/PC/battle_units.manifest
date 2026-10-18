@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 266887858
+CRC: 1429607323
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 351240061cc8570897185c67944c5f00
+    Hash: b0b5905502561da4c39020cd6de29cdd
   TypeTreeHash:
     serializedVersion: 2
     Hash: bbdc39b121a8ad3e0bf7270c36f63523
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 351240061cc8570897185c67944c5f00
+    Hash: b0b5905502561da4c39020cd6de29cdd
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,6 +37,7 @@ Assets:
 - Assets/GameRes/Pieces/Unit/SlimePiece.prefab
 - Assets/GameRes/Pieces/Unit/PieceView.prefab
 Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pieceframes"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_pieces"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_piece_frames"

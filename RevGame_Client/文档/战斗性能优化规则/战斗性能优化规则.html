@@ -1,0 +1,363 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>RevGame · 战斗性能优化规则</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}a{color:var(--green);text-decoration-thickness:1px;text-underline-offset:4px}button,input{font:inherit}button:focus-visible,a:focus-visible{outline:3px solid #b48442;outline-offset:4px}.topbar{height:76px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}.brand{font-weight:800;letter-spacing:2px}.brand i{font-style:normal;background:var(--green);color:white;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-right:12px}.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}.hero{max-width:1260px;margin:0 auto;padding:70px 40px 48px;display:grid;grid-template-columns:1.45fr 1fr;gap:60px;align-items:center}.eyebrow,.section-label{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}.hero h1{font-size:clamp(35px,4.3vw,62px);letter-spacing:-2px;line-height:1.25;margin:20px 0;font-weight:800}.hero h1 em{font-style:normal;color:var(--green)}.lead{color:var(--muted);font-size:17px;max-width:570px}.hero-links{display:flex;gap:12px;margin-top:27px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:9px 18px;border-radius:30px;text-decoration:none;font-size:14px;background:white}.pill.primary{background:var(--green);color:white;border-color:var(--green)}.stamp{font:12px Consolas,monospace;margin-top:25px;color:#7b867b}.demo{position:relative;background:linear-gradient(135deg,#fefdf5,#e6efe1);padding:26px;border:1px solid #d6e2d2;border-radius:28px;box-shadow:0 20px 55px #334f3320;overflow:hidden}.demo::before{content:"";position:absolute;width:210px;height:210px;background:#e5cc8e55;border-radius:50%;filter:blur(25px);right:-80px;top:-90px;animation:drift 8s ease-in-out infinite alternate}.demo-head{position:relative;display:flex;justify-content:space-between;align-items:center;font-size:13px}.live-dot{width:7px;height:7px;border-radius:50%;background:#688c62;box-shadow:0 0 0 5px #5c86621c;display:inline-block;margin-right:8px;animation:pulse 2.5s infinite}.tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:25px 0}.tile{aspect-ratio:1;background:#fff9ef;border:1px solid #d7c7ac;display:grid;place-items:center;border-radius:12px;transition:background .5s,border-color .5s,transform .5s;box-shadow:0 4px 7px #99866d12}.tile:nth-child(3n){background:#e9eef7}.tile:nth-child(3n + 1){background:#f6e7df}.tile span{width:45%;height:43%;border-radius:47% 47% 38% 38%;background:#728b68;position:relative;box-shadow:inset -4px -5px 0 #52764f40;animation:bob 3s ease-in-out infinite;animation-delay:var(--delay)}.tile span:before,.tile span:after{content:"";position:absolute;width:4px;height:4px;background:#223d2d;border-radius:50%;top:43%;left:29%}.tile span:after{left:auto;right:29%}.demo[data-mode="atlas"] .tile{background:#e3efdd;border-color:#adc4a3}.demo[data-mode="atlas"] .tile:nth-child(4n){transform:translateY(-3px)}.demo-result{display:flex;align-items:baseline;gap:12px;border-top:1px solid #cfdacb;padding-top:14px}.demo-result b{font:700 34px/1 Consolas,monospace;color:var(--green)}.demo-result span{font-size:13px;color:var(--muted)}.segmented{display:flex;gap:5px;border-radius:12px;background:#dce5d8;padding:4px;margin-top:15px}.segmented button{flex:1;border:0;background:transparent;border-radius:9px;padding:7px;cursor:pointer;font-size:13px;color:var(--ink)}.segmented button[aria-pressed="true"]{background:#fffef8;box-shadow:0 2px 5px #34502515}.demo small{display:block;font-size:11px;line-height:1.7;color:var(--muted);margin-top:13px}.metrics{max-width:1180px;margin:0 auto 45px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:25px 0}.metric{padding:5px 35px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric strong{font:700 39px/1.4 Consolas,monospace;color:var(--green)}.metric strong small{font-size:18px}.metric p{margin:4px 0 0;font-size:13px;color:var(--muted)}.workspace{display:grid;grid-template-columns:230px minmax(0,890px);gap:55px;max-width:1180px;margin:auto;padding-bottom:90px}.sidebar{align-self:start;position:sticky;top:28px}.sidebar h3{font-size:12px;letter-spacing:3px;margin:0 0 18px;color:var(--muted)}.sidebar nav{display:flex;flex-direction:column;gap:3px}.sidebar nav a{font-size:13px;text-decoration:none;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;display:flex;gap:10px}.sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}.sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}.sidebar .note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:22px;padding:20px 10px}.chapter{background:#fffefa;border:1px solid var(--line);border-radius:18px;margin-bottom:25px;padding:36px 38px;box-shadow:0 5px 15px #315c3110}.chapter h2{font-size:27px;line-height:1.45;letter-spacing:-.5px;margin:8px 0 22px}.chapter p{margin:17px 0}.chapter strong{color:#254e3d}.chapter ul,.chapter ol{padding-left:24px}.chapter li{margin:10px 0}.chapter code{font:13px/1.65 Consolas,"Microsoft YaHei",monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}.chapter pre{padding:20px;background:#edf2ea;border-radius:12px;overflow:auto}.chapter pre code{background:none;border:0;padding:0;white-space:pre}.table-scroll{overflow:auto;margin:24px -5px;border:1px solid var(--line);border-radius:11px}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}td,th{padding:13px 14px;border-bottom:1px solid #e4e9e0;vertical-align:top}tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:105px}tr:nth-child(even) td{background:#fafbf6}footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);display:flex;justify-content:space-between;font-size:13px}.progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--green);z-index:20;transition:width .1s}.chapter.arrive{animation:arrive .55s ease both}.motion-control{border:1px solid #c7d2c3;background:transparent;border-radius:30px;font-size:12px;cursor:pointer;padding:7px 12px;color:var(--green)}.paused *{animation-play-state:paused!important}.legend{padding:14px 18px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936}.document-meta{font-size:13px;color:var(--muted);margin-bottom:25px}.document-meta a{margin-right:20px}@keyframes bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.04,.98)}}@keyframes drift{to{transform:translate(-50px,40px)}}@keyframes pulse{50%{box-shadow:0 0 0 8px #5c866200}}@keyframes arrive{from{opacity:.5;transform:translateY(12px)}to{opacity:1;transform:none}}@media(max-width:1200px){.workspace{padding:0 25px 60px;gap:25px;grid-template-columns:200px minmax(0,1fr)}.metrics{margin-left:25px;margin-right:25px}.hero{gap:30px}}@media(max-width:900px){.sidebar{position:static}.sidebar nav{display:grid;grid-template-columns:1fr 1fr}.sidebar .note,.sidebar h3{display:none}.workspace{display:block}.sidebar{margin-bottom:25px}.hero{grid-template-columns:1fr 1fr;padding:40px 25px}.chapter{padding:28px}.tag{display:none}}@media(max-width:620px){body{font-size:15px}.topbar{height:66px}.hero{display:block;padding:35px 22px}.hero h1{letter-spacing:-1px;font-size:40px}.demo{margin-top:30px;max-width:390px}.tile-grid{gap:8px}.metrics{padding:18px 0;margin-bottom:25px}.metric{padding:0 10px}.metric strong{font-size:28px}.metric p{font-size:11px}.workspace{padding:0 14px 40px}.sidebar nav{gap:2px}.sidebar nav a{font-size:11px;padding:7px 5px;gap:6px}.chapter{padding:25px 20px;border-radius:14px}.chapter h2{font-size:24px}.table-scroll{margin:20px 0}table{min-width:560px}footer{display:block}.hero-links{gap:8px}.pill{padding:8px 14px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before{animation:none!important;transition:none!important}}@media print{.sidebar,.demo,.motion-control,.progress{display:none}.hero,.workspace{display:block;padding:0}.chapter{box-shadow:none;break-inside:auto;border:0;padding:15px 0}.metrics{margin:0}.topbar{padding:0}.table-scroll{overflow:visible}a{color:inherit}body{font-size:11pt}}
+</style></head><body>
+<div class="progress" aria-hidden="true"></div><header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">ENGINEERING FIELD GUIDE</span></div><button class="motion-control" id="motion" aria-pressed="false">暂停装饰动画</button></header>
+<div class="hero"><div><div class="eyebrow">REVOLUTION / PERFORMANCE STANDARD 1.0</div><h1>让战斗更流畅。<br><em>让每一份资源有归属。</em></h1><p class="lead">从围棋规则到渲染批次，从弹幕对象池到图集生命周期。用可复测的证据，建立下一次开发仍然有效的工程约定。</p><div class="hero-links"><a class="pill primary" href="#s1">阅读实测结果 ↗</a><a class="pill" href="战斗性能优化规则.md">Markdown 源文档</a></div><div class="stamp">2026.10.18 · UNITY 2022.3 · 1920 × 1080 LANDSCAPE</div></div><div class="demo" id="batchDemo" data-mode="atlas"><div class="demo-head"><strong><span class="live-dot"></span>贴图共享示意</strong><span class="tag">INTERACTIVE</span></div><div class="tile-grid"><div class="tile"><span style="--delay:-0.0s"></span></div><div class="tile"><span style="--delay:-0.19s"></span></div><div class="tile"><span style="--delay:-0.38s"></span></div><div class="tile"><span style="--delay:-0.5700000000000001s"></span></div><div class="tile"><span style="--delay:-0.76s"></span></div><div class="tile"><span style="--delay:-0.95s"></span></div><div class="tile"><span style="--delay:-1.1400000000000001s"></span></div><div class="tile"><span style="--delay:-1.33s"></span></div><div class="tile"><span style="--delay:-1.52s"></span></div><div class="tile"><span style="--delay:-1.71s"></span></div><div class="tile"><span style="--delay:-1.9s"></span></div><div class="tile"><span style="--delay:-2.09s"></span></div></div><div class="demo-result"><b id="textureCount">1</b><span id="demoText">张共享贴图 · 12 个精灵</span></div><div class="segmented" role="group" aria-label="贴图方案示意"><button data-mode="loose" aria-pressed="false">散图</button><button data-mode="atlas" aria-pressed="true">图集</button></div><small>此处是原理示意，不是性能测量。贴图相同仍需满足材质、排序与遮罩条件，才可能合批。</small></div></div>
+<div class="metrics"><div class="metric"><strong>45.8<small>% ↓</small></strong><p>固定画面批次 24 → 13</p></div><div class="metric"><strong>19.9<small>% ↓</small></strong><p>相同资源集纹理原生内存</p></div><div class="metric"><strong>191<small> / 9</small></strong><p>图片唯一覆盖 / 分用途图集</p></div></div>
+<div class="workspace"><aside class="sidebar"><h3>阅读导航</h3><nav><a href="#s1"><span>01</span>实测结论与适用边界</a><a href="#s2"><span>02</span>如何选择渲染优化</a><a href="#s3"><span>03</span>图集与AB的强制规则</a><a href="#s4"><span>04</span>Revolution资源与内存生命周期</a><a href="#s5"><span>05</span>CPU、分配与战斗算法</a><a href="#s6"><span>06</span>弹幕、动画和UI预算</a><a href="#s7"><span>07</span>Shader与图集UV</a><a href="#s8"><span>08</span>编程与注释规范</a><a href="#s9"><span>09</span>后续优化执行顺序与门禁</a><a href="#s10"><span>10</span>验收与证据</a></nav><div class="note">先测量，后优化。<br>先确定所有者，再分配。<br>不把Editor数据当真机结论。</div></aside><main><div class="document-meta"><a href="验收记录/图集Play验收.txt">图集与重入证据</a><a href="验收记录/纹理内存对比.txt">纹理内存证据</a></div><div class="legend">适用范围：RevGame 后续战斗开发。这里的数值为 Editor / PC AB 验收结果；Android 真机帧率与热稳定性仍需独立验证。</div><section id="s1" class="chapter"><div class="section-label">STANDARD / 01</div><h2>实测结论与适用边界</h2><div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th style="text-align: right;">优化前</th>
+<th style="text-align: right;">本次结果</th>
+<th>测量口径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>固定战斗画面绘制批次</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">13</td>
+<td>Editor DX11，events 场景，暂停模型推进，110 个启用的 SpriteRenderer</td>
+</tr>
+<tr>
+<td>SetPass 次数</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">10</td>
+<td>同一画面；材质/Shader 状态切换次数</td>
+</tr>
+<tr>
+<td>可见 SpriteRenderer 使用的不同贴图</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">5</td>
+<td>包含 Unity 内置血条白片，不含独立 UGUI 统计</td>
+</tr>
+<tr>
+<td>相同战斗/UI根资源的纹理对象</td>
+<td style="text-align: right;">172</td>
+<td style="text-align: right;">8</td>
+<td>分别加载旧/新 PC AB 的同一组根资源及依赖</td>
+</tr>
+<tr>
+<td>上述纹理原生内存估计</td>
+<td style="text-align: right;">9,009,968 B</td>
+<td style="text-align: right;">7,219,172 B</td>
+<td>Profiler.GetRuntimeMemorySizeLong 合计，约减少 <strong>19.9%</strong></td>
+</tr>
+<tr>
+<td>图集覆盖</td>
+<td style="text-align: right;">无</td>
+<td style="text-align: right;">9 图集 / 191 图片</td>
+<td>所有 GameRes 图片及打包、场景可达图片；唯一归属</td>
+</tr>
+<tr>
+<td>AB资源布局</td>
+<td style="text-align: right;">19 包</td>
+<td style="text-align: right;">25 包 / 235 映射</td>
+<td>PC 和 Android；外部导出目录不入库</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>不能从这些数字推出手机稳定 60 FPS。</strong> 当前证据来自 Unity Editor 与 PC AB，没有 Android 真机 GPU 耗时、温度和峰值内存数据。纹理原生内存不是进程总内存，也不是显卡驱动的真实显存占用。固定画面不等于整场战斗峰值。</p>
+<p>前一轮已完成规则 CPU 优化：同一离线夹具战斗中位耗时 291.343 → 40.912 ms，AI 补子 13.773 → 3.557 ms。它们是一次测试工作量的执行时间，不是每帧耗时。本次不把历史数字重复计为新增收益。</p>
+<p>一个实际反例：第一版把备用 UI 混入常用图集，纹理内存变成 9,840,612 B，比原先更大。拆出 <code>UIReserve</code> 后才降至 7,219,172 B。<strong>“打了图集”不等于“省了内存”。</strong></p></section><section id="s2" class="chapter"><div class="section-label">STANDARD / 02</div><h2>如何选择渲染优化</h2><div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>技术</th>
+<th>本项目决定</th>
+<th>原因与验收方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SpriteAtlas + 共享材质</td>
+<td>立即使用，已落地</td>
+<td>同一贴图、材质、相邻排序的精灵更容易合批；实际检查 Renderer 的 sprite.packed 与纹理对象</td>
+</tr>
+<tr>
+<td>动态合批</td>
+<td>保留并验证，已在工作</td>
+<td>基线已出现动态合批，不能把打开一个开关算成新增收益；用 Profiler / Frame Debugger 检查</td>
+</tr>
+<tr>
+<td>GPU 实例化</td>
+<td>当前不强行改造 SpriteRenderer</td>
+<td>当前实例化批次为 0；Shader 的 multi_compile_instancing 只提供变体，不会自动把 SpriteRenderer 改成实例化渲染器</td>
+</tr>
+<tr>
+<td>UGUI 合批</td>
+<td>由 Canvas 按贴图、材质、遮罩和层级组织</td>
+<td>不等同于 MeshRenderer 的动态合批；同图集也可能被文字、不同材质、Mask、Canvas 打断</td>
+</tr>
+<tr>
+<td>SRP Batcher</td>
+<td>不能直接套用当前 Built-in 项目</td>
+<td>它不是“把多个对象合成一次Draw Call”；更换渲染管线必须独立评估迁移成本</td>
+</tr>
+<tr>
+<td>静态合批</td>
+<td>不用于移动棋子和弹道</td>
+<td>棋子换位、动画换帧、弹幕飞行都有动态变化</td>
+</tr>
+</tbody>
+</table></div>
+<p>GPU 实例化值得在“数量远超当前 9×9 棋盘，且 CPU 提交成为瓶颈”时做隔离实验。实验渲染器须统一 Quad Mesh、材质和图集，传入每实例矩阵、颜色、UV矩形、帧号，并处理透明排序、裁剪、Boss 尺寸、对象池以及移动端回退。没有与现有 SpriteRenderer 同内容、同设备的性能对比，不替换正式路径。</p>
+<p>动态合批也有 CPU 顶点变换成本。不要为了一个批次把不相邻的透明物体乱排序；文字遮挡次序、弹道轮廓和拖尾正确性优先。最终检查 Batches、SetPass、CPU Render Thread、GPU 时间和透明过绘，不能只盯 DC。</p></section><section id="s3" class="chapter"><div class="section-label">STANDARD / 03</div><h2>图集与AB的强制规则</h2><p>所有进入 AB 的<strong>项目 Sprite 图片</strong>必须恰好属于一个 Sprite Atlas V2；不允许业务绕回散图 Texture2D 加载。引擎生成的字体字形纹理、内置 UISprite、RenderTexture、法线图或 LUT 不是 UI Sprite，不能为了满足字面要求错误打入 SpriteAtlas。新增特殊纹理要明确用途，当前构建门禁对未分类的非 Sprite 图片报错。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>图集</th>
+<th>内容</th>
+<th>加载边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PieceFrames</td>
+<td>玩家/敌人 135 张序列帧</td>
+<td>棋子与手牌头像共享；离开战斗释放服务自己的租约</td>
+</tr>
+<tr>
+<td>CombatFrames</td>
+<td>死亡、升级、弹头等 14 张特效图</td>
+<td>战斗按需加载；回池后再释放资源</td>
+</tr>
+<tr>
+<td>BoardStatus</td>
+<td>格子、眼、被围三帧、棋子配件，共 11 图</td>
+<td>棋盘/战斗表现共享</td>
+</tr>
+<tr>
+<td>UIBattle</td>
+<td>当前使用的手牌、对战底板、行动条和状态图</td>
+<td>与实际 UI 使用者共享</td>
+</tr>
+<tr>
+<td>UIMenus</td>
+<td>当前使用的菜单按钮和提示底图</td>
+<td>首次请求加载</td>
+</tr>
+<tr>
+<td>UIReserve</td>
+<td>当前没有预制体/配置引用的备用 UI</td>
+<td>打包保留，正常游戏不主动加载</td>
+</tr>
+<tr>
+<td>UI_Tavern_imgBKAtlas</td>
+<td>备用酒馆大底图</td>
+<td>独立页面，避免挤大常用图集</td>
+</tr>
+<tr>
+<td>UI_chessBoard_chessBoardAtlas</td>
+<td>备用长棋盘大图</td>
+<td>独立4096上限；不恢复成正式棋盘背景</td>
+</tr>
+<tr>
+<td>SceneBackdrop_0fc7e394Atlas</td>
+<td>当前场景引用的背景</td>
+<td>场景启动预热，场景寿命持有</td>
+</tr>
+</tbody>
+</table></div>
+<p>生产入口是 <code>GameResourceBuild.Configure / BuildAndCopy</code>。图集工具只给 Revolution 提供资源布局，不另造 AB 加载系统。新增图片后执行配置、构建、复制，提交生成的 ResMap、RevResPath 和图集目录清单。</p>
+<ol>
+<li>通过 AssetDatabase 移动资源并保留 <code>.meta</code> GUID；不用文件系统复制“第二份兼容图片”。旧编辑器配方走 <code>GameArtPaths</code> 迁移表。</li>
+<li>常规图集最大2048，备用超大图独占页面。关闭旋转、Tight Packing、Read/Write、Mipmaps，双线性过滤、4像素间隔。保留九宫格 border、pivot、PPU 和序列帧顺序。</li>
+<li>PC 使用 BC3/DXT5，Android 使用 ETC2 RGBA8，保留透明通道。ETC2 不支持的设备可能产生回退解压，发布前须核对最低设备范围；不以Editor结果代替真机。</li>
+<li>图集 <code>Include In Build=false</code>，通过 Revolution 加载 AB。源图与所属图集同包；预制体、材质、字体、Shader 保持明确共享包归属。</li>
+<li>使用 <code>.spriteatlasv2</code> 和 <code>SpriteAtlasImporter</code>。只创建 V1 的 <code>new SpriteAtlas()</code> 文件，在 V2 工程里可能得到无正确打包数据的资产；必须检查实际AB中的图集帧数及像素页面。</li>
+<li>构建前检查：图片覆盖且唯一归属、同包、命名、漏标、重名、循环依赖、隐式重复依赖、Android Shader。</li>
+<li>构建后检查：实际AB加载、图集不为空、Sprite已packed、没有源Texture2D副本、UI/序列帧/背景UV正确。</li>
+<li>增量构建后按本次Manifest清理改名后遗留的旧包，再复制到StreamingAssets。只清理经过绝对路径校验的项目AssetBundles平台目录中的旧文件对，不能递归清理任意配置路径。本次移除了不再被清单使用的art_ui、shared_piece_frames、shared_status旧包。</li>
+</ol>
+<p><strong>资源路径仍可保留 Sprite 的兼容映射，但运行期不能按 Texture2D 加载这些图片。</strong> Unity 会剥离源图片像素；直接请求 Texture2D 与本规范冲突。现有预制体与配置保留 Sprite GUID，Unity 在图集加载完成后自动绑定到图集页。</p></section><section id="s4" class="chapter"><div class="section-label">STANDARD / 04</div><h2>Revolution资源与内存生命周期</h2><p>资源寿命链：逻辑路径 → RevResManager.LoadAsync → 句柄检查 → 使用 → Release → 未使用缓存 → 流程空闲边界 FlushUnused。<code>Release</code> 不等于立即把整个进程内存降回原点，池、依赖和引擎缓存可能仍持有对象。</p>
+<p><code>GameSpriteAtlasService</code> 只适配 Unity 的 <code>atlasRequested</code>：按生成白名单验证标签、合并同图集在途请求，再通过 <code>RevResPath.Atlases</code> 加载。它没有自行拼 StreamingAssets 路径，没有每帧 GetSprite，也没有每颗棋子复制一套帧图。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>对象</th>
+<th>所有者</th>
+<th>收尾要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>图集加载租约</td>
+<td>GameSpriteAtlasService 的 Entry</td>
+<td>每次Load配一次Release；失败和迟到回调同样收尾</td>
+</tr>
+<tr>
+<td>战斗棋子/格子/反馈</td>
+<td>BoardView + RevPool + 战斗域</td>
+<td>回收视图、清回调和队列，再处理资源</td>
+</tr>
+<tr>
+<td>Tween</td>
+<td>创建动画的视图/卡牌</td>
+<td>回池Kill(false)，清字段；禁止全局KillAll误伤其它UI</td>
+</tr>
+<tr>
+<td>计时器、事件</td>
+<td>RevScope / RevLogic / 显式owner</td>
+<td>退出域或销毁时取消；不能无主订阅</td>
+</tr>
+<tr>
+<td>图集GetSprites测试克隆</td>
+<td>测试夹具</td>
+<td>用完销毁克隆；正式动画不走这条路径</td>
+</tr>
+<tr>
+<td>共享材质</td>
+<td>资源系统/场景</td>
+<td>用sharedMaterial，不通过renderer.material隐式克隆</td>
+</tr>
+<tr>
+<td>CPU查询工作区</td>
+<td>单个BoardModel/服务实例</td>
+<td>清内容保容量，不能用全局可变静态容器串局</td>
+</tr>
+</tbody>
+</table></div>
+<p>禁止在每帧、每次攻击、每张卡点击时调用 GC.Collect、Resources.UnloadUnusedAssets 或强制清整个资源组。<code>UnloadGroup(force:true)</code> 会伤到仍在用的共享引用；图集服务使用 Scene 组隔离战斗域强制回收，并在退出战斗后延一帧显式释放战斗专用租约。所有后台回调都检查已释放状态和流程版本。</p>
+<p>小白注释模板：类说明“负责什么、不负责什么、谁创建谁销毁”；字段说明“含义、单位、范围、是否共享、什么时候清”；方法说明“输入、结果、失败、调用时机、所有权”；实现中的关键步骤说明“为什么这么做、先后顺序、错误做法会造成什么”。不要给每句赋值机械写“将A赋给B”。</p></section><section id="s5" class="chapter"><div class="section-label">STANDARD / 05</div><h2>CPU、分配与战斗算法</h2><ul>
+<li>棋盘占格只通过 <code>BoardModel.Place/Move/Remove/Reset</code> 更新，同时递增 TopologyVersion；不得直接改位置后跳过占格维护。</li>
+<li>气眼计算只在占格、加气、围困免疫变化后刷新。伤害致死、补子、移动、复活都可能改变拓扑，不能漏刷新。</li>
+<li>AI 同一轮查询复用独立深快照，候选试算后还原；禁止移动真实战斗棋子试走，禁止让多个AI共享可变草稿。</li>
+<li>高频查询由调用方提供 List/数组缓冲。禁止在热循环里 LINQ、ToArray、闭包排序、字符串拼接、扫描整个场景和重复 GetComponent。</li>
+<li>高频容器预留容量并有上限。值类型并非万能：装箱、接口枚举器、复制大struct也可能有成本。</li>
+<li>敌方 AI 决策按既有战斗时钟触发，不能改为每帧寻路或每帧扫描所有候选点。表现帧与规则步长分离。</li>
+<li>飘字每帧先取至多20个矩形快照，再作最多400次轻量矩形比较；摆位的25个候选位置共用一组预留矩形。不要在双重循环反复读取Renderer.bounds和坐标转换。</li>
+<li>遮挡透明度没变化时不重复写TextMesh颜色；但Tween自身淡出必须继续更新。</li>
+</ul>
+<p>目标是热路径稳定且分配可解释。当前 Mono 中 <code>GC.GetAllocatedBytesForCurrentThread()</code> 曾对已知分配也返回0，不能用它证明零GC。使用 Profiler 的 GC.Alloc 调用栈/ProfilerRecorder有效计数和Player长时间记录；区分首次字体扩容、对象池预热和稳定期。</p></section><section id="s6" class="chapter"><div class="section-label">STANDARD / 06</div><h2>弹幕、动画和UI预算</h2><div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th style="text-align: right;">约束</th>
+<th>超限行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同屏飘字</td>
+<td style="text-align: right;">最多20</td>
+<td>合并同目标伤害；有界队列；过期不补播</td>
+</tr>
+<tr>
+<td>攻击口号</td>
+<td style="text-align: right;">最多7，计入20总预算</td>
+<td>同棋子冷却；优先保留伤害信息</td>
+</tr>
+<tr>
+<td>活跃弹道</td>
+<td style="text-align: right;">最多14</td>
+<td>分批释放，不能无限创建</td>
+</tr>
+<tr>
+<td>弹道待播</td>
+<td style="text-align: right;">最多24</td>
+<td>限龄丢弃过期表现，伤害早已在模型结算</td>
+</tr>
+<tr>
+<td>DOTween预留容量</td>
+<td style="text-align: right;">512 Tween / 128 Sequence</td>
+<td>是容量基线，不是允许无限动画的理由</td>
+</tr>
+<tr>
+<td>文字遮挡</td>
+<td style="text-align: right;">避让优先；下层35%透明度兜底</td>
+<td>保留字与描边的透明排序</td>
+</tr>
+</tbody>
+</table></div>
+<p>对象池优化的是重复创建/销毁，不会让活跃对象免费。每个弹道还有轮廓和短尾，14条弹道可能对应42个SpriteRenderer，测绘制时必须算子层。文字描边也会增加顶点和透明过绘。数量、材质、纹理与屏幕覆盖面积都要限制。</p>
+<p>切回合顺序固定：使旧异步代次失效 → 取消动画/计时器 → 归池 → 清文字、弹道、待播队列与预约计数 → 建立下一回合。任何迟到结果只能归池，不能占用新回合预算，不能再次扣血。</p>
+<p>UI继续按1920×1080横屏布局，适配安全区但背景覆盖整个视口。UGUI依靠图集、共享材质与合理层级合批；不为每张卡建一个Canvas。只有Profiler证明频繁重建影响其它静态UI时才拆Canvas。静态数值没变化不反复改Text，非交互图片关闭Raycast Target，避免每帧Layout重建。</p></section><section id="s7" class="chapter"><div class="section-label">STANDARD / 07</div><h2>Shader与图集UV</h2><p>棋子、卡牌、面板和背景优先单Pass共享材质。不加GrabPass、全屏模糊、逐棋子RenderTexture或高成本屏幕后处理。透明部分仍保持alpha，避免方框、残影和过绘扩大。</p>
+<p>UI原图使用UV0，动画效果使用独立局部坐标UV1，不能用图集中的绝对UV作为每张卡的0~1坐标。动态背景先将图集UV还原为原图局部坐标，再扭曲、限制范围，最后映回图集矩形；否则会采到邻图或透明间隔。</p>
+<p><code>GamePresentation.UpdateBackgroundAtlasUv</code> 使用 <code>DataUtility.GetOuterUV</code> 取得四个数。它不取会分配数组的 <code>sprite.uv</code>；只有UV改变才更新缓存的 MaterialPropertyBlock。背景只一张允许独立参数块；不要把这个做法无条件复制到所有棋子而打断合批。</p>
+<p>修改 Shader 后检查：透明边缘、九宫格、卡牌翻转、Boss三帧、被围三帧、不同屏幕比例、Android编译和真实AB材质。<code>shader.isSupported</code> 只是基本检查，不等于真机所有变体都正确。</p></section><section id="s8" class="chapter"><div class="section-label">STANDARD / 08</div><h2>编程与注释规范</h2><ol>
+<li>业务只访问Rev门面；禁止绕进Core/Implementation，禁止修改本仓库的Revolution框架快照。需要框架能力时回源仓库修改、验证、重新导出。</li>
+<li>流程用唯一GameFlow + FSM + RevScope；规则留在服务/模型，UI交互只转发，表现事件不二次结算伤害。</li>
+<li>异步只用RevTask及框架回调。每个回调审查退出、重入、失败和对象回池四种情况。</li>
+<li>面板分OnBindView装配、OnRefreshView落屏、交互转发。面板用CloseSelf，不直接Destroy自己。</li>
+<li>资源用生成逻辑路径或两段式参数，首次真机异步加载并检查句柄ErrorReason；日志走RevLog。</li>
+<li>中文注释；方法体有大括号；方法签名的左括号与参数不另起一行。核心类、接口/实现契约、方法、字段和关键算法步骤必须有面向新手的解释。</li>
+<li>按业务层和模块细分目录：例如View/Resources、View/Combat/Effects、Services/Battle/Simulation。Editor代码统一在Assets/Editor/RevGame下，不能塞进GameScripts/Editor。</li>
+<li>Shader放GameShader对应子目录；材质放GameRes/Material对应子目录；UI/Panel与UI/Item分开。生成目录不任意迁移。</li>
+<li>外部AssetBundles、Library、Temp、Logs、csproj/sln、安装包不入库；用户指定Assets/StreamingAssets可入库。</li>
+</ol>
+<p>真实实现请阅读：</p>
+<ul>
+<li><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameSpriteAtlasBuild.cs">GameSpriteAtlasBuild：依赖扫描、V2导入、分组与校验</a></li>
+<li><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GameSpriteAtlasService.cs">GameSpriteAtlasService：请求合并、晚到回调、成对释放</a></li>
+<li><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.Feedback.cs">BoardView.Feedback：预算、矩形缓存与遮挡</a></li>
+<li><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BattleEffectView.cs">BattleEffectView：共享字体材质、组件缓存、Tween回收</a></li>
+<li><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/GamePresentation.cs">GamePresentation：背景图集UV与全屏覆盖</a></li>
+<li><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Rendering/GameAtlasMemoryChecks.cs">GameAtlasMemoryChecks：同一组根资源的可重复AB内存对比</a></li>
+</ul></section><section id="s9" class="chapter"><div class="section-label">STANDARD / 09</div><h2>后续优化执行顺序与门禁</h2><p><strong>每次都走同一条证据链：基线 → 定位热点 → 单项修改 → 同输入复测 → 功能回归 → 记录。</strong> 提交中说明设备、平台、图形API、分辨率、种子、场景、预热、采样时长，以及哪些指标尚未测到。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>做法</th>
+<th>通过条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基线</td>
+<td>固定events场景，等待视图就绪，停止模型时钟；密集反馈另测</td>
+<td>前后资源、对象数和屏幕一致</td>
+</tr>
+<tr>
+<td>渲染</td>
+<td>Profiler批次/SetPass/动态批次；必要时Frame Debugger逐事件</td>
+<td>无缺图/乱序；批次变化有归因</td>
+</tr>
+<tr>
+<td>内存</td>
+<td>相同根资源及依赖对比，三次或更多进出战斗</td>
+<td>图集租约归零且不逐轮增长；纹理差异解释清楚</td>
+</tr>
+<tr>
+<td>图集</td>
+<td>GameSpriteAtlasBuild.Validate + GameAtlasPlayChecks</td>
+<td>覆盖、唯一归属、packed、实际AB与重入都通过</td>
+</tr>
+<tr>
+<td>反馈</td>
+<td>GameReadabilityChecks + GameRoundPresentationChecks</td>
+<td>20/14预算、避让、透明兜底、回合清理保留</td>
+</tr>
+<tr>
+<td>布局/美术</td>
+<td>GameLayoutChecks + GameResourcePlayChecks</td>
+<td>横屏、背景铺满、手牌六张、Boss/被围动画正确</td>
+</tr>
+<tr>
+<td>规则</td>
+<td>GameRuleChecks / GameTacticsChecks / GameOptimizationChecks</td>
+<td>不因优化改变气眼、占格、AI决策有效性</td>
+</tr>
+<tr>
+<td>发布</td>
+<td>PC和Android AB构建、映射一致、Shader检查</td>
+<td>不把Editor直读通过当成AB通过</td>
+</tr>
+</tbody>
+</table></div>
+<p>下一阶段在目标Android设备做10分钟密集战斗与反复进出：记录CPU主线程/渲染线程/GPU p50与p95、GC.Alloc、进程与纹理峰值、温度降频和触控响应。60 FPS预算16.67 ms，30 FPS预算33.33 ms；这是目标预算，只有设备证据才能标记达标。</p>
+<p>如果GPU受限先查透明过绘、Shader采样、像素覆盖和分辨率成本；如果CPU渲染提交受限再评估实例化；如果GC受限查分配栈；如果内存增长查仍被引用的池对象、事件、Tween、图集Entry和依赖链。不要把所有瓶颈都归因于Draw Call。</p></section><section id="s10" class="chapter"><div class="section-label">STANDARD / 10</div><h2>验收与证据</h2><p>同目录 <code>验收记录</code> 保存基线、最终资源内存对比、图集Play断言、资源和可读性回归、图集AB二进制检查、HTML排版检查。当前报告明确区分编辑器证据与待做的真机测试。</p>
+<p>本次通过：9张真实AB图集/191张Sprite，3次战斗重入引用释放；231个资源加载；50条密集反馈断言（峰值20条文字/14条弹道）；136条回合清理回归；37条Shader/动画回归；649条规则、13,418条随机棋盘等价断言、737条横屏布局断言。9个PC图集包均没有额外的源Texture2D资产；PC与Android各25包构建成功。HTML在1440和390宽度下无页面溢出、无脚本错误，交互、目录、链接及减少动画模式通过。</p>
+<p>纹理内存基线来自修改前提交be72a8c的PC AB，解出到临时目录，不回滚工程。复测入口：<code>GameAtlasMemoryChecks.Compare("Temp/AtlasBaselinePC")</code>，仅在非Play使用。固定画面前测为Editor直读，后测为实际PC AB，均为events场景、110个启用SpriteRenderer；数字反映该样本，不承诺所有场景同样降幅。</p>
+<p>框架可行性结论：本次图集通过项目适配器接入Unity绑定事件，加载、计数与释放复用RevResManager；棋子/弹幕仍复用RevPool，流程仍由RevScope/FSM驱动，生产构建仍复用Revolution AB工具，<strong>没有改框架内核</strong>。需要在项目侧补充的能力是图集分类、覆盖门禁、绑定适配和真实AB验收。</p>
+<p>参考：<a href="https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/编程范式/Revolution官方编程架构规范.md">Revolution官方编程架构规范</a> · <a href="https://docs.unity3d.com/2022.3/Documentation/Manual/class-SpriteAtlas.html">Unity 2022.3 Sprite Atlas</a> · <a href="https://docs.unity3d.com/2022.3/Documentation/Manual/GPUInstancing.html">GPU instancing</a> · <a href="https://docs.unity3d.com/2022.3/Documentation/Manual/DrawCallBatching.html">Draw call batching</a></p></section></main></div><footer><span>RevGame · 围棋史莱姆 / 框架可行性是第一交付物</span><span>可离线阅读 · 尊重系统减少动画设置</span></footer>
+<script>
+const demo=document.querySelector('#batchDemo');
+document.querySelectorAll('.segmented button').forEach(b=>b.addEventListener('click',()=>{const atlas=b.dataset.mode==='atlas';demo.dataset.mode=b.dataset.mode;document.querySelector('#textureCount').textContent=atlas?'1':'12';document.querySelector('#demoText').textContent=atlas?'张共享贴图 · 12 个精灵':'张独立贴图 · 12 个精灵';document.querySelectorAll('.segmented button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+document.querySelector('#motion').addEventListener('click',e=>{const paused=document.body.classList.toggle('paused');e.currentTarget.setAttribute('aria-pressed',String(paused));e.currentTarget.textContent=paused?'继续装饰动画':'暂停装饰动画';});
+const links=[...document.querySelectorAll('.sidebar nav a')],chapters=[...document.querySelectorAll('.chapter')];let scheduled=false;
+function update(){const max=document.documentElement.scrollHeight-innerHeight;document.querySelector('.progress').style.width=(max>0?scrollY/max*100:0)+'%';let active=chapters[0];for(const s of chapters){if(s.getBoundingClientRect().top<innerHeight*.35)active=s;}links.forEach(a=>a.classList.toggle('active',a.hash==='#'+active.id));scheduled=false;}
+addEventListener('scroll',()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update);}},{passive:true});update();
+if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('arrive');observer.unobserve(e.target);}}),{threshold:.04});chapters.forEach(s=>observer.observe(s));}
+</script></body></html>

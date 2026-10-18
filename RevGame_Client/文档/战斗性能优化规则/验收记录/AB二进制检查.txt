@@ -1,0 +1,9 @@
+atlas_boardstatus|sprites=11|rawTexture2D=0
+atlas_combatframes|sprites=14|rawTexture2D=0
+atlas_pieceframes|sprites=135|rawTexture2D=0
+atlas_scenebackdrop_0fc7e394atlas|sprites=1|rawTexture2D=0
+atlas_ui_chessboard_chessboardatlas|sprites=1|rawTexture2D=0
+atlas_ui_tavern_imgbkatlas|sprites=1|rawTexture2D=0
+atlas_uibattle|sprites=6|rawTexture2D=0
+atlas_uimenus|sprites=4|rawTexture2D=0
+atlas_uireserve|sprites=18|rawTexture2D=0

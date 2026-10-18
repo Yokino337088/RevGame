@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 1295944994
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 36ee8466a8875da1e9d23d928644a690
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 36ee8466a8875da1e9d23d928644a690
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Background/SceneBackdrop_0fc7e394.png
+- Assets/GameRes/Atlases/SceneBackdrop_0fc7e394Atlas.spriteatlasv2
+Dependencies: []

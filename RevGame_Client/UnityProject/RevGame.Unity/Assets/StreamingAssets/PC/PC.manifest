@@ -1,84 +1,108 @@
 ManifestFileVersion: 0
-CRC: 4223912771
+CRC: 1221614860
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
       Name: ui_panels
       Dependencies:
-        Dependency_0: art_ui
-        Dependency_1: font_cjk
-        Dependency_2: config_piece_art
-        Dependency_3: material_cards
-        Dependency_4: material_ui
-        Dependency_5: material_background
+        Dependency_0: font_cjk
+        Dependency_1: config_piece_art
+        Dependency_2: material_cards
+        Dependency_3: material_ui
+        Dependency_4: material_background
+        Dependency_5: atlas_uibattle
+        Dependency_6: atlas_uimenus
     Info_1:
       Name: ui_items
       Dependencies:
-        Dependency_0: art_ui
-        Dependency_1: font_cjk
-        Dependency_2: config_piece_art
-        Dependency_3: material_cards
-        Dependency_4: material_ui
+        Dependency_0: font_cjk
+        Dependency_1: config_piece_art
+        Dependency_2: material_cards
+        Dependency_3: material_ui
+        Dependency_4: atlas_uibattle
+        Dependency_5: atlas_uimenus
     Info_2:
-      Name: art_ui
-      Dependencies: {}
-    Info_3:
       Name: font_cjk
       Dependencies: {}
-    Info_4:
+    Info_3:
       Name: battle_board
       Dependencies:
-        Dependency_0: art_ui
-    Info_5:
+        Dependency_0: atlas_boardstatus
+        Dependency_1: atlas_uibattle
+    Info_4:
       Name: battle_units
       Dependencies:
         Dependency_0: config_piece_art
         Dependency_1: material_pieces
-        Dependency_2: shared_piece_frames
-    Info_6:
+        Dependency_2: atlas_boardstatus
+        Dependency_3: atlas_pieceframes
+    Info_5:
       Name: battle_boss
       Dependencies:
         Dependency_0: material_pieces
-    Info_7:
+        Dependency_1: atlas_boardstatus
+    Info_6:
       Name: config_piece_art
       Dependencies:
-        Dependency_0: shared_piece_frames
-        Dependency_1: shared_status
-    Info_8:
+        Dependency_0: atlas_boardstatus
+        Dependency_1: atlas_pieceframes
+    Info_7:
       Name: battle_feedback
       Dependencies:
-        Dependency_0: art_ui
-    Info_9:
+        Dependency_0: atlas_combatframes
+        Dependency_1: atlas_uibattle
+    Info_8:
       Name: data_tables
       Dependencies: {}
-    Info_10:
+    Info_9:
       Name: material_cards
       Dependencies:
         Dependency_0: shared_shaders
-    Info_11:
+    Info_10:
       Name: material_ui
       Dependencies:
         Dependency_0: shared_shaders
-    Info_12:
+    Info_11:
       Name: material_background
       Dependencies:
         Dependency_0: shared_shaders
-    Info_13:
+    Info_12:
       Name: audio_bgm
       Dependencies: {}
-    Info_14:
+    Info_13:
       Name: audio_sfx
       Dependencies: {}
-    Info_15:
+    Info_14:
       Name: material_pieces
       Dependencies:
         Dependency_0: shared_shaders
+    Info_15:
+      Name: shared_shaders
+      Dependencies: {}
     Info_16:
-      Name: shared_piece_frames
+      Name: atlas_boardstatus
       Dependencies: {}
     Info_17:
-      Name: shared_status
+      Name: atlas_combatframes
       Dependencies: {}
     Info_18:
-      Name: shared_shaders
+      Name: atlas_pieceframes
+      Dependencies: {}
+    Info_19:
+      Name: atlas_uibattle
+      Dependencies: {}
+    Info_20:
+      Name: atlas_uimenus
+      Dependencies: {}
+    Info_21:
+      Name: atlas_ui_tavern_imgbkatlas
+      Dependencies: {}
+    Info_22:
+      Name: atlas_ui_chessboard_chessboardatlas
+      Dependencies: {}
+    Info_23:
+      Name: atlas_scenebackdrop_0fc7e394atlas
+      Dependencies: {}
+    Info_24:
+      Name: atlas_uireserve
       Dependencies: {}
