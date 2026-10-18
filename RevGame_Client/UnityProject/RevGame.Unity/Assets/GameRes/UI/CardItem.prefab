@@ -278,6 +278,7 @@ GameObject:
   - component: {fileID: 6395624524832280484}
   - component: {fileID: 1208539850272737299}
   - component: {fileID: 7956304333142999140}
+  - component: {fileID: 5263298184783065894}
   m_Layer: 0
   m_Name: CardItem
   m_TagString: Untagged
@@ -327,7 +328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: 088bb3231d4177f43b3d9278d439bb00, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -409,3 +410,15 @@ MonoBehaviour:
   normalSprite: {fileID: 21300000, guid: cba82457de84bcc449df520be7f5dc01, type: 3}
   selectedSprite: {fileID: 21300000, guid: 227acdd951bc57e42a9d52a500a75889, type: 3}
   artConfig: {fileID: 11400000, guid: 3f9628245900a8d45ba465743a8476ff, type: 2}
+--- !u!114 &5263298184783065894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6349438840448695077}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

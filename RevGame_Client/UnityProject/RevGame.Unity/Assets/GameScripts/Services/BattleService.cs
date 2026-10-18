@@ -173,6 +173,8 @@ namespace RevGame.Services
             Phase = GamePhase.Prepare;
             _battleElapsed = 0f;
             _tickAccumulator = 0f;
+            // 战斗时间每回合从零开始，存活棋子的绝对移动冷却也必须重置，不能带着上回合的时间戳进入新回合。
+            foreach (Piece piece in _board.GetAllPieces()) { piece.NextMoveAt = 0f; }
             _cardsPlayedThisRound = 0;
             _lastWinner = null;
             EyeStoneSelected = false;
@@ -502,10 +504,11 @@ namespace RevGame.Services
                 }
 
                 float rate = side == GameSide.Player && piece.Def.IsRanged ? RangedActionsPerTick : 1f;
-                piece.ActionProgress += stepFraction * (side == GameSide.Player ? rate * (1f + _speedBonus + _roundSpeedBonus) : 1f);
+                // ★ 攻击提速与棋盘移动解耦：仍使用原来的五秒走位门槛，玩家的眼位阵型也不会被自动移动拆开。
+                piece.ActionProgress += stepFraction * Consts.AttackSpeedScale * (side == GameSide.Player ? rate * (1f + _speedBonus + _roundSpeedBonus) : 1f);
                 int actions = (int)piece.ActionProgress;
                 piece.ActionProgress -= actions;
-                if (actions == 0) { continue; }
+                // 即使本小步没有攻击额度，也要让到期的五秒移动准时执行；移动不再借用攻击冷却。
                 // 1) 能打就打。
                 List<BoardPos> targets = MoveRules.GetAttackTargets(_board, piece);
                 if (targets.Count > 0)
@@ -529,11 +532,14 @@ namespace RevGame.Services
                 // 2) 我方始终守住玩家布置的阵位，成一眼/两眼后也不会被自动 AI 拆散。
                 // 敌方只有「没有攻击目标」才走到这里；每四个逻辑步才允许靠近一次。
                 // 攻速增益只增加攻击次数，不增加移动次数，避免连击事件让整盘棋乱跳。
-                int tick = (int)System.Math.Round(_battleElapsed / Consts.BattleTickSeconds);
-                if (side == GameSide.Player || tick % Consts.EnemyMoveEveryTicks != 0)
+                float moveInterval = Consts.BattleTickSeconds * Consts.EnemyMoveEveryTicks;
+                if (side == GameSide.Player || _battleElapsed < System.Math.Max(moveInterval, piece.NextMoveAt))
                 {
                     continue;
                 }
+                // ★ 不再把时间四舍五入后做取模：提速后同一秒可能出手多次，取模会连续放行数次移动。
+                // 每颗敌棋单独记“最早下次移动时间”；失败也进入等待，避免被挡住时每小步重复寻路。
+                piece.NextMoveAt = _battleElapsed + moveInterval;
 
                 // 保留每种走法，但滑步不再一口气穿过整盘；马步仍保留原有蹩马腿规则。
                 List<BoardPos> moves = MoveRules.GetMoveTargets(_board, piece);
@@ -578,15 +584,16 @@ namespace RevGame.Services
 
             float linked = System.Math.Min(Consts.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Consts.LinkAttackPerCell);
             multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus + PreparationAttackBonus(attacker, target) : 0f);
-            if (IsBossRound)
-            {
-                multiplier *= 1f + (int)(_battleElapsed / Consts.BossAccelerationSeconds) * Consts.BossAccelerationBonus;
-            }
-
             var attack = new PieceAttackInfo(attacker.Id, attacker.Def.Kind, attacker.Pos, attacker.Size, attacker.Side);
             RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, attack);
             // 双方一起降低单发伤害，保留远程较高的出手频率，让玩家能看见互相消耗和支援反击。
             int raw = System.Math.Max(1, (int)(attacker.Def.Attack * attacker.AttackScale * multiplier * Consts.CombatDamageScale));
+            if (IsBossRound)
+            {
+                // 高频小额伤害取整后，10%可能永远看不出变化。每满一分钟至少加1，确保决死加速确实产生伤害压力。
+                int acceleration = (int)(_battleElapsed / Consts.BossAccelerationSeconds);
+                raw += System.Math.Max(acceleration, (int)(raw * acceleration * Consts.BossAccelerationBonus));
+            }
             int real = DamagePiece(target, raw, attacker);
             if (attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
             {

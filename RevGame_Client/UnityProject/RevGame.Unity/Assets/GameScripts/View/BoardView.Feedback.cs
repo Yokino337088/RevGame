@@ -13,10 +13,10 @@ namespace RevGame.View
     public sealed partial class BoardView
     {
         /// <summary>包含正在异步取池对象的请求；不是等加载完才计数，避免同帧几十个请求穿透上限。</summary>
-        public const int MaxFloatingTexts = 10;
+        public const int MaxFloatingTexts = 20;
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
         public const int MaxProjectiles = 14;
-        private const int MaxAttackTexts = 3;
+        private const int MaxAttackTexts = 7;
         private const int MaxPendingDamage = 20;
         private const int MaxPendingProjectiles = 24;
         // 平均每0.025秒允许一发；低帧率时每帧最多补两发，既能形成齐射，也不会一帧喷出整个队列。
@@ -28,6 +28,9 @@ namespace RevGame.View
         private readonly Dictionary<int, PendingDamageText> _pendingDamage = new Dictionary<int, PendingDamageText>();
         // 同一模拟步的多次真实命中先存快照再分批显示，不再让第一发占掉整帧所有人的弹道。
         private readonly Queue<PendingProjectile> _projectileQueue = new Queue<PendingProjectile>(MaxPendingProjectiles);
+        // 同一小步可能全军齐射；口号先排短队列再错开发出，避免只有HashSet中第一颗棋子永远能说话。
+        private readonly Queue<PendingAttackText> _attackQueue = new Queue<PendingAttackText>();
+        private readonly HashSet<int> _queuedAttackIds = new HashSet<int>();
         // 遍历字典时不能直接删除，用复用列表先收集过期编号，遍历结束后再移除。
         private readonly List<int> _expiredDamageIds = new List<int>();
         // 已申请但还没加载好的名额也算占用；否则异步加载完成的同一帧会突然挤出大量飘字。
@@ -50,6 +53,33 @@ namespace RevGame.View
             public float CreatedAt;
         }
 
+        private struct PendingAttackText
+        {
+            public PieceAttackInfo Attack;
+            public float CreatedAt;
+        }
+
+        /// <summary>只保留真实攻击；同棋最多一条待播，最多十二条，过半秒就放弃旧口号。</summary>
+        private void QueueAttackText(PieceAttackInfo attack)
+        {
+            if (_attackQueue.Count >= 12 || !_queuedAttackIds.Add(attack.PieceId)) { return; }
+            _attackQueue.Enqueue(new PendingAttackText { Attack = attack, CreatedAt = Time.time });
+        }
+
+        private void FlushAttackText()
+        {
+            if (Time.time < _nextAttackAt) { return; }
+            while (_attackQueue.Count > 0)
+            {
+                PendingAttackText pending = _attackQueue.Dequeue();
+                _queuedAttackIds.Remove(pending.Attack.PieceId);
+                if (Time.time - pending.CreatedAt > 0.5f) { continue; }
+                if (!TryReserveAttackText(pending.Attack.PieceId)) { continue; }
+                ShowAttackText(pending.Attack);
+                return;
+            }
+        }
+
         /// <summary>短时间内同一目标受到的真实伤害合计；不持有棋子对象，目标死亡回池后仍可正确播报。</summary>
         private sealed class PendingDamageText
         {
@@ -61,19 +91,18 @@ namespace RevGame.View
             public float CreatedAt, ReadyAt;
         }
 
-        /// <summary>全场口号至少间隔0.55秒、单棋至少间隔2.2秒；大量伤害积压时让位，但不因一条待播数字就永久静音。</summary>
+        /// <summary>口号最多七条，与数字共用二十条总预算；间隔缩短，但同一棋子不能连续刷屏。</summary>
         private bool TryReserveAttackText(int pieceId)
         {
             float now = Time.time;
             float last;
-            if (now < _nextAttackAt || now < _nextTextAt || _pendingDamage.Count >= 6) { return false; }
+            if (now < _nextAttackAt || _pendingDamage.Count >= 16) { return false; }
             if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts) { return false; }
             int attacks = _pendingTextLoads;
             foreach (BattleEffectView effect in _textEffects) { if (effect.IsAttackText) { attacks++; } }
-            if (attacks >= MaxAttackTexts || (_attackTextAt.TryGetValue(pieceId, out last) && now - last < 2.2f)) { return false; }
+            if (attacks >= MaxAttackTexts || (_attackTextAt.TryGetValue(pieceId, out last) && now - last < 0.65f)) { return false; }
             _attackTextAt[pieceId] = now;
-            _nextAttackAt = now + 0.55f;
-            _nextTextAt = now + 0.09f;
+            _nextAttackAt = now + 0.12f;
             _pendingTextLoads++;
             return true;
         }
@@ -126,7 +155,8 @@ namespace RevGame.View
             if (_released) { return; }
             FlushProjectiles();
             FlushOneDamageText();
-            // 最多十条文字，成对检查至多100次。实际相交时只淡化较旧、渲染在下面的文字。
+            FlushAttackText();
+            // 最多二十条文字，成对比较不超过400次；下层文字淡化，不能为了增量把旧字盖成一团。
             foreach (BattleEffectView older in _textEffects)
             {
                 bool covered = false;
@@ -138,7 +168,7 @@ namespace RevGame.View
             }
         }
 
-        /// <summary>每0.09秒至多发起一条伤害数字；同目标先合计，超过1.2秒的陈旧提示直接丢弃。</summary>
+        /// <summary>每0.035秒至多发起一条数字，密集交战可达15~20条；稀疏交战不伪造伤害凑数。</summary>
         private void FlushOneDamageText()
         {
             PendingDamageText oldest = null;
@@ -152,7 +182,7 @@ namespace RevGame.View
             if (oldest == null || Time.time < _nextTextAt || _textEffects.Count + _pendingTextLoads >= MaxFloatingTexts) { return; }
             _pendingDamage.Remove(oldest.TargetId);
             _pendingTextLoads++;
-            _nextTextAt = Time.time + 0.09f;
+            _nextTextAt = Time.time + 0.035f;
             int generation = _effectGeneration;
             PendingDamageText message = oldest;
             RevPool.GetAsync<BattleEffectView>(effect =>
@@ -168,7 +198,7 @@ namespace RevGame.View
         }
 
         /// <summary>
-        /// 先按文字真实包围盒预留“放大+上浮”的范围，再尝试周围12个位置；找不到空位就选重叠最少的位置。
+        /// 先预留放大和上浮范围，再尝试周围25个位置；加密文字时扩大可选位置，避免全挤在同一棋子头顶。
         /// 所有计算都在屏幕像素中进行，所以改变窗口大小后仍按可见尺寸避让，不靠固定世界坐标猜间距。
         /// </summary>
         private void ArrangeFloatingText(BattleEffectView text)
@@ -181,12 +211,13 @@ namespace RevGame.View
             Rect allowed = FeedbackScreenRect(camera);
             float bestCost = float.PositiveInfinity;
             Vector2 best = Vector2.zero;
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < 25; i++)
             {
-                int row = i / 3;
-                int column = i % 3;
-                Vector2 delta = new Vector2(column == 0 ? 0f : (column == 1 ? -1f : 1f) * original.width * 0.85f, row * original.height * 0.75f);
-                if (row == 3) { delta.y = -original.height; }
+                int row = i / 5;
+                int column = i % 5;
+                int horizontal = column == 0 ? 0 : ((column + 1) / 2) * (column % 2 == 1 ? -1 : 1);
+                int vertical = row == 0 ? 0 : ((row + 1) / 2) * (row % 2 == 1 ? 1 : -1);
+                Vector2 delta = new Vector2(horizontal * original.width * 1.02f, vertical * original.height * 0.86f);
                 Rect candidate = original;
                 candidate.position += delta;
                 delta += new Vector2(Mathf.Clamp(candidate.x, allowed.xMin, Mathf.Max(allowed.xMin, allowed.xMax - candidate.width)) - candidate.x,
@@ -225,6 +256,8 @@ namespace RevGame.View
         {
             _pendingDamage.Clear();
             _projectileQueue.Clear();
+            _attackQueue.Clear();
+            _queuedAttackIds.Clear();
             _textEffects.Clear();
             _projectileEffects.Clear();
             _attackTextAt.Clear();

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using RevGame.Battle;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Pieces;
 using Revolution;
 
@@ -93,6 +94,25 @@ namespace RevGame.Services
                     RevEvent.RemoveAllByOwner(owner);
                 }
             }
+
+            // 高频回归必须观察真实五秒出手次数，不能只检查常量改没改；高生命靶子避免因提前击败目标少算攻击。
+            battle = new BattleService(false);
+            Piece fastArcher = battle.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
+            Piece durable = new Piece(999, PieceCatalog.Get(PieceKind.Shield, StarTier.Three), GameSide.Enemy, hpScale: 1000f);
+            battle._board.Place(durable, new BoardPos(6, 6));
+            battle._enemyPieces.Add(durable);
+            battle.RefreshGoState();
+            battle.StartBattle();
+            int acceleratedAttacks = 0;
+            owner = new object();
+            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => { if (info.PieceId == fastArcher.Id) { acceleratedAttacks++; } }, owner: owner);
+            try
+            {
+                battle.Tick(5f);
+                check(acceleratedAttacks > 8 && durable.Hp < durable.MaxHp, "五秒真实远程攻击多于旧版八次，确实提高频率并扣血");
+                check(fastArcher.Pos == new BoardPos(0, 0), "高频远程保持原阵位");
+            }
+            finally { RevEvent.RemoveAllByOwner(owner); }
 
             foreach (float invalid in new[] { 0f, -1f, 5f, float.NaN, float.PositiveInfinity })
             {

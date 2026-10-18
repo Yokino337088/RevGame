@@ -34,6 +34,8 @@ namespace RevGame.UI
         private Action<int> _clicked;
         // 每个常驻槽位只持有自己的翻牌序列。禁止 KillAll，否则会把其他卡和战斗飘字一起停掉。
         private Tween _flip;
+        // 点击与刷新分别持有句柄；开始翻牌前先停止点击反馈，避免两个动画同时修改同一张牌的姿态。
+        private Tween _press;
         // 数据已在服务里更新，但正面需等转到 90 度才换；期间普通刷新只更新这份待显示内容。
         private HandCard _pendingCard;
         private int _pendingSelection;
@@ -121,6 +123,7 @@ namespace RevGame.UI
 
         private void StopFlip()
         {
+            StopPress();
             // 关闭准备面板也会走这里：不执行旧完成回调，恢复姿态，下一回合不会从半张牌开始。
             Tween previous = _flip;
             _flip = null;
@@ -172,8 +175,40 @@ namespace RevGame.UI
         {
             if (_clicked != null && CardId != 0)
             {
+                PlayPressFeedback();
                 _clicked(CardId);
             }
+        }
+
+        /// <summary>点击时先轻微压下，再左右衰减摆动；不改落子规则或手牌数据，连点也只保留最后一次反馈。</summary>
+        private void PlayPressFeedback()
+        {
+            if (IsFlipping) { return; }
+            StopPress();
+            float progress = 0f;
+            _press = DOTween.To(() => progress, value =>
+            {
+                progress = value;
+                // 正弦负责左右摆，(1-progress)让幅度自然收敛；首尾角度都为零，不积累旋转误差。
+                float swing = Mathf.Sin(value * Mathf.PI * 6f) * (1f - value);
+                transform.localRotation = Quaternion.Euler(0f, swing * 5f, swing * 6f);
+                transform.localScale = Vector3.one * (1f - Mathf.Sin(value * Mathf.PI) * 0.045f);
+            }, 1f, 0.42f).SetUpdate(true).SetEase(Ease.Linear).OnComplete(() =>
+            {
+                _press = null;
+                transform.localRotation = Quaternion.identity;
+                transform.localScale = Vector3.one;
+            });
+        }
+
+        /// <summary>关闭、切回合和刷新都取消旧抖动；Kill(false)不会执行旧的完成回调。</summary>
+        private void StopPress()
+        {
+            Tween previous = _press;
+            _press = null;
+            previous?.Kill(false);
+            transform.localRotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
         }
 
         public void Release()

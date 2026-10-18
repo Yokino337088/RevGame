@@ -37,6 +37,10 @@ namespace RevGame.View
         private float _baseTextScale = 1f, _textPeak = 1f, _textRise;
         private Renderer _textRenderer;
         private Color _projectileColor;
+        // 弹道额外持有寿命上限。即使外部意外 Kill/Pause 了 Tween，也不能留一根永远不动的黄条。
+        // 使用游戏时间：正常暂停时整个战斗一起停，恢复后再继续回收。
+        private bool _projectileActive;
+        private float _projectileExpiresAt;
         public bool IsFloatingText { get; private set; }
         public bool IsAttackText { get; private set; }
         public int TextOrder { get; private set; }
@@ -159,8 +163,9 @@ namespace RevGame.View
             _textPeak = Mathf.Clamp(config.PeakScale, 1f, 1.12f);
             _textRise = Consts.CellSize * (attack ? 0.30f : 0.45f);
             Camera camera = Camera.main;
-            float maxWidth = camera == null ? 180f : camera.pixelWidth * (attack ? 0.09f : 0.055f);
-            _baseTextScale = Mathf.Min(1f, maxWidth / Mathf.Max(1f, TextScreenRect.width * _textPeak));
+            float maxWidth = camera == null ? 120f : camera.pixelWidth * (attack ? 0.060f : 0.040f);
+            // 短文案也统一缩小，不能只有长句受限、两个字的口号仍然盖住整颗棋子。
+            _baseTextScale = Mathf.Min(attack ? 0.72f : 0.82f, maxWidth / Mathf.Max(1f, TextScreenRect.width * _textPeak));
             transform.localScale = Vector3.one * _baseTextScale;
             arrange?.Invoke(this);
             Vector3 start = transform.position;
@@ -180,6 +185,19 @@ namespace RevGame.View
         public void ShowProjectile(Vector3 source, Vector3 target, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy)
         {
             ResetVisual(source, onFinished);
+            Vector3 direction = target - source;
+            float distance = direction.magnitude;
+            // ★ 同格/极短距离没有可飞行空间：直接结束，禁止在原点播放一根“没有位移的子弹”。
+            if (distance < 0.05f) { Finish(); return; }
+            Vector3 unit = direction / distance;
+            float inset = Mathf.Min(Consts.CellSize * 0.46f, distance * 0.30f);
+            source += unit * inset;
+            target -= unit * inset;
+            transform.position = source;
+            // 固定时长会让相邻棋子之间的弹道长时间贴脸；短轨迹更快消失，长轨迹保留可读飞行时间。
+            float duration = Mathf.Clamp(projectileDuration * distance / (Consts.CellSize * 4f), 0.10f, projectileDuration);
+            _projectileActive = true;
+            _projectileExpiresAt = Time.time + duration + 0.12f;
             damageText.gameObject.SetActive(false);
             spriteRenderer.enabled = true;
             spriteRenderer.sprite = projectileSprite;
@@ -190,13 +208,14 @@ namespace RevGame.View
             if (projectileSprite != null)
             {
                 Vector3 size = projectileSprite.bounds.size;
-                flightScale = new Vector3(projectileWorldSize.x / Mathf.Max(0.01f, size.x), projectileWorldSize.y / Mathf.Max(0.01f, size.y), 1f);
+                // 弹头长度不能超过扣除身体后的飞行空间；相邻棋子之间不会出现一根比间隙还长的黄条。
+                float length = Mathf.Min(projectileWorldSize.x, Vector3.Distance(source, target) * 0.8f);
+                flightScale = new Vector3(length / Mathf.Max(0.01f, size.x), projectileWorldSize.y / Mathf.Max(0.01f, size.y), 1f);
                 ConfigureProjectileLayer(projectileOutline, Vector3.zero, new Vector3(1.16f, 1.5f, 1f), spriteRenderer.sortingOrder - 2);
-                ConfigureProjectileLayer(projectileTrail, Vector3.left * (size.x * 0.62f), new Vector3(1f, 0.65f, 1f), spriteRenderer.sortingOrder - 1);
+                ConfigureProjectileLayer(projectileTrail, Vector3.left * (size.x * 0.38f), new Vector3(0.48f, 0.55f, 1f), spriteRenderer.sortingOrder - 1);
             }
             // 敌我弹道用不同色相，密集交火时仍能分辨方向；不修改棋子或伤害数字的原有颜色。
             _projectileColor = targetSide == GameSide.Enemy ? new Color(1f, 0.92f, 0.28f) : new Color(1f, 0.38f, 0.22f);
-            Vector3 direction = target - source;
             transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             Vector3 normalScale = flightScale;
             transform.localScale = normalScale * 0.88f;
@@ -209,7 +228,13 @@ namespace RevGame.View
                 float pulse = value < 0.25f ? Mathf.Lerp(0.88f, 1.08f, value / 0.25f) : Mathf.Lerp(1.08f, 1f, (value - 0.25f) / 0.75f);
                 transform.localScale = normalScale * pulse;
                 SetProjectileAlpha(Mathf.Clamp01((1f - value) / 0.18f));
-            }, 1f, Mathf.Clamp(projectileDuration, 0.2f, 0.5f)).SetEase(Ease.Linear).OnComplete(Finish);
+            }, 1f, duration).SetEase(Ease.Linear).OnComplete(Finish);
+        }
+
+        /// <summary>生命周期保险：寿命到期先停止旧动画再归池；不能让失去Tween驱动的弹头永久停留在棋子上。</summary>
+        private void LateUpdate()
+        {
+            if (_projectileActive && Time.time >= _projectileExpiresAt) { StopAnimation(); Finish(); }
         }
 
         /// <summary>子图与本体共用Sprite和材质；局部尺寸跟随归一化根节点，尾巴始终短于一格。</summary>
@@ -259,6 +284,7 @@ namespace RevGame.View
         {
             StopAnimation();
             HideProjectileLayers();
+            _projectileActive = false;
             _onFinished = onFinished;
             _progress = 0f;
             _fadeAlpha = _occlusionAlpha = 1f;
@@ -289,6 +315,10 @@ namespace RevGame.View
 
         private void Finish()
         {
+            _projectileActive = false;
+            // 先撤掉所有图层，再通知棋盘和对象池。即使回池延迟到帧末，也不会再渲染最后一帧黄条。
+            HideProjectileLayers();
+            spriteRenderer.enabled = false;
             // 先清句柄再回池，避免 OnPoolReturn 去 Kill 正在完成回调的序列。
             _animation = null;
             System.Action<BattleEffectView> callback = _onFinished;
@@ -304,11 +334,13 @@ namespace RevGame.View
             previous?.Kill(false);
         }
 
-        public void OnPoolGet() { StopAnimation(); }
+        public void OnPoolGet() { StopAnimation(); HideProjectileLayers(); spriteRenderer.enabled = false; }
         public void OnPoolReturn()
         {
             StopAnimation();
             HideProjectileLayers();
+            spriteRenderer.enabled = false;
+            _projectileActive = false;
             _onFinished = null;
             IsFloatingText = IsAttackText = false;
             _fadeAlpha = _occlusionAlpha = 1f;
@@ -318,7 +350,13 @@ namespace RevGame.View
                 outline.text = string.Empty;
             }
         }
-        private void OnDisable() { StopAnimation(); }
+        private void OnDisable()
+        {
+            StopAnimation();
+            HideProjectileLayers();
+            spriteRenderer.enabled = false;
+            _projectileActive = false;
+        }
         private void OnDestroy() { StopAnimation(); }
     }
 }

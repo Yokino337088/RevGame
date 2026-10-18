@@ -90,6 +90,7 @@ namespace RevGame.Editor
             ApplyBoardArt();
             StyleBattleEffects();
             ApplyTypography();
+            GameArcaneArtBuilder.Apply();
             AssetDatabase.SaveAssets();
         }
 
@@ -374,20 +375,10 @@ namespace RevGame.Editor
 
             Transform existing = root.transform.Find("screenBackground");
             Image image = existing == null ? GameAssetBuilder.Picture("screenBackground", root.transform, Load(BackgroundPath), Vector2.zero, Vector2.zero) : existing.GetComponent<Image>();
-            image.sprite = Load(BackgroundPath);
-            image.color = Color.white;
-            image.raycastTarget = false;
-            image.type = Image.Type.Simple;
-            image.preserveAspect = false;
             image.transform.SetAsFirstSibling();
-            AspectRatioFitter fit = image.GetComponent<AspectRatioFitter>();
-            if (fit == null)
-            {
-                fit = image.gameObject.AddComponent<AspectRatioFitter>();
-            }
-
-            fit.aspectRatio = image.sprite.rect.width / image.sprite.rect.height;
-            fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            // 大地图只适合场景，铺在所有UI后面会抢走按钮和文字的视觉重心。
+            // 改为低速程序星雾，并移除原来的纵向地图比例适配器，始终铺满横屏画布。
+            GameArcaneArtBuilder.StyleBackdrop(image);
         }
 
         private static Image EnsurePicture(GameObject root, string name, string sprite, Vector2 size, Vector2 position)
@@ -430,7 +421,8 @@ namespace RevGame.Editor
                 renderer = background.AddComponent<SpriteRenderer>();
             }
 
-            renderer.sprite = Load(BackgroundPath);
+            // 用户可以在场景里挑选另一张背景；重建UI不能顺带把其选择覆盖回开始场景图。
+            if (renderer.sprite == null) { renderer.sprite = Load(BackgroundPath); }
             renderer.sortingOrder = -1000;
             renderer.color = Color.white;
             Camera camera = Camera.main;

@@ -33,6 +33,8 @@ namespace RevGame.Pieces
         public int ConnectedCells { get; internal set; }
         public int BonusLiberties { get; internal set; }
         internal float ActionProgress { get; set; }
+        /// <summary>敌棋下一次允许自动靠近的战斗时间；攻速增益不能提前这个时间。</summary>
+        internal float NextMoveAt { get; set; }
 
         private int _maxHp;
         private int _baseMaxHp;
@@ -134,6 +136,7 @@ namespace RevGame.Pieces
             ConnectedCells = source.ConnectedCells;
             BonusLiberties = source.BonusLiberties;
             ActionProgress = source.ActionProgress;
+            NextMoveAt = source.NextMoveAt;
             Liberties = source.Liberties;
             GoState = source.GoState;
         }

@@ -273,8 +273,12 @@ namespace RevGame.View
 
         private void OnAttack(PieceAttackInfo attack)
         {
-            // 口号是低优先级装饰：伤害数字拥挤时直接略过口号，不能把画面排成几秒后的旧战斗。
-            if (!TryReserveAttackText(attack.PieceId)) { return; }
+            QueueAttackText(attack);
+        }
+
+        /// <summary>预算预约成功后再取池对象；多个真实攻击口号错开播放，仍不更改任何模型伤害。</summary>
+        private void ShowAttackText(PieceAttackInfo attack)
+        {
             BattleText config = GameTextConfig.Require("Attack_" + attack.Kind);
             Vector3 position = attack.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             position += new Vector3(attack.Size - 1, attack.Size - 1, 0f) * Consts.CellSize * 0.5f;

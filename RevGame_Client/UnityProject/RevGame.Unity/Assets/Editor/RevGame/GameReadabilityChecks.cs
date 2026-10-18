@@ -114,7 +114,7 @@ namespace RevGame.Editor
                     projectilePeak = Math.Max(projectilePeak, board.ActiveProjectileCount);
                     Require(board.ActiveFloatingTextCount <= BoardView.MaxFloatingTexts && board.ActiveProjectileCount <= BoardView.MaxProjectiles, "动画播放中持续满足全场数量上限");
                 }
-                Require(peak > 6 && projectilePeak > 6, "文字和齐射实际密度均高于上一版六条限制，仍保留硬上限");
+                Require(peak >= 15 && peak <= 20 && projectilePeak > 6, "密集输入实际显示15~20条文字，齐射仍保留硬上限");
                 List<BattleEffectView> texts = new List<BattleEffectView>();
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { if (effect.IsFloatingText) { texts.Add(effect); } }
                 texts.Sort((a, b) => a.TextOrder.CompareTo(b.TextOrder));

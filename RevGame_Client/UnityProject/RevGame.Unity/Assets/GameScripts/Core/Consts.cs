@@ -34,6 +34,8 @@ namespace RevGame.Core
         public const float BattleDurationSeconds = 90f;
         /// <summary>普通棋子的基准行动周期（秒）；模拟小步与远程频率以此为基数，结果不依赖帧率。</summary>
         public const float BattleTickSeconds = 1.25f;
+        /// <summary>双方真实攻击提速35%；只乘出手进度，不改模拟时钟，因此不会加快敌人走位、增益或回合倒计时。</summary>
+        public const float AttackSpeedScale = 1.35f;
         /// <summary>固定模拟小步：一周期分四次驱动，允许远程在周期中途出手；不会加快普通棋或敌方移动。</summary>
         public const float BattleSimulationStepSeconds = BattleTickSeconds / 4f;
         /// <summary>敌人每四个逻辑步最多靠近一次，即五秒；攻击仍每步正常判定。</summary>
@@ -78,8 +80,8 @@ namespace RevGame.Core
         public const float VictoryAssistStallSeconds = 9f;
         /// <summary>僵持支援的集火间隔；与普通战斗事件的七秒间隔是两种节奏。</summary>
         public const float VictoryAssistPulseSeconds = 3f;
-        /// <summary>原型节奏参数，等待正式数值表替换；双方普通攻击一起放缓，远程攻击频率不变。</summary>
-        public const float CombatDamageScale = 0.6f;
+        /// <summary>提高出手频率时按比例摊薄单发伤害，维持总火力和长回合体验，避免攻速提高后几秒就结束。</summary>
+        public const float CombatDamageScale = 0.6f / AttackSpeedScale;
         /// <summary>敌方原型生命系数，给远程对射、守眼回血和事件留出展开时间。</summary>
         public const float EnemyHpScale = 2.4f;
         /// <summary>僵持支援单次至少削掉目标最大生命的此比例，不会因目标星级高而失效。</summary>

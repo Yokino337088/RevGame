@@ -21,6 +21,9 @@ namespace RevGame.View
         [SerializeField]
         private SpriteRenderer backgroundRenderer;
         private bool _released;
+        // 材质属于整个场景，不能归入Battle组；否则第一次返回大厅就会被战斗域卸载。
+        private bool _backgroundMaterialRequested;
+        private Material _originalBackgroundMaterial;
         private void OnEnable()
         {
             // 相机真正渲染前再核对一次布局：拖动窗口时不能等 0.25 秒计时器才适配新尺寸。
@@ -42,6 +45,22 @@ namespace RevGame.View
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
             // GameBootstrap 在配置表就绪后发出首次 ScreenChanged，此前不提前开放操作。
             FitCamera();
+            LoadBackgroundMaterial();
+        }
+
+        /// <summary>两段式逻辑路径通过框架加载，编辑器直读和正式AB加载共用此入口；不改用户选好的背景Sprite。</summary>
+        private void LoadBackgroundMaterial()
+        {
+            if (backgroundRenderer == null || _backgroundMaterialRequested) { return; }
+            _backgroundMaterialRequested = true;
+            _originalBackgroundMaterial = backgroundRenderer.sharedMaterial;
+            RevResManager.LoadAsync("Material/", "ArcaneScene", typeof(Material), handle =>
+            {
+                // 场景已退出时只释放迟到结果；不能给销毁中的Renderer写材质。
+                if (_released) { return; } // OnDestroy已经配对释放请求，迟到回调不能再减一次引用计数。
+                if (!handle.IsLoaded) { RevLog.Error("场景动态材质加载失败：" + handle.ErrorReason, "RevGame"); return; }
+                if (backgroundRenderer != null) { backgroundRenderer.sharedMaterial = handle.Content as Material; }
+            }, RevResGroup.Scene);
         }
 
         private void FitCamera()
@@ -111,6 +130,12 @@ namespace RevGame.View
         private void OnDestroy()
         {
             _released = true;
+            if (_backgroundMaterialRequested)
+            {
+                if (backgroundRenderer != null) { backgroundRenderer.sharedMaterial = _originalBackgroundMaterial; }
+                RevResManager.Release("Material/", "ArcaneScene");
+                _backgroundMaterialRequested = false;
+            }
             RevEvent.RemoveAllByOwner(this);
             RevTimer.CancelAllOf(this);
             RevUI.Close<HomePanel>();
