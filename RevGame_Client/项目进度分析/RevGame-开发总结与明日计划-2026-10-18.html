@@ -3,18 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light">
-<title>RevGame 开发总结与明日计划 · 2026-10-18</title>
+<title>RevGame 开发总结与明日计划</title>
 <style>
 :root{--ink:#203149;--muted:#5f6f80;--line:#d9e2ea;--paper:#fff;--accent:#126b73;--soft:#edf6f6;--page:#eef2f6}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--page);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;font-size:16px;line-height:1.85}.document{max-width:1180px;margin:36px auto;background:var(--paper);padding:48px 58px 62px;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px #2031490a}h1{font-size:34px;line-height:1.45;margin:0 0 14px;letter-spacing:.03em;color:#13283e;border-top:7px solid var(--accent);padding-top:22px}h2{font-size:24px;line-height:1.5;margin:50px 0 18px;padding:10px 0 10px 16px;border-left:5px solid var(--accent);background:linear-gradient(90deg,var(--soft),#fff);scroll-margin-top:24px}h3{font-size:19px;line-height:1.6;margin:32px 0 12px;color:#215469}p{margin:13px 0}a{color:#0d6578;text-underline-offset:3px;overflow-wrap:anywhere}a:hover{color:#043b4d}a[id]{display:block;scroll-margin-top:18px}strong{font-weight:700;color:#152d45}code{font-family:Consolas,"Microsoft YaHei",monospace;font-size:.9em;border:1px solid #dee8ee;background:#f2f6f9;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}li{margin:8px 0}ul,ol{padding-left:26px}.table-scroll{width:100%;overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;line-height:1.8;margin:0}th,td{vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--line);border-right:1px solid #e5ebf0;min-width:130px}th{background:#eaf1f5;color:#183d53;font-weight:700}th:last-child,td:last-child{border-right:0}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafc}td:first-child{font-weight:600;min-width:145px}td p:first-child{margin-top:0}td p:last-child{margin-bottom:0}.status{display:inline-block;white-space:nowrap;padding:2px 10px;border-radius:5px;font-size:13px;font-weight:700}.done{color:#176442;background:#e4f4eb}.partial{color:#795411;background:#fff2d5}.todo{color:#67556f;background:#f0eaf4}h2[id="section"]+ul,h2[id="目录"]+ul{padding:18px 32px;background:#f4f8fb;border:1px solid var(--line);border-radius:8px;columns:2;column-gap:32px}h1+p{font-size:14px;color:var(--muted)}blockquote{margin:20px 0;padding:8px 20px;background:var(--soft);border-left:4px solid var(--accent)}@media(max-width:800px){body{font-size:15px}.document{margin:0;padding:26px 20px 42px;border:0;border-radius:0;box-shadow:none}h1{font-size:27px}h2{font-size:21px;margin-top:34px}h3{font-size:18px}th,td{padding:10px 12px;font-size:13px}table{min-width:680px}h2[id="section"]+ul,h2[id="目录"]+ul{columns:1;padding:14px 24px}code{word-break:break-word}}@media print{@page{size:A4;margin:16mm 13mm}html{scroll-behavior:auto}body{background:#fff;font-size:10pt;line-height:1.65}.document{max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none}h1{font-size:23pt;border-top-width:4px}h2{font-size:16pt;margin-top:24pt;background:none;break-after:avoid}h3{font-size:12pt;break-after:avoid}a{color:inherit;text-decoration:none}code{font-size:8.5pt;padding:0 2px;background:none;border:0}.table-scroll{overflow:visible;border-radius:0;break-inside:auto}table{font-size:8pt;min-width:0;line-height:1.5;table-layout:fixed}th,td{padding:6px;min-width:0;overflow-wrap:anywhere}td:first-child{min-width:0}tr{break-inside:avoid}thead{display:table-header-group}.status{padding:0;font-size:8pt;background:none}.document>ul{columns:1}p,li{orphans:3;widows:3}}
-</style>
+
+img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid var(--line);border-radius:8px}pre{overflow:auto;padding:18px;background:#f2f6f9;border:1px solid var(--line);border-radius:8px;line-height:1.6}pre code{border:0;padding:0;white-space:pre;overflow-wrap:normal}blockquote p{margin:8px 0}.document{overflow-wrap:anywhere}</style>
 </head>
 <body><main class="document">
 <h1 id="revgame">RevGame 开发总结与明日计划</h1>
+<blockquote>
+<p>后续实施更新：本文保留 UI 交付及“明日计划”的历史记录；其中战斗节奏与围棋 AI 部分现已实现。当前行为、1150 条战术断言和两条连续 66 回合通关证据见<a href="RevGame-战斗与围棋AI改造验收-2026-10-18.html">战斗与围棋 AI 改造验收</a>，以该报告为准。</p>
+</blockquote>
 <p>记录日期：2026-10-18。工程：Unity 2022.3.15f1c1，<code>RevGame_Client/UnityProject/RevGame.Unity</code>。</p>
 <p>本文把“今天改了什么”“此前已经实现什么”“现在还缺什么”和“明天准备怎么做”分开记录。完成状态以当前源码及注明时间的验收证据为依据，不按代码行数估算完成百分比。项目首要目标仍是验证 Revolution 框架在真实业务中的可行性。</p>
-<p>交付时 Unity 保持打开，停留在 Home，唯一实际 Game 预览为“RevGame 1920x1080”。明日战斗与 AI 改造只写入本计划，今日没有提前实施。</p>
-<h2 id="section">目录</h2>
+<p>本历史记录的 UI 交付时 Unity 保持打开，停留在 Home，唯一实际 Game 预览为“RevGame 1920x1080”。当时战斗与 AI 改造仅写入计划；其后用户已要求实施，结果见上方更新链接。</p>
+<h2 id="_1">目录</h2>
 <ul>
 <li><a href="#overview">1. 当前项目走到哪一步</a></li>
 <li><a href="#today">2. 今天的两轮 UI 修复</a></li>
@@ -28,7 +31,7 @@
 <li><a href="#handoff">10. 新同学接手操作与维护规则</a></li>
 </ul>
 <p><a id="overview"></a></p>
-<h2 id="section-1">1. 当前项目走到哪一步</h2>
+<h2 id="1">1. 当前项目走到哪一步</h2>
 <p><strong>当前已经有一套可在 Unity 编辑器里从主界面玩到战斗、结算和章节奖励的完整原型。</strong> 玩法服务、局外流程、界面、资源、池化表现、音频、Excel 导表和 GM 验收均有实际接线，并非只有静态界面。</p>
 <p>目前适合把它称为“框架业务验证原型”。正式生命/攻击和敌方阵容仍为占位，轻松获胜依赖明确的辅助机制，持久存档和真机发布链路也没有完成。因此，流程能走通与战斗已经好玩、数值已经合理、手机已经可以发布，是不同层次的结论。</p>
 <div class="table-scroll"><table>
@@ -42,41 +45,41 @@
 <tbody>
 <tr>
 <td>编辑器内玩法闭环</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>主界面→选关→六牌布阵→自动战斗→结算→下一回合/章节奖励可以串起来。</td>
 </tr>
 <tr>
 <td>Revolution 业务接入</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>公开门面可以支撑本原型；已用到流程、作用域、服务、UI、资源、池、计时器、事件、声音、导表和 GM。</td>
 </tr>
 <tr>
 <td>战斗观感与操作</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>已有低频移动、伤害/攻击/升级弹幕、翻牌和手机横屏布局，仍需调整战斗长度与敌方策略。</td>
 </tr>
 <tr>
 <td>正式内容与平衡</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>有六章结构与占位配置，但不能等同于六章手工设计、连续平衡通关或正式数值完成。</td>
 </tr>
 <tr>
 <td>手机发布准备</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>目前以编辑器直读资源和 Simulator 验证为主，尚无 Android/iOS 真机、AB 及小游戏验收结论。</td>
 </tr>
 </tbody>
 </table></div>
 <p>“已完成”均指本文写明的原型范围；“部分完成”表示有可运行基础，但缺关键内容或验证；“未完成”表示还没有交付该能力。</p>
 <p><a id="today"></a></p>
-<h2 id="ui">2. 今天的两轮 UI 修复</h2>
-<h3 id="section-2">2.1 第一轮：六牌拉开列距，修复手机右侧留空</h3>
+<h2 id="2-ui">2. 今天的两轮 UI 修复</h2>
+<h3 id="21">2.1 第一轮：六牌拉开列距，修复手机右侧留空</h3>
 <p>六张手牌继续放在左侧，两列三行。此前横向与纵向共用较小间距，虽然卡槽没有直接重叠，视觉上仍然挤在一起。现在新增 <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/UI/GameBattleLayout.cs">GameBattleLayout.HandCard</a>，让实际 UI 与布局检查使用同一份卡槽计算。</p>
 <p>水平列间距取“左栏宽度的 16%”与“安全区高度的 6%”中较小值，纵向间距仍为安全区高度的 1.2%。卡片尺寸同时受两列总宽和三行总高约束，先给间隙留位置，再决定牌能做多大。这样既能在宽横屏上拉开两列，也能在较窄横屏上留在手牌区域内。</p>
 <p>右侧深灰条的原因已经通过 Unity MCP 量测：Note20Ultra 模拟设备物理尺寸为 3088×1440，非全屏时 <code>SimulatorInsets=(0,0,0,168)</code>，实际游戏渲染区域只剩 2920×1440。原因是上轮验收使用 <code>SetResolution(..., false)</code> 后保留了系统导航栏区域；背景图片和等比覆盖算法本身正常。</p>
 <p>启动修复放在 <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/GameBootstrap.cs">GameBootstrap.Awake</a>：Android/Editor 下通过 <code>UnityEngine.Device.Screen.fullScreen = true</code> 明确全屏。同时，经 Unity MCP 使用 <code>SetResolution(0, 0, FullScreenMode.FullScreenWindow)</code> 恢复模拟设备默认全屏状态，业务入口本身不调用 SetResolution。背景继续使用指定图片覆盖渲染区，交互继续通过安全区避让刘海。后续验收临时改分辨率也必须保持全屏，并在 <code>finally</code> 中恢复约定的设备与预览状态，避免测试结束后影响人工游玩。</p>
 <p>这一轮已执行 737 条布局检查，并在 3088×1440、1920×1080 的 Play 画面确认背景铺到右边缘。最终量测为全屏、四侧 Insets 均为 0、六个卡槽活动、翻牌结束后缩放与旋转复原，场景为 1 个相机和 1 个 Canvas。具体证据范围见第 7 节。</p>
-<h3 id="section-3">2.2 第二轮：文字更醒目，并统一布局设计基准</h3>
+<h3 id="22">2.2 第二轮：文字更醒目，并统一布局设计基准</h3>
 <p>本轮已经把 UI 统一为实际粗笔画中文字体、粗体样式与居中对齐，并提高文字的明暗对比。通过 Unity MCP 导入 <code>NotoSansCJKsc-Bold.otf</code>（17,002,248 字节），SIL OFL 1.1 许可和来源说明一并保存在 <code>Assets/ArtRes/字体</code>。这次替换了细衬线字形，不只是勾选原字体的 Bold。</p>
 <p>字体入口 <code>GameAssetBuilder.Font()</code> 改为统一读取新字体，<code>Label()</code> 默认设置 Bold；<code>GameArtMigration.ApplyTypography()</code> 经 MCP 保存了 49 个 Text 节点，覆盖 7 个 UI 预制体及 1 个 BattleEventNotice，包含六槽子节点与隐藏文字。常规文字采用 Bold/MiddleCenter：浅底使用近黑 <code>#0E0A06</code>，深底使用暖白 <code>#FFFAEB</code>，配合 0.45 或 0.8 的细描边。按钮字号 32、结算详情 28、计数 30。Notice 标题运行时继续保留 Excel 的语义色，并使用黑边与粗体，不把全部事件标题强制刷成同一种颜色。</p>
 <p>CardItem 的属性文字改为“生命/攻击”两行，独占底部高度；肖像向上避让，避免图片挤到属性。运行时自动适配的牌名字号上限改为 24、属性上限 20、最小字号 14，避免资产上调后又被旧运行时上限缩回小字。</p>
@@ -118,13 +121,13 @@
 </tbody>
 </table></div>
 <p>今天没有实施下一版战斗难度、敌方眼阵或 AI 改造。第 8、9 节全部是明天的方案与候选参数，当前游戏仍使用第 3 节所列节奏与辅助机制。</p>
-<h3 id="github">2.3 编辑器目录迁移与 GitHub 交付要求</h3>
+<h3 id="23-github">2.3 编辑器目录迁移与 GitHub 交付要求</h3>
 <p>按用户追加的目录要求，原 <code>Assets/GameScripts/Editor</code> 整体通过 Unity MCP 迁到 <a href="../UnityProject/RevGame.Unity/Assets/Editor/RevGame">Assets/Editor/RevGame</a>，共 9 个 C# 文件，GameScripts 不再存放这批编辑器工具。迁移保留原目录及文件的 <code>.meta</code> GUID，<code>RevGame.Editor</code> 命名空间及公开 API 不变，原有 GM/MCP 调用名称无需跟着目录改名。</p>
 <p>Unity 将 Editor 特殊目录中的脚本作为编辑器代码编译。此次迁移前后都在 Editor 目录内，且没有新增或调整 asmdef，因此仍属于 <code>Assembly-CSharp-Editor</code>；只是把文件放到项目约定的统一位置，没有改变运行时与编辑器的程序集边界。资源引用依赖 GUID 而不是这一层物理目录名，保留 meta 可避免移动时打断已有引用。</p>
 <p>迁移后已通过 Unity MCP 重新执行规则 570 条、布局 737 条及 Play 回合表现 136 条，均通过；池化检查和实际 1920×1080 UI 也已重新验收。这样有此次迁移后的实际证据，不只是沿用迁移前的历史数量。验收范围仍是本机 Unity 编辑器，不扩展为实体手机或连续六章平衡结论。</p>
 <p>用户同时要求将今天产出推送 GitHub。本报告随今日提交交付至 <code>origin/main</code>，最终提交号与推送结果见本次交付消息；文档不预写尚未发生的远端成功结果。Temp 验收截图不随提交交付。</p>
 <p><a id="features"></a></p>
-<h2 id="section-4">3. 当前已实现的功能清单</h2>
+<h2 id="3">3. 当前已实现的功能清单</h2>
 <p>以下包含前序实现和今日修复，不能全部理解为今天新增。数值是当前源码中的原型配置。</p>
 <div class="table-scroll"><table>
 <thead>
@@ -297,10 +300,10 @@
 </tr>
 </tbody>
 </table></div>
-<p>对应主要证据：<a href="RevGame-%E5%AE%9E%E7%8E%B0%E4%B8%8E%E6%A1%86%E6%9E%B6%E9%AA%8C%E8%AF%81%E6%8A%A5%E5%91%8A-2026-10-17.html">前序实现报告</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Core/Consts.cs">当前常量</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/BattleService.cs">战斗服务</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/BattleService.Progression.cs">成长与奖励</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/BattleService.Events.cs">事件与辅助</a>。</p>
+<p>对应主要证据：<a href="RevGame-实现与框架验证报告-2026-10-17.html">前序实现报告</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Core/Consts.cs">当前常量</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/BattleService.cs">战斗服务</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/BattleService.Progression.cs">成长与奖励</a>、<a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/BattleService.Events.cs">事件与辅助</a>。</p>
 <p><a id="architecture"></a></p>
-<h2 id="section-5">4. 代码从数据到画面的职责</h2>
-<h3 id="section-6">4.1 先理解六层各自回答什么问题</h3>
+<h2 id="4">4. 代码从数据到画面的职责</h2>
+<h3 id="41">4.1 先理解六层各自回答什么问题</h3>
 <p>可以把一次攻击理解为：“配置说这是什么棋子；模型记住它现在在哪、有多少血；服务判断这次能不能打并结算；流程决定什么时候推进；UI 和 View 把结果画出来。”面板和动画都不能反过来偷偷修改战斗规则。</p>
 <div class="table-scroll"><table>
 <thead>
@@ -343,7 +346,7 @@
 </tr>
 </tbody>
 </table></div>
-<h3 id="battleservice">4.2 同一个 BattleService 为什么分成多个文件</h3>
+<h3 id="42-battleservice">4.2 同一个 BattleService 为什么分成多个文件</h3>
 <p><code>partial</code> 的意思是“同一个类分文件写”，不是同时运行多套战斗管理器。以下文件共同组成一个服务，界面通过同一个 <code>IBattleService</code> 接口发出请求。</p>
 <div class="table-scroll"><table>
 <thead>
@@ -391,7 +394,7 @@
 </tr>
 </tbody>
 </table></div>
-<h3 id="ui-1">4.3 UI、场景表现与资源的具体分工</h3>
+<h3 id="43-ui">4.3 UI、场景表现与资源的具体分工</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -450,14 +453,14 @@
 </tr>
 </tbody>
 </table></div>
-<h3 id="excel">4.4 Excel、对象池与生命周期</h3>
-<p>工作簿为 <a href="../%E9%85%8D%E7%BD%AE%E8%A1%A8/%E6%88%98%E6%96%97%E5%BC%B9%E5%B9%95%E9%85%8D%E7%BD%AE.xlsx">战斗弹幕配置.xlsx</a>。原框架 ExcelTool 把它导出为 <code>Generated/BattleDataStructures.cs</code>、<code>Generated/BattleDataTables.cs</code> 和 <code>GameRes/Data</code> 下两份数据。<code>BattleText</code> 当前 21 行，<code>BattleTuning</code> 当前 1 行。启动时用 <code>RevTask</code> 等待 <code>RevDataTableManager.LoadAsync&lt;T&gt;()</code>，验证必需内容后才进入首页。</p>
+<h3 id="44-excel">4.4 Excel、对象池与生命周期</h3>
+<p>工作簿为 <a href="../配置表/战斗弹幕配置.xlsx">战斗弹幕配置.xlsx</a>。原框架 ExcelTool 把它导出为 <code>Generated/BattleDataStructures.cs</code>、<code>Generated/BattleDataTables.cs</code> 和 <code>GameRes/Data</code> 下两份数据。<code>BattleText</code> 当前 21 行，<code>BattleTuning</code> 当前 1 行。启动时用 <code>RevTask</code> 等待 <code>RevDataTableManager.LoadAsync&lt;T&gt;()</code>，验证必需内容后才进入首页。</p>
 <p>“导出了弹幕表”不代表“所有数值都已导表”。基础血攻在 PieceCatalog，敌阵在 LevelCatalog，节拍等常量在 Consts，仍需后续按正式表替换来源。不要手改 Generated 和 Data 的导出结果。</p>
 <p>RevPool 相当于可重复借还的道具仓库。借到一个弹幕对象时设置本次文字、颜色、位置并播放；播放完归还，下次复用。归还时必须 <code>Kill(false)</code> 并复原，不能触发上一轮的完成回调。BoardView 另有“整盘加载批次”和“短命效果批次”：清上一轮弹幕只推进后者，不能连 81 个棋盘格的加载一起取消。</p>
 <p>HUD 的提示也要记录自己的批次。若旧异步加载在下一回合才完成，它只能回池，不能补播到新界面。计时器、事件监听、对象池与资源分组各有明确所有者；<code>RevScope</code> 负责域的回收，仍需配合对象自身的显式清理。</p>
 <p><a id="examples"></a></p>
-<h2 id="section-7">5. 新手理解三个完整流程</h2>
-<h3 id="section-8">5.1 玩家点击一张牌，再点棋盘</h3>
+<h2 id="5">5. 新手理解三个完整流程</h2>
+<h3 id="51">5.1 玩家点击一张牌，再点棋盘</h3>
 <ol>
 <li>PreparePanel 只转发“选中哪张牌”的编号，不先在画面上生成一个假棋子。</li>
 <li>BattleService 检查当前是否准备期、牌是否仍在手里，以及选中的编号是否有效。</li>
@@ -465,7 +468,7 @@
 <li>全部合法才一次性消费牌与额度、更新棋盘、刷新气眼并尝试合成。</li>
 <li>服务发送事件，手牌槽重画，BoardView 才把真实棋子显示出来；失败则显示原因，原数据保留。</li>
 </ol>
-<h3 id="section-9">5.2 棋子发射弹道并打出伤害数字</h3>
+<h3 id="52">5.2 棋子发射弹道并打出伤害数字</h3>
 <ol>
 <li>BattleLogic 按固定小步调用服务推进，服务累计每颗棋子的行动进度。</li>
 <li>轮到出手时，MoveRules 提供合法敌人；BattleService 计算实际扣血，并发出攻击和受击快照。</li>
@@ -473,7 +476,7 @@
 <li>从 RevPool 借出攻击口号和弹道，读取 Excel 文案与动画参数，用 DOTween 播放。</li>
 <li>弹道到达后显示实际扣血；若期间已换回合，批次校验拒绝迟到弹幕。动画结束归还对象。</li>
 </ol>
-<h3 id="section-10">5.3 回合结算后进入下一轮</h3>
+<h3 id="53">5.3 回合结算后进入下一轮</h3>
 <ol>
 <li>服务确定胜负，清手牌选中态，进入结算阶段；结算弹窗显示这一份结果。</li>
 <li>场景表现归还弹幕/弹道，HUD 清旧提示和日志，取消延迟伤害，推进效果批次。</li>
@@ -482,8 +485,8 @@
 <li>同章按规则保留己方残局，换章清盘；奖励只允许消费一次。旧动画与异步回调不能把上一轮内容补回来。</li>
 </ol>
 <p><a id="progress"></a></p>
-<h2 id="section-11">6. 完成状态与尚未完成的工作</h2>
-<h3 id="section-12">6.1 已完成：当前原型能够交付的部分</h3>
+<h2 id="6">6. 完成状态与尚未完成的工作</h2>
+<h3 id="61">6.1 已完成：当前原型能够交付的部分</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -495,47 +498,47 @@
 <tbody>
 <tr>
 <td>局外到局内流程</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>主界面、六章选关、准备、自动战斗、结算、下一回合、章节奖励、返回首页。</td>
 </tr>
 <tr>
 <td>核心棋盘与落子</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>9×9 拼格、整块占格、全盘空位落子、准备期免费重摆、气眼与锁死、合成预检。</td>
 </tr>
 <tr>
 <td>手牌交互</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>每轮六张、剩余牌刷新、唯一编号、六槽复用、DOTween 翻牌、中断复原。</td>
 </tr>
 <tr>
 <td>原型成长内容</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>九种棋子与三星、职业数量加成、合成、章节解锁与奖励、眼位石、第十回合跳过。</td>
 </tr>
 <tr>
 <td>战斗信息表现</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>攻击、实际伤害、升级和八种支援的展示链路，池化与回合清理。</td>
 </tr>
 <tr>
 <td>指定美术与基本音频</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>背景、新版英文 UI、指定弹窗底板、原型 BGM 与提示音接线。</td>
 </tr>
 <tr>
 <td>弹幕 Excel 链路</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>原框架导表、生成注释、数据异步加载、运行时校验和查询。</td>
 </tr>
 <tr>
 <td>业务验证入口</td>
-<td><span class="status done">已完成</span></td>
+<td>已完成</td>
 <td>可调用真实服务的开发 GM、固定场景、规则/布局/回合/池化验收入口。</td>
 </tr>
 </tbody>
 </table></div>
-<h3 id="section-13">6.2 部分完成：能运行，但不能宣称最终完成的部分</h3>
+<h3 id="62">6.2 部分完成：能运行，但不能宣称最终完成的部分</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -547,42 +550,42 @@
 <tbody>
 <tr>
 <td>战斗节奏和可读性</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>已放慢行动、减少移动并加弹幕；还需要延长有效交战、错开事件、避免短时间单方面清场。</td>
 </tr>
 <tr>
 <td>敌方 AI 与阵容</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>已有合法出生、有限射程攻击与低频靠近；缺少有计划的气/眼阵容、远程站位和阵型评分。</td>
 </tr>
 <tr>
 <td>六章内容</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>有 66 个占位配置入口、Boss/护卫差异；缺少正式逐章阵容、数值曲线与连续通关验证。</td>
 </tr>
 <tr>
 <td>难度与可通关</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>轻松辅助能保通关；自然胜率、策略反馈、双方事件与辅助触发时机仍需平衡。</td>
 </tr>
 <tr>
 <td>UI 手机适配</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>已有安全区、共用空间计算、全屏修复、真实粗体字体及设计基准统一；本机 1920×1080 视觉与 49 节点资产审计已通过，仍缺真实设备触控、刘海和字体清晰度验收。</td>
 </tr>
 <tr>
 <td>性能与稳定性</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>有对象池、批次和清理检查；缺少移动端长时间运行、帧耗和 GC 量测。</td>
 </tr>
 <tr>
 <td>音频体验</td>
-<td><span class="status partial">部分完成</span></td>
+<td>部分完成</td>
 <td>已接线且有历史播放状态证据；缺少真机听感、音量层级与混音评审。</td>
 </tr>
 </tbody>
 </table></div>
-<h3 id="section-14">6.3 未完成：后续内容与发布能力</h3>
+<h3 id="63">6.3 未完成：后续内容与发布能力</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -594,42 +597,42 @@
 <tbody>
 <tr>
 <td>正式基础血攻、敌阵 Excel</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>等用户提供正式数值与表结构，再通过框架导表接入；现有占位值不能冒充正式配置。</td>
 </tr>
 <tr>
 <td>持久存档</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>章节、卡池等解锁仍只在本次运行内；需定义保存时机、版本和坏档恢复。</td>
 </tr>
 <tr>
 <td>章节职业克制与随机负面效果</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>不能把现有职业数量攻击加成当成职业克制。</td>
 </tr>
 <tr>
 <td>教程、成就等扩展</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>需按权威策划案和用户优先级继续排期。</td>
 </tr>
 <tr>
 <td>AB 构建与真加载</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>编辑器 AssetDatabase 直读通过不等于 AB 路径已验证。</td>
 </tr>
 <tr>
 <td>Android/iOS 真机</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>无真机启动、交互、字体、全屏、安全区、音频与性能验收结论。</td>
 </tr>
 <tr>
 <td>WebGL/小游戏平台</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>尚无目标平台构建与运行结论。</td>
 </tr>
 <tr>
 <td>连续 66 回合平衡与长时压力</td>
-<td><span class="status todo">未完成</span></td>
+<td>未完成</td>
 <td>独立生成配置/造局断言不能替代连续游玩与稳定性测试。</td>
 </tr>
 </tbody>
@@ -637,7 +640,7 @@
 <p>维护时还需清理少量落后的历史注释，例如 StartRound 附近把后期敌方 3★一概描述为 2×2；实际尺寸应以当前 Piece 构造和 Boss 显式尺寸为准。这属于说明修正，不能据旧注释擅自改变占格规则。</p>
 <p>策划案中明确砍掉的商店、装备、遗物、天赋树、天梯、打劫、行动力条等不放入待完成清单，避免把不该做的内容误算成进度缺口。</p>
 <p><a id="verification"></a></p>
-<h2 id="section-15">7. 验收记录与证据边界</h2>
+<h2 id="7">7. 验收记录与证据边界</h2>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -713,9 +716,9 @@
 <p>上表明确区分历史执行和今日重新执行；同一组检查在不同阶段复验，不能把 570、737、136 或重复运行次数累加成“新功能数量”。</p>
 <p>验收入口：<a href="../UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameRuleChecks.cs">GameRuleChecks</a>、<a href="../UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameLayoutChecks.cs">GameLayoutChecks</a>、<a href="../UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameRoundPresentationChecks.cs">GameRoundPresentationChecks</a>、<a href="../UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameFeelChecks.cs">GameFeelChecks</a>。物理目录迁移不改变 <code>RevGame.Editor</code> 调用命名空间。</p>
 <p><a id="tomorrow"></a></p>
-<h2 id="ai">8. 明天的战斗与 AI 改造方案</h2>
+<h2 id="8-ai">8. 明天的战斗与 AI 改造方案</h2>
 <p><strong>以下全部为计划，尚未实施；候选数值尚未定案。</strong> 目标是继续让玩家能够通关，同时让玩家有时间看清“敌方施压→我方受损→支援反击→重新稳住阵型”的过程。不能只靠堆血、无限增加弹幕或把普通棋全部加速。</p>
-<h3 id="section-16">8.1 先明确要保留的体验</h3>
+<h3 id="81">8.1 先明确要保留的体验</h3>
 <ul>
 <li>保留横屏、六张手牌、剩余牌刷新、全盘空位落子、准备期免费调阵。</li>
 <li>保留我方守阵和远程原地攻击，已有一眼/两眼阵型不因自动寻敌而散掉。</li>
@@ -723,15 +726,15 @@
 <li>保留显眼的实际伤害、攻击、升级和事件提示，但控制同时出现数量，给玩家阅读时间。</li>
 <li>不擅自接入被策划砍掉的系统，不修改 Revolution 快照内核来实现业务 AI。</li>
 </ul>
-<h3 id="section-17">8.2 战斗时间与事件时间分开调</h3>
+<h3 id="82">8.2 战斗时间与事件时间分开调</h3>
 <p>先测量当前各类局面“有效交战持续多久”和“哪种伤害过早清场”，再分别调整基础行动、敌人耐久、远程节奏和事件间隔。这里至少有四处不同的时间：敌人被消灭就提前结束的有效交战与普通 50 秒上限、45 秒决胜辅助、首次 3.75 秒/后续 5 秒的事件间隔，以及 Excel <code>Duration</code> 控制的提示停留。它们不能混成一个“战斗时长”参数。敌人在十几秒内被炮火清掉时，单纯延长回合上限没有用；延长提示停留也不会改变伤害与胜负。</p>
 <p>建议让第一段交战先由棋子自身完成，之后再引入支援。一次事件先展示征兆和标题，执行效果，留出观察结果的时间，再允许下一次事件。若后续确认采用敌方增援或护盾等候选事件，必须有明显提示，并让玩家看得到应对窗口，避免无预警改变胜负；这类事件当前尚未定案。</p>
 <p>普通回合、Boss、教学式早期回合应分开配置，不把所有难度塞在一组常量里。初期先用固定种子和少量代表场景调节，参数稳定后再扩至六章配置。</p>
-<h3 id="section-18">8.3 增加敌棋和远程，也要保证合法与可读</h3>
+<h3 id="83">8.3 增加敌棋和远程，也要保证合法与可读</h3>
 <p>当前普通敌阵为 3～5 颗占位棋，已经会抽到弓箭手和火法师；它们有各自远程规则，但按空格扫描放置，并不主动构造战术阵型。明天计划增加敌方人数和远程占比、改进有效射界，区分前排承伤、守眼骨架、远程输出与必要机动棋，而不是简单把所有空格填满。</p>
 <p>增加敌棋前先计算可用格，包括上一回合保留的玩家占格、玩家已围眼位、Boss 整块身体和计划保留的气。阵容需要先在临时计划中全部放得下，再一次性提交；失败则换较小合法模板或报告原因，不能偷偷少生成 Boss、把棋子生成到玩家身上，或破坏现有残局。</p>
 <p>敌方远程增加后，要重新核对实际射程、直线阻挡和炮架条件。不要用“看起来是远程”代替“此位置确实能攻击”：否则它们仍会频繁移动，或整场站着打不到人。保眼远程站位应优先选择能开火又不挤掉眼与公共气的位置。</p>
-<h3 id="section-19">8.4 用真实气、眼规则预置或构造一眼/两眼阵型</h3>
+<h3 id="84">8.4 用真实气、眼规则预置或构造一眼/两眼阵型</h3>
 <p>第一版建议先做少量可读的阵容模板，再在合法空格中做平移、镜像或适合棋盘的旋转，控制复杂度。每个模板明确记录骨架棋、输出棋、预留眼位与必要气，而不是只保存几颗棋子的坐标。</p>
 <p>计划的生成与验证顺序：</p>
 <ol>
@@ -743,17 +746,17 @@
 <li>若没有达标方案，退回较简单但完整合法的阵容；让降级原因出现在开发日志和 GM 快照中，便于验收。</li>
 </ol>
 <p>模板应优先复用 BoardModel、GoRules、MoveRules，业务算法放在现有 Data/Services 职责范围内。无需另起一套与真实规则不一致的“AI 专用棋盘”。</p>
-<h3 id="section-20">8.5 敌方行动先看守阵，再看攻击，最后才考虑移动</h3>
+<h3 id="85">8.5 敌方行动先看守阵，再看攻击，最后才考虑移动</h3>
 <p>当前已经有“成眼不走、能打就打、攻击不到才低频靠近”的基础，明天在此之上细化决策。守眼骨架默认固定，远程只在没有合法攻击位置且不损伤阵型时考虑调整；机动棋承担必要的接近任务。</p>
 <p>候选移动先验证完整占格，再用临时规则结果比较移动前后眼数和公共气。除非明确进入带提示的应急策略，不接受拆掉己方一眼/两眼、堵死己方最后公共气、填掉眼位的移动。距离相同时避免左右往返；攻速增益仍然不增加移动次数。</p>
 <p>目标选择可以先做可解释的小规则，例如“可合法命中→能完成击杀→威胁较大的目标→距离/稳定编号”，而不急于引入复杂搜索。规则次序与具体权重仍待调试，不在文档中把它们写成已完成。</p>
-<h3 id="section-21">8.6 战斗事件有来有回，通关辅助做最后兜底</h3>
+<h3 id="86">8.6 战斗事件有来有回，通关辅助做最后兜底</h3>
 <p>权威 v18 的现有约束是“事件只给增益，不出负面”。因此，先通过更合理的敌阵、攻防持续时间与我方支援节奏形成来回，沿用现有增益规则。把事件进一步分为敌方压力、我方应对和中性变化，是需要用户确认的候选设计，不是明天已获确认的实施项，也不能默认解除 v18 的边界。</p>
 <p>若这项候选之后确认，再分别设置预算与冷却：敌方可短时加固或增援，我方通过回血、回气、补眼、援军或适量炮火回应；不引入不可应对的永久强化。用户未确认前，不增加敌方增益或对玩家的随机负面事件。</p>
 <p>每类事件都要检查合法目标和可用空间，提示说明真实效果。没有合法目标时采用清楚、有限的替代效果，不能在已满的棋盘强塞援军，也不能为了表现而把眼位填掉。数值需要有上限和失效时机，换轮清理沿用已有批次/池化机制。</p>
 <p>当前 45 秒决胜辅助会直接清除剩余敌人，容易盖过刚加入的阵型和事件。明天计划先把这个机制改为可观测的最后兜底：只有长时间僵持、己方确实无进展等条件满足才触发，并保留醒目的“辅助”说明；不要把强制清场当作默认每局的主玩法。</p>
 <p>“最终可通关”仍是要保持的目标，但辅助的具体阈值、分级强度、Boss 处理和最终收尾方式尚未确定。调整必须覆盖弱阵、近战无法接敌、双方守眼和远程受阻场景，避免改完后出现无限对峙或失去通关保障。</p>
-<h3 id="section-22">8.7 明天必须增加的验收场景</h3>
+<h3 id="87">8.7 明天必须增加的验收场景</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -797,8 +800,8 @@
 </tbody>
 </table></div>
 <p><a id="schedule"></a></p>
-<h2 id="section-23">9. 建议参数与明日执行顺序</h2>
-<h3 id="section-24">9.1 仅供试验的候选区间</h3>
+<h2 id="9">9. 建议参数与明日执行顺序</h2>
+<h3 id="91">9.1 仅供试验的候选区间</h3>
 <p>以下数值尚未定案、尚未写入代码或正式 Excel。它们用于启动可重复的试玩比较，不能引用为当前游戏行为。</p>
 <div class="table-scroll"><table>
 <thead>
@@ -856,7 +859,7 @@
 </tr>
 </tbody>
 </table></div>
-<h3 id="section-25">9.2 按依赖执行，不一次改完再猜原因</h3>
+<h3 id="92">9.2 按依赖执行，不一次改完再猜原因</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -905,7 +908,7 @@
 </table></div>
 <p>如果正式数值尚未提供，明天可以先完成阵容合法性、AI 决策与节奏试验，但临时试验值必须继续标为原型配置。正式血攻和敌阵表接入应单独验收，不覆盖掉已有弹幕工作簿。</p>
 <p><a id="handoff"></a></p>
-<h2 id="section-26">10. 新同学接手操作与维护规则</h2>
+<h2 id="10">10. 新同学接手操作与维护规则</h2>
 <ol>
 <li>打开工程 <code>Assets/Scenes/SampleScene.unity</code>，按 Play，从首页进入第一章；保持 Unity 编辑器打开。</li>
 <li>左侧选牌，在空格落子；准备期点己方棋子再点空格可换位。刷新只重抽剩余牌；准备完毕进入自动战斗。</li>
@@ -918,6 +921,6 @@
 <li>注释使用中文，关键字段、接口、方法、算法与时序说明“为什么这样做、失败怎么办”，让新同学理解，不只把代码翻译成中文。控制流带大括号，参数签名不随意拆行。</li>
 <li>业务只使用 Rev 门面；异步只用 RevTask；启动只初始化一次。<code>Assets/Revolution</code> 是框架快照，不在本项目顺手改内核；确需修框架先回源仓 main。</li>
 </ol>
-<p>相关资料：<a href="RevGame-%E7%8E%B0%E7%8A%B6%E4%B8%8ECodex%E4%BA%A4%E6%8E%A5.html">现状与 Codex 交接</a>、<a href="RevGame-%E4%BB%A3%E7%A0%81%E6%9E%B6%E6%9E%84%E8%AF%B4%E6%98%8E.html">代码架构说明</a>、<a href="RevGame-%E5%AE%9E%E7%8E%B0%E4%B8%8E%E6%A1%86%E6%9E%B6%E9%AA%8C%E8%AF%81%E6%8A%A5%E5%91%8A-2026-10-17.html">实现与框架验证报告</a>、<a href="../%E7%AD%96%E5%88%92%E6%A1%88/%E7%8E%A9%E6%B3%95%E6%8B%93%E5%B1%95%E7%AD%96%E5%88%92%E6%A1%88.html">玩法拓展策划案 v18</a>。资料中的历史数值若与当前源码或后续用户指令冲突，以明确的最新要求与真实实现为准，并补写变更原因。</p>
-
-</main></body></html>
+<p>相关资料：<a href="RevGame-现状与Codex交接.html">现状与 Codex 交接</a>、<a href="RevGame-代码架构说明.html">代码架构说明</a>、<a href="RevGame-实现与框架验证报告-2026-10-17.html">实现与框架验证报告</a>、<a href="../策划案/玩法拓展策划案.html">玩法拓展策划案 v18</a>。资料中的历史数值若与当前源码或后续用户指令冲突，以明确的最新要求与真实实现为准，并补写变更原因。</p>
+</main></body>
+</html>

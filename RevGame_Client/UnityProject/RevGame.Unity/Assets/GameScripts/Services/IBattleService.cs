@@ -28,6 +28,10 @@ namespace RevGame.Services
     {
         bool VictoryAssistEnabled { get; }
         int BattleEventCount { get; }
+        /// <summary>实际验证成功的敌阵/空间降级说明，界面只能读取，不能借此修改棋盘。</summary>
+        string EnemyFormation { get; }
+        /// <summary>当前通关兜底阶段的说明，供玩家看见渐进支援和最终收尾何时生效。</summary>
+        string VictorySupportStatus { get; }
         /// <summary>手牌只读视图；消费牌必须走 TryPlayCard，不能由按钮自行删除。</summary>
         IReadOnlyList<HandCard> Hand { get; }
 
@@ -81,7 +85,7 @@ namespace RevGame.Services
         /// <summary>战斗已进行秒数（准备阶段为 0）。</summary>
         float BattleElapsed { get; }
 
-        /// <summary>普通回合50秒；Boss返回正无穷，UI应显示不限时。</summary>
+        /// <summary>普通回合90秒；Boss返回正无穷，辅助开启时仍有最后收尾保护。</summary>
         float BattleDuration { get; }
 
         /// <summary>我方棋子（只读快照，UI 遍历用）。</summary>

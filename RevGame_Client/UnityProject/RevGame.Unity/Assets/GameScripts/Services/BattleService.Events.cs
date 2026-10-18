@@ -19,6 +19,25 @@ namespace RevGame.Services
         private int _battleEventCount;
         private float _nextEventAt;
         private bool _decisiveSupportUsed;
+        // 支援是同一回合的状态，不是独立计时器；换轮统一清零，不会有上一轮的迟到炮火。
+        /// <summary>0=正常交战，1=僵持集火，2=决胜收尾；只向后推进，下一回合重新从零开始。</summary>
+        private int _supportStage;
+        /// <summary>最近一次敌人真正掉血的战斗时间；用它判断久攻无进展，不靠是否播过攻击动画。</summary>
+        private float _lastEnemyDamageAt;
+        /// <summary>下一次支援扣血的战斗时间，随固定模拟推进，不另开跨回合计时器。</summary>
+        private float _nextSupportPulseAt;
+        /// <summary>最后一子守护是否已经提示过，避免每次零伤害都刷同一条日志。</summary>
+        private bool _lastStandShown;
+        /// <summary>供 HUD/GM 读取的保障阶段说明；界面不能反过来修改支援阶段。</summary>
+        public string VictorySupportStatus
+        {
+            get
+            {
+                if (_supportStage >= 2) { return "决胜收尾 · 逐个击破"; }
+                if (_supportStage == 1) { return "僵持支援 · 集火破阵"; }
+                return "守阵交战 · " + Consts.VictoryAssistFinishSeconds + "秒最后兜底";
+            }
+        }
         /// <summary>默认轻松模式含最后一子守护与决胜支援；界面会公开说明。</summary>
         public bool VictoryAssistEnabled { get; }
         public int BattleEventCount => _battleEventCount;
@@ -200,7 +219,7 @@ namespace RevGame.Services
             if (VictoryAssistEnabled)
             {
                 // 顺序轮换，保证援军、治疗和炮火都会出现，避免连续随机到没有目标的事件。
-                BattleEventKind[] support = { BattleEventKind.Reinforcement, BattleEventKind.Heal, BattleEventKind.Artillery, BattleEventKind.Liberty, BattleEventKind.Artillery, BattleEventKind.Combo };
+                BattleEventKind[] support = { BattleEventKind.Reinforcement, BattleEventKind.Liberty, BattleEventKind.Heal, BattleEventKind.Eye, BattleEventKind.Combo, BattleEventKind.Artillery, BattleEventKind.Heal, BattleEventKind.BreakChain };
                 TriggerBattleEvent(support[_battleEventCount % support.Length]);
                 return;
             }
@@ -220,9 +239,9 @@ namespace RevGame.Services
             }
         }
 
-        private void SpawnSupport(BoardPos pos)
+        private void SpawnSupport(BoardPos pos, PieceKind kind = PieceKind.Shield)
         {
-            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
+            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, StarTier.One), GameSide.Player);
             if (!_board.Place(piece, pos))
             {
                 throw new System.InvalidOperationException("已预检的援兵落点不可用：" + pos);
@@ -292,7 +311,9 @@ namespace RevGame.Services
                             var pos = new BoardPos(x, y);
                             if (CanSupportFit(pos, 1))
                             {
-                                SpawnSupport(pos);
+                                // 全部六牌已落完也有援军。己方远程全灭时补弓箭，而不是再加一个够不着敌人的盾战。
+                                bool hasRanged = _playerPieces.Exists(p => p.IsAlive && p.Def.IsRanged);
+                                SpawnSupport(pos, hasRanged ? PieceKind.Shield : PieceKind.Archer);
                                 return true;
                             }
                         }
@@ -426,7 +447,7 @@ namespace RevGame.Services
             {
                 if (System.Math.Abs(p.Pos.X - center.Pos.X) <= 1 && System.Math.Abs(p.Pos.Y - center.Pos.Y) <= 1)
                 {
-                    DamagePiece(p, Consts.SupportDamage);
+                    DamagePiece(p, System.Math.Max(Consts.SupportDamage, (int)(p.MaxHp * Consts.ArtilleryHpRatio)));
                 }
             }
 
@@ -439,13 +460,19 @@ namespace RevGame.Services
             if (VictoryAssistEnabled && target.Side == GameSide.Player && _playerPieces.FindAll(p => p.IsAlive).Count == 1)
             {
                 // ★ 只保护最后一颗我方棋子至少留 1 血，前面的阵亡与合成仍正常发生。
-                // 配合 45 秒决胜支援保证真正获胜，不只是把结算界面的“负”改成“胜”。
+                // 配合后段渐进支援保证真实取胜。只保护最后一子，其他阵亡与阵型破坏仍正常发生。
                 amount = System.Math.Min(amount, System.Math.Max(0, target.Hp - 1));
+                if (amount == 0 && !_lastStandShown)
+                {
+                    _lastStandShown = true;
+                    RevEvent.DispatchEvent<string>(Events.BattleLog, "最后一子守护：阵线危急，援军将逐步接管火力");
+                }
             }
 
             int real = target.TakeDamage(amount);
             if (real > 0)
             {
+                if (target.Side == GameSide.Enemy) { _lastEnemyDamageAt = _battleElapsed; }
                 var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos);
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
             }
@@ -460,25 +487,54 @@ namespace RevGame.Services
             return real;
         }
 
+        /// <summary>每个模拟小步检查一次：先让正常交战展开，僵持时集火，长局最后逐个击破。</summary>
         private void ApplyVictorySupport()
         {
-            if (!VictoryAssistEnabled || _decisiveSupportUsed || _battleElapsed < Consts.VictoryAssistFinishSeconds)
+            if (!VictoryAssistEnabled || _board.IsSideWiped(GameSide.Enemy))
             {
                 return;
             }
-
-            _decisiveSupportUsed = true;
-            foreach (Piece enemy in new List<Piece>(_enemyPieces))
+            // 第一段只在久攻无进展或己方已经危急时介入。正常交战即使超过旧的45秒也可以继续。
+            bool stalled = _battleElapsed - _lastEnemyDamageAt >= Consts.VictoryAssistStallSeconds;
+            bool critical = _lastStandShown || _playerPieces.FindAll(p => p.IsAlive).TrueForAll(p => p.HpRatio < 0.3f);
+            if (_supportStage == 0 && _battleElapsed >= Consts.VictoryAssistStartSeconds && (stalled || critical))
             {
-                if (enemy.IsAlive)
+                BeginSupportStage(1, "僵持支援：每三秒集中火力压制一名敌人，正常攻防继续");
+            }
+            // 双方守眼、近战隔盘和 Boss 都必须能结束；后段改成逐个击破，让玩家看见破阵过程。
+            if (_supportStage < 2 && _battleElapsed >= Consts.VictoryAssistFinalSeconds)
+            {
+                BeginSupportStage(2, "决胜收尾：援军逐个击破残部，保留最后通关保障");
+            }
+            if (_supportStage == 0 || _battleElapsed < _nextSupportPulseAt) { return; }
+            _nextSupportPulseAt += _supportStage == 2 ? 1f : Consts.VictoryAssistPulseSeconds;
+            Piece target = _enemyPieces.Find(p => p.IsAlive && p.IsKing);
+            if (target == null) { target = _enemyPieces.Find(p => p.IsAlive && p.Def.IsRanged); }
+            if (target == null) { target = _enemyPieces.Find(p => p.IsAlive); }
+            if (target == null) { return; }
+            _decisiveSupportUsed = true;
+            int damage = _supportStage == 2 ? target.Hp : System.Math.Max(Consts.SupportDamage, (int)(target.MaxHp * Consts.VictoryAssistPulseHpRatio));
+            DamagePiece(target, damage);
+            // 非标准开发夹具也有绝对上限；正常6~10名普通敌棋已在前段逐个击破，不会默认整盘秒杀。
+            if (_battleElapsed >= Consts.VictoryAssistFinishSeconds)
+            {
+                foreach (Piece enemy in new List<Piece>(_enemyPieces))
                 {
-                    DamagePiece(enemy, enemy.Hp);
+                    if (enemy.IsAlive) { DamagePiece(enemy, enemy.Hp); }
                 }
             }
-
             RefreshGoState();
+        }
+
+        /// <summary>切换阶段并通知现有池化提示；推迟普通事件，避免两条大标题同时争抢阅读时间。</summary>
+        private void BeginSupportStage(int stage, string description)
+        {
+            _supportStage = stage;
+            _nextSupportPulseAt = _battleElapsed;
+            // 沿用 Excel 的决胜支援表现配置，阶段细节由持续可读的 HUD 与战斗日志说明。
             RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, "决胜支援");
-            RevEvent.DispatchEvent<string>(Events.BattleLog, "决胜支援：援军火力击败剩余敌人");
+            RevEvent.DispatchEvent<string>(Events.BattleLog, description);
+            _nextEventAt = System.Math.Max(_nextEventAt, _battleElapsed + 4f);
         }
     }
 }

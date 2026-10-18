@@ -1,5 +1,7 @@
 # RevGame 游戏代码架构与运行说明
 
+> 2026-10-18 最新战斗更新：已接入 6～10 名普通敌棋、三种远程、一眼/两眼真实布阵、深快照保阵试走、90 秒普通上限与阶段式通关保障。1150 条战术断言、570 条规则、737 条布局、136 条 Play 回合表现通过，两组种子各连续赢下 66 回合；当前参数及范围见[战斗与围棋 AI 改造验收](RevGame-战斗与围棋AI改造验收-2026-10-18.md)。下方旧日期与数字为前序实现记录。
+
 2026-10-17 当前实现：Revolution 原型闭环、手机横屏安全区布局、六牌刷新与 DOTween、回合表现清理、升级/攻击/伤害/支援 Excel。框架可行性证据及验证范围见[实现与框架验证报告](RevGame-实现与框架验证报告-2026-10-17.md)。正式基础数值仍待用户提供。
 
 ## 先跑起来
@@ -18,10 +20,11 @@ GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTw
 | Pieces/Piece | 生命、位置、身体大小、眼和行动进度；不持有 GameObject。 |
 | Board/BoardModel、GoRules | 完整占格、连通块、去重气数、围困和眼；先预检整块身体再提交。 |
 | Battle/HandModel、MoveRules | 唯一牌编号与目标查询。刷新后旧编号不能操作新牌；我方远程可跨盘锁定。 |
+| Battle/EnemyFormationPlanner、EnemyTactics | 在深复制棋盘中预检完整眼阵和保眼移动；成功后才把最终布阵或动作交给战斗服务。 |
 | Services/BattleService | 唯一规则服务，控制阶段、落子、伤害、胜负与固定模拟。 |
 | BattleService.Placement | 准备期棋盘统一点击：选牌、选己方棋子和选眼位石互斥；全盘落子与免费重摆。 |
 | BattleService.HandRefresh | 只重抽手中剩余牌，保留星级和落子额度，提交后通知 UI；应用 Excel 远程频率。 |
-| BattleService.Progression / Events / Comfort | 奖励、合成、职业加成、支援与轻松模式。partial 是同一个服务分文件，并非三套管理器。 |
+| BattleService.Progression / Events | 奖励、合成、职业加成、支援与轻松模式。partial 是同一个服务分文件，并非多套管理器。 |
 | BattleService.*Checks / Diagnostics | 仅编辑器或开发环境的边界断言、受控造局，不进入正式游戏业务。 |
 | Flow/GameFlow / BattleLogic | FSM 切换大厅、选关、战斗和退出；Scope 管回收；Logic 每 0.3125 秒驱动服务并转发 UI 动作。 |
 | View/BoardView | 编号映射到池化格子/棋子/特效；攻击和受击快照驱动口号与弹道，批次检查避免退出后补播。 |

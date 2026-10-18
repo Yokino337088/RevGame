@@ -8,7 +8,7 @@ namespace RevGame.Core
     /// 全局常量。**所有魔法数字都集中在这里**，不要在业务代码里散落写 9、0.5f 这种字面量。
     ///
     /// 为什么要有这个类：
-    /// 策划案里"9×9 棋盘 / 6 章 / 每章 10 回合 + 1 个 Boss / 战斗 15~20 秒"这些数字，
+        /// 策划案的棋盘/章节结构，以及用户后续调整的战斗时长等数字，
     /// 一旦散落在十几个文件里，改一次规则就要全项目搜。集中成常量后只改一处。
     /// </summary>
     public static class Consts
@@ -31,7 +31,7 @@ namespace RevGame.Core
         public const int RoundsPerChapter = BossRoundIndex;
         // ---------------- 回合节奏 ----------------
         /// <summary>用户要求放慢体验，覆盖 v18 原来的 15~20 秒，留足观看战斗和支援事件的时间。</summary>
-        public const float BattleDurationSeconds = 50f;
+        public const float BattleDurationSeconds = 90f;
         /// <summary>普通棋子的基准行动周期（秒）；模拟小步与远程频率以此为基数，结果不依赖帧率。</summary>
         public const float BattleTickSeconds = 1.25f;
         /// <summary>固定模拟小步：一周期分四次驱动，允许远程在周期中途出手；不会加快普通棋或敌方移动。</summary>
@@ -64,12 +64,30 @@ namespace RevGame.Core
         public const float BossAccelerationBonus = 0.1f;
         public const float BattleEventChance = 0.3f;
         public const float RareEventChance = 0.25f;
-        public const float BattleEventDelay = 3.75f;
-        /// <summary>两次事件至少间隔五秒，让玩家有时间读完上一条支援提示。</summary>
-        public const float BattleEventInterval = 5f;
+        public const float BattleEventDelay = 8f;
+        /// <summary>先观看正常交战，再每九秒加入一次增益；提示停留仍独立由 Excel Duration 控制。</summary>
+        public const float BattleEventInterval = 9f;
         public const int MaxBattleEventsPerRound = 12;
-        /// <summary>轻松模式 45 秒时用真实支援伤害清除剩余敌人，保证正常开始的战斗最终获胜。</summary>
-        public const float VictoryAssistFinishSeconds = 45f;
+        /// <summary>最迟兜底时间；正常交战可提前获胜，只有仍未结束的长局才走到这里。</summary>
+        public const float VictoryAssistFinishSeconds = 86f;
+        /// <summary>僵持/危急局面在此之后才允许渐进支援，给敌方阵型足够发挥时间。</summary>
+        public const float VictoryAssistStartSeconds = 36f;
+        /// <summary>长局到此进入逐个击破；正常交战和僵持支援都允许提前获胜。</summary>
+        public const float VictoryAssistFinalSeconds = 74f;
+        /// <summary>连续这么久没有敌人真正掉血，才算火力停滞。</summary>
+        public const float VictoryAssistStallSeconds = 9f;
+        /// <summary>僵持支援的集火间隔；与普通战斗事件的九秒间隔是两种节奏。</summary>
+        public const float VictoryAssistPulseSeconds = 3f;
+        /// <summary>原型节奏参数，等待正式数值表替换；双方普通攻击一起放缓，远程攻击频率不变。</summary>
+        public const float CombatDamageScale = 0.6f;
+        /// <summary>敌方原型生命系数，给远程对射、守眼回血和事件留出展开时间。</summary>
+        public const float EnemyHpScale = 2.4f;
+        /// <summary>僵持支援单次至少削掉目标最大生命的此比例，不会因目标星级高而失效。</summary>
+        public const float VictoryAssistPulseHpRatio = 0.35f;
+        /// <summary>普通炮火的比例伤害下限，仍与固定的 SupportDamage 取较大值。</summary>
+        public const float ArtilleryHpRatio = 0.12f;
+        /// <summary>敌弓直线射程；保留阻挡判定，和重弩跨盘攻击不同。</summary>
+        public const int EnemyArcherRange = 6;
         public const float PieceMoveSeconds = 0.45f;
         /// <summary>弹道飞行时长，同时用于安排命中飘字。</summary>
         public const float ProjectileSeconds = 0.3f;

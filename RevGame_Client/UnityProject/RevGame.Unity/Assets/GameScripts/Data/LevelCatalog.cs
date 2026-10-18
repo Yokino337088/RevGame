@@ -16,7 +16,7 @@ namespace RevGame.Data
         public int Round { get; }
         /// <summary>是否 Boss 回合（每章第 11 回合）。</summary>
         public bool IsBoss { get; }
-        /// <summary>敌方棋子外形（按顺序摆放；Boss 回合会额外加一个 Boss 大棋）。</summary>
+        /// <summary>敌方普通棋名单；布阵算法优先用前三种远程构建眼阵，Boss 大棋由战斗服务另加。</summary>
         public IReadOnlyList<PieceKind> EnemyKinds { get; }
 
         public RoundDef(int chapter, int round, bool isBoss, IReadOnlyList<PieceKind> enemyKinds)
@@ -38,19 +38,11 @@ namespace RevGame.Data
     ///
     /// ⚠️ 敌方阵容是**程序生成的占位**（等 Excel 关卡表接入后替换）。
     /// 生成规则（有意做得简单、可预期）：
-    /// - 普通回合：敌方 3~5 颗，外形按章号轮换，星级随章数提升；
+    /// - 普通回合：敌方 6~10 颗，固定有重弩、弓箭和火法，星级随章数提升；
     /// - Boss 回合：在第 11 回合，额外标记 <see cref = "RoundDef.IsBoss"/>。
     /// </summary>
     public static class LevelCatalog
     {
-        private static readonly PieceKind[] Pool =
-        {
-            PieceKind.Swordman,
-            PieceKind.Shield,
-            PieceKind.Archer,
-            PieceKind.MageFire,
-            PieceKind.Assassin,
-        };
         /// <summary>取某一章某一回合的配置。参数越界返回 null（调用方判空）。</summary>
         public static RoundDef GetRound(int chapter, int round)
         {
@@ -66,26 +58,15 @@ namespace RevGame.Data
 
             bool isBoss = round == Consts.BossRoundIndex;
             List<PieceKind> enemies = new List<PieceKind>();
-            if (isBoss)
+            // 前三名是输出骨架：重弩全盘压制、弓箭直线远射、火法利用炮架。
+            // 后面的近战连接成守眼骨架。数量与眼阵规模对应，不能只多生成一排散兵。
+            enemies.Add(PieceKind.Crossbow);
+            enemies.Add(PieceKind.Archer);
+            enemies.Add(PieceKind.MageFire);
+            int count = isBoss ? 10 : System.Math.Min(10, 6 + (round - 1) / 3 + (chapter - 1) / 3);
+            for (int i = enemies.Count; i < count; i++)
             {
-                // Boss 回合：先放 2 颗精英，再标记 Boss（Boss 本体由 Battle 层生成大棋）。
-                enemies.Add(Pool[chapter % Pool.Length]);
-                enemies.Add(Pool[(chapter + 2) % Pool.Length]);
-            }
-            else
-            {
-                // 普通回合：3 + 章内进度，最多 5 颗。
-                int count = 3 + (round - 1) / 4;
-                if (count > 5)
-                {
-                    count = 5;
-                }
-
-                for (int i = 0; i < count; i++)
-                {
-                    int index = (chapter * 3 + round + i * 2) % Pool.Length;
-                    enemies.Add(Pool[index]);
-                }
+                enemies.Add(i % 3 == 0 ? PieceKind.Shield : (i % 3 == 1 ? PieceKind.HeavySword : PieceKind.Swordman));
             }
 
             return new RoundDef(chapter, round, isBoss, enemies);

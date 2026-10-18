@@ -96,6 +96,34 @@ namespace RevGame.Pieces
         }
 
         /// <summary>
+        /// 创建算法试算用的独立棋子。只共享只读图鉴，血量、坐标、气眼、行动进度全部复制。
+        /// 不能把实战棋子直接放进临时棋盘：GoRules 会回写气眼，试走一步就会污染真实战斗。
+        /// </summary>
+        public Piece CreateSnapshot()
+        {
+            return new Piece(this);
+        }
+
+        private Piece(Piece source)
+        {
+            Id = source.Id;
+            Def = source.Def;
+            Side = source.Side;
+            Size = source.Size;
+            IsBoss = source.IsBoss;
+            IsKing = source.IsKing;
+            _maxHp = source._maxHp;
+            Hp = source.Hp;
+            Pos = source.Pos;
+            EyeCount = source.EyeCount;
+            ConnectedCells = source.ConnectedCells;
+            BonusLiberties = source.BonusLiberties;
+            ActionProgress = source.ActionProgress;
+            Liberties = source.Liberties;
+            GoState = source.GoState;
+        }
+
+        /// <summary>
         /// 受到伤害。返回**实际扣掉的血**（可能因为血量不够而小于传入值），
         /// 让调用方能在日志/飘字里显示真实数字（而不是"面板上写着 -30，实际只掉了 5"）。
         /// </summary>

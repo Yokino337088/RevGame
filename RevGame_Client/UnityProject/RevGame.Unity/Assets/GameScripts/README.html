@@ -1,10 +1,25 @@
-<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>README</title><style>body{font:16px/1.85 "Microsoft YaHei",sans-serif;max-width:1120px;margin:48px auto;padding:0 28px;color:#24352e;background:#f7f6ef}h1{font-size:32px;color:#245c47}h2{border-bottom:2px solid #bdd0c3;padding-top:24px}table{border-collapse:collapse;width:100%;background:white;margin:20px 0}th,td{border:1px solid #d1ddd5;padding:10px 14px;text-align:left;vertical-align:top}th{background:#e7efe7}code{background:#e8ece7;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{background:#e8ece7;padding:18px;overflow:auto}blockquote{border-left:4px solid #659077;margin:16px 0;padding:4px 18px;background:#edf2eb}a{color:#205c94}li{margin:7px 0}@media(max-width:700px){body{margin:20px auto;padding:0 14px;font-size:14px}table{display:block;overflow-x:auto}}</style><body><h1 id="revgame">RevGame 游戏代码架构与运行说明</h1>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RevGame 游戏代码架构与运行说明</title>
+<style>
+:root{--ink:#203149;--muted:#5f6f80;--line:#d9e2ea;--paper:#fff;--accent:#126b73;--soft:#edf6f6;--page:#eef2f6}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--page);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;font-size:16px;line-height:1.85}.document{max-width:1180px;margin:36px auto;background:var(--paper);padding:48px 58px 62px;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px #2031490a}h1{font-size:34px;line-height:1.45;margin:0 0 14px;letter-spacing:.03em;color:#13283e;border-top:7px solid var(--accent);padding-top:22px}h2{font-size:24px;line-height:1.5;margin:50px 0 18px;padding:10px 0 10px 16px;border-left:5px solid var(--accent);background:linear-gradient(90deg,var(--soft),#fff);scroll-margin-top:24px}h3{font-size:19px;line-height:1.6;margin:32px 0 12px;color:#215469}p{margin:13px 0}a{color:#0d6578;text-underline-offset:3px;overflow-wrap:anywhere}a:hover{color:#043b4d}a[id]{display:block;scroll-margin-top:18px}strong{font-weight:700;color:#152d45}code{font-family:Consolas,"Microsoft YaHei",monospace;font-size:.9em;border:1px solid #dee8ee;background:#f2f6f9;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}li{margin:8px 0}ul,ol{padding-left:26px}.table-scroll{width:100%;overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;line-height:1.8;margin:0}th,td{vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--line);border-right:1px solid #e5ebf0;min-width:130px}th{background:#eaf1f5;color:#183d53;font-weight:700}th:last-child,td:last-child{border-right:0}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafc}td:first-child{font-weight:600;min-width:145px}td p:first-child{margin-top:0}td p:last-child{margin-bottom:0}.status{display:inline-block;white-space:nowrap;padding:2px 10px;border-radius:5px;font-size:13px;font-weight:700}.done{color:#176442;background:#e4f4eb}.partial{color:#795411;background:#fff2d5}.todo{color:#67556f;background:#f0eaf4}h2[id="section"]+ul,h2[id="目录"]+ul{padding:18px 32px;background:#f4f8fb;border:1px solid var(--line);border-radius:8px;columns:2;column-gap:32px}h1+p{font-size:14px;color:var(--muted)}blockquote{margin:20px 0;padding:8px 20px;background:var(--soft);border-left:4px solid var(--accent)}@media(max-width:800px){body{font-size:15px}.document{margin:0;padding:26px 20px 42px;border:0;border-radius:0;box-shadow:none}h1{font-size:27px}h2{font-size:21px;margin-top:34px}h3{font-size:18px}th,td{padding:10px 12px;font-size:13px}table{min-width:680px}h2[id="section"]+ul,h2[id="目录"]+ul{columns:1;padding:14px 24px}code{word-break:break-word}}@media print{@page{size:A4;margin:16mm 13mm}html{scroll-behavior:auto}body{background:#fff;font-size:10pt;line-height:1.65}.document{max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none}h1{font-size:23pt;border-top-width:4px}h2{font-size:16pt;margin-top:24pt;background:none;break-after:avoid}h3{font-size:12pt;break-after:avoid}a{color:inherit;text-decoration:none}code{font-size:8.5pt;padding:0 2px;background:none;border:0}.table-scroll{overflow:visible;border-radius:0;break-inside:auto}table{font-size:8pt;min-width:0;line-height:1.5;table-layout:fixed}th,td{padding:6px;min-width:0;overflow-wrap:anywhere}td:first-child{min-width:0}tr{break-inside:avoid}thead{display:table-header-group}.status{padding:0;font-size:8pt;background:none}.document>ul{columns:1}p,li{orphans:3;widows:3}}
+
+img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid var(--line);border-radius:8px}pre{overflow:auto;padding:18px;background:#f2f6f9;border:1px solid var(--line);border-radius:8px;line-height:1.6}pre code{border:0;padding:0;white-space:pre;overflow-wrap:normal}blockquote p{margin:8px 0}.document{overflow-wrap:anywhere}</style>
+</head>
+<body><main class="document">
+<h1 id="revgame">RevGame 游戏代码架构与运行说明</h1>
+<blockquote>
+<p>2026-10-18 战斗更新已落地：敌方 6～10 名普通棋含重弩/弓箭/火法，真实一眼与两眼布阵、深快照保眼移动、阶段式通关保障。最新验收见<a href="../../../../项目进度分析/RevGame-战斗与围棋AI改造验收-2026-10-18.html">战斗与围棋 AI 报告</a>。布局继续使用 1920×1080 横屏。</p>
+</blockquote>
 <p>本项目首先验证 Revolution 框架能否支撑真实小游戏业务。当前已形成主界面、选关、六牌布阵、自动战斗、结算和章节奖励闭环。弹幕 Excel 已通过原框架导出并接入运行时，2 表共 22 行；正式基础血攻和敌方阵容仍等待用户提供数值。完整时间与证据边界见工程外的《RevGame-开发总结与明日计划-2026-10-18》及前序实现报告。</p>
-<h2 id="section">先跑起来</h2>
+<h2 id="_1">先跑起来</h2>
 <p>打开 <code>Assets/Scenes/SampleScene.unity</code>，按 Play。依次点击“开始闯关”→“第 1 章”→手牌→任意合法空格→“准备完毕”。每回合发满六张，准备期可在全盘空格落子；点击己方棋子再点空格可免费重摆，大棋必须整块放得下。刷新只重抽剩余 N 张，不补落子额度。本次运行中击败章节 Boss 后解锁下一章；退出程序后进度不保存。</p>
 <p>启动只由 GameBootstrap 调用一次 RevInitialize.Initialize，并集中注册 IBattleService 与 GameFlow。不要再手动初始化事件、UI、计时器等模块，否则会清空已注册监听。</p>
-<h2 id="section-1">文件怎么找</h2>
-<table>
+<h2 id="_2">文件怎么找</h2>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>目录 / 文件</th>
@@ -40,8 +55,8 @@
 </tr>
 <tr>
 <td>Battle</td>
-<td>HandModel 与 MoveRules</td>
-<td>手牌编号防重复消费；目标查询不直接搬动棋子。</td>
+<td>HandModel、MoveRules、EnemyFormationPlanner、EnemyTactics</td>
+<td>手牌编号防重复消费；真实射界、完整眼阵和深快照保阵试走，不直接搬动实战棋子。</td>
 </tr>
 <tr>
 <td>Services/BattleService</td>
@@ -109,9 +124,9 @@
 <td>编辑器代码集中在 Assets/Editor/RevGame，不放入 GameScripts；通过 Unity MCP 调用，运行时不依赖 AssetDatabase。</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>2026-10-18 按项目目录要求，将原 <code>Assets/GameScripts/Editor</code> 的 9 个 C# 文件整体通过 Unity MCP 迁至 <code>Assets/Editor/RevGame</code>，保留原目录和文件的 <code>.meta</code> GUID、<code>RevGame.Editor</code> 命名空间和公开调用入口。目录不决定 C# 命名空间，所以原有 <code>RevGame.Editor.GameLayoutChecks.Run()</code> 等调用不变。迁移前后都位于 Unity 的特殊 Editor 目录，且这里没有另设 asmdef，因此仍归属 <code>Assembly-CSharp-Editor</code>，编辑器/运行时代码边界不变。不要为了移动文件而把 UnityEditor 依赖放进运行时源码。</p>
-<h2 id="section-2">生命周期最容易踩的点</h2>
+<h2 id="_3">生命周期最容易踩的点</h2>
 <ul>
 <li>IBattleService 由启动入口拥有，贯穿本次运行，保留章节与卡池解锁。BeginCampaign 重置局内强化与棋盘；它不是每次退出战斗域都会销毁的临时服务。</li>
 <li>GameFlow 为当前页面开一个大厅域或战斗域；BattleLogic 随战斗域退出。池中对象、声音和场景表现还有各自的显式清理，不能假设一个域会自动归还所有东西。</li>
@@ -120,16 +135,18 @@
 <li>预制体异步加载可能跨越回合或场景切换；回调检查有效性后再更新画面，不能把旧结算数据盖到新战斗上。</li>
 <li>全体敌人占格先预检再提交。如果残局挤不出完整大棋空间，保留原状态并显示原因，不能少生成一个 Boss 却继续游戏。</li>
 </ul>
-<h2 id="section-3">资源约定</h2>
+<h2 id="_4">资源约定</h2>
 <p>美术在 <code>Assets/ArtRes/棋盘、棋子、状态标记、界面、图标、特效、字体、音频</code>，保留中文命名。运行时资源在 <code>Assets/GameRes/Board、Pieces、UI、Effects、Audio、Data</code>。弹幕工作簿位于仓库的 <code>RevGame_Client/配置表/战斗弹幕配置.xlsx</code>，导表生成 C# 位于 <code>GameScripts/Generated</code>；不要手改生成物来替代原框架导表。</p>
 <p>面板预制体名与类名相同，例如 <code>GameRes/UI/PreparePanel.prefab</code>；RevBind 字段 <code>_hintText</code> 对应节点 <code>hintText</code>。资源根配置在 <code>Assets/Editor/ABBuildConfig.asset</code>，逻辑路径只写 <code>UI/</code>、<code>Pieces/</code> 等，不拼 StreamingAssets 或 Application.dataPath。</p>
-<h2 id="section-4">代码规范</h2>
+<h2 id="_5">代码规范</h2>
 <p>使用 Revolution 公开门面，不顺手修改当前工程的框架内核；异步只用 RevTask。方法签名的括号与参数保持同一行；方法体及 if/for/foreach/while 均带大括号。文件头说明分工理由，关键事务、时序、回收用中文解释，不只复述代码。</p>
-<h2 id="section-5">验证入口</h2>
+<h2 id="_6">验证入口</h2>
 <p>非 Play：规则入口为 <code>return RevGame.Editor.GameRuleChecks.Run();</code>；布局入口为 <code>return RevGame.Editor.GameLayoutChecks.Run();</code>。源码都在 <a href="../Editor/RevGame">../Editor/RevGame</a>。前序规则历史为 570 条、前序 Play 回合表现历史为 136 条；今日编辑器目录迁移后，规则 570 条、布局 737 条及 Play 回合表现 136 条均已重新执行并通过。136 条覆盖连续 1/0/4 张剩牌换轮、暂停翻牌/升级/弹幕、延迟伤害与日志清空，不能与历史执行混为一次。</p>
 <p>本轮 <code>GameLayoutChecks.Run()</code> 经 Unity MCP 返回 737 条通过，覆盖多尺寸/安全区的纯几何计算；字体调整后再次通过。纯计算不切换实际编辑器预览，当前唯一实际预览固定 Game“RevGame 1920x1080”。该结果不等于真机、全部视觉项或连续 66 回合已验收。</p>
 <p>Play 回合表现入口为 <code>RevGame.Editor.GameRoundPresentationChecks.Begin()</code>，池化入口为 <code>RevGame.Editor.GameFeelChecks.BeginPoolCheck()</code>；池化检查需在同一流程至少等待四秒，不要中途切域或停止 Play。66 个回合的历史检查是分别新建服务生成配置，另有 1 血单兵/高血敌人的辅助兜底造局，均不等于连续带残局游玩 66 回合。</p>
 <p>本轮池化检查也已通过：伤害/弹道/攻击文字/升级/增益启动，回池 Kill、复用，四秒后无旧回调且 Tween 总数恢复。字体资产审计 49 个 Text 全部为 NotoSansCJKsc-Bold/Bold/MiddleCenter/Outline，失败 0；8 个界面/提示、70 个 Sprite 引用，旧 UI 为 0。唯一 1920×1080 Game 预览实际检查首页、选关、六牌准备、结算、奖励与战斗 HUD，字清晰且无遮挡/截断；这些是本机编辑器结论，不是实体手机验收。</p>
 <p>Play：GM 依次执行 <code>RevGame/打开选关</code>、<code>RevGame/进入战斗 1</code>、<code>RevGame/落首张牌</code>、<code>RevGame/开始战斗</code>、<code>RevGame/快照</code>。固定夹具包括 merge、large-merge、boss、events、reward、round10。非法命令返回 Success=false；重复消费牌、重复领奖不会生效。</p>
 <p>当前已验证编辑器直读和真实交互；未执行 AB 构建、真机或连续 66 回合平衡验收。完整玩法案的扩展范围和极端 Boss 对峙问题见交付报告。</p>
-</body></html>
+<p>本轮新增非 Play 入口 <code>return RevGame.Editor.GameTacticsChecks.Run();</code>，1150 条通过：覆盖 66 个敌阵、真实眼数、射界、快照隔离、拥挤降级和两组各连续 66 回合取胜；570 条规则、737 条布局及136 条 Play 回归也再次通过。连续路径固定按首个合法格落牌、章节奖励选第一项，是通关回归样本，不等于全策略平衡；当前阶段式支援已解决默认辅助下的长局/Boss对峙收尾，关闭辅助时仍允许原规则僵持。当前参数与证据以最新战斗报告为准。</p>
+</main></body>
+</html>

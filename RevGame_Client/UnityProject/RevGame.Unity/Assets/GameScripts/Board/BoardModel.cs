@@ -235,6 +235,18 @@ namespace RevGame.Board
             return list;
         }
 
+        /// <summary>给布阵和走法评分使用的深快照；每颗棋子也独立复制，试算不会改变实战数据。</summary>
+        public BoardModel CreateSnapshot()
+        {
+            var snapshot = new BoardModel(_size);
+            foreach (Piece piece in GetAllPieces())
+            {
+                snapshot.Place(piece.CreateSnapshot(), piece.Pos, respectEnemyEyes: false);
+            }
+            GoRules.Evaluate(snapshot);
+            return snapshot;
+        }
+
         /// <summary>取某一方所有棋子。</summary>
         public List<Piece> GetPiecesOf(GameSide side)
         {

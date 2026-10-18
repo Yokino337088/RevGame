@@ -106,6 +106,7 @@ namespace RevGame.Flow
             sb.AppendLine("第 " + Chapter + " 章 · 第 " + Round + " 回合（" + Battle.Phase + "）");
             sb.AppendLine("手牌 " + Battle.Hand.Count + "，剩余额度 " + Battle.CardsRemaining + "，全队攻击加成 " + Battle.TeamAttackBonus);
             sb.AppendLine("轻松模式=" + Battle.VictoryAssistEnabled + "，行动间隔=" + Consts.BattleTickSeconds + "秒，支援事件=" + Battle.BattleEventCount);
+            sb.AppendLine("敌阵=" + Battle.EnemyFormation + "，辅助=" + Battle.VictorySupportStatus + "，已战斗=" + Battle.BattleElapsed + "秒");
             foreach (var card in Battle.Hand)
             {
                 sb.AppendLine("手牌 #" + card.Id + " " + card.Kind + " " + card.Star);

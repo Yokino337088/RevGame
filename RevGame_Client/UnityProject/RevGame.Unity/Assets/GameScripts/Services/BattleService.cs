@@ -29,7 +29,8 @@ namespace RevGame.Services
         private readonly List<Piece> _playerPieces = new List<Piece>();
         private readonly List<Piece> _enemyPieces = new List<Piece>();
         private readonly HandModel _hand = new HandModel();
-        private readonly System.Random _random = new System.Random();
+        // 正式游玩使用随机种子；验收可在构造时传固定种子，复现同一手牌和事件序列。
+        private readonly System.Random _random;
         public IReadOnlyList<HandCard> Hand
         {
             get
@@ -116,14 +117,22 @@ namespace RevGame.Services
         }
 
         public string LastError { get; private set; }
+        /// <summary>本回合实际通过规则验证的敌阵名称；空间受限时包含降级原因，供 HUD/GM 查询。</summary>
+        public string EnemyFormation { get; private set; } = string.Empty;
 
         /// <summary>游戏默认开启轻松模式；编辑器可传 false 验证无辅助的基础规则。</summary>
         public BattleService() : this(true)
         {
         }
 
-        public BattleService(bool victoryAssist)
+        public BattleService(bool victoryAssist) : this(victoryAssist, null)
         {
+        }
+
+        /// <summary>固定种子只控制手牌/事件等随机输入，方便重放同一局；正式入口省略种子即可。</summary>
+        public BattleService(bool victoryAssist, int? seed)
+        {
+            _random = seed.HasValue ? new System.Random(seed.Value) : new System.Random();
             VictoryAssistEnabled = victoryAssist;
             LastError = string.Empty;
             Phase = GamePhase.Prepare;
@@ -144,8 +153,7 @@ namespace RevGame.Services
 
             // ★ 章间和失败重开要重置棋盘；只有同一章内的连续回合继承残局。
             bool newBoard = Chapter != chapter || round == 1;
-            // ★ 必须先为整队找好位置。否则后三章的 3★ 敌人占 2×2，单格空着不代表放得下；
-            //   先清旧棋盘再尝试，会出现「名单里有敌人，画面上却没有」或 Boss 主将缺失。
+            // 必须先验证整队。普通敌棋为 1×1，Boss 为 2×2/3×3，空出一格并不代表整块能落下。
             List<Piece> plannedEnemies;
             if (!TryPlanEnemies(def, newBoard, out plannedEnemies))
             {
@@ -172,6 +180,10 @@ namespace RevGame.Services
             _battleEventCount = 0;
             _nextEventAt = Consts.BattleEventDelay;
             _decisiveSupportUsed = false;
+            _supportStage = 0;
+            _lastEnemyDamageAt = 0f;
+            _nextSupportPulseAt = 0f;
+            _lastStandShown = false;
             _eyeHealElapsed = 0f;
             _eventScheduled = VictoryAssistEnabled || IsBossRound || _random.NextDouble() < Consts.BattleEventChance;
             LastError = string.Empty;
@@ -377,6 +389,7 @@ namespace RevGame.Services
             _tickAccumulator = 0f;
             LastError = string.Empty;
             RevEvent.DispatchEvent<int>(Events.PhaseEnterBattle, Round);
+            RevEvent.DispatchEvent<string>(Events.BattleLog, "敌阵：" + EnemyFormation + "；先破连接，再压制远程");
             RevLog.Info("战斗开始（限时 " + BattleDuration + " 秒）", Tag);
             return true;
         }
@@ -469,7 +482,6 @@ namespace RevGame.Services
         private void StepSide(GameSide side, float stepFraction = 1f)
         {
             List<Piece> pieces = side == GameSide.Player ? _playerPieces : _enemyPieces;
-            GameSide foe = side == GameSide.Player ? GameSide.Enemy : GameSide.Player;
             for (int i = 0; i < pieces.Count; i++)
             {
                 Piece piece = pieces[i];
@@ -497,7 +509,8 @@ namespace RevGame.Services
                         // 连击的上一发可能已经击败原目标；每发重查，才能继续射击下一名敌人。
                         targets = MoveRules.GetAttackTargets(_board, piece);
                         if (targets.Count == 0) { break; }
-                        Attack(piece, _board.GetPiece(targets[0]));
+                        Piece target = side == GameSide.Enemy ? EnemyTactics.ChooseTarget(_board, piece, targets) : _board.GetPiece(targets[0]);
+                        Attack(piece, target);
                         if (IsKingCaptured())
                         {
                             return;
@@ -525,55 +538,14 @@ namespace RevGame.Services
                     continue;
                 }
 
-                BoardPos best = ChooseMoveTowardNearestFoe(piece, moves, foe);
+                BoardPos best = EnemyTactics.ChooseSafeMove(_board, piece, moves);
                 // 只接受确实更接近目标的落点；被阻挡时原地等待，不能来回横跳。
-                if (NearestFoeDistance(best, foe) < NearestFoeDistance(piece.Pos, foe) && _board.Move(piece, best))
+                if (best != piece.Pos && _board.Move(piece, best))
                 {
+                    RefreshGoState();
                     RevEvent.DispatchEvent<int>(Events.PieceMoved, piece.Id);
                 }
             }
-        }
-
-        /// <summary>在候选格里挑一个"离最近的敌人最近"的（同距离时挑 Y 更靠近敌方的，保证有推进感）。</summary>
-        private BoardPos ChooseMoveTowardNearestFoe(Piece piece, List<BoardPos> moves, GameSide foe)
-        {
-            BoardPos best = moves[0];
-            int bestScore = int.MaxValue;
-            for (int i = 0; i < moves.Count; i++)
-            {
-                int nearest = NearestFoeDistance(moves[i], foe);
-                // 平局时优先往敌方方向推进：玩家往上、敌人往下。
-                int push = piece.Side == GameSide.Player ? -moves[i].Y : moves[i].Y;
-                int score = nearest * 100 + push;
-                if (score < bestScore)
-                {
-                    bestScore = score;
-                    best = moves[i];
-                }
-            }
-
-            return best;
-        }
-
-        private int NearestFoeDistance(BoardPos from, GameSide foe)
-        {
-            List<Piece> list = foe == GameSide.Player ? _playerPieces : _enemyPieces;
-            int min = int.MaxValue;
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (!list[i].IsAlive)
-                {
-                    continue;
-                }
-
-                int d = System.Math.Abs(list[i].Pos.X - from.X) + System.Math.Abs(list[i].Pos.Y - from.Y);
-                if (d < min)
-                {
-                    min = d;
-                }
-            }
-
-            return min == int.MaxValue ? 999 : min;
         }
 
         /// <summary>
@@ -607,7 +579,8 @@ namespace RevGame.Services
 
             var attack = new PieceAttackInfo(attacker.Id, attacker.Def.Kind, attacker.Pos, attacker.Size, attacker.Side);
             RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, attack);
-            int raw = (int)(attacker.Def.Attack * multiplier);
+            // 双方一起降低单发伤害，保留远程较高的出手频率，让玩家能看见互相消耗和支援反击。
+            int raw = System.Math.Max(1, (int)(attacker.Def.Attack * multiplier * Consts.CombatDamageScale));
             int real = DamagePiece(target, raw, attacker);
             RevEvent.DispatchEvent<string>(Events.BattleLog, attacker.Def.DisplayName + " → " + target.Def.DisplayName + " -" + real + (target.IsLocked ? "（锁死×2）" : ""));
             RefreshGoState();
@@ -749,158 +722,32 @@ namespace RevGame.Services
         }
 
         /// <summary>
-        /// 为下一回合预留所有敌棋占格。这里的集合只记录本次预检占用，不保存另一份棋盘；
-        /// 失败返回时，原棋盘、手牌、阶段、编号均未改变，玩家仍可查看原因并返回主界面。
+        /// 先创建完整名单，再在独立棋盘验证眼阵和全部身体占格。成功后才交给 StartRound 一次性提交。
+        /// 玩家残局太满时允许眼阵降级；完整名单仍放不下则明确拒绝，不能少生主将或清空旧回合。
         /// </summary>
         private bool TryPlanEnemies(RoundDef def, bool newBoard, out List<Piece> plan)
         {
             plan = new List<Piece>();
-            var occupied = new HashSet<BoardPos>();
-            if (!newBoard)
-            {
-                foreach (Piece piece in _playerPieces)
-                {
-                    if (!piece.IsAlive)
-                    {
-                        continue;
-                    }
-
-                    for (int y = 0; y < piece.Size; y++)
-                    {
-                        for (int x = 0; x < piece.Size; x++)
-                        {
-                            occupied.Add(new BoardPos(piece.Pos.X + x, piece.Pos.Y + y));
-                        }
-                    }
-                }
-            }
-
-            // 上一回合敌棋移除之后可能空出新的眼。只从保留的玩家占格计算保护点，
-            // 不沿用上一回合缓存的 EyeSide，避免新敌人出生在玩家已围好的眼里。
-            var reserved = new HashSet<BoardPos>(occupied);
-            for (int y = 0; y < Consts.BoardSize; y++)
-            {
-                for (int x = 0; x < Consts.BoardSize; x++)
-                {
-                    var pos = new BoardPos(x, y);
-                    if (occupied.Contains(pos))
-                    {
-                        continue;
-                    }
-
-                    bool eye = true;
-                    foreach (BoardPos next in pos.GetOrthogonalNeighbors())
-                    {
-                        if (next.IsInside(Consts.BoardSize) && !occupied.Contains(next))
-                        {
-                            eye = false;
-                            break;
-                        }
-                    }
-
-                    if (eye)
-                    {
-                        reserved.Add(pos);
-                    }
-                }
-            }
-
             if (def.IsBoss)
             {
-                int[] sizes = def.Chapter <= 2 ? new[]
-                {
-                    2
-                }
-
-                : (def.Chapter <= 4 ? new[]
-                {
-                    2,
-                    2
-                }
-
-                : (def.Chapter == 5 ? new[]
-                {
-                    3,
-                    2,
-                    2
-                }
-
-                : new[]
-                {
-                    3,
-                    3
-                }
-
-                ));
+                int[] sizes = def.Chapter <= 2 ? new[] { 2 } : (def.Chapter <= 4 ? new[] { 2, 2 } : (def.Chapter == 5 ? new[] { 3, 2, 2 } : new[] { 3, 3 }));
                 for (int i = 0; i < sizes.Length; i++)
                 {
-                    float hpScale = (1f + (def.Chapter - 1) * 0.25f) * (def.Chapter == 6 ? 2f : 1f);
-                    var boss = new Piece(_nextPieceId + plan.Count, PieceCatalog.Get(PieceKind.HeavySword, StarTier.Three), GameSide.Enemy, sizes[i], true, i == 0, hpScale);
-                    if (!ReserveEnemy(boss, reserved, plan))
-                    {
-                        return false;
-                    }
+                    float scale = Consts.EnemyHpScale * (1f + (def.Chapter - 1) * 0.25f) * (def.Chapter == 6 ? 2f : 1f);
+                    plan.Add(new Piece(_nextPieceId + plan.Count, PieceCatalog.Get(PieceKind.HeavySword, StarTier.Three), GameSide.Enemy, sizes[i], true, i == 0, scale));
                 }
             }
-
             StarTier star = LevelCatalog.GetEnemyStar(def.Chapter, def.IsBoss);
             foreach (PieceKind kind in def.EnemyKinds)
             {
                 PieceDef pieceDef = PieceCatalog.Get(kind, star);
-                if (pieceDef == null)
-                {
-                    return Reject("敌方图鉴配置缺失：" + kind);
-                }
-
-                var piece = new Piece(_nextPieceId + plan.Count, pieceDef, GameSide.Enemy);
-                if (!ReserveEnemy(piece, reserved, plan))
-                {
-                    return false;
-                }
+                if (pieceDef == null) { return Reject("敌方图鉴配置缺失：" + kind); }
+                plan.Add(new Piece(_nextPieceId + plan.Count, pieceDef, GameSide.Enemy, hpScale: Consts.EnemyHpScale));
             }
-
+            string report;
+            if (!EnemyFormationPlanner.TryArrange(plan, _playerPieces, newBoard, out report)) { return Reject(report); }
+            EnemyFormation = report;
             return true;
-        }
-
-        private bool ReserveEnemy(Piece piece, HashSet<BoardPos> reserved, List<Piece> plan)
-        {
-            for (int y = Consts.BoardSize - piece.Size; y >= 0; y--)
-            {
-                for (int x = Consts.BoardSize - piece.Size; x >= 0; x--)
-                {
-                    bool free = true;
-                    for (int dy = 0; dy < piece.Size && free; dy++)
-                    {
-                        for (int dx = 0; dx < piece.Size; dx++)
-                        {
-                            if (reserved.Contains(new BoardPos(x + dx, y + dy)))
-                            {
-                                free = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!free)
-                    {
-                        continue;
-                    }
-
-                    piece.Pos = new BoardPos(x, y);
-                    for (int dy = 0; dy < piece.Size; dy++)
-                    {
-                        for (int dx = 0; dx < piece.Size; dx++)
-                        {
-                            reserved.Add(new BoardPos(x + dx, y + dy));
-                        }
-                    }
-
-                    plan.Add(piece);
-                    return true;
-                }
-            }
-
-            return Reject("棋盘没有 " + piece.Size + "×" + piece.Size + " 的敌方出生空间；本回合保持不变，可返回主界面重新布阵");
         }
     }
 }

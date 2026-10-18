@@ -115,7 +115,7 @@ namespace RevGame.Battle
 
         /// <summary>
         /// 取这颗棋子**能攻击到的敌方棋子位置**。
-        /// 近战 = 相邻 1 格；我方远程 = 全盘锁定最近敌人；敌方远程 = 2 格直线，炮须隔一子。
+        /// 近战相邻一格；我方远程/敌方重弩全盘压制；敌弓六格直线，敌方法师仍须隔一颗炮架。
         /// </summary>
         public static List<BoardPos> GetAttackTargets(BoardModel board, Piece piece)
         {
@@ -130,11 +130,11 @@ namespace RevGame.Battle
                 return result;
             }
 
-            // 用户要求我方远程原地发射弹幕，因此它们可越过友军锁定全盘最近敌人。
-            // 这里仅算目标，视觉弹道由 View 播放；敌方仍使用各职业原来的有限射程。
-            if (piece.Side == GameSide.Player && piece.Def.IsRanged)
+            // 我方远程守阵输出；敌方重弩承担跨盘压制，避免守眼骨架整场没有射界。
+            // 敌弓保留直线与阻挡，法师保留炮架；不是所有远程都跳过职业规则。
+            if ((piece.Side == GameSide.Player && piece.Def.IsRanged) || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
             {
-                List<Piece> foes = board.GetPiecesOf(GameSide.Enemy);
+                List<Piece> foes = board.GetPiecesOf(piece.Side == GameSide.Player ? GameSide.Enemy : GameSide.Player);
                 foes.Sort((a, b) =>
                 {
                     int da = System.Math.Abs(a.Pos.X - piece.Pos.X) + System.Math.Abs(a.Pos.Y - piece.Pos.Y);
@@ -235,7 +235,7 @@ namespace RevGame.Battle
         private static void CollectAttackRays(BoardModel board, Piece piece, List<BoardPos> result)
         {
             bool cannon = piece.Def.Pattern == MovePattern.Cannon;
-            int range = cannon ? board.Size : (piece.Def.IsRanged ? 2 : 1);
+            int range = cannon ? board.Size : (piece.Def.IsRanged ? Consts.EnemyArcherRange : 1);
             var seen = new HashSet<Piece>();
             for (int direction = 0; direction < 4; direction++)
             {

@@ -1,5 +1,7 @@
 # RevGame 游戏代码架构与运行说明
 
+> 2026-10-18 战斗更新已落地：敌方 6～10 名普通棋含重弩/弓箭/火法，真实一眼与两眼布阵、深快照保眼移动、阶段式通关保障。最新验收见[战斗与围棋 AI 报告](../../../../项目进度分析/RevGame-战斗与围棋AI改造验收-2026-10-18.md)。布局继续使用 1920×1080 横屏。
+
 本项目首先验证 Revolution 框架能否支撑真实小游戏业务。当前已形成主界面、选关、六牌布阵、自动战斗、结算和章节奖励闭环。弹幕 Excel 已通过原框架导出并接入运行时，2 表共 22 行；正式基础血攻和敌方阵容仍等待用户提供数值。完整时间与证据边界见工程外的《RevGame-开发总结与明日计划-2026-10-18》及前序实现报告。
 
 ## 先跑起来
@@ -17,7 +19,7 @@
 | Pieces/Piece | 生命、身体大小、位置、气、眼 | 不持有 GameObject，视图回池不影响业务状态。 |
 | Board/BoardModel | 唯一棋盘数据 | 大棋所有身体格引用同一个 Piece；名单遍历不重复计算身体。 |
 | Board/GoRules | 连通块、气、眼、锁死 | 规则只依赖棋盘，不依赖画面。 |
-| Battle | HandModel 与 MoveRules | 手牌编号防重复消费；目标查询不直接搬动棋子。 |
+| Battle | HandModel、MoveRules、EnemyFormationPlanner、EnemyTactics | 手牌编号防重复消费；真实射界、完整眼阵和深快照保阵试走，不直接搬动实战棋子。 |
 | Services/BattleService | 回合、落子、攻击、胜负、敌方出生预检 | 所有动作先校验后提交；失败不留下半颗大棋或名单里的幽灵棋子。 |
 | Services/BattleService.Progression | 奖励、章节推进、职业加成、合成 | partial 是同一个服务按职责分文件，不是额外管理器。 |
 | Services/BattleService.Events | 八种事件、眼位石、伤害入口 | GM 与自动事件共用真实业务入口。 |
@@ -66,3 +68,5 @@ Play 回合表现入口为 `RevGame.Editor.GameRoundPresentationChecks.Begin()`�
 Play：GM 依次执行 `RevGame/打开选关`、`RevGame/进入战斗 1`、`RevGame/落首张牌`、`RevGame/开始战斗`、`RevGame/快照`。固定夹具包括 merge、large-merge、boss、events、reward、round10。非法命令返回 Success=false；重复消费牌、重复领奖不会生效。
 
 当前已验证编辑器直读和真实交互；未执行 AB 构建、真机或连续 66 回合平衡验收。完整玩法案的扩展范围和极端 Boss 对峙问题见交付报告。
+
+本轮新增非 Play 入口 `return RevGame.Editor.GameTacticsChecks.Run();`，1150 条通过：覆盖 66 个敌阵、真实眼数、射界、快照隔离、拥挤降级和两组各连续 66 回合取胜；570 条规则、737 条布局及136 条 Play 回归也再次通过。连续路径固定按首个合法格落牌、章节奖励选第一项，是通关回归样本，不等于全策略平衡；当前阶段式支援已解决默认辅助下的长局/Boss对峙收尾，关闭辅助时仍允许原规则僵持。当前参数与证据以最新战斗报告为准。

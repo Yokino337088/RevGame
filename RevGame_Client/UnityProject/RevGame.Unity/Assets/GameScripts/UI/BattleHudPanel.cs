@@ -130,7 +130,7 @@ namespace RevGame.UI
                 _roundText.text = "第 " + _battle.Chapter + " / 6 章 · 第 " + _battle.Round + " 回合" + (_battle.IsBossRound ? "（擒王 · 不限时）" : "");
             }
 
-            _assistText.text = _battle.VictoryAssistEnabled ? "轻松模式 · 支援事件 " + _battle.BattleEventCount + " 次\n最后一子守护 · 45秒决胜支援" : "";
+            _assistText.text = _battle.VictoryAssistEnabled ? "通关守护 · 支援事件 " + _battle.BattleEventCount + " 次\n" + _battle.VictorySupportStatus : "";
 
             if (_progressFill != null)
             {
@@ -141,7 +141,9 @@ namespace RevGame.UI
 
             if (_countText != null)
             {
-                _countText.text = "我方 " + CountAlive(_battle.PlayerPieces) + " / 敌方 " + CountAlive(_battle.EnemyPieces) + "\n全队攻击 +" + Mathf.RoundToInt(_battle.TeamAttackBonus * 100f) + "%";
+                // 沿用两行高度：第二行放简短阵型和攻击加成，完整降级原因留给 GM，不挤出第三行遮住日志。
+                string formation = _battle.EnemyFormation.Split('（')[0];
+                _countText.text = "我方 " + CountAlive(_battle.PlayerPieces) + " / 敌方 " + CountAlive(_battle.EnemyPieces) + "\n" + formation + " · 我方+" + Mathf.RoundToInt(_battle.TeamAttackBonus * 100f) + "%";
             }
 
             if (_logText != null)

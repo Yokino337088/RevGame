@@ -15,15 +15,20 @@ namespace RevGame.Services
     {
         public bool LoadDevelopmentScenario(string name)
         {
-            if (name != "merge" && name != "large-merge" && name != "boss" && name != "events" && name != "reward" && name != "round10")
+            if (name != "merge" && name != "large-merge" && name != "boss" && name != "events" && name != "reward" && name != "round10" && name != "enemy-one-eye" && name != "enemy-two-eyes")
             {
-                return Reject("只允许 merge / large-merge / boss / events / reward / round10 场景");
+                return Reject("只允许 merge / large-merge / boss / events / reward / round10 / enemy-one-eye / enemy-two-eyes 场景");
             }
 
             _playerPieces.Clear();
             _enemyPieces.Clear();
             _board.Reset();
-            StartRound(1, name == "round10" ? 10 : (name == "boss" || name == "reward" ? 11 : 1));
+            if (!StartRound(1, name == "enemy-two-eyes" ? 9 : (name == "round10" ? 10 : (name == "boss" || name == "reward" ? 11 : 1))))
+            {
+                return false;
+            }
+            // 新战术夹具保持正常六张手牌，让人工可以自由布阵观察，不混入原合成夹具的三星大棋。
+            if (name == "enemy-one-eye" || name == "enemy-two-eyes") { return true; }
             _eventScheduled = VictoryAssistEnabled;
             _hand.Clear();
             if (name == "merge" || name == "large-merge")

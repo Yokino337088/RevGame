@@ -245,7 +245,8 @@ namespace RevGame.Services
             battle._eventScheduled = false;
             check(battle.TriggerBattleEvent(BattleEventKind.Heal), "首次事件成功");
             check(!battle.TriggerBattleEvent(BattleEventKind.Artillery), "事件不能在同一时刻刷取");
-            battle.Tick(Consts.BattleEventInterval);
+            // 九秒冷却不是0.3125秒模拟步的整数倍，多推进一个小步，检查跨过冷却后的真实结果。
+            battle.Tick(Consts.BattleEventInterval + Consts.BattleSimulationStepSeconds);
             check(battle.TriggerBattleEvent(BattleEventKind.Artillery) && battle.BattleEventCount == 2, "冷却后允许第二次不同事件");
             battle = new BattleService();
             battle._rewardCard = PieceKind.Shield;

@@ -61,7 +61,7 @@ namespace RevGame.Bootstrap
             }, RevGMArg.Int("X"), RevGMArg.Int("Y"));
             RevGM.Register("RevGame/选奖励", "选择0~2号奖励", args => BattleResult(Logic().ChooseReward(args.Int(0, 0))), RevGMArg.Int("选项"));
             RevGM.Register("RevGame/跳过", "第10回合未落牌时跳过换攻击强化", args => BattleResult(Logic().SkipRound()));
-            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，间隔5秒且每回合最多12次", args =>
+            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，间隔9秒且每回合最多12次", args =>
             {
                 Logic();
                 int id = args.Int(0, 0);
@@ -72,7 +72,7 @@ namespace RevGame.Bootstrap
 
                 return BattleResult(RevServices.GetRequired<IBattleService>().TriggerBattleEvent((BattleEventKind)id));
             }, RevGMArg.Int("事件编号"));
-            RevGM.Register("RevGame/载入验收场景", "只允许预定义的六个本地验收场景", args =>
+            RevGM.Register("RevGame/载入验收场景", "预定义场景；enemy-one-eye/ enemy-two-eyes观察真实敌阵", args =>
             {
                 Logic();
                 var battle = (BattleService)RevServices.GetRequired<IBattleService>();
