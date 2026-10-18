@@ -12,7 +12,7 @@ namespace RevGame.Battle
     public static class EnemyTactics
     {
         /// <summary>在已经满足射程的目标中，优先收残血，再压制远程；同分选编号小的目标。</summary>
-        public static Piece ChooseTarget(BoardModel board, Piece attacker, List<BoardPos> targets)
+        public static Piece ChooseTarget(BoardModel board, Piece attacker, List<BoardPos> targets, int intelligence = 4)
         {
             Piece best = null;
             int bestScore = int.MinValue;
@@ -22,9 +22,21 @@ namespace RevGame.Battle
                 if (target == null || !target.IsAlive) { continue; }
                 // 分数分层拉开：优先可能一击击败的目标，其次远程威胁，最后距离。
                 // 这里只选择目标；真正扣血仍由服务计算锁死、连通、增益等效果，不能在 AI 中另扣一次。
-                int score = (target.Hp <= attacker.Def.Attack * Consts.CombatDamageScale ? 10000 : 0);
-                score += target.Def.IsRanged ? 1000 : 0;
-                score -= Distance(attacker.Pos, target.Pos) * 10;
+                // 第一档就近交战；第二档识别远程威胁；第三档会收残血；第四档优先断开脆弱连接。
+                // 规则安全检查不分档：低级AI也不能故意拆自己眼阵，只是看问题没有后期全面。
+                int score = -Distance(attacker.Pos, target.Pos) * 10;
+                if (intelligence >= 2 && target.Def.IsRanged) { score += 1000; }
+                if (intelligence >= 3)
+                {
+                    score += (int)((1f - target.HpRatio) * 500f);
+                    if (target.Hp <= attacker.Def.Attack * attacker.AttackScale * Consts.CombatDamageScale) { score += 10000; }
+                }
+                if (intelligence >= 4)
+                {
+                    score += target.EyeCount == 0 ? 300 : 0;
+                    score += System.Math.Max(0, 4 - target.Liberties) * 180;
+                    score += target.Def.IsRanged ? (int)(target.Def.Attack * target.AttackScale) : 0;
+                }
                 if (best == null || score > bestScore || (score == bestScore && target.Id < best.Id))
                 {
                     best = target;
@@ -38,7 +50,7 @@ namespace RevGame.Battle
         /// 只有服务确认“没有目标且移动冷却完成”才调用。每个候选都在深快照试走，最多四个普通格/八个马步。
         /// 不填自己的眼，不减少任何原有守眼棋群的眼数，也不把有气的同伴堵成零气。
         /// </summary>
-        public static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves)
+        public static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves, int intelligence = 4)
         {
             BoardPos best = piece.Pos;
             int oldDistance = NearestPlayerDistance(board, piece.Pos);
@@ -57,6 +69,26 @@ namespace RevGame.Battle
                 // 只接受能打开射界或真正接近的格子，堵路时等待，避免左右横跳。
                 if (targets == 0 && distance >= oldDistance) { continue; }
                 int score = targets * 1000 - distance * 20 + System.Math.Min(moved.Liberties, 12);
+                if (intelligence >= 3)
+                {
+                    // 前后棋盘都是深快照，比较压气成果不回写真实棋子的气与眼。
+                    foreach (Piece player in board.GetPiecesOf(GameSide.Player))
+                    {
+                        Piece copy = EnemyFormationPlanner.Find(trial, player.Id);
+                        score += System.Math.Max(0, player.Liberties - copy.Liberties) * 70;
+                    }
+                }
+                if (intelligence >= 4)
+                {
+                    // 后期AI会估计走到该格后有多少玩家能立即反击，避开集火区；不提高移动频率。
+                    foreach (Piece player in trial.GetPiecesOf(GameSide.Player))
+                    {
+                        foreach (BoardPos hit in MoveRules.GetAttackTargets(trial, player))
+                        {
+                            if (trial.GetPiece(hit) == moved) { score -= 220; break; }
+                        }
+                    }
+                }
                 if (score > bestScore) { bestScore = score; best = pos; }
             }
             return best;

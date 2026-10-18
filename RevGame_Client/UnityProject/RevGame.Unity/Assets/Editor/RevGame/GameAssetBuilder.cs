@@ -139,8 +139,7 @@ namespace RevGame.Editor
             try
             {
                 var piece = root.GetComponent<PieceView>();
-                SetReference(piece, "bossSmallSprite", Sprite("棋子/棋子_Boss_大棋_2x2.png"));
-                SetReference(piece, "bossLargeSprite", Sprite("棋子/棋子_Boss_大棋_3x3.png"));
+                // Boss身体播放图鉴中的真实序列帧，构建器只装配王冠和光环，不再写静态替换图。
                 var crown = SpriteChild(root, "王冠", "界面/UI_王冠.png", 25);
                 crown.transform.localPosition = new Vector3(0, 0.8f, 0);
                 crown.enabled = false;

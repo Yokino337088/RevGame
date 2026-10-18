@@ -28,6 +28,14 @@ namespace RevGame.Services
     {
         bool VictoryAssistEnabled { get; }
         int BattleEventCount { get; }
+        /// <summary>敌方当前AI档位（1～4）；随连续关卡进度提高，界面只能查看，不能自行改难度。</summary>
+        int EnemyIntelligence { get; }
+        /// <summary>本轮已发放增益；由准备阶段时钟在3秒后一次性产生，界面只负责排队播报。</summary>
+        IReadOnlyList<PreparationBuffDef> PreparationBuffs { get; }
+        /// <summary>本轮准备已经过的模拟秒数；按钮据此显示三秒发奖倒计时。</summary>
+        float PreparationElapsed { get; }
+        /// <summary>本轮增益是否已统一生效；为true后即可开战，无需等待所有播报动画结束。</summary>
+        bool PreparationGranted { get; }
         /// <summary>实际验证成功的敌阵/空间降级说明，界面只能读取，不能借此修改棋盘。</summary>
         string EnemyFormation { get; }
         /// <summary>当前通关兜底阶段的说明，供玩家看见渐进支援和最终收尾何时生效。</summary>

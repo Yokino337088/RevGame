@@ -64,9 +64,9 @@ namespace RevGame.Core
         public const float BossAccelerationBonus = 0.1f;
         public const float BattleEventChance = 0.3f;
         public const float RareEventChance = 0.25f;
-        public const float BattleEventDelay = 8f;
-        /// <summary>先观看正常交战，再每九秒加入一次增益；提示停留仍独立由 Excel Duration 控制。</summary>
-        public const float BattleEventInterval = 9f;
+        public const float BattleEventDelay = 6f;
+        /// <summary>先观看正常交战，再每七秒加入一次增益；提示停留仍独立由 Excel Duration 控制。</summary>
+        public const float BattleEventInterval = 7f;
         public const int MaxBattleEventsPerRound = 12;
         /// <summary>最迟兜底时间；正常交战可提前获胜，只有仍未结束的长局才走到这里。</summary>
         public const float VictoryAssistFinishSeconds = 86f;
@@ -76,7 +76,7 @@ namespace RevGame.Core
         public const float VictoryAssistFinalSeconds = 74f;
         /// <summary>连续这么久没有敌人真正掉血，才算火力停滞。</summary>
         public const float VictoryAssistStallSeconds = 9f;
-        /// <summary>僵持支援的集火间隔；与普通战斗事件的九秒间隔是两种节奏。</summary>
+        /// <summary>僵持支援的集火间隔；与普通战斗事件的七秒间隔是两种节奏。</summary>
         public const float VictoryAssistPulseSeconds = 3f;
         /// <summary>原型节奏参数，等待正式数值表替换；双方普通攻击一起放缓，远程攻击频率不变。</summary>
         public const float CombatDamageScale = 0.6f;

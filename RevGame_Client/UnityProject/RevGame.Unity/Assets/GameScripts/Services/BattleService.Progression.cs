@@ -56,6 +56,7 @@ namespace RevGame.Services
                 return Reject("这一章尚未解锁");
             }
 
+            _playedPairs.Clear();
             _campaignsStarted++;
             _attackBonus = 0f;
             _speedBonus = 0f;
@@ -294,77 +295,28 @@ namespace RevGame.Services
             return bonus;
         }
 
-        /// <summary>合成先试占格再移除材料；升到 3★ 没有 2×2 空间时保留三颗，待腾出空间再尝试。</summary>
-        private void TryMergePieces()
+        // 每种棋的成功打牌数跨轮累计，重开一局才清零；刷新、落子失败、自动援军均不计数。
+        private readonly Dictionary<PieceKind, int> _playedPairs = new Dictionary<PieceKind, int>();
+
+        /// <summary>每成功打出第二张同类牌，给场上已有同类棋升一级；新牌照常留在指定格。</summary>
+        private void RegisterPlayedPair(PieceKind kind, Piece placed)
         {
-            bool merged;
-            do
-            {
-                merged = false;
-                foreach (Piece seed in new List<Piece>(_playerPieces))
-                {
-                    if (!seed.IsAlive || seed.Def.Star == StarTier.Three || seed.EyeCount > 0)
-                    {
-                        continue;
-                    }
+            int count;
+            _playedPairs.TryGetValue(kind, out count);
+            _playedPairs[kind] = ++count;
+            if (count % 2 != 0) { return; }
+            // 优先最早入场的棋，四次同类牌可把第一颗逐步养到三星；满星后再培养下一颗。
+            Piece original = _playerPieces.Find(p => p != placed && p.IsAlive && p.Def.Kind == kind && p.Def.Star < StarTier.Three);
+            if (original == null) { return; }
+            UpgradePiece(original);
+        }
 
-                    // 成眼棋群从合成材料中排除，防止援军凑三张后自动吃掉守眼棋子。
-                    var same = _playerPieces.FindAll(p => p.IsAlive && p.EyeCount == 0 && p.Def.Kind == seed.Def.Kind && p.Def.Star == seed.Def.Star);
-                    if (same.Count < 3)
-                    {
-                        continue;
-                    }
-
-                    same = same.GetRange(0, 3);
-                    StarTier star = (StarTier)((int)seed.Def.Star + 1);
-                    int size = star == StarTier.Three ? 2 : 1;
-                    var consumed = new HashSet<Piece>(same);
-                    BoardPos pos = seed.Pos;
-                    bool fits = _board.CanFit(pos, size, GameSide.Player, consumed: consumed);
-                    if (!fits)
-                    {
-                        for (int y = 0; y < Consts.BoardSize && !fits; y++)
-                        {
-                            for (int x = 0; x < Consts.BoardSize && !fits; x++)
-                            {
-                                var candidate = new BoardPos(x, y);
-                                if (_board.CanFit(candidate, size, GameSide.Player, consumed: consumed))
-                                {
-                                    pos = candidate;
-                                    fits = true;
-                                }
-                            }
-                        }
-                    }
-
-                    if (!fits)
-                    {
-                        continue;
-                    }
-
-                    int hp = 0, max = 0;
-                    foreach (Piece material in same)
-                    {
-                        hp += material.Hp;
-                        max += material.MaxHp;
-                        _board.Remove(material);
-                        _playerPieces.Remove(material);
-                        RevEvent.DispatchEvent<int>(Events.PieceDied, material.Id);
-                    }
-
-                    var upgraded = new Piece(_nextPieceId++, PieceCatalog.Get(seed.Def.Kind, star), GameSide.Player);
-                    // 用材料的总体血量比例继承伤势，升星不会凭空把残血部队全部治满。
-                    upgraded.TakeDamage(upgraded.MaxHp - System.Math.Max(1, upgraded.MaxHp * hp / max));
-                    _board.Place(upgraded, pos);
-                    _playerPieces.Add(upgraded);
-                    RefreshGoState();
-                    RevEvent.DispatchEvent<int>(Events.PieceMerged, upgraded.Id);
-                    RevEvent.DispatchEvent<int>(Events.PiecePlaced, upgraded.Id);
-                    merged = true;
-                    break;
-                }
-            }
-            while (merged);
+        private void UpgradePiece(Piece piece)
+        {
+            if (!piece.UpgradeInPlace()) { return; }
+            RefreshGoState();
+            RevEvent.DispatchEvent<int>(Events.PieceMerged, piece.Id);
+            RevEvent.DispatchEvent<int>(Events.PieceHpChanged, piece.Id);
         }
     }
 }

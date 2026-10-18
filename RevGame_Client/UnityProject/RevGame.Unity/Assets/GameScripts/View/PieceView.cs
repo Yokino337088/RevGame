@@ -38,14 +38,15 @@ namespace RevGame.View
         [SerializeField]
         private SpriteRenderer lockedRenderer;
         [SerializeField]
-        private Sprite bossSmallSprite;
-        [SerializeField]
-        private Sprite bossLargeSprite;
-        [SerializeField]
         private SpriteRenderer crownRenderer;
         [SerializeField]
         private SpriteRenderer haloRenderer;
-        private Sprite _bossSprite;
+        private PieceKind _boundKind;
+        private StarTier _boundStar;
+        private GameSide _boundSide;
+        /// <summary>用于验收真实换帧，不把缩放静态图当作序列帧动画。</summary>
+        public int AnimationFrameIndex => _frameIndex;
+        public int AnimationFrameCount => _frames == null ? 0 : _frames.Length;
         [Header("动画节奏")]
         [Tooltip("动画推进的检查间隔（秒）。50ms 足够，别用每帧")]
         [SerializeField]
@@ -156,7 +157,12 @@ namespace RevGame.View
         /// <param name = "side">阵营（决定用玩家帧还是敌方帧）</param>
         public void Bind(int pieceId, PieceKind kind, StarTier star, GameSide side)
         {
+            // ★ 原位升级的Id不会变化，要比较星级才能换外观；相同绑定不能每次刷新都把动画归零。
+            if (PieceId == pieceId && _entry != null && _boundKind == kind && _boundStar == star && _boundSide == side) { return; }
             PieceId = pieceId;
+            _boundKind = kind;
+            _boundStar = star;
+            _boundSide = side;
             _entry = config != null ? config.Find(kind, star, side) : null;
             if (_entry == null)
             {
@@ -214,11 +220,8 @@ namespace RevGame.View
         public void SetBodySize(int size, bool boss, bool king)
         {
             transform.localScale = Vector3.one * (0.72f * size * Consts.CellSize);
-            _bossSprite = boss ? (size >= 3 ? bossLargeSprite : bossSmallSprite) : null;
-            if (_bossSprite != null && bodyRenderer != null)
-            {
-                bodyRenderer.sprite = _bossSprite;
-            }
+            // ★ 原版Boss素材只有单张立绘，没有可播放的序列。大棋复用图鉴内敌方重剑的真实帧序列。
+            // 此处仅改身体尺寸和饰件，绝不覆盖 Bind/OnTick 当前帧；否则每次HUD刷新都会把Boss定格。
 
             if (crownRenderer != null)
             {
@@ -262,7 +265,7 @@ namespace RevGame.View
             _frameTimer = 0f;
             _hpRatio = 1f;
             _locked = false;
-            _bossSprite = null;
+
             if (crownRenderer != null)
             {
                 crownRenderer.enabled = false;
@@ -310,7 +313,7 @@ namespace RevGame.View
 
             _frameTimer -= _frameInterval;
             _frameIndex = (_frameIndex + 1) % _frames.Length;
-            if (bodyRenderer != null && _bossSprite == null)
+            if (bodyRenderer != null)
             {
                 bodyRenderer.sprite = _frames[_frameIndex];
             }

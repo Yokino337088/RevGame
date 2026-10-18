@@ -45,7 +45,7 @@ namespace RevGame.Core
         Assassin = 8,
     }
 
-    /// <summary>星级。三个同名棋子合成高一档（1★ → 2★ → 3★）。</summary>
+    /// <summary>星级（1★ → 2★ → 3★）。每成功打出两张同类牌，旧棋原位升一档，新棋保留。</summary>
     public enum StarTier
     {
         One = 1,

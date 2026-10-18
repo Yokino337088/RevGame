@@ -10,8 +10,8 @@ Attack_MageWater	水浪冲击！		#BDEEFF	54	1.05	1.2
 Attack_MageFire	烈焰弹！		#BDEEFF	54	1.05	1.2
 Attack_Priest	圣光冲击！		#BDEEFF	54	1.05	1.2
 Attack_Assassin	疾影突袭！		#BDEEFF	54	1.05	1.2
-Upgrade_2	升星！{piece} 升至 {star} 星	三枚同名同星棋子合为更强棋子	#FFD84A	46	2.8	1.18
-Upgrade_3	三星觉醒！{piece}	身体扩大为2×2，继续守住阵型	#FFB347	48	3.1	1.24
+Upgrade_2	升星！{piece} 升至 {star} 星	每打出两张同类牌，原棋原位升星，新棋保留	#FFD84A	46	2.8	1.18
+Upgrade_3	三星觉醒！{piece}	原棋升至三星，编号、位置和占格保持不变	#FFB347	48	3.1	1.24
 Damage	-{damage}		#FFE52E	64	1.6	1.35
 Event_天降援兵	天降援兵	援军已加入战场，协助守住阵型	#FFD84A	48	2.8	1.12
 Event_回气	回气	全队气数增加，阵型更加稳固	#FFD84A	48	2.8	1.12

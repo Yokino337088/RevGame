@@ -34,7 +34,9 @@ namespace RevGame.Services
             if (name == "merge" || name == "large-merge")
             {
                 StarTier star = name == "merge" ? StarTier.One : StarTier.Two;
-                for (int i = 0; i < 2; i++)
+                _playedPairs.Clear();
+                _playedPairs[PieceKind.Shield] = 1;
+                for (int i = 0; i < 1; i++)
                 {
                     var p = new Piece(_nextPieceId++, PieceCatalog.Get(PieceKind.Shield, star), GameSide.Player);
                     _board.Place(p, new BoardPos(i, 0));

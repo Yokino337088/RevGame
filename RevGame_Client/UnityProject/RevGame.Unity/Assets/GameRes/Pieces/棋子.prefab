@@ -444,8 +444,6 @@ MonoBehaviour:
   baseRenderer: {fileID: 8708396518800077845}
   hpFillRenderer: {fileID: 4908232998346346066}
   lockedRenderer: {fileID: 9037942101268511130}
-  bossSmallSprite: {fileID: 21300000, guid: 57b5fc36ed2bf2a4591bc9728972624a, type: 3}
-  bossLargeSprite: {fileID: 21300000, guid: 57b5fc36ed2bf2a4591bc9728972624a, type: 3}
   crownRenderer: {fileID: 433312428334148148}
   haloRenderer: {fileID: 5463649186083677513}
   tickInterval: 0.05

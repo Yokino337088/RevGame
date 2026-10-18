@@ -90,7 +90,7 @@ namespace RevGame.Services
             int oldCard = battle.Hand[0].Id;
             check(!battle.SkipRound(), "Boss无完整出生空间时拒绝跳过");
             check(battle.Round == 10 && battle.Phase == GamePhase.Prepare && battle.Hand[0].Id == oldCard && battle.Board.Dump() == oldBoard && battle._attackBonus == 0f, "出生失败不改回合、棋盘、手牌，也不白领强化");
-            // 同样的拥挤棋盘检验 2★→3★：材料分散在三处，移除它们仍不能凑出 2×2。
+            // 同样的拥挤棋盘检验原位 2★→3★：没有连续2×2也必须成功，其他棋子全部保留。
             battle._board.Reset();
             battle._playerPieces.Clear();
             for (int y = 0; y < Consts.BoardSize; y += 2)
@@ -102,20 +102,11 @@ namespace RevGame.Services
                 }
             }
 
-            oldBoard = battle.Board.Dump();
-            battle.TryMergePieces();
-            check(battle.Board.Dump() == oldBoard && battle._playerPieces.FindAll(p => p.Def.Kind == PieceKind.Shield).Count == 3, "合成放不下时保留三份材料");
-            foreach (Piece piece in new List<Piece>(battle._playerPieces))
-            {
-                if (piece.Def.Kind != PieceKind.Shield)
-                {
-                    battle._board.Remove(piece);
-                    battle._playerPieces.Remove(piece);
-                }
-            }
-
-            battle.TryMergePieces();
-            check(battle._playerPieces.Count == 1 && battle._playerPieces[0].Size == 2, "腾出空间后可再次合成为完整大棋");
+            Piece original = battle._playerPieces.Find(p => p.Def.Kind == PieceKind.Shield);
+            BoardPos originalPosition = original.Pos;
+            battle.UpgradePiece(original);
+            check(original.Def.Star == StarTier.Three && original.Pos == originalPosition && original.Size == 1, "拥挤棋盘二升三保持原位单格，不要求腾出2×2");
+            check(battle._playerPieces.Count == 45 && battle.Board.GetPiece(originalPosition) == original, "原位升级不消耗其他棋子，编号和占格引用不变");
             battle = new BattleService();
             battle.StartRound(1, 11);
             Piece king = battle._enemyPieces.Find(p => p.IsKing);
@@ -136,6 +127,7 @@ namespace RevGame.Services
                 battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, pos);
             }
 
+            battle.Tick(3f);
             battle.StartBattle();
             battle.Tick(Consts.BattleTickSeconds);
             check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player && king.IsAlive, "主将围死即胜，不必先扣完生命");
@@ -147,6 +139,7 @@ namespace RevGame.Services
             battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(0, 0));
             king = battle._enemyPieces.Find(p => p.IsKing);
             battle.DamagePiece(king, king.Hp);
+            battle.Tick(3f);
             battle.StartBattle();
             battle.Tick(Consts.BattleTickSeconds);
             check(battle.LastWinner == GameSide.Player && battle._board.GetPiecesOf(GameSide.Enemy).Count > 0, "只击杀主将也能胜利，护卫不必清场");
@@ -208,9 +201,133 @@ namespace RevGame.Services
                 }
             }
 
+            VerifyPreparationContracts(check);
             VerifyComfortContracts(check);
             VerifyPlacementAndMovement(check);
             VerifyHandRefreshAndAttackRate(check);
+        }
+
+        /// <summary>逐项验证15种增益的真实结果，并检查延时、唯一发放、双牌事务和换轮清理。</summary>
+        private static void VerifyPreparationContracts(Action<bool, string> check)
+        {
+            var delayed = new BattleService(true, 84);
+            delayed.StartRound(1, 1);
+            delayed.Tick(2.99f);
+            check(!delayed.PreparationGranted && delayed.PreparationBuffs.Count == 0, "三秒前不提前给准备奖励");
+            delayed.Tick(0.01f);
+            check(delayed.PreparationGranted && delayed.PreparationBuffs.Count >= 3 && delayed.PreparationBuffs.Count <= 5, "到三秒发3～5项准备奖励");
+            var unique = new HashSet<PreparationBuffKind>();
+            foreach (PreparationBuffDef buff in delayed.PreparationBuffs) { check(unique.Add(buff.Kind), "本轮准备奖励不重复：" + buff.Title); }
+            int count = delayed.PreparationBuffs.Count;
+            delayed.Tick(30f);
+            check(delayed.PreparationBuffs.Count == count && delayed.BattleElapsed == 0f, "准备时钟不会重复抽奖或偷跑战斗");
+            check(delayed.StartRound(1, 2) && !delayed.PreparationGranted && delayed.PreparationBuffs.Count == 0, "换轮清空准备计时和播报数据");
+
+            foreach (PreparationBuffKind kind in Enum.GetValues(typeof(PreparationBuffKind)))
+            {
+                var service = new BattleService(false, 1);
+                Piece player = service.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(1, 0));
+                service.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(0, 1));
+                Piece enemy = new Piece(1000, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy, hpScale: 100f);
+                service._enemyPieces.Add(enemy);
+                service._board.Place(enemy, new BoardPos(5, 5));
+                service.RefreshGoState();
+                int max = player.MaxHp;
+                player.TakeDamage(max / 2);
+                int wounded = player.Hp;
+                int oldLiberties = player.Liberties;
+                service.ApplyPreparationBuff(kind);
+                service.RefreshGoState();
+                switch (kind)
+                {
+                    case PreparationBuffKind.Upgrade:
+                        check(service._playerPieces.Exists(p => p.Def.Star == StarTier.Two), "觉醒确实升星"); break;
+                    case PreparationBuffKind.Elite:
+                        check(service._playerPieces.Count == 3 && service._playerPieces.Exists(p => p.Def.Kind == PieceKind.Crossbow && p.Def.Star == StarTier.Two), "免费二星重弩真实入场"); break;
+                    case PreparationBuffKind.Recovery:
+                        check(player.Hp > wounded, "复苏立即回血");
+                        player.TakeDamage(max / 3);
+                        int hp = player.Hp;
+                        service.DamagePiece(player, 1);
+                        check(player.Hp > hp && !service._prepRecoveryBank, "储备在真实受伤后只消费一次"); break;
+                    case PreparationBuffKind.EncirclementImmunity:
+                        service._board.Move(player, new BoardPos(4, 4));
+                        service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(3, 4));
+                        service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(5, 4));
+                        service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(4, 3));
+                        service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(4, 5));
+                        service.RefreshGoState();
+                        check(player.Liberties == 0 && !player.IsLocked, "实际零气仍不锁行动");
+                        int before = service.TotalHp(GameSide.Enemy);
+                        service.StepSide(GameSide.Player);
+                        check(service.TotalHp(GameSide.Enemy) < before, "免疫围困后仍真实发动远程攻击"); break;
+                    case PreparationBuffKind.Vitality:
+                        check(player.MaxHp > max && Math.Abs(player.HpRatio - (float)wounded / max) < 0.02f, "生命加成保留伤势比例");
+                        service.ResetPreparation();
+                        check(player.MaxHp == max, "生命加成换轮可移除"); break;
+                    case PreparationBuffKind.Armor:
+                        hp = player.Hp; service.DamagePiece(player, 10);
+                        check(hp - player.Hp < 10, "护甲确实减少扣血"); break;
+                    case PreparationBuffKind.Shields:
+                        hp = player.Hp;
+                        for (int i = 0; i < 3; i++) { service.DamagePiece(player, 10); }
+                        check(player.Hp == hp && player.ShieldCharges == 0, "三次护盾真实挡伤");
+                        service.DamagePiece(player, 10);
+                        check(player.Hp < hp, "第四次不再挡伤"); break;
+                    case PreparationBuffKind.Regeneration:
+                        service.TickPreparationCombat(4f);
+                        check(player.Hp > wounded, "持续恢复实际回血"); break;
+                    case PreparationBuffKind.Haste:
+                        player.ActionProgress = 0f;
+                        before = enemy.Hp;
+                        service.StepSide(GameSide.Player, 0.4f);
+                        check(enemy.Hp < before, "攻速加成使未满普通间隔时确实多攻击"); break;
+                    case PreparationBuffKind.Liberties:
+                        check(player.Liberties == oldLiberties + 2, "额外两口气实际参与规则"); break;
+                    case PreparationBuffKind.EyePower:
+                        service.TickPreparationCombat(4f);
+                        check(player.EyeCount > 0 && player.Hp > wounded, "真实眼阵共鸣产生回复");
+                        goto case PreparationBuffKind.Attack;
+                    case PreparationBuffKind.Execution:
+                        enemy.TakeDamage((int)(enemy.MaxHp * 0.8f));
+                        goto case PreparationBuffKind.Attack;
+                    case PreparationBuffKind.Ranged:
+                    case PreparationBuffKind.Attack:
+                        before = enemy.Hp;
+                        service.Attack(player, enemy);
+                        int enhanced = before - enemy.Hp;
+                        service._prepAttack = service._prepRanged = service._prepExecution = 0f;
+                        service._prepEyePower = false;
+                        before = enemy.Hp;
+                        service.Attack(player, enemy);
+                        check(enhanced > before - enemy.Hp, "增益确实提高攻击伤害：" + kind); break;
+                    case PreparationBuffKind.LifeSteal:
+                        service.Attack(player, enemy);
+                        check(player.Hp > wounded, "吸血按真实命中回血"); break;
+                }
+                Piece snapshot = player.CreateSnapshot();
+                check(snapshot.MaxHp == player.MaxHp && snapshot.ShieldCharges == player.ShieldCharges && snapshot.IgnoreEncirclement == player.IgnoreEncirclement, "快照保留增益状态：" + kind);
+            }
+
+            var pairs = new BattleService(false);
+            pairs._hand.Add(PieceKind.Shield, StarTier.One);
+            pairs._hand.Add(PieceKind.Shield, StarTier.One);
+            pairs.TryPlayCard(pairs.Hand[0].Id, new BoardPos(0, 1));
+            Piece original = pairs._playerPieces[0];
+            original.TakeDamage(original.MaxHp / 2);
+            float ratio = original.HpRatio;
+            int second = pairs.Hand[0].Id;
+            check(!pairs.TryPlayCard(second, original.Pos) && original.Def.Star == StarTier.One, "失败落点不累计双牌或偷升星");
+            check(pairs.TryPlayCard(second, new BoardPos(1, 0)), "第二张同类牌成功落子");
+            check(pairs._playerPieces.Count == 2 && pairs.Board.GetPiece(new BoardPos(0, 1)) == original && original.Def.Star == StarTier.Two, "原棋原位升级，新棋保留指定格");
+            check(original.Size == 1 && Math.Abs(original.HpRatio - ratio) < 0.02f && original.EyeCount == 1, "升星保留占格、伤势和真实角眼");
+            pairs._hand.Add(PieceKind.Shield, StarTier.One);
+            pairs._hand.Add(PieceKind.Shield, StarTier.One);
+            pairs.TryPlayCard(pairs.Hand[0].Id, new BoardPos(3, 0));
+            pairs.TryPlayCard(pairs.Hand[0].Id, new BoardPos(4, 0));
+            check(original.Def.Star == StarTier.Three && original.Size == 1 && pairs._playerPieces.Count == 4, "第四张养成原位三星，四颗都保留");
+            pairs.BeginCampaign(1);
+            check(pairs._playedPairs.Count == 0, "新战役重置双牌累计，避免新局第一张错误升星");
         }
 
         /// <summary>用真正的最弱阵容与高血量敌人验证兜底，不直接写结算结果。</summary>
@@ -234,6 +351,7 @@ namespace RevGame.Services
                     service._enemyPieces.Add(enemy);
                     service._hand.Clear();
                     service.RefreshGoState();
+                    service.Tick(3f);
                     check(service.StartBattle(), "弱势夹具能正常开始：" + chapter + "/" + round);
                     service.Tick(Consts.VictoryAssistFinishSeconds);
                     check(service.LastWinner == GameSide.Player && service.Phase == GamePhase.Settle, "1血单兵对高血量敌人仍真实取胜：" + chapter + "/" + round);
@@ -245,7 +363,7 @@ namespace RevGame.Services
             battle._eventScheduled = false;
             check(battle.TriggerBattleEvent(BattleEventKind.Heal), "首次事件成功");
             check(!battle.TriggerBattleEvent(BattleEventKind.Artillery), "事件不能在同一时刻刷取");
-            // 九秒冷却不是0.3125秒模拟步的整数倍，多推进一个小步，检查跨过冷却后的真实结果。
+            // 七秒冷却不是0.3125秒模拟步的整数倍，多推进一个小步，检查跨过冷却后的真实结果。
             battle.Tick(Consts.BattleEventInterval + Consts.BattleSimulationStepSeconds);
             check(battle.TriggerBattleEvent(BattleEventKind.Artillery) && battle.BattleEventCount == 2, "冷却后允许第二次不同事件");
             battle = new BattleService();

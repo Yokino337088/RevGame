@@ -14,6 +14,14 @@ namespace RevGame.Data
     {
         public int Chapter { get; }
         public int Round { get; }
+        /// <summary>连续进度从零起算；跨章不归零，防止第2章第1轮比上一章Boss前还弱。</summary>
+        public int Progress => (Chapter - 1) * Consts.RoundsPerChapter + Round - 1;
+        /// <summary>成长只改运行期棋子，不修改所有单位共用的图鉴。</summary>
+        // 六牌保留、双牌升级和每轮增益都提高了我方火力，因此敌方基础生命同步提高，避免首轮几秒清场。
+        public float HpScale => Consts.EnemyHpScale * 4f * (1f + Progress * 0.018f);
+        public float AttackScale => 1f + Progress * 0.009f;
+        /// <summary>四档逐步开放选目标、收残血、压气和规避火力；移动冷却始终不缩短。</summary>
+        public int Intelligence => System.Math.Min(4, 1 + Progress / 17);
         /// <summary>是否 Boss 回合（每章第 11 回合）。</summary>
         public bool IsBoss { get; }
         /// <summary>敌方普通棋名单；布阵算法优先用前三种远程构建眼阵，Boss 大棋由战斗服务另加。</summary>
@@ -38,7 +46,7 @@ namespace RevGame.Data
     ///
     /// ⚠️ 敌方阵容是**程序生成的占位**（等 Excel 关卡表接入后替换）。
     /// 生成规则（有意做得简单、可预期）：
-    /// - 普通回合：敌方 6~10 颗，固定有重弩、弓箭和火法，星级随章数提升；
+    /// - 普通回合：敌方 6~19 颗，固定有重弩、弓箭和火法，星级随章数提升；
     /// - Boss 回合：在第 11 回合，额外标记 <see cref = "RoundDef.IsBoss"/>。
     /// </summary>
     public static class LevelCatalog
@@ -63,7 +71,8 @@ namespace RevGame.Data
             enemies.Add(PieceKind.Crossbow);
             enemies.Add(PieceKind.Archer);
             enemies.Add(PieceKind.MageFire);
-            int count = isBoss ? 10 : System.Math.Min(10, 6 + (round - 1) / 3 + (chapter - 1) / 3);
+            int progress = (chapter - 1) * Consts.RoundsPerChapter + round - 1;
+            int count = System.Math.Min(19, 6 + progress / 5);
             for (int i = enemies.Count; i < count; i++)
             {
                 enemies.Add(i % 3 == 0 ? PieceKind.Shield : (i % 3 == 1 ? PieceKind.HeavySword : PieceKind.Swordman));
@@ -73,16 +82,12 @@ namespace RevGame.Data
         }
 
         /// <summary>
-        /// 某个回合敌方棋子的星级（占位规则：第 1~2 章 1★、3~4 章 2★、5~6 章 3★；Boss 回合 +1 星，最高 3）。
+        /// 某个回合敌方棋子的星级（占位规则：第 1~2 章 1★、3~4 章 2★、5~6 章 3★；Boss额外增加大棋，不临时提高普通兵星级）。
         /// </summary>
         public static StarTier GetEnemyStar(int chapter, bool isBoss)
         {
             int star = chapter <= 2 ? 1 : (chapter <= 4 ? 2 : 3);
-            if (isBoss && star < 3)
-            {
-                star++;
-            }
-
+            // Boss 已有大棋和额外生命，不再临时升普通兵星级；否则下一轮普通兵会出现倒退。
             return (StarTier)star;
         }
 

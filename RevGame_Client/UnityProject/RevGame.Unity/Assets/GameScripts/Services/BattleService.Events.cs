@@ -248,6 +248,7 @@ namespace RevGame.Services
             }
 
             _playerPieces.Add(piece);
+            ApplyPreparationToNewPiece(piece);
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, piece.Id);
         }
 
@@ -357,7 +358,7 @@ namespace RevGame.Services
             _hand.Remove(card.Id);
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, piece.Id);
             RevEvent.DispatchEvent(Events.HandChanged);
-            TryMergePieces();
+            ApplyPreparationToNewPiece(piece);
             return true;
         }
 
@@ -457,9 +458,15 @@ namespace RevGame.Services
         /// <summary>普通攻击、炮火、决胜支援共用真实扣血出口，保证飘字与实际伤害一致。</summary>
         private int DamagePiece(Piece target, int amount, Piece attacker = null)
         {
+            if (target.Side == GameSide.Player)
+            {
+                // 护盾消费属于这颗棋，只有真实受击才扣次数；最后一子守护在减伤之后兜底。
+                if (amount > 0 && target.ShieldCharges > 0) { target.ShieldCharges--; amount = 0; }
+                else { amount = System.Math.Max(0, (int)(amount * (1f - _prepDamageReduction))); }
+            }
             if (VictoryAssistEnabled && target.Side == GameSide.Player && _playerPieces.FindAll(p => p.IsAlive).Count == 1)
             {
-                // ★ 只保护最后一颗我方棋子至少留 1 血，前面的阵亡与合成仍正常发生。
+                // ★ 只保护最后一颗我方棋子至少留 1 血，其余棋子的受伤与阵亡仍正常发生。
                 // 配合后段渐进支援保证真实取胜。只保护最后一子，其他阵亡与阵型破坏仍正常发生。
                 amount = System.Math.Min(amount, System.Math.Max(0, target.Hp - 1));
                 if (amount == 0 && !_lastStandShown)
@@ -470,6 +477,11 @@ namespace RevGame.Services
             }
 
             int real = target.TakeDamage(amount);
+            if (real > 0 && target.Side == GameSide.Player && _prepRecoveryBank)
+            {
+                _prepRecoveryBank = false;
+                HealTeam(0.4f);
+            }
             if (real > 0)
             {
                 if (target.Side == GameSide.Enemy) { _lastEnemyDamageAt = _battleElapsed; }
@@ -515,7 +527,7 @@ namespace RevGame.Services
             _decisiveSupportUsed = true;
             int damage = _supportStage == 2 ? target.Hp : System.Math.Max(Consts.SupportDamage, (int)(target.MaxHp * Consts.VictoryAssistPulseHpRatio));
             DamagePiece(target, damage);
-            // 非标准开发夹具也有绝对上限；正常6~10名普通敌棋已在前段逐个击破，不会默认整盘秒杀。
+            // 非标准开发夹具也有绝对上限；常规敌阵先经过前段逐个击破，最后才清理异常残敌。
             if (_battleElapsed >= Consts.VictoryAssistFinishSeconds)
             {
                 foreach (Piece enemy in new List<Piece>(_enemyPieces))

@@ -28,6 +28,8 @@ namespace RevGame.View
         // 动画只改变局部偏移；布局每帧由安全区重新计算，缩放窗口时不保留旧屏幕上的坐标。
         private float _slide;
         private float _peakScale = 1f;
+        // 准备横幅用归一化行程，窗口改变尺寸时重新算实际屏幕边界，绝不沿用旧像素坐标。
+        private bool _preparationMode;
         public bool HasActiveAnimation { get { return _animation != null && _animation.IsActive(); } }
 
         /// <summary>调用者拥有当前提示，关闭 HUD 时须归还；动画自己结束也会回池。</summary>
@@ -41,6 +43,7 @@ namespace RevGame.View
         public void Show(BattleText config, string title, Sprite sprite, Action<BattleEventNoticeView> onFinished)
         {
             StopAnimation();
+            _preparationMode = false;
             _onFinished = onFinished;
             titleText.text = title;
             detailText.text = config.Detail;
@@ -73,6 +76,51 @@ namespace RevGame.View
             _animation = sequence.OnComplete(Finish);
         }
 
+        /// <summary>准备增益专用：右侧飞入→停1.25秒→放大回弹→飞出左侧；对象仍由框架池回收。</summary>
+        public void ShowPreparation(string title, string detail, Action<BattleEventNoticeView> onFinished)
+        {
+            StopAnimation();
+            _preparationMode = true;
+            _onFinished = onFinished;
+            titleText.text = title;
+            detailText.text = detail;
+            titleText.fontSize = 46;
+            detailText.fontSize = 27;
+            titleText.color = new Color(1f, 0.94f, 0.28f, 1f);
+            detailText.color = Color.white;
+            titleText.fontStyle = detailText.fontStyle = FontStyle.Bold;
+            titleText.alignment = detailText.alignment = TextAnchor.MiddleCenter;
+            // 美术预制体已有描边时直接复用；给旧资源补一次即可，绝不每次出池重复添加组件。
+            ConfigureOutline(titleText);
+            ConfigureOutline(detailText);
+            icon.enabled = false;
+            RectTransform rect = (RectTransform)transform;
+            rect.anchorMin = rect.anchorMax = Vector2.zero;
+            rect.localRotation = Quaternion.identity;
+            rect.localPosition = Vector3.zero;
+            rect.localScale = Vector3.one;
+            _peakScale = 1.12f;
+            _slide = 1f;
+            group.alpha = 1f;
+            group.blocksRaycasts = group.interactable = false;
+            ApplySafeLayout();
+            Sequence sequence = DOTween.Sequence().SetUpdate(true);
+            sequence.Append(DOTween.To(() => _slide, x => _slide = x, 0f, 0.46f).SetEase(Ease.OutCubic));
+            sequence.AppendInterval(1.25f);
+            sequence.Append(DOTween.To(() => rect.localScale, x => rect.localScale = x, Vector3.one * _peakScale, 0.16f).SetEase(Ease.OutQuad));
+            sequence.Append(DOTween.To(() => rect.localScale, x => rect.localScale = x, Vector3.one, 0.24f).SetEase(Ease.OutBack));
+            sequence.Append(DOTween.To(() => _slide, x => _slide = x, -1f, 0.46f).SetEase(Ease.InCubic));
+            _animation = sequence.OnComplete(Finish);
+        }
+
+        private static void ConfigureOutline(Text text)
+        {
+            Outline outline = text.GetComponent<Outline>();
+            if (outline == null) { outline = text.gameObject.AddComponent<Outline>(); }
+            outline.effectColor = new Color(0.04f, 0.07f, 0.12f, 1f);
+            outline.effectDistance = new Vector2(2f, -2f);
+        }
+
         private void LateUpdate() { ApplySafeLayout(); }
 
         /// <summary>提示独占右栏中部空位，不盖住棋盘、信息栏或准备按钮；连同冲击放大的范围一起预留。</summary>
@@ -82,6 +130,22 @@ namespace RevGame.View
             RectTransform parent = rect.parent as RectTransform;
             if (parent == null) { return; }
             GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, GameBattleLayout.SafeViewport());
+            if (_preparationMode)
+            {
+                float bannerWidth = Mathf.Min(1120f, parent.rect.width * 0.72f);
+                rect.sizeDelta = new Vector2(bannerWidth, 146f);
+                // 半屏宽+横幅半宽+回弹余量，确保整块文字确实从可见区域之外进入/退出。
+                float travel = parent.rect.width * 0.5f + bannerWidth * _peakScale * 0.5f + 40f;
+                rect.anchoredPosition = new Vector2(parent.rect.width * 0.5f + _slide * travel, parent.rect.height * 0.60f);
+                SetChildRect(titleText.rectTransform, new Vector2(0f, 28f), new Vector2(bannerWidth, 64f));
+                SetChildRect(detailText.rectTransform, new Vector2(0f, -36f), new Vector2(bannerWidth, 66f));
+                titleText.resizeTextForBestFit = detailText.resizeTextForBestFit = true;
+                titleText.resizeTextMinSize = 28;
+                titleText.resizeTextMaxSize = 46;
+                detailText.resizeTextMinSize = 20;
+                detailText.resizeTextMaxSize = 27;
+                return;
+            }
             Rect slot = GameBattleLayout.InRegion(areas.Right, 0.56f, 0.86f, 0.14f);
             // 除以峰值：哪怕放大到 Excel 配置的最大比例，也不会超出预留范围。
             rect.sizeDelta = slot.size / _peakScale;
@@ -109,8 +173,9 @@ namespace RevGame.View
             _animation = null;
             Action<BattleEventNoticeView> callback = _onFinished;
             _onFinished = null;
-            callback?.Invoke(this);
+            // 先回池再通知队列，下一条可复用同一个对象；回调之后不再写任何本对象字段。
             RevPool.Return(this, 0);
+            callback?.Invoke(this);
         }
 
         private void StopAnimation()
@@ -125,6 +190,7 @@ namespace RevGame.View
         {
             StopAnimation();
             _onFinished = null;
+            _preparationMode = false;
             titleText.text = detailText.text = string.Empty;
             group.alpha = 0f;
         }

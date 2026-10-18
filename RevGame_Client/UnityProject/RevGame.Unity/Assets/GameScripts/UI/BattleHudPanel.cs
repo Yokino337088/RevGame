@@ -3,6 +3,8 @@
 // HUD 只读服务。每次打开重新订阅，关闭取消计时和序列，防止回池后丢监听或重复刷新。
 // ============================================================
 using System.Collections.Generic;
+using DG.Tweening;
+using RevGame.Data;
 using RevGame.Core;
 using RevGame.View;
 using RevGame.Services;
@@ -68,6 +70,13 @@ namespace RevGame.UI
         private RectTransform _noticeRoot;
         private readonly HashSet<BattleEventNoticeView> _notices = new HashSet<BattleEventNoticeView>();
         private int _noticeGeneration;
+        private int _regularNoticeGeneration;
+        private readonly Queue<PreparationBuffDef> _preparationQueue = new Queue<PreparationBuffDef>();
+        private BattleEventNoticeView _preparationNotice;
+        private bool _preparationLoading;
+        private Tween _progressTween, _bossTween;
+        private float _progressTarget = -1f, _bossTarget = -1f;
+        public int PendingPreparationNoticeCount => _preparationQueue.Count;
         private bool _noticeClosed;
         private readonly List<string> _logs = new List<string>();
         public int ActiveNoticeCount { get { return _notices.Count; } }
@@ -87,6 +96,7 @@ namespace RevGame.UI
         protected override void OnOpen()
         {
             _logs.Clear();
+            ResetBarAnimations();
             _noticeClosed = false;
             _noticeGeneration++;
             var container = new GameObject("BattleEventNotices", typeof(RectTransform));
@@ -97,6 +107,7 @@ namespace RevGame.UI
             _noticeRoot.offsetMin = _noticeRoot.offsetMax = Vector2.zero;
             SetNoticeVisible(false);
             RevTimer.Every(0.1f, RefreshView, owner: this);
+            RevEvent.AddEventListener(Events.PreparationBuffsGranted, OnPreparationGranted, owner: this);
             // owner: this → 面板释放时框架自动解绑，不用手写解绑清单。
             RevEvent.AddEventListener<int>(Events.PhaseEnterBattle, OnPhaseChanged, 0, this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnPhaseChanged, 0, this);
@@ -136,14 +147,14 @@ namespace RevGame.UI
             {
                 float duration = _battle.BattleDuration;
                 float ratio = duration > 0f ? Mathf.Clamp01(_battle.BattleElapsed / duration) : 0f;
-                _progressFill.fillAmount = ratio;
+                UpdateBar(_progressFill, ratio, ref _progressTween, ref _progressTarget, _battle.Phase != GamePhase.Battle);
             }
 
             if (_countText != null)
             {
                 // 沿用两行高度：第二行放简短阵型和攻击加成，完整降级原因留给 GM，不挤出第三行遮住日志。
                 string formation = _battle.EnemyFormation.Split('（')[0];
-                _countText.text = "我方 " + CountAlive(_battle.PlayerPieces) + " / 敌方 " + CountAlive(_battle.EnemyPieces) + "\n" + formation + " · 我方+" + Mathf.RoundToInt(_battle.TeamAttackBonus * 100f) + "%";
+                _countText.text = "我方 " + CountAlive(_battle.PlayerPieces) + " / 敌方 " + CountAlive(_battle.EnemyPieces) + "\n" + formation + " · AI " + _battle.EnemyIntelligence + "档 · 我方+" + Mathf.RoundToInt(_battle.TeamAttackBonus * 100f) + "%";
             }
 
             if (_logText != null)
@@ -166,7 +177,7 @@ namespace RevGame.UI
             _bossText.gameObject.SetActive(king != null);
             if (king != null)
             {
-                _bossBar.fillAmount = king.HpRatio;
+                UpdateBar(_bossBar, king.HpRatio, ref _bossTween, ref _bossTarget, _battle.Phase != GamePhase.Battle);
                 int rage = (int)(_battle.BattleElapsed / Consts.BossAccelerationSeconds) * 10;
                 _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
             }
@@ -214,6 +225,10 @@ namespace RevGame.UI
         private void ClearNotices()
         {
             _noticeGeneration++;
+            _regularNoticeGeneration++;
+            _preparationQueue.Clear();
+            _preparationNotice = null;
+            _preparationLoading = false;
             foreach (BattleEventNoticeView notice in _notices)
             {
                 if (notice != null)
@@ -228,6 +243,7 @@ namespace RevGame.UI
         private void ClearRoundPresentation()
         {
             ClearNotices();
+            ResetBarAnimations();
             _logs.Clear();
             _logText.text = string.Empty;
             // 旧版静态提示节点也清空并隐藏，防止它与池化的新提示同时显示。
@@ -265,9 +281,16 @@ namespace RevGame.UI
 
         private void ShowNotice(BattleText config, string title, Sprite sprite)
         {
-            // 同一时刻只读一条大提示。连续合成时显示最新结果，旧提示立即回池；
+            // 同一时刻只读一条大提示。连续升级时显示最新结果，旧提示立即回池；
             // 不排一个跨回合的长队列，否则玩家已进入准备期却还在观看上轮支援。
-            ClearNotices();
+            // 准备横幅与右栏升级提示分别管理：打牌升级不能吞掉尚未播报的准备增益。
+            foreach (BattleEventNoticeView old in new List<BattleEventNoticeView>(_notices))
+            {
+                if (old == _preparationNotice) { continue; }
+                _notices.Remove(old);
+                RevPool.Return(old, 0);
+            }
+            int regularGeneration = ++_regularNoticeGeneration;
             int generation = _noticeGeneration;
             RevPool.GetAsync<BattleEventNoticeView>(notice =>
             {
@@ -277,7 +300,7 @@ namespace RevGame.UI
                     return;
                 }
                 // 异步加载结束时面板可能已经关闭；过期结果必须回池，不能在大厅补播。
-                if (_noticeClosed || this == null || generation != _noticeGeneration)
+                if (_noticeClosed || this == null || generation != _noticeGeneration || regularGeneration != _regularNoticeGeneration)
                 {
                     RevPool.Return(notice, 0);
                     return;
@@ -285,6 +308,69 @@ namespace RevGame.UI
                 _notices.Add(notice);
                 notice.Show(config, title, sprite, OnNoticeFinished);
             }, _noticeRoot);
+        }
+
+        /// <summary>数据已经生效后仅排播报队列，不在动画完成回调里修改战斗属性。</summary>
+        private void OnPreparationGranted()
+        {
+            foreach (PreparationBuffDef buff in Battle.PreparationBuffs) { _preparationQueue.Enqueue(buff); }
+            TryShowPreparationNotice();
+            RefreshView();
+        }
+
+        private void TryShowPreparationNotice()
+        {
+            if (_noticeClosed || Battle.Phase != GamePhase.Prepare || _preparationLoading || _preparationNotice != null || _preparationQueue.Count == 0) { return; }
+            PreparationBuffDef buff = _preparationQueue.Dequeue();
+            int generation = _noticeGeneration;
+            _preparationLoading = true;
+            RevPool.GetAsync<BattleEventNoticeView>(notice =>
+            {
+                // 先判代次，再动loading。旧资源回调不能把新回合的加载状态改成false。
+                if (_noticeClosed || this == null || generation != _noticeGeneration)
+                {
+                    if (notice != null) { RevPool.Return(notice, 0); }
+                    return;
+                }
+                _preparationLoading = false;
+                if (notice == null)
+                {
+                    RevLog.Error("准备增益弹幕加载失败：" + buff.Title, "RevGame");
+                    TryShowPreparationNotice();
+                    return;
+                }
+                _preparationNotice = notice;
+                _notices.Add(notice);
+                notice.ShowPreparation(buff.Title, buff.Detail, OnPreparationNoticeFinished);
+            }, _noticeRoot);
+        }
+
+        private void OnPreparationNoticeFinished(BattleEventNoticeView notice)
+        {
+            _notices.Remove(notice);
+            _preparationNotice = null;
+            TryShowPreparationNotice();
+        }
+
+        /// <summary>只有目标值改变才接续缓动，避免每0.1秒刷新把同一动画反复从头启动。</summary>
+        private static void UpdateBar(Image image, float value, ref Tween tween, ref float target, bool instant)
+        {
+            value = Mathf.Clamp01(value);
+            if (Mathf.Abs(target - value) < 0.00001f) { return; }
+            tween?.Kill(false);
+            tween = null;
+            bool first = target < 0f;
+            target = value;
+            if (instant || first) { image.fillAmount = value; return; }
+            tween = DOTween.To(() => image.fillAmount, x => image.fillAmount = x, value, 0.28f).SetEase(Ease.OutCubic).SetUpdate(true);
+        }
+
+        private void ResetBarAnimations()
+        {
+            _progressTween?.Kill(false);
+            _bossTween?.Kill(false);
+            _progressTween = _bossTween = null;
+            _progressTarget = _bossTarget = -1f;
         }
 
         private void OnNoticeFinished(BattleEventNoticeView notice)

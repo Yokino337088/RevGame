@@ -1,3 +1,5 @@
+> 2026-10-18 最新追加：敌方6～19名及逐轮基础属性成长、四档AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、时间/Boss血条缓动、Boss真实重剑序列帧已实现。620条规则、737条布局、1280条战术、136条回合Play、23条成长Play及对象池检查通过；两组种子各连续66轮通关。升级保留Id/位置/占格，新牌照常落下。 详见[成长与准备增益验收](RevGame-成长与准备增益验收-2026-10-18.md)。下方早期规则与数字仅作历史记录。
+
 # RevGame 游戏代码架构与运行说明
 
 > 2026-10-18 最新战斗更新：已接入 6～10 名普通敌棋、三种远程、一眼/两眼真实布阵、深快照保阵试走、90 秒普通上限与阶段式通关保障。1150 条战术断言、570 条规则、737 条布局、136 条 Play 回合表现通过，两组种子各连续赢下 66 回合；当前参数及范围见[战斗与围棋 AI 改造验收](RevGame-战斗与围棋AI改造验收-2026-10-18.md)。下方旧日期与数字为前序实现记录。
@@ -6,7 +8,7 @@
 
 ## 先跑起来
 
-打开 `Assets/Scenes/SampleScene.unity`，按 Play。依次点击“开始闯关”→第一章→手牌→任意空格→“准备完毕”。准备期可以点己方棋子再点空格换位，也可以刷新剩余手牌。手机方向固定横屏。章节解锁只在本次运行保留。
+打开 `Assets/Scenes/GameScene.unity`，按 Play。依次点击“开始闯关”→第一章→手牌→任意空格→“开始战斗”。准备期可以点己方棋子再点空格换位，也可以刷新剩余手牌。手机方向固定横屏。章节解锁只在本次运行保留。
 
 GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTween；Start 使用 RevTask 异步加载两张生成表，校验后才由 GameFlow 开放首页。不要再手动初始化事件、UI 或计时器。
 
@@ -24,7 +26,8 @@ GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTw
 | Services/BattleService | 唯一规则服务，控制阶段、落子、伤害、胜负与固定模拟。 |
 | BattleService.Placement | 准备期棋盘统一点击：选牌、选己方棋子和选眼位石互斥；全盘落子与免费重摆。 |
 | BattleService.HandRefresh | 只重抽手中剩余牌，保留星级和落子额度，提交后通知 UI；应用 Excel 远程频率。 |
-| BattleService.Progression / Events | 奖励、合成、职业加成、支援与轻松模式。partial 是同一个服务分文件，并非多套管理器。 |
+| Data/PreparationBuffCatalog、BattleService.Preparation | 十五种增益、3秒发放、本轮属性、待升级、新棋继承、持续回复和重置。 |
+| BattleService.Progression / Events | 奖励、双牌原位升级、职业加成、支援与轻松模式。partial 是同一个服务分文件，并非多套管理器。 |
 | BattleService.*Checks / Diagnostics | 仅编辑器或开发环境的边界断言、受控造局，不进入正式游戏业务。 |
 | Flow/GameFlow / BattleLogic | FSM 切换大厅、选关、战斗和退出；Scope 管回收；Logic 每 0.3125 秒驱动服务并转发 UI 动作。 |
 | View/BoardView | 编号映射到池化格子/棋子/特效；攻击和受击快照驱动口号与弹道，批次检查避免退出后补播。 |

@@ -52,6 +52,7 @@ namespace RevGame.UI
         protected override void OnOpen()
         {
             ResetRoundCards();
+            RevTimer.Every(0.25f, RefreshView, owner: this);
             // ★ Close 会自动摘掉 owner 事件，复用时 OnBindView 不重跑，因此每次打开重新订阅。
             RevEvent.AddEventListener(Events.HandRerolled, OnHandRerolled, owner: this);
             RevEvent.AddEventListener(Events.HandChanged, RefreshView, owner: this);
@@ -75,6 +76,7 @@ namespace RevGame.UI
 
         protected override void OnClose()
         {
+            RevTimer.CancelAllOf(this);
             ResetRoundCards();
         }
 
@@ -97,7 +99,8 @@ namespace RevGame.UI
                 else { _cards[i].Show(card, battle.SelectedCardId); }
             }
 
-            _btnReady.interactable = battle.Phase == GamePhase.Prepare && !AnyCardFlipping;
+            _btnReady.interactable = battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !AnyCardFlipping;
+            _btnReady.GetComponentInChildren<Text>().text = battle.PreparationGranted ? "开始战斗" : "增益抵达 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed)) + "秒";
             _btnRefresh.interactable = battle.Hand.Count > 0 && !AnyCardFlipping;
             _btnRefresh.GetComponentInChildren<Text>().text = "刷新手牌（" + battle.Hand.Count + "张）";
             _btnSkip.gameObject.SetActive(battle.Round == Consts.NormalRoundsPerChapter);

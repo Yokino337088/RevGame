@@ -177,7 +177,7 @@ namespace RevGame.Board
             return Place(piece, to, respectEnemyEyes);
         }
 
-        /// <summary>检查整个占格；移动时忽略自己，合成预检时可忽略即将消耗的三颗材料。</summary>
+        /// <summary>检查整个占格；移动时忽略自己，离线预检也可显式忽略待替换对象。原位升星不改变占格。</summary>
         public bool CanFit(BoardPos pos, int size, GameSide side, Piece ignore = null, HashSet<Piece> consumed = null, bool respectEnemyEyes = true)
         {
             if (size < 1)

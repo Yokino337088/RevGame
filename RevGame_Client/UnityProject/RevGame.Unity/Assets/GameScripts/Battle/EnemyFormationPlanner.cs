@@ -29,7 +29,7 @@ namespace RevGame.Battle
         /// 只在成功后把最终坐标写入尚未出生的敌棋。玩家原对象始终只读，失败不会丢残局或少生 Boss。
         /// 搜索有固定上限：两种模板 × 四条边 × 最多七个偏移，不进行无穷递归。
         /// </summary>
-        public static bool TryArrange(List<Piece> roster, IReadOnlyList<Piece> players, bool newBoard, out string report)
+        public static bool TryArrange(List<Piece> roster, IReadOnlyList<Piece> players, bool newBoard, out string report, int intelligence = 4)
         {
             var baseline = new BoardModel(Consts.BoardSize);
             if (!newBoard)
@@ -76,7 +76,7 @@ namespace RevGame.Battle
                         Piece root = Find(trial, guards[0].Id);
                         if (root == null || root.EyeCount < eyes || !PreservesPlayers(baseline, trial)) { continue; }
                         if (trial.GetPiecesOf(GameSide.Enemy).Exists(p => p.IsLocked)) { continue; }
-                        int score = Score(trial);
+                        int score = Score(trial, intelligence);
                         if (score > bestScore) { best = trial; bestScore = score; }
                     }
                 }
@@ -193,14 +193,26 @@ namespace RevGame.Battle
             return true;
         }
 
-        private static int Score(BoardModel board)
+        private static int Score(BoardModel board, int intelligence)
         {
             int score = 0;
             foreach (Piece enemy in board.GetPiecesOf(GameSide.Enemy))
             {
                 score += enemy.Pos.Y * 3 + System.Math.Min(enemy.Liberties, 12);
                 // 使用真实射程查询评分，能开火的远程位置优先，不靠“职业叫射手”假定一定有输出。
-                if (enemy.Def.IsRanged) { score += MoveRules.GetAttackTargets(board, enemy).Count * 100; }
+                if (intelligence >= 2 && enemy.Def.IsRanged) { score += MoveRules.GetAttackTargets(board, enemy).Count * 100; }
+                if (intelligence >= 3) { score += enemy.EyeCount * 30; }
+                if (intelligence >= 4)
+                {
+                    // 高阶布阵同时看对方火力，主将和远程尽量不在出生点遭到集火。
+                    foreach (Piece player in board.GetPiecesOf(GameSide.Player))
+                    {
+                        foreach (BoardPos hit in MoveRules.GetAttackTargets(board, player))
+                        {
+                            if (board.GetPiece(hit) == enemy) { score -= enemy.IsKing ? 180 : 60; break; }
+                        }
+                    }
+                }
             }
             return score;
         }

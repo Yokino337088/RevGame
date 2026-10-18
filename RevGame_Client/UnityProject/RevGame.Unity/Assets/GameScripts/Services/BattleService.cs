@@ -119,6 +119,8 @@ namespace RevGame.Services
         public string LastError { get; private set; }
         /// <summary>本回合实际通过规则验证的敌阵名称；空间受限时包含降级原因，供 HUD/GM 查询。</summary>
         public string EnemyFormation { get; private set; } = string.Empty;
+        /// <summary>只读档位供界面/GM核对；真正策略由 EnemyTactics 使用。</summary>
+        public int EnemyIntelligence => LevelCatalog.GetRound(Chapter, Round)?.Intelligence ?? 1;
 
         /// <summary>游戏默认开启轻松模式；编辑器可传 false 验证无辅助的基础规则。</summary>
         public BattleService() : this(true)
@@ -175,6 +177,7 @@ namespace RevGame.Services
             _lastWinner = null;
             EyeStoneSelected = false;
             SelectedPieceId = 0;
+            ResetPreparation();
             _roundSpeedBonus = 0f;
             _roundLibertyBonus = 0;
             _battleEventCount = 0;
@@ -290,7 +293,7 @@ namespace RevGame.Services
 
             _hand.Remove(cardId);
             SelectedCardId = 0;
-            TryMergePieces();
+            RegisterPlayedPair(card.Kind, _playerPieces[_playerPieces.Count - 1]);
             RevEvent.DispatchEvent(Events.HandChanged);
             RevEvent.DispatchEvent(Events.SelectionChanged);
             return true;
@@ -360,6 +363,7 @@ namespace RevGame.Services
             }
 
             _playerPieces.Add(piece);
+            ApplyPreparationToNewPiece(piece);
             _cardsPlayedThisRound++;
             LastError = string.Empty;
             RefreshGoState();
@@ -381,6 +385,7 @@ namespace RevGame.Services
                 return Reject("请先放下至少一颗棋子再准备战斗");
             }
 
+            if (VictoryAssistEnabled && !_preparationGranted) { return Reject("开战前请等待准备增益，约 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - _preparationElapsed)) + " 秒"); }
             SelectedCardId = 0;
             SelectedPieceId = 0;
             EyeStoneSelected = false;
@@ -396,11 +401,12 @@ namespace RevGame.Services
 
         public void Tick(float deltaSeconds)
         {
-            if (Phase != GamePhase.Battle)
+            if (Phase == GamePhase.Prepare)
             {
+                TickPreparation(deltaSeconds);
                 return;
             }
-
+            if (Phase != GamePhase.Battle) { return; }
             if (float.IsNaN(deltaSeconds) || float.IsInfinity(deltaSeconds) || deltaSeconds <= 0f)
             {
                 return;
@@ -416,6 +422,7 @@ namespace RevGame.Services
                 _tickAccumulator -= stepSeconds;
                 _battleElapsed += stepSeconds;
                 ResolveOneStep(stepSeconds);
+                TickPreparationCombat(stepSeconds);
                 TryAutomaticEvent();
                 ApplyVictorySupport();
                 bool timeout = !IsBossRound && _battleElapsed >= BattleDuration;
@@ -461,9 +468,7 @@ namespace RevGame.Services
             }
 
             StepSide(GameSide.Enemy, stepSeconds / Consts.BattleTickSeconds);
-            // 上次因 2×2 空间不足而暂缓的合成，在移动或死亡腾出位置后重新尝试。
-            // 不能在 StepSide 遍历名单的途中合成，否则删除材料会让下一颗棋子漏行动。
-            TryMergePieces();
+            // 升级只由成功打牌/明确增益触发。战斗轮询绝不自动吃掉守眼棋子。
             RefreshGoState();
             _eyeHealElapsed += stepSeconds;
             if (_eyeHealElapsed >= Consts.EyeHealSeconds)
@@ -509,7 +514,7 @@ namespace RevGame.Services
                         // 连击的上一发可能已经击败原目标；每发重查，才能继续射击下一名敌人。
                         targets = MoveRules.GetAttackTargets(_board, piece);
                         if (targets.Count == 0) { break; }
-                        Piece target = side == GameSide.Enemy ? EnemyTactics.ChooseTarget(_board, piece, targets) : _board.GetPiece(targets[0]);
+                        Piece target = side == GameSide.Enemy ? EnemyTactics.ChooseTarget(_board, piece, targets, EnemyIntelligence) : _board.GetPiece(targets[0]);
                         Attack(piece, target);
                         if (IsKingCaptured())
                         {
@@ -538,7 +543,7 @@ namespace RevGame.Services
                     continue;
                 }
 
-                BoardPos best = EnemyTactics.ChooseSafeMove(_board, piece, moves);
+                BoardPos best = EnemyTactics.ChooseSafeMove(_board, piece, moves, EnemyIntelligence);
                 // 只接受确实更接近目标的落点；被阻挡时原地等待，不能来回横跳。
                 if (best != piece.Pos && _board.Move(piece, best))
                 {
@@ -565,13 +570,13 @@ namespace RevGame.Services
             }
 
             float multiplier = target.IsLocked ? Consts.LockedDamageMultiplier : Consts.BaseDamageMultiplier;
-            if (target.ConnectedCells <= 1)
+            if (!target.IgnoreEncirclement && target.ConnectedCells <= 1)
             {
                 multiplier *= Consts.IsolatedDamageMultiplier;
             }
 
             float linked = System.Math.Min(Consts.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Consts.LinkAttackPerCell);
-            multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus : 0f);
+            multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus + PreparationAttackBonus(attacker, target) : 0f);
             if (IsBossRound)
             {
                 multiplier *= 1f + (int)(_battleElapsed / Consts.BossAccelerationSeconds) * Consts.BossAccelerationBonus;
@@ -580,8 +585,12 @@ namespace RevGame.Services
             var attack = new PieceAttackInfo(attacker.Id, attacker.Def.Kind, attacker.Pos, attacker.Size, attacker.Side);
             RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, attack);
             // 双方一起降低单发伤害，保留远程较高的出手频率，让玩家能看见互相消耗和支援反击。
-            int raw = System.Math.Max(1, (int)(attacker.Def.Attack * multiplier * Consts.CombatDamageScale));
+            int raw = System.Math.Max(1, (int)(attacker.Def.Attack * attacker.AttackScale * multiplier * Consts.CombatDamageScale));
             int real = DamagePiece(target, raw, attacker);
+            if (attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
+            {
+                RevEvent.DispatchEvent<int>(Events.PieceHpChanged, attacker.Id);
+            }
             RevEvent.DispatchEvent<string>(Events.BattleLog, attacker.Def.DisplayName + " → " + target.Def.DisplayName + " -" + real + (target.IsLocked ? "（锁死×2）" : ""));
             RefreshGoState();
         }
@@ -728,13 +737,24 @@ namespace RevGame.Services
         private bool TryPlanEnemies(RoundDef def, bool newBoard, out List<Piece> plan)
         {
             plan = new List<Piece>();
+            // ★ 双牌升级不再消耗棋子，存活阵容会逐轮变大。按继承阵容的星级总量补充敌方承伤与输出，
+            // 让“保留十几颗远程”仍有交战时间，避免几秒清场和一路堆满导致下一轮无法出生。
+            // 这只是当前原型的动态压力，基础成长仍由关卡进度决定；最终收尾保障不受它影响。
+            float strength = 0f;
+            if (!newBoard)
+            {
+                foreach (Piece player in _playerPieces) { if (player.IsAlive) { strength += (int)player.Def.Star; } }
+            }
+            float pressure = System.Math.Max(1f, strength / 6f);
+            float hpScale = def.HpScale * System.Math.Min(16f, pressure * pressure);
+            float attackScale = def.AttackScale * System.Math.Min(4f, (float)System.Math.Sqrt(pressure));
             if (def.IsBoss)
             {
                 int[] sizes = def.Chapter <= 2 ? new[] { 2 } : (def.Chapter <= 4 ? new[] { 2, 2 } : (def.Chapter == 5 ? new[] { 3, 2, 2 } : new[] { 3, 3 }));
                 for (int i = 0; i < sizes.Length; i++)
                 {
-                    float scale = Consts.EnemyHpScale * (1f + (def.Chapter - 1) * 0.25f) * (def.Chapter == 6 ? 2f : 1f);
-                    plan.Add(new Piece(_nextPieceId + plan.Count, PieceCatalog.Get(PieceKind.HeavySword, StarTier.Three), GameSide.Enemy, sizes[i], true, i == 0, scale));
+                    float scale = hpScale * (1f + (def.Chapter - 1) * 0.25f);
+                    plan.Add(new Piece(_nextPieceId + plan.Count, PieceCatalog.Get(PieceKind.HeavySword, StarTier.Three), GameSide.Enemy, sizes[i], true, i == 0, scale, attackScale));
                 }
             }
             StarTier star = LevelCatalog.GetEnemyStar(def.Chapter, def.IsBoss);
@@ -742,10 +762,10 @@ namespace RevGame.Services
             {
                 PieceDef pieceDef = PieceCatalog.Get(kind, star);
                 if (pieceDef == null) { return Reject("敌方图鉴配置缺失：" + kind); }
-                plan.Add(new Piece(_nextPieceId + plan.Count, pieceDef, GameSide.Enemy, hpScale: Consts.EnemyHpScale));
+                plan.Add(new Piece(_nextPieceId + plan.Count, pieceDef, GameSide.Enemy, hpScale: hpScale, attackScale: attackScale));
             }
             string report;
-            if (!EnemyFormationPlanner.TryArrange(plan, _playerPieces, newBoard, out report)) { return Reject(report); }
+            if (!EnemyFormationPlanner.TryArrange(plan, _playerPieces, newBoard, out report, def.Intelligence)) { return Reject(report); }
             EnemyFormation = report;
             return true;
         }

@@ -26,6 +26,7 @@ namespace RevGame.Editor
             if (UnityEngine.Application.isPlaying) { return "请先退出 Play 再运行战术断言"; }
             _count = 0;
             var report = new StringBuilder();
+            RoundDef previous = null;
             var watch = System.Diagnostics.Stopwatch.StartNew();
             for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
             {
@@ -33,8 +34,15 @@ namespace RevGame.Editor
                 {
                     var battle = new BattleService(true, 1024);
                     Check(battle.StartRound(chapter, round), "眼阵完整生成：" + chapter + "/" + round);
+                    RoundDef current = LevelCatalog.GetRound(chapter, round);
+                    if (previous != null)
+                    {
+                        Check(current.HpScale > previous.HpScale && current.AttackScale > previous.AttackScale, "敌方生命与攻击基础倍率逐轮增长，跨章不倒退");
+                        Check(current.EnemyKinds.Count >= previous.EnemyKinds.Count && current.Intelligence >= previous.Intelligence, "数量与AI档位不倒退");
+                    }
+                    previous = current;
                     List<Piece> guards = new List<Piece>(battle.EnemyPieces).FindAll(p => !p.IsBoss);
-                    Check(guards.Count >= 6 && guards.Count <= 10, "普通敌棋六至十名，Boss另计");
+                    Check(guards.Count >= 6 && guards.Count <= 19, "普通敌棋六至十九名，Boss另计");
                     Check(guards.Exists(p => p.Def.Kind == PieceKind.Crossbow) && guards.Exists(p => p.Def.Kind == PieceKind.Archer) && guards.Exists(p => p.Def.Kind == PieceKind.MageFire), "重弩/弓箭/火法均存在");
                     int expectedEyes = guards.Count >= 8 ? 2 : 1;
                     Check(guards.FindAll(p => p.EyeCount >= expectedEyes).Count >= (expectedEyes == 2 ? 8 : 5), "真实规则确认完整守眼骨架");
@@ -102,7 +110,7 @@ namespace RevGame.Editor
         private static List<Piece> MakeEnemies()
         {
             var result = new List<Piece>();
-            foreach (PieceKind kind in LevelCatalog.GetRound(1, 9).EnemyKinds)
+            foreach (PieceKind kind in LevelCatalog.GetRound(1, 11).EnemyKinds)
             {
                 result.Add(new Piece(1000 + result.Count, PieceCatalog.Get(kind, StarTier.One), GameSide.Enemy));
             }
@@ -138,6 +146,19 @@ namespace RevGame.Editor
             {
                 if (enemy.EyeCount > 0) { Check(MoveRules.GetMoveTargets(battle.Board, enemy).Count == 0, "两眼守子不自动拆阵"); }
             }
+            var aim = new BoardModel(9);
+            var sniper = new Piece(100, PieceCatalog.Get(PieceKind.Crossbow, StarTier.One), GameSide.Enemy);
+            var near = new Piece(101, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
+            var threat = new Piece(102, PieceCatalog.Get(PieceKind.Archer, StarTier.One), GameSide.Player);
+            aim.Place(sniper, new BoardPos(4, 4));
+            aim.Place(near, new BoardPos(4, 3));
+            aim.Place(threat, new BoardPos(0, 0));
+            GoRules.Evaluate(aim);
+            List<BoardPos> shots = MoveRules.GetAttackTargets(aim, sniper);
+            Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 1) == near, "一档AI优先就近目标");
+            Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 2) == threat, "二档AI真实改为优先远程威胁");
+            near.TakeDamage(near.Hp - 1);
+            Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 3) == near, "三档AI真实改为优先一击收残血");
             BoardModel snapshot = battle.Board.CreateSnapshot();
             Piece bone = snapshot.GetPiecesOf(GameSide.Enemy)[0];
             string before = snapshot.Dump();
@@ -175,6 +196,7 @@ namespace RevGame.Editor
                     }, owner: owner);
                     try
                     {
+                        battle.Tick(3f);
                         Check(battle.StartBattle(), "固定种子实际开战");
                         battle.Tick(Consts.VictoryAssistFinishSeconds + Consts.BattleSimulationStepSeconds);
                         Check(battle.LastWinner == GameSide.Player && battle.Phase == GamePhase.Settle, "固定种子对局最终可胜");
@@ -231,12 +253,13 @@ namespace RevGame.Editor
                             // 极满残局下允许保留手牌；服务本来就允许至少一颗己方棋子开战。
                             if (!placed) { break; }
                         }
+                        battle.Tick(3f);
                         Check(battle.StartBattle(), "带残局正常开战");
                         battle.Tick(Consts.BattleDurationSeconds);
                         Check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player, "连续闯关本轮真实取胜");
                         seconds += battle.BattleElapsed;
                         events += battle.BattleEventCount;
-                        Check(battle.CompleteSettle(), "完整敌阵可在真实残局上生成：" + battle.LastError);
+                        Check(battle.CompleteSettle(), "完整敌阵可在真实残局上生成（" + seed + "，" + battle.Chapter + "/" + battle.Round + "）：" + battle.LastError);
                         if (battle.Phase == GamePhase.Reward) { Check(battle.ChooseReward(0), "第一项章节奖励可正常进入下一章"); }
                     }
                     Check(finished == 1 && battle.UnlockedChapter == Consts.ChapterCount, "最终通关只通知一次且解锁六章");

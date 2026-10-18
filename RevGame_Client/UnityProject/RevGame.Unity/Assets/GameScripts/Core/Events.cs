@@ -17,6 +17,8 @@ namespace RevGame.Core
         public const string HandRerolled = "RevGame.Hand.Rerolled";
         /// <summary>唯一签名 PieceAttackInfo：每次真实攻击的起点与棋种快照。</summary>
         public const string PieceAttacked = "RevGame.Piece.Attacked";
+        /// <summary>无参数：本轮3～5项准备增益已全部生效；HUD读取 PreparationBuffs 播报。</summary>
+        public const string PreparationBuffsGranted = "RevGame.Preparation.BuffsGranted";
         // ---------------- 流程 ----------------
         /// <summary>一个回合进入"准备"阶段。参数：回合号（int）。</summary>
         public const string PhaseEnterPrepare = "RevGame.Phase.Prepare";
@@ -37,7 +39,7 @@ namespace RevGame.Core
         public const string PieceHpChanged = "RevGame.Piece.HpChanged";
         /// <summary>棋块的围棋状态刷新完毕（气数/叫吃/锁死/连断都算完了）。</summary>
         public const string GoStateRefreshed = "RevGame.Board.GoStateRefreshed";
-        /// <summary>三个同名棋子合成升星。参数：棋子 Id（升星后的那个）。</summary>
+        /// <summary>棋子原位升星（双牌/准备增益）。参数：棋子 Id（升星后的那个）。</summary>
         public const string PieceMerged = "RevGame.Piece.Merged";
         // ---------------- 战斗表现 ----------------
         /// <summary>一次伤害结算完成。参数：受击棋子 Id。</summary>

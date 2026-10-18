@@ -61,7 +61,7 @@ namespace RevGame.Bootstrap
             }, RevGMArg.Int("X"), RevGMArg.Int("Y"));
             RevGM.Register("RevGame/选奖励", "选择0~2号奖励", args => BattleResult(Logic().ChooseReward(args.Int(0, 0))), RevGMArg.Int("选项"));
             RevGM.Register("RevGame/跳过", "第10回合未落牌时跳过换攻击强化", args => BattleResult(Logic().SkipRound()));
-            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，间隔9秒且每回合最多12次", args =>
+            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，间隔7秒且每回合最多12次", args =>
             {
                 Logic();
                 int id = args.Int(0, 0);

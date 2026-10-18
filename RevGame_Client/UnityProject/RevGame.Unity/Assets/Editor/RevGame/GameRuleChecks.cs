@@ -74,11 +74,11 @@ namespace RevGame.Editor
             Check(battle.Hand.Count == 6, "第八回合仍发六张");
             battle.LoadDevelopmentScenario("merge");
             Check(battle.Hand.Count == 6, "合成验收场景也保留完整六张手牌");
-            Check(battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(2, 0)), "第三张同名牌可以放下");
-            Check(battle.Board.GetPiecesOf(GameSide.Player).Count == 1 && battle.PlayerPieces[0].Def.Star == StarTier.Two, "三合一变为二星");
+            Check(battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(2, 0)), "第二张同名牌可以放下");
+            Check(battle.Board.GetPiecesOf(GameSide.Player).Count == 2 && battle.PlayerPieces[0].Def.Star == StarTier.Two, "双牌使原棋二星，第二颗保留");
             battle.LoadDevelopmentScenario("large-merge");
             battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(2, 0));
-            Check(battle.PlayerPieces.Count == 1 && battle.PlayerPieces[0].Size == 2, "三个二星合成2×2三星");
+            Check(battle.PlayerPieces.Count == 2 && battle.PlayerPieces[0].Size == 1 && battle.PlayerPieces[0].Def.Star == StarTier.Three, "原位三星保留单格和新落子");
             for (int chapter = 1; chapter <= 6; chapter++)
             {
                 battle = new BattleService();
@@ -107,6 +107,7 @@ namespace RevGame.Editor
             {
                 battle = new BattleService();
                 battle.LoadDevelopmentScenario("events");
+                battle.Tick(3f);
                 battle.StartBattle();
                 Check(battle.TriggerBattleEvent(kind), "事件可触发：" + kind);
                 Check(!battle.TriggerBattleEvent(kind), "冷却中拒绝重复事件：" + kind);

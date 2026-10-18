@@ -202,6 +202,8 @@ namespace RevGame.View
             // Pos 指身体左下格，图像要放在整个占格的中心，而不是压在左下角那一格。
             position += new Vector3(piece.Size - 1, piece.Size - 1, 0f) * (Consts.CellSize * 0.5f);
             view.MoveTo(position);
+            // 原位升级保留Id，所以每次同步检查外观；Bind内部只在种类/星级真的变化时重绑。
+            view.Bind(piece.Id, piece.Def.Kind, piece.Def.Star, piece.Side);
             view.SetBodySize(piece.Size, piece.IsBoss, piece.IsKing);
             view.SetHp(piece.HpRatio);
             view.SetLocked(piece.IsLocked);
