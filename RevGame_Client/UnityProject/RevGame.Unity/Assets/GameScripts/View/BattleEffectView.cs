@@ -19,6 +19,14 @@ namespace RevGame.View
         [SerializeField] private Sprite[] deathFrames;
         [SerializeField] private Sprite[] mergeFrames;
         [SerializeField] private Sprite projectileSprite;
+        [Tooltip("弹道本体的世界尺寸；不能直接依赖源美术图片的宽高。")]
+        [SerializeField] private Vector2 projectileWorldSize = new Vector2(0.82f, 0.24f);
+        [Tooltip("略延长可见飞行时间，让手机上能看清连续齐射；不改变真实伤害结算时间。")]
+        [SerializeField] private float projectileDuration = 0.36f;
+        [Tooltip("同一个池对象内的深色轮廓，保证浅色棋盘上也能看清弹头。")]
+        [SerializeField] private SpriteRenderer projectileOutline;
+        [Tooltip("同一个池对象内的短拖尾；不是另外申请的粒子、弹道或持续增长的轨迹。")]
+        [SerializeField] private SpriteRenderer projectileTrail;
         [SerializeField] private TextMesh[] damageOutlines = new TextMesh[0];
         // 每个池对象只拥有一条动画。回池 Kill(false)：停止即可，不能强制完成再触发回池回调。
         private Tween _animation;
@@ -28,6 +36,7 @@ namespace RevGame.View
         private float _fadeAlpha = 1f, _occlusionAlpha = 1f;
         private float _baseTextScale = 1f, _textPeak = 1f, _textRise;
         private Renderer _textRenderer;
+        private Color _projectileColor;
         public bool IsFloatingText { get; private set; }
         public bool IsAttackText { get; private set; }
         public int TextOrder { get; private set; }
@@ -167,25 +176,71 @@ namespace RevGame.View
             _animation = sequence.OnComplete(Finish);
         }
 
-        /// <summary>只播放已发生攻击的轨迹；抵达后 BoardView 根据同一快照显示数字。</summary>
-        public void ShowProjectile(Vector3 source, Vector3 target, System.Action<BattleEffectView> onFinished)
+        /// <summary>只播放已发生攻击的轨迹；扩大弹头、附带短尾与发射脉冲，动画绝不再次造成伤害。</summary>
+        public void ShowProjectile(Vector3 source, Vector3 target, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy)
         {
             ResetVisual(source, onFinished);
             damageText.gameObject.SetActive(false);
             spriteRenderer.enabled = true;
             spriteRenderer.sprite = projectileSprite;
-            spriteRenderer.color = new Color(1f, 0.8f, 0.12f);
             // 源Sprite本身宽约6.17个世界单位，不能直接把原图尺寸当成子弹尺寸。
-            // 使用Simple并按源Sprite实际大小归一化，固定为0.38×0.10个世界单位，避免出现横贯棋盘的长条。
+            // 本体从0.38×0.10提高至0.82×0.24；再加轮廓和短尾，让小屏也能看到有方向的弹幕。
             spriteRenderer.drawMode = SpriteDrawMode.Simple;
+            Vector3 flightScale = Vector3.one;
             if (projectileSprite != null)
             {
                 Vector3 size = projectileSprite.bounds.size;
-                transform.localScale = new Vector3(0.38f / Mathf.Max(0.01f, size.x), 0.10f / Mathf.Max(0.01f, size.y), 1f);
+                flightScale = new Vector3(projectileWorldSize.x / Mathf.Max(0.01f, size.x), projectileWorldSize.y / Mathf.Max(0.01f, size.y), 1f);
+                ConfigureProjectileLayer(projectileOutline, Vector3.zero, new Vector3(1.16f, 1.5f, 1f), spriteRenderer.sortingOrder - 2);
+                ConfigureProjectileLayer(projectileTrail, Vector3.left * (size.x * 0.62f), new Vector3(1f, 0.65f, 1f), spriteRenderer.sortingOrder - 1);
             }
+            // 敌我弹道用不同色相，密集交火时仍能分辨方向；不修改棋子或伤害数字的原有颜色。
+            _projectileColor = targetSide == GameSide.Enemy ? new Color(1f, 0.92f, 0.28f) : new Color(1f, 0.38f, 0.22f);
             Vector3 direction = target - source;
             transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
-            _animation = DOTween.To(() => transform.position, value => transform.position = value, target, Consts.ProjectileSeconds).SetEase(Ease.InQuad).OnComplete(Finish);
+            Vector3 normalScale = flightScale;
+            transform.localScale = normalScale * 0.88f;
+            SetProjectileAlpha(1f);
+            // 一条Tween同时推进飞行、发射脉冲和末段淡出；三个Sprite随同一个池对象回收，不额外创建计时器。
+            _animation = DOTween.To(() => _progress, value =>
+            {
+                _progress = value;
+                transform.position = Vector3.Lerp(source, target, value);
+                float pulse = value < 0.25f ? Mathf.Lerp(0.88f, 1.08f, value / 0.25f) : Mathf.Lerp(1.08f, 1f, (value - 0.25f) / 0.75f);
+                transform.localScale = normalScale * pulse;
+                SetProjectileAlpha(Mathf.Clamp01((1f - value) / 0.18f));
+            }, 1f, Mathf.Clamp(projectileDuration, 0.2f, 0.5f)).SetEase(Ease.Linear).OnComplete(Finish);
+        }
+
+        /// <summary>子图与本体共用Sprite和材质；局部尺寸跟随归一化根节点，尾巴始终短于一格。</summary>
+        private void ConfigureProjectileLayer(SpriteRenderer layer, Vector3 offset, Vector3 scale, int order)
+        {
+            if (layer == null) { return; }
+            layer.enabled = true;
+            layer.sprite = projectileSprite;
+            layer.drawMode = SpriteDrawMode.Simple;
+            layer.sharedMaterial = spriteRenderer.sharedMaterial;
+            layer.sortingLayerID = spriteRenderer.sortingLayerID;
+            layer.sortingOrder = order;
+            layer.transform.localPosition = offset;
+            layer.transform.localRotation = Quaternion.identity;
+            layer.transform.localScale = scale;
+        }
+
+        private void SetProjectileAlpha(float alpha)
+        {
+            Color color = _projectileColor;
+            color.a = alpha;
+            spriteRenderer.color = color;
+            if (projectileOutline != null) { projectileOutline.color = new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f); }
+            if (projectileTrail != null) { color.a = alpha * 0.45f; projectileTrail.color = color; }
+        }
+
+        /// <summary>这个预制体同时承担数字、死亡和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
+        private void HideProjectileLayers()
+        {
+            if (projectileOutline != null) { projectileOutline.enabled = false; }
+            if (projectileTrail != null) { projectileTrail.enabled = false; }
         }
 
         /// <summary>文字离边缘留出可读空间；顶排命中时缩短上浮距离，防止数字被手机屏幕裁掉。</summary>
@@ -203,6 +258,7 @@ namespace RevGame.View
         private void ResetVisual(Vector3 position, System.Action<BattleEffectView> onFinished)
         {
             StopAnimation();
+            HideProjectileLayers();
             _onFinished = onFinished;
             _progress = 0f;
             _fadeAlpha = _occlusionAlpha = 1f;
@@ -252,6 +308,7 @@ namespace RevGame.View
         public void OnPoolReturn()
         {
             StopAnimation();
+            HideProjectileLayers();
             _onFinished = null;
             IsFloatingText = IsAttackText = false;
             _fadeAlpha = _occlusionAlpha = 1f;

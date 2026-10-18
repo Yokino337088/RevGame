@@ -41,6 +41,10 @@ namespace RevGame.Editor
                 Require(effect.GetInstanceID() == effectId, "攻击文字实例未复用");
                 effect.ShowAttack(GameTextConfig.Require("Attack_Archer"), Vector3.zero, item => callbacks++);
                 Require(effect.HasActiveAnimation, "攻击文字动画未启动");
+                foreach (SpriteRenderer renderer in effect.GetComponentsInChildren<SpriteRenderer>(true))
+                {
+                    Require(!renderer.enabled, "弹道复用成攻击文字时仍残留弹头、轮廓或拖尾");
+                }
                 RevPool.Return(effect, 0);
                 Require(!effect.HasActiveAnimation, "攻击文字回池后 Tween 未停止");
                 effect = null;

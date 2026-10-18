@@ -19,8 +19,51 @@ namespace RevGame.Editor
             }
             BuildNotice();
             GameArtMigration.ApplyAll();
+            ApplyProjectileStyle();
             AssetDatabase.SaveAssets();
             return "DOTween 增益提示预制体、手机布局、1.15 单位拼格和点击区域已保存。\n" + GameArtMigration.Audit();
+        }
+
+        /// <summary>可单独由MCP调用：只更新弹道预制体，不重建场景或其他UI；重复执行复用原节点。</summary>
+        public static string ApplyProjectileStyle()
+        {
+            if (EditorApplication.isPlaying) { throw new System.InvalidOperationException("请先退出Play再保存弹道预制体"); }
+            const string path = "Assets/GameRes/Effects/BattleEffect.prefab";
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                BattleEffectView view = root.GetComponent<BattleEffectView>();
+                var so = new SerializedObject(view);
+                Sprite sprite = (Sprite)so.FindProperty("projectileSprite").objectReferenceValue;
+                so.FindProperty("projectileWorldSize").vector2Value = new Vector2(0.82f, 0.24f);
+                so.FindProperty("projectileDuration").floatValue = 0.36f;
+                so.FindProperty("projectileOutline").objectReferenceValue = ProjectileLayer(root.transform, "projectileOutline", sprite);
+                so.FindProperty("projectileTrail").objectReferenceValue = ProjectileLayer(root.transform, "projectileTrail", sprite);
+                so.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                return "弹道预制体已保存：0.82×0.24本体、深色轮廓与短拖尾，同一RevPool对象复用。";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>编辑器装配时创建一次，运行时只启用/隐藏；不会每次开火都new一个拖尾物体。</summary>
+        private static SpriteRenderer ProjectileLayer(Transform parent, string name, Sprite sprite)
+        {
+            Transform child = parent.Find(name);
+            if (child == null)
+            {
+                child = new GameObject(name).transform;
+                child.SetParent(parent, false);
+            }
+            SpriteRenderer renderer = child.GetComponent<SpriteRenderer>();
+            if (renderer == null) { renderer = child.gameObject.AddComponent<SpriteRenderer>(); }
+            renderer.sprite = sprite;
+            renderer.drawMode = SpriteDrawMode.Simple;
+            renderer.enabled = false;
+            return renderer;
         }
 
         private static void BuildNotice()

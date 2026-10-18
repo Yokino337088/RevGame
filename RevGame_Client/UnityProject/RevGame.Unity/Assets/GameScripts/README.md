@@ -1,6 +1,6 @@
 # RevGame 游戏代码架构与运行说明
 
-> 2026-10-18 最新修复：战斗飘字合计最多6条，同目标聚合、有界待播与空间避让，无法避让时下层35%透明；准备横幅到中央立即回弹0.5秒、停0.25秒后离场（合计1.67秒）；事件文字几何居中；强远程援军优先、安全后排/近战可攻击敌眼选位；准备及战斗均可点己方棋再点空格换位。规则643、布局737、战术1280、密集反馈Play 46、回合Play 136、成长Play 23条及池化检查通过。最新行为与证据见[RevGame-战斗可读性与援军修复-2026-10-18](../../../../项目进度分析/RevGame-战斗可读性与援军修复-2026-10-18.md)。下方旧时序、接口和测试数字是历史记录。
+> 2026-10-18 最新表现调整：飘字上限10条，0.22秒聚合、0.09秒显示间隔；弹道上限14条，同帧攻击进入24条容量短队列分批齐射，0.5秒过期不补播。本体放大至0.82×0.24，加入深色轮廓、短拖尾与发射脉冲，继续使用RevPool和单Tween。避让、下层35%透明、准备横幅1.67秒、援军和战斗换位规则继续保留。最新参数和本轮验证见[RevGame-弹幕爽感调整-2026-10-18](../../../../项目进度分析/RevGame-弹幕爽感调整-2026-10-18.md)。下方旧密度和测试数字为历史记录。
 
 > 2026-10-18 最新实现：敌方6～19名、基础属性逐轮成长、四档气眼AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、进度条缓动与Boss真实换帧。完整参数、代码职责与实际证据见[成长与准备增益验收](../../../../项目进度分析/RevGame-成长与准备增益验收-2026-10-18.md)。布局保持1920×1080手机横屏，手牌保持六张。
 
@@ -62,9 +62,9 @@
 
 ## 验证入口与本轮证据
 
-非Play依次执行 `return RevGame.Editor.GameRuleChecks.Run();`、`return RevGame.Editor.GameLayoutChecks.Run();`、`return RevGame.Editor.GameTacticsChecks.Run();`。本轮实际分别为643、737、1280条通过；战术回归包含两组种子各连续66回合取胜。
+非Play依次执行 `return RevGame.Editor.GameRuleChecks.Run();`、`return RevGame.Editor.GameLayoutChecks.Run();`、`return RevGame.Editor.GameTacticsChecks.Run();`。前轮实际分别为643、737、1280条通过（本轮仅改表现，未重跑这三组）；战术回归包含两组种子各连续66回合取胜。
 
-Play在主界面分别执行 `RevGame.Editor.GameRoundPresentationChecks.Begin()`（136条）、`RevGame.Editor.GameGrowthPresentationChecks.Begin()`（23条）、`RevGame.Editor.GameReadabilityChecks.Begin()`（46条）和 `RevGame.Editor.GameFeelChecks.BeginPoolCheck()`（通过）。一组结束再运行下一组；池化检查等待至少四秒，不能中途换域。成长检查验证真实三秒计时、准备横幅1.67秒新时序、Boss可见Sprite换帧、血条/时间条Tween以及换轮清理。
+Play在主界面分别执行 `RevGame.Editor.GameRoundPresentationChecks.Begin()`（136条）、`RevGame.Editor.GameGrowthPresentationChecks.Begin()`（23条）、`RevGame.Editor.GameReadabilityChecks.Begin()`（本轮已扩展为密集齐射检查）和 `RevGame.Editor.GameFeelChecks.BeginPoolCheck()`（通过）。先确认Play启动入口已完成，再运行检查；一组结束再运行下一组，池化检查等待至少四秒，不能中途换域。成长检查验证真实三秒计时、准备横幅1.67秒新时序、Boss可见Sprite换帧、血条/时间条Tween以及换轮清理。
 
 可通过开发GM进入关卡或固定夹具；非法命令仍返回Success=false，按钮和GM走同一业务入口。原攻击/伤害/升级/事件表共22条，本轮已通过Revolution导表工具修正两条旧升级说明；新增准备增益和基础成长仍是可调业务参数，尚未接正式数值Excel。
 

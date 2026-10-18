@@ -71,17 +71,27 @@ namespace RevGame.Editor
                 int sum = 0;
                 foreach (object item in pending.Values) { sum += GetField<int>(item, "Damage"); }
                 Require(sum == 360 && target.Hp == hp, "合计显示360，表现层不再额外扣血");
+                Require(board.PendingProjectileCount > 1 && board.PendingProjectileCount <= 24, "同帧齐射保留多发真实弹道，同时限制待播长度");
                 await RevTask.Delay(60);
-                Require(board.ActiveProjectileCount <= 6 && board.ActiveFloatingTextCount <= 2, "同帧攻击风暴没有穿透弹道与口号预算");
+                Require(board.ActiveProjectileCount > 1 && board.ActiveProjectileCount <= BoardView.MaxProjectiles && board.ActiveFloatingTextCount <= 3, "同帧攻击已分批形成多发齐射，仍受弹道与口号预算限制");
+                int checkedProjectiles = 0;
+                bool projectileSizeValid = true;
+                bool projectileLayersValid = true;
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                 {
                     SpriteRenderer sprite = GetField<SpriteRenderer>(effect, "spriteRenderer");
                     if (sprite.enabled && sprite.sprite != null)
                     {
-                        // bounds是旋转后的轴对齐包围盒，斜飞时对角线略大于本体；0.6仍不足一格的一半。
-                        Require(sprite.drawMode == SpriteDrawMode.Simple && sprite.bounds.size.magnitude < 0.6f, "弹道按源图尺寸归一化为短弹，不再撑成长条：" + sprite.bounds.size);
+                        // bounds是旋转后的轴对齐包围盒；既检查确实放大，也防止又变成横贯棋盘的线条。
+                        float size = sprite.bounds.size.magnitude;
+                        checkedProjectiles++;
+                        projectileSizeValid &= sprite.drawMode == SpriteDrawMode.Simple && size > 0.65f && size < 1.3f;
+                        projectileLayersValid &= GetField<SpriteRenderer>(effect, "projectileOutline").enabled && GetField<SpriteRenderer>(effect, "projectileTrail").enabled;
                     }
                 }
+                // 按整组检查，不能因本机这一帧恰好显示几发不同，导致断言数量随帧率改变。
+                Require(checkedProjectiles > 1 && projectileSizeValid, "多发弹头已明显放大，全部尺寸仍受控");
+                Require(checkedProjectiles > 1 && projectileLayersValid, "所有活跃弹头均带可见轮廓与短拖尾");
                 await RevTask.Delay(400);
                 bool shown = false;
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
@@ -94,15 +104,17 @@ namespace RevGame.Editor
                 {
                     RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(10000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, i + 1, true, player.Pos));
                 }
-                Require(board.PendingDamageTextCount <= 12, "不同目标风暴仍保持有界待播队列");
+                Require(board.PendingDamageTextCount <= 20, "不同目标风暴仍保持有界待播队列");
                 int peak = 0;
+                int projectilePeak = 0;
                 for (int frame = 0; frame < 24; frame++)
                 {
                     await RevTask.Delay(45);
                     peak = Math.Max(peak, board.ActiveFloatingTextCount);
-                    Require(board.ActiveFloatingTextCount <= 6 && board.ActiveProjectileCount <= 6, "动画播放中持续满足全场数量上限");
+                    projectilePeak = Math.Max(projectilePeak, board.ActiveProjectileCount);
+                    Require(board.ActiveFloatingTextCount <= BoardView.MaxFloatingTexts && board.ActiveProjectileCount <= BoardView.MaxProjectiles, "动画播放中持续满足全场数量上限");
                 }
-                Require(peak >= 3, "实际同时播放多条文字，避让检查不是空场通过");
+                Require(peak > 6 && projectilePeak > 6, "文字和齐射实际密度均高于上一版六条限制，仍保留硬上限");
                 List<BattleEffectView> texts = new List<BattleEffectView>();
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { if (effect.IsFloatingText) { texts.Add(effect); } }
                 texts.Sort((a, b) => a.TextOrder.CompareTo(b.TextOrder));
@@ -132,11 +144,17 @@ namespace RevGame.Editor
                 Text detail = GetField<Text>(notice, "detailText");
                 Require(title.alignment == TextAnchor.MiddleCenter && detail.alignment == TextAnchor.MiddleCenter, "事件标题与说明真正居中对齐");
                 Require(Mathf.Abs(title.rectTransform.anchoredPosition.x) < 0.01f && Mathf.Abs(detail.rectTransform.anchoredPosition.x) < 0.01f, "标题说明的文字框也与底板几何中心对齐");
+                // 故意在切轮前重新塞满两个队列，避免“队列早已自然播完”的空检查掩盖清理缺陷。
+                for (int i = 0; i < 40; i++)
+                {
+                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(20000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, 1, true, player.Pos));
+                }
+                Require(board.PendingProjectileCount > 0 && board.PendingDamageTextCount > 0, "切轮前两种显示队列确实都有待播内容");
                 Require(battle.StartRound(1, 2), "密集动画尚未结束时切换回合");
-                Require(board.ActiveEffectCount == 0 && board.PendingDamageTextCount == 0 && board.ActiveFloatingTextCount == 0 && board.ActiveProjectileCount == 0, "切阶段清空冻结文字、弹道、合并队列和预算");
+                Require(board.ActiveEffectCount == 0 && board.PendingDamageTextCount == 0 && board.ActiveFloatingTextCount == 0 && board.ActiveProjectileCount == 0 && board.PendingProjectileCount == 0, "切阶段清空冻结文字、弹道、两个待播队列和预算");
                 await RevTask.Delay(450);
                 Require(board.ActiveEffectCount == 0, "旧异步请求没有在新准备期补播");
-                LastResult = "通过 " + _checks + " 条Play断言：120次合并、100目标控频、短弹道、避让/透明、居中、战斗换位与阶段清理；峰值飘字=" + peak;
+                LastResult = "通过 " + _checks + " 条Play断言：120次合并、100目标控频、放大弹头/短尾/连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=" + peak + "，弹道=" + projectilePeak;
             }
             catch (Exception error)
             {

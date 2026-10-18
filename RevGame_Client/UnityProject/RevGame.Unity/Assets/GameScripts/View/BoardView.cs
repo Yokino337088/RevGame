@@ -296,9 +296,9 @@ namespace RevGame.View
             target += Vector3.one * ((hit.TargetSize - 1) * Consts.CellSize * 0.5f);
             target.z = 0f;
             Vector3 source = hit.HasAttacker ? hit.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) : target + Vector3.up * 2f;
-            if (TryReserveProjectile()) { ShowEffect(BattleEffectKind.Projectile, source, 0, hit.TargetSide, target); }
+            QueueProjectile(source, target, hit.TargetSide);
             // ★ 伤害取自扣血当刻的快照，即使受击棋子已经死亡回池，这个数字仍能正常显示。
-            // 稍等弹道抵达并合并同目标连击；有界队列随阶段统一清除，不再为每次命中创建独立Timer。
+            // 用短窗口合并同目标连击；弹道和数字各自受显示预算约束，都不再创建每次命中独立的Timer。
             QueueDamageText(hit, target);
         }
 
@@ -347,7 +347,7 @@ namespace RevGame.View
                 {
                     _pendingProjectileLoads--;
                     _projectileEffects.Add(effect);
-                    effect.ShowProjectile(position, destination, OnEffectFinished);
+                    effect.ShowProjectile(position, destination, OnEffectFinished, targetSide);
                 }
                 else
                 {
