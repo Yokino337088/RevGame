@@ -1,0 +1,7 @@
+{
+    "name": "RevGame.ResourceBuild.Editor",
+    "rootNamespace": "RevGame.Editor",
+    "references": ["Revolution.Editor", "Revolution.Runtime", "Revolution.Generation"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}

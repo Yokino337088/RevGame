@@ -59,11 +59,15 @@ fixed4 frag(v2f input) : SV_Target
     float3 foil = lerp(_GlowColor.rgb, float3(0.48, 0.83, 0.78), uv.y * 0.35);
     color.rgb += foil * (band * 0.65 + fine * 0.35) * _Strength;
     #elif defined(ARCANE_PANEL)
-    // 光只在边沿缓慢呼吸；不扭曲木牌/羊皮纸的底图，更不会给上层文字加模糊或彩色闪烁。
+    // 黄铜封边 + 青金色流光，模拟中世纪附魔木牌。底图中部只受很弱的光照，上层字体完全独立。
     float edgeDistance = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
     float edge = 1.0 - smoothstep(0.0, 0.11, edgeDistance);
     float wave = 0.5 + 0.5 * sin(uv.x * 8.0 + uv.y * 4.0 - time * 2.0 + input.effectUV.z * 6.28);
-    color.rgb += _GlowColor.rgb * edge * (0.3 + wave * 0.7) * _Strength;
+    float rim = 1.0 - smoothstep(0.004, 0.025, abs(edgeDistance - 0.045));
+    float glint = pow(saturate(0.5 + 0.5 * sin(uv.x * 10.0 - uv.y * 5.0 - time * 3.0)), 8.0);
+    float3 enchanted = lerp(_GlowColor.rgb, float3(0.25, 0.8, 0.76), wave * 0.45);
+    color.rgb += enchanted * (edge * (0.25 + wave * 0.55) + rim * glint * 0.7) * _Strength;
+    color.rgb += _GlowColor.rgb * glint * 0.035 * _Strength;
     #elif defined(ARCANE_BACKDROP)
     // 两层旋转波场形成低速“墨水/星雾”流动；不使用全屏模糊、GrabPass或额外RenderTexture。
     // UI无图时直接显示程序背景；Sprite背景则混合已有场景画，只让画面轻微流动。
@@ -74,10 +78,16 @@ fixed4 frag(v2f input) : SV_Target
     float mist = 0.5 + 0.5 * sin(p.x * 5.0 + p.y * 4.0 + field * 1.8 + time * 0.32);
     float3 ink = lerp(float3(0.025, 0.075, 0.09), float3(0.09, 0.25, 0.23), mist);
     ink = lerp(ink, float3(0.25, 0.16, 0.115), (field * 0.5 + 0.5) * 0.3);
-    float2 warp = float2(sin(p.y * 6.0 + time), cos(p.x * 5.0 - time * 0.7)) * _Strength * 0.012;
-    fixed4 art = tex2D(_MainTex, saturate(input.uv + warp)) + _TextureSampleAdd;
-    color.rgb = lerp(ink, art.rgb * (0.96 + mist * 0.04) + ink * _Strength * 0.1, _ArtBlend);
-    color.a = lerp(1.0, art.a, _ArtBlend);
+    // 双层扭曲让原画产生可见的液态流动；先内缩采样域，再扭曲，最后钳在半个像素内。
+    // 原图即使有透明边，也不会随着扭曲把相机底色带进屏幕；这里只对全屏背景强制不透明。
+    float2 warp = float2(sin(p.y * 6.0 + field + time), cos(p.x * 5.0 + field - time * 0.7)) * _Strength * 0.038;
+    float2 artUV = clamp(lerp(float2(0.05, 0.05), float2(0.95, 0.95), input.uv) + warp, 0.005, 0.995);
+    fixed4 art = tex2D(_MainTex, artUV) + _TextureSampleAdd;
+    float ribbons = pow(1.0 - abs(field), 3.0);
+    float3 magic = lerp(float3(0.18, 0.38, 0.46), float3(0.49, 0.22, 0.48), mist);
+    float3 painted = art.rgb * (0.86 + mist * 0.10) + magic * (0.16 + ribbons * 0.26) * _Strength;
+    color.rgb = lerp(ink + magic * ribbons * 0.06, painted, _ArtBlend);
+    color.a = 1.0;
     #endif
     return FinishUI(color, input);
 }

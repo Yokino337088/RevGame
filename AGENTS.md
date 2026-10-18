@@ -28,4 +28,13 @@
 
 ## 不要提交
 
-`Library/`、`Temp/`、`Logs/`、生成的 `*.csproj` / `*.sln`、`AssetBundles/`、打包产物 —— 详见 `.gitignore`。美术资源、`Assets/`、`策划案/` 是**要**入库的。
+`Library/`、`Temp/`、`Logs/`、生成的 `*.csproj` / `*.sln`、外部 `AssetBundles/` 导出目录、安装包 —— 详见 `.gitignore`。美术资源、`Assets/`、`策划案/` 是**要**入库的。用户指定的 `Assets/StreamingAssets/` 平台资源允许入库。
+
+## 战斗性能与模块目录（2026-10-18 起）
+
+- 后续战斗修改遵循 `RevGame_Client/项目进度分析/RevGame-战斗性能与资源规范-2026-10-18.md`；先用固定输入测量，再优化，不承诺未经实测的零GC或手机帧率。
+- 占格只通过 `BoardModel.Place/Move/Remove/Reset` 修改；气眼只在占格版本、加气或围困免疫变化时刷新。不能为了优化漏掉致死、补子、换位后的规则更新。
+- 高频查询使用调用方自有缓冲区；AI一轮查询复用一张独立深快照，不共享全局可变草稿，不移动实战棋子来试算。
+- 战斗视图/飘字/弹道走 `RevPool`；动画和异步回调必须有回收/过期检查。棋子用共享材质，禁止在每帧访问 `renderer.material`。
+- 保留现有层级，层内按功能细分（如 `Battle/AI`、`Services/Battle/Preparation`、`View/Combat/Effects`、`UI/Panels/Battle`）；Editor仍统一放 `Assets/Editor/RevGame`。生成目录不擅自搬迁。
+- AB配置通过项目 `GameResourceBuild.Configure` 串联框架工具；共享帧/Shader显式分包，重复依赖与循环依赖必须在构建前解决。

@@ -1,3 +1,5 @@
+> 2026-10-18 当前交付：敌方战斗低频补子、16种准备增益（新增万箭齐发）、被围三帧、背景全屏流动和UI魔光；AI注释与59脚本功能目录已完成。固定战斗规则中位数291.343→40.912ms，落子13.773→3.557ms；141项AB隐式重复降至0，PC/Android各19包构建通过，199个GameRes资源真实AB加载通过。详见[RevGame-战斗性能与资源规范-2026-10-18](RevGame-战斗性能与资源规范-2026-10-18.md)。以下较早数字保留作历史记录，当前结果以上述报告为准。
+
 > 2026-10-18 当前动态美术更新：最多20条更小飘字，密集输入实测20条；攻击提速35%，单发伤害按比例摊薄以保留长局，敌棋五秒移动冷却独立计算。弹道按距离收缩/计时，增加自然结束与中断寿命回收。三类Shader位于GameShader，四个共享材质位于GameRes/Material，已绑定35个UI底图；移除UI大地图背景，六牌流光与DOTween点击抖动已接入。645条规则、737条布局、1280条战术、37条动态美术Play、49条密集反馈Play、136条回合Play及池化检查通过。详见[RevGame-魔幻动态美术与弹幕增强-2026-10-18](RevGame-魔幻动态美术与弹幕增强-2026-10-18.md)，下方旧版本数字为历史记录。
 
 > 2026-10-18 最新追加：敌方6～19名及逐轮基础属性成长、四档AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、时间/Boss血条缓动、Boss真实重剑序列帧已实现。620条规则、737条布局、1280条战术、136条回合Play、23条成长Play及对象池检查通过；两组种子各连续66轮通关。升级保留Id/位置/占格，新牌照常落下。 详见[成长与准备增益验收](RevGame-成长与准备增益验收-2026-10-18.md)。下方早期规则与数字仅作历史记录。
@@ -89,15 +91,15 @@ UI/                界面
 |---|---|
 | `棋子美术配置.asset` | PieceArtConfig：**54 组**（9 外形×3 星×玩家/敌方）、**135 帧**待机动画 + 3 帧被围标识（由工具扫描生成，0 未匹配） |
 | `Pieces/棋子.prefab` | **一个预制体装所有棋子**：根（SpriteRenderer 10 + PieceView）+ 子 `底座`(9) / `血条底图`(11) / `血条`(12) / `被围标识`(13) |
-| `Pieces/PieceView.prefab` | 早期静态占位（可保留作对照，实际用 `棋子.prefab`） |
+| `Pieces/Model/PieceView.prefab` | 早期静态占位（可保留作对照，实际用 `棋子.prefab`） |
 | `Pieces/BossPieceView.prefab` | Boss 大棋静态占位（未接逻辑） |
 | `Board/BoardCell.prefab` | 单格底（SpriteRenderer 0） |
 | `Board/BoardStarPoint.prefab` | 星位点（1） |
 | `Board/BoardMoveHighlight.prefab` | 可落子高亮（5） |
 | `Board/BoardDeployZone.prefab` | 布阵半场（2） |
-| `UI/BattleHudPanel.prefab` | 根 + 6 子节点：`phaseIcon` / `roundText` / `progressBar` / `progressFill`(Filled) / `countText` / `logText` |
-| `UI/PreparePanel.prefab` | 根 + `hintText` + `btnReady`(label) |
-| `UI/SettlePanel.prefab` | 根 + `background` + `titleText` + `detailText` + `btnContinue`(label) |
+| `UI/Panels/Battle/BattleHudPanel.prefab` | 根 + 6 子节点：`phaseIcon` / `roundText` / `progressBar` / `progressFill`(Filled) / `countText` / `logText` |
+| `UI/Panels/Battle/PreparePanel.prefab` | 根 + `hintText` + `btnReady`(label) |
+| `UI/Panels/Battle/SettlePanel.prefab` | 根 + `background` + `titleText` + `detailText` + `btnContinue`(label) |
 
 ---
 
@@ -137,13 +139,13 @@ UI/                界面
 ### P0 — 不做就"看不见游戏"（必须最先做）
 
 #### P0-1 `BoardView` 棋盘渲染（**最大缺口**）
-- **落点**：`Assets/GameScripts/View/BoardView.cs`（新建）
+- **落点**：`Assets/GameScripts/View/Board/BoardView.cs`（新建）
 - **职责**：按 `BoardModel` 铺 81 个格子（用 `GameRes/Board/BoardCell.prefab`），把 `Dictionary<int, PieceView>` 与棋子 Id 对上；订阅 `Events.PiecePlaced/PieceMoved/PieceDied/GoStateRefreshed/DamageResolved` 做增删与刷新；锁死时调 `PieceView.SetLocked`、掉血调 `SetHp`。
 - **验收**：Play 后能看到 9×9 棋盘 + 双方棋子待机动画；GM `落一张盾战` 后新棋子出现在正确格子；`开始战斗` 后棋子会移动/掉血/死亡消失。
 - **注意**：坐标换算只用 `BoardPos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset)`；**禁止**在逻辑层用世界坐标反算格子。
 
 #### P0-2 手牌系统 + 准备面板改造
-- **落点**：`GameScripts/Battle/HandModel.cs`（新建）、`UI/PreparePanel.cs`（改造）、`GameRes/UI/CardItem.prefab`（MCP 新建）
+- **落点**：`GameScripts/Battle/Hand/HandModel.cs`（新建）、`UI/Panels/Battle/PreparePanel.cs`（改造）、`GameRes/UI/Items/Cards/CardItem.prefab`（MCP 新建）
 - **规则**（策划案 §05）：起手 3 张（`Consts.InitialHandSize`）、上限 5（`MaxHandSize`）、每回合可落 2~4 张（`MaxCardsPerRound`）、随机补给。
 - **验收**：准备阶段底部显示 N 张卡（`UI_卡牌底_默认` / 选中用 `UI_卡牌底_选中`），点卡→点亮棋盘可落格（`BoardMoveHighlight`）→ 点格子落子→ 卡消耗、`HandChanged` 事件触发。
 - **依赖**：P0-1（需要棋盘格子点击）。
@@ -161,12 +163,12 @@ UI/                界面
 ### P1 — 玩法闭环
 
 #### P1-1 三选一奖励面板（策划案 §04）
-- **落点**：`UI/RewardPanel.cs` + `GameRes/UI/RewardPanel.prefab`（用 `UI_三选一_弹窗底` + 4 个奖励图标）
+- **落点**：`UI/Panels/Battle/RewardPanel.cs` + `GameRes/UI/Panels/Battle/RewardPanel.prefab`（用 `UI_三选一_弹窗底` + 4 个奖励图标）
 - **规则**：每章通关后弹 3 选 1（全队强化 / 同名牌 / 新棋子 / 眼位石）；也可"跳过关卡换一档强化"。
 - **验收**：`RevUI.Open<RewardPanel, RewardPanel.RewardData>(data)` 能弹出、点击生效进下一章。
 
 #### P1-2 Boss 大棋 + 擒王
-- **落点**：`BattleService.SpawnEnemies`（Boss 生成）、`BoardModel`（支持 2×2/3×3 占格）、`View/BoardView`（Boss 用 `棋子_Boss_大棋_*` + 底座光环 + 王冠）
+- **落点**：`BattleService.SpawnEnemies`（Boss 生成）、`BoardModel`（支持 2×2/3×3 占格）、`View/Board/BoardView`（Boss 用 `棋子_Boss_大棋_*` + 底座光环 + 王冠）
 - **规则**：Boss 回合战斗不限时；打死或围死 Boss 直接通关本章；Boss 体积随章数长大（2×2 → 3×3）。
 - **验收**：第 11 回合出现 Boss、血条用 `UI_Boss血条框`、击杀后 `GameFinished` 或进入下一章。
 
@@ -175,7 +177,7 @@ UI/                界面
 - **验收**：连落 3 张同名 1★ 卡 → 棋盘上变成 1 个 2★（用 2★ 立绘），血量/攻击按表。
 
 #### P1-4 战斗事件（随机天降帮手）
-- **落点**：`BattleService.ResolveOneStep` 里按概率触发；事件定义放 `Data/BattleEventCatalog.cs`（新建）；图标用 `ArtRes/图标/图标_事件_*.png`。
+- **落点**：`BattleService.ResolveOneStep` 里按概率触发；事件定义放 `Data/Buffs/BattleEventCatalog.cs`（新建）；图标用 `ArtRes/图标/图标_事件_*.png`。
 - **规则**：8 种事件（回气/天降援兵/断链/炮火支援/疗愈雨/瞬移潮/补眼/连击），通过 `Events.BattleEventTriggered` 广播，HUD 弹提示条（`UI_战斗日志_弹条`）。
 - **验收**：战斗中有概率触发，日志出现"炮火支援"等字样且效果生效。
 
@@ -253,7 +255,7 @@ public sealed class XxxPanel : RevUIPanel { [RevBind] private Text _title; ... }
 
 ## 6. 数据结构速查（写代码前对一遍）
 
-### 枚举（`Core/Enums.cs`）
+### 枚举（`Core/Configuration/Enums.cs`）
 ```csharp
 PieceClass { Guard, Mage, Ranger, Assassin }
 PieceKind  { Swordman, Shield, HeavySword, Archer, Crossbow, MageWater, MageFire, Priest, Assassin }
@@ -264,7 +266,7 @@ GroupState { Normal, Atari, Locked }
 MovePattern{ Step, Slide, Knight, Cannon }
 ```
 
-### 常量（`Core/Consts.cs`，节选）
+### 常量（`Core/Configuration/Consts.cs`，节选）
 ```csharp
 BoardSize=9  CellSize=1f  BoardOriginOffset=-4.5f
 ChapterCount=6  NormalRoundsPerChapter=10  BossRoundIndex=11  RoundsPerChapter=11
@@ -274,7 +276,7 @@ LockedDamageMultiplier=2f
 SortingOrderBoard=0 Piece=10 Status=20 Effect=30
 ```
 
-### 事件（`Core/Events.cs`，节选）
+### 事件（`Core/Events/Events.cs`，节选）
 ```csharp
 PhaseEnterPrepare(int)  PhaseEnterBattle(int)  PhaseEnterSettle(GameSide)  GameFinished(bool)
 PiecePlaced(int)  PieceMoved(int)  PieceDied(int)  PieceHpChanged(int)  PieceMerged(int)
@@ -282,7 +284,7 @@ GoStateRefreshed()  DamageResolved(int)  BattleEnded(GameSide)  BattleEventTrigg
 HandChanged()  BattleLog(string)
 ```
 
-### 战斗服务契约（`Services/IBattleService.cs`）
+### 战斗服务契约（`Services/Battle/Contracts/IBattleService.cs`）
 ```csharp
 GamePhase Phase; int Chapter; int Round; bool IsBossRound; BoardModel Board;
 float BattleElapsed; float BattleDuration; IReadOnlyList<Piece> PlayerPieces/EnemyPieces;
@@ -292,7 +294,7 @@ bool TryPlayCard(PieceKind kind, StarTier star, BoardPos pos);
 bool StartBattle(); void Tick(float dt); bool CompleteSettle();
 ```
 
-### 棋盘模型（`Board/BoardModel.cs`）
+### 棋盘模型（`Board/Model/BoardModel.cs`）
 ```csharp
 Cell GetCell(BoardPos) / Piece GetPiece(BoardPos) / bool CanPlace(BoardPos)
 bool Place(Piece, BoardPos) / bool Remove(Piece) / bool Move(Piece, BoardPos)
@@ -300,7 +302,7 @@ List<Piece> GetAllPieces() / GetPiecesOf(GameSide) / bool IsSideWiped(GameSide)
 string Dump()   // 字符画，调试神器
 ```
 
-### 棋子表现（`View/PieceView.cs`）
+### 棋子表现（`View/Pieces/PieceView.cs`）
 ```csharp
 void Bind(int pieceId, PieceKind kind, StarTier star, GameSide side);
 void SetHp(float ratio);   void SetLocked(bool locked);   void Clear();
@@ -330,19 +332,19 @@ void SetHp(float ratio);   void SetLocked(bool locked);   void Clear();
 > 每完成一项：① `refresh_unity{compile:"request"}` ② `read_console(types:["error"])` 必须 0 条 ③ 按该项"验收"手工/脚本验证 ④ 在本文档把 `[ ]` 改成 `[x]`。
 
 ### 阶段 A：让它"看得见"（P0）
-- [x] **A1** 写 `View/BoardView.cs`：铺 81 格、棋子 Id↔PieceView、事件驱动增删/血量/锁死
+- [x] **A1** 写 `View/Board/BoardView.cs`：铺 81 格、棋子 Id↔PieceView、事件驱动增删/血量/锁死
 - [x] **A2** 场景装配 `SampleScene`：GameBootstrap + BoardView 根 + 正交相机（MCP `manage_gameobject`）
-- [x] **A3** 手牌模型 `Battle/HandModel.cs` + `GameRes/UI/CardItem.prefab` + `PreparePanel` 改造
+- [x] **A3** 手牌模型 `Battle/Hand/HandModel.cs` + `GameRes/UI/Items/Cards/CardItem.prefab` + `PreparePanel` 改造
 - [x] **A4** 棋盘点击落子（`BoardView` 接 `IPointerClickHandler` 或射线）
 - [x] **A5** `ResRoot` 写入 `ABBuildConfig`，重启编辑器复验面板加载
 
 **阶段 A 验收**：Play 后能看到完整棋盘与棋子动画；能用手牌落子；点「准备完毕」后棋子自动开打、掉血、死亡消失；结算面板弹出、点继续进下一回合。
 
 ### 阶段 B：玩法闭环（P1）
-- [x] **B1** `UI/RewardPanel.cs` + `GameRes/UI/RewardPanel.prefab`（三选一）
+- [x] **B1** `UI/Panels/Battle/RewardPanel.cs` + `GameRes/UI/Panels/Battle/RewardPanel.prefab`（三选一）
 - [x] **B2** Boss 大棋（2×2/3×3 占格 + 王冠 + Boss 血条 + 擒王判定）
 - [x] **B3** 三合一升星 + 同职业加成
-- [x] **B4** 战斗事件（8 种，`Data/BattleEventCatalog.cs` + 触发 + HUD 提示）
+- [x] **B4** 战斗事件（8 种，`Data/Buffs/BattleEventCatalog.cs` + 触发 + HUD 提示）
 
 ### 阶段 C：局外与打磨（P2）
 - [x] **C1** 主界面 → 关卡选择 → 战斗 → 结算 → 回主界面（局外一条线）

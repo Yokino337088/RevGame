@@ -1,3 +1,5 @@
+> 2026-10-18 当前交付：敌方战斗低频补子、16种准备增益（新增万箭齐发）、被围三帧、背景全屏流动和UI魔光；AI注释与59脚本功能目录已完成。固定战斗规则中位数291.343→40.912ms，落子13.773→3.557ms；141项AB隐式重复降至0，PC/Android各19包构建通过，199个GameRes资源真实AB加载通过。详见[RevGame-战斗性能与资源规范-2026-10-18](../../../../项目进度分析/RevGame-战斗性能与资源规范-2026-10-18.md)。以下较早数字保留作历史记录，当前结果以上述报告为准。
+
 # RevGame 游戏代码架构与运行说明
 
 > 2026-10-18 当前动态美术更新：最多20条更小飘字，密集输入实测20条；攻击提速35%，单发伤害按比例摊薄以保留长局，敌棋五秒移动冷却独立计算。弹道按距离收缩/计时，增加自然结束与中断寿命回收。三类Shader位于GameShader，四个共享材质位于GameRes/Material，已绑定35个UI底图；移除UI大地图背景，六牌流光与DOTween点击抖动已接入。645条规则、737条布局、1280条战术、37条动态美术Play、49条密集反馈Play、136条回合Play及池化检查通过。详见[RevGame-魔幻动态美术与弹幕增强-2026-10-18](../../../../项目进度分析/RevGame-魔幻动态美术与弹幕增强-2026-10-18.md)，下方旧版本数字为历史记录。
@@ -8,7 +10,7 @@
 
 ## 先跑起来
 
-打开本地 `Assets/Scenes/GameScene.unity`，按 Play（远端历史场景名为SampleScene，本地改名另行保留）。依次进入冒险选关→第一章→手牌→任意合法空格→“开始战斗”。每回合发满六张；约3秒领取准备增益后可开战，无需等全部播报结束。准备期可在全盘空格落子；准备或战斗中均可点己方棋子再点空格免费换位，大棋必须整块放得下。战斗期不能落手牌或眼位石，手动换位保留伤势、护盾和攻击进度。刷新只重抽剩余 N 张，不补落子额度。本次运行中击败章节 Boss 后解锁下一章；退出程序后进度不保存。
+打开本地 `Assets/Scenes/GameScene.unity`，按 Play。依次进入冒险选关→第一章→手牌→任意合法空格→“开始战斗”。每回合发满六张；约3秒领取准备增益后可开战，无需等全部播报结束。准备期可在全盘空格落子；准备或战斗中均可点己方棋子再点空格免费换位，大棋必须整块放得下。战斗期不能落手牌或眼位石，手动换位保留伤势、护盾和攻击进度。刷新只重抽剩余 N 张，不补落子额度。本次运行中击败章节 Boss 后解锁下一章；退出程序后进度不保存。
 
 启动只由 GameBootstrap 调用一次 RevInitialize.Initialize，并集中注册 IBattleService 与 GameFlow。不要再手动初始化事件、UI、计时器等模块，否则会清空已注册监听。
 
@@ -18,23 +20,23 @@
 |---|---|---|
 | Core | 坐标、常量、枚举、事件、域名 | 名称与规则比例集中，避免各处写不同数值。 |
 | Data | 图鉴、关卡、奖励、事件定义 | 配置与运行状态分开。基础血攻和阵容仍为占位，星级倍率采用 v18。 |
-| Pieces/Piece | 生命、身体大小、位置、气、眼 | 不持有 GameObject，视图回池不影响业务状态。 |
-| Board/BoardModel | 唯一棋盘数据 | 大棋所有身体格引用同一个 Piece；名单遍历不重复计算身体。 |
-| Board/GoRules | 连通块、气、眼、锁死 | 规则只依赖棋盘，不依赖画面。 |
+| Pieces/Model/Piece | 生命、身体大小、位置、气、眼 | 不持有 GameObject，视图回池不影响业务状态。 |
+| Board/Model/BoardModel | 唯一棋盘数据 | 大棋所有身体格引用同一个 Piece；名单遍历不重复计算身体。 |
+| Board/Rules/GoRules | 连通块、气、眼、锁死 | 规则只依赖棋盘，不依赖画面。 |
 | Battle | HandModel、MoveRules、EnemyFormationPlanner、EnemyTactics | 手牌编号防重复消费；真实射界、完整眼阵和深快照保阵试走，不直接搬动实战棋子。 |
-| Services/BattleService | 回合、落子、攻击、胜负、敌方出生预检 | 所有动作先校验后提交；失败不留下半颗大棋或名单里的幽灵棋子。 |
-| Services/BattleService.Progression | 奖励、章节推进、职业加成、双牌原位升级 | partial 是同一个服务按职责分文件，不是额外管理器。 |
-| Data/PreparationBuffCatalog、Services/BattleService.Preparation | 十五种准备增益、延时发放、属性继承与本轮清理 | 属性在模型先统一生效；动画仅告知，不决定奖励是否到账。 |
-| Services/BattleService.Reinforcement | 强援选择、远程安全后排和近战可攻击敌眼评分 | 逐格深快照试放后才消费牌，保护己方眼和气。 |
-| Services/BattleService.Events | 八种事件、眼位石、伤害入口 | GM 与自动事件共用真实业务入口。 |
+| Services/Battle/Simulation/BattleService | 回合、落子、攻击、胜负、敌方出生预检 | 所有动作先校验后提交；失败不留下半颗大棋或名单里的幽灵棋子。 |
+| Services/Battle/Progression/BattleService.Progression | 奖励、章节推进、职业加成、双牌原位升级 | partial 是同一个服务按职责分文件，不是额外管理器。 |
+| Data/Buffs/PreparationBuffCatalog、Services/Battle/Preparation/BattleService.Preparation | 十六种准备增益、延时发放、属性继承与本轮清理 | 属性在模型先统一生效；动画仅告知，不决定奖励是否到账。 |
+| Services/Battle/Support/BattleService.Reinforcement | 强援选择、远程安全后排和近战可攻击敌眼评分 | 逐格深快照试放后才消费牌，保护己方眼和气。 |
+| Services/Battle/Support/BattleService.Events | 八种事件、眼位石、伤害入口 | GM 与自动事件共用真实业务入口。 |
 | Services/*.Diagnostics / *.Checks | 开发固定场景与编辑器断言 | 正式包排除造局与测试代码。 |
-| Flow/GameFlow | RevLightFSM 调度 Home/LevelSelect/Battle/Exit | 状态控制当前页面，RevScope 负责当前域的回收。 |
-| Flow/BattleLogic | 战斗域内以 0.3125 秒固定小步推进和动作转发，普通行动基准为 1.25 秒 | 小步用于分时远程出手，不表示全部棋子每小步攻击；节奏不藏在面板里。 |
-| View/BoardView.Feedback | 飘字/弹道预算、聚合、避让和遮挡淡化 | 异步加载预约也计数，清阶段同时清队列和代次。 |
-| View/BoardView | 格子、棋子、特效池与模型编号映射 | 异步回调核对进入批次；实例独立容器避免 OnDisable 期间换父节点。 |
+| Flow/States/GameFlow | RevLightFSM 调度 Home/LevelSelect/Battle/Exit | 状态控制当前页面，RevScope 负责当前域的回收。 |
+| Flow/Logic/BattleLogic | 战斗域内以 0.3125 秒固定小步推进和动作转发，普通行动基准为 1.25 秒 | 小步用于分时远程出手，不表示全部棋子每小步攻击；节奏不藏在面板里。 |
+| View/Board/BoardView.Feedback | 飘字/弹道预算、聚合、避让和遮挡淡化 | 异步加载预约也计数，清阶段同时清队列和代次。 |
+| View/Board/BoardView | 格子、棋子、特效池与模型编号映射 | 异步回调核对进入批次；实例独立容器避免 OnDisable 期间换父节点。 |
 | View/*Presentation | 流程与阶段到面板的接线、相机适配 | 服务不引用 UI；晚完成的加载需核对当前阶段并刷新数据。 |
-| View/PieceView、BattleEffectView | 帧动画、血条、王冠、破碎、升星、飘字 | owner 计时器在停用时取消，避免回池对象继续更新。 |
-| View/GameAudio | RevSound 映射业务事件 | 运行时声音走逻辑路径，不直接加载磁盘。 |
+| View/Pieces/PieceView、BattleEffectView | 帧动画、血条、王冠、破碎、升星、飘字 | owner 计时器在停用时取消，避免回池对象继续更新。 |
+| View/Audio/GameAudio | RevSound 映射业务事件 | 运行时声音走逻辑路径，不直接加载磁盘。 |
 | UI | 主界面、选关、准备、HUD、结算、奖励、卡牌 | OnBindView 装配、OnRefreshView 落屏、按钮只转发动作。 |
 | Bootstrap | 唯一启动入口与开发 GM 注册 | 谁注册服务谁注销；正式环境不注册开发命令。 |
 | [../Editor/RevGame](../Editor/RevGame) | 资产装配工具与规则/布局/回合/池化验收入口 | 编辑器代码集中在 Assets/Editor/RevGame，不放入 GameScripts；通过 Unity MCP 调用，运行时不依赖 AssetDatabase。 |
@@ -54,7 +56,7 @@
 
 美术在 `Assets/ArtRes/棋盘、棋子、状态标记、界面、图标、特效、字体、音频`，保留中文命名。运行时资源在 `Assets/GameRes/Board、Pieces、UI、Effects、Audio、Data`。弹幕工作簿位于仓库的 `RevGame_Client/配置表/战斗弹幕配置.xlsx`，导表生成 C# 位于 `GameScripts/Generated`；不要手改生成物来替代原框架导表。
 
-面板预制体名与类名相同，例如 `GameRes/UI/PreparePanel.prefab`；RevBind 字段 `_hintText` 对应节点 `hintText`。资源根配置在 `Assets/Editor/ABBuildConfig.asset`，逻辑路径只写 `UI/`、`Pieces/` 等，不拼 StreamingAssets 或 Application.dataPath。
+面板预制体名与类名相同，例如 `GameRes/UI/Panels/Battle/PreparePanel.prefab`；RevBind 字段 `_hintText` 对应节点 `hintText`。资源根配置在 `Assets/Editor/ABBuildConfig.asset`，逻辑路径只写 `UI/`、`Pieces/` 等，不拼 StreamingAssets 或 Application.dataPath。
 
 ## 代码规范
 

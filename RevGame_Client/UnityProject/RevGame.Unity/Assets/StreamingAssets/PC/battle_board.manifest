@@ -1,0 +1,42 @@
+ManifestFileVersion: 0
+CRC: 3319015491
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6721a7839862f0e0379ef2a1f9c320e5
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 64553c4c19da8db9db78b35198247052
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 6721a7839862f0e0379ef2a1f9c320e5
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 61
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 949d49ab4f2eb71458a70500b637eb20, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Board/Indicator/BoardStarPoint.prefab
+- Assets/GameRes/Board/Tile/BoardCell.prefab
+- Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab
+- Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/art_ui"

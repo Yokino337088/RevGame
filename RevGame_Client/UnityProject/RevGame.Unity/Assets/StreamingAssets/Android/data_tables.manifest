@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2535752644
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 81ebd76c3786ccf9796097c424689cb2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 81ebd76c3786ccf9796097c424689cb2
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Data/BattleText.txt
+- Assets/GameRes/Data/BattleTuning.txt
+Dependencies: []

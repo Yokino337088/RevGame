@@ -16,7 +16,7 @@ namespace RevGame.Editor
     public static class GameAssetBuilder
     {
         private const string Art = "Assets/ArtRes/";
-        private const string Ui = "Assets/GameRes/UI/";
+        private const string Ui = "Assets/GameRes/UI/Panel/";
         private static readonly Color Ink = new Color(0.055f, 0.04f, 0.025f);
         public static string BuildP2()
         {
@@ -134,7 +134,7 @@ namespace RevGame.Editor
 
             so.ApplyModifiedPropertiesWithoutUndo();
             Save(root, "RewardPanel");
-            const string path = "Assets/GameRes/Pieces/棋子.prefab";
+            const string path = "Assets/GameRes/Pieces/Unit/SlimePiece.prefab";
             root = PrefabUtility.LoadPrefabContents(path);
             try
             {
@@ -191,7 +191,7 @@ namespace RevGame.Editor
 
         private static void BuildCell()
         {
-            const string path = "Assets/GameRes/Board/BoardCell.prefab";
+            const string path = "Assets/GameRes/Board/Tile/BoardCell.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
@@ -242,7 +242,7 @@ namespace RevGame.Editor
                 renderer = child.AddComponent<SpriteRenderer>();
             }
 
-            renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + path);
+            renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GameArtPaths.Resolve(Art + path));
             renderer.sortingOrder = order;
             return renderer;
         }
@@ -265,8 +265,8 @@ namespace RevGame.Editor
             SetReference(item, "stats", stats);
             SetReference(item, "normalSprite", background.sprite);
             SetReference(item, "selectedSprite", Sprite("界面/新版/UI_roleItem_roleItem.png"));
-            SetReference(item, "artConfig", AssetDatabase.LoadAssetAtPath<PieceArtConfig>("Assets/GameRes/棋子美术配置.asset"));
-            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(card, Ui + "CardItem.prefab");
+            SetReference(item, "artConfig", AssetDatabase.LoadAssetAtPath<PieceArtConfig>("Assets/GameRes/Config/Art/PieceArt.asset"));
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(card, "Assets/GameRes/UI/Item/Card/CardItem.prefab");
             Object.DestroyImmediate(card);
             GameObject root = Rect("PreparePanel", null, Vector2.zero, Vector2.zero);
             Stretch(root.GetComponent<RectTransform>());
@@ -424,14 +424,19 @@ namespace RevGame.Editor
 
         public static Sprite Sprite(string relativePath)
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(Art + relativePath);
+            // 制作工具保留原来的素材分类参数；新版UI实际已进入可共享分包的GameRes/Art/UI。
+            if (relativePath.StartsWith("界面/新版/", System.StringComparison.Ordinal))
+            {
+                return AssetDatabase.LoadAssetAtPath<Sprite>(GameArtMigration.NewUi + relativePath.Substring("界面/新版/".Length));
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(GameArtPaths.Resolve(Art + relativePath));
         }
 
         public static Font Font()
         {
             // 使用随工程保存的开源中文黑体粗体，而不是依赖开发电脑安装的系统字体。
             // 原明朝体的细笔画在手机缩小显示时容易融进木纹；真正的粗体字形能保留清楚的主笔画。
-            Font font = AssetDatabase.LoadAssetAtPath<Font>(Art + "字体/NotoSansCJKsc-Bold.otf");
+            Font font = AssetDatabase.LoadAssetAtPath<Font>("Assets/GameRes/Fonts/CJK/NotoSansCJKsc-Bold.otf");
             if (font == null)
             {
                 throw new System.InvalidOperationException("缺少 UI 粗体字体，请先通过 Unity MCP 导入 NotoSansCJKsc-Bold.otf 及 OFL 许可。");

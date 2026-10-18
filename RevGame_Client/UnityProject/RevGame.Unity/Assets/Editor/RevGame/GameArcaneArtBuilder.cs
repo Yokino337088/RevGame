@@ -20,9 +20,9 @@ namespace RevGame.Editor
         {
             if (EditorApplication.isPlaying) { throw new InvalidOperationException("请先退出Play再保存动态美术资源"); }
             Material card = MaterialOf("CardGleam", "RevGame/UI/CardGleam", 0.30f, 0.18f, 1f);
-            Material panel = MaterialOf("ArcanePanel", "RevGame/UI/ArcanePanel", 0.12f, 0.22f, 1f);
+            Material panel = MaterialOf("ArcanePanel", "RevGame/UI/ArcanePanel", 0.38f, 0.28f, 1f);
             Material backdrop = MaterialOf("ArcaneBackdrop", "RevGame/Background/ArcaneBackdrop", 0.7f, 0.28f, 0f);
-            MaterialOf("ArcaneScene", "RevGame/Background/ArcaneBackdrop", 0.65f, 0.22f, 1f);
+            MaterialOf("ArcaneScene", "RevGame/Background/ArcaneBackdrop", 0.85f, 0.38f, 1f);
             int images = 0;
             foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/GameRes/UI", "Assets/GameRes/Effects" }))
             {
@@ -88,7 +88,7 @@ namespace RevGame.Editor
         private static bool IsSurface(string path)
         {
             return path.Contains("UI_Pvp_imgBK") || path.Contains("UI_Tavern_Background") || path.Contains("UI_Tavern_btnClose") ||
-                path.Contains("UI_Tip_imgBK") || path.Contains("UI_roleItem_");
+                path.Contains("UI_Tip_imgBK") || path.Contains("UI_roleItem_") || path.Contains("UI_Begin_btnAdventure");
         }
 
         /// <summary>一个效果一个共享资产。调整参数直接改材质；不会访问renderer.material导致运行时复制材质。</summary>
@@ -96,7 +96,9 @@ namespace RevGame.Editor
         {
             Shader shader = Shader.Find(shaderName);
             if (shader == null || ShaderUtil.ShaderHasError(shader)) { throw new InvalidOperationException("Shader缺失或编译失败：" + shaderName); }
-            string path = MaterialRoot + name + ".mat";
+            // 材质按用途分文件夹；生成器和运行时共用相同组织方式，重建时不能又在根目录造出重复资产。
+            string folder = name == "CardGleam" ? "Cards" : (name == "ArcanePanel" ? "UI" : "Background");
+            string path = MaterialRoot + folder + "/" + name + ".mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {

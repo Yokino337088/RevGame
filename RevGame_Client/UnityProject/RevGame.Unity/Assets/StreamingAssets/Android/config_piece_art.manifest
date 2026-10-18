@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 3219933211
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8e73cf770b924b17276f931b19eba02a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: fcd779b9dd2527855ce9bc6ca6867542
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8e73cf770b924b17276f931b19eba02a
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: f5905d7344959e04384104fddd750e5f, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Assembly-CSharp
+  ClassName: RevGame.View.PieceArtConfig/Entry
+Assets:
+- Assets/GameRes/Config/Art/PieceArt.asset
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_piece_frames"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_status"

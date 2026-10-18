@@ -1,0 +1,84 @@
+ManifestFileVersion: 0
+CRC: 2547093517
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: ui_panels
+      Dependencies:
+        Dependency_0: art_ui
+        Dependency_1: font_cjk
+        Dependency_2: config_piece_art
+        Dependency_3: material_cards
+        Dependency_4: material_ui
+        Dependency_5: material_background
+    Info_1:
+      Name: ui_items
+      Dependencies:
+        Dependency_0: art_ui
+        Dependency_1: font_cjk
+        Dependency_2: config_piece_art
+        Dependency_3: material_cards
+        Dependency_4: material_ui
+    Info_2:
+      Name: art_ui
+      Dependencies: {}
+    Info_3:
+      Name: font_cjk
+      Dependencies: {}
+    Info_4:
+      Name: battle_board
+      Dependencies:
+        Dependency_0: art_ui
+    Info_5:
+      Name: battle_units
+      Dependencies:
+        Dependency_0: config_piece_art
+        Dependency_1: material_pieces
+        Dependency_2: shared_piece_frames
+    Info_6:
+      Name: battle_boss
+      Dependencies:
+        Dependency_0: material_pieces
+    Info_7:
+      Name: config_piece_art
+      Dependencies:
+        Dependency_0: shared_piece_frames
+        Dependency_1: shared_status
+    Info_8:
+      Name: battle_feedback
+      Dependencies:
+        Dependency_0: art_ui
+    Info_9:
+      Name: data_tables
+      Dependencies: {}
+    Info_10:
+      Name: material_cards
+      Dependencies:
+        Dependency_0: shared_shaders
+    Info_11:
+      Name: material_ui
+      Dependencies:
+        Dependency_0: shared_shaders
+    Info_12:
+      Name: material_background
+      Dependencies:
+        Dependency_0: shared_shaders
+    Info_13:
+      Name: audio_bgm
+      Dependencies: {}
+    Info_14:
+      Name: audio_sfx
+      Dependencies: {}
+    Info_15:
+      Name: material_pieces
+      Dependencies:
+        Dependency_0: shared_shaders
+    Info_16:
+      Name: shared_piece_frames
+      Dependencies: {}
+    Info_17:
+      Name: shared_status
+      Dependencies: {}
+    Info_18:
+      Name: shared_shaders
+      Dependencies: {}

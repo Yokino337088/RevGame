@@ -31,18 +31,18 @@ namespace RevGame.Editor
                 AssetDatabase.ImportAsset(target);
             }
 
-            string bgm = "Assets/GameRes/Audio/Bgm/普通朋友.mp3";
+            string bgm = "Assets/GameRes/Audio/Bgm/MainTheme.mp3";
             if (!File.Exists(bgm))
             {
                 File.Copy(Path.Combine(sourceAudioDirectory, "普通朋友.mp3"), bgm);
             }
 
             AssetDatabase.ImportAsset(bgm);
-            Tone("落子", 420, 0.09f);
-            Tone("受击", 155, 0.08f);
-            Tone("升星", 740, 0.35f);
-            Tone("胜利", 880, 0.5f);
-            Tone("失败", 220, 0.4f);
+            Tone("Place", 420, 0.09f);
+            Tone("Hit", 155, 0.08f);
+            Tone("Upgrade", 740, 0.35f);
+            Tone("Victory", 880, 0.5f);
+            Tone("Defeat", 220, 0.4f);
             BuildEffects();
             BuildHud();
             PolishReadability();
@@ -132,7 +132,7 @@ namespace RevGame.Editor
             Frames(so, "deathFrames", "特效_提子破碎_", 6);
             Frames(so, "mergeFrames", "特效_三合一升星_", 8);
             so.ApplyModifiedPropertiesWithoutUndo();
-            PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Effects/BattleEffect.prefab");
+            PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Effects/Combat/BattleEffect.prefab");
             Object.DestroyImmediate(root);
         }
 
@@ -148,7 +148,7 @@ namespace RevGame.Editor
 
         private static void BuildHud()
         {
-            const string path = "Assets/GameRes/UI/BattleHudPanel.prefab";
+            const string path = "Assets/GameRes/UI/Panel/BattleHudPanel.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
@@ -194,12 +194,12 @@ namespace RevGame.Editor
         /// <summary>根据实际 Play 画面修正可读性。尺寸按 Sprite 的真实世界宽度换算，不能把缩放当作宽度。</summary>
         public static void PolishReadability()
         {
-            const string piecePath = "Assets/GameRes/Pieces/棋子.prefab";
+            const string piecePath = "Assets/GameRes/Pieces/Unit/SlimePiece.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(piecePath);
             try
             {
                 // 当前 Boss 大棋图片只是旗帜占位，改用已有的敌方重剑立绘作为身体，王冠单独标识主将。
-                var art = AssetDatabase.LoadAssetAtPath<PieceArtConfig>("Assets/GameRes/棋子美术配置.asset");
+                var art = AssetDatabase.LoadAssetAtPath<PieceArtConfig>("Assets/GameRes/Config/Art/PieceArt.asset");
                 Sprite bossBody = art.Find(Core.PieceKind.HeavySword, Core.StarTier.Three, Core.GameSide.Enemy).idleFrames[0];
                 GameAssetBuilder.SetReference(root.GetComponent<PieceView>(), "bossSmallSprite", bossBody);
                 GameAssetBuilder.SetReference(root.GetComponent<PieceView>(), "bossLargeSprite", bossBody);
@@ -245,7 +245,7 @@ namespace RevGame.Editor
 
             )
             {
-                string path = "Assets/GameRes/UI/" + panel + ".prefab";
+                string path = "Assets/GameRes/UI/Panel/" + panel + ".prefab";
                 root = PrefabUtility.LoadPrefabContents(path);
                 try
                 {

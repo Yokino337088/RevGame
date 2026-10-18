@@ -25,6 +25,7 @@ sysinfo.txt
 [Aa]sset[Bb]undles/
 [Ll]ocalCDN/
 [Ll]ocal[Bb]uild/
+# StreamingAssets是随客户端交付的资源，允许入库；外部AssetBundles导出目录仍然忽略。
 
 # ---------------- Unity / IDE 生成的工程文件（重新打开会自动重建） ----------------
 *.csproj

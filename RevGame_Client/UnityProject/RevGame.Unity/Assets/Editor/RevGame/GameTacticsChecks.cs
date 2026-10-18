@@ -54,6 +54,7 @@ namespace RevGame.Editor
             report.AppendLine("66个敌阵生成耗时合计 " + watch.ElapsedMilliseconds + "ms（编辑器单次测量，不代表手机性能）");
             VerifySnapshotAndFallback();
             VerifyRangedAndMovement();
+            VerifyBattleDeployment();
             VerifyReplay(report);
             VerifyCampaign(report);
             LastResult = "通过 " + _count + " 条战术断言\n" + report;
@@ -105,6 +106,58 @@ namespace RevGame.Editor
             enemies = MakeEnemies();
             Check(!EnemyFormationPlanner.TryArrange(enemies, players, false, out reason) && reason.Contains("保持不变"), "满盘明确拒绝，不吞掉关键敌棋");
             Check(enemies.TrueForAll(p => p.Pos == default(BoardPos)), "布阵失败不提交部分落点");
+        }
+
+        /// <summary>推进真实战斗，记录每次人数增长的时刻；不能只验证一个“AI开启”开关。</summary>
+        private static void VerifyBattleDeployment()
+        {
+            int total = 0;
+            foreach (int chapter in new[] { 1, 6 })
+            {
+                foreach (int round in new[] { 1, 9, 11 })
+                {
+                    var battle = new BattleService(true, 381);
+                    Check(battle.StartRound(chapter, round), "战斗落子夹具初始化");
+                    // 同一角落的单兵故意制造弱势，验证AI施压和通关保障能够同时成立。
+                    Check(battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(0, 0)), "玩家保留一颗合法棋子");
+                    battle.Tick(3f);
+                    Check(battle.EnemyDeploymentCount == 0, "准备期不会偷偷给敌人落子");
+                    Check(battle.StartBattle(), "落子AI夹具真实开战");
+                    int previous = 0;
+                    float lastTime = 0f;
+                    while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 92f)
+                    {
+                        battle.Tick(Consts.BattleSimulationStepSeconds);
+                        if (battle.EnemyDeploymentCount == previous) { continue; }
+                        Check(battle.EnemyDeploymentCount == previous + 1, "每个落子窗口只增加一颗敌棋");
+                        Check(battle.BattleElapsed - lastTime >= 12f && battle.BattleElapsed < 60f, "至少间隔12秒且60秒后停援");
+                        Check(battle.Board.GetPiecesOf(GameSide.Enemy).Count <= 26, "敌军存活数量遵守上限");
+                        Piece newest = battle.EnemyPieces[battle.EnemyPieces.Count - 1];
+                        Check(battle.Board.GetPiece(newest.Pos) == newest && !newest.IsLocked, "实际落点合法且新棋不会无气出生");
+                        previous = battle.EnemyDeploymentCount;
+                        lastTime = battle.BattleElapsed;
+                        total++;
+                    }
+                    Check(battle.LastWinner == GameSide.Player && battle.BattleElapsed <= 87f, "加入敌方增援后弱势玩家仍由真实支援取胜");
+                    Check(previous <= 2 + battle.EnemyIntelligence, "章节AI档位的落子总预算未超限");
+                    int count = battle.EnemyDeploymentCount;
+                    battle.Tick(30f);
+                    Check(battle.EnemyDeploymentCount == count, "结算期不会出现迟到落子");
+                    Check(battle.StartRound(chapter, 1) && battle.EnemyDeploymentCount == 0, "重开归零落子计数和冷却");
+                }
+            }
+            Check(total > 0, "真实战斗中确实触发过敌方落子");
+
+            var probe = new BattleService(false, 3);
+            probe.StartRound(1, 9);
+            probe.TryPlayCard(probe.Hand[0].Id, new BoardPos(0, 0));
+            string original = probe.Board.Dump();
+            var reinforcement = new Piece(9000, PieceCatalog.Get(PieceKind.Archer, StarTier.One), GameSide.Enemy);
+            BoardPos chosen;
+            string purpose;
+            Check(EnemyTactics.TryChooseDeployment(probe.Board, reinforcement, 4, out chosen, out purpose), "战术算法能找到有效的接应位置");
+            Check(probe.Board.Dump() == original && probe.Board.GetPiece(chosen) == null, "候选试算没有把棋落进实盘");
+            Check(!probe.Board.GetCell(chosen).IsEyeMarked, "自动落子不填任何已成立的眼位");
         }
 
         private static List<Piece> MakeEnemies()
@@ -201,7 +254,8 @@ namespace RevGame.Editor
                         battle.Tick(Consts.VictoryAssistFinishSeconds + Consts.BattleSimulationStepSeconds);
                         Check(battle.LastWinner == GameSide.Player && battle.Phase == GamePhase.Settle, "固定种子对局最终可胜");
                         Check(playerDamage > 0 && enemyDamage > 0, "双方均有真实伤害，敌方不是纯站桩挨打");
-                        Check(battle.BattleElapsed > 15f && battle.BattleEventCount >= 2, "交战与事件有实际展开时间");
+                        // 最低验收线是15秒；固定步恰好落在15.0也应通过，不能误判成未达到15秒。
+                        Check(battle.BattleElapsed >= 15f && battle.BattleEventCount >= 2, "交战至少15秒且展开两次以上事件");
                         report.AppendLine(chapter + "/" + round + "：" + battle.BattleElapsed + "秒，事件" + battle.BattleEventCount + "，我方受伤" + playerDamage + "，敌方受伤" + enemyDamage + "，" + battle.VictorySupportStatus);
                     }
                     finally { RevEvent.RemoveAllByOwner(owner); }

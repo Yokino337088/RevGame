@@ -1,0 +1,31 @@
+ManifestFileVersion: 0
+CRC: 3594581460
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 92d8949308b5265c0b10463ad0fdf0a5
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: d484452003a4eaa1e4c86bf72e3d113f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 92d8949308b5265c0b10463ad0fdf0a5
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Pieces/Boss/BossPieceView.prefab
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_pieces"

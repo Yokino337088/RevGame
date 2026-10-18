@@ -28,7 +28,7 @@ namespace RevGame.Editor
         public static string ApplyProjectileStyle()
         {
             if (EditorApplication.isPlaying) { throw new System.InvalidOperationException("请先退出Play再保存弹道预制体"); }
-            const string path = "Assets/GameRes/Effects/BattleEffect.prefab";
+            const string path = "Assets/GameRes/Effects/Combat/BattleEffect.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
@@ -94,7 +94,7 @@ namespace RevGame.Editor
                 GameAssetBuilder.SetReference(view, "titleText", title);
                 GameAssetBuilder.SetReference(view, "detailText", detail);
                 GameAssetBuilder.SetReference(view, "icon", icon);
-                PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Effects/BattleEventNotice.prefab");
+                PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab");
             }
             finally
             {

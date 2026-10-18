@@ -1,0 +1,26 @@
+﻿{
+  "version": "0.1.0",
+  "platform": "Android",
+  "buildTime": "2026-10-18 20:30:05",
+  "bundles": [
+    { "name": "art_ui", "size": 7350674 },
+    { "name": "audio_bgm", "size": 4768919 },
+    { "name": "audio_sfx", "size": 4241 },
+    { "name": "battle_board", "size": 10395 },
+    { "name": "battle_boss", "size": 6647 },
+    { "name": "battle_feedback", "size": 17029303 },
+    { "name": "battle_units", "size": 20689 },
+    { "name": "config_piece_art", "size": 4330 },
+    { "name": "data_tables", "size": 2572 },
+    { "name": "font_cjk", "size": 15349866 },
+    { "name": "material_background", "size": 2551 },
+    { "name": "material_cards", "size": 2462 },
+    { "name": "material_pieces", "size": 2462 },
+    { "name": "material_ui", "size": 2440 },
+    { "name": "shared_piece_frames", "size": 645263 },
+    { "name": "shared_shaders", "size": 42787 },
+    { "name": "shared_status", "size": 7136 },
+    { "name": "ui_items", "size": 7946 },
+    { "name": "ui_panels", "size": 22932 }
+  ]
+}

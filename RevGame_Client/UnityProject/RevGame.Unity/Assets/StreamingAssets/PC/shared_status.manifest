@@ -1,0 +1,24 @@
+ManifestFileVersion: 0
+CRC: 1310412882
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0de8d0daf1ffc40a2009afb8f53bca19
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2d8df09e698f722ada1caa03d3413830
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0de8d0daf1ffc40a2009afb8f53bca19
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Status/Encircled/Encircled_003.png
+- Assets/GameRes/Art/Status/Encircled/Encircled_001.png
+- Assets/GameRes/Art/Status/Encircled/Encircled_002.png
+Dependencies: []

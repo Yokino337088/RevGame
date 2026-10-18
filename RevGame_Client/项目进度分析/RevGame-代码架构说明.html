@@ -1,8 +1,5 @@
-<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RevGame-代码架构说明</title><style>
-:root{--ink:#203149;--muted:#5f6f80;--line:#d9e2ea;--paper:#fff;--accent:#126b73;--soft:#edf6f6;--page:#eef2f6}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--page);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;font-size:16px;line-height:1.85}.document{max-width:1180px;margin:36px auto;background:var(--paper);padding:48px 58px 62px;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px #2031490a}h1{font-size:34px;line-height:1.45;margin:0 0 14px;letter-spacing:.03em;color:#13283e;border-top:7px solid var(--accent);padding-top:22px}h2{font-size:24px;line-height:1.5;margin:50px 0 18px;padding:10px 0 10px 16px;border-left:5px solid var(--accent);background:linear-gradient(90deg,var(--soft),#fff);scroll-margin-top:24px}h3{font-size:19px;line-height:1.6;margin:32px 0 12px;color:#215469}p{margin:13px 0}a{color:#0d6578;text-underline-offset:3px;overflow-wrap:anywhere}a:hover{color:#043b4d}a[id]{display:block;scroll-margin-top:18px}strong{font-weight:700;color:#152d45}code{font-family:Consolas,"Microsoft YaHei",monospace;font-size:.9em;border:1px solid #dee8ee;background:#f2f6f9;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}li{margin:8px 0}ul,ol{padding-left:26px}.table-scroll{width:100%;overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;line-height:1.8;margin:0}th,td{vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--line);border-right:1px solid #e5ebf0;min-width:130px}th{background:#eaf1f5;color:#183d53;font-weight:700}th:last-child,td:last-child{border-right:0}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafc}td:first-child{font-weight:600;min-width:145px}td p:first-child{margin-top:0}td p:last-child{margin-bottom:0}.status{display:inline-block;white-space:nowrap;padding:2px 10px;border-radius:5px;font-size:13px;font-weight:700}.done{color:#176442;background:#e4f4eb}.partial{color:#795411;background:#fff2d5}.todo{color:#67556f;background:#f0eaf4}h2[id="section"]+ul,h2[id="目录"]+ul{padding:18px 32px;background:#f4f8fb;border:1px solid var(--line);border-radius:8px;columns:2;column-gap:32px}h1+p{font-size:14px;color:var(--muted)}blockquote{margin:20px 0;padding:8px 20px;background:var(--soft);border-left:4px solid var(--accent)}@media(max-width:800px){body{font-size:15px}.document{margin:0;padding:26px 20px 42px;border:0;border-radius:0;box-shadow:none}h1{font-size:27px}h2{font-size:21px;margin-top:34px}h3{font-size:18px}th,td{padding:10px 12px;font-size:13px}table{min-width:680px}h2[id="section"]+ul,h2[id="目录"]+ul{columns:1;padding:14px 24px}code{word-break:break-word}}@media print{@page{size:A4;margin:16mm 13mm}html{scroll-behavior:auto}body{background:#fff;font-size:10pt;line-height:1.65}.document{max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none}h1{font-size:23pt;border-top-width:4px}h2{font-size:16pt;margin-top:24pt;background:none;break-after:avoid}h3{font-size:12pt;break-after:avoid}a{color:inherit;text-decoration:none}code{font-size:8.5pt;padding:0 2px;background:none;border:0}.table-scroll{overflow:visible;border-radius:0;break-inside:auto}table{font-size:8pt;min-width:0;line-height:1.5;table-layout:fixed}th,td{padding:6px;min-width:0;overflow-wrap:anywhere}td:first-child{min-width:0}tr{break-inside:avoid}thead{display:table-header-group}.status{padding:0;font-size:8pt;background:none}.document>ul{columns:1}p,li{orphans:3;widows:3}}
-
-img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid var(--line);border-radius:8px}pre{overflow:auto;padding:18px;background:#f2f6f9;border:1px solid var(--line);border-radius:8px;line-height:1.6}pre code{border:0;padding:0;white-space:pre;overflow-wrap:normal}blockquote p{margin:8px 0}.document{overflow-wrap:anywhere}</style></head><body><main class="document"><blockquote>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RevGame-代码架构说明</title><style>body{margin:0;background:#10171e;color:#e8eeec;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1080px;margin:auto;padding:32px}h1,h2,h3{color:#ffd18a;line-height:1.35}h2{margin-top:42px}a{color:#79dfd0}code{color:#9ae3dc;background:#1f2b33;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{overflow:auto;background:#1b252d;padding:18px}blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #d2a363;background:#1d2a32}table{border-collapse:collapse;width:100%;min-width:540px}th,td{border:1px solid #354752;text-align:left;padding:10px;vertical-align:top}th{color:#ffd18a;background:#21313c}.table-scroll{overflow-x:auto}img{display:block;max-width:100%;height:auto;border-radius:8px}p,li{overflow-wrap:anywhere}@media(max-width:600px){main{padding:18px}h1{font-size:26px}h2{font-size:22px}}</style></head><body><main><blockquote>
+<p>2026-10-18 当前交付：敌方战斗低频补子、16种准备增益（新增万箭齐发）、被围三帧、背景全屏流动和UI魔光；AI注释与59脚本功能目录已完成。固定战斗规则中位数291.343→40.912ms，落子13.773→3.557ms；141项AB隐式重复降至0，PC/Android各19包构建通过，199个GameRes资源真实AB加载通过。详见<a href="RevGame-战斗性能与资源规范-2026-10-18.html">RevGame-战斗性能与资源规范-2026-10-18</a>。以下较早数字保留作历史记录，当前结果以上述报告为准。</p>
 <p>2026-10-18 当前动态美术更新：最多20条更小飘字，密集输入实测20条；攻击提速35%，单发伤害按比例摊薄以保留长局，敌棋五秒移动冷却独立计算。弹道按距离收缩/计时，增加自然结束与中断寿命回收。三类Shader位于GameShader，四个共享材质位于GameRes/Material，已绑定35个UI底图；移除UI大地图背景，六牌流光与DOTween点击抖动已接入。645条规则、737条布局、1280条战术、37条动态美术Play、49条密集反馈Play、136条回合Play及池化检查通过。详见<a href="RevGame-魔幻动态美术与弹幕增强-2026-10-18.html">RevGame-魔幻动态美术与弹幕增强-2026-10-18</a>，下方旧版本数字为历史记录。</p>
 <p>2026-10-18 最新追加：敌方6～19名及逐轮基础属性成长、四档AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、时间/Boss血条缓动、Boss真实重剑序列帧已实现。620条规则、737条布局、1280条战术、136条回合Play、23条成长Play及对象池检查通过；两组种子各连续66轮通关。升级保留Id/位置/占格，新牌照常落下。 详见<a href="RevGame-成长与准备增益验收-2026-10-18.html">成长与准备增益验收</a>。下方早期规则与数字仅作历史记录。</p>
 </blockquote>
@@ -24,11 +21,11 @@ img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid v
 </thead>
 <tbody>
 <tr>
-<td>Core/Consts、Events、PieceAttackInfo、BattleHitInfo</td>
+<td>Core/Configuration/Consts、Events、PieceAttackInfo、BattleHitInfo</td>
 <td>基准周期与小步、事件唯一签名、攻击和扣血当刻的不可变快照。动画晚播放也不反推下一帧数据。</td>
 </tr>
 <tr>
-<td>Data/PieceCatalog、LevelCatalog</td>
+<td>Data/Pieces/PieceCatalog、LevelCatalog</td>
 <td>基础图鉴和关卡仍为原型数值；不能把弹幕表接入等同于全部数值已导表。</td>
 </tr>
 <tr>
@@ -36,23 +33,23 @@ img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid v
 <td>原 Revolution.ExcelTool 生成的数据结构和表类型，不手工维护。</td>
 </tr>
 <tr>
-<td>Pieces/Piece</td>
+<td>Pieces/Model/Piece</td>
 <td>生命、位置、身体大小、眼和行动进度；不持有 GameObject。</td>
 </tr>
 <tr>
-<td>Board/BoardModel、GoRules</td>
+<td>Board/Model/BoardModel、GoRules</td>
 <td>完整占格、连通块、去重气数、围困和眼；先预检整块身体再提交。</td>
 </tr>
 <tr>
-<td>Battle/HandModel、MoveRules</td>
+<td>Battle/Hand/HandModel、MoveRules</td>
 <td>唯一牌编号与目标查询。刷新后旧编号不能操作新牌；我方远程可跨盘锁定。</td>
 </tr>
 <tr>
-<td>Battle/EnemyFormationPlanner、EnemyTactics</td>
+<td>Battle/AI/EnemyFormationPlanner、EnemyTactics</td>
 <td>在深复制棋盘中预检完整眼阵和保眼移动；成功后才把最终布阵或动作交给战斗服务。</td>
 </tr>
 <tr>
-<td>Services/BattleService</td>
+<td>Services/Battle/Simulation/BattleService</td>
 <td>唯一规则服务，控制阶段、落子、伤害、胜负与固定模拟。</td>
 </tr>
 <tr>
@@ -64,8 +61,8 @@ img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid v
 <td>只重抽手中剩余牌，保留星级和落子额度，提交后通知 UI；应用 Excel 远程频率。</td>
 </tr>
 <tr>
-<td>Data/PreparationBuffCatalog、BattleService.Preparation</td>
-<td>十五种增益、3秒发放、本轮属性、待升级、新棋继承、持续回复和重置。</td>
+<td>Data/Buffs/PreparationBuffCatalog、BattleService.Preparation</td>
+<td>十六种增益、3秒发放、本轮属性、待升级、新棋继承、持续回复和重置。</td>
 </tr>
 <tr>
 <td>BattleService.Progression / Events</td>
@@ -76,7 +73,7 @@ img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid v
 <td>仅编辑器或开发环境的边界断言、受控造局，不进入正式游戏业务。</td>
 </tr>
 <tr>
-<td>Flow/GameFlow / BattleLogic</td>
+<td>Flow/States/GameFlow / BattleLogic</td>
 <td>FSM 切换大厅、选关、战斗和退出；Scope 管回收；Logic 每 0.3125 秒驱动服务并转发 UI 动作。</td>
 </tr>
 <tr>
@@ -84,43 +81,43 @@ img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid v
 <td>远程优先、至少二星、安全后排；近战须能攻击、可突入敌眼，深快照预检保护己方阵型。</td>
 </tr>
 <tr>
-<td>View/BoardView.Feedback</td>
+<td>View/Board/BoardView.Feedback</td>
 <td>全场最多20条文字、14条弹道；攻击口号与弹道短队列、聚合/有界待播/25候选避让，下层重叠35%透明。</td>
 </tr>
 <tr>
-<td>View/BoardView</td>
+<td>View/Board/BoardView</td>
 <td>编号映射到池化格子/棋子/特效；攻击和受击快照驱动口号与弹道，批次检查避免退出后补播。</td>
 </tr>
 <tr>
-<td>View/GameTextConfig</td>
+<td>View/Text/GameTextConfig</td>
 <td>只查询已加载导表数据，检查必需编号、颜色、字号和动画参数；不直接读磁盘。</td>
 </tr>
 <tr>
-<td>View/BattleEffectView</td>
+<td>View/Combat/Effects/BattleEffectView</td>
 <td>RevPool 复用伤害、口号、弹道与帧图，DOTween 执行表现；文字边界避免手机顶排裁切。</td>
 </tr>
 <tr>
-<td>View/BattleEventNoticeView</td>
+<td>View/Combat/Notices/BattleEventNoticeView</td>
 <td>RevPool 下的短命 UI 零件，显示升级或增益，不是独立业务面板。</td>
 </tr>
 <tr>
-<td>UI/BattleHudPanel</td>
+<td>UI/Panels/Battle/BattleHudPanel</td>
 <td>实时落屏，接 PieceMerged/BattleEventTriggered，替换升级占位符，持有并归还活动提示。</td>
 </tr>
 <tr>
-<td>UI/PreparePanel / CardItem</td>
+<td>UI/Panels/Battle/PreparePanel / CardItem</td>
 <td>六个槽位（包含隐藏项）复用，每次准备强制复原旧翻牌；牌内肖像和文字响应槽位尺寸，翻牌期间锁定操作。</td>
 </tr>
 <tr>
-<td>UI/GameMobileLayout / GameBattleLayout</td>
+<td>UI/Layout/GameMobileLayout / GameBattleLayout</td>
 <td>归一化 Device.Screen 安全区，共用棋盘/侧栏/顶栏区域；相机和提示使用同一计算结果，缩放时不积累偏移。</td>
 </tr>
 <tr>
-<td>View/GamePresentation / BattlePresentation</td>
+<td>View/Scene/GamePresentation / BattlePresentation</td>
 <td>流程与阶段到面板的装配，相机适配和异步有效性检查。</td>
 </tr>
 <tr>
-<td>View/GameAudio</td>
+<td>View/Audio/GameAudio</td>
 <td>业务事件转为 RevSound 逻辑资源路径。</td>
 </tr>
 <tr>

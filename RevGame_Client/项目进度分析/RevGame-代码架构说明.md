@@ -1,3 +1,5 @@
+> 2026-10-18 当前交付：敌方战斗低频补子、16种准备增益（新增万箭齐发）、被围三帧、背景全屏流动和UI魔光；AI注释与59脚本功能目录已完成。固定战斗规则中位数291.343→40.912ms，落子13.773→3.557ms；141项AB隐式重复降至0，PC/Android各19包构建通过，199个GameRes资源真实AB加载通过。详见[RevGame-战斗性能与资源规范-2026-10-18](RevGame-战斗性能与资源规范-2026-10-18.md)。以下较早数字保留作历史记录，当前结果以上述报告为准。
+
 > 2026-10-18 当前动态美术更新：最多20条更小飘字，密集输入实测20条；攻击提速35%，单发伤害按比例摊薄以保留长局，敌棋五秒移动冷却独立计算。弹道按距离收缩/计时，增加自然结束与中断寿命回收。三类Shader位于GameShader，四个共享材质位于GameRes/Material，已绑定35个UI底图；移除UI大地图背景，六牌流光与DOTween点击抖动已接入。645条规则、737条布局、1280条战术、37条动态美术Play、49条密集反馈Play、136条回合Play及池化检查通过。详见[RevGame-魔幻动态美术与弹幕增强-2026-10-18](RevGame-魔幻动态美术与弹幕增强-2026-10-18.md)，下方旧版本数字为历史记录。
 
 > 2026-10-18 最新追加：敌方6～19名及逐轮基础属性成长、四档AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、时间/Boss血条缓动、Boss真实重剑序列帧已实现。620条规则、737条布局、1280条战术、136条回合Play、23条成长Play及对象池检查通过；两组种子各连续66轮通关。升级保留Id/位置/占格，新牌照常落下。 详见[成长与准备增益验收](RevGame-成长与准备增益验收-2026-10-18.md)。下方早期规则与数字仅作历史记录。
@@ -18,31 +20,31 @@ GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTw
 
 | 文件或目录 | 职责及理由 |
 |---|---|
-| Core/Consts、Events、PieceAttackInfo、BattleHitInfo | 基准周期与小步、事件唯一签名、攻击和扣血当刻的不可变快照。动画晚播放也不反推下一帧数据。 |
-| Data/PieceCatalog、LevelCatalog | 基础图鉴和关卡仍为原型数值；不能把弹幕表接入等同于全部数值已导表。 |
+| Core/Configuration/Consts、Events、PieceAttackInfo、BattleHitInfo | 基准周期与小步、事件唯一签名、攻击和扣血当刻的不可变快照。动画晚播放也不反推下一帧数据。 |
+| Data/Pieces/PieceCatalog、LevelCatalog | 基础图鉴和关卡仍为原型数值；不能把弹幕表接入等同于全部数值已导表。 |
 | Generated/BattleDataStructures、BattleDataTables | 原 Revolution.ExcelTool 生成的数据结构和表类型，不手工维护。 |
-| Pieces/Piece | 生命、位置、身体大小、眼和行动进度；不持有 GameObject。 |
-| Board/BoardModel、GoRules | 完整占格、连通块、去重气数、围困和眼；先预检整块身体再提交。 |
-| Battle/HandModel、MoveRules | 唯一牌编号与目标查询。刷新后旧编号不能操作新牌；我方远程可跨盘锁定。 |
-| Battle/EnemyFormationPlanner、EnemyTactics | 在深复制棋盘中预检完整眼阵和保眼移动；成功后才把最终布阵或动作交给战斗服务。 |
-| Services/BattleService | 唯一规则服务，控制阶段、落子、伤害、胜负与固定模拟。 |
+| Pieces/Model/Piece | 生命、位置、身体大小、眼和行动进度；不持有 GameObject。 |
+| Board/Model/BoardModel、GoRules | 完整占格、连通块、去重气数、围困和眼；先预检整块身体再提交。 |
+| Battle/Hand/HandModel、MoveRules | 唯一牌编号与目标查询。刷新后旧编号不能操作新牌；我方远程可跨盘锁定。 |
+| Battle/AI/EnemyFormationPlanner、EnemyTactics | 在深复制棋盘中预检完整眼阵和保眼移动；成功后才把最终布阵或动作交给战斗服务。 |
+| Services/Battle/Simulation/BattleService | 唯一规则服务，控制阶段、落子、伤害、胜负与固定模拟。 |
 | BattleService.Placement | HandleBoardClick统一点击：准备期全盘落牌；准备/战斗均可选己方棋再点空格换位，生命、护盾、攻击进度不重置。 |
 | BattleService.HandRefresh | 只重抽手中剩余牌，保留星级和落子额度，提交后通知 UI；应用 Excel 远程频率。 |
-| Data/PreparationBuffCatalog、BattleService.Preparation | 十五种增益、3秒发放、本轮属性、待升级、新棋继承、持续回复和重置。 |
+| Data/Buffs/PreparationBuffCatalog、BattleService.Preparation | 十六种增益、3秒发放、本轮属性、待升级、新棋继承、持续回复和重置。 |
 | BattleService.Progression / Events | 奖励、双牌原位升级、职业加成、支援与轻松模式。partial 是同一个服务分文件，并非多套管理器。 |
 | BattleService.*Checks / Diagnostics | 仅编辑器或开发环境的边界断言、受控造局，不进入正式游戏业务。 |
-| Flow/GameFlow / BattleLogic | FSM 切换大厅、选关、战斗和退出；Scope 管回收；Logic 每 0.3125 秒驱动服务并转发 UI 动作。 |
+| Flow/States/GameFlow / BattleLogic | FSM 切换大厅、选关、战斗和退出；Scope 管回收；Logic 每 0.3125 秒驱动服务并转发 UI 动作。 |
 | BattleService.Reinforcement | 远程优先、至少二星、安全后排；近战须能攻击、可突入敌眼，深快照预检保护己方阵型。 |
-| View/BoardView.Feedback | 全场最多20条文字、14条弹道；攻击口号与弹道短队列、聚合/有界待播/25候选避让，下层重叠35%透明。 |
-| View/BoardView | 编号映射到池化格子/棋子/特效；攻击和受击快照驱动口号与弹道，批次检查避免退出后补播。 |
-| View/GameTextConfig | 只查询已加载导表数据，检查必需编号、颜色、字号和动画参数；不直接读磁盘。 |
-| View/BattleEffectView | RevPool 复用伤害、口号、弹道与帧图，DOTween 执行表现；文字边界避免手机顶排裁切。 |
-| View/BattleEventNoticeView | RevPool 下的短命 UI 零件，显示升级或增益，不是独立业务面板。 |
-| UI/BattleHudPanel | 实时落屏，接 PieceMerged/BattleEventTriggered，替换升级占位符，持有并归还活动提示。 |
-| UI/PreparePanel / CardItem | 六个槽位（包含隐藏项）复用，每次准备强制复原旧翻牌；牌内肖像和文字响应槽位尺寸，翻牌期间锁定操作。 |
-| UI/GameMobileLayout / GameBattleLayout | 归一化 Device.Screen 安全区，共用棋盘/侧栏/顶栏区域；相机和提示使用同一计算结果，缩放时不积累偏移。 |
-| View/GamePresentation / BattlePresentation | 流程与阶段到面板的装配，相机适配和异步有效性检查。 |
-| View/GameAudio | 业务事件转为 RevSound 逻辑资源路径。 |
+| View/Board/BoardView.Feedback | 全场最多20条文字、14条弹道；攻击口号与弹道短队列、聚合/有界待播/25候选避让，下层重叠35%透明。 |
+| View/Board/BoardView | 编号映射到池化格子/棋子/特效；攻击和受击快照驱动口号与弹道，批次检查避免退出后补播。 |
+| View/Text/GameTextConfig | 只查询已加载导表数据，检查必需编号、颜色、字号和动画参数；不直接读磁盘。 |
+| View/Combat/Effects/BattleEffectView | RevPool 复用伤害、口号、弹道与帧图，DOTween 执行表现；文字边界避免手机顶排裁切。 |
+| View/Combat/Notices/BattleEventNoticeView | RevPool 下的短命 UI 零件，显示升级或增益，不是独立业务面板。 |
+| UI/Panels/Battle/BattleHudPanel | 实时落屏，接 PieceMerged/BattleEventTriggered，替换升级占位符，持有并归还活动提示。 |
+| UI/Panels/Battle/PreparePanel / CardItem | 六个槽位（包含隐藏项）复用，每次准备强制复原旧翻牌；牌内肖像和文字响应槽位尺寸，翻牌期间锁定操作。 |
+| UI/Layout/GameMobileLayout / GameBattleLayout | 归一化 Device.Screen 安全区，共用棋盘/侧栏/顶栏区域；相机和提示使用同一计算结果，缩放时不积累偏移。 |
+| View/Scene/GamePresentation / BattlePresentation | 流程与阶段到面板的装配，相机适配和异步有效性检查。 |
+| View/Audio/GameAudio | 业务事件转为 RevSound 逻辑资源路径。 |
 | Assets/Editor/RevGame/GameArtMigration、GameFeelBuilder | 经 Unity MCP 保存新版资源引用、提示预制体、拼格和横屏布局；重跑不重复建按钮。 |
 | Assets/Editor/RevGame/GameRuleChecks、GameFeelChecks、GameRoundPresentationChecks、GameLayoutChecks | 570条规则、197条布局、136条回合表现回归；另验证池化动画，均调用真实业务/视图。 |
 | Assets/Editor/RevGame/GamePreviewGuard | 仅 Unity 2022.3 本项目 Play 态去掉重复 Game/Simulator 预览；不修改框架或打包到手机。 |

@@ -20,9 +20,9 @@ namespace RevGame.Editor
 {
     public static class GameArtMigration
     {
-        public const string NewUi = "Assets/ArtRes/界面/新版/";
+        public const string NewUi = "Assets/GameRes/Art/UI/";
         public const string BackgroundPath = "Assets/ArtRes/背景/棋盘_开始场景_背景.png";
-        private const string UiRoot = "Assets/GameRes/UI/";
+        private const string UiRoot = "Assets/GameRes/UI/Panel/";
 
         /// <summary>由 MCP 传入原版美术根目录；导入完成后才修改引用，避免先把界面替成空图。</summary>
         public static string ImportAndApply(string sourceRoot)
@@ -51,6 +51,9 @@ namespace RevGame.Editor
                     continue;
                 }
 
+                // 原素材虽然全是英文，空格和括号仍无法通过RevAB逻辑名校验；导入时固定映射，避免重建复发。
+                if (name == "UI_Game_imgBK (1).png") { name = "UI_Game_imgBK_Alt.png"; }
+                if (name == "UI_Tavern_Scrollbar Vertical.png") { name = "UI_Tavern_ScrollbarVertical.png"; }
                 ImportSprite(file, NewUi + name);
                 imported++;
             }
@@ -63,7 +66,7 @@ namespace RevGame.Editor
         /// <summary>供原有生成器在最后调用：重新生成面板也必须继续使用新版皮肤。</summary>
         public static void ApplyAll()
         {
-            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { UiRoot.TrimEnd('/') }))
+            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/GameRes/UI" }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 GameObject root = PrefabUtility.LoadPrefabContents(path);
@@ -286,7 +289,7 @@ namespace RevGame.Editor
                 // 已存在的预制体不会因为改常量自动长出第六张牌，必须一起迁移资产。
                 // 使用含隐藏项的固定槽位，恢复激活仅用于保存模板；运行时由 Hand 数据决定显隐。
                 Transform cards = root.transform.Find("cards");
-                GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(UiRoot + "CardItem.prefab");
+                GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/UI/Item/Card/CardItem.prefab");
                 while (cards.childCount < Consts.MaxHandSize)
                 {
                     GameObject slot = (GameObject)PrefabUtility.InstantiatePrefab(cardPrefab, cards);
@@ -439,7 +442,7 @@ namespace RevGame.Editor
         /// <summary>用户确认恢复逐格拼接：一个逻辑格就是一个世界单位，图像、高亮与点击区域共用同一坐标。</summary>
         private static void ApplyBoardArt()
         {
-            const string cellPath = "Assets/GameRes/Board/BoardCell.prefab";
+            const string cellPath = "Assets/GameRes/Board/Tile/BoardCell.prefab";
             GameObject cell = PrefabUtility.LoadPrefabContents(cellPath);
             try
             {
@@ -484,7 +487,7 @@ namespace RevGame.Editor
         /// <summary>通过 MCP 保存弹道和大号描边数字的预制体，运行时只做池化播放。</summary>
         private static void StyleBattleEffects()
         {
-            const string path = "Assets/GameRes/Effects/BattleEffect.prefab";
+            const string path = "Assets/GameRes/Effects/Combat/BattleEffect.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
@@ -543,7 +546,7 @@ namespace RevGame.Editor
                 paths.Add(AssetDatabase.GUIDToAssetPath(guid));
             }
             // 升级/增益提示属于池化 UI 零件，放在 Effects 下，也必须纳入新版美术引用检查。
-            const string notice = "Assets/GameRes/Effects/BattleEventNotice.prefab";
+            const string notice = "Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab";
             if (AssetDatabase.LoadAssetAtPath<GameObject>(notice) != null) { paths.Add(notice); }
             foreach (string prefabPath in paths)
             {

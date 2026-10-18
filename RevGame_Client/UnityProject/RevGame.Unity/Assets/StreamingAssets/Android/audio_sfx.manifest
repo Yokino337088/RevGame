@@ -1,0 +1,24 @@
+ManifestFileVersion: 0
+CRC: 1105941942
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 17abb22d225e98986c0088db2b18b067
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 17abb22d225e98986c0088db2b18b067
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Defeat.wav
+- Assets/GameRes/Audio/Sfx/Hit.wav
+- Assets/GameRes/Audio/Sfx/Place.wav
+- Assets/GameRes/Audio/Sfx/Upgrade.wav
+- Assets/GameRes/Audio/Sfx/Victory.wav
+Dependencies: []

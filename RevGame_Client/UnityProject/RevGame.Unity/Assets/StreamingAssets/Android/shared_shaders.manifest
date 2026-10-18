@@ -1,0 +1,23 @@
+ManifestFileVersion: 0
+CRC: 951254318
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6d31015986775e22589b1c045c273f5a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 0df1dec30b5d061d422d3e6493d27647
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 6d31015986775e22589b1c045c273f5a
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameShader/UI/ArcanePanel.shader
+- Assets/GameShader/Cards/CardGleam.shader
+- Assets/GameShader/Pieces/ArcanePiece.shader
+- Assets/GameShader/Background/ArcaneBackdrop.shader
+Dependencies: []

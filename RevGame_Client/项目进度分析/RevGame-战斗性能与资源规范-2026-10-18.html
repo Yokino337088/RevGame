@@ -1,0 +1,206 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RevGame-战斗性能与资源规范-2026-10-18</title><style>body{margin:0;background:#10171e;color:#e8eeec;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1080px;margin:auto;padding:32px}h1,h2,h3{color:#ffd18a;line-height:1.35}h2{margin-top:42px}a{color:#79dfd0}code{color:#9ae3dc;background:#1f2b33;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{overflow:auto;background:#1b252d;padding:18px}blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #d2a363;background:#1d2a32}table{border-collapse:collapse;width:100%;min-width:540px}th,td{border:1px solid #354752;text-align:left;padding:10px;vertical-align:top}th{color:#ffd18a;background:#21313c}.table-scroll{overflow-x:auto}img{display:block;max-width:100%;height:auto;border-radius:8px}p,li{overflow-wrap:anywhere}@media(max-width:600px){main{padding:18px}h1{font-size:26px}h2{font-size:22px}}</style></head><body><main><h1 id="revgame-ai-ab-2026-10-18">RevGame 战斗性能、敌方 AI 与 AB 资源规范（2026-10-18）</h1>
+<h2 id="_1">本次交付</h2>
+<p>本次针对敌方 AI 注释、战斗性能、棋子魔幻渲染、GameScripts 目录和 AB 重复依赖完成了可回归的实现。</p>
+<ul>
+<li>敌方 AI 核心代码补充了面向新手的中文说明：类职责、字段含义、方法输入输出、安全门槛、评分单位、快照隔离、固定顺序和失败回退均写在 <code>Battle/AI</code> 与 <code>Battle/Rules</code>。</li>
+<li><code>BoardModel</code> 增加占格版本和复用查询入口；<code>GoRules</code> 使用棋盘专属草稿区，减少气眼重算时的临时集合和队列。</li>
+<li>战斗服务在占格、气数加成或围困免疫真正变化时才刷新气眼；普通掉血不会触发整盘规则和 81 格 UI 重绘。</li>
+<li>高频走法和射界查询支持调用方传入复用列表；敌方移动和补子试算复用一张独立快照，不移动真实棋子进行试算。</li>
+<li>新增 <code>GameBattlePerformanceChecks</code> 和 <code>GameOptimizationChecks</code>，性能报告只描述编辑器规则层测量，不把编辑器数字冒充手机帧率。</li>
+<li>新增 <code>GameShader/Pieces/ArcanePiece.shader</code> 与 <code>GameRes/Material/Pieces/ArcanePiece.mat</code>。棋子身体使用单 Pass 古铜/青绿色流光，保持 Sprite alpha、序列帧和对象池生命周期。</li>
+<li>138 张棋子/状态图片通过 Unity AssetDatabase 保留 GUID 迁移到英文资源目录，避免中文逻辑路径和重复导入。</li>
+<li>GameScripts 59 个脚本按功能细分到 <code>Battle/AI</code>、<code>Board/Rules</code>、<code>Services/Battle/Preparation</code>、<code>UI/Panels/Battle</code>、<code>View/Combat/Effects</code> 等目录；Editor 代码仍统一位于 <code>Assets/Editor/RevGame</code>。</li>
+<li>AB 构建工具新增共享帧、共享状态、共享 Shader 和棋子材质包；构建前运行依赖分析门禁。</li>
+</ul>
+<h2 id="_2">同批完成的背景、增益与战斗落子</h2>
+<ul>
+<li>GameBackground 使用双层缓慢流动的 UV 扭曲和青紫色光带；保留场景当前指定的背景图片。修正 SpriteRenderer 原为 Sliced 导致尺寸计算与实际绘制不一致的问题，改为 Simple、完整矩形网格，并按相机视口覆盖比例加 2% 余量，画面顶满屏幕。</li>
+<li>UGUI 底图增加克制的黄铜/青绿流光，共绑定 36 处 UI 底图。六牌光泽、点击 DOTween 抖动、剩余手牌翻转刷新继续保留；UI 不再拿大幅棋盘地图做面板底图。</li>
+<li>攻击与伤害飘字相对上一版放大 20%，仍保留 20 条总预算、7 条攻击口号子预算和 14 条弹道预算，拥挤时聚合伤害并淡化重叠下层。</li>
+<li>准备增益新增第 16 种“万箭齐发”：所有我方弓箭手攻击频率翻倍，后落手牌和援军自动继承；移动频率不变，下一轮统一清零。仍为每轮 3～5 种不重复增益，准备开始三秒后生效并播报。</li>
+<li>被围标识使用用户提供的三张受伤数字图，0.14 秒换一帧；重复刷新锁死状态不重置播放进度，解除时立即隐藏。</li>
+<li>战斗敌方落子首手最早 12 秒，之后间隔 12～16 秒，60 秒后停援；每轮最多 2+AI档位次、在场最多 26 子、至少留出 8 格操作空间。加入后继续遵守真实伤害、最后一子保护与阶段支援。</li>
+</ul>
+<p>布局仍固定以 1920×1080 横屏为设计基准。敌方落子是围棋气眼启发式，不能直接占用已成立的眼，也不会无限刷怪。</p>
+<h2 id="_3">可核对的结果</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th style="text-align: right;">结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>固定战斗基线（优化前，中位数）</td>
+<td style="text-align: right;">291.343 ms</td>
+</tr>
+<tr>
+<td>固定战斗优化后（中位数）</td>
+<td style="text-align: right;">40.912 ms</td>
+</tr>
+<tr>
+<td>战斗规则耗时变化</td>
+<td style="text-align: right;">约减少 86%</td>
+</tr>
+<tr>
+<td>高档敌方补子基线（优化前）</td>
+<td style="text-align: right;">13.773 ms/次</td>
+</tr>
+<tr>
+<td>高档敌方补子优化后</td>
+<td style="text-align: right;">3.557 ms/次</td>
+</tr>
+<tr>
+<td>敌方补子耗时变化</td>
+<td style="text-align: right;">约减少 74%</td>
+</tr>
+<tr>
+<td>规则断言</td>
+<td style="text-align: right;">649 条，通过</td>
+</tr>
+<tr>
+<td>战术断言</td>
+<td style="text-align: right;">1408 条，通过</td>
+</tr>
+<tr>
+<td>优化等价断言</td>
+<td style="text-align: right;">13418 条，通过</td>
+</tr>
+<tr>
+<td>横屏布局断言</td>
+<td style="text-align: right;">737 条，通过</td>
+</tr>
+<tr>
+<td>PC / Android AB 包</td>
+<td style="text-align: right;">各 19 个，构建成功</td>
+</tr>
+<tr>
+<td>AB 隐式重复依赖</td>
+<td style="text-align: right;">141 → 0</td>
+</tr>
+<tr>
+<td>AB 循环依赖</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>AB 实际 Play 资源加载</td>
+<td style="text-align: right;">199 个资源通过</td>
+</tr>
+<tr>
+<td>完整两组 66 回合战役回放</td>
+<td style="text-align: right;">全部取胜</td>
+</tr>
+<tr>
+<td>回合交接 Play</td>
+<td style="text-align: right;">136 条，通过</td>
+</tr>
+<tr>
+<td>动态美术 Play</td>
+<td style="text-align: right;">37 条，通过</td>
+</tr>
+<tr>
+<td>密集反馈 Play</td>
+<td style="text-align: right;">49 条，通过；本次峰值18条飘字、13条弹道</td>
+</tr>
+</tbody>
+</table></div>
+<p>AB 校验覆盖 203 条逻辑映射：199 个 GameRes 资源加 4 个位于 GameShader 的共享 Shader。PC 与 Android 的实际导出包均为 19 个；只把允许入库的 StreamingAssets 发布副本交付，外部 AssetBundles 输出仍由 Git 忽略。</p>
+<p>性能数字来自 Unity Editor 的固定输入和五次中位数，适合比较本次改动前后规则层趋势。它不等于目标手机的 FPS；上线前仍需在目标 Android 设备做 Profiler 与内存峰值测试。</p>
+<p>本机 Mono 的 <code>GC.GetAllocatedBytesForCurrentThread()</code> 对已知 100 KB 分配也返回零，因此没有拿这个无效计数器宣称“零分配”。所有回归先独立运行；三项会修改同一游戏流程的表现测试曾被同时启动导致互相干扰，随后改为串行重跑，最终证据以串行结果为准。</p>
+<h2 id="ai">新手阅读 AI 的顺序</h2>
+<ol>
+<li><code>EnemyTactics.ChooseTarget</code>：只从已合法的攻击目标中打分，不扣血。</li>
+<li><code>EnemyTactics.ChooseSafeMove</code>：在独立快照试走，先保证自己的眼和气，再比较射界、距离和玩家反击。</li>
+<li><code>EnemyTactics.TryChooseDeployment</code>：逐格试落子，评分做眼、解围、连接、压气和射界。</li>
+<li><code>BattleService.EnemyDeployment.TickEnemyDeployment</code>：负责时间、数量、空格和胜利保护，成功后才提交真实棋子并发事件。</li>
+<li><code>EnemyFormationPlanner.TryArrange</code>：回合开始先尝试两眼、一眼、合法散阵，失败不提交半套敌阵。</li>
+</ol>
+<p>AI 是可解释的一手启发式，不是职业围棋搜索。它保证安全门槛、固定顺序和可复现，不会声称“像职业棋手一样数学最优”。</p>
+<h2 id="_4">后续战斗代码必须遵守</h2>
+<ul>
+<li>棋盘占格只能走 <code>BoardModel.Place/Move/Remove/Reset</code>；这些方法会增加 <code>TopologyVersion</code>。</li>
+<li>改变棋盘拓扑、玩家加气或围困免疫后必须调用 <code>RefreshGoState</code>。单纯掉血不改变气眼，不能重复整盘重算。</li>
+<li>规则查询优先使用调用方复用缓冲区；不得返回一个列表后又在嵌套查询中复用同一个列表。</li>
+<li>AI 试算只能操作 <code>CreateSnapshot</code> 的独立棋子；不能把真实棋子移走再移回。</li>
+<li>弹幕、弹道、棋子视图使用 <code>RevPool</code>；回池时取消计时器/Tween，异步回调需检查阶段代次。</li>
+<li>棋子和 UI 使用共享材质；禁止每帧访问 <code>renderer.material</code> 造成材质实例。</li>
+<li>任何“零 GC、极致性能、必定手机 60 FPS”都必须先有目标设备实测证据。本仓库当前只承诺编辑器规则层的对照数据。</li>
+<li>AB 发布使用 <code>GameResourceBuild.Configure</code>、<code>Build</code>、<code>BuildAndCopy</code>；外部 <code>AssetBundles/</code> 目录忽略，<code>Assets/StreamingAssets/</code> 平台目录允许入库。</li>
+</ul>
+<h2 id="_5">框架可行性结论</h2>
+<p>Revolution 的资源、对象池、事件、固定计时、UI 面板、Excel 导表和 AB 分包能够支撑本项目闭环。真实 AB Play 已加载 199 个 GameRes 资源并通过 Shader、背景比例、序列帧与共享材质验收。依赖分析工具现在把共享资源作为显式包管理，避免四个业务包重复携带同一批帧。框架快照本身没有被修改；项目通过公开门面和编辑器扩展接入。</p>
+<p>本次确认的框架边界：当前快照在 Edit 模式设置 <code>UseABInEditor</code> 时会尝试创建持久宿主，所以本次在 Play 内切换并最终恢复编辑器直读；资源句柄没有技能旧描述中的 <code>BundleName</code>，验收改为确认实际已加载的 AssetBundle。两点均未绕过契约修改框架内核。</p>
+<h2 id="_6">仍未完成或需要外部条件</h2>
+<ul>
+<li>正式关卡血量、攻击力和敌方阵容仍需用户提供最终 Excel 数值。</li>
+<li>未声称完成专业级围棋搜索、网络同步、存档和真机性能认证。</li>
+<li>目标 Android 设备上的 GPU、内存和温度数据需要在设备上采集。</li>
+<li>视频链接只作为美术风格参考；项目实现的是本地单 Pass Shader 和 DOTween 演出，不复制视频素材。</li>
+</ul>
+<h2 id="_7">实际画面与测量证据</h2>
+<p>下图来自本次真实 Unity Play 的 1920×1080 渲染。绿色格子是选中手牌后的合法落点提示，不是背景颜色。动画预览为原始30帧缩小后的GIF；模型暂停，画面中的背景/UI材质和棋子序列帧继续播放。</p>
+<p><img alt="动态背景、六牌与棋子" src="战斗性能与资源验收图/动态背景与棋子.gif" /></p>
+<p><img alt="密集反馈验收" src="战斗性能与资源验收图/密集战斗-1920x1080.png" /></p>
+<p>测量原始数据：<a href="战斗性能与资源验收图/performance-before.txt">优化前</a>、<a href="战斗性能与资源验收图/performance-after-final.txt">优化后</a>、<a href="战斗性能与资源验收图/performance-regression.txt">战役回归</a>。</p>
+<h2 id="_8">目录索引与分包</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>入口</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Assets/GameScripts/Battle/AI</td>
+<td>EnemyTactics、EnemyFormationPlanner；战术评分和初始布阵</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Battle/Rules</td>
+<td>MoveRules；射程与移动合法候选</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Board/Model、Board/Rules</td>
+<td>占格版本、棋群与气眼</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Services/Battle/Contracts</td>
+<td>面向流程/UI的服务接口</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Services/Battle/Simulation、AI</td>
+<td>模拟步、攻击、敌方落子时钟</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Services/Battle/Preparation、Support、Progression</td>
+<td>准备/手牌/换位、增益与援军、关卡推进</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/UI/Panels、UI/Items、UI/Layout、UI/Effects</td>
+<td>面板、卡片、横屏布局和着色坐标</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/View/Board、View/Pieces、View/Combat</td>
+<td>棋盘、棋子、弹道/飘字/事件提示</td>
+</tr>
+<tr>
+<td>Assets/Editor/RevGame/ResourceBuild</td>
+<td>项目分包入口，内部调用Revolution公开编辑器工具</td>
+</tr>
+<tr>
+<td>Assets/GameRes/UI/Panel、UI/Item</td>
+<td>UI面板预制体与可池化零件分开</td>
+</tr>
+<tr>
+<td>Assets/GameRes/Art/Pieces、Art/Status</td>
+<td>按阵营/种类分类的共享棋子帧、被围三帧</td>
+</tr>
+<tr>
+<td>Assets/GameShader/Pieces、Assets/GameRes/Material/Pieces</td>
+<td>棋子Shader源码与共享材质</td>
+</tr>
+</tbody>
+</table></div>
+<p>19个包：ui_panels、ui_items、art_ui、font_cjk、battle_board、battle_units、battle_boss、config_piece_art、battle_feedback、data_tables、material_cards、material_ui、material_background、material_pieces、audio_bgm、audio_sfx、shared_piece_frames、shared_status、shared_shaders。</p>
+<p>共享资源依赖为单向：业务预制体/材质依赖共享帧或Shader。Data根目录保持框架Excel导出约定，Generated保持生成代码位置。SpriteMigration.tsv保留138项旧路径、新路径和原GUID，便于核对素材来源。</p></main></body></html>
