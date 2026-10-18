@@ -139,22 +139,7 @@ namespace RevGame.Services
         /// <summary>寻找不破坏现有眼阵的安全空格加入强援；全盘无安全格时转换为攻击加成。</summary>
         private void SpawnPreparationElite()
         {
-            for (int y = 0; y < Consts.BoardSize; y++)
-            {
-                for (int x = 0; x < Consts.BoardSize; x++)
-                {
-                    var pos = new BoardPos(x, y);
-                    if (!CanSupportFit(pos, 1)) { continue; }
-                    // 援军体型明确为一格，不能为了免费增益挤占/拆掉玩家的一眼和两眼。
-                    var elite = new Piece(_nextPieceId++, PieceCatalog.Get(PieceKind.Crossbow, StarTier.Two), GameSide.Player, 1);
-                    _board.Place(elite, pos);
-                    _playerPieces.Add(elite);
-                    ApplyPreparationToNewPiece(elite);
-                    RefreshGoState();
-                    RevEvent.DispatchEvent<int>(Events.PiecePlaced, elite.Id);
-                    return;
-                }
-            }
+            if (TryDeployReinforcement(PieceKind.Crossbow, StarTier.Two)) { return; }
             _prepAttack += 0.1f;
             RevEvent.DispatchEvent<string>(Events.BattleLog, "重弩援军：无安全空格，改为本轮全队攻击加成+10%");
         }

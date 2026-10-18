@@ -47,6 +47,11 @@ namespace RevGame.View
             _onFinished = onFinished;
             titleText.text = title;
             detailText.text = config.Detail;
+            // 每次出池显式恢复字体状态，不能依赖上一次显示的是准备横幅还是升级提示。
+            titleText.fontStyle = detailText.fontStyle = FontStyle.Bold;
+            titleText.alignment = detailText.alignment = TextAnchor.MiddleCenter;
+            detailText.fontSize = 27;
+            detailText.color = Color.white;
             titleText.fontSize = config.FontSize;
             titleText.color = GameTextConfig.ColorOf(config);
             icon.sprite = sprite;
@@ -76,7 +81,7 @@ namespace RevGame.View
             _animation = sequence.OnComplete(Finish);
         }
 
-        /// <summary>准备增益专用：右侧飞入→停1.25秒→放大回弹→飞出左侧；对象仍由框架池回收。</summary>
+        /// <summary>准备增益：右侧进入中央后立即弹跳0.5秒，再停0.25秒，最后飞出左侧；对象由框架池回收。</summary>
         public void ShowPreparation(string title, string detail, Action<BattleEventNoticeView> onFinished)
         {
             StopAnimation();
@@ -106,9 +111,10 @@ namespace RevGame.View
             ApplySafeLayout();
             Sequence sequence = DOTween.Sequence().SetUpdate(true);
             sequence.Append(DOTween.To(() => _slide, x => _slide = x, 0f, 0.46f).SetEase(Ease.OutCubic));
-            sequence.AppendInterval(1.25f);
-            sequence.Append(DOTween.To(() => rect.localScale, x => rect.localScale = x, Vector3.one * _peakScale, 0.16f).SetEase(Ease.OutQuad));
-            sequence.Append(DOTween.To(() => rect.localScale, x => rect.localScale = x, Vector3.one, 0.24f).SetEase(Ease.OutBack));
+            // 到中央立刻开始冲击：0.2秒放大+0.3秒回弹，总共0.5秒；回弹后仅停0.25秒便离场。
+            sequence.Append(DOTween.To(() => rect.localScale, x => rect.localScale = x, Vector3.one * _peakScale, 0.2f).SetEase(Ease.OutQuad));
+            sequence.Append(DOTween.To(() => rect.localScale, x => rect.localScale = x, Vector3.one, 0.3f).SetEase(Ease.OutBack));
+            sequence.AppendInterval(0.25f);
             sequence.Append(DOTween.To(() => _slide, x => _slide = x, -1f, 0.46f).SetEase(Ease.InCubic));
             _animation = sequence.OnComplete(Finish);
         }
@@ -153,7 +159,8 @@ namespace RevGame.View
             float width = rect.sizeDelta.x;
             float height = rect.sizeDelta.y;
             SetChildRect(icon.rectTransform, new Vector2(-width * 0.40f, height * 0.15f), new Vector2(width * 0.12f, height * 0.35f));
-            SetChildRect(titleText.rectTransform, new Vector2(width * 0.07f, height * 0.19f), new Vector2(width * 0.79f, height * 0.50f));
+            // 标题的几何中心必须就是底板中心；只把Text设为居中，仍会在偏移的文字框内“假居中”。
+            SetChildRect(titleText.rectTransform, new Vector2(0f, height * 0.19f), new Vector2(width * 0.78f, height * 0.50f));
             SetChildRect(detailText.rectTransform, new Vector2(0f, -height * 0.27f), new Vector2(width * 0.94f, height * 0.34f));
             titleText.resizeTextForBestFit = detailText.resizeTextForBestFit = true;
             titleText.resizeTextMinSize = detailText.resizeTextMinSize = 14;
@@ -164,6 +171,7 @@ namespace RevGame.View
         private static void SetChildRect(RectTransform rect, Vector2 center, Vector2 size)
         {
             rect.anchorMin = rect.anchorMax = Vector2.one * 0.5f;
+            rect.pivot = Vector2.one * 0.5f;
             rect.anchoredPosition = center;
             rect.sizeDelta = size;
         }

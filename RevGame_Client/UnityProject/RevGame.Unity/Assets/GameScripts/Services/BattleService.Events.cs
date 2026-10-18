@@ -284,81 +284,18 @@ namespace RevGame.Services
             return n;
         }
 
-        /// <summary>自动援军不能填进现有眼位；手动落子可主动拆眼，但自动增益必须保护阵型。</summary>
-        private bool CanSupportFit(BoardPos pos, int size)
+        /// <summary>自动援军不能填己方眼；远程也不闯敌眼，近战试放可开放敌眼，但仍须通过气眼与攻击预检。</summary>
+        private bool CanSupportFit(BoardPos pos, int size, bool allowEnemyEyes = false)
         {
-            if (!_board.CanFit(pos, size, GameSide.Player)) { return false; }
+            if (!_board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: !allowEnemyEyes)) { return false; }
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
                 {
-                    if (_board.GetCell(new BoardPos(pos.X + x, pos.Y + y)).IsEyeMarked) { return false; }
+                    Cell cell = _board.GetCell(new BoardPos(pos.X + x, pos.Y + y));
+                    if (cell.IsEyeMarked && (!allowEnemyEyes || cell.EyeSide == GameSide.Player)) { return false; }
                 }
             }
-            return true;
-        }
-
-        private bool ReinforceFromHand()
-        {
-            if (Hand.Count == 0)
-            {
-                if (VictoryAssistEnabled)
-                {
-                    // 六张牌都落完仍能获得援军；自动支援不占玩家的六次落子额度。
-                    for (int y = 0; y < Consts.BoardSize / 2; y++)
-                    {
-                        for (int x = 0; x < Consts.BoardSize; x++)
-                        {
-                            var pos = new BoardPos(x, y);
-                            if (CanSupportFit(pos, 1))
-                            {
-                                // 全部六牌已落完也有援军。己方远程全灭时补弓箭，而不是再加一个够不着敌人的盾战。
-                                bool hasRanged = _playerPieces.Exists(p => p.IsAlive && p.Def.IsRanged);
-                                SpawnSupport(pos, hasRanged ? PieceKind.Shield : PieceKind.Archer);
-                                return true;
-                            }
-                        }
-                    }
-                }
-
-                return false;
-            }
-
-            HandCard card = Hand[0];
-            int size = card.Star == StarTier.Three ? 2 : 1;
-            BoardPos best = new BoardPos(-1, -1);
-            int score = -1;
-            for (int y = 0; y < Consts.BoardSize; y++)
-            {
-                for (int x = 0; x < Consts.BoardSize; x++)
-                {
-                    var pos = new BoardPos(x, y);
-                    if (!CanSupportFit(pos, size))
-                    {
-                        continue;
-                    }
-
-                    int candidate = FreeNeighbors(pos);
-                    if (candidate > score)
-                    {
-                        best = pos;
-                        score = candidate;
-                    }
-                }
-            }
-
-            if (score < 0)
-            {
-                return false;
-            }
-
-            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(card.Kind, card.Star), GameSide.Player);
-            _board.Place(piece, best);
-            _playerPieces.Add(piece);
-            _hand.Remove(card.Id);
-            RevEvent.DispatchEvent<int>(Events.PiecePlaced, piece.Id);
-            RevEvent.DispatchEvent(Events.HandChanged);
-            ApplyPreparationToNewPiece(piece);
             return true;
         }
 
@@ -493,6 +430,12 @@ namespace RevGame.Services
             if (!target.IsAlive)
             {
                 _board.Remove(target);
+                // 玩家可能刚选中这颗棋子准备换位；死亡后清选择，不能留下一个指向已移除棋子的编号。
+                if (SelectedPieceId == target.Id)
+                {
+                    SelectedPieceId = 0;
+                    RevEvent.DispatchEvent(Events.SelectionChanged);
+                }
                 RevEvent.DispatchEvent<int>(Events.PieceDied, target.Id);
             }
 

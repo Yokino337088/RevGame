@@ -35,23 +35,23 @@ namespace RevGame.Services
             Piece player = battle._playerPieces[0];
             int hand = battle.Hand.Count;
             int remaining = battle.CardsRemaining;
-            check(battle.HandlePrepareClick(player.Pos) && battle.SelectedPieceId == player.Id, "点己方棋子选中");
+            check(battle.HandleBoardClick(player.Pos) && battle.SelectedPieceId == player.Id, "点己方棋子选中");
             string before = battle._board.Dump();
-            check(!battle.HandlePrepareClick(new BoardPos(0, 7)) && battle._board.Dump() == before, "已占格换位失败，不改棋盘");
-            check(!battle.HandlePrepareClick(new BoardPos(-1, 0)) && player.Pos == new BoardPos(0, 8), "越界换位保留原位");
-            check(battle.HandlePrepareClick(new BoardPos(4, 4)) && player.Pos == new BoardPos(4, 4), "已选棋子移动到全盘空格");
+            check(!battle.HandleBoardClick(new BoardPos(0, 7)) && battle._board.Dump() == before, "已占格换位失败，不改棋盘");
+            check(!battle.HandleBoardClick(new BoardPos(-1, 0)) && player.Pos == new BoardPos(0, 8), "越界换位保留原位");
+            check(battle.HandleBoardClick(new BoardPos(4, 4)) && player.Pos == new BoardPos(4, 4), "已选棋子移动到全盘空格");
             check(battle.Hand.Count == hand && battle.CardsRemaining == remaining && battle.SelectedPieceId == 0, "换位不扣牌不扣额度，并清除选择");
-            battle.HandlePrepareClick(player.Pos);
+            battle.HandleBoardClick(player.Pos);
             battle._hand.Add(PieceKind.Archer, StarTier.One);
             int second = battle.Hand[0].Id;
             check(battle.SelectCard(second) && battle.SelectedPieceId == 0, "选手牌清除棋子选择");
 
             battle = new BattleService(false);
             Piece large = battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(3, 3), StarTier.Three);
-            battle.HandlePrepareClick(large.Pos);
+            battle.HandleBoardClick(large.Pos);
             before = battle._board.Dump();
-            check(!battle.HandlePrepareClick(new BoardPos(8, 6)) && battle._board.Dump() == before, "2×2 身体越界失败，四格占用完整保留");
-            check(battle.HandlePrepareClick(new BoardPos(6, 6)) && battle._board.GetPiece(new BoardPos(7, 7)) == large && battle._board.GetPiece(new BoardPos(3, 3)) == null, "大棋整体重摆，无旧占格残留");
+            check(!battle.HandleBoardClick(new BoardPos(8, 6)) && battle._board.Dump() == before, "2×2 身体越界失败，四格占用完整保留");
+            check(battle.HandleBoardClick(new BoardPos(6, 6)) && battle._board.GetPiece(new BoardPos(7, 7)) == large && battle._board.GetPiece(new BoardPos(3, 3)) == null, "大棋整体重摆，无旧占格残留");
 
             battle = new BattleService(false);
             player = battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(0, 0));
@@ -73,7 +73,31 @@ namespace RevGame.Services
             battle.StartBattle();
             battle.Tick(5f);
             check(player.Pos == new BoardPos(0, 0) && enemy.Hp < enemy.MaxHp, "我方远程原地跨盘弹幕真实命中，打破直线两格限制");
-            check(!battle.HandlePrepareClick(new BoardPos(3, 3)), "战斗中拒绝人工换位");
+            check(!battle.HandleBoardClick(new BoardPos(3, 3)), "战斗未选择棋子时不能凭空换位或落手牌");
+            int oldHp = player.Hp;
+            float oldProgress = player.ActionProgress;
+            check(battle.HandleBoardClick(player.Pos) && battle.CanPlaySelectedAt(new BoardPos(3, 3)), "战斗中点己方棋可选中并高亮空格");
+            check(battle.HandleBoardClick(new BoardPos(3, 3)) && player.Pos == new BoardPos(3, 3), "战斗中真实手动换位");
+            check(player.Hp == oldHp && player.ActionProgress == oldProgress, "战斗换位不回血、不重置攻击进度");
+            check(!battle.HandleBoardClick(enemy.Pos) && battle.SelectedPieceId == 0, "不能选择敌棋换位");
+            battle.HandleBoardClick(player.Pos);
+            battle.DamagePiece(player, player.MaxHp);
+            check(battle.SelectedPieceId == 0 && battle.Board.GetPiece(new BoardPos(3, 3)) == null, "选中棋子战死后清除选择和旧占格");
+
+            battle = new BattleService(false);
+            large = battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(3, 3), StarTier.Three);
+            battle.AddCheckPiece(GameSide.Enemy, PieceKind.Archer, new BoardPos(8, 8));
+            battle._hand.Add(PieceKind.Swordman, StarTier.One);
+            battle.StartBattle();
+            large.TakeDamage(30);
+            large.ShieldCharges = 2;
+            check(battle.HandleBoardClick(new BoardPos(4, 4)) && battle.SelectedPieceId == large.Id, "战斗中点击大棋任何身体格均选中同一颗棋");
+            before = battle._board.Dump();
+            check(!battle.HandleBoardClick(new BoardPos(8, 5)) && battle._board.Dump() == before, "战斗大棋越界预检失败不留半颗棋");
+            check(battle.HandleBoardClick(new BoardPos(6, 4)) && battle._board.GetPiece(new BoardPos(7, 5)) == large, "战斗大棋完整搬移四格");
+            check(large.Hp == large.MaxHp - 30 && large.ShieldCharges == 2 && battle.Hand.Count == 1, "换位保持伤势护盾与剩余手牌");
+            battle.Phase = GamePhase.Settle;
+            check(!battle.HandleBoardClick(large.Pos), "结算期间拒绝棋盘操作");
 
             battle = new BattleService(false);
             player = battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(3, 3));

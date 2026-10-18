@@ -55,9 +55,9 @@ namespace RevGame.Bootstrap
                 return BattleResult(RevServices.GetRequired<IBattleService>().TryPlayCard(args.Int(0, 0), pos));
             }, RevGMArg.Int("牌编号"), RevGMArg.Int("X"), RevGMArg.Int("Y"));
             RevGM.Register("RevGame/刷新手牌", "准备期重抽剩余手牌，不补额度", args => BattleResult(Logic().RefreshHand()));
-            RevGM.Register("RevGame/点棋盘", "准备期点己方棋子选中，再点空格免费换位；与触屏同一入口", args =>
+            RevGM.Register("RevGame/点棋盘", "准备或战斗时点己方棋子，再点空格换位；与触屏同一入口", args =>
             {
-                return BattleResult(Logic().PlaySelectedCard(new BoardPos(args.Int(0, 0), args.Int(1, 0))));
+                return BattleResult(Logic().ClickBoard(new BoardPos(args.Int(0, 0), args.Int(1, 0))));
             }, RevGMArg.Int("X"), RevGMArg.Int("Y"));
             RevGM.Register("RevGame/选奖励", "选择0~2号奖励", args => BattleResult(Logic().ChooseReward(args.Int(0, 0))), RevGMArg.Int("选项"));
             RevGM.Register("RevGame/跳过", "第10回合未落牌时跳过换攻击强化", args => BattleResult(Logic().SkipRound()));

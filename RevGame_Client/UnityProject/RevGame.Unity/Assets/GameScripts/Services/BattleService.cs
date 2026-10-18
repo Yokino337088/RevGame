@@ -249,14 +249,9 @@ namespace RevGame.Services
 
         public bool CanPlaySelectedAt(BoardPos pos)
         {
-            if (Phase != GamePhase.Prepare)
+            if (Phase != GamePhase.Prepare && Phase != GamePhase.Battle)
             {
                 return false;
-            }
-
-            if (EyeStoneSelected)
-            {
-                return EyeStones > 0 && CanCompleteEye(pos);
             }
 
             Piece selected = FindSelectedPiece();
@@ -264,6 +259,10 @@ namespace RevGame.Services
             {
                 return _board.CanFit(pos, selected.Size, GameSide.Player, selected, respectEnemyEyes: false);
             }
+
+            // 战斗中高亮仅来自已选己方棋子的换位范围，不能把剩余手牌当作可落牌状态。
+            if (Phase != GamePhase.Prepare) { return false; }
+            if (EyeStoneSelected) { return EyeStones > 0 && CanCompleteEye(pos); }
 
             HandCard card = _hand.Find(SelectedCardId);
             if (card == null || CardsRemaining <= 0)
@@ -310,6 +309,8 @@ namespace RevGame.Services
         {
             _hand.Clear();
             SelectedCardId = 0;
+            SelectedPieceId = 0;
+            EyeStoneSelected = false;
             // ★ 每回合重新发满六张，与上轮剩余一张/零张无关。
             // 奖励牌先占一个名额，再抽齐其余牌，不能追加后因超限被悄悄丢掉。
             if (_rewardCard.HasValue)
@@ -624,6 +625,8 @@ namespace RevGame.Services
             _lastWinner = winner;
             _hand.Clear();
             SelectedCardId = 0;
+            SelectedPieceId = 0;
+            EyeStoneSelected = false;
             RevEvent.DispatchEvent(Events.HandChanged);
             Phase = GamePhase.Settle;
             RevEvent.DispatchEvent<GameSide>(Events.PhaseEnterSettle, winner);

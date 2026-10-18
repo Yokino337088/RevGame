@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RevGame-战斗可读性与援军修复-2026-10-18</title><style>
+:root{--ink:#203149;--muted:#5f6f80;--line:#d9e2ea;--paper:#fff;--accent:#126b73;--soft:#edf6f6;--page:#eef2f6}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--page);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;font-size:16px;line-height:1.85}.document{max-width:1180px;margin:36px auto;background:var(--paper);padding:48px 58px 62px;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px #2031490a}h1{font-size:34px;line-height:1.45;margin:0 0 14px;letter-spacing:.03em;color:#13283e;border-top:7px solid var(--accent);padding-top:22px}h2{font-size:24px;line-height:1.5;margin:50px 0 18px;padding:10px 0 10px 16px;border-left:5px solid var(--accent);background:linear-gradient(90deg,var(--soft),#fff);scroll-margin-top:24px}h3{font-size:19px;line-height:1.6;margin:32px 0 12px;color:#215469}p{margin:13px 0}a{color:#0d6578;text-underline-offset:3px;overflow-wrap:anywhere}a:hover{color:#043b4d}a[id]{display:block;scroll-margin-top:18px}strong{font-weight:700;color:#152d45}code{font-family:Consolas,"Microsoft YaHei",monospace;font-size:.9em;border:1px solid #dee8ee;background:#f2f6f9;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}li{margin:8px 0}ul,ol{padding-left:26px}.table-scroll{width:100%;overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;line-height:1.8;margin:0}th,td{vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--line);border-right:1px solid #e5ebf0;min-width:130px}th{background:#eaf1f5;color:#183d53;font-weight:700}th:last-child,td:last-child{border-right:0}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafc}td:first-child{font-weight:600;min-width:145px}td p:first-child{margin-top:0}td p:last-child{margin-bottom:0}.status{display:inline-block;white-space:nowrap;padding:2px 10px;border-radius:5px;font-size:13px;font-weight:700}.done{color:#176442;background:#e4f4eb}.partial{color:#795411;background:#fff2d5}.todo{color:#67556f;background:#f0eaf4}h2[id="section"]+ul,h2[id="目录"]+ul{padding:18px 32px;background:#f4f8fb;border:1px solid var(--line);border-radius:8px;columns:2;column-gap:32px}h1+p{font-size:14px;color:var(--muted)}blockquote{margin:20px 0;padding:8px 20px;background:var(--soft);border-left:4px solid var(--accent)}@media(max-width:800px){body{font-size:15px}.document{margin:0;padding:26px 20px 42px;border:0;border-radius:0;box-shadow:none}h1{font-size:27px}h2{font-size:21px;margin-top:34px}h3{font-size:18px}th,td{padding:10px 12px;font-size:13px}table{min-width:680px}h2[id="section"]+ul,h2[id="目录"]+ul{columns:1;padding:14px 24px}code{word-break:break-word}}@media print{@page{size:A4;margin:16mm 13mm}html{scroll-behavior:auto}body{background:#fff;font-size:10pt;line-height:1.65}.document{max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none}h1{font-size:23pt;border-top-width:4px}h2{font-size:16pt;margin-top:24pt;background:none;break-after:avoid}h3{font-size:12pt;break-after:avoid}a{color:inherit;text-decoration:none}code{font-size:8.5pt;padding:0 2px;background:none;border:0}.table-scroll{overflow:visible;border-radius:0;break-inside:auto}table{font-size:8pt;min-width:0;line-height:1.5;table-layout:fixed}th,td{padding:6px;min-width:0;overflow-wrap:anywhere}td:first-child{min-width:0}tr{break-inside:avoid}thead{display:table-header-group}.status{padding:0;font-size:8pt;background:none}.document>ul{columns:1}p,li{orphans:3;widows:3}}
+
+img{display:block;max-width:100%;height:auto;margin:18px auto;border:1px solid var(--line);border-radius:8px}pre{overflow:auto;padding:18px;background:#f2f6f9;border:1px solid var(--line);border-radius:8px;line-height:1.6}pre code{border:0;padding:0;white-space:pre;overflow-wrap:normal}blockquote p{margin:8px 0}.document{overflow-wrap:anywhere}</style></head><body><main class="document"><h1 id="revgame">RevGame 战斗可读性、援军与战斗换位验收</h1>
+<p>2026-10-18 · Unity 2022.3.15f1c1 · 1920×1080 手机横屏 · 每轮六张手牌</p>
+<h2 id="_1">本轮结果</h2>
+<p>已完成战斗飘字控频与避让、重叠下层半透明、准备增益新动画、战斗事件文字居中、援军按兵种选位，以及战斗中点击己方棋子换位。关键接口、字段、候选评分、异步预约和回收逻辑均增加中文注释，说明为何这样处理、失败时保留什么。</p>
+<p>本项目首先验证 Revolution 框架在真实业务中的可行性。此次继续由服务负责规则、事件携带快照、RevPool 复用表现对象、DOTween 播放动画；未修改 Assets/Revolution 框架快照。当前交付仍是可玩的框架验证原型，正式数值、全策略平衡和手机性能验收尚未完成。</p>
+<h2 id="_2">弹幕如何减少并保持可读</h2>
+<p>这里的“飘字”指棋盘上的攻击口号和伤害数字。升级、准备增益、战斗事件仍由 HUD 的独立池化提示负责，沿用阶段清理和串行/替换播报规则。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>当前规则</th>
+<th>为什么这样处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同时显示文字</td>
+<td>攻击口号与数字合计最多6条，包括已申请但尚未加载好的池对象</td>
+<td>防止同帧异步加载完成后突破数量上限。</td>
+</tr>
+<tr>
+<td>新文字间隔</td>
+<td>至少0.16秒</td>
+<td>不把所有反馈挤在同一帧。</td>
+</tr>
+<tr>
+<td>攻击口号</td>
+<td>同时最多2条；全场至少间隔0.9秒；同一棋子至少间隔3.5秒</td>
+<td>口号为低优先级装饰，有伤害数字待播时主动让位。</td>
+</tr>
+<tr>
+<td>同目标连续伤害</td>
+<td>首次命中约0.32秒后显示累加数字</td>
+<td>例如120次、每次3点的表现快照只显示一个360。真实扣血仍按每次命中结算。</td>
+</tr>
+<tr>
+<td>待播数字</td>
+<td>最多12个目标，等待超过1.2秒丢弃旧显示</td>
+<td>防止几秒后的屏幕还在补播已经结束的攻击。</td>
+</tr>
+<tr>
+<td>弹道</td>
+<td>最多6条，生成至少间隔0.065秒</td>
+<td>密集连击不会变成线条墙。</td>
+</tr>
+<tr>
+<td>单条文字</td>
+<td>数字最长1.1秒、攻击口号最长0.9秒；峰值放大最多1.12倍</td>
+<td>保留冲击感并尽快腾出视野。</td>
+</tr>
+<tr>
+<td>文字宽度</td>
+<td>数字最多约屏宽5.5%，口号最多约9%</td>
+<td>防止长文案占满棋盘。原文案、基础字号和颜色继续读取导表数据。</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>这些限制只筛选表现，绝不减少真实伤害、攻击次数或增益效果。</strong> 达到预算时，略过装饰弹道/口号，数字合并或丢弃过期显示，不回写模型。</p>
+<p>避让不是简单地把文字固定排成一列。视图读取文字的实际屏幕包围盒，提前计入放大和上浮范围，在周围12个位置试算，优先选择不重叠、且离原受击位置较近的候选。文字被限制在棋盘可见区域内，避免挤进顶部信息栏、右侧面板和屏幕外。</p>
+<p>动画期间每帧继续检查实际矩形。如仍发生相交，按递增显示序号判断前后关系，把旧的下层文字降至35%透明度。遮挡透明度与动画淡出透明度相乘，不能把正在消失的字重新点亮。最多6条文字，成对检查最多36次。</p>
+<p>弹道使用 Simple 绘制，并按源 Sprite 的实际尺寸归一化为0.38×0.10世界单位。该源图本身宽约6.17世界单位，直接依赖原图尺寸会造成过长的弹道；现在实际短弹包围盒已通过 Play 检查。</p>
+<h2 id="_3">准备增益与战斗事件提示</h2>
+<p>准备期开始3秒后统一发放本轮3～5种增益，生效时间不由动画决定。横幅继续串行播放，每条的新时序为：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>时长</th>
+<th>动画</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>从右侧屏外飞入中央</td>
+<td>0.46秒</td>
+<td>OutCubic减速进入。</td>
+</tr>
+<tr>
+<td>到中央立刻放大并回弹</td>
+<td>0.50秒</td>
+<td>0.20秒放大至1.12倍，0.30秒回到原尺寸。</td>
+</tr>
+<tr>
+<td>回弹后短暂停留</td>
+<td>0.25秒</td>
+<td>留在中央。</td>
+</tr>
+<tr>
+<td>飞出左侧屏外</td>
+<td>0.46秒</td>
+<td>InCubic加速离场。</td>
+</tr>
+<tr>
+<td>合计</td>
+<td>1.67秒</td>
+<td>已删除原先到中央后先停1.25秒的流程。</td>
+</tr>
+</tbody>
+</table></div>
+<p>战斗事件和升级提示的标题、说明均为粗体居中。除了设置 Text.alignment，也把文字框的锚点、中心和横向偏移统一到面板中心，修复“文字在偏右的框里居中”的问题。BattleEventNotice 预制体通过 Unity MCP 保存，生成工具同步同一坐标，避免重建后复发。</p>
+<h2 id="_4">天降援兵如何选棋、落棋</h2>
+<ol>
+<li>优先尝试远程手牌，同类候选按攻击力降序、牌编号稳定排序；实际部署至少二星，三星仍按完整2×2身体处理。</li>
+<li>先在棋盘深快照里找到合法落点，再一次性提交和消费手牌。不占玩家手动落子次数，不计入两张同类牌的升级累计。</li>
+<li>没有可部署手牌时，默认开启的辅助模式尝试免费二星重弩。无合法位置时沿用事件失败/支援兜底，不覆盖棋子硬塞。</li>
+</ol>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>兵种</th>
+<th>候选选择规则</th>
+<th>安全约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>远程</td>
+<td>靠近最大的己方连通阵营，同时远离敌人；距敌不超过2格受到明显评分惩罚</td>
+<td>不填己方眼、不闯敌眼、不堵死同伴。</td>
+</tr>
+<tr>
+<td>近战</td>
+<td>必须由真实攻击规则找到可攻击目标，优先可用敌眼，再考虑贴敌位置</td>
+<td>可尝试敌方空眼；若落下后零气锁死、不能攻击则拒绝。拥有免围困增益时可突入并攻击。</td>
+</tr>
+</tbody>
+</table></div>
+<p>每个候选都会刷新快照中的气和眼，比较旧棋眼数及是否从有气变为零气，防止自动增兵拆己方阵型。距离按两块棋子身体最近边缘计算，大棋不只拿左下角算。一次选位仅复制一份棋盘，逐格试放后移除，实战状态不被候选试算污染。</p>
+<p>准备增益中的免费重弩也复用相同选位；如果没有安全格，沿用攻击力+10%的替代奖励。</p>
+<p>强援提高了早期输出，为保持原有首关至少15秒的节奏回归，本轮将敌方基础生命系数由9.6调整为10.8：<code>10.8 × (1 + P × 0.018)</code>，其中<code>P = (章 - 1) × 11 + 回合 - 1</code>。首关固定样本从14.375秒回到15.625秒；未改通关保底机制。这仍是原型参数，不能视为正式数值定稿。</p>
+<h2 id="_5">战斗中怎么换位</h2>
+<p>准备和战斗阶段统一调用 <code>IBattleService.HandleBoardClick</code>：<strong>点一颗存活的己方棋子，再点空格换位</strong>；再次点当前选中的棋子可取消选择。流程由 <code>BoardView.OnCellClicked → BattleLogic.ClickBoard → HandleBoardClick</code> 转发。</p>
+<ul>
+<li>战斗期只允许调整已在场己方棋，不能使用剩余手牌或眼位石。</li>
+<li>大棋先检查所有身体格，不能越界、覆盖他棋；失败完整保留原棋和当前选择。</li>
+<li>手动换位保留编号、生命、护盾和攻击进度，不能靠反复点击回血或立即攻击。</li>
+<li>玩家可主动拆眼或进入敌方空眼；自动 AI 仍遵守原有保眼与移动冷却规则。</li>
+<li>选中棋死亡、进入结算或开始新轮后清选择，避免留下指向旧棋的编号。</li>
+</ul>
+<h2 id="_6">代码入口与新手阅读顺序</h2>
+<p>以下路径均相对 Unity 工程目录。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>建议关注的方法与职责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Assets/GameScripts/Services/IBattleService.cs</td>
+<td><code>HandleBoardClick</code>接口与阶段约束；UI只能转发合法动作。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Services/BattleService.Placement.cs</td>
+<td>点击选择、完整身体预检、成功后移动与刷新气眼。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Services/BattleService.Reinforcement.cs</td>
+<td>选强援、深快照试放、远程/近战评分、保阵、按身体算距离。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/Services/BattleService.Events.cs / Preparation.cs</td>
+<td>事件消费与准备支援复用，死亡时清选择。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/View/BoardView.Feedback.cs</td>
+<td>显示预算、异步预约、伤害聚合、12候选避让、遮挡检查与重置。partial只是同一个BoardView分文件。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/View/BoardView.cs</td>
+<td>接收真实战斗快照、从RevPool申请实例、阶段切换归还实例。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/View/BattleEffectView.cs</td>
+<td>单个效果的DOTween、屏幕包围盒、前后顺序、遮挡透明度与短弹归一化。</td>
+</tr>
+<tr>
+<td>Assets/GameScripts/View/BattleEventNoticeView.cs</td>
+<td>准备横幅时序、普通事件文字几何居中、回池Kill(false)。</td>
+</tr>
+<tr>
+<td>Assets/Editor/RevGame/GameReadabilityChecks.cs</td>
+<td>Play密集反馈与真实点击入口检查，正式运行时代码不依赖它。</td>
+</tr>
+</tbody>
+</table></div>
+<p>阶段切换先使旧加载代次失效，再清队列、预约计数和活动实例。旧异步回调只能归还结果，不能扣新一轮的名额。对象池归还时停止当前 Tween 并丢弃旧回调，不能 Complete 后再触发回池，也不调用全局 KillAll。</p>
+<h2 id="_7">实际验证与证据范围</h2>
+<p>通过 Unity MCP 调用本项目真实检查入口，完成编译和 Play 验收；以下为本轮实际运行结果，非仅静态阅读。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>入口</th>
+<th>本轮结果</th>
+<th>覆盖</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GameRuleChecks.Run</td>
+<td>643条通过</td>
+<td>新增23条，覆盖战斗换位、完整大棋、状态保留/死亡清选择、远程优先、安全后排、近战射程与敌眼突袭、保护己眼。</td>
+</tr>
+<tr>
+<td>GameLayoutChecks.Run</td>
+<td>737条通过</td>
+<td>横屏布局与既有安全区回归。</td>
+</tr>
+<tr>
+<td>GameTacticsChecks.Run</td>
+<td>1280条通过</td>
+<td>两组固定种子各连续66轮全胜；检查成长、AI和既有通关辅助。</td>
+</tr>
+<tr>
+<td>GameReadabilityChecks.Begin</td>
+<td>46条Play断言通过，峰值6条飘字</td>
+<td>120次同目标合并成360且模型无额外扣血、100目标队列有界、短弹、避让、强制相交下层透明、真实事件居中、战斗点击入口换位、冻结动画后切阶段清零。</td>
+</tr>
+<tr>
+<td>GameGrowthPresentationChecks.Begin</td>
+<td>23条Play断言通过</td>
+<td>准备横幅1.67秒及中央即回弹、Boss可见Sprite换帧、进度条缓动。</td>
+</tr>
+<tr>
+<td>GameRoundPresentationChecks.Begin</td>
+<td>136条Play断言通过</td>
+<td>六牌、回合表现和跨轮清理回归。</td>
+</tr>
+<tr>
+<td>GameFeelChecks.BeginPoolCheck</td>
+<td>通过</td>
+<td>回池Kill、复用同一实例、4秒无旧回调、Tween数量恢复。</td>
+</tr>
+</tbody>
+</table></div>
+<p>两组连续战役种子分别为20261018、701，总模拟时长5018.438秒、4977.5秒，累计触发676、673次事件。六个独立样本的战斗时长分别为：1/1为15.625秒，1/9为56.875秒，3/1为79.0625秒，3/9为80.3125秒，6/1为85.3125秒，6/9为86.25秒。样本通过说明当前回归成立，不能证明任意策略均已完成平衡。</p>
+<p><img alt="受控密集反馈的1920×1080 Play截图" src="战斗可读性验收图/密集反馈-1920x1080.png" /></p>
+<p>上图为受控表现测试：注入大量命中快照检查限额、避让和透明兜底，测试期间不扣模型生命；不能当成正常实战的伤害数值截图。换位检查调用真实 BoardView 点击处理入口，未把它描述为原生鼠标点击测试。</p>
+<p>未执行：Android/iOS真机帧率、内存与触摸验收；AB构建及AB资源加载回归；正式Excel基础血攻/阵容；全策略通关与商业级平衡。此前报告中的2.57秒横幅、准备期限定重摆、9.6基础生命倍率均为历史版本，以本报告和当前代码为准。</p>
+<h2 id="_8">当前完成度与后续</h2>
+<p>已具备主界面、选关、六牌与刷新、准备增益、全盘布阵/主动换位、气眼规则、成长敌阵与AI、自动战斗、战斗事件、Boss表现、结算和章节奖励闭环。框架已在这些业务中实际承载流程、域回收、事件、资源、对象池、导表和受控GM检查。</p>
+<p>后续仍需正式数值Excel、真机测试、存档及更完整局外成长、音效和表现打磨、人工试玩与后期对保底支援依赖的调优。不同交付标准没有统一分母，不用旧的完成百分比描述当前原型。</p>
+<p>前序成长与增益细节见<a href="RevGame-成长与准备增益验收-2026-10-18.html">成长与准备增益验收</a>，工程入口见<a href="RevGame-代码架构说明.html">代码架构说明</a>。</p></main></body></html>

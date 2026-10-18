@@ -49,10 +49,10 @@ namespace RevGame.Services
         /// <summary>本回合剩余落子额度（并非剩余手牌数）。</summary>
         int CardsRemaining { get; }
 
-        /// <summary>准备期选中的己方棋子编号，0 表示未选。它与手牌/眼位石互斥。</summary>
+        /// <summary>准备或战斗中选中的己方棋子编号，0 表示未选。它与手牌/眼位石互斥。</summary>
         int SelectedPieceId { get; }
-        /// <summary>统一棋盘点击入口：点己方棋子选中，再点空格免费重摆；有手牌时空格用于落牌。</summary>
-        bool HandlePrepareClick(BoardPos pos);
+        /// <summary>两阶段共用点击入口：点己方棋子，再点空格换位；只有准备阶段可以落手牌或眼位石。失败保留原棋。</summary>
+        bool HandleBoardClick(BoardPos pos);
         /// <summary>仅重抽当前剩余手牌，保持张数、星级和剩余落子额度。</summary>
         bool RefreshHand();
         bool SelectCard(int cardId);

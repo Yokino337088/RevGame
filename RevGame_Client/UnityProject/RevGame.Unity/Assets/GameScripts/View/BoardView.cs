@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace RevGame.View
 {
-    public sealed class BoardView : MonoBehaviour
+    public sealed partial class BoardView : MonoBehaviour
     {
         private readonly Dictionary<int, float> _attackTextAt = new Dictionary<int, float>();
         private readonly List<BoardCellView> _cells = new List<BoardCellView>();
@@ -108,7 +108,7 @@ namespace RevGame.View
                 return;
             }
 
-            logic.PlaySelectedCard(pos);
+            logic.ClickBoard(pos);
         }
 
         private Piece FindPiece(int id)
@@ -239,11 +239,11 @@ namespace RevGame.View
         /// <summary>阶段交接时立即收走旧弹幕，不等待动画自然结束；暂停的动画也必须清除。</summary>
         private void ClearRoundEffects()
         {
-            // 先让旧异步回调失效，再取消“弹道抵达后显示数字”的计时器。
-            // 仅取消计时器还不够：已发出的对象池加载请求仍可能稍后返回，因此也要核对批次。
+            // 先让旧异步回调失效，再清伤害合并队列、显示预算和所属延时操作。
+            // 仅归还已显示的物体还不够：已发出的对象池加载请求稍后返回时也必须核对批次。
             _effectGeneration++;
             RevTimer.CancelAllOf(this);
-            _attackTextAt.Clear();
+            ResetFeedbackBudget();
             foreach (BattleEffectView effect in _effects)
             {
                 if (effect != null) { RevPool.Return(effect, 0); }
@@ -273,19 +273,20 @@ namespace RevGame.View
 
         private void OnAttack(PieceAttackInfo attack)
         {
-            // 连击有多次攻击，同一逻辑步仅喊一次口号，避免两段长文字完全叠住。
-            if (_attackTextAt.TryGetValue(attack.PieceId, out float last) && Time.time - last < 0.6f) { return; }
-            _attackTextAt[attack.PieceId] = Time.time;
+            // 口号是低优先级装饰：伤害数字拥挤时直接略过口号，不能把画面排成几秒后的旧战斗。
+            if (!TryReserveAttackText(attack.PieceId)) { return; }
             BattleText config = GameTextConfig.Require("Attack_" + attack.Kind);
             Vector3 position = attack.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             position += new Vector3(attack.Size - 1, attack.Size - 1, 0f) * Consts.CellSize * 0.5f;
             int generation = _effectGeneration;
             RevPool.GetAsync<BattleEffectView>(effect =>
             {
+                if (_released || generation != _effectGeneration) { if (effect != null) { RevPool.Return(effect, 0); } return; }
+                _pendingTextLoads--;
                 if (effect == null) { RevLog.Warn("攻击文字加载失败", "RevGame"); return; }
-                if (_released || generation != _effectGeneration) { RevPool.Return(effect, 0); return; }
                 _effects.Add(effect);
-                effect.ShowAttack(config, position, OnEffectFinished);
+                _textEffects.Add(effect);
+                effect.ShowAttack(config, position, OnEffectFinished, ArrangeFloatingText);
             }, _viewRoot);
         }
 
@@ -295,17 +296,10 @@ namespace RevGame.View
             target += Vector3.one * ((hit.TargetSize - 1) * Consts.CellSize * 0.5f);
             target.z = 0f;
             Vector3 source = hit.HasAttacker ? hit.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) : target + Vector3.up * 2f;
-            ShowEffect(BattleEffectKind.Projectile, source, 0, hit.TargetSide, target);
+            if (TryReserveProjectile()) { ShowEffect(BattleEffectKind.Projectile, source, 0, hit.TargetSide, target); }
             // ★ 伤害取自扣血当刻的快照，即使受击棋子已经死亡回池，这个数字仍能正常显示。
-            // 等弹道抵达再冒字；退出战斗时 owner 计时器统一取消，不会在大厅飘出旧战斗数字。
-            int generation = _effectGeneration;
-            RevTimer.After(Consts.ProjectileSeconds, () =>
-            {
-                if (!_released && generation == _effectGeneration)
-                {
-                    ShowEffect(BattleEffectKind.Damage, target, hit.Damage, hit.TargetSide);
-                }
-            }, owner: this);
+            // 稍等弹道抵达并合并同目标连击；有界队列随阶段统一清除，不再为每次命中创建独立Timer。
+            QueueDamageText(hit, target);
         }
 
         private void OnDied(int id)
@@ -337,6 +331,7 @@ namespace RevGame.View
             {
                 if (effect == null)
                 {
+                    if (generation == _effectGeneration && kind == BattleEffectKind.Projectile) { _pendingProjectileLoads--; }
                     RevLog.Warn("战斗特效加载失败", "RevGame");
                     return;
                 }
@@ -350,6 +345,8 @@ namespace RevGame.View
                 _effects.Add(effect);
                 if (kind == BattleEffectKind.Projectile)
                 {
+                    _pendingProjectileLoads--;
+                    _projectileEffects.Add(effect);
                     effect.ShowProjectile(position, destination, OnEffectFinished);
                 }
                 else
@@ -362,6 +359,8 @@ namespace RevGame.View
         private void OnEffectFinished(BattleEffectView effect)
         {
             _effects.Remove(effect);
+            _textEffects.Remove(effect);
+            _projectileEffects.Remove(effect);
         }
 
         private void OnDisable()

@@ -1,3 +1,5 @@
+> 2026-10-18 最新修复：战斗飘字合计最多6条，同目标聚合、有界待播与空间避让，无法避让时下层35%透明；准备横幅到中央立即回弹0.5秒、停0.25秒后离场（合计1.67秒）；事件文字几何居中；强远程援军优先、安全后排/近战可攻击敌眼选位；准备及战斗均可点己方棋再点空格换位。规则643、布局737、战术1280、密集反馈Play 46、回合Play 136、成长Play 23条及池化检查通过。最新行为与证据见[RevGame-战斗可读性与援军修复-2026-10-18](RevGame-战斗可读性与援军修复-2026-10-18.md)。下方旧时序、接口和测试数字是历史记录。
+
 > 2026-10-18 最新追加：敌方6～19名及逐轮基础属性成长、四档AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、时间/Boss血条缓动、Boss真实重剑序列帧已实现。620条规则、737条布局、1280条战术、136条回合Play、23条成长Play及对象池检查通过；两组种子各连续66轮通关。升级保留Id/位置/占格，新牌照常落下。 详见[成长与准备增益验收](RevGame-成长与准备增益验收-2026-10-18.md)。下方早期规则与数字仅作历史记录。
 
 # RevGame 游戏代码架构与运行说明
@@ -8,7 +10,7 @@
 
 ## 先跑起来
 
-打开 `Assets/Scenes/GameScene.unity`，按 Play。依次点击“开始闯关”→第一章→手牌→任意空格→“开始战斗”。准备期可以点己方棋子再点空格换位，也可以刷新剩余手牌。手机方向固定横屏。章节解锁只在本次运行保留。
+打开 `Assets/Scenes/GameScene.unity`，按 Play。依次点击“开始闯关”→第一章→手牌→任意空格→“开始战斗”。准备和战斗期均可以点己方棋子再点空格换位，也可以刷新剩余手牌。手机方向固定横屏。章节解锁只在本次运行保留。
 
 GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTween；Start 使用 RevTask 异步加载两张生成表，校验后才由 GameFlow 开放首页。不要再手动初始化事件、UI 或计时器。
 
@@ -24,12 +26,14 @@ GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTw
 | Battle/HandModel、MoveRules | 唯一牌编号与目标查询。刷新后旧编号不能操作新牌；我方远程可跨盘锁定。 |
 | Battle/EnemyFormationPlanner、EnemyTactics | 在深复制棋盘中预检完整眼阵和保眼移动；成功后才把最终布阵或动作交给战斗服务。 |
 | Services/BattleService | 唯一规则服务，控制阶段、落子、伤害、胜负与固定模拟。 |
-| BattleService.Placement | 准备期棋盘统一点击：选牌、选己方棋子和选眼位石互斥；全盘落子与免费重摆。 |
+| BattleService.Placement | HandleBoardClick统一点击：准备期全盘落牌；准备/战斗均可选己方棋再点空格换位，生命、护盾、攻击进度不重置。 |
 | BattleService.HandRefresh | 只重抽手中剩余牌，保留星级和落子额度，提交后通知 UI；应用 Excel 远程频率。 |
 | Data/PreparationBuffCatalog、BattleService.Preparation | 十五种增益、3秒发放、本轮属性、待升级、新棋继承、持续回复和重置。 |
 | BattleService.Progression / Events | 奖励、双牌原位升级、职业加成、支援与轻松模式。partial 是同一个服务分文件，并非多套管理器。 |
 | BattleService.*Checks / Diagnostics | 仅编辑器或开发环境的边界断言、受控造局，不进入正式游戏业务。 |
 | Flow/GameFlow / BattleLogic | FSM 切换大厅、选关、战斗和退出；Scope 管回收；Logic 每 0.3125 秒驱动服务并转发 UI 动作。 |
+| BattleService.Reinforcement | 远程优先、至少二星、安全后排；近战须能攻击、可突入敌眼，深快照预检保护己方阵型。 |
+| View/BoardView.Feedback | 全场最多6条文字、6条弹道；聚合/有界待播/12候选避让，下层重叠35%透明。 |
 | View/BoardView | 编号映射到池化格子/棋子/特效；攻击和受击快照驱动口号与弹道，批次检查避免退出后补播。 |
 | View/GameTextConfig | 只查询已加载导表数据，检查必需编号、颜色、字号和动画参数；不直接读磁盘。 |
 | View/BattleEffectView | RevPool 复用伤害、口号、弹道与帧图，DOTween 执行表现；文字边界避免手机顶排裁切。 |
@@ -55,7 +59,7 @@ GameBootstrap 在 Awake 只初始化一次框架、注册服务、初始化 DOTw
 
 Unity 菜单 `Revolution.Tools/配置表/导表工具`，选择此表并全量导出。只改现有文案和数值可用“快速导出（仅数据，不生成代码）”。生成 C# 到 `Assets/GameScripts/Generated`，数据到 `Assets/GameRes/Data`。共享输出设置在 ProjectSettings，个人源在 UserSettings，换机器重新选表。
 
-运行时只走 `RevDataTableManager.LoadAsync<T>()`、`Get<T>()` 和 `Unload<T>()`。标题、颜色、字号、时长和冲击倍率都从生成数据取；升级用 `{piece}` / `{star}`，伤害用 `{damage}`。缺行会报中文原因，不偷偷采用旧文案。
+运行时只走 `RevDataTableManager.LoadAsync<T>()`、`Get<T>()` 和 `Unload<T>()`。普通提示的标题、颜色、基础字号、时长和冲击倍率从生成数据取；棋盘文字另受可读性上限约束，准备横幅采用固定1.67秒时序；升级用 `{piece}` / `{star}`，伤害用 `{damage}`。缺行会报中文原因，不偷偷采用旧文案。
 
 ## 生命周期最容易踩的点
 
@@ -65,8 +69,8 @@ Unity 菜单 `Revolution.Tools/配置表/导表工具`，选择此表并全量�
 - 每个效果只持有自己的 Tween，回池 `Kill(false)`，不能 Complete 后再触发旧回调，也不能全局 KillAll。
 - CardItem 是常驻槽位，刷新只改内容。服务先提交新牌，视图暂存新牌，转到 90 度再渲染；普通 SelectionChanged 不能抢先换正面。
 - 异步回调核对进入批次、面板关闭状态和当前阶段。过期加载立即回池，不能把上局提示补到大厅。
-- 阶段交接也要显式清理，不能只依赖退出域。BoardView 独立效果批次 + 取消延迟伤害 + 回池；HUD 清提示/日志并拦晚到请求，池保留到退出战斗。每次仅展示一条最新增益/升级提示。
-- 大棋落子和换位先检查所有占格；失败保留整块旧身体。自动合成不消耗守眼棋子，援军不填眼。
+- 阶段交接也要显式清理，不能只依赖退出域。BoardView 独立效果批次 + 清合并队列/异步预约/显示预算 + 回池；HUD 清提示/日志并拦晚到请求，池保留到退出战斗。每次仅展示一条最新增益/升级提示。
+- 大棋落子和换位先检查所有占格；失败保留整块旧身体。双牌升级不消耗守眼棋子；自动援军不填己方眼，近战只尝试可攻击的敌方空眼。
 
 ## 美术与资源约定
 

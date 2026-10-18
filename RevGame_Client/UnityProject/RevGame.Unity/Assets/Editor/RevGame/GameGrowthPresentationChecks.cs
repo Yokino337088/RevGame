@@ -41,16 +41,16 @@ namespace RevGame.Editor
                 Require(banner != null && banner.HasActiveAnimation, "池化横幅确实在播放");
                 Tween animation = GetField<Tween>(banner, "_animation");
                 animation.Pause();
-                Require(Mathf.Abs(animation.Duration(false) - 2.57f) < 0.01f, "入场/1.25秒停顿/回弹/出场总时长");
+                Require(Mathf.Abs(animation.Duration(false) - 1.67f) < 0.01f, "入场/0.5秒冲击/0.25秒停顿/出场总时长");
                 Text title = GetField<Text>(banner, "titleText");
                 Require(title.fontStyle == FontStyle.Bold && title.alignment == TextAnchor.MiddleCenter && title.GetComponent<Outline>() != null, "大字加粗居中且有高对比描边");
                 animation.Goto(0.01f, false);
                 Require(GetField<float>(banner, "_slide") > 0.9f, "从屏幕右侧进入");
-                animation.Goto(1f, false);
-                Require(Mathf.Abs(GetField<float>(banner, "_slide")) < 0.001f && banner.transform.localScale == Vector3.one, "停顿期间居中且未提前缩放");
-                animation.Goto(1.82f, false);
-                Require(banner.transform.localScale.x > 1.05f, "停顿之后真实放大冲击");
-                animation.Goto(2.5f, false);
+                animation.Goto(0.6f, false);
+                Require(Mathf.Abs(GetField<float>(banner, "_slide")) < 0.001f && banner.transform.localScale.x > 1.05f, "到中央后立即放大冲击");
+                animation.Goto(1.05f, false);
+                Require(Mathf.Abs(banner.transform.localScale.x - 1f) < 0.001f, "0.5秒回弹结束后短停0.25秒");
+                animation.Goto(1.6f, false);
                 Require(GetField<float>(banner, "_slide") < -0.5f, "最终向屏幕左侧离开");
 
                 // 故意冻结横幅再切阶段，验证不依赖自然播完，也不把剩余队列带到下一轮。

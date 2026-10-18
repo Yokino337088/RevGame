@@ -18,7 +18,8 @@ namespace RevGame.Data
         public int Progress => (Chapter - 1) * Consts.RoundsPerChapter + Round - 1;
         /// <summary>成长只改运行期棋子，不修改所有单位共用的图鉴。</summary>
         // 六牌保留、双牌升级和每轮增益都提高了我方火力，因此敌方基础生命同步提高，避免首轮几秒清场。
-        public float HpScale => Consts.EnemyHpScale * 4f * (1f + Progress * 0.018f);
+        // 强援现在至少二星且会选安全射位，基础承伤同步小幅提高，避免首关退回十几秒内清场。
+        public float HpScale => Consts.EnemyHpScale * 4.5f * (1f + Progress * 0.018f);
         public float AttackScale => 1f + Progress * 0.009f;
         /// <summary>四档逐步开放选目标、收残血、压气和规避火力；移动冷却始终不缩短。</summary>
         public int Intelligence => System.Math.Min(4, 1 + Progress / 17);

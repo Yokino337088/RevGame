@@ -35,13 +35,16 @@ namespace RevGame.Editor
                 background.raycastTarget = false;
                 // 金色侧条、粗体大字和黑描边增加冲击感，仍只引用用户指定的新版图片。
                 Image icon = GameAssetBuilder.Picture("icon", root.transform, GameAssetBuilder.Sprite("界面/新版/UI_Setting_Checkmark.png"), new Vector2(72, 72), new Vector2(-340, 0));
-                Text title = GameAssetBuilder.Label("title", root.transform, "战斗支援", new Vector2(620, 65), new Vector2(35, 30), 48);
+                Text title = GameAssetBuilder.Label("title", root.transform, "战斗支援", new Vector2(620, 65), new Vector2(0, 30), 48);
                 title.fontStyle = FontStyle.Bold;
+                title.alignment = TextAnchor.MiddleCenter;
                 title.color = new Color(1f, 0.88f, 0.2f);
                 Outline outline = title.gameObject.AddComponent<Outline>();
                 outline.effectColor = Color.black;
                 outline.effectDistance = new Vector2(2, -2);
-                Text detail = GameAssetBuilder.Label("detail", root.transform, "增益效果已生效", new Vector2(640, 55), new Vector2(35, -32), 27);
+                Text detail = GameAssetBuilder.Label("detail", root.transform, "增益效果已生效", new Vector2(640, 55), new Vector2(0, -32), 27);
+                detail.fontStyle = FontStyle.Bold;
+                detail.alignment = TextAnchor.MiddleCenter;
                 detail.color = Color.white;
                 BattleEventNoticeView view = root.AddComponent<BattleEventNoticeView>();
                 GameAssetBuilder.SetReference(view, "group", group);

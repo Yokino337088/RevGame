@@ -204,6 +204,7 @@ namespace RevGame.Services
             VerifyPreparationContracts(check);
             VerifyComfortContracts(check);
             VerifyPlacementAndMovement(check);
+            VerifyReinforcementContracts(check);
             VerifyHandRefreshAndAttackRate(check);
         }
 
@@ -386,6 +387,49 @@ namespace RevGame.Services
             {
                 RevEvent.RemoveAllByOwner(owner);
             }
+        }
+
+        /// <summary>直接验证援军最终兵种、落点和实际攻击范围，避免只测“评分函数返回了true”。</summary>
+        private static void VerifyReinforcementContracts(Action<bool, string> check)
+        {
+            BattleService service = EventFixture();
+            service._hand.Clear();
+            service._hand.Add(PieceKind.HeavySword, StarTier.Three);
+            service._hand.Add(PieceKind.Archer, StarTier.One);
+            service._hand.Add(PieceKind.Crossbow, StarTier.Two);
+            int allowance = service.CardsRemaining;
+            check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "混合手牌援军成功");
+            Piece born = service._playerPieces[service._playerPieces.Count - 1];
+            check(born.Def.Kind == PieceKind.Crossbow && born.Def.Star >= StarTier.Two, "优先最强远程而非排在前面的近战");
+            check(service.Hand.Count == 2 && service.CardsRemaining == allowance, "只消费真正部署的牌，不扣手动落子额度");
+            check(born.Pos.Y <= 2 && born.Pos.X <= 4, "远程援军落在己方主体附近的安全后排");
+            check(service._enemyPieces.TrueForAll(p => BodyDistance(born.Pos, born.Size, p) > 2), "远程援军避开贴敌位置");
+
+            service = EventFixture();
+            service._hand.Clear();
+            check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "六牌用尽仍能获得强援");
+            born = service._playerPieces[service._playerPieces.Count - 1];
+            check(born.Def.Kind == PieceKind.Crossbow && born.Def.Star == StarTier.Two && service.Hand.Count == 0, "空手补二星重弩，不凭空增加手牌");
+
+            service = EventFixture();
+            service._hand.Clear();
+            service._hand.Add(PieceKind.Swordman, StarTier.One);
+            check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "近战援军可以部署");
+            born = service._playerPieces[service._playerPieces.Count - 1];
+            check(!born.Def.IsRanged && RevGame.Battle.MoveRules.GetAttackTargets(service._board, born).Count > 0, "近战落下就有真实射程内目标，不再丢在后排发呆");
+
+            service = new BattleService();
+            service.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(1, 0));
+            service.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(0, 1));
+            service.AddCheckPiece(GameSide.Enemy, PieceKind.Archer, new BoardPos(7, 8));
+            service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(8, 7));
+            service._prepImmune = true;
+            service.RefreshGoState();
+            check(service._board.GetCell(new BoardPos(8, 8)).EyeSide == GameSide.Enemy, "敌方真实角眼夹具成立");
+            check(service.TryDeployReinforcement(PieceKind.Swordman, StarTier.Two), "免围困近战可突入敌眼");
+            born = service._playerPieces[service._playerPieces.Count - 1];
+            check(born.Pos == new BoardPos(8, 8) && RevGame.Battle.MoveRules.GetAttackTargets(service._board, born).Count > 0, "敌眼落点可用且落下就能攻击时优先破眼");
+            check(service._board.GetCell(new BoardPos(0, 0)).EyeSide == GameSide.Player, "自动援军不填己方眼位");
         }
 
         private static BattleService EventFixture()

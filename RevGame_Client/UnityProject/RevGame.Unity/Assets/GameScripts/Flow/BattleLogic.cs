@@ -74,9 +74,10 @@ namespace RevGame.Flow
             return Battle.TryPlayCard(kind, star, pos);
         }
 
-        public bool PlaySelectedCard(BoardPos pos)
+        /// <summary>触屏与GM共用棋盘点击：服务按当前阶段决定落牌、选中棋子或换位。</summary>
+        public bool ClickBoard(BoardPos pos)
         {
-            return Battle.HandlePrepareClick(pos);
+            return Battle.HandleBoardClick(pos);
         }
 
         public bool ContinueToNextRound()
