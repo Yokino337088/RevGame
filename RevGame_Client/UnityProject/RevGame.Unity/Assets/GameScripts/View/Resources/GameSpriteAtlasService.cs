@@ -54,11 +54,25 @@ namespace RevGame.View
         /// <summary>补上场景加载早于Awake的背景请求。首次真机加载用RevTask等待，首页开放前就绪。</summary>
         public async RevTask PreloadSceneAsync()
         {
-            foreach (string name in GameSpriteAtlases.SceneNames)
+            await PreloadAsync(GameSpriteAtlases.SceneNames);
+        }
+
+        /// <summary>
+        /// 面板打开前的图集屏障。必须先等本屏所需的图集完成，再实例化UI；否则原Sprite已经被AB剥离像素，
+        /// Image会暂时使用白纹理。不能把“预制体句柄已成功”当成“依赖的图集已经可渲染”。
+        /// 加载仍只走RevResManager，本服务持有唯一租约，调用方不重复Release它。
+        /// </summary>
+        public async RevTask PreloadAsync(string[] names)
+        {
+            foreach (string name in names)
             {
+                if (!_known.Contains(name)) { throw new InvalidOperationException("未配置的图集：" + name); }
                 Entry entry = Request(name, null);
                 while (!_disposed && !entry.Finished) { await RevTask.Yield(); }
-                if (!_disposed && entry.Atlas == null) { throw new InvalidOperationException("场景图集未就绪：" + name); }
+                if (_disposed) { throw new OperationCanceledException("图集服务已释放"); }
+                if (entry.Atlas == null) { throw new InvalidOperationException("图集未就绪：" + name); }
+                // 即使AB已经缓存，也主动让出一帧，避免多张纹理上传挤在同一帧。
+                await RevTask.Yield();
             }
         }
 

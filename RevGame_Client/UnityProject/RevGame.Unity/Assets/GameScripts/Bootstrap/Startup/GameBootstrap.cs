@@ -13,10 +13,21 @@ namespace RevGame.Bootstrap
     [DefaultExecutionOrder(-100)]
     public sealed class GameBootstrap : MonoBehaviour
     {
+        /// <summary>跨场景只保留一个启动宿主；新场景里的调试启动器只能销毁自己，不能重新初始化框架。</summary>
+        private static GameBootstrap _instance;
+        private bool _ownsServices;
         private bool _released;
 
         private void Awake()
         {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            _ownsServices = true;
+            DontDestroyOnLoad(gameObject);
 #if UNITY_EDITOR
             // 配置资产负责持久化；此赋值防止域重载后编辑器延迟同步晚于场景 Awake。
             RevEditorResPolicy.ResRoot = "Assets/GameRes/";
@@ -56,37 +67,26 @@ namespace RevGame.Bootstrap
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
         private async void Start()
         {
+            if (!_ownsServices) { return; }
             try
             {
                 // 让场景表现先订阅 ScreenChanged，避免表已缓存时同步完成而漏掉首页事件。
                 await RevTask.Yield();
-                await RevServices.GetRequired<View.GameSpriteAtlasService>().PreloadSceneAsync();
-                await RevDataTableManager.LoadAsync<BattleTextTable>();
-                await RevDataTableManager.LoadAsync<BattleTuningTable>();
-                if (_released)
-                {
-                    RevDataTableManager.Unload<BattleTextTable>();
-                    RevDataTableManager.Unload<BattleTuningTable>();
-                    return;
-                }
-                View.GameTextConfig.Validate();
-                BattleTuningTable tuning = RevDataTableManager.Get<BattleTuningTable>();
-                if (!tuning.FindByKey("PlayerRangedActionsPerTick", out BattleTuning rate))
-                {
-                    throw new System.InvalidOperationException("BattleTuning 缺少我方远程攻击频率");
-                }
-                ((BattleService)RevServices.GetRequired<IBattleService>()).ConfigureRangedAttackRate(rate.Value);
-                RevServices.GetRequired<GameFlow>().Start();
+                if (_released) { return; }
+                await RevServices.GetRequired<GameFlow>().StartAsync();
             }
             catch (System.Exception error)
             {
-                RevLog.Exception(error, "游戏启动失败：请检查战斗弹幕配置导出结果", "RevGame");
+                RevLog.Exception(error, "游戏启动失败：请检查过场面板与资源配置", "RevGame");
             }
         }
 
         private void OnDestroy()
         {
+            // 重复启动器没有注册过服务，绝不能在销毁时注销真正的全局宿主。
+            if (!_ownsServices) { return; }
             _released = true;
+            _instance = null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             GameGmCommands.Unregister();
 #endif

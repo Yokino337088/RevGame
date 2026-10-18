@@ -8,6 +8,8 @@ using RevGame.Flow;
 using RevGame.UI;
 using Revolution;
 using UnityEngine;
+using System;
+using UnityEngine.UI;
 
 namespace RevGame.View
 {
@@ -21,8 +23,15 @@ namespace RevGame.View
         [SerializeField]
         private SpriteRenderer backgroundRenderer;
         private bool _released;
+        /// <summary>当前屏幕的异步装配版本；快速切换时旧面板加载回调不能覆盖新屏幕。</summary>
+        private int _screenVersion;
+        private GameScreen _readyScreen = GameScreen.Exit;
+        private string _loadError;
         // 材质属于整个场景，不能归入Battle组；否则第一次返回大厅就会被战斗域卸载。
         private bool _backgroundMaterialRequested;
+        /// <summary>动态背景也属于交付屏障；不能只等棋盘完成就把仍未取得材质的背景露给玩家。</summary>
+        private bool _backgroundReady;
+        private string _backgroundError;
         private Material _originalBackgroundMaterial;
         /// <summary>背景只有一张，允许独立参数块；棋子/弹道仍共享参数以保留合批。</summary>
         private MaterialPropertyBlock _backgroundProperties;
@@ -55,15 +64,25 @@ namespace RevGame.View
         /// <summary>两段式逻辑路径通过框架加载，编辑器直读和正式AB加载共用此入口；不改用户选好的背景Sprite。</summary>
         private void LoadBackgroundMaterial()
         {
-            if (backgroundRenderer == null || _backgroundMaterialRequested) { return; }
+            if (backgroundRenderer == null) { _backgroundReady = true; return; }
+            if (_backgroundMaterialRequested) { return; }
             _backgroundMaterialRequested = true;
             _originalBackgroundMaterial = backgroundRenderer.sharedMaterial;
             RevResManager.LoadAsync(RevResPath.Material_Background, "ArcaneScene", typeof(Material), handle =>
             {
                 // 场景已退出时只释放迟到结果；不能给销毁中的Renderer写材质。
                 if (_released) { return; } // OnDestroy已经配对释放请求，迟到回调不能再减一次引用计数。
-                if (!handle.IsLoaded) { RevLog.Error("场景动态材质加载失败：" + handle.ErrorReason, "RevGame"); return; }
-                if (backgroundRenderer != null) { backgroundRenderer.sharedMaterial = handle.Content as Material; }
+                if (!handle.IsLoaded)
+                {
+                    _backgroundError = "场景动态材质加载失败：" + handle.ErrorReason;
+                    RevLog.Error(_backgroundError, "RevGame");
+                    return;
+                }
+                if (backgroundRenderer != null)
+                {
+                    backgroundRenderer.sharedMaterial = handle.Content as Material;
+                    _backgroundReady = backgroundRenderer.sharedMaterial != null;
+                }
             }, RevResGroup.Scene);
         }
 
@@ -125,17 +144,92 @@ namespace RevGame.View
 
         private void OnScreen(GameScreen screen)
         {
-            boardRoot.SetActive(screen == GameScreen.Battle);
+            int version = ++_screenVersion;
+            _readyScreen = GameScreen.Exit;
+            _loadError = null;
+            if (boardRoot != null) { boardRoot.SetActive(screen == GameScreen.Battle); }
             RevUI.Close<HomePanel>();
             RevUI.Close<LevelSelectPanel>();
-            if (screen == GameScreen.Home)
+            if (screen == GameScreen.Home || screen == GameScreen.LevelSelect)
             {
-                RevUI.Open<HomePanel>(panel => CheckOpened(panel, screen));
+                ShowMenuAsync(screen, version);
             }
-            else if (screen == GameScreen.LevelSelect)
+            else if (screen == GameScreen.Battle && boardRoot == null)
             {
-                RevUI.Open<LevelSelectPanel>(panel => CheckOpened(panel, screen));
+                _loadError = "战斗场景没有接上棋盘根节点";
             }
+        }
+
+        /// <summary>局外面板在图集到齐之后才实例化；不能先显示白底，再等Unity稍后修复图片绑定。</summary>
+        private async void ShowMenuAsync(GameScreen screen, int version)
+        {
+            try
+            {
+                await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIMenus", "UIBattle" });
+                if (_released || version != _screenVersion) { return; }
+                RevUIPanel panel;
+                if (screen == GameScreen.Home) { panel = await RevUI.OpenAsync<HomePanel>(); }
+                else { panel = await RevUI.OpenAsync<LevelSelectPanel>(); }
+                CheckOpened(panel, screen);
+                if (!_released && version == _screenVersion) { _readyScreen = screen; }
+            }
+            catch (Exception error)
+            {
+                _loadError = error.Message;
+                RevLog.Exception(error, "局外面板装配失败", "RevGame");
+            }
+        }
+
+        /// <summary>先让棋盘正常OnDisable回收对象，再交给RevScene清池/卸场景，避免双重归还或旧弹幕残留。</summary>
+        public void SuspendBattle()
+        {
+            if (boardRoot != null) { boardRoot.SetActive(false); }
+        }
+
+        /// <summary>
+        /// 可见性屏障：等待81格、所有开局棋子、HUD和六张手牌完成装配，才允许过场淡出。
+        /// 仅流程边界检查一次Image清单，不放进战斗Update；超时给出明确原因，不能无限等加载条。
+        /// </summary>
+        public async RevTask WaitUntilReadyAsync(GameScreen screen, Action<float> progress)
+        {
+            float deadline = Time.realtimeSinceStartup + 30f;
+            BoardView board = boardRoot == null ? null : boardRoot.GetComponent<BoardView>();
+            while (!_released)
+            {
+                if (!string.IsNullOrEmpty(_loadError)) { throw new InvalidOperationException(_loadError); }
+                if (!string.IsNullOrEmpty(_backgroundError)) { throw new InvalidOperationException(_backgroundError); }
+                if (screen == GameScreen.Battle)
+                {
+                    if (board == null) { throw new InvalidOperationException("GameScene缺少BoardView"); }
+                    if (!string.IsNullOrEmpty(board.LoadError)) { throw new InvalidOperationException(board.LoadError); }
+                    progress?.Invoke(board.CellCount / (float)(Consts.BoardSize * Consts.BoardSize) * 0.8f);
+                    if (board.IsReady && _backgroundReady && RevUI.IsOpen<PreparePanel>() && RevUI.IsOpen<BattleHudPanel>()) { break; }
+                }
+                else if (_readyScreen == screen) { break; }
+                if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException("画面装配超时：" + screen); }
+                await RevTask.Yield();
+            }
+            if (_released) { throw new OperationCanceledException("场景已释放"); }
+            // 图集注册与UGUI提交不是同一个步骤。刷新后让引擎完成一次真实Canvas重建和渲染，再撤遮挡。
+            Image[] images = UnityEngine.Object.FindObjectsOfType<Image>();
+            foreach (Image image in images) { image.SetAllDirty(); }
+            Canvas.ForceUpdateCanvases();
+            await RevTask.Yield();
+            foreach (Image image in images)
+            {
+                if (image == null || image.sprite == null) { continue; }
+                if (image.sprite.texture == null || image.mainTexture == Texture2D.whiteTexture)
+                {
+                    throw new InvalidOperationException("UI图集像素未绑定：" + image.name + " / " + image.sprite.name);
+                }
+            }
+            if (screen == GameScreen.Battle)
+            {
+                CardItem[] cards = RevUI.Get<PreparePanel>().GetComponentsInChildren<CardItem>();
+                if (cards.Length != 6) { throw new InvalidOperationException("开局手牌视图必须完整显示6张"); }
+            }
+            progress?.Invoke(1f);
+            await RevTask.Yield();
         }
 
         private void CheckOpened(RevUIPanel panel, GameScreen expected)

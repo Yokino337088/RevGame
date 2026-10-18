@@ -1,0 +1,314 @@
+[
+  {
+    "platform": "PC",
+    "bundle": "atlas_boardstatus",
+    "sha256": "A63E386C8637130AD7B706B3FEFDD24BBF788AA6A9066BDBDE1CC492A02C9DE7",
+    "bytes": 21565
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_combatframes",
+    "sha256": "D3FAFCD798CC6D1847DCD965E6B5FDF2036EA34820D5C7AB46FD81A9B66D5C16",
+    "bytes": 73209
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_pieceframes",
+    "sha256": "0007EEB00897FD7B0424B837CBB407AEDEB603EED883BD818775579927F8F07D",
+    "bytes": 942810
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_scenebackdrop_0fc7e394atlas",
+    "sha256": "C5438F8A2A58E9F709A49EDC19A7C6E2E22B1CABDA7F72D855D8E6F4753AB7FC",
+    "bytes": 793000
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_ui_chessboard_chessboardatlas",
+    "sha256": "8F4A4293880F62E0958BEF99DB9135A9B49591AE8977435153BF661CEDBA1475",
+    "bytes": 464305
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_ui_tavern_imgbkatlas",
+    "sha256": "6CA9B2220A209B63C7158A1BA7E754C90B8882DF36A17CA761D050383686680A",
+    "bytes": 492052
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_uibattle",
+    "sha256": "6AB461CD574D392323E60FC0AE75A8A14AAAD5E259CFA80FEBFEC9F3B3812CCE",
+    "bytes": 280730
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_uimenus",
+    "sha256": "77A5B0C72E1B539055CCC80867618F2019D9BE71A85E5C285F801BC14BDE64A4",
+    "bytes": 108293
+  },
+  {
+    "platform": "PC",
+    "bundle": "atlas_uireserve",
+    "sha256": "0671A2E98684702DD93028B2D85771826BA2DEAB696BC79772E9A5FCE815F7DB",
+    "bytes": 492565
+  },
+  {
+    "platform": "PC",
+    "bundle": "audio_bgm",
+    "sha256": "60439EC913014BFF4EA5B43621BFC2F8B9B2EDDFF84914B444BAE24DB22B0841",
+    "bytes": 4768919
+  },
+  {
+    "platform": "PC",
+    "bundle": "audio_sfx",
+    "sha256": "87DE472C88E46BAA1CCDF9AA98A063F8B378BC6D360B92BBA692788FE07E395E",
+    "bytes": 4241
+  },
+  {
+    "platform": "PC",
+    "bundle": "battle_board",
+    "sha256": "8B356938F178B234F817D89FF41ABB30FEDD9D1A38B3E4E82881FE0F18E27229",
+    "bytes": 6364
+  },
+  {
+    "platform": "PC",
+    "bundle": "battle_boss",
+    "sha256": "6B3538D48DE1E46C8EEAFA43B260D241D1E8B4CAE7881C0052A460BE75BD4372",
+    "bytes": 3008
+  },
+  {
+    "platform": "PC",
+    "bundle": "battle_feedback",
+    "sha256": "FDD1636378E374008D387E7E4F2076B615B8E344D3568997A183A003610DE77F",
+    "bytes": 16969052
+  },
+  {
+    "platform": "PC",
+    "bundle": "battle_units",
+    "sha256": "7D254B179A8D2EDAE75BA732C2F4E5B9CFD2745C8770313941FCB64661DE8A8B",
+    "bytes": 9810
+  },
+  {
+    "platform": "PC",
+    "bundle": "config_piece_art",
+    "sha256": "C1183277BC960DFAE6C8B04602839B35F3A6B3C85C5B943F98C44B638C745176",
+    "bytes": 4335
+  },
+  {
+    "platform": "PC",
+    "bundle": "data_tables",
+    "sha256": "59C71A1790ECCCB472FE91BB3C8C978A75884F601E38123A9587A57A8195A4E3",
+    "bytes": 2572
+  },
+  {
+    "platform": "PC",
+    "bundle": "font_cjk",
+    "sha256": "3ECC28D78654C045AAE59C25DB6742F298D01BBC16F0F12A560350BB31BE3B55",
+    "bytes": 15349866
+  },
+  {
+    "platform": "PC",
+    "bundle": "material_background",
+    "sha256": "81E042DD852ED404D0937678541B80C254C157A5D4F3BD147C5C95C1D0236BE3",
+    "bytes": 2551
+  },
+  {
+    "platform": "PC",
+    "bundle": "material_cards",
+    "sha256": "134263455D024A3D9BA502513A0E9E38857B47C33957195D02772855753FB055",
+    "bytes": 2462
+  },
+  {
+    "platform": "PC",
+    "bundle": "material_pieces",
+    "sha256": "1D8A4CC370BB1D6E200F9C49F185639FA6FFB8BA6F5D4343998901D1A35049EA",
+    "bytes": 2458
+  },
+  {
+    "platform": "PC",
+    "bundle": "material_ui",
+    "sha256": "253B29CE265FBBAC82B0A5BAC20F8880250A407624E7A010E72FEC0BDC21E976",
+    "bytes": 2440
+  },
+  {
+    "platform": "PC",
+    "bundle": "shared_shaders",
+    "sha256": "315A4D50C81E809238D36E0B47F3D834542AD653F05BE19E0B88E6C0439727A0",
+    "bytes": 25095
+  },
+  {
+    "platform": "PC",
+    "bundle": "ui_items",
+    "sha256": "8255ADE9769290478464AC3784675370CA4594BCE88F7879856CFE9C4BC76B60",
+    "bytes": 8202
+  },
+  {
+    "platform": "PC",
+    "bundle": "ui_loading",
+    "sha256": "34BA4E767CB39BCE695E42F4519C6208A95D82790DF4FDE6F295BE8A34F73E99",
+    "bytes": 8010
+  },
+  {
+    "platform": "PC",
+    "bundle": "ui_panels",
+    "sha256": "0E86BE11AB61B0867347688F71FF4D8A4B20D8904493E95F7E544878DCFB0436",
+    "bytes": 24389
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_boardstatus",
+    "sha256": "ED4FA30CA584E74D48D93AFDE0053A2EFFA0A2595C3E130E4AD5A3CD6F728FBB",
+    "bytes": 25754
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_combatframes",
+    "sha256": "2446313CB2507B097CD62E59C364238AEE19672C11E10ABEBDDE295F4B8BB139",
+    "bytes": 98208
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_pieceframes",
+    "sha256": "8F8D3CC9FD7D171734F747DFD517F6E7CFB4E896A59ED507929D1185B8DD737A",
+    "bytes": 1099385
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_scenebackdrop_0fc7e394atlas",
+    "sha256": "A2C059F59B22338EEE9B958F3E726E21C36D25269F0A59206B23CC578E73CBC3",
+    "bytes": 700335
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_ui_chessboard_chessboardatlas",
+    "sha256": "E7EDB02FF127D995A0AC47DE470D696D5957E1EDE4AD1949A6AA09D134DE579A",
+    "bytes": 446160
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_ui_tavern_imgbkatlas",
+    "sha256": "FC3C958CDD5B28EA9D76837F6FC17725E24065A3291E5F6FEB66D2BE64FA436F",
+    "bytes": 443103
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_uibattle",
+    "sha256": "13B6F99DCEB4F9B0287A4D051918DFA01CA8D7197B2BAD0032EA7EE0392F089E",
+    "bytes": 283504
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_uimenus",
+    "sha256": "6274FDE67E23872ADA2294A3001CC987CE5B4BD5E50EDDD68649EA8140720536",
+    "bytes": 91698
+  },
+  {
+    "platform": "Android",
+    "bundle": "atlas_uireserve",
+    "sha256": "E07BF08C2BA4591CA810A666FD34E05B8133DB3AC19BD539E22B8042E6FB0D3A",
+    "bytes": 443610
+  },
+  {
+    "platform": "Android",
+    "bundle": "audio_bgm",
+    "sha256": "15D4C6AEBCE3623B66715D816E33B0B8CC23BF5FF8F5846713D2C07C3021DC5C",
+    "bytes": 4768919
+  },
+  {
+    "platform": "Android",
+    "bundle": "audio_sfx",
+    "sha256": "3D53312AD7ECFF77DB371E4527CC105FA24C822B6983A8DF8A60BF8F3165E345",
+    "bytes": 4241
+  },
+  {
+    "platform": "Android",
+    "bundle": "battle_board",
+    "sha256": "E0A122C3F42E69870419CC77885E8FD64BA8528F08554B16B432AEEF4C15BC42",
+    "bytes": 6364
+  },
+  {
+    "platform": "Android",
+    "bundle": "battle_boss",
+    "sha256": "4AB3A8D39B2E0AE2E1D35DE8EA696EBF3066C9769B9D11858C896358B6AA96B4",
+    "bytes": 3008
+  },
+  {
+    "platform": "Android",
+    "bundle": "battle_feedback",
+    "sha256": "55D213CCC148EE0B6973F242262CF6995B3594EB69B1034E74DDD66C8F6516FE",
+    "bytes": 16969052
+  },
+  {
+    "platform": "Android",
+    "bundle": "battle_units",
+    "sha256": "7FD5783B8AD56DB450DAAA26DCF028FAE485ED1BC9CAF40E724885F28976AEBD",
+    "bytes": 9810
+  },
+  {
+    "platform": "Android",
+    "bundle": "config_piece_art",
+    "sha256": "4A1D202B7CD55BBDD7650F4A01A327FE3B38F293445835256398CA496C3A5B96",
+    "bytes": 4335
+  },
+  {
+    "platform": "Android",
+    "bundle": "data_tables",
+    "sha256": "567E30888C9E45F6303BC9E478890EB1CF66DE4151921E784364C5523021EF94",
+    "bytes": 2572
+  },
+  {
+    "platform": "Android",
+    "bundle": "font_cjk",
+    "sha256": "FE269D68E419A26785CB0E423BEFB95B35AB622B9DEF50E15288C8CD138D3C23",
+    "bytes": 15349866
+  },
+  {
+    "platform": "Android",
+    "bundle": "material_background",
+    "sha256": "D0D16013DF8F008FCC80F66A7E108B47C66EBA6B1B635B6A089BC1CAE9B91593",
+    "bytes": 2551
+  },
+  {
+    "platform": "Android",
+    "bundle": "material_cards",
+    "sha256": "F922E3644761DBD5E1A4578740361B49275D4576BDC677A1C0A7BE8AF2B86833",
+    "bytes": 2462
+  },
+  {
+    "platform": "Android",
+    "bundle": "material_pieces",
+    "sha256": "E2A0A78047189455401F86F5ACA24A9AD3AB4468BDE13F0896D5EBABD58FBAF2",
+    "bytes": 2458
+  },
+  {
+    "platform": "Android",
+    "bundle": "material_ui",
+    "sha256": "A942CBF043B95459E28384FEE67C193A09219C73DD6A6FEBD220C00399893DC9",
+    "bytes": 2440
+  },
+  {
+    "platform": "Android",
+    "bundle": "shared_shaders",
+    "sha256": "CAB1985BA1B100160F302B37DD8C7E0392DF560E7C40028142B9DA981BCA46EB",
+    "bytes": 44675
+  },
+  {
+    "platform": "Android",
+    "bundle": "ui_items",
+    "sha256": "13068AA1C2D9A071FFD2C6FF1B23844408B6AED853F084AE9354EE9E5921D9FD",
+    "bytes": 8202
+  },
+  {
+    "platform": "Android",
+    "bundle": "ui_loading",
+    "sha256": "33734225DAF46E64B78087A209AD56C7989BC93258A2E8F590BB1ADDC25D7988",
+    "bytes": 8010
+  },
+  {
+    "platform": "Android",
+    "bundle": "ui_panels",
+    "sha256": "3B7B4EE09AD6948A2BF21F6184E75B81EECE9228177931D996EC9AEE0BC9AB11",
+    "bytes": 24389
+  }
+]

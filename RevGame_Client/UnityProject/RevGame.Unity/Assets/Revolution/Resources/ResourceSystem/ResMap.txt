@@ -229,6 +229,7 @@ GameShader/Pieces/ArcanePiece|shared_shaders|ArcanePiece
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
 UI/Item/Card/CardItem|ui_items|CardItem
 UI/Item/Notice/BattleEventNotice|ui_items|BattleEventNotice
+UI/Panel/Loading/LoadingPanel|ui_loading|LoadingPanel
 UI/Panel/BattleHudPanel|ui_panels|BattleHudPanel
 UI/Panel/HomePanel|ui_panels|HomePanel
 UI/Panel/LevelSelectPanel|ui_panels|LevelSelectPanel

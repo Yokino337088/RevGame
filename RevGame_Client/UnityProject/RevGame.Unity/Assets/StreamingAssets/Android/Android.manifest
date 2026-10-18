@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1425477360
+CRC: 3430652749
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -106,3 +106,8 @@ AssetBundleManifest:
     Info_24:
       Name: atlas_uireserve
       Dependencies: {}
+    Info_25:
+      Name: ui_loading
+      Dependencies:
+        Dependency_0: font_cjk
+        Dependency_1: material_background

@@ -1,0 +1,5 @@
+回合回归：通过136条，六牌与跨回合残留清理。
+美术回归：通过37条，Shader、卡牌、动态背景、弹道自然回收与中断回收。
+PC与Android各26包，52包SHA-256与构建目录一致。
+场景集成逐帧断言记录见SceneTransitionChecks-AB.txt、SceneTransitionChecks-Direct.txt。
+资源回归：232个资源真实AB加载、三种比例背景覆盖、被围三帧、Boss三帧、共享材质五次回池，通过。

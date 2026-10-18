@@ -107,6 +107,7 @@ GameObject:
   - component: {fileID: 2602836212566272415}
   - component: {fileID: 6230889826727427015}
   - component: {fileID: 8265225832005900137}
+  - component: {fileID: 4332925948863550077}
   m_Layer: 0
   m_Name: contentPlate
   m_TagString: Untagged
@@ -181,6 +182,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4332925948863550077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1073303091981679790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2356540563517888528
@@ -385,6 +398,7 @@ GameObject:
   - component: {fileID: 1853985365360513806}
   - component: {fileID: 747483674086788470}
   - component: {fileID: 6611976887025025680}
+  - component: {fileID: 8665368461753915643}
   m_Layer: 0
   m_Name: screenBackground
   m_TagString: Untagged
@@ -459,6 +473,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8665368461753915643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3226537833444151581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &3595374491049838135
@@ -646,6 +672,7 @@ GameObject:
   - component: {fileID: 2926446900094985115}
   - component: {fileID: 3561605993582489217}
   - component: {fileID: 792730611411312799}
+  - component: {fileID: 6968588669008464468}
   m_Layer: 0
   m_Name: btnPlay
   m_TagString: Untagged
@@ -765,5 +792,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6968588669008464468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8984703340483350223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

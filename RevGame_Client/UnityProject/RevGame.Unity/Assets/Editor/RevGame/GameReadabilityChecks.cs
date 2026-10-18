@@ -31,8 +31,9 @@ namespace RevGame.Editor
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 Require(flow.OpenLevels() && flow.EnterBattle(1), "进入真实战斗域");
+                await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 await RevTask.Delay(650);
                 BattleService battle = (BattleService)RevServices.GetRequired<IBattleService>();
                 Require(battle.LoadDevelopmentScenario("events"), "载入真实事件场景");
@@ -170,7 +171,7 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
 

@@ -18,6 +18,8 @@ namespace RevGame.Editor
         private static readonly string[,] Groups =
         {
             { "UI/Panel", "ui_panels" }, { "UI/Item", "ui_items" },
+            // 过场只依赖字体/程序星雾；单独分包，不能为显示加载条先拉入所有战斗界面的依赖。
+            { "UI/Panel/Loading", "ui_loading" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
@@ -116,6 +118,16 @@ namespace RevGame.Editor
         public static string BuildAndCopy(BuildTarget target)
         {
             string result = Build(target);
+            return result + PublishBuilt(target);
+        }
+
+        /// <summary>
+        /// 只发布已经构建成功的平台目录，供复制被文件占用打断后恢复，不需要再次构建所有AB。
+        /// 常规路径仍调用Revolution复制工具；编辑器持有未改动字体包时使用逐文件校验补齐，避免关闭Unity。
+        /// </summary>
+        public static string PublishBuilt(BuildTarget target)
+        {
+            if (EditorApplication.isPlaying) { throw new InvalidOperationException("不能在Play时覆盖正在使用的AB"); }
             ABBuildConfig config = ABBuildConfig.Instance;
             bool previousCopy = config.copyToStreamingAssets;
             string previousTarget = config.copyTarget;
@@ -128,11 +140,18 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("StreamingAssets发布目标越界：" + destination);
             }
+            if (!File.Exists(Path.Combine(output, platform))) { throw new InvalidOperationException("没有已构建的平台主清单：" + output); }
             try
             {
                 config.copyToStreamingAssets = true;
                 config.copyTarget = "StreamingAssets";
-                ABBuilderCore.CopyToStreamingAssets(output);
+                try { ABBuilderCore.CopyToStreamingAssets(output); }
+                catch (IOException)
+                {
+                    // Unity原生字体可能继续持有文件，整目录删除因而失败；旧字体与新字体字节相同就无需碰它。
+                    // 只跳过逐字节相同的文件，发生变化又被占用时仍报错，不能假装发布成功。
+                    CopyChangedFiles(output, destination);
+                }
             }
             finally
             {
@@ -141,7 +160,52 @@ namespace RevGame.Editor
                 EditorUtility.SetDirty(config);
                 AssetDatabase.SaveAssets();
             }
-            return result + "；已复制到 " + destination;
+            AssetDatabase.Refresh();
+            return "；已复制到 " + destination;
+        }
+
+        /// <summary>仅用于上方已验证的两个平台目录；保留Unity的.meta，补齐失败复制并删除已经过时的生成包。</summary>
+        private static void CopyChangedFiles(string output, string destination)
+        {
+            Directory.CreateDirectory(destination);
+            var expected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string source in Directory.GetFiles(output))
+            {
+                string name = Path.GetFileName(source);
+                expected.Add(name);
+                string target = Path.Combine(destination, name);
+                if (!SameBytes(source, target)) { File.Copy(source, target, true); }
+            }
+            foreach (string target in Directory.GetFiles(destination))
+            {
+                string name = Path.GetFileName(target);
+                if (expected.Contains(name) || name.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)) { continue; }
+                // 只删除AB工具生成的无扩展名包/manifest/构建清单，不递归删任意目录或其他项目文件。
+                if (!Path.HasExtension(name) || name.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase) || name == "BuildManifest.json")
+                {
+                    File.Delete(target);
+                    if (File.Exists(target + ".meta")) { File.Delete(target + ".meta"); }
+                }
+            }
+        }
+
+        /// <summary>流式比较，最多两个64KB缓冲；不把大字体包整份读入内存。长度相同仍须比较内容。</summary>
+        private static bool SameBytes(string source, string destination)
+        {
+            if (!File.Exists(destination) || new FileInfo(source).Length != new FileInfo(destination).Length) { return false; }
+            using (FileStream left = File.OpenRead(source))
+            using (FileStream right = File.OpenRead(destination))
+            {
+                var a = new byte[65536];
+                var b = new byte[65536];
+                int count;
+                while ((count = left.Read(a, 0, a.Length)) > 0)
+                {
+                    if (right.Read(b, 0, count) != count) { return false; }
+                    for (int i = 0; i < count; i++) { if (a[i] != b[i]) { return false; } }
+                }
+                return true;
+            }
         }
     }
 }

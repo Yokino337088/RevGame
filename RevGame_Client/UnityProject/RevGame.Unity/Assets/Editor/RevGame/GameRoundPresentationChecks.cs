@@ -31,8 +31,9 @@ namespace RevGame.Editor
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 Require(flow.OpenLevels() && flow.EnterBattle(1), "无法进入正常战役");
+                await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 await RevTask.Delay(700);
                 IBattleService battle = RevServices.GetRequired<IBattleService>();
                 VerifySixCards(battle);
@@ -100,7 +101,7 @@ namespace RevGame.Editor
             finally
             {
                 // 关域会收走所有暂停过的验收实例；不能要求使用者事后手动 KillAll 或重启编辑器。
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
 

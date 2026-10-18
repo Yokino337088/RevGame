@@ -27,6 +27,10 @@ namespace RevGame.View
         // 棋盘格跟随整场战斗，弹幕只属于当前阶段，必须分开编号。
         // 若复用 _generation，清弹幕时会误拦仍在加载的 81 个棋盘格，造成缺格。
         private int _effectGeneration;
+        /// <summary>过场读取的装配状态；不是玩法阶段。失败必须显示原因，不能用“格子少几个”悄悄继续。</summary>
+        public string LoadError { get; private set; }
+        private bool _cellsReady;
+        public bool IsReady { get { return _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
         public int ActiveEffectCount { get { return _effects.Count; } }
         public int CellCount
         {
@@ -47,6 +51,8 @@ namespace RevGame.View
         private void OnEnable()
         {
             _released = false;
+            LoadError = null;
+            _cellsReady = false;
             int generation = ++_generation;
             // ★ 池中实例放在独立容器，不挂到本组件的父链下。
             // Unity 停用 BoardView 时会调用 OnDisable；如果子棋子此时回池换父节点，Unity 会拒绝并报警。
@@ -65,24 +71,52 @@ namespace RevGame.View
             RevEvent.AddEventListener(Events.GoStateRefreshed, RefreshBoard, owner: this);
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshCells, owner: this);
             RevEvent.AddEventListener(Events.HandChanged, RefreshCells, owner: this);
-            for (int y = 0; y < Consts.BoardSize; y++)
-            {
-                for (int x = 0; x < Consts.BoardSize; x++)
-                {
-                    // ★ 每次循环保存一份坐标；异步回调执行时，循环变量早已走到末尾。
-                    BoardPos pos = new BoardPos(x, y);
-                    RevPool.GetAsync<BoardCellView>(cell => OnCellLoaded(cell, pos, generation), _viewRoot);
-                }
-            }
-
+            BuildCellsAsync(generation);
             RefreshBoard();
+        }
+
+        /// <summary>
+        /// 一次创建81格会把Instantiate、Collider、Sprite装配堆在一帧，异步加载预制体也无法消除这个尖峰。
+        /// 这里按行遍历，每批最多4格或耗时3毫秒就Yield；每格只刷新自己，末尾统一刷新全盘。
+        /// generation保证离场后晚到结果回池，不会混进下一场的棋盘列表。
+        /// </summary>
+        private async void BuildCellsAsync(int generation)
+        {
+            try
+            {
+                float sliceStart = Time.realtimeSinceStartup;
+                for (int index = 0; index < Consts.BoardSize * Consts.BoardSize; index++)
+                {
+                    if (_released || this == null || generation != _generation) { return; }
+                    BoardPos pos = new BoardPos(index % Consts.BoardSize, index / Consts.BoardSize);
+                    var completion = new RevTaskCompletionSource<BoardCellView>();
+                    RevPool.GetAsync<BoardCellView>(cell => completion.SetResult(cell), _viewRoot);
+                    BoardCellView view = await completion.Task;
+                    OnCellLoaded(view, pos, generation);
+                    if (view == null) { return; }
+                    if (index % 4 == 3 || Time.realtimeSinceStartup - sliceStart >= 0.003f)
+                    {
+                        await RevTask.Yield();
+                        sliceStart = Time.realtimeSinceStartup;
+                    }
+                }
+                if (_released || this == null || generation != _generation) { return; }
+                _cellsReady = true;
+                RefreshCells();
+            }
+            catch (System.Exception error)
+            {
+                LoadError = "棋盘分帧创建失败：" + error.Message;
+                RevLog.Exception(error, LoadError, "RevGame");
+            }
         }
 
         private void OnCellLoaded(BoardCellView view, BoardPos pos, int generation)
         {
             if (view == null)
             {
-                RevLog.Error("棋盘格加载失败，请检查 BoardCell 预制体", "RevGame");
+                LoadError = "棋盘格加载失败，请检查 BoardCell 预制体";
+                RevLog.Error(LoadError, "RevGame");
                 return;
             }
 
@@ -96,12 +130,14 @@ namespace RevGame.View
             view.Bind(pos, cell.IsStarPoint, OnCellClicked);
             view.name = "格子_" + pos.X + "_" + pos.Y;
             _cells.Add(view);
-            RefreshCells();
+            // 构建期间没有玩家输入，最后统一RefreshCells；避免1+2+…+81次重复遍历。
         }
 
         /// <summary>真实鼠标/触屏点击和自动验收走同一个入口，表现层不直接改棋盘。</summary>
         public void OnCellClicked(BoardPos pos)
         {
+            // 全屏UI遮挡鼠标/触屏，业务门禁再保护GM与物理射线调用，不能在半成品棋盘上提前落子。
+            if (RevServices.GetRequired<Flow.GameFlow>().IsGameplayBlocked) { return; }
             Flow.BattleLogic logic = RevLogic.Get<Flow.BattleLogic>();
             if (logic == null)
             {
@@ -165,7 +201,9 @@ namespace RevGame.View
         {
             if (view == null)
             {
-                RevLog.Error("棋子预制体加载失败，编号 " + id, "RevGame");
+                LoadError = "棋子预制体加载失败，编号 " + id;
+                _pendingPieces.Remove(id);
+                RevLog.Error(LoadError, "RevGame");
                 return;
             }
 

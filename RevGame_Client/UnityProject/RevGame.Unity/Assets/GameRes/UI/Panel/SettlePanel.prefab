@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1223221297080224968}
   - component: {fileID: 1611466656011789811}
   - component: {fileID: 4019066609803964394}
+  - component: {fileID: 8490668480734154130}
   m_Layer: 0
   m_Name: SettlePanel
   m_TagString: Untagged
@@ -106,6 +107,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panelName: SettlePanel
+--- !u!114 &8490668480734154130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 439753564902132181}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5607609742374013469
 GameObject:
   m_ObjectHideFlags: 0
@@ -214,6 +227,7 @@ GameObject:
   - component: {fileID: 6513088634379389789}
   - component: {fileID: 2180290476759758589}
   - component: {fileID: 7547704269956213913}
+  - component: {fileID: 6879470094785851578}
   m_Layer: 0
   m_Name: btnContinue
   m_TagString: Untagged
@@ -335,6 +349,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6879470094785851578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5812135689062215059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6444287991258081009
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,6 +373,7 @@ GameObject:
   - component: {fileID: 3104781814552816225}
   - component: {fileID: 4472095240901445314}
   - component: {fileID: 117195150274597334}
+  - component: {fileID: 5747826351599076034}
   m_Layer: 0
   m_Name: background
   m_TagString: Untagged
@@ -421,6 +448,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5747826351599076034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6444287991258081009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &6646174702277837067

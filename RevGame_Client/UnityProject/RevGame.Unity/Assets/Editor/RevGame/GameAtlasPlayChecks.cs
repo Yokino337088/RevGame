@@ -63,8 +63,9 @@ namespace RevGame.Editor
                 int baselineHeld = -1;
                 for (int cycle = 0; cycle < 3; cycle++)
                 {
-                    if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                    await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                     Require(flow.OpenLevels() && flow.EnterBattle(1), "正常进入战斗");
+                    await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                     await RevTask.Delay(1800);
                     var battle = (BattleService)RevServices.GetRequired<IBattleService>();
                     battle.LoadDevelopmentScenario("events");
@@ -76,7 +77,7 @@ namespace RevGame.Editor
                     Require(renderers.All(r => r.sprite.name == "UISprite" || r.sprite.packed), "实际场景不能偷偷回退散图");
                     Require(UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Image>().Where(i => i.sprite != null).All(i => i.sprite.name == "UISprite" || i.sprite.packed), "UI实际绑定图集");
                     report.Add("重入" + cycle + "：Renderer=" + renderers.Length + "，贴图=" + renderers.Select(r => r.sprite.texture).Distinct().Count() + "，批次=" + UnityEditor.UnityStats.batches);
-                    flow.ReturnHome();
+                    await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                     await RevTask.Delay(600);
                     Require(RevResManager.GetRefCount(RevResPath.Atlases, "PieceFrames") == 0 && RevResManager.GetRefCount(RevResPath.Atlases, "CombatFrames") == 0 && RevResManager.GetRefCount(RevResPath.Atlases, "BoardStatus") == 0, "返回大厅释放战斗图集租约");
                     int held = RevServices.GetRequired<GameSpriteAtlasService>().HeldCount;

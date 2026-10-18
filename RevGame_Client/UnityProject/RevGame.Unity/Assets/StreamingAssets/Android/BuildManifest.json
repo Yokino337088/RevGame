@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "Android",
-  "buildTime": "2026-10-18 22:25:14",
+  "buildTime": "2026-10-18 23:12:43",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 25754 },
     { "name": "atlas_combatframes", "size": 98208 },
@@ -26,7 +26,8 @@
     { "name": "material_pieces", "size": 2458 },
     { "name": "material_ui", "size": 2440 },
     { "name": "shared_shaders", "size": 44675 },
-    { "name": "ui_items", "size": 8006 },
-    { "name": "ui_panels", "size": 23004 }
+    { "name": "ui_items", "size": 8202 },
+    { "name": "ui_loading", "size": 8010 },
+    { "name": "ui_panels", "size": 24389 }
   ]
 }

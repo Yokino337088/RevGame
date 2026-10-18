@@ -73,5 +73,6 @@ namespace Revolution
         public const string UI_Item_Card = "UI/Item/Card/";
         public const string UI_Item_Notice = "UI/Item/Notice/";
         public const string UI_Panel = "UI/Panel/";
+        public const string UI_Panel_Loading = "UI/Panel/Loading/";
     }
 }

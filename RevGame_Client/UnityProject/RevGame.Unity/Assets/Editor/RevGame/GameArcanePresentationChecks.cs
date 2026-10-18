@@ -29,7 +29,7 @@ namespace RevGame.Editor
             LastResult = "运行中";
             _checks = 0;
             GameFlow flow = RevServices.GetRequired<GameFlow>();
-            GameObject container = new GameObject("弹道寿命验收");
+            GameObject container = null;
             BattleEffectView effect = null;
             try
             {
@@ -38,8 +38,11 @@ namespace RevGame.Editor
                     Shader shader = Shader.Find(name);
                     Require(shader != null && shader.isSupported && !ShaderUtil.ShaderHasError(shader), "Shader真实编译并受当前GPU支持：" + name);
                 }
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 Require(flow.OpenLevels() && flow.EnterBattle(1), "经过真实流程进入准备期");
+                await GameSceneTransitionChecks.WaitForFlowAsync(flow);
+                // 现在是真实分场景：测试容器必须在GameScene交付后创建，否则会被StartScene卸载顺带销毁。
+                container = new GameObject("弹道寿命验收");
                 await RevTask.Delay(800);
                 RevTimer.CancelAllOf(RevLogic.Get<BattleLogic>());
                 CardItem[] cards = UnityEngine.Object.FindObjectsOfType<CardItem>();
@@ -108,7 +111,7 @@ namespace RevGame.Editor
             {
                 if (effect != null && effect.gameObject.activeInHierarchy) { RevPool.Return(effect, 0); }
                 UnityEngine.Object.Destroy(container);
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
 
@@ -127,8 +130,9 @@ namespace RevGame.Editor
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 if (!flow.OpenLevels() || !flow.EnterBattle(1)) { throw new InvalidOperationException("无法进入准备预览"); }
+                await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 await RevTask.Delay(650);
                 RevTimer.CancelAllOf(RevLogic.Get<BattleLogic>());
                 System.IO.Directory.CreateDirectory("Temp/ArcaneVerification/Frames");
@@ -142,7 +146,7 @@ namespace RevGame.Editor
                 LastPreview = "已保存30帧真实Play预览";
             }
             catch (Exception error) { LastPreview = "失败：" + error.Message; RevLog.Exception(error, "预览采集失败", "RevGame"); }
-            finally { if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); } }
+            finally { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
         }
 
         private static T Get<T>(object target, string name)

@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // GameGrowthPresentationChecks.cs —— 在真正Play中验收计时、池化横幅、缓动和Boss逐帧变化。
 // 不用“字段写了true”代替屏幕结果；检查实际Text、RectTransform、Image和Sprite。
 // ============================================================
@@ -29,8 +29,9 @@ namespace RevGame.Editor
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 Require(flow.OpenLevels() && flow.EnterBattle(1), "进入战斗");
+                await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 await RevTask.Delay(650);
                 IBattleService battle = RevServices.GetRequired<IBattleService>();
                 Require(!battle.PreparationGranted && battle.PreparationBuffs.Count == 0, "真实准备时钟未到3秒不开奖");
@@ -101,7 +102,7 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
 

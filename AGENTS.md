@@ -42,3 +42,5 @@
 - 图集通过 `GameSpriteAtlasService` + `RevResManager` 绑定；新代码不得逐棋子/逐帧GetSprite、克隆材质或绕开框架引用计数。必须验收真实AB、背景UV、动画与重复进出战斗。
 - 核心类、接口契约、字段、方法和算法关键步骤写中文新手注释：说明用途、单位/范围、所有者、生命周期、失败路径及“为什么这样做”，不只逐句翻译代码。
 - GPU实例化、动态合批、UGUI合批分别测量；不能把Shader实例化关键字或开启一个开关当作优化成功证据。禁止为合批破坏透明排序与玩法。
+- 正式入口为 `Assets/Scenes/StartScene.unity`，大厅/选关留在StartScene，战斗在GameScene。跨场景只由GameFlow经RevScene异步交接，Bootstrap常驻且只初始化一次；过场面板必须在资源、背景、81格和六张手牌全部可画后淡出。
+- `EnterBattle/ReturnHome` 返回true只代表接受请求，测试需等待 `IsTransitioning=false` 再核对Screen。资源变更必须冷启动真实AB验证UI，不能先加载全部图集再宣称首次白图已修复；新增回归入口为 `GameSceneTransitionChecks`。

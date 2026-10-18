@@ -27,10 +27,16 @@ namespace RevGame.Editor
             LastResult = "运行中";
             int count = 0;
             PieceView piece = null;
-            var container = new GameObject("资源与动画验收");
+            GameObject container = null;
+            GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
                 Require(RevResBootstrap.UseABInEditor, "本验收必须开启AB模式");
+                // 背景现在属于GameScene，不能继续假设首页里也存在GameBackground。
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                Require(flow.OpenLevels() && flow.EnterBattle(1), "进入真实战斗场景再验背景与动画");
+                await GameSceneTransitionChecks.WaitForFlowAsync(flow);
+                container = new GameObject("资源与动画验收");
                 foreach (string guid in AssetDatabase.FindAssets("", new[] { "Assets/GameRes" }))
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -127,6 +133,7 @@ namespace RevGame.Editor
             {
                 if (piece != null && piece.gameObject.activeInHierarchy) { RevPool.Return(piece, 0); }
                 UnityEngine.Object.Destroy(container);
+                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
 

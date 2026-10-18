@@ -20,6 +20,7 @@ namespace RevGame.Bootstrap
             "打开选关",
             "进入战斗",
             "返回主界面",
+            "过场故障",
             "开始战斗",
             "下一回合",
             "落一张盾战",
@@ -44,6 +45,14 @@ namespace RevGame.Bootstrap
             RevGM.Register("RevGame/打开选关", "主界面进入选关", args => FlowResult(RevServices.GetRequired<GameFlow>().OpenLevels()));
             RevGM.Register("RevGame/进入战斗", "进入已解锁章节", args => FlowResult(RevServices.GetRequired<GameFlow>().EnterBattle(args.Int(0, 1))), RevGMArg.Int("章节", 1));
             RevGM.Register("RevGame/返回主界面", "退出当前域并返回主界面", args => FlowResult(RevServices.GetRequired<GameFlow>().ReturnHome()));
+            RevGM.Register("RevGame/过场故障", "仅开发验收：下一次过场在before-scene或after-scene失败，检查错误面板与回退", args =>
+            {
+                if (!RevServices.GetRequired<GameFlow>().ArmDevelopmentFailure(args.Str(0, "before-scene")))
+                {
+                    throw new RevGMUsageException("正在过场或阶段名无效");
+                }
+                return "下一次过场将主动失败，返回按钮仍走真实场景恢复流程";
+            }, RevGMArg.Str("阶段", "before-scene"));
             RevGM.Register("RevGame/开始战斗", "与准备按钮一致", args => BattleResult(Logic().BeginBattle()));
             RevGM.Register("RevGame/下一回合", "与结算继续按钮一致", args => BattleResult(Logic().ContinueToNextRound()));
             RevGM.Register("RevGame/落一张盾战", "只消费手中实际持有的盾战牌", args => AutoPlace(true));

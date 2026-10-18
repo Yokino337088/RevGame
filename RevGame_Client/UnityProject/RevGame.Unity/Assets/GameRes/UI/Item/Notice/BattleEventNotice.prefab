@@ -204,6 +204,7 @@ GameObject:
   - component: {fileID: 8323831930837779726}
   - component: {fileID: 3752573747741696082}
   - component: {fileID: 2155481825341984291}
+  - component: {fileID: 7824465476995815395}
   m_Layer: 0
   m_Name: BattleEventNotice
   m_TagString: Untagged
@@ -311,6 +312,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7824465476995815395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5341544048592500783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6433335214559062489
 GameObject:
   m_ObjectHideFlags: 0
@@ -322,6 +335,7 @@ GameObject:
   - component: {fileID: 8285276862325101141}
   - component: {fileID: 6008994975643112835}
   - component: {fileID: 5745394754813671822}
+  - component: {fileID: 5129647341153647554}
   m_Layer: 0
   m_Name: icon
   m_TagString: Untagged
@@ -386,3 +400,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5129647341153647554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6433335214559062489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -51,6 +51,10 @@ namespace RevGame.Flow
 
         private void OnFixedTick()
         {
+            // 过场遮挡期间不推进准备三秒/战斗时间。SetTickEnabled只管域Tick，不会停Every计时器，
+            // 因此必须在这个真实计时入口检查，避免增益提示在玩家看不到时已经播完。
+            GameFlow flow = RevServices.Get<GameFlow>();
+            if (flow != null && flow.IsGameplayBlocked) { return; }
             if (Battle.Phase == GamePhase.Battle || Battle.Phase == GamePhase.Prepare)
             {
                 Battle.Tick(Consts.BattleSimulationStepSeconds);
@@ -59,6 +63,7 @@ namespace RevGame.Flow
 
         public bool BeginBattle()
         {
+            if (RevServices.GetRequired<GameFlow>().IsGameplayBlocked) { return false; }
             return Battle.StartBattle();
         }
 

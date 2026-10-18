@@ -294,7 +294,7 @@
 <li><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BattleEffectView.cs">BattleEffectView：共享字体材质、组件缓存、Tween回收</a></li>
 <li><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/GamePresentation.cs">GamePresentation：背景图集UV与全屏覆盖</a></li>
 <li><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Rendering/GameAtlasMemoryChecks.cs">GameAtlasMemoryChecks：同一组根资源的可重复AB内存对比</a></li>
-</ul></section><section id="s9" class="chapter"><div class="section-label">STANDARD / 09</div><h2>后续优化执行顺序与门禁</h2><p><strong>每次都走同一条证据链：基线 → 定位热点 → 单项修改 → 同输入复测 → 功能回归 → 记录。</strong> 提交中说明设备、平台、图形API、分辨率、种子、场景、预热、采样时长，以及哪些指标尚未测到。</p>
+</ul></section><section id="s9" class="chapter"><div class="section-label">STANDARD / 09</div><h2>后续优化执行顺序与门禁</h2><p><strong>2026-10-18场景加载补充：</strong>正式入口为StartScene，大厅/选关与GameScene战斗分离。GameFlow经RevScene异步加载，预载图集和预制体，分帧创建对象池及81格；背景、棋子、HUD和六手牌均可画后，全屏过场才淡出。准备三秒计时从淡出完成开始。新增资源须补充就绪条件，冷启动真实AB验收不能提前加载全部图集来掩盖首次白块。<a href="../项目进度分析/RevGame-分场景加载与AB界面修复-2026-10-18.md">查看完整实现与验收</a>。原性能基线口径保留，本次增加独立过场包后为每平台26包。</p><p><strong>每次都走同一条证据链：基线 → 定位热点 → 单项修改 → 同输入复测 → 功能回归 → 记录。</strong> 提交中说明设备、平台、图形API、分辨率、种子、场景、预热、采样时长，以及哪些指标尚未测到。</p>
 <div class="table-scroll" tabindex="0"><table>
 <thead>
 <tr>
