@@ -8,40 +8,40 @@ Python 3.10+，仅使用标准库。通过 CLI 调用 Revolution 的 Unity 编�
 
 | 位置 | 用途 |
 |---|---|
-| `Automation/rev.py` / `rev.cmd` | 命令行入口 |
-| `Automation/revautomation/` | 可直接导入的 Python 客户端、编排和报告模块 |
-| `Automation/commands.json` | 内置动作、参数白名单、配置字段及环境要求 |
-| `Automation/examples/` | 业务模板、现有 GM 演示、编辑器流程、配置参数示例 |
+| `Revolution.Automation/rev.py` / `rev.cmd` | 命令行入口 |
+| `Revolution.Automation/revautomation/` | 可直接导入的 Python 客户端、编排和报告模块 |
+| `Revolution.Automation/commands.json` | 内置动作、参数白名单、配置字段及环境要求 |
+| `Revolution.Automation/examples/` | 业务模板、现有 GM 演示、编辑器流程、配置参数示例 |
 | `Assets/Revolution/Editor/RevAutomation/` | Unity 主线程桥接、编辑器适配器、场景执行器 |
 | `Assets/Revolution.HotUpdate/Editor/RevHotAutomation.cs` | 可选热更包的 CLI 适配器 |
 | `Assets/Revolution.Demo/RevHotUpdate.Demo/Editor/RevHotDemoAutomation.cs` | 可选热更演示的 CLI 适配器 |
 | `Unity工程/Library/RevolutionAutomation/` | 本机请求、进度、结果和日志；不入版本库 |
-| `Automation/results/请求ID/` | CLI 自动导出的 HTML / CSV / JSON；不入版本库 |
+| `Revolution.Automation/results/请求ID/` | CLI 自动导出的 HTML / CSV / JSON；不入版本库 |
 
-Unity 桥接必须放在 `Assets` 对应程序集内才能编译，Python 工具统一放在 `Automation`。复制到其他项目时，要同时带上框架 Editor 桥接。只安装框架本体也可以使用工具，未安装 HotUpdate 或 Demo 时，其动作会明确报“未安装/动作不存在”。
+Unity 桥接必须放在 `Assets` 对应程序集内才能编译，Python 工具统一放在 `Revolution.Automation`。复制到其他项目时，要同时带上框架 Editor 桥接。只安装框架本体也可以使用工具，未安装 HotUpdate 或 Demo 时，其动作会明确报“未安装/动作不存在”。
 
 当前执行目标是 **本机 Unity 编辑器**。资产操作支持在线编辑器和关闭工程后的 batch；GM 与场景执行需要图形编辑器中未暂停的 Play。尚未提供独立 Player、手机或浏览器小游戏的远程控制通道。
 
 ## 2. 最快开始
 
-以下命令从仓库根目录执行。`rev.cmd` 默认使用 `py -3`；没有 Python Launcher 时可设置 `$env:REV_PYTHON` 为 Python 可执行文件，或直接用 `python Automation/rev.py`。
+以下命令从仓库根目录执行。`rev.cmd` 默认使用 `py -3`；没有 Python Launcher 时可设置 `$env:REV_PYTHON` 为 Python 可执行文件，或直接用 `python Revolution.Automation/rev.py`。
 
 ```powershell
-.\Automation\rev.cmd --help
-.\Automation\rev.cmd commands
-.\Automation\rev.cmd doctor
+.\Revolution.Automation\rev.cmd --help
+.\Revolution.Automation\rev.cmd commands
+.\Revolution.Automation\rev.cmd doctor
 ```
 
 编辑器已打开时，等待 Unity 编译完成即可连接。需要工具启动 Unity 时，明确指定本机实际安装路径：
 
 ```powershell
 $env:UNITY_EDITOR = 'E:\你的Unity安装目录\Editor\Unity.exe'
-.\Automation\rev.cmd --timeout 300 editor launch
-.\Automation\rev.cmd --mode live editor status
-.\Automation\rev.cmd --mode live editor play --scene 'Assets/你的启动场景.unity'
-.\Automation\rev.cmd --mode live gm list
-.\Automation\rev.cmd --mode live gm exec '背包/添加道具 1001 2'
-.\Automation\rev.cmd --mode live editor stop
+.\Revolution.Automation\rev.cmd --timeout 300 editor launch
+.\Revolution.Automation\rev.cmd --mode live editor status
+.\Revolution.Automation\rev.cmd --mode live editor play --scene 'Assets/你的启动场景.unity'
+.\Revolution.Automation\rev.cmd --mode live gm list
+.\Revolution.Automation\rev.cmd --mode live gm exec '背包/添加道具 1001 2'
+.\Revolution.Automation\rev.cmd --mode live editor stop
 ```
 
 上面的背包指令只是业务命名示意。`gm list` 显示项目实际注册的命令、参数签名及高危标记；编辑模式列出注册入口的快照，Play 模式读取真实运行期注册表。自动化执行不会替业务偷偷注册命令。
@@ -53,7 +53,7 @@ $env:UNITY_EDITOR = 'E:\你的Unity安装目录\Editor\Unity.exe'
 ### 3.1 现有 GM 演示
 
 ```powershell
-.\Automation\rev.cmd --timeout 300 --output Automation/results/demo-pipeline.json pipeline Automation/examples/demo-gm.pipeline.json
+.\Revolution.Automation\rev.cmd --timeout 300 --output Revolution.Automation/results/demo-pipeline.json pipeline Revolution.Automation/examples/demo-gm.pipeline.json
 ```
 
 流程会启动/连接图形编辑器、进入现有 `RevGMCommandDemo` 场景、执行演示金币流程，最后停止 Play。这里的金币是 Demo 假数据；该示例用于工具接线，不代表任何真实业务验证。本次开发没有执行该流程。
@@ -66,8 +66,8 @@ $env:UNITY_EDITOR = 'E:\你的Unity安装目录\Editor\Unity.exe'
 4. 先运行少量轮次，确认业务状态和清理契约，再增加重复次数。
 
 ```powershell
-.\Automation\rev.cmd scenario validate Automation/examples/business.scenario.json
-.\Automation\rev.cmd --timeout 86400 --output Automation/results/business-pipeline.json pipeline Automation/examples/business.pipeline.json
+.\Revolution.Automation\rev.cmd scenario validate Revolution.Automation/examples/business.scenario.json
+.\Revolution.Automation\rev.cmd --timeout 86400 --output Revolution.Automation/results/business-pipeline.json pipeline Revolution.Automation/examples/business.pipeline.json
 ```
 
 `pipeline` 是 Python 顺序编排器：每步提供 `action` 和 `payload`，或用 `file` 读取参数。`file` 相对 pipeline 文件所在目录解析。`steps` 任一步失败就停止后续工作步骤，`finally` 逐项执行并记录失败，单个收尾请求最多等待 120 秒。它没有自动重试、事务回滚或断点重放；已经完成的导表/打包不会自动撤销。`--timeout` 是每次 Unity 请求的期限，pipeline 总时长可以更长。
@@ -147,7 +147,7 @@ $env:UNITY_EDITOR = 'E:\你的Unity安装目录\Editor\Unity.exe'
 步骤按游戏帧推进，最多每帧执行一次步骤/条件查询；`wait.seconds` 和 `until` 超时使用墙钟，不受 `Time.timeScale=0` 影响，但编辑器暂停会中断场景。预热失败也会使总结果失败。清理失败后继续尝试后续清理步骤。
 
 ```powershell
-.\Automation\rev.cmd --mode live --timeout 86400 scenario run Automation/examples/business.scenario.json --repeat 10000 --warmup 10 --report-dir Automation/results/my-business
+.\Revolution.Automation\rev.cmd --mode live --timeout 86400 scenario run Revolution.Automation/examples/business.scenario.json --repeat 10000 --warmup 10 --report-dir Revolution.Automation/results/my-business
 ```
 
 长场景应显式增大整体 `--timeout`。默认只有 120 秒。一万轮连续在 Unity 内执行，Python 不逐帧发送 IPC。
@@ -190,22 +190,22 @@ AB `scan`、`dependencies`、`sizes` 使用只读收集；`build` / `map` 按原
 PowerShell 传嵌套 JSON 容易丢引号，优先使用 UTF-8 JSON 参数文件：
 
 ```powershell
-.\Automation\rev.cmd ab configure --json Automation/examples/ab-config.json
-.\Automation\rev.cmd --timeout 1800 ab build --target StandaloneWindows64
-.\Automation\rev.cmd ab dependencies
-.\Automation\rev.cmd ab artifacts --target StandaloneWindows64
-.\Automation\rev.cmd ab mode --set enabled=true
-.\Automation\rev.cmd ab snapshot
-.\Automation\rev.cmd ab diff
-.\Automation\rev.cmd excel read --source 'D:\策划表'
-.\Automation\rev.cmd excel plan --source 'D:\策划表'
-.\Automation\rev.cmd excel export --source 'D:\策划表' --data-only
-.\Automation\rev.cmd ui scan --prefab 'Assets/GameRes/UI/RevExample.prefab'
-.\Automation\rev.cmd ui preview --json Automation/examples/ui-panel.json
-.\Automation\rev.cmd platform resources
-.\Automation\rev.cmd platform linkxml
-.\Automation\rev.cmd hot manifest --target StandaloneWindows64 --json Automation/examples/hot-manifest.json
-.\Automation\rev.cmd hot check --target StandaloneWindows64
+.\Revolution.Automation\rev.cmd ab configure --json Revolution.Automation/examples/ab-config.json
+.\Revolution.Automation\rev.cmd --timeout 1800 ab build --target StandaloneWindows64
+.\Revolution.Automation\rev.cmd ab dependencies
+.\Revolution.Automation\rev.cmd ab artifacts --target StandaloneWindows64
+.\Revolution.Automation\rev.cmd ab mode --set enabled=true
+.\Revolution.Automation\rev.cmd ab snapshot
+.\Revolution.Automation\rev.cmd ab diff
+.\Revolution.Automation\rev.cmd excel read --source 'D:\策划表'
+.\Revolution.Automation\rev.cmd excel plan --source 'D:\策划表'
+.\Revolution.Automation\rev.cmd excel export --source 'D:\策划表' --data-only
+.\Revolution.Automation\rev.cmd ui scan --prefab 'Assets/GameRes/UI/RevExample.prefab'
+.\Revolution.Automation\rev.cmd ui preview --json Revolution.Automation/examples/ui-panel.json
+.\Revolution.Automation\rev.cmd platform resources
+.\Revolution.Automation\rev.cmd platform linkxml
+.\Revolution.Automation\rev.cmd hot manifest --target StandaloneWindows64 --json Revolution.Automation/examples/hot-manifest.json
+.\Revolution.Automation\rev.cmd hot check --target StandaloneWindows64
 ```
 
 `--set KEY=JSON` 的字符串值必须包含 JSON 双引号；建议字符串、数组和控件参数直接写文件。`call 动作ID --json 参数文件` 可以调用同一动作或可选扩展动作。
@@ -234,8 +234,8 @@ UI 先 `scan` 取得控件路径和事件名。`controls` 不填采用原窗口�
 Ctrl+C 或整体超时会写取消标记。运行中的场景在下次更新进入清理，取消后的清理总共最多 10 秒。Play 已停止、编辑器暂停/关闭或脚本重载时，无法保证业务 GM 清理继续执行。同步 GM/打包调用卡住主线程时，文件标记无法抢占它；需定位阻塞业务。客户端只可能终止自己启动且取消后仍未退出的 batch 子进程，不会终止用户的在线图形编辑器。
 
 ```powershell
-.\Automation\rev.cmd job 这里替换为32位请求ID
-.\Automation\rev.cmd job 这里替换为32位请求ID --cancel
+.\Revolution.Automation\rev.cmd job 这里替换为32位请求ID
+.\Revolution.Automation\rev.cmd job 这里替换为32位请求ID --cancel
 ```
 
 `job` 可从另一个终端查询进度或取消。在线等待超时后，Unity 可能仍在清理；通过 job 查看最终 response。CLI 没有自动补跑未完成轮次，避免重复发奖、扣资源或网络请求。
@@ -245,7 +245,7 @@ Ctrl+C 或整体超时会写取消标记。运行中的场景在下次更新进�
 `scenario run` 与 pipeline 内的 `scenario.run` 完成后自动导出 HTML / CSV / JSON；失败场景也导出已有结果。`--report-dir` 可指定场景报告目录。客户端超时/重载中断时，保留的 job 文件可供手动检查，已有最终结果可以重新导出：
 
 ```powershell
-.\Automation\rev.cmd report 'Unity工程/Library/RevolutionAutomation/jobs/请求ID/scenario-result.json' --directory Automation/results/recovered
+.\Revolution.Automation\rev.cmd report 'Unity工程/Library/RevolutionAutomation/jobs/请求ID/scenario-result.json' --directory Revolution.Automation/results/recovered
 ```
 
 | 数据 | 定义与限制 |
