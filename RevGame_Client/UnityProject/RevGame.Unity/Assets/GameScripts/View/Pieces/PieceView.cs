@@ -74,6 +74,7 @@ namespace RevGame.View
         private Tween _visualTween;
         private MaterialPropertyBlock _visualProperties;
         private float _deathProgress;
+        // 身体燃烧的归一化时间（0~1）；火焰强弱由 Shader 的首尾包络控制，结束/归池都恢复为 0。
         private float _birthProgress;
         private float _stormProgress;
         private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
@@ -82,10 +83,12 @@ namespace RevGame.View
         private static readonly int BirthId = Shader.PropertyToID("_Birth");
         private static readonly int StormId = Shader.PropertyToID("_Storm");
         // 仅渲染时长，不改变玩法数值：不放入 Excel；所有入口使用相同的表现约定。
-        // 时长与 Shader 里的可见区间对齐（可见内容正好铺满整个时长），不留"画面空转"的结尾顿挫。
-        private const float BirthSeconds = 0.55f;
-        private const float StormSeconds = 0.7f;
-        private const float DeathSeconds = 0.6f;
+        // 1.35秒让玩家看清身体上翻卷的火舌；最后30%渐熄，不追加闪白或额外的收尾特效。
+        private const float BirthSeconds = 1.35f;
+        // 雷暴留出多次跳电的可读时间；死亡留出“浸染→破孔→残丝消失”的过程（单位：秒）。
+        // 延长的只有视图寿命：规则层仍立即移除死棋，不能延迟伤害或占格释放。
+        private const float StormSeconds = 0.95f;
+        private const float DeathSeconds = 1.05f;
         /// <summary>原棋子表现进度（0~1），供编辑器验证回池/重入；正常待机均为 0。</summary>
         public float DeathDissolveProgress { get { return _deathProgress; } }
         public float BirthProgress { get { return _birthProgress; } }
@@ -142,13 +145,16 @@ namespace RevGame.View
             Clear();
         }
 
-        /// <summary>落子后在当前棋子身体上从火焰中显形；正常落子和援军都走同一个入口，不借特效预制体。</summary>
+        /// <summary>
+        /// 落子/援军共用的身体燃烧：序列帧照常播放，Shader 只给当前帧的真实像素染上流动火舌。
+        /// 只修改本视图的参数块，不克隆共享材质；新效果、切阶段或回池会取消旧 Tween。
+        /// </summary>
         public void PlayBirthFire()
         {
             if (!PrepareBodyVisual(BirthId)) { return; }
             SetBirthProgress(0.001f);
-            // 必须用 Linear：火焰前沿在 Shader 里与进度成正比，OutCubic 会让前沿提前爬出头顶，
-            // 剩下一半时长画面纹丝不动——这就是之前"特效最后顿一下"的元凶。
+            // 这里推进的是时间，不是亮度。Linear 让火舌匀速向上翻卷；渐燃/渐熄由 Shader 单独计算，
+            // 不能再用收尾闪光来掩盖“带火身体 → 普通身体”的切换。
             _visualTween = DOTween.To(() => _birthProgress, SetBirthProgress, 1f, BirthSeconds)
                 .SetEase(Ease.Linear).OnComplete(FinishBodyVisual);
         }
@@ -176,17 +182,21 @@ namespace RevGame.View
             return true;
         }
 
+        /// <summary>
+        /// 同步当前帧的图集纹理与局部UV；燃烧中每次换帧都要同步，否则会采到上一帧或图集邻图。
+        /// 不清空参数块：同一个块还保存正在推进的燃烧/雷暴进度，换图不能把效果时间归零。
+        /// </summary>
         private void SetVisualUv(Sprite sprite)
         {
             // Sprite Atlas V2 打包位置不是 0~1；先得到当前帧的 UV 矩形，三种效果都按棋子局部坐标演算。
             Vector4 outer = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
-            _visualProperties.Clear();
             // ★ 白块根因：SpriteRenderer 一旦被设置了自定义 MaterialPropertyBlock，shader 的 _MainTex 会退回默认白图，
             // 棋子就只剩一个白色剪影。这里显式把当前帧的图集纹理写进去，shader 才能对序列帧真实采样。
             _visualProperties.SetTexture(MainTexId, sprite.texture);
             _visualProperties.SetVector(DissolveUvId, new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y));
         }
 
+        /// <summary>DOTween 的写入端：0~1 进度只属于此棋子，最后一帧已无火，再清理参数不会跳色。</summary>
         private void SetBirthProgress(float value)
         {
             _birthProgress = value;
@@ -203,7 +213,8 @@ namespace RevGame.View
 
         /// <summary>
         /// 规则层已立即判死、腾出占格；仅让这颗原棋子在画面上多留一小段表现寿命。
-        /// 不换 Sprite、不复制材质、不借 BattleEffect，只有身体的真实像素随 Shader 像液体般融下去。
+        /// 冻结死亡当刻的原始Sprite，不复制材质、不借BattleEffect；Shader用固定噪声逐步吃掉alpha，
+        /// 同时让剩余图案像毒液般下淌。已经侵蚀的孔洞不会随时间重新长回。
         /// </summary>
         public bool BeginDeathDissolve(System.Action<PieceView> onFinished)
         {
@@ -252,15 +263,34 @@ namespace RevGame.View
             StopBodyVisual();
         }
 
+        /// <summary>
+        /// 当前视图所有身体特效的统一收尾；可重复调用，回池也必须调用。
+        /// 取消旧回调、清理进度后重新交还Sprite贴图绑定，避免末帧白闪与下次借出串状态。
+        /// </summary>
         private void StopBodyVisual()
         {
+            bool hadVisual = _deathProgress > 0f || _birthProgress > 0f || _stormProgress > 0f;
             Tween previous = _visualTween;
             _visualTween = null;
             previous?.Kill(false);
             _deathProgress = 0f;
             _birthProgress = 0f;
             _stormProgress = 0f;
-            if (bodyRenderer != null) { bodyRenderer.SetPropertyBlock(null); }
+            // ★ 不仅清 Renderer，也清复用的草稿。下一次换帧只更新纹理和UV，不能带回旧死亡进度。
+            _visualProperties?.Clear();
+            if (bodyRenderer != null)
+            {
+                bodyRenderer.SetPropertyBlock(null);
+                if (hadVisual && bodyRenderer.sprite != null)
+                {
+                    // ★ SpriteRenderer把当前帧纹理也放在内部参数块里，直接清空会短暂采到默认白图。
+                    // 同一次方法内先撤下再重新绑定同一Sprite，强制引擎重建贴图绑定；中间不会渲染，
+                    // 不会出现空帧，也不用给待机棋子永久保留自定义参数块或克隆材质。
+                    Sprite current = bodyRenderer.sprite;
+                    bodyRenderer.sprite = null;
+                    bodyRenderer.sprite = current;
+                }
+            }
         }
 
         /// <summary>只平滑图像，不修改逻辑落点；同一目标重复刷新不会让动画一直从头开始。</summary>
@@ -454,7 +484,7 @@ namespace RevGame.View
         /// <summary>计时器回调：按帧间隔换 Sprite。</summary>
         private void OnTick()
         {
-            // 被围标识仍正常换帧；只有本体 Sprite 在短暂浴火/雷暴期间需要固定帧与图集UV。
+            // 被围标识和身体分别换帧；燃烧/雷暴只改变当前帧的颜色，不能把活棋变成静止立绘。
             if (_locked && lockedRenderer != null && _entry != null && _entry.lockedFrames != null && _entry.lockedFrames.Length > 0)
             {
                 _lockedFrameTimer += tickInterval;
@@ -466,8 +496,7 @@ namespace RevGame.View
                 }
                 lockedRenderer.sprite = _entry.lockedFrames[_lockedFrameIndex];
             }
-            // 原棋子短暂定格的是身体动画帧，不是业务血量、占格或锁死状态。
-            if (_visualTween != null && _visualTween.IsActive()) { return; }
+            // 死亡会取消本计时器并清空帧列表；存活棋子即使正在燃烧，也必须继续播放序列帧。
             if (_frames == null || _frames.Length <= 1)
             {
                 return;
@@ -484,6 +513,13 @@ namespace RevGame.View
             if (bodyRenderer != null)
             {
                 bodyRenderer.sprite = _frames[_frameIndex];
+                if (_birthProgress > 0f || _stormProgress > 0f)
+                {
+                    // 一张Atlas里的不同帧通常位于不同矩形。先换图再同步UV/纹理，
+                    // 保留当前效果进度，确保火舌始终贴在“此刻正在显示”的身体上。
+                    SetVisualUv(bodyRenderer.sprite);
+                    bodyRenderer.SetPropertyBlock(_visualProperties);
+                }
             }
         }
     }

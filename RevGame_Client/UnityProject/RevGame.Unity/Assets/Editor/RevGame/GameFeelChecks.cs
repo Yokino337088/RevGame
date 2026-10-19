@@ -14,8 +14,10 @@ namespace RevGame.Editor
     {
         public static string LastResult { get; private set; } = "未运行";
 
+        [UnityEditor.MenuItem("RevGame/验收/池化动画（Play）")]
         public static async void BeginPoolCheck()
         {
+            if (!Application.isPlaying) { RevLog.Warn("请先从StartScene进入Play再验收池化动画", "RevGame"); return; }
             if (LastResult == "运行中") { return; }
             LastResult = "运行中";
             GameObject container = new GameObject("池化动画验收", typeof(RectTransform));
@@ -70,7 +72,8 @@ namespace RevGame.Editor
                 int completedDeath = 0;
                 Require(piece.BeginDeathDissolve(item => { completedDeath++; RevPool.Return(item, 0); }), "原棋子再次播放溶解失败");
                 piece = null; // 动画完成时已由回调归池，finally 不得重复归还。
-                await RevTask.Delay(950);
+                // 死亡表现为1.05秒；给调度留余量，不能沿用旧0.6秒特效的验收等待时间。
+                await RevTask.Delay(1400);
                 Require(completedDeath == 1, "原棋子溶解自然完成未恰好回调一次");
 
                 effect = await Load<BattleEffectView>(container.transform);
@@ -118,6 +121,7 @@ namespace RevGame.Editor
                 Require(callbacks == 0, "中途回池后仍触发了旧动画完成回调");
                 Require(DOTween.TotalActiveTweens() == before, "动画总数没有恢复到验收前");
                 LastResult = "通过：原棋浴火入场/雷暴升星/死亡消融及伤害、弹道、提示，回池清理、复用和旧回调均正常";
+                RevLog.Info(LastResult, "GameFeelChecks");
             }
             catch (System.Exception error)
             {
@@ -130,6 +134,8 @@ namespace RevGame.Editor
                 if (piece != null) { RevPool.Return(piece, 0); }
                 if (notice != null) { RevPool.Return(notice, 0); }
                 Object.Destroy(container);
+                // 留下可读取的结果；这些文件只在忽略目录Temp中，不修改场景资产或正式资源。
+                System.IO.File.WriteAllText("Temp/GameFeelChecks.txt", LastResult);
             }
         }
 
