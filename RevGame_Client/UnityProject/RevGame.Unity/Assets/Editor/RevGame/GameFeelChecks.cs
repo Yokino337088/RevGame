@@ -3,6 +3,7 @@
 // 特意在动画中途回池、马上复用、等待旧动画原本该结束的时间，检查是否发生重复回调。
 // ============================================================
 using DG.Tweening;
+using RevGame.Core;
 using RevGame.View;
 using Revolution;
 using UnityEngine;
@@ -20,11 +21,58 @@ namespace RevGame.Editor
             GameObject container = new GameObject("池化动画验收", typeof(RectTransform));
             container.GetComponent<RectTransform>().sizeDelta = new Vector2(1920, 1080);
             BattleEffectView effect = null;
+            PieceView piece = null;
             BattleEventNoticeView notice = null;
             int callbacks = 0;
             int before = DOTween.TotalActiveTweens();
             try
             {
+                piece = await Load<PieceView>(container.transform);
+                piece.Bind(99001, PieceKind.Archer, StarTier.One, GameSide.Player);
+                SpriteRenderer body = (SpriteRenderer)typeof(PieceView).GetField("bodyRenderer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(piece);
+                Sprite currentFrame = body.sprite;
+                Require(currentFrame != null, "棋子当前帧未就绪");
+                var block = new MaterialPropertyBlock();
+                piece.PlayBirthFire();
+                await RevTask.Delay(120);
+                body.GetPropertyBlock(block);
+                Require(piece.BirthProgress > 0f && block.GetFloat("_Birth") > 0f, "原棋子的浴火入场没有推进");
+                piece.PlayUpgradeStorm();
+                body.GetPropertyBlock(block);
+                Require(piece.BirthProgress == 0f && block.GetFloat("_Birth") == 0f, "升级未中断旧浴火动画");
+                await RevTask.Delay(120);
+                body.GetPropertyBlock(block);
+                Require(piece.StormProgress > 0f && block.GetFloat("_Storm") > 0f, "原棋子的雷暴升级没有推进");
+                await RevTask.Delay(1200);
+                body.GetPropertyBlock(block);
+                Require(piece.StormProgress == 0f && block.GetFloat("_Storm") == 0f, "雷暴完成后没有清理 Shader 参数");
+                // 恢复待机后身体会继续换帧；死亡应冻结触发当刻的帧，不能拿入场前的旧帧作比较。
+                currentFrame = body.sprite;
+                int cancelledDeath = 0;
+                Require(piece.BeginDeathDissolve(item => cancelledDeath++), "原棋子未能启动身体溶解");
+                Require(body.sprite == currentFrame, "死亡不能换成独立特效贴图或另外实例");
+                await RevTask.Delay(120);
+                body.GetPropertyBlock(block);
+                Require(piece.DeathDissolveProgress > 0f && block.GetFloat("_Dissolve") > 0f, "原棋子身体溶解进度未推进");
+                RevPool.Return(piece, 0);
+                piece = null;
+                await RevTask.Delay(800);
+                Require(cancelledDeath == 0, "棋子中途回池仍触发了旧死亡回调");
+                piece = await Load<PieceView>(container.transform);
+                piece.Bind(99002, PieceKind.Archer, StarTier.One, GameSide.Player);
+                Require(piece.DeathDissolveProgress == 0f && piece.BirthProgress == 0f && piece.StormProgress == 0f,
+                    "棋子复用后残留上次的死亡/落地/升星 Shader 进度");
+                piece.PlayBirthFire();
+                RevPool.Return(piece, 0);
+                Require(piece.BirthProgress == 0f, "浴火入场中途回池没有清除表现状态");
+                piece = await Load<PieceView>(container.transform);
+                piece.Bind(99002, PieceKind.Archer, StarTier.One, GameSide.Player);
+                int completedDeath = 0;
+                Require(piece.BeginDeathDissolve(item => { completedDeath++; RevPool.Return(item, 0); }), "原棋子再次播放溶解失败");
+                piece = null; // 动画完成时已由回调归池，finally 不得重复归还。
+                await RevTask.Delay(950);
+                Require(completedDeath == 1, "原棋子溶解自然完成未恰好回调一次");
+
                 effect = await Load<BattleEffectView>(container.transform);
                 int effectId = effect.GetInstanceID();
                 effect.Show(BattleEffectKind.Damage, Vector3.zero, 123, item => callbacks++);
@@ -69,7 +117,7 @@ namespace RevGame.Editor
                 await RevTask.Delay(4000);
                 Require(callbacks == 0, "中途回池后仍触发了旧动画完成回调");
                 Require(DOTween.TotalActiveTweens() == before, "动画总数没有恢复到验收前");
-                LastResult = "通过：伤害/弹道/攻击文字/升级/增益提示均启动，回池 Kill，实例复用，4秒后无旧回调且 Tween 数恢复";
+                LastResult = "通过：原棋浴火入场/雷暴升星/死亡消融及伤害、弹道、提示，回池清理、复用和旧回调均正常";
             }
             catch (System.Exception error)
             {
@@ -79,6 +127,7 @@ namespace RevGame.Editor
             finally
             {
                 if (effect != null) { RevPool.Return(effect, 0); }
+                if (piece != null) { RevPool.Return(piece, 0); }
                 if (notice != null) { RevPool.Return(notice, 0); }
                 Object.Destroy(container);
             }

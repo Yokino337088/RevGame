@@ -128,22 +128,10 @@ namespace RevGame.Editor
             var effect = root.AddComponent<BattleEffectView>();
             GameAssetBuilder.SetReference(effect, "spriteRenderer", renderer);
             GameAssetBuilder.SetReference(effect, "damageText", text);
-            var so = new SerializedObject(effect);
-            Frames(so, "deathFrames", "特效_提子破碎_", 6);
-            Frames(so, "mergeFrames", "特效_三合一升星_", 8);
-            so.ApplyModifiedPropertiesWithoutUndo();
+            // 落子、升级与死亡都在原棋子的共享 Shader 上完成；这个池预制体只保留伤害数字与弹道。
+            // 重建时不可把已删除的旧死亡/升星帧引用带回来。
             PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Effects/Combat/BattleEffect.prefab");
             Object.DestroyImmediate(root);
-        }
-
-        private static void Frames(SerializedObject so, string field, string prefix, int count)
-        {
-            SerializedProperty frames = so.FindProperty(field);
-            frames.arraySize = count;
-            for (int i = 0; i < count; i++)
-            {
-                frames.GetArrayElementAtIndex(i).objectReferenceValue = GameAssetBuilder.Sprite("特效/" + prefix + (i + 1).ToString("00") + ".png");
-            }
         }
 
         private static void BuildHud()

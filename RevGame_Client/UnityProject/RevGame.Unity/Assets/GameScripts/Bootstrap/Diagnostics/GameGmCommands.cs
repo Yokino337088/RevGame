@@ -7,7 +7,9 @@
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;
+using RevGame.Pieces;
 using RevGame.Services;
+using RevGame.View;
 using Revolution;
 
 namespace RevGame.Bootstrap
@@ -27,6 +29,8 @@ namespace RevGame.Bootstrap
             "落首张牌",
             "落子",
             "点棋盘",
+            "攻击范围",
+            "收起攻击范围",
             "刷新手牌",
             "选奖励",
             "跳过",
@@ -68,6 +72,44 @@ namespace RevGame.Bootstrap
             {
                 return BattleResult(Logic().ClickBoard(new BoardPos(args.Int(0, 0), args.Int(1, 0))));
             }, RevGMArg.Int("X"), RevGMArg.Int("Y"));
+            RevGM.Register("RevGame/攻击范围", "长按棋子的受控等价入口：0=第一颗我方棋子，或指定棋子编号", args =>
+            {
+                Logic();
+                BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
+                if (board == null)
+                {
+                    throw new RevGMUsageException("当前没有棋盘视图");
+                }
+
+                int id = args.Int(0, 0);
+                if (id == 0)
+                {
+                    System.Collections.Generic.IReadOnlyList<Piece> players = RevServices.GetRequired<IBattleService>().PlayerPieces;
+                    if (players.Count == 0)
+                    {
+                        throw new RevGMUsageException("我方棋盘上没有棋子");
+                    }
+                    id = players[0].Id;
+                }
+
+                if (!board.ShowAttackRange(id))
+                {
+                    throw new RevGMUsageException("棋子 #" + id + " 无法显示攻击范围（不存在/已死亡/被锁死/射界为空）");
+                }
+                return "棋子 #" + id + " 攻击范围已显示，共 " + board.AttackRangeCellCount + " 格";
+            }, RevGMArg.Int("棋子编号", 0));
+            RevGM.Register("RevGame/收起攻击范围", "与再次点击屏幕任意位置一致", args =>
+            {
+                BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
+                if (board == null || !board.AttackRangeVisible)
+                {
+                    throw new RevGMUsageException("当前没有显示中的攻击范围");
+                }
+
+                int count = board.AttackRangeCellCount;
+                board.HideAttackRange();
+                return "攻击范围已收起，本次显示过 " + count + " 格";
+            });
             RevGM.Register("RevGame/选奖励", "选择0~2号奖励", args => BattleResult(Logic().ChooseReward(args.Int(0, 0))), RevGMArg.Int("选项"));
             RevGM.Register("RevGame/跳过", "第10回合未落牌时跳过换攻击强化", args => BattleResult(Logic().SkipRound()));
             RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，间隔7秒且每回合最多12次", args =>

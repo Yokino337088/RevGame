@@ -30,16 +30,32 @@ Material:
     m_Ints: []
     m_Floats:
     - _ArtBlend: 0
+    - _ArtBreathe: 0.45
+    - _ArtFlow: 0.14
+    - _ArtSpin: -4
+    - _ArtTwist: 1.9
+    - _ArtTwistRadius: 0.22
     - _ColorMask: 15
-    - _Speed: 0.28
+    - _Contrast: 4.2
+    - _Lighting: 0.55
+    - _PixelFilter: 745
+    - _Rainbow: 1
+    - _Speed: 0.34
+    - _SpinAmount: 0.3
+    - _SpinRotation: -2.2
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
-    - _Strength: 0.7
+    - _Strength: 0.85
+    - _SwirlScale: 34
     - _UseUIAlphaClip: 0
     m_Colors:
+    - _ArtUvRect: {r: 0, g: 0, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _GlowColor: {r: 1, g: 0.8, b: 0.37999994, a: 1}
+    - _SwirlColorA: {r: 0.11658941, g: 0.8238993, b: 0.71577543, a: 1}
+    - _SwirlColorB: {r: 0.9496855, g: 0.9372429, b: 0.5465171, a: 1}
+    - _SwirlColorC: {r: 0.035, g: 0.059999965, b: 0.089999996, a: 1}
   m_BuildTextureStacks: []

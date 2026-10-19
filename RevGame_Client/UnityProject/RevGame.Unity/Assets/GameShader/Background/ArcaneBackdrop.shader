@@ -37,6 +37,8 @@ Shader "RevGame/Background/ArcaneBackdrop"
         _SwirlColorA ("主色带", Color) = (0.10,0.52,0.56,1)
         _SwirlColorB ("副色带", Color) = (0.46,0.20,0.62,1)
         _SwirlColorC ("墨底", Color) = (0.035,0.06,0.09,1)
+        // 0=保持上面三色（战斗/选关统一墨绿紫）；1=按漩涡角度与半径走全色谱，形成五彩斑斓的虹彩带。
+        _Rainbow ("彩虹色带（0=原配色 1=五彩斑斓）", Range(0,1)) = 0
         _SpinRotation ("色带公转速度（负数为顺时针）", Range(-5,5)) = -2
         _Contrast ("色带锐度", Range(1,8)) = 3.5
         _Lighting ("色带高光", Range(0,1)) = 0.4
@@ -98,7 +100,7 @@ Shader "RevGame/Background/ArcaneBackdrop"
             float _ArtTwist, _ArtTwistRadius, _ArtFlow, _ArtSpin, _ArtBreathe;
             float _SwirlScale, _SpinAmount;
             fixed4 _SwirlColorA, _SwirlColorB, _SwirlColorC;
-            float _SpinRotation, _Contrast, _Lighting, _PixelFilter;
+            float _SpinRotation, _Contrast, _Lighting, _PixelFilter, _Rainbow;
 
             v2f vert(appdata input)
             {
@@ -175,6 +177,13 @@ Shader "RevGame/Background/ArcaneBackdrop"
                 return tex2Dgrad(_MainTex, _ArtUvRect.xy + artUV * rectSize, gradX, gradY) + _TextureSampleAdd;
             }
 
+            // 色相 → RGB（饱和度高、明度可调）。彩虹模式用它按漩涡角度取色，比手写三色渐变更均匀。
+            float3 HsvToRgb(float3 hsv)
+            {
+                float3 p = abs(frac(hsv.xxx + float3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
+                return hsv.z * lerp(float3(1.0, 1.0, 1.0), saturate(p - 1.0), hsv.y);
+            }
+
             // ---------- 程序漩涡（无图的大厅/选关/加载面板）----------
             float3 ProceduralSwirl(float2 pixel, float2 screen, float time)
             {
@@ -196,10 +205,19 @@ Shader "RevGame/Background/ArcaneBackdrop"
                 float bandB = max(0.0, 1.0 - contrastMod * abs(paint));
                 float bandC = 1.0 - min(1.0, bandA + bandB);
                 float baseShare = 0.3 / max(_Contrast, 0.0001);
-                float3 swirl = baseShare * _SwirlColorA.rgb + (1.0 - baseShare) * (_SwirlColorA.rgb * bandA + _SwirlColorB.rgb * bandB + _SwirlColorC.rgb * bandC);
+                // 彩虹模式：色相跟着“屏幕角度 + 半径 + 时间”转，主副色带错开约 0.45 圈色相，
+                // 相邻两道色带永远是对比色，卷曲起来才是五彩斑斓而不是同色深浅。
+                float hue = frac(atan2(uv.y, uv.x) / 6.2831853 + length(uv) * 0.22 + time * 0.04);
+                float3 rainbowA = HsvToRgb(float3(hue, 0.92, 1.0));
+                float3 rainbowB = HsvToRgb(float3(frac(hue + 0.45), 0.95, 1.0));
+                float3 colorA = lerp(_SwirlColorA.rgb, rainbowA, _Rainbow);
+                float3 colorB = lerp(_SwirlColorB.rgb, rainbowB, _Rainbow);
+                float3 swirl = baseShare * colorA + (1.0 - baseShare) * (colorA * bandA + colorB * bandB + _SwirlColorC.rgb * bandC);
                 // 高光：只有色带最中心那一窄条才亮（*5-4 把 0.8~1 拉成 0~1）。
                 float light = (_Lighting - 0.2) * max(bandA * 5.0 - 4.0, 0.0) + _Lighting * max(bandB * 5.0 - 4.0, 0.0);
-                return swirl + _GlowColor.rgb * light * _Strength;
+                // 彩虹模式高光用白色，避免暖金色把紫/蓝带染脏。
+                float3 glow = lerp(_GlowColor.rgb, float3(1.0, 1.0, 1.0), _Rainbow);
+                return swirl + glow * light * _Strength;
             }
 
             fixed4 frag(v2f input) : SV_Target

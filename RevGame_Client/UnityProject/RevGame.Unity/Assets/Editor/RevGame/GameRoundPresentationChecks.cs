@@ -68,14 +68,24 @@ namespace RevGame.Editor
                 await RevTask.Delay(900);
                 VerifySixCards(battle);
 
-                // 暂停真实升级与支援提示，模拟动画永远无法自然完成的最坏情况。
+                // 暂停原位升级棋子的雷暴 Shader，模拟动画永远无法自然完成；切阶段必须把逐实例参数清干净。
                 Require(((BattleService)battle).LoadDevelopmentScenario("merge"), "合成场景加载失败");
                 Require(battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(2, 0)), "合成未触发");
                 await RevTask.Delay(150);
+                PieceView pausedUpgrade = null;
+                foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>())
+                {
+                    if (view.StormProgress <= 0f) { continue; }
+                    pausedUpgrade = view;
+                    PauseOwnedTween(view, "_visualTween");
+                    break;
+                }
+                Require(pausedUpgrade != null, "真实合成没有在原棋子上启动雷暴 Shader");
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { PauseOwnedTween(effect, "_animation"); }
                 foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>()) { PauseOwnedTween(notice, "_animation"); }
                 battle.Tick(3f);
                 Require(battle.StartBattle(), "合成后开战失败");
+                Require(pausedUpgrade.StormProgress == 0f, "切阶段后原棋子残留暂停的雷暴 Shader 参数");
                 VerifyNoOldEffects();
                 battle.Tick(Balance.BattleEventDelay);
                 await RevTask.Delay(120);

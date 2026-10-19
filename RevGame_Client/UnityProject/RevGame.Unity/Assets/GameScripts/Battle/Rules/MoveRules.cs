@@ -182,6 +182,162 @@ namespace RevGame.Battle
             return;
         }
 
+        /// <summary>
+        /// 取这颗棋子**攻击能覆盖到的格子**（几何射界，格子上不要求真有敌人）。
+        ///
+        /// 与 <see cref = "GetAttackTargets"/> 的区别（长按查看攻击范围就靠这一条）：
+        /// - GetAttackTargets 回答"现在真能打到哪几颗敌棋"，空格永远不会出现；
+        /// - 这里回答"火力能伸到哪些格"，空格也算 —— 玩家想看的是射界，不是当前目标。
+        ///
+        /// 分支必须与 GetAttackTargets 保持一致，否则玩家看到黄色格子却打不到，比不显示更糟：
+        /// 我方远程/敌方重弩全盘；其余按四方向射线 —— 近战一格、敌弓六格、炮先找炮架再打架后第一格。
+        /// 被自己人挡住的格子不算覆盖（打不到），锁死棋子没有射界（返回空）。
+        /// </summary>
+        public static List<BoardPos> GetAttackCoverage(BoardModel board, Piece piece)
+        {
+            var result = new List<BoardPos>();
+            GetAttackCoverage(board, piece, result);
+            return result;
+        }
+
+        /// <summary>高频版本：结果写入调用方持有的列表，进入时Clear，容量保留。</summary>
+        public static void GetAttackCoverage(BoardModel board, Piece piece, List<BoardPos> result)
+        {
+            result.Clear();
+            if (board == null || piece == null)
+            {
+                return;
+            }
+
+            // 锁死 = 不能攻击；这时如果画出"全盘覆盖"会直接骗玩家。
+            if (!piece.IsAlive || piece.IsLocked)
+            {
+                return;
+            }
+
+            if ((piece.Side == GameSide.Player && piece.Def.IsRanged) || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
+            {
+                // 全盘压制：除自己的身体格以外，每个格子都在弹幕覆盖内（含空格和敌方棋子）。
+                for (int y = 0; y < board.Size; y++)
+                {
+                    for (int x = 0; x < board.Size; x++)
+                    {
+                        var pos = new BoardPos(x, y);
+                        if (!IsBodyCell(piece, pos))
+                        {
+                            result.Add(pos);
+                        }
+                    }
+                }
+                return;
+            }
+
+            bool cannon = piece.Def.Pattern == MovePattern.Cannon;
+            int range = cannon ? board.Size : (piece.Def.IsRanged ? Balance.EnemyArcherRange : 1);
+            for (int direction = 0; direction < 4; direction++)
+            {
+                // 大棋从每条边的每一格向外看，射界才是完整的；只从中心看会漏掉贴着边角的格子。
+                for (int edge = 0; edge < piece.Size; edge++)
+                {
+                    BoardPos origin = AttackOrigin(piece, direction, edge);
+                    if (cannon)
+                    {
+                        CollectCannonCoverage(board, piece, origin, direction, range, result);
+                    }
+                    else
+                    {
+                        CollectStraightCoverage(board, piece, origin, direction, range, result);
+                    }
+                }
+            }
+        }
+
+        /// <summary>近战/弓：沿射线把空格都算进覆盖；遇到棋子时敌方格算覆盖，自己人挡住的格不算。</summary>
+        private static void CollectStraightCoverage(BoardModel board, Piece piece, BoardPos origin, int direction, int range, List<BoardPos> result)
+        {
+            for (int step = 1; step <= range; step++)
+            {
+                var pos = new BoardPos(origin.X + Dx[direction] * step, origin.Y + Dy[direction] * step);
+                Cell cell = board.GetCell(pos);
+                if (cell == null)
+                {
+                    break;
+                }
+
+                if (cell.IsEmpty)
+                {
+                    AddCoverage(result, pos);
+                    continue;
+                }
+
+                // 有子就停：敌子这一格是着弹点，自己人这一格打不到也不该标黄。
+                if (cell.Occupant.Side != piece.Side)
+                {
+                    AddCoverage(result, pos);
+                }
+                break;
+            }
+        }
+
+        /// <summary>
+        /// 炮：炮架之前的空格都覆盖，炮架自身不算着弹点；
+        /// 炮架之后**只有第一格**是唯一着弹点（空格也算 —— 敌人走到那里就会被打），再远打不到。
+        /// </summary>
+        private static void CollectCannonCoverage(BoardModel board, Piece piece, BoardPos origin, int direction, int range, List<BoardPos> result)
+        {
+            Piece screen = null;
+            for (int step = 1; step <= range; step++)
+            {
+                var pos = new BoardPos(origin.X + Dx[direction] * step, origin.Y + Dy[direction] * step);
+                Cell cell = board.GetCell(pos);
+                if (cell == null)
+                {
+                    break;
+                }
+
+                if (screen == null)
+                {
+                    if (cell.IsEmpty)
+                    {
+                        AddCoverage(result, pos);
+                        continue;
+                    }
+                    screen = cell.Occupant;
+                    continue;
+                }
+
+                // ★ 2×2/3×3 的后半截身体仍是同一个炮架，不能当成"架后第一子"。
+                if (cell.Occupant == screen)
+                {
+                    continue;
+                }
+
+                if (cell.IsEmpty || cell.Occupant.Side != piece.Side)
+                {
+                    AddCoverage(result, pos);
+                }
+                break;
+            }
+        }
+
+        private static bool IsBodyCell(Piece piece, BoardPos pos)
+        {
+            return pos.X >= piece.Pos.X && pos.Y >= piece.Pos.Y && pos.X < piece.Pos.X + piece.Size && pos.Y < piece.Pos.Y + piece.Size;
+        }
+
+        /// <summary>最多81格，直接线性去重即可；不为一次长按分配 HashSet。</summary>
+        private static void AddCoverage(List<BoardPos> result, BoardPos pos)
+        {
+            for (int i = 0; i < result.Count; i++)
+            {
+                if (result[i] == pos)
+                {
+                    return;
+                }
+            }
+            result.Add(pos);
+        }
+
         /// <summary>单步走法：四方向各走 1~MoveRange 格（遇到棋子就停）。</summary>
         private static void CollectStep(BoardModel board, Piece piece, List<BoardPos> result)
         {

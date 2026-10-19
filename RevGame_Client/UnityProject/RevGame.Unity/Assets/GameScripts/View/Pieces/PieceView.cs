@@ -2,6 +2,7 @@
 // PieceView.cs
 // 棋子视图可反复回池，绑定模型和启动动画分开；每次停用取消 owner 计时器，防止旧动画继续跑。
 // ============================================================
+using DG.Tweening;
 using RevGame.Core;
 using Revolution;
 using UnityEngine;
@@ -69,6 +70,26 @@ namespace RevGame.View
         private float _moveElapsed;
         private bool _hasPosition;
         private bool _moving;
+        // 三种特效只改原棋子身体；共享一条 Tween 与逐实例参数块，归池先 Kill(false) 再清干净，防串对象。
+        private Tween _visualTween;
+        private MaterialPropertyBlock _visualProperties;
+        private float _deathProgress;
+        private float _birthProgress;
+        private float _stormProgress;
+        private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        private static readonly int DissolveUvId = Shader.PropertyToID("_DissolveUV");
+        private static readonly int BirthId = Shader.PropertyToID("_Birth");
+        private static readonly int StormId = Shader.PropertyToID("_Storm");
+        // 仅渲染时长，不改变玩法数值：不放入 Excel；所有入口使用相同的表现约定。
+        // 时长与 Shader 里的可见区间对齐（可见内容正好铺满整个时长），不留"画面空转"的结尾顿挫。
+        private const float BirthSeconds = 0.55f;
+        private const float StormSeconds = 0.7f;
+        private const float DeathSeconds = 0.6f;
+        /// <summary>原棋子表现进度（0~1），供编辑器验证回池/重入；正常待机均为 0。</summary>
+        public float DeathDissolveProgress { get { return _deathProgress; } }
+        public float BirthProgress { get { return _birthProgress; } }
+        public float StormProgress { get { return _stormProgress; } }
         /// <summary>当前绑定的业务棋子 Id（0 = 还没绑定）。</summary>
         public int PieceId { get; private set; }
 
@@ -83,6 +104,7 @@ namespace RevGame.View
 
         private void Awake()
         {
+            _visualProperties = new MaterialPropertyBlock();
             if (hpFillRenderer != null)
             {
                 _hpFillScale = hpFillRenderer.transform.localScale;
@@ -101,12 +123,14 @@ namespace RevGame.View
 
         private void OnDisable()
         {
+            StopBodyVisual();
             RevTimer.CancelAllOf(this);
             RevMono.RemoveAllOf(this);
         }
 
         public void OnPoolGet()
         {
+            StopBodyVisual();
             _hasPosition = false;
             _moving = false;
             // 出池后的第一次定位直接落到出生格，不能从上一颗棋子的旧位置飞过来。
@@ -114,7 +138,129 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            StopBodyVisual();
             Clear();
+        }
+
+        /// <summary>落子后在当前棋子身体上从火焰中显形；正常落子和援军都走同一个入口，不借特效预制体。</summary>
+        public void PlayBirthFire()
+        {
+            if (!PrepareBodyVisual(BirthId)) { return; }
+            SetBirthProgress(0.001f);
+            // 必须用 Linear：火焰前沿在 Shader 里与进度成正比，OutCubic 会让前沿提前爬出头顶，
+            // 剩下一半时长画面纹丝不动——这就是之前"特效最后顿一下"的元凶。
+            _visualTween = DOTween.To(() => _birthProgress, SetBirthProgress, 1f, BirthSeconds)
+                .SetEase(Ease.Linear).OnComplete(FinishBodyVisual);
+        }
+
+        /// <summary>原位升级后由同一颗棋子的身体掀起闪电与雷暴，反复升级会中断旧效果而非叠加实例。</summary>
+        public void PlayUpgradeStorm()
+        {
+            if (!PrepareBodyVisual(StormId)) { return; }
+            SetStormProgress(0.001f);
+            _visualTween = DOTween.To(() => _stormProgress, SetStormProgress, 1f, StormSeconds)
+                .SetEase(Ease.Linear).OnComplete(FinishBodyVisual);
+        }
+
+        private bool PrepareBodyVisual(int shaderProperty)
+        {
+            Sprite sprite = bodyRenderer != null ? bodyRenderer.sprite : null;
+            Material material = bodyRenderer != null ? bodyRenderer.sharedMaterial : null;
+            if (sprite == null || material == null || !material.HasProperty(shaderProperty))
+            {
+                RevLog.Warn("棋子入场/升级特效缺少当前帧或 ArcanePiece Shader 参数，编号 " + PieceId, "RevGame");
+                return false;
+            }
+            StopBodyVisual();
+            SetVisualUv(sprite);
+            return true;
+        }
+
+        private void SetVisualUv(Sprite sprite)
+        {
+            // Sprite Atlas V2 打包位置不是 0~1；先得到当前帧的 UV 矩形，三种效果都按棋子局部坐标演算。
+            Vector4 outer = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
+            _visualProperties.Clear();
+            // ★ 白块根因：SpriteRenderer 一旦被设置了自定义 MaterialPropertyBlock，shader 的 _MainTex 会退回默认白图，
+            // 棋子就只剩一个白色剪影。这里显式把当前帧的图集纹理写进去，shader 才能对序列帧真实采样。
+            _visualProperties.SetTexture(MainTexId, sprite.texture);
+            _visualProperties.SetVector(DissolveUvId, new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y));
+        }
+
+        private void SetBirthProgress(float value)
+        {
+            _birthProgress = value;
+            _visualProperties.SetFloat(BirthId, value);
+            bodyRenderer.SetPropertyBlock(_visualProperties);
+        }
+
+        private void SetStormProgress(float value)
+        {
+            _stormProgress = value;
+            _visualProperties.SetFloat(StormId, value);
+            bodyRenderer.SetPropertyBlock(_visualProperties);
+        }
+
+        /// <summary>
+        /// 规则层已立即判死、腾出占格；仅让这颗原棋子在画面上多留一小段表现寿命。
+        /// 不换 Sprite、不复制材质、不借 BattleEffect，只有身体的真实像素随 Shader 像液体般融下去。
+        /// </summary>
+        public bool BeginDeathDissolve(System.Action<PieceView> onFinished)
+        {
+            Sprite sprite = bodyRenderer != null ? bodyRenderer.sprite : null;
+            Material material = bodyRenderer != null ? bodyRenderer.sharedMaterial : null;
+            if (sprite == null || material == null || !material.HasProperty(DissolveId)) { return false; }
+
+            StopBodyVisual();
+            _moving = false;
+            // 冻住死亡瞬间的动画帧并隐藏血条/锁死标识等非身体层；不再从模型读取已死棋子。
+            RevTimer.CancelAllOf(this);
+            RevMono.RemoveAllOf(this);
+            _frames = null;
+            if (baseRenderer != null) { baseRenderer.enabled = false; }
+            if (hpFillRenderer != null) { hpFillRenderer.enabled = false; }
+            if (lockedRenderer != null) { lockedRenderer.enabled = false; }
+            if (crownRenderer != null) { crownRenderer.enabled = false; }
+            if (haloRenderer != null) { haloRenderer.enabled = false; }
+            SetVisualUv(sprite);
+            SetDeathProgress(0.001f);
+            _visualTween = DOTween.To(() => _deathProgress, SetDeathProgress, 1f, DeathSeconds)
+                .SetEase(Ease.Linear).OnComplete(() =>
+                {
+                    _visualTween = null;
+                    onFinished?.Invoke(this);
+                });
+            return true;
+        }
+
+        private void SetDeathProgress(float value)
+        {
+            _deathProgress = value;
+            _visualProperties.SetFloat(DissolveId, value);
+            bodyRenderer.SetPropertyBlock(_visualProperties);
+        }
+
+        /// <summary>换阶段时只撤入场/升级；已离开规则棋盘的死棋还要完成液体消融，不能一并取消。</summary>
+        public void StopTransientVisuals()
+        {
+            if (_birthProgress > 0f || _stormProgress > 0f) { StopBodyVisual(); }
+        }
+
+        private void FinishBodyVisual()
+        {
+            _visualTween = null;
+            StopBodyVisual();
+        }
+
+        private void StopBodyVisual()
+        {
+            Tween previous = _visualTween;
+            _visualTween = null;
+            previous?.Kill(false);
+            _deathProgress = 0f;
+            _birthProgress = 0f;
+            _stormProgress = 0f;
+            if (bodyRenderer != null) { bodyRenderer.SetPropertyBlock(null); }
         }
 
         /// <summary>只平滑图像，不修改逻辑落点；同一目标重复刷新不会让动画一直从头开始。</summary>
@@ -308,7 +454,7 @@ namespace RevGame.View
         /// <summary>计时器回调：按帧间隔换 Sprite。</summary>
         private void OnTick()
         {
-            // 先推进被围标识，再判断身体是否可换帧。共用原来的RevTimer，不给每颗棋新增计时器。
+            // 被围标识仍正常换帧；只有本体 Sprite 在短暂浴火/雷暴期间需要固定帧与图集UV。
             if (_locked && lockedRenderer != null && _entry != null && _entry.lockedFrames != null && _entry.lockedFrames.Length > 0)
             {
                 _lockedFrameTimer += tickInterval;
@@ -320,6 +466,8 @@ namespace RevGame.View
                 }
                 lockedRenderer.sprite = _entry.lockedFrames[_lockedFrameIndex];
             }
+            // 原棋子短暂定格的是身体动画帧，不是业务血量、占格或锁死状态。
+            if (_visualTween != null && _visualTween.IsActive()) { return; }
             if (_frames == null || _frames.Length <= 1)
             {
                 return;

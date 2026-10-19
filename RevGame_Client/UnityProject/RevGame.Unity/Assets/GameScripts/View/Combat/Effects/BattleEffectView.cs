@@ -9,15 +9,13 @@ using UnityEngine;
 
 namespace RevGame.View
 {
-    public enum BattleEffectKind { Death, Merge, Damage, Projectile }
+    public enum BattleEffectKind { Damage, Projectile }
 
     [RevPoolPrefab(RevResPath.Effects_Combat, "BattleEffect", Group = RevResGroup.Battle)]
     public sealed class BattleEffectView : MonoBehaviour, IRevPoolable
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private TextMesh damageText;
-        [SerializeField] private Sprite[] deathFrames;
-        [SerializeField] private Sprite[] mergeFrames;
         [SerializeField] private Sprite projectileSprite;
         [Tooltip("弹道本体的世界尺寸；不能直接依赖源美术图片的宽高。")]
         [SerializeField] private Vector2 projectileWorldSize = new Vector2(0.82f, 0.24f);
@@ -114,28 +112,13 @@ namespace RevGame.View
         /// <summary>伤害只显示已结算数值；arrange在创建Tween前安排位置，避免动画下一帧把避让位置覆盖掉。</summary>
         public void Show(BattleEffectKind kind, Vector3 position, int damage, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy, System.Action<BattleEffectView> arrange = null)
         {
+            if (kind != BattleEffectKind.Damage) { throw new System.InvalidOperationException("数字特效只能显示已经结算的伤害；弹道应使用 ShowProjectile"); }
             ResetVisual(position, onFinished);
-            bool number = kind == BattleEffectKind.Damage;
-            damageText.gameObject.SetActive(number);
-            if (number)
-            {
-                BattleText config = GameTextConfig.Require("Damage");
-                Color color = targetSide == GameSide.Player ? new Color(1f, 0.28f, 0.22f) : GameTextConfig.ColorOf(config);
-                ConfigureText(config, config.Text.Replace("{damage}", damage.ToString()), color);
-                StartFloatingText(config, position + new Vector3(0f, 0.35f, -0.5f), false, arrange);
-                return;
-            }
-            Sprite[] frames = kind == BattleEffectKind.Death ? deathFrames : mergeFrames;
-            spriteRenderer.enabled = frames != null && frames.Length > 0;
-            spriteRenderer.color = kind == BattleEffectKind.Merge ? new Color(1f, 0.75f, 0.18f) : Color.white;
-            spriteRenderer.drawMode = SpriteDrawMode.Simple;
-            // 非文字特效仍复用现有帧图，由Tween进度选帧，不给每个特效挂循环Timer。
-            _animation = DOTween.To(() => _progress, value =>
-            {
-                _progress = value;
-                if (frames != null && frames.Length > 0) { spriteRenderer.sprite = frames[Mathf.Min(frames.Length - 1, (int)(value * frames.Length))]; }
-                transform.localScale = Vector3.one * (1f + Mathf.Sin(value * Mathf.PI) * 0.25f);
-            }, 1f, 0.75f).SetEase(Ease.Linear).OnComplete(Finish);
+            damageText.gameObject.SetActive(true);
+            BattleText config = GameTextConfig.Require("Damage");
+            Color color = targetSide == GameSide.Player ? new Color(1f, 0.28f, 0.22f) : GameTextConfig.ColorOf(config);
+            ConfigureText(config, config.Text.Replace("{damage}", damage.ToString()), color);
+            StartFloatingText(config, position + new Vector3(0f, 0.35f, -0.5f), false, arrange);
         }
 
         /// <summary>低频攻击口号；文案与基础字号仍来自Excel，整场数量和频率由BoardView统一控制。</summary>
@@ -276,7 +259,7 @@ namespace RevGame.View
             if (projectileTrail != null) { color.a = alpha * 0.45f; projectileTrail.color = color; }
         }
 
-        /// <summary>这个预制体同时承担数字、死亡和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
+        /// <summary>这个预制体承担数字、升星和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
         private void HideProjectileLayers()
         {
             if (projectileOutline != null) { projectileOutline.enabled = false; }
