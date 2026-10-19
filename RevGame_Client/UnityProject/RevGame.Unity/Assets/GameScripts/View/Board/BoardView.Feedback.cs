@@ -17,6 +17,7 @@ namespace RevGame.View
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
         public const int MaxProjectiles = 14;
         private const int MaxAttackTexts = 7;
+        private const int MaxPendingAttackTexts = 12;
         private const int MaxPendingDamage = 20;
         private const int MaxPendingProjectiles = 24;
         // 平均每0.025秒允许一发；低帧率时每帧最多补两发，既能形成齐射，也不会一帧喷出整个队列。
@@ -26,11 +27,11 @@ namespace RevGame.View
         private readonly HashSet<BattleEffectView> _projectileEffects = new HashSet<BattleEffectView>();
         // 用目标编号做键：同一目标短时间连续挨打，只累加一个数字，不排队生成几十个文本对象。
         private readonly Dictionary<int, PendingDamageText> _pendingDamage = new Dictionary<int, PendingDamageText>();
-        // 同一模拟步的多次真实命中先存快照再分批显示，不再让第一发占掉整帧所有人的弹道。
-        private readonly Queue<PendingProjectile> _projectileQueue = new Queue<PendingProjectile>(MaxPendingProjectiles);
-        // 同一小步可能全军齐射；口号先排短队列再错开发出，避免只有HashSet中第一颗棋子永远能说话。
-        private readonly Queue<PendingAttackText> _attackQueue = new Queue<PendingAttackText>();
-        private readonly HashSet<int> _queuedAttackIds = new HashSet<int>();
+        // 预算不变，改用“最久没获得显示名额者优先”的有界缓冲。
+        // 普通FIFO满了只拒绝后来者，会永久偏爱先结算的老棋子；高星老棋子连射时，新落的一星棋子尤其容易完全没有反馈。
+        private readonly FairFeedbackBuffer<PendingProjectile> _projectileQueue = new FairFeedbackBuffer<PendingProjectile>(MaxPendingProjectiles, 4, 0.5f);
+        // 同一棋子只保留一份最新口号，不累计历史连射；最多十二份候选，仍不增加同屏的七条口号上限。
+        private readonly FairFeedbackBuffer<PendingAttackText> _attackQueue = new FairFeedbackBuffer<PendingAttackText>(MaxPendingAttackTexts, 1, 0.5f);
         // 遍历字典时不能直接删除，用复用列表先收集过期编号，遍历结束后再移除。
         private readonly List<int> _expiredDamageIds = new List<int>();
         // 每个棋盘独占固定长度缓冲。上限20条，因此不需要每帧new List/ToArray，也不共享静态可变数组。
@@ -55,34 +56,36 @@ namespace RevGame.View
         {
             public Vector3 Source, Target;
             public GameSide TargetSide;
-            public float CreatedAt;
         }
 
         private struct PendingAttackText
         {
             public PieceAttackInfo Attack;
-            public float CreatedAt;
         }
 
-        /// <summary>只保留真实攻击；同棋最多一条待播，最多十二条，过半秒就放弃旧口号。</summary>
+        /// <summary>
+        /// 只登记真实攻击；同棋最多一条最新快照，最多十二条待播，过半秒舍弃。
+        /// 满额时未显示过的棋子可以替换近期频繁显示者，不再把名单后面的新棋子一直挡在队外。
+        /// </summary>
         private void QueueAttackText(PieceAttackInfo attack)
         {
-            if (_attackQueue.Count >= 12 || !_queuedAttackIds.Add(attack.PieceId)) { return; }
-            _attackQueue.Enqueue(new PendingAttackText { Attack = attack, CreatedAt = Time.time });
+            _attackQueue.Offer(attack.PieceId, new PendingAttackText { Attack = attack }, Time.time);
         }
 
+        /// <summary>
+        /// 每次选择最久没有显示过、且自身冷却已到的棋子；全局预算不足时留下未过期候选等下一帧。
+        /// 不能先出队再试预约，否则满屏时整队会被清空，随后仍只有固定顺序的前几颗棋子抢到反馈。
+        /// </summary>
         private void FlushAttackText()
         {
-            if (Time.time < _nextAttackAt) { return; }
-            while (_attackQueue.Count > 0)
-            {
-                PendingAttackText pending = _attackQueue.Dequeue();
-                _queuedAttackIds.Remove(pending.Attack.PieceId);
-                if (Time.time - pending.CreatedAt > 0.5f) { continue; }
-                if (!TryReserveAttackText(pending.Attack.PieceId)) { continue; }
-                ShowAttackText(pending.Attack);
-                return;
-            }
+            float now = Time.time;
+            if (now < _nextAttackAt) { return; }
+            PendingAttackText pending;
+            int sourceId;
+            if (!_attackQueue.TryPeek(now, 0.65f, out pending, out sourceId)) { return; }
+            if (!TryReserveAttackText(sourceId)) { return; }
+            _attackQueue.MarkDisplayed(sourceId, now);
+            ShowAttackText(pending.Attack);
         }
 
         /// <summary>短时间内同一目标受到的真实伤害合计；不持有棋子对象，目标死亡回池后仍可正确播报。</summary>
@@ -112,11 +115,15 @@ namespace RevGame.View
             return true;
         }
 
-        /// <summary>把同帧攻击存入有界短队列；超载只略过显示，不改已经完成的真实扣血。</summary>
-        private void QueueProjectile(Vector3 source, Vector3 target, GameSide targetSide)
+        /// <summary>
+        /// 保存真实命中的弹道快照；来源编号用于公平轮流显示，同棋最多待播四发，总数仍不超过二十四发。
+        /// sourceId=0 兼容没有攻击者的环境支援与旧测试快照；这些弹道也受全局预算和半秒有效期约束。
+        /// 队满只影响画面取舍，不回滚真实伤害；手动换位后仍依靠编号识别同一颗棋子，不能拿旧坐标当身份。
+        /// </summary>
+        private void QueueProjectile(Vector3 source, Vector3 target, GameSide targetSide, int sourceId = 0)
         {
-            if (_projectileQueue.Count >= MaxPendingProjectiles) { return; }
-            _projectileQueue.Enqueue(new PendingProjectile { Source = source, Target = target, TargetSide = targetSide, CreatedAt = Time.time });
+            var shot = new PendingProjectile { Source = source, Target = target, TargetSide = targetSide };
+            _projectileQueue.Offer(sourceId, shot, Time.time);
         }
 
         /// <summary>真实齐射分散到相邻画面帧；最多14个活动/预约弹道，半秒前的旧弹道不追着新战况补播。</summary>
@@ -128,10 +135,12 @@ namespace RevGame.View
             int spawned = 0;
             while (_projectileQueue.Count > 0 && spawned < 2 && now >= _nextProjectileAt)
             {
-                if (now - _projectileQueue.Peek().CreatedAt > 0.5f) { _projectileQueue.Dequeue(); continue; }
                 if (_projectileEffects.Count + _pendingProjectileLoads >= MaxProjectiles) { return; }
-                PendingProjectile shot = _projectileQueue.Dequeue();
+                PendingProjectile shot;
+                int sourceId;
+                if (!_projectileQueue.TryPeek(now, 0f, out shot, out sourceId)) { return; }
                 _pendingProjectileLoads++;
+                _projectileQueue.MarkDisplayed(sourceId, now);
                 _nextProjectileAt += ProjectileSpawnInterval;
                 spawned++;
                 ShowEffect(BattleEffectKind.Projectile, shot.Source, 0, shot.TargetSide, shot.Target);
@@ -278,7 +287,6 @@ namespace RevGame.View
             _pendingDamage.Clear();
             _projectileQueue.Clear();
             _attackQueue.Clear();
-            _queuedAttackIds.Clear();
             _textEffects.Clear();
             _projectileEffects.Clear();
             _attackTextAt.Clear();

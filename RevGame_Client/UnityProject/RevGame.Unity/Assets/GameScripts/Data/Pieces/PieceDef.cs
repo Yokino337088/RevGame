@@ -32,7 +32,7 @@ namespace RevGame.Data
         public MovePattern Pattern { get; }
         /// <summary>走几步（Step 类用；Slide/Cannon 表示最大距离，0 = 不限）。</summary>
         public int MoveRange { get; }
-        /// <summary>是否远程（我方全盘弹幕；敌方普通远程两格直线，炮隔子；近战相邻一格）。</summary>
+        /// <summary>是否远程：决定攻速/表现与敌方职业射程；我方近战优先相邻、无接触时全盘援击，远程直接全盘选敌。</summary>
         public bool IsRanged { get; }
         /// <summary>立绘资源名（ArtRes/Pieces 下的文件名，不含扩展名）。</summary>
         public string SpriteName { get; }

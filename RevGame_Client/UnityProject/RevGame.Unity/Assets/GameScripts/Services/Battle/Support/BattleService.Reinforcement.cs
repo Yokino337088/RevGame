@@ -88,9 +88,19 @@ namespace RevGame.Services
                     if (!CanSupportFit(pos, size, allowEnemyEyes: !def.IsRanged)) { continue; }
                     if (!trial.Place(reinforcement, pos, respectEnemyEyes: false)) { continue; }
                     GoRules.Evaluate(trial);
-                    int attacks = MoveRules.GetAttackTargets(trial, reinforcement).Count;
+                    // 援军落点评分需要的是“身边贴着几颗敌人”，不能复用现在允许全盘援击的攻击列表。
+                    // 否则后排格子会因全盘敌人多而拿高分，违背近战援军贴敌/破眼的原有要求。
+                    // 直接数身体边缘相邻的存活敌棋，不在每一个候选格创建临时目标List。
+                    int attacks = 0;
+                    if (!def.IsRanged)
+                    {
+                        foreach (Piece enemy in _enemyPieces)
+                        {
+                            if (enemy.IsAlive && BodyDistance(pos, size, enemy) == 1) { attacks++; }
+                        }
+                    }
                     bool safe = !reinforcement.IsLocked && PreservesPlayerFormation(trial);
-                    // 没有敌人时准备期仍能发远程援军；近战战斗支援则必须真正有射程内目标。
+                    // 没有敌人时准备期仍能发远程援军；近战战斗支援仍需贴敌，避免援击新规则改变落点偏好。
                     if (safe && (def.IsRanged || attacks > 0))
                     {
                         int enemyDistance = Consts.BoardSize * 2;

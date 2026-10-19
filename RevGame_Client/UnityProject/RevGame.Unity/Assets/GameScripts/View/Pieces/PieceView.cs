@@ -70,6 +70,12 @@ namespace RevGame.View
         private float _moveElapsed;
         private bool _hasPosition;
         private bool _moving;
+        // 本地攻击姿态只缩放身体子节点，绝不缩放根节点；根节点的尺寸由占格大小控制。
+        // 用现有RevMono更新复用一个时间戳，不为每次攻击新增Tween、协程或临时特效对象。
+        private Vector3 _bodyRestScale;
+        // 大于零表示姿态有效，值为结束时的游戏时间（秒）；绝对时间不会误扣出手前那一帧的deltaTime。
+        private float _attackPulseEndsAt;
+        private const float AttackPulseSeconds = 0.20f;
         // 三种特效只改原棋子身体；共享一条 Tween 与逐实例参数块，归池先 Kill(false) 再清干净，防串对象。
         private Tween _visualTween;
         private MaterialPropertyBlock _visualProperties;
@@ -108,6 +114,7 @@ namespace RevGame.View
         private void Awake()
         {
             _visualProperties = new MaterialPropertyBlock();
+            if (bodyRenderer != null) { _bodyRestScale = bodyRenderer.transform.localScale; }
             if (hpFillRenderer != null)
             {
                 _hpFillScale = hpFillRenderer.transform.localScale;
@@ -126,6 +133,7 @@ namespace RevGame.View
 
         private void OnDisable()
         {
+            StopAttackPulse();
             StopBodyVisual();
             RevTimer.CancelAllOf(this);
             RevMono.RemoveAllOf(this);
@@ -133,6 +141,7 @@ namespace RevGame.View
 
         public void OnPoolGet()
         {
+            StopAttackPulse();
             StopBodyVisual();
             _hasPosition = false;
             _moving = false;
@@ -141,6 +150,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            StopAttackPulse();
             StopBodyVisual();
             Clear();
         }
@@ -223,6 +233,7 @@ namespace RevGame.View
             if (sprite == null || material == null || !material.HasProperty(DissolveId)) { return false; }
 
             StopBodyVisual();
+            StopAttackPulse();
             _moving = false;
             // 冻住死亡瞬间的动画帧并隐藏血条/锁死标识等非身体层；不再从模型读取已死棋子。
             RevTimer.CancelAllOf(this);
@@ -254,7 +265,45 @@ namespace RevGame.View
         /// <summary>换阶段时只撤入场/升级；已离开规则棋盘的死棋还要完成液体消融，不能一并取消。</summary>
         public void StopTransientVisuals()
         {
+            StopAttackPulse();
             if (_birthProgress > 0f || _stormProgress > 0f) { StopBodyVisual(); }
+        }
+
+        /// <summary>
+        /// 每次真实攻击触发0.2秒的身体蓄力/回弹，哪怕全场飘字或弹道名额已满也能看见出手。
+        /// 重复调用只重新开始同一条轻量时间轴；死亡、切阶段和回池都会恢复原始大小，防止残留到下一颗棋。
+        /// </summary>
+        public void PlayAttackPulse()
+        {
+            // 旧AB尚未更新时可能仍把身体挂在根上；宁可跳过这层姿态，也不能改变整颗棋的占格显示大小。
+            if (bodyRenderer == null || bodyRenderer.transform == transform || bodyRenderer.sprite == null || _deathProgress > 0f) { return; }
+            _attackPulseEndsAt = Time.time + AttackPulseSeconds;
+            // 当场轻压，让刚出手的棋子这一帧就有动作；下一帧再逐渐回弹，不等待额外的特效加载。
+            bodyRenderer.transform.localScale = Vector3.Scale(_bodyRestScale, new Vector3(1.10f, 0.92f, 1f));
+        }
+
+        /// <summary>恢复身体基准缩放；只在有攻击动作时写Transform，正常待机不增加逐帧写入。</summary>
+        private void StopAttackPulse()
+        {
+            if (_attackPulseEndsAt <= 0f) { return; }
+            _attackPulseEndsAt = 0f;
+            if (bodyRenderer != null) { bodyRenderer.transform.localScale = _bodyRestScale; }
+        }
+
+        /// <summary>身体轻压再回弹，最大横向放大10%、纵向压缩8%；不改变棋子的逻辑位置与攻击距离。</summary>
+        private void AdvanceAttackPulse()
+        {
+            if (_attackPulseEndsAt <= 0f || bodyRenderer == null) { return; }
+            float left = Mathf.Max(0f, _attackPulseEndsAt - Time.time);
+            if (left <= 0f)
+            {
+                StopAttackPulse();
+                return;
+            }
+            // 使用出手之后的实际游戏时间，而非当前帧的完整deltaTime：低帧率下也不误把刚启动的动作扣完。
+            float phase = 1f - left / AttackPulseSeconds;
+            float pulse = Mathf.Cos(phase * Mathf.PI * 0.5f);
+            bodyRenderer.transform.localScale = Vector3.Scale(_bodyRestScale, new Vector3(1f + pulse * 0.10f, 1f - pulse * 0.08f, 1f));
         }
 
         private void FinishBodyVisual()
@@ -317,6 +366,8 @@ namespace RevGame.View
 
         private void AdvanceMove()
         {
+            // 与平滑移动共享既有更新回调；站桩远程也需要推进攻击姿态，故必须放在_moving判断之前。
+            AdvanceAttackPulse();
             if (!_moving)
             {
                 return;
@@ -339,6 +390,7 @@ namespace RevGame.View
         {
             // ★ 原位升级的Id不会变化，要比较星级才能换外观；相同绑定不能每次刷新都把动画归零。
             if (PieceId == pieceId && _entry != null && _boundKind == kind && _boundStar == star && _boundSide == side) { return; }
+            StopAttackPulse();
             PieceId = pieceId;
             _boundKind = kind;
             _boundStar = star;
@@ -415,7 +467,7 @@ namespace RevGame.View
         }
 
         /// <summary>
-        /// 设置"被锁死"表现（策划案 §06：气=0 时不能动、不能打、挨双倍伤害，UI 要给明显标识）。
+        /// 设置零气围困标识：显示原有受击风险，不负责判断攻击资格；我方仍可反击，敌方锁死才停攻。
         /// </summary>
         public void SetLocked(bool locked)
         {

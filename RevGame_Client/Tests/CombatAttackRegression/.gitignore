@@ -1,0 +1,4 @@
+# 仓库会忽略 Unity 自动生成的所有 csproj；这里只放手写的纯 C# 回归工程，需要明确入库。
+!CombatAttackRegression.csproj
+bin/
+obj/

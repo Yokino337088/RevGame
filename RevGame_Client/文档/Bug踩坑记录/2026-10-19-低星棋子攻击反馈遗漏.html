@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>RevGame · 全体我方守阵攻击与反馈修复</title>
+  <style>
+    :root{--ink:#223049;--muted:#647187;--line:#dfe6ef;--paper:#fff;--wash:#f4f7fb;--accent:#346357;--mint:#e8f2ed;--amber:#866127}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--wash);color:var(--ink);font:16px/1.85 "Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:4px;overflow-wrap:anywhere}a:hover{color:#173d31}code,pre{font-family:Consolas,"Microsoft YaHei",monospace}code{padding:2px 5px;border-radius:5px;background:#edf1f5;font-size:.9em}pre{margin:20px 0;padding:22px;background:#233348;color:#e8eef5;border-radius:14px;overflow:auto;font-size:14px;line-height:1.9}pre code{padding:0;background:none;color:inherit}header{max-width:1140px;margin:auto;padding:66px 28px 34px}.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);font-weight:700}.meta{color:var(--muted);font-size:14px}h1{font-size:clamp(28px,3.5vw,44px);line-height:1.35;letter-spacing:-.03em;margin:15px 0 18px;max-width:850px}h2{font-size:23px;line-height:1.5;margin:0 0 20px;scroll-margin-top:24px}h3{font-size:17px;margin:24px 0 12px}p{margin:12px 0}.lead{font-size:18px;max-width:840px}.layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:32px;max-width:1140px;margin:auto;padding:0 28px 70px}nav{position:sticky;top:28px;align-self:start;padding:15px 0;font-size:14px}nav strong{display:block;margin:0 0 15px}nav a{display:block;padding:7px 0;color:var(--muted);text-decoration:none}nav a:hover{color:var(--accent)}main{min-width:0}section{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:30px;margin-bottom:22px;box-shadow:0 6px 24px #24364a04;animation:appear .5s both}section:nth-child(2){animation-delay:.05s}section:nth-child(3){animation-delay:.1s}.note{padding:17px 20px;border-left:3px solid var(--accent);background:var(--mint);border-radius:0 10px 10px 0}.pending{border-color:#b08a43;background:#fbf4e6;color:#775727}.table-wrap{overflow-x:auto;margin:18px 0}table{border-collapse:collapse;width:100%;font-size:14px;min-width:480px}th,td{text-align:left;vertical-align:top;padding:13px 14px;border-bottom:1px solid var(--line)}th{background:#f4f7f9;color:#4a5e72;font-weight:600}td:first-child{font-weight:600}ul,ol{padding-left:24px}li{padding-left:3px;margin:8px 0}.step{display:inline-block;border:1px solid #d4e5dc;background:#f1f7f4;color:var(--accent);font-size:12px;padding:2px 10px;border-radius:99px;margin-bottom:12px}.flow{white-space:pre;font-size:13px}footer{text-align:center;color:var(--muted);font-size:13px;padding:5px 25px 35px}strong{color:#203b36}@keyframes appear{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}@media(max-width:820px){header{padding:38px 20px 22px}.layout{display:block;padding:0 20px 38px}nav{position:static;padding:0 0 24px;display:flex;flex-wrap:wrap;gap:8px 16px}nav strong{width:100%;margin:0}nav a{padding:0}section{padding:23px 20px;border-radius:14px}.lead{font-size:17px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}section{animation:none}}@media print{body{background:#fff}.layout{display:block;max-width:none;padding:0}nav{display:none}header{padding:15px 0}section{box-shadow:none;break-inside:avoid;animation:none}footer{display:none}a{color:inherit}pre{white-space:pre-wrap}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">REV GAME / BUG JOURNAL</div>
+  <h1>所有我方原地参战，<br>每颗棋子的出手都应看得见。</h1>
+  <p class="lead">修复近战超距、我方零气导致的停攻，并解决密集齐射时的<strong>攻击反馈遗漏</strong>。全体存活我方守阵攻击，限量弹道与口号公平分配。</p>
+  <p class="meta">2026-10-19 · Unity 2022.3.15f1c1 · 编辑器直读资源 · <a href="2026-10-19-低星棋子攻击反馈遗漏.md">Markdown 版本</a></p>
+</header>
+<div class="layout">
+  <nav aria-label="文档目录">
+    <strong>修复记录</strong>
+    <a href="#finding">01 现象与结论</a><a href="#rules">02 规则与表现</a><a href="#cause">03 根因</a><a href="#fix">04 修复方法</a><a href="#code">05 核心代码</a><a href="#checks">06 回归步骤</a><a href="#evidence">07 验证边界</a><a href="#framework">08 框架结论</a>
+  </nav>
+  <main>
+    <section id="finding"><span class="step">01 / FINDING</span><h2>真实停攻与反馈遗漏，要同时解决</h2>
+      <p>旧规则中，离敌人较远的近战没有目标，我方零气会被直接跳过；密集齐射时，后落的棋子还经常抢不到文字、弹道。两类问题叠在一起，让一级棋子看起来普遍没有作用。代码并没有“一级禁攻”的分支。</p>
+      <div class="note"><strong>用户最终要求：棋盘上所有我方棋子都要攻击敌人。</strong> 现在所有存活我方原地参战：近战接触优先、无接触时全盘援击，远程全盘，我方零气仍能反击。</div>
+      <p>这既是反馈 Bug 修复，也是按最新要求调整旧玩法限制。不能只补弹道就宣布修好，必须核对真实攻击、实际扣血与保持阵位。行动继续按原攻击时钟积攒，不是每帧无限攻击。</p>
+    </section>
+    <section id="rules"><span class="step">02 / CONTRACT</span><h2>一次攻击的完整链路</h2>
+      <pre class="flow"><code>BattleService.StepSide
+  → CanAttack 统一资格，积攒到出手机会
+  → MoveRules.GetAttackTargets 找到合法敌人
+  → BattleService.Attack
+      ├─ PieceAttacked：告诉视图“确实出手”
+      └─ DamagePiece：结算伤害、发送命中快照
+          → BoardView：身体动作 / 口号 / 弹道 / 数字</code></pre>
+      <div class="table-wrap"><table><thead><tr><th>检查点</th><th>当前规则</th><th>排查时的含义</th></tr></thead><tbody>
+        <tr><td>星级</td><td>攻击循环没有一级禁攻分支</td><td>一级不是根因</td></tr>
+        <tr><td>我方远程</td><td>全盘索敌</td><td>不用直线或相邻，友军不挡守阵火力</td></tr>
+        <tr><td>我方近战</td><td>身体边缘接触优先，无接触时全盘援击</td><td>2×2 按整个边界查询；不必移动追敌</td></tr>
+        <tr><td>我方零气</td><td>保留 <code>IsLocked</code>，仍可出手</td><td>未增加气或免除原有受击代价，未新加输出惩罚</td></tr>
+        <tr><td>我方移动</td><td>守住玩家阵位，仍可手动调整</td><td>攻击不拆一眼、两眼</td></tr>
+        <tr><td>敌人</td><td>原职业射程、锁死禁攻</td><td>未同步获得全盘援击和零气反击</td></tr>
+      </tbody></table></div>
+      <p>模型负责战斗结果，视图只消费快照。不能在弹道到达或动画结束时重复扣血，也不能因为没有显示名额而撤销伤害。</p>
+    </section>
+    <section id="cause"><span class="step">03 / ROOT CAUSE</span><h2>旧规则门槛，加上显示机会不公平</h2>
+      <h3>模型入口确实拦住一部分我方</h3>
+      <p>旧行动入口、目标查询和范围预览分别检查锁死，近战只查相邻射线；我方又原地守阵，所以离敌人远的近战长期没有目标，零气我方则被整颗跳过。这是旧玩法限制，与最终“全体我方参战”的要求不一致。</p>
+      <h3>数量上限还缺少公平性</h3>
+      <ol><li>旧攻击口号队列只接收前 12 条，旧弹道队列只接收前 24 条；队满后后续请求直接放弃。</li><li>同一步按固定棋子顺序处理齐射，较早遍历到的棋子反复优先占满队列。</li><li>口号已经出队但当前没有文字预算时，旧实现会继续循环，把尚未显示的请求也消耗掉。</li><li>下一轮齐射仍按相近顺序发生，于是同一批后落棋可能一直没有反馈。</li></ol>
+      <p>一级棋子往往是新落的棋，更容易暴露固定顺序造成的遗漏。<strong>这个调度缺陷没有按星级筛选，不能误判为星级禁攻。</strong></p>
+    </section>
+    <section id="fix"><span class="step">04 / CHANGE</span><h2>先保证全体真实出手，再保证反馈可见</h2>
+      <h3>一份资格判断，三个入口共用</h3>
+      <p>新增 <code>MoveRules.CanAttack(Piece)</code>，由行动入口、真实选敌和范围预览三处共用。我方只需存在且存活，敌人还需未锁死。避免只改入口、查询仍为空，或范围提示与实际攻击互相矛盾。</p>
+      <p>近战优先用原接触射线找身边敌人，没有接触敌人时转入全盘援击；远程全盘。候选按距离优先、编号破同分稳定排序，不试移实战棋子，不改变占格与攻击时钟。</p>
+      <div class="note"><strong>零气反击不等于围困免疫。</strong> 气眼、IsLocked 和原有被围受击代价保留；没有加气、清状态、另加减伤，也没有新设我方输出惩罚。敌方规则保留。</div>
+      <p>近战援军落点仍按真正贴着身体边缘的敌人数评分，优先贴敌、破眼；不能拿全盘可援击目标数当贴身数，错误奖励后排空格。远程援军继续优先安全后排与主体阵营。</p>
+      <h3>0.20 秒身体轻压与回弹</h3>
+      <p><code>BoardView</code> 接到 <code>PieceAttacked</code> 后先触发对应 <code>PieceView.PlayAttackPulse()</code>。<strong>出手当帧轻压，随后在 0.20 秒内回弹</strong>：横向最多放大 10%、纵向最多压缩 8%，恢复 Awake 缓存的基准缩放。即使文字、弹道满额，也有出手动作。</p>
+      <p>本轮后台低帧率检查发现：若启动动作后立即扣掉整帧 deltaTime，刚出手的动作可能当场结束。现在记录绝对游戏结束时间，先给立即姿态，再按出手后的时间回弹；测试分别看立即动作、根不变和自然恢复，不假定必能采到第 70 毫秒。</p>
+      <p>这条轻量时间轴复用棋子已有的 <code>RevMono</code> 更新，不为每次攻击创建新对象、Timer 或 Tween。只缩放身体子节点，不移动占格，不改变射程、伤害；死亡、切阶段、重新绑定和回池都恢复基准大小。</p>
+      <p><strong>Play 检查补充发现：</strong> 实际 <code>SlimePiece</code> 的 <code>bodyRenderer</code> 原先在根节点，直接回弹会让根节点、血条和饰件一起缩放。此次把原渲染器迁到独立 <code>Body</code> 子节点，保留 fileID、贴图、材质、排序和原引用，六个根配件保持原位。</p>
+      <p><code>GamePieceShaderBuilder.EnsureBodyChild</code> 实现幂等迁移，并接入 <code>Apply</code>、<code>GameAssetBuilder.BuildP1</code>、<code>GamePolishBuilder.PolishReadability</code> 防止资源重建回退。Unity MCP 已加载真实预制体、执行幂等装配并保存：独立 Body 单位缩放、共享 ArcanePiece 材质，根节点 2 组件 / 7 子节点。装配通过不等于运行动画通过，Play 证据见下文。</p>
+      <h3>不同来源公平分享有界队列</h3>
+      <p>新增纯 C# 的 <code>FairFeedbackBuffer&lt;T&gt;</code>，以值快照保存请求，依据来源和上次获得显示机会的时间公平分配：</p>
+      <ol><li><code>Offer</code> 接收请求；同来源达到自己的待播上限后，只更新最新一份候选。总容量满时按显示历史选择替换；没显示过的来源优先，同分按编号稳定选择，不随机丢弃。</li><li><code>TryPeek</code> 只查看、不消耗；跳过暂时处于同棋冷却的请求，避免拖住其他来源。</li><li>成功预约显示名额后，才用 <code>MarkDisplayed</code> 消费并记录历史。满屏时暂时等候，不把整队出队丢掉。</li><li>0.5 秒前的旧请求过期；切回合用 <code>Clear</code> 清候选和历史，不补播陈旧齐射。</li></ol>
+      <div class="table-wrap"><table><thead><tr><th>反馈</th><th>保留的预算与节奏</th><th>公平性保护</th></tr></thead><tbody>
+        <tr><td>口号</td><td>待播来源 12 / 同屏 7 / 总字 20<br>间隔 0.12 秒，同棋冷却 0.65 秒</td><td>每来源保留最新一条、预约成功才消费、按显示历史分配</td></tr>
+        <tr><td>弹道</td><td>待播 24 / 同屏 14 / 间隔 0.025 秒<br>每画面帧最多发 2 条</td><td>每棋最多待播 4 条、按来源轮流显示，防止连击独占</td></tr>
+      </tbody></table></div>
+      <p><code>BattleHitInfo.SourceId</code> 记录攻击者在本局的唯一编号。棋子会换位，坐标不能代替身份；环境伤害或旧测试没有编号时用 0。快照不保存会回池的视图引用。</p>
+      <div class="note">这些都是<strong>表现预算</strong>，不是攻击是否造成伤害的条件；伤害始终在模型中结算。</div>
+      <h3>生命周期仍由 Revolution 管理</h3>
+      <ul><li>反馈对象通过 <code>RevPool</code> 借还，事件用 <code>RevEvent</code>，身体动作复用 <code>RevMono</code>。</li><li>切回合先使异步代次失效，再清队列、预算和池对象；迟到回调只能归池。</li><li>不修改框架快照、不创建逐棋子独立材质，也不把预算放开为无限。</li></ul>
+    </section>
+    <section id="code"><span class="step">05 / CODE MAP</span><h2>沿着这些入口阅读</h2>
+      <div class="table-wrap"><table><thead><tr><th>文件</th><th>核心职责</th></tr></thead><tbody>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Simulation/BattleService.cs">BattleService.cs</a></td><td>统一资格 / 行动进度 / 索敌 / 真实伤害</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Battle/Rules/MoveRules.cs">MoveRules.cs</a></td><td>CanAttack、接触优先、全盘援击、范围预览与敌人规则</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Reinforcement.cs">BattleService.Reinforcement.cs</a></td><td>近战援军按真实接触评分，保持贴敌破眼偏好</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Core/Events/BattleHitInfo.cs">BattleHitInfo.cs</a></td><td>不可变命中快照与来源编号</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.cs">BoardView.cs</a></td><td>真实攻击先触发身体动作，再安排其他反馈</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.Feedback.cs">BoardView.Feedback.cs</a></td><td>公平有界调度、预算、过期和回合重置</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Feedback/FairFeedbackBuffer.cs">FairFeedbackBuffer.cs</a></td><td>值快照缓冲与 Offer / TryPeek / MarkDisplayed / Clear 契约</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Pieces/PieceView.cs">PieceView.cs</a></td><td>出手脉冲、恢复基准缩放与回池清理</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/GamePieceShaderBuilder.cs">GamePieceShaderBuilder.cs</a></td><td>EnsureBodyChild 幂等迁移身体子节点，防重建回退</td></tr>
+        <tr><td><a href="../../UnityProject/RevGame.Unity/Assets/GameRes/Pieces/Unit/SlimePiece.prefab">SlimePiece.prefab</a></td><td>修正后的真实池化棋子层级</td></tr>
+      </tbody></table></div>
+      <p>核心中文注释交代字段的单位、所有权、生命周期，方法的调用时机与失败路径，以及为什么不能把出手动作绑在文字名额上。不是只给每行赋值换一句中文。</p>
+    </section>
+    <section id="checks"><span class="step">06 / REGRESSION</span><h2>最短复现与回归路径</h2>
+      <ol><li>从 <code>StartScene</code> 编辑器直读进入战斗，先放近战、远程，再补若干一级棋子。</li><li>密集齐射时同时核对真实攻击事件、敌方血量、身体动作和待播反馈；不能仅凭一句口号判定是否出手。</li><li>全部棋种与星级面对非相邻、隔友军敌人时应原地参战；近战身边有敌人时优先打接触目标。</li><li>我方零气仍应反击、保留围困受击代价；敌方零气仍停攻。范围预览、合法目标、攻击事件与掉血一致。</li><li>压满预算，检查队列仍有界、来源不长期饥饿，过期请求不补播。</li><li>在攻击中切阶段、死亡、回池重用，确认缩放、旧请求与预约全部清理。</li></ol>
+    </section>
+    <section id="evidence"><span class="step">07 / EVIDENCE</span><h2>验证状态与边界</h2>
+      <div class="note"><strong>最新离线回归通过：169 个规则场景 / 3758 条断言。</strong> 包含多帧容量不变量，不等于 3758 个独立玩法。</div>
+      <ul><li>162 个组合场景：9 棋种 × 3 星级 × 正常攻击、非相邻隔友军援击、我方零气反击/解围、敌方零气禁攻、一眼、两眼。</li><li>全部 27 棋种/星级组合核对跨盘援击、覆盖范围、真实掉血与原位守阵。零气我方出手后保留状态，敌方零气仍禁攻。</li><li>同场 40 个远程：前 10 个三星、后 30 个一级，全部攻击并造成伤害；来源伤害合计与扣血一致。连射击杀后会换靶。</li><li>另有 5 个边界：单格/两格近战接触优先、死亡不攻、无敌人不造攻击、被围受击增伤保留。</li><li>2794 条断言覆盖真实公平缓冲与旧式入队摘要的容量、公平、冷却、合并、过期和清空。</li><li>Unity MCP 执行 GameRuleChecks.Run，<strong>685 条真实业务断言通过</strong>，涵盖守阵、援军贴敌/守眼和全盘目标。</li><li>本 HTML 解析、相对链接与锚点检查通过；提供减少动画模式。</li></ul>
+      <p>眼阵夹具改为同种同位置的高血靶，并补充逐棋坐标、原对象占格、靶存活且掉血的断言，保留整盘比较。避免近战全体援击提前打死普通靶，让字符盘变化被误判为移动。</p>
+      <h3>固定输入下复现旧式入队的饥饿</h3>
+      <p>20 个来源按固定顺序每 0.625 秒齐射，最多每 0.12 秒显示一份，候选寿命 0.5 秒、容量 12，持续 10 秒：旧式 FIFO 摘要为 <strong>5/20</strong> 个来源获得显示，真实新缓冲为 <strong>20/20</strong>。</p>
+      <p>旧侧只摘录入队、满额拒收与过期规则，<strong>不是完整旧 BoardView 或旧版本 Play 实测</strong>。它证明饥饿机制可以复现，不代表旧游戏每局恰好只显示五颗棋子。</p>
+      <pre><code>dotnet run --project RevGame_Client/Tests/CombatAttackRegression/CombatAttackRegression.csproj -c Release</code></pre>
+      <p>从仓库根使用 .NET 10 SDK 执行。测试工程直接链接真实业务与配置解析代码，只补最小离线宿主接口，不复制攻击算法。详见<a href="../../Tests/CombatAttackRegression/README.md">回归工程说明</a>。</p>
+      <div class="note"><strong>Unity Play 池化动画验收通过。</strong> MCP 执行 GameFeelChecks，LastResult 与 Temp/GameFeelChecks.txt 一致：立即出手姿态、根位置/大小不变、自然恢复、中途回池复用、浴火/雷暴/消融，以及伤害、弹道、提示的复用和旧回调取消均正常。</div>
+      <p>复测：从 StartScene 编辑器直读进入 Play，执行 <strong>RevGame → 验收 → 池化动画（Play）</strong>。<a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameFeelChecks.cs">验收源码</a>检查真实预制体、池、动画与回调；它不是手机帧率测试，也不代替每场战斗的人工观感评价。</p>
+      <p><strong>额外压力回归未完成：</strong> 追加运行 <code>GameReadabilityChecks.Begin</code> 时发生脚本域重载，LastResult 重置为“未运行”，不能计入通过。重载销毁选关面板时还记录既有 <code>LevelSelectPanel.OnRelease</code> 空引用（LevelSelectPanel.cs:67，frame 0）；该文件本轮未修改，异常未修复，因此不声称 Console 零异常。此前单独核对通过的 169 场景 / 3758 断言、685 条业务断言及池化验收保持原证据口径。</p>
+      <p>终端编译 Unity 生成的 <code>.csproj</code> 未通过：已有 Rider 编辑器包缺少 <code>PathLocator</code>，产生 8 个错误、112 个警告。不能把编辑器重编译和离线回归成功写成全部工程构建通过；本轮不为战斗修复改依赖包配置。</p>
+      <p>本轮不打包 AB。编辑器直读通过不代表首次 AB 加载或手机性能通过。对象池能避免反复创建销毁，但不代表活跃对象没有 CPU、GPU 成本。</p>
+      <p>旧 AB 未重建时，身体渲染器可能仍在根节点；代码会跳过该压缩姿态以保护根大小，真实攻击与公平反馈仍执行。以后在 AB 模式看新姿态前需重新构建对应预制体包，本轮没有打包。</p>
+      <p>身体动作只在短时动画中更新 Transform；GC、CPU、GPU 与手机帧率仍按<a href="../战斗性能优化规则/战斗性能优化规则.md">战斗性能优化规则</a>测量，不凭实现方式宣称零开销。</p>
+    </section>
+    <section id="framework"><span class="step">08 / FRAMEWORK</span><h2>框架可行性与后续约束</h2>
+      <p>改动位于业务规则与表现调度，现有 <code>RevEvent + RevMono + RevPool</code> 能承载，不需要改框架内核。模型规则、只读查询与表现快照继续分开，运行稳定性以实际回归为准。</p>
+      <p><strong>以后分别检查：规则攻击是否发生、基础动作是否可见、限量反馈是否公平。</strong> 上限限制屏幕拥挤，公平调度防止某颗棋子总被挤掉，两者都要具备。</p>
+      <p>按最终要求，所有存活我方原地参战。以后不能重新加回玩家近战超距停攻、零气禁攻，也不能自动拆掉一眼、两眼。</p>
+    </section>
+  </main>
+</div>
+<footer>RevGame · Revolution 框架真实业务验证 / 2026-10-19</footer>
+</body>
+</html>

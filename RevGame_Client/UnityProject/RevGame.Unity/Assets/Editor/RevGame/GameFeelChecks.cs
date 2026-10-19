@@ -31,9 +31,21 @@ namespace RevGame.Editor
             {
                 piece = await Load<PieceView>(container.transform);
                 piece.Bind(99001, PieceKind.Archer, StarTier.One, GameSide.Player);
-                SpriteRenderer body = (SpriteRenderer)typeof(PieceView).GetField("bodyRenderer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(piece);
+                SpriteRenderer body = BodyOf(piece);
+                Require(body.transform != piece.transform, "棋子身体必须放在独立Body子节点，攻击动作不能缩放占格根节点");
                 Sprite currentFrame = body.sprite;
                 Require(currentFrame != null, "棋子当前帧未就绪");
+                // 实际出手不能完全依赖有名额上限的口号/弹道。检查身体真有动作，并且不移动占格根节点。
+                Vector3 bodyRest = body.transform.localScale;
+                Vector3 rootPosition = piece.transform.position;
+                Vector3 rootScale = piece.transform.localScale;
+                piece.PlayAttackPulse();
+                // 不依赖编辑器后台帧率采样中间帧：PlayAttackPulse当帧就应有姿态，随后再核对自然恢复。
+                Require((body.transform.localScale - bodyRest).sqrMagnitude > 0.00001f, "真实攻击未立即产生身体动作");
+                await RevTask.Delay(70);
+                Require(piece.transform.position == rootPosition && piece.transform.localScale == rootScale, "攻击姿态错误地改变了根节点位置或占格大小");
+                await RevTask.Delay(250);
+                Require(body.transform.localScale == bodyRest, "攻击动作结束后未恢复身体基准缩放");
                 var block = new MaterialPropertyBlock();
                 piece.PlayBirthFire();
                 await RevTask.Delay(120);
@@ -56,14 +68,24 @@ namespace RevGame.Editor
                 await RevTask.Delay(120);
                 body.GetPropertyBlock(block);
                 Require(piece.DeathDissolveProgress > 0f && block.GetFloat("_Dissolve") > 0f, "原棋子身体溶解进度未推进");
+                Require(body.transform.localScale == bodyRest, "死亡开始后仍残留攻击动作缩放");
                 RevPool.Return(piece, 0);
                 piece = null;
-                await RevTask.Delay(800);
+                // 死亡动画完整时长1.05秒；必须超过旧回调原本的触发时间，才能证明取消真正有效。
+                await RevTask.Delay(1200);
                 Require(cancelledDeath == 0, "棋子中途回池仍触发了旧死亡回调");
                 piece = await Load<PieceView>(container.transform);
                 piece.Bind(99002, PieceKind.Archer, StarTier.One, GameSide.Player);
                 Require(piece.DeathDissolveProgress == 0f && piece.BirthProgress == 0f && piece.StormProgress == 0f,
                     "棋子复用后残留上次的死亡/落地/升星 Shader 进度");
+                // 特意在姿态中途归池：下一颗棋不能继承上一颗攻击时被压扁的身体。
+                piece.PlayAttackPulse();
+                await RevTask.Delay(70);
+                RevPool.Return(piece, 0);
+                piece = await Load<PieceView>(container.transform);
+                piece.Bind(99002, PieceKind.Archer, StarTier.One, GameSide.Player);
+                body = BodyOf(piece);
+                Require(body.transform.localScale == bodyRest, "攻击中途回池没有恢复身体大小");
                 piece.PlayBirthFire();
                 RevPool.Return(piece, 0);
                 Require(piece.BirthProgress == 0f, "浴火入场中途回池没有清除表现状态");
@@ -120,7 +142,8 @@ namespace RevGame.Editor
                 await RevTask.Delay(4000);
                 Require(callbacks == 0, "中途回池后仍触发了旧动画完成回调");
                 Require(DOTween.TotalActiveTweens() == before, "动画总数没有恢复到验收前");
-                LastResult = "通过：原棋浴火入场/雷暴升星/死亡消融及伤害、弹道、提示，回池清理、复用和旧回调均正常";
+                Require(cancelledDeath == 0, "后续复用时旧死亡回调仍被触发");
+                LastResult = "通过：攻击身体回弹不改占格、自然恢复及中途回池正常；原棋浴火入场/雷暴升星/死亡消融及伤害、弹道、提示，复用和旧回调均正常";
                 RevLog.Info(LastResult, "GameFeelChecks");
             }
             catch (System.Exception error)
@@ -144,6 +167,13 @@ namespace RevGame.Editor
             var source = new RevTaskCompletionSource<T>();
             RevPool.GetAsync<T>(item => source.SetResult(item), parent);
             return source.Task;
+        }
+
+        /// <summary>仅验收夹具读取业务视图的私有身体引用，不向正式玩法公开修改渲染器的接口。</summary>
+        private static SpriteRenderer BodyOf(PieceView piece)
+        {
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            return (SpriteRenderer)typeof(PieceView).GetField("bodyRenderer", flags).GetValue(piece);
         }
 
         private static void Require(bool condition, string message)

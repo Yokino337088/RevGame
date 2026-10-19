@@ -94,7 +94,7 @@ namespace RevGame.Bootstrap
 
                 if (!board.ShowAttackRange(id))
                 {
-                    throw new RevGMUsageException("棋子 #" + id + " 无法显示攻击范围（不存在/已死亡/被锁死/射界为空）");
+                    throw new RevGMUsageException("棋子 #" + id + " 无法显示攻击范围（不存在/已死亡/敌方被锁死/射界为空）");
                 }
                 return "棋子 #" + id + " 攻击范围已显示，共 " + board.AttackRangeCellCount + " 格";
             }, RevGMArg.Int("棋子编号", 0));

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <DefineConstants>REVGAME_OFFLINE_TESTS</DefineConstants>
+    <GameAssets>../../UnityProject/RevGame.Unity/Assets</GameAssets>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 链接真实业务源文件：修复攻击算法后此处立即验证新实现，不能在测试里复制一套算法。 -->
+    <Compile Include="Program.cs;BattleAttackFixture.cs;OfflineHost.cs;FeedbackRegression.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Core/**/*.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Board/**/*.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Pieces/**/*.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Battle/**/*.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Data/**/*.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Services/Battle/**/*.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Generated/BattleDataTables.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/Generated/BattleDataStructures.cs" />
+    <Compile Include="$(GameAssets)/GameScripts/View/Combat/Feedback/FairFeedbackBuffer.cs" />
+    <!-- 解析器和事件派发也链接框架原文件；没有伪造伤害、目标或攻击通知。 -->
+    <Compile Include="$(GameAssets)/Revolution/Runtime/RevDataLoad/Core/*.cs" />
+    <Compile Include="$(GameAssets)/Revolution/Runtime/RevDataLoad/Interfaces/*.cs" />
+    <Compile Include="$(GameAssets)/Revolution/Runtime/RevEventSystem/Facade/*.cs" />
+    <Compile Include="$(GameAssets)/Revolution/Runtime/RevEventSystem/Core/*.cs" />
+    <Compile Include="$(GameAssets)/Revolution/Runtime/RevSingleton/RevSingleton.cs" />
+  </ItemGroup>
+</Project>

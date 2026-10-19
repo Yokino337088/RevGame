@@ -129,7 +129,8 @@ namespace RevGame.Battle
 
         /// <summary>
         /// 取这颗棋子**能攻击到的敌方棋子位置**。
-        /// 近战相邻一格；我方远程/敌方重弩全盘压制；敌弓六格直线，敌方法师仍须隔一颗炮架。
+        /// 我方全体守阵攻击：近战优先接触目标，没有接触目标时援击全盘敌人；远程始终全盘搜敌。
+        /// 敌人仍按原职业射程判断，重弩全盘、弓六格直线、法师需要炮架，不会同步获得我方的援击规则。
         /// </summary>
         public static List<BoardPos> GetAttackTargets(BoardModel board, Piece piece)
         {
@@ -150,14 +151,22 @@ namespace RevGame.Battle
                 return;
             }
 
-            if (!piece.IsAlive || piece.IsLocked)
+            if (!CanAttack(piece))
             {
                 return;
             }
 
-            // 我方远程守阵输出；敌方重弩承担跨盘压制，避免守眼骨架整场没有射界。
+            // 近战先保护身边的阵位；只有没有接触敌人时才改用守阵援击。
+            // 查询只读棋盘，不为了够到目标移动棋子，因此不会拆掉玩家的一眼、两眼阵型。
+            if (piece.Side == GameSide.Player && !piece.Def.IsRanged)
+            {
+                CollectAttackRays(board, piece, result);
+                if (result.Count > 0) { return; }
+            }
+
+            // 我方全体都能在原位贡献火力；敌方重弩承担跨盘压制，避免守眼骨架整场没有射界。
             // 敌弓保留直线与阻挡，法师保留炮架；不是所有远程都跳过职业规则。
-            if ((piece.Side == GameSide.Player && piece.Def.IsRanged) || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
+            if (piece.Side == GameSide.Player || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
             {
                 // 最多81格，用有序插入保留“距离优先、编号破同分”的旧顺序。
                 // 不再分配敌军名单和捕获piece的Sort闭包；死亡棋子不进入候选。
@@ -190,8 +199,8 @@ namespace RevGame.Battle
         /// - 这里回答"火力能伸到哪些格"，空格也算 —— 玩家想看的是射界，不是当前目标。
         ///
         /// 分支必须与 GetAttackTargets 保持一致，否则玩家看到黄色格子却打不到，比不显示更糟：
-        /// 我方远程/敌方重弩全盘；其余按四方向射线 —— 近战一格、敌弓六格、炮先找炮架再打架后第一格。
-        /// 被自己人挡住的格子不算覆盖（打不到），锁死棋子没有射界（返回空）。
+        /// 我方所有棋种/敌方重弩全盘；其余按四方向射线 —— 近战一格、敌弓六格、炮先找炮架再打架后第一格。
+        /// 我方近战当前优先打身边目标，但全盘仍是可援击的潜在范围；敌方被锁死时没有射界。
         /// </summary>
         public static List<BoardPos> GetAttackCoverage(BoardModel board, Piece piece)
         {
@@ -209,13 +218,13 @@ namespace RevGame.Battle
                 return;
             }
 
-            // 锁死 = 不能攻击；这时如果画出"全盘覆盖"会直接骗玩家。
-            if (!piece.IsAlive || piece.IsLocked)
+            // 与真实出手入口共用同一契约，不能出现长按显示全盘、战斗却被旧锁死判断拦住的情况。
+            if (!CanAttack(piece))
             {
                 return;
             }
 
-            if ((piece.Side == GameSide.Player && piece.Def.IsRanged) || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
+            if (piece.Side == GameSide.Player || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
             {
                 // 全盘压制：除自己的身体格以外，每个格子都在弹幕覆盖内（含空格和敌方棋子）。
                 for (int y = 0; y < board.Size; y++)
@@ -250,6 +259,16 @@ namespace RevGame.Battle
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 统一的攻击资格：存活我方即使零气也会守阵反击，敌人仍保留锁死不能出手的规则。
+        /// 这里只放宽我方的攻击资格，不清除IsLocked、不增加气、不免除原有被围受击惩罚，也不允许自动移动。
+        /// 服务结算、实际选敌与范围预览必须复用本方法，避免只修显示却没有真正扣血。
+        /// </summary>
+        public static bool CanAttack(Piece piece)
+        {
+            return piece != null && piece.IsAlive && (piece.Side == GameSide.Player || !piece.IsLocked);
         }
 
         /// <summary>近战/弓：沿射线把空格都算进覆盖；遇到棋子时敌方格算覆盖，自己人挡住的格不算。</summary>

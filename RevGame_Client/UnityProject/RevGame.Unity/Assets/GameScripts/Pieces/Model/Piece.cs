@@ -73,7 +73,7 @@ namespace RevGame.Pieces
             }
         }
 
-        /// <summary>是否被锁死（不能移动、不能攻击、挨双倍伤害）。</summary>
+        /// <summary>是否零气锁死：不能自动移动、按配置承受额外伤害；敌方不能攻击，我方仍可守阵反击。</summary>
         public bool IsLocked
         {
             get

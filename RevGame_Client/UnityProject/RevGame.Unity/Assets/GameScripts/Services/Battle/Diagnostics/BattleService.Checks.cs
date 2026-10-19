@@ -40,7 +40,7 @@ namespace RevGame.Services
                         break;
                     case BattleEventKind.Combo:
                         // 比较实际伤害，不能只检查一个「增益已设置」标志。把两军放到互相可攻击的位置。
-                        // 我方远程如今能全盘攻击；本断言只测连击，移除其余友军以隔离额外火力。
+                        // 我方全体如今能守阵援击；本断言只测连击，移除其余友军以隔离额外火力。
                         foreach (Piece other in new List<Piece>(service._playerPieces))
                         {
                             if (other != player) { service._board.Remove(other); service._playerPieces.Remove(other); }
@@ -259,7 +259,7 @@ namespace RevGame.Services
                         service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(4, 3));
                         service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(4, 5));
                         service.RefreshGoState();
-                        check(player.Liberties == 0 && !player.IsLocked, "实际零气仍不锁行动");
+                        check(player.Liberties == 0 && !player.IsLocked, "围困免疫在真实零气时移除锁死标记及额外受击惩罚");
                         int before = service.TotalHp(GameSide.Enemy);
                         service.StepSide(GameSide.Player);
                         check(service.TotalHp(GameSide.Enemy) < before, "免疫围困后仍真实发动远程攻击"); break;
@@ -295,8 +295,9 @@ namespace RevGame.Services
                         check(service.PreparationAttackRate(futureArcher) == 1f + buffDef.Amount, "后入场弓箭手继承配置的频率倍率");
                         check(service.PreparationAttackRate(service._playerPieces[1]) == 1f && service.PreparationAttackRate(enemy) == 1f, "近战与敌方不会继承万箭齐发");
                         service.ResetPreparation();
-                        player.ActionProgress = 0f;
-                        futureArcher.ActionProgress = 0f;
+                        // 这里只测万箭齐发移除后的冷却。近战现在也能援击，必须隔离全队旧进度，
+                        // 否则未来调整基础攻速时，近战恰好满条会被误判成“弓箭手增益没有移除”。
+                        foreach (Piece ally in service._playerPieces) { ally.ActionProgress = 0f; }
                         before = enemy.Hp;
                         service.StepSide(GameSide.Player, 0.25f);
                         check(enemy.Hp == before && service.PreparationAttackRate(futureArcher) == 1f, "换轮移除万箭齐发，原本未满冷却不再射击"); break;
@@ -433,7 +434,9 @@ namespace RevGame.Services
             service._hand.Add(PieceKind.Swordman, StarTier.One);
             check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "近战援军可以部署");
             born = service._playerPieces[service._playerPieces.Count - 1];
-            check(!born.Def.IsRanged && RevGame.Battle.MoveRules.GetAttackTargets(service._board, born).Count > 0, "近战落下就有真实射程内目标，不再丢在后排发呆");
+            check(!born.Def.IsRanged && RevGame.Battle.MoveRules.GetAttackTargets(service._board, born).Count > 0, "近战援军落下后可以立即开始积攒守阵攻击");
+            // 全盘援击不能替代“近战援军靠近敌人”的落点要求；直接检查身体边缘距离，避免射程放宽后此断言失去意义。
+            check(service._enemyPieces.Exists(p => p.IsAlive && BodyDistance(born.Pos, born.Size, p) <= 1), "近战援军仍优先落到可贴身交战的位置");
 
             service = new BattleService();
             service.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(1, 0));

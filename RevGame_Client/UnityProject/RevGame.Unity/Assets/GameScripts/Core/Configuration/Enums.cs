@@ -85,7 +85,7 @@ namespace RevGame.Core
         Normal = 0,
         /// <summary>叫吃：只剩最后一口气（美术上给脉冲提示）。</summary>
         Atari = 1,
-        /// <summary>锁死：气被填满，不能移动、不能攻击、挨双倍伤害。</summary>
+        /// <summary>锁死：零气时禁止自动移动并承受额外伤害；敌方停攻，我方保留守阵反击。</summary>
         Locked = 2,
     }
 

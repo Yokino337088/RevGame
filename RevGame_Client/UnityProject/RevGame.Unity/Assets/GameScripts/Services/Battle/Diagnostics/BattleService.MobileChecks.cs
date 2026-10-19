@@ -120,12 +120,26 @@ namespace RevGame.Services
                 }
                 battle.AddCheckPiece(GameSide.Player, kinds[n++ % 3], new BoardPos(1, 0));
                 if (eyes == 2) { battle.AddCheckPiece(GameSide.Player, kinds[n % 3], new BoardPos(3, 0)); }
-                battle.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(8, 8));
+                // 这里验收的是“守眼时有没有自动挪位”，不能让敌人提前死亡改变棋盘字符画。
+                // 新规则下六颗近战也会原位援击，普通一星盾靶可能在3.75秒内被打死；那是火力变化，不是玩家移动。
+                // 保留同种一星盾战及同一落点，只在夹具里给耐打血量，避免用禁攻/跳过战斗来掩盖真正的移动错误。
+                var eyeTarget = new Piece(battle._nextPieceId++, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy, hpScale: 100f);
+                check(battle._board.Place(eyeTarget, new BoardPos(8, 8)), "守眼移动夹具的耐打敌靶完整落位：" + eyes);
+                battle._enemyPieces.Add(eyeTarget);
                 battle.RefreshGoState();
                 check(battle._playerPieces.TrueForAll(p => p.EyeCount == eyes), "真实形成眼阵：" + eyes);
+                var eyePositions = new BoardPos[battle._playerPieces.Count];
+                for (int i = 0; i < eyePositions.Length; i++) { eyePositions[i] = battle._playerPieces[i].Pos; }
                 before = battle._board.Dump();
                 battle.StartBattle();
                 battle.Tick(3.75f);
+                check(battle.Phase == GamePhase.Battle && eyeTarget.IsAlive && eyeTarget.Hp < eyeTarget.MaxHp, "真实守阵攻击继续且敌靶未被提前击败：" + eyes);
+                // 字符画只区分P/E，不能识别两颗我方互换；再按每颗棋子的编号/对象确认原占格，防止漏报换位。
+                for (int i = 0; i < eyePositions.Length; i++)
+                {
+                    Piece defender = battle._playerPieces[i];
+                    check(defender.Pos == eyePositions[i] && battle._board.GetPiece(eyePositions[i]) == defender, "守眼棋子原编号原位不动：" + eyes + "眼 #" + defender.Id);
+                }
                 check(battle._board.Dump() == before, "成型眼阵保持原位：" + eyes);
             }
         }

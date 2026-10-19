@@ -47,10 +47,12 @@ namespace RevGame.Editor
             board.Place(adjacent, new BoardPos(6, 4));
             Check(RevGame.Battle.MoveRules.GetAttackTargets(board, large).Contains(adjacent.Pos), "大棋可攻击贴住身体边角的敌人");
             board.Move(adjacent, new BoardPos(7, 4));
-            Check(!RevGame.Battle.MoveRules.GetAttackTargets(board, large).Contains(adjacent.Pos), "大棋近战射程仍只有一格");
+            // 最新玩法要求所有我方守阵出手：离开接触范围后改为原位援击，而不是为了追敌拆眼或整场待机。
+            Check(RevGame.Battle.MoveRules.GetAttackTargets(board, large).Contains(adjacent.Pos), "我方大棋近战离开接触范围仍能原位援击");
             board.Remove(adjacent);
             board.Remove(large);
             Check(board.GetPiece(new BoardPos(5, 4)) == null, "移除大棋清掉全部身体");
+            VerifyFactionAttackContracts();
             var a = new Piece(2, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
             var b = new Piece(3, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
             board.Place(a, new BoardPos(1, 0));
@@ -120,6 +122,44 @@ namespace RevGame.Editor
             Check(!battle.SkipRound(), "Boss不能跳过");
             BattleService.VerifyDevelopmentContracts(Check);
             return "通过 " + _count + " 条真实业务断言（全盘落子/重摆、守眼、刷新事务、分时远程攻击、升星、Boss、支援与清理）";
+        }
+
+        /// <summary>
+        /// 阵营规则必须分别验收：我方零气仍守阵反击，敌方保留接触射程与锁死停攻。
+        /// 使用真实围子计算零气，不直接写 IsLocked/气眼字段，防止测试绕过围棋状态刷新。
+        /// </summary>
+        private static void VerifyFactionAttackContracts()
+        {
+            var board = new BoardModel(9);
+            var enemy = new Piece(100, PieceCatalog.Get(PieceKind.Shield, StarTier.Three), GameSide.Enemy, size: 2);
+            var player = new Piece(101, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
+            Check(board.Place(enemy, new BoardPos(4, 3)) && board.Place(player, new BoardPos(6, 4)), "敌方大棋接触射程夹具占格成功");
+            GoRules.Evaluate(board);
+            Check(RevGame.Battle.MoveRules.GetAttackTargets(board, enemy).Contains(player.Pos), "敌方近战仍可攻击贴身目标");
+            Check(board.Move(player, new BoardPos(7, 4)), "敌方射程夹具的靶子离开接触范围");
+            GoRules.Evaluate(board);
+            Check(!RevGame.Battle.MoveRules.GetAttackTargets(board, enemy).Contains(player.Pos), "敌方近战不继承我方全盘援击");
+
+            // 同一套真实十字围子分别检查双方，避免把“我方仍能出手”误写成所有棋子都免疫围困。
+            foreach (GameSide side in new[] { GameSide.Player, GameSide.Enemy })
+            {
+                board = new BoardModel(9);
+                var surrounded = new Piece(200, PieceCatalog.Get(PieceKind.Archer, StarTier.One), side);
+                Check(board.Place(surrounded, new BoardPos(4, 4)), "被围棋子真实落位：" + side);
+                GameSide opposing = side == GameSide.Player ? GameSide.Enemy : GameSide.Player;
+                int id = 201;
+                foreach (BoardPos neighbor in surrounded.Pos.GetOrthogonalNeighbors())
+                {
+                    var blocker = new Piece(id++, PieceCatalog.Get(PieceKind.Shield, StarTier.One), opposing);
+                    Check(board.Place(blocker, neighbor), "围子真实占格：" + side + " " + neighbor);
+                }
+                GoRules.Evaluate(board);
+                Check(surrounded.Liberties == 0 && surrounded.IsLocked, "零气仍保留锁死标记与受击惩罚：" + side);
+                bool shouldAttack = side == GameSide.Player;
+                Check(RevGame.Battle.MoveRules.CanAttack(surrounded) == shouldAttack, "攻击资格明确区分被围双方：" + side);
+                Check((RevGame.Battle.MoveRules.GetAttackTargets(board, surrounded).Count > 0) == shouldAttack, "目标查询遵守同一攻击资格：" + side);
+                Check((RevGame.Battle.MoveRules.GetAttackCoverage(board, surrounded).Count > 0) == shouldAttack, "长按射界遵守同一攻击资格：" + side);
+            }
         }
     }
 }

@@ -14,8 +14,13 @@ namespace RevGame.Core
         public readonly int Damage;
         public readonly bool HasAttacker;
         public readonly BoardPos Source;
+        /// <summary>
+        /// 攻击者在本局的唯一编号；0表示环境伤害或旧的表现测试没有提供来源。
+        /// 不能用坐标代替编号：玩家可以换位，而公平弹道队列仍需认出同一颗棋子，防止早落棋长期挤掉新棋。
+        /// </summary>
+        public readonly int SourceId;
 
-        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source)
+        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0)
         {
             TargetId = targetId;
             Position = position;
@@ -24,6 +29,7 @@ namespace RevGame.Core
             Damage = damage;
             HasAttacker = hasAttacker;
             Source = source;
+            SourceId = sourceId;
         }
     }
 }

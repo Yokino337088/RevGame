@@ -235,7 +235,7 @@ namespace RevGame.View
         }
 
         /// <summary>
-        /// 显示某颗棋子的攻击覆盖格。返回 false 表示没有可显示的内容（棋子不存在/被锁死/射界为空），
+        /// 显示某颗棋子的攻击覆盖格。返回 false 表示没有可显示的内容（棋子不存在/敌方被锁死/射界为空），
         /// 由调用方决定是否给玩家提示——表现层不吞掉"为什么没反应"。
         /// </summary>
         public bool ShowAttackRange(int pieceId)
@@ -253,7 +253,7 @@ namespace RevGame.View
             MoveRules.GetAttackCoverage(board, piece, _attackCoverage);
             if (_attackCoverage.Count == 0)
             {
-                RevLog.Debug("攻击范围：棋子 #" + pieceId + " 没有可覆盖的格子（可能被锁死或射界被挡）", "RevGame");
+                RevLog.Debug("攻击范围：棋子 #" + pieceId + " 没有可覆盖的格子（可能是敌方被锁死或射界被挡）", "RevGame");
                 return false;
             }
 
@@ -557,6 +557,11 @@ namespace RevGame.View
 
         private void OnAttack(PieceAttackInfo attack)
         {
+            // ★ 口号和子弹受全场预算限制，但每颗真实出手的棋子仍要有本地动作。
+            // 否则后排/新落的一星棋即使已经造成伤害，也会被玩家误认为“整场不攻击”。
+            // 这里只播身体姿态，不移动根节点、不改占格、不再结算一次伤害。
+            PieceView view;
+            if (_pieces.TryGetValue(attack.PieceId, out view)) { view.PlayAttackPulse(); }
             QueueAttackText(attack);
         }
 
@@ -584,7 +589,7 @@ namespace RevGame.View
             target += Vector3.one * ((hit.TargetSize - 1) * Consts.CellSize * 0.5f);
             target.z = 0f;
             Vector3 source = hit.HasAttacker ? hit.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) : target + Vector3.up * 2f;
-            QueueProjectile(source, target, hit.TargetSide);
+            QueueProjectile(source, target, hit.TargetSide, hit.SourceId);
             // ★ 伤害取自扣血当刻的快照，即使受击棋子已经死亡回池，这个数字仍能正常显示。
             // 用短窗口合并同目标连击；弹道和数字各自受显示预算约束，都不再创建每次命中独立的Timer。
             QueueDamageText(hit, target);

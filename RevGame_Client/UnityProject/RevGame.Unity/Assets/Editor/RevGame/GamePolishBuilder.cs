@@ -186,6 +186,8 @@ namespace RevGame.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(piecePath);
             try
             {
+                // 可读性装配也必须保持“根管占格、Body管动作”的层级，不能重新引入根渲染器导致整棋缩放。
+                GamePieceShaderBuilder.EnsureBodyChild(root);
                 // 当前 Boss 大棋图片只是旗帜占位，改用已有的敌方重剑立绘作为身体，王冠单独标识主将。
                 var art = AssetDatabase.LoadAssetAtPath<PieceArtConfig>("Assets/GameRes/Config/Art/PieceArt.asset");
                 Sprite bossBody = art.Find(Core.PieceKind.HeavySword, Core.StarTier.Three, Core.GameSide.Enemy).idleFrames[0];
