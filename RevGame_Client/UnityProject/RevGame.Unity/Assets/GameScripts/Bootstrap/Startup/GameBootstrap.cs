@@ -43,6 +43,11 @@ namespace RevGame.Bootstrap
             RevInitialize.Initialize();
             // 图集必须在任何面板/棋子加载前接上Unity回调；通过RevServices统一注销，重复Play不累积监听。
             RevServices.Register<View.GameSpriteAtlasService, View.GameSpriteAtlasService>(owner: this);
+            // ★ 必须立刻取一次，强制现在就创建：RevServices 对 Register<I, T>() 是“懒创建”，不取就要等到第一次 GetRequired 才 new，
+            //   而这个服务的构造函数才去订阅 SpriteAtlasManager.atlasRequested。场景里已有 Image 用到图集 Sprite 时，
+            //   Unity 会在更早的帧发出请求；那一刻没人监听，Unity 只请求一次、不会重发，图集永远不会交还给 Unity，
+            //   结果就是 Image 的 texture 为空（“UI图集像素未绑定”）。取到的对象仍由容器持有并在注销时 Dispose，这里不保存引用。
+            RevServices.GetRequired<View.GameSpriteAtlasService>();
 #if UNITY_ANDROID || UNITY_EDITOR
             // ★ 手机画面必须全屏。SetResolution(..., false) 中的 false 表示“窗口模式”，不是“不旋转”。
             // Android / Simulator 会因此预留系统导航栏；横屏时它会变成右侧深灰条，放大背景也填不到那里。
