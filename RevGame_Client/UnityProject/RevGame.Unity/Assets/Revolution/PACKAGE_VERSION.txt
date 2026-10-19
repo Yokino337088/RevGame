@@ -1,0 +1,25 @@
+# ============================================================
+#  Revolution 框架本体 · 安装基线（Package Version Anchor）
+# ============================================================
+#
+#  这个文件记录「Assets/Revolution 当前对应 Revolution 仓库的哪个 package 提交」。
+#  作用：tools/sync-framework.ps1 用它当基线做**增量**更新 —— 只覆盖有变化的文件，
+#        绝不整目录镜像，从而避免把本项目生成的数据覆盖掉。
+#
+#  ⚠️ 这两类文件**永远不要**被同步覆盖（脚本已内置保护清单）：
+#     · Generation/RevResPath.cs                      本项目资源目录常量（56 个）
+#     · Runtime/RevSoundSystem/Generated/RevSoundPath.cs  本项目音效目录常量（Audio/Sfx、Audio/Bgm）
+#     · Resources/ResourceSystem/ResMap.txt           本项目资源映射表
+#     · PACKAGE_VERSION.txt（就是本文件）
+#
+#  更新流程见 tools/sync-framework.ps1 的注释（默认 DryRun，-Apply 才落盘）。
+# ============================================================
+
+commit      = 449955dc8b6cdc8f622b0ce2e9b8f853766d7e23
+short       = 449955d
+date        = 2026-10-19 22:30
+source      = origin/package（Revolution 仓库 package 分支）
+source_main = 49692f5（package 提交说明：publish: 框架本体（源 49692f5））
+previous    = ae5c3c05d207c86c5b97660fae6bd744a08ce09a（2026-10-16 安装，源 e36a983）
+installed_by= CodeBuddy（2026-10-19 首次框架升级；641 文件 / 250 个 .cs）
+note        = 本次升级误用了整目录镜像，已按用户要求改为增量；这两个生成物已从 git 还原
