@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using RevGame.Board;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Pieces;
 
 namespace RevGame.Battle
@@ -44,7 +45,7 @@ namespace RevGame.Battle
                 if (intelligence >= 3)
                 {
                     score += (int)((1f - target.HpRatio) * 500f);
-                    if (target.Hp <= attacker.Def.Attack * attacker.AttackScale * Consts.CombatDamageScale) { score += 10000; }
+                    if (target.Hp <= attacker.Def.Attack * attacker.AttackScale * Balance.CombatDamageScale) { score += 10000; }
                 }
                 if (intelligence >= 4)
                 {

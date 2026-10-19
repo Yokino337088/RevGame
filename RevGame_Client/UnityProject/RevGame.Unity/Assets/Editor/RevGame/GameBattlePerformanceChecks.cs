@@ -22,6 +22,7 @@ namespace RevGame.Editor
         public static string Run(string label)
         {
             if (UnityEditor.EditorApplication.isPlaying) { throw new InvalidOperationException("请退出Play后测量独立规则"); }
+            GameConfigTestSupport.Ensure();
             MeasureBattle();
             var battle = new List<double>();
             var deployment = new List<double>();
@@ -60,7 +61,7 @@ namespace RevGame.Editor
             var watch = Stopwatch.StartNew();
             for (int step = 0; step < 300 && service.Phase == GamePhase.Battle; step++)
             {
-                service.Tick(Consts.BattleSimulationStepSeconds);
+                service.Tick(Balance.BattleSimulationStepSeconds);
             }
             watch.Stop();
             if (service.LastWinner != GameSide.Player) { throw new InvalidOperationException("性能优化改变了基准战斗胜负"); }

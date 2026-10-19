@@ -91,7 +91,7 @@ namespace RevGame.Services
         {
             get
             {
-                return IsBossRound ? float.PositiveInfinity : Consts.BattleDurationSeconds;
+                return IsBossRound ? float.PositiveInfinity : Balance.BattleDurationSeconds;
             }
         }
 
@@ -186,7 +186,7 @@ namespace RevGame.Services
             _roundSpeedBonus = 0f;
             _roundLibertyBonus = 0;
             _battleEventCount = 0;
-            _nextEventAt = Consts.BattleEventDelay;
+            _nextEventAt = Balance.BattleEventDelay;
             _decisiveSupportUsed = false;
             _supportStage = 0;
             _lastEnemyDamageAt = 0f;
@@ -194,7 +194,7 @@ namespace RevGame.Services
             _lastStandShown = false;
             _eyeHealElapsed = 0f;
             ResetEnemyDeployment();
-            _eventScheduled = VictoryAssistEnabled || IsBossRound || _random.NextDouble() < Consts.BattleEventChance;
+            _eventScheduled = VictoryAssistEnabled || IsBossRound || _random.NextDouble() < Balance.BattleEventChance;
             LastError = string.Empty;
             // 1) 清掉上一回合的敌人；我方棋子保留（策划案：布局与状态全部保留）。
             ClearEnemies();
@@ -276,7 +276,7 @@ namespace RevGame.Services
                 return false;
             }
 
-            int size = card.Star == StarTier.Three ? 2 : 1;
+            int size = PieceCatalog.PlayerBodySize(card.Star);
             return _board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: false);
         }
 
@@ -355,7 +355,7 @@ namespace RevGame.Services
                 return false;
             }
 
-            int size = star == StarTier.Three ? 2 : 1;
+            int size = PieceCatalog.PlayerBodySize(star);
             if (!_board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: false))
             {
                 LastError = "这个格子不能落子：" + pos;
@@ -392,7 +392,7 @@ namespace RevGame.Services
                 return Reject("请先放下至少一颗棋子再准备战斗");
             }
 
-            if (VictoryAssistEnabled && !_preparationGranted) { return Reject("开战前请等待准备增益，约 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - _preparationElapsed)) + " 秒"); }
+            if (VictoryAssistEnabled && !_preparationGranted) { return Reject("开战前请等待准备增益，约 " + System.Math.Max(1, (int)System.Math.Ceiling(Balance.PrepDelaySeconds - _preparationElapsed)) + " 秒"); }
             SelectedCardId = 0;
             SelectedPieceId = 0;
             EyeStoneSelected = false;
@@ -423,7 +423,7 @@ namespace RevGame.Services
             // 每个标准攻击周期分四小步，远程两倍攻速就能每 0.625 秒打一次，
             // 而不是每 1.25 秒把两发挤在同一帧。普通棋仍需攒满整个周期，敌人移动仍是五秒一次。
             // 固定步长和进度累加共同保证：不同帧率下攻击次数相同。
-            float stepSeconds = Consts.BattleSimulationStepSeconds;
+            float stepSeconds = Balance.BattleSimulationStepSeconds;
             while (_tickAccumulator >= stepSeconds && Phase == GamePhase.Battle)
             {
                 _tickAccumulator -= stepSeconds;
@@ -469,23 +469,23 @@ namespace RevGame.Services
                 return;
             }
 
-            StepSide(GameSide.Player, stepSeconds / Consts.BattleTickSeconds);
+            StepSide(GameSide.Player, stepSeconds / Balance.BattleTickSeconds);
             RefreshGoState();
             if (IsKingCaptured())
             {
                 return;
             }
 
-            StepSide(GameSide.Enemy, stepSeconds / Consts.BattleTickSeconds);
+            StepSide(GameSide.Enemy, stepSeconds / Balance.BattleTickSeconds);
             // 升级只由成功打牌/明确增益触发。战斗轮询绝不自动吃掉守眼棋子。
             RefreshGoState();
             _eyeHealElapsed += stepSeconds;
-            if (_eyeHealElapsed >= Consts.EyeHealSeconds)
+            if (_eyeHealElapsed >= Balance.EyeHealSeconds)
             {
-                _eyeHealElapsed -= Consts.EyeHealSeconds;
+                _eyeHealElapsed -= Balance.EyeHealSeconds;
                 foreach (Piece p in _board.Pieces)
                 {
-                    if (p.EyeCount >= 2 && p.Heal(System.Math.Max(1, (int)(p.MaxHp * Consts.EyeHealRatio))) > 0)
+                    if (p.EyeCount >= Balance.EyeHealMinEyes && p.Heal(System.Math.Max(1, (int)(p.MaxHp * Balance.EyeHealRatio))) > 0)
                     {
                         RevEvent.DispatchEvent<int>(Events.PieceHpChanged, p.Id);
                     }
@@ -519,7 +519,7 @@ namespace RevGame.Services
 
                 float rate = side == GameSide.Player && piece.Def.IsRanged ? RangedActionsPerTick : 1f;
                 // ★ 攻击提速与棋盘移动解耦：仍使用原来的五秒走位门槛，玩家的眼位阵型也不会被自动移动拆开。
-                piece.ActionProgress += stepFraction * Consts.AttackSpeedScale * PreparationAttackRate(piece)
+                piece.ActionProgress += stepFraction * Balance.AttackSpeedScale * PreparationAttackRate(piece)
                     * (side == GameSide.Player ? rate * (1f + _speedBonus + _roundSpeedBonus) : 1f);
                 int actions = (int)piece.ActionProgress;
                 piece.ActionProgress -= actions;
@@ -548,7 +548,7 @@ namespace RevGame.Services
                 // 2) 我方始终守住玩家布置的阵位，成一眼/两眼后也不会被自动 AI 拆散。
                 // 敌方只有「没有攻击目标」才走到这里；每四个逻辑步才允许靠近一次。
                 // 攻速增益只增加攻击次数，不增加移动次数，避免连击事件让整盘棋乱跳。
-                float moveInterval = Consts.BattleTickSeconds * Consts.EnemyMoveEveryTicks;
+                float moveInterval = Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
                 if (side == GameSide.Player || _battleElapsed < System.Math.Max(moveInterval, piece.NextMoveAt))
                 {
                     continue;
@@ -600,30 +600,31 @@ namespace RevGame.Services
                 return;
             }
 
-            float multiplier = target.IsLocked ? Consts.LockedDamageMultiplier : Consts.BaseDamageMultiplier;
+            float multiplier = target.IsLocked ? Balance.LockedDamageMultiplier : Balance.BaseDamageMultiplier;
             if (!target.IgnoreEncirclement && target.ConnectedCells <= 1)
             {
-                multiplier *= Consts.IsolatedDamageMultiplier;
+                multiplier *= Balance.IsolatedDamageMultiplier;
             }
 
-            float linked = System.Math.Min(Consts.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Consts.LinkAttackPerCell);
+            float linked = System.Math.Min(Balance.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Balance.LinkAttackPerCell);
             multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus + PreparationAttackBonus(attacker, target) : 0f);
             var attack = new PieceAttackInfo(attacker.Id, attacker.Def.Kind, attacker.Pos, attacker.Size, attacker.Side);
             RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, attack);
             // 双方一起降低单发伤害，保留远程较高的出手频率，让玩家能看见互相消耗和支援反击。
-            int raw = System.Math.Max(1, (int)(attacker.Def.Attack * attacker.AttackScale * multiplier * Consts.CombatDamageScale));
+            int raw = System.Math.Max(1, (int)(attacker.Def.Attack * attacker.AttackScale * multiplier * Balance.CombatDamageScale));
             if (IsBossRound)
             {
-                // 高频小额伤害取整后，10%可能永远看不出变化。每满一分钟至少加1，确保决死加速确实产生伤害压力。
-                int acceleration = (int)(_battleElapsed / Consts.BossAccelerationSeconds);
-                raw += System.Math.Max(acceleration, (int)(raw * acceleration * Consts.BossAccelerationBonus));
+                // 高频小额伤害取整后，10%可能永远看不出变化。每满一档至少加1，确保决死加速确实产生伤害压力。
+                int acceleration = (int)(_battleElapsed / Balance.BossAccelerationSeconds);
+                raw += System.Math.Max(acceleration, (int)(raw * acceleration * Balance.BossAccelerationBonus));
             }
             int real = DamagePiece(target, raw, attacker);
             if (attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
             {
                 RevEvent.DispatchEvent<int>(Events.PieceHpChanged, attacker.Id);
             }
-            RevEvent.DispatchEvent<string>(Events.BattleLog, attacker.Def.DisplayName + " → " + target.Def.DisplayName + " -" + real + (target.IsLocked ? "（锁死×2）" : ""));
+            // ★ 倍数从参数取，不写死“×2”：策划把锁死倍率改成 3 时，战报要跟着变。
+            RevEvent.DispatchEvent<string>(Events.BattleLog, attacker.Def.DisplayName + " → " + target.Def.DisplayName + " -" + real + (target.IsLocked ? "（锁死×" + Balance.LockedDamageMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "）" : ""));
             RefreshGoState();
         }
 
@@ -779,16 +780,19 @@ namespace RevGame.Services
             {
                 foreach (Piece player in _playerPieces) { if (player.IsAlive) { strength += (int)player.Def.Star; } }
             }
-            float pressure = System.Math.Max(1f, strength / 6f);
-            float hpScale = def.HpScale * System.Math.Min(16f, pressure * pressure);
-            float attackScale = def.AttackScale * System.Math.Min(4f, (float)System.Math.Sqrt(pressure));
+            float pressure = System.Math.Max(1f, strength / Balance.EnemyPressureStarDivisor);
+            float hpScale = def.HpScale * System.Math.Min(Balance.EnemyPressureHpMax, pressure * pressure);
+            float attackScale = def.AttackScale * System.Math.Min(Balance.EnemyPressureAttackMax, (float)System.Math.Sqrt(pressure));
             if (def.IsBoss)
             {
-                int[] sizes = def.Chapter <= 2 ? new[] { 2 } : (def.Chapter <= 4 ? new[] { 2, 2 } : (def.Chapter == 5 ? new[] { 3, 2, 2 } : new[] { 3, 3 }));
-                for (int i = 0; i < sizes.Length; i++)
+                // Boss 阵容（外形、星级、每颗占格）来自 ChapterConfig；第一颗是带王冠的主将。
+                BossLineup boss = LevelCatalog.BossOf(def.Chapter);
+                PieceDef bossDef = PieceCatalog.Get(boss.Kind, boss.Star);
+                if (bossDef == null) { return Reject("Boss 图鉴配置缺失：" + boss.Kind + " " + boss.Star); }
+                for (int i = 0; i < boss.BodySizes.Count; i++)
                 {
-                    float scale = hpScale * (1f + (def.Chapter - 1) * 0.25f);
-                    plan.Add(new Piece(_nextPieceId + plan.Count, PieceCatalog.Get(PieceKind.HeavySword, StarTier.Three), GameSide.Enemy, sizes[i], true, i == 0, scale, attackScale));
+                    float scale = hpScale * (1f + (def.Chapter - 1) * Balance.BossHpGrowthPerChapter);
+                    plan.Add(new Piece(_nextPieceId + plan.Count, bossDef, GameSide.Enemy, boss.BodySizes[i], true, i == 0, scale, attackScale));
                 }
             }
             StarTier star = LevelCatalog.GetEnemyStar(def.Chapter, def.IsBoss);

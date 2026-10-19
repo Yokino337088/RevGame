@@ -1,0 +1,71 @@
+#BalanceRule
+#Id	Value	Note
+#参数编号；代码按此名称读取，请勿改名。新增参数需程序同步读取，表里多出代码不认识的编号会在启动时报错	参数值；次数、格数、档位等必须填整数，比例用小数（0.25=25%）	含义、单位与取值说明（给策划看，程序不读取）
+Battle.DurationSeconds	90	普通回合战斗限时（秒）；Boss 回合不限时。到点按双方剩余总血量判胜负。
+Battle.TickSeconds	1.25	标准行动周期（秒）：普通棋攒满一个周期出手一次；同时是模拟与敌人移动的时间基准。
+Battle.StepsPerTick	4	一个行动周期拆成几个固定模拟小步（整数 ≥1）。越大远程分次出手越细，计算量越大。
+Battle.AttackSpeedScale	1.35	攻击提速倍率：只乘出手进度，不改变模拟时钟，因此不会加快敌人走位、增益或回合倒计时。
+Battle.CombatBaseScale	0.6	单发伤害基础系数。实际伤害系数 = 本值 ÷ 攻击提速倍率：提高出手频率时用它摊薄单发伤害，维持总火力。
+Battle.EnemyMoveEveryTicks	4	敌人每隔几个行动周期最多靠近一次（整数 ≥1）；默认 4 个周期 = 5 秒。攻击不受此限。
+Battle.EyeHealSeconds	5	守眼回血的间隔（秒）。
+Battle.EyeHealRatio	0.05	守眼回血：每次回复最大生命的比例。
+Battle.EyeHealMinEyes	2	守眼回血的触发条件：棋子至少成几只眼（整数）。
+Damage.BaseMultiplier	1	基础伤害倍率（公式里的单位 1，保持 1 即可）。
+Damage.LockedMultiplier	2	目标被锁死（气为 0）时受到的伤害倍率。
+Damage.IsolatedMultiplier	1.2	目标孤立（只剩自己一格相连）时受到的伤害倍率。
+Damage.LinkPerCell	0.05	攻击方每多一格相连棋，攻击额外加成的比例。
+Damage.LinkMax	0.25	相连加成的上限比例。
+Damage.ClassBonus	0.1	职业加成：同职业在场数量每达到一个门槛增加的攻击比例。
+Damage.ClassThresholdLow	3	职业加成第一档门槛：同职业在场棋数（整数）。
+Damage.ClassThresholdHigh	5	职业加成第二档门槛：同职业在场棋数（整数）。
+Boss.AccelerationSeconds	60	Boss 回合“决死加速”：每满多少秒加一档（秒）。
+Boss.AccelerationBonus	0.1	Boss 加速每档增加的伤害比例；高频小额伤害取整后至少再加 1 点，保证压力可见。
+Boss.HpGrowthPerChapter	0.25	Boss 大棋生命随章节递增：第 N 章 = 基础 × (1 + (N-1) × 本值)。
+Enemy.HpBase	2.4	敌方生命基础系数（给远程对射、守眼回血和事件留出展开时间）。
+Enemy.HpMultiplier	4.5	敌方生命额外倍率，抵消我方六牌保留、双牌升级和每轮增益带来的火力。
+Enemy.HpGrowthPerRound	0.018	敌方生命随连续回合进度递增：× (1 + 进度 × 本值)；进度跨章不归零。
+Enemy.AttackGrowthPerRound	0.008999999999999999	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
+Enemy.AiRoundsPerLevel	17	敌方 AI 档位每隔多少个连续回合提升一档（整数 ≥1）。
+Enemy.AiMaxLevel	4	敌方 AI 最高档位（整数，1~4）。
+Enemy.CountBase	6	敌方每回合基础人数（整数）。
+Enemy.CountRoundsPerExtra	5	每隔多少个连续回合敌方多一个人（整数 ≥1）。
+Enemy.CountMax	19	敌方每回合人数上限（整数）。
+Enemy.PressureStarDivisor	6	继承阵容压力 = 存活我方棋星级总和 ÷ 本值（至少为 1）；用于按我方强度动态抬高敌方血攻。
+Enemy.PressureHpMax	16	继承阵容压力对敌方生命倍率的上限（压力平方后的封顶值）。
+Enemy.PressureAttackMax	4	继承阵容压力对敌方攻击倍率的上限（压力开方后的封顶值）。
+Enemy.ArcherRange	6	敌方弓箭手直线射程（格，整数）；保留阻挡判定，与重弩跨盘攻击不同。
+Deploy.StartSeconds	12	战斗中敌方第一次补兵的最早时刻（秒），预留开局观察时间。
+Deploy.StopSeconds	60	到这个时刻起不再补兵（秒），避免与决胜支援形成无限拉锯。
+Deploy.LivingCap	26	敌方在场棋数上限（整数）；死亡棋子不占额度。
+Deploy.BaseCount	2	本回合补兵次数预算 = 本值 + 敌方 AI 档位（整数）。
+Deploy.IntervalMinSeconds	12	补兵间隔的下限（秒）。
+Deploy.IntervalBaseSeconds	18	补兵间隔 = max(下限, 本值 − AI档位 × 每档缩短秒数)。
+Deploy.IntervalPerLevelSeconds	2	AI 档位每提升一档缩短的补兵间隔（秒）。
+Deploy.MinEmptyCells	8	棋盘空格数不超过本值（整数）就不补兵，留给玩家调阵和援军。
+Event.ScheduleChance	0.3	关闭通关辅助时，普通回合安排战斗事件的概率（0~1）；Boss 回合与辅助开启时必定安排。
+Event.RareChance	0.25	关闭通关辅助时，抽到稀有事件组的概率（0~1）。
+Event.DelaySeconds	6	一回合里第一次事件最早的战斗时刻（秒）。
+Event.IntervalSeconds	7	相邻两次战斗事件之间的最短间隔（秒）。
+Event.MaxPerRound	12	每回合战斗事件次数上限（整数）。
+Event.FallbackHealRatio	0.1	事件没有合法目标时，改为全队回复最大生命的比例。
+Event.ArtilleryRadius	1	炮火支援的范围半径（格，整数）：以最密集的敌人为中心的 (2R+1)×(2R+1)。
+Event.StageDelaySeconds	4	进入僵持/决胜支援阶段后，普通战斗事件至少推迟多少秒，避免两条大标题争抢。
+Assist.StartSeconds	36	僵持/危急局面在此之后才允许渐进支援（秒）。
+Assist.FinalSeconds	74	长局到此进入“逐个击破”阶段（秒）。
+Assist.FinishSeconds	86	最迟兜底时间（秒）：到点清理全部残敌，保证长局一定结束。
+Assist.StallSeconds	9	连续这么久没有敌人真正掉血，才算火力停滞（秒）。
+Assist.PulseSeconds	3	僵持支援的集火间隔（秒）。
+Assist.FinalPulseSeconds	1	决胜收尾阶段逐个击破的间隔（秒）。
+Assist.PulseHpRatio	0.35	僵持支援单次至少削掉目标最大生命的比例，不会因目标星级高而失效。
+Assist.CriticalHpRatio	0.3	己方全部棋子生命比例都低于此值，视为危急，可提前触发渐进支援。
+Assist.SupportDamage	25	支援伤害的固定下限（整数）：炮火与僵持支援取 max(本值, 按最大生命比例计算的伤害)。
+Prep.DelaySeconds	3	准备阶段开始后多少秒发放本轮增益（秒）；开战前必须等它发放。
+Prep.BuffCountMin	3	每轮抽取增益数量的下限（整数）。
+Prep.BuffCountMax	5	每轮抽取增益数量的上限（整数，≤ 增益总数）。
+Prep.RegenIntervalSeconds	4	生生不息、慧眼共鸣的周期回复间隔（秒）。
+Round.NormalPerChapter	10	每章普通回合数（整数）；第 N+1 回合是 Boss 回合；选关/跳过回合等界面与此联动。
+Round.SkipAttackBonus	0.1	跳过最后一个普通回合直接挑战 Boss 时，永久获得的攻击加成比例。
+Hand.KindBaseWeight	3	抽手牌时，已解锁棋种的基础权重（整数）。
+Hand.ClassBonusWeight	1	场上已有同职业棋子时，该棋种额外增加的抽取权重（整数）。
+Upgrade.PairsPerStar	2	成功打出多少张同类牌，场上已有同类棋升一星（整数 ≥1）。
+Reward.OutnumberedFactor	2	判定“人数落后”：我方棋数 × 本值 < 敌方棋数时，奖励获得额外权重（整数 ≥1）。

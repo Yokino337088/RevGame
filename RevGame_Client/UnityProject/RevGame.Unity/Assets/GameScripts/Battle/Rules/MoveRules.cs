@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using RevGame.Board;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Pieces;
 
 namespace RevGame.Battle
@@ -261,7 +262,7 @@ namespace RevGame.Battle
         private static void CollectAttackRays(BoardModel board, Piece piece, List<BoardPos> result)
         {
             bool cannon = piece.Def.Pattern == MovePattern.Cannon;
-            int range = cannon ? board.Size : (piece.Def.IsRanged ? Consts.EnemyArcherRange : 1);
+            int range = cannon ? board.Size : (piece.Def.IsRanged ? Balance.EnemyArcherRange : 1);
 
             for (int direction = 0; direction < 4; direction++)
             {

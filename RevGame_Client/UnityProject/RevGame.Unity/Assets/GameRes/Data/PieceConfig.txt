@@ -1,0 +1,12 @@
+#PieceConfig
+#Kind	DisplayName	Class	SpriteKey	Hp	Attack	MovePattern	MoveRange	IsRanged	UnlockedAtStart
+#棋子外形编号，必须与代码枚举 PieceKind 同名；请勿改名、不要增删行（新增外形需程序先加枚举和立绘）	中文名，显示在手牌、血条和日志里；星级后缀（如“1★”）由程序拼接	职业，只能填 Guard / Mage / Ranger / Assassin；同职业在场凑够 3 个、5 个触发职业加成	立绘文件名里的棋子名（ArtRes 中“棋子_<本列><星级>_立绘”），与美术资源一一对应，改名需同步改资源	1★ 基础最大生命；2★、3★ 按星级表倍率放大后向下取整	1★ 基础攻击力；2★、3★ 按星级表倍率放大后向下取整	走法，只能填 Step（单步）/ Slide（滑步）/ Knight（马步）/ Cannon（炮，隔一子打）	走几步：Step、Knight 使用；Slide、Cannon 填 0 表示不限距离	是否远程（TRUE/FALSE）：我方远程全盘弹幕；敌方普通远程两格直线，炮隔子；近战相邻一格	开局是否已在手牌池（TRUE/FALSE）；其余棋子靠章节奖励“新棋子”解锁
+Swordman	剑士	Assassin	剑士	60	14	Step	1	FALSE	TRUE
+Shield	盾战	Guard	盾战	120	8	Step	1	FALSE	TRUE
+HeavySword	重剑	Guard	重剑	100	12	Step	1	FALSE	FALSE
+Archer	弓箭手	Ranger	弓箭	52	15	Slide	0	TRUE	TRUE
+Crossbow	重弩	Ranger	重弩	70	18	Slide	0	TRUE	FALSE
+MageWater	水法师	Mage	水法师	48	16	Cannon	0	TRUE	FALSE
+MageFire	火法师	Mage	火法师	44	20	Cannon	0	TRUE	TRUE
+Priest	牧师	Mage	牧师	56	10	Cannon	0	TRUE	FALSE
+Assassin	刺客	Assassin	刺客	46	22	Knight	1	FALSE	FALSE

@@ -1,4 +1,7 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>README</title><style>body{margin:0;background:#10171e;color:#e8eeec;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1080px;margin:auto;padding:32px}h1,h2,h3{color:#ffd18a;line-height:1.35}h2{margin-top:42px}a{color:#79dfd0}code{color:#9ae3dc;background:#1f2b33;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{overflow:auto;background:#1b252d;padding:18px}blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #d2a363;background:#1d2a32}table{border-collapse:collapse;width:100%;min-width:540px}th,td{border:1px solid #354752;text-align:left;padding:10px;vertical-align:top}th{color:#ffd18a;background:#21313c}.table-scroll{overflow-x:auto}img{display:block;max-width:100%;height:auto;border-radius:8px}p,li{overflow-wrap:anywhere}@media(max-width:600px){main{padding:18px}h1{font-size:26px}h2{font-size:22px}}</style></head><body><main><blockquote>
+<p>2026-10-19 <strong>数值全部改走 Excel 导表</strong>：棋子血攻与星级倍率、16 种增益的数值与说明文案、8 种战斗事件、敌方成长/人数/AI 档位、章节与 Boss 阵容、敌方出场名单与补兵规则、奖励权重与强化量、战斗节奏/伤害公式/通关辅助等 68 个参数，原先写死在 <code>PieceCatalog</code> / <code>Consts</code> / <code>BattleService.*</code> 里，现在由 <code>RevGame_Client/配置表/</code> 下 5 个工作簿（共 13 张表）经框架导表工具生成 <code>Generated/Battle*.cs</code> 与 <code>GameRes/Data/*.txt</code>，启动时 <code>GameConfig.Initialize</code> 统一校验。详见下方“配置表”一节。验证边界：已在工程外证明新旧行为逐字节等价（约 430 万行事件流水）、改表生效与填错拦截（24 项反向测试）、<code>Assembly-CSharp</code> / <code>Assembly-CSharp-Editor</code> 真实编译 0 错误；<strong>尚未在 Unity 内 Play 或运行 <code>GameRuleChecks</code> 等编辑器断言，也未跑 AB 构建与真机</strong>，这些仍需在 Unity 中执行一遍。</p>
+</blockquote>
+<blockquote>
 <p>2026-10-18 当前交付：敌方战斗低频补子、16种准备增益（新增万箭齐发）、被围三帧、背景全屏流动和UI魔光；AI注释与59脚本功能目录已完成。固定战斗规则中位数291.343→40.912ms，落子13.773→3.557ms；141项AB隐式重复降至0，PC/Android各19包构建通过，199个GameRes资源真实AB加载通过。详见<a href="../../../../项目进度分析/RevGame-战斗性能与资源规范-2026-10-18.html">RevGame-战斗性能与资源规范-2026-10-18</a>。以下较早数字保留作历史记录，当前结果以上述报告为准。</p>
 </blockquote>
 <h1 id="revgame">RevGame 游戏代码架构与运行说明</h1>
@@ -6,7 +9,7 @@
 <p>2026-10-18 当前动态美术更新：最多20条更小飘字，密集输入实测20条；攻击提速35%，单发伤害按比例摊薄以保留长局，敌棋五秒移动冷却独立计算。弹道按距离收缩/计时，增加自然结束与中断寿命回收。三类Shader位于GameShader，四个共享材质位于GameRes/Material，已绑定35个UI底图；移除UI大地图背景，六牌流光与DOTween点击抖动已接入。645条规则、737条布局、1280条战术、37条动态美术Play、49条密集反馈Play、136条回合Play及池化检查通过。详见<a href="../../../../项目进度分析/RevGame-魔幻动态美术与弹幕增强-2026-10-18.html">RevGame-魔幻动态美术与弹幕增强-2026-10-18</a>，下方旧版本数字为历史记录。</p>
 <p>2026-10-18 最新实现：敌方6～19名、基础属性逐轮成长、四档气眼AI、双牌原位升级、15种准备增益（每轮3～5种）、3秒后DOTween横穿播报、进度条缓动与Boss真实换帧。完整参数、代码职责与实际证据见<a href="../../../../项目进度分析/RevGame-成长与准备增益验收-2026-10-18.html">成长与准备增益验收</a>。布局保持1920×1080手机横屏，手牌保持六张。</p>
 </blockquote>
-<p>本项目首先验证 Revolution 框架能否支撑真实小游戏业务。当前已形成主界面、选关、六牌布阵、自动战斗、结算和章节奖励闭环。弹幕 Excel 已通过原框架导出并接入运行时，2 表共 22 行；正式基础血攻和敌方阵容仍等待用户提供数值。完整时间与证据边界见工程外的《RevGame-开发总结与明日计划-2026-10-18》及前序实现报告。</p>
+<p>本项目首先验证 Revolution 框架能否支撑真实小游戏业务。当前已形成主界面、选关、六牌布阵、自动战斗、结算和章节奖励闭环。全部玩法数值已由 Excel 经框架导表工具接入运行时（见“配置表”一节）；目前表里的数值与迁移前代码里的占位值完全相同，待策划给出正式数值后只需改 Excel。完整时间与证据边界见工程外的《RevGame-开发总结与明日计划-2026-10-18》及前序实现报告。</p>
 <h2 id="_1">先跑起来</h2>
 <p>打开本地 <code>Assets/Scenes/GameScene.unity</code>，按 Play。依次进入冒险选关→第一章→手牌→任意合法空格→“开始战斗”。每回合发满六张；约3秒领取准备增益后可开战，无需等全部播报结束。准备期可在全盘空格落子；准备或战斗中均可点己方棋子再点空格免费换位，大棋必须整块放得下。战斗期不能落手牌或眼位石，手动换位保留伤势、护盾和攻击进度。刷新只重抽剩余 N 张，不补落子额度。本次运行中击败章节 Boss 后解锁下一章；退出程序后进度不保存。</p>
 <p>启动只由 GameBootstrap 调用一次 RevInitialize.Initialize，并集中注册 IBattleService 与 GameFlow。不要再手动初始化事件、UI、计时器等模块，否则会清空已注册监听。</p>
@@ -22,13 +25,13 @@
 <tbody>
 <tr>
 <td>Core</td>
-<td>坐标、常量、枚举、事件、域名</td>
-<td>名称与规则比例集中，避免各处写不同数值。</td>
+<td>坐标、结构常量、枚举、事件、域名</td>
+<td><code>Consts</code> 只留棋盘边长、章节数、手牌槽位数、层级、表现时长这些与预制体/场景绑定的结构常量；平衡数值不在这里。</td>
 </tr>
 <tr>
 <td>Data</td>
-<td>图鉴、关卡、奖励、事件定义</td>
-<td>配置与运行状态分开。基础血攻和阵容仍为占位，星级倍率采用 v18。</td>
+<td>图鉴、关卡、奖励、事件定义（数据来自 Excel）</td>
+<td><code>Data/Config</code> 负责装配与校验：<code>GameConfig</code>（11 张表一次性校验）、<code>Balance</code>（68 个强类型参数）、<code>ConfigText</code>（说明文案占位符）、<code>GameConfigFileLoader</code>（仅编辑器断言/工程外测试用）。<code>PieceCatalog</code> / <code>LevelCatalog</code> 等保持原 API，内部读配置快照。</td>
 </tr>
 <tr>
 <td>Pieces/Model/Piece</td>
@@ -142,13 +145,57 @@
 <li>预制体异步加载可能跨越回合或场景切换；回调检查有效性后再更新画面，不能把旧结算数据盖到新战斗上。</li>
 <li>全体敌人占格先预检再提交。如果残局挤不出完整大棋空间，保留原状态并显示原因，不能少生成一个 Boss 却继续游戏。</li>
 </ul>
+<h2 id="_cfg">配置表（数值的唯一来源）</h2>
+<p><strong>规则</strong>：策划会调的数——血攻速、星级倍率、增益/事件的数值概率冷却、敌方成长、关卡与 Boss 阵容、奖励权重、战斗节奏、说明文案里的数字——只写在 Excel，不写在 C#。判断法：策划想调它，要不要程序改代码重编译？要，就该进表。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>工作簿（<code>RevGame_Client/配置表/</code>）</th>
+<th>表</th>
+<th>管什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>棋子数值配置.xlsx</td>
+<td><code>PieceConfig</code> <code>StarConfig</code></td>
+<td>9 种棋子 1★ 血攻/走法/职业/开局是否解锁；1~3★ 倍率与我方占格</td>
+</tr>
+<tr>
+<td>增益与事件配置.xlsx</td>
+<td><code>PrepBuffConfig</code> <code>BattleEventConfig</code> <code>EventRotationConfig</code></td>
+<td>16 种准备增益（标题、说明模板、数值）；8 种战斗事件效果量与稀有分组；通关辅助下事件轮换顺序</td>
+</tr>
+<tr>
+<td>关卡与奖励配置.xlsx</td>
+<td><code>ChapterConfig</code> <code>EnemyRosterConfig</code> <code>EnemyReinforceConfig</code> <code>RewardConfig</code> <code>RewardBoostConfig</code></td>
+<td>每章敌方星级与 Boss 阵容；敌方出场名单（核心+填充）；战斗中补兵规则；奖励权重/解锁条件；全队强化量</td>
+</tr>
+<tr>
+<td>战斗数值参数.xlsx</td>
+<td><code>BalanceRule</code></td>
+<td>68 个整局通用参数（节奏、伤害公式、Boss 加速、敌方成长、补兵节奏、事件、通关辅助、准备期、奖励抽取），每行带含义说明</td>
+</tr>
+<tr>
+<td>战斗弹幕配置.xlsx</td>
+<td><code>BattleText</code> <code>BattleTuning</code></td>
+<td>弹幕文案/颜色/字号/时长；我方远程攻频（原有，未改动）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>怎么改数值</strong>：改 Excel → Unity 菜单 <code>Revolution.Tools/配置表/导表工具</code>，<strong>添加整个 <code>配置表</code> 文件夹</strong>（不要只加单个文件，否则新工作簿会漏导）→ 只改了数值点“仅数据”（不触发脚本编译），增删字段/表点“导出”。生成物 <code>GameScripts/Generated/Battle*.cs</code> 与 <code>GameRes/Data/*.txt</code> 要一起提交，不要手改。<strong>新增表</strong>还要确认 <code>ResMap.txt</code> 有 <code>Data/&lt;表名&gt;|data_tables|&lt;表名&gt;</code>（Unity 导表工具会自动生成，无头导出需手动补）和 <code>.meta</code>，否则编辑器正常、真机报 <code>PathNotMapped</code>。</p>
+<p><strong>进 AB 包</strong>：13 张表的数据文件都在 <code>GameRes/Data</code>，AB 标记打在 <strong><code>Data</code> 文件夹</strong>上（<code>GameResourceBuild.Groups</code> 里的 <code>{ "Data", "data_tables" }</code>），子文件自动继承，所以每个 <code>*.txt.meta</code> 的 <code>assetBundleName</code> 都是空的——<strong>新增表不用改打包脚本、不用给 meta 填包名</strong>。三者必须对上：生成表 <code>base("Xxx")</code> 推出的逻辑路径 <code>Data/Xxx</code>、<code>ResMap.txt</code> 的 <code>Data/Xxx|data_tables|Xxx</code>、打包脚本里 <code>Data</code> 目录的包名；对不上就是真机 <code>PathNotMapped</code>。</p>
+<p><strong>运行时</strong>：<code>GameFlow.LoadGameConfigAsync</code> 用框架资源系统 <code>RevDataTableManager.LoadAsync</code>（分组 <code>Config</code>）逐张加载 11 张表 —— 编辑器直读、AB、热更、缓存与引用计数走同一条链路，退出时 <code>GameBootstrap</code> 按表 <code>Unload</code> 还掉资源引用。加载完成后 <code>GameConfig.Initialize</code> 一次性校验并装配；任何问题（枚举名拼错、缺行/多余行、数值越界或 NaN、整数填小数、占位符写错、章节数与选关按钮不符、补兵规则覆盖不全…）会攒成一份中文清单，走过场失败出口展示，<strong>不会带着 0 值进入战斗</strong>。业务读取：<code>Balance.*</code>（参数）、<code>PieceCatalog</code>、<code>LevelCatalog</code>、<code>PreparationBuffCatalog</code>、<code>BattleEventCatalog</code>、<code>RewardCatalog</code>。<code>BattleService</code> 构造函数和字段初始化里不得读配置（它在配置加载前就被注册了）。编辑器非 Play 断言开头调用 <code>GameConfigTestSupport.Ensure()</code>。</p>
+<p><strong>只有测试才直读 txt，且进不了真机包</strong>：<code>GameConfigFileLoader</code> 整个类包在 <code>#if UNITY_EDITOR || REVGAME_OFFLINE_TESTS</code> 里，只服务于编辑器非 Play 断言（没执行过 <code>RevInitialize</code>，拿不到资源策略链）和工程外纯 C# 测试。出包后 txt 在 AB 包里、磁盘上没有散文件，直读必然失败，所以它不允许进真机包；已用“去掉 <code>UNITY_EDITOR</code> 宏重新编译运行时程序集”验证过运行时不依赖它。</p>
+<p><strong>说明文案与数值同源</strong>：<code>PrepBuffConfig.Detail</code> 写成 <code>本轮全体攻击加成+{Amount%}</code>，数字取同一行的 <code>Amount</code>；<code>{名字%}</code> 按百分数显示，<code>{名字}</code> 显示数字。改数值后玩家看到的文字自动同步，战报里的 <code>（锁死×N）</code>、僵持支援的 <code>每N秒</code>、HUD 的决死伤害百分比也都读同一批参数。</p>
+<p><strong>刻意留在代码里的（并说明原因）</strong>：棋盘 9×9 与格子大小（与 81 格预制体、数组尺寸绑定）、章节数 6（选关界面 6 个按钮）、手牌上限 6（6 个常驻槽位）、层级排序、棋子移动/弹道动画时长（纯表现）、<code>Piece</code> 初始气数 4（棋盘重算前的占位）、飘字节流与池容量（表现节流）、<code>EnemyTactics</code> / <code>EnemyFormationPlanner</code> 里的目标评分权重和固定眼阵模板坐标（算法内部的相对优先级，不是可调“数值”）、<code>MoveRules</code> 的马步偏移（走法几何）、<code>HandRefresh</code> 里远程攻频的合法区间 1~4（校验边界）。若要把 AI 评分权重也开放给策划，需要先决定哪些是策划意义上的“难度旋钮”，再单独设计，不建议整体搬进表。</p>
 <h2 id="_4">资源约定</h2>
-<p>美术在 <code>Assets/ArtRes/棋盘、棋子、状态标记、界面、图标、特效、字体、音频</code>，保留中文命名。运行时资源在 <code>Assets/GameRes/Board、Pieces、UI、Effects、Audio、Data</code>。弹幕工作簿位于仓库的 <code>RevGame_Client/配置表/战斗弹幕配置.xlsx</code>，导表生成 C# 位于 <code>GameScripts/Generated</code>；不要手改生成物来替代原框架导表。</p>
+<p>美术在 <code>Assets/ArtRes/棋盘、棋子、状态标记、界面、图标、特效、字体、音频</code>，保留中文命名。运行时资源在 <code>Assets/GameRes/Board、Pieces、UI、Effects、Audio、Data</code>。配置工作簿位于仓库的 <code>RevGame_Client/配置表/</code>（见上一节），导表生成 C# 位于 <code>GameScripts/Generated</code>；不要手改生成物来替代原框架导表。</p>
 <p>面板预制体名与类名相同，例如 <code>GameRes/UI/Panels/Battle/PreparePanel.prefab</code>；RevBind 字段 <code>_hintText</code> 对应节点 <code>hintText</code>。资源根配置在 <code>Assets/Editor/ABBuildConfig.asset</code>，逻辑路径只写 <code>UI/</code>、<code>Pieces/</code> 等，不拼 StreamingAssets 或 Application.dataPath。</p>
 <h2 id="_5">代码规范</h2>
 <p>使用 Revolution 公开门面，不顺手修改当前工程的框架内核；异步只用 RevTask。方法签名的括号与参数保持同一行；方法体及 if/for/foreach/while 均带大括号。文件头说明分工理由，关键事务、时序、回收用中文解释，不只复述代码。</p>
 <h2 id="_6">验证入口与本轮证据</h2>
 <p>非Play依次执行 <code>return RevGame.Editor.GameRuleChecks.Run();</code>、<code>return RevGame.Editor.GameLayoutChecks.Run();</code>、<code>return RevGame.Editor.GameTacticsChecks.Run();</code>。前轮实际分别为643、737、1280条通过（本轮仅改表现，未重跑这三组）；战术回归包含两组种子各连续66回合取胜。</p>
 <p>Play在主界面分别执行 <code>RevGame.Editor.GameRoundPresentationChecks.Begin()</code>（136条）、<code>RevGame.Editor.GameGrowthPresentationChecks.Begin()</code>（23条）、<code>RevGame.Editor.GameReadabilityChecks.Begin()</code>（本轮已扩展为密集齐射检查）和 <code>RevGame.Editor.GameFeelChecks.BeginPoolCheck()</code>（通过）。先确认Play启动入口已完成，再运行检查；一组结束再运行下一组，池化检查等待至少四秒，不能中途换域。成长检查验证真实三秒计时、准备横幅1.67秒新时序、Boss可见Sprite换帧、血条/时间条Tween以及换轮清理。</p>
-<p>可通过开发GM进入关卡或固定夹具；非法命令仍返回Success=false，按钮和GM走同一业务入口。原攻击/伤害/升级/事件表共22条，本轮已通过Revolution导表工具修正两条旧升级说明；新增准备增益和基础成长仍是可调业务参数，尚未接正式数值Excel。</p>
+<p>可通过开发GM进入关卡或固定夹具；非法命令仍返回Success=false，按钮和GM走同一业务入口。原攻击/伤害/升级/事件表共22条，已通过Revolution导表工具修正两条旧升级说明；准备增益、基础成长等业务参数现已全部进入 Excel（见“配置表”一节）。</p>
 <p>前轮已实际操作Unity进行六牌准备、双牌原位升级；本轮通过Unity MCP运行真实Play检查，新增战斗换位入口、密集反馈与事件居中验收。保持1920×1080横屏；未执行AB构建、手机真机性能或全策略平衡验收。后期样本仍较依赖保底支援，具体限制和下一步见最新验收报告。</p></main></body></html>

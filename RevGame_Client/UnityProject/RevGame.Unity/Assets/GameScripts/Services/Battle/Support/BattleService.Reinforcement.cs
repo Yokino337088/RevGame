@@ -27,6 +27,7 @@ namespace RevGame.Services
                 int power = second.Attack.CompareTo(first.Attack);
                 return power != 0 ? power : a.Id.CompareTo(b.Id);
             });
+            // 援军至少二星：这是“援军比普通手牌强”的规则底线，数值上的星级倍率仍来自 StarConfig。
             foreach (HandCard card in candidates)
             {
                 StarTier star = card.Star < StarTier.Two ? StarTier.Two : card.Star;
@@ -36,14 +37,16 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent(Events.HandChanged);
                 return true;
             }
-            return VictoryAssistEnabled && TryDeployReinforcement(PieceKind.Crossbow, StarTier.Two);
+            // 手牌为空时的免费兜底援军，沿用“重弩援军”增益的外形与星级配置，而不是再写死一份。
+            PreparationBuffDef fallback = PreparationBuffCatalog.Get(PreparationBuffKind.Elite);
+            return VictoryAssistEnabled && TryDeployReinforcement(fallback.Piece, (StarTier)fallback.Star);
         }
 
         /// <summary>寻找安全落点并一次性提交援军；不占手动落子额度，不参与双牌升级计数。</summary>
         private bool TryDeployReinforcement(PieceKind kind, StarTier star)
         {
             PieceDef def = PieceCatalog.Get(kind, star);
-            int size = star == StarTier.Three ? 2 : 1;
+            int size = PieceCatalog.PlayerBodySize(star);
             BoardPos pos;
             if (!TryFindSupportPosition(def, size, out pos)) { return false; }
             var piece = new Piece(_nextPieceId++, def, GameSide.Player, size);

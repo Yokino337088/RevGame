@@ -96,7 +96,8 @@ namespace RevGame.Pieces
             Id = id;
             Def = def;
             Side = side;
-            Size = size > 0 ? size : (side == GameSide.Player && def.Star == StarTier.Three ? 2 : 1);
+            // 我方占格按星级取配置（StarConfig.PlayerBodySize）；敌方普通棋固定 1×1，Boss 大棋由调用方显式传入占格。
+            Size = size > 0 ? size : (side == GameSide.Player ? PieceCatalog.PlayerBodySize(def.Star) : 1);
             IsBoss = isBoss;
             IsKing = isKing;
             _maxHp = System.Math.Max(1, (int)(def.MaxHp * hpScale));

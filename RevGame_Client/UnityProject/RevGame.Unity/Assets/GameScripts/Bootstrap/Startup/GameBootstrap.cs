@@ -3,6 +3,7 @@
 // 框架初始化一次，注册服务后交给 GameFlow 统一开关域。销毁时按相反顺序注销，便于重复 Play。
 // ============================================================
 using DG.Tweening;
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Services;
 using Revolution;
@@ -93,8 +94,21 @@ namespace RevGame.Bootstrap
             // 先退出流程再注销战斗服务，退出回调仍然可以读取最后一份战斗数据。
             RevServices.Unregister<GameFlow>();
             RevServices.UnregisterAllOf(this);
+            // 先清掉配置快照再卸载表：之后任何迟到的读取都会立刻报“配置尚未装配”，而不是读到半卸载的数据。
+            GameConfig.Reset();
             RevDataTableManager.Unload<BattleTextTable>();
             RevDataTableManager.Unload<BattleTuningTable>();
+            RevDataTableManager.Unload<PieceConfigTable>();
+            RevDataTableManager.Unload<StarConfigTable>();
+            RevDataTableManager.Unload<PrepBuffConfigTable>();
+            RevDataTableManager.Unload<BattleEventConfigTable>();
+            RevDataTableManager.Unload<EventRotationConfigTable>();
+            RevDataTableManager.Unload<ChapterConfigTable>();
+            RevDataTableManager.Unload<EnemyRosterConfigTable>();
+            RevDataTableManager.Unload<EnemyReinforceConfigTable>();
+            RevDataTableManager.Unload<RewardConfigTable>();
+            RevDataTableManager.Unload<RewardBoostConfigTable>();
+            RevDataTableManager.Unload<BalanceRuleTable>();
         }
     }
 }

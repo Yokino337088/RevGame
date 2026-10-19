@@ -217,6 +217,17 @@ Pieces/Unit/SlimePiece|battle_units|SlimePiece
 Config/Art/PieceArt|config_piece_art|PieceArt
 Data/BattleText|data_tables|BattleText
 Data/BattleTuning|data_tables|BattleTuning
+Data/PieceConfig|data_tables|PieceConfig
+Data/StarConfig|data_tables|StarConfig
+Data/PrepBuffConfig|data_tables|PrepBuffConfig
+Data/BattleEventConfig|data_tables|BattleEventConfig
+Data/EventRotationConfig|data_tables|EventRotationConfig
+Data/ChapterConfig|data_tables|ChapterConfig
+Data/EnemyRosterConfig|data_tables|EnemyRosterConfig
+Data/EnemyReinforceConfig|data_tables|EnemyReinforceConfig
+Data/RewardConfig|data_tables|RewardConfig
+Data/RewardBoostConfig|data_tables|RewardBoostConfig
+Data/BalanceRule|data_tables|BalanceRule
 Fonts/CJK/NotoSansCJKsc-Bold|font_cjk|NotoSansCJKsc-Bold
 Material/Background/ArcaneBackdrop|material_background|ArcaneBackdrop
 Material/Background/ArcaneScene|material_background|ArcaneScene

@@ -21,37 +21,41 @@ namespace RevGame.Services
         public int EnemyDeploymentCount => _enemyDeploymentCount;
         /// <summary>只读观测接口，用于GM/测试核对低频落子；界面不能直接改时间来跳过冷却。</summary>
         public float NextEnemyDeploymentAt => _nextEnemyDeployAt;
-        // 第一手延后12秒，让玩家看清原始布阵；随后12～16秒一手，60秒后停手进入收尾。
-        private const float EnemyDeployStart = 12f; // 第一次落子最早时刻，预留开局观察时间。
-        private const float EnemyDeployStop = 60f; // 这时开始不再补兵，避免与玩家决胜支援形成无限拉锯。
-        private const int EnemyLivingCap = 26; // 在场数量而非历史生成数，死亡棋子不占额度。
+        // 补兵节奏全部来自“战斗数值参数.xlsx”的 Deploy.*：第一手延后让玩家看清原始布阵，随后按 AI 档位缩短间隔，
+        // 到停手时刻进入收尾，避免与玩家决胜支援形成无限拉锯；在场上限按数量而非历史生成数，死亡棋子不占额度。
 
         /// <summary>StartRound统一调用；不能另建跨回合Timer，否则上一轮延迟任务会把兵刷到新一轮。</summary>
         private void ResetEnemyDeployment()
         {
-            _nextEnemyDeployAt = EnemyDeployStart;
+            _nextEnemyDeployAt = Balance.DeployStartSeconds;
             _enemyDeploymentCount = 0;
         }
 
         /// <summary>只能在战斗固定步调用；失败同样进入冷却，避免满盘时每0.3125秒重做整盘试算。</summary>
         private void TickEnemyDeployment()
         {
-            if (Phase != GamePhase.Battle || _battleElapsed < _nextEnemyDeployAt || _battleElapsed >= EnemyDeployStop) { return; }
-            if (_enemyDeploymentCount >= 2 + EnemyIntelligence || IsKingCaptured() || _board.IsSideWiped(GameSide.Enemy)) { return; }
+            if (Phase != GamePhase.Battle || _battleElapsed < _nextEnemyDeployAt || _battleElapsed >= Balance.DeployStopSeconds) { return; }
+            if (_enemyDeploymentCount >= Balance.DeployBaseCount + EnemyIntelligence || IsKingCaptured() || _board.IsSideWiped(GameSide.Enemy)) { return; }
             // ★ 先推进下次时刻，再做昂贵的空间与策略检查；满盘/无合法点也不能在每个固定步重算。
-            _nextEnemyDeployAt = _battleElapsed + System.Math.Max(12f, 18f - EnemyIntelligence * 2f);
-            if (_board.IsSideWiped(GameSide.Player) || _board.GetPiecesOf(GameSide.Enemy).Count >= EnemyLivingCap) { return; }
+            _nextEnemyDeployAt = _battleElapsed + System.Math.Max(Balance.DeployIntervalMinSeconds, Balance.DeployIntervalBaseSeconds - EnemyIntelligence * Balance.DeployIntervalPerLevelSeconds);
+            if (_board.IsSideWiped(GameSide.Player) || _board.GetPiecesOf(GameSide.Enemy).Count >= Balance.DeployLivingCap) { return; }
             int empty = 0;
             for (int y = 0; y < _board.Size; y++)
             {
                 for (int x = 0; x < _board.Size; x++) { if (_board.CanPlace(new BoardPos(x, y))) { empty++; } }
             }
-            // 留八个以上空格给玩家调阵和援军；不能为了制造紧张感把手机棋盘塞满。
-            if (empty <= 8) { return; }
+            // 留出足够空格给玩家调阵和援军（Deploy.MinEmptyCells）；不能为了制造紧张感把手机棋盘塞满。
+            if (empty <= Balance.DeployMinEmptyCells) { return; }
             RoundDef round = LevelCatalog.GetRound(Chapter, Round);
             if (round == null) { return; }
-            PieceKind kind = _enemyDeploymentCount % 2 == 0 ? PieceKind.Archer : PieceKind.Shield;
-            if (EnemyIntelligence >= 3 && _enemyDeploymentCount % 3 == 2) { kind = PieceKind.Crossbow; }
+            // 补什么兵由 EnemyReinforceConfig 决定（按已补次数与 AI 档位）；装配时已校验所有序号都有规则命中。
+            PieceKind? picked = LevelCatalog.PickReinforcement(_enemyDeploymentCount, EnemyIntelligence);
+            if (!picked.HasValue)
+            {
+                RevLog.Warn("敌方补兵规则没有命中：第 " + _enemyDeploymentCount + " 次、AI 档位 " + EnemyIntelligence + "，请检查 EnemyReinforceConfig", Tag);
+                return;
+            }
+            PieceKind kind = picked.Value;
             PieceDef def = PieceCatalog.Get(kind, LevelCatalog.GetEnemyStar(Chapter, false));
             // 后补棋按章节/回合成长，但不再叠加继承大军的平方血量倍率，避免一手援军拖长整场。
             var newcomer = new Piece(_nextPieceId, def, GameSide.Enemy, hpScale: round.HpScale, attackScale: round.AttackScale);
@@ -64,7 +68,7 @@ namespace RevGame.Services
             _enemyPieces.Add(newcomer);
             _enemyDeploymentCount++;
             // 新棋不在落地瞬间攻击/移动；至少完整积攒攻击进度，移动再等五秒，给玩家反应窗口。
-            newcomer.NextMoveAt = _battleElapsed + Consts.BattleTickSeconds * Consts.EnemyMoveEveryTicks;
+            newcomer.NextMoveAt = _battleElapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
             RefreshGoState();
             // 模型先就绪，视图后收到通知：新棋第一次显示时已能读到正确气眼和锁死状态。
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, newcomer.Id);

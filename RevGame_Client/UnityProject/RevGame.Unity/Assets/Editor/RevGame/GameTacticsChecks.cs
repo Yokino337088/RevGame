@@ -24,13 +24,14 @@ namespace RevGame.Editor
         public static string Run()
         {
             if (UnityEngine.Application.isPlaying) { return "请先退出 Play 再运行战术断言"; }
+            GameConfigTestSupport.Ensure();
             _count = 0;
             var report = new StringBuilder();
             RoundDef previous = null;
             var watch = System.Diagnostics.Stopwatch.StartNew();
             for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
             {
-                for (int round = 1; round <= Consts.RoundsPerChapter; round++)
+                for (int round = 1; round <= Balance.RoundsPerChapter; round++)
                 {
                     var battle = new BattleService(true, 1024);
                     Check(battle.StartRound(chapter, round), "眼阵完整生成：" + chapter + "/" + round);
@@ -127,7 +128,7 @@ namespace RevGame.Editor
                     float lastTime = 0f;
                     while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 92f)
                     {
-                        battle.Tick(Consts.BattleSimulationStepSeconds);
+                        battle.Tick(Balance.BattleSimulationStepSeconds);
                         if (battle.EnemyDeploymentCount == previous) { continue; }
                         Check(battle.EnemyDeploymentCount == previous + 1, "每个落子窗口只增加一颗敌棋");
                         Check(battle.BattleElapsed - lastTime >= 12f && battle.BattleElapsed < 60f, "至少间隔12秒且60秒后停援");
@@ -251,7 +252,7 @@ namespace RevGame.Editor
                     {
                         battle.Tick(3f);
                         Check(battle.StartBattle(), "固定种子实际开战");
-                        battle.Tick(Consts.VictoryAssistFinishSeconds + Consts.BattleSimulationStepSeconds);
+                        battle.Tick(Balance.VictoryAssistFinishSeconds + Balance.BattleSimulationStepSeconds);
                         Check(battle.LastWinner == GameSide.Player && battle.Phase == GamePhase.Settle, "固定种子对局最终可胜");
                         Check(playerDamage > 0 && enemyDamage > 0, "双方均有真实伤害，敌方不是纯站桩挨打");
                         // 最低验收线是15秒；固定步恰好落在15.0也应通过，不能误判成未达到15秒。
@@ -289,7 +290,7 @@ namespace RevGame.Editor
                 {
                     for (int index = 0; index < LevelCatalog.TotalRounds; index++)
                     {
-                        Check(battle.Chapter == index / Consts.RoundsPerChapter + 1 && battle.Round == index % Consts.RoundsPerChapter + 1, "连续回合没有跳章或重复");
+                        Check(battle.Chapter == index / Balance.RoundsPerChapter + 1 && battle.Round == index % Balance.RoundsPerChapter + 1, "连续回合没有跳章或重复");
                         Check(battle.Hand.Count == Consts.MaxHandSize, "带残局的下一回合仍发满六牌");
                         while (battle.Hand.Count > 0)
                         {
@@ -309,7 +310,7 @@ namespace RevGame.Editor
                         }
                         battle.Tick(3f);
                         Check(battle.StartBattle(), "带残局正常开战");
-                        battle.Tick(Consts.BattleDurationSeconds);
+                        battle.Tick(Balance.BattleDurationSeconds);
                         Check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player, "连续闯关本轮真实取胜");
                         seconds += battle.BattleElapsed;
                         events += battle.BattleEventCount;

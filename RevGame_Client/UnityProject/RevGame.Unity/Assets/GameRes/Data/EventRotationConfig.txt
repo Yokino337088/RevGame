@@ -1,0 +1,11 @@
+#EventRotationConfig
+#Step	Kind
+#顺序号，从 1 开始连续；通关辅助开启时，第 N 次自动事件取第 ((N-1) % 总行数 + 1) 行	事件编号，同 BattleEventConfig.Kind；同一事件可出现多次（权重即出现次数）
+1	Reinforcement
+2	Liberty
+3	Heal
+4	Eye
+5	Combo
+6	Artillery
+7	Heal
+8	BreakChain

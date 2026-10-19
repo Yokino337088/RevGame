@@ -1,105 +1,44 @@
 // ============================================================
 // Consts.cs
-// 集中已确认的规则比例与待替换的占位值，让接入 Excel 时能区分规则和基础数值。
+// 只放“和预制体/场景/美术资源绑定的结构常量”。战斗数值、成长、概率、时长等平衡参数不在这里：
+// 它们由策划在 Excel 里维护（配置表/*.xlsx），经框架导表工具生成后通过 Balance / PieceCatalog / LevelCatalog 读取。
 // ============================================================
 namespace RevGame.Core
 {
     /// <summary>
-    /// 全局常量。**所有魔法数字都集中在这里**，不要在业务代码里散落写 9、0.5f 这种字面量。
+    /// 全局结构常量。
     ///
-    /// 为什么要有这个类：
-        /// 策划案的棋盘/章节结构，以及用户后续调整的战斗时长等数字，
-    /// 一旦散落在十几个文件里，改一次规则就要全项目搜。集中成常量后只改一处。
+    /// 为什么这几个留在代码里而不进 Excel：
+    /// 它们改一个值就必须同步改预制体、场景或美术资源，不是“调数值”能解决的事。
+    /// 把它们放进表反而会让策划以为改表就能生效，结果界面和数据对不上。
+    ///
+    /// ★ 想新增“平衡类”数字（时长、倍率、概率、数量上限…）时不要加在这里：
+    /// 先在 Excel 里加一行，再到 Balance.cs 读取并校验。这样才不会又长出一份写死的数值。
     /// </summary>
     public static class Consts
     {
-        // ---------------- 棋盘 ----------------
+        // ---------------- 棋盘（与 81 格棋盘预制体、BoardModel 数组尺寸绑定） ----------------
         /// <summary>棋盘边长：策划案是 9×9（81 格），沿用围棋规格。</summary>
         public const int BoardSize = 9;
         /// <summary>一格的边长（世界单位）。棋盘总宽 = BoardSize * CellSize。</summary>
         public const float CellSize = 1.15f;
         /// <summary>棋盘左下角的世界坐标。以棋盘中心为原点，所以是 -(边长/2)。</summary>
         public const float BoardOriginOffset = -(BoardSize * CellSize) * 0.5f;
-        // ---------------- 关卡结构（策划案 §04） ----------------
-        /// <summary>总共 6 章。</summary>
+        // ---------------- 关卡结构（与选关界面的章节按钮数量绑定） ----------------
+        /// <summary>总共 6 章。选关界面按这个数量创建章节按钮；ChapterConfig 的行数必须与它一致（启动时校验）。</summary>
         public const int ChapterCount = 6;
-        /// <summary>每章 10 个普通回合。</summary>
-        public const int NormalRoundsPerChapter = 10;
-        /// <summary>每章第 11 回合是 Boss 回合（生死回合）。</summary>
-        public const int BossRoundIndex = NormalRoundsPerChapter + 1;
-        /// <summary>每章总回合数（10 普通 + 1 Boss）。</summary>
-        public const int RoundsPerChapter = BossRoundIndex;
-        // ---------------- 回合节奏 ----------------
-        /// <summary>用户要求放慢体验，覆盖 v18 原来的 15~20 秒，留足观看战斗和支援事件的时间。</summary>
-        public const float BattleDurationSeconds = 90f;
-        /// <summary>普通棋子的基准行动周期（秒）；模拟小步与远程频率以此为基数，结果不依赖帧率。</summary>
-        public const float BattleTickSeconds = 1.25f;
-        /// <summary>双方真实攻击提速35%；只乘出手进度，不改模拟时钟，因此不会加快敌人走位、增益或回合倒计时。</summary>
-        public const float AttackSpeedScale = 1.35f;
-        /// <summary>固定模拟小步：一周期分四次驱动，允许远程在周期中途出手；不会加快普通棋或敌方移动。</summary>
-        public const float BattleSimulationStepSeconds = BattleTickSeconds / 4f;
-        /// <summary>敌人每四个逻辑步最多靠近一次，即五秒；攻击仍每步正常判定。</summary>
-        public const int EnemyMoveEveryTicks = 4;
-        /// <summary>普通回合、Boss 和重开都给六次落子；与发牌上限共用一个来源，避免只改 UI 却少发牌。</summary>
-        public const int MaxCardsPerRound = MaxHandSize;
-        // ---------------- 手牌 ----------------
-        /// <summary>首回合与后续回合一致，均发满六张；不继承上一回合的剩余牌数。</summary>
-        public const int InitialHandSize = MaxHandSize;
+        // ---------------- 手牌（与战斗界面的六个常驻手牌槽位绑定） ----------------
         /// <summary>每回合六张，UI 也必须准备六个常驻槽位，刷新只替换尚未使用的牌。</summary>
         public const int MaxHandSize = 6;
-        // ---------------- 数值占位（等 Excel 表接入后替换，见 README） ----------------
-        /// <summary>被"锁死"（气=0）时受到的伤害倍率。策划案：挨双倍伤害。</summary>
-        public const float LockedDamageMultiplier = 2f;
-        /// <summary>基础暴击/无（占位），保证公式里没有裸数字。</summary>
-        public const float BaseDamageMultiplier = 1f;
-        // 以下均为策划案已明确的比例。基础生命/攻击继续使用占位图鉴，等待 Excel 数值。
-        public const float TwoStarHpScale = 2f;
-        public const float ThreeStarHpScale = 3.6f;
-        public const float TwoStarAttackScale = 1.8f;
-        public const float ThreeStarAttackScale = 3.2f;
-        public const float RewardAttackBonus = 0.1f;
-        public const float ClassAttackBonus = 0.1f;
-        public const float LinkAttackPerCell = 0.05f;
-        public const float MaxLinkAttackBonus = 0.25f;
-        public const float IsolatedDamageMultiplier = 1.2f;
-        public const float BossAccelerationSeconds = 60f;
-        public const float BossAccelerationBonus = 0.1f;
-        public const float BattleEventChance = 0.3f;
-        public const float RareEventChance = 0.25f;
-        public const float BattleEventDelay = 6f;
-        /// <summary>先观看正常交战，再每七秒加入一次增益；提示停留仍独立由 Excel Duration 控制。</summary>
-        public const float BattleEventInterval = 7f;
-        public const int MaxBattleEventsPerRound = 12;
-        /// <summary>最迟兜底时间；正常交战可提前获胜，只有仍未结束的长局才走到这里。</summary>
-        public const float VictoryAssistFinishSeconds = 86f;
-        /// <summary>僵持/危急局面在此之后才允许渐进支援，给敌方阵型足够发挥时间。</summary>
-        public const float VictoryAssistStartSeconds = 36f;
-        /// <summary>长局到此进入逐个击破；正常交战和僵持支援都允许提前获胜。</summary>
-        public const float VictoryAssistFinalSeconds = 74f;
-        /// <summary>连续这么久没有敌人真正掉血，才算火力停滞。</summary>
-        public const float VictoryAssistStallSeconds = 9f;
-        /// <summary>僵持支援的集火间隔；与普通战斗事件的七秒间隔是两种节奏。</summary>
-        public const float VictoryAssistPulseSeconds = 3f;
-        /// <summary>提高出手频率时按比例摊薄单发伤害，维持总火力和长回合体验，避免攻速提高后几秒就结束。</summary>
-        public const float CombatDamageScale = 0.6f / AttackSpeedScale;
-        /// <summary>敌方原型生命系数，给远程对射、守眼回血和事件留出展开时间。</summary>
-        public const float EnemyHpScale = 2.4f;
-        /// <summary>僵持支援单次至少削掉目标最大生命的此比例，不会因目标星级高而失效。</summary>
-        public const float VictoryAssistPulseHpRatio = 0.35f;
-        /// <summary>普通炮火的比例伤害下限，仍与固定的 SupportDamage 取较大值。</summary>
-        public const float ArtilleryHpRatio = 0.12f;
-        /// <summary>敌弓直线射程；保留阻挡判定，和重弩跨盘攻击不同。</summary>
-        public const int EnemyArcherRange = 6;
+        /// <summary>首回合与后续回合一致，均发满六张；不继承上一回合的剩余牌数。</summary>
+        public const int InitialHandSize = MaxHandSize;
+        /// <summary>普通回合、Boss 和重开都给六次落子；与发牌上限共用一个来源，避免只改 UI 却少发牌。</summary>
+        public const int MaxCardsPerRound = MaxHandSize;
+        // ---------------- 纯表现时长（动画 Tween，不影响战斗结果） ----------------
         public const float PieceMoveSeconds = 0.45f;
         /// <summary>弹道飞行时长，同时用于安排命中飘字。</summary>
         public const float ProjectileSeconds = 0.3f;
-        public const float HealRatio = 0.1f;
-        public const float EyeHealSeconds = 5f;
-        public const float EyeHealRatio = 0.05f;
-        public const float ComboSpeedBonus = 0.2f;
-        /// <summary>炮火单颗伤害仍为占位；策划已规定效果，但没有给出最终数值。</summary>
-        public const int SupportDamage = 25;
-        // ---------------- 层与排序 ----------------
+        // ---------------- 层与排序（与预制体/材质的 Sorting Order 对应） ----------------
         /// <summary>棋盘格子的 Sprite 排序层。</summary>
         public const int SortingOrderBoard = 0;
         /// <summary>棋子本体排序层。</summary>

@@ -1,0 +1,6 @@
+#RewardBoostConfig
+#Boost	Detail	Amount
+#全队强化类型，必须与枚举 BoostKind 同名：Attack / Speed / Liberty；不要增删行	说明模板；{Amount%} 显示为百分数，{Amount} 显示为数字	强化量：Attack/Speed 为永久加成比例（0.1=10%）；Liberty 为永久增加的气数（整数）
+Attack	攻击永久 +{Amount%}	0.1
+Speed	攻速永久 +{Amount%}	0.1
+Liberty	全队永久 +{Amount} 气	1

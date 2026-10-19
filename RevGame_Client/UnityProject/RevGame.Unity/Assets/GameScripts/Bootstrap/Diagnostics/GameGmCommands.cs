@@ -104,7 +104,7 @@ namespace RevGame.Bootstrap
 
                 for (int i = 0; i < count && battle.Phase == GamePhase.Battle; i++)
                 {
-                    battle.Tick(Consts.BattleTickSeconds);
+                    battle.Tick(Balance.BattleTickSeconds);
                 }
 
                 return "推进完成，阶段=" + battle.Phase;

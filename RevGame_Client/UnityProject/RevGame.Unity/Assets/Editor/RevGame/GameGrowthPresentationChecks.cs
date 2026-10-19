@@ -6,6 +6,7 @@ using System;
 using System.Reflection;
 using DG.Tweening;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Services;
 using RevGame.UI;
@@ -87,7 +88,7 @@ namespace RevGame.Editor
                 }
                 battle.Tick(3f);
                 Require(placed && battle.StartBattle(), "普通回合正常开战");
-                battle.Tick(Consts.BattleSimulationStepSeconds);
+                battle.Tick(Balance.BattleSimulationStepSeconds);
                 RevEvent.DispatchEvent<int>(Events.PieceHpChanged, battle.PlayerPieces[0].Id);
                 Require(GetField<Tween>(hud, "_progressTween") != null, "顶部时间条实际创建DOTween缓动");
                 Require(battle.StartRound(1, 2), "再进下一轮");

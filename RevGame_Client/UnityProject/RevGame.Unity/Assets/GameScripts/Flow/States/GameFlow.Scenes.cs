@@ -1,5 +1,6 @@
 using System;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Services;
 using RevGame.UI;
 using RevGame.View;
@@ -151,6 +152,10 @@ namespace RevGame.Flow
         {
             await RevServices.GetRequired<GameSpriteAtlasService>().PreloadSceneAsync();
             ThrowIfDisposed();
+            // ★ 所有数值/文案先于任何业务读取加载并整体校验：棋子、星级、增益、事件、关卡、奖励、战斗参数都来自 Excel 导表。
+            // 任何一张表缺失或填错，GameConfig.Initialize 会一次性抛出中文问题清单，走下面的过场失败出口展示，而不是玩到一半才炸。
+            await LoadGameConfigAsync();
+            ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<BattleTextTable>();
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<BattleTuningTable>();
@@ -163,6 +168,51 @@ namespace RevGame.Flow
             }
             ((BattleService)RevServices.GetRequired<IBattleService>()).ConfigureRangedAttackRate(rate.Value);
             _startupComplete = true;
+        }
+
+        /// <summary>
+        /// 通过框架 RevDataTableManager 逐张异步加载游戏配置表（走资源系统：AB、热更、缓存与编辑器直读一致），
+        /// 全部就绪后交给 GameConfig.Initialize 统一校验装配。每次 await 后检查流程寿命。
+        /// 表的卸载由 GameBootstrap 在最终退出时统一完成，这里不重复卸载。
+        /// </summary>
+        private async RevTask LoadGameConfigAsync()
+        {
+            await RevDataTableManager.LoadAsync<PieceConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<StarConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<PrepBuffConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<BattleEventConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<EventRotationConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<ChapterConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<EnemyRosterConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<EnemyReinforceConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<RewardConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<RewardBoostConfigTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<BalanceRuleTable>();
+            ThrowIfDisposed();
+            GameConfig.Initialize(new GameConfigTables
+            {
+                Pieces = RevDataTableManager.Get<PieceConfigTable>(),
+                Stars = RevDataTableManager.Get<StarConfigTable>(),
+                PrepBuffs = RevDataTableManager.Get<PrepBuffConfigTable>(),
+                BattleEvents = RevDataTableManager.Get<BattleEventConfigTable>(),
+                EventRotation = RevDataTableManager.Get<EventRotationConfigTable>(),
+                Chapters = RevDataTableManager.Get<ChapterConfigTable>(),
+                EnemyRoster = RevDataTableManager.Get<EnemyRosterConfigTable>(),
+                EnemyReinforce = RevDataTableManager.Get<EnemyReinforceConfigTable>(),
+                Rewards = RevDataTableManager.Get<RewardConfigTable>(),
+                RewardBoosts = RevDataTableManager.Get<RewardBoostConfigTable>(),
+                Balance = RevDataTableManager.Get<BalanceRuleTable>(),
+            });
         }
 
         /// <summary>只在过场失败后可用。回退同样通过RevScene和资源屏障，不直接删UI或重初始化框架。</summary>

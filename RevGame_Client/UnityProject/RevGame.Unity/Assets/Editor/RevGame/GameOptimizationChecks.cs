@@ -16,6 +16,7 @@ namespace RevGame.Editor
         /// <summary>300张含大棋的随机棋盘，复用原有BuildGroups/CountLiberties作为易读参照算法。</summary>
         public static string Run()
         {
+            GameConfigTestSupport.Ensure();
             int checks = 0;
             var random = new Random(20261018);
             for (int sample = 0; sample < 300; sample++)

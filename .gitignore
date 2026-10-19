@@ -19,6 +19,8 @@
 ExportedObj/
 crashlytics-build.properties
 sysinfo.txt
+# Unity 编辑器版本记录：每个协作者本地用哪个编辑器打开就写哪个，不进仓库
+ProjectVersion.txt
 
 # ---------------- 打包 / 热更产物（工具生成，不入库） ----------------
 [Uu]nityProject/[Aa]sset[Bb]undles/

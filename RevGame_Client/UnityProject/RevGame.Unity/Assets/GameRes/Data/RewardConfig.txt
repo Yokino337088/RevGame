@@ -1,0 +1,7 @@
+#RewardConfig
+#Kind	Title	Detail	Weight	OutnumberedBonus	UnlockAfterCampaigns
+#奖励类型，必须与枚举 RewardKind 同名：TeamBoost / DuplicateCard / NewPiece / EyeStone；不要增删行	三选一卡片标题	说明模板；{PieceName} 取奖励涉及的棋子名。全队强化的说明取自 RewardBoostConfig，本列留空	三选一抽取权重（整数，越大越容易出现）	我方棋数 × 参数表 Reward.OutnumberedFactor 仍小于敌方棋数时，额外增加的权重（整数）；用于雪中送炭	本次运行开过多少局战役后才会出现（0=一直可出现）
+TeamBoost	全队强化		25	0	0
+DuplicateCard	同名牌	下章额外获得「{PieceName}」	30	20	0
+NewPiece	新棋子	解锁「{PieceName}」加入手牌池	25	0	0
+EyeStone	眼位石	保留一颗眼位石；准备阶段点金色格子补成一个眼	20	20	5

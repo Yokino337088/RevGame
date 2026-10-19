@@ -4,6 +4,7 @@
 // 服务统一扣牌，避免「界面扣了牌，但棋盘没有落子」的两份数据不一致。
 // ============================================================
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Services;
 using Revolution;
@@ -103,7 +104,7 @@ namespace RevGame.UI
             _btnReady.GetComponentInChildren<Text>().text = battle.PreparationGranted ? "开始战斗" : "增益抵达 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed)) + "秒";
             _btnRefresh.interactable = battle.Hand.Count > 0 && !AnyCardFlipping;
             _btnRefresh.GetComponentInChildren<Text>().text = "刷新手牌（" + battle.Hand.Count + "张）";
-            _btnSkip.gameObject.SetActive(battle.Round == Consts.NormalRoundsPerChapter);
+            _btnSkip.gameObject.SetActive(battle.Round == Balance.NormalRoundsPerChapter);
             _btnSkip.interactable = !AnyCardFlipping;
             _btnEye.gameObject.SetActive(battle.EyeStones > 0);
             _btnEye.GetComponentInChildren<Text>().text = "眼位石 ×" + battle.EyeStones;

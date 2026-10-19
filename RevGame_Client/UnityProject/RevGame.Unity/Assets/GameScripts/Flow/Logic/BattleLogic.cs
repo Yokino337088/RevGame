@@ -42,7 +42,7 @@ namespace RevGame.Flow
         protected override void OnStart()
         {
             // 驱动也必须按小步到达服务；否则服务虽能细分，画面仍会在 1.25 秒时一次播完两发。
-            Every(Consts.BattleSimulationStepSeconds, OnFixedTick);
+            Every(Balance.BattleSimulationStepSeconds, OnFixedTick);
             if (Battle.Round == 0)
             {
                 Battle.BeginCampaign(1);
@@ -57,7 +57,7 @@ namespace RevGame.Flow
             if (flow != null && flow.IsGameplayBlocked) { return; }
             if (Battle.Phase == GamePhase.Battle || Battle.Phase == GamePhase.Prepare)
             {
-                Battle.Tick(Consts.BattleSimulationStepSeconds);
+                Battle.Tick(Balance.BattleSimulationStepSeconds);
             }
         }
 
@@ -111,7 +111,7 @@ namespace RevGame.Flow
             var sb = new StringBuilder();
             sb.AppendLine("第 " + Chapter + " 章 · 第 " + Round + " 回合（" + Battle.Phase + "）");
             sb.AppendLine("手牌 " + Battle.Hand.Count + "，剩余额度 " + Battle.CardsRemaining + "，全队攻击加成 " + Battle.TeamAttackBonus);
-            sb.AppendLine("轻松模式=" + Battle.VictoryAssistEnabled + "，行动间隔=" + Consts.BattleTickSeconds + "秒，支援事件=" + Battle.BattleEventCount);
+            sb.AppendLine("轻松模式=" + Battle.VictoryAssistEnabled + "，行动间隔=" + Balance.BattleTickSeconds + "秒，支援事件=" + Battle.BattleEventCount);
             sb.AppendLine("AI=" + Battle.EnemyIntelligence + "档，准备计时=" + Battle.PreparationElapsed + "秒，准备增益已发=" + Battle.PreparationGranted);
             foreach (PreparationBuffDef buff in Battle.PreparationBuffs) { sb.AppendLine("准备增益：" + buff.Title + "：" + buff.Detail); }
             sb.AppendLine("敌阵=" + Battle.EnemyFormation + "，辅助=" + Battle.VictorySupportStatus + "，已战斗=" + Battle.BattleElapsed + "秒");

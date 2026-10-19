@@ -36,7 +36,7 @@ namespace RevGame.Services
                         check(player.Liberties == liberties + 1, "回气真实增加一口气");
                         break;
                     case BattleEventKind.Heal:
-                        check(player.Hp == hp + (int)(player.MaxHp * Consts.HealRatio), "疗愈雨按最大生命回复10%");
+                        check(player.Hp == hp + (int)(player.MaxHp * BattleEventCatalog.DefOf(BattleEventKind.Heal).Amount), "疗愈雨按配置比例回复最大生命");
                         break;
                     case BattleEventKind.Combo:
                         // 比较实际伤害，不能只检查一个「增益已设置」标志。把两军放到互相可攻击的位置。
@@ -66,7 +66,7 @@ namespace RevGame.Services
                         check(player.Pos == position && player.Liberties == liberties + 1, "守阵回气增加气但不移动玩家棋子");
                         break;
                     case BattleEventKind.Artillery:
-                        check(service._enemyPieces.TrueForAll(p => p.Hp == p.MaxHp - Consts.SupportDamage), "炮火对密集区域三颗敌子逐一扣血");
+                        check(service._enemyPieces.TrueForAll(p => p.Hp == p.MaxHp - Balance.SupportDamage), "炮火对密集区域三颗敌子逐一扣血");
                         break;
                 }
 
@@ -129,7 +129,7 @@ namespace RevGame.Services
 
             battle.Tick(3f);
             battle.StartBattle();
-            battle.Tick(Consts.BattleTickSeconds);
+            battle.Tick(Balance.BattleTickSeconds);
             check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player && king.IsAlive, "主将围死即胜，不必先扣完生命");
             check(battle.ContinueRound() && battle.Phase == GamePhase.Reward && battle.Rewards.Count == 3, "Boss结算进入三选一");
             check(!battle.ChooseReward(-1) && battle.Rewards.Count == 3, "越界奖励不消耗待领选项");
@@ -141,7 +141,7 @@ namespace RevGame.Services
             battle.DamagePiece(king, king.Hp);
             battle.Tick(3f);
             battle.StartBattle();
-            battle.Tick(Consts.BattleTickSeconds);
+            battle.Tick(Balance.BattleTickSeconds);
             check(battle.LastWinner == GameSide.Player && battle._board.GetPiecesOf(GameSide.Enemy).Count > 0, "只击杀主将也能胜利，护卫不必清场");
             int finished = 0;
             object owner = new object ();
@@ -193,7 +193,7 @@ namespace RevGame.Services
             check(Math.Abs(battle.ClassBonus(GameSide.Player) - 0.2f) < 0.001f, "五同职业再加10%");
             for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
             {
-                for (int round = 1; round <= Consts.RoundsPerChapter; round++)
+                for (int round = 1; round <= Balance.RoundsPerChapter; round++)
                 {
                     battle = new BattleService();
                     check(battle.StartRound(chapter, round) && battle._enemyPieces.Count == battle.Board.GetPiecesOf(GameSide.Enemy).Count, "66个回合配置可完整生成，名单与棋盘一致：" + chapter + "/" + round);
@@ -237,7 +237,8 @@ namespace RevGame.Services
                 player.TakeDamage(max / 2);
                 int wounded = player.Hp;
                 int oldLiberties = player.Liberties;
-                service.ApplyPreparationBuff(kind);
+                PreparationBuffDef buffDef = PreparationBuffCatalog.Get(kind);
+                service.ApplyPreparationBuff(buffDef);
                 service.RefreshGoState();
                 switch (kind)
                 {
@@ -250,7 +251,7 @@ namespace RevGame.Services
                         player.TakeDamage(max / 3);
                         int hp = player.Hp;
                         service.DamagePiece(player, 1);
-                        check(player.Hp > hp && !service._prepRecoveryBank, "储备在真实受伤后只消费一次"); break;
+                        check(player.Hp > hp && service._prepRecoveryRatio == 0f, "储备在真实受伤后只消费一次"); break;
                     case PreparationBuffKind.EncirclementImmunity:
                         service._board.Move(player, new BoardPos(4, 4));
                         service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(3, 4));
@@ -290,7 +291,8 @@ namespace RevGame.Services
                         check(enemy.Hp < before, "万箭齐发使弓箭手在普通冷却未满时实际射击");
                         Piece futureArcher = service.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(2, 0));
                         service.ApplyPreparationToNewPiece(futureArcher);
-                        check(service.PreparationAttackRate(futureArcher) == 2f, "后入场弓箭手继承翻倍频率");
+                        // 期望频率取自配置：1 + 万箭齐发的 Amount（默认 +100% 即翻倍），而不是把“2”写死进断言。
+                        check(service.PreparationAttackRate(futureArcher) == 1f + buffDef.Amount, "后入场弓箭手继承配置的频率倍率");
                         check(service.PreparationAttackRate(service._playerPieces[1]) == 1f && service.PreparationAttackRate(enemy) == 1f, "近战与敌方不会继承万箭齐发");
                         service.ResetPreparation();
                         player.ActionProgress = 0f;
@@ -299,7 +301,7 @@ namespace RevGame.Services
                         service.StepSide(GameSide.Player, 0.25f);
                         check(enemy.Hp == before && service.PreparationAttackRate(futureArcher) == 1f, "换轮移除万箭齐发，原本未满冷却不再射击"); break;
                     case PreparationBuffKind.Liberties:
-                        check(player.Liberties == oldLiberties + 2, "额外两口气实际参与规则"); break;
+                        check(player.Liberties == oldLiberties + (int)buffDef.Amount, "配置的额外气数实际参与规则"); break;
                     case PreparationBuffKind.EyePower:
                         service.TickPreparationCombat(4f);
                         check(player.EyeCount > 0 && player.Hp > wounded, "真实眼阵共鸣产生回复");
@@ -313,7 +315,7 @@ namespace RevGame.Services
                         service.Attack(player, enemy);
                         int enhanced = before - enemy.Hp;
                         service._prepAttack = service._prepRanged = service._prepExecution = 0f;
-                        service._prepEyePower = false;
+                        service._prepEyeAttack = 0f;
                         before = enemy.Hp;
                         service.Attack(player, enemy);
                         check(enhanced > before - enemy.Hp, "增益确实提高攻击伤害：" + kind); break;
@@ -351,7 +353,7 @@ namespace RevGame.Services
         {
             for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
             {
-                for (int round = 1; round <= Consts.RoundsPerChapter; round++)
+                for (int round = 1; round <= Balance.RoundsPerChapter; round++)
                 {
                     var service = new BattleService();
                     service.StartRound(chapter, round);
@@ -369,7 +371,7 @@ namespace RevGame.Services
                     service.RefreshGoState();
                     service.Tick(3f);
                     check(service.StartBattle(), "弱势夹具能正常开始：" + chapter + "/" + round);
-                    service.Tick(Consts.VictoryAssistFinishSeconds);
+                    service.Tick(Balance.VictoryAssistFinishSeconds);
                     check(service.LastWinner == GameSide.Player && service.Phase == GamePhase.Settle, "1血单兵对高血量敌人仍真实取胜：" + chapter + "/" + round);
                     check(service.BattleEventCount >= 3 && service._decisiveSupportUsed, "每回合多次支援并实际触发决胜伤害：" + chapter + "/" + round);
                 }
@@ -380,7 +382,7 @@ namespace RevGame.Services
             check(battle.TriggerBattleEvent(BattleEventKind.Heal), "首次事件成功");
             check(!battle.TriggerBattleEvent(BattleEventKind.Artillery), "事件不能在同一时刻刷取");
             // 七秒冷却不是0.3125秒模拟步的整数倍，多推进一个小步，检查跨过冷却后的真实结果。
-            battle.Tick(Consts.BattleEventInterval + Consts.BattleSimulationStepSeconds);
+            battle.Tick(Balance.BattleEventInterval + Balance.BattleSimulationStepSeconds);
             check(battle.TriggerBattleEvent(BattleEventKind.Artillery) && battle.BattleEventCount == 2, "冷却后允许第二次不同事件");
             battle = new BattleService();
             battle._rewardCard = PieceKind.Shield;

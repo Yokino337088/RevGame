@@ -31,6 +31,7 @@ namespace RevGame.Editor
                 return "请先退出 Play 再运行独立规则断言";
             }
 
+            GameConfigTestSupport.Ensure();
             _count = 0;
             var board = new BoardModel(9);
             var large = new Piece(1, PieceCatalog.Get(PieceKind.Shield, StarTier.Three), GameSide.Player);

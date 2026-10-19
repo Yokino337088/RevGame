@@ -1,0 +1,11 @@
+#BattleEventConfig
+#Kind	Name	IsRare	Amount	Cap
+#战斗事件编号，必须与枚举 BattleEventKind 同名；不要增删行、不要改名	事件中文名；同时是弹幕表 BattleText 里 Event_<名称> 的后缀，改名必须同步改弹幕表	是否稀有事件（TRUE/FALSE）：关闭通关辅助时，先按“稀有概率”决定抽稀有组还是普通组，再在组内随机；两组都不能为空	主效果数值，含义随事件而定：回气=增加的气数；疗愈雨=回复最大生命比例；连击=攻速加成；断链=可被切断的最小连块棋数；守阵回气=增加的气数；炮火支援=按最大生命计的伤害比例下限（与参数表 Assist.SupportDamage 取较大值）；其余留空	效果累计上限：目前仅连击使用（本轮攻速加成累计不超过该值）；其余留空
+Reinforcement	天降援兵	FALSE		
+Liberty	回气	FALSE	1	
+Heal	疗愈雨	FALSE	0.1	
+Combo	连击	FALSE	0.2	0.5
+Eye	补眼	TRUE		
+BreakChain	断链	TRUE	3	
+Teleport	守阵回气	TRUE	1	
+Artillery	炮火支援	TRUE	0.12	

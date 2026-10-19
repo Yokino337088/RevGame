@@ -1,0 +1,9 @@
+#EnemyRosterConfig
+#Id	Group	Kind
+#顺序号，从 1 开始连续；顺序就是出场顺序	Core=核心骨架（每个回合都有，按顺序先排）；Filler=填充兵（人数不足时，按这些行循环补足）	棋子外形（PieceKind 枚举名）
+1	Core	Crossbow
+2	Core	Archer
+3	Core	MageFire
+4	Filler	Shield
+5	Filler	HeavySword
+6	Filler	Swordman

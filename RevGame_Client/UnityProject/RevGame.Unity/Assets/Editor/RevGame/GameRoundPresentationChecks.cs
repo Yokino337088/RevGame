@@ -7,6 +7,7 @@ using System;
 using System.Reflection;
 using DG.Tweening;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Services;
 using RevGame.UI;
@@ -51,7 +52,7 @@ namespace RevGame.Editor
                     Require(placed == used && battle.Hand.Count == 6 - used, "消费后的剩余牌数不正确");
                     battle.Tick(3f);
                     Require(battle.StartBattle(), "有棋子时未能开战");
-                    battle.Tick(Consts.VictoryAssistFinishSeconds);
+                    battle.Tick(Balance.VictoryAssistFinishSeconds);
                     Require(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player, "没有经过真实结算");
                     Require(battle.ContinueRound(), "结算后无法继续");
                     await RevTask.Delay(600);
@@ -76,7 +77,7 @@ namespace RevGame.Editor
                 battle.Tick(3f);
                 Require(battle.StartBattle(), "合成后开战失败");
                 VerifyNoOldEffects();
-                battle.Tick(Consts.BattleEventDelay);
+                battle.Tick(Balance.BattleEventDelay);
                 await RevTask.Delay(120);
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { PauseOwnedTween(effect, "_animation"); }
                 foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>()) { PauseOwnedTween(notice, "_animation"); }

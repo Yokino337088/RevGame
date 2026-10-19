@@ -35,7 +35,7 @@ namespace RevGame.Services
             {
                 if (_supportStage >= 2) { return "决胜收尾 · 逐个击破"; }
                 if (_supportStage == 1) { return "僵持支援 · 集火破阵"; }
-                return "守阵交战 · " + Consts.VictoryAssistFinishSeconds + "秒最后兜底";
+                return "守阵交战 · " + Balance.VictoryAssistFinishSeconds + "秒最后兜底";
             }
         }
         /// <summary>默认轻松模式含最后一子守护与决胜支援；界面会公开说明。</summary>
@@ -165,7 +165,7 @@ namespace RevGame.Services
                 return Reject("战斗事件只能在战斗阶段触发");
             }
 
-            if (_battleEventCount >= Consts.MaxBattleEventsPerRound)
+            if (_battleEventCount >= Balance.MaxBattleEventsPerRound)
             {
                 return Reject("本回合支援次数已达上限");
             }
@@ -181,21 +181,23 @@ namespace RevGame.Services
             }
 
             _battleEventCount++;
-            _nextEventAt = _battleElapsed + Consts.BattleEventInterval;
+            _nextEventAt = _battleElapsed + Balance.BattleEventInterval;
             bool applied = true;
+            // 每个事件的效果量来自 BattleEventConfig（Amount/Cap），不在代码里写死。
+            BattleEventDef eventDef = BattleEventCatalog.DefOf(kind);
             switch (kind)
             {
                 case BattleEventKind.Reinforcement:
                     applied = ReinforceFromHand();
                     break;
                 case BattleEventKind.Liberty:
-                    _roundLibertyBonus++;
+                    _roundLibertyBonus += (int)eventDef.Amount;
                     break;
                 case BattleEventKind.Heal:
-                    HealTeam(Consts.HealRatio);
+                    HealTeam(eventDef.Amount);
                     break;
                 case BattleEventKind.Combo:
-                    _roundSpeedBonus = System.Math.Min(0.5f, _roundSpeedBonus + Consts.ComboSpeedBonus);
+                    _roundSpeedBonus = System.Math.Min(eventDef.Cap, _roundSpeedBonus + eventDef.Amount);
                     break;
                 case BattleEventKind.Eye:
                     applied = CompleteOneEye();
@@ -213,20 +215,21 @@ namespace RevGame.Services
 
             if (!applied)
             {
-                HealTeam(Consts.HealRatio);
+                HealTeam(Balance.EventFallbackHealRatio);
             }
 
             RefreshGoState();
             string title = BattleEventCatalog.NameOf(kind);
             LastError = string.Empty;
             RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, title);
-            RevEvent.DispatchEvent<string>(Events.BattleLog, title + (applied ? "：已生效" : "：没有合法目标，转为全队回复 10% 生命"));
+            // 回退回复的比例写进日志时也取自参数，不手写“10%”。
+            RevEvent.DispatchEvent<string>(Events.BattleLog, title + (applied ? "：已生效" : "：没有合法目标，转为全队回复 " + ConfigText.Percent(Balance.EventFallbackHealRatio) + " 生命"));
             return true;
         }
 
         private void TryAutomaticEvent()
         {
-            if (!_eventScheduled || _battleEventCount >= Consts.MaxBattleEventsPerRound || _battleElapsed < _nextEventAt)
+            if (!_eventScheduled || _battleEventCount >= Balance.MaxBattleEventsPerRound || _battleElapsed < _nextEventAt)
             {
                 return;
             }
@@ -234,13 +237,15 @@ namespace RevGame.Services
             if (VictoryAssistEnabled)
             {
                 // 顺序轮换，保证援军、治疗和炮火都会出现，避免连续随机到没有目标的事件。
-                BattleEventKind[] support = { BattleEventKind.Reinforcement, BattleEventKind.Liberty, BattleEventKind.Heal, BattleEventKind.Eye, BattleEventKind.Combo, BattleEventKind.Artillery, BattleEventKind.Heal, BattleEventKind.BreakChain };
-                TriggerBattleEvent(support[_battleEventCount % support.Length]);
+                // 轮换顺序来自 EventRotationConfig（同一事件出现几次，就是它的权重）。
+                IReadOnlyList<BattleEventKind> support = BattleEventCatalog.Rotation;
+                TriggerBattleEvent(support[_battleEventCount % support.Count]);
                 return;
             }
 
-            int first = _random.NextDouble() < Consts.RareEventChance ? 4 : 0;
-            TriggerBattleEvent((BattleEventKind)(first + _random.Next(4)));
+            // 先按稀有概率决定抽哪一组，再在组内等概率随机；分组来自 BattleEventConfig.IsRare。
+            IReadOnlyList<BattleEventKind> pool = BattleEventCatalog.Pool(_random.NextDouble() < Balance.RareEventChance);
+            TriggerBattleEvent(pool[_random.Next(pool.Count)]);
         }
 
         private void HealTeam(float ratio)
@@ -317,7 +322,7 @@ namespace RevGame.Services
         /// <summary>保留旧事件入口，但用回气替代自动传送；玩家布阵不被任何增益事件搬走。</summary>
         private bool TeleportToMoreLiberties()
         {
-            _roundLibertyBonus++;
+            _roundLibertyBonus += (int)BattleEventCatalog.DefOf(BattleEventKind.Teleport).Amount;
             RefreshGoState();
             return true;
         }
@@ -333,7 +338,8 @@ namespace RevGame.Services
                 }
             }
 
-            if (largest == null || largest.Count < 3)
+            // 连块至少多大才能断链（BattleEventConfig[BreakChain].Amount）。
+            if (largest == null || largest.Count < (int)BattleEventCatalog.DefOf(BattleEventKind.BreakChain).Amount)
             {
                 return false;
             }
@@ -384,11 +390,14 @@ namespace RevGame.Services
                 return false;
             }
 
+            // 炮击范围半径与伤害比例都来自参数/事件表：伤害 = max(固定下限, 目标最大生命 × 比例)。
+            int radius = Balance.EventArtilleryRadius;
+            float hpRatio = BattleEventCatalog.DefOf(BattleEventKind.Artillery).Amount;
             Piece center = enemies[0];
             int density = -1;
             foreach (Piece candidate in enemies)
             {
-                int n = enemies.FindAll(p => System.Math.Abs(p.Pos.X - candidate.Pos.X) <= 1 && System.Math.Abs(p.Pos.Y - candidate.Pos.Y) <= 1).Count;
+                int n = enemies.FindAll(p => System.Math.Abs(p.Pos.X - candidate.Pos.X) <= radius && System.Math.Abs(p.Pos.Y - candidate.Pos.Y) <= radius).Count;
                 if (n > density)
                 {
                     center = candidate;
@@ -398,9 +407,9 @@ namespace RevGame.Services
 
             foreach (Piece p in enemies)
             {
-                if (System.Math.Abs(p.Pos.X - center.Pos.X) <= 1 && System.Math.Abs(p.Pos.Y - center.Pos.Y) <= 1)
+                if (System.Math.Abs(p.Pos.X - center.Pos.X) <= radius && System.Math.Abs(p.Pos.Y - center.Pos.Y) <= radius)
                 {
-                    DamagePiece(p, System.Math.Max(Consts.SupportDamage, (int)(p.MaxHp * Consts.ArtilleryHpRatio)));
+                    DamagePiece(p, System.Math.Max(Balance.SupportDamage, (int)(p.MaxHp * hpRatio)));
                 }
             }
 
@@ -429,10 +438,12 @@ namespace RevGame.Services
             }
 
             int real = target.TakeDamage(amount);
-            if (real > 0 && target.Side == GameSide.Player && _prepRecoveryBank)
+            if (real > 0 && target.Side == GameSide.Player && _prepRecoveryRatio > 0f)
             {
-                _prepRecoveryBank = false;
-                HealTeam(0.4f);
+                // 复苏储备：首次实际受伤后回复一次，用完清零（比例来自 PrepBuffConfig[Recovery].Extra）。
+                float bank = _prepRecoveryRatio;
+                _prepRecoveryRatio = 0f;
+                HealTeam(bank);
             }
             if (real > 0)
             {
@@ -465,28 +476,29 @@ namespace RevGame.Services
                 return;
             }
             // 第一段只在久攻无进展或己方已经危急时介入。正常交战即使超过旧的45秒也可以继续。
-            bool stalled = _battleElapsed - _lastEnemyDamageAt >= Consts.VictoryAssistStallSeconds;
-            bool critical = _lastStandShown || _playerPieces.FindAll(p => p.IsAlive).TrueForAll(p => p.HpRatio < 0.3f);
-            if (_supportStage == 0 && _battleElapsed >= Consts.VictoryAssistStartSeconds && (stalled || critical))
+            bool stalled = _battleElapsed - _lastEnemyDamageAt >= Balance.VictoryAssistStallSeconds;
+            bool critical = _lastStandShown || _playerPieces.FindAll(p => p.IsAlive).TrueForAll(p => p.HpRatio < Balance.VictoryAssistCriticalHpRatio);
+            if (_supportStage == 0 && _battleElapsed >= Balance.VictoryAssistStartSeconds && (stalled || critical))
             {
-                BeginSupportStage(1, "僵持支援：每三秒集中火力压制一名敌人，正常攻防继续");
+                // 阶段说明里的间隔秒数取自参数，避免“每三秒”写在文字里、实际间隔在表里改了却对不上。
+                BeginSupportStage(1, "僵持支援：每" + ConfigText.Number(Balance.VictoryAssistPulseSeconds) + "秒集中火力压制一名敌人，正常攻防继续");
             }
             // 双方守眼、近战隔盘和 Boss 都必须能结束；后段改成逐个击破，让玩家看见破阵过程。
-            if (_supportStage < 2 && _battleElapsed >= Consts.VictoryAssistFinalSeconds)
+            if (_supportStage < 2 && _battleElapsed >= Balance.VictoryAssistFinalSeconds)
             {
                 BeginSupportStage(2, "决胜收尾：援军逐个击破残部，保留最后通关保障");
             }
             if (_supportStage == 0 || _battleElapsed < _nextSupportPulseAt) { return; }
-            _nextSupportPulseAt += _supportStage == 2 ? 1f : Consts.VictoryAssistPulseSeconds;
+            _nextSupportPulseAt += _supportStage == 2 ? Balance.VictoryAssistFinalPulseSeconds : Balance.VictoryAssistPulseSeconds;
             Piece target = _enemyPieces.Find(p => p.IsAlive && p.IsKing);
             if (target == null) { target = _enemyPieces.Find(p => p.IsAlive && p.Def.IsRanged); }
             if (target == null) { target = _enemyPieces.Find(p => p.IsAlive); }
             if (target == null) { return; }
             _decisiveSupportUsed = true;
-            int damage = _supportStage == 2 ? target.Hp : System.Math.Max(Consts.SupportDamage, (int)(target.MaxHp * Consts.VictoryAssistPulseHpRatio));
+            int damage = _supportStage == 2 ? target.Hp : System.Math.Max(Balance.SupportDamage, (int)(target.MaxHp * Balance.VictoryAssistPulseHpRatio));
             DamagePiece(target, damage);
             // 非标准开发夹具也有绝对上限；常规敌阵先经过前段逐个击破，最后才清理异常残敌。
-            if (_battleElapsed >= Consts.VictoryAssistFinishSeconds)
+            if (_battleElapsed >= Balance.VictoryAssistFinishSeconds)
             {
                 foreach (Piece enemy in new List<Piece>(_enemyPieces))
                 {
@@ -504,7 +516,7 @@ namespace RevGame.Services
             // 沿用 Excel 的决胜支援表现配置，阶段细节由持续可读的 HUD 与战斗日志说明。
             RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, "决胜支援");
             RevEvent.DispatchEvent<string>(Events.BattleLog, description);
-            _nextEventAt = System.Math.Max(_nextEventAt, _battleElapsed + 4f);
+            _nextEventAt = System.Math.Max(_nextEventAt, _battleElapsed + Balance.EventStageDelaySeconds);
         }
     }
 }

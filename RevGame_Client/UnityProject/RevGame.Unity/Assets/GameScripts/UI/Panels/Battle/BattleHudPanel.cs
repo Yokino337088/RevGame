@@ -178,7 +178,8 @@ namespace RevGame.UI
             if (king != null)
             {
                 UpdateBar(_bossBar, king.HpRatio, ref _bossTween, ref _bossTarget, _battle.Phase != GamePhase.Battle);
-                int rage = (int)(_battle.BattleElapsed / Consts.BossAccelerationSeconds) * 10;
+                // 决死伤害百分比 = 已满档位 × 每档加成；每档加成取自参数，旧代码这里把 10% 写死成了 *10。
+                int rage = (int)((int)(_battle.BattleElapsed / Balance.BossAccelerationSeconds) * Balance.BossAccelerationBonus * 100f + 0.5f);
                 _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
             }
         }

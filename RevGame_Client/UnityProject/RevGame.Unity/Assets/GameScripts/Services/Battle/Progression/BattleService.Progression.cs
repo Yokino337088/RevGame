@@ -15,13 +15,10 @@ namespace RevGame.Services
     public sealed partial class BattleService
     {
         private readonly List<RewardDef> _rewards = new List<RewardDef>();
-        private readonly HashSet<PieceKind> _unlockedKinds = new HashSet<PieceKind>
-        {
-            PieceKind.Swordman,
-            PieceKind.Shield,
-            PieceKind.Archer,
-            PieceKind.MageFire
-        };
+        // ★ 开局解锁的棋种来自 PieceConfig.UnlockedAtStart，而战斗服务在启动入口注册时配置表还没加载完，
+        // 所以不能在字段初始化里读配置——第一次真正用到时才从配置创建，之后随运行保留解锁进度。
+        private HashSet<PieceKind> _unlockedKindsStore;
+        private HashSet<PieceKind> _unlockedKinds => _unlockedKindsStore ?? (_unlockedKindsStore = PieceCatalog.CreateInitialUnlockedSet());
         private float _attackBonus;
         private float _speedBonus;
         private int _libertyBonus;
@@ -131,7 +128,8 @@ namespace RevGame.Services
                 candidates.Add(new RewardDef(RewardKind.NewPiece, locked[_random.Next(locked.Count)], BoostKind.Attack));
             }
 
-            if (_campaignsStarted >= 5)
+            // 眼位石要开过足够多局战役才出现（RewardConfig.UnlockAfterCampaigns）。
+            if (_campaignsStarted >= RewardCatalog.UnlockAfterCampaigns(RewardKind.EyeStone))
             {
                 candidates.Add(new RewardDef(RewardKind.EyeStone, PieceKind.Shield, BoostKind.Liberty));
             }
@@ -170,13 +168,9 @@ namespace RevGame.Services
 
         private int RewardWeight(RewardKind kind)
         {
-            int weight = kind == RewardKind.DuplicateCard ? 30 : (kind == RewardKind.EyeStone ? 20 : 25);
-            if ((kind == RewardKind.DuplicateCard || kind == RewardKind.EyeStone) && _board.GetPiecesOf(GameSide.Player).Count * 2 < _board.GetPiecesOf(GameSide.Enemy).Count)
-            {
-                weight += 20;
-            }
-
-            return weight;
+            // 基础权重与“人数落后时的额外权重”都来自 RewardConfig；落后判定的倍数来自 Reward.OutnumberedFactor。
+            bool outnumbered = _board.GetPiecesOf(GameSide.Player).Count * Balance.RewardOutnumberedFactor < _board.GetPiecesOf(GameSide.Enemy).Count;
+            return RewardCatalog.WeightOf(kind, outnumbered);
         }
 
         public bool ChooseReward(int index)
@@ -195,17 +189,18 @@ namespace RevGame.Services
             switch (reward.Kind)
             {
                 case RewardKind.TeamBoost:
+                    // 加成量来自 RewardBoostConfig；奖励卡上的说明文字用的是同一个数，所以“看到的”和“拿到的”一致。
                     if (reward.Boost == BoostKind.Attack)
                     {
-                        _attackBonus += Consts.RewardAttackBonus;
+                        _attackBonus += RewardCatalog.BoostAmount(BoostKind.Attack);
                     }
                     else if (reward.Boost == BoostKind.Speed)
                     {
-                        _speedBonus += Consts.RewardAttackBonus;
+                        _speedBonus += RewardCatalog.BoostAmount(BoostKind.Speed);
                     }
                     else
                     {
-                        _libertyBonus++;
+                        _libertyBonus += (int)RewardCatalog.BoostAmount(BoostKind.Liberty);
                     }
 
                     break;
@@ -227,9 +222,9 @@ namespace RevGame.Services
 
         public bool SkipRound()
         {
-            if (Phase != GamePhase.Prepare || Round != Consts.NormalRoundsPerChapter)
+            if (Phase != GamePhase.Prepare || Round != Balance.NormalRoundsPerChapter)
             {
-                return Reject("只能在第 10 回合准备阶段跳过");
+                return Reject("只能在第 " + Balance.NormalRoundsPerChapter + " 回合准备阶段跳过");
             }
 
             // 已经落牌就不能拿满收益又跳过，以免绕过「放弃本回合落子」的代价。
@@ -238,12 +233,12 @@ namespace RevGame.Services
                 return Reject("本回合已落子，不能再跳过换强化");
             }
 
-            if (!StartRound(Chapter, Consts.BossRoundIndex))
+            if (!StartRound(Chapter, Balance.BossRoundIndex))
             {
                 return false;
             }
 
-            _attackBonus += Consts.RewardAttackBonus;
+            _attackBonus += Balance.RoundSkipAttackBonus;
             return true;
         }
 
@@ -257,13 +252,12 @@ namespace RevGame.Services
                     continue;
                 }
 
-                pool.Add(kind);
-                pool.Add(kind);
-                pool.Add(kind);
+                // 每个已解锁棋种先放基础权重份；场上已有同职业棋子时再多放额外权重份（Hand.KindBaseWeight / Hand.ClassBonusWeight）。
+                for (int copy = 0; copy < Balance.HandKindBaseWeight; copy++) { pool.Add(kind); }
                 PieceClass job = PieceCatalog.Get(kind, StarTier.One).Class;
                 if (_playerPieces.Exists(p => p.IsAlive && p.Def.Class == job))
                 {
-                    pool.Add(kind);
+                    for (int copy = 0; copy < Balance.HandClassBonusWeight; copy++) { pool.Add(kind); }
                 }
             }
 
@@ -281,14 +275,15 @@ namespace RevGame.Services
             float bonus = 0f;
             foreach (int count in counts)
             {
-                if (count >= 3)
+                // 同职业在场数量每达到一档门槛，加一次职业加成（门槛与加成比例都在“战斗数值参数.xlsx”）。
+                if (count >= Balance.ClassThresholdLow)
                 {
-                    bonus += Consts.ClassAttackBonus;
+                    bonus += Balance.ClassAttackBonus;
                 }
 
-                if (count >= 5)
+                if (count >= Balance.ClassThresholdHigh)
                 {
-                    bonus += Consts.ClassAttackBonus;
+                    bonus += Balance.ClassAttackBonus;
                 }
             }
 
@@ -304,7 +299,7 @@ namespace RevGame.Services
             int count;
             _playedPairs.TryGetValue(kind, out count);
             _playedPairs[kind] = ++count;
-            if (count % 2 != 0) { return; }
+            if (count % Balance.UpgradePairsPerStar != 0) { return; }
             // 优先最早入场的棋，四次同类牌可把第一颗逐步养到三星；满星后再培养下一颗。
             Piece original = _playerPieces.Find(p => p != placed && p.IsAlive && p.Def.Kind == kind && p.Def.Star < StarTier.Three);
             if (original == null) { return; }
