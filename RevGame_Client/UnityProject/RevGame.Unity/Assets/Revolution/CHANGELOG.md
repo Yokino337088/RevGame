@@ -2,6 +2,18 @@
 
 ## [未发布]
 
+### 通用自动化工具（2026-10-19）
+
+- 新增仓库 `Automation/` 的 Python 标准库 CLI、本机文件队列和 Editor 主线程桥接；覆盖现有编辑器菜单及主要窗口操作（AB 分包/校验/构建/体积/快照、导表、UI 生成、平台工具、可选热更与演示工具）。
+- 通用业务通过已有 `RevGM.Execute` 接入：支持操作、条件轮询、精确断言、等待、预热、循环、失败清理、超时取消、逐轮 JSONL 及 HTML/CSV/JSON 报告；不内置任何游戏业务逻辑。
+- 增加 editor launch、顺序 pipeline 与 finally 收尾、job 查询/取消；域重载不重放已开始的资产或业务操作；原有高危/覆盖约束用显式 confirm 参数表达。
+- 为原平台报告、link.xml、UI 生成和热更 Demo 增加非交互适配入口，保留既有窗口调用链；CLI 拷贝前检查递归清理目标路径。
+- 文档与示例：`Automation/README.md`、`Revolution.Document/自动化工具/Revolution自动化工具使用说明.md`（同名 HTML）；HTML 直接复用现有《导表工具使用说明》的内联样式、页头、目录、卡片与顶部流动条动画。编译检查使用真实 Unity 引用和 .NET 4.7.2 参数；本次未运行 PlayMode、业务场景或一万轮压测。
+
+### 音效会话复位修复（2026-10-17）
+
+- RevGame Play 验证发现 `ResetForNewSession` 使用 64 个声音槽位的循环索引清理仅 4 项的分类音量数组，进入 Play 即越界。改为按两个数组各自的长度分别复位；从 main 源码导出该修复到 RevGame 快照。
+
 ### 运行稳定性修复（2026-10-16）
 
 - 修复静态审查的 **13 项严重问题 + 9 项潜在风险（F01–F13、R01–R09）**；完整对照与编译边界见仓库 `Revolution.Document/问题审查/Revolution框架问题修复记录_2026-10-16.md`（同名 HTML）。
@@ -13,6 +25,8 @@
 
 ### 新增
 
+- **`RevServices.Register<I, T>(owner: ..., eager: true)` 可选立即创建**：默认仍懒创建；只对类型对类型注册开放，供图集/引擎首次事件监听器在注册返回前完成构造和 `OnInit`。立即创建失败会撤销本次登记、保留原始异常，重复注册与 owner 注销语义不变；同时把 Tick 宿主安装失败纳入实例回滚。工程外直接链接真实源码的回归 9 项通过；Unity Play / AB / 真机未执行。同步服务定位器使用说明（md/html）和 Skill 坑位。
+- **包体大小预测编辑器窗口**：菜单 `Revolution.Tools/平台/包体大小预测`，Android APK 与 Windows 发布目录双页签。录入同一构建配置的实测产物作为基准，扫描 `Assets` 下的 StreamingAssets / Resources 原始文件变化，显示平台差异的粗估范围与数据口径；基准按工程存在本机 EditorPrefs，无基准不伪造总量。工具只读、不出包；代码、场景、导入配置、引擎版本变动需重新录入实测基准，最终大小仍以真实出包为准。
 - **`RevServices`：服务定位器的"一行注册、直接取、可注销"入口**（`Runtime/RevServiceLocator/Facade/RevServices.cs`）：
   - 解决的痛点：原来的 `RevServiceLocator.Create()…Build()` 要自己写静态类 + `static readonly` 缓存容器 + 链式调用，而且 `Build()` 之后冻结、**没法注销单个服务**，注册过的服务会一直占着内存。
   - 用法：`RevServices.Register<ISound, Sound>()`（一行；另有"已有实例"和"工厂"两个重载，都可带 `owner: this`）· `RevServices.GetRequired<ISound>()` / `Get` / `TryGet` / `IsRegistered` · `RevServices.Unregister<ISound>()` / `UnregisterAllOf(this)` / `UnregisterAll()` · `RevServices.Dump()`（谁注册了什么、谁还占着）。

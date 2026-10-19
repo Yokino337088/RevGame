@@ -1,0 +1,27 @@
+// 接入模板：复制到业务代码目录后接上实际服务。这里不实现任何游戏业务。
+// 在业务启动时 Register 一次，销毁对应业务作用域时 Unregister；不要在编辑器枚举入口里启动业务。
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
+using Revolution;
+
+public static class RevBusinessGM
+{
+    public static void Register(Action prepare, Action<int> execute, Func<string> status, Func<string> check, Action reset, Action teardown)
+    {
+        if (prepare == null || execute == null || status == null || check == null || reset == null || teardown == null)
+        { throw new ArgumentNullException("业务回调不能为空"); }
+        RevGM.Register("业务/准备", "准备测试账号、数据和运行环境", args => { prepare(); });
+        RevGM.Register("业务/执行", "开始一轮业务操作；跨帧流程由业务服务持有", args => { execute(args.Int(0)); }, RevGMArg.IntRequired("轮次"));
+        RevGM.Register("业务/状态", "返回运行中/完成/失败；查询不得产生副作用", args => status());
+        RevGM.Register("业务/断言", "检查真实业务状态，符合预期返回通过", args => check());
+        RevGM.Register("业务/复位", "清理本轮创建的对象、监听、句柄和临时数据", args => { reset(); });
+        RevGM.Register("业务/收尾", "归还场景级资源并恢复准备阶段的变更", args => { teardown(); });
+    }
+
+    public static void Unregister()
+    {
+        foreach (string name in new[] { "业务/准备", "业务/执行", "业务/状态", "业务/断言", "业务/复位", "业务/收尾" })
+        { RevGM.Unregister(name); }
+    }
+}
+#endif

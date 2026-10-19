@@ -40,13 +40,18 @@ namespace Revolution.Editor
         [MenuItem("Revolution.Tools/平台/首包体积审计 (Resources)", false, 42)]
         public static void Audit()
         {
+            RevABLog.Info(BuildReport());
+        }
+
+        // 窗口与 CLI 共享同一份结果，自动化拿到完整文字，不依赖抓 Console。
+        internal static string BuildReport()
+        {
             string assetsRoot = Path.GetFullPath("Assets");
             string[] dirs = Directory.GetDirectories(assetsRoot, "Resources", SearchOption.AllDirectories);
 
             if (dirs.Length == 0)
             {
-                RevABLog.Info("[首包] 工程里没有任何 Resources 文件夹 —— 没有被强制打进首包的资源。");
-                return;
+                return "[首包] 工程里没有任何 Resources 文件夹 —— 没有被强制打进首包的资源。";
             }
 
             var stats = new List<DirStat>();
@@ -87,7 +92,7 @@ namespace Revolution.Editor
             sb.AppendLine("[首包] 提醒：小游戏（微信 / 抖音）首包是硬预算 —— 业务资源请走 AB + CDN（框架的 RevResManager 已经支持），" +
                           "别让它们躺在 Resources 里跟着包体一起发出去。");
 
-            RevABLog.Info(sb.ToString());
+            return sb.ToString();
         }
 
         // ============================================================

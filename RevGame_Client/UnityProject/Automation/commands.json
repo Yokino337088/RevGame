@@ -1,0 +1,536 @@
+{
+  "protocol": 1,
+  "version": "1.0.0",
+  "environmentLegend": {
+    "client": "Python 本地操作",
+    "either": "在线或 batch",
+    "edit": "非 Play；在线或 batch",
+    "live": "图形编辑器；GM/场景需要未暂停 Play"
+  },
+  "actions": [
+    {
+      "id": "editor.launch",
+      "keys": [],
+      "description": "打开图形 Unity 并等待桥接",
+      "environment": "client"
+    },
+    {
+      "id": "editor.status",
+      "keys": [],
+      "description": "工程、Play、编译和 GM 状态",
+      "environment": "either"
+    },
+    {
+      "id": "editor.play",
+      "keys": [
+        "scene"
+      ],
+      "description": "进入 Play，可指定场景；等待两帧",
+      "environment": "live"
+    },
+    {
+      "id": "editor.stop",
+      "keys": [],
+      "description": "停止 Play",
+      "environment": "live"
+    },
+    {
+      "id": "editor.refresh",
+      "keys": [],
+      "description": "刷新 AssetDatabase",
+      "environment": "edit"
+    },
+    {
+      "id": "editor.menus",
+      "keys": [],
+      "description": "发现实际安装的 Revolution 菜单",
+      "environment": "either"
+    },
+    {
+      "id": "editor.menu",
+      "keys": [
+        "path"
+      ],
+      "description": "打开六类工具窗口；执行操作用专用动作",
+      "environment": "live"
+    },
+    {
+      "id": "ab.config",
+      "keys": [],
+      "description": "读取 AB 配置",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.configure",
+      "keys": [
+        "configJson"
+      ],
+      "description": "局部修改 AB 配置字段",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.scan",
+      "keys": [],
+      "description": "读取分包布局",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.validate",
+      "keys": [
+        "target"
+      ],
+      "description": "资源与平台 Shader 校验",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.build",
+      "keys": [
+        "target"
+      ],
+      "description": "收集、校验、构建、映射与首包拷贝",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.map",
+      "keys": [],
+      "description": "仅生成映射和路径常量",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.res-paths",
+      "keys": [],
+      "description": "生成资源路径常量",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.sound-paths",
+      "keys": [],
+      "description": "生成音效路径常量",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.check-map",
+      "keys": [
+        "target"
+      ],
+      "description": "检查运行期映射一致性",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.dependencies",
+      "keys": [],
+      "description": "包依赖、共享资源、循环依赖",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.sizes",
+      "keys": [],
+      "description": "按包估算源文件及其依赖源文件体积",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.artifacts",
+      "keys": [
+        "target"
+      ],
+      "description": "列出实际打包文件与字节数",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.snapshot",
+      "keys": [],
+      "description": "记录当前布局为基准",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.diff",
+      "keys": [
+        "baseline"
+      ],
+      "description": "比较基准与当前布局",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.mark",
+      "keys": [
+        "assets",
+        "bundle"
+      ],
+      "description": "创建/移动资源到分包；空 bundle 清除显式标记",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.mark-source",
+      "keys": [
+        "path"
+      ],
+      "description": "查询资源的显式/继承标记来源",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.rename",
+      "keys": [
+        "bundle",
+        "newBundle"
+      ],
+      "description": "按包名前缀改名或移动层级",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "ab.delete",
+      "keys": [
+        "bundle"
+      ],
+      "description": "按包名前缀移除标记，资源仍保留",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "ab.clean-names",
+      "keys": [],
+      "description": "清理闲置包名",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.sync",
+      "keys": [],
+      "description": "强制同步标记和缓存",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.overlay",
+      "keys": [
+        "enabled"
+      ],
+      "description": "切换 Project 窗口包标记显示",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.copy",
+      "keys": [
+        "target"
+      ],
+      "description": "按已启用配置拷贝首包",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.mode",
+      "keys": [
+        "enabled"
+      ],
+      "description": "切换编辑器 AB 加载模式",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.settings",
+      "keys": [],
+      "description": "读取团队及个人导表设置",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.configure",
+      "keys": [
+        "configJson",
+        "userConfigJson"
+      ],
+      "description": "修改团队及个人导表设置",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.read",
+      "keys": [
+        "sources",
+        "recursive"
+      ],
+      "description": "读取并校验 Excel",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.plan",
+      "keys": [
+        "sources",
+        "recursive"
+      ],
+      "description": "预览导出变更",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.export",
+      "keys": [
+        "sources",
+        "recursive",
+        "dataOnly",
+        "force"
+      ],
+      "description": "全量或仅数据导出，移除旧表需要 confirm",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.mark",
+      "keys": [
+        "bundle"
+      ],
+      "description": "标记配置表数据目录",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.orphans",
+      "keys": [
+        "sources",
+        "recursive"
+      ],
+      "description": "列出旧数据文件",
+      "environment": "edit"
+    },
+    {
+      "id": "excel.clean",
+      "keys": [
+        "sources",
+        "recursive"
+      ],
+      "description": "移除已确认的旧数据文件",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "ui.scan",
+      "keys": [
+        "prefab"
+      ],
+      "description": "扫描预制体控件及支持的事件",
+      "environment": "edit"
+    },
+    {
+      "id": "ui.preview",
+      "keys": [
+        "prefab",
+        "className",
+        "nameSpace",
+        "outputFolder",
+        "layer",
+        "useAttributes",
+        "controls"
+      ],
+      "description": "预览面板代码",
+      "environment": "edit"
+    },
+    {
+      "id": "ui.generate",
+      "keys": [
+        "prefab",
+        "className",
+        "nameSpace",
+        "outputFolder",
+        "layer",
+        "useAttributes",
+        "controls"
+      ],
+      "description": "生成面板代码；禁止覆盖业务文件",
+      "environment": "edit"
+    },
+    {
+      "id": "platform.resources",
+      "keys": [],
+      "description": "首包 Resources 体积审计",
+      "environment": "edit"
+    },
+    {
+      "id": "platform.linkxml",
+      "keys": [],
+      "description": "生成业务裁剪保护；覆盖手写文件需要 confirm",
+      "environment": "edit"
+    },
+    {
+      "id": "hot.manifest",
+      "keys": [
+        "target",
+        "outputDir",
+        "appVersion",
+        "resVersion",
+        "channel",
+        "env"
+      ],
+      "description": "生成热更清单、首包清单并自检",
+      "environment": "edit",
+      "requires": "HotUpdate"
+    },
+    {
+      "id": "hot.check",
+      "keys": [
+        "target",
+        "outputDir"
+      ],
+      "description": "读取已发布清单并与产物自检",
+      "environment": "edit",
+      "requires": "HotUpdate"
+    },
+    {
+      "id": "hot.demo-prepare",
+      "keys": [],
+      "description": "打包并装配本地 CDN 演示",
+      "environment": "edit",
+      "requires": "HotUpdate Demo, confirm"
+    },
+    {
+      "id": "hot.demo-clear",
+      "keys": [],
+      "description": "删除当前工程客户端热更缓存",
+      "environment": "edit",
+      "requires": "HotUpdate Demo, confirm"
+    },
+    {
+      "id": "hot.demo-urls",
+      "keys": [],
+      "description": "返回演示 URL 与本地目录",
+      "environment": "edit",
+      "requires": "HotUpdate Demo"
+    },
+    {
+      "id": "hot.demo-open",
+      "keys": [],
+      "description": "打开本地 CDN 目录；batch 返回目录",
+      "environment": "edit",
+      "requires": "HotUpdate Demo"
+    },
+    {
+      "id": "demo.ui-prefabs",
+      "keys": [],
+      "description": "生成全部 UI 演示预制体",
+      "environment": "edit",
+      "requires": "Demo, confirm"
+    },
+    {
+      "id": "gm.list",
+      "keys": [],
+      "description": "列出实际 GM 及参数、高危标记、注册错误",
+      "environment": "either"
+    },
+    {
+      "id": "gm.exec",
+      "keys": [
+        "command"
+      ],
+      "description": "执行一条 GM；高危指令需要 confirm",
+      "environment": "live"
+    },
+    {
+      "id": "scenario.run",
+      "keys": [
+        "name",
+        "repeat",
+        "warmup",
+        "setup",
+        "steps",
+        "cleanup",
+        "teardown",
+        "stopOnFailure",
+        "failOnUnityError",
+        "thresholds"
+      ],
+      "description": "通用业务循环、条件、断言、清理与采样",
+      "environment": "live"
+    },
+    {
+      "id": "scenario.validate",
+      "keys": null,
+      "description": "离线校验场景脚本格式，不执行游戏",
+      "environment": "client"
+    }
+  ],
+  "parameterTypes": {
+    "target": "string",
+    "scene": "string",
+    "path": "string",
+    "command": "string",
+    "configJson": "string",
+    "userConfigJson": "string",
+    "baseline": "string",
+    "outputDir": "string",
+    "appVersion": "string",
+    "resVersion": "string",
+    "channel": "string",
+    "env": "string",
+    "bundle": "string",
+    "newBundle": "string",
+    "assets": "string[]",
+    "sources": "string[]",
+    "recursive": "bool",
+    "dataOnly": "bool",
+    "force": "bool",
+    "enabled": "bool",
+    "prefab": "string",
+    "className": "string",
+    "nameSpace": "string",
+    "outputFolder": "string",
+    "layer": "string",
+    "useAttributes": "bool",
+    "controls": "array"
+  },
+  "configFields": {
+    "ab": [
+      "resRoot",
+      "sfxRoot",
+      "bgmRoot",
+      "markMode",
+      "autoGroupByFolder",
+      "excludeFolders",
+      "excludeExtensions",
+      "checkUnmarkedAssets",
+      "compressMode",
+      "forceRebuild",
+      "deterministic",
+      "stripUnityVersion",
+      "cleanOutputBeforeBuild",
+      "copyToStreamingAssets",
+      "copyTarget",
+      "version"
+    ],
+    "excel": [
+      "structDir",
+      "containerDir",
+      "structFileName",
+      "containerFileName",
+      "dataDir",
+      "generateMapAfterExport"
+    ],
+    "excelUser": [
+      "sources",
+      "includeSubfolders",
+      "autoReload"
+    ]
+  },
+  "configParameterTypes": {
+    "ab": {
+      "resRoot": "string",
+      "sfxRoot": "string",
+      "bgmRoot": "string",
+      "markMode": "enum:0,1",
+      "autoGroupByFolder": "bool",
+      "excludeFolders": "string[]",
+      "excludeExtensions": "string[]",
+      "checkUnmarkedAssets": "bool",
+      "compressMode": "enum:0,1,2",
+      "forceRebuild": "bool",
+      "deterministic": "bool",
+      "stripUnityVersion": "bool",
+      "cleanOutputBeforeBuild": "bool",
+      "copyToStreamingAssets": "bool",
+      "copyTarget": "string",
+      "version": "string"
+    },
+    "excel": {
+      "structDir": "string",
+      "containerDir": "string",
+      "structFileName": "string",
+      "containerFileName": "string",
+      "dataDir": "string",
+      "generateMapAfterExport": "bool"
+    },
+    "excelUser": {
+      "sources": "string[]",
+      "includeSubfolders": "bool",
+      "autoReload": "bool"
+    }
+  }
+}

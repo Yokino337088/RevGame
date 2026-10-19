@@ -74,6 +74,21 @@ namespace Revolution.Editor
                           "    并在真机上主动跑一次 RevStripGuard.Check() 确认关键类型还在（比等玩法瘫了再查快得多）。");
         }
 
+        // 自动化不弹对话框；手写文件仍需要调用方显式确认，沿用原生成器而不是另造 XML 规则。
+        internal static string GenerateForAutomation(bool confirm)
+        {
+            List<Type> types = CollectBusinessTypes();
+            List<string> modules = ScanNativeModules();
+            if (types.Count == 0 && modules.Count == 0) { return "没有需要保护的业务类型或原生模块，未写入"; }
+            if (File.Exists(OutputPath) && !File.ReadAllText(OutputPath).Contains(GeneratedMark) && !confirm)
+            {
+                throw new InvalidOperationException("Assets/link.xml 是手写文件；覆盖需 --confirm");
+            }
+            File.WriteAllText(OutputPath, BuildXml(types, modules), new UTF8Encoding(false));
+            AssetDatabase.ImportAsset(OutputPath);
+            return OutputPath;
+        }
+
         // ============================================================
         // 收集：哪些业务类型是靠反射使用的
         // ============================================================

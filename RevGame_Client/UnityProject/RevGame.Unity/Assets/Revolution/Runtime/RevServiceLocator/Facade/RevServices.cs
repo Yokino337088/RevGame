@@ -48,19 +48,22 @@ namespace Revolution
         // ============================================================
 
         /// <summary>
-        /// 注册服务（接口 → 实现）：第一次被取用时才创建，零反射。
+        /// 注册服务（接口 → 实现）：默认第一次取用时才创建，零反射。
         /// <code>RevServices.Register&lt;ISoundService, SoundService&gt;();</code>
+        /// <para>需要在首次外部事件发生前订阅时用 <c>eager: true</c>：在 Register 返回前即构造并执行 OnInit；
+        /// 创建失败会撤销本次登记并原样抛出异常。默认懒创建失败仍保留登记供下次取用重试。</para>
         /// <para><typeparamref name="TService"/> 是取服务用的类型（写接口）；<typeparamref name="TImpl"/> 必须有公开无参构造
         /// （需要构造参数请用工厂重载）。容器创建的实例在 <see cref="Unregister{TService}"/> 时会被 Dispose。</para>
         /// </summary>
         /// <param name="owner">谁注册的（可选）：传 <c>this</c>，对象销毁时 <see cref="UnregisterAllOf"/> 一行清掉它注册的全部服务</param>
+        /// <param name="eager">默认 false（懒创建）；true 时注册完成前即创建，适合必须抢在首个事件前订阅的服务</param>
         /// <exception cref="InvalidOperationException">这个类型已经注册过了（想换实现请先 Unregister）</exception>
-        public static void Register<TService, TImpl>(object owner = null)
+        public static void Register<TService, TImpl>(object owner = null, bool eager = false)
             where TService : class
             where TImpl : class, TService, new()
         {
             Hub.Register(typeof(TService), _ => new TImpl(), ownsInstance: true, owner: owner,
-                         origin: $"Register<{typeof(TService).Name}, {typeof(TImpl).Name}>()");
+                         origin: $"Register<{typeof(TService).Name}, {typeof(TImpl).Name}>()", eager: eager);
             EnsureHooks();
         }
 

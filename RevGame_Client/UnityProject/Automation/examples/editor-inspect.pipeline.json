@@ -1,0 +1,20 @@
+{
+  "name": "资源发布前检查（只读分析）",
+  "steps": [
+    {
+      "action": "ab.scan"
+    },
+    {
+      "action": "ab.validate"
+    },
+    {
+      "action": "ab.dependencies"
+    },
+    {
+      "action": "ab.sizes"
+    },
+    {
+      "action": "platform.resources"
+    }
+  ]
+}

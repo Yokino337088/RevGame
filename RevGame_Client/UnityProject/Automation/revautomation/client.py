@@ -1,0 +1,205 @@
+"""Atomic file RPC. Never start a second Unity process on an open project."""
+from __future__ import annotations
+
+import datetime as dt
+import json
+import os
+from pathlib import Path
+import subprocess
+import time
+import uuid
+
+
+class RevError(RuntimeError):
+    pass
+
+
+def read_json(path: Path):
+    def reject_constant(value):
+        raise ValueError("JSON 不接受非有限数：" + value)
+    return json.loads(path.read_text(encoding="utf-8-sig"), parse_constant=reject_constant)
+
+
+def atomic_json(path: Path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
+    temp.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
+    os.replace(temp, path)
+
+
+def find_unity(project: Path, explicit=None):
+    candidate = explicit or os.environ.get("UNITY_EDITOR")
+    if candidate:
+        path = Path(candidate).expanduser().resolve()
+        if not path.is_file():
+            raise RevError(f"Unity Editor 不存在：{path}")
+        return path
+    version_file = project / "ProjectSettings/ProjectVersion.txt"
+    version = None
+    if version_file.exists():
+        for line in version_file.read_text(encoding="utf-8").splitlines():
+            if line.startswith("m_EditorVersion:"):
+                version = line.split(":", 1)[1].strip()
+    roots = [Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Unity/Hub/Editor"]
+    if version:
+        matches = [root / version / "Editor/Unity.exe" for root in roots]
+    else:
+        matches = [p for root in roots for p in root.glob("*/Editor/Unity.exe")]
+    matches = [p for p in matches if p.is_file()]
+    if len(matches) == 1:
+        return matches[0]
+    raise RevError("请使用 --unity <Unity.exe> 或 UNITY_EDITOR 指定编辑器，避免猜错工程版本。")
+
+
+class RevClient:
+    def __init__(self, project: Path, mode="auto", unity=None, timeout=120.0, graphics=True):
+        self.project = Path(project).resolve()
+        if mode not in ("auto", "live", "batch") or not 0 < timeout < 604800:
+            raise RevError("mode 必须为 auto/live/batch，timeout 必须在 0..604800 秒之间。")
+        if not (self.project / "Assets").is_dir() or not (self.project / "ProjectSettings").is_dir():
+            raise RevError(f"不是 Unity 工程：{self.project}")
+        self.root = self.project / "Library/RevolutionAutomation"
+        self.mode, self.unity, self.timeout, self.graphics = mode, unity, timeout, graphics
+
+    def endpoint(self):
+        try:
+            value = read_json(self.root / "endpoint.json")
+            # Long builds block Unity's main thread; a stale heartbeat is not permission
+            # to launch another editor. PID and UnityLockfile are checked below too.
+            return value if isinstance(value, dict) and value.get("protocol") == 1 and -5 <= time.time() - value["heartbeatUnix"] < 15 else None
+        except (OSError, ValueError, KeyError, TypeError):
+            return None
+
+    def call(self, action, payload=None, confirm=False, progress=None):
+        request_id = uuid.uuid4().hex
+        mode = self.mode
+        endpoint = self.endpoint()
+        if mode == "auto":
+            mode = "live" if endpoint else "batch"
+        if mode == "live" and not endpoint:
+            raise RevError("没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。")
+        if endpoint and endpoint.get("batchMode"):
+            raise RevError("当前桥接属于正在运行的 batch Unity，请等待其退出。")
+        if mode == "batch" and (action in ("editor.play", "editor.stop", "editor.menu", "scenario.run") or action.startswith("gm.")):
+            raise RevError("此操作需要图形编辑器。先执行 editor launch，再执行 editor play。")
+        if mode == "batch" and (endpoint or self._editor_open()):
+            raise RevError("工程已被 Unity 占用：请使用 --mode live，或先关闭该工程。")
+        request = dict(protocol=1, id=request_id, action=action, payloadJson=json.dumps(payload or {}, ensure_ascii=False, allow_nan=False),
+                       confirm=confirm, sessionId=endpoint["sessionId"] if endpoint else "", timeoutSeconds=self.timeout,
+                       deadlineUtc=(dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=self.timeout)).isoformat())
+        work = self.root / "jobs" / request_id
+        work.mkdir(parents=True, exist_ok=False)
+        request_path, response_path = work / "request.json", work / "response.json"
+        process = None
+        atomic_json(request_path, request)
+        try:
+            if mode == "live":
+                atomic_json(self.root / "inbox" / (request_id + ".json"), request)
+            else:
+                editor = find_unity(self.project, self.unity)
+                args = [str(editor), "-batchmode", "-projectPath", str(self.project), "-executeMethod",
+                        "Revolution.Editor.RevAutomationBatch.Execute", "-revAutomationRequest", str(request_path),
+                        "-logFile", str(work / "unity.log")]
+                if not self.graphics:
+                    args.append("-nographics")
+                process = subprocess.Popen(args, cwd=self.project, shell=False)
+            end, last_progress = time.monotonic() + self.timeout, None
+            while not response_path.exists():
+                if process is not None and process.poll() is not None:
+                    if response_path.exists():
+                        break
+                    raise RevError(f"Unity 提前退出（{process.returncode}），请看 {work / 'unity.log'}")
+                if time.monotonic() >= end:
+                    raise TimeoutError(f"等待超时；请求 {request_id}，日志目录 {work}")
+                if progress and (work / "progress.json").exists():
+                    try:
+                        update = read_json(work / "progress.json")
+                        if update != last_progress:
+                            progress(update)
+                            last_progress = update
+                    except (OSError, ValueError):
+                        pass
+                time.sleep(0.08)
+            response = read_json(response_path)
+            if response.get("id") != request_id or response.get("protocol") != 1:
+                raise RevError("Unity 返回了不匹配的协议或请求 ID。")
+            if process is not None:
+                try:
+                    process.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    raise RevError(f"操作已返回，但 batch Unity 未退出。PID={process.pid}，请看 {work / 'unity.log'}")
+                if process.returncode != (0 if response.get("success") else 1):
+                    raise RevError(f"Unity 退出码与响应不一致：{process.returncode}，{work}")
+            response["jobDirectory"] = str(work)
+            if response.get("dataJson"):
+                response["data"] = json.loads(response.pop("dataJson"))
+            return response
+        except (TimeoutError, KeyboardInterrupt):
+            (work / "cancel").touch()
+            # Only a child editor started by this command may be terminated. Never kill
+            # the user's already-open Unity. In live mode a blocked GM needs manual diagnosis.
+            if process is not None and process.poll() is None:
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.terminate()
+            raise
+
+    def launch(self):
+        """Open a graphical editor and wait for compilation/bridge; never terminate it."""
+        endpoint = self.endpoint()
+        if endpoint and not endpoint.get("batchMode"):
+            return dict(success=True, alreadyOpen=True, endpoint=endpoint)
+        if self._editor_open():
+            raise RevError("工程已打开但桥接未就绪。请先处理 Unity 编译错误，或等待当前操作完成。")
+        editor = find_unity(self.project, self.unity)
+        self.root.mkdir(parents=True, exist_ok=True)
+        log = self.root / ("launch-" + uuid.uuid4().hex + ".log")
+        process = subprocess.Popen([str(editor), "-projectPath", str(self.project), "-logFile", str(log)], cwd=self.project, shell=False)
+        end = time.monotonic() + self.timeout
+        while time.monotonic() < end:
+            endpoint = self.endpoint()
+            if endpoint and not endpoint.get("batchMode"):
+                return dict(success=True, endpoint=endpoint, logPath=str(log))
+            if process.poll() is not None:
+                raise RevError(f"Unity 启动退出（{process.returncode}），请看 {log}")
+            time.sleep(.25)
+        raise TimeoutError(f"Unity 桥接尚未就绪；编辑器保留运行，PID={process.pid}，日志 {log}")
+
+    def job(self, request_id, cancel=False):
+        if len(request_id) != 32 or any(c not in "0123456789abcdefABCDEF" for c in request_id):
+            raise RevError("请求 ID 必须是 32 位十六进制。")
+        work = self.root / "jobs" / request_id
+        if not (work / "request.json").is_file():
+            raise RevError(f"请求不存在：{request_id}")
+        if cancel and not (work / "response.json").exists():
+            (work / "cancel").touch()
+        result = dict(success=True, jobDirectory=str(work), cancelRequested=(work / "cancel").exists())
+        for name in ("response", "progress", "scenario-result"):
+            if (work / (name + ".json")).exists():
+                result[name] = read_json(work / (name + ".json"))
+        return result
+
+    def _editor_open(self):
+        if (self.project / "Temp/UnityLockfile").exists():
+            return True
+        # A persisted endpoint can survive a crash. Check that PID before treating it as live.
+        try:
+            pid = int(read_json(self.root / "endpoint.json")["pid"])
+            if os.name == "nt":
+                import ctypes
+                from ctypes import wintypes
+                kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+                kernel.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+                kernel.OpenProcess.restype = wintypes.HANDLE
+                kernel.CloseHandle.argtypes = (wintypes.HANDLE,)
+                handle = kernel.OpenProcess(0x1000, False, pid)
+                if handle:
+                    kernel.CloseHandle(handle)
+                    return True
+            else:
+                os.kill(pid, 0)
+                return True
+        except (OSError, ValueError, KeyError):
+            pass
+        return False

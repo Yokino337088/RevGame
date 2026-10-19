@@ -70,8 +70,8 @@ namespace Revolution
         // 注册 / 注销
         // ============================================================
 
-        /// <summary>注册一条服务。重复注册直接报错（框架不做静默覆盖：要换实现，请先注销再注册）。</summary>
-        internal void Register(Type serviceType, Func<RevIServiceLocator, object> factory, bool ownsInstance, object owner, string origin)
+        /// <summary>注册一条服务。默认懒创建；eager 在登记后走同一条 Resolve 链立刻创建，失败仅撤销本次登记。</summary>
+        internal void Register(Type serviceType, Func<RevIServiceLocator, object> factory, bool ownsInstance, object owner, string origin, bool eager = false)
         {
             if (_entries.TryGetValue(serviceType, out Entry existing))
             {
@@ -81,8 +81,29 @@ namespace Revolution
                     "要同时存在多份（比如两局战斗各一份）：改用 RevServiceLocator.Create() 的作用域（见《服务定位器使用说明》进阶一节）。");
             }
 
-            _entries[serviceType] = new Entry(serviceType, factory, ownsInstance, owner, origin);
+            var entry = new Entry(serviceType, factory, ownsInstance, owner, origin);
+            _entries[serviceType] = entry;
             _unregistered.Remove(serviceType);
+            if (!eager) { return; }
+
+            try
+            {
+                // 与首次 GetRequired 共用 Factory / OnInit / Tick / 循环依赖检查；不为立即创建写第二套生命周期。
+                Resolve(serviceType, required: true);
+            }
+            catch
+            {
+                // ★ 懒创建失败会保留注册供下次取用重试；立即创建失败发生在 Register 内，调用者认为注册尚未成功。
+                // 只撤销自己的 Entry：工厂重入时若已注销并注册了新 Entry，不可误删后来者。
+                if (_entries.TryGetValue(serviceType, out Entry current) && ReferenceEquals(current, entry))
+                {
+                    _entries.Remove(serviceType);
+                    _unregistered.Remove(serviceType);
+                    try { Release(entry); }
+                    catch { /* 清理异常不能掩盖构造 / OnInit 的原始失败原因 */ }
+                }
+                throw;
+            }
         }
 
         /// <summary>
@@ -336,10 +357,10 @@ namespace Revolution
 
                 entry.Instance = instance;
                 _creationOrder.Add(entry);
-                AddTickable(instance);
-
                 try
                 {
+                    // 宿主首次挂 Tick 驱动也可能抛异常；和 OnInit 一样必须回滚实例，不能留半成品。
+                    AddTickable(instance);
                     if (instance is RevIServiceInit init)
                     {
                         init.OnInit(this);

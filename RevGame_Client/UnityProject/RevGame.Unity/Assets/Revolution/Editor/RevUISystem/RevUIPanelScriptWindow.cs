@@ -32,6 +32,8 @@ namespace Revolution.Editor
         private const string PrefAttributes = "Revolution.RevUIGen.UseAttributes";
         private const string PrefFolder = "Revolution.RevUIGen.Folder";
         private const string PrefPrefab = "Revolution.RevUIGen.PrefabPath";
+        private bool _automation;
+        private static bool _creatingForAutomation;
         private bool _showCode;
         private string _message;
         private MessageType _messageType;
@@ -47,6 +49,7 @@ namespace Revolution.Editor
 
         private void OnEnable()
         {
+            if (_creatingForAutomation) { return; }
             // 记住上次的输出目录 / 命名空间 / 监听方式：新手连续生成多个面板时不用反复填同样的值。
             string savedFolder = EditorPrefs.GetString(PrefFolder, "Assets");
             _outputFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(savedFolder)
@@ -70,7 +73,7 @@ namespace Revolution.Editor
             }
         }
 
-        private void OnDisable() => SavePrefs();
+        private void OnDisable() { if (!_automation) { SavePrefs(); } }
 
         private void SavePrefs()
         {
@@ -264,10 +267,10 @@ namespace Revolution.Editor
             }
         }
 
-        private bool TryGenerate(out string source, out string error)
+        private bool TryGenerate(out string source, out string error, bool savePreferences = true)
         {
             source = null;
-            SavePrefs();
+            if (savePreferences) { SavePrefs(); }
             if (_prefab == null || !PrefabUtility.IsPartOfPrefabAsset(_prefab)) { error = "请选择 Project 视图中的预制体资产，不能使用场景对象。"; return false; }
             if (_prefab.GetComponent<RectTransform>() == null) { error = "面板预制体根节点需要 RectTransform。"; return false; }
             if (_prefab.GetComponent<RevUIPanel>() != null) { error = "预制体根节点已有 RevUIPanel 脚本。请编辑现有面板，不要再生成第二个。"; return false; }
@@ -309,7 +312,7 @@ namespace Revolution.Editor
             return true;
         }
 
-        private void ScanPrefab()
+        private void ScanPrefab(bool remember = true)
         {
             _controls.Clear();
             _showCode = false;
@@ -361,8 +364,74 @@ namespace Revolution.Editor
             }
 
             // 记住所选预制体，配合 OnEnable 的恢复逻辑（清空选择时一并清掉偏好）。
-            if (_prefab != null) EditorPrefs.SetString(PrefPrefab, AssetDatabase.GetAssetPath(_prefab));
-            else EditorPrefs.DeleteKey(PrefPrefab);
+            if (remember)
+            {
+                if (_prefab != null) { EditorPrefs.SetString(PrefPrefab, AssetDatabase.GetAssetPath(_prefab)); }
+                else { EditorPrefs.DeleteKey(PrefPrefab); }
+            }
+        }
+
+        // CLI 使用同一套扫描、校验与模板；不显示窗口、不修改预制体、不覆盖业务脚本。
+        internal static object Automate(string action, RevAutomationOptions options, bool confirm)
+        {
+            RevUIPanelScriptWindow window;
+            _creatingForAutomation = true;
+            try { window = CreateInstance<RevUIPanelScriptWindow>(); }
+            finally { _creatingForAutomation = false; }
+            window._automation = true;
+            try
+            {
+                window._prefab = AssetDatabase.LoadAssetAtPath<GameObject>(options.prefab);
+                if (window._prefab == null) { throw new ArgumentException("prefab 必须是工程内预制体资产路径"); }
+                window._className = options.className ?? (window._prefab.name.EndsWith("Panel", StringComparison.Ordinal) ? window._prefab.name : window._prefab.name + "Panel");
+                window._namespace = options.nameSpace;
+                if (!Enum.TryParse(options.layer, out window._layer) || !Enum.IsDefined(typeof(RevUILayer), window._layer))
+                {
+                    throw new ArgumentException("未知 UI layer：" + options.layer);
+                }
+                window._useAttributes = options.useAttributes;
+                window._outputFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(options.outputFolder);
+                window.ScanPrefab(false);
+                if (action == "ui.scan")
+                {
+                    return new RevAutomationUIControls { controls = window._controls.Select(c => new RevAutomationControl
+                    { path = c.Path, component = c.TypeName, bind = c.Bind, events = c.Events.Select(e => e.Hook).ToArray() }).ToArray() };
+                }
+                if (options.controls != null)
+                {
+                    foreach (PanelControl control in window._controls)
+                    {
+                        control.Bind = false;
+                        foreach (PanelEvent item in control.Events) { item.Enabled = false; }
+                    }
+                    foreach (RevAutomationControl selected in options.controls)
+                    {
+                        PanelControl control = window._controls.SingleOrDefault(c => c.Path == selected.path);
+                        if (control == null) { throw new ArgumentException("未知控件路径：" + selected.path); }
+                        control.Bind = selected.bind;
+                        foreach (string name in selected.events ?? Array.Empty<string>())
+                        {
+                            PanelEvent item = control.Events.SingleOrDefault(e => e.Hook == name);
+                            if (item == null) { throw new ArgumentException("控件不支持事件：" + selected.path + " / " + name); }
+                            item.Enabled = true;
+                        }
+                    }
+                }
+                if (!window.TryGenerate(out string code, out string error, false)) { throw new InvalidOperationException(error); }
+                if (action == "ui.preview") { return new RevAutomationActions.RevAutomationText(code); }
+                if (action != "ui.generate") { throw new ArgumentException("未知 UI 自动化动作：" + action); }
+                string destination = window.OutputFolder() + "/" + window._className + ".cs";
+                if (File.Exists(destination))
+                {
+                    using var reader = new StreamReader(destination);
+                    if (!(reader.ReadLine() ?? "").Contains(SkeletonMarker)) { throw new InvalidOperationException("拒绝覆盖业务脚本：" + destination); }
+                    if (!confirm) { throw new InvalidOperationException("重新生成已有骨架需 --confirm；请先 ui.preview"); }
+                }
+                File.WriteAllText(destination, code, new UTF8Encoding(false));
+                AssetDatabase.ImportAsset(destination);
+                return new RevAutomationActions.RevAutomationText(destination);
+            }
+            finally { DestroyImmediate(window); }
         }
 
         private static string RelativePath(Transform node, Transform root)
@@ -412,6 +481,12 @@ namespace Revolution.Editor
             "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while" }, StringComparer.Ordinal);
 
         private void SetMessage(string text, MessageType type) { _message = text; _messageType = type; Repaint(); }
+    }
+
+    [Serializable]
+    internal sealed class RevAutomationUIControls
+    {
+        public RevAutomationControl[] controls;
     }
 
     internal sealed class PanelControl

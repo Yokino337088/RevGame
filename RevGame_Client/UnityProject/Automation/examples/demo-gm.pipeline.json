@@ -1,0 +1,23 @@
+{
+  "name": "现有 GM 演示一键流程",
+  "steps": [
+    {
+      "action": "editor.launch"
+    },
+    {
+      "action": "editor.play",
+      "payload": {
+        "scene": "Assets/Revolution.Demo/RevGMCommand.Demo/RevGMCommandDemo.unity"
+      }
+    },
+    {
+      "action": "scenario.run",
+      "file": "demo-gm.scenario.json"
+    }
+  ],
+  "finally": [
+    {
+      "action": "editor.stop"
+    }
+  ]
+}

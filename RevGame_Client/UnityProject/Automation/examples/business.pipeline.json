@@ -1,0 +1,23 @@
+{
+  "name": "业务自动化一键流程（需要填写自己的启动场景和 GM）",
+  "steps": [
+    {
+      "action": "editor.launch"
+    },
+    {
+      "action": "editor.play",
+      "payload": {
+        "scene": "Assets/请替换为业务启动场景.unity"
+      }
+    },
+    {
+      "action": "scenario.run",
+      "file": "business.scenario.json"
+    }
+  ],
+  "finally": [
+    {
+      "action": "editor.stop"
+    }
+  ]
+}

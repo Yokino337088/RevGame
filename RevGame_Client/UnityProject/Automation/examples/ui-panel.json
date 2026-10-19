@@ -1,0 +1,9 @@
+{
+  "prefab": "Assets/GameRes/请替换目录/请替换面板.prefab",
+  "className": "RevExamplePanel",
+  "nameSpace": "",
+  "outputFolder": "Assets",
+  "layer": "Normal",
+  "useAttributes": true,
+  "controls": []
+}

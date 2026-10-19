@@ -1,0 +1,52 @@
+{
+  "name": "通用业务流程（请替换或实现业务 GM）",
+  "repeat": 10000,
+  "warmup": 10,
+  "stopOnFailure": true,
+  "failOnUnityError": true,
+  "setup": [
+    {
+      "kind": "gm",
+      "command": "业务/准备"
+    }
+  ],
+  "steps": [
+    {
+      "kind": "gm",
+      "command": "业务/执行 {round}"
+    },
+    {
+      "kind": "until",
+      "command": "业务/状态",
+      "expected": "完成",
+      "timeoutSeconds": 60,
+      "intervalSeconds": 0.1
+    },
+    {
+      "kind": "assert",
+      "command": "业务/断言",
+      "expected": "通过"
+    },
+    {
+      "kind": "wait",
+      "frames": 2
+    }
+  ],
+  "cleanup": [
+    {
+      "kind": "gm",
+      "command": "业务/复位"
+    }
+  ],
+  "teardown": [
+    {
+      "kind": "gm",
+      "command": "业务/收尾"
+    }
+  ],
+  "thresholds": {
+    "maxFrameP95Ms": 0,
+    "maxFrameMs": 0,
+    "maxMonoUsedBytes": 0
+  }
+}

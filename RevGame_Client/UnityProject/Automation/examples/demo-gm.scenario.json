@@ -1,0 +1,36 @@
+{
+  "name": "现有 GM 演示的经济流程",
+  "repeat": 3,
+  "warmup": 1,
+  "stopOnFailure": true,
+  "failOnUnityError": true,
+  "setup": [
+    {
+      "kind": "gm",
+      "command": "工具/内部复位"
+    }
+  ],
+  "steps": [
+    {
+      "kind": "gm",
+      "command": "经济/清空金币"
+    },
+    {
+      "kind": "assert",
+      "command": "经济/加金币 100",
+      "expected": "金币 = 100"
+    },
+    {
+      "kind": "wait",
+      "frames": 5
+    }
+  ],
+  "cleanup": [
+    {
+      "kind": "gm",
+      "command": "工具/内部复位"
+    }
+  ],
+  "teardown": [],
+  "thresholds": {}
+}
