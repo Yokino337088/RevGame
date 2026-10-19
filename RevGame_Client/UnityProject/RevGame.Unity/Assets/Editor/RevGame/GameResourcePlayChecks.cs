@@ -67,13 +67,18 @@ namespace RevGame.Editor
                 Camera camera = Camera.main;
                 SpriteRenderer bg = GameObject.Find("GameBackground").GetComponent<SpriteRenderer>();
                 Require(bg.sharedMaterial.shader.name == "RevGame/Background/ArcaneBackdrop", "真实背景使用迷幻材质");
+                // 自动铺满默认关闭（尊重场景里手调的背景尺寸），验收这里显式打开，测完还原原值。
+                GamePresentation presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
+                FieldInfo fitField = typeof(GamePresentation).GetField("fitBackgroundToCamera", BindingFlags.NonPublic | BindingFlags.Instance);
+                bool originalFit = (bool)fitField.GetValue(presentation);
+                fitField.SetValue(presentation, true);
                 float originalAspect = camera.aspect;
                 try
                 {
                     foreach (float aspect in new[] { 16f / 9f, 19.5f / 9f, 4f / 3f })
                     {
                         camera.aspect = aspect;
-                        typeof(GamePresentation).GetMethod("FitCamera", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(UnityEngine.Object.FindObjectOfType<GamePresentation>(), null);
+                        typeof(GamePresentation).GetMethod("FitCamera", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(presentation, null);
                         Bounds bounds = bg.bounds;
                         foreach (Vector3 corner in new[] { Vector3.zero, Vector3.right, Vector3.up, new Vector3(1, 1, 0) })
                         {
@@ -85,7 +90,8 @@ namespace RevGame.Editor
                 finally
                 {
                     camera.aspect = originalAspect;
-                    typeof(GamePresentation).GetMethod("FitCamera", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(UnityEngine.Object.FindObjectOfType<GamePresentation>(), null);
+                    fitField.SetValue(presentation, originalFit);
+                    typeof(GamePresentation).GetMethod("FitCamera", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(presentation, null);
                 }
                 var loaded = new RevTaskCompletionSource<PieceView>();
                 RevPool.GetAsync<PieceView>(v => loaded.SetResult(v), container.transform);

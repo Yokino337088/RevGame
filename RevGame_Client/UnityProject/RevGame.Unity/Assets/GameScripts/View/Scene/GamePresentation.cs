@@ -117,19 +117,24 @@ namespace RevGame.View
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
             {
                 UpdateBackgroundAtlasUv();
-                // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
-                // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。
-                backgroundRenderer.drawMode = SpriteDrawMode.Simple;
-                // ★ 用同一个比例同时缩放宽和高，背景中的房屋才不会被拉扁。
-                // 取宽、高需要的缩放中较大的一个，保证填满窗口；多出来的部分由相机自然裁掉。
-                Vector2 sourceSize = backgroundRenderer.sprite.bounds.size;
-                float height = boardCamera.orthographicSize * 2f;
-                float scale = Mathf.Max(height * aspect / sourceSize.x, height / sourceSize.y) * 1.02f;
-                backgroundRenderer.transform.localScale = Vector3.one * scale;
-                cameraPosition = boardCamera.transform.position;
-                // 背景Pivot不一定在中心，扣掉缩放后的bounds.center，确保四边总围绕相机而非图片锚点。
-                Vector3 pivotOffset = backgroundRenderer.sprite.bounds.center * scale;
-                backgroundRenderer.transform.position = new Vector3(cameraPosition.x - pivotOffset.x, cameraPosition.y - pivotOffset.y, 5f);
+                // ★ 只有显式勾了“自动铺满”才写 transform：本方法每帧 pre-cull 都会跑，
+                //   无条件覆盖会让美术在场景里手调的尺寸一进 Play 就被改掉（含非等比缩放），手调永远留不住。
+                if (fitBackgroundToCamera)
+                {
+                    // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
+                    // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。
+                    backgroundRenderer.drawMode = SpriteDrawMode.Simple;
+                    // ★ 用同一个比例同时缩放宽和高，背景中的房屋才不会被拉扁。
+                    // 取宽、高需要的缩放中较大的一个，保证填满窗口；多出来的部分由相机自然裁掉。
+                    Vector2 sourceSize = backgroundRenderer.sprite.bounds.size;
+                    float height = boardCamera.orthographicSize * 2f;
+                    float scale = Mathf.Max(height * aspect / sourceSize.x, height / sourceSize.y) * 1.02f;
+                    backgroundRenderer.transform.localScale = Vector3.one * scale;
+                    cameraPosition = boardCamera.transform.position;
+                    // 背景Pivot不一定在中心，扣掉缩放后的bounds.center，确保四边总围绕相机而非图片锚点。
+                    Vector3 pivotOffset = backgroundRenderer.sprite.bounds.center * scale;
+                    backgroundRenderer.transform.position = new Vector3(cameraPosition.x - pivotOffset.x, cameraPosition.y - pivotOffset.y, 5f);
+                }
             }
         }
 
