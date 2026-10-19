@@ -22,6 +22,13 @@ namespace RevGame.View
         [Tooltip("由编辑器工具接好的背景。直接引用 Sprite，运行时不读取外部美术文件夹。")]
         [SerializeField]
         private SpriteRenderer backgroundRenderer;
+        /// <summary>
+        /// 是否让背景按相机自动铺满。默认关闭：尊重场景里手动设置的位置与（可能非等比的）缩放，
+        /// 每帧只同步图集 UV；只有需要背景跟随任意屏幕比例自动铺满时才在 Inspector 勾上。
+        /// </summary>
+        [Tooltip("勾上=按相机自动铺满背景（等比缩放并居中对齐相机）；关闭=保留场景里手动设置的尺寸，只同步图集UV")]
+        [SerializeField]
+        private bool fitBackgroundToCamera;
         private bool _released;
         /// <summary>当前屏幕的异步装配版本；快速切换时旧面板加载回调不能覆盖新屏幕。</summary>
         private int _screenVersion;
