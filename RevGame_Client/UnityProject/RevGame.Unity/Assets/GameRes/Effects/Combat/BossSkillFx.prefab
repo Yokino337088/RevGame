@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4210001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4210002}
+  - component: {fileID: 4210003}
+  m_Layer: 0
+  m_Name: BossSkillFx
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4210002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4210001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4210003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4210001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa1dd300069341c788a09ccd507de05e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 3e7182d0c8b24067b793cb396c6c43e2, type: 2}
+  glow: {fileID: 21300000, guid: 4e6fa53adab642e38539c42cc74d5f29, type: 3}
+  ring: {fileID: 21300000, guid: 1721433c2c114792914ec2376e9d22db, type: 3}
+  rune: {fileID: 21300000, guid: 759a76d31a4840c9838be2ef01a5a015, type: 3}
+  spark: {fileID: 21300000, guid: 4e2049b41eb045358bb28a4b1cd87bf5, type: 3}
+  beam: {fileID: 21300000, guid: 46ac64b39f6641e5b4dfdbd0bf107bb0, type: 3}
+  flame: {fileID: 21300000, guid: c042bd1b697d4972a01a0e14ac82c10f, type: 3}
+  scorch: {fileID: 21300000, guid: 789abc4ab117427fb74056453198a042, type: 3}
+  slash: {fileID: 21300000, guid: 59e4a0d51a874b859edad6402d279f3e, type: 3}
+  twirl: {fileID: 21300000, guid: 70c6bdef63f24fe59427094edcf8820e, type: 3}
+  smoke: {fileID: 21300000, guid: 5cd9e45f2c7d48bfa227db56338f0d76, type: 3}
+  reticle: {fileID: 21300000, guid: d05c384cf6184c00b508fc455d89946a, type: 3}
+  star: {fileID: 21300000, guid: b80f0b649c2d493db1432572b45df218, type: 3}

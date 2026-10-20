@@ -14,6 +14,7 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
         /// <summary>只供编辑器验收，检查实际数值变化、回合事务和结算次数。</summary>
@@ -43,7 +44,10 @@ namespace RevGame.Services
                         // 我方全体如今能守阵援击；本断言只测连击，移除其余友军以隔离额外火力。
                         foreach (Piece other in new List<Piece>(service._playerPieces))
                         {
-                            if (other != player) { service._board.Remove(other); service._playerPieces.Remove(other); }
+                            if (other != player)
+                            {
+                                service._board.Remove(other); service._playerPieces.Remove(other);
+                            }
                         }
                         service._board.Move(player, new BoardPos(4, 6));
                         service.RefreshGoState();
@@ -452,6 +456,9 @@ namespace RevGame.Services
             check(service._board.GetCell(new BoardPos(0, 0)).EyeSide == GameSide.Player, "自动援军不填己方眼位");
         }
 
+        /// <summary>
+        /// 事件验收用的固定局面：关闭通关辅助、固定随机种子，保证同一断言可重复。
+        /// </summary>
         private static BattleService EventFixture()
         {
             var service = new BattleService();
@@ -471,6 +478,10 @@ namespace RevGame.Services
             return service;
         }
 
+        /// <summary>
+        /// 验收造局：走正式占格并加入名单，不直接改血量、气或眼睛字段。
+        /// 这样断言验证的是真实规则链，而不是测试自己伪造的状态。
+        /// </summary>
         private Piece AddCheckPiece(GameSide side, PieceKind kind, BoardPos pos, StarTier star = StarTier.One, int size = 0)
         {
             var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, star), side, size);

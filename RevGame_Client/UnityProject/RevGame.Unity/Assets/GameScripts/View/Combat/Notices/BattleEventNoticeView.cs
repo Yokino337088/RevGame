@@ -30,6 +30,8 @@ namespace RevGame.View
         private float _peakScale = 1f;
         // 准备横幅用归一化行程，窗口改变尺寸时重新算实际屏幕边界，绝不沿用旧像素坐标。
         private bool _preparationMode;
+        // 敌落子使用右栏下方独立一行，不与战斗增益争抢同一个位置；都是布局比例，不是玩法数值。
+        private bool _enemyDeploymentMode;
         public bool HasActiveAnimation { get { return _animation != null && _animation.IsActive(); } }
 
         /// <summary>调用者拥有当前提示，关闭 HUD 时须归还；动画自己结束也会回池。</summary>
@@ -40,13 +42,14 @@ namespace RevGame.View
         }
 
         /// <summary>升级和增益共用池化提示，标题替换占位符，其余参数直接来自 Excel。</summary>
-        public void Show(BattleText config, string title, Sprite sprite, Action<BattleEventNoticeView> onFinished)
+        public void Show(BattleText config, string title, Sprite sprite, Action<BattleEventNoticeView> onFinished, string detail = null, bool enemyDeployment = false)
         {
             StopAnimation();
             _preparationMode = false;
+            _enemyDeploymentMode = enemyDeployment;
             _onFinished = onFinished;
             titleText.text = title;
-            detailText.text = config.Detail;
+            detailText.text = detail ?? config.Detail;
             // 每次出池显式恢复字体状态，不能依赖上一次显示的是准备横幅还是升级提示。
             titleText.fontStyle = detailText.fontStyle = FontStyle.Bold;
             titleText.alignment = detailText.alignment = TextAnchor.MiddleCenter;
@@ -122,7 +125,10 @@ namespace RevGame.View
         private static void ConfigureOutline(Text text)
         {
             Outline outline = text.GetComponent<Outline>();
-            if (outline == null) { outline = text.gameObject.AddComponent<Outline>(); }
+            if (outline == null)
+            {
+                outline = text.gameObject.AddComponent<Outline>();
+            }
             outline.effectColor = new Color(0.04f, 0.07f, 0.12f, 1f);
             outline.effectDistance = new Vector2(2f, -2f);
         }
@@ -134,7 +140,10 @@ namespace RevGame.View
         {
             RectTransform rect = (RectTransform)transform;
             RectTransform parent = rect.parent as RectTransform;
-            if (parent == null) { return; }
+            if (parent == null)
+            {
+                return;
+            }
             GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, GameBattleLayout.SafeViewport());
             if (_preparationMode)
             {
@@ -152,7 +161,7 @@ namespace RevGame.View
                 detailText.resizeTextMaxSize = 27;
                 return;
             }
-            Rect slot = GameBattleLayout.InRegion(areas.Right, 0.56f, 0.86f, 0.14f);
+            Rect slot = GameBattleLayout.InRegion(areas.Right, _enemyDeploymentMode ? 0.38f : 0.56f, 0.86f, 0.14f);
             // 除以峰值：哪怕放大到 Excel 配置的最大比例，也不会超出预留范围。
             rect.sizeDelta = slot.size / _peakScale;
             rect.anchoredPosition = slot.center + Vector2.right * (areas.Right.width * 0.03f * _slide);
@@ -199,6 +208,7 @@ namespace RevGame.View
             StopAnimation();
             _onFinished = null;
             _preparationMode = false;
+            _enemyDeploymentMode = false;
             titleText.text = detailText.text = string.Empty;
             group.alpha = 0f;
         }

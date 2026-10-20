@@ -1,6 +1,15 @@
 // ============================================================
 // EnemyFormationPlanner.cs —— 用真实棋盘规则验证敌方眼阵，再一次性提交落点。
 // 这是游戏业务算法，不依赖 Unity 对象，也不修改 Revolution 框架。
+//
+// 【它在敌方AI里的位置】
+// 回合开始时由服务调用；规划好后交给状态机的 Prepare 状态提交（见 EnemyStates.cs）。
+// 与 EnemyTactics 的区别：这里管“整队初始阵型”，那里管“战斗中的一次增援落点”；
+// 两者都只在深快照里试算，失败不改真实棋盘。
+//
+// 【为什么先规划再提交】
+// 敌阵必须整套放得下：Boss 的 2×2/3×3 身体、护卫眼阵、额外小兵都算在内。
+// 边摆边改会让“摆到一半放不下”留下半套敌阵，所以本类只输出坐标，提交由服务一次完成。
 // ============================================================
 using System.Collections.Generic;
 using RevGame.Board;
@@ -63,7 +72,10 @@ namespace RevGame.Battle
             for (int eyes = requested; eyes >= 1; eyes--)
             {
                 BoardPos[] template = eyes == 2 ? TwoEyes : OneEye;
-                if (guards.Count < template.Length) { continue; }
+                if (guards.Count < template.Length)
+                {
+                    continue;
+                }
                 BoardModel best = null;
                 int bestScore = int.MinValue;
                 int width = eyes == 2 ? 5 : 3;
@@ -75,7 +87,10 @@ namespace RevGame.Battle
                         HashSet<BoardPos> reserved = ProtectedEyes(trial);
                         // 模板的眼还没有形成，规则暂时识别不到，必须提前保留空点以防补名单时被填上。
                         reserved.Add(Transform(new BoardPos(1 + offset, 0), rotation, trial.Size));
-                        if (eyes == 2) { reserved.Add(Transform(new BoardPos(3 + offset, 0), rotation, trial.Size)); }
+                        if (eyes == 2)
+                        {
+                            reserved.Add(Transform(new BoardPos(3 + offset, 0), rotation, trial.Size));
+                        }
                         bool fits = true;
                         for (int i = 0; i < template.Length; i++)
                         {
@@ -86,14 +101,26 @@ namespace RevGame.Battle
                                 break;
                             }
                         }
-                        if (!fits || !PlaceRemaining(trial, roster, reserved)) { continue; }
+                        if (!fits || !PlaceRemaining(trial, roster, reserved))
+                        {
+                            continue;
+                        }
                         // 模板看起来像眼不等于真的成立；最终以同一套GoRules验证，UI/AI/实战没有三种眼算法。
                         GoRules.Evaluate(trial);
                         Piece root = Find(trial, guards[0].Id);
-                        if (root == null || root.EyeCount < eyes || !PreservesPlayers(baseline, trial)) { continue; }
-                        if (trial.GetPiecesOf(GameSide.Enemy).Exists(p => p.IsLocked)) { continue; }
+                        if (root == null || root.EyeCount < eyes || !PreservesPlayers(baseline, trial))
+                        {
+                            continue;
+                        }
+                        if (trial.GetPiecesOf(GameSide.Enemy).Exists(p => p.IsLocked))
+                        {
+                            continue;
+                        }
                         int score = Score(trial, intelligence);
-                        if (score > bestScore) { best = trial; bestScore = score; }
+                        if (score > bestScore)
+                        {
+                            best = trial; bestScore = score;
+                        }
                     }
                 }
                 if (best != null)
@@ -128,20 +155,32 @@ namespace RevGame.Battle
             ordered.Sort((a, b) => a.Size == b.Size ? a.Id.CompareTo(b.Id) : b.Size.CompareTo(a.Size));
             foreach (Piece source in ordered)
             {
-                if (Find(board, source.Id) != null) { continue; }
+                if (Find(board, source.Id) != null)
+                {
+                    continue;
+                }
                 // 眼阵之外的普通棋是机动前排，优先留一格间隔摆到中线；贴住骨架会继承眼数而全队站死。
-                if (!source.IsBoss && board.GetPiecesOf(GameSide.Enemy).Count > 0 && TryPlaceMobile(board, source, reserved)) { continue; }
+                if (!source.IsBoss && board.GetPiecesOf(GameSide.Enemy).Count > 0 && TryPlaceMobile(board, source, reserved))
+                {
+                    continue;
+                }
                 bool placed = false;
                 for (int y = board.Size - source.Size; y >= 0 && !placed; y--)
                 {
                     for (int x = board.Size - source.Size; x >= 0 && !placed; x--)
                     {
                         var pos = new BoardPos(x, y);
-                        if (!board.CanFit(pos, source.Size, source.Side) || CoversReserved(pos, source.Size, reserved)) { continue; }
+                        if (!board.CanFit(pos, source.Size, source.Side) || CoversReserved(pos, source.Size, reserved))
+                        {
+                            continue;
+                        }
                         placed = board.Place(source.CreateSnapshot(), pos);
                     }
                 }
-                if (!placed) { return false; }
+                if (!placed)
+                {
+                    return false;
+                }
             }
             return true;
         }
@@ -156,17 +195,29 @@ namespace RevGame.Battle
                 for (int x = 0; x < board.Size; x++)
                 {
                     var pos = new BoardPos(x, y);
-                    if (reserved.Contains(pos) || !board.CanFit(pos, source.Size, source.Side)) { continue; }
+                    if (reserved.Contains(pos) || !board.CanFit(pos, source.Size, source.Side))
+                    {
+                        continue;
+                    }
                     bool linked = false;
                     foreach (BoardPos neighbor in pos.GetOrthogonalNeighbors())
                     {
                         Piece ally = board.GetPiece(neighbor);
-                        if (ally != null && ally.Side == GameSide.Enemy) { linked = true; break; }
+                        if (ally != null && ally.Side == GameSide.Enemy)
+                        {
+                            linked = true; break;
+                        }
                     }
-                    if (linked) { continue; }
+                    if (linked)
+                    {
+                        continue;
+                    }
                     // 不直接贴脸出生，中线施压需要数次低频接近，给玩家观察与射击的窗口。
                     int score = -System.Math.Abs(y - board.Size / 2) * 10 - System.Math.Abs(x - board.Size / 2);
-                    if (score > bestScore) { bestScore = score; best = pos; }
+                    if (score > bestScore)
+                    {
+                        bestScore = score; best = pos;
+                    }
                 }
             }
             return best.X >= 0 && board.Place(source.CreateSnapshot(), best);
@@ -179,7 +230,10 @@ namespace RevGame.Battle
             {
                 for (int x = 0; x < size; x++)
                 {
-                    if (reserved.Contains(new BoardPos(pos.X + x, pos.Y + y))) { return true; }
+                    if (reserved.Contains(new BoardPos(pos.X + x, pos.Y + y)))
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -194,7 +248,10 @@ namespace RevGame.Battle
                 for (int x = 0; x < board.Size; x++)
                 {
                     var pos = new BoardPos(x, y);
-                    if (board.GetCell(pos).IsEyeMarked) { result.Add(pos); }
+                    if (board.GetCell(pos).IsEyeMarked)
+                    {
+                        result.Add(pos);
+                    }
                 }
             }
             return result;
@@ -206,7 +263,10 @@ namespace RevGame.Battle
             foreach (Piece player in before.GetPiecesOf(GameSide.Player))
             {
                 Piece copy = Find(after, player.Id);
-                if (copy == null || copy.EyeCount < player.EyeCount || (player.Liberties > 0 && copy.Liberties == 0)) { return false; }
+                if (copy == null || copy.EyeCount < player.EyeCount || (player.Liberties > 0 && copy.Liberties == 0))
+                {
+                    return false;
+                }
             }
             return true;
         }
@@ -222,8 +282,14 @@ namespace RevGame.Battle
             {
                 score += enemy.Pos.Y * 3 + System.Math.Min(enemy.Liberties, 12);
                 // 使用真实射程查询评分，能开火的远程位置优先，不靠“职业叫射手”假定一定有输出。
-                if (intelligence >= 2 && enemy.Def.IsRanged) { score += MoveRules.GetAttackTargets(board, enemy).Count * 100; }
-                if (intelligence >= 3) { score += enemy.EyeCount * 30; }
+                if (intelligence >= 2 && enemy.Def.IsRanged)
+                {
+                    score += MoveRules.GetAttackTargets(board, enemy).Count * 100;
+                }
+                if (intelligence >= 3)
+                {
+                    score += enemy.EyeCount * 30;
+                }
                 if (intelligence >= 4)
                 {
                     // 高阶布阵同时看对方火力，主将和远程尽量不在出生点遭到集火。
@@ -231,7 +297,10 @@ namespace RevGame.Battle
                     {
                         foreach (BoardPos hit in MoveRules.GetAttackTargets(board, player))
                         {
-                            if (board.GetPiece(hit) == enemy) { score -= enemy.IsKing ? 180 : 60; break; }
+                            if (board.GetPiece(hit) == enemy)
+                            {
+                                score -= enemy.IsKing ? 180 : 60; break;
+                            }
                         }
                     }
                 }

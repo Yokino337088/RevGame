@@ -1,5 +1,6 @@
 // ============================================================
 // BattleService.Placement.cs —— 准备期落牌，以及准备/战斗两阶段的主动换位。
+// 本文件是 BattleService 的 partial 片段；玩家意图统一从这里进入，再改棋盘数据。
 // 点击只改变「选择」，确认目标合法后才一次性搬完整颗棋子；失败不扣牌、不丢棋子。
 // ============================================================
 using RevGame.Core;
@@ -8,11 +9,16 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
         /// <summary>当前选中的己方棋子编号。0 是「没有选择」，不是有效棋子编号。</summary>
         public int SelectedPieceId { get; private set; }
 
+        /// <summary>
+        /// 按编号找仍在存活名单里的选中棋子；已死亡则视为未选中。
+        /// 返回 null 时调用方按“没选棋子”处理，不能继续对旧坐标换位。
+        /// </summary>
         private Piece FindSelectedPiece()
         {
             return _playerPieces.Find(piece => piece.Id == SelectedPieceId && piece.IsAlive);

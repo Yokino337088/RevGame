@@ -19,8 +19,13 @@ namespace RevGame.Core
         /// 不能用坐标代替编号：玩家可以换位，而公平弹道队列仍需认出同一颗棋子，防止早落棋长期挤掉新棋。
         /// </summary>
         public readonly int SourceId;
+        /// <summary>
+        /// 是否来自 Boss 技能。技能有自己的爆炸/激光特效，棋盘只显示伤害数字，
+        /// 不再额外画一条普通弹道——否则一次范围技能会同时飞出十几根黄色子弹，画面混乱。
+        /// </summary>
+        public readonly bool FromSkill;
 
-        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0)
+        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0, bool fromSkill = false)
         {
             TargetId = targetId;
             Position = position;
@@ -30,6 +35,7 @@ namespace RevGame.Core
             HasAttacker = hasAttacker;
             Source = source;
             SourceId = sourceId;
+            FromSkill = fromSkill;
         }
     }
 }

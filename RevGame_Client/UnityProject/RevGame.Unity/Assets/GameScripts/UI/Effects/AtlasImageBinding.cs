@@ -26,7 +26,10 @@ namespace RevGame.UI
         private void OnAtlasRegistered(SpriteAtlas atlas)
         {
             Sprite sprite = _image.overrideSprite != null ? _image.overrideSprite : _image.sprite;
-            if (sprite != null && atlas.CanBindTo(sprite)) { _image.SetAllDirty(); }
+            if (sprite != null && atlas.CanBindTo(sprite))
+            {
+                _image.SetAllDirty();
+            }
         }
     }
 }

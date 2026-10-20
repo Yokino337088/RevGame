@@ -75,7 +75,10 @@ namespace RevGame.Data
         {
             foreach (PreparationBuffDef def in GameConfig.Current.Buffs)
             {
-                if (def.Kind == kind) { return def; }
+                if (def.Kind == kind)
+                {
+                    return def;
+                }
             }
             throw new System.InvalidOperationException("增益配置缺少 " + kind + "（装配阶段本应拦截）");
         }

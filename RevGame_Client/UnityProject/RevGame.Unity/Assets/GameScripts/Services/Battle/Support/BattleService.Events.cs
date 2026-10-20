@@ -1,5 +1,6 @@
 // ============================================================
 // BattleService.Events.cs —— 战斗事件与眼位石的具体效果。
+// 本文件是 BattleService 的 partial 片段；事件同样走统一伤害出口，不另算一套血。
 // 自动事件和 GM 共用同一条受控入口；事件有间隔和次数上限，不能在同一秒无限叠增益。
 // 对没有合法目标的事件明确说明替代效果，避免出现「日志说生效，棋盘什么也没变」。
 // ============================================================
@@ -13,11 +14,16 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
+        /// <summary>本回合是否允许自动战斗事件；关闭辅助且未抽中概率时为 false。</summary>
         private bool _eventScheduled;
+        /// <summary>本回合已触发的事件次数；同时充当轮换下标和上限判断依据。</summary>
         private int _battleEventCount;
+        /// <summary>下一次事件最早发生的战斗时刻；防止同一秒连发多条大提示。</summary>
         private float _nextEventAt;
+        /// <summary>决胜支援是否已使用；只做诊断统计，不参与伤害计算。</summary>
         private bool _decisiveSupportUsed;
         // 支援是同一回合的状态，不是独立计时器；换轮统一清零，不会有上一轮的迟到炮火。
         /// <summary>0=正常交战，1=僵持集火，2=决胜收尾；只向后推进，下一回合重新从零开始。</summary>
@@ -33,16 +39,34 @@ namespace RevGame.Services
         {
             get
             {
-                if (_supportStage >= 2) { return "决胜收尾 · 逐个击破"; }
-                if (_supportStage == 1) { return "僵持支援 · 集火破阵"; }
+                if (_supportStage >= 2)
+                {
+                    return "决胜收尾 · 逐个击破";
+                }
+                if (_supportStage == 1)
+                {
+                    return "僵持支援 · 集火破阵";
+                }
                 return "守阵交战 · " + Balance.VictoryAssistFinishSeconds + "秒最后兜底";
             }
         }
         /// <summary>默认轻松模式含最后一子守护与决胜支援；界面会公开说明。</summary>
         public bool VictoryAssistEnabled { get; }
+        /// <summary>
+        /// 本轮已触发的战斗事件次数；同时用于上限判断与轮换下标。
+        /// </summary>
         public int BattleEventCount => _battleEventCount;
+        /// <summary>
+        /// 本轮攻击提速加成（疾风连击等事件）；换轮清零，不影响移动冷却。
+        /// </summary>
         private float _roundSpeedBonus;
+        /// <summary>
+        /// 本轮额外气数（气脉畅通等）；会改变围困判定，修改后必须刷新气眼。
+        /// </summary>
         private int _roundLibertyBonus;
+        /// <summary>
+        /// 守眼回血的累计时钟：攒够一个间隔才回一次，避免每小步零散回血。
+        /// </summary>
         private float _eyeHealElapsed;
         /// <summary>上次已发布的棋盘占格版本；-1保证第一次一定计算。</summary>
         private int _evaluatedTopology = -1;
@@ -74,6 +98,10 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.GoStateRefreshed);
         }
 
+        /// <summary>
+        /// 切换“补眼模式”：仅准备阶段且持有眼位石时可用。
+        /// 切换时清掉手牌与棋子选择，保证一次点击只会走一条操作路径。
+        /// </summary>
         public bool SelectEyeStone()
         {
             if (Phase != GamePhase.Prepare || EyeStones <= 0)
@@ -136,6 +164,10 @@ namespace RevGame.Services
             return false;
         }
 
+        /// <summary>
+        /// 在合法空格补一颗支援棋并扣一枚眼位石。
+        /// 不合法（不能补成眼）时拒绝且不扣石头；没有亮格时可以保留到以后用。
+        /// </summary>
         public bool TryPlaceEyeStone(BoardPos pos)
         {
             if (Phase != GamePhase.Prepare || !EyeStoneSelected || EyeStones <= 0)
@@ -158,6 +190,11 @@ namespace RevGame.Services
             return true;
         }
 
+        /// <summary>
+        /// 受控触发一次战斗事件（自动事件与 GM 共用）。
+        /// 先校验阶段、每回合上限与冷却，再执行效果；没有合法目标时转全队回复，
+        /// 避免出现“日志说生效、棋盘什么也没变”。
+        /// </summary>
         public bool TriggerBattleEvent(BattleEventKind kind)
         {
             if (Phase != GamePhase.Battle)
@@ -227,6 +264,10 @@ namespace RevGame.Services
             return true;
         }
 
+        /// <summary>
+        /// 自动事件的调度：开启辅助时按配置顺序轮换，关闭时按概率随机抽组。
+        /// 只在冷却与上限都满足时触发，不在每个模拟小步里重复尝试。
+        /// </summary>
         private void TryAutomaticEvent()
         {
             if (!_eventScheduled || _battleEventCount >= Balance.MaxBattleEventsPerRound || _battleElapsed < _nextEventAt)
@@ -248,6 +289,10 @@ namespace RevGame.Services
             TriggerBattleEvent(pool[_random.Next(pool.Count)]);
         }
 
+        /// <summary>
+        /// 全队按最大生命比例回复，并逐颗广播血条变化。
+        /// 实际回复量为 0 的棋子不发事件，避免无意义的界面刷新。
+        /// </summary>
         private void HealTeam(float ratio)
         {
             foreach (Piece piece in _playerPieces)
@@ -259,6 +304,10 @@ namespace RevGame.Services
             }
         }
 
+        /// <summary>
+        /// 生成我方支援棋：占格后加入名单并继承本轮准备增益。
+        /// 调用前必须已经预检过空格，失败直接抛错而不是悄悄少一颗援军。
+        /// </summary>
         private void SpawnSupport(BoardPos pos, PieceKind kind = PieceKind.Shield)
         {
             var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, StarTier.One), GameSide.Player);
@@ -272,6 +321,10 @@ namespace RevGame.Services
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, piece.Id);
         }
 
+        /// <summary>
+        /// 扫描全盘，找到第一个可以补成眼的位置并生成支援棋。
+        /// 找不到返回 false，由调用方转为回复兜底，不能强行塞进不合法位置。
+        /// </summary>
         private bool CompleteOneEye()
         {
             for (int y = 0; y < Consts.BoardSize; y++)
@@ -290,6 +343,9 @@ namespace RevGame.Services
             return false;
         }
 
+        /// <summary>
+        /// 统计四邻空格数量，用于选点/评估出入口；不代表该点可以落子。
+        /// </summary>
         private int FreeNeighbors(BoardPos pos)
         {
             int n = 0;
@@ -307,13 +363,19 @@ namespace RevGame.Services
         /// <summary>自动援军不能填己方眼；远程也不闯敌眼，近战试放可开放敌眼，但仍须通过气眼与攻击预检。</summary>
         private bool CanSupportFit(BoardPos pos, int size, bool allowEnemyEyes = false)
         {
-            if (!_board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: !allowEnemyEyes)) { return false; }
+            if (!_board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: !allowEnemyEyes))
+            {
+                return false;
+            }
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
                 {
                     Cell cell = _board.GetCell(new BoardPos(pos.X + x, pos.Y + y));
-                    if (cell.IsEyeMarked && (!allowEnemyEyes || cell.EyeSide == GameSide.Player)) { return false; }
+                    if (cell.IsEyeMarked && (!allowEnemyEyes || cell.EyeSide == GameSide.Player))
+                    {
+                        return false;
+                    }
                 }
             }
             return true;
@@ -327,6 +389,10 @@ namespace RevGame.Services
             return true;
         }
 
+        /// <summary>
+        /// 切断敌方最大连通块：在临时图里试删一颗，确认会分成两块才算断点。
+        /// 只在真实存在割点时生效；不能为了“有伤害”随便击杀一颗普通棋。
+        /// </summary>
         private bool BreakEnemyChain()
         {
             List<Piece> largest = null;
@@ -382,6 +448,10 @@ namespace RevGame.Services
             return false;
         }
 
+        /// <summary>
+        /// 炮火支援：以敌人最密集的位置为中心，对范围内敌人造成比例伤害。
+        /// 半径与比例都来自配置表；没有敌人时返回 false，由调用方转为回复。
+        /// </summary>
         private bool FireSupport()
         {
             var enemies = _board.GetPiecesOf(GameSide.Enemy);
@@ -416,14 +486,21 @@ namespace RevGame.Services
             return true;
         }
 
-        /// <summary>普通攻击、炮火、决胜支援共用真实扣血出口，保证飘字与实际伤害一致。</summary>
-        private int DamagePiece(Piece target, int amount, Piece attacker = null)
+        /// <summary>普通攻击、炮火、决胜支援、Boss 技能共用真实扣血出口，保证飘字与实际伤害一致。</summary>
+        /// <param name="fromSkill">true = Boss 技能伤害：表现层只飘数字，不追加普通弹道。</param>
+        private int DamagePiece(Piece target, int amount, Piece attacker = null, bool fromSkill = false)
         {
             if (target.Side == GameSide.Player)
             {
                 // 护盾消费属于这颗棋，只有真实受击才扣次数；最后一子守护在减伤之后兜底。
-                if (amount > 0 && target.ShieldCharges > 0) { target.ShieldCharges--; amount = 0; }
-                else { amount = System.Math.Max(0, (int)(amount * (1f - _prepDamageReduction))); }
+                if (amount > 0 && target.ShieldCharges > 0)
+                {
+                    target.ShieldCharges--; amount = 0;
+                }
+                else
+                {
+                    amount = System.Math.Max(0, (int)(amount * (1f - _prepDamageReduction)));
+                }
             }
             if (VictoryAssistEnabled && target.Side == GameSide.Player && _playerPieces.FindAll(p => p.IsAlive).Count == 1)
             {
@@ -447,10 +524,13 @@ namespace RevGame.Services
             }
             if (real > 0)
             {
-                if (target.Side == GameSide.Enemy) { _lastEnemyDamageAt = _battleElapsed; }
+                if (target.Side == GameSide.Enemy)
+                {
+                    _lastEnemyDamageAt = _battleElapsed;
+                }
                 // 保存攻击者Id供表现公平排队；只传值，不让延迟弹道持有已死亡或换位的Piece对象。
                 int sourceId = attacker == null ? 0 : attacker.Id;
-                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId);
+                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill);
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
             }
             RevEvent.DispatchEvent<int>(Events.DamageResolved, target.Id);
@@ -458,6 +538,7 @@ namespace RevGame.Services
             if (!target.IsAlive)
             {
                 _board.Remove(target);
+                MarkEnemyDead(target);
                 // 玩家可能刚选中这颗棋子准备换位；死亡后清选择，不能留下一个指向已移除棋子的编号。
                 if (SelectedPieceId == target.Id)
                 {
@@ -490,12 +571,24 @@ namespace RevGame.Services
             {
                 BeginSupportStage(2, "决胜收尾：援军逐个击破残部，保留最后通关保障");
             }
-            if (_supportStage == 0 || _battleElapsed < _nextSupportPulseAt) { return; }
+            if (_supportStage == 0 || _battleElapsed < _nextSupportPulseAt)
+            {
+                return;
+            }
             _nextSupportPulseAt += _supportStage == 2 ? Balance.VictoryAssistFinalPulseSeconds : Balance.VictoryAssistPulseSeconds;
             Piece target = _enemyPieces.Find(p => p.IsAlive && p.IsKing);
-            if (target == null) { target = _enemyPieces.Find(p => p.IsAlive && p.Def.IsRanged); }
-            if (target == null) { target = _enemyPieces.Find(p => p.IsAlive); }
-            if (target == null) { return; }
+            if (target == null)
+            {
+                target = _enemyPieces.Find(p => p.IsAlive && p.Def.IsRanged);
+            }
+            if (target == null)
+            {
+                target = _enemyPieces.Find(p => p.IsAlive);
+            }
+            if (target == null)
+            {
+                return;
+            }
             _decisiveSupportUsed = true;
             int damage = _supportStage == 2 ? target.Hp : System.Math.Max(Balance.SupportDamage, (int)(target.MaxHp * Balance.VictoryAssistPulseHpRatio));
             DamagePiece(target, damage);
@@ -504,7 +597,10 @@ namespace RevGame.Services
             {
                 foreach (Piece enemy in new List<Piece>(_enemyPieces))
                 {
-                    if (enemy.IsAlive) { DamagePiece(enemy, enemy.Hp); }
+                    if (enemy.IsAlive)
+                    {
+                        DamagePiece(enemy, enemy.Hp);
+                    }
                 }
             }
             RefreshGoState();

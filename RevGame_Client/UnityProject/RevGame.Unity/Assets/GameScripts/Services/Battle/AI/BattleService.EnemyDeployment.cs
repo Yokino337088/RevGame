@@ -1,5 +1,6 @@
 // ============================================================
-// BattleService.EnemyDeployment.cs —— 战斗中的低频敌方落子。
+// BattleService.EnemyDeployment.cs —— 战斗中的限额战术落子。
+// 本文件是 BattleService 的 partial 片段；“何时该落”由 RevHeavyFSM 的 Deploy 状态决定，这里只提交结果。
 // 固定时钟只提出一次落子请求，EnemyTactics在独立快照评分，服务最后提交并通知视图。
 // 它是有限的战术增援，不是无限刷怪；后段通关支援与最后一子保护仍使用原来的统一规则。
 // ============================================================
@@ -11,6 +12,7 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
         /// <summary>下一次允许尝试落子的战斗秒数；使用模拟时间，暂停与不同帧率都不会额外刷怪。</summary>
@@ -34,45 +36,40 @@ namespace RevGame.Services
         /// <summary>只能在战斗固定步调用；失败同样进入冷却，避免满盘时每0.3125秒重做整盘试算。</summary>
         private void TickEnemyDeployment()
         {
-            if (Phase != GamePhase.Battle || _battleElapsed < _nextEnemyDeployAt || _battleElapsed >= Balance.DeployStopSeconds) { return; }
-            if (_enemyDeploymentCount >= Balance.DeployBaseCount + EnemyIntelligence || IsKingCaptured() || _board.IsSideWiped(GameSide.Enemy)) { return; }
-            // ★ 先推进下次时刻，再做昂贵的空间与策略检查；满盘/无合法点也不能在每个固定步重算。
-            _nextEnemyDeployAt = _battleElapsed + System.Math.Max(Balance.DeployIntervalMinSeconds, Balance.DeployIntervalBaseSeconds - EnemyIntelligence * Balance.DeployIntervalPerLevelSeconds);
-            if (_board.IsSideWiped(GameSide.Player) || _board.GetPiecesOf(GameSide.Enemy).Count >= Balance.DeployLivingCap) { return; }
-            int empty = 0;
-            for (int y = 0; y < _board.Size; y++)
+            EnemyAI commander = EnsureEnemyCommander();
+            if (commander.State == EnemyAIState.Prepare)
             {
-                for (int x = 0; x < _board.Size; x++) { if (_board.CanPlace(new BoardPos(x, y))) { empty++; } }
+                commander.Tick(EnemyAIState.Deploy, Balance.BattleSimulationStepSeconds, "开战，进入战术增援");
             }
-            // 留出足够空格给玩家调阵和援军（Deploy.MinEmptyCells）；不能为了制造紧张感把手机棋盘塞满。
-            if (empty <= Balance.DeployMinEmptyCells) { return; }
-            RoundDef round = LevelCatalog.GetRound(Chapter, Round);
-            if (round == null) { return; }
-            // 补什么兵由 EnemyReinforceConfig 决定（按已补次数与 AI 档位）；装配时已校验所有序号都有规则命中。
-            PieceKind? picked = LevelCatalog.PickReinforcement(_enemyDeploymentCount, EnemyIntelligence);
-            if (!picked.HasValue)
+            else
             {
-                RevLog.Warn("敌方补兵规则没有命中：第 " + _enemyDeploymentCount + " 次、AI 档位 " + EnemyIntelligence + "，请检查 EnemyReinforceConfig", Tag);
-                return;
+                commander.Tick(Balance.BattleSimulationStepSeconds);
             }
-            PieceKind kind = picked.Value;
-            PieceDef def = PieceCatalog.Get(kind, LevelCatalog.GetEnemyStar(Chapter, false));
-            // 后补棋按章节/回合成长，但不再叠加继承大军的平方血量倍率，避免一手援军拖长整场。
-            var newcomer = new Piece(_nextPieceId, def, GameSide.Enemy, hpScale: round.HpScale, attackScale: round.AttackScale);
-            BoardPos position;
-            string intention;
-            // 预检不发布任何事件。只有真实Place成功才增加Id/名单/次数，这三个数据必须一起提交。
-            if (!EnemyTactics.TryChooseDeployment(_board, newcomer, EnemyIntelligence, out position, out intention)) { return; }
-            if (!_board.Place(newcomer, position)) { throw new System.InvalidOperationException("敌方落子预检与提交不一致：" + position); }
+        }
+
+        /// <summary>
+        /// 增援的唯一提交点：占格、编号、入名单、建 AI、刷新气眼、广播事件。
+        /// 顺序不能调换：先占格再广播，界面收到事件时棋盘与气眼已经是最终状态；
+        /// 任何一个失败都必须抛错，不能留下“名单里有棋、棋盘上没有”的半提交。
+        /// </summary>
+        private void CommitEnemyDeployment(Piece newcomer, BoardPos position, string intention)
+        {
+            if (!_board.Place(newcomer, position))
+            {
+                throw new System.InvalidOperationException("敌方落子预检与提交不一致：" + position);
+            }
             _nextPieceId++;
             _enemyPieces.Add(newcomer);
+            EnsureEnemyAI(newcomer);
             _enemyDeploymentCount++;
-            // 新棋不在落地瞬间攻击/移动；至少完整积攒攻击进度，移动再等五秒，给玩家反应窗口。
-            newcomer.NextMoveAt = _battleElapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
+            // 新棋的初始移动冷却已由Deploy状态设置；这里不再重复决定AI行为。
             RefreshGoState();
             // 模型先就绪，视图后收到通知：新棋第一次显示时已能读到正确气眼和锁死状态。
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, newcomer.Id);
-            RevEvent.DispatchEvent<string>(Events.BattleLog, "敌方落子 · " + intention + "：" + def.DisplayName + " → " + position);
+            // 专用事件只在真实提交后发布：试算中的81个候选不能各弹一次提示。
+            // HUD 接收值类型Id和文字，关闭面板后由owner解绑，不把新棋对象交给延迟动画保存。
+            RevEvent.DispatchEvent<int, string>(Events.EnemyDeployed, newcomer.Id, intention);
+            RevEvent.DispatchEvent<string>(Events.BattleLog, "敌方落子 · " + intention + "：" + newcomer.Def.DisplayName + " → " + position);
         }
     }
 }

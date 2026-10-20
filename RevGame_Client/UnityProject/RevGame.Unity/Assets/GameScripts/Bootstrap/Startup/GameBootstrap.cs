@@ -73,12 +73,18 @@ namespace RevGame.Bootstrap
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
         private async void Start()
         {
-            if (!_ownsServices) { return; }
+            if (!_ownsServices)
+            {
+                return;
+            }
             try
             {
                 // 让场景表现先订阅 ScreenChanged，避免表已缓存时同步完成而漏掉首页事件。
                 await RevTask.Yield();
-                if (_released) { return; }
+                if (_released)
+                {
+                    return;
+                }
                 await RevServices.GetRequired<GameFlow>().StartAsync();
             }
             catch (System.Exception error)
@@ -90,7 +96,10 @@ namespace RevGame.Bootstrap
         private void OnDestroy()
         {
             // 重复启动器没有注册过服务，绝不能在销毁时注销真正的全局宿主。
-            if (!_ownsServices) { return; }
+            if (!_ownsServices)
+            {
+                return;
+            }
             _released = true;
             _instance = null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -113,6 +122,7 @@ namespace RevGame.Bootstrap
             RevDataTableManager.Unload<EnemyReinforceConfigTable>();
             RevDataTableManager.Unload<RewardConfigTable>();
             RevDataTableManager.Unload<RewardBoostConfigTable>();
+            RevDataTableManager.Unload<BossSkillConfigTable>();
             RevDataTableManager.Unload<BalanceRuleTable>();
         }
     }

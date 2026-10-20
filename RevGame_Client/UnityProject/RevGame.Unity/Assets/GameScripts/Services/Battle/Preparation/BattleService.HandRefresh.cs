@@ -1,5 +1,6 @@
 // ============================================================
 // BattleService.HandRefresh.cs —— 只重抽仍在手中的牌，不改已经落下的棋子或落子额度。
+// 本文件是 BattleService 的一个 partial 片段，与其他片段共享同一实例；不是第二个服务。
 // 动画是 UI 的事：服务先一次性提交新手牌，再通知 UI 翻牌，动画中断也不会丢牌。
 // ============================================================
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
         /// <summary>默认两次；正式游戏启动时由 BattleTuning 导表数据覆盖。规则测试可独立使用默认值。</summary>
@@ -26,8 +28,14 @@ namespace RevGame.Services
         /// <summary>免费刷新剩余手牌；剩六张刷六张，落掉两张后只刷四张，不会补回已用额度。</summary>
         public bool RefreshHand()
         {
-            if (Phase != GamePhase.Prepare) { return Reject("只有准备阶段可以刷新手牌"); }
-            if (Hand.Count == 0) { return Reject("手牌已用完，下一回合再刷新"); }
+            if (Phase != GamePhase.Prepare)
+            {
+                return Reject("只有准备阶段可以刷新手牌");
+            }
+            if (Hand.Count == 0)
+            {
+                return Reject("手牌已用完，下一回合再刷新");
+            }
 
             var old = new List<Battle.HandCard>(Hand);
             var kinds = new List<PieceKind>();
@@ -37,7 +45,10 @@ namespace RevGame.Services
                 var choices = new List<PieceKind>();
                 foreach (PieceKind kind in _unlockedKinds)
                 {
-                    if (kind != card.Kind) { choices.Add(kind); }
+                    if (kind != card.Kind)
+                    {
+                        choices.Add(kind);
+                    }
                 }
                 kinds.Add(choices.Count == 0 ? card.Kind : choices[_random.Next(choices.Count)]);
             }

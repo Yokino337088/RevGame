@@ -70,9 +70,15 @@ namespace RevGame.View
                 int newest = -1;
                 for (int i = 0; i < _entries.Count; i++)
                 {
-                    if (_entries[i].SourceId != sourceId) { continue; }
+                    if (_entries[i].SourceId != sourceId)
+                    {
+                        continue;
+                    }
                     count++;
-                    if (newest < 0 || _entries[i].CreatedAt > _entries[newest].CreatedAt) { newest = i; }
+                    if (newest < 0 || _entries[i].CreatedAt > _entries[newest].CreatedAt)
+                    {
+                        newest = i;
+                    }
                 }
                 if (count >= _perSourceLimit)
                 {
@@ -90,9 +96,15 @@ namespace RevGame.View
             int worst = 0;
             for (int i = 1; i < _entries.Count; i++)
             {
-                if (HasHigherPriority(_entries[worst].SourceId, _entries[i].SourceId)) { worst = i; }
+                if (HasHigherPriority(_entries[worst].SourceId, _entries[i].SourceId))
+                {
+                    worst = i;
+                }
             }
-            if (!HasHigherPriority(sourceId, _entries[worst].SourceId)) { return false; }
+            if (!HasHigherPriority(sourceId, _entries[worst].SourceId))
+            {
+                return false;
+            }
             // ★ 满队时不按“谁先来”永久封死入口。已播过的早期棋子优先让位，尚未播过的棋子逐批获得名额。
             _entries[worst] = incoming;
             return true;
@@ -111,7 +123,10 @@ namespace RevGame.View
             {
                 Entry candidate = _entries[i];
                 float last = LastDisplayed(candidate.SourceId);
-                if (now - last < sourceInterval) { continue; }
+                if (now - last < sourceInterval)
+                {
+                    continue;
+                }
                 if (best < 0 || HasHigherPriority(candidate.SourceId, _entries[best].SourceId)
                     || (candidate.SourceId == _entries[best].SourceId && candidate.CreatedAt < _entries[best].CreatedAt))
                 {
@@ -138,10 +153,19 @@ namespace RevGame.View
             int oldest = -1;
             for (int i = 0; i < _entries.Count; i++)
             {
-                if (_entries[i].SourceId != sourceId) { continue; }
-                if (oldest < 0 || _entries[i].CreatedAt < _entries[oldest].CreatedAt) { oldest = i; }
+                if (_entries[i].SourceId != sourceId)
+                {
+                    continue;
+                }
+                if (oldest < 0 || _entries[i].CreatedAt < _entries[oldest].CreatedAt)
+                {
+                    oldest = i;
+                }
             }
-            if (oldest < 0) { return; }
+            if (oldest < 0)
+            {
+                return;
+            }
             _entries.RemoveAt(oldest);
             _lastDisplayedAt[sourceId] = now;
         }
@@ -158,7 +182,10 @@ namespace RevGame.View
         {
             for (int i = _entries.Count - 1; i >= 0; i--)
             {
-                if (now - _entries[i].CreatedAt > _lifetime) { _entries.RemoveAt(i); }
+                if (now - _entries[i].CreatedAt > _lifetime)
+                {
+                    _entries.RemoveAt(i);
+                }
             }
         }
 

@@ -114,7 +114,10 @@ namespace RevGame.View
         private void Awake()
         {
             _visualProperties = new MaterialPropertyBlock();
-            if (bodyRenderer != null) { _bodyRestScale = bodyRenderer.transform.localScale; }
+            if (bodyRenderer != null)
+            {
+                _bodyRestScale = bodyRenderer.transform.localScale;
+            }
             if (hpFillRenderer != null)
             {
                 _hpFillScale = hpFillRenderer.transform.localScale;
@@ -161,7 +164,10 @@ namespace RevGame.View
         /// </summary>
         public void PlayBirthFire()
         {
-            if (!PrepareBodyVisual(BirthId)) { return; }
+            if (!PrepareBodyVisual(BirthId))
+            {
+                return;
+            }
             SetBirthProgress(0.001f);
             // 这里推进的是时间，不是亮度。Linear 让火舌匀速向上翻卷；渐燃/渐熄由 Shader 单独计算，
             // 不能再用收尾闪光来掩盖“带火身体 → 普通身体”的切换。
@@ -172,7 +178,10 @@ namespace RevGame.View
         /// <summary>原位升级后由同一颗棋子的身体掀起闪电与雷暴，反复升级会中断旧效果而非叠加实例。</summary>
         public void PlayUpgradeStorm()
         {
-            if (!PrepareBodyVisual(StormId)) { return; }
+            if (!PrepareBodyVisual(StormId))
+            {
+                return;
+            }
             SetStormProgress(0.001f);
             _visualTween = DOTween.To(() => _stormProgress, SetStormProgress, 1f, StormSeconds)
                 .SetEase(Ease.Linear).OnComplete(FinishBodyVisual);
@@ -230,7 +239,10 @@ namespace RevGame.View
         {
             Sprite sprite = bodyRenderer != null ? bodyRenderer.sprite : null;
             Material material = bodyRenderer != null ? bodyRenderer.sharedMaterial : null;
-            if (sprite == null || material == null || !material.HasProperty(DissolveId)) { return false; }
+            if (sprite == null || material == null || !material.HasProperty(DissolveId))
+            {
+                return false;
+            }
 
             StopBodyVisual();
             StopAttackPulse();
@@ -239,11 +251,26 @@ namespace RevGame.View
             RevTimer.CancelAllOf(this);
             RevMono.RemoveAllOf(this);
             _frames = null;
-            if (baseRenderer != null) { baseRenderer.enabled = false; }
-            if (hpFillRenderer != null) { hpFillRenderer.enabled = false; }
-            if (lockedRenderer != null) { lockedRenderer.enabled = false; }
-            if (crownRenderer != null) { crownRenderer.enabled = false; }
-            if (haloRenderer != null) { haloRenderer.enabled = false; }
+            if (baseRenderer != null)
+            {
+                baseRenderer.enabled = false;
+            }
+            if (hpFillRenderer != null)
+            {
+                hpFillRenderer.enabled = false;
+            }
+            if (lockedRenderer != null)
+            {
+                lockedRenderer.enabled = false;
+            }
+            if (crownRenderer != null)
+            {
+                crownRenderer.enabled = false;
+            }
+            if (haloRenderer != null)
+            {
+                haloRenderer.enabled = false;
+            }
             SetVisualUv(sprite);
             SetDeathProgress(0.001f);
             _visualTween = DOTween.To(() => _deathProgress, SetDeathProgress, 1f, DeathSeconds)
@@ -266,7 +293,10 @@ namespace RevGame.View
         public void StopTransientVisuals()
         {
             StopAttackPulse();
-            if (_birthProgress > 0f || _stormProgress > 0f) { StopBodyVisual(); }
+            if (_birthProgress > 0f || _stormProgress > 0f)
+            {
+                StopBodyVisual();
+            }
         }
 
         /// <summary>
@@ -276,7 +306,10 @@ namespace RevGame.View
         public void PlayAttackPulse()
         {
             // 旧AB尚未更新时可能仍把身体挂在根上；宁可跳过这层姿态，也不能改变整颗棋的占格显示大小。
-            if (bodyRenderer == null || bodyRenderer.transform == transform || bodyRenderer.sprite == null || _deathProgress > 0f) { return; }
+            if (bodyRenderer == null || bodyRenderer.transform == transform || bodyRenderer.sprite == null || _deathProgress > 0f)
+            {
+                return;
+            }
             _attackPulseEndsAt = Time.time + AttackPulseSeconds;
             // 当场轻压，让刚出手的棋子这一帧就有动作；下一帧再逐渐回弹，不等待额外的特效加载。
             bodyRenderer.transform.localScale = Vector3.Scale(_bodyRestScale, new Vector3(1.10f, 0.92f, 1f));
@@ -285,15 +318,24 @@ namespace RevGame.View
         /// <summary>恢复身体基准缩放；只在有攻击动作时写Transform，正常待机不增加逐帧写入。</summary>
         private void StopAttackPulse()
         {
-            if (_attackPulseEndsAt <= 0f) { return; }
+            if (_attackPulseEndsAt <= 0f)
+            {
+                return;
+            }
             _attackPulseEndsAt = 0f;
-            if (bodyRenderer != null) { bodyRenderer.transform.localScale = _bodyRestScale; }
+            if (bodyRenderer != null)
+            {
+                bodyRenderer.transform.localScale = _bodyRestScale;
+            }
         }
 
         /// <summary>身体轻压再回弹，最大横向放大10%、纵向压缩8%；不改变棋子的逻辑位置与攻击距离。</summary>
         private void AdvanceAttackPulse()
         {
-            if (_attackPulseEndsAt <= 0f || bodyRenderer == null) { return; }
+            if (_attackPulseEndsAt <= 0f || bodyRenderer == null)
+            {
+                return;
+            }
             float left = Mathf.Max(0f, _attackPulseEndsAt - Time.time);
             if (left <= 0f)
             {
@@ -340,6 +382,18 @@ namespace RevGame.View
                     bodyRenderer.sprite = current;
                 }
             }
+        }
+
+        /// <summary>
+        /// 瞬间对齐到 position，打断正在进行的平滑移动。Boss 瞬移技能使用：
+        /// 平滑滑过去会让玩家误以为 Boss 是“走”过去的，瞬移必须一帧到位。
+        /// </summary>
+        public void SnapTo(Vector3 position)
+        {
+            _moving = false;
+            _hasPosition = true;
+            _moveTarget = position;
+            transform.position = position;
         }
 
         /// <summary>只平滑图像，不修改逻辑落点；同一目标重复刷新不会让动画一直从头开始。</summary>
@@ -389,7 +443,10 @@ namespace RevGame.View
         public void Bind(int pieceId, PieceKind kind, StarTier star, GameSide side)
         {
             // ★ 原位升级的Id不会变化，要比较星级才能换外观；相同绑定不能每次刷新都把动画归零。
-            if (PieceId == pieceId && _entry != null && _boundKind == kind && _boundStar == star && _boundSide == side) { return; }
+            if (PieceId == pieceId && _entry != null && _boundKind == kind && _boundStar == star && _boundSide == side)
+            {
+                return;
+            }
             StopAttackPulse();
             PieceId = pieceId;
             _boundKind = kind;
@@ -472,7 +529,10 @@ namespace RevGame.View
         public void SetLocked(bool locked)
         {
             // HUD每次刷新都会再次传入同一状态；只在状态切换时归零，否则永远停在第一帧。
-            if (_locked != locked) { _lockedFrameIndex = 0; _lockedFrameTimer = 0f; }
+            if (_locked != locked)
+            {
+                _lockedFrameIndex = 0; _lockedFrameTimer = 0f;
+            }
             _locked = locked;
             if (lockedRenderer == null)
             {

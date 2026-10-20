@@ -146,7 +146,10 @@ namespace RevGame.Board
             scratch.Visited.Clear();
             foreach (Piece root in board.Pieces)
             {
-                if (!scratch.Visited.Add(root)) { continue; }
+                if (!scratch.Visited.Add(root))
+                {
+                    continue;
+                }
                 scratch.Group.Clear();
                 scratch.Group.Add(root);
                 System.Array.Clear(scratch.Empty, 0, scratch.Empty.Length);
@@ -166,15 +169,24 @@ namespace RevGame.Board
                         {
                             BoardPos pos = BoundaryAt(piece, edge, direction);
                             Cell cell = board.GetCell(pos);
-                            if (cell == null) { continue; }
+                            if (cell == null)
+                            {
+                                continue;
+                            }
                             if (cell.IsEmpty)
                             {
                                 int index = pos.Y * board.Size + pos.X;
-                                if (scratch.Empty[index]) { continue; }
+                                if (scratch.Empty[index])
+                                {
+                                    continue;
+                                }
                                 scratch.Empty[index] = true;
                                 liberties++;
                                 // 全盘第一遍已经判过眼，此处直接读结果，不对同一空格重复算四邻。
-                                if (cell.EyeSide == root.Side) { eyes++; }
+                                if (cell.EyeSide == root.Side)
+                                {
+                                    eyes++;
+                                }
                             }
                             else if (cell.Occupant.Side == root.Side && scratch.Visited.Add(cell.Occupant))
                             {
@@ -202,18 +214,36 @@ namespace RevGame.Board
         /// <summary>四邻查询不使用yield迭代器，避免整盘判眼时创建大量短命枚举对象。</summary>
         private static BoardPos Neighbor(BoardPos pos, int direction)
         {
-            if (direction == 0) { return new BoardPos(pos.X - 1, pos.Y); }
-            if (direction == 1) { return new BoardPos(pos.X + 1, pos.Y); }
-            if (direction == 2) { return new BoardPos(pos.X, pos.Y - 1); }
+            if (direction == 0)
+            {
+                return new BoardPos(pos.X - 1, pos.Y);
+            }
+            if (direction == 1)
+            {
+                return new BoardPos(pos.X + 1, pos.Y);
+            }
+            if (direction == 2)
+            {
+                return new BoardPos(pos.X, pos.Y - 1);
+            }
             return new BoardPos(pos.X, pos.Y + 1);
         }
 
         /// <summary>按“边上的第edge格、四个方向”取得外边界；只创建值类型坐标。</summary>
         private static BoardPos BoundaryAt(Piece piece, int edge, int direction)
         {
-            if (direction == 0) { return new BoardPos(piece.Pos.X - 1, piece.Pos.Y + edge); }
-            if (direction == 1) { return new BoardPos(piece.Pos.X + piece.Size, piece.Pos.Y + edge); }
-            if (direction == 2) { return new BoardPos(piece.Pos.X + edge, piece.Pos.Y - 1); }
+            if (direction == 0)
+            {
+                return new BoardPos(piece.Pos.X - 1, piece.Pos.Y + edge);
+            }
+            if (direction == 1)
+            {
+                return new BoardPos(piece.Pos.X + piece.Size, piece.Pos.Y + edge);
+            }
+            if (direction == 2)
+            {
+                return new BoardPos(piece.Pos.X + edge, piece.Pos.Y - 1);
+            }
             return new BoardPos(piece.Pos.X + edge, piece.Pos.Y + piece.Size);
         }
     }

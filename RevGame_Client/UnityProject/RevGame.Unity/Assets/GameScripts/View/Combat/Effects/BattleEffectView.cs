@@ -51,8 +51,14 @@ namespace RevGame.View
             get
             {
                 Camera camera = Camera.main;
-                if (camera == null) { return new Rect(); }
-                if (_textRenderer == null) { _textRenderer = damageText.GetComponent<Renderer>(); }
+                if (camera == null)
+                {
+                    return new Rect();
+                }
+                if (_textRenderer == null)
+                {
+                    _textRenderer = damageText.GetComponent<Renderer>();
+                }
                 Bounds bounds = _textRenderer.bounds;
                 Vector3 min = camera.WorldToScreenPoint(bounds.min);
                 Vector3 max = camera.WorldToScreenPoint(bounds.max);
@@ -102,7 +108,10 @@ namespace RevGame.View
         {
             float alpha = covered ? 0.35f : 1f;
             // 遮挡关系没有变化就不重复写5份TextMesh颜色。Tween淡出仍由SetNumberAlpha逐帧更新。
-            if (Mathf.Approximately(alpha, _occlusionAlpha)) { return; }
+            if (Mathf.Approximately(alpha, _occlusionAlpha))
+            {
+                return;
+            }
             _occlusionAlpha = alpha;
             ApplyNumberAlpha();
         }
@@ -112,7 +121,10 @@ namespace RevGame.View
         /// <summary>伤害只显示已结算数值；arrange在创建Tween前安排位置，避免动画下一帧把避让位置覆盖掉。</summary>
         public void Show(BattleEffectKind kind, Vector3 position, int damage, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy, System.Action<BattleEffectView> arrange = null)
         {
-            if (kind != BattleEffectKind.Damage) { throw new System.InvalidOperationException("数字特效只能显示已经结算的伤害；弹道应使用 ShowProjectile"); }
+            if (kind != BattleEffectKind.Damage)
+            {
+                throw new System.InvalidOperationException("数字特效只能显示已经结算的伤害；弹道应使用 ShowProjectile");
+            }
             ResetVisual(position, onFinished);
             damageText.gameObject.SetActive(true);
             BattleText config = GameTextConfig.Require("Damage");
@@ -168,7 +180,10 @@ namespace RevGame.View
             arrange?.Invoke(this);
             Vector3 start = transform.position;
             Vector3 end = start + Vector3.up * _textRise;
-            if (arrange == null) { end = KeepTextOnScreen(end); }
+            if (arrange == null)
+            {
+                end = KeepTextOnScreen(end);
+            }
             float duration = Mathf.Min(config.Duration, attack ? 0.9f : 1.1f);
             transform.localScale = Vector3.one * (_baseTextScale * 0.72f);
             Sequence sequence = DOTween.Sequence();
@@ -186,7 +201,10 @@ namespace RevGame.View
             Vector3 direction = target - source;
             float distance = direction.magnitude;
             // ★ 同格/极短距离没有可飞行空间：直接结束，禁止在原点播放一根“没有位移的子弹”。
-            if (distance < 0.05f) { Finish(); return; }
+            if (distance < 0.05f)
+            {
+                Finish(); return;
+            }
             Vector3 unit = direction / distance;
             float inset = Mathf.Min(Consts.CellSize * 0.46f, distance * 0.30f);
             source += unit * inset;
@@ -232,13 +250,19 @@ namespace RevGame.View
         /// <summary>生命周期保险：寿命到期先停止旧动画再归池；不能让失去Tween驱动的弹头永久停留在棋子上。</summary>
         private void LateUpdate()
         {
-            if (_projectileActive && Time.time >= _projectileExpiresAt) { StopAnimation(); Finish(); }
+            if (_projectileActive && Time.time >= _projectileExpiresAt)
+            {
+                StopAnimation(); Finish();
+            }
         }
 
         /// <summary>子图与本体共用Sprite和材质；局部尺寸跟随归一化根节点，尾巴始终短于一格。</summary>
         private void ConfigureProjectileLayer(SpriteRenderer layer, Vector3 offset, Vector3 scale, int order)
         {
-            if (layer == null) { return; }
+            if (layer == null)
+            {
+                return;
+            }
             layer.enabled = true;
             layer.sprite = projectileSprite;
             layer.drawMode = SpriteDrawMode.Simple;
@@ -255,22 +279,37 @@ namespace RevGame.View
             Color color = _projectileColor;
             color.a = alpha;
             spriteRenderer.color = color;
-            if (projectileOutline != null) { projectileOutline.color = new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f); }
-            if (projectileTrail != null) { color.a = alpha * 0.45f; projectileTrail.color = color; }
+            if (projectileOutline != null)
+            {
+                projectileOutline.color = new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f);
+            }
+            if (projectileTrail != null)
+            {
+                color.a = alpha * 0.45f; projectileTrail.color = color;
+            }
         }
 
         /// <summary>这个预制体承担数字、升星和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
         private void HideProjectileLayers()
         {
-            if (projectileOutline != null) { projectileOutline.enabled = false; }
-            if (projectileTrail != null) { projectileTrail.enabled = false; }
+            if (projectileOutline != null)
+            {
+                projectileOutline.enabled = false;
+            }
+            if (projectileTrail != null)
+            {
+                projectileTrail.enabled = false;
+            }
         }
 
         /// <summary>文字离边缘留出可读空间；顶排命中时缩短上浮距离，防止数字被手机屏幕裁掉。</summary>
         private static Vector3 KeepTextOnScreen(Vector3 position, float top = 0.88f)
         {
             Camera camera = Camera.main;
-            if (camera == null) { return position; }
+            if (camera == null)
+            {
+                return position;
+            }
             // 视口坐标 0~1 表示整块屏幕，与手机实际像素无关。上方还留有回合 HUD，不能飘进其区域。
             Vector3 viewport = camera.WorldToViewportPoint(position);
             viewport.x = Mathf.Clamp(viewport.x, 0.08f, 0.92f);

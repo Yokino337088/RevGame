@@ -58,7 +58,10 @@ namespace RevGame.View
 
         private void OnCameraRendering(Camera camera)
         {
-            if (camera == boardCamera) { FitCamera(); }
+            if (camera == boardCamera)
+            {
+                FitCamera();
+            }
         }
         private void Start()
         {
@@ -71,14 +74,23 @@ namespace RevGame.View
         /// <summary>两段式逻辑路径通过框架加载，编辑器直读和正式AB加载共用此入口；不改用户选好的背景Sprite。</summary>
         private void LoadBackgroundMaterial()
         {
-            if (backgroundRenderer == null) { _backgroundReady = true; return; }
-            if (_backgroundMaterialRequested) { return; }
+            if (backgroundRenderer == null)
+            {
+                _backgroundReady = true; return;
+            }
+            if (_backgroundMaterialRequested)
+            {
+                return;
+            }
             _backgroundMaterialRequested = true;
             _originalBackgroundMaterial = backgroundRenderer.sharedMaterial;
             RevResManager.LoadAsync(RevResPath.Material_Background, "ArcaneScene", typeof(Material), handle =>
             {
                 // 场景已退出时只释放迟到结果；不能给销毁中的Renderer写材质。
-                if (_released) { return; } // OnDestroy已经配对释放请求，迟到回调不能再减一次引用计数。
+                if (_released)
+                {
+                    return;
+                } // OnDestroy已经配对释放请求，迟到回调不能再减一次引用计数。
                 if (!handle.IsLoaded)
                 {
                     _backgroundError = "场景动态材质加载失败：" + handle.ErrorReason;
@@ -104,7 +116,10 @@ namespace RevGame.View
             float aspect = Mathf.Max(0.1f, boardCamera.aspect);
             // 与手牌/HUD 使用相同安全区域。这里用像素计算，UI 用画布单位计算，比例完全一致。
             Vector2 screenSize = new Vector2(boardCamera.pixelWidth, boardCamera.pixelHeight);
-            if (screenSize.x < 1f || screenSize.y < 1f) { return; }
+            if (screenSize.x < 1f || screenSize.y < 1f)
+            {
+                return;
+            }
             GameBattleLayout.Regions areas = GameBattleLayout.Calculate(screenSize, GameBattleLayout.SafeViewport());
             float boardFraction = areas.Board.height / screenSize.y;
             float boardWidth = Consts.BoardSize * Consts.CellSize;
@@ -146,8 +161,14 @@ namespace RevGame.View
         {
             Vector4 outer = UnityEngine.Sprites.DataUtility.GetOuterUV(backgroundRenderer.sprite);
             Vector4 rect = new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y);
-            if (_backgroundProperties != null && rect == _lastBackgroundUv) { return; }
-            if (_backgroundProperties == null) { _backgroundProperties = new MaterialPropertyBlock(); }
+            if (_backgroundProperties != null && rect == _lastBackgroundUv)
+            {
+                return;
+            }
+            if (_backgroundProperties == null)
+            {
+                _backgroundProperties = new MaterialPropertyBlock();
+            }
             _lastBackgroundUv = rect;
             backgroundRenderer.GetPropertyBlock(_backgroundProperties);
             _backgroundProperties.SetVector(ArtUvRectId, rect);
@@ -159,7 +180,10 @@ namespace RevGame.View
             int version = ++_screenVersion;
             _readyScreen = GameScreen.Exit;
             _loadError = null;
-            if (boardRoot != null) { boardRoot.SetActive(screen == GameScreen.Battle); }
+            if (boardRoot != null)
+            {
+                boardRoot.SetActive(screen == GameScreen.Battle);
+            }
             RevUI.Close<HomePanel>();
             RevUI.Close<LevelSelectPanel>();
             if (screen == GameScreen.Home || screen == GameScreen.LevelSelect)
@@ -178,12 +202,24 @@ namespace RevGame.View
             try
             {
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIMenus", "UIBattle" });
-                if (_released || version != _screenVersion) { return; }
+                if (_released || version != _screenVersion)
+                {
+                    return;
+                }
                 RevUIPanel panel;
-                if (screen == GameScreen.Home) { panel = await RevUI.OpenAsync<HomePanel>(); }
-                else { panel = await RevUI.OpenAsync<LevelSelectPanel>(); }
+                if (screen == GameScreen.Home)
+                {
+                    panel = await RevUI.OpenAsync<HomePanel>();
+                }
+                else
+                {
+                    panel = await RevUI.OpenAsync<LevelSelectPanel>();
+                }
                 CheckOpened(panel, screen);
-                if (!_released && version == _screenVersion) { _readyScreen = screen; }
+                if (!_released && version == _screenVersion)
+                {
+                    _readyScreen = screen;
+                }
             }
             catch (Exception error)
             {
@@ -195,7 +231,10 @@ namespace RevGame.View
         /// <summary>先让棋盘正常OnDisable回收对象，再交给RevScene清池/卸场景，避免双重归还或旧弹幕残留。</summary>
         public void SuspendBattle()
         {
-            if (boardRoot != null) { boardRoot.SetActive(false); }
+            if (boardRoot != null)
+            {
+                boardRoot.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -208,20 +247,44 @@ namespace RevGame.View
             BoardView board = boardRoot == null ? null : boardRoot.GetComponent<BoardView>();
             while (!_released)
             {
-                if (!string.IsNullOrEmpty(_loadError)) { throw new InvalidOperationException(_loadError); }
-                if (!string.IsNullOrEmpty(_backgroundError)) { throw new InvalidOperationException(_backgroundError); }
+                if (!string.IsNullOrEmpty(_loadError))
+                {
+                    throw new InvalidOperationException(_loadError);
+                }
+                if (!string.IsNullOrEmpty(_backgroundError))
+                {
+                    throw new InvalidOperationException(_backgroundError);
+                }
                 if (screen == GameScreen.Battle)
                 {
-                    if (board == null) { throw new InvalidOperationException("GameScene缺少BoardView"); }
-                    if (!string.IsNullOrEmpty(board.LoadError)) { throw new InvalidOperationException(board.LoadError); }
+                    if (board == null)
+                    {
+                        throw new InvalidOperationException("GameScene缺少BoardView");
+                    }
+                    if (!string.IsNullOrEmpty(board.LoadError))
+                    {
+                        throw new InvalidOperationException(board.LoadError);
+                    }
                     progress?.Invoke(board.CellCount / (float)(Consts.BoardSize * Consts.BoardSize) * 0.8f);
-                    if (board.IsReady && _backgroundReady && RevUI.IsOpen<PreparePanel>() && RevUI.IsOpen<BattleHudPanel>()) { break; }
+                    if (board.IsReady && _backgroundReady && RevUI.IsOpen<PreparePanel>() && RevUI.IsOpen<BattleHudPanel>())
+                    {
+                        break;
+                    }
                 }
-                else if (_readyScreen == screen) { break; }
-                if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException("画面装配超时：" + screen); }
+                else if (_readyScreen == screen)
+                {
+                    break;
+                }
+                if (Time.realtimeSinceStartup > deadline)
+                {
+                    throw new TimeoutException("画面装配超时：" + screen);
+                }
                 await RevTask.Yield();
             }
-            if (_released) { throw new OperationCanceledException("场景已释放"); }
+            if (_released)
+            {
+                throw new OperationCanceledException("场景已释放");
+            }
             // 图集注册与UGUI提交不是同一个步骤。刷新后让引擎完成一次真实Canvas重建和渲染，再撤遮挡。
             Image[] images = UnityEngine.Object.FindObjectsOfType<Image>();
             foreach (Image image in images) { image.SetAllDirty(); }
@@ -229,7 +292,10 @@ namespace RevGame.View
             await RevTask.Yield();
             foreach (Image image in images)
             {
-                if (image == null || image.sprite == null) { continue; }
+                if (image == null || image.sprite == null)
+                {
+                    continue;
+                }
                 if (image.sprite.texture == null || image.mainTexture == Texture2D.whiteTexture)
                 {
                     throw new InvalidOperationException("UI图集像素未绑定：" + image.name + " / " + image.sprite.name);
@@ -238,7 +304,10 @@ namespace RevGame.View
             if (screen == GameScreen.Battle)
             {
                 CardItem[] cards = RevUI.Get<PreparePanel>().GetComponentsInChildren<CardItem>();
-                if (cards.Length != 6) { throw new InvalidOperationException("开局手牌视图必须完整显示6张"); }
+                if (cards.Length != 6)
+                {
+                    throw new InvalidOperationException("开局手牌视图必须完整显示6张");
+                }
             }
             progress?.Invoke(1f);
             await RevTask.Yield();
@@ -264,7 +333,10 @@ namespace RevGame.View
             _released = true;
             if (_backgroundMaterialRequested)
             {
-                if (backgroundRenderer != null) { backgroundRenderer.sharedMaterial = _originalBackgroundMaterial; }
+                if (backgroundRenderer != null)
+                {
+                    backgroundRenderer.sharedMaterial = _originalBackgroundMaterial;
+                }
                 RevResManager.Release(RevResPath.Material_Background, "ArcaneScene");
                 _backgroundMaterialRequested = false;
             }

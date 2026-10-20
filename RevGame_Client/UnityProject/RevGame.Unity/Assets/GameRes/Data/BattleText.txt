@@ -22,3 +22,5 @@ Event_断链	断链	敌方阵型受到干扰	#FFD84A	48	2.8	1.12
 Event_守阵回气	守阵回气	全队气数增加，阵型更加稳固	#FFD84A	48	2.8	1.12
 Event_炮火支援	炮火支援	支援火力命中敌人	#FFD84A	48	2.8	1.12
 Event_决胜支援	决胜支援	援军总攻！清除剩余敌人	#FFD84A	48	2.8	1.12
+EnemyDeployment	{intention}	{piece} {position}	#FF8A80	36	1.8	1.06
+BossSkill	{skill}	{hint}	#FF5A5A	40	2.2	1.1

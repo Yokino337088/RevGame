@@ -131,8 +131,9 @@ namespace RevGame.Editor
                         battle.Tick(Balance.BattleSimulationStepSeconds);
                         if (battle.EnemyDeploymentCount == previous) { continue; }
                         Check(battle.EnemyDeploymentCount == previous + 1, "每个落子窗口只增加一颗敌棋");
-                        Check(battle.BattleElapsed - lastTime >= 12f && battle.BattleElapsed < 60f, "至少间隔12秒且60秒后停援");
-                        Check(battle.Board.GetPiecesOf(GameSide.Enemy).Count <= 26, "敌军存活数量遵守上限");
+                        float interval = previous == 0 ? Balance.DeployStartSeconds : System.Math.Max(Balance.DeployIntervalMinSeconds, Balance.DeployIntervalBaseSeconds - battle.EnemyIntelligence * Balance.DeployIntervalPerLevelSeconds);
+                        Check(battle.BattleElapsed - lastTime >= interval && battle.BattleElapsed < Balance.DeployStopSeconds, "遵守配置落子间隔与停援时刻");
+                        Check(battle.Board.GetPiecesOf(GameSide.Enemy).Count <= Balance.DeployLivingCap, "敌军存活数量遵守上限");
                         Piece newest = battle.EnemyPieces[battle.EnemyPieces.Count - 1];
                         Check(battle.Board.GetPiece(newest.Pos) == newest && !newest.IsLocked, "实际落点合法且新棋不会无气出生");
                         previous = battle.EnemyDeploymentCount;
@@ -140,7 +141,7 @@ namespace RevGame.Editor
                         total++;
                     }
                     Check(battle.LastWinner == GameSide.Player && battle.BattleElapsed <= 87f, "加入敌方增援后弱势玩家仍由真实支援取胜");
-                    Check(previous <= 2 + battle.EnemyIntelligence, "章节AI档位的落子总预算未超限");
+                    Check(previous <= Balance.DeployBaseCount + battle.EnemyIntelligence, "章节AI档位的落子总预算未超限");
                     int count = battle.EnemyDeploymentCount;
                     battle.Tick(30f);
                     Check(battle.EnemyDeploymentCount == count, "结算期不会出现迟到落子");

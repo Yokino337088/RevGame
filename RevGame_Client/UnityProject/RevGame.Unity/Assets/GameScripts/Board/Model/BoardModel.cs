@@ -261,7 +261,10 @@ namespace RevGame.Board
         {
             foreach (Piece piece in _piecesByPos.Values)
             {
-                if (piece.Id == id) { return piece; }
+                if (piece.Id == id)
+                {
+                    return piece;
+                }
             }
             return null;
         }
@@ -272,7 +275,10 @@ namespace RevGame.Board
             destination.Clear();
             foreach (Piece piece in _piecesByPos.Values)
             {
-                if (!side.HasValue || piece.Side == side.Value) { destination.Add(piece); }
+                if (!side.HasValue || piece.Side == side.Value)
+                {
+                    destination.Add(piece);
+                }
             }
         }
 

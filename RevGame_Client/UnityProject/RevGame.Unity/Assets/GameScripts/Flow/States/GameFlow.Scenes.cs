@@ -44,13 +44,19 @@ namespace RevGame.Flow
         private string _developmentFault;
         public bool ArmDevelopmentFailure(string stage)
         {
-            if (IsTransitioning || (stage != "before-scene" && stage != "after-scene")) { return false; }
+            if (IsTransitioning || (stage != "before-scene" && stage != "after-scene"))
+            {
+                return false;
+            }
             _developmentFault = stage;
             return true;
         }
         private void CheckDevelopmentFailure(string stage)
         {
-            if (_developmentFault != stage) { return; }
+            if (_developmentFault != stage)
+            {
+                return;
+            }
             _developmentFault = null;
             throw new InvalidOperationException("验收主动注入过场失败：" + stage);
         }
@@ -76,7 +82,10 @@ namespace RevGame.Flow
                 _loading.ResetCover();
                 Report(0.02f, target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…");
                 await RevTask.Yield(); // 让遮挡层先实际画一帧，再开始资源解码与场景工作。
-                if (!_startupComplete) { await LoadStartupDataAsync(); }
+                if (!_startupComplete)
+                {
+                    await LoadStartupDataAsync();
+                }
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(target == GameScreen.Battle ? BattleAtlases : MenuAtlases);
                 ThrowIfDisposed();
                 Report(0.18f, "正在整理行囊…");
@@ -92,7 +101,10 @@ namespace RevGame.Flow
                     // 离开战斗时先停用视图：它们回池之后RevScene才可以安全清池。
                     // 此时旧域仍在，加载失败可重新激活旧画面；计时已由IsTransitioning暂停。
                     GamePresentation old = UnityEngine.Object.FindObjectOfType<GamePresentation>();
-                    if (old != null) { old.SuspendBattle(); }
+                    if (old != null)
+                    {
+                        old.SuspendBattle();
+                    }
                     await RevScene.LoadAsync(sceneName, p => Report(0.42f + p * 0.23f, "正在穿越迷雾…"));
                     ThrowIfDisposed();
                     if (RevScene.CurrentName != sceneName)
@@ -107,7 +119,10 @@ namespace RevGame.Flow
                 CheckDevelopmentFailure("after-scene");
 #endif
                 GamePresentation presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
-                if (presentation == null) { throw new InvalidOperationException("场景缺少GamePresentation接线：" + sceneName); }
+                if (presentation == null)
+                {
+                    throw new InvalidOperationException("场景缺少GamePresentation接线：" + sceneName);
+                }
                 Report(0.66f, "正在点亮前路…");
                 if (target == GameScreen.Battle)
                 {
@@ -133,13 +148,19 @@ namespace RevGame.Flow
                     LastError = "加载失败：" + error.Message;
                     RevLog.Exception(error, "场景交接失败，保留遮挡并提供返回入口", "RevGame");
                     // 失败时绝不以100%掩盖缺失画面；按钮执行真实回退流程，不让玩家对着残缺棋盘操作。
-                    if (_loading != null) { _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, LoadStep, LastError)); }
+                    if (_loading != null)
+                    {
+                        _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, LoadStep, LastError));
+                    }
                 }
             }
             finally
             {
                 warmup.Dispose();
-                if (ReferenceEquals(_activeWarmup, warmup)) { _activeWarmup = null; }
+                if (ReferenceEquals(_activeWarmup, warmup))
+                {
+                    _activeWarmup = null;
+                }
                 IsTransitioning = false;
             }
         }
@@ -197,6 +218,8 @@ namespace RevGame.Flow
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<RewardBoostConfigTable>();
             ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<BossSkillConfigTable>();
+            ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<BalanceRuleTable>();
             ThrowIfDisposed();
             GameConfig.Initialize(new GameConfigTables
@@ -211,6 +234,7 @@ namespace RevGame.Flow
                 EnemyReinforce = RevDataTableManager.Get<EnemyReinforceConfigTable>(),
                 Rewards = RevDataTableManager.Get<RewardConfigTable>(),
                 RewardBoosts = RevDataTableManager.Get<RewardBoostConfigTable>(),
+                BossSkills = RevDataTableManager.Get<BossSkillConfigTable>(),
                 Balance = RevDataTableManager.Get<BalanceRuleTable>(),
             });
         }
@@ -218,7 +242,10 @@ namespace RevGame.Flow
         /// <summary>只在过场失败后可用。回退同样通过RevScene和资源屏障，不直接删UI或重初始化框架。</summary>
         public void DismissLoadingFailure()
         {
-            if (_disposed || IsTransitioning || string.IsNullOrEmpty(LastError)) { return; }
+            if (_disposed || IsTransitioning || string.IsNullOrEmpty(LastError))
+            {
+                return;
+            }
             IsTransitioning = true;
             SwitchFromButtonAsync(GameScreen.Home);
         }
@@ -230,15 +257,24 @@ namespace RevGame.Flow
             // 0.02是新一次过场的起点，允许从上次的1重新开始。
             float next = value <= 0.02f ? value : Mathf.Max(LoadProgress, Mathf.Clamp01(value));
             // 轮询就绪时可能多帧没有新格子；不重复分配数据/重建文字/重启同一段Tween。
-            if (Mathf.Approximately(next, LoadProgress) && message == LoadStep) { return; }
+            if (Mathf.Approximately(next, LoadProgress) && message == LoadStep)
+            {
+                return;
+            }
             LoadProgress = next;
             LoadStep = message;
-            if (_loading != null) { _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, message)); }
+            if (_loading != null)
+            {
+                _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, message));
+            }
         }
 
         private void ThrowIfDisposed()
         {
-            if (_disposed) { throw new OperationCanceledException("游戏流程已退出"); }
+            if (_disposed)
+            {
+                throw new OperationCanceledException("游戏流程已退出");
+            }
         }
     }
 }

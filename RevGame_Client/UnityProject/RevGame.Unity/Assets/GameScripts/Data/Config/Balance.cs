@@ -33,7 +33,10 @@ namespace RevGame.Data
         public float Float(string key, float min, float max)
         {
             _used.Add(key);
-            if (!_table.FindByKey(key, out BalanceRule row)) { _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）"); return min; }
+            if (!_table.FindByKey(key, out BalanceRule row))
+            {
+                _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）"); return min;
+            }
             if (float.IsNaN(row.Value) || float.IsInfinity(row.Value) || row.Value < min || row.Value > max)
             {
                 _problems.Add("BalanceRule[" + key + "] = " + row.Value.ToString("R", CultureInfo.InvariantCulture) + " 超出合法范围 [" + GameConfig.Fmt(min) + ", " + GameConfig.Fmt(max) + "]");
@@ -45,7 +48,10 @@ namespace RevGame.Data
         public int Int(string key, int min, int max)
         {
             _used.Add(key);
-            if (!_table.FindByKey(key, out BalanceRule row)) { _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）"); return min; }
+            if (!_table.FindByKey(key, out BalanceRule row))
+            {
+                _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）"); return min;
+            }
             float v = row.Value;
             if (float.IsNaN(v) || float.IsInfinity(v) || v != (float)Math.Floor(v) || v < min || v > max)
             {
@@ -60,7 +66,10 @@ namespace RevGame.Data
         {
             foreach (string key in _table.Keys)
             {
-                if (!_used.Contains(key)) { _problems.Add("BalanceRule 里的参数 " + key + " 代码并不使用（多半是键名拼错，改了不会生效；确需新增请让程序同步读取）"); }
+                if (!_used.Contains(key))
+                {
+                    _problems.Add("BalanceRule 里的参数 " + key + " 代码并不使用（多半是键名拼错，改了不会生效；确需新增请让程序同步读取）");
+                }
             }
         }
     }
@@ -91,6 +100,14 @@ namespace RevGame.Data
         public float BossAccelerationSeconds;
         public float BossAccelerationBonus;
         public float BossHpGrowthPerChapter;
+        // ---- Boss 技能节奏（技能本身的参数在 BossSkillConfig 表里）
+        public float BossFirstSkillSeconds;
+        public float BossSkillGapSeconds;
+        public float BossRecoverSeconds;
+        public float BossEnrageHpRatio;
+        public float BossEnrageCooldownScale;
+        public float BossCooldownPerChapter;
+        public float BossPowerPerChapter;
         // ---- 敌方成长
         public float EnemyHpBase;
         public float EnemyHpMultiplier;
@@ -172,6 +189,14 @@ namespace RevGame.Data
             v.BossAccelerationSeconds = r.Float("Boss.AccelerationSeconds", 1f, 3600f);
             v.BossAccelerationBonus = r.Float("Boss.AccelerationBonus", 0f, 100f);
             v.BossHpGrowthPerChapter = r.Float("Boss.HpGrowthPerChapter", 0f, 100f);
+            v.BossFirstSkillSeconds = r.Float("Boss.FirstSkillSeconds", 0f, 120f);
+            v.BossSkillGapSeconds = r.Float("Boss.SkillGapSeconds", 0f, 60f);
+            v.BossRecoverSeconds = r.Float("Boss.RecoverSeconds", 0f, 10f);
+            v.BossEnrageHpRatio = r.Float("Boss.EnrageHpRatio", 0f, 1f);
+            v.BossEnrageCooldownScale = r.Float("Boss.EnrageCooldownScale", 0.1f, 1f);
+            // 上限 0.15：第六章冷却最多缩到 1-5×0.15=25%，不会出现 0 或负冷却。
+            v.BossCooldownPerChapter = r.Float("Boss.CooldownPerChapter", 0f, 0.15f);
+            v.BossPowerPerChapter = r.Float("Boss.PowerPerChapter", 0f, 2f);
 
             v.EnemyHpBase = r.Float("Enemy.HpBase", 0.01f, 1000f);
             v.EnemyHpMultiplier = r.Float("Enemy.HpMultiplier", 0.01f, 1000f);
@@ -229,7 +254,12 @@ namespace RevGame.Data
             r.ReportUnused();
 
             // ---- 跨参数的逻辑约束：单个值合法，组合起来不合法也会出事
-            void Rule(bool ok, string message) { if (!ok) { problems.Add("BalanceRule 参数组合不合法：" + message); } }
+            void Rule(bool ok, string message) {
+            if (!ok)
+            {
+                problems.Add("BalanceRule 参数组合不合法：" + message);
+            }
+            }
             Rule(v.PrepBuffCountMin <= v.PrepBuffCountMax, "Prep.BuffCountMin 不能大于 Prep.BuffCountMax");
             Rule(v.ClassThresholdLow <= v.ClassThresholdHigh, "Damage.ClassThresholdLow 不能大于 Damage.ClassThresholdHigh");
             Rule(v.EnemyCountBase <= v.EnemyCountMax, "Enemy.CountBase 不能大于 Enemy.CountMax");
@@ -273,6 +303,20 @@ namespace RevGame.Data
         public static float BossAccelerationSeconds => V.BossAccelerationSeconds;
         public static float BossAccelerationBonus => V.BossAccelerationBonus;
         public static float BossHpGrowthPerChapter => V.BossHpGrowthPerChapter;
+        /// <summary>开战后 Boss 第一次放技能前的等待秒数。</summary>
+        public static float BossFirstSkillSeconds => V.BossFirstSkillSeconds;
+        /// <summary>任意两次技能之间的公共间隔秒数，防止技能首尾相接。</summary>
+        public static float BossSkillGapSeconds => V.BossSkillGapSeconds;
+        /// <summary>技能最后一段命中后的收招硬直秒数。</summary>
+        public static float BossRecoverSeconds => V.BossRecoverSeconds;
+        /// <summary>生命比例低于它时触发一次狂暴。</summary>
+        public static float BossEnrageHpRatio => V.BossEnrageHpRatio;
+        /// <summary>狂暴后技能冷却乘以的系数。</summary>
+        public static float BossEnrageCooldownScale => V.BossEnrageCooldownScale;
+        /// <summary>每高一章冷却缩短的比例。</summary>
+        public static float BossCooldownPerChapter => V.BossCooldownPerChapter;
+        /// <summary>每高一章技能伤害提高的比例。</summary>
+        public static float BossPowerPerChapter => V.BossPowerPerChapter;
         // ---- 敌方成长
         /// <summary>敌方生命基础系数（旧名 EnemyHpScale）。</summary>
         public static float EnemyHpScale => V.EnemyHpBase;

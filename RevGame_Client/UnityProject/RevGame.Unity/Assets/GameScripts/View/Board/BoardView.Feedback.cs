@@ -79,11 +79,20 @@ namespace RevGame.View
         private void FlushAttackText()
         {
             float now = Time.time;
-            if (now < _nextAttackAt) { return; }
+            if (now < _nextAttackAt)
+            {
+                return;
+            }
             PendingAttackText pending;
             int sourceId;
-            if (!_attackQueue.TryPeek(now, 0.65f, out pending, out sourceId)) { return; }
-            if (!TryReserveAttackText(sourceId)) { return; }
+            if (!_attackQueue.TryPeek(now, 0.65f, out pending, out sourceId))
+            {
+                return;
+            }
+            if (!TryReserveAttackText(sourceId))
+            {
+                return;
+            }
             _attackQueue.MarkDisplayed(sourceId, now);
             ShowAttackText(pending.Attack);
         }
@@ -104,11 +113,25 @@ namespace RevGame.View
         {
             float now = Time.time;
             float last;
-            if (now < _nextAttackAt || _pendingDamage.Count >= 16) { return false; }
-            if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts) { return false; }
+            if (now < _nextAttackAt || _pendingDamage.Count >= 16)
+            {
+                return false;
+            }
+            if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
+            {
+                return false;
+            }
             int attacks = _pendingTextLoads;
-            foreach (BattleEffectView effect in _textEffects) { if (effect.IsAttackText) { attacks++; } }
-            if (attacks >= MaxAttackTexts || (_attackTextAt.TryGetValue(pieceId, out last) && now - last < 0.65f)) { return false; }
+            foreach (BattleEffectView effect in _textEffects) {
+            if (effect.IsAttackText)
+            {
+                attacks++;
+            }
+            }
+            if (attacks >= MaxAttackTexts || (_attackTextAt.TryGetValue(pieceId, out last) && now - last < 0.65f))
+            {
+                return false;
+            }
             _attackTextAt[pieceId] = now;
             _nextAttackAt = now + 0.12f;
             _pendingTextLoads++;
@@ -135,10 +158,16 @@ namespace RevGame.View
             int spawned = 0;
             while (_projectileQueue.Count > 0 && spawned < 2 && now >= _nextProjectileAt)
             {
-                if (_projectileEffects.Count + _pendingProjectileLoads >= MaxProjectiles) { return; }
+                if (_projectileEffects.Count + _pendingProjectileLoads >= MaxProjectiles)
+                {
+                    return;
+                }
                 PendingProjectile shot;
                 int sourceId;
-                if (!_projectileQueue.TryPeek(now, 0f, out shot, out sourceId)) { return; }
+                if (!_projectileQueue.TryPeek(now, 0f, out shot, out sourceId))
+                {
+                    return;
+                }
                 _pendingProjectileLoads++;
                 _projectileQueue.MarkDisplayed(sourceId, now);
                 _nextProjectileAt += ProjectileSpawnInterval;
@@ -150,12 +179,18 @@ namespace RevGame.View
         /// <summary>把已结算伤害放入有界显示队列；队列满时略过显示，绝不能因此撤销或重复扣血。</summary>
         private void QueueDamageText(BattleHitInfo hit, Vector3 position)
         {
-            if (hit.Damage <= 0) { return; }
+            if (hit.Damage <= 0)
+            {
+                return;
+            }
             PendingDamageText pending;
             if (!_pendingDamage.TryGetValue(hit.TargetId, out pending))
             {
                 // 有界队列：屏幕显示不完时不积压几百条旧数字，也不为每次命中创建一个Timer。
-                if (_pendingDamage.Count >= MaxPendingDamage) { return; }
+                if (_pendingDamage.Count >= MaxPendingDamage)
+                {
+                    return;
+                }
                 pending = new PendingDamageText { TargetId = hit.TargetId, Side = hit.TargetSide, CreatedAt = Time.time, ReadyAt = Time.time + 0.22f };
                 _pendingDamage.Add(hit.TargetId, pending);
             }
@@ -166,7 +201,10 @@ namespace RevGame.View
         /// <summary>在本帧动画推进后检查文字位置，让移动和放大的字也能获得遮挡淡化。</summary>
         private void LateUpdate()
         {
-            if (_released) { return; }
+            if (_released)
+            {
+                return;
+            }
             FlushProjectiles();
             FlushOneDamageText();
             FlushAttackText();
@@ -185,7 +223,10 @@ namespace RevGame.View
                 bool covered = false;
                 for (int j = 0; j < count; j++)
                 {
-                    if (_textSnapshot[j].TextOrder > older.TextOrder && _textRects[j].Overlaps(_textRects[i])) { covered = true; break; }
+                    if (_textSnapshot[j].TextOrder > older.TextOrder && _textRects[j].Overlaps(_textRects[i]))
+                    {
+                        covered = true; break;
+                    }
                 }
                 older.SetTextOccluded(covered);
             }
@@ -200,11 +241,20 @@ namespace RevGame.View
             _expiredDamageIds.Clear();
             foreach (PendingDamageText item in _pendingDamage.Values)
             {
-                if (Time.time - item.CreatedAt > 1.2f) { _expiredDamageIds.Add(item.TargetId); continue; }
-                if (Time.time >= item.ReadyAt && (oldest == null || item.CreatedAt < oldest.CreatedAt)) { oldest = item; }
+                if (Time.time - item.CreatedAt > 1.2f)
+                {
+                    _expiredDamageIds.Add(item.TargetId); continue;
+                }
+                if (Time.time >= item.ReadyAt && (oldest == null || item.CreatedAt < oldest.CreatedAt))
+                {
+                    oldest = item;
+                }
             }
             foreach (int id in _expiredDamageIds) { _pendingDamage.Remove(id); }
-            if (oldest == null || Time.time < _nextTextAt || _textEffects.Count + _pendingTextLoads >= MaxFloatingTexts) { return; }
+            if (oldest == null || Time.time < _nextTextAt || _textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
+            {
+                return;
+            }
             _pendingDamage.Remove(oldest.TargetId);
             _pendingTextLoads++;
             _nextTextAt = Time.time + 0.035f;
@@ -213,9 +263,19 @@ namespace RevGame.View
             RevPool.GetAsync<BattleEffectView>(effect =>
             {
                 // 过期回调不能减新回合的计数：只有代次仍然一致，才有权释放当前这笔预约。
-                if (_released || generation != _effectGeneration) { if (effect != null) { RevPool.Return(effect, 0); } return; }
+                if (_released || generation != _effectGeneration)
+                {
+                    if (effect != null)
+                    {
+                        RevPool.Return(effect, 0);
+                    }
+                    return;
+                }
                 _pendingTextLoads--;
-                if (effect == null) { RevLog.Warn("伤害文字加载失败", "RevGame"); return; }
+                if (effect == null)
+                {
+                    RevLog.Warn("伤害文字加载失败", "RevGame"); return;
+                }
                 _effects.Add(effect);
                 _textEffects.Add(effect);
                 effect.Show(BattleEffectKind.Damage, message.Position, message.Damage, OnEffectFinished, message.Side, ArrangeFloatingText);
@@ -229,7 +289,10 @@ namespace RevGame.View
         private void ArrangeFloatingText(BattleEffectView text)
         {
             Camera camera = Camera.main;
-            if (camera == null) { return; }
+            if (camera == null)
+            {
+                return;
+            }
             text.SetTextOrder(++_textOrder);
             Rect original = text.TextReservationRect;
             Vector3 anchor = text.transform.position;
@@ -240,7 +303,10 @@ namespace RevGame.View
             int occupiedCount = 0;
             foreach (BattleEffectView other in _textEffects)
             {
-                if (other != text) { _reservationRects[occupiedCount++] = other.TextReservationRect; }
+                if (other != text)
+                {
+                    _reservationRects[occupiedCount++] = other.TextReservationRect;
+                }
             }
             for (int i = 0; i < 25; i++)
             {
@@ -264,7 +330,10 @@ namespace RevGame.View
                     float height = Mathf.Max(0f, Mathf.Min(candidate.yMax, occupied.yMax) - Mathf.Max(candidate.yMin, occupied.yMin));
                     cost += width * height * 100f;
                 }
-                if (cost < bestCost) { bestCost = cost; best = delta; }
+                if (cost < bestCost)
+                {
+                    bestCost = cost; best = delta;
+                }
             }
             Vector3 pixel = camera.WorldToScreenPoint(anchor);
             text.transform.position = camera.ScreenToWorldPoint(pixel + new Vector3(best.x, best.y, 0f));

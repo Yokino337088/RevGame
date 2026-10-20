@@ -12,19 +12,32 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
+        /// <summary>本章 Boss 后的三选一候选；生成后只能消费一次，重复点击会被拒绝。</summary>
         private readonly List<RewardDef> _rewards = new List<RewardDef>();
         // ★ 开局解锁的棋种来自 PieceConfig.UnlockedAtStart，而战斗服务在启动入口注册时配置表还没加载完，
         // 所以不能在字段初始化里读配置——第一次真正用到时才从配置创建，之后随运行保留解锁进度。
         private HashSet<PieceKind> _unlockedKindsStore;
+        /// <summary>
+        /// 已解锁棋种，首次使用时才从配置创建。
+        /// 为什么延迟：服务在启动入口注册时配置表还没加载完，字段初始化里读表会拿到空集合。
+        /// </summary>
         private HashSet<PieceKind> _unlockedKinds => _unlockedKindsStore ?? (_unlockedKindsStore = PieceCatalog.CreateInitialUnlockedSet());
+        /// <summary>跨回合保留的全队攻击加成（跳过强化、奖励等）；准备增益另算，不混在一起。</summary>
         private float _attackBonus;
+        /// <summary>跨回合保留的攻击提速加成；只影响出手频率，不影响移动。</summary>
         private float _speedBonus;
+        /// <summary>跨回合保留的额外气数；会改变围困判定，改动后必须 RefreshGoState。</summary>
         private int _libertyBonus;
+        /// <summary>下一回合额外塞进手牌的奖励棋种；发牌时先占一个槽位，避免超限被丢。</summary>
         private PieceKind? _rewardCard;
+        /// <summary>已开过的战役数；奖励池据此解锁更高档选项，退出重进不会清零。</summary>
         private int _campaignsStarted;
+        /// <summary>整局是否已结束；防止结算按钮重复触发通关事件。</summary>
         private bool _finished;
+        /// <summary>奖励候选只读视图；真实领取必须走 ChooseReward，不能由界面自己加属性。</summary>
         public IReadOnlyList<RewardDef> Rewards
         {
             get
@@ -33,8 +46,15 @@ namespace RevGame.Services
             }
         }
 
+        /// <summary>持有眼位石数量；每局开始归零，只有选中补眼奖励才会增加。</summary>
         public int EyeStones { get; private set; }
+        /// <summary>
+        /// 是否处于“点金色空格补眼”的模式；与手牌、棋子选择互斥。
+        /// </summary>
         public bool EyeStoneSelected { get; private set; }
+        /// <summary>
+        /// 已解锁到第几章；选关界面据此决定按钮是否可点，战斗服务据此拒绝越级开局。
+        /// </summary>
         public int UnlockedChapter { get; private set; } = 1;
 
         public float TeamAttackBonus
@@ -107,6 +127,10 @@ namespace RevGame.Services
             return true;
         }
 
+        /// <summary>
+        /// 按奖励表生成三选一候选：先按权重抽不重复的项，再写入 _rewards 并广播。
+        /// 失败时宁可给出保底项，也不能让结算界面出现空白选项。
+        /// </summary>
         private void BuildRewards()
         {
             _rewards.Clear();
@@ -166,6 +190,10 @@ namespace RevGame.Services
             }
         }
 
+        /// <summary>
+        /// 计算某类奖励的抽取权重：人数落后等局势会提高对应奖励的权重。
+        /// 权重值来自配置表，本方法只负责把局势换算成倍率。
+        /// </summary>
         private int RewardWeight(RewardKind kind)
         {
             // 基础权重与“人数落后时的额外权重”都来自 RewardConfig；落后判定的倍数来自 Reward.OutnumberedFactor。
@@ -173,6 +201,10 @@ namespace RevGame.Services
             return RewardCatalog.WeightOf(kind, outnumbered);
         }
 
+        /// <summary>
+        /// 领取第 index 个奖励并推进下一章。
+        /// 必须校验阶段、索引和“是否已领过”，重复点击不能重复加属性。
+        /// </summary>
         public bool ChooseReward(int index)
         {
             if (Phase != GamePhase.Reward)
@@ -220,6 +252,10 @@ namespace RevGame.Services
             return StartRound(Chapter + 1, 1);
         }
 
+        /// <summary>
+        /// 第10回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。
+        /// 已落子会被拒绝，防止“拿满本回合收益再跳过”绕过代价。
+        /// </summary>
         public bool SkipRound()
         {
             if (Phase != GamePhase.Prepare || Round != Balance.NormalRoundsPerChapter)
@@ -242,6 +278,10 @@ namespace RevGame.Services
             return true;
         }
 
+        /// <summary>
+        /// 从已解锁棋种按权重抽一个手牌种类；场上已有同职业时提高其权重。
+        /// 只决定“发什么牌”，不扣额度、不落子。
+        /// </summary>
         private PieceKind PickUnlockedKind()
         {
             var pool = new List<PieceKind>();
@@ -264,6 +304,10 @@ namespace RevGame.Services
             return pool[_random.Next(pool.Count)];
         }
 
+        /// <summary>
+        /// 同职业在场数量达到门槛后的攻击加成（按配置档位计算）。
+        /// 只作数值加成，不改变棋子本身属性，因此换职业/死亡后会自动回落。
+        /// </summary>
         private float ClassBonus(GameSide side)
         {
             int[] counts = new int[4];
@@ -299,16 +343,29 @@ namespace RevGame.Services
             int count;
             _playedPairs.TryGetValue(kind, out count);
             _playedPairs[kind] = ++count;
-            if (count % Balance.UpgradePairsPerStar != 0) { return; }
+            if (count % Balance.UpgradePairsPerStar != 0)
+            {
+                return;
+            }
             // 优先最早入场的棋，四次同类牌可把第一颗逐步养到三星；满星后再培养下一颗。
             Piece original = _playerPieces.Find(p => p != placed && p.IsAlive && p.Def.Kind == kind && p.Def.Star < StarTier.Three);
-            if (original == null) { return; }
+            if (original == null)
+            {
+                return;
+            }
             UpgradePiece(original);
         }
 
+        /// <summary>
+        /// 原位升星：替换定义、刷新最大生命与攻击，并广播升级事件。
+        /// 不新建棋子，避免棋盘上出现“旧棋消失、新棋出生”的假移动。
+        /// </summary>
         private void UpgradePiece(Piece piece)
         {
-            if (!piece.UpgradeInPlace()) { return; }
+            if (!piece.UpgradeInPlace())
+            {
+                return;
+            }
             RefreshGoState();
             RevEvent.DispatchEvent<int>(Events.PieceMerged, piece.Id);
             RevEvent.DispatchEvent<int>(Events.PieceHpChanged, piece.Id);

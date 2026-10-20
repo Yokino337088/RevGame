@@ -1,0 +1,221 @@
+// ============================================================
+// BossSkill —— Boss 技能特效的统一 Shader（7 种效果模式，单 Pass，兼容 SpriteRenderer 与图集）。
+//
+// 【为什么一个 Shader 做 7 种效果】
+// Boss 每个技能的特效由若干“片”（SpriteRenderer）拼成：预警圈、冲击波、激光、火球……
+// 用一个 Shader + 每片自己的 _Mode 参数，所有片共享同一个材质与同一份图集贴图，
+// 不需要为每种技能克隆材质，也不会因为切换 Shader 造成大量 SetPass。
+// _Mode 是“整片统一”的参数，GPU 上每片只走一个分支，开销与普通 Sprite 相近。
+//
+// 【模式一览】（C# 侧见 BossSkillFxView.FxMode，数值必须一致）
+//   0 预警区域  ：半透明填充 + 流动警示斜纹 + 发亮描边；_Progress 0→1 表示“快要命中了”，越接近 1 闪得越急
+//   1 冲击波    ：从中心向外扩散的圆环，扩散越远越细越淡
+//   2 激光      ：横向光束，白色内芯 + 彩色外辉 + 沿光束流动的能量噪声
+//   3 爆炸火球  ：噪声扰动的火球，白芯→主色→暗红边，随进度膨胀并燃尽
+//   4 贴图发光  ：直接显示贴图（子弹、刀光、炸弹、准星、焦痕），带轻微闪烁
+//   5 传送门    ：多臂旋涡，_Progress 控制开合（0 闭合 → 0.5 全开 → 1 闭合）
+//   6 汲取漩涡  ：向内收缩的螺旋条纹，表现“生命被吸走”
+//
+// 【坐标】图集里的 UV 不是 0~1：每片的 _FxUV 记录当前 Sprite 在图集中的矩形，
+// 先换算回“这张图自己的 0~1 局部坐标”，程序化效果才不会采到隔壁的图。
+// 【混合】预乘透明度（与项目其他 Sprite Shader 一致）；_Additive=1 时 alpha 输出 0，表现为纯叠加发光。
+// ============================================================
+Shader "RevGame/Combat/BossSkill"
+{
+    Properties
+    {
+        [PerRendererData] _MainTex ("特效贴图（图集页）", 2D) = "white" {}
+        _Color ("整体颜色", Color) = (1,1,1,1)
+        [PerRendererData] _Mode ("效果模式 0~6", Float) = 4
+        [PerRendererData] _Progress ("效果进度 0~1", Range(0,1)) = 0
+        [PerRendererData] _Tint ("主色", Color) = (1,0.35,0.25,1)
+        [PerRendererData] _Shape ("预警形状 0圆 1方", Float) = 0
+        [PerRendererData] _Additive ("叠加程度 0正常 1纯发光", Range(0,1)) = 0.6
+        [PerRendererData] _FxUV ("当前Sprite在图集中的UV矩形", Vector) = (0,0,1,1)
+        [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
+        [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
+        [HideInInspector] _Flip ("Flip", Vector) = (1,1,1,1)
+        [PerRendererData] _AlphaTex ("External Alpha", 2D) = "white" {}
+        [PerRendererData] _EnableExternalAlpha ("Enable External Alpha", Float) = 0
+    }
+    SubShader
+    {
+        Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" "PreviewType"="Plane" "CanUseSpriteAtlas"="True" }
+        Cull Off
+        Lighting Off
+        ZWrite Off
+        Blend One OneMinusSrcAlpha
+        Pass
+        {
+            CGPROGRAM
+            #pragma target 3.0
+            #pragma vertex SpriteVert
+            #pragma fragment FragBossSkill
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ PIXELSNAP_ON
+            #pragma multi_compile _ ETC1_EXTERNAL_ALPHA
+            #include "UnitySprites.cginc"
+
+            half _Mode;
+            half _Progress;
+            fixed4 _Tint;
+            half _Shape;
+            half _Additive;
+            float4 _FxUV;
+
+            // ---------------- 噪声工具（不依赖额外贴图，不增加采样） ----------------
+            half Hash(float2 p)
+            {
+                return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
+            }
+
+            half Noise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                f = f * f * (3.0 - 2.0 * f);
+                half a = Hash(i);
+                half b = Hash(i + float2(1, 0));
+                half c = Hash(i + float2(0, 1));
+                half d = Hash(i + float2(1, 1));
+                return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
+            }
+
+            // 两层叠加的分形噪声：低频决定大形状，高频补细节。只叠两层，手机上足够便宜。
+            half Fbm(float2 p)
+            {
+                return Noise(p) * 0.65 + Noise(p * 2.7 + 13.1) * 0.35;
+            }
+
+            // ---------------- 0 预警区域 ----------------
+            // 内部：低透明度填充 + 斜向流动警示纹；边缘：亮描边；进度越高，脉冲越快越亮。
+            fixed4 Telegraph(float2 p, half t)
+            {
+                half dist = _Shape > 0.5 ? max(abs(p.x), abs(p.y)) : length(p);
+                half inside = step(dist, 1.0);
+                half edge = smoothstep(0.86, 0.97, dist) * inside;
+                // 从中心向外“充能”的填充：t=1 时铺满整个区域，玩家一眼看出还剩多久。
+                half charge = step(dist, t) * inside;
+                half stripes = step(0.5, frac((p.x + p.y) * 3.0 - _Time.y * 1.6));
+                half pulse = 0.55 + 0.45 * sin(_Time.y * lerp(6.0, 22.0, t));
+                half alpha = inside * 0.16 + charge * 0.22 + stripes * inside * 0.08 + edge * (0.55 + 0.4 * pulse);
+                half3 rgb = _Tint.rgb * (0.7 + edge * 0.8 * pulse) + charge * 0.15;
+                return fixed4(rgb, saturate(alpha));
+            }
+
+            // ---------------- 1 冲击波 ----------------
+            fixed4 Shockwave(float2 p, half t)
+            {
+                half dist = length(p) + (Noise(p * 6.0 + _Time.y * 3.0) - 0.5) * 0.06;
+                half radius = lerp(0.1, 0.95, t);
+                half width = lerp(0.22, 0.04, t);
+                half ring = saturate(1.0 - abs(dist - radius) / width);
+                ring *= ring;
+                half fade = 1.0 - t;
+                half3 rgb = lerp(_Tint.rgb, half3(1, 1, 1), ring * 0.6);
+                return fixed4(rgb * (1.0 + ring), ring * fade);
+            }
+
+            // ---------------- 2 激光 ----------------
+            // 局部坐标 x 沿光束方向（0 起点 → 1 终点），y 横穿光束。
+            fixed4 Laser(float2 uv, half t, half sourceAlpha)
+            {
+                half across = abs(uv.y - 0.5) * 2.0;
+                half core = saturate(1.0 - across / 0.18);
+                half glow = saturate(1.0 - across);
+                glow = glow * glow;
+                half flow = Fbm(float2(uv.x * 8.0 - _Time.y * 9.0, uv.y * 3.0));
+                // 开光与收光：进度两端变细变暗，中段最粗最亮。
+                half envelope = sin(saturate(t) * 3.14159);
+                half flicker = 0.85 + 0.15 * sin(_Time.y * 60.0);
+                half energy = (core * 1.3 + glow * (0.45 + flow * 0.55)) * envelope * flicker;
+                // 两端用原贴图的柔边收尾，光束不会切成生硬的长方形。
+                half ends = smoothstep(0.0, 0.08, uv.x) * smoothstep(1.0, 0.92, uv.x);
+                half3 rgb = lerp(_Tint.rgb, half3(1, 1, 1), core);
+                return fixed4(rgb * energy, saturate(energy * ends * max(sourceAlpha, 0.35)));
+            }
+
+            // ---------------- 3 爆炸火球 ----------------
+            fixed4 Explosion(float2 p, half t, half sourceAlpha)
+            {
+                half dist = length(p);
+                // 噪声扰动边缘，火球不是完美的圆；随时间翻滚。
+                half turbulence = Fbm(p * 3.5 + float2(0, -_Time.y * 2.5));
+                half radius = lerp(0.25, 1.0, sqrt(t)) * (0.8 + turbulence * 0.35);
+                half body = saturate(1.0 - dist / max(radius, 0.001));
+                // 燃尽：后半段从内部开始出现“烧穿”的空洞。
+                half burnout = smoothstep(t * 1.1 - 0.15, t * 1.1, turbulence * body);
+                half heat = body * lerp(1.0, burnout, saturate(t * 1.6 - 0.4));
+                half3 hot = half3(1.0, 0.96, 0.8);
+                half3 rim = half3(0.35, 0.05, 0.02);
+                half3 rgb = lerp(rim, lerp(_Tint.rgb, hot, smoothstep(0.55, 0.95, heat)), smoothstep(0.0, 0.45, heat));
+                half alpha = smoothstep(0.02, 0.25, heat) * (1.0 - smoothstep(0.75, 1.0, t)) * max(sourceAlpha, 0.5);
+                return fixed4(rgb * (0.8 + heat), alpha);
+            }
+
+            // ---------------- 5 传送门 / 6 汲取漩涡 ----------------
+            // direction = +1 向外旋（传送门），-1 向内收（汲取）。
+            fixed4 Vortex(float2 p, half t, half direction)
+            {
+                half dist = length(p);
+                half angle = atan2(p.y, p.x);
+                half open = direction > 0 ? sin(saturate(t) * 3.14159) : 1.0 - t * 0.6;
+                half twist = angle * 5.0 + dist * 9.0 * direction - _Time.y * 6.0 * direction;
+                half arms = saturate(sin(twist) * 0.5 + 0.5);
+                arms = arms * arms;
+                half disk = saturate(1.0 - dist / max(open, 0.001));
+                half rim = saturate(1.0 - abs(dist - open * 0.85) / 0.12);
+                half center = saturate(1.0 - dist / 0.25);
+                half alpha = disk * (arms * 0.7 + 0.15) + rim * 0.6 + center * open * 0.5;
+                half3 rgb = lerp(_Tint.rgb, half3(1, 1, 1), center * 0.7 + rim * 0.3);
+                return fixed4(rgb * (1.0 + rim), saturate(alpha));
+            }
+
+            fixed4 FragBossSkill(v2f input) : SV_Target
+            {
+                fixed4 source = SampleSpriteTexture(input.texcoord) * input.color;
+                float2 uv = (input.texcoord - _FxUV.xy) / max(_FxUV.zw, float2(0.0001, 0.0001));
+                float2 p = uv * 2.0 - 1.0;
+                half t = saturate(_Progress);
+                fixed4 fx;
+                if (_Mode < 0.5)
+                {
+                    fx = Telegraph(p, t);
+                }
+                else if (_Mode < 1.5)
+                {
+                    fx = Shockwave(p, t);
+                }
+                else if (_Mode < 2.5)
+                {
+                    fx = Laser(uv, t, source.a);
+                }
+                else if (_Mode < 3.5)
+                {
+                    fx = Explosion(p, t, source.a);
+                }
+                else if (_Mode < 4.5)
+                {
+                    // 贴图本身是白色发光图：用主色染色并加一点闪烁；焦痕这类暗色片用 _Additive=0 正常混合。
+                    half flicker = 0.9 + 0.1 * sin(_Time.y * 40.0 + uv.x * 6.0);
+                    fx = fixed4(_Tint.rgb * source.rgb * flicker, source.a * (1.0 - t));
+                }
+                else if (_Mode < 5.5)
+                {
+                    fx = Vortex(p, t, 1.0);
+                }
+                else
+                {
+                    fx = Vortex(p, t, -1.0);
+                }
+                fx.a *= _Tint.a * input.color.a;
+                // 预乘：rgb 按 alpha 衰减；再按 _Additive 降低输出 alpha，让发光部分“加”在底图上而不是盖住它。
+                fx.rgb *= fx.a;
+                fx.a *= 1.0 - _Additive;
+                return fx;
+            }
+            ENDCG
+        }
+    }
+    Fallback "Sprites/Default"
+}

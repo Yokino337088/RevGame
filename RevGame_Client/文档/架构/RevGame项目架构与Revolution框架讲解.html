@@ -1,0 +1,391 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>RevGame · 项目架构与 Revolution 框架讲解</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7;--sky:#e7eef6;--sand:#f8eedb}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}a{color:var(--green);text-decoration-thickness:1px;text-underline-offset:4px}button,input{font:inherit}button:focus-visible,a:focus-visible{outline:3px solid #b48442;outline-offset:4px}.topbar{height:76px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}.brand{font-weight:800;letter-spacing:2px}.brand i{font-style:normal;background:var(--green);color:white;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-right:12px}.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}.hero{max-width:1260px;margin:0 auto;padding:70px 40px 48px;display:grid;grid-template-columns:1.35fr 1fr;gap:60px;align-items:center}.eyebrow,.section-label{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}.hero h1{font-size:clamp(35px,4.3vw,60px);letter-spacing:-2px;line-height:1.25;margin:20px 0;font-weight:800}.hero h1 em{font-style:normal;color:var(--green)}.lead{color:var(--muted);font-size:17px;max-width:600px}.hero-links{display:flex;gap:12px;margin-top:27px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:9px 18px;border-radius:30px;text-decoration:none;font-size:14px;background:white}.pill.primary{background:var(--green);color:white;border-color:var(--green)}.stamp{font:12px Consolas,monospace;margin-top:25px;color:#7b867b}
+.demo{position:relative;background:linear-gradient(135deg,#fefdf5,#e6efe1);padding:26px;border:1px solid #d6e2d2;border-radius:28px;box-shadow:0 20px 55px #334f3320;overflow:hidden}.demo::before{content:"";position:absolute;width:210px;height:210px;background:#e5cc8e55;border-radius:50%;filter:blur(25px);right:-80px;top:-90px;animation:drift 8s ease-in-out infinite alternate}.demo-head{position:relative;display:flex;justify-content:space-between;align-items:center;font-size:13px}.live-dot{width:7px;height:7px;border-radius:50%;background:#688c62;box-shadow:0 0 0 5px #5c86621c;display:inline-block;margin-right:8px;animation:pulse 2.5s infinite}
+.chain{position:relative;list-style:none;margin:20px 0 6px;padding:0}.chain li{position:relative;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;padding:7px 10px;margin:3px 0;border-radius:11px;font-size:13px;line-height:1.55;transition:background .4s,transform .4s;border:1px solid transparent}.chain li b{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fffef8;border:1px solid #bccdb8;font:700 12px Consolas,monospace;color:var(--green);transition:background .4s,color .4s}.chain li small{display:block;color:var(--muted);font-size:11.5px}.chain li.on{background:#fffef8;border-color:#cfdccb;transform:translateX(4px);box-shadow:0 4px 12px #34502512}.chain li.on b{background:var(--green);color:#fff}
+.segmented{display:flex;gap:5px;border-radius:12px;background:#dce5d8;padding:4px;margin-top:15px}.segmented button{flex:1;border:0;background:transparent;border-radius:9px;padding:7px;cursor:pointer;font-size:13px;color:var(--ink)}.segmented button[aria-pressed="true"]{background:#fffef8;box-shadow:0 2px 5px #34502515}.demo small.note{display:block;font-size:11px;line-height:1.7;color:var(--muted);margin-top:13px}
+.metrics{max-width:1180px;margin:0 auto 45px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:25px 0}.metric{padding:5px 35px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric strong{font:700 39px/1.4 Consolas,monospace;color:var(--green)}.metric strong small{font-size:18px}.metric p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.workspace{display:grid;grid-template-columns:230px minmax(0,890px);gap:55px;max-width:1180px;margin:auto;padding-bottom:90px}.sidebar{align-self:start;position:sticky;top:28px}.sidebar h3{font-size:12px;letter-spacing:3px;margin:0 0 18px;color:var(--muted)}.sidebar nav{display:flex;flex-direction:column;gap:3px}.sidebar nav a{font-size:13px;text-decoration:none;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;display:flex;gap:10px}.sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}.sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}.sidebar .note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:22px;padding:20px 10px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:18px;margin-bottom:25px;padding:36px 38px;box-shadow:0 5px 15px #315c3110}.chapter h2{font-size:27px;line-height:1.45;letter-spacing:-.5px;margin:8px 0 22px}.chapter h3{font-size:18px;margin:32px 0 10px;color:#254e3d}.chapter p{margin:17px 0}.chapter strong{color:#254e3d}.chapter ul,.chapter ol{padding-left:24px}.chapter li{margin:10px 0}.chapter code{font:13px/1.65 Consolas,"Microsoft YaHei",monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}.chapter pre{padding:20px;background:#edf2ea;border-radius:12px;overflow:auto;font-size:13px}.chapter pre code{background:none;border:0;padding:0;white-space:pre}
+.table-scroll{overflow:auto;margin:24px -5px;border:1px solid var(--line);border-radius:11px}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}td,th{padding:13px 14px;border-bottom:1px solid #e4e9e0;vertical-align:top}tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:105px}tr:nth-child(even) td{background:#fafbf6}
+.legend{padding:14px 18px;background:var(--sand);border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin:20px 0}.callout{padding:14px 18px;border-radius:10px;font-size:14px;margin:22px 0;border-left:3px solid var(--green);background:var(--mint);color:#2b4d3f}.callout.warn{background:#fbeee6;border-color:#c4743d;color:#7a4222}.callout.tip{background:var(--sky);border-color:#5d86ad;color:#2b4b6c}.callout b{display:block;margin-bottom:3px;font-size:13px;letter-spacing:1px}
+.world{border:1px solid var(--line);border-radius:16px;padding:16px 16px 6px;margin:18px 0;background:#fcfdf9}.world.unity{background:linear-gradient(#f4f8ef,#fffefa)}.world.pure{background:linear-gradient(#eef3fa,#fffefa)}.world-title{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}.world-title strong{font-size:15px}.world-title span{font-size:12px;color:var(--muted)}.layer{display:grid;grid-template-columns:118px 1fr;gap:14px;align-items:start;padding:12px 14px;margin:0 0 10px;border-radius:11px;background:#fff;border:1px solid #e2e8de;border-left:4px solid var(--green)}.layer.blue{border-left-color:#5d86ad}.layer.gold{border-left-color:#b08b4e}.layer h4{margin:0;font-size:14px;line-height:1.5}.layer h4 small{display:block;font:11px Consolas,monospace;color:var(--muted);letter-spacing:1px}.layer p{margin:0;font-size:13px;line-height:1.7;color:#42554b}.bridge{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}.bridge div{flex:1 1 260px;border:1px dashed #9bb59b;border-radius:12px;padding:12px 16px;font-size:13px;background:#fbfdf8}.bridge b{display:block;color:var(--green);margin-bottom:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.chip{font:12px/1.5 Consolas,monospace;background:#e7eee3;border:1px solid #d3dfce;border-radius:20px;padding:1px 10px;color:#2f5846}.chip.rev{background:#e9f0f8;border-color:#cfdcec;color:#2f4f73}.chip.no{background:#f1f1ee;border-color:#e0e0da;color:#7b7b73}
+.steps{counter-reset:s;list-style:none;padding:0!important;margin:20px 0}.steps>li{counter-increment:s;position:relative;padding:4px 0 12px 54px;margin:0;border-left:0}.steps>li::before{content:counter(s);position:absolute;left:0;top:2px;width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font:700 14px Consolas,monospace;box-shadow:0 0 0 5px #e5eee1}.steps>li::after{content:"";position:absolute;left:16px;top:42px;bottom:-4px;width:2px;background:#cfdccb}.steps>li:last-child::after{display:none}.steps>li strong:first-child{display:block;font-size:15px}.steps>li span.who{display:inline-block;font:11.5px Consolas,monospace;color:#2f4f73;background:#e9f0f8;border-radius:6px;padding:0 7px;margin-right:6px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}.card{border:1px solid #e1e7dd;border-radius:13px;padding:15px 17px;background:#fff}.card h4{margin:0 0 4px;font-size:14px;color:#254e3d}.card p{margin:0;font-size:12.5px;line-height:1.7;color:#55655d}
+footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);display:flex;justify-content:space-between;font-size:13px}.progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--green);z-index:20;transition:width .1s}.chapter.arrive{animation:arrive .55s ease both}.motion-control{border:1px solid #c7d2c3;background:transparent;border-radius:30px;font-size:12px;cursor:pointer;padding:7px 12px;color:var(--green)}.paused *{animation-play-state:paused!important}.document-meta{font-size:13px;color:var(--muted);margin-bottom:25px}.document-meta a{margin-right:20px}
+@keyframes drift{to{transform:translate(-50px,40px)}}@keyframes pulse{50%{box-shadow:0 0 0 8px #5c866200}}@keyframes arrive{from{opacity:.5;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(max-width:1200px){.workspace{padding:0 25px 60px;gap:25px;grid-template-columns:200px minmax(0,1fr)}.metrics{margin-left:25px;margin-right:25px}.hero{gap:30px}}@media(max-width:900px){.sidebar{position:static}.sidebar nav{display:grid;grid-template-columns:1fr 1fr}.sidebar .note,.sidebar h3{display:none}.workspace{display:block}.sidebar{margin-bottom:25px}.hero{grid-template-columns:1fr 1fr;padding:40px 25px}.chapter{padding:28px}.tag{display:none}.cards{grid-template-columns:1fr 1fr}}@media(max-width:620px){body{font-size:15px}.topbar{height:66px}.hero{display:block;padding:35px 22px}.hero h1{letter-spacing:-1px;font-size:38px}.demo{margin-top:30px;max-width:420px}.metrics{padding:18px 0;margin-bottom:25px}.metric{padding:0 10px}.metric strong{font-size:28px}.metric p{font-size:11px}.workspace{padding:0 14px 40px}.sidebar nav{gap:2px}.sidebar nav a{font-size:11px;padding:7px 5px;gap:6px}.chapter{padding:25px 20px;border-radius:14px}.chapter h2{font-size:24px}.table-scroll{margin:20px 0}table{min-width:560px}footer{display:block}.hero-links{gap:8px}.pill{padding:8px 14px}.layer{grid-template-columns:1fr;gap:4px}.cards{grid-template-columns:1fr}.steps>li{padding-left:46px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before{animation:none!important;transition:none!important}}@media print{.sidebar,.demo,.motion-control,.progress{display:none}.hero,.workspace{display:block;padding:0}.chapter{box-shadow:none;break-inside:auto;border:0;padding:15px 0}.metrics{margin:0}.topbar{padding:0}.table-scroll{overflow:visible}a{color:inherit}body{font-size:11pt}}
+</style></head><body>
+<div class="progress" aria-hidden="true"></div><header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">ARCHITECTURE FIELD GUIDE</span></div><button class="motion-control" id="motion" aria-pressed="false">暂停装饰动画</button></header>
+
+<div class="hero"><div><div class="eyebrow">REVOLUTION / ARCHITECTURE GUIDE 1.0</div><h1>看懂这个项目。<br><em>业务该写在哪里。</em></h1><p class="lead">从启动入口到一次落子，从 Revolution 的 16 个模块到界面与规则怎样互相通话。一份给新手的地图：先知道全貌，再知道边界，最后知道自己动手时应该打开哪个文件。</p><div class="hero-links"><a class="pill primary" href="#s12">我要写业务，写哪里？ ↗</a><a class="pill" href="#s2">先看整体架构</a><a class="pill" href="#s8">三条完整链路</a></div><div class="stamp">2026.10.20 · UNITY 2022.3 · REVOLUTION 框架快照（只读使用）</div></div>
+<div class="demo" id="chainDemo" data-mode="card"><div class="demo-head"><strong><span class="live-dot"></span>一次操作怎样走完整条链路</strong><span class="tag">INTERACTIVE</span></div><ol class="chain" id="chainList"></ol><div class="segmented" role="group" aria-label="链路选择"><button data-mode="card" aria-pressed="true">落一张牌</button><button data-mode="tick" aria-pressed="false">战斗一步</button><button data-mode="scene" aria-pressed="false">进入战斗</button></div><small class="note">这是按真实代码顺序整理的示意动画，细节在第 08 节逐步解释。高亮会自动循环，也可以点上面的按钮切换。</small></div></div>
+
+<div class="metrics"><div class="metric"><strong>75<small> 个</small></strong><p>C# 源文件（含 3 个导表生成文件），约 1.2 万行有效代码</p></div><div class="metric"><strong>2<small> 个世界</small></strong><p>纯 C# 规则世界 / Unity 界面世界，只靠接口与事件对话</p></div><div class="metric"><strong>16<small> 个</small></strong><p>当前框架快照里业务直接用到的 Revolution 模块（另有 5 个未使用）</p></div></div>
+
+<div class="workspace"><aside class="sidebar"><h3>阅读导航</h3><nav><a href="#s1"><span>01</span>先把词弄懂</a><a href="#s2"><span>02</span>整体架构与目录</a><a href="#s3"><span>03</span>从启动到进入战斗</a><a href="#s4"><span>04</span>用到的框架模块</a><a href="#s5"><span>05</span>服务：替代单例</a><a href="#s6"><span>06</span>流程、域与 Logic</a><a href="#s7"><span>07</span>事件：模块怎么通话</a><a href="#s8"><span>08</span>三条完整链路</a><a href="#s9"><span>09</span>界面与表现层</a><a href="#s10"><span>10</span>配置与数值</a><a href="#s11"><span>11</span>敌方 AI 状态机</a><a href="#s12"><span>12</span>业务逻辑写在哪</a><a href="#s13"><span>13</span>不要这样做</a><a href="#s14"><span>14</span>验证与调试入口</a></nav><div class="note">先看边界，再看细节。<br>规则只算一次，画面只负责画。<br>不确定写哪里，先看第 12 节。</div></aside>
+<main><div class="document-meta"><a href="../战斗性能优化规则/战斗性能优化规则.html">配套：战斗性能优化规则</a></div>
+<div class="legend">阅读对象：刚接手 RevGame 的开发者。文中的类名、方法名、事件名都来自当前仓库的真实代码；没有在 Unity 里实际运行过的内容会明确说明。路径均相对于 <code>UnityProject/RevGame.Unity/Assets/GameScripts</code>。</div>
+
+<section id="s1" class="chapter"><div class="section-label">GUIDE / 01</div><h2>先把词弄懂</h2>
+<p>这个项目的代码量不大，但“词”很多。先用三句话记住全貌，后面所有章节都是在展开它们：</p>
+<ol>
+<li><strong>规则和数据住在“纯 C# 世界”。</strong>落子是否合法、谁掉血、谁赢、发什么奖励，全部在 <code>Services / Battle / Board / Pieces / Data / Core</code> 里算。这些目录<strong>不引用 UnityEngine</strong>，所以连 Unity 都不用开，也能用 <code>dotnet</code> 跑回归测试。</li>
+<li><strong>界面和画面住在“Unity 世界”。</strong><code>Bootstrap / Flow / UI / View</code> 引用 UnityEngine。它们只做两件事：把玩家操作转发给规则，把规则发出的事件画出来。</li>
+<li><strong>两个世界之间只有两座桥。</strong>向下是“调用”：界面经 <code>BattleLogic</code> 调 <code>IBattleService</code>；向上是“广播”：规则用 <code>RevEvent</code> 发事件，界面自己订阅。规则永远不会反过来调用界面。</li>
+</ol>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>名词</th><th>一句话解释</th><th>本项目里的例子</th></tr></thead><tbody>
+<tr><td>服务 Service</td><td>有状态、全局唯一的业务对象；调用方只认接口，不认具体类型。</td><td><code>IBattleService</code> → <code>BattleService</code></td></tr>
+<tr><td>域 Scope / Domain</td><td>一段有头有尾的生命周期。进入时启动，退出时把里面的计时器、监听、界面一次收干净。</td><td><code>GameDomain.Lobby</code>、<code>GameDomain.Battle</code></td></tr>
+<tr><td>Logic</td><td>绑定在某个域上的业务编排类，域关闭它自动停止。</td><td><code>BattleLogic</code>（战斗域）</td></tr>
+<tr><td>事件 Event</td><td>广播“某件事发生了”，发送者不关心谁在听。</td><td><code>Events.PiecePlaced</code>、<code>Events.PieceDied</code></td></tr>
+<tr><td>状态机 FSM</td><td>同一时刻只处在一个状态，切换路径明确。轻量版管流程，重量版管 AI。</td><td><code>GameFlow</code>（轻量）、<code>EnemyAI</code>（重量）</td></tr>
+<tr><td>对象池</td><td>把用完的对象放回池里复用，代替反复 new / Destroy。</td><td>棋子 <code>PieceView</code>、弹幕 <code>BattleEffectView</code></td></tr>
+<tr><td>导表</td><td>把 Excel 转成游戏能读取的数据表和强类型 C# 类。</td><td>13 张表 → <code>Generated/BattleDataTables.cs</code></td></tr>
+<tr><td>Presentation</td><td>“接线员”：监听阶段事件，决定打开或关闭哪些界面、显示哪个根节点。</td><td><code>BattlePresentation</code>、<code>GamePresentation</code></td></tr>
+<tr><td>固定步长</td><td>不管手机帧率是 30 还是 60，战斗都按固定的小时间片推进，结果可复现。</td><td><code>Balance.BattleSimulationStepSeconds</code></td></tr>
+</tbody></table></div>
+<div class="callout tip"><b>读代码的捷径</b>看到 <code>Rev</code> 开头的名字（<code>RevEvent</code>、<code>RevUI</code>、<code>RevServices</code> 等），说明这里在使用 Revolution 框架。看到 <code>RevGame.</code> 开头的命名空间，才是本项目自己的业务。</div></section>
+
+<section id="s2" class="chapter"><div class="section-label">GUIDE / 02</div><h2>整体架构与目录</h2>
+<p>下图按“能不能引用 UnityEngine”把代码分成两个世界。<strong>上面的世界可以调用下面的世界，下面的世界永远不会反过来依赖上面</strong>——这是整套架构最重要的一条边界，且有证据：<code>Tests/CombatAttackRegression</code> 只把下面那个世界的源文件链接进纯 .NET 控制台程序，就能完整编译并跑通回归。</p>
+<div class="world unity"><div class="world-title"><strong>Unity 世界 · 引用 UnityEngine</strong><span>Bootstrap / Flow / UI / View</span></div>
+<div class="layer"><h4>Bootstrap<small>启动层</small></h4><p>场景里唯一的启动宿主 <code>GameBootstrap</code>：初始化框架、注册服务、启动流程；<code>GameGmCommands</code> 注册调试指令。</p></div>
+<div class="layer"><h4>Flow<small>流程层</small></h4><p><code>GameFlow</code>（屏幕状态机 + 场景切换）、<code>SceneResourceWarmup</code>（资源预热）、<code>BattleLogic</code>（战斗域的节奏与入口）。它决定“现在处在哪个屏幕，战斗域开不开”。</p></div>
+<div class="layer"><h4>UI<small>界面层</small></h4><p>7 个 <code>RevUIPanel</code> 面板（主页、选关、加载、准备、HUD、结算、奖励）、手牌 <code>CardItem</code>、布局适配。只读服务状态，操作转发给 <code>BattleLogic</code>。</p></div>
+<div class="layer"><h4>View<small>表现层</small></h4><p>棋盘 <code>BoardView</code>、棋子 <code>PieceView</code>、弹幕特效、音频、图集服务，以及两个接线员 <code>GamePresentation</code> / <code>BattlePresentation</code>。只订阅事件并播放动画，不二次结算。</p></div></div>
+<div class="bridge"><div><b>↓ 调用（向下）</b>界面 → <code>BattleLogic</code> → <code>IBattleService</code>。入口方法统一、失败带原因（<code>LastError</code>）。</div><div><b>↑ 广播（向上）</b><code>BattleService</code> → <code>RevEvent.DispatchEvent</code> → 界面与表现订阅。规则不持有任何 UI 引用。</div></div>
+<div class="world pure"><div class="world-title"><strong>纯 C# 世界 · 不引用 UnityEngine</strong><span>可离线 dotnet 回归</span></div>
+<div class="layer blue"><h4>Services<small>服务层</small></h4><p><code>IBattleService</code> 契约与 <code>BattleService</code> 实现（拆成 14 个文件）：回合、落牌、伤害、胜负、奖励、事件、敌方增援。<strong>规则的唯一入口和唯一数据源。</strong></p></div>
+<div class="layer blue"><h4>Battle · Board · Pieces<small>玩法规则</small></h4><p><code>MoveRules</code>（走法与攻击范围）、<code>GoRules</code>（围棋的气与眼）、<code>BoardModel</code>（9×9 占格）、<code>Piece</code>、<code>HandModel</code>（手牌）、<code>EnemyAI</code> 等（敌方状态机）。</p></div>
+<div class="layer blue"><h4>Data · Generated<small>数据层</small></h4><p><code>Balance</code>、<code>GameConfig</code>、<code>PieceCatalog</code>、<code>LevelCatalog</code> 等，把 Excel 导出的表整理成强类型、带校验的只读数据。</p></div>
+<div class="layer blue"><h4>Core<small>基础定义</small></h4><p><code>Events</code>（事件名常量）、<code>Enums</code>、<code>Consts</code>、<code>BoardPos</code>、<code>GameDomain</code>。所有层都能用，它自己谁也不依赖。</p></div></div>
+<div class="callout"><b>Flow 与 View 的关系要说实话</b>Flow 是“编排者”：<code>GameFlow</code> 会找到场景里的 <code>GamePresentation</code>、打开 <code>LoadingPanel</code>；而界面和棋盘又会通过 <code>RevLogic.Get&lt;BattleLogic&gt;()</code> 调用 Flow。所以 Unity 世界内部并不是严格的单向分层，真正严格的是<strong>两个世界之间</strong>的边界。</div>
+<h3>目录地图</h3>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>目录</th><th style="text-align:right">文件</th><th>职责</th><th>代表文件</th></tr></thead><tbody>
+<tr><td>Bootstrap/</td><td style="text-align:right">2</td><td>启动与调试入口</td><td>GameBootstrap、GameGmCommands</td></tr>
+<tr><td>Flow/</td><td style="text-align:right">4</td><td>屏幕状态机、场景交接、战斗域 Logic</td><td>GameFlow(.Scenes)、BattleLogic、SceneResourceWarmup</td></tr>
+<tr><td>UI/</td><td style="text-align:right">12</td><td>面板、卡牌、布局适配</td><td>PreparePanel、BattleHudPanel、CardItem、GameBattleLayout</td></tr>
+<tr><td>View/</td><td style="text-align:right">13</td><td>棋盘/棋子/特效/音频/图集/场景接线</td><td>BoardView、PieceView、BattleEffectView、GamePresentation</td></tr>
+<tr><td>Services/Battle/</td><td style="text-align:right">14</td><td>战斗服务（按职责 partial 拆分）</td><td>IBattleService、BattleService.*.cs</td></tr>
+<tr><td>Battle/</td><td style="text-align:right">6</td><td>走法规则、手牌模型、敌方 AI</td><td>MoveRules、HandModel、EnemyStates、EnemyTactics</td></tr>
+<tr><td>Board/ · Pieces/</td><td style="text-align:right">4</td><td>棋盘模型、围棋气眼、棋子数据</td><td>BoardModel、GoRules、Piece</td></tr>
+<tr><td>Data/</td><td style="text-align:right">10</td><td>配置与目录（棋子、增益、关卡、数值）</td><td>Balance、GameConfig、PieceCatalog、LevelCatalog</td></tr>
+<tr><td>Core/</td><td style="text-align:right">7</td><td>事件名、枚举、常量、坐标、域名</td><td>Events、Enums、Consts、BoardPos、GameDomain</td></tr>
+<tr><td>Generated/</td><td style="text-align:right">3</td><td>导表与图集常量生成，<strong>不要手改</strong></td><td>BattleDataTables、BattleDataStructures、GameSpriteAtlases</td></tr>
+</tbody></table></div>
+<div class="callout warn"><b>放在哪个目录，决定它能用什么</b>只要你在纯世界的目录里写了 <code>using UnityEngine;</code>，离线测试就会编译失败——这正是我们想要的提醒：规则不能依赖 Unity 对象。</div></section>
+
+<section id="s3" class="chapter"><div class="section-label">GUIDE / 03</div><h2>从启动到进入战斗</h2>
+<p>理解启动顺序，你就理解了框架各模块是怎么被“接上电”的。下面每一步都能在代码里找到对应位置。</p>
+<ol class="steps">
+<li><strong>GameBootstrap.Awake</strong><span class="who">Bootstrap/Startup/GameBootstrap.cs</span>执行顺序 <code>-100</code>（比其他脚本早），<code>DontDestroyOnLoad</code> 常驻。设置 <code>RevUISetting</code>（横屏、参考分辨率 1920×1080），调用 <code>RevInitialize.Initialize()</code> 一次性初始化框架；随后注册三个服务：<code>GameSpriteAtlasService</code>、<code>IBattleService → BattleService</code>、<code>GameFlow</code>。同时初始化 DOTween（动画库，不属于 Revolution）。仅在 Editor / Development 构建下调用 <code>GameGmCommands.Register()</code> 注册调试指令，正式包里没有这些入口。</li>
+<li><strong>GameBootstrap.Start</strong><span class="who">Bootstrap</span><code>await RevTask.Yield()</code> 等一帧，让场景里的表现脚本先订阅 <code>ScreenChanged</code>，避免表已缓存时同步完成而漏掉首页事件；然后 <code>await GameFlow.StartAsync()</code>。</li>
+<li><strong>GameFlow.SwitchSceneAsync(Home)</strong><span class="who">Flow/States/GameFlow.Scenes.cs</span>这是所有“切场景”的统一流程：打开 <code>LoadingPanel</code> 全屏遮挡 → <code>RevScope.Detach</code> 让遮挡面板不被旧域带走 → 首次启动加载全部 Excel 表并整体校验 → 预载图集 → <code>SceneResourceWarmup</code> 预热资源 → <code>RevScene.LoadAsync</code> 加载 StartScene。</li>
+<li><strong>Change(target)：交割</strong><span class="who">Flow/States/GameFlow.cs</span><code>_fsm.ChangeTo(state)</code> 触发 <code>FlowState.OnEnter</code>：<code>RevScope.Enter(域名)</code> 打开对应的域；若目标是战斗，还会调用 <code>BeginCampaign(章节)</code> 生成首回合，再 <code>RevLogic.Start&lt;BattleLogic&gt;()</code> 启动战斗域逻辑。交割之后才广播 <code>Events.ScreenChanged</code>。</li>
+<li><strong>GamePresentation.OnScreen</strong><span class="who">View/Scene/GamePresentation.cs</span>收到 <code>ScreenChanged</code>：战斗屏显示棋盘根节点；大厅屏用 <code>RevUI.OpenAsync&lt;HomePanel&gt;()</code> 打开面板。</li>
+<li><strong>WaitUntilReadyAsync：可见性屏障</strong>等待 81 个格子、开局棋子、HUD、6 张手牌都装配完，才允许遮挡淡出。装配失败会抛出明确原因，不会拿 100% 进度条掩盖缺失的画面。</li>
+<li><strong>BattlePresentation 接管界面</strong><span class="who">View/Combat/BattlePresentation.cs</span>棋盘显示后它的 <code>OnEnable</code> 开始订阅 <code>PhaseEnterPrepare / Battle / Settle / Reward</code>，据此打开或关闭 <code>PreparePanel</code>、<code>SettlePanel</code>、<code>RewardPanel</code>，并常驻 <code>BattleHudPanel</code>。</li>
+</ol>
+<div class="callout"><b>为什么这么折腾？</b>先确认资源与画面都就绪、再撤遮挡，是为了不让玩家看到白块与半成品界面；<code>IsTransitioning</code> 与 <code>IsGameplayBlocked</code> 则保证加载期间不消耗“准备三秒”、不触发重复进入。</div></section>
+<section id="s4" class="chapter"><div class="section-label">GUIDE / 04</div><h2>用到的 Revolution 框架模块</h2>
+<p>Revolution 是一个 Unity 通用框架。本项目<strong>只通过 <code>Rev</code> 开头的门面调用它</strong>，不绕进框架内部，也不修改框架源码。按框架的模块文件夹归并，业务代码直接使用了其中 16 个：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>模块</th><th>业务入口</th><th>在本项目里用在哪</th><th>为什么这样用</th></tr></thead><tbody>
+<tr><td>RevInitialize</td><td><code>RevInitialize.Initialize()</code></td><td>GameBootstrap.Awake</td><td>一次性装配框架，必须最先调用。</td></tr>
+<tr><td>RevServiceLocator</td><td><code>RevServices.Register / GetRequired / Unregister</code></td><td>注册 <code>IBattleService</code>、<code>GameFlow</code>、<code>GameSpriteAtlasService</code>；全项目取用</td><td>替代单例，见第 05 节。</td></tr>
+<tr><td>RevEventSystem</td><td><code>RevEvent.AddEventListener / DispatchEvent / RemoveAllByOwner</code></td><td>规则层发事件，界面与表现订阅</td><td>规则与画面互不引用，见第 07 节。</td></tr>
+<tr><td>RevScope（含 RevLogic）</td><td><code>RevScope.Enter / Exit / Detach</code>；<code>[RevLogic(域名)]</code>、<code>RevLogic.Start / Get</code></td><td><code>GameFlow</code> 进入/退出大厅域与战斗域；<code>BattleLogic</code></td><td>域内资源一次收干净，不泄漏上一局的东西。</td></tr>
+<tr><td>RevStateMachine · 轻量</td><td><code>RevLightFSM</code>、<code>RevLightStateBase</code></td><td><code>GameFlow</code> 的屏幕状态机</td><td>状态少、只要“切换”，轻量版足够。</td></tr>
+<tr><td>RevStateMachine · 重量</td><td><code>RevHeavyFSM</code>、<code>RevHeavyFSMState</code></td><td>敌方 AI：每颗敌棋一台、指挥一台</td><td>需要状态时长、切换历史、宿主 Owner。</td></tr>
+<tr><td>RevUISystem</td><td><code>RevUI.Open / OpenAsync / Close / IsOpen / Get</code>；<code>[RevUIPanel]</code>；<code>RevUISetting</code></td><td>7 个面板；横屏 1920×1080 的画布设置</td><td>面板生命周期、层级与加载由框架负责。</td></tr>
+<tr><td>RevResourceSystem</td><td><code>RevResManager.LoadAsync / Release</code>；<code>RevResPath</code></td><td>图集 <code>GameSpriteAtlasService</code>、背景材质</td><td>只用“逻辑路径”加载，自带引用计数与 AB 支持。</td></tr>
+<tr><td>RevDataLoad</td><td><code>RevDataTableManager.LoadAsync / Get / Unload</code></td><td>13 张 Excel 导出的数据表</td><td>强类型读取，改数值不用改代码。</td></tr>
+<tr><td>RevObjectPool</td><td><code>RevPool.GetAsync / Return</code>；<code>[RevPoolPrefab]</code>、<code>IRevPoolable</code></td><td>棋子、格子、弹幕、提示条</td><td>战斗里反复出现的对象不 new / Destroy。</td></tr>
+<tr><td>RevTimer</td><td><code>RevTimer.Every / After</code>（带 <code>owner</code>）</td><td>棋子帧动画 50ms、准备面板 0.25s 刷新、HUD 0.1s 刷新、长按判定</td><td>owner 一释放，计时器自动取消。</td></tr>
+<tr><td>RevPublicMono</td><td><code>RevMono.AddUpdate / RemoveAllOf</code></td><td><code>PieceView</code> 的移动插值</td><td>不为每个小对象挂 Update 脚本。</td></tr>
+<tr><td>RevTask</td><td><code>async RevTask</code>、<code>RevTask.Yield</code></td><td>启动、场景切换、就绪等待</td><td>全项目统一的异步类型。</td></tr>
+<tr><td>RevScene</td><td><code>RevScene.LoadAsync / CurrentName / State</code></td><td><code>GameFlow</code> 切 StartScene / GameScene</td><td>加载场景的同时交给框架管理池与资源。</td></tr>
+<tr><td>RevSoundSystem</td><td><code>RevSound.Play / PlayBgm / StopBgm</code></td><td><code>GameAudio</code> 订阅事件播放音效与背景乐</td><td>声音集中，业务只写“发生了什么”。</td></tr>
+<tr><td>RevLog</td><td><code>RevLog.Error / Warn / Exception</code>（tag：<code>RevGame</code>）</td><td>全局</td><td>统一日志出口，按 tag 过滤。</td></tr>
+<tr><td>RevGMCommand</td><td><code>RevGM.Register</code></td><td><code>GameGmCommands</code>（仅 Editor / Development 构建）</td><td>受控的调试与自动化入口，不污染正式包。</td></tr>
+</tbody></table></div>
+<h3>没有直接使用的模块</h3>
+<div class="chips"><span class="chip no">RevActionSequence</span><span class="chip no">RevAppLifecycle</span><span class="chip no">RevInput</span><span class="chip no">RevSingleton</span><span class="chip no">RevStripGuard</span></div>
+<p>业务代码里没有直接调用它们（<code>RevAppLifecycle</code>、<code>RevStripGuard</code> 是框架内部自用）。触屏输入目前走 Unity 的 UGUI / <code>IPointerClickHandler</code>，而不是 <code>RevInput</code>。</p>
+<div class="callout tip"><b>不属于 Revolution 的第三方</b><strong>DOTween</strong> 负责界面与弹幕的补间动画（<code>GameBootstrap</code> 初始化，预留 512 Tween / 128 Sequence）；<strong>Unity SpriteAtlas</strong> 负责图集；<strong>UGUI</strong> 负责界面。别把它们当成框架的一部分去找文档。</div></section>
+
+<section id="s5" class="chapter"><div class="section-label">GUIDE / 05</div><h2>服务：用 RevServices 替代单例</h2>
+<p>很多项目会写 <code>BattleManager.Instance</code>。这里不这样做，而是“<strong>接口 + 服务定位器</strong>”：</p>
+<pre><code>// 只在 GameBootstrap.Awake 注册一次（懒创建：第一次取用才 new）
+RevServices.Register&lt;IBattleService, BattleService&gt;(owner: this);
+
+// 任何地方使用：只认接口，拿不到会抛出带原因的异常，而不是返回 null
+IBattleService battle = RevServices.GetRequired&lt;IBattleService&gt;();</code></pre>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th></th><th>传统单例</th><th>本项目的服务</th></tr></thead><tbody>
+<tr><td>调用方依赖</td><td>具体类 <code>Xxx.Instance</code></td><td>接口 <code>IBattleService</code></td></tr>
+<tr><td>谁创建实例</td><td>类自己 <code>static</code> 创建</td><td>启动入口统一注册，框架管理</td></tr>
+<tr><td>换实现 / 测试</td><td>要改所有调用点</td><td>只改注册那一行；离线测试直接 <code>new</code> 一个带固定种子的实例</td></tr>
+<tr><td>漏初始化</td><td>得到 null 或悄悄新建</td><td><code>GetRequired</code> 当场抛出中文原因</td></tr>
+<tr><td>回收</td><td>自己写 OnDestroy</td><td><code>RevServices.UnregisterAllOf(owner)</code> 一次收干净</td></tr>
+</tbody></table></div>
+<h3>BattleService 为什么拆成 14 个文件</h3>
+<p>它是一个类（<code>partial</code>），一个实例，只是按职责拆文件，每个文件只回答一个问题：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>文件</th><th>它回答的问题</th></tr></thead><tbody>
+<tr><td>Contracts/IBattleService</td><td>对外能做什么、能看什么（契约）</td></tr>
+<tr><td>Simulation/BattleService</td><td>回合怎么开始、每一小步怎么推进、怎么判胜负</td></tr>
+<tr><td>Preparation/Placement · HandRefresh · Preparation</td><td>准备期：落牌/换位、刷新手牌、三秒后发放准备增益</td></tr>
+<tr><td>Progression/BattleService.Progression</td><td>章节进度、奖励三选一、眼位石、跳过回合</td></tr>
+<tr><td>Support/Events · Reinforcement</td><td>战斗增益事件、统一扣血出口 <code>DamagePiece</code>、援军落点</td></tr>
+<tr><td>AI/EnemyAI · EnemyDeployment</td><td>敌方状态机的宿主与生命周期、战斗中的敌方增援提交</td></tr>
+<tr><td>Diagnostics/* (4 个)</td><td>只在 Editor / 开发构建里编译的验收造局</td></tr>
+</tbody></table></div>
+<div class="callout"><b>服务层的三条规矩</b>① 外部只依赖接口；② 每个会失败的方法都返回 <code>false</code> 并写 <code>LastError</code>（中文原因），不能静默失败；③ 只广播事实，绝不 <code>using</code> 任何 UI / View / Flow 命名空间。</div></section>
+
+<section id="s6" class="chapter"><div class="section-label">GUIDE / 06</div><h2>流程、域与 Logic</h2>
+<h3>GameFlow：屏幕状态机</h3>
+<p><code>GameFlow</code> 有四个屏幕状态 <code>GameScreen.Home / LevelSelect / Battle / Exit</code>，内部用 <code>RevLightFSM</code> 管理，每个屏幕一个 <code>FlowState</code>。按钮只能调用它提供的入口：<code>OpenLevels()</code>、<code>EnterBattle(章节)</code>、<code>ReturnHome()</code>。过场期间（<code>IsTransitioning</code>）这些入口会拒绝重复触发，并写 <code>LastError</code>。</p>
+<h3>域：一局的生命周期</h3>
+<p>进入屏幕时 <code>FlowState.OnEnter</code> 调用 <code>RevScope.Enter(GameDomain.Battle)</code> 开启一个域；退出时 <code>RevScope.Exit(句柄)</code>。域关闭时框架会停止域内的 Logic、关闭域内打开的面板，你不需要在每个地方手写“清理上一局”。过场遮挡 <code>LoadingPanel</code> 则用 <code>RevScope.Detach</code> 脱离旧域，由流程自己管理。</p>
+<h3>BattleLogic：战斗域的节奏与入口（节选并简化）</h3>
+<pre><code>[RevLogic(GameDomain.Battle)]            // 绑定到战斗域：域开它启动，域关它停止
+public sealed class BattleLogic : RevLogicBase
+{
+    protected override void OnStart()
+    {
+        // 固定步长：不管帧率，每 BattleSimulationStepSeconds 秒推进一小步
+        Every(Balance.BattleSimulationStepSeconds, OnFixedTick);
+    }
+    private void OnFixedTick()
+    {
+        if (flow.IsGameplayBlocked) { return; }          // 过场遮挡期间不消耗准备/战斗时间
+        Battle.Tick(Balance.BattleSimulationStepSeconds); // 交给服务推进
+    }
+    public bool PlayCard(...)  { return Battle.TryPlayCard(...); }  // 玩家/GM 的统一入口
+    public bool ClickBoard(BoardPos pos) { return Battle.HandleBoardClick(pos); }
+    protected override void OnStop() { /* 停掉敌方状态机 */ }
+}</code></pre>
+<p>它只做两件事：<strong>固定节奏</strong>（用 RevTimer 的 <code>Every</code> 驱动 <code>Tick</code>）和<strong>统一入口</strong>（<code>BeginBattle / RefreshHand / SelectCard / PlayCard / ClickBoard / ContinueToNextRound / ChooseReward / SkipRound / SelectEyeStone</code>）。</p>
+<div class="callout tip"><b>为什么按钮不直接调服务？</b>玩家点按钮和 GM 指令走的是<strong>同一个 BattleLogic 入口</strong>。所以用 GM 测出来的结果，和真实玩家点出来的结果是同一条代码路径，不会出现“GM 能过、手点不能过”。</div></section>
+
+<section id="s7" class="chapter"><div class="section-label">GUIDE / 07</div><h2>事件：模块之间怎么通话</h2>
+<p>项目里一共有三种通信方式，用途不同：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>方式</th><th>方向</th><th>什么时候用</th><th>例子</th></tr></thead><tbody>
+<tr><td>调用 Logic</td><td>界面 → 规则</td><td>玩家做了一个操作</td><td><code>RevLogic.Get&lt;BattleLogic&gt;().PlayCard(...)</code></td></tr>
+<tr><td>读服务状态</td><td>界面 ← 规则</td><td>需要“现在是什么样”</td><td><code>battle.Phase</code>、<code>battle.Hand</code>、<code>battle.CardsRemaining</code></td></tr>
+<tr><td>订阅事件</td><td>界面 ← 规则</td><td>需要知道“刚刚发生了什么”</td><td><code>RevEvent.AddEventListener(Events.PiecePlaced, ...)</code></td></tr>
+</tbody></table></div>
+<p>事件名全部集中在 <code>Core/Events/Events.cs</code>，都是 <code>const string</code>。规则层发事件，界面层订阅；<strong>规则永远不知道谁在听</strong>。</p>
+<pre><code>// 发送（BattleService 内部）：只发“事实”
+RevEvent.DispatchEvent&lt;int&gt;(Events.PiecePlaced, piece.Id);
+
+// 订阅（BattlePresentation.OnEnable）：必须带 owner
+RevEvent.AddEventListener&lt;int&gt;(Events.PhaseEnterBattle, OnBattle, owner: this);
+// 退订（OnDisable）：按 owner 一次移除，不会漏
+RevEvent.RemoveAllByOwner(this);</code></pre>
+<div class="callout warn"><b>订阅必须有主人</b>每次 <code>AddEventListener</code> 都带上 <code>owner</code>，并在对象销毁 / 关闭时 <code>RemoveAllByOwner</code>。无主订阅会让旧对象在下一局继续收事件——这是最典型的泄漏。</div>
+<h3>事件目录（核心部分）</h3>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>事件</th><th>谁发</th><th>谁听</th></tr></thead><tbody>
+<tr><td>ScreenChanged(屏幕)</td><td>GameFlow.Change</td><td>GamePresentation（开/关面板与棋盘）、GameAudio（背景乐）、GameSpriteAtlasService（图集租约）</td></tr>
+<tr><td>PhaseEnterPrepare / Battle / Settle / Reward</td><td>BattleService</td><td>BattlePresentation（开关面板）、BoardView、PreparePanel、BattleHudPanel；Settle 另有 GameAudio（胜负音）</td></tr>
+<tr><td>PiecePlaced(棋子Id)</td><td>BattleService（玩家落牌、援军、敌方增援）</td><td>BoardView（创建 PieceView）、GameAudio（落子音）、BattleHudPanel</td></tr>
+<tr><td>PieceMoved / PieceHpChanged / PieceDied</td><td>BattleService</td><td>BoardView（位置、血条、死亡动画）</td></tr>
+<tr><td>PieceAttacked(攻击信息)</td><td>BattleService.Attack</td><td>BoardView（出手动画与弹幕）</td></tr>
+<tr><td>BattleHit(伤害信息)</td><td>BattleService.DamagePiece</td><td>BoardView（飘字、受击）</td></tr>
+<tr><td>DamageResolved(棋子Id)</td><td>BattleService.DamagePiece</td><td>GameAudio（受击音）</td></tr>
+<tr><td>BattleEventTriggered / BattleLog(文字)</td><td>BattleService（战斗增益事件、战报）</td><td>BattleHudPanel（右栏弹幕与战报）</td></tr>
+<tr><td>PieceMerged(棋子Id)</td><td>BattleService（三合一升级）</td><td>BoardView、GameAudio、BattleHudPanel</td></tr>
+<tr><td>GoStateRefreshed</td><td>BattleService.RefreshGoState</td><td>BoardView（刷新气、眼、被围显示）</td></tr>
+<tr><td>HandChanged / HandRerolled / SelectionChanged</td><td>BattleService</td><td>PreparePanel、BoardView（刷新手牌与落点提示）</td></tr>
+<tr><td>PreparationBuffsGranted</td><td>BattleService.Preparation</td><td>BattleHudPanel（弹幕提示）</td></tr>
+<tr><td>EnemyDeployed(棋子Id, 意图)</td><td>BattleService.EnemyDeployment</td><td>BattleHudPanel（敌方落子弹幕）</td></tr>
+<tr><td>GameFinished(是否胜利)</td><td>BattleService.Progression</td><td>GameFlow（返回主界面）</td></tr>
+<tr><td>BattleEnded(胜方)</td><td>BattleService.EndBattle</td><td>目前没有业务订阅者；界面切换由 PhaseEnterSettle 驱动</td></tr>
+</tbody></table></div>
+<div class="callout tip"><b>想知道某个事件有谁在听？</b>在仓库里搜 <code>Events.事件名</code>：<code>DispatchEvent</code> 是发送方，<code>AddEventListener</code> 是订阅方。</div></section>
+<section id="s8" class="chapter"><div class="section-label">GUIDE / 08</div><h2>三条完整链路</h2>
+<p>把前面的概念串起来。每条链路都对应真实代码，你可以按步骤逐个文件对照阅读。</p>
+<h3>链路 A：玩家落一张牌</h3>
+<ol class="steps">
+<li><strong>选牌、点格子</strong><span class="who">PreparePanel / CardItem → BoardView</span>选牌调用 <code>BattleLogic.SelectCard(id)</code>（只改“选择”，不扣牌）；点格子时 <code>BoardCellView</code> 把点击交给 <code>BoardView</code>。</li>
+<li><strong>统一入口</strong><span class="who">View/Board/BoardView.cs → Flow/Logic/BattleLogic.cs</span><code>BoardView</code> 先检查 <code>GameFlow.IsGameplayBlocked</code>（过场中不接受操作）；若正显示攻击范围，这次点击只负责收起；否则调 <code>BattleLogic.ClickBoard(pos)</code>。界面到此为止，不接触任何数据。</li>
+<li><strong>服务判定</strong><span class="who">Services/…/BattleService.Placement.cs</span><code>HandleBoardClick(pos)</code> 的判断顺序是：① 点到己方棋子 → 选中 / 取消选中；点到敌棋 → 拒绝；② 点空格且已选中棋子 → 换位（<code>BoardModel.Move</code>，放不下则拒绝）；③ 战斗期没选棋子 → 拒绝；④ 准备期 → 补眼模式调 <code>TryPlaceEyeStone</code>，否则调 <code>TryPlayCard</code> → <code>PlaceCard</code>：校验阶段、落子额度、整块空间，再 <code>Place</code> 占格、检查三合一升级、继承准备增益、刷新气眼。</li>
+<li><strong>失败也有交代</strong>任何一步不合法，服务写 <code>LastError</code> 并发 <code>SelectionChanged</code>，棋子/手牌/额度保持原样，界面直接显示原因。</li>
+<li><strong>广播事实</strong><span class="who">RevEvent</span>成功则发 <code>PiecePlaced</code>、<code>HandChanged</code>、<code>SelectionChanged</code>（及 <code>GoStateRefreshed</code>）。服务到这里就结束了。</li>
+<li><strong>各自反应</strong><code>BoardView</code> 从 <code>RevPool</code> 取出 <code>PieceView</code> 并 <code>Bind</code>；<code>GameAudio</code> 播放落子音；<code>PreparePanel</code> 刷新手牌与剩余额度。它们互不认识，也不需要。</li>
+</ol>
+<h3>链路 B：战斗中的一小步</h3>
+<ol class="steps">
+<li><strong>固定节奏</strong><span class="who">BattleLogic.OnFixedTick</span>RevTimer 每个固定步长触发一次；若流程处于过场则直接返回；否则 <code>Battle.Tick(step)</code>。</li>
+<li><strong>攒时间、切小步</strong><span class="who">BattleService.Tick</span>准备阶段只推进“增益发放”计时；战斗阶段把传入的时间攒进累加器，攒够一个固定小步就循环处理：<code>ResolveOneStep</code> → 敌方增援检查 → 准备增益的战斗效果 → 自动战斗事件 → 通关辅助 → 判断是否结束。帧率再高也不会多算。</li>
+<li><strong>先我方，后敌方</strong><span class="who">ResolveOneStep</span><code>RefreshGoState</code> → <code>StepSide(Player)</code> → <code>RefreshGoState</code> → <code>StepSide(Enemy)</code>。固定顺序保证相同输入得到相同结果。</li>
+<li><strong>敌方由状态机决定</strong><span class="who">StepEnemyAI → EnemyAI.Tick</span>每颗敌棋的 <code>RevHeavyFSM</code> 在自己的 <code>OnUpdate</code> 里感知（死亡 / 零气 / 有射界 / 移动冷却），切换到 Attack 或 Advance，再执行；执行时只能通过 <code>IEnemyAIOwner</code> 调用服务的原子动作。</li>
+<li><strong>统一扣血出口</strong><span class="who">Attack → DamagePiece</span>先发 <code>PieceAttacked</code>（供动画），再由 <code>DamagePiece</code> 结算伤害（锁死倍伤、护盾、减伤等），发 <code>BattleHit</code>、<code>PieceHpChanged</code>、<code>DamageResolved</code>；死亡则发 <code>PieceDied</code> 并把该敌棋的状态机切到 Dead。<strong>伤害只在这里算一次。</strong></li>
+<li><strong>判胜负</strong><span class="who">EndBattle</span>擒王、一方全灭或超时后：停掉敌方状态机，进入 Settle 阶段，发 <code>PhaseEnterSettle</code>，<code>BattlePresentation</code> 据此打开结算面板。</li>
+</ol>
+<h3>链路 C：从选关进入战斗</h3>
+<ol class="steps">
+<li><strong>点击章节</strong><span class="who">LevelSelectPanel → GameFlow.EnterBattle(chapter)</span>检查未过场、处于选关屏、章节已解锁，通过则置 <code>IsTransitioning</code> 并开始异步切换。</li>
+<li><strong>过场与预热</strong><span class="who">GameFlow.SwitchSceneAsync</span>打开 <code>LoadingPanel</code> → 预载战斗图集 → 资源预热 → <code>RevScene.LoadAsync(GameScene)</code> → 预热对象池。</li>
+<li><strong>交割</strong><span class="who">FlowState.OnEnter</span><code>RevScope.Enter(Battle 域)</code> → <code>BeginCampaign(章节)</code> 生成首回合 → <code>RevLogic.Start&lt;BattleLogic&gt;()</code>。</li>
+<li><strong>画面跟上</strong><code>ScreenChanged</code> → <code>GamePresentation</code> 显示棋盘；<code>BoardView</code> 用对象池创建 81 个格子与开局棋子；<code>BattlePresentation</code> 打开 HUD 与准备面板。</li>
+<li><strong>可见性屏障</strong><span class="who">WaitUntilReadyAsync</span>格子、棋子、HUD、6 张手牌全部就绪才撤遮挡；任何失败显示原因并提供返回入口。</li>
+</ol></section>
+
+<section id="s9" class="chapter"><div class="section-label">GUIDE / 09</div><h2>界面与表现层</h2>
+<h3>面板（UI/Panels）</h3>
+<pre><code>[RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal)]   // 预制体路径 + 层级
+public sealed class PreparePanel : RevUIPanel
+{
+    protected override void OnOpen()
+    {
+        RevTimer.Every(0.25f, RefreshView, owner: this);               // 低频刷新，owner 释放自动取消
+        RevEvent.AddEventListener(Events.HandChanged, RefreshView, owner: this);
+    }
+    private void OnBeginClick() { RevLogic.Get&lt;BattleLogic&gt;().BeginBattle(); }  // 只转发
+}</code></pre>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>面板</th><th>谁打开</th><th>作用</th></tr></thead><tbody>
+<tr><td>HomePanel · LevelSelectPanel</td><td>GamePresentation</td><td>主页与章节选择</td></tr>
+<tr><td>LoadingPanel</td><td>GameFlow</td><td>全屏遮挡与进度，失败时显示原因与返回按钮</td></tr>
+<tr><td>PreparePanel</td><td>BattlePresentation</td><td>准备期：6 张手牌、刷新手牌、开始战斗、跳过</td></tr>
+<tr><td>BattleHudPanel</td><td>BattlePresentation</td><td>战斗中：进度、战报、增益与敌方落子弹幕、返回</td></tr>
+<tr><td>SettlePanel · RewardPanel</td><td>BattlePresentation</td><td>回合结算、章节奖励三选一</td></tr>
+</tbody></table></div>
+<p><strong>面板的三条规矩：</strong>交互只转发给 <code>BattleLogic</code>；状态用“事件触发 + 低频刷新”获得，不在 <code>Update</code> 里每帧读写；打开者（Presentation 或 Flow）负责在加载回调里再次核对阶段，过期面板直接关闭。</p>
+<h3>棋盘与棋子（View）</h3>
+<ul>
+<li><strong>BoardView</strong>是事件的主要订阅者：<code>PiecePlaced</code> 创建棋子、<code>PieceHpChanged</code> 更新血条、<code>PieceDied</code> 播死亡、<code>PieceAttacked</code> 播出手、<code>GoStateRefreshed</code> 刷新气眼显示。它不做任何规则判断。</li>
+<li><strong>PieceView</strong>声明 <code>[RevPoolPrefab(…)]</code> 并实现 <code>IRevPoolable</code>，所以由 <code>RevPool</code> 创建和回收。回池会停用物体、<code>Awake</code> 不会再执行，因此动画在 <code>OnEnable</code> 启动、<code>OnDisable</code> 停止（<code>RevTimer.Every</code> 换帧、<code>RevMono.AddUpdate</code> 做移动插值）。</li>
+<li><strong>BoardView.Feedback / FairFeedbackBuffer / BattleEffectView</strong>管飘字与弹道的数量预算和回收，保证密集战斗时画面可读。数值预算见《战斗性能优化规则》。</li>
+<li><strong>GameAudio</strong>订阅事件，调用 <code>RevSound.Play</code> / <code>PlayBgm</code> 播放音效与背景乐。</li>
+</ul>
+<div class="callout warn"><b>异步回调最常见的坑</b>对象池和面板都是异步取得的。回调到来时棋子可能已经死了、回合可能已经换了、面板可能已经关了。所以回调里必须带“代次（generation）”或“版本号”核对：不匹配就<strong>直接回池或关闭，不要补播</strong>。<code>BattleHudPanel.OnEnemyDeployed</code> 就是示范。</div>
+<h3>动画库的分工</h3>
+<p>棋子帧动画用 RevTimer 切换精灵；弹幕、提示条、缩放等补间用 DOTween。DOTween 的对象由创建者负责在回池时 <code>Kill</code>，不要 <code>KillAll</code>。</p></section>
+
+<section id="s10" class="chapter"><div class="section-label">GUIDE / 10</div><h2>配置与数值：Excel 到代码</h2>
+<p>棋子属性、增益、关卡、奖励、节奏——所有“策划能调的数”都来自 Excel，代码里不写死。</p>
+<ol class="steps">
+<li><strong>Excel 工作簿</strong>在客户端配置表目录下共 5 个工作簿，导出 <strong>13 张表</strong>。</li>
+<li><strong>导表</strong>生成两类产物：数据文本 <code>GameRes/Data/*.txt</code>；强类型代码 <code>Generated/BattleDataStructures.cs</code>、<code>BattleDataTables.cs</code>（<strong>不要手改</strong>）。</li>
+<li><strong>运行时加载</strong>首次启动时 <code>GameFlow.LoadStartupDataAsync</code> 用 <code>RevDataTableManager.LoadAsync&lt;T&gt;()</code> 逐表加载（数据文本已被打进 AB 包，真机上不是磁盘散文件）。</li>
+<li><strong>整体校验</strong><code>GameConfig.Initialize</code> 一次性校验所有表；缺表、缺键、多余键、越界会抛出<strong>中文问题清单</strong>，在过场界面显示，而不是玩到一半才出错。</li>
+<li><strong>业务读取</strong>通过强类型入口读：<code>Balance.XXX</code>（战斗数值）、<code>PieceCatalog</code>、<code>LevelCatalog</code>、<code>PreparationBuffCatalog</code> 等。</li>
+</ol>
+<div class="chips"><span class="chip">PieceConfig</span><span class="chip">StarConfig</span><span class="chip">BalanceRule</span><span class="chip">BattleTuning</span><span class="chip">BattleText</span><span class="chip">PrepBuffConfig</span><span class="chip">BattleEventConfig</span><span class="chip">EventRotationConfig</span><span class="chip">ChapterConfig</span><span class="chip">EnemyRosterConfig</span><span class="chip">EnemyReinforceConfig</span><span class="chip">RewardConfig</span><span class="chip">RewardBoostConfig</span></div>
+<h3>新增一个可调参数</h3>
+<ol><li>在“战斗数值参数”工作簿里加一行（键、数值、说明）。</li><li>在 <code>Data/Config/Balance.cs</code> 里按现有写法加三处：字段、读取（含取值范围）、只读属性。</li><li>重新导表。启动时若键不一致，校验会指出“缺少参数”或“多余参数”。</li></ol>
+<div class="callout tip"><b>编辑器与真机的区别</b><code>GameConfigFileLoader</code> 只在 <code>UNITY_EDITOR</code> 或离线测试里存在（直接读磁盘文本），真机只走 <code>RevDataTableManager</code>。两条路共用同一套解析和校验，所以结论一致。</div></section>
+
+<section id="s11" class="chapter"><div class="section-label">GUIDE / 11</div><h2>敌方 AI：RevHeavyFSM 的用法</h2>
+<p>敌方 AI 位于 <code>Battle/AI</code>，是重量级状态机的完整示例。<strong>每颗敌棋一台机器，敌方指挥一台机器。</strong></p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody>
+<tr><td>EnemyAI.cs</td><td>装配与驱动：按角色注册状态，把固定模拟时间交给框架，负责释放。<strong>不含决策。</strong></td></tr>
+<tr><td>EnemyStates.cs</td><td>每个状态自己感知、切换、执行（Hold / Attack / Advance / Locked / Dead；Prepare / Deploy / Stopped），并定义宿主接口 <code>IEnemyAIOwner</code>。</td></tr>
+<tr><td>EnemyTactics.cs</td><td>纯算法：打谁、走哪格、补在哪（围棋式评分：打吃、封逃路、切断、保眼）。无状态、无计时。</td></tr>
+<tr><td>EnemyFormationPlanner.cs</td><td>回合开始时规划整套敌阵，先预检再一次提交。</td></tr>
+</tbody></table></div>
+<p>一个模拟步里的顺序：服务调 <code>EnemyAI.Tick(秒)</code> → 当前状态 <code>OnUpdate</code> 感知（死亡？非战斗？零气？有射界？移动冷却到？）→ 需要就 <code>ChangeTo</code> 新状态 → 立刻执行新状态的行为一次 → 行为通过 <code>IEnemyAIOwner</code> 提交原子动作（攻击、移动、增援落子）。</p>
+<div class="callout"><b>三方分工</b>状态机回答“<strong>现在</strong>该做什么”，算法回答“<strong>具体</strong>选哪个”，服务回答“<strong>怎样合规地</strong>执行”（扣血、占格、广播）。想改 AI，永远是在前两者里改，不要把逻辑塞回服务。</div>
+<h3>Boss 主将：另一台更重的状态机</h3>
+<p>普通敌棋只有五个状态，Boss 有九个技能 + 待机/死亡/停止。两者状态表差异太大，所以 <strong>Boss 主将使用独立的 <code>BossAI</code></strong>，小兵与 Boss 护卫仍用 <code>EnemyAI</code>；同一颗棋只会有一台机器（<code>EnsureAIFor</code> 按“是否带王冠的主将”分流）。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody>
+<tr><td>Battle/AI/BossAI.cs</td><td>状态枚举、宿主接口 <code>IBossAIOwner</code>、机器装配与驱动</td></tr>
+<tr><td>Battle/AI/BossStates.cs</td><td>待机决策、九个技能状态；基类实现“蓄力 → 多段命中 → 收招”的统一节奏</td></tr>
+<tr><td>Battle/AI/BossTactics.cs</td><td>纯算法：技能评分挑选、范围/连线/落点/瞬移落点计算</td></tr>
+<tr><td>Services/Battle/AI/BattleService.BossAI.cs</td><td>宿主：技能伤害、瞬移、回血、召唤、广播；状态机生命周期</td></tr>
+<tr><td>View/Combat/Effects/BossSkillFxView.cs</td><td>预警与命中特效（DOTween + BossSkill.shader 七种模式）</td></tr>
+<tr><td>View/Board/BoardView.BossSkills.cs</td><td>订阅技能事件、取池播放、瞬移瞬间对齐、换回合回收</td></tr>
+</tbody></table></div>
+<p><strong>章节难度</strong>来自 Excel（<code>BossSkillConfig</code> 的 <code>UnlockChapter</code> 与 <code>BalanceRule</code> 的 <code>Boss.*</code>）：第一章只有横扫与狙击，逐章解锁轰炸、弹幕、瞬移、激光、汲取，第六章九招齐全；章节越高冷却越短、伤害越高，第四章起残血还会触发一次狂暴并进一步缩短冷却。</p>
+<p><strong>预警与躲避</strong>：技能先广播 <code>BossSkillTelegraph</code> 画出危险区，命中时才按“那一刻谁在范围里”结算并广播 <code>BossSkillCast</code>。所以把棋子移出范围是真的能躲开——这也是为什么状态类里要在命中时重新收集目标，而不是在蓄力时锁死名单。</p></section>
+
+<section id="s12" class="chapter"><div class="section-label">GUIDE / 12</div><h2>如果我要手写业务逻辑，写在哪里</h2>
+<p>先问自己：这件事属于“<strong>规则</strong>”“<strong>表现</strong>”还是“<strong>流程</strong>”？规则放纯世界，表现放 View / UI，流程放 Flow。下表按“你想做什么”给出落点：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>我想做的事</th><th>写在哪里</th><th>别忘了</th></tr></thead><tbody>
+<tr><td>调一个数值 / 新增可调参数</td><td>Excel + <code>Data/Config/Balance.cs</code></td><td>重新导表</td></tr>
+<tr><td>新增棋子 / 改棋子属性</td><td>Excel（PieceConfig / StarConfig）、<code>Core/Configuration/Enums.cs</code>（<code>PieceKind</code>）、<code>View/Pieces/PieceArtConfig.cs</code></td><td>导表；补美术与图集</td></tr>
+<tr><td>改走法 / 攻击范围</td><td><code>Battle/Rules/MoveRules.cs</code></td><td>加离线回归断言</td></tr>
+<tr><td>改围棋的气与眼</td><td><code>Board/Rules/GoRules.cs</code>、<code>Board/Model/BoardModel.cs</code></td><td>占格后必须刷新气眼</td></tr>
+<tr><td>改落牌 / 伤害 / 胜负 / 奖励 / 回合</td><td><code>Services/Battle/*</code> 对应的 partial 文件</td><td>失败写 <code>LastError</code>；需要对外暴露就同步改 <code>IBattleService</code></td></tr>
+<tr><td>新增战斗增益 / 准备增益</td><td>Excel + <code>Data/Buffs/*Catalog.cs</code> + <code>Services/Battle/Support/BattleService.Events.cs</code> 或 <code>Preparation/BattleService.Preparation.cs</code> 的效果分支</td><td>伤害走 <code>DamagePiece</code>，不要另算一套</td></tr>
+<tr><td>新增敌方 AI 行为</td><td><code>Battle/AI/EnemyStates.cs</code>（状态）+ <code>EnemyTactics.cs</code>（算法）</td><td>需要新原子动作才改 <code>IEnemyAIOwner</code></td></tr>
+<tr><td>新增玩家操作（按钮）</td><td>面板转发 → <code>Flow/Logic/BattleLogic.cs</code> 新方法 → <code>IBattleService</code> 新方法</td><td>GM 与按钮共用这一入口</td></tr>
+<tr><td>新增界面面板</td><td><code>UI/Panels/…</code> + 预制体 <code>GameRes/UI</code>；由 <code>BattlePresentation</code> / <code>GamePresentation</code> 打开</td><td>刷新资源映射；订阅事件要带 owner</td></tr>
+<tr><td>新增动画 / 特效 / 音效</td><td><code>View/…</code> 订阅现有事件播放；音效在 <code>View/Audio/GameAudio.cs</code></td><td>对象池取用；回调带代次</td></tr>
+<tr><td>新增一个事件</td><td><code>Core/Events/Events.cs</code> 加常量；服务里发送；View / UI 订阅</td><td>只发事实，不带 UI 引用</td></tr>
+<tr><td>新增屏幕 / 流程节点</td><td><code>Core/Configuration/Enums.cs</code>（<code>GameScreen</code>）、<code>Flow/States/GameFlow*.cs</code></td><td>进入屏幕要开域，退出要关域</td></tr>
+<tr><td>新增全局服务</td><td>接口 + 实现，在 <code>Bootstrap/Startup/GameBootstrap.cs</code> 注册</td><td>退出时 <code>UnregisterAllOf</code></td></tr>
+<tr><td>新增调试指令</td><td><code>Bootstrap/Diagnostics/GameGmCommands.cs</code></td><td>必须走 <code>BattleLogic</code>，不要直改数据</td></tr>
+<tr><td>验证你的改动</td><td>纯规则：<code>Tests/CombatAttackRegression</code>；Unity 内：<code>Assets/Editor/RevGame/*Checks</code></td><td>表现与手感仍需 Play 实测</td></tr>
+</tbody></table></div>
+<h3>实战 1：新增一个战斗增益事件</h3>
+<ol class="steps">
+<li><strong>登记种类</strong>在 <code>Data/Buffs/BattleEventCatalog.cs</code> 的 <code>BattleEventKind</code> 里加一项。</li>
+<li><strong>配置</strong>在 Excel 的 BattleEventConfig / EventRotationConfig 里加行（标题、权重、数值），重新导表。</li>
+<li><strong>写效果</strong>在 <code>BattleService.Events.cs</code> 里按现有 <code>case BattleEventKind.…</code> 的写法加分支；要伤害就调 <code>DamagePiece</code>，要回血就复用 <code>HealTeam</code>；没有合法目标时按现有约定转为全队回复。</li>
+<li><strong>表现</strong>已有的 <code>BattleEventTriggered</code> / <code>BattleLog</code> 会让 HUD 自动弹出提示；需要特效再在 View 里订阅。</li>
+<li><strong>回归</strong>在离线测试里造局，断言效果和上限。</li>
+</ol>
+<h3>实战 2：新增一个“自动整理”按钮</h3>
+<ol class="steps">
+<li><strong>面板</strong>在 <code>PreparePanel</code> 加按钮和点击方法，只调 <code>RevLogic.Get&lt;BattleLogic&gt;().AutoArrange()</code>。</li>
+<li><strong>Logic</strong>在 <code>BattleLogic</code> 加 <code>AutoArrange()</code>，转发到 <code>Battle.AutoArrange()</code>。</li>
+<li><strong>契约</strong>在 <code>IBattleService</code> 加方法声明和注释，在 <code>Preparation</code> 下的 partial 里实现：先校验阶段，失败 <code>Reject("原因")</code>。</li>
+<li><strong>通知</strong>成功后发 <code>HandChanged</code> / <code>SelectionChanged</code>，界面自然刷新，不需要新事件。</li>
+</ol>
+<h3>实战 3：让敌人受伤后撤退</h3>
+<ol class="steps">
+<li><strong>状态</strong>在 <code>EnemyAIState</code> 加 <code>Retreat</code>，在 <code>EnemyStates.cs</code> 新增 <code>EnemyRetreatState : EnemyState</code>，只写撤退时该做什么。</li>
+<li><strong>注册</strong>在 <code>EnemyAI</code> 的构造里 <code>AddState</code>。</li>
+<li><strong>感知</strong>在基类 <code>EnemyState.OnUpdate</code> 的判断链里加“血量低于阈值”的条件。</li>
+<li><strong>算法</strong>选哪格撤退属于通用计算，放到 <code>EnemyTactics</code>，状态里只调用。</li>
+<li><strong>动作</strong>移动仍走 <code>IEnemyAIOwner.Move</code>，不要在状态里直接改棋盘。</li>
+</ol></section>
+
+<section id="s13" class="chapter"><div class="section-label">GUIDE / 13</div><h2>不要这样做</h2>
+<ul>
+<li><strong>不要在纯世界目录里 <code>using UnityEngine</code> / UI / View / Flow。</strong>离线回归会立刻失败，这是故意的提醒。</li>
+<li><strong>不要在界面里直接改 <code>Piece</code>、<code>BoardModel</code> 的字段。</strong>所有改变必须经 <code>BattleLogic → IBattleService</code>。</li>
+<li><strong>不要在 View 里重复结算伤害。</strong>画面只播放事件带来的信息。</li>
+<li><strong>不要订阅事件不带 owner。</strong>不要创建无主计时器。</li>
+<li><strong>不要用 <code>Resources.Load</code> / <code>File.ReadAllText</code> 读资源。</strong>一律走 <code>RevResManager</code> 的逻辑路径，数据表走 <code>RevDataTableManager</code>。</li>
+<li><strong>不要把策划数值写死在代码里。</strong>放 Excel 并加校验。</li>
+<li><strong>不要手改 <code>Generated/</code> 和 <code>Revolution/</code>。</strong>前者由导表生成；后者是框架快照，需要改能力请回源仓库。</li>
+<li><strong>不要静默失败。</strong>返回 <code>false</code> 之前必须写 <code>LastError</code>。</li>
+<li><strong>不要在热路径里 <code>new List</code>、<code>FindObjectOfType</code>、LINQ。</strong>复用缓冲，缓存引用。</li>
+<li><strong>不要写单行 <code>if</code>。</strong>项目规范：<code>if</code> 后的语句必须用大括号并换行。</li>
+<li><strong>不要把 <code>async void</code> 用在业务方法上。</strong>它只允许出现在按钮 / Unity 回调这类“无法 await”的边界，且要自己收口异常。</li>
+</ul></section>
+
+<section id="s14" class="chapter"><div class="section-label">GUIDE / 14</div><h2>验证与调试入口</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>入口</th><th>能验证什么</th><th>怎么用</th></tr></thead><tbody>
+<tr><td>离线回归</td><td>纯规则：走法、气眼、AI 状态、增援、增益、事件等</td><td><code>dotnet run --project Tests/CombatAttackRegression/CombatAttackRegression.csproj</code></td></tr>
+<tr><td>Editor 验收</td><td>布局、资源、图集、规则等价、战术</td><td><code>Assets/Editor/RevGame/*Checks</code>（如 GameRuleChecks、GameTacticsChecks）</td></tr>
+<tr><td>GM 指令</td><td>通过真实入口推进流程：快照、敌方 AI、进入战斗、落子、点棋盘、推进步数等</td><td>仅 Editor / Development 构建，指令名都以 <code>RevGame/</code> 开头</td></tr>
+<tr><td>日志</td><td>启动、过场、配置校验、异步失败</td><td>RevLog，tag 为 <code>RevGame</code></td></tr>
+</tbody></table></div>
+<h3>推荐阅读顺序</h3>
+<ol><li><code>Bootstrap/Startup/GameBootstrap.cs</code>：框架怎么接电、服务怎么注册。</li><li><code>Flow/States/GameFlow.cs</code>：屏幕与域怎么切换。</li><li><code>Flow/Logic/BattleLogic.cs</code>：战斗域的入口和节奏。</li><li><code>Services/Battle/Contracts/IBattleService.cs</code>：规则对外的完整契约。</li><li><code>Services/Battle/Simulation/BattleService.cs</code>：回合与一小步怎么推进。</li><li><code>View/Board/BoardView.cs</code> 与 <code>UI/Panels/Battle/PreparePanel.cs</code>：界面怎样订阅与转发。</li><li><code>Battle/AI/EnemyStates.cs</code>：状态机里的业务。</li></ol>
+<div class="legend">边界说明：本文依据当前工作区的真实代码整理；离线回归最近一次结果为 174 个场景 / 4086 条断言通过。Unity 内的 Play 实测、真机帧率与手感没有在撰写本文时重新验证；顶部的交互动画与分层图是示意，不是性能测量。</div></section>
+</main></div>
+<footer><span>RevGame · 项目架构与 Revolution 框架讲解</span><span>可离线阅读 · 尊重系统减少动画设置</span></footer>
+<script>
+const chains={
+card:[["玩家点格子","BoardCellView → BoardView"],["统一入口","BattleLogic.ClickBoard(pos)"],["服务判定","IBattleService.HandleBoardClick"],["校验并落子","阶段 / 额度 / 空间 → BoardModel.Place"],["广播事实","RevEvent: PiecePlaced"],["各自反应","PieceView 入池取出 · 音效 · 手牌刷新"]],
+tick:[["固定节奏","RevTimer.Every → OnFixedTick"],["推进","IBattleService.Tick → ResolveOneStep"],["敌方状态机","EnemyAI 感知 → Attack / Advance"],["统一扣血","Attack → DamagePiece"],["广播结果","BattleHit · PieceHpChanged · PieceDied"],["画面反应","BoardView 飘字 · 血条 · 死亡动画"]],
+scene:[["点击章节","GameFlow.EnterBattle(chapter)"],["过场遮挡","LoadingPanel + 资源预热"],["加载场景","RevScene.LoadAsync(GameScene)"],["开域并建局","RevScope.Enter + BeginCampaign + BattleLogic"],["画面就位","GamePresentation · BoardView · 对象池"],["撤遮挡","WaitUntilReadyAsync 通过后淡出"]]};
+const demo=document.querySelector('#chainDemo'),list=document.querySelector('#chainList');let mode='card',index=0,timer=0;
+function render(){list.innerHTML=chains[mode].map((s,i)=>'<li data-i="'+i+'"><b>'+(i+1)+'</b><span>'+s[0]+'<small>'+s[1]+'</small></span></li>').join('');mark();}
+function mark(){[...list.children].forEach((li,i)=>li.classList.toggle('on',i===index));}
+function start(){clearInterval(timer);if(matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('paused')){index=0;mark();return;}timer=setInterval(()=>{index=(index+1)%chains[mode].length;mark();},1300);}
+document.querySelectorAll('.segmented button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;index=0;demo.dataset.mode=mode;document.querySelectorAll('.segmented button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render();start();}));
+document.querySelector('#motion').addEventListener('click',e=>{const paused=document.body.classList.toggle('paused');e.currentTarget.setAttribute('aria-pressed',String(paused));e.currentTarget.textContent=paused?'继续装饰动画':'暂停装饰动画';start();});
+render();start();
+const links=[...document.querySelectorAll('.sidebar nav a')],chapters=[...document.querySelectorAll('.chapter')];let scheduled=false;
+function update(){const max=document.documentElement.scrollHeight-innerHeight;document.querySelector('.progress').style.width=(max>0?scrollY/max*100:0)+'%';let active=chapters[0];for(const s of chapters){if(s.getBoundingClientRect().top<innerHeight*.35)active=s;}links.forEach(a=>a.classList.toggle('active',a.hash==='#'+active.id));scheduled=false;}
+addEventListener('scroll',()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update);}},{passive:true});update();
+if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('arrive');observer.unobserve(e.target);}}),{threshold:.04});chapters.forEach(s=>observer.observe(s));}
+</script></body></html>
+
+

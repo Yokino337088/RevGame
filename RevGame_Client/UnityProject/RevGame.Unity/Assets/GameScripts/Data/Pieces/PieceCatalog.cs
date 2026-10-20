@@ -27,7 +27,10 @@ namespace RevGame.Data
             get
             {
                 ConfigSnapshot snapshot = GameConfig.Current;
-                if (!ReferenceEquals(_cachedFor, snapshot)) { Rebuild(snapshot); }
+                if (!ReferenceEquals(_cachedFor, snapshot))
+                {
+                    Rebuild(snapshot);
+                }
                 return _defs;
             }
         }
@@ -105,7 +108,10 @@ namespace RevGame.Data
             var set = new HashSet<PieceKind>();
             foreach (PieceKind kind in snapshot.PieceOrder)
             {
-                if (snapshot.Pieces[kind].UnlockedAtStart) { set.Add(kind); }
+                if (snapshot.Pieces[kind].UnlockedAtStart)
+                {
+                    set.Add(kind);
+                }
             }
             return set;
         }

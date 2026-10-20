@@ -145,9 +145,15 @@ namespace RevGame.Pieces
         /// <summary>原位升一星：换图鉴和属性，绝不换 Id/坐标/占格，所以眼阵里的棋子也能安全升级。</summary>
         public bool UpgradeInPlace()
         {
-            if (!IsAlive || Def.Star == StarTier.Three) { return false; }
+            if (!IsAlive || Def.Star == StarTier.Three)
+            {
+                return false;
+            }
             PieceDef next = PieceCatalog.Get(Def.Kind, (StarTier)((int)Def.Star + 1));
-            if (next == null) { return false; }
+            if (next == null)
+            {
+                return false;
+            }
             float ratio = HpRatio;
             // ★ 先保存比例，再换最大生命。残血升级仍保留伤势，不能无意变成免费满血。
             float growth = (float)_baseMaxHp / Def.MaxHp;
@@ -161,7 +167,10 @@ namespace RevGame.Pieces
         /// <summary>每轮生命加成以基础值重算，而非反复相乘；换轮移除后不会越滚越大。</summary>
         internal void SetRoundHealthScale(float scale)
         {
-            if (System.Math.Abs(_roundHealthScale - scale) < 0.00001f) { return; }
+            if (System.Math.Abs(_roundHealthScale - scale) < 0.00001f)
+            {
+                return;
+            }
             float ratio = HpRatio;
             bool alive = IsAlive;
             _roundHealthScale = scale;

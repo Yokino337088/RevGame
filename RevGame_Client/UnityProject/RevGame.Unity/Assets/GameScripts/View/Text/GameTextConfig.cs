@@ -37,6 +37,9 @@ namespace RevGame.View
             Require("Upgrade_2");
             Require("Upgrade_3");
             Require("Damage");
+            Require("EnemyDeployment");
+            // Boss 技能预警提示样式（标题 {skill}、副标题 {hint}），缺这一行时启动阶段就报错。
+            Require("BossSkill");
             for (int i = 0; i < 8; i++) { Require("Event_" + Data.BattleEventCatalog.NameOf((Data.BattleEventKind)i)); }
             Require("Event_决胜支援");
             foreach (BattleText row in RevDataTableManager.Get<BattleTextTable>().All)

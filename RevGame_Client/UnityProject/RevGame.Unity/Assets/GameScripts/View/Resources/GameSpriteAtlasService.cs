@@ -66,11 +66,20 @@ namespace RevGame.View
         {
             foreach (string name in names)
             {
-                if (!_known.Contains(name)) { throw new InvalidOperationException("未配置的图集：" + name); }
+                if (!_known.Contains(name))
+                {
+                    throw new InvalidOperationException("未配置的图集：" + name);
+                }
                 Entry entry = Request(name, null);
                 while (!_disposed && !entry.Finished) { await RevTask.Yield(); }
-                if (_disposed) { throw new OperationCanceledException("图集服务已释放"); }
-                if (entry.Atlas == null) { throw new InvalidOperationException("图集未就绪：" + name); }
+                if (_disposed)
+                {
+                    throw new OperationCanceledException("图集服务已释放");
+                }
+                if (entry.Atlas == null)
+                {
+                    throw new InvalidOperationException("图集未就绪：" + name);
+                }
                 // 即使AB已经缓存，也主动让出一帧，避免多张纹理上传挤在同一帧。
                 await RevTask.Yield();
             }
@@ -79,8 +88,14 @@ namespace RevGame.View
         /// <summary>Unity给出的register必须在图集完成后调用；缓存命中也可能同步发生，所以先建Entry再发请求。</summary>
         private void OnAtlasRequested(string tag, Action<SpriteAtlas> register)
         {
-            if (_disposed) { return; }
-            if (!_known.Contains(tag)) { RevLog.Error("未配置的图集标签：" + tag + "，请重跑资源配置", "RevGame"); return; }
+            if (_disposed)
+            {
+                return;
+            }
+            if (!_known.Contains(tag))
+            {
+                RevLog.Error("未配置的图集标签：" + tag + "，请重跑资源配置", "RevGame"); return;
+            }
             Request(tag, register);
         }
 
@@ -90,18 +105,30 @@ namespace RevGame.View
             Entry entry;
             if (_entries.TryGetValue(name, out entry))
             {
-                if (entry.Atlas != null) { register?.Invoke(entry.Atlas); }
-                else if (!entry.Finished && register != null) { entry.Waiters.Add(register); }
+                if (entry.Atlas != null)
+                {
+                    register?.Invoke(entry.Atlas);
+                }
+                else if (!entry.Finished && register != null)
+                {
+                    entry.Waiters.Add(register);
+                }
                 return entry;
             }
             entry = new Entry(name);
-            if (register != null) { entry.Waiters.Add(register); }
+            if (register != null)
+            {
+                entry.Waiters.Add(register);
+            }
             _entries.Add(name, entry);
             RevResManager.LoadAsync(RevResPath.Atlases, name, typeof(SpriteAtlas), handle =>
             {
                 entry.Finished = true;
                 // 退出时已Release的租约不能再减一次，也不能把旧atlas重新交给Unity。
-                if (_disposed || entry.Released) { entry.Waiters.Clear(); return; }
+                if (_disposed || entry.Released)
+                {
+                    entry.Waiters.Clear(); return;
+                }
                 if (!handle.IsLoaded)
                 {
                     entry.Waiters.Clear();
@@ -122,20 +149,29 @@ namespace RevGame.View
         private void OnScreenChanged(GameScreen screen)
         {
             int version = ++_screenVersion;
-            if (screen != GameScreen.Battle) { ReleaseBattleAfterViewsAsync(version); }
+            if (screen != GameScreen.Battle)
+            {
+                ReleaseBattleAfterViewsAsync(version);
+            }
         }
 
         /// <summary>等本次UI/棋盘退出通知处理完；只有版本没变，才释放这次退出对应的战斗引用。</summary>
         private async void ReleaseBattleAfterViewsAsync(int version)
         {
             await RevTask.Yield();
-            if (_disposed || version != _screenVersion) { return; }
+            if (_disposed || version != _screenVersion)
+            {
+                return;
+            }
             // 仅在流程边界分配这个小清单；不能一边遍历Dictionary一边删除元素。
             var names = new[] { "PieceFrames", "CombatFrames", "BoardStatus" };
             foreach (string name in names)
             {
                 Entry entry;
-                if (!_entries.TryGetValue(name, out entry)) { continue; }
+                if (!_entries.TryGetValue(name, out entry))
+                {
+                    continue;
+                }
                 Release(entry);
                 _entries.Remove(name);
             }
@@ -145,7 +181,10 @@ namespace RevGame.View
         /// <summary>一次性释放自己的引用并断开等待者。重复退出、迟到回调不会导致负引用计数。</summary>
         private static void Release(Entry entry)
         {
-            if (entry.Released) { return; }
+            if (entry.Released)
+            {
+                return;
+            }
             entry.Released = true;
             entry.Waiters.Clear();
             entry.Atlas = null;
@@ -155,7 +194,10 @@ namespace RevGame.View
         /// <summary>先退订事件再释放资源，防止卸载过程中又收到新请求；由Bootstrap反向注销服务调用。</summary>
         public void Dispose()
         {
-            if (_disposed) { return; }
+            if (_disposed)
+            {
+                return;
+            }
             _disposed = true;
             SpriteAtlasManager.atlasRequested -= OnAtlasRequested;
             RevEvent.RemoveAllByOwner(this);

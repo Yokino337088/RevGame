@@ -63,6 +63,7 @@ namespace Revolution
         public const string Material = "Material/";
         public const string Material_Background = "Material/Background/";
         public const string Material_Cards = "Material/Cards/";
+        public const string Material_Combat = "Material/Combat/";
         public const string Material_Pieces = "Material/Pieces/";
         public const string Material_UI = "Material/UI/";
         public const string Pieces = "Pieces/";

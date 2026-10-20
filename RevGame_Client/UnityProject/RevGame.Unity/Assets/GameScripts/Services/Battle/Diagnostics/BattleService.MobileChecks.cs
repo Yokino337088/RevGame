@@ -10,8 +10,13 @@ using RevGame.Pieces;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
+        /// <summary>
+        /// 验收手机单指操作的全部真实边界：全盘落子、己方换位、大棋整块搬移、
+        /// 敌方独立移动冷却、零气仍可反击、结算期拒绝操作。
+        /// </summary>
         private static void VerifyPlacementAndMovement(Action<bool, string> check)
         {
             for (int y = 0; y < Consts.BoardSize; y++)
@@ -58,12 +63,14 @@ namespace RevGame.Services
             Piece enemy = battle.AddCheckPiece(GameSide.Enemy, PieceKind.Archer, new BoardPos(8, 8));
             battle.RefreshGoState();
             battle.StartBattle();
-            battle.Tick(3.75f);
-            check(enemy.Pos == new BoardPos(8, 8), "敌人五秒冷却前不移动");
-            battle.Tick(1.25f);
+            float movementCooldown = Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
+            float simulationStep = Balance.BattleSimulationStepSeconds;
+            battle.Tick(movementCooldown - simulationStep);
+            check(enemy.Pos == new BoardPos(8, 8), "敌人配置冷却到期前不移动");
+            battle.Tick(simulationStep);
             BoardPos firstMove = enemy.Pos;
-            check(Math.Abs(firstMove.X - 8) + Math.Abs(firstMove.Y - 8) == 1, "敌方滑步五秒时只靠近一格");
-            battle.Tick(3.75f);
+            check(Math.Abs(firstMove.X - 8) + Math.Abs(firstMove.Y - 8) == 1, "敌方滑步冷却到期只靠近一格");
+            battle.Tick(movementCooldown - simulationStep);
             check(enemy.Pos == firstMove && player.Pos == new BoardPos(0, 0), "冷却期间不重复挪动，我方始终守阵");
 
             battle = new BattleService(false);
@@ -119,7 +126,10 @@ namespace RevGame.Services
                     battle.AddCheckPiece(GameSide.Player, kinds[n++ % 3], new BoardPos(x, 1));
                 }
                 battle.AddCheckPiece(GameSide.Player, kinds[n++ % 3], new BoardPos(1, 0));
-                if (eyes == 2) { battle.AddCheckPiece(GameSide.Player, kinds[n % 3], new BoardPos(3, 0)); }
+                if (eyes == 2)
+                {
+                    battle.AddCheckPiece(GameSide.Player, kinds[n % 3], new BoardPos(3, 0));
+                }
                 // 这里验收的是“守眼时有没有自动挪位”，不能让敌人提前死亡改变棋盘字符画。
                 // 新规则下六颗近战也会原位援击，普通一星盾靶可能在3.75秒内被打死；那是火力变化，不是玩家移动。
                 // 保留同种一星盾战及同一落点，只在夹具里给耐打血量，避免用禁攻/跳过战斗来掩盖真正的移动错误。

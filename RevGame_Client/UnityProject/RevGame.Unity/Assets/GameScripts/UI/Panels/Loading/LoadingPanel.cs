@@ -61,7 +61,10 @@ namespace RevGame.UI
 
         protected override void OnRefreshView()
         {
-            if (Data == null) { return; }
+            if (Data == null)
+            {
+                return;
+            }
             _message.text = string.IsNullOrEmpty(Data.Error) ? Data.Message : Data.Error;
             _btnReturn.gameObject.SetActive(!string.IsNullOrEmpty(Data.Error));
             _progressTween?.Kill(false);
@@ -82,7 +85,10 @@ namespace RevGame.UI
         public async RevTask FadeOutAsync()
         {
             while (this != null && _progressTween != null && _progressTween.IsActive()) { await RevTask.Yield(); }
-            if (this == null) { return; }
+            if (this == null)
+            {
+                return;
+            }
             _fadeTween = _cover.DOFade(0f, 0.35f).SetEase(Ease.InOutSine).SetUpdate(true).OnComplete(() => _fadeTween = null);
             while (this != null && _fadeTween != null && _fadeTween.IsActive()) { await RevTask.Yield(); }
             // 最后一帧淡出前仍拦截点击；流程解除输入门禁后才真正关闭。

@@ -73,6 +73,9 @@ namespace RevGame.UI
         private int _regularNoticeGeneration;
         private readonly Queue<PreparationBuffDef> _preparationQueue = new Queue<PreparationBuffDef>();
         private BattleEventNoticeView _preparationNotice;
+        // 敌方落子与玩家增益分通道，避免同一模拟步触发增益时把落子提示立即收走。
+        private BattleEventNoticeView _enemyNotice;
+        private int _enemyNoticeGeneration;
         private bool _preparationLoading;
         private Tween _progressTween, _bossTween;
         private float _progressTarget = -1f, _bossTarget = -1f;
@@ -113,6 +116,8 @@ namespace RevGame.UI
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnPhaseChanged, 0, this);
             RevEvent.AddEventListener<int>(Events.PieceMerged, OnUpgraded, owner: this);
             RevEvent.AddEventListener<int>(Events.PiecePlaced, OnPieceChanged, 0, this);
+            RevEvent.AddEventListener<int, string>(Events.EnemyDeployed, OnEnemyDeployed, owner: this);
+            RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, OnBossTelegraph, owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, 0, this);
             RevEvent.AddEventListener<string>(Events.BattleLog, OnBattleLog, 0, this);
             RevEvent.AddEventListener<int>(Events.PieceHpChanged, OnPieceChanged, 0, this);
@@ -227,6 +232,8 @@ namespace RevGame.UI
         {
             _noticeGeneration++;
             _regularNoticeGeneration++;
+            _enemyNoticeGeneration++;
+            _enemyNotice = null;
             _preparationQueue.Clear();
             _preparationNotice = null;
             _preparationLoading = false;
@@ -268,11 +275,84 @@ namespace RevGame.UI
             ShowNotice(config, config.Text, sprite);
         }
 
+        /// <summary>
+        /// 只播报已经提交的敌方落子。先把棋种/坐标转成文字，异步加载不能保存可能阵亡的Piece引用。
+        /// 新回合/关闭面板会改变代次：旧加载回调只回池、不补播，避免大厅突然出现敌方弹幕。
+        /// </summary>
+        private void OnEnemyDeployed(int id, string intention)
+        {
+            Pieces.Piece piece = Battle.Board.FindPiece(id);
+            if (piece == null || piece.Side != GameSide.Enemy)
+            {
+                return;
+            }
+            BattleText config = GameTextConfig.Require("EnemyDeployment");
+            string title = config.Text.Replace("{intention}", "敌方落子 · " + intention);
+            string detail = config.Detail.Replace("{piece}", piece.Def.DisplayName).Replace("{position}", piece.Pos.ToString());
+            ShowEnemyNotice(config, title, detail, "敌方落子提示加载失败");
+        }
+
+        /// <summary>
+        /// Boss 开始蓄力时弹出“技能名 + 应对提示”。与敌方落子共用右栏同一条提示通道：
+        /// Boss 技能更重要，新提示直接顶掉旧的，保证玩家看到的是“马上要发生的事”。
+        /// 文字来自 Excel（BossSkillConfig 的 Name/Hint、BattleText 的 BossSkill 样式），这里不写死文案。
+        /// </summary>
+        private void OnBossTelegraph(BossSkillInfo info)
+        {
+            BossSkillDef def = BossSkillCatalog.Get(info.Kind);
+            BattleText config = GameTextConfig.Require("BossSkill");
+            string title = config.Text.Replace("{skill}", (info.Enraged ? "狂暴 · " : "Boss · ") + def.Name);
+            string detail = config.Detail.Replace("{hint}", def.Hint);
+            ShowEnemyNotice(config, title, detail, "Boss 技能提示加载失败");
+        }
+
+        /// <summary>
+        /// 右栏“敌方动态”提示通道：同一时间只显示一条，新提示替换旧提示。
+        /// 用两层代次防止过期显示：_noticeGeneration 代表回合/面板寿命，_enemyNoticeGeneration 代表本通道的请求序号；
+        /// 异步加载回来时任意一个不匹配都直接回池，不会在新回合里冒出旧提示。
+        /// </summary>
+        private void ShowEnemyNotice(BattleText config, string title, string detail, string loadError)
+        {
+            if (_enemyNotice != null)
+            {
+                _notices.Remove(_enemyNotice);
+                RevPool.Return(_enemyNotice, 0);
+                _enemyNotice = null;
+            }
+            int generation = _noticeGeneration;
+            int request = ++_enemyNoticeGeneration;
+            RevPool.GetAsync<BattleEventNoticeView>(notice =>
+            {
+                if (notice == null)
+                {
+                    RevLog.Error(loadError, "RevGame"); return;
+                }
+                if (_noticeClosed || this == null || generation != _noticeGeneration || request != _enemyNoticeGeneration)
+                {
+                    RevPool.Return(notice, 0);
+                    return;
+                }
+                _enemyNotice = notice;
+                _notices.Add(notice);
+                notice.Show(config, title, null, item =>
+                {
+                    _notices.Remove(item);
+                    if (_enemyNotice == item)
+                    {
+                        _enemyNotice = null;
+                    }
+                }, detail, enemyDeployment: true);
+            }, _noticeRoot);
+        }
+
         private void OnUpgraded(int id)
         {
             foreach (Pieces.Piece piece in Battle.PlayerPieces)
             {
-                if (piece.Id != id || !piece.IsAlive) { continue; }
+                if (piece.Id != id || !piece.IsAlive)
+                {
+                    continue;
+                }
                 BattleText config = GameTextConfig.Require("Upgrade_" + (int)piece.Def.Star);
                 string title = config.Text.Replace("{piece}", piece.Def.DisplayName.Split(' ')[0]).Replace("{star}", ((int)piece.Def.Star).ToString());
                 ShowNotice(config, title, eventIcons.Length > 0 ? eventIcons[0] : null);
@@ -287,7 +367,10 @@ namespace RevGame.UI
             // 准备横幅与右栏升级提示分别管理：打牌升级不能吞掉尚未播报的准备增益。
             foreach (BattleEventNoticeView old in new List<BattleEventNoticeView>(_notices))
             {
-                if (old == _preparationNotice) { continue; }
+                if (old == _preparationNotice || old == _enemyNotice)
+                {
+                    continue;
+                }
                 _notices.Remove(old);
                 RevPool.Return(old, 0);
             }
@@ -321,7 +404,10 @@ namespace RevGame.UI
 
         private void TryShowPreparationNotice()
         {
-            if (_noticeClosed || Battle.Phase != GamePhase.Prepare || _preparationLoading || _preparationNotice != null || _preparationQueue.Count == 0) { return; }
+            if (_noticeClosed || Battle.Phase != GamePhase.Prepare || _preparationLoading || _preparationNotice != null || _preparationQueue.Count == 0)
+            {
+                return;
+            }
             PreparationBuffDef buff = _preparationQueue.Dequeue();
             int generation = _noticeGeneration;
             _preparationLoading = true;
@@ -330,7 +416,10 @@ namespace RevGame.UI
                 // 先判代次，再动loading。旧资源回调不能把新回合的加载状态改成false。
                 if (_noticeClosed || this == null || generation != _noticeGeneration)
                 {
-                    if (notice != null) { RevPool.Return(notice, 0); }
+                    if (notice != null)
+                    {
+                        RevPool.Return(notice, 0);
+                    }
                     return;
                 }
                 _preparationLoading = false;
@@ -357,12 +446,18 @@ namespace RevGame.UI
         private static void UpdateBar(Image image, float value, ref Tween tween, ref float target, bool instant)
         {
             value = Mathf.Clamp01(value);
-            if (Mathf.Abs(target - value) < 0.00001f) { return; }
+            if (Mathf.Abs(target - value) < 0.00001f)
+            {
+                return;
+            }
             tween?.Kill(false);
             tween = null;
             bool first = target < 0f;
             target = value;
-            if (instant || first) { image.fillAmount = value; return; }
+            if (instant || first)
+            {
+                image.fillAmount = value; return;
+            }
             tween = DOTween.To(() => image.fillAmount, x => image.fillAmount = x, value, 0.28f).SetEase(Ease.OutCubic).SetUpdate(true);
         }
 

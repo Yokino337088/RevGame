@@ -3,6 +3,7 @@ using System;
 
 namespace UnityEngine
 {
+    public static class Time { public static float time => 0f; }
     /// <summary>仅让 BoardPos 的坐标转换方法可以编译；本套攻击断言没有使用引擎或世界坐标。</summary>
     public struct Vector3
     {
@@ -29,9 +30,17 @@ namespace UnityEngine
 
 namespace Revolution
 {
+    // 本轮AI只用同步切换；链接真实RevTask和取消源，但禁止测试误用没有Unity宿主的帧调度。
+    public static class RevTaskScheduler
+    {
+        public static RevTask Delay(int milliseconds) { throw new NotSupportedException("离线同步AI测试不调度延迟"); }
+        public static RevTask Yield() { throw new NotSupportedException("离线同步AI测试不调度帧等待"); }
+        public static RevTask WhenAll(params RevTask[] tasks) { throw new NotSupportedException("离线同步AI测试不调度并行任务"); }
+    }
     /// <summary>业务日志由控制台接收；测试失败依靠异常和非零退出码，不能靠看日志猜测。</summary>
     public static class RevLog
     {
+        public static void Error(string message, string tag = null) { throw new InvalidOperationException(message); }
         public static void Info(string message, string tag = null)
         {
         }

@@ -56,5 +56,57 @@ namespace RevGame.Services
         {
             StepSide(GameSide.Enemy, fraction);
         }
+
+        public RevGame.Battle.EnemyAI RegressionEnemyAI(Piece piece) { return EnsureEnemyAI(piece); }
+        public void SetRegressionElapsed(float seconds) { _battleElapsed = seconds; }
+        public void ResetRegressionDeployment()
+        {
+            ResetEnemyDeployment();
+            EnsureEnemyCommander().Tick(RevGame.Battle.EnemyAIState.Prepare, 0f, "测试回合初始化");
+        }
+
+        /// <summary>仅测试宿主可直接推进落子时钟，不执行攻击，以隔离冷却、预算和落子事件。</summary>
+        public void RunRegressionDeploymentAt(float seconds)
+        {
+            _battleElapsed = seconds;
+            TickEnemyDeployment();
+        }
+
+        public static BattleService CreatePreparationRegressionFixture(int seed)
+        {
+            return new BattleService(true, seed) { Chapter = 1, Round = 1, Phase = GamePhase.Prepare };
+        }
+
+        public void GrantRegressionPreparation() { TickPreparation(Balance.PrepDelaySeconds); }
+        public float RegressionArrowRate(Piece piece) { return PreparationAttackRate(piece); }
+
+        /// <summary>
+        /// Boss 造局：指定章节的 Boss 回合，放一颗带王冠的 Boss 主将（走正式占格）。
+        /// 只用于离线验证 Boss 状态机，不经过完整布阵，避免随机敌阵干扰技能断言。
+        /// </summary>
+        public static BattleService CreateBossRegressionFixture(int chapter)
+        {
+            return new BattleService(false, 20261020) { Chapter = chapter, Round = Balance.BossRoundIndex, IsBossRound = true, Phase = GamePhase.Battle };
+        }
+
+        public Piece AddRegressionBoss(BoardPos pos, int size, float hpScale = 50f)
+        {
+            Piece boss = new Piece(_nextPieceId++, PieceCatalog.Get(PieceKind.HeavySword, StarTier.Three), GameSide.Enemy, size, true, true, hpScale);
+            if (!_board.Place(boss, pos))
+            {
+                throw new System.InvalidOperationException("测试造局 Boss 占格失败 @" + pos);
+            }
+            _enemyPieces.Add(boss);
+            return boss;
+        }
+
+        /// <summary>按正式路径推进敌方一个模拟小步（Boss 走 BossAI，其余走 EnemyAI）。</summary>
+        public void RunRegressionEnemyAI(float seconds)
+        {
+            _battleElapsed += seconds;
+            StepEnemyAI(seconds);
+        }
+
+        public RevGame.Battle.BossAI RegressionBossAI(Piece boss) { return EnsureBossAI(boss); }
     }
 }

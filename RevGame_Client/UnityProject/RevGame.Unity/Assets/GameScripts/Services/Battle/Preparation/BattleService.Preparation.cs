@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // BattleService.Preparation.cs —— 准备增益与本轮持续效果。
 // 只由战斗域固定时钟推进，不创建跨界面的延时回调；退出战斗域后不会在大厅突然加棋或弹提示。
 // 所有百分比、次数、阈值都来自 Excel（增益与事件配置.xlsx 的 PrepBuffConfig），领取时缓存进下面的 _prepXxx 字段，
@@ -12,6 +12,7 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
         // 这一轮已经领取的增益清单。UI 只读取它排队播报，不能从动画回调再次发放奖励。
@@ -40,8 +41,17 @@ namespace RevGame.Services
         private float _prepArrowRate = 1f;
         // 回复脉冲的本轮累计时间；每个周期减掉一个周期，保留不足一个周期的余量。
         private float _prepRegenClock;
+        /// <summary>
+        /// 本轮已发放的增益清单（只读）。HUD 只负责排队播报，不能借它重复发奖。
+        /// </summary>
         public IReadOnlyList<PreparationBuffDef> PreparationBuffs => _preparationBuffs;
+        /// <summary>
+        /// 准备阶段已过的模拟秒数；开始按钮用它显示“增益抵达 N 秒”。
+        /// </summary>
         public float PreparationElapsed => _preparationElapsed;
+        /// <summary>
+        /// 本轮增益是否已统一生效；开启辅助时，未生效不允许开战。
+        /// </summary>
         public bool PreparationGranted => _preparationGranted;
 
         /// <summary>每轮先清临时属性，保留玩家棋子的位置、伤势和永久星级，防止增益跨轮叠加失控。</summary>
@@ -69,14 +79,29 @@ namespace RevGame.Services
         /// <summary>等待 Prep.DelaySeconds 后洗牌取出若干种不重复增益。业务先生效，随后通知UI播放动画。</summary>
         private void TickPreparation(float deltaSeconds)
         {
-            if (_preparationGranted || float.IsNaN(deltaSeconds) || float.IsInfinity(deltaSeconds) || deltaSeconds <= 0f) { return; }
+            if (_preparationGranted || float.IsNaN(deltaSeconds) || float.IsInfinity(deltaSeconds) || deltaSeconds <= 0f)
+            {
+                return;
+            }
             _preparationElapsed += deltaSeconds;
-            if (_preparationElapsed < Balance.PrepDelaySeconds) { return; }
+            if (_preparationElapsed < Balance.PrepDelaySeconds)
+            {
+                return;
+            }
             // 基础规则验收显式关闭通关辅助时，不赠送增益，便于隔离比较同一攻击/走法的结果。
-            if (!VictoryAssistEnabled) { _preparationGranted = true; return; }
+            if (!VictoryAssistEnabled)
+            {
+                _preparationGranted = true; return;
+            }
             // ★ 先标记再派事件。界面刷新/GM重入都不能让同一轮重复抽取一批奖励。
             _preparationGranted = true;
+            // 保底不是“加大概率”：先把万箭齐发取出并实际应用，再从剩余增益里抽取。
+            // 它占用本轮总名额；先移除再洗牌，保证不会出现同一轮重复领取两次。
+            PreparationBuffDef volley = PreparationBuffCatalog.Get(PreparationBuffKind.ArrowVolley);
+            _preparationBuffs.Add(volley);
+            ApplyPreparationBuff(volley);
             var shuffled = new List<PreparationBuffDef>(PreparationBuffCatalog.All);
+            shuffled.Remove(volley);
             // Fisher-Yates：每次把当前位置与前面一个随机位置交换，最后取前几项即可保证本轮不重复。
             // 先复制目录再洗牌，不能打乱全局目录，否则下一轮或验收读取会受上一轮影响。
             for (int i = shuffled.Count - 1; i > 0; i--)
@@ -88,7 +113,7 @@ namespace RevGame.Services
             }
             // 数量上下限来自 Prep.BuffCountMin/Max（含上限）；Next 的上界是开区间，所以 +1。
             int count = _random.Next(Balance.PrepBuffCountMin, Balance.PrepBuffCountMax + 1);
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count - 1; i++)
             {
                 _preparationBuffs.Add(shuffled[i]);
                 ApplyPreparationBuff(shuffled[i]);
@@ -105,8 +130,14 @@ namespace RevGame.Services
             {
                 case PreparationBuffKind.Upgrade:
                     var candidates = _playerPieces.FindAll(p => p.IsAlive && p.Def.Star < StarTier.Three);
-                    if (candidates.Count > 0) { UpgradePiece(candidates[_random.Next(candidates.Count)]); }
-                    else { _pendingUpgrade++; }
+                    if (candidates.Count > 0)
+                    {
+                        UpgradePiece(candidates[_random.Next(candidates.Count)]);
+                    }
+                    else
+                    {
+                        _pendingUpgrade++;
+                    }
                     break;
                 case PreparationBuffKind.Elite: SpawnPreparationElite(buff); break;
                 case PreparationBuffKind.Attack: _prepAttack += buff.Amount; break;
@@ -126,7 +157,10 @@ namespace RevGame.Services
             }
             foreach (Piece piece in _playerPieces)
             {
-                if (!piece.IsAlive) { continue; }
+                if (!piece.IsAlive)
+                {
+                    continue;
+                }
                 piece.SetRoundHealthScale(_prepHealthScale);
                 piece.IgnoreEncirclement = _prepImmune;
                 // 此处仍在准备期，没有受击，统一赋满护盾；战斗中新增棋走单独入口，绝不重置老棋护盾。
@@ -150,7 +184,10 @@ namespace RevGame.Services
         /// <summary>寻找不破坏现有眼阵的安全空格加入强援（外形与星级来自 Excel）；全盘无安全格时转换为攻击加成。</summary>
         private void SpawnPreparationElite(PreparationBuffDef buff)
         {
-            if (TryDeployReinforcement(buff.Piece, (StarTier)buff.Star)) { return; }
+            if (TryDeployReinforcement(buff.Piece, (StarTier)buff.Star))
+            {
+                return;
+            }
             _prepAttack += buff.Amount;
             // 日志里的比例与上面实际增加的是同一个数，不再手写“+10%”。
             RevEvent.DispatchEvent<string>(Events.BattleLog, buff.Title + "：无安全空格，改为本轮全队攻击加成+" + ConfigText.Percent(buff.Amount));
@@ -173,7 +210,10 @@ namespace RevGame.Services
         private void TickPreparationCombat(float seconds)
         {
             _prepRegenClock += seconds;
-            if (_prepRegenClock < Balance.PrepRegenIntervalSeconds) { return; }
+            if (_prepRegenClock < Balance.PrepRegenIntervalSeconds)
+            {
+                return;
+            }
             _prepRegenClock -= Balance.PrepRegenIntervalSeconds;
             foreach (Piece piece in _playerPieces)
             {

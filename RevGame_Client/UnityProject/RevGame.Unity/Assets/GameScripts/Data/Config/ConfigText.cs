@@ -39,13 +39,19 @@ namespace RevGame.Data
         /// </summary>
         public static string Render(string template, string where, List<string> problems, Func<string, string> resolver)
         {
-            if (string.IsNullOrEmpty(template)) { return string.Empty; }
+            if (string.IsNullOrEmpty(template))
+            {
+                return string.Empty;
+            }
             var sb = new StringBuilder(template.Length + 16);
             int i = 0;
             while (i < template.Length)
             {
                 char c = template[i];
-                if (c != '{') { sb.Append(c); i++; continue; }
+                if (c != '{')
+                {
+                    sb.Append(c); i++; continue;
+                }
                 int close = template.IndexOf('}', i + 1);
                 if (close < 0)
                 {
@@ -60,7 +66,10 @@ namespace RevGame.Data
                     problems.Add(where + " 的占位符 {" + token + "} 不可用（模板：" + template + "）");
                     sb.Append('{').Append(token).Append('}');
                 }
-                else { sb.Append(value); }
+                else
+                {
+                    sb.Append(value);
+                }
                 i = close + 1;
             }
             return sb.ToString();
@@ -71,7 +80,10 @@ namespace RevGame.Data
         {
             var problems = new List<string>();
             string text = Render(template, where, problems, resolver);
-            if (problems.Count > 0) { throw new InvalidOperationException(string.Join("；", problems)); }
+            if (problems.Count > 0)
+            {
+                throw new InvalidOperationException(string.Join("；", problems));
+            }
             return text;
         }
     }

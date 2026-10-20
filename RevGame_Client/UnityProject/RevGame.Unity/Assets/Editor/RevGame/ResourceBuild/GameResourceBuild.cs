@@ -26,7 +26,7 @@ namespace RevGame.Editor
             { "Effects/Combat", "battle_feedback" }, { "Data", "data_tables" },
             { "Material/Cards", "material_cards" }, { "Material/UI", "material_ui" },
             { "Material/Background", "material_background" },
-            { "Material/Pieces", "material_pieces" },
+            { "Material/Pieces", "material_pieces" }, { "Material/Combat", "material_combat" },
             { "Audio/Bgm", "audio_bgm" }, { "Audio/Sfx", "audio_sfx" }
         };
 

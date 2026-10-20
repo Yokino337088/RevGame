@@ -77,6 +77,32 @@ namespace RevGame.Core
     }
 
     /// <summary>
+    /// Boss 技能种类。每一项必须在 Excel 的 BossSkillConfig 表里恰好有一行（启动时校验覆盖）。
+    /// 名称同时是 Boss 状态机里对应技能状态的名字，新增技能要三处同步：这里、Excel、BossStates.cs。
+    /// </summary>
+    public enum BossSkillKind
+    {
+        /// <summary>横扫震地：贴身范围攻击，打 Boss 身体周围一圈。</summary>
+        Cleave = 0,
+        /// <summary>致命狙击：锁定我方威胁最大的一颗棋子，单体高伤。</summary>
+        Snipe = 1,
+        /// <summary>三连轰炸：远处锁定一块区域，分三次落弹。</summary>
+        Bombard = 2,
+        /// <summary>弹幕风暴：以自身为圆心向外扫射一圈弹幕。</summary>
+        BulletRing = 3,
+        /// <summary>瞬影爆破：瞬移到我方阵中空位，落地范围爆炸。</summary>
+        BlinkBlast = 4,
+        /// <summary>天光回旋：多道激光环绕自身旋转，持续多段伤害。</summary>
+        LaserSpin = 5,
+        /// <summary>灵魂汲取：吸取我方残血棋子的生命为自己回血。</summary>
+        SoulDrain = 6,
+        /// <summary>召唤影卫：在自身附近召出小兵。</summary>
+        Summon = 7,
+        /// <summary>狂暴怒吼：血量跌破阈值时只触发一次，此后技能冷却缩短。</summary>
+        Enrage = 8,
+    }
+
+    /// <summary>
     /// 棋块的围棋状态（策划案 §06）。由 <c>GoRules</c> 每次结算后统一刷新。
     /// </summary>
     public enum GroupState

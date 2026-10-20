@@ -212,6 +212,7 @@ Board/Indicator/BoardStarPoint|battle_board|BoardStarPoint
 Board/Tile/BoardCell|battle_board|BoardCell
 Pieces/Boss/BossPieceView|battle_boss|BossPieceView
 Effects/Combat/BattleEffect|battle_feedback|BattleEffect
+Effects/Combat/BossSkillFx|battle_feedback|BossSkillFx
 Pieces/Unit/PieceView|battle_units|PieceView
 Pieces/Unit/SlimePiece|battle_units|SlimePiece
 Config/Art/PieceArt|config_piece_art|PieceArt
@@ -227,11 +228,13 @@ Data/EnemyRosterConfig|data_tables|EnemyRosterConfig
 Data/EnemyReinforceConfig|data_tables|EnemyReinforceConfig
 Data/RewardConfig|data_tables|RewardConfig
 Data/RewardBoostConfig|data_tables|RewardBoostConfig
+Data/BossSkillConfig|data_tables|BossSkillConfig
 Data/BalanceRule|data_tables|BalanceRule
 Fonts/CJK/NotoSansCJKsc-Bold|font_cjk|NotoSansCJKsc-Bold
 Material/Background/ArcaneBackdrop|material_background|ArcaneBackdrop
 Material/Background/ArcaneScene|material_background|ArcaneScene
 Material/Cards/CardGleam|material_cards|CardGleam
+Material/Combat/BossSkill|material_combat|BossSkill
 Material/Pieces/ArcanePiece|material_pieces|ArcanePiece
 Material/UI/ArcanePanel|material_ui|ArcanePanel
 GameShader/Background/ArcaneBackdrop|shared_shaders|ArcaneBackdrop

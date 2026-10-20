@@ -1,6 +1,22 @@
 // ============================================================
-// EnemyTactics.cs —— 敌人的目标选择与保眼试走；不直接搬动实战棋子。
-// 先保证阵型与气，再比较射界和距离，同分按编号/遍历顺序稳定选择，方便复现。
+// EnemyTactics.cs —— 敌方战术“纯算法”：打谁、走哪、补在哪；不直接搬动实战棋子。
+//
+// 【它在敌方AI里的位置】
+// EnemyStates.cs 决定“什么时候该攻击/推进/增援”，本文件只回答“具体选哪个目标/落点”。
+// 分成两层的好处：状态机处理时序，算法处理评分；调整权重不会影响状态流转，反之亦然。
+//
+// 【三条铁律】
+// 1) 只读真实棋盘：所有试走/试落子都在 CreateSnapshot() 的深拷贝里完成，
+//    真实棋子的位置、气、眼、血量在查询期间绝不会被改动；
+// 2) 安全检查优先于分数：不填真眼、不减少友军眼数、不把有气的友军堵成零气，
+//    任何权重都不能越过这道门槛；
+// 3) 结果可复现：同分时保留先扫描到的候选，不依赖字典顺序或时间。
+//
+// 【为什么不做多层搜索】
+// 这是可解释的一手启发式（看落子后的气眼与射界），不是 AlphaGo 类搜索：
+// 每次只在配置指定的落子窗口运行，最多 81 个候选，不做递归博弈树。
+// 好处是手机端可控、每手都有中文意图可解释；代价是算不到多步之后的劫争。
+// 评分权重是算法内部相对偏好，不是策划可调数值，因此不放进 Excel。
 // ============================================================
 using System.Collections.Generic;
 using RevGame.Board;
@@ -11,11 +27,20 @@ using RevGame.Pieces;
 namespace RevGame.Battle
 {
     /// <summary>
-    /// 敌方战术计算器：回答“打谁、走哪、补在哪”，不负责时间、不生成GameObject、不派事件。
-    /// 初学者阅读顺序：ChooseTarget（只打分）→ ChooseSafeMove（先试走）→ TryChooseDeployment（试落子）。
-    /// intelligence是1～4档观察能力，不是行动速度；冷却、数量上限和玩家通关辅助由BattleService控制。
-    /// 这里采用一手启发式：看下一步后的气眼和射界，不进行职业围棋的多层搜索，也不保证数学最优。
-    /// 每次查询有独立的深快照和临时缓冲区；快照里的棋子可写，真实board里的棋子只能读。
+    /// 敌方战术计算器（静态类，无状态，可离线单测）。
+    ///
+    /// 【三个公开入口，对应三个时机】
+    /// · ChooseTarget        ：已有射界时，选这一发打谁；
+    /// · ChooseSafeMove      ：没有射界且移动冷却到，选靠近哪一格；
+    /// · TryChooseDeployment ：回合布阵后的战术增援，选补在哪一格。
+    ///
+    /// 【调用者是谁】
+    /// 只有 EnemyStates.cs 的状态会调用（棋子状态与指挥状态），BattleService 不直接调，
+    /// 这样“AI 什么时候思考”始终由状态机决定，不会出现某处绕过状态偷偷落子。
+    ///
+    /// intelligence 是 1～4 档观察能力（看得多远、考虑多少因素），**不是行动速度**；
+    /// 出手频率、移动冷却、增援数量上限由 Excel 与服务控制。
+    /// 每次查询独立创建快照与临时缓冲；快照里的棋子可写，真实 board 里的棋子只读。
     /// </summary>
     public static class EnemyTactics
     {
@@ -35,17 +60,26 @@ namespace RevGame.Battle
             foreach (BoardPos pos in targets)
             {
                 Piece target = board.GetPiece(pos);
-                if (target == null || !target.IsAlive) { continue; }
+                if (target == null || !target.IsAlive)
+                {
+                    continue;
+                }
                 // 分数分层拉开：优先可能一击击败的目标，其次远程威胁，最后距离。
                 // 这里只选择目标；真正扣血仍由服务计算锁死、连通、增益等效果，不能在 AI 中另扣一次。
                 // 第一档就近交战；第二档识别远程威胁；第三档会收残血；第四档优先断开脆弱连接。
                 // 规则安全检查不分档：低级AI也不能故意拆自己眼阵，只是看问题没有后期全面。
                 int score = -Distance(attacker.Pos, target.Pos) * 10;
-                if (intelligence >= 2 && target.Def.IsRanged) { score += 1000; }
+                if (intelligence >= 2 && target.Def.IsRanged)
+                {
+                    score += 1000;
+                }
                 if (intelligence >= 3)
                 {
                     score += (int)((1f - target.HpRatio) * 500f);
-                    if (target.Hp <= attacker.Def.Attack * attacker.AttackScale * Balance.CombatDamageScale) { score += 10000; }
+                    if (target.Hp <= attacker.Def.Attack * attacker.AttackScale * Balance.CombatDamageScale)
+                    {
+                        score += 10000;
+                    }
                 }
                 if (intelligence >= 4)
                 {
@@ -63,9 +97,18 @@ namespace RevGame.Battle
         }
 
         /// <summary>
-        /// 只有服务确认“没有目标且移动冷却完成”才调用。普通候选最多四格，马步最多八格。
-        /// 不填自己的眼，不减少任何原有守眼棋群的眼数，也不把有气的同伴堵成零气。
-        /// 查询只复制一次棋盘，每次试走前恢复位置并重算规则；返回原坐标代表原地等候，不是失败异常。
+        /// 没有射界且移动冷却完成时，从合法走法里选一个安全落点。
+        ///
+        /// 【怎么做】
+        /// 1) 复制一次真实棋盘；每个候选都“先恢复原位 → 再试走 → 重算气眼”，
+        ///    所以候选之间不会累积上一次的影响；
+        /// 2) 硬门槛：不能让自己零气、不能让任何友军掉眼或从有气变零气（PreservesFormation）；
+        /// 3) 软评分：新射界数 ×1000、距离更近、自身气数；3 档起加“压缩玩家气”，
+        ///    4 档再减去“走进去会被多少玩家集火”的风险。
+        ///
+        /// 【为什么返回原坐标】
+        /// 表示“原地等待”，不是失败：可能所有候选都被门槛否决，或都不比现在更接近。
+        /// 调用方会把移动冷却推到下一次，堵路时不会每个小步重新全盘搜索。
         /// </summary>
         public static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves, int intelligence = 4)
         {
@@ -78,26 +121,44 @@ namespace RevGame.Battle
             foreach (BoardPos pos in moves)
             {
                 Cell cell = board.GetCell(pos);
-                if (cell == null || cell.IsEyeMarked) { continue; }
+                if (cell == null || cell.IsEyeMarked)
+                {
+                    continue;
+                }
                 // ★ 恢复的是“试算棋盘”，绝不能临时移动真实棋子再移回去，那会让表现/事件读到假状态。
                 // 上一次试走可能改变眼标记，所以还原时不受旧眼限制，重算后才校验新候选。
-                if (moved.Pos != piece.Pos) { trial.Move(moved, piece.Pos, respectEnemyEyes: false); }
+                if (moved.Pos != piece.Pos)
+                {
+                    trial.Move(moved, piece.Pos, respectEnemyEyes: false);
+                }
                 GoRules.Evaluate(trial);
-                if (!trial.Move(moved, pos)) { continue; }
+                if (!trial.Move(moved, pos))
+                {
+                    continue;
+                }
                 GoRules.Evaluate(trial);
-                if (moved.IsLocked || !PreservesFormation(board, trial)) { continue; }
+                if (moved.IsLocked || !PreservesFormation(board, trial))
+                {
+                    continue;
+                }
                 MoveRules.GetAttackTargets(trial, moved, hits);
                 int targets = hits.Count;
                 int distance = NearestPlayerDistance(trial, pos);
                 // 只接受能打开射界或真正接近的格子，堵路时等待，避免左右横跳。
-                if (targets == 0 && distance >= oldDistance) { continue; }
+                if (targets == 0 && distance >= oldDistance)
+                {
+                    continue;
+                }
                 int score = targets * 1000 - distance * 20 + System.Math.Min(moved.Liberties, 12);
                 if (intelligence >= 3)
                 {
                     // 前后棋盘都是深快照，比较压气成果不回写真实棋子的气与眼。
                     foreach (Piece player in board.Pieces)
                     {
-                        if (player.Side != GameSide.Player) { continue; }
+                        if (player.Side != GameSide.Player)
+                        {
+                            continue;
+                        }
                         Piece copy = EnemyFormationPlanner.Find(trial, player.Id);
                         score += System.Math.Max(0, player.Liberties - copy.Liberties) * 70;
                     }
@@ -107,15 +168,24 @@ namespace RevGame.Battle
                     // 后期AI会估计走到该格后有多少玩家能立即反击，避开集火区；不提高移动频率。
                     foreach (Piece player in trial.Pieces)
                     {
-                        if (player.Side != GameSide.Player) { continue; }
+                        if (player.Side != GameSide.Player)
+                        {
+                            continue;
+                        }
                         MoveRules.GetAttackTargets(trial, player, hits);
                         foreach (BoardPos hit in hits)
                         {
-                            if (trial.GetPiece(hit) == moved) { score -= 220; break; }
+                            if (trial.GetPiece(hit) == moved)
+                            {
+                                score -= 220; break;
+                            }
                         }
                     }
                 }
-                if (score > bestScore) { bestScore = score; best = pos; }
+                if (score > bestScore)
+                {
+                    bestScore = score; best = pos;
+                }
             }
             return best;
         }
@@ -128,16 +198,22 @@ namespace RevGame.Battle
         {
             foreach (Piece ally in before.Pieces)
             {
-                if (ally.Side != GameSide.Enemy) { continue; }
+                if (ally.Side != GameSide.Enemy)
+                {
+                    continue;
+                }
                 Piece copy = EnemyFormationPlanner.Find(after, ally.Id);
-                if (copy == null || copy.EyeCount < ally.EyeCount || (ally.Liberties > 0 && copy.Liberties == 0)) { return false; }
+                if (copy == null || copy.EyeCount < ally.EyeCount || (ally.Liberties > 0 && copy.Liberties == 0))
+                {
+                    return false;
+                }
             }
             return true;
         }
 
         /// <summary>
         /// 按“补活自己的棋、连接断点、压缩对手的气、形成射界”给空格评分。
-        /// 这是可解释的一手启发式，不是职业围棋搜索：最多81个候选，只在十几秒一次的落子窗口运行。
+        /// 这是可解释的一手启发式，不是职业围棋搜索：最多81个候选，只在配置指定的落子窗口运行，不在每个渲染帧运行。
         /// 一次查询只创建一张深快照，候选之间先撤掉上一颗试落子再重算气眼；不累计前一个候选的影响。
         /// 无安全点返回false，best保持(-1,-1)，调用方照常进入冷却，不允许在下帧无限重试。
         /// </summary>
@@ -153,10 +229,16 @@ namespace RevGame.Battle
             int bestScore = int.MinValue;
             List<Piece> allies = board.GetPiecesOf(GameSide.Enemy);
             List<Piece> players = board.GetPiecesOf(GameSide.Player);
-            if (allies.Count == 0 || players.Count == 0) { return false; }
+            if (allies.Count == 0 || players.Count == 0)
+            {
+                return false;
+            }
             BoardModel trial = board.CreateSnapshot();
             Piece added = newcomer.CreateSnapshot();
             var hits = new List<BoardPos>(board.Size * board.Size);
+            // 连通块只构建一次。共享一口气的五颗棋是一块，不应把打吃奖励算五遍。
+            // 下面仍在同一张快照试落子；全盘最多81个候选，只在落子时钟到期时运行。
+            List<List<Piece>> groups = GoRules.BuildGroups(board);
             for (int y = 0; y < board.Size; y++)
             {
                 for (int x = 0; x < board.Size; x++)
@@ -164,7 +246,10 @@ namespace RevGame.Battle
                     var pos = new BoardPos(x, y);
                     Cell cell = board.GetCell(pos);
                     // 真眼受现有围棋规则保护，敌方不能直接塞进已成立的玩家眼位；压气要从外围进行。
-                    if (!cell.IsEmpty || cell.IsEyeMarked) { continue; }
+                    if (!cell.IsEmpty || cell.IsEyeMarked)
+                    {
+                        continue;
+                    }
                     int allyDistance = int.MaxValue;
                     int neighbors = 0;
                     foreach (Piece ally in allies)
@@ -174,23 +259,38 @@ namespace RevGame.Battle
                         int dy = System.Math.Max(0, System.Math.Max(ally.Pos.Y - y, y - (ally.Pos.Y + ally.Size - 1)));
                         int distance = dx + dy;
                         allyDistance = System.Math.Min(allyDistance, distance);
-                        if (distance == 1) { neighbors++; }
+                        if (distance == 1)
+                        {
+                            neighbors++;
+                        }
                     }
                     // 从既有阵线延伸，避免敌人在玩家后排凭空刷出一颗贴脸棋。
-                    if (allyDistance > (intelligence >= 3 ? 3 : 2)) { continue; }
+                    if (allyDistance > (intelligence >= 3 ? 3 : 2))
+                    {
+                        continue;
+                    }
                     // 上一个候选无论通过还是被continue否决，都在这里撤回；不创建81份棋盘/棋子。
                     trial.Remove(added);
                     GoRules.Evaluate(trial);
-                    if (!trial.Place(added, pos)) { continue; }
+                    if (!trial.Place(added, pos))
+                    {
+                        continue;
+                    }
                     GoRules.Evaluate(trial);
-                    if (added.IsLocked || !PreservesFormation(board, trial)) { continue; }
+                    if (added.IsLocked || !PreservesFormation(board, trial))
+                    {
+                        continue;
+                    }
                     int eyeGain = 0;
                     int rescue = 0;
                     foreach (Piece ally in allies)
                     {
                         Piece copy = EnemyFormationPlanner.Find(trial, ally.Id);
                         eyeGain += System.Math.Max(0, copy.EyeCount - ally.EyeCount);
-                        if (ally.Liberties <= 2) { rescue += System.Math.Max(0, copy.Liberties - ally.Liberties); }
+                        if (ally.Liberties <= 2)
+                        {
+                            rescue += System.Math.Max(0, copy.Liberties - ally.Liberties);
+                        }
                     }
                     int pressure = 0;
                     foreach (Piece player in players)
@@ -201,28 +301,185 @@ namespace RevGame.Battle
                     }
                     MoveRules.GetAttackTargets(trial, added, hits);
                     int targets = hits.Count;
-                    // 分数单位只是偏好：做眼500 > 解围100 > 连接65 > 射界35。
-                    // “气”按整块共享，救回五颗同一块的棋，会累计五颗的收益，刻意鼓励保护主体阵型。
-                    int score = eyeGain * 500 + rescue * 100 + neighbors * 65 + targets * 35;
-                    score += pressure * (intelligence >= 2 ? 65 : 25);
+                    // 战术优先、阵型兜底：实际封住一口气，优先于在后排无目的地堆棋。
+                    // 权重没有血量/时间单位，是算法内部的相对偏好，因此不作为策划数值进表。
+                    //
+                    // 评分构成（数值越大越优先，仅用于候选之间比较）：
+                    //   eyeGain ×500      ：做眼活棋，最多计 2 只（min），防止大块补眼淹没进攻评分
+                    //   rescue  ×100      ：给只剩 1~2 气的友军续气
+                    //   neighbors×65      ：与友军相连，形成一整块
+                    //   targets ×35       ：落下即有合法射界
+                    //   pressure×45/65    ：压缩玩家气（2 档起加权，靠近吃更值钱）
+                    //   attackScore       ：围困/打吃/断点/封逃路，见 ScoreEncirclement
+                    //   自身气 ×8、距离 ×8：同等条件下选更安全、更靠近战线
+                    string attackPlan;
+                    int attackScore = ScoreEncirclement(board, trial, groups, pos, out attackPlan);
+                    int score = System.Math.Min(eyeGain, 2) * 500 + rescue * 100 + neighbors * 65 + targets * 35;
+                    score += attackScore + pressure * (intelligence >= 2 ? 65 : 45);
                     score += System.Math.Min(added.Liberties, 8) * 8 - NearestPlayerDistance(trial, pos) * 8;
                     if (intelligence >= 4)
                     {
                         foreach (Piece player in trial.Pieces)
                         {
-                            if (player.Side != GameSide.Player) { continue; }
+                            if (player.Side != GameSide.Player)
+                            {
+                                continue;
+                            }
                             MoveRules.GetAttackTargets(trial, player, hits);
-                            if (hits.Contains(pos)) { score -= 24; }
+                            if (hits.Contains(pos))
+                            {
+                                score -= 24;
+                            }
                         }
                     }
-                    // 同分保持首次扫描结果，固定种子回放与不同帧率运行才会落在同一个位置。
-                    if (score <= bestScore) { continue; }
+                    // 同分保持首次扫描结果（严格大于才替换）：固定输入必然得到同一落点，
+                    // 不同帧率、不同机器上的回放才不会漂移；不要为了“更随机”改成 >=。
+                    if (score <= bestScore)
+                    {
+                        continue;
+                    }
                     bestScore = score;
                     best = pos;
-                    intention = eyeGain > 0 ? "补眼做活" : (rescue > 0 ? "接应解围" : (pressure > 0 ? "压气封堵" : "连接补阵"));
+                    // 意图只用于战斗日志/弹幕解释“这一手在干什么”，不产生任何额外效果；
+                    // 优先级与实际评分一致：先报战术，再报做眼/解围/连接。
+                    intention = attackScore > 0 ? attackPlan : (eyeGain > 0 ? "补眼做活" : (rescue > 0 ? "接应解围" : "连接补阵"));
                 }
             }
             return best.X >= 0;
+        }
+
+        /// <summary>
+        /// 围追堵截评分：先看真实减气，再看打吃、封逃路和断点。
+        ///
+        /// 【评分场景表】（数值只是候选排序，不是伤害）
+        ///   对方从有气变 0 气（收网围困）：+3200，最快让目标锁死、挨双倍伤害
+        ///   对方从多气变 1 气（打吃逼应）  ：+1800，逼对方补气或救援
+        ///   减到 ≤3 气（夹击压气）          ：+600，持续施压
+        ///   每封掉 1 口气                    ：+180，基础收益
+        ///   该口气通向的空点越多              ：每个 +90（越像出头通道越值得先封）
+        ///   同时接触两个玩家棋群（切断接应）  ：额外 +(块数−1)×1100
+        ///
+        /// 打吃=对方只剩一口气；本游戏零气是锁死、不是围棋立即提子，仍由战斗伤害击败它。
+        /// 切断=占住两个不同玩家棋群共同的连接点；并非假称落子能拆开已经连接的棋群。
+        /// 所有权重只是候选之间的优先级，不是伤害、概率或冷却，不需要进入数值表。
+        /// </summary>
+        private static int ScoreEncirclement(BoardModel before, BoardModel after, List<List<Piece>> groups, BoardPos pos, out string plan)
+        {
+            int score = 0;
+            int touchedGroups = 0;
+            int strongest = 0;
+            plan = "压气封堵";
+            foreach (List<Piece> group in groups)
+            {
+                if (group[0].Side != GameSide.Player)
+                {
+                    continue;
+                }
+                bool touched = false;
+                foreach (Piece player in group)
+                {
+                    foreach (BoardPos boundary in BoardModel.Boundary(player))
+                    {
+                        if (boundary == pos)
+                        {
+                            touched = true; break;
+                        }
+                    }
+                    if (touched)
+                    {
+                        break;
+                    }
+                }
+                if (!touched)
+                {
+                    continue;
+                }
+                touchedGroups++;
+                Piece old = group[0];
+                Piece copy = after.FindPiece(old.Id);
+                int lost = System.Math.Max(0, old.Liberties - copy.Liberties);
+                if (lost == 0)
+                {
+                    continue;
+                }
+                int benefit = lost * 180;
+                string reason = "压气封堵";
+                if (old.Liberties > 0 && copy.Liberties == 0)
+                {
+                    benefit += 3200; reason = "收网围困";
+                }
+                else if (old.Liberties > 1 && copy.Liberties == 1)
+                {
+                    benefit += 1800; reason = "打吃逼应";
+                }
+                else if (copy.Liberties <= 3)
+                {
+                    benefit += 600; reason = "夹击压气";
+                }
+                // 一口气若通向许多空格，往往是出头通道；先封它比填后方狭窄空点更有效。
+                // 这里只观察一层邻居，是有界的一手启发式，不能冒称AlphaGo多层搜索。
+                int exits = 0;
+                foreach (BoardPos next in pos.GetOrthogonalNeighbors())
+                {
+                    Cell cell = before.GetCell(next);
+                    if (cell != null && cell.IsEmpty && !cell.IsEyeMarked)
+                    {
+                        exits++;
+                    }
+                }
+                benefit += exits * 90;
+                score += benefit;
+                if (benefit > strongest)
+                {
+                    strongest = benefit; plan = reason;
+                }
+            }
+            if (touchedGroups >= 2)
+            {
+                score += (touchedGroups - 1) * 1100;
+                if (strongest < 1800)
+                {
+                    plan = "切断接应";
+                }
+            }
+            return score;
+        }
+
+        /// <summary>
+        /// 查询一次推进的合法候选，并过滤普通棋跨多格的落点；马步保留原有跳法。
+        /// 这是通用候选计算，不决定何时移动、不消费冷却、不提交位置。
+        /// result 由调用方复用，本方法会重填它；倒序删除避免下标前移漏掉候选。
+        /// </summary>
+        public static void GetAdvanceCandidates(BoardModel board, Piece actor, List<BoardPos> result)
+        {
+            MoveRules.GetMoveTargets(board, actor, result);
+            for (int i = result.Count - 1; i >= 0; i--)
+            {
+                if (actor.Def.Pattern != MovePattern.Knight && Distance(result[i], actor.Pos) > 1)
+                {
+                    result.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 统计真正未占用的格子，不等于合法增援点数：眼位保护、气眼安全仍由选点算法检查。
+        /// 此查询只返回数字，不读增援预算、不改模型，也不决定是否停援。
+        /// </summary>
+        public static int CountEmptyCells(BoardModel board)
+        {
+            int count = 0;
+            for (int y = 0; y < board.Size; y++)
+            {
+                for (int x = 0; x < board.Size; x++)
+                {
+                    if (board.CanPlace(new BoardPos(x, y)))
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
 
         /// <summary>与最近玩家锚点的曼哈顿距离，用来鼓励接近。这里只作评分，合法攻击仍由MoveRules确定。</summary>
@@ -231,7 +488,10 @@ namespace RevGame.Battle
             int nearest = int.MaxValue;
             foreach (Piece player in board.Pieces)
             {
-                if (player.Side == GameSide.Player) { nearest = System.Math.Min(nearest, Distance(from, player.Pos)); }
+                if (player.Side == GameSide.Player)
+                {
+                    nearest = System.Math.Min(nearest, Distance(from, player.Pos));
+                }
             }
             return nearest;
         }

@@ -86,7 +86,10 @@ namespace RevGame.Flow
                 return false;
             }
 
-            if (Screen == GameScreen.LevelSelect) { Change(GameScreen.Home); }
+            if (Screen == GameScreen.LevelSelect)
+            {
+                Change(GameScreen.Home);
+            }
             else
             {
                 IsTransitioning = true;

@@ -1,5 +1,6 @@
 // ============================================================
 // BattleService.Reinforcement.cs —— 援军的选兵和落点预检。
+// 本文件是 BattleService 的 partial 片段；援军只是“服务发起的另一种落子”，仍走同一占格规则。
 // 远程守住主体阵营，近战落下就应有攻击目标；所有候选在深快照里试放，不能污染实战气眼。
 // ============================================================
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
         /// <summary>先选最强远程手牌，近战随后；实际部署至少二星。手牌为空时，辅助模式免费补二星重弩。</summary>
@@ -23,7 +25,10 @@ namespace RevGame.Services
                 PieceDef first = PieceCatalog.Get(a.Kind, a.Star);
                 PieceDef second = PieceCatalog.Get(b.Kind, b.Star);
                 int ranged = second.IsRanged.CompareTo(first.IsRanged);
-                if (ranged != 0) { return ranged; }
+                if (ranged != 0)
+                {
+                    return ranged;
+                }
                 int power = second.Attack.CompareTo(first.Attack);
                 return power != 0 ? power : a.Id.CompareTo(b.Id);
             });
@@ -31,7 +36,10 @@ namespace RevGame.Services
             foreach (HandCard card in candidates)
             {
                 StarTier star = card.Star < StarTier.Two ? StarTier.Two : card.Star;
-                if (!TryDeployReinforcement(card.Kind, star)) { continue; }
+                if (!TryDeployReinforcement(card.Kind, star))
+                {
+                    continue;
+                }
                 // 先确定完整身体真的能落下，再消费这张牌；失败候选不能把手牌或落子额度扣掉。
                 _hand.Remove(card.Id);
                 RevEvent.DispatchEvent(Events.HandChanged);
@@ -48,7 +56,10 @@ namespace RevGame.Services
             PieceDef def = PieceCatalog.Get(kind, star);
             int size = PieceCatalog.PlayerBodySize(star);
             BoardPos pos;
-            if (!TryFindSupportPosition(def, size, out pos)) { return false; }
+            if (!TryFindSupportPosition(def, size, out pos))
+            {
+                return false;
+            }
             var piece = new Piece(_nextPieceId++, def, GameSide.Player, size);
             // 近战可以突入敌方空眼，前面的试放已确认可攻击且不拆己方眼；仍然不能覆盖已有棋子。
             if (!_board.Place(piece, pos, respectEnemyEyes: false))
@@ -73,7 +84,10 @@ namespace RevGame.Services
             List<Piece> mainGroup = new List<Piece>();
             foreach (List<Piece> group in GoRules.BuildGroups(_board))
             {
-                if (group[0].Side == GameSide.Player && group.Count > mainGroup.Count) { mainGroup = group; }
+                if (group[0].Side == GameSide.Player && group.Count > mainGroup.Count)
+                {
+                    mainGroup = group;
+                }
             }
             // 同一份快照逐格试放、移除，避免每个候选都复制整个棋盘；实战数据始终只读。
             BoardModel trial = _board.CreateSnapshot();
@@ -85,8 +99,14 @@ namespace RevGame.Services
                 for (int x = 0; x < Consts.BoardSize; x++)
                 {
                     var pos = new BoardPos(x, y);
-                    if (!CanSupportFit(pos, size, allowEnemyEyes: !def.IsRanged)) { continue; }
-                    if (!trial.Place(reinforcement, pos, respectEnemyEyes: false)) { continue; }
+                    if (!CanSupportFit(pos, size, allowEnemyEyes: !def.IsRanged))
+                    {
+                        continue;
+                    }
+                    if (!trial.Place(reinforcement, pos, respectEnemyEyes: false))
+                    {
+                        continue;
+                    }
                     GoRules.Evaluate(trial);
                     // 援军落点评分需要的是“身边贴着几颗敌人”，不能复用现在允许全盘援击的攻击列表。
                     // 否则后排格子会因全盘敌人多而拿高分，违背近战援军贴敌/破眼的原有要求。
@@ -96,7 +116,10 @@ namespace RevGame.Services
                     {
                         foreach (Piece enemy in _enemyPieces)
                         {
-                            if (enemy.IsAlive && BodyDistance(pos, size, enemy) == 1) { attacks++; }
+                            if (enemy.IsAlive && BodyDistance(pos, size, enemy) == 1)
+                            {
+                                attacks++;
+                            }
                         }
                     }
                     bool safe = !reinforcement.IsLocked && PreservesPlayerFormation(trial);
@@ -106,7 +129,10 @@ namespace RevGame.Services
                         int enemyDistance = Consts.BoardSize * 2;
                         foreach (Piece enemy in _enemyPieces)
                         {
-                            if (enemy.IsAlive) { enemyDistance = System.Math.Min(enemyDistance, BodyDistance(pos, size, enemy)); }
+                            if (enemy.IsAlive)
+                            {
+                                enemyDistance = System.Math.Min(enemyDistance, BodyDistance(pos, size, enemy));
+                            }
                         }
                         int mainDistance = Consts.BoardSize;
                         int nearbyAllies = 0;
@@ -114,21 +140,30 @@ namespace RevGame.Services
                         {
                             int distance = BodyDistance(pos, size, ally);
                             mainDistance = System.Math.Min(mainDistance, distance);
-                            if (distance <= 2) { nearbyAllies++; }
+                            if (distance <= 2)
+                            {
+                                nearbyAllies++;
+                            }
                         }
                         int score;
                         if (def.IsRanged)
                         {
                             // 距敌太近的格子受重罚；主体阵营附近的后排空格比孤零零的远角更优。
                             score = enemyDistance * 24 + nearbyAllies * 35 - mainDistance * 22 + FreeNeighbors(pos);
-                            if (enemyDistance <= 2) { score -= 500; }
+                            if (enemyDistance <= 2)
+                            {
+                                score -= 500;
+                            }
                         }
                         else
                         {
                             bool enemyEye = _board.GetCell(pos).EyeSide == GameSide.Enemy;
                             score = (enemyEye ? 600 : 0) + attacks * 90 - enemyDistance * 25 + reinforcement.Liberties * 4;
                         }
-                        if (score > bestScore) { best = pos; bestScore = score; }
+                        if (score > bestScore)
+                        {
+                            best = pos; bestScore = score;
+                        }
                     }
                     trial.Remove(reinforcement);
                 }
@@ -141,9 +176,15 @@ namespace RevGame.Services
         {
             foreach (Piece original in _playerPieces)
             {
-                if (!original.IsAlive) { continue; }
+                if (!original.IsAlive)
+                {
+                    continue;
+                }
                 Piece copy = EnemyFormationPlanner.Find(trial, original.Id);
-                if (copy == null || copy.EyeCount < original.EyeCount || (original.Liberties > 0 && copy.Liberties <= 0)) { return false; }
+                if (copy == null || copy.EyeCount < original.EyeCount || (original.Liberties > 0 && copy.Liberties <= 0))
+                {
+                    return false;
+                }
             }
             return true;
         }

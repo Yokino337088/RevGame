@@ -50,6 +50,16 @@ namespace RevGame.UI
             _applying = true;
             _lastSize = size;
             _lastSafe = safe;
+            // 两个战斗面板的预制体已按 1920×1080 无刘海布局保存；在设计分辨率下
+            // 直接使用可编辑的预制体坐标，只有设备尺寸/安全区变化时才重新适配。
+            if ((panelName == "PreparePanel" || panelName == "BattleHudPanel")
+                && Mathf.Abs(size.x - GameBattleLayout.DesignResolution.x) < 0.01f
+                && Mathf.Abs(size.y - GameBattleLayout.DesignResolution.y) < 0.01f
+                && safe == new Rect(0f, 0f, 1f, 1f))
+            {
+                _applying = false;
+                return;
+            }
             float width = size.x;
             if (panelName == "PreparePanel")
             {
@@ -108,7 +118,10 @@ namespace RevGame.UI
             {
                 // 自己计算每个槽位，避免 HorizontalLayoutGroup 在横屏侧栏里又把牌挤回一行。
                 HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
-                if (layout != null) { layout.enabled = false; }
+                if (layout != null)
+                {
+                    layout.enabled = false;
+                }
                 Rect hand = GameBattleLayout.InRegion(areas.Left, 0.50f, 1f, 0.65f);
                 PlaceAbsolute("cards", hand);
                 for (int i = 0; i < row.childCount; i++)
@@ -174,7 +187,10 @@ namespace RevGame.UI
         private void Place(string path, float ax, float ay, float x, float y, float width, float height)
         {
             RectTransform rect = transform.Find(path) as RectTransform;
-            if (rect == null) { return; }
+            if (rect == null)
+            {
+                return;
+            }
             rect.anchorMin = rect.anchorMax = new Vector2(ax, ay);
             rect.pivot = Vector2.one * 0.5f;
             rect.anchoredPosition = new Vector2(x, y);

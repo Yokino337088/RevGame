@@ -4,6 +4,8 @@
 // 不提供任意执行脚本、任意改属性或跨项目操作；正式包不注册这些命令。
 // ============================================================
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System.Linq;
+using RevGame.Battle;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;
@@ -40,6 +42,177 @@ namespace RevGame.Bootstrap
         };
         public static void Register()
         {
+            RevGM.Register("RevGame/敌方AI", "只读重量级状态机当前状态、状态时长和最近切换原因", args =>
+            {
+                Logic();
+                return ((BattleService)RevServices.GetRequired<IBattleService>()).EnemyAIStatus();
+            });
+            // 仅开发验收：让 Boss 立刻施放指定技能，用来逐个检查特效与伤害。
+            // 仍会检查“这一招此刻有没有合法目标”，打不到人时返回失败而不是空放；正式战斗由 Boss 自己挑技能。
+            RevGM.Register("RevGame/Boss技能", "Boss 回合战斗中立刻施放技能：0横扫 1狙击 2轰炸 3弹幕 4瞬移 5激光 6汲取 7召唤 8狂暴", args =>
+            {
+                Logic();
+                int index = args.Int(0, 0);
+                if (index < 0 || index >= System.Enum.GetValues(typeof(Core.BossSkillKind)).Length)
+                {
+                    throw new RevGMUsageException("技能编号超出范围");
+                }
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                if (!battle.IsBossRound || battle.Phase != Core.GamePhase.Battle)
+                {
+                    throw new RevGMUsageException("只有 Boss 回合的战斗阶段才能施放 Boss 技能");
+                }
+                var kind = (Core.BossSkillKind)index;
+                if (!battle.ForceBossSkill(kind))
+                {
+                    throw new RevGMUsageException(kind + " 当前没有合法目标");
+                }
+                // 返回固定字符串，自动化脚本才能用 assert 精确比较（expected 是精确相等，不是包含）。
+                return "ok";
+            }, RevGMArg.Int("技能", 0));
+            // 自动化专用：幂等地把游戏推进到“Boss 回合已开战”。
+            // 流程：主界面 → 选关 → 进入战斗域（异步，返回 loading）→ 已到战斗屏后加载 boss 夹具并开战（返回 ready）。
+            // 场景脚本用 until 轮询本条，直到返回 ready，避免用 wait 猜加载时间。
+            RevGM.Register("RevGame/Boss准备", "自动化：进入战斗域并直接开始 Boss 回合；loading=加载中，ready=已开战", args =>
+            {
+                int chapter = args.Int(0, 1);
+                GameFlow flow = RevServices.GetRequired<GameFlow>();
+                // 过场没结束前绝不能开战：此时准备面板还没打开，提前切到战斗会让
+                // GamePresentation.WaitUntilReadyAsync 永远等不到 PreparePanel，过场最终超时。
+                if (flow.IsTransitioning)
+                {
+                    return "loading";
+                }
+                if (flow.Screen != GameScreen.Battle)
+                {
+                    if (flow.Screen == GameScreen.Home && !flow.OpenLevels())
+                    {
+                        throw new RevGMUsageException(flow.LastError);
+                    }
+                    if (!flow.EnterBattle(chapter))
+                    {
+                        throw new RevGMUsageException(flow.LastError);
+                    }
+                    return "loading";
+                }
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                if (battle.Phase == Core.GamePhase.Battle && battle.IsBossRound)
+                {
+                    return "ready";
+                }
+                if (battle.Phase == Core.GamePhase.Prepare && battle.IsBossRound)
+                {
+                    // 夹具已加载：补满准备 3 秒发放增益，然后开战。
+                    battle.Tick(Balance.PrepDelaySeconds);
+                    if (!battle.StartBattle())
+                    {
+                        throw new RevGMUsageException(battle.LastError);
+                    }
+                    return "ready";
+                }
+                // 首次进入：加载固定的 boss 夹具（第 11 回合、含一颗我方大棋），再发增益、开战。
+                if (!battle.LoadDevelopmentScenario("boss"))
+                {
+                    throw new RevGMUsageException(battle.LastError);
+                }
+                battle.Tick(Balance.PrepDelaySeconds);
+                if (!battle.StartBattle())
+                {
+                    throw new RevGMUsageException(battle.LastError);
+                }
+                return "ready";
+            }, RevGMArg.Int("章节", 1));
+            // 自动化查询：把 Boss 状态折叠成稳定字符串，供 until/assert 精确比较。
+            RevGM.Register("RevGame/Boss查询", "自动化：Boss 状态 idle / casting / dead / stopped / none", args =>
+            {
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                BossAIState? state = battle.IsBossRound ? battle.BossState : null;
+                if (!state.HasValue)
+                {
+                    return "none";
+                }
+                if (state.Value == BossAIState.Idle)
+                {
+                    return "idle";
+                }
+                if (state.Value == BossAIState.Dead)
+                {
+                    return "dead";
+                }
+                if (state.Value == BossAIState.Stopped)
+                {
+                    return "stopped";
+                }
+                return "casting";
+            });
+            // 自动化准备：把我方一颗棋子挪到 Boss 身边，保证每个技能都有合法目标。
+            // 只移动真实棋子（走 BoardModel.Move 与真实占格预检），不扣血、不改属性。
+            // 自动化专用：清掉 Boss 护卫，给贴身技能腾位置。只用于验收，不改变规则。
+            RevGM.Register("RevGame/Boss清卫", "自动化：移除 Boss 以外的敌方棋子，给贴身技能腾出落点", args =>
+            {
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                if (!battle.IsBossRound)
+                {
+                    throw new RevGMUsageException("当前不是 Boss 回合");
+                }
+                return "ok:" + battle.ClearBossGuards();
+            });
+            RevGM.Register("RevGame/Boss靠近", "自动化：把我方一颗存活棋子移到离 Boss 指定距离的空格（1=贴身，2=隔一格）", args =>
+            {
+                int distance = args.Int(1, 1);
+                if (distance < 1 || distance > 4)
+                {
+                    throw new RevGMUsageException("距离只允许 1~4");
+                }
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                Piece boss = battle.EnemyPieces.FirstOrDefault(p => p.IsAlive && p.IsKing);
+                // 优先取最小的一颗：1×1 棋子才可能贴到 Boss 身边，2×2 大棋在贴身格常常放不下。
+                Piece player = battle.PlayerPieces.Where(p => p.IsAlive).OrderBy(p => p.Size).FirstOrDefault();
+                if (boss == null || player == null)
+                {
+                    throw new RevGMUsageException("缺少 Boss 或我方棋子");
+                }
+                // 按扫描顺序找第一个“与 Boss 身体间隔恰好为 distance”的可放置格。
+                // 为什么需要距离：横扫要求贴脸（间隔 1），狙击/轰炸要求至少隔一格（间隔 2），
+                // 只用一个固定距离会让另一类技能永远没有合法目标。
+                for (int y = 0; y < Consts.BoardSize; y++)
+                {
+                    for (int x = 0; x < Consts.BoardSize; x++)
+                    {
+                        var cell = new BoardPos(x, y);
+                        int gap = System.Math.Max(
+                            System.Math.Max(0, System.Math.Max(x - (boss.Pos.X + boss.Size - 1), boss.Pos.X - x)),
+                            System.Math.Max(0, System.Math.Max(y - (boss.Pos.Y + boss.Size - 1), boss.Pos.Y - y)));
+                        if (gap != distance || !cell.IsInside(Consts.BoardSize))
+                        {
+                            continue;
+                        }
+                        if (!battle.Board.CanFit(cell, player.Size, GameSide.Player, player, respectEnemyEyes: false))
+                        {
+                            continue;
+                        }
+                        if (battle.Board.Move(player, cell, respectEnemyEyes: false))
+                        {
+                            return "ok";
+                        }
+                    }
+                }
+                throw new RevGMUsageException("Boss 周围 " + distance + " 格外没有可放置的空格");
+            }, RevGMArg.Int("距离", 1));
+            // 自动化续航：把双方都回满血，保证连续验收 9 个技能时不会因为一方提前阵亡而中断。
+            // 只调用真实的 Heal 与血条事件，不修改最大生命、攻击或任何其它数值。
+            RevGM.Register("RevGame/Boss续航", "自动化：回满 Boss 与我方全部棋子，保证多技能连续验收", args =>
+            {
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                foreach (Piece piece in battle.PlayerPieces.Concat(battle.EnemyPieces))
+                {
+                    if (piece.IsAlive && piece.Heal(piece.MaxHp) > 0)
+                    {
+                        RevEvent.DispatchEvent<int>(Events.PieceHpChanged, piece.Id);
+                    }
+                }
+                return "ok";
+            });
             RevGM.Register("RevGame/快照", "读取流程、作用域、手牌和棋盘", args =>
             {
                 string snapshot = RevServices.GetRequired<GameFlow>().Snapshot();
@@ -112,7 +285,7 @@ namespace RevGame.Bootstrap
             });
             RevGM.Register("RevGame/选奖励", "选择0~2号奖励", args => BattleResult(Logic().ChooseReward(args.Int(0, 0))), RevGMArg.Int("选项"));
             RevGM.Register("RevGame/跳过", "第10回合未落牌时跳过换攻击强化", args => BattleResult(Logic().SkipRound()));
-            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，间隔7秒且每回合最多12次", args =>
+            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，受配置表里的事件间隔与每回合上限约束", args =>
             {
                 Logic();
                 int id = args.Int(0, 0);

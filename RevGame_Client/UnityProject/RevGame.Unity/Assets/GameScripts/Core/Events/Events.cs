@@ -17,7 +17,7 @@ namespace RevGame.Core
         public const string HandRerolled = "RevGame.Hand.Rerolled";
         /// <summary>唯一签名 PieceAttackInfo：每次真实攻击的起点与棋种快照。</summary>
         public const string PieceAttacked = "RevGame.Piece.Attacked";
-        /// <summary>无参数：本轮3～5项准备增益已全部生效；HUD读取 PreparationBuffs 播报。</summary>
+        /// <summary>无参数：本轮按配置抽取的准备增益（含保底万箭齐发）已全部生效；HUD读取 PreparationBuffs 播报。</summary>
         public const string PreparationBuffsGranted = "RevGame.Preparation.BuffsGranted";
         // ---------------- 流程 ----------------
         /// <summary>一个回合进入"准备"阶段。参数：回合号（int）。</summary>
@@ -31,6 +31,8 @@ namespace RevGame.Core
         // ---------------- 棋盘 / 棋子 ----------------
         /// <summary>有棋子落下。参数：棋子的整数 Id。</summary>
         public const string PiecePlaced = "RevGame.Piece.Placed";
+        /// <summary>敌方战术落子已提交。唯一签名 (int棋子Id, string战术意图)；HUD只播报，不反向生成棋子。</summary>
+        public const string EnemyDeployed = "RevGame.Enemy.Deployed";
         /// <summary>有棋子移动。参数：棋子 Id。</summary>
         public const string PieceMoved = "RevGame.Piece.Moved";
         /// <summary>有棋子死亡（被吃掉）。参数：棋子 Id。</summary>
@@ -63,5 +65,17 @@ namespace RevGame.Core
         public const string ScreenChanged = "RevGame.Flow.ScreenChanged";
         /// <summary>需要弹一条战斗日志。参数：文本（string）。</summary>
         public const string BattleLog = "RevGame.UI.BattleLog";
+
+        // ---------------- Boss 技能 ----------------
+        /// <summary>
+        /// Boss 开始蓄力一个技能（预警）。参数：<c>BossSkillInfo</c>。
+        /// 表现层据此画出危险区域、给玩家留出反应时间；此刻还没有任何伤害。
+        /// </summary>
+        public const string BossSkillTelegraph = "RevGame.Boss.SkillTelegraph";
+        /// <summary>
+        /// Boss 技能真正命中的一刻（多段技能每段一次）。参数：<c>BossSkillInfo</c>（Index = 第几段）。
+        /// 伤害已在服务里结算完毕，表现层只播放爆炸/激光等特效，不能再次扣血。
+        /// </summary>
+        public const string BossSkillCast = "RevGame.Boss.SkillCast";
     }
 }

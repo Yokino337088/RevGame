@@ -42,7 +42,10 @@ namespace RevGame.UI
             float right = Mathf.Clamp01(safe.xMax / size.x);
             float bottom = Mathf.Clamp01(safe.yMin / size.y);
             float top = Mathf.Clamp01(safe.yMax / size.y);
-            if (right <= left || top <= bottom) { return new Rect(0f, 0f, 1f, 1f); }
+            if (right <= left || top <= bottom)
+            {
+                return new Rect(0f, 0f, 1f, 1f);
+            }
             return Rect.MinMaxRect(left, bottom, right, top);
         }
 

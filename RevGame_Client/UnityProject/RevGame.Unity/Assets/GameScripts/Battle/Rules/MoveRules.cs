@@ -161,7 +161,10 @@ namespace RevGame.Battle
             if (piece.Side == GameSide.Player && !piece.Def.IsRanged)
             {
                 CollectAttackRays(board, piece, result);
-                if (result.Count > 0) { return; }
+                if (result.Count > 0)
+                {
+                    return;
+                }
             }
 
             // 我方全体都能在原位贡献火力；敌方重弩承担跨盘压制，避免守眼骨架整场没有射界。
@@ -172,14 +175,20 @@ namespace RevGame.Battle
                 // 不再分配敌军名单和捕获piece的Sort闭包；死亡棋子不进入候选。
                 foreach (Piece foe in board.Pieces)
                 {
-                    if (foe.Side == piece.Side || !foe.IsAlive) { continue; }
+                    if (foe.Side == piece.Side || !foe.IsAlive)
+                    {
+                        continue;
+                    }
                     int index = result.Count;
                     int distance = Distance(piece.Pos, foe.Pos);
                     while (index > 0)
                     {
                         Piece previous = board.GetPiece(result[index - 1]);
                         int previousDistance = Distance(piece.Pos, previous.Pos);
-                        if (previousDistance < distance || (previousDistance == distance && previous.Id < foe.Id)) { break; }
+                        if (previousDistance < distance || (previousDistance == distance && previous.Id < foe.Id))
+                        {
+                            break;
+                        }
                         index--;
                     }
                     result.Insert(index, foe.Pos);
@@ -487,7 +496,10 @@ namespace RevGame.Battle
         {
             for (int i = 0; i < result.Count; i++)
             {
-                if (board.GetPiece(result[i]) == target) { return true; }
+                if (board.GetPiece(result[i]) == target)
+                {
+                    return true;
+                }
             }
             return false;
         }

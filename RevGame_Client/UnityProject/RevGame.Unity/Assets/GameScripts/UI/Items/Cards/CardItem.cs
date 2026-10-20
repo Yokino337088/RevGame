@@ -87,7 +87,10 @@ namespace RevGame.UI
         public void FlipTo(HandCard card, int selectedId, float delay, Action completed)
         {
             StopFlip();
-            if (card == null) { RenderCard(null, 0); return; }
+            if (card == null)
+            {
+                RenderCard(null, 0); return;
+            }
             _pendingCard = card;
             _pendingSelection = selectedId;
             button.interactable = false;
@@ -143,10 +146,21 @@ namespace RevGame.UI
         private void LayoutContents()
         {
             RectTransform rect = transform as RectTransform;
-            if (rect == null || title == null || stats == null || portrait == null) { return; }
+            if (rect == null || title == null || stats == null || portrait == null)
+            {
+                return;
+            }
             Vector2 size = rect.rect.size;
-            if (size == _lastLayoutSize || size.x < 1f || size.y < 1f) { return; }
+            if (size == _lastLayoutSize || size.x < 1f || size.y < 1f)
+            {
+                return;
+            }
             _lastLayoutSize = size;
+            // 设计分辨率的卡牌内部布局已经保存到 CardItem.prefab，保留美术在预制体中调整的结果。
+            if (Mathf.Abs(size.x - 162.93528f) < 0.01f && Mathf.Abs(size.y - 217.24704f) < 0.01f)
+            {
+                return;
+            }
             SetContentRect(portrait.rectTransform, new Vector2(0f, size.y * 0.18f), Vector2.one * Mathf.Min(size.x * 0.70f, size.y * 0.48f));
             SetContentRect(title.rectTransform, new Vector2(0f, -size.y * 0.16f), new Vector2(size.x * 0.94f, size.y * 0.18f));
             // 两行属性独占底部区域；先预留实际高度，再让 BestFit 在小范围内缩放，不能让粗体越出卡底。
@@ -183,7 +197,10 @@ namespace RevGame.UI
         /// <summary>点击时先轻微压下，再左右衰减摆动；不改落子规则或手牌数据，连点也只保留最后一次反馈。</summary>
         private void PlayPressFeedback()
         {
-            if (IsFlipping) { return; }
+            if (IsFlipping)
+            {
+                return;
+            }
             StopPress();
             float progress = 0f;
             _press = DOTween.To(() => progress, value =>

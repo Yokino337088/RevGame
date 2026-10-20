@@ -37,6 +37,8 @@ namespace RevGame.Flow
                 new Resource(RevResPath.Board_Tile, "BoardCell"),
                 new Resource(RevResPath.Pieces_Unit, "SlimePiece"),
                 new Resource(RevResPath.Effects_Combat, "BattleEffect"),
+                // Boss 技能特效：进战斗时一并预载，避免 Boss 第一次放技能时同步读 AB 造成卡顿。
+                new Resource(RevResPath.Effects_Combat, "BossSkillFx"),
                 new Resource(RevResPath.UI_Item_Notice, "BattleEventNotice"),
                 new Resource(RevResPath.UI_Panel, "BattleHudPanel"),
                 new Resource(RevResPath.UI_Panel, "PreparePanel"),
@@ -46,13 +48,19 @@ namespace RevGame.Flow
 
             for (int i = 0; i < resources.Length; i++)
             {
-                if (_disposed) { throw new OperationCanceledException("预热已取消"); }
+                if (_disposed)
+                {
+                    throw new OperationCanceledException("预热已取消");
+                }
                 Resource resource = resources[i];
                 _leases.Add(resource);
                 var completion = new RevTaskCompletionSource<RevResHandle>();
                 RevResManager.LoadAsync(resource.Root, resource.Name, typeof(GameObject), h => completion.SetResult(h), resource.Group);
                 RevResHandle handle = await completion.Task;
-                if (!handle.IsLoaded) { throw new InvalidOperationException(resource.Name + "预载失败：" + handle.ErrorReason); }
+                if (!handle.IsLoaded)
+                {
+                    throw new InvalidOperationException(resource.Name + "预载失败：" + handle.ErrorReason);
+                }
                 progress?.Invoke((i + 1f) / resources.Length);
                 await RevTask.Yield();
             }
@@ -70,18 +78,36 @@ namespace RevGame.Flow
             {
                 for (int i = 0; i < count; i++)
                 {
-                    if (_disposed) { throw new OperationCanceledException("对象池预热已取消"); }
+                    if (_disposed)
+                    {
+                        throw new OperationCanceledException("对象池预热已取消");
+                    }
                     Component instance;
-                    if (i < 24) { instance = await GetAsync<PieceView>(); }
-                    else if (i < 44) { instance = await GetAsync<BattleEffectView>(); }
-                    else { instance = await GetAsync<BattleEventNoticeView>(); }
+                    if (i < 24)
+                    {
+                        instance = await GetAsync<PieceView>();
+                    }
+                    else if (i < 44)
+                    {
+                        instance = await GetAsync<BattleEffectView>();
+                    }
+                    else
+                    {
+                        instance = await GetAsync<BattleEventNoticeView>();
+                    }
                     // 退出发生在await期间时，不能再把迟到实例记入已经清空的清单。
                     if (_disposed)
                     {
-                        if (instance != null) { RevPool.Return(instance, 0); }
+                        if (instance != null)
+                        {
+                            RevPool.Return(instance, 0);
+                        }
                         throw new OperationCanceledException("预热过程中流程已退出");
                     }
-                    if (instance == null) { throw new InvalidOperationException("对象池预热失败，序号" + i); }
+                    if (instance == null)
+                    {
+                        throw new InvalidOperationException("对象池预热失败，序号" + i);
+                    }
                     _instances.Add(instance);
                     progress?.Invoke((i + 1f) / count);
                     if (i % 2 == 1 || Time.realtimeSinceStartup - sliceStart >= 0.003f)
@@ -103,13 +129,21 @@ namespace RevGame.Flow
 
         private void ReturnInstances()
         {
-            foreach (Component instance in _instances) { if (instance != null) { RevPool.Return(instance, 0); } }
+            foreach (Component instance in _instances) {
+            if (instance != null)
+            {
+                RevPool.Return(instance, 0);
+            }
+            }
             _instances.Clear();
         }
 
         public void Dispose()
         {
-            if (_disposed) { return; }
+            if (_disposed)
+            {
+                return;
+            }
             _disposed = true;
             ReturnInstances();
             foreach (Resource resource in _leases) { RevResManager.Release(resource.Root, resource.Name); }

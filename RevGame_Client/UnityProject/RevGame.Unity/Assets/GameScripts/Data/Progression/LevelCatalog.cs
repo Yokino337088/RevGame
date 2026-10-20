@@ -72,8 +72,14 @@ namespace RevGame.Data
             ReinforceRule best = null;
             foreach (ReinforceRule rule in snapshot.Reinforce)
             {
-                if (intelligence < rule.MinIntelligence || count % rule.Every != rule.Offset) { continue; }
-                if (best == null || rule.Priority > best.Priority) { best = rule; }
+                if (intelligence < rule.MinIntelligence || count % rule.Every != rule.Offset)
+                {
+                    continue;
+                }
+                if (best == null || rule.Priority > best.Priority)
+                {
+                    best = rule;
+                }
             }
             return best == null ? (PieceKind?)null : best.Kind;
         }
@@ -93,7 +99,10 @@ namespace RevGame.Data
         /// </summary>
         public static int GetIntelligence(int chapter, int round)
         {
-            if (chapter < 1 || chapter > Consts.ChapterCount || round < 1 || round > Balance.RoundsPerChapter) { return 1; }
+            if (chapter < 1 || chapter > Consts.ChapterCount || round < 1 || round > Balance.RoundsPerChapter)
+            {
+                return 1;
+            }
             int progress = (chapter - 1) * Balance.RoundsPerChapter + round - 1;
             return System.Math.Min(Balance.EnemyAiMaxLevel, 1 + progress / Balance.EnemyAiRoundsPerLevel);
         }

@@ -32,7 +32,12 @@ namespace RevGame.UI
         {
             get
             {
-                foreach (CardItem card in _cards) { if (card.IsFlipping) { return true; } }
+                foreach (CardItem card in _cards) {
+                if (card.IsFlipping)
+                {
+                    return true;
+                }
+                }
                 return false;
             }
         }
@@ -97,7 +102,10 @@ namespace RevGame.UI
                 {
                     _cards[i].FlipTo(card, battle.SelectedCardId, i * 0.055f, RefreshView);
                 }
-                else { _cards[i].Show(card, battle.SelectedCardId); }
+                else
+                {
+                    _cards[i].Show(card, battle.SelectedCardId);
+                }
             }
 
             _btnReady.interactable = battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !AnyCardFlipping;
@@ -107,7 +115,7 @@ namespace RevGame.UI
             _btnSkip.gameObject.SetActive(battle.Round == Balance.NormalRoundsPerChapter);
             _btnSkip.interactable = !AnyCardFlipping;
             _btnEye.gameObject.SetActive(battle.EyeStones > 0);
-            _btnEye.GetComponentInChildren<Text>().text = "眼位石 ×" + battle.EyeStones;
+            _btnEye.GetComponentInChildren<Text>(true).text = "眼位石 ×" + battle.EyeStones;
             if (battle.EyeStoneSelected)
             {
                 _hintText.text = "点击金色亮格补眼；没有亮格时可保留眼位石";
@@ -123,7 +131,10 @@ namespace RevGame.UI
 
         private void OnRefreshClick()
         {
-            if (!AnyCardFlipping) { RevLogic.Get<BattleLogic>().RefreshHand(); }
+            if (!AnyCardFlipping)
+            {
+                RevLogic.Get<BattleLogic>().RefreshHand();
+            }
         }
 
         private void OnCardClick(int id)
@@ -133,7 +144,10 @@ namespace RevGame.UI
 
         private void OnReadyClick()
         {
-            if (!AnyCardFlipping) { RevLogic.Get<BattleLogic>().BeginBattle(); }
+            if (!AnyCardFlipping)
+            {
+                RevLogic.Get<BattleLogic>().BeginBattle();
+            }
         }
 
         private void OnSkipClick()

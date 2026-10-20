@@ -1,6 +1,7 @@
 // ============================================================
 // BattleService.HandChecks.cs —— 编辑器中检查刷新事务与远程实际出手时间。
 // 使用真实服务推进和事件快照，避免“配置写了两倍，战斗却仍把两发挤在同一帧”。
+// 本文件只在编辑器编译；放在 Services 目录是为了调用私有业务实现，而不是另写一套。
 // ============================================================
 #if UNITY_EDITOR
 using System;
@@ -13,8 +14,13 @@ using Revolution;
 
 namespace RevGame.Services
 {
+    // partial 片段：与其他 BattleService.*.cs 共享同一实例，完整类说明见 Simulation/BattleService.cs。
     public sealed partial class BattleService
     {
+        /// <summary>
+        /// 验收手牌刷新事务与远程实际出手次数：刷新不补落子额度、
+        /// 攻速配置改变后确实在多个固定小步里分出多次攻击，而不是挤在同一帧。
+        /// </summary>
         private static void VerifyHandRefreshAndAttackRate(Action<bool, string> check)
         {
             var battle = new BattleService(false);
@@ -86,8 +92,14 @@ namespace RevGame.Services
                     {
                         check(attack.PieceId == archer.Id && attack.Kind == PieceKind.Archer && attack.Position == archer.Pos && attack.Side == GameSide.Player, "每次真实攻击派发正确快照");
                     }
-                    if (rate == 1) { singleDamage = hp - victim.Hp; }
-                    else { check(hp - victim.Hp == singleDamage * 2, "相同周期两倍频率造成两倍真实伤害"); }
+                    if (rate == 1)
+                    {
+                        singleDamage = hp - victim.Hp;
+                    }
+                    else
+                    {
+                        check(hp - victim.Hp == singleDamage * 2, "相同周期两倍频率造成两倍真实伤害");
+                    }
                 }
                 finally
                 {
@@ -105,7 +117,12 @@ namespace RevGame.Services
             battle.StartBattle();
             int acceleratedAttacks = 0;
             owner = new object();
-            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => { if (info.PieceId == fastArcher.Id) { acceleratedAttacks++; } }, owner: owner);
+            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => {
+            if (info.PieceId == fastArcher.Id)
+            {
+                acceleratedAttacks++;
+            }
+            }, owner: owner);
             try
             {
                 battle.Tick(5f);

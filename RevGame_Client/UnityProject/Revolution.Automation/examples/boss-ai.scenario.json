@@ -1,0 +1,66 @@
+{
+  "name": "Boss AI 九技能自动化验收",
+  "repeat": 1,
+  "warmup": 0,
+  "stopOnFailure": true,
+  "failOnUnityError": true,
+  "setup": [
+    { "kind": "until", "command": "RevGame/Boss准备 1", "expected": "ready", "timeoutSeconds": 120, "intervalSeconds": 0.5 }
+  ],
+  "steps": [
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+    { "kind": "gm", "command": "RevGame/Boss清卫" },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 1" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 0" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 2" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 1" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 2" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 2" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 1" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 3" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 2" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 4" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 1" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 5" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 1" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 6" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 1" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 7" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "gm", "command": "RevGame/Boss靠近 1" },
+    { "kind": "gm", "command": "RevGame/Boss续航" },
+    { "kind": "gm", "command": "RevGame/Boss技能 8" },
+    { "kind": "until", "command": "RevGame/Boss查询", "expected": "idle", "timeoutSeconds": 20 },
+
+    { "kind": "assert", "command": "RevGame/Boss查询", "expected": "idle" }
+  ],
+  "cleanup": [],
+  "teardown": [
+    { "kind": "gm", "command": "RevGame/返回主界面" }
+  ],
+  "thresholds": { "maxFrameP95Ms": 0, "maxFrameMs": 0, "maxMonoUsedBytes": 0 }
+}

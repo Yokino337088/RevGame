@@ -36,7 +36,10 @@ namespace RevGame.UI
         /// <summary>仅在UGUI原本要更新网格时执行；按控件矩形归一化，卡片变大、九宫格拉伸后仍是一道完整流光。</summary>
         public override void ModifyMesh(VertexHelper vertices)
         {
-            if (!IsActive() || vertices.currentVertCount == 0) { return; }
+            if (!IsActive() || vertices.currentVertCount == 0)
+            {
+                return;
+            }
             Rect rect = graphic.rectTransform.rect;
             float width = Mathf.Max(1f, rect.width);
             float height = Mathf.Max(1f, rect.height);

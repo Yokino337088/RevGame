@@ -22,7 +22,7 @@ namespace RevGame.Data
 {
     public static class GameConfigFileLoader
     {
-        /// <summary>读取目录下 11 张游戏配置表并装配；任何一张表缺文件或有解析错误行都会抛出带原因的异常。</summary>
+        /// <summary>读取目录下 12 张游戏配置表并装配；任何一张表缺文件或有解析错误行都会抛出带原因的异常。</summary>
         public static void LoadFromDirectory(string dataDirectory)
         {
             var tables = new GameConfigTables
@@ -37,6 +37,7 @@ namespace RevGame.Data
                 EnemyReinforce = Read(new EnemyReinforceConfigTable(), dataDirectory),
                 Rewards = Read(new RewardConfigTable(), dataDirectory),
                 RewardBoosts = Read(new RewardBoostConfigTable(), dataDirectory),
+                BossSkills = Read(new BossSkillConfigTable(), dataDirectory),
                 Balance = Read(new BalanceRuleTable(), dataDirectory),
             };
             GameConfig.Initialize(tables);
@@ -49,7 +50,10 @@ namespace RevGame.Data
         private static T Read<T>(T table, string dataDirectory) where T : RevIDataTable
         {
             string path = Path.Combine(dataDirectory, table.ResourceName + ".txt");
-            if (!File.Exists(path)) { throw new GameConfigException(new List<string> { "找不到配置数据文件 " + path + "（请先用导表工具导出）" }); }
+            if (!File.Exists(path))
+            {
+                throw new GameConfigException(new List<string> { "找不到配置数据文件 " + path + "（请先用导表工具导出）" });
+            }
             int errors;
             table.LoadText(File.ReadAllText(path), out errors);
             if (errors > 0)

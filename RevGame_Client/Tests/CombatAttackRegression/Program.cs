@@ -44,6 +44,13 @@ internal static class Program
             VerifyDeadAttackerStaysSilent();
             VerifyNoEnemyStaysSilent();
             VerifyEncircledPlayerStillTakesExtraDamage();
+            VerifyGoDeploymentTactics();
+            VerifyFrequentEnemyDeployment();
+            VerifyGuaranteedArrowVolley();
+            VerifyHeavyEnemyAI();
+            int bossScenarios;
+            _assertions += BossRegression.Run(out bossScenarios);
+            _scenarios += bossScenarios;
             _assertions += FeedbackRegression.Run();
             Console.WriteLine("CombatAttackRegression: " + _scenarios + " scenarios, " + _assertions + " assertions passed.");
             return 0;
@@ -498,6 +505,154 @@ internal static class Program
         Assert(!player.IsLocked && player.Liberties > 0, "移走包围者后玩家真实解围");
         float normalDamage = MeasureDamagePerHit(battle, attacker, player, GameSide.Enemy);
         Assert(lockedDamage > normalDamage && normalDamage > 0f, "同一攻击者的真实单击伤害证明零气受击增伤仍在");
+        _scenarios++;
+    }
+
+    /// <summary>真实造出最后一口气和共同断点；验证AI选点而非只验证评分常量。</summary>
+    private static void VerifyGoDeploymentTactics()
+    {
+        BattleService battle = BattleService.CreateAttackRegressionFixture();
+        Piece player = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(4, 4));
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(3, 4));
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(4, 3));
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(5, 4));
+        battle.RefreshRegressionGoState();
+        string before = battle.Board.Dump();
+        Piece candidate = new Piece(900, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy);
+        BoardPos pos;
+        string plan;
+        Assert(EnemyTactics.TryChooseDeployment(battle.Board, candidate, 4, out pos, out plan), "围困造局有合法落点");
+        Assert(pos == new BoardPos(4, 5) && plan == "收网围困", "AI优先封住对方最后一口气");
+        Assert(battle.Board.Dump() == before && player.Liberties == 1, "试落子不污染实战占格与气数");
+        battle = BattleService.CreateAttackRegressionFixture();
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(3, 4));
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(5, 4));
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(4, 2));
+        battle.RefreshRegressionGoState();
+        Assert(EnemyTactics.TryChooseDeployment(battle.Board, candidate, 4, out pos, out plan), "断点造局有合法落点");
+        Assert(pos == new BoardPos(4, 4) && plan == "切断接应", "AI抢占两个棋群的共同连接点");
+        _scenarios += 2;
+    }
+
+    /// <summary>跳过攻击只推进真实落子入口，核对冷却和事件一次提交一次发布。</summary>
+    private static void VerifyFrequentEnemyDeployment()
+    {
+        BattleService battle = BattleService.CreateAttackRegressionFixture();
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(4, 4), 1000f);
+        battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(4, 7), 1000f);
+        battle.RefreshRegressionGoState();
+        object owner = new object();
+        int events = 0;
+        RevEvent.AddEventListener<int, string>(Events.EnemyDeployed, (id, plan) =>
+        {
+            Assert(battle.Board.FindPiece(id) != null && !string.IsNullOrEmpty(plan), "落子通知发生时真实棋子和战术解释已存在");
+            events++;
+        }, owner: owner);
+        try
+        {
+            battle.ResetRegressionDeployment();
+            battle.RunRegressionDeploymentAt(Balance.DeployStartSeconds - 0.01f);
+            Assert(battle.EnemyDeploymentCount == 0, "首手时刻未到不落子");
+            battle.RunRegressionDeploymentAt(Balance.DeployStartSeconds);
+            int first = battle.EnemyDeploymentCount;
+            Assert(first == 1, "首手时刻到期真实提交一手");
+            float due = battle.NextEnemyDeploymentAt;
+            battle.RunRegressionDeploymentAt(due - 0.01f);
+            Assert(battle.EnemyDeploymentCount == first, "冷却未到不能重复落子");
+            for (int i = 0; i < 7; i++) { battle.RunRegressionDeploymentAt(battle.NextEnemyDeploymentAt); }
+            Assert(battle.EnemyDeploymentCount >= 5, "多个连续战术窗口真实提交至少五手，不再仅补两三手");
+            Assert(events == battle.EnemyDeploymentCount, "每手真实落子仅发布一次弹幕事件");
+            Assert(battle.NextEnemyDeploymentAt < 40f, "多手落子在前段完成，而不是等待十几秒一手");
+            int finished = battle.EnemyDeploymentCount;
+            battle.RunRegressionDeploymentAt(Balance.DeployStopSeconds);
+            Assert(battle.EnemyDeploymentCount == finished && events == finished, "停手时刻后不再生成敌棋或虚构落子通知");
+            foreach (Piece enemy in new List<Piece>(battle.EnemyPieces)) { battle.RemoveRegressionPiece(enemy); }
+            battle.ResetRegressionDeployment();
+            battle.RunRegressionDeploymentAt(Balance.DeployStartSeconds);
+            Assert(battle.EnemyDeploymentCount == 0 && battle.Board.IsSideWiped(GameSide.Enemy), "敌方全灭不能借频繁增援复活");
+        }
+        finally { RevEvent.RemoveAllByOwner(owner); }
+        _scenarios++;
+    }
+
+    /// <summary>多种子验证保底、去重和后入场继承，不以单次随机碰巧抽到为证据。</summary>
+    private static void VerifyGuaranteedArrowVolley()
+    {
+        for (int seed = 0; seed < 32; seed++)
+        {
+            BattleService battle = BattleService.CreatePreparationRegressionFixture(seed);
+            battle.GrantRegressionPreparation();
+            int volleys = 0;
+            var kinds = new HashSet<PreparationBuffKind>();
+            foreach (PreparationBuffDef buff in battle.PreparationBuffs)
+            {
+                Assert(kinds.Add(buff.Kind), "准备增益不重复：种子 " + seed);
+                if (buff.Kind == PreparationBuffKind.ArrowVolley) { volleys++; }
+            }
+            Assert(volleys == 1, "每个随机种子都有且只有一次万箭齐发");
+            Assert(kinds.Count >= Balance.PrepBuffCountMin && kinds.Count <= Balance.PrepBuffCountMax, "保底计入本轮总增益名额");
+            Piece archer = battle.AddRegressionPiece(PieceKind.Archer, StarTier.One, GameSide.Player, new BoardPos(7, 7));
+            Assert(battle.RegressionArrowRate(archer) == 1f + PreparationBuffCatalog.Get(PreparationBuffKind.ArrowVolley).Amount, "领取后入场弓箭手继承实际攻速倍率");
+            int count = battle.PreparationBuffs.Count;
+            battle.GrantRegressionPreparation();
+            Assert(battle.PreparationBuffs.Count == count, "重复推进准备时钟不重复领取");
+        }
+        _scenarios++;
+    }
+
+    /// <summary>直接装配真实RevHeavyFSM，核对状态行为、时间、历史、终态与服务回合回收。</summary>
+    private static void VerifyHeavyEnemyAI()
+    {
+        BattleService actionBattle = BattleService.CreateAttackRegressionFixture();
+        Piece actor = actionBattle.AddRegressionPiece(PieceKind.Archer, StarTier.One, GameSide.Enemy, new BoardPos(4, 4));
+        Piece target = actionBattle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(4, 5), 1000f);
+        actionBattle.RefreshRegressionGoState();
+        EnemyAI ai = actionBattle.RegressionEnemyAI(actor);
+        ai.Tick(0.25f);
+        Assert(ai.State == EnemyAIState.Attack && ai.StateTime == 0f, "状态自己感知接敌并切Attack，框架切换清零时间");
+        ai.Tick(1f);
+        Assert(ai.StateTime == 1f && target.Hp < target.MaxHp, "持续Attack真实扣血，不是回调计数冒充攻击");
+        int hp = target.Hp;
+        actionBattle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(3, 4));
+        actionBattle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(5, 4));
+        actionBattle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(4, 3));
+        actionBattle.RefreshRegressionGoState();
+        ai.Tick(1f);
+        Assert(ai.State == EnemyAIState.Locked && target.Hp == hp, "状态自己感知零气锁死，停止攻击");
+        actionBattle.RemoveRegressionPiece(target);
+        ai.Tick(0.25f);
+        Assert(ai.State == EnemyAIState.Attack && ai.History[ai.History.Length - 1].Reason == "发现合法攻击目标", "解除包围后状态自己恢复攻防并保存原因");
+        ai.Tick(EnemyAIState.Dead, 0f, "真实死亡");
+        ai.Tick(1f);
+        Assert(ai.State == EnemyAIState.Dead, "死亡态不再次感知复活");
+        ai.Dispose();
+        ai.Dispose();
+        bool rejected = false;
+        try { ai.Tick(0f); }
+        catch (ObjectDisposedException) { rejected = true; }
+        Assert(rejected, "已处置AI不能再次驱动");
+        actionBattle.StopEnemyAI();
+        BattleService movement = BattleService.CreateAttackRegressionFixture();
+        Piece walker = movement.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(7, 7));
+        movement.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(1, 1), 1000f);
+        movement.RefreshRegressionGoState();
+        EnemyAI movingAI = movement.RegressionEnemyAI(walker);
+        movingAI.Tick(0.25f);
+        Assert(movingAI.State == EnemyAIState.Hold && walker.Pos == new BoardPos(7, 7), "无射界且冷却未到，由Hold状态保持原位");
+        movement.SetRegressionElapsed(Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks);
+        movingAI.Tick(0.25f);
+        Assert(movingAI.State == EnemyAIState.Advance && walker.Pos != new BoardPos(7, 7), "Advance状态真实选择并提交合法移动");
+        BoardPos movedPosition = walker.Pos;
+        movingAI.Tick(0.25f);
+        Assert(movingAI.State == EnemyAIState.Hold && walker.Pos == movedPosition, "移动后下一步自主回到等待，不重复移动");
+        movement.StopEnemyAI();
+        BattleService battle = new BattleService(false, 1);
+        Assert(battle.StartRound(1, 1), "真实回合布阵成功");
+        Assert(battle.EnemyAICount == battle.EnemyPieces.Count && battle.EnemyAIStatus().Contains("Prepare"), "开局敌军每颗都有机器，指挥进入Prepare");
+        Assert(battle.StartRound(1, 2), "下一回合布阵成功");
+        Assert(battle.EnemyAICount == battle.EnemyPieces.Count, "换回合回收旧机器，只持有新敌军");
+        battle.StopEnemyAI();
+        Assert(battle.EnemyAICount == 0 && battle.EnemyAIStatus().Contains("已停止"), "域退出清空敌棋与指挥机器");
         _scenarios++;
     }
 
