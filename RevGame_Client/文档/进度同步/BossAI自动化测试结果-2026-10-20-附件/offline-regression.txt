@@ -1,0 +1,5 @@
+G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\GameScripts\Services\Battle\Support\BattleService.Events.cs(27,22): warning CS0414: 字段“BattleService._decisiveSupportUsed”已被赋值，但从未使用过它的值 [G:\RevRoot\MyRevGame\RevGame_Client\Tests\CombatAttackRegression\CombatAttackRegression.csproj]
+真实配置目录：G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\GameRes\Data
+FIFO admission summary baseline (not full old BoardView): 5/20 sources; real FairFeedbackBuffer: 20/20 sources (0.625s volleys, 10s).
+FairFeedbackBuffer: 2794 assertions passed (12/24 capacity, 40 sources, pause/expiry/clear).
+CombatAttackRegression: 181 scenarios, 4167 assertions passed.

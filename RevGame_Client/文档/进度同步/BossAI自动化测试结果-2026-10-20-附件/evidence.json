@@ -1,0 +1,2405 @@
+{
+  "reportDate": "2026-10-20",
+  "timezone": "Asia/Shanghai",
+  "testedBaselineCommit": "174a198c1e28e44d133a73f17bbaec33177e5614",
+  "overall": "未通过",
+  "reason": "原版九技能场景失败；仅完成三种技能的独立事件与回收断言、六张截图归档，九技能完整视觉验收未完成。",
+  "primaryJobId": "52a954851ea444acb476703c641f347d",
+  "primarySummary": {
+    "name": "Boss AI 九技能自动化验收",
+    "resultPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\scenario-result.json",
+    "startedUtc": "2026-10-20T09:01:41.2404035+00:00",
+    "finishedUtc": "2026-10-20T09:01:57.3250949+00:00",
+    "unityVersion": "2022.3.15f1c1",
+    "environment": "Unity Editor PlayMode",
+    "unityLogPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\unity-errors.jsonl",
+    "requested": 1,
+    "completed": 1,
+    "failedIterations": 1,
+    "warmupCompleted": 0,
+    "success": false,
+    "cancelled": false,
+    "elapsedSeconds": 16.0845769,
+    "frameSamples": 4283,
+    "frameMeanMs": 3.023109104658929,
+    "frameP95Ms": 4.4,
+    "frameMaxMs": 22.580299526453018,
+    "peakMonoUsedBytes": 748965888,
+    "peakAllocatedMemoryBytes": 610760022,
+    "unityErrors": 0,
+    "errors": [
+      "steps[28]: RevGame/Boss技能 6: SoulDrain 当前没有合法目标"
+    ]
+  },
+  "originalScenarioResult": {
+    "name": "Boss AI 九技能自动化验收",
+    "resultPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\scenario-result.json",
+    "startedUtc": "2026-10-20T09:01:41.2404035+00:00",
+    "finishedUtc": "2026-10-20T09:01:57.3250949+00:00",
+    "unityVersion": "2022.3.15f1c1",
+    "environment": "Unity Editor PlayMode",
+    "unityLogPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\unity-errors.jsonl",
+    "requested": 1,
+    "completed": 1,
+    "failedIterations": 1,
+    "warmupCompleted": 0,
+    "success": false,
+    "cancelled": false,
+    "elapsedSeconds": 16.0845769,
+    "frameSamples": 4283,
+    "frameMeanMs": 3.023109104658929,
+    "frameP95Ms": 4.4,
+    "frameMaxMs": 22.580299526453018,
+    "peakMonoUsedBytes": 748965888,
+    "peakAllocatedMemoryBytes": 610760022,
+    "unityErrors": 0,
+    "errors": [
+      "steps[28]: RevGame/Boss技能 6: SoulDrain 当前没有合法目标"
+    ]
+  },
+  "originalIterations": [
+    {
+      "iteration": 0,
+      "warmup": false,
+      "success": false,
+      "durationMs": 12942.521900000002,
+      "frames": 4283,
+      "frameP95Ms": 4.4,
+      "frameMaxMs": 22.580299526453018,
+      "monoUsedBytes": 709795840,
+      "allocatedMemoryBytes": 607285138,
+      "gc0": 1,
+      "gc1": 1,
+      "gc2": 1,
+      "message": "steps[28]: RevGame/Boss技能 6: SoulDrain 当前没有合法目标"
+    }
+  ],
+  "offline": {
+    "success": true,
+    "scenarios": 181,
+    "assertions": 4167,
+    "exitCode": 0,
+    "command": "dotnet run --project RevGame_Client/Tests/CombatAttackRegression/CombatAttackRegression.csproj -c Release --no-restore",
+    "outputFile": "offline-regression.txt",
+    "warning": "CS0414: BattleService._decisiveSupportUsed 已赋值但未使用。"
+  },
+  "supplementalResults": [
+    {
+      "label": "Cleave",
+      "success": true,
+      "error": "",
+      "detail": "skill=0;phase=done;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4575;hpAfterImpact=4548;targetBefore=155;targetAfter=130;enemiesBefore=1;enemiesAfter=2;latency=1.250;activeFx=0;state=Idle;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\ndamage:target=125;amount=25\ncast:Cleave;index=0;count=1;origin=(6,6);A=(6,6);enraged=False\n敌方指挥：Deploy\r\nBoss #115 Idle · 1.25秒 · Cleave 收招\r\n#126 Attack · 0.31秒 · 发现合法攻击目标\r\n"
+    },
+    {
+      "label": "Cleave-settled",
+      "success": true,
+      "error": "",
+      "detail": "skill=0;phase=done;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4550;hpAfterImpact=4525;targetBefore=240;targetAfter=240;enemiesBefore=1;enemiesAfter=2;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.250;activeFx=0;state=Idle;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\ndamage:target=150;amount=25\ncast:Cleave;index=0;count=1;origin=(6,6);A=(6,6);enraged=False\n敌方指挥：Deploy\r\nBoss #140 Idle · 1.25秒 · Cleave 收招\r\n#151 Attack · 0.94秒 · 发现合法攻击目标\r\n"
+    },
+    {
+      "label": "Snipe",
+      "success": true,
+      "error": "",
+      "detail": "skill=1;phase=done;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4553;hpAfterImpact=4531;targetBefore=120;targetAfter=120;enemiesBefore=1;enemiesAfter=2;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.563;activeFx=0;state=Idle;error=\ntelegraph:Snipe;A=(1,1);B=(6,6);C=(6,6);windup=1.4\ndamage:target=162;amount=43\ncast:Snipe;index=0;count=1;origin=(6,6);A=(1,1);enraged=False\n敌方指挥：Deploy\r\nBoss #153 Idle · 1.25秒 · Snipe 收招\r\n#164 Attack · 1.25秒 · 发现合法攻击目标\r\n"
+    },
+    {
+      "label": "Bombard",
+      "success": true,
+      "error": "",
+      "detail": "skill=2;phase=done;counter=False;telegraphs=1;casts=3;skillHits=3;hpBefore=4575;hpBeforeImpact=4553;hpAfterImpact=4531;targetBefore=120;targetAfter=120;enemiesBefore=1;enemiesAfter=2;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.250;activeFx=0;state=Idle;error=\ntelegraph:Bombard;A=(0,0);B=(1,1);C=(1,0);windup=1.2\ndamage:target=175;amount=22\ncast:Bombard;index=0;count=3;origin=(6,6);A=(0,0);enraged=False\ndamage:target=175;amount=22\ncast:Bombard;index=1;count=3;origin=(6,6);A=(0,0);enraged=False\ndamage:target=175;amount=22\ncast:Bombard;index=2;count=3;origin=(6,6);A=(0,0);enraged=False\n敌方指挥：Deploy\r\nBoss #166 Idle · 0.63秒 · Bombard 收招\r\n#177 Attack · 1.25秒 · 发现合法攻击目标\r\n"
+    }
+  ],
+  "supplementalTrace": [
+    {
+      "utc": 1792487451.662509,
+      "command": "RevGame/Boss验收准备 0",
+      "response": {
+        "protocol": 1,
+        "id": "238ea08c6cce4eea8c453b4850586bde",
+        "success": false,
+        "error": "InvalidOperationException",
+        "message": "执行「RevGame/Boss验收准备」时抛异常：InvalidOperationException: 玩家固定落点放不下:(1,1)\n     at MCPDynamicCode+<Execute>c__AnonStorey0.<>m__5 (Revolution.RevGMArgs args) [0x00221] in <dc8ef28a0842457a8f575b9d53e191e9>:0 \r",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\238ea08c6cce4eea8c453b4850586bde",
+        "data": null
+      }
+    },
+    {
+      "utc": 1792487509.3721936,
+      "command": "RevGame/Boss验收准备 0",
+      "response": {
+        "protocol": 1,
+        "id": "2c336675b2af4ee5a9e6acd87ca60d8e",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2c336675b2af4ee5a9e6acd87ca60d8e",
+        "data": {
+          "success": true,
+          "message": "ready",
+          "elapsedMs": 21.8389
+        }
+      }
+    },
+    {
+      "utc": 1792487509.639432,
+      "command": "RevGame/Boss验收施放",
+      "response": {
+        "protocol": 1,
+        "id": "eef809992ab4451bad9479e237901d9c",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\eef809992ab4451bad9479e237901d9c",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 1.7876
+        }
+      }
+    },
+    {
+      "utc": 1792487509.7244172,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "4ee898fb65e14760993562cdd46d4854",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4ee898fb65e14760993562cdd46d4854",
+        "data": {
+          "success": true,
+          "message": "wait-telegraph",
+          "elapsedMs": 0.1077
+        }
+      }
+    },
+    {
+      "utc": 1792487509.970912,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "e2da1e0a1c8e44cd9e5d18194206ce86",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e2da1e0a1c8e44cd9e5d18194206ce86",
+        "data": {
+          "success": true,
+          "message": "telegraph",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487510.0604308,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "675cecb6dfdb4452aaf63bca4129805d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\675cecb6dfdb4452aaf63bca4129805d",
+        "data": {
+          "success": true,
+          "message": "skill=0;phase=telegraph;counter=False;telegraphs=1;casts=0;skillHits=0;hpBefore=4575;hpBeforeImpact=0;hpAfterImpact=0;targetBefore=155;targetAfter=0;enemiesBefore=1;enemiesAfter=1;latency=0.000;activeFx=1;state=Cleave;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\n敌方指挥：Deploy\r\nBoss #115 Cleave · 0.31秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 2.1702
+        }
+      }
+    },
+    {
+      "utc": 1792487587.2942183,
+      "command": "RevGame/Boss验收命中",
+      "response": {
+        "protocol": 1,
+        "id": "d9e11e3ad5114bdfbb4d2e37ddb56ca4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d9e11e3ad5114bdfbb4d2e37ddb56ca4",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.1979
+        }
+      }
+    },
+    {
+      "utc": 1792487587.3789415,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "4bafbe78c78c4a0d9e0abaaf9de984bf",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4bafbe78c78c4a0d9e0abaaf9de984bf",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487587.6249652,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "162a9c00467b43e396114188c8cbd5ff",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\162a9c00467b43e396114188c8cbd5ff",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487587.7903924,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f67dfa47b97d45dbbf834d4a986e815b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f67dfa47b97d45dbbf834d4a986e815b",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487588.0360053,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "4fce28eaccb64a27be059ae85f39959d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4fce28eaccb64a27be059ae85f39959d",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487588.2017019,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "357050e03d3d42f785ecb314aed4bf3f",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\357050e03d3d42f785ecb314aed4bf3f",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487588.3672307,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "981b304920474fe3b60f06ede1816ab4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\981b304920474fe3b60f06ede1816ab4",
+        "data": {
+          "success": true,
+          "message": "impact",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487588.5330803,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "87fc2443741c4a5e9fad13d6cc2e8224",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\87fc2443741c4a5e9fad13d6cc2e8224",
+        "data": {
+          "success": true,
+          "message": "skill=0;phase=impact;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4575;hpAfterImpact=4548;targetBefore=155;targetAfter=130;enemiesBefore=1;enemiesAfter=1;latency=1.250;activeFx=1;state=Cleave;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\ndamage:target=125;amount=25\ncast:Cleave;index=0;count=1;origin=(6,6);A=(6,6);enraged=False\n敌方指挥：Deploy\r\nBoss #115 Cleave · 1.25秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.272
+        }
+      }
+    },
+    {
+      "utc": 1792487599.9941125,
+      "command": "RevGame/Boss验收收尾",
+      "response": {
+        "protocol": 1,
+        "id": "efd6d4a6046c47b6bdc2548b418de175",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\efd6d4a6046c47b6bdc2548b418de175",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.2351
+        }
+      }
+    },
+    {
+      "utc": 1792487600.081649,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "cbc2c8d695874cca8da8275cdab1d5cc",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cbc2c8d695874cca8da8275cdab1d5cc",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487600.3287623,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "7502cd47779847a3bb3f8a344cd93cea",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7502cd47779847a3bb3f8a344cd93cea",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487600.4950058,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "cc2906ec71624e88822a8aed66a2471a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cc2906ec71624e88822a8aed66a2471a",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487600.6620872,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f0d362a9aae54affadf3e52f81b79d1b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f0d362a9aae54affadf3e52f81b79d1b",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487600.8279,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "e5ac74f7f2eb4575bb32e763b4dc7306",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e5ac74f7f2eb4575bb32e763b4dc7306",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487600.9937894,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "9e12874adfde48ffbd68eb1495fc921e",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\9e12874adfde48ffbd68eb1495fc921e",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487601.1606064,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "a792a243cd164f508ac5dfb7c2753657",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a792a243cd164f508ac5dfb7c2753657",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487601.3271093,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "1cbc95477d1d4d17baa6e4ff99129891",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1cbc95477d1d4d17baa6e4ff99129891",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487601.4945257,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "43480fd47df84d83944b845ce6d6bc89",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\43480fd47df84d83944b845ce6d6bc89",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487601.7410903,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f01304a4ec6c4cea9a1f21b9b09036dc",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f01304a4ec6c4cea9a1f21b9b09036dc",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487601.9075766,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "3c7eaf3ac73049a78a5d62db42df6fda",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3c7eaf3ac73049a78a5d62db42df6fda",
+        "data": {
+          "success": true,
+          "message": "done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487601.993821,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "1fcde3bbed5d493895bbd8439251b569",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1fcde3bbed5d493895bbd8439251b569",
+        "data": {
+          "success": true,
+          "message": "skill=0;phase=done;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4575;hpAfterImpact=4548;targetBefore=155;targetAfter=130;enemiesBefore=1;enemiesAfter=2;latency=1.250;activeFx=0;state=Idle;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\ndamage:target=125;amount=25\ncast:Cleave;index=0;count=1;origin=(6,6);A=(6,6);enraged=False\n敌方指挥：Deploy\r\nBoss #115 Idle · 1.25秒 · Cleave 收招\r\n#126 Attack · 0.31秒 · 发现合法攻击目标\r\n",
+          "elapsedMs": 0.6072
+        }
+      }
+    },
+    {
+      "utc": 1792487602.0792809,
+      "command": "RevGame/Boss验收断言",
+      "response": {
+        "protocol": 1,
+        "id": "e5d5e7b285954f24ad89e9882d404017",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e5d5e7b285954f24ad89e9882d404017",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 1.6053
+        }
+      }
+    },
+    {
+      "utc": 1792487668.6949792,
+      "command": "RevGame/Boss验收准备 0",
+      "response": {
+        "protocol": 1,
+        "id": "6ed951831ab943c39f3298b8b1ef5b48",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\6ed951831ab943c39f3298b8b1ef5b48",
+        "data": {
+          "success": true,
+          "message": "settling",
+          "elapsedMs": 33.7054
+        }
+      }
+    },
+    {
+      "utc": 1792487668.781625,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "2599738bdc18422880d65baa5340254d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2599738bdc18422880d65baa5340254d",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.1361
+        }
+      }
+    },
+    {
+      "utc": 1792487668.9485993,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "b1f335bbd01347dfbbf103c1baee9aa2",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b1f335bbd01347dfbbf103c1baee9aa2",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0012
+        }
+      }
+    },
+    {
+      "utc": 1792487669.1152425,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "0659e1dbc10e4d8ab3f77fc8e9e677fd",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\0659e1dbc10e4d8ab3f77fc8e9e677fd",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0012
+        }
+      }
+    },
+    {
+      "utc": 1792487669.2831225,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "37a4887e6b8f4871805cb8da05cc1610",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\37a4887e6b8f4871805cb8da05cc1610",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487669.4504445,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "557ac345c3aa42569368168bdc9d3ca0",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\557ac345c3aa42569368168bdc9d3ca0",
+        "data": {
+          "success": true,
+          "message": "ready",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487669.5369067,
+      "command": "RevGame/Boss验收施放",
+      "response": {
+        "protocol": 1,
+        "id": "302f71ec65f54f65bae897f794d692a4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\302f71ec65f54f65bae897f794d692a4",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 1.4681
+        }
+      }
+    },
+    {
+      "utc": 1792487669.6228943,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "a7453dbbfafa4bb88909c3c5def15ed0",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a7453dbbfafa4bb88909c3c5def15ed0",
+        "data": {
+          "success": true,
+          "message": "wait-telegraph",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487669.7893357,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "49cfd9166aae47a893d62df9d8484f24",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\49cfd9166aae47a893d62df9d8484f24",
+        "data": {
+          "success": true,
+          "message": "wait-telegraph",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487669.9557312,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f6d740ab071341b79cc9c4a536f730a6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f6d740ab071341b79cc9c4a536f730a6",
+        "data": {
+          "success": true,
+          "message": "telegraph",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487670.045456,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "e71f1ee1259245d3acf85c1a7cbd55bf",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e71f1ee1259245d3acf85c1a7cbd55bf",
+        "data": {
+          "success": true,
+          "message": "skill=0;phase=telegraph;counter=False;telegraphs=1;casts=0;skillHits=0;hpBefore=4575;hpBeforeImpact=0;hpAfterImpact=0;targetBefore=240;targetAfter=0;enemiesBefore=1;enemiesAfter=1;enemiesBeforeImpact=0;enemiesAfterImpact=0;latency=-0.625;activeFx=1;state=Cleave;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\n敌方指挥：Deploy\r\nBoss #140 Cleave · 0.31秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.885
+        }
+      }
+    },
+    {
+      "utc": 1792487685.5641189,
+      "command": "RevGame/Boss验收命中",
+      "response": {
+        "protocol": 1,
+        "id": "600b7f9a9c964fc09c8b4c001423ad45",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\600b7f9a9c964fc09c8b4c001423ad45",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.2165
+        }
+      }
+    },
+    {
+      "utc": 1792487685.6499665,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f8178e15388948568665107960e494c4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f8178e15388948568665107960e494c4",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487685.8164678,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "8ae8de3868a14f6eb3b7be64180f0064",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8ae8de3868a14f6eb3b7be64180f0064",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487685.982725,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "1f974b5ce32d4a00a8a3684a8c7e8581",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1f974b5ce32d4a00a8a3684a8c7e8581",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487686.1484027,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "0e51f83e4f554cbba402363b68422462",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\0e51f83e4f554cbba402363b68422462",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487686.3157997,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "1f1460a77b3b4fddbe35092e8e17e88b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1f1460a77b3b4fddbe35092e8e17e88b",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0014
+        }
+      }
+    },
+    {
+      "utc": 1792487686.4824579,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f7bdafd87f2a4dd6a390f5f326e608b1",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f7bdafd87f2a4dd6a390f5f326e608b1",
+        "data": {
+          "success": true,
+          "message": "impact",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487686.5684705,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "cac3e0f2f8f3420ba5b2ed44021088e9",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cac3e0f2f8f3420ba5b2ed44021088e9",
+        "data": {
+          "success": true,
+          "message": "skill=0;phase=impact;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4550;hpAfterImpact=4525;targetBefore=240;targetAfter=240;enemiesBefore=1;enemiesAfter=1;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.250;activeFx=1;state=Cleave;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\ndamage:target=150;amount=25\ncast:Cleave;index=0;count=1;origin=(6,6);A=(6,6);enraged=False\n敌方指挥：Deploy\r\nBoss #140 Cleave · 1.25秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.2507
+        }
+      }
+    },
+    {
+      "utc": 1792487687.6140919,
+      "command": "RevGame/Boss验收收尾",
+      "response": {
+        "protocol": 1,
+        "id": "32371562f3cb4cf89f6513c480aa5606",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\32371562f3cb4cf89f6513c480aa5606",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.2503
+        }
+      }
+    },
+    {
+      "utc": 1792487687.702094,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "681e4bc516e2475c94d42f36b73b8443",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\681e4bc516e2475c94d42f36b73b8443",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487687.868998,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "13f6b019d39e44b5888494100da1817a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\13f6b019d39e44b5888494100da1817a",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487688.0358756,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "d80601973d6a4109ace6631f943a41db",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d80601973d6a4109ace6631f943a41db",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487688.2023451,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "10d83d98124245ae86a7109b2461b1b6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\10d83d98124245ae86a7109b2461b1b6",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487688.4495134,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "adfbaa66a91c4fbf8bef9583270aa61c",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\adfbaa66a91c4fbf8bef9583270aa61c",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487688.6158369,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "93b973b41dfe4102b5ecad6f760b78c2",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\93b973b41dfe4102b5ecad6f760b78c2",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487688.7832954,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "e9580e31457c4deb8cc545b5fe4acb5b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e9580e31457c4deb8cc545b5fe4acb5b",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487688.9494884,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "cf4fbd09113d4f11accf54051420f825",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cf4fbd09113d4f11accf54051420f825",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487689.1160765,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "5ff272a905054ce8afa77418551a68f6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\5ff272a905054ce8afa77418551a68f6",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487689.2825053,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "5971736166a24b929af33440edfd0c4d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\5971736166a24b929af33440edfd0c4d",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0011
+        }
+      }
+    },
+    {
+      "utc": 1792487689.4491584,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "2ff785a044f64746aea63e0f07d861bf",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2ff785a044f64746aea63e0f07d861bf",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487689.6154907,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "124a028afa804ba6b835d96423d6e719",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\124a028afa804ba6b835d96423d6e719",
+        "data": {
+          "success": true,
+          "message": "done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487689.7016191,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "7ad69ffe72f8408f8cf5e9d33ecb107c",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7ad69ffe72f8408f8cf5e9d33ecb107c",
+        "data": {
+          "success": true,
+          "message": "skill=0;phase=done;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4550;hpAfterImpact=4525;targetBefore=240;targetAfter=240;enemiesBefore=1;enemiesAfter=2;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.250;activeFx=0;state=Idle;error=\ntelegraph:Cleave;A=(6,6);B=(6,6);C=(6,6);windup=1\ndamage:target=150;amount=25\ncast:Cleave;index=0;count=1;origin=(6,6);A=(6,6);enraged=False\n敌方指挥：Deploy\r\nBoss #140 Idle · 1.25秒 · Cleave 收招\r\n#151 Attack · 0.94秒 · 发现合法攻击目标\r\n",
+          "elapsedMs": 0.2949
+        }
+      }
+    },
+    {
+      "utc": 1792487689.7869754,
+      "command": "RevGame/Boss验收断言",
+      "response": {
+        "protocol": 1,
+        "id": "7e2b72b0e3c84637a96e21a5005ae677",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7e2b72b0e3c84637a96e21a5005ae677",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 1.5185
+        }
+      }
+    },
+    {
+      "utc": 1792487715.7172213,
+      "command": "RevGame/Boss验收准备 1",
+      "response": {
+        "protocol": 1,
+        "id": "1a2d0dd8581045db93eeccc60de23d11",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1a2d0dd8581045db93eeccc60de23d11",
+        "data": {
+          "success": true,
+          "message": "settling",
+          "elapsedMs": 28.5062
+        }
+      }
+    },
+    {
+      "utc": 1792487715.8036528,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "00c3c914db594aec818bf397b494938a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\00c3c914db594aec818bf397b494938a",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487715.9706793,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "861cb26b815c4c3fbc256b7ec4ffd26a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\861cb26b815c4c3fbc256b7ec4ffd26a",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487716.2175932,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "539d5bebefee4f0fb6cfdce0daf218e8",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\539d5bebefee4f0fb6cfdce0daf218e8",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487716.3893623,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "14ef4c6a0e124f5983194b362a96955a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\14ef4c6a0e124f5983194b362a96955a",
+        "data": {
+          "success": true,
+          "message": "ready",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487716.4764462,
+      "command": "RevGame/Boss验收施放",
+      "response": {
+        "protocol": 1,
+        "id": "46656366081c448dae72186857a8a291",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\46656366081c448dae72186857a8a291",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.8213
+        }
+      }
+    },
+    {
+      "utc": 1792487716.5630417,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "8ddcb55b536e42258986abe26a1d54ea",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8ddcb55b536e42258986abe26a1d54ea",
+        "data": {
+          "success": true,
+          "message": "wait-telegraph",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487716.810437,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "50c9f6790075453ea0044781eb67c0e3",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\50c9f6790075453ea0044781eb67c0e3",
+        "data": {
+          "success": true,
+          "message": "telegraph",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487716.8973286,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "e0b518e0f83c4bebb4a25d87fe444317",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e0b518e0f83c4bebb4a25d87fe444317",
+        "data": {
+          "success": true,
+          "message": "skill=1;phase=telegraph;counter=False;telegraphs=1;casts=0;skillHits=0;hpBefore=4575;hpBeforeImpact=0;hpAfterImpact=0;targetBefore=120;targetAfter=0;enemiesBefore=1;enemiesAfter=1;enemiesBeforeImpact=0;enemiesAfterImpact=0;latency=1.250;activeFx=1;state=Snipe;error=\ntelegraph:Snipe;A=(1,1);B=(6,6);C=(6,6);windup=1.4\n敌方指挥：Deploy\r\nBoss #153 Snipe · 0.31秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.2778
+        }
+      }
+    },
+    {
+      "utc": 1792487718.283506,
+      "command": "RevGame/Boss验收命中",
+      "response": {
+        "protocol": 1,
+        "id": "1a815c919fff49daad946037900f0790",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1a815c919fff49daad946037900f0790",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.005
+        }
+      }
+    },
+    {
+      "utc": 1792487718.3757308,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "84e0f876a77a481684799a523a002df0",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\84e0f876a77a481684799a523a002df0",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0011
+        }
+      }
+    },
+    {
+      "utc": 1792487718.5445888,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "78d29d5dd93f4e768471b43e7a0b342a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\78d29d5dd93f4e768471b43e7a0b342a",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487718.7941022,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "29f105c77ea74fe69e575aa1a0411558",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\29f105c77ea74fe69e575aa1a0411558",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487718.9627764,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "e4980b8f424e4c0b9205cccea75144c2",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e4980b8f424e4c0b9205cccea75144c2",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487719.1296413,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f8bf8cc037c1448a8dc8dff0145258f6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f8bf8cc037c1448a8dc8dff0145258f6",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487719.2966728,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "1d5b8250a14c406381083abd31b808ea",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1d5b8250a14c406381083abd31b808ea",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487719.4641762,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "4a795f2cc0a448838359fded7fcf18c0",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4a795f2cc0a448838359fded7fcf18c0",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487719.6304493,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "d4083b377e9a4272870f56a3c89b517e",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d4083b377e9a4272870f56a3c89b517e",
+        "data": {
+          "success": true,
+          "message": "impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487719.7961688,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "10c5e7107bf948918ff3c0e4ebabf229",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\10c5e7107bf948918ff3c0e4ebabf229",
+        "data": {
+          "success": true,
+          "message": "skill=1;phase=impact;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4553;hpAfterImpact=4531;targetBefore=120;targetAfter=120;enemiesBefore=1;enemiesAfter=1;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.563;activeFx=1;state=Snipe;error=\ntelegraph:Snipe;A=(1,1);B=(6,6);C=(6,6);windup=1.4\ndamage:target=162;amount=43\ncast:Snipe;index=0;count=1;origin=(6,6);A=(1,1);enraged=False\n敌方指挥：Deploy\r\nBoss #153 Snipe · 1.56秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.2461
+        }
+      }
+    },
+    {
+      "utc": 1792487721.154665,
+      "command": "RevGame/Boss验收收尾",
+      "response": {
+        "protocol": 1,
+        "id": "a6a99332ec914ff18ca60253bab41abf",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a6a99332ec914ff18ca60253bab41abf",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.0065
+        }
+      }
+    },
+    {
+      "utc": 1792487721.2414477,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "5cd575b452b5451793736f9593a051c4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\5cd575b452b5451793736f9593a051c4",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487721.4091697,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "c7f5290811764992a2045e221658212c",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\c7f5290811764992a2045e221658212c",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487721.6572685,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "0b432163d23d4b33b01c719fc7201b83",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\0b432163d23d4b33b01c719fc7201b83",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487721.8251631,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "49442b758930466c9c5810283b2cb2fb",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\49442b758930466c9c5810283b2cb2fb",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487721.9964836,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "db812499156843e2b81a431225974656",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\db812499156843e2b81a431225974656",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487722.1644514,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "1c33909b479b45239b778fbce94fa8cc",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1c33909b479b45239b778fbce94fa8cc",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487722.3333442,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "3ae2ae0438584270a1b3d5027319068b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3ae2ae0438584270a1b3d5027319068b",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487722.5035005,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "a19ca19edc1844a5935a366d4377165a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a19ca19edc1844a5935a366d4377165a",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487722.6709893,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f56ff6ded2fa418785e534355c69980d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f56ff6ded2fa418785e534355c69980d",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487722.8379955,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "bd71353bf6e94887a55a20587420fe05",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\bd71353bf6e94887a55a20587420fe05",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487723.0054262,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "350b089dbeaa4a54ad9eff3e569dac55",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\350b089dbeaa4a54ad9eff3e569dac55",
+        "data": {
+          "success": true,
+          "message": "done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487723.173142,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "d3701c63574744d2a519c7c2dcd58303",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d3701c63574744d2a519c7c2dcd58303",
+        "data": {
+          "success": true,
+          "message": "skill=1;phase=done;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4553;hpAfterImpact=4531;targetBefore=120;targetAfter=120;enemiesBefore=1;enemiesAfter=2;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.563;activeFx=0;state=Idle;error=\ntelegraph:Snipe;A=(1,1);B=(6,6);C=(6,6);windup=1.4\ndamage:target=162;amount=43\ncast:Snipe;index=0;count=1;origin=(6,6);A=(1,1);enraged=False\n敌方指挥：Deploy\r\nBoss #153 Idle · 1.25秒 · Snipe 收招\r\n#164 Attack · 1.25秒 · 发现合法攻击目标\r\n",
+          "elapsedMs": 0.2458
+        }
+      }
+    },
+    {
+      "utc": 1792487723.2595832,
+      "command": "RevGame/Boss验收断言",
+      "response": {
+        "protocol": 1,
+        "id": "c8b9a4bec36b4e9ab9d9a153cce863da",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\c8b9a4bec36b4e9ab9d9a153cce863da",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.2279
+        }
+      }
+    },
+    {
+      "utc": 1792487742.7493339,
+      "command": "RevGame/Boss验收准备 2",
+      "response": {
+        "protocol": 1,
+        "id": "8a9179db03574a379098cfdf3110e3de",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8a9179db03574a379098cfdf3110e3de",
+        "data": {
+          "success": true,
+          "message": "settling",
+          "elapsedMs": 23.419
+        }
+      }
+    },
+    {
+      "utc": 1792487742.8361874,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "d605c29dd6ed4fbc8130607b46b11054",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d605c29dd6ed4fbc8130607b46b11054",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487743.00362,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f8b40ce113d9451bab1a0648b7ce5916",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f8b40ce113d9451bab1a0648b7ce5916",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487743.1709979,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "f011cb7704ea4a3ba802f49c009b7f77",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f011cb7704ea4a3ba802f49c009b7f77",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487743.3374367,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "fe800c7ff0624d48833ef9e3437ab670",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\fe800c7ff0624d48833ef9e3437ab670",
+        "data": {
+          "success": true,
+          "message": "wait-ready",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487743.5039327,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "c55fba8ad39245cf8ea4366f40d6c576",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\c55fba8ad39245cf8ea4366f40d6c576",
+        "data": {
+          "success": true,
+          "message": "ready",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487743.67059,
+      "command": "RevGame/Boss验收施放",
+      "response": {
+        "protocol": 1,
+        "id": "df08334b2b3542d0a86e94f92bfd79c1",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\df08334b2b3542d0a86e94f92bfd79c1",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 6.1448
+        }
+      }
+    },
+    {
+      "utc": 1792487743.7568462,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "4338e3a3890e4c7d9daf702f6fdf8ffb",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4338e3a3890e4c7d9daf702f6fdf8ffb",
+        "data": {
+          "success": true,
+          "message": "wait-telegraph",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487743.9246037,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "739449c77d52470fb965bbe51b24ba17",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\739449c77d52470fb965bbe51b24ba17",
+        "data": {
+          "success": true,
+          "message": "telegraph",
+          "elapsedMs": 0.0011
+        }
+      }
+    },
+    {
+      "utc": 1792487744.0118237,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "4eef14f028524f4c995764167c72bbac",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4eef14f028524f4c995764167c72bbac",
+        "data": {
+          "success": true,
+          "message": "skill=2;phase=telegraph;counter=False;telegraphs=1;casts=0;skillHits=0;hpBefore=4575;hpBeforeImpact=0;hpAfterImpact=0;targetBefore=120;targetAfter=0;enemiesBefore=1;enemiesAfter=1;enemiesBeforeImpact=0;enemiesAfterImpact=0;latency=1.563;activeFx=1;state=Bombard;error=\ntelegraph:Bombard;A=(0,0);B=(1,1);C=(1,0);windup=1.2\n敌方指挥：Deploy\r\nBoss #166 Bombard · 0.31秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.2577
+        }
+      }
+    },
+    {
+      "utc": 1792487745.118769,
+      "command": "RevGame/Boss验收命中",
+      "response": {
+        "protocol": 1,
+        "id": "d9ca0f7804ae4da78fe46f465106a629",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d9ca0f7804ae4da78fe46f465106a629",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.0051
+        }
+      }
+    },
+    {
+      "utc": 1792487745.2059543,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "181d8447e53c4874bfa86d981e2ff222",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\181d8447e53c4874bfa86d981e2ff222",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487745.457328,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "4de0e1edb9e845c1a8f29ae629aa46a2",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4de0e1edb9e845c1a8f29ae629aa46a2",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487745.625303,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "8717d88e86b446d9b430752e58b11f71",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8717d88e86b446d9b430752e58b11f71",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0012
+        }
+      }
+    },
+    {
+      "utc": 1792487745.7929127,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "6770f252740943ec86f0d08e71d7aaa6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\6770f252740943ec86f0d08e71d7aaa6",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.001
+        }
+      }
+    },
+    {
+      "utc": 1792487745.961969,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "52098c8a163c4a6399f0798611c8f9c5",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52098c8a163c4a6399f0798611c8f9c5",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0012
+        }
+      }
+    },
+    {
+      "utc": 1792487746.1309736,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "2da7926853984637b13005f1e4f43f3e",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2da7926853984637b13005f1e4f43f3e",
+        "data": {
+          "success": true,
+          "message": "wait-impact",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487746.3003967,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "be864f29bcb04f55841872e1c6e2142f",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\be864f29bcb04f55841872e1c6e2142f",
+        "data": {
+          "success": true,
+          "message": "impact",
+          "elapsedMs": 0.0011
+        }
+      }
+    },
+    {
+      "utc": 1792487746.4690526,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "387272f043804b72859df87fad207bdc",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\387272f043804b72859df87fad207bdc",
+        "data": {
+          "success": true,
+          "message": "skill=2;phase=impact;counter=False;telegraphs=1;casts=1;skillHits=1;hpBefore=4575;hpBeforeImpact=4553;hpAfterImpact=4531;targetBefore=120;targetAfter=120;enemiesBefore=1;enemiesAfter=1;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.250;activeFx=2;state=Bombard;error=\ntelegraph:Bombard;A=(0,0);B=(1,1);C=(1,0);windup=1.2\ndamage:target=175;amount=22\ncast:Bombard;index=0;count=3;origin=(6,6);A=(0,0);enraged=False\n敌方指挥：Deploy\r\nBoss #166 Bombard · 1.25秒 · 测试/GM 指定技能\r\n",
+          "elapsedMs": 0.2941
+        }
+      }
+    },
+    {
+      "utc": 1792487747.511941,
+      "command": "RevGame/Boss验收收尾",
+      "response": {
+        "protocol": 1,
+        "id": "c1d73be2d3104476bcb2e56a16172d70",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\c1d73be2d3104476bcb2e56a16172d70",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.0038
+        }
+      }
+    },
+    {
+      "utc": 1792487747.600375,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "5d9c65aaa8c0401792d2ac8adabc4875",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\5d9c65aaa8c0401792d2ac8adabc4875",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487747.849026,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "59d9f89d95d941c9991d6b9a8247c1d1",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\59d9f89d95d941c9991d6b9a8247c1d1",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487748.016307,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "1a08d91c3ade44c88af3b3e6cab7ae62",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1a08d91c3ade44c88af3b3e6cab7ae62",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487748.1841464,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "cacee502138f49ce84a942c503e11661",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cacee502138f49ce84a942c503e11661",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487748.3516364,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "23ef6639346849d8b3f06760799e4341",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\23ef6639346849d8b3f06760799e4341",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487748.5189846,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "6cc365fadff940ecaa937a06fd562acd",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\6cc365fadff940ecaa937a06fd562acd",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487748.6866355,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "94c43344257545a4b14e1c7144ef7af4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\94c43344257545a4b14e1c7144ef7af4",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0008
+        }
+      }
+    },
+    {
+      "utc": 1792487748.8538067,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "9f8c821862604fe484bca45486b63064",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\9f8c821862604fe484bca45486b63064",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0006
+        }
+      }
+    },
+    {
+      "utc": 1792487749.02238,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "af0c2ff496384f20a2e3477a3ba094b5",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\af0c2ff496384f20a2e3477a3ba094b5",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0009
+        }
+      }
+    },
+    {
+      "utc": 1792487749.1998274,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "816c0d5d37bf421c9fb58c3bd8559427",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\816c0d5d37bf421c9fb58c3bd8559427",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487749.367007,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "103c2ffbcebc4e009dadd639061ab1fb",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\103c2ffbcebc4e009dadd639061ab1fb",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0011
+        }
+      }
+    },
+    {
+      "utc": 1792487749.5337803,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "03ac3fe1ec4843c2bc763372e39f04ed",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\03ac3fe1ec4843c2bc763372e39f04ed",
+        "data": {
+          "success": true,
+          "message": "wait-done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487749.701563,
+      "command": "RevGame/Boss验收状态",
+      "response": {
+        "protocol": 1,
+        "id": "fe2d624fda29461987184066cdd668be",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\fe2d624fda29461987184066cdd668be",
+        "data": {
+          "success": true,
+          "message": "done",
+          "elapsedMs": 0.0007
+        }
+      }
+    },
+    {
+      "utc": 1792487749.8682842,
+      "command": "RevGame/Boss验收结果",
+      "response": {
+        "protocol": 1,
+        "id": "8794d8b91b1949bdbe0e9315edf28019",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8794d8b91b1949bdbe0e9315edf28019",
+        "data": {
+          "success": true,
+          "message": "skill=2;phase=done;counter=False;telegraphs=1;casts=3;skillHits=3;hpBefore=4575;hpBeforeImpact=4553;hpAfterImpact=4531;targetBefore=120;targetAfter=120;enemiesBefore=1;enemiesAfter=2;enemiesBeforeImpact=1;enemiesAfterImpact=1;latency=1.250;activeFx=0;state=Idle;error=\ntelegraph:Bombard;A=(0,0);B=(1,1);C=(1,0);windup=1.2\ndamage:target=175;amount=22\ncast:Bombard;index=0;count=3;origin=(6,6);A=(0,0);enraged=False\ndamage:target=175;amount=22\ncast:Bombard;index=1;count=3;origin=(6,6);A=(0,0);enraged=False\ndamage:target=175;amount=22\ncast:Bombard;index=2;count=3;origin=(6,6);A=(0,0);enraged=False\n敌方指挥：Deploy\r\nBoss #166 Idle · 0.63秒 · Bombard 收招\r\n#177 Attack · 1.25秒 · 发现合法攻击目标\r\n",
+          "elapsedMs": 0.2654
+        }
+      }
+    },
+    {
+      "utc": 1792487749.9555721,
+      "command": "RevGame/Boss验收断言",
+      "response": {
+        "protocol": 1,
+        "id": "5220b7d604a342369e34cee7adb97500",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\5220b7d604a342369e34cee7adb97500",
+        "data": {
+          "success": true,
+          "message": "ok",
+          "elapsedMs": 0.2206
+        }
+      }
+    },
+    {
+      "utc": 1792488145.721161,
+      "command": "RevGame/Boss验收释放",
+      "response": {
+        "protocol": 1,
+        "id": "882cf6f8f9bf41e1bf821013661dfc8d",
+        "success": false,
+        "error": "InvalidOperationException",
+        "message": "GM 执行需要已进入且未暂停的 Play",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\882cf6f8f9bf41e1bf821013661dfc8d",
+        "data": null
+      }
+    }
+  ],
+  "uniqueSupplementalSkills": [
+    0,
+    1,
+    2
+  ],
+  "screenshotCount": 6,
+  "screenshots": [
+    {
+      "skill": 0,
+      "phase": "telegraph",
+      "file": "00-cleave-telegraph-settled.png",
+      "bytes": 2026326,
+      "sha256": "83d4943856d21804a0fc5afbb99ff4d6ec390c759e5c27b1152319419ff6d94c"
+    },
+    {
+      "skill": 0,
+      "phase": "impact",
+      "file": "00-cleave-impact-settled.png",
+      "bytes": 2152545,
+      "sha256": "321be09ed8a21d2395d3897b24391f4289824f20f3204fcbb3a9e43cd440b6ee"
+    },
+    {
+      "skill": 1,
+      "phase": "telegraph",
+      "file": "01-snipe-telegraph.png",
+      "bytes": 2203857,
+      "sha256": "fb46a0c25d689eb782639d3e27557933256a4e6caddc4f87366b71edbe8361df"
+    },
+    {
+      "skill": 1,
+      "phase": "impact",
+      "file": "01-snipe-impact.png",
+      "bytes": 2198771,
+      "sha256": "ca6125f99106c6056884fa4abb715471617eddaed4348361974834f08ee982c7"
+    },
+    {
+      "skill": 2,
+      "phase": "telegraph",
+      "file": "02-bombard-telegraph.png",
+      "bytes": 2207016,
+      "sha256": "e1e179b96d03001d1374546c561363fcbd0c7fe9f0cda0ea343363a23ed4401a"
+    },
+    {
+      "skill": 2,
+      "phase": "impact",
+      "file": "02-bombard-impact.png",
+      "bytes": 2207464,
+      "sha256": "dfa8e7fef57a56f6685f69d0e2a52b0646d1b03287f12ace283cd4f18f4aac8e"
+    }
+  ],
+  "unityErrorLog": {
+    "path": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\unity-errors.jsonl",
+    "exists": false,
+    "recordedUnityErrors": 0
+  },
+  "cleanup": {
+    "playing": false,
+    "timeScale": 1,
+    "temporaryHarnessReleased": true,
+    "result": "playing=False;scale=1;cleanup=[OK] released (0.34ms)"
+  },
+  "unexecuted": [
+    "弹幕单目标仅结算一次的 Play 事件断言与截图",
+    "瞬移占格专项与截图",
+    "激光三段事件专项与截图",
+    "受伤 Boss 汲取回血的 Play 补测",
+    "召唤数量和独立小兵状态机专项",
+    "狂暴 Enraged=true 与冷却专项",
+    "Play 狙击躲避与瞬移被堵",
+    "第六章自然 AI 与 repeat=20 压测",
+    "真机性能与全九招遮挡验收"
+  ]
+}
