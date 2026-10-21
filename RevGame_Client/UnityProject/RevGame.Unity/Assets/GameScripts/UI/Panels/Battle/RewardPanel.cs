@@ -29,9 +29,7 @@ namespace RevGame.UI
         private Sprite[] rewardIcons;
         protected override void OnBindView()
         {
-            _choice0.onClick.AddListener(OnFirst);
-            _choice1.onClick.AddListener(OnSecond);
-            _choice2.onClick.AddListener(OnThird);
+
         }
 
         protected override void OnRefreshView()
@@ -55,26 +53,24 @@ namespace RevGame.UI
             }
         }
 
+        [RevButtonClick("choice0")]
         private void OnFirst()
         {
             RevLogic.Get<BattleLogic>().ChooseReward(0);
         }
 
+        [RevButtonClick("choice1")]
         private void OnSecond()
         {
             RevLogic.Get<BattleLogic>().ChooseReward(1);
         }
 
+        [RevButtonClick("choice2")]
         private void OnThird()
         {
             RevLogic.Get<BattleLogic>().ChooseReward(2);
         }
 
-        protected override void OnRelease()
-        {
-            _choice0.onClick.RemoveListener(OnFirst);
-            _choice1.onClick.RemoveListener(OnSecond);
-            _choice2.onClick.RemoveListener(OnThird);
-        }
+
     }
 }

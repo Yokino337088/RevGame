@@ -30,7 +30,17 @@ namespace RevGame.Editor
             Label("subtitle", root.transform, "落子布阵 · 连成一片 · 围住主将", new Vector2(1100, 60), new Vector2(0, 135), 32);
             MakeButton("btnPlay", root.transform, "开始闯关", new Vector2(370, 110), new Vector2(0, -70));
             Label("hint", root.transform, "点手牌，再点棋盘。准备完毕后，棋子自动作战。", new Vector2(1250, 60), new Vector2(0, -260), 30);
-            Save(root, "HomePanel");
+            // 首页已转为手工维护，不能让旧装配器覆盖三个按钮及其布局。
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(Ui + "HomePanel.prefab") == null)
+            {
+                MakeButton("btnPvP", root.transform, "玩家对战", new Vector2(370, 110), new Vector2(0, -200));
+                MakeButton("btnQuit", root.transform, "我不玩了", new Vector2(370, 110), new Vector2(0, -330));
+                Save(root, "HomePanel");
+            }
+            else
+            {
+                Object.DestroyImmediate(root);
+            }
             root = Rect("LevelSelectPanel", null, Vector2.zero, Vector2.zero);
             Stretch(root.GetComponent<RectTransform>());
             background = root.AddComponent<Image>();

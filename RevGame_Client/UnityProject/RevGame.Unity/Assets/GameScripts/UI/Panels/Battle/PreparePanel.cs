@@ -44,15 +44,7 @@ namespace RevGame.UI
         protected override void OnBindView()
         {
             _cards = GetComponentsInChildren<CardItem>(true);
-            foreach (CardItem card in _cards)
-            {
-                card.BindClick(OnCardClick);
-            }
-
-            _btnReady.onClick.AddListener(OnReadyClick);
-            _btnSkip.onClick.AddListener(OnSkipClick);
-            _btnEye.onClick.AddListener(OnEyeClick);
-            _btnRefresh.onClick.AddListener(OnRefreshClick);
+            // 六槽按钮随预制体一同装配，由方法特性接线；点击时读取当前 CardId。
         }
 
         protected override void OnOpen()
@@ -129,6 +121,7 @@ namespace RevGame.UI
             _refreshAnimation = false;
         }
 
+        [RevButtonClick("btnRefresh")]
         private void OnRefreshClick()
         {
             if (!AnyCardFlipping)
@@ -137,11 +130,57 @@ namespace RevGame.UI
             }
         }
 
-        private void OnCardClick(int id)
+        /// <summary>六个固定槽位由框架反射接线；读取槽内当前牌编号，不捕获上一轮的手牌数据。</summary>
+        [RevButtonClick("card0")]
+        private void OnCard0(string nodeName)
         {
-            RevLogic.Get<BattleLogic>().SelectCard(id);
+            SelectCardSlot(nodeName);
         }
 
+        [RevButtonClick("card1")]
+        private void OnCard1(string nodeName)
+        {
+            SelectCardSlot(nodeName);
+        }
+
+        [RevButtonClick("card2")]
+        private void OnCard2(string nodeName)
+        {
+            SelectCardSlot(nodeName);
+        }
+
+        [RevButtonClick("card3")]
+        private void OnCard3(string nodeName)
+        {
+            SelectCardSlot(nodeName);
+        }
+
+        [RevButtonClick("card4")]
+        private void OnCard4(string nodeName)
+        {
+            SelectCardSlot(nodeName);
+        }
+
+        [RevButtonClick("card5")]
+        private void OnCard5(string nodeName)
+        {
+            SelectCardSlot(nodeName);
+        }
+
+        private void SelectCardSlot(string nodeName)
+        {
+            foreach (CardItem card in _cards)
+            {
+                if (card.name == nodeName && card.CardId != 0 && !card.IsFlipping)
+                {
+                    card.PlayClickFeedback();
+                    RevLogic.Get<BattleLogic>().SelectCard(card.CardId);
+                    return;
+                }
+            }
+        }
+
+        [RevButtonClick("btnReady")]
         private void OnReadyClick()
         {
             if (!AnyCardFlipping)
@@ -150,11 +189,13 @@ namespace RevGame.UI
             }
         }
 
+        [RevButtonClick("btnSkip")]
         private void OnSkipClick()
         {
             RevLogic.Get<BattleLogic>().SkipRound();
         }
 
+        [RevButtonClick("btnEye")]
         private void OnEyeClick()
         {
             RevLogic.Get<BattleLogic>().SelectEyeStone();
@@ -162,10 +203,6 @@ namespace RevGame.UI
 
         protected override void OnRelease()
         {
-            _btnReady.onClick.RemoveListener(OnReadyClick);
-            _btnSkip.onClick.RemoveListener(OnSkipClick);
-            _btnEye.onClick.RemoveListener(OnEyeClick);
-            _btnRefresh.onClick.RemoveListener(OnRefreshClick);
             foreach (CardItem card in _cards)
             {
                 card.Release();

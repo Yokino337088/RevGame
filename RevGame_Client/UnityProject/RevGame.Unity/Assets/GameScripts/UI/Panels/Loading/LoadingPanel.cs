@@ -44,7 +44,7 @@ namespace RevGame.UI
         protected override void OnBindView()
         {
             _cover = GetComponent<CanvasGroup>();
-            _btnReturn.onClick.AddListener(OnReturn);
+
         }
 
         /// <summary>缓存面板再次使用时必须归零；不能把上次100%和透明状态带进下一次加载。</summary>
@@ -94,6 +94,7 @@ namespace RevGame.UI
             // 最后一帧淡出前仍拦截点击；流程解除输入门禁后才真正关闭。
         }
 
+        [RevButtonClick("btnReturn")]
         private void OnReturn()
         {
             RevServices.GetRequired<Flow.GameFlow>().DismissLoadingFailure();
@@ -103,7 +104,7 @@ namespace RevGame.UI
         protected override void OnRelease()
         {
             KillAnimations();
-            _btnReturn.onClick.RemoveListener(OnReturn);
+
         }
 
         private void KillAnimations()

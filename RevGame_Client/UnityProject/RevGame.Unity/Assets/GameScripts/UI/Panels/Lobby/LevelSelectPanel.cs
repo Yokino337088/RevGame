@@ -5,7 +5,7 @@
 using RevGame.Flow;
 using RevGame.Services;
 using Revolution;
-using UnityEngine.Events;
+
 using UnityEngine.UI;
 
 namespace RevGame.UI
@@ -18,20 +18,14 @@ namespace RevGame.UI
         [RevBind]
         private Text _hint;
         private Button[] _chapters;
-        private UnityAction[] _actions;
+        // 六个固定章节按钮由方法特性接线，数组只用于刷新可交互状态。
         protected override void OnBindView()
         {
             _chapters = new Button[Core.Consts.ChapterCount];
-            _actions = new UnityAction[_chapters.Length];
             for (int i = 0; i < _chapters.Length; i++)
             {
-                int chapter = i + 1;
-                _chapters[i] = transform.Find("chapter" + chapter).GetComponent<Button>();
-                _actions[i] = () => OnChapter(chapter);
-                _chapters[i].onClick.AddListener(_actions[i]);
+                _chapters[i] = transform.Find("chapter" + (i + 1)).GetComponent<Button>();
             }
-
-            _btnHome.onClick.AddListener(OnHome);
         }
 
         protected override void OnRefreshView()
@@ -55,19 +49,46 @@ namespace RevGame.UI
             }
         }
 
+        [RevButtonClick("chapter1")]
+        private void OnChapter1()
+        {
+            OnChapter(1);
+        }
+
+        [RevButtonClick("chapter2")]
+        private void OnChapter2()
+        {
+            OnChapter(2);
+        }
+
+        [RevButtonClick("chapter3")]
+        private void OnChapter3()
+        {
+            OnChapter(3);
+        }
+
+        [RevButtonClick("chapter4")]
+        private void OnChapter4()
+        {
+            OnChapter(4);
+        }
+
+        [RevButtonClick("chapter5")]
+        private void OnChapter5()
+        {
+            OnChapter(5);
+        }
+
+        [RevButtonClick("chapter6")]
+        private void OnChapter6()
+        {
+            OnChapter(6);
+        }
+
+        [RevButtonClick("btnHome")]
         private void OnHome()
         {
             RevServices.GetRequired<GameFlow>().ReturnHome();
-        }
-
-        protected override void OnRelease()
-        {
-            for (int i = 0; i < _chapters.Length; i++)
-            {
-                _chapters[i].onClick.RemoveListener(_actions[i]);
-            }
-
-            _btnHome.onClick.RemoveListener(OnHome);
         }
     }
 }

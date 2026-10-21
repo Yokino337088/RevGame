@@ -93,6 +93,16 @@ namespace RevGame.Bootstrap
             }
         }
 
+        /// <summary>统一应用退出入口；停止 Play 或退出 Player 后复用 OnDestroy 的服务/域清理链。</summary>
+        public static void RequestQuit()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
         private void OnDestroy()
         {
             // 重复启动器没有注册过服务，绝不能在销毁时注销真正的全局宿主。

@@ -64,7 +64,7 @@ namespace RevGame.Editor
         }
 
         /// <summary>供原有生成器在最后调用：重新生成面板也必须继续使用新版皮肤。</summary>
-        public static void ApplyAll()
+        public static void ApplyAll(bool rebuildLayout = false)
         {
             foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/GameRes/UI" }))
             {
@@ -73,7 +73,11 @@ namespace RevGame.Editor
                 try
                 {
                     ReplaceSerializedSprites(root);
-                    StylePanel(root);
+                    // 美术引用迁移不能顺便重排/隐藏手工编辑的控件；旧样式仅供明确的重建操作使用。
+                    if (rebuildLayout && root.name != "HomePanel")
+                    {
+                        StylePanel(root);
+                    }
                     GameMobileLayout mobile = root.GetComponent<GameMobileLayout>();
                     if (mobile == null && root.GetComponent<Revolution.RevUIPanel>() != null)
                     {

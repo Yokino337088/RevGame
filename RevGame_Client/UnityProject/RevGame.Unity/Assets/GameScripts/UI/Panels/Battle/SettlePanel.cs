@@ -37,18 +37,7 @@ namespace RevGame.UI
         private Button _btnContinue;
         protected override void OnBindView()
         {
-            if (_btnContinue != null)
-            {
-                _btnContinue.onClick.AddListener(OnContinueClick);
-            }
-        }
 
-        protected override void OnRelease()
-        {
-            if (_btnContinue != null)
-            {
-                _btnContinue.onClick.RemoveListener(OnContinueClick);
-            }
         }
 
         protected override void OnRefreshView()
@@ -71,6 +60,7 @@ namespace RevGame.UI
             }
         }
 
+        [RevButtonClick("btnContinue")]
         private void OnContinueClick()
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();

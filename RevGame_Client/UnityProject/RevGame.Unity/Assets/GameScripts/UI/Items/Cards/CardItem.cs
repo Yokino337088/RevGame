@@ -31,7 +31,6 @@ namespace RevGame.UI
         private Sprite selectedSprite;
         [SerializeField]
         private PieceArtConfig artConfig;
-        private Action<int> _clicked;
         // 每个常驻槽位只持有自己的翻牌序列。禁止 KillAll，否则会把其他卡和战斗飘字一起停掉。
         private Tween _flip;
         // 点击与刷新分别持有句柄；开始翻牌前先停止点击反馈，避免两个动画同时修改同一张牌的姿态。
@@ -40,16 +39,11 @@ namespace RevGame.UI
         private HandCard _pendingCard;
         private int _pendingSelection;
         private Vector2 _lastLayoutSize;
+        /// <summary>卡牌默认保留预制体内的肖像和文字布局，不因运行时槽位尺寸变化偷偷重排。</summary>
+        [Tooltip("旧版内部重排（默认关闭）。通常应直接在预制体里设置锚点和文字布局。")]
+        [SerializeField] private bool useLegacyLayout;
         public bool IsFlipping { get { return _flip != null && _flip.IsActive(); } }
         public int CardId { get; private set; }
-
-        public void BindClick(Action<int> clicked)
-        {
-            _clicked = clicked;
-            // 面板复用时先移除自己的监听，保证一次点击只转发一次。
-            button.onClick.RemoveListener(OnClick);
-            button.onClick.AddListener(OnClick);
-        }
 
         /// <summary>空槽位隐藏；选中框只比较唯一编号，不比较同名牌。</summary>
         public void Show(HandCard card, int selectedId)
@@ -146,7 +140,7 @@ namespace RevGame.UI
         private void LayoutContents()
         {
             RectTransform rect = transform as RectTransform;
-            if (rect == null || title == null || stats == null || portrait == null)
+            if (!useLegacyLayout || rect == null || title == null || stats == null || portrait == null)
             {
                 return;
             }
@@ -185,12 +179,12 @@ namespace RevGame.UI
             CardId = 0;
         }
 
-        private void OnClick()
+        /// <summary>点击由 PreparePanel 的反射标注接收；卡片只保留表现动画，不自行注册控件事件。</summary>
+        public void PlayClickFeedback()
         {
-            if (_clicked != null && CardId != 0)
+            if (CardId != 0)
             {
                 PlayPressFeedback();
-                _clicked(CardId);
             }
         }
 
@@ -231,8 +225,7 @@ namespace RevGame.UI
         public void Release()
         {
             StopFlip();
-            button.onClick.RemoveListener(OnClick);
-            _clicked = null;
+
         }
     }
 }

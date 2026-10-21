@@ -1,7 +1,7 @@
 // ============================================================
-// GameMobileLayout.cs —— 手机横屏排版：左侧手牌、中间大棋盘、右侧信息与操作。
-// 框架 Canvas 负责缩放，本组件负责按钮位置；不会切换为竖屏布局。
-// 位置使用画布逻辑单位，宽屏手机多出来的空间仍留在两侧，避免把棋盘格压小。
+// GameMobileLayout.cs —— 旧版横屏布局兼容组件，默认不再改写预制体。
+// RectTransform 锚点与框架 CanvasScaler 是正式界面的布局来源，编辑结果即运行时基准。
+// 旧算法需在 Inspector 明确开启；保留它不代表正常界面会自动重排。
 // ============================================================
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +12,9 @@ namespace RevGame.UI
     {
         [Tooltip("对应预制体名称，由编辑器装配工具填写；不依赖运行时 Clone 名称。")]
         [SerializeField] private string panelName;
+        /// <summary>默认以预制体为唯一布局来源；旧算法只用于主动选择的旧版布局演示。</summary>
+        [Tooltip("旧版代码重排（默认关闭）。开启后会覆盖预制体坐标，新建按钮也不会自动加入旧算法。正常界面请使用 RectTransform 锚点与 CanvasScaler 适配。")]
+        [SerializeField] private bool useLegacyLayout;
         private Vector2 _lastSize;
         private Rect _lastSafe;
         private bool _applying;
@@ -37,7 +40,9 @@ namespace RevGame.UI
         private void ApplyLayout()
         {
             RectTransform root = transform as RectTransform;
-            if (_applying || root == null || string.IsNullOrEmpty(panelName))
+            // 不按节点名重新摆放：新增控件、字体行高与手工坐标必须一起来自预制体。
+            // 画布等比缩放和预制体锚点仍正常生效；安全区布局需要在预制体中显式设计。
+            if (!useLegacyLayout || _applying || root == null || string.IsNullOrEmpty(panelName))
             {
                 return;
             }

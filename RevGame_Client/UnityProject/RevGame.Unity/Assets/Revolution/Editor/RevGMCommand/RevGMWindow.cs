@@ -567,6 +567,10 @@ namespace Revolution.Editor
 
         private void FillInput(string text)
         {
+            // IMGUI TextField keeps its own TextEditor buffer while focused. If a command is filled
+            // from another control without releasing that focus, the stale buffer can overwrite _input
+            // on the next OnGUI pass, making the fill button appear to do nothing.
+            GUIUtility.keyboardControl = 0;
             _input = text;
             _suggestedFor = null;
             _selectedIndex = 0;

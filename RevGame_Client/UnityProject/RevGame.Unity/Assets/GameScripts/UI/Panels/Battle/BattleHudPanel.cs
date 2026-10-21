@@ -93,7 +93,7 @@ namespace RevGame.UI
 
         protected override void OnBindView()
         {
-            _btnHome.onClick.AddListener(OnHome);
+
         }
 
         protected override void OnOpen()
@@ -204,15 +204,12 @@ namespace RevGame.UI
             }
         }
 
+        [RevButtonClick("btnHome")]
         private void OnHome()
         {
             RevServices.GetRequired<Flow.GameFlow>().ReturnHome();
         }
 
-        protected override void OnRelease()
-        {
-            _btnHome.onClick.RemoveListener(OnHome);
-        }
 
         protected override void OnClose()
         {

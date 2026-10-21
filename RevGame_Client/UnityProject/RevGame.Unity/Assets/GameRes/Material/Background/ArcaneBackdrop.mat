@@ -56,6 +56,6 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _GlowColor: {r: 1, g: 0.8, b: 0.37999994, a: 1}
     - _SwirlColorA: {r: 0.11658941, g: 0.8238993, b: 0.71577543, a: 1}
-    - _SwirlColorB: {r: 0.9496855, g: 0.9372429, b: 0.5465171, a: 1}
-    - _SwirlColorC: {r: 0.035, g: 0.059999965, b: 0.089999996, a: 1}
+    - _SwirlColorB: {r: 0.9490196, g: 0.54509807, b: 0.8903075, a: 1}
+    - _SwirlColorC: {r: 0.21288714, g: 0.21868484, b: 0.2264151, a: 1}
   m_BuildTextureStacks: []
