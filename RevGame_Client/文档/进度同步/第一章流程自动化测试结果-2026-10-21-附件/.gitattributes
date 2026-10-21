@@ -1,0 +1,2 @@
+# 原始证据保留字节；CRLF是记录本身的换行，并非尾部空白。
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

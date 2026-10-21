@@ -66,6 +66,10 @@ namespace RevGame.Bootstrap
             RevServices.Register<GameFlow, GameFlow>(owner: this);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
+            // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
+            RevServices.Register<RevGame.Animation.GameAutomationRunner, RevGame.Animation.GameAutomationRunner>(owner: this);
+            RevGame.Animation.GameAutomationCommands.Register();
             GameGmCommands.Register();
 #endif
         }
@@ -113,6 +117,9 @@ namespace RevGame.Bootstrap
             _released = true;
             _instance = null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // 必须先停测试再退出游戏域：测试可能还按着按钮，不能对已销毁的旧面板补发松手/点击。
+            RevGame.Animation.GameAutomationCommands.Unregister();
+            RevServices.Unregister<RevGame.Animation.GameAutomationRunner>();
             GameGmCommands.Unregister();
 #endif
             // 先退出流程再注销战斗服务，退出回调仍然可以读取最后一份战斗数据。

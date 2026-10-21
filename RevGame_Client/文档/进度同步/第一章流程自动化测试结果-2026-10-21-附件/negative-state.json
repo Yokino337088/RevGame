@@ -1,0 +1,26 @@
+{
+  "jsonrpc": "2.0",
+  "id": "negative-state",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true,\"message\":\"Code executed successfully.\",\"data\":{\"result\":{\"Screen\":\"Battle\",\"IsTransitioning\":false,\"home\":false,\"select\":false},\"compiler\":\"codedom\"}}"
+      }
+    ],
+    "structuredContent": {
+      "success": true,
+      "message": "Code executed successfully.",
+      "data": {
+        "result": {
+          "Screen": "Battle",
+          "IsTransitioning": false,
+          "home": false,
+          "select": false
+        },
+        "compiler": "codedom"
+      }
+    },
+    "isError": false
+  }
+}

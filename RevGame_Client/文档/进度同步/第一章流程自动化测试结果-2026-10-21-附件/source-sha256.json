@@ -1,0 +1,47 @@
+{
+  "baseCommit": "3115628",
+  "description": "主流程实测对应本轮工作区源码；最终Git提交包含这些文件。",
+  "files": [
+    {
+      "path": "RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter.json",
+      "sha256": "3f4fed97791a10b3ecf4606029433bc03656a9bfb6f04f84b3ebd537cbc93041"
+    },
+    {
+      "path": "RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py",
+      "sha256": "7ec3bbcf8ab94ec33feeded4fa81650bd0c82b125e05eadc304869edb7768d60"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Animation/Contracts/GameAutomationPlan.cs",
+      "sha256": "2e39abaf3ce1c030a19ed5f2270c789e1f53b41a82d622362b65e530701b594c"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Animation/Diagnostics/GameAutomationCommands.cs",
+      "sha256": "d43c8863d6c84293fccc46f05022ca68812b0315cbc2a7660e1dc54381f518c9"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Animation/Fixtures/BattleService.Automation.cs",
+      "sha256": "1c43fc649f13c87baf6c056bf693ddf90d3136ced53b184fcae3d45f998c85f6"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Animation/Flow/GameAutomationRunner.cs",
+      "sha256": "8ea56cf982704c93f2f99fe06c4754532708e14c6fed3b995d768db14ca6d322"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Animation/Input/GamePointerInput.cs",
+      "sha256": "15a73c428c2dee3101fd311d373e3ae9cce64f5065de7c29995924d6b27c2ca1"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
+      "sha256": "3904eae4798a9b988cd181dc19ea7a57ebc4440305ad845d7c76dc07c2dec307"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Simulation/BattleService.cs",
+      "sha256": "1526c3e5a56d4e0a374fccf93dab669b3f1fc498a37de9cac03a993e1dbc0186"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Events.cs",
+      "sha256": "d7a71a9be6cd8cb7796003dab4a28814b02e1527d99c6965a048fdaabdd682d5"
+    }
+  ],
+  "normalization": "源码均为UTF-8文本；计算SHA-256前将CRLF和CR统一为LF，避免不同平台Git换行转换造成误报。"
+}

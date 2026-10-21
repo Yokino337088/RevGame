@@ -1,0 +1,28 @@
+{
+  "jsonrpc": "2.0",
+  "id": "final-cleanup-check",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true,\"message\":\"Code executed successfully.\",\"data\":{\"result\":{\"IsAutomationBoostActive\":false,\"IsTransitioning\":false,\"Screen\":\"Home\",\"Scene\":\"StartScene\",\"battleDomain\":false,\"logic\":false},\"compiler\":\"codedom\"}}"
+      }
+    ],
+    "structuredContent": {
+      "success": true,
+      "message": "Code executed successfully.",
+      "data": {
+        "result": {
+          "IsAutomationBoostActive": false,
+          "IsTransitioning": false,
+          "Screen": "Home",
+          "Scene": "StartScene",
+          "battleDomain": false,
+          "logic": false
+        },
+        "compiler": "codedom"
+      }
+    },
+    "isError": false
+  }
+}

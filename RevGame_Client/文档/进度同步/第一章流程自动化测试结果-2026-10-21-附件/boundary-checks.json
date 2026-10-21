@@ -1,0 +1,22 @@
+{
+  "jsonrpc": "2.0",
+  "id": "boundary-checks",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":false,\"message\":\"Runtime error: 输入穿透了最上层遮罩\",\"data\":{\"exceptionType\":\"Exception\",\"stackTrace\":\"  at MCPDynamicCode.Execute () [0x002a2] in <cd782748b5754e53ba99ec2d34c432af>:0 \\r\\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\\r\\n  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <7ec8e29954a6455daa48484a381ec418>:0 \",\"compiler\":\"codedom\"}}"
+      }
+    ],
+    "structuredContent": {
+      "success": false,
+      "message": "Runtime error: 输入穿透了最上层遮罩",
+      "data": {
+        "exceptionType": "Exception",
+        "stackTrace": "  at MCPDynamicCode.Execute () [0x002a2] in <cd782748b5754e53ba99ec2d34c432af>:0 \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <7ec8e29954a6455daa48484a381ec418>:0 ",
+        "compiler": "codedom"
+      }
+    },
+    "isError": false
+  }
+}

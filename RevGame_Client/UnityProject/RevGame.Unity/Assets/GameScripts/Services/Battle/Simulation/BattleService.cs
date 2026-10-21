@@ -610,6 +610,10 @@ namespace RevGame.Services
                     continue;
                 }
                 float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。
+                rate = ScaleAutomationAttackRate(rate);
+#endif
                 piece.ActionProgress += stepFraction * Balance.AttackSpeedScale * PreparationAttackRate(piece)
                     * rate * (1f + _speedBonus + _roundSpeedBonus);
                 int actions = (int)piece.ActionProgress;
@@ -664,6 +668,10 @@ namespace RevGame.Services
                 int acceleration = (int)(_battleElapsed / Balance.BossAccelerationSeconds);
                 raw += System.Math.Max(acceleration, (int)(raw * acceleration * Balance.BossAccelerationBonus));
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // +500%测试攻击=原伤害×6，只影响真实出手；仍走下面的受击、死亡、事件与对象池表现链。
+            raw = ScaleAutomationAttackDamage(attacker, raw);
+#endif
             int real = DamagePiece(target, raw, attacker);
             if (attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
             {

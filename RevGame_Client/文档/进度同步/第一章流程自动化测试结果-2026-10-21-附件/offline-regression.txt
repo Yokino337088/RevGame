@@ -1,0 +1,8 @@
+命令：dotnet run --project RevGame_Client/Tests/CombatAttackRegression/CombatAttackRegression.csproj -c Release --no-restore
+执行环境：本机 .NET 控制台，链接实际战斗源文件；不启用UNITY_EDITOR强化钩子。
+退出码：0
+
+真实配置目录：D:\AAAAAAA王者荣耀项目组工作日志\RevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\GameRes\Data
+FIFO admission summary baseline (not full old BoardView): 5/20 sources; real FairFeedbackBuffer: 20/20 sources (0.625s volleys, 10s).
+FairFeedbackBuffer: 2794 assertions passed (12/24 capacity, 40 sources, pause/expiry/clear).
+CombatAttackRegression: 181 scenarios, 4167 assertions passed.

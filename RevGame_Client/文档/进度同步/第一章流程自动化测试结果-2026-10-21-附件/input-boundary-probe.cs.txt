@@ -1,0 +1,53 @@
+var results = new System.Collections.Generic.List<string>();
+var flow = Revolution.RevServices.GetRequired<RevGame.Flow.GameFlow>();
+var runner = Revolution.RevServices.GetRequired<RevGame.Animation.GameAutomationRunner>();
+var battle = (RevGame.Services.BattleService)Revolution.RevServices.GetRequired<RevGame.Services.IBattleService>();
+int timers = Revolution.RevTimer.Count;
+int attacks = Revolution.RevEvent.GetListenerCount(RevGame.Core.Events.PieceAttacked);
+var invalid = new RevGame.Animation.GameAutomationPlan { steps = new [] { new RevGame.Animation.GameAutomationStep { op="gm", command="RevGame/强制胜利" } } };
+bool rejected = false;
+try { RevGame.Animation.GameAutomationRunner.Validate(invalid); } catch (Revolution.RevGMUsageException) { rejected=true; }
+if (!rejected) { throw new System.Exception("任意胜利GM未被拒绝"); }
+results.Add("强制胜利GM被拒绝");
+invalid.steps[0].op="wait";
+invalid.boost=new RevGame.Animation.GameAutomationBoost { attackBonusPercent=501 };
+rejected=false;
+try { RevGame.Animation.GameAutomationRunner.Validate(invalid); } catch (Revolution.RevGMUsageException) { rejected=true; }
+if (!rejected) { throw new System.Exception("越界增益未被拒绝"); }
+results.Add("501%越界增益被拒绝");
+invalid.boost=null; invalid.timeoutSeconds=float.NaN;
+rejected=false;
+try { RevGame.Animation.GameAutomationRunner.Validate(invalid); } catch (Revolution.RevGMUsageException) { rejected=true; }
+if (!rejected) { throw new System.Exception("NaN超时未被拒绝"); }
+results.Add("NaN超时被拒绝");
+var input = new RevGame.Animation.GamePointerInput();
+var button = input.FindButton("HomePanel/btnPlay");
+bool wasEnabled=button.interactable;
+button.interactable=false;
+bool disabledRejected=!input.PressButton(button);
+button.interactable=wasEnabled;
+if (!disabledRejected) { throw new System.Exception("不可交互按钮仍被按下"); }
+results.Add("禁用按钮被拒绝");
+var blocker = new UnityEngine.GameObject("AutomationInputBoundary",typeof(UnityEngine.Canvas),typeof(UnityEngine.UI.GraphicRaycaster));
+var canvas = blocker.GetComponent<UnityEngine.Canvas>(); canvas.renderMode=UnityEngine.RenderMode.ScreenSpaceOverlay; canvas.sortingOrder=32760;
+var image=new UnityEngine.GameObject("Blocker",typeof(UnityEngine.RectTransform),typeof(UnityEngine.UI.Image)); image.transform.SetParent(blocker.transform,false);
+var rect=(UnityEngine.RectTransform)image.transform; rect.anchorMin=UnityEngine.Vector2.zero;rect.anchorMax=UnityEngine.Vector2.one;rect.offsetMin=rect.offsetMax=UnityEngine.Vector2.zero;
+UnityEngine.Canvas.ForceUpdateCanvases();
+bool blocked = !input.PressButton(button);
+blocker.SetActive(false); UnityEngine.Object.Destroy(blocker);
+if(!blocked) { input.Release(false); throw new System.Exception("输入穿透了最上层遮罩"); }
+results.Add("最上层UI遮罩阻止点击");
+if(!input.PressButton(button)) { throw new System.Exception("无遮罩时无法按下首页按钮"); }
+input.Release(false);
+if(input.IsPressed || flow.Screen!=RevGame.Core.GameScreen.Home) { throw new System.Exception("取消手势补发了点击"); }
+results.Add("取消按下手势不补点击");
+var plan=new RevGame.Animation.GameAutomationPlan { name="取消与重入回归", boost=new RevGame.Animation.GameAutomationBoost { attackBonusPercent=500,attackSpeedBonusPercent=500,defenseBonusPercent=500 }, steps=new [] {new RevGame.Animation.GameAutomationStep {op="wait",screen="Battle"} } };
+runner.Start(plan);
+if(!battle.IsAutomationBoostActive) { throw new System.Exception("测试强化未取得租约"); }
+rejected=false;
+try { runner.Start(plan); } catch(Revolution.RevGMUsageException) { rejected=true; }
+runner.Cancel();
+if(!rejected || battle.IsAutomationBoostActive || runner.State!="cancelled") { throw new System.Exception("重入或取消清理失败"); }
+if(timers!=Revolution.RevTimer.Count || attacks!=Revolution.RevEvent.GetListenerCount(RevGame.Core.Events.PieceAttacked)) { throw new System.Exception("取消后计时器或攻击订阅未恢复基线"); }
+results.Add("重复启动被拒绝"); results.Add("取消释放500%强化、计时器和观察订阅");
+return new {success=true, checks=results, boostActive=battle.IsAutomationBoostActive,screen=flow.Screen.ToString()};

@@ -502,6 +502,10 @@ namespace RevGame.Services
                     amount = System.Math.Max(0, (int)(amount * (1f - _prepDamageReduction)));
                 }
             }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // 测试防御位于统一伤害出口，Boss技能也生效；不开夹具时不改变原规则，护盾挡住的0伤害保持0。
+            amount = ScaleAutomationIncomingDamage(target, amount);
+#endif
             if (VictoryAssistEnabled && target.Side == GameSide.Player && _playerPieces.FindAll(p => p.IsAlive).Count == 1)
             {
                 // ★ 只保护最后一颗我方棋子至少留 1 血，其余棋子的受伤与阵亡仍正常发生。

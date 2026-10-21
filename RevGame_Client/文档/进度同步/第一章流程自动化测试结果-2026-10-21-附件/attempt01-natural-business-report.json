@@ -1,0 +1,354 @@
+{
+  "name": "第一章真实输入完整通章",
+  "startedUtc": "2026-10-21T14:46:53.8527597Z",
+  "state": "cancelled",
+  "error": "外部取消",
+  "completedSteps": 17,
+  "totalSteps": 64,
+  "pointerClicks": 27,
+  "cardsPlayed": 10,
+  "gmActions": 0,
+  "playerAttacks": 3882,
+  "enemyAttacks": 194,
+  "damageEvents": 4113,
+  "bossCasts": 0,
+  "unityErrors": 0,
+  "elapsedSeconds": 234.20294189453125,
+  "rounds": [
+    {
+      "chapter": 1,
+      "round": 1,
+      "winner": "Player",
+      "battleSeconds": 63.75,
+      "playerAttacks": 1238,
+      "enemyAttacks": 41,
+      "damageEvents": 1289
+    },
+    {
+      "chapter": 1,
+      "round": 2,
+      "winner": "Player",
+      "battleSeconds": 74.0625,
+      "playerAttacks": 1360,
+      "enemyAttacks": 67,
+      "damageEvents": 1440
+    }
+  ],
+  "evidence": [
+    {
+      "step": "启动首页就绪",
+      "detail": "wait 完成",
+      "screen": "Home",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.04884669929742813
+    },
+    {
+      "step": "点击开始游戏",
+      "detail": "EventSystem指针点击：HomePanel/btnPlay",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.2259608954191208
+    },
+    {
+      "step": "点击开始游戏",
+      "detail": "click 完成",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.22596970200538635
+    },
+    {
+      "step": "选关界面就绪",
+      "detail": "wait 完成",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.28606370091438293
+    },
+    {
+      "step": "点击第一章",
+      "detail": "EventSystem指针点击：LevelSelectPanel/chapter1",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.4450972080230713
+    },
+    {
+      "step": "点击第一章",
+      "detail": "click 完成",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.4451045095920563
+    },
+    {
+      "step": "第1轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.162303924560547
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#1 → (0,0)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.510691165924072
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#2 → (1,0)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.805958271026611
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#3 → (2,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 8.123934745788574
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#4 → (3,0)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 8.466821670532227
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#5 → (4,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 8.773018836975098
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#6 → (5,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 9.085407257080078
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 9.085412979125977
+    },
+    {
+      "step": "第1轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 9.260942459106445
+    },
+    {
+      "step": "第1轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 9.260951042175293
+    },
+    {
+      "step": "第1轮自然战斗胜利并有真实攻击伤害",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 72.79918670654297
+    },
+    {
+      "step": "第1轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 72.98863983154297
+    },
+    {
+      "step": "第1轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 72.9886474609375
+    },
+    {
+      "step": "第2轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 75.88215637207031
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#7 → (4,0)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 76.20451354980469
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#8 → (5,0)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 76.52586364746094
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 76.52587127685547
+    },
+    {
+      "step": "第2轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 76.68318176269531
+    },
+    {
+      "step": "第2轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 76.68318939208984
+    },
+    {
+      "step": "第2轮自然战斗胜利并有真实攻击伤害",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 153.96942138671875
+    },
+    {
+      "step": "第2轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 154.26177978515625
+    },
+    {
+      "step": "第2轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 154.26177978515625
+    },
+    {
+      "step": "第3轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 157.1331024169922
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#13 → (3,0)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 157.40684509277344
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#14 → (4,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 157.7270965576172
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 157.7270965576172
+    },
+    {
+      "step": "第3轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 157.8842315673828
+    },
+    {
+      "step": "第3轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 157.88424682617188
+    },
+    {
+      "step": "流程结束",
+      "detail": "cancelled 外部取消",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 234.20297241210938
+    }
+  ]
+}

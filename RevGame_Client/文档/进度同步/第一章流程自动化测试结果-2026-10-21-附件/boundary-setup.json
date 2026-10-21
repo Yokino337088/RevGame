@@ -1,0 +1,22 @@
+{
+  "jsonrpc": "2.0",
+  "id": "boundary-setup",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":false,\"message\":\"Runtime error: Object reference not set to an instance of an object\",\"data\":{\"exceptionType\":\"NullReferenceException\",\"stackTrace\":\"  at MCPDynamicCode.Execute () [0x00163] in <43c39fdf1e92470a9eb86bb5fc6df762>:0 \\r\\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\\r\\n  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <7ec8e29954a6455daa48484a381ec418>:0 \",\"compiler\":\"codedom\"}}"
+      }
+    ],
+    "structuredContent": {
+      "success": false,
+      "message": "Runtime error: Object reference not set to an instance of an object",
+      "data": {
+        "exceptionType": "NullReferenceException",
+        "stackTrace": "  at MCPDynamicCode.Execute () [0x00163] in <43c39fdf1e92470a9eb86bb5fc6df762>:0 \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <7ec8e29954a6455daa48484a381ec418>:0 ",
+        "compiler": "codedom"
+      }
+    },
+    "isError": false
+  }
+}
