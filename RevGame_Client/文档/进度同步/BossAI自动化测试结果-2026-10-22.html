@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Boss 弹幕「暗红魔法球」验证结果 · 2026-10-22</title>
+<style>
+:root{--bg:#14161a;--panel:#1c2027;--line:#2b3140;--text:#e6e9ef;--muted:#9aa4b6;--accent:#e0443a;--ok:#3fb96b;--warn:#e0a33f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.75 "Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:26px;margin:0 0 6px}
+h2{font-size:19px;margin:36px 0 12px;padding-left:10px;border-left:3px solid var(--accent)}
+p{margin:10px 0}
+code{background:#0f1115;padding:1px 6px;border-radius:4px;font-size:13px;color:#8ec9ff}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#222836;color:var(--muted);font-weight:600}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.muted{color:var(--muted)}
+.summary{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px;border-radius:6px;margin:18px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin:16px 0}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+figure img{width:100%;display:block}
+figcaption{padding:8px 10px;font-size:13px;color:var(--muted)}
+ol,ul{padding-left:22px}
+li{margin:6px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Boss 弹幕「暗红魔法球」验证结果</h1>
+<p class="muted">2026-10-22 · 拉取远程提交后的重新验证 · Unity 2022.3.15f1c1 Editor PlayMode</p>
+
+<div class="summary">
+<strong>一句话总结：</strong>拉取 <code>3a15526</code> 后重新编译并重跑验证，暗红魔法球在 1920×1080、2560×1080、1440×1080、1080×2340 四种画幅下都能肉眼看到；离线回归 182 场景 / 4,171 断言全通过；九技能 Play 回归通过。真机与连续动画主观验收仍未执行。
+</div>
+
+<h2>1. 拉取与合并</h2>
+<table>
+<tr><th>仓库</th><td><code>g:\RevRoot\MyRevGame</code></td></tr>
+<tr><th>拉取前 → 后</th><td><code>3115628</code> → <code>3a15526 新增玩家流程自动化与六牌强化测试，归档第一章实测报告</code></td></tr>
+<tr><th>方式</th><td><code>git pull --ff-only</code>；本地无领先提交</td></tr>
+<tr><th>冲突</th><td>本地未提交的 <code>BattleService.Events.cs</code>（我方免伤调试开关）与远程同文件改动重叠</td></tr>
+<tr><th>处理</th><td>先备份该文件、还原后快进拉取，再把免伤开关插回 <code>DamagePiece</code> 开头，与远程的 <code>ScaleAutomationIncomingDamage</code> 共存</td></tr>
+<tr><th>编译</th><td><span class="ok">通过</span>：<code>refresh_unity(force, compile=request)</code> 后 Console 无 Error，远程新增的 <code>Assets/GameScripts/Animation/*</code> 与本地改动一起编译</td></tr>
+</table>
+
+<h2>2. 自动化桥接的坑（已记录，未改框架）</h2>
+<p>拉取后第一次 <code>rev.cmd editor status</code> 超时：<code>inbox</code> 里的请求无人消费，而 <code>endpoint.json</code> 心跳正常。根因是 <code>Revolution.Editor.RevAutomationBridge._recovered</code> 停留在 <code>false</code>（脚本重载 / Play 切换后 <code>EditorApplication.delayCall</code> 里的 <code>Recover</code> 没有执行），<code>Update</code> 里 <code>if (!_recovered …) return;</code> 挡住了取单分支。</p>
+<p>本次通过反射手动调用 <code>Recover()</code> 恢复。按项目规则 <code>Assets/Revolution</code> 是框架快照，不在 RevGame 内修改，需要反馈回框架仓库。</p>
+
+<h2>3. 验证矩阵</h2>
+<table>
+<tr><th>验证项</th><th>结果</th><th>证据</th></tr>
+<tr><td>离线战斗回归</td><td class="ok">通过：182 场景 / 4,171 断言</td><td><code>dotnet run -c Release</code>，含新增 <code>VerifyBulletRingIsGlobal</code>（两个远角目标各结算一次伤害）</td></tr>
+<tr><td>1920×1080 取证</td><td class="ok">通过：1/1 轮，unityErrors=0</td><td><code>results/boss-orb-20261022/run-16x9/report.html</code></td></tr>
+<tr><td>2560×1080 取证</td><td class="ok">通过：1/1 轮，unityErrors=0</td><td><code>results/boss-orb-20261022/run-21x9/report.html</code></td></tr>
+<tr><td>1440×1080 取证</td><td class="ok">通过：1/1 轮，unityErrors=0</td><td><code>results/boss-orb-20261022/run-4x3/report.html</code></td></tr>
+<tr><td>1080×2340 竖屏取证</td><td class="ok">通过：1/1 轮，unityErrors=0</td><td><code>results/boss-orb-20261022/run-tall/report.html</code></td></tr>
+<tr><td>九技能 Play 回归（我方免伤）</td><td class="ok">通过：1/1 轮，failedIterations=0</td><td><code>results/boss-orb-20261022/run-nine-skills/report.html</code></td></tr>
+</table>
+<p class="muted">每轮按 蓄力 → 成环 → 发射 → 早期飞行 → 中段 → 末段 连拍 6 张，共 24 张，存于 <code>BossAI自动化测试结果-2026-10-22-附件/</code>。</p>
+
+<h2>4. 截图证据</h2>
+<div class="grid">
+<figure><img src="BossAI自动化测试结果-2026-10-22-附件/orb-w1920-ring.png" alt="1920x1080 成环"><figcaption>1920×1080 · 成环：16 颗暗红球围住 Boss，实心酒红球体 + 亮红裂纹 + 符文光环</figcaption></figure>
+<figure><img src="BossAI自动化测试结果-2026-10-22-附件/orb-w1920-launch.png" alt="1920x1080 发射"><figcaption>1920×1080 · 发射：同时沿径向向外扩散</figcaption></figure>
+<figure><img src="BossAI自动化测试结果-2026-10-22-附件/orb-w2560-launch.png" alt="2560x1080 发射"><figcaption>2560×1080 · 超宽屏：球体越过棋盘进入背景区域仍然清晰</figcaption></figure>
+<figure><img src="BossAI自动化测试结果-2026-10-22-附件/orb-w1440-launch.png" alt="1440x1080 发射"><figcaption>1440×1080 · 4:3</figcaption></figure>
+<figure><img src="BossAI自动化测试结果-2026-10-22-附件/orb-h2340-launch.png" alt="1080x2340 发射"><figcaption>1080×2340 · 竖屏：弹幕覆盖整幅宽度（棋盘被相机压在上半屏属另一问题）</figcaption></figure>
+<figure><img src="BossAI自动化测试结果-2026-10-22-附件/orb-w1920-mid-flight.png" alt="1920x1080 中段"><figcaption>1920×1080 · 中段：子弹已飞出可见范围</figcaption></figure>
+</div>
+
+<h2>5. 本轮发现的问题（未擅自修改）</h2>
+<ol>
+<li><strong>文案与实现不一致</strong>：<code>BossSkillConfig</code> 中 <code>BulletRing</code> 的 <code>Hint</code> 仍是“以 Boss 为圆心向外扫射一圈弹幕”，HUD 标题也用这句；实际已是全屏弹幕，玩家会误以为贴边能躲。</li>
+<li><strong>表字段失效</strong>：同一行 <code>Radius=3</code> 已不参与弹幕的任何判定（选招与伤害都改为全屏收集），属于策划数值，应按规范回 <code>配置表/*.xlsx</code> 调整，不留在 C#。</li>
+<li><strong>章节解锁</strong>：<code>UnlockChapter=3</code>，第 1、2 章正常游玩不会出弹幕——这正是“自己测的时候没弹幕”的原因，不是渲染失效。</li>
+</ol>
+<p class="muted">第 1、2 项涉及策划文案与数值，确认后再改表并重新导表。</p>
+
+<h2>6. 未执行</h2>
+<ul>
+<li>真机 / 手机端 AB 冷启动的弹幕表现（当前只验证了 PC 编辑器与 PC 资源包）。</li>
+<li>连续动画节奏、血条与飘字遮挡的逐帧主观验收。</li>
+<li>帧时间门槛：本轮四个场景的 <code>thresholds</code> 全为 0，数值只是观测值，不构成性能结论。</li>
+<li>九技能伤害数值与段数逐值核对（<code>VerifyEverySkill</code> 只校验段数与副作用）。</li>
+</ul>
+
+</main>
+</body>
+</html>
