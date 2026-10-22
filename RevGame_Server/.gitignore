@@ -1,0 +1,20 @@
+# 服务端构建产物与依赖缓存
+**/bin/
+**/obj/
+
+# IDE 与系统垃圾
+.idea/
+.vs/
+*.user
+.DS_Store
+
+# 运行期产物（日志、本地数据、协议导出临时文件）
+**/Logs/
+**/logs/
+RevGame.Server/Config/local/
+
+# 官方工具镜像：可随时用 `fantasy add -t fantasynet` / `-t fantasyunity` 重新生成
+# Fantasy.Net 实际依赖走 NuGet（Entity.csproj），Fantasy.Unity 走 UPM（Packages/manifest.json），
+# 仓库里再存一份几千文件的副本没有收益，只会让 clone 变慢
+RevGame.Server/Tools/Fantasy.Net/
+RevGame.Server/Tools/Fantasy.Unity/
