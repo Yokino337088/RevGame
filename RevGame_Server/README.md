@@ -9,6 +9,41 @@
 
 ---
 
+## 🚀 一键部署开发环境（新同事先跑这个）
+
+```powershell
+# 双击 setup-fantasy-env.cmd 也行；命令行方式：
+cd RevGame_Server
+powershell -ExecutionPolicy Bypass -File setup-fantasy-env.ps1            # 检查 + 缺什么补什么
+powershell -ExecutionPolicy Bypass -File setup-fantasy-env.ps1 -CheckOnly # 只检查，不装
+```
+
+脚本按 Fantasy 官方标准环境逐项核对，**缺什么就按官方方式装什么**，幂等可重复执行：
+
+| 检查项 | 缺失时的动作 |
+|---|---|
+| .NET SDK **8.0+** | 优先 `winget install Microsoft.DotNet.SDK.8`；无 winget 则用官方 `dotnet-install.ps1` 装到用户目录 |
+| git | 只报告并给下载地址（UPM 拉包、克隆示例都依赖它） |
+| **Fantasy.Cli** | `dotnet tool install -g Fantasy.Cli`；`-Force` 则 `dotnet tool update -g` |
+| Unity 编辑器 | 只报告；校验是否等于 `ProjectVersion.txt` 里的 `2022.3.15f1c1`（版本不符会污染工程） |
+| MongoDB（可选） | 只报告；`Fantasy.config` 默认模板用 MongoDB 作 World 数据库 |
+| 工程与工具目录 | 缺 `Tools/*` 用 `fantasy add -t ...` 重新提取；最后跑一次 `dotnet build` 验证 |
+
+| 参数 | 作用 |
+|---|---|
+| `-CheckOnly` | 只体检不安装，适合 CI 与"先看看缺什么" |
+| `-Force` | 已装 Fantasy.Cli 也升级到最新 |
+| `-SkipRestore` | 跳过 `dotnet build` 验证（离线/只想看工具链） |
+
+退出码：`0` = 无阻塞项（可能有 WARN），`1` = 存在 FAIL。
+输出一律三态（`OK` / `WARN` / `FAIL`），不会静默跳过失败项。
+
+> 脚本已处理 Fantasy CLI 的两个非交互坑：预设 `FANTASY_CLI_LANG=Chinese`（否则首次运行会弹语言菜单，
+> 在无终端环境直接抛异常），以及 `fantasy add` 必须显式传 `-t`。
+> `.ps1` 文件保存为 **UTF-8 with BOM**，避免 Windows PowerShell 5.1 把中文按 ANSI 解码成乱码。
+
+---
+
 ## 一、目录怎么分（按功能）
 
 ```text
