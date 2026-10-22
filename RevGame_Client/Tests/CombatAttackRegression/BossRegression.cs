@@ -24,6 +24,7 @@ internal static class BossRegression
         VerifySkillRhythm(); scenarios++;
         VerifySnipeCanBeDodged(); scenarios++;
         VerifyEverySkill(); scenarios++;
+        VerifyBulletRingIsGlobal(); scenarios++;
         VerifyChapterOneNeverUsesLockedSkills(); scenarios++;
         VerifyEnrageOnce(); scenarios++;
         VerifyLifecycle(); scenarios++;
@@ -136,6 +137,39 @@ internal static class BossRegression
                 battle.RunRegressionEnemyAI(Step);
             }
             Assert(hits.Count == 0 && target.Hp == target.MaxHp, "躲开准星后不受狙击伤害");
+        }
+        finally
+        {
+            RevEvent.RemoveAllByOwner(owner);
+            battle.StopEnemyAI();
+        }
+    }
+
+    /// <summary>弹幕不受距离限制：只放两个远角目标，验证全屏选招、每目标仅一次技能伤害和收招。</summary>
+    private static void VerifyBulletRingIsGlobal()
+    {
+        BattleService battle = BattleService.CreateBossRegressionFixture(6);
+        Piece boss = battle.AddRegressionBoss(new BoardPos(0, 0), 2);
+        Piece first = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(8, 8), 1000f);
+        Piece second = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(0, 8), 1000f);
+        battle.RefreshRegressionGoState();
+        var hits = new List<BattleHitInfo>();
+        var casts = new List<BossSkillInfo>();
+        object owner = new object();
+        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.FromSkill) { hits.Add(hit); } }, owner: owner);
+        RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, casts.Add, owner: owner);
+        try
+        {
+            BossAI ai = battle.RegressionBossAI(boss);
+            Assert(battle.ForceBossSkill(BossSkillKind.BulletRing), "没有近处目标也可施放全屏弹幕");
+            int guard = 0;
+            while (ai.State != BossAIState.Idle && guard++ < 200)
+            {
+                battle.RunRegressionEnemyAI(Step);
+            }
+            Assert(ai.State == BossAIState.Idle && casts.Count == 1, "全屏弹幕一次命中后收招");
+            Assert(hits.Count == 2, "全屏弹幕两个远处目标各结算一次，不按子弹数量重复伤害");
+            Assert(hits.Exists(h => h.TargetId == first.Id) && hits.Exists(h => h.TargetId == second.Id), "两个不同远角目标都被弹幕命中");
         }
         finally
         {

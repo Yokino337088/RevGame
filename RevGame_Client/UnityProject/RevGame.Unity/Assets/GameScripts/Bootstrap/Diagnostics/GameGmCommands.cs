@@ -213,6 +213,41 @@ namespace RevGame.Bootstrap
                 }
                 return "ok";
             });
+            // 仅开发验收：我方全队免伤，避免 Boss 技能把棋子打死后后续技能没有目标。
+            // 开关状态保存在 BattleService，不修改棋子的血量或属性；正式包不会编译这条命令。
+            RevGM.Register("RevGame/我方无敌", "仅开发验收：1=我方全队免伤，0=恢复正常受伤", args =>
+            {
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                bool on = args.Int(0, 1) != 0;
+                return battle.SetPlayerInvincible(on) ? "ok:on" : "ok:off";
+            }, RevGMArg.Int("开关", 1));
+            // 仅开发验收：把 Boss 压到 80% 血，专门满足汲取技能的施放条件。
+            RevGM.Register("RevGame/Boss压血", "仅开发验收：把 Boss 血量压到 80%，用于验证汲取", args =>
+            {
+                var battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                if (!battle.PressBossHp(0.8f))
+                {
+                    throw new RevGMUsageException("当前没有存活的 Boss");
+                }
+                return "ok";
+            });
+            // 仅开发验收：把当前 Game 画面存成 PNG，供测试报告引用。
+            // 保存目录固定在进度同步附件下，文件名由测试场景指定。
+            RevGM.Register("RevGame/截图", "仅开发验收：保存当前 Game 画面为 PNG（名称不带扩展名）", args =>
+            {
+                string name = args.Str(0, string.Empty);
+                if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0)
+                {
+                    throw new RevGMUsageException("截图名称不合法");
+                }
+                // TODO(联调后删除)：仅用于本轮多宽高比取证的归档目录，正式业务不需要截图命令。
+                string dir = System.IO.Path.GetFullPath(
+                    System.IO.Path.Combine(UnityEngine.Application.dataPath, "../../../文档/进度同步/BossAI自动化测试结果-2026-10-22-附件"));
+                System.IO.Directory.CreateDirectory(dir);
+                string path = System.IO.Path.Combine(dir, name + ".png");
+                UnityEngine.ScreenCapture.CaptureScreenshot(path);
+                return "ok:" + path;
+            }, RevGMArg.Str("名称", "shot"));
             RevGM.Register("RevGame/快照", "读取流程、作用域、手牌和棋盘", args =>
             {
                 string snapshot = RevServices.GetRequired<GameFlow>().Snapshot();

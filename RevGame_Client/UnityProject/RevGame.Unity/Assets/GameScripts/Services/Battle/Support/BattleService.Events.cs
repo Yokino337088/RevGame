@@ -490,6 +490,14 @@ namespace RevGame.Services
         /// <param name="fromSkill">true = Boss 技能伤害：表现层只飘数字，不追加普通弹道。</param>
         private int DamagePiece(Piece target, int amount, Piece attacker = null, bool fromSkill = false)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // 仅开发验收：GM 可让我方全队免伤，专门观察 Boss 技能；
+            // 条件编译保证正式包既没有这个字段，也不会走这条分支。
+            if (PlayerInvincible && target.Side == GameSide.Player)
+            {
+                amount = 0;
+            }
+#endif
             if (target.Side == GameSide.Player)
             {
                 // 护盾消费属于这颗棋，只有真实受击才扣次数；最后一子守护在减伤之后兜底。

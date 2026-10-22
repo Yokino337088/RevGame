@@ -39,33 +39,87 @@ namespace RevGame.View
             Sprite = 4,
             Portal = 5,
             Drain = 6,
+            ColoredLaser = 7,
+            MagicOrb = 8,
         }
 
         [Header("共享材质（BossSkill.mat）：所有片共用，逐片参数走 MaterialPropertyBlock")]
         [SerializeField] private Material material;
-        [Header("特效贴图（CC0 替代美术，换图不需要改代码）")]
+        [Header("中心光晕 / 通用特效底图（Glow）")]
+        [Tooltip("用于环绕激光蓄力的中心光，以及预警区、冲击波、爆炸、传送门和汲取效果的底图。建议使用居中光晕 Sprite；部分外观由 Shader 生成，换图不等于替换整个效果。")]
         [SerializeField] private Sprite glow;
+
+        [Header("暗红魔法球 / 弹幕网格底图（Ring）")]
+        [Tooltip("用于弹幕蓄力和飞行阶段。建议保留完整、居中的圆形 Sprite 网格；球体、裂纹和光环由 Shader 生成，仅换这张图不能直接替换魔法球外观。")]
         [SerializeField] private Sprite ring;
+
+        [Header("召唤蓄力法阵（Rune）")]
+        [Tooltip("用于召唤技能蓄力时，Boss 脚下放大并旋转的法阵。可替换为居中的圆形符文 / 魔法阵 Sprite。")]
         [SerializeField] private Sprite rune;
+
+        [Header("火花预留贴图（Spark，当前未使用）")]
+        [Tooltip("当前技能播放逻辑未使用此字段，替换它不会改变现有特效。")]
         [SerializeField] private Sprite spark;
+
+        [Header("狙击 / 环绕激光 / 汲取光束（Beam）")]
+        [Tooltip("用于狙击瞄准与发射、环绕激光预瞄与发射，以及灵魂汲取连线。使用沿图片横向延伸的光束 Sprite；光束颜色和部分形状由 Shader 控制。")]
         [SerializeField] private Sprite beam;
+
+        [Header("轰炸下落火球（Flame）")]
+        [Tooltip("用于轰炸命中前从高处落下的火球，不是落地后的爆炸。可替换为火焰 / 火球 Sprite，播放时会旋转 180 度。")]
         [SerializeField] private Sprite flame;
+
+        [Header("轰炸落地焦痕（Scorch）")]
+        [Tooltip("用于轰炸落地后留在棋盘上、逐渐淡出的焦痕。可替换为居中的焦黑印记 / 弹坑 Sprite，显示时会染成深褐色。")]
         [SerializeField] private Sprite scorch;
+
+        [Header("横扫蓄力与命中刀光（Slash）")]
+        [Tooltip("用于横扫技能蓄力和施放时，围绕 Boss 旋转、放大的刀光。可替换为居中的弧形斩击 Sprite。")]
         [SerializeField] private Sprite slash;
+
+        [Header("灵魂汲取蓄力漩涡（Twirl）")]
+        [Tooltip("用于灵魂汲取蓄力时，Boss 身上旋转的漩涡。可替换为居中的旋涡 Sprite；目标脚下与命中后的汲取效果由 Glow 配合 Shader 绘制。")]
         [SerializeField] private Sprite twirl;
+
+        [Header("瞬移出发点烟雾（Smoke）")]
+        [Tooltip("用于瞬移爆破蓄力和施放时，Boss 原位置的烟雾。可替换为居中的烟团 Sprite，播放时会旋转或放大淡出。")]
         [SerializeField] private Sprite smoke;
+
+        [Header("狙击锁定 / 轰炸落点准星（Reticle）")]
+        [Tooltip("用于狙击目标处收紧旋转的准星，以及轰炸三个落点的锁定标记。可替换为居中的瞄准框 / 十字准星 Sprite。")]
         [SerializeField] private Sprite reticle;
+
+        [Header("通用命中瞬间星芒（Star）")]
+        [Tooltip("用于多种技能命中或施放瞬间的闪光，迅速放大再淡出。可替换为居中的星芒 / 闪光 Sprite，显示时使用白色。")]
         [SerializeField] private Sprite star;
 
-        /// <summary>
-        /// 一个池对象最多同时用几片。弹幕风暴的子弹最多，按 16 发 + 冲击波 + 中心光预留；
-        /// 表里把子弹数配得更多时只画前 MaxSlots-4 发，伤害不受影响（伤害在服务里只算一次）。
-        /// </summary>
-        private const int MaxSlots = 22;
+        /// <summary>结构容量：支持表格上限 32 发子弹与额外中心光，避免静默裁掉表内配置的弹幕数量。</summary>
+        private const int MaxSlots = 36;
+
+        /// <summary>表现飞行终点越过屏幕最远角；不参与技能合法性和伤害判定。</summary>
+        private static float FullScreenTravelDistance(Vector3 center)
+        {
+            float distance = Consts.BoardSize * Consts.CellSize * Mathf.Sqrt(2f);
+            Camera camera = Camera.main;
+            if (camera != null)
+            {
+                float depth = camera.WorldToViewportPoint(center).z;
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 corner = camera.ViewportToWorldPoint(new Vector3(i % 2, i / 2, depth));
+                    distance = Mathf.Max(distance, Vector3.Distance(center, corner));
+                }
+            }
+            return distance + Consts.CellSize;
+        }
         /// <summary>地面预警的排序：高于棋盘格（≤6）、低于棋子（≥9），预警画在棋子脚下，不遮挡棋子。</summary>
         private const int GroundOrder = 7;
         /// <summary>命中特效的排序：高于棋子（≤25）、低于伤害飘字（≥89），爆炸盖在棋子上但不挡数字。</summary>
         private const int ImpactOrder = 40;
+        /// <summary>狙击光束相对原美术宽度加粗 50%；只影响显示，不是伤害范围，因此不进玩法表。</summary>
+        private const float SnipeLaserWidthScale = 1.5f;
+        /// <summary>环绕光束相对原美术宽度加粗一倍；预瞄与命中共用倍率，不改变技能判定，因此不进玩法表。</summary>
+        private const float LaserSpinWidthScale = 2f;
 
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int ModeId = Shader.PropertyToID("_Mode");
@@ -155,7 +209,9 @@ namespace RevGame.View
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
             float duration = info.Windup;
-            Color warning = Color.Lerp(tint, new Color(1f, 0.15f, 0.1f, 1f), 0.45f);
+            // 两种激光从预瞄到命中保持红/黄识别色，避免通用红色预警把黄色染成橙色。
+            bool coloredLaser = info.Kind == BossSkillKind.Snipe || info.Kind == BossSkillKind.LaserSpin;
+            Color warning = coloredLaser ? tint : Color.Lerp(tint, new Color(1f, 0.15f, 0.1f, 1f), 0.45f);
             switch (info.Kind)
             {
                 case BossSkillKind.Cleave:
@@ -172,8 +228,9 @@ namespace RevGame.View
                 {
                     // 瞄准线由细变亮，准星从大到小收紧并旋转——越收越紧代表越接近开枪。
                     Vector3 target = Center(info.A, 1);
-                    int sight = Take(beam, FxMode.Laser, warning, 0.9f, GroundOrder + 1);
-                    Stretch(sight, center, target, Consts.CellSize * 0.18f);
+                    // 保留彩色光芯并降低纯叠加比例，浅色棋盘上也能读出红色线身。
+                    int sight = Take(beam, FxMode.ColoredLaser, warning, 0.15f, GroundOrder + 1);
+                    Stretch(sight, center, target, Consts.CellSize * 0.18f * SnipeLaserWidthScale);
                     TweenProgress(sight, 0.15f, 0.5f, duration);
                     Zone(target, Consts.CellSize * 1.1f, 0f, warning, duration);
                     int r = Take(reticle, FxMode.Sprite, warning, 0.85f, ImpactOrder);
@@ -199,6 +256,23 @@ namespace RevGame.View
                     return total;
                 }
                 case BossSkillKind.BulletRing:
+                {
+                    // 全屏招式不画旧的局部危险圆：Boss 身体周围先生成完整一圈子弹。
+                    // 这是蓄力表现，伤害仍由技能状态统一结算，不在 Tween 中扣血。
+                    int bullets = Mathf.Min(info.Count, MaxSlots - 4);
+                    float launchRadius = info.OriginSize * Consts.CellSize * 0.6f;
+                    for (int i = 0; i < bullets; i++)
+                    {
+                        float angle = 360f / bullets * i;
+                        Vector3 direction = Quaternion.Euler(0f, 0f, angle) * Vector3.right;
+                        // 圆形替代图只提供完整的 Sprite 网格；球体、裂纹和光晕由 Shader 生成，不依赖细闪电像素。
+                        int b = Take(ring, FxMode.MagicOrb, tint, 0.12f, ImpactOrder);
+                        Place(b, center + direction * launchRadius, Consts.CellSize * 1.05f);
+                        _renderers[b].transform.localRotation = Quaternion.Euler(0f, 0f, angle);
+                        _sequence.Insert(0f, _renderers[b].transform.DOScale(_renderers[b].transform.localScale * 1.2f, duration).SetEase(Ease.InQuad));
+                    }
+                    break;
+                }
                 case BossSkillKind.LaserSpin:
                 {
                     // 圆形危险区：半径包含 Boss 半个身体。中心聚光逐渐变亮，激光技能额外画四根预瞄线缓慢转动。
@@ -211,8 +285,8 @@ namespace RevGame.View
                     {
                         for (int i = 0; i < 4; i++)
                         {
-                            int b = Take(beam, FxMode.Laser, warning, 0.95f, GroundOrder + 1);
-                            Ray(b, i * 90f, diameter * 0.5f, Consts.CellSize * 0.12f);
+                            int b = Take(beam, FxMode.ColoredLaser, warning, 0.15f, GroundOrder + 1);
+                            Ray(b, i * 90f, diameter * 0.5f, Consts.CellSize * 0.12f * LaserSpinWidthScale);
                             TweenProgress(b, 0.1f, 0.4f, duration);
                         }
                         _sequence.Insert(0f, _pivot.DOLocalRotate(new Vector3(0, 0, 45f), duration).SetEase(Ease.InOutSine));
@@ -290,8 +364,8 @@ namespace RevGame.View
                 {
                     // 射线“一闪而过”：0.3 秒内开光→收光；目标处星芒 + 小冲击波。
                     Vector3 target = Center(info.A, 1);
-                    int shot = Take(beam, FxMode.Laser, tint, 0.85f, ImpactOrder);
-                    Stretch(shot, center, target, Consts.CellSize * 0.45f);
+                    int shot = Take(beam, FxMode.ColoredLaser, tint, 0.25f, ImpactOrder);
+                    Stretch(shot, center, target, Consts.CellSize * 0.45f * SnipeLaserWidthScale);
                     TweenProgress(shot, 0f, 1f, 0.32f);
                     Shockwave(target, Consts.CellSize * 1.8f, tint, 0.4f);
                     Flash(target, Consts.CellSize * 1.2f, 0.35f);
@@ -323,23 +397,26 @@ namespace RevGame.View
                 }
                 case BossSkillKind.BulletRing:
                 {
-                    // 子弹等角度分布，从 Boss 身边飞到半径边缘并淡出；同时一圈冲击波标出射程。
-                    float radius = (info.Radius + info.OriginSize * 0.5f) * Consts.CellSize;
+                    // 所有子弹先位于同一个圆周，沿各自径向同时出发；不再逐发延迟或在 Radius 处消失。
+                    // 飞行距离覆盖棋盘对角线与相机可见范围，Boss 在屏幕角落也能扫完整个画面。
+                    float radius = FullScreenTravelDistance(center);
                     int bullets = Mathf.Min(info.Count, MaxSlots - 4);
+                    float launchRadius = info.OriginSize * Consts.CellSize * 0.6f;
+                    // 纯表现时长不影响伤害/冷却，留在表现层，不作为策划战斗数值。
+                    const float flightSeconds = 0.9f;
                     for (int i = 0; i < bullets; i++)
                     {
                         float angle = 360f / bullets * i;
                         Vector3 direction = Quaternion.Euler(0, 0, angle) * Vector3.right;
-                        int b = Take(spark, FxMode.Sprite, tint, 0.8f, ImpactOrder);
-                        Place(b, center + direction * info.OriginSize * Consts.CellSize * 0.5f, Consts.CellSize * 0.55f);
+                        // 圆形替代图只提供完整的 Sprite 网格；球体、裂纹和光晕由 Shader 生成，不依赖细闪电像素。
+                        int b = Take(ring, FxMode.MagicOrb, tint, 0.12f, ImpactOrder);
+                        Place(b, center + direction * launchRadius, Consts.CellSize * 1.05f);
                         _renderers[b].transform.localRotation = Quaternion.Euler(0, 0, angle);
-                        // 错开 0.015 秒依次射出，读起来像“扫射”而不是同时爆开。
-                        float delay = i * 0.015f;
-                        _sequence.Insert(delay, _renderers[b].transform.DOMove(center + direction * radius, 0.45f).SetEase(Ease.OutQuad));
-                        TweenProgress(b, 0f, 1f, 0.2f, delay + 0.35f);
+                        _sequence.Insert(0f, _renderers[b].transform.DOMove(center + direction * radius, flightSeconds).SetEase(Ease.Linear));
+                        TweenProgress(b, 0f, 1f, 0.15f, flightSeconds);
                     }
-                    Shockwave(center, radius * 2.1f, tint, 0.55f);
-                    return 0.8f;
+                    Flash(center, info.OriginSize * Consts.CellSize, 0.3f);
+                    return flightSeconds + 0.15f;
                 }
                 case BossSkillKind.BlinkBlast:
                 {
@@ -360,12 +437,12 @@ namespace RevGame.View
                 }
                 case BossSkillKind.LaserSpin:
                 {
-                    // 六道激光环绕 Boss，每段转 120°；狂暴时转得更快、颜色更红（tint 已含狂暴色）。
+                    // 六道黄色激光环绕 Boss，每段转 120°；狂暴时加快转速，保留黄色便于识别技能。
                     float length = (info.Radius + info.OriginSize * 0.5f) * Consts.CellSize;
                     for (int i = 0; i < 6; i++)
                     {
-                        int b = Take(beam, FxMode.Laser, tint, 0.9f, ImpactOrder);
-                        Ray(b, i * 60f + info.Index * 20f, length, Consts.CellSize * 0.32f);
+                        int b = Take(beam, FxMode.ColoredLaser, tint, 0.25f, ImpactOrder);
+                        Ray(b, i * 60f + info.Index * 20f, length, Consts.CellSize * 0.32f * LaserSpinWidthScale);
                         TweenProgress(b, 0f, 1f, 0.5f);
                     }
                     float spin = info.Enraged ? 180f : 120f;
@@ -564,18 +641,18 @@ namespace RevGame.View
             }
         }
 
-        /// <summary>技能主色；狂暴后整体偏向血红色，玩家一眼能看出“二阶段”。</summary>
+        /// <summary>技能美术识别色，不参与玩法数值所以不进表；激光固定红/黄，其余技能狂暴后偏血红。</summary>
         private static Color TintOf(BossSkillKind kind, bool enraged)
         {
             Color color;
             switch (kind)
             {
                 case BossSkillKind.Cleave: color = new Color(1f, 0.75f, 0.3f); break;
-                case BossSkillKind.Snipe: color = new Color(1f, 0.25f, 0.2f); break;
+                case BossSkillKind.Snipe: return new Color(1f, 0.04f, 0.06f);
                 case BossSkillKind.Bombard: color = new Color(1f, 0.5f, 0.15f); break;
-                case BossSkillKind.BulletRing: color = new Color(0.78f, 0.45f, 1f); break;
+                case BossSkillKind.BulletRing: return new Color(0.72f, 0.025f, 0.055f);
                 case BossSkillKind.BlinkBlast: color = new Color(0.35f, 0.85f, 1f); break;
-                case BossSkillKind.LaserSpin: color = new Color(0.55f, 0.8f, 1f); break;
+                case BossSkillKind.LaserSpin: return new Color(1f, 0.85f, 0.03f);
                 case BossSkillKind.SoulDrain: color = new Color(0.45f, 1f, 0.55f); break;
                 case BossSkillKind.Summon: color = new Color(0.6f, 0.35f, 1f); break;
                 default: color = new Color(1f, 0.12f, 0.18f); break;

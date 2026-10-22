@@ -1,7 +1,7 @@
 // ============================================================
-// BossSkill —— Boss 技能特效的统一 Shader（7 种效果模式，单 Pass，兼容 SpriteRenderer 与图集）。
+// BossSkill —— Boss 技能特效的统一 Shader（9 种效果模式，单 Pass，兼容 SpriteRenderer 与图集）。
 //
-// 【为什么一个 Shader 做 7 种效果】
+// 【为什么一个 Shader 做 9 种效果】
 // Boss 每个技能的特效由若干“片”（SpriteRenderer）拼成：预警圈、冲击波、激光、火球……
 // 用一个 Shader + 每片自己的 _Mode 参数，所有片共享同一个材质与同一份图集贴图，
 // 不需要为每种技能克隆材质，也不会因为切换 Shader 造成大量 SetPass。
@@ -15,6 +15,8 @@
 //   4 贴图发光  ：直接显示贴图（子弹、刀光、炸弹、准星、焦痕），带轻微闪烁
 //   5 传送门    ：多臂旋涡，_Progress 控制开合（0 闭合 → 0.5 全开 → 1 闭合）
 //   6 汲取漩涡  ：向内收缩的螺旋条纹，表现“生命被吸走”
+//   7 彩色激光  ：保留主色光芯，避免红/黄激光在浅色棋盘上被白芯冲淡
+//   8 暗红魔法球：实心球壳、能量裂纹与流动符文光环，圆图只提供网格
 //
 // 【坐标】图集里的 UV 不是 0~1：每片的 _FxUV 记录当前 Sprite 在图集中的矩形，
 // 先换算回“这张图自己的 0~1 局部坐标”，程序化效果才不会采到隔壁的图。
@@ -26,7 +28,7 @@ Shader "RevGame/Combat/BossSkill"
     {
         [PerRendererData] _MainTex ("特效贴图（图集页）", 2D) = "white" {}
         _Color ("整体颜色", Color) = (1,1,1,1)
-        [PerRendererData] _Mode ("效果模式 0~6", Float) = 4
+        [PerRendererData] _Mode ("效果模式 0~8", Float) = 4
         [PerRendererData] _Progress ("效果进度 0~1", Range(0,1)) = 0
         [PerRendererData] _Tint ("主色", Color) = (1,0.35,0.25,1)
         [PerRendererData] _Shape ("预警形状 0圆 1方", Float) = 0
@@ -118,10 +120,12 @@ Shader "RevGame/Combat/BossSkill"
 
             // ---------------- 2 激光 ----------------
             // 局部坐标 x 沿光束方向（0 起点 → 1 终点），y 横穿光束。
-            fixed4 Laser(float2 uv, half t, half sourceAlpha)
+            fixed4 Laser(float2 uv, half t, half sourceAlpha, half coreWhiten)
             {
                 half across = abs(uv.y - 0.5) * 2.0;
-                half core = saturate(1.0 - across / 0.18);
+                // 彩色光束用更饱满的光芯；外侧仍然柔和衰减，浅色格子上不会只剩一根淡线。
+                half colored = step(coreWhiten, 0.5);
+                half core = saturate(1.0 - across / lerp(0.18, 0.3, colored));
                 half glow = saturate(1.0 - across);
                 glow = glow * glow;
                 half flow = Fbm(float2(uv.x * 8.0 - _Time.y * 9.0, uv.y * 3.0));
@@ -131,8 +135,12 @@ Shader "RevGame/Combat/BossSkill"
                 half energy = (core * 1.3 + glow * (0.45 + flow * 0.55)) * envelope * flicker;
                 // 两端用原贴图的柔边收尾，光束不会切成生硬的长方形。
                 half ends = smoothstep(0.0, 0.08, uv.x) * smoothstep(1.0, 0.92, uv.x);
-                half3 rgb = lerp(_Tint.rgb, half3(1, 1, 1), core);
-                return fixed4(rgb * energy, saturate(energy * ends * max(sourceAlpha, 0.35)));
+                // 彩色模式只让光芯略微提亮；仍复用原来的柔边、流动与开收光，不增加贴图采样。
+                half3 rgb = lerp(_Tint.rgb, half3(1, 1, 1), core * coreWhiten);
+                // 彩色模式提高线身覆盖率并限制过曝；旧白芯模式保持原有亮度与透明度。
+                half3 light = lerp(rgb * energy, rgb * (0.85 + core * 0.15), colored);
+                half coverage = max(sourceAlpha, lerp(0.35, 0.85, colored));
+                return fixed4(light, saturate(energy * ends * coverage));
             }
 
             // ---------------- 3 爆炸火球 ----------------
@@ -171,6 +179,29 @@ Shader "RevGame/Combat/BossSkill"
                 return fixed4(rgb * (1.0 + rim), saturate(alpha));
             }
 
+            // ---------------- 8 暗红魔法球 ----------------
+            // 圆图只承载 FullRect 网格：不乘源图的 RGB/Alpha，避免细图和透明区域把球体消掉。
+            // 实心酒红球壳遮住浅色棋盘，亮红裂纹与双层流动光环提供冲击力；不依赖 Bloom。
+            fixed4 MagicOrb(float2 p, half t)
+            {
+                half dist = length(p);
+                half turbulence = Fbm(p * 5.0 + float2(_Time.y * 1.2, -_Time.y * 1.7));
+                half body = 1.0 - smoothstep(0.53, 0.62, dist);
+                half core = 1.0 - smoothstep(0.05, 0.44, length(p + float2(0.12, -0.1)));
+                half veins = pow(saturate(1.0 - abs(turbulence - 0.52) * 11.0), 3.0) * body;
+                half angle = atan2(p.y, p.x);
+                half flow = 0.55 + 0.45 * sin(angle * 5.0 - _Time.y * 5.0 + turbulence * 5.0);
+                half rim = pow(saturate(1.0 - abs(dist - 0.60) / 0.09), 2.0);
+                half rune = pow(saturate(1.0 - abs(dist - 0.79) / 0.045), 2.0) * flow;
+                half halo = pow(saturate(1.0 - dist), 3.0);
+                half pulse = 0.88 + 0.12 * sin(_Time.y * 8.0);
+                half3 shell = lerp(half3(0.035, 0.002, 0.009), _Tint.rgb * 0.52, turbulence);
+                half3 rgb = shell + half3(1.0, 0.09, 0.035) * (veins * 0.85 + core * 0.55);
+                rgb += half3(0.95, 0.035, 0.075) * (rim * 1.15 + rune * 0.8 + halo * 0.22) * pulse;
+                half alpha = saturate(body * 0.98 + rim * 0.9 + rune * 0.75 + halo * 0.32);
+                return fixed4(rgb, alpha * (1.0 - smoothstep(0.85, 1.0, t)));
+            }
+
             fixed4 FragBossSkill(v2f input) : SV_Target
             {
                 fixed4 source = SampleSpriteTexture(input.texcoord) * input.color;
@@ -188,7 +219,7 @@ Shader "RevGame/Combat/BossSkill"
                 }
                 else if (_Mode < 2.5)
                 {
-                    fx = Laser(uv, t, source.a);
+                    fx = Laser(uv, t, source.a, 1.0);
                 }
                 else if (_Mode < 3.5)
                 {
@@ -204,9 +235,17 @@ Shader "RevGame/Combat/BossSkill"
                 {
                     fx = Vortex(p, t, 1.0);
                 }
-                else
+                else if (_Mode < 6.5)
                 {
                     fx = Vortex(p, t, -1.0);
+                }
+                else if (_Mode < 7.5)
+                {
+                    fx = Laser(uv, t, source.a, 0.06);
+                }
+                else
+                {
+                    fx = MagicOrb(p, t);
                 }
                 fx.a *= _Tint.a * input.color.a;
                 // 预乘：rgb 按 alpha 衰减；再按 _Additive 降低输出 alpha，让发光部分“加”在底图上而不是盖住它。

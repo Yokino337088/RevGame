@@ -174,7 +174,8 @@ namespace RevGame.Battle
                 }
                 case BossSkillKind.BulletRing:
                 {
-                    CollectInCircle(board, boss, def.Radius, victims);
+                    // 全屏弹幕只要求棋盘上有存活我方棋子，不以旧 Radius 限制选招。
+                    CollectAllPlayers(board, victims);
                     plan.Score = victims.Count * 8f;
                     return victims.Count > 0;
                 }
@@ -287,6 +288,19 @@ namespace RevGame.Battle
                 if (dx * dx + dy * dy <= reach * reach)
                 {
                     result.Add(p);
+                }
+            }
+        }
+
+        /// <summary>全屏技能收集全部存活我方棋子；与位置、距离和棋子身体大小无关。</summary>
+        public static void CollectAllPlayers(BoardModel board, List<Piece> result)
+        {
+            result.Clear();
+            foreach (Piece piece in board.GetPiecesOf(GameSide.Player))
+            {
+                if (piece.IsAlive)
+                {
+                    result.Add(piece);
                 }
             }
         }

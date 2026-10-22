@@ -311,7 +311,8 @@ namespace RevGame.Battle
     }
 
     /// <summary>
-    /// 弹幕风暴：以 Boss 为圆心向外扫射一圈。表里的 Count 是“子弹数量”（只影响画面密度），
+    /// 弹幕风暴：以 Boss 身体中心生成一圈子弹同时向全屏散射，没有距离限制。
+    /// 表里的 Count 是“子弹数量”（只影响画面密度），
     /// 伤害只结算一次，不会因为子弹多就把同一颗棋打十几次。
     /// </summary>
     internal sealed class BossBulletRingState : BossSkillState
@@ -322,7 +323,8 @@ namespace RevGame.Battle
         protected override int HitCount => 1;
         protected override void Hit(int index)
         {
-            BossTactics.CollectInCircle(Owner.Board, Owner.Boss, Def.Radius, Victims);
+            // 取快照后逐个结算，避免死亡移除棋子时修改正在遍历的棋盘名单。
+            BossTactics.CollectAllPlayers(Owner.Board, Victims);
             DamageAll(Victims);
         }
     }

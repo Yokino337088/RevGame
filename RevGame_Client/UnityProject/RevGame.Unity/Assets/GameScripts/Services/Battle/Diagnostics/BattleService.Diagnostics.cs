@@ -16,6 +16,41 @@ namespace RevGame.Services
     public sealed partial class BattleService
     {
         /// <summary>
+        /// 仅开发验收：打开后我方棋子受到的任何伤害都记为 0。
+        /// 用于单独观察 Boss 技能表现，避免棋子提前阵亡导致后续技能没有合法目标；
+        /// 正式发行包不包含本文件，这个开关也不会进入发布版本。
+        /// </summary>
+        public bool PlayerInvincible { get; private set; }
+
+        /// <summary>只允许开发 GM 调用；返回设置后的状态，便于自动化精确断言。</summary>
+        public bool SetPlayerInvincible(bool value)
+        {
+            PlayerInvincible = value;
+            return PlayerInvincible;
+        }
+
+        /// <summary>
+        /// 仅开发验收：把 Boss 血量压到指定比例，专门满足“汲取只在残血时可用”的前置条件。
+        /// 走统一扣血出口，血量、事件与表现保持一致；不是任意改血接口，比例也限制在 0.1~0.85。
+        /// </summary>
+        public bool PressBossHp(float ratio)
+        {
+            ratio = System.Math.Max(0.1f, System.Math.Min(0.85f, ratio));
+            Piece boss = _enemyPieces.Find(p => p.IsAlive && p.IsKing);
+            if (boss == null)
+            {
+                return false;
+            }
+            int targetHp = System.Math.Max(1, (int)(boss.MaxHp * ratio));
+            int delta = boss.Hp - targetHp;
+            if (delta > 0)
+            {
+                DamagePiece(boss, delta);
+            }
+            return true;
+        }
+
+        /// <summary>
         /// 加载预定义的开发场景（merge / enemy-one-eye / enemy-two-eyes 等）。
         /// 只用于编辑器验收与 GM 观察，正式发行包不包含本文件。
         /// </summary>
