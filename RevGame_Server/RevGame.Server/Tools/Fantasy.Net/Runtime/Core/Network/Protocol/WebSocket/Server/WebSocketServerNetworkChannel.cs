@@ -1,0 +1,397 @@
+#if FANTASY_NET
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.IO.Pipelines;
+using System.Net;
+using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using Fantasy.Async;
+using Fantasy.Network.Interface;
+using Fantasy.PacketParser;
+using Fantasy.Serialize;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
+namespace Fantasy.Network.WebSocket;
+
+public sealed class WebSocketServerNetworkChannel : ANetworkServerChannel
+{
+    private bool _isSending;
+    private bool _isInnerDispose;
+    private readonly Pipe _pipe = new Pipe();
+    private readonly System.Net.WebSockets.WebSocket _webSocket;
+    private readonly HttpListenerResponse _httpResponse;
+    private readonly WebSocketServerNetwork _network;
+    private readonly ReadOnlyMemoryPacketParser _packetParser;
+    private readonly Queue<MemoryStreamBuffer> _sendBuffers = new Queue<MemoryStreamBuffer>();
+    private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+    
+    public WebSocketServerNetworkChannel(ANetwork network, uint id, HttpListenerWebSocketContext httpListenerWebSocketContext, HttpListenerResponse httpResponse, IPEndPoint remoteEndPoint) : base(network, id, remoteEndPoint)
+    {
+        try
+        {
+            _network = (WebSocketServerNetwork)network;
+            _webSocket = httpListenerWebSocketContext.WebSocket;
+            _httpResponse = httpResponse;
+            _packetParser =
+                (ReadOnlyMemoryPacketParser)PacketParserFactory
+                    .CreateWebglBufferPacketParser(network);
+        }
+        catch
+        {
+            base.Dispose();
+            throw;
+        }
+    }
+    
+    internal void Start()
+    {
+        ReadPipeDataAsync().Coroutine();
+        ReceiveSocketAsync().Coroutine();
+    }
+    
+    public override void Dispose()
+    {
+        if (IsDisposed || _isInnerDispose)
+        {
+            return;
+        }
+        
+        var synchronizationContext = Scene?.ThreadSynchronizationContext;
+        
+        if (synchronizationContext != null && !ReferenceEquals(SynchronizationContext.Current, synchronizationContext))
+        {
+            synchronizationContext.Post(Dispose);
+            return;
+        }
+        
+        _isInnerDispose = true;
+
+        try
+        {
+            _network.RemoveChannel(Id);
+
+            if (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                try
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+                catch (OperationCanceledException)
+                {
+                    // 通常情况下，此处的异常可以忽略
+                }
+            }
+
+            _isSending = false;
+            ClearSendBuffers();
+            _packetParser.Dispose();
+            CloseAndDisposeAsync().Coroutine();
+        }
+        finally
+        {
+            base.Dispose();
+        }
+    }
+
+    private async FTask CloseAndDisposeAsync()
+    {
+        try
+        {
+            if (_webSocket.State == WebSocketState.Open || _webSocket.State == WebSocketState.CloseReceived)
+            {
+                using var closeTimeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(2000));
+
+                await _webSocket.CloseOutputAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "Normal Closure",
+                    closeTimeout.Token)
+                    .ConfigureAwait(false);
+            }
+        }
+        catch (Exception)
+        {
+            try
+            {
+                _webSocket.Abort();
+            }
+            catch
+            {
+                // 关闭过程中的异常可以忽略
+            }
+        }
+        finally
+        {
+            try
+            {
+                _webSocket.Dispose();
+            }
+            finally
+            {
+                try
+                {
+                    _httpResponse.Close();
+                }
+                catch
+                {
+                    // 关闭过程中的异常可以忽略
+                }
+            }
+        }
+    }
+    
+    #region ReceiveSocket
+
+    private async FTask ReceiveSocketAsync()
+    {
+        while (!_cancellationTokenSource.IsCancellationRequested)
+        {
+            try
+            {
+                var memory = _pipe.Writer.GetMemory(8192);
+                // 这里接收的数据不一定是一个完整的包。如果大于8192就会分成多个包。
+                var receiveResult = await _webSocket.ReceiveAsync(memory, _cancellationTokenSource.Token);
+                
+                // 客户端发送了关闭帧，服务器需要响应关闭帧
+                if (receiveResult.MessageType == WebSocketMessageType.Close)
+                {
+                    Dispose();
+                    break;
+                }
+
+                var count = receiveResult.Count;
+
+                if (count > 0)
+                {
+                    await PipeWriterFlushAsync(count);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                Dispose();
+                break;
+            }
+            catch (WebSocketException)
+            {
+                // Log.Error($"WebSocket error: {wse.Message}");
+                Dispose();
+                break;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+                Dispose();
+                break;
+            }
+        }
+
+        await _pipe.Writer.CompleteAsync();
+        
+        // 接收循环结束，自动释放连接
+        Dispose();
+    }
+    
+    private async FTask PipeWriterFlushAsync(int count)
+    {
+        _pipe.Writer.Advance(count);
+        await _pipe.Writer.FlushAsync();
+    }
+
+    #endregion
+    
+    #region ReceivePipeData
+
+    private async FTask ReadPipeDataAsync()
+    {
+        var pipeReader = _pipe.Reader;
+        while (!_cancellationTokenSource.IsCancellationRequested)
+        {
+            ReadResult result = default;
+            
+            try
+            {
+                result = await pipeReader.ReadAsync(_cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // 出现这个异常表示取消了_cancellationTokenSource。一般Channel断开会取消。
+                break;
+            }
+            
+            var buffer = result.Buffer;
+            var consumed = buffer.Start;
+            var examined = buffer.End;
+            
+            while (TryReadMessage(ref buffer, out var message))
+            {
+                ReceiveData(ref message);
+                consumed = buffer.Start;
+            }
+            
+            if (result.IsCompleted)
+            {
+                break;
+            }
+            
+            pipeReader.AdvanceTo(consumed, examined);
+        }
+
+        await pipeReader.CompleteAsync();
+    }
+
+    private bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out ReadOnlyMemory<byte> message)
+    {
+        if (buffer.Length == 0)
+        {
+            message = default;
+            return false;
+        }
+        
+        message = buffer.First;
+        
+        if (message.Length == 0)
+        {
+            message = default;
+            return false;
+        }
+        
+        buffer = buffer.Slice(message.Length);
+        return true;
+    }
+
+    private void ReceiveData(ref ReadOnlyMemory<byte> buffer)
+    {
+        try
+        {
+            while (!_cancellationTokenSource.IsCancellationRequested &&
+                   _packetParser.UnPack(ref buffer, out var packInfo))
+            {
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    packInfo.Dispose();
+                    return;
+                }
+                
+                Session.Receive(packInfo);
+            }
+        }
+        catch (ScanException e)
+        {
+            Log.Warning($"RemoteAddress:{RemoteEndPoint} \n{e}");
+            Dispose();
+        }
+        catch (Exception e)
+        {
+            Log.Error($"RemoteAddress:{RemoteEndPoint} \n{e}");
+            Dispose();
+        }
+    }
+
+    #endregion
+
+    #region Send
+
+    public override void Send(uint rpcId, long address, MemoryStreamBuffer memoryStream, IMessage message, Type messageType)
+    {
+        if (IsDisposed || _isInnerDispose)
+        {
+            message?.Dispose();
+            return;
+        }
+        
+        _sendBuffers.Enqueue(_packetParser.Pack(ref rpcId, ref address, memoryStream, message, messageType));
+
+        if (!_isSending)
+        {
+            Send().Coroutine();
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReturnMemoryStream(MemoryStreamBuffer memoryStream)
+    {
+        if ((memoryStream.MemoryStreamBufferSource & MemoryStreamBufferSource.Return) == 0)
+        {
+            return;
+        }
+
+        if (_isInnerDispose)
+        {
+            memoryStream.Dispose();
+            return;
+        }
+
+        _network.MemoryStreamBufferPool.ReturnMemoryStream(memoryStream);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearSendBuffers()
+    {
+        while (_sendBuffers.TryDequeue(out var memoryStream))
+        {
+            ReturnMemoryStream(memoryStream);
+        }
+    }
+    
+    private async FTask Send()
+    {
+        if (_isSending || IsDisposed)
+        {
+            return;
+        }
+            
+        _isSending = true;
+
+        try
+        {
+            while (_isSending)
+            {
+                if (!_sendBuffers.TryDequeue(out var memoryStream))
+                {
+                    _isSending = false;
+                    return;
+                }
+
+                try
+                {
+                    await _webSocket.SendAsync(
+                        new ArraySegment<byte>(memoryStream.GetBuffer(), 0, (int)memoryStream.Position),
+                        WebSocketMessageType.Binary, 
+                        true, 
+                        _cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+                catch (Exception)
+                {
+                    Dispose();
+                    return;
+                }
+                finally
+                {
+                    ReturnMemoryStream(memoryStream);
+                }
+            }
+        }
+        finally
+        {
+            _isSending = false;
+        }
+    }
+
+    #endregion
+}
+#endif

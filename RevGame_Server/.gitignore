@@ -13,8 +13,11 @@
 **/logs/
 RevGame.Server/Config/local/
 
-# 官方工具镜像：可随时用 `fantasy add -t fantasynet` / `-t fantasyunity` 重新生成
-# Fantasy.Net 实际依赖走 NuGet（Entity.csproj），Fantasy.Unity 走 UPM（Packages/manifest.json），
-# 仓库里再存一份几千文件的副本没有收益，只会让 clone 变慢
-RevGame.Server/Tools/Fantasy.Net/
+# Fantasy.Unity 镜像不入库：Unity 侧通过 UPM 安装同一份包（Packages/manifest.json），
+# 这里再存 1088 个文件纯属重复；需要时 `fantasy add -t fantasyunity` 可重新生成。
+# 注意 Tools/Fantasy.Net 的源码是**要**入库的 —— NuGet 包只带 dll、没有 pdb 和 SourceLink，
+# 不提交就没法在本地读框架实现，也无法断点进框架代码。
 RevGame.Server/Tools/Fantasy.Unity/
+
+# 官方仓库自带的本地开发配置，与本项目无关
+RevGame.Server/Tools/Fantasy.Net/.claude/
