@@ -17,6 +17,15 @@
       },
       "hash": "aa5fc638d623f56178d50329d9ad8c541a57fe66"
     },
+    "com.fantasy.unity": {
+      "version": "https://github.com/qq362946/Fantasy.git?path=/Fantasy.Packages/Fantasy.Unity#2026.1.2003",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      },
+      "hash": "e9004b15c34195d5b552d5f5cc0598549fb7a79d"
+    },
     "com.unity.2d.animation": {
       "version": "9.0.4",
       "depth": 1,
