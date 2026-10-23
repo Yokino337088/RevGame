@@ -1,0 +1,89 @@
+// ============================================================
+// RevXxxPanel.cs —— <一句话：这个面板是干什么的>
+//
+// 位置：Assets/<你的工程>/UI/RevXxxPanel.cs（或模块目录的 UI 子目录）
+//
+// 【它解决什么】<这个界面要给玩家看什么、做什么>
+// 【怎么用】RevUI.Open<RevXxxPanel, RevXxxData>(new RevXxxData { ... });
+//        需要秒开就先 RevUI.Preload<RevXxxPanel>()。
+// 【数据流】业务 → SetData(data) → OnDataChanged → RefreshView（单向；不允许在视图钩子里发请求）
+//
+// 【★ 刷新时机（新手最易混）】
+//   · OnRefreshView 只在三个时机被调：打开时 / 面板【开着】时 SetData / 你手动 RefreshView()。
+//   · 框架【不监听】数据对象内容：原地改字段（Data.Count++）后必须手动 RefreshView()；
+//     换新对象走 SetData（开着时自动刷，不用再手动刷）。
+//   · SetData 写在【业务侧数据产生的地方】（点击回调 / 网络回包），不要写在面板里 —— 面板是数据的消费方。
+//   · SetData(null) 和面板回池复用都会把 Data 清成 null，OnRefreshView 里用 Data 前先判空。
+// ============================================================
+using Revolution;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace <你的命名空间>
+{
+    /// <summary>面板数据（只放"画界面需要的字段"，不要塞整个业务模型）。</summary>
+    public sealed class RevXxxData
+    {
+        public bool ShowTips;
+        public string Title = string.Empty;
+    }
+
+    // ★ root 必填：预制体在资源根目录下的两段路径（分组 + 名字 → 用 RevResPath 常量拼，别手写字符串）
+    // ★ ExclusiveGroup：同组互斥（页签类界面用）；InBackStack：是否参与 RevUI.Back()
+    [RevUIPanel(RevResPath.Data, RevUILayer.Normal, ExclusiveGroup = "XxxTab")]
+    public sealed class RevXxxPanel : RevUIPanel<RevXxxData>
+    {
+        // ★ 普通控件事件优先用反射标注特性；这里只绑定需要直接读写的展示字段。
+        [RevBind] private Text _title;
+
+        /// <summary>只装配：找节点、配置视图。普通按钮事件由方法特性自动接线。</summary>
+        protected override void OnBindView()
+        {
+        }
+
+        /// <summary>控件名必须与预制体节点名一致；普通点击优先用这个特性而非手写 AddListener。</summary>
+        [RevButtonClick("btnClose")]
+        private void OnCloseClick()
+        {
+            CloseSelf();
+        }
+
+        /// <summary>
+        /// 只落屏：把 Data 画到界面上（带数据面板必须实现；别在这里发请求 / 改业务状态，否则"刷新→改数据→再刷新"死循环）。
+        /// 打开时、面板开着时 SetData、手动 RefreshView() 三种情况都会走到这里；Data 一定是最新值。
+        /// </summary>
+        protected override void OnRefreshView()
+        {
+            if (Data == null) { return; }           // ★ SetData(null) / 回池复用后 Data 是 null，必须判空
+            _title.text = Data.Title;
+        }
+
+        /// <summary>
+        /// 可选：SetData 换数据那一刻的增量通知（此时 Data 已是新值）。起步可以整个删掉——只靠 OnRefreshView 全量重画就完全正确。
+        /// ★ 这里【不要】再手动 RefreshView()：面板开着时框架随后会自动刷一次，手动再刷 = 每次换数据画两遍。
+        /// 提示：SetData 传同一个对象引用时 oldData == newData，比较不出差异。
+        /// </summary>
+        protected override void OnDataChanged(RevXxxData oldData, RevXxxData newData)
+        {
+            // 例：只更新变化的那几个控件（省性能）；没有特殊需求就留空。
+        }
+
+        /// <summary>可选：按钮统一走这里（按钮节点用 [RevBind] 登记过才会进来），避免回调散落各处。</summary>
+        protected override void OnClick(string nodeName)
+        {
+            RevLog.Info($"点击 {nodeName}（这里只转发给业务服务，不写业务逻辑）", "UI");
+        }
+
+        /// <summary>可选：从面板池取出复用时调用 —— 清掉自己缓存的字段，否则会带着上一次的状态。</summary>
+        protected override void OnReuse()
+        {
+            _title.text = string.Empty;
+        }
+
+        /// <summary>可选：关闭时清理（框架会清 Data，但你自己缓存的字段 / 计时器要清）。</summary>
+        protected override void OnClose()
+        {
+            RevTimer.CancelAllOf(this);
+        }
+    }
+}

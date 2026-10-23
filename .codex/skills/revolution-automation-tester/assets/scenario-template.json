@@ -1,0 +1,22 @@
+{
+  "name": "业务功能冒烟测试",
+  "repeat": 1,
+  "warmup": 0,
+  "stopOnFailure": true,
+  "failOnUnityError": true,
+  "setup": [
+    { "kind": "until", "command": "业务/就绪", "expected": "ready", "timeoutSeconds": 60, "intervalSeconds": 0.2 }
+  ],
+  "steps": [
+    { "kind": "gm", "command": "业务/执行" },
+    { "kind": "until", "command": "业务/状态", "expected": "完成", "timeoutSeconds": 60, "intervalSeconds": 0.2 },
+    { "kind": "assert", "command": "业务/断言", "expected": "通过" }
+  ],
+  "cleanup": [
+    { "kind": "gm", "command": "业务/复位" }
+  ],
+  "teardown": [
+    { "kind": "gm", "command": "业务/收尾" }
+  ],
+  "thresholds": { "maxFrameP95Ms": 0, "maxFrameMs": 0, "maxMonoUsedBytes": 0 }
+}

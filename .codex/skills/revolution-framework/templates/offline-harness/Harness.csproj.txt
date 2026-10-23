@@ -1,0 +1,30 @@
+<!--
+  工程外断言工程模板（把 <REPO> 换成仓库绝对路径；按需增删 Compile 清单）
+  ★ 不要把这个工程放进 Assets/ —— Unity 会去编译它。
+  ★ 用 <EnableDefaultCompileItems>false</EnableDefaultCompileItems> + 显式 Compile，才能"只链接要验的源码"。
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>RevHarness</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- 桩里未使用的字段/事件会报警告，这里统一压掉 -->
+    <NoWarn>CS0067;CS0169;CS0414</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <!-- 需要 UnityEngine / UnityEditor 类型时再加一份桩（签名必须与真实一致）：
+    <Compile Include="UnityStubs.cs" /> -->
+
+    <!-- 通用 net8 模板；持久 Tests/RevHotUpdate.Offline 工程使用 net10，不要求本模板跟随升级。 -->
+    <Compile Include="<REPO>/RevolutionFrameWork_Unity/Assets/Revolution/Runtime/RevResourceSystem/Core/RevResPathUtil.cs" />
+    <!-- 其余内核按需添加 Compile，并补齐关联类型/桩；不要默认链接尚未使用且依赖不全的文件。 -->
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,130 @@
+// ============================================================
+// Program.cs —— 工程外断言入口（模板）
+//
+// 用法：dotnet run -c Release
+// 约定：每条断言一句人话；优先验"不变量"；零分配契约用 GC.GetAllocatedBytesForCurrentThread() 实测；
+//       随机行为固定种子；失败不要 early return（收集后统一打印，一次看清有几处坏）。
+//
+// ★ 下面示例里的类型/方法名以源码为准（本模板给的是"形状"）：
+//   打开对应的 Core 文件，照它的真实 API 写断言；桩/调用写错时编译不过，这本身就是一道校验。
+// ============================================================
+using System;
+using System.Collections.Generic;
+using Revolution;
+
+namespace RevHarness
+{
+    public static class Program
+    {
+        private static int _pass;
+        private static int _skip;
+        private static readonly List<string> Failures = new List<string>();
+
+        public static int Main()
+        {
+            TimerTable();
+            PathKey();
+            PoolDoubleReturn();
+            ZeroAllocation();
+
+            Console.WriteLine();
+            Console.WriteLine($"通过 {_pass} 项，失败 {_failCount} 项，未实现 {_skip} 项");
+            for (int i = 0; i < Failures.Count; i++) { Console.WriteLine("  FAIL " + Failures[i]); }
+            return _failCount > 0 ? 1 : (_skip > 0 ? 2 : 0);
+        }
+
+        // ============================================================
+        // ① 槽位表：代际号 / 延迟复用 / 句柄校验（不变量类断言）
+        // ============================================================
+
+        private static void TimerTable()
+        {
+            // 形状示意：真实 API 见 Runtime/RevTimer/Core/RevTimerTable.cs
+            // var table = new RevTimerTable(capacity);
+            // int slot = table.Rent(owner: null, interval: 1f, ...);
+            // table.Return(slot);
+            // That(table.IsValid(slot) == false, "归还后句柄立即失效（代际号变了，旧句柄不能误伤新槽位）");
+
+            Skip("TimerTable：待补（照 RevTimerTable 的真实 API 写第一条不变量断言）");
+        }
+
+        // ============================================================
+        // ② 路径与缓存键：两段键 == 完整路径键（框架承诺过的等价关系）
+        // ============================================================
+
+        private static void PathKey()
+        {
+            string joined = RevResPathUtil.Join("UI/Icon", "Hero_1001");
+            That(joined == "UI/Icon/Hero_1001", "Join：两段拼成完整逻辑路径（根可带可不带结尾 /）");
+            That(RevResPathUtil.ComputeKey("UI/Icon", "Hero_1001"), RevResPathUtil.ComputeKey(joined), "两段键 == 完整路径键");
+            string[] roots = { null, "", "/", "Data", "Data/" };
+            for (int i = 0; i < roots.Length; i++)
+            {
+                That(RevResPathUtil.ComputeKey(roots[i], "config"),
+                    RevResPathUtil.ComputeKey(RevResPathUtil.Join(roots[i], "config")),
+                    $"路径键边界一致：root={roots[i] ?? "<null>"}");
+            }
+        }
+
+        // ============================================================
+        // ③ 池内核：重复归还必须被拦（防"同一个对象被发两次"）
+        // ============================================================
+
+        private static void PoolDoubleReturn()
+        {
+            // 形状示意：真实 API 见 Runtime/RevObjectPool/Core/RevPoolCore.cs
+            // var pool = new RevPoolCore<Foo>(...);
+            // var a = pool.Get(); pool.Return(a);
+            // That(pool.Return(a) == false, "重复归还被拦下（否则同一对象会被发给两个使用者）");
+
+            Skip("PoolCore：待补（照 RevPoolCore 的真实 API 写「重复归还」断言）");
+        }
+
+        // ============================================================
+        // ④ 零分配契约：框架对外承诺过的地方必须实测（不是估算）
+        // ============================================================
+
+        private static void ZeroAllocation()
+        {
+            // 形状示意：先热身，再取前后分配差
+            // for (int i = 0; i < 2000; i++) { RevLog.Info("warmup"); }
+            // long mark = GC.GetAllocatedBytesForCurrentThread();
+            // for (int i = 0; i < 100000; i++) { RevLog.Info("x"); }
+            // long bytes = GC.GetAllocatedBytesForCurrentThread() - mark;
+            // That(bytes == 0, $"10 万条日志零分配（实测 {bytes} 字节）");
+
+            Skip("零分配契约：待补（照对应内核的真实 API 写，并把数字写进文档）");
+        }
+
+        // ============================================================
+        // 断言基础设施（照抄即可）
+        // ============================================================
+
+        private static int _failCount;
+
+        private static void Skip(string description)
+        {
+            _skip++;
+            Console.WriteLine("  TODO " + description);
+        }
+
+        private static void That(bool ok, string description)
+        {
+            if (ok) { _pass++; return; }
+
+            _failCount++;
+            Failures.Add(description);
+            Console.WriteLine("  FAIL " + description);
+        }
+
+        private static void That<T>(T actual, T expected, string description)
+        {
+            if (EqualityComparer<T>.Default.Equals(actual, expected)) { _pass++; return; }
+
+            _failCount++;
+            string line = $"{description}（期望 {expected}，实际 {actual}）";
+            Failures.Add(line);
+            Console.WriteLine("  FAIL " + line);
+        }
+    }
+}

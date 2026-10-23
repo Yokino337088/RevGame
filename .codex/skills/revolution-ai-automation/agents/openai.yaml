@@ -1,0 +1,4 @@
+interface:
+  display_name: "Revolution AI 自动化"
+  short_description: "一句话执行编辑器与游戏测试，发现真实接口并采集业务断言、截图和清理证据"
+  default_prompt: "使用 $revolution-ai-automation 测试当前游戏功能，先发现真实接口，验证业务结果并清理本轮状态。"
