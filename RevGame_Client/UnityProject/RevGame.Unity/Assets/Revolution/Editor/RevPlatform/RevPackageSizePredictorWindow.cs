@@ -49,6 +49,69 @@ namespace Revolution.Editor
             public bool IsValid;
         }
 
+        [Serializable]
+        private sealed class Prediction
+        {
+            public string target, capturedAt;
+            public long streamingBytes, resourcesBytes, baselineBytes;
+            public int streamingFiles, resourcesFiles;
+            public bool hasPrediction;
+            public double lowBytes, highBytes;
+            public string note = "只估算同构建配置下的内置资源增量；系数不是保证误差边界，不代表最终产物大小";
+        }
+
+        [RevAutomationAction("platform.size", Keys = new[] { "target" }, Description = "与包体大小预测窗口共用扫描、基准和估算模型")]
+        public static object PredictForAutomation(RevAutomationRequest request) => AutomateSize(request, false, false);
+        [RevAutomationAction("platform.size-baseline", Keys = new[] { "target", "path" }, Confirm = true, Description = "将当前资源与实测 APK/Windows Player 录入包体基准")]
+        public static object BaselineForAutomation(RevAutomationRequest request) => AutomateSize(request, true, false);
+        [RevAutomationAction("platform.size-clear", Keys = new[] { "target" }, Confirm = true, Description = "清除本机当前工程的平台包体基准")]
+        public static object ClearForAutomation(RevAutomationRequest request) => AutomateSize(request, false, true);
+
+        private static object AutomateSize(RevAutomationRequest request, bool capture, bool clear)
+        {
+            var p = RevAutomationEditorOptions.Read(request);
+            int tab = p.target == "Android" ? 0 : p.target == "StandaloneWindows64" || p.target == "StandaloneWindows" ? 1 : -1;
+            if (tab < 0) { throw new ArgumentException("target 为 Android 或 StandaloneWindows64"); }
+            var sizes = new AssetSizes();
+            ScanDirectory(Path.GetFullPath("Assets"), false, false, ref sizes);
+            if (clear) { EditorPrefs.DeleteKey(PrefKey(tab)); }
+            if (capture) { SaveBaseline(tab, CaptureBaseline(tab, p.path, sizes)); }
+            Baseline baseline = LoadBaseline(tab);
+            Range(tab, sizes, baseline, out double low, out double high);
+            return new Prediction { target = p.target, capturedAt = baseline.CapturedAt, streamingBytes = sizes.Streaming,
+                resourcesBytes = sizes.Resources, streamingFiles = sizes.StreamingFiles, resourcesFiles = sizes.ResourceFiles,
+                baselineBytes = baseline.Output, hasPrediction = baseline.IsValid, lowBytes = baseline.IsValid ? low : 0, highBytes = baseline.IsValid ? high : 0 };
+        }
+
+        private static void Range(int tab, AssetSizes sizes, Baseline baseline, out double low, out double high)
+        {
+            double streaming = sizes.Streaming - (double)baseline.Streaming, resources = sizes.Resources - (double)baseline.Resources;
+            double min = tab == 0 ? 0.20d : 1d, max = tab == 0 ? 1.05d : 1d;
+            low = Math.Max(0d, baseline.Output + Math.Min(streaming * min, streaming * max) + Math.Min(0d, resources * 1.5d));
+            high = Math.Max(0d, baseline.Output + Math.Max(streaming * min, streaming * max) + Math.Max(0d, resources * 1.5d));
+        }
+
+        private static Baseline CaptureBaseline(int tab, string file, AssetSizes sizes)
+        {
+            if (string.IsNullOrEmpty(file) || !File.Exists(file)) { throw new ArgumentException("实测产物不存在：" + file); }
+            long output;
+            if (tab == 0)
+            {
+                if (!file.EndsWith(".apk", StringComparison.OrdinalIgnoreCase)) { throw new ArgumentException("只能选择 APK，不支持 AAB"); }
+                output = new FileInfo(file).Length;
+            }
+            else
+            {
+                if (!file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) { throw new ArgumentException("请选择 Windows Player 的 .exe"); }
+                string folder = Path.GetDirectoryName(Path.GetFullPath(file));
+                if (!Directory.Exists(Path.Combine(folder, Path.GetFileNameWithoutExtension(file) + "_Data"))) { throw new ArgumentException("缺少同名 _Data 目录"); }
+                output = SumDirectory(folder);
+            }
+            if (output <= 0) { throw new ArgumentException("产物为空，无法录入基准"); }
+            return new Baseline { Output = output, Streaming = sizes.Streaming, Resources = sizes.Resources,
+                CapturedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm", Invariant), IsValid = true };
+        }
+
         [MenuItem("Revolution.Tools/平台/包体大小预测", false, 43)]
         private static void Open()
         {
@@ -126,12 +189,8 @@ namespace Revolution.Editor
         {
             double streamingDelta = (_current.Streaming - (double)baseline.Streaming) / MiB;
             double resourcesDelta = (_current.Resources - (double)baseline.Resources) / MiB;
-            double output = baseline.Output / MiB;
-            double streamingMin = _tab == 0 ? 0.20d : 1d;
-            double streamingMax = _tab == 0 ? 1.05d : 1d;
-            // ★ 减少资源时同样要交换上下界，否则“预测下限”会高于上限。
-            double low = Math.Max(0d, output + Math.Min(streamingDelta * streamingMin, streamingDelta * streamingMax) + Math.Min(0d, resourcesDelta * 1.5d));
-            double high = Math.Max(0d, output + Math.Max(streamingDelta * streamingMin, streamingDelta * streamingMax) + Math.Max(0d, resourcesDelta * 1.5d));
+            Range(_tab, _current, baseline, out double lowBytes, out double highBytes);
+            double low = lowBytes / MiB, high = highBytes / MiB;
 
             EditorGUILayout.Space(10f);
             EditorGUILayout.LabelField("预测结果（仅内置资源增量）", EditorStyles.boldLabel);
@@ -199,31 +258,9 @@ namespace Revolution.Editor
             if (string.IsNullOrEmpty(file)) { return; }
             try
             {
-                long output;
-                if (_tab == 0)
-                {
-                    if (!file.EndsWith(".apk", StringComparison.OrdinalIgnoreCase)) { throw new InvalidOperationException("只能选择 APK 文件，不支持 AAB。"); }
-                    output = new FileInfo(file).Length;
-                }
-                else
-                {
-                    if (!file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) { throw new InvalidOperationException("请选择构建产物的 .exe。"); }
-                    string folder = Path.GetDirectoryName(file);
-                    string data = Path.Combine(folder, Path.GetFileNameWithoutExtension(file) + "_Data");
-                    if (!Directory.Exists(data)) { throw new InvalidOperationException("缺少与 .exe 同名的 _Data 文件夹，请选择 Windows Player 发布产物。"); }
-                    output = SumDirectory(folder);
-                }
-                if (output <= 0) { throw new InvalidOperationException("选中的产物为空，无法作为基准。"); }
-                bool confirmed = EditorUtility.DisplayDialog("确认基准与资源匹配", "当前 Assets 扫描值会和所选产物体积一起保存。请确认该产物就是由当前工程、同一资源与构建配置生成的；若资源已改动，请先重新出包，否则预测差值无效。", "确认录入", "取消");
+                var baseline = CaptureBaseline(_tab, file, _current);
+                bool confirmed = EditorUtility.DisplayDialog("确认基准与资源匹配", "当前 Assets 扫描值将与所选产物一起保存，请确认产物由当前资源与构建配置生成。", "确认录入", "取消");
                 if (!confirmed) { return; }
-                var baseline = new Baseline
-                {
-                    Output = output,
-                    Streaming = _current.Streaming,
-                    Resources = _current.Resources,
-                    CapturedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm", Invariant),
-                    IsValid = true
-                };
                 if (_tab == 0) { _android = baseline; } else { _windows = baseline; }
                 SaveBaseline(_tab, baseline);
             }

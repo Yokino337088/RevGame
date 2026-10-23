@@ -1,0 +1,194 @@
+[
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/fire_01.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_9.png",
+    "sha256": "9727a9743ac6ab8dd4dd79f5fc5b0266290efae45f4d4452279eb5e4bcf3a978"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/flare_01.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_10.png",
+    "sha256": "254f5bd4f0548612bf29305d27899efdee8cb8d8306292761ebbddebd3e57935"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/circle_03.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_11.png",
+    "sha256": "ed6c6f082e666c16bcaca89f15aefb55df9bf69450090518bcae1d3d61f82936"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/spark_04.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_12.png",
+    "sha256": "3cba35b80a97c12283a8ecd41780a0412194de14562cbffc7f04e9157183f772"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/smoke_04.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_13.png",
+    "sha256": "2db2f69874cdb1e5203f2f86803d5debde30402590cf50a810afaba882184616"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/flame_01.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_14.png",
+    "sha256": "92a70bcb90b1e21c57b2dae42843135703b2e988abee97433f84c3119723d144"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/star_04.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_15.png",
+    "sha256": "6485ac16c773663bd39346f3bedae04465ac14c661eb47cc5cfa935cdbf6c2ec"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/magic_03.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_16.png",
+    "sha256": "c2ef5fe86cd2fd08e5b9768389ab6580b346c391db3c7c09fc9b0a63e00ec4ce"
+  },
+  {
+    "pack": "particle-pack",
+    "source": "PNG (Transparent)/magic_05.png",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/BossExt_17.png",
+    "sha256": "92fb8c7a1d9bc14e052526c0505502c3e5b37d27502fa3d36d2c80b4565b62ef"
+  },
+  {
+    "pack": "impact-sounds",
+    "source": "Audio/impactMetal_heavy_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_Cleave.ogg",
+    "sha256": "e07045693e4a2b3d165c424e3dab4c781d9ff8880a386880ac89a51315d7f831"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/laserLarge_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_Snipe.ogg",
+    "sha256": "a56d95794cd732d6c2d66ce488c14cf557fe526c282897c9a77675c2bd9b77e6"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/explosionCrunch_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_Bombard.ogg",
+    "sha256": "4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/laserRetro_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_BulletRing.ogg",
+    "sha256": "2a203a007d24cc7e607eb8bec1d86bedba7f551911217ce2c4c1f31393aed32c"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/forceField_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_BlinkBlast.ogg",
+    "sha256": "c2916f2a062c8ddd1aca2826d134fe90847037db31342726ffb0f9097afe339c"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/laserLarge_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_LaserSpin.ogg",
+    "sha256": "e678aca631495b7dfef4ac625f0349875ccac81a60f538d530e072241af3e4bd"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/spaceEngineLow_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_SoulDrain.ogg",
+    "sha256": "d7deee8d7217ce63aab802ad7365a59cacfd243392dc1bd03b0a9d454aa494df"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/forceField_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_Summon.ogg",
+    "sha256": "5574e69dd04e5f59322c5ddffde5978f077b09170ae5e29cec0bd9901828cd90"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/lowFrequency_explosion_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_Enrage.ogg",
+    "sha256": "cdda50600a4928f2f1b8371224d53c171ac799c1cf2c30b11999508985250b3b"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/explosionCrunch_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_MeteorShower.ogg",
+    "sha256": "fdd04d6f0032d4d57c134ad37f3587d2d00e58c9572715275bd8cf4f43593576"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/laserLarge_002.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_CrossLaser.ogg",
+    "sha256": "e5e0b6ccc4d5720c8174a3e5b7cc6f9be3057352a89cbb2e99a00efc6fe5cc11"
+  },
+  {
+    "pack": "impact-sounds",
+    "source": "Audio/impactGlass_heavy_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_FrostNova.ogg",
+    "sha256": "b44b39a940e8948e74b9bd3776bff980df43cf220abdaf0d467dc4c43c0244a5"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/laserRetro_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_ChainLightning.ogg",
+    "sha256": "a0a99efaa755594982d5dfebf3d9cecaed5249bdf1f0de29cf26ca9ea24c191a"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/slime_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_PoisonMarsh.ogg",
+    "sha256": "480ee82b690136ea9db6966a3c3033356b8274752795c4e37afd6b6defcfacff"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/thrusterFire_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_FlameWall.ogg",
+    "sha256": "0fdc474d93f209debf1fc4ea77765a669dcb7676db31b4d8a0a509685bccf374"
+  },
+  {
+    "pack": "impact-sounds",
+    "source": "Audio/impactGlass_heavy_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_IceLance.ogg",
+    "sha256": "58686e0e562612cc566791844a10e269f8d1921f4766c14ba43976fd0a429f4e"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/spaceEngineLow_001.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_GravityWell.ogg",
+    "sha256": "307dfd8fbfe7e6f2d59dec4de445cf02bd4fff86005803096b8c95e333836a70"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/forceField_002.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/Boss_DoomSigil.ogg",
+    "sha256": "051b0eafc479695af4ca3607d41fd4be41bae7c21f4f9508d004722b09f1bd63"
+  },
+  {
+    "pack": "sci-fi-sounds",
+    "source": "Audio/lowFrequency_explosion_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/EnergyHuge.ogg",
+    "sha256": "3cb48d86dab63140cfb9aaeea4d4a6846abaca5831d157d8adbec0490da26343"
+  },
+  {
+    "pack": "impact-sounds",
+    "source": "Audio/impactSoft_heavy_000.ogg",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Audio/Sfx/RegionWave.ogg",
+    "sha256": "49e7ca88743fca974bb8676ea138b751cfd8f9033b5e7af8736c2a215d6edbc1"
+  },
+  {
+    "pack": "game-icons.net",
+    "source": "https://game-icons.net/1x1/lorc/unlit-bomb.html",
+    "author": "Lorc",
+    "license": "CC BY 3.0",
+    "modification": "移除实心背景，栅格化为256px PNG；能量扫描、裂纹与光晕由运行时Shader叠加。",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/EnergyBomb.png",
+    "sha256": "35e85632d901255e1913906dac5c3acea54daaaa9809e526b93e303700490a71"
+  },
+  {
+    "pack": "RevGame",
+    "source": "本项目程序绘制",
+    "author": "RevGame项目",
+    "license": "项目自有素材",
+    "modification": "64px透明条纹边框，专供区域波动预警。",
+    "runtime": "UnityProject/RevGame.Unity/Assets/GameRes/Art/Combat/RegionHazard.png",
+    "sha256": "f2d9a7ee5ec9aa542cae3da9c8e2ffd8650f1618770a1469aa5fc7a775563a25"
+  }
+]

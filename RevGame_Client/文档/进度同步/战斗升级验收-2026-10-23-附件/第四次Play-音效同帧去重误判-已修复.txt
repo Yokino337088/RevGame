@@ -1,0 +1,368 @@
+失败：System.InvalidOperationException: 本次Play没有声音加载/播放失败
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00fe8] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:185 
+冷启动使用真实AB模式
+正式流程进入战斗
+加载固定Boss夹具
+正式开战
+真实棋盘视图已就绪
+战斗增益 Attack 30：ok
+战斗增益 Defense 30：ok
+战斗增益 Haste 20：ok
+战斗增益 Vitality 30：ok
+四项GM真实查询一致
+区域波动：ok
+预警覆盖指定区域全部格子
+区域声音真实AudioSource正在播放
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+DOTween逐格起伏真实改变格子显示高度
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+波浪结束没有活跃格子Tween
+波浪后格子恢复原位 (8,8)
+波浪后格子恢复原位 (7,8)
+波浪后格子恢复原位 (6,8)
+波浪后格子恢复原位 (5,8)
+波浪后格子恢复原位 (4,8)
+波浪后格子恢复原位 (3,8)
+波浪后格子恢复原位 (2,8)
+波浪后格子恢复原位 (1,8)
+波浪后格子恢复原位 (0,8)
+波浪后格子恢复原位 (8,7)
+波浪后格子恢复原位 (7,7)
+波浪后格子恢复原位 (6,7)
+波浪后格子恢复原位 (5,7)
+波浪后格子恢复原位 (4,7)
+波浪后格子恢复原位 (3,7)
+波浪后格子恢复原位 (2,7)
+波浪后格子恢复原位 (1,7)
+波浪后格子恢复原位 (0,7)
+波浪后格子恢复原位 (8,6)
+波浪后格子恢复原位 (7,6)
+波浪后格子恢复原位 (6,6)
+波浪后格子恢复原位 (5,6)
+波浪后格子恢复原位 (4,6)
+波浪后格子恢复原位 (3,6)
+波浪后格子恢复原位 (2,6)
+波浪后格子恢复原位 (1,6)
+波浪后格子恢复原位 (0,6)
+波浪后格子恢复原位 (8,5)
+波浪后格子恢复原位 (7,5)
+波浪后格子恢复原位 (6,5)
+波浪后格子恢复原位 (5,5)
+波浪后格子恢复原位 (4,5)
+波浪后格子恢复原位 (3,5)
+波浪后格子恢复原位 (2,5)
+波浪后格子恢复原位 (1,5)
+波浪后格子恢复原位 (0,5)
+波浪后格子恢复原位 (8,4)
+波浪后格子恢复原位 (7,4)
+波浪后格子恢复原位 (6,4)
+波浪后格子恢复原位 (5,4)
+波浪后格子恢复原位 (4,4)
+波浪后格子恢复原位 (3,4)
+波浪后格子恢复原位 (2,4)
+波浪后格子恢复原位 (1,4)
+波浪后格子恢复原位 (0,4)
+波浪后格子恢复原位 (8,3)
+波浪后格子恢复原位 (7,3)
+波浪后格子恢复原位 (6,3)
+波浪后格子恢复原位 (5,3)
+波浪后格子恢复原位 (4,3)
+波浪后格子恢复原位 (3,3)
+波浪后格子恢复原位 (2,3)
+波浪后格子恢复原位 (1,3)
+波浪后格子恢复原位 (0,3)
+波浪后格子恢复原位 (8,2)
+波浪后格子恢复原位 (7,2)
+波浪后格子恢复原位 (6,2)
+波浪后格子恢复原位 (5,2)
+波浪后格子恢复原位 (4,2)
+波浪后格子恢复原位 (3,2)
+波浪后格子恢复原位 (2,2)
+波浪后格子恢复原位 (1,2)
+波浪后格子恢复原位 (0,2)
+波浪后格子恢复原位 (8,1)
+波浪后格子恢复原位 (7,1)
+波浪后格子恢复原位 (6,1)
+波浪后格子恢复原位 (5,1)
+波浪后格子恢复原位 (4,1)
+波浪后格子恢复原位 (3,1)
+波浪后格子恢复原位 (2,1)
+波浪后格子恢复原位 (1,1)
+波浪后格子恢复原位 (0,1)
+波浪后格子恢复原位 (8,0)
+波浪后格子恢复原位 (7,0)
+波浪后格子恢复原位 (6,0)
+波浪后格子恢复原位 (5,0)
+波浪后格子恢复原位 (4,0)
+波浪后格子恢复原位 (3,0)
+波浪后格子恢复原位 (2,0)
+波浪后格子恢复原位 (1,0)
+波浪后格子恢复原位 (0,0)
+能量巨大：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+炸弹池化特效已真实加载
+炸弹Sprite来自真实图集
+九种扩展素材配置齐全
+新增Sprite图集绑定 BossExt_9
+新增Sprite图集绑定 BossExt_10
+新增Sprite图集绑定 BossExt_11
+新增Sprite图集绑定 BossExt_12
+新增Sprite图集绑定 BossExt_13
+新增Sprite图集绑定 BossExt_14
+新增Sprite图集绑定 BossExt_15
+新增Sprite图集绑定 BossExt_16
+新增Sprite图集绑定 BossExt_17
+真实AB技能Shader支持当前图形设备
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+实际固定步长已结算一次炸弹
+能量巨大声音真实AudioSource正在播放
+UI显示能量巨大弹幕
+命中已启动相机震动
+相机震动衰减归零
+复位技能夹具 Cleave
+Boss清卫：ok:8
+技能夹具开战 Cleave
+Boss靠近 1：ok
+Boss技能 0：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+Cleave 真实命中段数=1，收招回到Idle
+Cleave 技能声音真实AudioSource曾播放
+复位技能夹具 Snipe
+Boss清卫：ok:8
+技能夹具开战 Snipe
+Boss靠近 1：ok
+Boss技能 1：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+Snipe 真实命中段数=1，收招回到Idle
+Snipe 技能声音真实AudioSource曾播放
+复位技能夹具 Bombard
+Boss清卫：ok:8
+技能夹具开战 Bombard
+Boss靠近 1：ok
+Boss技能 2：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+Bombard 真实命中段数=3，收招回到Idle
+Bombard 技能声音真实AudioSource曾播放
+复位技能夹具 BulletRing
+Boss清卫：ok:8
+技能夹具开战 BulletRing
+Boss靠近 1：ok
+Boss技能 3：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+BulletRing 真实命中段数=1，收招回到Idle
+BulletRing 技能声音真实AudioSource曾播放
+复位技能夹具 BlinkBlast
+Boss清卫：ok:8
+瞬移远端目标落子 (0,0)：
+声音失败：Place：Duplicated
+瞬移远端目标落子 (1,0)：
+声音失败：Place：Duplicated
+瞬移远端目标落子 (1,1)：
+声音失败：Place：Duplicated
+技能夹具开战 BlinkBlast
+Boss技能 4：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+BlinkBlast 真实命中段数=1，收招回到Idle
+BlinkBlast 技能声音真实AudioSource曾播放
+复位技能夹具 LaserSpin
+Boss清卫：ok:8
+技能夹具开战 LaserSpin
+Boss靠近 1：ok
+Boss技能 5：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+LaserSpin 真实命中段数=3，收招回到Idle
+LaserSpin 技能声音真实AudioSource曾播放
+复位技能夹具 SoulDrain
+Boss清卫：ok:8
+技能夹具开战 SoulDrain
+Boss靠近 1：ok
+Boss压血：ok
+Boss技能 6：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+SoulDrain 真实命中段数=1，收招回到Idle
+SoulDrain 技能声音真实AudioSource曾播放
+复位技能夹具 Summon
+Boss清卫：ok:8
+技能夹具开战 Summon
+Boss靠近 1：ok
+Boss技能 7：ok
+声音失败：Hit：Duplicated
+声音失败：Place：Duplicated
+声音失败：Hit：Duplicated
+Summon 真实命中段数=1，收招回到Idle
+Summon 技能声音真实AudioSource曾播放
+复位技能夹具 Enrage
+Boss清卫：ok:8
+技能夹具开战 Enrage
+Boss靠近 1：ok
+Boss技能 8：ok
+声音失败：Hit：Duplicated
+Enrage 真实命中段数=1，收招回到Idle
+Enrage 技能声音真实AudioSource曾播放
+复位技能夹具 MeteorShower
+Boss清卫：ok:8
+技能夹具开战 MeteorShower
+Boss靠近 1：ok
+Boss技能 9：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+MeteorShower 真实命中段数=3，收招回到Idle
+MeteorShower 技能声音真实AudioSource曾播放
+复位技能夹具 CrossLaser
+Boss清卫：ok:8
+技能夹具开战 CrossLaser
+Boss靠近 1：ok
+十字目标夹具包含Boss与小棋
+十字目标通过真实点击入口移至 (2,0)
+Boss技能 10：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+CrossLaser 真实命中段数=1，收招回到Idle
+CrossLaser 技能声音真实AudioSource曾播放
+复位技能夹具 FrostNova
+Boss清卫：ok:8
+技能夹具开战 FrostNova
+Boss靠近 1：ok
+Boss技能 11：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+FrostNova 真实命中段数=3，收招回到Idle
+FrostNova 技能声音真实AudioSource曾播放
+复位技能夹具 ChainLightning
+Boss清卫：ok:8
+技能夹具开战 ChainLightning
+Boss靠近 1：ok
+Boss技能 12：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+ChainLightning 真实命中段数=3，收招回到Idle
+ChainLightning 技能声音真实AudioSource曾播放
+复位技能夹具 PoisonMarsh
+Boss清卫：ok:8
+技能夹具开战 PoisonMarsh
+Boss靠近 1：ok
+Boss技能 13：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+PoisonMarsh 真实命中段数=3，收招回到Idle
+PoisonMarsh 技能声音真实AudioSource曾播放
+复位技能夹具 FlameWall
+Boss清卫：ok:8
+技能夹具开战 FlameWall
+Boss靠近 1：ok
+Boss技能 14：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+FlameWall 真实命中段数=3，收招回到Idle
+FlameWall 技能声音真实AudioSource曾播放
+复位技能夹具 IceLance
+Boss清卫：ok:8
+技能夹具开战 IceLance
+Boss靠近 1：ok
+Boss技能 15：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+IceLance 真实命中段数=1，收招回到Idle
+IceLance 技能声音真实AudioSource曾播放
+复位技能夹具 GravityWell
+Boss清卫：ok:8
+技能夹具开战 GravityWell
+Boss靠近 1：ok
+Boss技能 16：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+GravityWell 真实命中段数=3，收招回到Idle
+GravityWell 技能声音真实AudioSource曾播放
+复位技能夹具 DoomSigil
+Boss清卫：ok:8
+技能夹具开战 DoomSigil
+Boss靠近 1：ok
+Boss技能 17：ok
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+声音失败：Hit：Duplicated
+DoomSigil 真实命中段数=2，收招回到Idle
+DoomSigil 技能声音真实AudioSource曾播放
+区域波动：ok
+能量巨大：ok
+退出后无活跃棋盘格子
+退出后无Boss/炸弹池对象残留
+清理后回到首页
+System.InvalidOperationException: 本次Play没有声音加载/播放失败
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00fe8] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:185 

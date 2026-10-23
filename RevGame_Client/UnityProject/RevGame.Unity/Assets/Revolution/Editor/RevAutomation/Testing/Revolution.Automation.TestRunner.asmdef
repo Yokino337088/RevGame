@@ -1,0 +1,9 @@
+{
+    "name": "Revolution.Automation.TestRunner",
+    "rootNamespace": "Revolution.Editor.Testing",
+    "references": ["Revolution.Editor", "UnityEditor.TestRunner", "UnityEngine.TestRunner"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true,
+    "defineConstraints": ["REV_AUTOMATION_TEST_FRAMEWORK"],
+    "versionDefines": [{"name": "com.unity.test-framework", "expression": "1.1.0", "define": "REV_AUTOMATION_TEST_FRAMEWORK"}]
+}

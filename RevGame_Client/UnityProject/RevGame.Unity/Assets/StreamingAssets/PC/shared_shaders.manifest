@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2468825228
+CRC: 1139203323
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 678b31391edf59f60391a62a09c990a7
+    Hash: 7712c418494364561720ba6506c0633a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 678b31391edf59f60391a62a09c990a7
+    Hash: 7712c418494364561720ba6506c0633a
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -19,5 +19,7 @@ Assets:
 - Assets/GameShader/UI/ArcanePanel.shader
 - Assets/GameShader/Cards/CardGleam.shader
 - Assets/GameShader/Pieces/ArcanePiece.shader
+- Assets/GameShader/Combat/BossSkill.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
+- Assets/GameShader/Background/ChapterAtmosphere.shader
 Dependencies: []

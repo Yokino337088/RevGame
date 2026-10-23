@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- 链接真实业务源文件：修复攻击算法后此处立即验证新实现，不能在测试里复制一套算法。 -->
-    <Compile Include="Program.cs;BattleAttackFixture.cs;OfflineHost.cs;FeedbackRegression.cs;BossRegression.cs" />
+    <Compile Include="Program.cs;BattleAttackFixture.cs;OfflineHost.cs;FeedbackRegression.cs;BossRegression.cs;CombatPacingRegression.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Core/**/*.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Board/**/*.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Pieces/**/*.cs" />

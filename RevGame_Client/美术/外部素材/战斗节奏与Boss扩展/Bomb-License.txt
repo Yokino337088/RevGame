@@ -1,0 +1,5 @@
+Unlit bomb by Lorc
+Source: https://game-icons.net/1x1/lorc/unlit-bomb.html
+License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
+Modification: removed solid background, rasterized to 256px PNG; runtime energy shading in BossSkill.shader.

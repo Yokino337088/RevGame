@@ -40,8 +40,8 @@ namespace RevGame.View
             Require("EnemyDeployment");
             // Boss 技能预警提示样式（标题 {skill}、副标题 {hint}），缺这一行时启动阶段就报错。
             Require("BossSkill");
-            for (int i = 0; i < 8; i++) { Require("Event_" + Data.BattleEventCatalog.NameOf((Data.BattleEventKind)i)); }
-            Require("Event_决胜支援");
+            foreach (Data.BattleEventKind kind in System.Enum.GetValues(typeof(Data.BattleEventKind))) { Require("Event_" + Data.BattleEventCatalog.NameOf(kind)); }
+            Require("Event_能量巨大");
             foreach (BattleText row in RevDataTableManager.Get<BattleTextTable>().All)
             {
                 ColorOf(row);

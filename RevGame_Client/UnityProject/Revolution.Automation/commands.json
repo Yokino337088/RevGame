@@ -1,11 +1,12 @@
 {
   "protocol": 1,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "environmentLegend": {
     "client": "Python 本地操作",
     "either": "在线或 batch",
     "edit": "非 Play；在线或 batch",
-    "live": "图形编辑器；GM/场景需要未暂停 Play"
+    "live": "图形编辑器；GM/场景需要未暂停 Play",
+    "play": "图形编辑器中未暂停的 Play"
   },
   "actions": [
     {
@@ -18,7 +19,8 @@
       "id": "editor.status",
       "keys": [],
       "description": "工程、Play、编译和 GM 状态",
-      "environment": "either"
+      "environment": "either",
+      "readOnly": true
     },
     {
       "id": "editor.play",
@@ -44,7 +46,8 @@
       "id": "editor.menus",
       "keys": [],
       "description": "发现实际安装的 Revolution 菜单",
-      "environment": "either"
+      "environment": "either",
+      "readOnly": true
     },
     {
       "id": "editor.menu",
@@ -58,7 +61,8 @@
       "id": "ab.config",
       "keys": [],
       "description": "读取 AB 配置",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.configure",
@@ -72,7 +76,8 @@
       "id": "ab.scan",
       "keys": [],
       "description": "读取分包布局",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.validate",
@@ -80,7 +85,8 @@
         "target"
       ],
       "description": "资源与平台 Shader 校验",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.build",
@@ -114,19 +120,22 @@
         "target"
       ],
       "description": "检查运行期映射一致性",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.dependencies",
       "keys": [],
       "description": "包依赖、共享资源、循环依赖",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.sizes",
       "keys": [],
       "description": "按包估算源文件及其依赖源文件体积",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.artifacts",
@@ -134,7 +143,8 @@
         "target"
       ],
       "description": "列出实际打包文件与字节数",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.snapshot",
@@ -148,7 +158,8 @@
         "baseline"
       ],
       "description": "比较基准与当前布局",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "ab.mark",
@@ -226,7 +237,8 @@
       "id": "excel.settings",
       "keys": [],
       "description": "读取团队及个人导表设置",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "excel.configure",
@@ -244,7 +256,8 @@
         "recursive"
       ],
       "description": "读取并校验 Excel",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "excel.plan",
@@ -253,7 +266,8 @@
         "recursive"
       ],
       "description": "预览导出变更",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "excel.export",
@@ -281,7 +295,8 @@
         "recursive"
       ],
       "description": "列出旧数据文件",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "excel.clean",
@@ -333,7 +348,8 @@
       "id": "platform.resources",
       "keys": [],
       "description": "首包 Resources 体积审计",
-      "environment": "edit"
+      "environment": "edit",
+      "readOnly": true
     },
     {
       "id": "platform.linkxml",
@@ -363,7 +379,8 @@
       ],
       "description": "读取已发布清单并与产物自检",
       "environment": "edit",
-      "requires": "HotUpdate"
+      "requires": "HotUpdate",
+      "readOnly": true
     },
     {
       "id": "hot.demo-prepare",
@@ -384,7 +401,8 @@
       "keys": [],
       "description": "返回演示 URL 与本地目录",
       "environment": "edit",
-      "requires": "HotUpdate Demo"
+      "requires": "HotUpdate Demo",
+      "readOnly": true
     },
     {
       "id": "hot.demo-open",
@@ -436,6 +454,677 @@
       "keys": null,
       "description": "离线校验场景脚本格式，不执行游戏",
       "environment": "client"
+    },
+    {
+      "id": "build.settings",
+      "keys": [],
+      "description": "读取 Build Settings 的场景列表与活动平台",
+      "environment": "edit",
+      "readOnly": true
+    },
+    {
+      "id": "build.configure",
+      "keys": [
+        "scenes"
+      ],
+      "description": "替换 Build Settings 场景清单；不切换当前场景",
+      "environment": "edit"
+    },
+    {
+      "id": "build.target",
+      "keys": [
+        "target"
+      ],
+      "description": "异步切换已安装的构建平台，重载后继续等待",
+      "environment": "live"
+    },
+    {
+      "id": "build.player",
+      "keys": [
+        "target",
+        "path",
+        "development"
+      ],
+      "description": "按已配置场景构建 Player，返回真实 BuildReport 摘要",
+      "environment": "edit"
+    },
+    {
+      "id": "editor.capabilities",
+      "keys": [],
+      "description": "当前工程真正安装的动作、参数和运行条件",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "editor.compilation",
+      "keys": [],
+      "description": "上次编译诊断及当前编译失败状态",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "editor.console",
+      "keys": [
+        "offset",
+        "limit",
+        "query",
+        "severity"
+      ],
+      "description": "分页读取 Unity Console（含编译错误）",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "editor.console-clear",
+      "keys": [],
+      "description": "清空 Console；清理前先保存错误证据",
+      "environment": "either",
+      "requires": "confirm"
+    },
+    {
+      "id": "editor.pause",
+      "keys": [],
+      "description": "暂停 Play",
+      "environment": "live"
+    },
+    {
+      "id": "editor.resume",
+      "keys": [],
+      "description": "恢复 Play",
+      "environment": "live"
+    },
+    {
+      "id": "editor.step",
+      "keys": [],
+      "description": "暂停 Play 下前进一步并等待该帧完成",
+      "environment": "live"
+    },
+    {
+      "id": "runtime.state",
+      "keys": [],
+      "description": "当前场景、框架域/服务/UI 状态与面板列表",
+      "environment": "play",
+      "readOnly": true
+    },
+    {
+      "id": "ui.dump",
+      "keys": [
+        "query",
+        "offset",
+        "limit",
+        "includeInactive"
+      ],
+      "description": "UGUI 可交互控件、文本、屏幕位置和遮挡情况",
+      "environment": "play",
+      "readOnly": true
+    },
+    {
+      "id": "ui.click",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "校验遮挡与 interactable 后经 EventSystem 注入真实指针事件",
+      "environment": "play"
+    },
+    {
+      "id": "ui.input",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "text",
+        "submit"
+      ],
+      "description": "填写 UGUI/TMP 输入框，触发公开文本变更事件",
+      "environment": "play"
+    },
+    {
+      "id": "ui.back",
+      "keys": [],
+      "description": "调用框架 RevUI.Back 返回上一层界面",
+      "environment": "play"
+    },
+    {
+      "id": "ui.close",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "经 RevUI.Close 关闭指定框架面板",
+      "environment": "play"
+    },
+    {
+      "id": "runtime.screenshot",
+      "keys": [],
+      "description": "在下一帧末捕获完整 GameView 到当前工单目录，等待 PNG 写完",
+      "environment": "play"
+    },
+    {
+      "id": "scene.list",
+      "keys": [],
+      "description": "已加载场景、活动场景及未保存状态",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "scene.hierarchy",
+      "keys": [
+        "scene",
+        "query",
+        "offset",
+        "limit",
+        "includeInactive"
+      ],
+      "description": "包含未激活对象的分页场景层级",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "scene.open",
+      "keys": [
+        "path",
+        "additive"
+      ],
+      "description": "打开现有场景，替换前检查未保存内容",
+      "environment": "edit"
+    },
+    {
+      "id": "scene.new",
+      "keys": [
+        "additive"
+      ],
+      "description": "创建空场景（通过 scene.save 落盘）",
+      "environment": "edit"
+    },
+    {
+      "id": "scene.save",
+      "keys": [
+        "scene",
+        "path"
+      ],
+      "description": "保存指定或活动场景；新场景必须提供 path",
+      "environment": "edit"
+    },
+    {
+      "id": "scene.close",
+      "keys": [
+        "scene"
+      ],
+      "description": "关闭已保存场景，拒绝丢弃未保存内容",
+      "environment": "edit"
+    },
+    {
+      "id": "scene.active",
+      "keys": [
+        "scene"
+      ],
+      "description": "切换已加载的活动场景",
+      "environment": "edit"
+    },
+    {
+      "id": "gameobject.find",
+      "keys": [
+        "scene",
+        "query",
+        "type",
+        "offset",
+        "limit",
+        "includeInactive"
+      ],
+      "description": "分页查找场景对象；返回当前会话的 id",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "gameobject.create",
+      "keys": [
+        "name",
+        "parent",
+        "scene"
+      ],
+      "description": "创建场景对象并支持 Undo",
+      "environment": "edit"
+    },
+    {
+      "id": "gameobject.inspect",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "property",
+        "offset",
+        "limit"
+      ],
+      "description": "读取 GameObject Inspector 序列化属性",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "gameobject.set",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "changes"
+      ],
+      "description": "修改 GameObject 序列化属性并支持 Undo",
+      "environment": "edit"
+    },
+    {
+      "id": "gameobject.parent",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "parent",
+        "worldPositionStays"
+      ],
+      "description": "调整父子关系；parent 为空移到场景根",
+      "environment": "edit"
+    },
+    {
+      "id": "gameobject.duplicate",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "name"
+      ],
+      "description": "复制场景对象并保留父节点",
+      "environment": "edit"
+    },
+    {
+      "id": "gameobject.delete",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "删除场景对象并支持 Undo",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "component.list",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "offset",
+        "limit"
+      ],
+      "description": "枚举对象组件及组件 id",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "component.get",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "type",
+        "index",
+        "property",
+        "offset",
+        "limit"
+      ],
+      "description": "读取组件属性、属性类型与可写状态",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "component.set",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "type",
+        "index",
+        "changes"
+      ],
+      "description": "经 SerializedObject 修改组件属性，保留 Prefab override 与 Undo",
+      "environment": "edit"
+    },
+    {
+      "id": "component.add",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "type"
+      ],
+      "description": "添加组件并返回组件 id",
+      "environment": "edit"
+    },
+    {
+      "id": "component.remove",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "type",
+        "index"
+      ],
+      "description": "移除组件并支持 Undo",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "component.types",
+      "keys": [
+        "query",
+        "offset",
+        "limit"
+      ],
+      "description": "发现可添加组件类型，消除类型名猜测",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "asset.find",
+      "keys": [
+        "query",
+        "folders",
+        "offset",
+        "limit"
+      ],
+      "description": "按 Unity 搜索语法查询资产，例如 t:Prefab",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "asset.inspect",
+      "keys": [
+        "path",
+        "property",
+        "offset",
+        "limit"
+      ],
+      "description": "读取资产 Inspector；Shader、材质、ScriptableObject 通用",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "asset.set",
+      "keys": [
+        "path",
+        "changes"
+      ],
+      "description": "修改并保存资产序列化属性",
+      "environment": "edit"
+    },
+    {
+      "id": "asset.mkdir",
+      "keys": [
+        "path"
+      ],
+      "description": "创建资产目录，父目录必须存在",
+      "environment": "edit"
+    },
+    {
+      "id": "asset.copy",
+      "keys": [
+        "path",
+        "destination"
+      ],
+      "description": "复制资产，不覆盖既有目标",
+      "environment": "edit"
+    },
+    {
+      "id": "asset.move",
+      "keys": [
+        "path",
+        "destination"
+      ],
+      "description": "移动或重命名资产，保留 GUID 且不覆盖",
+      "environment": "edit"
+    },
+    {
+      "id": "asset.delete",
+      "keys": [
+        "path"
+      ],
+      "description": "删除明确指定的资产或资产目录",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "asset.import",
+      "keys": [
+        "path"
+      ],
+      "description": "重新导入资产并应用 Importer 修改",
+      "environment": "edit"
+    },
+    {
+      "id": "asset.create",
+      "keys": [
+        "path",
+        "type"
+      ],
+      "description": "创建指定 ScriptableObject 类型的 .asset",
+      "environment": "edit"
+    },
+    {
+      "id": "asset.importer",
+      "keys": [
+        "path",
+        "property",
+        "offset",
+        "limit"
+      ],
+      "description": "读取纹理/模型/音频等 Importer 设置",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "asset.importer-set",
+      "keys": [
+        "path",
+        "changes"
+      ],
+      "description": "修改 Importer 并 SaveAndReimport",
+      "environment": "edit"
+    },
+    {
+      "id": "prefab.instantiate",
+      "keys": [
+        "path",
+        "scene",
+        "parent"
+      ],
+      "description": "将 Prefab 实例化到指定场景",
+      "environment": "edit"
+    },
+    {
+      "id": "prefab.create",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "path"
+      ],
+      "description": "将场景对象保存为新 Prefab",
+      "environment": "edit"
+    },
+    {
+      "id": "prefab.inspect",
+      "keys": [
+        "path",
+        "objectPath",
+        "type",
+        "index",
+        "property",
+        "offset",
+        "limit"
+      ],
+      "description": "加载 Prefab 内容读取子节点或组件属性，随后卸载",
+      "environment": "edit"
+    },
+    {
+      "id": "prefab.modify",
+      "keys": [
+        "path",
+        "objectPath",
+        "type",
+        "index",
+        "changes"
+      ],
+      "description": "修改 Prefab 子节点或组件属性并保存，不需打开窗口",
+      "environment": "edit"
+    },
+    {
+      "id": "settings.get",
+      "keys": [
+        "path",
+        "property",
+        "offset",
+        "limit"
+      ],
+      "description": "读取 Player/Tags/Layers/Input/Graphics 等项目设置",
+      "environment": "edit",
+      "readOnly": true
+    },
+    {
+      "id": "settings.set",
+      "keys": [
+        "path",
+        "changes"
+      ],
+      "description": "经序列化接口修改并保存项目设置",
+      "environment": "edit"
+    },
+    {
+      "id": "editor.selection",
+      "keys": [],
+      "description": "读取编辑器当前选择",
+      "environment": "live"
+    },
+    {
+      "id": "editor.select",
+      "keys": [
+        "id"
+      ],
+      "description": "选择场景对象、组件或资产",
+      "environment": "live"
+    },
+    {
+      "id": "editor.undo",
+      "keys": [],
+      "description": "撤销一次编辑器操作",
+      "environment": "live"
+    },
+    {
+      "id": "editor.redo",
+      "keys": [],
+      "description": "重做一次编辑器操作",
+      "environment": "live"
+    },
+    {
+      "id": "test.list",
+      "keys": [
+        "mode"
+      ],
+      "description": "发现 Unity Test Runner 测试树",
+      "environment": "live"
+    },
+    {
+      "id": "test.run",
+      "keys": [
+        "mode",
+        "testNames",
+        "categories",
+        "assemblies"
+      ],
+      "description": "运行 EditMode/PlayMode 测试并等待完整结果；零测试判失败",
+      "environment": "live"
+    },
+    {
+      "id": "test.result",
+      "keys": [
+        "id"
+      ],
+      "description": "查询测试工单；取消等待后测试引擎可能仍在运行",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "platform.size",
+      "keys": [
+        "target"
+      ],
+      "description": "与包体大小预测窗口共用扫描、基准和估算模型",
+      "environment": "edit",
+      "readOnly": true
+    },
+    {
+      "id": "platform.size-baseline",
+      "keys": [
+        "target",
+        "path"
+      ],
+      "description": "将当前资源与实测 APK/Windows Player 录入包体基准",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "platform.size-clear",
+      "keys": [
+        "target"
+      ],
+      "description": "清除本机当前工程的平台包体基准",
+      "environment": "edit",
+      "requires": "confirm"
+    },
+    {
+      "id": "editor.wait",
+      "keys": [],
+      "description": "等待在线编辑器导入/编译与重载稳定，编译失败返回非零",
+      "environment": "client"
+    },
+    {
+      "id": "runtime.start",
+      "keys": [
+        "port"
+      ],
+      "description": "显式启动开发态本机 HTTP 服务；返回凭据文件路径",
+      "environment": "play",
+      "readOnly": false
+    },
+    {
+      "id": "runtime.stop",
+      "keys": [],
+      "description": "停止运行时 HTTP 服务并取消其未完成工单",
+      "environment": "play",
+      "readOnly": false
+    },
+    {
+      "id": "runtime.capabilities",
+      "keys": [],
+      "description": "游戏本局实际注册的 GM 参数契约与自定义能力",
+      "environment": "play",
+      "readOnly": true
+    },
+    {
+      "id": "runtime.call",
+      "keys": [
+        "runtimeAction",
+        "argumentsJson"
+      ],
+      "description": "调用显式注册的游戏能力；参数由其 JSON Schema 验证",
+      "environment": "play",
+      "readOnly": false
+    },
+    {
+      "id": "editor.coverage",
+      "keys": [],
+      "description": "核对 Revolution.Tools 菜单与 CLI 接线，列出未映射入口",
+      "environment": "either",
+      "readOnly": true
     }
   ],
   "parameterTypes": {
@@ -465,7 +1154,36 @@
     "outputFolder": "string",
     "layer": "string",
     "useAttributes": "bool",
-    "controls": "array"
+    "controls": "array",
+    "id": "string",
+    "objectPath": "string",
+    "destination": "string",
+    "query": "string",
+    "type": "string",
+    "name": "string",
+    "parent": "string",
+    "property": "string",
+    "value": "string",
+    "severity": "string",
+    "mode": "string",
+    "text": "string",
+    "offset": "int",
+    "limit": "int",
+    "index": "int",
+    "additive": "bool",
+    "includeInactive": "bool",
+    "worldPositionStays": "bool",
+    "submit": "bool",
+    "folders": "string[]",
+    "testNames": "string[]",
+    "categories": "string[]",
+    "assemblies": "string[]",
+    "changes": "array",
+    "scenes": "array",
+    "port": "int",
+    "runtimeAction": "string",
+    "argumentsJson": "string",
+    "development": "bool"
   },
   "configFields": {
     "ab": [
@@ -532,5 +1250,23 @@
       "includeSubfolders": "bool",
       "autoReload": "bool"
     }
+  },
+  "pipeline": {
+    "reference": {
+      "$ref": "先前步骤ID#/data/id"
+    },
+    "expect": [
+      {
+        "path": "/data/total",
+        "equals": 1
+      }
+    ],
+    "until": {
+      "path": "/data/finished",
+      "equals": true,
+      "timeoutSeconds": 30,
+      "intervalSeconds": 0.2
+    },
+    "polling": "until 只允许 readOnly 动作；引用保留 JSON 类型；finally 在失败或 Ctrl+C 后逐项执行"
   }
 }

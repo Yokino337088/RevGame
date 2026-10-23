@@ -16,7 +16,11 @@ namespace RevGame.Data
         Eye,
         BreakChain,
         Teleport,
-        Artillery
+        Artillery,
+        Attack,
+        Defense,
+        Haste,
+        Vitality
     }
 
     public static class BattleEventCatalog

@@ -10,9 +10,9 @@ namespace RevGame.Services
     public sealed partial class BattleService
     {
         /// <summary>关闭保胜辅助、随机事件和敌人出手，仅隔离验证这颗棋子的真实攻击链。</summary>
-        public static BattleService CreateAttackRegressionFixture()
+        public static BattleService CreateAttackRegressionFixture(int seed = 20261019)
         {
-            return new BattleService(false, 20261019)
+            return new BattleService(false, seed)
             {
                 Chapter = 1,
                 Round = 1,

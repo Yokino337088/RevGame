@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 952495712
+CRC: 742012626
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2f3985dd10db58f50115c2bbc988cc8d
+    Hash: 38650593d0ab4049b1411c599a8080e4
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e762ccb57c4caaabbb5a4199ac82c23
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2f3985dd10db58f50115c2bbc988cc8d
+    Hash: 38650593d0ab4049b1411c599a8080e4
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -20,5 +20,6 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Material/Background/ArcaneBackdrop.mat
 - Assets/GameRes/Material/Background/ArcaneScene.mat
+- Assets/GameRes/Material/Background/ChapterAtmosphere.mat
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

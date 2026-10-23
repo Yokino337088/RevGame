@@ -2,10 +2,18 @@
 
 ## [未发布]
 
+### RevMCP 与 AI 自动化接口层（2026-10-22）
+
+- 新增 `Revolution.RevMCP` 标准库 Python MCP stdio 服务，统一发现/调用 Editor、真实 GM、运行时业务与显式 CLI/Python。提供 rev_discover/rev_call/rev_run、动态工具、精确业务断言、只读轮询、取消、finally 与截图 image 证据。
+- 新增开发态 `RevRuntimeAutomation` 注册门面、主线程队列和本机 HTTP。Editor 与独立开发版 Player 共用 UI/状态/日志/截图实现；按 owner 对称注销，参数与 HighRisk/confirm 校验，session/request id 防止变更重放。正式包默认不包含接口，WebGL HTTP 明确不支持。
+- Unity 菜单新增 `Revolution.Tools/AI/RevMCP 控制台`，查看运行状态、启停服务、复制连接配置。Automation 2.0 增强场景、对象/组件、资产/Importer、Prefab、项目设置、Console/编译、Test Runner、平台切换和真实 Player 构建；当前20个工具菜单映射完整，离线125/示例工程实时122动作。
+- 修复编译重载后队列恢复丢失、Windows 原子替换竞争；跨帧操作/测试只恢复等待不重跑；Test Framework 零测试/skip/inconclusive 不假通过。构建产物使用 Builds 唯一目录，避免 Library 输出被 Unity 拒绝。Editor 与 HTTP 共用忙标记，防止交叉变更。
+- 新增教学场景 RevAutomationDemo、一句话测试 Skill、面向新手注释、使用说明 MD/HTML 与脱敏验证记录。Python Automation 19项、RevMCP 13项、Unity EditMode 24项通过；实际 MCP→Editor 和 MCP→独立 Windows 开发版 Player 完成按钮+GM→计数3断言→PNG→归零；Windows BuildReport 0错误/0警告。未据此声称 Android、IL2CPP、小游戏真机或全部动作逐一集成通过。
+
 ### 修复 RevGM 面板命令填入后不更新输入框
 
 - 命令从联想、分组、详情、枚举候选或历史填入时，先释放 IMGUI 的键盘控件焦点，避免仍聚焦的 `TextEditor` 把旧缓冲区写回输入字段；之后重新聚焦搜索框，便于继续输入参数。
-- 与 Revolution 框架仓库的 `RevGMWindow` 修复保持同步。
+- 将同一修复同步到 RevGame 集成工程中的框架快照。待 Unity Editor 实际点击回归后再确认全部交互路径。
 
 ### 通用自动化工具（2026-10-19）
 

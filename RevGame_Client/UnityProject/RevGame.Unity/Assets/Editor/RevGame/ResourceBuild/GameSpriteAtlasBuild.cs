@@ -88,7 +88,9 @@ namespace RevGame.Editor
                 .Select(AssetDatabase.GUIDToAssetPath).Where(p => !AssetDatabase.IsValidFolder(p)).ToList();
             roots.Add("Assets/Scenes/GameScene.unity");
             return AssetDatabase.GetDependencies(roots.ToArray(), true)
-                .Where(p => AssetImporter.GetAtPath(p) is TextureImporter).Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
+                // 章节背景是独立 GPU 纹理（显式 _ChapterTex 采样），按需租约，不纳入 Sprite 图集预热。
+                .Where(p => !p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) && AssetImporter.GetAtPath(p) is TextureImporter)
+                .Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
         }
 
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>

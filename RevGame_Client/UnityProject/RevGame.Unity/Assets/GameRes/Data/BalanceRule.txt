@@ -24,7 +24,7 @@ Boss.HpGrowthPerChapter	0.25	Boss 大棋生命随章节递增：第 N 章 = 基�
 Enemy.HpBase	2.4	敌方生命基础系数（给远程对射、守眼回血和事件留出展开时间）。
 Enemy.HpMultiplier	4.5	敌方生命额外倍率，抵消我方六牌保留、双牌升级和每轮增益带来的火力。
 Enemy.HpGrowthPerRound	0.018	敌方生命随连续回合进度递增：× (1 + 进度 × 本值)；进度跨章不归零。
-Enemy.AttackGrowthPerRound	0.008999999999999999	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
+Enemy.AttackGrowthPerRound	0.009	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
 Enemy.AiRoundsPerLevel	5	敌方 AI 档位每隔多少个连续回合提升一档（整数 ≥1）。
 Enemy.AiMaxLevel	4	敌方 AI 最高档位（整数，1~4）。
 Enemy.CountBase	6	敌方每回合基础人数（整数）。
@@ -44,20 +44,12 @@ Deploy.IntervalPerLevelSeconds	0.5	AI 档位每提升一档缩短的补兵间隔
 Deploy.MinEmptyCells	8	棋盘空格数不超过本值（整数）就不补兵，留给玩家调阵和援军。
 Event.ScheduleChance	1	关闭通关辅助时，普通回合安排战斗事件的概率（0~1）；Boss 回合与辅助开启时必定安排。
 Event.RareChance	0.25	关闭通关辅助时，抽到稀有事件组的概率（0~1）。
-Event.DelaySeconds	3	一回合里第一次事件最早的战斗时刻（秒）。
-Event.IntervalSeconds	4	相邻两次战斗事件之间的最短间隔（秒）。
-Event.MaxPerRound	20	每回合战斗事件次数上限（整数）。
+Event.DelaySeconds	1.5	一回合里第一次事件最早的战斗时刻（秒）。
+Event.IntervalSeconds	2	相邻两次战斗事件之间的最短间隔（秒）。
+Event.MaxPerRound	1000	每回合战斗事件次数上限（整数）。
 Event.FallbackHealRatio	0.1	事件没有合法目标时，改为全队回复最大生命的比例。
 Event.ArtilleryRadius	1	炮火支援的范围半径（格，整数）：以最密集的敌人为中心的 (2R+1)×(2R+1)。
 Event.StageDelaySeconds	4	进入僵持/决胜支援阶段后，普通战斗事件至少推迟多少秒，避免两条大标题争抢。
-Assist.StartSeconds	36	僵持/危急局面在此之后才允许渐进支援（秒）。
-Assist.FinalSeconds	74	长局到此进入“逐个击破”阶段（秒）。
-Assist.FinishSeconds	86	最迟兜底时间（秒）：到点清理全部残敌，保证长局一定结束。
-Assist.StallSeconds	9	连续这么久没有敌人真正掉血，才算火力停滞（秒）。
-Assist.PulseSeconds	3	僵持支援的集火间隔（秒）。
-Assist.FinalPulseSeconds	1	决胜收尾阶段逐个击破的间隔（秒）。
-Assist.PulseHpRatio	0.35	僵持支援单次至少削掉目标最大生命的比例，不会因目标星级高而失效。
-Assist.CriticalHpRatio	0.3	己方全部棋子生命比例都低于此值，视为危急，可提前触发渐进支援。
 Assist.SupportDamage	25	支援伤害的固定下限（整数）：炮火与僵持支援取 max(本值, 按最大生命比例计算的伤害)。
 Prep.DelaySeconds	3	准备阶段开始后多少秒发放本轮增益（秒）；开战前必须等它发放。
 Prep.BuffCountMin	4	每轮抽取增益数量的下限（整数）。
@@ -76,3 +68,16 @@ Boss.EnrageHpRatio	0.5	Boss 生命比例低于该值时触发一次狂暴（仅�
 Boss.EnrageCooldownScale	0.65	狂暴后所有技能冷却乘以该系数（越小越频繁）
 Boss.CooldownPerChapter	0.06	每高一章，技能冷却缩短的比例：冷却 × (1 − (章节−1) × 该值)
 Boss.PowerPerChapter	0.12	每高一章，技能伤害提高的比例：倍率 × (1 + (章节−1) × 该值)
+Boss.CaptureHpRatio	0.2	主将血量不高于此比例且零气才能擒王；直接击杀仍获胜
+Event.EffectMultiplier	2	战斗增益效果倍率；数量类支援也受此倍率影响
+PlayerAI.MoveSeconds	3.75	玩家战术移动独立冷却秒数，不随攻速加快
+PlayerAI.RetreatDistance	2	远程在距敌不大于此格数时寻找更安全位置
+Region.IntervalSeconds	15	区域波动间隔秒数，优先随机敌人覆盖区域
+Region.WarningSeconds	1.5	区域高亮预警秒数
+Region.Size	3	方形区域边长，单位格
+Region.CellDelaySeconds	0.08	区域逐格波动间隔秒数（按行序号）
+Region.DamageHpRatio	0.04	波动对区域内双方棋子的最大生命伤害比例；大棋每次仅受击一次
+Bomb.IntervalSeconds	24	能量巨大自动投放间隔秒数
+Bomb.WarningSeconds	1.2	炸弹落地蓄力秒数，到点统一命中
+Bomb.DamageHpRatio	0.05	全场敌棋最大生命伤害比例；不按时间升级、不斩杀
+Combat.BuffCap	5	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成

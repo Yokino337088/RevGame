@@ -61,6 +61,8 @@ namespace RevGame.Services
             battle = new BattleService(false);
             player = battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(0, 0));
             Piece enemy = battle.AddCheckPiece(GameSide.Enemy, PieceKind.Archer, new BoardPos(8, 8));
+            // 此夹具只比较敌方独立冷却，冻结玩家移动避免新接敌AI改变敌方的感知输入。
+            player.NextMoveAt = float.MaxValue;
             battle.RefreshGoState();
             battle.StartBattle();
             float movementCooldown = Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
@@ -71,7 +73,7 @@ namespace RevGame.Services
             BoardPos firstMove = enemy.Pos;
             check(Math.Abs(firstMove.X - 8) + Math.Abs(firstMove.Y - 8) == 1, "敌方滑步冷却到期只靠近一格");
             battle.Tick(movementCooldown - simulationStep);
-            check(enemy.Pos == firstMove && player.Pos == new BoardPos(0, 0), "冷却期间不重复挪动，我方始终守阵");
+            check(enemy.Pos == firstMove && player.Pos == new BoardPos(0, 0), "敌方冷却期间不重复挪动，固定玩家输入未变");
 
             battle = new BattleService(false);
             player = battle.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
@@ -150,7 +152,8 @@ namespace RevGame.Services
                     Piece defender = battle._playerPieces[i];
                     check(defender.Pos == eyePositions[i] && battle._board.GetPiece(eyePositions[i]) == defender, "守眼棋子原编号原位不动：" + eyes + "眼 #" + defender.Id);
                 }
-                check(battle._board.Dump() == before, "成型眼阵保持原位：" + eyes);
+                // 敌人会正常滑步/增援，整盘字符画本来就能变化；玩家编号原位已逐颗检查，再核对真实眼数。
+                check(battle._playerPieces.TrueForAll(p => p.EyeCount == eyes), "敌军行动后玩家成型眼阵仍完整：" + eyes);
             }
         }
     }

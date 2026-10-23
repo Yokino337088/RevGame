@@ -42,8 +42,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa1dd300069341c788a09ccd507de05e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  energyBomb: {fileID: 21300000, guid: 1d355cc2a5775374380f97c0674220cf, type: 3}
+  extendedSprites:
+  - {fileID: 21300000, guid: f1d7d6b41b3051e41b65f019a4636f53, type: 3}
+  - {fileID: 21300000, guid: c5d225ac863791f45902e129ac7ebb9e, type: 3}
+  - {fileID: 21300000, guid: 24db0fb7721480f44bccf6a482375dca, type: 3}
+  - {fileID: 21300000, guid: 4b3e02621833473439fa7de188e286a3, type: 3}
+  - {fileID: 21300000, guid: dabe510d0850505489b1b4e9b6fc1afc, type: 3}
+  - {fileID: 21300000, guid: 7e46accc9c472954bb1aface680cd5fc, type: 3}
+  - {fileID: 21300000, guid: 2299b4b203f843c428a3f3a3a13c3227, type: 3}
+  - {fileID: 21300000, guid: 3a7bd7d705bba9843a80d4facc3b79c7, type: 3}
+  - {fileID: 21300000, guid: 00e2d2b19eaa85d4eafcc64392c20335, type: 3}
   material: {fileID: 2100000, guid: 3e7182d0c8b24067b793cb396c6c43e2, type: 2}
   glow: {fileID: 21300000, guid: 4e6fa53adab642e38539c42cc74d5f29, type: 3}
   ring: {fileID: 21300000, guid: 1721433c2c114792914ec2376e9d22db, type: 3}

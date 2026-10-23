@@ -70,6 +70,10 @@ namespace Revolution.Editor
         public double heartbeatUnix;
         public bool playing;
         public bool compiling;
+        public bool paused;
+        public bool updating;
+        public bool compilationFailed;
+        public string scene;
         public bool batchMode;
         public string activeRequest;
     }
@@ -147,6 +151,23 @@ namespace Revolution.Editor
     public sealed class RevAutomationActionAttribute : Attribute
     {
         public readonly string Name;
+        public string Description { get; set; } = "项目扩展动作";
+        public string Environment { get; set; } = "edit";
+        public string[] Keys { get; set; }
+        public bool Confirm { get; set; }
+        // 仅用于能从已持久化状态继续等待的动作，不能用于重放工作。
+        public bool ResumeAfterReload { get; set; }
         public RevAutomationActionAttribute(string name) { Name = name; }
+    }
+
+    /// <summary>跨帧操作由桥接持续推进，完成前仍占用唯一工单。</summary>
+    public abstract class RevAutomationOperation : IDisposable
+    {
+        public bool Success { get; protected set; } = true;
+        public string Message { get; protected set; } = "完成";
+        public object Result { get; protected set; }
+        public abstract bool Tick();
+        public virtual void Cancel() { Success = false; Message = "操作取消或超时"; }
+        public virtual void Dispose() { }
     }
 }

@@ -1,0 +1,130 @@
+{
+  "atlas_boardstatus": {
+    "bytes": 21565,
+    "sha256": "351d2d2a7edb530b992c2885bc592dbad0c5838699704630e11f9b347d8dfb39"
+  },
+  "atlas_combatframes": {
+    "bytes": 1206737,
+    "sha256": "da02d4cfbb620f15c0660f785613be5e71b023a7ebe06523039c6aac7efc025e"
+  },
+  "atlas_pieceframes": {
+    "bytes": 942810,
+    "sha256": "f86e8a3617d3aa682dec347d281d45bf290c327b996d87e0829ea005401434ba"
+  },
+  "atlas_scenebackdrop_0fc7e394atlas": {
+    "bytes": 793005,
+    "sha256": "1af9f923d695738bb0e5b60865d798edb13dad4d752e79878142f078aa20af75"
+  },
+  "atlas_uibattle": {
+    "bytes": 280730,
+    "sha256": "768b50cbe02efe0fa90aaa9c9ad714ab8dc8d4922c12cb781083a07a54c08186"
+  },
+  "atlas_uimenus": {
+    "bytes": 102497,
+    "sha256": "af1049da9721e9b2855de5ec35dc4160e6539441032909e9573a1ae57060bca4"
+  },
+  "atlas_uireserve": {
+    "bytes": 521599,
+    "sha256": "2e79092e0e71aac9ae0f7c40757790ffe4cff3a2e16e823b3122920afc1966a2"
+  },
+  "atlas_ui_chessboard_chessboardatlas": {
+    "bytes": 464305,
+    "sha256": "d4e54ccc07841fa00d4e2cbc0663c3c80b9d891da39f8b1e73e32d3c69520fde"
+  },
+  "atlas_ui_tavern_imgbkatlas": {
+    "bytes": 492052,
+    "sha256": "8cad23f8ea0a7134c8b208dcf17143c44bd9d6da43c8739123bb488101a11974"
+  },
+  "audio_bgm": {
+    "bytes": 4768919,
+    "sha256": "60439ec913014bff4ea5b43621bfc2f8b9b2eddff84914b444bae24db22b0841"
+  },
+  "audio_sfx": {
+    "bytes": 262069,
+    "sha256": "e21005b2e465205eccbd4ad0fc69ada42b97449eb1f6981e0661fba50cd954ff"
+  },
+  "background_chapter02_village": {
+    "bytes": 2919180,
+    "sha256": "075744b3ee226c393e0b350be905b63b2beaeeaa6f66e78a66b3978aa71df69d"
+  },
+  "background_chapter03_lake": {
+    "bytes": 3391366,
+    "sha256": "d860908a8969fe18d3eb5f9d7656e2be5202fb2c7e2bedcb486a9a9d04716c0b"
+  },
+  "background_chapter04_swamp": {
+    "bytes": 2634536,
+    "sha256": "56b98cd9f03f65b66066d07b18800b21fdd67034353bcee01186f5c407802bc2"
+  },
+  "background_chapter05_ice": {
+    "bytes": 3563723,
+    "sha256": "2a57681da86d434bdf0afbdee149f76162ab1d024d189a9ab772638905355635"
+  },
+  "background_chapter06_temple": {
+    "bytes": 2773808,
+    "sha256": "70394cc011507fd53c27e98d5ff7bad588278046e756488aab45afac3a8c6eb5"
+  },
+  "battle_board": {
+    "bytes": 6637,
+    "sha256": "9ca949beec97a241037e6767a47dc9d6dfb3fcd3d505de7c4b93fbf7b268e29e"
+  },
+  "battle_boss": {
+    "bytes": 3008,
+    "sha256": "6b3538d48de1e46c8eeafa43b260d241d1e8b4cae7881c0052a460be75bd4372"
+  },
+  "battle_feedback": {
+    "bytes": 16965706,
+    "sha256": "14a93cd6deac7ac8a77cf47676a4f2f5724d5e779077e005d0330e56289e3b4a"
+  },
+  "battle_units": {
+    "bytes": 9867,
+    "sha256": "dac451218f700b259826e6a1f5f769b87f5046c82492b3879d87e34f14a04025"
+  },
+  "config_piece_art": {
+    "bytes": 4335,
+    "sha256": "c1183277bc960dfae6c8b04602839b35f3a6b3c85c5b943f98c44b638c745176"
+  },
+  "data_tables": {
+    "bytes": 14650,
+    "sha256": "7f927b45253b410a478378c50055d5c84977fbdbc8882128890e3ee2d7f2613c"
+  },
+  "font_cjk": {
+    "bytes": 15349866,
+    "sha256": "3ecc28d78654c045aae59c25db6742f298d01bbc16f0f12a560350bb31be3b55"
+  },
+  "material_background": {
+    "bytes": 3244,
+    "sha256": "c5959319645531e34812fb17b5aa6005b3cd870032d5a05a8bc23c82203f0f57"
+  },
+  "material_cards": {
+    "bytes": 2462,
+    "sha256": "134263455d024a3d9ba502513a0e9e38857b47c33957195d02772855753fb055"
+  },
+  "material_combat": {
+    "bytes": 2438,
+    "sha256": "97c6f47e6f55e451ae266ab2299d3771e6ed21bc20be7ff1851753da58f4e625"
+  },
+  "material_pieces": {
+    "bytes": 2497,
+    "sha256": "0ba84c86e4c3ba6d1c05a505934ca4c2368b19f8285940fdc746b6a097a2e8d6"
+  },
+  "material_ui": {
+    "bytes": 2440,
+    "sha256": "253b29ce265fbbac82b0a5bac20f8880250a407624e7a010e72fec0bdc21e976"
+  },
+  "shared_shaders": {
+    "bytes": 46025,
+    "sha256": "2090bbf39e1476b6162a497a0438584c87a765c82b8074a2a79c2bae93e1f823"
+  },
+  "ui_items": {
+    "bytes": 8240,
+    "sha256": "c5f509db0e6e329933ded7b81a259fcf96fcccf46b8dd34eb435770754e266a1"
+  },
+  "ui_loading": {
+    "bytes": 8017,
+    "sha256": "92cc9b0477e02f7c98462c2d876ddbb410ba1bef5164cc1150462b1d980177a7"
+  },
+  "ui_panels": {
+    "bytes": 24700,
+    "sha256": "b2ee6dae8c1d69aa7fb157fe66b40e7a9e149fe70668a6306510eaace146c353"
+  }
+}

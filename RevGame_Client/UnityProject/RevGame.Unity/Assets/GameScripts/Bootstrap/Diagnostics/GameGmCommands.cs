@@ -16,7 +16,7 @@ using Revolution;
 
 namespace RevGame.Bootstrap
 {
-    public static class GameGmCommands
+    public static partial class GameGmCommands
     {
         private static readonly string[] Names =
         {
@@ -38,7 +38,17 @@ namespace RevGame.Bootstrap
             "跳过",
             "战斗事件",
             "载入验收场景",
-            "推进"
+            "推进",
+            // 输入与查询类（实现见 GameGmCommands.Input.cs）
+            "点击",
+            "点格子",
+            "面板",
+            "战斗状态",
+            "手牌",
+            "棋子",
+            "选牌",
+            "落点",
+            "奖励"
         };
         public static void Register()
         {
@@ -49,7 +59,7 @@ namespace RevGame.Bootstrap
             });
             // 仅开发验收：让 Boss 立刻施放指定技能，用来逐个检查特效与伤害。
             // 仍会检查“这一招此刻有没有合法目标”，打不到人时返回失败而不是空放；正式战斗由 Boss 自己挑技能。
-            RevGM.Register("RevGame/Boss技能", "Boss 回合战斗中立刻施放技能：0横扫 1狙击 2轰炸 3弹幕 4瞬移 5激光 6汲取 7召唤 8狂暴", args =>
+            RevGM.Register("RevGame/Boss技能", "Boss 回合战斗中立刻施放技能：0横扫 1狙击 2轰炸 3弹幕 4瞬移 5激光 6汲取 7召唤 8狂暴 9流星 10十字 11冰环 12雷链 13毒沼 14火墙 15冰刺 16引力 17烙印", args =>
             {
                 Logic();
                 int index = args.Int(0, 0);
@@ -159,7 +169,7 @@ namespace RevGame.Bootstrap
             });
             RevGM.Register("RevGame/Boss靠近", "自动化：把我方一颗存活棋子移到离 Boss 指定距离的空格（1=贴身，2=隔一格）", args =>
             {
-                int distance = args.Int(1, 1);
+                int distance = args.Int(0, 1);
                 if (distance < 1 || distance > 4)
                 {
                     throw new RevGMUsageException("距离只允许 1~4");
@@ -320,13 +330,13 @@ namespace RevGame.Bootstrap
             });
             RevGM.Register("RevGame/选奖励", "选择0~2号奖励", args => BattleResult(Logic().ChooseReward(args.Int(0, 0))), RevGMArg.Int("选项"));
             RevGM.Register("RevGame/跳过", "第10回合未落牌时跳过换攻击强化", args => BattleResult(Logic().SkipRound()));
-            RevGM.Register("RevGame/战斗事件", "战斗中触发0~7号事件，受配置表里的事件间隔与每回合上限约束", args =>
+            RevGM.Register("RevGame/战斗事件", "战斗中按BattleEventKind编号触发事件，含攻击/防御/攻速/生命；受导表冷却与次数约束", args =>
             {
                 Logic();
                 int id = args.Int(0, 0);
-                if (id < 0 || id > 7)
+                if (!System.Enum.IsDefined(typeof(BattleEventKind), id))
                 {
-                    throw new RevGMUsageException("事件编号必须是0~7");
+                    throw new RevGMUsageException("事件编号不在BattleEventKind配置范围内");
                 }
 
                 return BattleResult(RevServices.GetRequired<IBattleService>().TriggerBattleEvent((BattleEventKind)id));
@@ -359,6 +369,8 @@ namespace RevGame.Bootstrap
 
                 return "推进完成，阶段=" + battle.Phase;
             }, RevGMArg.Int("步数", 1));
+            // 真实指针输入 + 结构化查询：玩家路径与 AI 决策入口，见同目录 GameGmCommands.Input.cs。
+            RegisterInputCommands();
         }
 
         private static BattleLogic Logic()

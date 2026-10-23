@@ -71,6 +71,7 @@ namespace RevGame.Bootstrap
             RevServices.Register<RevGame.Animation.GameAutomationRunner, RevGame.Animation.GameAutomationRunner>(owner: this);
             RevGame.Animation.GameAutomationCommands.Register();
             GameGmCommands.Register();
+            GameCombatGmCommands.Register();
 #endif
         }
 
@@ -120,6 +121,7 @@ namespace RevGame.Bootstrap
             // 必须先停测试再退出游戏域：测试可能还按着按钮，不能对已销毁的旧面板补发松手/点击。
             RevGame.Animation.GameAutomationCommands.Unregister();
             RevServices.Unregister<RevGame.Animation.GameAutomationRunner>();
+            GameCombatGmCommands.Unregister();
             GameGmCommands.Unregister();
 #endif
             // 先退出流程再注销战斗服务，退出回调仍然可以读取最后一份战斗数据。

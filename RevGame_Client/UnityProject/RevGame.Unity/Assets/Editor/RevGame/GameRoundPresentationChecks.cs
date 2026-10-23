@@ -4,6 +4,7 @@
 // 所有暂停动作都包在 try/finally 中，最终返回主界面，不把验收用的半截动画留给人工游玩。
 // ============================================================
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using DG.Tweening;
 using RevGame.Core;
@@ -52,7 +53,13 @@ namespace RevGame.Editor
                     Require(placed == used && battle.Hand.Count == 6 - used, "消费后的剩余牌数不正确");
                     battle.Tick(3f);
                     Require(battle.StartBattle(), "有棋子时未能开战");
-                    battle.Tick(Balance.VictoryAssistFinishSeconds);
+                    // 此处测换轮发牌而非战斗难度：通过统一伤害出口结束固定夹具，不再等待已删除的兜底清场。
+                    var damage = typeof(BattleService).GetMethod("DamagePiece", BindingFlags.Instance | BindingFlags.NonPublic);
+                    foreach (var enemy in new List<RevGame.Pieces.Piece>(battle.EnemyPieces))
+                    {
+                        damage.Invoke(battle, new object[] { enemy, int.MaxValue, null, true });
+                    }
+                    battle.Tick(Balance.BattleSimulationStepSeconds);
                     Require(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player, "没有经过真实结算");
                     Require(battle.ContinueRound(), "结算后无法继续");
                     await RevTask.Delay(600);

@@ -1,10 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revolution 通用自动化工具 · 使用说明</title>
-<style>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revolution.Automation 2.0</title><style>
 /* ============================================================
    Revolution 文档 · 公共样式
    —— 与 assets/docs.css 同一套视觉语言（配色 / 字体 / 组件）。
@@ -136,186 +132,45 @@ footer{max-width:1000px;margin:0 auto;padding:0 24px 60px;color:var(--text-sub);
   .toc{display:none;}
 }
 
-</style>
-</head>
-<body>
 
-<header class="hero">
-  <div class="wrap">
-    <span class="kicker">使用说明 · 从零到能跑业务自动化</span>
-    <h1>Revolution 通用自动化工具 · 使用说明</h1>
-    <p>Python + CLI + GM：调用编辑器工具，编排项目自己的业务流程。</p>
-    <p class="meta">54 个内置动作 · 条件轮询与断言 · 预热与循环 · 失败清理 · HTML / CSV / JSON 报告</p>
-  </div>
-  <div class="deco"></div>
-</header>
+pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit;white-space:pre;}
+img{display:block;max-width:100%;height:auto;margin:18px auto;border-radius:8px;}
+td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
+@media(max-width:640px){section{padding:18px 16px;}main{padding:18px 12px;}h2{display:block;font-size:20px;}.hero h1{font-size:25px;}}
 
-<main>
-  <nav class="toc">
-    <ol>
-      <li><a href="#s0">〇、这套工具能做什么</a></li>
-      <li><a href="#s1">一、目录与运行环境</a></li>
-      <li><a href="#s2">二、最快开始</a></li>
-      <li><a href="#s3">三、一键流程</a></li>
-      <li><a href="#s4">四、业务接入契约</a></li>
-      <li><a href="#s5">五、通用场景脚本</a></li>
-      <li><a href="#s6">六、编辑器功能覆盖</a></li>
-      <li><a href="#s7">七、参数示例与原工具约束</a></li>
-      <li><a href="#s8">八、模式、超时、取消与重载</a></li>
-      <li><a href="#s9">九、报告与性能口径</a></li>
-      <li><a href="#s10">十、Codex 与 Python 使用</a></li>
-      <li><a href="#s11">十一、本次交付检查范围</a></li>
-      <li><a href="#s12">附、内置动作参数速查</a></li>
-    </ol>
-  </nav>
-
-<section id="s0">
-<h2><span class="num">〇</span>这套工具能做什么</h2>
-<p class="lead">Python 3.10+，仅使用标准库。通过 CLI 调用 Revolution 的 Unity 编辑器工具、运行期 GM，以及由 GM 组成的通用业务场景。登录、背包、任务、商城、UI、场景和战斗都使用同一套执行机制。</p><p><strong>业务功能由游戏自己实现。</strong> 工具负责调用、等待、断言、循环、采集、清理和报告。<code>examples/business.*</code> 是接入模板，里面的“业务/…”指令必须由业务开发者提供。现有 GM 演示示例只操作演示数据。</p>
-</section>
-
-<section id="s1">
-<h2><span class="num">一</span>目录与运行环境</h2>
-<p class="lead">Python 工具放在 Revolution.Automation；Unity 主线程桥接放在框架 Editor 程序集。</p>
-<div class="table-wrap">
-<table><thead><tr><th>位置</th><th>用途</th></tr></thead><tbody><tr><td><code>Revolution.Automation/rev.py</code> / <code>rev.cmd</code></td><td>命令行入口</td></tr><tr><td><code>Revolution.Automation/revautomation/</code></td><td>可直接导入的 Python 客户端、编排和报告模块</td></tr><tr><td><code>Revolution.Automation/commands.json</code></td><td>内置动作、参数白名单、配置字段及环境要求</td></tr><tr><td><code>Revolution.Automation/examples/</code></td><td>业务模板、现有 GM 演示、编辑器流程、配置参数示例</td></tr><tr><td><code>Assets/Revolution/Editor/RevAutomation/</code></td><td>Unity 主线程桥接、编辑器适配器、场景执行器</td></tr><tr><td><code>Assets/Revolution.HotUpdate/Editor/RevHotAutomation.cs</code></td><td>可选热更包的 CLI 适配器</td></tr><tr><td><code>Assets/Revolution.Demo/RevHotUpdate.Demo/Editor/RevHotDemoAutomation.cs</code></td><td>可选热更演示的 CLI 适配器</td></tr><tr><td><code>Unity工程/Library/RevolutionAutomation/</code></td><td>本机请求、进度、结果和日志；不入版本库</td></tr><tr><td><code>Revolution.Automation/results/请求ID/</code></td><td>CLI 自动导出的 HTML / CSV / JSON；不入版本库</td></tr></tbody></table>
-</div><p>Unity 桥接必须放在 <code>Assets</code> 对应程序集内才能编译，Python 工具统一放在 <code>Revolution.Automation</code>。复制到其他项目时，要同时带上框架 Editor 桥接。只安装框架本体也可以使用工具，未安装 HotUpdate 或 Demo 时，其动作会明确报“未安装/动作不存在”。</p><p>当前执行目标是 <strong>本机 Unity 编辑器</strong>。资产操作支持在线编辑器和关闭工程后的 batch；GM 与场景执行需要图形编辑器中未暂停的 Play。尚未提供独立 Player、手机或浏览器小游戏的远程控制通道。</p>
-</section>
-
-<section id="s2">
-<h2><span class="num">二</span>最快开始</h2>
-<p class="lead">先确认命令入口与桥接，再进入 Play 执行项目实际注册的 GM。</p>
-<p>以下命令从仓库根目录执行。<code>rev.cmd</code> 默认使用 <code>py -3</code>；没有 Python Launcher 时可设置 <code>$env:REV_PYTHON</code> 为 Python 可执行文件，或直接用 <code>python Revolution.Automation/rev.py</code>。</p><pre>.\Revolution.Automation\rev.cmd <span class="k">--help</span>
-.\Revolution.Automation\rev.cmd commands
-.\Revolution.Automation\rev.cmd doctor</pre><p>编辑器已打开时，等待 Unity 编译完成即可连接。需要工具启动 Unity 时，明确指定本机实际安装路径：</p><pre>$env:UNITY_EDITOR = <span class="s">&#x27;E:\你的Unity安装目录\Editor\Unity.exe&#x27;</span>
-.\Revolution.Automation\rev.cmd <span class="k">--timeout</span> <span class="n">300</span> editor launch
-.\Revolution.Automation\rev.cmd <span class="k">--mode</span> live editor status
-.\Revolution.Automation\rev.cmd <span class="k">--mode</span> live editor play <span class="k">--scene</span> <span class="s">&#x27;Assets/你的启动场景.unity&#x27;</span>
-.\Revolution.Automation\rev.cmd <span class="k">--mode</span> live gm list
-.\Revolution.Automation\rev.cmd <span class="k">--mode</span> live gm exec <span class="s">&#x27;背包/添加道具 1001 2&#x27;</span>
-.\Revolution.Automation\rev.cmd <span class="k">--mode</span> live editor stop</pre><p>上面的背包指令只是业务命名示意。<code>gm list</code> 显示项目实际注册的命令、参数签名及高危标记；编辑模式列出注册入口的快照，Play 模式读取真实运行期注册表。自动化执行不会替业务偷偷注册命令。</p><p>所有全局选项放在子命令<strong>前面</strong>：<code>--project</code>、<code>--unity</code>、<code>--mode</code>、<code>--timeout</code>、<code>--confirm</code>、<code>--output</code>、<code>--no-graphics</code>。<code>--project</code> 默认指向本仓库的 <code>RevolutionFrameWork_Unity</code>，因此可以从其他工作目录调用脚本。</p>
-</section>
-
-<section id="s3">
-<h2><span class="num">三</span>一键流程</h2>
-<p class="lead">用一个 JSON 文件串联编辑器操作与业务场景，并在结束时执行收尾。</p>
-<h3 id="section-4">3.1 现有 GM 演示</h3><pre>.\Revolution.Automation\rev.cmd <span class="k">--timeout</span> <span class="n">300</span> <span class="k">--output</span> Revolution.Automation/results/demo-pipeline.json pipeline Revolution.Automation/examples/demo-gm.pipeline.json</pre><p>流程会启动/连接图形编辑器、进入现有 <code>RevGMCommandDemo</code> 场景、执行演示金币流程，最后停止 Play。这里的金币是 Demo 假数据；该示例用于工具接线，不代表任何真实业务验证。本次开发没有执行该流程。</p><h3 id="section-5">3.2 自己的业务</h3><ol><li>按第 4 节提供真实业务 GM。</li><li>修改 <code>examples/business.pipeline.json</code> 的场景路径。</li><li>修改 <code>examples/business.scenario.json</code> 的命令、条件及断言。</li><li>先运行少量轮次，确认业务状态和清理契约，再增加重复次数。</li></ol><pre>.\Revolution.Automation\rev.cmd scenario validate Revolution.Automation/examples/business.scenario.json
-.\Revolution.Automation\rev.cmd <span class="k">--timeout</span> <span class="n">86400</span> <span class="k">--output</span> Revolution.Automation/results/business-pipeline.json pipeline Revolution.Automation/examples/business.pipeline.json</pre><p><code>pipeline</code> 是 Python 顺序编排器：每步提供 <code>action</code> 和 <code>payload</code>，或用 <code>file</code> 读取参数。<code>file</code> 相对 pipeline 文件所在目录解析。<code>steps</code> 任一步失败就停止后续工作步骤，<code>finally</code> 逐项执行并记录失败，单个收尾请求最多等待 120 秒。它没有自动重试、事务回滚或断点重放；已经完成的导表/打包不会自动撤销。<code>--timeout</code> 是每次 Unity 请求的期限，pipeline 总时长可以更长。</p><pre>{
-  <span class="s">&quot;name&quot;</span>: <span class="s">&quot;资源检查&quot;</span>,
-  <span class="s">&quot;steps&quot;</span>: [
-    { <span class="s">&quot;action&quot;</span>: <span class="s">&quot;ab.scan&quot;</span> },
-    { <span class="s">&quot;action&quot;</span>: <span class="s">&quot;ab.validate&quot;</span>, <span class="s">&quot;payload&quot;</span>: { <span class="s">&quot;target&quot;</span>: <span class="s">&quot;Android&quot;</span> } },
-    { <span class="s">&quot;action&quot;</span>: <span class="s">&quot;platform.resources&quot;</span> }
-  ],
-  <span class="s">&quot;finally&quot;</span>: []
-}</pre><p>资产操作与业务场景可以编排在一起；在资产操作前先停止 Play，生成代码后等编译完成再进入 Play。流程不保存未保存场景，切换场景时发现未保存内容会返回失败。</p>
-</section>
-
-<section id="s4">
-<h2><span class="num">四</span>业务接入契约</h2>
-<p class="lead">业务提供真实操作、完成状态与结果查询，工具负责驱动、等待和记录。</p>
-<p><code>examples/RevBusinessGM.cs.txt</code> 提供只接收业务回调的注册模板。复制到业务目录后接入自己的服务，模板本身不实现登录、背包、战斗等逻辑。</p><div class="table-wrap">
-<table><thead><tr><th>指令角色</th><th>责任</th></tr></thead><tbody><tr><td>准备</td><td>创建/选择测试账号、初始数据与业务环境</td></tr><tr><td>执行</td><td>发起一轮真实操作，可传 <code>{round}</code> 作为编号或随机种子</td></tr><tr><td>状态</td><td>无副作用查询，明确返回“运行中 / 完成 / 失败”等约定文本</td></tr><tr><td>断言</td><td>查询真实业务结果，满足预期时返回约定值；异常/拒绝给明确原因</td></tr><tr><td>复位</td><td>清理本轮对象、监听、计时器、句柄、临时数据；允许在半途失败后调用</td></tr><tr><td>收尾</td><td>恢复准备阶段的状态与资源；允许重复调用</td></tr></tbody></table>
-</div><p><strong><code>RevGM.Execute</code> 是同步接口。</strong> 命令返回成功只说明命令体执行完成；异步登录、网络回包、场景加载、动画或一场战斗结束，需要通过 <code>until</code> 轮询业务状态。业务跨帧流程继续使用框架的 <code>RevTask</code>，由业务服务持有生命周期和取消令牌。查询命令应快速返回，禁止在 Unity 主线程里忙等。</p><p>注册只在业务启动时执行一次，结束时按名字 <code>Unregister</code>，避免重复注册。编辑器的 <code>[RevGMEntry]</code> 入口只做注册，不能在枚举命令时启动真实业务。正式包是否保留 GM 由业务决定，示例模板限定 <code>UNITY_EDITOR || DEVELOPMENT_BUILD</code>。</p><p><code>until</code> 与 <code>assert</code> 比较的是 GM 返回结果的 <strong>Message 精确字符串</strong>，区分大小写；不支持模糊包含、Python 表达式或自动解析任意业务 JSON。业务可以提供专门查询命令返回简洁且稳定的判定文本。需要复杂比较时，在业务查询指令内实现，或通过 Python 取 <code>gm.exec</code> 的结构化响应后自行判断。</p>
-</section>
-
-<section id="s5">
-<h2><span class="num">五</span>通用场景脚本</h2>
-<p class="lead">一份场景脚本描述准备、工作、逐轮清理和全局收尾。</p>
-<pre>{
-  <span class="s">&quot;name&quot;</span>: <span class="s">&quot;任意业务循环&quot;</span>,
-  <span class="s">&quot;repeat&quot;</span>: <span class="n">10000</span>,
-  <span class="s">&quot;warmup&quot;</span>: <span class="n">10</span>,
-  <span class="s">&quot;stopOnFailure&quot;</span>: <span class="k">true</span>,
-  <span class="s">&quot;failOnUnityError&quot;</span>: <span class="k">true</span>,
-  <span class="s">&quot;setup&quot;</span>: [{ <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;gm&quot;</span>, <span class="s">&quot;command&quot;</span>: <span class="s">&quot;业务/准备&quot;</span> }],
-  <span class="s">&quot;steps&quot;</span>: [
-    { <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;gm&quot;</span>, <span class="s">&quot;command&quot;</span>: <span class="s">&quot;业务/执行 {round}&quot;</span> },
-    { <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;until&quot;</span>, <span class="s">&quot;command&quot;</span>: <span class="s">&quot;业务/状态&quot;</span>, <span class="s">&quot;expected&quot;</span>: <span class="s">&quot;完成&quot;</span>, <span class="s">&quot;timeoutSeconds&quot;</span>: <span class="n">60</span>, <span class="s">&quot;intervalSeconds&quot;</span>: <span class="n">0.1</span> },
-    { <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;assert&quot;</span>, <span class="s">&quot;command&quot;</span>: <span class="s">&quot;业务/断言&quot;</span>, <span class="s">&quot;expected&quot;</span>: <span class="s">&quot;通过&quot;</span> },
-    { <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;wait&quot;</span>, <span class="s">&quot;frames&quot;</span>: <span class="n">2</span> }
-  ],
-  <span class="s">&quot;cleanup&quot;</span>: [{ <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;gm&quot;</span>, <span class="s">&quot;command&quot;</span>: <span class="s">&quot;业务/复位&quot;</span> }],
-  <span class="s">&quot;teardown&quot;</span>: [{ <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;gm&quot;</span>, <span class="s">&quot;command&quot;</span>: <span class="s">&quot;业务/收尾&quot;</span> }],
-  <span class="s">&quot;thresholds&quot;</span>: { <span class="s">&quot;maxFrameP95Ms&quot;</span>: <span class="n">0</span>, <span class="s">&quot;maxFrameMs&quot;</span>: <span class="n">0</span>, <span class="s">&quot;maxMonoUsedBytes&quot;</span>: <span class="n">0</span> }
-}</pre><div class="table-wrap">
-<table><thead><tr><th>字段/步骤</th><th>含义</th></tr></thead><tbody><tr><td><code>setup</code></td><td>全场景执行一次</td></tr><tr><td><code>steps</code></td><td>每轮工作步骤；至少一个</td></tr><tr><td><code>cleanup</code></td><td>每轮后执行，工作失败后也尝试执行</td></tr><tr><td><code>teardown</code></td><td>场景结束时执行，准备失败后也尝试执行</td></tr><tr><td><code>gm</code></td><td>执行命令；返回失败则本步骤失败</td></tr><tr><td><code>until</code></td><td>轮询命令，Message 等于 expected 才继续；必须有正数 timeoutSeconds</td></tr><tr><td><code>assert</code></td><td>执行一次查询并比较 expected</td></tr><tr><td><code>wait</code></td><td>等待指定秒数与帧数；两者同时填写时都满足才继续</td></tr><tr><td><code>repeat</code> / <code>warmup</code></td><td>正式轮数 1..1000000；预热轮数 0..1000000</td></tr><tr><td><code>{iteration}</code></td><td>正式轮从 0 递增，预热阶段固定为 0</td></tr><tr><td><code>{round}</code></td><td>预热加正式的总轮编号，从 0 递增，适合唯一轮号</td></tr><tr><td><code>stopOnFailure</code></td><td>默认 true；false 时某轮失败仍先清理，再继续下一轮；总结果仍为失败</td></tr><tr><td><code>failOnUnityError</code></td><td>默认 true；Unity Error/Exception/Assert 计入失败，工作阶段转入清理</td></tr><tr><td><code>thresholds</code></td><td>0 关闭；非零时限制正式阶段帧 P95、最大帧耗时、采样托管内存峰值</td></tr></tbody></table>
-</div><p>步骤按游戏帧推进，最多每帧执行一次步骤/条件查询；<code>wait.seconds</code> 和 <code>until</code> 超时使用墙钟，不受 <code>Time.timeScale=0</code> 影响，但编辑器暂停会中断场景。预热失败也会使总结果失败。清理失败后继续尝试后续清理步骤。</p><pre>.\Revolution.Automation\rev.cmd <span class="k">--mode</span> live <span class="k">--timeout</span> <span class="n">86400</span> scenario run Revolution.Automation/examples/business.scenario.json <span class="k">--repeat</span> <span class="n">10000</span> <span class="k">--warmup</span> <span class="n">10</span> <span class="k">--report-dir</span> Revolution.Automation/results/my-business</pre><p>长场景应显式增大整体 <code>--timeout</code>。默认只有 120 秒。一万轮连续在 Unity 内执行，Python 不逐帧发送 IPC。</p>
-</section>
-
-<section id="s6">
-<h2><span class="num">六</span>编辑器功能覆盖</h2>
-<p class="lead">现有菜单和主要窗口操作对应到明确的 CLI 命令。</p>
-<p>目前仓库中的 Revolution 编辑器菜单与主要窗口功能对应如下。菜单是 GUI 入口时，<code>editor menu --path</code> 并不存在：使用 <code>editor menu &#x27;菜单全路径&#x27;</code> 打开窗口；无人值守执行使用对应动作。</p><div class="table-wrap">
-<table><thead><tr><th>现有工具/功能</th><th>CLI</th></tr></thead><tbody><tr><td>GM 指令面板</td><td><code>gm list</code> / <code>gm exec</code>；窗口用 <code>editor menu</code></td></tr><tr><td>RevAB 打包工具：打包、校验、映射</td><td><code>ab build</code> / <code>ab validate</code> / <code>ab map</code></td></tr><tr><td>RevAB 分包浏览：资源归包/移动/移出</td><td><code>ab scan</code> / <code>ab mark</code> / <code>ab mark-source</code></td></tr><tr><td>分包改名、层级移动、移除标记、清理空闲名</td><td><code>ab rename</code> / <code>ab delete</code> / <code>ab clean-names</code></td></tr><tr><td>分包依赖与共享依赖分析</td><td><code>ab dependencies</code>；共享资源用 <code>ab mark</code> 移到单独包</td></tr><tr><td>体积页签 / 实际产物</td><td><code>ab sizes</code> / <code>ab artifacts</code></td></tr><tr><td>检查页签 / 映射检查</td><td><code>ab validate</code> / <code>ab check-map</code></td></tr><tr><td>快照页签</td><td><code>ab snapshot</code> / <code>ab diff</code>，baseline 可指定上次打包快照路径</td></tr><tr><td>打包配置、首包拷贝、标记同步、Project 显示</td><td><code>ab config</code> / <code>ab configure</code> / <code>ab copy</code> / <code>ab sync</code> / <code>ab overlay</code></td></tr><tr><td>资源/音效目录常量生成</td><td><code>ab res-paths</code> / <code>ab sound-paths</code></td></tr><tr><td>编辑器 AB 模式开关</td><td><code>ab mode</code></td></tr><tr><td>导表窗口：来源、输出配置、读取、预览计划</td><td><code>excel settings</code> / <code>excel configure</code> / <code>excel read</code> / <code>excel plan</code></td></tr><tr><td>两个快速导出菜单</td><td><code>excel export</code> / <code>excel export --data-only</code>；不传 source 使用已保存来源</td></tr><tr><td>导表数据目录标记、旧数据检查/清理</td><td><code>excel mark</code> / <code>excel orphans</code> / <code>excel clean</code></td></tr><tr><td>UI 面板代码生成器</td><td><code>ui scan</code> / <code>ui preview</code> / <code>ui generate</code></td></tr><tr><td>平台 Resources 首包审计</td><td><code>platform resources</code></td></tr><tr><td>平台 link.xml 生成</td><td><code>platform linkxml</code></td></tr><tr><td>热更清单窗口的生成/自检</td><td><code>hot manifest</code> / <code>hot check</code></td></tr><tr><td>热更演示四个菜单</td><td><code>hot demo-prepare</code> / <code>hot demo-open</code> / <code>hot demo-clear</code> / <code>hot demo-urls</code></td></tr><tr><td>生成全部 UI 演示预制体</td><td><code>demo ui-prefabs</code></td></tr></tbody></table>
-</div><p>“新建空分包”在 Unity 中只是窗口中的临时名字；CLI 用 <code>ab mark</code> 为资源设置一个新包名，就完成实际分包。<code>ab delete</code> 只移除标记，不删除资源。窗口布局、折叠、排序、选择等展示行为不产生资产，CLI 通过结构化结果供 Codex 查询。</p><p>AB <code>scan</code>、<code>dependencies</code>、<code>sizes</code> 使用只读收集；<code>build</code> / <code>map</code> 按原工具收集链执行，配置为 AutoByFolder 时会重新标记资源。<code>ab sizes</code> 返回源文件及其依赖源文件字节估算；<code>ab artifacts</code> 返回真正产物大小，两者不能混作压缩率或运行时内存。</p><p>独立 WPF 导表与 COS 发布程序属于仓库配套应用，不属于 Unity 编辑器扩展，本次 CLI 未增加云上传命令。热更演示装配本地 CDN 目录后，仍需自行启动已有本地 HTTP 服务。</p>
-</section>
-
-<section id="s7">
-<h2><span class="num">七</span>参数示例与原工具约束</h2>
-<p class="lead">优先使用 UTF-8 JSON 参数文件；生成与覆盖继续遵守原工具的约束。</p>
-<p>PowerShell 传嵌套 JSON 容易丢引号，优先使用 UTF-8 JSON 参数文件：</p><pre>.\Revolution.Automation\rev.cmd ab configure <span class="k">--json</span> Revolution.Automation/examples/ab-config.json
-.\Revolution.Automation\rev.cmd <span class="k">--timeout</span> <span class="n">1800</span> ab build <span class="k">--target</span> StandaloneWindows64
-.\Revolution.Automation\rev.cmd ab dependencies
-.\Revolution.Automation\rev.cmd ab artifacts <span class="k">--target</span> StandaloneWindows64
-.\Revolution.Automation\rev.cmd ab mode <span class="k">--set</span> enabled=<span class="k">true</span>
-.\Revolution.Automation\rev.cmd ab snapshot
-.\Revolution.Automation\rev.cmd ab diff
-.\Revolution.Automation\rev.cmd excel read <span class="k">--source</span> <span class="s">&#x27;D:\策划表&#x27;</span>
-.\Revolution.Automation\rev.cmd excel plan <span class="k">--source</span> <span class="s">&#x27;D:\策划表&#x27;</span>
-.\Revolution.Automation\rev.cmd excel export <span class="k">--source</span> <span class="s">&#x27;D:\策划表&#x27;</span> <span class="k">--data-only</span>
-.\Revolution.Automation\rev.cmd ui scan <span class="k">--prefab</span> <span class="s">&#x27;Assets/GameRes/UI/RevExample.prefab&#x27;</span>
-.\Revolution.Automation\rev.cmd ui preview <span class="k">--json</span> Revolution.Automation/examples/ui-panel.json
-.\Revolution.Automation\rev.cmd platform resources
-.\Revolution.Automation\rev.cmd platform linkxml
-.\Revolution.Automation\rev.cmd hot manifest <span class="k">--target</span> StandaloneWindows64 <span class="k">--json</span> Revolution.Automation/examples/hot-manifest.json
-.\Revolution.Automation\rev.cmd hot check <span class="k">--target</span> StandaloneWindows64</pre><p><code>--set KEY=JSON</code> 的字符串值必须包含 JSON 双引号；建议字符串、数组和控件参数直接写文件。<code>call 动作ID --json 参数文件</code> 可以调用同一动作或可选扩展动作。</p><p>配置动作的 <code>configJson</code> 是<strong>JSON 字符串</strong>，用于局部覆盖原 ScriptableObject 的字段。允许的配置字段见 <code>commands.json</code> 的 <code>configFields</code>。AB 枚举使用整数：<code>markMode</code> 的 0=ScanExisting、1=AutoByFolder；<code>compressMode</code> 的 0=LZ4、1=LZMA、2=None。导表 <code>userConfigJson</code> 可保存 <code>sources</code>、<code>includeSubfolders</code>、<code>autoReload</code>。<code>recursive</code> 控制本次读取是否递归，CLI 默认 true；需要和窗口的非递归设置一致时传 false。</p><p>UI 先 <code>scan</code> 取得控件路径和事件名。<code>controls</code> 不填采用原窗口默认选择；填空数组表示不选任何控件；每项为 <code>path</code>、<code>bind</code>、<code>events</code>，事件名使用 scan 返回的 Hook（如 Click）。<code>component</code> 是扫描返回信息，当前生成器按同一节点优先交互控件的既有规则选组件。代码生成仍走原名称、路径、重复节点和事件消歧校验。已有业务 <code>.cs</code> 拒绝覆盖；原生成骨架重生成需要 <code>--confirm</code>。</p><p>热更 <code>appVersion</code> 默认 <code>Application.version</code>，<code>resVersion</code> 必填；<code>target</code> 默认当前 BuildTarget。热更 Demo 准备使用原演示的当前目标和版本自增约定，不接受其他目标参数。</p><p>高危 GM、批量移除/改名、清空热更缓存、重生成演示资源，以及原工具要求确认的覆盖/删表，使用全局 <code>--confirm</code> 表达允许。缺少该参数返回原因。UI 业务脚本即使带 confirm 也不能覆盖。</p>
-</section>
-
-<section id="s8">
-<h2><span class="num">八</span>模式、超时、取消与重载</h2>
-<p class="lead">明确区分在线编辑器与 batch，并通过请求 ID 跟踪取消、超时和重载。</p>
-<div class="table-wrap">
-<table><thead><tr><th>模式</th><th>行为</th></tr></thead><tbody><tr><td><code>auto</code></td><td>有活跃图形编辑器桥接则在线调用，否则尝试 batch</td></tr><tr><td><code>live</code></td><td>要求已打开工程并有桥接；GM/场景还要求 Play</td></tr><tr><td><code>batch</code></td><td>仅工程关闭时启动子 Unity，执行资产任务并按结果退出；不带 <code>-quit</code> 抢先结束</td></tr><tr><td><code>editor launch</code></td><td>打开图形 Unity 并等待桥接；超时后保留该编辑器，日志位置写入错误信息</td></tr></tbody></table>
-</div><p>工具不会对已打开的工程再启动第二个 Unity。在线长打包会阻塞主线程心跳，工具仍检查进程/工程锁并拒绝另开编辑器。Unity 路径优先取 <code>--unity</code>、其次 <code>UNITY_EDITOR</code>、最后按 ProjectVersion/常见 Hub 目录定位；版本不明确时要求显式路径。<code>--no-graphics</code> 只影响 batch，不适合渲染性能评估。</p><p>每个请求有 ID、会话、期限和独立目录。超期/已取消的排队请求不会迟到执行。开始前保存 active 状态；脚本重载后只恢复 Play/Stop 的状态等待，其他已开始动作返回 <code>InterruptedByReload</code>，不重放有副作用的工作。收到该错误时先检查现有产物与逐轮 JSONL，再决定重试。</p><p>Ctrl+C 或整体超时会写取消标记。运行中的场景在下次更新进入清理，取消后的清理总共最多 10 秒。Play 已停止、编辑器暂停/关闭或脚本重载时，无法保证业务 GM 清理继续执行。同步 GM/打包调用卡住主线程时，文件标记无法抢占它；需定位阻塞业务。客户端只可能终止自己启动且取消后仍未退出的 batch 子进程，不会终止用户的在线图形编辑器。</p><pre>.\Revolution.Automation\rev.cmd job 这里替换为32位请求ID
-.\Revolution.Automation\rev.cmd job 这里替换为32位请求ID <span class="k">--cancel</span></pre><p><code>job</code> 可从另一个终端查询进度或取消。在线等待超时后，Unity 可能仍在清理；通过 job 查看最终 response。CLI 没有自动补跑未完成轮次，避免重复发奖、扣资源或网络请求。</p>
-</section>
-
-<section id="s9">
-<h2><span class="num">九</span>报告与性能口径</h2>
-<p class="lead">报告保留实际采集数据，区分编辑器帧时间、内存采样与真实设备性能。</p>
-<p><code>scenario run</code> 与 pipeline 内的 <code>scenario.run</code> 完成后自动导出 HTML / CSV / JSON；失败场景也导出已有结果。<code>--report-dir</code> 可指定场景报告目录。客户端超时/重载中断时，保留的 job 文件可供手动检查，已有最终结果可以重新导出：</p><pre>.\Revolution.Automation\rev.cmd report <span class="s">&#x27;Unity工程/Library/RevolutionAutomation/jobs/请求ID/scenario-result.json&#x27;</span> <span class="k">--directory</span> Revolution.Automation/results/recovered</pre><div class="table-wrap">
-<table><thead><tr><th>数据</th><th>定义与限制</th></tr></thead><tbody><tr><td>completed / failedIterations</td><td>已记录正式轮数（含失败轮）及失败轮数；全局准备/收尾失败单独影响总 success</td></tr><tr><td>iterations.jsonl / CSV</td><td>逐轮：成功、墙钟时长、帧数、帧 P95/最大值、轮末内存、GC 计数差和失败原因</td></tr><tr><td>帧均值/P95/最大值</td><td><code>Time.unscaledDeltaTime</code>，正式 steps 与 cleanup 阶段采集；含阶段边界帧及编辑器、业务和采集开销</td></tr><tr><td>P95</td><td>0.1ms 直方图近似上界；200ms 及以上桶保守使用实际最大值，非精确分位数</td></tr><tr><td>内存</td><td>Mono 已用字节、引擎总分配字节；每 30 帧及轮末采样的峰值，可能漏掉采样间短峰；含编辑器和工具开销</td></tr><tr><td>GC</td><td>每轮 <code>GC.CollectionCount(0/1/2)</code> 差值，包含编辑器和工具分配，非单个业务 GC Alloc</td></tr><tr><td>unity-errors.jsonl</td><td>最多保留前 50 个 Error/Exception/Assert，含阶段、轮号、步骤和堆栈；总错误数另计</td></tr></tbody></table>
-</div><p>帧数据<strong>不是独立 CPU/GPU 耗时，也不等于真机性能</strong>；帧率上限、VSync、失焦限帧、GameView 状态和 Profiler 都会影响结果。稳定性循环与性能测量应固定同一环境，正式真机性能仍需设备侧采集。没有帧样本时 0 表示未测得；启用帧门禁却没有样本会判失败。预热轮不纳入正式性能汇总。</p><p>采集使用固定大小直方图并复用每轮缓存；逐轮写盘避免把一万轮结果堆在内存。写盘、JSON 序列化和错误记录仍有成本，需要将工具本身算入测量环境。</p>
-</section>
-
-<section id="s10">
-<h2><span class="num">十</span>Codex 与 Python 使用</h2>
-<p class="lead">Codex 根据结构化结果继续编排；Python 也可直接调用同一客户端。</p>
-<p>可直接告诉 Codex：“列出可用 GM；按背包脚本运行 20 轮；查看断言与 Unity 错误；给出报告路径”。Codex 调 CLI，根据结构化返回值继续工作。视觉位置、界面外观或系统对话框需要单独的电脑/浏览器控制能力，CLI 不会替鼠标点击自动推断业务完成。</p><p>Python 入口：<code>from revautomation.client import RevClient</code>，<code>client.call(action, payload, confirm=False)</code> 返回带 success/error/message/data/jobDirectory 的字典；Unity 业务失败用 <code>success=false</code> 表达，客户端环境/超时错误抛异常，调用者必须检查返回值。<code>examples/business_runner.py</code> 演示进入 Play、执行、导出、finally 停止的完整写法。</p><p>CLI stdout 输出 JSON，场景进度写 stderr。退出码：0 成功；1 Unity 动作/场景或流程失败；2 参数/客户端/超时错误；130 用户中断。<code>--output</code> 同时保存完整正常响应；命令在等待阶段抛出的客户端错误通过 stderr 返回，job 文件仍保留。</p><p>可选 Editor 扩展通过 <code>[RevAutomationAction(&quot;自己的动作ID&quot;)]</code> 注册一个静态、接收 <code>RevAutomationRequest</code>、返回可被 JsonUtility 序列化对象的方法。适配器引用 <code>Revolution.Editor</code>，只在编辑器程序集使用；框架本体不反向引用业务或可选包。</p>
-</section>
-
-<section id="s11">
-<h2><span class="num">十一</span>本次交付检查范围</h2>
-<p class="lead">本次完成源码、语法、命令入口与编译检查，业务运行范围在这里明确记录。</p>
-<p>已做源码检查、Python 语法/CLI 入口检查及使用真实 Unity 引用的 C# 编译。未自动启动业务场景、运行演示场景或执行一万轮压测；项目目前没有用户自己的业务 GM。Unity 实际 Play、Domain Reload、各平台打包、视觉交互与真机表现需要接入实际业务后再运行。</p>
-</section>
-
-<section id="s12">
-<h2><span class="num">附</span>内置动作参数速查</h2>
-<p class="lead">按动作 ID 查找参数字段与执行环境；完整定义在 commands.json。</p>
-<p>以下清单来自 <code>commands.json</code>；<code>call</code> 可直接使用动作 ID。client 表示 Python 本地操作；edit 表示非 Play 的在线/batch 操作；live 表示图形编辑器；either 表示在线/batch 均可。</p><div class="table-wrap">
-<table><thead><tr><th>动作 ID</th><th>payload 字段</th><th>环境</th><th>说明</th></tr></thead><tbody><tr><td><code>editor.launch</code></td><td>—</td><td>client</td><td>打开图形 Unity 并等待桥接</td></tr><tr><td><code>editor.status</code></td><td>—</td><td>either</td><td>工程、Play、编译和 GM 状态</td></tr><tr><td><code>editor.play</code></td><td>scene</td><td>live</td><td>进入 Play，可指定场景；等待两帧</td></tr><tr><td><code>editor.stop</code></td><td>—</td><td>live</td><td>停止 Play</td></tr><tr><td><code>editor.refresh</code></td><td>—</td><td>edit</td><td>刷新 AssetDatabase</td></tr><tr><td><code>editor.menus</code></td><td>—</td><td>either</td><td>发现实际安装的 Revolution 菜单</td></tr><tr><td><code>editor.menu</code></td><td>path</td><td>live</td><td>打开六类工具窗口；执行操作用专用动作</td></tr><tr><td><code>ab.config</code></td><td>—</td><td>edit</td><td>读取 AB 配置</td></tr><tr><td><code>ab.configure</code></td><td>configJson</td><td>edit</td><td>局部修改 AB 配置字段</td></tr><tr><td><code>ab.scan</code></td><td>—</td><td>edit</td><td>读取分包布局</td></tr><tr><td><code>ab.validate</code></td><td>target</td><td>edit</td><td>资源与平台 Shader 校验</td></tr><tr><td><code>ab.build</code></td><td>target</td><td>edit</td><td>收集、校验、构建、映射与首包拷贝</td></tr><tr><td><code>ab.map</code></td><td>—</td><td>edit</td><td>仅生成映射和路径常量</td></tr><tr><td><code>ab.res-paths</code></td><td>—</td><td>edit</td><td>生成资源路径常量</td></tr><tr><td><code>ab.sound-paths</code></td><td>—</td><td>edit</td><td>生成音效路径常量</td></tr><tr><td><code>ab.check-map</code></td><td>target</td><td>edit</td><td>检查运行期映射一致性</td></tr><tr><td><code>ab.dependencies</code></td><td>—</td><td>edit</td><td>包依赖、共享资源、循环依赖</td></tr><tr><td><code>ab.sizes</code></td><td>—</td><td>edit</td><td>按包估算源文件及其依赖源文件体积</td></tr><tr><td><code>ab.artifacts</code></td><td>target</td><td>edit</td><td>列出实际打包文件与字节数</td></tr><tr><td><code>ab.snapshot</code></td><td>—</td><td>edit</td><td>记录当前布局为基准</td></tr><tr><td><code>ab.diff</code></td><td>baseline</td><td>edit</td><td>比较基准与当前布局</td></tr><tr><td><code>ab.mark</code></td><td>assets, bundle</td><td>edit</td><td>创建/移动资源到分包；空 bundle 清除显式标记</td></tr><tr><td><code>ab.mark-source</code></td><td>path</td><td>edit</td><td>查询资源的显式/继承标记来源</td></tr><tr><td><code>ab.rename</code></td><td>bundle, newBundle</td><td>edit</td><td>按包名前缀改名或移动层级</td></tr><tr><td><code>ab.delete</code></td><td>bundle</td><td>edit</td><td>按包名前缀移除标记，资源仍保留</td></tr><tr><td><code>ab.clean-names</code></td><td>—</td><td>edit</td><td>清理闲置包名</td></tr><tr><td><code>ab.sync</code></td><td>—</td><td>edit</td><td>强制同步标记和缓存</td></tr><tr><td><code>ab.overlay</code></td><td>enabled</td><td>edit</td><td>切换 Project 窗口包标记显示</td></tr><tr><td><code>ab.copy</code></td><td>target</td><td>edit</td><td>按已启用配置拷贝首包</td></tr><tr><td><code>ab.mode</code></td><td>enabled</td><td>edit</td><td>切换编辑器 AB 加载模式</td></tr><tr><td><code>excel.settings</code></td><td>—</td><td>edit</td><td>读取团队及个人导表设置</td></tr><tr><td><code>excel.configure</code></td><td>configJson, userConfigJson</td><td>edit</td><td>修改团队及个人导表设置</td></tr><tr><td><code>excel.read</code></td><td>sources, recursive</td><td>edit</td><td>读取并校验 Excel</td></tr><tr><td><code>excel.plan</code></td><td>sources, recursive</td><td>edit</td><td>预览导出变更</td></tr><tr><td><code>excel.export</code></td><td>sources, recursive, dataOnly, force</td><td>edit</td><td>全量或仅数据导出，移除旧表需要 confirm</td></tr><tr><td><code>excel.mark</code></td><td>bundle</td><td>edit</td><td>标记配置表数据目录</td></tr><tr><td><code>excel.orphans</code></td><td>sources, recursive</td><td>edit</td><td>列出旧数据文件</td></tr><tr><td><code>excel.clean</code></td><td>sources, recursive</td><td>edit</td><td>移除已确认的旧数据文件</td></tr><tr><td><code>ui.scan</code></td><td>prefab</td><td>edit</td><td>扫描预制体控件及支持的事件</td></tr><tr><td><code>ui.preview</code></td><td>prefab, className, nameSpace, outputFolder, layer, useAttributes, controls</td><td>edit</td><td>预览面板代码</td></tr><tr><td><code>ui.generate</code></td><td>prefab, className, nameSpace, outputFolder, layer, useAttributes, controls</td><td>edit</td><td>生成面板代码；禁止覆盖业务文件</td></tr><tr><td><code>platform.resources</code></td><td>—</td><td>edit</td><td>首包 Resources 体积审计</td></tr><tr><td><code>platform.linkxml</code></td><td>—</td><td>edit</td><td>生成业务裁剪保护；覆盖手写文件需要 confirm</td></tr><tr><td><code>hot.manifest</code></td><td>target, outputDir, appVersion, resVersion, channel, env</td><td>edit</td><td>生成热更清单、首包清单并自检</td></tr><tr><td><code>hot.check</code></td><td>target, outputDir</td><td>edit</td><td>读取已发布清单并与产物自检</td></tr><tr><td><code>hot.demo-prepare</code></td><td>—</td><td>edit</td><td>打包并装配本地 CDN 演示</td></tr><tr><td><code>hot.demo-clear</code></td><td>—</td><td>edit</td><td>删除当前工程客户端热更缓存</td></tr><tr><td><code>hot.demo-urls</code></td><td>—</td><td>edit</td><td>返回演示 URL 与本地目录</td></tr><tr><td><code>hot.demo-open</code></td><td>—</td><td>edit</td><td>打开本地 CDN 目录；batch 返回目录</td></tr><tr><td><code>demo.ui-prefabs</code></td><td>—</td><td>edit</td><td>生成全部 UI 演示预制体</td></tr><tr><td><code>gm.list</code></td><td>—</td><td>either</td><td>列出实际 GM 及参数、高危标记、注册错误</td></tr><tr><td><code>gm.exec</code></td><td>command</td><td>live</td><td>执行一条 GM；高危指令需要 confirm</td></tr><tr><td><code>scenario.run</code></td><td>name, repeat, warmup, setup, steps, cleanup, teardown, stopOnFailure, failOnUnityError, thresholds</td><td>live</td><td>通用业务循环、条件、断言、清理与采样</td></tr><tr><td><code>scenario.validate</code></td><td>—</td><td>client</td><td>离线校验场景脚本格式，不执行游戏</td></tr></tbody></table>
-</div>
-</section>
-
-</main>
-
-<footer>
-  Revolution · 通用自动化工具　|　2026-10-19　|　Python 标准库客户端 / Unity Editor 本机桥接<br>
-  <a href="../Revolution.Document/index.html">文档总入口</a> · <a href="../Revolution.Document/GM指令/GM指令使用说明.html">GM 指令使用说明</a> ·
-  <a href="https://yokino337088.github.io/Revolution/">在线文档站</a>
-</footer>
-
-</body>
-</html>
+pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit;white-space:pre;}
+img{display:block;max-width:100%;height:auto;margin:18px auto;border-radius:8px;}
+td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
+@media(max-width:640px){section{padding:18px 16px;}main{padding:18px 12px;}h2{display:block;font-size:20px;}.hero h1{font-size:25px;}}
+</style></head><body>
+<header class="hero"><div class="wrap"><span class="kicker">REVOLUTION · AI AUTOMATION</span><h1>Revolution.Automation 2.0</h1><p>Unity 内接线 · 真实业务契约 · 断言、截图与清理</p><div class="meta">2026-10-22 · Python 3.10+ · Unity 2022.3</div></div><div class="deco"></div></header>
+<main><section id="intro">
+<p>Python 3.10+ 标准库 CLI，通过 Unity 主线程桥调用编辑器、GM 和测试。新增场景/对象/组件/资产/Importer/Prefab/项目设置、Console/编译、Test Runner、Player 构建、运行时 UI/截图，以及流程引用、断言、有界轮询和 finally 清理。</p>
+<p>先用 Unity 打开目标工程，等待编译；下面命令从仓库根目录执行：</p>
+<pre><code class="language-powershell">$project = &#39;G:\RevRoot\Revolution\RevolutionFrameWork_Unity&#39;
+$env:PYTHONIOENCODING = &#39;utf-8&#39;
+python Revolution.Automation/rev.py --project $project doctor
+python Revolution.Automation/rev.py --project $project --mode live commands --live
+python Revolution.Automation/rev.py --project $project --mode live editor coverage
+python Revolution.Automation/rev.py --project $project --mode live scene list
+python Revolution.Automation/rev.py --project $project --mode live gameobject find --query Canvas
+</code></pre>
+<p>commands.json 是离线说明，commands --live 才是实际安装能力。2026-10-22 示例工程有 122 个 Editor 动作，另 3 个 Python 动作为 editor.launch/editor.wait/scenario.validate；20 个 Revolution.Tools 菜单都有映射。覆盖表用于发现漏接线，不意味着所有第三方控件或未来新增功能自动可用。</p>
+<p>需要一句话 Agent 测试、GM 动态工具、独立开发版 Player、外部 CLI/Python，使用相邻的 <a href="../Revolution.RevMCP/README.md">Revolution.RevMCP</a> 与 Skills/revolution-ai-automation。</p>
+<p>完整的新手使用说明（操作示例、参数契约、pipeline、旧 scenario、报告与故障处理）：</p>
+<ul>
+<li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/Revolution%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.html">HTML 文档</a></li>
+<li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/Revolution%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md">Markdown</a></li>
+<li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/RevMCP%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.html">RevMCP HTML</a></li>
+</ul>
+<p>参数可用 call 动作ID --json 参数文件，避免 PowerShell 转义中文和复杂对象。全局选项 --project/--mode/--timeout/--confirm/--output 放在子命令前。Python 直接导入 revautomation.client.RevClient 可复用同一协议。</p>
+<pre><code class="language-powershell">python Revolution.Automation/rev.py --project $project --mode live --output result.json call component.get --json inspect.json
+python Revolution.Automation/rev.py pipeline Revolution.Automation/examples/editor-inspect.pipeline.json --validate
+python -m unittest discover -s Revolution.Automation/tests -v
+</code></pre>
+<p>Unity 接线位于 Assets/Revolution/Editor/RevAutomation，运行时共用模块位于 Assets/Revolution/Runtime/RevAutomation。仅复制 Python 不会自动安装 Unity 代码。已有工程使用 live，关闭工程后才可 batch 执行允许的资产动作；游戏 scenario 必须未暂停的图形 Play。</p>
+<p>结果位于 Unity工程/Library/RevolutionAutomation/jobs/id，scenario 报告默认导出 Revolution.Automation/results/。CLI 退出码非零、response.success=false、业务断言或清理失败都属于失败；超时不代表动作未执行，不自动重放变更。</p>
+<p>截至 2026-10-22：Python 19 项与 Unity EditMode 24 项通过；真实 MCP 到 Editor 的按钮、GM、断言、PNG、清理链路已运行。详见文档中的脱敏验证记录。</p>
+</section></main>
+<footer>Revolution · 2026-10-22<br><a href="../Revolution.Document/index.html">文档总入口</a> · <a href="README.md">Markdown 源文档</a></footer>
+</body></html>

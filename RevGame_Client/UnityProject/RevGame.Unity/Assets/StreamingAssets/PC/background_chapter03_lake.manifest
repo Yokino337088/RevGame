@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2886536758
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b1365bbe1205dc1cbb3bde9a7db43753
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b1365bbe1205dc1cbb3bde9a7db43753
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/ChapterBackground/Chapter03_Lake.png
+Dependencies: []

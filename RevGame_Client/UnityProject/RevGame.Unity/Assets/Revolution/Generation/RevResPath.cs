@@ -53,6 +53,7 @@ namespace Revolution
         public const string Board = "Board/";
         public const string Board_Indicator = "Board/Indicator/";
         public const string Board_Tile = "Board/Tile/";
+        public const string ChapterBackground = "ChapterBackground/";
         public const string Config = "Config/";
         public const string Config_Art = "Config/Art/";
         public const string Data = "Data/";

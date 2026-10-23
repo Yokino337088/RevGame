@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2363748701
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 95fdedeb9fd788b9bd880afc323868ac
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 95fdedeb9fd788b9bd880afc323868ac
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/ChapterBackground/Chapter02_Village.png
+Dependencies: []

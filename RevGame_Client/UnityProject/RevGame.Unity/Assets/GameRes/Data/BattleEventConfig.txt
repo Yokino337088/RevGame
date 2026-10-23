@@ -9,3 +9,7 @@ Eye	补眼	TRUE
 BreakChain	断链	TRUE	3	
 Teleport	守阵回气	TRUE	1	
 Artillery	炮火支援	TRUE	0.12	
+Attack	战意高涨	FALSE	0.15	5
+Defense	钢铁防线	FALSE	0.15	5
+Haste	疾风行动	FALSE	0.1	5
+Vitality	生命奔涌	FALSE	0.15	5

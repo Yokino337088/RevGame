@@ -43,6 +43,16 @@ namespace RevGame.Battle
         SoulDrain,
         Summon,
         Enrage,
+        MeteorShower,
+        CrossLaser,
+        FrostNova,
+        ChainLightning,
+        PoisonMarsh,
+        FlameWall,
+        IceLance,
+        GravityWell,
+        DoomSigil,
+
         Dead,
         Stopped,
     }
@@ -133,6 +143,15 @@ namespace RevGame.Battle
             _machine.AddState(BossAIState.SoulDrain, new BossSoulDrainState(_machine));
             _machine.AddState(BossAIState.Summon, new BossSummonState(_machine));
             _machine.AddState(BossAIState.Enrage, new BossEnrageState(_machine));
+            _machine.AddState(BossAIState.MeteorShower, new BossMeteorShowerState(_machine));
+            _machine.AddState(BossAIState.CrossLaser, new BossCrossLaserState(_machine));
+            _machine.AddState(BossAIState.FrostNova, new BossFrostNovaState(_machine));
+            _machine.AddState(BossAIState.ChainLightning, new BossChainLightningState(_machine));
+            _machine.AddState(BossAIState.PoisonMarsh, new BossPoisonMarshState(_machine));
+            _machine.AddState(BossAIState.FlameWall, new BossFlameWallState(_machine));
+            _machine.AddState(BossAIState.IceLance, new BossIceLanceState(_machine));
+            _machine.AddState(BossAIState.GravityWell, new BossGravityWellState(_machine));
+            _machine.AddState(BossAIState.DoomSigil, new BossDoomSigilState(_machine));
             _machine.AddState(BossAIState.Dead, new BossDeadState(_machine));
             _machine.AddState(BossAIState.Stopped, new BossStoppedState(_machine));
             _machine.ChangeState(BossAIState.Idle, "创建Boss AI");
@@ -152,6 +171,16 @@ namespace RevGame.Battle
                 case BossSkillKind.SoulDrain: return BossAIState.SoulDrain;
                 case BossSkillKind.Summon: return BossAIState.Summon;
                 case BossSkillKind.Enrage: return BossAIState.Enrage;
+                case BossSkillKind.MeteorShower: return BossAIState.MeteorShower;
+                case BossSkillKind.CrossLaser: return BossAIState.CrossLaser;
+                case BossSkillKind.FrostNova: return BossAIState.FrostNova;
+                case BossSkillKind.ChainLightning: return BossAIState.ChainLightning;
+                case BossSkillKind.PoisonMarsh: return BossAIState.PoisonMarsh;
+                case BossSkillKind.FlameWall: return BossAIState.FlameWall;
+                case BossSkillKind.IceLance: return BossAIState.IceLance;
+                case BossSkillKind.GravityWell: return BossAIState.GravityWell;
+                case BossSkillKind.DoomSigil: return BossAIState.DoomSigil;
+
             }
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "没有对应的Boss技能状态");
         }

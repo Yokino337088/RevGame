@@ -24,6 +24,8 @@ namespace RevGame.View
         /// <summary>攻击范围用的独立渲染器：不能复用 highlightRenderer，否则"可落点"和范围会互相关掉。</summary>
         [SerializeField]
         private SpriteRenderer rangeRenderer;
+        [Tooltip("区域波动专用底图，独立于落点勾号；由项目图集统一管理。")]
+        [SerializeField] private Sprite hazardSprite;
         [Tooltip("按住多久算长按（秒）。纯表现手感，不影响战斗规则。")]
         [SerializeField]
         private float longPressSeconds = 0.35f;
@@ -34,6 +36,12 @@ namespace RevGame.View
         private bool _longPressFired;
         private Color _rangeBaseColor = new Color(1f, 0.95f, 0.66f, 0.45f);
         private Tween _rangeTween;
+        // 危险区独立一层，不借用落点/射界颜色。组件随格子池复用，不逐次创建Renderer。
+        private SpriteRenderer _hazardRenderer;
+        private Tween _hazardTween;
+        private Vector3 _hazardRestPosition;
+        private Vector3 _hazardRestScale;
+        public bool HasHazardAnimation => _hazardTween != null && _hazardTween.IsActive();
         public BoardPos Position { get; private set; }
 
         public bool IsHighlighted
@@ -153,6 +161,57 @@ namespace RevGame.View
             rangeRenderer.enabled = false;
         }
 
+        /// <summary>先整块高亮，随后按指定延迟逐格抬起落回。动画只改显示位置，不改棋盘占格。</summary>
+        public void PlayHazardWave(float delay)
+        {
+            CancelHazardWave();
+            _hazardRestPosition = transform.position;
+            _hazardRestScale = transform.localScale;
+            if (_hazardRenderer == null && hazardSprite != null)
+            {
+                var child = new GameObject("HazardOverlay");
+                child.transform.SetParent(transform, false);
+                _hazardRenderer = child.AddComponent<SpriteRenderer>();
+                _hazardRenderer.sprite = hazardSprite;
+                _hazardRenderer.sharedMaterial = highlightRenderer.sharedMaterial;
+                _hazardRenderer.sortingOrder = 6;
+                child.transform.localScale = Vector3.one * (Consts.CellSize * 0.94f / hazardSprite.bounds.size.x);
+            }
+            if (_hazardRenderer != null)
+            {
+                _hazardRenderer.enabled = true;
+                _hazardRenderer.color = new Color(1f, 0.3f, 0.025f, 0.8f);
+            }
+            Sequence sequence = DOTween.Sequence();
+            sequence.AppendInterval(delay);
+            sequence.Append(transform.DOMoveY(_hazardRestPosition.y + Consts.CellSize * 0.24f, 0.14f).SetEase(Ease.OutQuad));
+            sequence.Join(transform.DOScale(_hazardRestScale * 1.07f, 0.14f));
+            sequence.Append(transform.DOMoveY(_hazardRestPosition.y, 0.22f).SetEase(Ease.OutBounce));
+            sequence.Join(transform.DOScale(_hazardRestScale, 0.22f));
+            sequence.OnComplete(() => { _hazardTween = null; if (_hazardRenderer != null) { _hazardRenderer.enabled = false; } });
+            // DOTween会复用句柄；外部Kill后及时解绑，下一次取消不能误杀已经借给别处的动画。
+            sequence.OnKill(() =>
+            {
+                if (!ReferenceEquals(_hazardTween, sequence)) { return; }
+                _hazardTween = null;
+                transform.position = _hazardRestPosition; transform.localScale = _hazardRestScale;
+                if (_hazardRenderer != null) { _hazardRenderer.enabled = false; }
+            });
+            _hazardTween = sequence;
+        }
+
+        /// <summary>换阶段/回池主动恢复原位。Kill(false)不会执行旧回调，避免动画把新回合格子抬走。</summary>
+        public void CancelHazardWave()
+        {
+            if (_hazardTween != null)
+            {
+                _hazardTween.Kill(false); _hazardTween = null;
+                transform.position = _hazardRestPosition;
+                transform.localScale = _hazardRestScale;
+            }
+            if (_hazardRenderer != null) { _hazardRenderer.enabled = false; }
+        }
+
         public void OnPointerDown(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
@@ -218,6 +277,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            CancelHazardWave();
             // ★ 委托会引用棋盘宿主，回池时必须摘掉，否则旧场景仍可能被保留在内存中。
             RevTimer.CancelAllOf(this);
             _onClick = null;

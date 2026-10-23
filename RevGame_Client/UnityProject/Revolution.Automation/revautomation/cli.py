@@ -9,6 +9,7 @@ import sys
 
 from .client import RevClient, RevError, atomic_json, find_unity, read_json
 from .report import export_report
+from . import pipeline as pipelines
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PROJECT = ROOT.parent / "RevolutionFrameWork_Unity"
@@ -25,12 +26,15 @@ def parser():
     p.add_argument("--confirm", action="store_true", help="显式允许已标记高危 GM、移除旧表或覆盖已生成骨架")
     sub = p.add_subparsers(dest="family", required=True)
     sub.add_parser("doctor", help="检查工程、桥接与编辑器定位")
-    sub.add_parser("commands", help="离线列出所有内置 CLI 操作")
+    commands = sub.add_parser("commands", help="查询离线命令清单，或当前工程实际安装的能力")
+    commands.add_argument("--live", action="store_true", help="从 Unity 获取当前实际注册的能力")
+    commands.add_argument("--action", help="只显示指定动作的参数契约")
     job = sub.add_parser("job", help="离线查看作业进度或请求取消")
     job.add_argument("id")
     job.add_argument("--cancel", action="store_true")
     pipeline = sub.add_parser("pipeline", help="顺序执行多个编辑器/GM/场景动作；失败停止，最后执行 finally")
     pipeline.add_argument("file", type=Path)
+    pipeline.add_argument("--validate", action="store_true", help="只校验流程，不执行 Unity 操作")
     call = sub.add_parser("call", help="调用动作 ID（也支持扩展包注册的动作）")
     call.add_argument("action")
     call.add_argument("--json", type=Path, help="动作参数 JSON 文件")
@@ -38,17 +42,11 @@ def parser():
     report = sub.add_parser("report", help="从 scenario 结果生成 JSON/CSV/HTML")
     report.add_argument("result", type=Path)
     report.add_argument("--directory", type=Path, required=True)
-    for family, operations in {
-        "editor": ("launch", "status", "play", "stop", "refresh", "menus", "menu"),
-        "demo": ("ui-prefabs",),
-        "ab": ("config", "configure", "scan", "validate", "build", "map", "res-paths", "sound-paths", "check-map", "dependencies", "sizes", "artifacts", "snapshot", "diff", "mark", "mark-source", "rename", "delete", "clean-names", "sync", "overlay", "copy", "mode"),
-        "excel": ("settings", "configure", "read", "plan", "export", "mark", "orphans", "clean"),
-        "ui": ("scan", "preview", "generate"),
-        "platform": ("resources", "linkxml"),
-        "hot": ("manifest", "check", "demo-prepare", "demo-clear", "demo-urls", "demo-open"),
-        "gm": ("list", "exec"),
-        "scenario": ("run", "validate"),
-    }.items():
+    families = {}
+    for spec in read_json(ROOT / "commands.json")["actions"]:
+        family, operation = spec["id"].split(".", 1)
+        families.setdefault(family, []).append(operation)
+    for family, operations in families.items():
         group = sub.add_parser(family)
         ops = group.add_subparsers(dest="operation", required=True)
         for operation in operations:
@@ -66,8 +64,16 @@ def parser():
                 action.add_argument("--scene")
             if family == "editor" and operation == "menu":
                 action.add_argument("path", help="菜单全路径，不带快捷键")
-            if family == "ab" or family == "hot":
+            if not (family == "editor" and operation == "menu"):
+                action.add_argument("--path")
+            for flag in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value"):
+                action.add_argument("--" + flag)
+            for flag in ("offset", "limit", "index"):
+                action.add_argument("--" + flag, type=int)
+            if family in ("ab", "hot", "build", "platform"):
                 action.add_argument("--target", help="如 StandaloneWindows64 / Android / WebGL")
+            if family == "test":
+                action.add_argument("--test-mode", choices=("EditMode", "PlayMode"))
             if family == "excel":
                 action.add_argument("--source", action="append")
                 action.add_argument("--data-only", action="store_true")
@@ -94,7 +100,8 @@ def payload_of(args):
             raise RevError(f"--set 的值必须是合法 JSON；字符串需要双引号：{key}") from exc
     for attr, key in (("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
                       ("source", "sources"), ("prefab", "prefab"), ("class_name", "className"),
-                      ("name_space", "nameSpace"), ("output_folder", "outputFolder")):
+                      ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"),
+                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "offset", "limit", "index"))):
         value = getattr(args, attr, None)
         if value is not None:
             data[key] = value
@@ -162,7 +169,7 @@ def validate_scenario(data):
                 raise RevError("until 必须配置大于 0 的 timeoutSeconds，防止永久等待。")
 
 
-def validate_action(action, payload):
+def validate_action(action, payload, allow_refs=False):
     if not isinstance(action, str) or not action or not isinstance(payload, dict):
         raise RevError("动作需要非空 action 和 payload 对象。")
     manifest = read_json(ROOT / "commands.json")
@@ -175,14 +182,33 @@ def validate_action(action, payload):
         validate_scenario(payload)
     types = manifest.get("parameterTypes", {})
     for key, value in payload.items():
+        if allow_refs and isinstance(value, dict) and "$ref" in value:
+            list(pipelines.references(value))
+            continue
         kind = types.get(key)
         valid = (kind != "string" or isinstance(value, str)) and (kind != "bool" or type(value) is bool)
         valid = valid and (kind not in ("array", "string[]") or isinstance(value, list))
         valid = valid and (kind != "string[]" or all(isinstance(item, str) for item in value))
+        valid = valid and (kind != "int" or type(value) is int)
         if not valid:
             raise RevError(f"{key} 类型应为 {kind}。")
+        if key in ("changes", "scenes") and isinstance(value, list):
+            allowed = {"property", "value"} if key == "changes" else {"path", "enabled"}
+            for item in value:
+                if not isinstance(item, dict) or set(item) - allowed:
+                    raise RevError(f"{key} 元素只能包含 {sorted(allowed)}。")
+                for field, child in item.items():
+                    if allow_refs and isinstance(child, dict) and "$ref" in child:
+                        list(pipelines.references(child))
+                    elif (field == "enabled" and type(child) is not bool) or (field != "enabled" and not isinstance(child, str)):
+                        raise RevError(f"{key}.{field} 类型无效。")
+                required = {"property", "value"} if key == "changes" else {"path"}
+                if required - set(item):
+                    raise RevError(f"{key} 元素缺少 {sorted(required - set(item))}。")
     for key, group in (("configJson", action.split(".")[0]), ("userConfigJson", "excelUser")):
         if key not in payload:
+            continue
+        if allow_refs and isinstance(payload[key], dict) and "$ref" in payload[key]:
             continue
         config = json.loads(payload[key])
         fields = manifest.get("configFields", {}).get(group)
@@ -201,53 +227,17 @@ def validate_action(action, payload):
 
 
 def run_pipeline(client, path, confirm):
-    spec = read_json(path)
-    if not isinstance(spec, dict) or set(spec) - {"name", "steps", "finally"} or not isinstance(spec.get("steps"), list) or not spec["steps"]:
-        raise RevError("pipeline 需要非空 steps 数组，可选 name、finally。")
-    if not isinstance(spec.get("finally", []), list):
-        raise RevError("finally 必须是数组。")
-    phases = {phase: [] for phase in ("steps", "finally")}
-    # 执行前检查所有步骤，避免先改了一半工程才发现脚本拼错。
-    for phase in phases:
-        for step in spec.get(phase, []):
-            if not isinstance(step, dict) or set(step) - {"action", "payload", "file"}:
-                raise RevError("pipeline 步骤只支持 action、payload 或 file。")
-            if "file" in step and "payload" in step:
-                raise RevError("同一步骤不能同时提供 file 与 payload。")
-            payload = read_json(path.parent / step["file"]) if "file" in step else step.get("payload", {})
-            action = step.get("action")
-            validate_action(action, payload)
-            phases[phase].append((action, payload))
-    result = dict(success=True, name=spec.get("name", path.stem), steps=[], cleanup=[])
-    def invoke(action, payload):
-        return invoke_action(client, action, payload, confirm)
-    try:
-        for action, payload in phases["steps"]:
-            response = invoke(action, payload)
-            result["steps"].append(dict(action=action, response=response))
-            if not response.get("success"):
-                result["success"] = False
-                break
-    except (RevError, OSError, ValueError, TimeoutError) as exc:
-        result.update(success=False, error=str(exc))
-    finally:
-        original_timeout = client.timeout
-        client.timeout = min(client.timeout, 120)
-        for action, payload in phases["finally"]:
-            try:
-                response = invoke(action, payload)
-                result["cleanup"].append(dict(action=action, response=response))
-                result["success"] = result["success"] and response.get("success", False)
-            except (RevError, OSError, ValueError, TimeoutError) as exc:
-                result["cleanup"].append(dict(action=action, error=str(exc)))
-                result["success"] = False
-        client.timeout = original_timeout
-    return result
+    return pipelines.run(client, path, confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"))
 
 
 def invoke_action(client, action, payload, confirm, report_dir=None):
-    response = client.launch() if action == "editor.launch" else client.call(action, payload, confirm,
-        lambda update: print(json.dumps(update, ensure_ascii=False), file=sys.stderr))
+    if action == "editor.launch":
+        response = client.launch()
+    elif action == "editor.wait":
+        response = client.wait_ready()
+    else:
+        response = client.call(action, payload, confirm,
+            lambda update: print(json.dumps(update, ensure_ascii=False), file=sys.stderr))
     if action == "scenario.run" and (response.get("data") or {}).get("resultPath"):
         directory = report_dir or ROOT / "results" / Path(response["jobDirectory"]).name
         response["reports"] = export_report(Path(response["data"]["resultPath"]), directory)
@@ -260,12 +250,24 @@ def main(argv=None):
         if args.timeout <= 0 or not args.timeout < 604800:
             raise RevError("--timeout 必须大于 0 且小于 604800 秒。")
         if args.family == "commands":
-            result = read_json(ROOT / "commands.json")
+            if args.live:
+                result = RevClient(args.project, "live", args.unity, args.timeout).call("editor.capabilities")
+                if result.get("success"):
+                    result = result["data"]
+            else:
+                result = read_json(ROOT / "commands.json")
+            if args.action:
+                found = [item for item in result.get("actions", []) if item["id"] == args.action]
+                if not found:
+                    raise RevError(f"动作未找到：{args.action}")
+                result = dict(success=True, actions=found)
         elif args.family == "report":
             result = export_report(args.result, args.directory)
         elif args.family == "scenario" and args.operation == "validate":
             payload = payload_of(args)
             result = dict(success=True, name=payload.get("name", "scenario"), message="场景 JSON 格式有效；GM 是否存在及业务结果需在 Play 中检查。")
+        elif args.family == "pipeline" and args.validate:
+            result = pipelines.run(None, args.file, args.confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"), validate_only=True)
         else:
             client = RevClient(args.project, args.mode, args.unity, args.timeout, not args.no_graphics)
             if args.family == "doctor":
@@ -278,7 +280,7 @@ def main(argv=None):
             elif args.family == "job":
                 result = client.job(args.id, args.cancel)
             elif args.family == "pipeline":
-                result = run_pipeline(client, args.file, args.confirm)
+                result = pipelines.run(client, args.file, args.confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"), output=args.output)
             else:
                 action = args.action if args.family == "call" else args.family + "." + args.operation
                 payload = payload_of(args)
@@ -294,5 +296,8 @@ def main(argv=None):
         print(json.dumps(dict(success=False, error="Cancelled", message="已请求取消；Unity 清理进度请看 jobDirectory。"), ensure_ascii=False), file=sys.stderr)
         return 130
     except (RevError, OSError, ValueError, TimeoutError) as exc:
-        print(json.dumps(dict(success=False, error=type(exc).__name__, message=str(exc)), ensure_ascii=False), file=sys.stderr)
+        result = dict(success=False, error=type(exc).__name__, message=str(exc))
+        if args.output:
+            atomic_json(args.output, result)
+        print(json.dumps(result, ensure_ascii=False), file=sys.stderr)
         return 2

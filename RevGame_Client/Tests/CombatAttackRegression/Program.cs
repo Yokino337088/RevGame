@@ -51,6 +51,8 @@ internal static class Program
             int bossScenarios;
             _assertions += BossRegression.Run(out bossScenarios);
             _scenarios += bossScenarios;
+            _assertions += CombatPacingRegression.Run(out int pacingScenarios);
+            _scenarios += pacingScenarios;
             _assertions += FeedbackRegression.Run();
             Console.WriteLine("CombatAttackRegression: " + _scenarios + " scenarios, " + _assertions + " assertions passed.");
             return 0;

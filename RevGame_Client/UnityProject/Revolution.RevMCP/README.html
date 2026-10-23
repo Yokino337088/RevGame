@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revolution.RevMCP</title><style>
+/* ============================================================
+   Revolution 文档 · 公共样式
+   —— 与 assets/docs.css 同一套视觉语言（配色 / 字体 / 组件）。
+   ★ 本套文档刻意「自包含」：样式内联在 <head> 里，不依赖外部文件 ——
+     因为外链样式在「单独打开 / IDE 预览（虚拟根）/ 单文件分享」时解析不到，
+     页面会退化成一坨无样式 HTML（详见仓库提交说明）。
+     新增文档：复制本段样式（或从 assets/docs.css 取值）内联进来即可。
+   兼容类名：hero / toc / callout(good|warn|bad) / plain / table-wrap / card / cheat / cmp / flow / pre
+   ============================================================ */
+:root{
+  --accent:#2F6FED; --accent-soft:#EAF1FE;
+  --page:#F4F6F9; --panel:#FFFFFF; --border:#E3E7ED;
+  --text:#1F2329; --text-sub:#6B7280;
+  --good:#12A150; --good-soft:#E8F8EF;
+  --warn:#B7791F; --warn-soft:#FDF6E3;
+  --bad:#D93F31;  --bad-soft:#FDECEA;
+  --code-bg:#1E2430; --code-fg:#D7DEEA;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--page); color:var(--text);
+  font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+  font-size:15.5px; line-height:1.85; -webkit-font-smoothing:antialiased;
+}
+.hero{background:linear-gradient(135deg,#2F6FED 0%,#4A84F5 55%,#6E9BFF 100%);color:#fff;padding:46px 24px 40px;position:relative;overflow:hidden;}
+.hero .wrap{max-width:1000px;margin:0 auto;position:relative;z-index:2;}
+.hero .kicker{display:inline-block;font-size:12px;letter-spacing:.12em;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;margin-bottom:14px;}
+.hero h1{margin:0 0 12px;font-size:31px;line-height:1.35;font-weight:700;}
+.hero p{margin:6px 0 0;color:rgba(255,255,255,.94);font-size:14.5px;}
+.hero code{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35);color:#fff;}
+.hero .meta{margin-top:16px;font-size:13px;color:rgba(255,255,255,.85);}
+.hero .deco{position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 26px,transparent 26px 52px);
+  animation:march 1.1s linear infinite;opacity:.75;z-index:1;}
+
+main{max-width:1000px;margin:0 auto;padding:26px 24px 70px;}
+section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:26px 28px;margin-bottom:20px;}
+h2{font-size:21px;margin:0 0 6px;display:flex;align-items:center;gap:10px;}
+h2 .num{flex:0 0 auto;min-width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;
+  background:var(--accent);color:#fff;font-size:14px;font-weight:700;padding:0 8px;}
+h2 + .lead{color:var(--text-sub);font-size:14px;margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+h3{font-size:17px;margin:28px 0 10px;}
+h3:first-of-type{margin-top:6px;}
+h4{font-size:15px;margin:20px 0 8px;color:#2B3444;}
+p{margin:10px 0;}
+ul,ol{margin:10px 0;padding-left:24px;}
+li{margin:6px 0;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{font-family:"Cascadia Mono",Consolas,"Courier New",monospace;font-size:13px;
+  background:#EEF2F8;border:1px solid #E1E7F0;border-radius:4px;padding:1px 5px;color:#22304A;}
+
+.toc{background:#FBFCFE;}
+.toc ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 22px;}
+.toc a{display:block;padding:6px 10px;border-radius:6px;color:var(--text);font-size:14px;}
+.toc a:hover{background:var(--accent-soft);color:var(--accent);text-decoration:none;}
+
+.table-wrap{overflow-x:auto;margin:14px 0;}
+table{border-collapse:collapse;width:100%;font-size:13.5px;}
+th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+thead th{background:#F3F6FB;font-weight:700;}
+tbody tr:nth-child(even){background:#FAFBFD;}
+tbody tr:hover{background:#F1F6FF;}
+td.c,th.c{text-align:center;white-space:nowrap;}
+
+.plain{border-radius:10px;padding:14px 16px;margin:14px 0;font-size:14.5px;background:#F7F9FC;border:1px solid #E4E9F2;}
+.plain .tag{display:inline-block;font-size:11.5px;background:#5B6B84;color:#fff;border-radius:999px;padding:1px 9px;margin-right:8px;vertical-align:2px;}
+.plain p:first-child{margin-top:0;}
+.plain p:last-child{margin-bottom:0;}
+
+.callout{border-radius:8px;padding:14px 16px;margin:14px 0;font-size:14.5px;
+  border-left:4px solid var(--accent);background:var(--accent-soft);}
+.callout.good{border-left-color:var(--good);background:var(--good-soft);}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft);}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft);}
+.callout p:first-child{margin-top:0;}
+.callout p:last-child{margin-bottom:0;}
+.callout .t{font-weight:700;display:block;margin-bottom:4px;}
+
+pre{background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:15px 17px;overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;font-size:12.5px;line-height:1.7;margin:14px 0;}
+pre .c{color:#7D8CA6;}
+pre .k{color:#8FB8FF;}
+pre .s{color:#A5D6A7;}
+pre .n{color:#FFB86C;}
+pre b{color:#FFD479;font-weight:700;}
+
+.card{border:1px solid var(--border);border-radius:10px;background:#FBFCFE;padding:16px 18px;margin:16px 0;}
+.card > .h{font-weight:700;font-size:15.5px;margin-bottom:4px;}
+.card > .when{font-size:13.5px;color:var(--text-sub);margin-bottom:10px;}
+.card pre{margin:10px 0;}
+.card .note{font-size:13px;color:var(--text-sub);margin-top:8px;}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+.cmp > div{border-radius:9px;padding:12px 14px;font-size:13.5px;border:1px solid;}
+.cmp .no{background:var(--bad-soft);border-color:#F3C9C3;}
+.cmp .yes{background:var(--good-soft);border-color:#BFE9D2;}
+.cmp .h{font-weight:700;margin-bottom:6px;}
+.cmp pre{margin:6px 0 0;font-size:12px;}
+
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:16px 0;}
+.flow .n{border:1.5px solid var(--border);background:#fff;border-radius:8px;padding:7px 12px;font-size:13px;}
+.flow .n.on{border-color:var(--accent);background:var(--accent-soft);}
+.flow .n.wait{border-color:#EBCF8A;background:var(--warn-soft);}
+.flow .ar{color:var(--accent);font-weight:700;}
+
+.cheat{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0;}
+.cheat div{border:1px solid var(--border);border-radius:8px;background:#fff;padding:9px 12px;font-size:13px;}
+.cheat div b{display:block;font-size:12.5px;color:var(--text-sub);font-weight:400;margin-bottom:2px;}
+
+footer{max-width:1000px;margin:0 auto;padding:0 24px 60px;color:var(--text-sub);font-size:13px;}
+
+@keyframes march{to{background-position:28px 0;}}
+@media (max-width:760px){
+  .hero h1{font-size:23px;}
+  section{padding:18px 16px;}
+  .cmp{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion:reduce){ .hero .deco{animation:none !important;} }
+@media print{
+  body{background:#fff;font-size:12px;}
+  .hero{background:#fff;color:#000;border-bottom:2px solid #000;}
+  .hero .kicker,.hero .meta{color:#333;}
+  section{break-inside:avoid;border:0;padding:0;margin-bottom:20px;}
+  pre{background:#F5F5F5;color:#000;border:1px solid #CCC;}
+  .toc{display:none;}
+}
+
+
+pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit;white-space:pre;}
+img{display:block;max-width:100%;height:auto;margin:18px auto;border-radius:8px;}
+td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
+@media(max-width:640px){section{padding:18px 16px;}main{padding:18px 12px;}h2{display:block;font-size:20px;}.hero h1{font-size:25px;}}
+
+pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit;white-space:pre;}
+img{display:block;max-width:100%;height:auto;margin:18px auto;border-radius:8px;}
+td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
+@media(max-width:640px){section{padding:18px 16px;}main{padding:18px 12px;}h2{display:block;font-size:20px;}.hero h1{font-size:25px;}}
+</style></head><body>
+<header class="hero"><div class="wrap"><span class="kicker">REVOLUTION · AI AUTOMATION</span><h1>Revolution.RevMCP</h1><p>Unity 内接线 · 真实业务契约 · 断言、截图与清理</p><div class="meta">2026-10-22 · Python 3.10+ · Unity 2022.3</div></div><div class="deco"></div></header>
+<main><section id="intro">
+<p>把 Revolution 的 Editor、实际注册 GM、运行时业务、UGUI、状态/截图，以及显式 CLI/Python 接口提供给 Agent。Python 3.10+，标准库即可运行。Unity 内入口为 <code>Revolution.Tools/AI/RevMCP 控制台</code>，外部 Python 进程提供 MCP stdio；独立开发版 Player 复用运行时桥。</p>
+<p>保留相邻的 <code>Revolution.Automation</code> 目录，Unity 工程安装当前框架。先打开目标工程并等待编译，再执行：</p>
+<pre><code class="language-powershell">$project = &#39;G:\RevRoot\Revolution\RevolutionFrameWork_Unity&#39;
+python Revolution.RevMCP/rev_mcp.py --project $project discover
+python Revolution.Automation/rev.py --project $project --mode live editor play --scene &#39;Assets/Revolution.Demo/RevAutomation.Demo/RevAutomationDemo.unity&#39;
+python Revolution.RevMCP/rev_mcp.py --project $project run Revolution.RevMCP/examples/ui-gm.plan.json
+python Revolution.Automation/rev.py --project $project --mode live editor stop
+</code></pre>
+<p>Agent 启动命令：<code>python &lt;rev_mcp.py绝对路径&gt; --project &lt;Unity工程绝对路径&gt; serve</code>。配置示例见 examples/mcp-config.example.json，也可直接从 Unity 控制台复制。稳定工具为 rev_discover、rev_call、rev_run；真实注册表还会生成动态工具。</p>
+<p>独立 Player 显式 <code>-revAutomation</code> 开启服务，MCP 使用 <code>--runtime-endpoint &lt;runtime.json&gt;</code>。正式包默认无运行时测试接口。game 业务能力通过 <code>RevRuntimeAutomation.Register</code> 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。</p>
+<p>安装 <code>Skills/revolution-ai-automation</code> 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。</p>
+<p>完整的新手教程、接口注册、Player、CLI/Python、计划格式、限制和验证记录：</p>
+<ul>
+<li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/RevMCP%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.html">RevMCP 使用说明 HTML</a></li>
+<li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/RevMCP%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md">Markdown</a></li>
+<li><a href="../Revolution.Automation/README.md">Editor Automation</a></li>
+<li><a href="../Skills/revolution-ai-automation/SKILL.md">AI 自动化 Skill</a></li>
+</ul>
+<p>无 Unity 依赖的回归：</p>
+<pre><code class="language-powershell">python -m unittest discover -s Revolution.RevMCP/tests -v
+</code></pre>
+<p>实际 Unity/MCP 验证（先启动教学场景 Play）：</p>
+<pre><code class="language-powershell">python Revolution.RevMCP/tests/verify_unity.py --project $project --output Revolution.RevMCP/results/verification.json
+</code></pre>
+<p>截至 2026-10-22：Python 13 项通过；实际 MCP → Editor 与 Windows 开发版 Player 的 UI/GM/断言/截图/清理已通过。设备与其他平台没有以此冒充已验收。</p>
+</section></main>
+<footer>Revolution · 2026-10-22<br><a href="../Revolution.Document/index.html">文档总入口</a> · <a href="README.md">Markdown 源文档</a></footer>
+</body></html>

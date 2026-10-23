@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3642421530
+CRC: 3577994015
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d824f86bc7fc0df954d0445463e7a6f2
+    Hash: 6942ffd2d98b964fb3fa2cd4acc143f4
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 0cd52914ecd8f51a2b1f14efa836de6c
+    Hash: 1c5f8747f817713213fdf2afe60fd31c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d824f86bc7fc0df954d0445463e7a6f2
+    Hash: 6942ffd2d98b964fb3fa2cd4acc143f4
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -28,6 +28,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 9d6a33d802449a140ae99f0e795c51b0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: aa1dd300069341c788a09ccd507de05e, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -39,6 +41,8 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Effects/Combat/BattleEffect.prefab
+- Assets/GameRes/Effects/Combat/BossSkillFx.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat

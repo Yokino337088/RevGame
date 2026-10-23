@@ -484,6 +484,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 384782a4b190ce64eb64609e28f76ee1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  villageBackground:
+    textureName: Chapter02_Village
+    strength: 0.8
+    speed: 0.48
+    distortion: 0.002
+    glow: 0.65
+    particles: 0.55
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    accent: {r: 1, g: 0.82, b: 0.35, a: 1}
+    secondary: {r: 0.45, g: 1, b: 0.67, a: 1}
+  lakeBackground:
+    textureName: Chapter03_Lake
+    strength: 0.8
+    speed: 0.7
+    distortion: 0.012
+    glow: 0.85
+    particles: 0.35
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    accent: {r: 0.55, g: 0.9, b: 1, a: 1}
+    secondary: {r: 0.2, g: 0.65, b: 1, a: 1}
+  swampBackground:
+    textureName: Chapter04_Swamp
+    strength: 0.8
+    speed: 0.19
+    distortion: 0.016
+    glow: 0.5
+    particles: 0.5
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    accent: {r: 0.78, g: 0.61, b: 0.27, a: 1}
+    secondary: {r: 0.4, g: 0.53, b: 0.18, a: 1}
+  iceBackground:
+    textureName: Chapter05_Ice
+    strength: 0.8
+    speed: 0.42
+    distortion: 0.0015
+    glow: 0.65
+    particles: 0.8
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    accent: {r: 0.7, g: 0.93, b: 1, a: 1}
+    secondary: {r: 0.35, g: 0.65, b: 1, a: 1}
+  templeBackground:
+    textureName: Chapter06_Temple
+    strength: 0.8
+    speed: 0.28
+    distortion: 0.001
+    glow: 0.9
+    particles: 0.6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    accent: {r: 1, g: 0.86, b: 0.48, a: 1}
+    secondary: {r: 1, g: 0.96, b: 0.78, a: 1}
+  backgroundBoardProtection: 0.82
+  backgroundArrivalSeconds: 0.85
   boardRoot: {fileID: 1894253706}
   boardCamera: {fileID: 519420031}
   backgroundRenderer: {fileID: 835511811}

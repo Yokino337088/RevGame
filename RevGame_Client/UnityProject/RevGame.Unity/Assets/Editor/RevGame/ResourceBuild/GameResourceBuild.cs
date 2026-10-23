@@ -52,6 +52,17 @@ namespace RevGame.Editor
                 if (importer == null) { throw new InvalidOperationException("分包目录不存在：" + path); }
                 importer.SetAssetBundleNameAndVariant(Groups[i, 1], string.Empty);
             }
+            // 章节大图由背景 Shader 独立采样、逐章加载，不进常驻 SpriteAtlas，也不共包拖入其它章节。
+            const string chapterRoot = "Assets/GameRes/ChapterBackground";
+            if (AssetDatabase.IsValidFolder(chapterRoot))
+            {
+                foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { chapterRoot }))
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+                    AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant(bundle, string.Empty);
+                }
+            }
             // Shader仍按用户要求放在GameShader，而不是复制到每个材质目录。
             // 显式归入共享包后，依赖它的材质/预制体只引用一份编译结果，避免Shader再次隐式重复。
             foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Assets/GameShader" }))

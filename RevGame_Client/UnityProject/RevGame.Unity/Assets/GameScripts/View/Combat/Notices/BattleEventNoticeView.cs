@@ -78,7 +78,11 @@ namespace RevGame.View
             sequence.Join(DOTween.To(() => rect.localScale, value => rect.localScale = value, Vector3.one * config.PeakScale, 0.24f).SetEase(Ease.OutBack));
             sequence.Join(DOTween.To(() => group.alpha, value => group.alpha = value, 1f, 0.12f));
             sequence.Append(DOTween.To(() => rect.localScale, value => rect.localScale = value, Vector3.one, 0.14f));
-            sequence.AppendInterval(Mathf.Max(0.1f, config.Duration - 0.86f));
+            if (title == "能量巨大")
+            {
+                sequence.Append(titleText.rectTransform.DOShakeAnchorPos(0.42f, new Vector2(14f, 9f), 24, 90f, false, true));
+            }
+            sequence.AppendInterval(Mathf.Max(0.1f, config.Duration - 0.86f - (title == "能量巨大" ? 0.42f : 0f)));
             sequence.Append(DOTween.To(() => group.alpha, value => group.alpha = value, 0f, 0.4f));
             sequence.Join(DOTween.To(() => _slide, value => _slide = value, -1f, 0.4f));
             _animation = sequence.OnComplete(Finish);

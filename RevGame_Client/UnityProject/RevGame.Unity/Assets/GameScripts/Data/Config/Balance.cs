@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Balance.cs —— “战斗数值参数”表（BalanceRule）的类型化读取与校验。
 //
 // 为什么不直接在业务里 FindByKey("Battle.DurationSeconds")：
@@ -78,6 +78,19 @@ namespace RevGame.Data
     internal sealed class BalanceValues
     {
         // ---- 战斗节奏
+        public float BossCaptureHpRatio;
+        public float EventEffectMultiplier;
+        public float PlayerMoveSeconds;
+        public int PlayerRetreatDistance;
+        public float RegionIntervalSeconds;
+        public float RegionWarningSeconds;
+        public int RegionSize;
+        public float RegionCellDelaySeconds;
+        public float RegionDamageHpRatio;
+        public float BombIntervalSeconds;
+        public float BombWarningSeconds;
+        public float BombDamageHpRatio;
+        public float CombatBuffCap;
         public float BattleDurationSeconds;
         public float BattleTickSeconds;
         public int BattleStepsPerTick;
@@ -141,14 +154,6 @@ namespace RevGame.Data
         public int EventArtilleryRadius;
         public float EventStageDelaySeconds;
         // ---- 通关辅助
-        public float AssistStartSeconds;
-        public float AssistFinalSeconds;
-        public float AssistFinishSeconds;
-        public float AssistStallSeconds;
-        public float AssistPulseSeconds;
-        public float AssistFinalPulseSeconds;
-        public float AssistPulseHpRatio;
-        public float AssistCriticalHpRatio;
         public int AssistSupportDamage;
         // ---- 准备期
         public float PrepDelaySeconds;
@@ -230,14 +235,6 @@ namespace RevGame.Data
             v.EventArtilleryRadius = r.Int("Event.ArtilleryRadius", 0, 10);
             v.EventStageDelaySeconds = r.Float("Event.StageDelaySeconds", 0f, 3600f);
 
-            v.AssistStartSeconds = r.Float("Assist.StartSeconds", 0f, 3600f);
-            v.AssistFinalSeconds = r.Float("Assist.FinalSeconds", 0f, 3600f);
-            v.AssistFinishSeconds = r.Float("Assist.FinishSeconds", 0f, 3600f);
-            v.AssistStallSeconds = r.Float("Assist.StallSeconds", 0f, 3600f);
-            v.AssistPulseSeconds = r.Float("Assist.PulseSeconds", 0.1f, 3600f);
-            v.AssistFinalPulseSeconds = r.Float("Assist.FinalPulseSeconds", 0.1f, 3600f);
-            v.AssistPulseHpRatio = r.Float("Assist.PulseHpRatio", 0f, 1f);
-            v.AssistCriticalHpRatio = r.Float("Assist.CriticalHpRatio", 0f, 1f);
             v.AssistSupportDamage = r.Int("Assist.SupportDamage", 1, 100000);
 
             v.PrepDelaySeconds = r.Float("Prep.DelaySeconds", 0f, 3600f);
@@ -251,6 +248,19 @@ namespace RevGame.Data
             v.HandClassBonusWeight = r.Int("Hand.ClassBonusWeight", 0, 1000);
             v.UpgradePairsPerStar = r.Int("Upgrade.PairsPerStar", 1, 100);
             v.RewardOutnumberedFactor = r.Int("Reward.OutnumberedFactor", 1, 100);
+            v.BossCaptureHpRatio = r.Float("Boss.CaptureHpRatio", 0.01f, 1f);
+            v.EventEffectMultiplier = r.Float("Event.EffectMultiplier", 1f, 10f);
+            v.PlayerMoveSeconds = r.Float("PlayerAI.MoveSeconds", 0.5f, 60f);
+            v.PlayerRetreatDistance = r.Int("PlayerAI.RetreatDistance", 1, 8);
+            v.RegionIntervalSeconds = r.Float("Region.IntervalSeconds", 3f, 600f);
+            v.RegionWarningSeconds = r.Float("Region.WarningSeconds", 0.5f, 5f);
+            v.RegionSize = r.Int("Region.Size", 1, 9);
+            v.RegionCellDelaySeconds = r.Float("Region.CellDelaySeconds", 0.02f, 0.2f);
+            v.RegionDamageHpRatio = r.Float("Region.DamageHpRatio", 0.001f, 0.2f);
+            v.BombIntervalSeconds = r.Float("Bomb.IntervalSeconds", 5f, 600f);
+            v.BombWarningSeconds = r.Float("Bomb.WarningSeconds", 0.5f, 5f);
+            v.BombDamageHpRatio = r.Float("Bomb.DamageHpRatio", 0.001f, 0.15f);
+            v.CombatBuffCap = r.Float("Combat.BuffCap", 0.1f, 10f);
             r.ReportUnused();
 
             // ---- 跨参数的逻辑约束：单个值合法，组合起来不合法也会出事
@@ -263,9 +273,10 @@ namespace RevGame.Data
             Rule(v.PrepBuffCountMin <= v.PrepBuffCountMax, "Prep.BuffCountMin 不能大于 Prep.BuffCountMax");
             Rule(v.ClassThresholdLow <= v.ClassThresholdHigh, "Damage.ClassThresholdLow 不能大于 Damage.ClassThresholdHigh");
             Rule(v.EnemyCountBase <= v.EnemyCountMax, "Enemy.CountBase 不能大于 Enemy.CountMax");
-            Rule(v.AssistStartSeconds <= v.AssistFinalSeconds && v.AssistFinalSeconds <= v.AssistFinishSeconds, "必须满足 Assist.StartSeconds ≤ Assist.FinalSeconds ≤ Assist.FinishSeconds");
             Rule(v.DeployStartSeconds <= v.DeployStopSeconds, "Deploy.StartSeconds 不能大于 Deploy.StopSeconds");
             Rule(v.EyeHealMinEyes >= 1, "Battle.EyeHealMinEyes 至少为 1");
+            Rule(v.RegionWarningSeconds + (v.RegionSize * v.RegionSize - 1) * v.RegionCellDelaySeconds < v.RegionIntervalSeconds, "区域预警与逐格命中总时长必须小于波动间隔");
+            Rule(v.BombWarningSeconds < v.BombIntervalSeconds, "炸弹蓄力必须小于施放间隔");
             return v;
         }
     }
@@ -342,6 +353,32 @@ namespace RevGame.Data
         public static float DeployIntervalPerLevelSeconds => V.DeployIntervalPerLevelSeconds;
         public static int DeployMinEmptyCells => V.DeployMinEmptyCells;
         // ---- 战斗事件
+        /// <summary>来自 BalanceRule[Boss.CaptureHpRatio]，单位与取值说明见原始 Excel。</summary>
+        public static float BossCaptureHpRatio => V.BossCaptureHpRatio;
+        /// <summary>来自 BalanceRule[Event.EffectMultiplier]，单位与取值说明见原始 Excel。</summary>
+        public static float EventEffectMultiplier => V.EventEffectMultiplier;
+        /// <summary>来自 BalanceRule[PlayerAI.MoveSeconds]，单位与取值说明见原始 Excel。</summary>
+        public static float PlayerMoveSeconds => V.PlayerMoveSeconds;
+        /// <summary>来自 BalanceRule[PlayerAI.RetreatDistance]，单位与取值说明见原始 Excel。</summary>
+        public static int PlayerRetreatDistance => V.PlayerRetreatDistance;
+        /// <summary>来自 BalanceRule[Region.IntervalSeconds]，单位与取值说明见原始 Excel。</summary>
+        public static float RegionIntervalSeconds => V.RegionIntervalSeconds;
+        /// <summary>来自 BalanceRule[Region.WarningSeconds]，单位与取值说明见原始 Excel。</summary>
+        public static float RegionWarningSeconds => V.RegionWarningSeconds;
+        /// <summary>来自 BalanceRule[Region.Size]，单位与取值说明见原始 Excel。</summary>
+        public static int RegionSize => V.RegionSize;
+        /// <summary>来自 BalanceRule[Region.CellDelaySeconds]，单位与取值说明见原始 Excel。</summary>
+        public static float RegionCellDelaySeconds => V.RegionCellDelaySeconds;
+        /// <summary>来自 BalanceRule[Region.DamageHpRatio]，单位与取值说明见原始 Excel。</summary>
+        public static float RegionDamageHpRatio => V.RegionDamageHpRatio;
+        /// <summary>来自 BalanceRule[Bomb.IntervalSeconds]，单位与取值说明见原始 Excel。</summary>
+        public static float BombIntervalSeconds => V.BombIntervalSeconds;
+        /// <summary>来自 BalanceRule[Bomb.WarningSeconds]，单位与取值说明见原始 Excel。</summary>
+        public static float BombWarningSeconds => V.BombWarningSeconds;
+        /// <summary>来自 BalanceRule[Bomb.DamageHpRatio]，单位与取值说明见原始 Excel。</summary>
+        public static float BombDamageHpRatio => V.BombDamageHpRatio;
+        /// <summary>来自 BalanceRule[Combat.BuffCap]，单位与取值说明见原始 Excel。</summary>
+        public static float CombatBuffCap => V.CombatBuffCap;
         public static float BattleEventChance => V.EventScheduleChance;
         public static float RareEventChance => V.EventRareChance;
         public static float BattleEventDelay => V.EventDelaySeconds;
@@ -351,14 +388,6 @@ namespace RevGame.Data
         public static int EventArtilleryRadius => V.EventArtilleryRadius;
         public static float EventStageDelaySeconds => V.EventStageDelaySeconds;
         // ---- 通关辅助
-        public static float VictoryAssistStartSeconds => V.AssistStartSeconds;
-        public static float VictoryAssistFinalSeconds => V.AssistFinalSeconds;
-        public static float VictoryAssistFinishSeconds => V.AssistFinishSeconds;
-        public static float VictoryAssistStallSeconds => V.AssistStallSeconds;
-        public static float VictoryAssistPulseSeconds => V.AssistPulseSeconds;
-        public static float VictoryAssistFinalPulseSeconds => V.AssistFinalPulseSeconds;
-        public static float VictoryAssistPulseHpRatio => V.AssistPulseHpRatio;
-        public static float VictoryAssistCriticalHpRatio => V.AssistCriticalHpRatio;
         public static int SupportDamage => V.AssistSupportDamage;
         // ---- 准备期
         public static float PrepDelaySeconds => V.PrepDelaySeconds;

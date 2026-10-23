@@ -209,7 +209,7 @@ internal static class BossRegression
                     battle.RunRegressionEnemyAI(Step);
                 }
                 Assert(ai.State == BossAIState.Idle, kind + " 收招后回到待机");
-                int expected = kind == BossSkillKind.Bombard || kind == BossSkillKind.LaserSpin ? BossSkillCatalog.Get(kind).Count : 1;
+                int expected = kind == BossSkillKind.Bombard || kind == BossSkillKind.LaserSpin || kind >= BossSkillKind.MeteorShower ? BossSkillCatalog.Get(kind).Count : 1;
                 Assert(casts.Count == expected, kind + " 命中段数 = " + expected + "（实际 " + casts.Count + "）");
                 for (int i = 0; i < casts.Count; i++)
                 {

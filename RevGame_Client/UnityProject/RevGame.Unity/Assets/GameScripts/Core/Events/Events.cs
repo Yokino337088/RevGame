@@ -66,6 +66,12 @@ namespace RevGame.Core
         /// <summary>需要弹一条战斗日志。参数：文本（string）。</summary>
         public const string BattleLog = "RevGame.UI.BattleLog";
 
+        /// <summary>固定区域预警，唯一签名RegionPulseInfo；格子动画开始时还不扣血。</summary>
+        public const string RegionPulseWarning = "RevGame.Battle.RegionPulseWarning";
+        /// <summary>炸弹开始落下，唯一签名EnergyBombInfo。</summary>
+        public const string EnergyBombWarning = "RevGame.Battle.EnergyBombWarning";
+        /// <summary>炸弹真实命中，唯一签名EnergyBombInfo；此时震屏/音效/手机振动。</summary>
+        public const string EnergyBombImpact = "RevGame.Battle.EnergyBombImpact";
         // ---------------- Boss 技能 ----------------
         /// <summary>
         /// Boss 开始蓄力一个技能（预警）。参数：<c>BossSkillInfo</c>。

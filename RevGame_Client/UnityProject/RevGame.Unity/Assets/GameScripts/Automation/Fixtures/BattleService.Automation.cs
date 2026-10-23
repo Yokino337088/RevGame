@@ -65,7 +65,7 @@ namespace RevGame.Services
             foreach (Piece piece in _playerPieces)
             {
                 // SetRoundHealthScale保留生命比例且保留0血；加生命不是复活或免费回满的旁路。
-                piece.SetRoundHealthScale(ScaleAutomationHealth(_prepHealthScale));
+                ApplyPreparationHealth(piece, _prepHealthScale);
                 if (piece.IsAlive) { Revolution.RevEvent.DispatchEvent<int>(Events.PieceHpChanged, piece.Id); }
             }
         }

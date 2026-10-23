@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "revolution": {
+      "command": "python",
+      "args": [
+        "G:/RevRoot/Revolution/Revolution.RevMCP/rev_mcp.py",
+        "--project", "G:/RevRoot/Revolution/RevolutionFrameWork_Unity",
+        "serve"
+      ]
+    }
+  }
+}

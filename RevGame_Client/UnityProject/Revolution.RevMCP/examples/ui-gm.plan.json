@@ -1,0 +1,16 @@
+{
+  "name": "RevAutomationDemo：玩家按钮、GM、状态、截图与清理",
+  "steps": [
+    {"target":"game","action":"demo.reset","expect":[{"path":"/data/count","equals":0}]},
+    {"id":"ui","target":"game","action":"ui.dump","arguments":{"query":"AutomationCanvas/Increment"},"expect":[{"path":"/data/total","equals":1}]},
+    {"target":"game","action":"ui.click","arguments":{"id":{"$ref":"ui#/data/items/0/id"}}},
+    {"target":"game","action":"demo.state","until":{"path":"/data/count","equals":1,"timeoutSeconds":5,"intervalSeconds":0.2}},
+    {"target":"gm","action":"自动化演示/增加","arguments":{"arg0":2},"expect":[{"path":"/data/message","equals":"3"}]},
+    {"target":"game","action":"demo.state","expect":[{"path":"/data/count","equals":3}]},
+    {"target":"game","action":"runtime.screenshot"},
+    {"target":"game","action":"runtime.logs","expect":[{"path":"/data/errorCount","equals":0}]}
+  ],
+  "finally": [
+    {"target":"game","action":"demo.reset","expect":[{"path":"/data/count","equals":0}]}
+  ]
+}

@@ -110,6 +110,7 @@ namespace RevGame.View
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshCells, owner: this);
             RevEvent.AddEventListener(Events.HandChanged, RefreshCells, owner: this);
             ListenBossSkills();
+            ListenCombatPacing();
             BuildCellsAsync(generation);
             RefreshBoard();
         }
@@ -591,6 +592,7 @@ namespace RevGame.View
             // OnPoolReturn 使用 Kill(false)，不会执行旧完成回调，也不会在遍历中修改本集合。
             _effects.Clear();
             ClearBossFx();
+            ClearCombatPacing();
         }
 
         private void OnPlaced(int id)
@@ -809,6 +811,7 @@ namespace RevGame.View
             RevTimer.CancelAllOf(this);
             // Boss 技能特效先回池：它们挂在 _viewRoot 下，容器稍后销毁前必须全部归还。
             ClearBossFx();
+            ClearCombatPacing();
             foreach (var view in _pieces.Values)
             {
                 if (view != null)

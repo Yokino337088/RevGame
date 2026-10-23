@@ -133,12 +133,12 @@ namespace RevGame.Services
             }
         }
 
-        /// <summary>本回合战斗限时：普通回合读表，Boss 回合返回正无穷（不会超时判负）。</summary>
+        /// <summary>所有回合均不限时，返回正无穷；时间仅用于驱动冷却，不参与胜负比较。</summary>
         public float BattleDuration
         {
             get
             {
-                return IsBossRound ? float.PositiveInfinity : Balance.BattleDurationSeconds;
+                return float.PositiveInfinity;
             }
         }
 
@@ -176,13 +176,13 @@ namespace RevGame.Services
         /// <summary>只读档位供界面/GM核对；真正策略由 EnemyTactics 使用。</summary>
         public int EnemyIntelligence => LevelCatalog.GetIntelligence(Chapter, Round);
 
-        /// <summary>游戏默认开启轻松模式；编辑器可传 false 验证无辅助的基础规则。</summary>
+        /// <summary>游戏默认开启随机战斗事件；该开关不提供免死或保胜。</summary>
         public BattleService() : this(true)
         {
         }
 
         /// <summary>
-        /// 轻松模式开关的重载：不传种子时使用系统随机，正式游玩走这个入口。
+        /// 战斗事件开关的重载：不传种子时使用系统随机，正式游玩走这个入口。
         /// </summary>
         public BattleService(bool victoryAssist) : this(victoryAssist, null)
         {
@@ -236,16 +236,13 @@ namespace RevGame.Services
             _lastWinner = null;
             EyeStoneSelected = false;
             SelectedPieceId = 0;
+            // 先归零本轮生命增益，再恢复准备属性；反过来会把上一轮的生命倍率重新套回残局。
+            ResetCombatPacing();
             ResetPreparation();
             _roundSpeedBonus = 0f;
             _roundLibertyBonus = 0;
             _battleEventCount = 0;
             _nextEventAt = Balance.BattleEventDelay;
-            _decisiveSupportUsed = false;
-            _supportStage = 0;
-            _lastEnemyDamageAt = 0f;
-            _nextSupportPulseAt = 0f;
-            _lastStandShown = false;
             _eyeHealElapsed = 0f;
             ResetEnemyDeployment();
             _eventScheduled = VictoryAssistEnabled || IsBossRound || _random.NextDouble() < Balance.BattleEventChance;
@@ -485,7 +482,7 @@ namespace RevGame.Services
             LastError = string.Empty;
             RevEvent.DispatchEvent<int>(Events.PhaseEnterBattle, Round);
             RevEvent.DispatchEvent<string>(Events.BattleLog, "敌阵：" + EnemyFormation + "；先破连接，再压制远程");
-            RevLog.Info("战斗开始（限时 " + BattleDuration + " 秒）", Tag);
+            RevLog.Info("战斗开始（不限时，胜负由真实战斗决定）", Tag);
             return true;
         }
 
@@ -520,16 +517,21 @@ namespace RevGame.Services
                 _tickAccumulator -= stepSeconds;
                 _battleElapsed += stepSeconds;
                 ResolveOneStep(stepSeconds);
+                // 全灭是已经发生的结局，必须先结算；不能让同一步的自动援军复活已全灭的一方。
+                if (HasBattleEnded())
+                {
+                    EndBattle();
+                    break;
+                }
                 // 攻击结算完再补子：已被全灭或擒王的敌人不能靠同一帧的增援“复活”。
                 TickEnemyDeployment();
                 TickPreparationCombat(stepSeconds);
                 TryAutomaticEvent();
-                ApplyVictorySupport();
-                bool timeout = !IsBossRound && _battleElapsed >= BattleDuration;
-                bool captured = IsKingCaptured();
-                if (timeout || captured || _board.IsSideWiped(GameSide.Enemy) || _board.IsSideWiped(GameSide.Player))
+                // 全部战斗不限时；加速由真实增益、区域波动和炸弹伤害完成，不删除残敌。
+                TickCombatPacing();
+                if (HasBattleEnded())
                 {
-                    EndBattle(timeout);
+                    EndBattle();
                 }
             }
         }
@@ -552,7 +554,7 @@ namespace RevGame.Services
         //  战斗推进
         // =====================================================================
         /// <summary>
-        /// 一个战斗步：双方交替行动 —— 先攻击射程内的目标；我方守阵，敌方仅在射程不足且移动冷却结束时接近。
+        /// 一个战斗步：双方交替行动；玩家按独立冷却执行贴敌/后撤，再结算攻击，敌人由各自状态机驱动。
         /// 规则简单但**完全确定**（同样的棋盘 + 同样的顺序 ⇒ 同样的结果），方便复现 bug。
         /// </summary>
         private void ResolveOneStep(float stepSeconds)
@@ -590,7 +592,7 @@ namespace RevGame.Services
         /// <summary>
         /// 推进一方的行动。先按统一资格跳过死亡棋/锁死敌棋，再积攒攻击进度：满1才出手，不按显示帧数出手。
         /// 我方零气仍参与守阵反击；气眼状态及其原有受击惩罚继续保留，不能为出手偷偷清除锁死标记。
-        /// 有合法目标就攻击；没目标时玩家守阵，敌人还必须等独立移动冷却，再让EnemyTactics安全试走。
+        /// 玩家按独立冷却决定接敌或后撤，有合法目标就攻击；敌人由EnemyTactics安全试走。
         /// 攻击和移动共用真实规则，但使用两套时钟，所以“万箭齐发”不会把棋子移动速度也翻倍。
         /// 缓冲列表归本服务持有，查询完成立即消费，不能交给异步视图保存；视图接收的是不可变事件快照。
         /// </summary>
@@ -609,13 +611,14 @@ namespace RevGame.Services
                 {
                     continue;
                 }
+                TryPlayerTacticalMove(piece);
                 float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。
                 rate = ScaleAutomationAttackRate(rate);
 #endif
                 piece.ActionProgress += stepFraction * Balance.AttackSpeedScale * PreparationAttackRate(piece)
-                    * rate * (1f + _speedBonus + _roundSpeedBonus);
+                    * rate * (1f + _speedBonus + _roundSpeedBonus + _combatHasteBonus);
                 int actions = (int)piece.ActionProgress;
                 piece.ActionProgress -= actions;
                 for (int action = 0; action < actions; action++)
@@ -657,7 +660,7 @@ namespace RevGame.Services
             }
 
             float linked = System.Math.Min(Balance.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Balance.LinkAttackPerCell);
-            multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus + PreparationAttackBonus(attacker, target) : 0f);
+            multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
             var attack = new PieceAttackInfo(attacker.Id, attacker.Def.Kind, attacker.Pos, attacker.Size, attacker.Side);
             RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, attack);
             // 双方一起降低单发伤害，保留远程较高的出手频率，让玩家能看见互相消耗和支援反击。
@@ -686,7 +689,7 @@ namespace RevGame.Services
         /// 结束战斗：判定胜方、停掉敌方状态机、清牌并广播结算事件。
         /// 先停 AI 再广播，避免界面在结算阶段还能看到旧回合的棋继续行动。
         /// </summary>
-        private void EndBattle(bool timeout)
+        private void EndBattle()
         {
             GameSide winner;
             if (IsKingCaptured())
@@ -696,12 +699,6 @@ namespace RevGame.Services
             else if (_board.IsSideWiped(GameSide.Player))
             {
                 winner = GameSide.Enemy;
-            }
-            else if (timeout)
-            {
-                // 只有普通回合会走到超时判定；Boss 不限时，胜负由擒王或我方全灭决定。
-                winner = TotalHp(GameSide.Player) >= TotalHp(GameSide.Enemy) ? GameSide.Player : GameSide.Enemy;
-                RevEvent.DispatchEvent<string>(Events.BattleLog, "战斗超时，按剩余血量判定");
             }
             else if (_board.IsSideWiped(GameSide.Enemy))
             {
@@ -725,19 +722,20 @@ namespace RevGame.Services
             RevLog.Info("战斗结束：" + (winner == GameSide.Player ? "胜" : "负"), Tag);
         }
 
-        /// <summary>存活棋子血量总和，只用于超时判胜；死棋不参与，避免高血量尸体影响结果。</summary>
+        /// <summary>唯一结束条件：真实全灭或满足残血门槛的擒王。时间不参与胜负。</summary>
+        private bool HasBattleEnded()
+        {
+            return IsKingCaptured() || _board.IsSideWiped(GameSide.Player) || _board.IsSideWiped(GameSide.Enemy);
+        }
+
+        /// <summary>仅供固定输入验收比较血量变化；绝不参与胜负，避免按剩余血量把超时战斗判赢。</summary>
         private int TotalHp(GameSide side)
         {
-            List<Piece> list = side == GameSide.Player ? _playerPieces : _enemyPieces;
             int sum = 0;
-            for (int i = 0; i < list.Count; i++)
+            foreach (Piece piece in side == GameSide.Player ? _playerPieces : _enemyPieces)
             {
-                if (list[i].IsAlive)
-                {
-                    sum += list[i].Hp;
-                }
+                if (piece.IsAlive) { sum += piece.Hp; }
             }
-
             return sum;
         }
 
@@ -835,7 +833,8 @@ namespace RevGame.Services
             }
 
             Piece king = _enemyPieces.Find(p => p.IsKing);
-            return king != null && (!king.IsAlive || king.IsLocked);
+            // 血线与包围同时满足才擒王。满血时即使零气，也必须继续打掉血量；真实击杀始终获胜。
+            return king != null && (!king.IsAlive || (king.HpRatio <= Balance.BossCaptureHpRatio && king.IsLocked));
         }
 
         /// <summary>
@@ -847,7 +846,7 @@ namespace RevGame.Services
             plan = new List<Piece>();
             // ★ 双牌升级不再消耗棋子，存活阵容会逐轮变大。按继承阵容的星级总量补充敌方承伤与输出，
             // 让“保留十几颗远程”仍有交战时间，避免几秒清场和一路堆满导致下一轮无法出生。
-            // 这只是当前原型的动态压力，基础成长仍由关卡进度决定；最终收尾保障不受它影响。
+            // 这只是当前原型的动态压力，基础成长仍由关卡进度决定，胜负始终由真实战斗规则判断。
             float strength = 0f;
             if (!newBoard)
             {

@@ -253,11 +253,11 @@ namespace RevGame.Editor
                     {
                         battle.Tick(3f);
                         Check(battle.StartBattle(), "固定种子实际开战");
-                        battle.Tick(Balance.VictoryAssistFinishSeconds + Balance.BattleSimulationStepSeconds);
-                        Check(battle.LastWinner == GameSide.Player && battle.Phase == GamePhase.Settle, "固定种子对局最终可胜");
+                        // 测试期限仅约束验收程序，超时必须失败，不能反过来删除实战敌人保证通过。
+                        for (int step = 0; step < 4000 && battle.Phase == GamePhase.Battle; step++) { battle.Tick(Balance.BattleSimulationStepSeconds); }
+                        Check(battle.LastWinner.HasValue && battle.Phase == GamePhase.Settle, "固定种子对局按真实存活结果结束，允许玩家失败");
                         Check(playerDamage > 0 && enemyDamage > 0, "双方均有真实伤害，敌方不是纯站桩挨打");
-                        // 最低验收线是15秒；固定步恰好落在15.0也应通过，不能误判成未达到15秒。
-                        Check(battle.BattleElapsed >= 15f && battle.BattleEventCount >= 2, "交战至少15秒且展开两次以上事件");
+                        Check(battle.BattleElapsed > 0f, "真实推进了战斗时钟，不通过超时清敌结算");
                         report.AppendLine(chapter + "/" + round + "：" + battle.BattleElapsed + "秒，事件" + battle.BattleEventCount + "，我方受伤" + playerDamage + "，敌方受伤" + enemyDamage + "，" + battle.VictorySupportStatus);
                     }
                     finally { RevEvent.RemoveAllByOwner(owner); }

@@ -80,22 +80,22 @@ namespace RevGame.Flow
             return Battle.StartBattle();
         }
 
-        public bool RefreshHand() { return Battle.RefreshHand(); }
+        public bool RefreshHand() { return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.RefreshHand(); }
 
         public bool SelectCard(int id)
         {
-            return Battle.SelectCard(id);
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.SelectCard(id);
         }
 
         public bool PlayCard(PieceKind kind, StarTier star, BoardPos pos)
         {
-            return Battle.TryPlayCard(kind, star, pos);
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.TryPlayCard(kind, star, pos);
         }
 
-        /// <summary>触屏与GM共用棋盘点击：服务按当前阶段决定落牌、选中棋子或换位。</summary>
+        /// <summary>触屏与GM共用棋盘点击；章间背景加载时和过场一样拒绝输入，不抢跑准备计时。</summary>
         public bool ClickBoard(BoardPos pos)
         {
-            return Battle.HandleBoardClick(pos);
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.HandleBoardClick(pos);
         }
 
         public bool ContinueToNextRound()

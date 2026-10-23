@@ -243,9 +243,17 @@ Shader "RevGame/Combat/BossSkill"
                 {
                     fx = Laser(uv, t, source.a, 0.06);
                 }
-                else
+                else if (_Mode < 8.5)
                 {
                     fx = MagicOrb(p, t);
+                }
+                else
+                {
+                    // 9 能量炸弹：保留素材alpha，流动扫描与能量裂纹用本地UV生成，不会采到相邻图集。
+                    half scan = pow(saturate(1.0 - abs(frac(uv.y - _Time.y * 1.5) - 0.5) * 7.0), 2.0);
+                    half crack = pow(saturate(1.0 - abs(Fbm(p * 5.0 + _Time.y) - 0.5) * 12.0), 3.0);
+                    half3 shell = lerp(half3(0.055, 0.08, 0.13), _Tint.rgb, scan * 0.65 + crack * 0.45);
+                    fx = fixed4(shell + _Tint.rgb * crack * 0.5, source.a);
                 }
                 fx.a *= _Tint.a * input.color.a;
                 // 预乘：rgb 按 alpha 衰减；再按 _Additive 降低输出 alpha，让发光部分“加”在底图上而不是盖住它。

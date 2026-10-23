@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 594154486
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3c0fd1e6d406f97e216a7a4300a462c9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 3c0fd1e6d406f97e216a7a4300a462c9
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/ChapterBackground/Chapter05_Ice.png
+Dependencies: []

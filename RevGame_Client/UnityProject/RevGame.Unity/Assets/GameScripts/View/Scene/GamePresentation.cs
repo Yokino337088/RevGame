@@ -13,13 +13,15 @@ using UnityEngine.UI;
 
 namespace RevGame.View
 {
-    public sealed class GamePresentation : MonoBehaviour
+    public sealed partial class GamePresentation : MonoBehaviour
     {
+        [Header("场景接线 · 棋盘根节点与渲染相机")]
         [SerializeField]
         private GameObject boardRoot;
         [SerializeField]
         private Camera boardCamera;
-        [Tooltip("由编辑器工具接好的背景。直接引用 Sprite，运行时不读取外部美术文件夹。")]
+        [Header("第 1 章 · 原始背景（保留当前图片与效果）")]
+        [Tooltip("第 1 章仍用这里的 Sprite；第 2~6 章按下面对应的逻辑名异步加载，运行时不读取外部美术目录。")]
         [SerializeField]
         private SpriteRenderer backgroundRenderer;
         /// <summary>
@@ -54,6 +56,7 @@ namespace RevGame.View
         private void OnDisable()
         {
             Camera.onPreCull -= OnCameraRendering;
+            ClearEnergyShake();
         }
 
         private void OnCameraRendering(Camera camera)
@@ -66,6 +69,10 @@ namespace RevGame.View
         private void Start()
         {
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
+            RevEvent.AddEventListener<EnergyBombInfo>(Events.EnergyBombImpact, OnEnergyImpact, owner: this);
+            RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, _ => ClearEnergyShake(), owner: this);
+            RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, _ => ClearEnergyShake(), owner: this);
+            InitializeChapterBackground();
             // GameBootstrap 在配置表就绪后发出首次 ScreenChanged，此前不提前开放操作。
             FitCamera();
             LoadBackgroundMaterial();
@@ -99,8 +106,9 @@ namespace RevGame.View
                 }
                 if (backgroundRenderer != null)
                 {
-                    backgroundRenderer.sharedMaterial = handle.Content as Material;
-                    _backgroundReady = backgroundRenderer.sharedMaterial != null;
+                    Material material = handle.Content as Material;
+                    SetLegacyBackgroundMaterial(material);
+                    _backgroundReady = material != null;
                 }
             }, RevResGroup.Scene);
         }
@@ -128,13 +136,13 @@ namespace RevGame.View
             Vector3 cameraPosition = boardCamera.transform.position;
             cameraPosition.x = (0.5f - center.x / screenSize.x) * boardCamera.orthographicSize * 2f * aspect;
             cameraPosition.y = (0.5f - center.y / screenSize.y) * boardCamera.orthographicSize * 2f;
-            boardCamera.transform.position = cameraPosition;
+            boardCamera.transform.position = cameraPosition + EnergyShakeOffset();
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
             {
-                UpdateBackgroundAtlasUv();
-                // ★ 只有显式勾了“自动铺满”才写 transform：本方法每帧 pre-cull 都会跑，
-                //   无条件覆盖会让美术在场景里手调的尺寸一进 Play 就被改掉（含非等比缩放），手调永远留不住。
-                if (fitBackgroundToCamera)
+                if (_activeBackgroundChapter > 1) { UpdateChapterFrame(areas, screenSize); }
+                else { UpdateBackgroundAtlasUv(); }
+                // 第一章尊重原有手调布局；新章节横向原画始终等比铺满，不能沿用旧竖图的非等比尺寸。
+                if (fitBackgroundToCamera || _activeBackgroundChapter > 1)
                 {
                     // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
                     // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。
@@ -180,6 +188,7 @@ namespace RevGame.View
             int version = ++_screenVersion;
             _readyScreen = GameScreen.Exit;
             _loadError = null;
+            if (screen == GameScreen.Battle) { ApplyChapterBackground(RevServices.GetRequired<RevGame.Services.IBattleService>().Chapter); }
             if (boardRoot != null)
             {
                 boardRoot.SetActive(screen == GameScreen.Battle);
@@ -266,7 +275,7 @@ namespace RevGame.View
                         throw new InvalidOperationException(board.LoadError);
                     }
                     progress?.Invoke(board.CellCount / (float)(Consts.BoardSize * Consts.BoardSize) * 0.8f);
-                    if (board.IsReady && _backgroundReady && RevUI.IsOpen<PreparePanel>() && RevUI.IsOpen<BattleHudPanel>())
+                    if (board.IsReady && IsChapterBackgroundReady && RevUI.IsOpen<PreparePanel>() && RevUI.IsOpen<BattleHudPanel>())
                     {
                         break;
                     }
@@ -331,6 +340,7 @@ namespace RevGame.View
         private void OnDestroy()
         {
             _released = true;
+            DisposeChapterBackground();
             if (_backgroundMaterialRequested)
             {
                 if (backgroundRenderer != null)

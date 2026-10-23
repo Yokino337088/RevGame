@@ -17,7 +17,18 @@ namespace RevGame.View
             RevEvent.AddEventListener<int>(Events.PieceMerged, OnMerged, owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, owner: this);
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
+            RevEvent.AddEventListener<EnergyBombInfo>(Events.EnergyBombImpact, OnEnergyBomb, owner: this);
+            RevEvent.AddEventListener<RegionPulseInfo>(Events.RegionPulseWarning, OnRegion, owner: this);
+            RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, OnBossSkill, owner: this);
             RevSound.Failed += OnFailed;
+        }
+
+        private void OnEnergyBomb(EnergyBombInfo info) { RevSound.Play("EnergyHuge", volume: 0.48f); }
+        private void OnRegion(RegionPulseInfo info) { RevSound.Play("RegionWave", volume: 0.22f); }
+        private void OnBossSkill(BossSkillInfo info)
+        {
+            // 多段技能只在首段播完整音效，避免密集叠音；各技能声音名与外部素材登记保持一致。
+            if (info.Index == 0) { RevSound.Play("Boss_" + info.Kind, volume: 0.28f); }
         }
 
         private void OnPlaced(int id)
@@ -55,6 +66,9 @@ namespace RevGame.View
 
         private void OnFailed(string name, RevSoundErrorReason reason)
         {
+            // 多颗棋同帧命中时，框架只播放一次同名声音以免音量叠爆。
+            // Duplicated代表正常去重；其它加载/播放错误仍必须显示出来供排错。
+            if (reason == RevSoundErrorReason.Duplicated) { return; }
             RevLog.Warn("声音播放失败：" + name + "，原因：" + reason, "RevGame");
         }
 

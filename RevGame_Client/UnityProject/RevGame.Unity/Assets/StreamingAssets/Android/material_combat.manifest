@@ -1,0 +1,23 @@
+ManifestFileVersion: 0
+CRC: 3754947990
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: eec41570cd9fa50bdf4a6860d2b4d05b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5e762ccb57c4caaabbb5a4199ac82c23
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: eec41570cd9fa50bdf4a6860d2b4d05b
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Material/Combat/BossSkill.mat
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders

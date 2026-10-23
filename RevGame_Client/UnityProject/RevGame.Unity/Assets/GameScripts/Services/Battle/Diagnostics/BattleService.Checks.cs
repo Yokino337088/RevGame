@@ -31,13 +31,13 @@ namespace RevGame.Services
                 switch (kind)
                 {
                     case BattleEventKind.Reinforcement:
-                        check(service.Hand.Count == 0 && service._playerPieces.Count == 4, "天降援兵真实消费一张牌并增加棋子");
+                        check(service.Hand.Count == 0 && service._playerPieces.Count == 3 + (int)Balance.EventEffectMultiplier, "天降援兵消费真实手牌，余量按翻倍效果补强援");
                         break;
                     case BattleEventKind.Liberty:
-                        check(player.Liberties == liberties + 1, "回气真实增加一口气");
+                        check(player.Liberties == liberties + (int)(BattleEventCatalog.DefOf(kind).Amount * Balance.EventEffectMultiplier), "回气真实按配置翻倍增加气");
                         break;
                     case BattleEventKind.Heal:
-                        check(player.Hp == hp + (int)(player.MaxHp * BattleEventCatalog.DefOf(BattleEventKind.Heal).Amount), "疗愈雨按配置比例回复最大生命");
+                        check(player.Hp == Math.Min(player.MaxHp, hp + (int)(player.MaxHp * BattleEventCatalog.DefOf(kind).Amount * Balance.EventEffectMultiplier)), "疗愈雨按配置翻倍回复并限制到满血");
                         break;
                     case BattleEventKind.Combo:
                         // 比较实际伤害，不能只检查一个「增益已设置」标志。把两军放到互相可攻击的位置。
@@ -67,10 +67,10 @@ namespace RevGame.Services
                         check(service._board.GetPiece(new BoardPos(5, 7)) == null && service._board.GetPiecesOf(GameSide.Enemy).Count == 2, "断链移除中间连接子并拆开敌块");
                         break;
                     case BattleEventKind.Teleport:
-                        check(player.Pos == position && player.Liberties == liberties + 1, "守阵回气增加气但不移动玩家棋子");
+                        check(player.Pos == position && player.Liberties == liberties + (int)(BattleEventCatalog.DefOf(kind).Amount * Balance.EventEffectMultiplier), "守阵回气按翻倍增加气但不移动棋子");
                         break;
                     case BattleEventKind.Artillery:
-                        check(service._enemyPieces.TrueForAll(p => p.Hp == p.MaxHp - Balance.SupportDamage), "炮火对密集区域三颗敌子逐一扣血");
+                        check(service._enemyPieces.TrueForAll(p => p.Hp == p.MaxHp - Math.Max(Balance.SupportDamage, (int)(p.MaxHp * BattleEventCatalog.DefOf(kind).Amount * Balance.EventEffectMultiplier))), "炮火按配置翻倍对密集区域三颗敌子逐一扣血");
                         break;
                 }
 
@@ -133,8 +133,11 @@ namespace RevGame.Services
 
             battle.Tick(3f);
             battle.StartBattle();
-            battle.Tick(Balance.BattleTickSeconds);
-            check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player && king.IsAlive, "主将围死即胜，不必先扣完生命");
+            battle.Tick(Balance.BattleSimulationStepSeconds);
+            check(battle.Phase == GamePhase.Battle && king.IsLocked && king.HpRatio > Balance.BossCaptureHpRatio, "主将满血围死不能获胜");
+            battle.DamagePiece(king, king.Hp - (int)(king.MaxHp * Balance.BossCaptureHpRatio));
+            battle.Tick(Balance.BattleSimulationStepSeconds);
+            check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player && king.IsAlive, "主将降到门槛且围死才擒王");
             check(battle.ContinueRound() && battle.Phase == GamePhase.Reward && battle.Rewards.Count == 3, "Boss结算进入三选一");
             check(!battle.ChooseReward(-1) && battle.Rewards.Count == 3, "越界奖励不消耗待领选项");
             check(battle.ChooseReward(0) && battle.Chapter == 2 && !battle.ChooseReward(0), "奖励领取一次进入下章，重复拒绝");
@@ -217,10 +220,10 @@ namespace RevGame.Services
         {
             var delayed = new BattleService(true, 84);
             delayed.StartRound(1, 1);
-            delayed.Tick(2.99f);
-            check(!delayed.PreparationGranted && delayed.PreparationBuffs.Count == 0, "三秒前不提前给准备奖励");
+            delayed.Tick(Balance.PrepDelaySeconds - 0.01f);
+            check(!delayed.PreparationGranted && delayed.PreparationBuffs.Count == 0, "配置时刻前不提前给准备奖励");
             delayed.Tick(0.01f);
-            check(delayed.PreparationGranted && delayed.PreparationBuffs.Count >= 3 && delayed.PreparationBuffs.Count <= 5, "到三秒发3～5项准备奖励");
+            check(delayed.PreparationGranted && delayed.PreparationBuffs.Count >= Balance.PrepBuffCountMin && delayed.PreparationBuffs.Count <= Balance.PrepBuffCountMax, "按配置时刻和数量范围发准备奖励");
             var unique = new HashSet<PreparationBuffKind>();
             foreach (PreparationBuffDef buff in delayed.PreparationBuffs) { check(unique.Add(buff.Kind), "本轮准备奖励不重复：" + buff.Title); }
             int count = delayed.PreparationBuffs.Count;
@@ -353,7 +356,7 @@ namespace RevGame.Services
             check(pairs._playedPairs.Count == 0, "新战役重置双牌累计，避免新局第一张错误升星");
         }
 
-        /// <summary>用真正的最弱阵容与高血量敌人验证兜底，不直接写结算结果。</summary>
+        /// <summary>验证不再保胜：最后一子允许死亡，结算必须真实判负。</summary>
         private static void VerifyComfortContracts(Action<bool, string> check)
         {
             for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
@@ -376,9 +379,18 @@ namespace RevGame.Services
                     service.RefreshGoState();
                     service.Tick(3f);
                     check(service.StartBattle(), "弱势夹具能正常开始：" + chapter + "/" + round);
-                    service.Tick(Balance.VictoryAssistFinishSeconds);
-                    check(service.LastWinner == GameSide.Player && service.Phase == GamePhase.Settle, "1血单兵对高血量敌人仍真实取胜：" + chapter + "/" + round);
-                    check(service.BattleEventCount >= 3 && service._decisiveSupportUsed, "每回合多次支援并实际触发决胜伤害：" + chapter + "/" + round);
+                    service._prepDamageReduction = service._prepRecoveryRatio = 0f;
+                    foreach (Piece extra in new List<Piece>(service._playerPieces))
+                    {
+                        extra.ShieldCharges = 0;
+                        if (extra != survivor) { service.DamagePiece(extra, int.MaxValue); }
+                    }
+                    survivor.ShieldCharges = 0;
+                    service._prepDamageReduction = service._prepRecoveryRatio = 0f;
+                    service.DamagePiece(survivor, survivor.Hp);
+                    check(!survivor.IsAlive, "最后一子不再免死：" + chapter + "/" + round);
+                    service.Tick(Balance.BattleSimulationStepSeconds);
+                    check(service.LastWinner == GameSide.Enemy && service.Phase == GamePhase.Settle, "玩家全灭真实判负：" + chapter + "/" + round);
                 }
             }
 
@@ -421,23 +433,23 @@ namespace RevGame.Services
             service._hand.Add(PieceKind.Crossbow, StarTier.Two);
             int allowance = service.CardsRemaining;
             check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "混合手牌援军成功");
-            Piece born = service._playerPieces[service._playerPieces.Count - 1];
+            Piece born = service._playerPieces[3];
             check(born.Def.Kind == PieceKind.Crossbow && born.Def.Star >= StarTier.Two, "优先最强远程而非排在前面的近战");
-            check(service.Hand.Count == 2 && service.CardsRemaining == allowance, "只消费真正部署的牌，不扣手动落子额度");
+            check(service.Hand.Count == 3 - (int)Balance.EventEffectMultiplier && service.CardsRemaining == allowance, "翻倍援军只消费真正部署的牌，不扣手动落子额度");
             check(born.Pos.Y <= 2 && born.Pos.X <= 4, "远程援军落在己方主体附近的安全后排");
             check(service._enemyPieces.TrueForAll(p => BodyDistance(born.Pos, born.Size, p) > 2), "远程援军避开贴敌位置");
 
             service = EventFixture();
             service._hand.Clear();
             check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "六牌用尽仍能获得强援");
-            born = service._playerPieces[service._playerPieces.Count - 1];
+            born = service._playerPieces[3];
             check(born.Def.Kind == PieceKind.Crossbow && born.Def.Star == StarTier.Two && service.Hand.Count == 0, "空手补二星重弩，不凭空增加手牌");
 
             service = EventFixture();
             service._hand.Clear();
             service._hand.Add(PieceKind.Swordman, StarTier.One);
             check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "近战援军可以部署");
-            born = service._playerPieces[service._playerPieces.Count - 1];
+            born = service._playerPieces[3];
             check(!born.Def.IsRanged && RevGame.Battle.MoveRules.GetAttackTargets(service._board, born).Count > 0, "近战援军落下后可以立即开始积攒守阵攻击");
             // 全盘援击不能替代“近战援军靠近敌人”的落点要求；直接检查身体边缘距离，避免射程放宽后此断言失去意义。
             check(service._enemyPieces.Exists(p => p.IsAlive && BodyDistance(born.Pos, born.Size, p) <= 1), "近战援军仍优先落到可贴身交战的位置");

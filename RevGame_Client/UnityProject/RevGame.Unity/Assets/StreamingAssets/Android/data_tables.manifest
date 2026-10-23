@@ -1,21 +1,33 @@
 ManifestFileVersion: 0
-CRC: 2535752644
+CRC: 1945554082
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 81ebd76c3786ccf9796097c424689cb2
+    Hash: cf6b4e7dc9b535d98c55ad9e4aefe7d2
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5ad585dd02dfb5016c0dad519eab8f49
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 81ebd76c3786ccf9796097c424689cb2
+    Hash: cf6b4e7dc9b535d98c55ad9e4aefe7d2
 HashAppended: 0
 ClassTypes:
 - Class: 49
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Data/RewardBoostConfig.txt
+- Assets/GameRes/Data/StarConfig.txt
+- Assets/GameRes/Data/EnemyReinforceConfig.txt
+- Assets/GameRes/Data/RewardConfig.txt
+- Assets/GameRes/Data/BalanceRule.txt
+- Assets/GameRes/Data/PrepBuffConfig.txt
+- Assets/GameRes/Data/BattleEventConfig.txt
 - Assets/GameRes/Data/BattleText.txt
+- Assets/GameRes/Data/EnemyRosterConfig.txt
 - Assets/GameRes/Data/BattleTuning.txt
+- Assets/GameRes/Data/PieceConfig.txt
+- Assets/GameRes/Data/BossSkillConfig.txt
+- Assets/GameRes/Data/ChapterConfig.txt
+- Assets/GameRes/Data/EventRotationConfig.txt
 Dependencies: []

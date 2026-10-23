@@ -100,6 +100,25 @@ namespace RevGame.Core
         Summon = 7,
         /// <summary>狂暴怒吼：血量跌破阈值时只触发一次，此后技能冷却缩短。</summary>
         Enrage = 8,
+        /// <summary>流星陨落，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        MeteorShower = 9,
+        /// <summary>十字天罚，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        CrossLaser = 10,
+        /// <summary>极寒新星，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        FrostNova = 11,
+        /// <summary>连锁雷暴，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        ChainLightning = 12,
+        /// <summary>腐蚀毒沼，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        PoisonMarsh = 13,
+        /// <summary>烈焰火墙，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        FlameWall = 14,
+        /// <summary>冰晶贯穿，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        IceLance = 15,
+        /// <summary>引力坍缩，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        GravityWell = 16,
+        /// <summary>末日烙印，参数、预警和解锁章节来自BossSkillConfig。</summary>
+        DoomSigil = 17,
+
     }
 
     /// <summary>

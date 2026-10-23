@@ -187,7 +187,7 @@ namespace RevGame.Services
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             normalScale = ScaleAutomationHealth(normalScale);
 #endif
-            piece.SetRoundHealthScale(normalScale);
+            piece.SetRoundHealthScale(normalScale * (1f + _combatVitalityBonus));
         }
 
         /// <summary>寻找不破坏现有眼阵的安全空格加入强援（外形与星级来自 Excel）；全盘无安全格时转换为攻击加成。</summary>

@@ -1,0 +1,40 @@
+# Revolution.RevMCP
+
+把 Revolution 的 Editor、实际注册 GM、运行时业务、UGUI、状态/截图，以及显式 CLI/Python 接口提供给 Agent。Python 3.10+，标准库即可运行。Unity 内入口为 `Revolution.Tools/AI/RevMCP 控制台`，外部 Python 进程提供 MCP stdio；独立开发版 Player 复用运行时桥。
+
+保留相邻的 `Revolution.Automation` 目录，Unity 工程安装当前框架。先打开目标工程并等待编译，再执行：
+
+```powershell
+$project = 'G:\RevRoot\Revolution\RevolutionFrameWork_Unity'
+python Revolution.RevMCP/rev_mcp.py --project $project discover
+python Revolution.Automation/rev.py --project $project --mode live editor play --scene 'Assets/Revolution.Demo/RevAutomation.Demo/RevAutomationDemo.unity'
+python Revolution.RevMCP/rev_mcp.py --project $project run Revolution.RevMCP/examples/ui-gm.plan.json
+python Revolution.Automation/rev.py --project $project --mode live editor stop
+```
+
+Agent 启动命令：`python <rev_mcp.py绝对路径> --project <Unity工程绝对路径> serve`。配置示例见 examples/mcp-config.example.json，也可直接从 Unity 控制台复制。稳定工具为 rev_discover、rev_call、rev_run；真实注册表还会生成动态工具。
+
+独立 Player 显式 `-revAutomation` 开启服务，MCP 使用 `--runtime-endpoint <runtime.json>`。正式包默认无运行时测试接口。game 业务能力通过 `RevRuntimeAutomation.Register` 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。
+
+安装 `Skills/revolution-ai-automation` 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。
+
+完整的新手教程、接口注册、Player、CLI/Python、计划格式、限制和验证记录：
+
+- [RevMCP 使用说明 HTML](../Revolution.Document/自动化工具/RevMCP使用说明.html)
+- [Markdown](../Revolution.Document/自动化工具/RevMCP使用说明.md)
+- [Editor Automation](../Revolution.Automation/README.md)
+- [AI 自动化 Skill](../Skills/revolution-ai-automation/SKILL.md)
+
+无 Unity 依赖的回归：
+
+```powershell
+python -m unittest discover -s Revolution.RevMCP/tests -v
+```
+
+实际 Unity/MCP 验证（先启动教学场景 Play）：
+
+```powershell
+python Revolution.RevMCP/tests/verify_unity.py --project $project --output Revolution.RevMCP/results/verification.json
+```
+
+截至 2026-10-22：Python 13 项通过；实际 MCP → Editor 与 Windows 开发版 Player 的 UI/GM/断言/截图/清理已通过。设备与其他平台没有以此冒充已验收。

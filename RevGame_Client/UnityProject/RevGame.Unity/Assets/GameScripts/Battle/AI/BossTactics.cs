@@ -97,6 +97,10 @@ namespace RevGame.Battle
             plan = new BossSkillPlan { Kind = kind, A = boss.Pos, B = boss.Pos, C = boss.Pos };
             BossSkillDef def = BossSkillCatalog.Get(kind);
             var victims = new List<Piece>(16);
+            if ((int)kind >= (int)BossSkillKind.MeteorShower)
+            {
+                return BossPatternGeometry.TryPlan(board, boss, kind, out plan);
+            }
             switch (kind)
             {
                 case BossSkillKind.Cleave:

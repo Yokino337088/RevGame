@@ -415,6 +415,10 @@ namespace RevGame.Data
                             problems.Add(where + " 的 Amount 必须大于 0（该事件的主效果量）"); ok = false;
                         }
                         break;
+                    case BattleEventKind.Attack:
+                    case BattleEventKind.Defense:
+                    case BattleEventKind.Haste:
+                    case BattleEventKind.Vitality:
                     case BattleEventKind.Combo:
                         if (row.Amount <= 0f || row.Cap <= 0f)
                         {

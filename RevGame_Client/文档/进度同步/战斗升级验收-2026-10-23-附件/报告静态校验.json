@@ -1,0 +1,11 @@
+{
+  "localReferencesChecked": 125,
+  "missingReferences": [],
+  "uniqueIds": 10,
+  "skillsExpandable": 18,
+  "screenshotsVerified": 40,
+  "screenshotResolution": "1920x1080",
+  "scriptSyntaxValid": true,
+  "browserRendered": false,
+  "browserLimitation": "浏览器工具拒绝本地file协议；只做静态结构/链接/图片/脚本校验，不宣称浏览器视觉或窄屏实测通过。"
+}

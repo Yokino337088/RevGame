@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4208075241
+CRC: 2317231738
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 761f7ffa79d741a1376e41928b826709
+    Hash: 2aba5f57e151d2dafaf2ddc56610380e
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 6e2f7c073a115800f8a51676f394a879
+    Hash: f140de14d15f991ed9636dde8b37d45e
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 761f7ffa79d741a1376e41928b826709
+    Hash: 2aba5f57e151d2dafaf2ddc56610380e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,5 +37,5 @@ Assets:
 - Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab
 - Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle

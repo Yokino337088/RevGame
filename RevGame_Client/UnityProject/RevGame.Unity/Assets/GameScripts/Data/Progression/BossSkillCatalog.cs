@@ -43,6 +43,11 @@ namespace RevGame.Data
         public float Power { get; internal set; }
         /// <summary>伤害半径（格）。</summary>
         public int Radius { get; internal set; }
+        /// <summary>
+        /// 弹幕飞行速度（格/秒）。只有弹幕类技能使用，0 表示该技能不发射飞行弹幕。
+        /// 单位取"格/秒"而不是"世界单位/秒"：策划改棋盘大小时手感不会跟着变。
+        /// </summary>
+        public float BulletSpeed { get; internal set; }
     }
 
     public static class BossSkillCatalog
@@ -113,9 +118,16 @@ namespace RevGame.Data
                 ok &= GameConfig.CheckRange(row.Count, 1, 32, where, "Count", problems);
                 ok &= GameConfig.CheckRange(row.Power, 0f, 50f, where, "Power", problems);
                 ok &= GameConfig.CheckRange(row.Radius, 0, 8, where, "Radius", problems);
+                ok &= GameConfig.CheckRange(row.BulletSpeed, 0f, 60f, where, "BulletSpeed", problems);
                 if (kind != BossSkillKind.Enrage && kind != BossSkillKind.Summon && row.Power <= 0f)
                 {
                     problems.Add(where + " 是伤害技能，Power 必须大于 0"); ok = false;
+                }
+                // 弹幕技能必须有飞行速度，否则子弹会停在 Boss 身上（表现为"没打出去"），
+                // 这类配置错误在编辑器里很难看出来，所以启动期直接报出来。
+                if (kind == BossSkillKind.BulletRing && row.BulletSpeed <= 0f)
+                {
+                    problems.Add(where + " 是弹幕技能，BulletSpeed 必须大于 0（单位：格/秒）"); ok = false;
                 }
                 if (kind != BossSkillKind.Enrage && row.Weight == 0)
                 {
@@ -138,6 +150,7 @@ namespace RevGame.Data
                     Count = row.Count,
                     Power = row.Power,
                     Radius = row.Radius,
+                    BulletSpeed = row.BulletSpeed,
                 };
             }
             GameConfig.CheckCoverage<BossSkillKind>(keys, "BossSkillConfig", problems);

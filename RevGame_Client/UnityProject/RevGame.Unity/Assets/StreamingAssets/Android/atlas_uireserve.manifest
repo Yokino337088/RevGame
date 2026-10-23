@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1797180944
+CRC: 4061657380
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c8578168565d30671ad4c2d2d80f67f3
+    Hash: f5760c427b32e27a789735969ac0213e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c8578168565d30671ad4c2d2d80f67f3
+    Hash: f5760c427b32e27a789735969ac0213e
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -35,6 +35,7 @@ Assets:
 - Assets/GameRes/Art/UI/UI_Tavern_Checkmark.png
 - Assets/GameRes/Art/UI/UI_Begin_btnTrain.png
 - Assets/GameRes/Art/UI/UI_Begin_imgAchieve.png
+- Assets/GameRes/Art/UI/UI_Begin_btnAdventure.png
 - Assets/GameRes/Art/UI/UI_ChooseLevel_imgCoin.png
 - Assets/GameRes/Art/UI/UI_Pvp_btnSetting.png
 - Assets/GameRes/Art/UI/UI_Tavern_Handle.png

@@ -14,6 +14,10 @@ class RevError(RuntimeError):
     pass
 
 
+class RevCancelled(RevError):
+    pass
+
+
 def read_json(path: Path):
     def reject_constant(value):
         raise ValueError("JSON 不接受非有限数：" + value)
@@ -24,7 +28,18 @@ def atomic_json(path: Path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
     temp.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
-    os.replace(temp, path)
+    try:
+        for attempt in range(8):
+            try:
+                os.replace(temp, path)
+                break
+            except PermissionError:
+                # Windows 上短暂的读取句柄可能阻止替换；只重试文件发布，绝不重执行动作。
+                if attempt == 7:
+                    raise
+                time.sleep(.01 * (attempt + 1))
+    finally:
+        temp.unlink(missing_ok=True)
 
 
 def find_unity(project: Path, explicit=None):
@@ -64,13 +79,17 @@ class RevClient:
     def endpoint(self):
         try:
             value = read_json(self.root / "endpoint.json")
+            if Path(value.get("project", "")).resolve() != self.project:
+                return None
             # Long builds block Unity's main thread; a stale heartbeat is not permission
             # to launch another editor. PID and UnityLockfile are checked below too.
             return value if isinstance(value, dict) and value.get("protocol") == 1 and -5 <= time.time() - value["heartbeatUnix"] < 15 else None
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
-    def call(self, action, payload=None, confirm=False, progress=None):
+    def call(self, action, payload=None, confirm=False, progress=None, cancel=None):
+        if action == "editor.wait":
+            return self.wait_ready()
         request_id = uuid.uuid4().hex
         mode = self.mode
         endpoint = self.endpoint()
@@ -80,7 +99,9 @@ class RevClient:
             raise RevError("没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。")
         if endpoint and endpoint.get("batchMode"):
             raise RevError("当前桥接属于正在运行的 batch Unity，请等待其退出。")
-        if mode == "batch" and (action in ("editor.play", "editor.stop", "editor.menu", "scenario.run") or action.startswith("gm.")):
+        specs = read_json(Path(__file__).resolve().parents[1] / "commands.json")["actions"]
+        spec = next((item for item in specs if item["id"] == action), {})
+        if mode == "batch" and (spec.get("environment") in ("live", "play") or action.startswith("gm.")):
             raise RevError("此操作需要图形编辑器。先执行 editor launch，再执行 editor play。")
         if mode == "batch" and (endpoint or self._editor_open()):
             raise RevError("工程已被 Unity 占用：请使用 --mode live，或先关闭该工程。")
@@ -105,6 +126,8 @@ class RevClient:
                 process = subprocess.Popen(args, cwd=self.project, shell=False)
             end, last_progress = time.monotonic() + self.timeout, None
             while not response_path.exists():
+                if cancel is not None and cancel.is_set():
+                    raise RevCancelled(f"请求取消：{request_id}，请检查工单已发生的副作用：{work}")
                 if process is not None and process.poll() is not None:
                     if response_path.exists():
                         break
@@ -134,7 +157,7 @@ class RevClient:
             if response.get("dataJson"):
                 response["data"] = json.loads(response.pop("dataJson"))
             return response
-        except (TimeoutError, KeyboardInterrupt):
+        except (TimeoutError, KeyboardInterrupt, RevCancelled):
             (work / "cancel").touch()
             # Only a child editor started by this command may be terminated. Never kill
             # the user's already-open Unity. In live mode a blocked GM needs manual diagnosis.
@@ -149,7 +172,7 @@ class RevClient:
         """Open a graphical editor and wait for compilation/bridge; never terminate it."""
         endpoint = self.endpoint()
         if endpoint and not endpoint.get("batchMode"):
-            return dict(success=True, alreadyOpen=True, endpoint=endpoint)
+            return dict(self.wait_ready(), alreadyOpen=True)
         if self._editor_open():
             raise RevError("工程已打开但桥接未就绪。请先处理 Unity 编译错误，或等待当前操作完成。")
         editor = find_unity(self.project, self.unity)
@@ -160,11 +183,40 @@ class RevClient:
         while time.monotonic() < end:
             endpoint = self.endpoint()
             if endpoint and not endpoint.get("batchMode"):
-                return dict(success=True, endpoint=endpoint, logPath=str(log))
+                remaining = end - time.monotonic()
+                original = self.timeout
+                self.timeout = max(.01, remaining)
+                try:
+                    return dict(self.wait_ready(), logPath=str(log))
+                finally:
+                    self.timeout = original
             if process.poll() is not None:
                 raise RevError(f"Unity 启动退出（{process.returncode}），请看 {log}")
             time.sleep(.25)
         raise TimeoutError(f"Unity 桥接尚未就绪；编辑器保留运行，PID={process.pid}，日志 {log}")
+
+    def wait_ready(self):
+        """Compilation/import barrier, also across the bridge's domain reload."""
+        if self.mode == "batch":
+            raise RevError("editor.wait 需要在线编辑器。batch 请求由子编辑器自行完成编译。")
+        end, stable, session = time.monotonic() + self.timeout, None, None
+        first_heartbeat = None
+        while time.monotonic() < end:
+            endpoint = self.endpoint()
+            ready = endpoint and not any(endpoint.get(k) for k in ("batchMode", "compiling", "updating", "activeRequest"))
+            if ready:
+                if stable is None or session != endpoint.get("sessionId"):
+                    stable, session = time.monotonic(), endpoint.get("sessionId")
+                    first_heartbeat = endpoint.get("heartbeatUnix")
+                # 至少跨过两个心跳，避免 refresh 回执早于实际开始编译。
+                if time.monotonic() - stable >= 2 and endpoint.get("heartbeatUnix", 0) > first_heartbeat:
+                    if endpoint.get("compilationFailed"):
+                        raise RevError(f"Unity 脚本编译失败；读取 editor.console/editor.compilation 或 {self.root / 'compilation.json'}")
+                    return dict(success=True, endpoint=endpoint, message="资源导入与脚本编译已稳定就绪")
+            else:
+                stable = None
+            time.sleep(.1)
+        raise TimeoutError(f"等待 Unity 就绪超时；请检查 {self.root / 'endpoint.json'} 与 editor.console")
 
     def job(self, request_id, cancel=False):
         if len(request_id) != 32 or any(c not in "0123456789abcdefABCDEF" for c in request_id):

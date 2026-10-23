@@ -1,0 +1,8 @@
+{
+    "protocol": 1,
+    "id": "72df98ee0c0e4d25ba9ce25ee98c1404",
+    "success": true,
+    "error": "",
+    "message": "完成",
+    "dataJson": "{\"success\":true,\"cancelled\":false,\"time\":\"15:50:45\",\"tableCount\":14,\"rowCount\":200,\"unchangedCount\":0,\"codeChanged\":true,\"dataOnly\":false,\"written\":[\"更新  Assets/GameScripts/Generated/BattleDataStructures.cs\",\"更新  Assets/GameScripts/Generated/BattleDataTables.cs\",\"更新  Assets/GameRes/Data/ChapterConfig.txt\",\"更新  Assets/GameRes/Data/EnemyRosterConfig.txt\",\"更新  Assets/GameRes/Data/EnemyReinforceConfig.txt\",\"更新  Assets/GameRes/Data/RewardConfig.txt\",\"更新  Assets/GameRes/Data/RewardBoostConfig.txt\",\"更新  Assets/GameRes/Data/BossSkillConfig.txt\",\"更新  Assets/GameRes/Data/PrepBuffConfig.txt\",\"更新  Assets/GameRes/Data/BattleEventConfig.txt\",\"更新  Assets/GameRes/Data/EventRotationConfig.txt\",\"更新  Assets/GameRes/Data/BattleText.txt\",\"更新  Assets/GameRes/Data/BattleTuning.txt\",\"更新  Assets/GameRes/Data/BalanceRule.txt\",\"更新  Assets/GameRes/Data/PieceConfig.txt\",\"更新  Assets/GameRes/Data/StarConfig.txt\"],\"errors\":[],\"warnings\":[],\"unmarked\":[],\"orphans\":[],\"mapStatus\":\"\",\"mapFailed\":false}"
+}

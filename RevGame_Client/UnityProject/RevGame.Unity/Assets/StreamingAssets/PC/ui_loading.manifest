@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1930333120
+CRC: 2507693807
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 1e5fad278d5cc63eea6f5318fb373f6b
+    Hash: b09092cc211c3a907c0d71cc8e4428e9
   TypeTreeHash:
     serializedVersion: 2
-    Hash: b443009edecbe1d6ec851dd49486bc09
+    Hash: 7a4531213013ed5c9381ca38e4c91d8a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 1e5fad278d5cc63eea6f5318fb373f6b
+    Hash: b09092cc211c3a907c0d71cc8e4428e9
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -17,17 +17,17 @@ ClassTypes:
 - Class: 21
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 73f43010159730045ab9b1b6f32361dd, type: 3}
 - Class: 114
@@ -64,5 +64,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background

@@ -143,10 +143,10 @@ namespace RevGame.UI
 
             if (_roundText != null)
             {
-                _roundText.text = "第 " + _battle.Chapter + " / 6 章 · 第 " + _battle.Round + " 回合" + (_battle.IsBossRound ? "（擒王 · 不限时）" : "");
+                _roundText.text = "第 " + _battle.Chapter + " / 6 章 · 第 " + _battle.Round + " 回合" + (_battle.IsBossRound ? "（擒王 · 不限时）" : "（不限时）");
             }
 
-            _assistText.text = _battle.VictoryAssistEnabled ? "通关守护 · 支援事件 " + _battle.BattleEventCount + " 次\n" + _battle.VictorySupportStatus : "";
+            _assistText.text = _battle.VictoryAssistEnabled ? "战斗增益 · 支援事件 " + _battle.BattleEventCount + " 次\n" + _battle.VictorySupportStatus : "";
 
             if (_progressFill != null)
             {
@@ -185,7 +185,7 @@ namespace RevGame.UI
                 UpdateBar(_bossBar, king.HpRatio, ref _bossTween, ref _bossTarget, _battle.Phase != GamePhase.Battle, ClearBossTween);
                 // 决死伤害百分比 = 已满档位 × 每档加成；每档加成取自参数，旧代码这里把 10% 写死成了 *10。
                 int rage = (int)((int)(_battle.BattleElapsed / Balance.BossAccelerationSeconds) * Balance.BossAccelerationBonus * 100f + 0.5f);
-                _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
+                _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (king.HpRatio <= Balance.BossCaptureHpRatio ? " · 可擒王" : " · 降至" + ConfigText.Percent(Balance.BossCaptureHpRatio) + "后可擒王") + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
             }
         }
 

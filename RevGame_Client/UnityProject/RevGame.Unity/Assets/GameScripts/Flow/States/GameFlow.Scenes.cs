@@ -22,7 +22,8 @@ namespace RevGame.Flow
         /// <summary>跨整个加载及淡出期间的互斥锁。战斗Logic据此暂停Tick，防止准备增益被遮罩吃掉。</summary>
         public bool IsTransitioning { get; private set; }
         /// <summary>失败遮挡仍开着时也不能推进玩法；IsTransitioning只表示异步任务是否仍在执行。</summary>
-        public bool IsGameplayBlocked { get { return IsTransitioning || _loading != null; } }
+        public bool IsGameplayBlocked { get { return IsTransitioning || _loading != null || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady); } }
+        private GamePresentation _activePresentation;
         /// <summary>诊断用真实阶段进度，不是DOTween插值后的视觉值；范围0~1。</summary>
         public float LoadProgress { get; private set; }
         /// <summary>当前阶段的人话描述，GM可查询，面板也直接显示；不携带文件系统路径。</summary>
@@ -130,6 +131,7 @@ namespace RevGame.Flow
                 }
                 ThrowIfDisposed();
                 // 交割前资源/场景已确认；现在由FSM关闭旧域、打开新域，再让表现层按新模型绘制。
+                _activePresentation = presentation;
                 Change(target);
                 string finalStep = target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…";
                 await presentation.WaitUntilReadyAsync(target, p => Report(0.78f + p * 0.20f, finalStep));
@@ -237,6 +239,23 @@ namespace RevGame.Flow
                 BossSkills = RevDataTableManager.Get<BossSkillConfigTable>(),
                 Balance = RevDataTableManager.Get<BalanceRuleTable>(),
             });
+        }
+
+        /// <summary>连续通章不重载场景；背景失败仍走既有错误面板和返回流程，而非留在冻结的棋盘上。</summary>
+        public async void ShowChapterBackgroundFailure(string reason)
+        {
+            if (_disposed || IsTransitioning || Screen != GameScreen.Battle) { return; }
+            LastError = "章节背景失败：" + reason;
+            try
+            {
+                LoadingPanel panel = await RevUI.OpenAsync<LoadingPanel>();
+                if (_disposed || IsTransitioning || Screen != GameScreen.Battle) { return; }
+                _loading = panel;
+                RevScope.Detach(panel);
+                panel.ResetCover();
+                panel.SetData(new LoadingPanel.ProgressData(0f, "背景未就绪", LastError));
+            }
+            catch (Exception error) { RevLog.Exception(error, "章节背景错误面板打开失败", "RevGame"); }
         }
 
         /// <summary>只在过场失败后可用。回退同样通过RevScene和资源屏障，不直接删UI或重初始化框架。</summary>

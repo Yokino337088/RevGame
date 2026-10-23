@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1039056746
+CRC: 2883672354
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 68755e6fc6857aad38c9a0accf9a8bac
+    Hash: d10ffb30c376c4caf39770d2cae7fb28
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 68755e6fc6857aad38c9a0accf9a8bac
+    Hash: d10ffb30c376c4caf39770d2cae7fb28
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -21,7 +21,6 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Art/UI/UI_Tavern_btnClose.png
-- Assets/GameRes/Art/UI/UI_Begin_btnAdventure.png
 - Assets/GameRes/Art/UI/UI_Tip_imgBK.png
 - Assets/GameRes/Art/UI/UI_Tavern_Background.png
 - Assets/GameRes/Atlases/UIMenus.spriteatlasv2

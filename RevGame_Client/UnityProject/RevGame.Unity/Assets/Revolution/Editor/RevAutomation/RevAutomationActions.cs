@@ -105,9 +105,13 @@ namespace Revolution.Editor
 
         public static object Execute(RevAutomationRequest request)
         {
+            RevAutomationCatalog.ValidatePayload(request);
             var p = JsonUtility.FromJson<RevAutomationOptions>(request.payloadJson ?? "{}");
             if (p == null) { throw new ArgumentException("payloadJson 必须是 JSON 对象"); }
             string action = request.action;
+            if (action == "hot.demo-prepare") { RequireEditMode(); ValidateCopyDestination(Target(null)); }
+            MethodInfo extension = RevAutomationCatalog.Extension(action);
+            if (extension != null) { return RevAutomationCatalog.Invoke(extension, request); }
             if (action == "editor.status")
             {
                 return new RevAutomationStatus { unityVersion = Application.unityVersion, project = Path.GetFullPath("."),
@@ -139,7 +143,6 @@ namespace Revolution.Editor
             if (action.StartsWith("ui.", StringComparison.Ordinal)) { return RevUIPanelScriptWindow.Automate(action, p, request.confirm); }
             if (action == "platform.resources") { return new RevAutomationText(RevFirstPackageAudit.BuildReport()); }
             if (action == "platform.linkxml") { return new RevAutomationText(RevLinkXmlGenerator.GenerateForAutomation(request.confirm)); }
-            if (action == "hot.demo-prepare") { ValidateCopyDestination(Target(null)); }
             if (action == "demo.ui-prefabs")
             {
                 if (!request.confirm) { throw new InvalidOperationException("重新生成演示预制体会覆盖演示资产，需要 --confirm"); }
@@ -148,16 +151,8 @@ namespace Revolution.Editor
                 return new RevAutomationText("已生成 UI 演示预制体");
             }
 
-            // 扩展包显式用特性声明动作，无需让框架本体依赖可选 HotUpdate / Demo 程序集。
-            MethodInfo[] methods = TypeCache.GetMethodsWithAttribute<RevAutomationActionAttribute>()
-                .Where(m => m.GetCustomAttribute<RevAutomationActionAttribute>().Name == action).ToArray();
-            if (methods.Length != 1) { throw new ArgumentException($"动作不存在或重复：{action}（可选扩展包可能未安装）"); }
-            MethodInfo method = methods[0];
-            if (!method.IsStatic || method.ReturnType == typeof(void) || method.GetParameters().Length != 1
-                || method.GetParameters()[0].ParameterType != typeof(RevAutomationRequest))
-            { throw new InvalidOperationException("扩展动作必须是 static object Method(RevAutomationRequest request)：" + action); }
-            try { return methods[0].Invoke(null, new object[] { request }); }
-            catch (TargetInvocationException e) { throw e.InnerException ?? e; }
+            throw new ArgumentException("动作不存在（可选扩展可能未安装）：" + action);
+
         }
 
         /// <summary>
@@ -246,7 +241,7 @@ namespace Revolution.Editor
         {
             if (Application.isBatchMode) { throw new InvalidOperationException("菜单窗口需要在线编辑器；无人值守请使用对应的有结果动作"); }
             var allowed = new[] { "Revolution.Tools/资源/RevAB 打包工具", "Revolution.Tools/资源/RevAB 分包浏览", "Revolution.Tools/GM 指令面板",
-                "Revolution.Tools/UI/面板代码生成器", "Revolution.Tools/配置表/导表工具", "Revolution.Tools/热更新/热更清单窗口" };
+                "Revolution.Tools/UI/面板代码生成器", "Revolution.Tools/配置表/导表工具", "Revolution.Tools/热更新/热更清单窗口", "Revolution.Tools/平台/包体大小预测", "Revolution.Tools/AI/RevMCP 控制台" };
             if (!allowed.Contains(path)) { throw new ArgumentException("editor.menu 仅负责打开工具窗口；执行生成/删除请使用明确的 CLI 动作，避免阻塞确认对话框"); }
             if (!EditorApplication.ExecuteMenuItem(path)) { throw new InvalidOperationException("菜单未执行：" + path); }
             return new RevAutomationText("已打开：" + path);

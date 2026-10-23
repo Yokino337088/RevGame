@@ -17,6 +17,7 @@
 // 防止上一次的残影带到下一次。BoardView 负责“什么时候取一个来播”和“换回合时全部收回”。
 // ============================================================
 using System;
+using RevGame.Battle;
 using DG.Tweening;
 using RevGame.Core;
 using RevGame.Data;
@@ -41,8 +42,13 @@ namespace RevGame.View
             Drain = 6,
             ColoredLaser = 7,
             MagicOrb = 8,
+            EnergyBomb = 9,
         }
 
+        [Header("能量巨大：炸弹轮廓素材（Lorc CC BY 3.0）")]
+        [SerializeField] private Sprite energyBomb;
+        [Header("新增九种技能的Kenney CC0效果图，按技能9~17顺序")]
+        [SerializeField] private Sprite[] extendedSprites;
         [Header("共享材质（BossSkill.mat）：所有片共用，逐片参数走 MaterialPropertyBlock")]
         [SerializeField] private Material material;
         [Header("中心光晕 / 通用特效底图（Glow）")]
@@ -94,7 +100,8 @@ namespace RevGame.View
         [SerializeField] private Sprite star;
 
         /// <summary>结构容量：支持表格上限 32 发子弹与额外中心光，避免静默裁掉表内配置的弹幕数量。</summary>
-        private const int MaxSlots = 36;
+        // 新技能可预警整盘81格；容量为格数+中心装饰，不在播放中动态扩容。
+        private const int MaxSlots = 84;
 
         /// <summary>表现飞行终点越过屏幕最远角；不参与技能合法性和伤害判定。</summary>
         private static float FullScreenTravelDistance(Vector3 center)
@@ -203,11 +210,109 @@ namespace RevGame.View
             _sequence.InsertCallback(lifetime, Finish);
         }
 
+        /// <summary>能量炸弹只播动画；真实爆炸命中由规则事件另行通知，Tween取消不会漏结算或补伤害。</summary>
+        public void PlayEnergyBomb(EnergyBombInfo info, bool warning, Action<BossSkillFxView> onFinished)
+        {
+            OnPoolReturn();
+            _onFinished = onFinished;
+            _sequence = DOTween.Sequence();
+            Vector3 center = Center(info.Position, 1);
+            _pivot.position = center;
+            Color tint = new Color(1f, 0.69f, 0.1f);
+            if (warning)
+            {
+                Zone(center, Consts.CellSize * 2.2f, 0f, tint, info.WarningSeconds);
+                int bomb = Take(energyBomb, FxMode.EnergyBomb, tint, 0f, ImpactOrder + 2);
+                Place(bomb, center + Vector3.up * Consts.CellSize * 4f, Consts.CellSize * 1.45f);
+                _sequence.Insert(0f, _renderers[bomb].transform.DOMove(center, info.WarningSeconds * 0.55f).SetEase(Ease.InQuad));
+                _sequence.Insert(info.WarningSeconds * 0.55f, _renderers[bomb].transform.DOShakeRotation(info.WarningSeconds * 0.4f, new Vector3(0, 0, 16f), 16));
+                _sequence.InsertCallback(info.WarningSeconds, Finish);
+            }
+            else
+            {
+                int flash = Take(glow, FxMode.Explosion, tint, 0.35f, ImpactOrder);
+                Place(flash, center, Consts.CellSize * 4.5f);
+                TweenProgress(flash, 0f, 1f, 0.75f);
+                Shockwave(center, Consts.BoardSize * Consts.CellSize * 1.45f, tint, 0.85f);
+                Flash(center, Consts.CellSize * 4f, 0.35f);
+                _sequence.InsertCallback(0.9f, Finish);
+            }
+        }
+
+        /// <summary>预警逐格调用与伤害完全相同的几何函数；命中后使用各技能独立外部素材、主色和Shader模式。</summary>
+        private float BuildPattern(BossSkillInfo info, bool warning, Color tint)
+        {
+            var plan = new BossSkillPlan { Kind = info.Kind, A = info.A, B = info.B, C = info.C };
+            float duration = warning ? info.Windup + Mathf.Max(0, info.Count - 1) * BossSkillCatalog.Get(info.Kind).Interval : 0.48f;
+            int spriteIndex = (int)info.Kind - 9;
+            Sprite art = extendedSprites != null && spriteIndex < extendedSprites.Length ? extendedSprites[spriteIndex] : glow;
+            for (int y = 0; y < Consts.BoardSize; y++)
+            {
+                for (int x = 0; x < Consts.BoardSize; x++)
+                {
+                    BoardPos pos = new BoardPos(x, y);
+                    bool affected = false;
+                    int from = warning ? 0 : info.Index, to = warning ? info.Count : info.Index + 1;
+                    for (int index = from; index < to; index++)
+                    {
+                        if (BossPatternGeometry.Contains(info.Kind, info.Origin, info.OriginSize, plan, info.Radius, index, pos)) { affected = true; break; }
+                    }
+                    if (!affected) { continue; }
+                    if (warning) { Zone(Center(pos, 1), Consts.CellSize * 0.94f, 1f, tint, duration); }
+                    else
+                    {
+                        FxMode mode = info.Kind == BossSkillKind.GravityWell ? FxMode.Drain : info.Kind == BossSkillKind.MeteorShower ? FxMode.Explosion : FxMode.Sprite;
+                        int slot = Take(art, mode, tint, 0.22f, ImpactOrder);
+                        Place(slot, Center(pos, 1), Consts.CellSize * 1.05f);
+                        TweenProgress(slot, 0f, 1f, duration);
+                        _sequence.Insert(0f, _renderers[slot].transform.DOScale(_renderers[slot].transform.localScale * 1.25f, duration).SetEase(Ease.OutQuad));
+                    }
+                }
+            }
+            if (!warning) { BuildPatternBeams(info, tint, duration); }
+            return duration;
+        }
+
+        /// <summary>
+        /// 线形技能在逐格命中标记上叠加连续光束：十字激光不能只剩零散小星点。
+        /// 端点均来自施法快照；不改伤害集合，不追踪移动后的Boss，不额外申请材质。
+        /// </summary>
+        private void BuildPatternBeams(BossSkillInfo info, Color tint, float duration)
+        {
+            BoardPos center = new BoardPos(info.Origin.X + info.OriginSize / 2, info.Origin.Y + info.OriginSize / 2);
+            if (info.Kind == BossSkillKind.CrossLaser)
+            {
+                PatternBeam(Center(new BoardPos(0, center.Y), 1), Center(new BoardPos(Consts.BoardSize - 1, center.Y), 1), tint, duration);
+                PatternBeam(Center(new BoardPos(center.X, 0), 1), Center(new BoardPos(center.X, Consts.BoardSize - 1), 1), tint, duration);
+            }
+            else if (info.Kind == BossSkillKind.IceLance)
+            {
+                PatternBeam(Center(new BoardPos(0, info.A.Y), 1), Center(new BoardPos(Consts.BoardSize - 1, info.A.Y), 1), tint, duration);
+            }
+            else if (info.Kind == BossSkillKind.ChainLightning)
+            {
+                BoardPos from = info.Index == 0 ? center : info.Index % 3 == 1 ? info.A : info.B;
+                BoardPos to = info.Index % 3 == 0 ? info.A : info.Index % 3 == 1 ? info.B : info.C;
+                PatternBeam(Center(from, 1), Center(to, 1), tint, duration);
+            }
+        }
+
+        /// <summary>纯表现线宽与柔边，不表示新增伤害范围；序列停止时随池对象一起回收。</summary>
+        private void PatternBeam(Vector3 from, Vector3 to, Color tint, float duration)
+        {
+            if ((to - from).sqrMagnitude < 0.001f) { return; }
+            Vector3 edge = (to - from).normalized * Consts.CellSize * 0.5f;
+            int slot = Take(beam, FxMode.ColoredLaser, tint, 0.12f, ImpactOrder + 1);
+            Stretch(slot, from - edge, to + edge, Consts.CellSize * 0.65f);
+            TweenProgress(slot, 0.08f, 1f, duration);
+        }
+
         // ================================================================ 预警
         /// <summary>按技能画危险区域，返回整段预警的时长（与蓄力时间一致）。</summary>
         private float BuildTelegraph(BossSkillInfo info, Vector3 center, Color tint)
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
+            if ((int)info.Kind >= 9) { return BuildPattern(info, true, tint); }
             float duration = info.Windup;
             // 两种激光从预瞄到命中保持红/黄识别色，避免通用红色预警把黄色染成橙色。
             bool coloredLaser = info.Kind == BossSkillKind.Snipe || info.Kind == BossSkillKind.LaserSpin;
@@ -345,6 +450,7 @@ namespace RevGame.View
         /// <summary>按技能播放命中特效，返回本段动画时长。</summary>
         private float BuildCast(BossSkillInfo info, Vector3 center, Color tint)
         {
+            if ((int)info.Kind >= 9) { return BuildPattern(info, false, tint); }
             switch (info.Kind)
             {
                 case BossSkillKind.Cleave:
@@ -402,8 +508,13 @@ namespace RevGame.View
                     float radius = FullScreenTravelDistance(center);
                     int bullets = Mathf.Min(info.Count, MaxSlots - 4);
                     float launchRadius = info.OriginSize * Consts.CellSize * 0.6f;
-                    // 纯表现时长不影响伤害/冷却，留在表现层，不作为策划战斗数值。
-                    const float flightSeconds = 0.9f;
+                    // 飞行时长由技能表的 BulletSpeed（格/秒）反算，不再写死：
+                    //   · 距离要乘 CellSize 才能把"格"换成世界单位；
+                    //   · 子弹从圆周出发，所以实际飞行距离是 radius − launchRadius；
+                    //   · 表里配 0 属于坏配置（校验层已拦），这里兜底成 0.9 秒，避免子弹卡在 Boss 身上不动。
+                    float speed = BossSkillCatalog.Get(info.Kind).BulletSpeed;
+                    float travelDistance = Mathf.Max(0.01f, radius - launchRadius);
+                    float flightSeconds = speed > 0.01f ? travelDistance / (speed * Consts.CellSize) : 0.9f;
                     for (int i = 0; i < bullets; i++)
                     {
                         float angle = 360f / bullets * i;
@@ -655,6 +766,15 @@ namespace RevGame.View
                 case BossSkillKind.LaserSpin: return new Color(1f, 0.85f, 0.03f);
                 case BossSkillKind.SoulDrain: color = new Color(0.45f, 1f, 0.55f); break;
                 case BossSkillKind.Summon: color = new Color(0.6f, 0.35f, 1f); break;
+                case BossSkillKind.MeteorShower: color = new Color(1f, 0.35f, 0.08f); break;
+                case BossSkillKind.CrossLaser: color = new Color(1f, 0.76f, 0.1f); break;
+                case BossSkillKind.FrostNova: color = new Color(0.4f, 0.86f, 1f); break;
+                case BossSkillKind.ChainLightning: color = new Color(0.65f, 0.7f, 1f); break;
+                case BossSkillKind.PoisonMarsh: color = new Color(0.5f, 0.88f, 0.22f); break;
+                case BossSkillKind.FlameWall: color = new Color(1f, 0.26f, 0.04f); break;
+                case BossSkillKind.IceLance: color = new Color(0.6f, 0.95f, 1f); break;
+                case BossSkillKind.GravityWell: color = new Color(0.75f, 0.35f, 1f); break;
+                case BossSkillKind.DoomSigil: color = new Color(1f, 0.7f, 0.15f); break;
                 default: color = new Color(1f, 0.12f, 0.18f); break;
             }
             return enraged ? Color.Lerp(color, new Color(1f, 0.1f, 0.15f), 0.5f) : color;

@@ -487,4 +487,5 @@ MonoBehaviour:
   highlightRenderer: {fileID: 6307974630202996987}
   eyeRenderer: {fileID: 4063423787922083844}
   rangeRenderer: {fileID: 6806279434710294186}
+  hazardSprite: {fileID: 21300000, guid: 6614b09b60b7f4540b01c66f3d8a7edb, type: 3}
   longPressSeconds: 0.35
