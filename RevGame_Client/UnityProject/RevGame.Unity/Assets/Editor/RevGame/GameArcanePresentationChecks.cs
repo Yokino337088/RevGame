@@ -77,7 +77,7 @@ namespace RevGame.Editor
                     Require(vertex.uv0 == new Vector4(0.23f, 0.67f) && vertex.uv1.x == 0f && vertex.uv1.y == 0f, "原图UV保持不变，特效UV单独从零开始");
                 }
                 SpriteRenderer background = Get<SpriteRenderer>(UnityEngine.Object.FindObjectOfType<GamePresentation>(), "backgroundRenderer");
-                Require(background.sharedMaterial.shader.name == "RevGame/Background/ArcaneBackdrop", "场景实际经RevResManager使用动态背景材质");
+                Require(background.sharedMaterial.shader.name == "RevGame/Background/Chapter01_Tutorial", "场景实际经RevResManager使用第一章独立动态材质");
                 System.IO.Directory.CreateDirectory("Temp/ArcaneVerification");
                 ScreenCapture.CaptureScreenshot("Temp/ArcaneVerification/prepare.png");
 

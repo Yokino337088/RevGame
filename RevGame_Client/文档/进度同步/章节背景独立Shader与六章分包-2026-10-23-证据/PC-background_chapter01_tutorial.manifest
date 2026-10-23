@@ -1,0 +1,31 @@
+ManifestFileVersion: 0
+CRC: 1099688013
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: d537429d7e7b3f241ca4020cd9c4efc7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 10a2a251079648f5a522e399a53d2bcc
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: d537429d7e7b3f241ca4020cd9c4efc7
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameShader/Background/Chapter01_Tutorial_Shader.shader
+- Assets/GameRes/Material/Background/ArcaneScene.mat
+- Assets/GameRes/ChapterBackground/SceneBackdrop_0fc7e394.png
+- Assets/GameRes/Atlases/SceneBackdrop_0fc7e394Atlas.spriteatlasv2
+Dependencies: []

@@ -1,24 +1,44 @@
 ManifestFileVersion: 0
-CRC: 1105941942
+CRC: 252132553
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 1f90c4ca1b2c7ff8632444420575fc4c
+    Hash: 0e8f7d59fcb693b8b7a63ac04dd1ab92
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9a2ca7bdbd1871f7131daf57de908e0c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 1f90c4ca1b2c7ff8632444420575fc4c
+    Hash: 0e8f7d59fcb693b8b7a63ac04dd1ab92
 HashAppended: 0
 ClassTypes:
 - Class: 83
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Audio/Sfx/Boss_BlinkBlast.ogg
 - Assets/GameRes/Audio/Sfx/Defeat.wav
+- Assets/GameRes/Audio/Sfx/Boss_Cleave.ogg
+- Assets/GameRes/Audio/Sfx/Boss_PoisonMarsh.ogg
 - Assets/GameRes/Audio/Sfx/Hit.wav
+- Assets/GameRes/Audio/Sfx/Boss_ChainLightning.ogg
+- Assets/GameRes/Audio/Sfx/Boss_FrostNova.ogg
+- Assets/GameRes/Audio/Sfx/Boss_DoomSigil.ogg
+- Assets/GameRes/Audio/Sfx/Boss_GravityWell.ogg
+- Assets/GameRes/Audio/Sfx/Boss_MeteorShower.ogg
+- Assets/GameRes/Audio/Sfx/Boss_SoulDrain.ogg
+- Assets/GameRes/Audio/Sfx/Boss_Enrage.ogg
+- Assets/GameRes/Audio/Sfx/Boss_BulletRing.ogg
+- Assets/GameRes/Audio/Sfx/Boss_Summon.ogg
 - Assets/GameRes/Audio/Sfx/Place.wav
+- Assets/GameRes/Audio/Sfx/Boss_LaserSpin.ogg
+- Assets/GameRes/Audio/Sfx/Boss_FlameWall.ogg
 - Assets/GameRes/Audio/Sfx/Upgrade.wav
 - Assets/GameRes/Audio/Sfx/Victory.wav
+- Assets/GameRes/Audio/Sfx/Boss_IceLance.ogg
+- Assets/GameRes/Audio/Sfx/Boss_CrossLaser.ogg
+- Assets/GameRes/Audio/Sfx/RegionWave.ogg
+- Assets/GameRes/Audio/Sfx/Boss_Bombard.ogg
+- Assets/GameRes/Audio/Sfx/EnergyHuge.ogg
+- Assets/GameRes/Audio/Sfx/Boss_Snipe.ogg
 Dependencies: []

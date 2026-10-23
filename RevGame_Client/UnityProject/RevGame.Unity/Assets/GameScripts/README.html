@@ -11,18 +11,13 @@
 </blockquote>
 <p>本项目首先验证 Revolution 框架能否支撑真实小游戏业务。当前已形成主界面、选关、六牌布阵、自动战斗、结算和章节奖励闭环。全部玩法数值已由 Excel 经框架导表工具接入运行时（见“配置表”一节）；当前参数以Excel和上方最新实现记录为准，调参后通过框架导表更新。完整时间与证据边界见工程外的《RevGame-开发总结与明日计划-2026-10-18》及前序实现报告。</p>
 <h2 id="combat-upgrade">战斗节奏与Boss18技能（2026-10-23）</h2><p>所有战斗不限时；删除超时清敌、保胜与最后一子免死。事件效果与频率翻倍，新增四属性增益；每15秒3×3波浪，双方4%原始伤害；每24秒“能量巨大”，全场敌军5%原始伤害。玩家近战接敌封气、远程贴敌后撤，Boss≤20%血且零气才能擒王。</p><p>18招按章节解锁，14张配置表通过框架工具导出。GM：<code>RevGame/战斗增益 Attack|Defense|Haste|Vitality 额外百分比</code>、<code>RevGame/区域波动</code>、<code>RevGame/能量巨大</code>、<code>RevGame/战斗节奏</code>。</p><p>本轮实测：218场景4445断言、Unity规则704条、真实PC AB Play 253条通过，新增错误0；手机振动/Android真机/整章平衡待验。完整截图与首次失败记录在<code>RevGame_Client/文档/进度同步/战斗节奏与Boss18技能升级-2026-10-23.html</code>。下文旧版保胜等描述以本节为准。</p><h2 id="chapter-background">章节背景与主题 Shader（2026-10-23）</h2>
-<p>第 1 章保留场景原背景与 <code>ArcaneScene</code> 效果。第 2~6 章使用独立大图与 <code>ChapterAtmosphere</code> 单 Pass Shader，不改棋子、卡牌或大厅材质。</p>
-<div class="table-scroll"><table><thead><tr><th>章节</th><th>图片逻辑名（GameRes/ChapterBackground）</th><th>主题效果</th></tr></thead><tbody>
-<tr><td>2</td><td><code>Chapter02_Village</code></td><td>魔法村落：明朗阳光、绿金魔光与萤火，建筑不大幅扭曲</td></tr>
-<tr><td>3</td><td><code>Chapter03_Lake</code></td><td>蓝色湖面：波纹、涟漪、焦散与银蓝反光；程序表现，不采集场景反射</td></tr>
-<tr><td>4</td><td><code>Chapter04_Swamp</code></td><td><strong>死亡沼泽湖面 v1</strong>：低频黏稠暗流、泥泡与油膜高光</td></tr>
-<tr><td>5</td><td><code>Chapter05_Ice</code></td><td>冰封极地：冰面扫光、边霜、寒雾与双层飘雪</td></tr>
-<tr><td>6</td><td><code>Chapter06_Temple</code></td><td><strong>象牙金神殿</strong>：暖金光束、同心光晕与金粉，石柱保持稳定</td></tr>
-</tbody></table></div>
-<p><code>GameScene</code> 的 <code>GamePresentation</code> Inspector 按章分组，展开后可调总强度、速度、扰动、反光、粒子与配色。总强度 0 显示原画；棋盘保护减弱棋盘内效果。图片只填逻辑名，更换后使用章节背景导入工具并重建发布对应平台 AB。</p>
-<p><code>GamePresentation.Chapters</code> 监听开局与准备阶段，覆盖直接入章、连续通章及重开。等待背景时暂停计时与输入，失败提供返回面板。每章纹理独立分包、按需加载，不纳入启动图集预热；断开旧引用后释放，退出场景配对释放材质和在途请求。游戏内不使用 GrabPass 或全屏 RenderTexture。</p>
-<p>验证状态（2026-10-23）：五张图 SHA256 与指定原图一致；Unity C# 编译零错误、主题 Shader 当前 GPU 支持；PC / Android 各 32 个 AB 构建发布。编辑器直读与真实 PC AB 模式完成六章切图、固定时间两帧 GPU 差异、16:9 / 19.5:9 / 4:3 铺满、第一章恢复及退出租约归零检查。真实帧与原始结果在工程 <code>Temp/ChapterBackgroundChecks/Direct</code> 和 <code>AB</code>。测试通过真实 <code>StartRound</code> 触发准备事件，未验证逐章解锁或完整 Boss 通章；后追加的强度 0 静止断言已编译，因编辑器退出及重启提示未补跑；Android 真机效果与性能尚未验证。</p>
-<p>入口：<code>game.background.import / audit / build / check / status</code>，导入菜单 <code>RevGame/美术/导入章节背景与主题特效</code>。运行时加载严格走 <code>RevResManager</code>；验收 RenderTexture 仅存在于 Editor，不进入游戏逻辑。</p>
+<p>六章均使用独立材质和专用 Shader，每章图片+材质+Shader同包；第一章还包含原有SpriteAtlas。第一章原图保留GUID迁入<code>GameRes/ChapterBackground</code>，保留ArcaneScene参数与手调布局，大厅不再预热第一章，GameScene无章节图片/材质硬引用。</p>
+<div class="table-scroll"><table><thead><tr><th>章节</th><th>图片逻辑名</th><th>独立Shader / 主题</th></tr></thead><tbody><tr><td>1</td><td>`SceneBackdrop_0fc7e394`</td><td>`Chapter01_Tutorial` / 原教学效果</td></tr><tr><td>2</td><td>`Chapter02_Village`</td><td>明朗日照、薄荷淡紫魔光、萤火</td></tr><tr><td>3</td><td>`Chapter03_Lake`</td><td>双向水流折射、原画柔化镜像反射、焦散</td></tr><tr><td>4</td><td>`Chapter04_Swamp`</td><td>黏稠泥面、慢流褶皱、油膜和泥泡</td></tr><tr><td>5</td><td>`Chapter05_Ice`</td><td>固态冰面扫光、霜雾与三层飘雪</td></tr><tr><td>6</td><td>`Chapter06_Temple`</td><td>慢旋螺纹、呼吸光环和催眠符文</td></tr></tbody></table></div>
+<p>Shader文件位于<code>GameShader/Background/*_Shader.shader</code>，声明名为<code>RevGame/Background/Chapter0X_*</code>。材质位于<code>GameRes/Material/Background</code>：第一章ArcaneScene，其余<code>Chapter0X_*_Material</code>。效果参数直接在各章材质Inspector调节，场景只保存逻辑名、棋盘保护与布局。旧ChapterAtmosphere已移除，共用cginc只提供数学/采样，不按主题分支。</p>
+<p>六个AB分别为<code>background_chapter01_tutorial</code>、<code>background_chapter02_village</code>、<code>background_chapter03_lake</code>、<code>background_chapter04_swamp</code>、<code>background_chapter05_ice</code>、<code>background_chapter06_temple</code>。PC/Android真实Manifest均为章节依赖0、其它包反向引用0，构建会强制检查。通过RevResManager按章异步租用，先接新图再释放旧图；Release归零进入未使用缓存，在空闲整理点真正卸载，不代表进程内存瞬间归零。</p>
+<p>本轮Direct 231条、真实PC AB冷启动252条断言通过，含快速取消、六章切换、强度0/速度0静止、GPU动态、多比例覆盖、第一章packed图集和引用回收。真实AB整理点核对当前章仅1背景包，大厅0包。PC/Android各32包、310映射构建发布；最终C#编译和Console错误0。Android真机、整章通关与平衡尚未验证。</p>
+<p>入口<code>game.background.import / audit / build / check / status</code>；<code>game.background.mode</code>只在编辑态保存下次Play偏好，规避当前框架setter的编辑态初始化问题。详情与原始PNG见<code>RevGame_Client/文档/进度同步/章节背景独立Shader与六章分包-2026-10-23.html</code>。
+</p>
 <h2 id="_1">先跑起来</h2>
 <p>打开正式入口 <code>Assets/Scenes/StartScene.unity</code>，按 Play。依次进入冒险选关→第一章→手牌→任意合法空格→“开始战斗”。每回合发满六张；约3秒领取准备增益后可开战，无需等全部播报结束。准备期可在全盘空格落子；准备或战斗中均可点己方棋子再点空格免费换位，大棋必须整块放得下。战斗期不能落手牌或眼位石，手动换位保留伤势、护盾和攻击进度。刷新只重抽剩余 N 张，不补落子额度。本次运行中击败章节 Boss 后解锁下一章；退出程序后进度不保存。</p>
 <p>启动只由 GameBootstrap 调用一次 RevInitialize.Initialize，并集中注册 IBattleService 与 GameFlow。不要再手动初始化事件、UI、计时器等模块，否则会清空已注册监听。</p>

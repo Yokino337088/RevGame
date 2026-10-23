@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Chapter04_Swamp_Material
+  m_Shader: {fileID: 4800000, guid: e5eb9c0d27f299e43b332015ade640ef, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _ChapterTex:
+        m_Texture: {fileID: 2800000, guid: d20d7077dd69eed4da848c4c45d45e96, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Aspect: 1.7777778
+    - _BoardProtection: 0.82
+    - _BubbleSize: 0.2
+    - _Distortion: 0.018
+    - _EffectTime: -1
+    - _Glow: 0.65
+    - _MudDepth: 0.1
+    - _Particles: 0.55
+    - _PreviewTime: -1
+    - _Speed: 0.22
+    - _Strength: 0.85
+    - _Transition: 1
+    - _Viscosity: 1.3
+    m_Colors:
+    - _Accent: {r: 0.74, g: 0.56999993, b: 0.25999996, a: 1}
+    - _BoardRect: {r: 0, g: 0, b: 0, a: 0}
+    - _Secondary: {r: 0.41999996, g: 0.56999993, b: 0.22999996, a: 1}
+    - _Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _WaterRegion: {r: 0, g: 0, b: 1, a: 1}
+  m_BuildTextureStacks: []

@@ -89,14 +89,16 @@ namespace RevGame.Editor
             roots.Add("Assets/Scenes/GameScene.unity");
             return AssetDatabase.GetDependencies(roots.ToArray(), true)
                 // 章节背景是独立 GPU 纹理（显式 _ChapterTex 采样），按需租约，不纳入 Sprite 图集预热。
-                .Where(p => !p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) && AssetImporter.GetAtPath(p) is TextureImporter)
+                // 第一章也归档进 ChapterBackground，但仍是 Sprite，必须保留图集；其余五章是独立采样的 Default 纹理。
+                .Where(p => AssetImporter.GetAtPath(p) is TextureImporter importer
+                    && (!p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) || importer.textureType == TextureImporterType.Sprite))
                 .Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
         }
 
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path, bool activelyUsed)
         {
-            if (path.Contains("/Background/")) { return Path.GetFileNameWithoutExtension(path) + "Atlas"; }
+            if (path.Contains("/Background/") || path.Contains("/ChapterBackground/")) { return Path.GetFileNameWithoutExtension(path) + "Atlas"; }
             if (path.Contains("/Art/Pieces/")) { return "PieceFrames"; }
             if (path.Contains("/Art/Combat/")) { return "CombatFrames"; }
             if (path.Contains("/Art/Board/") || path.Contains("/Art/Status/")) { return "BoardStatus"; }
@@ -155,7 +157,8 @@ namespace RevGame.Editor
             SpriteAtlasAsset.Save(atlas, atlasPath);
             UnityEngine.Object.DestroyImmediate(atlas);
             AssetDatabase.ImportAsset(atlasPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
-            string bundle = "atlas_" + name.ToLowerInvariant();
+            // 第一章图片必须保留图集，但整个图集同样属于第一章独立包，不能留在常驻公共资源里。
+            string bundle = name == "SceneBackdrop_0fc7e394Atlas" ? "background_chapter01_tutorial" : "atlas_" + name.ToLowerInvariant();
             // V2以Importer设置为准；只改源资产而不改Importer，旧.meta会在导入时覆盖Include In Build等设置。
             var atlasImporter = (SpriteAtlasImporter)AssetImporter.GetAtPath(atlasPath);
             atlasImporter.includeInBuild = false;

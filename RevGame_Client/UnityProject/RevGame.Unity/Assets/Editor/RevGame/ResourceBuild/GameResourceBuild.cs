@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using Revolution.Editor;
 using UnityEditor;
+using UnityEngine;
 
 namespace RevGame.Editor
 {
@@ -59,8 +60,15 @@ namespace RevGame.Editor
                 foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { chapterRoot }))
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
+                    // 第一章迁入同一目录后仍由 SpriteAtlas 管理，其余五章的材质+Default纹理逐章同包。
+                    var textureImporter = AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
+                    if (textureImporter == null || textureImporter.textureType == UnityEditor.TextureImporterType.Sprite) { continue; }
                     string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
                     AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant(bundle, string.Empty);
+                    string materialPath = "Assets/GameRes/Material/Background/" + Path.GetFileNameWithoutExtension(path) + "_Material.mat";
+                    AssetImporter materialImporter = AssetImporter.GetAtPath(materialPath);
+                    if (materialImporter == null) { throw new InvalidOperationException("章节图片缺少对应的独立材质：" + path); }
+                    materialImporter.SetAssetBundleNameAndVariant(bundle, string.Empty);
                 }
             }
             // Shader仍按用户要求放在GameShader，而不是复制到每个材质目录。
@@ -71,6 +79,22 @@ namespace RevGame.Editor
             }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被上面的粗目录标记覆盖。
             GameSpriteAtlasBuild.Configure();
+            // 每章的图/材质/Shader归同一个包。UI使用的ArcaneBackdrop保留在公共Shader包，
+            // 第一章改用Chapter01_Tutorial，避免大厅因共享Shader把第一章包作为依赖带入。
+            string[] chapterShaders = { "Chapter01_Tutorial", "Chapter02_Village", "Chapter03_Lake", "Chapter04_Swamp", "Chapter05_Ice", "Chapter06_Temple" };
+            for (int i = 0; i < chapterShaders.Length; i++)
+            {
+                string bundle = "background_" + chapterShaders[i].ToLowerInvariant();
+                string shaderPath = "Assets/GameShader/Background/" + chapterShaders[i] + "_Shader.shader";
+                string materialName = i == 0 ? "ArcaneScene" : chapterShaders[i] + "_Material";
+                string materialPath = "Assets/GameRes/Material/Background/" + materialName + ".mat";
+                foreach (string path in new[] { shaderPath, materialPath })
+                {
+                    AssetImporter importer = AssetImporter.GetAtPath(path);
+                    if (importer == null) { throw new InvalidOperationException("章节独立资源缺失：" + path); }
+                    importer.SetAssetBundleNameAndVariant(bundle, string.Empty);
+                }
+            }
             string atlasReport = GameSpriteAtlasBuild.Validate();
             AssetDatabase.RemoveUnusedAssetBundleNames();
             AssetDatabase.SaveAssets();
@@ -96,9 +120,35 @@ namespace RevGame.Editor
             Configure();
             ABBuildResult built = ABBuilderCore.Build(target);
             if (!built.success) { throw new InvalidOperationException("AB构建失败：" + target); }
+            ValidateChapterBundleClosure(built.manifest.raw);
             PruneObsoleteBundles(built);
             ABManifestWriter.WriteBuildManifest(built);
-            return target + "：" + built.manifest.allBundles.Length + "个包 → " + Path.GetFullPath(built.outputDir);
+            return target + "：" + built.manifest.allBundles.Length + "个包；六章背景包依赖为0，其它包不引用背景包 → " + Path.GetFullPath(built.outputDir);
+        }
+
+        /// <summary>查真正构建出来的Manifest，而非仅看编辑器标记，防止图集/材质隐式把其它章节一起带入。</summary>
+        private static void ValidateChapterBundleClosure(AssetBundleManifest manifest)
+        {
+            string[] chapterBundles = { "background_chapter01_tutorial", "background_chapter02_village", "background_chapter03_lake", "background_chapter04_swamp", "background_chapter05_ice", "background_chapter06_temple" };
+            var expected = new HashSet<string>(chapterBundles, StringComparer.Ordinal);
+            int chapters = 0;
+            foreach (string bundle in manifest.GetAllAssetBundles())
+            {
+                string[] dependencies = manifest.GetAllDependencies(bundle);
+                if (expected.Contains(bundle))
+                {
+                    chapters++;
+                    if (dependencies.Length != 0) { throw new InvalidOperationException("章节包必须自包含：" + bundle + " → " + string.Join(",", dependencies)); }
+                }
+                else
+                {
+                    foreach (string dependency in dependencies)
+                    {
+                        if (expected.Contains(dependency)) { throw new InvalidOperationException("非章节资源包不应依赖背景：" + bundle + " → " + dependency); }
+                    }
+                }
+            }
+            if (chapters != chapterBundles.Length) { throw new InvalidOperationException("实际构建未包含全部六个章节背景包"); }
         }
 
         /// <summary>

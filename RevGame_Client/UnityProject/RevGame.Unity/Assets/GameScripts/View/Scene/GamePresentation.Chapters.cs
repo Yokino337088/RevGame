@@ -1,5 +1,5 @@
-// 章节背景仅属于场景表现：美术参数留在 Inspector，不改变关卡数值、棋子或 UI 材质。
-// 五张大图独立按需加载，不放进启动预热图集；换章先提交新画面再释放旧引用。
+// 章节背景仅属于场景表现：每张原画使用自己的材质与 Shader，美术参数在对应材质 Inspector 中调节。
+// 图片与材质按章成对租用；换章先提交完整新画面再释放旧引用，取消/退出也必须配对归还。
 using System;
 using RevGame.Core;
 using RevGame.Flow;
@@ -18,35 +18,33 @@ namespace RevGame.View
             [Header("图片替换（资源系统逻辑名，不填磁盘路径）")]
             [Tooltip("图片位于 Assets/GameRes/ChapterBackground，替换同名 PNG 后重新打包即可；更改逻辑名需重新进入战斗。")]
             [InspectorName("背景图片逻辑名")] public string textureName;
-            [Header("动态效果（纯美术表现参数，不影响玩法）")]
-            [InspectorName("特效总强度（0 = 原画）")] [Range(0f, 1f)] public float strength = 0.8f;
-            [InspectorName("流动速度（0 = 静止）")] [Range(0f, 2f)] public float speed = 0.4f;
-            [InspectorName("原画扰动幅度")] [Range(0f, 0.04f)] public float distortion = 0.008f;
-            [InspectorName("反光 / 光束强度")] [Range(0f, 1.5f)] public float glow = 0.65f;
-            [InspectorName("萤火 / 气泡 / 雪花 / 金粉")] [Range(0f, 1f)] public float particles = 0.5f;
-            [Header("主题配色（光束 / 波纹 / 雪花，不重染整张原画）")]
-            [InspectorName("原画色调（白色保持原色）")] public Color tint = Color.white;
-            [InspectorName("主特效颜色")] public Color accent = Color.white;
-            [InspectorName("辅特效颜色")] public Color secondary = Color.white;
+            [Tooltip("材质在 Material/Background 中，原画名加 _Material。主题专属参数直接在该材质上调，不由场景的公共参数覆盖。")]
+            [InspectorName("独立材质逻辑名")] public string materialName;
+            [Tooltip("必须与该章节专用 Shader 的声明名称一致，避免换图后误用其它章节的效果。")]
+            [InspectorName("独立 Shader 名称")] public string shaderName;
 
-            public ChapterBackgroundStyle(string name, float rate, float warp, float light, float motes, Color primary, Color other)
+            public ChapterBackgroundStyle(string name)
             {
-                textureName = name; speed = rate; distortion = warp; glow = light; particles = motes;
-                accent = primary; secondary = other;
+                textureName = name;
+                materialName = name + "_Material";
+                shaderName = "RevGame/Background/" + name;
             }
         }
 
         // 章节与图像的对应是美术绑定，不是策划关卡规则；参数在场景中序列化，修改无需重编代码。
+        [Header("第 1 章 · 原始教学背景（独立图集与专用材质）")]
+        [SerializeField] private ChapterBackgroundStyle tutorialBackground = new ChapterBackgroundStyle("SceneBackdrop_0fc7e394")
+        { materialName = "ArcaneScene", shaderName = "RevGame/Background/Chapter01_Tutorial" };
         [Header("第 2 章 · 魔法村落（明朗阳光 / 绿金流光 / 萤火）")]
-        [SerializeField] private ChapterBackgroundStyle villageBackground = new ChapterBackgroundStyle("Chapter02_Village", 0.48f, 0.002f, 0.65f, 0.55f, new Color(1f, 0.82f, 0.35f), new Color(0.45f, 1f, 0.67f));
+        [SerializeField] private ChapterBackgroundStyle villageBackground = new ChapterBackgroundStyle("Chapter02_Village");
         [Header("第 3 章 · 魔法湖泊（波动 / 银蓝反光 / 焦散）")]
-        [SerializeField] private ChapterBackgroundStyle lakeBackground = new ChapterBackgroundStyle("Chapter03_Lake", 0.7f, 0.012f, 0.85f, 0.35f, new Color(0.55f, 0.9f, 1f), new Color(0.2f, 0.65f, 1f));
+        [SerializeField] private ChapterBackgroundStyle lakeBackground = new ChapterBackgroundStyle("Chapter03_Lake");
         [Header("第 4 章 · 死亡沼泽（使用湖面 v1 / 黏稠暗流 / 泥泡）")]
-        [SerializeField] private ChapterBackgroundStyle swampBackground = new ChapterBackgroundStyle("Chapter04_Swamp", 0.19f, 0.016f, 0.5f, 0.5f, new Color(0.78f, 0.61f, 0.27f), new Color(0.4f, 0.53f, 0.18f));
+        [SerializeField] private ChapterBackgroundStyle swampBackground = new ChapterBackgroundStyle("Chapter04_Swamp");
         [Header("第 5 章 · 冰雪极地（冰封扫光 / 寒雾 / 双层飘雪）")]
-        [SerializeField] private ChapterBackgroundStyle iceBackground = new ChapterBackgroundStyle("Chapter05_Ice", 0.42f, 0.0015f, 0.65f, 0.8f, new Color(0.7f, 0.93f, 1f), new Color(0.35f, 0.65f, 1f));
-        [Header("第 6 章 · 象牙金神殿（神圣光束 / 光晕 / 金粉）")]
-        [SerializeField] private ChapterBackgroundStyle templeBackground = new ChapterBackgroundStyle("Chapter06_Temple", 0.28f, 0.001f, 0.9f, 0.6f, new Color(1f, 0.86f, 0.48f), new Color(1f, 0.96f, 0.78f));
+        [SerializeField] private ChapterBackgroundStyle iceBackground = new ChapterBackgroundStyle("Chapter05_Ice");
+        [Header("第 6 章 · 象牙金神殿（迷幻螺纹 / 慢旋符文 / 呼吸法阵）")]
+        [SerializeField] private ChapterBackgroundStyle templeBackground = new ChapterBackgroundStyle("Chapter06_Temple");
         [Header("背景可读性与换章演出")]
         [Tooltip("棋盘内减弱光束、雪花及扭曲，外围保留完整效果；不会给棋盘盖黑色遮罩。")]
         [Range(0f, 1f)] [SerializeField] private float backgroundBoardProtection = 0.82f;
@@ -54,8 +52,7 @@ namespace RevGame.View
         [Range(0.1f, 2f)] [SerializeField] private float backgroundArrivalSeconds = 0.85f;
 
         public const string ChapterBackgroundRoot = "ChapterBackground";
-        public const string ChapterBackgroundMaterialName = "ChapterAtmosphere";
-        public bool IsChapterBackgroundReady { get { return _chapterReady && _backgroundReady; } }
+        public bool IsChapterBackgroundReady { get { return _chapterReady; } }
         public int BackgroundChapter { get { return _activeBackgroundChapter; } }
         public string BackgroundTextureName { get { return _currentBackground == null ? "Original" : _currentBackground.Name; } }
         public string BackgroundLoadError { get { return _backgroundError; } }
@@ -64,23 +61,24 @@ namespace RevGame.View
         private sealed class BackgroundLease
         {
             public string Name;
+            public string MaterialName;
             public Texture2D Texture;
+            public Sprite Sprite;
+            public Material Material;
             public bool Finished;
+            public bool MaterialFinished;
+            public bool TextureRequested;
+            public bool MaterialRequested;
+            public GameSpriteAtlasService.TutorialSpriteLease Atlas;
             public bool Released;
             public string Error;
         }
 
         private BackgroundLease _pendingBackground;
         private BackgroundLease _currentBackground;
-        private Sprite _originalBackgroundSprite;
-        private Sprite _chapterSprite;
-        private Material _legacyBackgroundMaterial;
-        private Material _chapterMaterial;
-        private bool _chapterMaterialRequested;
-        private bool _chapterMaterialFinished;
         private bool _chapterReady = true;
         private int _requestedBackgroundChapter;
-        private int _activeBackgroundChapter = 1;
+        private int _activeBackgroundChapter;
         private int _backgroundVersion;
         private float _backgroundArrivalTime;
         private Vector3 _originalBackgroundScale;
@@ -95,7 +93,7 @@ namespace RevGame.View
         {
             if (backgroundRenderer != null)
             {
-                _originalBackgroundSprite = backgroundRenderer.sprite;
+                _originalBackgroundMaterial = backgroundRenderer.sharedMaterial;
                 _originalBackgroundScale = backgroundRenderer.transform.localScale;
                 _originalBackgroundPosition = backgroundRenderer.transform.position;
             }
@@ -112,19 +110,14 @@ namespace RevGame.View
         {
             switch (chapter)
             {
+                case 1: return tutorialBackground;
                 case 2: return villageBackground;
                 case 3: return lakeBackground;
                 case 4: return swampBackground;
                 case 5: return iceBackground;
                 case 6: return templeBackground;
-                default: throw new ArgumentOutOfRangeException(nameof(chapter), "背景章节只允许 2~6");
+                default: throw new ArgumentOutOfRangeException(nameof(chapter), "背景章节只允许 1~6");
             }
-        }
-
-        private void SetLegacyBackgroundMaterial(Material material)
-        {
-            _legacyBackgroundMaterial = material;
-            if (_requestedBackgroundChapter <= 1 && backgroundRenderer != null) { backgroundRenderer.sharedMaterial = material; }
         }
 
         private void ApplyChapterBackground(int chapter)
@@ -136,29 +129,7 @@ namespace RevGame.View
             _chapterReady = false;
             ReleaseBackground(_pendingBackground);
             _pendingBackground = null;
-            if (chapter == 1)
-            {
-                RestoreOriginalBackground();
-                _chapterReady = true;
-                return;
-            }
             LoadChapterBackgroundAsync(chapter, version);
-        }
-
-        private void RequestChapterMaterial()
-        {
-            if (_chapterMaterialRequested) { return; }
-            _chapterMaterialRequested = true;
-            RevResManager.LoadAsync(RevResPath.Material_Background, ChapterBackgroundMaterialName, typeof(Material), handle =>
-            {
-                if (_released) { return; }
-                _chapterMaterialFinished = true;
-                _chapterMaterial = handle.Content as Material;
-                if (!handle.IsLoaded || _chapterMaterial == null || _chapterMaterial.shader == null || !_chapterMaterial.shader.isSupported)
-                {
-                    _backgroundError = "章节背景材质加载失败：" + handle.ErrorReason;
-                }
-            }, RevResGroup.Scene);
         }
 
         private async void LoadChapterBackgroundAsync(int chapter, int version)
@@ -167,19 +138,38 @@ namespace RevGame.View
             try
             {
                 ChapterBackgroundStyle style = BackgroundStyle(chapter);
-                if (style == null || string.IsNullOrWhiteSpace(style.textureName)) { throw new InvalidOperationException("章节背景逻辑名不能为空：" + chapter); }
-                RequestChapterMaterial();
-                lease = new BackgroundLease { Name = style.textureName };
+                if (style == null || string.IsNullOrWhiteSpace(style.textureName) || string.IsNullOrWhiteSpace(style.materialName) || string.IsNullOrWhiteSpace(style.shaderName))
+                { throw new InvalidOperationException("章节背景的图片与材质逻辑名不能为空：" + chapter); }
+                lease = new BackgroundLease { Name = style.textureName, MaterialName = style.materialName };
                 _pendingBackground = lease;
-                RevResManager.LoadAsync(ChapterBackgroundRoot, lease.Name, typeof(Texture2D), handle =>
+                // 标记“已请求”后再调用：编辑器缓存命中可能同步回调，退出只释放实际发起的请求。
+                if (chapter == 1)
+                {
+                    lease.Atlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireTutorialSprite();
+                    LoadTutorialSpriteAsync(lease);
+                }
+                else
+                {
+                    lease.TextureRequested = true;
+                    RevResManager.LoadAsync(ChapterBackgroundRoot, lease.Name, typeof(Texture2D), handle =>
+                    {
+                        if (lease.Released || _released) { return; }
+                        lease.Finished = true;
+                        lease.Texture = handle.Content as Texture2D;
+                        if (!handle.IsLoaded || lease.Texture == null) { lease.Error = "背景图片加载失败：" + lease.Name + " / " + handle.ErrorReason; }
+                    }, RevResGroup.Scene);
+                }
+                lease.MaterialRequested = true;
+                RevResManager.LoadAsync(RevResPath.Material_Background, lease.MaterialName, typeof(Material), handle =>
                 {
                     if (lease.Released || _released) { return; }
-                    lease.Finished = true;
-                    lease.Texture = handle.Content as Texture2D;
-                    if (!handle.IsLoaded || lease.Texture == null) { lease.Error = "背景图片加载失败：" + lease.Name + " / " + handle.ErrorReason; }
+                    lease.MaterialFinished = true;
+                    lease.Material = handle.Content as Material;
+                    if (!handle.IsLoaded || lease.Material == null)
+                    { lease.Error = "章节独立材质加载失败：" + lease.MaterialName + " / " + handle.ErrorReason; }
                 }, RevResGroup.Scene);
                 float deadline = Time.realtimeSinceStartup + 30f;
-                while (!_released && version == _backgroundVersion && (!lease.Finished || !_chapterMaterialFinished))
+                while (!_released && version == _backgroundVersion && (!lease.Finished || !lease.MaterialFinished))
                 {
                     if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException("章节背景加载超时：" + chapter); }
                     await RevTask.Yield();
@@ -187,26 +177,31 @@ namespace RevGame.View
                 if (_released || version != _backgroundVersion) { return; }
                 if (!string.IsNullOrEmpty(lease.Error)) { throw new InvalidOperationException(lease.Error); }
                 if (!string.IsNullOrEmpty(_backgroundError)) { throw new InvalidOperationException(_backgroundError); }
-                if (_chapterMaterial == null || _chapterMaterial.shader == null || !_chapterMaterial.shader.isSupported
-                    || _chapterMaterial.shader.name != "RevGame/Background/ChapterAtmosphere")
+                if (lease.Material == null || lease.Material.shader == null || !lease.Material.shader.isSupported
+                    || lease.Material.shader.name != style.shaderName)
                 {
-                    throw new InvalidOperationException("章节背景 Shader 未就绪或不支持当前平台");
+                    throw new InvalidOperationException("章节独立 Shader 未就绪、与材质不匹配或不支持当前平台：" + lease.MaterialName);
                 }
-                Sprite sprite = Sprite.Create(lease.Texture, new Rect(0, 0, lease.Texture.width, lease.Texture.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
-                sprite.name = lease.Name;
+                if (chapter != 1)
+                {
+                    lease.Sprite = Sprite.Create(lease.Texture, new Rect(0, 0, lease.Texture.width, lease.Texture.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+                    lease.Sprite.name = lease.Name;
+                }
                 // 先让 Renderer 与参数块指向新图，再销毁旧 Sprite、Release 旧图；不能在渲染器还持有它时卸包。
-                Sprite oldSprite = _chapterSprite;
                 BackgroundLease oldLease = _currentBackground;
-                _chapterSprite = sprite;
                 _currentBackground = lease;
                 _pendingBackground = null;
                 _activeBackgroundChapter = chapter;
-                backgroundRenderer.sprite = sprite;
-                backgroundRenderer.sharedMaterial = _chapterMaterial;
+                backgroundRenderer.sprite = lease.Sprite;
+                backgroundRenderer.sharedMaterial = lease.Material;
+                if (chapter == 1)
+                {
+                    backgroundRenderer.transform.localScale = _originalBackgroundScale;
+                    backgroundRenderer.transform.position = _originalBackgroundPosition;
+                }
                 _backgroundArrivalTime = Time.unscaledTime;
                 UploadChapterStyle();
                 FitCamera();
-                if (oldSprite != null) { Destroy(oldSprite); }
                 ReleaseBackground(oldLease);
                 _chapterReady = true;
             }
@@ -226,34 +221,46 @@ namespace RevGame.View
             }
         }
 
+        /// <summary>第一章只在被选中时向项目图集服务租一张 Sprite，不再由大厅提前预热。</summary>
+        private async void LoadTutorialSpriteAsync(BackgroundLease lease)
+        {
+            try
+            {
+                Sprite sprite = await lease.Atlas.LoadAsync(lease.Name);
+                if (lease.Released || _released)
+                {
+                    if (sprite != null) { Destroy(sprite); }
+                    return;
+                }
+                lease.Sprite = sprite;
+                if (sprite == null) { lease.Error = "第一章图集租约已取消"; }
+            }
+            catch (Exception error) { lease.Error = "第一章图集加载失败：" + error.Message; }
+            finally { lease.Finished = true; }
+        }
+
         private void UploadChapterStyle()
         {
-            ChapterBackgroundStyle style = BackgroundStyle(_activeBackgroundChapter);
             if (_backgroundProperties == null) { _backgroundProperties = new MaterialPropertyBlock(); }
             // 独立 Texture2D 不参与图集；显式设置 _ChapterTex，规避 SpriteRenderer 覆盖 _MainTex 的平台差异。
             _backgroundProperties.Clear();
-            _backgroundProperties.SetTexture(ChapterTextureId, _currentBackground.Texture);
-            _backgroundProperties.SetFloat("_Theme", _activeBackgroundChapter);
-            _backgroundProperties.SetFloat("_Strength", style.strength);
-            _backgroundProperties.SetFloat("_Speed", style.speed);
-            _backgroundProperties.SetFloat("_Distortion", style.distortion);
-            _backgroundProperties.SetFloat("_Glow", style.glow);
-            _backgroundProperties.SetFloat("_Particles", style.particles);
+            if (_activeBackgroundChapter > 1) { _backgroundProperties.SetTexture(ChapterTextureId, _currentBackground.Texture); }
+            // Shader/速度/颜色等由当前独立材质决定；参数块只持有场景时钟、图片与棋盘布局。
+            _backgroundProperties.SetFloat(EffectTimeId, Time.unscaledTime);
             _backgroundProperties.SetFloat("_BoardProtection", backgroundBoardProtection);
-            _backgroundProperties.SetFloat("_Aspect", _currentBackground.Texture.width / (float)_currentBackground.Texture.height);
+            _backgroundProperties.SetFloat("_Aspect", _currentBackground.Sprite.rect.width / _currentBackground.Sprite.rect.height);
             _backgroundProperties.SetFloat(PreviewTimeId, -1f);
-            _backgroundProperties.SetColor("_Tint", style.tint);
-            _backgroundProperties.SetColor("_Accent", style.accent);
-            _backgroundProperties.SetColor("_Secondary", style.secondary);
             backgroundRenderer.SetPropertyBlock(_backgroundProperties);
+            _lastBackgroundUv = Vector4.zero;
+            if (_activeBackgroundChapter == 1) { UpdateBackgroundAtlasUv(); }
         }
 
         private void UpdateChapterFrame(GameBattleLayout.Regions areas, Vector2 screenSize)
         {
-            if (_activeBackgroundChapter <= 1 || _currentBackground == null) { return; }
+            if (_currentBackground == null) { return; }
             _backgroundProperties.SetFloat(EffectTimeId, Time.unscaledTime);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            _backgroundProperties.SetFloat("_Strength", _previewBackgroundStrength >= 0f ? _previewBackgroundStrength : BackgroundStyle(_activeBackgroundChapter).strength);
+            _backgroundProperties.SetFloat("_Strength", _previewBackgroundStrength >= 0f ? _previewBackgroundStrength : _currentBackground.Material.GetFloat("_Strength"));
 #endif
             _backgroundProperties.SetFloat(TransitionId, Mathf.Clamp01((Time.unscaledTime - _backgroundArrivalTime) / Mathf.Max(0.1f, backgroundArrivalSeconds)));
             Rect board = areas.Board;
@@ -265,17 +272,15 @@ namespace RevGame.View
         {
             if (backgroundRenderer != null)
             {
-                backgroundRenderer.sprite = _originalBackgroundSprite;
-                backgroundRenderer.sharedMaterial = _legacyBackgroundMaterial ?? _originalBackgroundMaterial;
+                backgroundRenderer.sprite = null;
+                backgroundRenderer.sharedMaterial = _originalBackgroundMaterial;
                 backgroundRenderer.transform.localScale = _originalBackgroundScale;
                 backgroundRenderer.transform.position = _originalBackgroundPosition;
                 backgroundRenderer.SetPropertyBlock(null);
             }
-            if (_chapterSprite != null) { Destroy(_chapterSprite); }
-            _chapterSprite = null;
             ReleaseBackground(_currentBackground);
             _currentBackground = null;
-            _activeBackgroundChapter = 1;
+            _activeBackgroundChapter = 0;
             _lastBackgroundUv = Vector4.zero;
             _backgroundProperties = null;
         }
@@ -284,8 +289,15 @@ namespace RevGame.View
         {
             if (lease == null || lease.Released) { return; }
             lease.Released = true;
+            // 两种 Sprite 都由本租约拥有：第一章是 GetSprite 的副本，其余章是动态完整矩形。
+            if (lease.Sprite != null) { Destroy(lease.Sprite); }
+            lease.Sprite = null;
             lease.Texture = null;
-            RevResManager.Release(ChapterBackgroundRoot, lease.Name);
+            lease.Material = null;
+            if (lease.TextureRequested) { RevResManager.Release(ChapterBackgroundRoot, lease.Name); }
+            if (lease.MaterialRequested) { RevResManager.Release(RevResPath.Material_Background, lease.MaterialName); }
+            lease.Atlas?.Dispose();
+            lease.Atlas = null;
         }
 
         private void DisposeChapterBackground()
@@ -294,26 +306,26 @@ namespace RevGame.View
             RestoreOriginalBackground();
             ReleaseBackground(_pendingBackground);
             _pendingBackground = null;
-            if (_chapterMaterialRequested)
-            {
-                RevResManager.Release(RevResPath.Material_Background, ChapterBackgroundMaterialName);
-                _chapterMaterialRequested = false;
-            }
-            _chapterMaterial = null;
         }
 
         private void OnValidate()
         {
-            if (Application.isPlaying && _activeBackgroundChapter > 1 && _currentBackground != null && backgroundRenderer != null) { UploadChapterStyle(); }
+            if (Application.isPlaying && _currentBackground != null && backgroundRenderer != null) { UploadChapterStyle(); }
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private float _previewBackgroundStrength = -1f;
         // 固定渲染时间仅用于两帧 GPU 像素差异验收，不修改战斗计时、章节或存档。
         public void SetBackgroundPreviewStrength(float strength) { _previewBackgroundStrength = strength; }
+        public void SetBackgroundPreviewSpeed(float speed)
+        {
+            if (_currentBackground == null || _backgroundProperties == null) { return; }
+            _backgroundProperties.SetFloat("_Speed", speed >= 0f ? speed : _currentBackground.Material.GetFloat("_Speed"));
+            backgroundRenderer.SetPropertyBlock(_backgroundProperties);
+        }
         public void SetBackgroundPreviewTime(float seconds)
         {
-            if (_activeBackgroundChapter <= 1 || _backgroundProperties == null) { return; }
+            if (_backgroundProperties == null) { return; }
             _backgroundProperties.SetFloat(PreviewTimeId, seconds);
             backgroundRenderer.SetPropertyBlock(_backgroundProperties);
         }

@@ -22,23 +22,24 @@
 
 ## 章节背景与主题 Shader（2026-10-23）
 
-第 1 章保留场景原背景与 `ArcaneScene` 效果。第 2~6 章按下表使用独立大图与 `ChapterAtmosphere` 单 Pass Shader，不改棋子、卡牌或大厅材质。
+六章均使用独立材质和专用 Shader，每章图片+材质+Shader同包；第一章还包含原有SpriteAtlas。第一章原图保留GUID迁入`GameRes/ChapterBackground`，保留ArcaneScene参数与手调布局，大厅不再预热第一章，GameScene无章节图片/材质硬引用。
 
-| 章节 | `GameRes/ChapterBackground` 图片逻辑名 | 原图与主题效果 |
+| 章节 | 图片逻辑名 | 独立Shader / 主题 |
 |---|---|---|
-| 2 | `Chapter02_Village` | 魔法村落：明朗阳光、绿金魔光与萤火，建筑不大幅扭曲 |
-| 3 | `Chapter03_Lake` | 蓝色纯湖面：多层波纹、扩散涟漪、动态焦散与银蓝反光；反光为程序表现，不采集场景反射 |
-| 4 | `Chapter04_Swamp` | **死亡沼泽湖面 v1**：低频黏稠暗流、缓慢泥泡与油膜高光 |
-| 5 | `Chapter05_Ice` | 冰封极地：冰面扫光、边缘冰霜、寒雾与双层飘雪 |
-| 6 | `Chapter06_Temple` | **神殿象牙金版本**：暖金光束、同心光晕与金粉，石柱结构保持稳定 |
+| 1 | `SceneBackdrop_0fc7e394` | `Chapter01_Tutorial` / 原教学效果 |
+| 2 | `Chapter02_Village` | 明朗日照、薄荷淡紫魔光、萤火 |
+| 3 | `Chapter03_Lake` | 双向水流折射、原画柔化镜像反射、焦散 |
+| 4 | `Chapter04_Swamp` | 黏稠泥面、慢流褶皱、油膜和泥泡 |
+| 5 | `Chapter05_Ice` | 固态冰面扫光、霜雾与三层飘雪 |
+| 6 | `Chapter06_Temple` | 慢旋螺纹、呼吸光环和催眠符文 |
 
-`GameScene` 的 `GamePresentation` Inspector 按章节分组，展开对应项可调总强度、速度、扰动、反光、粒子和配色。总强度设为 0 显示原画；棋盘保护减弱棋盘内部效果而保留外围动态。图片只填逻辑名，不填外部美术磁盘路径。更换图片后使用章节背景导入工具，再通过项目资源工具构建并发布对应平台 AB。
+Shader文件位于`GameShader/Background/*_Shader.shader`，声明名为`RevGame/Background/Chapter0X_*`。材质位于`GameRes/Material/Background`：第一章ArcaneScene，其余`Chapter0X_*_Material`。效果参数直接在各章材质Inspector调节，场景只保存逻辑名、棋盘保护与布局。旧ChapterAtmosphere已移除，共用cginc只提供数学/采样，不按主题分支。
 
-运行时由 `GamePresentation.Chapters` 监听开局与准备阶段，覆盖直接入章、同场景连续通章及重开；等待背景时暂停玩法计时与输入，失败提供既有返回面板。仅按需加载当前章纹理，旧图在断开 Renderer 引用后释放；场景退出时配对释放材质和在途请求。五张纹理独立分包，不加入启动图集预热，也不在游戏内使用 GrabPass 或全屏 RenderTexture。
+六个AB分别为`background_chapter01_tutorial`、`background_chapter02_village`、`background_chapter03_lake`、`background_chapter04_swamp`、`background_chapter05_ice`、`background_chapter06_temple`。PC/Android真实Manifest均为章节依赖0、其它包反向引用0，构建会强制检查。通过RevResManager按章异步租用，先接新图再释放旧图；Release归零进入未使用缓存，在空闲整理点真正卸载，不代表进程内存瞬间归零。
 
-验证状态（2026-10-23）：五张图片 SHA256 与指定原图一致；Unity C# 编译零错误、主题 Shader 当前 GPU 支持；PC / Android 各 32 个 AB 构建并发布。编辑器直读与真实 PC AB 模式均完成六章切图、固定时间两帧 GPU 差异、16:9 / 19.5:9 / 4:3 铺满、第一章恢复及退出租约归零检查。真实帧与原始结果位于工程 `Temp/ChapterBackgroundChecks/Direct` 和 `AB`。测试使用真实 `StartRound` 触发同场景准备事件，未验证逐章解锁与完整打 Boss 通章；后追加的强度 0 静止断言已编译，因目标编辑器退出及重启提示未补跑；Android 真机效果与性能尚未验证。
+本轮Direct 231条、真实PC AB冷启动252条断言通过，含快速取消、六章切换、强度0/速度0静止、GPU动态、多比例覆盖、第一章packed图集和引用回收。真实AB整理点核对当前章仅1背景包，大厅0包。PC/Android各32包、310映射构建发布；最终C#编译和Console错误0。Android真机、整章通关与平衡尚未验证。
 
-自动化入口：`game.background.import` / `audit` / `build` / `check` / `status`。导入也可用菜单 `RevGame/美术/导入章节背景与主题特效`。背景加载严格走 `RevResManager`，验收用 RenderTexture 只存在于 Editor，不进入游戏运行逻辑。
+入口`game.background.import / audit / build / check / status`；`game.background.mode`只在编辑态保存下次Play偏好，规避当前框架setter的编辑态初始化问题。详情与原始PNG见`RevGame_Client/文档/进度同步/章节背景独立Shader与六章分包-2026-10-23.html`。
 
 ## 先跑起来
 

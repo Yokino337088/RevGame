@@ -50,7 +50,10 @@ namespace RevGame.Editor
                     if (root.StartsWith("Audio/")) { group = RevResGroup.Sound; }
                     // 入图集后AB会剥离源Texture2D像素，只保留Sprite元数据和图集页面。
                     // 因此图片必须按Sprite加载；用Texture2D测试会强求本就应该被剥离的散图副本。
-                    Type contentType = AssetImporter.GetAtPath(path) is TextureImporter ? typeof(Sprite) : AssetDatabase.GetMainAssetTypeAtPath(path);
+                    TextureImporter textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
+                    // 章节2~6是Shader的非Sprite采样纹理；它们不受SpriteAtlas剥离规则约束，须按Texture2D验收。
+                    Type contentType = textureImporter != null && textureImporter.textureType == TextureImporterType.Sprite
+                        ? typeof(Sprite) : AssetDatabase.GetMainAssetTypeAtPath(path);
                     RevResManager.LoadAsync(root, name, contentType, h => source.SetResult(h), group);
                     RevResHandle handle = await source.Task;
                     try
@@ -66,7 +69,7 @@ namespace RevGame.Editor
                 Require(RevDataTableManager.IsLoaded<BattleTextTable>() && RevDataTableManager.IsLoaded<BattleTuningTable>(), "游戏启动的两张表已从AB读取");
                 Camera camera = Camera.main;
                 SpriteRenderer bg = GameObject.Find("GameBackground").GetComponent<SpriteRenderer>();
-                Require(bg.sharedMaterial.shader.name == "RevGame/Background/ArcaneBackdrop", "真实背景使用迷幻材质");
+                Require(bg.sharedMaterial.shader.name == "RevGame/Background/Chapter01_Tutorial", "真实第一章背景使用独立迷幻材质");
                 // 自动铺满默认关闭（尊重场景里手调的背景尺寸），验收这里显式打开，测完还原原值。
                 GamePresentation presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
                 FieldInfo fitField = typeof(GamePresentation).GetField("fitBackgroundToCamera", BindingFlags.NonPublic | BindingFlags.Instance);

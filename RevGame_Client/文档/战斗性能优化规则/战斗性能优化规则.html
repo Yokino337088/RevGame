@@ -154,8 +154,8 @@
 </tr>
 <tr>
 <td>SceneBackdrop_0fc7e394Atlas</td>
-<td>当前场景引用的背景</td>
-<td>场景启动预热，场景寿命持有</td>
+<td>第一章专用原背景</td>
+<td>仅第一章按需租用；与第一章图片/材质/Shader同包，其它章不预热</td>
 </tr>
 </tbody>
 </table></div>
@@ -170,7 +170,7 @@
 <li>构建后检查：实际AB加载、图集不为空、Sprite已packed、没有源Texture2D副本、UI/序列帧/背景UV正确。</li>
 <li>增量构建后按本次Manifest清理改名后遗留的旧包，再复制到StreamingAssets。只清理经过绝对路径校验的项目AssetBundles平台目录中的旧文件对，不能递归清理任意配置路径。本次移除了不再被清单使用的art_ui、shared_piece_frames、shared_status旧包。</li>
 </ol>
-<p><strong>资源路径仍可保留 Sprite 的兼容映射，但运行期不能按 Texture2D 加载这些图片。</strong> Unity 会剥离源图片像素；直接请求 Texture2D 与本规范冲突。现有预制体与配置保留 Sprite GUID，Unity 在图集加载完成后自动绑定到图集页。</p></section><section id="s4" class="chapter"><div class="section-label">STANDARD / 04</div><h2>Revolution资源与内存生命周期</h2><p>资源寿命链：逻辑路径 → RevResManager.LoadAsync → 句柄检查 → 使用 → Release → 未使用缓存 → 流程空闲边界 FlushUnused。<code>Release</code> 不等于立即把整个进程内存降回原点，池、依赖和引擎缓存可能仍持有对象。</p>
+<p><strong>资源路径仍可保留 Sprite 的兼容映射，但运行期不能按 Texture2D 加载这些图片。</strong> Unity 会剥离源图片像素；直接请求 Texture2D 与本规范冲突。现有预制体与配置保留 Sprite GUID，Unity 在图集加载完成后自动绑定到图集页。</p></section><p>2026-10-23补充：六章背景分别归入六个自包含AB。第2~6章为Shader独立采样的Default纹理，不作为Sprite使用；专属Shader与材质同包。GameScene不硬引用章节图或材质，切章/退出成对归还，空闲整理点卸载。详见<a href="../进度同步/章节背景独立Shader与六章分包-2026-10-23.html">章节背景专题</a>。</p><section id="s4" class="chapter"><div class="section-label">STANDARD / 04</div><h2>Revolution资源与内存生命周期</h2><p>资源寿命链：逻辑路径 → RevResManager.LoadAsync → 句柄检查 → 使用 → Release → 未使用缓存 → 流程空闲边界 FlushUnused。<code>Release</code> 不等于立即把整个进程内存降回原点，池、依赖和引擎缓存可能仍持有对象。</p>
 <p><code>GameSpriteAtlasService</code> 只适配 Unity 的 <code>atlasRequested</code>：按生成白名单验证标签、合并同图集在途请求，再通过 <code>RevResPath.Atlases</code> 加载。它没有自行拼 StreamingAssets 路径，没有每帧 GetSprite，也没有每颗棋子复制一套帧图。</p>
 <div class="table-scroll" tabindex="0"><table>
 <thead>

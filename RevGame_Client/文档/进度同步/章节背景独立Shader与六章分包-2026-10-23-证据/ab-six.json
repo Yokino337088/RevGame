@@ -1,0 +1,98 @@
+{
+  "success": true,
+  "name": "六章背景真实PC AB冷启动验收",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.mode",
+      "response": {
+        "protocol": 1,
+        "id": "42fa231cd6ff40d999ff9a50dcd72637",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\42fa231cd6ff40d999ff9a50dcd72637",
+        "data": {
+          "text": "下次Play UseABInEditor=True"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.0940000000409782
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "1f58f9e817374602ab75c02ce4748a3f",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1f58f9e817374602ab75c02ce4748a3f",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 3.296000000089407
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.check",
+      "response": {
+        "protocol": 1,
+        "id": "bb59cac96744467ea33b40d4b54fd82e",
+        "success": true,
+        "error": "",
+        "message": "通过：AB，252 条断言；六章图片、GPU 动态/关闭、多比例覆盖与资源回收",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\bb59cac96744467ea33b40d4b54fd82e",
+        "data": {
+          "text": "通过：AB，252 条断言；六章图片、GPU 动态/关闭、多比例覆盖与资源回收",
+          "abMode": true,
+          "checks": 252,
+          "directory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Temp\\ChapterBackgroundChecks"
+        }
+      },
+      "polls": 1,
+      "seconds": 14.093999999808148
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "163326b790dc45deb112f82962fda248",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\163326b790dc45deb112f82962fda248",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.40600000019185245
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.mode",
+      "response": {
+        "protocol": 1,
+        "id": "71ac666d04ed42b682846740096a76d9",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\71ac666d04ed42b682846740096a76d9",
+        "data": {
+          "text": "下次Play UseABInEditor=True"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.10999999986961484
+    }
+  ],
+  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175246-6ccea710.json"
+}

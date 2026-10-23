@@ -173,8 +173,7 @@ namespace RevGame.Flow
         /// </summary>
         private async RevTask LoadStartupDataAsync()
         {
-            await RevServices.GetRequired<GameSpriteAtlasService>().PreloadSceneAsync();
-            ThrowIfDisposed();
+            // 章节背景只在被选中时加载；大厅启动不能预热第一章，否则独立AB仍会常驻。
             // ★ 所有数值/文案先于任何业务读取加载并整体校验：棋子、星级、增益、事件、关卡、奖励、战斗参数都来自 Excel 导表。
             // 任何一张表缺失或填错，GameConfig.Initialize 会一次性抛出中文问题清单，走下面的过场失败出口展示，而不是玩到一半才炸。
             await LoadGameConfigAsync();

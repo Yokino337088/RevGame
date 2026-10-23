@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: ArcaneScene
-  m_Shader: {fileID: 4800000, guid: 9abf69ac64d7d65419c3e8eec1920a1f, type: 3}
+  m_Shader: {fileID: 4800000, guid: a11ada9fcaa12254dae432082d104581, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -39,8 +39,11 @@ Material:
     - _ArtWarp: 0.012
     - _ColorMask: 15
     - _Contrast: 3.5
+    - _EffectTime: -1
     - _Lighting: 0.4
     - _PixelFilter: 745
+    - _PreviewTime: -1
+    - _Rainbow: 0
     - _Speed: 0.51
     - _SpinAmount: 0.3
     - _SpinRotation: -2

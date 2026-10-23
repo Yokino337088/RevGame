@@ -11,6 +11,7 @@ namespace RevGame.Editor
     public static class GameChapterBackgroundAutomation
     {
         [Serializable] private sealed class Options { public string target = "StandaloneWindows64"; }
+        [Serializable] private sealed class ModeOptions { public bool enabled; }
         [Serializable] private sealed class BuildResult { public string text; }
 
         private static object Invoke(string method)
@@ -30,6 +31,17 @@ namespace RevGame.Editor
 
         [RevAutomationAction("game.background.status", Environment = "either", Keys = new string[0], Description = "读取最近背景验收结果")]
         public static object Status(RevAutomationRequest request) { return Invoke("Status"); }
+
+        [RevAutomationAction("game.background.mode", Keys = new[] { "enabled" }, Description = "仅在编辑态保存下次Play的资源模式，不提前初始化运行时单例")]
+        public static object Mode(RevAutomationRequest request)
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("请先完整退出Play再切换模式"); }
+            bool enabled = JsonUtility.FromJson<ModeOptions>(request.payloadJson).enabled;
+            // 当前框架属性setter会在编辑态Init并创建DontDestroyOnLoad宿主，因此这里仅保存已核对的同一EditorPrefs键。
+            // 不在项目内修改框架快照；策略仍由下一次Play的唯一RevInitialize入口正常装配。
+            EditorPrefs.SetBool("Revolution.Res.UseABInEditor", enabled);
+            return new BuildResult { text = "下次Play UseABInEditor=" + enabled };
+        }
 
         [RevAutomationAction("game.background.build", Keys = new[] { "target" }, Description = "通过项目资源入口构建并发布 PC 或 Android AB")]
         public static object Build(RevAutomationRequest request)

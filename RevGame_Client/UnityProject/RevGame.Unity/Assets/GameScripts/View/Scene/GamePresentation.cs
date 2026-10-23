@@ -20,8 +20,8 @@ namespace RevGame.View
         private GameObject boardRoot;
         [SerializeField]
         private Camera boardCamera;
-        [Header("第 1 章 · 原始背景（保留当前图片与效果）")]
-        [Tooltip("第 1 章仍用这里的 Sprite；第 2~6 章按下面对应的逻辑名异步加载，运行时不读取外部美术目录。")]
+        [Header("章节背景渲染节点（图片、材质全部按章加载）")]
+        [Tooltip("场景不直接引用背景 Sprite/专属材质；第 1 章经图集服务绑定，其余章按逻辑名异步加载。")]
         [SerializeField]
         private SpriteRenderer backgroundRenderer;
         /// <summary>
@@ -36,10 +36,7 @@ namespace RevGame.View
         private int _screenVersion;
         private GameScreen _readyScreen = GameScreen.Exit;
         private string _loadError;
-        // 材质属于整个场景，不能归入Battle组；否则第一次返回大厅就会被战斗域卸载。
-        private bool _backgroundMaterialRequested;
-        /// <summary>动态背景也属于交付屏障；不能只等棋盘完成就把仍未取得材质的背景露给玩家。</summary>
-        private bool _backgroundReady;
+        // 背景失败由过场流程显示；实际材质由当前章节租约持有，节点默认材质只用于退出清空。
         private string _backgroundError;
         private Material _originalBackgroundMaterial;
         /// <summary>背景只有一张，允许独立参数块；棋子/弹道仍共享参数以保留合批。</summary>
@@ -75,42 +72,6 @@ namespace RevGame.View
             InitializeChapterBackground();
             // GameBootstrap 在配置表就绪后发出首次 ScreenChanged，此前不提前开放操作。
             FitCamera();
-            LoadBackgroundMaterial();
-        }
-
-        /// <summary>两段式逻辑路径通过框架加载，编辑器直读和正式AB加载共用此入口；不改用户选好的背景Sprite。</summary>
-        private void LoadBackgroundMaterial()
-        {
-            if (backgroundRenderer == null)
-            {
-                _backgroundReady = true; return;
-            }
-            if (_backgroundMaterialRequested)
-            {
-                return;
-            }
-            _backgroundMaterialRequested = true;
-            _originalBackgroundMaterial = backgroundRenderer.sharedMaterial;
-            RevResManager.LoadAsync(RevResPath.Material_Background, "ArcaneScene", typeof(Material), handle =>
-            {
-                // 场景已退出时只释放迟到结果；不能给销毁中的Renderer写材质。
-                if (_released)
-                {
-                    return;
-                } // OnDestroy已经配对释放请求，迟到回调不能再减一次引用计数。
-                if (!handle.IsLoaded)
-                {
-                    _backgroundError = "场景动态材质加载失败：" + handle.ErrorReason;
-                    RevLog.Error(_backgroundError, "RevGame");
-                    return;
-                }
-                if (backgroundRenderer != null)
-                {
-                    Material material = handle.Content as Material;
-                    SetLegacyBackgroundMaterial(material);
-                    _backgroundReady = material != null;
-                }
-            }, RevResGroup.Scene);
         }
 
         private void FitCamera()
@@ -139,8 +100,8 @@ namespace RevGame.View
             boardCamera.transform.position = cameraPosition + EnergyShakeOffset();
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
             {
-                if (_activeBackgroundChapter > 1) { UpdateChapterFrame(areas, screenSize); }
-                else { UpdateBackgroundAtlasUv(); }
+                UpdateChapterFrame(areas, screenSize);
+                if (_activeBackgroundChapter == 1) { UpdateBackgroundAtlasUv(); }
                 // 第一章尊重原有手调布局；新章节横向原画始终等比铺满，不能沿用旧竖图的非等比尺寸。
                 if (fitBackgroundToCamera || _activeBackgroundChapter > 1)
                 {
@@ -341,15 +302,6 @@ namespace RevGame.View
         {
             _released = true;
             DisposeChapterBackground();
-            if (_backgroundMaterialRequested)
-            {
-                if (backgroundRenderer != null)
-                {
-                    backgroundRenderer.sharedMaterial = _originalBackgroundMaterial;
-                }
-                RevResManager.Release(RevResPath.Material_Background, "ArcaneScene");
-                _backgroundMaterialRequested = false;
-            }
             RevEvent.RemoveAllByOwner(this);
             RevTimer.CancelAllOf(this);
             RevUI.Close<HomePanel>();

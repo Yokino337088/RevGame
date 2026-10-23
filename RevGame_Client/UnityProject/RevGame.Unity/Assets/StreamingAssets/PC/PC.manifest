@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1445842629
+CRC: 2098924776
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -36,12 +36,9 @@ AssetBundleManifest:
       Dependencies:
         Dependency_0: shared_shaders
     Info_10:
-      Name: atlas_scenebackdrop_0fc7e394atlas
-      Dependencies: {}
-    Info_11:
       Name: atlas_ui_tavern_imgbkatlas
       Dependencies: {}
-    Info_12:
+    Info_11:
       Name: ui_items
       Dependencies:
         Dependency_0: atlas_uimenus
@@ -50,52 +47,52 @@ AssetBundleManifest:
         Dependency_3: config_piece_art
         Dependency_4: font_cjk
         Dependency_5: material_ui
-    Info_13:
+    Info_12:
       Name: atlas_ui_chessboard_chessboardatlas
       Dependencies: {}
-    Info_14:
+    Info_13:
       Name: config_piece_art
       Dependencies:
         Dependency_0: atlas_boardstatus
         Dependency_1: atlas_pieceframes
-    Info_15:
+    Info_14:
       Name: battle_units
       Dependencies:
         Dependency_0: atlas_boardstatus
         Dependency_1: atlas_pieceframes
         Dependency_2: config_piece_art
         Dependency_3: material_pieces
-    Info_16:
+    Info_15:
       Name: audio_sfx
       Dependencies: {}
-    Info_17:
+    Info_16:
       Name: material_pieces
       Dependencies:
         Dependency_0: shared_shaders
-    Info_18:
+    Info_17:
       Name: battle_feedback
       Dependencies:
         Dependency_0: atlas_uibattle
         Dependency_1: atlas_combatframes
         Dependency_2: material_combat
-    Info_19:
+    Info_18:
       Name: ui_loading
       Dependencies:
         Dependency_0: font_cjk
         Dependency_1: material_background
-    Info_20:
+    Info_19:
       Name: battle_board
       Dependencies:
         Dependency_0: atlas_boardstatus
         Dependency_1: atlas_uibattle
         Dependency_2: atlas_combatframes
-    Info_21:
+    Info_20:
       Name: font_cjk
       Dependencies: {}
-    Info_22:
+    Info_21:
       Name: data_tables
       Dependencies: {}
-    Info_23:
+    Info_22:
       Name: ui_panels
       Dependencies:
         Dependency_0: atlas_uimenus
@@ -105,30 +102,33 @@ AssetBundleManifest:
         Dependency_4: font_cjk
         Dependency_5: material_ui
         Dependency_6: material_background
-    Info_24:
+    Info_23:
       Name: material_ui
       Dependencies:
         Dependency_0: shared_shaders
-    Info_25:
+    Info_24:
       Name: material_background
       Dependencies:
         Dependency_0: shared_shaders
-    Info_26:
+    Info_25:
       Name: material_combat
       Dependencies:
         Dependency_0: shared_shaders
-    Info_27:
+    Info_26:
       Name: background_chapter02_village
       Dependencies: {}
-    Info_28:
+    Info_27:
       Name: background_chapter03_lake
       Dependencies: {}
-    Info_29:
+    Info_28:
       Name: background_chapter04_swamp
       Dependencies: {}
-    Info_30:
+    Info_29:
       Name: background_chapter05_ice
       Dependencies: {}
-    Info_31:
+    Info_30:
       Name: background_chapter06_temple
+      Dependencies: {}
+    Info_31:
+      Name: background_chapter01_tutorial
       Dependencies: {}

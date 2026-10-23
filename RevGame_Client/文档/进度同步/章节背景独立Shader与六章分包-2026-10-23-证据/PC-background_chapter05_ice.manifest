@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 2070218472
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0ef888ded78d7b78e74242845017ca14
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b30fce1a9ad74efb72be6c308c56e365
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0ef888ded78d7b78e74242845017ca14
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/ChapterBackground/Chapter05_Ice.png
+- Assets/GameRes/Material/Background/Chapter05_Ice_Material.mat
+- Assets/GameShader/Background/Chapter05_Ice_Shader.shader
+Dependencies: []

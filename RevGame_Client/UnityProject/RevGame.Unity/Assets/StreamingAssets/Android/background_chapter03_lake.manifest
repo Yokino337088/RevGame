@@ -1,20 +1,26 @@
 ManifestFileVersion: 0
-CRC: 2220829942
+CRC: 633511281
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e2197abaa4621e7b9e94320c9d9f0aa2
+    Hash: 131b4bd067e2f1542d83016c5e5a2050
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2612ac43db082a73502ee80f2eceb73f
+    Hash: b30fce1a9ad74efb72be6c308c56e365
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e2197abaa4621e7b9e94320c9d9f0aa2
+    Hash: 131b4bd067e2f1542d83016c5e5a2050
 HashAppended: 0
 ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 48
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/ChapterBackground/Chapter03_Lake.png
+- Assets/GameShader/Background/Chapter03_Lake_Shader.shader
+- Assets/GameRes/Material/Background/Chapter03_Lake_Material.mat
 Dependencies: []

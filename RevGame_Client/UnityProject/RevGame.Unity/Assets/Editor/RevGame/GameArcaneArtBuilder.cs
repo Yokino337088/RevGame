@@ -22,7 +22,7 @@ namespace RevGame.Editor
             Material card = MaterialOf("CardGleam", "RevGame/UI/CardGleam", 0.30f, 0.18f, 1f);
             Material panel = MaterialOf("ArcanePanel", "RevGame/UI/ArcanePanel", 0.38f, 0.28f, 1f);
             Material backdrop = MaterialOf("ArcaneBackdrop", "RevGame/Background/ArcaneBackdrop", 0.7f, 0.28f, 0f);
-            MaterialOf("ArcaneScene", "RevGame/Background/ArcaneBackdrop", 0.85f, 0.38f, 1f);
+            MaterialOf("ArcaneScene", "RevGame/Background/Chapter01_Tutorial", 0.85f, 0.38f, 1f);
             int images = 0;
             foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/GameRes/UI", "Assets/GameRes/Effects" }))
             {

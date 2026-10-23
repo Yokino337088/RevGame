@@ -1,0 +1,86 @@
+[
+  {
+    "platform": "PC",
+    "bundle": "background_chapter01_tutorial",
+    "bytes": 816242,
+    "assets": "- Assets/GameShader/Background/Chapter01_Tutorial_Shader.shader\n- Assets/GameRes/Material/Background/ArcaneScene.mat\n- Assets/GameRes/ChapterBackground/SceneBackdrop_0fc7e394.png\n- Assets/GameRes/Atlases/SceneBackdrop_0fc7e394Atlas.spriteatlasv2",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "PC",
+    "bundle": "background_chapter02_village",
+    "bytes": 2943373,
+    "assets": "- Assets/GameShader/Background/Chapter02_Village_Shader.shader\n- Assets/GameRes/ChapterBackground/Chapter02_Village.png\n- Assets/GameRes/Material/Background/Chapter02_Village_Material.mat",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "PC",
+    "bundle": "background_chapter03_lake",
+    "bytes": 3412027,
+    "assets": "- Assets/GameRes/ChapterBackground/Chapter03_Lake.png\n- Assets/GameShader/Background/Chapter03_Lake_Shader.shader\n- Assets/GameRes/Material/Background/Chapter03_Lake_Material.mat",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "PC",
+    "bundle": "background_chapter04_swamp",
+    "bytes": 2655493,
+    "assets": "- Assets/GameShader/Background/Chapter04_Swamp_Shader.shader\n- Assets/GameRes/Material/Background/Chapter04_Swamp_Material.mat\n- Assets/GameRes/ChapterBackground/Chapter04_Swamp.png",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "PC",
+    "bundle": "background_chapter05_ice",
+    "bytes": 3585190,
+    "assets": "- Assets/GameRes/ChapterBackground/Chapter05_Ice.png\n- Assets/GameRes/Material/Background/Chapter05_Ice_Material.mat\n- Assets/GameShader/Background/Chapter05_Ice_Shader.shader",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "PC",
+    "bundle": "background_chapter06_temple",
+    "bytes": 2799014,
+    "assets": "- Assets/GameShader/Background/Chapter06_Temple_Shader.shader\n- Assets/GameRes/Material/Background/Chapter06_Temple_Material.mat\n- Assets/GameRes/ChapterBackground/Chapter06_Temple.png",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "Android",
+    "bundle": "background_chapter01_tutorial",
+    "bytes": 736888,
+    "assets": "- Assets/GameShader/Background/Chapter01_Tutorial_Shader.shader\n- Assets/GameRes/Material/Background/ArcaneScene.mat\n- Assets/GameRes/ChapterBackground/SceneBackdrop_0fc7e394.png\n- Assets/GameRes/Atlases/SceneBackdrop_0fc7e394Atlas.spriteatlasv2",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "Android",
+    "bundle": "background_chapter02_village",
+    "bytes": 2948791,
+    "assets": "- Assets/GameShader/Background/Chapter02_Village_Shader.shader\n- Assets/GameRes/ChapterBackground/Chapter02_Village.png\n- Assets/GameRes/Material/Background/Chapter02_Village_Material.mat",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "Android",
+    "bundle": "background_chapter03_lake",
+    "bytes": 3417254,
+    "assets": "- Assets/GameRes/ChapterBackground/Chapter03_Lake.png\n- Assets/GameShader/Background/Chapter03_Lake_Shader.shader\n- Assets/GameRes/Material/Background/Chapter03_Lake_Material.mat",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "Android",
+    "bundle": "background_chapter04_swamp",
+    "bytes": 2660851,
+    "assets": "- Assets/GameShader/Background/Chapter04_Swamp_Shader.shader\n- Assets/GameRes/Material/Background/Chapter04_Swamp_Material.mat\n- Assets/GameRes/ChapterBackground/Chapter04_Swamp.png",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "Android",
+    "bundle": "background_chapter05_ice",
+    "bytes": 3593549,
+    "assets": "- Assets/GameRes/ChapterBackground/Chapter05_Ice.png\n- Assets/GameRes/Material/Background/Chapter05_Ice_Material.mat\n- Assets/GameShader/Background/Chapter05_Ice_Shader.shader",
+    "dependencies": "[]"
+  },
+  {
+    "platform": "Android",
+    "bundle": "background_chapter06_temple",
+    "bytes": 2804400,
+    "assets": "- Assets/GameShader/Background/Chapter06_Temple_Shader.shader\n- Assets/GameRes/Material/Background/Chapter06_Temple_Material.mat\n- Assets/GameRes/ChapterBackground/Chapter06_Temple.png",
+    "dependencies": "[]"
+  }
+]

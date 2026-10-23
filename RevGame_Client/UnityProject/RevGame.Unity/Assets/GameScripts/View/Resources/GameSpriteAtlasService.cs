@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RevGame.Core;
 using RevGame.Generated;
 using Revolution;
+using UnityEngine;
 using UnityEngine.U2D;
 
 namespace RevGame.View
@@ -15,6 +16,8 @@ namespace RevGame.View
     /// </summary>
     public sealed class GameSpriteAtlasService : IDisposable
     {
+        /// <summary>第一章专用图集标签；它与图片/材质/Shader同包，仅由当前背景租约持有。</summary>
+        public const string TutorialAtlasName = "SceneBackdrop_0fc7e394Atlas";
         /// <summary>每个标签只发出一次LoadAsync；多个同时等待的渲染器复用同一条请求。</summary>
         private readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
         /// <summary>生成器给出的合法图集标签，不允许随意拼磁盘路径或尝试未知AB名。</summary>
@@ -25,7 +28,7 @@ namespace RevGame.View
         private int _screenVersion;
 
         /// <summary>一张图集的一次租约。Release只释放本类的引用，绝不强制卸载别人的依赖包。</summary>
-        private sealed class Entry
+        internal sealed class Entry
         {
             /// <summary>生成清单中的资源名，同时也是Release需要使用的名字；一生不改变。</summary>
             public readonly string Name;
@@ -37,6 +40,8 @@ namespace RevGame.View
             public bool Released;
             /// <summary>成功或失败都为true，供启动预热结束等待；失败原因已由回调记录。</summary>
             public bool Finished;
+            /// <summary>快速切章可同时存在多个请求；每个背景租约只归还自己的一份，最后一份退出才撤图集。</summary>
+            public int TutorialUsers;
             /// <summary>先建立租约记录再调用LoadAsync，兼容资源缓存命中时立即同步回调。</summary>
             public Entry(string name) { Name = name; }
         }
@@ -50,6 +55,53 @@ namespace RevGame.View
 
         /// <summary>开发验收读取当前租约数量；它表示本类持有数，不代表整个Unity进程纹理数。</summary>
         public int HeldCount { get { return _entries.Count; } }
+
+        /// <summary>第一章的一份明确租约；持有原Entry，旧请求失败后也绝不会扣减后来新请求的计数。</summary>
+        public sealed class TutorialSpriteLease : IDisposable
+        {
+            private readonly GameSpriteAtlasService _owner;
+            private readonly Entry _entry;
+            private bool _released;
+            internal TutorialSpriteLease(GameSpriteAtlasService owner, Entry entry) { _owner = owner; _entry = entry; }
+
+            /// <summary>仅切入时复制一次Sprite，不逐帧查询；副本交给背景拥有并销毁，取消时返回null。</summary>
+            public async RevTask<Sprite> LoadAsync(string spriteName)
+            {
+                while (!_released && !_owner._disposed && !_entry.Released && !_entry.Finished) { await RevTask.Yield(); }
+                if (_released || _owner._disposed) { return null; }
+                if (_entry.Released || _entry.Atlas == null) { throw new InvalidOperationException("第一章图集加载失败或已释放"); }
+                Sprite sprite = _entry.Atlas.GetSprite(spriteName);
+                if (sprite == null) { throw new InvalidOperationException("第一章图集不含背景Sprite：" + spriteName); }
+                return sprite;
+            }
+
+            public void Dispose()
+            {
+                if (_released) { return; }
+                _released = true;
+                _owner.ReleaseTutorialSprite(_entry);
+            }
+        }
+
+        /// <summary>第一章被选中才加载；多个在途背景共享图集，但各自拥有可独立取消的租约。</summary>
+        public TutorialSpriteLease AcquireTutorialSprite()
+        {
+            if (_disposed) { throw new ObjectDisposedException(nameof(GameSpriteAtlasService)); }
+            Entry entry = Request(TutorialAtlasName, null);
+            entry.TutorialUsers++;
+            return new TutorialSpriteLease(this, entry);
+        }
+
+        /// <summary>换到其它章节/退出时归还；不强制卸载仍有持有者的包，也不会重复扣减在途请求。</summary>
+        private void ReleaseTutorialSprite(Entry entry)
+        {
+            if (entry.TutorialUsers <= 0) { return; }
+            entry.TutorialUsers--;
+            if (entry.TutorialUsers > 0) { return; }
+            Release(entry);
+            if (_entries.TryGetValue(TutorialAtlasName, out Entry current) && ReferenceEquals(current, entry))
+            { _entries.Remove(TutorialAtlasName); }
+        }
 
         /// <summary>补上场景加载早于Awake的背景请求。首次真机加载用RevTask等待，首页开放前就绪。</summary>
         public async RevTask PreloadSceneAsync()

@@ -1,0 +1,12 @@
+{
+  "protocol": 1,
+  "id": "aca94c026300499184c7134d9f988eab",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\aca94c026300499184c7134d9f988eab",
+  "data": {
+    "text": "Android：32个包；六章背景包依赖为0，其它包不引用背景包 → G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\Android；已复制到 G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\Android"
+  },
+  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175208-0cecb167.json"
+}

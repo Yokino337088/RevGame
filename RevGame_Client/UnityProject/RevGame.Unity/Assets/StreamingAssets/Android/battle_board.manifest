@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2317231738
+CRC: 3447659870
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2aba5f57e151d2dafaf2ddc56610380e
+    Hash: 416563fb6117379e44379ff869c94e52
   TypeTreeHash:
     serializedVersion: 2
-    Hash: f140de14d15f991ed9636dde8b37d45e
+    Hash: 085b774d147042c9408b6970dbb071a2
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2aba5f57e151d2dafaf2ddc56610380e
+    Hash: 416563fb6117379e44379ff869c94e52
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -38,4 +38,5 @@ Assets:
 - Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
 Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle

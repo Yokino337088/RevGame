@@ -1,0 +1,22 @@
+{
+  "protocol": 1,
+  "id": "7dc8f605220b448c93bac5ea93265794",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7dc8f605220b448c93bac5ea93265794",
+  "data": {
+    "scenes": [
+      {
+        "path": "Assets/Scenes/StartScene.unity",
+        "name": "StartScene",
+        "handle": -819024,
+        "roots": 4,
+        "loaded": true,
+        "dirty": false,
+        "active": true
+      }
+    ]
+  },
+  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175404-3c2ae8b7.json"
+}

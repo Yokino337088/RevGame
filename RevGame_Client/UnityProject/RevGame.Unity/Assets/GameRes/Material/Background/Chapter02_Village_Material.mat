@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Chapter02_Village_Material
+  m_Shader: {fileID: 4800000, guid: 5d0a058884e72c444b224bd79a218821, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _ChapterTex:
+        m_Texture: {fileID: 2800000, guid: a0b3f9100ee9fdf4f83cf8390a626ed4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Aspect: 1.7777778
+    - _BoardProtection: 0.82
+    - _Daylight: 0.1
+    - _Distortion: 0.002
+    - _EffectTime: -1
+    - _Glow: 0.8
+    - _Particles: 0.6
+    - _PreviewTime: -1
+    - _RibbonWidth: 0.4
+    - _Speed: 0.48
+    - _Strength: 0.8
+    - _Transition: 1
+    m_Colors:
+    - _Accent: {r: 1, g: 0.86, b: 0.45999992, a: 1}
+    - _BoardRect: {r: 0, g: 0, b: 0, a: 0}
+    - _DreamColor: {r: 0.76, g: 0.62, b: 1, a: 1}
+    - _Secondary: {r: 0.45999992, g: 1, b: 0.75, a: 1}
+    - _Tint: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []

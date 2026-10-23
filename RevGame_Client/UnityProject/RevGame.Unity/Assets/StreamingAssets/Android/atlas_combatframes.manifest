@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2229891815
+CRC: 288087728
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: dda7a13464ed5dab6aa5b6a96bb773c0
+    Hash: b84a43d8ccde8c1f1886811eeaafe449
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: dda7a13464ed5dab6aa5b6a96bb773c0
+    Hash: b84a43d8ccde8c1f1886811eeaafe449
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,31 +20,42 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/GameRes/Art/Combat/BossFx_Smoke.png
+- Assets/GameRes/Art/Combat/BossFx_Reticle.png
+- Assets/GameRes/Art/Combat/RegionHazard.png
 - Assets/GameRes/Art/Combat/CombatFrame_092fd5ee.png
+- Assets/GameRes/Art/Combat/BossExt_9.png
+- Assets/GameRes/Art/Combat/BossExt_13.png
+- Assets/GameRes/Art/Combat/BossExt_14.png
+- Assets/GameRes/Art/Combat/BossFx_Smoke.png
+- Assets/GameRes/Art/Combat/BossExt_12.png
 - Assets/GameRes/Art/Combat/CombatFrame_5a79e758.png
 - Assets/GameRes/Art/Combat/CombatFrame_879159c5.png
-- Assets/GameRes/Art/Combat/CombatFrame_086cb9b4.png
+- Assets/GameRes/Art/Combat/BossExt_11.png
+- Assets/GameRes/Art/Combat/BossExt_17.png
 - Assets/GameRes/Art/Combat/CombatFrame_b5b32890.png
+- Assets/GameRes/Art/Combat/CombatFrame_086cb9b4.png
 - Assets/GameRes/Art/Combat/BossFx_Glow.png
 - Assets/GameRes/Art/Combat/BossFx_Slash.png
 - Assets/GameRes/Art/Combat/CombatFrame_f869f0da.png
 - Assets/GameRes/Art/Combat/CombatFrame_a323e4a1.png
 - Assets/GameRes/Art/Combat/CombatFrame_c9f24a20.png
-- Assets/GameRes/Art/Combat/BossFx_Spark.png
+- Assets/GameRes/Art/Combat/BossExt_15.png
 - Assets/GameRes/Art/Combat/CombatFrame_2da5a9bd.png
+- Assets/GameRes/Art/Combat/BossFx_Spark.png
 - Assets/GameRes/Art/Combat/BossFx_Flame.png
 - Assets/GameRes/Art/Combat/BossFx_Ring.png
 - Assets/GameRes/Atlases/CombatFrames.spriteatlasv2
 - Assets/GameRes/Art/Combat/CombatFrame_2ddb09b0.png
+- Assets/GameRes/Art/Combat/BossExt_10.png
 - Assets/GameRes/Art/Combat/CombatFrame_d413fc59.png
 - Assets/GameRes/Art/Combat/BossFx_Beam.png
 - Assets/GameRes/Art/Combat/CombatFrame_203f54cd.png
 - Assets/GameRes/Art/Combat/BossFx_Scorch.png
 - Assets/GameRes/Art/Combat/BossFx_Rune.png
 - Assets/GameRes/Art/Combat/BossFx_Twirl.png
-- Assets/GameRes/Art/Combat/CombatFrame_fb400a28.png
+- Assets/GameRes/Art/Combat/EnergyBomb.png
 - Assets/GameRes/Art/Combat/CombatFrame_9e33cda5.png
-- Assets/GameRes/Art/Combat/BossFx_Reticle.png
+- Assets/GameRes/Art/Combat/BossExt_16.png
+- Assets/GameRes/Art/Combat/CombatFrame_fb400a28.png
 - Assets/GameRes/Art/Combat/BossFx_Star.png
 Dependencies: []
