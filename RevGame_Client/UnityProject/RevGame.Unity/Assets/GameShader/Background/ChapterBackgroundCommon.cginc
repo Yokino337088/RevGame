@@ -68,6 +68,19 @@ float3 ChapterArt(float2 uv, float2 warp, float amount)
     return tex2Dgrad(_ChapterTex, sampleUV, ddx(uv), ddy(uv)).rgb * _Tint.rgb;
 }
 
+// 只供需要裁掉原画透明留边的章节调用；其它章节仍使用原ChapterArt，采样行为不变。
+// rect=原贴图内有效画面的UV起点xy/尺寸zw；先在完整屏幕UV上收敛位移，再映射到有效内容。
+// 多留1.5像素防止压缩/双线性过滤把透明黑色混入画面，背景仍绘制整个屏幕，而非缩小背景物体。
+float3 ChapterArtRect(float2 uv, float2 warp, float amount, float4 rect)
+{
+    float2 edge = min(uv, 1.0 - uv);
+    float edgeSafe = smoothstep(0.0, 0.065, min(edge.x, edge.y));
+    float2 texel = max(_ChapterTex_TexelSize.xy * 1.5, float2(0.0001, 0.0001));
+    float2 artUV = rect.xy + (uv + warp * amount * edgeSafe) * rect.zw;
+    artUV = clamp(artUV, rect.xy + texel, rect.xy + rect.zw - texel);
+    return tex2Dgrad(_ChapterTex, artUV, ddx(uv) * rect.zw, ddy(uv) * rect.zw).rgb * _Tint.rgb;
+}
+
 fixed4 ChapterOutput(float3 color, ChapterFragment input, float amount)
 {
     float arrival = (1.0 - saturate(_Transition)) * exp(-length(ChapterPlane(input.uv)) * 3.5) * 0.035;

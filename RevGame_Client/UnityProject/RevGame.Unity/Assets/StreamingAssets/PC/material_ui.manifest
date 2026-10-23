@@ -3,13 +3,13 @@ CRC: 2776074602
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 841be4b35d7857cddc27c5b363e8aa14
+    Hash: 4f327adddd36cf76dad2facf97d8f0b7
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e762ccb57c4caaabbb5a4199ac82c23
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 841be4b35d7857cddc27c5b363e8aa14
+    Hash: 4f327adddd36cf76dad2facf97d8f0b7
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -20,4 +20,4 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Material/UI/ArcanePanel.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"

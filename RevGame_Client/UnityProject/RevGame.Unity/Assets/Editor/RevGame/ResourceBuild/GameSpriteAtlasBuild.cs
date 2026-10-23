@@ -33,12 +33,6 @@ namespace RevGame.Editor
             // 工程使用Unity 2022的Sprite Atlas V2；必须保存.spriteatlasv2源资产并让Importer烘焙。
             // 仅CreateAsset(new SpriteAtlas)会得到V1原生对象，不能把空的打包数据当作V2图集交付。
             EditorSettings.spritePackerMode = SpritePackerMode.SpriteAtlasV2;
-            // 同目录里有尚未启用的新版美术。它们仍按要求打包，但不能挤进常驻按钮/手牌图集。
-            // 从预制体/配置/场景反查真实使用者；不从图集反查，否则图集自己的源图会使所有图片都变成“正在用”。
-            var activeRoots = AssetDatabase.FindAssets("", new[] { "Assets/GameRes" }).Select(AssetDatabase.GUIDToAssetPath)
-                .Where(p => p.EndsWith(".prefab", StringComparison.Ordinal) || p.EndsWith(".asset", StringComparison.Ordinal)).ToList();
-            activeRoots.Add("Assets/Scenes/GameScene.unity");
-            var activeTextures = new HashSet<string>(AssetDatabase.GetDependencies(activeRoots.ToArray(), true), StringComparer.Ordinal);
             var groups = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
             foreach (string original in CollectTextures())
             {
@@ -57,7 +51,7 @@ namespace RevGame.Editor
                     importer.mipmapEnabled = false;
                     importer.SaveAndReimport();
                 }
-                string group = GroupFor(path, activeTextures.Contains(original));
+                string group = GroupFor(path);
                 List<string> paths;
                 if (!groups.TryGetValue(group, out paths)) { paths = new List<string>(); groups.Add(group, paths); }
                 paths.Add(path);
@@ -65,6 +59,17 @@ namespace RevGame.Editor
             foreach (var pair in groups)
             {
                 ConfigureAtlas(pair.Key, pair.Value);
+            }
+            // 旧的备用图集保留文件供以后复用，但不能保留包标记或Include In Build，否则仍可能增加包体。
+            // 这里也支持单独调用Configure，不依赖外层恰好已经清过标记。
+            var included = new HashSet<string>(groups.Keys, StringComparer.Ordinal);
+            foreach (string guid in AssetDatabase.FindAssets("t:SpriteAtlas", new[] { AtlasRoot }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (included.Contains(Path.GetFileNameWithoutExtension(path))) { continue; }
+                var importer = (SpriteAtlasImporter)AssetImporter.GetAtPath(path);
+                importer.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+                if (importer.includeInBuild) { importer.includeInBuild = false; importer.SaveAndReimport(); }
             }
             WriteCatalog(groups.Keys);
             AssetDatabase.SaveAssets();
@@ -81,13 +86,10 @@ namespace RevGame.Editor
             if (!File.Exists(path) || File.ReadAllText(path) != source) { File.WriteAllText(path, source); }
         }
 
-        /// <summary>只扫描游戏实际打包范围和场景依赖；不把整个原版美术素材库误装进手机包。</summary>
+        /// <summary>只收业务入口可达的图片；图集和图片自身不作为入口，避免备用素材永久被打回来。</summary>
         public static string[] CollectTextures()
         {
-            var roots = AssetDatabase.FindAssets("", new[] { "Assets/GameRes" })
-                .Select(AssetDatabase.GUIDToAssetPath).Where(p => !AssetDatabase.IsValidFolder(p)).ToList();
-            roots.Add("Assets/Scenes/GameScene.unity");
-            return AssetDatabase.GetDependencies(roots.ToArray(), true)
+            return GameResourceUsage.Scan().Dependencies
                 // 章节背景是独立 GPU 纹理（显式 _ChapterTex 采样），按需租约，不纳入 Sprite 图集预热。
                 // 第一章也归档进 ChapterBackground，但仍是 Sprite，必须保留图集；其余五章是独立采样的 Default 纹理。
                 .Where(p => AssetImporter.GetAtPath(p) is TextureImporter importer
@@ -96,7 +98,7 @@ namespace RevGame.Editor
         }
 
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
-        private static string GroupFor(string path, bool activelyUsed)
+        private static string GroupFor(string path)
         {
             if (path.Contains("/Background/") || path.Contains("/ChapterBackground/")) { return Path.GetFileNameWithoutExtension(path) + "Atlas"; }
             if (path.Contains("/Art/Pieces/")) { return "PieceFrames"; }
@@ -107,7 +109,6 @@ namespace RevGame.Editor
                 string name = Path.GetFileNameWithoutExtension(path);
                 // 未在战斗使用的长竖棋盘图与酒馆大底板不能拖大六张手牌的常驻贴图。
                 if (name == "UI_chessBoard_chessBoard" || name == "UI_Tavern_imgBK") { return name + "Atlas"; }
-                if (!activelyUsed) { return "UIReserve"; }
                 if (name.StartsWith("UI_roleItem") || name.StartsWith("UI_Game") || name.StartsWith("UI_Pvp") || name.StartsWith("UI_Setting")) { return "UIBattle"; }
                 return "UIMenus";
             }
@@ -180,6 +181,8 @@ namespace RevGame.Editor
             foreach (string guid in AssetDatabase.FindAssets("t:SpriteAtlas", new[] { AtlasRoot }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
+                // 未打标备用图集不参与打包唯一性统计；否则它保存的历史packables会干扰使用中图片的归属。
+                if (string.IsNullOrEmpty(AssetDatabase.GetImplicitAssetBundleName(path))) { continue; }
                 SpriteAtlas atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
                 if (atlas.IsIncludeInBuild() || atlas.GetPackingSettings().enableRotation || atlas.GetTextureSettings().readable)
                 {

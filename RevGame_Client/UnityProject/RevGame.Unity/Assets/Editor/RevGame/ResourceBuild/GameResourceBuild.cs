@@ -39,6 +39,12 @@ namespace RevGame.Editor
             config.resRoot = "Assets/GameRes";
             config.markMode = ABMarkMode.ScanExisting;
             config.checkUnmarkedAssets = true;
+            // Art/Atlases是素材库，不再要求每个闲置文件都进包。ScanExisting仍会收集其中明确打标的使用中资产；
+            // 此排除只免除素材库的“无标记即报错”，不能代替下面GameResourceUsage的逐张引用/图集闭包校验。
+            foreach (string folder in new[] { "Art", "Atlases" })
+            {
+                if (!config.excludeFolders.Contains(folder)) { config.excludeFolders.Add(folder); }
+            }
             EditorUtility.SetDirty(config);
             foreach (string guid in AssetDatabase.FindAssets("", new[] { config.resRoot }))
             {
@@ -96,6 +102,7 @@ namespace RevGame.Editor
                 }
             }
             string atlasReport = GameSpriteAtlasBuild.Validate();
+            string usageReport = GameResourceUsage.Validate();
             AssetDatabase.RemoveUnusedAssetBundleNames();
             AssetDatabase.SaveAssets();
             ABCollectResult collect = ABCollector.Collect();
@@ -111,7 +118,7 @@ namespace RevGame.Editor
             ABResPathGenerator.Generate();
             ABSoundPathGenerator.Generate();
             AssetDatabase.SaveAssets();
-            return count + "条映射，" + validation.bundleCount + "个包，" + atlasReport + "；隐式重复/循环/漏标/重名/Android Shader错误均0条";
+            return count + "条映射，" + validation.bundleCount + "个包，" + atlasReport + "；" + usageReport + "；隐式重复/循环/漏标/重名/Android Shader错误均0条";
         }
 
         /// <summary>实际构建二进制并记录清单。供MCP调用，不调用会退出Unity的CI入口。</summary>

@@ -35,19 +35,26 @@ Material:
     m_Floats:
     - _Aspect: 1.7777778
     - _BoardProtection: 0.82
-    - _ColdTone: 0.55
-    - _Distortion: 0.001
+    - _ColdBreath: 1.1
+    - _ColdTone: 0.95
+    - _Distortion: 0.0038
     - _EffectTime: -1
-    - _Frost: 0.65
-    - _Glow: 0.7
-    - _Particles: 0.8
+    - _Frost: 0.95
+    - _Glow: 1.05
+    - _IceCoverage: 0.85
+    - _IceCracks: 1.15
+    - _IceDepth: 0.65
+    - _IceFlow: 1.15
+    - _IceScale: 6.5
+    - _Particles: 0.7
     - _PreviewTime: -1
-    - _SnowWind: 0.35
-    - _Speed: 0.65
-    - _Strength: 0.85
+    - _SnowWind: 0.43
+    - _Speed: 0.9
+    - _Strength: 1
     - _Transition: 1
     m_Colors:
     - _Accent: {r: 0.8, g: 0.96, b: 1, a: 1}
+    - _ArtUVRect: {r: 0, g: 0.007751938, b: 1, a: 0.99224806}
     - _BoardRect: {r: 0, g: 0, b: 0, a: 0}
     - _Secondary: {r: 0.45, g: 0.74, b: 1, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}

@@ -3,13 +3,13 @@ CRC: 121776341
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b746b1cfb9ec2c97da3df498250e63fc
+    Hash: 578a365d96e527242cb0dfcaf1d8b667
   TypeTreeHash:
     serializedVersion: 2
     Hash: 6d230dbb4df3f544730d8d68864d5fac
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b746b1cfb9ec2c97da3df498250e63fc
+    Hash: 578a365d96e527242cb0dfcaf1d8b667
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -26,5 +26,5 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Pieces/Boss/BossPieceView.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_pieces
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_pieces"

@@ -3,13 +3,13 @@ CRC: 2501947313
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 00b868a857ff265b1142a713b1b63da7
+    Hash: aae4a67b755ca4e018a5875b8d8a79cd
   TypeTreeHash:
     serializedVersion: 2
-    Hash: f8e1670d827790ae820e0f5af04bdb1e
+    Hash: 7bffd0f1a4d75797a4a9b20e5d6eb5af
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 00b868a857ff265b1142a713b1b63da7
+    Hash: aae4a67b755ca4e018a5875b8d8a79cd
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -41,13 +41,13 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: f1ee153e3285058408401c4c121a6788, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 2c095aa75de45e54586094fec76eb185, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 02f7065cb2fb0d1449699e45bb0a2516, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f1ee153e3285058408401c4c121a6788, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -85,10 +85,10 @@ Assets:
 - Assets/GameRes/UI/Panel/BattleHudPanel.prefab
 - Assets/GameRes/UI/Panel/SettlePanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui"

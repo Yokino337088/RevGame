@@ -3,13 +3,13 @@ CRC: 1315678211
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ccc153b9420bfe307c2a3a8f109c9a8e
+    Hash: c696f4aac7292223a24d77f783f47f16
   TypeTreeHash:
     serializedVersion: 2
     Hash: 085b774d147042c9408b6970dbb071a2
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ccc153b9420bfe307c2a3a8f109c9a8e
+    Hash: c696f4aac7292223a24d77f783f47f16
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,6 +37,6 @@ Assets:
 - Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab
 - Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"

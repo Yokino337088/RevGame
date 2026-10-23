@@ -1,0 +1,2575 @@
+{
+  "audit": {
+    "roots": 73,
+    "artTotal": 213,
+    "artUsed": 178,
+    "artExcluded": 35,
+    "atlasTotal": 9,
+    "atlasPacked": 6,
+    "excludedSourceBytes": 4478136,
+    "assets": [
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_4816b6aa.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 313,
+        "referencedBy": [
+          "Assets/GameRes/Board/Indicator/BoardStarPoint.prefab",
+          "Assets/GameRes/Board/Tile/BoardCell.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_5a487af7.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1399,
+        "referencedBy": [
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_736665ce.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 286,
+        "referencedBy": [
+          "Assets/GameRes/Board/Tile/BoardCell.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_81fb5e21.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 22308,
+        "referencedBy": [
+          "Assets/GameRes/Pieces/Unit/PieceView.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_9e3fb542.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 268,
+        "referencedBy": [
+          "Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab",
+          "Assets/GameRes/Board/Tile/BoardCell.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_a69ff108.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 306,
+        "referencedBy": [
+          "Assets/GameRes/Board/Indicator/BoardDeployZone.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_a6f4bd8e.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1341,
+        "referencedBy": [
+          "Assets/GameRes/Pieces/Boss/BossPieceView.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Board/BoardSprite_e26b7dcd.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1017,
+        "referencedBy": [
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_10.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 42886,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_11.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 72952,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_12.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 83811,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_13.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 97568,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_14.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 54099,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_15.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 30613,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_16.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 58093,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_17.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 74794,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossExt_9.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 99891,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Beam.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 9548,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Flame.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 35623,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Glow.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 48091,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Reticle.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 8083,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Ring.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 27068,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Rune.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 50385,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Scorch.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 42527,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Slash.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 19779,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Smoke.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 22943,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Spark.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 37617,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Star.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 18024,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/BossFx_Twirl.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 28562,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_086cb9b4.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2936,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_092fd5ee.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 1936,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_203f54cd.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 1874,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_2da5a9bd.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2305,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_2ddb09b0.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2126,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_5a79e758.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2367,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_879159c5.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2258,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_9e33cda5.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2885,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_a323e4a1.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2898,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_b5b32890.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2063,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_c9f24a20.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2092,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_d413fc59.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2984,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_f869f0da.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2258,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/CombatFrame_fb400a28.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 2179,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/EnergyBomb.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 4996,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BossSkillFx.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Combat/RegionHazard.png",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 333,
+        "referencedBy": [
+          "Assets/GameRes/Board/Tile/BoardCell.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26039,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25511,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25902,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27061,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26755,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27075,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27511,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27001,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27387,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25792,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24680,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25187,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26758,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25801,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26198,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27202,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26152,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26538,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24395,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23267,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23635,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24944,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24165,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24537,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25637,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25011,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25426,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23026,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24311,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23232,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23735,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24981,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23960,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24037,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25349,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24398,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 19252,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21590,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 18595,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25384,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24307,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 18909,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 13850,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23612,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24348,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 19273,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21592,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 18476,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 19525,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21882,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 18753,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 13957,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23575,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24223,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25551,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25416,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25880,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26281,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26049,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26626,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27779,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27285,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 28202,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25410,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24948,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25664,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26321,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25987,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26945,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 28160,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 28131,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 28858,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24253,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24189,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_1_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24374,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25395,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25671,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_2_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25838,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26169,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26636,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_3_Idle_003.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26779,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24308,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24084,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25411,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25553,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26072,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26249,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24236,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23370,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24781,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24230,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24994,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24423,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21113,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21498,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22198,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22488,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23232,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23689,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22188,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21112,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22725,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21829,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23459,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22778,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 20249,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 20336,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21815,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22377,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21795,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22329,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 20302,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 20435,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21141,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21403,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21117,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 21329,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24483,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24796,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24763,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25352,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26215,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 26993,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23674,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24214,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 24574,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25432,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27182,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 27936,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_1_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22064,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_1_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 22551,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_2_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23605,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_2_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 23978,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_001.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25061,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_002.png",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 25291,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Status/Encircled/Encircled_001.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1412,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Status/Encircled/Encircled_002.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1474,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/Status/Encircled/Encircled_003.png",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1412,
+        "referencedBy": [
+          "Assets/GameRes/Config/Art/PieceArt.asset",
+          "Assets/GameRes/Pieces/Unit/SlimePiece.prefab",
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_btnAdventure.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 10013,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_btnTavern.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 7973,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_btnTrain.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 13710,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_btnWar.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 11811,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_imgAchieve.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 3687,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_imgAdvertise.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 6148,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Begin_imgSetting.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 3449,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Buy_btnClose.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 11504,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_ChooseLevel_btnSetting.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 10331,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_ChooseLevel_imgCoin.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 41601,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_ChooseLevel_imgTip2.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 231405,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Game_imgBK_Alt.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 384924,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Game_imgEnemyMobility.png",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 2769,
+        "referencedBy": [
+          "Assets/GameRes/Effects/Combat/BattleEffect.prefab",
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Game_imgMobilityBK.png",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 68142,
+        "referencedBy": [
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Pvp_btnSetting.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 9827,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Pvp_imgBK.png",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 1098164,
+        "referencedBy": [
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab",
+          "Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
+          "Assets/GameRes/UI/Panel/RewardPanel.prefab",
+          "Assets/GameRes/UI/Panel/SettlePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Setting_Background.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 4855,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Setting_Checkmark.png",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 2286,
+        "referencedBy": [
+          "Assets/GameRes/Board/Tile/BoardCell.prefab",
+          "Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab",
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab",
+          "Assets/GameRes/UI/Panel/RewardPanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Settlement_imgBK.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 549158,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tavern_Background.png",
+        "markedBundle": "atlas_uimenus",
+        "required": true,
+        "sourceBytes": 24964,
+        "referencedBy": [
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab",
+          "Assets/GameRes/UI/Panel/HomePanel.prefab",
+          "Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tavern_Checkmark.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 26530,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tavern_Handle.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 4827,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tavern_ScrollbarVertical.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 15508,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tavern_btnClose.png",
+        "markedBundle": "atlas_uimenus",
+        "required": true,
+        "sourceBytes": 38701,
+        "referencedBy": [
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab",
+          "Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab",
+          "Assets/GameRes/UI/Panel/SettlePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tavern_imgBK.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 1997127,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_Tip_imgBK.png",
+        "markedBundle": "atlas_uimenus",
+        "required": true,
+        "sourceBytes": 232928,
+        "referencedBy": [
+          "Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab",
+          "Assets/GameRes/UI/Panel/BattleHudPanel.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_achieveItem_imgBK.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 81855,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_chessBoard_chessBoard.png",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 1018732,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_roleItem_imgBK.png",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 31314,
+        "referencedBy": [
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab",
+          "Assets/GameRes/UI/Panel/RewardPanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Art/UI/UI_roleItem_roleItem.png",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 45937,
+        "referencedBy": [
+          "Assets/GameRes/UI/Item/Card/CardItem.prefab",
+          "Assets/GameRes/UI/Panel/PreparePanel.prefab"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/BoardStatus.spriteatlasv2",
+        "markedBundle": "atlas_boardstatus",
+        "required": true,
+        "sourceBytes": 1122,
+        "referencedBy": [
+          "Assets/GameRes/Art/Board/BoardSprite_4816b6aa.png",
+          "Assets/GameRes/Art/Board/BoardSprite_5a487af7.png",
+          "Assets/GameRes/Art/Board/BoardSprite_736665ce.png",
+          "Assets/GameRes/Art/Board/BoardSprite_81fb5e21.png",
+          "Assets/GameRes/Art/Board/BoardSprite_9e3fb542.png",
+          "Assets/GameRes/Art/Board/BoardSprite_a69ff108.png",
+          "Assets/GameRes/Art/Board/BoardSprite_a6f4bd8e.png",
+          "Assets/GameRes/Art/Board/BoardSprite_e26b7dcd.png",
+          "Assets/GameRes/Art/Status/Encircled/Encircled_001.png",
+          "Assets/GameRes/Art/Status/Encircled/Encircled_002.png",
+          "Assets/GameRes/Art/Status/Encircled/Encircled_003.png"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/CombatFrames.spriteatlasv2",
+        "markedBundle": "atlas_combatframes",
+        "required": true,
+        "sourceBytes": 1998,
+        "referencedBy": [
+          "Assets/GameRes/Art/Combat/BossExt_10.png",
+          "Assets/GameRes/Art/Combat/BossExt_11.png",
+          "Assets/GameRes/Art/Combat/BossExt_12.png",
+          "Assets/GameRes/Art/Combat/BossExt_13.png",
+          "Assets/GameRes/Art/Combat/BossExt_14.png",
+          "Assets/GameRes/Art/Combat/BossExt_15.png",
+          "Assets/GameRes/Art/Combat/BossExt_16.png",
+          "Assets/GameRes/Art/Combat/BossExt_17.png",
+          "Assets/GameRes/Art/Combat/BossExt_9.png",
+          "Assets/GameRes/Art/Combat/BossFx_Beam.png",
+          "Assets/GameRes/Art/Combat/BossFx_Flame.png",
+          "Assets/GameRes/Art/Combat/BossFx_Glow.png",
+          "Assets/GameRes/Art/Combat/BossFx_Reticle.png",
+          "Assets/GameRes/Art/Combat/BossFx_Ring.png",
+          "Assets/GameRes/Art/Combat/BossFx_Rune.png",
+          "Assets/GameRes/Art/Combat/BossFx_Scorch.png",
+          "Assets/GameRes/Art/Combat/BossFx_Slash.png",
+          "Assets/GameRes/Art/Combat/BossFx_Smoke.png",
+          "Assets/GameRes/Art/Combat/BossFx_Spark.png",
+          "Assets/GameRes/Art/Combat/BossFx_Star.png",
+          "Assets/GameRes/Art/Combat/BossFx_Twirl.png",
+          "Assets/GameRes/Art/Combat/EnergyBomb.png",
+          "Assets/GameRes/Art/Combat/RegionHazard.png"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/PieceFrames.spriteatlasv2",
+        "markedBundle": "atlas_pieceframes",
+        "required": true,
+        "sourceBytes": 10174,
+        "referencedBy": [
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Archer/Enemy_Archer_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Assassin/Enemy_Assassin_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Crossbow/Enemy_Crossbow_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/MageWater/Enemy_MageWater_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Priest/Enemy_Priest_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Shield/Enemy_Shield_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_1_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_2_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Enemy/Swordman/Enemy_Swordman_3_Idle_003.png",
+          "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Archer/Player_Archer_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Assassin/Player_Assassin_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Crossbow/Player_Crossbow_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/HeavySword/Player_HeavySword_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/MageFire/Player_MageFire_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/MageWater/Player_MageWater_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Priest/Player_Priest_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Shield/Player_Shield_3_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_1_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_1_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_2_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_2_Idle_002.png",
+          "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_001.png",
+          "Assets/GameRes/Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_002.png"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/SceneBackdrop_0fc7e394Atlas.spriteatlasv2",
+        "markedBundle": "background_chapter01_tutorial",
+        "required": true,
+        "sourceBytes": 392,
+        "referencedBy": [
+          "Assets/GameRes/ChapterBackground/SceneBackdrop_0fc7e394.png"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/UIBattle.spriteatlasv2",
+        "markedBundle": "atlas_uibattle",
+        "required": true,
+        "sourceBytes": 757,
+        "referencedBy": [
+          "Assets/GameRes/Art/UI/UI_Game_imgEnemyMobility.png",
+          "Assets/GameRes/Art/UI/UI_Game_imgMobilityBK.png",
+          "Assets/GameRes/Art/UI/UI_Pvp_imgBK.png",
+          "Assets/GameRes/Art/UI/UI_Setting_Checkmark.png",
+          "Assets/GameRes/Art/UI/UI_roleItem_imgBK.png",
+          "Assets/GameRes/Art/UI/UI_roleItem_roleItem.png"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/UIMenus.spriteatlasv2",
+        "markedBundle": "atlas_uimenus",
+        "required": true,
+        "sourceBytes": 538,
+        "referencedBy": [
+          "Assets/GameRes/Art/UI/UI_Tavern_Background.png",
+          "Assets/GameRes/Art/UI/UI_Tavern_btnClose.png",
+          "Assets/GameRes/Art/UI/UI_Tip_imgBK.png"
+        ]
+      },
+      {
+        "path": "Assets/GameRes/Atlases/UIReserve.spriteatlasv2",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 1739,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Atlases/UI_Tavern_imgBKAtlas.spriteatlasv2",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 392,
+        "referencedBy": []
+      },
+      {
+        "path": "Assets/GameRes/Atlases/UI_chessBoard_chessBoardAtlas.spriteatlasv2",
+        "markedBundle": "",
+        "required": false,
+        "sourceBytes": 392,
+        "referencedBy": []
+      }
+    ]
+  },
+  "buildSizes": [
+    {
+      "platform": "PC",
+      "before": 57772712,
+      "after": 56227602,
+      "saved": 1545110,
+      "removedFiles": [
+        "atlas_ui_chessboard_chessboardatlas",
+        "atlas_ui_chessboard_chessboardatlas.manifest",
+        "atlas_ui_tavern_imgbkatlas",
+        "atlas_ui_tavern_imgbkatlas.manifest",
+        "atlas_uireserve",
+        "atlas_uireserve.manifest"
+      ]
+    },
+    {
+      "platform": "Android",
+      "before": 57599725,
+      "after": 56143383,
+      "saved": 1456342,
+      "removedFiles": [
+        "atlas_ui_chessboard_chessboardatlas",
+        "atlas_ui_chessboard_chessboardatlas.manifest",
+        "atlas_ui_tavern_imgbkatlas",
+        "atlas_ui_tavern_imgbkatlas.manifest",
+        "atlas_uireserve",
+        "atlas_uireserve.manifest"
+      ]
+    }
+  ],
+  "coldPlayPassed": true,
+  "coldPlayResult": "通过：AB，3245条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察172帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察120帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察150帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察122帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察143帧，分帧棋盘20帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察118帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过",
+  "compilePassed": true
+}

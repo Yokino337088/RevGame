@@ -3,13 +3,13 @@ CRC: 3577994015
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6942ffd2d98b964fb3fa2cd4acc143f4
+    Hash: bbba70ccfecc1ab6323df9c29a9803bb
   TypeTreeHash:
     serializedVersion: 2
     Hash: 1c5f8747f817713213fdf2afe60fd31c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6942ffd2d98b964fb3fa2cd4acc143f4
+    Hash: bbba70ccfecc1ab6323df9c29a9803bb
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -43,6 +43,6 @@ Assets:
 - Assets/GameRes/Effects/Combat/BattleEffect.prefab
 - Assets/GameRes/Effects/Combat/BossSkillFx.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat"

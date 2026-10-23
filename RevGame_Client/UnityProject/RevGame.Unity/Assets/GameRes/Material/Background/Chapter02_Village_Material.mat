@@ -35,15 +35,15 @@ Material:
     m_Floats:
     - _Aspect: 1.7777778
     - _BoardProtection: 0.82
-    - _Daylight: 0.1
-    - _Distortion: 0.002
+    - _Daylight: 0
+    - _Distortion: 0.01
     - _EffectTime: -1
-    - _Glow: 0.8
-    - _Particles: 0.6
+    - _Glow: 1.5
+    - _Particles: 0.59
     - _PreviewTime: -1
-    - _RibbonWidth: 0.4
-    - _Speed: 0.48
-    - _Strength: 0.8
+    - _RibbonWidth: 0.8
+    - _Speed: 1.57
+    - _Strength: 1
     - _Transition: 1
     m_Colors:
     - _Accent: {r: 1, g: 0.86, b: 0.45999992, a: 1}

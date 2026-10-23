@@ -44,3 +44,10 @@
 - GPU实例化、动态合批、UGUI合批分别测量；不能把Shader实例化关键字或开启一个开关当作优化成功证据。禁止为合批破坏透明排序与玩法。
 - 正式入口为 `Assets/Scenes/StartScene.unity`，大厅/选关留在StartScene，战斗在GameScene。跨场景只由GameFlow经RevScene异步交接，Bootstrap常驻且只初始化一次；过场面板必须在资源、背景、81格和六张手牌全部可画后淡出。
 - `EnterBattle/ReturnHome` 返回true只代表接受请求，测试需等待 `IsTransitioning=false` 再核对Screen。资源变更必须冷启动真实AB验证UI，不能先加载全部图集再宣称首次白图已修复；新增回归入口为 `GameSceneTransitionChecks`。
+
+## 编辑器自动化调用方式（2026-10-23 实测）
+
+- 用户要求优先采用更快的通道。已有常驻MCP连接或需要连续多次操作时，优先复用同一个RevMCP stdio会话；只有一两条临时编辑器命令时，优先 `Revolution.Automation/rev.py --project <工程> --mode live call <真实动作ID>`，省去常驻服务的启动/握手成本。
+- 不再逐条启动 `rev_mcp.py ... call editor ...` 作为常规调用方式：本次状态查询/AB扫描中，其耗时高于直接CLI和常驻MCP。短命令优先合并在一次工具调用或现有pipeline中，避免重复启动、重复读大清单；Unity资产修改、构建、Play仍串行执行。
+- 会话首次使用、编译/域重载后按技能重新发现真实能力；不能为了速度跳过参数校验、业务断言、错误检查、资源依赖门禁或收尾。已有编辑器只用live，不另启batch Unity。
+- 测量范围是调用通道开销；AB构建本体仍调用同一套Unity/Revolution工具，不能宣称切换CLI/MCP会同比缩短打包时间。数据与边界见 `RevGame_Client/文档/进度同步/CLI与MCP速度对比-2026-10-23.md`。

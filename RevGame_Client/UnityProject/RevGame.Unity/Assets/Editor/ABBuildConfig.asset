@@ -20,6 +20,8 @@ MonoBehaviour:
   excludeFolders:
   - Editor
   - Raw
+  - Art
+  - Atlases
   excludeExtensions:
   - .cs
   - .meta

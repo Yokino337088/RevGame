@@ -41,6 +41,9 @@ namespace RevGame.Editor
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
                     if (AssetDatabase.IsValidFolder(path)) { continue; }
+                    // GameRes现在同时保留“已打包资源”和“未启用素材”。只验收有AB标记的资源，
+                    // 不能强求已经按真实引用剔除的备用图片仍然能从AB加载；去留正确性由GameResourceUsage独立校验。
+                    if (string.IsNullOrEmpty(AssetDatabase.GetImplicitAssetBundleName(path))) { continue; }
                     string root = Path.GetDirectoryName(path).Replace('\\', '/').Substring("Assets/GameRes/".Length) + "/";
                     string name = Path.GetFileNameWithoutExtension(path);
                     var source = new RevTaskCompletionSource<RevResHandle>();

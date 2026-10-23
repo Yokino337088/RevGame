@@ -1,18 +1,29 @@
-// 冰雪极地专用：冰面保持固态，裂纹反光、边缘霜雾与三层不同风速的雪花形成清冷空间。
+// ============================================================
+// 第五章 · 极地封冻：保留原画，在其上叠加厚冰折射、冰晶裂隙、失温寒潮与分层风雪。
+// 为什么不堆48层视差采样：这是手机全屏背景，每个像素都要执行；用一次冰胞查询和两次原画采样模拟厚度。
+// 所有动画只读ChapterClock，所有视觉变化受ChapterAmount约束；不新增CPU Update、粒子对象或材质实例。
+// ============================================================
 Shader "RevGame/Background/Chapter05_Ice"
 {
     Properties
     {
         [PerRendererData] _MainTex ("精灵贴图", 2D) = "white" {}
         _ChapterTex ("第五章 · 冰封极地原画", 2D) = "white" {}
+        _ArtUVRect ("原画有效UV（去透明留边）", Vector) = (0,0.007751938,1,0.99224806)
         _Strength ("冰雪总强度", Range(0,1)) = 0.85
-        _Speed ("雪与寒雾速度", Range(0,2)) = 0.65
-        _Distortion ("边缘寒气微扰", Range(0,0.01)) = 0.001
-        _Glow ("冰面扫光强度", Range(0,1.5)) = 0.7
-        _Particles ("飘雪密度", Range(0,1)) = 0.8
+        _Speed ("冰下流动与风雪速度", Range(0,2)) = 0.8
+        _Distortion ("冰下折射幅度（UV）", Range(0,0.01)) = 0.0055
+        _IceFlow ("冰下微流动强度", Range(0,2)) = 1.15
+        _IceDepth ("冰层厚度与内层视差", Range(0,1)) = 0.75
+        _IceCracks ("蓝色冰晶裂隙强度", Range(0,1.5)) = 1.05
+        _IceScale ("冰晶分块密度", Range(3,12)) = 6.5
+        _IceCoverage ("封冻冰壳覆盖", Range(0,1)) = 0.72
+        _ColdBreath ("失温寒潮与流雾", Range(0,1.5)) = 1.05
+        _Glow ("冰裂反光与雪亮度", Range(0,1.5)) = 1.05
+        _Particles ("飘雪密度", Range(0,1)) = 0.7
         _SnowWind ("雪花横向风速", Range(-1,1)) = 0.35
-        _Frost ("边缘冰霜厚度", Range(0,1)) = 0.65
-        _ColdTone ("清冷蓝白色调", Range(0,1)) = 0.55
+        _Frost ("边缘冰霜厚度", Range(0,1)) = 0.9
+        _ColdTone ("极地深蓝冷色", Range(0,1)) = 0.9
         _Tint ("原画色调", Color) = (1,1,1,1)
         _Accent ("雪白冰光", Color) = (0.8,0.96,1,1)
         _Secondary ("寒雾颜色", Color) = (0.45,0.74,1,1)
@@ -35,7 +46,44 @@ Shader "RevGame/Background/Chapter05_Ice"
             #pragma fragment IceFrag
             #include "ChapterBackgroundCommon.cginc"
             float _SnowWind, _Frost, _ColdTone;
+            // 全部为美术表现参数，单位/范围见Properties；不影响攻防、AI或战斗时间，不放策划数值表。
+            float _IceFlow, _IceDepth, _IceCracks, _IceScale, _IceCoverage, _ColdBreath;
+            float4 _ArtUVRect;
 
+            // 返回x=冰胞边界距离，yz=冰胞斜面方向，w=该块固定种子。
+            // 最近/次近的随机中心像两块相邻冰晶；距离相近处就是接缝，距离差越小越靠近裂隙。
+            // 只查周围3×3格，固定上限且不采纹理；冰胞中心不随时间改变，避免整片冰块像水一样漂走。
+            float4 IceCell(float2 p)
+            {
+                float2 cell = floor(p);
+                float2 local = frac(p);
+                float nearest = 9.0;
+                float second = 9.0;
+                float2 slope = 0;
+                float seed = 0;
+                [unroll] for (int y = -1; y <= 1; y++)
+                {
+                    [unroll] for (int x = -1; x <= 1; x++)
+                    {
+                        float2 neighbor = float2(x, y);
+                        float2 id = cell + neighbor;
+                        float2 jitter = float2(ChapterHash(id + 3.1), ChapterHash(id + 17.7));
+                        float2 offset = neighbor + 0.15 + jitter * 0.7 - local;
+                        float distanceSquared = dot(offset, offset);
+                        if (distanceSquared < nearest)
+                        {
+                            second = nearest;
+                            nearest = distanceSquared;
+                            slope = offset;
+                            seed = jitter.x;
+                        }
+                        else { second = min(second, distanceSquared); }
+                    }
+                }
+                return float4(max(0, sqrt(second) - sqrt(nearest)), slope, seed);
+            }
+
+            // 单层雪：格子种子固定、时间只平移坐标，所以不会每帧随机闪烁。三次调用模拟远/中/近景。
             float IceSnow(float2 p, float time, float scale, float fall, float size, float seed)
             {
                 float2 q = p * scale + float2(-time * _SnowWind * fall, time * fall);
@@ -57,21 +105,54 @@ Shader "RevGame/Background/Chapter05_Ice"
                 float amount = ChapterAmount(input);
                 float2 margin = min(uv, 1.0 - uv);
                 float edgeDistance = min(margin.x, margin.y);
-                float grain = ChapterNoise(p * 9.0 + float2(time * 0.025, 0));
-                float frost = (1.0 - smoothstep(0.015, 0.08 + grain * 0.08, edgeDistance)) * _Frost;
-                float fog = ChapterNoise(p * float2(3.5, 6.0) + float2(time * 0.16, -time * 0.06));
-                float2 warp = float2(sin(p.y * 8.0 + time * 0.35), 0) * _Distortion * frost;
-                float3 art = ChapterArt(uv, warp, amount);
-                float sweep = exp(-pow((uv.x + uv.y * 0.55 - 0.82 - sin(time * 0.27) * 0.7) * 12.0, 2.0));
-                // 从原画提取明亮裂纹，只令既有裂纹闪过冰光，不让固态冰面像水一样流动。
-                float cracks = smoothstep(0.68, 0.96, min(art.r, min(art.g, art.b)));
+
+                // ① 固定表层，流动内层。低频两轴偏移让原画像隔着厚冰缓慢呼吸；幅度是UV比例，不是世界米数。
+                // ChapterArt会在屏幕边缘把偏移收敛到0并限制采样范围，横屏顶满时不会拉出黑边/留白。
+                float grain = ChapterNoise(p * 9.0);
+                float fog = ChapterNoise(p * float2(3.0, 5.5) + float2(-time * 0.12, time * 0.055));
+                float2 flow = float2(sin(p.y * 5.2 + time * 0.65) + sin(p.x * 3.7 - time * 0.41) * 0.45,
+                    cos(p.x * 4.3 + time * 0.48) + sin(p.y * 3.3 - time * 0.37) * 0.4);
+                float4 ice = IceCell(p * _IceScale + grain * 0.22);
+                float2 warp = flow * _Distortion * _IceFlow;
+                float2 refraction = ice.yz * (_IceDepth * 0.0045);
+                float3 art = ChapterArtRect(uv, warp + refraction, amount, _ArtUVRect);
+                // 第二层与表面产生不同方向/距离的位移，模拟冰下重影和折射深度；并非真正的体积/48层视差。
+                float3 underIce = ChapterArtRect(uv, warp * 0.4 - refraction * 1.7, amount, _ArtUVRect);
+                art = lerp(art, underIce, amount * _IceDepth * 0.12);
+
+                // ② 冰胞边界 = 暗缝 + 青蓝内芯 + 外侧光晕。fwidth保留至少一个像素的过渡，缩放时不会锐利闪烁。
+                float aa = max(fwidth(ice.x), 0.002);
+                float seam = 1.0 - smoothstep(0.012, 0.045 + aa, ice.x);
+                float rim = 1.0 - smoothstep(0.035, 0.12 + aa, ice.x);
+                float core = 1.0 - smoothstep(0.002, 0.014 + aa, ice.x);
+                float crystalShade = saturate(dot(ice.yz, float2(-0.65, 0.76)) + 0.45);
+                float frostEdge = 1.0 - smoothstep(0.015, 0.19 + grain * 0.12, edgeDistance);
+                float frost = frostEdge * _Frost;
+                // 寒潮使用宽缓的波带，持续移动而非突然闪白；表面仍保留原画手绘轮廓。
+                float breath = 0.5 + 0.5 * sin(time * 0.72 - p.x * 3.1 + p.y * 2.2 + fog * 2.0);
+                float coldWave = smoothstep(0.4, 0.95, breath) * _ColdBreath;
+                float sweep = pow(saturate(0.5 + 0.5 * sin(p.x * 2.8 + p.y * 1.5 - time * 0.55)), 6.0);
+                float originalCracks = smoothstep(0.62, 0.94, min(art.r, min(art.g, art.b)));
+
+                // ③ 先压低暖色并加深冰层，再叠加冷色反光；不要靠全屏加白制造“冰封”，否则雪地会过曝。
+                float3 color = lerp(art, art * float3(0.62, 0.86, 1.08), amount * _ColdTone);
+                float shell = _IceCoverage * amount;
+                color *= 1.0 - shell * (0.07 + crystalShade * 0.10);
+                color = lerp(color, color * float3(0.77, 0.94, 1.04) + _Secondary.rgb * 0.055, shell);
+                color *= 1.0 - seam * _IceCracks * amount * 0.25;
+                color += (_Secondary.rgb * rim * 0.12 + _Accent.rgb * core * 0.20) * _IceCracks * amount;
+                color += _Secondary.rgb * crystalShade * shell * sweep * 0.09;
+                color = lerp(color, _Secondary.rgb * 0.5, amount * coldWave * (0.10 + fog * 0.12));
+
+                // ④ 窗边霜晶沿冰胞接缝蔓延、斜向寒雾扫过原画；棋盘保护在amount中统一生效。
+                float frostCrystal = frost * (0.25 + rim * 0.55 + grain * 0.2);
+                color = lerp(color, _Accent.rgb * 0.88, frostCrystal * amount * 0.42);
+                color += _Secondary.rgb * fog * coldWave * amount * 0.075;
                 float farSnow = IceSnow(p, time * 0.55, 36.0, 0.65, 0.055, 2.1);
                 float middleSnow = IceSnow(p, time, 23.0, 0.9, 0.068, 7.7);
                 float nearSnow = IceSnow(p + 3.7, time, 13.0, 1.15, 0.085, 19.2);
-                float3 color = lerp(art, art * float3(0.9, 0.98, 1.08), amount * _ColdTone);
-                color = lerp(color, _Accent.rgb, frost * fog * amount * 0.15);
-                color += (_Accent.rgb * (farSnow * 0.35 + middleSnow * 0.55 + nearSnow * 0.8 + sweep * cracks * 0.18)
-                    + _Secondary.rgb * frost * fog * 0.07) * _Glow * amount;
+                color += _Accent.rgb * (farSnow * 0.25 + middleSnow * 0.45 + nearSnow * 0.65
+                    + sweep * originalCracks * 0.12) * _Glow * amount;
                 return ChapterOutput(color, input, amount);
             }
             ENDCG
