@@ -35,22 +35,22 @@ Material:
     m_Floats:
     - _Aspect: 1.7777778
     - _BoardProtection: 0.65
-    - _Caustics: 0.8
-    - _Distortion: 0.012
+    - _Caustics: 0.99
+    - _Distortion: 0.0372
     - _EffectTime: -1
-    - _FlowDistance: 0.055
+    - _FlowDistance: 0.141
     - _Glow: 1.1
-    - _Particles: 0.35
+    - _Particles: 0.591
     - _PreviewTime: -1
-    - _ReflectionStrength: 0.4
-    - _ReflectionStretch: 0.85
-    - _RippleStrength: 1.1
-    - _SpecularPower: 100
-    - _SpecularStrength: 1.25
+    - _ReflectionStrength: 0.471
+    - _ReflectionStretch: 0.98
+    - _RippleStrength: 1.69
+    - _SpecularPower: 107
+    - _SpecularStrength: 1.32
     - _Speed: 1.05
     - _Strength: 1
     - _Transition: 1
-    - _WaveHeight: 0.9
+    - _WaveHeight: 1.5
     m_Colors:
     - _Accent: {r: 0.67, g: 0.95, b: 1, a: 1}
     - _ArtUVRect: {r: 0, g: 0.007751938, b: 1, a: 0.99224806}
