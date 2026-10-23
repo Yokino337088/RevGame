@@ -1,0 +1,7 @@
+{
+  "kind": "preflight failure before scenario",
+  "error": "运行期未注册自动化GM；随后MCP观察服务注册表为空",
+  "businessStarted": false,
+  "cardsPlayed": 0,
+  "action": "停止本次Play后重新从正式场景启动；不手工注册GM或重初始化框架"
+}

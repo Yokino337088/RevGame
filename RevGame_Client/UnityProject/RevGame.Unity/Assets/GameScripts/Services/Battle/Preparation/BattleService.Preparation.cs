@@ -72,7 +72,7 @@ namespace RevGame.Services
             {
                 piece.IgnoreEncirclement = false;
                 piece.ShieldCharges = 0;
-                piece.SetRoundHealthScale(1f);
+                ApplyPreparationHealth(piece, 1f);
             }
         }
 
@@ -161,7 +161,7 @@ namespace RevGame.Services
                 {
                     continue;
                 }
-                piece.SetRoundHealthScale(_prepHealthScale);
+                ApplyPreparationHealth(piece, _prepHealthScale);
                 piece.IgnoreEncirclement = _prepImmune;
                 // 此处仍在准备期，没有受击，统一赋满护盾；战斗中新增棋走单独入口，绝不重置老棋护盾。
                 piece.ShieldCharges = _prepShieldCharges;
@@ -171,7 +171,7 @@ namespace RevGame.Services
         /// <summary>让手牌和援军继承已领取的效果；只初始化这颗新棋，避免把老棋消耗过的护盾补满。</summary>
         private void ApplyPreparationToNewPiece(Piece piece)
         {
-            piece.SetRoundHealthScale(_prepHealthScale);
+            ApplyPreparationHealth(piece, _prepHealthScale);
             piece.IgnoreEncirclement = _prepImmune;
             piece.ShieldCharges = _prepShieldCharges;
             if (_pendingUpgrade > 0 && piece.Def.Star < StarTier.Three)
@@ -179,6 +179,15 @@ namespace RevGame.Services
                 _pendingUpgrade--;
                 UpgradePiece(piece);
             }
+        }
+
+        /// <summary>原有准备生命与开发GM生命只有一个组合出口，换轮、援军、后落手牌均不漏算或重复相乘。</summary>
+        private void ApplyPreparationHealth(Piece piece, float normalScale)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            normalScale = ScaleAutomationHealth(normalScale);
+#endif
+            piece.SetRoundHealthScale(normalScale);
         }
 
         /// <summary>寻找不破坏现有眼阵的安全空格加入强援（外形与星级来自 Excel）；全盘无安全格时转换为攻击加成。</summary>

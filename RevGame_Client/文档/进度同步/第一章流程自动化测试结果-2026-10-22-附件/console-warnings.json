@@ -1,0 +1,10 @@
+{
+  "scope": "150%攻击基线",
+  "fullSnapshotCaptured": false,
+  "warningCount": null,
+  "observedInSession": [
+    "启动时1个无效KeyCode名称警告",
+    "RevPool/RevHeavyFSM调试诊断Warning"
+  ],
+  "note": "基线未单独保存完整Console Warning快照；本文件为观察说明，不能作为完整计数或零警告证据。新倍率会话样本另放其独立附件。"
+}

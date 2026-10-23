@@ -1,0 +1,8 @@
+{
+  "reproduction": "HUD UpdateBar float tween completed and recycled into original PieceView.BeginDeathDissolve; next HUD UpdateBar kills the stale tween reference",
+  "sameTweenObject": true,
+  "pieceId": 12,
+  "progressAfterMoreThanDeathDuration": 0.001,
+  "tweenActiveAfterWaiting": false,
+  "observedIn": "Unity graphic Play via MCP; fixed-input reflection fixture; not claimed as whole-chapter baseline"
+}

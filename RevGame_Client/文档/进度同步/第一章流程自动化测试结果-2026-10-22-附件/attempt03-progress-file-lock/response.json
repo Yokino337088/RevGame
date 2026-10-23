@@ -1,0 +1,34 @@
+{
+  "protocol": 1,
+  "id": "526ca13f48ee4d00ba8383228f936596",
+  "success": false,
+  "error": "IOException",
+  "message": "System.IO.IOException: The process cannot access the file because it is being used by another process.\r\n  at System.IO.FileSystem.ReplaceFile (System.String sourceFullPath, System.String destFullPath, System.String destBackupFullPath, System.Boolean ignoreMetadataErrors) [0x0002c] in <7ec8e29954a6455daa48484a381ec418>:0 \r\n  at System.IO.File.Replace (System.String sourceFileName, System.String destinationFileName, System.String destinationBackupFileName, System.Boolean ignoreMetadataErrors) [0x00034] in <7ec8e29954a6455daa48484a381ec418>:0 \r\n  at System.IO.File.Replace (System.String sourceFileName, System.String destinationFileName, System.String destinationBackupFileName) [0x00000] in <7ec8e29954a6455daa48484a381ec418>:0 \r\n  at Revolution.Editor.RevAutomationBridge.WriteJson (System.String path, System.Object value) [0x00033] in G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Revolution\\Editor\\RevAutomation\\RevAutomationBridge.cs:87 \r\n  at Revolution.Editor.RevAutomationScenario.Tick () [0x00141] in G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Revolution\\Editor\\RevAutomation\\RevAutomationScenario.cs:288 \r\n  at Revolution.Editor.RevAutomationBridge.Update () [0x00117] in G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Revolution\\Editor\\RevAutomation\\RevAutomationBridge.cs:219 ",
+  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\526ca13f48ee4d00ba8383228f936596",
+  "data": {
+    "name": "第一章攻击150%·末四轮零手牌实测",
+    "resultPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\526ca13f48ee4d00ba8383228f936596\\scenario-result.json",
+    "startedUtc": "2026-10-22T07:32:05.5922323+00:00",
+    "finishedUtc": "2026-10-22T07:38:01.6304851+00:00",
+    "unityVersion": "2022.3.15f1c1",
+    "environment": "Unity Editor PlayMode",
+    "unityLogPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\526ca13f48ee4d00ba8383228f936596\\unity-errors.jsonl",
+    "requested": 1,
+    "completed": 1,
+    "failedIterations": 1,
+    "warmupCompleted": 0,
+    "success": false,
+    "cancelled": false,
+    "elapsedSeconds": 356.07025669999996,
+    "frameSamples": 82556,
+    "frameMeanMs": 4.312785375716479,
+    "frameP95Ms": 6.6,
+    "frameMaxMs": 494.8940873146057,
+    "peakMonoUsedBytes": 735125504,
+    "peakAllocatedMemoryBytes": 411399631,
+    "unityErrors": 0,
+    "errors": [
+      "执行器中断：The process cannot access the file because it is being used by another process."
+    ]
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "scope": "本次新Play会话的Console Warning前30条样本，非全部警告计数；含启动期无效KeyCode及Pool/FSM诊断",
+  "truncated": true,
+  "success": true,
+  "message": "Retrieved 30 log entries.",
+  "data": [
+    {
+      "type": "Warning",
+      "message": "16:29:01.134 W [Input] [RevInput] 有 1 个键位名在 Unity KeyCode 里不存在（会被跳过；键位名必须与 KeyCode 一致） frame:0",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.383 W [Pool] [RevPool][调试] 新建 GameObject 池：GameObject:SlimePiece（分组 Battle） frame:6591",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.430 W [Pool] [RevPool][调试] 新建 GameObject 池：GameObject:BattleEffect（分组 Battle） frame:6604",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.485 W [Pool] [RevPool][调试] 新建 GameObject 池：GameObject:BattleEventNotice（分组 Battle） frame:6615",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.510 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Prepare（EnemyPrepareState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.510 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Deploy（EnemyDeployState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.511 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Stopped（EnemyStoppedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.512 W [StateMachine] [RevHeavyFSM][诊断] Prepare → Stopped（创建AI） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.512 W [StateMachine] [RevHeavyFSM][诊断] Stopped → Prepare（敌阵预检完成，进入布阵状态） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.513 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Hold（EnemyHoldState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.514 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Attack（EnemyAttackState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.514 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Advance（EnemyAdvanceState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.514 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Locked（EnemyLockedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.515 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Dead（EnemyDeadState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.515 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Stopped（EnemyStoppedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.515 W [StateMachine] [RevHeavyFSM][诊断] Prepare → Hold（创建AI） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.516 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Hold（EnemyHoldState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.517 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Attack（EnemyAttackState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.517 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Advance（EnemyAdvanceState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.517 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Locked（EnemyLockedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.518 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Dead（EnemyDeadState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.518 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Stopped（EnemyStoppedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.518 W [StateMachine] [RevHeavyFSM][诊断] Prepare → Hold（创建AI） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.518 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Hold（EnemyHoldState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.518 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Attack（EnemyAttackState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.519 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Advance（EnemyAdvanceState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.519 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Locked（EnemyLockedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.519 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Dead（EnemyDeadState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.519 W [StateMachine] [RevHeavyFSM][诊断] 注册状态 Stopped（EnemyStoppedState） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    },
+    {
+      "type": "Warning",
+      "message": "16:29:15.520 W [StateMachine] [RevHeavyFSM][诊断] Prepare → Hold（创建AI） frame:6616",
+      "file": "Assets/Revolution/Runtime/RevLog/Support/RevConsoleSink.cs",
+      "line": 40,
+      "stackTrace": null
+    }
+  ]
+}

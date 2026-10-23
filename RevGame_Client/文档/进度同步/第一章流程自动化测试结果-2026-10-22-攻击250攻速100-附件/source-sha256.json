@@ -1,0 +1,70 @@
+{
+  "scope": "本次运行所用相关C#与计划；README在结束后补充说明，非整个工作区快照",
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Contracts/GameAutomationPlan.cs",
+      "sha256": "a09c70a6dd6b383550112330a2d3b1ca50cd36fc4bfb869647891110da2a1dd6"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Fixtures/BattleService.Automation.cs",
+      "sha256": "1fe2bc6438cf5b4385fa69843a19cbb2eab3a947fa5fc2843bacb5cf867cd8d3"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Diagnostics/GameAttributeGmCommands.cs",
+      "sha256": "f4f7ef26b1066e1c6b899242e975a1abea7a4d756c63231788f07f163c5c1db5"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Diagnostics/GameAutomationCommands.cs",
+      "sha256": "73ca4127268298aa4d084f84eb5b6c2af4fda7384ab0af411923cfb4a14786c6"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Flow/GameAutomationRunner.cs",
+      "sha256": "76f2e8ea2f36020e48393b3c853d6588ba5722ee99a2b0772440bb3cd02545b6"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Preparation/BattleService.Preparation.cs",
+      "sha256": "39d2eaeca5abd25ec3f7669f128acc23e969ff450d7b2cf31bfdf292f8948288"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/BattleHudPanel.cs",
+      "sha256": "30d7600655b6c474b7afc308a58d7b4ee53ed173f93b776cbbf5f930fbe72be8"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardCellView.cs",
+      "sha256": "c10ea2afb256e58b580cb663d6e7366e984e74b29fdef8b3ad00eceeffb72bdf"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.cs",
+      "sha256": "a9886681ddd4781a4a94d2368da59697a942a94a020788be07541997192b2d78"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pieces/PieceView.cs",
+      "sha256": "da1427e5ca6e8425c40ba5863af38ca8a757f03a6440299a3c480143d6fe05dd"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameAttributeGmChecks.cs",
+      "sha256": "90039944db192224d1320ff915705e6149c721af73490c5ebaa659c6aeadb300"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/GameAttributeGmChecks.cs.meta",
+      "sha256": "b5ca444cc248ad43520a648236e7f135d7ab2c0ae0aaff31277e2a9d7e32162c"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/GamePieceDeathChecks.cs",
+      "sha256": "81d399aaccd6d8f5a592de4763071bc86ca5b93e81b8da3dce01fbbacab03816"
+    },
+    {
+      "path": "RevGame_Client/Tests/BusinessFlowAutomation/README.md",
+      "sha256": "0076912c8b2cebf52428753b080293d591510eaa075f2bbc997f0dc5cde71ea9"
+    },
+    {
+      "path": "RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py",
+      "sha256": "c96f93195f002861e9cd34d3a1c527d90f6bc549ea04e7235ec12a38a94dde84"
+    },
+    {
+      "path": "RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter-2026-10-22-attack250-speed100.json",
+      "sha256": "6262f80b0beb407dc1dcef24915907dec17f19a64afdf81f1cd8526475d442b5"
+    }
+  ]
+}

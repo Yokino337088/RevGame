@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "desktop",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "imageCount": 11,
+      "brokenImages": [],
+      "brokenAnchors": [],
+      "title": "RevGame · 属性GM与第一章复测 · 2026.10.22"
+    },
+    {
+      "name": "mobile",
+      "viewport": 390,
+      "pageWidth": 390,
+      "imageCount": 11,
+      "brokenImages": [],
+      "brokenAnchors": [],
+      "title": "RevGame · 属性GM与第一章复测 · 2026.10.22"
+    }
+  ],
+  "lightbox": true,
+  "javascriptErrors": []
+}

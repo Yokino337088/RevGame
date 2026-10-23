@@ -132,7 +132,9 @@ namespace RevGame.View
             _rangeTween = DOTween.Sequence()
                 .Append(target.DOScale(1.12f, 0.13f).SetEase(Ease.OutQuad))
                 .Join(rangeRenderer.DOFade(_rangeBaseColor.a, 0.1f))
-                .Append(target.DOScale(1f, 0.08f).SetEase(Ease.InOutQuad));
+                .Append(target.DOScale(1f, 0.08f).SetEase(Ease.InOutQuad))
+                // 范围波纹也使用可复用 Tween；自然结束就解除引用，避免下次收起范围误停别人的序列。
+                .OnKill(() => _rangeTween = null);
         }
 
         /// <summary>立即收起范围格：先停动画再清状态，避免淡出动画在回池后又改了一次颜色。</summary>

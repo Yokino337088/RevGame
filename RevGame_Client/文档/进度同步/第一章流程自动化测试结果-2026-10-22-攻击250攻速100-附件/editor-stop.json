@@ -1,0 +1,7 @@
+{
+  "method": "Unity MCP manage_editor stop",
+  "scope": "本次测试自行启动Play，CLI以--attach运行；此回执在作业28a4098289fe4a5f91f9b389400a4eca完成后获取",
+  "success": true,
+  "message": "Exited play mode.",
+  "data": null
+}

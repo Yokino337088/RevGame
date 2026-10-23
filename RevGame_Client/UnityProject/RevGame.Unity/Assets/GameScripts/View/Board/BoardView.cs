@@ -699,7 +699,7 @@ namespace RevGame.View
             if (_pieces.TryGetValue(id, out view))
             {
                 // 规则层已在发事件前移除占格；这里也立即摘出存活视图字典，但让原物体留场消融。
-                // 如果在动画中途切阶段，ClearRoundEffects 会停动画并归池，绝不能让旧回调归还新棋子。
+                // 切阶段保留这段短动画；完成或独立期限到达后归池，离场则由 CancelDissolvingPieces 收尾。
                 _pieces.Remove(id);
                 _lastHp.Remove(id);
                 _dissolvingPieces.Add(view);
@@ -716,7 +716,7 @@ namespace RevGame.View
 
         private void OnDeathDissolved(PieceView view)
         {
-            // 只有完整动画才走这里；中途回池会 Kill(false)，不会触发旧完成回调。
+            // 动画自然完成或表现期限到达都走这里；中途离场会取消两者，不允许旧回调归还新棋子。
             if (_dissolvingPieces.Remove(view))
             {
                 RevPool.Return(view, 0);

@@ -1,0 +1,1458 @@
+{
+  "name": "第一章攻击150%·末四轮零手牌实测",
+  "startedUtc": "2026-10-22T07:21:24.1580901Z",
+  "state": "failed",
+  "error": "步骤超时：第8轮实际交战胜利证据且六张手牌未消耗；；",
+  "completedSteps": 41,
+  "totalSteps": 60,
+  "pointerClicks": 101,
+  "cardsPlayed": 42,
+  "gmActions": 0,
+  "playerAttacks": 16695,
+  "enemyAttacks": 566,
+  "damageEvents": 17255,
+  "bossCasts": 0,
+  "unityErrors": 0,
+  "elapsedSeconds": 516.3919067382812,
+  "boost": {
+    "attackBonusPercent": 50,
+    "attackSpeedBonusPercent": 0,
+    "defenseBonusPercent": 0
+  },
+  "rounds": [
+    {
+      "chapter": 1,
+      "round": 1,
+      "winner": "Player",
+      "battleSeconds": 26.875,
+      "playerAttacks": 430,
+      "enemyAttacks": 6,
+      "damageEvents": 436,
+      "enemiesAtStart": 6,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 6,
+      "playersAtEnd": 8,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 696,
+      "playerHpEnd": 956,
+      "enemyHpStart": 4816,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 696,
+      "enemyMaxHpStart": 4816,
+      "playerDamageTaken": 21,
+      "enemyDamageTaken": 10424,
+      "playerDamageTakenFromAttacker": 21,
+      "enemyDamageTakenFromAttacker": 10047,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Attack",
+        "Shields",
+        "Execution",
+        "Armor",
+        "Regeneration"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 2,
+      "winner": "Player",
+      "battleSeconds": 18.75,
+      "playerAttacks": 688,
+      "enemyAttacks": 13,
+      "damageEvents": 695,
+      "enemiesAtStart": 6,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 14,
+      "playersAtEnd": 15,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 1894,
+      "playerHpEnd": 1989,
+      "enemyHpStart": 16478,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 1894,
+      "enemyMaxHpStart": 16478,
+      "playerDamageTaken": 85,
+      "enemyDamageTaken": 20511,
+      "playerDamageTakenFromAttacker": 85,
+      "enemyDamageTakenFromAttacker": 20511,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Recovery",
+        "Attack",
+        "Shields",
+        "Upgrade",
+        "Haste"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 3,
+      "winner": "Player",
+      "battleSeconds": 44.375,
+      "playerAttacks": 2300,
+      "enemyAttacks": 44,
+      "damageEvents": 2349,
+      "enemiesAtStart": 6,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 21,
+      "playersAtEnd": 21,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 2722,
+      "playerHpEnd": 2919,
+      "enemyHpStart": 73325,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 2803,
+      "enemyMaxHpStart": 73325,
+      "playerDamageTaken": 801,
+      "enemyDamageTaken": 85695,
+      "playerDamageTakenFromAttacker": 801,
+      "enemyDamageTakenFromAttacker": 73367,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Haste",
+        "LifeSteal",
+        "EncirclementImmunity"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 4,
+      "winner": "Player",
+      "battleSeconds": 49.375,
+      "playerAttacks": 2150,
+      "enemyAttacks": 57,
+      "damageEvents": 2212,
+      "enemiesAtStart": 6,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 27,
+      "playersAtEnd": 21,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 3650,
+      "playerHpEnd": 3257,
+      "enemyHpStart": 81227,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 3650,
+      "enemyMaxHpStart": 81227,
+      "playerDamageTaken": 1062,
+      "enemyDamageTaken": 96984,
+      "playerDamageTakenFromAttacker": 1062,
+      "enemyDamageTakenFromAttacker": 89505,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Recovery",
+        "EyePower",
+        "Attack",
+        "Execution"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 5,
+      "winner": "Player",
+      "battleSeconds": 42.8125,
+      "playerAttacks": 2102,
+      "enemyAttacks": 73,
+      "damageEvents": 2147,
+      "enemiesAtStart": 6,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 27,
+      "playersAtEnd": 22,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 3802,
+      "playerHpEnd": 3413,
+      "enemyHpStart": 82614,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 3849,
+      "enemyMaxHpStart": 82614,
+      "playerDamageTaken": 815,
+      "enemyDamageTaken": 96213,
+      "playerDamageTakenFromAttacker": 815,
+      "enemyDamageTakenFromAttacker": 83797,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Regeneration",
+        "Shields",
+        "Execution"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 6,
+      "winner": "Player",
+      "battleSeconds": 60.3125,
+      "playerAttacks": 3180,
+      "enemyAttacks": 134,
+      "damageEvents": 3321,
+      "enemiesAtStart": 7,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 29,
+      "playersAtEnd": 23,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 3942,
+      "playerHpEnd": 3178,
+      "enemyHpStart": 106605,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 4069,
+      "enemyMaxHpStart": 106605,
+      "playerDamageTaken": 2115,
+      "enemyDamageTaken": 126965,
+      "playerDamageTakenFromAttacker": 2115,
+      "enemyDamageTakenFromAttacker": 109807,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Armor",
+        "Elite",
+        "Regeneration"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 7,
+      "winner": "Player",
+      "battleSeconds": 52.8125,
+      "playerAttacks": 2776,
+      "enemyAttacks": 124,
+      "damageEvents": 2905,
+      "enemiesAtStart": 7,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 6,
+      "handAtStart": 0,
+      "handAtEnd": 0,
+      "playersAtStart": 30,
+      "playersAtEnd": 27,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 4285,
+      "playerHpEnd": 4239,
+      "enemyHpStart": 108365,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 4285,
+      "enemyMaxHpStart": 108365,
+      "playerDamageTaken": 2402,
+      "enemyDamageTaken": 123912,
+      "playerDamageTakenFromAttacker": 2402,
+      "enemyDamageTakenFromAttacker": 112422,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Recovery",
+        "LifeSteal",
+        "Liberties",
+        "Elite",
+        "Ranged"
+      ]
+    },
+    {
+      "chapter": 1,
+      "round": 8,
+      "winner": "Player",
+      "battleSeconds": 66.875,
+      "playerAttacks": 3069,
+      "enemyAttacks": 115,
+      "damageEvents": 3190,
+      "enemiesAtStart": 7,
+      "kingId": 0,
+      "kingCaptured": false,
+      "cardsPlayed": 0,
+      "handAtStart": 6,
+      "handAtEnd": 0,
+      "playersAtStart": 27,
+      "playersAtEnd": 19,
+      "enemiesAtEnd": 0,
+      "playerHpStart": 5551,
+      "playerHpEnd": 4166,
+      "enemyHpStart": 110125,
+      "enemyHpEnd": 0,
+      "playerMaxHpStart": 5551,
+      "enemyMaxHpStart": 110125,
+      "playerDamageTaken": 2210,
+      "enemyDamageTaken": 126853,
+      "playerDamageTakenFromAttacker": 2210,
+      "enemyDamageTakenFromAttacker": 109608,
+      "bossCasts": 0,
+      "victoryAssistEnabled": true,
+      "preparationBuffs": [
+        "ArrowVolley",
+        "Recovery",
+        "Haste",
+        "Vitality",
+        "Upgrade",
+        "Ranged"
+      ]
+    }
+  ],
+  "boostReleased": true,
+  "evidence": [
+    {
+      "step": "启动首页就绪",
+      "detail": "wait 完成",
+      "screen": "Home",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.7126681208610535
+    },
+    {
+      "step": "启动首页就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/01-c0-r0-Prepare.png",
+      "screen": "Home",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.7131724953651428
+    },
+    {
+      "step": "点击开始游戏",
+      "detail": "EventSystem指针点击：HomePanel/btnPlay",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.8760560154914856
+    },
+    {
+      "step": "点击开始游戏",
+      "detail": "click 完成",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.8760591745376587
+    },
+    {
+      "step": "选关界面就绪",
+      "detail": "wait 完成",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.9511017203330994
+    },
+    {
+      "step": "选关界面就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/02-c0-r0-Prepare.png",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 0.9511173963546753
+    },
+    {
+      "step": "点击第一章",
+      "detail": "EventSystem指针点击：LevelSelectPanel/chapter1",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 1.1129357814788818
+    },
+    {
+      "step": "点击第一章",
+      "detail": "click 完成",
+      "screen": "LevelSelect",
+      "phase": "Prepare",
+      "chapter": 0,
+      "round": 0,
+      "atSeconds": 1.1129379272460938
+    },
+    {
+      "step": "第1轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 5.911327362060547
+    },
+    {
+      "step": "第1轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/03-c1-r1-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 5.911338806152344
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#1 → (0,0)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 6.2352190017700195
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#2 → (1,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 6.552619457244873
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#3 → (2,0)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 6.872074604034424
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#4 → (3,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.194937229156494
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#5 → (4,0)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.511956214904785
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "已验证手牌#6 → (5,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.832396030426025
+    },
+    {
+      "step": "第1轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.832397937774658
+    },
+    {
+      "step": "第1轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.993122100830078
+    },
+    {
+      "step": "第1轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 7.993124485015869
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/04-c1-r1-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 8.63167667388916
+    },
+    {
+      "step": "第1轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 34.630306243896484
+    },
+    {
+      "step": "第1轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/05-c1-r1-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 1,
+      "atSeconds": 34.63032150268555
+    },
+    {
+      "step": "第1轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 34.814178466796875
+    },
+    {
+      "step": "第1轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 34.814178466796875
+    },
+    {
+      "step": "第2轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 37.748775482177734
+    },
+    {
+      "step": "第2轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/06-c1-r2-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 37.74878692626953
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#7 → (6,0)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 38.070491790771484
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#8 → (7,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 38.390159606933594
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#9 → (8,0)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 38.71286392211914
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#10 → (0,1)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 39.03355026245117
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#11 → (2,1)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 39.35014724731445
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "已验证手牌#12 → (3,1)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 39.67189025878906
+    },
+    {
+      "step": "第2轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 39.67189407348633
+    },
+    {
+      "step": "第2轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 39.8301887512207
+    },
+    {
+      "step": "第2轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 39.83019256591797
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/07-c1-r2-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 40.47040939331055
+    },
+    {
+      "step": "第2轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 58.391239166259766
+    },
+    {
+      "step": "第2轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/08-c1-r2-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 2,
+      "atSeconds": 58.39125061035156
+    },
+    {
+      "step": "第2轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 58.57023620605469
+    },
+    {
+      "step": "第2轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 58.57024002075195
+    },
+    {
+      "step": "第3轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 61.512107849121094
+    },
+    {
+      "step": "第3轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/09-c1-r3-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 61.51211929321289
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#13 → (4,1)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 61.83043670654297
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#14 → (5,1)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 62.15003204345703
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#15 → (6,1)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 62.470699310302734
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#16 → (7,1)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 62.79064178466797
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#17 → (8,1)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 63.11273193359375
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "已验证手牌#18 → (2,2)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 63.43250274658203
+    },
+    {
+      "step": "第3轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 63.4325065612793
+    },
+    {
+      "step": "第3轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 63.59210205078125
+    },
+    {
+      "step": "第3轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 63.592105865478516
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/10-c1-r3-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 64.22872924804688
+    },
+    {
+      "step": "第3轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 107.75068664550781
+    },
+    {
+      "step": "第3轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/11-c1-r3-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 3,
+      "atSeconds": 107.75069427490234
+    },
+    {
+      "step": "第3轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 107.92857360839844
+    },
+    {
+      "step": "第3轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 107.92857360839844
+    },
+    {
+      "step": "第4轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 110.86908721923828
+    },
+    {
+      "step": "第4轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/12-c1-r4-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 110.86909484863281
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "已验证手牌#19 → (5,0)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 111.19190979003906
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "已验证手牌#20 → (6,1)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 111.51209259033203
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "已验证手牌#21 → (7,1)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 111.83099365234375
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "已验证手牌#22 → (4,2)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 112.15170288085938
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "已验证手牌#23 → (5,2)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 112.47113800048828
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "已验证手牌#24 → (6,2)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 112.79115295410156
+    },
+    {
+      "step": "第4轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 112.79115295410156
+    },
+    {
+      "step": "第4轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 112.95040893554688
+    },
+    {
+      "step": "第4轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 112.95040893554688
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/13-c1-r4-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 113.58959197998047
+    },
+    {
+      "step": "第4轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 162.1497039794922
+    },
+    {
+      "step": "第4轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/14-c1-r4-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 4,
+      "atSeconds": 162.1497039794922
+    },
+    {
+      "step": "第4轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 162.33071899414062
+    },
+    {
+      "step": "第4轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 162.33071899414062
+    },
+    {
+      "step": "第5轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 165.2695770263672
+    },
+    {
+      "step": "第5轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/15-c1-r5-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 165.26959228515625
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "已验证手牌#25 → (5,0)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 165.59104919433594
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "已验证手牌#26 → (6,1)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 165.91310119628906
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "已验证手牌#27 → (7,1)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 166.2315673828125
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "已验证手牌#28 → (8,1)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 166.5518798828125
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "已验证手牌#29 → (5,2)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 166.87130737304688
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "已验证手牌#30 → (6,2)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 167.19163513183594
+    },
+    {
+      "step": "第5轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 167.19163513183594
+    },
+    {
+      "step": "第5轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 167.35122680664062
+    },
+    {
+      "step": "第5轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 167.35122680664062
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/16-c1-r5-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 167.99066162109375
+    },
+    {
+      "step": "第5轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 209.91868591308594
+    },
+    {
+      "step": "第5轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/17-c1-r5-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 5,
+      "atSeconds": 209.91868591308594
+    },
+    {
+      "step": "第5轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 210.0979766845703
+    },
+    {
+      "step": "第5轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 210.0979766845703
+    },
+    {
+      "step": "第6轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 213.03298950195312
+    },
+    {
+      "step": "第6轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/18-c1-r6-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 213.03298950195312
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "已验证手牌#31 → (5,1)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 213.35116577148438
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "已验证手牌#32 → (7,1)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 213.67095947265625
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "已验证手牌#33 → (4,2)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 213.99327087402344
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "已验证手牌#34 → (5,2)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 214.3114013671875
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "已验证手牌#35 → (6,2)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 214.6331329345703
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "已验证手牌#36 → (7,2)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 214.95147705078125
+    },
+    {
+      "step": "第6轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 214.95147705078125
+    },
+    {
+      "step": "第6轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 215.1116943359375
+    },
+    {
+      "step": "第6轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 215.1116943359375
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/19-c1-r6-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 215.75006103515625
+    },
+    {
+      "step": "第6轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 275.27142333984375
+    },
+    {
+      "step": "第6轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/20-c1-r6-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 6,
+      "atSeconds": 275.2714538574219
+    },
+    {
+      "step": "第6轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 275.4551086425781
+    },
+    {
+      "step": "第6轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 275.4551086425781
+    },
+    {
+      "step": "第7轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 278.39129638671875
+    },
+    {
+      "step": "第7轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/21-c1-r7-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 278.3913269042969
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "已验证手牌#37 → (0,0)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 278.7127685546875
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "已验证手牌#38 → (1,1)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 279.0298767089844
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "已验证手牌#39 → (4,2)；手牌/额度各扣1，棋种=Swordman",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 279.3515319824219
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "已验证手牌#40 → (5,2)；手牌/额度各扣1，棋种=Shield",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 279.67254638671875
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "已验证手牌#41 → (0,3)；手牌/额度各扣1，棋种=MageFire",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 279.991943359375
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "已验证手牌#42 → (1,3)；手牌/额度各扣1，棋种=Archer",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 280.3133850097656
+    },
+    {
+      "step": "第7轮模拟手牌落子",
+      "detail": "deployHand 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 280.3133850097656
+    },
+    {
+      "step": "第7轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 280.4703063964844
+    },
+    {
+      "step": "第7轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 280.4703063964844
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/22-c1-r7-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 281.10870361328125
+    },
+    {
+      "step": "第7轮实际交战胜利证据",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 333.0369873046875
+    },
+    {
+      "step": "第7轮实际交战胜利证据",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/23-c1-r7-Settle.png",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 7,
+      "atSeconds": 333.0370178222656
+    },
+    {
+      "step": "第7轮点击结算继续",
+      "detail": "EventSystem指针点击：SettlePanel/btnContinue",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 333.2108154296875
+    },
+    {
+      "step": "第7轮点击结算继续",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 333.2108459472656
+    },
+    {
+      "step": "第8轮准备与六张手牌就绪",
+      "detail": "wait 完成",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 336.22979736328125
+    },
+    {
+      "step": "第8轮准备与六张手牌就绪",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/24-c1-r8-Prepare.png",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 336.22979736328125
+    },
+    {
+      "step": "第8轮点击开始战斗",
+      "detail": "EventSystem指针点击：PreparePanel/btnReady",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 336.39166259765625
+    },
+    {
+      "step": "第8轮点击开始战斗",
+      "detail": "click 完成",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 336.39166259765625
+    },
+    {
+      "step": "交战中",
+      "detail": "异步帧末截图请求：Library/RevolutionAutomation/BusinessFlowScreenshots/20261022-072124-156/25-c1-r8-Battle.png",
+      "screen": "Battle",
+      "phase": "Battle",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 337.032470703125
+    },
+    {
+      "step": "流程结束",
+      "detail": "failed 步骤超时：第8轮实际交战胜利证据且六张手牌未消耗；；",
+      "screen": "Battle",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 8,
+      "atSeconds": 516.3919067382812
+    }
+  ]
+}

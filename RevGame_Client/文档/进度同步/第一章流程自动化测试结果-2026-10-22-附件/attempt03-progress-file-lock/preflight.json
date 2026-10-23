@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-22",
+  "scene": "Assets/Scenes/StartScene.unity",
+  "sceneDirty": false,
+  "playing": false,
+  "paused": false,
+  "timeScale": 1,
+  "batch": false,
+  "computerUse": {
+    "available": false,
+    "attempts": 2,
+    "error": "windows sandbox failed: CreateProcessWithLogonW failed: 1385"
+  },
+  "conditions": {
+    "attackMultiplier": 1.5,
+    "attackSpeedMultiplier": 1,
+    "defenseBonusPercent": 0,
+    "healthBonusPercent": 0,
+    "noHandRounds": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "cardsRounds1to7": 6,
+    "naturalGameBuffs": "unchanged and recorded"
+  }
+}

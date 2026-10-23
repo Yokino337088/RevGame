@@ -17,11 +17,13 @@ namespace RevGame.Animation
         public float timeoutSeconds = 1800f;
         /// <summary>显式选择的测试强化；不填写则完全沿用普通游戏数值。报告会保留它，不能据此判断正式难度。</summary>
         public GameAutomationBoost boost;
+        /// <summary>仅编辑器取证：请求Unity在正常帧末写PNG到Library；不暂停、不手工推进PlayerLoop。</summary>
+        public bool captureScreenshots;
         /// <summary>依次执行的步骤，最多 256 项；失败即停止，不会继续点击后面的界面。</summary>
         public GameAutomationStep[] steps;
     }
 
-    /// <summary>测试夹具配置，三项均为“额外百分比”，0关闭，500表示原值的6倍；只允许0～500。</summary>
+    /// <summary>四项均为额外整数百分比：0为原值，250为原值×3.5；只作用于开发态我方棋子。</summary>
     [Serializable]
     public sealed class GameAutomationBoost
     {
@@ -31,6 +33,33 @@ namespace RevGame.Animation
         public int attackSpeedBonusPercent;
         /// <summary>防御等效加成：正伤害除以(1+百分比/100)，最少1；盾挡后的0伤害保持0。</summary>
         public int defenseBonusPercent;
+        /// <summary>我方最大生命额外百分比；调整时保持当前生命比例，死亡棋子不复活，后续新棋同样继承。</summary>
+        public int healthBonusPercent;
+
+        // 这是调试输入的技术边界，不是正式玩法数值；防止整数溢出与一次模拟累积过量攻击动作。
+        public const int MaxBonusPercent = 10000;
+
+        public static void Validate(GameAutomationBoost value)
+        {
+            if (value == null) { return; }
+            if (!Valid(value.attackBonusPercent) || !Valid(value.attackSpeedBonusPercent)
+                || !Valid(value.defenseBonusPercent) || !Valid(value.healthBonusPercent))
+            {
+                throw new Revolution.RevGMUsageException("四项额外加成均需为0～" + MaxBonusPercent + "%的整数");
+            }
+        }
+
+        private static bool Valid(int value)
+        {
+            return value >= 0 && value <= MaxBonusPercent;
+        }
+
+        /// <summary>租约持有自己的快照；GM的后续编辑不能悄悄改写旧报告或另一个测试。</summary>
+        public GameAutomationBoost Copy()
+        {
+            return new GameAutomationBoost { attackBonusPercent = attackBonusPercent, attackSpeedBonusPercent = attackSpeedBonusPercent,
+                defenseBonusPercent = defenseBonusPercent, healthBonusPercent = healthBonusPercent };
+        }
     }
 
     /// <summary>单步契约。支持 wait、assert、click、deployHand、gm；未识别的操作必须拒绝。</summary>
@@ -53,7 +82,7 @@ namespace RevGame.Animation
         public int round;
         /// <summary>期望手牌数；-1 表示不检查，0 表示确实应当没有手牌。</summary>
         public int hand = -1;
-        /// <summary>额外只读条件：ready、roundWon、chapterWon、homeClean；不填写则仅检查上面的字段。</summary>
+        /// <summary>额外只读条件：ready、roundWon、roundWonNoHand、chapterWon、homeClean；不填写则仅检查上面的字段。</summary>
         public string condition;
         /// <summary>deployHand 要打出的实际张数，1～6；空间不足时明确失败，绝不删除旧棋来腾位置。</summary>
         public int count = 1;
@@ -133,6 +162,25 @@ namespace RevGame.Animation
         public int kingId;
         /// <summary>结算时确有主将且已死亡/锁死。围棋擒王允许未出手就合法取胜，不能误判为测试失败。</summary>
         public bool kingCaptured;
+        /// <summary>本轮准备阶段由测试指针实际验证的落牌数；用于核对末四轮确实没有出牌。</summary>
+        public int cardsPlayed;
+        /// <summary>开战与结算瞬间剩余手牌数；零出牌轮开战为6，原业务结算统一清牌后为0。</summary>
+        public int handAtStart, handAtEnd;
+        /// <summary>开战与结算时双方仍存活的棋子数；援军和复活可能改变数量，不直接当作死亡计数。</summary>
+        public int playersAtStart, playersAtEnd, enemiesAtEnd;
+        /// <summary>双方存活棋子的当前生命合计，单位HP；回血/增援会影响变化，实际受伤另按事件累计。</summary>
+        public int playerHpStart, playerHpEnd, enemyHpStart, enemyHpEnd;
+        /// <summary>开战时存活棋子的最大生命合计，用于区分已有伤势与本轮受伤。</summary>
+        public int playerMaxHpStart, enemyMaxHpStart;
+        /// <summary>本轮双方实际承受的正伤害合计，单位HP，来自BattleHit而非伤害公式推算。</summary>
+        public int playerDamageTaken, enemyDamageTaken;
+        /// <summary>有攻击者来源的实际受伤合计；环境/辅助无来源伤害单独扣除，避免都算作双方对攻。</summary>
+        public int playerDamageTakenFromAttacker, enemyDamageTakenFromAttacker;
+        /// <summary>本轮真实Boss技能施放数；不能把普通攻击当作技能覆盖。</summary>
+        public int bossCasts;
+        /// <summary>本轮实际启用的原有轻松模式，以及已抽到的准备增益名称；测试不会改写它们。</summary>
+        public bool victoryAssistEnabled;
+        public string[] preparationBuffs;
     }
 
     /// <summary>单条审计记录：动作、输入来源、执行时的章/回合/阶段与真实时间。</summary>

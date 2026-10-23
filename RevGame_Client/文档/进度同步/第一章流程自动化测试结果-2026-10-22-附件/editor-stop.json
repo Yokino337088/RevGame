@@ -1,0 +1,8 @@
+{
+  "success": true,
+  "evidenceType": "停止操作索引，非原始MCP回执",
+  "method": "基线结束后Unity MCP manage_editor stop",
+  "rawReceiptArchived": false,
+  "supportingEvidence": "final-cleanup-check.json记录首页、强化回收与停止确认",
+  "previousMismatchedReceipt": "attempt03-editor-stop-original.json（原文件是此前中断尝试的回执，不可作为最终基线回执）"
+}

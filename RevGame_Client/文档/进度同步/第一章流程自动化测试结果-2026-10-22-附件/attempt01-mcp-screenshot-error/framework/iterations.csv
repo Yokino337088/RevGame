@@ -1,0 +1,2 @@
+﻿iteration,warmup,success,durationMs,frames,frameP95Ms,frameMaxMs,monoUsedBytes,allocatedMemoryBytes,gc0,gc1,gc2,message
+0,False,False,62101.6866,16538,5.6,406.68490529060364,699285504,370104485,6,6,6,Unity Error: An abnormal situation has occurred: the PlayerLoop internal function has been called recursively. Please contact Customer Support with a sample project so that we can reproduce the problem and troubleshoot it.

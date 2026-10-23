@@ -1,0 +1,465 @@
+{
+  "name": "第一章攻击额外250%·攻速额外100%·末四轮零手牌实测",
+  "timeoutSeconds": 1800,
+  "steps": [
+    {
+      "name": "启动首页就绪",
+      "op": "wait",
+      "screen": "Home",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "通过新GM精确设置并核对四项属性",
+      "op": "gm",
+      "command": "RevGame/属性设置 250 100 0 0",
+      "expected": "{\"attackBonusPercent\":250,\"attackSpeedBonusPercent\":100,\"defenseBonusPercent\":0,\"healthBonusPercent\":0}",
+      "timeoutSeconds": 10
+    },
+    {
+      "name": "点击开始游戏",
+      "op": "click",
+      "target": "HomePanel/btnPlay"
+    },
+    {
+      "name": "选关界面就绪",
+      "op": "wait",
+      "screen": "LevelSelect"
+    },
+    {
+      "name": "点击第一章",
+      "op": "click",
+      "target": "LevelSelectPanel/chapter1"
+    },
+    {
+      "name": "第1轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 1,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第1轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 1,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第1轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第1轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 1,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第1轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第2轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 2,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第2轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 2,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第2轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第2轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 2,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第2轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第3轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 3,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第3轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 3,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第3轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第3轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 3,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第3轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第4轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 4,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第4轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 4,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第4轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第4轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 4,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第4轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第5轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 5,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第5轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 5,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第5轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第5轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 5,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第5轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第6轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 6,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第6轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 6,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第6轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第6轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 6,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第6轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第7轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 7,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第7轮模拟手牌落子",
+      "op": "deployHand",
+      "count": 6,
+      "chapter": 1,
+      "round": 7,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "第7轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第7轮实际交战胜利证据",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 7,
+      "condition": "roundWon",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "第7轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第8轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 8,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第8轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第8轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 8,
+      "condition": "roundWonNoHand",
+      "timeoutSeconds": 180,
+      "hand": 0
+    },
+    {
+      "name": "第8轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第9轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 9,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第9轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第9轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 9,
+      "condition": "roundWonNoHand",
+      "timeoutSeconds": 180,
+      "hand": 0
+    },
+    {
+      "name": "第9轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第10轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 10,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第10轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第10轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 10,
+      "condition": "roundWonNoHand",
+      "timeoutSeconds": 180,
+      "hand": 0
+    },
+    {
+      "name": "第10轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "第11轮准备与六张手牌就绪",
+      "op": "wait",
+      "screen": "Battle",
+      "phase": "Prepare",
+      "chapter": 1,
+      "round": 11,
+      "hand": 6,
+      "condition": "ready",
+      "timeoutSeconds": 90
+    },
+    {
+      "name": "第11轮点击开始战斗",
+      "op": "click",
+      "target": "PreparePanel/btnReady"
+    },
+    {
+      "name": "第11轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+      "op": "wait",
+      "phase": "Settle",
+      "chapter": 1,
+      "round": 11,
+      "condition": "roundWonNoHand",
+      "timeoutSeconds": 180,
+      "hand": 0
+    },
+    {
+      "name": "第11轮点击结算继续",
+      "op": "click",
+      "target": "SettlePanel/btnContinue"
+    },
+    {
+      "name": "完整11轮通章与奖励界面",
+      "op": "wait",
+      "phase": "Reward",
+      "chapter": 1,
+      "condition": "chapterWon",
+      "timeoutSeconds": 20
+    },
+    {
+      "name": "点击第一项章节奖励",
+      "op": "click",
+      "target": "RewardPanel/choice0"
+    },
+    {
+      "name": "奖励消费后进入第二章六牌准备",
+      "op": "wait",
+      "phase": "Prepare",
+      "chapter": 2,
+      "round": 1,
+      "hand": 6,
+      "condition": "ready"
+    },
+    {
+      "name": "点击返回大厅",
+      "op": "click",
+      "target": "BattleHudPanel/btnHome"
+    },
+    {
+      "name": "首页与战斗域回收完成",
+      "op": "wait",
+      "screen": "Home",
+      "condition": "homeClean",
+      "timeoutSeconds": 90
+    }
+  ],
+  "boost": {
+    "attackBonusPercent": 250,
+    "attackSpeedBonusPercent": 100,
+    "defenseBonusPercent": 0,
+    "healthBonusPercent": 0
+  },
+  "captureScreenshots": true
+}

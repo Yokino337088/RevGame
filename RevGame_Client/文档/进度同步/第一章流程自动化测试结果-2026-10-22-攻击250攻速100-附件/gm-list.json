@@ -1,0 +1,308 @@
+{
+  "protocol": 1,
+  "id": "b8f4fc36386d42aa87eb26223a030b1b",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b8f4fc36386d42aa87eb26223a030b1b",
+  "data": {
+    "playing": true,
+    "commands": [
+      {
+        "name": "RevGame/属性设置",
+        "description": "依次设置额外攻击/攻速/等效防御/最大生命百分比；250=原值×3.5，重复设置不叠加",
+        "signature": "RevGame/属性设置 <攻击%|整数(默认 0) 攻速%|整数(默认 0) 防御%|整数(默认 0) 生命%|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/加攻击",
+        "description": "累计增加该项额外整数百分比；负数可调低，最终需在0～10000%；AI重试建议用属性设置",
+        "signature": "RevGame/加攻击 <增加百分比|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/加攻速",
+        "description": "累计增加该项额外整数百分比；负数可调低，最终需在0～10000%；AI重试建议用属性设置",
+        "signature": "RevGame/加攻速 <增加百分比|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/加防御",
+        "description": "累计增加该项额外整数百分比；负数可调低，最终需在0～10000%；AI重试建议用属性设置",
+        "signature": "RevGame/加防御 <增加百分比|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/加血量",
+        "description": "累计增加该项额外整数百分比；负数可调低，最终需在0～10000%；AI重试建议用属性设置",
+        "signature": "RevGame/加血量 <增加百分比|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/属性查询",
+        "description": "返回四项开发额外加成JSON；0为不额外增加，未修改正常准备增益",
+        "signature": "RevGame/属性查询",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/属性清除",
+        "description": "清除四项开发强化，生命按比例恢复原上限，不复活死棋",
+        "signature": "RevGame/属性清除",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/自动化开始",
+        "description": "接收Base64编码的UTF-8测试计划，异步执行真实玩家输入",
+        "signature": "RevGame/自动化开始 <计划Base64|文本(必填)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/自动化状态",
+        "description": "只读 idle/running/passed/failed/cancelled",
+        "signature": "RevGame/自动化状态",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/自动化检查",
+        "description": "供Scenario轮询：passed/running；失败直接抛出报告原因",
+        "signature": "RevGame/自动化检查",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/自动化报告",
+        "description": "只读完整JSON报告，含逐步证据和11轮真实交战结果",
+        "signature": "RevGame/自动化报告",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/自动化取消",
+        "description": "幂等取消测试并释放手势、计时器和观察订阅；不修改棋盘",
+        "signature": "RevGame/自动化取消",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/自动化收尾",
+        "description": "幂等取消并经真实GameFlow返回首页；loading/clean，可在失败后轮询",
+        "signature": "RevGame/自动化收尾",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/敌方AI",
+        "description": "只读重量级状态机当前状态、状态时长和最近切换原因",
+        "signature": "RevGame/敌方AI",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss技能",
+        "description": "Boss 回合战斗中立刻施放技能：0横扫 1狙击 2轰炸 3弹幕 4瞬移 5激光 6汲取 7召唤 8狂暴",
+        "signature": "RevGame/Boss技能 <技能|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss准备",
+        "description": "自动化：进入战斗域并直接开始 Boss 回合；loading=加载中，ready=已开战",
+        "signature": "RevGame/Boss准备 <章节|整数(默认 1)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss查询",
+        "description": "自动化：Boss 状态 idle / casting / dead / stopped / none",
+        "signature": "RevGame/Boss查询",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss清卫",
+        "description": "自动化：移除 Boss 以外的敌方棋子，给贴身技能腾出落点",
+        "signature": "RevGame/Boss清卫",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss靠近",
+        "description": "自动化：把我方一颗存活棋子移到离 Boss 指定距离的空格（1=贴身，2=隔一格）",
+        "signature": "RevGame/Boss靠近 <距离|整数(默认 1)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss续航",
+        "description": "自动化：回满 Boss 与我方全部棋子，保证多技能连续验收",
+        "signature": "RevGame/Boss续航",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/我方无敌",
+        "description": "仅开发验收：1=我方全队免伤，0=恢复正常受伤",
+        "signature": "RevGame/我方无敌 <开关|整数(默认 1)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/Boss压血",
+        "description": "仅开发验收：把 Boss 血量压到 80%，用于验证汲取",
+        "signature": "RevGame/Boss压血",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/截图",
+        "description": "仅开发验收：保存当前 Game 画面为 PNG（名称不带扩展名）",
+        "signature": "RevGame/截图 <名称|文本(默认 shot)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/快照",
+        "description": "读取流程、作用域、手牌和棋盘",
+        "signature": "RevGame/快照",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/打开选关",
+        "description": "主界面进入选关",
+        "signature": "RevGame/打开选关",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/进入战斗",
+        "description": "进入已解锁章节",
+        "signature": "RevGame/进入战斗 <章节|整数(默认 1)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/返回主界面",
+        "description": "退出当前域并返回主界面",
+        "signature": "RevGame/返回主界面",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/过场故障",
+        "description": "仅开发验收：下一次过场在before-scene或after-scene失败，检查错误面板与回退",
+        "signature": "RevGame/过场故障 <阶段|文本(默认 before-scene)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/开始战斗",
+        "description": "与准备按钮一致",
+        "signature": "RevGame/开始战斗",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/下一回合",
+        "description": "与结算继续按钮一致",
+        "signature": "RevGame/下一回合",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/落一张盾战",
+        "description": "只消费手中实际持有的盾战牌",
+        "signature": "RevGame/落一张盾战",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/落首张牌",
+        "description": "把第一张手牌落在己方合法空位",
+        "signature": "RevGame/落首张牌",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/落子",
+        "description": "按手牌编号和格子落子；越界不会扣牌",
+        "signature": "RevGame/落子 <牌编号|整数(默认 0) X|整数(默认 0) Y|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/刷新手牌",
+        "description": "准备期重抽剩余手牌，不补额度",
+        "signature": "RevGame/刷新手牌",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/点棋盘",
+        "description": "准备或战斗时点己方棋子，再点空格换位；与触屏同一入口",
+        "signature": "RevGame/点棋盘 <X|整数(默认 0) Y|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/攻击范围",
+        "description": "长按棋子的受控等价入口：0=第一颗我方棋子，或指定棋子编号",
+        "signature": "RevGame/攻击范围 <棋子编号|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/收起攻击范围",
+        "description": "与再次点击屏幕任意位置一致",
+        "signature": "RevGame/收起攻击范围",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/选奖励",
+        "description": "选择0~2号奖励",
+        "signature": "RevGame/选奖励 <选项|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/跳过",
+        "description": "第10回合未落牌时跳过换攻击强化",
+        "signature": "RevGame/跳过",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/战斗事件",
+        "description": "战斗中触发0~7号事件，受配置表里的事件间隔与每回合上限约束",
+        "signature": "RevGame/战斗事件 <事件编号|整数(默认 0)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/载入验收场景",
+        "description": "预定义场景；enemy-one-eye/ enemy-two-eyes观察真实敌阵",
+        "signature": "RevGame/载入验收场景 <场景|文本(默认 merge)>",
+        "highRisk": false,
+        "hidden": false
+      },
+      {
+        "name": "RevGame/推进",
+        "description": "固定步长推进1~100步，不能修改胜负结果",
+        "signature": "RevGame/推进 <步数|整数(默认 1)>",
+        "highRisk": false,
+        "hidden": false
+      }
+    ],
+    "registrationErrors": []
+  }
+}

@@ -152,7 +152,7 @@ namespace RevGame.UI
             {
                 float duration = _battle.BattleDuration;
                 float ratio = duration > 0f ? Mathf.Clamp01(_battle.BattleElapsed / duration) : 0f;
-                UpdateBar(_progressFill, ratio, ref _progressTween, ref _progressTarget, _battle.Phase != GamePhase.Battle);
+                UpdateBar(_progressFill, ratio, ref _progressTween, ref _progressTarget, _battle.Phase != GamePhase.Battle, ClearProgressTween);
             }
 
             if (_countText != null)
@@ -182,7 +182,7 @@ namespace RevGame.UI
             _bossText.gameObject.SetActive(king != null);
             if (king != null)
             {
-                UpdateBar(_bossBar, king.HpRatio, ref _bossTween, ref _bossTarget, _battle.Phase != GamePhase.Battle);
+                UpdateBar(_bossBar, king.HpRatio, ref _bossTween, ref _bossTarget, _battle.Phase != GamePhase.Battle, ClearBossTween);
                 // 决死伤害百分比 = 已满档位 × 每档加成；每档加成取自参数，旧代码这里把 10% 写死成了 *10。
                 int rage = (int)((int)(_battle.BattleElapsed / Balance.BossAccelerationSeconds) * Balance.BossAccelerationBonus * 100f + 0.5f);
                 _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
@@ -440,7 +440,7 @@ namespace RevGame.UI
         }
 
         /// <summary>只有目标值改变才接续缓动，避免每0.1秒刷新把同一动画反复从头启动。</summary>
-        private static void UpdateBar(Image image, float value, ref Tween tween, ref float target, bool instant)
+        private static void UpdateBar(Image image, float value, ref Tween tween, ref float target, bool instant, TweenCallback onKilled)
         {
             value = Mathf.Clamp01(value);
             if (Mathf.Abs(target - value) < 0.00001f)
@@ -455,7 +455,22 @@ namespace RevGame.UI
             {
                 image.fillAmount = value; return;
             }
-            tween = DOTween.To(() => image.fillAmount, x => image.fillAmount = x, value, 0.28f).SetEase(Ease.OutCubic).SetUpdate(true);
+            // 【新手注意】项目开启了 Tween 复用：动画结束后，同一个 C# 对象可能立刻被借给死亡消融。
+            // 因此不能只用 IsActive 判断“旧血条动画还活着”；它可能已经是别人的动画。
+            // AutoKill（自然结束）和手动 Kill 都会执行 OnKill，必须在进入复用池前清空本面板的引用。
+            // ref 参数不能在 lambda 中捕获，所以由各字段自己的清理方法接收这个回调。
+            tween = DOTween.To(() => image.fillAmount, x => image.fillAmount = x, value, 0.28f)
+                .SetEase(Ease.OutCubic).SetUpdate(true).OnKill(onKilled);
+        }
+
+        private void ClearProgressTween()
+        {
+            _progressTween = null;
+        }
+
+        private void ClearBossTween()
+        {
+            _bossTween = null;
         }
 
         private void ResetBarAnimations()

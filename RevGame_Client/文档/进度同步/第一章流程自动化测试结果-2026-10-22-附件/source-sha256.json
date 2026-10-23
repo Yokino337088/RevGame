@@ -1,0 +1,14 @@
+{
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Contracts/GameAutomationPlan.cs": "d6234c48a0be8371592fa85e822446b21ff6f1661f11a9b4adc28e656ba4af8e",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Diagnostics/GameAutomationCommands.cs": "9ee6bdcdc6e7f3808106207e543aaaf15f9bb9531e95eeec97fa6e5785c3b5b8",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Fixtures/BattleService.Automation.cs": "231eda1bacc6e6fb83e7e3a9f2c20d1275a64fbc973b4bfc33230da9aa2e6ef3",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Flow/GameAutomationRunner.cs": "36ff76f4ab60d35f16de79de02ea7b9fcb2e0c54a3adad5c1f48dbb5e388fb92",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Automation/Input/GamePointerInput.cs": "7cf2e4a06652b1636e1e7457fb68ff31ad734a0bac46f7d50637be8551050b14",
+  "RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py": "6f19325ff14b66aa786be92911b69797dfff409b853f187f88ebff7ebd17c777",
+  "RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter-2026-10-22.json": "09b02f9debb0507634feb16f5aaa32a64c5fd55c0d9657dcd6f99de75ead7b3c",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pieces/PieceView.cs": "da1427e5ca6e8425c40ba5863af38ca8a757f03a6440299a3c480143d6fe05dd",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardCellView.cs": "c10ea2afb256e58b580cb663d6e7366e984e74b29fdef8b3ad00eceeffb72bdf",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.cs": "a9886681ddd4781a4a94d2368da59697a942a94a020788be07541997192b2d78",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/BattleHudPanel.cs": "30d7600655b6c474b7afc308a58d7b4ee53ed173f93b776cbbf5f930fbe72be8",
+  "RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/GamePieceDeathChecks.cs": "81d399aaccd6d8f5a592de4763071bc86ca5b93e81b8da3dce01fbbacab03816"
+}

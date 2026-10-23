@@ -1,0 +1,306 @@
+[
+  {
+    "file": "screenshots/01-c1-r2-Prepare.png",
+    "step": "启动首页就绪",
+    "chapter": 1,
+    "round": 2,
+    "phase": "Prepare",
+    "atSeconds": 0.07335440069437027
+  },
+  {
+    "file": "screenshots/02-c1-r2-Prepare.png",
+    "step": "选关界面就绪",
+    "chapter": 1,
+    "round": 2,
+    "phase": "Prepare",
+    "atSeconds": 0.3101018965244293
+  },
+  {
+    "file": "screenshots/03-c1-r1-Prepare.png",
+    "step": "第1轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 1,
+    "phase": "Prepare",
+    "atSeconds": 5.028439521789551
+  },
+  {
+    "file": "screenshots/04-c1-r1-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 1,
+    "phase": "Battle",
+    "atSeconds": 7.748612880706787
+  },
+  {
+    "file": "screenshots/05-c1-r1-Settle.png",
+    "step": "第1轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 1,
+    "phase": "Settle",
+    "atSeconds": 20.013423919677734
+  },
+  {
+    "file": "screenshots/06-c1-r2-Prepare.png",
+    "step": "第2轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 2,
+    "phase": "Prepare",
+    "atSeconds": 23.107534408569336
+  },
+  {
+    "file": "screenshots/07-c1-r2-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 2,
+    "phase": "Battle",
+    "atSeconds": 25.828594207763672
+  },
+  {
+    "file": "screenshots/08-c1-r2-Settle.png",
+    "step": "第2轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 2,
+    "phase": "Settle",
+    "atSeconds": 50.14916229248047
+  },
+  {
+    "file": "screenshots/09-c1-r3-Prepare.png",
+    "step": "第3轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 3,
+    "phase": "Prepare",
+    "atSeconds": 53.26985168457031
+  },
+  {
+    "file": "screenshots/10-c1-r3-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 3,
+    "phase": "Battle",
+    "atSeconds": 55.988975524902344
+  },
+  {
+    "file": "screenshots/11-c1-r3-Settle.png",
+    "step": "第3轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 3,
+    "phase": "Settle",
+    "atSeconds": 123.27147674560547
+  },
+  {
+    "file": "screenshots/12-c1-r4-Prepare.png",
+    "step": "第4轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 4,
+    "phase": "Prepare",
+    "atSeconds": 126.38923645019531
+  },
+  {
+    "file": "screenshots/13-c1-r4-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 4,
+    "phase": "Battle",
+    "atSeconds": 129.1078338623047
+  },
+  {
+    "file": "screenshots/14-c1-r4-Settle.png",
+    "step": "第4轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 4,
+    "phase": "Settle",
+    "atSeconds": 180.14923095703125
+  },
+  {
+    "file": "screenshots/15-c1-r5-Prepare.png",
+    "step": "第5轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 5,
+    "phase": "Prepare",
+    "atSeconds": 183.2677459716797
+  },
+  {
+    "file": "screenshots/16-c1-r5-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 5,
+    "phase": "Battle",
+    "atSeconds": 185.98971557617188
+  },
+  {
+    "file": "screenshots/17-c1-r5-Settle.png",
+    "step": "第5轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 5,
+    "phase": "Settle",
+    "atSeconds": 241.34762573242188
+  },
+  {
+    "file": "screenshots/18-c1-r6-Prepare.png",
+    "step": "第6轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 6,
+    "phase": "Prepare",
+    "atSeconds": 244.46754455566406
+  },
+  {
+    "file": "screenshots/19-c1-r6-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 6,
+    "phase": "Battle",
+    "atSeconds": 247.18739318847656
+  },
+  {
+    "file": "screenshots/20-c1-r6-Settle.png",
+    "step": "第6轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 6,
+    "phase": "Settle",
+    "atSeconds": 295.1074523925781
+  },
+  {
+    "file": "screenshots/21-c1-r7-Prepare.png",
+    "step": "第7轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 7,
+    "phase": "Prepare",
+    "atSeconds": 298.2301025390625
+  },
+  {
+    "file": "screenshots/22-c1-r7-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 7,
+    "phase": "Battle",
+    "atSeconds": 300.9493103027344
+  },
+  {
+    "file": "screenshots/23-c1-r7-Settle.png",
+    "step": "第7轮实际交战胜利证据",
+    "chapter": 1,
+    "round": 7,
+    "phase": "Settle",
+    "atSeconds": 352.9502258300781
+  },
+  {
+    "file": "screenshots/24-c1-r8-Prepare.png",
+    "step": "第8轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Prepare",
+    "atSeconds": 356.0687561035156
+  },
+  {
+    "file": "screenshots/25-c1-r8-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Battle",
+    "atSeconds": 356.8726806640625
+  },
+  {
+    "file": "screenshots/26-c1-r8-Settle.png",
+    "step": "第8轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Settle",
+    "atSeconds": 420.3959655761719
+  },
+  {
+    "file": "screenshots/27-c1-r9-Prepare.png",
+    "step": "第9轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 9,
+    "phase": "Prepare",
+    "atSeconds": 423.5118713378906
+  },
+  {
+    "file": "screenshots/28-c1-r9-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 9,
+    "phase": "Battle",
+    "atSeconds": 424.3116455078125
+  },
+  {
+    "file": "screenshots/29-c1-r9-Settle.png",
+    "step": "第9轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 9,
+    "phase": "Settle",
+    "atSeconds": 501.0272521972656
+  },
+  {
+    "file": "screenshots/30-c1-r10-Prepare.png",
+    "step": "第10轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 10,
+    "phase": "Prepare",
+    "atSeconds": 504.1522521972656
+  },
+  {
+    "file": "screenshots/31-c1-r10-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 10,
+    "phase": "Battle",
+    "atSeconds": 504.9477233886719
+  },
+  {
+    "file": "screenshots/32-c1-r10-Settle.png",
+    "step": "第10轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 10,
+    "phase": "Settle",
+    "atSeconds": 589.5079956054688
+  },
+  {
+    "file": "screenshots/33-c1-r11-Prepare.png",
+    "step": "第11轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Prepare",
+    "atSeconds": 592.628173828125
+  },
+  {
+    "file": "screenshots/34-c1-r11-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Battle",
+    "atSeconds": 593.4285888671875
+  },
+  {
+    "file": "screenshots/35-c1-r11-Settle.png",
+    "step": "第11轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Settle",
+    "atSeconds": 635.1088256835938
+  },
+  {
+    "file": "screenshots/36-c1-r11-Reward.png",
+    "step": "完整11轮通章与奖励界面",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Reward",
+    "atSeconds": 635.34912109375
+  },
+  {
+    "file": "screenshots/37-c2-r1-Prepare.png",
+    "step": "奖励消费后进入第二章六牌准备",
+    "chapter": 2,
+    "round": 1,
+    "phase": "Prepare",
+    "atSeconds": 638.54736328125
+  },
+  {
+    "file": "screenshots/38-c2-r1-Prepare.png",
+    "step": "首页与战斗域回收完成",
+    "chapter": 2,
+    "round": 1,
+    "phase": "Prepare",
+    "atSeconds": 639.6683349609375
+  }
+]

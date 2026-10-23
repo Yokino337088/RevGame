@@ -16,6 +16,7 @@ namespace RevGame.Animation
     {
         public static void Register()
         {
+            GameAttributeGmCommands.Register();
             RevGM.Register("RevGame/自动化开始", "接收Base64编码的UTF-8测试计划，异步执行真实玩家输入", args =>
             {
                 string encoded = args.Str(0, "");
@@ -69,6 +70,7 @@ namespace RevGame.Animation
 
         public static void Unregister()
         {
+            GameAttributeGmCommands.Unregister();
             RevGM.Unregister("RevGame/自动化开始");
             RevGM.Unregister("RevGame/自动化状态");
             RevGM.Unregister("RevGame/自动化检查");

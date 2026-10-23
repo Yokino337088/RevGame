@@ -1,0 +1,112 @@
+[
+  {
+    "file": "screenshots/01-c1-r2-Prepare.png",
+    "step": "启动首页就绪",
+    "chapter": 1,
+    "round": 2,
+    "phase": "Prepare",
+    "atSeconds": 0.07335440069437027,
+    "title": "正式入口首页",
+    "note": "正常帧末PNG；开始本次流程前。"
+  },
+  {
+    "file": "screenshots/04-c1-r1-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 1,
+    "phase": "Battle",
+    "atSeconds": 7.748612880706787,
+    "title": "第1轮实际交战",
+    "note": "双方事件计数和承伤见逐轮表。"
+  },
+  {
+    "file": "screenshots/13-c1-r4-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 4,
+    "phase": "Battle",
+    "atSeconds": 129.1078338623047,
+    "title": "第4轮实际交战",
+    "note": "攻击×1.5、攻速不额外强化。"
+  },
+  {
+    "file": "screenshots/21-c1-r7-Prepare.png",
+    "step": "第7轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 7,
+    "phase": "Prepare",
+    "atSeconds": 298.2301025390625,
+    "title": "第7轮准备",
+    "note": "最后一轮允许主动下六张牌。"
+  },
+  {
+    "file": "screenshots/24-c1-r8-Prepare.png",
+    "step": "第8轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Prepare",
+    "atSeconds": 356.0687561035156,
+    "title": "第8轮准备",
+    "note": "从本轮开始不下任何手牌。"
+  },
+  {
+    "file": "screenshots/26-c1-r8-Settle.png",
+    "step": "第8轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Settle",
+    "atSeconds": 420.3959655761719,
+    "title": "第8轮结算",
+    "note": "开战时六牌未出，结算时按原规则清牌；结合逐轮数据核对。"
+  },
+  {
+    "file": "screenshots/33-c1-r11-Prepare.png",
+    "step": "第11轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Prepare",
+    "atSeconds": 592.628173828125,
+    "title": "Boss轮准备",
+    "note": "不增加主动落牌，已有阵容进入Boss轮。"
+  },
+  {
+    "file": "screenshots/34-c1-r11-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Battle",
+    "atSeconds": 593.4285888671875,
+    "title": "Boss实际交战",
+    "note": "仅在真实战斗持续到取证时间时生成。"
+  },
+  {
+    "file": "screenshots/35-c1-r11-Settle.png",
+    "step": "第11轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Settle",
+    "atSeconds": 635.1088256835938,
+    "title": "Boss实际结算",
+    "note": "实际胜负和主将状态由业务事件核对。"
+  },
+  {
+    "file": "screenshots/36-c1-r11-Reward.png",
+    "step": "完整11轮通章与奖励界面",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Reward",
+    "atSeconds": 635.34912109375,
+    "title": "章节奖励",
+    "note": "截图按帧末实际画面标注，选择动作另见业务证据。"
+  },
+  {
+    "file": "screenshots/38-c2-r1-Prepare.png",
+    "step": "首页与战斗域回收完成",
+    "chapter": 2,
+    "round": 1,
+    "phase": "Prepare",
+    "atSeconds": 639.6683349609375,
+    "title": "回到首页",
+    "note": "业务homeClean断言通过后的帧末画面。"
+  }
+]

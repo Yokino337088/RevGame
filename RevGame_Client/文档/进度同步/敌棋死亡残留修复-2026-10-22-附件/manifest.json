@@ -1,0 +1,66 @@
+{
+  "algorithm": "SHA-256",
+  "selfExcluded": true,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 159,
+      "sha256": "be40503c7e8d9c6a4c8330da92519f19a77e20fd9b2efe6ee822cef9145b4cd9"
+    },
+    {
+      "path": "before-reproduction.json",
+      "bytes": 418,
+      "sha256": "55c60fdbab2621d6cd34b8fc6a95b0a30b9380fe67507066583225e4d369b7f7"
+    },
+    {
+      "path": "death-monitor.txt",
+      "bytes": 36,
+      "sha256": "1c1cc33be52d97b0ba852e6f65ac12e46c666951a7843ded9e45bdbb14c2f437"
+    },
+    {
+      "path": "DeathFix-after.png",
+      "bytes": 2150509,
+      "sha256": "40436fe57ef26af529bec96ec583146c34a440cd3ba681a91011885fc46e33a6"
+    },
+    {
+      "path": "DeathFix-dissolving.png",
+      "bytes": 2071525,
+      "sha256": "500e8b23a32bbb467f06b9168607da5b1d8ac078cd2f7630959800d17de0954c"
+    },
+    {
+      "path": "GameFeelChecks.txt",
+      "bytes": 179,
+      "sha256": "71685b4cb22a3a9bb0cdf8cfc430152df82a5c57032082e2b0aeb641f0468dd5"
+    },
+    {
+      "path": "GamePieceDeathChecks.txt",
+      "bytes": 1910,
+      "sha256": "c2c880c4599621da44e1b926ea576e64c298fef018c1402ab3d1275feb75bd4a"
+    },
+    {
+      "path": "html-validation.json",
+      "bytes": 553,
+      "sha256": "9402931d8d0951bad3ce30392f767ff3d07093c799b8588c0dfa1fbfb7f49bdb"
+    },
+    {
+      "path": "user-symptom-1.png",
+      "bytes": 27488,
+      "sha256": "a5f2424218bd55fa00853290641a222fb737db8114c1ad65f399919acd597d05"
+    },
+    {
+      "path": "user-symptom-2.png",
+      "bytes": 9603,
+      "sha256": "f80cf9893c9f8598beabbc56204d1e123c9eb9bf0c09f7ceb6c2f805a468abcc"
+    },
+    {
+      "path": "user-symptom-3.png",
+      "bytes": 20208,
+      "sha256": "dee0f6ce5e33fc4c39223601c04baefcd64638ac2bfbc4c889faaf1766ca7ddd"
+    },
+    {
+      "path": "user-symptom-4.png",
+      "bytes": 9107,
+      "sha256": "fc50bd33f396071ac1c1416b28f48df2752846ac445142f482325c46bc348078"
+    }
+  ]
+}

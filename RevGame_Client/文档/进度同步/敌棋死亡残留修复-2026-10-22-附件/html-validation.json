@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "desktop",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "imageCount": 5,
+      "brokenImages": [],
+      "brokenAnchors": [],
+      "title": "RevGame · 敌棋死亡残留修复日志 · 2026.10.22"
+    },
+    {
+      "name": "mobile",
+      "viewport": 390,
+      "pageWidth": 390,
+      "imageCount": 5,
+      "brokenImages": [],
+      "brokenAnchors": [],
+      "title": "RevGame · 敌棋死亡残留修复日志 · 2026.10.22"
+    }
+  ],
+  "lightbox": true,
+  "javascriptErrors": []
+}

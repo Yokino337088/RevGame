@@ -3,6 +3,7 @@ using System;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;
+using RevGame.Pieces;
 using RevGame.Services;
 using RevGame.UI;
 using RevGame.View;
@@ -43,6 +44,14 @@ namespace RevGame.Animation
         private int _attackBaseline;
         private int _enemyBaseline;
         private int _damageBaseline;
+        /// <summary>前一轮累计落牌基线；开战时取差，保证不出牌轮也有真实零值证据。</summary>
+        private int _cardsBaseline;
+        private int _bossBaseline;
+        /// <summary>每次测试独有的Library截图目录和序号，避免重跑覆盖失败证据；仅开发态工具持有。</summary>
+        private string _screenshotDirectory;
+        private int _screenshotSequence;
+        private double _battleShotAt;
+        private bool _battleShotTaken;
         public string State { get { return _report.state; } }
 
         /// <summary>
@@ -60,7 +69,13 @@ namespace RevGame.Animation
             _index = _stage = _deployed = 0;
             _pendingError = null;
             _currentRound = null;
+            _cardsBaseline = 0;
             _startedAt = _stepAt = Time.realtimeSinceStartupAsDouble;
+            _screenshotSequence = 0;
+            _screenshotDirectory = "Library/RevolutionAutomation/BusinessFlowScreenshots/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff");
+#if UNITY_EDITOR
+            if (plan.captureScreenshots) { System.IO.Directory.CreateDirectory(_screenshotDirectory); }
+#endif
             _report = new GameAutomationReport
             {
                 name = plan.name, state = "running", totalSteps = plan.steps.Length,
@@ -85,12 +100,7 @@ namespace RevGame.Animation
             {
                 throw new RevGMUsageException("计划需有 1～256 步，总超时需为 1～3600 秒");
             }
-            if (plan.boost != null && (plan.boost.attackBonusPercent < 0 || plan.boost.attackBonusPercent > 500
-                || plan.boost.attackSpeedBonusPercent < 0 || plan.boost.attackSpeedBonusPercent > 500
-                || plan.boost.defenseBonusPercent < 0 || plan.boost.defenseBonusPercent > 500))
-            {
-                throw new RevGMUsageException("自动化增益范围为0～500%，正式游玩请不传boost");
-            }
+            GameAutomationBoost.Validate(plan.boost);
             foreach (GameAutomationStep step in plan.steps)
             {
                 if (step == null || !ValidTimeout(step.timeoutSeconds))
@@ -107,7 +117,7 @@ namespace RevGame.Animation
                     throw new RevGMUsageException("screen/phase 必须使用项目枚举名称");
                 }
                 if (step.condition != null && step.condition != "" && step.condition != "ready" && step.condition != "roundWon"
-                    && step.condition != "chapterWon" && step.condition != "homeClean")
+                    && step.condition != "roundWonNoHand" && step.condition != "chapterWon" && step.condition != "homeClean")
                 {
                     throw new RevGMUsageException("未知只读条件：" + step.condition);
                 }
@@ -118,7 +128,7 @@ namespace RevGame.Animation
                 }
                 if (step.op == "gm" && !IsAllowedCommand(step.command))
                 {
-                    throw new RevGMUsageException("测试只允许玩家业务 GM；禁止跳关、强制胜利、改属性和任意脚本");
+                    throw new RevGMUsageException("测试只允许列出的玩家业务与开发属性GM；禁止跳关、强制胜利和任意脚本");
                 }
                 if (step.op == "click" && (string.IsNullOrEmpty(step.target) || step.target.Split('/').Length != 2))
                 {
@@ -137,7 +147,18 @@ namespace RevGame.Animation
         {
             string name = (command ?? "").Split(' ')[0];
             return name == "RevGame/打开选关" || name == "RevGame/进入战斗" || name == "RevGame/返回主界面"
-                || name == "RevGame/开始战斗" || name == "RevGame/下一回合" || name == "RevGame/刷新手牌" || name == "RevGame/选奖励";
+                || name == "RevGame/开始战斗" || name == "RevGame/下一回合" || name == "RevGame/刷新手牌" || name == "RevGame/选奖励"
+                || GameAttributeGmCommands.IsAttributeCommand(name);
+        }
+
+        /// <summary>运行中GM沿用本执行器租约，记录每次修改；完成、失败和取消仍统一释放，不遗留手动强化。</summary>
+        internal void SetBoostFromGm(GameAutomationBoost boost)
+        {
+            GameAutomationBoost.Validate(boost);
+            ((BattleService)RevServices.GetRequired<IBattleService>()).SetAutomationBoost(this, boost);
+            _plan.boost = boost?.Copy();
+            _report.boost = boost?.Copy();
+            Record("开发属性GM", boost == null ? "清除开发强化" : JsonUtility.ToJson(boost));
         }
 
         /// <summary>每次最多推进一个小动作；异常和 Unity 错误统一变成失败证据，计时器不能静默死掉。</summary>
@@ -168,9 +189,15 @@ namespace RevGame.Animation
                 {
                     return;
                 }
+                if (_currentRound != null && !_battleShotTaken && now >= _battleShotAt)
+                {
+                    CaptureEvidence("交战中");
+                    _battleShotTaken = true;
+                }
                 if (Execute(step))
                 {
                     Record(step.name, step.op + " 完成");
+                    if (step.op == "wait") { CaptureEvidence(step.name); }
                     _report.completedSteps = ++_index;
                     _stage = _deployed = 0;
                     _stepAt = now;
@@ -339,6 +366,8 @@ namespace RevGame.Animation
             {
                 case "ready": return battle.PreparationGranted && RevUI.IsOpen<PreparePanel>();
                 case "roundWon": return battle.LastWinner == GameSide.Player && battle.Phase == GamePhase.Settle && RoundWasObserved(battle.Chapter, battle.Round);
+                case "roundWonNoHand": return battle.LastWinner == GameSide.Player && battle.Phase == GamePhase.Settle
+                    && RoundWasObserved(battle.Chapter, battle.Round) && RoundUsedNoHand(battle.Chapter, battle.Round);
                 case "chapterWon": return ChapterWasObserved(step.chapter > 0 ? step.chapter : battle.Chapter) && battle.UnlockedChapter > battle.Chapter;
                 case "homeClean": return flow.Screen == GameScreen.Home && RevScene.CurrentName == "StartScene"
                     && RevLogic.Get<BattleLogic>() == null && !RevScope.IsActive(GameDomain.Battle)
@@ -376,6 +405,19 @@ namespace RevGame.Animation
             return (_plan.boost != null || _report.enemyAttacks > 0) && _report.unityErrors == 0;
         }
 
+        /// <summary>EndBattle在广播前统一清牌，所以只在开战核对六张未出，并结合真实落牌计数核对零牌。</summary>
+        private bool RoundUsedNoHand(int chapter, int round)
+        {
+            foreach (GameAutomationRound result in _report.rounds)
+            {
+                if (result.chapter == chapter && result.round == round)
+                {
+                    return result.cardsPlayed == 0 && result.handAtStart == Consts.MaxCardsPerRound && result.handAtEnd == 0;
+                }
+            }
+            return false;
+        }
+
         private void OnAttack(PieceAttackInfo attack)
         {
             if (attack.Side == GameSide.Player) { _report.playerAttacks++; }
@@ -385,6 +427,18 @@ namespace RevGame.Animation
         private void OnHit(BattleHitInfo hit)
         {
             if (hit.Damage > 0) { _report.damageEvents++; }
+            if (_currentRound == null || hit.Damage <= 0) { return; }
+            // ★ 直接累加业务已结算的实际扣血，保留无来源的环境/辅助伤害，不能用攻击次数猜伤害。
+            if (hit.TargetSide == GameSide.Player)
+            {
+                _currentRound.playerDamageTaken += hit.Damage;
+                if (hit.HasAttacker) { _currentRound.playerDamageTakenFromAttacker += hit.Damage; }
+            }
+            else
+            {
+                _currentRound.enemyDamageTaken += hit.Damage;
+                if (hit.HasAttacker) { _currentRound.enemyDamageTakenFromAttacker += hit.Damage; }
+            }
         }
 
         private void OnBossCast(BossSkillInfo info)
@@ -397,6 +451,19 @@ namespace RevGame.Animation
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();
             _currentRound = new GameAutomationRound { chapter = battle.Chapter, round = round, enemiesAtStart = battle.EnemyPieces.Count };
+            _currentRound.cardsPlayed = _report.cardsPlayed - _cardsBaseline;
+            _cardsBaseline = _report.cardsPlayed;
+            _currentRound.handAtStart = battle.Hand.Count;
+            _currentRound.victoryAssistEnabled = battle.VictoryAssistEnabled;
+            _currentRound.preparationBuffs = new string[battle.PreparationBuffs.Count];
+            for (int i = 0; i < battle.PreparationBuffs.Count; i++)
+            {
+                _currentRound.preparationBuffs[i] = battle.PreparationBuffs[i].Kind.ToString();
+            }
+            SnapshotHealth(battle, _currentRound, true);
+            _bossBaseline = _report.bossCasts;
+            _battleShotAt = Time.realtimeSinceStartupAsDouble + 0.6d;
+            _battleShotTaken = false;
             if (battle.IsBossRound)
             {
                 foreach (var enemy in battle.EnemyPieces)
@@ -429,6 +496,9 @@ namespace RevGame.Animation
             // “擒王”是原有玩法：主将被锁死就立即赢，不一定发生攻击/扣血。
             // 只读核对开战时同一编号的主将，绝不把“没生成Boss”或“删掉全部敌人”误认为围棋获胜。
             IBattleService battle = RevServices.GetRequired<IBattleService>();
+            _currentRound.handAtEnd = battle.Hand.Count;
+            _currentRound.bossCasts = _report.bossCasts - _bossBaseline;
+            SnapshotHealth(battle, _currentRound, false);
             if (battle.IsBossRound && _currentRound.kingId > 0)
             {
                 foreach (var enemy in battle.EnemyPieces)
@@ -457,6 +527,32 @@ namespace RevGame.Animation
             }
         }
 
+        /// <summary>仅在开战/结算时扫描现有名单；不移动棋子、不改变生命，也不在战斗每帧构造快照。</summary>
+        private static void SnapshotHealth(IBattleService battle, GameAutomationRound result, bool start)
+        {
+            int players = 0, enemies = 0, playerHp = 0, enemyHp = 0, playerMax = 0, enemyMax = 0;
+            foreach (Piece piece in battle.PlayerPieces)
+            {
+                if (!piece.IsAlive) { continue; }
+                players++; playerHp += piece.Hp; playerMax += piece.MaxHp;
+            }
+            foreach (Piece piece in battle.EnemyPieces)
+            {
+                if (!piece.IsAlive) { continue; }
+                enemies++; enemyHp += piece.Hp; enemyMax += piece.MaxHp;
+            }
+            if (start)
+            {
+                result.playersAtStart = players; result.playerHpStart = playerHp; result.enemyHpStart = enemyHp;
+                result.playerMaxHpStart = playerMax; result.enemyMaxHpStart = enemyMax;
+            }
+            else
+            {
+                result.playersAtEnd = players; result.enemiesAtEnd = enemies;
+                result.playerHpEnd = playerHp; result.enemyHpEnd = enemyHp;
+            }
+        }
+
         private void Record(string step, string detail)
         {
             GameFlow flow = RevServices.GetRequired<GameFlow>();
@@ -471,6 +567,20 @@ namespace RevGame.Animation
         private static void Require(bool condition, string message)
         {
             if (!condition) { throw new InvalidOperationException(message); }
+        }
+
+        /// <summary>异步请求正常帧末截图，记录请求时的阶段；实际画面由验收者复核，不通过强制Step获取。</summary>
+        private void CaptureEvidence(string label)
+        {
+#if UNITY_EDITOR
+            if (!_plan.captureScreenshots) { return; }
+            IBattleService battle = RevServices.GetRequired<IBattleService>();
+            string file = _screenshotDirectory + "/" + (++_screenshotSequence).ToString("D2") + "-c" + battle.Chapter
+                + "-r" + battle.Round + "-" + battle.Phase + ".png";
+            // ★ CaptureScreenshot自己等待渲染结束；不能在主线程同步等待或调用EditorApplication.Step，后者会递归PlayerLoop。
+            ScreenCapture.CaptureScreenshot(file);
+            Record(label, "异步帧末截图请求：" + file);
+#endif
         }
 
         private void Finish(string state, string error)

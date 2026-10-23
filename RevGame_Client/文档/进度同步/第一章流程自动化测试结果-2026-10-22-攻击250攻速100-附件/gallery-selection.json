@@ -1,0 +1,102 @@
+[
+  {
+    "file": "screenshots/01-c0-r0-Prepare.png",
+    "step": "启动首页就绪",
+    "chapter": 0,
+    "round": 0,
+    "phase": "Prepare",
+    "atSeconds": 0.07547380030155182,
+    "title": "正式入口首页",
+    "note": "新Play会话开始本次计划。"
+  },
+  {
+    "file": "screenshots/04-c1-r1-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 1,
+    "phase": "Battle",
+    "atSeconds": 7.754264831542969,
+    "title": "第1轮交战",
+    "note": "本次攻击×3.5、攻速×2；以逐轮事件计数为准。"
+  },
+  {
+    "file": "screenshots/13-c1-r4-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 4,
+    "phase": "Battle",
+    "atSeconds": 42.7122802734375,
+    "title": "第4轮交战",
+    "note": "真实战斗与伤害表现。"
+  },
+  {
+    "file": "screenshots/21-c1-r7-Prepare.png",
+    "step": "第7轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 7,
+    "phase": "Prepare",
+    "atSeconds": 79.11341857910156,
+    "title": "第7轮准备",
+    "note": "最后一轮允许手动打出六张牌。"
+  },
+  {
+    "file": "screenshots/24-c1-r8-Prepare.png",
+    "step": "第8轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Prepare",
+    "atSeconds": 91.83399963378906,
+    "title": "第8轮零出牌准备",
+    "note": "从本轮起不下手牌；画面是否已有既有棋不影响零落牌条件。"
+  },
+  {
+    "file": "screenshots/26-c1-r8-Settle.png",
+    "step": "第8轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 8,
+    "phase": "Settle",
+    "atSeconds": 98.39360809326172,
+    "title": "第8轮结算",
+    "note": "0次落牌、开战6牌、结算0牌已由数据断言。"
+  },
+  {
+    "file": "screenshots/33-c1-r11-Prepare.png",
+    "step": "第11轮准备与六张手牌就绪",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Prepare",
+    "atSeconds": 121.19404602050781,
+    "title": "Boss准备",
+    "note": "保留六张手牌直接开战。"
+  },
+  {
+    "file": "screenshots/34-c1-r11-Battle.png",
+    "step": "交战中",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Battle",
+    "atSeconds": 121.99378204345703,
+    "title": "Boss交战",
+    "note": "技能次数仅按实际事件，不按单张截图推断覆盖。"
+  },
+  {
+    "file": "screenshots/35-c1-r11-Settle.png",
+    "step": "第11轮实际交战胜利证据且实际零落牌、结算按规则清牌",
+    "chapter": 1,
+    "round": 11,
+    "phase": "Settle",
+    "atSeconds": 129.0324249267578,
+    "title": "Boss擒王结算",
+    "note": "真实BattleEnded，未要求先清光护卫。"
+  },
+  {
+    "file": "screenshots/38-c2-r1-Prepare.png",
+    "step": "首页与战斗域回收完成",
+    "chapter": 2,
+    "round": 1,
+    "phase": "Prepare",
+    "atSeconds": 133.59410095214844,
+    "title": "回到首页",
+    "note": "homeClean、强化释放及StartScene核对通过。"
+  }
+]

@@ -1,0 +1,194 @@
+通过 77 条：七条注册、参数原子校验、真实攻击/攻速/防御/生命、继承/换轮/升星、租约与终止清理
+PASS 1 没有并发自动化作业
+PASS 2 运行期已注册：属性设置
+PASS 3 运行期已注册：属性查询
+PASS 4 运行期已注册：属性清除
+PASS 5 运行期已注册：加攻击
+PASS 6 运行期已注册：加攻速
+PASS 7 运行期已注册：加防御
+PASS 8 运行期已注册：加血量
+PASS 9 属性清除 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 10 属性设置 250 100 0 0 → {"attackBonusPercent":250,"attackSpeedBonusPercent":100,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 11 设置与精确JSON查询
+PASS 12 属性设置 250 100 0 0 → {"attackBonusPercent":250,"attackSpeedBonusPercent":100,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 13 重复设置不累计
+PASS 14 加攻击 25 → {"attackBonusPercent":275,"attackSpeedBonusPercent":100,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 15 加攻速 20 → {"attackBonusPercent":275,"attackSpeedBonusPercent":120,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 16 加防御 50 → {"attackBonusPercent":275,"attackSpeedBonusPercent":120,"defenseBonusPercent":50,"healthBonusPercent":0}
+PASS 17 加血量 100 → {"attackBonusPercent":275,"attackSpeedBonusPercent":120,"defenseBonusPercent":50,"healthBonusPercent":100}
+PASS 18 四项分别累计
+PASS 19 加攻击 -25 → {"attackBonusPercent":250,"attackSpeedBonusPercent":120,"defenseBonusPercent":50,"healthBonusPercent":100}
+PASS 20 负增量允许下调到合法范围
+PASS 21 拒绝错误且原配置不变：属性设置
+PASS 22 拒绝错误且原配置不变：属性设置 1 2 3
+PASS 23 拒绝错误且原配置不变：属性设置 1 2 3 4 5
+PASS 24 拒绝错误且原配置不变：属性设置 1 x 0 0
+PASS 25 拒绝错误且原配置不变：属性设置 -1 0 0 0
+PASS 26 拒绝错误且原配置不变：属性设置 0 0 0 10001
+PASS 27 拒绝错误且原配置不变：属性设置 2147483648 0 0 0
+PASS 28 拒绝错误且原配置不变：加攻击
+PASS 29 拒绝错误且原配置不变：加攻击 1 2
+PASS 30 拒绝错误且原配置不变：加攻击 2147483647
+PASS 31 拒绝错误且原配置不变：加血量 -101
+PASS 32 拒绝错误且原配置不变：属性查询 1
+PASS 33 拒绝错误且原配置不变：属性清除 1
+PASS 34 属性设置 10000 10000 10000 10000 → {"attackBonusPercent":10000,"attackSpeedBonusPercent":10000,"defenseBonusPercent":10000,"healthBonusPercent":10000}
+PASS 35 技术范围上界可设置
+PASS 36 属性清除 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 37 正式入口接受战斗请求
+PASS 38 加载固定双玩家与Boss护卫夹具
+PASS 39 固定比较对象均存活
+PASS 40 原倍率真实出手造成非致死伤害：19
+PASS 41 属性设置 250 0 0 0 → {"attackBonusPercent":250,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 42 +250%真实普通攻击=原伤害×3.5，沿用整数截断
+PASS 43 未修改敌方最大生命
+PASS 44 属性清除 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 45 属性设置 0 100 0 0 → {"attackBonusPercent":0,"attackSpeedBonusPercent":100,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 46 +100%作用于真实攻击进度积累，速度翻倍
+PASS 47 未改变整个游戏时钟
+PASS 48 属性设置 0 0 100 0 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":100,"healthBonusPercent":0}
+PASS 49 +100%等效防御将真实技能正伤害减半
+PASS 50 正伤害至少1
+PASS 51 护盾抵消后的0伤害保持0
+PASS 52 属性清除 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 53 清除后原伤害恢复
+PASS 54 属性设置 0 0 0 100 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":100}
+PASS 55 已有伤棋最大生命翻倍且保留伤势比例
+PASS 56 属性设置 0 0 0 100 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":100}
+PASS 57 重复设置生命不会乘上旧倍率
+PASS 58 真实手牌落子成功
+PASS 59 后落棋继承最大生命倍率
+PASS 60 固定小棋可以升星
+PASS 61 升星后保持开发生命倍率
+PASS 62 开发生命和正常准备生命增益相乘组合
+PASS 63 真实切换下一轮
+PASS 64 换轮清理正常准备增益，保留本次开发生命
+PASS 65 真实致死入口使小棋死亡
+PASS 66 属性设置 0 0 0 200 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":200}
+PASS 67 调整生命不复活死棋
+PASS 68 属性清除 → {"attackBonusPercent":0,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 69 清除恢复原上限并释放手动租约
+PASS 70 属性设置 100 0 0 0 → {"attackBonusPercent":100,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 71 自动化接管手动租约并采用计划值
+PASS 72 加攻击 5 → {"attackBonusPercent":25,"attackSpeedBonusPercent":0,"defenseBonusPercent":0,"healthBonusPercent":0}
+PASS 73 运行中的GM沿用自动化租约
+PASS 74 取消路径清除强化
+PASS 75 计划内属性GM实际执行与查询通过：{
+    "name": "业务流程",
+    "startedUtc": "2026-10-22T08:26:12.8184303Z",
+    "state": "passed",
+    "error": "",
+    "completedSteps": 4,
+    "totalSteps": 4,
+    "pointerClicks": 0,
+    "cardsPlayed": 0,
+    "gmActions": 3,
+    "playerAttacks": 0,
+    "enemyAttacks": 0,
+    "damageEvents": 0,
+    "bossCasts": 0,
+    "unityErrors": 0,
+    "elapsedSeconds": 0.3153262138366699,
+    "boost": {
+        "attackBonusPercent": 0,
+        "attackSpeedBonusPercent": 0,
+        "defenseBonusPercent": 0,
+        "healthBonusPercent": 0
+    },
+    "rounds": [],
+    "boostReleased": true,
+    "evidence": [
+        {
+            "step": "开发属性GM",
+            "detail": "{\"attackBonusPercent\":250,\"attackSpeedBonusPercent\":100,\"defenseBonusPercent\":20,\"healthBonusPercent\":30}",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.07868710160255432
+        },
+        {
+            "step": "设置四项",
+            "detail": "GM（不是模拟输入）：RevGame/属性设置 250 100 20 30 → {\"attackBonusPercent\":250,\"attackSpeedBonusPercent\":100,\"defenseBonusPercent\":20,\"healthBonusPercent\":30}",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.0786994993686676
+        },
+        {
+            "step": "设置四项",
+            "detail": "gm 完成",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.07870180159807205
+        },
+        {
+            "step": "查询精确返回",
+            "detail": "GM（不是模拟输入）：RevGame/属性查询 → {\"attackBonusPercent\":250,\"attackSpeedBonusPercent\":100,\"defenseBonusPercent\":20,\"healthBonusPercent\":30}",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.15497179329395295
+        },
+        {
+            "step": "查询精确返回",
+            "detail": "gm 完成",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.1549738049507141
+        },
+        {
+            "step": "开发属性GM",
+            "detail": "清除开发强化",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.23541679978370667
+        },
+        {
+            "step": "清除四项",
+            "detail": "GM（不是模拟输入）：RevGame/属性清除 → {\"attackBonusPercent\":0,\"attackSpeedBonusPercent\":0,\"defenseBonusPercent\":0,\"healthBonusPercent\":0}",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.23543310165405274
+        },
+        {
+            "step": "清除四项",
+            "detail": "gm 完成",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.23543420433998109
+        },
+        {
+            "step": "正常首页",
+            "detail": "assert 完成",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.31532371044158938
+        },
+        {
+            "step": "流程结束",
+            "detail": "passed ",
+            "screen": "Home",
+            "phase": "Prepare",
+            "chapter": 1,
+            "round": 2,
+            "atSeconds": 0.31532761454582217
+        }
+    ]
+}
+PASS 76 完成路径释放租约
+PASS 77 错误断言使计划失败且释放强化

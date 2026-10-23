@@ -62,7 +62,7 @@ table{{border-collapse:collapse;width:100%}}td,th{{padding:10px;text-align:cente
 <section><b>{report['state']}</b> · 步骤 {report['completedSteps']}/{report['totalSteps']} · 真实耗时 {report['elapsedSeconds']:.2f}s
 <p>指针点击 {report['pointerClicks']} · 验证落牌 {report['cardsPlayed']} · GM动作 {report['gmActions']} · Unity错误 {report['unityErrors']}</p>
 <p>测试强化：{html.escape(json.dumps(report.get('boost'), ensure_ascii=False))}；强化已清除：{report.get('boostReleased', False)}。</p>
-<p>+500%表示原值×6；防御采用正伤害÷6（最少1）。加速用例验证流程，不证明普通难度或Boss全部技能。</p>
+<p>四项配置均为额外百分比：+250%表示原值×3.5，0表示不加成。生命调整保留伤势比例；游戏原有准备增益照常运行。此用例不证明普通难度或Boss全部技能。</p>
 <pre>{html.escape(report.get('error', ''))}</pre></section><section class="scroll"><table>
 <tr><th>章</th><th>轮</th><th>胜方</th><th>模拟秒</th><th>我方攻击</th><th>敌方攻击</th><th>伤害事件</th><th>开战敌人数</th><th>擒王</th></tr>{rows}</table></section>
 <h2>逐步证据</h2><ol>{evidence}</ol></main></html>"""
@@ -103,16 +103,9 @@ def main():
         names = {c["name"] for c in registered["data"]["commands"]}
         if "RevGame/自动化开始" not in names:
             raise RuntimeError("运行期未注册自动化GM，请检查编译与启动接线")
-        last_update = [""]
-
-        def progress(value):
-            # 只输出变化，避免长章测试每帧刷终端；详细数据由框架写作业文件。
-            summary = str(value.get("message", ""))
-            if summary != last_update[0]:
-                print(summary, flush=True)
-                last_update[0] = summary
-
-        response = client.call("scenario.run", spec, progress=progress)
+        # Windows 下持续打开 progress.json 可能与编辑器的原子替换竞争读锁。
+        # 此处只等待最终 response；详细进度由作业目录保留，避免观察动作中断长章测试。
+        response = client.call("scenario.run", spec)
         atomic_json(output / "response.json", response)
         job_result = Path(response["jobDirectory"]) / "scenario-result.json"
         if job_result.exists():

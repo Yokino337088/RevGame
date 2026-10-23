@@ -78,6 +78,10 @@ namespace RevGame.View
         private const float AttackPulseSeconds = 0.20f;
         // 三种特效只改原棋子身体；共享一条 Tween 与逐实例参数块，归池先 Kill(false) 再清干净，防串对象。
         private Tween _visualTween;
+        // 死亡后的视图只拥有短暂表现寿命；回收不再只依赖 Tween 的完成回调。
+        // 句柄与回调都属于本次借出的棋子，回池/复用前必须取消，避免旧期限收走新棋子。
+        private RevTimerHandle _deathRecycleTimer;
+        private System.Action<PieceView> _onDeathFinished;
         private MaterialPropertyBlock _visualProperties;
         private float _deathProgress;
         // 身体燃烧的归一化时间（0~1）；火焰强弱由 Shader 的首尾包络控制，结束/归池都恢复为 0。
@@ -172,7 +176,7 @@ namespace RevGame.View
             // 这里推进的是时间，不是亮度。Linear 让火舌匀速向上翻卷；渐燃/渐熄由 Shader 单独计算，
             // 不能再用收尾闪光来掩盖“带火身体 → 普通身体”的切换。
             _visualTween = DOTween.To(() => _birthProgress, SetBirthProgress, 1f, BirthSeconds)
-                .SetEase(Ease.Linear).OnComplete(FinishBodyVisual);
+                .SetEase(Ease.Linear).OnComplete(FinishBodyVisual).OnKill(ClearVisualTween);
         }
 
         /// <summary>原位升级后由同一颗棋子的身体掀起闪电与雷暴，反复升级会中断旧效果而非叠加实例。</summary>
@@ -184,7 +188,7 @@ namespace RevGame.View
             }
             SetStormProgress(0.001f);
             _visualTween = DOTween.To(() => _stormProgress, SetStormProgress, 1f, StormSeconds)
-                .SetEase(Ease.Linear).OnComplete(FinishBodyVisual);
+                .SetEase(Ease.Linear).OnComplete(FinishBodyVisual).OnKill(ClearVisualTween);
         }
 
         private bool PrepareBodyVisual(int shaderProperty)
@@ -273,13 +277,33 @@ namespace RevGame.View
             }
             SetVisualUv(sprite);
             SetDeathProgress(0.001f);
+            _onDeathFinished = onFinished;
+            // 这是纯表现的游戏时间期限（动画1.05秒 + 0.10秒调度余量），不是延迟模型死亡。
+            // 即使 Tween 被外部误停，独立的 owner 计时器仍会归还尸体；暂停游戏时它随战斗一起暂停。
+            _deathRecycleTimer = RevTimer.After(DeathSeconds + 0.10f, FinishDeathDissolve, owner: this);
             _visualTween = DOTween.To(() => _deathProgress, SetDeathProgress, 1f, DeathSeconds)
                 .SetEase(Ease.Linear).OnComplete(() =>
                 {
                     _visualTween = null;
-                    onFinished?.Invoke(this);
-                });
+                    FinishDeathDissolve();
+                }).OnKill(ClearVisualTween);
             return true;
+        }
+
+        /// <summary>外部中断也要解除句柄，防止回收期限再去Kill已经被复用给其他对象的Tween。</summary>
+        private void ClearVisualTween()
+        {
+            _visualTween = null;
+        }
+
+        /// <summary>自然完成与到期保护共用一个出口；先撤销旧回调，再回池，因此最多通知一次。</summary>
+        private void FinishDeathDissolve()
+        {
+            System.Action<PieceView> callback = _onDeathFinished;
+            // StopBodyVisual 会停期限、清回调及未完成的 Tween；归池又调用它也安全。
+            // 先拷贝再清空，防止 OnPoolReturn/OnDisable 重入时再次归还同一实例。
+            StopBodyVisual();
+            callback?.Invoke(this);
         }
 
         private void SetDeathProgress(float value)
@@ -360,6 +384,8 @@ namespace RevGame.View
         /// </summary>
         private void StopBodyVisual()
         {
+            _deathRecycleTimer.Stop();
+            _onDeathFinished = null;
             bool hadVisual = _deathProgress > 0f || _birthProgress > 0f || _stormProgress > 0f;
             Tween previous = _visualTween;
             _visualTween = null;

@@ -1,0 +1,9 @@
+{
+  "checkedAtLocalDate": "2026-10-22",
+  "playObservation": {"screen":"Home","scene":"StartScene","isTransitioning":false,"isAutomationBoostActive":false},
+  "businessHomeClean": true,
+  "boostReleased": true,
+  "deathMonitor": {"observed":275,"checked":275,"failures":0},
+  "stopMethod":"Unity MCP manage_editor stop; the test started this Play before attaching CLI",
+  "editorStopConfirmed":true
+}

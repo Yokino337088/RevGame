@@ -1,0 +1,30 @@
+{
+  "name": "第一章攻击150%·末四轮零手牌实测",
+  "resultPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\407e164591684d6f988ec487c259a6e7\\scenario-result.json",
+  "startedUtc": "2026-10-22T07:15:18.8842632+00:00",
+  "finishedUtc": "2026-10-22T07:16:22.0613331+00:00",
+  "unityVersion": "2022.3.15f1c1",
+  "environment": "Unity Editor PlayMode",
+  "unityLogPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\407e164591684d6f988ec487c259a6e7\\unity-errors.jsonl",
+  "requested": 1,
+  "completed": 1,
+  "failedIterations": 1,
+  "warmupCompleted": 0,
+  "success": false,
+  "cancelled": false,
+  "elapsedSeconds": 63.172148799999995,
+  "frameSamples": 16538,
+  "frameMeanMs": 3.747105572031355,
+  "frameP95Ms": 5.6,
+  "frameMaxMs": 406.68490529060364,
+  "peakMonoUsedBytes": 714072064,
+  "peakAllocatedMemoryBytes": 374411677,
+  "unityErrors": 5,
+  "errors": [
+    "Unity Error: An abnormal situation has occurred: the PlayerLoop internal function has been called recursively. Please contact Customer Support with a sample project so that we can reproduce the problem and troubleshoot it.",
+    "Unity Error: An abnormal situation has occurred: the PlayerLoop internal function has been called recursively. Please contact Customer Support with a sample project so that we can reproduce the problem and troubleshoot it.",
+    "Unity Error: An abnormal situation has occurred: the PlayerLoop internal function has been called recursively. Please contact Customer Support with a sample project so that we can reproduce the problem and troubleshoot it.",
+    "Unity Error: An abnormal situation has occurred: the PlayerLoop internal function has been called recursively. Please contact Customer Support with a sample project so that we can reproduce the problem and troubleshoot it.",
+    "Unity Error: An abnormal situation has occurred: the PlayerLoop internal function has been called recursively. Please contact Customer Support with a sample project so that we can reproduce the problem and troubleshoot it."
+  ]
+}

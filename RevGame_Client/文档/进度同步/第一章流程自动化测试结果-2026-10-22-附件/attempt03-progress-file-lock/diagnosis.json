@@ -1,0 +1,7 @@
+{
+  "job": "526ca13f48ee4d00ba8383228f936596",
+  "firstError": "The process cannot access the file because it is being used by another process.",
+  "suspectedCause": "progress.json read/atomic replace sharing violation; removed optional Python progress reads in project CLI; not a proven framework root cause",
+  "roundsWon": 7,
+  "unityErrors": 0
+}

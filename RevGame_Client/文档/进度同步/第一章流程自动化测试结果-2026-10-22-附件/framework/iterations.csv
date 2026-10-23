@@ -1,0 +1,2 @@
+﻿iteration,warmup,success,durationMs,frames,frameP95Ms,frameMaxMs,monoUsedBytes,allocatedMemoryBytes,gc0,gc1,gc2,message
+0,False,True,639734.5765999999,161424,6.8,754.963219165802,679768064,448518638,49,49,49,

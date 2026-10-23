@@ -1,0 +1,2 @@
+# 原始证据保留字节，避免跨平台换行转换导致SHA-256清单失效。
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -1,0 +1,15 @@
+{
+  "checkedAtLocalDate": "2026-10-22",
+  "playObservation": {
+    "screen": "Home",
+    "transitioning": false,
+    "scene": "StartScene",
+    "boostActive": false,
+    "boost": "{\"attackBonusPercent\":0,\"attackSpeedBonusPercent\":0,\"defenseBonusPercent\":0,\"healthBonusPercent\":0}",
+    "monitor": "observed=107;checked=107;failures=0\n",
+    "playing": true
+  },
+  "businessHomeClean": true,
+  "boostReleased": true,
+  "method": "Unity MCP execute_code after final scenario success"
+}

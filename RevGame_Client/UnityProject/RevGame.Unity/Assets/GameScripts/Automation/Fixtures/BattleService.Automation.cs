@@ -19,12 +19,15 @@ namespace RevGame.Services
         /// <summary>只能在已验证的测试计划开始时取得租约；增益本身不生成棋子、不改胜负、不跳过战斗。</summary>
         internal void SetAutomationBoost(object owner, GameAutomationBoost boost)
         {
-            if (_automationBoostOwner != null && _automationBoostOwner != owner)
+            GameAutomationBoost.Validate(boost);
+            if (_automationBoostOwner != null && _automationBoostOwner != owner && _automationBoostOwner != this)
             {
                 throw new System.InvalidOperationException("另一份自动化测试仍持有战斗增益");
             }
             _automationBoostOwner = owner;
-            _automationBoost = boost;
+            // 手动GM以服务自身为owner；启动自动化可接管它，并显式采用计划配置，不继承未声明的旧强化。
+            _automationBoost = boost?.Copy();
+            RefreshAutomationHealth();
         }
 
         /// <summary>完成、失败、取消和退出Play必须归还租约；反复调用安全，普通玩家不会继承测试强化。</summary>
@@ -34,6 +37,36 @@ namespace RevGame.Services
             {
                 _automationBoostOwner = null;
                 _automationBoost = null;
+                RefreshAutomationHealth();
+            }
+        }
+
+        /// <summary>返回独立参数快照，供GM读取/修改后整体提交；不暴露正在使用的可变配置。</summary>
+        internal GameAutomationBoost CopyAutomationBoost()
+        {
+            return _automationBoost?.Copy() ?? new GameAutomationBoost();
+        }
+
+        /// <summary>手动GM的租约不会覆盖运行中的自动化；运行中修改必须由执行器持同一owner接续。</summary>
+        internal void SetManualDevelopmentBoost(GameAutomationBoost boost)
+        {
+            if (boost == null) { ClearAutomationBoost(this); }
+            else { SetAutomationBoost(this, boost); }
+        }
+
+        /// <summary>组合原有本轮生命增益，不改只读图鉴；比例重算让反复设置/清零都不会乘上旧倍率。</summary>
+        private float ScaleAutomationHealth(float normalScale)
+        {
+            return normalScale * (1f + (_automationBoost == null ? 0 : _automationBoost.healthBonusPercent) / 100f);
+        }
+
+        private void RefreshAutomationHealth()
+        {
+            foreach (Piece piece in _playerPieces)
+            {
+                // SetRoundHealthScale保留生命比例且保留0血；加生命不是复活或免费回满的旁路。
+                piece.SetRoundHealthScale(ScaleAutomationHealth(_prepHealthScale));
+                if (piece.IsAlive) { Revolution.RevEvent.DispatchEvent<int>(Events.PieceHpChanged, piece.Id); }
             }
         }
 

@@ -1,0 +1,1 @@
+{"iteration":0,"warmup":false,"success":true,"durationMs":133840.85349999998,"frames":39125,"frameP95Ms":5.3,"frameMaxMs":897.846519947052,"monoUsedBytes":664449024,"allocatedMemoryBytes":419958419,"gc0":13,"gc1":13,"gc2":13,"message":""}
