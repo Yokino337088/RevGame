@@ -4,12 +4,12 @@
   "success": true,
   "error": "",
   "message": "完成",
-  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\70b520a7e4e64823a95b5446126eb146",
+  "jobDirectory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\70b520a7e4e64823a95b5446126eb146",
   "data": {
     "text": "第一章 GUID/Sprite/图集保留；六个独立背景包，每包图片+专属材质+专属Shader；其余5张原图SHA256一致",
     "abMode": true,
     "checks": 252,
-    "directory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Temp\\ChapterBackgroundChecks"
+    "directory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Temp\\ChapterBackgroundChecks"
   },
-  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175403-0ccad301.json"
+  "reportPath": "RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175403-0ccad301.json"
 }

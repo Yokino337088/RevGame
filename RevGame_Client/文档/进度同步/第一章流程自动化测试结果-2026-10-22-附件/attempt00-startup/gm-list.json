@@ -4,7 +4,7 @@
   "success": true,
   "error": "",
   "message": "完成",
-  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\117cb71fc4f244b1ad38009d6654379b",
+  "jobDirectory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\117cb71fc4f244b1ad38009d6654379b",
   "data": {
     "playing": true,
     "commands": [],

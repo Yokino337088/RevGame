@@ -13,8 +13,8 @@
 import subprocess
 import sys
 
-REV = r'g:\RevRoot\MyRevGame\RevGame_Client\UnityProject\Revolution.Automation\rev.py'
-PROJECT = r'g:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity'
+REV = r'RevGame_Client\UnityProject\Revolution.Automation\rev.py'
+PROJECT = r'RevGame_Client\UnityProject\RevGame.Unity'
 
 command = sys.argv[1] if len(sys.argv) > 1 else 'RevGame/快照'
 

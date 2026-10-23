@@ -26,7 +26,7 @@
 | 引擎 | Unity **2022.3.15f1c1**（2D 模板，uGUI + TextMeshPro 已装） |
 | 框架 | Revolution 装在 `Assets/Revolution`（从 `package` 分支快照装入，**不要在这里改框架**） |
 | AI 桥 | `com.coplaydev.unity-mcp`（已装，用于**所有资源/预制体操作**） |
-| 本机工程根 | `d:\AAAAAAA王者荣耀项目组工作日志\RevGame\RevGame_Client\UnityProject\RevGame.Unity` |
+| 本机工程根 | `RevGame_Client\UnityProject\RevGame.Unity` |
 | 代码规模 | 22 个 `.cs` / **2,811 行**，命名空间 `RevGame.*` |
 | 美术 | `Assets/ArtRes` 共 **286 个文件**（全中文命名，7 个目录） |
 | 预制体/配置 | `Assets/GameRes` 共 **11 个**（10 prefab + 1 配置表） |

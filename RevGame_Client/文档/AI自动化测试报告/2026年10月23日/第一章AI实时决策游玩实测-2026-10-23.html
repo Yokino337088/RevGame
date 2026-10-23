@@ -65,7 +65,7 @@
 <div class="resource-links"><a href="附件/ch1-chapter2-prepare.png">通关后画面 ↗</a><a href="第一章AI实时决策游玩实测-2026-10-23.md">Markdown 版本 ↗</a></div>
 <details><summary>复现方式</summary><pre><code># 1) Unity 打开 RevGame.Unity，等待编译完成
 # 2) 用 RevMCP 读局面
-python Revolution.RevMCP/rev_mcp.py --project "G:/.../RevGame.Unity" call gm "RevGame/棋子"
+python Revolution.RevMCP/rev_mcp.py --project "<Unity 工程目录>" call gm "RevGame/棋子"
 
 # 3) 真实点击：首页 → 第一章
 python ... call gm "RevGame/点击" --json args.json   # {"arg0":"HomePanel/btnPlay"}

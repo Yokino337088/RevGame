@@ -38,12 +38,12 @@
 <section id="primary" class="chapter"><div class="section-label">REPORT / 03</div><h2>原版场景：保留失败原文</h2><dl class="key-values"><div><dt>任务 ID</dt><dd><code>52a954851ea444acb476703c641f347d</code></dd></div><div><dt>执行时间（北京时间）</dt><dd>2026-10-20 17:01:41 — 17:01:57</dd></div><div><dt>执行结果</dt><dd><code>success=false</code> · <code>cancelled=false</code></dd></div><div><dt>迭代完成情况</dt><dd><code>completed/requested = 1/1</code> · <code>failedIterations=1</code></dd></div><div><dt>Unity 错误计数</dt><dd><code>unityErrors=0</code></dd></div><div><dt>运行耗时</dt><dd>16.085 秒 · 原版场景统计</dd></div></dl><p class="muted">1/1 表示执行完成，并不表示测试通过。</p><pre class="failure"><code>errors[0]:
 steps[28]: RevGame/Boss技能 6: SoulDrain 当前没有合法目标</code></pre><p>该任务未生成 <code>unity-errors.jsonl</code>，与结果中的 Unity Error 计数 0 一致，因此没有错误日志摘录可展示。失败原因来自自动化步骤返回的业务异常；报告完整保留了场景错误与迭代记录。</p><details><summary>展开原版场景 summary.json</summary><pre><code>{
   &quot;name&quot;: &quot;Boss AI 九技能自动化验收&quot;,
-  &quot;resultPath&quot;: &quot;G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\scenario-result.json&quot;,
+  &quot;resultPath&quot;: &quot;RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\scenario-result.json&quot;,
   &quot;startedUtc&quot;: &quot;2026-10-20T09:01:41.2404035+00:00&quot;,
   &quot;finishedUtc&quot;: &quot;2026-10-20T09:01:57.3250949+00:00&quot;,
   &quot;unityVersion&quot;: &quot;2022.3.15f1c1&quot;,
   &quot;environment&quot;: &quot;Unity Editor PlayMode&quot;,
-  &quot;unityLogPath&quot;: &quot;G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\unity-errors.jsonl&quot;,
+  &quot;unityLogPath&quot;: &quot;RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\52a954851ea444acb476703c641f347d\\unity-errors.jsonl&quot;,
   &quot;requested&quot;: 1,
   &quot;completed&quot;: 1,
   &quot;failedIterations&quot;: 1,

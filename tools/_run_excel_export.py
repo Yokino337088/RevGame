@@ -14,9 +14,9 @@
 import subprocess
 import sys
 
-REV = r'g:\RevRoot\MyRevGame\RevGame_Client\UnityProject\Revolution.Automation\rev.py'
-PROJECT = r'g:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity'
-SOURCES = r'g:\RevRoot\MyRevGame\RevGame_Client\配置表'
+REV = r'RevGame_Client\UnityProject\Revolution.Automation\rev.py'
+PROJECT = r'RevGame_Client\UnityProject\RevGame.Unity'
+SOURCES = r'RevGame_Client\配置表'
 
 action = sys.argv[1] if len(sys.argv) > 1 else 'plan'
 

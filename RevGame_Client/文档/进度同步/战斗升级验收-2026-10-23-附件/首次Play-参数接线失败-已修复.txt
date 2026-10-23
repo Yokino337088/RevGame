@@ -1,7 +1,7 @@
 失败：System.InvalidOperationException: Boss靠近 0 1：RevGame/Boss靠近 → 参数多了 1 个（本命令最多接受 1 个参数；多个词请用引号括起来，例如 "王者 荣耀"）
-  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
-  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
-  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x009be] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:112 
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x009be] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:112 
 冷启动使用真实AB模式
 正式流程进入战斗
 加载固定Boss夹具
@@ -119,6 +119,6 @@ UI显示能量巨大弹幕
 技能夹具开战 Cleave
 Boss清卫：ok:8
 System.InvalidOperationException: Boss靠近 0 1：RevGame/Boss靠近 → 参数多了 1 个（本命令最多接受 1 个参数；多个词请用引号括起来，例如 "王者 荣耀"）
-  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
-  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
-  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x009be] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:112 
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x009be] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:112 

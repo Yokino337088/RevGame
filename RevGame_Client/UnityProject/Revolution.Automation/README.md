@@ -5,7 +5,7 @@ Python 3.10+ 标准库 CLI，通过 Unity 主线程桥调用编辑器、GM 和�
 先用 Unity 打开目标工程，等待编译；下面命令从仓库根目录执行：
 
 ```powershell
-$project = 'G:\RevRoot\Revolution\RevolutionFrameWork_Unity'
+$project = '<本仓库绝对路径>/RevolutionFrameWork_Unity'
 $env:PYTHONIOENCODING = 'utf-8'
 python Revolution.Automation/rev.py --project $project doctor
 python Revolution.Automation/rev.py --project $project --mode live commands --live

@@ -4,8 +4,8 @@
     {
       "name": "project.echo",
       "description": "教学示例：回显 JSON 文本；接入前替换 command/cwd 为本机真实绝对路径",
-      "command": ["C:/Python311/python.exe", "G:/RevRoot/Revolution/Revolution.RevMCP/examples/echo_tool.py"],
-      "cwd": "G:/RevRoot/Revolution",
+      "command": ["C:/Python311/python.exe", "<本仓库绝对路径>/Revolution.RevMCP/examples/echo_tool.py"],
+      "cwd": "<本仓库绝对路径>",
       "inputSchema": {"type":"object","properties":{"text":{"type":"string","maxLength":4096}},"required":["text"],"additionalProperties":false},
       "readOnly": true,
       "confirm": false,

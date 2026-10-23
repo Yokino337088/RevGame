@@ -21,13 +21,13 @@
 
 ## 2. 必须先完成的准备
 
-1. **Unity 编辑器已打开本工程**：`G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity`
+1. **Unity 编辑器已打开本工程**：`RevGame_Client\UnityProject\RevGame.Unity`
    （桥接文件在 `Library/RevolutionAutomation/`，编辑器进程存活才有 `endpoint.json`）。
 2. **等脚本编译完成**：本轮新增了 GM 指令，必须让 Unity 重新编译后再进 Play，否则会提示“没有这条命令”。
 3. 所有命令从 `UnityProject` 目录执行：
 
 ```powershell
-cd G:\RevRoot\MyRevGame\RevGame_Client\UnityProject
+cd RevGame_Client\UnityProject
 
 # 自检：工程路径 / 会话 / 桥接
 python Revolution.Automation\rev.py --project RevGame.Unity doctor
@@ -216,7 +216,7 @@ python Revolution.Automation\rev.py --project RevGame.Unity --mode live --timeou
 ## 10. 离线回归（不依赖 Unity，可先跑）
 
 ```powershell
-dotnet run --project G:\RevRoot\MyRevGame\RevGame_Client\Tests\CombatAttackRegression\CombatAttackRegression.csproj
+dotnet run --project RevGame_Client\Tests\CombatAttackRegression\CombatAttackRegression.csproj
 ```
 
 期望输出：`CombatAttackRegression: 181 scenarios, 4167 assertions passed.`

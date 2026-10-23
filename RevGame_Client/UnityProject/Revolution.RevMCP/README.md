@@ -5,7 +5,7 @@
 保留相邻的 `Revolution.Automation` 目录，Unity 工程安装当前框架。先打开目标工程并等待编译，再执行：
 
 ```powershell
-$project = 'G:\RevRoot\Revolution\RevolutionFrameWork_Unity'
+$project = '<本仓库绝对路径>/RevolutionFrameWork_Unity'
 python Revolution.RevMCP/rev_mcp.py --project $project discover
 python Revolution.Automation/rev.py --project $project --mode live editor play --scene 'Assets/Revolution.Demo/RevAutomation.Demo/RevAutomationDemo.unity'
 python Revolution.RevMCP/rev_mcp.py --project $project run Revolution.RevMCP/examples/ui-gm.plan.json

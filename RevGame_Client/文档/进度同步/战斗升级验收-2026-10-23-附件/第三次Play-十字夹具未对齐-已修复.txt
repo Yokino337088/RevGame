@@ -1,7 +1,7 @@
 失败：System.InvalidOperationException: Boss技能 10：CrossLaser 当前没有合法目标
-  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
-  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
-  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00ae5] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:129 
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00ae5] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:129 
 冷启动使用真实AB模式
 正式流程进入战斗
 加载固定Boss夹具
@@ -183,6 +183,6 @@ Boss清卫：ok:8
 技能夹具开战 CrossLaser
 Boss靠近 1：ok
 System.InvalidOperationException: Boss技能 10：CrossLaser 当前没有合法目标
-  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
-  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
-  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00ae5] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:129 
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Gm (System.String command) [0x00011] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:36 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00ae5] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:129 

@@ -4,11 +4,11 @@
   "success": true,
   "error": "",
   "message": "完成",
-  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e3460e9a09144645a5475170d0242eb4",
+  "jobDirectory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e3460e9a09144645a5475170d0242eb4",
   "data": {
     "compiling": false,
     "failed": false,
     "messages": []
   },
-  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175402-6778699e.json"
+  "reportPath": "RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175402-6778699e.json"
 }

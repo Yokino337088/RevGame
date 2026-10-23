@@ -3,8 +3,8 @@
     "revolution": {
       "command": "python",
       "args": [
-        "G:/RevRoot/Revolution/Revolution.RevMCP/rev_mcp.py",
-        "--project", "G:/RevRoot/Revolution/RevolutionFrameWork_Unity",
+        "<本仓库绝对路径>/Revolution.RevMCP/rev_mcp.py",
+        "--project", "<本仓库绝对路径>/RevolutionFrameWork_Unity",
         "serve"
       ]
     }

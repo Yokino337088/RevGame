@@ -1,6 +1,6 @@
 失败：System.InvalidOperationException: 本次Play没有声音加载/播放失败
-  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
-  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00fe8] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:185 
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00fe8] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:185 
 冷启动使用真实AB模式
 正式流程进入战斗
 加载固定Boss夹具
@@ -364,5 +364,5 @@ DoomSigil 技能声音真实AudioSource曾播放
 退出后无Boss/炸弹池对象残留
 清理后回到首页
 System.InvalidOperationException: 本次Play没有声音加载/播放失败
-  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
-  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00fe8] in G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:185 
+  at RevGame.Editor.GameCombatUpgradeChecks.Require (System.Boolean ok, System.String message) [0x00021] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:30 
+  at RevGame.Editor.GameCombatUpgradeChecks.Begin () [0x00fe8] in RevGame_Client\UnityProject\RevGame.Unity\Assets\Editor\RevGame\GameCombatUpgradeChecks.cs:185 

@@ -147,7 +147,7 @@ td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
 <main><section id="intro">
 <p>把 Revolution 的 Editor、实际注册 GM、运行时业务、UGUI、状态/截图，以及显式 CLI/Python 接口提供给 Agent。Python 3.10+，标准库即可运行。Unity 内入口为 <code>Revolution.Tools/AI/RevMCP 控制台</code>，外部 Python 进程提供 MCP stdio；独立开发版 Player 复用运行时桥。</p>
 <p>保留相邻的 <code>Revolution.Automation</code> 目录，Unity 工程安装当前框架。先打开目标工程并等待编译，再执行：</p>
-<pre><code class="language-powershell">$project = &#39;G:\RevRoot\Revolution\RevolutionFrameWork_Unity&#39;
+<pre><code class="language-powershell">$project = &#39;<本仓库绝对路径>/RevolutionFrameWork_Unity&#39;
 python Revolution.RevMCP/rev_mcp.py --project $project discover
 python Revolution.Automation/rev.py --project $project --mode live editor play --scene &#39;Assets/Revolution.Demo/RevAutomation.Demo/RevAutomationDemo.unity&#39;
 python Revolution.RevMCP/rev_mcp.py --project $project run Revolution.RevMCP/examples/ui-gm.plan.json

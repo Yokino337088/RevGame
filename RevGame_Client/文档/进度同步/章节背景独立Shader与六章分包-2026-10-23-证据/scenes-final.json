@@ -4,7 +4,7 @@
   "success": true,
   "error": "",
   "message": "完成",
-  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7dc8f605220b448c93bac5ea93265794",
+  "jobDirectory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7dc8f605220b448c93bac5ea93265794",
   "data": {
     "scenes": [
       {
@@ -18,5 +18,5 @@
       }
     ]
   },
-  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175404-3c2ae8b7.json"
+  "reportPath": "RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175404-3c2ae8b7.json"
 }

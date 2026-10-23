@@ -4,9 +4,9 @@
   "success": true,
   "error": "",
   "message": "完成",
-  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8f1550334551412da767b759b0b1dd06",
+  "jobDirectory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\8f1550334551412da767b759b0b1dd06",
   "data": {
-    "text": "StandaloneWindows64：32个包；六章背景包依赖为0，其它包不引用背景包 → G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\PC；已复制到 G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\PC"
+    "text": "StandaloneWindows64：32个包；六章背景包依赖为0，其它包不引用背景包 → RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\PC；已复制到 RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\PC"
   },
-  "reportPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175114-530a0275.json"
+  "reportPath": "RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261023-175114-530a0275.json"
 }

@@ -1,11 +1,11 @@
 {
   "name": "第一章攻击150%·末四轮零手牌实测",
-  "resultPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d570573cf3704a4da82b623b7da9d5af\\scenario-result.json",
+  "resultPath": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d570573cf3704a4da82b623b7da9d5af\\scenario-result.json",
   "startedUtc": "2026-10-22T07:58:10.7926290+00:00",
   "finishedUtc": "2026-10-22T08:08:50.4954076+00:00",
   "unityVersion": "2022.3.15f1c1",
   "environment": "Unity Editor PlayMode",
-  "unityLogPath": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d570573cf3704a4da82b623b7da9d5af\\unity-errors.jsonl",
+  "unityLogPath": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d570573cf3704a4da82b623b7da9d5af\\unity-errors.jsonl",
   "requested": 1,
   "completed": 1,
   "failedIterations": 0,

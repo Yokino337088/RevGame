@@ -147,7 +147,7 @@ td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
 <main><section id="intro">
 <p>Python 3.10+ 标准库 CLI，通过 Unity 主线程桥调用编辑器、GM 和测试。新增场景/对象/组件/资产/Importer/Prefab/项目设置、Console/编译、Test Runner、Player 构建、运行时 UI/截图，以及流程引用、断言、有界轮询和 finally 清理。</p>
 <p>先用 Unity 打开目标工程，等待编译；下面命令从仓库根目录执行：</p>
-<pre><code class="language-powershell">$project = &#39;G:\RevRoot\Revolution\RevolutionFrameWork_Unity&#39;
+<pre><code class="language-powershell">$project = &#39;<本仓库绝对路径>/RevolutionFrameWork_Unity&#39;
 $env:PYTHONIOENCODING = &#39;utf-8&#39;
 python Revolution.Automation/rev.py --project $project doctor
 python Revolution.Automation/rev.py --project $project --mode live commands --live

@@ -1,4 +1,4 @@
-真实配置目录：G:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity\Assets\GameRes\Data
+真实配置目录：RevGame_Client\UnityProject\RevGame.Unity\Assets\GameRes\Data
 CombatPacingRegression: 36 scenarios, 225 assertions passed.
 FIFO admission summary baseline (not full old BoardView): 5/20 sources; real FairFeedbackBuffer: 20/20 sources (0.625s volleys, 10s).
 FairFeedbackBuffer: 2794 assertions passed (12/24 capacity, 40 sources, pause/expiry/clear).

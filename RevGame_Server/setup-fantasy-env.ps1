@@ -286,7 +286,7 @@ function Test-Unity {
 
     # Unity Hub 的两处默认安装位置都扫；按版本号精确匹配工程要求
     $candidates = @()
-    foreach ($base in @("$env:ProgramFiles\Unity\Hub\Editor", 'G:\Unity\Editor')) {
+    foreach ($base in @("$env:ProgramFiles\Unity\Hub\Editor", "$env:UNITY_EDITOR_ROOT")) {
         if (Test-Path $base) {
             $candidates += Get-ChildItem $base -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
         }

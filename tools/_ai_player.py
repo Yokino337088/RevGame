@@ -19,8 +19,8 @@ import sys
 import tempfile
 import time
 
-REV_MCP = r'g:\RevRoot\MyRevGame\RevGame_Client\UnityProject\Revolution.RevMCP\rev_mcp.py'
-PROJECT = r'g:\RevRoot\MyRevGame\RevGame_Client\UnityProject\RevGame.Unity'
+REV_MCP = r'RevGame_Client\UnityProject\Revolution.RevMCP\rev_mcp.py'
+PROJECT = r'RevGame_Client\UnityProject\RevGame.Unity'
 TMP = tempfile.mkdtemp(prefix='aiplayer_')
 
 

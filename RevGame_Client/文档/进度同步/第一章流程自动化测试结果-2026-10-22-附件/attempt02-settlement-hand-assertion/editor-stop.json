@@ -4,6 +4,6 @@
   "success": true,
   "error": "",
   "message": "已停止 Play",
-  "jobDirectory": "G:\\RevRoot\\MyRevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\786b26058f3b4084af62b67cc9344d01",
+  "jobDirectory": "RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\786b26058f3b4084af62b67cc9344d01",
   "data": null
 }
