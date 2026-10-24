@@ -6,9 +6,11 @@ import json
 import math
 from pathlib import Path
 import sys
+import time
 
 from .client import RevClient, RevError, atomic_json, find_unity, read_json
-from .report import export_report
+from .media import write_gif
+from .report import export_evidence, export_report
 from . import pipeline as pipelines
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +44,25 @@ def parser():
     report = sub.add_parser("report", help="从 scenario 结果生成 JSON/CSV/HTML")
     report.add_argument("result", type=Path)
     report.add_argument("--directory", type=Path, required=True)
+    gif = sub.add_parser("gif", help="把多张截图合成 GIF（离线，不需要 Unity）")
+    gif.add_argument("frames", nargs="+", type=Path)
+    gif.add_argument("--out", type=Path, required=True)
+    gif.add_argument("--delay", type=int, default=120, help="每帧停留毫秒")
+    gif.add_argument("--max-width", type=int, default=640)
+    capture = sub.add_parser("capture", help="连续抓 N 帧并合成 GIF（需要 Unity 在 Play 中）")
+    capture.add_argument("--out", type=Path, required=True, help="输出的 .gif 路径")
+    capture.add_argument("--frames", type=int, default=12)
+    capture.add_argument("--interval", type=int, default=120, help="两帧间隔毫秒（同时作为 GIF 帧间隔）")
+    capture.add_argument("--action", default="runtime.screenshot")
+    capture.add_argument("--json", type=Path, help="动作参数 JSON")
+    capture.add_argument("--max-width", type=int, default=640)
+    capture.add_argument("--report", action="store_true", help="同时生成带图/动图的 HTML 报告")
+    evidence = sub.add_parser("evidence", help="把结果目录里的截图/动图整理成 HTML 报告")
+    evidence.add_argument("--directory", type=Path, required=True)
+    evidence.add_argument("--title", default="Revolution 自动化测试报告")
+    evidence.add_argument("--subtitle", default="证据与截图")
+    evidence.add_argument("--summary", type=Path, help="指标 JSON（可选）")
+    evidence.add_argument("--note", action="append", default=[])
     families = {}
     for spec in read_json(ROOT / "commands.json")["actions"]:
         family, operation = spec["id"].split(".", 1)
@@ -230,6 +251,29 @@ def run_pipeline(client, path, confirm):
     return pipelines.run(client, path, confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"))
 
 
+def capture_frames(client, args):
+    """连续抓帧：每次调用截图动作，收集 Unity 返回的绝对路径。
+
+    为什么在客户端循环而不是在 Unity 里一次抓完：
+    Unity 的截图动作是"下一帧末写出 PNG"，跨帧等待发生在客户端最稳；
+    编辑器重载/卡帧时也不会把一串帧压在同一个作业里，失败能立刻看出是第几帧。
+    """
+    payload = read_json(args.json) if args.json else {}
+    shots = []
+    total = max(1, args.frames)
+    for index in range(total):
+        response = invoke_action(client, args.action, payload, args.confirm)
+        if not response.get("success", True):
+            raise RevError("第 %d 帧抓取失败：%s" % (index + 1, response.get("message") or response.get("error") or "未知原因"))
+        path = (response.get("data") or {}).get("path")
+        if not path:
+            raise RevError("动作 %s 未返回 data.path，无法合成 GIF" % args.action)
+        shots.append(Path(path))
+        if index + 1 < total:
+            time.sleep(max(0, args.interval) / 1000.0)
+    return shots
+
+
 def invoke_action(client, action, payload, confirm, report_dir=None):
     if action == "editor.launch":
         response = client.launch()
@@ -263,6 +307,14 @@ def main(argv=None):
                 result = dict(success=True, actions=found)
         elif args.family == "report":
             result = export_report(args.result, args.directory)
+        elif args.family == "gif":
+            result = dict(success=True, **write_gif(args.frames, args.out, args.delay, args.max_width))
+        elif args.family == "evidence":
+            summary = read_json(args.summary) if args.summary else None
+            result = dict(success=True, **export_evidence(
+                args.directory, args.title, args.subtitle, summary, args.note))
+        elif args.family == "capture" and args.mode == "batch":
+            raise RevError("capture 需要 Play 中的在线编辑器：先 editor launch，再 editor play。")
         elif args.family == "scenario" and args.operation == "validate":
             payload = payload_of(args)
             result = dict(success=True, name=payload.get("name", "scenario"), message="场景 JSON 格式有效；GM 是否存在及业务结果需在 Play 中检查。")
@@ -279,6 +331,15 @@ def main(argv=None):
                               bridgeInstalled=bool(list((client.project / "Assets").rglob("RevAutomationBridge.cs"))))
             elif args.family == "job":
                 result = client.job(args.id, args.cancel)
+            elif args.family == "capture":
+                frames = capture_frames(client, args)
+                info = write_gif(frames, args.out, args.interval, args.max_width)
+                result = dict(success=True, **info)
+                if args.report:
+                    result["report"] = export_evidence(
+                        args.out.parent, "Revolution 自动化测试报告",
+                        "连续 %d 帧 · 间隔 %d ms" % (len(frames), args.interval),
+                        {"帧数": len(frames), "帧间隔毫秒": args.interval, "GIF": args.out.name})
             elif args.family == "pipeline":
                 result = pipelines.run(client, args.file, args.confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"), output=args.output)
             else:

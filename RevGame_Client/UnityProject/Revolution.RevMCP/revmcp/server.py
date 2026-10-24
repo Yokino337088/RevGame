@@ -7,7 +7,9 @@ notifications/cancelled 仍能设置取消信号，又不会让两个变更同�
 from __future__ import annotations
 import hashlib
 import json
+from pathlib import Path
 import queue
+import shutil
 import sys
 import threading
 
@@ -103,6 +105,9 @@ class Server:
             validate(arguments, schema)
             result = self.hub.call(target, action, arguments["arguments"], arguments.get("confirm", False), token)
         report_path = self.hub.save(result)
+        evidence_path = self.write_evidence(result, report_path)
+        if evidence_path:
+            result = dict(result, evidencePath=evidence_path)
         content = []
         def visual_evidence(value):
             # A plan can contain screenshots below steps[].response.data. Surface
@@ -118,6 +123,62 @@ class Server:
         result = dict(result, reportPath=report_path)
         content.insert(0, dict(type="text", text=json.dumps(result, ensure_ascii=False, allow_nan=False)))
         return dict(content=content, structuredContent=result, isError=result.get("success") is False)
+
+    def write_evidence(self, result, report_path):
+        """测试必须留证据：把本次截图收进报告目录，生成带图/动图的 HTML 报告。
+
+        项目规矩：一次自动化测试的产出必须包含 report.html，里面有当时的画面；
+        涉及动态效果（技能、位移、粒子、UI 过渡）时还要有 GIF。
+        只有 {"success": true} 而没有图的报告，视为未完成。
+        """
+        try:
+            from revautomation.media import write_gif
+            from revautomation.report import export_evidence
+        except Exception:
+            return None
+
+        directory = Path(report_path).parent
+        shots = []
+
+        def collect(value):
+            if isinstance(value, dict):
+                if value.get("mimeType") == "image/png" and value.get("path"):
+                    shots.append(value["path"])
+                for item in value.values():
+                    collect(item)
+            elif isinstance(value, list):
+                for item in value:
+                    collect(item)
+
+        collect(result.get("steps"))
+        collect(result.get("cleanup"))
+
+        copied = []
+        for index, shot in enumerate(shots, 1):
+            source = Path(shot)
+            try:
+                if source.is_file():
+                    target = directory / ("%02d-%s" % (index, source.name))
+                    shutil.copyfile(source, target)
+                    copied.append(target)
+            except OSError:
+                continue
+
+        try:
+            if len(copied) >= 2:
+                write_gif(copied, directory / "anim.gif", delay_ms=120, max_width=520)
+            title = "Revolution 自动化测试报告 · %s" % (result.get("name") or "plan")
+            summary = {
+                "结论": "通过" if result.get("success") else "失败",
+                "步骤数": len(result.get("steps") or []),
+                "截图": len(copied),
+                "清理步骤": len(result.get("cleanup") or []),
+            }
+            info = export_evidence(directory, title, "由 RevMCP 计划执行自动生成", summary,
+                                   ["结论只由断言决定；图片是当时画面的直接证据。"])
+            return info.get("html")
+        except Exception:
+            return None
 
     def worker(self):
         while True:
