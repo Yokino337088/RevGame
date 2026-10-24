@@ -1,0 +1,68 @@
+{
+  "success": false,
+  "name": "退出Play后执行规则与重装",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.status",
+      "response": {
+        "protocol": 1,
+        "id": "c31b14fd91f14a759681d120eb7f5c57",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\c31b14fd91f14a759681d120eb7f5c57",
+        "data": {
+          "unityVersion": "2022.3.15f1c1",
+          "project": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity",
+          "playing": true,
+          "paused": false,
+          "compiling": false,
+          "updating": false,
+          "gmEnabled": true,
+          "gmCount": 55
+        }
+      },
+      "polls": 1,
+      "seconds": 0.10156810001353733
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "687149d0205e47dc85be41fd07014c71",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\687149d0205e47dc85be41fd07014c71",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.8301597000099719
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.regression",
+      "response": {
+        "protocol": 1,
+        "id": "f0ac651ef3a144f4b9418efa767e48b5",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f0ac651ef3a144f4b9418efa767e48b5",
+        "data": {
+          "text": "通过 675 条真实业务断言（全盘落子/重摆、守眼、刷新事务、分时远程攻击、升星、Boss、支援与清理）\n通过 747 条战术断言\n60个敌阵生成耗时合计 5939ms（编辑器单次测量，不代表手机性能）\r\n1/1：27.8125秒，事件12，我方受伤584，敌方受伤25866，真实胜负 · 不限时 · 区域波动与能量炸弹\r\n1/9：33.4375秒，事件15，我方受伤1149，敌方受伤13026，真实胜负 · 不限时 · 区域波动与能量炸弹\r\n3/1：7.5秒，事件3，我方受伤811，敌方受伤773，真实胜负 · 不限时 · 区域波动与能量炸弹\r\n3/9：5.9375秒，事件2，我方受伤731，敌方受伤677，真实胜负 · 不限时 · 区域波动与能量炸弹\r\n6/1：5.3125秒，事件2，我方受伤944，敌方受伤260，真实胜负 · 不限时 · 区域波动与能量炸弹\r\n6/9：4.6875秒，事件2，我方受伤462，敌方受伤853，真实胜负 · 不限时 · 区域波动与能量炸弹\r\n连续闯关种子20261018：实际胜利10轮，失败重开分支通过，战斗合计367.1875秒，事件168次\r\n连续闯关种子701：实际胜利10轮，失败重开分支通过，战斗合计385.3125秒，事件174次\r\n\n"
+        }
+      },
+      "polls": 1,
+      "seconds": 48.58937309999601
+    }
+  ],
+  "cleanup": [],
+  "error": "没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。",
+  "cancelled": false
+}

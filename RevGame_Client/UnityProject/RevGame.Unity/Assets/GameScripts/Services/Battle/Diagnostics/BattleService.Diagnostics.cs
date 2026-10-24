@@ -64,7 +64,7 @@ namespace RevGame.Services
             _playerPieces.Clear();
             _enemyPieces.Clear();
             _board.Reset();
-            if (!StartRound(1, name == "enemy-two-eyes" ? 9 : (name == "round10" ? 10 : (name == "boss" || name == "reward" ? 11 : 1))))
+            if (!StartRound(1, name == "enemy-two-eyes" ? 9 : (name == "round10" ? Balance.NormalRoundsPerChapter : (name == "boss" || name == "reward" ? Balance.BossRoundIndex : 1))))
             {
                 return false;
             }

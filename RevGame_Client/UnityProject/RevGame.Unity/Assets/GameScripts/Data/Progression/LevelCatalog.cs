@@ -130,7 +130,7 @@ namespace RevGame.Data
             int count = System.Math.Min(Balance.EnemyCountMax, Balance.EnemyCountBase + progress / Balance.EnemyCountRoundsPerExtra);
             for (int i = enemies.Count; i < count; i++)
             {
-                enemies.Add(snapshot.FillerRoster[i % snapshot.FillerRoster.Count]);
+                enemies.Add(snapshot.FillerRoster[(i + progress) % snapshot.FillerRoster.Count]);
             }
 
             return new RoundDef(chapter, round, isBoss, enemies);

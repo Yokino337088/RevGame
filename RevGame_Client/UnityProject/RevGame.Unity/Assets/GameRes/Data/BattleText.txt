@@ -28,3 +28,27 @@ Event_钢铁防线	钢铁防线	本轮全队等效防御增强	#8DE0FF	42	2.3	1.
 Event_疾风行动	疾风行动	本轮全队攻击提速	#9DF0C2	42	2.3	1.15
 Event_生命奔涌	生命奔涌	本轮生命上限增强，保留当前血量比例	#9FF4AF	42	2.3	1.15
 Event_能量巨大	能量巨大	能量炸弹引爆！冲击全场敌军	#FFE176	56	2.6	1.3
+Damage_Incoming	受击 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FF818A	56	1.1	1.32
+Damage_Critical	暴击！ -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FF921F	68	1.1	1.5
+Damage_RegionPulse	区域波动 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#53E6DF	56	1.1	1.32
+Damage_EnergyBomb	能量巨大 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#ED83FF	56	1.1	1.32
+Damage_Artillery	炮火支援 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FFD09D	56	1.1	1.32
+Damage_Execution	断链 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#BBA6FF	56	1.1	1.32
+Damage_BossCleave	震地 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#D9AC76	56	1.1	1.32
+Damage_BossSnipe	狙击 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FF577C	56	1.1	1.32
+Damage_BossBombard	轰炸 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FFAA57	56	1.1	1.32
+Damage_BossBulletRing	弹幕 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#EF7CCA	56	1.1	1.32
+Damage_BossBlinkBlast	瞬爆 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#BC85FF	56	1.1	1.32
+Damage_BossLaserSpin	天光 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FFF09E	56	1.1	1.32
+Damage_BossSoulDrain	汲魂 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#B59AFF	56	1.1	1.32
+Damage_BossSummon	影卫 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#B7A0F2	56	1.1	1.32
+Damage_BossEnrage	狂怒 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FF5252	56	1.1	1.32
+Damage_BossMeteorShower	陨星 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FF793E	56	1.1	1.32
+Damage_BossCrossLaser	天罚 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FFF8B2	56	1.1	1.32
+Damage_BossFrostNova	冰霜 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#73DFFF	56	1.1	1.32
+Damage_BossChainLightning	雷暴 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#A7A1FF	56	1.1	1.32
+Damage_BossPoisonMarsh	毒沼 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#A3ED56	56	1.1	1.32
+Damage_BossFlameWall	烈焰 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#FFAC42	56	1.1	1.32
+Damage_BossIceLance	冰枪 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#9CF5FF	56	1.1	1.32
+Damage_BossGravityWell	引力 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#C182F6	56	1.1	1.32
+Damage_BossDoomSigil	烙印 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#F16AA9	56	1.1	1.32

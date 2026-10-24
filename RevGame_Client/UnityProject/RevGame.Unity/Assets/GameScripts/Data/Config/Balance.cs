@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Balance.cs —— “战斗数值参数”表（BalanceRule）的类型化读取与校验。
 //
 // 为什么不直接在业务里 FindByKey("Battle.DurationSeconds")：
@@ -77,6 +77,15 @@ namespace RevGame.Data
     /// <summary>一份不可变的参数快照。</summary>
     internal sealed class BalanceValues
     {
+        // ---- 积分与暴击；所有数值来自Excel，范围在Read中一次性校验。
+        public int DeployBatchCount;
+        public float CriticalChance;
+        public float CriticalMultiplier;
+        public int ScoreKillPoints;
+        public int ScoreCriticalPoints;
+        public float ScoreRoundGrowth;
+        public float ScorePieceGrowth;
+        public float ScoreMultiplierCap;
         // ---- 战斗节奏
         public float BossCaptureHpRatio;
         public float EventEffectMultiplier;
@@ -179,6 +188,15 @@ namespace RevGame.Data
         {
             var r = new BalanceReader(table, problems);
             var v = new BalanceValues();
+            v.DeployBatchCount = r.Int("Deploy.BatchCount", 1, 2);
+            v.CriticalChance = r.Float("Damage.CriticalChance", 0f, 1f);
+            v.CriticalMultiplier = r.Float("Damage.CriticalMultiplier", 1f, 10f);
+            v.ScoreKillPoints = r.Int("Score.KillPoints", 0, 100000);
+            v.ScoreCriticalPoints = r.Int("Score.CriticalPoints", 0, 100000);
+            v.ScoreRoundGrowth = r.Float("Score.RoundGrowth", 0f, 10f);
+            v.ScorePieceGrowth = r.Float("Score.PieceGrowth", 0f, 10f);
+            v.ScoreMultiplierCap = r.Float("Score.MultiplierCap", 1f, 1000f);
+
             v.EnemyAttackRate = r.Float("EnemyAI.AttackRate", 0.1f, 5f);
             v.EnemyChaseSteps = r.Int("EnemyAI.ChaseSteps", 1, 4);
             v.RangedFormationEnabled = r.Int("PlayerAI.FormationEnabled", 0, 1);
@@ -300,6 +318,15 @@ namespace RevGame.Data
     public static class Balance
     {
         private static BalanceValues V => GameConfig.Current.Balance;
+        public static int DeployBatchCount => V.DeployBatchCount;
+        public static float CriticalChance => V.CriticalChance;
+        public static float CriticalMultiplier => V.CriticalMultiplier;
+        public static int ScoreKillPoints => V.ScoreKillPoints;
+        public static int ScoreCriticalPoints => V.ScoreCriticalPoints;
+        public static float ScoreRoundGrowth => V.ScoreRoundGrowth;
+        public static float ScorePieceGrowth => V.ScorePieceGrowth;
+        public static float ScoreMultiplierCap => V.ScoreMultiplierCap;
+
 
         // ---- 战斗节奏
         public static float BattleDurationSeconds => V.BattleDurationSeconds;

@@ -37,6 +37,7 @@ namespace RevGame.Flow
                 new Resource(RevResPath.Board_Tile, "BoardCell"),
                 new Resource(RevResPath.Pieces_Unit, "SlimePiece"),
                 new Resource(RevResPath.Effects_Combat, "BattleEffect"),
+                new Resource(RevResPath.Effects_Combat, "ScoreSpark"),
                 // Boss 技能特效：进战斗时一并预载，避免 Boss 第一次放技能时同步读 AB 造成卡顿。
                 new Resource(RevResPath.Effects_Combat, "BossSkillFx"),
                 new Resource(RevResPath.UI_Item_Notice, "BattleEventNotice"),
@@ -73,7 +74,7 @@ namespace RevGame.Flow
         public async RevTask WarmBattlePoolsAsync(Action<float> progress)
         {
             const int feedbackEnd = 24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles + BoardView.MaxMeleeEffects;
-            const int count = feedbackEnd + 2;
+            const int count = feedbackEnd + UI.BattleHudPanel.MaxScoreSparks + 2;
             float sliceStart = Time.realtimeSinceStartup;
             try
             {
@@ -91,6 +92,10 @@ namespace RevGame.Flow
                     else if (i < feedbackEnd)
                     {
                         instance = await GetAsync<BattleEffectView>();
+                    }
+                    else if (i < feedbackEnd + UI.BattleHudPanel.MaxScoreSparks)
+                    {
+                        instance = await GetAsync<ScoreSparkView>();
                     }
                     else
                     {

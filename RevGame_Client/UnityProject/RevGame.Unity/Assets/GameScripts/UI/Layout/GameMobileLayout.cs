@@ -161,6 +161,8 @@ namespace RevGame.UI
             InRegion("logText", areas.Right, 0.755f, 0.90f, 0.075f);
             InRegion("assistText", areas.Left, 0.065f, 0.94f, 0.10f);
             InRegion("assistPlate", areas.Left, 0.065f, 1f, 0.125f);
+            // 计分板只在战斗/结算显示；准备阶段左栏留给六张手牌。统一坐标避免挤进棋盘。
+            Place("scoreFrame", 0f, 0f, areas.Left.center.x, areas.Left.yMin + areas.Left.height * .51f, 330f, 310f);
             // Boss 信息也留在右栏，不再挤在棋盘上沿和回合标题之间。
             InRegion("bossFrame", areas.Right, 0.70f, 0.90f, 0.018f);
             InRegion("bossBar", areas.Right, 0.70f, 0.90f, 0.018f);

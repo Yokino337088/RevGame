@@ -1,0 +1,99 @@
+{
+  "success": true,
+  "name": "final-editor-status",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.refresh",
+      "response": {
+        "protocol": 1,
+        "id": "f32abbee973344d88630a37493b0f359",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f32abbee973344d88630a37493b0f359",
+        "data": {
+          "text": "已请求资源刷新；后续编译状态请用 editor.status 检查"
+        }
+      },
+      "polls": 1,
+      "seconds": 2.9874699000210967
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.status",
+      "response": {
+        "protocol": 1,
+        "id": "39984726d144477abeaf0fad26977266",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\39984726d144477abeaf0fad26977266",
+        "data": {
+          "unityVersion": "2022.3.15f1c1",
+          "project": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity",
+          "playing": false,
+          "paused": false,
+          "compiling": false,
+          "updating": false,
+          "gmEnabled": true,
+          "gmCount": 0
+        }
+      },
+      "polls": 1,
+      "seconds": 7.820810400007758
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "scene.list",
+      "response": {
+        "protocol": 1,
+        "id": "9e180c6c28574594aa1440f62d8a45ca",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\9e180c6c28574594aa1440f62d8a45ca",
+        "data": {
+          "scenes": [
+            {
+              "path": "Assets/Scenes/StartScene.unity",
+              "name": "StartScene",
+              "handle": -2012064,
+              "roots": 4,
+              "loaded": true,
+              "dirty": false,
+              "active": true
+            }
+          ]
+        }
+      },
+      "polls": 1,
+      "seconds": 0.6485302000073716
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.console",
+      "response": {
+        "protocol": 1,
+        "id": "749c0b73a9b74883a582d59da8b385b0",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\749c0b73a9b74883a582d59da8b385b0",
+        "data": {
+          "total": 0,
+          "offset": 0,
+          "truncated": false,
+          "entries": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.08631250000325963
+    }
+  ],
+  "cleanup": []
+}

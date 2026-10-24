@@ -46,18 +46,22 @@ namespace RevGame.Editor
                 if (!config.excludeFolders.Contains(folder)) { config.excludeFolders.Add(folder); }
             }
             EditorUtility.SetDirty(config);
+            // 先计算最终标记再一次写入，避免旧流程先清空再恢复数百个meta，减少重复保存与资源重导入。
+            // 不变的资产完全不写；Art/Atlases由下方唯一归属配置负责增删，不经历临时空包名。
+            var desired = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (string guid in AssetDatabase.FindAssets("", new[] { config.resRoot }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 AssetImporter importer = AssetImporter.GetAtPath(path);
-                if (importer != null) { importer.SetAssetBundleNameAndVariant(string.Empty, string.Empty); }
+                if (importer != null && !path.StartsWith("Assets/GameRes/Art/", StringComparison.Ordinal)
+                    && !path.StartsWith("Assets/GameRes/Atlases/", StringComparison.Ordinal)) { desired[path] = string.Empty; }
             }
             for (int i = 0; i < Groups.GetLength(0); i++)
             {
                 string path = config.resRoot + "/" + Groups[i, 0];
                 AssetImporter importer = AssetImporter.GetAtPath(path);
                 if (importer == null) { throw new InvalidOperationException("分包目录不存在：" + path); }
-                importer.SetAssetBundleNameAndVariant(Groups[i, 1], string.Empty);
+                desired[path] = Groups[i, 1];
             }
             // 章节大图由背景 Shader 独立采样、逐章加载，不进常驻 SpriteAtlas，也不共包拖入其它章节。
             const string chapterRoot = "Assets/GameRes/ChapterBackground";
@@ -70,21 +74,19 @@ namespace RevGame.Editor
                     var textureImporter = AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
                     if (textureImporter == null || textureImporter.textureType == UnityEditor.TextureImporterType.Sprite) { continue; }
                     string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
-                    AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant(bundle, string.Empty);
+                    desired[path] = bundle;
                     string materialPath = "Assets/GameRes/Material/Background/" + Path.GetFileNameWithoutExtension(path) + "_Material.mat";
                     AssetImporter materialImporter = AssetImporter.GetAtPath(materialPath);
                     if (materialImporter == null) { throw new InvalidOperationException("章节图片缺少对应的独立材质：" + path); }
-                    materialImporter.SetAssetBundleNameAndVariant(bundle, string.Empty);
+                    desired[materialPath] = bundle;
                 }
             }
             // Shader仍按用户要求放在GameShader，而不是复制到每个材质目录。
             // 显式归入共享包后，依赖它的材质/预制体只引用一份编译结果，避免Shader再次隐式重复。
             foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Assets/GameShader" }))
             {
-                AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)).SetAssetBundleNameAndVariant("shared_shaders", string.Empty);
+                desired[AssetDatabase.GUIDToAssetPath(guid)] = "shared_shaders";
             }
-            // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被上面的粗目录标记覆盖。
-            GameSpriteAtlasBuild.Configure();
             // 每章的图/材质/Shader归同一个包。UI使用的ArcaneBackdrop保留在公共Shader包，
             // 第一章改用Chapter01_Tutorial，避免大厅因共享Shader把第一章包作为依赖带入。
             string[] chapterShaders = { "Chapter01_Tutorial", "Chapter02_Village", "Chapter03_Lake", "Chapter04_Swamp", "Chapter05_Ice", "Chapter06_Temple" };
@@ -98,9 +100,12 @@ namespace RevGame.Editor
                 {
                     AssetImporter importer = AssetImporter.GetAtPath(path);
                     if (importer == null) { throw new InvalidOperationException("章节独立资源缺失：" + path); }
-                    importer.SetAssetBundleNameAndVariant(bundle, string.Empty);
+                    desired[path] = bundle;
                 }
             }
+            foreach (var pair in desired) { SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value); }
+            // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。
+            GameSpriteAtlasBuild.Configure();
             string atlasReport = GameSpriteAtlasBuild.Validate();
             string usageReport = GameResourceUsage.Validate();
             AssetDatabase.RemoveUnusedAssetBundleNames();
@@ -119,6 +124,15 @@ namespace RevGame.Editor
             ABSoundPathGenerator.Generate();
             AssetDatabase.SaveAssets();
             return count + "条映射，" + validation.bundleCount + "个包，" + atlasReport + "；" + usageReport + "；隐式重复/循环/漏标/重名/Android Shader错误均0条";
+        }
+
+        /// <summary>项目侧幂等打标；不改框架，不关闭漏标/重复依赖校验。</summary>
+        internal static void SetBundleIfChanged(AssetImporter importer, string bundle)
+        {
+            if (importer.assetBundleName != bundle || !string.IsNullOrEmpty(importer.assetBundleVariant))
+            {
+                importer.SetAssetBundleNameAndVariant(bundle, string.Empty);
+            }
         }
 
         /// <summary>实际构建二进制并记录清单。供MCP调用，不调用会退出Unity的CI入口。</summary>

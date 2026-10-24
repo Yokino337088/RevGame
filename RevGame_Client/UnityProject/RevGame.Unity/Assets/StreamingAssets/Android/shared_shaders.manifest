@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1711312453
+CRC: 1938419286
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b142fe288afba13c2dc7e472cd2c3c12
+    Hash: 27d7c34eb8e62a5e19eb38aa21922031
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b142fe288afba13c2dc7e472cd2c3c12
+    Hash: 27d7c34eb8e62a5e19eb38aa21922031
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -24,4 +24,5 @@ Assets:
 - Assets/GameShader/Combat/BossSkill.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
 - Assets/GameShader/Combat/RangedProjectile.shader
+- Assets/GameShader/Combat/ScoreSpark.shader
 Dependencies: []

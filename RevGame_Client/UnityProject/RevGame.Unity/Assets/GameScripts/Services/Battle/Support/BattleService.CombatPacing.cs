@@ -86,7 +86,7 @@ namespace RevGame.Services
                     Piece target = _board.GetPiece(pos);
                     if (target != null && target.IsAlive && _regionHitIds.Add(target.Id))
                     {
-                        DamagePiece(target, Math.Max(1, (int)(target.MaxHp * Balance.RegionDamageHpRatio)), fromSkill: true);
+                        DamagePiece(target, Math.Max(1, (int)(target.MaxHp * Balance.RegionDamageHpRatio)), fromSkill: true, damageKind: BattleDamageKind.RegionPulse);
                     }
                 }
                 if (_regionCell >= _region.Size * _region.Size) { _regionActive = false; }
@@ -101,7 +101,7 @@ namespace RevGame.Services
                 _board.CopyPieces(_pacingVictims, GameSide.Enemy);
                 foreach (Piece enemy in _pacingVictims)
                 {
-                    if (enemy.IsAlive) { DamagePiece(enemy, Math.Max(1, (int)(enemy.MaxHp * Balance.BombDamageHpRatio)), fromSkill: true); }
+                    if (enemy.IsAlive) { DamagePiece(enemy, Math.Max(1, (int)(enemy.MaxHp * Balance.BombDamageHpRatio)), fromSkill: true, damageKind: BattleDamageKind.EnergyBomb); }
                 }
                 EnergyBombCount++;
                 RefreshGoState();

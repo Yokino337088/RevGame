@@ -54,6 +54,7 @@ namespace RevGame.Flow
         {
             BattleService service = RevServices.Get<IBattleService>() as BattleService;
             service?.StopEnemyAI();
+            service?.FlushScore();
         }
 
         private void OnFixedTick()

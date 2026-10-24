@@ -254,7 +254,7 @@ namespace RevGame.Battle
                     var pos = new BoardPos(x, y);
                     Cell cell = board.GetCell(pos);
                     // 真眼受现有围棋规则保护，敌方不能直接塞进已成立的玩家眼位；压气要从外围进行。
-                    if (!cell.IsEmpty || cell.IsEyeMarked)
+                    if (!cell.IsEmpty || cell.IsEyeMarked || !board.CanFit(pos, newcomer.Size, newcomer.Side))
                     {
                         continue;
                     }
@@ -279,8 +279,9 @@ namespace RevGame.Battle
                     }
                     // 上一个候选无论通过还是被continue否决，都在这里撤回；不创建81份棋盘/棋子。
                     trial.Remove(added);
-                    GoRules.Evaluate(trial);
-                    if (!trial.Place(added, pos))
+                    // 候选在原棋盘已通过整个身体的占格/眼位检查，撤回上个候选后占格正好恢复原状。
+                    // 忽略试盘残留眼标记再放入，随后仍完整重算气眼；省去每候选一次重复Evaluate，不省安全验收。
+                    if (!trial.Place(added, pos, respectEnemyEyes: false))
                     {
                         continue;
                     }

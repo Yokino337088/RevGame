@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "name": "atlas-idempotence",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.configure",
+      "response": {
+        "protocol": 1,
+        "id": "41a25249970a4185b83dfbfb03dd271f",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\41a25249970a4185b83dfbfb03dd271f",
+        "data": {
+          "text": "302条映射，29个包，6张图集，186张图片唯一覆盖；保留185/220个Art资源，排除35个，打包6/9张图集；隐式重复/循环/漏标/重名/Android Shader错误均0条"
+        }
+      },
+      "polls": 1,
+      "seconds": 2.5829536999808624
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.configure",
+      "response": {
+        "protocol": 1,
+        "id": "dd85b28c731a4c5abb473abd4bf42c53",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\dd85b28c731a4c5abb473abd4bf42c53",
+        "data": {
+          "text": "302条映射，29个包，6张图集，186张图片唯一覆盖；保留185/220个Art资源，排除35个，打包6/9张图集；隐式重复/循环/漏标/重名/Android Shader错误均0条"
+        }
+      },
+      "polls": 1,
+      "seconds": 2.580591899983119
+    }
+  ],
+  "cleanup": []
+}

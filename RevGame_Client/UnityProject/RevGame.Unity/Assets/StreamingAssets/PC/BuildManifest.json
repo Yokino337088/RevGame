@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-10-24 19:25:21",
+  "buildTime": "2026-10-25 05:01:14",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 21565 },
     { "name": "atlas_combatframes", "size": 1307241 },
@@ -18,19 +18,19 @@
     { "name": "background_chapter06_temple", "size": 2800494 },
     { "name": "battle_board", "size": 6733 },
     { "name": "battle_boss", "size": 3008 },
-    { "name": "battle_feedback", "size": 16962824 },
+    { "name": "battle_feedback", "size": 16964340 },
     { "name": "battle_units", "size": 9867 },
     { "name": "config_piece_art", "size": 4335 },
-    { "name": "data_tables", "size": 15088 },
+    { "name": "data_tables", "size": 16149 },
     { "name": "font_cjk", "size": 15349866 },
     { "name": "material_background", "size": 2722 },
     { "name": "material_cards", "size": 2462 },
-    { "name": "material_combat", "size": 3696 },
+    { "name": "material_combat", "size": 3789 },
     { "name": "material_pieces", "size": 2458 },
     { "name": "material_ui", "size": 2440 },
-    { "name": "shared_shaders", "size": 44941 },
+    { "name": "shared_shaders", "size": 46016 },
     { "name": "ui_items", "size": 8240 },
     { "name": "ui_loading", "size": 8017 },
-    { "name": "ui_panels", "size": 24700 }
+    { "name": "ui_panels", "size": 36572 }
   ]
 }

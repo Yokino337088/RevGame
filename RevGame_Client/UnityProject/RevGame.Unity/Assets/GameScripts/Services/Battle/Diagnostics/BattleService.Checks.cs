@@ -78,7 +78,7 @@ namespace RevGame.Services
             }
 
             var battle = new BattleService();
-            battle.StartRound(1, 10);
+            battle.StartRound(1, Balance.NormalRoundsPerChapter);
             battle._board.Reset();
             battle._enemyPieces.Clear();
             // 每个偶数行都铺满，留出很多单格空位，却没有任何连续两行，专门拦截「只看左下格」错误。
@@ -93,7 +93,7 @@ namespace RevGame.Services
             string oldBoard = battle.Board.Dump();
             int oldCard = battle.Hand[0].Id;
             check(!battle.SkipRound(), "Boss无完整出生空间时拒绝跳过");
-            check(battle.Round == 10 && battle.Phase == GamePhase.Prepare && battle.Hand[0].Id == oldCard && battle.Board.Dump() == oldBoard && battle._attackBonus == 0f, "出生失败不改回合、棋盘、手牌，也不白领强化");
+            check(battle.Round == Balance.NormalRoundsPerChapter && battle.Phase == GamePhase.Prepare && battle.Hand[0].Id == oldCard && battle.Board.Dump() == oldBoard && battle._attackBonus == 0f, "出生失败不改回合、棋盘、手牌，也不白领强化");
             // 同样的拥挤棋盘检验原位 2★→3★：没有连续2×2也必须成功，其他棋子全部保留。
             battle._board.Reset();
             battle._playerPieces.Clear();
@@ -112,7 +112,7 @@ namespace RevGame.Services
             check(original.Def.Star == StarTier.Three && original.Pos == originalPosition && original.Size == 1, "拥挤棋盘二升三保持原位单格，不要求腾出2×2");
             check(battle._playerPieces.Count == 45 && battle.Board.GetPiece(originalPosition) == original, "原位升级不消耗其他棋子，编号和占格引用不变");
             battle = new BattleService();
-            battle.StartRound(1, 11);
+            battle.StartRound(1, Balance.BossRoundIndex);
             Piece king = battle._enemyPieces.Find(p => p.IsKing);
             foreach (BoardPos pos in BoardModel.Boundary(king))
             {
@@ -142,7 +142,7 @@ namespace RevGame.Services
             check(!battle.ChooseReward(-1) && battle.Rewards.Count == 3, "越界奖励不消耗待领选项");
             check(battle.ChooseReward(0) && battle.Chapter == 2 && !battle.ChooseReward(0), "奖励领取一次进入下章，重复拒绝");
             battle = new BattleService();
-            battle.StartRound(6, 11);
+            battle.StartRound(6, Balance.BossRoundIndex);
             battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(0, 0));
             king = battle._enemyPieces.Find(p => p.IsKing);
             battle.DamagePiece(king, king.Hp);
@@ -164,7 +164,7 @@ namespace RevGame.Services
 
             battle = new BattleService(false);
             battle.Chapter = 1;
-            battle.Round = 11;
+            battle.Round = Balance.BossRoundIndex;
             battle.IsBossRound = true;
             battle.Phase = GamePhase.Battle;
             // 高生命夹具保证能打满一分钟；仍走 Tick 和 Attack，不能只断言时长属性为 Infinity。
@@ -175,14 +175,13 @@ namespace RevGame.Services
             battle._board.Place(king, new BoardPos(3, 4));
             battle._enemyPieces.Add(king);
             battle.RefreshGoState();
-            int beforeHp = king.Hp;
-            battle.Attack(fighter, king);
-            int baseDamage = beforeHp - king.Hp;
+            BattleDamageKind baselineKind;
+            int baseDamage = battle.MeasureComparableHit(fighter, king, out baselineKind);
             battle.Tick(62.5f);
             check(battle.Phase == GamePhase.Battle && battle.BattleElapsed == 62.5f, "关闭轻松辅助时Boss超过60秒仍不超时结算");
-            beforeHp = king.Hp;
-            battle.Attack(fighter, king);
-            check(beforeHp - king.Hp > baseDamage, "60秒后真实伤害按决死加速增加");
+            BattleDamageKind acceleratedKind;
+            int accelerated = battle.MeasureComparableHit(fighter, king, out acceleratedKind, baselineKind);
+            check(accelerated > baseDamage, "相同暴击状态下60秒后真实伤害按决死加速增加");
             battle.Tick(float.NaN);
             battle.Tick(float.PositiveInfinity);
             battle.Tick(-1f);
@@ -203,7 +202,7 @@ namespace RevGame.Services
                 for (int round = 1; round <= Balance.RoundsPerChapter; round++)
                 {
                     battle = new BattleService();
-                    check(battle.StartRound(chapter, round) && battle._enemyPieces.Count == battle.Board.GetPiecesOf(GameSide.Enemy).Count, "66个回合配置可完整生成，名单与棋盘一致：" + chapter + "/" + round);
+                    check(battle.StartRound(chapter, round) && battle._enemyPieces.Count == battle.Board.GetPiecesOf(GameSide.Enemy).Count, "60个回合配置可完整生成，名单与棋盘一致：" + chapter + "/" + round);
                     check(battle.Hand.Count == 6 && battle.CardsRemaining == 6, "普通/Boss均为六张手牌：" + chapter + "/" + round);
                 }
             }
@@ -319,14 +318,13 @@ namespace RevGame.Services
                         goto case PreparationBuffKind.Attack;
                     case PreparationBuffKind.Ranged:
                     case PreparationBuffKind.Attack:
-                        before = enemy.Hp;
-                        service.Attack(player, enemy);
-                        int enhanced = before - enemy.Hp;
+                        BattleDamageKind enhancedKind;
+                        int enhanced = service.MeasureComparableHit(player, enemy, out enhancedKind);
                         service._prepAttack = service._prepRanged = service._prepExecution = 0f;
                         service._prepEyeAttack = 0f;
-                        before = enemy.Hp;
-                        service.Attack(player, enemy);
-                        check(enhanced > before - enemy.Hp, "增益确实提高攻击伤害：" + kind); break;
+                        BattleDamageKind plainKind;
+                        int plain = service.MeasureComparableHit(player, enemy, out plainKind, enhancedKind);
+                        check(enhanced > plain, "相同暴击状态下增益确实提高攻击伤害：" + kind); break;
                     case PreparationBuffKind.LifeSteal:
                         service.Attack(player, enemy);
                         check(player.Hp > wounded, "吸血按真实命中回血"); break;
@@ -494,6 +492,27 @@ namespace RevGame.Services
         /// 验收造局：走正式占格并加入名单，不直接改血量、气或眼睛字段。
         /// 这样断言验证的是真实规则链，而不是测试自己伪造的状态。
         /// </summary>
+        /// <summary>新增暴击后伤害对照必须匹配同种命中；只观察真实出手，不关闭或篡改生产随机概率。</summary>
+        private int MeasureComparableHit(Piece attacker, Piece target, out BattleDamageKind kind, BattleDamageKind? required = null)
+        {
+            BattleHitInfo observed = default(BattleHitInfo);
+            object owner = new object();
+            RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => observed = hit, owner: owner);
+            try
+            {
+                for (int attempt = 0; attempt < 256 && target.IsAlive; attempt++)
+                {
+                    Attack(attacker, target);
+                    if (!required.HasValue || observed.DamageKind == required.Value)
+                    {
+                        kind = observed.DamageKind; return observed.Damage;
+                    }
+                }
+                throw new InvalidOperationException("伤害对照未采到相同暴击状态");
+            }
+            finally { RevEvent.RemoveAllByOwner(owner); }
+        }
+
         private Piece AddCheckPiece(GameSide side, PieceKind kind, BoardPos pos, StarTier star = StarTier.One, int size = 0)
         {
             var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, star), side, size);

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 899353287
+CRC: 3664817886
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 13c323f35536e6be51d10312bb81c5bd
+    Hash: a3e75322479e5bef9cc9f81dc5120e56
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e762ccb57c4caaabbb5a4199ac82c23
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 13c323f35536e6be51d10312bb81c5bd
+    Hash: a3e75322479e5bef9cc9f81dc5120e56
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -21,6 +21,7 @@ Assets:
 - Assets/GameRes/Material/Combat/CrossbowBoltBody.mat
 - Assets/GameRes/Material/Combat/HolyOrbTrail.mat
 - Assets/GameRes/Material/Combat/HolyOrbBody.mat
+- Assets/GameRes/Material/Combat/ScoreSpark.mat
 - Assets/GameRes/Material/Combat/HolyOrbAura.mat
 - Assets/GameRes/Material/Combat/SwordSlash.mat
 - Assets/GameRes/Material/Combat/ShieldBash.mat

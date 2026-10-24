@@ -29,7 +29,7 @@ namespace RevGame.UI
     /// 真正的"一次性数据"（例如结算面板的胜负）才走 SetData。
     /// </summary>
     [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal)]
-    public sealed class BattleHudPanel : RevUIPanel
+    public sealed partial class BattleHudPanel : RevUIPanel
     {
         [Header("阶段图标（三种阶段各一张，由预制体指定）")]
         [SerializeField]
@@ -99,6 +99,7 @@ namespace RevGame.UI
         protected override void OnOpen()
         {
             _logs.Clear();
+            OpenScore();
             ResetBarAnimations();
             _noticeClosed = false;
             _noticeGeneration++;
@@ -129,6 +130,7 @@ namespace RevGame.UI
         protected override void OnRefreshView()
         {
             IBattleService _battle = Battle;
+            RefreshScore(_battle);
             if (_battle == null)
             {
                 return;
@@ -213,6 +215,7 @@ namespace RevGame.UI
 
         protected override void OnClose()
         {
+            CloseScore();
             RevTimer.CancelAllOf(this);
             _noticeClosed = true;
             ClearRoundPresentation();
@@ -508,18 +511,21 @@ namespace RevGame.UI
         private void OnPhaseChanged(int round)
         {
             ClearRoundPresentation();
+            ClearScoreFlights();
             RefreshView();
         }
 
         private void OnSettle(GameSide winner)
         {
             ClearRoundPresentation();
+            ClearScoreFlights();
             RefreshView();
         }
 
         private void OnPieceChanged(int pieceId)
         {
-            RefreshView();
+            // 伤害可以同帧触发数十次，统一交给已有10Hz时钟落屏；真实伤害数字仍逐帧显示。
+            // 不在这里反复拼接全部HUD字符串、扫描主将、重建Canvas布局。
         }
 
         private void OnBattleLog(string text)
@@ -531,7 +537,7 @@ namespace RevGame.UI
                 _logs.RemoveAt(0);
             }
 
-            RefreshView();
+            // 最新战报由10Hz刷新显示，保留即时事件但合并重复UI工作。
         }
     }
 }

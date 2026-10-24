@@ -32,6 +32,8 @@ namespace RevGame.Core
         /// <summary>有棋子落下。参数：棋子的整数 Id。</summary>
         public const string PiecePlaced = "RevGame.Piece.Placed";
         /// <summary>敌方战术落子已提交。唯一签名 (int棋子Id, string战术意图)；HUD只播报，不反向生成棋子。</summary>
+        /// <summary>真实伤害结算后的积分到账，签名固定为ScoreGrantedInfo。</summary>
+        public const string ScoreGranted = "RevGame.Score.Granted";
         public const string EnemyDeployed = "RevGame.Enemy.Deployed";
         /// <summary>有棋子移动。参数：棋子 Id。</summary>
         public const string PieceMoved = "RevGame.Piece.Moved";

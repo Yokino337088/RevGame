@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 551898073
+CRC: 3151656267
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: bf16d96a1308a88d7ad48433b491aa84
+    Hash: e69e6127bf76a407191206fdf7bcef4c
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1c196b8427bf975db75cfb2e09c6aab7
+    Hash: 671d74b5b402ce6d9a36f8845e8ba0a6
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: bf16d96a1308a88d7ad48433b491aa84
+    Hash: e69e6127bf76a407191206fdf7bcef4c
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -27,9 +27,13 @@ ClassTypes:
 - Class: 102
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 9d6a33d802449a140ae99f0e795c51b0, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: aa1dd300069341c788a09ccd507de05e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 52ca6d6ce2c2f924b8ba7ba532786f8a, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -38,12 +42,21 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: Assembly-CSharp
   ClassName: RevGame.View.BattleEffectView/ProjectileAppearance
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
 Assets:
 - Assets/GameRes/Effects/Combat/BattleEffect.prefab
 - Assets/GameRes/Effects/Combat/BossSkillFx.prefab
+- Assets/GameRes/Effects/Combat/ScoreSpark.prefab
 Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat"

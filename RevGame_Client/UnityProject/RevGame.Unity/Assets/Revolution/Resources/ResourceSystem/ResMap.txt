@@ -242,6 +242,7 @@ Board/Tile/BoardCell|battle_board|BoardCell
 Pieces/Boss/BossPieceView|battle_boss|BossPieceView
 Effects/Combat/BattleEffect|battle_feedback|BattleEffect
 Effects/Combat/BossSkillFx|battle_feedback|BossSkillFx
+Effects/Combat/ScoreSpark|battle_feedback|ScoreSpark
 Pieces/Unit/PieceView|battle_units|PieceView
 Pieces/Unit/SlimePiece|battle_units|SlimePiece
 Config/Art/PieceArt|config_piece_art|PieceArt
@@ -275,6 +276,7 @@ Material/Combat/LavaFireballAura|material_combat|LavaFireballAura
 Material/Combat/LavaFireballBody|material_combat|LavaFireballBody
 Material/Combat/LavaFireballTrail|material_combat|LavaFireballTrail
 Material/Combat/RegionRift|material_combat|RegionRift
+Material/Combat/ScoreSpark|material_combat|ScoreSpark
 Material/Combat/ShieldBash|material_combat|ShieldBash
 Material/Combat/SwordSlash|material_combat|SwordSlash
 Material/Combat/WaterOrbAura|material_combat|WaterOrbAura
@@ -288,6 +290,7 @@ GameShader/Combat/BossSkill|shared_shaders|BossSkill
 GameShader/Combat/MeleeImpact|shared_shaders|MeleeImpact
 GameShader/Combat/RangedProjectile|shared_shaders|RangedProjectile
 GameShader/Combat/RegionRift|shared_shaders|RegionRift
+GameShader/Combat/ScoreSpark|shared_shaders|ScoreSpark
 GameShader/Pieces/ArcanePiece|shared_shaders|ArcanePiece
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
 UI/Item/Card/CardItem|ui_items|CardItem

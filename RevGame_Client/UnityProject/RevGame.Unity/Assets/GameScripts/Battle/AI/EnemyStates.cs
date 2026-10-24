@@ -341,38 +341,44 @@ namespace RevGame.Battle
             }
             Owner.NextDeploymentAt = Owner.Elapsed + Math.Max(Balance.DeployIntervalMinSeconds,
                 Balance.DeployIntervalBaseSeconds - Owner.Intelligence * Balance.DeployIntervalPerLevelSeconds);
-            // 3) 在场上限与空格下限：留空间给玩家调阵和援军，不把棋盘塞满。
-            if (Owner.Board.GetPiecesOf(GameSide.Enemy).Count >= Balance.DeployLivingCap)
+            // 同一窗口最多两子；每颗都提交后再查第二颗，预算/空位/气眼不能沿用第一次的旧值。
+            for (int batch = 0; batch < Balance.DeployBatchCount; batch++)
             {
-                return;
+                if (Owner.DeploymentCount >= Balance.DeployBaseCount + Owner.Intelligence || Owner.KingCaptured
+                    || Owner.Board.IsSideWiped(GameSide.Player) || Owner.Board.IsSideWiped(GameSide.Enemy)) { break; }
+                // 3) 在场上限与空格下限：留空间给玩家调阵和援军，不把棋盘塞满。
+                if (Owner.Board.GetPiecesOf(GameSide.Enemy).Count >= Balance.DeployLivingCap)
+                {
+                    return;
+                }
+                if (EnemyTactics.CountEmptyCells(Owner.Board) <= Balance.DeployMinEmptyCells)
+                {
+                    return;
+                }
+                // 4) 兵种来自 EnemyReinforceConfig：按已补次数与 AI 档位交替，缺规则时明确报错而不是瞎猜。
+                RoundDef round = LevelCatalog.GetRound(Owner.Chapter, Owner.Round);
+                if (round == null)
+                {
+                    throw new InvalidOperationException("敌方落子缺少当前回合配置");
+                }
+                PieceKind? kind = LevelCatalog.PickReinforcement(Owner.DeploymentCount, Owner.Intelligence);
+                if (!kind.HasValue)
+                {
+                    RevLog.Warn("敌方补兵规则没有命中，请检查EnemyReinforceConfig", "RevGame"); return;
+                }
+                PieceDef def = PieceCatalog.Get(kind.Value, LevelCatalog.GetEnemyStar(Owner.Chapter, false));
+                Piece newcomer = Owner.CreateDeployment(def, round);
+                BoardPos position;
+                string intention;
+                // 5) 选点：深快照里试落，不污染实战气眼；无安全点就放弃本次窗口（冷却已消耗）。
+                if (!EnemyTactics.TryChooseDeployment(Owner.Board, newcomer, Owner.Intelligence, out position, out intention))
+                {
+                    return;
+                }
+                // 6) 新棋落地不立即攻击/移动，先攒满一个完整移动冷却，玩家有机会反应。
+                newcomer.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
+                Owner.CommitDeployment(newcomer, position, intention);
             }
-            if (EnemyTactics.CountEmptyCells(Owner.Board) <= Balance.DeployMinEmptyCells)
-            {
-                return;
-            }
-            // 4) 兵种来自 EnemyReinforceConfig：按已补次数与 AI 档位交替，缺规则时明确报错而不是瞎猜。
-            RoundDef round = LevelCatalog.GetRound(Owner.Chapter, Owner.Round);
-            if (round == null)
-            {
-                throw new InvalidOperationException("敌方落子缺少当前回合配置");
-            }
-            PieceKind? kind = LevelCatalog.PickReinforcement(Owner.DeploymentCount, Owner.Intelligence);
-            if (!kind.HasValue)
-            {
-                RevLog.Warn("敌方补兵规则没有命中，请检查EnemyReinforceConfig", "RevGame"); return;
-            }
-            PieceDef def = PieceCatalog.Get(kind.Value, LevelCatalog.GetEnemyStar(Owner.Chapter, false));
-            Piece newcomer = Owner.CreateDeployment(def, round);
-            BoardPos position;
-            string intention;
-            // 5) 选点：深快照里试落，不污染实战气眼；无安全点就放弃本次窗口（冷却已消耗）。
-            if (!EnemyTactics.TryChooseDeployment(Owner.Board, newcomer, Owner.Intelligence, out position, out intention))
-            {
-                return;
-            }
-            // 6) 新棋落地不立即攻击/移动，先攒满一个完整移动冷却，玩家有机会反应。
-            newcomer.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
-            Owner.CommitDeployment(newcomer, position, intention);
         }
     }
 }

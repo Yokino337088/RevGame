@@ -1,0 +1,1 @@
+Offline validation passed: 24 links, 7 images; unique anchors; media decode and evidence JSON parse valid. Browser rendering not tested.

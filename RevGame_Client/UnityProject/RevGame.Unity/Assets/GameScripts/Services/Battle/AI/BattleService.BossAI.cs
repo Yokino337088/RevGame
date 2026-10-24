@@ -63,7 +63,7 @@ namespace RevGame.Services
                 _service.RefreshGoState();
                 RevEvent.DispatchEvent<int>(Events.PieceMoved, piece.Id);
             }
-            public int SkillDamage(Piece target, float power) { return _service.BossSkillDamage(Boss, target, power); }
+            public int SkillDamage(Piece target, float power) { return _service.BossSkillDamage(Boss, target, power, PendingPlan.Kind); }
             public bool Teleport(BoardPos position) { return _service.TeleportBoss(Boss, position); }
             public int HealBoss(int amount)
             {
@@ -116,7 +116,7 @@ namespace RevGame.Services
         /// 技能伤害公式：Boss 一次普通攻击 × 技能倍率（已含章节换算）× 锁死倍率，
         /// 再叠加 Boss 回合的“决死加速”。走 DamagePiece 统一出口，护盾、减伤、最后一子守护照常生效。
         /// </summary>
-        private int BossSkillDamage(Piece boss, Piece target, float power)
+        private int BossSkillDamage(Piece boss, Piece target, float power, BossSkillKind kind = BossSkillKind.Cleave)
         {
             if (target == null || !target.IsAlive || power <= 0f)
             {
@@ -126,7 +126,7 @@ namespace RevGame.Services
             int raw = Math.Max(1, (int)(boss.Def.Attack * boss.AttackScale * power * multiplier * Balance.CombatDamageScale));
             int acceleration = (int)(_battleElapsed / Balance.BossAccelerationSeconds);
             raw += Math.Max(acceleration, (int)(raw * acceleration * Balance.BossAccelerationBonus));
-            int real = DamagePiece(target, raw, boss, fromSkill: true);
+            int real = DamagePiece(target, raw, boss, fromSkill: true, damageKind: (BattleDamageKind)((int)BattleDamageKind.BossCleave + (int)kind));
             // 击杀会改变占格和气眼，立刻刷新，后面几段伤害读到的是最新棋盘。
             RefreshGoState();
             return real;

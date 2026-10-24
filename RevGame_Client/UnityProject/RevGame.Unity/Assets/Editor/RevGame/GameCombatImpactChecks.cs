@@ -111,6 +111,7 @@ namespace RevGame.Editor
             if(!Application.isPlaying || LastResult=="运行中") { throw new InvalidOperationException("需要空闲Play"); }
             LastResult="运行中";_checks=0;Directory.CreateDirectory(Output);
             GameFlow flow=RevServices.GetRequired<GameFlow>();
+            IDisposable scorePreview=((BattleService)RevServices.GetRequired<IBattleService>()).BeginScorePreview();
             string outcome="失败：验收未完成";
             try
             {
@@ -199,6 +200,7 @@ namespace RevGame.Editor
             {
                 try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
                 catch(Exception cleanup) { outcome+="；清理失败："+cleanup.Message; }
+                scorePreview.Dispose();
                 LastResult=outcome;
                 File.WriteAllText(Output+"/result.txt",outcome);
             }

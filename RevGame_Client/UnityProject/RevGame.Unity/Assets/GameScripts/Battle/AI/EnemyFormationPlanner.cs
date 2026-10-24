@@ -51,7 +51,7 @@ namespace RevGame.Battle
         /// <param name="newBoard">true代表新开局，false代表保留玩家原有阵型。</param>
         /// <param name="report">成功返回实际眼阵/降级说明，失败返回明确的空间不足原因。</param>
         /// <param name="intelligence">1～4档评分因素，所有档位都遵守不重叠、不破眼的安全检查。</param>
-        public static bool TryArrange(List<Piece> roster, IReadOnlyList<Piece> players, bool newBoard, out string report, int intelligence = 4)
+        public static bool TryArrange(List<Piece> roster, IReadOnlyList<Piece> players, bool newBoard, out string report, int intelligence = 4, int variation = 0)
         {
             var baseline = new BoardModel(Consts.BoardSize);
             if (!newBoard)
@@ -67,6 +67,14 @@ namespace RevGame.Battle
             }
             GoRules.Evaluate(baseline);
             var guards = roster.FindAll(p => !p.IsBoss && p.Size == 1);
+            // 靠内侧的模板点先安排近战，边缘后排安排远程；职业排序每轮稳定，坐标由变化编号决定。
+            guards.Sort((a, b) => a.Def.IsRanged == b.Def.IsRanged ? a.Id.CompareTo(b.Id) : (a.Def.IsRanged ? 1 : -1));
+            // 查询内共享只读名单与射界缓冲，不在每个候选重新创建、排序同一份名册。
+            var ordered = new List<Piece>(roster);
+            ordered.Sort((a, b) => a.Size == b.Size ? a.Id.CompareTo(b.Id) : b.Size.CompareTo(a.Size));
+            var hits = new List<BoardPos>(Consts.BoardSize * Consts.BoardSize);
+            var hitIds = new HashSet<int>();
+            int preferredEdge = 1 + variation % 3; // 左、上、右轮换，优先给玩家下方准备区留空间。
             // 先争取两眼；空间不够才退一眼，再退散阵。降级的是阵型，不是必需出生的棋子数量。
             int requested = guards.Count >= TwoEyes.Length ? 2 : 1;
             for (int eyes = requested; eyes >= 1; eyes--)
@@ -79,12 +87,20 @@ namespace RevGame.Battle
                 BoardModel best = null;
                 int bestScore = int.MinValue;
                 int width = eyes == 2 ? 5 : 3;
-                for (int rotation = 0; rotation < 4; rotation++)
+                for (int edgeIndex = 0; edgeIndex < 4; edgeIndex++)
                 {
-                    for (int offset = 0; offset <= baseline.Size - width; offset++)
+                    int rotation = (preferredEdge + edgeIndex) % 4;
+                    int preferredOffset = (variation / 3) % (baseline.Size - width + 1);
+                    if (newBoard && rotation == 1) { preferredOffset = 2 + (variation / 3) % (baseline.Size - width - 1); }
+                    if (newBoard && rotation == 3) { preferredOffset = (variation / 3) % (baseline.Size - width - 1); }
+                    for (int offsetIndex = 0; offsetIndex <= baseline.Size - width; offsetIndex++)
                     {
+                        int offset = (preferredOffset + offsetIndex) % (baseline.Size - width + 1);
                         BoardModel trial = baseline.CreateSnapshot();
                         HashSet<BoardPos> reserved = ProtectedEyes(trial);
+                        // 新挑战保留最下两行准备区，让首轮手牌有连续落点；结构坐标由9×9棋盘决定，不是人数/伤害参数。
+                        // 保留残局时只保护真实玩家眼位，由后面的安全验收决定其它空格能否出生。
+                        if (newBoard) { ReserveOpening(reserved, trial.Size); }
                         // 模板的眼还没有形成，规则暂时识别不到，必须提前保留空点以防补名单时被填上。
                         reserved.Add(Transform(new BoardPos(1 + offset, 0), rotation, trial.Size));
                         if (eyes == 2)
@@ -101,7 +117,7 @@ namespace RevGame.Battle
                                 break;
                             }
                         }
-                        if (!fits || !PlaceRemaining(trial, roster, reserved))
+                        if (!fits || !PlaceRemaining(trial, ordered, reserved, variation))
                         {
                             continue;
                         }
@@ -116,7 +132,17 @@ namespace RevGame.Battle
                         {
                             continue;
                         }
-                        int score = Score(trial, intelligence);
+                        // 安全门槛通过后才考虑回合风格。边缘/偏移偏好大于一般射界分，避免每轮都退化成同一最高分布局。
+                        // 首选构图已通过完整气眼/占格/残局保护时直接提交，不继续创建二十多份等价布局快照。
+                        // 只有被残局阻挡时才进入后面的全候选评分；不能以节省搜索为理由绕过前面的安全断言。
+                        if (edgeIndex == 0 && offsetIndex == 0)
+                        {
+                            CopyPositions(trial, roster);
+                            report = Describe(variation, eyes, requested);
+                            return true;
+                        }
+                        int score = Score(trial, intelligence, hits, hitIds)
+                            + (rotation == preferredEdge ? 10000 : 0) - System.Math.Abs(offset - preferredOffset) * 1000;
                         if (score > bestScore)
                         {
                             best = trial; bestScore = score;
@@ -126,14 +152,16 @@ namespace RevGame.Battle
                 if (best != null)
                 {
                     CopyPositions(best, roster);
-                    report = (eyes == 2 ? "两眼活棋" : "一眼守阵") + (eyes < requested ? "（空间受限，已降级）" : "");
+                    report = Describe(variation, eyes, requested);
                     return true;
                 }
             }
 
             // 玩家可能已经占据全部边缘：允许完整合法散阵，但绝不偷偷删掉放不下的护卫或主将。
             BoardModel fallback = baseline.CreateSnapshot();
-            if (PlaceRemaining(fallback, roster, ProtectedEyes(fallback)))
+            HashSet<BoardPos> fallbackReserved = ProtectedEyes(fallback);
+            if (newBoard) { ReserveOpening(fallbackReserved, fallback.Size); }
+            if (PlaceRemaining(fallback, ordered, fallbackReserved, variation))
             {
                 GoRules.Evaluate(fallback);
                 if (!fallback.GetPiecesOf(GameSide.Enemy).Exists(p => p.IsLocked) && PreservesPlayers(baseline, fallback))
@@ -148,11 +176,9 @@ namespace RevGame.Battle
         }
 
         /// <summary>补齐模板之外的完整名单；reserved 是必须留空的眼位，任何大棋身体都不能覆盖它。</summary>
-        private static bool PlaceRemaining(BoardModel board, List<Piece> roster, HashSet<BoardPos> reserved)
+        private static bool PlaceRemaining(BoardModel board, List<Piece> ordered, HashSet<BoardPos> reserved, int variation)
         {
             // 大身体先摆，避免小兵占掉最后一块 3×3；已有模板棋子按 Id 跳过。
-            var ordered = new List<Piece>(roster);
-            ordered.Sort((a, b) => a.Size == b.Size ? a.Id.CompareTo(b.Id) : b.Size.CompareTo(a.Size));
             foreach (Piece source in ordered)
             {
                 if (Find(board, source.Id) != null)
@@ -160,7 +186,7 @@ namespace RevGame.Battle
                     continue;
                 }
                 // 眼阵之外的普通棋是机动前排，优先留一格间隔摆到中线；贴住骨架会继承眼数而全队站死。
-                if (!source.IsBoss && board.GetPiecesOf(GameSide.Enemy).Count > 0 && TryPlaceMobile(board, source, reserved))
+                if (!source.IsBoss && HasEnemy(board) && TryPlaceMobile(board, source, reserved, variation))
                 {
                     continue;
                 }
@@ -186,7 +212,7 @@ namespace RevGame.Battle
         }
 
         /// <summary>给眼阵外的普通棋找中线机动点；不紧贴守眼骨架，避免共享眼数后全军停止移动。</summary>
-        private static bool TryPlaceMobile(BoardModel board, Piece source, HashSet<BoardPos> reserved)
+        private static bool TryPlaceMobile(BoardModel board, Piece source, HashSet<BoardPos> reserved, int variation)
         {
             BoardPos best = new BoardPos(-1, -1);
             int bestScore = int.MinValue;
@@ -213,7 +239,10 @@ namespace RevGame.Battle
                         continue;
                     }
                     // 不直接贴脸出生，中线施压需要数次低频接近，给玩家观察与射击的窗口。
-                    int score = -System.Math.Abs(y - board.Size / 2) * 10 - System.Math.Abs(x - board.Size / 2);
+                    int row = source.Def.IsRanged ? board.Size - 3 : board.Size / 2;
+                    int flank = 2 + variation % 3 * 2;
+                    int score = -System.Math.Abs(y - row) * 10 - System.Math.Abs(x - flank);
+                    // 同一合法射界下前排更近、后排更远；不靠“所有兵种都堆中线”制造压力。
                     if (score > bestScore)
                     {
                         bestScore = score; best = pos;
@@ -275,37 +304,54 @@ namespace RevGame.Battle
         /// 对已经合法的整套敌阵评分。低档偏向后排与有气；高档再看射界、眼数、玩家可反击的位置。
         /// 分数越大越优先，同分保留扫描时先遇到的方案，因此固定输入可以稳定回放。
         /// </summary>
-        private static int Score(BoardModel board, int intelligence)
+        private static int Score(BoardModel board, int intelligence, List<BoardPos> hits, HashSet<int> hitIds)
         {
             int score = 0;
-            foreach (Piece enemy in board.GetPiecesOf(GameSide.Enemy))
+            foreach (Piece enemy in board.Pieces)
             {
+                if (enemy.Side != GameSide.Enemy) { continue; }
                 score += enemy.Pos.Y * 3 + System.Math.Min(enemy.Liberties, 12);
-                // 使用真实射程查询评分，能开火的远程位置优先，不靠“职业叫射手”假定一定有输出。
                 if (intelligence >= 2 && enemy.Def.IsRanged)
                 {
-                    score += MoveRules.GetAttackTargets(board, enemy).Count * 100;
+                    MoveRules.GetAttackTargets(board, enemy, hits);
+                    score += hits.Count * 100;
                 }
-                if (intelligence >= 3)
+                if (intelligence >= 3) { score += enemy.EyeCount * 30; }
+            }
+            // 旧实现对每颗敌人重复计算每颗玩家的射界。现在每个玩家只查一次，按敌人Id去重后扣分。
+            // 这与旧评分等价，大身体多个占格命中也只算一次；缓冲归本次查询独占，不共享可变全局草稿。
+            if (intelligence >= 4)
+            {
+                foreach (Piece player in board.Pieces)
                 {
-                    score += enemy.EyeCount * 30;
-                }
-                if (intelligence >= 4)
-                {
-                    // 高阶布阵同时看对方火力，主将和远程尽量不在出生点遭到集火。
-                    foreach (Piece player in board.GetPiecesOf(GameSide.Player))
+                    if (player.Side != GameSide.Player) { continue; }
+                    hitIds.Clear();
+                    MoveRules.GetAttackTargets(board, player, hits);
+                    foreach (BoardPos hit in hits)
                     {
-                        foreach (BoardPos hit in MoveRules.GetAttackTargets(board, player))
-                        {
-                            if (board.GetPiece(hit) == enemy)
-                            {
-                                score -= enemy.IsKing ? 180 : 60; break;
-                            }
-                        }
+                        Piece enemy = board.GetPiece(hit);
+                        if (enemy != null && enemy.Side == GameSide.Enemy && hitIds.Add(enemy.Id)) { score -= enemy.IsKing ? 180 : 60; }
                     }
                 }
             }
             return score;
+        }
+
+        private static bool HasEnemy(BoardModel board)
+        {
+            foreach (Piece piece in board.Pieces) { if (piece.Side == GameSide.Enemy) { return true; } }
+            return false;
+        }
+
+        private static void ReserveOpening(HashSet<BoardPos> reserved, int size)
+        {
+            for (int x = 0; x < size; x++) { reserved.Add(new BoardPos(x, 0)); reserved.Add(new BoardPos(x, 1)); }
+        }
+
+        private static string Describe(int variation, int eyes, int requested)
+        {
+            return (variation % 3 == 0 ? "左翼推进·" : variation % 3 == 1 ? "纵深守阵·" : "右翼夹击·")
+                + (eyes == 2 ? "两眼活棋" : "一眼守阵") + (eyes < requested ? "（空间受限，已降级）" : "");
         }
 
         /// <summary>同一个边缘模板每次旋转九十度，就能尝试四条边；size - 1 把坐标限制在棋盘内。</summary>

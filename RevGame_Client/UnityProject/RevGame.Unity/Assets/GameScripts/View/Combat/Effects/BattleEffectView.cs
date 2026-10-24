@@ -147,10 +147,17 @@ namespace RevGame.View
             {
                 throw new System.InvalidOperationException("数字特效只能显示已经结算的伤害；弹道应使用 ShowProjectile");
             }
+            ShowDamage(position, damage, BattleDamageKind.Normal, onFinished, targetSide, arrange);
+        }
+
+        /// <summary>样式直接取服务发出的来源；纯表现函数，不查询棋子、不推测暴击、不再次结算伤害。</summary>
+        public void ShowDamage(Vector3 position, int damage, BattleDamageKind kind, System.Action<BattleEffectView> onFinished, GameSide targetSide, System.Action<BattleEffectView> arrange = null)
+        {
             ResetVisual(position, onFinished);
             damageText.gameObject.SetActive(true);
-            BattleText config = GameTextConfig.Require("Damage");
-            Color color = targetSide == GameSide.Player ? new Color(1f, 0.28f, 0.22f) : GameTextConfig.ColorOf(config);
+            BattleText config = GameTextConfig.Damage(kind, targetSide);
+            DamageKind = kind;
+            Color color = GameTextConfig.ColorOf(config);
             ConfigureText(config, config.Text.Replace("{damage}", damage.ToString()), color);
             StartFloatingText(config, position + new Vector3(0f, 0.35f, -0.5f), false, arrange);
         }
@@ -163,6 +170,11 @@ namespace RevGame.View
             ConfigureText(config, config.Text, GameTextConfig.ColorOf(config));
             StartFloatingText(config, position + new Vector3(0f, 0.55f, -0.5f), true, arrange);
         }
+
+        /// <summary>只读诊断：用于核对真实颜色和文案，避免测试只看Tween存在。</summary>
+        public BattleDamageKind DamageKind { get; private set; }
+        public Color TextColor => damageText.color;
+        public string TextContent => damageText.text;
 
         private void ConfigureText(BattleText config, string content, Color color)
         {
@@ -190,12 +202,12 @@ namespace RevGame.View
             IsFloatingText = true;
             IsAttackText = attack;
             transform.position = KeepTextOnScreen(position);
-            _textPeak = Mathf.Clamp(config.PeakScale, 1f, 1.12f);
+            _textPeak = Mathf.Clamp(config.PeakScale, 1f, attack ? 1.12f : 1.5f);
             _textRise = Consts.CellSize * (attack ? 0.30f : 0.45f);
             Camera camera = Camera.main;
             // 本轮在原尺寸上整体放大20%；宽度上限与基础缩放一起改，避免长文案被旧上限重新压小。
             // BoardView随后用实际屏幕包围盒避让，所以放大后仍共享20条预算和重叠半透明规则。
-            float maxWidth = camera == null ? 144f : camera.pixelWidth * (attack ? 0.072f : 0.048f);
+            float maxWidth = camera == null ? 144f : camera.pixelWidth * (attack ? 0.072f : DamageKind == BattleDamageKind.Normal ? 0.048f : 0.105f);
             // 短文案也统一缩小，不能只有长句受限、两个字的口号仍然盖住整颗棋子。
             _baseTextScale = Mathf.Min(attack ? 0.864f : 0.984f, maxWidth / Mathf.Max(1f, TextScreenRect.width * _textPeak));
             transform.localScale = Vector3.one * _baseTextScale;
@@ -208,12 +220,19 @@ namespace RevGame.View
             }
             float duration = Mathf.Min(config.Duration, attack ? 0.9f : 1.1f);
             transform.localScale = Vector3.one * (_baseTextScale * 0.72f);
-            Sequence sequence = DOTween.Sequence();
-            sequence.Append(DOTween.To(() => transform.localScale, value => transform.localScale = value, Vector3.one * (_baseTextScale * _textPeak), 0.14f).SetEase(Ease.OutQuad));
-            sequence.Append(DOTween.To(() => transform.localScale, value => transform.localScale = value, Vector3.one * _baseTextScale, 0.14f).SetEase(Ease.OutBack));
-            sequence.Insert(0f, DOTween.To(() => transform.position, value => transform.position = value, end, duration).SetEase(Ease.OutQuad));
-            sequence.Insert(duration - 0.28f, DOTween.To(() => _fadeAlpha, SetNumberAlpha, 0f, 0.28f));
-            _animation = sequence.OnComplete(Finish);
+            // 一条DOTween同时驱动弹出、衰减振动、上浮、淡出，替代每条文字的Sequence+4个子Tween。
+            // 振幅是表现尺度而非玩法数值；临界缩放和上浮范围仍交给BoardView预约避让。
+            _animation = DOTween.To(() => _progress, value =>
+            {
+                _progress = value;
+                float seconds = value * duration;
+                float scale = seconds < .14f ? Mathf.Lerp(.72f, _textPeak, 1f - Mathf.Pow(1f - seconds / .14f, 2f))
+                    : Mathf.Lerp(_textPeak, 1f, Mathf.Clamp01((seconds - .14f) / .18f));
+                float shake = attack ? 0f : Mathf.Sin(seconds * 72f) * Mathf.Max(0f, 1f - seconds / .42f) * Consts.CellSize * .045f;
+                transform.localScale = Vector3.one * (_baseTextScale * scale);
+                transform.position = Vector3.Lerp(start, end, 1f - (1f - value) * (1f - value)) + Vector3.right * shake;
+                SetNumberAlpha(Mathf.Clamp01((duration - seconds) / .28f));
+            }, 1f, duration).SetEase(Ease.Linear).OnComplete(Finish);
         }
 
         /// <summary>只播放已发生攻击的轨迹；扩大弹头、附带短尾与发射脉冲，动画绝不再次造成伤害。</summary>

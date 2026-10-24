@@ -18,6 +18,38 @@ namespace RevGame.Editor
 {
     public static class GameBattlePerformanceChecks
     {
+        /// <summary>本次前后对照固定为同一名单/棋盘/AI档位；不以必胜作为性能断言，也不让Excel人数变化改变工作量。</summary>
+        public static string RunFixed(string label)
+        {
+            if (UnityEditor.EditorApplication.isPlaying) { throw new InvalidOperationException("请退出Play后测量规则"); }
+            GameConfigTestSupport.Ensure();
+            var formation = new List<double>();
+            var deployment = new List<double>();
+            for (int sample = 0; sample < 6; sample++)
+            {
+                var roster = new List<Piece>();
+                for (int i = 0; i < 10; i++)
+                {
+                    roster.Add(new Piece(i + 1, PieceCatalog.Get(i < 5 ? PieceKind.Shield : PieceKind.Archer, StarTier.One), GameSide.Enemy));
+                }
+                var players = new List<Piece>();
+                var watch = Stopwatch.StartNew();
+                if (!EnemyFormationPlanner.TryArrange(roster, players, true, out string reason, 4)) { throw new InvalidOperationException(reason); }
+                watch.Stop();
+                double deploy = MeasureDeployment();
+                if (sample > 0) { formation.Add(watch.Elapsed.TotalMilliseconds); deployment.Add(deploy); }
+            }
+            formation.Sort(); deployment.Sort();
+            long start = GC.GetAllocatedBytesForCurrentThread();
+            GC.KeepAlive(new byte[102400]);
+            string report = label + "\n固定10棋整队中位数(ms)=" + formation[2].ToString("F3")
+                + "\n固定棋盘AI4补子中位数(ms/次)=" + deployment[2].ToString("F3")
+                + "\n分配计数器有效=" + (GC.GetAllocatedBytesForCurrentThread() > start)
+                + "\n整队样本=" + string.Join(",", formation) + "\n补子样本=" + string.Join(",", deployment);
+            Directory.CreateDirectory("Temp/ScoreUpgrade");
+            File.WriteAllText("Temp/ScoreUpgrade/performance-" + label + ".txt", report);
+            return report;
+        }
         /// <summary>保存可重复的前后测量；label建议使用before/after，结果进入Temp，不进入资源包。</summary>
         public static string Run(string label)
         {

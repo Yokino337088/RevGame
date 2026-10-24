@@ -7,6 +7,39 @@ namespace RevGame.Editor
     /// <summary>项目级资源审计接入现有RevMCP；调用真实AssetDatabase与项目打包入口，不复制框架打包实现。</summary>
     public static class GameResourceUsageAutomation
     {
+        [RevAutomationAction("game.score.check", Environment = "play", Keys = new string[0], Description = "真实AB积分飞星、橙色暴击、滚筒与密集渲染回收验收")]
+        public static object ScoreCheck(RevAutomationRequest request)
+        {
+            if (!Revolution.RevResBootstrap.UseABInEditor) { throw new InvalidOperationException("需要冷启动真实AB模式"); }
+            Type type = Type.GetType("RevGame.Editor.GameScoreChecks, Assembly-CSharp-Editor", true);
+            PropertyInfo result = type.GetProperty("LastResult");
+            if ((string)result.GetValue(null) == "运行中") { throw new InvalidOperationException("积分验收正在运行"); }
+            type.GetMethod("Begin").Invoke(null, null);
+            return new PlayCheckOperation(result);
+        }
+        [RevAutomationAction("game.score.rules", Environment = "edit", Keys = new string[0], Description = "验证真实计分、永久累计隔离、10回合与60局初始布局")]
+        public static object ScoreRules(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameScoreChecks, Assembly-CSharp-Editor", true);
+            try { return new Result { text = (string)type.GetMethod("RunRules").Invoke(null, null) }; }
+            catch (TargetInvocationException error) { throw error.InnerException ?? error; }
+        }
+        [RevAutomationAction("game.score.configure", Environment = "edit", Keys = new string[0], Description = "装配左侧积分滚筒与共享Shader飞星预制体")]
+        public static object ScoreConfigure(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameScoreBuilder, Assembly-CSharp-Editor", true);
+            return new Result { text = (string)type.GetMethod("Configure").Invoke(null, null) };
+        }
+        /// <summary>只允许两个固定标签，前后使用同一输入，不开放任意代码执行。</summary>
+        [RevAutomationAction("game.score.perf-before", Environment = "edit", Keys = new string[0], Description = "固定输入记录计分升级前规则性能")]
+        public static object ScorePerfBefore(RevAutomationRequest request) { return FixedPerformance("before"); }
+        [RevAutomationAction("game.score.perf-after", Environment = "edit", Keys = new string[0], Description = "固定输入记录计分升级后规则性能")]
+        public static object ScorePerfAfter(RevAutomationRequest request) { return FixedPerformance("after"); }
+        private static object FixedPerformance(string label)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameBattlePerformanceChecks, Assembly-CSharp-Editor", true);
+            return new Result { text = (string)type.GetMethod("RunFixed").Invoke(null, new object[] { label }) };
+        }
         /// <summary>只读返回逐资源的使用者、源文件大小和当前包名，允许配置前后对照。</summary>
         [RevAutomationAction("game.resources.audit", Environment = "edit", Keys = new string[0], Description = "只读审计Art/Atlases的真实业务引用与AB标记")]
         public static object Audit(RevAutomationRequest request) { return GameResourceUsage.Audit(); }

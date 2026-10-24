@@ -1,0 +1,2 @@
+战斗数值参数.xlsx: worksheets unchanged; intended original-cell value edits=['B30', 'B32', 'B37', 'C40', 'B41', 'B42', 'B43', 'B58']; original style differences=0; existing rows preserved, new data rows=8; style examples=[]
+战斗弹幕配置.xlsx: worksheets unchanged; intended original-cell value edits=[]; original style differences=0; existing rows preserved, new data rows=24; style examples=[]

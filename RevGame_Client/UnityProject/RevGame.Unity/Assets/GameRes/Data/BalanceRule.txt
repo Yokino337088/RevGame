@@ -27,20 +27,20 @@ Enemy.HpGrowthPerRound	0.018	敌方生命随连续回合进度递增：× (1 + �
 Enemy.AttackGrowthPerRound	0.009	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
 Enemy.AiRoundsPerLevel	5	敌方 AI 档位每隔多少个连续回合提升一档（整数 ≥1）。
 Enemy.AiMaxLevel	4	敌方 AI 最高档位（整数，1~4）。
-Enemy.CountBase	6	敌方每回合基础人数（整数）。
+Enemy.CountBase	9	敌方每回合基础人数（整数）。
 Enemy.CountRoundsPerExtra	5	每隔多少个连续回合敌方多一个人（整数 ≥1）。
-Enemy.CountMax	19	敌方每回合人数上限（整数）。
+Enemy.CountMax	21	敌方每回合人数上限（整数）。
 Enemy.PressureStarDivisor	6	继承阵容压力 = 存活我方棋星级总和 ÷ 本值（至少为 1）；用于按我方强度动态抬高敌方血攻。
 Enemy.PressureHpMax	16	继承阵容压力对敌方生命倍率的上限（压力平方后的封顶值）。
 Enemy.PressureAttackMax	4	继承阵容压力对敌方攻击倍率的上限（压力开方后的封顶值）。
 Enemy.ArcherRange	6	敌方弓箭手直线射程（格，整数）；保留阻挡判定，与重弩跨盘攻击不同。
-Deploy.StartSeconds	2.5	战斗中敌方第一次补兵的最早时刻（秒），预留开局观察时间。
+Deploy.StartSeconds	1.5	战斗中敌方第一次补兵的最早时刻（秒），预留开局观察时间。
 Deploy.StopSeconds	60	到这个时刻起不再补兵（秒），避免与决胜支援形成无限拉锯。
 Deploy.LivingCap	26	敌方在场棋数上限（整数）；死亡棋子不占额度。
-Deploy.BaseCount	18	本回合补兵次数预算 = 本值 + 敌方 AI 档位（整数）。
-Deploy.IntervalMinSeconds	2	补兵间隔的下限（秒）。
-Deploy.IntervalBaseSeconds	4.5	补兵间隔 = max(下限, 本值 − AI档位 × 每档缩短秒数)。
-Deploy.IntervalPerLevelSeconds	0.5	AI 档位每提升一档缩短的补兵间隔（秒）。
+Deploy.BaseCount	18	本回合增援棋子预算=本值+AI档位；按成功落地棋数计数，不按窗口计数。
+Deploy.IntervalMinSeconds	1	补兵间隔的下限（秒）。
+Deploy.IntervalBaseSeconds	2.25	补兵间隔 = max(下限, 本值 − AI档位 × 每档缩短秒数)。
+Deploy.IntervalPerLevelSeconds	0.25	AI 档位每提升一档缩短的补兵间隔（秒）。
 Deploy.MinEmptyCells	8	棋盘空格数不超过本值（整数）就不补兵，留给玩家调阵和援军。
 Event.ScheduleChance	1	关闭通关辅助时，普通回合安排战斗事件的概率（0~1）；Boss 回合与辅助开启时必定安排。
 Event.RareChance	0.25	关闭通关辅助时，抽到稀有事件组的概率（0~1）。
@@ -55,7 +55,7 @@ Prep.DelaySeconds	3	准备阶段开始后多少秒发放本轮增益（秒）；
 Prep.BuffCountMin	4	每轮抽取增益数量的下限（整数）。
 Prep.BuffCountMax	6	每轮抽取增益数量的上限（整数，≤ 增益总数）。
 Prep.RegenIntervalSeconds	4	生生不息、慧眼共鸣的周期回复间隔（秒）。
-Round.NormalPerChapter	10	每章普通回合数（整数）；第 N+1 回合是 Boss 回合；选关/跳过回合等界面与此联动。
+Round.NormalPerChapter	9	每章普通回合数（整数）；第 N+1 回合是 Boss 回合；选关/跳过回合等界面与此联动。
 Round.SkipAttackBonus	0.1	跳过最后一个普通回合直接挑战 Boss 时，永久获得的攻击加成比例。
 Hand.KindBaseWeight	3	抽手牌时，已解锁棋种的基础权重（整数）。
 Hand.ClassBonusWeight	1	场上已有同职业棋子时，该棋种额外增加的抽取权重（整数）。
@@ -86,3 +86,11 @@ EnemyAI.ChaseSteps	3	无眼近战每次冲锋最多经过的空格数（1～4）
 PlayerAI.FormationEnabled	1	远程自动整队开关（0关/1开）；只在战斗中整理散阵，不拆眼、不搬动零气棋。
 PlayerAI.FormationMinCount	2	参与自动整队的远程棋最少数量（2～20）；已有相连阵型保持原位。
 PlayerAI.FormationSeconds	6	自动整队检查间隔（秒，1～60）；尊重手动移动冷却，失败也消耗间隔，避免反复搜索。
+Deploy.BatchCount	2	每个增援窗口最多落子数量（1～2）；每颗落地后重新检查人数、空格和气眼，不能穿透总预算。
+Damage.CriticalChance	0.18	玩家普通攻击暴击概率（0～1）；每次真实出手独立抽取，环境/Boss技能不抽取。
+Damage.CriticalMultiplier	1.8	暴击伤害倍率（1～10）；先乘真实伤害再结算护盾、防御，仅实际扣血才给暴击积分。
+Score.KillPoints	100	玩家普通攻击或友方支援击杀一颗敌棋的基础积分（整数0～100000）；环境波动不归玩家击杀。
+Score.CriticalPoints	15	一次造成真实扣血的玩家暴击基础积分（整数0～100000）；致死暴击同时获得击杀分。
+Score.RoundGrowth	0.12	倍率的连续回合增长系数（0～10）；进度=(章节-1)×每章回合数+回合-1。
+Score.PieceGrowth	0.05	倍率的存活玩家棋数增长系数（0～10）；第一颗为基准，死亡后按当前数量重新计算。
+Score.MultiplierCap	20	积分倍率上限（1～1000）；倍率=min(上限,(1+进度×回合系数)×(1+额外存活棋数×棋数系数))。

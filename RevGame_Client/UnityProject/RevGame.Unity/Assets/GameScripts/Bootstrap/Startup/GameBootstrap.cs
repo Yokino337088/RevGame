@@ -62,6 +62,7 @@ namespace RevGame.Bootstrap
             // 用户明确要求手机横屏；设备方向和根 Canvas 都固定横屏。
             Screen.orientation = ScreenOrientation.LandscapeLeft;
 #endif
+            RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
             RevServices.Register<IBattleService, BattleService>(owner: this);
             RevServices.Register<GameFlow, GameFlow>(owner: this);
 

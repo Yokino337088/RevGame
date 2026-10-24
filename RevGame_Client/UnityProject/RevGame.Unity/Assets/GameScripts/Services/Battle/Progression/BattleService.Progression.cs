@@ -253,7 +253,7 @@ namespace RevGame.Services
         }
 
         /// <summary>
-        /// 第10回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。
+        /// 最后普通回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。
         /// 已落子会被拒绝，防止“拿满本回合收益再跳过”绕过代价。
         /// </summary>
         public bool SkipRound()

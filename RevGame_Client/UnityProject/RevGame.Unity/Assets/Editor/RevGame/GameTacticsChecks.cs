@@ -43,7 +43,7 @@ namespace RevGame.Editor
                     }
                     previous = current;
                     List<Piece> guards = new List<Piece>(battle.EnemyPieces).FindAll(p => !p.IsBoss);
-                    Check(guards.Count >= 6 && guards.Count <= 19, "普通敌棋六至十九名，Boss另计");
+                    Check(guards.Count >= Balance.EnemyCountBase && guards.Count <= Balance.EnemyCountMax, "普通敌棋人数遵守Excel上下限，Boss另计");
                     Check(guards.Exists(p => p.Def.Kind == PieceKind.Crossbow) && guards.Exists(p => p.Def.Kind == PieceKind.Archer) && guards.Exists(p => p.Def.Kind == PieceKind.MageFire), "重弩/弓箭/火法均存在");
                     int expectedEyes = guards.Count >= 8 ? 2 : 1;
                     Check(guards.FindAll(p => p.EyeCount >= expectedEyes).Count >= (expectedEyes == 2 ? 8 : 5), "真实规则确认完整守眼骨架");
@@ -52,7 +52,7 @@ namespace RevGame.Editor
                 }
             }
             watch.Stop();
-            report.AppendLine("66个敌阵生成耗时合计 " + watch.ElapsedMilliseconds + "ms（编辑器单次测量，不代表手机性能）");
+            report.AppendLine("60个敌阵生成耗时合计 " + watch.ElapsedMilliseconds + "ms（编辑器单次测量，不代表手机性能）");
             VerifySnapshotAndFallback();
             VerifyRangedAndMovement();
             VerifyBattleDeployment();
@@ -92,9 +92,10 @@ namespace RevGame.Editor
                 }
             }
             List<Piece> enemies = MakeEnemies();
+            int expectedCount = enemies.Count;
             string reason;
             Check(EnemyFormationPlanner.TryArrange(enemies, players, false, out reason) && reason.Contains("散阵"), "边缘被占时完整降级为合法散阵");
-            Check(enemies.Count == 8 && players.TrueForAll(p => p.Hp == p.MaxHp), "降级不减员、不修改玩家血量");
+            Check(enemies.Count == expectedCount && players.TrueForAll(p => p.Hp == p.MaxHp), "降级不减员、不修改玩家血量");
             for (int y = 1; y < 8; y++)
             {
                 for (int x = 1; x < 8; x++)
@@ -115,7 +116,7 @@ namespace RevGame.Editor
             int total = 0;
             foreach (int chapter in new[] { 1, 6 })
             {
-                foreach (int round in new[] { 1, 9, 11 })
+                foreach (int round in new[] { 1, Balance.NormalRoundsPerChapter, Balance.BossRoundIndex })
                 {
                     var battle = new BattleService(true, 381);
                     Check(battle.StartRound(chapter, round), "战斗落子夹具初始化");
@@ -133,7 +134,7 @@ namespace RevGame.Editor
                     {
                         battle.Tick(Balance.BattleSimulationStepSeconds);
                         if (battle.EnemyDeploymentCount == previous) { continue; }
-                        Check(battle.EnemyDeploymentCount == previous + 1, "每个落子窗口只增加一颗敌棋");
+                        Check(battle.EnemyDeploymentCount > previous && battle.EnemyDeploymentCount - previous <= Balance.DeployBatchCount, "每个落子窗口遵守配置的最多两子");
                         float interval = previous == 0 ? Balance.DeployStartSeconds : System.Math.Max(Balance.DeployIntervalMinSeconds, Balance.DeployIntervalBaseSeconds - battle.EnemyIntelligence * Balance.DeployIntervalPerLevelSeconds);
                         Check(battle.BattleElapsed - lastTime >= interval && battle.BattleElapsed < Balance.DeployStopSeconds, "遵守配置落子间隔与停援时刻");
                         Check(battle.Board.GetPiecesOf(GameSide.Enemy).Count <= Balance.DeployLivingCap, "敌军存活数量遵守上限");
@@ -172,7 +173,7 @@ namespace RevGame.Editor
         private static List<Piece> MakeEnemies()
         {
             var result = new List<Piece>();
-            foreach (PieceKind kind in LevelCatalog.GetRound(1, 11).EnemyKinds)
+            foreach (PieceKind kind in LevelCatalog.GetRound(1, Balance.BossRoundIndex).EnemyKinds)
             {
                 result.Add(new Piece(1000 + result.Count, PieceCatalog.Get(kind, StarTier.One), GameSide.Enemy));
             }

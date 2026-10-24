@@ -64,7 +64,7 @@ namespace RevGame.Services
         /// <summary>手牌模型：负责“有哪些牌、怎么抽”，额度与扣牌仍由本服务决定。</summary>
         private readonly HandModel _hand = new HandModel();
         // 正式游玩使用随机种子；验收可在构造时传固定种子，复现同一手牌和事件序列。
-        // 注意：随机只影响“抽到什么”，不影响伤害公式或落子判定。
+        // 随机控制抽牌、事件和普攻暴击；伤害公式仍读Excel，落子是否合法仍由棋盘规则判定。
         private readonly System.Random _random;
         /// <summary>手牌只读视图：界面只能看，增删必须走 TryPlayCard / RefreshHand。</summary>
         public IReadOnlyList<HandCard> Hand
@@ -110,7 +110,7 @@ namespace RevGame.Services
         public GamePhase Phase { get; private set; }
         /// <summary>当前章节（1~6）。</summary>
         public int Chapter { get; private set; }
-        /// <summary>当前回合（1~11，最后一个是 Boss）。</summary>
+        /// <summary>当前回合（1~10，最后一个是 Boss）。</summary>
         public int Round { get; private set; }
         /// <summary>本回合是否 Boss 回合；Boss 回合不限时，靠擒王或全灭结束。</summary>
         public bool IsBossRound { get; private set; }
@@ -177,7 +177,7 @@ namespace RevGame.Services
         public int EnemyIntelligence => LevelCatalog.GetIntelligence(Chapter, Round);
 
         /// <summary>游戏默认开启随机战斗事件；该开关不提供免死或保胜。</summary>
-        public BattleService() : this(true)
+        public BattleService() : this(true, null, RevServices.Get<IScoreProgress>())
         {
         }
 
@@ -189,8 +189,10 @@ namespace RevGame.Services
         }
 
         /// <summary>固定种子只控制手牌/事件等随机输入，方便重放同一局；正式入口省略种子即可。</summary>
-        public BattleService(bool victoryAssist, int? seed)
+        public BattleService(bool victoryAssist, int? seed, IScoreProgress scoreProgress = null)
         {
+            _scoreProgress = scoreProgress;
+            LifetimeScore = scoreProgress == null ? 0 : scoreProgress.Total;
             _random = seed.HasValue ? new System.Random(seed.Value) : new System.Random();
             VictoryAssistEnabled = victoryAssist;
             LastError = string.Empty;
@@ -226,6 +228,7 @@ namespace RevGame.Services
 
             Chapter = chapter;
             Round = round;
+            RoundScore = 0; // 只清本回合分，永久积分不因失败、换回合或返回大厅清零。
             IsBossRound = def.IsBoss;
             Phase = GamePhase.Prepare;
             _battleElapsed = 0f;
@@ -678,7 +681,10 @@ namespace RevGame.Services
             // +500%测试攻击=原伤害×6，只影响真实出手；仍走下面的受击、死亡、事件与对象池表现链。
             raw = ScaleAutomationAttackDamage(attacker, raw);
 #endif
-            int real = DamagePiece(target, raw, attacker);
+            // 每次玩家普攻独立抽样；固定随机种子也覆盖暴击，便于重放。环境与Boss技能不进入这里。
+            bool critical = attacker.Side == GameSide.Player && _random.NextDouble() < Balance.CriticalChance;
+            if (critical) { raw = (int)System.Math.Min(int.MaxValue, System.Math.Ceiling(raw * (double)Balance.CriticalMultiplier)); }
+            int real = DamagePiece(target, raw, attacker, damageKind: critical ? BattleDamageKind.Critical : BattleDamageKind.Normal);
             if (attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
             {
                 RevEvent.DispatchEvent<int>(Events.PieceHpChanged, attacker.Id);
@@ -713,6 +719,7 @@ namespace RevGame.Services
             }
 
             _lastWinner = winner;
+            FlushScore();
             _hand.Clear();
             SelectedCardId = 0;
             SelectedPieceId = 0;
@@ -889,7 +896,7 @@ namespace RevGame.Services
                 plan.Add(new Piece(_nextPieceId + plan.Count, pieceDef, GameSide.Enemy, hpScale: hpScale, attackScale: attackScale));
             }
             string report;
-            if (!EnemyFormationPlanner.TryArrange(plan, _playerPieces, newBoard, out report, def.Intelligence))
+            if (!EnemyFormationPlanner.TryArrange(plan, _playerPieces, newBoard, out report, def.Intelligence, def.Progress))
             {
                 return Reject(report);
             }

@@ -1,0 +1,115 @@
+{
+  "success": true,
+  "name": "score-final-rules-cold-ui",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.score.rules",
+      "response": {
+        "protocol": 1,
+        "id": "90f17e4ffe544ae5be96de07dfd3e23d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\90f17e4ffe544ae5be96de07dfd3e23d",
+        "data": {
+          "text": "通过 1089 条积分/10回合/60局敌阵/节奏规则断言"
+        }
+      },
+      "polls": 1,
+      "seconds": 2.662745699984953
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.score.perf-after",
+      "response": {
+        "protocol": 1,
+        "id": "9bb97f7e051241ae8ab292449dcb532d",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\9bb97f7e051241ae8ab292449dcb532d",
+        "data": {
+          "text": "after\n固定10棋整队中位数(ms)=0.102\n固定棋盘AI4补子中位数(ms/次)=0.914\n分配计数器有效=False\n整队样本=0.0872,0.1017,0.1021,0.1029,0.1276\n补子样本=0.90604,0.90639,0.91402,0.94443,1.0037"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.16854919999605045
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "ed61f325fab344ceb8be984746380f48",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\ed61f325fab344ceb8be984746380f48",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 4.112328599992907
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.play-check",
+      "response": {
+        "protocol": 1,
+        "id": "3ff4376e32a94825932c3acec395a98e",
+        "success": true,
+        "error": "",
+        "message": "通过：AB，3579条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察220帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察130帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察154帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察132帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察182帧，分帧棋盘20帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察124帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3ff4376e32a94825932c3acec395a98e",
+        "data": {
+          "text": "通过：AB，3579条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察220帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察130帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察154帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察132帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察182帧，分帧棋盘20帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察124帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过"
+        }
+      },
+      "polls": 1,
+      "seconds": 14.896935600001598
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.console",
+      "response": {
+        "protocol": 1,
+        "id": "424954259e734290866c4ab87c51f5be",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\424954259e734290866c4ab87c51f5be",
+        "data": {
+          "total": 0,
+          "offset": 0,
+          "truncated": false,
+          "entries": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09020949999103323
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "0bf839204db54135929035a49061137e",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\0bf839204db54135929035a49061137e",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.6534051000198815
+    }
+  ]
+}

@@ -12,6 +12,8 @@ namespace RevGame.Core
         public readonly int TargetSize;
         public readonly GameSide TargetSide;
         public readonly int Damage;
+        /// <summary>由真实结算携带，禁止表现层根据伤害大小猜测暴击或技能。</summary>
+        public readonly BattleDamageKind DamageKind;
         public readonly bool HasAttacker;
         public readonly BoardPos Source;
         /// <summary>
@@ -20,7 +22,7 @@ namespace RevGame.Core
         /// </summary>
         public readonly int SourceId;
         /// <summary>
-        /// 是否来自 Boss 技能。技能有自己的爆炸/激光特效，棋盘只显示伤害数字，
+        /// 是否来自技能或环境事件。它们有自己的爆炸/激光特效，棋盘只显示伤害数字，
         /// 不再额外画一条普通弹道——否则一次范围技能会同时飞出十几根黄色子弹，画面混乱。
         /// </summary>
         public readonly bool FromSkill;
@@ -29,13 +31,14 @@ namespace RevGame.Core
         public readonly int SourceSize;
         public readonly bool SourceIsRanged;
 
-        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0, bool fromSkill = false, PieceKind sourceKind = PieceKind.Swordman, int sourceSize = 1, bool sourceIsRanged = false)
+        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0, bool fromSkill = false, PieceKind sourceKind = PieceKind.Swordman, int sourceSize = 1, bool sourceIsRanged = false, BattleDamageKind damageKind = BattleDamageKind.Normal)
         {
             TargetId = targetId;
             Position = position;
             TargetSize = targetSize;
             TargetSide = targetSide;
             Damage = damage;
+            DamageKind = damageKind;
             HasAttacker = hasAttacker;
             Source = source;
             SourceId = sourceId;

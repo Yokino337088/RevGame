@@ -66,7 +66,6 @@ namespace RevGame.Services
                 RevEvent.RemoveAllByOwner(owner);
             }
 
-            int singleDamage = 0;
             for (int rate = 1; rate <= 2; rate++)
             {
                 battle = new BattleService(false);
@@ -77,8 +76,10 @@ namespace RevGame.Services
                 battle.StartBattle();
                 int hp = victim.Hp;
                 var attacks = new List<PieceAttackInfo>();
+                var hits = new List<BattleHitInfo>();
                 owner = new object();
                 RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, attacks.Add, owner: owner);
+                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.TargetId == victim.Id) { hits.Add(hit); } }, owner: owner);
                 try
                 {
                     battle.Tick(0.3125f);
@@ -92,14 +93,10 @@ namespace RevGame.Services
                     {
                         check(attack.PieceId == archer.Id && attack.Kind == PieceKind.Archer && attack.Position == archer.Pos && attack.Side == GameSide.Player, "每次真实攻击派发正确快照");
                     }
-                    if (rate == 1)
-                    {
-                        singleDamage = hp - victim.Hp;
-                    }
-                    else
-                    {
-                        check(hp - victim.Hp == singleDamage * 2, "相同周期两倍频率造成两倍真实伤害");
-                    }
+                    // 暴击逐次抽样，不能再假设第二发必定和第一发等伤害；独立核对每次命中和实际扣血守恒。
+                    int resolved = 0;
+                    foreach (BattleHitInfo hit in hits) { resolved += hit.Damage; }
+                    check(hits.Count == rate && hp - victim.Hp == resolved, "出手倍率对应真实命中次数，逐次含暴击伤害之和等于真实扣血");
                 }
                 finally
                 {

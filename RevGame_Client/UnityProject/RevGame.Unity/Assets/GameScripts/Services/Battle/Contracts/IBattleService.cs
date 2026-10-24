@@ -43,6 +43,11 @@ namespace RevGame.Services
     /// </summary>
     public interface IBattleService
     {
+        /// <summary>本回合积分换回合清零；永久总积分在本机跨挑战保存；倍率随进度和存活棋数变化。</summary>
+        long RoundScore { get; }
+        long LifetimeScore { get; }
+        float ScoreMultiplier { get; }
+        void FlushScore();
         // ---------------- 只读状态（界面/GM 观察用，不能从这里改数据） ----------------
         /// <summary>通关辅助是否开启；开启时含最后一子保护、阶段支援，AI不能绕开此统一伤害规则。</summary>
         bool VictoryAssistEnabled { get; }
@@ -102,7 +107,7 @@ namespace RevGame.Services
         /// <summary>当前章（1~6）。</summary>
         int Chapter { get; }
 
-        /// <summary>当前回合（1~11）。</summary>
+        /// <summary>当前回合（1~10）。</summary>
         int Round { get; }
 
         /// <summary>本回合是否 Boss 回合（擒王、不限时）。</summary>
@@ -172,7 +177,7 @@ namespace RevGame.Services
         /// <summary>领取第 index 个奖励（0~2）；重复领取或不存在的编号必须返回 false。</summary>
         bool ChooseReward(int index);
 
-        /// <summary>第10回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。</summary>
+        /// <summary>最后普通回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。</summary>
         bool SkipRound();
 
         /// <summary>切换“补眼模式”；必须准备阶段且持有眼位石。</summary>

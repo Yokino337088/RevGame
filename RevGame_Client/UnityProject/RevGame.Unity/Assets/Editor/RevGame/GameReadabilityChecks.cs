@@ -31,6 +31,7 @@ namespace RevGame.Editor
             string outcome = "失败：验收未完成";
             System.IO.Directory.CreateDirectory("Temp/ReadabilityVerification");
             GameFlow flow = RevServices.GetRequired<GameFlow>();
+            IDisposable scorePreview = ((BattleService)RevServices.GetRequired<IBattleService>()).BeginScorePreview();
             try
             {
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
@@ -222,7 +223,8 @@ namespace RevGame.Editor
             }
             finally
             {
-                await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
+                finally { scorePreview.Dispose(); }
                 LastResult = outcome;
                 System.IO.File.WriteAllText("Temp/ReadabilityVerification/Result.txt", LastResult);
             }

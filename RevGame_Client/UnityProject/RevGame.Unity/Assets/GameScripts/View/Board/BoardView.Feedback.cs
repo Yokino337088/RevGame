@@ -30,15 +30,15 @@ namespace RevGame.View
         // 这两个集合只追踪当前正在播放的池对象，动画结束或阶段切换时立即移除。
         private readonly HashSet<BattleEffectView> _textEffects = new HashSet<BattleEffectView>();
         private readonly HashSet<BattleEffectView> _projectileEffects = new HashSet<BattleEffectView>();
-        // 用目标编号做键：同一目标短时间连续挨打，只累加一个数字，不排队生成几十个文本对象。
-        private readonly Dictionary<int, PendingDamageText> _pendingDamage = new Dictionary<int, PendingDamageText>();
+        // 目标编号+伤害来源复合键：同类伤害合并，暴击和不同技能各自保留颜色，不无界排队。
+        private readonly Dictionary<long, PendingDamageText> _pendingDamage = new Dictionary<long, PendingDamageText>(MaxPendingDamage);
         // 预算不变，改用“最久没获得显示名额者优先”的有界缓冲。
         // 普通FIFO满了只拒绝后来者，会永久偏爱先结算的老棋子；高星老棋子连射时，新落的一星棋子尤其容易完全没有反馈。
         private readonly FairFeedbackBuffer<PendingProjectile> _projectileQueue = new FairFeedbackBuffer<PendingProjectile>(MaxPendingProjectiles, 4, 0.5f);
         // 同一棋子只保留一份最新口号，不累计历史连射；最多十二份候选，仍不增加同屏的七条口号上限。
         private readonly FairFeedbackBuffer<PendingAttackText> _attackQueue = new FairFeedbackBuffer<PendingAttackText>(MaxPendingAttackTexts, 1, 0.5f);
         // 遍历字典时不能直接删除，用复用列表先收集过期编号，遍历结束后再移除。
-        private readonly List<int> _expiredDamageIds = new List<int>();
+        private readonly List<long> _expiredDamageIds = new List<long>(MaxPendingDamage);
         // 每个棋盘独占固定长度缓冲。上限20条，因此不需要每帧new List/ToArray，也不共享静态可变数组。
         // Rect是值类型，缓存的是本次动画推进后的快照；下一帧重新采样，缩放/移动不会用到旧矩形。
         private readonly BattleEffectView[] _textSnapshot = new BattleEffectView[MaxFloatingTexts];
@@ -104,9 +104,11 @@ namespace RevGame.View
         }
 
         /// <summary>短时间内同一目标受到的真实伤害合计；不持有棋子对象，目标死亡回池后仍可正确播报。</summary>
-        private sealed class PendingDamageText
+        private struct PendingDamageText
         {
             // 保存快照值而非Piece引用，避免棋子死亡、视图回池后读到别的棋子的状态。
+            public long Key;
+            public BattleDamageKind Kind;
             public int TargetId, Damage;
             public GameSide Side;
             public Vector3 Position;
@@ -189,19 +191,22 @@ namespace RevGame.View
             {
                 return;
             }
+            // 同一目标的普通伤害、暴击、环境和各Boss技能分开合并，避免暴击被黄色普通数覆盖。
+            // 用值类型复合键与值类型快照，每次入队不再分配一个PendingDamageText对象。
+            long key = ((long)hit.TargetId << 8) | (byte)hit.DamageKind;
             PendingDamageText pending;
-            if (!_pendingDamage.TryGetValue(hit.TargetId, out pending))
+            if (!_pendingDamage.TryGetValue(key, out pending))
             {
                 // 有界队列：屏幕显示不完时不积压几百条旧数字，也不为每次命中创建一个Timer。
                 if (_pendingDamage.Count >= MaxPendingDamage)
                 {
                     return;
                 }
-                pending = new PendingDamageText { TargetId = hit.TargetId, Side = hit.TargetSide, CreatedAt = Time.time };
-                _pendingDamage.Add(hit.TargetId, pending);
+                pending = new PendingDamageText { Key = key, Kind = hit.DamageKind, TargetId = hit.TargetId, Side = hit.TargetSide, CreatedAt = Time.time };
             }
             pending.Damage = (int)System.Math.Min(int.MaxValue, (long)pending.Damage + hit.Damage);
-            pending.Position = position; // 玩家换位后，以最近一次命中位置播报，不能再追着已回池的对象找坐标。
+            pending.Position = position; // 玩家换位后，以最近一次命中位置播报。
+            _pendingDamage[key] = pending;
         }
 
         /// <summary>在本帧动画推进后检查文字位置，让移动和放大的字也能获得遮挡淡化。</summary>
@@ -247,21 +252,22 @@ namespace RevGame.View
         /// <summary>本帧直接显示已结算数字；超预算只替换表现，不更改战斗数值。</summary>
         private void FlushOneDamageText()
         {
-            PendingDamageText oldest = null;
+            PendingDamageText oldest = default(PendingDamageText);
+            bool found = false;
             _expiredDamageIds.Clear();
             foreach (PendingDamageText item in _pendingDamage.Values)
             {
                 if (Time.time - item.CreatedAt > 1.2f)
                 {
-                    _expiredDamageIds.Add(item.TargetId); continue;
+                    _expiredDamageIds.Add(item.Key); continue;
                 }
-                if (oldest == null || item.CreatedAt < oldest.CreatedAt)
+                if (!found || item.CreatedAt < oldest.CreatedAt)
                 {
-                    oldest = item;
+                    oldest = item; found = true;
                 }
             }
-            foreach (int id in _expiredDamageIds) { _pendingDamage.Remove(id); }
-            if (oldest == null) { return; }
+            foreach (long id in _expiredDamageIds) { _pendingDamage.Remove(id); }
+            if (!found) { return; }
             if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
             {
                 BattleEffectView retire = null;
@@ -280,7 +286,7 @@ namespace RevGame.View
             {
                 return;
             }
-            _pendingDamage.Remove(oldest.TargetId);
+            _pendingDamage.Remove(oldest.Key);
             _pendingTextLoads++;
             int generation = _effectGeneration;
             PendingDamageText message = oldest;
@@ -302,7 +308,7 @@ namespace RevGame.View
                 }
                 _effects.Add(effect);
                 _textEffects.Add(effect);
-                effect.Show(BattleEffectKind.Damage, message.Position, message.Damage, OnEffectFinished, message.Side, ArrangeFloatingText);
+                effect.ShowDamage(message.Position, message.Damage, message.Kind, OnEffectFinished, message.Side, ArrangeFloatingText);
             }, _viewRoot);
         }
 

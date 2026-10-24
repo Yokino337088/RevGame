@@ -24,7 +24,7 @@ namespace RevGame.Editor
 
         /// <summary>
         /// 收集真实依赖、迁移旧散图、创建分组图集并打标。重复执行不会创建第二份资源。
-        /// 在GameResourceBuild清理旧标记之后调用；不能在Play里改资源布局。
+        /// 在GameResourceBuild计算并应用目录标记后调用；不能在Play里改资源布局。
         /// </summary>
         public static void Configure()
         {
@@ -68,8 +68,15 @@ namespace RevGame.Editor
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (included.Contains(Path.GetFileNameWithoutExtension(path))) { continue; }
                 var importer = (SpriteAtlasImporter)AssetImporter.GetAtPath(path);
-                importer.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+                GameResourceBuild.SetBundleIfChanged(importer, string.Empty);
                 if (importer.includeInBuild) { importer.includeInBuild = false; importer.SaveAndReimport(); }
+            }
+            // 图集归属变化后剔除闲置源图旧标记，不能因跳过“全量清空”而把无引用图片继续带进包。
+            var usedSources = new HashSet<string>(groups.Values.SelectMany(paths => paths), StringComparer.Ordinal);
+            foreach (string guid in AssetDatabase.FindAssets("", new[] { "Assets/GameRes/Art" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!usedSources.Contains(path)) { GameResourceBuild.SetBundleIfChanged(AssetImporter.GetAtPath(path), string.Empty); }
             }
             WriteCatalog(groups.Keys);
             AssetDatabase.SaveAssets();
@@ -144,33 +151,37 @@ namespace RevGame.Editor
                 string error = AssetDatabase.MoveAsset(legacy, atlasPath);
                 if (!string.IsNullOrEmpty(error)) { throw new InvalidOperationException(error); }
             }
-            var atlas = new SpriteAtlasAsset();
-            atlas.Add(paths.Select(p => AssetDatabase.LoadAssetAtPath<Texture2D>(p)).Cast<UnityEngine.Object>().ToArray());
-            atlas.SetPackingSettings(new SpriteAtlasPackingSettings { enableRotation = false, enableTightPacking = false, padding = 4 });
-            atlas.SetTextureSettings(new SpriteAtlasTextureSettings { readable = false, generateMipMaps = false, sRGB = true, filterMode = FilterMode.Bilinear });
+            SpriteAtlas existing = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+            // 内容相同就保留V2源文件。每次新建再保存会触发Importer重建，既增加导入时间，也会覆盖正在保存的包标记。
+            string[] members = existing == null ? Array.Empty<string>() : existing.GetPackables().Select(AssetDatabase.GetAssetPath).OrderBy(p => p, StringComparer.Ordinal).ToArray();
+            if (!members.SequenceEqual(paths.OrderBy(p => p, StringComparer.Ordinal)))
+            {
+                var atlas = new SpriteAtlasAsset();
+                try
+                {
+                    atlas.Add(paths.Select(p => AssetDatabase.LoadAssetAtPath<Texture2D>(p)).Cast<UnityEngine.Object>().ToArray());
+                    SpriteAtlasAsset.Save(atlas, atlasPath);
+                }
+                finally { UnityEngine.Object.DestroyImmediate(atlas); }
+                AssetDatabase.ImportAsset(atlasPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            }
             // 2160高的备用竖棋盘图独占4096页；常规图集仍限制2048，不能为一张大图放大全部常驻页。
             int maxSize = paths.Any(p => { var t = AssetDatabase.LoadAssetAtPath<Texture2D>(p); return t.width + 8 > 2048 || t.height + 8 > 2048; }) ? 4096 : 2048;
-            atlas.SetPlatformSettings(new TextureImporterPlatformSettings { name = "DefaultTexturePlatform", maxTextureSize = maxSize, textureCompression = TextureImporterCompression.Compressed });
-            atlas.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Standalone", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.DXT5 });
-            atlas.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.ETC2_RGBA8 });
-            // 不让Player场景再自动携带一份图集；运行时atlasRequested通过RevResManager加载所属AB。
-            atlas.SetIncludeInBuild(false);
-            SpriteAtlasAsset.Save(atlas, atlasPath);
-            UnityEngine.Object.DestroyImmediate(atlas);
-            AssetDatabase.ImportAsset(atlasPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             // 第一章图片必须保留图集，但整个图集同样属于第一章独立包，不能留在常驻公共资源里。
             string bundle = name == "SceneBackdrop_0fc7e394Atlas" ? "background_chapter01_tutorial" : "atlas_" + name.ToLowerInvariant();
             // V2以Importer设置为准；只改源资产而不改Importer，旧.meta会在导入时覆盖Include In Build等设置。
             var atlasImporter = (SpriteAtlasImporter)AssetImporter.GetAtPath(atlasPath);
+            string before = EditorJsonUtility.ToJson(atlasImporter);
             atlasImporter.includeInBuild = false;
             atlasImporter.packingSettings = new SpriteAtlasPackingSettings { enableRotation = false, enableTightPacking = false, padding = 4 };
             atlasImporter.textureSettings = new SpriteAtlasTextureSettings { readable = false, generateMipMaps = false, sRGB = true, filterMode = FilterMode.Bilinear };
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "DefaultTexturePlatform", maxTextureSize = maxSize, textureCompression = TextureImporterCompression.Compressed });
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Standalone", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.DXT5 });
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.ETC2_RGBA8 });
-            atlasImporter.SetAssetBundleNameAndVariant(bundle, string.Empty);
-            atlasImporter.SaveAndReimport();
-            foreach (string path in paths) { AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant(bundle, string.Empty); }
+            if (before != EditorJsonUtility.ToJson(atlasImporter)) { atlasImporter.SaveAndReimport(); }
+            // 导入完成后重新取Importer，再写最终AB标记，避免旧Importer的保存覆盖标记。
+            GameResourceBuild.SetBundleIfChanged(AssetImporter.GetAtPath(atlasPath), bundle);
+            foreach (string path in paths) { GameResourceBuild.SetBundleIfChanged(AssetImporter.GetAtPath(path), bundle); }
         }
 
         /// <summary>每张待打包图片必须恰好属于一张图集，并且源图/图集包名一致；漏图会中止构建。</summary>

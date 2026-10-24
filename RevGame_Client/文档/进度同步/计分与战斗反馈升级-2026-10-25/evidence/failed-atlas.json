@@ -1,0 +1,23 @@
+{
+  "success": false,
+  "name": "幂等分包门禁与双平台实包",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "35a1a19774674c5487ab68a27157b5a4",
+        "success": false,
+        "error": "InvalidOperationException",
+        "message": "图片图集归属不是唯一：Assets/GameRes/Art/UI/UI_Tavern_Background.png",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\35a1a19774674c5487ab68a27157b5a4",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 12.329945700010285
+    }
+  ],
+  "cleanup": []
+}

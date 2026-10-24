@@ -9,6 +9,24 @@ namespace RevGame.View
 {
     public static class GameTextConfig
     {
+        // 表对象更换时自动失效；不可缓存跨卸载的资源引用。颜色只解析一次，命中热点不反复解析HEX。
+        private static BattleTextTable _cachedTable;
+        private static readonly System.Collections.Generic.Dictionary<string, Color> Colors = new System.Collections.Generic.Dictionary<string, Color>();
+        private static readonly System.Collections.Generic.Dictionary<Core.BattleDamageKind, BattleText> DamageRows = new System.Collections.Generic.Dictionary<Core.BattleDamageKind, BattleText>();
+        private static void EnsureCache()
+        {
+            BattleTextTable table = RevDataTableManager.Get<BattleTextTable>();
+            if (table == _cachedTable) { return; }
+            _cachedTable = table; Colors.Clear(); DamageRows.Clear();
+        }
+
+        public static BattleText Damage(Core.BattleDamageKind kind, Core.GameSide side)
+        {
+            EnsureCache();
+            if (kind == Core.BattleDamageKind.Normal) { return Require(side == Core.GameSide.Player ? "Damage_Incoming" : "Damage"); }
+            if (!DamageRows.TryGetValue(kind, out BattleText row)) { row = Require("Damage_" + kind); DamageRows.Add(kind, row); }
+            return row;
+        }
         /// <summary>只读已异步加载完成的表；缺行即报错，不偷偷用旧文案掩盖导表问题。</summary>
         public static BattleText Require(string id)
         {
@@ -23,10 +41,13 @@ namespace RevGame.View
         /// <summary>将表中的 #RRGGBB 或 #RRGGBBAA 转为 Unity 颜色；错误明确指出配置编号。</summary>
         public static Color ColorOf(BattleText row)
         {
+            EnsureCache();
+            if (Colors.TryGetValue(row.Id, out Color cached)) { return cached; }
             if (!ColorUtility.TryParseHtmlString(row.ColorHex, out Color color))
             {
                 throw new System.InvalidOperationException("弹幕颜色不是有效十六进制：" + row.Id);
             }
+            Colors[row.Id] = color;
             return color;
         }
 
@@ -37,6 +58,11 @@ namespace RevGame.View
             Require("Upgrade_2");
             Require("Upgrade_3");
             Require("Damage");
+            Require("Damage_Incoming");
+            foreach (Core.BattleDamageKind kind in System.Enum.GetValues(typeof(Core.BattleDamageKind)))
+            {
+                if (kind != Core.BattleDamageKind.Normal) { Require("Damage_" + kind); }
+            }
             Require("EnemyDeployment");
             // Boss 技能预警提示样式（标题 {skill}、副标题 {hint}），缺这一行时启动阶段就报错。
             Require("BossSkill");

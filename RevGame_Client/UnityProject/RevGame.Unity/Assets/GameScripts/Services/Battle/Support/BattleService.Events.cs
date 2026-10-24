@@ -423,7 +423,7 @@ namespace RevGame.Services
 
                 if (visited.Count < largest.Count)
                 {
-                    DamagePiece(cut, cut.Hp);
+                    DamagePiece(cut, cut.Hp, fromSkill: true, damageKind: BattleDamageKind.Execution);
                     return true;
                 }
             }
@@ -462,7 +462,7 @@ namespace RevGame.Services
             {
                 if (System.Math.Abs(p.Pos.X - center.Pos.X) <= radius && System.Math.Abs(p.Pos.Y - center.Pos.Y) <= radius)
                 {
-                    DamagePiece(p, System.Math.Max(Balance.SupportDamage, (int)(p.MaxHp * hpRatio)), fromSkill: true);
+                    DamagePiece(p, System.Math.Max(Balance.SupportDamage, (int)(p.MaxHp * hpRatio)), fromSkill: true, damageKind: BattleDamageKind.Artillery);
                 }
             }
 
@@ -470,9 +470,11 @@ namespace RevGame.Services
         }
 
         /// <summary>普通攻击、炮火、区域波动、炸弹与Boss技能共用真实扣血出口，保证飘字与实际伤害一致。</summary>
-        /// <param name="fromSkill">true = Boss 技能伤害：表现层只飘数字，不追加普通弹道。</param>
-        private int DamagePiece(Piece target, int amount, Piece attacker = null, bool fromSkill = false)
+        /// <param name="fromSkill">true = 技能/环境伤害：表现层只飘数字，不追加普通弹道，颜色由damageKind指定。</param>
+        private int DamagePiece(Piece target, int amount, Piece attacker = null, bool fromSkill = false, BattleDamageKind damageKind = BattleDamageKind.Normal)
         {
+            // 活体与占格身份同时检查：多段技能引用已死棋时不能再次发死亡或击杀积分。
+            if (target == null || !target.IsAlive || _board.FindPiece(target.Id) != target) { return 0; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             // 仅开发验收：GM 可让我方全队免伤，专门观察 Boss 技能；
             // 条件编译保证正式包既没有这个字段，也不会走这条分支。
@@ -517,9 +519,10 @@ namespace RevGame.Services
             {
                 // 保存攻击者Id供表现公平排队；只传值，不让延迟弹道持有已死亡或换位的Piece对象。
                 int sourceId = attacker == null ? 0 : attacker.Id;
-                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill, attacker == null ? PieceKind.Swordman : attacker.Def.Kind, attacker == null ? 1 : attacker.Size, attacker != null && attacker.Def.IsRanged);
+                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill, attacker == null ? PieceKind.Swordman : attacker.Def.Kind, attacker == null ? 1 : attacker.Size, attacker != null && attacker.Def.IsRanged, damageKind);
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
             }
+            AwardHitScore(target, attacker, damageKind, real);
             RevEvent.DispatchEvent<int>(Events.DamageResolved, target.Id);
             RevEvent.DispatchEvent<int>(Events.PieceHpChanged, target.Id);
             if (!target.IsAlive)
