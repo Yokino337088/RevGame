@@ -1,0 +1,50 @@
+{
+  "success": true,
+  "name": "Android真实资源包发布",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.status",
+      "response": {
+        "protocol": 1,
+        "id": "6937b2a838944a52b19919c7452ab3ad",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\6937b2a838944a52b19919c7452ab3ad",
+        "data": {
+          "unityVersion": "2022.3.15f1c1",
+          "project": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity",
+          "playing": false,
+          "paused": false,
+          "compiling": false,
+          "updating": false,
+          "gmEnabled": true,
+          "gmCount": 0
+        }
+      },
+      "polls": 1,
+      "seconds": 0.24762880000344012
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "3faf94280ceb488eb31b332d56c43f73",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3faf94280ceb488eb31b332d56c43f73",
+        "data": {
+          "text": "Android：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\Android；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\Android"
+        }
+      },
+      "polls": 1,
+      "seconds": 97.1372274000023
+    }
+  ],
+  "cleanup": []
+}

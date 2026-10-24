@@ -1,0 +1,73 @@
+{
+  "success": true,
+  "name": "导表并构建PC资源",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "excel.export",
+      "response": {
+        "protocol": 1,
+        "id": "88884230136940d69b2dac63907004b6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\88884230136940d69b2dac63907004b6",
+        "data": {
+          "success": true,
+          "cancelled": false,
+          "time": "19:14:07",
+          "tableCount": 1,
+          "rowCount": 85,
+          "unchangedCount": 2,
+          "codeChanged": false,
+          "dataOnly": true,
+          "written": [
+            "更新  Assets/GameRes/Data/BalanceRule.txt"
+          ],
+          "errors": [],
+          "warnings": [],
+          "unmarked": [],
+          "orphans": [
+            "Assets/GameRes/Data/BattleEventConfig.txt",
+            "Assets/GameRes/Data/BattleText.txt",
+            "Assets/GameRes/Data/BattleTuning.txt",
+            "Assets/GameRes/Data/BossSkillConfig.txt",
+            "Assets/GameRes/Data/ChapterConfig.txt",
+            "Assets/GameRes/Data/EnemyReinforceConfig.txt",
+            "Assets/GameRes/Data/EnemyRosterConfig.txt",
+            "Assets/GameRes/Data/EventRotationConfig.txt",
+            "Assets/GameRes/Data/PieceConfig.txt",
+            "Assets/GameRes/Data/PrepBuffConfig.txt",
+            "Assets/GameRes/Data/RewardBoostConfig.txt",
+            "Assets/GameRes/Data/RewardConfig.txt",
+            "Assets/GameRes/Data/StarConfig.txt"
+          ],
+          "mapStatus": "",
+          "mapFailed": false
+        }
+      },
+      "polls": 1,
+      "seconds": 1.0548570999962976
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "bca1747f30684583b4c7fa912d2c3d42",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\bca1747f30684583b4c7fa912d2c3d42",
+        "data": {
+          "text": "StandaloneWindows64：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\PC；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\PC"
+        }
+      },
+      "polls": 1,
+      "seconds": 64.0907598999911
+    }
+  ],
+  "cleanup": []
+}

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1315678211
+CRC: 788183704
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7b486497fbb46c091e1375a2acc0dd19
+    Hash: 5ba2757c9b492fdc60e93113d93ef8bb
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 085b774d147042c9408b6970dbb071a2
+    Hash: 269eab1946ccd18af2691f903f5795f6
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7b486497fbb46c091e1375a2acc0dd19
+    Hash: 5ba2757c9b492fdc60e93113d93ef8bb
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,3 +40,4 @@ Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat"

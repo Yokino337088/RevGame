@@ -101,6 +101,7 @@ namespace RevGame.View
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, owner: this);
             RevEvent.AddEventListener<int>(Events.PiecePlaced, OnPlaced, owner: this);
             RevEvent.AddEventListener<int>(Events.PieceMoved, OnPieceChanged, owner: this);
+            RevEvent.AddEventListener<int>(Events.PieceFormationMoved, OnFormationMoved, owner: this);
             RevEvent.AddEventListener<int>(Events.PieceDied, OnDied, priority: 10, owner: this);
             RevEvent.AddEventListener<int>(Events.PieceHpChanged, OnHpChanged, owner: this);
             RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, OnAttack, owner: this);
@@ -620,6 +621,16 @@ namespace RevGame.View
             RefreshBoard();
         }
 
+        /// <summary>服务已经提交完整阵型；先启动专用位移，随后的常规刷新看到同一目标不会重启动画。</summary>
+        private void OnFormationMoved(int id)
+        {
+            Piece piece = FindPiece(id);
+            if (_released || piece == null || !_pieces.TryGetValue(id, out PieceView view)) { return; }
+            Vector3 destination = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
+            destination += new Vector3(piece.Size - 1, piece.Size - 1, 0) * Consts.CellSize * 0.5f;
+            view.MoveFormationTo(destination);
+        }
+
         private void OnHpChanged(int id)
         {
             Piece p = FindPiece(id);
@@ -686,6 +697,11 @@ namespace RevGame.View
             if (hit.HasAttacker && hit.SourceIsRanged && !hit.FromSkill)
             {
                 QueueProjectile(source, target, hit.TargetSide, hit.SourceId, hit.SourceKind);
+            }
+            else if (hit.HasAttacker && !hit.FromSkill && _meleeEffects.Count + _pendingMeleeLoads < MaxMeleeEffects)
+            {
+                _pendingMeleeLoads++;
+                ShowEffect(BattleEffectKind.Melee, source, 0, hit.TargetSide, target, hit.SourceKind);
             }
             // ★ 伤害取自扣血当刻的快照，即使受击棋子已经死亡回池，这个数字仍能正常显示。
             // 只在同一画面帧内合并同目标连击；弹道和数字各自受显示预算约束，都不再创建每次命中独立的Timer。
@@ -772,6 +788,7 @@ namespace RevGame.View
                     {
                         _pendingProjectileLoads--;
                     }
+                    if (generation == _effectGeneration && kind == BattleEffectKind.Melee) { _pendingMeleeLoads--; }
                     RevLog.Warn("战斗特效加载失败", "RevGame");
                     return;
                 }
@@ -789,6 +806,12 @@ namespace RevGame.View
                     _projectileEffects.Add(effect);
                     effect.ShowProjectile(position, destination, OnEffectFinished, targetSide, sourceKind);
                 }
+                else if (kind == BattleEffectKind.Melee)
+                {
+                    _pendingMeleeLoads--;
+                    _meleeEffects.Add(effect);
+                    effect.ShowMelee(position, destination, sourceKind, OnEffectFinished);
+                }
                 else
                 {
                     effect.Show(kind, position, damage, OnEffectFinished, targetSide);
@@ -801,6 +824,7 @@ namespace RevGame.View
             _effects.Remove(effect);
             _textEffects.Remove(effect);
             _projectileEffects.Remove(effect);
+            _meleeEffects.Remove(effect);
         }
 
         private void OnDisable()

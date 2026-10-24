@@ -1,0 +1,63 @@
+{
+  "success": true,
+  "name": "区域像素与近战连续帧",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.check",
+      "response": {
+        "protocol": 1,
+        "id": "3bafed7a916f4a37b593cdc7c1dc53da",
+        "success": true,
+        "error": "",
+        "message": "通过 37 条Play断言；近战峰值 4，弹道峰值 14；证据 Temp/CombatImpactVerification",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3bafed7a916f4a37b593cdc7c1dc53da",
+        "data": {
+          "text": "通过 37 条Play断言；近战峰值 4，弹道峰值 14；证据 Temp/CombatImpactVerification"
+        }
+      },
+      "polls": 1,
+      "seconds": 27.938392600000952
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.console",
+      "response": {
+        "protocol": 1,
+        "id": "27bc517aeee74e02ac9b0167beb104ad",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\27bc517aeee74e02ac9b0167beb104ad",
+        "data": {
+          "total": 0,
+          "offset": 0,
+          "truncated": false,
+          "entries": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.092760300001828
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "25c30ca81a224643bb2743ad0d031440",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\25c30ca81a224643bb2743ad0d031440",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.6648293000034755
+    }
+  ]
+}

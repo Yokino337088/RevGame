@@ -113,7 +113,12 @@ namespace RevGame.Battle
         public static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves, int intelligence = 4)
         {
             BoardPos best = piece.Pos;
-            int oldDistance = NearestPlayerDistance(board, piece.Pos);
+            // 无眼近战优先选后排；距离场会绕开占格，不能只比曼哈顿距离而在墙边左右横跳。
+            Piece prey = !piece.Def.IsRanged ? FindRangedPrey(board, piece) : null;
+            int[,] pursuit = prey != null ? BuildPursuitDistances(board, piece, prey) : null;
+            int oldDistance = pursuit != null ? pursuit[piece.Pos.X, piece.Pos.Y] : NearestPlayerDistance(board, piece.Pos);
+            // 后排完全不可达时恢复原有接敌策略，不让无穷距离参与乘法评分。
+            if (oldDistance == int.MaxValue) { pursuit = null; oldDistance = NearestPlayerDistance(board, piece.Pos); }
             int bestScore = int.MinValue;
             BoardModel trial = board.CreateSnapshot();
             Piece moved = trial.FindPiece(piece.Id);
@@ -143,13 +148,16 @@ namespace RevGame.Battle
                 }
                 MoveRules.GetAttackTargets(trial, moved, hits);
                 int targets = hits.Count;
-                int distance = NearestPlayerDistance(trial, pos);
+                int distance = pursuit != null ? pursuit[pos.X, pos.Y] : NearestPlayerDistance(trial, pos);
                 // 只接受能打开射界或真正接近的格子，堵路时等待，避免左右横跳。
-                if (targets == 0 && distance >= oldDistance)
+                if (distance == int.MaxValue || (targets == 0 && distance >= oldDistance))
                 {
                     continue;
                 }
-                int score = targets * 1000 - distance * 20 + System.Math.Min(moved.Liberties, 12);
+                // 追后排时，接近目标比偶然打到前排更重要；贴到后排立即获得最高接敌评分。
+                int score = pursuit != null ? (oldDistance - distance) * 450 + (distance == 0 ? 2600 : 0) + targets * 80
+                    : targets * 1000 - distance * 20;
+                score += System.Math.Min(moved.Liberties, 12);
                 if (intelligence >= 3)
                 {
                     // 前后棋盘都是深快照，比较压气成果不回写真实棋子的气与眼。
@@ -316,6 +324,14 @@ namespace RevGame.Battle
                     int attackScore = ScoreEncirclement(board, trial, groups, pos, out attackPlan);
                     int score = System.Math.Min(eyeGain, 2) * 500 + rescue * 100 + neighbors * 65 + targets * 35;
                     score += attackScore + pressure * (intelligence >= 2 ? 65 : 45);
+                    // 追击兵接近远程后，增援优先沿其阵线封掉该远程棋群的气；眼位仍由前面的门槛保护。
+                    foreach (Piece player in players)
+                    {
+                        if (!player.Def.IsRanged) { continue; }
+                        Piece copy = trial.FindPiece(player.Id);
+                        int lost = System.Math.Max(0, player.Liberties - copy.Liberties);
+                        score += lost * 900 + (lost > 0 && copy.Liberties == 0 ? 2200 : 0);
+                    }
                     score += System.Math.Min(added.Liberties, 8) * 8 - NearestPlayerDistance(trial, pos) * 8;
                     if (intelligence >= 4)
                     {
@@ -446,12 +462,32 @@ namespace RevGame.Battle
         }
 
         /// <summary>
-        /// 查询一次推进的合法候选，并过滤普通棋跨多格的落点；马步保留原有跳法。
+        /// 查询一次推进的合法候选：无眼近战追远程时允许配置长度的直线冲锋，逐格检查占用；
+        /// 没有远程目标时过滤普通棋跨多格落点，马步保留原有跳法，守眼棋不主动离阵。
         /// 这是通用候选计算，不决定何时移动、不消费冷却、不提交位置。
         /// result 由调用方复用，本方法会重填它；倒序删除避免下标前移漏掉候选。
         /// </summary>
         public static void GetAdvanceCandidates(BoardModel board, Piece actor, List<BoardPos> result)
         {
+            if (actor.EyeCount > 0) { result.Clear(); return; }
+            if (!actor.Def.IsRanged && actor.Def.Pattern != MovePattern.Knight && FindRangedPrey(board, actor) != null)
+            {
+                // 冲锋沿四个直线方向连续走空格，显示层直线滑动也不会斜穿拐角里的棋子。
+                // 需要绕路时由反向距离场选择下一个拐点，分两次行动完成；整个大棋身体都必须能放下。
+                result.Clear();
+                foreach (BoardPos adjacent in actor.Pos.GetOrthogonalNeighbors())
+                {
+                    int dx = adjacent.X - actor.Pos.X;
+                    int dy = adjacent.Y - actor.Pos.Y;
+                    for (int step = 1; step <= Balance.EnemyChaseSteps; step++)
+                    {
+                        var next = new BoardPos(actor.Pos.X + dx * step, actor.Pos.Y + dy * step);
+                        if (!board.CanFit(next, actor.Size, actor.Side, actor)) { break; }
+                        result.Add(next);
+                    }
+                }
+                return;
+            }
             MoveRules.GetMoveTargets(board, actor, result);
             for (int i = result.Count - 1; i >= 0; i--)
             {
@@ -460,6 +496,52 @@ namespace RevGame.Battle
                     result.RemoveAt(i);
                 }
             }
+        }
+
+        /// <summary>先按曼哈顿距离选最近玩家远程，同距按Id稳定选择；调用者再检查可达性，不可达时回退常规接敌。</summary>
+        private static Piece FindRangedPrey(BoardModel board, Piece actor)
+        {
+            Piece best = null;
+            int nearest = int.MaxValue;
+            foreach (Piece player in board.Pieces)
+            {
+                if (player.Side != GameSide.Player || !player.IsAlive || !player.Def.IsRanged) { continue; }
+                int distance = Distance(actor.Pos, player.Pos);
+                if (distance < nearest || (distance == nearest && (best == null || player.Id < best.Id)))
+                {
+                    best = player; nearest = distance;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>从目标身体外沿反向广度搜索；路径距离0表示已贴身，不会穿过第三方棋子或受保护眼位。</summary>
+        private static int[,] BuildPursuitDistances(BoardModel board, Piece actor, Piece prey)
+        {
+            var distances = new int[board.Size, board.Size];
+            var queue = new Queue<BoardPos>();
+            for (int y = 0; y < board.Size; y++)
+            {
+                for (int x = 0; x < board.Size; x++)
+                {
+                    distances[x,y] = int.MaxValue;
+                    var pos = new BoardPos(x,y);
+                    int dx = System.Math.Max(0, System.Math.Max(prey.Pos.X - (x + actor.Size - 1), x - (prey.Pos.X + prey.Size - 1)));
+                    int dy = System.Math.Max(0, System.Math.Max(prey.Pos.Y - (y + actor.Size - 1), y - (prey.Pos.Y + prey.Size - 1)));
+                    if (dx + dy != 1 || !board.CanFit(pos, actor.Size, actor.Side, actor)) { continue; }
+                    distances[x,y] = 0; queue.Enqueue(pos);
+                }
+            }
+            while (queue.Count > 0)
+            {
+                BoardPos from = queue.Dequeue();
+                foreach (BoardPos next in from.GetOrthogonalNeighbors())
+                {
+                    if (!board.CanFit(next, actor.Size, actor.Side, actor) || distances[next.X,next.Y] != int.MaxValue) { continue; }
+                    distances[next.X,next.Y] = distances[from.X,from.Y] + 1; queue.Enqueue(next);
+                }
+            }
+            return distances;
         }
 
         /// <summary>

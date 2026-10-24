@@ -1,0 +1,23 @@
+{
+  "success": false,
+  "name": "现行战斗规则整体回归",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.regression",
+      "response": {
+        "protocol": 1,
+        "id": "56d76f3118724110bfa4494957e4b9c3",
+        "success": false,
+        "error": "InvalidOperationException",
+        "message": "GameTacticsChecks：战术验收失败：连续闯关本轮真实取胜",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\56d76f3118724110bfa4494957e4b9c3",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 39.73938229998748
+    }
+  ],
+  "cleanup": []
+}

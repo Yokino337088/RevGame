@@ -38,17 +38,29 @@ Shader "RevGame/Combat/RangedProjectile"
                 float t = _Time.y;
                 float2 p = uv * 2 - 1;
                 fixed4 c = SampleSpriteTexture(i.texcoord);
-                if (_Trail > 0.5)
+                if (_Trail > 1.5)
+                {
+                    // 法球外层独立魔法环，超出原画透明边界仍能看清；两个反向旋转的断环与符文形成职业轮廓。
+                    float r = length(p);
+                    float a = atan2(p.y,p.x);
+                    float ring1 = (1-smoothstep(.022,.065,abs(r-.72))) * smoothstep(-.6,.1,sin(a*3-t*5));
+                    float ring2 = (1-smoothstep(.015,.045,abs(r-.9))) * smoothstep(-.2,.1,sin(a*5+t*3));
+                    float runes = pow(saturate(sin(a*12+t*2)),16) * (1-smoothstep(.02,.09,abs(r-.8)));
+                    float halo = pow(saturate(1-r),3)*.5;
+                    c.a = saturate(ring1*.95+ring2*.7+runes+halo);
+                    c.rgb = lerp(_Glow.rgb,half3(1,.98,.85),ring1*.6+runes*.6);
+                }
+                else if (_Trail > 0.5)
                 {
                     // 左端散去、右端汇入弹头；三条不同频率的细丝表现空气、寒流或火舌。
                     float bend = sin(uv.x * 14 - t * 12) * 0.18 * (1 - uv.x);
-                    float width = lerp(0.025, 0.36, uv.x);
+                    float width = lerp(0.05, 0.62, uv.x);
                     float core = saturate(1 - abs(p.y - bend) / width);
                     float filament = pow(saturate(1 - abs(p.y + bend * 1.8 - 0.18 * sin(uv.x * 24 - t * 15)) / 0.09), 2);
                     float fade = smoothstep(0, 0.22, uv.x) * (1 - smoothstep(0.85, 1, uv.x));
-                    float streak = core * core + filament * 0.3;
+                    float streak = core * 1.25 + filament * 0.65;
                     c.a = saturate(streak * fade);
-                    c.rgb = lerp(_Glow.rgb, half3(1,1,0.95), core * 0.65);
+                    c.rgb = lerp(_Glow.rgb, half3(1,1,0.95), core * 0.85);
                 }
                 else if (_Style > 2.5 && _Style < 3.5)
                 {

@@ -14,9 +14,9 @@ namespace RevGame.Services
         private void TryPlayerTacticalMove(Piece piece)
         {
             if (piece.IsLocked || piece.EyeCount > 0 || _battleElapsed < Math.Max(Balance.PlayerMoveSeconds, piece.NextMoveAt)) { return; }
-            piece.NextMoveAt = _battleElapsed + Balance.PlayerMoveSeconds;
             int oldDistance = NearestEnemyDistance(piece.Pos, piece.Size);
             if (piece.Def.IsRanged && oldDistance > Balance.PlayerRetreatDistance) { return; }
+            piece.NextMoveAt = _battleElapsed + Balance.PlayerMoveSeconds;
             if (_board.IsSideWiped(GameSide.Enemy)) { return; }
             BoardModel trial = _board.CreateSnapshot();
             Piece copy = trial.FindPiece(piece.Id);

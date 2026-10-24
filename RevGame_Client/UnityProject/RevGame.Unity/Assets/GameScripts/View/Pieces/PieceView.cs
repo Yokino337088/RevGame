@@ -78,6 +78,9 @@ namespace RevGame.View
         private const float AttackPulseSeconds = 0.20f;
         // 三种特效只改原棋子身体；共享一条 Tween 与逐实例参数块，归池先 Kill(false) 再清干净，防串对象。
         private Tween _visualTween;
+        /// <summary>整队的根节点位移动画，归当前池租约持有；与身体Shader动画分开取消。</summary>
+        private Tween _formationTween;
+        public bool IsFormationMoving => _formationTween != null && _formationTween.IsActive();
         // 死亡后的视图只拥有短暂表现寿命；回收不再只依赖 Tween 的完成回调。
         // 句柄与回调都属于本次借出的棋子，回池/复用前必须取消，避免旧期限收走新棋子。
         private RevTimerHandle _deathRecycleTimer;
@@ -140,6 +143,7 @@ namespace RevGame.View
 
         private void OnDisable()
         {
+            StopFormationMove();
             StopAttackPulse();
             StopBodyVisual();
             RevTimer.CancelAllOf(this);
@@ -157,6 +161,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            StopFormationMove();
             StopAttackPulse();
             StopBodyVisual();
             Clear();
@@ -250,6 +255,7 @@ namespace RevGame.View
 
             StopBodyVisual();
             StopAttackPulse();
+            StopFormationMove();
             _moving = false;
             // 冻住死亡瞬间的动画帧并隐藏血条/锁死标识等非身体层；不再从模型读取已死棋子。
             RevTimer.CancelAllOf(this);
@@ -316,6 +322,8 @@ namespace RevGame.View
         /// <summary>换阶段时只撤入场/升级；已离开规则棋盘的死棋还要完成液体消融，不能一并取消。</summary>
         public void StopTransientVisuals()
         {
+            // 阶段结束时占格已经确定：取消整队后对齐目标，不能把上一轮半空中的棋留到准备期。
+            if (IsFormationMoving) { StopFormationMove(); transform.position = _moveTarget; }
             StopAttackPulse();
             if (_birthProgress > 0f || _stormProgress > 0f)
             {
@@ -416,6 +424,7 @@ namespace RevGame.View
         /// </summary>
         public void SnapTo(Vector3 position)
         {
+            StopFormationMove();
             _moving = false;
             _hasPosition = true;
             _moveTarget = position;
@@ -438,10 +447,38 @@ namespace RevGame.View
                 return;
             }
 
+            StopFormationMove();
             _moveStart = transform.position;
             _moveTarget = position;
             _moveElapsed = 0f;
             _moving = true;
+        }
+
+        /// <summary>集结时沿抛物线跃入阵位，身体伴随已有雷光Shader。0.65秒和弧高是纯美术表现，不改变占格时间。</summary>
+        public void MoveFormationTo(Vector3 position)
+        {
+            StopFormationMove();
+            _moving = false;
+            _hasPosition = true;
+            _moveTarget = position;
+            Vector3 start = transform.position;
+            float progress = 0f;
+            PlayUpgradeStorm();
+            Tween tween = DOTween.To(() => progress, value =>
+            {
+                progress = value;
+                transform.position = Vector3.Lerp(start, position, value) + Vector3.up * (Mathf.Sin(value * Mathf.PI) * Consts.CellSize * 0.65f);
+            }, 1f, 0.65f).SetEase(Ease.InOutCubic);
+            _formationTween = tween;
+            tween.OnComplete(() => { transform.position = position; });
+            tween.OnKill(() => { if (ReferenceEquals(_formationTween, tween)) { _formationTween = null; } });
+        }
+
+        private void StopFormationMove()
+        {
+            Tween previous = _formationTween;
+            _formationTween = null;
+            previous?.Kill(false);
         }
 
         private void AdvanceMove()

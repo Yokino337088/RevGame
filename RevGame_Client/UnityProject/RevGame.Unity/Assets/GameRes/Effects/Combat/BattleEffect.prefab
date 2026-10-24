@@ -83,7 +83,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 817440947618351212}
-  m_Text: 
+  m_Text:
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1
@@ -195,8 +195,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d6a33d802449a140ae99f0e795c51b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   spriteRenderer: {fileID: 5456698598399472057}
   damageText: {fileID: 2218918612403544709}
   projectileStyles:
@@ -204,37 +204,47 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: b5b9de31cfea6e847a99556218c6cad7, type: 3}
     BodyMaterial: {fileID: 2100000, guid: ce9b0591687eb554a8651544f334945a, type: 2}
     TrailMaterial: {fileID: 2100000, guid: 4491cba7d52555144997c5930b7c0a19, type: 2}
+    AuraMaterial: {fileID: 0}
     WorldSize: {x: 0.92, y: 0.17}
     TrailColor: {r: 0.75, g: 0.95, b: 1, a: 1}
-    TrailSize: {x: 1.35, y: 0.25}
+    TrailSize: {x: 2.2, y: 0.46}
   - Kind: 4
     Sprite: {fileID: 21300000, guid: 8755ec08c2a66f442a17fd219fdd5252, type: 3}
     BodyMaterial: {fileID: 2100000, guid: ae6e05e8f933daa42baefe8364f31e69, type: 2}
     TrailMaterial: {fileID: 2100000, guid: 380f32fe9aae1134cb9658168fb1e607, type: 2}
+    AuraMaterial: {fileID: 0}
     WorldSize: {x: 0.72, y: 0.22}
     TrailColor: {r: 1, g: 0.67, b: 0.24, a: 1}
-    TrailSize: {x: 1.35, y: 0.25}
+    TrailSize: {x: 2.2, y: 0.46}
   - Kind: 5
     Sprite: {fileID: 21300000, guid: 1baae7f38823b5847a6e7ac4804f1855, type: 3}
     BodyMaterial: {fileID: 2100000, guid: 9465cf53c149ae0429eed4307f5e8dfe, type: 2}
     TrailMaterial: {fileID: 2100000, guid: 11b7edb7454ac88428d800f0e829d1a4, type: 2}
+    AuraMaterial: {fileID: 2100000, guid: a5fc6a43cf6c86d4480e6be9d81f6533, type: 2}
     WorldSize: {x: 0.56, y: 0.56}
     TrailColor: {r: 0.2, g: 0.8, b: 1, a: 1}
-    TrailSize: {x: 1.05, y: 0.5}
+    TrailSize: {x: 1.65, y: 0.7}
   - Kind: 6
     Sprite: {fileID: 21300000, guid: 8c5d007b13471e64f81441b66a11b5ed, type: 3}
     BodyMaterial: {fileID: 2100000, guid: 4bd44820d5cf8304fb004759effb3495, type: 2}
     TrailMaterial: {fileID: 2100000, guid: 09da4552144414148be0ae8793647458, type: 2}
+    AuraMaterial: {fileID: 2100000, guid: d1daafed178e7ad4190730d0ba91915e, type: 2}
     WorldSize: {x: 0.92, y: 0.58}
     TrailColor: {r: 1, g: 0.24, b: 0.025, a: 1}
-    TrailSize: {x: 1.05, y: 0.5}
+    TrailSize: {x: 1.65, y: 0.7}
   - Kind: 7
     Sprite: {fileID: 21300000, guid: 4726f55251c06a74e9e7e418c0922757, type: 3}
     BodyMaterial: {fileID: 2100000, guid: 14b0d0634a8f678428b2465fff580232, type: 2}
     TrailMaterial: {fileID: 2100000, guid: ac377a44fb9cf1a49a722008dd91230d, type: 2}
+    AuraMaterial: {fileID: 2100000, guid: 0b1f9cb1b855f1446942934a21374b29, type: 2}
     WorldSize: {x: 0.58, y: 0.58}
     TrailColor: {r: 1, g: 0.88, b: 0.36, a: 1}
-    TrailSize: {x: 1.05, y: 0.5}
+    TrailSize: {x: 1.65, y: 0.7}
+  swordSlash: {fileID: 21300000, guid: b39c602296898e64c941ac7fc7b058d5, type: 3}
+  shieldImpact: {fileID: 21300000, guid: 099d1d95e57aafb449ed9ed2291eef06, type: 3}
+  swordMaterial: {fileID: 2100000, guid: 890f6f737a9ce6e418a9278aae86f06c, type: 2}
+  shieldMaterial: {fileID: 2100000, guid: 40538d2e01fcf41409b0abc1b00765c0, type: 2}
+  assassinMaterial: {fileID: 2100000, guid: 6995101224bc0a6489107dd67a9e848c, type: 2}
   projectileDuration: 0.36
   projectileOutline: {fileID: 466885779375704732}
   projectileTrail: {fileID: 6145150587853207099}
@@ -410,7 +420,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2601470439865961685}
-  m_Text: 
+  m_Text:
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1
@@ -507,7 +517,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3434483517178281451}
-  m_Text: 
+  m_Text:
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1
@@ -692,7 +702,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6372295322479081304}
-  m_Text: 
+  m_Text:
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1
@@ -789,7 +799,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7117495176675005099}
-  m_Text: 
+  m_Text:
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1

@@ -1,0 +1,94 @@
+{
+  "success": true,
+  "name": "最终编译和资源门禁",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.compilation",
+      "response": {
+        "protocol": 1,
+        "id": "ee24fea04e914910aa7ab5154add8717",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\ee24fea04e914910aa7ab5154add8717",
+        "data": {
+          "compiling": false,
+          "failed": false,
+          "messages": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09586590000253636
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.validate",
+      "response": {
+        "protocol": 1,
+        "id": "13642978b88044d4a0b3b5673cddfeb0",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\13642978b88044d4a0b3b5673cddfeb0",
+        "data": {
+          "text": "保留185/220个Art资源，排除35个，打包6/9张图集；6张图集，186张图片唯一覆盖"
+        }
+      },
+      "polls": 1,
+      "seconds": 6.180641500002821
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.console",
+      "response": {
+        "protocol": 1,
+        "id": "040af31fdc21422d8e69da4dba2794e4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\040af31fdc21422d8e69da4dba2794e4",
+        "data": {
+          "total": 0,
+          "offset": 0,
+          "truncated": false,
+          "entries": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.1727238000021316
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "scene.list",
+      "response": {
+        "protocol": 1,
+        "id": "7a06bedb1d6b402fb57633dd2449a85b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7a06bedb1d6b402fb57633dd2449a85b",
+        "data": {
+          "scenes": [
+            {
+              "path": "Assets/Scenes/StartScene.unity",
+              "name": "StartScene",
+              "handle": -1856900,
+              "roots": 4,
+              "loaded": true,
+              "dirty": false,
+              "active": true
+            }
+          ]
+        }
+      },
+      "polls": 1,
+      "seconds": 0.1710393999965163
+    }
+  ],
+  "cleanup": []
+}

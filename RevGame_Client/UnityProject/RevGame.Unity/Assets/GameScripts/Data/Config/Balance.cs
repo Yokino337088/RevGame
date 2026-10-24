@@ -95,6 +95,13 @@ namespace RevGame.Data
         public float BattleTickSeconds;
         public int BattleStepsPerTick;
         public float AttackSpeedScale;
+        /// <summary>敌军普通攻击的独立倍率；不影响移动、技能冷却或玩家攻速。</summary>
+        public float EnemyAttackRate;
+        /// <summary>无眼近战一次冲锋最多经过的空格数，路径上的每一格都必须放得下整个身体。</summary>
+        public int EnemyChaseSteps;
+        public int RangedFormationEnabled;
+        public int RangedFormationMinCount;
+        public float RangedFormationSeconds;
         public float CombatBaseScale;
         public int EnemyMoveEveryTicks;
         public float EyeHealSeconds;
@@ -172,6 +179,11 @@ namespace RevGame.Data
         {
             var r = new BalanceReader(table, problems);
             var v = new BalanceValues();
+            v.EnemyAttackRate = r.Float("EnemyAI.AttackRate", 0.1f, 5f);
+            v.EnemyChaseSteps = r.Int("EnemyAI.ChaseSteps", 1, 4);
+            v.RangedFormationEnabled = r.Int("PlayerAI.FormationEnabled", 0, 1);
+            v.RangedFormationMinCount = r.Int("PlayerAI.FormationMinCount", 2, 20);
+            v.RangedFormationSeconds = r.Float("PlayerAI.FormationSeconds", 1f, 60f);
             v.BattleDurationSeconds = r.Float("Battle.DurationSeconds", 1f, 3600f);
             v.BattleTickSeconds = r.Float("Battle.TickSeconds", 0.05f, 60f);
             v.BattleStepsPerTick = r.Int("Battle.StepsPerTick", 1, 60);
@@ -295,6 +307,12 @@ namespace RevGame.Data
         /// <summary>固定模拟小步：一个行动周期拆成 StepsPerTick 份。</summary>
         public static float BattleSimulationStepSeconds => V.BattleTickSeconds / V.BattleStepsPerTick;
         public static float AttackSpeedScale => V.AttackSpeedScale;
+        /// <summary>敌人普攻倍率，包含主将普攻；不缩短主将技能预警。</summary>
+        public static float EnemyAttackRate => V.EnemyAttackRate;
+        public static int EnemyChaseSteps => V.EnemyChaseSteps;
+        public static bool RangedFormationEnabled => V.RangedFormationEnabled == 1;
+        public static int RangedFormationMinCount => V.RangedFormationMinCount;
+        public static float RangedFormationSeconds => V.RangedFormationSeconds;
         /// <summary>单发伤害系数 = 基础系数 ÷ 攻击提速：提高出手频率时摊薄单发伤害，维持总火力。</summary>
         public static float CombatDamageScale => V.CombatBaseScale / V.AttackSpeedScale;
         public static int EnemyMoveEveryTicks => V.EnemyMoveEveryTicks;

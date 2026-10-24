@@ -71,5 +71,38 @@ namespace RevGame.Editor
         }
 
         [Serializable] private sealed class Result { public string text; }
+
+        /// <summary>固定规则夹具入口，不允许外部传反射目标。</summary>
+        [RevAutomationAction("game.impact.rules", Environment = "edit", Keys = new string[0], Description = "验收敌方攻速、后排追击、封气与安全整队")]
+        public static object ImpactRules(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameCombatImpactChecks, Assembly-CSharp-Editor", true);
+            return new Result { text = (string)type.GetMethod("RunRules").Invoke(null,null) };
+        }
+
+        /// <summary>敌方节奏改动后复用原有全规则和战术回放，覆盖合成、守眼与跨回合契约。</summary>
+        [RevAutomationAction("game.impact.regression", Environment = "edit", Keys = new string[0], Description = "运行原有规则与战术回放回归")]
+        public static object ImpactRegression(RevAutomationRequest request)
+        {
+            string result = string.Empty;
+            foreach (string name in new[] { "GameRuleChecks", "GameTacticsChecks" })
+            {
+                Type type = Type.GetType("RevGame.Editor."+name+", Assembly-CSharp-Editor",true);
+                try { result += (string)type.GetMethod("Run").Invoke(null,null) + "\n"; }
+                catch (TargetInvocationException error) { throw new InvalidOperationException(name + "：" + (error.InnerException ?? error).Message,error.InnerException ?? error); }
+            }
+            return new Result { text=result };
+        }
+
+        /// <summary>真实Play记录整队、近远程特效与区域波动连续帧，完成后返回大厅。</summary>
+        [RevAutomationAction("game.impact.check", Environment = "play", Keys = new string[0], Description = "实际战斗冲击视觉与回收验收")]
+        public static object ImpactCheck(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameCombatImpactChecks, Assembly-CSharp-Editor", true);
+            PropertyInfo result = type.GetProperty("LastResult");
+            if ((string)result.GetValue(null) == "运行中") { throw new InvalidOperationException("冲击验收正在运行"); }
+            type.GetMethod("Begin").Invoke(null,null);
+            return new PlayCheckOperation(result);
+        }
     }
 }

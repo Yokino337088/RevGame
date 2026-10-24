@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "name": "战术与资源门禁",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.rules",
+      "response": {
+        "protocol": 1,
+        "id": "3b1d98238fd2479c8ceb7e1736195929",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3b1d98238fd2479c8ceb7e1736195929",
+        "data": {
+          "text": "通过 33 条战斗冲击规则断言；两次追击查询合计 9ms（编辑器单次，不代表手机性能）"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.5042996000120183
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.validate",
+      "response": {
+        "protocol": 1,
+        "id": "b96b7877068548e9ac9aec686dfe6fa4",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b96b7877068548e9ac9aec686dfe6fa4",
+        "data": {
+          "text": "保留185/220个Art资源，排除35个，打包6/9张图集；6张图集，186张图片唯一覆盖"
+        }
+      },
+      "polls": 1,
+      "seconds": 5.275183699995978
+    }
+  ],
+  "cleanup": []
+}

@@ -1,0 +1,80 @@
+{
+  "success": true,
+  "name": "真实AB场景往返与战斗冲击验收",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.play-check",
+      "response": {
+        "protocol": 1,
+        "id": "b81c030edb5a48e0851a8f2543d2c525",
+        "success": true,
+        "error": "",
+        "message": "通过：AB，3341条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察224帧，分帧棋盘24帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察101帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察161帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察120帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察152帧，分帧棋盘21帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察111帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b81c030edb5a48e0851a8f2543d2c525",
+        "data": {
+          "text": "通过：AB，3341条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察224帧，分帧棋盘24帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察101帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察161帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察120帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察152帧，分帧棋盘21帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察111帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过"
+        }
+      },
+      "polls": 1,
+      "seconds": 16.78010329999961
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.check",
+      "response": {
+        "protocol": 1,
+        "id": "5615be3e7acc443a9e30a87ede534544",
+        "success": true,
+        "error": "",
+        "message": "通过 36 条Play断言；近战峰值 6，弹道峰值 15；证据 Temp/CombatImpactVerification",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\5615be3e7acc443a9e30a87ede534544",
+        "data": {
+          "text": "通过 36 条Play断言；近战峰值 6，弹道峰值 15；证据 Temp/CombatImpactVerification"
+        }
+      },
+      "polls": 1,
+      "seconds": 18.329960000002757
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.feedback.check",
+      "response": {
+        "protocol": 1,
+        "id": "02c11addf2fe4e0bbc8368350d07a619",
+        "success": true,
+        "error": "",
+        "message": "通过 2897 条Play断言：120次合并、100目标控频、职业原画/即时伤害/35条连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=20，弹道=35",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\02c11addf2fe4e0bbc8368350d07a619",
+        "data": {
+          "text": "通过 2897 条Play断言：120次合并、100目标控频、职业原画/即时伤害/35条连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=20，弹道=35"
+        }
+      },
+      "polls": 1,
+      "seconds": 13.305802499991842
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "1f5f5c136f464923a6230abaae6db8f7",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1f5f5c136f464923a6230abaae6db8f7",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.9825107999931788
+    }
+  ],
+  "sourceReport": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\Revolution.RevMCP\\results\\20261024-191724-115dfb33.json",
+  "omitted": "仅省略未过滤的历史Console步骤；其余步骤与清理原样保留。最终错误数见visual.json。"
+}

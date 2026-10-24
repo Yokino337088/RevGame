@@ -6,7 +6,7 @@ Battle.TickSeconds	1.25	标准行动周期（秒）：普通棋攒满一个周�
 Battle.StepsPerTick	4	一个行动周期拆成几个固定模拟小步（整数 ≥1）。越大远程分次出手越细，计算量越大。
 Battle.AttackSpeedScale	1.35	攻击提速倍率：只乘出手进度，不改变模拟时钟，因此不会加快敌人走位、增益或回合倒计时。
 Battle.CombatBaseScale	0.6	单发伤害基础系数。实际伤害系数 = 本值 ÷ 攻击提速倍率：提高出手频率时用它摊薄单发伤害，维持总火力。
-Battle.EnemyMoveEveryTicks	2	敌人每隔几个行动周期最多移动一次（整数≥1）；默认2个周期=2.5秒，不改变攻击频率。
+Battle.EnemyMoveEveryTicks	1	敌人移动冷却为本值×标准行动周期（整数≥1）；当前1即1.25秒；不改变攻击频率。
 Battle.EyeHealSeconds	5	守眼回血的间隔（秒）。
 Battle.EyeHealRatio	0.05	守眼回血：每次回复最大生命的比例。
 Battle.EyeHealMinEyes	2	守眼回血的触发条件：棋子至少成几只眼（整数）。
@@ -81,3 +81,8 @@ Bomb.IntervalSeconds	24	能量巨大自动投放间隔秒数
 Bomb.WarningSeconds	1.2	炸弹落地蓄力秒数，到点统一命中
 Bomb.DamageHpRatio	0.05	全场敌棋最大生命伤害比例；不按时间升级、不斩杀
 Combat.BuffCap	5	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成
+EnemyAI.AttackRate	1.45	敌方普攻独立倍率（0.1～5）；含主将普攻，不加快技能预警；1恢复原频率，1.45提高45%。
+EnemyAI.ChaseSteps	3	无眼近战每次冲锋最多经过的空格数（1～4）；不穿棋、不占敌眼，马步保留原走法。
+PlayerAI.FormationEnabled	1	远程自动整队开关（0关/1开）；只在战斗中整理散阵，不拆眼、不搬动零气棋。
+PlayerAI.FormationMinCount	2	参与自动整队的远程棋最少数量（2～20）；已有相连阵型保持原位。
+PlayerAI.FormationSeconds	6	自动整队检查间隔（秒，1～60）；尊重手动移动冷却，失败也消耗间隔，避免反复搜索。

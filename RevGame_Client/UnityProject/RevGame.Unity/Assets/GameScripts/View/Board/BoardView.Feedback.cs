@@ -16,6 +16,11 @@ namespace RevGame.View
         public const int MaxFloatingTexts = 20;
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
         public const int MaxProjectiles = 35;
+        /// <summary>近战短效独立表现预算，不占远程35发名额；上限是渲染资源约束，不是战斗数值。</summary>
+        public const int MaxMeleeEffects = 16;
+        private readonly HashSet<BattleEffectView> _meleeEffects = new HashSet<BattleEffectView>();
+        private int _pendingMeleeLoads;
+        public int ActiveMeleeCount => _meleeEffects.Count;
         private const int MaxAttackTexts = 7;
         private const int MaxPendingAttackTexts = 12;
         private const int MaxPendingDamage = 81;
@@ -372,6 +377,8 @@ namespace RevGame.View
         /// <summary>切阶段先使加载代次失效，再清本地预算；上一轮的异步结果只能归池，不能占用新一轮名额。</summary>
         private void ResetFeedbackBudget()
         {
+            _meleeEffects.Clear();
+            _pendingMeleeLoads = 0;
             _pendingDamage.Clear();
             _projectileQueue.Clear();
             _attackQueue.Clear();

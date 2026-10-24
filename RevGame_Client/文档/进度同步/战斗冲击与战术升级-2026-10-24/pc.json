@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "name": "重建PC局部时间Shader",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "eec78e9128f14847acc5d6f395f92357",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\eec78e9128f14847acc5d6f395f92357",
+        "data": {
+          "text": "StandaloneWindows64：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\PC；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\PC"
+        }
+      },
+      "polls": 1,
+      "seconds": 35.32349300000351
+    }
+  ],
+  "cleanup": []
+}

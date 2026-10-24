@@ -5,6 +5,7 @@
 // ============================================================
 using RevGame.Core;
 using RevGame.Pieces;
+using RevGame.Data;
 using Revolution;
 
 namespace RevGame.Services
@@ -70,6 +71,11 @@ namespace RevGame.Services
 
                 SelectedPieceId = 0;
                 LastError = string.Empty;
+                // 手动指令优先：暂缓下一次自动移动/整队，避免刚拖开的棋当步又被AI拉回去。
+                if (Phase == GamePhase.Battle)
+                {
+                    selected.NextMoveAt = _battleElapsed + System.Math.Max(Balance.PlayerMoveSeconds, Balance.RangedFormationSeconds);
+                }
                 RefreshGoState();
                 RevEvent.DispatchEvent<int>(Events.PieceMoved, selected.Id);
                 RevEvent.DispatchEvent(Events.SelectionChanged);

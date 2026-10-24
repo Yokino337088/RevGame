@@ -238,6 +238,8 @@ namespace RevGame.Services
             SelectedPieceId = 0;
             // 先归零本轮生命增益，再恢复准备属性；反过来会把上一轮的生命倍率重新套回残局。
             ResetCombatPacing();
+            _nextFormationAt = Balance.RangedFormationSeconds;
+            _formationMoves.Clear();
             ResetPreparation();
             _roundSpeedBonus = 0f;
             _roundLibertyBonus = 0;
@@ -565,6 +567,7 @@ namespace RevGame.Services
                 return;
             }
 
+            TryArrangeRangedFormation();
             StepSide(GameSide.Player, stepSeconds / Balance.BattleTickSeconds);
             RefreshGoState();
             if (IsKingCaptured())

@@ -1,6 +1,7 @@
 // 棋盘节奏表现：只监听事实，区域格子用DOTween起伏，炸弹复用框架池化的技能特效零件。
 using RevGame.Core;
 using Revolution;
+using UnityEngine;
 
 namespace RevGame.View
 {
@@ -27,7 +28,13 @@ namespace RevGame.View
             foreach (BoardCellView cell in _cells)
             {
                 int index = info.CellIndex(cell.Position);
-                if (index >= 0) { cell.PlayHazardWave(info.WarningSeconds + index * info.CellDelaySeconds); }
+                if (index < 0) { continue; }
+                int x = index % info.Size;
+                int y = index / info.Size;
+                // 只画外轮廓亮边，九格连成一整片侵蚀地面；内部仍保留暗菱形纹理。
+                Vector4 edges = new Vector4(x == 0 ? 1 : 0,x == info.Size-1 ? 1 : 0,y == 0 ? 1 : 0,y == info.Size-1 ? 1 : 0);
+                float delay = info.WarningSeconds + index * info.CellDelaySeconds;
+                cell.PlayHazardWave(delay, delay + .85f, edges);
             }
         }
         private void OnEnergyBombWarning(EnergyBombInfo info) { SpawnEnergyBomb(info, true); }

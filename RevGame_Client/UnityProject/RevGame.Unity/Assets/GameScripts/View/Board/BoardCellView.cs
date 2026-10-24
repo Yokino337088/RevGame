@@ -26,6 +26,8 @@ namespace RevGame.View
         private SpriteRenderer rangeRenderer;
         [Tooltip("区域波动专用底图，独立于落点勾号；由项目图集统一管理。")]
         [SerializeField] private Sprite hazardSprite;
+        [SerializeField] private Material hazardMaterial;
+        private MaterialPropertyBlock _hazardProperties;
         [Tooltip("按住多久算长按（秒）。纯表现手感，不影响战斗规则。")]
         [SerializeField]
         private float longPressSeconds = 0.35f;
@@ -39,8 +41,6 @@ namespace RevGame.View
         // 危险区独立一层，不借用落点/射界颜色。组件随格子池复用，不逐次创建Renderer。
         private SpriteRenderer _hazardRenderer;
         private Tween _hazardTween;
-        private Vector3 _hazardRestPosition;
-        private Vector3 _hazardRestScale;
         public bool HasHazardAnimation => _hazardTween != null && _hazardTween.IsActive();
         public BoardPos Position { get; private set; }
 
@@ -162,39 +162,57 @@ namespace RevGame.View
         }
 
         /// <summary>先整块高亮，随后按指定延迟逐格抬起落回。动画只改显示位置，不改棋盘占格。</summary>
-        public void PlayHazardWave(float delay)
+        public void PlayHazardWave(float delay, float duration, Vector4 edges)
         {
             CancelHazardWave();
-            _hazardRestPosition = transform.position;
-            _hazardRestScale = transform.localScale;
             if (_hazardRenderer == null && hazardSprite != null)
             {
                 var child = new GameObject("HazardOverlay");
                 child.transform.SetParent(transform, false);
                 _hazardRenderer = child.AddComponent<SpriteRenderer>();
                 _hazardRenderer.sprite = hazardSprite;
-                _hazardRenderer.sharedMaterial = highlightRenderer.sharedMaterial;
+                _hazardRenderer.sharedMaterial = hazardMaterial;
                 _hazardRenderer.sortingOrder = 6;
-                child.transform.localScale = Vector3.one * (Consts.CellSize * 0.94f / hazardSprite.bounds.size.x);
+                child.transform.localScale = Vector3.one * (Consts.CellSize / hazardSprite.bounds.size.x);
             }
             if (_hazardRenderer != null)
             {
                 _hazardRenderer.enabled = true;
-                _hazardRenderer.color = new Color(1f, 0.3f, 0.025f, 0.8f);
+                _hazardRenderer.color = Color.white;
+                if (_hazardProperties == null) { _hazardProperties = new MaterialPropertyBlock(); }
+                _hazardProperties.Clear();
+                _hazardProperties.SetTexture("_MainTex", hazardSprite.texture);
+                _hazardProperties.SetVector("_SpriteUV", UnityEngine.Sprites.DataUtility.GetOuterUV(hazardSprite));
+                _hazardProperties.SetVector("_Timing", new Vector4(Time.time,delay,duration,Position.X*3+Position.Y*7));
+                _hazardProperties.SetVector("_Edges", edges);
+                _hazardProperties.SetFloat("_Age",0);
+                _hazardRenderer.SetPropertyBlock(_hazardProperties);
             }
+            if (_hazardRenderer == null || hazardMaterial == null) { RevLog.Error("区域波动材质未配置", "RevGame"); return; }
+            // 只动显示层，格子点击区域始终在原位；否则飞起时点击会错格。
+            Transform overlay = _hazardRenderer.transform;
+            Vector3 restScale = Vector3.one * (Consts.CellSize / hazardSprite.bounds.size.x);
+            overlay.localPosition = Vector3.zero;
+            overlay.localScale = restScale * .08f;
             Sequence sequence = DOTween.Sequence();
-            sequence.AppendInterval(delay);
-            sequence.Append(transform.DOMoveY(_hazardRestPosition.y + Consts.CellSize * 0.24f, 0.14f).SetEase(Ease.OutQuad));
-            sequence.Join(transform.DOScale(_hazardRestScale * 1.07f, 0.14f));
-            sequence.Append(transform.DOMoveY(_hazardRestPosition.y, 0.22f).SetEase(Ease.OutBounce));
-            sequence.Join(transform.DOScale(_hazardRestScale, 0.22f));
+            sequence.Append(overlay.DOScale(restScale,.2f).SetEase(Ease.OutBack));
+            // Shader内建_Time与跨场景后的Time.time不保证同一起点。把本次租约的局部秒数交给Shader，
+            // 显隐/命中闪光与DOTween共用同一时钟，暂停、场景重入也不会变成永久透明。
+            float age = 0;
+            sequence.Insert(0,DOTween.To(() => age,value =>
+            {
+                age=value; _hazardProperties.SetFloat("_Age",value); _hazardRenderer.SetPropertyBlock(_hazardProperties);
+            },duration,duration).SetEase(Ease.Linear));
+            sequence.Insert(delay,overlay.DOLocalMoveY(Consts.CellSize*.28f,.12f).SetEase(Ease.OutQuad));
+            sequence.Insert(delay+.12f,overlay.DOLocalMoveY(0,.22f).SetEase(Ease.OutBounce));
+            sequence.Insert(duration-.25f,overlay.DOScale(restScale*.05f,.25f).SetEase(Ease.InBack));
             sequence.OnComplete(() => { _hazardTween = null; if (_hazardRenderer != null) { _hazardRenderer.enabled = false; } });
             // DOTween会复用句柄；外部Kill后及时解绑，下一次取消不能误杀已经借给别处的动画。
             sequence.OnKill(() =>
             {
                 if (!ReferenceEquals(_hazardTween, sequence)) { return; }
                 _hazardTween = null;
-                transform.position = _hazardRestPosition; transform.localScale = _hazardRestScale;
+                overlay.localPosition = Vector3.zero;
                 if (_hazardRenderer != null) { _hazardRenderer.enabled = false; }
             });
             _hazardTween = sequence;
@@ -206,8 +224,7 @@ namespace RevGame.View
             if (_hazardTween != null)
             {
                 _hazardTween.Kill(false); _hazardTween = null;
-                transform.position = _hazardRestPosition;
-                transform.localScale = _hazardRestScale;
+                if (_hazardRenderer != null) { _hazardRenderer.transform.localPosition = Vector3.zero; }
             }
             if (_hazardRenderer != null) { _hazardRenderer.enabled = false; }
         }

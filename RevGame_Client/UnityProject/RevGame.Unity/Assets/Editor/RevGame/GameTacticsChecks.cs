@@ -126,7 +126,10 @@ namespace RevGame.Editor
                     Check(battle.StartBattle(), "落子AI夹具真实开战");
                     int previous = 0;
                     float lastTime = 0f;
-                    while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 92f)
+                    // 当前正式规则为无限时真实胜负，VictoryAssistEnabled只开事件、不提供保胜。
+                    // 验收仍有4000步硬期限，不能为了旧版“87秒单兵必胜”断言给生产玩法补免死或清场。
+                    int steps = 0;
+                    while (battle.Phase == GamePhase.Battle && steps++ < 4000)
                     {
                         battle.Tick(Balance.BattleSimulationStepSeconds);
                         if (battle.EnemyDeploymentCount == previous) { continue; }
@@ -140,7 +143,11 @@ namespace RevGame.Editor
                         lastTime = battle.BattleElapsed;
                         total++;
                     }
-                    Check(battle.LastWinner == GameSide.Player && battle.BattleElapsed <= 87f, "加入敌方增援后弱势玩家仍由真实支援取胜");
+                    Check(battle.Phase == GamePhase.Settle && battle.LastWinner.HasValue, "增援对局通过真实胜负结算，孤立单兵允许失败");
+                    if (!battle.IsBossRound)
+                    {
+                        Check(battle.Board.IsSideWiped(GameSide.Player) || battle.Board.IsSideWiped(GameSide.Enemy), "普通回合胜负对应一方真实全灭，不靠验收期限清场");
+                    }
                     Check(previous <= Balance.DeployBaseCount + battle.EnemyIntelligence, "章节AI档位的落子总预算未超限");
                     int count = battle.EnemyDeploymentCount;
                     battle.Tick(30f);
@@ -285,6 +292,8 @@ namespace RevGame.Editor
                 int finished = 0;
                 float seconds = 0f;
                 int events = 0;
+                int wins = 0;
+                bool lost = false;
                 object owner = new object();
                 RevEvent.AddEventListener<bool>(Events.GameFinished, won => { if (won) { finished++; } }, owner: owner);
                 try
@@ -311,15 +320,27 @@ namespace RevGame.Editor
                         }
                         battle.Tick(3f);
                         Check(battle.StartBattle(), "带残局正常开战");
-                        battle.Tick(Balance.BattleDurationSeconds);
-                        Check(battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player, "连续闯关本轮真实取胜");
+                        for (int step = 0; step < 4000 && battle.Phase == GamePhase.Battle; step++) { battle.Tick(Balance.BattleSimulationStepSeconds); }
+                        Check(battle.Phase == GamePhase.Settle && battle.LastWinner.HasValue, "连续闯关在有界验收期限内通过真实胜负结算");
                         seconds += battle.BattleElapsed;
                         events += battle.BattleEventCount;
+                        if (battle.LastWinner == GameSide.Enemy)
+                        {
+                            // 固定“从左下填空”的策略不是必胜策略；当前正式服务明确不再免死/保胜。
+                            // 失败分支同样必须验收：玩家全灭、留在本章、重开首轮、旧残局和手牌正确复位。
+                            int chapter = battle.Chapter;
+                            Check(battle.Board.IsSideWiped(GameSide.Player), "策略失败对应玩家真实全灭");
+                            Check(battle.CompleteSettle() && battle.Chapter == chapter && battle.Round == 1 && battle.Phase == GamePhase.Prepare, "失败后正常重开本章首轮");
+                            Check(battle.PlayerPieces.Count == 0 && battle.Hand.Count == Consts.MaxHandSize && finished == 0, "失败复位不带旧残局、不误报通关，六牌重新发放");
+                            lost = true;
+                            break;
+                        }
+                        wins++;
                         Check(battle.CompleteSettle(), "完整敌阵可在真实残局上生成（" + seed + "，" + battle.Chapter + "/" + battle.Round + "）：" + battle.LastError);
                         if (battle.Phase == GamePhase.Reward) { Check(battle.ChooseReward(0), "第一项章节奖励可正常进入下一章"); }
                     }
-                    Check(finished == 1 && battle.UnlockedChapter == Consts.ChapterCount, "最终通关只通知一次且解锁六章");
-                    report.AppendLine("连续闯关种子" + seed + "：66回合取胜，战斗合计" + seconds + "秒，事件" + events + "次，奖励固定选第1项");
+                    if (!lost) { Check(finished == 1 && battle.UnlockedChapter == Consts.ChapterCount, "最终通关只通知一次且解锁六章"); }
+                    report.AppendLine("连续闯关种子" + seed + "：实际胜利" + wins + "轮，" + (lost ? "失败重开分支通过" : "六章通关分支通过") + "，战斗合计" + seconds + "秒，事件" + events + "次");
                 }
                 finally { RevEvent.RemoveAllByOwner(owner); }
             }

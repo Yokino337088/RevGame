@@ -35,6 +35,8 @@ namespace RevGame.Core
         public const string EnemyDeployed = "RevGame.Enemy.Deployed";
         /// <summary>有棋子移动。参数：棋子 Id。</summary>
         public const string PieceMoved = "RevGame.Piece.Moved";
+        /// <summary>参数int棋子Id：自动整队已提交，视图播放专用集结动画；不产生第二次移动。</summary>
+        public const string PieceFormationMoved = "RevGame.Piece.FormationMoved";
         /// <summary>有棋子死亡（被吃掉）。参数：棋子 Id。</summary>
         public const string PieceDied = "RevGame.Piece.Died";
         /// <summary>棋子血量变化。参数：棋子 Id。</summary>

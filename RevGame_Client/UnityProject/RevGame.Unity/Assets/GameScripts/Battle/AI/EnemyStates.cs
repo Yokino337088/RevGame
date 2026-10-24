@@ -161,7 +161,8 @@ namespace RevGame.Battle
         protected int ConsumeActions(float seconds)
         {
             Piece actor = Owner.Actor;
-            actor.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale;
+            // 敌方专属倍率只作用于普攻额度，不乘模拟时间，避免连带加快技能、补兵与区域伤害。
+            actor.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate;
             int actions = (int)actor.ActionProgress;
             actor.ActionProgress -= actions;
             return actions;
@@ -203,7 +204,7 @@ namespace RevGame.Battle
     ///
     /// 三个容易踩坑的点：
     /// 1) 先在进入时就把 NextMoveAt 推到下一次冷却，**失败也算**——否则被堵住时每个小步都会全盘搜索；
-    /// 2) 普通走法只允许“接近一格”，马步保留原有跳法，防止滑步一步穿过整盘；
+    /// 2) 无眼近战追远程时按Excel限制连续直线冲锋，逐格检查占用；其它普通走法仍接近一格，马步保留原跳法；
     /// 3) 具体落点由 EnemyTactics 在深快照里试走，本状态不自己判断气眼，避免和规则算法分叉。
     /// </summary>
     internal sealed class EnemyAdvanceState : EnemyState

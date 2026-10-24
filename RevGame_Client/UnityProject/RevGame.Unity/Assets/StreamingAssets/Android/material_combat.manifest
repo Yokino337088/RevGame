@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3357662728
+CRC: 899353287
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: f1cdfc7a1a8aa4902d5a65f80b7fe178
+    Hash: 13c323f35536e6be51d10312bb81c5bd
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e762ccb57c4caaabbb5a4199ac82c23
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: f1cdfc7a1a8aa4902d5a65f80b7fe178
+    Hash: 13c323f35536e6be51d10312bb81c5bd
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -21,6 +21,11 @@ Assets:
 - Assets/GameRes/Material/Combat/CrossbowBoltBody.mat
 - Assets/GameRes/Material/Combat/HolyOrbTrail.mat
 - Assets/GameRes/Material/Combat/HolyOrbBody.mat
+- Assets/GameRes/Material/Combat/HolyOrbAura.mat
+- Assets/GameRes/Material/Combat/SwordSlash.mat
+- Assets/GameRes/Material/Combat/ShieldBash.mat
+- Assets/GameRes/Material/Combat/LavaFireballAura.mat
+- Assets/GameRes/Material/Combat/AssassinSlash.mat
 - Assets/GameRes/Material/Combat/LavaFireballBody.mat
 - Assets/GameRes/Material/Combat/CrossbowBoltTrail.mat
 - Assets/GameRes/Material/Combat/LavaFireballTrail.mat
@@ -28,6 +33,8 @@ Assets:
 - Assets/GameRes/Material/Combat/ArcherArrowBody.mat
 - Assets/GameRes/Material/Combat/WaterOrbTrail.mat
 - Assets/GameRes/Material/Combat/WaterOrbBody.mat
+- Assets/GameRes/Material/Combat/RegionRift.mat
+- Assets/GameRes/Material/Combat/WaterOrbAura.mat
 - Assets/GameRes/Material/Combat/ArcherArrowTrail.mat
 Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders"

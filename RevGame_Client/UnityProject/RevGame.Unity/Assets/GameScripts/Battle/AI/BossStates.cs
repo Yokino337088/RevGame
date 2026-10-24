@@ -105,7 +105,7 @@ namespace RevGame.Battle
         private void NormalAction(float seconds)
         {
             Piece boss = Owner.Boss;
-            boss.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale;
+            boss.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate;
             int actions = (int)boss.ActionProgress;
             boss.ActionProgress -= actions;
             MoveRules.GetAttackTargets(Owner.Board, boss, _targets);

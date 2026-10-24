@@ -10,7 +10,7 @@ using UnityEngine.Sprites;
 
 namespace RevGame.View
 {
-    public enum BattleEffectKind { Damage, Projectile }
+    public enum BattleEffectKind { Damage, Projectile, Melee }
 
     [RevPoolPrefab(RevResPath.Effects_Combat, "BattleEffect", Group = RevResGroup.Battle)]
     public sealed class BattleEffectView : MonoBehaviour, IRevPoolable
@@ -24,13 +24,16 @@ namespace RevGame.View
             // 职业键与原画引用在编辑器装配；禁止运行时回查已死亡的攻击者。
             public PieceKind Kind;
             public Sprite Sprite;
-            public Material BodyMaterial, TrailMaterial;
+            public Material BodyMaterial, TrailMaterial, AuraMaterial;
             // 本体/尾迹的世界单位尺寸；与原图像素分辨率解耦。
             public Vector2 WorldSize;
             public Color TrailColor = Color.white;
             public Vector2 TrailSize;
         }
         [SerializeField] private ProjectileAppearance[] projectileStyles = new ProjectileAppearance[0];
+        [SerializeField] private Sprite swordSlash, shieldImpact;
+        [SerializeField] private Material swordMaterial, shieldMaterial, assassinMaterial;
+        private bool _magicAura;
         [Tooltip("最长飞行秒数，仅表现；命中伤害已由服务结算。")]
         [SerializeField] private float projectileDuration = 0.36f;
         // 每个池对象只创建一个参数块；只在发射时写入图集矩形，不克隆材质、不逐帧取Sprite。
@@ -247,6 +250,7 @@ namespace RevGame.View
                 return;
             }
             ProjectileKind = sourceKind;
+            _magicAura = style.AuraMaterial != null;
             spriteRenderer.sprite = style.Sprite;
             spriteRenderer.sharedMaterial = style.BodyMaterial;
             spriteRenderer.drawMode = SpriteDrawMode.Simple;
@@ -259,8 +263,9 @@ namespace RevGame.View
             _projectileProperties.SetTexture("_MainTex", style.Sprite.texture);
             _projectileProperties.SetVector(SpriteUvId, DataUtility.GetOuterUV(style.Sprite));
             spriteRenderer.SetPropertyBlock(_projectileProperties);
-            ConfigureProjectileLayer(projectileOutline, style.Sprite, style.BodyMaterial, Vector3.zero, new Vector3(1.1f, 1.25f, 1f), spriteRenderer.sortingOrder - 2);
-            ConfigureProjectileLayer(projectileTrail, style.Sprite, style.TrailMaterial, Vector3.left * (size.x * 0.55f),
+            ConfigureProjectileLayer(projectileOutline, style.Sprite, _magicAura ? style.AuraMaterial : style.BodyMaterial,
+                Vector3.zero, _magicAura ? new Vector3(1.6f, 1.8f, 1f) : new Vector3(1.1f, 1.25f, 1f), spriteRenderer.sortingOrder - 2);
+            ConfigureProjectileLayer(projectileTrail, style.Sprite, style.TrailMaterial, Vector3.left * (size.x * 1.1f),
                 new Vector3(style.TrailSize.x / style.WorldSize.x, style.TrailSize.y / style.WorldSize.y, 1f), spriteRenderer.sortingOrder - 1);
             // 保留下载原画色彩；敌方仅略染暖色，职业仍由原画与共享Shader辨识。
             _projectileColor = targetSide == GameSide.Enemy ? Color.white : new Color(1f, 0.83f, 0.78f);
@@ -315,12 +320,12 @@ namespace RevGame.View
             spriteRenderer.color = color;
             if (projectileOutline != null)
             {
-                projectileOutline.color = new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f);
+                projectileOutline.color = _magicAura ? new Color(1,1,1,alpha) : new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f);
             }
             if (projectileTrail != null)
             {
                 Color tail = _trailColor;
-                tail.a = alpha * 0.8f;
+                tail.a = alpha;
                 projectileTrail.color = tail;
             }
         }
@@ -336,6 +341,44 @@ namespace RevGame.View
             {
                 projectileTrail.enabled = false;
             }
+        }
+
+        /// <summary>
+        /// 真实近战命中后播放原画斩击/盾击。斩弧扫向目标，盾环沿冲击方向压扁再弹开。
+        /// 这里只画0.34秒的命中余波，不延迟伤害、不从已死亡的棋子查询方向；池回收会停掉同一Tween。
+        /// </summary>
+        public void ShowMelee(Vector3 source, Vector3 target, PieceKind kind, System.Action<BattleEffectView> onFinished)
+        {
+            ResetVisual(Vector3.Lerp(source, target, 0.72f), onFinished);
+            bool shield = kind == PieceKind.Shield;
+            Sprite art = shield ? shieldImpact : swordSlash;
+            Material material = shield ? shieldMaterial : (kind == PieceKind.Assassin ? assassinMaterial : swordMaterial);
+            if (art == null || material == null) { RevLog.Error("近战特效资源未装配", "RevGame"); Finish(); return; }
+            damageText.gameObject.SetActive(false);
+            spriteRenderer.enabled = true;
+            spriteRenderer.sprite = art;
+            spriteRenderer.sharedMaterial = material;
+            _projectileProperties.Clear();
+            _projectileProperties.SetTexture("_MainTex", art.texture);
+            _projectileProperties.SetVector(SpriteUvId, DataUtility.GetOuterUV(art));
+            _projectileProperties.SetFloat("_Progress",0);
+            spriteRenderer.SetPropertyBlock(_projectileProperties);
+            float angle = Mathf.Atan2(target.y-source.y, target.x-source.x) * Mathf.Rad2Deg;
+            Vector3 origin = transform.position;
+            Vector3 direction = (target-source).normalized;
+            Vector3 baseScale = new Vector3((shield ? 1.2f : 1.6f)/art.bounds.size.x, 1.6f/art.bounds.size.y, 1);
+            _projectileActive = true;
+            _projectileExpiresAt = Time.time + .5f;
+            _animation = DOTween.To(() => _progress, value =>
+            {
+                _progress = value;
+                transform.position = origin + direction * value * .22f;
+                _projectileProperties.SetFloat("_Progress",value);
+                spriteRenderer.SetPropertyBlock(_projectileProperties);
+                transform.rotation = Quaternion.Euler(0,0,angle + (shield ? 0 : Mathf.Lerp(-60,65,value)));
+                transform.localScale = baseScale * Mathf.Lerp(.55f,1.2f,Mathf.Sin(value*Mathf.PI*.5f));
+                spriteRenderer.color = new Color(1,1,1,Mathf.Clamp01((1-value)*2.4f));
+            },1f,.34f).SetEase(Ease.OutCubic).OnComplete(Finish);
         }
 
         /// <summary>文字离边缘留出可读空间；顶排命中时缩短上浮距离，防止数字被手机屏幕裁掉。</summary>

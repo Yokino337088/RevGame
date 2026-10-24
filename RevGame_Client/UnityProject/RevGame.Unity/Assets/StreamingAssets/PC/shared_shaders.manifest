@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3935725104
+CRC: 1112877868
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 75235483a66b9f87b30c380d1f599312
+    Hash: 7005d538f21579e2e64b9f6374774ec3
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 75235483a66b9f87b30c380d1f599312
+    Hash: 7005d538f21579e2e64b9f6374774ec3
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -18,7 +18,9 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameShader/UI/ArcanePanel.shader
 - Assets/GameShader/Cards/CardGleam.shader
+- Assets/GameShader/Combat/MeleeImpact.shader
 - Assets/GameShader/Pieces/ArcanePiece.shader
+- Assets/GameShader/Combat/RegionRift.shader
 - Assets/GameShader/Combat/BossSkill.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
 - Assets/GameShader/Combat/RangedProjectile.shader

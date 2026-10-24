@@ -50,20 +50,27 @@ namespace RevGame.Editor
                     style.FindPropertyRelative("BodyMaterial").objectReferenceValue = ProjectileMaterial(artNames[i], i, false, colors[i]);
                     style.FindPropertyRelative("TrailMaterial").objectReferenceValue = ProjectileMaterial(artNames[i], i, true, colors[i]);
                     style.FindPropertyRelative("WorldSize").vector2Value = sizes[i];
-                    style.FindPropertyRelative("TrailSize").vector2Value = new Vector2(i < 2 ? 1.35f : 1.05f, i < 2 ? .25f : .5f);
+                    style.FindPropertyRelative("TrailSize").vector2Value = new Vector2(i < 2 ? 2.2f : 1.65f, i < 2 ? .46f : .7f);
                     style.FindPropertyRelative("TrailColor").colorValue = colors[i];
+                    style.FindPropertyRelative("AuraMaterial").objectReferenceValue = i < 2 ? null : ArcaneAuraMaterial(artNames[i], i, colors[i]);
                 }
                 Sprite arrow = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Projectiles/ArcherArrow.png");
                 so.FindProperty("projectileDuration").floatValue = .36f;
                 so.FindProperty("projectileOutline").objectReferenceValue = ProjectileLayer(root.transform, "projectileOutline", arrow);
                 so.FindProperty("projectileTrail").objectReferenceValue = ProjectileLayer(root.transform, "projectileTrail", arrow);
+                so.FindProperty("swordSlash").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Melee/SwordSlash.png");
+                so.FindProperty("shieldImpact").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Melee/ShieldImpact.png");
+                so.FindProperty("swordMaterial").objectReferenceValue = MeleeMaterial("SwordSlash", false, new Color(.18f,.78f,1));
+                so.FindProperty("shieldMaterial").objectReferenceValue = MeleeMaterial("ShieldBash", true, new Color(1,.62f,.08f));
+                so.FindProperty("assassinMaterial").objectReferenceValue = MeleeMaterial("AssassinSlash", false, new Color(.8f,.18f,1));
                 SpriteRenderer body = (SpriteRenderer)so.FindProperty("spriteRenderer").objectReferenceValue;
                 body.sprite = arrow;
                 body.sharedMaterial = ProjectileMaterial("ArcherArrow", 0, false, colors[0]);
                 so.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, path);
                 AssetDatabase.SaveAssets();
-                return "五职业真实原画、10个共享单Pass材质与有界拖尾已保存。";
+                ConfigureRegion();
+                return "五职业长尾/魔法环、近战原画与区域魔法地面共享材质已保存。";
             }
             finally
             {
@@ -74,7 +81,10 @@ namespace RevGame.Editor
         /// <summary>仅设置本次五张原图的导入规则；图集归属仍由GameSpriteAtlasBuild统一配置。</summary>
         private static void ImportProjectileArt()
         {
-            foreach (string file in System.IO.Directory.GetFiles("Assets/GameRes/Art/Combat/Projectiles", "*.png"))
+            var files = new System.Collections.Generic.List<string>(System.IO.Directory.GetFiles("Assets/GameRes/Art/Combat/Projectiles", "*.png"));
+            files.AddRange(System.IO.Directory.GetFiles("Assets/GameRes/Art/Combat/Melee", "*.png"));
+            files.Add("Assets/GameRes/Art/Combat/RegionHazard.png");
+            foreach (string file in files)
             {
                 string path = file.Replace('\\', '/');
                 AssetDatabase.ImportAsset(path);
@@ -93,6 +103,47 @@ namespace RevGame.Editor
                 importer.SetTextureSettings(settings);
                 importer.SaveAndReimport();
             }
+        }
+
+        private static Material ArcaneAuraMaterial(string name, int style, Color color)
+        {
+            Material material = SharedMaterial(name + "Aura", "RevGame/Combat/RangedProjectile");
+            material.SetFloat("_Style", style); material.SetFloat("_Trail", 2); material.SetColor("_Glow", color);
+            EditorUtility.SetDirty(material); return material;
+        }
+
+        private static Material MeleeMaterial(string name, bool shield, Color color)
+        {
+            Material material = SharedMaterial(name, "RevGame/Combat/MeleeImpact");
+            material.SetFloat("_Shield", shield ? 1 : 0); material.SetColor("_Glow", color);
+            EditorUtility.SetDirty(material); return material;
+        }
+
+        /// <summary>编辑器创建共享资产，运行时只引用；不能以renderer.material克隆来调职业颜色。</summary>
+        private static Material SharedMaterial(string name, string shaderName)
+        {
+            string path = "Assets/GameRes/Material/Combat/" + name + ".mat";
+            Shader shader = Shader.Find(shaderName);
+            if (shader == null) { throw new System.InvalidOperationException("缺少Shader：" + shaderName); }
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null) { material = new Material(shader); AssetDatabase.CreateAsset(material,path); }
+            material.shader = shader;
+            return material;
+        }
+
+        private static void ConfigureRegion()
+        {
+            const string path = "Assets/GameRes/Board/Tile/BoardCell.prefab";
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var so = new SerializedObject(root.GetComponent<BoardCellView>());
+                so.FindProperty("hazardMaterial").objectReferenceValue = SharedMaterial("RegionRift", "RevGame/Combat/RegionRift");
+                so.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root,path);
+                AssetDatabase.SaveAssets();
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
         /// <summary>材质由预制体直接引用；每种职业共享一对，运行时禁止逐弹道克隆。</summary>

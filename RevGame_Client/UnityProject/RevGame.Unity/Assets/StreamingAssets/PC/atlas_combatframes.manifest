@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2181187665
+CRC: 3623377977
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: bf7587ed1e18c25e42abee07e14d25c0
+    Hash: 191362004b27065ac46c84db9096529e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: bf7587ed1e18c25e42abee07e14d25c0
+    Hash: 191362004b27065ac46c84db9096529e
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,11 +20,12 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/GameRes/Art/Combat/BossFx_Smoke.png
+- Assets/GameRes/Art/Combat/BossFx_Reticle.png
 - Assets/GameRes/Art/Combat/BossExt_13.png
 - Assets/GameRes/Art/Combat/BossExt_9.png
 - Assets/GameRes/Art/Combat/Projectiles/CrossbowBolt.png
 - Assets/GameRes/Art/Combat/BossExt_14.png
+- Assets/GameRes/Art/Combat/BossFx_Smoke.png
 - Assets/GameRes/Art/Combat/BossExt_12.png
 - Assets/GameRes/Art/Combat/BossExt_11.png
 - Assets/GameRes/Art/Combat/BossExt_17.png
@@ -41,12 +42,13 @@ Assets:
 - Assets/GameRes/Art/Combat/BossFx_Beam.png
 - Assets/GameRes/Art/Combat/Projectiles/HolyOrb.png
 - Assets/GameRes/Art/Combat/BossFx_Rune.png
-- Assets/GameRes/Art/Combat/BossFx_Twirl.png
+- Assets/GameRes/Art/Combat/Melee/ShieldImpact.png
 - Assets/GameRes/Art/Combat/BossFx_Scorch.png
 - Assets/GameRes/Art/Combat/Projectiles/ArcherArrow.png
+- Assets/GameRes/Art/Combat/BossFx_Twirl.png
 - Assets/GameRes/Art/Combat/EnergyBomb.png
 - Assets/GameRes/Art/Combat/RegionHazard.png
+- Assets/GameRes/Art/Combat/Melee/SwordSlash.png
 - Assets/GameRes/Art/Combat/BossExt_16.png
-- Assets/GameRes/Art/Combat/BossFx_Reticle.png
 - Assets/GameRes/Art/Combat/BossFx_Star.png
 Dependencies: []
