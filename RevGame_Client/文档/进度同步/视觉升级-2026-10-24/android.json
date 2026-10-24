@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "name": "feedback-final-Android-build",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "b47f03a66cfc406a8d7db92825619eae",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b47f03a66cfc406a8d7db92825619eae",
+        "data": {
+          "text": "Android：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\Android；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\Android"
+        }
+      },
+      "polls": 1,
+      "seconds": 35.08448150000186
+    }
+  ],
+  "cleanup": []
+}

@@ -51,6 +51,25 @@ namespace RevGame.Editor
             }
         }
 
+        /// <summary>固定入口只驱动已有密集反馈夹具；异步完成后由真实断言决定成功。</summary>
+        [RevAutomationAction("game.feedback.check", Environment = "play", Keys = new string[0], Description = "密集弹道、即时伤害、图集与跨回合清理验收")]
+        public static object FeedbackCheck(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameReadabilityChecks, Assembly-CSharp-Editor", true);
+            PropertyInfo result = type.GetProperty("LastResult", BindingFlags.Public | BindingFlags.Static);
+            if ((string)result.GetValue(null) == "运行中") { throw new InvalidOperationException("反馈验收正在运行"); }
+            type.GetMethod("Begin").Invoke(null, null);
+            return new PlayCheckOperation(result);
+        }
+
+        /// <summary>只装配项目弹道资产，不重建或保存用户场景。</summary>
+        [RevAutomationAction("game.feedback.configure", Keys = new string[0], Description = "导入远程原画并装配五职业共享特效材质")]
+        public static object FeedbackConfigure(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameFeelBuilder, Assembly-CSharp-Editor", true);
+            return new Result { text = (string)type.GetMethod("ApplyProjectileStyle").Invoke(null, null) };
+        }
+
         [Serializable] private sealed class Result { public string text; }
     }
 }

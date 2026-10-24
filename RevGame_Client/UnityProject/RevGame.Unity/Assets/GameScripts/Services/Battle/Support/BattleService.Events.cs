@@ -517,7 +517,7 @@ namespace RevGame.Services
             {
                 // 保存攻击者Id供表现公平排队；只传值，不让延迟弹道持有已死亡或换位的Piece对象。
                 int sourceId = attacker == null ? 0 : attacker.Id;
-                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill);
+                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill, attacker == null ? PieceKind.Swordman : attacker.Def.Kind, attacker == null ? 1 : attacker.Size, attacker != null && attacker.Def.IsRanged);
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
             }
             RevEvent.DispatchEvent<int>(Events.DamageResolved, target.Id);

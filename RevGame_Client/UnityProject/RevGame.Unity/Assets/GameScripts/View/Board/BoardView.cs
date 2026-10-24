@@ -681,13 +681,14 @@ namespace RevGame.View
             target += Vector3.one * ((hit.TargetSize - 1) * Consts.CellSize * 0.5f);
             target.z = 0f;
             Vector3 source = hit.HasAttacker ? hit.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) : target + Vector3.up * 2f;
-            // Boss 技能自带爆炸/激光特效，这里只飘伤害数字，不再叠一根普通弹道。
-            if (!hit.FromSkill)
+            source += new Vector3(hit.SourceSize - 1, hit.SourceSize - 1, 0f) * Consts.CellSize * 0.5f;
+            // 只为真实远程普攻发射职业弹道；近战和自带特效的Boss技能仅反馈真实伤害。
+            if (hit.HasAttacker && hit.SourceIsRanged && !hit.FromSkill)
             {
-                QueueProjectile(source, target, hit.TargetSide, hit.SourceId);
+                QueueProjectile(source, target, hit.TargetSide, hit.SourceId, hit.SourceKind);
             }
             // ★ 伤害取自扣血当刻的快照，即使受击棋子已经死亡回池，这个数字仍能正常显示。
-            // 用短窗口合并同目标连击；弹道和数字各自受显示预算约束，都不再创建每次命中独立的Timer。
+            // 只在同一画面帧内合并同目标连击；弹道和数字各自受显示预算约束，都不再创建每次命中独立的Timer。
             QueueDamageText(hit, target);
         }
 
@@ -760,7 +761,7 @@ namespace RevGame.View
             }
         }
 
-        private void ShowEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide = GameSide.Enemy, Vector3 destination = default(Vector3))
+        private void ShowEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide = GameSide.Enemy, Vector3 destination = default(Vector3), PieceKind sourceKind = PieceKind.Archer)
         {
             int generation = _effectGeneration;
             RevPool.GetAsync<BattleEffectView>(effect =>
@@ -786,7 +787,7 @@ namespace RevGame.View
                 {
                     _pendingProjectileLoads--;
                     _projectileEffects.Add(effect);
-                    effect.ShowProjectile(position, destination, OnEffectFinished, targetSide);
+                    effect.ShowProjectile(position, destination, OnEffectFinished, targetSide, sourceKind);
                 }
                 else
                 {

@@ -16,7 +16,7 @@ namespace RevGame.Flow
         /// <summary>本次Load调用的账本。先登记再请求，缓存命中同步回调、失败或中途退出也不会漏Release。</summary>
         private readonly List<Resource> _leases = new List<Resource>(12);
         /// <summary>预热时先同时持有实例，避免“取一个立刻还一个”实际上只生成了同一个对象。</summary>
-        private readonly List<Component> _instances = new List<Component>(48);
+        private readonly List<Component> _instances = new List<Component>(24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles + 2);
         private bool _disposed;
 
         private readonly struct Resource
@@ -67,12 +67,13 @@ namespace RevGame.Flow
         }
 
         /// <summary>
-        /// 预创建24颗棋子、20个反馈实例、2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
+        /// 预创建24颗棋子、55个反馈实例（35弹道+20文字）、2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
         /// 每帧最多2个，且单批累计超过3毫秒就主动让帧；单个Unity实例化不可拆分，不能承诺绝对无卡帧。
         /// </summary>
         public async RevTask WarmBattlePoolsAsync(Action<float> progress)
         {
-            const int count = 46;
+            const int feedbackEnd = 24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles;
+            const int count = feedbackEnd + 2;
             float sliceStart = Time.realtimeSinceStartup;
             try
             {
@@ -87,7 +88,7 @@ namespace RevGame.Flow
                     {
                         instance = await GetAsync<PieceView>();
                     }
-                    else if (i < 44)
+                    else if (i < feedbackEnd)
                     {
                         instance = await GetAsync<BattleEffectView>();
                     }

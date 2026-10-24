@@ -28,6 +28,8 @@ namespace RevGame.Editor
             if (!Application.isPlaying || LastResult == "运行中") { return; }
             LastResult = "运行中";
             _checks = 0;
+            string outcome = "失败：验收未完成";
+            System.IO.Directory.CreateDirectory("Temp/ReadabilityVerification");
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
@@ -72,14 +74,14 @@ namespace RevGame.Editor
                 for (int i = 0; i < 120; i++)
                 {
                     RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, new PieceAttackInfo(player.Id, player.Def.Kind, player.Pos, player.Size, player.Side));
-                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, 3, true, player.Pos));
+                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, 3, true, player.Pos, player.Id, false, PieceKind.Archer, player.Size, true));
                 }
                 Require(board.PendingDamageTextCount == 1, "同目标120次伤害仅保留一条待播数字");
                 IDictionary pending = GetField<IDictionary>(board, "_pendingDamage");
                 int sum = 0;
                 foreach (object item in pending.Values) { sum += GetField<int>(item, "Damage"); }
                 Require(sum == 360 && target.Hp == hp, "合计显示360，表现层不再额外扣血");
-                Require(board.PendingProjectileCount > 1 && board.PendingProjectileCount <= 24, "同帧齐射保留多发真实弹道，同时限制待播长度");
+                Require(board.PendingProjectileCount > 1 && board.PendingProjectileCount <= 70, "同帧齐射保留多发真实弹道，同时限制待播长度");
                 await RevTask.Delay(60);
                 Require(board.ActiveProjectileCount > 1 && board.ActiveProjectileCount <= BoardView.MaxProjectiles && board.ActiveFloatingTextCount <= 3, "同帧攻击已分批形成多发齐射，仍受弹道与口号预算限制");
                 int checkedProjectiles = 0;
@@ -100,22 +102,21 @@ namespace RevGame.Editor
                 // 按整组检查，不能因本机这一帧恰好显示几发不同，导致断言数量随帧率改变。
                 Require(checkedProjectiles > 1 && projectileSizeValid, "多发弹头已明显放大，全部尺寸仍受控");
                 Require(checkedProjectiles > 1 && projectileLayersValid, "所有活跃弹头均带可见轮廓与短拖尾");
-                await RevTask.Delay(400);
                 bool shown = false;
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                 {
                     if (effect.IsFloatingText && !effect.IsAttackText && GetField<TextMesh>(effect, "damageText").text.Contains("360")) { shown = true; }
                 }
-                Require(shown, "屏幕实际文字显示合并后的360");
+                Require(shown, "60ms内实际显示同帧合计360，不再等0.22秒");
 
                 for (int i = 0; i < 100; i++)
                 {
-                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(10000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, i + 1, true, player.Pos));
+                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(10000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, i + 1, true, new BoardPos(0, 0), 5000 + i, false, PieceKind.Archer, 1, true));
                 }
-                Require(board.PendingDamageTextCount <= 20, "不同目标风暴仍保持有界待播队列");
+                Require(board.PendingDamageTextCount <= 81, "不同目标风暴仍保持有界待播队列");
                 int peak = 0;
                 int projectilePeak = 0;
-                for (int frame = 0; frame < 24; frame++)
+                for (int frame = 0; frame < 12; frame++)
                 {
                     await RevTask.Delay(45);
                     peak = Math.Max(peak, board.ActiveFloatingTextCount);
@@ -144,6 +145,56 @@ namespace RevGame.Editor
                 await RevTask.Delay(80);
                 Require(GetField<TextMesh>(lower, "damageText").color.a <= 0.351f, "无法避让时下层文字实际半透明");
 
+                // 同一真实事件入口注入固定长轨迹；只控制表现输入，绝不调用TakeDamage。
+                // 不暂停弹道Tween以虚增峰值；连续供给才能证明调度率真的支持35条活跃飞行。
+                await RevTask.Delay(1200);
+                var kinds = new[] { PieceKind.Archer, PieceKind.Crossbow, PieceKind.MageWater, PieceKind.MageFire, PieceKind.Priest };
+                var seen = new HashSet<PieceKind>();
+                var materialByKind = new Dictionary<PieceKind, Material>();
+                int densePeak = 0;
+                float worstDispatchMs = 0f;
+                var timer = new System.Diagnostics.Stopwatch();
+                for (int frame = 0; frame < 80; frame++)
+                {
+                    timer.Restart();
+                    for (int shot = 0; shot < 10; shot++)
+                    {
+                        int kind = shot % 5;
+                        RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(30000 + kind, new BoardPos(8, kind + 2), 1,
+                            GameSide.Enemy, 1, true, new BoardPos(0, kind + 2), 8000 + shot, false, kinds[kind], 1, true));
+                    }
+                    timer.Stop();
+                    worstDispatchMs = Mathf.Max(worstDispatchMs, (float)timer.Elapsed.TotalMilliseconds);
+                    await RevTask.Delay(25);
+                    densePeak = Math.Max(densePeak, board.ActiveProjectileCount);
+                    Require(board.ActiveProjectileCount <= 35 && board.PendingProjectileCount <= 70 && board.ActiveFloatingTextCount <= 20, "持续齐射的活动、待播、文字三项硬预算");
+                    if (frame < 40) { continue; }
+                    foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
+                    {
+                        SpriteRenderer body = GetField<SpriteRenderer>(effect, "spriteRenderer");
+                        if (!body.enabled) { continue; }
+                        seen.Add(effect.ProjectileKind);
+                        Require(body.sprite != null && body.sprite.name.IndexOf("UI_", StringComparison.Ordinal) < 0, "弹头使用下载的职业原画");
+                        Require(body.sharedMaterial.shader.name == "RevGame/Combat/RangedProjectile" && body.sharedMaterial.shader.isSupported, "职业Shader已真正绑定并支持当前GPU");
+                        if (RevResBootstrap.UseABInEditor) { Require(body.sprite.packed, "真实AB中的职业图片已绑定图集"); }
+                        if (materialByKind.TryGetValue(effect.ProjectileKind, out Material shared)) { Require(shared == body.sharedMaterial, "同职业弹道共用材质，没有隐式克隆"); }
+                        else { materialByKind.Add(effect.ProjectileKind, body.sharedMaterial); }
+                    }
+                    if (frame % 2 == 0) { ScreenCapture.CaptureScreenshot("Temp/ReadabilityVerification/Frame-" + ((frame - 40) / 2).ToString("00") + ".png"); }
+                }
+                Require(densePeak >= 30 && densePeak <= 35, "持续实飞峰值达到30至35，不能只提高常量；实际=" + densePeak);
+                Require(seen.Count == 5 && materialByKind.Count == 5, "五职业箭矢、弩矢、水球、熔岩、圣光均实际出现");
+                await RevTask.Delay(800);
+                Require(board.ActiveProjectileCount == 0 && board.PendingProjectileCount == 0, "停止输入后弹道寿命和队列完整回收");
+                int beforeMelee = board.PendingProjectileCount;
+                RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(target.Id, target.Pos, 1, target.Side, 2, true, player.Pos, player.Id));
+                RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(target.Id, target.Pos, 1, target.Side, 2, true, player.Pos, player.Id, true, PieceKind.MageFire, 1, true));
+                Require(board.PendingProjectileCount == beforeMelee, "近战和自带技能特效不再发射通用占位弹道");
+                System.IO.File.WriteAllText("Temp/ReadabilityVerification/Metrics.txt", "初始密集输入文字峰值=" + peak + "，弹道峰值=" + projectilePeak +
+                    "；持续五职业齐射峰值=" + densePeak + "；每批10次事件分发最大毫秒=" + worstDispatchMs.ToString("F3") +
+                    "；环境=" + SystemInfo.graphicsDeviceName + "/" + SystemInfo.graphicsDeviceType + "/" + Screen.width + "x" + Screen.height +
+                    "。事件分发计时不含GPU，截图与Editor开销不代表手机帧率；未宣称零GC。");
+
                 Require(battle.TriggerBattleEvent(Data.BattleEventKind.Reinforcement), "触发真实天降援兵事件");
                 await RevTask.Delay(80);
                 BattleEventNoticeView notice = UnityEngine.Object.FindObjectOfType<BattleEventNoticeView>();
@@ -155,23 +206,25 @@ namespace RevGame.Editor
                 // 故意在切轮前重新塞满两个队列，避免“队列早已自然播完”的空检查掩盖清理缺陷。
                 for (int i = 0; i < 40; i++)
                 {
-                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(20000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, 1, true, player.Pos));
+                    RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(20000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, 1, true, player.Pos, 6000 + i, false, PieceKind.Archer, player.Size, true));
                 }
                 Require(board.PendingProjectileCount > 0 && board.PendingDamageTextCount > 0, "切轮前两种显示队列确实都有待播内容");
                 Require(battle.StartRound(1, 2), "密集动画尚未结束时切换回合");
                 Require(board.ActiveEffectCount == 0 && board.PendingDamageTextCount == 0 && board.ActiveFloatingTextCount == 0 && board.ActiveProjectileCount == 0 && board.PendingProjectileCount == 0, "切阶段清空冻结文字、弹道、两个待播队列和预算");
                 await RevTask.Delay(450);
                 Require(board.ActiveEffectCount == 0, "旧异步请求没有在新准备期补播");
-                LastResult = "通过 " + _checks + " 条Play断言：120次合并、100目标控频、放大弹头/短尾/连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=" + peak + "，弹道=" + projectilePeak;
+                outcome = "通过 " + _checks + " 条Play断言：120次合并、100目标控频、职业原画/即时伤害/35条连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=" + peak + "，弹道=" + projectilePeak;
             }
             catch (Exception error)
             {
-                LastResult = "失败：" + error.Message;
+                outcome = "失败：" + error.Message;
                 RevLog.Exception(error, "战斗可读性验收失败", "RevGame");
             }
             finally
             {
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                LastResult = outcome;
+                System.IO.File.WriteAllText("Temp/ReadabilityVerification/Result.txt", LastResult);
             }
         }
 

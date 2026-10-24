@@ -15,13 +15,13 @@ namespace RevGame.View
         /// <summary>包含正在异步取池对象的请求；不是等加载完才计数，避免同帧几十个请求穿透上限。</summary>
         public const int MaxFloatingTexts = 20;
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
-        public const int MaxProjectiles = 14;
+        public const int MaxProjectiles = 35;
         private const int MaxAttackTexts = 7;
         private const int MaxPendingAttackTexts = 12;
-        private const int MaxPendingDamage = 20;
-        private const int MaxPendingProjectiles = 24;
-        // 平均每0.025秒允许一发；低帧率时每帧最多补两发，既能形成齐射，也不会一帧喷出整个队列。
-        private const float ProjectileSpawnInterval = 0.025f;
+        private const int MaxPendingDamage = 81;
+        private const int MaxPendingProjectiles = 70;
+        // 每秒最多200发、每帧最多6发；寿命0.36秒时可达到35条，低帧率仍不无界追赶。
+        private const float ProjectileSpawnInterval = 0.005f;
         // 这两个集合只追踪当前正在播放的池对象，动画结束或阶段切换时立即移除。
         private readonly HashSet<BattleEffectView> _textEffects = new HashSet<BattleEffectView>();
         private readonly HashSet<BattleEffectView> _projectileEffects = new HashSet<BattleEffectView>();
@@ -42,7 +42,7 @@ namespace RevGame.View
         // 已申请但还没加载好的名额也算占用；否则异步加载完成的同一帧会突然挤出大量飘字。
         private int _pendingTextLoads, _pendingProjectileLoads;
         // 下次允许显示的游戏时间；只限制表现生成速度，不影响模型中的攻击冷却或伤害结算。
-        private float _nextTextAt, _nextAttackAt, _nextProjectileAt;
+        private float _nextAttackAt, _nextProjectileAt;
         // 递增显示序号同时决定渲染前后关系；不得用HashSet遍历顺序判断哪条文字在下面。
         private int _textOrder;
         // 以下只读计数供编辑器验收观察，业务层不能通过它们修改战斗结果。
@@ -56,6 +56,7 @@ namespace RevGame.View
         {
             public Vector3 Source, Target;
             public GameSide TargetSide;
+            public PieceKind SourceKind;
         }
 
         private struct PendingAttackText
@@ -104,8 +105,8 @@ namespace RevGame.View
             public int TargetId, Damage;
             public GameSide Side;
             public Vector3 Position;
-            // CreatedAt控制最长等待时间；ReadyAt给同一目标留出0.22秒的合并窗口。
-            public float CreatedAt, ReadyAt;
+            // CreatedAt控制过期；同帧合并后立即允许显示，不再人为等待0.22秒。
+            public float CreatedAt;
         }
 
         /// <summary>口号最多七条，与数字共用二十条总预算；间隔缩短，但同一棋子不能连续刷屏。</summary>
@@ -139,24 +140,24 @@ namespace RevGame.View
         }
 
         /// <summary>
-        /// 保存真实命中的弹道快照；来源编号用于公平轮流显示，同棋最多待播四发，总数仍不超过二十四发。
-        /// sourceId=0 兼容没有攻击者的环境支援与旧测试快照；这些弹道也受全局预算和半秒有效期约束。
+        /// 保存真实命中的弹道快照；来源编号用于公平轮流显示，同棋最多待播四发，总数不超过七十发。
+        /// 来源职业直接取结算快照；环境伤害与近战不会进入此队列。
         /// 队满只影响画面取舍，不回滚真实伤害；手动换位后仍依靠编号识别同一颗棋子，不能拿旧坐标当身份。
         /// </summary>
-        private void QueueProjectile(Vector3 source, Vector3 target, GameSide targetSide, int sourceId = 0)
+        private void QueueProjectile(Vector3 source, Vector3 target, GameSide targetSide, int sourceId, PieceKind sourceKind)
         {
-            var shot = new PendingProjectile { Source = source, Target = target, TargetSide = targetSide };
+            var shot = new PendingProjectile { Source = source, Target = target, TargetSide = targetSide, SourceKind = sourceKind };
             _projectileQueue.Offer(sourceId, shot, Time.time);
         }
 
-        /// <summary>真实齐射分散到相邻画面帧；最多14个活动/预约弹道，半秒前的旧弹道不追着新战况补播。</summary>
+        /// <summary>真实齐射分散到相邻画面帧；最多35个活动/预约弹道，半秒前的旧弹道不追着新战况补播。</summary>
         private void FlushProjectiles()
         {
             float now = Time.time;
-            // 空闲后的第一帧最多借一个间隔，不能因时钟落后几秒而突然补几十发。
-            _nextProjectileAt = Mathf.Max(_nextProjectileAt, now - ProjectileSpawnInterval);
+            // 空闲后的第一帧最多借五个间隔，不能因时钟落后几秒而突然补几十发。
+            _nextProjectileAt = Mathf.Max(_nextProjectileAt, now - ProjectileSpawnInterval * 5f);
             int spawned = 0;
-            while (_projectileQueue.Count > 0 && spawned < 2 && now >= _nextProjectileAt)
+            while (_projectileQueue.Count > 0 && spawned < 6 && now >= _nextProjectileAt)
             {
                 if (_projectileEffects.Count + _pendingProjectileLoads >= MaxProjectiles)
                 {
@@ -172,7 +173,7 @@ namespace RevGame.View
                 _projectileQueue.MarkDisplayed(sourceId, now);
                 _nextProjectileAt += ProjectileSpawnInterval;
                 spawned++;
-                ShowEffect(BattleEffectKind.Projectile, shot.Source, 0, shot.TargetSide, shot.Target);
+                ShowEffect(BattleEffectKind.Projectile, shot.Source, 0, shot.TargetSide, shot.Target, shot.SourceKind);
             }
         }
 
@@ -191,7 +192,7 @@ namespace RevGame.View
                 {
                     return;
                 }
-                pending = new PendingDamageText { TargetId = hit.TargetId, Side = hit.TargetSide, CreatedAt = Time.time, ReadyAt = Time.time + 0.22f };
+                pending = new PendingDamageText { TargetId = hit.TargetId, Side = hit.TargetSide, CreatedAt = Time.time };
                 _pendingDamage.Add(hit.TargetId, pending);
             }
             pending.Damage = (int)System.Math.Min(int.MaxValue, (long)pending.Damage + hit.Damage);
@@ -206,7 +207,11 @@ namespace RevGame.View
                 return;
             }
             FlushProjectiles();
-            FlushOneDamageText();
+            // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
+            for (int i = 0; i < 8 && _pendingDamage.Count > 0; i++)
+            {
+                FlushOneDamageText();
+            }
             FlushAttackText();
             // 最多二十条文字。把昂贵的Renderer.bounds/WorldToScreenPoint从两重循环里提出来：
             // 原来最多读取约800次矩形，现在只读取20次；两两比较仍保留，避免为省CPU改变遮挡规则。
@@ -234,7 +239,7 @@ namespace RevGame.View
             System.Array.Clear(_textSnapshot, 0, count);
         }
 
-        /// <summary>每0.035秒至多发起一条数字，密集交战可达15~20条；稀疏交战不伪造伤害凑数。</summary>
+        /// <summary>本帧直接显示已结算数字；超预算只替换表现，不更改战斗数值。</summary>
         private void FlushOneDamageText()
         {
             PendingDamageText oldest = null;
@@ -245,19 +250,33 @@ namespace RevGame.View
                 {
                     _expiredDamageIds.Add(item.TargetId); continue;
                 }
-                if (Time.time >= item.ReadyAt && (oldest == null || item.CreatedAt < oldest.CreatedAt))
+                if (oldest == null || item.CreatedAt < oldest.CreatedAt)
                 {
                     oldest = item;
                 }
             }
             foreach (int id in _expiredDamageIds) { _pendingDamage.Remove(id); }
-            if (oldest == null || Time.time < _nextTextAt || _textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
+            if (oldest == null) { return; }
+            if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
+            {
+                BattleEffectView retire = null;
+                foreach (BattleEffectView text in _textEffects)
+                {
+                    if (retire == null || (text.IsAttackText && !retire.IsAttackText) ||
+                        (text.IsAttackText == retire.IsAttackText && text.TextOrder < retire.TextOrder))
+                    {
+                        retire = text;
+                    }
+                }
+                // 先结束遍历，再调用会摘除集合元素的回池回调。
+                if (retire != null) { retire.RetireFeedback(); }
+            }
+            if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
             {
                 return;
             }
             _pendingDamage.Remove(oldest.TargetId);
             _pendingTextLoads++;
-            _nextTextAt = Time.time + 0.035f;
             int generation = _effectGeneration;
             PendingDamageText message = oldest;
             RevPool.GetAsync<BattleEffectView>(effect =>
@@ -360,7 +379,7 @@ namespace RevGame.View
             _projectileEffects.Clear();
             _attackTextAt.Clear();
             _pendingTextLoads = _pendingProjectileLoads = 0;
-            _nextTextAt = _nextAttackAt = _nextProjectileAt = 0f;
+            _nextAttackAt = _nextProjectileAt = 0f;
             _textOrder = 0;
         }
     }

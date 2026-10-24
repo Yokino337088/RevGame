@@ -6,6 +6,7 @@ using DG.Tweening;
 using Revolution;
 using RevGame.Core;
 using UnityEngine;
+using UnityEngine.Sprites;
 
 namespace RevGame.View
 {
@@ -16,11 +17,28 @@ namespace RevGame.View
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private TextMesh damageText;
-        [SerializeField] private Sprite projectileSprite;
-        [Tooltip("弹道本体的世界尺寸；不能直接依赖源美术图片的宽高。")]
-        [SerializeField] private Vector2 projectileWorldSize = new Vector2(0.82f, 0.24f);
-        [Tooltip("略延长可见飞行时间，让手机上能看清连续齐射；不改变真实伤害结算时间。")]
+        /// <summary>五种远程职业的共享资产配方；预制体持有引用，由战斗资源组和图集共同管理。</summary>
+        [System.Serializable]
+        public sealed class ProjectileAppearance
+        {
+            // 职业键与原画引用在编辑器装配；禁止运行时回查已死亡的攻击者。
+            public PieceKind Kind;
+            public Sprite Sprite;
+            public Material BodyMaterial, TrailMaterial;
+            // 本体/尾迹的世界单位尺寸；与原图像素分辨率解耦。
+            public Vector2 WorldSize;
+            public Color TrailColor = Color.white;
+            public Vector2 TrailSize;
+        }
+        [SerializeField] private ProjectileAppearance[] projectileStyles = new ProjectileAppearance[0];
+        [Tooltip("最长飞行秒数，仅表现；命中伤害已由服务结算。")]
         [SerializeField] private float projectileDuration = 0.36f;
+        // 每个池对象只创建一个参数块；只在发射时写入图集矩形，不克隆材质、不逐帧取Sprite。
+        private MaterialPropertyBlock _projectileProperties;
+        private static readonly int SpriteUvId = Shader.PropertyToID("_SpriteUV");
+        private Color _trailColor;
+        public PieceKind ProjectileKind { get; private set; }
+        public Sprite ProjectileArt => spriteRenderer.sprite;
         [Tooltip("同一个池对象内的深色轮廓，保证浅色棋盘上也能看清弹头。")]
         [SerializeField] private SpriteRenderer projectileOutline;
         [Tooltip("同一个池对象内的短拖尾；不是另外申请的粒子、弹道或持续增长的轨迹。")]
@@ -98,6 +116,7 @@ namespace RevGame.View
         /// <summary>缓存组件不复制材质；TextMesh及其描边继续共享字体材质，保留动态合批条件。</summary>
         private void Awake()
         {
+            _projectileProperties = new MaterialPropertyBlock();
             _textRenderer = damageText.GetComponent<Renderer>();
             _outlineRenderers = new Renderer[damageOutlines.Length];
             for (int i = 0; i < damageOutlines.Length; i++) { _outlineRenderers[i] = damageOutlines[i].GetComponent<Renderer>(); }
@@ -195,7 +214,7 @@ namespace RevGame.View
         }
 
         /// <summary>只播放已发生攻击的轨迹；扩大弹头、附带短尾与发射脉冲，动画绝不再次造成伤害。</summary>
-        public void ShowProjectile(Vector3 source, Vector3 target, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy)
+        public void ShowProjectile(Vector3 source, Vector3 target, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy, PieceKind sourceKind = PieceKind.Archer)
         {
             ResetVisual(source, onFinished);
             Vector3 direction = target - source;
@@ -216,22 +235,36 @@ namespace RevGame.View
             _projectileExpiresAt = Time.time + duration + 0.12f;
             damageText.gameObject.SetActive(false);
             spriteRenderer.enabled = true;
-            spriteRenderer.sprite = projectileSprite;
-            // 源Sprite本身宽约6.17个世界单位，不能直接把原图尺寸当成子弹尺寸。
-            // 本体从0.38×0.10提高至0.82×0.24；再加轮廓和短尾，让小屏也能看到有方向的弹幕。
-            spriteRenderer.drawMode = SpriteDrawMode.Simple;
-            Vector3 flightScale = Vector3.one;
-            if (projectileSprite != null)
+            ProjectileAppearance style = null;
+            for (int i = 0; i < projectileStyles.Length; i++)
             {
-                Vector3 size = projectileSprite.bounds.size;
-                // 弹头长度不能超过扣除身体后的飞行空间；相邻棋子之间不会出现一根比间隙还长的黄条。
-                float length = Mathf.Min(projectileWorldSize.x, Vector3.Distance(source, target) * 0.8f);
-                flightScale = new Vector3(length / Mathf.Max(0.01f, size.x), projectileWorldSize.y / Mathf.Max(0.01f, size.y), 1f);
-                ConfigureProjectileLayer(projectileOutline, Vector3.zero, new Vector3(1.16f, 1.5f, 1f), spriteRenderer.sortingOrder - 2);
-                ConfigureProjectileLayer(projectileTrail, Vector3.left * (size.x * 0.38f), new Vector3(0.48f, 0.55f, 1f), spriteRenderer.sortingOrder - 1);
+                if (projectileStyles[i].Kind == sourceKind) { style = projectileStyles[i]; break; }
             }
-            // 敌我弹道用不同色相，密集交火时仍能分辨方向；不修改棋子或伤害数字的原有颜色。
-            _projectileColor = targetSide == GameSide.Enemy ? new Color(1f, 0.92f, 0.28f) : new Color(1f, 0.38f, 0.22f);
+            if (style == null || style.Sprite == null || style.BodyMaterial == null || style.TrailMaterial == null)
+            {
+                RevLog.Warn("远程弹道缺少职业素材：" + sourceKind, "RevGame");
+                Finish();
+                return;
+            }
+            ProjectileKind = sourceKind;
+            spriteRenderer.sprite = style.Sprite;
+            spriteRenderer.sharedMaterial = style.BodyMaterial;
+            spriteRenderer.drawMode = SpriteDrawMode.Simple;
+            Vector3 size = style.Sprite.bounds.size;
+            float length = Mathf.Min(style.WorldSize.x, Vector3.Distance(source, target) * 0.8f);
+            Vector3 flightScale = new Vector3(length / Mathf.Max(0.01f, size.x), style.WorldSize.y / Mathf.Max(0.01f, size.y), 1f);
+            // 使用实际packed矩形还原局部UV，Shader的流动和拖尾不会采到图集中相邻图片。
+            // SpriteRenderer自身的纹理绑定也使用参数块；显式带上当前Sprite的图集页，不能用空块抹掉_MainTex。
+            _projectileProperties.Clear();
+            _projectileProperties.SetTexture("_MainTex", style.Sprite.texture);
+            _projectileProperties.SetVector(SpriteUvId, DataUtility.GetOuterUV(style.Sprite));
+            spriteRenderer.SetPropertyBlock(_projectileProperties);
+            ConfigureProjectileLayer(projectileOutline, style.Sprite, style.BodyMaterial, Vector3.zero, new Vector3(1.1f, 1.25f, 1f), spriteRenderer.sortingOrder - 2);
+            ConfigureProjectileLayer(projectileTrail, style.Sprite, style.TrailMaterial, Vector3.left * (size.x * 0.55f),
+                new Vector3(style.TrailSize.x / style.WorldSize.x, style.TrailSize.y / style.WorldSize.y, 1f), spriteRenderer.sortingOrder - 1);
+            // 保留下载原画色彩；敌方仅略染暖色，职业仍由原画与共享Shader辨识。
+            _projectileColor = targetSide == GameSide.Enemy ? Color.white : new Color(1f, 0.83f, 0.78f);
+            _trailColor = style.TrailColor;
             transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             Vector3 normalScale = flightScale;
             transform.localScale = normalScale * 0.88f;
@@ -256,17 +289,18 @@ namespace RevGame.View
             }
         }
 
-        /// <summary>子图与本体共用Sprite和材质；局部尺寸跟随归一化根节点，尾巴始终短于一格。</summary>
-        private void ConfigureProjectileLayer(SpriteRenderer layer, Vector3 offset, Vector3 scale, int order)
+        /// <summary>子图复用原画与职业共享材质；尾巴尺寸来自美术配方，跟随归一化根节点，不累计轨迹。</summary>
+        private void ConfigureProjectileLayer(SpriteRenderer layer, Sprite art, Material material, Vector3 offset, Vector3 scale, int order)
         {
             if (layer == null)
             {
                 return;
             }
             layer.enabled = true;
-            layer.sprite = projectileSprite;
+            layer.sprite = art;
             layer.drawMode = SpriteDrawMode.Simple;
-            layer.sharedMaterial = spriteRenderer.sharedMaterial;
+            layer.sharedMaterial = material;
+            layer.SetPropertyBlock(_projectileProperties);
             layer.sortingLayerID = spriteRenderer.sortingLayerID;
             layer.sortingOrder = order;
             layer.transform.localPosition = offset;
@@ -285,11 +319,13 @@ namespace RevGame.View
             }
             if (projectileTrail != null)
             {
-                color.a = alpha * 0.45f; projectileTrail.color = color;
+                Color tail = _trailColor;
+                tail.a = alpha * 0.8f;
+                projectileTrail.color = tail;
             }
         }
 
-        /// <summary>这个预制体承担数字、升星和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
+        /// <summary>这个预制体承担数字、口号和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
         private void HideProjectileLayers()
         {
             if (projectileOutline != null)
@@ -350,6 +386,13 @@ namespace RevGame.View
             }
         }
 
+        /// <summary>满屏时由棋盘替换最旧反馈；先停止动画，再走同一回池回调，不残留旧Tween。</summary>
+        public void RetireFeedback()
+        {
+            StopAnimation();
+            Finish();
+        }
+
         private void Finish()
         {
             _projectileActive = false;
@@ -377,6 +420,9 @@ namespace RevGame.View
             StopAnimation();
             HideProjectileLayers();
             spriteRenderer.enabled = false;
+            spriteRenderer.SetPropertyBlock(null);
+            if (projectileOutline != null) { projectileOutline.SetPropertyBlock(null); }
+            if (projectileTrail != null) { projectileTrail.SetPropertyBlock(null); }
             _projectileActive = false;
             _onFinished = null;
             IsFloatingText = IsAttackText = false;

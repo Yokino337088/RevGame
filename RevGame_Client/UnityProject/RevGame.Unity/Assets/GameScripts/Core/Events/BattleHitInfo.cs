@@ -24,8 +24,12 @@ namespace RevGame.Core
         /// 不再额外画一条普通弹道——否则一次范围技能会同时飞出十几根黄色子弹，画面混乱。
         /// </summary>
         public readonly bool FromSkill;
+        /// <summary>扣血当刻的职业、占格尺寸与远程标记；死亡或换位后仍使用这一份快照。</summary>
+        public readonly PieceKind SourceKind;
+        public readonly int SourceSize;
+        public readonly bool SourceIsRanged;
 
-        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0, bool fromSkill = false)
+        public BattleHitInfo(int targetId, BoardPos position, int targetSize, GameSide targetSide, int damage, bool hasAttacker, BoardPos source, int sourceId = 0, bool fromSkill = false, PieceKind sourceKind = PieceKind.Swordman, int sourceSize = 1, bool sourceIsRanged = false)
         {
             TargetId = targetId;
             Position = position;
@@ -36,6 +40,9 @@ namespace RevGame.Core
             Source = source;
             SourceId = sourceId;
             FromSkill = fromSkill;
+            SourceKind = sourceKind;
+            SourceSize = sourceSize;
+            SourceIsRanged = sourceIsRanged;
         }
     }
 }

@@ -3,6 +3,7 @@
 // 只保存本项目的预制体和场景；不在运行时找磁盘美术，也不修改 Revolution 快照。
 // ============================================================
 using RevGame.View;
+using RevGame.Core;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,25 +29,92 @@ namespace RevGame.Editor
         public static string ApplyProjectileStyle()
         {
             if (EditorApplication.isPlaying) { throw new System.InvalidOperationException("请先退出Play再保存弹道预制体"); }
+            ImportProjectileArt();
             const string path = "Assets/GameRes/Effects/Combat/BattleEffect.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
                 BattleEffectView view = root.GetComponent<BattleEffectView>();
                 var so = new SerializedObject(view);
-                Sprite sprite = (Sprite)so.FindProperty("projectileSprite").objectReferenceValue;
-                so.FindProperty("projectileWorldSize").vector2Value = new Vector2(0.82f, 0.24f);
-                so.FindProperty("projectileDuration").floatValue = 0.36f;
-                so.FindProperty("projectileOutline").objectReferenceValue = ProjectileLayer(root.transform, "projectileOutline", sprite);
-                so.FindProperty("projectileTrail").objectReferenceValue = ProjectileLayer(root.transform, "projectileTrail", sprite);
+                string[] artNames = { "ArcherArrow", "CrossbowBolt", "WaterOrb", "LavaFireball", "HolyOrb" };
+                PieceKind[] kinds = { PieceKind.Archer, PieceKind.Crossbow, PieceKind.MageWater, PieceKind.MageFire, PieceKind.Priest };
+                Vector2[] sizes = { new Vector2(.92f,.17f), new Vector2(.72f,.22f), new Vector2(.56f,.56f), new Vector2(.92f,.58f), new Vector2(.58f,.58f) };
+                Color[] colors = { new Color(.75f,.95f,1), new Color(1,.67f,.24f), new Color(.2f,.8f,1), new Color(1,.24f,.025f), new Color(1,.88f,.36f) };
+                SerializedProperty styles = so.FindProperty("projectileStyles");
+                styles.arraySize = kinds.Length;
+                for (int i = 0; i < kinds.Length; i++)
+                {
+                    SerializedProperty style = styles.GetArrayElementAtIndex(i);
+                    style.FindPropertyRelative("Kind").intValue = (int)kinds[i];
+                    style.FindPropertyRelative("Sprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Projectiles/" + artNames[i] + ".png");
+                    style.FindPropertyRelative("BodyMaterial").objectReferenceValue = ProjectileMaterial(artNames[i], i, false, colors[i]);
+                    style.FindPropertyRelative("TrailMaterial").objectReferenceValue = ProjectileMaterial(artNames[i], i, true, colors[i]);
+                    style.FindPropertyRelative("WorldSize").vector2Value = sizes[i];
+                    style.FindPropertyRelative("TrailSize").vector2Value = new Vector2(i < 2 ? 1.35f : 1.05f, i < 2 ? .25f : .5f);
+                    style.FindPropertyRelative("TrailColor").colorValue = colors[i];
+                }
+                Sprite arrow = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Projectiles/ArcherArrow.png");
+                so.FindProperty("projectileDuration").floatValue = .36f;
+                so.FindProperty("projectileOutline").objectReferenceValue = ProjectileLayer(root.transform, "projectileOutline", arrow);
+                so.FindProperty("projectileTrail").objectReferenceValue = ProjectileLayer(root.transform, "projectileTrail", arrow);
+                SpriteRenderer body = (SpriteRenderer)so.FindProperty("spriteRenderer").objectReferenceValue;
+                body.sprite = arrow;
+                body.sharedMaterial = ProjectileMaterial("ArcherArrow", 0, false, colors[0]);
                 so.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, path);
-                return "弹道预制体已保存：0.82×0.24本体、深色轮廓与短拖尾，同一RevPool对象复用。";
+                AssetDatabase.SaveAssets();
+                return "五职业真实原画、10个共享单Pass材质与有界拖尾已保存。";
             }
             finally
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        /// <summary>仅设置本次五张原图的导入规则；图集归属仍由GameSpriteAtlasBuild统一配置。</summary>
+        private static void ImportProjectileArt()
+        {
+            foreach (string file in System.IO.Directory.GetFiles("Assets/GameRes/Art/Combat/Projectiles", "*.png"))
+            {
+                string path = file.Replace('\\', '/');
+                AssetDatabase.ImportAsset(path);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spritePixelsPerUnit = 100;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.isReadable = false;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(settings);
+                importer.SaveAndReimport();
+            }
+        }
+
+        /// <summary>材质由预制体直接引用；每种职业共享一对，运行时禁止逐弹道克隆。</summary>
+        private static Material ProjectileMaterial(string name, int style, bool trail, Color glow)
+        {
+            const string directory = "Assets/GameRes/Material/Combat";
+            System.IO.Directory.CreateDirectory(directory);
+            string path = directory + "/" + name + (trail ? "Trail" : "Body") + ".mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader shader = Shader.Find("RevGame/Combat/RangedProjectile");
+            if (shader == null) { throw new System.InvalidOperationException("远程弹道Shader尚未导入"); }
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.shader = shader;
+            material.SetFloat("_Style", style);
+            material.SetFloat("_Trail", trail ? 1f : 0f);
+            material.SetColor("_Glow", glow);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         /// <summary>编辑器装配时创建一次，运行时只启用/隐藏；不会每次开火都new一个拖尾物体。</summary>

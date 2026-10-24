@@ -98,8 +98,8 @@ namespace RevGame.Editor
                 await RevTask.Delay(120);
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { PauseOwnedTween(effect, "_animation"); }
                 foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>()) { PauseOwnedTween(notice, "_animation"); }
-                // 该通知会安排 0.3 秒后的伤害数字，随即换回合，专门检查迟到回调。
-                RevEvent.DispatchEvent(Events.BattleHit, new BattleHitInfo(1, new BoardPos(2, 2), 1, GameSide.Enemy, 999, true, new BoardPos(0, 0)));
+                // 通知先进入本帧反馈队列，随即换回合，检查队列与迟到取池回调均被取消。
+                RevEvent.DispatchEvent(Events.BattleHit, new BattleHitInfo(1, new BoardPos(2, 2), 1, GameSide.Enemy, 999, true, new BoardPos(0, 0), 1, false, PieceKind.Archer, 1, true));
                 Require(battle.StartRound(1, 2), "切回准备失败");
                 VerifyNoOldEffects();
                 await RevTask.Delay(2000);

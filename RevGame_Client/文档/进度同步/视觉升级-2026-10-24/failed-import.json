@@ -1,0 +1,50 @@
+{
+  "success": false,
+  "name": "feedback-editor-check",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.compilation",
+      "response": {
+        "protocol": 1,
+        "id": "1134a6026fad4ddcb5112d8f19df4d3b",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\1134a6026fad4ddcb5112d8f19df4d3b",
+        "data": {
+          "compiling": false,
+          "failed": false,
+          "messages": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.2501822999911383
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.configure",
+      "response": {
+        "protocol": 1,
+        "id": "896bb4b986fe4fb89c37cfd54a8aff1d",
+        "success": false,
+        "error": "UnityError",
+        "message": "Cannot open file 'Assets/GameRes/Atlases/PieceFrames.spriteatlasv2.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Atlases/PieceFrames.spriteatlasv2.meta'\nCannot open file 'Assets/GameRes/Atlases/PieceFrames.spriteatlasv2.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Atlases/PieceFrames.spriteatlasv2.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_003.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_2_Idle_003.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_001.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_001.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_002.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_002.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_003.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/HeavySword/Enemy_HeavySword_3_Idle_003.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_001.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_001.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_002.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_002.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_003.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_1_Idle_003.png.meta'\nCannot open file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_001.png.meta' for write.\n\nFailed to write meta file 'Assets/GameRes/Art/Pieces/Enemy/MageFire/Enemy_MageFire_2_Idle_001.png.meta'",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\896bb4b986fe4fb89c37cfd54a8aff1d",
+        "data": {
+          "text": "288条映射，29个包，6张图集，184张图片唯一覆盖；保留183/218个Art资源，排除35个，打包6/9张图集；隐式重复/循环/漏标/重名/Android Shader错误均0条"
+        }
+      },
+      "polls": 1,
+      "seconds": 27.002785999997286
+    }
+  ],
+  "cleanup": [
+    {
+      "action": "editor.stop",
+      "error": "没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。"
+    }
+  ]
+}

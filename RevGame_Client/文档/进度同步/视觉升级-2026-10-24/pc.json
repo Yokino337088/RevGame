@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "name": "feedback-final-PC-build",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "2b3d6a1a16c1494fac7b5cd34a935c85",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2b3d6a1a16c1494fac7b5cd34a935c85",
+        "data": {
+          "text": "StandaloneWindows64：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\PC；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\PC"
+        }
+      },
+      "polls": 1,
+      "seconds": 15.54848860000493
+    }
+  ],
+  "cleanup": []
+}

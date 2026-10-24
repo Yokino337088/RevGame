@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4040887904
+CRC: 145651732
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a7ad2ebdb08aaa59a1a6a0c44bee5f48
+    Hash: ade0b64204fa5decca13ac425b79c466
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1c5f8747f817713213fdf2afe60fd31c
+    Hash: 82c9ebbdd1cae69e180a1136d481bf75
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a7ad2ebdb08aaa59a1a6a0c44bee5f48
+    Hash: ade0b64204fa5decca13ac425b79c466
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -38,11 +38,12 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
-SerializeReferenceClassIdentifiers: []
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Assembly-CSharp
+  ClassName: RevGame.View.BattleEffectView/ProjectileAppearance
 Assets:
 - Assets/GameRes/Effects/Combat/BattleEffect.prefab
 - Assets/GameRes/Effects/Combat/BossSkillFx.prefab
 Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat"

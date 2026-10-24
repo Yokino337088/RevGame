@@ -1,0 +1,80 @@
+{
+  "success": true,
+  "name": "visual-final-diagnostics",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.compilation",
+      "response": {
+        "protocol": 1,
+        "id": "e17baa77c70043d0a1a8ef5194d4a7ef",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e17baa77c70043d0a1a8ef5194d4a7ef",
+        "data": {
+          "compiling": false,
+          "failed": false,
+          "messages": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.08728660001361277
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "scene.list",
+      "response": {
+        "protocol": 1,
+        "id": "ef66930b5ed8473a8b86bc39ecad96b1",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\ef66930b5ed8473a8b86bc39ecad96b1",
+        "data": {
+          "scenes": [
+            {
+              "path": "Assets/Scenes/StartScene.unity",
+              "name": "StartScene",
+              "handle": -1723620,
+              "roots": 4,
+              "loaded": true,
+              "dirty": false,
+              "active": true
+            }
+          ]
+        }
+      },
+      "polls": 1,
+      "seconds": 0.08561319998989347
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.status",
+      "response": {
+        "protocol": 1,
+        "id": "e7c9250d550346898d3ac8e1e3ab4b44",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\e7c9250d550346898d3ac8e1e3ab4b44",
+        "data": {
+          "unityVersion": "2022.3.15f1c1",
+          "project": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity",
+          "playing": false,
+          "paused": false,
+          "compiling": false,
+          "updating": false,
+          "gmEnabled": true,
+          "gmCount": 10
+        }
+      },
+      "polls": 1,
+      "seconds": 0.1650662000029115
+    }
+  ],
+  "cleanup": []
+}

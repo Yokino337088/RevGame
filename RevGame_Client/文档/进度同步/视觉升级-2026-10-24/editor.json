@@ -1,0 +1,78 @@
+{
+  "success": true,
+  "name": "feedback-visual-recheck",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.compilation",
+      "response": {
+        "protocol": 1,
+        "id": "a4770f5bd50f4cb98e7d659c0eb2c84a",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a4770f5bd50f4cb98e7d659c0eb2c84a",
+        "data": {
+          "compiling": false,
+          "failed": false,
+          "messages": []
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09037210000678897
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "bb7e917654c644258d38b9004496c441",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\bb7e917654c644258d38b9004496c441",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 4.916149399999995
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.feedback.check",
+      "response": {
+        "protocol": 1,
+        "id": "307af37e58744c1c822611bec1487c8e",
+        "success": true,
+        "error": "",
+        "message": "通过 2238 条Play断言：120次合并、100目标控频、职业原画/即时伤害/35条连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=20，弹道=35",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\307af37e58744c1c822611bec1487c8e",
+        "data": {
+          "text": "通过 2238 条Play断言：120次合并、100目标控频、职业原画/即时伤害/35条连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=20，弹道=35"
+        }
+      },
+      "polls": 1,
+      "seconds": 14.633709000001545
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "fbc5b64543b24b288e5407edc02df0bc",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\fbc5b64543b24b288e5407edc02df0bc",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.7588854000059655
+    }
+  ]
+}

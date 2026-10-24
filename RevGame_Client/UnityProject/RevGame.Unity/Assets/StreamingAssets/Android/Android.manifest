@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 2821922474
+CRC: 3245915096
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -51,8 +51,7 @@ AssetBundleManifest:
       Name: battle_feedback
       Dependencies:
         Dependency_0: atlas_combatframes
-        Dependency_1: atlas_uibattle
-        Dependency_2: material_combat
+        Dependency_1: material_combat
     Info_8:
       Name: data_tables
       Dependencies: {}

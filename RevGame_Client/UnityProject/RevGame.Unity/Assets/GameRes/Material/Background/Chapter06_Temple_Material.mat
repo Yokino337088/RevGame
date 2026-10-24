@@ -34,23 +34,26 @@ Material:
     m_Ints: []
     m_Floats:
     - _Aspect: 1.7777778
-    - _BoardProtection: 1
-    - _Distortion: 0.01
+    - _BoardProtection: 0.72
+    - _Distortion: 0.00971
+    - _DustStrength: 2
     - _EffectTime: -1
     - _Glow: 1.5
-    - _Particles: 1
+    - _GodRays: 1.91
+    - _HaloStrength: 2
+    - _Particles: 0.6
     - _PreviewTime: -1
-    - _RingRadius: 0.6
-    - _Speed: 2
-    - _SpiralTurns: 3.63
+    - _RingRadius: 0.339
+    - _RuneStrength: 2
+    - _Speed: 1.65
     - _Strength: 1
-    - _TranceStrength: 0.6
     - _Transition: 1
     m_Colors:
-    - _Accent: {r: 1, g: 0.8399999, b: 0.39999998, a: 1}
+    - _Accent: {r: 1, g: 0.8, b: 0.32, a: 1}
     - _BoardRect: {r: 0, g: 0, b: 0, a: 0}
-    - _Focus: {r: 0.5, g: 0.51, b: 0, a: 0}
-    - _RuneColor: {r: 0.78999996, g: 0.63, b: 1, a: 1}
-    - _Secondary: {r: 1, g: 0.95, b: 0.78, a: 1}
+    - _Focus: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _LightOrigin: {r: 0.5, g: 1.18, b: 0, a: 0}
+    - _RuneColor: {r: 1, g: 0.76, b: 0.28, a: 1}
+    - _Secondary: {r: 1, g: 0.97, b: 0.82, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

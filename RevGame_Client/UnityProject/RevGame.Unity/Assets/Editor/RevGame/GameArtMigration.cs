@@ -496,7 +496,7 @@ namespace RevGame.Editor
             try
             {
                 BattleEffectView effect = root.GetComponent<BattleEffectView>();
-                GameAssetBuilder.SetReference(effect, "projectileSprite", Load(NewUi + "UI_Game_imgEnemyMobility.png"));
+                // 职业弹道由GameFeelBuilder独立装配，不能再覆盖为UI占位图。
                 TextMesh text = root.transform.Find("damage").GetComponent<TextMesh>();
                 text.fontSize = 80;
                 text.characterSize = 0.1f;

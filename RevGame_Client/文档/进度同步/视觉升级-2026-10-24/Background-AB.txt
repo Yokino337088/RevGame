@@ -1,0 +1,253 @@
+通过：AB，252 条断言；六章图片、GPU 动态/关闭、多比例覆盖与资源回收
+第一章材质引用正确，当前章=0
+第一章图集引用正确，当前章=0
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+整理后实际背景包数量=0，当前章=0
+通过玩家共用流程进入第一章
+背景交接成功且无错误
+第一章仍使用原图
+第一章图集Sprite可画
+第一章保留原材质参数并使用专用Shader
+第一章真实AB使用图集像素
+第一章材质引用正确，当前章=1
+第一章图集引用正确，当前章=1
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter01_tutorial
+整理后实际背景包数量=1，当前章=1
+冷加载时快速换章并取消
+背景交接成功且无错误
+第一章仍使用原图
+第一章图集Sprite可画
+第一章保留原材质参数并使用专用Shader
+第一章真实AB使用图集像素
+第一章材质引用正确，当前章=1
+第一章图集引用正确，当前章=1
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter01_tutorial
+整理后实际背景包数量=1，当前章=1
+真实模型开始章节 2
+背景交接成功且无错误
+章节图片正确 2
+章节独立材质真实接入 2
+章节独立 Shader 真实接入 2
+第一章材质引用正确，当前章=2
+第一章图集引用正确，当前章=2
+图片引用 Chapter02_Village=1
+材质引用 Chapter02_Village=1
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter02_village
+整理后实际背景包数量=1，当前章=2
+当前 GPU 编译支持主题 Shader
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+特效强度 0 时原画没有时间相关变化
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+速度 0 时该章节特效静止
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+GPU 连续时间像素有动态差异 2 / 0.023246
+村落日照提高画面亮度，保持明朗
+当前目标比例四角覆盖 1040x480
+背景等比铺满 (1040, 480)
+当前目标比例四角覆盖 800x600
+背景等比铺满 (800, 600)
+真实模型开始章节 3
+背景交接成功且无错误
+章节图片正确 3
+章节独立材质真实接入 3
+章节独立 Shader 真实接入 3
+第一章材质引用正确，当前章=3
+第一章图集引用正确，当前章=3
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=1
+材质引用 Chapter03_Lake=1
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter03_lake
+整理后实际背景包数量=1，当前章=3
+当前 GPU 编译支持主题 Shader
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+特效强度 0 时原画没有时间相关变化
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+速度 0 时该章节特效静止
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+GPU 连续时间像素有动态差异 3 / 0.042047
+当前目标比例四角覆盖 1040x480
+背景等比铺满 (1040, 480)
+当前目标比例四角覆盖 800x600
+背景等比铺满 (800, 600)
+真实模型开始章节 4
+背景交接成功且无错误
+章节图片正确 4
+章节独立材质真实接入 4
+章节独立 Shader 真实接入 4
+第一章材质引用正确，当前章=4
+第一章图集引用正确，当前章=4
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=1
+材质引用 Chapter04_Swamp=1
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter04_swamp
+整理后实际背景包数量=1，当前章=4
+当前 GPU 编译支持主题 Shader
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+特效强度 0 时原画没有时间相关变化
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+速度 0 时该章节特效静止
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+GPU 连续时间像素有动态差异 4 / 0.024407
+当前目标比例四角覆盖 1040x480
+背景等比铺满 (1040, 480)
+当前目标比例四角覆盖 800x600
+背景等比铺满 (800, 600)
+真实模型开始章节 5
+背景交接成功且无错误
+章节图片正确 5
+章节独立材质真实接入 5
+章节独立 Shader 真实接入 5
+第一章材质引用正确，当前章=5
+第一章图集引用正确，当前章=5
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=1
+材质引用 Chapter05_Ice=1
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter05_ice
+整理后实际背景包数量=1，当前章=5
+当前 GPU 编译支持主题 Shader
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+特效强度 0 时原画没有时间相关变化
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+速度 0 时该章节特效静止
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+GPU 连续时间像素有动态差异 5 / 0.047061
+当前目标比例四角覆盖 1040x480
+背景等比铺满 (1040, 480)
+当前目标比例四角覆盖 800x600
+背景等比铺满 (800, 600)
+真实模型开始章节 6
+背景交接成功且无错误
+章节图片正确 6
+章节独立材质真实接入 6
+章节独立 Shader 真实接入 6
+第一章材质引用正确，当前章=6
+第一章图集引用正确，当前章=6
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=1
+材质引用 Chapter06_Temple=1
+当前实际背景包=background_chapter06_temple
+整理后实际背景包数量=1，当前章=6
+当前 GPU 编译支持主题 Shader
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+特效强度 0 时原画没有时间相关变化
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+速度 0 时该章节特效静止
+当前目标比例四角覆盖 960x540
+当前目标比例四角覆盖 960x540
+GPU 连续时间像素有动态差异 6 / 0.004631
+当前目标比例四角覆盖 1040x480
+背景等比铺满 (1040, 480)
+当前目标比例四角覆盖 800x600
+背景等比铺满 (800, 600)
+重新开始第一章
+背景交接成功且无错误
+第一章仍使用原图
+第一章图集Sprite可画
+第一章保留原材质参数并使用专用Shader
+第一章真实AB使用图集像素
+第一章材质引用正确，当前章=1
+第一章图集引用正确，当前章=1
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+当前实际背景包=background_chapter01_tutorial
+整理后实际背景包数量=1，当前章=1
+第一章材质引用正确，当前章=0
+第一章图集引用正确，当前章=0
+图片引用 Chapter02_Village=0
+材质引用 Chapter02_Village=0
+图片引用 Chapter03_Lake=0
+材质引用 Chapter03_Lake=0
+图片引用 Chapter04_Swamp=0
+材质引用 Chapter04_Swamp=0
+图片引用 Chapter05_Ice=0
+材质引用 Chapter05_Ice=0
+图片引用 Chapter06_Temple=0
+材质引用 Chapter06_Temple=0
+整理后实际背景包数量=0，当前章=0

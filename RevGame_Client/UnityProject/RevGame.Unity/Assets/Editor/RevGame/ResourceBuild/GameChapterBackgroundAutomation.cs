@@ -51,6 +51,16 @@ namespace RevGame.Editor
         [RevAutomationAction("game.lake.configure", Environment = "edit", Keys = new string[0], Description = "配置第三章流动湖面材质参数")]
         public static object LakeConfigure(RevAutomationRequest request) { return InvokeIce("ConfigureLake"); }
 
+        /// <summary>修改前保留同相机、同时间的真实GPU基线，不操作未保存场景。</summary>
+        [RevAutomationAction("game.surface.before", Environment = "edit", Keys = new string[0], Description = "记录沼泽/神殿修改前GPU画面")]
+        public static object SurfaceBefore(RevAutomationRequest request) { return InvokeIce("CaptureSwampTempleBefore"); }
+
+        [RevAutomationAction("game.swamp.preview", Environment = "edit", Keys = new string[0], Description = "隔离GPU验收黏稠回流、鼓泡和腐败毒气")]
+        public static object SwampPreview(RevAutomationRequest request) { return InvokeIce("RunSwamp"); }
+
+        [RevAutomationAction("game.temple.preview", Environment = "edit", Keys = new string[0], Description = "隔离GPU验收神殿圣光、庄严法阵和上升光尘")]
+        public static object TemplePreview(RevAutomationRequest request) { return InvokeIce("RunTemple"); }
+
         private static object InvokeIce(string method)
         {
             Type type = Type.GetType("RevGame.Editor.GameChapterSurfacePreview, Assembly-CSharp-Editor", true);

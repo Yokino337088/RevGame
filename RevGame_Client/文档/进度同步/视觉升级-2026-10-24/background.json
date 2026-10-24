@@ -1,0 +1,101 @@
+{
+  "success": true,
+  "name": "推送前真实PC_AB资源与背景回归",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.play-check",
+      "response": {
+        "protocol": 1,
+        "id": "2cf70c72059b419b9ef2913392fba26b",
+        "success": true,
+        "error": "",
+        "message": "通过：AB，3198条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察164帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察121帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察141帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察118帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察147帧，分帧棋盘20帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察122帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2cf70c72059b419b9ef2913392fba26b",
+        "data": {
+          "text": "通过：AB，3198条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察164帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察121帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察141帧，分帧棋盘20帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察118帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察147帧，分帧棋盘20帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察122帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过"
+        }
+      },
+      "polls": 1,
+      "seconds": 13.350949900006526
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.check",
+      "response": {
+        "protocol": 1,
+        "id": "283dfdc041364ef9a12333acd3714d37",
+        "success": true,
+        "error": "",
+        "message": "通过：AB，252 条断言；六章图片、GPU 动态/关闭、多比例覆盖与资源回收",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\283dfdc041364ef9a12333acd3714d37",
+        "data": {
+          "text": "通过：AB，252 条断言；六章图片、GPU 动态/关闭、多比例覆盖与资源回收",
+          "abMode": true,
+          "checks": 252,
+          "directory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Temp\\ChapterBackgroundChecks"
+        }
+      },
+      "polls": 1,
+      "seconds": 16.2521340999956
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "runtime.screenshot",
+      "response": {
+        "protocol": 1,
+        "id": "81a75582fcaa40799d675d387eff64d6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\81a75582fcaa40799d675d387eff64d6",
+        "data": {
+          "path": "C:/Users/33861/AppData/LocalLow/DefaultCompany/RevGame_Unity\\RevolutionAutomation\\screenshots\\9b0a04ca41864781af355cd27735d7eb.png",
+          "bytes": 926207,
+          "mimeType": "image/png"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.3432163999968907
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "222787cc76b0438b80ed229425e4653c",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\222787cc76b0438b80ed229425e4653c",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.6538445000041975
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.mode",
+      "response": {
+        "protocol": 1,
+        "id": "adff5f6c727b4ee588f1f2e0cfdce3d6",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\adff5f6c727b4ee588f1f2e0cfdce3d6",
+        "data": {
+          "text": "下次Play UseABInEditor=False"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.0949213999992935
+    }
+  ]
+}

@@ -20,7 +20,7 @@ namespace RevGame.View
         private readonly List<Entry> _entries;
         /// <summary>本回合来源最后一次拿到显示名额的秒数；不保存棋子引用，Clear 时一起清除。</summary>
         private readonly Dictionary<int, float> _lastDisplayedAt = new Dictionary<int, float>(81);
-        /// <summary>允许保留的候选总数；攻击口号传 12，弹道传 24，保持原来的手机表现预算。</summary>
+        /// <summary>允许保留的候选总数；攻击口号传 12，弹道传 70，活动弹道仍单独受35条硬上限控制。</summary>
         private readonly int _capacity;
         /// <summary>每颗棋子的待播数上限；口号只留最新一条，弹道可留少量连射，避免把齐射变成单发。</summary>
         private readonly int _perSourceLimit;

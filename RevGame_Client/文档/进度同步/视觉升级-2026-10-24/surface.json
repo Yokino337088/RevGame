@@ -1,0 +1,97 @@
+{
+  "success": true,
+  "name": "沼泽神殿分层GPU验收",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.status",
+      "response": {
+        "protocol": 1,
+        "id": "166cd1a20b9746f39b7a48bf5e2afae9",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\166cd1a20b9746f39b7a48bf5e2afae9",
+        "data": {
+          "unityVersion": "2022.3.15f1c1",
+          "project": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity",
+          "playing": false,
+          "paused": false,
+          "compiling": false,
+          "updating": false,
+          "gmEnabled": true,
+          "gmCount": 0
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09321669999917503
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.swamp.preview",
+      "response": {
+        "protocol": 1,
+        "id": "72bfcf5d91244acbac9067607bd64a84",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\72bfcf5d91244acbac9067607bd64a84",
+        "data": {
+          "text": "通过：1920×1080实际GPU出图、0/2.5/5秒动态、强度0/速度0静止；时间像素差=0.031718，特效与原画差=0.041971，独立原画流动差=0.013055"
+        }
+      },
+      "polls": 1,
+      "seconds": 8.074743699995452
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.temple.preview",
+      "response": {
+        "protocol": 1,
+        "id": "bebb3ba9ea82461baf5a6b4ed47a8349",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\bebb3ba9ea82461baf5a6b4ed47a8349",
+        "data": {
+          "text": "通过：1920×1080实际GPU出图、0/2.5/5秒动态、强度0/速度0静止；时间像素差=0.003460，特效与原画差=0.030195，独立原画流动差=0.000000"
+        }
+      },
+      "polls": 1,
+      "seconds": 7.666545799991582
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "scene.list",
+      "response": {
+        "protocol": 1,
+        "id": "cca27b29994e400e8bf813b95b156e66",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cca27b29994e400e8bf813b95b156e66",
+        "data": {
+          "scenes": [
+            {
+              "path": "Assets/Scenes/TestScene.unity",
+              "name": "TestScene",
+              "handle": -1262,
+              "roots": 2,
+              "loaded": true,
+              "dirty": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09052499999233987
+    }
+  ]
+}

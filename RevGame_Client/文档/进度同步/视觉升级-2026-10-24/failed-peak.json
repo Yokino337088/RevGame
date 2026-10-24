@@ -1,0 +1,101 @@
+{
+  "success": false,
+  "name": "feedback-import-recovery",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.status",
+      "response": {
+        "protocol": 1,
+        "id": "3410a78c38e044e0afb30ca7f2c51fb9",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3410a78c38e044e0afb30ca7f2c51fb9",
+        "data": {
+          "unityVersion": "2022.3.15f1c1",
+          "project": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity",
+          "playing": false,
+          "paused": false,
+          "compiling": false,
+          "updating": false,
+          "gmEnabled": true,
+          "gmCount": 0
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09148699999786913
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.validate",
+      "response": {
+        "protocol": 1,
+        "id": "a2ee3aa513f8461b9661833cf28c7f62",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a2ee3aa513f8461b9661833cf28c7f62",
+        "data": {
+          "text": "保留183/218个Art资源，排除35个，打包6/9张图集；6张图集，184张图片唯一覆盖"
+        }
+      },
+      "polls": 1,
+      "seconds": 2.7479351999936625
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "4cc636b3d0f84aaa8b3bb4f74a9ef79a",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\4cc636b3d0f84aaa8b3bb4f74a9ef79a",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 4.673133000003872
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.feedback.check",
+      "response": {
+        "protocol": 1,
+        "id": "af9acf274ad2481f9e095eeb32657d0f",
+        "success": false,
+        "error": "OperationFailed",
+        "message": "失败：持续实飞峰值达到30至35，不能只提高常量",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\af9acf274ad2481f9e095eeb32657d0f",
+        "data": {
+          "text": "失败：持续实飞峰值达到30至35，不能只提高常量"
+        }
+      },
+      "polls": 1,
+      "seconds": 11.528320400000666
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "d0dd329483ed432d9422fb4d808a9ab6",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d0dd329483ed432d9422fb4d808a9ab6",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.6538028999930248
+    }
+  ]
+}
