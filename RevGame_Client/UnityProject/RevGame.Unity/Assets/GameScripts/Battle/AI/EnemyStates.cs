@@ -46,7 +46,7 @@ namespace RevGame.Battle
     /// · 状态只能通过这里列出的动作改世界，不能顺手改血量、改回合或碰 UI；
     /// · 服务实现这些动作时仍走统一出口（伤害公式、占格预检、事件广播），规则只有一份。
     /// </summary>
-    public interface IEnemyAIOwner : RevIHeavyFSMOwner
+    public interface IEnemyAIOwner : RevIHeavyFSMOwner, IAttackPrediction
     {
         /// <summary>当前棋盘，只读用于查询；落子/移动必须走下面的提交方法。</summary>
         BoardModel Board { get; }
@@ -162,9 +162,9 @@ namespace RevGame.Battle
         {
             Piece actor = Owner.Actor;
             // 敌方专属倍率只作用于普攻额度，不乘模拟时间，避免连带加快技能、补兵与区域伤害。
-            actor.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate;
-            int actions = (int)actor.ActionProgress;
-            actor.ActionProgress -= actions;
+            actor.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate * actor.EyeSpeedMultiplier;
+            int actions = actor.ConsumeCompletedActions();
+
             return actions;
         }
     }
@@ -188,7 +188,7 @@ namespace RevGame.Battle
                 {
                     break;
                 }
-                Piece target = EnemyTactics.ChooseTarget(Owner.Board, Owner.Actor, Targets, Owner.Intelligence);
+                Piece target = EnemyTactics.ChooseTarget(Owner.Board, Owner.Actor, Targets, Owner.Intelligence, Owner);
                 Owner.Attack(Owner.Actor, target);
                 // 擒王后整场立即结束，不再处理本步剩余连击。
                 if (Owner.KingCaptured)
@@ -362,6 +362,9 @@ namespace RevGame.Battle
                     throw new InvalidOperationException("敌方落子缺少当前回合配置");
                 }
                 PieceKind? kind = LevelCatalog.PickReinforcement(Owner.DeploymentCount, Owner.Intelligence);
+                // 本方空眼优先补远程，普通阵位仍按原增援表轮换。每次提交后重查，不能连续覆盖同一格。
+                bool hasEye = EyeTactics.TryFindOwnEye(Owner.Board, GameSide.Enemy, 1, out BoardPos eyePosition);
+                if (hasEye) { kind = PieceKind.Crossbow; }
                 if (!kind.HasValue)
                 {
                     RevLog.Warn("敌方补兵规则没有命中，请检查EnemyReinforceConfig", "RevGame"); return;
@@ -371,7 +374,12 @@ namespace RevGame.Battle
                 BoardPos position;
                 string intention;
                 // 5) 选点：深快照里试落，不污染实战气眼；无安全点就放弃本次窗口（冷却已消耗）。
-                if (!EnemyTactics.TryChooseDeployment(Owner.Board, newcomer, Owner.Intelligence, out position, out intention))
+                if (hasEye)
+                {
+                    position = eyePosition;
+                    intention = "远程驻守眼位";
+                }
+                else if (!EnemyTactics.TryChooseDeployment(Owner.Board, newcomer, Owner.Intelligence, out position, out intention))
                 {
                     return;
                 }

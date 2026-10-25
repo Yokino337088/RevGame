@@ -52,13 +52,26 @@ namespace RevGame.Services
                         service._board.Move(player, new BoardPos(4, 6));
                         service.RefreshGoState();
                         Piece target = service._board.GetPiece(new BoardPos(4, 7));
-                        int before = target.Hp;
-                        service.StepSide(GameSide.Player);
-                        int oneAction = before - target.Hp;
-                        player.ActionProgress = 0.9f;
-                        before = target.Hp;
-                        service.StepSide(GameSide.Player);
-                        check(oneAction > 0 && before - target.Hp >= oneAction * 2, "连击累计进度达到阈值时真实多攻击一次");
+                        // 连击测试数真实攻击事件，不比较随机暴击的伤害倍数；旧断言会把首发暴击误判为连击失败。
+                        // 依据当前导表攻速归一化步长，第一步积累1.1次，第二步从0.9起累积为2次；目标持续回血避免提前死亡。
+                        float comboStep = 1.1f / (Balance.AttackSpeedScale * service.PreparationAttackRate(player)
+                            * (1f + service._speedBonus + service._roundSpeedBonus + service._combatHasteBonus) * player.EyeSpeedMultiplier);
+                        int attacks = 0;
+                        object comboOwner = new object();
+                        RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => { if (info.PieceId == player.Id) { attacks++; } }, owner: comboOwner);
+                        try
+                        {
+                            player.ActionProgress = 0f;
+                            int before = target.Hp;
+                            service.StepSide(GameSide.Player, comboStep);
+                            check(attacks == 1 && target.Hp < before, "连击第一步真实出手一次并扣血");
+                            player.ActionProgress = 0.9f;
+                            target.Heal(target.MaxHp);
+                            before = target.Hp; attacks = 0;
+                            service.StepSide(GameSide.Player, comboStep);
+                            check(attacks == 2 && target.Hp < before, "连击累计进度达到阈值时真实多攻击一次：次数=" + attacks + "，目标=" + before + "→" + target.Hp + "，进度=" + player.ActionProgress + "，阶段=" + service.Phase);
+                        }
+                        finally { RevEvent.RemoveAllByOwner(comboOwner); }
                         break;
                     case BattleEventKind.Eye:
                         check(service._board.GetCell(new BoardPos(0, 0)).IsEyeMarked, "补眼真实在缺口放援兵形成角眼");
@@ -167,7 +180,8 @@ namespace RevGame.Services
             battle.Round = Balance.BossRoundIndex;
             battle.IsBossRound = true;
             battle.Phase = GamePhase.Battle;
-            // 高生命夹具保证能打满一分钟；仍走 Tick 和 Attack，不能只断言时长属性为 Infinity。
+            // 此夹具隔离“没有超时判负”，每小步用真实Heal补满双方。百分比支援增强后单纯提高最大生命已不能保证存活一分钟。
+            // 所有Tick、攻击、百分比扣血照常发生；伤害比例和死亡路径由独立眼位回归覆盖。
             Piece fighter = new Piece(1, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player, hpScale: 1000f);
             king = new Piece(2, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy, 1, true, true, 1000f);
             battle._board.Place(fighter, new BoardPos(3, 3));
@@ -177,7 +191,12 @@ namespace RevGame.Services
             battle.RefreshGoState();
             BattleDamageKind baselineKind;
             int baseDamage = battle.MeasureComparableHit(fighter, king, out baselineKind);
-            battle.Tick(62.5f);
+            for (int step = 0; step < 200; step++)
+            {
+                fighter.Heal(fighter.MaxHp);
+                king.Heal(king.MaxHp);
+                battle.Tick(Balance.BattleSimulationStepSeconds);
+            }
             check(battle.Phase == GamePhase.Battle && battle.BattleElapsed == 62.5f, "关闭轻松辅助时Boss超过60秒仍不超时结算");
             BattleDamageKind acceleratedKind;
             int accelerated = battle.MeasureComparableHit(fighter, king, out acceleratedKind, baselineKind);
@@ -246,6 +265,8 @@ namespace RevGame.Services
                 PreparationBuffDef buffDef = PreparationBuffCatalog.Get(kind);
                 service.ApplyPreparationBuff(buffDef);
                 service.RefreshGoState();
+                // 玩家AI现在由状态机守住阶段边界；攻击类断言必须先走真实开战，不能在准备态偷跑StepSide。
+                check(service.StartBattle(), "增益夹具通过正式入口开战");
                 switch (kind)
                 {
                     case PreparationBuffKind.Upgrade:
@@ -433,7 +454,8 @@ namespace RevGame.Services
             check(service.TriggerBattleEvent(BattleEventKind.Reinforcement), "混合手牌援军成功");
             Piece born = service._playerPieces[3];
             check(born.Def.Kind == PieceKind.Crossbow && born.Def.Star >= StarTier.Two, "优先最强远程而非排在前面的近战");
-            check(service.Hand.Count == 3 - (int)Balance.EventEffectMultiplier && service.CardsRemaining == allowance, "翻倍援军只消费真正部署的牌，不扣手动落子额度");
+            // 配置倍率可超过三张手牌；用尽后发免费援军，手牌数量不可能成为负数。
+            check(service.Hand.Count == Math.Max(0, 3 - (int)Balance.EventEffectMultiplier) && service.CardsRemaining == allowance, "援军只消费真正部署的牌，不扣手动落子额度");
             check(born.Pos.Y <= 2 && born.Pos.X <= 4, "远程援军落在己方主体附近的安全后排");
             check(service._enemyPieces.TrueForAll(p => BodyDistance(born.Pos, born.Size, p) > 2), "远程援军避开贴敌位置");
 
@@ -460,10 +482,10 @@ namespace RevGame.Services
             service._prepImmune = true;
             service.RefreshGoState();
             check(service._board.GetCell(new BoardPos(8, 8)).EyeSide == GameSide.Enemy, "敌方真实角眼夹具成立");
-            check(service.TryDeployReinforcement(PieceKind.Swordman, StarTier.Two), "免围困近战可突入敌眼");
+            check(service.TryDeployReinforcement(PieceKind.Swordman, StarTier.Two), "近战支援可驻守己方眼");
             born = service._playerPieces[service._playerPieces.Count - 1];
-            check(born.Pos == new BoardPos(8, 8) && RevGame.Battle.MoveRules.GetAttackTargets(service._board, born).Count > 0, "敌眼落点可用且落下就能攻击时优先破眼");
-            check(service._board.GetCell(new BoardPos(0, 0)).EyeSide == GameSide.Player, "自动援军不填己方眼位");
+            check(born.Pos == new BoardPos(0, 0) && born.IsEyeGarrison, "支援严格优先己方眼，不提前钻敌眼");
+            check(service._board.GetCell(new BoardPos(0, 0)).EyeSide == GameSide.Player, "己方驻眼保留眼位身份");
         }
 
         /// <summary>

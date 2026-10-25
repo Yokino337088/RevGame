@@ -1,0 +1,195 @@
+{
+  "success": true,
+  "message": "Frame Debugger events 0-45 of 46.",
+  "data": {
+    "events": [
+      {
+        "index": 0,
+        "name": "Camera.Render/Drawing/Render.OpaqueGeometry/RenderForwardOpaque.Render/Clear"
+      },
+      {
+        "index": 1,
+        "name": "Camera.Render/Drawing/Render.OpaqueGeometry/RenderForwardOpaque.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 2,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 3,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 4,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 5,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 6,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 7,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 8,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 9,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 10,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 11,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 12,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 13,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 14,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 15,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 16,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 17,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 18,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 19,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 20,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 21,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 22,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 23,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 24,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 25,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 26,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 27,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 28,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 29,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 30,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 31,
+        "name": "Camera.Render/Drawing/Render.TransparentGeometry/RenderForwardAlpha.Render/RenderForward.RenderLoopJob"
+      },
+      {
+        "index": 32,
+        "name": "UGUI.Rendering.RenderOverlays"
+      },
+      {
+        "index": 33,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 34,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 35,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 36,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 37,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 38,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 39,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 40,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 41,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 42,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 43,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 44,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays/Canvas.RenderOverlays"
+      },
+      {
+        "index": 45,
+        "name": "UGUI.Rendering.RenderOverlays/Canvas.RenderOverlays"
+      }
+    ],
+    "total_events": 46,
+    "page_size": 100,
+    "cursor": 0
+  }
+}

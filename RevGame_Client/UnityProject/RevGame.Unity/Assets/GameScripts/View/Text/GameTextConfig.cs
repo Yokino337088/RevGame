@@ -68,6 +68,8 @@ namespace RevGame.View
             Require("BossSkill");
             foreach (Data.BattleEventKind kind in System.Enum.GetValues(typeof(Data.BattleEventKind))) { Require("Event_" + Data.BattleEventCatalog.NameOf(kind)); }
             Require("Event_能量巨大");
+            Require("Event_眼位成型");
+            Require("Event_眼位复苏");
             foreach (BattleText row in RevDataTableManager.Get<BattleTextTable>().All)
             {
                 ColorOf(row);

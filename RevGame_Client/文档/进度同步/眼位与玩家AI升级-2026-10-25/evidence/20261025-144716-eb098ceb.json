@@ -1,0 +1,62 @@
+{
+  "success": false,
+  "name": "眼位扶持-真实AB动态验收",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "447dfbae7da04e589611d58eb900d04b",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\447dfbae7da04e589611d58eb900d04b",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 5.4813410000060685
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.eye.check",
+      "response": {
+        "protocol": 1,
+        "id": "cad7e4eca13f4279ba6a41cf22aa55e1",
+        "success": false,
+        "error": "AssertionFailed",
+        "message": "失败：System.InvalidOperationException: 真实Tick到3秒窗口补入一颗远程\r\n  at RevGame.Editor.GameEyeChecks.Require (System.Boolean condition, System.String message) [0x00016] in D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Editor\\RevGame\\GameEyeChecks.cs:178 \r\n  at RevGame.Editor.GameEyeChecks.Begin () [0x00614] in D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Editor\\RevGame\\GameEyeChecks.cs:94 ",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cad7e4eca13f4279ba6a41cf22aa55e1",
+        "data": {
+          "text": "失败：System.InvalidOperationException: 真实Tick到3秒窗口补入一颗远程\r\n  at RevGame.Editor.GameEyeChecks.Require (System.Boolean condition, System.String message) [0x00016] in D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Editor\\RevGame\\GameEyeChecks.cs:178 \r\n  at RevGame.Editor.GameEyeChecks.Begin () [0x00614] in D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Editor\\RevGame\\GameEyeChecks.cs:94 "
+        },
+        "assertion": {
+          "path": "/success",
+          "equals": true
+        }
+      },
+      "polls": 1,
+      "seconds": 9.049862799991388
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "50cd135c8f9647d8b04873ce977d8d5e",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\50cd135c8f9647d8b04873ce977d8d5e",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.5845968000066932
+    }
+  ]
+}

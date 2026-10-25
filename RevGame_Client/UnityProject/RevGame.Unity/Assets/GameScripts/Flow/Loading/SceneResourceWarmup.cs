@@ -129,7 +129,7 @@ namespace RevGame.Flow
         private static RevTask<T> GetAsync<T>() where T : Component
         {
             var completion = new RevTaskCompletionSource<T>();
-            RevPool.GetAsync<T>(value => completion.SetResult(value));
+            GamePoolRequests.GetAsync<T>(value => completion.SetResult(value));
             return completion.Task;
         }
 

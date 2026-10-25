@@ -61,7 +61,7 @@ namespace RevGame.Services
                 return false;
             }
             var piece = new Piece(_nextPieceId++, def, GameSide.Player, size);
-            // 近战可以突入敌方空眼，前面的试放已确认可攻击且不拆己方眼；仍然不能覆盖已有棋子。
+            // 近战只可突入外围已封完的最后敌眼，试放已确认不拆己方阵型；仍然不能覆盖已有棋子。
             if (!_board.Place(piece, pos, respectEnemyEyes: false))
             {
                 throw new System.InvalidOperationException("援军预检与提交不一致：" + pos);
@@ -74,13 +74,14 @@ namespace RevGame.Services
         }
 
         /// <summary>
-        /// 远程优先靠近最大己方连通阵营，并远离敌人；近战必须落下就能攻击，优先可用的敌眼。
+        /// 所有援军优先驻守本方空眼；无眼时远程靠近主体阵营，近战贴敌并遵守最后破眼门槛。
         /// 深快照内的气眼会被试算覆盖，最后只提交坐标；实战棋子不会被试算改血量、护盾或阵型。
         /// </summary>
         private bool TryFindSupportPosition(PieceDef def, int size, out BoardPos best)
         {
             best = new BoardPos(-1, -1);
             int bestScore = int.MinValue;
+            bool bestOwnEye = false;
             List<Piece> mainGroup = new List<Piece>();
             foreach (List<Piece> group in GoRules.BuildGroups(_board))
             {
@@ -122,9 +123,11 @@ namespace RevGame.Services
                             }
                         }
                     }
-                    bool safe = !reinforcement.IsLocked && PreservesPlayerFormation(trial);
+                    bool ownEye = size == 1 && _board.GetCell(pos).EyeSide == GameSide.Player;
+                    bool finalEnemyEye = _board.GetCell(pos).EyeSide == GameSide.Enemy;
+                    bool safe = (!reinforcement.IsLocked || finalEnemyEye) && PreservesPlayerFormation(trial);
                     // 没有敌人时准备期仍能发远程援军；近战战斗支援仍需贴敌，避免援击新规则改变落点偏好。
-                    if (safe && (def.IsRanged || attacks > 0))
+                    if (safe && (ownEye || def.IsRanged || attacks > 0))
                     {
                         int enemyDistance = Consts.BoardSize * 2;
                         foreach (Piece enemy in _enemyPieces)
@@ -160,9 +163,9 @@ namespace RevGame.Services
                             bool enemyEye = _board.GetCell(pos).EyeSide == GameSide.Enemy;
                             score = (enemyEye ? 600 : 0) + attacks * 90 - enemyDistance * 25 + reinforcement.Liberties * 4;
                         }
-                        if (score > bestScore)
+                        if ((ownEye && !bestOwnEye) || (ownEye == bestOwnEye && score > bestScore))
                         {
-                            best = pos; bestScore = score;
+                            best = pos; bestScore = score; bestOwnEye = ownEye;
                         }
                     }
                     trial.Remove(reinforcement);
@@ -172,7 +175,7 @@ namespace RevGame.Services
         }
 
         /// <summary>比较旧棋的眼数和气，防止自动加棋堵死同伴；玩家手动换位则由玩家自行决定是否拆眼。</summary>
-        private bool PreservesPlayerFormation(BoardModel trial)
+        private bool PreservesPlayerFormation(BoardModel trial, Piece allowedLocked = null)
         {
             foreach (Piece original in _playerPieces)
             {
@@ -181,7 +184,7 @@ namespace RevGame.Services
                     continue;
                 }
                 Piece copy = EnemyFormationPlanner.Find(trial, original.Id);
-                if (copy == null || copy.EyeCount < original.EyeCount || (original.Liberties > 0 && copy.Liberties <= 0))
+                if (copy == null || copy.EyeCount < original.EyeCount || (original != allowedLocked && original.Liberties > 0 && copy.Liberties <= 0 && copy.EyeCount == 0))
                 {
                     return false;
                 }

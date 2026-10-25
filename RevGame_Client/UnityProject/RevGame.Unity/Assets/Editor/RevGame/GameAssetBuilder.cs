@@ -230,6 +230,9 @@ namespace RevGame.Editor
                 highlight.drawMode = SpriteDrawMode.Sliced;
                 highlight.size = Vector2.one;
                 SpriteRenderer eye = SpriteChild(root, "眼", "状态标记/标记_眼_金色.png", 6);
+                // 旧配方也必须使用实际卡通双眼，防止重建预制体时悄悄退回打勾占位图。
+                eye.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GameEyeBuilder.EyePath);
+                eye.transform.localScale = Vector3.one * 0.76f;
                 SetReference(view, "starRenderer", star);
                 SetReference(view, "highlightRenderer", highlight);
                 SetReference(view, "eyeRenderer", eye);

@@ -28,7 +28,7 @@ namespace RevGame.UI
     /// 让它每帧/每次事件后自己去 `IBattleService` 拉一次，比让业务层到处记得推送更不容易漏。
     /// 真正的"一次性数据"（例如结算面板的胜负）才走 SetData。
     /// </summary>
-    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal)]
+    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed partial class BattleHudPanel : RevUIPanel
     {
         [Header("阶段图标（三种阶段各一张，由预制体指定）")]
@@ -262,6 +262,15 @@ namespace RevGame.UI
 
         private void OnBattleEvent(string title)
         {
+            if (title == "眼位成型" || title == "眼位复苏")
+            {
+                BattleText eyeText = GameTextConfig.Require("Event_" + title);
+                string detail = eyeText.Detail.Replace("{defense}", ConfigText.Percent(Balance.EyeGuardDefenseBonus))
+                    .Replace("{regen}", ConfigText.Percent(Balance.EyeHealRatio))
+                    .Replace("{heal}", ConfigText.Percent(Balance.EyeReviveHealRatio));
+                ShowNotice(eyeText, eyeText.Text, null, detail, central: true);
+                return;
+            }
             Sprite sprite = eventIcons.Length > 0 ? eventIcons[0] : null;
             for (int i = 0; i < eventIcons.Length; i++)
             {
@@ -321,7 +330,7 @@ namespace RevGame.UI
             }
             int generation = _noticeGeneration;
             int request = ++_enemyNoticeGeneration;
-            RevPool.GetAsync<BattleEventNoticeView>(notice =>
+            GamePoolRequests.GetAsync<BattleEventNoticeView>(notice =>
             {
                 if (notice == null)
                 {
@@ -360,7 +369,7 @@ namespace RevGame.UI
             }
         }
 
-        private void ShowNotice(BattleText config, string title, Sprite sprite)
+        private void ShowNotice(BattleText config, string title, Sprite sprite, string detail = null, bool central = false)
         {
             // 同一时刻只读一条大提示。连续升级时显示最新结果，旧提示立即回池；
             // 不排一个跨回合的长队列，否则玩家已进入准备期却还在观看上轮支援。
@@ -376,7 +385,7 @@ namespace RevGame.UI
             }
             int regularGeneration = ++_regularNoticeGeneration;
             int generation = _noticeGeneration;
-            RevPool.GetAsync<BattleEventNoticeView>(notice =>
+            GamePoolRequests.GetAsync<BattleEventNoticeView>(notice =>
             {
                 if (notice == null)
                 {
@@ -390,7 +399,8 @@ namespace RevGame.UI
                     return;
                 }
                 _notices.Add(notice);
-                notice.Show(config, title, sprite, OnNoticeFinished);
+                if (central) { notice.ShowPreparation(title, detail, OnNoticeFinished); }
+                else { notice.Show(config, title, sprite, OnNoticeFinished); }
             }, _noticeRoot);
         }
 
@@ -411,7 +421,7 @@ namespace RevGame.UI
             PreparationBuffDef buff = _preparationQueue.Dequeue();
             int generation = _noticeGeneration;
             _preparationLoading = true;
-            RevPool.GetAsync<BattleEventNoticeView>(notice =>
+            GamePoolRequests.GetAsync<BattleEventNoticeView>(notice =>
             {
                 // 先判代次，再动loading。旧资源回调不能把新回合的加载状态改成false。
                 if (_noticeClosed || this == null || generation != _noticeGeneration)

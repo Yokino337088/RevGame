@@ -1,0 +1,11 @@
+{
+  "protocol": 1,
+  "id": "b6fde92692a44b49b3a394ae56eb874a",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b6fde92692a44b49b3a394ae56eb874a",
+  "data": {
+    "text": "after\n固定10棋整队中位数(ms)=0.117\n固定棋盘AI4补子中位数(ms/次)=1.237\n分配计数器有效=False\n整队样本=0.1134,0.1168,0.1169,0.1185,0.1334\n补子样本=1.1529,1.18876,1.2371,1.31814,1.39189"
+  }
+}

@@ -47,7 +47,7 @@ namespace RevGame.Services
     ///
     /// 这样"改表现不用碰规则、改规则不用碰表现"，两边都能单独验证。
     /// </summary>
-    public sealed partial class BattleService : IBattleService
+    public sealed partial class BattleService : IBattleService, IAttackPrediction
     {
         /// <summary>日志标签：RevLog 按它分组过滤，排查时先看 "RevGame"。</summary>
         private const string Tag = "RevGame";
@@ -65,7 +65,7 @@ namespace RevGame.Services
         private readonly HandModel _hand = new HandModel();
         // 正式游玩使用随机种子；验收可在构造时传固定种子，复现同一手牌和事件序列。
         // 随机控制抽牌、事件和普攻暴击；伤害公式仍读Excel，落子是否合法仍由棋盘规则判定。
-        private readonly System.Random _random;
+        private System.Random _random;
         /// <summary>手牌只读视图：界面只能看，增删必须走 TryPlayCard / RefreshHand。</summary>
         public IReadOnlyList<HandCard> Hand
         {
@@ -262,6 +262,7 @@ namespace RevGame.Services
             _nextPieceId += plannedEnemies.Count;
             DealHand();
             RefreshGoState();
+            DeployInitialEyeGarrison();
             RevLog.Info("开始 " + def + "，敌方 " + _enemyPieces.Count + " 颗", Tag);
             RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
             return true;
@@ -531,6 +532,7 @@ namespace RevGame.Services
                 // 攻击结算完再补子：已被全灭或擒王的敌人不能靠同一帧的增援“复活”。
                 TickEnemyDeployment();
                 TickPreparationCombat(stepSeconds);
+                TickEyeSupport();
                 TryAutomaticEvent();
                 // 全部战斗不限时；加速由真实增益、区域波动和炸弹伤害完成，不删除残敌。
                 TickCombatPacing();
@@ -581,18 +583,7 @@ namespace RevGame.Services
             StepSide(GameSide.Enemy, stepSeconds / Balance.BattleTickSeconds);
             // 升级只由成功打牌/明确增益触发。战斗轮询绝不自动吃掉守眼棋子。
             RefreshGoState();
-            _eyeHealElapsed += stepSeconds;
-            if (_eyeHealElapsed >= Balance.EyeHealSeconds)
-            {
-                _eyeHealElapsed -= Balance.EyeHealSeconds;
-                foreach (Piece p in _board.Pieces)
-                {
-                    if (p.EyeCount >= Balance.EyeHealMinEyes && p.Heal(System.Math.Max(1, (int)(p.MaxHp * Balance.EyeHealRatio))) > 0)
-                    {
-                        RevEvent.DispatchEvent<int>(Events.PieceHpChanged, p.Id);
-                    }
-                }
-            }
+            TickEyeHealing(stepSeconds);
         }
 
         /// <summary>
@@ -617,16 +608,23 @@ namespace RevGame.Services
                 {
                     continue;
                 }
-                TryPlayerTacticalMove(piece);
+                EnsurePlayerAI(piece).Tick(stepFraction * Balance.BattleTickSeconds);
+                if (IsKingCaptured()) { return; }
+            }
+        }
+
+        /// <summary>玩家状态的原子攻击入口。驻眼倍率只乘攻击进度；每次出手重新查询，致死后不会攻击旧目标。</summary>
+        private void StepPlayerAttack(Piece piece, float stepFraction)
+        {
                 float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。
                 rate = ScaleAutomationAttackRate(rate);
 #endif
                 piece.ActionProgress += stepFraction * Balance.AttackSpeedScale * PreparationAttackRate(piece)
-                    * rate * (1f + _speedBonus + _roundSpeedBonus + _combatHasteBonus);
-                int actions = (int)piece.ActionProgress;
-                piece.ActionProgress -= actions;
+                    * rate * (1f + _speedBonus + _roundSpeedBonus + _combatHasteBonus) * piece.EyeSpeedMultiplier;
+                int actions = piece.ConsumeCompletedActions();
+
                 for (int action = 0; action < actions; action++)
                 {
                     MoveRules.GetAttackTargets(_board, piece, _attackTargets);
@@ -640,7 +638,6 @@ namespace RevGame.Services
                         return;
                     }
                 }
-            }
         }
 
         /// <summary>
@@ -659,36 +656,11 @@ namespace RevGame.Services
                 return;
             }
 
-            float multiplier = target.IsLocked ? Balance.LockedDamageMultiplier : Balance.BaseDamageMultiplier;
-            if (!target.IgnoreEncirclement && target.ConnectedCells <= 1)
-            {
-                multiplier *= Balance.IsolatedDamageMultiplier;
-            }
-
-            float linked = System.Math.Min(Balance.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Balance.LinkAttackPerCell);
-            multiplier *= 1f + System.Math.Max(0f, linked) + ClassBonus(attacker.Side) + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
+            // 攻击表现先发事实；暴击只在真正出手时抽样，AI预判绝不消耗随机序列。
             var attack = new PieceAttackInfo(attacker.Id, attacker.Def.Kind, attacker.Pos, attacker.Size, attacker.Side);
             RevEvent.DispatchEvent<PieceAttackInfo>(Events.PieceAttacked, attack);
-            // 双方一起降低单发伤害，保留远程较高的出手频率，让玩家能看见互相消耗和支援反击。
-            int raw = System.Math.Max(1, (int)(attacker.Def.Attack * attacker.AttackScale * multiplier * Balance.CombatDamageScale));
-            if (IsBossRound)
-            {
-                // 高频小额伤害取整后，10%可能永远看不出变化。每满一档至少加1，确保决死加速确实产生伤害压力。
-                int acceleration = (int)(_battleElapsed / Balance.BossAccelerationSeconds);
-                raw += System.Math.Max(acceleration, (int)(raw * acceleration * Balance.BossAccelerationBonus));
-            }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // +500%测试攻击=原伤害×6，只影响真实出手；仍走下面的受击、死亡、事件与对象池表现链。
-            raw = ScaleAutomationAttackDamage(attacker, raw);
-#endif
-            // 每次玩家普攻独立抽样；固定随机种子也覆盖暴击，便于重放。环境与Boss技能不进入这里。
             bool critical = attacker.Side == GameSide.Player && _random.NextDouble() < Balance.CriticalChance;
-            if (critical) { raw = (int)System.Math.Min(int.MaxValue, System.Math.Ceiling(raw * (double)Balance.CriticalMultiplier)); }
-            int real = DamagePiece(target, raw, attacker, damageKind: critical ? BattleDamageKind.Critical : BattleDamageKind.Normal);
-            if (attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
-            {
-                RevEvent.DispatchEvent<int>(Events.PieceHpChanged, attacker.Id);
-            }
+            int real = ResolveDamage(new DamageRequest(target, DamageBasis.Attack, critical ? BattleDamageKind.Critical : BattleDamageKind.Normal, attacker, fromSkill: false));
             // ★ 倍数从参数取，不写死“×2”：策划把锁死倍率改成 3 时，战报要跟着变。
             RevEvent.DispatchEvent<string>(Events.BattleLog, attacker.Def.DisplayName + " → " + target.Def.DisplayName + " -" + real + (target.IsLocked ? "（锁死×" + Balance.LockedDamageMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "）" : ""));
             RefreshGoState();
@@ -776,6 +748,15 @@ namespace RevGame.Services
         /// </summary>
         private void RebuildBoardFromRoster()
         {
+            // 原有驻眼身份随残局保留，但只还给同一格的同一颗棋；重建顺序不能决定谁得到增益。
+            var eyeGarrisons = new List<KeyValuePair<Piece, BoardPos>>();
+            foreach (Piece piece in _playerPieces)
+            {
+                if (piece.IsAlive && _board.GetCell(piece.Pos)?.EyeGarrisonId == piece.Id)
+                {
+                    eyeGarrisons.Add(new KeyValuePair<Piece, BoardPos>(piece, piece.Pos));
+                }
+            }
             _board.Reset();
             // 先把玩家棋子按原坐标放回去；坐标被占就找最近的空格。
             for (int i = 0; i < _playerPieces.Count; i++)
@@ -798,6 +779,11 @@ namespace RevGame.Services
                 }
             }
 
+            foreach (KeyValuePair<Piece, BoardPos> saved in eyeGarrisons)
+            {
+                Cell cell = _board.GetCell(saved.Value);
+                if (cell != null && cell.Occupant == saved.Key) { cell.EyeGarrisonId = saved.Key.Id; }
+            }
             // 清掉已经死掉的棋子。
             for (int i = _playerPieces.Count - 1; i >= 0; i--)
             {

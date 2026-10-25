@@ -106,8 +106,8 @@ namespace RevGame.Battle
         {
             Piece boss = Owner.Boss;
             boss.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate;
-            int actions = (int)boss.ActionProgress;
-            boss.ActionProgress -= actions;
+            int actions = boss.ConsumeCompletedActions();
+
             MoveRules.GetAttackTargets(Owner.Board, boss, _targets);
             if (_targets.Count > 0)
             {
@@ -119,7 +119,7 @@ namespace RevGame.Battle
                     {
                         break;
                     }
-                    Owner.Attack(boss, EnemyTactics.ChooseTarget(Owner.Board, boss, _targets, Owner.Intelligence));
+                    Owner.Attack(boss, EnemyTactics.ChooseTarget(Owner.Board, boss, _targets, Owner.Intelligence, Owner));
                     if (Owner.KingCaptured)
                     {
                         return;

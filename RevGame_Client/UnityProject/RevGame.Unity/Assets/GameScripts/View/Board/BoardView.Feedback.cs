@@ -290,7 +290,7 @@ namespace RevGame.View
             _pendingTextLoads++;
             int generation = _effectGeneration;
             PendingDamageText message = oldest;
-            RevPool.GetAsync<BattleEffectView>(effect =>
+            GamePoolRequests.GetAsync<BattleEffectView>(effect =>
             {
                 // 过期回调不能减新回合的计数：只有代次仍然一致，才有权释放当前这笔预约。
                 if (_released || generation != _effectGeneration)

@@ -1,0 +1,27 @@
+{
+  "success": false,
+  "name": "后成眼-业务回归复核",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.regression",
+      "response": {
+        "protocol": 1,
+        "id": "7b5de0d62b724615adde29c48bbb2a3b",
+        "success": false,
+        "error": "AssertionFailed",
+        "message": "GameRuleChecks：验收失败：连击累计进度达到阈值时真实多攻击一次",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\7b5de0d62b724615adde29c48bbb2a3b",
+        "data": null,
+        "assertion": {
+          "path": "/success",
+          "equals": true
+        }
+      },
+      "polls": 1,
+      "seconds": 2.6714695999980904
+    }
+  ],
+  "cleanup": []
+}

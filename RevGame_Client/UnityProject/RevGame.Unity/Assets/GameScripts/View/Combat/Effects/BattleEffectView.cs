@@ -66,12 +66,19 @@ namespace RevGame.View
         public bool IsAttackText { get; private set; }
         public int TextOrder { get; private set; }
 
+        // 每条飘字同一帧会被新入场文字反复查询避让；缓存仍按位置/缩放失效，不复用动画移动前的矩形。
+        // 相机只在本场景寿命内借用，Unity销毁后自动判空，下一次读取重新取得。
+        private Camera _textCamera;
+        private int _rectFrame = -1;
+        private Vector3 _rectPosition, _rectScale;
+        private Rect _cachedTextRect;
+
         /// <summary>屏幕上真实文字的矩形，供整个棋盘统一避让；不使用渲染位置以外的固定“第几条通道”。</summary>
         public Rect TextScreenRect
         {
             get
             {
-                Camera camera = Camera.main;
+                Camera camera = _textCamera != null ? _textCamera : (_textCamera = Camera.main);
                 if (camera == null)
                 {
                     return new Rect();
@@ -80,11 +87,16 @@ namespace RevGame.View
                 {
                     _textRenderer = damageText.GetComponent<Renderer>();
                 }
+                Vector3 position = transform.position;
+                Vector3 scale = transform.lossyScale;
+                if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale) { return _cachedTextRect; }
+                _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale;
                 Bounds bounds = _textRenderer.bounds;
                 Vector3 min = camera.WorldToScreenPoint(bounds.min);
                 Vector3 max = camera.WorldToScreenPoint(bounds.max);
-                return Rect.MinMaxRect(Mathf.Min(min.x, max.x) - 3f, Mathf.Min(min.y, max.y) - 3f,
+                _cachedTextRect = Rect.MinMaxRect(Mathf.Min(min.x, max.x) - 3f, Mathf.Min(min.y, max.y) - 3f,
                     Mathf.Max(min.x, max.x) + 3f, Mathf.Max(min.y, max.y) + 3f);
+                return _cachedTextRect;
             }
         }
 
@@ -178,6 +190,7 @@ namespace RevGame.View
 
         private void ConfigureText(BattleText config, string content, Color color)
         {
+            _rectFrame = -1;
             spriteRenderer.enabled = false;
             damageText.text = content;
             damageText.fontSize = config.FontSize;
@@ -193,7 +206,9 @@ namespace RevGame.View
                 outline.anchor = TextAnchor.MiddleCenter;
                 outline.alignment = TextAlignment.Center;
             }
-            SetNumberAlpha(1f);
+            // 复用时文字/颜色已替换，必须强制初始化描边；后续恒定透明度无需每帧重建五份字形颜色。
+            _fadeAlpha = 1f;
+            ApplyNumberAlpha();
         }
 
         /// <summary>先限定可见字宽，再避让，最后记录Tween起终点；文字最多保留约一秒，不积压上一轮攻击。</summary>
@@ -432,6 +447,7 @@ namespace RevGame.View
 
         private void SetNumberAlpha(float alpha)
         {
+            if (Mathf.Approximately(_fadeAlpha, alpha)) { return; }
             _fadeAlpha = alpha;
             ApplyNumberAlpha();
         }

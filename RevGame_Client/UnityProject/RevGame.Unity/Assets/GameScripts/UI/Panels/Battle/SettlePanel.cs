@@ -16,7 +16,7 @@ namespace RevGame.UI
     /// 这是典型的"一次性数据"界面，所以走框架推荐的数据流：
     /// 业务层 `RevUI.Open&lt;SettlePanel, SettleData&gt;(data)` → 面板 `OnRefreshView` 只负责画。
     /// </summary>
-    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Popup)]
+    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Popup, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed class SettlePanel : RevUIPanel<SettlePanel.SettleData>
     {
         /// <summary>结算数据（面板只读）。

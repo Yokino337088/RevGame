@@ -24,6 +24,8 @@ namespace RevGame.UI
         /// <summary>当前一轮滚动的起点/终点，仅由本组件持有；待显示目标变化不会重建这些数组。</summary>
         private float[] _from, _to;
         private int[] _shown;
+        // 高位不变时不反复写RectTransform，避免把静止数字也加入每帧Canvas重建。
+        private float[] _paintedPosition;
         private Tween _roll;
         private long _target = -1;
         private float _progress;
@@ -33,7 +35,8 @@ namespace RevGame.UI
         private void Awake()
         {
             _from = new float[lower.Length]; _to = new float[lower.Length]; _shown = new int[lower.Length];
-            for (int i = 0; i < _shown.Length; i++) { _shown[i] = -1; }
+            _paintedPosition = new float[lower.Length];
+            for (int i = 0; i < _shown.Length; i++) { _shown[i] = -1; _paintedPosition[i] = float.NaN; }
         }
 
         /// <summary>snap用于换回合/首次打开，必须直接落到真实分数，避免播放上一回合的旧分。</summary>
@@ -89,6 +92,8 @@ namespace RevGame.UI
         /// <summary>整数部分决定字形，小数部分决定上下偏移；只有数字真的变化时才重建该Text的字形网格。</summary>
         private void Paint(int column, float position)
         {
+            if (_paintedPosition[column] == position) { return; }
+            _paintedPosition[column] = position;
             int whole = Mathf.FloorToInt(position), digit = whole % 10;
             if (_shown[column] != digit)
             {

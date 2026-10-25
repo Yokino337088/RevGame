@@ -109,7 +109,7 @@ namespace RevGame.Services
                 if (name == "reward")
                 {
                     Piece king = _enemyPieces.Find(piece => piece.IsKing);
-                    king.TakeDamage(king.Hp - 1);
+                    DamagePiece(king, king.Hp - 1);
                     _board.Move(p, new BoardPos(5, 5));
                 }
             }

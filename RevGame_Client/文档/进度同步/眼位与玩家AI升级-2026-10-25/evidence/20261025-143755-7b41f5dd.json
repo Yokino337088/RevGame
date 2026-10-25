@@ -1,0 +1,27 @@
+{
+  "success": false,
+  "name": "眼位扶持-业务战术回归",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.regression",
+      "response": {
+        "protocol": 1,
+        "id": "59e48e8fd3b745d79dbe87fc29a62c37",
+        "success": false,
+        "error": "AssertionFailed",
+        "message": "GameRuleChecks：验收失败：战斗中点己方棋可选中并高亮空格",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\59e48e8fd3b745d79dbe87fc29a62c37",
+        "data": null,
+        "assertion": {
+          "path": "/success",
+          "equals": true
+        }
+      },
+      "polls": 1,
+      "seconds": 17.6521197000111
+    }
+  ],
+  "cleanup": []
+}

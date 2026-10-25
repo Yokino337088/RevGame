@@ -69,6 +69,7 @@ namespace RevGame.Services
                 return new Piece(_service._nextPieceId, definition, GameSide.Enemy, hpScale: round.HpScale, attackScale: round.AttackScale);
             }
             public void CommitDeployment(Piece piece, BoardPos position, string intention) { _service.CommitEnemyDeployment(piece, position, intention); }
+            public bool PredictAttackDefeat(Piece attacker, Piece target) { return _service.PredictAttackDefeat(attacker, target); }
             public void Attack(Piece attacker, Piece target) { _service.Attack(attacker, target); }
             public void Move(Piece piece, BoardPos position)
             {
@@ -173,6 +174,8 @@ namespace RevGame.Services
         /// <summary>停止AI并释放状态实例/委托。用于结算、回合替换和域退出，不等死亡特效播放完。</summary>
         public void StopEnemyAI()
         {
+            // 旧公共清理入口由流程/夹具统一调用，同时收走玩家机器，防止跨回合残留。
+            StopPlayerAI();
             foreach (EnemyAI ai in _enemyAI.Values) { ai.Dispose(); }
             _enemyAI.Clear();
             foreach (BossAI ai in _bossAI.Values) { ai.Dispose(); }

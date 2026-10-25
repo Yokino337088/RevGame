@@ -1,0 +1,21 @@
+{
+  "protocol": 1,
+  "id": "f038d749425f4989aab66b3d1d058aa1",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f038d749425f4989aab66b3d1d058aa1",
+  "data": {
+    "scenes": [
+      {
+        "path": "Assets/Scenes/StartScene.unity",
+        "name": "StartScene",
+        "handle": -2176286,
+        "roots": 4,
+        "loaded": true,
+        "dirty": false,
+        "active": true
+      }
+    ]
+  }
+}

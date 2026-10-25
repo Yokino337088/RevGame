@@ -1,0 +1,14 @@
+{
+  "protocol": 1,
+  "id": "28ef7a20b76f4ffe8aeb0c4fc13e146e",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\28ef7a20b76f4ffe8aeb0c4fc13e146e",
+  "data": {
+    "total": 0,
+    "offset": 0,
+    "truncated": false,
+    "entries": []
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "success": true,
+  "name": "眼位扶持-冷启动UI三次往返",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "f39b878e445c44e298fed31cb9d58527",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f39b878e445c44e298fed31cb9d58527",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 8.267611600022065
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.play-check",
+      "response": {
+        "protocol": 1,
+        "id": "d26da2df99234588834bf7bdbb468fe7",
+        "success": true,
+        "error": "",
+        "message": "通过：AB，2880条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察215帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察81帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察149帧，分帧棋盘25帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察82帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察150帧，分帧棋盘25帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察54帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\d26da2df99234588834bf7bdbb468fe7",
+        "data": {
+          "text": "通过：AB，2880条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时\n冷启动首页：3个可见Image材质/纹理通过\n选关0：8个可见Image材质/纹理通过\n进入0：观察215帧，分帧棋盘21帧，最大每帧新增格4\n战斗0：21个可见Image材质/纹理通过\n返回0：观察81帧，分帧棋盘0帧，最大每帧新增格0\n返回首页0：3个可见Image材质/纹理通过\n选关1：11个可见Image材质/纹理通过\n进入1：观察149帧，分帧棋盘25帧，最大每帧新增格4\n战斗1：21个可见Image材质/纹理通过\n返回1：观察82帧，分帧棋盘0帧，最大每帧新增格0\n返回首页1：3个可见Image材质/纹理通过\n选关2：11个可见Image材质/纹理通过\n进入2：观察150帧，分帧棋盘25帧，最大每帧新增格4\n战斗2：21个可见Image材质/纹理通过\n返回2：观察54帧，分帧棋盘0帧，最大每帧新增格0\n返回首页2：3个可见Image材质/纹理通过"
+        }
+      },
+      "polls": 1,
+      "seconds": 26.69434960000217
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "b111b2cdda4a4e8cabcb3b6549af18b1",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b111b2cdda4a4e8cabcb3b6549af18b1",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.9916516000230331
+    }
+  ]
+}

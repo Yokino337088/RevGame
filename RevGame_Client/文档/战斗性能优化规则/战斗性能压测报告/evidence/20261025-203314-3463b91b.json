@@ -1,0 +1,11 @@
+{
+  "protocol": 1,
+  "id": "30cc1749619b4556b0bd721597d6a085",
+  "success": true,
+  "error": "",
+  "message": "完成",
+  "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\30cc1749619b4556b0bd721597d6a085",
+  "data": {
+    "text": "通过 177 条眼位、属性、真实攻速、补兵、重量级AI规则断言"
+  }
+}

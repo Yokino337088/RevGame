@@ -75,6 +75,7 @@ namespace RevGame.Board
         /// <summary>清空棋盘（新的一局用）。</summary>
         public void Reset()
         {
+            foreach (Piece piece in _piecesByPos.Values) { piece.IsEyeGarrison = false; piece.HasEyeGuardAura = false; }
             _piecesByPos.Clear();
             TopologyVersion++;
             for (int y = 0; y < _size; y++)
@@ -84,6 +85,7 @@ namespace RevGame.Board
                     _cells[x, y].Occupant = null;
                     _cells[x, y].IsEyeMarked = false;
                     _cells[x, y].EyeSide = null;
+                    _cells[x, y].EyeGarrisonId = 0;
                 }
             }
         }
@@ -125,7 +127,10 @@ namespace RevGame.Board
             {
                 for (int x = 0; x < piece.Size; x++)
                 {
-                    _cells[pos.X + x, pos.Y + y].Occupant = piece;
+                    Cell cell = _cells[pos.X + x, pos.Y + y];
+                    // 记录落子时的空眼来源供旧快照兼容；有效驻眼由GoRules全盘按当前几何重算，不再依赖此历史标记。
+                    cell.EyeGarrisonId = piece.Size == 1 && GoRules.IsEye(this, cell.Pos, piece.Side) ? piece.Id : 0;
+                    cell.Occupant = piece;
                 }
             }
 
@@ -154,10 +159,12 @@ namespace RevGame.Board
                 for (int x = 0; x < piece.Size; x++)
                 {
                     _cells[piece.Pos.X + x, piece.Pos.Y + y].Occupant = null;
+                    _cells[piece.Pos.X + x, piece.Pos.Y + y].EyeGarrisonId = 0;
                 }
             }
 
             _piecesByPos.Remove(piece.Pos);
+            piece.IsEyeGarrison = false; piece.HasEyeGuardAura = false;
             TopologyVersion++;
             return true;
         }
@@ -180,6 +187,8 @@ namespace RevGame.Board
             {
                 return false;
             }
+            // 原位操作没有拓扑变化，也不应丢失暂时破眼期间保留的驻守身份。
+            if (to == piece.Pos) { return true; }
 
             // ★ 先把完整目标区域检查完，再整体搬移，不能先搬第一格、失败后留下半个身体。
             Remove(piece);
@@ -251,6 +260,14 @@ namespace RevGame.Board
             foreach (Piece piece in _piecesByPos.Values)
             {
                 snapshot.Place(piece.CreateSnapshot(), piece.Pos, respectEnemyEyes: false);
+            }
+            // 驻眼是落子时取得的身份，不取决于字典枚举顺序；试盘必须逐格复制，不能重新猜测。
+            for (int y = 0; y < _size; y++)
+            {
+                for (int x = 0; x < _size; x++)
+                {
+                    snapshot._cells[x, y].EyeGarrisonId = _cells[x, y].EyeGarrisonId;
+                }
             }
             GoRules.Evaluate(snapshot);
             return snapshot;

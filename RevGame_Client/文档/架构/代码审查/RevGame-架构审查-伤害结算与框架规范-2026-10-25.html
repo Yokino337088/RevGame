@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RevMCP · AI 控制编辑器与游戏使用说明</title><style>
+/* ============================================================
+   Revolution 文档 · 公共样式
+   —— 与 assets/docs.css 同一套视觉语言（配色 / 字体 / 组件）。
+   ★ 本套文档刻意「自包含」：样式内联在 <head> 里，不依赖外部文件 ——
+     因为外链样式在「单独打开 / IDE 预览（虚拟根）/ 单文件分享」时解析不到，
+     页面会退化成一坨无样式 HTML（详见仓库提交说明）。
+     新增文档：复制本段样式（或从 assets/docs.css 取值）内联进来即可。
+   兼容类名：hero / toc / callout(good|warn|bad) / plain / table-wrap / card / cheat / cmp / flow / pre
+   ============================================================ */
+:root{
+  --accent:#2F6FED; --accent-soft:#EAF1FE;
+  --page:#F4F6F9; --panel:#FFFFFF; --border:#E3E7ED;
+  --text:#1F2329; --text-sub:#6B7280;
+  --good:#12A150; --good-soft:#E8F8EF;
+  --warn:#B7791F; --warn-soft:#FDF6E3;
+  --bad:#D93F31;  --bad-soft:#FDECEA;
+  --code-bg:#1E2430; --code-fg:#D7DEEA;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--page); color:var(--text);
+  font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+  font-size:15.5px; line-height:1.85; -webkit-font-smoothing:antialiased;
+}
+.hero{background:linear-gradient(135deg,#2F6FED 0%,#4A84F5 55%,#6E9BFF 100%);color:#fff;padding:46px 24px 40px;position:relative;overflow:hidden;}
+.hero .wrap{max-width:1000px;margin:0 auto;position:relative;z-index:2;}
+.hero .kicker{display:inline-block;font-size:12px;letter-spacing:.12em;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;margin-bottom:14px;}
+.hero h1{margin:0 0 12px;font-size:31px;line-height:1.35;font-weight:700;}
+.hero p{margin:6px 0 0;color:rgba(255,255,255,.94);font-size:14.5px;}
+.hero code{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35);color:#fff;}
+.hero .meta{margin-top:16px;font-size:13px;color:rgba(255,255,255,.85);}
+.hero .deco{position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 26px,transparent 26px 52px);
+  animation:march 1.1s linear infinite;opacity:.75;z-index:1;}
+
+main{max-width:1000px;margin:0 auto;padding:26px 24px 70px;}
+section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:26px 28px;margin-bottom:20px;}
+h2{font-size:21px;margin:0 0 6px;display:flex;align-items:center;gap:10px;}
+h2 .num{flex:0 0 auto;min-width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;
+  background:var(--accent);color:#fff;font-size:14px;font-weight:700;padding:0 8px;}
+h2 + .lead{color:var(--text-sub);font-size:14px;margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+h3{font-size:17px;margin:28px 0 10px;}
+h3:first-of-type{margin-top:6px;}
+h4{font-size:15px;margin:20px 0 8px;color:#2B3444;}
+p{margin:10px 0;}
+ul,ol{margin:10px 0;padding-left:24px;}
+li{margin:6px 0;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{font-family:"Cascadia Mono",Consolas,"Courier New",monospace;font-size:13px;
+  background:#EEF2F8;border:1px solid #E1E7F0;border-radius:4px;padding:1px 5px;color:#22304A;}
+
+.toc{background:#FBFCFE;}
+.toc ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 22px;}
+.toc a{display:block;padding:6px 10px;border-radius:6px;color:var(--text);font-size:14px;}
+.toc a:hover{background:var(--accent-soft);color:var(--accent);text-decoration:none;}
+
+.table-wrap{overflow-x:auto;margin:14px 0;}
+table{border-collapse:collapse;width:100%;font-size:13.5px;}
+th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+thead th{background:#F3F6FB;font-weight:700;}
+tbody tr:nth-child(even){background:#FAFBFD;}
+tbody tr:hover{background:#F1F6FF;}
+td.c,th.c{text-align:center;white-space:nowrap;}
+
+.plain{border-radius:10px;padding:14px 16px;margin:14px 0;font-size:14.5px;background:#F7F9FC;border:1px solid #E4E9F2;}
+.plain .tag{display:inline-block;font-size:11.5px;background:#5B6B84;color:#fff;border-radius:999px;padding:1px 9px;margin-right:8px;vertical-align:2px;}
+.plain p:first-child{margin-top:0;}
+.plain p:last-child{margin-bottom:0;}
+
+.callout{border-radius:8px;padding:14px 16px;margin:14px 0;font-size:14.5px;
+  border-left:4px solid var(--accent);background:var(--accent-soft);}
+.callout.good{border-left-color:var(--good);background:var(--good-soft);}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft);}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft);}
+.callout p:first-child{margin-top:0;}
+.callout p:last-child{margin-bottom:0;}
+.callout .t{font-weight:700;display:block;margin-bottom:4px;}
+
+pre{background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:15px 17px;overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;font-size:12.5px;line-height:1.7;margin:14px 0;}
+pre .c{color:#7D8CA6;}
+pre .k{color:#8FB8FF;}
+pre .s{color:#A5D6A7;}
+pre .n{color:#FFB86C;}
+pre b{color:#FFD479;font-weight:700;}
+
+.card{border:1px solid var(--border);border-radius:10px;background:#FBFCFE;padding:16px 18px;margin:16px 0;}
+.card > .h{font-weight:700;font-size:15.5px;margin-bottom:4px;}
+.card > .when{font-size:13.5px;color:var(--text-sub);margin-bottom:10px;}
+.card pre{margin:10px 0;}
+.card .note{font-size:13px;color:var(--text-sub);margin-top:8px;}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+.cmp > div{border-radius:9px;padding:12px 14px;font-size:13.5px;border:1px solid;}
+.cmp .no{background:var(--bad-soft);border-color:#F3C9C3;}
+.cmp .yes{background:var(--good-soft);border-color:#BFE9D2;}
+.cmp .h{font-weight:700;margin-bottom:6px;}
+.cmp pre{margin:6px 0 0;font-size:12px;}
+
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:16px 0;}
+.flow .n{border:1.5px solid var(--border);background:#fff;border-radius:8px;padding:7px 12px;font-size:13px;}
+.flow .n.on{border-color:var(--accent);background:var(--accent-soft);}
+.flow .n.wait{border-color:#EBCF8A;background:var(--warn-soft);}
+.flow .ar{color:var(--accent);font-weight:700;}
+
+.cheat{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0;}
+.cheat div{border:1px solid var(--border);border-radius:8px;background:#fff;padding:9px 12px;font-size:13px;}
+.cheat div b{display:block;font-size:12.5px;color:var(--text-sub);font-weight:400;margin-bottom:2px;}
+
+footer{max-width:1000px;margin:0 auto;padding:0 24px 60px;color:var(--text-sub);font-size:13px;}
+
+@keyframes march{to{background-position:28px 0;}}
+@media (max-width:760px){
+  .hero h1{font-size:23px;}
+  section{padding:18px 16px;}
+  .cmp{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion:reduce){ .hero .deco{animation:none !important;} }
+@media print{
+  body{background:#fff;font-size:12px;}
+  .hero{background:#fff;color:#000;border-bottom:2px solid #000;}
+  .hero .kicker,.hero .meta{color:#333;}
+  section{break-inside:avoid;border:0;padding:0;margin-bottom:20px;}
+  pre{background:#F5F5F5;color:#000;border:1px solid #CCC;}
+  .toc{display:none;}
+}
+
+
+pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit;white-space:pre;}
+img{display:block;max-width:100%;height:auto;margin:18px auto;border-radius:8px;}
+td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
+@media(max-width:640px){section{padding:18px 16px;}main{padding:18px 12px;}h2{display:block;font-size:20px;}.hero h1{font-size:25px;}}
+
+pre code{background:transparent;border:0;padding:0;color:inherit;font:inherit;white-space:pre;}
+img{display:block;max-width:100%;height:auto;margin:18px auto;border-radius:8px;}
+td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
+@media(max-width:640px){section{padding:18px 16px;}main{padding:18px 12px;}h2{display:block;font-size:20px;}.hero h1{font-size:25px;}}
+</style></head><body>
+
+<header class="hero"><div class="wrap">
+<span class="kicker">REVGAME · ARCHITECTURE REVIEW</span>
+<h1>架构审查：伤害结算收敛 与 Revolution 框架规范符合性</h1>
+<p>只读审查 · 2026-10-25 · 扫描 110 个 .cs（排除 Diagnostics / Automation 测试夹具后统计生产路径）</p>
+</div></header>
+
+<main>
+
+<section class="toc"><h2>目录</h2><ol>
+<li><a href="#s1">结论摘要</a></li>
+<li><a href="#s2">审查范围与方法</a></li>
+<li><a href="#s3">严重问题：伤害公式三套并存</a></li>
+<li><a href="#s4">严重问题：GM 注册分散</a></li>
+<li><a href="#s5">规范问题</a></li>
+<li><a href="#s6">潜在风险</a></li>
+<li><a href="#s7">统一伤害出口方案（设计稿）</a></li>
+<li><a href="#s8">合规亮点</a></li>
+<li><a href="#s10">资源加载与卸载（AB 包 / 内存）</a></li><li><a href="#s11">生命周期、流程与域管理</a></li><li><a href="#s12">附录：证据清单</a></li>
+</ol><p>本报告为只读审查，未修改评审对象的任何一行代码；文中代码位置均为 <code>文件:行号</code>，可直接跳转核对。</p></section>
+
+<section id="s1"><h2>1. 结论摘要</h2>
+<div class="callout good"><p><b>一句话结论</b>：伤害的<b>写入口已经收敛</b>（唯一出口 <code>DamagePiece</code>，含护盾/减伤/防御/复苏），但<b>伤害数值的计算入口没有收敛</b>——同一份“攻击力→伤害”的公式在 3 处各写一遍且修正项不同，其中 AI 预判那套少乘了倍率，存在“AI 以为能斩杀、实际杀不死”的确定性偏差。</p></div>
+<div class="table-wrap"><table>
+<thead><tr><th>维度</th><th>评分</th><th>结论</th></tr></thead><tbody>
+<tr><td>伤害写出口（唯一性）</td><td>9 / 10</td><td><code>DamagePiece</code> 是唯一收口，生产路径 9 处调用全部经它；带护盾、减伤、防御折算、复苏与事件派发</td></tr>
+<tr><td>伤害公式（收敛度）</td><td><b>3 / 10</b></td><td>3 套公式 / 4 种口径（攻击力乘算、最大生命比例、固定值、直接斩杀），分散在 5 个文件；修正项不一致</td></tr>
+<tr><td>服务与生命周期</td><td>7 / 10</td><td>注册集中（5 处 / 1 文件）✅；但 <code>GetRequired</code> 38 处 / 14 文件，热路径重复查表</td></tr>
+<tr><td>UI 规范</td><td>9 / 10</td><td>7 个面板全部 <code>[RevUIPanel]</code> + 30 处 <code>[RevBind]</code>，路径用 <code>RevResPath</code> 常量</td></tr>
+<tr><td>时间与事件</td><td>8 / 10</td><td><code>RevTimer</code> 8 处均带 owner；57 处事件订阅基本都传 owner；无 <code>StartCoroutine</code></td></tr>
+<tr><td>GM 与可测试性</td><td>5 / 10</td><td>GM 覆盖充分（52 条），但注册散落 5 个文件，违反“注册集中在一处”</td></tr>
+<tr><td>资源与平台</td><td>7 / 10</td><td>无 <code>Resources.Load</code>；1 处 <code>Application.dataPath</code> 硬编码路径（写测试证据）</td></tr>
+<tr><td>资源加载与包卸载</td><td><b>5 / 10</b></td><td>按需加载与句柄释放一一对应（4 加载 / 4 释放）；但<b>域级卸载 0 调用</b>、图集加载<b>未带分组</b>，包要等 30s 巡检或低内存才真正卸掉</td></tr>
+<tr><td>生命周期 / 域管理</td><td>9 / 10</td><td>域退出会停 Logic、取消 Timer、退订事件、销毁池、注销服务；<code>_released</code> 防迟到回调。缺口只有一个：<b>包级卸载没挂到域退出</b></td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s2"><h2>2. 审查范围与方法</h2>
+<div class="table-wrap"><table><tbody>
+<tr><th>审查对象</th><td><code>Assets/GameScripts</code> 共 110 个 .cs（含 Automation 与 Diagnostics 夹具）</td></tr>
+<tr><th>统计口径</th><td>“生产路径”统计已排除 <code>Diagnostics/</code>、<code>Automation/</code> 与 <code>*Checks.cs</code>，避免测试夹具稀释结论</td></tr>
+<tr><th>对照标准</th><td>《Revolution 官方编程架构规范》+ 框架审查清单（清理与生命周期 / 资源 / UI / 异步 / 事件时间 / 音频状态机 GM / 编辑器与真机 / 代码规范）</td></tr>
+<tr><th>输出格式</th><td>严重问题 → 规范问题 → 潜在风险 → 优化建议（每条给“改哪一行 / 改成什么”）</td></tr>
+<tr><th>代码改动</th><td><b>零</b>。仅新增本报告文件；未触碰任何 .cs / .prefab / 配置</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s3"><h2>3. 严重问题（P0）：伤害公式三套并存，修正项不一致</h2>
+
+<h3>3.1 现状：一份伤害，三种算法</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>位置</th><th>公式</th><th>参与的修正项</th></tr></thead><tbody>
+<tr><td>A（普攻）</td><td><code>BattleService.cs:668-687</code></td><td><code>Attack × AttackScale × multiplier × CombatDamageScale</code>，再叠加 Boss 加速、测试缩放、暴击</td><td><b>9 项</b>：锁死、孤立、连携（<code>ConnectedCells</code>）、职业加成、<code>_attackBonus</code>、<code>_combatAttackBonus</code>、准备阶段加成、Boss 加速、暴击</td></tr>
+<tr><td>B（Boss 技能）</td><td><code>BattleService.BossAI.cs:125-129</code></td><td><code>Attack × AttackScale × power × multiplier × CombatDamageScale</code></td><td><b>3 项</b>：锁死/基础倍率、技能 <code>power</code>、<code>CombatDamageScale</code>；<b>不含</b>连携、职业、攻击加成与暴击</td></tr>
+<tr><td>C（AI 预判）</td><td><code>EnemyTactics.cs:79</code></td><td><code>Attack × AttackScale × CombatDamageScale</code></td><td><b>2 项</b>；<b>少乘 <code>multiplier</code></b>（锁死/孤立倍率）</td></tr>
+</tbody></table></div>
+
+<h3>3.2 由此产生的确定性偏差</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>偏差</th><th>机制</th><th>玩家可感知的后果</th></tr></thead><tbody>
+<tr><td><b>AI 误判斩杀</b></td><td>C 比 A 少了 <code>multiplier</code>：目标被锁死时 A 的伤害是 C 的 1.5～2 倍，AI 却按“打不死”评估</td><td>高智 AI 反而“该补刀不补刀”，看起来像犯傻；调高 <code>LockedDamageMultiplier</code> 会让偏差按比例放大</td></tr>
+<tr><td><b>Boss 越后期越弱</b></td><td>B 不含连携/职业/攻击加成；玩家侧 buff 越多，普攻与 Boss 技能的差距越大</td><td>后期 Boss 技能“看着吓人但不疼”，难度曲线塌陷</td></tr>
+<tr><td><b>平衡改动要改 3 处</b></td><td>改 <code>CombatDamageScale</code> 时三处都会变；改倍率只影响 A/B，C 不跟随</td><td>无法预测改动效果，只能用“跑一遍看看”来验证</td></tr>
+<tr><td><b>无法统一扩展</b></td><td>新增“元素抗性/暴击抵抗/伤害上限”必须同时改 A/B/C 与 <code>DamagePiece</code></td><td>每次加机制都是一次全链路排查</td></tr>
+</tbody></table></div>
+
+<h3>3.3 另有两套“非攻击力”口径（同属伤害，但语义不同）</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>类型</th><th>位置</th><th>口径</th></tr></thead><tbody>
+<tr><td>区域波动</td><td><code>BattleService.CombatPacing.cs:89</code></td><td><code>MaxHp × RegionDamageHpRatio</code>（按最大生命比例）</td></tr>
+<tr><td>能量炸弹</td><td><code>BattleService.CombatPacing.cs:104</code></td><td><code>MaxHp × BombDamageHpRatio</code></td></tr>
+<tr><td>炮兵支援</td><td><code>BattleService.Events.cs:465</code></td><td><code>Max(SupportDamage, MaxHp × hpRatio)</code></td></tr>
+<tr><td>斩杀</td><td><code>BattleService.Events.cs:426</code></td><td><code>cut.Hp</code>（直接等于当前血量）</td></tr>
+</tbody></table></div>
+<div class="callout"><p>这四类<b>不一定要合并成攻击力公式</b>（按最大生命扣血是合理设计），但它们应当走同一套“伤害请求”结构，否则护盾、减伤、伤害类型、统计与日志会在不同路径上表现不一致。</p></div>
+
+<h3>3.4 例外：吸血绕过了结算结果</h3>
+<p><code>BattleService.cs:688</code> 用 <code>real × _prepLifeSteal</code> 直接回血，<code>real</code> 是 <code>DamagePiece</code> 的返回值——这条是<b>正确的</b>（消费结算结果而不是重算），可作为其它路径的参考写法。</p>
+</section>
+
+<section id="s4"><h2>4. 严重问题（P0）：GM 注册分散在 5 个文件</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>项</th><th>现状</th><th>规范要求</th></tr></thead><tbody>
+<tr><td>注册点</td><td><b>52 处</b>，分散在 <code>GameAttributeGmCommands</code> / <code>GameAutomationCommands</code> / <code>GameCombatGmCommands</code> / <code>GameGmCommands</code> 等 5 个文件</td><td>“GM：<b>注册集中在一处</b>；命令名不含空白字符；业务拒绝抛 <code>RevGMUsageException</code>”</td></tr>
+<tr><td>影响</td><td>命令清单无法一眼看全；新增/删除命令容易漏；同名重复注册难排查</td><td>—</td></tr>
+<tr><td>建议</td><td colspan="2">保留各 <code>XxxGmCommands</code> 的 <b>handler 实现</b>，但把 <code>RevGM.Register(...)</code> 全部收敛到一个 <code>GameGmRegistration.RegisterAll()</code>，由启动入口调一次；名字与描述集中可审计</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s5"><h2>5. 规范问题（P1）</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>项</th><th>证据</th><th>问题</th><th>改法</th></tr></thead><tbody>
+<tr><td>服务取用过于分散</td><td><code>RevServices.GetRequired</code> <b>38 处 / 14 文件</b>；<code>BattleLogic.cs:22-99</code> 每个方法都 <code>GetRequired&lt;GameFlow&gt;()</code> 一次</td><td>热路径重复字典查找；取到的服务若被注销会拿到已 Dispose 对象</td><td><code>BattleLogic</code> 在构造/绑定时取一次并保存<b>接口引用</b>（注意：不能长期保存服务实例跨域；应在域打开时取、域关闭时失效）</td></tr>
+<tr><td>面板里直接取服务</td><td><code>BattleHudPanel.cs:90</code> 返回 <code>GetRequired&lt;IBattleService&gt;()</code>；<code>:212</code> 调 <code>GameFlow.ReturnHome()</code></td><td>面板承担了跨界面流程调用，违反“面板只装配/只落屏”</td><td>把“返回首页”转成事件或交给 <code>GameFlow</code> 的按钮转发层</td></tr>
+<tr><td>硬编码绝对路径</td><td><code>GameGmCommands.cs:255</code> 用 <code>Application.dataPath + "../../../文档/..."</code></td><td>违反“禁止自己拼 dataPath”；换目录结构就失效，且与资源系统无关却绕开了路径约定</td><td>证据目录改为 GM 参数或配置表字段，默认值走统一常量</td></tr>
+<tr><td>public async void</td><td><code>GameFlow.Scenes.cs:244 public async void ShowChapterBackgroundFailure(string)</code></td><td>对外暴露的 <code>async void</code>，异常会静默丢失（规范只允许“事件/按钮入口 + 整体 try/catch”）</td><td>改成 <code>void</code> + 内部 <code>Forget()</code> 的 async 方法，或加整体 try/catch + <code>RevLog.Exception</code></td></tr>
+<tr><td>Update 承担逻辑</td><td><code>BoardView.cs:237 private void Update()</code>（另 4 处 LateUpdate 为布局/表现）</td><td>视图层每帧 Update 若含业务判断，会绕过固定步长与暂停语义</td><td>业务判断移入 <code>RevLogicBase.OnTick</code> 或 <code>RevTimer.Every</code>；Update 只留纯表现插值</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s6"><h2>6. 潜在风险（P2，现在能跑、边界会出问题）</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>项</th><th>证据</th><th>风险</th></tr></thead><tbody>
+<tr><td><code>Balance</code> 静态属性被直读</td><td>34 处 / 11 文件（如 <code>BossStates.cs:108</code>、<code>BattleService.cs:626</code>）</td><td>无法在单测里替换配置；改数值必须重编；同一份配置被 3 套公式各自解释</td></tr>
+<tr><td><code>DamagePiece</code> 职责偏多</td><td><code>BattleService.Events.cs:474-520</code>：存活校验 → GM 免伤 → 护盾 → 减伤 → 自动化缩放 → 防御折算 → 扣血 → 复苏 → 事件</td><td>9 个阶段写在一个方法里，新增“元素抗性/伤害上限”会继续变长；阶段顺序被隐式依赖，改动易回归</td></tr>
+<tr><td>伤害类型已定义但只用于记录</td><td><code>BattleDamageKind</code>（Normal/Critical/RegionPulse/EnergyBomb/Artillery/Execution/BossCleave…）</td><td>没有按类型分派修正（例如“技能伤害减免”“区域伤害抗性”），未来加抗性会散落</td></tr>
+<tr><td>事件订阅量大</td><td>57 处 / 13 文件，普遍带 <code>owner</code> ✅</td><td>事件名有常量类（<code>Events.*</code>）合规；但同名事件签名一致性无编译期保证，靠人工</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s7"><h2>7. 统一伤害出口方案（设计稿，不含代码改动）</h2>
+
+<h3>7.1 目标形态：一个入口 + 可组合的阶段</h3>
+<pre><code class="language-text">业务/AI/技能
+   ↓ 只构造「请求」，不自己乘系数
+DamageRequest { attacker, target, baseAmount, kind, source, flags }
+   ↓
+DamageCalculator.Resolve(request)          ← 唯一“算”的地方
+   ├─ 阶段1 基础值：攻击力型 / 最大生命型 / 固定值型
+   ├─ 阶段2 攻击方修正：连携、职业、攻击加成、准备加成
+   ├─ 阶段3 目标方修正：锁死/孤立倍率、防御、减伤、护盾
+   ├─ 阶段4 特殊：暴击、Boss 加速、伤害上限
+   └─ 阶段5 产出 DamageResult { raw, final, absorbed, kind, breakdown[] }
+   ↓
+DamageApplier.Apply(result)                ← 唯一“写”的地方（= 现有 DamagePiece 收敛后的形态）
+   └─ TakeDamage → 复苏 → 事件 → 统计/日志
+</code></pre>
+
+<h3>7.2 迁移四步（每步都可独立验证，风险从低到高）</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>步骤</th><th>动作</th><th>验证方式（用现有 GM + 自动化）</th></tr></thead><tbody>
+<tr><td>① 抽“只读预测”</td><td>新增 <code>PredictDamage(attacker, target, kind)</code>，把 A/B/C 三处公式统一改为调用它；<b>先不改结算</b></td><td>GM <code>RevGame/战斗节奏</code> 对比：预测值与实际结算值逐条相等（可用现有 <code>GameAutomationRunner</code> 断言）</td></tr>
+<tr><td>② 消除 AI 偏差</td><td><code>EnemyTactics.cs:79</code> 改用 <code>PredictDamage</code>，不再自己乘</td><td>同种子重放：AI 目标选择在改动前后一致（或差异可解释）</td></tr>
+<tr><td>③ 统一出口结构</td><td>把 <code>DamagePiece</code> 的 9 个阶段拆为 <code>DamageApplier</code> 内的有序列表，行为不变</td><td>现有 <code>BattleService.Checks</code> 全绿 + 护盾/减伤/复苏用例不回归</td></tr>
+<tr><td>④ 把“非攻击力”口径纳入</td><td>区域波动/炸弹/炮兵/斩杀改为构造 <code>DamageRequest(kind=…, base=按最大生命)</code></td><td>同场景伤害数字与改动前逐点一致（录制 GIF 前后对比）</td></tr>
+</tbody></table></div>
+
+<h3>7.3 验收标准（可断言，不是“看着对”）</h3>
+<ul>
+<li>全仓 <code>Attack × AttackScale × … × CombatDamageScale</code> 的乘法只出现在 <b>1 个文件</b>；</li>
+<li>AI 预判值与实际结算值 <b>100% 相等</b>（同种子、同状态）；</li>
+<li>新增一种伤害类型时，只改 <code>DamageKind</code> 表与一个阶段，不改调用方；</li>
+<li>每次改动都要留下 <code>report.html</code> + 前后对比 GIF（符合本项目“测试必须出报告与动图”的规矩）。</li>
+</ul>
+</section>
+
+<section id="s8"><h2>8. 合规亮点（这些不用改）</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>项</th><th>证据</th></tr></thead><tbody>
+<tr><td>UI 面板完全按框架写法</td><td>7 个面板全部 <code>[RevUIPanel(RevResPath…)]</code>；30 处 <code>[RevBind]</code>；<code>BattleHudPanel</code> 用 <code>RevTimer.Every(0.1f, RefreshView, owner: this)</code> 而非 Update 刷 UI</td></tr>
+<tr><td>计时器有归属</td><td><code>RevTimer</code> 8 处均带 <code>owner</code>；<code>PieceView</code> 用 50ms 计时器推序列帧并在注释里说明了“不用 Animator 的原因”</td></tr>
+<tr><td>事件订阅有 owner</td><td>57 处订阅，抽样全部带 <code>owner: this</code>；事件名集中在 <code>Events</code> 常量类</td></tr>
+<tr><td>无协程、无单例滥用</td><td><code>StartCoroutine</code> 0 处；静态实例仅 1 处 <code>Vector2</code> 常量</td></tr>
+<tr><td>服务注册集中</td><td><code>GameBootstrap.cs:45-72</code> 共 5 处 <code>Register</code>，全部集中且带 <code>owner: this</code></td></tr>
+<tr><td>资源走逻辑路径</td><td>无 <code>Resources.Load</code>；使用 <code>RevResPath.UI_Panel</code> 等常量</td></tr>
+<tr><td>伤害写出唯一</td><td><code>DamagePiece</code> 单点收口，且内部对 <code>int.MaxValue</code> 用 double 中间值防溢出——这是踩过坑才有的写法</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s10"><h2>10. 资源加载与卸载（AB 包 / 内存）</h2>
+
+<h3>10.1 实测：加载与释放是一一对应的</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>指标</th><th>实测</th><th>评价</th></tr></thead><tbody>
+<tr><td><code>RevResManager</code> 加载调用</td><td><b>4 处 / 3 文件</b></td><td>全部按需触发，没有“开局全量加载”</td></tr>
+<tr><td>对应 <code>Release</code> 调用</td><td><b>4 处 / 3 文件</b></td><td>1:1 配对，且都有幂等保护</td></tr>
+<tr><td><code>Resources.Load</code></td><td>0</td><td>✅ 未绕开资源系统</td></tr>
+<tr><td>直接 <code>AssetBundle</code> 操作</td><td>0</td><td>✅ 完全交给框架</td></tr>
+<tr><td><code>Instantiate</code> / <code>RevPool</code></td><td>0 / <b>47</b></td><td>✅ 实例全部池化，<code>Destroy</code> 仅 5 处</td></tr>
+</tbody></table></div>
+
+<p>四处加载与释放分别是：</p>
+<div class="table-wrap"><table>
+<thead><tr><th>资源</th><th>加载</th><th>分组</th><th>释放</th></tr></thead><tbody>
+<tr><td>战斗预制体预热</td><td><code>SceneResourceWarmup.cs:59</code></td><td>✅ <code>resource.Group</code></td><td><code>:155</code>（Dispose 时逐个 Release）</td></tr>
+<tr><td>UI 图集</td><td><code>GameSpriteAtlasService.cs:176</code></td><td><b>❌ 未传（Unknown）</b></td><td><code>:243</code>（租约归零时）</td></tr>
+<tr><td>章节背景贴图</td><td><code>GamePresentation.Chapters.cs:154</code></td><td>✅ <code>RevResGroup.Scene</code></td><td><code>:297</code></td></tr>
+<tr><td>章节背景材质</td><td><code>GamePresentation.Chapters.cs:163</code></td><td>✅ <code>RevResGroup.Scene</code></td><td><code>:298</code></td></tr>
+</tbody></table></div>
+
+<h3>10.2 先对齐框架语义（否则会把“正常”误判成“泄漏”）</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>API</th><th>真实语义</th><th>证据</th></tr></thead><tbody>
+<tr><td><code>Release(root, name)</code></td><td><b>只减引用计数</b>，资源进“未使用表”，<b>不卸包</b></td><td><code>RevResManager.cs:594-598</code>（内部仅 <code>DecRef</code>）</td></tr>
+<tr><td><code>FlushUnused()</code></td><td>真正卸载：<code>ReleaseBundleOf</code> + <code>Resources.UnloadUnusedAssets</code></td><td><code>RevResManager.cs:608-629</code></td></tr>
+<tr><td><code>UnloadGroup(group, force)</code></td><td>按业务域批量卸载；<code>force=false</code> 只卸 RefCount≤0；<code>Resident</code> 永不参与</td><td><code>RevResManager.cs:649-675</code></td></tr>
+<tr><td><code>UnloadAll()</code></td><td>全清（回登录 / 大版本切换）</td><td><code>RevResManager.cs:784-791</code></td></tr>
+<tr><td><code>RevResAutoUnloader</code></td><td>默认开启：<b>30s 巡检</b> + <code>lowMemory</code> 强清；上限 800 句柄 / 降到 600</td><td><code>RevResAutoUnloader.cs:37-58</code></td></tr>
+</tbody></table></div>
+<div class="callout"><p>结论先说：框架的设计是“<b>减引用 → 延迟卸载 → 按域批量卸</b>”，并不要求每次 <code>Release</code> 立刻卸包（注释明说立刻卸会抖动、<code>UnloadUnusedAssets</code> 很贵）。所以判断标准应是：<b>域结束时有没有触发域级卸载</b>，而不是“有没有立刻卸”。</p></div>
+
+<h3>10.3 P0-1：图集加载没有传分组 → 按域卸载“点名不到”</h3>
+<pre><code class="language-text">GameSpriteAtlasService.cs:176
+RevResManager.LoadAsync(RevResPath.Atlases, name, typeof(SpriteAtlas), handle => { … });
+//                          ↑ 没有第 5 个参数 group → 归属 RevResGroup.Unknown
+</code></pre>
+<div class="table-wrap"><table>
+<thead><tr><th>项</th><th>影响</th></tr></thead><tbody>
+<tr><td>为什么严重</td><td><code>UnloadGroup</code> 只认 <code>RevResHandle.Group</code>（框架注释：<i>“传 Unknown 的永远不在这里被释放”</i>）。图集是显存占用最大的一类资源，战斗退出后<b>按域卸不到</b></td></tr>
+<tr><td>后果</td><td>只能等 30s 巡检（<code>CheckInterval=30</code>）或系统低内存事件；低端机在“战斗 → 回主菜单”这段峰值内存滞留最明显</td></tr>
+<tr><td>改法</td><td>补第 5 个参数：战斗图集传 <code>RevResGroup.Battle</code>，菜单图集传 <code>RevResGroup.Menu</code>（<code>PreloadAsync(… target == GameScreen.Battle ? … )</code> 处已经知道用途，直接透传即可）</td></tr>
+</tbody></table></div>
+
+<h3>10.4 P0-2：全项目从未调用域级卸载</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>调用</th><th>项目内次数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>RevResBootstrap.Shutdown(group)</code></td><td><b>0</b></td><td>框架里它才是“切场景/退域”的正规入口（内部会 <code>UnloadGroup</code> + <code>FlushUnused</code>）</td></tr>
+<tr><td><code>RevResManager.UnloadGroup</code></td><td><b>0</b></td><td>同上</td></tr>
+<tr><td><code>RevResManager.UnloadAll</code></td><td><b>0</b></td><td>回主菜单/大版本切换时也没有全清</td></tr>
+</tbody></table></div>
+<pre><code class="language-text">GameFlow.cs:174-183  OnExit()
+{
+    if (_scope != null && _scope.IsOpen) { RevScope.Exit(_scope); }   // 只停 Logic + 关 UI
+    _scope = null;                                                     // 没有任何资源卸载
+}
+</code></pre>
+<div class="callout"><p><b>这就是“不用了没有立刻卸载”的真正原因</b>：不是漏了 <code>Release</code>，而是<b>域退出时没有触发包级卸载</b>，资源只能靠自动卸载器 30s 兜底。</p></div>
+
+<h3>10.5 P2-1：预热与域卸载存在时序风险（需实机确认）</h3>
+<p><code>SceneResourceWarmup</code> 在加载界面预载战斗预制体（带 <code>resource.Group</code>），域退出时 <code>Dispose</code> 会 <code>Release</code> 全部句柄（<code>:155</code>）。若随后立刻对同一分组执行 <code>Shutdown(force:false)</code>，引用归零的句柄会被<b>真正卸包</b>——此时若仍有池化实例在场景里持有该包内的材质/贴图，就会出现<b>材质丢失（洋红/白模）</b>。</p>
+<div class="table-wrap"><table>
+<thead><tr><th>建议</th><th>原因</th></tr></thead><tbody>
+<tr><td>卸载放在 <code>RevPool.DestroyPool</code> <b>之后</b></td><td>先销毁实例，再卸包，避免“实例还活着但底层资源没了”</td></tr>
+<tr><td>或对战斗公共资源打 <code>Resident</code> 标志</td><td>常驻资源不参与分组卸载，跨域共享更安全</td></tr>
+<tr><td>验收断言</td><td>战斗退出后 3 秒内 <code>RevResManager.GetAllHandles()</code> 中 Battle 组句柄应归零，且回主菜单画面无洋红</td></tr>
+</tbody></table></div>
+
+<h3>10.6 这块的达标项（写得很好，别改坏）</h3>
+<ul>
+<li><b>章节背景租约</b>：<code>ReleaseBackground</code> 顺序正确——先 <code>Destroy(sprite)</code>，再置空 <code>Texture/Material</code>，再 <code>Release</code> 两个资源，最后 <code>lease.Atlas?.Dispose()</code>；并用 <code>++_backgroundVersion</code> 让迟到回调失效（<code>Chapters.cs:288-309</code>）。</li>
+<li><b>图集租约</b>：<code>TutorialUsers</code> 计数 + <code>entry.Released</code> 幂等，重复退出不会负引用（<code>GameSpriteAtlasService.cs:96-104、234-244</code>）。</li>
+<li><b>迟到回调防护</b>：<code>_released</code> / <code>lease.Released</code> / <code>generation</code> 三重判断，异步加载回来发现已释放会直接 <code>RevPool.Return</code>（<code>BoardView.CombatPacing.cs:48</code>）。</li>
+</ul>
+</section>
+
+<section id="s11"><h2>11. 生命周期、流程与域管理</h2>
+
+<h3>11.1 域的生命周期链路是完整的</h3>
+<pre><code class="language-text">GameFlow.EnterDomain()            GameFlow.cs:152   _scope = RevScope.Enter(domain)
+        ↓                                          :167   RevLogic.Start&lt;BattleLogic&gt;()
+   域运行（Tick 由 Logic 驱动，服务自己不起 Timer）      IBattleService.cs:35 明确写了这条约定
+        ↓
+GameFlow.OnExit()                 GameFlow.cs:177-182  RevScope.Exit(_scope); _scope = null;
+        ↓                                          → 停 Logic、关该域 UI
+GameFlow.Dispose()                GameFlow.cs:121-126  _activeWarmup?.Dispose();
+GameBootstrap.OnDestroy           GameBootstrap.cs:129-130  Unregister&lt;GameFlow&gt;(); UnregisterAllOf(this);
+</code></pre>
+
+<h3>11.2 域退出时的释放动作（实测计数）</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>释放动作</th><th>次数</th><th>代表位置</th><th>评价</th></tr></thead><tbody>
+<tr><td><code>RevTimer.CancelAllOf</code></td><td><b>11</b></td><td><code>BoardView.cs:836</code>、<code>BattleHudPanel.cs:219</code></td><td>✅ 视图/面板自行清计时器</td></tr>
+<tr><td><code>RevEvent.RemoveAllByOwner</code></td><td><b>7</b></td><td><code>GameFlow.cs:126</code>、<code>BoardView.cs:835</code></td><td>✅ 全部带 owner</td></tr>
+<tr><td><code>RevPool.DestroyPool</code></td><td><b>5</b></td><td><code>BoardView.cs:867-869</code>、<code>BattleHudPanel.cs:222</code></td><td>✅ 棋子/格子/特效/飘字/分数齐清</td></tr>
+<tr><td><code>Dispose()</code> 实现</td><td><b>8</b></td><td><code>BossAI/EnemyAI/GameFlow/Warmup/Score/BattleService.Score/图集</code></td><td>✅ AI 与打分器也有释放</td></tr>
+<tr><td><code>RevServices.UnregisterAllOf(this)</code></td><td>1（Bootstrap）</td><td><code>GameBootstrap.cs:130</code></td><td>✅ 容器创建的服务（图集）会被 Dispose</td></tr>
+</tbody></table></div>
+
+<h3>11.3 P1-3：图集服务只在“退出游戏”时 Dispose，运行期不释放</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>项</th><th>现状</th><th>影响</th></tr></thead><tbody>
+<tr><td>释放时机</td><td><code>RevServices.Register&lt;GameSpriteAtlasService, GameSpriteAtlasService&gt;(owner: this)</code> → 只有 <code>GameBootstrap.OnDestroy</code> 才会 Dispose</td><td>菜单 ↔ 战斗来回切，图集<b>只累加不释放</b>；六章打完，图集数量 = 章节数 + 2</td></tr>
+<tr><td>是否算 bug</td><td>不算——图集常驻能避免反复加载抖动，是常见取舍</td><td>但需要<b>显式预算</b>，否则低端机显存会持续抬高</td></tr>
+<tr><td>建议</td><td colspan="2">两条路选一条：① 图集按分组（Battle/Menu/章节）加载，域退出时随组卸载；② 明确标 <code>Resident</code>，并在“回主菜单停留 N 秒”或低内存时 <code>UnloadGroup</code>。无论哪条，都建议在 GM 里加一条“打印图集句柄数”以便回归</td></tr>
+</tbody></table></div>
+
+<h3>11.4 结论</h3>
+<div class="callout good"><p><b>引用与定时器的释放是到位的</b>：域退出停 Logic、11 处取消计时器、7 处按 owner 退订事件、5 处销毁池、8 个 Dispose、Bootstrap 注销服务；异步迟到回调用 <code>_released</code>/<code>generation</code> 挡住。<br>
+<b>唯一缺口是“资源包卸载没有挂在域退出上”</b>——补两处调用（图集传分组、域退出调 <code>RevResBootstrap.Shutdown</code>）就能把内存从“30 秒后才回落”变成“退出即回落”。</p></div>
+
+<h3>11.5 整改清单（按优先级，均不改现有架构）</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>动作</th><th>落点</th><th>验收断言</th></tr></thead><tbody>
+<tr><td>①</td><td>图集加载补 <code>RevResGroup</code></td><td><code>GameSpriteAtlasService.cs:176</code></td><td>加载后 <code>GetAllHandles()</code> 中该句柄的 <code>Group ≠ Unknown</code></td></tr>
+<tr><td>②</td><td>域退出触发包级卸载</td><td><code>GameFlow.OnExit()</code>（<code>RevScope.Exit</code> 之后）</td><td>退出战斗 3 秒内 Battle 组句柄 = 0，<code>TotalTrimCount</code> 增长</td></tr>
+<tr><td>③</td><td>切章节时卸场景资源</td><td><code>GamePresentation</code> 换章入口</td><td>连续切 6 章，Scene 组句柄数不随章节数线性增长</td></tr>
+<tr><td>④</td><td>卸载顺序：先 <code>DestroyPool</code> 再卸包</td><td><code>BoardView.Dispose</code> / <code>GameFlow.OnExit</code></td><td>退出战斗回菜单无洋红/白模，Profiler 无 “Missing” 报错</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s12"><h2>12. 附录：证据清单</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>类别</th><th>数量</th><th>代表位置</th></tr></thead><tbody>
+<tr><td>TakeDamage 调用（生产）</td><td>1</td><td><code>BattleService.Events.cs:510</code></td></tr>
+<tr><td>DamagePiece 定义 / 调用</td><td>1 / 26（生产 9）</td><td><code>Events.cs:474</code>；<code>BattleService.cs:687</code>、<code>BossAI.cs:129</code>、<code>CombatPacing.cs:89</code></td></tr>
+<tr><td>攻击力乘算公式</td><td>3 套</td><td><code>BattleService.cs:673</code>、<code>BossAI.cs:126</code>、<code>EnemyTactics.cs:79</code></td></tr>
+<tr><td>最大生命比例伤害</td><td>3 处</td><td><code>CombatPacing.cs:89/104</code>、<code>Events.cs:465</code></td></tr>
+<tr><td>GM 注册</td><td>52 处 / 5 文件</td><td><code>GameAttributeGmCommands.cs:15</code> 等</td></tr>
+<tr><td>RevServices.GetRequired</td><td>38 处 / 14 文件</td><td><code>BattleLogic.cs:22-99</code>、<code>BattleHudPanel.cs:90</code></td></tr>
+<tr><td>async void</td><td>9 处 / 6 文件</td><td><code>GameFlow.Scenes.cs:244</code>（public）</td></tr>
+<tr><td>Update 家族（生产）</td><td>5 处</td><td><code>BoardView.cs:237</code>、<code>BattleEffectView.cs:308</code></td></tr>
+<tr><td>硬编码 dataPath</td><td>1 处</td><td><code>GameGmCommands.cs:255</code></td></tr>
+<tr><td>RevResManager 加载 / 释放</td><td>4 / 4</td><td><code>SceneResourceWarmup.cs:59,155</code>、<code>GameSpriteAtlasService.cs:176,243</code>、<code>GamePresentation.Chapters.cs:154,163,297,298</code></td></tr>
+<tr><td>域级卸载调用</td><td><b>0</b></td><td>未调用 <code>RevResBootstrap.Shutdown</code> / <code>UnloadGroup</code> / <code>UnloadAll</code></td></tr>
+<tr><td>RevScope 进入 / 退出</td><td>1 / 1</td><td><code>GameFlow.cs:152</code> / <code>GameFlow.cs:179</code></td></tr>
+<tr><td>Timers / Events / Pools / Dispose</td><td>11 / 7 / 5 / 8</td><td>见 11.2 明细表</td></tr>
+</tbody></table></div>
+<div class="callout"><p>以上计数均为本次只读扫描结果（2026-10-25），排除 <code>Diagnostics/</code>、<code>Automation/</code>、<code>*Checks.cs</code> 后统计；代码变动后建议重跑同一套扫描再对比。</p></div>
+</section>
+
+</main>
+<footer>RevGame · 架构审查（只读）· 2026-10-25 · 追加「资源加载卸载 + 生命周期域管理」</footer>
+</body></html>

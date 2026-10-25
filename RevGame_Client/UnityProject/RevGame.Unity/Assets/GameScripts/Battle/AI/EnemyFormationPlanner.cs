@@ -64,6 +64,11 @@ namespace RevGame.Battle
                         return false;
                     }
                 }
+                // 先把完整残局落完，再复制已成立的驻眼身份；不能因枚举时驻军先于守子入盘而丢眼。
+                foreach (Piece player in players)
+                {
+                    if (player.IsAlive && player.IsEyeGarrison) { baseline.GetCell(player.Pos).EyeGarrisonId = player.Id; }
+                }
             }
             GoRules.Evaluate(baseline);
             var guards = roster.FindAll(p => !p.IsBoss && p.Size == 1);

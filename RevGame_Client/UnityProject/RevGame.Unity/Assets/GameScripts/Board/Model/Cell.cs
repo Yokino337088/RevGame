@@ -23,6 +23,8 @@ namespace RevGame.Board
         public bool IsEyeMarked { get; internal set; }
         /// <summary>眼属于哪方。落子不能填进对方的眼，避免只显示眼却没有规则保护。</summary>
         public GameSide? EyeSide { get; internal set; }
+        /// <summary>落入空眼时的历史编号，0表示当时未成眼。仅保留旧快照兼容，不作为当前驻眼资格；资格由全盘几何刷新决定。</summary>
+        internal int EyeGarrisonId { get; set; }
 
         /// <summary>是否为空。</summary>
         public bool IsEmpty

@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3255509615
+CRC: 2677243997
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -29,8 +29,7 @@ AssetBundleManifest:
       Dependencies:
         Dependency_0: atlas_boardstatus
         Dependency_1: atlas_combatframes
-        Dependency_2: atlas_uibattle
-        Dependency_3: material_combat
+        Dependency_2: material_combat
     Info_4:
       Name: battle_units
       Dependencies:

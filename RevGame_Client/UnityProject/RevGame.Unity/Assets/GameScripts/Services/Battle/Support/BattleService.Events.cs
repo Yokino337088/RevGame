@@ -69,7 +69,19 @@ namespace RevGame.Services
                 p.BonusLiberties = p.Side == GameSide.Player ? bonus : 0;
             }
 
+            // 只比较真实棋盘刷新前后的驻眼身份；AI快照不经过服务，不会冒出弹幕。
+            _previousEyeGarrisons.Clear();
+            foreach (Piece p in _board.Pieces)
+            {
+                if (p.IsEyeGarrison) { _previousEyeGarrisons.Add(p.Id); }
+            }
             GoRules.Evaluate(_board);
+            bool newlyOccupied = false;
+            foreach (Piece p in _board.Pieces)
+            {
+                newlyOccupied |= p.Side == GameSide.Player && p.IsEyeGarrison && !_previousEyeGarrisons.Contains(p.Id);
+            }
+            if (newlyOccupied) { RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, "眼位成型"); }
             RevEvent.DispatchEvent(Events.GoStateRefreshed);
         }
 
@@ -343,25 +355,11 @@ namespace RevGame.Services
             return n;
         }
 
-        /// <summary>自动援军不能填己方眼；远程也不闯敌眼，近战试放可开放敌眼，但仍须通过气眼与攻击预检。</summary>
+        /// <summary>支援允许驻守本方眼；敌眼沿用与玩家AI相同的“最后一眼”硬门槛。</summary>
         private bool CanSupportFit(BoardPos pos, int size, bool allowEnemyEyes = false)
         {
-            if (!_board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: !allowEnemyEyes))
-            {
-                return false;
-            }
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    Cell cell = _board.GetCell(new BoardPos(pos.X + x, pos.Y + y));
-                    if (cell.IsEyeMarked && (!allowEnemyEyes || cell.EyeSide == GameSide.Player))
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
+            return _board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: false)
+                && EyeTactics.CanEnter(_board, pos, size, GameSide.Player, ranged: !allowEnemyEyes);
         }
 
         /// <summary>保留旧事件入口，但用回气替代自动传送；玩家布阵不被任何增益事件搬走。</summary>
@@ -423,7 +421,7 @@ namespace RevGame.Services
 
                 if (visited.Count < largest.Count)
                 {
-                    DamagePiece(cut, cut.Hp, fromSkill: true, damageKind: BattleDamageKind.Execution);
+                    ResolveDamage(new DamageRequest(cut, DamageBasis.CurrentHp, BattleDamageKind.Execution, factor: 1f));
                     return true;
                 }
             }
@@ -462,84 +460,13 @@ namespace RevGame.Services
             {
                 if (System.Math.Abs(p.Pos.X - center.Pos.X) <= radius && System.Math.Abs(p.Pos.Y - center.Pos.Y) <= radius)
                 {
-                    DamagePiece(p, System.Math.Max(Balance.SupportDamage, (int)(p.MaxHp * hpRatio)), fromSkill: true, damageKind: BattleDamageKind.Artillery);
+                    ResolveDamage(new DamageRequest(p, DamageBasis.MaxHp, BattleDamageKind.Artillery, factor: hpRatio, floor: Balance.SupportDamage));
                 }
             }
 
             return true;
         }
 
-        /// <summary>普通攻击、炮火、区域波动、炸弹与Boss技能共用真实扣血出口，保证飘字与实际伤害一致。</summary>
-        /// <param name="fromSkill">true = 技能/环境伤害：表现层只飘数字，不追加普通弹道，颜色由damageKind指定。</param>
-        private int DamagePiece(Piece target, int amount, Piece attacker = null, bool fromSkill = false, BattleDamageKind damageKind = BattleDamageKind.Normal)
-        {
-            // 活体与占格身份同时检查：多段技能引用已死棋时不能再次发死亡或击杀积分。
-            if (target == null || !target.IsAlive || _board.FindPiece(target.Id) != target) { return 0; }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // 仅开发验收：GM 可让我方全队免伤，专门观察 Boss 技能；
-            // 条件编译保证正式包既没有这个字段，也不会走这条分支。
-            if (PlayerInvincible && target.Side == GameSide.Player)
-            {
-                amount = 0;
-            }
-#endif
-            if (target.Side == GameSide.Player)
-            {
-                // 护盾消费属于这颗棋，只有真实受击才扣次数；耗尽后可正常阵亡。
-                if (amount > 0 && target.ShieldCharges > 0)
-                {
-                    target.ShieldCharges--; amount = 0;
-                }
-                else
-                {
-                    // 用double做中间值：float会把int.MaxValue向上舍入，Mono转回int可能溢出成负数。
-                    // 大额GM/回归伤害也必须是正常伤害，不能因为数值转换变成0而留下“假免死”棋子。
-                    amount = (int)System.Math.Max(0d, System.Math.Min(int.MaxValue, amount * (1d - _prepDamageReduction)));
-                }
-            }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // 测试防御位于统一伤害出口，Boss技能也生效；不开夹具时不改变原规则，护盾挡住的0伤害保持0。
-            amount = ScaleAutomationIncomingDamage(target, amount);
-#endif
-            // 防御用等效生命倍率折算：+100%防御=同样伤害减半；仍可正常死亡，不设最后一子保命。
-            if (target.Side == GameSide.Player && amount > 0)
-            {
-                amount = System.Math.Max(1, (int)(amount / (1d + _combatDefenseBonus)));
-            }
-
-            int real = target.TakeDamage(amount);
-            if (real > 0 && target.Side == GameSide.Player && _prepRecoveryRatio > 0f)
-            {
-                // 复苏储备：首次实际受伤后回复一次，用完清零（比例来自 PrepBuffConfig[Recovery].Extra）。
-                float bank = _prepRecoveryRatio;
-                _prepRecoveryRatio = 0f;
-                HealTeam(bank);
-            }
-            if (real > 0)
-            {
-                // 保存攻击者Id供表现公平排队；只传值，不让延迟弹道持有已死亡或换位的Piece对象。
-                int sourceId = attacker == null ? 0 : attacker.Id;
-                var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill, attacker == null ? PieceKind.Swordman : attacker.Def.Kind, attacker == null ? 1 : attacker.Size, attacker != null && attacker.Def.IsRanged, damageKind);
-                RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
-            }
-            AwardHitScore(target, attacker, damageKind, real);
-            RevEvent.DispatchEvent<int>(Events.DamageResolved, target.Id);
-            RevEvent.DispatchEvent<int>(Events.PieceHpChanged, target.Id);
-            if (!target.IsAlive)
-            {
-                _board.Remove(target);
-                MarkEnemyDead(target);
-                // 玩家可能刚选中这颗棋子准备换位；死亡后清选择，不能留下一个指向已移除棋子的编号。
-                if (SelectedPieceId == target.Id)
-                {
-                    SelectedPieceId = 0;
-                    RevEvent.DispatchEvent(Events.SelectionChanged);
-                }
-                RevEvent.DispatchEvent<int>(Events.PieceDied, target.Id);
-            }
-
-            return real;
-        }
 
     }
 }

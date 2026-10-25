@@ -1,0 +1,58 @@
+{
+  "success": true,
+  "name": "眼位扶持-隔离动态验收",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "24b8fe26a2674582b23603d769ff2472",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\24b8fe26a2674582b23603d769ff2472",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 8.232835600007093
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.eye.check",
+      "response": {
+        "protocol": 1,
+        "id": "2557f3c4bfe64feeb69d69dbe036a83e",
+        "success": true,
+        "error": "",
+        "message": "通过 45 条真实AB眼图标、双方Shader动态、离眼及回收断言",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2557f3c4bfe64feeb69d69dbe036a83e",
+        "data": {
+          "text": "通过 45 条真实AB眼图标、双方Shader动态、离眼及回收断言"
+        }
+      },
+      "polls": 1,
+      "seconds": 21.678524500021012
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "2847baed8c6549a7a3adcd7d74f1fecb",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\2847baed8c6549a7a3adcd7d74f1fecb",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.863961199996993
+    }
+  ]
+}

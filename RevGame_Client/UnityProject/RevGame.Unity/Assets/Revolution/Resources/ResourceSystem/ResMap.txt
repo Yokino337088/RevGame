@@ -8,6 +8,7 @@ Art/Board/BoardSprite_736665ce|atlas_boardstatus|BoardSprite_736665ce
 Art/Board/BoardSprite_a6f4bd8e|atlas_boardstatus|BoardSprite_a6f4bd8e
 Art/Board/BoardSprite_a69ff108|atlas_boardstatus|BoardSprite_a69ff108
 Art/Board/BoardSprite_e26b7dcd|atlas_boardstatus|BoardSprite_e26b7dcd
+Art/Status/CartoonEyes|atlas_boardstatus|CartoonEyes
 Art/Status/Encircled/Encircled_001|atlas_boardstatus|Encircled_001
 Art/Status/Encircled/Encircled_002|atlas_boardstatus|Encircled_002
 Art/Status/Encircled/Encircled_003|atlas_boardstatus|Encircled_003

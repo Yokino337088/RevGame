@@ -203,6 +203,14 @@ namespace RevGame.View
                 UploadChapterStyle();
                 FitCamera();
                 ReleaseBackground(oldLease);
+                // 新Renderer已接管，等旧Sprite的Destroy落地后再清理零引用包。
+                // 章节交接时做一次，不把昂贵的闲置资源扫描放进战斗Update；有其他使用者的包由引用计数保留。
+                if (oldLease != null)
+                {
+                    await RevTask.Yield();
+                    if (_released || version != _backgroundVersion) { return; }
+                    RevResManager.FlushUnused();
+                }
                 _chapterReady = true;
             }
             catch (Exception error)

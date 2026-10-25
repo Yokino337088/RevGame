@@ -42,7 +42,7 @@ namespace RevGame.View
         private void SpawnEnergyBomb(EnergyBombInfo info, bool warning)
         {
             int generation = _effectGeneration;
-            RevPool.GetAsync<BossSkillFxView>(fx =>
+            GamePoolRequests.GetAsync<BossSkillFxView>(fx =>
             {
                 if (fx == null) { RevLog.Warn("能量炸弹特效加载失败", "RevGame"); return; }
                 if (_released || this == null || generation != _effectGeneration) { RevPool.Return(fx, 0); return; }

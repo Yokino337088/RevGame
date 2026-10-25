@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using RevGame.Bootstrap;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Services;
 using RevGame.UI;
@@ -32,10 +33,14 @@ namespace RevGame.Editor
             _assertions = 0;
             Report.Clear();
             string mode = RevResBootstrap.UseABInEditor ? "AB" : "Direct";
+            GameFlow flow = null;
+            IDisposable score = null;
             try
             {
-                GameFlow flow = RevServices.GetRequired<GameFlow>();
+                flow = RevServices.GetRequired<GameFlow>();
                 await WaitForFlowAsync(flow);
+                score = ((BattleService)RevServices.GetRequired<IBattleService>()).BeginScorePreview();
+                VerifyGmRegistry();
                 Require(flow.Screen == GameScreen.Home && RevScene.CurrentName == GameFlow.StartSceneName, "启动交付StartScene首页");
                 CheckImages("冷启动首页");
                 Require(UnityEngine.Object.FindObjectOfType<BoardView>() == null, "大厅没有战斗棋盘实例");
@@ -65,8 +70,17 @@ namespace RevGame.Editor
                     if (cycle == 0)
                     {
                         ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Battle.png");
-                        await RevTask.Delay(3250);
+                        // 准备由Scaled固定步推进；Editor长帧/截图会让墙钟与模拟时钟不同，不能用3250ms猜完成。
+                        double started = Time.realtimeSinceStartupAsDouble;
+                        while (!battle.PreparationGranted)
+                        {
+                            Require(Time.realtimeSinceStartupAsDouble - started < 10d, "准备增益十秒内到达，超时不能掩盖计时冻结");
+                            Require(battle.PreparationElapsed < Balance.PrepDelaySeconds, "未发增益前模拟时间未越过阈值");
+                            await RevTask.Yield();
+                        }
                         Require(battle.PreparationGranted, "玩家看到战场三秒后正常发放准备增益");
+                        Require(battle.PreparationElapsed >= Balance.PrepDelaySeconds, "准备增益由真实模拟阈值触发");
+                        Report.Add("准备实际墙钟=" + (Time.realtimeSinceStartupAsDouble - started).ToString("F3") + "秒，模拟=" + battle.PreparationElapsed);
                     }
                     Require(flow.ReturnHome(), "接受返回大厅");
                     await ObserveTransitionAsync(flow, false, mode, cycle);
@@ -76,6 +90,16 @@ namespace RevGame.Editor
                     Require(!RevUI.IsOpen<PreparePanel>() && !RevUI.IsOpen<BattleHudPanel>(), "返回不残留战斗面板");
                     Require(UnityEngine.Object.FindObjectsOfType<BattleEffectView>().Length == 0, "返回不残留活动弹道飘字");
                     Require(RevResManager.GetRefCount(RevResPath.Atlases, "PieceFrames") == 0, "战斗图集服务租约释放");
+                    Require(RevResManager.GetRefCount(RevResPath.Board_Tile, "BoardCell") == 0
+                        && RevResManager.GetRefCount(RevResPath.Pieces_Unit, "SlimePiece") == 0
+                        && RevResManager.GetRefCount(RevResPath.Effects_Combat, "BattleEffect") == 0,
+                        "退出无棋盘/棋子/反馈冷加载请求引用残留");
+                    string[] bundles = AssetBundle.GetAllLoadedAssetBundles().Select(b => b.name).ToArray();
+                    if (RevResBootstrap.UseABInEditor)
+                    {
+                        Require(!bundles.Contains("battle_units") && !bundles.Contains("battle_feedback") && !bundles.Contains("battle_board"), "战斗专用AB已实际卸载");
+                    }
+                    Report.Add("返回" + cycle + "已加载包" + bundles.Length + "：" + string.Join(",", bundles));
                     CheckImages("返回首页" + cycle);
                 }
 
@@ -102,6 +126,15 @@ namespace RevGame.Editor
             {
                 LastResult = "失败：" + error;
                 RevLog.Exception(error, "场景集成验收失败", "RevGame");
+            }
+            finally
+            {
+                if (Application.isPlaying && flow != null)
+                {
+                    try { await ReturnHomeAsync(flow); }
+                    catch (Exception error) { LastResult += "\n收尾失败：" + error.Message; }
+                }
+                score?.Dispose();
             }
             File.WriteAllText("Temp/SceneTransitionChecks-" + mode + ".txt", LastResult);
         }
@@ -162,6 +195,26 @@ namespace RevGame.Editor
                 if (RevResBootstrap.UseABInEditor) { Require(image.sprite.name == "UISprite" || image.sprite.packed, step + "/" + image.name + "真实AB图集绑定"); }
             }
             Report.Add(step + "：" + images.Length + "个可见Image材质/纹理通过");
+        }
+
+        /// <summary>注册/注销用同一实际账本，验证幂等与无遗漏；保留其它模块命令，不能Clear全局注册表。</summary>
+        private static void VerifyGmRegistry()
+        {
+            string[] before = RevGM.Commands.Where(c => c.Name.StartsWith("RevGame/")).Select(c => c.Name).OrderBy(n => n).ToArray();
+            Require(before.Length >= 59, "统一注册入口包含旧命令与完整玩家操作");
+            GameGmCommands.RegisterAll();
+            Require(RevGM.Commands.Count(c => c.Name.StartsWith("RevGame/")) == before.Length, "重复注册幂等");
+            try
+            {
+                GameGmCommands.UnregisterAll();
+                Require(!RevGM.Commands.Any(c => c.Name.StartsWith("RevGame/")), "注销无Boss/输入/自动化命令残留");
+            }
+            finally { GameGmCommands.RegisterAll(); }
+            Require(before.SequenceEqual(RevGM.Commands.Where(c => c.Name.StartsWith("RevGame/")).Select(c => c.Name).OrderBy(n => n)), "重新注册恢复相同完整清单");
+            foreach (string name in new[] { "选择眼石", "故障返回", "玩家对战", "退出游戏", "玩家操作目录", "流程状态", "选牌", "落子", "点格子", "攻击范围", "选奖励" })
+            {
+                Require(RevGM.Commands.Any(c => c.Name == "RevGame/" + name), "玩家业务可由AI调用：" + name);
+            }
         }
 
         /// <summary>既有Play夹具共用它，不再假设EnterBattle返回true就能立即取得BattleLogic。</summary>

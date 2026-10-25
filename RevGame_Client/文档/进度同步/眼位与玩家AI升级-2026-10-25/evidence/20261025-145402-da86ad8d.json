@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "name": "眼位扶持-Android资源构建",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "3a966a6b19cb4950a13c4e308f14c765",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\3a966a6b19cb4950a13c4e308f14c765",
+        "data": {
+          "text": "Android：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\Android；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\Android"
+        }
+      },
+      "polls": 1,
+      "seconds": 49.787404000002425
+    }
+  ],
+  "cleanup": []
+}

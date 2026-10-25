@@ -467,8 +467,8 @@ namespace RevGame.Editor
                 highlight.size = Vector2.one * Consts.CellSize;
                 highlight.color = Color.white;
                 SpriteRenderer eye = cell.transform.Find("眼").GetComponent<SpriteRenderer>();
-                eye.sprite = Load(NewUi + "UI_Setting_Checkmark.png");
-                eye.transform.localScale = Vector3.one * 0.35f;
+                eye.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GameEyeBuilder.EyePath);
+                eye.transform.localScale = Vector3.one * 0.76f;
                 PrefabUtility.SaveAsPrefabAsset(cell, cellPath);
             }
             finally

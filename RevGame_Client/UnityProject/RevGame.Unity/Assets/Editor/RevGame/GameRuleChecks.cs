@@ -121,6 +121,7 @@ namespace RevGame.Editor
             Check(battle.SkipRound() && battle.Round == Balance.BossRoundIndex && battle.TeamAttackBonus >= 0.1f, "跳过最后普通回合换强化");
             Check(!battle.SkipRound(), "Boss不能跳过");
             BattleService.VerifyDevelopmentContracts(Check);
+            BattleService.VerifyDamageContracts(Check);
             return "通过 " + _count + " 条真实业务断言（全盘落子/重摆、守眼、刷新事务、分时远程攻击、升星、Boss、支援与清理）";
         }
 

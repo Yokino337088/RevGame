@@ -42,6 +42,12 @@ namespace RevGame.Battle
     /// 出手频率、移动冷却、增援数量上限由 Excel 与服务控制。
     /// 每次查询独立创建快照与临时缓冲；快照里的棋子可写，真实 board 里的棋子只读。
     /// </summary>
+    /// <summary>AI只依赖只读预测契约；由当前战斗服务提供，绝不另外写一套伤害公式。</summary>
+    public interface IAttackPrediction
+    {
+        bool PredictAttackDefeat(Piece attacker, Piece target);
+    }
+
     public static class EnemyTactics
     {
         /// <summary>
@@ -53,7 +59,7 @@ namespace RevGame.Battle
         /// <param name="attacker">当前行动者，不会在这里扣攻击次数。</param>
         /// <param name="targets">MoveRules算出的合法射程坐标；本方法不会把射程外敌人塞进来。</param>
         /// <param name="intelligence">关卡控制的1～4档；档位只增加评分因素。</param>
-        public static Piece ChooseTarget(BoardModel board, Piece attacker, List<BoardPos> targets, int intelligence = 4)
+        public static Piece ChooseTarget(BoardModel board, Piece attacker, List<BoardPos> targets, int intelligence = 4, IAttackPrediction prediction = null)
         {
             Piece best = null;
             int bestScore = int.MinValue;
@@ -76,7 +82,7 @@ namespace RevGame.Battle
                 if (intelligence >= 3)
                 {
                     score += (int)((1f - target.HpRatio) * 500f);
-                    if (target.Hp <= attacker.Def.Attack * attacker.AttackScale * Balance.CombatDamageScale)
+                    if (prediction != null && prediction.PredictAttackDefeat(attacker, target))
                     {
                         score += 10000;
                     }
@@ -240,6 +246,12 @@ namespace RevGame.Battle
             if (allies.Count == 0 || players.Count == 0)
             {
                 return false;
+            }
+            // 远程本方驻眼优先于所有相对评分；眼的骨架完整且空格可容纳时，不会封死同伴。
+            if (newcomer.Def.IsRanged && EyeTactics.TryFindOwnEye(board, GameSide.Enemy, newcomer.Size, out best))
+            {
+                intention = "远程驻守眼位";
+                return true;
             }
             BoardModel trial = board.CreateSnapshot();
             Piece added = newcomer.CreateSnapshot();

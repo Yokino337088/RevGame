@@ -67,7 +67,7 @@ namespace RevGame.UI
             {
                 int generation = _scoreGeneration, lane = _scoreLane++;
                 _scoreLoading++;
-                RevPool.GetAsync<ScoreSparkView>(spark =>
+                GamePoolRequests.GetAsync<ScoreSparkView>(spark =>
                 {
                     if (generation != _scoreGeneration || _noticeClosed)
                     {

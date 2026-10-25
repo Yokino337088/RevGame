@@ -136,6 +136,18 @@ namespace RevGame.Flow
                 string finalStep = target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…";
                 await presentation.WaitUntilReadyAsync(target, p => Report(0.78f + p * 0.20f, finalStep));
                 ThrowIfDisposed();
+                // 旧视图/池与战斗图集退出通知已完成，新视图持有自己的引用；预热账本也必须先放手。
+                // Release只把资源放进闲置表，这里在遮挡内调用门面真正卸载零引用AB，绝不force卸共享资源。
+                warmup.Dispose();
+                if (target != GameScreen.Battle)
+                {
+                    // RevScene只清空闲实例，运行中首次创建的技能池可能仍持有prefab。
+                    // 此时战斗域与视图已退出，销毁整个战斗组的池，归还池本身的长期资源租约。
+                    RevPool.DestroyGroup(RevResGroup.Battle);
+                }
+                await RevTask.Yield();
+                ThrowIfDisposed();
+                RevResManager.FlushUnused();
                 Report(1f, target == GameScreen.Battle ? "战场已就绪" : "营地已就绪");
                 await _loading.FadeOutAsync();
                 ThrowIfDisposed();

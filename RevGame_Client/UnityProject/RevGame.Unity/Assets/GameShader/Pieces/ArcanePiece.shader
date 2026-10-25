@@ -16,6 +16,7 @@ Shader "RevGame/Pieces/ArcanePiece"
         [PerRendererData] _Dissolve ("死亡溶解进度", Range(0,1)) = 0
         [PerRendererData] _Birth ("落子身体燃烧进度（首尾均无火）", Range(0,1)) = 0
         [PerRendererData] _Storm ("升级雷暴进度", Range(0,1)) = 0
+        [PerRendererData] _EyeGarrison ("驻眼阵营：0关闭1玩家2敌方", Float) = 0
         [PerRendererData] _DissolveUV ("当前帧图集UV矩形", Vector) = (0,0,1,1)
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
@@ -49,6 +50,7 @@ Shader "RevGame/Pieces/ArcanePiece"
             half _Dissolve;
             half _Birth;
             half _Storm;
+            half _EyeGarrison;
             float4 _DissolveUV;
             float4 _MainTex_TexelSize;
 
@@ -170,7 +172,21 @@ Shader "RevGame/Pieces/ArcanePiece"
                     half spark = saturate(corona * 0.94 + shock * 0.68) * envelope * thunder;
                     source.rgb = lerp(source.rgb, electricity, spark);
                 }
-                // 三种动画仍沿用 Unity Sprite 的预乘透明度，清理参数块后存活棋子不执行任何特效分支。
+                // 驻眼光带与短效共用当前帧UV；玩家青金、敌人橙红。仅改原图RGB，死亡时关闭，轮廓alpha完全保留。
+                if (_EyeGarrison > 0.5 && _Dissolve <= 0.0)
+                {
+                    half enemy = step(1.5, _EyeGarrison);
+                    half3 aura = lerp(half3(0.06, 0.95, 0.88), half3(1.0, 0.16, 0.045), enemy);
+                    half3 crest = lerp(half3(1.0, 0.88, 0.18), half3(1.0, 0.65, 0.12), enemy);
+                    float2 centered = localUV - 0.5;
+                    half wave = 0.5 + 0.5 * sin(localUV.y * 23.0 - _Time.y * 4.6 + sin(localUV.x * 10.0) * 0.7);
+                    half bands = smoothstep(0.72, 0.98, wave);
+                    half orbit = pow(saturate(0.5 + 0.5 * sin(atan2(centered.y, centered.x) * 3.0 + _Time.y * 3.0)), 5.0);
+                    half pulse = 0.5 + 0.5 * sin(_Time.y * 2.8);
+                    source.rgb = lerp(source.rgb, aura * (0.35 + lightness * 0.65), 0.32 + pulse * 0.12);
+                    source.rgb = lerp(source.rgb, lerp(aura, crest, orbit), bands * (0.58 + pulse * 0.22));
+                }
+                // 全部动画沿用 Unity Sprite 预乘透明度，不扩大轮廓，不额外增加Pass。
                 source.rgb *= source.a;
                 return source;
             }

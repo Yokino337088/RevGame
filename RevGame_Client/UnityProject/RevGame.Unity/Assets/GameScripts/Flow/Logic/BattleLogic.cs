@@ -101,22 +101,22 @@ namespace RevGame.Flow
 
         public bool ContinueToNextRound()
         {
-            return Battle.ContinueRound();
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.ContinueRound();
         }
 
         public bool ChooseReward(int index)
         {
-            return Battle.ChooseReward(index);
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.ChooseReward(index);
         }
 
         public bool SkipRound()
         {
-            return Battle.SkipRound();
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.SkipRound();
         }
 
         public bool SelectEyeStone()
         {
-            return Battle.SelectEyeStone();
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.SelectEyeStone();
         }
 
         /// <summary>快照中的章/回合始终取服务，不提前跳到下一回合，便于对应结算与日志。</summary>

@@ -61,7 +61,7 @@ namespace RevGame.Battle
     /// Boss 状态能调用的宿主能力。和 IEnemyAIOwner 一样是“窄接口”：
     /// 状态只能通过这些方法改变世界，伤害公式、占格预检、事件广播仍由服务统一负责。
     /// </summary>
-    public interface IBossAIOwner : RevIHeavyFSMOwner
+    public interface IBossAIOwner : RevIHeavyFSMOwner, IAttackPrediction
     {
         // ---------------- 只读局面 ----------------
         /// <summary>真实棋盘（只读查询；改变棋盘必须走下面的动作方法）。</summary>

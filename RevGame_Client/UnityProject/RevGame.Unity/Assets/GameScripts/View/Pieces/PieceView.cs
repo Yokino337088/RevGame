@@ -90,6 +90,10 @@ namespace RevGame.View
         // 身体燃烧的归一化时间（0~1）；火焰强弱由 Shader 的首尾包络控制，结束/归池都恢复为 0。
         private float _birthProgress;
         private float _stormProgress;
+        /// <summary>驻眼阵营编码：0关闭、1玩家、2敌方；只由模型同步，归池或死亡清零。</summary>
+        private float _eyeGarrison;
+        public bool IsEyeGarrisonVisual => _eyeGarrison > 0f;
+        private static readonly int EyeGarrisonId = Shader.PropertyToID("_EyeGarrison");
         private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int DissolveUvId = Shader.PropertyToID("_DissolveUV");
@@ -143,6 +147,7 @@ namespace RevGame.View
 
         private void OnDisable()
         {
+            SetEyeGarrison(false);
             StopFormationMove();
             StopAttackPulse();
             StopBodyVisual();
@@ -152,6 +157,7 @@ namespace RevGame.View
 
         public void OnPoolGet()
         {
+            SetEyeGarrison(false);
             StopAttackPulse();
             StopBodyVisual();
             _hasPosition = false;
@@ -161,6 +167,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            SetEyeGarrison(false);
             StopFormationMove();
             StopAttackPulse();
             StopBodyVisual();
@@ -246,6 +253,7 @@ namespace RevGame.View
         /// </summary>
         public bool BeginDeathDissolve(System.Action<PieceView> onFinished)
         {
+            SetEyeGarrison(false);
             Sprite sprite = bodyRenderer != null ? bodyRenderer.sprite : null;
             Material material = bodyRenderer != null ? bodyRenderer.sharedMaterial : null;
             if (sprite == null || material == null || !material.HasProperty(DissolveId))
@@ -415,7 +423,27 @@ namespace RevGame.View
                     bodyRenderer.sprite = null;
                     bodyRenderer.sprite = current;
                 }
+                // 入场火焰/升级雷暴结束只撤短效，驻眼持续光效仍属于当前棋子，不能被一并清掉。
+                if (_eyeGarrison > 0f) { ApplyEyeGarrison(); }
             }
+        }
+
+        /// <summary>绑定规则层的驻眼状态。复用原有参数块和共享材质，不逐棋克隆材质、不生成额外光效物体。</summary>
+        public void SetEyeGarrison(bool active)
+        {
+            float value = active ? (_boundSide == GameSide.Player ? 1f : 2f) : 0f;
+            if (_eyeGarrison == value) { return; }
+            _eyeGarrison = value;
+            ApplyEyeGarrison();
+        }
+
+        /// <summary>每次换动画帧同时更新图集局部UV；光带始终在本棋轮廓内流动，透明区不出现方块。</summary>
+        private void ApplyEyeGarrison()
+        {
+            if (bodyRenderer == null || _visualProperties == null || bodyRenderer.sprite == null) { return; }
+            SetVisualUv(bodyRenderer.sprite);
+            _visualProperties.SetFloat(EyeGarrisonId, _eyeGarrison);
+            bodyRenderer.SetPropertyBlock(_visualProperties);
         }
 
         /// <summary>
@@ -615,6 +643,7 @@ namespace RevGame.View
         /// <summary>回池/回收时调用：清掉绑定，避免复用成"上一颗棋子"。</summary>
         public void Clear()
         {
+            SetEyeGarrison(false);
             PieceId = 0;
             _entry = null;
             _frames = null;
@@ -688,7 +717,7 @@ namespace RevGame.View
             if (bodyRenderer != null)
             {
                 bodyRenderer.sprite = _frames[_frameIndex];
-                if (_birthProgress > 0f || _stormProgress > 0f)
+                if (_birthProgress > 0f || _stormProgress > 0f || _eyeGarrison > 0f)
                 {
                     // 一张Atlas里的不同帧通常位于不同矩形。先换图再同步UV/纹理，
                     // 保留当前效果进度，确保火舌始终贴在“此刻正在显示”的身体上。

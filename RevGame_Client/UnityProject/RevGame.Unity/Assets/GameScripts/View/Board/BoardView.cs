@@ -134,7 +134,7 @@ namespace RevGame.View
                     }
                     BoardPos pos = new BoardPos(index % Consts.BoardSize, index / Consts.BoardSize);
                     var completion = new RevTaskCompletionSource<BoardCellView>();
-                    RevPool.GetAsync<BoardCellView>(cell => completion.SetResult(cell), _viewRoot);
+                    GamePoolRequests.GetAsync<BoardCellView>(cell => completion.SetResult(cell), _viewRoot);
                     BoardCellView view = await completion.Task;
                     OnCellLoaded(view, pos, generation);
                     if (view == null)
@@ -468,7 +468,7 @@ namespace RevGame.View
                 {
                     int id = piece.Id;
                     int generation = _generation;
-                    RevPool.GetAsync<PieceView>(loaded => OnPieceLoaded(loaded, id, generation), _viewRoot);
+                    GamePoolRequests.GetAsync<PieceView>(loaded => OnPieceLoaded(loaded, id, generation), _viewRoot);
                 }
             }
 
@@ -534,6 +534,7 @@ namespace RevGame.View
             view.SetBodySize(piece.Size, piece.IsBoss, piece.IsKing);
             view.SetHp(piece.HpRatio);
             view.SetLocked(piece.IsLocked);
+            view.SetEyeGarrison(piece.IsEyeGarrison && piece.IsAlive);
         }
 
         private void RefreshCells()
@@ -665,7 +666,7 @@ namespace RevGame.View
             Vector3 position = attack.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             position += new Vector3(attack.Size - 1, attack.Size - 1, 0f) * Consts.CellSize * 0.5f;
             int generation = _effectGeneration;
-            RevPool.GetAsync<BattleEffectView>(effect =>
+            GamePoolRequests.GetAsync<BattleEffectView>(effect =>
             {
                 if (_released || generation != _effectGeneration)
                 {
@@ -780,7 +781,7 @@ namespace RevGame.View
         private void ShowEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide = GameSide.Enemy, Vector3 destination = default(Vector3), PieceKind sourceKind = PieceKind.Archer)
         {
             int generation = _effectGeneration;
-            RevPool.GetAsync<BattleEffectView>(effect =>
+            GamePoolRequests.GetAsync<BattleEffectView>(effect =>
             {
                 if (effect == null)
                 {

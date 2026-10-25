@@ -33,6 +33,19 @@ namespace RevGame.Services
             _enemyDeploymentCount = 0;
         }
 
+        /// <summary>每回合敌阵成立后，向首个空眼部署远程守军；没有眼或达到人数上限则不强塞、不覆盖棋子。</summary>
+        private void DeployInitialEyeGarrison()
+        {
+            if (_enemyPieces.Count >= Balance.DeployLivingCap
+                || !EyeTactics.TryFindOwnEye(_board, GameSide.Enemy, 1, out BoardPos position)) { return; }
+            // 重弩已有跨盘射界，驻眼时不会被四周友军挡住而永远不出手；血攻/星级/成长仍读现有表。
+            RoundDef round = LevelCatalog.GetRound(Chapter, Round);
+            PieceDef def = PieceCatalog.Get(PieceKind.Crossbow, LevelCatalog.GetEnemyStar(Chapter, false));
+            var newcomer = new Piece(_nextPieceId, def, GameSide.Enemy, hpScale: round.HpScale, attackScale: round.AttackScale);
+            newcomer.NextMoveAt = Balance.PlayerMoveSeconds;
+            CommitEnemyDeployment(newcomer, position, "远程驻守眼位", countAgainstBudget: false);
+        }
+
         /// <summary>只能在战斗固定步调用；失败同样进入冷却，避免满盘时每0.3125秒重做整盘试算。</summary>
         private void TickEnemyDeployment()
         {
@@ -52,7 +65,7 @@ namespace RevGame.Services
         /// 顺序不能调换：先占格再广播，界面收到事件时棋盘与气眼已经是最终状态；
         /// 任何一个失败都必须抛错，不能留下“名单里有棋、棋盘上没有”的半提交。
         /// </summary>
-        private void CommitEnemyDeployment(Piece newcomer, BoardPos position, string intention)
+        private void CommitEnemyDeployment(Piece newcomer, BoardPos position, string intention, bool countAgainstBudget = true)
         {
             if (!_board.Place(newcomer, position))
             {
@@ -61,7 +74,8 @@ namespace RevGame.Services
             _nextPieceId++;
             _enemyPieces.Add(newcomer);
             EnsureEnemyAI(newcomer);
-            _enemyDeploymentCount++;
+            // 开局驻眼属于本轮初始阵容；战斗中的额外补子才消耗原有增援预算。
+            if (countAgainstBudget) { _enemyDeploymentCount++; }
             // 新棋的初始移动冷却已由Deploy状态设置；这里不再重复决定AI行为。
             RefreshGoState();
             // 模型先就绪，视图后收到通知：新棋第一次显示时已能读到正确气眼和锁死状态。

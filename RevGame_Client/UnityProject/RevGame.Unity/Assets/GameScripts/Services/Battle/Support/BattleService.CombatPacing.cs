@@ -1,4 +1,4 @@
-// 无限时战斗的真实加速：可调增益、逐格区域波动、全场小额炸弹。没有免死、斩杀或按时间清场。
+// 无限时战斗的真实加速：可调增益、仅伤敌的逐格区域波动、全场能量炸弹；伤害按最大生命比例扣除。
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -29,6 +29,8 @@ namespace RevGame.Services
         private void ResetCombatPacing()
         {
             _combatAttackBonus = _combatDefenseBonus = _combatHasteBonus = _combatVitalityBonus = 0f;
+            _nextEyeSupportAt = Balance.EyeSupportSeconds;
+            EyeSupportCount = EyeReviveCount = 0;
             _nextRegionAt = Balance.RegionIntervalSeconds;
             _nextBombAt = Balance.BombIntervalSeconds;
             _regionActive = _bombActive = false;
@@ -84,15 +86,15 @@ namespace RevGame.Services
                     BoardPos pos = new BoardPos(_region.Origin.X + _regionCell % _region.Size, _region.Origin.Y + _regionCell / _region.Size);
                     _regionCell++;
                     Piece target = _board.GetPiece(pos);
-                    if (target != null && target.IsAlive && _regionHitIds.Add(target.Id))
+                    if (target != null && target.IsAlive && target.Side == GameSide.Enemy && _regionHitIds.Add(target.Id))
                     {
-                        DamagePiece(target, Math.Max(1, (int)(target.MaxHp * Balance.RegionDamageHpRatio)), fromSkill: true, damageKind: BattleDamageKind.RegionPulse);
+                        ResolveDamage(new DamageRequest(target, DamageBasis.MaxHp, BattleDamageKind.RegionPulse, factor: Balance.RegionDamageHpRatio));
                     }
                 }
                 if (_regionCell >= _region.Size * _region.Size) { _regionActive = false; }
                 RefreshGoState();
             }
-            // 波动可击杀最后一颗玩家棋，必须立刻停止后续炸弹调度。
+            // 前一段事件可能结束战斗，后续炸弹不能在我方已经全灭时挽回败局。
             if (_board.IsSideWiped(GameSide.Player) || IsKingCaptured()) { return; }
             if (!_bombActive && _battleElapsed >= _nextBombAt) { TriggerEnergyBomb(); }
             if (_bombActive && _battleElapsed >= _bombImpactAt)
@@ -101,7 +103,7 @@ namespace RevGame.Services
                 _board.CopyPieces(_pacingVictims, GameSide.Enemy);
                 foreach (Piece enemy in _pacingVictims)
                 {
-                    if (enemy.IsAlive) { DamagePiece(enemy, Math.Max(1, (int)(enemy.MaxHp * Balance.BombDamageHpRatio)), fromSkill: true, damageKind: BattleDamageKind.EnergyBomb); }
+                    if (enemy.IsAlive) { ResolveDamage(new DamageRequest(enemy, DamageBasis.MaxHp, BattleDamageKind.EnergyBomb, factor: Balance.BombDamageHpRatio)); }
                 }
                 EnergyBombCount++;
                 RefreshGoState();

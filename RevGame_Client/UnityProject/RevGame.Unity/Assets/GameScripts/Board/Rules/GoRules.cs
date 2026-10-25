@@ -79,10 +79,12 @@ namespace RevGame.Board
             return empty.Count;
         }
 
-        /// <summary>v18：只检查棋盘内邻居；角上两颗、边上三颗也能围成眼。</summary>
+        /// <summary>按当前完整占格判眼，不依赖落子顺序；角上两邻、边上三邻也有效。中心可为空或本方单格棋，大棋内部不算眼。</summary>
         public static bool IsEye(BoardModel board, BoardPos pos, GameSide side)
         {
-            if (!board.CanPlace(pos))
+            Cell center = board.GetCell(pos);
+            // 不能要求中心棋曾经“落入已成型空眼”：中心先落、外围最后补齐也必须在本次全盘刷新获得驻眼状态。
+            if (center == null || (!center.IsEmpty && (center.Occupant.Side != side || center.Occupant.Size != 1)))
             {
                 return false;
             }
@@ -98,7 +100,7 @@ namespace RevGame.Board
                 }
 
                 neighbors++;
-                if (cell.IsEmpty || cell.Occupant.Side != side)
+                if (cell.IsEmpty || cell.Occupant.Side != side || cell.Occupant == center.Occupant)
                 {
                     return false;
                 }
@@ -161,6 +163,21 @@ namespace RevGame.Board
                 for (int head = 0; head < scratch.Group.Count; head++)
                 {
                     Piece piece = scratch.Group[head];
+                    piece.IsEyeGarrison = false;
+                    piece.HasEyeGuardAura = false;
+                    // 驻眼仍是这组棋的眼，但不是空格气。按身体格计数且只处理一次，不能被四周邻棋重复计眼。
+                    for (int y = 0; y < piece.Size; y++)
+                    {
+                        for (int x = 0; x < piece.Size; x++)
+                        {
+                            Cell own = board.GetCell(new BoardPos(piece.Pos.X + x, piece.Pos.Y + y));
+                            if (own.EyeSide == piece.Side)
+                            {
+                                piece.IsEyeGarrison = true;
+                                eyes++;
+                            }
+                        }
+                    }
                     cells += piece.Size * piece.Size;
                     bonus = System.Math.Max(bonus, piece.BonusLiberties);
                     for (int edge = 0; edge < piece.Size; edge++)
@@ -172,6 +189,11 @@ namespace RevGame.Board
                             if (cell == null)
                             {
                                 continue;
+                            }
+                            // 读首遍已经计算好的眼标记。只看身体外边界，覆盖多格或邻接多个眼也只设一个布尔值。
+                            if (piece.Side == GameSide.Player && cell.EyeSide == GameSide.Player)
+                            {
+                                piece.HasEyeGuardAura = true;
                             }
                             if (cell.IsEmpty)
                             {
@@ -196,11 +218,13 @@ namespace RevGame.Board
                     }
                 }
 
+                int openLiberties = liberties;
                 liberties = System.Math.Max(0, liberties + bonus);
                 GroupState state = eyes > 0 ? GroupState.Normal : (liberties == 0 ? GroupState.Locked : (liberties == 1 ? GroupState.Atari : GroupState.Normal));
                 foreach (Piece piece in scratch.Group)
                 {
                     piece.Liberties = liberties;
+                    piece.OpenLiberties = openLiberties;
                     piece.GoState = state;
                     piece.EyeCount = eyes;
                     piece.ConnectedCells = cells;

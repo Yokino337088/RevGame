@@ -77,7 +77,8 @@ namespace RevGame.Services
 
             battle = new BattleService(false);
             player = battle.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
-            enemy = battle.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(8, 7));
+            // 此夹具检查远程命中和手动换位；提高靶子生命，避免新的15%波动在点选前正常结束战斗。
+            enemy = battle.AddImpactPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(8, 7));
             battle.RefreshGoState();
             battle.StartBattle();
             battle.Tick(5f);
@@ -153,7 +154,9 @@ namespace RevGame.Services
                     check(defender.Pos == eyePositions[i] && battle._board.GetPiece(eyePositions[i]) == defender, "守眼棋子原编号原位不动：" + eyes + "眼 #" + defender.Id);
                 }
                 // 敌人会正常滑步/增援，整盘字符画本来就能变化；玩家编号原位已逐颗检查，再核对真实眼数。
-                check(battle._playerPieces.TrueForAll(p => p.EyeCount == eyes), "敌军行动后玩家成型眼阵仍完整：" + eyes);
+                // 眼中支援可以把相邻同方占格也围成新眼；应验证原有眼未消失，不把合法增眼当作拆阵。
+                check(battle._board.GetCell(new BoardPos(0, 0)).IsEyeMarked
+                    && (eyes == 1 || battle._board.GetCell(new BoardPos(2, 0)).IsEyeMarked), "敌军行动后玩家原有成型眼位仍完整：" + eyes);
             }
         }
     }

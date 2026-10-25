@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2466702993
+CRC: 2424823250
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 320468cf607e32c1e5eb019883b53566
+    Hash: 490c154c980cdc693c8f85ab1c1cfa58
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 320468cf607e32c1e5eb019883b53566
+    Hash: 490c154c980cdc693c8f85ab1c1cfa58
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -27,6 +27,7 @@ Assets:
 - Assets/GameRes/Art/Status/Encircled/Encircled_001.png
 - Assets/GameRes/Art/Board/BoardSprite_5a487af7.png
 - Assets/GameRes/Art/Board/BoardSprite_a69ff108.png
+- Assets/GameRes/Art/Status/CartoonEyes.png
 - Assets/GameRes/Art/Board/BoardSprite_736665ce.png
 - Assets/GameRes/Art/Status/Encircled/Encircled_002.png
 - Assets/GameRes/Art/Board/BoardSprite_e26b7dcd.png

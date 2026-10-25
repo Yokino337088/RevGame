@@ -12,6 +12,37 @@ namespace RevGame.Services
 {
     public sealed partial class BattleService
     {
+        /// <summary>六章压测专用固定48棋夹具；保留真实AI/伤害/支援，生命放大仅用于维持持续负载，不属于关卡难度。</summary>
+        public bool LoadPerformanceScenario(int chapter)
+        {
+            // 每章重置相同种子，使暴击/事件输入可复现；只存在于编辑器夹具。
+            _random = new System.Random(1025 + chapter);
+            if (!StartRound(chapter, 1)) { return false; }
+            StopEnemyAI();
+            _board.Reset(); _playerPieces.Clear(); _enemyPieces.Clear();
+            PieceKind[] kinds = { PieceKind.Archer, PieceKind.MageFire, PieceKind.MageWater, PieceKind.Crossbow, PieceKind.Shield, PieceKind.Swordman };
+            for (int side = 0; side < 2; side++)
+            {
+                for (int row = 0; row < 3; row++)
+                {
+                    for (int x = 0; x < 8; x++)
+                    {
+                        AddImpactPiece(side == 0 ? GameSide.Player : GameSide.Enemy, kinds[(x + row) % kinds.Length], new BoardPos(x, side == 0 ? row : 8 - row));
+                    }
+                }
+            }
+            RefreshGoState();
+            RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
+            return true;
+        }
+
+        /// <summary>持续负载夹具每秒补满生命，避免百分比技能清场后把空场帧率误记为48棋压测；报告必须披露。</summary>
+        public void SustainPerformanceScenario()
+        {
+            foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { piece.Heal(piece.MaxHp); } }
+            foreach (Piece piece in _enemyPieces) { if (piece.IsAlive) { piece.Heal(piece.MaxHp); } }
+        }
+
         /// <summary>只供自动化建立高生命展示棋盘；动画测试不会依赖随机手牌或先后死亡。</summary>
         public bool LoadImpactScenario()
         {

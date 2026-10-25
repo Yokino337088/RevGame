@@ -7,6 +7,19 @@ namespace RevGame.Editor
     /// <summary>项目级资源审计接入现有RevMCP；调用真实AssetDatabase与项目打包入口，不复制框架打包实现。</summary>
     public static class GameResourceUsageAutomation
     {
+        [RevAutomationAction("game.battle.stress-before", Environment = "play", Keys = new string[0], Description = "六章48棋真实渲染性能基线，约两分钟，恢复首页与设置")]
+        public static object StressBefore(RevAutomationRequest request) { return Stress("before"); }
+        [RevAutomationAction("game.battle.stress-after", Environment = "play", Keys = new string[0], Description = "六章同输入性能复测，保存帧采样及Profiler原始文件")]
+        public static object StressAfter(RevAutomationRequest request) { return Stress("after"); }
+        private static object Stress(string label)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameBattleStressChecks, Assembly-CSharp-Editor", true);
+            PropertyInfo result = type.GetProperty("LastResult");
+            if ((string)result.GetValue(null) == "运行中") { throw new InvalidOperationException("压测正在运行"); }
+            type.GetMethod("Begin").Invoke(null, new object[] { label });
+            return new PlayCheckOperation(result);
+        }
+
         [RevAutomationAction("game.score.check", Environment = "play", Keys = new string[0], Description = "真实AB积分飞星、橙色暴击、滚筒与密集渲染回收验收")]
         public static object ScoreCheck(RevAutomationRequest request)
         {
@@ -29,6 +42,18 @@ namespace RevGame.Editor
         {
             Type type = Type.GetType("RevGame.Editor.GameScoreBuilder, Assembly-CSharp-Editor", true);
             return new Result { text = (string)type.GetMethod("Configure").Invoke(null, null) };
+        }
+        [RevAutomationAction("game.ui.preview-recover", Environment = "edit", Keys = new string[0], Description = "恢复非Play图集预览并读取HUD实际Sprite纹理")]
+        public static object PreviewRecover(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameEditorAtlasPreview, Assembly-CSharp-Editor", true);
+            return new Result { text = (string)type.GetMethod("Recover").Invoke(null, null) };
+        }
+        [RevAutomationAction("game.ui.preview-check", Environment = "edit", Keys = new string[0], Description = "独立场景绘制真实UGUI并保存白图排查像素证据")]
+        public static object PreviewCheck(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameUiPreviewChecks, Assembly-CSharp-Editor", true);
+            return new Result { text = (string)type.GetMethod("Capture").Invoke(null, null) };
         }
         /// <summary>只允许两个固定标签，前后使用同一输入，不开放任意代码执行。</summary>
         [RevAutomationAction("game.score.perf-before", Environment = "edit", Keys = new string[0], Description = "固定输入记录计分升级前规则性能")]

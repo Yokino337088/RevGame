@@ -89,6 +89,24 @@ namespace RevGame.Data
         // ---- 战斗节奏
         public float BossCaptureHpRatio;
         public float EventEffectMultiplier;
+        /// <summary>驻眼加成比例，1表示增加100%；配置装配后只读。</summary>
+        public float PlayerEyeAttackBonus;
+        /// <summary>驻眼加成比例，1表示增加100%；配置装配后只读。</summary>
+        public float PlayerEyeSpeedBonus;
+        /// <summary>驻眼加成比例，1表示增加100%；配置装配后只读。</summary>
+        public float PlayerEyeDefenseBonus;
+        /// <summary>驻眼加成比例，1表示增加100%；配置装配后只读。</summary>
+        public float EnemyEyeAttackBonus;
+        /// <summary>守眼四邻防御加成，比例，多个眼不叠加。</summary>
+        public float EyeGuardDefenseBonus;
+        /// <summary>空眼远程支援间隔，秒。</summary>
+        public float EyeSupportSeconds;
+        /// <summary>驻眼原地复活生命比例，每颗棋一生一次。</summary>
+        public float EyeReviveHpRatio;
+        /// <summary>复活时四邻友军治疗比例，按各自最大生命计算。</summary>
+        public float EyeReviveHealRatio;
+        /// <summary>敌方驻眼攻速加成比例，0.5表示增加50%；不影响移动速度。</summary>
+        public float EnemyEyeSpeedBonus;
         public float PlayerMoveSeconds;
         public int PlayerRetreatDistance;
         public float RegionIntervalSeconds;
@@ -280,6 +298,15 @@ namespace RevGame.Data
             v.RewardOutnumberedFactor = r.Int("Reward.OutnumberedFactor", 1, 100);
             v.BossCaptureHpRatio = r.Float("Boss.CaptureHpRatio", 0.01f, 1f);
             v.EventEffectMultiplier = r.Float("Event.EffectMultiplier", 1f, 10f);
+            v.PlayerEyeAttackBonus = r.Float("Eye.PlayerAttackBonus", 0f, 10f);
+            v.PlayerEyeSpeedBonus = r.Float("Eye.PlayerSpeedBonus", 0f, 10f);
+            v.PlayerEyeDefenseBonus = r.Float("Eye.PlayerDefenseBonus", 0f, 10f);
+            v.EnemyEyeAttackBonus = r.Float("Eye.EnemyAttackBonus", 0f, 10f);
+            v.EyeGuardDefenseBonus = r.Float("Eye.GuardDefenseBonus", 0f, 10f);
+            v.EyeSupportSeconds = r.Float("Eye.SupportSeconds", 0.1f, 600f);
+            v.EyeReviveHpRatio = r.Float("Eye.ReviveHpRatio", 0.01f, 1f);
+            v.EyeReviveHealRatio = r.Float("Eye.ReviveHealRatio", 0f, 1f);
+            v.EnemyEyeSpeedBonus = r.Float("Eye.EnemySpeedBonus", 0f, 10f);
             v.PlayerMoveSeconds = r.Float("PlayerAI.MoveSeconds", 0.5f, 60f);
             v.PlayerRetreatDistance = r.Int("PlayerAI.RetreatDistance", 1, 8);
             v.RegionIntervalSeconds = r.Float("Region.IntervalSeconds", 3f, 600f);
@@ -289,7 +316,7 @@ namespace RevGame.Data
             v.RegionDamageHpRatio = r.Float("Region.DamageHpRatio", 0.001f, 0.2f);
             v.BombIntervalSeconds = r.Float("Bomb.IntervalSeconds", 5f, 600f);
             v.BombWarningSeconds = r.Float("Bomb.WarningSeconds", 0.5f, 5f);
-            v.BombDamageHpRatio = r.Float("Bomb.DamageHpRatio", 0.001f, 0.15f);
+            v.BombDamageHpRatio = r.Float("Bomb.DamageHpRatio", 0.001f, 1f);
             v.CombatBuffCap = r.Float("Combat.BuffCap", 0.1f, 10f);
             r.ReportUnused();
 
@@ -403,6 +430,24 @@ namespace RevGame.Data
         /// <summary>来自 BalanceRule[Event.EffectMultiplier]，单位与取值说明见原始 Excel。</summary>
         public static float EventEffectMultiplier => V.EventEffectMultiplier;
         /// <summary>来自 BalanceRule[PlayerAI.MoveSeconds]，单位与取值说明见原始 Excel。</summary>
+        /// <summary>来自驻眼配置Eye.PlayerAttackBonus，离眼立即还原，不累乘基础属性。</summary>
+        public static float PlayerEyeAttackBonus => V.PlayerEyeAttackBonus;
+        /// <summary>来自驻眼配置Eye.PlayerSpeedBonus，离眼立即还原，不累乘基础属性。</summary>
+        public static float PlayerEyeSpeedBonus => V.PlayerEyeSpeedBonus;
+        /// <summary>来自驻眼配置Eye.PlayerDefenseBonus，离眼立即还原，不累乘基础属性。</summary>
+        public static float PlayerEyeDefenseBonus => V.PlayerEyeDefenseBonus;
+        /// <summary>来自驻眼配置Eye.EnemyAttackBonus，离眼立即还原，不累乘基础属性。</summary>
+        public static float EnemyEyeAttackBonus => V.EnemyEyeAttackBonus;
+        /// <summary>守眼四邻防御加成，比例，多个眼不叠加；来自Excel的Eye.GuardDefenseBonus。</summary>
+        public static float EyeGuardDefenseBonus => V.EyeGuardDefenseBonus;
+        /// <summary>空眼远程支援间隔，秒；来自Excel的Eye.SupportSeconds。</summary>
+        public static float EyeSupportSeconds => V.EyeSupportSeconds;
+        /// <summary>驻眼原地复活生命比例，每颗棋一生一次；来自Excel的Eye.ReviveHpRatio。</summary>
+        public static float EyeReviveHpRatio => V.EyeReviveHpRatio;
+        /// <summary>复活时四邻友军治疗比例，按各自最大生命计算；来自Excel的Eye.ReviveHealRatio。</summary>
+        public static float EyeReviveHealRatio => V.EyeReviveHealRatio;
+        /// <summary>来自驻眼配置Eye.EnemySpeedBonus，离眼立即还原，不累乘基础属性。</summary>
+        public static float EnemyEyeSpeedBonus => V.EnemyEyeSpeedBonus;
         public static float PlayerMoveSeconds => V.PlayerMoveSeconds;
         /// <summary>来自 BalanceRule[PlayerAI.RetreatDistance]，单位与取值说明见原始 Excel。</summary>
         public static int PlayerRetreatDistance => V.PlayerRetreatDistance;

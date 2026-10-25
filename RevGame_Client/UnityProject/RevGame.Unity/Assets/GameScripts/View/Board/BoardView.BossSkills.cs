@@ -70,7 +70,7 @@ namespace RevGame.View
         private void SpawnBossFx(BossSkillInfo info, bool telegraph)
         {
             int generation = _effectGeneration;
-            RevPool.GetAsync<BossSkillFxView>(fx =>
+            GamePoolRequests.GetAsync<BossSkillFxView>(fx =>
             {
                 if (fx == null)
                 {

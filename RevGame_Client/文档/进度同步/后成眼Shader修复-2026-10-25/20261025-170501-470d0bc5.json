@@ -1,0 +1,94 @@
+{
+  "success": true,
+  "name": "后成眼-AB Shader实测",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.mode",
+      "response": {
+        "protocol": 1,
+        "id": "df618cdb293b400f8187b8d65c0922f5",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\df618cdb293b400f8187b8d65c0922f5",
+        "data": {
+          "text": "下次Play UseABInEditor=True"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.1764887000026647
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.play",
+      "response": {
+        "protocol": 1,
+        "id": "c074a74f5ed14c339fe190ff6ab2ae2c",
+        "success": true,
+        "error": "",
+        "message": "已进入 Play；业务准备状态请另用 GM 条件等待",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\c074a74f5ed14c339fe190ff6ab2ae2c",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 6.694091399986064
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.eye.check",
+      "response": {
+        "protocol": 1,
+        "id": "45a38ee715504c45a5670533f3b71323",
+        "success": true,
+        "error": "",
+        "message": "通过 51 条真实AB眼图标、双方Shader动态、离眼及回收断言",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\45a38ee715504c45a5670533f3b71323",
+        "data": {
+          "text": "通过 51 条真实AB眼图标、双方Shader动态、离眼及回收断言"
+        }
+      },
+      "polls": 1,
+      "seconds": 17.163675099989632
+    }
+  ],
+  "cleanup": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "editor.stop",
+      "response": {
+        "protocol": 1,
+        "id": "51a00ea0821e41a7a5d646e5bdda20a7",
+        "success": true,
+        "error": "",
+        "message": "已停止 Play",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\51a00ea0821e41a7a5d646e5bdda20a7",
+        "data": null
+      },
+      "polls": 1,
+      "seconds": 0.4947502999857534
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.mode",
+      "response": {
+        "protocol": 1,
+        "id": "a27608eca1e44e68a77e1e41387bebfa",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\a27608eca1e44e68a77e1e41387bebfa",
+        "data": {
+          "text": "下次Play UseABInEditor=False"
+        }
+      },
+      "polls": 1,
+      "seconds": 0.09925549998297356
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "name": "眼位扶持-资源门禁与PC构建",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.resources.validate",
+      "response": {
+        "protocol": 1,
+        "id": "f98c09b5132b4f41a2a1312bfd582f4c",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\f98c09b5132b4f41a2a1312bfd582f4c",
+        "data": {
+          "text": "保留186/222个Art资源，排除36个，打包6/9张图集；6张图集，187张图片唯一覆盖"
+        }
+      },
+      "polls": 1,
+      "seconds": 5.574549500015564
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.background.build",
+      "response": {
+        "protocol": 1,
+        "id": "cf57a1dc161642d7b50b4b63e68174ab",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\cf57a1dc161642d7b50b4b63e68174ab",
+        "data": {
+          "text": "StandaloneWindows64：29个包；六章背景包依赖为0，其它包不引用背景包 → D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\AssetBundles\\PC；已复制到 D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\StreamingAssets\\PC"
+        }
+      },
+      "polls": 1,
+      "seconds": 21.84889959997963
+    }
+  ],
+  "cleanup": []
+}

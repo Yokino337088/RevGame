@@ -1,0 +1,45 @@
+{
+  "success": false,
+  "name": "后成眼-完整规则验证",
+  "steps": [
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.eye.rules",
+      "response": {
+        "protocol": 1,
+        "id": "b57eb0dd402049abbc2deb1cbdb792ae",
+        "success": true,
+        "error": "",
+        "message": "完成",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\b57eb0dd402049abbc2deb1cbdb792ae",
+        "data": {
+          "text": "通过 177 条眼位、属性、真实攻速、补兵、重量级AI规则断言"
+        }
+      },
+      "polls": 1,
+      "seconds": 1.7932051999960095
+    },
+    {
+      "id": null,
+      "target": "editor",
+      "action": "game.impact.regression",
+      "response": {
+        "protocol": 1,
+        "id": "6a40cd50c5584b64b91eef18fa86ecf6",
+        "success": false,
+        "error": "AssertionFailed",
+        "message": "GameRuleChecks：验收失败：连击累计进度达到阈值时真实多攻击一次",
+        "jobDirectory": "D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Library\\RevolutionAutomation\\jobs\\6a40cd50c5584b64b91eef18fa86ecf6",
+        "data": null,
+        "assertion": {
+          "path": "/success",
+          "equals": true
+        }
+      },
+      "polls": 1,
+      "seconds": 3.559352999989642
+    }
+  ],
+  "cleanup": []
+}

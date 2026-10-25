@@ -7,9 +7,9 @@ Battle.StepsPerTick	4	一个行动周期拆成几个固定模拟小步（整数 
 Battle.AttackSpeedScale	1.35	攻击提速倍率：只乘出手进度，不改变模拟时钟，因此不会加快敌人走位、增益或回合倒计时。
 Battle.CombatBaseScale	0.6	单发伤害基础系数。实际伤害系数 = 本值 ÷ 攻击提速倍率：提高出手频率时用它摊薄单发伤害，维持总火力。
 Battle.EnemyMoveEveryTicks	1	敌人移动冷却为本值×标准行动周期（整数≥1）；当前1即1.25秒；不改变攻击频率。
-Battle.EyeHealSeconds	5	守眼回血的间隔（秒）。
-Battle.EyeHealRatio	0.05	守眼回血：每次回复最大生命的比例。
-Battle.EyeHealMinEyes	2	守眼回血的触发条件：棋子至少成几只眼（整数）。
+Battle.EyeHealSeconds	1	我方眼位四邻回血间隔，秒
+Battle.EyeHealRatio	0.03	我方眼位四邻每秒回复各自最大生命3%；多个眼不叠加
+Battle.EyeHealMinEyes	1	历史兼容字段；新规则按是否紧邻有效我方眼判定，不按整群眼数回血
 Damage.BaseMultiplier	1	基础伤害倍率（公式里的单位 1，保持 1 即可）。
 Damage.LockedMultiplier	2	目标被锁死（气为 0）时受到的伤害倍率。
 Damage.IsolatedMultiplier	1.2	目标孤立（只剩自己一格相连）时受到的伤害倍率。
@@ -69,17 +69,17 @@ Boss.EnrageCooldownScale	0.65	狂暴后所有技能冷却乘以该系数（越�
 Boss.CooldownPerChapter	0.06	每高一章，技能冷却缩短的比例：冷却 × (1 − (章节−1) × 该值)
 Boss.PowerPerChapter	0.12	每高一章，技能伤害提高的比例：倍率 × (1 + (章节−1) × 该值)
 Boss.CaptureHpRatio	0.2	主将血量不高于此比例且零气才能擒王；直接击杀仍获胜
-Event.EffectMultiplier	2	战斗增益效果倍率；数量类支援也受此倍率影响
-PlayerAI.MoveSeconds	3.75	玩家战术移动独立冷却秒数，不随攻速加快
+Event.EffectMultiplier	5	战斗增益效果倍率；数量类支援也受此倍率影响
+PlayerAI.MoveSeconds	3	玩家战术移动独立冷却秒数，不随攻速加快
 PlayerAI.RetreatDistance	2	远程在距敌不大于此格数时寻找更安全位置
-Region.IntervalSeconds	15	区域波动间隔秒数，优先随机敌人覆盖区域
+Region.IntervalSeconds	3	区域波动每3秒一次
 Region.WarningSeconds	1.5	区域高亮预警秒数
-Region.Size	3	方形区域边长，单位格
-Region.CellDelaySeconds	0.08	区域逐格波动间隔秒数（按行序号）
-Region.DamageHpRatio	0.04	波动对区域内双方棋子的最大生命伤害比例；大棋每次仅受击一次
-Bomb.IntervalSeconds	24	能量巨大自动投放间隔秒数
-Bomb.WarningSeconds	1.2	炸弹落地蓄力秒数，到点统一命中
-Bomb.DamageHpRatio	0.05	全场敌棋最大生命伤害比例；不按时间升级、不斩杀
+Region.Size	4	方形区域边长，单位格
+Region.CellDelaySeconds	0.05	区域逐格波动间隔秒数（按行序号）
+Region.DamageHpRatio	0.2	仅扣区域内敌棋最大生命15%；大棋每次仅受击一次
+Bomb.IntervalSeconds	6	能量巨大每8秒一次
+Bomb.WarningSeconds	1	炸弹落地蓄力秒数，到点统一命中
+Bomb.DamageHpRatio	0.3	直接扣全场敌棋最大生命30%
 Combat.BuffCap	5	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成
 EnemyAI.AttackRate	1.45	敌方普攻独立倍率（0.1～5）；含主将普攻，不加快技能预警；1恢复原频率，1.45提高45%。
 EnemyAI.ChaseSteps	3	无眼近战每次冲锋最多经过的空格数（1～4）；不穿棋、不占敌眼，马步保留原走法。
@@ -87,10 +87,19 @@ PlayerAI.FormationEnabled	1	远程自动整队开关（0关/1开）；只在战�
 PlayerAI.FormationMinCount	2	参与自动整队的远程棋最少数量（2～20）；已有相连阵型保持原位。
 PlayerAI.FormationSeconds	6	自动整队检查间隔（秒，1～60）；尊重手动移动冷却，失败也消耗间隔，避免反复搜索。
 Deploy.BatchCount	2	每个增援窗口最多落子数量（1～2）；每颗落地后重新检查人数、空格和气眼，不能穿透总预算。
-Damage.CriticalChance	0.18	玩家普通攻击暴击概率（0～1）；每次真实出手独立抽取，环境/Boss技能不抽取。
-Damage.CriticalMultiplier	1.8	暴击伤害倍率（1～10）；先乘真实伤害再结算护盾、防御，仅实际扣血才给暴击积分。
+Damage.CriticalChance	0.25	玩家普通攻击暴击概率（0～1）；每次真实出手独立抽取，环境/Boss技能不抽取。
+Damage.CriticalMultiplier	1.5	暴击伤害倍率（1～10）；先乘真实伤害再结算护盾、防御，仅实际扣血才给暴击积分。
 Score.KillPoints	100	玩家普通攻击或友方支援击杀一颗敌棋的基础积分（整数0～100000）；环境波动不归玩家击杀。
 Score.CriticalPoints	15	一次造成真实扣血的玩家暴击基础积分（整数0～100000）；致死暴击同时获得击杀分。
 Score.RoundGrowth	0.12	倍率的连续回合增长系数（0～10）；进度=(章节-1)×每章回合数+回合-1。
 Score.PieceGrowth	0.05	倍率的存活玩家棋数增长系数（0～10）；第一颗为基准，死亡后按当前数量重新计算。
 Score.MultiplierCap	20	积分倍率上限（1～1000）；倍率=min(上限,(1+进度×回合系数)×(1+额外存活棋数×棋数系数))。
+Eye.PlayerAttackBonus	1.5	我方驻守己方眼位攻击加成；1表示加100%
+Eye.PlayerSpeedBonus	1.5	我方驻守己方眼位攻速加成；1表示加100%
+Eye.PlayerDefenseBonus	2	我方驻守己方眼位防御加成；1表示同等伤害减半
+Eye.EnemyAttackBonus	0.3	敌方驻眼不增加攻击力
+Eye.EnemySpeedBonus	0.5	敌方驻眼仅增加50%攻速，不增加攻击或防御
+Eye.GuardDefenseBonus	0.5	有效我方眼上下左右友军防御+50%；多个眼不叠加
+Eye.SupportSeconds	2	战斗每3秒向一个空的我方眼补一颗弩兵；无空眼跳过
+Eye.ReviveHpRatio	1	有效我方驻眼棋致死时原地回满生命；每颗一生仅一次
+Eye.ReviveHealRatio	0.6	驻眼复活时四邻存活友军各回复最大生命40%；大棋去重

@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace RevGame.UI
 {
-    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal)]
+    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed class PreparePanel : RevUIPanel
     {
         [RevBind]

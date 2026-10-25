@@ -43,9 +43,10 @@ namespace RevGame.Editor
                     }
                     previous = current;
                     List<Piece> guards = new List<Piece>(battle.EnemyPieces).FindAll(p => !p.IsBoss);
-                    Check(guards.Count >= Balance.EnemyCountBase && guards.Count <= Balance.EnemyCountMax, "普通敌棋人数遵守Excel上下限，Boss另计");
+                    int garrisons = guards.FindAll(p => p.IsEyeGarrison).Count;
+                    Check(guards.Count >= Balance.EnemyCountBase && guards.Count - garrisons <= Balance.EnemyCountMax, "初始普通敌阵遵守配置，额外驻眼远程单独计算");
                     Check(guards.Exists(p => p.Def.Kind == PieceKind.Crossbow) && guards.Exists(p => p.Def.Kind == PieceKind.Archer) && guards.Exists(p => p.Def.Kind == PieceKind.MageFire), "重弩/弓箭/火法均存在");
-                    int expectedEyes = guards.Count >= 8 ? 2 : 1;
+                    int expectedEyes = guards.Count - garrisons >= 8 ? 2 : 1;
                     Check(guards.FindAll(p => p.EyeCount >= expectedEyes).Count >= (expectedEyes == 2 ? 8 : 5), "真实规则确认完整守眼骨架");
                     Check(guards.TrueForAll(p => !p.IsLocked), "敌棋出生不锁死");
                     Check(battle.Board.GetAllPieces().Count == battle.EnemyPieces.Count, "全部名单都有完整棋盘占格");
@@ -113,7 +114,8 @@ namespace RevGame.Editor
         /// <summary>推进真实战斗，记录每次人数增长的时刻；不能只验证一个“AI开启”开关。</summary>
         private static void VerifyBattleDeployment()
         {
-            int total = 0;
+            // 新增敌方驻眼后，孤立单兵可能在首个增援窗口前阵亡；用独立高生命固定输入验补兵时序，保留下面的真实单兵败局。
+            int total = BattleService.VerifyEyeDeploymentTiming(Check);
             foreach (int chapter in new[] { 1, 6 })
             {
                 foreach (int round in new[] { 1, Balance.NormalRoundsPerChapter, Balance.BossRoundIndex })
@@ -167,7 +169,7 @@ namespace RevGame.Editor
             string purpose;
             Check(EnemyTactics.TryChooseDeployment(probe.Board, reinforcement, 4, out chosen, out purpose), "战术算法能找到有效的接应位置");
             Check(probe.Board.Dump() == original && probe.Board.GetPiece(chosen) == null, "候选试算没有把棋落进实盘");
-            Check(!probe.Board.GetCell(chosen).IsEyeMarked, "自动落子不填任何已成立的眼位");
+            Check(probe.Board.GetCell(chosen).EyeSide != GameSide.Player, "敌方自动落子不闯玩家眼位");
         }
 
         private static List<Piece> MakeEnemies()
@@ -209,7 +211,8 @@ namespace RevGame.Editor
             {
                 if (enemy.EyeCount > 0) { Check(MoveRules.GetMoveTargets(battle.Board, enemy).Count == 0, "两眼守子不自动拆阵"); }
             }
-            var aim = new BoardModel(9);
+            var prediction = new BattleService(false, 1025);
+            var aim = prediction.Board;
             var sniper = new Piece(100, PieceCatalog.Get(PieceKind.Crossbow, StarTier.One), GameSide.Enemy);
             var near = new Piece(101, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
             var threat = new Piece(102, PieceCatalog.Get(PieceKind.Archer, StarTier.One), GameSide.Player);
@@ -221,7 +224,7 @@ namespace RevGame.Editor
             Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 1) == near, "一档AI优先就近目标");
             Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 2) == threat, "二档AI真实改为优先远程威胁");
             near.TakeDamage(near.Hp - 1);
-            Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 3) == near, "三档AI真实改为优先一击收残血");
+            Check(EnemyTactics.ChooseTarget(aim, sniper, shots, 3, prediction) == near, "三档AI真实改为优先一击收残血");
             BoardModel snapshot = battle.Board.CreateSnapshot();
             Piece bone = snapshot.GetPiecesOf(GameSide.Enemy)[0];
             string before = snapshot.Dump();

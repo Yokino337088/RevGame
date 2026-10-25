@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace RevGame.UI
 {
-    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Popup)]
+    [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Popup, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed class RewardPanel : RevUIPanel<RewardPanel.RewardData>
     {
         public sealed class RewardData

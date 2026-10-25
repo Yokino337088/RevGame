@@ -30,6 +30,30 @@ namespace RevGame.Pieces
         /// <summary>只有带王冠的主将决定擒王胜负；其余大棋是护卫。</summary>
         public bool IsKing { get; }
         public int EyeCount { get; internal set; }
+        /// <summary>棋群实际空格气数，不含加气增益；AI以此判断外围是否完全封住。</summary>
+        public int OpenLiberties { get; internal set; }
+        /// <summary>本棋是否正在有效的本方眼中驻守。仅规则刷新写入，离开、死亡或守眼骨架破坏立即失效。</summary>
+        public bool IsEyeGarrison { get; internal set; }
+        /// <summary>驻眼独立攻击倍率；乘在已有攻击结果上，反复刷新不会叠加。</summary>
+        public float EyeAttackMultiplier => IsEyeGarrison ? 1f + (Side == GameSide.Player ? Balance.PlayerEyeAttackBonus : Balance.EnemyEyeAttackBonus) : 1f;
+        /// <summary>驻眼独立攻速倍率；只影响攻击进度，不缩短移动冷却。</summary>
+        public float EyeSpeedMultiplier => IsEyeGarrison ? 1f + (Side == GameSide.Player ? Balance.PlayerEyeSpeedBonus : Balance.EnemyEyeSpeedBonus) : 1f;
+        /// <summary>敌方眼位不给防御；我方按等效生命倍率抵消伤害，至少保留1点有效伤害。</summary>
+        public float EyeDefenseMultiplier => IsEyeGarrison && Side == GameSide.Player ? 1f + Balance.PlayerEyeDefenseBonus : 1f;
+        /// <summary>是否为有效我方眼的上下左右守子；规则层重算，多个眼共享一颗棋也只给一份光环。</summary>
+        public bool HasEyeGuardAura { get; internal set; }
+        /// <summary>守眼光环独立防御倍率，和驻眼/本轮防御相乘；破眼立即还原。</summary>
+        public float EyeGuardDefenseMultiplier => HasEyeGuardAura ? 1f + Balance.EyeGuardDefenseBonus : 1f;
+        /// <summary>本棋一生只可驻眼复活一次；移动、升星、换轮不会重置，快照单独复制。</summary>
+        public bool EyeReviveUsed { get; private set; }
+        /// <summary>致死结算内部调用；仅仍在有效我方眼中且尚未消费资格的棋可恢复生命，不改变占格身份。</summary>
+        internal bool TryReviveInEye()
+        {
+            if (IsAlive || Side != GameSide.Player || !IsEyeGarrison || EyeReviveUsed) { return false; }
+            EyeReviveUsed = true;
+            Hp = System.Math.Max(1, (int)(MaxHp * Balance.EyeReviveHpRatio));
+            return true;
+        }
         public int ConnectedCells { get; internal set; }
         public int BonusLiberties { get; internal set; }
         internal float ActionProgress { get; set; }
@@ -134,6 +158,10 @@ namespace RevGame.Pieces
             Hp = source.Hp;
             Pos = source.Pos;
             EyeCount = source.EyeCount;
+            OpenLiberties = source.OpenLiberties;
+            IsEyeGarrison = source.IsEyeGarrison;
+            HasEyeGuardAura = source.HasEyeGuardAura;
+            EyeReviveUsed = source.EyeReviveUsed;
             ConnectedCells = source.ConnectedCells;
             BonusLiberties = source.BonusLiberties;
             ActionProgress = source.ActionProgress;
@@ -176,6 +204,14 @@ namespace RevGame.Pieces
             _roundHealthScale = scale;
             _maxHp = System.Math.Max(1, (int)(_baseMaxHp * scale));
             Hp = alive ? System.Math.Max(1, (int)(_maxHp * ratio)) : 0;
+        }
+
+        /// <summary>取出完整攻击次数并保留小数进度。1e-6只是float累计误差容限，防止1.9999999被截成1；不是策划攻速。</summary>
+        public int ConsumeCompletedActions()
+        {
+            int actions = (int)(ActionProgress + 0.000001f);
+            ActionProgress = System.Math.Max(0f, ActionProgress - actions);
+            return actions;
         }
 
         /// <summary>
