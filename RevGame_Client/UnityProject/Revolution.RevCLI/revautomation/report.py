@@ -64,6 +64,8 @@ def export_evidence(directory, title="自动化测试报告", subtitle="证据�
     动图（GIF）用来表达"随时间变化"的效果，单帧截图看不出来。
     """
     directory = Path(directory)
+    # CLI 第一次跑时目录往往还不存在；不建就会在写报告那一步抛 FileNotFoundError。
+    directory.mkdir(parents=True, exist_ok=True)
     images, animations = collect_media(directory, limit)
     rows = []
     for key, value in (summary or {}).items():

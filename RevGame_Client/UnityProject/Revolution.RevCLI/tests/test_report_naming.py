@@ -41,6 +41,12 @@ class ReportNamingTest(unittest.TestCase):
             self.assertIn("登录流程验收", text)
             self.assertIn("01-shot.png", text)
 
+    def test_export_creates_missing_directory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp) / "还没建" / "结果目录"
+            info = export_evidence(directory, "空目录首次导出", "无截图")
+            self.assertTrue(Path(info["html"]).is_file())
+
 
 class ReportStyleTest(unittest.TestCase):
     def test_style_is_self_contained(self):
