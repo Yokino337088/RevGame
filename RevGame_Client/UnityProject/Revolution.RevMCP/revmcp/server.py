@@ -127,7 +127,7 @@ class Server:
     def write_evidence(self, result, report_path):
         """测试必须留证据：把本次截图收进报告目录，生成带图/动图的 HTML 报告。
 
-        项目规矩：一次自动化测试的产出必须包含 report.html，里面有当时的画面；
+        项目规矩：一次自动化测试的产出必须包含一份「中文标题_日期.html」报告，里面有当时的画面；
         涉及动态效果（技能、位移、粒子、UI 过渡）时还要有 GIF。
         只有 {"success": true} 而没有图的报告，视为未完成。
         """
@@ -167,7 +167,7 @@ class Server:
         try:
             if len(copied) >= 2:
                 write_gif(copied, directory / "anim.gif", delay_ms=120, max_width=520)
-            title = "Revolution 自动化测试报告 · %s" % (result.get("name") or "plan")
+            title = "%s 自动化测试" % (result.get("name") or "计划")
             summary = {
                 "结论": "通过" if result.get("success") else "失败",
                 "步骤数": len(result.get("steps") or []),

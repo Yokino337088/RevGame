@@ -1,1 +1,0 @@
-通过：六章48棋持续负载，报告=Temp/BattleStress/before/result.json

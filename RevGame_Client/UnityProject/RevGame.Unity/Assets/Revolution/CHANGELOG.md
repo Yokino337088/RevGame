@@ -2,6 +2,25 @@
 
 ## [未发布]
 
+### 测试报告命名与版式（2026-10-26）
+
+- 报告不再统一叫 `report.html`：改为 `<中文标题>_<YYYY-MM-DD>.html`，日期取数据产生当天，非法文件名字符替换为 `-`。新增 `revautomation/report.py::report_file_name`，`evidence`、`capture --report`、`run --report` 与 RevMCP 自动证据全部走它。
+- 报告样式改为项目既有的工程手册风（纸色底 + 绿金主色、顶栏 / hero / 章节卡片 / 表格 / 图墙），常量更名 `EVIDENCE_CSS` → `REPORT_CSS`。目的是和《战斗性能优化规则》这类文档放一起时是同一套视觉语言，不是两个项目。
+- 新增 `Skills/revolution-ai-automation/references/report.md`：命名、目录结构（正文在顶层，`画面/` 与 `证据/` 进子目录）、版式设计变量、内容清单、截图压缩口径（1600 宽 JPEG / 动图 ≤720）、证据打包规则与被退回的反例。
+- Skill 产出规矩同步：过程文件（markers/status/逐帧 CSV）必须合进一个证据 zip，不要把几十个散文件摊在报告目录里。
+- 回归：RevCLI Python 24 项（含新增 5 项命名与版式测试）通过；未重开 Unity，本次不涉及编辑器侧代码。
+
+### RevCLI 更名与桥接提速（2026-10-26）
+
+- `Revolution.Automation` 更名为 `Revolution.RevCLI`：目录、README/文档、工作流与全部引用同步；Python 包名 `revautomation` 不变（内部 import 名），发布分支沿用 `automation` 以免旧克隆失效。MCP 参数 `--automation-root` 更名 `--cli-root`，旧名保留为别名。
+- 轮询节奏调整：Editor 桥接 100ms → 20ms，Python 侧 5ms 起步自适应（20ms/50ms 退让），`commands.json` 按 mtime 缓存。
+  **实测结论与预期不符**：真实编辑器上 `editor.status` 各 20 次，改造前 mean 107.7ms / p50 111.4ms，改造后 mean 107.9ms / p50 111.6ms，**无可测差异**。原因是空闲编辑器 `EditorApplication.update` 本身约 110ms 才触发一次，轮询间隔不是约束项；假桥单独测 Python 侧往返 9.2ms，只说明该段不是瓶颈。不要把本次改动当作提速成果，端到端延迟仍由编辑器 tick 与动作自身耗时决定。
+- 修复读取回执与写入方原子替换的竞争：Python 读取 `response.json` 偶发 `PermissionError`（与 2026-10-20 boss-ai 作业失败同源），改为有限次重试读取，只重试读、绝不重发动作。
+- 新增 `batch.call`：一次请求顺序执行最多 64 个编辑器动作，省掉每步一次往返。真实编辑器实测 10 步：分 10 次调用 994ms，一次批量 111ms（约 9 倍），编辑器内部 10 步仅 4.5ms——耗时几乎全在一次往返上。每步仍走同一分发逻辑，参数校验与 confirm 规则不变；默认遇错即停（`stopOnError=false` 可继续），禁止嵌套。配套 `RevClient.batch(...)`。
+- 批量只收「同一帧内能同步完成」的动作：`environment` 为 live/play 的（`gm.*`、`ui.*`、`runtime.*`、`scenario.*`、`test.*`）以及 `editor.play/stop/refresh/menu`、构建类一律明确拒绝并说明原因，避免后续步骤读到旧状态。**游戏运行时测试继续用 pipeline 或计划 JSON**，那里才有等待、断言与 finally 清理。实测：安全动作 2/2 通过；混入 `editor.play`、`editor.refresh`、`ab.build` 均被拒并给出可执行的替代建议。
+- 覆盖核对：能力目录与工程特性合计 122 个 Editor 动作，CLI 清单 125 条（多出 `editor.launch`/`editor.wait`/`scenario.validate` 三个客户端动作），**编辑器有而 CLI 缺 0 条**，本次未新增编辑器能力。
+- 回归：CLI Python 19 项、RevMCP Python 13 项通过；未在本次重开 Unity 复测真实往返，端到端数字以实际编辑会话为准。
+
 ### RevMCP 与 AI 自动化接口层（2026-10-22）
 
 - 新增 `Revolution.RevMCP` 标准库 Python MCP stdio 服务，统一发现/调用 Editor、真实 GM、运行时业务与显式 CLI/Python。提供 rev_discover/rev_call/rev_run、动态工具、精确业务断言、只读轮询、取消、finally 与截图 image 证据。

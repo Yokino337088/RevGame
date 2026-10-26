@@ -9,7 +9,7 @@ description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使�
 
 ## 找到并连接真实入口
 
-- 定位 Unity 工程、`Revolution.RevMCP/rev_mcp.py` 和相邻 `Revolution.Automation/rev.py`。始终显式传目标工程，不能默认运行框架 Demo。
+- 定位 Unity 工程、`Revolution.RevMCP/rev_mcp.py` 和相邻 `Revolution.RevCLI/rev.py`。始终显式传目标工程，不能默认运行框架 Demo。
 - MCP 已连接时先 `rev_discover`；否则执行 `python <rev_mcp.py> --project <工程> discover`。独立 Player 使用 `--runtime-endpoint <runtime.json>`。需要配置时读 [连接和注册](references/connection.md)。
 - `unavailable` 会说明缺 Play、桥接、编译或凭据等原因。编辑模式下没有游戏能力是正常边界，不能从离线 commands 清单推断已注册业务。
 - 在进行场景切换、Play、构建之前记录原场景、dirty/playing/paused 与当前工单。普通测试已授权的启动/停止可自行执行；未保存内容必须保留，不能为了测试丢弃。编译后用 `editor.wait` 等到新心跳稳定，再重新发现能力。
@@ -27,29 +27,34 @@ description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使�
 - `finally` 放清理；取消后仍执行清理。清理失败要保留并继续尝试剩余步骤，不能报整体通过。工具 confirm 字段表示调用参数要求，不增加也不替代用户授权；按照已有任务授权判断。
 - 读取 Editor Console 或 `runtime.logs`，比较本次新增 Error/Exception；画面要求用 `runtime.screenshot` 的真实 PNG/MCP image 证据。截图能证明看到的画面，不能替代业务数值断言。
 
-## 产出规矩（强制）：HTML 报告 + 截图 + GIF
+## 产出规矩（强制）：报告 + 截图 + GIF
 
-每次测试结束都必须产出一份**可以直接发给别人看**的 HTML 报告，只有 `{"success": true}` 不算完成。
+每次测试结束都必须交一份**可以直接发给别人看**的 HTML 报告，只有 `{"success": true}` 不算完成。
 
-- 报告必须是 `report.html`，视觉与《进度同步》那批文档一致（蓝色 hero、目录、卡片、表格、图墙）；不要另发明一套样式。
-- 必须带**当时的截图**：至少覆盖初始态、关键操作后、失败现场（没失败就放最终态）。截图是画面证据，不能替代数值断言。
+- **文件名是 `<中文标题>_<YYYY-MM-DD>.html`**，例如 `第一章流程自动化测试_2026-10-26.html`；日期取数据产生当天。不要叫 `report.html`：一个目录躺三份 `report.html`，事后分不清哪次是哪次。`rev.py evidence`、`capture --report` 和 `rev_run` 都按这个规则命名。
+- **版式沿用项目已有的工程手册风**（纸色底、绿金主色、顶栏 + hero + 章节卡片 + 表格 + 图墙），样式来自 `revautomation/report.py` 的 `REPORT_CSS`。项目里已经有同类文档时，以那份文档的样式为准，不要另发明一套配色。
+- 必须带**当时的截图**：初始态、关键操作后、失败现场（没失败就放最终态）。截图是画面证据，不能替代数值断言。
 - **动态效果必须给 GIF**：技能、位移、粒子、UI 过渡、节奏类表现，单帧看不出来，要连拍成动图（默认 10–20 帧、100–150ms 间隔）。
 - 报告里要写清：结论、每步断言、失败首个原因、环境（工程/平台/模式）、截图与动图、未验证项。结论只由断言决定，图片只证画面。
+- **证据要收进归档，不要散**：报告目录只留「报告 + `画面/` + 证据压缩包」。每轮的 markers、status、逐帧 CSV 合进一个 zip，不要几十个文件摊在同一层。
+- 图片按网页可用的体积交付：截图转 1600 宽 JPEG（1920×1080 的 PNG 约 3MB → 约 300KB），动图宽 ≤ 720。只压体积，不裁剪、不拼接、不美化。
+
+具体规范、目录结构和反例见 [报告规范](references/report.md)。
 
 生成方式（三选一，按手头有什么）：
 
 ```powershell
 # 1) 一遍连拍 + 合成 + 出报告（需要 Unity 在 Play）
-python Revolution.Automation/rev.py --project <工程> --mode live capture --out results\anim.gif --frames 12 --interval 120 --report
+python Revolution.RevCLI/rev.py --project <工程> --mode live capture --out results\anim.gif --frames 12 --interval 120 --report
 
 # 2) 已经有图，只补报告
-python Revolution.Automation/rev.py evidence --directory results\<本次目录> --title "第一章流程自动化测试" --subtitle "截图与动图"
+python Revolution.RevCLI/rev.py evidence --directory results\<本次目录> --title "第一章流程自动化测试" --subtitle "截图与动图"
 
 # 3) 只有零散截图，先合成动图（离线，不需要 Unity）
-python Revolution.Automation/rev.py gif a.png b.png c.png --out results\anim.gif --delay 120
+python Revolution.RevCLI/rev.py gif a.png b.png c.png --out results\anim.gif --delay 120
 ```
 
-用 `rev_run` 跑计划时，RevMCP 会**自动**把本次截图收进报告目录、合成 GIF 并写 `report.html`（返回里的 `evidencePath`）。若发现没有报告或没有图，先补证据再回报结论。
+用 `rev_run` 跑计划时，RevMCP 会**自动**把本次截图收进报告目录、合成 GIF 并写出带日期的报告（返回里的 `evidencePath`）。若发现没有报告或没有图，先补证据再回报结论。
 
 ## 收尾与报告
 
