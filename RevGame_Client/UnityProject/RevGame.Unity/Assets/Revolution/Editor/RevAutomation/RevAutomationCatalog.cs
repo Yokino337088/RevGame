@@ -36,6 +36,7 @@ namespace Revolution.Editor
             new RevAutomationCapability { id = "ab.configure", description = "局部修改 AB 配置字段", environment = "edit", keys = new string[] { "configJson" } },
             new RevAutomationCapability { id = "ab.scan", description = "读取分包布局", environment = "edit", keys = new string[] {  } },
             new RevAutomationCapability { id = "ab.validate", description = "资源与平台 Shader 校验", environment = "edit", keys = new string[] { "target" } },
+            new RevAutomationCapability { id = "batch.call", description = "一次请求顺序执行多个动作（最多 64 步），省掉每步一次的往返等待", environment = "either", keys = new string[] { "steps", "stopOnError" } },
             new RevAutomationCapability { id = "ab.build", description = "收集、校验、构建、映射与首包拷贝", environment = "edit", keys = new string[] { "target" } },
             new RevAutomationCapability { id = "ab.map", description = "仅生成映射和路径常量", environment = "edit", keys = new string[] {  } },
             new RevAutomationCapability { id = "ab.res-paths", description = "生成资源路径常量", environment = "edit", keys = new string[] {  } },
@@ -107,6 +108,26 @@ namespace Revolution.Editor
             var attr = method.GetCustomAttribute<RevAutomationActionAttribute>();
             return new RevAutomationCapability { id = attr.Name, description = attr.Description, environment = attr.Environment,
                 keys = attr.Keys, confirm = attr.Confirm, resumesAfterReload = attr.ResumeAfterReload };
+        }
+
+        /// <summary>
+        /// 查询动作声明的运行环境（edit / either / live / play）。未登记返回 null。
+        /// 批量执行要靠它判断某一步能不能在同一帧里安全跑完。
+        /// </summary>
+        public static string EnvironmentOf(string action)
+        {
+            var builtin = Builtins.FirstOrDefault(b => b.id == action);
+            if (builtin != null) { return builtin.environment; }
+            try
+            {
+                var method = Extension(action);
+                return method == null ? null : method.GetCustomAttribute<RevAutomationActionAttribute>().Environment;
+            }
+            catch (InvalidOperationException)
+            {
+                // 重复或签名无效的扩展：交给 Execute 报原来的错，这里不掩盖。
+                return null;
+            }
         }
 
         public static MethodInfo Extension(string action)

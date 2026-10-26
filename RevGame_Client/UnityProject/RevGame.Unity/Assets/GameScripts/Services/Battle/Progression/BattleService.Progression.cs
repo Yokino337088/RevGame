@@ -57,6 +57,20 @@ namespace RevGame.Services
         /// </summary>
         public int UnlockedChapter { get; private set; } = 1;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>GM解锁本次运行的全部章节。服务拥有解锁值；不伪造通关、发奖励或改当前战役，退出程序后不保存。</summary>
+        public int UnlockAllChaptersForDevelopment()
+        {
+            // 重复执行不重复广播；使用项目章节总数，避免GM与正式选关范围不一致。
+            if (UnlockedChapter < Consts.ChapterCount)
+            {
+                UnlockedChapter = Consts.ChapterCount;
+                RevEvent.DispatchEvent(Events.ProgressChanged);
+            }
+            return UnlockedChapter;
+        }
+#endif
+
         public float TeamAttackBonus
         {
             get

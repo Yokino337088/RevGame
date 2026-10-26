@@ -1,0 +1,259 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light">
+<title>RevGame · 九路围棋PvP技术选型_2026-10-26</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7;--sky:#e7eef6;--sand:#f8eedb;--red:#a34e3a;--rose:#fbefe9}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}a{color:var(--green);text-underline-offset:4px}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #b48442;outline-offset:4px}button:disabled{opacity:.5}.topbar{height:76px;padding:0 5vw;border-bottom:1px solid var(--line);background:#fbfcf8;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:800;letter-spacing:2px;white-space:nowrap}.brand i{font-style:normal;display:inline-grid;place-items:center;width:34px;height:34px;margin-right:12px;background:var(--green);color:white;border-radius:11px}.tag,.eyebrow,.section-label{font:12px/1.6 Consolas,monospace;letter-spacing:2px}.tag{color:var(--muted);margin-left:12px}.toolbar{display:flex;gap:12px;align-items:center;font-size:12px}.print-button{border:1px solid #c7d2c3;background:transparent;border-radius:30px;padding:7px 15px;color:var(--green)}.hero{max-width:1260px;margin:auto;padding:64px 40px 42px;display:grid;grid-template-columns:1.28fr 1fr;gap:58px;align-items:center}.eyebrow,.section-label{color:var(--green)}h1{font-size:clamp(36px,4.2vw,58px);line-height:1.26;letter-spacing:-2px;margin:18px 0 22px;font-weight:800}h1 em{font-style:normal;color:var(--red)}.lead{font-size:16px;color:var(--muted);max-width:620px}.hero-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:25px}.pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:8px 17px;border-radius:30px;background:#fff;text-decoration:none;font-size:13px}.pill.primary{background:var(--green);border-color:var(--green);color:white}.stamp{margin-top:23px;font:12px/1.8 Consolas,"Microsoft YaHei",monospace;color:#748073}.verdict-card{position:relative;padding:29px;background:linear-gradient(135deg,#fffdf6,#eaf0e4);border:1px solid #d6e2d2;border-radius:26px;box-shadow:0 18px 48px #334f331a;overflow:hidden}.verdict-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px;font-size:13px}.verdict-title{font-size:27px;font-weight:800;line-height:1.4;margin:0 0 11px}.verdict-card p{font-size:13px;color:var(--muted);margin:9px 0}.skill-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:22px}.skill-cell{display:grid;place-items:center;min-height:43px;border-radius:9px;background:#f7f8f2;border:1px solid #cfd6c9;color:#798276;font:700 14px Consolas,monospace}.skill-cell.complete{background:var(--green);color:white;border-color:var(--green)}.skill-cell.partial{background:#f5e6c8;border-color:#dfc79c;color:#886428}.skill-cell.blocked{background:#f4ddd2;border-color:#dab8aa;color:#9b4b36}.grid-legend{display:flex;gap:13px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:11px}.grid-legend i{display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:2px;background:var(--green)}.grid-legend i.partial{background:#dec296}.grid-legend i.blocked{background:#ce927a}.grid-legend i.pending{background:#cfd6c9}.badge{display:inline-flex;align-items:center;border:1px solid transparent;border-radius:20px;padding:2px 10px;font-size:11px;line-height:1.8;white-space:nowrap}.badge.pass{background:#e5efe2;color:#315e43;border-color:#cadcc3}.badge.fail{background:#fae8dd;color:#9a4c2c;border-color:#e7c6b0}.badge.pending{background:#eef0e9;color:#6a7567;border-color:#d9ded2}.metrics{max-width:1180px;margin:0 auto 44px;display:grid;grid-template-columns:repeat(4,1fr);padding:23px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.metric{padding:0 26px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric strong{font:700 35px/1.5 Consolas,monospace;color:var(--green)}.metric strong small{font-size:17px}.metric p{font-size:12px;line-height:1.7;color:var(--muted);margin:3px 0 0}.workspace{max-width:1180px;margin:auto;display:grid;grid-template-columns:210px minmax(0,1fr);gap:45px;padding-bottom:75px}.sidebar{position:sticky;top:28px;align-self:start}.sidebar h2{font-size:11px;letter-spacing:3px;color:var(--muted);margin:0 0 16px}.sidebar nav{display:flex;flex-direction:column;gap:3px}.sidebar nav a{display:flex;gap:10px;font-size:12px;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;text-decoration:none}.sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}.sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}.sidebar .note{margin-top:20px;padding:18px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.chapter{padding:32px 34px;margin-bottom:24px;border:1px solid var(--line);border-radius:18px;background:#fffefa;box-shadow:0 5px 15px #315c310b}.chapter h2{font-size:26px;line-height:1.4;letter-spacing:-.5px;margin:8px 0 22px}.chapter h3{font-size:17px;margin:26px 0 10px;color:#254e3d}.chapter p{margin:15px 0}.chapter strong{color:#254e3d}.chapter ul,.chapter ol{padding-left:22px}.chapter li{margin:9px 0}.callout{padding:15px 18px;border-left:3px solid var(--green);border-radius:9px;background:var(--mint);font-size:13px;line-height:1.85;margin:20px 0}.callout b{display:block;letter-spacing:.5px;margin-bottom:4px}.callout.warn{background:var(--rose);border-color:#ba7655;color:#7a4932}.callout.tip{background:var(--sky);border-color:#6b8fae;color:#36516d}.table-scroll{overflow:auto;border:1px solid var(--line);border-radius:11px;margin:22px 0}table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.75;text-align:left}th{background:#edf2e9;color:#375441;font-weight:700}th,td{padding:12px 13px;vertical-align:top;border-bottom:1px solid #e4e9e0}tr:last-child td{border-bottom:0}tr:nth-child(even) td{background:#fafbf6}td:first-child{font-weight:600}code{font:12px/1.75 Consolas,"Microsoft YaHei",monospace;overflow-wrap:anywhere;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px}pre{padding:18px;background:#edf2ea;border-radius:11px;overflow:auto;line-height:1.75;font-size:12px;white-space:pre-wrap;word-break:break-word}pre code{background:none;border:0;padding:0}.record{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:15px 0;background:#fcfdf9}.record-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.record-head h3{margin:0;font-size:15px}.record p{font-size:13px;line-height:1.85;color:var(--muted);margin:10px 0 0}.key-values{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0 22px}.key-values div{padding:11px 0;border-bottom:1px solid #e8ece3;min-width:0}.key-values dt{font-size:11px;color:var(--muted)}.key-values dd{margin:2px 0 0;font-size:13px;overflow-wrap:anywhere}.failure{border-left:3px solid #b86e4c;background:#fcf0e8;color:#7a4932}.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.mini-card{padding:16px;border:1px solid var(--line);border-radius:12px;background:#fafcf7}.mini-card strong{font:700 26px/1.5 Consolas,monospace}.mini-card p{margin:3px 0 0;font-size:11px;color:var(--muted)}.skill-evidence{padding-top:22px;margin-top:25px;border-top:1px solid var(--line)}.evidence-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:15px}.evidence-head h3{margin:3px 0 0;font-size:21px}.evidence-head .eyebrow{font-size:10px}.screenshots{display:grid;grid-template-columns:1fr 1fr;gap:12px}figure{margin:0;min-width:0}.shot{display:block;position:relative;overflow:hidden;border:1px solid #d2d9cd;border-radius:11px;background:#e9ebe3;line-height:0}.shot img{width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;display:block;transition:transform .25s}.shot:hover img{transform:scale(1.02)}.image-label{position:absolute;left:9px;top:9px;font:10px/1.5 Consolas,monospace;letter-spacing:1px;background:#fffef2ee;color:#315341;border:1px solid #d5ddca;padding:3px 7px;border-radius:5px}.zoom{position:absolute;right:8px;bottom:8px;font:10px/1.5 "Microsoft YaHei",sans-serif;background:#25352fdd;color:white;padding:3px 7px;border-radius:5px}figcaption{font-size:11px;color:var(--muted);padding:6px 2px 0}.caption-note{font-size:12px;color:var(--muted)}.fact-strip{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.fact-strip span{font-size:11px;background:#f0f4ec;border:1px solid #e1e7da;border-radius:6px;padding:4px 9px}.fact-strip b{color:var(--green);margin-left:3px}details{border:1px solid var(--line);border-radius:9px;margin:17px 0;background:#fcfdf8}summary{padding:11px 15px;cursor:pointer;font-size:12px;color:var(--green)}details pre{margin:0 12px 12px;font-size:11px;max-height:340px;overflow:auto}.todo-list{list-style:none;padding:0!important;counter-reset:tasks}.todo-list li{position:relative;padding:0 0 15px 43px;margin:15px 0;border-bottom:1px solid #e6ebe1}.todo-list li:last-child{border-bottom:0;padding-bottom:0}.todo-list li:before{counter-increment:tasks;content:counter(tasks);position:absolute;left:0;top:2px;display:grid;place-items:center;width:28px;height:28px;border:1px solid #d3ddcc;border-radius:50%;background:#edf3e8;color:var(--green);font:700 12px Consolas,monospace}.todo-list strong{display:block;font-size:14px}.todo-list small{font-size:12px;line-height:1.85;color:var(--muted)}.resource-links{display:flex;gap:10px;flex-wrap:wrap;margin:17px 0}.resource-links a{font-size:12px;border:1px solid #ccd8c5;border-radius:7px;padding:7px 12px;text-decoration:none;background:#fff}.muted{color:var(--muted);font-size:12px}.footnote{font-size:11px;color:var(--muted);margin:10px 0}.endmark{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding:27px 5vw;color:var(--muted);font-size:12px}.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:20;background:var(--green)}dialog{border:1px solid #c8d4c0;border-radius:17px;padding:14px;max-width:95vw;width:1440px;max-height:94vh;background:#fffefa;color:var(--ink);box-shadow:0 25px 90px #15251b55}dialog::backdrop{background:#17251ddd;backdrop-filter:blur(4px)}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;padding:2px 4px 12px}.dialog-head button{border:1px solid #ccd8c5;border-radius:20px;background:white;color:var(--green);padding:4px 13px}.dialog-img{display:block;width:100%;height:auto;max-height:80vh;object-fit:contain;border-radius:8px;background:#e8eae3}
+@media(max-width:1200px){.workspace{padding:0 25px 55px;grid-template-columns:185px minmax(0,1fr);gap:25px}.metrics{margin-left:25px;margin-right:25px}.hero{gap:30px}.chapter{padding:28px}}@media(max-width:900px){.workspace{display:block}.sidebar{position:static;margin-bottom:23px}.sidebar h2,.sidebar .note{display:none}.sidebar nav{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.sidebar nav a{font-size:11px;padding:7px}.hero{padding:40px 25px;grid-template-columns:1.15fr 1fr;gap:25px}.hero h1{font-size:39px}.verdict-card{padding:22px}.skill-grid{gap:3px}.skill-cell{min-height:34px}.tag{display:none}.metric{padding:0 17px}.metric strong{font-size:29px}.screenshots{gap:12px}}@media(max-width:620px){body{font-size:14px}.topbar{height:65px;padding:0 20px}.brand{font-size:13px;letter-spacing:1px}.toolbar>a{display:none}.hero{display:block;padding:32px 22px}.hero h1{font-size:39px;letter-spacing:-1px}.hero .lead{font-size:14px}.verdict-card{margin-top:28px}.metrics{grid-template-columns:1fr 1fr;gap:17px 0;padding:21px 0;margin:0 20px 27px}.metric{padding:0 12px}.metric:nth-child(2){border-right:0}.metric strong{font-size:30px}.workspace{padding:0 14px 36px}.sidebar nav{grid-template-columns:1fr 1fr}.chapter{padding:24px 19px;border-radius:14px}.chapter h2{font-size:23px}.table-scroll table{min-width:610px}.screenshots{grid-template-columns:1fr}.evidence-head{align-items:flex-start;gap:10px}.evidence-head .badge{font-size:10px}.key-values{grid-template-columns:1fr}.mini-grid{gap:7px}.mini-card{padding:11px}.mini-card strong{font-size:20px}.record-head{align-items:flex-start}.record{padding:16px}.hero-links{gap:8px}.pill{font-size:12px;padding:8px 13px}.image-label{font-size:10px}.endmark{display:block}.endmark span{display:block;margin:5px 0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}@media print{body{font-size:10pt;background:white}.topbar{height:45px;padding:0}.toolbar,.sidebar,.progress,.zoom,dialog{display:none}.hero{display:block;padding:20px 0}.hero h1{font-size:30pt}.verdict-card{margin:20px 0;box-shadow:none}.hero-links{display:none}.workspace{display:block;padding:0}.chapter{border:0;border-top:1px solid var(--line);padding:20px 0;box-shadow:none;break-inside:auto}.metrics{margin:0}.screenshots{grid-template-columns:1fr 1fr}.skill-evidence,figure,.record{break-inside:avoid}.table-scroll{overflow:visible}.table-scroll table{min-width:0}.endmark{padding:20px 0}a{color:inherit;text-decoration:none}}
+
+.verdict-title{color:var(--green)}.round-grid{display:grid;grid-template-columns:repeat(11,1fr);gap:5px;margin-top:22px}.round-grid span{display:grid;place-items:center;padding:11px 0;border-radius:7px;background:var(--green);color:#fff;font:700 13px Consolas,monospace}.round-grid span:last-child{background:#a76e2d}.chapter{animation:arrive .5s both}@keyframes arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.timeline{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.timeline span{background:#eff4e9;border:1px solid #d6e1ce;border-radius:8px;padding:9px 13px;font-size:12px}.timeline span:last-child{background:#e2eddf}.rounds td,.rounds th{text-align:center;white-space:nowrap}.rounds .boss td{background:#f8eedb}.rounds th:first-child,.rounds td:first-child{text-align:left}figure+figure{margin-top:0}.gallery-group{margin:28px 0}.gallery-group h3{margin:0 0 15px}.chapter ul{font-size:13px}.big-number{font:800 64px/1.2 Consolas,monospace;color:var(--green)}.narrow{max-width:650px}.note-small{font-size:12px;color:var(--muted)}
+@media(max-width:700px){.round-grid{gap:3px}.round-grid span{padding:8px 0;font-size:11px}.big-number{font-size:50px}}
+@media(prefers-reduced-motion:reduce){.chapter{animation:none}}
+ .round-grid{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:22px}.round-cell{display:grid;place-items:center;height:36px;border-radius:8px;background:#e8eee3;font:700 13px Consolas,monospace}.round-cell.complete{background:var(--green);color:white}.round-cell.boss.complete{background:var(--gold)}.rounds{font-size:11px}.screenshots{row-gap:20px}@media(max-width:600px){.round-grid{gap:3px}.round-cell{height:28px;font-size:10px}.table-scroll{margin-inline:-10px}}@media(max-width:600px){.topbar{height:auto;flex-wrap:wrap;gap:10px}.toolbar{width:100%;justify-content:space-between}.brand{min-width:0}}
+/* 本组文档补充：围棋示意图与步骤条，沿用同样的纸墨配色。 */
+.figure{background:#fbfaf4;border:1px solid var(--line,#dce3da);border-radius:14px;padding:18px;margin:18px 0}
+.figure svg{display:block;width:100%;max-width:440px;height:auto;margin:0 auto}
+.figure figcaption{margin-top:12px;font-size:12.5px;color:#6b7a70;text-align:center;line-height:1.7}
+.steps{counter-reset:step;margin:18px 0;padding:0;list-style:none}
+.steps li{counter-increment:step;position:relative;padding:12px 16px 12px 52px;border:1px solid var(--line,#dce3da);
+border-radius:10px;background:#fffefa;margin-bottom:10px}
+.steps li::before{content:counter(step,decimal-leading-zero);position:absolute;left:16px;top:12px;
+font:700 13px/1.6 Consolas,monospace;color:#326956}
+.steps li b{display:block;margin-bottom:2px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.split>div{border:1px solid var(--line,#dce3da);border-radius:10px;padding:14px 16px;background:#fffefa}
+.split h4{margin:0 0 8px;font-size:14px;color:#326956}
+.split .bad h4{color:#a4491f}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+</style></head><body>
+<div class="progress" aria-hidden="true"></div>
+<header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">REVGAME / 技术选型 / PVP</span></div>
+<span class="tag">2026.10.26 · 九路围棋 PvP · 技术选型 v2（客户端权威）</span></header>
+<div class="hero"><div><div class="eyebrow">REVGAME / 技术选型 / PVP</div>
+<h1>客户端算规则，<br><em>服务端只做转发。</em></h1>
+<p class="lead">不做反作弊、不做服务端权威。围棋是确定性规则，同一份内核加上同一条落子序列，
+两端棋面必然一致——所以"谁算"不影响结果。服务端退化成消息管道，一行规则校验都不写。</p>
+<div class="hero-links"><a class="pill primary" href="#s2">先看同步方案怎么否决 ↗</a><a class="pill" href="#s12">直接看放弃了什么</a></div>
+<div class="stamp">2026.10.26 · 九路围棋 PvP · 技术选型 v2（客户端权威）</div></div>
+<div class="verdict-card"><div class="verdict-top"><span>选型结论</span><span class="badge pass">客户端权威 + 服务端转发</span></div>
+<div class="verdict-title">谁按下落子，谁那边就算数；对手收到后自己重算一遍</div>
+<p>服务端只负责配对、转发、感知断线。落子合法性、提子、胜负全在客户端。
+作弊无法防止——这是明确接受的代价，不是遗漏。</p></div>
+</div>
+<div class="metrics"><div class="metric"><strong>1<small> 次</small></strong><p>每手一次转发，服务端零计算</p></div><div class="metric"><strong>0<small> 帧</small></strong><p>不需要帧同步与插值</p></div><div class="metric"><strong>2<small> 端</small></strong><p>各自跑同一份 GoCore</p></div><div class="metric"><strong>200<small> 手</small></strong><p>序列即棋面，也即录像</p></div></div>
+<div class="workspace"><aside class="sidebar"><h2>文档目录</h2><nav><a href="#s1"><span>01</span>结论与取舍</a><a href="#s2"><span>02</span>为什么不用帧同步</a><a href="#s3"><span>03</span>真正要解决的问题</a><a href="#s4"><span>04</span>Fantasy 结构映射</a><a href="#s5"><span>05</span>落子序列即真源</a><a href="#s6"><span>06</span>规则内核 GoCore</a><a href="#s7"><span>07</span>协议清单</a><a href="#s8"><span>08</span>一次落子的链路</a><a href="#s9"><span>09</span>落子建议放在哪</a><a href="#s10"><span>10</span>容量估算</a><a href="#s11"><span>11</span>重连与超时</a><a href="#s12"><span>12</span>放弃了什么</a></nav></aside>
+<main>
+<section id="s1" class="chapter"><div class="section-label">DECISION / 01</div>
+<h2>结论与取舍</h2>
+<p>你的判断成立，而且比"用不到同步"更进一步：<strong>围棋连"服务端裁决"都不需要</strong>。理由是三条硬性质：</p>
+<ul>
+<li><b>确定性</b>：规则里没有任何随机与物理，给同样的输入必然得到同样的输出。</li>
+<li><b>状态可重建</b>：一串落子坐标就能还原唯一棋面，不需要传快照。</li>
+<li><b>输入稀疏</b>：一局 200 手、10 分钟，服务端只做转发，负载可忽略。</li>
+</ul>
+<p>所以服务端剩下的职责只有三件：<strong>配对、转发、感知断线</strong>。原来那套"服务端权威 + 幂等校验 + 时钟裁决"整套都可以删掉。</p>
+<div class="callout"><p><strong>但有一个东西不能一起删：接收方校验。</strong>它和反作弊不是一回事——
+反作弊是防"蓄意作弊的人"，接收方校验是防"对方客户端的一个 bug 把我这边搞崩"。
+收到落子后仍然要用同一份内核试算一次，非法就拒绝并请求重同步。这层是健壮性，不是安全。</p></div>
+<h3>1.1 这个决定换来什么</h3>
+<table><thead><tr><th>少做的</th><th>省下的</th></tr></thead><tbody>
+<tr><td>服务端规则计算</td><td>不用在服务端跑 GoRules，不用维护一份服务端内核对拍</td></tr>
+<tr><td>防作弊与反外挂</td><td>不用做行为分析、异常检测、封号流程</td></tr>
+<tr><td>时钟权威</td><td>不用处理"服务端时钟与客户端时钟偏差"的一堆边界</td></tr>
+<tr><td>幂等与重放保护</td><td>只保留"接收方丢弃重复 seq"，不做服务端账本</td></tr>
+</tbody></table>
+<h3>1.2 这个决定要求什么</h3>
+<p>代价集中在一处：<strong>两端的内核必须完全同源</strong>。以前双端不一致还有服务端兜底，现在没有兜底了，
+不一致就会直接表现为"两边棋面不一样"。所以第 06 节的对拍测试从"建议"变成<strong>必须做</strong>。</p>
+</section>
+
+<section id="s2" class="chapter"><div class="section-label">REJECT / 02</div>
+<h2>为什么不用帧同步和状态同步</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>方案</th><th>它解决什么问题</th><th>放到围棋里会怎样</th><th>结论</th></tr></thead><tbody><tr><td>帧同步（Lockstep）</td><td>大量单位连续运动、每帧输入要对齐，如 RTS、格斗</td><td>要求每帧采样输入并保证双端逐位一致；围棋几秒才有一个输入，99.9% 的帧是空转，带宽与确定性成本全是白付</td><td>否决</td></tr><tr><td>状态同步（周期快照）</td><td>状态复杂且频繁变化，如 MMO 的位置、血量</td><td>棋面本来就是离散的，一手只改 1~19 个格；周期快照反而引入快照与落子交错的乱序问题，丢一个包就要全量重发</td><td>否决</td></tr><tr><td>服务端权威 + 客户端预测</td><td>防作弊、需要第三方裁定</td><td>本期不做反作弊，等于多写一套服务端内核 + 幂等账本 + 时钟裁决，收益为零</td><td>本期不做</td></tr><tr><td>纯 P2P</td><td>没有服务器成本</td><td>NAT 穿透、暴露 IP、掉线无感知，成本比转发更高</td><td>否决</td></tr><tr><td><strong>客户端权威 + 服务端转发</strong></td><td>回合制、离散状态、不需要防作弊</td><td>落子方本地即生效，对手收到后自己重算，服务端一条消息转发完事</td><td><strong>采用</strong></td></tr></tbody></table></div>
+<p>围棋有几个特性决定了它天生适合事件驱动。这些同时也是"以后要不要改联机方案"的判断依据：</p>
+<ul>
+<li><b>状态是离散的</b>：81 个格子，每格三种取值，没有任何连续量，不存在插值需求。</li>
+<li><b>输入是稀疏的</b>：一局 200 手、10 分钟，平均 3 秒一次输入。</li>
+<li><b>没有物理与随机</b>：除贴目常数外没有随机性，不存在"双端算不一样"的风险。</li>
+</ul>
+</section>
+
+<section id="s3" class="chapter"><div class="section-label">PROBLEM / 03</div>
+<h2>真正要解决的问题</h2>
+<p>去掉服务端权威之后，需要解决的问题从"四个大件"缩到五条具体的事，全部围绕"两端看到同一个棋面"：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>问题</th><th>不做会怎样</th><th>做法</th></tr></thead><tbody><tr><td>消息顺序与去重</td><td>乱序或重发导致多下一手、棋面错乱</td><td>每方 <code>seq</code> 单调递增；接收方按 <code>seq</code> 丢弃重复、发现缺口即请求重同步</td></tr><tr><td>接收方校验</td><td>对方一个 bug 或非法手把我这边搞崩</td><td>收到后用同一份 GoCore 试算，非法则不落子并请求全量序列（健壮性，不是反作弊）</td></tr><tr><td>两端内核同源</td><td>两边规则不同，棋面直接分歧，且没有第三方能纠正</td><td>同一份源码 + 协议带版本号硬拦 + EditMode 对拍测试（见 06.3）</td></tr><tr><td>断线重连</td><td>切后台回来一片空白，只能弃局</td><td>本地存 <code>MoveList</code>，重放即可；缺口向对手或服务端补</td></tr><tr><td>时间显示与超时</td><td>两边倒计时数字不一样，看着像卡了</td><td>开局广播一次时间戳，各自用本地时钟算；落子带 <code>elapsedMs</code> 让对手校正</td></tr></tbody></table></div>
+<div class="callout warn"><p><strong>接收方校验的具体做法：</strong>收到 <code>G2C_GoOpponentMove</code> 后，用自己的 GoCore 试算这一手。
+合法就落下并播放动画；非法就<strong>不落子</strong>，向对手请求一次全量序列重同步，并在界面上提示"对手数据异常，已重新同步"。
+整个过程不弹错、不闪退、不卡死。</p></div>
+</section>
+
+<section id="s4" class="chapter"><div class="section-label">MAPPING / 04</div>
+<h2>Fantasy 结构映射</h2>
+<p>因为没有服务端计算，这套映射比"服务端权威"版本薄了一层：房间不再需要一个"裁判循环"，只需要能拿到双方的 Session。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>职责</th><th>Fantasy 机制</th><th>关键 API</th><th>说明</th></tr></thead><tbody><tr><td>登录、大厅、匹配队列</td><td>Root Scene（配置在 Fantasy.config）</td><td>—</td><td>常驻，进程启动时创建</td></tr><tr><td>单局房间（只配对与转发）</td><td><code>SubScene</code></td><td><code>Scene.CreateSubScene(parent, SceneType.GoRoom)</code></td><td>一局一个，<code>Close()</code> 即清空该房间全部实体</td></tr><tr><td>落子转发</td><td>客户端消息 Handler</td><td><code>MessageRPC&lt;C2G_GoMove, G2C_GoMoveResult&gt;</code></td><td>Handler 里取对手 Session 直接 <code>Send</code>，不做规则计算</td></tr><tr><td>断线感知</td><td>Session 断开事件</td><td>Session 的 Disconnect 回调</td><td>通知房间另一方，并保留 90 秒重连窗口</td></tr><tr><td>对局记录（可选）</td><td>MongoDB</td><td><code>ISupportedSerialize</code>、<code>scene.World.Database</code></td><td>转发时顺手存序列；便于排查，不承担判定职责</td></tr><tr><td>多机部署</td><td>ServiceDiscovery</td><td>—</td><td>房间少时单机即可，M4 之后再考虑</td></tr></tbody></table></div>
+<h3>4.1 连 Roaming 也不需要</h3>
+<p>Roaming（<code>SessionRoamingComponent</code>）解决的是玩家在多个后端服之间迁移，消息要跟着人走。
+围棋一局两人、10–15 分钟、玩家不会在对局中途跑去别的服，而且服务端本来就不算东西——没有状态需要跟着人迁移。</p>
+<p><strong>做法：</strong>Session 连到 Map 服，房间 SubScene 里直接持有两个 <code>Session</code> 引用，落子 Handler 里调到对手的 Session 上 <code>Send</code> 即可。
+一条消息一跳，没有路由表、没有 Address 解析、没有 Terminus 生命周期。</p>
+<h3>4.2 房间代码骨架</h3>
+<p>整个房间逻辑大概就这么长。注意 Handler 里<strong>没有一行规则计算</strong>：</p>
+<div class="table-scroll"><pre style="margin:0"><code>// 房间只做两件事：记下两个人、把一方的落子转给另一方
+sealed class GoRoomComponent : Entity
+{
+    public long RoomId;
+    public long BlackUid;
+    public long WhiteUid;
+    public Session BlackSession;
+    public Session WhiteSession;
+    public readonly List&lt;GoMove&gt; MoveList = new();   // 顺手留一份，便于复盘与重连
+}
+
+// 落子 Handler：不做任何规则计算，只转发
+public sealed class C2G_GoMoveHandler : MessageRPC&lt;C2G_GoMove, G2C_GoMoveResult&gt;
+{
+    protected override async FTask Run(Session session, C2G_GoMove request, G2C_GoMoveResult response, Action reply)
+    {
+        var room = session.GetComponent&lt;GoSessionComponent&gt;().Room;
+        var target = request.Side == GoSide.Black ? room.WhiteSession : room.BlackSession;
+
+        room.MoveList.Add(new GoMove { Seq = request.Seq, X = request.X, Y = request.Y, Side = request.Side });
+        target.Send(new G2C_GoOpponentMove { Seq = request.Seq, X = request.X, Y = request.Y, Side = request.Side });
+
+        reply();
+        await FTask.CompletedTask;
+    }
+}</code></pre></div>
+</section>
+
+<section id="s5" class="chapter"><div class="section-label">CORE / 05</div>
+<h2>落子序列即真源</h2>
+<p>服务端不算规则之后，这条设计反而更重要了——因为<strong>序列变成唯一的现场记录</strong>：</p>
+<div class="callout"><p><strong>棋面是派生数据，序列是原始数据。</strong>客户端的棋面随时可以由本地的 <code>MoveList</code> 重放出来；
+服务端顺手也留一份（转发时顺手 append，成本为零），但<strong>不依赖它</strong>——它是便利，不是权威。</p></div>
+<p>为什么两端各存一份而不是集中存：</p>
+<ul>
+<li><b>重连</b>：自己本地就有序列，重连后直接重放，甚至不需要问服务端。</li>
+<li><b>复盘</b>：序列回放即录像，不需要额外存中间帧。</li>
+<li><b>分歧兜底</b>：万一两边棋面不一致，对比双方序列的第一处差异就能定位到具体哪一手出的问题。</li>
+<li><b>观战</b>：新观众从起始重放到当前手即可。</li>
+</ul>
+<p>服务端那份副本的用途是"双方都掉线时留给对局一个记录"，以及便于排查问题，不承担判定职责。</p>
+</section>
+
+<section id="s6" class="chapter"><div class="section-label">KERNEL / 06</div>
+<h2>规则内核：GoCore 是唯一的裁判</h2>
+<p>这一节原本是"服务端与客户端要共用内核"，现在变成更硬的约束：<strong>客户端 A 与客户端 B 必须共用内核</strong>，
+因为没有任何第三方能纠正分歧。</p>
+<h3>6.1 现有实现不能复用</h3>
+<p>现有 <code>BoardModel</code> 与 <code>GoRules</code> 是变体棋（大棋 + 加气 + 攻击），语义不同，不能拿来下正经围棋：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>现有实现</th><th>为什么不能用于正经围棋</th></tr></thead><tbody><tr><td><code>Piece.Size</code> 支持 1×1 / 2×2 / 3×3</td><td>围棋棋子永远是单点，多格棋子的连通、气、边界算法全部不适用</td></tr><tr><td><code>BonusLiberties</code> 加气</td><td>围棋的气是纯几何结果，可加气等于改了规则</td></tr><tr><td><code>IsEyeGarrison</code> / <code>HasEyeGuardAura</code></td><td>变体玩法的眼防护机制，围棋里不存在</td></tr><tr><td>依赖 <code>UnityEngine</code> 与 MonoBehaviour 视图</td><td>纯逻辑内核不该有 UI 与场景依赖，也没法做无头自对弈测试</td></tr><tr><td>每格一个 <code>Cell</code>、每子一个 <code>Piece</code> 对象</td><td>自对弈与批量校验要跑几万次，对象分配成本高</td></tr></tbody></table></div>
+<h3>6.2 GoCore 的设计约束</h3>
+<ul>
+<li><b>纯逻辑</b>：<code>netstandard2.1</code>，不引用 UnityEngine，客户端与服务端都能编（服务端虽然不算规则，但工具与测试要用）。</li>
+<li><b>扁平存储</b>：<code>byte[81]</code>（0 空 / 1 黑 / 2 白），不建对象图。连通块用可复用的 <code>int[]</code> 栈做 flood fill，单次落子零分配。</li>
+<li><b>超级劫用 Zobrist</b>：每格每种颜色一个随机数，局面哈希 = 异或；本地维护 <code>HashSet&lt;ulong&gt;</code> 存历史哈希，落子前查重。</li>
+<li><b>单一入口</b>：<code>TryPlay(x, y, out PlayResult)</code>，返回是否合法、提了哪些子、是否成劫、是否终局。<strong>不提供</strong>"只校验不落下"的旁路，避免自己这边状态漂移。</li>
+<li><b>确定性</b>：同样的输入序列必须得到同样的输出，<strong>禁止</strong>使用 <code>Random</code>、<code>DateTime.Now</code>、字典遍历顺序等不稳定输入。</li>
+</ul>
+<h3>6.3 双端同源怎么保证</h3>
+<p>没有服务端兜底之后，这一节是全案最该投入的地方。三种做法：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>做法</th><th>优点</th><th>缺点</th><th>建议</th></tr></thead><tbody><tr><td>单一源码目录 + 两端引用</td><td>物理上只有一份，不可能改歪</td><td>Unity 的 asmdef 要指向项目外目录，需确认编译顺序</td><td><strong>采用</strong></td></tr><tr><td>编成 dll 双端引用</td><td>版本清晰</td><td>每次改动要重编 dll，Unity 侧还要处理 .meta</td><td>备选</td></tr><tr><td>两边各写一份</td><td>各自舒服</td><td>必然漂移，且没有服务端兜底，漂移会直接变成对局事故</td><td>禁止</td></tr></tbody></table></div>
+<div class="callout warn"><p><strong>三道保险，缺一不可：</strong>
+① <b>协议带内核版本号</b>，开局前比对，不一致直接拒绝开局并提示升级——这是最省的兜底；
+② <b>EditMode 对拍测试</b>，同一批随机序列跑两遍断言棋面哈希一致；
+③ <b>对局中轻量对账</b>，每 20 手附带一次局面哈希，不一致就触发重同步。前两条必做，第三条可选但便宜。</p></div>
+</section>
+
+<section id="s7" class="chapter"><div class="section-label">PROTOCOL / 07</div>
+<h2>协议清单</h2>
+<p>去掉服务端校验后，消息从"请求-裁决-广播"退化成"请求-转发"。消息数量少了三分之一：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>消息</th><th>方向</th><th>字段</th><th>说明</th></tr></thead><tbody><tr><td><code>C2G_GoEnter</code></td><td>C → S</td><td>roomId, token</td><td>进入房间；token 由匹配结果下发</td></tr><tr><td><code>G2C_GoStart</code></td><td>S → C（双方）</td><td>blackUid, whiteUid, mySide, komi, coreVersion, startUtcMs</td><td>开局；<code>coreVersion</code> 不一致直接拒绝开局</td></tr><tr><td><code>C2G_GoMove</code></td><td>C → S</td><td>seq, x, y, side, elapsedMs</td><td>落子方本地已生效，发出去只是通知</td></tr><tr><td><code>G2C_GoOpponentMove</code></td><td>S → C（仅对手）</td><td>seq, x, y, side, elapsedMs</td><td><strong>原样转发</strong>，服务端不校验规则</td></tr><tr><td><code>C2G_GoResync</code></td><td>C → S</td><td>fromSeq</td><td>发现缺口或非法手时请求补发</td></tr><tr><td><code>G2C_GoResync</code></td><td>S → C</td><td>moveList[], fromSeq</td><td>服务端副本补发；没有副本则转给对手代发</td></tr><tr><td><code>G2C_GoOpponentLeft</code></td><td>S → C</td><td>reason</td><td>对手掉线 / 认输 / 超时，只通知不裁决</td></tr><tr><td><code>G2C_GoEnd</code></td><td>C → S → C</td><td>result, territory, komi, reason</td><td>由结束方算出结果，服务端只转发；双方各自显示</td></tr></tbody></table></div>
+</section>
+
+<section id="s8" class="chapter"><div class="section-label">FLOW / 08</div>
+<h2>一次落子的完整链路</h2>
+<ol class="steps">
+<li><b>落子方本地试算</b>用本地 GoCore 跑 <code>TryPlay</code>，非法则当场拦下并提示原因，不发请求。此刻<strong>本地就是权威</strong>。</li>
+<li><b>本地立即生效</b>落子动画与棋面同时更新，没有"待确认"状态——不需要等服务端回话。</li>
+<li><b>发送</b> <code>C2G_GoMove{seq, x, y, side}</code>，不等应答（fire-and-forget），失败由重发兜底。</li>
+<li><b>服务端转发</b>记 <code>seq</code> 与落子，原样转给对手的 Session，<strong>不计算、不校验规则</strong>。</li>
+<li><b>对手接收</b>用同一份 GoCore 试算这一手。</li>
+<li><b>合法则落下</b>播放动画，棋面推进到同一状态。</li>
+<li><b>非法则</b>不落子，发 <code>C2G_GoResync</code> 请求全量序列，界面提示"已重新同步"，不弹错。</li>
+<li><b>对手超时未收到</b>则本地记一笔，下一手到达时按 <code>seq</code> 判断是否缺手，缺则重同步。</li>
+</ol>
+<div class="callout"><p><strong>延迟体验：</strong>落子方是零延迟（本地即生效），对手是"一个消息往返"。
+同城时约 30–60ms，棋类完全够用。<strong>不需要客户端预测</strong>——预测的前提是"服务端可能否决我"，现在不存在这种情况。</p></div>
+</section>
+
+<section id="s9" class="chapter"><div class="section-label">HINT / 09</div>
+<h2>落子建议放在哪</h2>
+<p>服务端已经不算规则了，再让它算建议也不合适——它连棋面都没有。所以<strong>建议放客户端</strong>：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>方案</th><th>延迟</th><th>能否限制次数</th><th>成本</th><th>结论</th></tr></thead><tbody><tr><td>客户端本地算</td><td>&lt; 1ms</td><td>只能自律，可被改</td><td>零</td><td><strong>采用</strong></td></tr><tr><td>服务端算</td><td>一个往返</td><td>能强约束</td><td>要让服务端也维护棋面，与不算规则的决定冲突</td><td>本期不做</td></tr></tbody></table></div>
+<p>评分项（权重可配，M1 之后按对局数据调）：</p>
+<ul>
+<li><b>提子价值</b>：这一手能提的子数；能救回自己被叫吃的块同样加分。</li>
+<li><b>气的变化</b>：落子后己方块气数增加、敌方块气数减少。</li>
+<li><b>角与边</b>：9 路盘角部价值高，开局优先推荐空角与星位附近。</li>
+<li><b>连接与切断</b>：能连上自己的孤棋，或切断对方两块。</li>
+<li><b>做眼</b>：这一手能形成真眼时额外加分。</li>
+</ul>
+<div class="callout warn"><p><strong>两件必须写在界面上的事：</strong>
+① 建议基于启发式评分，不是必胜下法；<br>
+② 每局 3 次的限制是<strong>客户端自律</strong>，改客户端可以绕过——我们不校验，也不追究。</p></div>
+</section>
+
+<section id="s10" class="chapter"><div class="section-label">CAPACITY / 10</div>
+<h2>容量估算</h2>
+<p>服务端只转发，成本比"权威"版本低一个量级：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>项</th><th>数值</th><th>说明</th></tr></thead><tbody><tr><td>单次落子转发</td><td>约 60 字节</td><td>seq + 坐标 + 时长，服务端只搬运</td></tr><tr><td>服务端单步开销</td><td>微秒级</td><td>不跑规则，只做序列 append 与 Session 转发</td></tr><tr><td>单局序列</td><td>约 200 条 / 4KB</td><td>两端各存一份，服务端可选存一份</td></tr><tr><td>1000 并发房间</td><td>约 333 手/秒转发</td><td>单核远未饱和</td></tr><tr><td>SubScene 创建开销</td><td>毫秒级</td><td>共享父 Scene 的对象池与定时器</td></tr><tr><td>对局记录存储</td><td>10 万局约 2–5GB</td><td>MongoDB，按 roomId 建索引</td></tr></tbody></table></div>
+<p>结论：<strong>性能完全不是问题。</strong>真正的瓶颈只剩匹配池冷启动（人少时匹配不到人），
+所以策划案的数值表里给了"匹配 60 秒转人机"的兜底。</p>
+</section>
+
+<section id="s11" class="chapter"><div class="section-label">RESILIENCE / 11</div>
+<h2>断线重连与超时</h2>
+<h3>11.1 重连</h3>
+<p>没有服务端权威之后，重连反而更简单——<strong>本地就有完整序列</strong>：</p>
+<ul>
+<li>短暂断网（切后台、地铁）：本地 <code>MoveList</code> 完整，重连后直接继续，连同步都不需要，只补收断线期间对手的落子。</li>
+<li>客户端重启：本地存档里存了 <code>roomId</code> + <code>MoveList</code>，启动后重放并请求服务端补发缺口。</li>
+<li>两边序列对不上：比对第一处差异，以<strong>落子方</strong>的序列为准重同步（因为他本地立即生效，他的序列必然包含他自己那一手）。</li>
+<li>超过 90 秒未回来，判该方认输。</li>
+</ul>
+<h3>11.2 超时</h3>
+<p>没有服务端时钟，超时只能靠两端各自计时。这在围棋里完全可行，因为读秒精度是 30 秒级，几百毫秒的差异无所谓：</p>
+<ul>
+<li>开局时服务端广播一次 <code>startUtcMs</code>（只是时间戳，不是裁决）；两端各自用本地时钟算流逝。</li>
+<li>每手落子带一个 <code>elapsedMs</code>（落子方自己报的思考时长），对手据此更新自己的显示，避免两边数字跳。</li>
+<li>超时判定：<strong>等待方</strong>在本地计时到 0 后，宣布"对方超时"并结束对局。</li>
+<li>争议可能性：如果一方故意报小 <code>elapsedMs</code> 拖时间，对手会先判他超时——所以这个字段被对手监督，比服务端权威版更容易作弊的空间其实不大。</li>
+</ul>
+<div class="callout"><p><strong>掉线不暂停时钟。</strong>暂停会被用来拖时间。90 秒重连窗口已经能覆盖手机切后台。</p></div>
+</section>
+
+<section id="s12" class="chapter"><div class="section-label">TRADEOFF / 12</div>
+<h2>放弃了什么</h2>
+<p>这一节是给评审和未来的自己看的。选择客户端权威就等于放弃了下面这些东西，写成清单，避免以后有人以为这是"没做完"：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>放弃的东西</th><th>后果</th><th>接受的理由</th></tr></thead><tbody><tr><td>防作弊</td><td>改客户端可以下非法手、无限提示、伪造思考时长</td><td>只做好友局与休闲对战，不设赌注、不做实物奖励</td></tr><tr><td>排位公信力</td><td>段位只对本机有意义，可以刷</td><td>段位定位为自我参考，不做官方榜</td></tr><tr><td>争议裁定</td><td>双方各执一词时没有第三方判</td><td>好友局，冲突线下解决</td></tr><tr><td>服务端权威序列</td><td>服务端那份副本可能缺手（断线时）</td><td>以落子方本地序列为准，冲突时重同步</td></tr><tr><td>跨设备续局</td><td>换手机后本地序列丢失，无法续下</td><td>本期内不做；若要支持，改为服务端存序列并允许拉取</td></tr></tbody></table></div>
+<h3>12.1 如果以后要开排位</h3>
+<p>只要出现"排名有公信力"的需求，服务端权威这一层就必须补回来，而且是<strong>从协议层重做</strong>，不是加个开关。
+到那一步需要的东西文档里都留着：服务端 GoCore 同源编译、<code>seq</code> 幂等账本、服务端时钟裁决。
+好消息是 <code>MoveList</code> 即真源的设计让迁移很平滑——搬序列，不搬状态。</p>
+<h3>12.2 被否决的同步方案</h3>
+<ul>
+<li><b>帧同步</b>：输入稀疏、无连续量，确定性与带宽成本全是白付。</li>
+<li><b>状态同步</b>：周期快照会引入乱序与全量重发，反而更复杂。</li>
+<li><b>Roaming 跨服迁移</b>：一局两人、10 分钟，没有迁移场景，也没有状态要迁移。</li>
+<li><b>纯 P2P</b>：连"消息中转"都省了，但 NAT 穿透、双方互相暴露 IP、掉线无感知，成本比转发更高。</li>
+<li><b>服务端权威反作弊</b>：本期明确不做，见第 12 节。</li>
+</ul>
+</section>
+<div class="endmark">— 文档结束 —</div></main></div>
+<footer class="footnote"><span>配套文档：九路围棋PvP策划案_2026-10-26.html</span><span>Fantasy 侧 API 以当前仓库框架版本为准</span></footer>
+<script>
+const links=[...document.querySelectorAll('.sidebar nav a')],chapters=[...document.querySelectorAll('.chapter')];let busy=false;
+function tick(){const max=document.documentElement.scrollHeight-innerHeight;const bar=document.querySelector('.progress');if(bar)bar.style.width=(max>0?scrollY/max*100:0)+'%';let active=chapters[0];for(const s of chapters){if(s.getBoundingClientRect().top<innerHeight*.35)active=s;}links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active.id));busy=false;}
+addEventListener('scroll',()=>{if(!busy){busy=true;requestAnimationFrame(tick);}},{passive:true});tick();
+</script></body></html>

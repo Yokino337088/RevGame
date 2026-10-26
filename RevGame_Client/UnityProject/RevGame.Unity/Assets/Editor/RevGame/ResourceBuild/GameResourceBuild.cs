@@ -21,6 +21,7 @@ namespace RevGame.Editor
             { "UI/Panel", "ui_panels" }, { "UI/Item", "ui_items" },
             // 过场只依赖字体/程序星雾；单独分包，不能为显示加载条先拉入所有战斗界面的依赖。
             { "UI/Panel/Loading", "ui_loading" },
+            { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
@@ -103,6 +104,15 @@ namespace RevGame.Editor
                     desired[path] = bundle;
                 }
             }
+            // 棋盘常驻材质与专属Shader随同章背景打包；预制体只在运行时借当前章，不硬引用六章。
+            for (int i = 0; i < chapterShaders.Length; i++)
+            {
+                string name = chapterShaders[i];
+                string bundle = "background_" + name.ToLowerInvariant();
+                desired["Assets/GameShader/Board/" + name + "_SurfaceShader.shader"] = bundle;
+                desired["Assets/GameRes/Material/Board/" + name + "_Surface.mat"] = bundle;
+            }
+            desired["Assets/GameRes/Material/Board/PlacementMagic.mat"] = "material_board";
             foreach (var pair in desired) { SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value); }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。
             GameSpriteAtlasBuild.Configure();

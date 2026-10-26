@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4267013600
+CRC: 3115465128
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 78794f01bbbf8b1fd8fb732c13d77cf9
+    Hash: e62299cc52fa109c76a0bb9a8858e706
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 78794f01bbbf8b1fd8fb732c13d77cf9
+    Hash: e62299cc52fa109c76a0bb9a8858e706
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -21,8 +21,10 @@ Assets:
 - Assets/GameShader/Combat/MeleeImpact.shader
 - Assets/GameShader/Pieces/ArcanePiece.shader
 - Assets/GameShader/Combat/RegionRift.shader
+- Assets/GameShader/Board/PlacementMagic.shader
 - Assets/GameShader/Combat/BossSkill.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
+- Assets/GameShader/UI/SlimeTutorialHighlight.shader
 - Assets/GameShader/Combat/RangedProjectile.shader
 - Assets/GameShader/Combat/ScoreSpark.shader
 Dependencies: []

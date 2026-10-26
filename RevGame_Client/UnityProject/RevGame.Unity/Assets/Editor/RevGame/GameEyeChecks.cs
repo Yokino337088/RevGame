@@ -61,7 +61,7 @@ namespace RevGame.Editor
                 {
                     SpriteRenderer eye = cell.transform.Find("眼").GetComponent<SpriteRenderer>();
                     if (!eye.enabled) { continue; }
-                    Require(eye.sprite != null && eye.sprite.name == "CartoonEyes", "眼位不再引用Checkmark");
+                    Require(eye.sprite != null && eye.sprite.name.StartsWith("EyeBlink_", StringComparison.Ordinal) && cell.EyeFrameCount == 4, "眼位不再引用Checkmark");
                     Require(eye.sprite.packed && eye.sprite.texture.width > 72, "眼图标来自真实AB的Atlas V2页面");
                     eyeIcons++;
                 }

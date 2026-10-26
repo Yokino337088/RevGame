@@ -156,6 +156,7 @@ namespace RevGame.View
             }
             RevUI.Close<HomePanel>();
             RevUI.Close<LevelSelectPanel>();
+            RevUI.Close<TutorialPanel>();
             if (screen == GameScreen.Home || screen == GameScreen.LevelSelect)
             {
                 ShowMenuAsync(screen, version);
@@ -279,6 +280,10 @@ namespace RevGame.View
                     throw new InvalidOperationException("开局手牌视图必须完整显示6张");
                 }
             }
+            if (screen == GameScreen.Battle && RevServices.GetRequired<GameFlow>().IsTutorialActive)
+            {
+                if (await RevUI.OpenAsync<TutorialPanel>() == null) { throw new InvalidOperationException("引导浮层加载失败"); }
+            }
             progress?.Invoke(1f);
             await RevTask.Yield();
         }
@@ -306,6 +311,7 @@ namespace RevGame.View
             RevTimer.CancelAllOf(this);
             RevUI.Close<HomePanel>();
             RevUI.Close<LevelSelectPanel>();
+            RevUI.Close<TutorialPanel>();
         }
     }
 }

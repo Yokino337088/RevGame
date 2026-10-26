@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3211145269
+CRC: 3890908858
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0a2c0c6f1c5da5995aef1f042d959230
+    Hash: f10fa4d386b682e9aaf0312703a38058
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0a2c0c6f1c5da5995aef1f042d959230
+    Hash: f10fa4d386b682e9aaf0312703a38058
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,6 +20,7 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Art/UI/UI_Settlement_imgBK.png
 - Assets/GameRes/Art/UI/UI_Tavern_btnClose.png
 - Assets/GameRes/Art/UI/UI_Tip_imgBK.png
 - Assets/GameRes/Art/UI/UI_Tavern_Background.png

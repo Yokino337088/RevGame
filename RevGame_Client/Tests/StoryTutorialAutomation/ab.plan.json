@@ -1,0 +1,976 @@
+{
+  "name": "真实GameScene教学完整AB回归",
+  "steps": [
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/episode",
+          "equals": "opening"
+        },
+        {
+          "path": "/data/isolated",
+          "equals": true
+        },
+        {
+          "path": "/data/scoreIsolated",
+          "equals": true
+        },
+        {
+          "path": "/data/guideFrameCount",
+          "equals": 3
+        },
+        {
+          "path": "/data/guidePacked",
+          "equals": true
+        }
+      ],
+      "until": {
+        "path": "/data/soundStarted",
+        "equals": true,
+        "timeoutSeconds": 30,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "nextFirst",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "nextFirst#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next0",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next0#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next1",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next1#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next2",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next2#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next3",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next3#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next4",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next4#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next5",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next5#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "next6",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "next6#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/handCount",
+          "equals": 6
+        },
+        {
+          "path": "/data/renderedCells",
+          "equals": 81
+        },
+        {
+          "path": "/data/renderedPieces",
+          "equals": 4
+        },
+        {
+          "path": "/data/prepareOpen",
+          "equals": true
+        },
+        {
+          "path": "/data/hudOpen",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialOpen",
+          "equals": true
+        },
+        {
+          "path": "/data/step",
+          "equals": "SelectCard"
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.3
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.logs",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/errorCount",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "tutorial.finish",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "card1"
+      },
+      "id": "wrongCard",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "wrongCard#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "SelectCard"
+        },
+        {
+          "path": "/data/handCount",
+          "equals": 6
+        },
+        {
+          "path": "/data/preparationGranted",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "card0"
+      },
+      "id": "realCard",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "realCard#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "SealLiberty"
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 0,
+        "arg1": 0
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "SealLiberty"
+        },
+        {
+          "path": "/data/handCount",
+          "equals": 6
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 4,
+        "arg1": 3
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "SelectAlly"
+        },
+        {
+          "path": "/data/liberties",
+          "equals": 0
+        },
+        {
+          "path": "/data/locked",
+          "equals": true
+        },
+        {
+          "path": "/data/handCount",
+          "equals": 5
+        },
+        {
+          "path": "/data/playerCount",
+          "equals": 4
+        },
+        {
+          "path": "/data/renderedPieces",
+          "equals": 5
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 3,
+        "arg1": 4
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "MoveAlly"
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 0,
+        "arg1": 0
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "MoveAlly"
+        },
+        {
+          "path": "/data/liberties",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 2,
+        "arg1": 4
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/step",
+          "equals": "Ready"
+        },
+        {
+          "path": "/data/liberties",
+          "equals": 1
+        },
+        {
+          "path": "/data/locked",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "until": {
+        "path": "/data/preparationGranted",
+        "equals": true,
+        "timeoutSeconds": 12,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnReady"
+      },
+      "id": "realReady",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "realReady#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialActive",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialOpen",
+          "equals": false
+        },
+        {
+          "path": "/data/phase",
+          "equals": "Battle"
+        },
+        {
+          "path": "/data/episode",
+          "equals": "chapter1"
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "chapterNext0",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "chapterNext0#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "chapterNext1",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "chapterNext1#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "chapterNext2",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "chapterNext2#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/playing",
+          "equals": false
+        },
+        {
+          "path": "/data/enemyHp",
+          "equals": 0
+        }
+      ],
+      "until": {
+        "path": "/data/phase",
+        "equals": "Settle",
+        "timeoutSeconds": 60,
+        "intervalSeconds": 0.3
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.logs",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/errorCount",
+          "equals": 0
+        }
+      ]
+    }
+  ],
+  "finally": [
+    {
+      "target": "gm",
+      "action": "RevGame/返回主界面",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/tutorialOpen",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialActive",
+          "equals": false
+        },
+        {
+          "path": "/data/renderedCells",
+          "equals": 0
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 30,
+        "intervalSeconds": 0.3
+      }
+    },
+    {
+      "target": "editor",
+      "action": "editor.stop"
+    },
+    {
+      "target": "editor",
+      "action": "game.story.test-disarm"
+    }
+  ]
+}

@@ -1,0 +1,452 @@
+{
+  "name": "开场重播与六章解锁GM",
+  "steps": [
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/unlockedChapter",
+          "equals": 1
+        },
+        {
+          "path": "/data/openingComplete",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/播放初始剧情",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/episode",
+          "equals": "opening"
+        },
+        {
+          "path": "/data/blocked",
+          "equals": true
+        }
+      ],
+      "until": {
+        "path": "/data/playing",
+        "equals": true,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "opening0",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "opening0#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "opening1",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "opening1#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "opening2",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "opening2#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "opening3",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "opening3#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "opening4",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "opening4#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "opening5",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "opening5#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/playing",
+          "equals": false
+        },
+        {
+          "path": "/data/openingComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialActive",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/打开选关",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter6"
+      },
+      "expect": [
+        {
+          "path": "/data/items/0/interactable",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/解锁六章关卡",
+      "arguments": {}
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/解锁六章关卡",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/unlockedChapter",
+          "equals": 6
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter1"
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/interactable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter2"
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/interactable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter3"
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/interactable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter4"
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/interactable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter5"
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/interactable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter6"
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/interactable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "chapter6"
+      },
+      "id": "enterSix",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "enterSix#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/chapter",
+          "equals": 6
+        },
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/episode",
+          "equals": "chapter6"
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    }
+  ],
+  "finally": [
+    {
+      "target": "gm",
+      "action": "RevGame/返回主界面",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/playing",
+          "equals": false
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    }
+  ]
+}

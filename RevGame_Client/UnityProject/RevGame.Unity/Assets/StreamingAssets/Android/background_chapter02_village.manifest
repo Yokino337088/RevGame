@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 999972713
+CRC: 909591918
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6276045169144c421eb38e70b73ba1e7
+    Hash: 24a1dfe0533d9d4d5257ec12124f4435
   TypeTreeHash:
     serializedVersion: 2
     Hash: b30fce1a9ad74efb72be6c308c56e365
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6276045169144c421eb38e70b73ba1e7
+    Hash: 24a1dfe0533d9d4d5257ec12124f4435
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -20,7 +20,9 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Material/Board/Chapter02_Village_Surface.mat
 - Assets/GameShader/Background/Chapter02_Village_Shader.shader
 - Assets/GameRes/ChapterBackground/Chapter02_Village.png
+- Assets/GameShader/Board/Chapter02_Village_SurfaceShader.shader
 - Assets/GameRes/Material/Background/Chapter02_Village_Material.mat
 Dependencies: []

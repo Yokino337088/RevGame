@@ -1,0 +1,811 @@
+{
+  "name": "魔法史莱姆高亮与GM教学重播",
+  "steps": [
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/playing",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/新手教学",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/episode",
+          "equals": "tutorial"
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "introA",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "introA#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "introB",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "introB#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/step",
+          "equals": "SelectCard"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/overlapCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/tutorialLayout/textFits",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/shader",
+          "equals": "RevGame/UI/SlimeTutorialHighlight"
+        },
+        {
+          "path": "/data/tutorialLayout/supported",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/raycast",
+          "equals": false
+        },
+        {
+          "path": "/data/renderedCells",
+          "equals": 81
+        },
+        {
+          "path": "/data/handCount",
+          "equals": 6
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "card0"
+      },
+      "id": "realCard",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "realCard#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/step",
+          "equals": "SealLiberty"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/overlapCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/tutorialLayout/textFits",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/shader",
+          "equals": "RevGame/UI/SlimeTutorialHighlight"
+        },
+        {
+          "path": "/data/tutorialLayout/supported",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/raycast",
+          "equals": false
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 4,
+        "arg1": 3
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/step",
+          "equals": "SelectAlly"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/overlapCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/tutorialLayout/textFits",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/shader",
+          "equals": "RevGame/UI/SlimeTutorialHighlight"
+        },
+        {
+          "path": "/data/tutorialLayout/supported",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/raycast",
+          "equals": false
+        },
+        {
+          "path": "/data/liberties",
+          "equals": 0
+        },
+        {
+          "path": "/data/handCount",
+          "equals": 5
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 3,
+        "arg1": 4
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/step",
+          "equals": "MoveAlly"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/overlapCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/tutorialLayout/textFits",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/shader",
+          "equals": "RevGame/UI/SlimeTutorialHighlight"
+        },
+        {
+          "path": "/data/tutorialLayout/supported",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/raycast",
+          "equals": false
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/点格子",
+      "arguments": {
+        "arg0": 2,
+        "arg1": 4
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/step",
+          "equals": "Ready"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/overlapCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/tutorialLayout/textFits",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/shader",
+          "equals": "RevGame/UI/SlimeTutorialHighlight"
+        },
+        {
+          "path": "/data/tutorialLayout/supported",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/raycast",
+          "equals": false
+        },
+        {
+          "path": "/data/liberties",
+          "equals": 1
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "until": {
+        "path": "/data/preparationGranted",
+        "equals": true,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnReady"
+      },
+      "id": "realReady",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "realReady#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/phase",
+          "equals": "Battle"
+        },
+        {
+          "path": "/data/tutorialActive",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/episode",
+          "equals": "chapter1"
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "c1",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "c1#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "c2",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "c2#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "c3",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "c3#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "gm",
+      "action": "RevGame/新手教学",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/episode",
+          "equals": "tutorial"
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "b1",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "b1#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "ui.dump",
+      "arguments": {
+        "query": "btnNext"
+      },
+      "id": "b2",
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 1
+        },
+        {
+          "path": "/data/items/0/raycastReachable",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "ui.click",
+      "arguments": {
+        "id": {
+          "$ref": "b2#/data/items/0/id"
+        }
+      }
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/scene",
+          "equals": "GameScene"
+        },
+        {
+          "path": "/data/step",
+          "equals": "SelectCard"
+        },
+        {
+          "path": "/data/sameBoard",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/overlapCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/tutorialLayout/textFits",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/shader",
+          "equals": "RevGame/UI/SlimeTutorialHighlight"
+        },
+        {
+          "path": "/data/tutorialLayout/supported",
+          "equals": true
+        },
+        {
+          "path": "/data/tutorialLayout/raycast",
+          "equals": false
+        }
+      ],
+      "until": {
+        "path": "/data/blocked",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.logs",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/errorCount",
+          "equals": 0
+        }
+      ]
+    }
+  ],
+  "finally": [
+    {
+      "target": "gm",
+      "action": "RevGame/返回主界面",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "story.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/tutorialOpen",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialActive",
+          "equals": false
+        },
+        {
+          "path": "/data/tutorialComplete",
+          "equals": true
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.2
+      }
+    }
+  ]
+}

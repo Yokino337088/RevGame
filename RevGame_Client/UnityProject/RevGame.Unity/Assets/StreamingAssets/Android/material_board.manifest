@@ -1,0 +1,23 @@
+ManifestFileVersion: 0
+CRC: 954963481
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 7b69681ab511f774e2100ea63f04a14f
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5e762ccb57c4caaabbb5a4199ac82c23
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 7b69681ab511f774e2100ea63f04a14f
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Material/Board/PlacementMagic.mat
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders

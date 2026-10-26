@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-用 Revolution.Automation CLI 导表。
+用 Revolution.RevCLI CLI 导表。
 
 为什么不用 PowerShell 直接调 rev.cmd：
     配置表目录是中文路径（'配置表'），PowerShell 把参数传给原生进程时会按 GBK 转码，
@@ -14,7 +14,7 @@
 import subprocess
 import sys
 
-REV = r'RevGame_Client\UnityProject\Revolution.Automation\rev.py'
+REV = r'RevGame_Client\UnityProject\Revolution.RevCLI\rev.py'
 PROJECT = r'RevGame_Client\UnityProject\RevGame.Unity'
 SOURCES = r'RevGame_Client\配置表'
 

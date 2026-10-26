@@ -28,7 +28,7 @@ PowerShell 是 Windows 自带的，`tools/` 里也已有 `sync-framework.ps1`，
 | 步骤 | 检查内容 | 失败说明 |
 |---|---|---|
 | 1 | 找 `py -3` / `python` / `python3`，取 `sys.executable` 绝对路径，版本 ≥ 3.10 | 版本太低或只在 Microsoft Store 里（那个 `python.exe` 是占位程序，会弹商店） |
-| 2 | `Revolution.RevMCP`、`Revolution.Automation`、Unity 工程目录是否齐全 | 目录结构不对，或 `-Project` 指错了 |
+| 2 | `Revolution.RevMCP`、`Revolution.RevCLI`、Unity 工程目录是否齐全 | 目录结构不对，或 `-Project` 指错了 |
 | 3 | **真的拉起一次 MCP 服务**，发 `initialize` + `tools/list`，拿到工具列表 | 配置能连上的唯一硬证据 |
 | 4 | 生成 3 份客户端配置到 `tools/revmcp-configs/` | — |
 | 5 | 探测 Unity 是否已连上（不通过不算失败） | 编辑器没开或还在编译，属正常状态 |
@@ -109,7 +109,7 @@ python Revolution.RevMCP\rev_mcp.py --project RevGame_Client\UnityProject\RevGam
 | 客户端显示已连接但没有工具 | Python 路径写错，或指向了另一个 Python | 用脚本生成的值，别手打 |
 | `discover` 连接超时 / 找不到工程 | Unity 没开，或工程还在编译 | 编辑器打开并等编译完成；这不是 RevMCP 坏了 |
 | 改了配置没生效 | 客户端要重启或手动 Reload | CodeBuddy / Cursor 在 MCP 设置里点刷新 |
-| 提示 `Revolution.Automation not found` | 两个目录被拆开或改名了 | 保持 `Revolution.RevMCP` 与 `Revolution.Automation` 同级 |
+| 提示 `Revolution.RevCLI not found` | 两个目录被拆开或改名了 | 保持 `Revolution.RevMCP` 与 `Revolution.RevCLI` 同级 |
 | 中文乱码 | 脚本用了 UTF-8；`cmd` 按 OEM 码页读批处理 | 直接跑 `.ps1`；`.cmd` 只作双击入口且保持纯 ASCII |
 
 ---

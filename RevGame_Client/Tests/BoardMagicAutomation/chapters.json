@@ -1,0 +1,1841 @@
+[
+  {
+    "name": "第1章魔法棋盘与落点",
+    "steps": [
+      {
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "arguments": {}
+      },
+      {
+        "target": "gm",
+        "action": "RevGame/进入战斗",
+        "arguments": {
+          "arg0": 1
+        }
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/scene",
+            "equals": "GameScene"
+          },
+          {
+            "path": "/data/chapter",
+            "equals": 1
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter1line0",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter1line0#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter1line1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter1line1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter1line2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter1line2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/chapter",
+            "equals": 1
+          },
+          {
+            "path": "/data/animatedCells",
+            "equals": 81
+          },
+          {
+            "path": "/data/materialCount",
+            "equals": 1
+          },
+          {
+            "path": "/data/supported",
+            "equals": true
+          },
+          {
+            "path": "/data/cellRenderers",
+            "equals": 405
+          },
+          {
+            "path": "/data/materialRefs",
+            "equals": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "path": "/data/error",
+            "equals": ""
+          }
+        ],
+        "until": {
+          "path": "/data/ready",
+          "equals": true,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "card0"
+        },
+        "id": "cardFor1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "cardFor1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/invalidHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/missingHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/placementShader",
+            "equals": "RevGame/Board/PlacementMagic"
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      }
+    ],
+    "finally": [
+      {
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/screen",
+            "equals": "Home"
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      }
+    ]
+  },
+  {
+    "name": "第2章魔法棋盘与落点",
+    "steps": [
+      {
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "arguments": {}
+      },
+      {
+        "target": "gm",
+        "action": "RevGame/进入战斗",
+        "arguments": {
+          "arg0": 2
+        }
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/scene",
+            "equals": "GameScene"
+          },
+          {
+            "path": "/data/chapter",
+            "equals": 2
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter2line0",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter2line0#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter2line1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter2line1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter2line2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter2line2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/chapter",
+            "equals": 2
+          },
+          {
+            "path": "/data/animatedCells",
+            "equals": 81
+          },
+          {
+            "path": "/data/materialCount",
+            "equals": 1
+          },
+          {
+            "path": "/data/supported",
+            "equals": true
+          },
+          {
+            "path": "/data/cellRenderers",
+            "equals": 405
+          },
+          {
+            "path": "/data/materialRefs",
+            "equals": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "path": "/data/error",
+            "equals": ""
+          }
+        ],
+        "until": {
+          "path": "/data/ready",
+          "equals": true,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "card0"
+        },
+        "id": "cardFor2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "cardFor2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/invalidHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/missingHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/placementShader",
+            "equals": "RevGame/Board/PlacementMagic"
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      }
+    ],
+    "finally": [
+      {
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/screen",
+            "equals": "Home"
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      }
+    ]
+  },
+  {
+    "name": "第3章魔法棋盘与落点",
+    "steps": [
+      {
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "arguments": {}
+      },
+      {
+        "target": "gm",
+        "action": "RevGame/进入战斗",
+        "arguments": {
+          "arg0": 3
+        }
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/scene",
+            "equals": "GameScene"
+          },
+          {
+            "path": "/data/chapter",
+            "equals": 3
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter3line0",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter3line0#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter3line1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter3line1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter3line2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter3line2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/chapter",
+            "equals": 3
+          },
+          {
+            "path": "/data/animatedCells",
+            "equals": 81
+          },
+          {
+            "path": "/data/materialCount",
+            "equals": 1
+          },
+          {
+            "path": "/data/supported",
+            "equals": true
+          },
+          {
+            "path": "/data/cellRenderers",
+            "equals": 405
+          },
+          {
+            "path": "/data/materialRefs",
+            "equals": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "path": "/data/error",
+            "equals": ""
+          }
+        ],
+        "until": {
+          "path": "/data/ready",
+          "equals": true,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "card0"
+        },
+        "id": "cardFor3",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "cardFor3#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/invalidHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/missingHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/placementShader",
+            "equals": "RevGame/Board/PlacementMagic"
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      }
+    ],
+    "finally": [
+      {
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/screen",
+            "equals": "Home"
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      }
+    ]
+  },
+  {
+    "name": "第4章魔法棋盘与落点",
+    "steps": [
+      {
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "arguments": {}
+      },
+      {
+        "target": "gm",
+        "action": "RevGame/进入战斗",
+        "arguments": {
+          "arg0": 4
+        }
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/scene",
+            "equals": "GameScene"
+          },
+          {
+            "path": "/data/chapter",
+            "equals": 4
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter4line0",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter4line0#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter4line1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter4line1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter4line2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter4line2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/chapter",
+            "equals": 4
+          },
+          {
+            "path": "/data/animatedCells",
+            "equals": 81
+          },
+          {
+            "path": "/data/materialCount",
+            "equals": 1
+          },
+          {
+            "path": "/data/supported",
+            "equals": true
+          },
+          {
+            "path": "/data/cellRenderers",
+            "equals": 405
+          },
+          {
+            "path": "/data/materialRefs",
+            "equals": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "path": "/data/error",
+            "equals": ""
+          }
+        ],
+        "until": {
+          "path": "/data/ready",
+          "equals": true,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "card0"
+        },
+        "id": "cardFor4",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "cardFor4#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/invalidHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/missingHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/placementShader",
+            "equals": "RevGame/Board/PlacementMagic"
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      }
+    ],
+    "finally": [
+      {
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/screen",
+            "equals": "Home"
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      }
+    ]
+  },
+  {
+    "name": "第5章魔法棋盘与落点",
+    "steps": [
+      {
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "arguments": {}
+      },
+      {
+        "target": "gm",
+        "action": "RevGame/进入战斗",
+        "arguments": {
+          "arg0": 5
+        }
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/scene",
+            "equals": "GameScene"
+          },
+          {
+            "path": "/data/chapter",
+            "equals": 5
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter5line0",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter5line0#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter5line1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter5line1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter5line2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter5line2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/chapter",
+            "equals": 5
+          },
+          {
+            "path": "/data/animatedCells",
+            "equals": 81
+          },
+          {
+            "path": "/data/materialCount",
+            "equals": 1
+          },
+          {
+            "path": "/data/supported",
+            "equals": true
+          },
+          {
+            "path": "/data/cellRenderers",
+            "equals": 405
+          },
+          {
+            "path": "/data/materialRefs",
+            "equals": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "path": "/data/error",
+            "equals": ""
+          }
+        ],
+        "until": {
+          "path": "/data/ready",
+          "equals": true,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "card0"
+        },
+        "id": "cardFor5",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "cardFor5#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/invalidHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/missingHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/placementShader",
+            "equals": "RevGame/Board/PlacementMagic"
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      }
+    ],
+    "finally": [
+      {
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/screen",
+            "equals": "Home"
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      }
+    ]
+  },
+  {
+    "name": "第6章魔法棋盘与落点",
+    "steps": [
+      {
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "arguments": {}
+      },
+      {
+        "target": "gm",
+        "action": "RevGame/进入战斗",
+        "arguments": {
+          "arg0": 6
+        }
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/scene",
+            "equals": "GameScene"
+          },
+          {
+            "path": "/data/chapter",
+            "equals": 6
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter6line0",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter6line0#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter6line1",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter6line1#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter6line2",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter6line2#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "btnNext"
+        },
+        "id": "chapter6line3",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "chapter6line3#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/chapter",
+            "equals": 6
+          },
+          {
+            "path": "/data/animatedCells",
+            "equals": 81
+          },
+          {
+            "path": "/data/materialCount",
+            "equals": 1
+          },
+          {
+            "path": "/data/supported",
+            "equals": true
+          },
+          {
+            "path": "/data/cellRenderers",
+            "equals": 405
+          },
+          {
+            "path": "/data/materialRefs",
+            "equals": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "path": "/data/error",
+            "equals": ""
+          }
+        ],
+        "until": {
+          "path": "/data/ready",
+          "equals": true,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "ui.dump",
+        "arguments": {
+          "query": "card0"
+        },
+        "id": "cardFor6",
+        "expect": [
+          {
+            "path": "/data/total",
+            "equals": 1
+          },
+          {
+            "path": "/data/items/0/raycastReachable",
+            "equals": true
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "ui.click",
+        "arguments": {
+          "id": {
+            "$ref": "cardFor6#/data/items/0/id"
+          }
+        }
+      },
+      {
+        "target": "game",
+        "action": "board.magic.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/invalidHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/missingHighlights",
+            "equals": 0
+          },
+          {
+            "path": "/data/placementShader",
+            "equals": "RevGame/Board/PlacementMagic"
+          }
+        ]
+      },
+      {
+        "target": "game",
+        "action": "runtime.screenshot",
+        "arguments": {}
+      }
+    ],
+    "finally": [
+      {
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "arguments": {}
+      },
+      {
+        "target": "game",
+        "action": "story.state",
+        "arguments": {},
+        "expect": [
+          {
+            "path": "/data/screen",
+            "equals": "Home"
+          }
+        ],
+        "until": {
+          "path": "/data/transitioning",
+          "equals": false,
+          "timeoutSeconds": 40,
+          "intervalSeconds": 0.2
+        }
+      }
+    ]
+  }
+]

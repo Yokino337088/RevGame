@@ -1,0 +1,211 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light">
+<title>RevGame · 九路围棋PvP策划案_2026-10-26</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7;--sky:#e7eef6;--sand:#f8eedb;--red:#a34e3a;--rose:#fbefe9}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}a{color:var(--green);text-underline-offset:4px}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #b48442;outline-offset:4px}button:disabled{opacity:.5}.topbar{height:76px;padding:0 5vw;border-bottom:1px solid var(--line);background:#fbfcf8;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:800;letter-spacing:2px;white-space:nowrap}.brand i{font-style:normal;display:inline-grid;place-items:center;width:34px;height:34px;margin-right:12px;background:var(--green);color:white;border-radius:11px}.tag,.eyebrow,.section-label{font:12px/1.6 Consolas,monospace;letter-spacing:2px}.tag{color:var(--muted);margin-left:12px}.toolbar{display:flex;gap:12px;align-items:center;font-size:12px}.print-button{border:1px solid #c7d2c3;background:transparent;border-radius:30px;padding:7px 15px;color:var(--green)}.hero{max-width:1260px;margin:auto;padding:64px 40px 42px;display:grid;grid-template-columns:1.28fr 1fr;gap:58px;align-items:center}.eyebrow,.section-label{color:var(--green)}h1{font-size:clamp(36px,4.2vw,58px);line-height:1.26;letter-spacing:-2px;margin:18px 0 22px;font-weight:800}h1 em{font-style:normal;color:var(--red)}.lead{font-size:16px;color:var(--muted);max-width:620px}.hero-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:25px}.pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:8px 17px;border-radius:30px;background:#fff;text-decoration:none;font-size:13px}.pill.primary{background:var(--green);border-color:var(--green);color:white}.stamp{margin-top:23px;font:12px/1.8 Consolas,"Microsoft YaHei",monospace;color:#748073}.verdict-card{position:relative;padding:29px;background:linear-gradient(135deg,#fffdf6,#eaf0e4);border:1px solid #d6e2d2;border-radius:26px;box-shadow:0 18px 48px #334f331a;overflow:hidden}.verdict-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px;font-size:13px}.verdict-title{font-size:27px;font-weight:800;line-height:1.4;margin:0 0 11px}.verdict-card p{font-size:13px;color:var(--muted);margin:9px 0}.skill-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:22px}.skill-cell{display:grid;place-items:center;min-height:43px;border-radius:9px;background:#f7f8f2;border:1px solid #cfd6c9;color:#798276;font:700 14px Consolas,monospace}.skill-cell.complete{background:var(--green);color:white;border-color:var(--green)}.skill-cell.partial{background:#f5e6c8;border-color:#dfc79c;color:#886428}.skill-cell.blocked{background:#f4ddd2;border-color:#dab8aa;color:#9b4b36}.grid-legend{display:flex;gap:13px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:11px}.grid-legend i{display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:2px;background:var(--green)}.grid-legend i.partial{background:#dec296}.grid-legend i.blocked{background:#ce927a}.grid-legend i.pending{background:#cfd6c9}.badge{display:inline-flex;align-items:center;border:1px solid transparent;border-radius:20px;padding:2px 10px;font-size:11px;line-height:1.8;white-space:nowrap}.badge.pass{background:#e5efe2;color:#315e43;border-color:#cadcc3}.badge.fail{background:#fae8dd;color:#9a4c2c;border-color:#e7c6b0}.badge.pending{background:#eef0e9;color:#6a7567;border-color:#d9ded2}.metrics{max-width:1180px;margin:0 auto 44px;display:grid;grid-template-columns:repeat(4,1fr);padding:23px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.metric{padding:0 26px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric strong{font:700 35px/1.5 Consolas,monospace;color:var(--green)}.metric strong small{font-size:17px}.metric p{font-size:12px;line-height:1.7;color:var(--muted);margin:3px 0 0}.workspace{max-width:1180px;margin:auto;display:grid;grid-template-columns:210px minmax(0,1fr);gap:45px;padding-bottom:75px}.sidebar{position:sticky;top:28px;align-self:start}.sidebar h2{font-size:11px;letter-spacing:3px;color:var(--muted);margin:0 0 16px}.sidebar nav{display:flex;flex-direction:column;gap:3px}.sidebar nav a{display:flex;gap:10px;font-size:12px;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;text-decoration:none}.sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}.sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}.sidebar .note{margin-top:20px;padding:18px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.chapter{padding:32px 34px;margin-bottom:24px;border:1px solid var(--line);border-radius:18px;background:#fffefa;box-shadow:0 5px 15px #315c310b}.chapter h2{font-size:26px;line-height:1.4;letter-spacing:-.5px;margin:8px 0 22px}.chapter h3{font-size:17px;margin:26px 0 10px;color:#254e3d}.chapter p{margin:15px 0}.chapter strong{color:#254e3d}.chapter ul,.chapter ol{padding-left:22px}.chapter li{margin:9px 0}.callout{padding:15px 18px;border-left:3px solid var(--green);border-radius:9px;background:var(--mint);font-size:13px;line-height:1.85;margin:20px 0}.callout b{display:block;letter-spacing:.5px;margin-bottom:4px}.callout.warn{background:var(--rose);border-color:#ba7655;color:#7a4932}.callout.tip{background:var(--sky);border-color:#6b8fae;color:#36516d}.table-scroll{overflow:auto;border:1px solid var(--line);border-radius:11px;margin:22px 0}table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.75;text-align:left}th{background:#edf2e9;color:#375441;font-weight:700}th,td{padding:12px 13px;vertical-align:top;border-bottom:1px solid #e4e9e0}tr:last-child td{border-bottom:0}tr:nth-child(even) td{background:#fafbf6}td:first-child{font-weight:600}code{font:12px/1.75 Consolas,"Microsoft YaHei",monospace;overflow-wrap:anywhere;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px}pre{padding:18px;background:#edf2ea;border-radius:11px;overflow:auto;line-height:1.75;font-size:12px;white-space:pre-wrap;word-break:break-word}pre code{background:none;border:0;padding:0}.record{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:15px 0;background:#fcfdf9}.record-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.record-head h3{margin:0;font-size:15px}.record p{font-size:13px;line-height:1.85;color:var(--muted);margin:10px 0 0}.key-values{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0 22px}.key-values div{padding:11px 0;border-bottom:1px solid #e8ece3;min-width:0}.key-values dt{font-size:11px;color:var(--muted)}.key-values dd{margin:2px 0 0;font-size:13px;overflow-wrap:anywhere}.failure{border-left:3px solid #b86e4c;background:#fcf0e8;color:#7a4932}.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.mini-card{padding:16px;border:1px solid var(--line);border-radius:12px;background:#fafcf7}.mini-card strong{font:700 26px/1.5 Consolas,monospace}.mini-card p{margin:3px 0 0;font-size:11px;color:var(--muted)}.skill-evidence{padding-top:22px;margin-top:25px;border-top:1px solid var(--line)}.evidence-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:15px}.evidence-head h3{margin:3px 0 0;font-size:21px}.evidence-head .eyebrow{font-size:10px}.screenshots{display:grid;grid-template-columns:1fr 1fr;gap:12px}figure{margin:0;min-width:0}.shot{display:block;position:relative;overflow:hidden;border:1px solid #d2d9cd;border-radius:11px;background:#e9ebe3;line-height:0}.shot img{width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;display:block;transition:transform .25s}.shot:hover img{transform:scale(1.02)}.image-label{position:absolute;left:9px;top:9px;font:10px/1.5 Consolas,monospace;letter-spacing:1px;background:#fffef2ee;color:#315341;border:1px solid #d5ddca;padding:3px 7px;border-radius:5px}.zoom{position:absolute;right:8px;bottom:8px;font:10px/1.5 "Microsoft YaHei",sans-serif;background:#25352fdd;color:white;padding:3px 7px;border-radius:5px}figcaption{font-size:11px;color:var(--muted);padding:6px 2px 0}.caption-note{font-size:12px;color:var(--muted)}.fact-strip{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.fact-strip span{font-size:11px;background:#f0f4ec;border:1px solid #e1e7da;border-radius:6px;padding:4px 9px}.fact-strip b{color:var(--green);margin-left:3px}details{border:1px solid var(--line);border-radius:9px;margin:17px 0;background:#fcfdf8}summary{padding:11px 15px;cursor:pointer;font-size:12px;color:var(--green)}details pre{margin:0 12px 12px;font-size:11px;max-height:340px;overflow:auto}.todo-list{list-style:none;padding:0!important;counter-reset:tasks}.todo-list li{position:relative;padding:0 0 15px 43px;margin:15px 0;border-bottom:1px solid #e6ebe1}.todo-list li:last-child{border-bottom:0;padding-bottom:0}.todo-list li:before{counter-increment:tasks;content:counter(tasks);position:absolute;left:0;top:2px;display:grid;place-items:center;width:28px;height:28px;border:1px solid #d3ddcc;border-radius:50%;background:#edf3e8;color:var(--green);font:700 12px Consolas,monospace}.todo-list strong{display:block;font-size:14px}.todo-list small{font-size:12px;line-height:1.85;color:var(--muted)}.resource-links{display:flex;gap:10px;flex-wrap:wrap;margin:17px 0}.resource-links a{font-size:12px;border:1px solid #ccd8c5;border-radius:7px;padding:7px 12px;text-decoration:none;background:#fff}.muted{color:var(--muted);font-size:12px}.footnote{font-size:11px;color:var(--muted);margin:10px 0}.endmark{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding:27px 5vw;color:var(--muted);font-size:12px}.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:20;background:var(--green)}dialog{border:1px solid #c8d4c0;border-radius:17px;padding:14px;max-width:95vw;width:1440px;max-height:94vh;background:#fffefa;color:var(--ink);box-shadow:0 25px 90px #15251b55}dialog::backdrop{background:#17251ddd;backdrop-filter:blur(4px)}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;padding:2px 4px 12px}.dialog-head button{border:1px solid #ccd8c5;border-radius:20px;background:white;color:var(--green);padding:4px 13px}.dialog-img{display:block;width:100%;height:auto;max-height:80vh;object-fit:contain;border-radius:8px;background:#e8eae3}
+@media(max-width:1200px){.workspace{padding:0 25px 55px;grid-template-columns:185px minmax(0,1fr);gap:25px}.metrics{margin-left:25px;margin-right:25px}.hero{gap:30px}.chapter{padding:28px}}@media(max-width:900px){.workspace{display:block}.sidebar{position:static;margin-bottom:23px}.sidebar h2,.sidebar .note{display:none}.sidebar nav{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.sidebar nav a{font-size:11px;padding:7px}.hero{padding:40px 25px;grid-template-columns:1.15fr 1fr;gap:25px}.hero h1{font-size:39px}.verdict-card{padding:22px}.skill-grid{gap:3px}.skill-cell{min-height:34px}.tag{display:none}.metric{padding:0 17px}.metric strong{font-size:29px}.screenshots{gap:12px}}@media(max-width:620px){body{font-size:14px}.topbar{height:65px;padding:0 20px}.brand{font-size:13px;letter-spacing:1px}.toolbar>a{display:none}.hero{display:block;padding:32px 22px}.hero h1{font-size:39px;letter-spacing:-1px}.hero .lead{font-size:14px}.verdict-card{margin-top:28px}.metrics{grid-template-columns:1fr 1fr;gap:17px 0;padding:21px 0;margin:0 20px 27px}.metric{padding:0 12px}.metric:nth-child(2){border-right:0}.metric strong{font-size:30px}.workspace{padding:0 14px 36px}.sidebar nav{grid-template-columns:1fr 1fr}.chapter{padding:24px 19px;border-radius:14px}.chapter h2{font-size:23px}.table-scroll table{min-width:610px}.screenshots{grid-template-columns:1fr}.evidence-head{align-items:flex-start;gap:10px}.evidence-head .badge{font-size:10px}.key-values{grid-template-columns:1fr}.mini-grid{gap:7px}.mini-card{padding:11px}.mini-card strong{font-size:20px}.record-head{align-items:flex-start}.record{padding:16px}.hero-links{gap:8px}.pill{font-size:12px;padding:8px 13px}.image-label{font-size:10px}.endmark{display:block}.endmark span{display:block;margin:5px 0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}@media print{body{font-size:10pt;background:white}.topbar{height:45px;padding:0}.toolbar,.sidebar,.progress,.zoom,dialog{display:none}.hero{display:block;padding:20px 0}.hero h1{font-size:30pt}.verdict-card{margin:20px 0;box-shadow:none}.hero-links{display:none}.workspace{display:block;padding:0}.chapter{border:0;border-top:1px solid var(--line);padding:20px 0;box-shadow:none;break-inside:auto}.metrics{margin:0}.screenshots{grid-template-columns:1fr 1fr}.skill-evidence,figure,.record{break-inside:avoid}.table-scroll{overflow:visible}.table-scroll table{min-width:0}.endmark{padding:20px 0}a{color:inherit;text-decoration:none}}
+
+.verdict-title{color:var(--green)}.round-grid{display:grid;grid-template-columns:repeat(11,1fr);gap:5px;margin-top:22px}.round-grid span{display:grid;place-items:center;padding:11px 0;border-radius:7px;background:var(--green);color:#fff;font:700 13px Consolas,monospace}.round-grid span:last-child{background:#a76e2d}.chapter{animation:arrive .5s both}@keyframes arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.timeline{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.timeline span{background:#eff4e9;border:1px solid #d6e1ce;border-radius:8px;padding:9px 13px;font-size:12px}.timeline span:last-child{background:#e2eddf}.rounds td,.rounds th{text-align:center;white-space:nowrap}.rounds .boss td{background:#f8eedb}.rounds th:first-child,.rounds td:first-child{text-align:left}figure+figure{margin-top:0}.gallery-group{margin:28px 0}.gallery-group h3{margin:0 0 15px}.chapter ul{font-size:13px}.big-number{font:800 64px/1.2 Consolas,monospace;color:var(--green)}.narrow{max-width:650px}.note-small{font-size:12px;color:var(--muted)}
+@media(max-width:700px){.round-grid{gap:3px}.round-grid span{padding:8px 0;font-size:11px}.big-number{font-size:50px}}
+@media(prefers-reduced-motion:reduce){.chapter{animation:none}}
+ .round-grid{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:22px}.round-cell{display:grid;place-items:center;height:36px;border-radius:8px;background:#e8eee3;font:700 13px Consolas,monospace}.round-cell.complete{background:var(--green);color:white}.round-cell.boss.complete{background:var(--gold)}.rounds{font-size:11px}.screenshots{row-gap:20px}@media(max-width:600px){.round-grid{gap:3px}.round-cell{height:28px;font-size:10px}.table-scroll{margin-inline:-10px}}@media(max-width:600px){.topbar{height:auto;flex-wrap:wrap;gap:10px}.toolbar{width:100%;justify-content:space-between}.brand{min-width:0}}
+/* 本组文档补充：围棋示意图与步骤条，沿用同样的纸墨配色。 */
+.figure{background:#fbfaf4;border:1px solid var(--line,#dce3da);border-radius:14px;padding:18px;margin:18px 0}
+.figure svg{display:block;width:100%;max-width:440px;height:auto;margin:0 auto}
+.figure figcaption{margin-top:12px;font-size:12.5px;color:#6b7a70;text-align:center;line-height:1.7}
+.steps{counter-reset:step;margin:18px 0;padding:0;list-style:none}
+.steps li{counter-increment:step;position:relative;padding:12px 16px 12px 52px;border:1px solid var(--line,#dce3da);
+border-radius:10px;background:#fffefa;margin-bottom:10px}
+.steps li::before{content:counter(step,decimal-leading-zero);position:absolute;left:16px;top:12px;
+font:700 13px/1.6 Consolas,monospace;color:#326956}
+.steps li b{display:block;margin-bottom:2px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.split>div{border:1px solid var(--line,#dce3da);border-radius:10px;padding:14px 16px;background:#fffefa}
+.split h4{margin:0 0 8px;font-size:14px;color:#326956}
+.split .bad h4{color:#a4491f}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+</style></head><body>
+<div class="progress" aria-hidden="true"></div>
+<header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">REVGAME / 玩法策划 / PVP</span></div>
+<span class="tag">2026.10.26 · 九路围棋 PvP · 策划案 v1</span></header>
+<div class="hero"><div><div class="eyebrow">REVGAME / 玩法策划 / PVP</div>
+<h1>九路围棋，<br><em>先让新手看懂棋。</em></h1>
+<p class="lead">正经规则、正经计分，但把"气、眼、提子、地盘"这些原本只在棋手脑子里的东西，全部搬到屏幕上。
+目标是让没下过围棋的人在 3 分钟内看懂一局、敢下第一手。</p>
+<div class="hero-links"><a class="pill primary" href="#s2">先看门槛怎么拆 ↗</a><a class="pill" href="#s4">直接看五项设计</a></div>
+<div class="stamp">2026.10.26 · 九路围棋 PvP · 策划案 v1</div></div>
+<div class="verdict-card"><div class="verdict-top"><span>当前状态</span><span class="badge pending">入口占位</span></div>
+<div class="verdict-title">PvP 按钮目前只弹一句「玩家对战暂未开放」</div>
+<p>单机是"大棋 + 加气 + 攻击"的自研变体，与正经围棋是两套规则。本文档定义<strong>独立模式</strong>：
+不改单机的 BoardModel / GoRules / Piece，新开一条 9 路围棋的内核与界面。</p></div>
+</div>
+<div class="metrics"><div class="metric"><strong>9<small>×9</small></strong><p>81 个交叉点，单局 10–15 分钟</p></div><div class="metric"><strong>3.75<small> 子</small></strong><p>黑贴目，配置化，按实测胜率校准</p></div><div class="metric"><strong>3<small> 次</small></strong><p>进阶场每局落子建议次数</p></div><div class="metric"><strong>5<small> 层</small></strong><p>气 / 眼 / 提子 / 地盘 / 建议的可视化</p></div></div>
+<div class="workspace"><aside class="sidebar"><h2>文档目录</h2><nav><a href="#s1"><span>01</span>定位与现状</a><a href="#s2"><span>02</span>门槛拆解</a><a href="#s3"><span>03</span>规则定义</a><a href="#s4"><span>04</span>五项降门槛设计</a><a href="#s5"><span>05</span>胜利反馈</a><a href="#s6"><span>06</span>流程与界面</a><a href="#s7"><span>07</span>数值表</a><a href="#s8"><span>08</span>分段与新手保护</a><a href="#s9"><span>09</span>反作弊取舍</a><a href="#s10"><span>10</span>里程碑与验收</a><a href="#s11"><span>11</span>本期不做</a></nav></aside>
+<main>
+<section id="s1" class="chapter"><div class="section-label">POSITION / 01</div>
+<h2>定位与现状</h2>
+<p>要做的是<strong>让新手敢下的 9 路围棋</strong>，不是把 19 路围棋搬到手机上。三条边界先定死：</p>
+<ul>
+<li><b>规则是正经的。</b>气、提子、打劫、数子法计分，一样不少，不做"简化版围棋"——规则一旦改动，学过棋的人反而不认。</li>
+<li><b>门槛靠界面拆，不靠规则拆。</b>所有降低难度的设计都放在表现层和提示层，随时可以关掉，不影响公平性。</li>
+<li><b>单机玩法不动。</b>现有章节玩法依赖 Piece 的大棋尺寸、加气、攻击与回合，和围棋规则不兼容，强行合并只会两头都坏。</li>
+</ul>
+<div class="callout"><p><strong>为什么是 9 路而不是 19 路：</strong>19 路有 361 个点，一局 40 分钟起，手机端流失率极高。
+9 路 81 点，一局 10–15 分钟，正好是一次碎片时间的长度，也让"地盘可视化"这类辅助真正有用——棋盘大了，色块反而是噪音。</p></div>
+</section>
+
+<section id="s2" class="chapter"><div class="section-label">PROBLEM / 02</div>
+<h2>门槛到底高在哪：五条拆解</h2>
+<p>把"围棋难"这句感受拆成可下手的五条，每条对应一个设计动作。这一节是全案的核心逻辑，后面所有内容都从这里推导。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>门槛</th><th>玩家的真实感受</th><th>本方案的解法</th><th>对应章节</th></tr></thead><tbody><tr><td>棋盘太大</td><td>一进去就懵，不知道从哪下手</td><td>9 路 + 星位引导，首手提示占角</td><td>03 / 04</td></tr><tr><td>规则是隐形的</td><td>气、眼、提子都在棋盘内部，只能靠眼睛算</td><td>棋子常显气数、叫吃呼吸警示、提子预演</td><td>04.1–04.3</td></tr><tr><td>输赢算不清</td><td>下完了还不知道自己输多少</td><td>终局领地染色 + 目数差，中途分段淡显</td><td>04.4</td></tr><tr><td>不知道该下哪</td><td>没有布局理论，第一手就卡住</td><td>每局有限次落子建议，带一句话理由</td><td>04.5</td></tr><tr><td>赢了没感觉</td><td>结算只是一行字</td><td>领地波次染色、目数滚动、段位徽章演出</td><td>05</td></tr></tbody></table></div>
+<div class="callout warn"><p><strong>一个容易被忽略的点：</strong>前四条是"看不懂"，第五条是"没反馈"。前者影响留存，后者影响复玩。
+两个都要做，但如果只能先做一个，先做"看不懂"——看不懂的人不会走到结算那一步。</p></div>
+</section>
+
+<section id="s3" class="chapter"><div class="section-label">RULES / 03</div>
+<h2>规则定义</h2>
+<h3>3.1 基本规则</h3>
+<ul>
+<li><b>棋盘与先手：</b>9×9，81 个交叉点，黑先白后，轮流在空交叉点落子，落子后不可移动。</li>
+<li><b>气与提子：</b>与棋子直线相邻的空点是气，同色相连成块、气共享。一块棋气为 0 时整块提走。</li>
+<li><b>禁止自杀：</b>落子后己方块无气、且没有提掉对方任何棋子的着法非法。</li>
+<li><b>打劫：</b>禁止"全局同形再现"（位置超级劫）。不是只看单劫——整盘局面重复即非法，用局面哈希判定，见技术选型 06。</li>
+<li><b>终局：</b>双方连续各 pass 一次；或一方认输；或一方超时。</li>
+</ul>
+<figure class="figure"><svg viewBox="0 0 364 364" role="img" aria-label="9 路棋盘与星位"><rect width="364" height="364" fill="#f7f3e6" rx="8"/><line x1="22" y1="22" x2="342" y2="22" stroke="#5a5346" stroke-width="1.6"/><line x1="22" y1="22" x2="22" y2="342" stroke="#5a5346" stroke-width="1.6"/><line x1="22" y1="62" x2="342" y2="62" stroke="#8b8371" stroke-width="0.9"/><line x1="62" y1="22" x2="62" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="102" x2="342" y2="102" stroke="#8b8371" stroke-width="0.9"/><line x1="102" y1="22" x2="102" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="142" x2="342" y2="142" stroke="#8b8371" stroke-width="0.9"/><line x1="142" y1="22" x2="142" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="182" x2="342" y2="182" stroke="#8b8371" stroke-width="0.9"/><line x1="182" y1="22" x2="182" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="222" x2="342" y2="222" stroke="#8b8371" stroke-width="0.9"/><line x1="222" y1="22" x2="222" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="262" x2="342" y2="262" stroke="#8b8371" stroke-width="0.9"/><line x1="262" y1="22" x2="262" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="302" x2="342" y2="302" stroke="#8b8371" stroke-width="0.9"/><line x1="302" y1="22" x2="302" y2="342" stroke="#8b8371" stroke-width="0.9"/><line x1="22" y1="342" x2="342" y2="342" stroke="#5a5346" stroke-width="1.6"/><line x1="342" y1="22" x2="342" y2="342" stroke="#5a5346" stroke-width="1.6"/><circle cx="102" cy="102" r="3" fill="#5a5346"/><circle cx="262" cy="102" r="3" fill="#5a5346"/><circle cx="182" cy="182" r="3" fill="#5a5346"/><circle cx="102" cy="262" r="3" fill="#5a5346"/><circle cx="262" cy="262" r="3" fill="#5a5346"/><circle cx="102" cy="102" r="16.8" fill="#2b2721"/><circle cx="97.29599999999999" cy="96.96" r="4.368" fill="#5c554a" opacity="0.85"/><circle cx="262" cy="262" r="16.8" fill="#fdfcf6" stroke="#8b8371" stroke-width="1.2"/><circle cx="142" cy="222" r="16.8" fill="#2b2721"/><circle cx="137.296" cy="216.96" r="4.368" fill="#5c554a" opacity="0.85"/><circle cx="222" cy="142" r="16.8" fill="#fdfcf6" stroke="#8b8371" stroke-width="1.2"/><circle cx="182" cy="102" r="16.8" fill="#2b2721"/><circle cx="177.296" cy="96.96" r="4.368" fill="#5c554a" opacity="0.85"/><circle cx="182" cy="182" r="5.712000000000001" fill="none" stroke="#a76e2d" stroke-width="1.8" stroke-dasharray="3 2.5"/><text x="204.8" y="186" font-size="11" fill="#a76e2d" text-anchor="start" font-family="Consolas,monospace">天元</text></svg><figcaption>9 路盘与五个星位。角上二路小目、边上、天元——开局引导只会提示这四个角，不强制。</figcaption></figure>
+<h3>3.2 计分：中国规则数子法</h3>
+<p>选数子法而不是数目法，理由是它和"地盘可视化"天然一致：<strong>子 + 空 = 地</strong>，界面上染色出来的区域就是最终计分依据，玩家看到的和算的一致。数目法要额外记提子数，对新手是第二层负担。</p>
+<ul>
+<li>己方地 = 己方棋子数 + 被己方独占包围的空点数（空点四周都被同一方围住才算）。</li>
+<li>黑贴 3.75 子（7.5 目），配置化；M1 阶段用手工对局样本校准，落在 6.5–7.5 目区间。</li>
+<li>黑胜条件：黑地 &gt; (81 + 贴子) ÷ 2。贴 3.75 子时临界值是 42.375，即<strong>黑需 43 子及以上获胜</strong>。</li>
+</ul>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>局面</th><th style="text-align:right">黑地</th><th style="text-align:right">白地</th><th style="text-align:right">判定（黑 − 白 − 贴子）</th></tr></thead><tbody><tr><td>黑小胜</td><td style="text-align:right">43</td><td style="text-align:right">38</td><td style="text-align:right">黑胜 1.25 子（43 − 38 − 3.75）</td></tr><tr><td>白小胜</td><td style="text-align:right">42</td><td style="text-align:right">39</td><td style="text-align:right">白胜 0.75 子（42 − 39 − 3.75 = −0.75）</td></tr><tr><td>大差</td><td style="text-align:right">52</td><td style="text-align:right">29</td><td style="text-align:right">黑胜 19.25 子</td></tr></tbody></table></div>
+<h3>3.3 时间规则</h3>
+<p>主时限 10 分钟 + 读秒 30 秒，读秒 3 次。超时判负。<strong>不做"限时每步"</strong>——围棋有的手要长考，固定每步时间会让高手难受，而总时长 10 分钟已经足够压住单局时长。</p>
+<h3>3.4 和单机玩法的边界</h3>
+<p>这点必须写清楚，否则实现时会有人想"复用一下"：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th></th><th>单机章节玩法</th><th>九路围棋 PvP</th></tr></thead><tbody><tr><td>棋子</td><td>Piece，可 1×1 / 2×2 / 3×3 大棋</td><td>单点，无尺寸</td></tr><tr><td>气</td><td>可被 BonusLiberties 加气，有眼防护光环</td><td>纯标准气，无任何加成</td></tr><tr><td>回合</td><td>攻击、支援、能量、Boss 技能</td><td>只有落子与 pass</td></tr><tr><td>内核</td><td>BoardModel + GoRules（Unity 依赖）</td><td>GoCore（纯逻辑，无 Unity 依赖）</td></tr><tr><td>计分</td><td>击杀与章节进度</td><td>数子法</td></tr></tbody></table></div>
+<div class="callout warn"><p><strong>结论：不复用内核，只复用表现层。</strong>BoardCellView 的格子高亮、范围波纹、飘字、溶解这些能力可以拿来画气眼提示，
+但 BoardModel / GoRules / Piece 一律不碰——它们的语义是"变体棋"，搬进围棋会同时污染两套规则。</p></div>
+</section>
+
+<section id="s4" class="chapter"><div class="section-label">DESIGN / 04</div>
+<h2>五项降低门槛的设计</h2>
+<p>每一项都按"问题 → 方案 → 交互细节 → 可关闭"写，因为这五件事做过头会变成<strong>替玩家下棋</strong>，那就失去了围棋本身的意义。</p>
+
+<h3>4.1 气：从隐形到常显</h3>
+<ul>
+<li><b>常显：</b>每块棋在棋块边缘显示气数小徽标。气 ≥ 3 时用 40% 透明度，气 ≤ 2 时常显。</li>
+<li><b>叫吃（1 气）：</b>整块棋呼吸式红光 + 外轮廓脉冲，频率 0.6 秒一次，不闪烁避免晃眼。</li>
+<li><b>落子预览：</b>鼠标悬停/手指按住某点时，受影响的己方块与敌方块在气数旁显示 <code>+1</code> / <code>−1</code> 箭头。</li>
+</ul>
+<h3>4.2 眼：真眼与假眼分开画</h3>
+<p>新手最容易死的地方是"以为有眼其实没眼"。所以真眼和假眼必须<strong>长得不一样</strong>：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>类型</th><th>表现</th><th>触发条件</th></tr></thead><tbody><tr><td>真眼</td><td>淡青实线圆环 + 中心实点</td><td>该空点四周全被同一块棋包围，且不是对方可提的点</td></tr><tr><td>假眼</td><td>虚线圆环 + 中心小叉</td><td>看似被围，但对方可在此提子或连接</td></tr><tr><td>活棋</td><td>整块棋外框转为金色实线，角标「活」</td><td>该块棋拥有两个及以上真眼</td></tr><tr><td>死棋</td><td>外框灰色虚线，角标「死」</td><td>被完全包围且无法做出两眼，且轮到对方可提</td></tr></tbody></table></div>
+<div class="callout"><p><strong>克制规则：</strong>死活在<strong>非终局</strong>只做弱提示（灰色虚线，不写"死"字）。死活本身是围棋最难的部分，
+下结论式标注会误导玩家，也会把"我明明能做活"的乐趣抹掉。终局判定时再明确标注。</p></div>
+<h3>4.3 提子预演</h3>
+<ul>
+<li>悬停落点即计算：会提哪些子 → 被提子闪白一次，然后显示半透明"幽灵"标记。</li>
+<li>顶部条提示：<code>这一手提 3 子</code>，同时被提子所在棋块的气数标为 0。</li>
+<li>非法落点当场拦住，并用一句话说原因：<code>这里没有气，会被立即提走</code> / <code>打劫，不能立即回提</code> / <code>这里已经有子</code>。</li>
+</ul>
+<h3>4.4 地盘可视化：分段开放，不全程开</h3>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>手数区间</th><th>显示方式</th><th>为什么这样</th></tr></thead><tbody><tr><td>0–20 手</td><td>不显示</td><td>开局地盘未成型，色块全是误导，也会让新手误以为在圈地</td></tr><tr><td>21–60 手</td><td>每 10 手淡显 1.2 秒后自动隐藏</td><td>给一个阶段性概念，不打断思考</td></tr><tr><td>终局</td><td>全程显示 + 目数差</td><td>结算依据，必须清楚</td></tr></tbody></table></div>
+<p>显示样式：领地内填充淡色方块（黑=墨绿 12% 透明度，白=米白），棋盘右下角显示实时<code>黑 45 : 白 36</code>。
+<strong>不显示"胜率"</strong>——胜率和目数差不是一回事，给新手看胜率会造成"我还有机会"的错觉。</p>
+<h3>4.5 落子建议：有限次、说理由、公开强度</h3>
+<ul>
+<li><b>次数：</b>进阶场每局 3 次，新手场 9 次。次数由客户端记录，服务端不校验——改客户端可以绕过，这是已知取舍（见第 09 节）。用完后按钮变灰并显示剩余 0。</li>
+<li><b>强度档位：</b>新手档只推荐"能提子 / 能逃跑 / 占空角"三类；进阶段加入连接、做眼、切断；可完全关闭。</li>
+<li><b>表现：</b>给出 3 个候选点，第一推荐大圈 + 高亮，二三小圈；每个点配一句话理由，例如<code>提掉这两子，同时给自己做出一个眼</code>。</li>
+<li><b>诚实：</b>界面上写明"建议基于启发式评分，不是必胜下法"。绝不能让玩家以为开了 AI 就能赢——这是这类功能最常见的信任崩塌点。</li>
+</ul>
+</section>
+
+<section id="s5" class="chapter"><div class="section-label">PAYOFF / 05</div>
+<h2>胜利反馈：把结算做成一段演出</h2>
+<p>现在的问题不是"字太小"，而是<strong>没有过程</strong>。玩家点完最后一手，界面直接跳到一行结果文字，情绪没有落点。
+改成有时序的演出，总长 2.2 秒，可点击跳过：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>时间</th><th>画面</th><th>说明</th></tr></thead><tbody><tr><td>0.0s</td><td>最后一手落定，全场静止 300ms</td><td>留白，让玩家意识到结束了</td></tr><tr><td>0.3s</td><td>领地染色：从每颗棋子向外扩散填充</td><td>黑墨绿 / 白米白，波次 0.8 秒，边缘发光</td></tr><tr><td>1.1s</td><td>双方提子数从两侧飞入并滚动计数</td><td>提子数是围棋里最直观的战果</td></tr><tr><td>1.4s</td><td>目数差大字逐位滚动：黑胜 3.5 目</td><td>主视觉，字号最大</td></tr><tr><td>1.8s</td><td>段位徽章翻转 + 粒子 + 三连音</td><td>进阶场才播放</td></tr><tr><td>2.2s</td><td>浮现「复盘 / 再来一局 / 返回」</td><td>复盘直接播落子序列</td></tr></tbody></table></div>
+<div class="callout"><p><strong>输的一方不播 LOSE 大字。</strong>改成展示"差距最小的一手"——指出他在哪一手少输了 4 目。
+挫败感要转化成"下一局我能改"，而不是"我不适合这个游戏"。这条对新手留存比胜方的演出更重要。</p></div>
+</section>
+
+<section id="s6" class="chapter"><div class="section-label">FLOW / 06</div>
+<h2>流程与界面</h2>
+<ol class="steps">
+<li><b>入口</b>首页 btnPvP（现有占位按钮）→ 模式选择：新手场 / 进阶场。</li>
+<li><b>匹配</b>显示已等待时长与对手段位区间，可随时取消。超过 20 秒放宽区间，超过 60 秒提示"当前人少，是否改为人机"。</li>
+<li><b>对局</b>棋盘居中；顶部双方信息（头像、段位、剩余时间、提子数）；底部 pass / 认输 / 提示三键。</li>
+<li><b>终局</b>按第 05 节演出，结算面板给目数明细：子数、空数、贴子、结果。</li>
+<li><b>复盘</b>落子序列回放，支持前后步进与跳转。技术侧不需要额外存储，序列本身就是录像。</li>
+</ol>
+<p><strong>不做自由聊天。</strong>只提供 6 条预设短语（"好棋""承让""再来一局""想一下""认输吧""GG"）。
+自由输入意味着内容审核成本，而这个模式的社交收益远小于风险。</p>
+</section>
+
+<section id="s7" class="chapter"><div class="section-label">CONFIG / 07</div>
+<h2>数值表</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>配置项</th><th>默认值</th><th>说明</th></tr></thead><tbody><tr><td>boardSize</td><td>9</td><td>本期固定 9，预留到 13 的扩展位</td></tr><tr><td>komi</td><td>3.75 子</td><td>黑贴，按实测胜率校准到 45%–55% 区间</td></tr><tr><td>mainTimeSeconds</td><td>600</td><td>主时限 10 分钟</td></tr><tr><td>byoyomiSeconds</td><td>30</td><td>读秒每次 30 秒</td></tr><tr><td>byoyomiCount</td><td>3</td><td>读秒次数</td></tr><tr><td>hintCountAdvanced</td><td>3</td><td>进阶场每局提示次数（客户端自律）</td></tr><tr><td>hintCountRookie</td><td>9</td><td>新手场每局提示次数（客户端自律）</td></tr><tr><td>territoryRevealFrom</td><td>21</td><td>从第几手开始分段显示地盘</td></tr><tr><td>territoryRevealEvery</td><td>10</td><td>每多少手淡显一次</td></tr><tr><td>reconnectWindowSeconds</td><td>90</td><td>断线后可重连的时间窗</td></tr><tr><td>matchTimeoutSeconds</td><td>60</td><td>匹配超时转人机</td></tr></tbody></table></div>
+</section>
+
+<section id="s8" class="chapter"><div class="section-label">RANK / 08</div>
+<h2>分段与新手保护</h2>
+<p>首版不做官方段位体系。规则计算在客户端、服务端不校验，任何"排名"都缺乏公信力，所以段位只做<strong>本地参考</strong>：</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>场次</th><th>段位</th><th>提示次数</th><th>计分</th></tr></thead><tbody><tr><td>新手场</td><td>不显示段位</td><td>9</td><td>不计分，只统计对局数</td></tr><tr><td>进阶场</td><td>本地记录 9 级 → 1 级</td><td>3</td><td>本地 Elo（K=32），前 5 局不扣分，服务端不参与</td></tr></tbody></table></div>
+<ul>
+<li>段位存在本地存档，换设备不同步，也不做官方榜——避免"我刷到初段"这类预期落空。</li>
+<li>匹配优先按对局数（前 20 局）而不是分数，避免新手一上来撞到老手。</li>
+<li>前 5 局失败不扣分，但胜利照常加分——让新手先建立"我能赢"的认知。</li>
+<li>连败 3 局后，下一局优先推荐提示次数更多的新手场。</li>
+</ul>
+</section>
+
+<section id="s9" class="chapter"><div class="section-label">TRADEOFF / 09</div>
+<h2>反作弊：明确不做，以及为什么</h2>
+<p>这一节写的是主动取舍，不是遗漏。规则计算全部在客户端，服务端只转发消息，因此改客户端可以下非法手、无限用建议、伪造思考时长。<strong>我们不防</strong>，理由：</p>
+<ul>
+<li>本模式定位是<b>好友局与休闲对战</b>，不设赌注、不做实物奖励、名次不与任何资源挂钩。</li>
+<li>段位与战绩只存本地，不提供官方榜，也不作为资源发放依据。</li>
+<li>发生争议时没有第三方裁定，双方线下解决。</li>
+</ul>
+<p>但有一层仍然要做，且和反作弊无关：<b>接收方校验</b>。对手收到落子后用自己的内核试算一遍，非法就不落子、请求重同步。这不是防人，而是防"对方客户端的一个 bug 把我这边卡死或闪退"。</p>
+<ul>
+<li><b>不做悔棋。</b>PvP 里悔棋等于给对方送信息。误触用"落子需二次确认"解决（仅新手场开启）。</li>
+<li><b>超时不做 AI 代下。</b>超时直接判负。让 AI 代下会让对手面对一个不知疲倦的机器，体验更差。</li>
+</ul>
+<div class="callout warn"><p>如果以后要做有公信力的排位，服务端权威这一层必须补回来，而且是协议层重做。
+技术选型文档 12.1 留了迁移路径。</p></div>
+</section>
+
+<section id="s10" class="chapter"><div class="section-label">PLAN / 10</div>
+<h2>里程碑与验收</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>阶段</th><th>范围</th><th>验收标准</th></tr></thead><tbody><tr><td>M1（约 2 周）</td><td>GoCore 规则内核、本地双人、气与提子可视化、终局计分</td><td>500 局自对弈无非法局面；经典死活题判定一致；本地双人可完整下完一局并正确计分</td></tr><tr><td>M2（约 1 周）</td><td>服务端房间与转发、匹配、断线重连、超时显示</td><td>两人真实联机完成一局；中途杀进程重连后局面一致；超时判负双方一致</td></tr><tr><td>M3（约 1 周）</td><td>落子建议、终局演出、复盘、本地段位</td><td>提示次数按设定扣减；终局演出可跳过；复盘步进与实战一致</td></tr></tbody></table></div>
+<p>服务端只做转发，所以 M2 的工期比"服务端权威"版本短：不需要写服务端规则内核、不需要幂等账本与时钟裁决。</p>
+<p>验收手段沿用现有设施：<strong>GoCore 用 EditMode 单测 + 批量自对弈</strong>；联机部分用 <strong>RevMCP 的计划执行</strong>驱动两个客户端，
+断言点落在"两端 <code>MoveList</code> 逐手一致、最终棋面哈希相同"上，而不是靠肉眼看画面。</p>
+</section>
+
+<section id="s11" class="chapter"><div class="section-label">SCOPE / 11</div>
+<h2>本期不做</h2>
+<ul>
+<li><b>19 路 / 13 路：</b>配置留了口子，但本期只做 9 路。多尺寸意味着 UI、缩放、提示算法全部要重做一遍。</li>
+<li><b>自由聊天：</b>只做预设短语。</li>
+<li><b>悔棋：</b>见第 09 节。</li>
+<li><b>KataGo 级 AI：</b>建议功能走启发式，人机模式走现有 AI 框架的简化版。真要上 KataGo 是独立项目（模型体积、算力、服务端推理成本都要单算）。</li>
+<li><b>实时观战 / 弹幕：</b>落子序列天然支持观战，但首版不做入口。</li>
+<li><b>禁着点标记、让子棋、数子争议申诉：</b>规则上支持，界面上不做。</li>
+</ul>
+<div class="callout warn"><p>这份文档的边界比内容更重要。上面每一条"不做"，都是下一轮评审时最容易被加进来的东西——
+加进来就要重新排期。要加，请在 M3 之后再讨论。</p></div>
+</section>
+<div class="endmark">— 文档结束 —</div></main></div>
+<footer class="footnote"><span>配套文档：九路围棋PvP技术选型_2026-10-26.html</span><span>规则口径以中国规则数子法为准；数值全部配置化</span></footer>
+<script>
+const links=[...document.querySelectorAll('.sidebar nav a')],chapters=[...document.querySelectorAll('.chapter')];let busy=false;
+function tick(){const max=document.documentElement.scrollHeight-innerHeight;const bar=document.querySelector('.progress');if(bar)bar.style.width=(max>0?scrollY/max*100:0)+'%';let active=chapters[0];for(const s of chapters){if(s.getBoundingClientRect().top<innerHeight*.35)active=s;}links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active.id));busy=false;}
+addEventListener('scroll',()=>{if(!busy){busy=true;requestAnimationFrame(tick);}},{passive:true});tick();
+</script></body></html>

@@ -9,7 +9,7 @@
 
     脚本不做 pip 安装：RevMCP 是纯标准库实现，不需要任何第三方包。所谓"初始化依赖"其实是。
         1. 本机有一个 ≥3.10 的 Python（并拿到它的绝对路径）；
-        2. Revolution.RevMCP 与 Revolution.Automation 两个目录同级存在；
+        2. Revolution.RevMCP 与 Revolution.RevCLI 两个目录同级存在；
         3. 客户端配置里的路径写对。
 
     第 3 点最容易错：反斜杠写错时客户端只会静默显示"连不上"。所以本脚本不靠
@@ -509,7 +509,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $unityRoot = Join-Path $repoRoot 'RevGame_Client\UnityProject'
 $unityProject = if ($Project) { (Resolve-Path -LiteralPath $Project).Path } else { Join-Path $unityRoot 'RevGame.Unity' }
 $revMcpDir = Join-Path $unityRoot 'Revolution.RevMCP'
-$automationDir = Join-Path $unityRoot 'Revolution.Automation'
+$automationDir = Join-Path $unityRoot 'Revolution.RevCLI'
 $revMcp = Join-Path $revMcpDir 'rev_mcp.py'
 $outDir = if ($Out) { $Out } else { Join-Path $PSScriptRoot 'revmcp-configs' }
 
@@ -531,7 +531,7 @@ Write-Host "`n[2/5] 目录与依赖文件"
 $required = @(
     @{ Path = $revMcp; Label = 'RevMCP 入口' },
     @{ Path = (Join-Path $revMcpDir 'revmcp\server.py'); Label = 'MCP 服务实现' },
-    @{ Path = (Join-Path $automationDir 'revautomation\client.py'); Label = 'Revolution.Automation 客户端（RevMCP 依赖它）' },
+    @{ Path = (Join-Path $automationDir 'revautomation\client.py'); Label = 'Revolution.RevCLI 客户端（RevMCP 依赖它）' },
     @{ Path = (Join-Path $unityProject 'Assets'); Label = 'Unity 工程' }
 )
 $layoutOk = $true
@@ -539,7 +539,7 @@ foreach ($item in $required) {
     if (Test-Path -LiteralPath $item.Path) { Write-Ok "$($item.Label)：$($item.Path)" }
     else {
         $layoutOk = $false
-        Write-Bad "$($item.Label) 缺失：$($item.Path)" '确认目录结构完整（Revolution.RevMCP 与 Revolution.Automation 必须同级）'
+        Write-Bad "$($item.Label) 缺失：$($item.Path)" '确认目录结构完整（Revolution.RevMCP 与 Revolution.RevCLI 必须同级）'
     }
 }
 

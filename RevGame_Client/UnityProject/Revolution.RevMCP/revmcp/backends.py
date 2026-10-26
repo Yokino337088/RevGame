@@ -1,6 +1,6 @@
 """把 Agent 的统一调用接到三个真实执行入口。
 
-Editor 走 Revolution.Automation 的文件工单；游戏走相同注册表（Editor 转发或
+Editor 走 Revolution.RevCLI 的文件工单；游戏走相同注册表（Editor 转发或
 Player 本机 HTTP）；外部工具走人工登记的可执行文件。这里只适配传输，不实现
 背包、战斗等玩法。网络成功/进程退出不等于业务正确，后置断言交给 workflow。
 """
@@ -184,13 +184,13 @@ def gm_line(command, arguments):
 
 class Hub:
     """统一目录与调度器。先 discover 查实际接口，再按 target/action 精确调用。"""
-    def __init__(self, project=None, runtime_endpoint=None, automation_root=None, external_manifest=None, reports=None, timeout=120):
+    def __init__(self, project=None, runtime_endpoint=None, cli_root=None, external_manifest=None, reports=None, timeout=120):
         self.timeout = timeout
         self.editor = RevClient(project, mode="live", timeout=timeout) if project else None
         self.runtime_endpoint = Path(runtime_endpoint) if runtime_endpoint else None
         self.external_manifest = external_manifest
         self.reports = Path(reports or (Path.cwd() / ".rev-mcp/results")).resolve()
-        self.manifest = read_json(Path(automation_root) / "commands.json")
+        self.manifest = read_json(Path(cli_root) / "commands.json")
         self.known = {s["id"]: s for s in self.manifest["actions"]}
 
     def game_call(self, action, arguments, confirm=False, cancel=None):

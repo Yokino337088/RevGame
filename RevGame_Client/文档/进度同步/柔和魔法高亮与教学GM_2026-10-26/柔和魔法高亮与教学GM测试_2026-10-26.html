@@ -1,0 +1,91 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>柔和魔法高亮与教学GM测试 · 2026-10-26</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+
+body{background:#f6f4ed;color:#253e37;font-family:Segoe UI,Microsoft YaHei,sans-serif}main{max-width:1180px;margin:40px auto;padding:0 24px}header,section{background:#fffdf7;border:1px solid #dfdfcf;border-radius:18px;padding:28px;margin-bottom:24px}h1{font-size:36px}h2{font-size:24px}p,li{line-height:1.9}.badge{display:inline-block;background:#e5f1e6;color:#286344;padding:8px 18px;border-radius:30px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}figure{margin:0}img{max-width:100%;border-radius:12px}figcaption{padding:10px 0;color:#637167}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid #e1e5db;padding:10px;text-align:left}code{background:#eff2e9;padding:3px 6px;border-radius:5px}details{margin:18px 0}@media(max-width:760px){.grid{grid-template-columns:1fr}h1{font-size:27px}}
+</style><main><header><small>REVGAME · REVOLUTION 框架业务验收</small><h1>柔和魔法高亮与教学 GM</h1><p>2026 年 10 月 26 日 · Unity 2022.3.15f1c1 · Editor 图形 Play · PC 真实 AssetBundle</p><span class="badge">74 个主测试步骤 + 4 个清理步骤通过</span><p>新手教学仍发生在真实 GameScene。高亮改为中心透明的薄荷绿／淡紫动态边框，右侧提示收进空白区，GM 可重播教学并保留首次进度。</p></header>
+<section><h2>交付结果</h2><ul><li>新 Shader：<code>RevGame/UI/SlimeTutorialHighlight</code>。圆角边缘缓慢波动，默认最高透明度 0.55，普通 Alpha 混合；不覆盖按钮文字，不拦截点击。</li><li>引导框高度由右栏 45% 缩到 17%，放在 48%～65% 区间。当前 1920×1080 画布中实际尺寸约 444×177；五个阶段均验证与可见按钮、状态栏重叠数为 0。</li><li>标题、气数、正文均检查字体实际排版高度；已知默认长句压缩，用户自行修改的 SO 文案保留。</li><li>GM：<code>RevGame/新手教学</code>，无参数。大厅直接开始，战斗先返回大厅再开始；返回 <code>accepted</code> 后等待剧情／过场交付。当前战役会被替换。</li><li>重复触发被拒绝，步骤与六张手牌保持不变；重播不会改写首次教程完成标记。</li><li>PC、Android 各 32 个包构建成功；材质进入 material_ui，Shader 进入 shared_shaders。六章背景保持独立。</li></ul></section>
+<section><h2>真实画面</h2><div class="grid"><figure><img src="画面/步骤1.jpg"><figcaption>选择真实手牌</figcaption></figure><figure><img src="画面/步骤2.jpg"><figcaption>棋格柔和高亮</figcaption></figure><figure><img src="画面/步骤3.jpg"><figcaption>封气后的紧凑引导</figcaption></figure><figure><img src="画面/步骤4.jpg"><figcaption>开始战斗按钮柔和边框</figcaption></figure></div><h3>动态边框 · 12 帧连续实拍</h3><img src="画面/魔法边框动态.gif"><p>截图与动图仅缩放压缩，未裁剪、拼接或增强颜色。画面证据辅助观察，业务结果由实际状态断言确认。</p></section>
+<section><h2>覆盖与修复记录</h2><p>50 步已完成存档回归：GM 入场 → 真实手牌点击 → 真实棋格封气／换位 → 原始开始战斗按钮 → 战斗内再次 GM 重播。24 步未完成存档回归：中断首次教学后重播并完成，完成标记仍为 false。两组运行日志累计 Error/Exception 均为 0，各自返回大厅清理通过。</p><p>调试中发现并修复：Shader 局部变量使用了 HLSL 保留字；缩小面板后标题行高不足；封锁态气数过长换行。修复后重新构建／执行上述通过版本，未降低断言。</p><p>一次中间测试直接从战斗停 Play 出现现有 RevObjectPool 清理警告；最终验证均先经正式流程返回大厅再停止。该历史警告保留在本地机器证据中，不作为当前通过记录。</p><p>框架可行性：复用 RevUI、RevTimer、RevGM、RevTask、RevScene、RevScope 与资源门面完成实现。没有增加第二套棋盘或场景状态机，也没有为本次需求修改框架内核。</p><details><summary>展开每一步的结果（含清理）</summary><table><thead><tr><th>用例／序号</th><th>入口</th><th>结果</th><th>实际后置</th></tr></thead><tbody><tr><td>已完成存档完整回归 · 1</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=True</td></tr><tr><td>已完成存档完整回归 · 2</td><td>RevGame/新手教学</td><td>通过</td><td>accepted</td></tr><tr><td>已完成存档完整回归 · 3</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=True</td></tr><tr><td>已完成存档完整回归 · 4</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 5</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 6</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 7</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 8</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=SelectCard；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 9</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 10</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 11</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 12</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=SealLiberty；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 13</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 14</td><td>RevGame/点格子</td><td>通过</td><td>ok:4,3</td></tr><tr><td>已完成存档完整回归 · 15</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=SelectAlly；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 16</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 17</td><td>RevGame/点格子</td><td>通过</td><td>ok:3,4</td></tr><tr><td>已完成存档完整回归 · 18</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=MoveAlly；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 19</td><td>RevGame/点格子</td><td>通过</td><td>ok:2,4</td></tr><tr><td>已完成存档完整回归 · 20</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=Ready；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 21</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 22</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 23</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 24</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 25</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 26</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 27</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 28</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 29</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 30</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 31</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 32</td><td>runtime.screenshot</td><td>通过</td><td>真实运行截图</td></tr><tr><td>已完成存档完整回归 · 33</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=Ready；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 34</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 35</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 36</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=Ready；教学完成=True</td></tr><tr><td>已完成存档完整回归 · 37</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 38</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 39</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 40</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 41</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 42</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 43</td><td>RevGame/新手教学</td><td>通过</td><td>accepted</td></tr><tr><td>已完成存档完整回归 · 44</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=True</td></tr><tr><td>已完成存档完整回归 · 45</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 46</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 47</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 48</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>已完成存档完整回归 · 49</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=SelectCard；教学完成=True；重叠=0；文字完整=True</td></tr><tr><td>已完成存档完整回归 · 50</td><td>runtime.logs</td><td>通过</td><td>累计运行错误=0</td></tr><tr><td>已完成存档完整回归 · 51</td><td>RevGame/返回主界面</td><td>通过</td><td>流程=Battle，场景=GameScene，过场=True，加载进度=2%，步骤=正在返回营地…
+[RevScope] 域栈深度 1，当前 = RevGame.Battle
+└─ RevGame.Battle  [Open]  进入于 1.3 s 前  回收分组: —  每帧: 开  兜底归属: 开
+   归属对象 3 个：BattleHudPanel×1、PreparePanel×1、TutorialPanel×1
+   业务单元 2 个：TutorialLogic、BattleLogic
+说明：没写 owner 的计时器 / 事件 / 每帧回调归域自己，不逐个记账（所以注册零额外开销），这里不统计它们的个数。
+上次关闭：
+域「RevGame.Lobby」关闭报告：耗时 0.04 ms，回收 0 个（0 失败）
+  0 关域门  —（标记关闭中，不再接新东西）
+  1 业务单元 RevLogic  0 个  0.00 ms
+  2 界面 RevUI  0 个  0.00 ms
+  3 每帧回调 RevMono  0 个  0.00 ms
+  4 计时器 RevTimer  0 个  0.00 ms
+  5 事件监听 RevEvent  0 个  0.01 ms
+  6 对象池 RevPool  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）
+  7 资源 RevRes  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）
+  8 服务 RevServices  0 个  0.00 ms
+  9 兜底扫尾  0 个  0.01 ms
+Logic数量=2</td></tr><tr><td>已完成存档完整回归 · 52</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=True</td></tr><tr><td>未完成存档保护 · 1</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=False</td></tr><tr><td>未完成存档保护 · 2</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 3</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 4</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 5</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 6</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=SelectCard；教学完成=False；重叠=0；文字完整=True</td></tr><tr><td>未完成存档保护 · 7</td><td>RevGame/返回主界面</td><td>通过</td><td>流程=Battle，场景=GameScene，过场=True，加载进度=2%，步骤=正在返回营地…
+[RevScope] 域栈深度 1，当前 = RevGame.Battle
+└─ RevGame.Battle  [Open]  进入于 1.4 s 前  回收分组: —  每帧: 开  兜底归属: 开
+   归属对象 3 个：BattleHudPanel×1、PreparePanel×1、TutorialPanel×1
+   业务单元 2 个：TutorialLogic、BattleLogic
+说明：没写 owner 的计时器 / 事件 / 每帧回调归域自己，不逐个记账（所以注册零额外开销），这里不统计它们的个数。
+上次关闭：
+域「RevGame.Lobby」关闭报告：耗时 1.41 ms，回收 0 个（0 失败）
+  0 关域门  —（标记关闭中，不再接新东西）
+  1 业务单元 RevLogic  0 个  0.08 ms
+  2 界面 RevUI  0 个  0.13 ms
+  3 每帧回调 RevMono  0 个  0.24 ms
+  4 计时器 RevTimer  0 个  0.02 ms
+  5 事件监听 RevEvent  0 个  0.02 ms
+  6 对象池 RevPool  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）
+  7 资源 RevRes  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）
+  8 服务 RevServices  0 个  0.27 ms
+  9 兜底扫尾  0 个  0.01 ms
+Logic数量=2</td></tr><tr><td>未完成存档保护 · 8</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=False</td></tr><tr><td>未完成存档保护 · 9</td><td>RevGame/新手教学</td><td>通过</td><td>accepted</td></tr><tr><td>未完成存档保护 · 10</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 11</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 12</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 13</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 14</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=SelectCard；教学完成=False；重叠=0；文字完整=True</td></tr><tr><td>未完成存档保护 · 15</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 16</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 17</td><td>RevGame/点格子</td><td>通过</td><td>ok:4,3</td></tr><tr><td>未完成存档保护 · 18</td><td>RevGame/点格子</td><td>通过</td><td>ok:3,4</td></tr><tr><td>未完成存档保护 · 19</td><td>RevGame/点格子</td><td>通过</td><td>ok:2,4</td></tr><tr><td>未完成存档保护 · 20</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=Ready；教学完成=False；重叠=0；文字完整=True</td></tr><tr><td>未完成存档保护 · 21</td><td>ui.dump</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 22</td><td>ui.click</td><td>通过</td><td>完成</td></tr><tr><td>未完成存档保护 · 23</td><td>story.state</td><td>通过</td><td>场景=GameScene；步骤=Ready；教学完成=False</td></tr><tr><td>未完成存档保护 · 24</td><td>runtime.logs</td><td>通过</td><td>累计运行错误=0</td></tr><tr><td>未完成存档保护 · 25</td><td>RevGame/返回主界面</td><td>通过</td><td>流程=Battle，场景=GameScene，过场=True，加载进度=2%，步骤=正在返回营地…
+[RevScope] 域栈深度 1，当前 = RevGame.Battle
+└─ RevGame.Battle  [Open]  进入于 4.9 s 前  回收分组: —  每帧: 开  兜底归属: 开
+   归属对象 3 个：BattleHudPanel×1、TutorialPanel×1、StoryPanel×1
+   业务单元 2 个：TutorialLogic、BattleLogic
+说明：没写 owner 的计时器 / 事件 / 每帧回调归域自己，不逐个记账（所以注册零额外开销），这里不统计它们的个数。
+上次关闭：
+域「RevGame.Lobby」关闭报告：耗时 0.03 ms，回收 0 个（0 失败）
+  0 关域门  —（标记关闭中，不再接新东西）
+  1 业务单元 RevLogic  0 个  0.00 ms
+  2 界面 RevUI  0 个  0.00 ms
+  3 每帧回调 RevMono  0 个  0.00 ms
+  4 计时器 RevTimer  0 个  0.00 ms
+  5 事件监听 RevEvent  0 个  0.01 ms
+  6 对象池 RevPool  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）
+  7 资源 RevRes  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）
+  8 服务 RevServices  0 个  0.00 ms
+  9 兜底扫尾  0 个  0.01 ms
+Logic数量=2</td></tr><tr><td>未完成存档保护 · 26</td><td>story.state</td><td>通过</td><td>场景=StartScene；步骤=none；教学完成=False</td></tr></tbody></table></details></section>
+<section><h2>边界与复现</h2><p>已验证 PC Editor 真实 AB 与当前 1920×1080 横屏。Android 已完成 AB 构建，但未在手机实机验证；未覆盖全部屏幕比例、刘海安全区及用户以后自定义超长文案。</p><p>复现计划：<code>Tests/StoryTutorialAutomation/soft-highlight.plan.json</code> 使用 flags=3；<code>replay-progress.plan.json</code> 使用 flags=1。先冷启动 StartScene、启动运行时自动化、rev_discover，再执行 rev_run。结束后停止 Play 并解除隔离开关。</p><p>最终 Play=false，编译无错误，测试隔离开关已解除。报告只含 HTML、截图和 GIF，不生成 ZIP。原始 JSON 在忽略目录 <code>.codex/work/tutorial-soft/</code>，该目录不提交。</p></section></main></html>

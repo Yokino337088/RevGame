@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Chapter04_Swamp_Surface
+  m_Shader: {fileID: 4800000, guid: 1911e526a80bcd644883a43585c52e16, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CellSize: 1.15
+    - _Origin: -5.1749997
+    - _PreviewTime: -1
+    - _Speed: 0.62
+    - _Strength: 0.48
+    - _MudStrength: 0.72
+    - _MudContrast: 0.31
+    - _FlowSpeed: 1
+    - _FlowWarp: 0.3
+    - _PatternScale: 1
+    - _EddyStrength: 0.22
+    - _EddyDensity: 0.28
+    - _BubbleStrength: 0.56
+    - _BubbleDensity: 0.42
+    - _BubbleSpeed: 1
+    - _BubbleSize: 1
+    - _RimStrength: 0.24
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Glow: {r: 0.63, g: 0.76, b: 0.31, a: 1}
+    - _Tint: {r: 0.65, g: 0.55, b: 0.4, a: 1}
+  m_BuildTextureStacks: []

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1005553435
+CRC: 4065568514
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: de0cf4cc4932737584272ac9e42d3c4d
+    Hash: 9c3652902bb8d7a172bcec86ec42bbd6
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 269eab1946ccd18af2691f903f5795f6
+    Hash: 308c113bec349118e2bc37a54ba52f3d
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: de0cf4cc4932737584272ac9e42d3c4d
+    Hash: 9c3652902bb8d7a172bcec86ec42bbd6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,6 +37,7 @@ Assets:
 - Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab
 - Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_board
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat

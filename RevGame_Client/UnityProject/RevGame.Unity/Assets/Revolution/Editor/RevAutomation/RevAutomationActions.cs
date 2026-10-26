@@ -103,12 +103,174 @@ namespace Revolution.Editor
         /// 最后看末尾用特性扫描出来的"扩展动作"（如 hot.*）。
         /// </summary>
 
+        [Serializable]
+        private sealed class RevAutomationBatchPayload
+        {
+            public RevAutomationBatchStep[] steps;
+            public bool stopOnError = true;
+        }
+
+        [Serializable]
+        private sealed class RevAutomationBatchStep
+        {
+            public string action;
+            public string payloadJson;
+            public bool confirm;
+        }
+
+        [Serializable]
+        private sealed class RevAutomationBatchStepResult
+        {
+            public int index;
+            public string action;
+            public bool success;
+            public string message;
+            public string dataJson;
+        }
+
+        [Serializable]
+        private sealed class RevAutomationBatchResult
+        {
+            public bool success;
+            public int total;
+            public int failed;
+            public double elapsedMs;
+            public RevAutomationBatchStepResult[] results;
+        }
+
+        /// <summary>
+        /// 一次请求执行多个动作，省掉"每步一次往返"。
+        ///
+        /// 为什么值得做：实测单次往返约 110ms，而耗时几乎全在编辑器 tick 上，
+        /// 压轮询间隔没有意义；把 N 步压进一次请求，才是真正的数量级改善。
+        ///
+        /// 边界：
+        /// - 每步仍走同一个 Execute 分发，参数校验、edit/play 限制和 confirm 规则不变；
+        /// - 不允许嵌套 batch，避免超时与错误归属变得不可推理；
+        /// - 默认遇错即停（stopOnError=false 可继续），因为后续步骤常常依赖前一步的状态。
+        /// </summary>
+        /// <summary>发起后需要等待完成、或长耗时阻塞的动作，不适合塞进同帧批量。</summary>
+        private static readonly string[] BatchDeferredActions =
+        {
+            "editor.refresh", "editor.menu", "editor.play", "editor.stop", "editor.pause", "editor.resume", "editor.step",
+        };
+
+        private static string BatchRejectReason(string action)
+        {
+            string environment = RevAutomationCatalog.EnvironmentOf(action);
+            if (environment == "live" || environment == "play")
+            {
+                return "该动作需要 Play 或运行时状态，无法在同一帧内完成；请改用 pipeline 或计划 JSON";
+            }
+            foreach (string deferred in BatchDeferredActions)
+            {
+                if (action == deferred)
+                {
+                    return "该动作发起后需要等待（刷新/菜单/Play 切换），放进批量会读到旧状态";
+                }
+            }
+            if (action.EndsWith(".build") || action.StartsWith("build."))
+            {
+                return "构建类动作耗时长且不适合批量；请单独调用以便看到进度";
+            }
+            return null;
+        }
+
+        private static object ExecuteBatch(RevAutomationRequest request)
+        {
+            var payload = JsonUtility.FromJson<RevAutomationBatchPayload>(request.payloadJson ?? "{}");
+            if (payload == null || payload.steps == null || payload.steps.Length == 0)
+            {
+                throw new ArgumentException("batch.call 需要非空 steps 数组");
+            }
+            if (payload.steps.Length > 64)
+            {
+                throw new ArgumentException("batch.call 单次最多 64 步；更多步骤请拆成多次，便于定位失败");
+            }
+            var started = DateTime.UtcNow;
+            var results = new List<RevAutomationBatchStepResult>(payload.steps.Length);
+            int failed = 0;
+            for (int i = 0; i < payload.steps.Length; i++)
+            {
+                var step = payload.steps[i];
+                var item = new RevAutomationBatchStepResult { index = i, action = step?.action };
+                if (step == null || string.IsNullOrEmpty(step.action))
+                {
+                    item.success = false;
+                    item.message = "步骤缺少 action";
+                    results.Add(item);
+                    failed++;
+                    if (payload.stopOnError) { break; }
+                    continue;
+                }
+                if (step.action == "batch.call")
+                {
+                    item.success = false;
+                    item.message = "batch.call 不允许嵌套";
+                    results.Add(item);
+                    failed++;
+                    if (payload.stopOnError) { break; }
+                    continue;
+                }
+                // 批量是"同一帧内同步跑完"，所以必须挡掉两类动作，否则后续步骤会读到旧状态：
+                // 1) 需要 Play / 运行时状态的（live、play）；
+                // 2) 发起后要等一帧或长时间阻塞的（刷新、菜单、各种构建）。
+                // 运行期/UI/战斗这类多帧验证请继续用 pipeline 或计划 JSON，那里有等待与断言。
+                string reason = BatchRejectReason(step.action);
+                if (reason != null)
+                {
+                    item.success = false;
+                    item.message = reason;
+                    results.Add(item);
+                    failed++;
+                    if (payload.stopOnError) { break; }
+                    continue;
+                }
+                var sub = new RevAutomationRequest
+                {
+                    protocol = request.protocol,
+                    id = request.id,
+                    action = step.action,
+                    payloadJson = string.IsNullOrEmpty(step.payloadJson) ? "{}" : step.payloadJson,
+                    sessionId = request.sessionId,
+                    timeoutSeconds = request.timeoutSeconds,
+                    deadlineUtc = request.deadlineUtc,
+                    // 外层 confirm 视为整批授权；单步也可自行声明，避免批处理绕过高危确认。
+                    confirm = step.confirm || request.confirm,
+                };
+                try
+                {
+                    object value = Execute(sub);
+                    item.success = true;
+                    item.message = "完成";
+                    item.dataJson = value == null ? "" : JsonUtility.ToJson(value, false);
+                }
+                catch (Exception error)
+                {
+                    item.success = false;
+                    item.message = error.GetType().Name + ": " + error.Message;
+                    failed++;
+                }
+                results.Add(item);
+                if (!item.success && payload.stopOnError) { break; }
+            }
+            return new RevAutomationBatchResult
+            {
+                success = failed == 0,
+                total = results.Count,
+                failed = failed,
+                elapsedMs = (DateTime.UtcNow - started).TotalMilliseconds,
+                results = results.ToArray(),
+            };
+        }
+
         public static object Execute(RevAutomationRequest request)
         {
             RevAutomationCatalog.ValidatePayload(request);
             var p = JsonUtility.FromJson<RevAutomationOptions>(request.payloadJson ?? "{}");
             if (p == null) { throw new ArgumentException("payloadJson 必须是 JSON 对象"); }
             string action = request.action;
+            if (action == "batch.call") { return ExecuteBatch(request); }
             if (action == "hot.demo-prepare") { RequireEditMode(); ValidateCopyDestination(Target(null)); }
             MethodInfo extension = RevAutomationCatalog.Extension(action);
             if (extension != null) { return RevAutomationCatalog.Invoke(extension, request); }

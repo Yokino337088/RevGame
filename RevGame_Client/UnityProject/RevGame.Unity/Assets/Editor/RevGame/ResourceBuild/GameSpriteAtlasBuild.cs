@@ -63,10 +63,17 @@ namespace RevGame.Editor
             // 旧的备用图集保留文件供以后复用，但不能保留包标记或Include In Build，否则仍可能增加包体。
             // 这里也支持单独调用Configure，不依赖外层恰好已经清过标记。
             var included = new HashSet<string>(groups.Keys, StringComparer.Ordinal);
+            var assignedSources = new HashSet<string>(groups.Values.SelectMany(paths => paths), StringComparer.Ordinal);
             foreach (string guid in AssetDatabase.FindAssets("t:SpriteAtlas", new[] { AtlasRoot }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (included.Contains(Path.GetFileNameWithoutExtension(path))) { continue; }
+                // 备用素材转为在用后，必须从旧备用图集移除：即使旧图集不进包，重复归属也会令Unity绑定和审计不确定。
+                // 只移除已经分到新图集的源图，其余备用素材及GUID继续保留。
+                var oldAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
+                string[] oldSources = oldAtlas.GetPackables().Select(AssetDatabase.GetAssetPath).ToArray();
+                string[] remaining = oldSources.Where(source => !assignedSources.Contains(source)).ToArray();
+                if (remaining.Length != oldSources.Length) { ConfigureAtlas(Path.GetFileNameWithoutExtension(path), remaining.ToList()); }
                 var importer = (SpriteAtlasImporter)AssetImporter.GetAtPath(path);
                 GameResourceBuild.SetBundleIfChanged(importer, string.Empty);
                 if (importer.includeInBuild) { importer.includeInBuild = false; importer.SaveAndReimport(); }
@@ -108,6 +115,7 @@ namespace RevGame.Editor
         private static string GroupFor(string path)
         {
             if (path.Contains("/Background/") || path.Contains("/ChapterBackground/")) { return Path.GetFileNameWithoutExtension(path) + "Atlas"; }
+            if (path.Contains("/Art/Story/")) { return "StoryGuide"; }
             if (path.Contains("/Art/Pieces/")) { return "PieceFrames"; }
             if (path.Contains("/Art/Combat/")) { return "CombatFrames"; }
             if (path.Contains("/Art/Board/") || path.Contains("/Art/Status/")) { return "BoardStatus"; }

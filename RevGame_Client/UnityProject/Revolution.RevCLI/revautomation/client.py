@@ -18,10 +18,45 @@ class RevCancelled(RevError):
     pass
 
 
+_COMMANDS_CACHE = {}
+
+
+def command_specs(path: Path):
+    """读取 commands.json 的动作清单，按文件修改时间缓存。
+
+    每次 call 都重新解析一百多条 JSON 只省不了多少时间，但在高频短操作里会白白多花毫秒；
+    缓存键带 mtime_ns，所以改了清单立刻生效，不会拿旧规则去校验新动作。
+    """
+    stamp = path.stat().st_mtime_ns
+    hit = _COMMANDS_CACHE.get(path)
+    if hit is not None and hit[0] == stamp:
+        return hit[1]
+    specs = read_json(path)["actions"]
+    _COMMANDS_CACHE[path] = (stamp, specs)
+    return specs
+
+
 def read_json(path: Path):
     def reject_constant(value):
         raise ValueError("JSON 不接受非有限数：" + value)
     return json.loads(path.read_text(encoding="utf-8-sig"), parse_constant=reject_constant)
+
+
+def read_json_settled(path: Path, attempts: int = 60, delay: float = .005):
+    """等文件落定后再读，避免与写入方的原子替换撞车。
+
+    Windows 上写入方用 temp + os.replace（Unity 侧是 File.Replace）发布结果；
+    这期间读方打开同名文件会短暂拿到 PermissionError。2026-10-20 的 boss-ai 作业
+    就是因为同一竞争被直接判失败。这里只重试“读”，绝不重发动作——读取失败不代表动作没执行。
+    """
+    for attempt in range(attempts):
+        try:
+            return read_json(path)
+        except (PermissionError, FileNotFoundError):
+            if attempt == attempts - 1:
+                raise
+            time.sleep(delay)
+    raise RevError(f"无法读取结果文件：{path}")
 
 
 def atomic_json(path: Path, value):
@@ -99,7 +134,7 @@ class RevClient:
             raise RevError("没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。")
         if endpoint and endpoint.get("batchMode"):
             raise RevError("当前桥接属于正在运行的 batch Unity，请等待其退出。")
-        specs = read_json(Path(__file__).resolve().parents[1] / "commands.json")["actions"]
+        specs = command_specs(Path(__file__).resolve().parents[1] / "commands.json")
         spec = next((item for item in specs if item["id"] == action), {})
         if mode == "batch" and (spec.get("environment") in ("live", "play") or action.startswith("gm.")):
             raise RevError("此操作需要图形编辑器。先执行 editor launch，再执行 editor play。")
@@ -125,6 +160,9 @@ class RevClient:
                     args.append("-nographics")
                 process = subprocess.Popen(args, cwd=self.project, shell=False)
             end, last_progress = time.monotonic() + self.timeout, None
+            # 起步 5ms、稳定后 20ms、长操作退到 50ms：本地文件桥通常几十毫秒就出结果，
+            # 固定 80ms 轮询会让每个短操作都白等一轮。
+            started, cadence = time.monotonic(), .005
             while not response_path.exists():
                 if cancel is not None and cancel.is_set():
                     raise RevCancelled(f"请求取消：{request_id}，请检查工单已发生的副作用：{work}")
@@ -142,8 +180,12 @@ class RevClient:
                             last_progress = update
                     except (OSError, ValueError):
                         pass
-                time.sleep(0.08)
-            response = read_json(response_path)
+                time.sleep(cadence)
+                if cadence < .02:
+                    cadence = .02
+                elif time.monotonic() - started > .3:
+                    cadence = .05
+            response = read_json_settled(response_path)
             if response.get("id") != request_id or response.get("protocol") != 1:
                 raise RevError("Unity 返回了不匹配的协议或请求 ID。")
             if process is not None:
@@ -167,6 +209,17 @@ class RevClient:
                 except subprocess.TimeoutExpired:
                     process.terminate()
             raise
+
+    def batch(self, steps, stop_on_error=True, confirm=False):
+        """一次请求执行多个动作，省掉"每步一次往返"。
+
+        实测单次往返约 110ms 且几乎全花在编辑器 tick 上，所以批量是唯一有效的提速方式。
+        steps 形如 [{"action": "editor.status"}, {"action": "ab.config"}]，
+        每步可单独带 payloadJson 与 confirm；默认遇错即停，避免后续步骤依赖错误状态。
+        """
+        if not isinstance(steps, list) or not steps:
+            raise RevError("batch 需要非空步骤数组")
+        return self.call("batch.call", {"steps": steps, "stopOnError": stop_on_error}, confirm=confirm)
 
     def launch(self):
         """Open a graphical editor and wait for compilation/bridge; never terminate it."""

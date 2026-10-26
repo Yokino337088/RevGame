@@ -16,13 +16,14 @@ namespace RevGame.Flow
     /// </summary>
     public sealed partial class GameFlow
     {
-        /// <summary>打包时的两个场景名；编辑器构建工具保证StartScene位于Build Settings第0位。</summary>
+        /// <summary>正式场景名；StartScene位于Build Settings第0位，教学和战斗都由同一流程切换。</summary>
         public const string StartSceneName = "StartScene";
         public const string BattleSceneName = "GameScene";
+
         /// <summary>跨整个加载及淡出期间的互斥锁。战斗Logic据此暂停Tick，防止准备增益被遮罩吃掉。</summary>
         public bool IsTransitioning { get; private set; }
         /// <summary>失败遮挡仍开着时也不能推进玩法；IsTransitioning只表示异步任务是否仍在执行。</summary>
-        public bool IsGameplayBlocked { get { return IsTransitioning || _loading != null || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady); } }
+        public bool IsGameplayBlocked { get { return IsStoryPlaying || IsTransitioning || _loading != null || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady); } }
         private GamePresentation _activePresentation;
         /// <summary>诊断用真实阶段进度，不是DOTween插值后的视觉值；范围0~1。</summary>
         public float LoadProgress { get; private set; }
@@ -186,7 +187,7 @@ namespace RevGame.Flow
         private async RevTask LoadStartupDataAsync()
         {
             // 章节背景只在被选中时加载；大厅启动不能预热第一章，否则独立AB仍会常驻。
-            // ★ 所有数值/文案先于任何业务读取加载并整体校验：棋子、星级、增益、事件、关卡、奖励、战斗参数都来自 Excel 导表。
+            // 战斗数值/说明先于业务加载并整体校验；独立剧情文案按用户要求由下方StoryBook SO加载。
             // 任何一张表缺失或填错，GameConfig.Initialize 会一次性抛出中文问题清单，走下面的过场失败出口展示，而不是玩到一半才炸。
             await LoadGameConfigAsync();
             ThrowIfDisposed();
@@ -201,6 +202,8 @@ namespace RevGame.Flow
                 throw new InvalidOperationException("BattleTuning缺少我方远程攻击频率");
             }
             ((BattleService)RevServices.GetRequired<IBattleService>()).ConfigureRangedAttackRate(rate.Value);
+            await LoadStoryAsync();
+            ThrowIfDisposed();
             _startupComplete = true;
         }
 

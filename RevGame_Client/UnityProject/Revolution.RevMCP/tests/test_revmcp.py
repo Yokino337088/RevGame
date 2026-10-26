@@ -11,7 +11,7 @@ import threading
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT), str(ROOT.parent / "Revolution.Automation")]
+sys.path[:0] = [str(ROOT), str(ROOT.parent / "Revolution.RevCLI")]
 from revmcp.backends import Hub, call_external, external_specs, gm_line
 from revmcp.schema import object_schema, validate
 from revmcp.server import action_schema

@@ -100,12 +100,15 @@ namespace RevGame.UI
                 }
             }
 
-            _btnReady.interactable = battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !AnyCardFlipping;
+            var lesson = RevLogic.Get<TutorialLogic>();
+            bool guided = lesson != null && lesson.Active;
+            _btnReady.interactable = (!guided || lesson.Step == TutorialStep.Ready) && battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !AnyCardFlipping;
             _btnReady.GetComponentInChildren<Text>().text = battle.PreparationGranted ? "开始战斗" : "增益抵达 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed)) + "秒";
-            _btnRefresh.interactable = battle.Hand.Count > 0 && !AnyCardFlipping;
+            if (guided && lesson.Step != TutorialStep.Ready) { _btnReady.GetComponentInChildren<Text>().text = "完成引导后开战"; }
+            _btnRefresh.interactable = !guided && battle.Hand.Count > 0 && !AnyCardFlipping;
             _btnRefresh.GetComponentInChildren<Text>().text = "刷新手牌（" + battle.Hand.Count + "张）";
             _btnSkip.gameObject.SetActive(battle.Round == Balance.NormalRoundsPerChapter);
-            _btnSkip.interactable = !AnyCardFlipping;
+            _btnSkip.interactable = !guided && !AnyCardFlipping;
             _btnEye.gameObject.SetActive(battle.EyeStones > 0);
             _btnEye.GetComponentInChildren<Text>(true).text = "眼位石 ×" + battle.EyeStones;
             if (battle.EyeStoneSelected)

@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 543895847
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1d6d0924904121401e3362cc341f230c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 436cae0edbdbd7b6a08d9dd80e13e1eb
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 1d6d0924904121401e3362cc341f230c
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: 0c8e6cbfa60038942b93ad0c61a06a43, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Assembly-CSharp
+  ClassName: RevGame.Data.StoryBook/Episode
+- AssemblyName: Assembly-CSharp
+  ClassName: RevGame.Data.StoryBook/Line
+Assets:
+- Assets/GameRes/Config/Story/StoryBook.asset
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_storyguide

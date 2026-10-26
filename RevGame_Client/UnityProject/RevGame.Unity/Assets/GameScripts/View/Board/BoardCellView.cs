@@ -13,7 +13,7 @@ using UnityEngine.EventSystems;
 namespace RevGame.View
 {
     [RevPoolPrefab(RevResPath.Board_Tile, "BoardCell", Group = RevResGroup.Battle)]
-    public sealed class BoardCellView : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IRevPoolable
+    public sealed partial class BoardCellView : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IRevPoolable
     {
         [SerializeField]
         private SpriteRenderer starRenderer;
@@ -102,6 +102,7 @@ namespace RevGame.View
             if (eyeRenderer != null)
             {
                 eyeRenderer.enabled = visible;
+                if (visible) { AnimateEye(Time.unscaledTime); }
             }
         }
 
@@ -295,6 +296,7 @@ namespace RevGame.View
         public void OnPoolReturn()
         {
             CancelHazardWave();
+            RestoreSurface();
             // ★ 委托会引用棋盘宿主，回池时必须摘掉，否则旧场景仍可能被保留在内存中。
             RevTimer.CancelAllOf(this);
             _onClick = null;

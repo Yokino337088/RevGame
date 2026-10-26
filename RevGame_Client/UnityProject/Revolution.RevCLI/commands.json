@@ -23,6 +23,16 @@
       "readOnly": true
     },
     {
+      "id": "batch.call",
+      "keys": [
+        "steps",
+        "stopOnError"
+      ],
+      "description": "一次请求顺序执行多个动作（最多 64 步），省掉每步一次的往返等待",
+      "environment": "either",
+      "readOnly": false
+    },
+    {
       "id": "editor.play",
       "keys": [
         "scene"

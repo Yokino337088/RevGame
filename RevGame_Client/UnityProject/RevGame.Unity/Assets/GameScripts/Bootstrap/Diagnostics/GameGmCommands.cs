@@ -30,6 +30,25 @@ namespace RevGame.Bootstrap
             RevGame.Animation.GameAttributeGmCommands.RegisterGroup();
             RevGame.Animation.GameAutomationCommands.RegisterGroup();
             RegisterPlayerActions();
+            RegisterCommand("RevGame/播放初始剧情", "重播开场剧情；保留首次进度，不自动进入教学，accepted仅表示请求已接受", args =>
+            {
+                var flow = RevServices.GetRequired<GameFlow>();
+                if (!flow.ReplayOpeningStory()) { throw new RevGMUsageException(flow.LastError); }
+                return "accepted";
+            });
+            RegisterCommand("RevGame/解锁六章关卡", "解锁本次运行全部六章；不发通关奖励，退出游戏后不保存", args =>
+            {
+                int unlocked = ((BattleService)RevServices.GetRequired<IBattleService>()).UnlockAllChaptersForDevelopment();
+                // 已打开的选关界面不会自动观察服务字段，主动刷新才能立即让章节按钮可点击。
+                if (RevUI.IsOpen<LevelSelectPanel>()) { RevUI.Get<LevelSelectPanel>().RefreshView(); }
+                return "unlocked=" + unlocked;
+            });
+            RegisterCommand("RevGame/新手教学", "重播真实棋盘教学：替换当前战役，保留首次进度；返回accepted后等待剧情/场景就绪", args =>
+            {
+                var flow = RevServices.GetRequired<GameFlow>();
+                if (!flow.ReplayTutorial()) { throw new RevGMUsageException(flow.LastError); }
+                return "accepted";
+            });
 
             RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/敌方AI", "只读重量级状态机当前状态、状态时长和最近切换原因", args =>
             {
@@ -852,7 +871,7 @@ namespace RevGame.Animation
 namespace RevGame.Animation
 {
     /// <summary>
-    /// 将项目测试执行器接到现成 RevGM，再由 Revolution.Automation CLI/Scenario 调用。
+    /// 将项目测试执行器接到现成 RevGM，再由 Revolution.RevCLI CLI/Scenario 调用。
     /// 仅注册六条窄入口，不另建HTTP服务/文件桥，不修改框架快照；注册和注销由Bootstrap成对调用。
     /// </summary>
     internal static class GameAutomationCommands

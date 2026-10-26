@@ -64,7 +64,7 @@ namespace RevGame.View
         /// <summary>过场读取的装配状态；不是玩法阶段。失败必须显示原因，不能用“格子少几个”悄悄继续。</summary>
         public string LoadError { get; private set; }
         private bool _cellsReady;
-        public bool IsReady { get { return _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
+        public bool IsReady { get { return _surfaceReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
         public int ActiveEffectCount { get { return _effects.Count; } }
         /// <summary>攻击范围是否正在显示；编辑器/自动化验收直接读，不看渲染器状态。</summary>
         public bool AttackRangeVisible { get { return _attackRangeVisible; } }
@@ -112,6 +112,7 @@ namespace RevGame.View
             RevEvent.AddEventListener(Events.HandChanged, RefreshCells, owner: this);
             ListenBossSkills();
             ListenCombatPacing();
+            RequestBoardSurface();
             BuildCellsAsync(generation);
             RefreshBoard();
         }
@@ -178,6 +179,7 @@ namespace RevGame.View
 
             var cell = RevServices.GetRequired<IBattleService>().Board.GetCell(pos);
             view.Bind(pos, cell.IsStarPoint, OnCellClicked, OnCellLongPressed);
+            if (_surfaceMaterial != null) { view.ApplySurface(_surfaceMaterial); }
             view.name = "格子_" + pos.X + "_" + pos.Y;
             _cells.Add(view);
             _cellByPos[pos] = view;
@@ -236,6 +238,7 @@ namespace RevGame.View
         /// <summary>点击棋盘之外的任意位置（背景/HUD）也收起范围，和点击棋盘格保持同一手感。</summary>
         private void Update()
         {
+            AnimateBoardEyes();
             if (!_attackRangeVisible || !Input.GetMouseButtonDown(0))
             {
                 return;
@@ -547,13 +550,19 @@ namespace RevGame.View
             IBattleService battle = RevServices.GetRequired<IBattleService>();
             foreach (BoardCellView view in _cells)
             {
-                view.SetHighlight(battle.CanPlaySelectedAt(view.Position) || (battle.SelectedPieceId != 0 && battle.Board.GetPiece(view.Position)?.Id == battle.SelectedPieceId));
+                // 教学也点真实BoardCellView；只收窄已有高亮，不画第二张UI棋盘。
+                var lesson = RevLogic.Get<RevGame.Flow.TutorialLogic>();
+                bool guided = lesson != null && lesson.Active;
+                // 教学只显示浮层的柔和魔法边框，避免原落点贴图与边框叠加变亮。
+                view.SetHighlight(guided ? false :
+                    battle.CanPlaySelectedAt(view.Position) || (battle.SelectedPieceId != 0 && battle.Board.GetPiece(view.Position)?.Id == battle.SelectedPieceId));
                 view.SetEye(battle.Board.GetCell(view.Position).IsEyeMarked);
             }
         }
 
         private void OnRound(int round)
         {
+            RequestBoardSurface();
             // 换阶段后旧棋子的射界已经过期，必须先收起再清弹幕。
             HideAttackRange();
             ClearRoundEffects();
@@ -854,6 +863,7 @@ namespace RevGame.View
                 }
             }
 
+            ReleaseBoardSurface();
             _pieces.Clear();
             _cells.Clear();
             _cellByPos.Clear();

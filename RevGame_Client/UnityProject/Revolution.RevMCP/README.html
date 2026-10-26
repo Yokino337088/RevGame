@@ -146,21 +146,22 @@ td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
 <header class="hero"><div class="wrap"><span class="kicker">REVOLUTION · AI AUTOMATION</span><h1>Revolution.RevMCP</h1><p>Unity 内接线 · 真实业务契约 · 断言、截图与清理</p><div class="meta">2026-10-22 · Python 3.10+ · Unity 2022.3</div></div><div class="deco"></div></header>
 <main><section id="intro">
 <p>把 Revolution 的 Editor、实际注册 GM、运行时业务、UGUI、状态/截图，以及显式 CLI/Python 接口提供给 Agent。Python 3.10+，标准库即可运行。Unity 内入口为 <code>Revolution.Tools/AI/RevMCP 控制台</code>，外部 Python 进程提供 MCP stdio；独立开发版 Player 复用运行时桥。</p>
-<p>保留相邻的 <code>Revolution.Automation</code> 目录，Unity 工程安装当前框架。先打开目标工程并等待编译，再执行：</p>
+<p>保留相邻的 <code>Revolution.RevCLI</code> 目录，Unity 工程安装当前框架。先打开目标工程并等待编译，再执行：</p>
 <pre><code class="language-powershell">$project = &#39;<本仓库绝对路径>/RevolutionFrameWork_Unity&#39;
 python Revolution.RevMCP/rev_mcp.py --project $project discover
-python Revolution.Automation/rev.py --project $project --mode live editor play --scene &#39;Assets/Revolution.Demo/RevAutomation.Demo/RevAutomationDemo.unity&#39;
+python Revolution.RevCLI/rev.py --project $project --mode live editor play --scene &#39;Assets/Revolution.Demo/RevAutomation.Demo/RevAutomationDemo.unity&#39;
 python Revolution.RevMCP/rev_mcp.py --project $project run Revolution.RevMCP/examples/ui-gm.plan.json
-python Revolution.Automation/rev.py --project $project --mode live editor stop
+python Revolution.RevCLI/rev.py --project $project --mode live editor stop
 </code></pre>
 <p>Agent 启动命令：<code>python &lt;rev_mcp.py绝对路径&gt; --project &lt;Unity工程绝对路径&gt; serve</code>。配置示例见 examples/mcp-config.example.json，也可直接从 Unity 控制台复制。稳定工具为 rev_discover、rev_call、rev_run；真实注册表还会生成动态工具。</p>
+<p>关于速度：真实编辑器上单次往返约 110ms，实测改造轮询间隔（100ms→20ms）前后没有可测差异——空闲编辑器 <code>EditorApplication.update</code> 本身约 110ms 才触发一次，瓶颈在编辑器 tick 而不是轮询。要减少耗时，应当减少往返次数（一次调用做更多事），而不是继续压轮询间隔。</p>
 <p>独立 Player 显式 <code>-revAutomation</code> 开启服务，MCP 使用 <code>--runtime-endpoint &lt;runtime.json&gt;</code>。正式包默认无运行时测试接口。game 业务能力通过 <code>RevRuntimeAutomation.Register</code> 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。</p>
 <p>安装 <code>Skills/revolution-ai-automation</code> 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。</p>
 <p>完整的新手教程、接口注册、Player、CLI/Python、计划格式、限制和验证记录：</p>
 <ul>
 <li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/RevMCP%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.html">RevMCP 使用说明 HTML</a></li>
 <li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/RevMCP%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md">Markdown</a></li>
-<li><a href="../Revolution.Automation/README.md">Editor Automation</a></li>
+<li><a href="../Revolution.RevCLI/README.md">Editor Automation</a></li>
 <li><a href="../Skills/revolution-ai-automation/SKILL.md">AI 自动化 Skill</a></li>
 </ul>
 <p>无 Unity 依赖的回归：</p>

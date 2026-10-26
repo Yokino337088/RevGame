@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2296073651
+CRC: 4085487448
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cb745ee891c093d4dd940a8af0294812
+    Hash: b04e83664c6e4fb4072669cb62cd015f
   TypeTreeHash:
     serializedVersion: 2
     Hash: b30fce1a9ad74efb72be6c308c56e365
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cb745ee891c093d4dd940a8af0294812
+    Hash: b04e83664c6e4fb4072669cb62cd015f
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -20,7 +20,9 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Material/Board/Chapter04_Swamp_Surface.mat
 - Assets/GameShader/Background/Chapter04_Swamp_Shader.shader
 - Assets/GameRes/Material/Background/Chapter04_Swamp_Material.mat
 - Assets/GameRes/ChapterBackground/Chapter04_Swamp.png
+- Assets/GameShader/Board/Chapter04_Swamp_SurfaceShader.shader
 Dependencies: []

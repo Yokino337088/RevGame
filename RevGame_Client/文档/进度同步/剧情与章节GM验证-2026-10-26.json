@@ -1,0 +1,1224 @@
+{
+  "main": {
+    "success": true,
+    "name": "开场重播与六章解锁GM",
+    "steps": [
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "19e7d0382d8c4b318b10cebd707bdc89",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "StartScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 1,
+            "chapter": 0,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 0,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 0,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 0,
+            "renderedCells": 0,
+            "renderedPieces": 0,
+            "prepareOpen": false,
+            "hudOpen": false,
+            "guideFrame": -1,
+            "guideFrameCount": 3,
+            "screen": "Home",
+            "transitioning": false,
+            "blocked": false,
+            "playing": false,
+            "episode": "",
+            "line": 0,
+            "error": "",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": false,
+            "soundStarted": false,
+            "visibleCharacters": 0,
+            "guidePacked": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.01500000013038516
+      },
+      {
+        "id": null,
+        "target": "gm",
+        "action": "RevGame/播放初始剧情",
+        "response": {
+          "id": "8c49e3b13ba64be8be45e802ec415967",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "success": true,
+            "message": "accepted",
+            "elapsedMs": 1.5211
+          }
+        },
+        "polls": 1,
+        "seconds": 0.015999999828636646
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "6d96da87366644039ab5f52fc7568e9a",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "StartScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 1,
+            "chapter": 0,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 0,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 0,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 0,
+            "renderedCells": 0,
+            "renderedPieces": 0,
+            "prepareOpen": false,
+            "hudOpen": false,
+            "guideFrame": 0,
+            "guideFrameCount": 3,
+            "screen": "Home",
+            "transitioning": false,
+            "blocked": true,
+            "playing": true,
+            "episode": "opening",
+            "line": 0,
+            "error": "",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": true,
+            "soundStarted": true,
+            "visibleCharacters": 1,
+            "guidePacked": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.030999999959021807
+      },
+      {
+        "id": "opening0",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "05fca635a0b5484fa26206fcad8cd5bb",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131700",
+                "path": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+                "type": "UnityEngine.UI.Button",
+                "text": "史莱姆棋旅 · 落子异世界",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 540
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.11000000010244548
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "2275a49e0c2244b4a50033c7d6e977ca",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131700",
+            "hitPath": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.014999999897554517
+      },
+      {
+        "id": "opening1",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "d9c62b4438cb47dd8683f3d855547385",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131700",
+                "path": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+                "type": "UnityEngine.UI.Button",
+                "text": "史莱姆棋旅 · 落子异世界",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 540
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.11000000010244548
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "cb1ee1bbe7714ebab0736913895403ca",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131700",
+            "hitPath": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.0779999999795109
+      },
+      {
+        "id": "opening2",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "57a26ece78ff4a54868cda7e4fa16e06",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131700",
+                "path": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+                "type": "UnityEngine.UI.Button",
+                "text": "史莱姆棋旅 · 落子异世界",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 540
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.01500000013038516
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "93530d6cd719420c80544e11075eec10",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131700",
+            "hitPath": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.015999999828636646
+      },
+      {
+        "id": "opening3",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "70a59002e333429fad344a37b4462c2a",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131700",
+                "path": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+                "type": "UnityEngine.UI.Button",
+                "text": "史莱姆棋旅 · 落子异世界",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 540
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.030999999959021807
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "aa3c608d45a840fba1fda6f8125d0547",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131700",
+            "hitPath": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.11000000010244548
+      },
+      {
+        "id": "opening4",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "a5a6f596ee9e4c248b06b1fe29d23598",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131700",
+                "path": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+                "type": "UnityEngine.UI.Button",
+                "text": "史莱姆棋旅 · 落子异世界",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 540
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.0779999999795109
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "7aaaf216498744a3911328cf77849325",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131700",
+            "hitPath": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.10899999993853271
+      },
+      {
+        "id": "opening5",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "cf5e20beda74493aa7d246e4de12b231",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131700",
+                "path": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+                "type": "UnityEngine.UI.Button",
+                "text": "史莱姆棋旅 · 落子异世界",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 540
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.10900000017136335
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "bece4e4d2cf04df7a104c3b4da590fbf",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131700",
+            "hitPath": "[RevUIRoot]/Guide/StoryPanel/storyView/btnNext",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.015999999828636646
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "ea54027026be43e8a438be1b13cca3dc",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "StartScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 1,
+            "chapter": 0,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 0,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 0,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 0,
+            "renderedCells": 0,
+            "renderedPieces": 0,
+            "prepareOpen": false,
+            "hudOpen": false,
+            "guideFrame": -1,
+            "guideFrameCount": 3,
+            "screen": "Home",
+            "transitioning": false,
+            "blocked": false,
+            "playing": false,
+            "episode": "",
+            "line": 6,
+            "error": "",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": false,
+            "soundStarted": false,
+            "visibleCharacters": 0,
+            "guidePacked": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.03100000019185245
+      },
+      {
+        "id": null,
+        "target": "gm",
+        "action": "RevGame/打开选关",
+        "response": {
+          "id": "77ec2aecccd24d2c97e6d43f30284f80",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "success": true,
+            "message": "流程=LevelSelect，场景=StartScene，过场=False，加载进度=100%，步骤=营地已就绪\n[RevScope] 域栈深度 1，当前 = RevGame.Lobby\n└─ RevGame.Lobby  [Open]  进入于 0.0 s 前  回收分组: —  每帧: 开  兜底归属: 开\n说明：没写 owner 的计时器 / 事件 / 每帧回调归域自己，不逐个记账（所以注册零额外开销），这里不统计它们的个数。\n上次关闭：\n域「RevGame.Lobby」关闭报告：耗时 2.20 ms，回收 1 个（0 失败）\n  0 关域门  —（标记关闭中，不再接新东西）\n  1 业务单元 RevLogic  0 个  0.09 ms\n  2 界面 RevUI  1 个  0.39 ms\n  3 每帧回调 RevMono  0 个  0.38 ms\n  4 计时器 RevTimer  0 个  0.10 ms\n  5 事件监听 RevEvent  0 个  0.03 ms\n  6 对象池 RevPool  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）\n  7 资源 RevRes  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）\n  8 服务 RevServices  0 个  0.43 ms\n  9 兜底扫尾  0 个  0.02 ms\nLogic数量=0",
+            "elapsedMs": 4.7111
+          }
+        },
+        "polls": 1,
+        "seconds": 0.031999999890103936
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "7f3a3f554c3c4b57b1ee6d797c753138",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131928",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter6",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 6 章\n通关前章解锁",
+                "active": true,
+                "interactable": false,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 1360,
+                  "y": 450
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.10899999993853271
+      },
+      {
+        "id": null,
+        "target": "gm",
+        "action": "RevGame/解锁六章关卡",
+        "response": {
+          "id": "b15f8aea136e449897064acf458f3b85",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "success": true,
+            "message": "unlocked=6",
+            "elapsedMs": 0.932
+          }
+        },
+        "polls": 1,
+        "seconds": 0.030999999959021807
+      },
+      {
+        "id": null,
+        "target": "gm",
+        "action": "RevGame/解锁六章关卡",
+        "response": {
+          "id": "dca3e6e212f3422f881e2d7527411846",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "success": true,
+            "message": "unlocked=6",
+            "elapsedMs": 0.0335
+          }
+        },
+        "polls": 1,
+        "seconds": 0.03100000019185245
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "cfd8995dccc848cfb5108f42c2e1ffe0",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "StartScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 6,
+            "chapter": 0,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 0,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 0,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 0,
+            "renderedCells": 0,
+            "renderedPieces": 0,
+            "prepareOpen": false,
+            "hudOpen": false,
+            "guideFrame": -1,
+            "guideFrameCount": 3,
+            "screen": "LevelSelect",
+            "transitioning": false,
+            "blocked": false,
+            "playing": false,
+            "episode": "",
+            "line": 6,
+            "error": "",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": false,
+            "soundStarted": false,
+            "visibleCharacters": 0,
+            "guidePacked": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.031999999890103936
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "6f67c43dc8cd4dd8b49a4015b7c023e2",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131808",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter1",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 1 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 560,
+                  "y": 670
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.030999999959021807
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "390145a7aacf4285a2acb94225e1afbd",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131832",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter2",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 2 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 670
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.10900000017136335
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "d5b1ebb3e2674335b450ef23eb8746f5",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131856",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter3",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 3 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 1360,
+                  "y": 670
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.031999999890103936
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "0351a5814c9b4b4d833018908fc1acfd",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131880",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter4",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 4 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 560,
+                  "y": 450
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.09300000010989606
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "8962c58c5f48404b84556b600c2c867f",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131904",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter5",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 5 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 960,
+                  "y": 450
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.0779999999795109
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "905a440fe7c04a95b9446231985846d2",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131928",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter6",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 6 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 1360,
+                  "y": 450
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.031999999890103936
+      },
+      {
+        "id": "enterSix",
+        "target": "game",
+        "action": "ui.dump",
+        "response": {
+          "id": "c9b3203ee49f445db326d806b2d5198c",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "total": 1,
+            "offset": 0,
+            "truncated": false,
+            "items": [
+              {
+                "id": "instance:-1131928",
+                "path": "[RevUIRoot]/Normal/LevelSelectPanel/chapter6",
+                "type": "UnityEngine.UI.Button",
+                "text": "第 6 章\n开始挑战",
+                "active": true,
+                "interactable": true,
+                "raycastReachable": true,
+                "screenPoint": {
+                  "x": 1360,
+                  "y": 450
+                }
+              }
+            ]
+          }
+        },
+        "polls": 1,
+        "seconds": 0.10899999993853271
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "ui.click",
+        "response": {
+          "id": "511858a008194809931bfa5d21fceadc",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "id": "instance:-1131928",
+            "hitPath": "[RevUIRoot]/Normal/LevelSelectPanel/chapter6",
+            "dispatched": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.01600000006146729
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "a647e22d68094cf88b130067bbad788f",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "GameScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 6,
+            "chapter": 6,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 124895,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 6,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 20,
+            "renderedCells": 81,
+            "renderedPieces": 20,
+            "prepareOpen": true,
+            "hudOpen": true,
+            "guideFrame": 1,
+            "guideFrameCount": 3,
+            "screen": "Battle",
+            "transitioning": false,
+            "blocked": true,
+            "playing": true,
+            "episode": "chapter6",
+            "line": 0,
+            "error": "",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": true,
+            "soundStarted": true,
+            "visibleCharacters": 3,
+            "guidePacked": true
+          }
+        },
+        "polls": 7,
+        "seconds": 1.8119999999180436
+      }
+    ],
+    "cleanup": [
+      {
+        "id": null,
+        "target": "gm",
+        "action": "RevGame/返回主界面",
+        "response": {
+          "id": "8a99a12607f04fc08b29678d361e66f3",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "success": true,
+            "message": "流程=Battle，场景=GameScene，过场=True，加载进度=2%，步骤=正在返回营地…\n[RevScope] 域栈深度 1，当前 = RevGame.Battle\n└─ RevGame.Battle  [Open]  进入于 1.2 s 前  回收分组: —  每帧: 开  兜底归属: 开\n   归属对象 3 个：BattleHudPanel×1、PreparePanel×1、StoryPanel×1\n   业务单元 1 个：BattleLogic\n说明：没写 owner 的计时器 / 事件 / 每帧回调归域自己，不逐个记账（所以注册零额外开销），这里不统计它们的个数。\n上次关闭：\n域「RevGame.Lobby」关闭报告：耗时 0.03 ms，回收 0 个（0 失败）\n  0 关域门  —（标记关闭中，不再接新东西）\n  1 业务单元 RevLogic  0 个  0.00 ms\n  2 界面 RevUI  0 个  0.00 ms\n  3 每帧回调 RevMono  0 个  0.00 ms\n  4 计时器 RevTimer  0 个  0.00 ms\n  5 事件监听 RevEvent  0 个  0.01 ms\n  6 对象池 RevPool  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）\n  7 资源 RevRes  —（这个域没配置回收分组（Reclaim = Unknown），不按组回收）\n  8 服务 RevServices  0 个  0.00 ms\n  9 兜底扫尾  0 个  0.00 ms\nLogic数量=1",
+            "elapsedMs": 1.1033
+          }
+        },
+        "polls": 1,
+        "seconds": 0.01600000006146729
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "d8e540b9118d4d05b6cea99ca3152a26",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "StartScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 6,
+            "chapter": 6,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 124895,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 6,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 20,
+            "renderedCells": 0,
+            "renderedPieces": 0,
+            "prepareOpen": false,
+            "hudOpen": false,
+            "guideFrame": -1,
+            "guideFrameCount": 3,
+            "screen": "Home",
+            "transitioning": false,
+            "blocked": false,
+            "playing": false,
+            "episode": "",
+            "line": 0,
+            "error": "",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": false,
+            "soundStarted": false,
+            "visibleCharacters": 0,
+            "guidePacked": true
+          }
+        },
+        "polls": 5,
+        "seconds": 1.047000000020489
+      }
+    ],
+    "evidencePath": "G:\\RevRoot\\MyRevGame\\.codex\\work\\tutorial-soft\\runtime-reports\\开场重播与六章解锁GM 自动化测试_2026-10-26.html",
+    "reportPath": "G:\\RevRoot\\MyRevGame\\.codex\\work\\tutorial-soft\\runtime-reports\\20261026-144542-548c1ca7.json"
+  },
+  "repeatOpening": {
+    "id": "bd3674c1afb9493da6e6dcdb87d9bc7e",
+    "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+    "success": false,
+    "error": "InvalidOperationException",
+    "message": "请等待资源、过场、剧情或教学结束后再播放初始剧情",
+    "data": null,
+    "evidencePath": "G:\\RevRoot\\MyRevGame\\.codex\\work\\tutorial-soft\\runtime-reports\\计划 自动化测试_2026-10-26.html",
+    "reportPath": "G:\\RevRoot\\MyRevGame\\.codex\\work\\tutorial-soft\\runtime-reports\\20261026-144556-2c7ec2bd.json"
+  },
+  "cleanup": {
+    "success": true,
+    "name": "开场重播收尾",
+    "steps": [
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.next",
+        "response": {
+          "id": "4c3b446a0dd94a59b09a31b133b3ca57",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "accepted": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.01600000006146729
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.next",
+        "response": {
+          "id": "b759be2727764f17b2dd7bfe4e1f4e4e",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "accepted": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.01500000013038516
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.next",
+        "response": {
+          "id": "11e9308d700a43c28924a618dd7fbe1e",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "accepted": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.09399999980814755
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.next",
+        "response": {
+          "id": "5911659cc0d24b47964e00d0883f2644",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "accepted": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.03100000019185245
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.next",
+        "response": {
+          "id": "147cbdb3abf54d73845ae62bd47980ff",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "accepted": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0
+      },
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.next",
+        "response": {
+          "id": "86c4c925fb8d41419409e096a747e8b0",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "accepted": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0
+      }
+    ],
+    "cleanup": [
+      {
+        "id": null,
+        "target": "game",
+        "action": "story.state",
+        "response": {
+          "id": "9f48e215de8643b2b251050ca961a9f6",
+          "sessionId": "c113cb8478994a639e657bcfd6961f2e",
+          "success": true,
+          "error": null,
+          "message": "完成",
+          "data": {
+            "scene": "StartScene",
+            "tutorialLayout": null,
+            "unlockedChapter": 6,
+            "chapter": 6,
+            "tutorialActive": false,
+            "tutorialOpen": false,
+            "scoreIsolated": true,
+            "preparationGranted": false,
+            "battleElapsed": 0,
+            "enemyHp": 124895,
+            "playerHp": 0,
+            "sameBoard": false,
+            "handCount": 6,
+            "phase": "Prepare",
+            "playerCount": 0,
+            "enemyCount": 20,
+            "renderedCells": 0,
+            "renderedPieces": 0,
+            "prepareOpen": false,
+            "hudOpen": false,
+            "guideFrame": -1,
+            "guideFrameCount": 3,
+            "screen": "Home",
+            "transitioning": false,
+            "blocked": false,
+            "playing": false,
+            "episode": "",
+            "line": 6,
+            "error": "请等待资源、过场、剧情或教学结束后再播放初始剧情",
+            "openingComplete": true,
+            "tutorialComplete": true,
+            "isolated": true,
+            "step": "none",
+            "liberties": -1,
+            "locked": false,
+            "typing": false,
+            "soundStarted": false,
+            "visibleCharacters": 0,
+            "guidePacked": true
+          }
+        },
+        "polls": 1,
+        "seconds": 0.015999999828636646
+      }
+    ],
+    "evidencePath": "G:\\RevRoot\\MyRevGame\\.codex\\work\\tutorial-soft\\runtime-reports\\开场重播收尾 自动化测试_2026-10-26.html",
+    "reportPath": "G:\\RevRoot\\MyRevGame\\.codex\\work\\tutorial-soft\\runtime-reports\\20261026-144630-c079b3a0.json"
+  },
+  "errorCount": 0
+}

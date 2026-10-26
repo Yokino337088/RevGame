@@ -49,7 +49,7 @@ namespace Revolution.Editor
             if (GUILayout.Button("显示工单与证据目录")) { Directory.CreateDirectory(RevAutomationBridge.Root); EditorUtility.RevealInFinder(RevAutomationBridge.Root); }
             if (!string.IsNullOrEmpty(_message)) { EditorGUILayout.HelpBox(_message, MessageType.Info); }
             EditorGUILayout.LabelField("命令行自检", EditorStyles.boldLabel);
-            EditorGUILayout.SelectableLabel("python Revolution.RevMCP/rev_mcp.py --project <Unity工程路径> discover\npython Revolution.Automation/rev.py --project <Unity工程路径> --mode live editor coverage", GUILayout.Height(48));
+            EditorGUILayout.SelectableLabel("python Revolution.RevMCP/rev_mcp.py --project <Unity工程路径> discover\npython Revolution.RevCLI/rev.py --project <Unity工程路径> --mode live editor coverage", GUILayout.Height(48));
             EditorGUILayout.EndScrollView();
         }
         private void Try(Action action) { try { action(); } catch (Exception e) { _message = e.Message; } }

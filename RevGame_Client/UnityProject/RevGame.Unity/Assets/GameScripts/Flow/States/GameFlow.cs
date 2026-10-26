@@ -14,7 +14,7 @@ namespace RevGame.Flow
     /// <summary>唯一流程服务，由常驻GameBootstrap创建/注销。FSM管理业务域，Scenes部分编排异步场景交付。</summary>
     public sealed partial class GameFlow : IDisposable
     {
-        /// <summary>互斥流程状态机：同时只有大厅或战斗一个活动域，不把场景回调当成第二台状态机。</summary>
+        /// <summary>互斥流程状态机：大厅、教学、战斗同时只激活一个域，不把场景回调当成第二台状态机。</summary>
         private readonly RevLightFSM<FlowState> _fsm = new RevLightFSM<FlowState>();
         /// <summary>启动时创建状态实例并复用；回合变化不会反复new状态对象。</summary>
         private readonly Dictionary<GameScreen, FlowState> _states = new Dictionary<GameScreen, FlowState>();
@@ -37,14 +37,16 @@ namespace RevGame.Flow
         public async RevTask StartAsync()
         {
             RevEvent.AddEventListener<bool>(Events.GameFinished, OnFinished, owner: this);
+            RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnStoryPrepare, owner: this);
             IsTransitioning = true;
             await SwitchSceneAsync(GameScreen.Home);
+            if (!_disposed && string.IsNullOrEmpty(LastError)) { BeginIntroduction(); }
         }
 
         /// <summary>大厅内部切页，不切Unity场景。必须已离开过场且处于首页，否则返回false与LastError。</summary>
         public bool OpenLevels()
         {
-            if (IsTransitioning || Screen != GameScreen.Home)
+            if (IsGameplayBlocked || Screen != GameScreen.Home)
             {
                 LastError = "请从主界面进入选关";
                 return false;
@@ -57,7 +59,7 @@ namespace RevGame.Flow
         /// <summary>提交进入指定章节的异步请求。true=已接受，完成请观察IsTransitioning和Screen。</summary>
         public bool EnterBattle(int chapter)
         {
-            if (IsTransitioning || Screen != GameScreen.LevelSelect)
+            if (IsGameplayBlocked || Screen != GameScreen.LevelSelect)
             {
                 LastError = "请先打开选关界面";
                 return false;
@@ -69,6 +71,7 @@ namespace RevGame.Flow
                 return false;
             }
 
+            _presentedChapter = 0;
             _chapter = chapter;
             // true只表示请求被接受；IsTransitioning变回false且Screen=Battle才表示完整交付。
             // 按钮和GM走同一入口，连点不会创建两条加载链或重复开启战斗域。
@@ -86,6 +89,9 @@ namespace RevGame.Flow
                 return false;
             }
 
+            CancelStory();
+            IsTutorialActive = false;
+            _tutorialReplay = false;
             if (Screen == GameScreen.LevelSelect)
             {
                 Change(GameScreen.Home);
@@ -100,7 +106,8 @@ namespace RevGame.Flow
 
         private void OnFinished(bool won)
         {
-            ReturnHome();
+            if (won) { PlayStory("ending", () => ReturnHome()); }
+            else { ReturnHome(); }
         }
 
         /// <summary>所有FSM交割的唯一位置；先更新状态/域，再通知视图，因此视图读到的一定是新模型。</summary>
@@ -121,6 +128,9 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
+            CancelStory();
+            if (_storyHandle != null) { RevResManager.Release("Config/Story", "StoryBook"); _storyHandle = null; }
+            _storyBook = null;
             _activeWarmup?.Dispose();
             _activeWarmup = null;
             RevEvent.RemoveAllByOwner(this);
@@ -164,6 +174,11 @@ namespace RevGame.Flow
                         throw new InvalidOperationException(battle.LastError);
                     }
 
+                    if (_owner.IsTutorialActive)
+                    {
+                        ((BattleService)battle).ConfigureTutorialOpening();
+                        if (RevLogic.Start<TutorialLogic>() == null) { throw new InvalidOperationException("无法启动真实棋盘引导"); }
+                    }
                     if (RevLogic.Start<BattleLogic>() == null)
                     {
                         throw new InvalidOperationException("无法启动战斗域逻辑");

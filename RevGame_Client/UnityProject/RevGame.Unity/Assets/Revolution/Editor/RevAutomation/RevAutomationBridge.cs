@@ -24,7 +24,7 @@ namespace Revolution.Editor
     //    4. 兜底：超时、取消、域重载、编辑器退出都要给外部一个明确的失败回执。
     //
     //  【为什么复用文件桥】Editor 资产动作沿用已有工单与域重载恢复，不为 MCP 再开重复执行链；
-    //  代价是要轮询（Unity 0.1s 一次，Python 0.08s 一次），延迟通常在百毫秒级。
+    //  代价是要轮询：Unity 侧 20ms 一次、Python 侧 5~50ms 自适应，常见往返延迟降到几十毫秒。
     //
     //  【新手最需要理解的 3 个状态】
     //    _active   —— 当前正在处理的请求（同一时刻只允许 1 个，其它拿 Busy）
@@ -37,9 +37,9 @@ namespace Revolution.Editor
     {
         public static string Root { get { return Path.GetFullPath("Library/RevolutionAutomation"); } }
         private static string Inbox { get { return Path.Combine(Root, "inbox"); } }
-        private const string ActiveKey = "Revolution.Automation.ActiveRequest";
-        private const string SessionKey = "Revolution.Automation.Session";
-        public const string TestJobKey = "Revolution.Automation.TestJob";
+        private const string ActiveKey = "Revolution.RevCLI.ActiveRequest";
+        private const string SessionKey = "Revolution.RevCLI.Session";
+        public const string TestJobKey = "Revolution.RevCLI.TestJob";
         private static readonly string Session;
         private static RevAutomationRequest _active;
         private static RevAutomationScenario _scenario;
@@ -272,7 +272,10 @@ namespace Revolution.Editor
                 // 否则心跳看似正常，收发室却会永远停在“尚未恢复”的状态。
                 if (!_recovered && !EditorApplication.isCompiling && !EditorApplication.isUpdating) { Recover(); }
                 if (!_recovered || now < _poll || EditorApplication.isCompiling || EditorApplication.isUpdating) { return; }
-                _poll = now + .1;
+                // 20ms 而不是原来的 100ms：空目录检查只是一次 GetFiles，
+                // 但它决定了每个请求要等多久才开始执行，属于纯等待成本。
+                // 实际耗时仍在 Complete 里回报，不靠缩短轮询掩盖真实执行时间。
+                _poll = now + .02;
                 foreach (string path in Directory.GetFiles(Inbox, "*.json").OrderBy(File.GetLastWriteTimeUtc))
                 {
                     string text = File.ReadAllText(path);

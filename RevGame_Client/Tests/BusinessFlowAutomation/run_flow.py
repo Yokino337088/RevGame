@@ -1,4 +1,4 @@
-"""RevGame业务流程CLI：复用Revolution.Automation，不创建第二套Unity通信桥。"""
+"""RevGame业务流程CLI：复用Revolution.RevCLI，不创建第二套Unity通信桥。"""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,7 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-AUTOMATION = ROOT / "UnityProject/Revolution.Automation"
+AUTOMATION = ROOT / "UnityProject/Revolution.RevCLI"
 PROJECT = ROOT / "UnityProject/RevGame.Unity"
 sys.path.insert(0, str(AUTOMATION))
 from revautomation.client import RevClient, atomic_json, read_json

@@ -162,7 +162,7 @@ RevGame/
 │  │  │  ├─ Scenes/                        StartScene（首页 / 选关）· GameScene（战斗）
 │  │  │  ├─ StreamingAssets/               平台 AB 产物（由打包工具生成）
 │  │  │  └─ Editor/                        RevGame 自己的编辑器工具与打包串联
-│  │  ├─ Revolution.Automation/             自动化客户端（`rev.cmd`：CLI / 场景 / 报告）
+│  │  ├─ Revolution.RevCLI/             自动化客户端（`rev.cmd`：CLI / 场景 / 报告）
 │  │  ├─ Packages/ · ProjectSettings/
 │  ├─ Tests/
 │  │  ├─ CombatAttackRegression/            离线断言工程（纯 C#，不开 Unity）
@@ -216,11 +216,11 @@ RevGame/
 cd RevGame_Client/Tests/CombatAttackRegression; dotnet run -c Release
 
 # 2) PlayMode 场景（真实 Unity，可连拍截图取证）
-cd RevGame_Client/UnityProject/Revolution.Automation
+cd RevGame_Client/UnityProject/Revolution.RevCLI
 .\rev.cmd --mode live --project "..\RevGame.Unity" --timeout 600 scenario run <场景.json> --report-dir <输出目录>
 
 # 3) 业务流程自动化（首页 → 通章 → 回首页）
-python RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter.json
+python RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter-2026-10-22-attack250-speed100.json
 ```
 
 > 命令 2、3 都会生成 HTML 报告；`results/` 不入库，正式报告与必要原始证据归档到 `RevGame_Client/文档/进度同步/`。

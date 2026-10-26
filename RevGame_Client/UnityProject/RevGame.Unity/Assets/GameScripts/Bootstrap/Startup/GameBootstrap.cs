@@ -62,6 +62,7 @@ namespace RevGame.Bootstrap
             // 用户明确要求手机横屏；设备方向和根 Canvas 都固定横屏。
             Screen.orientation = ScreenOrientation.LandscapeLeft;
 #endif
+            RevServices.Register<StoryProgress, StoryProgress>(owner: this);
             RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
             RevServices.Register<IBattleService, BattleService>(owner: this);
             RevServices.Register<GameFlow, GameFlow>(owner: this);
@@ -71,6 +72,7 @@ namespace RevGame.Bootstrap
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Animation.GameAutomationRunner, RevGame.Animation.GameAutomationRunner>(owner: this);
             GameGmCommands.RegisterAll();
+            StoryAutomationCommands.Register();
 #endif
         }
 
@@ -119,6 +121,7 @@ namespace RevGame.Bootstrap
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             // 必须先停测试再退出游戏域：测试可能还按着按钮，不能对已销毁的旧面板补发松手/点击。
             GameGmCommands.UnregisterAll();
+            StoryAutomationCommands.Unregister();
             RevServices.Unregister<RevGame.Animation.GameAutomationRunner>();
 
 #endif

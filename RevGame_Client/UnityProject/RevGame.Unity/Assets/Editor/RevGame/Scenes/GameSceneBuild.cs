@@ -66,7 +66,9 @@ namespace RevGame.Editor
             EditorBuildSettings.scenes = new[]
             {
                 new EditorBuildSettingsScene("Assets/Scenes/StartScene.unity", true),
-                new EditorBuildSettingsScene("Assets/Scenes/GameScene.unity", true)
+                new EditorBuildSettingsScene("Assets/Scenes/GameScene.unity", true),
+                // 教学是正式首启流程的一部分，重建场景不能从发布清单移除它。
+                new EditorBuildSettingsScene("Assets/Scenes/TutorialScene.unity", true)
             };
             AssetDatabase.SaveAssets();
             return "StartScene/GameScene已拆分，启动场景在Build Settings第0位；加载面板已保存；" + imageCount + "个Image已接图集晚绑定刷新";

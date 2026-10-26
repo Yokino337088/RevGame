@@ -1,15 +1,15 @@
 # RevGame 玩家业务流程自动化
 
-执行器当前放在 `Assets/GameScripts/Automation`。这里是命令行入口和可改的业务计划，复用现有 `UnityProject/Revolution.Automation` 客户端、作业队列、Scenario、GM 和报告，不另建通信服务器。
+执行器当前放在 `Assets/GameScripts/Automation`。这里是命令行入口和可改的业务计划，复用现有 `UnityProject/Revolution.RevCLI` 客户端、作业队列、Scenario、GM 和报告，不另建通信服务器。
 
 ## 如何跑第一章
 
 1. 用 Unity 2022.3.15f1c1 打开 `UnityProject/RevGame.Unity`，等待编译完成；本轮采用编辑器资源直读，不需要重新打 AB。
-2. 确保项目现有 Revolution.Automation 编辑器桥已开启。
+2. 确保项目现有 Revolution.RevCLI 编辑器桥已开启。
 3. 从仓库根目录执行：
 
 ```powershell
-python RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter.json
+python RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter-2026-10-22-attack250-speed100.json
 ```
 
 默认只接管未运行的编辑器，从 `StartScene` 开始 Play，结束后只停止本命令启动的 Play，Unity 窗口保持打开。如果已由电脑插件/自己手动启动 Play，明确加 `--attach`；这种模式结束后保留原来的 Play 状态，避免工具擅自打断你的操作。
@@ -31,17 +31,15 @@ python RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py RevGame_Client/Te
 
 ### 2026-10-22：攻击150%、末四轮不下牌
 
-本次专用计划为 `plans/first-chapter-2026-10-22.json`：攻击额外+50%（普通攻击最终伤害×1.5，沿用整数取整），攻速和防御额外加成为0，生命不添加测试强化。前7轮各下6张，共42张；第8～11轮不执行落牌操作，`roundWonNoHand`逐轮核对实际落牌0张、开战手牌6张、结算清牌后0张。`EndBattle`原本就统一清牌，不能错误要求结算仍有6张。原有轻松模式、准备增益、援军、回血等正常游戏规则保留；不能将其误说成无辅助基础难度。
+本次专用计划为 `plans/first-chapter-2026-10-22.json`（已被后续计划取代，文件不再保留，参数与结论保留在本节）：攻击额外+50%（普通攻击最终伤害×1.5，沿用整数取整），攻速和防御额外加成为0，生命不添加测试强化。前7轮各下6张，共42张；第8～11轮不执行落牌操作，`roundWonNoHand`逐轮核对实际落牌0张、开战手牌6张、结算清牌后0张。`EndBattle`原本就统一清牌，不能错误要求结算仍有6张。原有轻松模式、准备增益、援军、回血等正常游戏规则保留；不能将其误说成无辅助基础难度。
 
-```powershell
-python -X utf8 RevGame_Client/Tests/BusinessFlowAutomation/run_flow.py RevGame_Client/Tests/BusinessFlowAutomation/plans/first-chapter-2026-10-22.json
-```
+该计划文件已在 2026-10-26 合并清理时删除；复现同类场景请用当前计划（见文末「当前计划」），不要再照着旧文件名执行。
 
 开发态报告新增每轮落牌数、开战/结算手牌数、双方存活名单和生命合计、实际承伤（另列有攻击者来源的部分）、Boss技能数及实际准备增益。人数差不等于死亡数，血量差不等于伤害量，援军、复活、治疗都可能改变总量。
 
 计划可设 `captureScreenshots: true`，仅在Editor中用 `ScreenCapture.CaptureScreenshot` 请求正常帧末PNG，输出到每次独立的 `Library/RevolutionAutomation/BusinessFlowScreenshots/` 子目录。截图请求及当时阶段写入逐步证据，CLI报告后应核对文件与画面。它不暂停或手工推进PlayerLoop；本工程Unity MCP同步截图路径曾在作业中触发 `EditorApplication.Step` 递归错误，不应与正式作业并用。失败证据保留后再重跑，不能关闭错误门禁掩盖问题。
 
-复制 `plans/first-chapter.json` 后修改名字和步骤。每份计划1～256步，总超时与单步超时均1～3600真实秒。
+以 `plans/first-chapter-2026-10-22-attack250-speed100.json` 为模板，复制后改名字和步骤；只在需要对比另一组数值时才另存新文件，不要每调一次参数就留一份快照。每份计划1～256步，总超时与单步超时均1～3600真实秒。
 
 | 操作 | 用途 | 常用字段 |
 | --- | --- | --- |

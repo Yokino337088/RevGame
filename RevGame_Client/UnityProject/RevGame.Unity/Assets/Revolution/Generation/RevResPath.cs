@@ -47,6 +47,8 @@ namespace Revolution
         public const string Art_Pieces_Player_Swordman = "Art/Pieces/Player/Swordman/";
         public const string Art_Status = "Art/Status/";
         public const string Art_Status_Encircled = "Art/Status/Encircled/";
+        public const string Art_Status_EyeBlink = "Art/Status/EyeBlink/";
+        public const string Art_Story = "Art/Story/";
         public const string Art_UI = "Art/UI/";
         public const string Atlases = "Atlases/";
         public const string Audio = "Audio/";
@@ -58,6 +60,7 @@ namespace Revolution
         public const string ChapterBackground = "ChapterBackground/";
         public const string Config = "Config/";
         public const string Config_Art = "Config/Art/";
+        public const string Config_Story = "Config/Story/";
         public const string Data = "Data/";
         public const string Effects = "Effects/";
         public const string Effects_Combat = "Effects/Combat/";
@@ -65,6 +68,7 @@ namespace Revolution
         public const string Fonts_CJK = "Fonts/CJK/";
         public const string Material = "Material/";
         public const string Material_Background = "Material/Background/";
+        public const string Material_Board = "Material/Board/";
         public const string Material_Cards = "Material/Cards/";
         public const string Material_Combat = "Material/Combat/";
         public const string Material_Pieces = "Material/Pieces/";
@@ -78,5 +82,6 @@ namespace Revolution
         public const string UI_Item_Notice = "UI/Item/Notice/";
         public const string UI_Panel = "UI/Panel/";
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
+        public const string UI_Panel_Story = "UI/Panel/Story/";
     }
 }

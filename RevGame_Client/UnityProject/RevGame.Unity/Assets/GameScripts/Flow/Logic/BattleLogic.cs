@@ -66,6 +66,9 @@ namespace RevGame.Flow
             {
                 return;
             }
+            // 教学实操时冻结准备随机增益，完成换位后才恢复正常准备计时。
+            var lesson = RevLogic.Get<TutorialLogic>();
+            if (flow != null && flow.IsTutorialActive && lesson != null && lesson.Step != TutorialStep.Ready) { return; }
             if (Battle.Phase == GamePhase.Battle || Battle.Phase == GamePhase.Prepare)
             {
                 Battle.Tick(Balance.BattleSimulationStepSeconds);
@@ -78,25 +81,36 @@ namespace RevGame.Flow
             {
                 return false;
             }
+            if (RevServices.GetRequired<GameFlow>().IsTutorialActive) { return RevServices.GetRequired<GameFlow>().CompleteTutorial(); }
             return Battle.StartBattle();
         }
 
-        public bool RefreshHand() { return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.RefreshHand(); }
+        public bool RefreshHand() { return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && !RevServices.GetRequired<GameFlow>().IsTutorialActive && Battle.RefreshHand(); }
 
         public bool SelectCard(int id)
         {
-            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.SelectCard(id);
+            if (RevServices.GetRequired<GameFlow>().IsGameplayBlocked) { return false; }
+            var lesson = RevLogic.Get<TutorialLogic>();
+            if (lesson != null && !lesson.AllowCard(id)) { return false; }
+            bool accepted = Battle.SelectCard(id);
+            if (accepted) { lesson?.Observe(); }
+            return accepted;
         }
 
         public bool PlayCard(PieceKind kind, StarTier star, BoardPos pos)
         {
-            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.TryPlayCard(kind, star, pos);
+            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && !RevServices.GetRequired<GameFlow>().IsTutorialActive && Battle.TryPlayCard(kind, star, pos);
         }
 
         /// <summary>触屏与GM共用棋盘点击；章间背景加载时和过场一样拒绝输入，不抢跑准备计时。</summary>
         public bool ClickBoard(BoardPos pos)
         {
-            return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.HandleBoardClick(pos);
+            if (RevServices.GetRequired<GameFlow>().IsGameplayBlocked) { return false; }
+            var lesson = RevLogic.Get<TutorialLogic>();
+            if (lesson != null && !lesson.AllowCell(pos)) { return false; }
+            bool accepted = Battle.HandleBoardClick(pos);
+            if (accepted) { lesson?.Observe(); }
+            return accepted;
         }
 
         public bool ContinueToNextRound()
