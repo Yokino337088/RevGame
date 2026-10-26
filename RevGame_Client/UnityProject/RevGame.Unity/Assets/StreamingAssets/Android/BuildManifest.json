@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "Android",
-  "buildTime": "2026-10-26 16:27:38",
+  "buildTime": "2026-10-26 17:34:33",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 38102 },
     { "name": "atlas_combatframes", "size": 1058971 },
@@ -9,7 +9,7 @@
     { "name": "atlas_storyguide", "size": 12729 },
     { "name": "atlas_uibattle", "size": 283504 },
     { "name": "atlas_uimenus", "size": 231198 },
-    { "name": "audio_bgm", "size": 4768919 },
+    { "name": "audio_bgm", "size": 1902069 },
     { "name": "audio_sfx", "size": 262069 },
     { "name": "background_chapter01_tutorial", "size": 743136 },
     { "name": "background_chapter02_village", "size": 2954391 },

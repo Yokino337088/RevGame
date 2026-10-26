@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-10-26 16:27:06",
+  "buildTime": "2026-10-26 17:33:59",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_combatframes", "size": 1307241 },
@@ -9,7 +9,7 @@
     { "name": "atlas_storyguide", "size": 11543 },
     { "name": "atlas_uibattle", "size": 280730 },
     { "name": "atlas_uimenus", "size": 269114 },
-    { "name": "audio_bgm", "size": 4768919 },
+    { "name": "audio_bgm", "size": 1902069 },
     { "name": "audio_sfx", "size": 262069 },
     { "name": "background_chapter01_tutorial", "size": 818631 },
     { "name": "background_chapter02_village", "size": 2945673 },
