@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
+  m_Name: BossChapter02
+  m_EditorClassIdentifier: 
+  Chapter: 2
+  Appearance: 3
+  Frames:
+  - {fileID: 21300000, guid: b4d591e6d41486c448fb5a5d6e874130, type: 3}
+  - {fileID: 21300000, guid: a46a3519bd6c8ac41811fc3987003e27, type: 3}
+  - {fileID: 21300000, guid: 15fb0fd8475889f4aa6ee2a72200c4d7, type: 3}
+  - {fileID: 21300000, guid: 05bb1a3c97b82364d846e856264328e1, type: 3}
+  - {fileID: 21300000, guid: f97cc3c7e05266d46bbf54074e3f8c2a, type: 3}
+  - {fileID: 21300000, guid: 5595674fdeedd5448a225431311d15da, type: 3}
+  - {fileID: 21300000, guid: 8bb03b3b1dbe2484dbf4b7fc58b54682, type: 3}
+  - {fileID: 21300000, guid: 8c88ee704f4f61848994e9fd087d8f2f, type: 3}
+  FrameSeconds: 0.18
+  PingPong: 1
+  BodyScale: 1
+  BuiltInDecorations: 1

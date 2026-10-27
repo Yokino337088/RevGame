@@ -24,7 +24,7 @@ namespace RevGame.View
     /// 它自己绝不计算规则 —— 表现层不碰规则，是这套架构的底线。
     /// </summary>
     [RevPoolPrefab(RevResPath.Pieces_Unit, "SlimePiece", Group = RevResGroup.Battle)]
-    public sealed class PieceView : MonoBehaviour, IRevPoolable
+    public sealed partial class PieceView : MonoBehaviour, IRevPoolable
     {
         [Header("美术配置表（由编辑器工具自动填入）")]
         [SerializeField]
@@ -538,6 +538,7 @@ namespace RevGame.View
             {
                 return;
             }
+            RestoreBossArt();
             StopAttackPulse();
             PieceId = pieceId;
             _boundKind = kind;
@@ -600,12 +601,11 @@ namespace RevGame.View
         public void SetBodySize(int size, bool boss, bool king)
         {
             transform.localScale = Vector3.one * (0.72f * size * Consts.CellSize);
-            // ★ 原版Boss素材只有单张立绘，没有可播放的序列。大棋复用图鉴内敌方重剑的真实帧序列。
-            // 此处仅改身体尺寸和饰件，绝不覆盖 Bind/OnTick 当前帧；否则每次HUD刷新都会把Boss定格。
+            // Boss关键帧在BindBossArt中绑定；尺寸刷新绝不覆盖当前Sprite或重置帧索引。
 
             if (crownRenderer != null)
             {
-                crownRenderer.enabled = king;
+                crownRenderer.enabled = king && (_bossArt == null || !_bossArt.BuiltInDecorations);
             }
 
             if (haloRenderer != null)
@@ -643,6 +643,7 @@ namespace RevGame.View
         /// <summary>回池/回收时调用：清掉绑定，避免复用成"上一颗棋子"。</summary>
         public void Clear()
         {
+            RestoreBossArt();
             SetEyeGarrison(false);
             PieceId = 0;
             _entry = null;
@@ -713,7 +714,7 @@ namespace RevGame.View
             }
 
             _frameTimer -= _frameInterval;
-            _frameIndex = (_frameIndex + 1) % _frames.Length;
+            AdvanceAnimationIndex();
             if (bodyRenderer != null)
             {
                 bodyRenderer.sprite = _frames[_frameIndex];

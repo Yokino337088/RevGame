@@ -52,7 +52,16 @@ namespace RevGame.View
         [Range(0.1f, 2f)] [SerializeField] private float backgroundArrivalSeconds = 0.85f;
 
         public const string ChapterBackgroundRoot = "ChapterBackground";
-        public bool IsChapterBackgroundReady { get { return _chapterReady; } }
+        /// <summary>只在场景装配时借棋盘组件；准备门禁高频读取不反复GetComponent。</summary>
+        private BoardView _backgroundBoard;
+        public bool IsChapterBackgroundReady
+        {
+            get
+            {
+                // Boss回合首次加载关键帧也属于画面就绪，不能在美术还没到时消耗准备/战斗时间。
+                return _chapterReady && (_backgroundBoard == null || _backgroundBoard.IsBossArtReady);
+            }
+        }
         public int BackgroundChapter { get { return _activeBackgroundChapter; } }
         public string BackgroundTextureName { get { return _currentBackground == null ? "Original" : _currentBackground.Name; } }
         public string BackgroundLoadError { get { return _backgroundError; } }
@@ -91,6 +100,7 @@ namespace RevGame.View
 
         private void InitializeChapterBackground()
         {
+            _backgroundBoard = boardRoot == null ? null : boardRoot.GetComponent<BoardView>();
             if (backgroundRenderer != null)
             {
                 _originalBackgroundMaterial = backgroundRenderer.sharedMaterial;

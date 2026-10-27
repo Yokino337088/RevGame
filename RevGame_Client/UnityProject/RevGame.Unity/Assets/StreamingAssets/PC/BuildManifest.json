@@ -1,9 +1,15 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-10-27 13:09:00",
+  "buildTime": "2026-10-27 14:53:13",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
+    { "name": "atlas_bosschapter01frames", "size": 403701 },
+    { "name": "atlas_bosschapter02frames", "size": 450102 },
+    { "name": "atlas_bosschapter03frames", "size": 430465 },
+    { "name": "atlas_bosschapter04frames", "size": 410866 },
+    { "name": "atlas_bosschapter05frames", "size": 413800 },
+    { "name": "atlas_bosschapter06frames", "size": 441603 },
     { "name": "atlas_combatframes", "size": 1307241 },
     { "name": "atlas_pieceframes", "size": 942810 },
     { "name": "atlas_storyguide", "size": 11543 },

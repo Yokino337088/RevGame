@@ -114,6 +114,12 @@ namespace RevGame.Editor
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path)
         {
+            if (path.Contains("/Art/Boss/"))
+            {
+                // 每章8帧独立图集，默认棋子/手牌配置不引用它，普通回合不预加载Boss美术。
+                string folder = Path.GetFileName(Path.GetDirectoryName(path));
+                return folder.Substring(0, 9).Replace("Chapter", "BossChapter") + "Frames";
+            }
             if (path.Contains("/Background/") || path.Contains("/ChapterBackground/")) { return Path.GetFileNameWithoutExtension(path) + "Atlas"; }
             if (path.Contains("/Art/Story/")) { return "StoryGuide"; }
             if (path.Contains("/Art/Pieces/")) { return "PieceFrames"; }

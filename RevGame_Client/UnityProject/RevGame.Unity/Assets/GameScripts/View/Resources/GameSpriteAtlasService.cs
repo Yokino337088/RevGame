@@ -40,8 +40,8 @@ namespace RevGame.View
             public bool Released;
             /// <summary>成功或失败都为true，供启动预热结束等待；失败原因已由回调记录。</summary>
             public bool Finished;
-            /// <summary>快速切章可同时存在多个请求；每个背景租约只归还自己的一份，最后一份退出才撤图集。</summary>
-            public int TutorialUsers;
+            /// <summary>背景/Boss显式租约用户数；每个调用者只归还自己的一份，最后一份退出才撤图集。</summary>
+            public int ScopedUsers;
             /// <summary>先建立租约记录再调用LoadAsync，兼容资源缓存命中时立即同步回调。</summary>
             public Entry(string name) { Name = name; }
         }
@@ -79,7 +79,7 @@ namespace RevGame.View
             {
                 if (_released) { return; }
                 _released = true;
-                _owner.ReleaseTutorialSprite(_entry);
+                _owner.ReleaseScopedAtlas(_entry);
             }
         }
 
@@ -88,19 +88,53 @@ namespace RevGame.View
         {
             if (_disposed) { throw new ObjectDisposedException(nameof(GameSpriteAtlasService)); }
             Entry entry = Request(TutorialAtlasName, null);
-            entry.TutorialUsers++;
+            entry.ScopedUsers++;
             return new TutorialSpriteLease(this, entry);
         }
 
-        /// <summary>换到其它章节/退出时归还；不强制卸载仍有持有者的包，也不会重复扣减在途请求。</summary>
-        private void ReleaseTutorialSprite(Entry entry)
+        /// <summary>Boss回合的有限图集租约；多个调用者共用加载，最后一个归还后释放，不将六章图集全局预热。</summary>
+        public sealed class ScopedAtlasLease : IDisposable
         {
-            if (entry.TutorialUsers <= 0) { return; }
-            entry.TutorialUsers--;
-            if (entry.TutorialUsers > 0) { return; }
+            private readonly GameSpriteAtlasService _owner;
+            private readonly Entry _entry;
+            private bool _released;
+            internal ScopedAtlasLease(GameSpriteAtlasService owner, Entry entry) { _owner = owner; _entry = entry; }
+            public async RevTask WaitReadyAsync()
+            {
+                float deadline = Time.realtimeSinceStartup + 30f;
+                while (!_released && !_owner._disposed && !_entry.Finished)
+                {
+                    if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException("图集加载超时：" + _entry.Name); }
+                    await RevTask.Yield();
+                }
+                if (_released || _owner._disposed || _entry.Released) { throw new OperationCanceledException("Boss图集租约已释放"); }
+                if (_entry.Atlas == null) { throw new InvalidOperationException("Boss图集加载失败：" + _entry.Name); }
+            }
+            public void Dispose()
+            {
+                if (_released) { return; }
+                _released = true;
+                _owner.ReleaseScopedAtlas(_entry);
+            }
+        }
+        public ScopedAtlasLease AcquireScopedAtlas(string name)
+        {
+            if (_disposed) { throw new ObjectDisposedException(nameof(GameSpriteAtlasService)); }
+            if (!_known.Contains(name)) { throw new InvalidOperationException("Boss图集没有登记：" + name); }
+            Entry entry = Request(name, null);
+            entry.ScopedUsers++;
+            return new ScopedAtlasLease(this, entry);
+        }
+
+        /// <summary>换到其它章节/退出时归还；不强制卸载仍有持有者的包，也不会重复扣减在途请求。</summary>
+        private void ReleaseScopedAtlas(Entry entry)
+        {
+            if (entry.ScopedUsers <= 0) { return; }
+            entry.ScopedUsers--;
+            if (entry.ScopedUsers > 0) { return; }
             Release(entry);
-            if (_entries.TryGetValue(TutorialAtlasName, out Entry current) && ReferenceEquals(current, entry))
-            { _entries.Remove(TutorialAtlasName); }
+            if (_entries.TryGetValue(entry.Name, out Entry current) && ReferenceEquals(current, entry))
+            { _entries.Remove(entry.Name); }
         }
 
         /// <summary>补上场景加载早于Awake的背景请求。首次真机加载用RevTask等待，首页开放前就绪。</summary>

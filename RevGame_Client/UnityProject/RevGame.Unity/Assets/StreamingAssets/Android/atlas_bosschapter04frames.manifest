@@ -1,0 +1,37 @@
+ManifestFileVersion: 0
+CRC: 103844021
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0307aba3268f7472d8b41391fd37a970
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 88edf1c01c7a43459b9906c962d65cf1
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0307aba3268f7472d8b41391fd37a970
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_02.png
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_04.png
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_07.png
+- Assets/GameRes/Config/Boss/BossChapter04.asset
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_05.png
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_01.png
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_06.png
+- Assets/GameRes/Atlases/BossChapter04Frames.spriteatlasv2
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_08.png
+- Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_03.png
+Dependencies: []

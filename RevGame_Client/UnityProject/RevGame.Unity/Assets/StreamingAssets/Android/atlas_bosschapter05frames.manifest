@@ -1,0 +1,37 @@
+ManifestFileVersion: 0
+CRC: 612804357
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 103ba2080d6d10665e764d2472cea58e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 88edf1c01c7a43459b9906c962d65cf1
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 103ba2080d6d10665e764d2472cea58e
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_07.png
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_04.png
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_06.png
+- Assets/GameRes/Config/Boss/BossChapter05.asset
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_08.png
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_02.png
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_01.png
+- Assets/GameRes/Atlases/BossChapter05Frames.spriteatlasv2
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_05.png
+- Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_03.png
+Dependencies: []

@@ -21,6 +21,13 @@ namespace Revolution
         public const string Art = "Art/";
         public const string Art_Background = "Art/Background/";
         public const string Art_Board = "Art/Board/";
+        public const string Art_Boss = "Art/Boss/";
+        public const string Art_Boss_Chapter01_Swordman = "Art/Boss/Chapter01_Swordman/";
+        public const string Art_Boss_Chapter02_Archer = "Art/Boss/Chapter02_Archer/";
+        public const string Art_Boss_Chapter03_MageWater = "Art/Boss/Chapter03_MageWater/";
+        public const string Art_Boss_Chapter04_Assassin = "Art/Boss/Chapter04_Assassin/";
+        public const string Art_Boss_Chapter05_Shield = "Art/Boss/Chapter05_Shield/";
+        public const string Art_Boss_Chapter06_Priest = "Art/Boss/Chapter06_Priest/";
         public const string Art_Combat = "Art/Combat/";
         public const string Art_Combat_Melee = "Art/Combat/Melee/";
         public const string Art_Combat_Projectiles = "Art/Combat/Projectiles/";
@@ -60,6 +67,7 @@ namespace Revolution
         public const string ChapterBackground = "ChapterBackground/";
         public const string Config = "Config/";
         public const string Config_Art = "Config/Art/";
+        public const string Config_Boss = "Config/Boss/";
         public const string Config_Story = "Config/Story/";
         public const string Data = "Data/";
         public const string Effects = "Effects/";

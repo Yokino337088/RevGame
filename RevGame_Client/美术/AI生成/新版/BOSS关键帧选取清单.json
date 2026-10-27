@@ -1,0 +1,452 @@
+[
+  {
+    "chapter": 1,
+    "folder": "剑士",
+    "role": "Swordman",
+    "originalFrameCount": 97,
+    "selectedIndices": [
+      0,
+      12,
+      14,
+      69,
+      72,
+      81,
+      85,
+      96
+    ],
+    "size": 384,
+    "frames": [
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00000.png",
+        "sourceIndex": 0,
+        "sourceSha256": "79f8ebaa214ac8d1d50fc0266a6f33f75d1e69dec30d7d2e5929cbd9ea885969",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_01.png",
+        "outputSha256": "00171cd093e278b85a6779b099dd9cb2163c2d5dcd8467ec706811e00b1f3d09"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00012.png",
+        "sourceIndex": 12,
+        "sourceSha256": "c11093dfe21cc8a3539abc8a9ef9b1c7675a6e1c1ceacef3b65192009b4100d2",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_02.png",
+        "outputSha256": "270b0cd374cbdd7ea6f372ca541ce8e165c330772d50a5687b2c7f54087cc76c"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00014.png",
+        "sourceIndex": 14,
+        "sourceSha256": "59273720a004a9a9fe7f5ed09451a3587d70d1212bde1de5955940d469454158",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_03.png",
+        "outputSha256": "b6a214429eba060ef52ff72b42aacf4d7f7f670d54305184f348f91256f7172b"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00069.png",
+        "sourceIndex": 69,
+        "sourceSha256": "e6c5850760c37627af26ff566eb9e12d9a1f9a24ecc8a2549e85fb6136f84dc1",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_04.png",
+        "outputSha256": "f6199b694c7f310f6b7f3d3f1ad217a9d2273b5d743d7191660b43d9e8b7354d"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00072.png",
+        "sourceIndex": 72,
+        "sourceSha256": "950fcbb774ffc4f392cd32a4b78d8f49d0b03579edc99f17b6d38e05148514ae",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_05.png",
+        "outputSha256": "588acd2522d235556917eaba8c0d27d0925c05396155328d0756ece3b6606f45"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00081.png",
+        "sourceIndex": 81,
+        "sourceSha256": "fbd8db4c20f5e48f22b37c3eb152f34eee092622dab02c5671edbbd7be976faf",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_06.png",
+        "outputSha256": "627f19e2231551932f686491b5b09965c65d001599978621212e70ed36990ecf"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00085.png",
+        "sourceIndex": 85,
+        "sourceSha256": "77e01ce8da4caef724f2986797a13d01f45b5fd456fa8858706aaf0ea86a6b00",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_07.png",
+        "outputSha256": "fadb36bb48b4b919a5caf564edb14f0c3c137113ff44c7940b7996093ac32576"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/剑士/frame_00096.png",
+        "sourceIndex": 96,
+        "sourceSha256": "cb6b9425805587ff38afa5085ff9f6f4bdb40cc343a6f5e0e885523e775fcc11",
+        "output": "Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_08.png",
+        "outputSha256": "1105e802fc54cdda95ab6c038b8c833ab32100d8e74aaca4d0b3334a3a9dcfd7"
+      }
+    ]
+  },
+  {
+    "chapter": 2,
+    "folder": "弓手",
+    "role": "Archer",
+    "originalFrameCount": 97,
+    "selectedIndices": [
+      0,
+      15,
+      22,
+      54,
+      62,
+      74,
+      88,
+      96
+    ],
+    "size": 384,
+    "frames": [
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00000.png",
+        "sourceIndex": 0,
+        "sourceSha256": "b5da3e87bd3d273ac02b83e9ebd297ef32848b616ecc323061985a6675bceb36",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_01.png",
+        "outputSha256": "90c19df59a80e5d06700a7ecb4094669e0d6da10880a842babff9f14c5ddabdd"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00015.png",
+        "sourceIndex": 15,
+        "sourceSha256": "6ab09fa906e2881235f514d33bd0cef63d05148627a462a9b9bb9f0d7e4bb306",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_02.png",
+        "outputSha256": "f47c5a8af01bc08ec2ec43af778da880b51f0fa77b087265d3acb1de18a14de4"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00022.png",
+        "sourceIndex": 22,
+        "sourceSha256": "1b56f5fbc3c368d94818226dea72a363eaac40dfa331f6c8d3d44757b6bfb63e",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_03.png",
+        "outputSha256": "96804a4205708eace110dfc6f21ecee6a09ba4d82716737917832da24ffcfa53"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00054.png",
+        "sourceIndex": 54,
+        "sourceSha256": "e9615b88116fd3f54b541acc8a1753959a9388a3633c4bd8617bfc5a90c83daa",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_04.png",
+        "outputSha256": "ef8d0cbcd853dc6492be92348b0be2df89bc8a920457b6c2c69ae5d2990491b9"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00062.png",
+        "sourceIndex": 62,
+        "sourceSha256": "50a092ea12e633472879f798d33639568a71f1f5dfed7e4d020ec123b3305a6b",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_05.png",
+        "outputSha256": "9b66c44062d53ef434c7fb6e27c199d4b6a53ae064be4e0e8c367adc4d6849d9"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00074.png",
+        "sourceIndex": 74,
+        "sourceSha256": "88149dfd9d234a7101203b85b96635740600b1d288504a8823b032b1aa264d73",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_06.png",
+        "outputSha256": "ee5f999c2e57fc2a6f92d720675b0d385e1db1e180092741927f05595e2dd689"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00088.png",
+        "sourceIndex": 88,
+        "sourceSha256": "1da2d4a9d74d770b368543f9004307309e9f27ab1efd7f6cf1f60c69d03146ff",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_07.png",
+        "outputSha256": "6da0ebd0d6d2964f10d3c3d76ceccd8588a378b28d469b4ff42419809c900ed3"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/弓手/frame_00096.png",
+        "sourceIndex": 96,
+        "sourceSha256": "03f502a3aa665b4358b9d27c3a970099a6803467fe6d8e6d2a7d867cb3f32985",
+        "output": "Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_08.png",
+        "outputSha256": "688f8b32abe3e81a36d951b0ddbec807cb8e3b523b1887b550d069c6ff4584a2"
+      }
+    ]
+  },
+  {
+    "chapter": 3,
+    "folder": "水系法师",
+    "role": "MageWater",
+    "originalFrameCount": 97,
+    "selectedIndices": [
+      0,
+      7,
+      22,
+      32,
+      50,
+      59,
+      75,
+      96
+    ],
+    "size": 384,
+    "frames": [
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00000.png",
+        "sourceIndex": 0,
+        "sourceSha256": "fa057c20641f4ab949c9f38811bc0be6227cfa54e8efa9870fc7f67c32eca114",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_01.png",
+        "outputSha256": "ac321d36dbaa9203701ae3f40e26710b76c71b45b41b663f2eda82013eac246f"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00007.png",
+        "sourceIndex": 7,
+        "sourceSha256": "0392c0498b8d31001a7fb8c2579d17590c394c9c4bdba778a288c378fe5f2b6b",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_02.png",
+        "outputSha256": "5974218a385212cf74e0dd3dc0faeaee4132038ac7e9ab10acb66a43d7164d80"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00022.png",
+        "sourceIndex": 22,
+        "sourceSha256": "786e7faafd8de88ea9aac12c066ad69ae670c234ec0cfaf3019955a014d738d5",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_03.png",
+        "outputSha256": "7e4f7d447927b469d68ffc9b17d03ac2b230436849fc9ab6e51473967671ccc7"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00032.png",
+        "sourceIndex": 32,
+        "sourceSha256": "a30184c03612cf500805c38a8f5bdba097045256b8e65d7e2a71a6b38212e6ba",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_04.png",
+        "outputSha256": "f6b09558f2db78cdd112cdc4b5a4c5f8dbe663fd9ff47ea2f3b091e0c1994eb8"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00050.png",
+        "sourceIndex": 50,
+        "sourceSha256": "05b5487d0f7cf40e33cdcd839c808db34413f1327cd3b7794d04655665f86545",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_05.png",
+        "outputSha256": "b9199e2fb20b09a2ae237570f499874b5adc5949fc7954d087aef78d11744fe5"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00059.png",
+        "sourceIndex": 59,
+        "sourceSha256": "efcab345837e7b0c42d9445aed29deab65bab2b5d4a632ab73ddef2ba800d35c",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_06.png",
+        "outputSha256": "c1bfcb9b3e0c925a40c643bfb5417caf35264e83e97374183f914cd0e822228e"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00075.png",
+        "sourceIndex": 75,
+        "sourceSha256": "3d76a658a4996a5c1e26210174eafe7987e50d2f0dcdc5016ebeef0caa1a881a",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_07.png",
+        "outputSha256": "33ea14eb8dc5548807f94ce7c9fb884dc69abba3ba1a32773c9f0b968339b5e1"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/水系法师/frame_00096.png",
+        "sourceIndex": 96,
+        "sourceSha256": "6066f9655f4711785393e9ce402adb56435169fe081474793101d16b0510715b",
+        "output": "Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_08.png",
+        "outputSha256": "69805aecaa63ea68354d4a8cb78dfc0f9cd1ec5ed9607fe1f04b32b7fb74c8fe"
+      }
+    ]
+  },
+  {
+    "chapter": 4,
+    "folder": "刺客",
+    "role": "Assassin",
+    "originalFrameCount": 97,
+    "selectedIndices": [
+      0,
+      8,
+      23,
+      32,
+      71,
+      78,
+      89,
+      96
+    ],
+    "size": 384,
+    "frames": [
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00000.png",
+        "sourceIndex": 0,
+        "sourceSha256": "a51b972fc64d6e82ac647f56d4a9ede5d4dd917ab77a7b87e00f0296ce850efe",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_01.png",
+        "outputSha256": "5affc5963eefea708fba2299c92744d41191a2f27c37bab74ea89d83ebf9825d"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00008.png",
+        "sourceIndex": 8,
+        "sourceSha256": "ecea70c763e6b6b1cd133ab7b67e3a7b4d5e7268fff14445c84d280dcd876d94",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_02.png",
+        "outputSha256": "9100ea1ac3b7c47db2db602d048ae01673842d9c68da9d39d80795767cf9dfbf"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00023.png",
+        "sourceIndex": 23,
+        "sourceSha256": "7eed7bb41b48cf418330db62349bde6f72b064ceaa39f4d79e85cad8eed0e221",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_03.png",
+        "outputSha256": "937b1a6b20440dc1d3f49fdc26c3e9ae0e90e8fed999a5b0391b544f8e8d4f1a"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00032.png",
+        "sourceIndex": 32,
+        "sourceSha256": "c5ed13580e19283a0674c149b428b5e5b160ab1c704a541db15e2d6f7323208a",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_04.png",
+        "outputSha256": "e6f9f4c747be497e8257053de5032dbf12062a018c469b21c4d4d32fd13676e2"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00071.png",
+        "sourceIndex": 71,
+        "sourceSha256": "9718d076232b1bb497892ac4dcc52129c6c6ab420b39d3b7f1b5159c210abfc5",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_05.png",
+        "outputSha256": "61c0c045042d06adeb5de33e618e08cbf43f8e92d1d3ed8b7e9078ad79db77e8"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00078.png",
+        "sourceIndex": 78,
+        "sourceSha256": "da568dee7afacdf78c4d275ee63daa238e208737ba2512df91f9661b58f7277f",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_06.png",
+        "outputSha256": "777c51b084d8e2ce8a263996c10d3a655c0bc932690a1975a49ee21572841371"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00089.png",
+        "sourceIndex": 89,
+        "sourceSha256": "54a1f4c9a299b93655bfa0f8f6e573827b67f611a2b360d6c7df640e90afab98",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_07.png",
+        "outputSha256": "46a9b14cc5b0b3cd142befafef3326f82cf67fe19386804342351544fb697890"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/刺客/frame_00096.png",
+        "sourceIndex": 96,
+        "sourceSha256": "004c0658f0ce6f94b86f632f033171906fb4ebdba1c5a235d7ae3d6424a60d60",
+        "output": "Assets/GameRes/Art/Boss/Chapter04_Assassin/Boss04_Assassin_Idle_08.png",
+        "outputSha256": "b1b150b483cfacd668a50c9417de3fff3aef19c57db82f9f1f7a66caaf15061b"
+      }
+    ]
+  },
+  {
+    "chapter": 5,
+    "folder": "盾卫",
+    "role": "Shield",
+    "originalFrameCount": 97,
+    "selectedIndices": [
+      0,
+      5,
+      17,
+      34,
+      36,
+      71,
+      76,
+      96
+    ],
+    "size": 384,
+    "frames": [
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00000.png",
+        "sourceIndex": 0,
+        "sourceSha256": "e8a7f347c342b72f8e62af73b3b6e049fdf6c7b1eee49e5768f5f79325ef86ff",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_01.png",
+        "outputSha256": "7e696ff35ca3e150b6909ef02cab65fda1e9b6577b412917b923ce499ca82dcd"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00005.png",
+        "sourceIndex": 5,
+        "sourceSha256": "c62212178f81f3f37b590ebc11de737ee7f6235bd78941c5892bddbeabd9a4a1",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_02.png",
+        "outputSha256": "29d9d97303a8cbb4dd85f557b194d43d1bb4eab565c07b3204ab73c067694191"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00017.png",
+        "sourceIndex": 17,
+        "sourceSha256": "7c074420001178bf1711e7d37f260d2dd2bfa1fbed84a3ed78d4fb669926c4a2",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_03.png",
+        "outputSha256": "1218e91b0168fc371a5725129b20eec1914f58b5adda0471514654198ea2812e"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00034.png",
+        "sourceIndex": 34,
+        "sourceSha256": "ee9692e3b3f5b16cd2d7d44549899cc22bffcac3262394ce69b164f5541cfd2e",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_04.png",
+        "outputSha256": "d2e90a1de96d534c2c028b1f281b27818c9f3c14302120769467dcd59388c9e7"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00036.png",
+        "sourceIndex": 36,
+        "sourceSha256": "712b302676002ee1929fad562a2f5ef02e926f81b64c23b50ce02f39a405b179",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_05.png",
+        "outputSha256": "5bd1396658451109e86abb4a7b9ba401707383a0a3074afd8a35c54b1d4ee93a"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00071.png",
+        "sourceIndex": 71,
+        "sourceSha256": "fd78015af2f0d70ad185f54f5b34e23afb49a3707e0203b3c29062f936c023d0",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_06.png",
+        "outputSha256": "9c3db647d8aad86cfa293fd73a45e1275e1bfe208371c1b6a84ed2e21858c64f"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00076.png",
+        "sourceIndex": 76,
+        "sourceSha256": "bb62c3b6cdc9836201ed20023a548802dfefcb2ae7b12b70df5de8af27d9ff12",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_07.png",
+        "outputSha256": "2c619e8031cc7b636d8becbf4c4eae1913594796007744beb873a4a90f3928d8"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/盾卫/frame_00096.png",
+        "sourceIndex": 96,
+        "sourceSha256": "a63a4ca02e4a48157edb4f6d1c02212f844436caaf0ca6a96d0d97c71bcaad95",
+        "output": "Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_08.png",
+        "outputSha256": "f38570bac8d876f44e1ed2ba30a79192e3beb5738fb6b70269787a71d43d63e8"
+      }
+    ]
+  },
+  {
+    "chapter": 6,
+    "folder": "牧师",
+    "role": "Priest",
+    "originalFrameCount": 97,
+    "selectedIndices": [
+      0,
+      7,
+      20,
+      37,
+      62,
+      75,
+      87,
+      96
+    ],
+    "size": 384,
+    "frames": [
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00000.png",
+        "sourceIndex": 0,
+        "sourceSha256": "586cc0183db7446ad32ff85ba3bdd0a5409a7860a7512e89936c4d5ae67eb097",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_01.png",
+        "outputSha256": "b5ce83f8efe71094f6a61b43ccc3d36842c17e2f539cd6ffabf69c21add1a345"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00007.png",
+        "sourceIndex": 7,
+        "sourceSha256": "d97abdd96dab9287fcd1cc0a76dc8bdd08e7a68a855db7e01917432a2f3afdbf",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_02.png",
+        "outputSha256": "d97c068a5ad7853dff10dcb8ad093ae4fb2777cc55bc3d9e0be82caa238996c5"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00020.png",
+        "sourceIndex": 20,
+        "sourceSha256": "dd5d6202506163f547a0070d0cba3a9241ee6cdfa8bd10fc1b832605c0d39017",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_03.png",
+        "outputSha256": "ddc55fc0348bce54e380a131530e710de1210b87aaae3857c436a78fc32d2907"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00037.png",
+        "sourceIndex": 37,
+        "sourceSha256": "9880de9baff52d209af7b3a96b4621a2873d82c5cb317526abb5c30bfd2609fd",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_04.png",
+        "outputSha256": "873fbedd6c446b2fece52f2d1835000fad2f0faa6b1cb62be146f1fde07778e0"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00062.png",
+        "sourceIndex": 62,
+        "sourceSha256": "b8860e20c125fd8b756675c323e1e783dfd684e97d27a9393cf44f59d9383a00",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_05.png",
+        "outputSha256": "19a2924f84241f796b97f7c23768cca6301f9932c4c99ce527c97c35a3bc7863"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00075.png",
+        "sourceIndex": 75,
+        "sourceSha256": "07f2485202813d158adf1647fcedfe1b61ffe8fd23c400690229525b06ceb2ba",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_06.png",
+        "outputSha256": "77c3923d2988fa26b68313a15230dbf412c8ab3ee7786d2c268858e34a9cf825"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00087.png",
+        "sourceIndex": 87,
+        "sourceSha256": "fd1d488d8424a889dc5f3189fba7dd5378cb19a92ae8b5326cdbd2b7dc502095",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_07.png",
+        "outputSha256": "a50e4823da5287aeb0b4993c1e8dba04b85921ca337147a9dd38df7c99c0f810"
+      },
+      {
+        "source": "美术/AI生成/新版/BOSS序列帧_透明/牧师/frame_00096.png",
+        "sourceIndex": 96,
+        "sourceSha256": "313f8a4af456bd3140dc9df2b8e83d9818119ddfeceb508d12cf7cbae7d536be",
+        "output": "Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_08.png",
+        "outputSha256": "69d404708eefb4866bed3d1f5beb70321ef22f6f1917074bd61ee3121a58b0cc"
+      }
+    ]
+  }
+]

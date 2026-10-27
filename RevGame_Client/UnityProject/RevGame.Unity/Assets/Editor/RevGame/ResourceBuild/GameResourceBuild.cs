@@ -120,6 +120,12 @@ namespace RevGame.Editor
             desired["Assets/GameRes/Material/Board/PlacementMagic.mat"] = "material_board";
             // 长BGM逐曲独立分包：选择一章不会把其它歌曲一起装进内存。原MP3保留，由Unity只转码一次。
             GameChapterAudioBuild.Configure(desired);
+            // 每章Boss配置只引用该章8帧，配置和图集同包；普通棋子预制体不能引用六章配置。
+            for (int chapter = 1; chapter <= 6; chapter++)
+            {
+                desired["Assets/GameRes/Config/Boss/BossChapter" + chapter.ToString("D2") + ".asset"]
+                    = "atlas_bosschapter" + chapter.ToString("D2") + "frames";
+            }
             foreach (var pair in desired) { SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value); }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。
             GameSpriteAtlasBuild.Configure();

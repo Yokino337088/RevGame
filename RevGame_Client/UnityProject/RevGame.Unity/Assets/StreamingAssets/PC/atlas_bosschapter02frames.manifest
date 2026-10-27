@@ -1,0 +1,37 @@
+ManifestFileVersion: 0
+CRC: 1997905626
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 34ca36c814b993b9b3138128951e9d42
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 88edf1c01c7a43459b9906c962d65cf1
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 34ca36c814b993b9b3138128951e9d42
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_06.png
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_03.png
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_08.png
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_07.png
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_04.png
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_01.png
+- Assets/GameRes/Config/Boss/BossChapter02.asset
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_02.png
+- Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_05.png
+- Assets/GameRes/Atlases/BossChapter02Frames.spriteatlasv2
+Dependencies: []

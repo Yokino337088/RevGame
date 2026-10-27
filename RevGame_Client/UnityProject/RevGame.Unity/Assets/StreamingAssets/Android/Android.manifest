@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 4289308736
+CRC: 1843038265
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -165,3 +165,21 @@ AssetBundleManifest:
         Dependency_0: atlas_uimenus
         Dependency_1: atlas_uibattle
         Dependency_2: font_cjk
+    Info_40:
+      Name: atlas_bosschapter01frames
+      Dependencies: {}
+    Info_41:
+      Name: atlas_bosschapter02frames
+      Dependencies: {}
+    Info_42:
+      Name: atlas_bosschapter03frames
+      Dependencies: {}
+    Info_43:
+      Name: atlas_bosschapter04frames
+      Dependencies: {}
+    Info_44:
+      Name: atlas_bosschapter05frames
+      Dependencies: {}
+    Info_45:
+      Name: atlas_bosschapter06frames
+      Dependencies: {}

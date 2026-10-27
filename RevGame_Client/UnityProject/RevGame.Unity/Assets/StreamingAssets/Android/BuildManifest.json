@@ -1,9 +1,15 @@
 ﻿{
   "version": "0.1.0",
   "platform": "Android",
-  "buildTime": "2026-10-27 13:10:06",
+  "buildTime": "2026-10-27 14:55:10",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 38102 },
+    { "name": "atlas_bosschapter01frames", "size": 452625 },
+    { "name": "atlas_bosschapter02frames", "size": 489137 },
+    { "name": "atlas_bosschapter03frames", "size": 475640 },
+    { "name": "atlas_bosschapter04frames", "size": 456322 },
+    { "name": "atlas_bosschapter05frames", "size": 454408 },
+    { "name": "atlas_bosschapter06frames", "size": 486343 },
     { "name": "atlas_combatframes", "size": 1058971 },
     { "name": "atlas_pieceframes", "size": 1099385 },
     { "name": "atlas_storyguide", "size": 12729 },

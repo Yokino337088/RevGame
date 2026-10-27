@@ -64,7 +64,7 @@ namespace RevGame.View
         /// <summary>过场读取的装配状态；不是玩法阶段。失败必须显示原因，不能用“格子少几个”悄悄继续。</summary>
         public string LoadError { get; private set; }
         private bool _cellsReady;
-        public bool IsReady { get { return _surfaceReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
+        public bool IsReady { get { return _surfaceReady && IsBossArtReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
         public int ActiveEffectCount { get { return _effects.Count; } }
         /// <summary>攻击范围是否正在显示；编辑器/自动化验收直接读，不看渲染器状态。</summary>
         public bool AttackRangeVisible { get { return _attackRangeVisible; } }
@@ -442,7 +442,7 @@ namespace RevGame.View
             {
                 return;
             }
-
+            RequestBossArt();
             _removedIds.Clear();
             foreach (var pair in _pieces)
             {
@@ -526,7 +526,7 @@ namespace RevGame.View
             }
         }
 
-        private static void RefreshPiece(PieceView view, Piece piece)
+        private void RefreshPiece(PieceView view, Piece piece)
         {
             Vector3 position = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             // Pos 指身体左下格，图像要放在整个占格的中心，而不是压在左下角那一格。
@@ -534,6 +534,8 @@ namespace RevGame.View
             view.MoveTo(position);
             // 原位升级保留Id，所以每次同步检查外观；Bind内部只在种类/星级真的变化时重绑。
             view.Bind(piece.Id, piece.Def.Kind, piece.Def.Star, piece.Side);
+            // 换章异步加载期间不能把上一章配置临时贴给新Boss；画面门禁会等对应章完成。
+            if (piece.IsBoss) { view.BindBossArt(_bossArt != null && _bossArt.Chapter == RevServices.GetRequired<IBattleService>().Chapter ? _bossArt : null); }
             view.SetBodySize(piece.Size, piece.IsBoss, piece.IsKing);
             view.SetHp(piece.HpRatio);
             view.SetLocked(piece.IsLocked);
@@ -874,6 +876,7 @@ namespace RevGame.View
             _lastHp.Clear();
             ClearRoundEffects();
             CancelDissolvingPieces();
+            ReleaseBossArt();
             _generation++;
             RevPool.DestroyPool<PieceView>();
             RevPool.DestroyPool<BoardCellView>();
