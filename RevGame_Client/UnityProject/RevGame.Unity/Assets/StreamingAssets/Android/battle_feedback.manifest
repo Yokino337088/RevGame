@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3699842839
+CRC: 1431356017
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 05edb0200b3ed745fde8098b7860ddd3
+    Hash: 2e5acc731a16c3a841919e0c27d76654
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 671d74b5b402ce6d9a36f8845e8ba0a6
+    Hash: b221ebce10141f5b4d35824a6b1b86d3
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 05edb0200b3ed745fde8098b7860ddd3
+    Hash: 2e5acc731a16c3a841919e0c27d76654
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -19,8 +19,6 @@ ClassTypes:
 - Class: 21
   Script: {instanceID: 0}
 - Class: 23
-  Script: {instanceID: 0}
-- Class: 28
   Script: {instanceID: 0}
 - Class: 48
   Script: {instanceID: 0}
@@ -59,4 +57,5 @@ Assets:
 - Assets/GameRes/Effects/Combat/ScoreSpark.prefab
 Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat

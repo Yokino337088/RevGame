@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using RevGame.Core;
 using RevGame.Flow;
 using RevGame.Services;
@@ -89,21 +88,9 @@ namespace RevGame.Editor
                     throw new InvalidOperationException("章节独立 Shader 缺失或编译失败：" + Names[i] + " / " + string.Join("; ", messages));
                 }
                 string path = TextureRoot + "/" + Names[i] + ".png";
-                File.Copy(Path.Combine(SourceRoot, Sources[i]), path, true);
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
-                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                importer.textureType = TextureImporterType.Default;
-                importer.sRGBTexture = true;
-                importer.mipmapEnabled = false;
-                importer.isReadable = false;
-                importer.npotScale = TextureImporterNPOTScale.None;
-                importer.wrapMode = TextureWrapMode.Clamp;
-                importer.filterMode = FilterMode.Bilinear;
-                importer.maxTextureSize = 2048;
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name = "Standalone", overridden = true, maxTextureSize = 2048, format = TextureImporterFormat.DXT5 });
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = 2048, format = TextureImporterFormat.ETC2_RGBA8 });
-                importer.SetAssetBundleNameAndVariant("background_" + Names[i].ToLowerInvariant(), string.Empty);
-                importer.SaveAndReimport();
+                // 原画保留在美术目录，运行时生成RGB/16:9副本；重导不能再写回未满足块压缩的765/774高度。
+                GameResourceCompressionBuild.PrepareBackground(Path.Combine(SourceRoot, Sources[i]), path);
+                AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant("background_" + Names[i].ToLowerInvariant(), string.Empty);
                 // 框架按不含扩展名的资源名寻址：同包 PNG 与材质不能同名，故材质统一加后缀。
                 string materialName = Names[i] + "_Material";
                 string materialPath = MaterialRoot + "/" + materialName + ".mat";
@@ -157,7 +144,8 @@ namespace RevGame.Editor
             for (int i = 0; i < Names.Length; i++)
             {
                 string path = TextureRoot + "/" + Names[i] + ".png";
-                if (Digest(path) != Digest(Path.Combine(SourceRoot, Sources[i]))) { throw new InvalidOperationException("导入图片不是指定原图：" + Names[i]); }
+                // 制作副本经过RGB采样，PNG字节不再与原画一致；改验源SHA标识和制作尺寸，不把转码当换图。
+                GameResourceCompressionBuild.ValidateBackground(Path.Combine(SourceRoot, Sources[i]), path);
                 var importer = AssetImporter.GetAtPath(path) as TextureImporter;
                 if (importer == null || importer.textureType != TextureImporterType.Default || importer.isReadable || importer.mipmapEnabled
                     || !importer.sRGBTexture || importer.wrapMode != TextureWrapMode.Clamp || importer.npotScale != TextureImporterNPOTScale.None)
@@ -190,7 +178,7 @@ namespace RevGame.Editor
                     }
                 }
             }
-            return Result("第一章 GUID/Sprite/图集保留；六个独立背景包，每包图片+专属材质+专属Shader；其余5张原图SHA256一致");
+            return Result("第一章 GUID/Sprite/图集保留；六个独立背景包；其余5张RGB副本源图SHA标识与16:9制作尺寸一致");
         }
 
         private static void SaveSceneInspector()
@@ -234,12 +222,6 @@ namespace RevGame.Editor
                 if (previous.IsValid() && previous.isLoaded) { SceneManager.SetActiveScene(previous); }
                 if (opened) { EditorSceneManager.CloseScene(scene, true); }
             }
-        }
-
-        private static string Digest(string path)
-        {
-            using (SHA256 sha = SHA256.Create())
-            using (FileStream stream = File.OpenRead(path)) { return Convert.ToBase64String(sha.ComputeHash(stream)); }
         }
 
         private static void EnsureFolder(string path)
