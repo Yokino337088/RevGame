@@ -38,6 +38,15 @@ namespace Revolution.Editor
         /// </summary>
         public readonly Dictionary<string, long> extraBytes = new Dictionary<string, long>();
 
+        /// <summary>
+        /// 包名 → 会随这个包一起打入的未分包资源路径（例如 Assets/GameRes/Textures/Board.png）。
+        /// “未分包”表示资源自己和它的上级文件夹都没有生效的 AB 标记；它仍可能因为被引用而进入包。
+        /// 同一资源在一个包内只记录一次，路径按字符顺序排列，方便界面稳定显示和定位。
+        /// 与 extraBytes 来自同一次编辑器依赖扫描，因此清单与总大小使用完全相同的统计口径。
+        /// 只由 AnalyzeFromDatabase 填充：Manifest 本身没有提供这种逐资源的编辑器估算清单。
+        /// </summary>
+        public readonly Dictionary<string, string[]> unbundledAssets = new Dictionary<string, string[]>();
+
         public bool HasIssue => sharedAssets.Count > 0 || circularBundles.Count > 0;
     }
 
@@ -143,7 +152,9 @@ namespace Revolution.Editor
                 var deps = new SortedSet<string>(StringComparer.Ordinal);
 
                 // 本包"顺带背进包里"的未分包资源（同一个资源只算一次）
-                var localUnbundled = new HashSet<string>();
+                // SortedSet 同时完成去重和排序：多个 Prefab 引用同一材质/贴图时只显示一行、只算一次大小。
+                // 不要从 sharedAssets 反推这里的清单，它只记录“被多个包引用”的资源，会漏掉只被本包引用的资源。
+                var localUnbundled = new SortedSet<string>(StringComparer.Ordinal);
                 long extra = 0;
 
                 foreach (string logic in pair.Value)
@@ -176,6 +187,7 @@ namespace Revolution.Editor
 
                 report.directDeps[bundle] = deps.ToArray();
                 report.extraBytes[bundle] = extra;
+                report.unbundledAssets[bundle] = localUnbundled.ToArray();
             }
 
             // 被 2 个以上包引用的"无主"资源 → 一定会被复制多份

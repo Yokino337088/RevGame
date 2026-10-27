@@ -57,6 +57,9 @@ namespace Revolution.Editor
         [NonSerialized] private List<string> _detailBundles = new List<string>();
         [NonSerialized] private List<string> _detailLoose = new List<string>();
 
+        // 可换行的资源按钮：长路径在窄窗口里也能看全。样式按需创建，避免每帧创建 GUIStyle。
+        [NonSerialized] private GUIStyle _unbundledAssetStyle;
+
         private const float ToolbarHeight = 21f;
         private const float SearchHeight = 20f;
         private const float HintHeight = 18f;
@@ -288,8 +291,11 @@ namespace Revolution.Editor
                 deps == null || deps.Length == 0 ? "—（不依赖别的包）" : string.Join("、", deps), EditorStyles.wordWrappedMiniLabel);
 
             report.extraBytes.TryGetValue(bundle, out long extra);
-            if (extra > 0)
-                EditorGUILayout.LabelField("会一起打进来的未分包资源", ABGUI.FormatSize(extra), EditorStyles.miniLabel);
+            report.unbundledAssets.TryGetValue(bundle, out string[] unbundled);
+
+            // 总大小为 0 也可能有资源（例如空文件），所以由清单决定是否显示，不能再只判断 extra > 0。
+            // 复用分析缓存里的路径，不在 OnGUI 每一帧重新遍历 AssetDatabase.GetDependencies。
+            DrawUnbundledAssets(unbundled, extra);
         }
 
         private void DrawAssetDetail(ABAssetTreeView.Row row)
@@ -307,19 +313,57 @@ namespace Revolution.Editor
             EditorGUILayout.LabelField("依赖的其他包",
                 _detailBundles.Count == 0 ? "—" : string.Join("、", _detailBundles), EditorStyles.wordWrappedMiniLabel);
 
-            if (_detailLoose.Count == 0) return;
+            long extra = 0;
+            foreach (string path in _detailLoose)
+            {
+                extra += ABSizeCache.OfAsset(path);
+            }
+            DrawUnbundledAssets(_detailLoose, extra);
+        }
 
-            EditorGUILayout.LabelField($"会被一起打进这个包的未分包资源（{_detailLoose.Count} 个）", EditorStyles.miniBoldLabel);
-            for (int i = 0; i < Math.Min(8, _detailLoose.Count); i++)
+        /// <summary>
+        /// 包详情与单个资源详情共用的未分包依赖清单。
+        /// 全部资源都列出来，不截断成前 8 项；父级详情区域已经有滚动条，资源多时向下滚动即可。
+        /// 每项显示图标、文件名、完整 Project 路径和源文件大小；点击整块资源按钮会选中并高亮该资源。
+        /// 这是依赖扫描的源文件估算，不能当作压缩后的 AssetBundle 产物大小。
+        /// </summary>
+        private void DrawUnbundledAssets(IReadOnlyList<string> paths, long extraBytes)
+        {
+            if (paths == null || paths.Count == 0)
+            {
+                return;
+            }
+
+            EditorGUILayout.LabelField("会一起打进来的未分包资源",
+                $"{paths.Count} 个 · 源文件 {ABGUI.FormatSize(extraBytes)}", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("点击资源可在 Project 窗口选中并高亮；完整清单可向下滚动查看。",
+                EditorStyles.wordWrappedMiniLabel);
+
+            _unbundledAssetStyle ??= new GUIStyle(EditorStyles.miniButton)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                wordWrap = true,
+            };
+
+            foreach (string path in paths)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("定位", EditorStyles.miniButton, GUILayout.Width(38))) ABGUI.Ping(_detailLoose[i]);
-                    EditorGUILayout.LabelField(ABGUI.Short(_detailLoose[i]), EditorStyles.miniLabel);
+                    // 显示完整路径，避免不同目录下的同名贴图/材质无法区分。
+                    // GetCachedIcon 使用 Unity 已缓存的图标；真正加载资源只发生在用户点击时。
+                    var content = new GUIContent(System.IO.Path.GetFileName(path) + "\n" + path,
+                        AssetDatabase.GetCachedIcon(path), "在 Project 窗口选中并高亮：" + path);
+                    if (GUILayout.Button(content, _unbundledAssetStyle,
+                            GUILayout.MinHeight(34f), GUILayout.ExpandWidth(true)))
+                    {
+                        // 共用定位入口同时设置 Selection.activeObject 和 PingObject，Inspector 也会随之更新。
+                        ABGUI.Ping(path);
+                    }
+
+                    GUILayout.Label(new GUIContent(ABGUI.FormatSize(ABSizeCache.OfAsset(path)), "源文件大小（不是打包压缩后的大小）"),
+                        EditorStyles.miniLabel, GUILayout.Width(66f));
                 }
             }
-            if (_detailLoose.Count > 8)
-                EditorGUILayout.LabelField($"… 还有 {_detailLoose.Count - 8} 个", EditorStyles.miniLabel);
         }
 
         private void DrawMultiAssetDetail(List<ABAssetTreeView.Row> rows)
