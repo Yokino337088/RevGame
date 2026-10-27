@@ -1,18 +1,22 @@
 ManifestFileVersion: 0
-CRC: 543266255
+CRC: 3861642364
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: eb81182c20dfc3f34f623d7ca5a6c7a1
+    Hash: 8720896e34c3dd1d518f1947a26a5739
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 88edf1c01c7a43459b9906c962d65cf1
+    Hash: 1220329aa1b034131fd9f44c2ff76d53
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: eb81182c20dfc3f34f623d7ca5a6c7a1
+    Hash: 8720896e34c3dd1d518f1947a26a5739
 HashAppended: 0
 ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 48
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
@@ -24,12 +28,15 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Material/BossDeath/Chapter05_Ice_Body.mat
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_07.png
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_04.png
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_06.png
 - Assets/GameRes/Config/Boss/BossChapter05.asset
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_08.png
+- Assets/GameShader/BossDeath/Chapter05_Ice.shader
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_02.png
+- Assets/GameRes/Material/BossDeath/Chapter05_Ice_Aura.mat
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_01.png
 - Assets/GameRes/Atlases/BossChapter05Frames.spriteatlasv2
 - Assets/GameRes/Art/Boss/Chapter05_Shield/Boss05_Shield_Idle_05.png

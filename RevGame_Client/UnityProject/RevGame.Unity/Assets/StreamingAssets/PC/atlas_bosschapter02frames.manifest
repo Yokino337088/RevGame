@@ -1,18 +1,22 @@
 ManifestFileVersion: 0
-CRC: 1997905626
+CRC: 782749432
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 34ca36c814b993b9b3138128951e9d42
+    Hash: b2112f626ccd3a5c59892ac8fa6c57dd
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 88edf1c01c7a43459b9906c962d65cf1
+    Hash: 1220329aa1b034131fd9f44c2ff76d53
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 34ca36c814b993b9b3138128951e9d42
+    Hash: b2112f626ccd3a5c59892ac8fa6c57dd
 HashAppended: 0
 ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 48
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
@@ -26,9 +30,12 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_06.png
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_03.png
+- Assets/GameRes/Material/BossDeath/Chapter02_Sunlight_Aura.mat
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_08.png
+- Assets/GameShader/BossDeath/Chapter02_Sunlight.shader
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_07.png
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_04.png
+- Assets/GameRes/Material/BossDeath/Chapter02_Sunlight_Body.mat
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_01.png
 - Assets/GameRes/Config/Boss/BossChapter02.asset
 - Assets/GameRes/Art/Boss/Chapter02_Archer/Boss02_Archer_Idle_02.png

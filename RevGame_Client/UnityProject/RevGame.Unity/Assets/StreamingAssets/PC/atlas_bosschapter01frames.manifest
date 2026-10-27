@@ -1,18 +1,22 @@
 ManifestFileVersion: 0
-CRC: 1186667702
+CRC: 2656299821
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2fe767db9d6e60b612d11513e0b18286
+    Hash: 7d2b393ff8b308569dc1d538792c1165
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 88edf1c01c7a43459b9906c962d65cf1
+    Hash: 1220329aa1b034131fd9f44c2ff76d53
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2fe767db9d6e60b612d11513e0b18286
+    Hash: 7d2b393ff8b308569dc1d538792c1165
 HashAppended: 0
 ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 48
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
@@ -27,10 +31,13 @@ Assets:
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_05.png
 - Assets/GameRes/Atlases/BossChapter01Frames.spriteatlasv2
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_08.png
+- Assets/GameShader/BossDeath/Chapter01_Stardust.shader
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_06.png
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_03.png
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_07.png
+- Assets/GameRes/Material/BossDeath/Chapter01_Stardust_Body.mat
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_02.png
+- Assets/GameRes/Material/BossDeath/Chapter01_Stardust_Aura.mat
 - Assets/GameRes/Config/Boss/BossChapter01.asset
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_01.png
 - Assets/GameRes/Art/Boss/Chapter01_Swordman/Boss01_Swordman_Idle_04.png

@@ -1,18 +1,22 @@
 ManifestFileVersion: 0
-CRC: 2018380268
+CRC: 878365543
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0b6a00d173487b76960fa29187deff23
+    Hash: 37a664d4da878eccad0ce200eee214ca
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 88edf1c01c7a43459b9906c962d65cf1
+    Hash: 1220329aa1b034131fd9f44c2ff76d53
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0b6a00d173487b76960fa29187deff23
+    Hash: 37a664d4da878eccad0ce200eee214ca
 HashAppended: 0
 ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 48
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
@@ -27,9 +31,12 @@ Assets:
 - Assets/GameRes/Atlases/BossChapter06Frames.spriteatlasv2
 - Assets/GameRes/Config/Boss/BossChapter06.asset
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_03.png
+- Assets/GameRes/Material/BossDeath/Chapter06_Cross_Body.mat
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_08.png
+- Assets/GameShader/BossDeath/Chapter06_Cross.shader
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_01.png
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_05.png
+- Assets/GameRes/Material/BossDeath/Chapter06_Cross_Aura.mat
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_04.png
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_07.png
 - Assets/GameRes/Art/Boss/Chapter06_Priest/Boss06_Priest_Idle_02.png

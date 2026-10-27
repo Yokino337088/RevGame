@@ -1,18 +1,22 @@
 ManifestFileVersion: 0
-CRC: 2878807955
+CRC: 1424210951
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 8fa3b8bb7fea93a6c94f3c9611f54033
+    Hash: 22111e2a8848f854a3930bed65598fe2
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 88edf1c01c7a43459b9906c962d65cf1
+    Hash: 1220329aa1b034131fd9f44c2ff76d53
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 8fa3b8bb7fea93a6c94f3c9611f54033
+    Hash: 22111e2a8848f854a3930bed65598fe2
 HashAppended: 0
 ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 48
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
@@ -31,7 +35,10 @@ Assets:
 - Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_01.png
 - Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_04.png
 - Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_03.png
+- Assets/GameRes/Material/BossDeath/Chapter03_Water_Aura.mat
 - Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_08.png
 - Assets/GameRes/Atlases/BossChapter03Frames.spriteatlasv2
+- Assets/GameShader/BossDeath/Chapter03_Water.shader
+- Assets/GameRes/Material/BossDeath/Chapter03_Water_Body.mat
 - Assets/GameRes/Config/Boss/BossChapter03.asset
 Dependencies: []
