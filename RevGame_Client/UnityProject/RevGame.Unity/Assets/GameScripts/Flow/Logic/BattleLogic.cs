@@ -15,6 +15,11 @@ namespace RevGame.Flow
     [RevLogic(GameDomain.Battle)]
     public sealed class BattleLogic : RevLogicBase
     {
+        /// <summary>
+        /// 战斗服务入口。每次现取而不缓存成字段：域退出会销毁服务，缓存下来就是留着一个失效引用。
+        /// 返回接口而不是 BattleService，让视图与自动化只拿到"读状态、发起动作"的窄面，
+        /// StopEnemyAI 这类收尾方法不对外暴露。
+        /// </summary>
         public IBattleService Battle
         {
             get
@@ -23,6 +28,7 @@ namespace RevGame.Flow
             }
         }
 
+        /// <summary>当前章节号，只做转发。快照与日志拼串时用它；界面和自动化各自持有服务，直接读 battle.Chapter。</summary>
         public int Chapter
         {
             get
@@ -31,6 +37,7 @@ namespace RevGame.Flow
             }
         }
 
+        /// <summary>当前回合号，0 表示还没开章。OnStart 用 0 判断是否需要开第一章。</summary>
         public int Round
         {
             get
@@ -57,6 +64,7 @@ namespace RevGame.Flow
             service?.FlushScore();
         }
 
+        /// <summary>作者原话:这里是固定步长去驱动战斗，锁逻辑帧</summary>
         private void OnFixedTick()
         {
             // 过场遮挡期间不推进准备三秒/战斗时间。SetTickEnabled只管域Tick，不会停Every计时器，
@@ -68,13 +76,18 @@ namespace RevGame.Flow
             }
             // 教学实操时冻结准备随机增益，完成换位后才恢复正常准备计时。
             var lesson = RevLogic.Get<TutorialLogic>();
-            if (flow != null && flow.IsTutorialActive && lesson != null && lesson.Step != TutorialStep.Ready) { return; }
+            //这里直接return就代表不进行tick
+            if (flow != null && flow.IsTutorialActive && lesson != null && lesson.Step != TutorialStep.Ready) 
+            { 
+                return; 
+            }
             if (Battle.Phase == GamePhase.Battle || Battle.Phase == GamePhase.Prepare)
             {
                 Battle.Tick(Balance.BattleSimulationStepSeconds);
             }
         }
 
+        /// <summary>开战。过场遮挡期间直接拒绝；教学进行中则把这次点击当作"完成教学"，不进入战斗。</summary>
         public bool BeginBattle()
         {
             if (RevServices.GetRequired<GameFlow>().IsGameplayBlocked)
@@ -85,8 +98,10 @@ namespace RevGame.Flow
             return Battle.StartBattle();
         }
 
+        /// <summary>刷新手牌。教学期间禁止：教学按预设牌序推进，换一批牌会让后续步骤对不上。</summary>
         public bool RefreshHand() { return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && !RevServices.GetRequired<GameFlow>().IsTutorialActive && Battle.RefreshHand(); }
 
+        /// <summary>选牌。教学期间不禁，由 <see cref="TutorialLogic.AllowCard"/> 判断是不是这一步该选的牌，选成功后推进教学。</summary>
         public bool SelectCard(int id)
         {
             if (RevServices.GetRequired<GameFlow>().IsGameplayBlocked) { return false; }
@@ -97,6 +112,7 @@ namespace RevGame.Flow
             return accepted;
         }
 
+        /// <summary>出牌落子。教学期间禁止：实操统一走 ClickBoard 的落点引导，不走这条入口，避免两套入口各推一次教学。</summary>
         public bool PlayCard(PieceKind kind, StarTier star, BoardPos pos)
         {
             return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && !RevServices.GetRequired<GameFlow>().IsTutorialActive && Battle.TryPlayCard(kind, star, pos);
@@ -113,21 +129,25 @@ namespace RevGame.Flow
             return accepted;
         }
 
+        /// <summary>结算后进入下一回合。这一组结算入口都只拦过场遮挡，不额外拦教学。</summary>
         public bool ContinueToNextRound()
         {
             return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.ContinueRound();
         }
 
+        /// <summary>三选一奖励，候选由服务生成。</summary>
         public bool ChooseReward(int index)
         {
             return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.ChooseReward(index);
         }
 
+        /// <summary>跳过当前回合；此刻能不能跳过由服务按阶段与回合判断。</summary>
         public bool SkipRound()
         {
             return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.SkipRound();
         }
 
+        /// <summary>选择眼石；资格与可用次数由服务校验。</summary>
         public bool SelectEyeStone()
         {
             return !RevServices.GetRequired<GameFlow>().IsGameplayBlocked && Battle.SelectEyeStone();
