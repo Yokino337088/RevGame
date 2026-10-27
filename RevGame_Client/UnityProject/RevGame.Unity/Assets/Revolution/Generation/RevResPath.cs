@@ -77,6 +77,7 @@ namespace Revolution
         public const string Material = "Material/";
         public const string Material_Background = "Material/Background/";
         public const string Material_Board = "Material/Board/";
+        public const string Material_BossDeath = "Material/BossDeath/";
         public const string Material_Cards = "Material/Cards/";
         public const string Material_Combat = "Material/Combat/";
         public const string Material_Pieces = "Material/Pieces/";
@@ -92,5 +93,6 @@ namespace Revolution
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
         public const string UI_Panel_Settings = "UI/Panel/Settings/";
         public const string UI_Panel_Story = "UI/Panel/Story/";
+        public const string UI_Panel_Victory = "UI/Panel/Victory/";
     }
 }
