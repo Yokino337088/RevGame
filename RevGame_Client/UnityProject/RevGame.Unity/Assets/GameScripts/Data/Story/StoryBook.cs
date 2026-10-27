@@ -33,6 +33,7 @@ namespace RevGame.Data
                 }
             }
             foreach (string id in new[] { "opening", "tutorial", "chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "ending" }) { Find(id); }
+            for (int chapter = 1; chapter <= 6; chapter++) { Find("boss_after_" + chapter); }
             if (Find("lesson").Lines.Length != 5) { throw new InvalidOperationException("教学说明必须对应五个教学步骤"); }
         }
 

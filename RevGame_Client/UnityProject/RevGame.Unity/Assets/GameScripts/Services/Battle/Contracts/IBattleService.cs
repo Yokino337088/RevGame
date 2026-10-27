@@ -45,6 +45,7 @@ namespace RevGame.Services
     {
         /// <summary>本回合积分换回合清零；永久总积分在本机跨挑战保存；倍率随进度和存活棋数变化。</summary>
         long RoundScore { get; }
+        long ChapterScore { get; }
         long LifetimeScore { get; }
         float ScoreMultiplier { get; }
         void FlushScore();

@@ -23,6 +23,7 @@ namespace RevGame.Editor
             { "UI/Panel/Loading", "ui_loading" },
             { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
             { "UI/Panel/Settings", "ui_settings" },
+            { "UI/Panel/Victory", "ui_victory" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
@@ -125,6 +126,13 @@ namespace RevGame.Editor
             {
                 desired["Assets/GameRes/Config/Boss/BossChapter" + chapter.ToString("D2") + ".asset"]
                     = "atlas_bosschapter" + chapter.ToString("D2") + "frames";
+                // 死亡Shader与身体/光晕材质随本章Boss同包，避免一场Boss把六章特效全加载。
+                string[] deathNames = { "Chapter01_Stardust", "Chapter02_Sunlight", "Chapter03_Water", "Chapter04_Swamp", "Chapter05_Ice", "Chapter06_Cross" };
+                string deathName = deathNames[chapter - 1];
+                string bossBundle = "atlas_bosschapter" + chapter.ToString("D2") + "frames";
+                desired["Assets/GameShader/BossDeath/" + deathName + ".shader"] = bossBundle;
+                desired["Assets/GameRes/Material/BossDeath/" + deathName + "_Body.mat"] = bossBundle;
+                desired["Assets/GameRes/Material/BossDeath/" + deathName + "_Aura.mat"] = bossBundle;
             }
             foreach (var pair in desired) { SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value); }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。

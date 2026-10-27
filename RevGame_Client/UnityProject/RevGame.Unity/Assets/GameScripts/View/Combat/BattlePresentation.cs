@@ -19,6 +19,8 @@ namespace RevGame.View
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnPrepare, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterBattle, OnBattle, owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, owner: this);
+            RevEvent.AddEventListener<BossDefeatedInfo>(Events.BossVictoryPresentationFinished, OnBossVictoryFinished, owner: this);
+            RevEvent.AddEventListener(Events.BossIntroFinished, OnBossIntroFinished, owner: this);
             RevEvent.AddEventListener(Events.PhaseEnterReward, OnReward, owner: this);
             RevUI.Open<BattleHudPanel>(panel => ValidatePanel(panel, null));
             IBattleService battle = RevServices.GetRequired<IBattleService>();
@@ -40,7 +42,19 @@ namespace RevGame.View
         {
             RevUI.Close<SettlePanel>();
             RevUI.Close<RewardPanel>();
-            RevUI.Open<PreparePanel>(panel => ValidatePanel(panel, GamePhase.Prepare));
+            RevUI.Open<PreparePanel>(panel =>
+            {
+                ValidatePanel(panel, GamePhase.Prepare);
+                var flow = RevServices.Get<RevGame.Flow.GameFlow>();
+                if (flow != null && flow.IsBossIntroPlaying) { flow.SetPrepareHidden(true); }
+            });
+        }
+
+        private void OnBossIntroFinished()
+        {
+            if (_released) { return; }
+            var flow = RevServices.Get<RevGame.Flow.GameFlow>();
+            if (flow != null) { flow.SetPrepareHidden(false); }
         }
 
         private void OnBattle(int round)
@@ -51,6 +65,8 @@ namespace RevGame.View
         private void OnSettle(GameSide winner)
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();
+            RevUI.Close<PreparePanel>();
+            if (winner == GameSide.Player && battle.IsBossRound && RevServices.GetRequired<RevGame.Flow.GameFlow>().IsBossVictoryPlaying) { return; }
             var data = new SettlePanel.SettleData
             {
                 Winner = winner,
@@ -60,6 +76,12 @@ namespace RevGame.View
             };
             RevUI.Close<PreparePanel>();
             RevUI.Open<SettlePanel, SettlePanel.SettleData>(data, panel => ValidatePanel(panel, GamePhase.Settle));
+        }
+        private void OnBossVictoryFinished(BossDefeatedInfo info)
+        {
+            IBattleService battle = RevServices.GetRequired<IBattleService>();
+            if (!_released && battle.Chapter == info.Chapter && battle.Round == info.Round && battle.Phase == GamePhase.Settle)
+            { OnSettle(GameSide.Player); }
         }
 
         private void ValidatePanel(RevUIPanel panel, GamePhase? expected)
@@ -77,6 +99,12 @@ namespace RevGame.View
             }
 
             if (expected.HasValue && RevServices.GetRequired<IBattleService>().Phase != expected.Value)
+            {
+                RevUI.Close(panel);
+                return;
+            }
+
+            if (expected == GamePhase.Settle && RevServices.GetRequired<RevGame.Flow.GameFlow>().IsBossVictoryPlaying)
             {
                 RevUI.Close(panel);
                 return;

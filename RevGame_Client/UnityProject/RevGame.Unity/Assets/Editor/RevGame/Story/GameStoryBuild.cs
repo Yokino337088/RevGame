@@ -64,6 +64,7 @@ namespace RevGame.Editor
                 book = ScriptableObject.CreateInstance<StoryBook>();
                 book.Guide = guide;
                 book.Episodes = GameStoryContent.Create();
+                book.Episodes = book.Episodes.Concat(GameBossVictoryBuild.CreateAfterStories()).ToArray();
                 AssetDatabase.CreateAsset(book, BookPath);
             }
             // 迁移旧静态向导：使用项目已有三帧身体动画，移动保留GUID，归StoryGuide唯一图集。

@@ -32,6 +32,9 @@ namespace RevGame.Flow
             if (LevelCatalog.GetRound(chapter, Balance.BossRoundIndex)?.IsBoss != true)
             { LastError = "该章没有有效Boss回合配置"; return false; }
             CancelStory();
+            CancelBossVictory();
+            CancelBossIntro();
+            FinalBossStoryShown = false;
             IsTutorialActive = false;
             _tutorialReplay = false;
             _bossDevelopmentEntering = true;

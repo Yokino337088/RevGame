@@ -98,6 +98,7 @@ namespace RevGame.View
             _viewRoot = new GameObject("BattleViews").transform;
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnRound, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterBattle, OnRound, owner: this);
+            RevEvent.AddEventListener(Events.BossIntroFinished, RefreshBoard, owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, owner: this);
             RevEvent.AddEventListener<int>(Events.PiecePlaced, OnPlaced, owner: this);
             RevEvent.AddEventListener<int>(Events.PieceMoved, OnPieceChanged, owner: this);
@@ -454,13 +455,15 @@ namespace RevGame.View
 
             foreach (int id in _removedIds)
             {
-                RevPool.Return(_pieces[id], 0);
+                if (!HoldVictoryBoss(_pieces[id])) { RevPool.Return(_pieces[id], 0); }
                 _pieces.Remove(id);
                 _lastHp.Remove(id);
             }
 
             foreach (Piece piece in RevServices.GetRequired<IBattleService>().Board.Pieces)
             {
+                // 擒王时模型主将可能还有残血，视图已归演出拥有，不能重新从池生成第二颗。
+                if (_victoryBossId != 0 && piece.Id == _victoryBossId) { continue; }
                 PieceView view;
                 if (_pieces.TryGetValue(piece.Id, out view))
                 {
@@ -514,6 +517,7 @@ namespace RevGame.View
 
         private void PlayPendingPieceVisual(int id, PieceView view)
         {
+            if (view.HasBossDeathVisual) { _pendingUpgrades.Remove(id); _pendingBirths.Remove(id); return; }
             // 星级升级可能在落子事件之前触发；只有新帧绑定好、尺寸落定后才播，不能闪回旧星级。
             if (_pendingUpgrades.Remove(id))
             {
@@ -528,6 +532,8 @@ namespace RevGame.View
 
         private void RefreshPiece(PieceView view, Piece piece)
         {
+            // 入场已经借出死亡材质/参数块；准备计时被门禁暂停，重复气眼刷新不能把显现效果覆盖掉。
+            if (view.HasBossDeathVisual) { return; }
             Vector3 position = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             // Pos 指身体左下格，图像要放在整个占格的中心，而不是压在左下角那一格。
             position += new Vector3(piece.Size - 1, piece.Size - 1, 0f) * (Consts.CellSize * 0.5f);
@@ -540,6 +546,7 @@ namespace RevGame.View
             view.SetHp(piece.HpRatio);
             view.SetLocked(piece.IsLocked);
             view.SetEyeGarrison(piece.IsEyeGarrison && piece.IsAlive);
+            PrimeBossIntro(view);
         }
 
         private void RefreshCells()
@@ -564,6 +571,7 @@ namespace RevGame.View
 
         private void OnRound(int round)
         {
+            if (RevServices.GetRequired<IBattleService>().Phase == GamePhase.Prepare) { CancelVictoryViews(); }
             RequestBoardSurface();
             // 换阶段后旧棋子的射界已经过期，必须先收起再清弹幕。
             HideAttackRange();
@@ -733,6 +741,7 @@ namespace RevGame.View
                 // 切阶段保留这段短动画；完成或独立期限到达后归池，离场则由 CancelDissolvingPieces 收尾。
                 _pieces.Remove(id);
                 _lastHp.Remove(id);
+                if (HoldVictoryBoss(view)) { RefreshBoard(); return; }
                 _dissolvingPieces.Add(view);
                 if (!view.BeginDeathDissolve(OnDeathDissolved))
                 {
@@ -842,6 +851,8 @@ namespace RevGame.View
         private void OnDisable()
         {
             _released = true;
+            EndBossIntroVisual();
+            CancelVictoryViews();
             // 先收起范围（停波纹计时器、清黄格），再把棋子/格子归池；顺序反了会对已回池的对象调 Hide。
             HideAttackRange();
             RevEvent.RemoveAllByOwner(this);

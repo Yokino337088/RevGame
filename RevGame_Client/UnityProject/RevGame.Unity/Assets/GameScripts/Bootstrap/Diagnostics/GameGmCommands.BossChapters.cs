@@ -17,6 +17,25 @@ namespace RevGame.Bootstrap
         /// <summary>RegisterAll唯一调用，全部名称归同一注册账本；正式发布不编译这些入口。</summary>
         private static void RegisterBossChapterCommands()
         {
+            RegisterCommand("RevGame/Boss出场测试","重播当前活主将出场特写/出生/弹幕/舞动，阶段生命积分不变；accepted后查演出状态",args =>
+            {
+                if (args.Count != 0) { throw new RevGMUsageException("Boss出场测试不需要参数；先进入目标Boss关卡"); }
+                GameFlow flow = RevServices.GetRequired<GameFlow>();
+                if (!flow.ReplayBossIntroForDevelopment()) { throw new RevGMUsageException(flow.LastError); }
+                return "accepted";
+            });
+            RegisterCommand("RevGame/Boss退场测试","预览当前活主将退场特写/死亡/波浪/弹幕，结束还原活棋，不扣血或发奖励",args =>
+            {
+                if (args.Count != 0) { throw new RevGMUsageException("Boss退场测试不需要参数；先进入目标Boss关卡"); }
+                GameFlow flow = RevServices.GetRequired<GameFlow>();
+                if (!flow.PreviewBossExitForDevelopment()) { throw new RevGMUsageException(flow.LastError); }
+                return "accepted";
+            });
+            RegisterCommand("RevGame/Boss演出状态","只读当前出场/退场步骤，运行中等待；completed表示视觉完成，不表示获胜",args =>
+            {
+                GameFlow flow = RevServices.GetRequired<GameFlow>();
+                return "intro="+flow.BossIntroStage+",exit="+flow.BossVictoryStage+",playing="+(flow.IsBossIntroPlaying||flow.IsBossVictoryPlaying);
+            });
             for (int index = 0; index < BossChapterLabels.Length; index++)
             {
                 int chapter = index + 1; // 每次捕获独立局部变量，不能让六条委托都取最后一章。
@@ -37,7 +56,7 @@ namespace RevGame.Bootstrap
                 int chapter = args.Int(0);
                 ValidateBossChapter(chapter);
                 GameFlow flow = RevServices.GetRequired<GameFlow>();
-                if (flow.IsBossDevelopmentEntering || flow.IsTransitioning) { return "loading"; }
+                if (flow.IsBossDevelopmentEntering || flow.IsTransitioning || flow.IsBossIntroPlaying) { return "loading"; }
                 if (!string.IsNullOrEmpty(flow.LastError)) { throw new RevGMUsageException(flow.LastError); }
                 IBattleService battle = RevServices.GetRequired<IBattleService>();
                 if (flow.Screen != GameScreen.Battle || RevScene.CurrentName != GameFlow.BattleSceneName

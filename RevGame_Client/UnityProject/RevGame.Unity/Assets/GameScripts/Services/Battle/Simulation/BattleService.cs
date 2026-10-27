@@ -224,6 +224,7 @@ namespace RevGame.Services
             if (newBoard)
             {
                 _playerPieces.Clear();
+                ChapterScore = 0;
             }
 
             Chapter = chapter;
@@ -699,6 +700,16 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.HandChanged);
             Phase = GamePhase.Settle;
             StopEnemyAI();
+            if (IsBossRound && winner == GameSide.Player)
+            {
+                // Phase先落定，演出不能再次造成伤害；事件先于结算，流程可立即锁住提前弹窗/继续请求。
+                Piece king = _enemyPieces.Find(piece => piece.IsKing);
+                if (king != null)
+                {
+                    RevEvent.DispatchEvent<BossDefeatedInfo>(Events.BossDefeated,
+                        new BossDefeatedInfo(Chapter, Round, king.Id, king.Pos, king.Size, ChapterScore, king.IsAlive));
+                }
+            }
             RevEvent.DispatchEvent<GameSide>(Events.PhaseEnterSettle, winner);
             RevEvent.DispatchEvent<GameSide>(Events.BattleEnded, winner);
             RevLog.Info("战斗结束：" + (winner == GameSide.Player ? "胜" : "负"), Tag);

@@ -53,6 +53,7 @@ namespace RevGame.View
         private void OnDisable()
         {
             Camera.onPreCull -= OnCameraRendering;
+            ClearBossFocus();
             ClearEnergyShake();
         }
 
@@ -98,6 +99,7 @@ namespace RevGame.View
             cameraPosition.x = (0.5f - center.x / screenSize.x) * boardCamera.orthographicSize * 2f * aspect;
             cameraPosition.y = (0.5f - center.y / screenSize.y) * boardCamera.orthographicSize * 2f;
             boardCamera.transform.position = cameraPosition + EnergyShakeOffset();
+            ApplyBossFocus();
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
             {
                 UpdateChapterFrame(areas, screenSize);

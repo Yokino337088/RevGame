@@ -23,6 +23,11 @@ namespace RevGame.View
         public float BodyScale = 1f;
         [Tooltip("美术自带圆底座和王冠时不再重复叠原底座/王冠")]
         public bool BuiltInDecorations = true;
+        [Tooltip("本章Boss死亡身体材质，只借用共享材质，演出进度写参数块")]
+        public Material DeathMaterial;
+        [Tooltip("本章Boss死亡外部魔法材质，与身体使用同一Shader的Overlay模式")]
+        public Material DeathAuraMaterial;
+        [Range(2, 6)] public float DeathSeconds = 3.2f;
 
         /// <summary>加载失败明确报告，不用普通敌方重剑图冒充新Boss；帧引用只能由配置持有。</summary>
         public void Validate(int chapter)

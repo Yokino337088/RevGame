@@ -92,6 +92,7 @@ namespace RevGame.View
                     {
                         view.BindBossArt(config);
                         view.SetBodySize(piece.Size, true, piece.IsKing);
+                        PrimeBossIntro(view);
                     }
                     else if (view.BossAppearanceChapter != 0) { view.BindBossArt(null); }
                 }

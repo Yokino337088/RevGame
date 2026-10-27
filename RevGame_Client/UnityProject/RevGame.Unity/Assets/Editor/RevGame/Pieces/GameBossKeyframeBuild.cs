@@ -34,6 +34,8 @@ namespace RevGame.Editor
                     importer.ReadTextureSettings(spriteSettings);
                     spriteSettings.spriteAlignment = (int)SpriteAlignment.Center;
                     spriteSettings.spriteGenerateFallbackPhysicsShape = false;
+                    // 光晕沿帧外透明区展开；完整矩形保留Shader绘制区域，紧密网格会裁掉环形光效。
+                    spriteSettings.spriteMeshType = SpriteMeshType.FullRect;
                     importer.SetTextureSettings(spriteSettings);
                     importer.mipmapEnabled = false;
                     importer.isReadable = false;

@@ -28,6 +28,12 @@ namespace RevGame.Core
         public const string PhaseEnterSettle = "RevGame.Phase.Settle";
         /// <summary>整章通关 / 整局结束。参数：是否通关（bool）。</summary>
         public const string GameFinished = "RevGame.Game.Finished";
+        /// <summary>唯一签名BossDefeatedInfo：真实Boss终局胜利，优先于结算UI广播。</summary>
+        public const string BossDefeated = "RevGame.Boss.Defeated";
+        /// <summary>无参数：Boss入场完成或取消，准备面板/棋盘恢复可见；不改变准备时间和模型。</summary>
+        public const string BossIntroFinished = "RevGame.Boss.IntroFinished";
+        /// <summary>唯一签名BossDefeatedInfo：击败演出、积分弹幕和章节剧情全部结束后开放结算。</summary>
+        public const string BossVictoryPresentationFinished = "RevGame.Boss.VictoryPresentationFinished";
         // ---------------- 棋盘 / 棋子 ----------------
         /// <summary>有棋子落下。参数：棋子的整数 Id。</summary>
         public const string PiecePlaced = "RevGame.Piece.Placed";

@@ -30,7 +30,7 @@ namespace RevGame.Flow
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (_bossDevelopmentEntering) { return true; }
 #endif
-                return IsAudioSettingsVisible || IsStoryPlaying || IsTransitioning || _loading != null
+                return IsBossIntroPlaying || IsBossVictoryPlaying || IsAudioSettingsVisible || IsStoryPlaying || IsTransitioning || _loading != null
                     || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady);
             }
         }

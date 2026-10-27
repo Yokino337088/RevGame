@@ -167,6 +167,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            ClearBossDeath();
             SetEyeGarrison(false);
             StopFormationMove();
             StopAttackPulse();
@@ -400,9 +401,10 @@ namespace RevGame.View
         /// </summary>
         private void StopBodyVisual()
         {
+            // Boss演出拥有独立参数块；旧阶段/驻眼回调不能清空它，否则会把进度与贴图一起撤掉。
+            if (_bossDeathActive) { return; }
             _deathRecycleTimer.Stop();
             _onDeathFinished = null;
-            bool hadVisual = _deathProgress > 0f || _birthProgress > 0f || _stormProgress > 0f;
             Tween previous = _visualTween;
             _visualTween = null;
             previous?.Kill(false);
@@ -414,7 +416,7 @@ namespace RevGame.View
             if (bodyRenderer != null)
             {
                 bodyRenderer.SetPropertyBlock(null);
-                if (hadVisual && bodyRenderer.sprite != null)
+                if (bodyRenderer.sprite != null)
                 {
                     // ★ SpriteRenderer把当前帧纹理也放在内部参数块里，直接清空会短暂采到默认白图。
                     // 同一次方法内先撤下再重新绑定同一Sprite，强制引擎重建贴图绑定；中间不会渲染，
@@ -440,6 +442,7 @@ namespace RevGame.View
         /// <summary>每次换动画帧同时更新图集局部UV；光带始终在本棋轮廓内流动，透明区不出现方块。</summary>
         private void ApplyEyeGarrison()
         {
+            if (_bossDeathActive) { return; }
             if (bodyRenderer == null || _visualProperties == null || bodyRenderer.sprite == null) { return; }
             SetVisualUv(bodyRenderer.sprite);
             _visualProperties.SetFloat(EyeGarrisonId, _eyeGarrison);
@@ -600,6 +603,7 @@ namespace RevGame.View
         /// <summary>身体放大与占格数据一致；王冠只标主将，玩家能清楚知道要击败谁。</summary>
         public void SetBodySize(int size, bool boss, bool king)
         {
+            IsKingVisual = boss && king;
             transform.localScale = Vector3.one * (0.72f * size * Consts.CellSize);
             // Boss关键帧在BindBossArt中绑定；尺寸刷新绝不覆盖当前Sprite或重置帧索引。
 
@@ -643,6 +647,7 @@ namespace RevGame.View
         /// <summary>回池/回收时调用：清掉绑定，避免复用成"上一颗棋子"。</summary>
         public void Clear()
         {
+            ClearBossDeath();
             RestoreBossArt();
             SetEyeGarrison(false);
             PieceId = 0;

@@ -13,6 +13,8 @@ namespace RevGame.Services
         private readonly IScoreProgress _scoreProgress;
         /// <summary>本回合分数，成功进入新回合时清零；准备失败时保留旧值。</summary>
         public long RoundScore { get; private set; }
+        /// <summary>当前章累计积分，同章回合继承；换章、失败重开和新战役清零，不等于永久总积分。</summary>
+        public long ChapterScore { get; private set; }
         /// <summary>本设备永久累计总量，重新挑战/退出大厅均保留；取值0～long.MaxValue。</summary>
         public long LifetimeScore { get; private set; }
         /// <summary>依据当前存活棋数即时计算；后续死亡会降低棋数部分，章节进度部分继续递增。</summary>
@@ -45,6 +47,7 @@ namespace RevGame.Services
             float multiplier = ScoreMultiplier;
             long added = Math.Max(1L, (long)Math.Round(basis * (double)multiplier, MidpointRounding.AwayFromZero));
             RoundScore = AddScore(RoundScore, added);
+            ChapterScore = AddScore(ChapterScore, added);
             LifetimeScore = AddScore(LifetimeScore, added);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!_scorePreview)
@@ -72,15 +75,15 @@ namespace RevGame.Services
         private sealed class ScorePreview : IDisposable
         {
             private BattleService _service;
-            private readonly long _round, _total;
+            private readonly long _round, _total, _chapter;
             public ScorePreview(BattleService service)
             {
-                _service = service; _round = service.RoundScore; _total = service.LifetimeScore; service._scorePreview = true;
+                _service = service; _round = service.RoundScore; _total = service.LifetimeScore; _chapter = service.ChapterScore; service._scorePreview = true;
             }
             public void Dispose()
             {
                 if (_service == null) { return; }
-                _service.RoundScore = _round; _service.LifetimeScore = _total; _service._scorePreview = false; _service = null;
+                _service.RoundScore = _round; _service.LifetimeScore = _total; _service.ChapterScore = _chapter; _service._scorePreview = false; _service = null;
             }
         }
 #endif

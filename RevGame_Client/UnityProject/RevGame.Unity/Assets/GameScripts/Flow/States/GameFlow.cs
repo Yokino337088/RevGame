@@ -37,7 +37,9 @@ namespace RevGame.Flow
         public async RevTask StartAsync()
         {
             RevEvent.AddEventListener<bool>(Events.GameFinished, OnFinished, owner: this);
+            RevEvent.AddEventListener<BossDefeatedInfo>(Events.BossDefeated, OnBossDefeated, priority: 100, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnStoryPrepare, owner: this);
+            RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnBossPrepare, priority: 200, owner: this);
             IsTransitioning = true;
             await SwitchSceneAsync(GameScreen.Home);
             if (!_disposed && string.IsNullOrEmpty(LastError)) { BeginIntroduction(); }
@@ -72,6 +74,7 @@ namespace RevGame.Flow
             }
 
             _presentedChapter = 0;
+            FinalBossStoryShown = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             _bossDevelopmentStartPending = false;
 #endif
@@ -93,6 +96,8 @@ namespace RevGame.Flow
             }
 
             CancelStory();
+            CancelBossVictory();
+            CancelBossIntro();
             IsTutorialActive = false;
             _tutorialReplay = false;
             if (Screen == GameScreen.LevelSelect)
@@ -109,7 +114,8 @@ namespace RevGame.Flow
 
         private void OnFinished(bool won)
         {
-            if (won) { PlayStory("ending", () => ReturnHome()); }
+            if (won && FinalBossStoryShown) { ReturnHome(); }
+            else if (won) { PlayStory("ending", () => ReturnHome()); }
             else { ReturnHome(); }
         }
 
@@ -131,6 +137,10 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
+            CancelBossIntro();
+            _introRunner?.Dispose(); _introRunner = null;
+            CancelBossVictory();
+            _victoryRunner?.Dispose(); _victoryRunner = null;
             CancelStory();
             if (_storyHandle != null) { RevResManager.Release("Config/Story", "StoryBook"); _storyHandle = null; }
             _storyBook = null;

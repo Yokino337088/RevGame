@@ -295,6 +295,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            SetVictoryWave(1);
             CancelHazardWave();
             RestoreSurface();
             // ★ 委托会引用棋盘宿主，回池时必须摘掉，否则旧场景仍可能被保留在内存中。

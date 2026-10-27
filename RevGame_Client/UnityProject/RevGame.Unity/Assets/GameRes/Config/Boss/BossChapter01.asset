@@ -27,3 +27,6 @@ MonoBehaviour:
   PingPong: 1
   BodyScale: 1
   BuiltInDecorations: 1
+  DeathMaterial: {fileID: 2100000, guid: aa4f0cb09bfb0204b921ea3ca4a4c12a, type: 2}
+  DeathAuraMaterial: {fileID: 2100000, guid: fe61af8024454af49aa8cb330a2acfa2, type: 2}
+  DeathSeconds: 3.2
