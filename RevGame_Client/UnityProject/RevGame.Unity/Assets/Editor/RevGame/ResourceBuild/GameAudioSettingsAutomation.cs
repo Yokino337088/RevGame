@@ -12,6 +12,8 @@ namespace RevGame.Editor
         public static object Check(RevAutomationRequest request) { return Call("CheckPersistence"); }
         [RevAutomationAction("game.audio-settings.preview", Environment = "edit", Keys = new string[0], Description = "隔离真实AB设置面板渲染与滑杆/静音回调检查，不切场景")]
         public static object Preview(RevAutomationRequest request) { return Call("Preview"); }
+        [RevAutomationAction("game.audio-settings.slider-layout", Environment = "edit", Keys = new string[0], Description = "只调整已有声音滑杆尺寸，保留用户图片和其它控件布局")]
+        public static object SliderLayout(RevAutomationRequest request) { return Call("AdjustSlider"); }
         private static object Call(string method)
         {
             Type type = Type.GetType("RevGame.Editor.GameAudioSettingsBuild, Assembly-CSharp-Editor", true);

@@ -45,3 +45,11 @@ RevGame/声音查询
 - 直接解析新包确认第五、第六章AudioClip为流式、44100Hz双声道Vorbis。新增两首音乐后Android AB约24.12MiB、PC约24.33MiB，包含旧MainTheme备用曲；不是APK体积。
 - 未启动Play、未切换用户场景；真实RevUI按钮/拖动/自动图集绑定、跨章播放、扬声器听感、Android触摸/真机/APK及刘海适配尚未验收。未以工具成功宣称这些通过。
 - 详细证据与下载原流仅在.codex/work/chapter56-settings-2026-10-27，不提交、不生成ZIP。
+
+## 滑条尺寸调整（用户更换图片后）
+
+保留用户选择的轨道/填充图片和静音、恢复默认按钮位置。轨道545×46；填充区域545×46，填充RectTransform的sizeDelta清零；手柄区域509×46，手柄sizeDelta为22×14，Slider纵向拉伸后实际显示22×60。清零手柄偏移，使其中心落在轨道上，保留当前音量值。
+
+新增game.audio-settings.slider-layout，优先修改当前同一Prefab Stage，保持预览打开。game.audio-settings.configure不再覆盖已有设置预制体，防止重跑制作时恢复旧图片和布局。
+
+实际PC AB离屏画面与滑杆42%/静音/恢复60%检查通过，PC/Android AB已更新。没有启动Play或切换用户场景；真机触摸拖动尚未验收。

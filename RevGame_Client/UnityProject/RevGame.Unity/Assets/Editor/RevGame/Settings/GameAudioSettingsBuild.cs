@@ -23,6 +23,9 @@ namespace RevGame.Editor
         public static string Configure()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("设置预制体制作需要编辑态"); }
+            // 用户已在Prefab编辑器选择新图片/调整布局后，不再用旧制作配方覆盖已有预制体。
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/AudioSettingsPanel.prefab") != null)
+            { return "声音设置预制体已存在，保留用户图片与尺寸；需要调滑杆时执行slider-layout入口"; }
             if (!AssetDatabase.IsValidFolder(Folder)) { AssetDatabase.CreateFolder("Assets/GameRes/UI/Panel", "Settings"); }
             var root = new GameObject("AudioSettingsPanel", typeof(RectTransform), typeof(CanvasGroup), typeof(AudioSettingsPanel));
             try
@@ -78,6 +81,48 @@ namespace RevGame.Editor
             AddEntry("LevelSelectPanel", false);
             AddEntry("BattleHudPanel", true);
             return "声音设置预制体、滑杆/静音/默认按钮、首页/选关/战斗入口已保存";
+        }
+
+        /// <summary>只调整滑杆，优先修改用户正在编辑的同一Prefab Stage，避免额外加载旧副本覆盖未保存的图片选择。</summary>
+        public static string AdjustSlider()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("滑杆布局调整只能在编辑态执行"); }
+            string path = Folder + "/AudioSettingsPanel.prefab";
+            PrefabStage stage = PrefabStageUtility.GetCurrentPrefabStage();
+            bool current = stage != null && stage.assetPath == path;
+            GameObject root = current ? stage.prefabContentsRoot : PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                RectTransform track = (RectTransform)root.transform.Find("card/sldBgm");
+                RectTransform fillArea = (RectTransform)track.Find("fillArea");
+                RectTransform fill = (RectTransform)fillArea.Find("fill");
+                RectTransform handleArea = (RectTransform)track.Find("handleArea");
+                RectTransform handle = (RectTransform)handleArea.Find("handle");
+                Slider slider = track.GetComponent<Slider>();
+                if (slider == null || fill == null || handle == null) { throw new InvalidOperationException("声音滑杆接线不完整"); }
+                Undo.RecordObjects(new UnityEngine.Object[] { track, fillArea, fill, handleArea, handle }, "调整声音设置滑杆尺寸");
+                track.sizeDelta = new Vector2(545, 46);
+                fillArea.sizeDelta = new Vector2(545, 46);
+                fillArea.anchoredPosition = Vector2.zero;
+                handleArea.sizeDelta = new Vector2(509, 46);
+                handleArea.anchoredPosition = Vector2.zero;
+                // Slider会把fill纵向锚点设为0～1；sizeDelta.y必须为0，实际高度等于fillArea的46。
+                fill.sizeDelta = Vector2.zero;
+                fill.anchoredPosition = Vector2.zero;
+                // Slider会把handle纵向锚点设为0～1；实际高度=46+14=60，宽22接近原31:84图片比例。
+                // 清零位置让手柄中心对准轨道，509宽的行程留出端部边框，0/100%不会滑出轨道。
+                handle.sizeDelta = new Vector2(22, 14);
+                handle.anchoredPosition = Vector2.zero;
+                float value = slider.value;
+                slider.SetValueWithoutNotify(value < .5f ? 1 : 0);
+                slider.SetValueWithoutNotify(value);
+                EditorUtility.SetDirty(root);
+                if (PrefabUtility.SaveAsPrefabAsset(root, path) == null) { throw new InvalidOperationException("滑杆尺寸保存失败"); }
+                // 保持当前Prefab预览不关闭；同一Stage的最新图片、尺寸与磁盘保存内容一致。
+                if (current) { EditorSceneManager.MarkSceneDirty(stage.scene); }
+                return "轨道545×46，填充跟随轨道，手柄实际22×60；已保留图片、音量值和其它控件位置";
+            }
+            finally { if (!current) { PrefabUtility.UnloadPrefabContents(root); } }
         }
 
         /// <summary>战斗顶栏原返回按钮拆出右侧设置位，保证两个按钮不互相覆盖；大厅入口放右上角。</summary>

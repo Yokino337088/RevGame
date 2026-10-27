@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "f428ae80234897957f8e3cc8df19427cc1b12ab84f427f573400555989700b8d",
-  "inputDigest": "ce12522e73f8962cf692a545f90e0389c47d590b95493bbd742f79b63c2e2ae3",
+  "inputDigest": "1311ce829f939709dca19a577dcdd80ee1a524668ab87622740d9e19500317d2",
   "originalBytes": 17002248,
   "outputBytes": 673200,
   "characterCount": 1533,
@@ -1681,7 +1681,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Settings/AudioSettingsPanel.prefab",
-      "sha256": "ac39445087edc6be3a462b85086155837017a8ceab704a2b75746e9d30bb4b71"
+      "sha256": "9ed8051ddf236c033cce0d6585579778c0ab8112593d9fc396b5b25ecb43f753"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/SettlePanel.prefab",
