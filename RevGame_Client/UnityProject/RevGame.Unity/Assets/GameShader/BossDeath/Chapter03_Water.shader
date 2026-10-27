@@ -29,13 +29,20 @@ Shader "RevGame/BossDeath/Chapter03_Water"
  #include "BossDeathCommon.cginc"
  fixed4 Frag(v2f i):SV_Target {
  float2 uv=DeathLocal(i.texcoord);float2 p=uv-.5;float t=saturate(_Progress);fixed4 source=DeathSource(i);
- 
-float angle=atan2(p.y,p.x);float spiral=sin(angle*4+length(p)*32-t*20);
-float n=DeathNoise(uv*_Detail);float field=uv.y+n*.15+spiral*.035;
-float front=lerp(-.2,1.25,t);float keep=1-smoothstep(field-.04,field+.04,front);
-float rim=exp(-abs(field-front)*24)*Envelope(t);float2 warp=float2(sin(uv.y*30-t*16)*.07,t*.14)*t;
-if(_Overlay>.5){float rings=Ring(p,.12+t*.48,.02)+Ring(p,.06+t*.32,.009);float flow=pow(saturate(spiral),6)*exp(-length(p)*3);return DeathOverlay(_Primary.rgb+_Secondary.rgb*2,(rings+flow*.6)*Envelope(t)*_Intensity,uv);}
-float3 color=lerp(DeathWarp(i,uv,warp),source.rgb*_Primary.rgb,t*.55)+_Secondary.rgb*rim*3*_Intensity;
+// 镜湖反射纹理随全身流场卷动：低频扭转产生龙卷感，高频细波形成湖面闪光。
+// RGB采样轻微位移，Alpha保留原角色；没有置于角色前面的水环或漩涡平面。
+float envelope=Envelope(t);
+float2 q=DeathRotate(p,t*4.2+length(p)*3.2);
+float ripple=sin(q.y*32+t*13+DeathNoise(q*7)*3);
+float2 current=float2(sin(q.y*19+t*9),cos(q.x*16-t*8));
+float2 warp=((q-p)*.13+current*.025)*envelope;
+float3 moved=DeathBodyFlow(i,uv,warp,source);
+float mirror=pow(saturate(.5+.5*sin((q.y+q.x*.18)*49+current.x*2-t*6)),10);
+float field=uv.y+DeathNoise(uv*_Detail)*.13+ripple*.035;
+float keep=1-smoothstep(field-.06,field+.06,lerp(-.2,1.3,t));
+if(_Overlay>.5){return fixed4(0,0,0,0);}
+float3 water=lerp(_Primary.rgb,_Secondary.rgb,mirror)*(.05+mirror*.13);
+float3 color=lerp(source.rgb,moved,.8*envelope)+water*envelope;
 return DeathFinish(color,source.a*keep);
 
  }

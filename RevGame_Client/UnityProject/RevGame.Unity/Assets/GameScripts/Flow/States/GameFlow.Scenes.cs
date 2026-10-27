@@ -198,6 +198,8 @@ namespace RevGame.Flow
         {
             // 章节背景只在被选中时加载；大厅启动不能预热第一章，否则独立AB仍会常驻。
             // 战斗数值/说明先于业务加载并整体校验；独立剧情文案按用户要求由下方StoryBook SO加载。
+            // 下面的顺序有依赖：先 12 张业务表（GameConfig 装配）→ 再文本表（GameTextConfig 校验文案占位符）
+            // → 再调参表（BattleService 读远程出手频率）→ 最后剧情。任何一步失败都走同一个过场失败出口。
             // 任何一张表缺失或填错，GameConfig.Initialize 会一次性抛出中文问题清单，走下面的过场失败出口展示，而不是玩到一半才炸。
             await LoadGameConfigAsync();
             ThrowIfDisposed();
@@ -224,30 +226,48 @@ namespace RevGame.Flow
         /// </summary>
         private async RevTask LoadGameConfigAsync()
         {
+            // ==================== 配置表加载（新手必读） ====================
+            // 【谁负责什么】流程层（GameFlow）只决定“什么时候加载”，GameConfig 只负责“怎么校验装配”。
+            //   所以这个方法里只有 LoadAsync，没有任何数值计算或默认值——数值一律来自导表。
+            // 【为什么逐张 await，不并行】表之间有依赖：增益文案、Boss 技能、奖励数值都会引用 Balance 参数表。
+            //   而且每张之后都会 ThrowIfDisposed()，流程中途被销毁时立刻停手，不会把数据写进已死对象。
+            // 【为什么最后才 Initialize】12 张表全部到位后一次性校验，
+            //   任何一张缺失或填错都会汇总成中文清单抛给上层过场展示，而不是“先玩着，玩到一半才炸”。
+            // 【顺序为什么是这样】棋子/星级 → 增益/事件 → 章节/敌人 → 奖励/Boss → 参数表（Balance）最后统一读取。
+            // ==============================================================
+            // 棋子基础数值（PieceConfig）：血量、攻击、走法、体型。
             await RevDataTableManager.LoadAsync<PieceConfigTable>();
             ThrowIfDisposed();
+            // 星级成长倍率（StarConfig）：1★→3★ 的血量与攻击缩放。
             await RevDataTableManager.LoadAsync<StarConfigTable>();
             ThrowIfDisposed();
+            // 准备期增益（PrepBuffConfig）与八种战斗事件（BattleEventConfig）、以及事件轮转顺序。
             await RevDataTableManager.LoadAsync<PrepBuffConfigTable>();
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<BattleEventConfigTable>();
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<EventRotationConfigTable>();
             ThrowIfDisposed();
+            // 章节结构、敌方出场名单、援军规则：决定每章“敌人是谁、几时补兵”。
             await RevDataTableManager.LoadAsync<ChapterConfigTable>();
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<EnemyRosterConfigTable>();
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<EnemyReinforceConfigTable>();
             ThrowIfDisposed();
+            // 三选一奖励池与强化项（RewardConfig / RewardBoostConfig）。
             await RevDataTableManager.LoadAsync<RewardConfigTable>();
             ThrowIfDisposed();
             await RevDataTableManager.LoadAsync<RewardBoostConfigTable>();
             ThrowIfDisposed();
+            // Boss 技能表（BossSkillConfig）：18 个技能的威力、蓄力、冷却与章节解锁。
             await RevDataTableManager.LoadAsync<BossSkillConfigTable>();
             ThrowIfDisposed();
+            // 全局参数表（BalanceRule）：攻速、暴击、各类倍率。放最后读，因为它被上面多张表的文案引用。
             await RevDataTableManager.LoadAsync<BalanceRuleTable>();
             ThrowIfDisposed();
+            // 12 张表全部到位：交给 GameConfig 统一校验并生成一份不可变快照。
+            // 这里传的是“表引用”，不是拷贝；真正的校验与数值计算都在 Initialize 内部完成。
             GameConfig.Initialize(new GameConfigTables
             {
                 Pieces = RevDataTableManager.Get<PieceConfigTable>(),

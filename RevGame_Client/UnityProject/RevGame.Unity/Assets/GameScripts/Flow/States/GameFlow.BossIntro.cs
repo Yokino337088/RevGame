@@ -17,6 +17,7 @@ namespace RevGame.Flow
             .WaitTask(ctx => ctx.SourceAs<GameFlow>().IntroReadyAsync(),"等待真实棋盘与场景",cancelOnFailure:true)
             .WaitTask(ctx => ctx.SourceAs<GameFlow>().IntroFocusAsync(),"主将特写",cancelOnFailure:true)
             .WaitTask(ctx => ctx.SourceAs<GameFlow>().IntroRevealAsync(),"逆向死亡显现",cancelOnFailure:true)
+            .WaitTask(ctx => ctx.SourceAs<GameFlow>().IntroReturnCameraAsync(),"镜头完整拉回",cancelOnFailure:true)
             .WaitTask(ctx => ctx.SourceAs<GameFlow>().IntroAnnounceAsync(),"闪烁登场与棋盘舞动",cancelOnFailure:true)
             .Finally(f => f.Do("恢复准备UI与镜头",ctx => ctx.SourceAs<GameFlow>().CleanupBossIntro()))
             .OnCompleted(run => run.Context.SourceAs<GameFlow>().FinishBossIntro(true))
@@ -27,6 +28,8 @@ namespace RevGame.Flow
         private GamePresentation _introPresentation;
         private BossDefeatedInfo _introInfo;
         private Tween _introTween;
+        /// <summary>本次演出独有的声音句柄；取消只停止自己，不能停止其它业务音效。</summary>
+        private RevSoundHandle _introSound;
         /// <summary>版本归本流程；晚到的UI/资源不得显示上一场入场。时间不改Time.timeScale，准备Logic由门禁暂停。</summary>
         private int _introVersion;
         public bool IsBossIntroPlaying { get; private set; }
@@ -85,8 +88,16 @@ namespace RevGame.Flow
         private async RevTask IntroRevealAsync()
         {
             BossIntroStage = "reveal";
+            _introSound = RevSound.Play("BossEntrance", volume: .55f);
             await IntroTweenAsync(_introBoard.BossIntroSeconds,t => _introBoard.SetBossIntroProgress(t));
             _introBoard.EndBossIntroVisual();
+        }
+        /// <summary>等待镜头Tween结束并归零后再开弹幕，避免横幅挡住Boss特写；取消仍由finally归位。</summary>
+        private async RevTask IntroReturnCameraAsync()
+        {
+            BossIntroStage = "return-camera";
+            await IntroTweenAsync(.45f,t => _introPresentation.SetBossFocus(IntroCenter,_introInfo.BodySize,1-Mathf.SmoothStep(0,1,t)));
+            _introPresentation.ClearBossFocus();
         }
         private async RevTask IntroAnnounceAsync()
         {
@@ -105,7 +116,6 @@ namespace RevGame.Flow
             BossIntroStage = "announce";
             await IntroTweenAsync(2.4f,t =>
             {
-                _introPresentation.SetBossFocus(IntroCenter,_introInfo.BodySize,1-Mathf.SmoothStep(0,1,Mathf.Clamp01(t*6)));
                 _introBoard.SetBossIntroDance(t);
                 panel.SetFlashProgress(t);
             });
@@ -136,6 +146,10 @@ namespace RevGame.Flow
         private void CleanupBossIntro()
         {
             _introTween?.Kill(false); _introTween = null;
+            // 取消/换场先停声音再释放，迟到的加载由RevSound处理，不影响战斗其它音效。
+            RevSound.Stop(_introSound);
+            _introSound = default;
+            RevSound.Unload("BossEntrance");
             if (_introBoard == null) { _introBoard = UnityEngine.Object.FindObjectOfType<BoardView>(); }
             if (_introBoard != null) { _introBoard.EndBossIntroVisual(); _introBoard.ClearVictoryBoardWave(); }
             if (_introPresentation != null) { _introPresentation.ClearBossFocus(); }

@@ -28,7 +28,7 @@ namespace RevGame.Editor
                         && battle.Phase == GamePhase.Prepare, "没有进入目标Boss准备回合", ref checks);
                     var bosses = battle.EnemyPieces.Where(p => p.IsBoss && p.IsAlive).ToArray();
                     var lineup = LevelCatalog.BossOf(chapter);
-                    Require(bosses.Length == lineup.BodySizes.Count && bosses.Count(p => p.IsKing) == 1, "Boss数量/唯一主将错误", ref checks);
+                    Require(bosses.Length == 1 && lineup.BodySizes.Count == 1 && bosses.Count(p => p.IsKing) == 1, "Boss数量/唯一主将错误", ref checks);
                     for (int index = 0; index < bosses.Length; index++)
                     {
                         Require(bosses[index].Def.Kind == lineup.Kind && bosses[index].Def.Star == lineup.Star
@@ -41,7 +41,7 @@ namespace RevGame.Editor
                         && battle.Board.TopologyVersion == oldVersion, "非法章节改变当前棋盘", ref checks);
                     Require(!battle.BeginBossCampaignForDevelopment(7) && battle.Chapter == chapter, "超界章节未拒绝", ref checks);
                     Require(battle.BeginBossCampaignForDevelopment(chapter) && battle.Hand.Count == 6
-                        && battle.EnemyPieces.Count(p => p.IsBoss) == lineup.BodySizes.Count, "同章重复重开产生残留或少牌", ref checks);
+                        && battle.EnemyPieces.Count(p => p.IsBoss) == 1, "同章重复重开产生残留或少牌", ref checks);
                 }
                 Require(battle.BeginCampaign(1) && battle.Round == 1 && !battle.IsBossRound, "普通开局被Boss入口污染", ref checks);
                 Require(!battle.BeginCampaign(2) && battle.Chapter == 1, "正常入口绕过解锁", ref checks);

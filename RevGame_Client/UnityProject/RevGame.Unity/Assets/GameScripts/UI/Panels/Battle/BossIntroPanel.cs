@@ -30,12 +30,12 @@ namespace RevGame.UI
                 .Append(_banner.DOShakeAnchorPos(.25f,new Vector2(18,8),14,80,false,true))
                 .Append(_banner.DOScale(1,.18f)).OnComplete(()=>{_animation=null;onDone();});
         }
-        /// <summary>0～1由入场序列传入。闪光每秒约两次，亮度/Alpha限制在横幅内，缩放让提示更有冲击。</summary>
+        /// <summary>0～1由入场序列传入。文字每秒约两次轻闪，黑底保持半透明，缩放让提示更有冲击。</summary>
         public void SetFlashProgress(float progress)
         {
             float flash = .5f+.5f*Mathf.Sin(progress*Mathf.PI*10);
-            _flare.color = new Color(1,.82f,.3f,.12f+flash*.36f);
-            _headline.color = Color.Lerp(new Color(.32f,.16f,.06f),new Color(.92f,.42f,.08f),flash);
+            _flare.color = Color.clear;
+            _headline.color = Color.Lerp(new Color(.85f,.9f,1f),Color.white,flash);
             _banner.localScale = Vector3.one*(1+flash*.035f);
         }
         protected override void PlayCloseTransition(System.Action onDone) { RevUIAnim.Play(this,RevUIAnimPreset.FadeOut,.2f,onDone,owner:this); }

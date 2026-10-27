@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RevGame.View
 {
-    /// <summary>由当前Boss回合的BoardView租约持有；同章多颗Boss共用同一组帧，离场后归还。</summary>
+    /// <summary>由当前Boss回合的BoardView租约持有；本章唯一Boss借用同一组帧，离场后归还。</summary>
     [CreateAssetMenu(fileName = "BossChapterArt", menuName = "RevGame/Boss章节美术")]
     public sealed class BossChapterArtConfig : ScriptableObject
     {

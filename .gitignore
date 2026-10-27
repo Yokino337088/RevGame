@@ -85,3 +85,6 @@ RevGame_Client/文档/进度同步/**/*.zip
 
 # ---------------- RevMCP 初始化生成的客户端配置（含本机绝对路径，不入库） ----------------
 tools/revmcp-configs/
+
+# 版权音乐：只本地使用，不入库
+RevGame_Client/音乐/

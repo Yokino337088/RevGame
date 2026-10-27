@@ -36,7 +36,7 @@ namespace RevGame.View
                 if (!_pieces.TryGetValue(piece.Id, out PieceView view) || view == null
                     || view.BossAppearanceChapter != chapter || view.AnimationFrameCount != 8) { return false; }
             }
-            return bosses > 0;
+            return bosses == 1;
         }
 #endif
 

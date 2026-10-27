@@ -29,12 +29,28 @@ Shader "RevGame/BossDeath/Chapter02_Sunlight"
  #include "BossDeathCommon.cginc"
  fixed4 Frag(v2f i):SV_Target {
  float2 uv=DeathLocal(i.texcoord);float2 p=uv-.5;float t=saturate(_Progress);fixed4 source=DeathSource(i);
- 
-float angle=atan2(p.y,p.x);float rays=pow(saturate(.5+.5*sin(angle*18-t*3)),8);
-float front=lerp(-.15,1.2,t);float field=uv.y+DeathNoise(uv*_Detail)*.18;
-float keep=1-smoothstep(field-.04,field+.04,front);float rim=exp(-abs(field-front)*20)*Envelope(t);
-if(_Overlay>.5){float beam=exp(-abs(p.x)*8)*(.35+rays*.7);float halo=Ring(p,.18+t*.4,.025);return DeathOverlay(_Primary.rgb*2+_Secondary.rgb,(beam+halo)*Envelope(t)*_Intensity*.85,uv);}
-float3 color=lerp(source.rgb,_Primary.rgb+source.rgb*.35,smoothstep(0,.65,t)) + _Secondary.rgb*rim*2*_Intensity;
+// 阳光普照以肩部上方为光源：放射光束与穿过身体的金色扫光同步爆发，不绘制闭合圆环。
+// 整体强度仍由共享材质调节；高亮集中光束和消散前沿，原图颜色与Alpha轮廓继续作为主体。
+float envelope=Envelope(t);
+float field=uv.y+DeathNoise(uv*_Detail)*.12;
+float front=lerp(-.15,1.2,t);
+float keep=1-smoothstep(field-.06,field+.06,front);
+float2 lightPos=p-float2(0,.22);
+float angle=atan2(lightPos.y,lightPos.x);
+float rays=pow(saturate(.5+.5*sin(angle*14-t*4)),7);
+float reach=exp(-length(lightPos)*2.4);
+float shafts=pow(saturate(.5+.5*sin((p.x+p.y*.28)*25-t*7)),7);
+float sunlight=(.35+shafts*.65)*smoothstep(-.5,.35,p.y);
+float rim=exp(-abs(field-front)*23);
+if(_Overlay>.5)
+{
+ // 外部金光恢复明显的放射感，但Alpha封顶55%，避免把弓、耳朵和表情整片刷白。
+ float beam=(1-smoothstep(.06,.45,abs(p.x)))*sunlight;
+ float core=exp(-dot(lightPos,lightPos)*25);
+ float glow=(beam*.42+core*.26+rays*reach*.36)*envelope*_Intensity;
+ return DeathOverlay(_Primary.rgb*1.4+_Secondary.rgb*.45,min(.55,glow),uv);
+}
+float3 color=source.rgb+(_Primary.rgb*.14+_Secondary.rgb*(sunlight*.18+rays*reach*.24+rim*.50))*envelope*_Intensity;
 return DeathFinish(color,source.a*keep);
 
  }

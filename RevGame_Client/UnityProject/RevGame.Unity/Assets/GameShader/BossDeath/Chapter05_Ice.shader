@@ -29,13 +29,26 @@ Shader "RevGame/BossDeath/Chapter05_Ice"
  #include "BossDeathCommon.cginc"
  fixed4 Frag(v2f i):SV_Target {
  float2 uv=DeathLocal(i.texcoord);float2 p=uv-.5;float t=saturate(_Progress);fixed4 source=DeathSource(i);
- 
-float ice=smoothstep(uv.y-.08,uv.y+.08,t*1.7+DeathNoise(uv*_Detail)*.12);
-float cracks=pow(saturate(1-abs(sin(uv.x*29+sin(uv.y*15)*3))),12);float facets=.45+.55*DeathNoise(floor(uv*13));
-float keep=1-smoothstep(.78,1,t);float spark=Ring(p,.18+t*.35,.012);
-if(_Overlay>.5){float shard=pow(saturate(.5+.5*cos(atan2(p.y,p.x)*8-length(p)*20)),15);return DeathOverlay(_Primary.rgb*.75+_Secondary.rgb*.9,(spark*.65+shard*.35*exp(-length(p)*2))*Envelope(t)*_Intensity,uv);}
-float3 frozen=source.rgb*.35+lerp(_Primary.rgb,_Secondary.rgb,facets)*.62+cracks*.35;
-return DeathFinish(lerp(source.rgb,frozen,ice*.9)+_Secondary.rgb*cracks*ice*.5*_Intensity,source.a*keep);
+// 退场按t正向冻结，登场按t逆向融冰；同一表面进度保证不是一层雪花贴片冒充冰壳。
+float envelope=Envelope(t);
+float frostNoise=DeathNoise(uv*_Detail);
+float meltFront=uv.y*.62+frostNoise*.23;
+float ice=smoothstep(meltFront-.10,meltFront+.10,t*1.35);
+float cracks=pow(saturate(1-abs(sin(uv.x*29+sin(uv.y*15)*3))),12);
+float facets=.45+.55*DeathNoise(floor(uv*13));
+float keep=1-smoothstep(.80,1,t);
+if(_Overlay>.5)
+{
+ // 雪花维持同体型和22%透明度；视觉冲击来自身体冰壳融化，不再把大雪花压在脸上。
+ float snow=Snowflake(p*.8);
+ return DeathOverlay(lerp(_Primary.rgb,_Secondary.rgb,.45),snow*envelope*.22,uv);
+}
+// 冰壳带冷蓝折射、晶面和细裂纹；仍保留原图45%的色彩细节，不画不透明白色覆盖片。
+float3 frozen=source.rgb*.45+lerp(_Primary.rgb*.65,_Secondary.rgb*.9,facets)*.55;
+float3 color=lerp(source.rgb,frozen,ice*.90);
+float thawEdge=exp(-abs(meltFront-t*1.35)*24)*envelope;
+color+=_Secondary.rgb*(cracks*ice*.16+thawEdge*.32)*envelope;
+return DeathFinish(color,source.a*keep);
 
  }
  ENDCG

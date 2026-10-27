@@ -29,14 +29,25 @@ Shader "RevGame/BossDeath/Chapter01_Stardust"
  #include "BossDeathCommon.cginc"
  fixed4 Frag(v2f i):SV_Target {
  float2 uv=DeathLocal(i.texcoord);float2 p=uv-.5;float t=saturate(_Progress);fixed4 source=DeathSource(i);
- 
-float noise=DeathNoise(uv*_Detail);float field=noise*.7+length(p)*.6;
-float threshold=lerp(-.1,1.4,t);float keep=1-smoothstep(field-.035,field+.035,threshold);
-float rim=exp(-abs(field-threshold)*28)*Envelope(t);
-float2 cell=floor((p-float2(0,t*t*.4))*26);float2 star=frac((p-float2(0,t*t*.4))*26)-.5;
-float spark=pow(saturate(1-length(star)*3),9)*step(.76,DeathHash(cell));
-if(_Overlay>.5){float halos=Ring(p,.2+t*.35,.008)+Ring(p,.1+t*.55,.003);return DeathOverlay(_Primary.rgb*2+_Secondary.rgb*spark*5,(spark+halos*.28)*Envelope(t)*_Intensity,uv);}
-float3 color=source.rgb+(_Primary.rgb*rim*2+_Secondary.rgb*spark)*_Intensity;
+// 全身星云采用域扭曲：两层噪声驱动采样坐标和云带，星尘跟随同一流场移动。
+// 扭曲只占局部UV的几个百分点；身体Alpha仍取原帧，保留剑、王冠及序列帧轮廓。
+float envelope=Envelope(t);
+float2 q=DeathRotate(p,t*4.8+length(p)*2.8);
+float2 field=float2(DeathNoise(q*5+float2(t*2,0)),DeathNoise(q*5+float2(7,-t*1.4)))-.5;
+float2 flow=q+field*.32;
+float cloud=DeathNoise(flow*9+float2(t*1.8,-t));
+float bands=.5+.5*sin(flow.y*27+cloud*5+t*9);
+float2 warp=(field*.07+(q-p)*.16)*envelope;
+float3 moved=DeathBodyFlow(i,uv,warp,source);
+float2 starsUv=flow*30;
+float2 cell=floor(starsUv),starPoint=frac(starsUv)-.5;
+float star=pow(saturate(1-length(starPoint)*4),10)*step(.86,DeathHash(cell));
+// 外层不画旋涡贴片；色彩和星点全部被真实棋子轮廓裁切。
+if(_Overlay>.5){return fixed4(0,0,0,0);}
+float fieldDissolve=DeathNoise(uv*_Detail)*.65+uv.y*.35;
+float keep=1-smoothstep(fieldDissolve-.07,fieldDissolve+.07,lerp(-.15,1.2,t));
+float3 stardust=lerp(_Primary.rgb,_Secondary.rgb,bands)*(.10+cloud*.17)+star*.42;
+float3 color=lerp(source.rgb,moved,.8*envelope)+stardust*envelope*_Intensity;
 return DeathFinish(color,source.a*keep);
 
  }

@@ -62,7 +62,9 @@ namespace RevGame.View
             _bossDeathAura.sortingLayerID = bodyRenderer.sortingLayerID;
             _bossDeathAura.sortingOrder = bodyRenderer.sortingOrder + 1;
             _bossDeathAura.transform.localPosition = bodyRenderer.transform.localPosition;
-            _bossDeathAura.transform.localScale = bodyRenderer.transform.localScale * 1.9f;
+            // 外层最多略超出身体；第五章雪花与身体同尺寸，由Shader控制22%透明度。
+            float auraScale = _bossArt.Chapter == 5 ? 1f : 1.12f;
+            _bossDeathAura.transform.localScale = bodyRenderer.transform.localScale * auraScale;
             _bossDeathAura.enabled = true;
             SetBossDeathProgress(0);
         }

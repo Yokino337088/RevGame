@@ -869,17 +869,20 @@ namespace RevGame.Services
             float attackScale = def.AttackScale * System.Math.Min(Balance.EnemyPressureAttackMax, (float)System.Math.Sqrt(pressure));
             if (def.IsBoss)
             {
-                // Boss 阵容（外形、星级、每颗占格）来自 ChapterConfig；第一颗是带王冠的主将。
+                // 每章只允许一颗Boss。配置加载先校验单体，此处再拒绝异常数据，避免多主将进入占格计划。
                 BossLineup boss = LevelCatalog.BossOf(def.Chapter);
                 PieceDef bossDef = PieceCatalog.Get(boss.Kind, boss.Star);
                 if (bossDef == null)
                 {
                     return Reject("Boss 图鉴配置缺失：" + boss.Kind + " " + boss.Star);
                 }
-                for (int i = 0; i < boss.BodySizes.Count; i++)
+                if (boss.BodySizes.Count != 1)
+                {
+                    return Reject("Boss阵容必须且只能有一颗主将");
+                }
                 {
                     float scale = hpScale * (1f + (def.Chapter - 1) * Balance.BossHpGrowthPerChapter);
-                    plan.Add(new Piece(_nextPieceId + plan.Count, bossDef, GameSide.Enemy, boss.BodySizes[i], true, i == 0, scale, attackScale));
+                    plan.Add(new Piece(_nextPieceId + plan.Count, bossDef, GameSide.Enemy, boss.BodySizes[0], true, true, scale, attackScale));
                 }
             }
             StarTier star = LevelCatalog.GetEnemyStar(def.Chapter, def.IsBoss);

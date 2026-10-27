@@ -614,7 +614,8 @@ namespace RevGame.View
 
             if (haloRenderer != null)
             {
-                haloRenderer.enabled = boss || size > 1;
+                // 章节Boss只显示专属演出，禁用通用圆形底座；普通大棋保留原标记。
+                haloRenderer.enabled = !boss && size > 1;
             }
         }
 

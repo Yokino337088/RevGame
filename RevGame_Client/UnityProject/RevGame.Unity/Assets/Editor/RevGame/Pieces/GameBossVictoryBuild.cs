@@ -39,6 +39,8 @@ namespace RevGame.Editor
             }
             CreatePanel();
             CreateIntroPanel();
+            StyleBanner("BossVictoryPanel");
+            StyleBanner("BossIntroPanel");
             EnsurePrepareGroup();
             var book = AssetDatabase.LoadAssetAtPath<StoryBook>("Assets/GameRes/Config/Story/StoryBook.asset");
             if (book == null) { throw new InvalidOperationException("先制作现有剧情资产"); }
@@ -88,6 +90,30 @@ namespace RevGame.Editor
                 if (PrefabUtility.SaveAsPrefabAsset(root, path) == null) { throw new InvalidOperationException("胜利弹幕保存失败"); }
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        /// <summary>原地迁移已存在的预制体，保留GUID与绑定。空Sprite的UGUI Image即纯色矩形，不新增纹理依赖。</summary>
+        private static void StyleBanner(string name)
+        {
+            string path = PanelRoot + "/" + name + ".prefab";
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var banner = (RectTransform)root.transform.Find("banner");
+                banner.anchoredPosition = Vector2.zero;
+                Image image = banner.GetComponent<Image>();
+                image.sprite = null; image.type = Image.Type.Simple;
+                image.color = new Color(0,0,0,.72f); image.raycastTarget = false;
+                foreach (Text text in banner.GetComponentsInChildren<Text>(true)) { text.color = Color.white; }
+                Transform flare = banner.Find("flare");
+                if (flare != null)
+                {
+                    Image overlay = flare.GetComponent<Image>();
+                    overlay.sprite = null; overlay.type = Image.Type.Simple; overlay.color = Color.clear;
+                }
+                if (PrefabUtility.SaveAsPrefabAsset(root,path) == null) { throw new InvalidOperationException("黑底弹幕保存失败"); }
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
         private static Text Label(string name, Transform parent, string value, Vector2 size, Vector2 position, int fontSize)

@@ -30,6 +30,8 @@ namespace RevGame.Flow
         private BoardView _victoryBoard;
         private GamePresentation _victoryPresentation;
         private Tween _victoryTween;
+        /// <summary>本次演出独有的声音句柄；取消只停止自己，不能停止其它业务音效。</summary>
+        private RevSoundHandle _victorySound;
         private float _victoryOldTimeScale;
         private int _victoryVersion;
         /// <summary>只有本演出启动的剧情才由取消收尾关闭，避免误关其它开发预览。</summary>
@@ -84,6 +86,7 @@ namespace RevGame.Flow
         {
             BossVictoryStage = "death";
             _victoryBoard.BeginVictoryDeath(_victoryInfo);
+            _victorySound = RevSound.Play("BossExit", volume: .5f);
             await VictoryTweenAsync(_victoryBoard.VictoryDeathSeconds, value => _victoryBoard.SetVictoryDeathProgress(value));
             _victoryBoard.ReleaseVictoryBoss();
             Time.timeScale = _victoryOldTimeScale;
@@ -97,6 +100,8 @@ namespace RevGame.Flow
                 _victoryBoard.SetVictoryBoardWave(value, VictoryCenter);
             });
             _victoryBoard.ClearVictoryBoardWave();
+            // 胜利弹幕也只在镜头回到棋盘全景之后显示。
+            _victoryPresentation.ClearBossFocus();
         }
         private async RevTask VictoryBannerAsync()
         {
@@ -150,6 +155,9 @@ namespace RevGame.Flow
         private void CleanupVictoryVisuals()
         {
             _victoryTween?.Kill(false); _victoryTween = null;
+            RevSound.Stop(_victorySound);
+            _victorySound = default;
+            RevSound.Unload("BossExit");
             Time.timeScale = _victoryOldTimeScale;
             if (_victoryPresentation != null) { _victoryPresentation.ClearBossFocus(); }
             if (_victoryBoard != null) { _victoryBoard.ReleaseVictoryBoss(); _victoryBoard.ClearVictoryBoardWave(); }

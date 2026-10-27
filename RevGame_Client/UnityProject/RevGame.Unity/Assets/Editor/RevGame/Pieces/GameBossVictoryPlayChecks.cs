@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using RevGame.Core;
 using RevGame.Flow;
@@ -51,11 +52,21 @@ namespace RevGame.Editor
                 {
                     Require(flow.EnterBossChapterForDevelopment(chapter),"进入真实Boss章节"+chapter+":"+flow.LastError);
                     await Until(()=>flow.IsBossIntroPlaying,30,"没有触发入场序列");
+                    bool entranceHeard=false;
                     bool reveal=false,announce=false; int frame=0;float nextCapture=0;
                     float deadline=Time.realtimeSinceStartup+45;
                     while(flow.IsBossIntroPlaying||flow.IsTransitioning||flow.IsBossDevelopmentEntering)
                     {
                         if(Time.realtimeSinceStartup>deadline){throw new InvalidOperationException("入场未结束："+flow.BossIntroStage+"/"+flow.LastError);}
+                        entranceHeard |= VoicePlaying("BossEntrance");
+                        Require(battle.EnemyPieces.Count(p=>p.IsBoss&&p.IsAlive)==1,"第"+chapter+"章全程唯一Boss");
+                        if (RevUI.Get<BossIntroPanel>() != null)
+                        {
+                            Require(UnityEngine.Object.FindObjectOfType<GamePresentation>().IsBossCameraRestored,"登场弹幕显示时镜头已完全拉回");
+                            VerifyBanner(RevUI.Get<BossIntroPanel>().transform);
+                        }
+                        if(flow.BossIntroStage=="focus"||flow.BossIntroStage=="reveal"||flow.BossIntroStage=="return-camera")
+                        { Require(!RevUI.IsOpen<BossIntroPanel>(),"特写和拉回阶段没有提前显示弹幕"); }
                         if(flow.BossIntroStage=="reveal"||flow.BossIntroStage=="announce")
                         {
                             Require(flow.IsGameplayBlocked&&battle.Phase==GamePhase.Prepare,"入场锁玩法且仍为准备阶段");
@@ -69,6 +80,7 @@ namespace RevGame.Editor
                         }
                         await RevTask.Yield();
                     }
+                    Require(entranceHeard,"第"+chapter+"章登场声音由真实AudioSource播放");
                     Require(reveal&&announce&&flow.BossIntroStage=="completed","真实入场显现/弹幕两阶段完整结束");
                     Require(!flow.IsGameplayBlocked&&RevUI.Get<PreparePanel>().GetComponent<CanvasGroup>().alpha==1,"入场结束恢复准备UI与操作");
                     BoardView board=UnityEngine.Object.FindObjectOfType<BoardView>();
@@ -101,10 +113,17 @@ namespace RevGame.Editor
                     Require(RevLogic.Get<BattleLogic>().BeginBattle(),"正式开战");
                     Require(((BattleService)battle).DefeatBossForVictoryCheck(),"真实伤害夹具击杀Boss");
                     await Until(()=>flow.IsBossVictoryPlaying,3,"没有触发击败演出");
+                    bool exitHeard=false;
                     bool death=false,wave=false,banner=false;frame=0;nextCapture=0;deadline=Time.realtimeSinceStartup+20;
                     while(flow.IsBossVictoryPlaying&&flow.BossVictoryStage!="story")
                     {
                         if(Time.realtimeSinceStartup>deadline){throw new InvalidOperationException("击败演出未推进："+flow.BossVictoryStage);}
+                        exitHeard |= VoicePlaying("BossExit");
+                        if (RevUI.Get<BossVictoryPanel>() != null)
+                        {
+                            Require(UnityEngine.Object.FindObjectOfType<GamePresentation>().IsBossCameraRestored,"退场弹幕显示时镜头已完全拉回");
+                            VerifyBanner(RevUI.Get<BossVictoryPanel>().transform);
+                        }
                         Require(flow.IsGameplayBlocked&&battle.Phase==GamePhase.Settle,"演出时真实结算且输入受锁");
                         Require(!RevUI.IsOpen<SettlePanel>(),"演出时结算面板没有提前弹出");
                         if(flow.BossVictoryStage=="death"){death=true;Require(Mathf.Abs(Time.timeScale-originalTime*.7f)<.0001f,"死亡特写只慢30%，真实速度70%");}
@@ -115,6 +134,7 @@ namespace RevGame.Editor
                         {ScreenCapture.CaptureScreenshot(Folder+"/Chapter"+chapter.ToString("D2")+"-Victory-"+(frame++).ToString("D2")+".png");nextCapture=Time.realtimeSinceStartup+.15f;}
                         await RevTask.Yield();
                     }
+                    Require(exitHeard,"第"+chapter+"章退场声音由真实AudioSource播放");
                     Require(death&&wave&&banner,"击败慢动作/死亡/波浪/弹幕实际完整推进");
                     await Until(()=>flow.IsStoryPlaying&&flow.StoryId=="boss_after_"+chapter,5,"没有接入本章收尾剧情");
                     Require(!board.HasVictoryBossView&&Time.timeScale==originalTime,"剧情前Boss回池且恢复时间");
@@ -147,6 +167,20 @@ namespace RevGame.Editor
                 File.WriteAllText(Folder+"/result.json",JsonUtility.ToJson(new Result{status=Status,error=Error,assertions=Assertions.Count,unityErrors=errors},true));
                 if(Application.isPlaying&&flow.Screen==GameScreen.Battle&&!flow.IsTransitioning){flow.ReturnHome();}
             }
+        }
+        /// <summary>验证运行时实际实例，不用编辑器源Prefab替代真实AB的UI证据。</summary>
+        private static void VerifyBanner(Transform panel)
+        {
+            Image background=panel.Find("banner").GetComponent<Image>();
+            Color c=background.color;
+            Require(background.sprite==null&&c.r==0&&c.g==0&&c.b==0&&c.a>.5f&&c.a<.85f,"真实AB弹幕使用半透明黑底");
+        }
+        /// <summary>声音句柄被接受不代表已经出声；检测实际播放中的AudioSource，按阶段逐帧累计证据。</summary>
+        private static bool VoicePlaying(string clip)
+        {
+            foreach(AudioSource source in UnityEngine.Object.FindObjectsOfType<AudioSource>())
+            { if(source.isPlaying&&source.clip!=null&&source.clip.name==clip){return true;} }
+            return false;
         }
         [Serializable]private sealed class Result{public string status,error;public int assertions,unityErrors;}
     }

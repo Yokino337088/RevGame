@@ -304,6 +304,8 @@ Audio/Sfx/Boss_PoisonMarsh|audio_sfx|Boss_PoisonMarsh
 Audio/Sfx/Boss_Snipe|audio_sfx|Boss_Snipe
 Audio/Sfx/Boss_SoulDrain|audio_sfx|Boss_SoulDrain
 Audio/Sfx/Boss_Summon|audio_sfx|Boss_Summon
+Audio/Sfx/BossEntrance|audio_sfx|BossEntrance
+Audio/Sfx/BossExit|audio_sfx|BossExit
 Audio/Sfx/Defeat|audio_sfx|Defeat
 Audio/Sfx/EnergyHuge|audio_sfx|EnergyHuge
 Audio/Sfx/Hit|audio_sfx|Hit

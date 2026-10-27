@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2893561499
+CRC: 148814582
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: aca928bf0ad502ae381415b995290416
+    Hash: 90cbb51ec6758251ceb2af0a4e7f28a6
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 14da144f9ba278e2c1bf9cf62cc3b385
+    Hash: 9e334c4f3d2e24d6ca0505833c50af83
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: aca928bf0ad502ae381415b995290416
+    Hash: 90cbb51ec6758251ceb2af0a4e7f28a6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -25,8 +25,6 @@ ClassTypes:
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
-  Script: {instanceID: 0}
-- Class: 213
   Script: {instanceID: 0}
 - Class: 222
   Script: {instanceID: 0}
@@ -45,5 +43,4 @@ Assets:
 - Assets/GameRes/UI/Panel/Victory/BossVictoryPanel.prefab
 - Assets/GameRes/UI/Panel/Victory/BossIntroPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"

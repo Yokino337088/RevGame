@@ -29,26 +29,23 @@ Shader "RevGame/BossDeath/Chapter04_Swamp"
  #include "BossDeathCommon.cginc"
  fixed4 Frag(v2f i):SV_Target {
  float2 uv=DeathLocal(i.texcoord);float2 p=uv-.5;float t=saturate(_Progress);fixed4 source=DeathSource(i);
- 
-// 从底部吞入泥浆：采样向上偏移会让原身体向下沉；Alpha也采同一点，不能留白色旧轮廓。
+// 沼泽毒液从脚下漫上身体，低频噪声使泥面翻动；原画保留大部分颜色与边线。
+float envelope=Envelope(t);
 float n=DeathNoise(uv*_Detail+float2(t*.4,-t*.7));
-float2 sinkUv=uv+float2(sin(uv.y*17+t*7)*.015*t,t*t*.38);
+float2 sinkUv=uv+float2(sin(uv.y*17+t*7)*.012*t,t*t*.30);
 float inside=step(0,sinkUv.x)*step(sinkUv.x,1)*step(0,sinkUv.y)*step(sinkUv.y,1);
 fixed4 sinking=SampleSpriteTexture(_FrameUV.xy+clamp(sinkUv,.001,.999)*_FrameUV.zw)*i.color;
-float mudHeight=lerp(-.2,1.25,t)+sin(uv.x*20+t*3)*.045+n*.10;
+float mudHeight=lerp(-.2,1.25,t)+sin(uv.x*20+t*3)*.035+n*.08;
 float keep=smoothstep(mudHeight-.055,mudHeight+.055,uv.y);
-float coating=(1-smoothstep(mudHeight+.025,mudHeight+.19,uv.y))*Envelope(t);
+float coating=(1-smoothstep(mudHeight+.025,mudHeight+.19,uv.y))*envelope;
 if(_Overlay>.5)
 {
- // 外层只画身体脚下的实心泥浆与随机翻涌，不画任何Ring/椭圆描边。
- float bottom=exp(-pow((uv.y-.27-n*.028)/.095,2));
- float span=1-smoothstep(.24,.43,abs(p.x)+n*.08);
- float churn=DeathNoise(float2(uv.x*23,uv.y*16-t*1.4));
- float sludge=bottom*span*(.65+churn*.35)*Envelope(t)*_Intensity;
- return DeathOverlay(_Primary.rgb*(.5+churn*.7)+_Secondary.rgb*pow(churn,6)*.22,sludge,uv);
+ float bottom=exp(-pow((uv.y-.25-n*.025)/.07,2));
+ float span=1-smoothstep(.22,.43,abs(p.x)+n*.06);
+ return DeathOverlay(_Secondary.rgb*.7,bottom*span*envelope*.18,uv);
 }
-float3 mud=sinking.rgb*.32+_Primary.rgb*(.55+n*.35);
-float3 color=lerp(sinking.rgb,mud,saturate(coating*.9+t*.25));
+float poison=pow(saturate(n),5)*coating;
+float3 color=lerp(sinking.rgb,sinking.rgb*.8+_Secondary.rgb*.15,coating*.42)+_Secondary.rgb*poison*.16;
 return DeathFinish(color,sinking.a*inside*keep);
 
  }

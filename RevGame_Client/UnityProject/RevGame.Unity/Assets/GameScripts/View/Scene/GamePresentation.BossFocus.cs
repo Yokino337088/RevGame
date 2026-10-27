@@ -21,6 +21,8 @@ namespace RevGame.View
             boardCamera.transform.position = Vector3.Lerp(boardCamera.transform.position, focus, _bossFocusBlend);
             boardCamera.orthographicSize = Mathf.Lerp(boardCamera.orthographicSize, _bossFocusSize, _bossFocusBlend);
         }
+        /// <summary>只读镜头门禁，供实际Play验证弹幕不会在特写中提前弹出。</summary>
+        public bool IsBossCameraRestored { get { return _bossFocusBlend <= 0f; } }
         public void ClearBossFocus() { _bossFocusBlend = 0; if (boardCamera != null) { FitCamera(); } }
     }
 }

@@ -16,7 +16,11 @@ namespace RevGame.Bootstrap
     {
         /// <summary>跨场景只保留一个启动宿主；新场景里的调试启动器只能销毁自己，不能重新初始化框架。</summary>
         private static GameBootstrap _instance;
+
+        //作者原话：这个状态变量代表是否已经初始化过了，防止重复初始化
         private bool _ownsServices;
+
+        //作者原话：这个状态变量代表是否已经被释放掉了
         private bool _released;
 
         private void Awake()
@@ -62,12 +66,36 @@ namespace RevGame.Bootstrap
             // 用户明确要求手机横屏；设备方向和根 Canvas 都固定横屏。
             Screen.orientation = ScreenOrientation.LandscapeLeft;
 #endif
+            // ==================== 全局服务注册（新手必读） ====================
+            // 【两个泛型参数是什么】Register<TService, TImpl>() 的第一个是「取用键」，第二个是「实现类」，
+            //   并不是固定「接口 + 实现」的写法：
+            //     · 取用键：以后谁要拿这个服务，就写 RevServices.GetRequired<取用键>()；
+            //     · 实现类：容器真正 new 出来的类型，框架要求它能赋值给取用键（约束 TImpl : TService）。
+            //   因此 Register<X, X>() 是合法的“自注册”：拿 X 当键、new 一个 X(这里框架的做法是懒加载new出来)。
+            //   写成这样只有一个目的——
+            //   让容器负责创建，并在注销时 Dispose（等价于 Register<T>(new T())，但释放权在容器手上）。
+            //
+            // 【什么时候用接口做键，什么时候用类做键】两种都合规，判断标准是“以后会不会换实现”：
+            //     · 会换、要单测 Mock、或只想对外暴露能力  → 用接口做键（下方 IBattleService / IScoreProgress）；
+            //     · 全项目只有这一份实现，且调用方要用到具体成员(这个就是单例模式) → 直接用类做键（下方 StoryProgress / GameAudioSettings）；
+            //   为了“看起来像接口”而抽一个没有成员的接口，只会多一层跳转，没有收益。
+            //
+            // 【owner: this 的作用】把这批服务登记在 GameBootstrap 名下；
+            //   OnDestroy 里一行 RevServices.UnregisterAllOf(this) 会按相反顺序全部注销，
+            //   其中“容器创建”的实例会被 Dispose —— 所以 GameAudioSettings 才实现了 IDisposable。
+            // ================================================================
+            // 纯本地进度存档（按位标记开场/教学是否看完），没有替换需求，用类做键即可；无参构造供容器创建。
             RevServices.Register<StoryProgress, StoryProgress>(owner: this);
+            // 玩家音量偏好：全项目一份、要跨战斗常驻；它实现 IDisposable，注销时由容器负责释放。
             RevServices.Register<GameAudioSettings, GameAudioSettings>(owner: this);
             // 在任何BGM请求之前应用玩家已保存音量；此服务是全局寿命，不随战斗退场丢失。
+            // 注意 Register<TService, TImpl>() 是“懒创建”：不在这里取一次，构造函数就不会执行，音量也就不会应用。
             RevServices.GetRequired<GameAudioSettings>();
+            // 积分要跨局累计、要落盘、还要能在测试里替换，因此抽了接口：调用方只认 IScoreProgress，不认存储实现。
             RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
+            // 战斗服务是全项目最核心的契约：UI、流程、AI 都只认 IBattleService，实现可以整体替换（含固定种子的测试实例）。
             RevServices.Register<IBattleService, BattleService>(owner: this);
+            // 流程控制者目前只有一份实现、还没有接口，调用方会直接用到它的具体方法（切场景、Boss 演出、回大厅）。
             RevServices.Register<GameFlow, GameFlow>(owner: this);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -94,6 +122,7 @@ namespace RevGame.Bootstrap
                 {
                     return;
                 }
+                //到这里真正开始去启动游戏的流程
                 await RevServices.GetRequired<GameFlow>().StartAsync();
             }
             catch (System.Exception error)
@@ -133,6 +162,9 @@ namespace RevGame.Bootstrap
             RevServices.UnregisterAllOf(this);
             // 先清掉配置快照再卸载表：之后任何迟到的读取都会立刻报“配置尚未装配”，而不是读到半卸载的数据。
             GameConfig.Reset();
+            // 14 张配置表在这里统一卸载（加载方是 GameFlow，释放方是启动宿主，避免两边都卸一次）。
+            // 顺序不强制，但必须先 Reset 快照（上一行）：让迟到的读取立刻报“配置尚未装配”，
+            // 而不是读到正在被卸载的数据；重复 Play 也不会残留上一局的表。
             RevDataTableManager.Unload<BattleTextTable>();
             RevDataTableManager.Unload<BattleTuningTable>();
             RevDataTableManager.Unload<PieceConfigTable>();

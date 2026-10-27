@@ -25,7 +25,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c4dc7da1634cd7149967d4ddfcdf50d5, type: 3}
   FrameSeconds: 0.18
   PingPong: 1
-  BodyScale: 1
+  BodyScale: 1.38
   BuiltInDecorations: 1
   DeathMaterial: {fileID: 2100000, guid: aa4f0cb09bfb0204b921ea3ca4a4c12a, type: 2}
   DeathAuraMaterial: {fileID: 2100000, guid: fe61af8024454af49aa8cb330a2acfa2, type: 2}

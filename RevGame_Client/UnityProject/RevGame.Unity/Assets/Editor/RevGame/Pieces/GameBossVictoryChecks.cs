@@ -31,8 +31,8 @@ namespace RevGame.Editor
                 var victory = (RevSequenceDefinition)blueprint.GetValue(null);
                 require(victory.StepCount == 5 && victory.FinallySteps.Count == 1,"正式击败序列五步与finally契约");
                 var intro = (RevSequenceDefinition)typeof(GameFlow).GetField("BossIntroSequence",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);
-                require(intro.StepCount == 4 && intro.FinallySteps.Count == 1,"正式入场四步与finally契约");
-                require(intro.Steps[2].Name == "逆向死亡显现" && intro.Steps[3].Name == "闪烁登场与棋盘舞动","入场逆播/弹幕/舞动编排顺序");
+                require(intro.StepCount == 5 && intro.FinallySteps.Count == 1,"正式入场五步与finally契约");
+                require(intro.Steps[2].Name == "逆向死亡显现" && intro.Steps[3].Name == "镜头完整拉回" && intro.Steps[4].Name == "闪烁登场与棋盘舞动","入场逆播/弹幕/舞动编排顺序");
                 // 固定节点验收真实框架顺序、源互斥和中断finally；不假装已跑正式Play演出。
                 var order = new List<string>(); object source = new object();
                 RevSequenceDefinition definition = RevSequence.Create("Boss演出取消契约",RevSequenceConcurrency.RejectPerSource)

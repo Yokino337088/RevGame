@@ -29,13 +29,21 @@ Shader "RevGame/BossDeath/Chapter06_Cross"
  #include "BossDeathCommon.cginc"
  fixed4 Frag(v2f i):SV_Target {
  float2 uv=DeathLocal(i.texcoord);float2 p=uv-.5;float t=saturate(_Progress);fixed4 source=DeathSource(i);
- 
-float vertical=exp(-abs(p.x)*60),horizontal=exp(-abs(p.y-.10)*60);float cross=saturate(vertical+horizontal);
-float n=DeathNoise(uv*_Detail);float field=n*.4+abs(p.x)*.8+abs(p.y)*.5;
-float threshold=lerp(-.2,1.1,t);float keep=1-smoothstep(field-.035,field+.035,threshold);
-float rim=exp(-abs(field-threshold)*30)*Envelope(t);
-if(_Overlay>.5){float wide=exp(-abs(p.x)*13)+exp(-abs(p.y-.1)*13);float circle=Ring(p,.22+t*.25,.008);return DeathOverlay(_Secondary.rgb*3+_Primary.rgb,(cross*2+wide*.25+circle)*Envelope(t)*_Intensity,uv);}
-float3 color=source.rgb+(_Secondary.rgb*cross*2+_Primary.rgb*rim*2)*_Intensity*Envelope(t);
+// 十字圣光恢复明确的纵横爆发；高亮只集中细光柱与消散边缘，身体其余区域仍清晰。
+float envelope=Envelope(t);
+float vertical=exp(-abs(p.x)*60),horizontal=exp(-abs(p.y-.1)*60);
+float cross=saturate(vertical+horizontal);
+float n=DeathNoise(uv*_Detail+float2(0,t));
+float field=n*.4+abs(p.x)*.8+abs(p.y)*.5;
+float keep=1-smoothstep(field-.05,field+.05,lerp(-.2,1.1,t));
+if(_Overlay>.5)
+{
+ float glow=exp(-abs(p.x)*18)+exp(-abs(p.y-.1)*18);
+ return DeathOverlay(_Secondary.rgb,(cross*.58+glow*.13)*envelope,uv);
+}
+float blessing=pow(saturate(n),6);
+float rim=exp(-abs(field-lerp(-.2,1.1,t))*30);
+float3 color=source.rgb+(_Primary.rgb*rim*.55+_Secondary.rgb*(cross*.95+blessing*.22))*envelope;
 return DeathFinish(color,source.a*keep);
 
  }

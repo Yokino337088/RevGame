@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1739274231
+CRC: 1329098692
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 420cb06303de44b0e54846daa39b0fc9
+    Hash: e0539ac0d3c4c7a82f07fcfc334bc311
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9a2ca7bdbd1871f7131daf57de908e0c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 420cb06303de44b0e54846daa39b0fc9
+    Hash: e0539ac0d3c4c7a82f07fcfc334bc311
 HashAppended: 0
 ClassTypes:
 - Class: 83
@@ -34,7 +34,9 @@ Assets:
 - Assets/GameRes/Audio/Sfx/Boss_LaserSpin.ogg
 - Assets/GameRes/Audio/Sfx/Boss_FlameWall.ogg
 - Assets/GameRes/Audio/Sfx/Upgrade.wav
+- Assets/GameRes/Audio/Sfx/BossEntrance.ogg
 - Assets/GameRes/Audio/Sfx/Victory.wav
+- Assets/GameRes/Audio/Sfx/BossExit.ogg
 - Assets/GameRes/Audio/Sfx/Boss_IceLance.ogg
 - Assets/GameRes/Audio/Sfx/Boss_CrossLaser.ogg
 - Assets/GameRes/Audio/Sfx/RegionWave.ogg

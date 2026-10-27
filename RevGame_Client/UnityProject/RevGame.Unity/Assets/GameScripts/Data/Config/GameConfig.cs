@@ -156,6 +156,8 @@ namespace RevGame.Data
 
     public static class GameConfig
     {
+        // 全局只有这一份“当前配置快照”。所有业务（Balance / 棋子图鉴 / 事件表…）都读它，
+        // 并且只在 Initialize 成功结束时整体替换：外界永远看不到“装配到一半”的配置。
         private static ConfigSnapshot _current;
 
         /// <summary>配置是否已经装配完成。</summary>
@@ -184,6 +186,13 @@ namespace RevGame.Data
         /// 校验并装配全部配置。任何一张表有问题都会汇总成一份清单一起抛出；
         /// 失败时旧配置保持不变（不会出现“装了一半”的状态）。
         /// </summary>
+        /// <remarks>
+        /// 新手按这三段读这个方法：
+        /// ① 先逐张检查“表到底加载了没有”（RequireLoaded）——没加载就直接给出中文原因，
+        ///    而不是等到读某一行时抛 NullReference；
+        /// ② 再按依赖顺序构建：Balance 最先（其它表的文案要引用它），然后棋子、星级、事件、增益、章节、敌人、奖励、Boss；
+        /// ③ 构建过程中所有问题只收集不中断，最后一次性抛 GameConfigException，让策划一次看到全部错误。
+        /// </remarks>
         public static void Initialize(GameConfigTables tables)
         {
             var problems = new List<string>();
@@ -224,6 +233,8 @@ namespace RevGame.Data
             {
                 throw new GameConfigException(problems);
             }
+            // 最后一步才替换全局快照：前面任何一步抛异常，旧配置都还是完整的，
+            // 玩家不会读到“新表一半 + 旧表一半”的混合状态。
             _current = snapshot;
         }
 
@@ -623,8 +634,9 @@ namespace RevGame.Data
                     problems.Add(where + " 的 BossStar 必须是 1~3（当前 " + row.BossStar + "）"); ok = false;
                 }
                 int[] sizes = ParseSizes(row.BossBodySizes, where, problems);
-                if (sizes == null)
+                if (sizes == null || sizes.Length != 1)
                 {
+                    problems.Add(where + " 每章只能配置一颗Boss，请仅填写一个占格边长（2或3）");
                     ok = false;
                 }
                 if (!ok)
@@ -647,7 +659,7 @@ namespace RevGame.Data
             {
                 if (!int.TryParse(part.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int size) || size < 1 || size > 3)
                 {
-                    problems.Add(where + " 的 BossBodySizes = \"" + text + "\" 不合法（逗号分隔的 1~3 整数，如 3,2,2）");
+                    problems.Add(where + " 的 BossBodySizes = \"" + text + "\" 不合法（只填写一个 1~3 整数，如 2 或 3）");
                     return null;
                 }
                 sizes.Add(size);
