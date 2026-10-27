@@ -113,6 +113,8 @@ namespace RevGame.Editor
                 desired["Assets/GameRes/Material/Board/" + name + "_Surface.mat"] = bundle;
             }
             desired["Assets/GameRes/Material/Board/PlacementMagic.mat"] = "material_board";
+            // 长BGM逐曲独立分包：选择一章不会把其它歌曲一起装进内存。原MP3保留，由Unity只转码一次。
+            GameChapterAudioBuild.Configure(desired);
             foreach (var pair in desired) { SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value); }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。
             GameSpriteAtlasBuild.Configure();

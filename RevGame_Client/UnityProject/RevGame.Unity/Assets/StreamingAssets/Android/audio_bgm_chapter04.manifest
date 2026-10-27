@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2313471700
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8ea66e9ce7b1183bd0a61eacdd9a792c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8ea66e9ce7b1183bd0a61eacdd9a792c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Chapter04_Adventure.mp3
+Dependencies: []

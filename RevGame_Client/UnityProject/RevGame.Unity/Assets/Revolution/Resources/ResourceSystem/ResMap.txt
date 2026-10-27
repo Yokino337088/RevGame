@@ -200,6 +200,10 @@ Art/UI/UI_Tavern_btnClose|atlas_uimenus|UI_Tavern_btnClose
 Art/UI/UI_Tip_imgBK|atlas_uimenus|UI_Tip_imgBK
 Atlases/UIMenus|atlas_uimenus|UIMenus
 Audio/Bgm/MainTheme|audio_bgm|MainTheme
+Audio/Bgm/Chapter01_CafeByTheSea|audio_bgm_chapter01|Chapter01_CafeByTheSea
+Audio/Bgm/Chapter02_AzureBlue|audio_bgm_chapter02|Chapter02_AzureBlue
+Audio/Bgm/Chapter03_ToTheSouth|audio_bgm_chapter03|Chapter03_ToTheSouth
+Audio/Bgm/Chapter04_Adventure|audio_bgm_chapter04|Chapter04_Adventure
 Audio/Sfx/Boss_BlinkBlast|audio_sfx|Boss_BlinkBlast
 Audio/Sfx/Boss_Bombard|audio_sfx|Boss_Bombard
 Audio/Sfx/Boss_BulletRing|audio_sfx|Boss_BulletRing

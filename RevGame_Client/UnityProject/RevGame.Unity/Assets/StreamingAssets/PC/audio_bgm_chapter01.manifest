@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 435100740
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f2d19be68643c874a6b55061057d54cd
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f2d19be68643c874a6b55061057d54cd
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Chapter01_CafeByTheSea.mp3
+Dependencies: []

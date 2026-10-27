@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3526415678
+CRC: 2849721879
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -140,3 +140,15 @@ AssetBundleManifest:
       Name: material_board
       Dependencies:
         Dependency_0: shared_shaders
+    Info_33:
+      Name: audio_bgm_chapter01
+      Dependencies: {}
+    Info_34:
+      Name: audio_bgm_chapter02
+      Dependencies: {}
+    Info_35:
+      Name: audio_bgm_chapter03
+      Dependencies: {}
+    Info_36:
+      Name: audio_bgm_chapter04
+      Dependencies: {}
