@@ -23,7 +23,17 @@ namespace RevGame.Flow
         /// <summary>跨整个加载及淡出期间的互斥锁。战斗Logic据此暂停Tick，防止准备增益被遮罩吃掉。</summary>
         public bool IsTransitioning { get; private set; }
         /// <summary>失败遮挡仍开着时也不能推进玩法；IsTransitioning只表示异步任务是否仍在执行。</summary>
-        public bool IsGameplayBlocked { get { return IsAudioSettingsVisible || IsStoryPlaying || IsTransitioning || _loading != null || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady); } }
+        public bool IsGameplayBlocked
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (_bossDevelopmentEntering) { return true; }
+#endif
+                return IsAudioSettingsVisible || IsStoryPlaying || IsTransitioning || _loading != null
+                    || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady);
+            }
+        }
         private GamePresentation _activePresentation;
         /// <summary>诊断用真实阶段进度，不是DOTween插值后的视觉值；范围0~1。</summary>
         public float LoadProgress { get; private set; }

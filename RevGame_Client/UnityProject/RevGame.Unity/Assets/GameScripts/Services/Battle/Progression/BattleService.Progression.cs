@@ -86,7 +86,13 @@ namespace RevGame.Services
             {
                 return Reject("这一章尚未解锁");
             }
+            return BeginCampaignAtRound(chapter, 1);
+        }
 
+        /// <summary>普通入口与开发Boss直达共享战役重置；回合号来自关卡配置，不另造测试敌阵或胜负规则。</summary>
+        private bool BeginCampaignAtRound(int chapter, int round)
+        {
+            if (LevelCatalog.GetRound(chapter, round) == null) { return Reject("目标关卡配置不存在"); }
             _playedPairs.Clear();
             _campaignsStarted++;
             _attackBonus = 0f;
@@ -100,8 +106,23 @@ namespace RevGame.Services
             _finished = false;
             _playerPieces.Clear();
             RevEvent.DispatchEvent(Events.ProgressChanged);
-            return StartRound(chapter, 1);
+            return StartRound(chapter, round);
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>开发专用：不要求前章解锁，按该章真实Boss回合开新战役；不写通关/奖励存档。</summary>
+        public bool BeginBossCampaignForDevelopment(int chapter)
+        {
+            // 先校验章号，拒绝时不能清掉当前棋盘、增益或手牌。
+            if (chapter < 1 || chapter > Consts.ChapterCount) { return Reject("Boss章节只允许1～" + Consts.ChapterCount); }
+            var target = LevelCatalog.GetRound(chapter, Balance.BossRoundIndex);
+            if (target == null || !target.IsBoss) { return Reject("目标章节缺少Boss回合配置"); }
+            if (_automationBoostOwner != null && _automationBoostOwner != this)
+            { return Reject("另一份自动化仍持有战斗增益，请先结束该测试"); }
+            ClearAutomationBoost(this);
+            return BeginCampaignAtRound(chapter, Balance.BossRoundIndex);
+        }
+#endif
 
         /// <summary>由结算按钮或 GM 调用；完成最终 Boss 后只派发一次通关，不重新开最终回合。</summary>
         public bool ContinueRound()

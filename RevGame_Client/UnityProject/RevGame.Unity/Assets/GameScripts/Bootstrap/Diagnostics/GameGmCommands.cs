@@ -30,6 +30,7 @@ namespace RevGame.Bootstrap
             RevGame.Animation.GameAttributeGmCommands.RegisterGroup();
             RevGame.Animation.GameAutomationCommands.RegisterGroup();
             RegisterPlayerActions();
+            RegisterBossChapterCommands();
             RegisterCommand("RevGame/声音设置", "打开玩家声音设置面板，accepted表示已接受异步加载", args =>
             {
                 if (!RevServices.GetRequired<GameFlow>().OpenAudioSettings()) { throw new RevGMUsageException(RevServices.GetRequired<GameFlow>().LastError); }

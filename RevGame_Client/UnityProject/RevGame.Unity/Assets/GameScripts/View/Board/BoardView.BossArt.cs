@@ -24,6 +24,22 @@ namespace RevGame.View
         public bool IsBossArtReady { get { return _bossArtReady; } }
         public int BossArtChapter { get { return _bossArt == null ? 0 : _bossArt.Chapter; } }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>只读真实模型与视图绑定，验证该章全部Boss出现且8帧正确；没有Boss时不能空集合冒充就绪。</summary>
+        public bool AreBossViewsReady(int chapter)
+        {
+            int bosses = 0;
+            foreach (var piece in RevServices.GetRequired<IBattleService>().EnemyPieces)
+            {
+                if (!piece.IsAlive || !piece.IsBoss) { continue; }
+                bosses++;
+                if (!_pieces.TryGetValue(piece.Id, out PieceView view) || view == null
+                    || view.BossAppearanceChapter != chapter || view.AnimationFrameCount != 8) { return false; }
+            }
+            return bosses > 0;
+        }
+#endif
+
         /// <summary>刷新只检查当前章与Boss回合，真正加载一次；同章血量/气眼变化不会重置动画或再加引用。</summary>
         private async void RequestBossArt()
         {

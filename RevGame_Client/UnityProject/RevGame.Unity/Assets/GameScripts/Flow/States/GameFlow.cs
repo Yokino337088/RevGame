@@ -72,6 +72,9 @@ namespace RevGame.Flow
             }
 
             _presentedChapter = 0;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _bossDevelopmentStartPending = false;
+#endif
             _chapter = chapter;
             // true只表示请求被接受；IsTransitioning变回false且Screen=Battle才表示完整交付。
             // 按钮和GM走同一入口，连点不会创建两条加载链或重复开启战斗域。
@@ -169,7 +172,15 @@ namespace RevGame.Flow
                 {
                     // 模型先生成首回合，再启动计时Logic；过场门禁阻止这段时间消耗准备秒数。
                     var battle = RevServices.GetRequired<IBattleService>();
-                    if (!battle.BeginCampaign(_owner._chapter))
+                    bool started;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    bool bossStart = _owner._bossDevelopmentStartPending;
+                    _owner._bossDevelopmentStartPending = false;
+                    started = bossStart ? ((BattleService)battle).BeginBossCampaignForDevelopment(_owner._chapter) : battle.BeginCampaign(_owner._chapter);
+#else
+                    started = battle.BeginCampaign(_owner._chapter);
+#endif
+                    if (!started)
                     {
                         throw new InvalidOperationException(battle.LastError);
                     }
