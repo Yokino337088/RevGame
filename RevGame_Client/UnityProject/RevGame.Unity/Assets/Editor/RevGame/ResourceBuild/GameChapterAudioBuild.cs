@@ -10,11 +10,11 @@ namespace RevGame.Editor
     public static class GameChapterAudioBuild
     {
         // 资源构建asmdef不能引用默认Assembly-CSharp；此处的固定名字属于资源制作清单。
-        private static readonly string[] Names = { "Chapter01_CafeByTheSea", "Chapter02_AzureBlue", "Chapter03_ToTheSouth", "Chapter04_Adventure", "MainTheme", "MainTheme" };
+        private static readonly string[] Names = { "Chapter01_CafeByTheSea", "Chapter02_AzureBlue", "Chapter03_ToTheSouth", "Chapter04_Adventure", "Chapter05_IceWalls", "Chapter06_Swing" };
         /// <summary>统一默认与PC/Android的长音乐设置；质量0.5为包体与听感的折中，保持立体声和原采样率。</summary>
         internal static void Configure(Dictionary<string, string> desired)
         {
-            for (int chapter = 1; chapter <= 4; chapter++)
+            for (int chapter = 1; chapter <= Names.Length; chapter++)
             {
                 string path = "Assets/GameRes/Audio/Bgm/" + Names[chapter - 1] + ".mp3";
                 desired[path] = "audio_bgm_chapter0" + chapter;
@@ -35,7 +35,7 @@ namespace RevGame.Editor
         }
 
         /// <summary>只读导入、时长与六章绑定断言，不切换当前场景，不启动Play。</summary>
-        [RevAutomationAction("game.audio.check", Environment = "edit", Keys = new string[0], Description = "验证四章音乐绑定、流式Vorbis设置和有效音频时长")]
+        [RevAutomationAction("game.audio.check", Environment = "edit", Keys = new string[0], Description = "验证六章音乐绑定、流式Vorbis设置和有效音频时长")]
         public static object Check(RevAutomationRequest request)
         {
             var rows = new List<string>();
@@ -49,7 +49,7 @@ namespace RevGame.Editor
                 string path = "Assets/GameRes/Audio/Bgm/" + name + ".mp3";
                 AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
                 if (clip == null || clip.length < 1f || clip.channels != 2) { throw new InvalidOperationException("无效音乐：" + path); }
-                if (chapter <= 4)
+                if (chapter <= Names.Length)
                 {
                     var importer = (AudioImporter)AssetImporter.GetAtPath(path);
                     AudioImporterSampleSettings settings = importer.defaultSampleSettings;

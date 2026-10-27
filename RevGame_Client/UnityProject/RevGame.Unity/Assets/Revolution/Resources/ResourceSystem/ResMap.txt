@@ -192,11 +192,13 @@ Art/UI/UI_Game_imgMobilityBK|atlas_uibattle|UI_Game_imgMobilityBK
 Art/UI/UI_Pvp_imgBK|atlas_uibattle|UI_Pvp_imgBK
 Art/UI/UI_roleItem_imgBK|atlas_uibattle|UI_roleItem_imgBK
 Art/UI/UI_roleItem_roleItem|atlas_uibattle|UI_roleItem_roleItem
+Art/UI/UI_Setting_Background|atlas_uibattle|UI_Setting_Background
 Art/UI/UI_Setting_Checkmark|atlas_uibattle|UI_Setting_Checkmark
 Atlases/UIBattle|atlas_uibattle|UIBattle
 Art/UI/UI_Settlement_imgBK|atlas_uimenus|UI_Settlement_imgBK
 Art/UI/UI_Tavern_Background|atlas_uimenus|UI_Tavern_Background
 Art/UI/UI_Tavern_btnClose|atlas_uimenus|UI_Tavern_btnClose
+Art/UI/UI_Tavern_Handle|atlas_uimenus|UI_Tavern_Handle
 Art/UI/UI_Tip_imgBK|atlas_uimenus|UI_Tip_imgBK
 Atlases/UIMenus|atlas_uimenus|UIMenus
 Audio/Bgm/MainTheme|audio_bgm|MainTheme
@@ -204,6 +206,8 @@ Audio/Bgm/Chapter01_CafeByTheSea|audio_bgm_chapter01|Chapter01_CafeByTheSea
 Audio/Bgm/Chapter02_AzureBlue|audio_bgm_chapter02|Chapter02_AzureBlue
 Audio/Bgm/Chapter03_ToTheSouth|audio_bgm_chapter03|Chapter03_ToTheSouth
 Audio/Bgm/Chapter04_Adventure|audio_bgm_chapter04|Chapter04_Adventure
+Audio/Bgm/Chapter05_IceWalls|audio_bgm_chapter05|Chapter05_IceWalls
+Audio/Bgm/Chapter06_Swing|audio_bgm_chapter06|Chapter06_Swing
 Audio/Sfx/Boss_BlinkBlast|audio_sfx|Boss_BlinkBlast
 Audio/Sfx/Boss_Bombard|audio_sfx|Boss_Bombard
 Audio/Sfx/Boss_BulletRing|audio_sfx|Boss_BulletRing
@@ -334,5 +338,6 @@ UI/Panel/LevelSelectPanel|ui_panels|LevelSelectPanel
 UI/Panel/PreparePanel|ui_panels|PreparePanel
 UI/Panel/RewardPanel|ui_panels|RewardPanel
 UI/Panel/SettlePanel|ui_panels|SettlePanel
+UI/Panel/Settings/AudioSettingsPanel|ui_settings|AudioSettingsPanel
 UI/Panel/Story/StoryPanel|ui_story|StoryPanel
 UI/Panel/Story/TutorialPanel|ui_story|TutorialPanel

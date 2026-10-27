@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1317094540
+CRC: 4018751973
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -153,3 +153,15 @@ AssetBundleManifest:
     Info_36:
       Name: audio_bgm_chapter04
       Dependencies: {}
+    Info_37:
+      Name: audio_bgm_chapter05
+      Dependencies: {}
+    Info_38:
+      Name: audio_bgm_chapter06
+      Dependencies: {}
+    Info_39:
+      Name: ui_settings
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: atlas_uibattle
+        Dependency_2: font_cjk

@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "0da074894eaa5e76321d044af19773371853af38acd417ac22fd213f9e57d27d",
-  "inputDigest": "7371dba672910bc03d4854d95cbaa88d6152479a50b0db817ae0ce3833986df0",
+  "outputSha256": "f428ae80234897957f8e3cc8df19427cc1b12ab84f427f573400555989700b8d",
+  "inputDigest": "ce12522e73f8962cf692a545f90e0389c47d590b95493bbd742f79b63c2e2ae3",
   "originalBytes": 17002248,
-  "outputBytes": 673048,
-  "characterCount": 1532,
-  "glyphCount": 3065,
+  "outputBytes": 673200,
+  "characterCount": 1533,
+  "glyphCount": 3066,
   "codepoints": [
     32,
     33,
@@ -848,6 +848,7 @@
     26426,
     26432,
     26435,
+    26438,
     26448,
     26449,
     26460,
@@ -1656,15 +1657,15 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/BattleHudPanel.prefab",
-      "sha256": "301fc62b6d662411e5b862e9878d99d1561865e1cd9119d1e5fbd939f1f98a7e"
+      "sha256": "4193d767b84cabed0b59c23c759d9abd6e5ad86b69ec12200f7cc2afdabb282e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/HomePanel.prefab",
-      "sha256": "cb6e73ad3964934913982f98ef79afa5c3e8e4662abf046cbfdab3777da9e4f2"
+      "sha256": "a5efa46200bfd82f2e0687c12108ae33e272260a4e3ef068a0b2f4bdc8e2e7c1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
-      "sha256": "d5fcdfe29776d4ced17cb3eb68a04208353c37eb250e6bd50db07aedb6776f38"
+      "sha256": "bf65c05adb4eb081c39f43132f628d27cc4cf2881b48426c88ee91fa5802b070"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab",
@@ -1677,6 +1678,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/RewardPanel.prefab",
       "sha256": "facbc32db141f34f33e73aeb3c7f94d81edeb01474a70fafd9c843b875c0314c"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Settings/AudioSettingsPanel.prefab",
+      "sha256": "ac39445087edc6be3a462b85086155837017a8ceab704a2b75746e9d30bb4b71"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/SettlePanel.prefab",
@@ -1776,7 +1781,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs",
-      "sha256": "74d1f27f5954510512acc4ae1b78c6c57a8c5a19a1cdefb6c2e3fb38576d6afb"
+      "sha256": "f394ee376640e2f2915fb6b79625e74ec7cceb14393859ffa58dfe062130feab"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
@@ -1784,7 +1789,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
-      "sha256": "d822877a8f15df712b4c484efece4f0b33603e27f378f1c60bd60086d4df7efa"
+      "sha256": "cc9c3f7c0fcc8c05cf1d9e29b54277efe1829d64828c5e166c8d3ba2450d778d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Board/BoardPos.cs",
@@ -1891,12 +1896,16 @@
       "sha256": "b34b9ccfe385fb1db2edb0ba56e3020b735738ef9589af49cc26be9882bff78a"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.AudioSettings.cs",
+      "sha256": "0314246cdcbef61dd95b8696bba9e2f88b3c9b7b4eb645fbb8b88289114566a1"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.cs",
       "sha256": "2d79b221a28dc9e28df53d45ad2c25f0547578b99fa6d93e98fa35a27c5772f4"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs",
-      "sha256": "d4e4064fb926be63612638031f0a0d6dbd0d65b0838d2e8aa8252a6c6f5da8e5"
+      "sha256": "6427883d648b1394a584ecfba7f0290aaf49855cf49e3827717d05ad546310d4"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Story.cs",
@@ -2015,6 +2024,10 @@
       "sha256": "a4dc7de53f34bb37c0d7f6adc5de6218c698251294df4f7fa3826dd5df7d3476"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Progression/GameAudioSettings.cs",
+      "sha256": "2f6c3b9ca0630cab26a34de3b68ce01518eb2b9531408c3207d575ecd2d787db"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Progression/ScoreProgressStore.cs",
       "sha256": "bc3fb54b285e05fff48e7f89d3bc8ab5a574b8e4b25e89ae24cc89de8d228252"
     },
@@ -2044,7 +2057,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/BattleHudPanel.cs",
-      "sha256": "eeecafcc289c14134d452f032f229c5dedbcac256c4f593f9ceec1683bbfb3a0"
+      "sha256": "c6b45c7768b88f0ebad25408623e151dd51c9228736383950ea451758f792267"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/BattleHudPanel.Score.cs",
@@ -2071,12 +2084,16 @@
       "sha256": "a1c9dd90bdd9952c73eee70ed2f2486cb28c750e79e85484da74591e74d997f4"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/AudioSettingsPanel.cs",
+      "sha256": "d79cb779efacfd483a87a38534e477f4ac38ddeaabd447ce524ccbf2be8bd745"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.cs",
-      "sha256": "960554caa7aa98d8bef618f82c0967f6668d004d55f98f4732564bb53a643f86"
+      "sha256": "ea08ff6965fbb309aed3a277a164a6d9a6d16c111e9578eff46234d91483628b"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/LevelSelectPanel.cs",
-      "sha256": "382a2d2bc09754a2ee08986e9865fa4d8e79badcc9c851aa4308e9eb4650d6e4"
+      "sha256": "09b1c92ea4553a704a5ff9fa244fdc0efb4423db7dd0ebcf521f9bd1737c1511"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryPanel.cs",
@@ -2092,7 +2109,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Audio/GameAudio.cs",
-      "sha256": "6b0031f973d82a304bf08a6c6f511d2927a3de56d012a2bfe4a20020c4386325"
+      "sha256": "6ebd46e16316a767c0439ca2eb82c1cfe9178ae9c0200f3c07f4275643191d9f"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardCellView.cs",

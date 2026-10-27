@@ -54,5 +54,7 @@ namespace RevGame.UI
         {
             Bootstrap.GameBootstrap.RequestQuit();
         }
+        [RevButtonClick("btnSettings")]
+        private void OnSettings() { RevServices.GetRequired<GameFlow>().OpenAudioSettings(); }
     }
 }

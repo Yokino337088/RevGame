@@ -31,6 +31,8 @@ namespace RevGame.UI
     [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed partial class BattleHudPanel : RevUIPanel
     {
+        [RevButtonClick("btnSettings")]
+        private void OnSettings() { RevServices.GetRequired<RevGame.Flow.GameFlow>().OpenAudioSettings(); }
         [Header("阶段图标（三种阶段各一张，由预制体指定）")]
         [SerializeField]
         private Sprite phasePrepareSprite;

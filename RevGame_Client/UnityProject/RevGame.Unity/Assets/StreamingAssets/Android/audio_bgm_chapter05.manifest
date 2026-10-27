@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2250236236
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 03a38cb03b17833a1278bdd04cc4e31e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 03a38cb03b17833a1278bdd04cc4e31e
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Chapter05_IceWalls.mp3
+Dependencies: []

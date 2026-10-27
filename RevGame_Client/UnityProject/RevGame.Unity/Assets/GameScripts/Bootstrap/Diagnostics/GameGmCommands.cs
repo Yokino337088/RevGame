@@ -30,6 +30,26 @@ namespace RevGame.Bootstrap
             RevGame.Animation.GameAttributeGmCommands.RegisterGroup();
             RevGame.Animation.GameAutomationCommands.RegisterGroup();
             RegisterPlayerActions();
+            RegisterCommand("RevGame/声音设置", "打开玩家声音设置面板，accepted表示已接受异步加载", args =>
+            {
+                if (!RevServices.GetRequired<GameFlow>().OpenAudioSettings()) { throw new RevGMUsageException(RevServices.GetRequired<GameFlow>().LastError); }
+                return "accepted";
+            });
+            RegisterCommand("RevGame/BGM音量", "设置玩家BGM音量百分比0～100；保存并立即生效", args =>
+            {
+                int percent = args.Int(0, 60);
+                if (percent < 0 || percent > 100) { throw new RevGMUsageException("音量范围0～100"); }
+                var settings = RevServices.GetRequired<GameAudioSettings>();
+                settings.SetVolume(percent / 100f);
+                settings.Save();
+                return "volume=" + percent;
+            });
+            RegisterCommand("RevGame/声音查询", "读取玩家BGM音量、静音与设置面板状态", args =>
+            {
+                var settings = RevServices.GetRequired<GameAudioSettings>();
+                return "volume=" + Mathf.RoundToInt(settings.Volume * 100f) + ",muted=" + settings.Muted
+                    + ",panel=" + RevServices.GetRequired<GameFlow>().IsAudioSettingsVisible;
+            });
             RegisterCommand("RevGame/播放初始剧情", "重播开场剧情；保留首次进度，不自动进入教学，accepted仅表示请求已接受", args =>
             {
                 var flow = RevServices.GetRequired<GameFlow>();

@@ -22,6 +22,7 @@ namespace RevGame.Editor
             // 过场只依赖字体/程序星雾；单独分包，不能为显示加载条先拉入所有战斗界面的依赖。
             { "UI/Panel/Loading", "ui_loading" },
             { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
+            { "UI/Panel/Settings", "ui_settings" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },

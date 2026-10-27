@@ -78,7 +78,7 @@ namespace RevGame.View
             if (_battleScreen) { RefreshChapterMusic(); }
         }
 
-        /// <summary>章节到音乐的资源绑定，不是玩法数值；第五、六章待选，暂沿用MainTheme。</summary>
+        /// <summary>章节到音乐的资源绑定，不是玩法数值；六章均有独立曲目。</summary>
         public static string GetChapterMusicName(int chapter)
         {
             switch (chapter)
@@ -87,6 +87,8 @@ namespace RevGame.View
                 case 2: return "Chapter02_AzureBlue";
                 case 3: return "Chapter03_ToTheSouth";
                 case 4: return "Chapter04_Adventure";
+                case 5: return "Chapter05_IceWalls";
+                case 6: return "Chapter06_Swing";
                 default: return "MainTheme";
             }
         }
@@ -99,7 +101,7 @@ namespace RevGame.View
             ReleaseChapterMusic();
             _currentBgm = name;
             // 先停旧曲再释放其流式资源，新曲淡入，避免正在读旧Clip时卸载其AB。
-            if (RevSound.PlayBgm(name, fadeSeconds: 0.6f, volume: 0.06f).IsEmpty)
+            if (RevSound.PlayBgm(name, fadeSeconds: 0.6f, volume: GameAudioSettings.MusicBaseVolume).IsEmpty)
             {
                 // 声音总开关关闭或请求被拒绝时不能记成已播放，否则下一次刷新会永远跳过此曲。
                 _currentBgm = null;

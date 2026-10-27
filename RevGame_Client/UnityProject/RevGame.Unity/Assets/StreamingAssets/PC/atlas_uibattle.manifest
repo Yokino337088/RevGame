@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1672748129
+CRC: 3708733030
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 8147945074c2a66d2e93e4e671ac8973
+    Hash: 4d2f55ccab465a646e7c1ee77b4af81b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 8147945074c2a66d2e93e4e671ac8973
+    Hash: 4d2f55ccab465a646e7c1ee77b4af81b
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,6 +20,7 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Art/UI/UI_Setting_Background.png
 - Assets/GameRes/Art/UI/UI_Game_imgMobilityBK.png
 - Assets/GameRes/Art/UI/UI_Pvp_imgBK.png
 - Assets/GameRes/Art/UI/UI_Game_imgEnemyMobility.png

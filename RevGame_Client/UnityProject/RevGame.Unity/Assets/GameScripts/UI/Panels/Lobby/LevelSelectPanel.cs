@@ -90,5 +90,7 @@ namespace RevGame.UI
         {
             RevServices.GetRequired<GameFlow>().ReturnHome();
         }
+        [RevButtonClick("btnSettings")]
+        private void OnSettings() { RevServices.GetRequired<GameFlow>().OpenAudioSettings(); }
     }
 }

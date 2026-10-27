@@ -63,6 +63,9 @@ namespace RevGame.Bootstrap
             Screen.orientation = ScreenOrientation.LandscapeLeft;
 #endif
             RevServices.Register<StoryProgress, StoryProgress>(owner: this);
+            RevServices.Register<GameAudioSettings, GameAudioSettings>(owner: this);
+            // 在任何BGM请求之前应用玩家已保存音量；此服务是全局寿命，不随战斗退场丢失。
+            RevServices.GetRequired<GameAudioSettings>();
             RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
             RevServices.Register<IBattleService, BattleService>(owner: this);
             RevServices.Register<GameFlow, GameFlow>(owner: this);
