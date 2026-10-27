@@ -122,7 +122,42 @@ namespace RevGame.Editor
                 int visible = 0;
                 foreach (Color32 pixel in pixels) { if (pixel.r > 100 || pixel.g > 100 || pixel.b > 100) { visible++; } }
                 if (visible < 100) { throw new InvalidOperationException("统一字体未产生可见文字像素"); }
-                return string.Join("；", results) + "；真实AB五处Noto文字/描边可绘制；" + Path.GetFullPath(Output);
+                // 使用真实AB字体核对剧情/教学/战斗代表字符；不把编辑器原字体可用误当成AB可用。
+                Font runtimeFont = texts[0].font;
+                FontCharacters fontCharacters = JsonUtility.FromJson<FontCharacters>(File.ReadAllText("../../美术/第三方素材/字体/字体精简清单.json"));
+                foreach (int codepoint in fontCharacters.codepoints)
+                {
+                    if (codepoint > char.MaxValue || !runtimeFont.HasCharacter((char)codepoint))
+                    { throw new InvalidOperationException("真实AB精简字体缺字：U+" + codepoint.ToString("X4")); }
+                }
+                const string sample = "史莱姆棋旅 · 落子异世界\n欢迎来到魔法村落，冒险家！\n镜湖／死亡沼泽／冰封极地／神殿\n攻击＋250% 防御 生命 攻速\n气 · 眼 · 擒王 · 能量巨大\n暴击 0123456789 ×÷←→★✓";
+                foreach (char character in sample)
+                {
+                    if (!char.IsWhiteSpace(character) && !runtimeFont.HasCharacter(character))
+                    { throw new InvalidOperationException("实际AB字体缺少代表字符：" + character); }
+                }
+                instance.SetActive(false);
+                var sampleObject = new GameObject("精简字库样例", typeof(TextMesh));
+                SceneManager.MoveGameObjectToScene(sampleObject, scene);
+                TextMesh sampleText = sampleObject.GetComponent<TextMesh>();
+                sampleText.font = runtimeFont;
+                sampleText.fontSize = 48;
+                sampleText.fontStyle = FontStyle.Normal;
+                sampleText.characterSize = .075f;
+                sampleText.anchor = TextAnchor.MiddleCenter;
+                sampleText.alignment = TextAlignment.Center;
+                sampleText.text = sample;
+                sampleText.color = Color.white;
+                runtimeFont.RequestCharactersInTexture(sample, 48, FontStyle.Normal);
+                sampleText.GetComponent<MeshRenderer>().sharedMaterial = runtimeFont.material;
+                // TextMesh字面尺寸不等于像素字号；读取真实网格边界，让多行样例完整落在相机视口内。
+                camera.Render();
+                Bounds textBounds = sampleText.GetComponent<MeshRenderer>().bounds;
+                float fit = Mathf.Min(1.5f / Mathf.Max(.001f, textBounds.size.x), .85f / Mathf.Max(.001f, textBounds.size.y));
+                sampleObject.transform.localScale = Vector3.one * fit;
+                sampleObject.transform.position = -textBounds.center * fit;
+                Capture(camera, target, readback, "FontSubset-StoryAndBattle.png");
+                return string.Join("；", results) + "；真实AB五处Noto文字/描边可绘制，精简字库" + fontCharacters.codepoints.Length + "字符全部可用；" + Path.GetFullPath(Output);
             }
             finally
             {
@@ -153,5 +188,8 @@ namespace RevGame.Editor
             File.WriteAllBytes(Output + "/" + name, readback.EncodeToPNG());
             return readback.GetPixels32();
         }
+
+        [Serializable]
+        private sealed class FontCharacters { public int[] codepoints; }
     }
 }

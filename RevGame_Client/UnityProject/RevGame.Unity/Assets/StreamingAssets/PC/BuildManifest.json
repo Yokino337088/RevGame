@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-10-27 11:30:56",
+  "buildTime": "2026-10-27 11:48:43",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_combatframes", "size": 1307241 },
@@ -28,7 +28,7 @@
     { "name": "config_piece_art", "size": 4335 },
     { "name": "config_story", "size": 5611 },
     { "name": "data_tables", "size": 16581 },
-    { "name": "font_cjk", "size": 15349866 },
+    { "name": "font_cjk", "size": 620866 },
     { "name": "material_background", "size": 2722 },
     { "name": "material_board", "size": 2399 },
     { "name": "material_cards", "size": 2462 },
