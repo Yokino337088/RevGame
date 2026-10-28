@@ -1,23 +1,29 @@
 ManifestFileVersion: 0
-CRC: 2750676588
+CRC: 3329045194
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 069de2445096fdecceb126c8311f2dcd
+    Hash: 6366f5ffadda55df58e2159118fe7394
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 14da144f9ba278e2c1bf9cf62cc3b385
+    Hash: f4dc3ec718afb556dbfd1bf9a2996ab0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 069de2445096fdecceb126c8311f2dcd
+    Hash: 6366f5ffadda55df58e2159118fe7394
 HashAppended: 0
 ClassTypes:
 - Class: 1
+  Script: {instanceID: 0}
+- Class: 21
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 7035a8dda3708ff4a9ee20e1c361fc9f, type: 3}
 - Class: 114
@@ -47,3 +53,4 @@ Assets:
 Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui

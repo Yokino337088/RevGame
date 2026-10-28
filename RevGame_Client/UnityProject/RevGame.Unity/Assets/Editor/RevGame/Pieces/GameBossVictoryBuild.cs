@@ -92,18 +92,25 @@ namespace RevGame.Editor
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
 
-        /// <summary>原地迁移已存在的预制体，保留GUID与绑定。空Sprite的UGUI Image即纯色矩形，不新增纹理依赖。</summary>
+        /// <summary>复用HUD支援提示的原图与共享材质。只改背景，保留已有横幅位置、尺寸、标题与动画绑定。</summary>
         private static void StyleBanner(string name)
         {
+            GameObject hud = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/UI/Panel/BattleHudPanel.prefab");
+            Image source = hud == null ? null : hud.transform.Find("assistPlate")?.GetComponent<Image>();
+            if (source == null || source.sprite == null || source.material == null)
+            { throw new InvalidOperationException("战斗增益提示背景缺失，不能用纯色矩形代替"); }
             string path = PanelRoot + "/" + name + ".prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
                 var banner = (RectTransform)root.transform.Find("banner");
-                banner.anchoredPosition = Vector2.zero;
                 Image image = banner.GetComponent<Image>();
-                image.sprite = null; image.type = Image.Type.Simple;
-                image.color = new Color(0,0,0,.72f); image.raycastTarget = false;
+                image.sprite = source.sprite; image.material = source.material; image.type = source.type;
+                image.color = source.color; image.pixelsPerUnitMultiplier = source.pixelsPerUnitMultiplier;
+                image.raycastTarget = false;
+                // 同一ArcanePanel共享材质需要独立UV1坐标；图集晚绑定组件负责刷新，不在运行时复制资源。
+                if (banner.GetComponent<ArcaneImageCoordinates>() == null) { banner.gameObject.AddComponent<ArcaneImageCoordinates>(); }
+                if (banner.GetComponent<AtlasImageBinding>() == null) { banner.gameObject.AddComponent<AtlasImageBinding>(); }
                 foreach (Text text in banner.GetComponentsInChildren<Text>(true)) { text.color = Color.white; }
                 Transform flare = banner.Find("flare");
                 if (flare != null)
@@ -111,7 +118,7 @@ namespace RevGame.Editor
                     Image overlay = flare.GetComponent<Image>();
                     overlay.sprite = null; overlay.type = Image.Type.Simple; overlay.color = Color.clear;
                 }
-                if (PrefabUtility.SaveAsPrefabAsset(root,path) == null) { throw new InvalidOperationException("黑底弹幕保存失败"); }
+                if (PrefabUtility.SaveAsPrefabAsset(root,path) == null) { throw new InvalidOperationException("魔法提示背景弹幕保存失败"); }
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }

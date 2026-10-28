@@ -172,8 +172,12 @@ namespace RevGame.Editor
         private static void VerifyBanner(Transform panel)
         {
             Image background=panel.Find("banner").GetComponent<Image>();
-            Color c=background.color;
-            Require(background.sprite==null&&c.r==0&&c.g==0&&c.b==0&&c.a>.5f&&c.a<.85f,"真实AB弹幕使用半透明黑底");
+            var hud=RevUI.Get<BattleHudPanel>();
+            Image reference=hud.transform.Find("assistPlate").GetComponent<Image>();
+            Require(background.sprite!=null&&background.sprite.name==reference.sprite.name
+                &&background.material==reference.material&&background.color==reference.color,"真实AB弹幕复用战斗增益控件背景/材质");
+            Require(background.GetComponent<ArcaneImageCoordinates>()!=null&&background.GetComponent<AtlasImageBinding>()!=null,
+                "弹幕魔法背景UV与图集刷新组件完整");
         }
         /// <summary>声音句柄被接受不代表已经出声；检测实际播放中的AudioSource，按阶段逐帧累计证据。</summary>
         private static bool VoicePlaying(string clip)

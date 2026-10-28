@@ -183,6 +183,12 @@ namespace RevGame.Editor
                     GameObject panelPrefab=bundles["ui_victory"].LoadAsset<GameObject>(("assets/gameres/ui/panel/victory/"+panelName+".prefab").ToLowerInvariant());
                     require(panelPrefab!=null,"AB弹幕预制体存在");
                     GameObject obj=UnityEngine.Object.Instantiate(panelPrefab,canvas.transform,false);
+                    Image bannerImage = obj.transform.Find("banner").GetComponent<Image>();
+                    require(bannerImage.sprite != null && bannerImage.sprite.name == "UI_Tip_imgBK"
+                        && bannerImage.material != null && bannerImage.material.name == "ArcanePanel", "实际AB弹幕使用HUD魔法提示图片和共享材质");
+                    require(bannerImage.GetComponent<ArcaneImageCoordinates>() != null && bannerImage.GetComponent<AtlasImageBinding>() != null,
+                        "实际AB弹幕拥有UV1与图集刷新组件");
+                    // 原始资源名在测试克隆前检查；Atlas.GetSprite返回名带(Clone)，不能拿它冒充资源名错误。
                     foreach(Image image in obj.GetComponentsInChildren<Image>(true)){if(image.sprite!=null){image.sprite=Packed(image.sprite,atlases,sprites);image.SetAllDirty();}}
                     RevUIPanel panel=obj.GetComponent<RevUIPanel>();
                     // 编辑态不启动UI管理器；仅按公开绑定计划给这个固定面板装配真实控件，不调用框架内部Binder。

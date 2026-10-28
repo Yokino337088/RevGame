@@ -64,6 +64,9 @@ namespace RevGame.View
             _bossDeathAura.transform.localPosition = bodyRenderer.transform.localPosition;
             // 外层最多略超出身体；第五章雪花与身体同尺寸，由Shader控制22%透明度。
             float auraScale = _bossArt.Chapter == 5 ? 1f : 1.12f;
+            // 第六章可在专属材质配置圣光范围；只在演出开始读一次，不克隆材质或改变Boss占格。
+            if (_bossArt.DeathAuraMaterial.HasProperty("_AuraScale"))
+            { auraScale = Mathf.Clamp(_bossArt.DeathAuraMaterial.GetFloat("_AuraScale"),1f,2.5f); }
             _bossDeathAura.transform.localScale = bodyRenderer.transform.localScale * auraScale;
             _bossDeathAura.enabled = true;
             SetBossDeathProgress(0);

@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 2994621077
+CRC: 2331015571
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -188,3 +188,4 @@ AssetBundleManifest:
       Dependencies:
         Dependency_0: atlas_uimenus
         Dependency_1: font_cjk
+        Dependency_2: material_ui
