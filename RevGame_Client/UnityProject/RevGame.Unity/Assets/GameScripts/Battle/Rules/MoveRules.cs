@@ -96,7 +96,7 @@ namespace RevGame.Battle
                 return;
             }
 
-            if (!piece.IsAlive || piece.IsLocked || piece.EyeCount > 0)
+            if (!piece.IsAlive || piece.BossHidden || piece.BossFrozen || piece.IsLocked || piece.EyeCount > 0)
             {
                 return;
             }
@@ -175,7 +175,7 @@ namespace RevGame.Battle
                 // 不再分配敌军名单和捕获piece的Sort闭包；死亡棋子不进入候选。
                 foreach (Piece foe in board.Pieces)
                 {
-                    if (foe.Side == piece.Side || !foe.IsAlive)
+                    if (foe.Side == piece.Side || !foe.IsAlive || foe.BossHidden)
                     {
                         continue;
                     }
@@ -277,7 +277,7 @@ namespace RevGame.Battle
         /// </summary>
         public static bool CanAttack(Piece piece)
         {
-            return piece != null && piece.IsAlive && (piece.Side == GameSide.Player || !piece.IsLocked);
+            return piece != null && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen && (piece.Side == GameSide.Player || !piece.IsLocked);
         }
 
         /// <summary>近战/弓：沿射线把空格都算进覆盖；遇到棋子时敌方格算覆盖，自己人挡住的格不算。</summary>

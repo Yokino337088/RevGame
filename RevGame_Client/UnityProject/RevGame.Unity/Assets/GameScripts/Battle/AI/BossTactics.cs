@@ -9,7 +9,7 @@
 //
 // 【评分思路（新手可以照着改）】
 // 每个技能先算一个“局面分”（这一招此刻能打到多少人、值不值），再乘以表里的 Weight。
-// 分数最高的技能胜出；同分保留枚举里靠前的（结果可复现，不依赖随机数）。
+// 先从使用次数最少的可用技能中选择，再比较评分；防止全盘弹幕永远压过其它技能。
 // 上一次刚用过的技能分数减半，避免 Boss 连放同一招让战斗单调。
 //
 // 【几何约定】
@@ -54,9 +54,10 @@ namespace RevGame.Battle
         /// <param name="last">上一次使用的技能，null 表示本场还没用过。</param>
         /// <param name="plan">选中的计划；返回 false 时无意义。</param>
         /// <returns>false = 当前没有任何技能值得放（例如所有技能都打不到人），Boss 继续普通攻击。</returns>
-        public static bool TryChoose(BoardModel board, Piece boss, int chapter, int intelligence, float[] readyAt, float now, BossSkillKind? last, out BossSkillPlan plan)
+        public static bool TryChoose(BoardModel board, Piece boss, int chapter, int intelligence, float[] readyAt, float now, BossSkillKind? last, out BossSkillPlan plan, int[] useCounts = null)
         {
             plan = default;
+            int leastUsed = int.MaxValue;
             bool found = false;
             float best = 0f;
             foreach (BossSkillKind kind in (BossSkillKind[])Enum.GetValues(typeof(BossSkillKind)))
@@ -78,8 +79,10 @@ namespace RevGame.Battle
                     candidate.Score *= RepeatPenalty;
                 }
                 // 严格大于才替换：同分保留枚举靠前的技能，相同局面永远选同一招，方便复现和测试。
-                if (candidate.Score > best)
+                int used = useCounts == null ? 0 : useCounts[(int)kind];
+                if (used < leastUsed || (used == leastUsed && candidate.Score > best))
                 {
+                    leastUsed = used;
                     best = candidate.Score;
                     plan = candidate;
                     found = true;
@@ -97,6 +100,10 @@ namespace RevGame.Battle
             plan = new BossSkillPlan { Kind = kind, A = boss.Pos, B = boss.Pos, C = boss.Pos };
             BossSkillDef def = BossSkillCatalog.Get(kind);
             var victims = new List<Piece>(16);
+            if ((int)kind >= (int)BossSkillKind.StarStorm)
+            {
+                return BossExclusiveGeometry.TryPlan(board, boss, kind, out plan);
+            }
             if ((int)kind >= (int)BossSkillKind.MeteorShower)
             {
                 return BossPatternGeometry.TryPlan(board, boss, kind, out plan);
@@ -118,7 +125,7 @@ namespace RevGame.Battle
                     float bestThreat = 0f;
                     foreach (Piece p in board.GetPiecesOf(GameSide.Player))
                     {
-                        if (!p.IsAlive || RectGap(p, boss.Pos, boss.Size) < 2)
+                        if (!(p.IsAlive && !p.BossHidden) || RectGap(p, boss.Pos, boss.Size) < 2)
                         {
                             continue;
                         }
@@ -210,7 +217,7 @@ namespace RevGame.Battle
                             }
                         }
                     }
-                    if (bestCount < 2 || bestCount <= here)
+                    if (bestCount == 0)
                     {
                         return false;
                     }
@@ -264,7 +271,7 @@ namespace RevGame.Battle
             result.Clear();
             foreach (Piece p in board.GetPiecesOf(GameSide.Player))
             {
-                if (p.IsAlive && RectGap(p, origin, size) <= radius)
+                if ((p.IsAlive && !p.BossHidden) && RectGap(p, origin, size) <= radius)
                 {
                     result.Add(p);
                 }
@@ -282,7 +289,7 @@ namespace RevGame.Battle
             float cy = boss.Pos.Y + (boss.Size - 1) * 0.5f;
             foreach (Piece p in board.GetPiecesOf(GameSide.Player))
             {
-                if (!p.IsAlive)
+                if (!(p.IsAlive && !p.BossHidden))
                 {
                     continue;
                 }
@@ -302,7 +309,7 @@ namespace RevGame.Battle
             result.Clear();
             foreach (Piece piece in board.GetPiecesOf(GameSide.Player))
             {
-                if (piece.IsAlive)
+                if ((piece.IsAlive && !piece.BossHidden))
                 {
                     result.Add(piece);
                 }
@@ -317,7 +324,7 @@ namespace RevGame.Battle
             result.Clear();
             foreach (Piece p in board.GetPiecesOf(GameSide.Player))
             {
-                if (p.IsAlive)
+                if ((p.IsAlive && !p.BossHidden))
                 {
                     result.Add(p);
                 }

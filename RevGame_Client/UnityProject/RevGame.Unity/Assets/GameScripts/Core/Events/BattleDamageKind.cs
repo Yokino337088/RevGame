@@ -11,6 +11,7 @@ namespace RevGame.Core
         BossCleave = 16, BossSnipe, BossBombard, BossBulletRing, BossBlinkBlast,
         BossLaserSpin, BossSoulDrain, BossSummon, BossEnrage, BossMeteorShower,
         BossCrossLaser, BossFrostNova, BossChainLightning, BossPoisonMarsh,
-        BossFlameWall, BossIceLance, BossGravityWell, BossDoomSigil
+        BossFlameWall, BossIceLance, BossGravityWell, BossDoomSigil,
+        BossStarStorm, BossBlackHole, BossSolarFlare, BossSunBrand, BossTidalSurge, BossMaelstrom, BossSwampMaw, BossMireChains, BossFrozenPrison, BossGlacialAegis, BossDivineCross, BossSanctuary
     }
 }

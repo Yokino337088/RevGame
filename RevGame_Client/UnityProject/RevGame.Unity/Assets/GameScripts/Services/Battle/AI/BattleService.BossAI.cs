@@ -51,6 +51,8 @@ namespace RevGame.Services
             public float NextSkillAt { get; set; }
             /// <summary>长度 = 技能枚举数量；初始全是 0，表示所有技能一开始都不在冷却。</summary>
             public float[] SkillReadyAt { get; } = new float[Enum.GetValues(typeof(BossSkillKind)).Length];
+            public int[] SkillUseCounts { get; } = new int[System.Enum.GetValues(typeof(BossSkillKind)).Length];
+            public void ExclusiveHit(BossSkillInfo info) { _service.ApplyExclusiveHit(Boss, info); }
             public BossSkillKind? LastSkill { get; set; }
             public BossSkillPlan PendingPlan { get; set; }
             public bool PredictAttackDefeat(Piece attacker, Piece target) { return _service.PredictAttackDefeat(attacker, target); }

@@ -22,6 +22,7 @@
 using System;
 using RevGame.Board;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Pieces;
 using Revolution;
 
@@ -52,6 +53,8 @@ namespace RevGame.Battle
         IceLance,
         GravityWell,
         DoomSigil,
+
+        StarStorm, BlackHole, SolarFlare, SunBrand, TidalSurge, Maelstrom, SwampMaw, MireChains, FrozenPrison, GlacialAegis, DivineCross, Sanctuary,
 
         Dead,
         Stopped,
@@ -86,6 +89,10 @@ namespace RevGame.Battle
         float NextSkillAt { get; set; }
         /// <summary>按 BossSkillKind 下标存放的各技能“冷却结束时刻”。</summary>
         float[] SkillReadyAt { get; }
+        /// <summary>本局各技能开始施放的次数。优先轮换未用招式，防止全屏评分长期垄断。</summary>
+        int[] SkillUseCounts { get; }
+        /// <summary>专属技能提交，仍由服务统一处理扣血、控制与占格。</summary>
+        void ExclusiveHit(BossSkillInfo info);
         /// <summary>上一次使用的技能，用于“避免连放同一招”。</summary>
         BossSkillKind? LastSkill { get; set; }
         /// <summary>Idle 选好、等待技能状态在 OnEnter 读取的计划。</summary>
@@ -152,6 +159,18 @@ namespace RevGame.Battle
             _machine.AddState(BossAIState.IceLance, new BossIceLanceState(_machine));
             _machine.AddState(BossAIState.GravityWell, new BossGravityWellState(_machine));
             _machine.AddState(BossAIState.DoomSigil, new BossDoomSigilState(_machine));
+            _machine.AddState(BossAIState.StarStorm, new BossExclusiveState(_machine, BossSkillKind.StarStorm));
+            _machine.AddState(BossAIState.BlackHole, new BossExclusiveState(_machine, BossSkillKind.BlackHole));
+            _machine.AddState(BossAIState.SolarFlare, new BossExclusiveState(_machine, BossSkillKind.SolarFlare));
+            _machine.AddState(BossAIState.SunBrand, new BossExclusiveState(_machine, BossSkillKind.SunBrand));
+            _machine.AddState(BossAIState.TidalSurge, new BossExclusiveState(_machine, BossSkillKind.TidalSurge));
+            _machine.AddState(BossAIState.Maelstrom, new BossExclusiveState(_machine, BossSkillKind.Maelstrom));
+            _machine.AddState(BossAIState.SwampMaw, new BossExclusiveState(_machine, BossSkillKind.SwampMaw));
+            _machine.AddState(BossAIState.MireChains, new BossExclusiveState(_machine, BossSkillKind.MireChains));
+            _machine.AddState(BossAIState.FrozenPrison, new BossExclusiveState(_machine, BossSkillKind.FrozenPrison));
+            _machine.AddState(BossAIState.GlacialAegis, new BossExclusiveState(_machine, BossSkillKind.GlacialAegis));
+            _machine.AddState(BossAIState.DivineCross, new BossExclusiveState(_machine, BossSkillKind.DivineCross));
+            _machine.AddState(BossAIState.Sanctuary, new BossExclusiveState(_machine, BossSkillKind.Sanctuary));
             _machine.AddState(BossAIState.Dead, new BossDeadState(_machine));
             _machine.AddState(BossAIState.Stopped, new BossStoppedState(_machine));
             _machine.ChangeState(BossAIState.Idle, "创建Boss AI");
@@ -180,6 +199,19 @@ namespace RevGame.Battle
                 case BossSkillKind.IceLance: return BossAIState.IceLance;
                 case BossSkillKind.GravityWell: return BossAIState.GravityWell;
                 case BossSkillKind.DoomSigil: return BossAIState.DoomSigil;
+                case BossSkillKind.StarStorm: return BossAIState.StarStorm;
+                case BossSkillKind.BlackHole: return BossAIState.BlackHole;
+                case BossSkillKind.SolarFlare: return BossAIState.SolarFlare;
+                case BossSkillKind.SunBrand: return BossAIState.SunBrand;
+                case BossSkillKind.TidalSurge: return BossAIState.TidalSurge;
+                case BossSkillKind.Maelstrom: return BossAIState.Maelstrom;
+                case BossSkillKind.SwampMaw: return BossAIState.SwampMaw;
+                case BossSkillKind.MireChains: return BossAIState.MireChains;
+                case BossSkillKind.FrozenPrison: return BossAIState.FrozenPrison;
+                case BossSkillKind.GlacialAegis: return BossAIState.GlacialAegis;
+                case BossSkillKind.DivineCross: return BossAIState.DivineCross;
+                case BossSkillKind.Sanctuary: return BossAIState.Sanctuary;
+
 
             }
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "没有对应的Boss技能状态");
@@ -228,7 +260,7 @@ namespace RevGame.Battle
         /// </summary>
         public bool TryCast(BossSkillKind kind)
         {
-            if (_disposed || State == BossAIState.Dead || _owner == null)
+            if (_disposed || State == BossAIState.Dead || _owner == null || !BossSkillCatalog.IsUnlocked(kind, _owner.Chapter))
             {
                 return false;
             }

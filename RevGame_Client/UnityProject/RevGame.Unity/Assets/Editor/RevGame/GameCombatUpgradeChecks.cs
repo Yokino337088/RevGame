@@ -141,11 +141,13 @@ namespace RevGame.Editor
                 // 每招重新造局，不能复用已受伤/移动过的目标来制造覆盖；原九招与新增九招都走实际状态机。
                 foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
                 {
+                    // 此入口保留原18招声音/特效回归；章节专属的状态与视觉由GameBossSkillExpansionPlayChecks逐章验收。
+                    if (kind >= BossSkillKind.StarStorm) { continue; }
                     Require(battle.LoadDevelopmentScenario("boss"), "复位技能夹具 " + kind);
                     Gm("Boss清卫");
                     if (kind == BossSkillKind.BlinkBlast)
                     {
-                        // 瞬移的真实选招条件是“落点至少两人，且比原地更密集”。
+                        // 瞬移需要一个合法且能命中玩家的完整身体落点。
                         // 准备期消费实际手牌构造远处目标群，不能绕过选招条件强行报通过。
                         foreach (BoardPos pos in new[] { new BoardPos(0, 0), new BoardPos(1, 0), new BoardPos(1, 1) })
                         {

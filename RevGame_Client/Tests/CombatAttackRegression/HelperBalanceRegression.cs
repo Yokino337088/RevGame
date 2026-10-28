@@ -23,6 +23,7 @@ internal static class HelperBalanceRegression
                 var battle = new BattleService(true, seed + chapter * 101);
                 int helperHits = 0, playerHits = 0, enemyHits = 0, deaths = 0, playerDeaths = 0, bossCasts = 0, bossId = 0;
                 string bossLastDamage = "none";
+                var bossKinds = new HashSet<BossSkillKind>();
                 long helperDamage = 0, playerDamage = 0, enemyDamage = 0;
                 object owner = new object();
                 RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, info =>
@@ -31,7 +32,7 @@ internal static class HelperBalanceRegression
                     else if (info.TargetSide == GameSide.Player) { enemyHits++; enemyDamage += info.Damage; } else { playerHits++; playerDamage += info.Damage; }
                     if (info.TargetId == bossId) { bossLastDamage = info.DamageKind.ToString(); }
                 }, owner: owner);
-                RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, info => bossCasts++, owner: owner);
+                RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, info => { bossCasts++; bossKinds.Add(info.Kind); }, owner: owner);
                 RevEvent.AddEventListener<int>(Events.PieceDied, id =>
                 {
                     deaths++;
@@ -79,7 +80,7 @@ internal static class HelperBalanceRegression
                         bool won = battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player;
                         if (won) { wins++; } else { losses++; }
                         rows.Add(new { seed, chapter, round, won, seconds = battle.BattleElapsed, helperHits, playerHits, enemyHits, deaths, playerDeaths,
-                            helperDamage, playerDamage, enemyDamage, bossHpStart, bossCasts, bossLastDamage, minPlayerHpRatio, wallet = battle.CombatScore, score = battle.ChapterScore });
+                            helperDamage, playerDamage, enemyDamage, bossHpStart, bossCasts, bossDistinctSkills = bossKinds.Count, bossSkills = new List<BossSkillKind>(bossKinds), bossLastDamage, minPlayerHpRatio, wallet = battle.CombatScore, score = battle.ChapterScore });
                         if (round < Balance.RoundsPerChapter)
                         {
                             bool accepted = won ? battle.ContinueRound() : battle.BeginHelperBalanceFixture(chapter, round + 1);

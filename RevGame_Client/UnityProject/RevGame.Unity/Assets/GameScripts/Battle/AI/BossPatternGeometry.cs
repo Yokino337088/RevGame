@@ -17,7 +17,7 @@ namespace RevGame.Battle
             Piece a = null, b = null, c = null;
             foreach (Piece p in board.Pieces)
             {
-                if (p.Side != GameSide.Player || !p.IsAlive) { continue; }
+                if (p.Side != GameSide.Player || !(p.IsAlive && !p.BossHidden)) { continue; }
                 if (a == null || p.Def.Attack > a.Def.Attack) { c = b; b = a; a = p; }
                 else if (b == null || p.Def.Attack > b.Def.Attack) { c = b; b = p; }
                 else if (c == null || p.Def.Attack > c.Def.Attack) { c = p; }
@@ -28,7 +28,7 @@ namespace RevGame.Battle
             int hits = 0;
             foreach (Piece p in board.Pieces)
             {
-                if (p.Side != GameSide.Player || !p.IsAlive) { continue; }
+                if (p.Side != GameSide.Player || !(p.IsAlive && !p.BossHidden)) { continue; }
                 for (int index = 0; index < def.Count; index++)
                 {
                     if (Touches(p, kind, boss.Pos, boss.Size, plan, def.Radius, index)) { hits++; break; }

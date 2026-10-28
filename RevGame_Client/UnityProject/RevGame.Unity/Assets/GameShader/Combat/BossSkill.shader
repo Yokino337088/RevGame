@@ -247,13 +247,47 @@ Shader "RevGame/Combat/BossSkill"
                 {
                     fx = MagicOrb(p, t);
                 }
-                else
+                else if (_Mode < 9.5)
                 {
                     // 9 能量炸弹：保留素材alpha，流动扫描与能量裂纹用本地UV生成，不会采到相邻图集。
                     half scan = pow(saturate(1.0 - abs(frac(uv.y - _Time.y * 1.5) - 0.5) * 7.0), 2.0);
                     half crack = pow(saturate(1.0 - abs(Fbm(p * 5.0 + _Time.y) - 0.5) * 12.0), 3.0);
                     half3 shell = lerp(half3(0.055, 0.08, 0.13), _Tint.rgb, scan * 0.65 + crack * 0.45);
                     fx = fixed4(shell + _Tint.rgb * crack * 0.5, source.a);
+                }
+                else
+                {
+                    // 10至15为六章专属程序化场：无需散图Texture，所有图案在Sprite局部坐标生成。
+                    half r=length(p), angle=atan2(p.y,p.x);
+                    half envelope=smoothstep(0,.08,t)*(1-smoothstep(.82,1,t));
+                    half edge=1-smoothstep(.85,1,r);
+                    half energy=0;
+                    if (_Mode < 10.5) // 星空：旋臂、星点、暗色视界与发亮吸积环。
+                    {
+                        half arms=pow(saturate(.5+.5*sin(angle*5+r*18-_Time.y*5)),5);
+                        half disk=exp(-abs(r-.45)*18);
+                        half stars=pow(Hash(floor(p*22)),35)*edge;
+                        energy=(arms*.65+disk+stars)*smoothstep(.18,.29,r);
+                    }
+                    else if (_Mode < 11.5) // 太阳：扭曲日冕、放射性火舌。
+                    { energy=pow(saturate(1-r),2)+pow(saturate(.5+.5*sin(angle*14+Fbm(p*5+_Time.y)*6)),3)*exp(-abs(r-.64)*8); }
+                    else if (_Mode < 12.5) // 水流：连续螺旋泡沫与外缘浪花。
+                    { energy=pow(saturate(.5+.5*sin(r*29-angle*3+_Time.y*7)),6)*edge+exp(-abs(r-.8)*35)*.7; }
+                    else if (_Mode < 13.5) // 沼泽：黏稠涡纹和冒泡裂隙，中心保持深色。
+                    { energy=(pow(Fbm(p*7+_Time.y*.5),3)*1.8+exp(-abs(r-.7)*18)) * smoothstep(.12,.4,r)*edge; }
+                    else if (_Mode < 14.5) // 冰晶：六向晶枝和破裂冰壳。
+                    { energy=pow(saturate(.5+.5*cos(angle*6)),18)*edge+exp(-abs(r-.7)*30)+pow(saturate(1-abs(Fbm(p*12)-.5)*20),3)*edge*.45; }
+                    else // 圣域：同心法印、十字圣纹、角向刻度。
+                    { energy=exp(-abs(r-.75)*45)+exp(-abs(r-.5)*50)+pow(saturate(1-min(abs(p.x),abs(p.y))*14),3)*edge+pow(saturate(cos(angle*24)),16)*exp(-abs(r-.68)*35); }
+                    half3 dark=_Tint.rgb*.08;
+                    fx=fixed4(lerp(dark,_Tint.rgb*1.8+energy*.3,saturate(energy)),saturate(energy*.8+edge*.22)*envelope);
+                    // 黑洞独立暗核：遮住棋盘才能读成陷落，而不是另一团紫色光晕。
+                    if (_Mode < 10.5 && _Shape > 1.5)
+                    {
+                        half horizon = 1-smoothstep(.28,.38,r);
+                        fx.rgb = lerp(fx.rgb, half3(.006,.002,.018), horizon);
+                        fx.a = max(fx.a, horizon * envelope);
+                    }
                 }
                 fx.a *= _Tint.a * input.color.a;
                 // 预乘：rgb 按 alpha 衰减；再按 _Additive 降低输出 alpha，让发光部分“加”在底图上而不是盖住它。

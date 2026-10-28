@@ -7,6 +7,8 @@
 // ============================================================
 using System.Collections.Generic;
 using RevGame.Core;
+using RevGame.Battle;
+using RevGame.Data;
 using Revolution;
 using UnityEngine;
 
@@ -22,6 +24,7 @@ namespace RevGame.View
         /// <summary>订阅 Boss 技能事件；在 OnEnable 里与其他事件一起注册，owner 释放时自动解绑。</summary>
         private void ListenBossSkills()
         {
+            RevEvent.AddEventListener<int>(Events.BossStatusChanged, OnBossStatusChanged, owner: this);
             RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, OnBossTelegraph, owner: this);
             RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, OnBossCast, owner: this);
         }
@@ -37,6 +40,7 @@ namespace RevGame.View
             {
                 boss.PlayAttackPulse();
             }
+            if ((int)info.Kind >= (int)BossSkillKind.StarStorm && boss != null) { boss.PlayBossCharge(info.Kind, info.Windup); }
             SpawnBossFx(info, true);
         }
 
@@ -59,6 +63,15 @@ namespace RevGame.View
                     boss.SnapTo(position);
                 }
                 boss.PlayAttackPulse();
+            }
+            if ((int)info.Kind >= (int)BossSkillKind.StarStorm)
+            {
+                if (boss != null) { boss.PlayBossCharge(info.Kind, .6f, windingUp: false); }
+                foreach (BoardCellView cell in _cells)
+                {
+                    if (BossExclusiveGeometry.Contains(info.Kind, info.A, info.B, info.C, info.Radius, info.Index, cell.Position))
+                    { cell.PlayBossTile(BossSkillFxView.ExclusiveTint(info.Kind), Mathf.Max(.8f, BossSkillCatalog.Get(info.Kind).Duration)); }
+                }
             }
             SpawnBossFx(info, false);
         }
@@ -97,6 +110,13 @@ namespace RevGame.View
         }
 
         /// <summary>换回合 / 结算 / 退出时立即收回所有 Boss 特效。</summary>
+        private void OnBossStatusChanged(int id)
+        {
+            if (_released || !_pieces.TryGetValue(id, out PieceView view)) { return; }
+            var piece = FindPiece(id);
+            if (piece != null) { view.SetBossStatus(piece.BossHidden, piece.BossFrozen, piece.BossAttackFactor < 1f || piece.BossSpeedFactor < 1f); }
+        }
+
         private void ClearBossFx()
         {
             foreach (BossSkillFxView fx in _bossFx)
@@ -107,6 +127,7 @@ namespace RevGame.View
                 }
             }
             _bossFx.Clear();
+            foreach (BoardCellView cell in _cells) { cell.ClearBossTile(); }
         }
     }
 }

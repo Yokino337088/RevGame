@@ -36,7 +36,7 @@ namespace RevGame.Battle
             var ranged = new List<Piece>();
             foreach (Piece piece in board.Pieces)
             {
-                if (piece.Side == GameSide.Player && piece.Def.IsRanged && piece.IsAlive) { ranged.Add(piece); }
+                if (piece.Side == GameSide.Player && piece.Def.IsRanged && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen) { ranged.Add(piece); }
             }
             if (ranged.Count < minimumCount) { return; }
             ranged.Sort((a,b) => a.Id.CompareTo(b.Id));

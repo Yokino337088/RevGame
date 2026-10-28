@@ -56,3 +56,15 @@ Event_眼位成型	眼位成型	眼位四邻：防御+{defense} · 每秒回复{
 Event_眼位复苏	眼位复苏	驻眼棋原地复活 · 四邻友军回复{heal}最大生命	#FFF080	48	2.8	1.12
 Damage_Helper	-{damage}		#FFE52E	64	1.6	1.35
 Damage_HelperBeam	-{damage}		#FFE52E	64	1.6	1.35
+Damage_BossStarStorm	星暴 -{damage}	真实扣血；仅同目标同来源合并	#AD80FF	56	1.1	1.32
+Damage_BossBlackHole	黑洞 -{damage}	真实扣血；仅同目标同来源合并	#AD80FF	56	1.1	1.32
+Damage_BossSolarFlare	日冕 -{damage}	真实扣血；仅同目标同来源合并	#FFAA36	56	1.1	1.32
+Damage_BossSunBrand	灼烧 -{damage}	真实扣血；仅同目标同来源合并	#FFAA36	56	1.1	1.32
+Damage_BossTidalSurge	怒涛 -{damage}	真实扣血；仅同目标同来源合并	#40CCFF	56	1.1	1.32
+Damage_BossMaelstrom	回流 -{damage}	真实扣血；仅同目标同来源合并	#40CCFF	56	1.1	1.32
+Damage_BossSwampMaw	吞噬 -{damage}	真实扣血；仅同目标同来源合并	#8ECF48	56	1.1	1.32
+Damage_BossMireChains	泥沼 -{damage}	真实扣血；仅同目标同来源合并	#8ECF48	56	1.1	1.32
+Damage_BossFrozenPrison	冰囚 -{damage}	真实扣血；仅同目标同来源合并	#70E0FF	56	1.1	1.32
+Damage_BossGlacialAegis	冰爆 -{damage}	真实扣血；仅同目标同来源合并	#70E0FF	56	1.1	1.32
+Damage_BossDivineCross	神罚 -{damage}	真实扣血；仅同目标同来源合并	#FFDA50	56	1.1	1.32
+Damage_BossSanctuary	圣域 -{damage}	真实扣血；仅同目标同来源合并	#FFDA50	56	1.1	1.32

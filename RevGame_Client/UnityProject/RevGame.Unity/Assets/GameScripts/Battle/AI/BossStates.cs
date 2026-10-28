@@ -18,8 +18,8 @@
 // 预警期间玩家可以把棋子移出危险区，命中时按“那一刻谁在范围里”结算——躲开就是真的躲开了。
 //
 // 【难度如何体现在状态里】
-// 第一章 Boss 只有横扫和狙击；章节越高解锁的技能越多（见 Excel 的 UnlockChapter）；
-// 第四章起残血会进入狂暴（BossEnrageState），之后冷却进一步缩短；第六章所有状态都会出现。
+// 各章共享18种基础技能，再由ExclusiveChapter限定本章两种专属技能；
+// 可用技能先按使用次数轮换，再按战术评分选招。残血狂暴属于各章共用二阶段。
 //
 // 【为什么不在 OnEnter 里切状态】
 // 框架规定 OnEnter/OnExit 期间不能再对同一台机器 ChangeState（DEBUG 会抛异常）。
@@ -79,7 +79,8 @@ namespace RevGame.Battle
                 return;
             }
             Piece boss = Owner.Boss;
-            // ① 狂暴优先：血线一到立刻怒吼，不等公共间隔——这是第四章起 Boss 的“二阶段”信号。
+            Reposition();
+            // ① 狂暴优先：血线一到立刻怒吼，不等公共间隔——这是各章 Boss 的“二阶段”信号。
             if (!Owner.Enraged && BossSkillCatalog.IsUnlocked(BossSkillKind.Enrage, Owner.Chapter) && boss.HpRatio <= Balance.BossEnrageHpRatio)
             {
                 BossSkillPlan enrage;
@@ -91,7 +92,7 @@ namespace RevGame.Battle
             // ② 公共间隔到了才挑技能：BossTactics 会过滤掉未解锁、冷却中、打不到人的技能。
             BossSkillPlan plan;
             if (Owner.Elapsed >= Owner.NextSkillAt
-                && BossTactics.TryChoose(Owner.Board, boss, Owner.Chapter, Owner.Intelligence, Owner.SkillReadyAt, Owner.Elapsed, Owner.LastSkill, out plan))
+                && BossTactics.TryChoose(Owner.Board, boss, Owner.Chapter, Owner.Intelligence, Owner.SkillReadyAt, Owner.Elapsed, Owner.LastSkill, out plan, Owner.SkillUseCounts))
             {
                 Owner.PendingPlan = plan;
                 ChangeTo(BossAI.StateOf(plan.Kind), "选择技能 " + plan.Kind + "（评分 " + plan.Score.ToString("0.#") + "）");
@@ -99,6 +100,33 @@ namespace RevGame.Battle
             }
             // ③ 没有技能可放：普通攻击/靠近。只有待机时才积攒攻击进度——放技能期间不会“偷偷攒普攻”。
             NormalAction(seconds);
+        }
+
+        /// <summary>每个独立移动周期换位；不依赖普攻是否有目标，也不受小兵守眼策略限制。</summary>
+        private void Reposition()
+        {
+            Piece boss = Owner.Boss;
+            if (Owner.Elapsed < boss.NextMoveAt) { return; }
+            boss.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
+            // 轮转的巡游目标只是算法评分，不是玩法数值。整块身体仍经CanFit检查，不穿越占格。
+            int turn = 0;
+            foreach (int count in Owner.SkillUseCounts) { turn += count; }
+            BoardPos goal = new BoardPos((turn % 2 == 0 ? 1 : Owner.Board.Size - boss.Size - 1),
+                ((turn / 2) % 2 == 0 ? 1 : Owner.Board.Size - boss.Size - 1));
+            BoardPos best = boss.Pos;
+            int score = int.MaxValue;
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    if (dx == 0 && dy == 0) { continue; }
+                    BoardPos pos = new BoardPos(boss.Pos.X + dx, boss.Pos.Y + dy);
+                    if (!Owner.Board.CanFit(pos, boss.Size, GameSide.Enemy, boss, respectEnemyEyes: false)) { continue; }
+                    int candidate = Math.Abs(pos.X - goal.X) + Math.Abs(pos.Y - goal.Y);
+                    if (candidate < score) { score = candidate; best = pos; }
+                }
+            }
+            if (best != boss.Pos) { Owner.Teleport(best); }
         }
 
         /// <summary>与普通敌棋相同的攻击/推进规则：射程内有人就打，没有就等移动冷却后靠近一格。</summary>
@@ -127,22 +155,7 @@ namespace RevGame.Battle
                 }
                 return;
             }
-            if (Owner.Elapsed < Math.Max(Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks, boss.NextMoveAt))
-            {
-                return;
-            }
-            // 先推进冷却，失败也算一次：被堵住时不会每个小步都全盘搜索。
-            boss.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
-            EnemyTactics.GetAdvanceCandidates(Owner.Board, boss, _targets);
-            if (_targets.Count == 0)
-            {
-                return;
-            }
-            BoardPos best = EnemyTactics.ChooseSafeMove(Owner.Board, boss, _targets, Owner.Intelligence);
-            if (best != boss.Pos)
-            {
-                Owner.Move(boss, best);
-            }
+
         }
     }
 
@@ -192,6 +205,7 @@ namespace RevGame.Battle
                 _invalid = true;
                 return;
             }
+            Owner.SkillUseCounts[(int)Kind]++;
             OnPlanned();
             Piece boss = Owner.Boss;
             Info = new BossSkillInfo(boss.Id, Kind, boss.Pos, boss.Size, Plan.A, Plan.B, Plan.C, Def.Radius, Def.Windup, 0, Def.Count, Owner.Enraged);

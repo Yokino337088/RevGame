@@ -547,6 +547,7 @@ namespace RevGame.View
             view.SetHp(piece.HpRatio);
             view.SetLocked(piece.IsLocked);
             view.SetEyeGarrison(piece.IsEyeGarrison && piece.IsAlive);
+            view.SetBossStatus(piece.BossHidden, piece.BossFrozen, piece.BossAttackFactor < 1f || piece.BossSpeedFactor < 1f);
             PrimeBossIntro(view);
         }
 

@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "97db4bc80ca0659a43b7a39480ec5ec3a3ea29ba199662174437234ed12144b8",
-  "inputDigest": "51c5eca72737f90374a0578b826f34ef9e6cfe994d9c0ebce79097e90b238867",
+  "outputSha256": "30091e72624aee35716c7452cb36e2f3767676eaa128d1f2e435d572953dda28",
+  "inputDigest": "bf2cf1dc15ed410cb04b59825f9bfe9a6d4e2eed86e08027881cb8b3f227a176",
   "originalBytes": 17002248,
-  "outputBytes": 693356,
-  "characterCount": 1578,
-  "glyphCount": 3145,
+  "outputBytes": 698328,
+  "characterCount": 1591,
+  "glyphCount": 3169,
   "codepoints": [
     32,
     33,
@@ -308,6 +308,7 @@
     20876,
     20877,
     20882,
+    20885,
     20889,
     20891,
     20896,
@@ -345,6 +346,7 @@
     21047,
     21050,
     21051,
+    21066,
     21069,
     21073,
     21093,
@@ -421,6 +423,7 @@
     21516,
     21517,
     21518,
+    21520,
     21521,
     21527,
     21534,
@@ -454,6 +457,7 @@
     22122,
     22124,
     22218,
+    22234,
     22235,
     22238,
     22240,
@@ -477,6 +481,7 @@
     22362,
     22374,
     22378,
+    22404,
     22411,
     22495,
     22521,
@@ -539,6 +544,7 @@
     23454,
     23457,
     23458,
+    23459,
     23467,
     23475,
     23478,
@@ -974,6 +980,7 @@
     28040,
     28041,
     28044,
+    28059,
     28065,
     28072,
     28082,
@@ -1005,12 +1012,14 @@
     28457,
     28508,
     28525,
+    28526,
     28608,
     28779,
     28781,
     28783,
     28784,
     28789,
+    28796,
     28845,
     28846,
     28856,
@@ -1021,6 +1030,7 @@
     28895,
     28903,
     28909,
+    28937,
     28938,
     28966,
     28976,
@@ -1148,6 +1158,7 @@
     31508,
     31526,
     31532,
+    31548,
     31561,
     31570,
     31572,
@@ -1209,6 +1220,7 @@
     32531,
     32534,
     32536,
+    32538,
     32541,
     32544,
     32553,
@@ -1399,6 +1411,7 @@
     36753,
     36755,
     36776,
+    36784,
     36793,
     36798,
     36801,
@@ -1646,7 +1659,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/BattleText.txt",
-      "sha256": "f9bbb24393d060039b940dde9c35bdbbdbee042f62763dc6d06f227086a00cea"
+      "sha256": "c220eed39f78381e061f7bebc395f3f038d55fa680194cbacd234a177eb17d02"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/BattleTuning.txt",
@@ -1654,7 +1667,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/BossSkillConfig.txt",
-      "sha256": "4b76376b7a550120b394747242bbaecd21704420df529821822c343fc7d9e32c"
+      "sha256": "7124f4c51cfd7d4e6ceea839ccdc17eabae1a8acb4b71877553506b10d1db343"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/ChapterConfig.txt",
@@ -1806,11 +1819,19 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossAI.cs",
-      "sha256": "ff20107f8c42768e6106c0eeaa78f9334a818b8632629354cefee8eb6fae864f"
+      "sha256": "2e4d614d5574612839fdc9718a25b7821411c73fb8dd2d03dd448769bb2440a8"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossExclusiveGeometry.cs",
+      "sha256": "a4e3d6900c62bbe54a59020d6e433b2e5585d5db2b89e03f368a29a2543b0837"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossExclusiveState.cs",
+      "sha256": "52cdc46d95d26204d58e5a161a804dfbd5af35a22916365920853c82ddf1589f"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossPatternGeometry.cs",
-      "sha256": "1d15ada0b5b7dbb2ba94518ce93ee05700617cbefe0da8ae763def64f625eda9"
+      "sha256": "83fd31090a4544a8848554e416e3306c24281ff8ecba9958cb4a0f8e335f1a2c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossPatternStates.cs",
@@ -1818,11 +1839,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossStates.cs",
-      "sha256": "6cff8befc45355610c9ad0052d5b74aeb367b4e15ef6cf5790c980f6aa9ae632"
+      "sha256": "f4c6d06fe5af37c36c37feeac90a3c314713b19fb152255eb6836ae92e448f58"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/BossTactics.cs",
-      "sha256": "62b058998389c4ba978257661e2cb74ab8fbe7d6cbfbc980afe9b416c18c01de"
+      "sha256": "956611f8ec38a26a831d252d5c03b970cca5f849e388cccbd78fedd78a45a346"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/EnemyAI.cs",
@@ -1838,7 +1859,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/EnemyTactics.cs",
-      "sha256": "5c83ee357dd8b958e960830ecd508bc27515b1d50856bf144663a113c59873ed"
+      "sha256": "b23abf67ce48ea41e31dc9e09469b4c0cb3b9aea80278da95477a5b9fab86f62"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/EyeTactics.cs",
@@ -1854,7 +1875,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/AI/RangedFormationPlanner.cs",
-      "sha256": "d92a2476ebf68ec6ae1bd5377ae200ec57f6e801dadb0aa19828cd23e75f3e2f"
+      "sha256": "fe56e1ae2d00382305e154fef83646b35f277b15edcf7e673000cbf64b56ccc3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/Hand/HandModel.cs",
@@ -1862,7 +1883,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Battle/Rules/MoveRules.cs",
-      "sha256": "16f0eb10cc3705f6b708da61e99f4d631f875ae428e32cf10c33768ab393d3d8"
+      "sha256": "af78e69494a5661be6f4ea844e80c439b6d9daadb39c61955db5c7cc9a636db2"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Board/Model/BoardModel.cs",
@@ -1882,7 +1903,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs",
-      "sha256": "fa153dc53d7db36434a0faf6b7e851d29863496c0fbbf52a411f7ab50449748b"
+      "sha256": "dd017e6adbf5abd736dbcf647bc9de417d21004557aede7d7806cb46ade1d5bb"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
@@ -1902,11 +1923,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Configuration/Enums.cs",
-      "sha256": "a52acd6eb16cfa5c930f9a7b0e2aa4d07edeb4b6a7bd38631b45ff6443b315a8"
+      "sha256": "e819de8a72be70c7edc2f99a443a2f97fa35ba7e65c4eaf757bf0f0a3bf8568a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Events/BattleDamageKind.cs",
-      "sha256": "1a4df010221a7c15b161fc125f60b56b6235095b6971086e05d2a56ae5b15eb9"
+      "sha256": "f184a041085d4bb14f600b7a26bb4238a766f4a3ef5ae8529a5bea6c78d8b50b"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Events/BattleHitInfo.cs",
@@ -1926,7 +1947,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Events/Events.cs",
-      "sha256": "64b9c168798fb954c76d025e875b8896c9b07a87d8c513eb0b55d079c7f1c3c1"
+      "sha256": "d9b6d8288725913d116d20ae666560fc644b427cdbf58c873c426a7235ab5937"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Events/HelperSnapshot.cs",
@@ -1978,7 +1999,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Progression/BossSkillCatalog.cs",
-      "sha256": "1f4a71789e92c8cf2831e3fa2b9027be2ea4e6b7f60d270597ed6b858ae53228"
+      "sha256": "8bd281c65138b96bc3c37df5868e28a46d8a9e6ee79a8dcbb3f7a5ebb36c94c5"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Progression/LevelCatalog.cs",
@@ -2038,15 +2059,19 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pieces/Model/Piece.cs",
-      "sha256": "94dd78d5772856c8f5c957587db5085eb63aaf072d040c3a0f25b881ac9f71ed"
+      "sha256": "2117f6c8ef6d1cf1bf5b76afbd51d653ba60056c51ebbfcd1eaf3a6375a65ad4"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/AI/BattleService.BossAI.cs",
-      "sha256": "104aa4c2b8cca9116c04026bd6930ef68405144b27917ac317f3433651469509"
+      "sha256": "30a46249b8e9db6f5d2f5eb269c674edab848a92cd5eef7c23fa5ee22c949cc9"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/AI/BattleService.BossEffects.cs",
+      "sha256": "de3e712b315e037ca184b784c1e899aa2d629b3235ec17fae36247728a1b5339"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/AI/BattleService.EnemyAI.cs",
-      "sha256": "6c21c73c748c0c3ca0c77403577de39441d17a513ceedbfa5d42e21d6f429511"
+      "sha256": "fbf91c01fc5308c080bdd89dc85465d4916639f21094e8b9b85dad220d10bb5c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/AI/BattleService.EnemyDeployment.cs",
@@ -2071,6 +2096,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Diagnostics/BattleService.BalanceTesting.cs",
       "sha256": "c72829b2e9cf637a43df3af13694c4a8b1220b0dc6b20822effc8e56d0fc3294"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Diagnostics/BattleService.BossSkillChecks.cs",
+      "sha256": "433dd92bf552d1adb1cb0097f12e4ad2bcbf1172e8bf18aae6c0de9fcc805b3b"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Diagnostics/BattleService.BossVictoryChecks.cs",
@@ -2138,7 +2167,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Preparation/BattleService.Placement.cs",
-      "sha256": "0895966f61b0176b3a4704eeb81a39d3f0df50c6a96d4a46874a74173b7c3b40"
+      "sha256": "7e4478f7648f99f56dd388868af68f53f32429f5d0b0429ab0d5d62cb95494aa"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Preparation/BattleService.Preparation.cs",
@@ -2158,7 +2187,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Simulation/BattleService.cs",
-      "sha256": "5f8dcdb2adb3bdd5d76bcf19ff7de2d6d6246500f103e1821637144d7dc75404"
+      "sha256": "ae572e29a0eee9b089f69711a963159097f46d4f2b9ba10f555294e4c69be005"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.CombatPacing.cs",
@@ -2166,7 +2195,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Damage.cs",
-      "sha256": "2d9db7c45177435828972013a3b554106c82396478727b121e516eb9729fc1b2"
+      "sha256": "36ec7c5192ac3befe8d2123b9e8f29efa1505a0220115024ea356393081242f8"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Events.cs",
@@ -2293,8 +2322,12 @@
       "sha256": "6ebd46e16316a767c0439ca2eb82c1cfe9178ae9c0200f3c07f4275643191d9f"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardCellView.BossSkills.cs",
+      "sha256": "60a0909a1c2a33a72e5189aecb0c9ad3b80c0b185f23062add3dd24a9ca861e6"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardCellView.cs",
-      "sha256": "0ecd3bf5f2ec701b21feee2d4a5101d979a53eff135caf31b9f80032064e70b4"
+      "sha256": "3d68311b907a93474264ba433ff0d6ca13b8978da62290bc12f653db96c7b86d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardCellView.Magic.cs",
@@ -2314,7 +2347,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.BossSkills.cs",
-      "sha256": "b6253933baa3fa7f8814fe39223672ab67582ccbeb7566e4d9a803a3fa06d192"
+      "sha256": "4e6b554be85a51b25edfcbbdb9fd77ecbff067bade2de96ebf29f121441b3268"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.BossVictory.cs",
@@ -2326,7 +2359,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.cs",
-      "sha256": "6211937171b010a2a7a987f5319c90d2b06e8235f9cdf01d67eb31402d43b95c"
+      "sha256": "17c2dfcee63dd32f9a5c51032c922da6553356f22cec359eca3ed4f63c1e0e96"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.Feedback.cs",
@@ -2354,7 +2387,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BossSkillFxView.cs",
-      "sha256": "944f7fbcc28826172abdff5669fae8a37daf4c63ec8989edefa58455d9bf6f5c"
+      "sha256": "c845a2cd79f75af461397a7287cbf48ae1797dac04276826032b4804c25bf8c2"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BossSkillFxView.Exclusive.cs",
+      "sha256": "282fd3d500e7e559e6a29bb109d18e5f1dd55c431d610579413739c01c9c9f5a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/ScoreSparkView.cs",
@@ -2397,8 +2434,12 @@
       "sha256": "7bbb15463bdf4cbed588e3e7f67dd973216b0c7fd06de2ecd4ed0b37ed70d123"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pieces/PieceView.BossSkills.cs",
+      "sha256": "b1ab8a978e4ddc787d0076660725f0ad4d1d1d7e7b9550c7f69298f1a47f6c0e"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pieces/PieceView.cs",
-      "sha256": "129cca5bbf703afe83b0a1b07d8a556a1b9769b6df68892e953b819027665e00"
+      "sha256": "ebbbb31061bd58057c15c076d3205a702d9cde22f8d01a825ef6eaacb72cecd3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GamePoolRequests.cs",
@@ -2446,7 +2487,7 @@
     },
     {
       "path": "RevGame_Client/配置表/关卡与奖励配置.xlsx",
-      "sha256": "a5d4be9e420e41888ad6b4b6936ef238646af53754429f34631db914f3741ffc"
+      "sha256": "9e3ddac01818748d808e7b1278c6724802a0995a989f8855a3e63921d6bb06c1"
     },
     {
       "path": "RevGame_Client/配置表/增益与事件配置.xlsx",
@@ -2454,7 +2495,7 @@
     },
     {
       "path": "RevGame_Client/配置表/战斗弹幕配置.xlsx",
-      "sha256": "7bb29a92feab9749457475324fab5addb6fbef0fd11fc1cae6c48646c8492cd1"
+      "sha256": "bd53ba168e6cd6c849681661d8db08dd5ff9175798d1568f36fd1091d7b0a1f5"
     },
     {
       "path": "RevGame_Client/配置表/战斗数值参数.xlsx",

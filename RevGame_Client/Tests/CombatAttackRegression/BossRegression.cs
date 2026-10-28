@@ -80,9 +80,9 @@ internal static class BossRegression
             Assert(unlocked >= previous, "第" + chapter + "章解锁技能数不能少于上一章");
             previous = unlocked;
         }
-        Assert(previous == Enum.GetValues(typeof(BossSkillKind)).Length, "第六章 Boss 拥有全部技能");
+        Assert(previous == 20, "每章18通用加2专属技能");
         Assert(BossSkillCatalog.IsUnlocked(BossSkillKind.Cleave, 1) && BossSkillCatalog.IsUnlocked(BossSkillKind.Snipe, 1), "第一章至少有横扫与狙击");
-        Assert(!BossSkillCatalog.IsUnlocked(BossSkillKind.LaserSpin, 1) && !BossSkillCatalog.IsUnlocked(BossSkillKind.Summon, 5), "高阶技能不会提前出现");
+        Assert(BossSkillCatalog.IsUnlocked(BossSkillKind.LaserSpin, 1) && !BossSkillCatalog.IsUnlocked(BossSkillKind.StarStorm, 6), "通用技能首章可用，专属技能不串章");
         foreach (BossSkillKind kind in new[] { BossSkillKind.Cleave, BossSkillKind.Snipe })
         {
             Assert(BossSkillCatalog.CooldownFor(kind, 6, false) < BossSkillCatalog.CooldownFor(kind, 1, false), kind + " 第六章冷却更短");
@@ -121,7 +121,7 @@ internal static class BossRegression
             }
             Assert(telegraphs.Count == 1, "等待结束后进入技能并广播预警");
             BossSkillKind kind = telegraphs[0].Kind;
-            Assert(kind == BossSkillKind.Cleave || kind == BossSkillKind.Snipe, "第一章只会用横扫/狙击");
+            Assert(BossSkillCatalog.IsUnlocked(kind, 1), "第一章施放合法技能池中的技能");
             Assert(ai.State == BossAI.StateOf(kind) && casts.Count == 0 && skillHits.Count == 0, "预警期间状态正确且尚未造成技能伤害");
             float windup = BossSkillCatalog.Get(kind).Windup;
             float castStart = battle.BattleElapsed;
@@ -130,11 +130,11 @@ internal static class BossRegression
                 battle.RunRegressionEnemyAI(Step);
             }
             Assert(casts.Count == 1 && battle.BattleElapsed - castStart >= windup - Step * 1.01f, "蓄力满 Windup 才命中");
-            Assert(skillHits.Count >= 1 && skillHits[0].TargetId == adjacent.Id, "技能命中的伤害带 FromSkill 标记且打到范围内的棋子");
             while (ai.State != BossAIState.Idle && guard++ < 120)
             {
                 battle.RunRegressionEnemyAI(Step);
             }
+            Assert(skillHits.Count >= 1 && skillHits[0].TargetId == adjacent.Id, "技能命中的伤害带 FromSkill 标记且打到范围内的棋子");
             Assert(ai.State == BossAIState.Idle, "收招后回到待机");
             Assert(ai.History[ai.History.Length - 1].Reason.Contains("收招"), "切换历史记录收招原因");
         }
@@ -215,6 +215,7 @@ internal static class BossRegression
     {
         foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
         {
+            if ((int)kind >= 18) { continue; } // 专属技能由BossSkillExpansion规则和六章Play逐招验收。
             BattleService battle = BattleService.CreateBossRegressionFixture(6);
             Piece boss = battle.AddRegressionBoss(new BoardPos(3, 3), 2);
             // 布置：一颗贴身、一颗在圈内、三颗远处扎堆——让每个技能都有合法目标。
@@ -313,7 +314,7 @@ internal static class BossRegression
                     battle.RunRegressionEnemyAI(Step);
                 }
                 int enrages = telegraphs.FindAll(t => t.Kind == BossSkillKind.Enrage).Count;
-                Assert(chapter == 1 ? enrages == 0 : enrages == 1, "第" + chapter + "章狂暴次数 = " + enrages);
+                Assert(enrages == 1, "第" + chapter + "章狂暴次数 = " + enrages);
             }
             finally
             {

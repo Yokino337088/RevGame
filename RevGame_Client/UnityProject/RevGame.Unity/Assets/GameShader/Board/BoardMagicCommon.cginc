@@ -4,7 +4,8 @@
 struct appdata { float4 vertex:POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; };
 struct v2f { float4 vertex:SV_POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; float2 world:TEXCOORD1; };
 sampler2D _MainTex;
-fixed4 _Color, _Tint, _Glow;
+fixed4 _Color, _Tint, _Glow, _BossTint;
+float _BossPulse;
 float _Strength, _Speed, _CellSize, _Origin, _PreviewTime;
 v2f vert(appdata v) { v2f o; o.vertex=UnityObjectToClipPos(v.vertex); o.world=mul(unity_ObjectToWorld,v.vertex).xy; o.uv=v.uv; o.color=v.color*_Color; return o; }
 float clockTime() { return (_PreviewTime >= 0 ? _PreviewTime : _Time.y)*_Speed; }
@@ -24,6 +25,10 @@ fixed4 finishTile(v2f i,float light) {
  fixed4 base=tex2D(_MainTex,i.uv)*i.color;
  // 保留原图alpha和格线；低饱和底色承载细节，亮纹有上限，不使用叠加混合烫白棋盘。
  base.rgb=base.rgb*_Tint.rgb + _Glow.rgb*saturate(light)*_Strength;
+ // 专属技能时格面亮起法纹，与常驻章节底色叠加，不覆盖原图透明度。
+ float2 p=tileLocal(i.world);
+ float rune=pow(saturate(.5+.5*sin((abs(p.x)+abs(p.y))*45-_Time.y*9)),5);
+ base.rgb=lerp(base.rgb,_BossTint.rgb*(.6+rune),saturate(_BossPulse)*.72);
  return base;
 }
 // 明暗起伏只作用于底色的小范围，棋子与格线始终保留足够对比度。
@@ -31,5 +36,9 @@ fixed4 finishTileShaded(v2f i,float light,float shade) {
  fixed4 base=tex2D(_MainTex,i.uv)*i.color;
  base.rgb*= _Tint.rgb*(1+clamp(shade,-.7,1)*.18);
  base.rgb+=_Glow.rgb*saturate(light)*_Strength;
+ // 专属技能时格面亮起法纹，与常驻章节底色叠加，不覆盖原图透明度。
+ float2 p=tileLocal(i.world);
+ float rune=pow(saturate(.5+.5*sin((abs(p.x)+abs(p.y))*45-_Time.y*9)),5);
+ base.rgb=lerp(base.rgb,_BossTint.rgb*(.6+rune),saturate(_BossPulse)*.72);
  return base;
 }

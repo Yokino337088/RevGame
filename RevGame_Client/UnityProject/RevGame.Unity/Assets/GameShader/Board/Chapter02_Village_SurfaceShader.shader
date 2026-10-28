@@ -1,5 +1,8 @@
 // 第二章：柔和的暖阳漫反射与圆润光斑缓慢起伏，不生成定向光束。
-Shader "RevGame/Board/Chapter02_Village" { Properties { [PerRendererData] _MainTex ("Sprite",2D)="white"{}
+Shader "RevGame/Board/Chapter02_Village" { Properties {
+ [PerRendererData] _BossPulse ("Boss技能格面脉冲", Float) = 0
+ [PerRendererData] _BossTint ("Boss技能主色", Color) = (1,1,1,1)
+ [PerRendererData] _MainTex ("Sprite",2D)="white"{}
 _Color("Color",Color)=(1,1,1,1)
 _Tint("底色",Color)=(.65,.6,.8,1)
 _Glow("魔法光色",Color)=(.6,.5,1,1)

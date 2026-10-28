@@ -85,7 +85,7 @@ namespace RevGame.Editor
             RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit,OnHit,owner:Owner);
             RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked,OnAttack,owner:Owner);
             RevEvent.AddEventListener<int>(Events.PieceDied,OnDeath,owner:Owner);
-            RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast,info=>{if(_round!=null){_round.bossCasts++;}},owner:Owner);
+            RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast,info=>{if(_round!=null){_round.bossCasts++; if(!_round.bossSkills.Contains(info.Kind.ToString())){_round.bossSkills.Add(info.Kind.ToString());}}},owner:Owner);
             try
             {
                 await Until(()=>flow.Screen==GameScreen.Home&&!flow.IsGameplayBlocked,30,"首页未就绪");
@@ -221,6 +221,8 @@ namespace RevGame.Editor
             public int chapter,round,cardsPlayed,playersStart,enemiesStart,playersEnd,enemiesEnd,playerHpStart,enemyHpStart,playerHpEnd,enemyHpEnd;
             public int playerAttacks,enemyAttacks,playerDamage,enemyDamage,playerCombatDamage,enemyCombatDamage,supportDamage,playerDeaths,enemyDeaths,events,bombs,regions,bossCasts,moves,emergency;
             public float seconds,firstHit=-1,firstDeath=-1;public string winner;public bool boss,timeout;public string[] preparation;
+            // 记录自然施法的去重名单，不能拿GM轮播数量代替正常对战覆盖。
+            public List<string> bossSkills=new List<string>();
             public List<string> decisions=new List<string>();
         }
     }

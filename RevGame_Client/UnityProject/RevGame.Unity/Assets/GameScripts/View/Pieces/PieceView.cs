@@ -167,6 +167,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            ClearBossSkillVisual();
             ClearBossDeath();
             SetEyeGarrison(false);
             StopFormationMove();
@@ -413,6 +414,7 @@ namespace RevGame.View
             _stormProgress = 0f;
             // ★ 不仅清 Renderer，也清复用的草稿。下一次换帧只更新纹理和UV，不能带回旧死亡进度。
             _visualProperties?.Clear();
+            ApplyBossShader();
             if (bodyRenderer != null)
             {
                 bodyRenderer.SetPropertyBlock(null);
@@ -734,7 +736,7 @@ namespace RevGame.View
             if (bodyRenderer != null)
             {
                 bodyRenderer.sprite = _frames[_frameIndex];
-                if (_birthProgress > 0f || _stormProgress > 0f || _eyeGarrison > 0f)
+                if (_birthProgress > 0f || _stormProgress > 0f || _eyeGarrison > 0f || _bossCharge > 0f || _bossIce > 0f)
                 {
                     // 一张Atlas里的不同帧通常位于不同矩形。先换图再同步UV/纹理，
                     // 保留当前效果进度，确保火舌始终贴在“此刻正在显示”的身体上。

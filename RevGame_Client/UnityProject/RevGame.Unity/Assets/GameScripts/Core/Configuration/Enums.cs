@@ -118,6 +118,31 @@ namespace RevGame.Core
         GravityWell = 16,
         /// <summary>末日烙印，参数、预警和解锁章节来自BossSkillConfig。</summary>
         DoomSigil = 17,
+        /// <summary>星辰风暴：章节专属技能，参数来自配置表。</summary>
+        StarStorm = 18,
+        /// <summary>黑洞陷落：章节专属技能，参数来自配置表。</summary>
+        BlackHole = 19,
+        /// <summary>日冕灼潮：章节专属技能，参数来自配置表。</summary>
+        SolarFlare = 20,
+        /// <summary>烈阳烙印：章节专属技能，参数来自配置表。</summary>
+        SunBrand = 21,
+        /// <summary>怒涛横卷：章节专属技能，参数来自配置表。</summary>
+        TidalSurge = 22,
+        /// <summary>回流涡旋：章节专属技能，参数来自配置表。</summary>
+        Maelstrom = 23,
+        /// <summary>沼泽巨口：章节专属技能，参数来自配置表。</summary>
+        SwampMaw = 24,
+        /// <summary>泥沼缚射：章节专属技能，参数来自配置表。</summary>
+        MireChains = 25,
+        /// <summary>极寒囚笼：章节专属技能，参数来自配置表。</summary>
+        FrozenPrison = 26,
+        /// <summary>冰封终焉：章节专属技能，参数来自配置表。</summary>
+        GlacialAegis = 27,
+        /// <summary>十字神罚：章节专属技能，参数来自配置表。</summary>
+        DivineCross = 28,
+        /// <summary>圣域：章节专属技能，参数来自配置表。</summary>
+        Sanctuary = 29,
+
 
     }
 

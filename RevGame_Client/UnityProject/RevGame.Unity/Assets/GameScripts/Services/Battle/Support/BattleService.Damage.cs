@@ -57,7 +57,7 @@ namespace RevGame.Services
         {
             Piece target = request.Target;
             Piece attacker = request.Attacker;
-            if (target == null || !target.IsAlive || _board.FindPiece(target.Id) != target) { return default; }
+            if (target == null || !target.IsAlive || target.BossHidden || target.BossInvulnerable || _board.FindPiece(target.Id) != target) { return default; }
             int amount;
             if (request.Basis == DamageBasis.Attack || request.Basis == DamageBasis.BossSkill)
             {
@@ -75,7 +75,7 @@ namespace RevGame.Services
                         // 共鸣只强化远程普攻；不修改图鉴共享数据，不改变敌方或技能伤害。
                         teamScale *= 1f + HelperRangedAttackBonus;
                     }
-                    amount = ClampDamage(attacker.Def.Attack * attacker.AttackScale * attacker.EyeAttackMultiplier * multiplier * Balance.CombatDamageScale * teamScale, 1);
+                    amount = ClampDamage(attacker.Def.Attack * attacker.AttackScale * attacker.BossAttackFactor * attacker.EyeAttackMultiplier * multiplier * Balance.CombatDamageScale * teamScale, 1);
                 }
                 else
                 {
@@ -140,7 +140,7 @@ namespace RevGame.Services
         private int ResolveDamage(DamageRequest request)
         {
             Piece target = request.Target;
-            if (target == null || !target.IsAlive || _board.FindPiece(target.Id) != target) { return 0; }
+            if (target == null || !target.IsAlive || target.BossHidden || target.BossInvulnerable || _board.FindPiece(target.Id) != target) { return 0; }
             DamageEvaluation evaluation = EvaluateDamage(request);
             int amount = evaluation.Damage;
             Piece attacker = request.Attacker;

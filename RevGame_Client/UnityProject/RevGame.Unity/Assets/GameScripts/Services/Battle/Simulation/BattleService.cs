@@ -588,6 +588,7 @@ namespace RevGame.Services
                 return;
             }
 
+            TickBossEffects();
             TryArrangeRangedFormation();
             StepSide(GameSide.Player, stepSeconds / Balance.BattleTickSeconds);
             RefreshGoState();
@@ -639,7 +640,7 @@ namespace RevGame.Services
                 rate = ScaleAutomationAttackRate(rate);
 #endif
                 piece.ActionProgress += stepFraction * Balance.AttackSpeedScale * PreparationAttackRate(piece)
-                    * rate * (1f + _speedBonus + _roundSpeedBonus + _combatHasteBonus) * piece.EyeSpeedMultiplier;
+                    * rate * piece.BossSpeedFactor * (1f + _speedBonus + _roundSpeedBonus + _combatHasteBonus) * piece.EyeSpeedMultiplier;
                 int actions = piece.ConsumeCompletedActions();
 
                 for (int action = 0; action < actions; action++)
@@ -668,7 +669,7 @@ namespace RevGame.Services
                 return;
             }
 
-            if (!target.IsAlive)
+            if (!target.IsAlive || target.BossHidden || attacker.BossHidden || attacker.BossFrozen)
             {
                 return;
             }
@@ -857,7 +858,7 @@ namespace RevGame.Services
 
             Piece king = _enemyPieces.Find(p => p.IsKing);
             // 血线与包围同时满足才擒王。满血时即使零气，也必须继续打掉血量；真实击杀始终获胜。
-            return king != null && (!king.IsAlive || (king.HpRatio <= Balance.BossCaptureHpRatio && king.IsLocked));
+            return king != null && (!king.IsAlive || (king.HpRatio <= Balance.BossCaptureHpRatio && king.IsLocked && !king.BossInvulnerable));
         }
 
         /// <summary>

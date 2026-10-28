@@ -1,5 +1,8 @@
 // 第四章：黏稠泥流慢速回卷，偶发气泡上浮，保持偏暗的沼泽色调。
-Shader "RevGame/Board/Chapter04_Swamp" { Properties { [PerRendererData] _MainTex ("Sprite",2D)="white"{}
+Shader "RevGame/Board/Chapter04_Swamp" { Properties {
+ [PerRendererData] _BossPulse ("Boss技能格面脉冲", Float) = 0
+ [PerRendererData] _BossTint ("Boss技能主色", Color) = (1,1,1,1)
+ [PerRendererData] _MainTex ("Sprite",2D)="white"{}
 _Color("Color",Color)=(1,1,1,1)
 _Tint("底色",Color)=(.65,.55,.4,1)
 _Glow("魔法光色",Color)=(.63,.76,.31,1)

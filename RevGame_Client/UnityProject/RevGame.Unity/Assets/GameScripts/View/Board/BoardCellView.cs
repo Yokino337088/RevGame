@@ -295,6 +295,7 @@ namespace RevGame.View
 
         public void OnPoolReturn()
         {
+            ClearBossTile();
             SetVictoryWave(1);
             CancelHazardWave();
             RestoreSurface();

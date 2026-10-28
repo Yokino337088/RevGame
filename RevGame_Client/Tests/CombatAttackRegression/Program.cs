@@ -24,6 +24,12 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+            if (args.Length > 1 && args[1] == "boss-expansion")
+            {
+                Console.WriteLine(BattleService.VerifyBossSkillExpansion((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); }));
+                Console.WriteLine("Boss专属与轮换断言通过：" + _assertions);
+                return 0;
+            }
             if (args.Length > 1 && args[1] == "storm")
             {
                 BattleService.VerifyStormRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });

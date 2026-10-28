@@ -22,7 +22,7 @@ namespace RevGame.Services
         /// </summary>
         private Piece FindSelectedPiece()
         {
-            return _playerPieces.Find(piece => piece.Id == SelectedPieceId && piece.IsAlive);
+            return _playerPieces.Find(piece => piece.Id == SelectedPieceId && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen);
         }
 
         /// <summary>
@@ -45,6 +45,7 @@ namespace RevGame.Services
             Piece occupant = _board.GetPiece(pos);
             if (occupant != null)
             {
+                if (occupant.BossHidden || occupant.BossFrozen) { return Reject("棋子正在黑洞或冰封中，状态结束后才能调整"); }
                 if (occupant.Side != GameSide.Player)
                 {
                     return SetHelperTarget(occupant.Id);

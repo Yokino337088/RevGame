@@ -70,7 +70,7 @@ namespace RevGame.Battle
                 foreach (BoardPos pos in targets)
                 {
                     Piece candidate = board.GetPiece(pos);
-                    if (candidate == null || !candidate.IsAlive || candidate.Side == attacker.Side || !candidate.Def.IsRanged) { continue; }
+                    if (candidate == null || !candidate.IsAlive || candidate.BossHidden || candidate.Side == attacker.Side || !candidate.Def.IsRanged) { continue; }
                     if (focus == null || candidate.Hp < focus.Hp || (candidate.Hp == focus.Hp && candidate.Id < focus.Id))
                     {
                         focus = candidate;
@@ -83,7 +83,7 @@ namespace RevGame.Battle
             foreach (BoardPos pos in targets)
             {
                 Piece target = board.GetPiece(pos);
-                if (target == null || !target.IsAlive || target.Side == attacker.Side)
+                if (target == null || !target.IsAlive || target.BossHidden || target.Side == attacker.Side)
                 {
                     continue;
                 }

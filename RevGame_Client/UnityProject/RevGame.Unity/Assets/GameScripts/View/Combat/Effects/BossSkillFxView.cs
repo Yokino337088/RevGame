@@ -28,7 +28,7 @@ using UnityEngine.Sprites;
 namespace RevGame.View
 {
     [RevPoolPrefab(RevResPath.Effects_Combat, "BossSkillFx", Group = RevResGroup.Battle)]
-    public sealed class BossSkillFxView : MonoBehaviour, IRevPoolable
+    public sealed partial class BossSkillFxView : MonoBehaviour, IRevPoolable
     {
         /// <summary>Shader 的效果模式；数值必须与 BossSkill.shader 里的分支一致。</summary>
         private enum FxMode
@@ -101,7 +101,7 @@ namespace RevGame.View
 
         /// <summary>结构容量：支持表格上限 32 发子弹与额外中心光，避免静默裁掉表内配置的弹幕数量。</summary>
         // 新技能可预警整盘81格；容量为格数+中心装饰，不在播放中动态扩容。
-        private const int MaxSlots = 84;
+        private const int MaxSlots = 90;
 
         /// <summary>表现飞行终点越过屏幕最远角；不参与技能合法性和伤害判定。</summary>
         private static float FullScreenTravelDistance(Vector3 center)
@@ -312,6 +312,7 @@ namespace RevGame.View
         private float BuildTelegraph(BossSkillInfo info, Vector3 center, Color tint)
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
+            if ((int)info.Kind >= 18) { return BuildExclusive(info, true); }
             if ((int)info.Kind >= 9) { return BuildPattern(info, true, tint); }
             float duration = info.Windup;
             // 两种激光从预瞄到命中保持红/黄识别色，避免通用红色预警把黄色染成橙色。
@@ -450,6 +451,7 @@ namespace RevGame.View
         /// <summary>按技能播放命中特效，返回本段动画时长。</summary>
         private float BuildCast(BossSkillInfo info, Vector3 center, Color tint)
         {
+            if ((int)info.Kind >= 18) { return BuildExclusive(info, false); }
             if ((int)info.Kind >= 9) { return BuildPattern(info, false, tint); }
             switch (info.Kind)
             {

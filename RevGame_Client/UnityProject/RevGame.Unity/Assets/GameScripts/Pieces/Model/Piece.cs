@@ -60,6 +60,15 @@ namespace RevGame.Pieces
         /// <summary>敌棋下一次允许自动靠近的战斗时间；攻速增益不能提前这个时间。</summary>
         internal float NextMoveAt { get; set; }
 
+        /// <summary>Boss控制由本局服务写入；隐藏仍保留占格预约，防止返场时被挤掉。快照复制，离场清零。</summary>
+        public bool BossHidden { get; internal set; }
+        public bool BossFrozen { get; internal set; }
+        public bool BossInvulnerable { get; internal set; }
+        internal float BossHiddenUntil, BossFrozenUntil;
+        /// <summary>领域的临时攻击/攻速倍率，默认1，每个模拟步按当前区域重算，禁止改共享图鉴。</summary>
+        public float BossAttackFactor { get; internal set; } = 1f;
+        public float BossSpeedFactor { get; internal set; } = 1f;
+
         private int _maxHp;
         private int _baseMaxHp;
         private float _roundHealthScale = 1f;
@@ -156,6 +165,10 @@ namespace RevGame.Pieces
             IgnoreEncirclement = source.IgnoreEncirclement;
             ShieldCharges = source.ShieldCharges;
             Hp = source.Hp;
+            BossHidden = source.BossHidden; BossFrozen = source.BossFrozen;
+            BossInvulnerable = source.BossInvulnerable;
+            BossHiddenUntil = source.BossHiddenUntil; BossFrozenUntil = source.BossFrozenUntil;
+            BossAttackFactor = source.BossAttackFactor; BossSpeedFactor = source.BossSpeedFactor;
             Pos = source.Pos;
             EyeCount = source.EyeCount;
             OpenLiberties = source.OpenLiberties;
@@ -225,7 +238,7 @@ namespace RevGame.Pieces
                 return 0;
             }
 
-            if (!IsAlive)
+            if (!IsAlive || BossHidden || BossInvulnerable)
             {
                 return 0;
             }

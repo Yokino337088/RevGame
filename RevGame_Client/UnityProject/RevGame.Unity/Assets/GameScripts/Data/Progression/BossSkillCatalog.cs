@@ -48,6 +48,13 @@ namespace RevGame.Data
         /// 单位取"格/秒"而不是"世界单位/秒"：策划改棋盘大小时手感不会跟着变。
         /// </summary>
         public float BulletSpeed { get; internal set; }
+        /// <summary>0表示通用技能，否则仅对应章节使用，不随解锁向后继承。</summary>
+        public int ExclusiveChapter { get; internal set; }
+        /// <summary>持续状态的模拟秒数；视图不能自行决定何时解冻或返场。</summary>
+        public float Duration { get; internal set; }
+        /// <summary>区域内实际攻击/攻速倍率，1表示不削弱；每步重算，离开或结束即还原。</summary>
+        public float AttackFactor { get; internal set; }
+        public float SpeedFactor { get; internal set; }
     }
 
     public static class BossSkillCatalog
@@ -61,7 +68,8 @@ namespace RevGame.Data
         /// <summary>该章节的 Boss 能不能使用这个技能。</summary>
         public static bool IsUnlocked(BossSkillKind kind, int chapter)
         {
-            return chapter >= Get(kind).UnlockChapter;
+            BossSkillDef def = Get(kind);
+            return chapter >= def.UnlockChapter && (def.ExclusiveChapter == 0 || def.ExclusiveChapter == chapter);
         }
 
         /// <summary>
@@ -110,6 +118,17 @@ namespace RevGame.Data
                     problems.Add(where + " 的 Hint 不能为空"); ok = false;
                 }
                 ok &= GameConfig.CheckRange(row.UnlockChapter, 1, 6, where, "UnlockChapter", problems);
+                ok &= GameConfig.CheckRange(row.ExclusiveChapter, 0, 6, where, "ExclusiveChapter", problems);
+                ok &= GameConfig.CheckRange(row.Duration, 0f, 30f, where, "Duration", problems);
+                ok &= GameConfig.CheckRange(row.AttackFactor, 0f, 1f, where, "AttackFactor", problems);
+                ok &= GameConfig.CheckRange(row.SpeedFactor, 0f, 1f, where, "SpeedFactor", problems);
+                if ((kind == BossSkillKind.SolarFlare || kind == BossSkillKind.SunBrand) && (row.Interval <= 0f || row.Duration <= row.Interval))
+                { problems.Add(where + " 的灼烧必须配置正间隔，持续时间必须超过间隔"); ok = false; }
+                if ((kind == BossSkillKind.BlackHole || kind == BossSkillKind.SwampMaw || kind == BossSkillKind.FrozenPrison
+                    || kind == BossSkillKind.MireChains || kind == BossSkillKind.Sanctuary) && row.Duration <= 0f)
+                { problems.Add(where + " 的持续状态必须有正持续时间"); ok = false; }
+                if ((int)kind >= (int)BossSkillKind.StarStorm && row.ExclusiveChapter != ((int)kind - (int)BossSkillKind.StarStorm) / 2 + 1)
+                { problems.Add(where + " 的专属章节与技能主题不符"); ok = false; }
                 ok &= GameConfig.CheckRange(row.Weight, 0, 1000, where, "Weight", problems);
                 ok &= GameConfig.CheckRange(row.Cooldown, 0f, 600f, where, "Cooldown", problems);
                 // 蓄力至少 0.3 秒：再短玩家根本看不到预警，等于没有预警。
@@ -151,6 +170,8 @@ namespace RevGame.Data
                     Power = row.Power,
                     Radius = row.Radius,
                     BulletSpeed = row.BulletSpeed,
+                    ExclusiveChapter = row.ExclusiveChapter, Duration = row.Duration,
+                    AttackFactor = row.AttackFactor, SpeedFactor = row.SpeedFactor,
                 };
             }
             GameConfig.CheckCoverage<BossSkillKind>(keys, "BossSkillConfig", problems);

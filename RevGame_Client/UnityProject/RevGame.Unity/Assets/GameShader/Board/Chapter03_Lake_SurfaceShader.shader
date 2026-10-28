@@ -1,5 +1,8 @@
 // 第三章：交叉水波形成不断移动的焦散和反光。只扰动光照，避免图集UV越界。
-Shader "RevGame/Board/Chapter03_Lake" { Properties { [PerRendererData] _MainTex ("Sprite",2D)="white"{}
+Shader "RevGame/Board/Chapter03_Lake" { Properties {
+ [PerRendererData] _BossPulse ("Boss技能格面脉冲", Float) = 0
+ [PerRendererData] _BossTint ("Boss技能主色", Color) = (1,1,1,1)
+ [PerRendererData] _MainTex ("Sprite",2D)="white"{}
 _Color("Color",Color)=(1,1,1,1)
 _Tint("底色",Color)=(.65,.6,.8,1)
 _Glow("魔法光色",Color)=(.6,.5,1,1)

@@ -52,6 +52,8 @@ namespace RevGame.Core
         /// <summary>有棋子死亡（被吃掉）。参数：棋子 Id。</summary>
         public const string PieceDied = "RevGame.Piece.Died";
         /// <summary>棋子血量变化。参数：棋子 Id。</summary>
+        /// <summary>Boss控制状态变化，签名Action&lt;int&gt;，参数为本局棋子Id。</summary>
+        public const string BossStatusChanged = "RevGame.Piece.BossStatus";
         public const string PieceHpChanged = "RevGame.Piece.HpChanged";
         /// <summary>棋块的围棋状态刷新完毕（气数/叫吃/锁死/连断都算完了）。</summary>
         public const string GoStateRefreshed = "RevGame.Board.GoStateRefreshed";
