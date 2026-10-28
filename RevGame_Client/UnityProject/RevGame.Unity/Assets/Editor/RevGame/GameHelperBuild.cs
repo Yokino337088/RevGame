@@ -95,14 +95,14 @@ namespace RevGame.Editor
             var canvas = new GameObject("Speech", typeof(RectTransform), typeof(Canvas)).GetComponent<Canvas>();
             canvas.transform.SetParent(root.transform, false); canvas.renderMode = RenderMode.WorldSpace;
             canvas.sortingOrder = 80;
-            canvas.GetComponent<RectTransform>().sizeDelta = new Vector2(255, 68);
+            canvas.GetComponent<RectTransform>().sizeDelta = new Vector2(360, 90);
             canvas.transform.localScale = Vector3.one * .01f;
             canvas.transform.localPosition = new Vector3(.3f, 1.12f, 0);
-            var bg = GameAssetBuilder.Picture("Background", canvas.transform, GameAssetBuilder.Sprite("界面/新版/UI_Tip_imgBK.png"), new Vector2(255,68), Vector2.zero);
+            var bg = GameAssetBuilder.Picture("Background", canvas.transform, GameAssetBuilder.Sprite("界面/新版/UI_Tip_imgBK.png"), new Vector2(360,90), Vector2.zero);
             bg.preserveAspect = false; bg.type = Image.Type.Sliced;
             bg.color = new Color(1f,1f,1f,.96f);
             bg.gameObject.AddComponent<AtlasImageBinding>();
-            var text = GameAssetBuilder.Label("SpeechText", canvas.transform, "攻击敌人，为我积攒能量！", new Vector2(232,56), Vector2.zero, 23);
+            var text = GameAssetBuilder.Label("SpeechText", canvas.transform, "攻击敌人，为我积攒能量！", new Vector2(328,70), Vector2.zero, 23);
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.color = new Color(1f,.96f,.8f);
             var serialized = new SerializedObject(view);
@@ -116,6 +116,18 @@ namespace RevGame.Editor
             UnityEngine.Object.DestroyImmediate(root);
             root = new GameObject("HelperAttack");
             var attack = root.AddComponent<HelperAttackView>();
+            // 序列帧已随工程入库；重建不依赖开发者机器上的外部素材目录。
+            var stormVisual = root.AddComponent<HelperStormVisual>();
+            var stormBody = new GameObject("StormProjectile").AddComponent<SpriteRenderer>();
+            stormBody.transform.SetParent(root.transform, false); stormBody.sortingOrder = 64;
+            stormBody.sharedMaterial = MakeSharedMaterial("HelperStorm", "RevGame/Helper/Storm");
+            stormBody.enabled = false;
+            var stormObject = new SerializedObject(stormVisual);
+            stormObject.FindProperty("body").objectReferenceValue = stormBody;
+            BindStormFrames(stormObject, "missileFrames", "Missile", 3);
+            BindStormFrames(stormObject, "jellyFrames", "Jellyfish", 5);
+            BindStormFrames(stormObject, "explosionFrames", "Explosion", 4);
+            stormObject.ApplyModifiedPropertiesWithoutUndo();
             var line = root.AddComponent<LineRenderer>();
             line.useWorldSpace = true; line.positionCount = 2; line.sortingOrder = 60;
             line.numCapVertices = 4; line.textureMode = LineTextureMode.Stretch; line.enabled = false;
@@ -124,6 +136,7 @@ namespace RevGame.Editor
             MeshRenderer runeView = MakeQuad("Rune", root.transform, mesh, rune, 62);
             MeshRenderer impactView = MakeQuad("BeamImpact", root.transform, mesh, impact, 63);
             serialized = new SerializedObject(attack); serialized.FindProperty("line").objectReferenceValue = line;
+            serialized.FindProperty("stormVisual").objectReferenceValue = stormVisual;
             serialized.FindProperty("diamond").objectReferenceValue = crystal;
             serialized.FindProperty("rune").objectReferenceValue = runeView;
             serialized.FindProperty("impact").objectReferenceValue = impactView;
@@ -169,6 +182,23 @@ namespace RevGame.Editor
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null) { material = new Material(shader); AssetDatabase.CreateAsset(material,path); }
             material.shader = shader; EditorUtility.SetDirty(material); return material;
+        }
+        /// <summary>导入透明序列帧并绑定引用；图集由GameSpriteAtlasBuild统一打包，运行时不会逐帧GetSprite。</summary>
+        private static void BindStormFrames(SerializedObject target, string field, string prefix, int count)
+        {
+            var array = target.FindProperty(field); array.arraySize = count;
+            for (int i = 0; i < count; i++)
+            {
+                string path = "Assets/GameRes/Art/Pieces/Helper/Storm/" + prefix + (i + 1).ToString("00") + ".png";
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer == null) { throw new InvalidOperationException("风暴序列帧缺失：" + path); }
+                importer.textureType = TextureImporterType.Sprite; importer.spritePixelsPerUnit = 150;
+                importer.spriteImportMode = SpriteImportMode.Single; importer.mipmapEnabled = importer.isReadable = false;
+                importer.alphaIsTransparency = true; importer.npotScale = TextureImporterNPOTScale.None;
+                importer.filterMode = FilterMode.Bilinear; importer.maxTextureSize = 512;
+                importer.SaveAndReimport();
+                array.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            }
         }
         private static Mesh MakeQuadMesh()
         {

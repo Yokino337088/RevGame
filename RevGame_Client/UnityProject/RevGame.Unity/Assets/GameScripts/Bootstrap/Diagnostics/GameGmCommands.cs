@@ -30,6 +30,12 @@ namespace RevGame.Bootstrap
             RevGame.Automation.GameAttributeGmCommands.RegisterGroup();
             RevGame.Automation.GameAutomationCommands.RegisterGroup();
             RegisterPlayerActions();
+#if UNITY_EDITOR
+            RegisterCommand("RevGame/风暴测试开始", "隔离Play风暴、动画、追踪激光和回收断言；高生命视觉夹具不计胜率", args =>
+                (string)Type.GetType("RevGame.Editor.GameStormPlayChecks, Assembly-CSharp-Editor", true).GetMethod("Begin").Invoke(null, null));
+            RegisterCommand("RevGame/风暴测试状态", "只读风暴Play验收结果", args =>
+                (string)Type.GetType("RevGame.Editor.GameStormPlayChecks, Assembly-CSharp-Editor", true).GetMethod("State").Invoke(null, null));
+#endif
             RegisterCommand("RevGame/移除棋子", "移除编号对应的存活己方棋子，不返牌不给分；战斗全灭仍失败", args =>
             {
                 var battle = RequireBattle();
@@ -47,7 +53,7 @@ namespace RevGame.Bootstrap
                 var battle = RequireBattle();
                 HelperSnapshot helper = battle.Helper;
                 return "state=" + helper.State + ",position=" + helper.Position + ",target=" + helper.TargetId
-                    + ",tier=" + helper.Tier + ",outside=" + helper.Outside + ",wallet=" + battle.CombatScore
+                    + ",tier=" + helper.Tier + ",outside=" + helper.Outside + ",storm=" + helper.Storm + ",wallet=" + battle.CombatScore
                     + ";visual=" + UnityEngine.Object.FindObjectOfType<BoardView>()?.HelperVisualStatus;
             });
             RegisterCommand("RevGame/帮手视效", "只读当前活动帮手弹道几何/材质状态", args =>
@@ -519,6 +525,51 @@ namespace RevGame.Bootstrap
                 var b=RevServices.GetRequired<IBattleService>();
                 return GameBalanceTactics.ChoosePlacement(b,false,out int id,out BoardPos pos,out string why)?"card="+id+",pos="+pos+",reason="+why:"none";
             });
+            // Agent测试只补查询/对等停钟，不自动选择策略；实际落子、移动、指定目标继续使用上面的玩家GM。
+            RegisterCommand("RevGame/实测开始", "仅隔离首页开始逐次决策测试；种子不改血攻，双方观察时同时停钟", args =>
+                AgentBalanceCall("Begin", args.Int(0, 1028)), RevGMArg.Int("种子", 1028));
+            RegisterCommand("RevGame/实测状态", "只读JSON盘面、手牌、真实血量和帮手间隔；用于Agent与截图交叉观察", args => AgentBalanceCall("State"));
+            RegisterCommand("RevGame/实测等待", "正常战斗推进0.5～12模拟秒，再对等停钟等待Agent；accepted后查window=false", args =>
+                AgentBalanceCall("Advance", args.Float(0, 4f), args.Float(1, 4f)), RevGMArg.Float("模拟秒", 4f), RevGMArg.Float("同速倍率", 4f));
+            RegisterCommand("RevGame/实测结束", "保存逐局实测指标并恢复原时间倍率、解除测试订阅", args => AgentBalanceCall("End"));
+            RegisterCommand("RevGame/剧情下一句", "与剧情继续按钮相同；不跳过战斗或改进度存档", args =>
+            {
+                if (!RevServices.GetRequired<GameFlow>().AdvanceStory()) { throw new RevGMUsageException("当前剧情不接受继续"); }
+                return "accepted";
+            });
+            RegisterCommand("RevGame/战术布阵", "隔离测试：balanced/ranged/frontline策略用真实手牌部署，保留正常阵容规模，不加属性", args =>
+            {
+                var battle = RequireBattle();
+                string strategy = args.Str(0, "balanced");
+                if (!RevServices.GetRequired<StoryProgress>().IsIsolated || battle.Phase != GamePhase.Prepare
+                    || RevServices.GetRequired<GameFlow>().IsGameplayBlocked) { throw new RevGMUsageException("需要隔离测试且准备已交付"); }
+                if (strategy != "balanced" && strategy != "ranged" && strategy != "frontline") { throw new RevGMUsageException("未知布阵策略"); }
+                int played = 0, preference = strategy == "ranged" ? 1 : strategy == "frontline" ? -1 : 0;
+                for (int n = 0; n < 6; n++)
+                {
+                    int alive = 0;
+                    foreach (Piece piece in battle.PlayerPieces) { if (piece.IsAlive) { alive++; } }
+                    if (alive >= Balance.PlayerFirepowerSoftCount || battle.CardsRemaining <= 0) { break; }
+                    if (!GameBalanceTactics.ChoosePlacement(battle, false, out int id, out BoardPos pos, out string why, preference)) { break; }
+                    if (!battle.TryPlayCard(id, pos)) { throw new RevGMUsageException(battle.LastError); }
+                    played++;
+                }
+                return "strategy=" + strategy + ",played=" + played;
+            }, RevGMArg.Str("策略", "balanced"));
+            RegisterCommand("RevGame/战术撤退", "受伤且受威胁的远程通过正式点棋盘入口后撤；没有候选返回none", args =>
+            {
+                var battle = RequireBattle();
+                if (!GameBalanceTactics.ChooseRetreat(battle, out BoardPos from, out BoardPos to)) { return "none"; }
+                if (!Logic().ClickBoard(from) || !Logic().ClickBoard(to)) { throw new RevGMUsageException(battle.LastError); }
+                return from + "->" + to;
+            });
+        }
+
+        /// <summary>Editor测试宿主不进入正式构建；只允许这里列出的固定方法，不接受任意反射目标。</summary>
+        private static string AgentBalanceCall(string method, params object[] arguments)
+        {
+            var type = Type.GetType("RevGame.Editor.GameBalanceAgentSession, Assembly-CSharp-Editor", true);
+            return (string)type.GetMethod(method).Invoke(null, arguments);
         }
 #endif
 

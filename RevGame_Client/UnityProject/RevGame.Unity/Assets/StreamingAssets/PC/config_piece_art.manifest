@@ -3,13 +3,13 @@ CRC: 1552690934
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c9912480745f6c09ff72f74d4702c77a
+    Hash: 6d09043c74de931a272a9cb13590b267
   TypeTreeHash:
     serializedVersion: 2
     Hash: fcd779b9dd2527855ce9bc6ca6867542
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c9912480745f6c09ff72f74d4702c77a
+    Hash: 6d09043c74de931a272a9cb13590b267
 HashAppended: 0
 ClassTypes:
 - Class: 114
@@ -24,5 +24,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Config/Art/PieceArt.asset
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pieceframes
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pieceframes"

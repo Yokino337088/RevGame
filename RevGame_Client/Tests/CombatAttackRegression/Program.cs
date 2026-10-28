@@ -24,6 +24,17 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+            if (args.Length > 1 && args[1] == "storm")
+            {
+                BattleService.VerifyStormRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
+                Console.WriteLine("风暴与集火断言通过：" + _assertions); return 0;
+            }
+            if (args.Length > 1 && args[1] == "boss")
+            {
+                int assertions = BossRegression.Run(out int scenarios);
+                Console.WriteLine("BossRegression: " + scenarios + " scenarios, " + assertions + " assertions passed.");
+                return 0;
+            }
             if (args.Length > 1 && args[1] == "helper-balance") { return HelperBalanceRegression.Run(args.Length > 2 ? args[2] : "."); }
             if (args.Length > 1 && args[1] == "helper")
             {
@@ -259,17 +270,19 @@ internal static class Program
     private static void VerifyEyeAttack(PieceKind kind, StarTier star, bool twoEyes)
     {
         BattleService battle = BattleService.CreateAttackRegressionFixture();
-        BoardPos origin = twoEyes ? new BoardPos(4, 1) : new BoardPos(1, 0);
+        // 两眼夹具放到内部，避免贴边的密集实子按现行“己方单格棋也可驻眼”规则额外形成第三只眼。
+        // 仍严格断言恰好两眼；修正输入而不是放宽预期，更不修改正式判眼规则。
+        BoardPos origin = twoEyes ? new BoardPos(5, 2) : new BoardPos(1, 0);
         Piece actor = battle.AddRegressionPiece(kind, star, GameSide.Player, origin);
         if (twoEyes)
         {
-            for (int y = 0; y <= 2; y++)
+            for (int y = 1; y <= 3; y++)
             {
-                for (int x = 0; x <= 4; x++)
+                for (int x = 1; x <= 5; x++)
                 {
                     BoardPos pos = new BoardPos(x, y);
                     bool bodyCell = x >= origin.X && x < origin.X + actor.Size && y >= origin.Y && y < origin.Y + actor.Size;
-                    if (bodyCell || (y == 1 && (x == 1 || x == 3)))
+                    if (bodyCell || (y == 2 && (x == 2 || x == 4)))
                     {
                         continue;
                     }

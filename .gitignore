@@ -76,9 +76,12 @@ desktop.ini
 *.tmp
 __pycache__/
 
-# ---------------- Codex 本机技能、配置与测试证据（全部不入库） ----------------
-# 用户明确要求 .codex/ 下所有内容均留在本机，技能从框架官方目录安装。
-.codex/
+# ---------------- Codex 项目技能入库，本机执行证据仍忽略 ----------------
+# 2026-10-28：用户要求恢复并提交项目技能；工作缓存和本机连接配置不随技能发布。
+.codex/work/
+.codex/config.toml
+.codex/auth.json
+.codex/session*
 
 # 自动化报告只保留文档和必要截图/GIF，原始证据放本机 .codex/work/。
 RevGame_Client/文档/进度同步/**/*.zip

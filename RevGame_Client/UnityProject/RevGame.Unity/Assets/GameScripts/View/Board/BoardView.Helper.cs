@@ -13,6 +13,7 @@ namespace RevGame.View
         private HelperView _helperView;
         /// <summary>只租用共享棋子图集，四帧在一次加载期间复用；最后收走视图后才归还租约。</summary>
         private GameSpriteAtlasService.ScopedAtlasLease _helperAtlas;
+        private GameSpriteAtlasService.ScopedAtlasLease _helperStormAtlas;
         private bool _helperLoading;
         // 常驻刷新与阶段短效独立owner；棋盘ClearRoundEffects取消本组件计时器时不能停掉帮手装配。
         private readonly object _helperRefreshOwner = new object(), _helperAttackOwner = new object();
@@ -31,6 +32,7 @@ namespace RevGame.View
         private void OpenHelperVisual()
         {
             _helperAtlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas("HelperFrames");
+            _helperStormAtlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas("HelperStormFrames");
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperShot, owner: this);
             RevTimer.Every(.06f, RefreshHelperVisual, owner: _helperRefreshOwner);
         }
@@ -93,13 +95,13 @@ namespace RevGame.View
             if (material == null) { RevLog.Warn("帮手攻击材质尚未就绪，伤害已正常结算", "RevGame"); return; }
             Vector3 start = info.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             Vector3 end = info.Target.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
-            for (int i = 0; i < info.Projectiles && _helperAttacks.Count + _helperPendingAttacks < 16; i++)
+            for (int i = 0; i < info.Projectiles && _helperAttacks.Count + _helperPendingAttacks < 40; i++)
             {
                 int generation = _helperAttackGeneration, lane = i;
                 _helperPendingAttacks++;
                 // 入账飞星约0.66秒到HUD，耗能飞星0.72秒后启动再飞0.66秒；攻击视觉随后发射。
                 // 这里只延迟画面，模型早已同步扣款与伤害。预约也计预算，退出时owner计时器会取消。
-                RevTimer.After(1.4f, () =>
+                RevTimer.After(info.Beam || info.Storm ? 0 : 1.4f, () =>
                 {
                     if (_released || generation != _helperAttackGeneration) { return; }
                     GamePoolRequests.GetAsync<HelperAttackView>(view =>
@@ -112,7 +114,9 @@ namespace RevGame.View
                         _helperPendingAttacks--;
                         if (view == null) { RevLog.Warn("帮手攻击预制体加载失败", "RevGame"); return; }
                         _helperAttacks.Add(view);
-                        view.Play(start, end, material, info.Beam, lane, attack => _helperAttacks.Remove(attack));
+                        _pieces.TryGetValue(info.TargetId, out PieceView target);
+                        view.Play(start, end, material, info.Beam, lane + _helperAttacks.Count, attack => _helperAttacks.Remove(attack),
+                            _helperView == null ? null : _helperView.transform, target, info);
                     }, _viewRoot);
                 }, domain: RevTimeDomain.Unscaled, owner: _helperAttackOwner);
             }
@@ -136,6 +140,7 @@ namespace RevGame.View
             ClearHelperAttacks();
             if (_helperView != null) { RevPool.Return(_helperView, 0); _helperView = null; }
             _helperAtlas?.Dispose(); _helperAtlas = null;
+            _helperStormAtlas?.Dispose(); _helperStormAtlas = null;
             _helperLoading = false;
             RevPool.DestroyPool<HelperAttackView>();
             RevPool.DestroyPool<HelperView>();

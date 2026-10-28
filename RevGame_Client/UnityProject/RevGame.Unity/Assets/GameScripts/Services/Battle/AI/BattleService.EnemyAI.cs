@@ -178,6 +178,7 @@ namespace RevGame.Services
             StopPlayerAI();
             _helperAI?.Dispose();
             _helperAI = null;
+            ResetHelperStorm();
             foreach (EnemyAI ai in _enemyAI.Values) { ai.Dispose(); }
             _enemyAI.Clear();
             foreach (BossAI ai in _bossAI.Values) { ai.Dispose(); }

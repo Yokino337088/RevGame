@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 493057331
+CRC: 1214260992
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 99d175dd858c52fef1e91cec889af018
+    Hash: 3c27c7198aab18b2512a808e8d9685e6
   TypeTreeHash:
     serializedVersion: 2
-    Hash: d3115bfba4d70846dea59c6fd0b66587
+    Hash: 6ca8d9cf61b8810de2eca4fdcd43a2ba
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 99d175dd858c52fef1e91cec889af018
+    Hash: 3c27c7198aab18b2512a808e8d9685e6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -25,9 +25,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 15ae06e7400e5db46a8c92425017de42, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 15ae06e7400e5db46a8c92425017de42, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -54,6 +54,6 @@ Assets:
 - Assets/GameRes/Pieces/Helper/BattleHelper.prefab
 - Assets/GameShader/Helper/HelperGoldReflect_Shader.shader
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_helperframes
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_helperframes"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"

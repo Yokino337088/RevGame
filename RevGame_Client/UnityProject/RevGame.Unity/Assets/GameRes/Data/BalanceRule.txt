@@ -20,9 +20,9 @@ Damage.ClassThresholdLow	3	职业加成第一档门槛：同职业在场棋数�
 Damage.ClassThresholdHigh	5	职业加成第二档门槛：同职业在场棋数（整数）。
 Boss.AccelerationSeconds	60	Boss 回合“决死加速”：每满多少秒加一档（秒）。
 Boss.AccelerationBonus	0.1	Boss 加速每档增加的伤害比例；高频小额伤害取整后至少再加 1 点，保证压力可见。
-Boss.HpGrowthPerChapter	0.16	Boss 大棋生命随章节递增：第 N 章 = 基础 × (1 + (N-1) × 本值)。
-Enemy.HpBase	1.2	敌方生命基础系数（给远程对射、守眼回血和事件留出展开时间）。
-Enemy.HpMultiplier	1.2	敌方生命额外倍率，抵消我方六牌保留、双牌升级和每轮增益带来的火力。
+Boss.HpGrowthPerChapter	0	主将生命已随关卡基础成长；不再额外叠加章节倍率，避免后章厚血重复放大。
+Enemy.HpBase	1.7	敌军生命基础倍率，与额外倍率组合；增加单棋承伤时间，不提高单发攻击。
+Enemy.HpMultiplier	1.4	敌军额外生命倍率；主将另乘Boss独立耐久。
 Enemy.HpGrowthPerRound	0.004	敌方生命随连续回合进度递增：× (1 + 进度 × 本值)；进度跨章不归零。
 Enemy.AttackGrowthPerRound	0.002	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
 Enemy.AiRoundsPerLevel	5	敌方 AI 档位每隔多少个连续回合提升一档（整数 ≥1）。
@@ -81,7 +81,7 @@ Bomb.IntervalSeconds	18	能量巨大每8秒一次
 Bomb.WarningSeconds	1	炸弹落地蓄力秒数，到点统一命中
 Bomb.DamageHpRatio	0.1	直接扣全场敌棋最大生命30%
 Combat.BuffCap	0.6	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成
-EnemyAI.AttackRate	0.45	敌方普攻独立倍率（0.1～5）；含主将普攻，不加快技能预警；1恢复原频率，1.45提高45%。
+EnemyAI.AttackRate	0.45	敌军普攻独立频率倍率；不改变技能预警和移动冷却。
 EnemyAI.ChaseSteps	3	无眼近战每次冲锋最多经过的空格数（1～4）；不穿棋、不占敌眼，马步保留原走法。
 PlayerAI.FormationEnabled	1	远程自动整队开关（0关/1开）；只在战斗中整理散阵，不拆眼、不搬动零气棋。
 PlayerAI.FormationMinCount	2	参与自动整队的远程棋最少数量（2～20）；已有相连阵型保持原位。
@@ -117,10 +117,10 @@ Enemy.JumpSeconds	2.8	敌近战跳跃接敌冷却秒，保眼与占格预检不�
 Helper.PlayerHitScore	1	玩家普攻真实命中基础积分；主要能源来源
 Helper.HitScore	1	帮手单发命中返还积分；必须小于单发成本
 Helper.ShotCost	3	每个普通攻击粒子消耗可用积分
-Helper.BaseDamage	5	帮手单发基础伤害，仍走统一扣血管线
+Helper.BaseDamage	3	帮手普通弹幕单发基础伤害；加密弹幕以小伤害多命中呈现。
 Helper.ScoreStep	8000	每积累该章积分提升一档，最多配置档数
 Helper.MaxTier	5	攻击成长档数上限，防无限火力
-Helper.DamageGrowth	0.15	每档单发伤害增加比例
+Helper.DamageGrowth	0.15	每档弹幕单发伤害与普通攻速成长比例；受档数与最低间隔限制。
 Helper.BaseInterval	1.8	普通攻击间隔秒
 Helper.MinInterval	0.65	最快普通攻击间隔秒
 Helper.MoveSeconds	1.2	爬行或跳至外圈的决策间隔秒
@@ -128,10 +128,26 @@ Helper.CrowdedCount	30	活棋达到此数量时转棋盘外攻击
 Helper.BeamScore	24000	本章累计积分达到该值解锁激光
 Helper.BeamReserve	80	开始激光所需可用积分储备
 Helper.BeamTickCost	8	激光每次持续命中消耗积分，耗尽立即停止
-Helper.BeamDamage	10	每个固定模拟步激光伤害，不返还积分
+Helper.BeamDamage	6	帮手激光每个标准模拟步基础伤害；Boss加速不放大激光每秒伤害。
 Helper.BeamSeconds	2.5	激光最长持续秒
 Helper.BeamCooldown	18	两次巨大能量束最短间隔秒
 Helper.RangedAttackLink	0.2	帮手攻击成长向玩家远程普攻传递比例，乘现有阵容火力系数
 Helper.RangedSpeedLink	0.8	帮手实际攻速成长向玩家远程攻击进度传递比例
 Helper.RangedAttackCap	0.15	远程共鸣攻击最高增加15%，不影响敌方/环境技能
 Helper.RangedSpeedCap	0.6	远程共鸣攻速最高增加60%，钱包消费不降档，换章重置
+Boss.HpMultiplier	65	主将额外生命倍率；与独立攻击及百分比承伤系数共同校准约180秒实战，仅出生时应用。
+Helper.BossSpeedBonus	1	Boss回合帮手普通弹幕额外攻速比例，1=提高100%；不提高远程共鸣。
+Helper.BossDamageScale	0.75	Boss回合帮手单发弹幕伤害倍率；与加速分开，避免火力翻倍秒杀。
+Boss.AttackMultiplier	0.35	主将独立攻击倍率；普攻和技能共同使用，不影响普通敌棋与护卫。
+Boss.PercentDamageScale	0.3	主将承受最大生命比例伤害系数；炸弹、区域、炮火共用，保留固定伤害下限。
+Helper.StormThreshold	3	风暴触发上界：存活玩家棋数大于0且小于此数
+Helper.StormMissileSeconds	2.4	风暴导弹间隔，模拟秒
+Helper.StormMissileDamage	18	风暴导弹每次直接命中基础伤害
+Helper.StormBlastRadius	1.2	导弹爆炸半径，棋盘格；溅射为直接伤害的一半
+Helper.StormJellySeconds	1.5	风暴水母弹幕间隔，模拟秒
+Helper.StormJellyCount	12	每轮水母颗数，按敌棋稳定轮转
+Helper.StormJellyDamage	2	单颗水母基础伤害
+Helper.StormBeamSeconds	2	风暴激光持续模拟秒
+Helper.StormBeamCooldown	6	风暴激光启动间隔，模拟秒
+Helper.StormBeamDps	12	风暴激光每个命中敌人的每秒基础伤害
+Helper.StormBeamWidth	1.8	风暴激光完整宽度，棋盘格，几何检测与画面共用

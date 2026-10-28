@@ -51,7 +51,7 @@ namespace RevGame.Battle
     public static class EnemyTactics
     {
         /// <summary>
-        /// 从合法射程列表选择一个目标。第1档就近，第2档识别远程，第3档收残血，第4档还看气与连接。
+        /// 从合法射程列表选择目标。远程单位先集火玩家远程；其余情况才按距离、残血和气眼评分。
         /// 返回null表示候选已经死亡/消失；调用方不可假设查到的每个坐标仍有棋子。
         /// 评分仅比较优先级，没有伤害单位；10000让预计可击杀通常优先，但真实扣血仍必须走服务。
         /// </summary>
@@ -61,12 +61,29 @@ namespace RevGame.Battle
         /// <param name="intelligence">关卡控制的1～4档；档位只增加评分因素。</param>
         public static Piece ChooseTarget(BoardModel board, Piece attacker, List<BoardPos> targets, int intelligence = 4, IAttackPrediction prediction = null)
         {
+            // 集火采用所有远程共用的排序（当前生命、Id），不掺入各自距离或攻击力。
+            // 因而有共同射界的射手会持续压同一颗残血远程；目标死亡后下一次攻击立即重选。
+            // 只遍历调用方给出的合法射界，不能为了集火穿墙、越射程或击中友军。
+            if (attacker.Def.IsRanged)
+            {
+                Piece focus = null;
+                foreach (BoardPos pos in targets)
+                {
+                    Piece candidate = board.GetPiece(pos);
+                    if (candidate == null || !candidate.IsAlive || candidate.Side == attacker.Side || !candidate.Def.IsRanged) { continue; }
+                    if (focus == null || candidate.Hp < focus.Hp || (candidate.Hp == focus.Hp && candidate.Id < focus.Id))
+                    {
+                        focus = candidate;
+                    }
+                }
+                if (focus != null) { return focus; }
+            }
             Piece best = null;
             int bestScore = int.MinValue;
             foreach (BoardPos pos in targets)
             {
                 Piece target = board.GetPiece(pos);
-                if (target == null || !target.IsAlive)
+                if (target == null || !target.IsAlive || target.Side == attacker.Side)
                 {
                     continue;
                 }

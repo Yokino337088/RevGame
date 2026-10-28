@@ -11,7 +11,7 @@ namespace RevGame.Automation
     public static class GameBalanceTactics
     {
         /// <summary>从真实手牌和可用格选一张牌；算法权重只表示位置偏好，不是血攻/奖励数值。</summary>
-        public static bool ChoosePlacement(IBattleService battle, bool careless, out int cardId, out BoardPos position, out string reason)
+        public static bool ChoosePlacement(IBattleService battle, bool careless, out int cardId, out BoardPos position, out string reason, int rangedPreference = 0)
         {
             cardId = 0; position = default; reason = "无合法落点";
             double best = double.NegativeInfinity;
@@ -44,6 +44,8 @@ namespace RevGame.Automation
                             if (def.IsRanged && enemyDistance < 3) { score -= 15; }
                             if (!def.IsRanged && liveFront < 2) { score += 8; }
                             if (def.IsRanged && liveRanged < liveFront+2) { score += 4; }
+                            // Agent可以指定本轮补前排或补远程的策略；只改变合法候选排序，不制造手牌或棋子。
+                            if (rangedPreference != 0 && def.IsRanged == (rangedPreference > 0)) { score += 12; }
                             // 给下半盘两处候选眼留呼吸空间，鼓励周围连接；不是直接制造眼或额外棋子。
                             if ((x==2||x==6)&&y==1) { score -= 8; }
                             if (y<=2 && (Math.Abs(x-2)+Math.Abs(y-1)==1||Math.Abs(x-6)+Math.Abs(y-1)==1)) { score += 1.8; }

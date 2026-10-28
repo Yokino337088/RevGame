@@ -21,14 +21,17 @@ internal static class HelperBalanceRegression
             for (int chapter = 1; chapter <= 6; chapter++)
             {
                 var battle = new BattleService(true, seed + chapter * 101);
-                int helperHits = 0, playerHits = 0, enemyHits = 0, deaths = 0, playerDeaths = 0;
+                int helperHits = 0, playerHits = 0, enemyHits = 0, deaths = 0, playerDeaths = 0, bossCasts = 0, bossId = 0;
+                string bossLastDamage = "none";
                 long helperDamage = 0, playerDamage = 0, enemyDamage = 0;
                 object owner = new object();
                 RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, info =>
                 {
                     if (info.DamageKind == BattleDamageKind.Helper || info.DamageKind == BattleDamageKind.HelperBeam) { helperHits++; helperDamage += info.Damage; }
                     else if (info.TargetSide == GameSide.Player) { enemyHits++; enemyDamage += info.Damage; } else { playerHits++; playerDamage += info.Damage; }
+                    if (info.TargetId == bossId) { bossLastDamage = info.DamageKind.ToString(); }
                 }, owner: owner);
+                RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, info => bossCasts++, owner: owner);
                 RevEvent.AddEventListener<int>(Events.PieceDied, id =>
                 {
                     deaths++;
@@ -41,6 +44,7 @@ internal static class HelperBalanceRegression
                     {
                         helperHits = playerHits = enemyHits = deaths = playerDeaths = 0;
                         helperDamage = playerDamage = enemyDamage = 0;
+                        bossCasts = 0; bossId = 0; bossLastDamage = "none";
                         int front = 0, ranged = 0;
                         foreach (Piece p in battle.PlayerPieces) { if (p.IsAlive) { if (p.Def.IsRanged) { ranged++; } else { front++; } } }
                         foreach (var card in battle.Hand) { if (PieceCatalog.Get(card.Kind, card.Star).IsRanged) { ranged++; } else { front++; } }
@@ -54,10 +58,18 @@ internal static class HelperBalanceRegression
                         }
                         battle.Tick(Balance.PrepDelaySeconds);
                         if (!battle.StartBattle()) { throw new InvalidOperationException(battle.LastError); }
+                        int playerHpStart = 0, bossHpStart = 0;
+                        foreach (Piece p in battle.PlayerPieces) { if (p.IsAlive) { playerHpStart += p.MaxHp; } }
+                        foreach (Piece p in battle.EnemyPieces) { if (p.IsKing) { bossId = p.Id; bossHpStart = p.MaxHp; } }
+                        float minPlayerHpRatio = 1f;
                         float nextRetreat = 3;
-                        while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 180)
+                        // Boss目标约三分钟，测试看门狗必须留出余量；360秒只限制测试，不会替游戏结算胜负。
+                        while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 360)
                         {
                             battle.Tick(Balance.BattleSimulationStepSeconds);
+                            int hp = 0;
+                            foreach (Piece p in battle.PlayerPieces) { if (p.IsAlive) { hp += p.Hp; } }
+                            minPlayerHpRatio = Math.Min(minPlayerHpRatio, hp / (float)Math.Max(1, playerHpStart));
                             if (battle.Phase == GamePhase.Battle && battle.BattleElapsed >= nextRetreat)
                             {
                                 if (GameBalanceTactics.ChooseRetreat(battle, out BoardPos from, out BoardPos to)) { battle.HandleBoardClick(from); battle.HandleBoardClick(to); }
@@ -66,7 +78,8 @@ internal static class HelperBalanceRegression
                         }
                         bool won = battle.Phase == GamePhase.Settle && battle.LastWinner == GameSide.Player;
                         if (won) { wins++; } else { losses++; }
-                        rows.Add(new { seed, chapter, round, won, seconds = battle.BattleElapsed, helperHits, playerHits, enemyHits, deaths, playerDeaths, helperDamage, playerDamage, enemyDamage, wallet = battle.CombatScore, score = battle.ChapterScore });
+                        rows.Add(new { seed, chapter, round, won, seconds = battle.BattleElapsed, helperHits, playerHits, enemyHits, deaths, playerDeaths,
+                            helperDamage, playerDamage, enemyDamage, bossHpStart, bossCasts, bossLastDamage, minPlayerHpRatio, wallet = battle.CombatScore, score = battle.ChapterScore });
                         if (round < Balance.RoundsPerChapter)
                         {
                             bool accepted = won ? battle.ContinueRound() : battle.BeginHelperBalanceFixture(chapter, round + 1);

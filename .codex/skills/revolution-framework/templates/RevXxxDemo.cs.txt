@@ -1,0 +1,89 @@
+// ============================================================
+// RevXxxDemo.cs —— <模块名> 开箱示例（照 Assets/Revolution.Demo 的既有约定）
+//
+// 位置：Assets/Revolution.Demo/RevXxx.Demo/RevXxxDemo.cs
+//
+// 【约定】一个模块一个 `RevXxx.Demo` 目录：**一个带详尽注释的演示脚本 + 一个可直接打开点 Play 的场景**。
+//   场景结构：Main Camera + Directional Light + RevDemoRoot（挂本脚本）；
+//   界面结构：左侧按钮逐个点，右侧"演示步骤日志"讲清每一步发生了什么（OnGUI 实现，零 UGUI 依赖）。
+// 【同步维护】新增场景后要登记：Assets/Revolution.Demo/RevDemoSceneList.txt 与 Assets/Revolution.Demo/README.md。
+// 【演示脚本要"能直接编译"】只用框架门面 + UnityEngine 公开 API，不要引用 internal 类型。
+// ============================================================
+using System.Collections.Generic;
+using Revolution;
+using UnityEngine;
+
+namespace Revolution.Demo.Xxx
+{
+    /// <summary><模块名>演示面板（左侧按钮 + 右侧步骤日志）。</summary>
+    public sealed class RevXxxDemo : MonoBehaviour
+    {
+        private readonly List<string> _ui = new List<string>();
+        private Vector2 _scroll;
+
+        private void Start()
+        {
+            Ui("准备：<这个演示需要先做什么，比如先点①配置、先跑一次菜单XX>");
+            Ui($"当前状态：<能被观察到的数字/状态，最好每步都能对比>");
+        }
+
+        private void OnDisable()
+        {
+            // ★ 订阅过的东西必须在这里退订 / 取消：场景销毁后回调还在是最典型的泄漏
+            RevTimer.CancelAllOf(this);
+            RevEvent.RemoveAllByOwner(this);
+            RevMono.RemoveAllOf(this);
+        }
+
+        private void OnGUI()
+        {
+            GUILayout.BeginArea(new Rect(10, 10, 460, Screen.height - 20));
+            GUILayout.Label("<b>RevXxx <模块名>演示</b>", TitleStyle());
+
+            // ① 每个按钮 = 一个知识点，按"从最简到进阶"排列
+            if (GUILayout.Button("① 最小用法（一行调用）"))
+            {
+                // <一行调用最典型的那句 API>
+                Ui("① 已完成：<描述你能在右侧看到什么、为什么>");
+            }
+
+            if (GUILayout.Button("② 进阶用法（带参数 / 带回调）"))
+            {
+                Ui("② 已完成：<…>");
+            }
+
+            if (GUILayout.Button("③ 边界与失败（故意制造一次失败）"))
+            {
+                // ★ 失败也要演示：框架的原则是"失败必带原因"，demo 里把原因打出来
+                Ui("③ 失败原因：<handle.ErrorReason / 返回值 / 事件参数>（真实项目拿它提示或重试）");
+            }
+
+            GUILayout.Space(6);
+            if (GUILayout.Button("清空演示日志")) { _ui.Clear(); }
+            GUILayout.Label("原则：<这个模块的一条铁律，用一句话写在这>", HintStyle());
+            GUILayout.EndArea();
+
+            // ---------- 右侧：步骤日志 ----------
+            GUILayout.BeginArea(new Rect(Screen.width - 520, 10, 510, Screen.height - 20));
+            GUILayout.Label("<b>演示步骤日志</b>", TitleStyle());
+            _scroll = GUILayout.BeginScrollView(_scroll);
+            foreach (string line in _ui) { GUILayout.Label(line); }
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+        }
+
+        private void Ui(string line)
+        {
+            _ui.Add(line);
+            if (_ui.Count > 300) { _ui.RemoveAt(0); }
+            _scroll.y = float.MaxValue;          // 自动滚到最新
+        }
+
+        // ---------- 简单样式 ----------
+        private static GUIStyle _title;
+        private static GUIStyle _hint;
+
+        private static GUIStyle TitleStyle() => _title ??= new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15 };
+        private static GUIStyle HintStyle() => _hint ??= new GUIStyle(GUI.skin.label) { richText = true, fontSize = 12, wordWrap = true };
+    }
+}

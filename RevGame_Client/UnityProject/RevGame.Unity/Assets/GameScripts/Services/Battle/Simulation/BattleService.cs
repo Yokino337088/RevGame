@@ -898,8 +898,10 @@ namespace RevGame.Services
                     return Reject("Boss阵容必须且只能有一颗主将");
                 }
                 {
-                    float scale = hpScale * (1f + (def.Chapter - 1) * Balance.BossHpGrowthPerChapter);
-                    plan.Add(new Piece(_nextPieceId + plan.Count, bossDef, GameSide.Enemy, boss.BodySizes[0], true, true, scale, attackScale));
+                    // 主将独立耐久：普通敌兵调参不再决定全部Boss节奏；只在出生时计算，不修改共享图鉴。
+                    float scale = hpScale * Balance.BossHpMultiplier * (1f + (def.Chapter - 1) * Balance.BossHpGrowthPerChapter);
+                    // 主将厚血与低单发伤害独立配置；沿用实例AttackScale，普攻/技能/AI预测自然使用同一份数值。
+                    plan.Add(new Piece(_nextPieceId + plan.Count, bossDef, GameSide.Enemy, boss.BodySizes[0], true, true, scale, attackScale * Balance.BossAttackMultiplier));
                 }
             }
             StarTier star = LevelCatalog.GetEnemyStar(def.Chapter, def.IsBoss);

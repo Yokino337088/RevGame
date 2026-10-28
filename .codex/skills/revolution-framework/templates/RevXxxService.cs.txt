@@ -1,0 +1,109 @@
+// ============================================================
+// RevXxxService.cs —— <一句话：这个服务负责哪块业务能力>
+//
+// 位置：业务侧（放你自己的程序集；**不要**放进框架 Runtime）
+//
+// 【它解决什么】跨界面 / 跨模块复用的业务能力封装 —— 界面通过它拿数据、发请求，
+//   不让界面直接碰游戏内核（这就是参考实现里 System 层要解决的问题，本框架用"服务 + RevServices"承担）。
+// 【为什么是纯 C#】不引用 UnityEngine 的类可以被链接进普通 .NET 工程跑断言（见 templates/offline-harness/）。
+// 【什么时候不该写服务】只有一屏用、关掉界面就该没的逻辑 → 留在面板里（面板 + TData）。
+// ============================================================
+using System;
+using System.Collections.Generic;
+using Revolution;
+
+namespace <你的命名空间>
+{
+    /// <summary>能力接口（界面只依赖它，不依赖实现 —— 这样能换实现、也能在测试里塞假实现）。</summary>
+    public interface IRevXxxService
+    {
+        int Gold { get; }
+
+        /// <summary>加金币；返回"现在有多少"（失败必须有出口：结果值 / 抛带人话的异常）。</summary>
+        int AddGold(int amount, string reason);
+    }
+
+    /// <summary>实现：纯 C#、可单测、依赖用构造传参（由注册时的工厂递进来；不要在方法里 new 别的服务）。</summary>
+    public sealed class RevXxxService : IRevXxxService, IDisposable
+    {
+        private readonly IRevXxxConfigProvider _config;
+        private int _gold;
+
+        public RevXxxService(IRevXxxConfigProvider config)
+        {
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+        }
+
+        public int Gold => _gold;
+
+        public int AddGold(int amount, string reason)
+        {
+            if (amount == 0) { throw new RevXxxUsageException("加金币数量不能为 0（业务拒绝要带人话）"); }
+
+            _gold += amount;
+            RevLog.Info($"加金币 {amount}（{reason}）→ 现有 {_gold}", "Economy");
+            return _gold;
+        }
+
+        /// <summary>释放：取消订阅、停计时器、归还资源 —— 容器会逆序调用它。</summary>
+        public void Dispose()
+        {
+            RevEvent.RemoveAllByOwner(this);
+            RevTimer.CancelAllOf(this);
+        }
+    }
+
+    /// <summary>业务在"业务拒绝"时的异常（照 RevGMUsageException 的风格：消息是给使用者看的人话）。</summary>
+    public sealed class RevXxxUsageException : Exception
+    {
+        public RevXxxUsageException(string message) : base(message) { }
+    }
+
+    /// <summary>配置来源（示例）：真实项目里从配置表 / 服务端拉，这里只留契约。</summary>
+    public interface IRevXxxConfigProvider
+    {
+        int InitialGold { get; }
+    }
+
+    /// <summary>
+    /// 注册（**全局服务集中在启动入口一处注册**；一行一个，不用静态类 / 缓存字段 / Build）：
+    ///   RevServices.Register&lt;IRevXxxConfigProvider, RevXxxConfigProvider&gt;();
+    ///   RevServices.Register&lt;IRevXxxService&gt;(s =&gt; new RevXxxService(s.GetRequired&lt;IRevXxxConfigProvider&gt;()));   // 要构造参数 → 工厂
+    /// 取用：RevServices.GetRequired&lt;IRevXxxService&gt;().AddGold(10, "任务奖励");
+    /// 不用了（比如这个服务跟着某个模块走）：RevServices.Unregister&lt;IRevXxxService&gt;();  // 实现了 IDisposable → 容器会 Dispose
+    ///
+    /// ★ 注意：RevXxxService 的构造函数有参数，所以不能写 Register&lt;I, T&gt;()（它要求公开无参构造），必须用工厂重载。
+    /// ★ 顺序运行的战斗域：Enter 后用 owner: RevScope.Current 注册，Exit 负责注销；服务不会自动归当前域。
+    ///   同类型服务需要多局并存时，才用 RevServiceLocator.Create().AddScoped&lt;…&gt;().Build() 与 CreateScope()。
+    ///   注册时的 owner 必须保存为同一引用；不要在退出时用已经变化的 RevScope.Current 猜原归属。
+    ///   配置服务若已经是全局注册，只新增域内业务服务；不要整套重复 Install 来掩盖注册冲突。
+    /// </summary>
+    public static class RevXxxServiceInstaller
+    {
+        /// <summary>在启动入口注册全局服务；域内使用时显式传该域 owner，并保证退出时收尾。</summary>
+        public static void Install(object owner = null)
+        {
+            RevServices.Register<IRevXxxConfigProvider, RevXxxConfigProvider>(owner: owner);
+            RevServices.Register<IRevXxxService>(s => new RevXxxService(s.GetRequired<IRevXxxConfigProvider>()), owner: owner);
+        }
+    }
+
+    // ---------- 下面两个是占位：真实项目里换成你的实现 ----------
+
+    internal sealed class RevXxxConfigProvider : IRevXxxConfigProvider
+    {
+        public int InitialGold => 0;
+    }
+
+    public interface IRevCombatContext : IDisposable
+    {
+        int RoomId { get; }
+    }
+
+    internal sealed class RevCombatContext : IRevCombatContext
+    {
+        public int RoomId { get; set; }
+
+        public void Dispose() { }
+    }
+}

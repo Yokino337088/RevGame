@@ -28,7 +28,39 @@ internal static class BossRegression
         VerifyChapterOneNeverUsesLockedSkills(); scenarios++;
         VerifyEnrageOnce(); scenarios++;
         VerifyLifecycle(); scenarios++;
+        VerifyBossDurability(); scenarios++;
         return _assertions;
+    }
+
+    /// <summary>厚血必须来自真实出生配置；主将百分比减伤不能蔓延到护卫或吞掉炮火的固定下限。</summary>
+    private static void VerifyBossDurability()
+    {
+        var battle = BattleService.CreateBossRegressionFixture(1);
+        try
+        {
+            Piece boss = battle.AddRegressionBoss(new BoardPos(3, 6), 2);
+            Piece guard = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(0, 0), 50f);
+            int hp = boss.Hp;
+            int predicted = battle.RegressionPercentDamage(boss, .1f, 25, true);
+            Assert(boss.Hp == hp, "主将百分比伤害预判不扣血");
+            Assert(predicted == Math.Max(25, (int)(boss.MaxHp * (double)Balance.BossPercentDamageScale * .1f)), "主将按独立百分比系数承伤");
+            Assert(battle.RegressionPercentDamage(boss, .1f, 25, false) == predicted && hp - boss.Hp == predicted, "主将预测与实际扣血一致");
+            Assert(battle.RegressionPercentDamage(guard, .1f, 25, true) == Math.Max(25, (int)(guard.MaxHp * (double).1f)), "护卫不套用主将百分比减伤");
+            Assert(battle.RegressionPercentDamage(boss, .000001f, 25, true) == 25, "炮火固定伤害下限不被削减");
+        }
+        finally { battle.StopEnemyAI(); }
+
+        var spawn = new BattleService(false, 20261028);
+        try
+        {
+            Assert(spawn.BeginHelperBalanceFixture(1, Balance.BossRoundIndex), "从真实关卡配置创建主将");
+            Piece boss = null;
+            foreach (Piece p in spawn.EnemyPieces) { if (p.IsKing) { boss = p; break; } }
+            Assert(boss != null, "Boss回合实际生成主将");
+            float expected = LevelCatalog.GetRound(1, Balance.BossRoundIndex).AttackScale * Balance.BossAttackMultiplier;
+            Assert(Math.Abs(boss.AttackScale - expected) < .00001f, "主将实例攻击乘入Excel独立倍率");
+        }
+        finally { spawn.StopEnemyAI(); }
     }
 
     /// <summary>章节越高：技能越多、冷却越短、伤害越高；第六章拥有全部技能。</summary>

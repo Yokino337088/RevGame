@@ -1,0 +1,66 @@
+// ============================================================
+// RevBoot.cs —— 游戏启动入口（挂在第一个场景的空物体上）
+//
+// 位置：Assets/<你的工程>/Boot/RevBoot.cs
+//
+// 【它解决什么】新项目"第一步该做什么"：一处完成框架初始化 + 服务注册 + 生命周期订阅 + 打开首个界面。
+// 【怎么用】新建空场景 → 建空物体挂本脚本 → 把场景加进 Build Settings 并放第一个。
+// 【★ 顺序不能乱】① 初始化资源系统 → ② 注册全局服务（一行一个）→ ③ 订阅生命周期 → ④ 打开首个界面。
+// 【服务不用再写静态类 / static readonly / Build / Tick / Dispose】RevServices 一行注册、直接取、可注销，
+//   实现了 RevITickable 的服务由框架自动驱动。
+// ============================================================
+using Revolution;
+using UnityEngine;
+
+namespace <你的命名空间>
+{
+    public sealed class RevBoot : MonoBehaviour
+    {
+        private async void Start()
+        {
+            // 异步入口必须整体 try/catch，否则异常静默（async void 不会抛给任何人）。
+            try
+            {
+                // ① 资源系统：只需调这一行（幂等；不要再直接调 RevResBootstrap.Instance.Init()）。
+                //    接热更时，需要在资源策略注册前装配扩展钩子 → RevInitialize.Initialize(() => { /* 扩展 Install */ });
+                //    具体写法以《RevHotUpdate 使用说明》为准（见 references/hot-update.md）。
+                RevInitialize.Initialize();
+
+                // ② 注册全局服务（示例；换成你自己的接口与实现）。★ 全局服务集中在这里注册，别散落在各个业务脚本里。
+                //    第一次被取用时才创建，所以这里注册再多也不会拖慢启动。
+                // RevServices.Register<IAudioService, AudioService>();
+                // RevServices.Register<IConfigService>(Config.Load());           // 已有实例：注销时容器不会 Dispose 它
+                // 跟着某个模块 / 场景走的服务，不要放这里：在那个模块的 Awake 注册、OnDestroy 注销（owner: this）。
+
+                // ③ 生命周期：切后台 / 回前台（owner: this 让对象销毁时自动摘除）。
+                RevEvent.AddEventListener(RevAppLifecycle.Resumed, OnResumed, owner: this);
+
+                // ④ UI 方向默认 Auto；项目需要固定方向时，在首次 Open / Preload 前选择（不锁设备方向）。
+                // RevUISetting.CanvasOrientation = RevUICanvasOrientation.Portrait; // 可选 Landscape / UseDesign
+                // 打开首个界面（真机首次必须异步；await 返回时面板已打开）。
+                // await RevUI.OpenAsync<LoginPanel>();
+
+                RevLog.Info("启动完成", "Boot");
+            }
+            catch (System.Exception e)
+            {
+                RevLog.Exception(e, "启动失败", "Boot");
+            }
+        }
+
+        /// <summary>回到前台：长时间后台后连接多半已断、时间被跳过，按需重连 / 重算。</summary>
+        private void OnResumed()
+        {
+            if (RevAppLifecycle.LastBackgroundSeconds > 60f)
+            {
+                RevLog.Info($"后台 {RevAppLifecycle.LastBackgroundSeconds:F0} 秒后回来，需要时在这里重连 / 校准服务器时间", "Boot");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            RevEvent.RemoveAllByOwner(this);        // 一行防泄漏
+            // 全局服务一般随进程结束；需要"回登录就清空"时：RevServices.UnregisterAll();
+        }
+    }
+}

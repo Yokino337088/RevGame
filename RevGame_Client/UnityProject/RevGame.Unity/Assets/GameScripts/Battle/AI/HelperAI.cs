@@ -4,7 +4,7 @@ using Revolution;
 namespace RevGame.Battle
 {
     /// <summary>帮手重量级状态机：充能等待、爬行、弹幕、持续激光、停战。状态时钟由固定模拟步驱动。</summary>
-    public enum HelperAIState { Charge, Crawl, Barrage, Beam, Rest }
+    public enum HelperAIState { Charge, Crawl, Barrage, Beam, Storm, Rest }
 
     /// <summary>状态只读感知，并通过宿主的原子动作提交；不碰UI、占格或历史积分存储。</summary>
     public interface IHelperAIOwner : RevIHeavyFSMOwner
@@ -15,9 +15,12 @@ namespace RevGame.Battle
         bool CanBeam { get; }
         bool MoveDue { get; }
         bool ShotDue { get; }
+        /// <summary>仅剩少量真实玩家棋子时启动；全灭和结算由CanFight优先阻止。</summary>
+        bool StormActive { get; }
         void Crawl();
         void Barrage();
         void Beam(float seconds);
+        void Storm(float seconds);
     }
 
     /// <summary>BattleService拥有唯一机器；换回合Dispose重建，退出后不会留旧目标引用。</summary>
@@ -47,6 +50,7 @@ namespace RevGame.Battle
             {
                 HelperAIState next = !Owner.CanFight ? HelperAIState.Rest
                     : !Owner.HasTarget ? HelperAIState.Charge
+                    : Owner.StormActive ? HelperAIState.Storm
                     : Owner.BeamRunning || Owner.CanBeam ? HelperAIState.Beam
                     : Owner.MoveDue ? HelperAIState.Crawl
                     : Owner.ShotDue ? HelperAIState.Barrage : HelperAIState.Charge;
@@ -54,6 +58,7 @@ namespace RevGame.Battle
                 if (next == HelperAIState.Crawl) { Owner.Crawl(); }
                 else if (next == HelperAIState.Barrage) { Owner.Barrage(); }
                 else if (next == HelperAIState.Beam) { Owner.Beam(seconds); }
+                else if (next == HelperAIState.Storm) { Owner.Storm(seconds); }
             }
         }
     }

@@ -24,6 +24,11 @@ namespace RevGame.View
         private float _animationTime;
         private int _lastFrame = -1;
         private MaterialPropertyBlock _goldProperties;
+        /// <summary>唯一帮手拥有的台词布局缓存。只在换台词时排字，LateUpdate仅约束屏幕边缘。</summary>
+        private readonly Vector3[] _bubbleCorners = new Vector3[4];
+        private Vector3 _bubbleAnchor;
+        private Camera _bubbleCamera;
+        private bool _bubbleLayoutReady;
         private static readonly int FrameUvId = Shader.PropertyToID("_FrameUV"), MainTexId = Shader.PropertyToID("_MainTex");
         /// <summary>只读验收：当前身体仍采样当前帧图集，金光参数块不能把它换成默认白纹理。</summary>
         public bool GoldReflectionReady => body != null && body.sprite != null && body.sprite.texture != null
@@ -65,7 +70,57 @@ namespace RevGame.View
                     transform.position = Vector3.Lerp(start, target, value) + Vector3.up * (Mathf.Sin(value * Mathf.PI) * height);
                 }, 1f, .42f).SetEase(Ease.InOutSine).OnComplete(() => _movement = null);
             }
-            if (speech != null && speech.text != snapshot.Speech) { speech.text = snapshot.Speech; }
+            if (speech != null && (speech.text != snapshot.Speech || !_bubbleLayoutReady))
+            {
+                speech.text = snapshot.Speech;
+                RefreshSpeechLayout();
+            }
+        }
+
+        /// <summary>按当前文案测宽，再在有限宽度内换行测高；不缩小字体，避免长句被固定高度截掉。</summary>
+        private void RefreshSpeechLayout()
+        {
+            if (bubble == null || speech == null) { return; }
+            var rect = (RectTransform)bubble.transform;
+            if (!_bubbleLayoutReady) { _bubbleAnchor = rect.localPosition; }
+            speech.horizontalOverflow = HorizontalWrapMode.Wrap;
+            speech.verticalOverflow = VerticalWrapMode.Truncate;
+            speech.resizeTextForBestFit = false;
+            float width = Mathf.Clamp(speech.preferredWidth + 32f, 270f, 390f);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+            // 文字与底板都用拉伸锚点，旧AB实例同样能够得到正确内边距。
+            speech.rectTransform.anchorMin = Vector2.zero;
+            speech.rectTransform.anchorMax = Vector2.one;
+            speech.rectTransform.offsetMin = new Vector2(16f, 10f);
+            speech.rectTransform.offsetMax = new Vector2(-16f, -10f);
+            Transform background = rect.Find("Background");
+            if (background is RectTransform bg)
+            {
+                bg.anchorMin = Vector2.zero; bg.anchorMax = Vector2.one;
+                bg.offsetMin = bg.offsetMax = Vector2.zero;
+            }
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(72f, speech.preferredHeight + 24f));
+            _bubbleLayoutReady = true;
+        }
+
+        /// <summary>只读验收完整字形所需高度；独立于截图，能抓到“背景变大但文字仍截断”。</summary>
+        public bool SpeechFits => speech != null && speech.preferredHeight <= speech.rectTransform.rect.height + 1f;
+
+        private void LateUpdate()
+        {
+            if (bubble == null || !_bubbleLayoutReady) { return; }
+            if (_bubbleCamera == null) { _bubbleCamera = Camera.main; }
+            if (_bubbleCamera == null || !_bubbleCamera.orthographic) { return; }
+            var rect = (RectTransform)bubble.transform;
+            rect.localPosition = _bubbleAnchor;
+            rect.GetWorldCorners(_bubbleCorners);
+            Vector3 low = _bubbleCamera.WorldToViewportPoint(_bubbleCorners[0]);
+            Vector3 high = _bubbleCamera.WorldToViewportPoint(_bubbleCorners[2]);
+            float dx = low.x < .02f ? .02f - low.x : high.x > .98f ? .98f - high.x : 0f;
+            float dy = low.y < .02f ? .02f - low.y : high.y > .98f ? .98f - high.y : 0f;
+            // 帮手会爬到棋盘外；将气泡移回镜头安全区，不移动棋子也不改变台词内容。
+            rect.position += _bubbleCamera.transform.right * (dx * _bubbleCamera.orthographicSize * 2f * _bubbleCamera.aspect)
+                + _bubbleCamera.transform.up * (dy * _bubbleCamera.orthographicSize * 2f);
         }
 
         private void Update()

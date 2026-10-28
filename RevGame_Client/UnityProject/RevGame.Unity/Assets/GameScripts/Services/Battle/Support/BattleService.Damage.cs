@@ -95,6 +95,12 @@ namespace RevGame.Services
             else
             {
                 double basis = request.Basis == DamageBasis.MaxHp ? target.MaxHp : request.Basis == DamageBasis.CurrentHp ? target.Hp : 0;
+                // 炸弹/区域/炮火都经过这个出口。仅缩放主将的百分比部分，保留固定伤害下限；
+                // 否则单纯增加Boss最大生命也会同比放大支援伤害，厚血仍会被少量支援直接清空。
+                if (request.Basis == DamageBasis.MaxHp && IsBossMaster(target))
+                {
+                    basis *= Balance.BossPercentDamageScale;
+                }
                 amount = ClampDamage(basis * request.Factor, request.Floor);
             }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

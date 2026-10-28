@@ -129,6 +129,29 @@ namespace RevGame.Data
         public float EnemyJumpSeconds;
         /// <summary>玩家普攻真实命中基础积分；主要能源来源。</summary>
         public int HelperPlayerHitScore;
+        /// <summary>风暴触发上界：存活玩家棋数大于0且小于此数；由战斗服务消费，不能由视图改变。</summary>
+        public int HelperStormThreshold;
+        /// <summary>风暴导弹间隔，模拟秒；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormMissileSeconds;
+        /// <summary>风暴导弹每次直接命中基础伤害；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormMissileDamage;
+        /// <summary>导弹爆炸半径，棋盘格；溅射为直接伤害的一半；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormBlastRadius;
+        /// <summary>风暴水母弹幕间隔，模拟秒；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormJellySeconds;
+        /// <summary>每轮水母颗数，按敌棋稳定轮转；由战斗服务消费，不能由视图改变。</summary>
+        public int HelperStormJellyCount;
+        /// <summary>单颗水母基础伤害；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormJellyDamage;
+        /// <summary>风暴激光持续模拟秒；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormBeamSeconds;
+        /// <summary>风暴激光启动间隔，模拟秒；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormBeamCooldown;
+        /// <summary>风暴激光每个命中敌人的每秒基础伤害；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormBeamDps;
+        /// <summary>风暴激光完整宽度，棋盘格，几何检测与画面共用；由战斗服务消费，不能由视图改变。</summary>
+        public float HelperStormBeamWidth;
+
         /// <summary>帮手单发命中返还积分；必须小于单发成本。</summary>
         public int HelperHitScore;
         /// <summary>每个普通攻击粒子消耗可用积分。</summary>
@@ -145,6 +168,8 @@ namespace RevGame.Data
         public float HelperBaseInterval;
         /// <summary>最快普通攻击间隔秒。</summary>
         public float HelperMinInterval;
+        /// <summary>Boss回合帮手额外攻速比例与单发伤害倍率；独立配置，避免弹幕加密等于伤害翻倍。</summary>
+        public float HelperBossSpeedBonus, HelperBossDamageScale;
         /// <summary>爬行或跳至外圈的决策间隔秒。</summary>
         public float HelperMoveSeconds;
         /// <summary>活棋达到此数量时转棋盘外攻击。</summary>
@@ -196,6 +221,12 @@ namespace RevGame.Data
         public float BossAccelerationSeconds;
         public float BossAccelerationBonus;
         public float BossHpGrowthPerChapter;
+        /// <summary>仅主将的额外最大生命倍率；护卫沿用普通敌军成长，不通过增加Boss数量堆耐久。</summary>
+        public float BossHpMultiplier;
+        /// <summary>主将出生时独立乘入攻击倍率，普攻与技能共用；不降低普通敌棋和护卫的伤害。</summary>
+        public float BossAttackMultiplier;
+        /// <summary>主将承受最大生命比例伤害的系数，范围(0,1]；固定伤害与棋子普攻不受影响。</summary>
+        public float BossPercentDamageScale;
         // ---- Boss 技能节奏（技能本身的参数在 BossSkillConfig 表里）
         public float BossFirstSkillSeconds;
         public float BossSkillGapSeconds;
@@ -291,6 +322,9 @@ namespace RevGame.Data
             v.BossAccelerationSeconds = r.Float("Boss.AccelerationSeconds", 1f, 3600f);
             v.BossAccelerationBonus = r.Float("Boss.AccelerationBonus", 0f, 100f);
             v.BossHpGrowthPerChapter = r.Float("Boss.HpGrowthPerChapter", 0f, 100f);
+            v.BossHpMultiplier = r.Float("Boss.HpMultiplier", 1f, 100f);
+            v.BossAttackMultiplier = r.Float("Boss.AttackMultiplier", 0.01f, 1f);
+            v.BossPercentDamageScale = r.Float("Boss.PercentDamageScale", 0.01f, 1f);
             v.BossFirstSkillSeconds = r.Float("Boss.FirstSkillSeconds", 0f, 120f);
             v.BossSkillGapSeconds = r.Float("Boss.SkillGapSeconds", 0f, 60f);
             v.BossRecoverSeconds = r.Float("Boss.RecoverSeconds", 0f, 10f);
@@ -374,6 +408,17 @@ namespace RevGame.Data
             v.RangedLimit = r.Int("Player.RangedLimit",1,81);
             v.BossPlayerPieceLimit = r.Int("Boss.PlayerPieceLimit",1,70);
             v.EnemyJumpSeconds = r.Float("Enemy.JumpSeconds",0.3f,20f);
+            v.HelperStormThreshold = r.Int("Helper.StormThreshold",1,10);
+            v.HelperStormMissileSeconds = r.Float("Helper.StormMissileSeconds",0.2f,30f);
+            v.HelperStormMissileDamage = r.Float("Helper.StormMissileDamage",1f,1000f);
+            v.HelperStormBlastRadius = r.Float("Helper.StormBlastRadius",0.1f,5f);
+            v.HelperStormJellySeconds = r.Float("Helper.StormJellySeconds",0.2f,30f);
+            v.HelperStormJellyCount = r.Int("Helper.StormJellyCount",1,32);
+            v.HelperStormJellyDamage = r.Float("Helper.StormJellyDamage",1f,100f);
+            v.HelperStormBeamSeconds = r.Float("Helper.StormBeamSeconds",0.2f,10f);
+            v.HelperStormBeamCooldown = r.Float("Helper.StormBeamCooldown",1f,60f);
+            v.HelperStormBeamDps = r.Float("Helper.StormBeamDps",1f,1000f);
+            v.HelperStormBeamWidth = r.Float("Helper.StormBeamWidth",0.2f,5f);
             v.HelperPlayerHitScore = r.Int("Helper.PlayerHitScore",1,100);
             v.HelperHitScore = r.Int("Helper.HitScore",0,10);
             v.HelperShotCost = r.Int("Helper.ShotCost",1,100);
@@ -383,6 +428,8 @@ namespace RevGame.Data
             v.HelperDamageGrowth = r.Float("Helper.DamageGrowth",0f,1f);
             v.HelperBaseInterval = r.Float("Helper.BaseInterval",0.2f,10f);
             v.HelperMinInterval = r.Float("Helper.MinInterval",0.2f,10f);
+            v.HelperBossSpeedBonus = r.Float("Helper.BossSpeedBonus",0f,3f);
+            v.HelperBossDamageScale = r.Float("Helper.BossDamageScale",0.1f,1f);
             v.HelperMoveSeconds = r.Float("Helper.MoveSeconds",0.3f,10f);
             v.HelperCrowdedCount = r.Int("Helper.CrowdedCount",1,81);
             v.HelperBeamScore = r.Int("Helper.BeamScore",10,100000);
@@ -469,6 +516,9 @@ namespace RevGame.Data
         public static float BossAccelerationSeconds => V.BossAccelerationSeconds;
         public static float BossAccelerationBonus => V.BossAccelerationBonus;
         public static float BossHpGrowthPerChapter => V.BossHpGrowthPerChapter;
+        public static float BossHpMultiplier => V.BossHpMultiplier;
+        public static float BossAttackMultiplier => V.BossAttackMultiplier;
+        public static float BossPercentDamageScale => V.BossPercentDamageScale;
         /// <summary>开战后 Boss 第一次放技能前的等待秒数。</summary>
         public static float BossFirstSkillSeconds => V.BossFirstSkillSeconds;
         /// <summary>任意两次技能之间的公共间隔秒数，防止技能首尾相接。</summary>
@@ -560,6 +610,17 @@ namespace RevGame.Data
         public static int RangedLimit => V.RangedLimit;
         public static int BossPlayerPieceLimit => V.BossPlayerPieceLimit;
         public static float EnemyJumpSeconds => V.EnemyJumpSeconds;
+        public static int HelperStormThreshold => V.HelperStormThreshold;
+        public static float HelperStormMissileSeconds => V.HelperStormMissileSeconds;
+        public static float HelperStormMissileDamage => V.HelperStormMissileDamage;
+        public static float HelperStormBlastRadius => V.HelperStormBlastRadius;
+        public static float HelperStormJellySeconds => V.HelperStormJellySeconds;
+        public static int HelperStormJellyCount => V.HelperStormJellyCount;
+        public static float HelperStormJellyDamage => V.HelperStormJellyDamage;
+        public static float HelperStormBeamSeconds => V.HelperStormBeamSeconds;
+        public static float HelperStormBeamCooldown => V.HelperStormBeamCooldown;
+        public static float HelperStormBeamDps => V.HelperStormBeamDps;
+        public static float HelperStormBeamWidth => V.HelperStormBeamWidth;
         public static int HelperPlayerHitScore => V.HelperPlayerHitScore;
         public static int HelperHitScore => V.HelperHitScore;
         public static int HelperShotCost => V.HelperShotCost;
@@ -569,6 +630,8 @@ namespace RevGame.Data
         public static float HelperDamageGrowth => V.HelperDamageGrowth;
         public static float HelperBaseInterval => V.HelperBaseInterval;
         public static float HelperMinInterval => V.HelperMinInterval;
+        public static float HelperBossSpeedBonus => V.HelperBossSpeedBonus;
+        public static float HelperBossDamageScale => V.HelperBossDamageScale;
         public static float HelperMoveSeconds => V.HelperMoveSeconds;
         public static int HelperCrowdedCount => V.HelperCrowdedCount;
         public static int HelperBeamScore => V.HelperBeamScore;

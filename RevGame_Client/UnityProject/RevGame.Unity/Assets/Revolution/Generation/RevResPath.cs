@@ -43,6 +43,7 @@ namespace Revolution
         public const string Art_Pieces_Enemy_Shield = "Art/Pieces/Enemy/Shield/";
         public const string Art_Pieces_Enemy_Swordman = "Art/Pieces/Enemy/Swordman/";
         public const string Art_Pieces_Helper = "Art/Pieces/Helper/";
+        public const string Art_Pieces_Helper_Storm = "Art/Pieces/Helper/Storm/";
         public const string Art_Pieces_Player = "Art/Pieces/Player/";
         public const string Art_Pieces_Player_Archer = "Art/Pieces/Player/Archer/";
         public const string Art_Pieces_Player_Assassin = "Art/Pieces/Player/Assassin/";

@@ -108,5 +108,12 @@ namespace RevGame.Services
         }
 
         public RevGame.Battle.BossAI RegressionBossAI(Piece boss) { return EnsureBossAI(boss); }
+
+        /// <summary>只接真实百分比伤害出口；查询不扣血，提交仍触发正式护盾/死亡/计分。</summary>
+        public int RegressionPercentDamage(Piece target, float ratio, int floor, bool predict)
+        {
+            var request = new DamageRequest(target, DamageBasis.MaxHp, BattleDamageKind.Artillery, factor: ratio, floor: floor);
+            return predict ? EvaluateDamage(request).Damage : ResolveDamage(request);
+        }
     }
 }

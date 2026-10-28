@@ -130,6 +130,8 @@ namespace RevGame.Editor
             desired["Assets/GameRes/Material/Helper/HelperRune.mat"] = "battle_helper_fx";
             desired["Assets/GameShader/Helper/HelperRune_Shader.shader"] = "battle_helper_fx";
             desired["Assets/GameRes/Material/Helper/HelperBeamImpact.mat"] = "battle_helper_fx";
+            desired["Assets/GameRes/Material/Helper/HelperStorm.mat"] = "battle_helper_fx";
+            desired["Assets/GameShader/Helper/HelperStorm_Shader.shader"] = "battle_helper_fx";
             desired["Assets/GameShader/Helper/HelperBeamImpact_Shader.shader"] = "battle_helper_fx";
             for (int i = 0; i < chapterShaders.Length; i++)
             {

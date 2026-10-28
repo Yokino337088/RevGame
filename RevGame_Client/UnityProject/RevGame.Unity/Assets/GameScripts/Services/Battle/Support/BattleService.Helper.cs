@@ -29,6 +29,10 @@ namespace RevGame.Services
         private string _helperSpeech = "攻击敌人，为我积攒能量！";
         /// <summary>累计成绩决定档位，可用余额决定能否攻击；两个概念分开避免花一次分就降级。</summary>
         private int HelperTier => (int)Math.Min(Balance.HelperMaxTier, ChapterScore / Balance.HelperScoreStep);
+        /// <summary>实际弹幕间隔（模拟秒）；Boss加速只作用于帮手，不额外放大远程共鸣或激光每秒伤害。</summary>
+        public float HelperShotInterval => Math.Max(Balance.HelperMinInterval,
+            Balance.HelperBaseInterval / (1f + HelperTier * Balance.HelperDamageGrowth))
+            / (IsBossRound ? 1f + Balance.HelperBossSpeedBonus : 1f);
         /// <summary>
         /// 帮手每档的攻击成长等比传给远程普攻，实时读当前章成绩。扣能源不降档，换章/重开才清零。
         /// 乘数独立作用于普攻，不能把炸弹/区域伤害也放大；既有阵容火力递减仍生效。
@@ -46,13 +50,14 @@ namespace RevGame.Services
             }
         }
         public HelperSnapshot Helper => new HelperSnapshot(Chapter > 0 && Phase != GamePhase.Settle,
-            _helperOutside, _helperPosition, _helperTargetId, HelperTier, _helperAI == null ? "Rest" : _helperAI.State.ToString(), _helperSpeech);
+            _helperOutside, _helperPosition, _helperTargetId, HelperTier, _helperAI == null ? "Rest" : _helperAI.State.ToString(), _helperSpeech, HelperStormActive);
 
         /// <summary>回合是机器的生命周期边界。钱包同章保留，目标与全部绝对冷却重置，避免旧回合时钟污染。</summary>
         private void ResetHelperRound()
         {
             _helperAI?.Dispose();
             _helperAI = new HelperAI(new HelperOwner(this));
+            ResetHelperStorm();
             _helperTargetId = _helperExplicitTargetId = 0;
             _helperPosition = new BoardPos(Consts.BoardSize, 4);
             _helperOutside = true;
@@ -97,6 +102,7 @@ namespace RevGame.Services
                 }
             }
             _helperTargetId = best == null ? 0 : best.Id;
+            UpdateHelperStorm();
             _helperAI.Tick(seconds);
         }
 
@@ -147,6 +153,8 @@ namespace RevGame.Services
             private int BeamCost => (int)Math.Min(int.MaxValue, Math.Ceiling(Balance.HelperBeamTickCost * (double)_service.ScoreMultiplier));
             public bool CanBeam => _service.ChapterScore >= Balance.HelperBeamScore
                 && _service.CombatScore >= Math.Max(Balance.HelperBeamReserve, BeamCost) && _service._battleElapsed >= _service._helperNextBeam;
+            public bool StormActive => _service.HelperStormActive;
+            public void Storm(float seconds) { _service.StepHelperStorm(seconds, this); }
             public bool MoveDue => _service._battleElapsed >= _service._helperNextMove;
             public bool ShotDue => _service._battleElapsed >= _service._helperNextShot && _service.CombatScore >= ShotCost;
 
@@ -193,11 +201,14 @@ namespace RevGame.Services
                 int count = (int)Math.Min(1 + tier, _service.CombatScore / ShotCost);
                 int cost = count * ShotCost;
                 if (!_service.SpendCombatScore(cost)) { return; }
-                _service._helperNextShot = _service._battleElapsed + Math.Max(Balance.HelperMinInterval, Balance.HelperBaseInterval / (1f + tier * Balance.HelperDamageGrowth));
+                // 保留固定步的微小超时，避免“每次从当前时刻重新计时”吃掉高攻速；缺分时不积攒无限追发。
+                _service._helperNextShot = Math.Max(_service._helperNextShot,
+                    _service._battleElapsed - Balance.BattleSimulationStepSeconds) + _service.HelperShotInterval;
                 BoardPos position = target.Pos;
                 for (int i = 0; i < count && target.IsAlive; i++)
                 {
-                    _service.DamagePiece(target, ClampDamage(Balance.HelperBaseDamage * (1f + tier * Balance.HelperDamageGrowth), 1), damageKind: BattleDamageKind.Helper);
+                    float damageScale = _service.IsBossRound ? Balance.HelperBossDamageScale : 1f;
+                    _service.DamagePiece(target, ClampDamage(Balance.HelperBaseDamage * (1f + tier * Balance.HelperDamageGrowth) * damageScale, 1), damageKind: BattleDamageKind.Helper);
                 }
                 _service._helperSpeech = tier >= 2 ? "能量充足，弹幕掩护！" : "我来帮你压制远程！";
                 RevEvent.DispatchEvent<HelperShotInfo>(Events.HelperShot, new HelperShotInfo(_service._helperPosition, position, target.Id, _service.Chapter, count, cost, false));
