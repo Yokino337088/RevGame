@@ -64,7 +64,7 @@ namespace RevGame.View
         /// <summary>过场读取的装配状态；不是玩法阶段。失败必须显示原因，不能用“格子少几个”悄悄继续。</summary>
         public string LoadError { get; private set; }
         private bool _cellsReady;
-        public bool IsReady { get { return _surfaceReady && IsBossArtReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
+        public bool IsReady { get { return _surfaceReady && IsBossArtReady && HelperVisualReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
         public int ActiveEffectCount { get { return _effects.Count; } }
         /// <summary>攻击范围是否正在显示；编辑器/自动化验收直接读，不看渲染器状态。</summary>
         public bool AttackRangeVisible { get { return _attackRangeVisible; } }
@@ -96,6 +96,7 @@ namespace RevGame.View
             // Unity 停用 BoardView 时会调用 OnDisable；如果子棋子此时回池换父节点，Unity 会拒绝并报警。
             // 独立容器的子物体不参与那次停用遍历，便可先完整回池，再销毁这个空容器。
             _viewRoot = new GameObject("BattleViews").transform;
+            OpenHelperVisual();
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnRound, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterBattle, OnRound, owner: this);
             RevEvent.AddEventListener(Events.BossIntroFinished, RefreshBoard, owner: this);
@@ -613,6 +614,7 @@ namespace RevGame.View
             // OnPoolReturn 使用 Kill(false)，不会执行旧完成回调，也不会在遍历中修改本集合。
             _effects.Clear();
             ClearBossFx();
+            ClearHelperAttacks();
             ClearCombatPacing();
         }
 
@@ -648,7 +650,8 @@ namespace RevGame.View
             if (_released || piece == null || !_pieces.TryGetValue(id, out PieceView view)) { return; }
             Vector3 destination = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             destination += new Vector3(piece.Size - 1, piece.Size - 1, 0) * Consts.CellSize * 0.5f;
-            view.MoveFormationTo(destination);
+            if (piece.Side == GameSide.Enemy && !piece.Def.IsRanged) { view.JumpTo(destination); }
+            else { view.MoveFormationTo(destination); }
         }
 
         private void OnHpChanged(int id)
@@ -859,6 +862,7 @@ namespace RevGame.View
             RevTimer.CancelAllOf(this);
             // Boss 技能特效先回池：它们挂在 _viewRoot 下，容器稍后销毁前必须全部归还。
             ClearBossFx();
+            CloseHelperVisual();
             ClearCombatPacing();
             foreach (var view in _pieces.Values)
             {

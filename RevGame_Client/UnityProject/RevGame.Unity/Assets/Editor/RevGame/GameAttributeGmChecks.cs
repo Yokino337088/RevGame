@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using RevGame.Animation;
+using RevGame.Automation;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;

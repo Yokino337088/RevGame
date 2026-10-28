@@ -1,6 +1,6 @@
 // 开发态测试夹具。物理文件留在用户指定的 Animation/Fixtures，partial 仍是原来的 BattleService，绝不是第二套战斗服务。
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-using RevGame.Animation;
+using RevGame.Automation;
 using RevGame.Core;
 using RevGame.Pieces;
 

@@ -10,6 +10,21 @@ namespace RevGame.Services
 {
     public sealed partial class BattleService
     {
+        /// <summary>棋盘占格版本改变时更新活棋计数。不能每颗棋每次攻击都复制名单或扫描整盘。</summary>
+        private int _firepowerTopology = -1, _firepowerAlive;
+        private float PlayerFirepowerScale()
+        {
+            if (_firepowerTopology != _board.TopologyVersion)
+            {
+                _firepowerTopology = _board.TopologyVersion;
+                _firepowerAlive = 0;
+                foreach (Piece p in _playerPieces) { if (p.IsAlive) { _firepowerAlive++; } }
+            }
+            if (_firepowerAlive <= Balance.PlayerFirepowerSoftCount) { return 1f; }
+            // 更多棋子仍提供占格、封气与生命；单位火力收益递减，防六十颗远程同时输出造成秒杀。
+            double ratio = Balance.PlayerFirepowerSoftCount / (double)_firepowerAlive;
+            return (float)Math.Max(Balance.PlayerFirepowerMinScale, Math.Pow(ratio,Balance.PlayerFirepowerExponent));
+        }
         /// <summary>基础来源不同，但最终减伤/护盾/扣血出口相同；百分比技能不能误套普攻加成。</summary>
         private enum DamageBasis { Fixed, Attack, BossSkill, MaxHp, CurrentHp }
 
@@ -54,7 +69,13 @@ namespace RevGame.Services
                     float linked = Math.Min(Balance.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Balance.LinkAttackPerCell);
                     multiplier *= 1f + Math.Max(0f, linked) + ClassBonus(attacker.Side)
                         + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
-                    amount = ClampDamage(attacker.Def.Attack * attacker.AttackScale * attacker.EyeAttackMultiplier * multiplier * Balance.CombatDamageScale, 1);
+                    float teamScale = attacker.Side == GameSide.Player ? PlayerFirepowerScale() : 1f;
+                    if (attacker.Side == GameSide.Player && attacker.Def.IsRanged)
+                    {
+                        // 共鸣只强化远程普攻；不修改图鉴共享数据，不改变敌方或技能伤害。
+                        teamScale *= 1f + HelperRangedAttackBonus;
+                    }
+                    amount = ClampDamage(attacker.Def.Attack * attacker.AttackScale * attacker.EyeAttackMultiplier * multiplier * Balance.CombatDamageScale * teamScale, 1);
                 }
                 else
                 {
@@ -138,6 +159,7 @@ namespace RevGame.Services
             // 在死亡广播、移除占格、胜负与积分之前处理复活，视图不会被回池，后续伤害仍可真正击杀它。
             if (!target.IsAlive && target.TryReviveInEye()) { HealRevivedEyeNeighbors(target); }
             AwardHitScore(target, attacker, damageKind, real);
+            AwardCombatHit(target, attacker, damageKind, real);
             RevEvent.DispatchEvent<int>(Events.DamageResolved, target.Id);
             RevEvent.DispatchEvent<int>(Events.PieceHpChanged, target.Id);
             if (!target.IsAlive)

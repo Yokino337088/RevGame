@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace RevGame.Animation
+namespace RevGame.Automation
 {
     /// <summary>
     /// 开发态单指输入适配器：屏幕坐标 → EventSystem 真实射线 → 按下 → 下一次轮询松开/点击。

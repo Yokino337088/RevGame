@@ -54,6 +54,7 @@ namespace RevGame.Services
         private bool TryDeployReinforcement(PieceKind kind, StarTier star)
         {
             PieceDef def = PieceCatalog.Get(kind, star);
+            if (!CanAddPlayerRanged(def, false)) { return false; }
             int size = PieceCatalog.PlayerBodySize(star);
             BoardPos pos;
             if (!TryFindSupportPosition(def, size, out pos))

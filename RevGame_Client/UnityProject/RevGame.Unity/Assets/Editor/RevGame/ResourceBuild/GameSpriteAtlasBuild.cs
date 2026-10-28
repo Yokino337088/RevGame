@@ -107,6 +107,8 @@ namespace RevGame.Editor
                 // 章节背景是独立 GPU 纹理（显式 _ChapterTex 采样），按需租约，不纳入 Sprite 图集预热。
                 // 第一章也归档进 ChapterBackground，但仍是 Sprite，必须保留图集；其余五章是独立采样的 Default 纹理。
                 .Where(p => AssetImporter.GetAtPath(p) is TextureImporter importer
+                    // 激光是LineRenderer非Sprite采样纹理，保持完整0～1UV；禁止误归Sprite图集。
+                    && !p.StartsWith("Assets/GameRes/HelperTextures/", StringComparison.Ordinal)
                     && (!p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) || importer.textureType == TextureImporterType.Sprite))
                 .Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
         }
@@ -114,6 +116,7 @@ namespace RevGame.Editor
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path)
         {
+            if (path.Contains("/Art/Pieces/Helper/")) { return "HelperFrames"; }
             if (path.Contains("/Art/Boss/"))
             {
                 // 每章8帧独立图集，默认棋子/手牌配置不引用它，普通回合不预加载Boss美术。
@@ -192,6 +195,13 @@ namespace RevGame.Editor
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "DefaultTexturePlatform", maxTextureSize = maxSize, textureCompression = TextureImporterCompression.Compressed });
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Standalone", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.DXT5 });
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.ETC2_RGBA8 });
+            if (name == "HelperFrames")
+            {
+                // 仅四张小图使用512无损图集，防DXT/ETC色块软化脸部与腿部边缘；不扩大其它图集内存。
+                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="DefaultTexturePlatform", maxTextureSize=512, textureCompression=TextureImporterCompression.Uncompressed });
+                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="Standalone", overridden=true, maxTextureSize=512, format=TextureImporterFormat.RGBA32 });
+                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="Android", overridden=true, maxTextureSize=512, format=TextureImporterFormat.RGBA32 });
+            }
             if (before != EditorJsonUtility.ToJson(atlasImporter)) { atlasImporter.SaveAndReimport(); }
             // 导入完成后重新取Importer，再写最终AB标记，避免旧Importer的保存覆盖标记。
             GameResourceBuild.SetBundleIfChanged(AssetImporter.GetAtPath(atlasPath), bundle);

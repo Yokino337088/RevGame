@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 3080927074
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 32d30691f9756ee5264e59d66bc38187
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 32d30691f9756ee5264e59d66bc38187
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Pieces/Helper/HelperFrame01.png
+- Assets/GameRes/Art/Pieces/Helper/HelperFrame03.png
+- Assets/GameRes/Atlases/HelperFrames.spriteatlasv2
+- Assets/GameRes/Art/Pieces/Helper/HelperFrame02.png
+- Assets/GameRes/Art/Pieces/Helper/HelperFrame04.png
+Dependencies: []

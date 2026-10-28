@@ -486,6 +486,16 @@ namespace RevGame.View
         }
 
         /// <summary>集结时沿抛物线跃入阵位，身体伴随已有雷光Shader。0.65秒和弧高是纯美术表现，不改变占格时间。</summary>
+        /// <summary>敌近战接敌跳跃；模型已原子Move，Tween只画0.28秒弧线。复用已有回收停止契约。</summary>
+        public void JumpTo(Vector3 position)
+        {
+            StopFormationMove();
+            _moveTarget = position;
+            _formationTween = transform.DOJump(position, .26f, 1, .28f).SetEase(Ease.OutQuad);
+            Tween tween = _formationTween;
+            tween.OnKill(() => { if (ReferenceEquals(_formationTween, tween)) { _formationTween = null; } });
+        }
+
         public void MoveFormationTo(Vector3 position)
         {
             StopFormationMove();

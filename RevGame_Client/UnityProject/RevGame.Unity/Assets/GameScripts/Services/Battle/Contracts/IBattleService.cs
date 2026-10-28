@@ -43,6 +43,18 @@ namespace RevGame.Services
     /// </summary>
     public interface IBattleService
     {
+        /// <summary>可花费的本章战斗积分，消费不会减少历史分数。</summary>
+        long CombatScore { get; }
+        /// <summary>唯一帮手的只读状态；不是占格棋子，敌人永远无法把它列为目标。</summary>
+        HelperSnapshot Helper { get; }
+        /// <summary>帮手成长传递的远程普攻/攻速加成，均为无量纲比例，受Excel上限约束。</summary>
+        float HelperRangedAttackBonus { get; }
+        float HelperRangedSpeedBonus { get; }
+        /// <summary>主动移除存活己方棋，不返还手牌或积分；最后一颗移除仍会真实失败。</summary>
+        bool RemovePlayerPiece(int id);
+        /// <summary>指定帮手攻击目标，0取消；目标必须是当前存活敌棋。</summary>
+        bool SetHelperTarget(int id);
+
         /// <summary>本回合积分换回合清零；永久总积分在本机跨挑战保存；倍率随进度和存活棋数变化。</summary>
         long RoundScore { get; }
         long ChapterScore { get; }

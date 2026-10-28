@@ -120,6 +120,24 @@ namespace RevGame.Editor
             }
             desired["Assets/GameRes/Material/Board/PlacementMagic.mat"] = "material_board";
             // 长BGM逐曲独立分包：选择一章不会把其它歌曲一起装进内存。原MP3保留，由Unity只转码一次。
+            desired["Assets/GameRes/Pieces/Helper"] = "battle_helper";
+            desired["Assets/GameRes/Effects/Helper"] = "battle_helper_fx";
+            desired["Assets/GameRes/HelperTextures"] = "battle_helper_fx";
+            desired["Assets/GameRes/Material/Helper/HelperBlueBeam.mat"] = "battle_helper_fx";
+            desired["Assets/GameShader/Helper/HelperBlueBeam_Shader.shader"] = "battle_helper_fx";
+            desired["Assets/GameRes/Material/Helper/HelperGoldReflect.mat"] = "battle_helper";
+            desired["Assets/GameShader/Helper/HelperGoldReflect_Shader.shader"] = "battle_helper";
+            desired["Assets/GameRes/Material/Helper/HelperRune.mat"] = "battle_helper_fx";
+            desired["Assets/GameShader/Helper/HelperRune_Shader.shader"] = "battle_helper_fx";
+            desired["Assets/GameRes/Material/Helper/HelperBeamImpact.mat"] = "battle_helper_fx";
+            desired["Assets/GameShader/Helper/HelperBeamImpact_Shader.shader"] = "battle_helper_fx";
+            for (int i = 0; i < chapterShaders.Length; i++)
+            {
+                string name = "HelperChapter" + (i + 1).ToString("00");
+                string bundle = "background_" + chapterShaders[i].ToLowerInvariant();
+                desired["Assets/GameRes/Material/Helper/" + name + ".mat"] = bundle;
+                desired["Assets/GameShader/Helper/" + name + "_Shader.shader"] = bundle;
+            }
             GameChapterAudioBuild.Configure(desired);
             // 每章Boss配置只引用该章8帧，配置和图集同包；普通棋子预制体不能引用六章配置。
             for (int chapter = 1; chapter <= 6; chapter++)

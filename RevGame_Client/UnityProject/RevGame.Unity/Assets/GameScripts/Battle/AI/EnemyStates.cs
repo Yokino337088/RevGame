@@ -129,7 +129,7 @@ namespace RevGame.Battle
                 {
                     next = EnemyAIState.Attack; reason = "发现合法攻击目标";
                 }
-                else if (Owner.Elapsed >= Math.Max(Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks, actor.NextMoveAt))
+                else if (Owner.Elapsed >= Math.Max((actor.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds), actor.NextMoveAt))
                 {
                     next = EnemyAIState.Advance; reason = "没有射界且移动冷却完成";
                 }
@@ -216,10 +216,10 @@ namespace RevGame.Battle
             // 推进时也要消费攻击进度：规则是“没有射界就攒不出整次出手”，不是暂停计时。
             ConsumeActions(seconds);
             Piece actor = Owner.Actor;
-            actor.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
+            actor.NextMoveAt = Owner.Elapsed + (actor.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds);
             // 状态决定何时推进、失败是否消费冷却；通用合法候选与距离过滤交给算法。
             EnemyTactics.GetAdvanceCandidates(Owner.Board, actor, Targets);
-            if (Targets.Count == 0)
+            if (Targets.Count == 0 && (actor.Def.IsRanged || actor.EyeCount > 0))
             {
                 return;
             }
@@ -384,7 +384,7 @@ namespace RevGame.Battle
                     return;
                 }
                 // 6) 新棋落地不立即攻击/移动，先攒满一个完整移动冷却，玩家有机会反应。
-                newcomer.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
+                newcomer.NextMoveAt = Owner.Elapsed + (newcomer.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds);
                 Owner.CommitDeployment(newcomer, position, intention);
             }
         }

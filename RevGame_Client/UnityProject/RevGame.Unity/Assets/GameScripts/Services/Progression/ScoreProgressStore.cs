@@ -5,14 +5,6 @@ using UnityEngine;
 
 namespace RevGame.Services
 {
-    /// <summary>积分持久化契约。规则测试可不传存储，不能把测试击杀写入玩家永久积分。</summary>
-    public interface IScoreProgress
-    {
-        long Total { get; }
-        void Record(long total);
-        void Flush();
-    }
-
     /// <summary>
     /// 启动宿主持有的本地积分存档；只保存总量，不保存棋盘。PlayerPrefs适用于当前离线小游戏。
     /// 击中时只标脏，至多每2秒落盘一次，结算/离开战斗/切后台立即刷盘；异常退出最多丢失最近2秒。

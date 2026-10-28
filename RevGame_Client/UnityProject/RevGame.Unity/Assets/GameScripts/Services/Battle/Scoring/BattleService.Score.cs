@@ -42,13 +42,17 @@ namespace RevGame.Services
             bool critical = friendly && kind == BattleDamageKind.Critical;
             bool kill = !target.IsAlive && (friendly || kind == BattleDamageKind.EnergyBomb
                 || kind == BattleDamageKind.Artillery || kind == BattleDamageKind.Execution);
-            int basis = (kill ? Balance.ScoreKillPoints : 0) + (critical ? Balance.ScoreCriticalPoints : 0);
+            // 普攻、暴击与击杀合并一组飞星，避免同一击重复广播入账。
+            bool basic = friendly && (kind == BattleDamageKind.Normal || kind == BattleDamageKind.Critical);
+            int basis = (kill ? Balance.ScoreKillPoints : 0) + (critical ? Balance.ScoreCriticalPoints : 0)
+                + (basic ? Balance.HelperPlayerHitScore : 0);
             if (basis <= 0) { return; }
             float multiplier = ScoreMultiplier;
             long added = Math.Max(1L, (long)Math.Round(basis * (double)multiplier, MidpointRounding.AwayFromZero));
             RoundScore = AddScore(RoundScore, added);
             ChapterScore = AddScore(ChapterScore, added);
             LifetimeScore = AddScore(LifetimeScore, added);
+            CombatScore = AddScore(CombatScore, added);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!_scorePreview)
 #endif
@@ -75,15 +79,15 @@ namespace RevGame.Services
         private sealed class ScorePreview : IDisposable
         {
             private BattleService _service;
-            private readonly long _round, _total, _chapter;
+            private readonly long _round, _total, _chapter, _wallet;
             public ScorePreview(BattleService service)
             {
-                _service = service; _round = service.RoundScore; _total = service.LifetimeScore; _chapter = service.ChapterScore; service._scorePreview = true;
+                _service = service; _round = service.RoundScore; _total = service.LifetimeScore; _chapter = service.ChapterScore; _wallet = service.CombatScore; service._scorePreview = true;
             }
             public void Dispose()
             {
                 if (_service == null) { return; }
-                _service.RoundScore = _round; _service.LifetimeScore = _total; _service.ChapterScore = _chapter; _service._scorePreview = false; _service = null;
+                _service.RoundScore = _round; _service.LifetimeScore = _total; _service.ChapterScore = _chapter; _service.CombatScore = _wallet; _service._scorePreview = false; _service = null;
             }
         }
 #endif

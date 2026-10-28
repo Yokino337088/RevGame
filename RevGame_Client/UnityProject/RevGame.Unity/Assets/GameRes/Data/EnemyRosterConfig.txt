@@ -4,6 +4,6 @@
 1	Core	Crossbow
 2	Core	Archer
 3	Core	MageFire
-4	Filler	Shield
-5	Filler	HeavySword
+4	Filler	Archer
+5	Filler	MageFire
 6	Filler	Swordman

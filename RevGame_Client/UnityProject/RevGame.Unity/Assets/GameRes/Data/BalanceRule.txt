@@ -5,101 +5,133 @@ Battle.DurationSeconds	90	普通回合战斗限时（秒）；Boss 回合不限�
 Battle.TickSeconds	1.25	标准行动周期（秒）：普通棋攒满一个周期出手一次；同时是模拟与敌人移动的时间基准。
 Battle.StepsPerTick	4	一个行动周期拆成几个固定模拟小步（整数 ≥1）。越大远程分次出手越细，计算量越大。
 Battle.AttackSpeedScale	1.35	攻击提速倍率：只乘出手进度，不改变模拟时钟，因此不会加快敌人走位、增益或回合倒计时。
-Battle.CombatBaseScale	0.6	单发伤害基础系数。实际伤害系数 = 本值 ÷ 攻击提速倍率：提高出手频率时用它摊薄单发伤害，维持总火力。
+Battle.CombatBaseScale	0.5	单发伤害基础系数。实际伤害系数 = 本值 ÷ 攻击提速倍率：提高出手频率时用它摊薄单发伤害，维持总火力。
 Battle.EnemyMoveEveryTicks	1	敌人移动冷却为本值×标准行动周期（整数≥1）；当前1即1.25秒；不改变攻击频率。
 Battle.EyeHealSeconds	1	我方眼位四邻回血间隔，秒
-Battle.EyeHealRatio	0.03	我方眼位四邻每秒回复各自最大生命3%；多个眼不叠加
+Battle.EyeHealRatio	0.018	我方眼位四邻每秒回复各自最大生命3%；多个眼不叠加
 Battle.EyeHealMinEyes	1	历史兼容字段；新规则按是否紧邻有效我方眼判定，不按整群眼数回血
 Damage.BaseMultiplier	1	基础伤害倍率（公式里的单位 1，保持 1 即可）。
-Damage.LockedMultiplier	2	目标被锁死（气为 0）时受到的伤害倍率。
-Damage.IsolatedMultiplier	1.2	目标孤立（只剩自己一格相连）时受到的伤害倍率。
-Damage.LinkPerCell	0.05	攻击方每多一格相连棋，攻击额外加成的比例。
-Damage.LinkMax	0.25	相连加成的上限比例。
+Damage.LockedMultiplier	1.6	目标被锁死（气为 0）时受到的伤害倍率。
+Damage.IsolatedMultiplier	1.1	目标孤立（只剩自己一格相连）时受到的伤害倍率。
+Damage.LinkPerCell	0.025	攻击方每多一格相连棋，攻击额外加成的比例。
+Damage.LinkMax	0.15	相连加成的上限比例。
 Damage.ClassBonus	0.1	职业加成：同职业在场数量每达到一个门槛增加的攻击比例。
 Damage.ClassThresholdLow	3	职业加成第一档门槛：同职业在场棋数（整数）。
 Damage.ClassThresholdHigh	5	职业加成第二档门槛：同职业在场棋数（整数）。
 Boss.AccelerationSeconds	60	Boss 回合“决死加速”：每满多少秒加一档（秒）。
 Boss.AccelerationBonus	0.1	Boss 加速每档增加的伤害比例；高频小额伤害取整后至少再加 1 点，保证压力可见。
-Boss.HpGrowthPerChapter	0.25	Boss 大棋生命随章节递增：第 N 章 = 基础 × (1 + (N-1) × 本值)。
-Enemy.HpBase	2.4	敌方生命基础系数（给远程对射、守眼回血和事件留出展开时间）。
-Enemy.HpMultiplier	4.5	敌方生命额外倍率，抵消我方六牌保留、双牌升级和每轮增益带来的火力。
-Enemy.HpGrowthPerRound	0.018	敌方生命随连续回合进度递增：× (1 + 进度 × 本值)；进度跨章不归零。
-Enemy.AttackGrowthPerRound	0.009	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
+Boss.HpGrowthPerChapter	0.16	Boss 大棋生命随章节递增：第 N 章 = 基础 × (1 + (N-1) × 本值)。
+Enemy.HpBase	1.2	敌方生命基础系数（给远程对射、守眼回血和事件留出展开时间）。
+Enemy.HpMultiplier	1.2	敌方生命额外倍率，抵消我方六牌保留、双牌升级和每轮增益带来的火力。
+Enemy.HpGrowthPerRound	0.004	敌方生命随连续回合进度递增：× (1 + 进度 × 本值)；进度跨章不归零。
+Enemy.AttackGrowthPerRound	0.002	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
 Enemy.AiRoundsPerLevel	5	敌方 AI 档位每隔多少个连续回合提升一档（整数 ≥1）。
 Enemy.AiMaxLevel	4	敌方 AI 最高档位（整数，1~4）。
-Enemy.CountBase	9	敌方每回合基础人数（整数）。
+Enemy.CountBase	6	敌方每回合基础人数（整数）。
 Enemy.CountRoundsPerExtra	5	每隔多少个连续回合敌方多一个人（整数 ≥1）。
-Enemy.CountMax	21	敌方每回合人数上限（整数）。
+Enemy.CountMax	12	敌方每回合人数上限（整数）。
 Enemy.PressureStarDivisor	6	继承阵容压力 = 存活我方棋星级总和 ÷ 本值（至少为 1）；用于按我方强度动态抬高敌方血攻。
-Enemy.PressureHpMax	16	继承阵容压力对敌方生命倍率的上限（压力平方后的封顶值）。
-Enemy.PressureAttackMax	4	继承阵容压力对敌方攻击倍率的上限（压力开方后的封顶值）。
+Enemy.PressureHpMax	10	继承阵容压力对敌方生命倍率的上限（压力平方后的封顶值）。
+Enemy.PressureAttackMax	1.2	继承阵容压力对敌方攻击倍率的上限（压力开方后的封顶值）。
 Enemy.ArcherRange	6	敌方弓箭手直线射程（格，整数）；保留阻挡判定，与重弩跨盘攻击不同。
-Deploy.StartSeconds	1.5	战斗中敌方第一次补兵的最早时刻（秒），预留开局观察时间。
-Deploy.StopSeconds	60	到这个时刻起不再补兵（秒），避免与决胜支援形成无限拉锯。
-Deploy.LivingCap	26	敌方在场棋数上限（整数）；死亡棋子不占额度。
-Deploy.BaseCount	18	本回合增援棋子预算=本值+AI档位；按成功落地棋数计数，不按窗口计数。
+Deploy.StartSeconds	10	战斗中敌方第一次补兵的最早时刻（秒），预留开局观察时间。
+Deploy.StopSeconds	28	到这个时刻起不再补兵（秒），避免与决胜支援形成无限拉锯。
+Deploy.LivingCap	20	敌方在场棋数上限（整数）；死亡棋子不占额度。
+Deploy.BaseCount	2	本回合增援棋子预算=本值+AI档位；按成功落地棋数计数，不按窗口计数。
 Deploy.IntervalMinSeconds	1	补兵间隔的下限（秒）。
-Deploy.IntervalBaseSeconds	2.25	补兵间隔 = max(下限, 本值 − AI档位 × 每档缩短秒数)。
-Deploy.IntervalPerLevelSeconds	0.25	AI 档位每提升一档缩短的补兵间隔（秒）。
+Deploy.IntervalBaseSeconds	8	补兵间隔 = max(下限, 本值 − AI档位 × 每档缩短秒数)。
+Deploy.IntervalPerLevelSeconds	0.4	AI 档位每提升一档缩短的补兵间隔（秒）。
 Deploy.MinEmptyCells	8	棋盘空格数不超过本值（整数）就不补兵，留给玩家调阵和援军。
 Event.ScheduleChance	1	关闭通关辅助时，普通回合安排战斗事件的概率（0~1）；Boss 回合与辅助开启时必定安排。
 Event.RareChance	0.25	关闭通关辅助时，抽到稀有事件组的概率（0~1）。
-Event.DelaySeconds	1.5	一回合里第一次事件最早的战斗时刻（秒）。
-Event.IntervalSeconds	2	相邻两次战斗事件之间的最短间隔（秒）。
-Event.MaxPerRound	1000	每回合战斗事件次数上限（整数）。
+Event.DelaySeconds	5	一回合里第一次事件最早的战斗时刻（秒）。
+Event.IntervalSeconds	6	相邻两次战斗事件之间的最短间隔（秒）。
+Event.MaxPerRound	12	每回合战斗事件次数上限（整数）。
 Event.FallbackHealRatio	0.1	事件没有合法目标时，改为全队回复最大生命的比例。
 Event.ArtilleryRadius	1	炮火支援的范围半径（格，整数）：以最密集的敌人为中心的 (2R+1)×(2R+1)。
 Event.StageDelaySeconds	4	进入僵持/决胜支援阶段后，普通战斗事件至少推迟多少秒，避免两条大标题争抢。
 Assist.SupportDamage	25	支援伤害的固定下限（整数）：炮火与僵持支援取 max(本值, 按最大生命比例计算的伤害)。
 Prep.DelaySeconds	3	准备阶段开始后多少秒发放本轮增益（秒）；开战前必须等它发放。
-Prep.BuffCountMin	4	每轮抽取增益数量的下限（整数）。
-Prep.BuffCountMax	6	每轮抽取增益数量的上限（整数，≤ 增益总数）。
+Prep.BuffCountMin	3	每轮抽取增益数量的下限（整数）。
+Prep.BuffCountMax	4	每轮抽取增益数量的上限（整数，≤ 增益总数）。
 Prep.RegenIntervalSeconds	4	生生不息、慧眼共鸣的周期回复间隔（秒）。
 Round.NormalPerChapter	9	每章普通回合数（整数）；第 N+1 回合是 Boss 回合；选关/跳过回合等界面与此联动。
 Round.SkipAttackBonus	0.1	跳过最后一个普通回合直接挑战 Boss 时，永久获得的攻击加成比例。
 Hand.KindBaseWeight	3	抽手牌时，已解锁棋种的基础权重（整数）。
 Hand.ClassBonusWeight	1	场上已有同职业棋子时，该棋种额外增加的抽取权重（整数）。
-Upgrade.PairsPerStar	2	成功打出多少张同类牌，场上已有同类棋升一星（整数 ≥1）。
+Upgrade.PairsPerStar	3	成功打出多少张同类牌，场上已有同类棋升一星（整数 ≥1）。
 Reward.OutnumberedFactor	2	判定“人数落后”：我方棋数 × 本值 < 敌方棋数时，奖励获得额外权重（整数 ≥1）。
-Boss.FirstSkillSeconds	3	开战后 Boss 第一次释放技能前的等待（秒），给玩家看清阵型的时间
-Boss.SkillGapSeconds	1.5	两次技能之间的公共间隔（秒）：防止不同技能首尾相接、毫无喘息
+Boss.FirstSkillSeconds	7	开战后 Boss 第一次释放技能前的等待（秒），给玩家看清阵型的时间
+Boss.SkillGapSeconds	3.2	两次技能之间的公共间隔（秒）：防止不同技能首尾相接、毫无喘息
 Boss.RecoverSeconds	0.6	技能最后一段命中后的收招硬直（秒），之后才回到普通攻击
 Boss.EnrageHpRatio	0.5	Boss 生命比例低于该值时触发一次狂暴（仅限已解锁狂暴的章节）
 Boss.EnrageCooldownScale	0.65	狂暴后所有技能冷却乘以该系数（越小越频繁）
 Boss.CooldownPerChapter	0.06	每高一章，技能冷却缩短的比例：冷却 × (1 − (章节−1) × 该值)
-Boss.PowerPerChapter	0.12	每高一章，技能伤害提高的比例：倍率 × (1 + (章节−1) × 该值)
+Boss.PowerPerChapter	0.07	每高一章，技能伤害提高的比例：倍率 × (1 + (章节−1) × 该值)
 Boss.CaptureHpRatio	0.2	主将血量不高于此比例且零气才能擒王；直接击杀仍获胜
-Event.EffectMultiplier	5	战斗增益效果倍率；数量类支援也受此倍率影响
+Event.EffectMultiplier	1	战斗增益效果倍率；数量类支援也受此倍率影响
 PlayerAI.MoveSeconds	3	玩家战术移动独立冷却秒数，不随攻速加快
 PlayerAI.RetreatDistance	2	远程在距敌不大于此格数时寻找更安全位置
-Region.IntervalSeconds	3	区域波动每3秒一次
+Region.IntervalSeconds	12	区域波动每3秒一次
 Region.WarningSeconds	1.5	区域高亮预警秒数
 Region.Size	4	方形区域边长，单位格
 Region.CellDelaySeconds	0.05	区域逐格波动间隔秒数（按行序号）
-Region.DamageHpRatio	0.2	仅扣区域内敌棋最大生命15%；大棋每次仅受击一次
-Bomb.IntervalSeconds	6	能量巨大每8秒一次
+Region.DamageHpRatio	0.055	仅扣区域内敌棋最大生命15%；大棋每次仅受击一次
+Bomb.IntervalSeconds	18	能量巨大每8秒一次
 Bomb.WarningSeconds	1	炸弹落地蓄力秒数，到点统一命中
-Bomb.DamageHpRatio	0.3	直接扣全场敌棋最大生命30%
-Combat.BuffCap	5	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成
-EnemyAI.AttackRate	1.45	敌方普攻独立倍率（0.1～5）；含主将普攻，不加快技能预警；1恢复原频率，1.45提高45%。
+Bomb.DamageHpRatio	0.1	直接扣全场敌棋最大生命30%
+Combat.BuffCap	0.6	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成
+EnemyAI.AttackRate	0.45	敌方普攻独立倍率（0.1～5）；含主将普攻，不加快技能预警；1恢复原频率，1.45提高45%。
 EnemyAI.ChaseSteps	3	无眼近战每次冲锋最多经过的空格数（1～4）；不穿棋、不占敌眼，马步保留原走法。
 PlayerAI.FormationEnabled	1	远程自动整队开关（0关/1开）；只在战斗中整理散阵，不拆眼、不搬动零气棋。
 PlayerAI.FormationMinCount	2	参与自动整队的远程棋最少数量（2～20）；已有相连阵型保持原位。
 PlayerAI.FormationSeconds	6	自动整队检查间隔（秒，1～60）；尊重手动移动冷却，失败也消耗间隔，避免反复搜索。
 Deploy.BatchCount	2	每个增援窗口最多落子数量（1～2）；每颗落地后重新检查人数、空格和气眼，不能穿透总预算。
-Damage.CriticalChance	0.25	玩家普通攻击暴击概率（0～1）；每次真实出手独立抽取，环境/Boss技能不抽取。
-Damage.CriticalMultiplier	1.5	暴击伤害倍率（1～10）；先乘真实伤害再结算护盾、防御，仅实际扣血才给暴击积分。
+Damage.CriticalChance	0.15	玩家普通攻击暴击概率（0～1）；每次真实出手独立抽取，环境/Boss技能不抽取。
+Damage.CriticalMultiplier	1.35	暴击伤害倍率（1～10）；先乘真实伤害再结算护盾、防御，仅实际扣血才给暴击积分。
 Score.KillPoints	100	玩家普通攻击或友方支援击杀一颗敌棋的基础积分（整数0～100000）；环境波动不归玩家击杀。
 Score.CriticalPoints	15	一次造成真实扣血的玩家暴击基础积分（整数0～100000）；致死暴击同时获得击杀分。
 Score.RoundGrowth	0.12	倍率的连续回合增长系数（0～10）；进度=(章节-1)×每章回合数+回合-1。
 Score.PieceGrowth	0.05	倍率的存活玩家棋数增长系数（0～10）；第一颗为基准，死亡后按当前数量重新计算。
 Score.MultiplierCap	20	积分倍率上限（1～1000）；倍率=min(上限,(1+进度×回合系数)×(1+额外存活棋数×棋数系数))。
-Eye.PlayerAttackBonus	1.5	我方驻守己方眼位攻击加成；1表示加100%
-Eye.PlayerSpeedBonus	1.5	我方驻守己方眼位攻速加成；1表示加100%
-Eye.PlayerDefenseBonus	2	我方驻守己方眼位防御加成；1表示同等伤害减半
-Eye.EnemyAttackBonus	0.3	敌方驻眼不增加攻击力
-Eye.EnemySpeedBonus	0.5	敌方驻眼仅增加50%攻速，不增加攻击或防御
+Eye.PlayerAttackBonus	0.3	我方驻守己方眼位攻击加成；1表示加100%
+Eye.PlayerSpeedBonus	0.25	我方驻守己方眼位攻速加成；1表示加100%
+Eye.PlayerDefenseBonus	0.5	我方驻守己方眼位防御加成；1表示同等伤害减半
+Eye.EnemyAttackBonus	0.15	敌方驻眼不增加攻击力
+Eye.EnemySpeedBonus	0.2	敌方驻眼仅增加50%攻速，不增加攻击或防御
 Eye.GuardDefenseBonus	0.5	有效我方眼上下左右友军防御+50%；多个眼不叠加
-Eye.SupportSeconds	2	战斗每3秒向一个空的我方眼补一颗弩兵；无空眼跳过
-Eye.ReviveHpRatio	1	有效我方驻眼棋致死时原地回满生命；每颗一生仅一次
-Eye.ReviveHealRatio	0.6	驻眼复活时四邻存活友军各回复最大生命40%；大棋去重
+Eye.SupportSeconds	10	战斗每3秒向一个空的我方眼补一颗弩兵；无空眼跳过
+Eye.ReviveHpRatio	0.6	有效我方驻眼棋致死时原地回满生命；每颗一生仅一次
+Eye.ReviveHealRatio	0.3	驻眼复活时四邻存活友军各回复最大生命40%；大棋去重
+Assist.EmergencyFirstSeconds	5	失误支援最早5秒；只帮助仍有存活棋子的低血队伍
+Assist.EmergencyIntervalSeconds	8	两次应急治疗的最短间隔，秒
+Assist.EmergencyHpRatio	0.6	存活队伍当前/最大生命比例低于该值才治疗
+Assist.EmergencyHealRatio	0.32	每次治疗存活队伍最大生命32%，不复活
+Assist.EmergencyMaxCount	3	每回合最多三次应急治疗，仍允许全灭失败
+Player.FirepowerSoftCount	14	活棋不超过14时原火力；超过后单位普攻收益递减，不删除棋子或修改占格
+Player.FirepowerExponent	1.25	单位伤害倍率=(阈值/活棋数)^指数，最后按最小值夹紧
+Player.FirepowerMinScale	0.18	火力最低保留比例，避免拥挤阵容失去攻击；正伤害仍至少1
+Player.RangedLimit	30	玩家存活远程上限，所有新增入口共用，不扣失败手牌
+Boss.PlayerPieceLimit	45	进入Boss回合时超过此数量吞噬低星棋，先近战
+Enemy.JumpSeconds	2.8	敌近战跳跃接敌冷却秒，保眼与占格预检不变
+Helper.PlayerHitScore	1	玩家普攻真实命中基础积分；主要能源来源
+Helper.HitScore	1	帮手单发命中返还积分；必须小于单发成本
+Helper.ShotCost	3	每个普通攻击粒子消耗可用积分
+Helper.BaseDamage	5	帮手单发基础伤害，仍走统一扣血管线
+Helper.ScoreStep	8000	每积累该章积分提升一档，最多配置档数
+Helper.MaxTier	5	攻击成长档数上限，防无限火力
+Helper.DamageGrowth	0.15	每档单发伤害增加比例
+Helper.BaseInterval	1.8	普通攻击间隔秒
+Helper.MinInterval	0.65	最快普通攻击间隔秒
+Helper.MoveSeconds	1.2	爬行或跳至外圈的决策间隔秒
+Helper.CrowdedCount	30	活棋达到此数量时转棋盘外攻击
+Helper.BeamScore	24000	本章累计积分达到该值解锁激光
+Helper.BeamReserve	80	开始激光所需可用积分储备
+Helper.BeamTickCost	8	激光每次持续命中消耗积分，耗尽立即停止
+Helper.BeamDamage	10	每个固定模拟步激光伤害，不返还积分
+Helper.BeamSeconds	2.5	激光最长持续秒
+Helper.BeamCooldown	18	两次巨大能量束最短间隔秒
+Helper.RangedAttackLink	0.2	帮手攻击成长向玩家远程普攻传递比例，乘现有阵容火力系数
+Helper.RangedSpeedLink	0.8	帮手实际攻速成长向玩家远程攻击进度传递比例
+Helper.RangedAttackCap	0.15	远程共鸣攻击最高增加15%，不影响敌方/环境技能
+Helper.RangedSpeedCap	0.6	远程共鸣攻速最高增加60%，钱包消费不降档，换章重置

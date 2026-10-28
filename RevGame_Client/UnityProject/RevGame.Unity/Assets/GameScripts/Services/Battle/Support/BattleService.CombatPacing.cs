@@ -24,6 +24,8 @@ namespace RevGame.Services
         private readonly List<BoardPos> _regionCandidates = new List<BoardPos>(81);
         public int RegionPulseCount { get; private set; }
         public int EnergyBombCount { get; private set; }
+        private float _nextEmergencyAt;
+        public int EmergencySupportCount { get; private set; }
 
         /// <summary>仅StartRound调用。所有等待命中的状态在此失效，下一回合不会收到上一轮伤害。</summary>
         private void ResetCombatPacing()
@@ -36,6 +38,8 @@ namespace RevGame.Services
             _regionActive = _bombActive = false;
             _regionHitIds.Clear();
             RegionPulseCount = EnergyBombCount = 0;
+            EmergencySupportCount = 0;
+            _nextEmergencyAt = Balance.EmergencyFirstSeconds;
         }
 
         /// <summary>正常事件与GM共用。加成按回合累加并封顶，防御+100%表示等效承伤能力翻倍。</summary>
@@ -78,6 +82,7 @@ namespace RevGame.Services
         private void TickCombatPacing()
         {
             if (Phase != GamePhase.Battle || IsKingCaptured() || _board.IsSideWiped(GameSide.Player) || _board.IsSideWiped(GameSide.Enemy)) { return; }
+            TryEmergencySupport();
             if (!_regionActive && _battleElapsed >= _nextRegionAt) { TriggerRegionPulse(); }
             if (_regionActive)
             {
@@ -111,6 +116,19 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, "能量巨大");
                 RevEvent.DispatchEvent<string>(Events.BattleLog, "能量巨大：全场敌军受到最大生命" + ConfigText.Percent(Balance.BombDamageHpRatio) + "的能量冲击");
             }
+        }
+
+        /// <summary>失误支援保留真实风险：只治疗仍存活且队伍血线低的玩家，每轮有限次数，不复活、不删敌、不改胜负。</summary>
+        private void TryEmergencySupport()
+        {
+            if (!VictoryAssistEnabled || EmergencySupportCount >= Balance.EmergencyMaxCount || _battleElapsed < _nextEmergencyAt) { return; }
+            int hp=0,maxHp=0;
+            foreach(Piece piece in _playerPieces){if(piece.IsAlive){hp+=piece.Hp;maxHp+=piece.MaxHp;}}
+            if(maxHp<=0 || hp/(float)maxHp > Balance.EmergencyHpRatio){return;}
+            EmergencySupportCount++;
+            _nextEmergencyAt=_battleElapsed+Balance.EmergencyIntervalSeconds;
+            HealTeam(Balance.EmergencyHealRatio);
+            RevEvent.DispatchEvent<string>(Events.BattleLog,"应急支援：仅为存活队伍回复最大生命"+ConfigText.Percent(Balance.EmergencyHealRatio));
         }
 
         /// <summary>随机从“覆盖至少一个敌人”的所有合法矩形中抽取，未找到才从全盘抽取；不是永远选同一密集点。</summary>

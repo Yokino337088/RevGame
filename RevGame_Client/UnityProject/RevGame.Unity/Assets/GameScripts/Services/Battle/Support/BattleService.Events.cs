@@ -305,7 +305,9 @@ namespace RevGame.Services
         /// </summary>
         private void SpawnSupport(BoardPos pos, PieceKind kind = PieceKind.Shield)
         {
-            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, StarTier.One), GameSide.Player);
+            PieceDef definition = PieceCatalog.Get(kind, StarTier.One);
+            if (!CanAddPlayerRanged(definition, false)) { return; }
+            var piece = new Piece(_nextPieceId++, definition, GameSide.Player);
             if (!_board.Place(piece, pos))
             {
                 throw new System.InvalidOperationException("已预检的援兵落点不可用：" + pos);

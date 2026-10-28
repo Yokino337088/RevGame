@@ -129,6 +129,13 @@ namespace RevGame.Flow
             return accepted;
         }
 
+        /// <summary>移除与落子使用同一过场/教学门禁，不能借新按钮在Boss入场或教学期间拆掉规则棋。</summary>
+        public bool RemovePiece(int id)
+        {
+            var flow = RevServices.GetRequired<GameFlow>();
+            return !flow.IsGameplayBlocked && !flow.IsTutorialActive && Battle.RemovePlayerPiece(id);
+        }
+
         /// <summary>结算后进入下一回合。这一组结算入口都只拦过场遮挡，不额外拦教学。</summary>
         public bool ContinueToNextRound()
         {

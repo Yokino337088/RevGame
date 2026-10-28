@@ -30,6 +30,11 @@ namespace UnityEngine
 
 namespace Revolution
 {
+    /// <summary>外部规则宿主没有全局服务；测试显式构造BattleService，不注册生产持久化服务。</summary>
+    public static class RevServices
+    {
+        public static T Get<T>() where T : class { return null; }
+    }
     // 本轮AI只用同步切换；链接真实RevTask和取消源，但禁止测试误用没有Unity宿主的帧调度。
     public static class RevTaskScheduler
     {

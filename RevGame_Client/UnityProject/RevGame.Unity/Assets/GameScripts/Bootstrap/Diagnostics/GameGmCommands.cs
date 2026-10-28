@@ -1,7 +1,7 @@
 // 所有RevGame GM的唯一文件与注册入口。Bootstrap只调用RegisterAll/UnregisterAll。
 // 玩家操作复用正式业务/真实指针，诊断造局明确标注；正式发布不编译这些入口。
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-using RevGame.Animation;
+using RevGame.Automation;
 using RevGame.Battle;
 using RevGame.Core;
 using RevGame.Data;
@@ -27,9 +27,35 @@ namespace RevGame.Bootstrap
             try
             {
             GameCombatGmCommands.RegisterGroup();
-            RevGame.Animation.GameAttributeGmCommands.RegisterGroup();
-            RevGame.Animation.GameAutomationCommands.RegisterGroup();
+            RevGame.Automation.GameAttributeGmCommands.RegisterGroup();
+            RevGame.Automation.GameAutomationCommands.RegisterGroup();
             RegisterPlayerActions();
+            RegisterCommand("RevGame/移除棋子", "移除编号对应的存活己方棋子，不返牌不给分；战斗全灭仍失败", args =>
+            {
+                var battle = RequireBattle();
+                if (!battle.RemovePlayerPiece(args.Int(0, 0))) { throw new RevGMUsageException(battle.LastError); }
+                return "removed";
+            });
+            RegisterCommand("RevGame/帮手目标", "指定助阵帮手攻击敌棋编号；0取消，Boss回合优先Boss", args =>
+            {
+                var battle = RequireBattle();
+                if (!battle.SetHelperTarget(args.Int(0, 0))) { throw new RevGMUsageException(battle.LastError); }
+                return "accepted";
+            });
+            RegisterCommand("RevGame/帮手状态", "读取帮手FSM、位置、目标、档位和可用战斗积分", args =>
+            {
+                var battle = RequireBattle();
+                HelperSnapshot helper = battle.Helper;
+                return "state=" + helper.State + ",position=" + helper.Position + ",target=" + helper.TargetId
+                    + ",tier=" + helper.Tier + ",outside=" + helper.Outside + ",wallet=" + battle.CombatScore
+                    + ";visual=" + UnityEngine.Object.FindObjectOfType<BoardView>()?.HelperVisualStatus;
+            });
+            RegisterCommand("RevGame/帮手视效", "只读当前活动帮手弹道几何/材质状态", args =>
+            {
+                var text = new StringBuilder();
+                foreach (HelperAttackView attack in UnityEngine.Object.FindObjectsOfType<HelperAttackView>()) { text.AppendLine(attack.VisualStatus); }
+                return text.ToString();
+            });
             RegisterBossChapterCommands();
             RegisterCommand("RevGame/声音设置", "打开玩家声音设置面板，accepted表示已接受异步加载", args =>
             {
@@ -469,6 +495,32 @@ namespace RevGame.Bootstrap
             RevGM.Register(name, description, handler, args);
             Registered.Add(name);
         }
+#if UNITY_EDITOR
+        /// <summary>Editor数值测试入口仅使用固定类型/方法；由本类唯一账本清理，不提供任意脚本能力。</summary>
+        public static void RegisterEditorBalanceCommands()
+        {
+            if(Registered.Contains("RevGame/数值测试开始")){return;}
+            RegisterCommand("RevGame/数值测试开始","隔离Play正常策略测试：种子/是否失误/起始章/终章/标签；完整60回合不加属性",args=>
+            {
+                var type=Type.GetType("RevGame.Editor.GameBalanceCampaignChecks, Assembly-CSharp-Editor",true);
+                return (string)type.GetMethod("Begin").Invoke(null,new object[]{args.Str(4,"gm"),args.Int(0,1028),args.Str(1,"false")=="true",args.Int(2,1),args.Int(3,6),false,4f,6,10});
+            });
+            RegisterCommand("RevGame/数值测试状态","只读当前数值测试章回、状态、报告目录",args=>(string)Type.GetType("RevGame.Editor.GameBalanceCampaignChecks, Assembly-CSharp-Editor",true).GetMethod("State").Invoke(null,null));
+            RegisterCommand("RevGame/数值测试取消","取消本次数值测试，恢复时间并解除测试手势/订阅",args=>
+            {Type.GetType("RevGame.Editor.GameBalanceCampaignChecks, Assembly-CSharp-Editor",true).GetMethod("Cancel").Invoke(null,null);return "cancel-requested";});
+            RegisterCommand("RevGame/数值盘面","只读实际棋子、手牌、战斗血攻；不修改状态",args=>
+            {
+                var b=RevServices.GetRequired<IBattleService>();
+                var text=new StringBuilder();AppendPieces(text,'P',b.PlayerPieces);AppendPieces(text,'E',b.EnemyPieces);
+                return "chapter="+b.Chapter+",round="+b.Round+",phase="+b.Phase+",seconds="+b.BattleElapsed+",pieces="+text;
+            });
+            RegisterCommand("RevGame/数值建议","只读当前盘面合理落点建议，不消费手牌或修改棋盘",args=>
+            {
+                var b=RevServices.GetRequired<IBattleService>();
+                return GameBalanceTactics.ChoosePlacement(b,false,out int id,out BoardPos pos,out string why)?"card="+id+",pos="+pos+",reason="+why:"none";
+            });
+        }
+#endif
 
         /// <summary>真实玩家按钮覆盖：使用与点击GM相同的EventSystem链，保留遮罩、翻牌、禁用与阶段拒绝。</summary>
         private static string ClickPlayerButton(string path)
@@ -807,7 +859,7 @@ namespace RevGame.Bootstrap
     }
 }
 
-namespace RevGame.Animation
+namespace RevGame.Automation
 {
     /// <summary>开发属性命令的唯一注册点；只保存本次Play中的临时强化，不写入存档或正式配置。</summary>
     internal static class GameAttributeGmCommands
@@ -889,7 +941,7 @@ namespace RevGame.Animation
     }
 }
 
-namespace RevGame.Animation
+namespace RevGame.Automation
 {
     /// <summary>
     /// 将项目测试执行器接到现成 RevGM，再由 Revolution.RevCLI CLI/Scenario 调用。

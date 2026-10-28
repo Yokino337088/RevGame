@@ -78,7 +78,7 @@ namespace RevGame.Services
                     throw new System.InvalidOperationException("敌方移动预检与提交不一致");
                 }
                 _service.RefreshGoState();
-                RevEvent.DispatchEvent<int>(Events.PieceMoved, piece.Id);
+                RevEvent.DispatchEvent<int>(piece.Def.IsRanged ? Events.PieceMoved : Events.PieceFormationMoved, piece.Id);
             }
         }
 
@@ -176,6 +176,8 @@ namespace RevGame.Services
         {
             // 旧公共清理入口由流程/夹具统一调用，同时收走玩家机器，防止跨回合残留。
             StopPlayerAI();
+            _helperAI?.Dispose();
+            _helperAI = null;
             foreach (EnemyAI ai in _enemyAI.Values) { ai.Dispose(); }
             _enemyAI.Clear();
             foreach (BossAI ai in _bossAI.Values) { ai.Dispose(); }

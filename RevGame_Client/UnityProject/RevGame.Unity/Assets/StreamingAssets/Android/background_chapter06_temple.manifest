@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3263357566
+CRC: 46807124
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: f6f60e4ddd9b5be9d44769899bbf87fa
+    Hash: a2ff0ae007cba29f2cef4717d27c5b75
   TypeTreeHash:
     serializedVersion: 2
     Hash: b30fce1a9ad74efb72be6c308c56e365
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: f6f60e4ddd9b5be9d44769899bbf87fa
+    Hash: a2ff0ae007cba29f2cef4717d27c5b75
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -21,8 +21,10 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Material/Board/Chapter06_Temple_Surface.mat
+- Assets/GameShader/Helper/HelperChapter06_Shader.shader
 - Assets/GameShader/Background/Chapter06_Temple_Shader.shader
 - Assets/GameRes/Material/Background/Chapter06_Temple_Material.mat
+- Assets/GameRes/Material/Helper/HelperChapter06.mat
 - Assets/GameRes/ChapterBackground/Chapter06_Temple.png
 - Assets/GameShader/Board/Chapter06_Temple_SurfaceShader.shader
 Dependencies: []

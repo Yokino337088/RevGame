@@ -215,14 +215,21 @@ namespace RevGame.Services
             // ★ 章间和失败重开要重置棋盘；只有同一章内的连续回合继承残局。
             bool newBoard = Chapter != chapter || round == 1;
             // 必须先验证整队。普通敌棋为 1×1，Boss 为 2×2/3×3，空出一格并不代表整块能落下。
+            // 吞噬先在独立名单上规划，敌阵预检失败不会改真实棋盘或玩家残局。
+            List<Piece> swallowed;
+            List<Piece> survivors = PlanBossSwallow(def, newBoard, out swallowed);
             List<Piece> plannedEnemies;
-            if (!TryPlanEnemies(def, newBoard, out plannedEnemies))
+            if (!TryPlanEnemies(def, newBoard, out plannedEnemies, survivors))
             {
-                return false;
+                // 空格总数不保证存在连续Boss身体区；只在原吞噬预算内重选，不额外删棋。
+                if (!TryPlanBossSpace(def, newBoard, swallowed.Count, out survivors, out swallowed, out plannedEnemies)) { return false; }
             }
 
+            foreach (Piece swallowedPiece in swallowed) { RemovePlayerPieceCore(swallowedPiece); }
+            LastBossSwallowedCount = swallowed.Count;
             if (newBoard)
             {
+                CombatScore = 0;
                 _playerPieces.Clear();
                 ChapterScore = 0;
             }
@@ -265,7 +272,12 @@ namespace RevGame.Services
             RefreshGoState();
             DeployInitialEyeGarrison();
             RevLog.Info("开始 " + def + "，敌方 " + _enemyPieces.Count + " 颗", Tag);
+            ResetHelperRound();
             RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
+            if (swallowed.Count > 0)
+            {
+                RevEvent.DispatchEvent<string>(Events.BoardRuleNotice, "不好，boss发动了技能，强制吞噬了你的棋子");
+            }
             return true;
         }
 
@@ -344,6 +356,7 @@ namespace RevGame.Services
                 return false;
             }
 
+            if (!CanAddPlayerRanged(PieceCatalog.Get(card.Kind, card.Star), false)) { return false; }
             int size = PieceCatalog.PlayerBodySize(card.Star);
             return _board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: false);
         }
@@ -435,6 +448,7 @@ namespace RevGame.Services
                 return false;
             }
 
+            if (!CanAddPlayerRanged(def, true)) { return false; }
             int size = PieceCatalog.PlayerBodySize(star);
             if (!_board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: false))
             {
@@ -537,6 +551,7 @@ namespace RevGame.Services
                 TryAutomaticEvent();
                 // 全部战斗不限时；加速由真实增益、区域波动和炸弹伤害完成，不删除残敌。
                 TickCombatPacing();
+                if (!HasBattleEnded()) { TickHelper(stepSeconds); }
                 if (HasBattleEnded())
                 {
                     EndBattle();
@@ -618,6 +633,7 @@ namespace RevGame.Services
         private void StepPlayerAttack(Piece piece, float stepFraction)
         {
                 float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
+                if (piece.Def.IsRanged) { rate *= 1f + HelperRangedSpeedBonus; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。
                 rate = ScaleAutomationAttackRate(rate);
@@ -848,16 +864,17 @@ namespace RevGame.Services
         /// 先创建完整名单，再在独立棋盘验证眼阵和全部身体占格。成功后才交给 StartRound 一次性提交。
         /// 玩家残局太满时允许眼阵降级；完整名单仍放不下则明确拒绝，不能少生主将或清空旧回合。
         /// </summary>
-        private bool TryPlanEnemies(RoundDef def, bool newBoard, out List<Piece> plan)
+        private bool TryPlanEnemies(RoundDef def, bool newBoard, out List<Piece> plan, IReadOnlyList<Piece> survivors = null)
         {
             plan = new List<Piece>();
+            IReadOnlyList<Piece> retainedPlayers = survivors ?? _playerPieces;
             // ★ 双牌升级不再消耗棋子，存活阵容会逐轮变大。按继承阵容的星级总量补充敌方承伤与输出，
             // 让“保留十几颗远程”仍有交战时间，避免几秒清场和一路堆满导致下一轮无法出生。
             // 这只是当前原型的动态压力，基础成长仍由关卡进度决定，胜负始终由真实战斗规则判断。
             float strength = 0f;
             if (!newBoard)
             {
-                foreach (Piece player in _playerPieces) {
+                foreach (Piece player in retainedPlayers) {
                 if (player.IsAlive)
                 {
                     strength += (int)player.Def.Star;
@@ -896,7 +913,7 @@ namespace RevGame.Services
                 plan.Add(new Piece(_nextPieceId + plan.Count, pieceDef, GameSide.Enemy, hpScale: hpScale, attackScale: attackScale));
             }
             string report;
-            if (!EnemyFormationPlanner.TryArrange(plan, _playerPieces, newBoard, out report, def.Intelligence, def.Progress))
+            if (!EnemyFormationPlanner.TryArrange(plan, retainedPlayers, newBoard, out report, def.Intelligence, def.Progress))
             {
                 return Reject(report);
             }

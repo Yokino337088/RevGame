@@ -30,10 +30,10 @@ namespace RevGame.Services
                 service.DamagePiece(enemy, 0, player, damageKind: BattleDamageKind.Critical);
                 check(service.LifetimeScore == before && awards == 0, "0伤害暴击不给分");
                 service.DamagePiece(enemy, 1, player, damageKind: BattleDamageKind.Critical);
-                check(service.RoundScore == Balance.ScoreCriticalPoints && awards == 1, "真实暴击只发一次暴击分");
+                check(service.RoundScore == Balance.ScoreCriticalPoints + Balance.HelperPlayerHitScore && awards == 1, "真实暴击合并普攻积分只发一组飞星");
                 check(observed.DamageKind == BattleDamageKind.Critical && observed.Damage == 1, "暴击快照携带真实扣血及来源");
                 service.DamagePiece(enemy, int.MaxValue, player, damageKind: BattleDamageKind.Critical);
-                long expected = Balance.ScoreKillPoints + Balance.ScoreCriticalPoints * 2L;
+                long expected = Balance.ScoreKillPoints + (Balance.ScoreCriticalPoints + Balance.HelperPlayerHitScore) * 2L;
                 check(service.RoundScore == expected && awards == 2, "致死暴击同时给击杀和暴击分但只发一组飞星");
                 service.DamagePiece(enemy, int.MaxValue, player, damageKind: BattleDamageKind.Critical);
                 check(service.RoundScore == expected && awards == 2, "多段技能重复命中死亡棋不重复计分");

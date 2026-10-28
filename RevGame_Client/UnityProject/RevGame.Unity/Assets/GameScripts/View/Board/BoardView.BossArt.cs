@@ -98,7 +98,19 @@ namespace RevGame.View
                 }
                 oldAtlas?.Dispose();
                 if (oldName != null) { RevResManager.Release(BossArtRoot, oldName); }
-                _bossArtReady = true;
+                // 资源句柄完成后再等主将当前帧像素绑定；期间保持原来的场景屏障，不提前播放出生Shader。
+                float frameDeadline = Time.realtimeSinceStartup + 15f;
+                while (!_released && version == _bossArtVersion && config != null)
+                {
+                    bool framesReady = true;
+                    foreach (PieceView view in _pieces.Values)
+                    { if (view.BossAppearanceChapter == chapter && !view.IsBossFrameTextureReady) { framesReady = false; break; } }
+                    if (framesReady) { break; }
+                    if (Time.realtimeSinceStartup > frameDeadline) { throw new TimeoutException("Boss图集像素未能绑定：" + name); }
+                    await RevTask.Yield();
+                }
+                if (!_released && version == _bossArtVersion)
+                { foreach (PieceView view in _pieces.Values) { PrimeBossIntro(view); } _bossArtReady = true; }
             }
             catch (Exception error)
             {

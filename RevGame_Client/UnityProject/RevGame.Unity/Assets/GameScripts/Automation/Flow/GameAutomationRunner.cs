@@ -11,7 +11,7 @@ using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RevGame.Animation
+namespace RevGame.Automation
 {
     /// <summary>
     /// 开发态业务流程执行器，由常驻 Bootstrap 的 RevServices 创建/注销，能够跨 StartScene/GameScene 继续工作。

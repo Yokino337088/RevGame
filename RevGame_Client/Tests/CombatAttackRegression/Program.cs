@@ -24,6 +24,13 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+            if (args.Length > 1 && args[1] == "helper-balance") { return HelperBalanceRegression.Run(args.Length > 2 ? args[2] : "."); }
+            if (args.Length > 1 && args[1] == "helper")
+            {
+                BattleService.VerifyHelperRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
+                Console.WriteLine("帮手控制台真实规则断言：" + _assertions);
+                return 0;
+            }
             foreach (PieceKind kind in Enum.GetValues(typeof(PieceKind)))
             {
                 for (int tier = 1; tier <= 3; tier++)

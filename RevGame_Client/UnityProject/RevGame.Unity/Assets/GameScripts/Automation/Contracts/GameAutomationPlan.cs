@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RevGame.Animation
+namespace RevGame.Automation
 {
     /// <summary>
     /// 一份可由 CLI 发送的业务测试计划。这里只描述“玩家要做什么”，不携带任意脚本或私有字段修改。

@@ -29,6 +29,7 @@ namespace RevGame.Services
             _nextEyeSupportAt += Balance.EyeSupportSeconds;
             if (_board.IsSideWiped(GameSide.Player) || _board.IsSideWiped(GameSide.Enemy) || IsKingCaptured()) { return; }
             if (!EyeTactics.TryFindOwnEye(_board, GameSide.Player, 1, out BoardPos pos)) { return; }
+            if (!CanAddPlayerRanged(PieceCatalog.Get(PieceKind.Crossbow, StarTier.One), false)) { return; }
             SpawnSupport(pos, PieceKind.Crossbow);
             EyeSupportCount++;
             RefreshGoState();

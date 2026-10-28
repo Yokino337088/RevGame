@@ -75,7 +75,7 @@ namespace RevGame.Battle
                 // 第一档就近交战；第二档识别远程威胁；第三档会收残血；第四档优先断开脆弱连接。
                 // 规则安全检查不分档：低级AI也不能故意拆自己眼阵，只是看问题没有后期全面。
                 int score = -Distance(attacker.Pos, target.Pos) * 10;
-                if (intelligence >= 2 && target.Def.IsRanged)
+                if (target.Def.IsRanged)
                 {
                     score += 1000;
                 }
@@ -118,6 +118,19 @@ namespace RevGame.Battle
         /// </summary>
         public static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves, int intelligence = 4)
         {
+            // 用户授权近战直接跳至射界附近：只扩大候选位置，下面的保眼/占格/零气门禁仍逐一验证。
+            if (!piece.Def.IsRanged && !piece.IsBoss && piece.EyeCount == 0)
+            {
+                moves.Clear();
+                for (int y = 0; y < board.Size; y++)
+                {
+                    for (int x = 0; x < board.Size; x++)
+                    {
+                        BoardPos candidate = new BoardPos(x, y);
+                        if (board.CanFit(candidate, piece.Size, piece.Side, piece)) { moves.Add(candidate); }
+                    }
+                }
+            }
             BoardPos best = piece.Pos;
             // 无眼近战优先选后排；距离场会绕开占格，不能只比曼哈顿距离而在墙边左右横跳。
             Piece prey = !piece.Def.IsRanged ? FindRangedPrey(board, piece) : null;

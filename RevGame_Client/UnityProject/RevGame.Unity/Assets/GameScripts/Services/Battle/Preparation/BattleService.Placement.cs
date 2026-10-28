@@ -47,7 +47,7 @@ namespace RevGame.Services
             {
                 if (occupant.Side != GameSide.Player)
                 {
-                    return Reject("这个格子已有敌方棋子，请选择空格");
+                    return SetHelperTarget(occupant.Id);
                 }
 
                 SelectedPieceId = SelectedPieceId == occupant.Id ? 0 : occupant.Id;

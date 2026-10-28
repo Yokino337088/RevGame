@@ -1,0 +1,49 @@
+ManifestFileVersion: 0
+CRC: 2203571616
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b31d2bdfd2155a90ae212a295358d7ff
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 60df71fa62f2a161c166d3251c9a5a1e
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b31d2bdfd2155a90ae212a295358d7ff
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 64d9bd01b6fa3c6489c23dd009e6845a, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 120
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Material/Helper/HelperBlueBeam.mat
+- Assets/GameRes/HelperTextures/HelperBlueLaser.png
+- Assets/GameRes/Material/Helper/HelperRune.mat
+- Assets/GameRes/Effects/Helper/HelperQuad.asset
+- Assets/GameRes/Material/Helper/HelperBeamImpact.mat
+- Assets/GameShader/Helper/HelperBeamImpact_Shader.shader
+- Assets/GameShader/Helper/HelperBlueBeam_Shader.shader
+- Assets/GameRes/HelperTextures/HelperMagicRune.png
+- Assets/GameShader/Helper/HelperRune_Shader.shader
+- Assets/GameRes/Effects/Helper/HelperAttack.prefab
+Dependencies: []

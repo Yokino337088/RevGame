@@ -118,6 +118,55 @@ namespace RevGame.Data
         public float BombWarningSeconds;
         public float BombDamageHpRatio;
         public float CombatBuffCap;
+        // 失误支援只在辅助模式和仍有活棋时生效；数值来自Excel，不把GM无敌当正常平衡。
+        public float EmergencyFirstSeconds, EmergencyIntervalSeconds, EmergencyHpRatio, EmergencyHealRatio;
+        public int EmergencyMaxCount;
+        /// <summary>玩家存活远程上限，所有新增入口共用，不扣失败手牌。</summary>
+        public int RangedLimit;
+        /// <summary>进入Boss回合时超过此数量吞噬低星棋，先近战。</summary>
+        public int BossPlayerPieceLimit;
+        /// <summary>敌近战跳跃接敌冷却秒，保眼与占格预检不变。</summary>
+        public float EnemyJumpSeconds;
+        /// <summary>玩家普攻真实命中基础积分；主要能源来源。</summary>
+        public int HelperPlayerHitScore;
+        /// <summary>帮手单发命中返还积分；必须小于单发成本。</summary>
+        public int HelperHitScore;
+        /// <summary>每个普通攻击粒子消耗可用积分。</summary>
+        public int HelperShotCost;
+        /// <summary>帮手单发基础伤害，仍走统一扣血管线。</summary>
+        public float HelperBaseDamage;
+        /// <summary>每积累该章积分提升一档，最多配置档数。</summary>
+        public int HelperScoreStep;
+        /// <summary>攻击成长档数上限，防无限火力。</summary>
+        public int HelperMaxTier;
+        /// <summary>每档单发伤害增加比例。</summary>
+        public float HelperDamageGrowth;
+        /// <summary>普通攻击间隔秒。</summary>
+        public float HelperBaseInterval;
+        /// <summary>最快普通攻击间隔秒。</summary>
+        public float HelperMinInterval;
+        /// <summary>爬行或跳至外圈的决策间隔秒。</summary>
+        public float HelperMoveSeconds;
+        /// <summary>活棋达到此数量时转棋盘外攻击。</summary>
+        public int HelperCrowdedCount;
+        /// <summary>本章累计积分达到该值解锁激光。</summary>
+        public int HelperBeamScore;
+        /// <summary>开始激光所需可用积分储备。</summary>
+        public int HelperBeamReserve;
+        /// <summary>激光每次持续命中消耗积分，耗尽立即停止。</summary>
+        public int HelperBeamTickCost;
+        /// <summary>每个固定模拟步激光伤害，不返还积分。</summary>
+        public float HelperBeamDamage;
+        /// <summary>激光最长持续秒。</summary>
+        public float HelperBeamSeconds;
+        /// <summary>两次巨大能量束最短间隔秒。</summary>
+        public float HelperBeamCooldown;
+        /// <summary>帮手伤害/频率成长传给远程棋的比例，上限防高分跨章成长失控。</summary>
+        public float HelperRangedAttackLink, HelperRangedSpeedLink, HelperRangedAttackCap, HelperRangedSpeedCap;
+
+        /// <summary>超过正常编队规模后火力递减，单位为活棋数和无量纲指数；不删棋、不限制落子。</summary>
+        public int PlayerFirepowerSoftCount;
+        public float PlayerFirepowerExponent, PlayerFirepowerMinScale;
         public float BattleDurationSeconds;
         public float BattleTickSeconds;
         public int BattleStepsPerTick;
@@ -318,9 +367,43 @@ namespace RevGame.Data
             v.BombWarningSeconds = r.Float("Bomb.WarningSeconds", 0.5f, 5f);
             v.BombDamageHpRatio = r.Float("Bomb.DamageHpRatio", 0.001f, 1f);
             v.CombatBuffCap = r.Float("Combat.BuffCap", 0.1f, 10f);
+            v.EmergencyFirstSeconds = r.Float("Assist.EmergencyFirstSeconds",0f,120f);
+            v.EmergencyIntervalSeconds = r.Float("Assist.EmergencyIntervalSeconds",1f,120f);
+            v.EmergencyHpRatio = r.Float("Assist.EmergencyHpRatio",.05f,1f);
+            v.EmergencyHealRatio = r.Float("Assist.EmergencyHealRatio",.01f,.8f);
+            v.RangedLimit = r.Int("Player.RangedLimit",1,81);
+            v.BossPlayerPieceLimit = r.Int("Boss.PlayerPieceLimit",1,70);
+            v.EnemyJumpSeconds = r.Float("Enemy.JumpSeconds",0.3f,20f);
+            v.HelperPlayerHitScore = r.Int("Helper.PlayerHitScore",1,100);
+            v.HelperHitScore = r.Int("Helper.HitScore",0,10);
+            v.HelperShotCost = r.Int("Helper.ShotCost",1,100);
+            v.HelperBaseDamage = r.Float("Helper.BaseDamage",1f,100f);
+            v.HelperScoreStep = r.Int("Helper.ScoreStep",10,10000);
+            v.HelperMaxTier = r.Int("Helper.MaxTier",1,10);
+            v.HelperDamageGrowth = r.Float("Helper.DamageGrowth",0f,1f);
+            v.HelperBaseInterval = r.Float("Helper.BaseInterval",0.2f,10f);
+            v.HelperMinInterval = r.Float("Helper.MinInterval",0.2f,10f);
+            v.HelperMoveSeconds = r.Float("Helper.MoveSeconds",0.3f,10f);
+            v.HelperCrowdedCount = r.Int("Helper.CrowdedCount",1,81);
+            v.HelperBeamScore = r.Int("Helper.BeamScore",10,100000);
+            v.HelperBeamReserve = r.Int("Helper.BeamReserve",10,10000);
+            v.HelperBeamTickCost = r.Int("Helper.BeamTickCost",1,100);
+            v.HelperBeamDamage = r.Float("Helper.BeamDamage",1f,200f);
+            v.HelperBeamSeconds = r.Float("Helper.BeamSeconds",0.3f,10f);
+            v.HelperBeamCooldown = r.Float("Helper.BeamCooldown",3f,120f);
+            v.HelperRangedAttackLink = r.Float("Helper.RangedAttackLink",0f,2f);
+            v.HelperRangedSpeedLink = r.Float("Helper.RangedSpeedLink",0f,2f);
+            v.HelperRangedAttackCap = r.Float("Helper.RangedAttackCap",0f,2f);
+            v.HelperRangedSpeedCap = r.Float("Helper.RangedSpeedCap",0f,2f);
+            v.EmergencyMaxCount = r.Int("Assist.EmergencyMaxCount",0,10);
+            v.PlayerFirepowerSoftCount = r.Int("Player.FirepowerSoftCount",1,81);
+            v.PlayerFirepowerExponent = r.Float("Player.FirepowerExponent",0f,3f);
+            v.PlayerFirepowerMinScale = r.Float("Player.FirepowerMinScale",.01f,1f);
             r.ReportUnused();
 
             // ---- 跨参数的逻辑约束：单个值合法，组合起来不合法也会出事
+            if (v.HelperHitScore >= v.HelperShotCost) { problems.Add("帮手命中返分必须小于单发消耗，避免自给自足无限开火"); }
+            if (v.HelperMinInterval > v.HelperBaseInterval) { problems.Add("帮手最快间隔不能超过基础间隔"); }
             void Rule(bool ok, string message) {
             if (!ok)
             {
@@ -469,6 +552,38 @@ namespace RevGame.Data
         public static float BombDamageHpRatio => V.BombDamageHpRatio;
         /// <summary>来自 BalanceRule[Combat.BuffCap]，单位与取值说明见原始 Excel。</summary>
         public static float CombatBuffCap => V.CombatBuffCap;
+        public static float EmergencyFirstSeconds => V.EmergencyFirstSeconds;
+        public static float EmergencyIntervalSeconds => V.EmergencyIntervalSeconds;
+        public static float EmergencyHpRatio => V.EmergencyHpRatio;
+        public static float EmergencyHealRatio => V.EmergencyHealRatio;
+        public static int EmergencyMaxCount => V.EmergencyMaxCount;
+        public static int RangedLimit => V.RangedLimit;
+        public static int BossPlayerPieceLimit => V.BossPlayerPieceLimit;
+        public static float EnemyJumpSeconds => V.EnemyJumpSeconds;
+        public static int HelperPlayerHitScore => V.HelperPlayerHitScore;
+        public static int HelperHitScore => V.HelperHitScore;
+        public static int HelperShotCost => V.HelperShotCost;
+        public static float HelperBaseDamage => V.HelperBaseDamage;
+        public static int HelperScoreStep => V.HelperScoreStep;
+        public static int HelperMaxTier => V.HelperMaxTier;
+        public static float HelperDamageGrowth => V.HelperDamageGrowth;
+        public static float HelperBaseInterval => V.HelperBaseInterval;
+        public static float HelperMinInterval => V.HelperMinInterval;
+        public static float HelperMoveSeconds => V.HelperMoveSeconds;
+        public static int HelperCrowdedCount => V.HelperCrowdedCount;
+        public static int HelperBeamScore => V.HelperBeamScore;
+        public static int HelperBeamReserve => V.HelperBeamReserve;
+        public static int HelperBeamTickCost => V.HelperBeamTickCost;
+        public static float HelperBeamDamage => V.HelperBeamDamage;
+        public static float HelperBeamSeconds => V.HelperBeamSeconds;
+        public static float HelperBeamCooldown => V.HelperBeamCooldown;
+        public static float HelperRangedAttackLink => V.HelperRangedAttackLink;
+        public static float HelperRangedSpeedLink => V.HelperRangedSpeedLink;
+        public static float HelperRangedAttackCap => V.HelperRangedAttackCap;
+        public static float HelperRangedSpeedCap => V.HelperRangedSpeedCap;
+        public static int PlayerFirepowerSoftCount => V.PlayerFirepowerSoftCount;
+        public static float PlayerFirepowerExponent => V.PlayerFirepowerExponent;
+        public static float PlayerFirepowerMinScale => V.PlayerFirepowerMinScale;
         public static float BattleEventChance => V.EventScheduleChance;
         public static float RareEventChance => V.EventRareChance;
         public static float BattleEventDelay => V.EventDelaySeconds;

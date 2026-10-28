@@ -106,6 +106,7 @@ namespace RevGame.Services
             _finished = false;
             _playerPieces.Clear();
             ChapterScore = 0;
+            CombatScore = 0;
             RevEvent.DispatchEvent(Events.ProgressChanged);
             return StartRound(chapter, round);
         }

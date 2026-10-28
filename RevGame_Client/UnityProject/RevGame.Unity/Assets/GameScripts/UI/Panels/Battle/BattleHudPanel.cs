@@ -111,6 +111,7 @@ namespace RevGame.UI
             _noticeRoot.anchorMin = Vector2.zero;
             _noticeRoot.anchorMax = Vector2.one;
             _noticeRoot.offsetMin = _noticeRoot.offsetMax = Vector2.zero;
+            OpenPieceManagement();
             SetNoticeVisible(false);
             RevTimer.Every(0.1f, RefreshView, owner: this);
             RevEvent.AddEventListener(Events.PreparationBuffsGranted, OnPreparationGranted, owner: this);
@@ -133,6 +134,7 @@ namespace RevGame.UI
         {
             IBattleService _battle = Battle;
             RefreshScore(_battle);
+            RefreshHelperWallet();
             if (_battle == null)
             {
                 return;
@@ -523,6 +525,8 @@ namespace RevGame.UI
         private void OnPhaseChanged(int round)
         {
             ClearRoundPresentation();
+            _swallowWaiting = false;
+            if (Battle.Phase == GamePhase.Prepare) { NotifyBossSwallow(); }
             ClearScoreFlights();
             RefreshView();
         }

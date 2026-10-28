@@ -39,7 +39,7 @@ namespace RevGame.View
         {
             if (!view.IsKingVisual || view.BossAppearanceChapter == 0) { return; }
             var flow = Revolution.RevServices.Get<RevGame.Flow.GameFlow>();
-            if (flow != null && flow.IsBossIntroPlaying && flow.BossIntroStage == "waiting") { view.BeginBossBirth(); }
+            if (flow != null && flow.IsBossIntroPlaying && flow.BossIntroStage == "waiting" && view.IsBossFrameTextureReady) { view.BeginBossBirth(); }
         }
     }
 }

@@ -20,7 +20,8 @@ namespace RevGame.Editor
             for (int ai = 1; ai <= Balance.EnemyAiMaxLevel; ai++)
             {
                 float interval = Math.Max(Balance.DeployIntervalMinSeconds, Balance.DeployIntervalBaseSeconds - ai * Balance.DeployIntervalPerLevelSeconds);
-                Require(interval >= 1f && interval <= 2f, "AI" + ai + "增援间隔1～2秒");
+                Require(interval >= Balance.DeployIntervalMinSeconds && interval <= Balance.DeployIntervalBaseSeconds,
+                    "AI" + ai + "增援间隔在配置上下界内");
             }
             for (int chapter = 1; chapter <= 6; chapter++)
             {

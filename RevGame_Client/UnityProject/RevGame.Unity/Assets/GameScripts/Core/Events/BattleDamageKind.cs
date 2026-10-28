@@ -7,6 +7,7 @@ namespace RevGame.Core
     public enum BattleDamageKind
     {
         Normal, Critical, RegionPulse, EnergyBomb, Artillery, Execution,
+        Helper, HelperBeam,
         BossCleave = 16, BossSnipe, BossBombard, BossBulletRing, BossBlinkBlast,
         BossLaserSpin, BossSoulDrain, BossSummon, BossEnrage, BossMeteorShower,
         BossCrossLaser, BossFrostNova, BossChainLightning, BossPoisonMarsh,

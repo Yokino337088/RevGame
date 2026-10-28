@@ -54,3 +54,5 @@ Damage_BossGravityWell	引力 -{damage}	真实扣血伤害；相同目标与同�
 Damage_BossDoomSigil	烙印 -{damage}	真实扣血伤害；相同目标与同种来源才合并。	#F16AA9	56	1.1	1.32
 Event_眼位成型	眼位成型	眼位四邻：防御+{defense} · 每秒回复{regen}最大生命	#64F6DC	48	2.8	1.12
 Event_眼位复苏	眼位复苏	驻眼棋原地复活 · 四邻友军回复{heal}最大生命	#FFF080	48	2.8	1.12
+Damage_Helper	-{damage}		#FFE52E	64	1.6	1.35
+Damage_HelperBeam	-{damage}		#FFE52E	64	1.6	1.35

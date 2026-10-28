@@ -45,6 +45,8 @@ namespace RevGame.View
             if (_bossDeathActive) { return; }
             if (_bossArt == null || _bossArt.DeathMaterial == null || _bossArt.DeathAuraMaterial == null || bodyRenderer.sprite == null)
             { throw new System.InvalidOperationException("Boss章节死亡材质未就绪"); }
+            // 图集租约加载和Sprite的引擎绑定分属两步；空贴图必须在开始前拒绝，不能留下半启动的材质状态。
+            if (bodyRenderer.sprite.texture == null) { throw new System.InvalidOperationException("Boss帧图集像素尚未绑定"); }
             // 棋盘在致死事实时已Hold；不要再次保存全false的附属层状态，出生也复用此停止入口。
             HoldBossDefeat();
             _bossRestMaterial = bodyRenderer.sharedMaterial;
@@ -72,6 +74,7 @@ namespace RevGame.View
             SetBossDeathProgress(0);
         }
         public float BossDeathSeconds { get { return _bossArt == null ? 3.2f : _bossArt.DeathSeconds; } }
+        public bool IsBossFrameTextureReady { get { return bodyRenderer != null && bodyRenderer.sprite != null && bodyRenderer.sprite.texture != null; } }
 
         /// <summary>出生直接复用死亡Shader，进度从1逆播到0，停用换帧避免同一进度的噪声跳帧。</summary>
         public void BeginBossBirth()

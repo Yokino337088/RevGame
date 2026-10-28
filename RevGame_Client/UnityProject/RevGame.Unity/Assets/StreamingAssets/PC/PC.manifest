@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 2113792290
+CRC: 2291310661
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -189,3 +189,15 @@ AssetBundleManifest:
         Dependency_0: atlas_uimenus
         Dependency_1: font_cjk
         Dependency_2: material_ui
+    Info_47:
+      Name: battle_helper_fx
+      Dependencies: {}
+    Info_48:
+      Name: battle_helper
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk
+        Dependency_2: atlas_helperframes
+    Info_49:
+      Name: atlas_helperframes
+      Dependencies: {}

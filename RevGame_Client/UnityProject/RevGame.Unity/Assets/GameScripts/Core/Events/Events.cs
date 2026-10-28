@@ -13,6 +13,10 @@ namespace RevGame.Core
     /// </summary>
     public static class Events
     {
+        /// <summary>string：吞噬/数量上限等规则事实提示，UI只能播放动画。</summary>
+        public const string BoardRuleNotice = "RevGame.Board.RuleNotice";
+        /// <summary>HelperShotInfo：帮手已扣积分并提交伤害后的攻击快照。</summary>
+        public const string HelperShot = "RevGame.Helper.Shot";
         /// <summary>无参数：准备期整批手牌重抽完成，UI 应播放翻牌后换正面。</summary>
         public const string HandRerolled = "RevGame.Hand.Rerolled";
         /// <summary>唯一签名 PieceAttackInfo：每次真实攻击的起点与棋种快照。</summary>

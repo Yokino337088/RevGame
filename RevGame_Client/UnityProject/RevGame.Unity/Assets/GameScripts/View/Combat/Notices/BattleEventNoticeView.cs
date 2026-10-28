@@ -32,6 +32,8 @@ namespace RevGame.View
         private bool _preparationMode;
         // 敌落子使用右栏下方独立一行，不与战斗增益争抢同一个位置；都是布局比例，不是玩法数值。
         private bool _enemyDeploymentMode;
+        // 长规则文案使用横幅留足阅读宽度，仍复用底板和池，不挤在右侧小栏内缩成14号字。
+        private bool _boardRuleMode;
         public bool HasActiveAnimation { get { return _animation != null && _animation.IsActive(); } }
 
         /// <summary>调用者拥有当前提示，关闭 HUD 时须归还；动画自己结束也会回池。</summary>
@@ -47,6 +49,7 @@ namespace RevGame.View
             StopAnimation();
             _preparationMode = false;
             _enemyDeploymentMode = enemyDeployment;
+            _boardRuleMode = title.Contains("吞噬") || title.Contains("远程棋子最多");
             _onFinished = onFinished;
             titleText.text = title;
             detailText.text = detail ?? config.Detail;
@@ -82,6 +85,12 @@ namespace RevGame.View
             {
                 sequence.Append(titleText.rectTransform.DOShakeAnchorPos(0.42f, new Vector2(14f, 9f), 24, 90f, false, true));
             }
+            if (title.Contains("吞噬") || title.Contains("远程棋子最多"))
+            {
+                // 规则提示短促弹跳+闪烁，借用现有共享底板；Tween仅归当前池对象所有。
+                sequence.Append(rect.DOPunchScale(Vector3.one * .12f, .32f, 3, .5f));
+                sequence.Append(group.DOFade(.35f, .1f).SetLoops(4, LoopType.Yoyo));
+            }
             sequence.AppendInterval(Mathf.Max(0.1f, config.Duration - 0.86f - (title == "能量巨大" ? 0.42f : 0f)));
             sequence.Append(DOTween.To(() => group.alpha, value => group.alpha = value, 0f, 0.4f));
             sequence.Join(DOTween.To(() => _slide, value => _slide = value, -1f, 0.4f));
@@ -93,6 +102,7 @@ namespace RevGame.View
         {
             StopAnimation();
             _preparationMode = true;
+            _boardRuleMode = false;
             _onFinished = onFinished;
             titleText.text = title;
             detailText.text = detail;
@@ -149,6 +159,18 @@ namespace RevGame.View
                 return;
             }
             GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, GameBattleLayout.SafeViewport());
+            if (_boardRuleMode)
+            {
+                float bannerWidth = Mathf.Min(1080f, parent.rect.width * .68f);
+                rect.sizeDelta = new Vector2(bannerWidth, 94f);
+                rect.anchoredPosition = new Vector2(parent.rect.width * .5f, parent.rect.height * .76f);
+                SetChildRect(titleText.rectTransform, Vector2.zero, new Vector2(bannerWidth * .93f, 72f));
+                SetChildRect(detailText.rectTransform, new Vector2(0, -35), new Vector2(bannerWidth * .9f, 20));
+                titleText.resizeTextForBestFit = true;
+                titleText.resizeTextMinSize = 27;
+                titleText.resizeTextMaxSize = 39;
+                return;
+            }
             if (_preparationMode)
             {
                 float bannerWidth = Mathf.Min(1120f, parent.rect.width * 0.72f);
