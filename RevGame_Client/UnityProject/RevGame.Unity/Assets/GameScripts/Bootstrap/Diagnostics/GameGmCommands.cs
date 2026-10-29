@@ -31,7 +31,7 @@ namespace RevGame.Bootstrap
             RevGame.Automation.GameAutomationCommands.RegisterGroup();
             RegisterPlayerActions();
 #if UNITY_EDITOR
-            RegisterCommand("RevGame/Boss技能扩展测试开始", "隔离Play通过真实Boss技能入口验证十二招和三层特效，自动截图并回首页", args =>
+            RegisterCommand("RevGame/Boss技能扩展测试开始", "隔离Play通过真实Boss技能入口验证每章四个专属及三层特效，自动截图并回首页", args =>
                 (string)Type.GetType("RevGame.Editor.GameBossSkillExpansionPlayChecks, Assembly-CSharp-Editor", true).GetMethod("Begin").Invoke(null, null));
             RegisterCommand("RevGame/Boss技能扩展测试状态", "只读六章技能Play断言与证据进度", args =>
                 (string)Type.GetType("RevGame.Editor.GameBossSkillExpansionPlayChecks, Assembly-CSharp-Editor", true).GetMethod("State").Invoke(null, null));
@@ -58,6 +58,7 @@ namespace RevGame.Bootstrap
                 HelperSnapshot helper = battle.Helper;
                 return "state=" + helper.State + ",position=" + helper.Position + ",target=" + helper.TargetId
                     + ",tier=" + helper.Tier + ",outside=" + helper.Outside + ",storm=" + helper.Storm + ",wallet=" + battle.CombatScore
+                    + ",protectionTarget=" + battle.HelperProtectionTargetId + ",protectionHealing=" + battle.HelperProtectionHealing
                     + ";visual=" + UnityEngine.Object.FindObjectOfType<BoardView>()?.HelperVisualStatus;
             });
             RegisterCommand("RevGame/帮手视效", "只读当前活动帮手弹道几何/材质状态", args =>
@@ -114,7 +115,7 @@ namespace RevGame.Bootstrap
             });
             // 仅开发验收：让 Boss 立刻施放指定技能，用来逐个检查特效与伤害。
             // 仍会检查“这一招此刻有没有合法目标”，打不到人时返回失败而不是空放；正式战斗由 Boss 自己挑技能。
-            RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/Boss技能", "Boss 回合战斗中立刻施放技能：0横扫 1狙击 2轰炸 3弹幕 4瞬移 5激光 6汲取 7召唤 8狂暴 9流星 10十字 11冰环 12雷链 13毒沼 14火墙 15冰刺 16引力 17烙印；18星暴 19黑洞 20日冕 21烈阳 22怒涛 23回流 24沼口 25泥缚 26冰囚 27冰爆 28神罚 29圣域（专属仅本章）", args =>
+            RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/Boss技能", "Boss 回合战斗中立刻施放技能：0横扫 1狙击 2轰炸 3弹幕 4瞬移 5激光 6汲取 7召唤 8狂暴 9流星 10十字 11冰环 12雷链 13毒沼 14火墙 15冰刺 16引力 17烙印；18星暴 19黑洞 20日冕 21烈阳 22怒涛 23回流 24沼口 25泥缚 26冰囚 27冰爆 28神罚 29圣域；30至60新增元素技能（所有主动技能仅所属章可用）", args =>
             {
                 Logic();
                 int index = args.Int(0, 0);

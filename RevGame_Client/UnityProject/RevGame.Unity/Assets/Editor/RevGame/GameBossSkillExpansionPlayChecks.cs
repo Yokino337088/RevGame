@@ -64,9 +64,9 @@ namespace RevGame.Editor
                     await Wait(() => !flow.IsGameplayBlocked && UnityEngine.Object.FindObjectOfType<BoardView>()?.AreBossViewsReady(chapter) == true, "章节美术未加载");
                     await Wait(() => battle.PreparationGranted || !battle.VictoryAssistEnabled, "准备增益尚未实际发放");
                     Check(battle.StartBattle(), "正式开战章" + chapter + ":" + battle.LastError);
-                    for (int index = 0; index < 2; index++)
+                    foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
                     {
-                        BossSkillKind kind = (BossSkillKind)(18 + (chapter - 1) * 2 + index);
+                        if (!BossSkillCatalog.IsSpecial(kind) || !BossSkillCatalog.IsUnlocked(kind,chapter)) { continue; }
                         BossSkillDef def = BossSkillCatalog.Get(kind);
                         _result.current = chapter + "/" + kind;
                         int hits = 0;

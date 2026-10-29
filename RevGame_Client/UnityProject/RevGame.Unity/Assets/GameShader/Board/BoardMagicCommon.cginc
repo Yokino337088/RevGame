@@ -21,14 +21,26 @@ float mote(float2 p,float2 center,float radius) { return 1-smoothstep(radius*.3,
 float2 tileLocal(float2 world) { return frac((world-_Origin)/_CellSize)-.5; }
 float2 tileId(float2 world) { return floor((world-_Origin)/_CellSize); }
 float innerMask(float2 p) { return 1-smoothstep(.36,.48,max(abs(p.x),abs(p.y))); }
+// Boss命中时使用深色格面衬底和粗亮菱纹；独立于章节底色，因此冰雪盘不会吞掉浅色法纹。
+// 只改变颜色，保留源alpha；每格仍共用章节材质，无新增Pass、贴图采样或全屏处理。
+float3 bossImpactColor(float3 baseColor,float2 world) {
+ if (_BossPulse <= 0.001) { return baseColor; }
+ float2 p=tileLocal(world);
+ float diamond=abs(p.x)+abs(p.y);
+ float seal=1-smoothstep(.025,.065,abs(diamond-.35));
+ float charge=pow(saturate(.5+.5*sin(diamond*35-_Time.y*11)),5);
+ float border=1-smoothstep(.012,.045,abs(max(abs(p.x),abs(p.y))-.43));
+ float3 dark=_BossTint.rgb*.085;
+ float3 rune=_BossTint.rgb*(1.15+charge*.55)+float3(.3,.3,.3)*seal;
+ float3 effect=lerp(dark,rune,saturate(seal+border+charge*.35));
+ return lerp(baseColor,effect,saturate(_BossPulse)*.93);
+}
 fixed4 finishTile(v2f i,float light) {
  fixed4 base=tex2D(_MainTex,i.uv)*i.color;
  // 保留原图alpha和格线；低饱和底色承载细节，亮纹有上限，不使用叠加混合烫白棋盘。
  base.rgb=base.rgb*_Tint.rgb + _Glow.rgb*saturate(light)*_Strength;
  // 专属技能时格面亮起法纹，与常驻章节底色叠加，不覆盖原图透明度。
- float2 p=tileLocal(i.world);
- float rune=pow(saturate(.5+.5*sin((abs(p.x)+abs(p.y))*45-_Time.y*9)),5);
- base.rgb=lerp(base.rgb,_BossTint.rgb*(.6+rune),saturate(_BossPulse)*.72);
+ base.rgb=bossImpactColor(base.rgb,i.world);
  return base;
 }
 // 明暗起伏只作用于底色的小范围，棋子与格线始终保留足够对比度。
@@ -37,8 +49,6 @@ fixed4 finishTileShaded(v2f i,float light,float shade) {
  base.rgb*= _Tint.rgb*(1+clamp(shade,-.7,1)*.18);
  base.rgb+=_Glow.rgb*saturate(light)*_Strength;
  // 专属技能时格面亮起法纹，与常驻章节底色叠加，不覆盖原图透明度。
- float2 p=tileLocal(i.world);
- float rune=pow(saturate(.5+.5*sin((abs(p.x)+abs(p.y))*45-_Time.y*9)),5);
- base.rgb=lerp(base.rgb,_BossTint.rgb*(.6+rune),saturate(_BossPulse)*.72);
+ base.rgb=bossImpactColor(base.rgb,i.world);
  return base;
 }

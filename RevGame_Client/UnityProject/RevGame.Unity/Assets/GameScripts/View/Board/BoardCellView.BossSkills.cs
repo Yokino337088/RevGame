@@ -10,23 +10,32 @@ namespace RevGame.View
         private float _bossTilePulse;
         public bool HasBossSkillAnimation => _bossTileTween != null && _bossTileTween.IsActive();
 
-        public void PlayBossTile(Color tint, float duration)
+        /// <summary>
+        /// 技能格面双跳：首次冲击抬起，回落后再轻弹一次。延迟由到技能中心的距离决定，形成逐格传播的波浪。
+        /// duration/delay仅决定表现，玩家能否被命中仍由服务判断；每格只保留一条Tween，后来的冲击替换旧冲击。
+        /// </summary>
+        public void PlayBossTile(Color tint, float duration, float delay = 0f)
         {
             ClearBossTile();
             if (_surfaceRenderer == null) { return; }
             _bossTileProperties ??= new MaterialPropertyBlock();
             _surfaceRenderer.GetPropertyBlock(_bossTileProperties);
+            // 自定义参数块必须携带真实图集页；仅写颜色可能让某些SpriteRenderer路径退回材质的白色默认贴图。
+            if (_surfaceRenderer.sprite != null) { _bossTileProperties.SetTexture("_MainTex", _surfaceRenderer.sprite.texture); }
             _bossTileProperties.SetColor("_BossTint", tint);
-            _bossTilePulse = 1f;
+            _bossTilePulse = 0f;
             _bossTileTween = DOTween.To(() => _bossTilePulse, value =>
             {
                 _bossTilePulse = value;
-                _bossTileProperties.SetFloat("_BossPulse", value);
+                float flash = (1f - value) * (.74f + .26f * Mathf.Cos(value * Mathf.PI * 8f));
+                _bossTileProperties.SetFloat("_BossPulse", flash);
                 _surfaceRenderer.SetPropertyBlock(_bossTileProperties);
                 // 复用已有的纯视觉起伏层：只动Sprite，绝不移动根节点上的格子碰撞器。
-                SetVictoryWave(Mathf.Clamp01(1f - value));
+                float wave = value < .65f ? value / .65f : (value - .65f) / .35f;
+                SetVictoryWave(Mathf.Clamp01(wave), value < .65f ? .62f : .23f);
                 if (_victorySurface != null && _victorySurface.enabled) { _victorySurface.SetPropertyBlock(_bossTileProperties); }
-            }, 0f, duration).SetEase(Ease.OutSine).OnComplete(() => { _bossTileTween = null; ClearBossTile(); });
+            }, 1f, Mathf.Clamp(duration, .65f, 1.25f)).SetDelay(delay).SetEase(Ease.Linear)
+                .OnComplete(() => { _bossTileTween = null; ClearBossTile(); });
         }
         public void ClearBossTile()
         {

@@ -61,9 +61,9 @@ Hand.KindBaseWeight	3	抽手牌时，已解锁棋种的基础权重（整数）�
 Hand.ClassBonusWeight	1	场上已有同职业棋子时，该棋种额外增加的抽取权重（整数）。
 Upgrade.PairsPerStar	3	成功打出多少张同类牌，场上已有同类棋升一星（整数 ≥1）。
 Reward.OutnumberedFactor	2	判定“人数落后”：我方棋数 × 本值 < 敌方棋数时，奖励获得额外权重（整数 ≥1）。
-Boss.FirstSkillSeconds	7	开战后 Boss 第一次释放技能前的等待（秒），给玩家看清阵型的时间
-Boss.SkillGapSeconds	3.2	两次技能之间的公共间隔（秒）：防止不同技能首尾相接、毫无喘息
-Boss.RecoverSeconds	0.6	技能最后一段命中后的收招硬直（秒），之后才回到普通攻击
+Boss.FirstSkillSeconds	4	开战后 Boss 第一次释放技能前的等待（秒），给玩家看清阵型的时间
+Boss.SkillGapSeconds	1.25	两次技能之间的公共间隔（秒）：防止不同技能首尾相接、毫无喘息
+Boss.RecoverSeconds	0.4	技能最后一段命中后的收招硬直（秒），之后才回到普通攻击
 Boss.EnrageHpRatio	0.5	Boss 生命比例低于该值时触发一次狂暴（仅限已解锁狂暴的章节）
 Boss.EnrageCooldownScale	0.65	狂暴后所有技能冷却乘以该系数（越小越频繁）
 Boss.CooldownPerChapter	0.06	每高一章，技能冷却缩短的比例：冷却 × (1 − (章节−1) × 该值)
@@ -135,11 +135,11 @@ Helper.RangedAttackLink	0.2	帮手攻击成长向玩家远程普攻传递比例�
 Helper.RangedSpeedLink	0.8	帮手实际攻速成长向玩家远程攻击进度传递比例
 Helper.RangedAttackCap	0.15	远程共鸣攻击最高增加15%，不影响敌方/环境技能
 Helper.RangedSpeedCap	0.6	远程共鸣攻速最高增加60%，钱包消费不降档，换章重置
-Boss.HpMultiplier	65	主将额外生命倍率；与独立攻击及百分比承伤系数共同校准约180秒实战，仅出生时应用。
+Boss.HpMultiplier	100	2026-10-29三种子18场Boss实测中位283秒（原164秒）；与百分比伤害折减0.13、攻击倍率0.4配套，不保证每局固定时长
 Helper.BossSpeedBonus	1	Boss回合帮手普通弹幕额外攻速比例，1=提高100%；不提高远程共鸣。
 Helper.BossDamageScale	0.75	Boss回合帮手单发弹幕伤害倍率；与加速分开，避免火力翻倍秒杀。
-Boss.AttackMultiplier	0.35	主将独立攻击倍率；普攻和技能共同使用，不影响普通敌棋与护卫。
-Boss.PercentDamageScale	0.3	主将承受最大生命比例伤害系数；炸弹、区域、炮火共用，保留固定伤害下限。
+Boss.AttackMultiplier	0.4	主将独立攻击倍率；普攻和技能共同使用，不影响普通敌棋与护卫。
+Boss.PercentDamageScale	0.13	主将承受最大生命比例伤害系数；炸弹、区域、炮火共用，保留固定伤害下限。
 Helper.StormThreshold	3	风暴触发上界：存活玩家棋数大于0且小于此数
 Helper.StormMissileSeconds	2.4	风暴导弹间隔，模拟秒
 Helper.StormMissileDamage	18	风暴导弹每次直接命中基础伤害
@@ -151,3 +151,7 @@ Helper.StormBeamSeconds	2	风暴激光持续模拟秒
 Helper.StormBeamCooldown	6	风暴激光启动间隔，模拟秒
 Helper.StormBeamDps	12	风暴激光每个命中敌人的每秒基础伤害
 Helper.StormBeamWidth	1.8	风暴激光完整宽度，棋盘格，几何检测与画面共用
+Boss.CommonSkillsPerExclusive	3	每3次通用主动技能穿插1次本章专属，组内轮换且仍检查冷却与合法目标
+Helper.ProtectionHealPerSecond	0.3	战斗只剩1枚存活玩家棋时，每秒恢复其最大生命30%；不复活、不提供无敌
+Helper.ProtectionAttackBonus	0.5	最后单棋保护攻击+50%，同伴补入即撤销，不累计写回原始属性
+Helper.ProtectionSpeedBonus	0.5	最后单棋保护攻速+50%，与已有加成相乘，回合退出撤销

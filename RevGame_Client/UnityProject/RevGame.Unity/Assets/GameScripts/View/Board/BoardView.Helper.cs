@@ -11,6 +11,10 @@ namespace RevGame.View
     {
         private IBattleService Battle => RevServices.GetRequired<IBattleService>();
         private HelperView _helperView;
+        /// <summary>持续保护只拥有一条治疗射线；目标身份由服务决定，视图不推算存活数或治疗量。</summary>
+        private HelperHealingView _helperHealing;
+        private bool _helperHealingLoading;
+        private int _helperHealingGeneration;
         /// <summary>只租用共享棋子图集，四帧在一次加载期间复用；最后收走视图后才归还租约。</summary>
         private GameSpriteAtlasService.ScopedAtlasLease _helperAtlas;
         private GameSpriteAtlasService.ScopedAtlasLease _helperStormAtlas;
@@ -21,8 +25,10 @@ namespace RevGame.View
         private readonly HashSet<HelperAttackView> _helperAttacks = new HashSet<HelperAttackView>();
         private Material _helperProjectile, _helperBeam;
         private int _helperVisualChapter, _helperVisualGeneration, _helperPendingAttacks;
-        // 表现硬预算，不影响实际攻击数量与扣血；同屏最多16个帮助弹道，忙时只合并视觉。
+        // 表现硬预算，不影响实际攻击数量与扣血；同屏最多40个帮手弹道（含预约），忙时只合并视觉。
         public int HelperAttackVisualCount => _helperAttacks.Count;
+        public bool HelperHealingVisible => _helperHealing != null && _helperHealing.IsConnected;
+        public int HelperHealingTargetId => _helperHealing == null ? 0 : _helperHealing.TargetId;
         public bool HelperVisualReady => _helperView != null && _helperView.FramesReady && _helperProjectile != null && _helperBeam != null;
         /// <summary>开发验收定位加载/帧/材质失败，查询只读，不触发重新加载。</summary>
         public string HelperVisualStatus => "view=" + (_helperView != null) + ",frames=" + (_helperView != null && _helperView.FramesReady)
@@ -60,6 +66,54 @@ namespace RevGame.View
                 }, _viewRoot);
             }
             if (_helperView != null) { _helperView.Present(battle.Helper); }
+            RefreshHelperHealing(battle.HelperProtectionTargetId);
+        }
+
+        /// <summary>
+        /// 无保护/回合结束立即回池。异步取池同时捕获目标Id与代次，目标改变后晚到的实例会直接归还，
+        /// 不会在已经死亡的棋子或下一回合重新出现一条“幽灵治疗线”。
+        /// </summary>
+        private void RefreshHelperHealing(int targetId)
+        {
+            if (targetId == 0 || _helperView == null || !_helperView.gameObject.activeInHierarchy
+                || !_pieces.TryGetValue(targetId, out PieceView target) || target == null || target.PieceId != targetId)
+            {
+                ClearHelperHealing();
+                return;
+            }
+            if (_helperHealing != null)
+            {
+                _helperHealing.Bind(_helperView.transform, target, targetId);
+                return;
+            }
+            if (_helperHealingLoading) { return; }
+            _helperHealingLoading = true;
+            int generation = _helperHealingGeneration;
+            GamePoolRequests.GetAsync<HelperHealingView>(view =>
+            {
+                if (_released || generation != _helperHealingGeneration)
+                {
+                    if (view != null) { RevPool.Return(view, 0); }
+                    return;
+                }
+                _helperHealingLoading = false;
+                if (view == null) { RevLog.Warn("帮手治疗射线预制体加载失败", "RevGame"); return; }
+                if (Battle.HelperProtectionTargetId != targetId || _helperView == null
+                    || !_pieces.TryGetValue(targetId, out PieceView current) || current == null || current.PieceId != targetId)
+                {
+                    RevPool.Return(view, 0);
+                    return;
+                }
+                _helperHealing = view;
+                view.Bind(_helperView.transform, current, targetId);
+            }, _viewRoot);
+        }
+
+        private void ClearHelperHealing()
+        {
+            _helperHealingGeneration++;
+            _helperHealingLoading = false;
+            if (_helperHealing != null) { RevPool.Return(_helperHealing, 0); _helperHealing = null; }
         }
 
         /// <summary>只加载当前章节材质；切章或关闭时配对Release，六章Shader不会被预制体同时引用。</summary>
@@ -143,6 +197,7 @@ namespace RevGame.View
             _helperStormAtlas?.Dispose(); _helperStormAtlas = null;
             _helperLoading = false;
             RevPool.DestroyPool<HelperAttackView>();
+            RevPool.DestroyPool<HelperHealingView>();
             RevPool.DestroyPool<HelperView>();
             ReleaseHelperMaterials();
         }
@@ -150,6 +205,7 @@ namespace RevGame.View
         /// <summary>准备/战斗/结算切换只收短效，演员和刷新租约活到整个BoardView退出。</summary>
         private void ClearHelperAttacks()
         {
+            ClearHelperHealing();
             _helperAttackGeneration++;
             RevTimer.CancelAllOf(_helperAttackOwner);
             foreach (HelperAttackView attack in _helperAttacks) { if (attack != null) { RevPool.Return(attack, 0); } }

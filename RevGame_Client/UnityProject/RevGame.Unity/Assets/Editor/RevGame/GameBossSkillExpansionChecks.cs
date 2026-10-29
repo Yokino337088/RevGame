@@ -18,6 +18,8 @@ namespace RevGame.Editor
             try
             {
                 GameConfigTestSupport.Ensure();
+                BattleService.VerifyExpandedBossSkills((ok, message) =>
+                { if (!ok) { throw new InvalidOperationException(message); } result.assertions.Add(message); });
                 result.summary = BattleService.VerifyBossSkillExpansion((ok, message) =>
                 { if (!ok) { throw new InvalidOperationException(message); } result.assertions.Add(message); });
                 result.passed = true;

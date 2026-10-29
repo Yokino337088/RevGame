@@ -9,7 +9,8 @@
 //
 // 【评分思路（新手可以照着改）】
 // 每个技能先算一个“局面分”（这一招此刻能打到多少人、值不值），再乘以表里的 Weight。
-// 先从使用次数最少的可用技能中选择，再比较评分；防止全盘弹幕永远压过其它技能。
+// 通用技能与本章专属分开轮换：每完成表里规定的通用次数，就给专属一次优先窗口。
+// 组内先选使用次数最少的合法技能，再比较评分；既不会让全盘弹幕霸屏，也不会饿死专属技能。
 // 上一次刚用过的技能分数减半，避免 Boss 连放同一招让战斗单调。
 //
 // 【几何约定】
@@ -44,32 +45,77 @@ namespace RevGame.Battle
 
     public static class BossTactics
     {
-        /// <summary>重复使用上一招时的分数系数。</summary>
+        /// <summary>重复使用上一招时的相对评分权重；只影响同组候选打分，不是策划战斗数值。</summary>
         private const float RepeatPenalty = 0.5f;
 
+        /// <summary>枚举目录只建立一次。选招是热路径，不能每次 Enum.GetValues 再分配一份数组。</summary>
+        private static readonly BossSkillKind[] AllKinds = (BossSkillKind[])Enum.GetValues(typeof(BossSkillKind));
+
         /// <summary>
-        /// 从所有已解锁、冷却已好的技能里挑出最划算的一个。
+        /// 从已解锁、冷却结束且拥有合法目标的招式中选计划。
+        /// 通用与专属各自轮换，专属不再与本章六个主动通用招争用同一张次数排行榜。
         /// </summary>
-        /// <param name="readyAt">按 BossSkillKind 下标存放的“冷却结束时刻”；小于等于 now 才可用。</param>
-        /// <param name="last">上一次使用的技能，null 表示本场还没用过。</param>
-        /// <param name="plan">选中的计划；返回 false 时无意义。</param>
-        /// <returns>false = 当前没有任何技能值得放（例如所有技能都打不到人），Boss 继续普通攻击。</returns>
+        /// <param name="readyAt">每招冷却结束的模拟秒数；大于 now 的技能绝不允许抢占专属窗口。</param>
+        /// <param name="last">上一次完成的技能；专属补轮时仍插入通用招，避免连放两个专属压住玩家。</param>
+        /// <param name="plan">选中的不可变预警计划；返回 false 时没有可释放招式。</param>
+        /// <param name="useCounts">本 Boss 实际开始释放的次数；只读，真实进入状态后才由宿主增加。</param>
         public static bool TryChoose(BoardModel board, Piece boss, int chapter, int intelligence, float[] readyAt, float now, BossSkillKind? last, out BossSkillPlan plan, int[] useCounts = null)
+        {
+            int commonCasts = 0;
+            int exclusiveCasts = 0;
+            if (useCounts != null)
+            {
+                foreach (BossSkillKind kind in AllKinds)
+                {
+                    BossSkillDef def = BossSkillCatalog.Get(kind);
+                    // 狂暴是血线事件，不占“通用技能已放几招”的名额；其它章节专属也不能串入本章计数。
+                    if (def.Weight <= 0 || !BossSkillCatalog.IsUnlocked(kind, chapter))
+                    {
+                        continue;
+                    }
+                    if (def.ExclusiveChapter == chapter)
+                    {
+                        exclusiveCasts += useCounts[(int)kind];
+                    }
+                    else
+                    {
+                        commonCasts += useCounts[(int)kind];
+                    }
+                }
+            }
+
+            // 只从真实施法次数推导配额，省去第二份容易在重开/取消时漏清的调度状态。
+            // 专属暂时没有合法目标或仍冷却时，下面回退通用；配额保留，下次合法时仍能轮到它。
+            bool lastWasExclusive = last.HasValue && BossSkillCatalog.Get(last.Value).ExclusiveChapter == chapter;
+            bool preferExclusive = commonCasts >= (exclusiveCasts + 1) * Balance.BossCommonSkillsPerExclusive && !lastWasExclusive;
+            if (TryChooseGroup(board, boss, chapter, intelligence, readyAt, now, last, useCounts, preferExclusive, out plan))
+            {
+                return true;
+            }
+            // 回退仍走同一套冷却、解锁与目标检查；没有可释放技能时交给 Idle 做普通攻击。
+            return TryChooseGroup(board, boss, chapter, intelligence, readyAt, now, last, useCounts, !preferExclusive, out plan);
+        }
+
+        /// <summary>
+        /// 在一个组内轮换。次数少的合法技能优先，同次数再按战术评分选择；严格大于才替换同分候选，固定输入可复现。
+        /// exclusive=true 只看本章专属；false 只看通用主动技能，狂暴永远由血线触发。
+        /// </summary>
+        private static bool TryChooseGroup(BoardModel board, Piece boss, int chapter, int intelligence, float[] readyAt, float now,
+            BossSkillKind? last, int[] useCounts, bool exclusive, out BossSkillPlan plan)
         {
             plan = default;
             int leastUsed = int.MaxValue;
             bool found = false;
             float best = 0f;
-            foreach (BossSkillKind kind in (BossSkillKind[])Enum.GetValues(typeof(BossSkillKind)))
+            foreach (BossSkillKind kind in AllKinds)
             {
                 BossSkillDef def = BossSkillCatalog.Get(kind);
-                // 狂暴不参与挑选：它只由“血量跌破阈值”触发，见 BossIdleState。
-                if (def.Weight <= 0 || !BossSkillCatalog.IsUnlocked(kind, chapter) || readyAt[(int)kind] > now)
+                if (def.Weight <= 0 || !BossSkillCatalog.IsUnlocked(kind, chapter) || readyAt[(int)kind] > now
+                    || (def.ExclusiveChapter == chapter) != exclusive)
                 {
                     continue;
                 }
-                BossSkillPlan candidate;
-                if (!TryPlan(board, boss, kind, intelligence, out candidate))
+                if (!TryPlan(board, boss, kind, intelligence, out BossSkillPlan candidate))
                 {
                     continue;
                 }
@@ -78,7 +124,6 @@ namespace RevGame.Battle
                 {
                     candidate.Score *= RepeatPenalty;
                 }
-                // 严格大于才替换：同分保留枚举靠前的技能，相同局面永远选同一招，方便复现和测试。
                 int used = useCounts == null ? 0 : useCounts[(int)kind];
                 if (used < leastUsed || (used == leastUsed && candidate.Score > best))
                 {
@@ -99,6 +144,10 @@ namespace RevGame.Battle
         {
             plan = new BossSkillPlan { Kind = kind, A = boss.Pos, B = boss.Pos, C = boss.Pos };
             BossSkillDef def = BossSkillCatalog.Get(kind);
+            if (BossSkillCatalog.IsExpanded(kind))
+            {
+                return BossExpandedGeometry.TryPlan(board, boss, kind, out plan);
+            }
             var victims = new List<Piece>(16);
             if ((int)kind >= (int)BossSkillKind.StarStorm)
             {

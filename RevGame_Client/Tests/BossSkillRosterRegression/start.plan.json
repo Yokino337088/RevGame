@@ -1,0 +1,12 @@
+{
+  "name": "六章六通用四专属真实AB验收启动",
+  "steps": [
+    {
+      "target": "editor",
+      "action": "game.boss-impact.begin",
+      "arguments": { "first": 1, "last": 6, "extended": true, "fromSkill": 0, "toSkill": 60 },
+      "expect": [{ "path": "/success", "equals": true }]
+    }
+  ],
+  "finally": []
+}

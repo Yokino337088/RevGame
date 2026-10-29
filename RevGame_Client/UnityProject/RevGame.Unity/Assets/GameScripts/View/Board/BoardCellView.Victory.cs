@@ -11,7 +11,7 @@ namespace RevGame.View
         private bool _victorySourceWasEnabled;
         private MaterialPropertyBlock _victorySurfaceProperties;
         /// <summary>按格缓存渲染层，避免每帧GetComponents；关闭/回池必须归位，不能让旧波浪位置继承下一局。</summary>
-        public void SetVictoryWave(float progress)
+        public void SetVictoryWave(float progress, float height = .36f)
         {
             bool starting = !_victoryWaveActive;
             if (progress <= 0 || progress >= 1)
@@ -81,7 +81,8 @@ namespace RevGame.View
                     index++;
                 }
             }
-            float jump = Mathf.Sin(Mathf.Clamp01(progress) * Mathf.PI) * .36f;
+            // height是纯视觉高度（世界单位），Boss冲击可比通关波浪更有弹性；仍不移动Collider所在根节点。
+            float jump = Mathf.Sin(Mathf.Clamp01(progress) * Mathf.PI) * height;
             for (int index = 0; index < _victoryVisuals.Length; index++)
             {
                 if (_victoryVisuals[index] == null) { continue; }

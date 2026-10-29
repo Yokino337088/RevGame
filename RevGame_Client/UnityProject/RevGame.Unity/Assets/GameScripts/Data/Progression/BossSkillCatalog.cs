@@ -6,7 +6,7 @@
 // 写死在状态类里，每调一次都要改代码重新编译；放进表里，改完导表即可生效。
 //
 // 难度怎么随章节提升（第一章最温和，第六章最难）：
-// 1) 解锁：UnlockChapter ≤ 当前章节的技能才会被 Boss 使用，所以章节越高技能越多，第六章全部可用；
+// 1) 解锁：UnlockChapter ≤ 当前章节的技能才会被 Boss 使用，每章固定六个主动通用和四个专属，不向后继承；
 // 2) 冷却：冷却 × (1 − (章节−1) × Boss.CooldownPerChapter)，章节越高放技能越频繁；
 // 3) 伤害：倍率 × (1 + (章节−1) × Boss.PowerPerChapter)，章节越高每一击越痛；
 // 4) 狂暴：只有解锁了 Enrage 的章节，Boss 残血时才会狂暴并进一步缩短冷却。
@@ -48,7 +48,7 @@ namespace RevGame.Data
         /// 单位取"格/秒"而不是"世界单位/秒"：策划改棋盘大小时手感不会跟着变。
         /// </summary>
         public float BulletSpeed { get; internal set; }
-        /// <summary>0表示通用技能，否则仅对应章节使用，不随解锁向后继承。</summary>
+        /// <summary>0表示通用技能（UnlockChapter指定唯一章节），否则仅对应章节使用，不随解锁向后继承。</summary>
         public int ExclusiveChapter { get; internal set; }
         /// <summary>持续状态的模拟秒数；视图不能自行决定何时解冻或返场。</summary>
         public float Duration { get; internal set; }
@@ -59,6 +59,25 @@ namespace RevGame.Data
 
     public static class BossSkillCatalog
     {
+        /// <summary>新增几何招式使用独立执行器；枚举范围是接线结构，不是策划数值。</summary>
+        public static bool IsExpanded(BossSkillKind kind)
+        {
+            return kind >= BossSkillKind.CometRails;
+        }
+
+        /// <summary>专属由配置字段判定，禁止用枚举大小推断，新增通用技能也可能排在旧专属后。</summary>
+        public static bool IsSpecial(BossSkillKind kind)
+        {
+            return Get(kind).ExclusiveChapter > 0;
+        }
+
+        /// <summary>主题章节从同一配置读取，供身体、声音与地面统一配色。</summary>
+        public static int ThemeChapter(BossSkillKind kind)
+        {
+            BossSkillDef def = Get(kind);
+            return def.ExclusiveChapter > 0 ? def.ExclusiveChapter : def.UnlockChapter;
+        }
+
         /// <summary>按种类取技能定义；配置装配时已保证每个枚举都有一行，所以这里不会返回 null。</summary>
         public static BossSkillDef Get(BossSkillKind kind)
         {
@@ -69,7 +88,7 @@ namespace RevGame.Data
         public static bool IsUnlocked(BossSkillKind kind, int chapter)
         {
             BossSkillDef def = Get(kind);
-            return chapter >= def.UnlockChapter && (def.ExclusiveChapter == 0 || def.ExclusiveChapter == chapter);
+            return kind == BossSkillKind.Enrage || (def.ExclusiveChapter == 0 ? chapter == def.UnlockChapter : chapter == def.ExclusiveChapter);
         }
 
         /// <summary>
@@ -127,7 +146,7 @@ namespace RevGame.Data
                 if ((kind == BossSkillKind.BlackHole || kind == BossSkillKind.SwampMaw || kind == BossSkillKind.FrozenPrison
                     || kind == BossSkillKind.MireChains || kind == BossSkillKind.Sanctuary) && row.Duration <= 0f)
                 { problems.Add(where + " 的持续状态必须有正持续时间"); ok = false; }
-                if ((int)kind >= (int)BossSkillKind.StarStorm && row.ExclusiveChapter != ((int)kind - (int)BossSkillKind.StarStorm) / 2 + 1)
+                if (kind >= BossSkillKind.StarStorm && kind <= BossSkillKind.Sanctuary && row.ExclusiveChapter != ((int)kind - (int)BossSkillKind.StarStorm) / 2 + 1)
                 { problems.Add(where + " 的专属章节与技能主题不符"); ok = false; }
                 ok &= GameConfig.CheckRange(row.Weight, 0, 1000, where, "Weight", problems);
                 ok &= GameConfig.CheckRange(row.Cooldown, 0f, 600f, where, "Cooldown", problems);
@@ -175,6 +194,19 @@ namespace RevGame.Data
                 };
             }
             GameConfig.CheckCoverage<BossSkillKind>(keys, "BossSkillConfig", problems);
+            // 数量是六章技能池的交付契约，避免策划错填章节后静默少招或串章。
+            for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
+            {
+                int common = 0, special = 0;
+                foreach (BossSkillDef def in snapshot.BossSkills.Values)
+                {
+                    if (def.Kind == BossSkillKind.Enrage) { continue; }
+                    if (def.ExclusiveChapter == chapter) { special++; }
+                    else if (def.ExclusiveChapter == 0 && def.UnlockChapter == chapter) { common++; }
+                }
+                if (common != 6 || special != 4)
+                { problems.Add("第" + chapter + "章技能池必须六通用四专属，实际=" + common + "/" + special); }
+            }
         }
     }
 }

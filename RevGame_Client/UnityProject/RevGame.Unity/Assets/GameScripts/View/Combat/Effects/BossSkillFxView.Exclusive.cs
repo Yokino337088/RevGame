@@ -11,7 +11,7 @@ namespace RevGame.View
         /// <summary>六章颜色是美术结构常量，不影响命中/伤害。预警、身体与格面统一色语义。</summary>
         public static Color ExclusiveTint(BossSkillKind kind)
         {
-            switch (((int)kind - (int)BossSkillKind.StarStorm) / 2)
+            switch (BossSkillCatalog.ThemeChapter(kind) - 1)
             {
                 case 0: return new Color(.57f, .25f, 1f);
                 case 1: return new Color(1f, .37f, .035f);
@@ -26,7 +26,7 @@ namespace RevGame.View
         private float BuildExclusive(BossSkillInfo info, bool warning)
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
-            int theme = ((int)info.Kind - (int)BossSkillKind.StarStorm) / 2;
+            int theme = BossSkillCatalog.ThemeChapter(info.Kind) - 1;
             Color tint = ExclusiveTint(info.Kind);
             float duration = warning ? info.Windup : Mathf.Max(.85f, def.Duration);
             BoardPos focus = info.Kind == BossSkillKind.SunBrand ? (info.Index % 3 == 0 ? info.A : info.Index % 3 == 1 ? info.B : info.C) : info.A;

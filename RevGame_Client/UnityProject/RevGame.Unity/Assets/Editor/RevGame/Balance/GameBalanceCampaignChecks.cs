@@ -34,7 +34,8 @@ namespace RevGame.Editor
             { throw new ArgumentException("测试速度/落牌数/回合边界无效"); }
             Status="running";_cancel=false;
             _report=new Report{label=label,seed=seed,careless=careless,continuous=continuous,timeScale=speed,maxCards=maxCards};
-            _folder=Path.GetFullPath("../../../.codex/work/balance-2026-10-28/"+label+"-"+seed);
+            // 每次保留独立证据，避免今天的测试覆盖昨天同标签的结果；日期只决定文件归档，不参与玩法。
+            _folder=Path.GetFullPath("../../../.codex/work/balance-"+DateTime.Now.ToString("yyyy-MM-dd")+"/"+label+"-"+seed);
             Directory.CreateDirectory(_folder);
             RunAsync(seed,careless,first,last,continuous,speed,maxCards,lastRound);return "started";
         }
@@ -128,7 +129,8 @@ namespace RevGame.Editor
                         Snapshot(battle,true);Capture("start");
                         // 与玩家开始战斗按钮一致；GM明确记录，落牌使用EventSystem实际指针。
                         var start=RevGM.Execute("RevGame/开始战斗");if(!start.Success){throw new InvalidOperationException(start.Message);}
-                        float deadline=Time.realtimeSinceStartup+90, nextDecision=3;int sample=0;
+                        // 仅测试看门狗：厚血Boss可能超过六分钟，按测试速度换算上限；游戏没有强制倒计时。
+                        float deadline=Time.realtimeSinceStartup+720f/speed+30f, nextDecision=3;int sample=0;
                         while(battle.Phase==GamePhase.Battle)
                         {
                             Check();
@@ -148,6 +150,7 @@ namespace RevGame.Editor
                         }
                         _round.seconds=battle.BattleElapsed;_round.winner=battle.LastWinner?.ToString()??"timeout";
                         _round.events=battle.BattleEventCount;_round.bombs=battle.EnergyBombCount;_round.regions=battle.RegionPulseCount;_round.emergency=battle.EmergencySupportCount;
+                        _round.helperHealing=battle.HelperProtectionHealing;
                         Snapshot(battle,false);Capture("end");
                         _report.rounds.Add(_round);Save();
                         bool won=battle.LastWinner==GameSide.Player&&!_round.timeout;
@@ -221,6 +224,7 @@ namespace RevGame.Editor
             public int chapter,round,cardsPlayed,playersStart,enemiesStart,playersEnd,enemiesEnd,playerHpStart,enemyHpStart,playerHpEnd,enemyHpEnd;
             public int playerAttacks,enemyAttacks,playerDamage,enemyDamage,playerCombatDamage,enemyCombatDamage,supportDamage,playerDeaths,enemyDeaths,events,bombs,regions,bossCasts,moves,emergency;
             public float seconds,firstHit=-1,firstDeath=-1;public string winner;public bool boss,timeout;public string[] preparation;
+            public long helperHealing;
             // 记录自然施法的去重名单，不能拿GM轮播数量代替正常对战覆盖。
             public List<string> bossSkills=new List<string>();
             public List<string> decisions=new List<string>();

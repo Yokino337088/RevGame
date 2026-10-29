@@ -3,13 +3,13 @@ CRC: 565779281
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e526092930acee559f2ed9046918aa2f
+    Hash: 4528fb0aa617aa2bf7ff1dcbd734cae2
   TypeTreeHash:
     serializedVersion: 2
     Hash: 423d436dcbc3a0c84228a3a182d4e84f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e526092930acee559f2ed9046918aa2f
+    Hash: 4528fb0aa617aa2bf7ff1dcbd734cae2
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -56,6 +56,6 @@ Assets:
 - Assets/GameRes/Effects/Combat/BossSkillFx.prefab
 - Assets/GameRes/Effects/Combat/ScoreSpark.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_combatframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_combat

@@ -69,6 +69,9 @@ namespace RevGame.Editor
             Material gold = MakeSharedMaterial("HelperGoldReflect", "RevGame/Helper/GoldReflect");
             Material rune = MakeSharedMaterial("HelperRune", "RevGame/Helper/Rune");
             Material impact = MakeSharedMaterial("HelperBeamImpact", "RevGame/Helper/BeamImpact");
+            Material healingBeam = MakeSharedMaterial("HelperHealingBeam", "RevGame/Helper/HealingBeam");
+            Material healingImpact = MakeSharedMaterial("HelperHealingImpact", "RevGame/Helper/HealingImpact");
+            Material mushroomImpact = MakeSharedMaterial("HelperMushroomImpact", "RevGame/Helper/MushroomImpact");
             Material beamMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Helper/HelperBlueBeam.mat");
             // 这次用户明确要求更粗亮，升级一次默认值；后续重建保留用户调好的材质参数。
             if (!AssetImporter.GetAtPath("Assets/GameRes/Material/Helper/HelperBlueBeam.mat").userData.Contains("beam-v2"))
@@ -124,6 +127,8 @@ namespace RevGame.Editor
             stormBody.enabled = false;
             var stormObject = new SerializedObject(stormVisual);
             stormObject.FindProperty("body").objectReferenceValue = stormBody;
+            stormObject.FindProperty("missileScale").floatValue = 1.35f;
+            stormObject.FindProperty("jellyScale").floatValue = 1.3f;
             BindStormFrames(stormObject, "missileFrames", "Missile", 3);
             BindStormFrames(stormObject, "jellyFrames", "Jellyfish", 5);
             BindStormFrames(stormObject, "explosionFrames", "Explosion", 4);
@@ -132,6 +137,9 @@ namespace RevGame.Editor
             line.useWorldSpace = true; line.positionCount = 2; line.sortingOrder = 60;
             line.numCapVertices = 4; line.textureMode = LineTextureMode.Stretch; line.enabled = false;
             Mesh mesh = MakeQuadMesh();
+            MeshRenderer mushroomView = MakeQuad("MushroomImpact", root.transform, mesh, mushroomImpact, 65);
+            stormObject.FindProperty("mushroom").objectReferenceValue = mushroomView;
+            stormObject.ApplyModifiedPropertiesWithoutUndo();
             MeshRenderer crystal = MakeQuad("Diamond", root.transform, mesh, null, 61);
             MeshRenderer runeView = MakeQuad("Rune", root.transform, mesh, rune, 62);
             MeshRenderer impactView = MakeQuad("BeamImpact", root.transform, mesh, impact, 63);
@@ -142,6 +150,20 @@ namespace RevGame.Editor
             serialized.FindProperty("impact").objectReferenceValue = impactView;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             PrefabUtility.SaveAsPrefabAsset(root, folders[2] + "/HelperAttack.prefab");
+            UnityEngine.Object.DestroyImmediate(root);
+            // 持续治疗独占一个池对象，两端每帧跟随；预制体只引用共享材质与已有Quad。
+            root = new GameObject("HelperHealing");
+            var healing = root.AddComponent<HelperHealingView>();
+            var healingLine = root.AddComponent<LineRenderer>();
+            healingLine.useWorldSpace = true; healingLine.positionCount = 2; healingLine.sortingOrder = 66;
+            healingLine.numCapVertices = 4; healingLine.textureMode = LineTextureMode.Stretch;
+            healingLine.sharedMaterial = healingBeam; healingLine.enabled = false;
+            MeshRenderer healingRing = MakeQuad("HealingPluses", root.transform, mesh, healingImpact, 67);
+            serialized = new SerializedObject(healing);
+            serialized.FindProperty("beam").objectReferenceValue = healingLine;
+            serialized.FindProperty("impact").objectReferenceValue = healingRing;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(root, folders[2] + "/HelperHealing.prefab");
             UnityEngine.Object.DestroyImmediate(root);
             const string hudPath = "Assets/GameRes/UI/Panel/BattleHudPanel.prefab";
             root = PrefabUtility.LoadPrefabContents(hudPath);
@@ -170,7 +192,7 @@ namespace RevGame.Editor
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();
-            return "四帧帮手、台词框、移除按钮、积分显示、七份材质/Shader已制作";
+            return "帮手、放大导弹/水母、蘑菇云、治疗绿束和加号、HUD及共享材质/Shader已制作";
         }
 
         /// <summary>制作资产共享一次，运行时直接借用，不为每发子弹new Mesh/Material。</summary>
@@ -196,6 +218,9 @@ namespace RevGame.Editor
                 importer.spriteImportMode = SpriteImportMode.Single; importer.mipmapEnabled = importer.isReadable = false;
                 importer.alphaIsTransparency = true; importer.npotScale = TextureImporterNPOTScale.None;
                 importer.filterMode = FilterMode.Bilinear; importer.maxTextureSize = 512;
+                // 导弹和水母放大后不能再被平台有损压缩污染透明边缘；帧数少且独立图集，保留源像素。
+                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name="Standalone", overridden=true, maxTextureSize=512, format=TextureImporterFormat.RGBA32 });
+                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name="Android", overridden=true, maxTextureSize=512, format=TextureImporterFormat.RGBA32 });
                 importer.SaveAndReimport();
                 array.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             }

@@ -43,6 +43,16 @@ namespace RevGame.View
             ColoredLaser = 7,
             MagicOrb = 8,
             EnergyBomb = 9,
+            // 10~15保留给六章专属元素场；16~24让新增通用招式有明确图形，避免全都只剩小粒子。
+            Meteor = 16,
+            Cross = 17,
+            Frost = 18,
+            Lightning = 19,
+            Poison = 20,
+            Flame = 21,
+            Ice = 22,
+            Gravity = 23,
+            Doom = 24,
         }
 
         [Header("能量巨大：炸弹轮廓素材（Lorc CC BY 3.0）")]
@@ -123,10 +133,10 @@ namespace RevGame.View
         private const int GroundOrder = 7;
         /// <summary>命中特效的排序：高于棋子（≤25）、低于伤害飘字（≥89），爆炸盖在棋子上但不挡数字。</summary>
         private const int ImpactOrder = 40;
-        /// <summary>狙击光束相对原美术宽度加粗 50%；只影响显示，不是伤害范围，因此不进玩法表。</summary>
-        private const float SnipeLaserWidthScale = 1.5f;
-        /// <summary>环绕光束相对原美术宽度加粗一倍；预瞄与命中共用倍率，不改变技能判定，因此不进玩法表。</summary>
-        private const float LaserSpinWidthScale = 2f;
+        /// <summary>狙击光束视觉宽度：原图线宽的2.3倍。只影响显示，不是伤害范围，因此不进玩法表。</summary>
+        private const float SnipeLaserWidthScale = 2.3f;
+        /// <summary>环绕光束视觉宽度：原图线宽的3倍。预瞄与命中共用倍率，不改变技能判定，因此不进玩法表。</summary>
+        private const float LaserSpinWidthScale = 3f;
 
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int ModeId = Shader.PropertyToID("_Mode");
@@ -204,7 +214,7 @@ namespace RevGame.View
             _sequence = DOTween.Sequence();
             Vector3 center = Center(info.Origin, info.OriginSize);
             _pivot.position = center;
-            Color tint = TintOf(info.Kind, info.Enraged);
+            Color tint = SkillTint(info.Kind, info.Enraged);
             float lifetime = telegraph ? BuildTelegraph(info, center, tint) : BuildCast(info, center, tint);
             // 用一个空回调把总时长“撑住”：所有片的动画都在 lifetime 内结束，最后统一回池。
             _sequence.InsertCallback(lifetime, Finish);
@@ -243,7 +253,7 @@ namespace RevGame.View
         private float BuildPattern(BossSkillInfo info, bool warning, Color tint)
         {
             var plan = new BossSkillPlan { Kind = info.Kind, A = info.A, B = info.B, C = info.C };
-            float duration = warning ? info.Windup + Mathf.Max(0, info.Count - 1) * BossSkillCatalog.Get(info.Kind).Interval : 0.48f;
+            float duration = warning ? info.Windup + Mathf.Max(0, info.Count - 1) * BossSkillCatalog.Get(info.Kind).Interval : 0.72f;
             int spriteIndex = (int)info.Kind - 9;
             Sprite art = extendedSprites != null && spriteIndex < extendedSprites.Length ? extendedSprites[spriteIndex] : glow;
             for (int y = 0; y < Consts.BoardSize; y++)
@@ -261,11 +271,12 @@ namespace RevGame.View
                     if (warning) { Zone(Center(pos, 1), Consts.CellSize * 0.94f, 1f, tint, duration); }
                     else
                     {
-                        FxMode mode = info.Kind == BossSkillKind.GravityWell ? FxMode.Drain : info.Kind == BossSkillKind.MeteorShower ? FxMode.Explosion : FxMode.Sprite;
-                        int slot = Take(art, mode, tint, 0.22f, ImpactOrder);
-                        Place(slot, Center(pos, 1), Consts.CellSize * 1.05f);
+                        // 使用FullRect光晕网格承载九种独立程序图形；旧小粒子素材的透明区不再裁掉法纹。
+                        FxMode mode = (FxMode)((int)FxMode.Meteor + spriteIndex);
+                        int slot = Take(glow != null ? glow : art, mode, tint, 0.12f, ImpactOrder);
+                        Place(slot, Center(pos, 1), Consts.CellSize * 1.3f);
                         TweenProgress(slot, 0f, 1f, duration);
-                        _sequence.Insert(0f, _renderers[slot].transform.DOScale(_renderers[slot].transform.localScale * 1.25f, duration).SetEase(Ease.OutQuad));
+                        _sequence.Insert(0f, _renderers[slot].transform.DOScale(_renderers[slot].transform.localScale * 1.18f, duration).SetEase(Ease.OutBack));
                     }
                 }
             }
@@ -303,7 +314,7 @@ namespace RevGame.View
             if ((to - from).sqrMagnitude < 0.001f) { return; }
             Vector3 edge = (to - from).normalized * Consts.CellSize * 0.5f;
             int slot = Take(beam, FxMode.ColoredLaser, tint, 0.12f, ImpactOrder + 1);
-            Stretch(slot, from - edge, to + edge, Consts.CellSize * 0.65f);
+            Stretch(slot, from - edge, to + edge, Consts.CellSize * 0.95f);
             TweenProgress(slot, 0.08f, 1f, duration);
         }
 
@@ -312,7 +323,8 @@ namespace RevGame.View
         private float BuildTelegraph(BossSkillInfo info, Vector3 center, Color tint)
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
-            if ((int)info.Kind >= 18) { return BuildExclusive(info, true); }
+            if (BossSkillCatalog.IsExpanded(info.Kind)) { return BuildExpanded(info,true); }
+            if (BossSkillCatalog.IsSpecial(info.Kind)) { return BuildExclusive(info, true); }
             if ((int)info.Kind >= 9) { return BuildPattern(info, true, tint); }
             float duration = info.Windup;
             // 两种激光从预瞄到命中保持红/黄识别色，避免通用红色预警把黄色染成橙色。
@@ -373,7 +385,7 @@ namespace RevGame.View
                         Vector3 direction = Quaternion.Euler(0f, 0f, angle) * Vector3.right;
                         // 圆形替代图只提供完整的 Sprite 网格；球体、裂纹和光晕由 Shader 生成，不依赖细闪电像素。
                         int b = Take(ring, FxMode.MagicOrb, tint, 0.12f, ImpactOrder);
-                        Place(b, center + direction * launchRadius, Consts.CellSize * 1.05f);
+                        Place(b, center + direction * launchRadius, Consts.CellSize * 1.3f);
                         _renderers[b].transform.localRotation = Quaternion.Euler(0f, 0f, angle);
                         _sequence.Insert(0f, _renderers[b].transform.DOScale(_renderers[b].transform.localScale * 1.2f, duration).SetEase(Ease.InQuad));
                     }
@@ -451,7 +463,8 @@ namespace RevGame.View
         /// <summary>按技能播放命中特效，返回本段动画时长。</summary>
         private float BuildCast(BossSkillInfo info, Vector3 center, Color tint)
         {
-            if ((int)info.Kind >= 18) { return BuildExclusive(info, false); }
+            if (BossSkillCatalog.IsExpanded(info.Kind)) { return BuildExpanded(info,false); }
+            if (BossSkillCatalog.IsSpecial(info.Kind)) { return BuildExclusive(info, false); }
             if ((int)info.Kind >= 9) { return BuildPattern(info, false, tint); }
             switch (info.Kind)
             {
@@ -460,7 +473,7 @@ namespace RevGame.View
                     // 刀光转一整圈并放大，冲击波向外推开；最后一下星芒闪光。
                     float size = (info.OriginSize + info.Radius * 2) * Consts.CellSize;
                     int s = Take(slash, FxMode.Sprite, tint, 0.7f, ImpactOrder);
-                    Place(s, center, size * 0.75f);
+                    Place(s, center, size * 0.95f);
                     _sequence.Insert(0f, _renderers[s].transform.DOLocalRotate(new Vector3(0, 0, -360f), 0.35f, RotateMode.FastBeyond360).SetEase(Ease.OutCubic));
                     _sequence.Insert(0f, _renderers[s].transform.DOScale(_renderers[s].transform.localScale * 1.35f, 0.35f).SetEase(Ease.OutBack));
                     TweenProgress(s, 0f, 1f, 0.45f, 0.1f);
@@ -475,8 +488,8 @@ namespace RevGame.View
                     int shot = Take(beam, FxMode.ColoredLaser, tint, 0.25f, ImpactOrder);
                     Stretch(shot, center, target, Consts.CellSize * 0.45f * SnipeLaserWidthScale);
                     TweenProgress(shot, 0f, 1f, 0.32f);
-                    Shockwave(target, Consts.CellSize * 1.8f, tint, 0.4f);
-                    Flash(target, Consts.CellSize * 1.2f, 0.35f);
+                    Shockwave(target, Consts.CellSize * 2.6f, tint, 0.48f);
+                    Flash(target, Consts.CellSize * 1.8f, 0.35f);
                     return 0.5f;
                 }
                 case BossSkillKind.Bombard:
@@ -485,13 +498,13 @@ namespace RevGame.View
                     BoardPos[] points = { info.A, info.B, info.C };
                     Vector3 point = Center(points[info.Index % 3], 1);
                     int bomb = Take(flame, FxMode.Sprite, tint, 0.6f, ImpactOrder + 1);
-                    Place(bomb, point + Vector3.up * 3f, Consts.CellSize * 0.9f);
+                    Place(bomb, point + Vector3.up * 3f, Consts.CellSize * 1.4f);
                     _renderers[bomb].transform.localRotation = Quaternion.Euler(0, 0, 180f);
                     _sequence.Insert(0f, _renderers[bomb].transform.DOMove(point, 0.22f).SetEase(Ease.InQuad));
                     _sequence.InsertCallback(0.22f, () => _renderers[bomb].enabled = false);
                     float size = (1 + info.Radius * 2) * Consts.CellSize;
                     int fire = Take(glow, FxMode.Explosion, tint, 0.55f, ImpactOrder);
-                    Place(fire, point, size);
+                    Place(fire, point, size * 1.2f);
                     _renderers[fire].enabled = false;
                     _sequence.InsertCallback(0.22f, () => _renderers[fire].enabled = true);
                     TweenProgress(fire, 0f, 1f, 0.6f, 0.22f);
@@ -523,7 +536,7 @@ namespace RevGame.View
                         Vector3 direction = Quaternion.Euler(0, 0, angle) * Vector3.right;
                         // 圆形替代图只提供完整的 Sprite 网格；球体、裂纹和光晕由 Shader 生成，不依赖细闪电像素。
                         int b = Take(ring, FxMode.MagicOrb, tint, 0.12f, ImpactOrder);
-                        Place(b, center + direction * launchRadius, Consts.CellSize * 1.05f);
+                        Place(b, center + direction * launchRadius, Consts.CellSize * 1.3f);
                         _renderers[b].transform.localRotation = Quaternion.Euler(0, 0, angle);
                         _sequence.Insert(0f, _renderers[b].transform.DOMove(center + direction * radius, flightSeconds).SetEase(Ease.Linear));
                         TweenProgress(b, 0f, 1f, 0.15f, flightSeconds);
@@ -569,7 +582,7 @@ namespace RevGame.View
                     foreach (BoardPos pos in new[] { info.A, info.B })
                     {
                         int line = Take(beam, FxMode.Laser, tint, 0.85f, ImpactOrder);
-                        Stretch(line, Center(pos, 1), center, Consts.CellSize * 0.3f);
+                        Stretch(line, Center(pos, 1), center, Consts.CellSize * 0.62f);
                         TweenProgress(line, 0f, 1f, 0.6f);
                     }
                     int vortex = Take(glow, FxMode.Drain, tint, 0.6f, ImpactOrder);
@@ -695,7 +708,7 @@ namespace RevGame.View
         /// <summary>一圈冲击波：进度 0→1 时圆环由内向外扩散并变细变淡。</summary>
         private void Shockwave(Vector3 world, float worldSize, Color tint, float duration, float delay = 0f)
         {
-            int w = Take(glow, FxMode.Shockwave, tint, 0.7f, ImpactOrder);
+            int w = Take(glow, FxMode.Shockwave, tint, 0.22f, ImpactOrder);
             Place(w, world, worldSize);
             if (delay > 0f)
             {
@@ -755,8 +768,9 @@ namespace RevGame.View
         }
 
         /// <summary>技能美术识别色，不参与玩法数值所以不进表；激光固定红/黄，其余技能狂暴后偏血红。</summary>
-        private static Color TintOf(BossSkillKind kind, bool enraged)
+        public static Color SkillTint(BossSkillKind kind, bool enraged)
         {
+            if (BossSkillCatalog.IsExpanded(kind) || BossSkillCatalog.IsSpecial(kind)) { return ExclusiveTint(kind); }
             Color color;
             switch (kind)
             {

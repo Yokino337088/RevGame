@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3388887432
+CRC: 2811451713
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -191,7 +191,8 @@ AssetBundleManifest:
         Dependency_2: material_ui
     Info_47:
       Name: battle_helper_fx
-      Dependencies: {}
+      Dependencies:
+        Dependency_0: atlas_helperstormframes
     Info_48:
       Name: battle_helper
       Dependencies:
@@ -200,4 +201,7 @@ AssetBundleManifest:
         Dependency_2: atlas_helperframes
     Info_49:
       Name: atlas_helperframes
+      Dependencies: {}
+    Info_50:
+      Name: atlas_helperstormframes
       Dependencies: {}

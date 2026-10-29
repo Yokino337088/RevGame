@@ -12,6 +12,7 @@ namespace RevGame.Core
         BossLaserSpin, BossSoulDrain, BossSummon, BossEnrage, BossMeteorShower,
         BossCrossLaser, BossFrostNova, BossChainLightning, BossPoisonMarsh,
         BossFlameWall, BossIceLance, BossGravityWell, BossDoomSigil,
-        BossStarStorm, BossBlackHole, BossSolarFlare, BossSunBrand, BossTidalSurge, BossMaelstrom, BossSwampMaw, BossMireChains, BossFrozenPrison, BossGlacialAegis, BossDivineCross, BossSanctuary
+        BossStarStorm, BossBlackHole, BossSolarFlare, BossSunBrand, BossTidalSurge, BossMaelstrom, BossSwampMaw, BossMireChains, BossFrozenPrison, BossGlacialAegis, BossDivineCross, BossSanctuary,
+        BossCometRails, BossAstralShards, BossSolarSpears, BossEmberFan, BossMagmaRings, BossTidalLances, BossFoamBurst, BossUndertow, BossReefSpikes, BossBogSpines, BossVenomFan, BossMireRipples, BossBlightSeeds, BossSnowCross, BossHailBarrage, BossIceFault, BossJudgementLances, BossHaloPulse, BossRunicGrid, BossEventHorizon, BossConstellationSeal, BossPhoenixDescent, BossSolarEclipse, BossLeviathanWake, BossAbyssalCage, BossPlagueBloom, BossHydraFangs, BossAbsoluteZero, BossAvalanche, BossHeavenfall, BossFinalEdict
     }
 }

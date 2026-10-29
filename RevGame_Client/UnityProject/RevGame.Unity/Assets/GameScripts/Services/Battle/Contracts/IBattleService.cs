@@ -47,6 +47,10 @@ namespace RevGame.Services
         long CombatScore { get; }
         /// <summary>唯一帮手的只读状态；不是占格棋子，敌人永远无法把它列为目标。</summary>
         HelperSnapshot Helper { get; }
+        /// <summary>战斗中唯一存活玩家棋的Id；0表示没有单棋保护，视图只读此事实连接治疗线。</summary>
+        int HelperProtectionTargetId { get; }
+        /// <summary>本回合单棋保护实际恢复的生命总量，非理论回复量，供GM/自动化验收。</summary>
+        long HelperProtectionHealing { get; }
         /// <summary>帮手成长传递的远程普攻/攻速加成，均为无量纲比例，受Excel上限约束。</summary>
         float HelperRangedAttackBonus { get; }
         float HelperRangedSpeedBonus { get; }
@@ -62,7 +66,7 @@ namespace RevGame.Services
         float ScoreMultiplier { get; }
         void FlushScore();
         // ---------------- 只读状态（界面/GM 观察用，不能从这里改数据） ----------------
-        /// <summary>通关辅助是否开启；开启时含最后一子保护、阶段支援，AI不能绕开此统一伤害规则。</summary>
+        /// <summary>阶段增益与定时支援的开关；最后单棋治疗保护独立生效，所有伤害仍走统一出口。</summary>
         bool VictoryAssistEnabled { get; }
         /// <summary>本轮已发生的玩家战斗增益次数，不含准备增益与敌方落子。</summary>
         int BattleEventCount { get; }

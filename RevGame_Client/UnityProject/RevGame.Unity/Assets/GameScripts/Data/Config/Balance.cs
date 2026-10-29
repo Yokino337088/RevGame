@@ -170,6 +170,10 @@ namespace RevGame.Data
         public float HelperMinInterval;
         /// <summary>Boss回合帮手额外攻速比例与单发伤害倍率；独立配置，避免弹幕加密等于伤害翻倍。</summary>
         public float HelperBossSpeedBonus, HelperBossDamageScale;
+        /// <summary>最后一颗棋子的每秒最大生命回复比例、攻击与攻速加成；服务逐步结算，不由动画回血。</summary>
+        public float HelperProtectionHealPerSecond, HelperProtectionAttackBonus, HelperProtectionSpeedBonus;
+        /// <summary>通用主动技能放几次后轮到本章专属；狂暴不消耗轮换名额。</summary>
+        public int BossCommonSkillsPerExclusive;
         /// <summary>爬行或跳至外圈的决策间隔秒。</summary>
         public float HelperMoveSeconds;
         /// <summary>活棋达到此数量时转棋盘外攻击。</summary>
@@ -323,6 +327,7 @@ namespace RevGame.Data
             v.BossAccelerationBonus = r.Float("Boss.AccelerationBonus", 0f, 100f);
             v.BossHpGrowthPerChapter = r.Float("Boss.HpGrowthPerChapter", 0f, 100f);
             v.BossHpMultiplier = r.Float("Boss.HpMultiplier", 1f, 100f);
+            v.BossCommonSkillsPerExclusive = r.Int("Boss.CommonSkillsPerExclusive", 1, 10);
             v.BossAttackMultiplier = r.Float("Boss.AttackMultiplier", 0.01f, 1f);
             v.BossPercentDamageScale = r.Float("Boss.PercentDamageScale", 0.01f, 1f);
             v.BossFirstSkillSeconds = r.Float("Boss.FirstSkillSeconds", 0f, 120f);
@@ -429,6 +434,9 @@ namespace RevGame.Data
             v.HelperBaseInterval = r.Float("Helper.BaseInterval",0.2f,10f);
             v.HelperMinInterval = r.Float("Helper.MinInterval",0.2f,10f);
             v.HelperBossSpeedBonus = r.Float("Helper.BossSpeedBonus",0f,3f);
+            v.HelperProtectionHealPerSecond = r.Float("Helper.ProtectionHealPerSecond",0f,1f);
+            v.HelperProtectionAttackBonus = r.Float("Helper.ProtectionAttackBonus",0f,2f);
+            v.HelperProtectionSpeedBonus = r.Float("Helper.ProtectionSpeedBonus",0f,2f);
             v.HelperBossDamageScale = r.Float("Helper.BossDamageScale",0.1f,1f);
             v.HelperMoveSeconds = r.Float("Helper.MoveSeconds",0.3f,10f);
             v.HelperCrowdedCount = r.Int("Helper.CrowdedCount",1,81);
@@ -517,6 +525,7 @@ namespace RevGame.Data
         public static float BossAccelerationBonus => V.BossAccelerationBonus;
         public static float BossHpGrowthPerChapter => V.BossHpGrowthPerChapter;
         public static float BossHpMultiplier => V.BossHpMultiplier;
+        public static int BossCommonSkillsPerExclusive => V.BossCommonSkillsPerExclusive;
         public static float BossAttackMultiplier => V.BossAttackMultiplier;
         public static float BossPercentDamageScale => V.BossPercentDamageScale;
         /// <summary>开战后 Boss 第一次放技能前的等待秒数。</summary>
@@ -631,6 +640,9 @@ namespace RevGame.Data
         public static float HelperBaseInterval => V.HelperBaseInterval;
         public static float HelperMinInterval => V.HelperMinInterval;
         public static float HelperBossSpeedBonus => V.HelperBossSpeedBonus;
+        public static float HelperProtectionHealPerSecond => V.HelperProtectionHealPerSecond;
+        public static float HelperProtectionAttackBonus => V.HelperProtectionAttackBonus;
+        public static float HelperProtectionSpeedBonus => V.HelperProtectionSpeedBonus;
         public static float HelperBossDamageScale => V.HelperBossDamageScale;
         public static float HelperMoveSeconds => V.HelperMoveSeconds;
         public static int HelperCrowdedCount => V.HelperCrowdedCount;

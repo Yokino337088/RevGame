@@ -1,0 +1,11 @@
+{
+  "name": "Boss技能验收取消并请求内部清理",
+  "steps": [],
+  "finally": [
+    {
+      "target": "editor",
+      "action": "game.boss-impact.cancel",
+      "expect": [{ "path": "/success", "equals": true }]
+    }
+  ]
+}

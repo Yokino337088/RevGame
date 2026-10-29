@@ -142,6 +142,69 @@ namespace RevGame.Core
         DivineCross = 28,
         /// <summary>圣域：章节专属技能，参数来自配置表。</summary>
         Sanctuary = 29,
+        /// <summary>彗星轨道：第1章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        CometRails = 30,
+        /// <summary>星屑追爆：第1章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        AstralShards = 31,
+        /// <summary>烈阳贯枪：第2章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        SolarSpears = 32,
+        /// <summary>炎羽扇扫：第2章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        EmberFan = 33,
+        /// <summary>熔岩环爆：第2章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        MagmaRings = 34,
+        /// <summary>潮汐水枪：第3章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        TidalLances = 35,
+        /// <summary>泡沫连爆：第3章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        FoamBurst = 36,
+        /// <summary>暗流绞阵：第3章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        Undertow = 37,
+        /// <summary>礁岩穿刺：第3章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        ReefSpikes = 38,
+        /// <summary>腐沼骨刺：第4章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        BogSpines = 39,
+        /// <summary>毒雾扇潮：第4章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        VenomFan = 40,
+        /// <summary>泥潭连震：第4章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        MireRipples = 41,
+        /// <summary>疫种爆裂：第4章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        BlightSeeds = 42,
+        /// <summary>寒霜十字：第5章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        SnowCross = 43,
+        /// <summary>冰雹连坠：第5章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        HailBarrage = 44,
+        /// <summary>冰川断层：第5章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        IceFault = 45,
+        /// <summary>裁决光矛：第6章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        JudgementLances = 46,
+        /// <summary>圣环脉冲：第6章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        HaloPulse = 47,
+        /// <summary>律令棋阵：第6章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        RunicGrid = 48,
+        /// <summary>星界崩塌：第1章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        EventHorizon = 49,
+        /// <summary>星座封阵：第1章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        ConstellationSeal = 50,
+        /// <summary>焚天凤陨：第2章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        PhoenixDescent = 51,
+        /// <summary>日蚀审判：第2章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        SolarEclipse = 52,
+        /// <summary>巨鲸破浪：第3章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        LeviathanWake = 53,
+        /// <summary>深渊潮牢：第3章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        AbyssalCage = 54,
+        /// <summary>瘟疫绽放：第4章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        PlagueBloom = 55,
+        /// <summary>九首獠牙：第4章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        HydraFangs = 56,
+        /// <summary>绝对零域：第5章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        AbsoluteZero = 57,
+        /// <summary>万仞雪崩：第5章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        Avalanche = 58,
+        /// <summary>天穹裁决：第6章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        Heavenfall = 59,
+        /// <summary>终极律令：第6章招式，参数由Excel配置，固定格形允许预警后躲避。</summary>
+        FinalEdict = 60,
+
 
 
     }

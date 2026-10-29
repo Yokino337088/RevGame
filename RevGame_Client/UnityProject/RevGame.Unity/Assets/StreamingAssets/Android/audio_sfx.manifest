@@ -1,24 +1,26 @@
 ManifestFileVersion: 0
-CRC: 3406395864
+CRC: 3153698040
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 5c4da38b2a737fc0a3a93d4f0a9f4c47
+    Hash: b6106d5b1bbbfe0452def1c565080353
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9a2ca7bdbd1871f7131daf57de908e0c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 5c4da38b2a737fc0a3a93d4f0a9f4c47
+    Hash: b6106d5b1bbbfe0452def1c565080353
 HashAppended: 0
 ClassTypes:
 - Class: 83
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Audio/Sfx/HelperExplosion.ogg
 - Assets/GameRes/Audio/Sfx/Boss_BlinkBlast.ogg
 - Assets/GameRes/Audio/Sfx/Defeat.wav
 - Assets/GameRes/Audio/Sfx/Boss_Cleave.ogg
+- Assets/GameRes/Audio/Sfx/HelperJellyImpact.ogg
 - Assets/GameRes/Audio/Sfx/Boss_PoisonMarsh.ogg
 - Assets/GameRes/Audio/Sfx/Hit.wav
 - Assets/GameRes/Audio/Sfx/Boss_ChainLightning.ogg
@@ -27,13 +29,16 @@ Assets:
 - Assets/GameRes/Audio/Sfx/Boss_GravityWell.ogg
 - Assets/GameRes/Audio/Sfx/Boss_MeteorShower.ogg
 - Assets/GameRes/Audio/Sfx/Boss_SoulDrain.ogg
+- Assets/GameRes/Audio/Sfx/HelperMissile.ogg
 - Assets/GameRes/Audio/Sfx/Boss_Enrage.ogg
+- Assets/GameRes/Audio/Sfx/HelperJellyfish.ogg
 - Assets/GameRes/Audio/Sfx/Boss_BulletRing.ogg
 - Assets/GameRes/Audio/Sfx/Boss_Summon.ogg
 - Assets/GameRes/Audio/Sfx/Place.wav
 - Assets/GameRes/Audio/Sfx/Boss_LaserSpin.ogg
 - Assets/GameRes/Audio/Sfx/Boss_FlameWall.ogg
 - Assets/GameRes/Audio/Sfx/Upgrade.wav
+- Assets/GameRes/Audio/Sfx/HelperHeal.ogg
 - Assets/GameRes/Audio/Sfx/BossEntrance.ogg
 - Assets/GameRes/Audio/Sfx/Victory.wav
 - Assets/GameRes/Audio/Sfx/BossExit.ogg
@@ -43,4 +48,6 @@ Assets:
 - Assets/GameRes/Audio/Sfx/Boss_Bombard.ogg
 - Assets/GameRes/Audio/Sfx/EnergyHuge.ogg
 - Assets/GameRes/Audio/Sfx/Boss_Snipe.ogg
+- Assets/GameRes/Audio/Sfx/HelperBarrage.ogg
+- Assets/GameRes/Audio/Sfx/HelperBeam.ogg
 Dependencies: []

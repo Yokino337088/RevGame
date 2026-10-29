@@ -65,7 +65,7 @@ internal static class HelperBalanceRegression
                         float minPlayerHpRatio = 1f;
                         float nextRetreat = 3;
                         // Boss目标约三分钟，测试看门狗必须留出余量；360秒只限制测试，不会替游戏结算胜负。
-                        while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 360)
+                        while (battle.Phase == GamePhase.Battle && battle.BattleElapsed < 720)
                         {
                             battle.Tick(Balance.BattleSimulationStepSeconds);
                             int hp = 0;

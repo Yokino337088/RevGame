@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-29",
+  "creator": "Kenney",
+  "license": "CC0",
+  "source": "https://kenney.nl/assets/sci-fi-sounds",
+  "entries": [
+    {
+      "resource": "HelperBarrage",
+      "source": "Audio/laserSmall_004.ogg",
+      "seconds": 0.25,
+      "bytes": 4675,
+      "sha256": "aa63984cacf21dfd5af421f7a1a20e7c37b1d27bd26f02166af10358f19ffa0e",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4"
+    },
+    {
+      "resource": "HelperBeam",
+      "source": "Audio/laserLarge_004.ogg",
+      "seconds": 0.78,
+      "bytes": 7649,
+      "sha256": "5009c8cb17d6d90236b1b23d938c36ede7899a403d4bd53943cfd5688dec9c5b",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4"
+    },
+    {
+      "resource": "HelperMissile",
+      "source": "Audio/thrusterFire_003.ogg",
+      "seconds": 0.56,
+      "bytes": 6980,
+      "sha256": "883199ca9730b8d9539db5b3172a392c2cca57244a649a0622040cf88e53ab76",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4"
+    },
+    {
+      "resource": "HelperJellyfish",
+      "source": "Audio/slime_000.ogg",
+      "seconds": 0.35,
+      "bytes": 6929,
+      "sha256": "63fef2873689740b0060cca9638674ac83d5058c3c92cb1aa97bd3c52f6ed9fc",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4，水母低电平原声提高12dB并限幅0.7防止瞬态削波"
+    },
+    {
+      "resource": "HelperExplosion",
+      "source": "Audio/explosionCrunch_003.ogg",
+      "seconds": 0.74,
+      "bytes": 7731,
+      "sha256": "6fc036d285e9fdc668b49ea82985607dfbe4b2811fac029e36f7eb186f92a91c",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4"
+    },
+    {
+      "resource": "HelperHeal",
+      "source": "Audio/forceField_003.ogg",
+      "seconds": 0.85,
+      "bytes": 7412,
+      "sha256": "77d2282b66db9fc9bf29a1ca5287954a845ad5c3cb5b535c61b1d6a92dde7451",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4"
+    },
+    {
+      "resource": "HelperJellyImpact",
+      "source": "Audio/slime_001.ogg",
+      "seconds": 0.32,
+      "bytes": 6198,
+      "sha256": "8be8c82450011c420f4b4b2a1027c3f2809fdda43d897a98dfcd986df589879a",
+      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4，水母低电平原声提高12dB并限幅0.7防止瞬态削波"
+    }
+  ]
+}

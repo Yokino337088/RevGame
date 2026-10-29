@@ -21,6 +21,8 @@ namespace RevGame.View
         private Vector3 _lastEnd;
         public bool IsBeam => _beam && line.enabled;
         public bool IsStorm => _storm;
+        /// <summary>每次借出播放递增，自动化可区分同一个池对象的不同弹幕，避免把上次飞行误配给这次爆炸。</summary>
+        public int PlaySerial { get; private set; }
         /// <summary>在LateUpdate完成几何刷新后记录误差，避免测试在Update中把正常的一帧先后顺序误判成脱离。</summary>
         public float OriginError { get; private set; }
         public HelperStormVisual StormVisual => stormVisual;
@@ -36,6 +38,7 @@ namespace RevGame.View
             Transform source = null, PieceView target = null, HelperShotInfo info = default)
         {
             Stop();
+            PlaySerial++;
             _finished = finished;
             _source = source; _target = target; _targetId = info.TargetId; _beam = beam; _storm = info.Storm; _lastEnd = end;
             if (source != null) { start = source.position; }
@@ -70,7 +73,11 @@ namespace RevGame.View
                 }
                 else if (_storm)
                 {
-                    stormVisual.Present(start, _lastEnd, t);
+                    // 视觉接触半径按目标当前缩放取值；只控制弹体何时切爆炸，不参与服务层伤害判定。
+                    float radius = _target != null && _target.gameObject.activeInHierarchy && _target.PieceId == _targetId
+                        ? Mathf.Max(.24f, _target.transform.lossyScale.x * .38f) : .32f;
+                    radius += info.Weapon == HelperWeapon.Jellyfish ? .36f : .3f;
+                    stormVisual.Present(start, _lastEnd, t, radius);
                 }
                 else
                 {

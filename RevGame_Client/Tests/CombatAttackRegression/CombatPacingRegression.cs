@@ -24,6 +24,14 @@ internal static class CombatPacingRegression
         Console.WriteLine("CombatPacingRegression: " + _cases + " scenarios, " + _checks + " assertions passed.");
         return _checks;
     }
+    /// <summary>独立运行技能格形，不让与技能无关的历史增益测试遮住本次几何回归结果。</summary>
+    public static int RunBossPatterns(out int scenarios)
+    {
+        _checks = _cases = 0;
+        PatternTargets();
+        scenarios = _cases;
+        return _checks;
+    }
     private static void Buffs()
     {
         var battle = BattleService.CreateAttackRegressionFixture();
@@ -191,8 +199,8 @@ internal static class CombatPacingRegression
     {
         foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
         {
-            if (kind < BossSkillKind.MeteorShower) { continue; }
-            var battle = BattleService.CreateBossRegressionFixture(6);
+            if (kind < BossSkillKind.MeteorShower || BossSkillCatalog.IsSpecial(kind) || BossSkillCatalog.IsExpanded(kind)) { continue; }
+            var battle = BattleService.CreateBossRegressionFixture(BossSkillCatalog.ThemeChapter(kind));
             Piece boss = battle.AddRegressionBoss(new BoardPos(3, 3), 2);
             Piece first = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(2, 3), 1000);
             Piece second = battle.AddRegressionPiece(PieceKind.Archer, StarTier.One, GameSide.Player, new BoardPos(6, 4), 1000);
@@ -216,7 +224,10 @@ internal static class CombatPacingRegression
                 {
                     for (int index = 0; index < info.Count; index++)
                     {
-                        if (BossPatternGeometry.Contains(kind, info.Origin, info.OriginSize, plan, info.Radius, index, target.Pos)) { expected++; }
+                        bool affected = BossSkillCatalog.IsExpanded(kind)
+                            ? BossExpandedGeometry.Contains(kind, info.A, info.B, info.C, info.Radius, index, target.Pos)
+                            : BossPatternGeometry.Contains(kind, info.Origin, info.OriginSize, plan, info.Radius, index, target.Pos);
+                        if (affected) { expected++; }
                     }
                 }
                 Check(hits.Count == expected, kind + " 所有真实命中与预警格集合一致");

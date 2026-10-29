@@ -68,6 +68,7 @@ namespace RevGame.View
         {
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
             RevEvent.AddEventListener<EnergyBombInfo>(Events.EnergyBombImpact, OnEnergyImpact, owner: this);
+            RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, OnBossSkillHit, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, _ => ClearEnergyShake(), owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, _ => ClearEnergyShake(), owner: this);
             InitializeChapterBackground();

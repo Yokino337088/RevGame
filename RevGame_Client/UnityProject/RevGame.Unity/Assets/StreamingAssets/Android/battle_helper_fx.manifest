@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2775038030
+CRC: 1049898287
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3d209feca007a674fe2c20613135f778
+    Hash: e843b5b859465943a3469068d88ad472
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 60df71fa62f2a161c166d3251c9a5a1e
+    Hash: ddc6a9c1c0e76fc02bd70a241e3969e2
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3d209feca007a674fe2c20613135f778
+    Hash: e843b5b859465943a3469068d88ad472
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -30,20 +30,38 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 64d9bd01b6fa3c6489c23dd009e6845a, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0365877c9ffa4314d9a8b5b07354542c, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 06de1bc2e0e04cf99bd512923b4882c8, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 120
   Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Effects/Helper/HelperHealing.prefab
 - Assets/GameRes/Material/Helper/HelperBlueBeam.mat
+- Assets/GameRes/Material/Helper/HelperMushroomImpact.mat
 - Assets/GameRes/HelperTextures/HelperBlueLaser.png
+- Assets/GameShader/Helper/HelperHealingBeam_Shader.shader
 - Assets/GameRes/Material/Helper/HelperRune.mat
+- Assets/GameRes/Material/Helper/HelperHealingImpact.mat
+- Assets/GameShader/Helper/HelperMushroomImpact_Shader.shader
 - Assets/GameRes/Effects/Helper/HelperQuad.asset
+- Assets/GameShader/Helper/HelperStorm_Shader.shader
 - Assets/GameRes/Material/Helper/HelperBeamImpact.mat
 - Assets/GameShader/Helper/HelperBeamImpact_Shader.shader
+- Assets/GameRes/Material/Helper/HelperStorm.mat
+- Assets/GameShader/Helper/HelperHealingImpact_Shader.shader
 - Assets/GameShader/Helper/HelperBlueBeam_Shader.shader
+- Assets/GameRes/Material/Helper/HelperHealingBeam.mat
 - Assets/GameRes/HelperTextures/HelperMagicRune.png
 - Assets/GameShader/Helper/HelperRune_Shader.shader
 - Assets/GameRes/Effects/Helper/HelperAttack.prefab
-Dependencies: []
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_helperstormframes

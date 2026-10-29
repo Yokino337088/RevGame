@@ -14,7 +14,7 @@ namespace RevGame.View
         public bool BossHiddenVisual => _bossSunk;
         public float BossIceVisual => _bossIce;
 
-        /// <summary>十二招的身体涌能随章节变色；冰封终焉保持冰壳直到真实爆炸事件到达。</summary>
+        /// <summary>专属招式的身体涌能随章节变色；冰封终焉保持冰壳直到真实爆炸事件到达。</summary>
         public void PlayBossCharge(BossSkillKind kind, float seconds, bool windingUp = true)
         {
             _bossCastTween?.Kill(false);

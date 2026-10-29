@@ -18,6 +18,9 @@ namespace RevGame.View
     {
         /// <summary>正在播放的 Boss 技能特效；换回合/退出时逐个回池，避免旧技能残影留在新回合。</summary>
         private readonly HashSet<BossSkillFxView> _bossFx = new HashSet<BossSkillFxView>();
+        /// <summary>表现预算含异步预约；更频繁施法不能让持续特效无限堆积。最多8组，每组已有90片固定容量。</summary>
+        private const int MaxBossFxGroups = 8;
+        private int _pendingBossFx;
         /// <summary>当前在场的 Boss 特效数量（编辑器验收读取）。</summary>
         public int ActiveBossFxCount => _bossFx.Count;
 
@@ -40,7 +43,7 @@ namespace RevGame.View
             {
                 boss.PlayAttackPulse();
             }
-            if ((int)info.Kind >= (int)BossSkillKind.StarStorm && boss != null) { boss.PlayBossCharge(info.Kind, info.Windup); }
+            if (BossSkillCatalog.IsSpecial(info.Kind) && boss != null) { boss.PlayBossCharge(info.Kind, info.Windup); }
             SpawnBossFx(info, true);
         }
 
@@ -64,16 +67,70 @@ namespace RevGame.View
                 }
                 boss.PlayAttackPulse();
             }
-            if ((int)info.Kind >= (int)BossSkillKind.StarStorm)
+            if (BossSkillCatalog.IsSpecial(info.Kind))
             {
                 if (boss != null) { boss.PlayBossCharge(info.Kind, .6f, windingUp: false); }
-                foreach (BoardCellView cell in _cells)
-                {
-                    if (BossExclusiveGeometry.Contains(info.Kind, info.A, info.B, info.C, info.Radius, info.Index, cell.Position))
-                    { cell.PlayBossTile(BossSkillFxView.ExclusiveTint(info.Kind), Mathf.Max(.8f, BossSkillCatalog.Get(info.Kind).Duration)); }
-                }
             }
+            PlayBossBoardWave(info);
             SpawnBossFx(info, false);
+        }
+
+        /// <summary>
+        /// 全部主动通用技能也推动棋格。几何技能复用规则Contains，近身/环绕按同一身体与半径定义画格面；
+        /// 波浪只是已经施放后的动效，不增加伤害范围。最多81格、每格一条Tween，旧冲击不会叠加失控。
+        /// </summary>
+        private void PlayBossBoardWave(BossSkillInfo info)
+        {
+            var plan = new BossSkillPlan { Kind = info.Kind, A = info.A, B = info.B, C = info.C };
+            bool exclusive = BossSkillCatalog.IsSpecial(info.Kind);
+            Color tint = exclusive ? BossSkillFxView.ExclusiveTint(info.Kind) : BossSkillFxView.SkillTint(info.Kind, info.Enraged);
+            BoardPos focus = info.Kind == BossSkillKind.Bombard
+                ? (info.Index % 3 == 0 ? info.A : info.Index % 3 == 1 ? info.B : info.C)
+                : info.Kind == BossSkillKind.BlinkBlast || exclusive ? info.A : info.Origin;
+            foreach (BoardCellView cell in _cells)
+            {
+                BoardPos pos = cell.Position;
+                bool affected;
+                if (exclusive)
+                {
+                    affected = BossExclusiveGeometry.Contains(info.Kind, info.A, info.B, info.C, info.Radius, info.Index, pos);
+                }
+                else if (BossSkillCatalog.IsExpanded(info.Kind))
+                {
+                    affected = BossExpandedGeometry.Contains(info.Kind,info.A,info.B,info.C,info.Radius,info.Index,pos);
+                }
+                else if (info.Kind >= BossSkillKind.MeteorShower)
+                {
+                    affected = BossPatternGeometry.Contains(info.Kind, info.Origin, info.OriginSize, plan, info.Radius, info.Index, pos);
+                }
+                else
+                {
+                    affected = CommonBossTileAffected(info, focus, pos);
+                }
+                if (!affected) { continue; }
+                // 9×9棋盘最远延迟限制为0.24秒，远处棋格也能及时响应；每格碰撞与数据坐标完全不变。
+                float delay = Mathf.Min(.24f, (Mathf.Abs(pos.X - focus.X) + Mathf.Abs(pos.Y - focus.Y)) * .024f);
+                cell.PlayBossTile(tint, .88f, delay);
+            }
+        }
+
+        /// <summary>原始九招没有逐格Contains，此处只计算“震动落在哪些格”的视觉集合，不参与结算。</summary>
+        private static bool CommonBossTileAffected(BossSkillInfo info, BoardPos focus, BoardPos pos)
+        {
+            if (info.Kind == BossSkillKind.BulletRing || info.Kind == BossSkillKind.Enrage) { return true; }
+            if (info.Kind == BossSkillKind.Snipe) { return pos == info.A; }
+            if (info.Kind == BossSkillKind.SoulDrain) { return pos == info.A || pos == info.B; }
+            if (info.Kind == BossSkillKind.LaserSpin)
+            {
+                float halfBody = (info.OriginSize - 1) * .5f;
+                float dx = pos.X - info.Origin.X - halfBody, dy = pos.Y - info.Origin.Y - halfBody;
+                float radius = info.Radius + halfBody;
+                return dx * dx + dy * dy <= radius * radius;
+            }
+            int size = info.Kind == BossSkillKind.Bombard ? 1 : info.OriginSize;
+            int reach = info.Kind == BossSkillKind.Summon ? 1 : info.Radius;
+            return pos.X >= focus.X - reach && pos.X < focus.X + size + reach
+                && pos.Y >= focus.Y - reach && pos.Y < focus.Y + size + reach;
         }
 
         /// <summary>
@@ -82,9 +139,13 @@ namespace RevGame.View
         /// </summary>
         private void SpawnBossFx(BossSkillInfo info, bool telegraph)
         {
+            // 预算只限制表现，不参与伤害或技能释放；格面波浪仍会按实际事件展示本次命中。
+            if (_bossFx.Count + _pendingBossFx >= MaxBossFxGroups) { return; }
             int generation = _effectGeneration;
+            _pendingBossFx++;
             GamePoolRequests.GetAsync<BossSkillFxView>(fx =>
             {
+                if (generation == _effectGeneration) { _pendingBossFx = Mathf.Max(0, _pendingBossFx - 1); }
                 if (fx == null)
                 {
                     RevLog.Warn("Boss 技能特效加载失败：" + info.Kind, "RevGame");
@@ -127,6 +188,7 @@ namespace RevGame.View
                 }
             }
             _bossFx.Clear();
+            _pendingBossFx = 0;
             foreach (BoardCellView cell in _cells) { cell.ClearBossTile(); }
         }
     }

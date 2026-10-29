@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace RevGame.View
 {
-    public sealed class GameAudio : MonoBehaviour
+    public sealed partial class GameAudio : MonoBehaviour
     {
         /// <summary>本场景是否处于战斗屏；准备事件也会在入场装配期间触发，不能因此提前播放。</summary>
         private bool _battleScreen;
@@ -27,6 +27,8 @@ namespace RevGame.View
             RevEvent.AddEventListener<EnergyBombInfo>(Events.EnergyBombImpact, OnEnergyBomb, owner: this);
             RevEvent.AddEventListener<RegionPulseInfo>(Events.RegionPulseWarning, OnRegion, owner: this);
             RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, OnBossSkill, owner: this);
+            OpenBossAudio();
+            OpenHelperAudio();
             RevSound.Failed += OnFailed;
         }
 
@@ -34,8 +36,7 @@ namespace RevGame.View
         private void OnRegion(RegionPulseInfo info) { RevSound.Play("RegionWave", volume: 0.22f); }
         private void OnBossSkill(BossSkillInfo info)
         {
-            // 多段技能只在首段播完整音效，避免密集叠音；各技能声音名与外部素材登记保持一致。
-            if (info.Index == 0) { RevSound.Play("Boss_" + info.Kind, volume: 0.28f); }
+            PlayBossSkillAudio(info);
         }
 
         private void OnPlaced(int id)
@@ -129,6 +130,8 @@ namespace RevGame.View
 
         private void OnDestroy()
         {
+            CloseHelperAudio();
+            CloseBossAudio();
             RevEvent.RemoveAllByOwner(this);
             RevSound.Failed -= OnFailed;
             ReleaseChapterMusic();

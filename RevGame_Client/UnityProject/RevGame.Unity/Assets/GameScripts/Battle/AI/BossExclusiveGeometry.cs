@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using RevGame.Board;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.Pieces;
 namespace RevGame.Battle
 {
@@ -33,6 +34,10 @@ namespace RevGame.Battle
         /// <summary>index是当前伤害段。风暴为中心向外的方环；全盘边界由棋盘枚举自然裁剪。</summary>
         public static bool Contains(BossSkillKind kind, BoardPos a, BoardPos b, BoardPos c, int radius, int index, BoardPos cell)
         {
+            if (BossSkillCatalog.IsExpanded(kind))
+            {
+                return BossExpandedGeometry.Contains(kind,a,b,c,radius,index,cell);
+            }
             int x = Math.Abs(cell.X - a.X), y = Math.Abs(cell.Y - a.Y);
             switch (kind)
             {

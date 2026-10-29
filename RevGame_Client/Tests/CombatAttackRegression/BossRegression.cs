@@ -80,9 +80,9 @@ internal static class BossRegression
             Assert(unlocked >= previous, "第" + chapter + "章解锁技能数不能少于上一章");
             previous = unlocked;
         }
-        Assert(previous == 20, "每章18通用加2专属技能");
+        Assert(previous == 11, "每章6主动通用加4专属及独立狂暴");
         Assert(BossSkillCatalog.IsUnlocked(BossSkillKind.Cleave, 1) && BossSkillCatalog.IsUnlocked(BossSkillKind.Snipe, 1), "第一章至少有横扫与狙击");
-        Assert(BossSkillCatalog.IsUnlocked(BossSkillKind.LaserSpin, 1) && !BossSkillCatalog.IsUnlocked(BossSkillKind.StarStorm, 6), "通用技能首章可用，专属技能不串章");
+        Assert(BossSkillCatalog.IsUnlocked(BossSkillKind.LaserSpin, 5) && !BossSkillCatalog.IsUnlocked(BossSkillKind.StarStorm, 6), "通用技能首章可用，专属技能不串章");
         foreach (BossSkillKind kind in new[] { BossSkillKind.Cleave, BossSkillKind.Snipe })
         {
             Assert(BossSkillCatalog.CooldownFor(kind, 6, false) < BossSkillCatalog.CooldownFor(kind, 1, false), kind + " 第六章冷却更短");
@@ -156,7 +156,9 @@ internal static class BossRegression
         var hits = new List<BattleHitInfo>();
         object owner = new object();
         RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, telegraphs.Add, owner: owner);
-        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.FromSkill) { hits.Add(hit); } }, owner: owner);
+        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.DamageKind == BattleDamageKind.BossSnipe) { hits.Add(hit); } }, owner: owner);
+        int snipeCasts = 0;
+        RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, cast => { if (cast.Kind == BossSkillKind.Snipe) { snipeCasts++; } }, owner: owner);
         try
         {
             battle.RegressionBossAI(boss);
@@ -164,11 +166,12 @@ internal static class BossRegression
             Assert(telegraphs.Count == 1 && telegraphs[0].A == target.Pos, "准星锁定威胁目标所在格");
             Assert(battle.Board.Move(target, new BoardPos(8, 0), respectEnemyEyes: false), "测试中玩家移开目标");
             battle.RefreshRegressionGoState();
-            for (int i = 0; i < 20; i++)
+            // 只观察狙击的命中步，避免收招后自然选到另一招，再把另一招的伤害误算成狙击无法躲避。
+            for (int i = 0; i < 20 && snipeCasts == 0; i++)
             {
                 battle.RunRegressionEnemyAI(Step);
             }
-            Assert(hits.Count == 0 && target.Hp == target.MaxHp, "躲开准星后不受狙击伤害");
+            Assert(snipeCasts == 1 && hits.Count == 0 && target.Hp == target.MaxHp, "狙击实际发射，躲开准星后生命不变");
         }
         finally
         {
@@ -180,7 +183,7 @@ internal static class BossRegression
     /// <summary>弹幕不受距离限制：只放两个远角目标，验证全屏选招、每目标仅一次技能伤害和收招。</summary>
     private static void VerifyBulletRingIsGlobal()
     {
-        BattleService battle = BattleService.CreateBossRegressionFixture(6);
+        BattleService battle = BattleService.CreateBossRegressionFixture(3);
         Piece boss = battle.AddRegressionBoss(new BoardPos(0, 0), 2);
         Piece first = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(8, 8), 1000f);
         Piece second = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(0, 8), 1000f);
@@ -216,7 +219,7 @@ internal static class BossRegression
         foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
         {
             if ((int)kind >= 18) { continue; } // 专属技能由BossSkillExpansion规则和六章Play逐招验收。
-            BattleService battle = BattleService.CreateBossRegressionFixture(6);
+            BattleService battle = BattleService.CreateBossRegressionFixture(BossSkillCatalog.ThemeChapter(kind));
             Piece boss = battle.AddRegressionBoss(new BoardPos(3, 3), 2);
             // 布置：一颗贴身、一颗在圈内、三颗远处扎堆——让每个技能都有合法目标。
             battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(2, 3), 1000f);

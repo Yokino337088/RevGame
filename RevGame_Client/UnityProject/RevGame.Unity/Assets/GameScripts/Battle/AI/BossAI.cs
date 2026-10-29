@@ -56,6 +56,8 @@ namespace RevGame.Battle
 
         StarStorm, BlackHole, SolarFlare, SunBrand, TidalSurge, Maelstrom, SwampMaw, MireChains, FrozenPrison, GlacialAegis, DivineCross, Sanctuary,
 
+        CometRails, AstralShards, SolarSpears, EmberFan, MagmaRings, TidalLances, FoamBurst, Undertow, ReefSpikes, BogSpines, VenomFan, MireRipples, BlightSeeds, SnowCross, HailBarrage, IceFault, JudgementLances, HaloPulse, RunicGrid, EventHorizon, ConstellationSeal, PhoenixDescent, SolarEclipse, LeviathanWake, AbyssalCage, PlagueBloom, HydraFangs, AbsoluteZero, Avalanche, Heavenfall, FinalEdict,
+
         Dead,
         Stopped,
     }
@@ -89,7 +91,7 @@ namespace RevGame.Battle
         float NextSkillAt { get; set; }
         /// <summary>按 BossSkillKind 下标存放的各技能“冷却结束时刻”。</summary>
         float[] SkillReadyAt { get; }
-        /// <summary>本局各技能开始施放的次数。优先轮换未用招式，防止全屏评分长期垄断。</summary>
+        /// <summary>本局各技能开始施放的次数；通用/专属据此分组轮换，回合结束随宿主清理。</summary>
         int[] SkillUseCounts { get; }
         /// <summary>专属技能提交，仍由服务统一处理扣血、控制与占格。</summary>
         void ExclusiveHit(BossSkillInfo info);
@@ -171,6 +173,37 @@ namespace RevGame.Battle
             _machine.AddState(BossAIState.GlacialAegis, new BossExclusiveState(_machine, BossSkillKind.GlacialAegis));
             _machine.AddState(BossAIState.DivineCross, new BossExclusiveState(_machine, BossSkillKind.DivineCross));
             _machine.AddState(BossAIState.Sanctuary, new BossExclusiveState(_machine, BossSkillKind.Sanctuary));
+            _machine.AddState(BossAIState.CometRails, new BossExpandedState(_machine, BossSkillKind.CometRails));
+            _machine.AddState(BossAIState.AstralShards, new BossExpandedState(_machine, BossSkillKind.AstralShards));
+            _machine.AddState(BossAIState.SolarSpears, new BossExpandedState(_machine, BossSkillKind.SolarSpears));
+            _machine.AddState(BossAIState.EmberFan, new BossExpandedState(_machine, BossSkillKind.EmberFan));
+            _machine.AddState(BossAIState.MagmaRings, new BossExpandedState(_machine, BossSkillKind.MagmaRings));
+            _machine.AddState(BossAIState.TidalLances, new BossExpandedState(_machine, BossSkillKind.TidalLances));
+            _machine.AddState(BossAIState.FoamBurst, new BossExpandedState(_machine, BossSkillKind.FoamBurst));
+            _machine.AddState(BossAIState.Undertow, new BossExpandedState(_machine, BossSkillKind.Undertow));
+            _machine.AddState(BossAIState.ReefSpikes, new BossExpandedState(_machine, BossSkillKind.ReefSpikes));
+            _machine.AddState(BossAIState.BogSpines, new BossExpandedState(_machine, BossSkillKind.BogSpines));
+            _machine.AddState(BossAIState.VenomFan, new BossExpandedState(_machine, BossSkillKind.VenomFan));
+            _machine.AddState(BossAIState.MireRipples, new BossExpandedState(_machine, BossSkillKind.MireRipples));
+            _machine.AddState(BossAIState.BlightSeeds, new BossExpandedState(_machine, BossSkillKind.BlightSeeds));
+            _machine.AddState(BossAIState.SnowCross, new BossExpandedState(_machine, BossSkillKind.SnowCross));
+            _machine.AddState(BossAIState.HailBarrage, new BossExpandedState(_machine, BossSkillKind.HailBarrage));
+            _machine.AddState(BossAIState.IceFault, new BossExpandedState(_machine, BossSkillKind.IceFault));
+            _machine.AddState(BossAIState.JudgementLances, new BossExpandedState(_machine, BossSkillKind.JudgementLances));
+            _machine.AddState(BossAIState.HaloPulse, new BossExpandedState(_machine, BossSkillKind.HaloPulse));
+            _machine.AddState(BossAIState.RunicGrid, new BossExpandedState(_machine, BossSkillKind.RunicGrid));
+            _machine.AddState(BossAIState.EventHorizon, new BossExpandedState(_machine, BossSkillKind.EventHorizon));
+            _machine.AddState(BossAIState.ConstellationSeal, new BossExpandedState(_machine, BossSkillKind.ConstellationSeal));
+            _machine.AddState(BossAIState.PhoenixDescent, new BossExpandedState(_machine, BossSkillKind.PhoenixDescent));
+            _machine.AddState(BossAIState.SolarEclipse, new BossExpandedState(_machine, BossSkillKind.SolarEclipse));
+            _machine.AddState(BossAIState.LeviathanWake, new BossExpandedState(_machine, BossSkillKind.LeviathanWake));
+            _machine.AddState(BossAIState.AbyssalCage, new BossExpandedState(_machine, BossSkillKind.AbyssalCage));
+            _machine.AddState(BossAIState.PlagueBloom, new BossExpandedState(_machine, BossSkillKind.PlagueBloom));
+            _machine.AddState(BossAIState.HydraFangs, new BossExpandedState(_machine, BossSkillKind.HydraFangs));
+            _machine.AddState(BossAIState.AbsoluteZero, new BossExpandedState(_machine, BossSkillKind.AbsoluteZero));
+            _machine.AddState(BossAIState.Avalanche, new BossExpandedState(_machine, BossSkillKind.Avalanche));
+            _machine.AddState(BossAIState.Heavenfall, new BossExpandedState(_machine, BossSkillKind.Heavenfall));
+            _machine.AddState(BossAIState.FinalEdict, new BossExpandedState(_machine, BossSkillKind.FinalEdict));
             _machine.AddState(BossAIState.Dead, new BossDeadState(_machine));
             _machine.AddState(BossAIState.Stopped, new BossStoppedState(_machine));
             _machine.ChangeState(BossAIState.Idle, "创建Boss AI");
@@ -211,6 +244,38 @@ namespace RevGame.Battle
                 case BossSkillKind.GlacialAegis: return BossAIState.GlacialAegis;
                 case BossSkillKind.DivineCross: return BossAIState.DivineCross;
                 case BossSkillKind.Sanctuary: return BossAIState.Sanctuary;
+                case BossSkillKind.CometRails: return BossAIState.CometRails;
+                case BossSkillKind.AstralShards: return BossAIState.AstralShards;
+                case BossSkillKind.SolarSpears: return BossAIState.SolarSpears;
+                case BossSkillKind.EmberFan: return BossAIState.EmberFan;
+                case BossSkillKind.MagmaRings: return BossAIState.MagmaRings;
+                case BossSkillKind.TidalLances: return BossAIState.TidalLances;
+                case BossSkillKind.FoamBurst: return BossAIState.FoamBurst;
+                case BossSkillKind.Undertow: return BossAIState.Undertow;
+                case BossSkillKind.ReefSpikes: return BossAIState.ReefSpikes;
+                case BossSkillKind.BogSpines: return BossAIState.BogSpines;
+                case BossSkillKind.VenomFan: return BossAIState.VenomFan;
+                case BossSkillKind.MireRipples: return BossAIState.MireRipples;
+                case BossSkillKind.BlightSeeds: return BossAIState.BlightSeeds;
+                case BossSkillKind.SnowCross: return BossAIState.SnowCross;
+                case BossSkillKind.HailBarrage: return BossAIState.HailBarrage;
+                case BossSkillKind.IceFault: return BossAIState.IceFault;
+                case BossSkillKind.JudgementLances: return BossAIState.JudgementLances;
+                case BossSkillKind.HaloPulse: return BossAIState.HaloPulse;
+                case BossSkillKind.RunicGrid: return BossAIState.RunicGrid;
+                case BossSkillKind.EventHorizon: return BossAIState.EventHorizon;
+                case BossSkillKind.ConstellationSeal: return BossAIState.ConstellationSeal;
+                case BossSkillKind.PhoenixDescent: return BossAIState.PhoenixDescent;
+                case BossSkillKind.SolarEclipse: return BossAIState.SolarEclipse;
+                case BossSkillKind.LeviathanWake: return BossAIState.LeviathanWake;
+                case BossSkillKind.AbyssalCage: return BossAIState.AbyssalCage;
+                case BossSkillKind.PlagueBloom: return BossAIState.PlagueBloom;
+                case BossSkillKind.HydraFangs: return BossAIState.HydraFangs;
+                case BossSkillKind.AbsoluteZero: return BossAIState.AbsoluteZero;
+                case BossSkillKind.Avalanche: return BossAIState.Avalanche;
+                case BossSkillKind.Heavenfall: return BossAIState.Heavenfall;
+                case BossSkillKind.FinalEdict: return BossAIState.FinalEdict;
+
 
 
             }

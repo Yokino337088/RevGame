@@ -237,6 +237,7 @@ namespace RevGame.Services
             Chapter = chapter;
             Round = round;
             RoundScore = 0; // 只清本回合分，永久积分不因失败、换回合或返回大厅清零。
+            HelperProtectionHealing = 0;
             IsBossRound = def.IsBoss;
             Phase = GamePhase.Prepare;
             _battleElapsed = 0f;
@@ -537,6 +538,7 @@ namespace RevGame.Services
             {
                 _tickAccumulator -= stepSeconds;
                 _battleElapsed += stepSeconds;
+                TickHelperProtection(stepSeconds);
                 ResolveOneStep(stepSeconds);
                 // 全灭是已经发生的结局，必须先结算；不能让同一步的自动援军复活已全灭的一方。
                 if (HasBattleEnded())
@@ -634,6 +636,7 @@ namespace RevGame.Services
         private void StepPlayerAttack(Piece piece, float stepFraction)
         {
                 float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
+                if (HasHelperProtection(piece)) { rate *= 1f + Balance.HelperProtectionSpeedBonus; }
                 if (piece.Def.IsRanged) { rate *= 1f + HelperRangedSpeedBonus; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。

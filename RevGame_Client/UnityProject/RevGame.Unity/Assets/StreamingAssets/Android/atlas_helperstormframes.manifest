@@ -1,0 +1,36 @@
+ManifestFileVersion: 0
+CRC: 1054560381
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 417ed9cf31996ebd2930278105f4634e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 417ed9cf31996ebd2930278105f4634e
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Pieces/Helper/Storm/Missile02.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Jellyfish05.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Jellyfish02.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Missile03.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Jellyfish01.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Jellyfish04.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Explosion01.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Missile01.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Explosion02.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Explosion04.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Jellyfish03.png
+- Assets/GameRes/Art/Pieces/Helper/Storm/Explosion03.png
+- Assets/GameRes/Atlases/HelperStormFrames.spriteatlasv2
+Dependencies: []

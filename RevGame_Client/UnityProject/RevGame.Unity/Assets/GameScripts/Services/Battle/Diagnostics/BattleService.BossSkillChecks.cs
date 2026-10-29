@@ -13,20 +13,22 @@ namespace RevGame.Services
     public sealed partial class BattleService
     {
         /// <summary>已在目标章节准备态时，建立固定高生命测试输入；不修改配置、解锁或存档。</summary>
-        public bool LoadBossSkillPreview(int chapter)
+        public bool LoadBossSkillPreview(int chapter, float bossAttackScale = .1f)
         {
             if (Phase != GamePhase.Prepare || Chapter != chapter || !IsBossRound) { return Reject("需要先进入目标章节Boss准备回合"); }
             StopEnemyAI();
             _board.Reset(); _playerPieces.Clear(); _enemyPieces.Clear();
             var lineup = LevelCatalog.BossOf(chapter);
             var boss = new Piece(_nextPieceId++, PieceCatalog.Get(lineup.Kind, lineup.Star), GameSide.Enemy,
-                lineup.BodySizes[0], true, true, 1000f, .1f);
+                lineup.BodySizes[0], true, true, 1000f, bossAttackScale);
             if (!_board.Place(boss, new BoardPos(5, 6))) { return Reject("Boss固定位置无法放置"); }
+            // 汲取只有主将缺血才合法；固定输入让主将保留七成生命，仍高于狂暴血线。
+            boss.TakeDamage(boss.MaxHp * 3 / 10);
             _enemyPieces.Add(boss);
             EnsureAIFor(boss);
             // 第一组围住(2,2)形成真眼；额外分散目标保证十字、横排、近身和后排技能都有可观察对象。
             var cells = new[] { new BoardPos(1,2), new BoardPos(2,1), new BoardPos(3,2), new BoardPos(2,3),
-                new BoardPos(0,0), new BoardPos(4,0), new BoardPos(6,2), new BoardPos(8,4), new BoardPos(4,5), new BoardPos(3,7) };
+                new BoardPos(0,0), new BoardPos(4,0), new BoardPos(6,2), new BoardPos(8,1), new BoardPos(0,5), new BoardPos(1,7) };
             foreach (BoardPos cell in cells)
             {
                 var p = new Piece(_nextPieceId++, PieceCatalog.Get(PieceKind.Archer, StarTier.One), GameSide.Player, 1, hpScale: 1000f);
@@ -65,10 +67,10 @@ namespace RevGame.Services
                             positions.Add(boss.Pos);
                         }
                         int distinct = owner.SkillUseCounts.Count(n => n > 0);
-                        check(distinct > 10, "第" + chapter + "章180秒自然轮换超过10招，实际=" + distinct);
+                        check(distinct == 10, "第" + chapter + "章180秒自然轮换六通用四专属，实际=" + distinct);
                         check(positions.Count >= 5, "第" + chapter + "章独立走位至少5个位置，实际=" + positions.Count);
-                        for (int skill = 18; skill < 30; skill++)
-                        { check((owner.SkillUseCounts[skill] > 0) == (skill / 2 - 8 == chapter), "章节专属隔离及实际轮到：" + chapter + "/" + (BossSkillKind)skill); }
+                        for (int skill = 0; skill < owner.SkillUseCounts.Length; skill++)
+                        { check((owner.SkillUseCounts[skill] > 0) == (BossSkillCatalog.IsUnlocked((BossSkillKind)skill,chapter) && (BossSkillKind)skill != BossSkillKind.Enrage), "章节专属隔离及实际轮到：" + chapter + "/" + (BossSkillKind)skill); }
                         summaries.Add("ch=" + chapter + ",skills=" + distinct + ",positions=" + positions.Count
                             + ",casts=" + string.Join(",", owner.SkillUseCounts));
                     }
@@ -185,7 +187,7 @@ namespace RevGame.Services
                 info = new BossSkillInfo(boss.Id, BossSkillKind.Sanctuary, boss.Pos, boss.Size, target.Pos, target.Pos, target.Pos, 1, 1, 0, 1, false);
                 battle.ApplyExclusiveHit(boss, info);
                 check(target.BossAttackFactor < 1f && target.BossSpeedFactor < 1f, "圣域同时削弱攻击和攻速");
-                check(battle._board.Move(target, new BoardPos(0,5), respectEnemyEyes:false), "移出圣域");
+                check(battle._board.Move(target, new BoardPos(0,8), respectEnemyEyes:false), "移出圣域");
                 battle.RefreshBossZones(); check(target.BossAttackFactor == 1f && target.BossSpeedFactor == 1f, "离开圣域立即撤销减益");
                 boss.BossInvulnerable = true; hp = boss.Hp;
                 foreach (DamageBasis basis in Enum.GetValues(typeof(DamageBasis)))

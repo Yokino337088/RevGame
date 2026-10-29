@@ -196,12 +196,14 @@ namespace RevGame.Editor
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "DefaultTexturePlatform", maxTextureSize = maxSize, textureCompression = TextureImporterCompression.Compressed });
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Standalone", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.DXT5 });
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.ETC2_RGBA8 });
-            if (name == "HelperFrames")
+            if (name == "HelperFrames" || name == "HelperStormFrames")
             {
-                // 仅四张小图使用512无损图集，防DXT/ETC色块软化脸部与腿部边缘；不扩大其它图集内存。
-                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="DefaultTexturePlatform", maxTextureSize=512, textureCompression=TextureImporterCompression.Uncompressed });
-                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="Standalone", overridden=true, maxTextureSize=512, format=TextureImporterFormat.RGBA32 });
-                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="Android", overridden=true, maxTextureSize=512, format=TextureImporterFormat.RGBA32 });
+                // 帮手四帧使用512图集；放大的导弹/水母帧使用独立2048图集，避免块压缩破坏透明细边。
+                // RGBA32会增加这两组的纹理内存，因此只对它们启用，其余图集继续平台压缩并按需加载。
+                int helperSize = name == "HelperFrames" ? 512 : 2048;
+                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="DefaultTexturePlatform", maxTextureSize=helperSize, textureCompression=TextureImporterCompression.Uncompressed });
+                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="Standalone", overridden=true, maxTextureSize=helperSize, format=TextureImporterFormat.RGBA32 });
+                atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name="Android", overridden=true, maxTextureSize=helperSize, format=TextureImporterFormat.RGBA32 });
             }
             if (before != EditorJsonUtility.ToJson(atlasImporter)) { atlasImporter.SaveAndReimport(); }
             // 导入完成后重新取Importer，再写最终AB标记，避免旧Importer的保存覆盖标记。

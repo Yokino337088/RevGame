@@ -133,6 +133,12 @@ namespace RevGame.Editor
             desired["Assets/GameRes/Material/Helper/HelperStorm.mat"] = "battle_helper_fx";
             desired["Assets/GameShader/Helper/HelperStorm_Shader.shader"] = "battle_helper_fx";
             desired["Assets/GameShader/Helper/HelperBeamImpact_Shader.shader"] = "battle_helper_fx";
+            // 治疗线与蘑菇云是共享短效，单独归帮手特效包，不把六章背景一起拉入内存。
+            foreach (string effect in new[] { "HelperHealingBeam", "HelperHealingImpact", "HelperMushroomImpact" })
+            {
+                desired["Assets/GameRes/Material/Helper/" + effect + ".mat"] = "battle_helper_fx";
+                desired["Assets/GameShader/Helper/" + effect + "_Shader.shader"] = "battle_helper_fx";
+            }
             for (int i = 0; i < chapterShaders.Length; i++)
             {
                 string name = "HelperChapter" + (i + 1).ToString("00");

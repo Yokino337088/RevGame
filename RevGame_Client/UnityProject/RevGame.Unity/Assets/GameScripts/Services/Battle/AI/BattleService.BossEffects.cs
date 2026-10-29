@@ -30,7 +30,8 @@ namespace RevGame.Services
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
             BossExclusiveGeometry.Collect(_board, info, _exclusiveVictims);
-            if (info.Kind == BossSkillKind.Sanctuary || info.Kind == BossSkillKind.MireChains)
+            if (info.Kind == BossSkillKind.Sanctuary || info.Kind == BossSkillKind.MireChains
+                || info.Kind == BossSkillKind.PlagueBloom || info.Kind == BossSkillKind.FinalEdict || info.Kind == BossSkillKind.AbyssalCage)
             {
                 _bossEffects.Add(new BossEffectLease { Source = boss, Info = info, EndsAt = _battleElapsed + def.Duration });
             }
@@ -50,6 +51,7 @@ namespace RevGame.Services
                         target.BossHiddenUntil = Math.Max(target.BossHiddenUntil, _battleElapsed + def.Duration);
                         target.ActionProgress = 0f;
                         break;
+                    case BossSkillKind.AbsoluteZero:
                     case BossSkillKind.FrozenPrison:
                         target.BossFrozen = true;
                         target.BossFrozenUntil = Math.Max(target.BossFrozenUntil, _battleElapsed + def.Duration);
