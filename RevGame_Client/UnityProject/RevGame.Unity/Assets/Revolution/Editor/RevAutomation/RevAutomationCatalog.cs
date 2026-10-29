@@ -130,6 +130,19 @@ namespace Revolution.Editor
             }
         }
 
+        /// <summary>只读接口说明，供活动日志解释命令用途；未注册返回 null，不凭名字编造功能。</summary>
+        public static string DescriptionOf(string action)
+        {
+            var builtin = Builtins.FirstOrDefault(b => b.id == action);
+            if (builtin != null) { return builtin.description; }
+            try
+            {
+                var method = Extension(action);
+                return method?.GetCustomAttribute<RevAutomationActionAttribute>().Description;
+            }
+            catch (InvalidOperationException) { return null; }
+        }
+
         public static MethodInfo Extension(string action)
         {
             var methods = Methods.Where(m => m.GetCustomAttribute<RevAutomationActionAttribute>().Name == action).ToArray();

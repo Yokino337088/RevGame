@@ -194,10 +194,13 @@ namespace Revolution.Editor
             {
                 var step = payload.steps[i];
                 var item = new RevAutomationBatchStepResult { index = i, action = step?.action };
+                var activity = RevAutomationActivity.Begin("Unity Batch", "editor", step?.action ?? "(缺少动作)", step?.payloadJson,
+                    "batch-" + request.id + "-" + i, request.id);
                 if (step == null || string.IsNullOrEmpty(step.action))
                 {
                     item.success = false;
                     item.message = "步骤缺少 action";
+                    RevAutomationActivity.Finish(activity, false, item.message, null, "InvalidStep");
                     results.Add(item);
                     failed++;
                     if (payload.stopOnError) { break; }
@@ -207,6 +210,7 @@ namespace Revolution.Editor
                 {
                     item.success = false;
                     item.message = "batch.call 不允许嵌套";
+                    RevAutomationActivity.Finish(activity, false, item.message, null, "NestedBatch");
                     results.Add(item);
                     failed++;
                     if (payload.stopOnError) { break; }
@@ -221,6 +225,7 @@ namespace Revolution.Editor
                 {
                     item.success = false;
                     item.message = reason;
+                    RevAutomationActivity.Finish(activity, false, item.message, null, "BatchRejected");
                     results.Add(item);
                     failed++;
                     if (payload.stopOnError) { break; }
@@ -244,11 +249,13 @@ namespace Revolution.Editor
                     item.success = true;
                     item.message = "完成";
                     item.dataJson = value == null ? "" : JsonUtility.ToJson(value, false);
+                    RevAutomationActivity.Finish(activity, true, item.message, value);
                 }
                 catch (Exception error)
                 {
                     item.success = false;
                     item.message = error.GetType().Name + ": " + error.Message;
+                    RevAutomationActivity.Finish(activity, false, item.message, null, error.GetType().Name);
                     failed++;
                 }
                 results.Add(item);
@@ -355,7 +362,32 @@ namespace Revolution.Editor
 
         public static RevGMResult ExecuteGM(string line, bool confirm)
         {
+            string description = null;
+            try { string name = GMCommandName(line); if (RevGM.TryGet(name, out RevGMCommand command)) { description = command.Description; } }
+            catch (Exception) { } // 描述查询失败不替代原命令的参数/高危校验。
+            var ticket = RevAutomationActivity.Begin("Unity GM", "gm", "gm.exec",
+                RevAutomationJson.Write(new Dictionary<string, object> { ["command"] = line }), description: description);
+            try
+            {
+                RevGMResult result = ExecuteGMCore(line, confirm);
+                RevAutomationActivity.Finish(ticket, result.Success, result.Message, null, result.Success ? null : "GMFailed");
+                return result;
+            }
+            catch (Exception e) { RevAutomationActivity.Finish(ticket, false, e.Message, null, e.GetType().Name); throw; }
+        }
+
+        private static RevGMResult ExecuteGMCore(string line, bool confirm)
+        {
             if (!EditorApplication.isPlaying || EditorApplication.isPaused) { throw new InvalidOperationException("GM 执行需要已进入且未暂停的 Play"); }
+            string name = GMCommandName(line);
+            if (!RevGM.TryGet(name, out RevGMCommand command)) { return RevGM.Execute(line); }
+            if (command.IsHighRisk && !confirm) { throw new InvalidOperationException("高危 GM 需要 CLI --confirm：" + command.Name); }
+            return RevGM.Execute(line);
+        }
+
+        /// <summary>只读取命令名供说明和高危判定；参数解析仍由运行期 RevGM 门面负责。</summary>
+        internal static string GMCommandName(string line)
+        {
             // 这里只读取命令名检查 HighRisk；参数仍完整交给 RevGM.Execute 解析。
             // 命令名也可能加引号，必须按运行期相同的三种分隔符与引号规则处理，不能只 Split(' ')。
             var token = new StringBuilder();
@@ -368,10 +400,7 @@ namespace Revolution.Editor
                 started = true;
                 token.Append(c);
             }
-            string name = token.ToString();
-            if (!RevGM.TryGet(name, out RevGMCommand command)) { return RevGM.Execute(line); }
-            if (command.IsHighRisk && !confirm) { throw new InvalidOperationException("高危 GM 需要 CLI --confirm：" + command.Name); }
-            return RevGM.Execute(line);
+            return token.ToString();
         }
 
         private static IEnumerable<KeyValuePair<string, MethodInfo>> MenuMethods()
@@ -434,8 +463,8 @@ namespace Revolution.Editor
                     return config;
                 case "ab.res-paths":
                     if (!config.HasResRoot || !AssetDatabase.IsValidFolder(config.GetResRoot())) { throw new InvalidOperationException("先配置有效的资源根目录 resRoot"); }
-                    if (!ABBuildSetting.EnsureWritableForGeneratedCode("RevResPath", ABBuildSetting.ResPathCodePath)) { throw new InvalidOperationException("资源路径生成位置不可写"); }
-                    ABResPathGenerator.Generate(); return new RevAutomationText("已生成 RevResPath");
+                    if (!ABBuildSetting.EnsureWritableForGeneratedCode("RevResPath", config.GetResPathCodePath())) { throw new InvalidOperationException("资源路径生成位置不可写"); }
+                    ABResPathGenerator.Generate(); return new RevAutomationText("已生成 RevResPath → " + config.GetResPathCodePath());
                 case "ab.sound-paths":
                     if (!ABBuildSetting.EnsureWritableForGeneratedCode("RevSoundPath", ABBuildSetting.SoundPathCodePath)) { throw new InvalidOperationException("音效路径生成位置不可写"); }
                     ABSoundPathGenerator.Generate(); return new RevAutomationText("已生成 RevSoundPath");

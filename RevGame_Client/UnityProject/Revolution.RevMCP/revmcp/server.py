@@ -19,7 +19,8 @@ from . import workflow
 VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 STRING = {"type": "string"}
 CALL_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "game", "gm", "cli"]},
-    "action": STRING, "arguments": {"type": "object"}, "confirm": {"type": "boolean"}}, ("target", "action"))
+    "action": STRING, "arguments": {"type": "object"}, "confirm": {"type": "boolean"},
+    "intent": {"type": "string", "maxLength": 512, "description": "给用户的一句话目的：为什么调用这个动作；不参与业务参数校验"}}, ("target", "action"))
 
 
 def action_schema(spec, manifest):
@@ -78,13 +79,35 @@ class Server:
             suffix = hashlib.sha256((target + "/" + action).encode("utf-8")).hexdigest()[:16]
             prefix = "".join(c if c.isascii() and c.isalnum() else "_" for c in action)[:32]
             name = f"{target}_{prefix}_{suffix}"
-            schema = object_schema({"arguments": action_schema(spec, self.hub.manifest), "confirm": {"type": "boolean"}}, ("arguments",))
+            schema = object_schema({"arguments": action_schema(spec, self.hub.manifest), "confirm": {"type": "boolean"},
+                                    "intent": {"type": "string", "maxLength": 512}}, ("arguments",))
             self.dynamic[name] = (target, action, schema)
             tools.append(dict(name=name, description=description.strip(), inputSchema=schema,
                 annotations=dict(readOnlyHint=bool(spec.get("readOnly")), destructiveHint=bool(spec.get("confirm", spec.get("highRisk", False))), openWorldHint=False)))
         return dict(tools=tools)
 
     def call(self, params, token):
+        arguments = params.get("arguments", {})
+        intent = arguments.get("intent", "") if isinstance(arguments, dict) else ""
+        if params.get("name") == "rev_run" and isinstance(arguments, dict) and isinstance(arguments.get("plan"), dict):
+            intent = arguments["plan"].get("intent", "")
+        # 元数据只记录，不能被解释成需要执行的命令。旧客户端不传 intent 也仍可调用。
+        with self.hub.activity.scope(intent=intent if isinstance(intent, str) else ""):
+            return self._trace_call(params, token)
+
+    def _trace_call(self, params, token):
+        # 外层工具记录包含 discover、整份计划和参数验证失败；Hub 内层另记实际命令。
+        # 这样窗口能分清“Agent 请求成功”和“每一步业务/断言通过”。
+        ticket = self.hub.activity.start("mcp", params.get("name", "unknown"), params.get("arguments", {}))
+        try:
+            response = self._call(params, token)
+        except (Exception, KeyboardInterrupt) as exc:
+            self.hub.activity.finish(ticket, error=exc)
+            raise
+        self.hub.activity.finish(ticket, dict(success=not response.get("isError"), message="MCP 工具处理完成"))
+        return response
+
+    def _call(self, params, token):
         name, arguments = params.get("name"), params.get("arguments", {})
         if not isinstance(arguments, dict):
             raise ValueError("Tool arguments must be an object")

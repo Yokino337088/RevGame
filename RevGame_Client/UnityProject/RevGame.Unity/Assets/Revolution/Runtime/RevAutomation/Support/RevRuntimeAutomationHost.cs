@@ -27,6 +27,7 @@ namespace Revolution
             public RevRuntimeOperation Operation;
             public int StartErrorCount;
             public bool Started;
+            public RevAutomationActivity.Ticket Activity;
         }
         private static RevRuntimeAutomationHost _instance;
         private readonly ConcurrentQueue<Job> _queue = new ConcurrentQueue<Job>();
@@ -59,6 +60,7 @@ namespace Revolution
                 host._listener.Prefixes.Add(url + "/"); host._listener.Start();
                 string folder = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "RevolutionAutomation")) : Path.Combine(Application.persistentDataPath, "RevolutionAutomation");
                 Directory.CreateDirectory(folder); host._endpoint = Path.Combine(folder, "runtime.json");
+                RevAutomationActivity.Configure(Path.Combine(folder, "activity"));
                 var endpoint = new Dictionary<string, object> { ["protocol"] = 1, ["url"] = url, ["token"] = host._token,
                     ["sessionId"] = host._session, ["pid"] = System.Diagnostics.Process.GetCurrentProcess().Id,
                     ["product"] = Application.productName, ["platform"] = Application.platform.ToString(), ["project"] = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..")) : "" };
@@ -173,6 +175,8 @@ namespace Revolution
 #endif
             if (_active == null && !_queue.TryDequeue(out _active)) { return; }
             var job = _active;
+            job.Activity ??= RevAutomationActivity.Begin("Unity HTTP", job.Action == "gm.exec" ? "gm" : "game",
+                job.Action, job.Payload, "http-" + job.Id);
             try
             {
                 if (job.Cancelled || DateTime.UtcNow >= job.Deadline)
@@ -206,7 +210,14 @@ namespace Revolution
             job.Operation = null;
             try { job.Response = RevAutomationJson.Write(new Dictionary<string, object> { ["id"] = job.Id, ["sessionId"] = _session,
                 ["success"] = success, ["error"] = error, ["message"] = message, ["data"] = data }); }
-            catch (Exception e) { job.Response = RevAutomationJson.Write(new Dictionary<string, object> { ["id"] = job.Id, ["sessionId"] = _session, ["success"] = false, ["error"] = "SerializationFailed", ["message"] = e.Message }); }
+            catch (Exception e)
+            {
+                success = false; error = "SerializationFailed"; message = e.Message;
+                job.Response = RevAutomationJson.Write(new Dictionary<string, object> { ["id"] = job.Id, ["sessionId"] = _session, ["success"] = false, ["error"] = error, ["message"] = message });
+            }
+            job.Activity ??= RevAutomationActivity.Begin("Unity HTTP", job.Action == "gm.exec" ? "gm" : "game",
+                job.Action, job.Payload, "http-" + job.Id);
+            RevAutomationActivity.Finish(job.Activity, success, message, data, error);
             if (_active == job) { _active = null; }
         }
         private void Shutdown()

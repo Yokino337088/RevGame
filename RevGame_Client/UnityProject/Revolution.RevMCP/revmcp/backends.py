@@ -22,6 +22,7 @@ import uuid
 from revautomation.client import RevClient, RevError, RevCancelled, atomic_json, read_json
 from revautomation.cli import validate_action
 from .schema import validate, check_schema, object_schema
+from .activity import Activity
 
 
 class RuntimeClient:
@@ -133,7 +134,9 @@ def call_external(spec, arguments, confirm, cancel, limit=4 * 1024 * 1024):
     # Temporary files avoid pipe deadlocks and unbounded in-memory buffering.
     with tempfile.TemporaryFile() as stdin, tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
         stdin.write(json.dumps(arguments, ensure_ascii=False, allow_nan=False).encode("utf-8")); stdin.seek(0)
-        process = subprocess.Popen(spec["command"], cwd=spec["cwd"], stdin=stdin, stdout=stdout, stderr=stderr, shell=False)
+        # 外部 Python 在 Windows 重定向 stdin 时可能按系统代码页读中文；协议统一 UTF-8。
+        environment = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
+        process = subprocess.Popen(spec["command"], cwd=spec["cwd"], stdin=stdin, stdout=stdout, stderr=stderr, shell=False, env=environment)
         deadline = time.monotonic() + spec.get("timeoutSeconds", 120)
         try:
             while process.poll() is None:
@@ -192,6 +195,10 @@ class Hub:
         self.reports = Path(reports or (Path.cwd() / ".rev-mcp/results")).resolve()
         self.manifest = read_json(Path(cli_root) / "commands.json")
         self.known = {s["id"]: s for s in self.manifest["actions"]}
+        # --project 时写到 Unity 忽略目录；纯 Player 写到本机 endpoint 旁边，纯 CLI 写到报告旁边。
+        # Unity 执行日志由桥自身记录，Agent 流补足外部 CLI、调用拒绝和计划断言等 Unity 看不到的工作。
+        activity_root = self.editor.root if self.editor else self.runtime_endpoint.parent if self.runtime_endpoint else self.reports.parent
+        self.activity = Activity(activity_root / "activity")
 
     def game_call(self, action, arguments, confirm=False, cancel=None):
         if self.runtime_endpoint:
@@ -239,6 +246,23 @@ class Hub:
         return result
 
     def call(self, target, action, arguments=None, confirm=False, cancel=None, catalog=None):
+        # 用实时注册说明解释操作用途；intent 来自 Agent 明确提供的元数据，不从业务参数猜测。
+        with self.activity.scope(description=self.known.get(action, {}).get("description", "")):
+            ticket = self.activity.start(target, action, arguments)
+        try:
+            catalog = catalog or self.discover(cancel)
+            specs = catalog.get("commands", []) if target == "gm" else catalog.get("actions", [])
+            spec = next((s for s in specs if (s.get("name") if target == "gm" else s.get("id")) == action
+                         and (target == "gm" or s.get("target") == target)), {})
+            ticket[0]["description"] = spec.get("description", "")
+            response = self._call(target, action, arguments, confirm, cancel, catalog)
+        except (Exception, KeyboardInterrupt) as exc:
+            self.activity.finish(ticket, error=exc)
+            raise
+        self.activity.finish(ticket, response)
+        return response
+
+    def _call(self, target, action, arguments=None, confirm=False, cancel=None, catalog=None):
         arguments = arguments or {}
         catalog = catalog or self.discover(cancel)
         if target == "gm":

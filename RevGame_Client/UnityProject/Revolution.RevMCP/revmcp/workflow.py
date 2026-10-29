@@ -1,5 +1,6 @@
 """Cross-backend test plans. Validate first; always attempt every cleanup step."""
 import time
+from contextlib import nullcontext
 from revautomation.client import RevError, RevCancelled
 from revautomation.pipeline import references, resolve, matches, validate_condition
 
@@ -10,18 +11,22 @@ def run(hub, plan, cancel=None):
     $ref 保留原始 JSON 类型，不能把对象/数字先转成字符串。until 只重复只读
     查询；业务变更只执行一次。断言检查 response 内的精确值，不解析自然语言。
     """
-    if not isinstance(plan, dict) or set(plan) - {"name", "steps", "finally"} or not isinstance(plan.get("steps"), list) or not plan["steps"]:
+    if not isinstance(plan, dict) or set(plan) - {"name", "intent", "steps", "finally"} or not isinstance(plan.get("steps"), list) or not plan["steps"]:
         raise RevError("Plan requires nonempty steps; optional name and finally")
     if not isinstance(plan.get("finally", []), list):
         raise RevError("finally must be an array")
+    if not isinstance(plan.get("intent", ""), str) or len(plan.get("intent", "")) > 512:
+        raise RevError("intent requires a string of at most 512 characters")
     catalog = hub.discover(cancel)
     known = {(s["target"], s["id"]): s for s in catalog["actions"]}
     known.update({("gm", c["name"]): c for c in catalog["commands"]})
     ids = set()
     for phase in ("steps", "finally"):
         for step in plan.get(phase, []):
-            if not isinstance(step, dict) or set(step) - {"id", "target", "action", "arguments", "confirm", "expect", "until"}:
+            if not isinstance(step, dict) or set(step) - {"id", "target", "action", "arguments", "confirm", "expect", "until", "intent"}:
                 raise RevError("Unknown plan step fields")
+            if not isinstance(step.get("intent", ""), str) or len(step.get("intent", "")) > 512:
+                raise RevError("step intent requires a string of at most 512 characters")
             spec = known.get((step.get("target"), step.get("action")))
             if spec is None:
                 raise RevError("Plan references an unavailable capability: " + str(step.get("action")))
@@ -55,7 +60,24 @@ def run(hub, plan, cancel=None):
     report = dict(success=True, name=plan.get("name", "agent-test"), steps=[], cleanup=[])
     responses = {}
 
+    def activity_scope(**values):
+        activity = getattr(hub, "activity", None)
+        return activity.scope(**values) if activity else nullcontext()
+
     def execute(step, token):
+        activity = getattr(hub, "activity", None)
+        ticket = activity.start("plan", step["action"], {"expect": step.get("expect", []), "until": step.get("until")}) if activity else None
+        try:
+            row = execute_core(step, token)
+        except (Exception, KeyboardInterrupt) as exc:
+            if activity:
+                activity.finish(ticket, error=exc)
+            raise
+        if activity:
+            activity.finish(ticket, row["response"])
+        return row
+
+    def execute_core(step, token):
         started = time.monotonic()
         until = step.get("until")
         deadline = started + (until.get("timeoutSeconds", 30) if until else hub.timeout)
@@ -82,7 +104,8 @@ def run(hub, plan, cancel=None):
 
     try:
         for step in plan["steps"]:
-            row = execute(step, cancel)
+            with activity_scope(plan=report["name"], phase="steps", step=step.get("id", step["action"]), intent=step.get("intent", plan.get("intent", ""))):
+                row = execute(step, cancel)
             report["steps"].append(row)
             if not row["response"].get("success"):
                 report["success"] = False
@@ -92,7 +115,8 @@ def run(hub, plan, cancel=None):
     finally:
         for step in plan.get("finally", []):
             try:
-                row = execute(step, None)  # Cancellation must not skip cleanup.
+                with activity_scope(plan=report["name"], phase="finally", step=step.get("id", step["action"]), intent=step.get("intent", "")):
+                    row = execute(step, None)  # Cancellation must not skip cleanup.
                 report["cleanup"].append(row)
                 if not row["response"].get("success"):
                     report["success"] = False

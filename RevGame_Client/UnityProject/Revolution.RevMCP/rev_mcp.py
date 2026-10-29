@@ -28,6 +28,7 @@ def main():
     call.add_argument("action")
     call.add_argument("--json", type=Path, help="参数 JSON 文件，不是 JSON 字符串")
     call.add_argument("--confirm", action="store_true")
+    call.add_argument("--intent", default="", help="给活动窗口的一句话目的；不会传入业务参数")
     run = sub.add_parser("run", help="运行带断言和 finally 的测试计划")
     run.add_argument("plan", type=Path)
     args = parser.parse_args()
@@ -48,7 +49,10 @@ def main():
         if args.operation == "discover":
             result = hub.discover()
         elif args.operation == "call":
-            result = hub.call(args.target, args.action, read_json(args.json) if args.json else {}, args.confirm)
+            if len(args.intent) > 512:
+                raise ValueError("intent 最多 512 字符")
+            with hub.activity.scope(intent=args.intent):
+                result = hub.call(args.target, args.action, read_json(args.json) if args.json else {}, args.confirm)
         else:
             result = run_plan(hub, read_json(args.plan))
         result["reportPath"] = hub.save(result)

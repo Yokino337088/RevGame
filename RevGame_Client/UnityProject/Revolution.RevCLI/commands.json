@@ -10,6 +10,20 @@
   },
   "actions": [
     {
+      "id": "editor.activity-window",
+      "keys": ["floating", "page", "query", "targetFilter", "stateFilter"],
+      "description": "打开 RevMCP 活动窗口并设置页签和筛选",
+      "environment": "live",
+      "readOnly": false
+    },
+    {
+      "id": "editor.activity",
+      "keys": ["query", "target", "state", "offset", "limit"],
+      "description": "分页读取 RevMCP 实时活动记录与执行结果",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
       "id": "editor.launch",
       "keys": [],
       "description": "打开图形 Unity 并等待桥接",
@@ -1138,6 +1152,11 @@
     }
   ],
   "parameterTypes": {
+    "floating": "bool",
+    "page": "int",
+    "targetFilter": "int",
+    "stateFilter": "int",
+    "state": "string",
     "target": "string",
     "scene": "string",
     "path": "string",
@@ -1198,6 +1217,7 @@
   "configFields": {
     "ab": [
       "resRoot",
+      "resPathCodePath",
       "sfxRoot",
       "bgmRoot",
       "markMode",
@@ -1231,6 +1251,7 @@
   "configParameterTypes": {
     "ab": {
       "resRoot": "string",
+      "resPathCodePath": "string",
       "sfxRoot": "string",
       "bgmRoot": "string",
       "markMode": "enum:0,1",

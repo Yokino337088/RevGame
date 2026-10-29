@@ -146,6 +146,12 @@ namespace Revolution
         /// <summary>桥接层调用入口：先检查运行态与 Schema，再调用处理函数；异常交给工单记录。</summary>
         public static object Invoke(string action, string payloadJson, bool confirm = false)
         {
+            return RevAutomationActivity.TraceRuntime(action, payloadJson, () => InvokeCore(action, payloadJson, confirm),
+                Entries.TryGetValue(action, out Entry entry) ? entry.Description : null);
+        }
+
+        private static object InvokeCore(string action, string payloadJson, bool confirm)
+        {
             MainThread(); if (!Application.isPlaying) { throw new InvalidOperationException("游戏能力需要 Play/Player"); }
             EnsureBuiltins();
             if (action == "runtime.capabilities") { return Capabilities(); }
@@ -155,6 +161,18 @@ namespace Revolution
             return entry.Handler(payloadJson);
         }
         public static object ExecuteGM(string commandLine, bool confirm)
+        {
+            return RevAutomationActivity.TraceRuntime("gm.exec", RevAutomationJson.Write(new Dictionary<string, object> { ["command"] = commandLine }),
+                () => ExecuteGMCore(commandLine, confirm), GMDescription(commandLine));
+        }
+
+        private static string GMDescription(string line)
+        {
+            try { RevGMParser.Split(line, out string name, out _); return RevGM.TryGet(name, out RevGMCommand command) ? command.Description : null; }
+            catch (Exception) { return null; }
+        }
+
+        private static object ExecuteGMCore(string commandLine, bool confirm)
         {
             MainThread(); RevGMParser.Split(commandLine, out string name, out _);
             if (!RevGM.TryGet(name, out RevGMCommand command) || command.Name != name) { throw new ArgumentException("GM 必须使用已注册的完整命令名"); }

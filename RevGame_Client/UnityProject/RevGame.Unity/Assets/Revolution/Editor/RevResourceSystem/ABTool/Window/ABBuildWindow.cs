@@ -171,7 +171,7 @@ namespace Revolution.Editor
             DrawRootSection(cfg);
             DrawMarkSection(cfg, so);
             DrawOptionsSection(so);
-            DrawCodeGenSection();
+            DrawCodeGenSection(cfg, so);
 
             if (so.ApplyModifiedProperties()) SaveConfig(cfg);        // 只在真的改了才落盘
 
@@ -519,17 +519,49 @@ namespace Revolution.Editor
 
         // ---------------- 代码生成 ----------------
 
-        private static void DrawCodeGenSection()
+        private static void DrawCodeGenSection(ABBuildConfig cfg, SerializedObject so)
         {
             if (!ABGUI.Foldout("codegen", "代码生成", false)) return;
 
             EditorGUILayout.LabelField("「打包」「仅生成映射」都会顺带生成 RevResPath；音效目录改了会自动重生成 RevSoundPath。这里是手动入口。",
                 EditorStyles.wordWrappedMiniLabel);
 
+            // 输出目录与资源根目录是两个概念：前者放 C#，后者是生成器要扫描的资源。
+            SerializedProperty output = so.FindProperty("resPathCodePath");
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("生成路径常量 RevResPath")) ABGUI.Defer(() => ABResPathGenerator.Generate());
-                if (GUILayout.Button("打开 RevResPath.cs", GUILayout.Width(150))) OpenCode(ABBuildSetting.ResPathCodePath, "生成路径常量");
+                EditorGUILayout.PropertyField(output, new GUIContent("RevResPath 生成路径", "Assets 下的目录或 RevResPath.cs 文件；留空使用默认路径"));
+                if (GUILayout.Button("选择…", GUILayout.Width(58)))
+                {
+                    // 模态文件夹选择器延后一帧，避免在 OnGUI 中断 GUILayout 配对。
+                    ABGUI.Defer(() =>
+                    {
+                        string selected = EditorUtility.OpenFolderPanel("选择 RevResPath 生成目录", Application.dataPath, "");
+                        if (string.IsNullOrEmpty(selected)) { return; }
+                        try
+                        {
+                            string resolved = ABGeneratedCodePath.Resolve(selected, ABBuildSetting.ResPathCodePath, "RevResPath.cs");
+                            Undo.RecordObject(cfg, "设置 RevResPath 生成路径");
+                            cfg.resPathCodePath = resolved;
+                            SaveConfig(cfg);
+                        }
+                        catch (System.Exception e) { EditorUtility.DisplayDialog("生成路径无效", e.Message, "好"); }
+                    });
+                }
+                if (GUILayout.Button("默认", GUILayout.Width(44))) { output.stringValue = ""; }
+            }
+            string target = null;
+            try { target = ABGeneratedCodePath.Resolve(output.stringValue, ABBuildSetting.ResPathCodePath, "RevResPath.cs"); }
+            catch (System.Exception e) { EditorGUILayout.HelpBox(e.Message, MessageType.Error); }
+            if (target != null) { EditorGUILayout.LabelField("实际输出：" + target, EditorStyles.wordWrappedMiniLabel); }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(target == null))
+                {
+                    if (GUILayout.Button("生成路径常量 RevResPath")) { ABGUI.Defer(() => ABResPathGenerator.Generate()); }
+                    if (GUILayout.Button("打开 RevResPath.cs", GUILayout.Width(150))) { OpenCode(target, "生成路径常量"); }
+                }
             }
 
             using (new EditorGUILayout.HorizontalScope())

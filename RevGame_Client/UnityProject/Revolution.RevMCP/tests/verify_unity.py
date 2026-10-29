@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--project", type=Path)
     parser.add_argument("--runtime-endpoint", type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--plan", type=Path, help="可选自定义计划；默认仍验证教学场景 UI/GM")
     args = parser.parse_args()
     if not args.project and not args.runtime_endpoint:
         parser.error("Choose a real Unity instance")
@@ -45,7 +46,7 @@ def main():
         tools = request("tools/list")["tools"]
         if not any(t["name"].startswith("gm_") for t in tools):
             raise RuntimeError("No actual registered GM tools")
-        plan = json.loads((root / "examples/ui-gm.plan.json").read_text(encoding="utf-8"))
+        plan = json.loads((args.plan or (root / "examples/ui-gm.plan.json")).read_text(encoding="utf-8"))
         result = request("tools/call", dict(name="rev_run", arguments=dict(plan=plan)))
         images = [c for c in result["content"] if c["type"] == "image"]
         for i, image in enumerate(images):

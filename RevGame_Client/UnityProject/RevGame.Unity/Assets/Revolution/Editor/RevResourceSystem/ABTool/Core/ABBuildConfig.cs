@@ -72,6 +72,14 @@ namespace Revolution.Editor
         [Tooltip("背景音乐根目录（相对资源根目录的逻辑段，如 Audio/Bgm）")]
         public string bgmRoot = DefaultBgmRoot;
 
+        // 代码输出位置属于项目结构，随配置资产共享；空字符串是“使用默认”，不是未配置错误。
+        [Tooltip("RevResPath 生成目录或 Assets/.../RevResPath.cs；留空使用框架默认路径")]
+        public string resPathCodePath = "";
+        [HideInInspector] public string lastResPathCodePath = "";
+
+        /// <summary>当前生效的输出位置；窗口、生成器、CLI 与“打开代码”按钮共用它，避免各用不同路径。</summary>
+        public string GetResPathCodePath() => ABGeneratedCodePath.Resolve(resPathCodePath, ABBuildSetting.ResPathCodePath, "RevResPath.cs");
+
         [Tooltip("AB 标记来源：ScanExisting = 只用你已设好的分包（默认）；AutoByFolder = 按目录自动分包")]
         public ABMarkMode markMode = ABMarkMode.ScanExisting;
 

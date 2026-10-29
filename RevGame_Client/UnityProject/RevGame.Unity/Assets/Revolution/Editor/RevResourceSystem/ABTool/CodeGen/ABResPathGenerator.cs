@@ -14,8 +14,8 @@
 //   新增资源不用重新生成，因为目录结构没变。
 //
 // 【生成到哪？】
-//   ABBuildSetting.ResPathCodePath = Assets/Revolution/Generation/RevResPath.cs
-//   （Generation 是框架自带的程序集，专门放"生成物"，见 Revolution.Generation.asmdef）
+//   默认 Assets/Revolution/Generation/RevResPath.cs；ABBuildConfig.resPathCodePath 可指定 Assets 内目录。
+//   改路径后移动原生成物、保留 GUID，避免出现两份 Revolution.RevResPath；业务程序集需要引用目标程序集。
 //
 // 【为什么要"防抖"？】
 //   本文件会在资源变化时被自动调用（见文件底部的 AssetPostprocessor）。
@@ -25,8 +25,6 @@
 // 【扫描 / 命名 / 拼源码】这些纯逻辑都在 ResPathNaming.cs（不依赖 Unity，可单独编译验证）。
 // ============================================================
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -57,34 +55,33 @@ namespace Revolution.Editor
         /// </summary>
         public static void Generate(string resRoot)
         {
-            if (string.IsNullOrEmpty(resRoot)) return;      // 空根目录没什么可扫的（提示由调用方负责）
+            if (string.IsNullOrEmpty(resRoot)) { return; } // 空根目录没什么可扫的（提示由调用方负责）
 
             // ★ 框架被当作只读包安装（UPM）时跳过：包目录不可写，硬写只会留下"假生成"
-            if (!ABBuildSetting.EnsureWritableForGeneratedCode("RevResPath", ABBuildSetting.ResPathCodePath)) return;
+            ABBuildConfig config = ABBuildConfig.Instance;
+            string output = config.GetResPathCodePath();
+            if (!ABBuildSetting.EnsureWritableForGeneratedCode("RevResPath", output)) { return; }
 
             List<string> dirs = ResPathNaming.CollectFolders(resRoot);
             string code = ResPathNaming.BuildCode(resRoot, dirs, out List<string> conflicts);
 
             foreach (string c in conflicts)
-                RevABLog.Warn($"[RevResPath] 常量名冲突，已跳过：{c} —— 建议给其中一个目录改名");
+            { RevABLog.Warn($"[RevResPath] 常量名冲突，已跳过：{c} —— 建议给其中一个目录改名"); }
 
             // ★ 防抖：内容没变直接返回，否则会触发"写文件 → 重编译 → 回调 → 再写"的死循环
-            if (File.Exists(ABBuildSetting.ResPathCodePath) &&
-                File.ReadAllText(ABBuildSetting.ResPathCodePath) == code)
-                return;
-
-            string dir = Path.GetDirectoryName(ABBuildSetting.ResPathCodePath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            File.WriteAllText(ABBuildSetting.ResPathCodePath, code, Encoding.UTF8);
-            AssetDatabase.ImportAsset(ABBuildSetting.ResPathCodePath);
+            string previous = string.IsNullOrEmpty(config.lastResPathCodePath) ? ABBuildSetting.ResPathCodePath : config.lastResPathCodePath;
+            bool changed = ABGeneratedCodePath.Write(output, previous, code, nameof(ABResPathGenerator));
+            if (config.lastResPathCodePath != output)
+            { config.lastResPathCodePath = output; EditorUtility.SetDirty(config); AssetDatabase.SaveAssets(); }
+            if (!changed) { return; }
 
             if (dirs.Count == 0)
+            {
                 RevABLog.Warn($"[RevResPath] 资源根目录 \"{resRoot}\" 下没扫到任何文件夹，" +
                                  $"生成的是空常量类。请在打包窗口里确认资源根目录是否正确。");
+            }
             else
-                RevABLog.Info($"[RevResPath] 已生成 {dirs.Count} 个目录常量 → {ABBuildSetting.ResPathCodePath}");
+            { RevABLog.Info($"[RevResPath] 已生成 {dirs.Count} 个目录常量 → {output}"); }
         }
 
         /// <summary>菜单入口：不想开打包窗口时也能单独刷新常量</summary>

@@ -52,6 +52,8 @@ namespace Revolution.Editor
         private static bool _batch;
         private static bool _recovered;
         private static bool _quitting;
+        // 与活动工单分开保存：被 Busy 拒绝的请求也需要一条完成记录，不能覆盖正在运行的记录。
+        private static readonly Dictionary<string, RevAutomationActivity.Ticket> ActivityTickets = new Dictionary<string, RevAutomationActivity.Ticket>();
 
         static RevAutomationBridge()
         {
@@ -62,6 +64,7 @@ namespace Revolution.Editor
                 SessionState.SetString(SessionKey, Session);
             }
             Directory.CreateDirectory(Inbox);
+            RevAutomationActivity.Configure(Path.Combine(Root, "activity"));
             EditorApplication.update += Update;
             EditorApplication.quitting += OnQuit;
             EditorApplication.delayCall += Recover;
@@ -122,6 +125,8 @@ namespace Revolution.Editor
                 }
                 return;
             }
+            ActivityTickets[request.id] = RevAutomationActivity.Begin("Unity Editor", "editor", request.action,
+                request.payloadJson, "editor-" + request.id, request.id);
             if (_active != null) { Reply(request, false, "Busy", "已有自动化操作在执行，请等待其完成", null); return; }
             if (RevRuntimeAutomation.HasPendingWork && request.action != "editor.status" && request.action != "editor.console" && request.action != "editor.resume"
                 && request.action != "runtime.stop" && request.action != "editor.stop")
@@ -334,6 +339,13 @@ namespace Revolution.Editor
             string dataJson;
             try { dataJson = RevAutomationJson.Write(data); }
             catch (Exception e) { success = false; error = "SerializationFailed"; message = e.Message; dataJson = "null"; }
+            // 重载时静态 ticket 会丢失；使用同一活动 id 补记录，窗口仍合并为原来的那一行。
+            if (!ActivityTickets.TryGetValue(request.id, out RevAutomationActivity.Ticket ticket))
+            { ticket = RevAutomationActivity.Begin("Unity Editor", "editor", request.action, request.payloadJson, "editor-" + request.id, request.id); }
+            // 日志读取结果又包含日志；只记完成数量摘要，避免把账本不断递归拷贝到自己里面。
+            object activityResult = request.action == "editor.activity" ? "已读取活动记录" : data;
+            RevAutomationActivity.Finish(ticket, success, message, activityResult, error);
+            ActivityTickets.Remove(request.id);
             WriteJson(Path.Combine(JobDirectory(request.id), "response.json"), new RevAutomationResponse
             {
                 id = request.id, success = success, error = error, message = message,

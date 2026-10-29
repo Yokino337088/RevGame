@@ -14,6 +14,10 @@ python Revolution.RevCLI/rev.py --project $project --mode live editor stop
 
 Agent 启动命令：`python <rev_mcp.py绝对路径> --project <Unity工程绝对路径> serve`。配置示例见 examples/mcp-config.example.json，也可直接从 Unity 控制台复制。稳定工具为 rev_discover、rev_call、rev_run；真实注册表还会生成动态工具。
 
+Unity 控制台的“活动日志”实时显示 Agent 请求、编辑器执行、运行时 GM/业务、外部 CLI 和计划断言；中文解释操作及用途，点击查看参数、结果与工单。可选 `intent` 写在 rev_call/动态工具外层，或计划/步骤上，只说明目的、不进入业务参数。活动账本保存在 `Library/RevolutionAutomation/activity`，窗口最多显示最近 500 条。更新后重启外部 MCP 会话，并同步 Unity 桥。
+
+新手说明：[活动日志与生成路径](../Revolution.Document/自动化工具/RevMCP活动日志与生成路径使用说明.html)。
+
 CLI 目录默认取同级 `Revolution.RevCLI`；若放在别处用 `--cli-root` 指定（改名前的 `--automation-root` 仍可用）。
 
 关于速度：真实编辑器上单次往返约 110ms，实测改造轮询间隔（100ms→20ms）前后没有可测差异——空闲编辑器 `EditorApplication.update` 本身约 110ms 才触发一次，瓶颈在编辑器 tick 而不是轮询。要减少耗时，应当减少往返次数（一次调用做更多事），而不是继续压轮询间隔。

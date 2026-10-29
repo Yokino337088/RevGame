@@ -23,7 +23,7 @@ namespace Revolution.Editor
                 string menu = attr.menuItem;
                 string[] prefixes = menu switch
                 {
-                    "Revolution.Tools/AI/RevMCP 控制台" => new[] { "runtime.start", "runtime.stop", "runtime.capabilities" },
+                    "Revolution.Tools/AI/RevMCP 控制台" => new[] { "runtime.start", "runtime.stop", "runtime.capabilities", "editor.activity" },
                     "Revolution.Tools/Demo/生成 UI 演示预制体（全部）" => new[] { "demo.ui-prefabs" },
                     "Revolution.Tools/GM 指令面板 %#g" => new[] { "gm." },
                     "Revolution.Tools/UI/面板代码生成器" => new[] { "ui.scan", "ui.preview", "ui.generate" },
