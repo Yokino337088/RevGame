@@ -91,3 +91,7 @@ tools/revmcp-configs/
 
 # 版权音乐：只本地使用，不入库
 RevGame_Client/音乐/
+
+# ---------------- Claude Code 本机项目技能（不入库） ----------------
+# 技能源自 .codex/skills，本机复制安装给 Claude Code 使用。
+.claude/skills/
