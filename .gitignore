@@ -95,3 +95,9 @@ RevGame_Client/音乐/
 # ---------------- Claude Code 本机项目技能（不入库） ----------------
 # 技能源自 .codex/skills，本机复制安装给 Claude Code 使用。
 .claude/skills/
+
+# ---------------- 技能模板豁免（2026-10-29）----------------
+# 上面的 *.csproj / *.sln 是给 Unity 与服务端构建产物用的，会误伤技能模板：
+# .codex/skills/**/templates 下是给人复制使用的工程模板，必须随技能一起入库。
+!.codex/skills/**/templates/*.csproj
+!.codex/skills/**/templates/*.sln
