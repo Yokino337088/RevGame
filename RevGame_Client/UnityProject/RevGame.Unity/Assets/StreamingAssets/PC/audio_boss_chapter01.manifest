@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 3698899248
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a6d755fa95fe9816bba8a90c756b2821
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a6d755fa95fe9816bba8a90c756b2821
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_Cleave.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_GravityWell.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_MeteorShower.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_BlackHole.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_EventHorizon.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_CometRails.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_StarStorm.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_ConstellationSeal.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_AstralShards.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter01/Boss_Snipe.ogg
+Dependencies: []

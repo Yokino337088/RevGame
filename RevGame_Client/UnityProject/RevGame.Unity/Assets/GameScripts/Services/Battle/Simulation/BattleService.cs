@@ -636,7 +636,7 @@ namespace RevGame.Services
         private void StepPlayerAttack(Piece piece, float stepFraction)
         {
                 float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
-                if (HasHelperProtection(piece)) { rate *= 1f + Balance.HelperProtectionSpeedBonus; }
+                if (HasHelperProtection(piece)) { rate *= 1f + (IsBossRound ? Balance.HelperBossHealingSpeedBonus : Balance.HelperProtectionSpeedBonus); }
                 if (piece.Def.IsRanged) { rate *= 1f + HelperRangedSpeedBonus; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。

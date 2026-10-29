@@ -70,7 +70,7 @@ namespace RevGame.Services
                     multiplier *= 1f + Math.Max(0f, linked) + ClassBonus(attacker.Side)
                         + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
                     float teamScale = attacker.Side == GameSide.Player ? PlayerFirepowerScale() : 1f;
-                    if (HasHelperProtection(attacker)) { teamScale *= 1f + Balance.HelperProtectionAttackBonus; }
+                    if (HasHelperProtection(attacker)) { teamScale *= 1f + (IsBossRound ? Balance.HelperBossHealingAttackBonus : Balance.HelperProtectionAttackBonus); }
                     if (attacker.Side == GameSide.Player && attacker.Def.IsRanged)
                     {
                         // 共鸣只强化远程普攻；不修改图鉴共享数据，不改变敌方或技能伤害。

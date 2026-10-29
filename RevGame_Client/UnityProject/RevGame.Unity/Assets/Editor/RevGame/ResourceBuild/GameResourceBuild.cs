@@ -31,7 +31,11 @@ namespace RevGame.Editor
             { "Material/Cards", "material_cards" }, { "Material/UI", "material_ui" },
             { "Material/Background", "material_background" },
             { "Material/Pieces", "material_pieces" }, { "Material/Combat", "material_combat" },
-            { "Audio/Bgm", "audio_bgm" }, { "Audio/Sfx", "audio_sfx" }
+            { "Audio/Bgm", "audio_bgm" }, { "Audio/Sfx", "audio_sfx" },
+            { "Audio/Sfx/Helper", "audio_helper" }, { "Audio/Sfx/Boss/Common", "audio_boss_common" },
+            { "Audio/Sfx/Boss/Chapter01", "audio_boss_chapter01" }, { "Audio/Sfx/Boss/Chapter02", "audio_boss_chapter02" },
+            { "Audio/Sfx/Boss/Chapter03", "audio_boss_chapter03" }, { "Audio/Sfx/Boss/Chapter04", "audio_boss_chapter04" },
+            { "Audio/Sfx/Boss/Chapter05", "audio_boss_chapter05" }, { "Audio/Sfx/Boss/Chapter06", "audio_boss_chapter06" }
         };
 
         /// <summary>幂等标记并用框架生成ResMap、路径和音效目录常量；有漏标/重名/非法名就中止，不掩盖错误。</summary>

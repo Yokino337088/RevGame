@@ -66,9 +66,11 @@ namespace RevGame.View
             if (_battleScreen)
             {
                 RefreshChapterMusic();
+                RefreshBossAudio();
             }
             else
             {
+                CloseBossAudio();
                 ReleaseChapterMusic();
             }
         }
@@ -76,7 +78,7 @@ namespace RevGame.View
         /// <summary>同章下一回合保持播放位置；跨章仍在GameScene时由准备事件选择新音乐。</summary>
         private void OnPrepare(int round)
         {
-            if (_battleScreen) { RefreshChapterMusic(); }
+            if (_battleScreen) { RefreshChapterMusic(); RefreshBossAudio(); }
         }
 
         /// <summary>章节到音乐的资源绑定，不是玩法数值；六章均有独立曲目。</summary>

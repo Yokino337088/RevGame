@@ -155,10 +155,10 @@ namespace RevGame.Editor
             root = new GameObject("HelperHealing");
             var healing = root.AddComponent<HelperHealingView>();
             var healingLine = root.AddComponent<LineRenderer>();
-            healingLine.useWorldSpace = true; healingLine.positionCount = 2; healingLine.sortingOrder = 66;
+            healingLine.useWorldSpace = true; healingLine.positionCount = 2; healingLine.sortingOrder = 7;
             healingLine.numCapVertices = 4; healingLine.textureMode = LineTextureMode.Stretch;
             healingLine.sharedMaterial = healingBeam; healingLine.enabled = false;
-            MeshRenderer healingRing = MakeQuad("HealingPluses", root.transform, mesh, healingImpact, 67);
+            MeshRenderer healingRing = MakeQuad("HealingPluses", root.transform, mesh, healingImpact, 7);
             serialized = new SerializedObject(healing);
             serialized.FindProperty("beam").objectReferenceValue = healingLine;
             serialized.FindProperty("impact").objectReferenceValue = healingRing;

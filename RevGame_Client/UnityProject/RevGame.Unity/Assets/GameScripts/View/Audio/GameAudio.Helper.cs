@@ -11,6 +11,7 @@ namespace RevGame.View
     /// </summary>
     public sealed partial class GameAudio
     {
+        private static readonly string[] HelperClipNames = { "HelperBarrage", "HelperBeam", "HelperExplosion", "HelperHeal", "HelperJellyfish", "HelperJellyImpact", "HelperMissile" };
         private readonly object _helperAudioOwner = new object();
         private readonly float[] _helperSoundDue = new float[4];
         private int _helperAudioGeneration, _helperHealingTarget;
@@ -20,6 +21,7 @@ namespace RevGame.View
         private void OpenHelperAudio()
         {
             _helperImpactDue = 0;
+            foreach (string name in HelperClipNames) { RevSound.Register(name,"Helper/" + name); }
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperShotAudio, owner: _helperAudioOwner);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnHelperAudioPrepare, owner: _helperAudioOwner);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnHelperAudioSettle, owner: _helperAudioOwner);
@@ -78,6 +80,7 @@ namespace RevGame.View
             ResetHelperAudio();
             RevTimer.CancelAllOf(_helperAudioOwner);
             RevEvent.RemoveAllByOwner(_helperAudioOwner);
+            foreach (string name in HelperClipNames) { RevSound.Unload(name); RevSound.Unregister(name); }
         }
     }
 }

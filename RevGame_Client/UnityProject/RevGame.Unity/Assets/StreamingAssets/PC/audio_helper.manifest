@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 2622358304
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8e0f19f8fd4b5c6b5446fd6298a1662a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8e0f19f8fd4b5c6b5446fd6298a1662a
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Helper/HelperExplosion.ogg
+- Assets/GameRes/Audio/Sfx/Helper/HelperJellyImpact.ogg
+- Assets/GameRes/Audio/Sfx/Helper/HelperMissile.ogg
+- Assets/GameRes/Audio/Sfx/Helper/HelperJellyfish.ogg
+- Assets/GameRes/Audio/Sfx/Helper/HelperHeal.ogg
+- Assets/GameRes/Audio/Sfx/Helper/HelperBeam.ogg
+- Assets/GameRes/Audio/Sfx/Helper/HelperBarrage.ogg
+Dependencies: []

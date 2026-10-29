@@ -20,6 +20,12 @@ namespace RevGame.View
             _cachedTable = table; Colors.Clear(); DamageRows.Clear();
         }
 
+        /// <summary>仅飘字放大：long容纳int最大伤害乘十，规则/计分仍使用原始int。倍率由Excel读取。</summary>
+        public static long DisplayDamage(int actualDamage)
+        {
+            return (long)actualDamage * Data.Balance.DamageDisplayMultiplier;
+        }
+
         public static BattleText Damage(Core.BattleDamageKind kind, Core.GameSide side)
         {
             EnsureCache();

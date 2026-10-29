@@ -1,0 +1,31 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>章节音效分包与伤害显示</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style><main><p># 章节音效分包与伤害显示说明</p><p>2026-10-29。承接本次Boss风暴治疗与独立音效开发；按用户追加要求把音效文件夹、AB边界、加载与释放一起拆分。</p><p>## 当前行为</p><p>- Boss实际攻击倍率最终0.75：基线0.4先提高50%到0.6，再增加25%到0.75。Boss生命倍率125，治疗与风暴规则保持前文。<br>- 所有伤害飘字在唯一ShowDamage入口用long将真实伤害乘以Presentation.DamageMultiplier=10，7显示70，int最大值显示21474836470。真实伤害事件、扣血、击杀、积分、累计和合并缓冲全部保留原值。只有画面数字放大。<br>- Boss音效根Audio/Sfx/Boss：Chapter01至Chapter06各十个技能，分别audio_boss_chapter01至06；狂暴在Common，audio_boss_common。帮手在Audio/Sfx/Helper，audio_helper。常用放置/受击/升级/胜负与登退场仍在小型audio_sfx。<br>- 当前场景只注册本章十种技能与狂暴，共11个别名；首次实际播放按需异步加载。登记本身不预加载；禁止PreloadAll。换章先停止本章句柄，Unload释放Clip引用，再Unregister。新章随后登记，外章不借资源。<br>- 业务仍调用RevSound别名、RevResManager公开门面，资源分包由GameResourceBuild.Configure生成；迁移资源保留.meta GUID，不在运行时拼磁盘路径。<br>- 章节音频Clip互不重复；61种源内容摘要全部不同。完整来源、许可和新逻辑路径/AB名见文档/第三方素材授权/Boss技能独立音效-2026-10-29。</p><p>## 真实验收</p><p>PC AB从正式StartScene冷启动。逐章通过实际Boss FSM施放本章技能，观察AudioSource真正播放，核对GameAudio只注册本章11个别名，外章所有音效引用为0；正式返回首页后61项引用均归零。通过真实BattleEffectView与TextMesh核对7→70及大整数安全。六章同时继续观察风暴、治疗、满血换人、低图层与回池。</p><p>本次独立音效先在分包前逐招验证60/60实播、错误0、清理完成；分包后逐章验证代表技能、包依赖与引用释放。两个范围分别报告，不把分包前全套实播说成分包后全部60招重新运行。</p><p>## 边界</p><p>包文件大小不等于运行时解码内存。引用归零说明资源租约归还，不代表立刻降低进程内存。未做Profiler内存峰值、Android或手机性能测量。最终正常配置三种子服务回放180回合179胜1负、18场Boss均胜；自动布局/撤退策略不代表真人胜率。<br></p><table><tr><th>包</th><th>KiB</th></tr><tr><td>audio_boss_chapter01</td><td>193.7</td></tr><tr><td>audio_boss_chapter02</td><td>351.4</td></tr><tr><td>audio_boss_chapter03</td><td>719.7</td></tr><tr><td>audio_boss_chapter04</td><td>182.8</td></tr><tr><td>audio_boss_chapter05</td><td>44.8</td></tr><tr><td>audio_boss_chapter06</td><td>76.6</td></tr><tr><td>audio_boss_common</td><td>8.4</td></tr></table></main></html>

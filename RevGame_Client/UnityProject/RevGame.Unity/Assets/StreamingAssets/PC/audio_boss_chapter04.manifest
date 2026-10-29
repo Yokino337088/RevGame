@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 1820766866
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 275e43614c066f8ca19145a320036971
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 275e43614c066f8ca19145a320036971
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_SwampMaw.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_PlagueBloom.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_PoisonMarsh.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_BogSpines.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_MireRipples.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_HydraFangs.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_MireChains.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_BlightSeeds.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_SoulDrain.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter04/Boss_VenomFan.ogg
+Dependencies: []

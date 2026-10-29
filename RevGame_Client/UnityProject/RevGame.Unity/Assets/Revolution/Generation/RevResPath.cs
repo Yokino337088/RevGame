@@ -63,6 +63,16 @@ namespace Revolution
         public const string Audio = "Audio/";
         public const string Audio_Bgm = "Audio/Bgm/";
         public const string Audio_Sfx = "Audio/Sfx/";
+        public const string Audio_Sfx_Boss = "Audio/Sfx/Boss/";
+        public const string Audio_Sfx_Boss_Chapter01 = "Audio/Sfx/Boss/Chapter01/";
+        public const string Audio_Sfx_Boss_Chapter02 = "Audio/Sfx/Boss/Chapter02/";
+        public const string Audio_Sfx_Boss_Chapter03 = "Audio/Sfx/Boss/Chapter03/";
+        public const string Audio_Sfx_Boss_Chapter04 = "Audio/Sfx/Boss/Chapter04/";
+        public const string Audio_Sfx_Boss_Chapter05 = "Audio/Sfx/Boss/Chapter05/";
+        public const string Audio_Sfx_Boss_Chapter06 = "Audio/Sfx/Boss/Chapter06/";
+        public const string Audio_Sfx_Boss_Common = "Audio/Sfx/Boss/Common/";
+        public const string Audio_Sfx_Helper = "Audio/Sfx/Helper/";
+        public const string Audio_Sfx_Helper_Helper = "Audio/Sfx/Helper/Helper/";
         public const string Board = "Board/";
         public const string Board_Indicator = "Board/Indicator/";
         public const string Board_Tile = "Board/Tile/";

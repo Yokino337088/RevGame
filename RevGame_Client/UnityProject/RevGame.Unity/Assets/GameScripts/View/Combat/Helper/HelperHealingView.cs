@@ -5,8 +5,8 @@ using UnityEngine;
 namespace RevGame.View
 {
     /// <summary>
-    /// 最后一颗玩家棋的持续治疗连线。BoardView独占一个池实例，服务的保护目标Id是唯一显示依据。
-    /// 这里只画绿色能量和加号；恢复生命、攻击/攻速加成均由BattleService处理，不随帧率重复结算。
+    /// 当前治疗目标的持续治疗连线。BoardView独占一个池实例，服务的保护目标Id是唯一显示依据。
+    /// 这里只画绿色能量与脚下空心光环；恢复生命、攻击/攻速加成均由BattleService处理，不随帧率重复结算。
     /// </summary>
     [RevPoolPrefab("Effects/Helper", "HelperHealing", Group = RevResGroup.Battle)]
     public sealed class HelperHealingView : MonoBehaviour, IRevPoolable
@@ -29,6 +29,8 @@ namespace RevGame.View
         /// <summary>在模型刷新时重新绑定当前身份；目标被池借给另一颗棋时Id检查会立即隐藏旧保护。</summary>
         public void Bind(Transform source, PieceView target, int targetId)
         {
+            // 视觉层结构：格面至多6，棋子从9开始，治疗线固定7，保持在棋子身体下面。
+            beam.sortingOrder = 7; impact.sortingOrder = 7;
             _source = source; _target = target; _targetId = targetId;
             RefreshGeometry();
         }

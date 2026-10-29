@@ -128,84 +128,333 @@ namespace RevGame.Battle
         private readonly RevHeavyFSM<BossAIState, IBossAIOwner> _machine;
         /// <summary>是否已释放：释放后再驱动会抛异常，防止旧回合 Boss 被继续推进。</summary>
         private bool _disposed;
-        /// <summary>当前状态（GM/测试只读）。</summary>
+        /// <summary>当前机器实际注册数量：三种生命周期状态加本章十技能与狂暴，共十四；用于验收，不是内存字节测量。</summary>
+        public int RegisteredStateCount { get; private set; }
+        /// <summary>当前状态，只读供GM和测试观察。</summary>
         public BossAIState State => _machine.CurrentStateType;
         /// <summary>当前状态已持续的模拟秒数。</summary>
         public float StateTime => _machine.StateTime;
         /// <summary>切换历史（含原因），排查“Boss 为什么没放技能”时先看这里。</summary>
         public RevHeavyFSMTransition<BossAIState>[] History => _machine.GetHistory();
 
-        /// <summary>创建并注册全部 Boss 状态，初始为 Idle。</summary>
+        /// <summary>创建并注册本章 Boss 状态，初始为 Idle。</summary>
         public BossAI(IBossAIOwner owner)
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
             _machine = new RevHeavyFSM<BossAIState, IBossAIOwner>(_owner);
             // 显式注册（不用反射）：IL2CPP 裁剪时能看到每个状态类型，也没有运行期查找开销。
-            // 未解锁的技能也注册：解锁与否由 BossTactics 在挑选时判断，状态表保持完整、便于测试单个技能。
+            // 配置先确定本章六通用四专属，再创建对应状态；跨章技能不分配实例、名单缓冲或委托。
             _machine.AddState(BossAIState.Idle, new BossIdleState(_machine));
-            _machine.AddState(BossAIState.Cleave, new BossCleaveState(_machine));
-            _machine.AddState(BossAIState.Snipe, new BossSnipeState(_machine));
-            _machine.AddState(BossAIState.Bombard, new BossBombardState(_machine));
-            _machine.AddState(BossAIState.BulletRing, new BossBulletRingState(_machine));
-            _machine.AddState(BossAIState.BlinkBlast, new BossBlinkBlastState(_machine));
-            _machine.AddState(BossAIState.LaserSpin, new BossLaserSpinState(_machine));
-            _machine.AddState(BossAIState.SoulDrain, new BossSoulDrainState(_machine));
-            _machine.AddState(BossAIState.Summon, new BossSummonState(_machine));
-            _machine.AddState(BossAIState.Enrage, new BossEnrageState(_machine));
-            _machine.AddState(BossAIState.MeteorShower, new BossMeteorShowerState(_machine));
-            _machine.AddState(BossAIState.CrossLaser, new BossCrossLaserState(_machine));
-            _machine.AddState(BossAIState.FrostNova, new BossFrostNovaState(_machine));
-            _machine.AddState(BossAIState.ChainLightning, new BossChainLightningState(_machine));
-            _machine.AddState(BossAIState.PoisonMarsh, new BossPoisonMarshState(_machine));
-            _machine.AddState(BossAIState.FlameWall, new BossFlameWallState(_machine));
-            _machine.AddState(BossAIState.IceLance, new BossIceLanceState(_machine));
-            _machine.AddState(BossAIState.GravityWell, new BossGravityWellState(_machine));
-            _machine.AddState(BossAIState.DoomSigil, new BossDoomSigilState(_machine));
-            _machine.AddState(BossAIState.StarStorm, new BossExclusiveState(_machine, BossSkillKind.StarStorm));
-            _machine.AddState(BossAIState.BlackHole, new BossExclusiveState(_machine, BossSkillKind.BlackHole));
-            _machine.AddState(BossAIState.SolarFlare, new BossExclusiveState(_machine, BossSkillKind.SolarFlare));
-            _machine.AddState(BossAIState.SunBrand, new BossExclusiveState(_machine, BossSkillKind.SunBrand));
-            _machine.AddState(BossAIState.TidalSurge, new BossExclusiveState(_machine, BossSkillKind.TidalSurge));
-            _machine.AddState(BossAIState.Maelstrom, new BossExclusiveState(_machine, BossSkillKind.Maelstrom));
-            _machine.AddState(BossAIState.SwampMaw, new BossExclusiveState(_machine, BossSkillKind.SwampMaw));
-            _machine.AddState(BossAIState.MireChains, new BossExclusiveState(_machine, BossSkillKind.MireChains));
-            _machine.AddState(BossAIState.FrozenPrison, new BossExclusiveState(_machine, BossSkillKind.FrozenPrison));
-            _machine.AddState(BossAIState.GlacialAegis, new BossExclusiveState(_machine, BossSkillKind.GlacialAegis));
-            _machine.AddState(BossAIState.DivineCross, new BossExclusiveState(_machine, BossSkillKind.DivineCross));
-            _machine.AddState(BossAIState.Sanctuary, new BossExclusiveState(_machine, BossSkillKind.Sanctuary));
-            _machine.AddState(BossAIState.CometRails, new BossExpandedState(_machine, BossSkillKind.CometRails));
-            _machine.AddState(BossAIState.AstralShards, new BossExpandedState(_machine, BossSkillKind.AstralShards));
-            _machine.AddState(BossAIState.SolarSpears, new BossExpandedState(_machine, BossSkillKind.SolarSpears));
-            _machine.AddState(BossAIState.EmberFan, new BossExpandedState(_machine, BossSkillKind.EmberFan));
-            _machine.AddState(BossAIState.MagmaRings, new BossExpandedState(_machine, BossSkillKind.MagmaRings));
-            _machine.AddState(BossAIState.TidalLances, new BossExpandedState(_machine, BossSkillKind.TidalLances));
-            _machine.AddState(BossAIState.FoamBurst, new BossExpandedState(_machine, BossSkillKind.FoamBurst));
-            _machine.AddState(BossAIState.Undertow, new BossExpandedState(_machine, BossSkillKind.Undertow));
-            _machine.AddState(BossAIState.ReefSpikes, new BossExpandedState(_machine, BossSkillKind.ReefSpikes));
-            _machine.AddState(BossAIState.BogSpines, new BossExpandedState(_machine, BossSkillKind.BogSpines));
-            _machine.AddState(BossAIState.VenomFan, new BossExpandedState(_machine, BossSkillKind.VenomFan));
-            _machine.AddState(BossAIState.MireRipples, new BossExpandedState(_machine, BossSkillKind.MireRipples));
-            _machine.AddState(BossAIState.BlightSeeds, new BossExpandedState(_machine, BossSkillKind.BlightSeeds));
-            _machine.AddState(BossAIState.SnowCross, new BossExpandedState(_machine, BossSkillKind.SnowCross));
-            _machine.AddState(BossAIState.HailBarrage, new BossExpandedState(_machine, BossSkillKind.HailBarrage));
-            _machine.AddState(BossAIState.IceFault, new BossExpandedState(_machine, BossSkillKind.IceFault));
-            _machine.AddState(BossAIState.JudgementLances, new BossExpandedState(_machine, BossSkillKind.JudgementLances));
-            _machine.AddState(BossAIState.HaloPulse, new BossExpandedState(_machine, BossSkillKind.HaloPulse));
-            _machine.AddState(BossAIState.RunicGrid, new BossExpandedState(_machine, BossSkillKind.RunicGrid));
-            _machine.AddState(BossAIState.EventHorizon, new BossExpandedState(_machine, BossSkillKind.EventHorizon));
-            _machine.AddState(BossAIState.ConstellationSeal, new BossExpandedState(_machine, BossSkillKind.ConstellationSeal));
-            _machine.AddState(BossAIState.PhoenixDescent, new BossExpandedState(_machine, BossSkillKind.PhoenixDescent));
-            _machine.AddState(BossAIState.SolarEclipse, new BossExpandedState(_machine, BossSkillKind.SolarEclipse));
-            _machine.AddState(BossAIState.LeviathanWake, new BossExpandedState(_machine, BossSkillKind.LeviathanWake));
-            _machine.AddState(BossAIState.AbyssalCage, new BossExpandedState(_machine, BossSkillKind.AbyssalCage));
-            _machine.AddState(BossAIState.PlagueBloom, new BossExpandedState(_machine, BossSkillKind.PlagueBloom));
-            _machine.AddState(BossAIState.HydraFangs, new BossExpandedState(_machine, BossSkillKind.HydraFangs));
-            _machine.AddState(BossAIState.AbsoluteZero, new BossExpandedState(_machine, BossSkillKind.AbsoluteZero));
-            _machine.AddState(BossAIState.Avalanche, new BossExpandedState(_machine, BossSkillKind.Avalanche));
-            _machine.AddState(BossAIState.Heavenfall, new BossExpandedState(_machine, BossSkillKind.Heavenfall));
-            _machine.AddState(BossAIState.FinalEdict, new BossExpandedState(_machine, BossSkillKind.FinalEdict));
+            RegisteredStateCount++;
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Cleave, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Cleave, new BossCleaveState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Snipe, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Snipe, new BossSnipeState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Bombard, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Bombard, new BossBombardState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.BulletRing, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.BulletRing, new BossBulletRingState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.BlinkBlast, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.BlinkBlast, new BossBlinkBlastState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.LaserSpin, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.LaserSpin, new BossLaserSpinState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SoulDrain, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SoulDrain, new BossSoulDrainState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Summon, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Summon, new BossSummonState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Enrage, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Enrage, new BossEnrageState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.MeteorShower, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.MeteorShower, new BossMeteorShowerState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.CrossLaser, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.CrossLaser, new BossCrossLaserState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.FrostNova, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.FrostNova, new BossFrostNovaState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.ChainLightning, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.ChainLightning, new BossChainLightningState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.PoisonMarsh, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.PoisonMarsh, new BossPoisonMarshState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.FlameWall, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.FlameWall, new BossFlameWallState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.IceLance, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.IceLance, new BossIceLanceState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.GravityWell, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.GravityWell, new BossGravityWellState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.DoomSigil, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.DoomSigil, new BossDoomSigilState(_machine));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.StarStorm, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.StarStorm, new BossExclusiveState(_machine, BossSkillKind.StarStorm));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.BlackHole, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.BlackHole, new BossExclusiveState(_machine, BossSkillKind.BlackHole));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SolarFlare, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SolarFlare, new BossExclusiveState(_machine, BossSkillKind.SolarFlare));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SunBrand, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SunBrand, new BossExclusiveState(_machine, BossSkillKind.SunBrand));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.TidalSurge, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.TidalSurge, new BossExclusiveState(_machine, BossSkillKind.TidalSurge));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Maelstrom, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Maelstrom, new BossExclusiveState(_machine, BossSkillKind.Maelstrom));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SwampMaw, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SwampMaw, new BossExclusiveState(_machine, BossSkillKind.SwampMaw));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.MireChains, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.MireChains, new BossExclusiveState(_machine, BossSkillKind.MireChains));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.FrozenPrison, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.FrozenPrison, new BossExclusiveState(_machine, BossSkillKind.FrozenPrison));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.GlacialAegis, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.GlacialAegis, new BossExclusiveState(_machine, BossSkillKind.GlacialAegis));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.DivineCross, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.DivineCross, new BossExclusiveState(_machine, BossSkillKind.DivineCross));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Sanctuary, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Sanctuary, new BossExclusiveState(_machine, BossSkillKind.Sanctuary));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.CometRails, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.CometRails, new BossExpandedState(_machine, BossSkillKind.CometRails));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.AstralShards, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.AstralShards, new BossExpandedState(_machine, BossSkillKind.AstralShards));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SolarSpears, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SolarSpears, new BossExpandedState(_machine, BossSkillKind.SolarSpears));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.EmberFan, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.EmberFan, new BossExpandedState(_machine, BossSkillKind.EmberFan));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.MagmaRings, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.MagmaRings, new BossExpandedState(_machine, BossSkillKind.MagmaRings));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.TidalLances, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.TidalLances, new BossExpandedState(_machine, BossSkillKind.TidalLances));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.FoamBurst, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.FoamBurst, new BossExpandedState(_machine, BossSkillKind.FoamBurst));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Undertow, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Undertow, new BossExpandedState(_machine, BossSkillKind.Undertow));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.ReefSpikes, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.ReefSpikes, new BossExpandedState(_machine, BossSkillKind.ReefSpikes));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.BogSpines, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.BogSpines, new BossExpandedState(_machine, BossSkillKind.BogSpines));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.VenomFan, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.VenomFan, new BossExpandedState(_machine, BossSkillKind.VenomFan));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.MireRipples, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.MireRipples, new BossExpandedState(_machine, BossSkillKind.MireRipples));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.BlightSeeds, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.BlightSeeds, new BossExpandedState(_machine, BossSkillKind.BlightSeeds));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SnowCross, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SnowCross, new BossExpandedState(_machine, BossSkillKind.SnowCross));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.HailBarrage, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.HailBarrage, new BossExpandedState(_machine, BossSkillKind.HailBarrage));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.IceFault, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.IceFault, new BossExpandedState(_machine, BossSkillKind.IceFault));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.JudgementLances, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.JudgementLances, new BossExpandedState(_machine, BossSkillKind.JudgementLances));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.HaloPulse, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.HaloPulse, new BossExpandedState(_machine, BossSkillKind.HaloPulse));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.RunicGrid, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.RunicGrid, new BossExpandedState(_machine, BossSkillKind.RunicGrid));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.EventHorizon, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.EventHorizon, new BossExpandedState(_machine, BossSkillKind.EventHorizon));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.ConstellationSeal, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.ConstellationSeal, new BossExpandedState(_machine, BossSkillKind.ConstellationSeal));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.PhoenixDescent, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.PhoenixDescent, new BossExpandedState(_machine, BossSkillKind.PhoenixDescent));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.SolarEclipse, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.SolarEclipse, new BossExpandedState(_machine, BossSkillKind.SolarEclipse));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.LeviathanWake, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.LeviathanWake, new BossExpandedState(_machine, BossSkillKind.LeviathanWake));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.AbyssalCage, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.AbyssalCage, new BossExpandedState(_machine, BossSkillKind.AbyssalCage));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.PlagueBloom, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.PlagueBloom, new BossExpandedState(_machine, BossSkillKind.PlagueBloom));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.HydraFangs, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.HydraFangs, new BossExpandedState(_machine, BossSkillKind.HydraFangs));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.AbsoluteZero, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.AbsoluteZero, new BossExpandedState(_machine, BossSkillKind.AbsoluteZero));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Avalanche, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Avalanche, new BossExpandedState(_machine, BossSkillKind.Avalanche));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.Heavenfall, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.Heavenfall, new BossExpandedState(_machine, BossSkillKind.Heavenfall));
+                RegisteredStateCount++;
+            }
+            if (BossSkillCatalog.IsUnlocked(BossSkillKind.FinalEdict, owner.Chapter))
+            {
+                _machine.AddState(BossAIState.FinalEdict, new BossExpandedState(_machine, BossSkillKind.FinalEdict));
+                RegisteredStateCount++;
+            }
             _machine.AddState(BossAIState.Dead, new BossDeadState(_machine));
+            RegisteredStateCount++;
             _machine.AddState(BossAIState.Stopped, new BossStoppedState(_machine));
+            RegisteredStateCount++;
             _machine.ChangeState(BossAIState.Idle, "创建Boss AI");
         }
 

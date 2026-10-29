@@ -8,11 +8,14 @@ using Revolution;
 namespace RevGame.Services
 {
     /// <summary>
-    /// 少子兜底属于正式玩法：状态由存活棋数推导，三种武器各自用模拟秒冷却。
+    /// Boss回合自动风暴与普通少子兜底属于正式玩法：状态由回合和存活棋数推导，三种武器各自用模拟秒冷却。
     /// 帮手仍不占格、不计存活、不改胜负。所有伤害交回统一管线，表现不能重复结算。
     /// </summary>
     public sealed partial class BattleService
     {
+        /// <summary>Boss回合专属倍率取Excel；普通少子救场仍保持原数值，不重复叠加共鸣。</summary>
+        private float HelperStormAttackFactor => IsBossRound ? 1f + Balance.HelperBossStormAttackBonus : 1f;
+        private float HelperStormSpeedFactor => IsBossRound ? 1f + Balance.HelperBossStormSpeedBonus : 1f;
         public bool HelperStormActive { get; private set; }
         private float _stormMissileAt, _stormJellyAt, _stormBeamAt, _stormBeamUntil, _stormBeamRemainder;
         // 服务拥有自己的缓冲：伤害可能从敌军名单移除对象，不能边遍历原名单边扣血。
@@ -35,7 +38,7 @@ namespace RevGame.Services
             {
                 if (player.IsAlive && _board.FindPiece(player.Id) == player) { alive++; }
             }
-            bool active = Phase == GamePhase.Battle && alive > 0 && alive < Balance.HelperStormThreshold;
+            bool active = Phase == GamePhase.Battle && alive > 0 && (IsBossRound || alive < Balance.HelperStormThreshold);
             if (active == HelperStormActive) { return; }
             HelperStormActive = active;
             // 清掉旧激光，不把普通模式的剩余时长带进风暴，也不让补兵后留下免费激光。
@@ -80,7 +83,7 @@ namespace RevGame.Services
             _helperSpeech = "风暴模式！锁定远程，火力全开！";
             if (_battleElapsed >= _stormMissileAt)
             {
-                _stormMissileAt = _battleElapsed + Balance.HelperStormMissileSeconds;
+                _stormMissileAt = _battleElapsed + Balance.HelperStormMissileSeconds / HelperStormSpeedFactor;
                 BoardPos impact = target.Pos;
                 CollectStormTargets();
                 for (int index = 0; index < _stormTargets.Count; index++)
@@ -91,14 +94,14 @@ namespace RevGame.Services
                     float dx = Math.Max(0, Math.Max(enemy.Pos.X - impact.X, impact.X - (enemy.Pos.X + enemy.Size - 1)));
                     float dy = Math.Max(0, Math.Max(enemy.Pos.Y - impact.Y, impact.Y - (enemy.Pos.Y + enemy.Size - 1)));
                     if (dx * dx + dy * dy <= Balance.HelperStormBlastRadius * Balance.HelperStormBlastRadius)
-                    { DamagePiece(enemy, ClampDamage(Balance.HelperStormMissileDamage * (enemy == target ? 1f : .5f), 1), damageKind: BattleDamageKind.HelperBeam); }
+                    { DamagePiece(enemy, ClampDamage(Balance.HelperStormMissileDamage * HelperStormAttackFactor * (enemy == target ? 1f : .5f), 1), damageKind: BattleDamageKind.HelperBeam); }
                 }
                 EmitStorm(target, impact, HelperWeapon.Missile, 1);
             }
             if (Phase != GamePhase.Battle) { return; }
             if (_battleElapsed >= _stormJellyAt)
             {
-                _stormJellyAt = _battleElapsed + Balance.HelperStormJellySeconds;
+                _stormJellyAt = _battleElapsed + Balance.HelperStormJellySeconds / HelperStormSpeedFactor;
                 CollectStormTargets();
                 int count = _stormTargets.Count;
                 for (int i = 0; i < Balance.HelperStormJellyCount && count > 0 && Phase == GamePhase.Battle; i++)
@@ -106,7 +109,7 @@ namespace RevGame.Services
                     Piece enemy = _stormTargets[_stormJellyCursor++ % count];
                     if (!enemy.IsAlive) { continue; }
                     BoardPos position = enemy.Pos;
-                    DamagePiece(enemy, ClampDamage(Balance.HelperStormJellyDamage, 1), damageKind: BattleDamageKind.HelperBeam);
+                    DamagePiece(enemy, ClampDamage(Balance.HelperStormJellyDamage * HelperStormAttackFactor, 1), damageKind: BattleDamageKind.HelperBeam);
                     EmitStorm(enemy, position, HelperWeapon.Jellyfish, 1);
                 }
                 _stormJellyCursor %= Math.Max(1, count);
@@ -116,13 +119,13 @@ namespace RevGame.Services
             if (target == null) { return; }
             if (_battleElapsed >= _stormBeamAt)
             {
-                _stormBeamAt = _battleElapsed + Balance.HelperStormBeamCooldown;
+                _stormBeamAt = _battleElapsed + Balance.HelperStormBeamCooldown / HelperStormSpeedFactor;
                 _stormBeamUntil = _battleElapsed + Balance.HelperStormBeamSeconds;
                 _stormBeamRemainder = 0;
             }
             if (_battleElapsed >= _stormBeamUntil) { return; }
             // 小数伤害累积后取整，避免每个固定步向上取1使低DPS被帧率放大。
-            _stormBeamRemainder += Balance.HelperStormBeamDps * seconds;
+            _stormBeamRemainder += Balance.HelperStormBeamDps * HelperStormAttackFactor * seconds;
             int damage = (int)_stormBeamRemainder;
             _stormBeamRemainder -= damage;
             BoardPos end = target.Pos;

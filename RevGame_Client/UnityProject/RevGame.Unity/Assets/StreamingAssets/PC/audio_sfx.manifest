@@ -1,53 +1,28 @@
 ManifestFileVersion: 0
-CRC: 3990162966
+CRC: 2060679146
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 41d7a7a7d3e26ed5a4e6e7a0eb26cc84
+    Hash: aadd16ed5485f2c48d341df300aa890a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9a2ca7bdbd1871f7131daf57de908e0c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 41d7a7a7d3e26ed5a4e6e7a0eb26cc84
+    Hash: aadd16ed5485f2c48d341df300aa890a
 HashAppended: 0
 ClassTypes:
 - Class: 83
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/GameRes/Audio/Sfx/HelperExplosion.ogg
-- Assets/GameRes/Audio/Sfx/Boss_BlinkBlast.ogg
 - Assets/GameRes/Audio/Sfx/Defeat.wav
-- Assets/GameRes/Audio/Sfx/Boss_Cleave.ogg
-- Assets/GameRes/Audio/Sfx/HelperJellyImpact.ogg
-- Assets/GameRes/Audio/Sfx/Boss_PoisonMarsh.ogg
 - Assets/GameRes/Audio/Sfx/Hit.wav
-- Assets/GameRes/Audio/Sfx/Boss_ChainLightning.ogg
-- Assets/GameRes/Audio/Sfx/Boss_FrostNova.ogg
-- Assets/GameRes/Audio/Sfx/Boss_DoomSigil.ogg
-- Assets/GameRes/Audio/Sfx/Boss_GravityWell.ogg
-- Assets/GameRes/Audio/Sfx/Boss_MeteorShower.ogg
-- Assets/GameRes/Audio/Sfx/Boss_SoulDrain.ogg
-- Assets/GameRes/Audio/Sfx/HelperMissile.ogg
-- Assets/GameRes/Audio/Sfx/Boss_Enrage.ogg
-- Assets/GameRes/Audio/Sfx/HelperJellyfish.ogg
-- Assets/GameRes/Audio/Sfx/Boss_BulletRing.ogg
-- Assets/GameRes/Audio/Sfx/Boss_Summon.ogg
 - Assets/GameRes/Audio/Sfx/Place.wav
-- Assets/GameRes/Audio/Sfx/Boss_LaserSpin.ogg
-- Assets/GameRes/Audio/Sfx/Boss_FlameWall.ogg
 - Assets/GameRes/Audio/Sfx/Upgrade.wav
-- Assets/GameRes/Audio/Sfx/HelperHeal.ogg
 - Assets/GameRes/Audio/Sfx/BossEntrance.ogg
 - Assets/GameRes/Audio/Sfx/Victory.wav
 - Assets/GameRes/Audio/Sfx/BossExit.ogg
-- Assets/GameRes/Audio/Sfx/Boss_IceLance.ogg
-- Assets/GameRes/Audio/Sfx/Boss_CrossLaser.ogg
 - Assets/GameRes/Audio/Sfx/RegionWave.ogg
-- Assets/GameRes/Audio/Sfx/Boss_Bombard.ogg
 - Assets/GameRes/Audio/Sfx/EnergyHuge.ogg
-- Assets/GameRes/Audio/Sfx/Boss_Snipe.ogg
-- Assets/GameRes/Audio/Sfx/HelperBarrage.ogg
-- Assets/GameRes/Audio/Sfx/HelperBeam.ogg
 Dependencies: []

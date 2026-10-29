@@ -9,7 +9,7 @@ Shader "RevGame/Helper/HealingImpact"
  }
  SubShader
  {
-  Tags {"Queue"="Transparent+37" "RenderType"="Transparent"}
+  Tags {"Queue"="Transparent+7" "RenderType"="Transparent"}
   Blend SrcAlpha OneMinusSrcAlpha ZWrite Off Cull Off
   Pass
   {

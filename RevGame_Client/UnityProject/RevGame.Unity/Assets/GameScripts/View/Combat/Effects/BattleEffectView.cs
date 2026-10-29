@@ -170,7 +170,7 @@ namespace RevGame.View
             BattleText config = GameTextConfig.Damage(kind, targetSide);
             DamageKind = kind;
             Color color = GameTextConfig.ColorOf(config);
-            ConfigureText(config, config.Text.Replace("{damage}", damage.ToString()), color);
+            ConfigureText(config, config.Text.Replace("{damage}", GameTextConfig.DisplayDamage(damage).ToString()), color);
             StartFloatingText(config, position + new Vector3(0f, 0.35f, -0.5f), false, arrange);
         }
 

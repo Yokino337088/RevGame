@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3095569165
+CRC: 210057309
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -204,4 +204,28 @@ AssetBundleManifest:
       Dependencies: {}
     Info_50:
       Name: atlas_helperstormframes
+      Dependencies: {}
+    Info_51:
+      Name: audio_boss_chapter01
+      Dependencies: {}
+    Info_52:
+      Name: audio_boss_chapter02
+      Dependencies: {}
+    Info_53:
+      Name: audio_boss_chapter03
+      Dependencies: {}
+    Info_54:
+      Name: audio_boss_chapter04
+      Dependencies: {}
+    Info_55:
+      Name: audio_boss_chapter05
+      Dependencies: {}
+    Info_56:
+      Name: audio_boss_chapter06
+      Dependencies: {}
+    Info_57:
+      Name: audio_boss_common
+      Dependencies: {}
+    Info_58:
+      Name: audio_helper
       Dependencies: {}

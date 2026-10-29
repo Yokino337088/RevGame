@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 1888360035
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b036d00d454029808048ab286fcefa42
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b036d00d454029808048ab286fcefa42
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_DivineCross.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_RunicGrid.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_DoomSigil.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_FinalEdict.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_HaloPulse.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_Summon.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_JudgementLances.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_CrossLaser.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_Sanctuary.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter06/Boss_Heavenfall.ogg
+Dependencies: []

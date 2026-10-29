@@ -1,0 +1,612 @@
+[
+  {
+    "skill": "Cleave",
+    "name": "横扫震地",
+    "resource": "Boss_Cleave",
+    "source": "impactPunch_heavy_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "b33a8f14068aec24ec69ba85e5e87fdc41228975f6a1a3e44a6e7d6fc3d9f8d8",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_Cleave",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "Snipe",
+    "name": "致命狙击",
+    "resource": "Boss_Snipe",
+    "source": "laserLarge_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "a56d95794cd732d6c2d66ce488c14cf557fe526c282897c9a77675c2bd9b77e6",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_Snipe",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "Bombard",
+    "name": "三连轰炸",
+    "resource": "Boss_Bombard",
+    "source": "explosionCrunch_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_Bombard",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "BulletRing",
+    "name": "弹幕风暴",
+    "resource": "Boss_BulletRing",
+    "source": "laserRetro_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "2a203a007d24cc7e607eb8bec1d86bedba7f551911217ce2c4c1f31393aed32c",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_BulletRing",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "BlinkBlast",
+    "name": "瞬影爆破",
+    "resource": "Boss_BlinkBlast",
+    "source": "spaceEngineSmall_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "2bec8ff75d81f0c37a6b78bd63beea6c70375e49ee30b0bbe7f38d654d576831",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_BlinkBlast",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "LaserSpin",
+    "name": "天光回旋",
+    "resource": "Boss_LaserSpin",
+    "source": "laserLarge_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "e678aca631495b7dfef4ac625f0349875ccac81a60f538d530e072241af3e4bd",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_LaserSpin",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "SoulDrain",
+    "name": "灵魂汲取",
+    "resource": "Boss_SoulDrain",
+    "source": "spaceEngineLow_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "d7deee8d7217ce63aab802ad7365a59cacfd243392dc1bd03b0a9d454aa494df",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_SoulDrain",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "Summon",
+    "name": "召唤影卫",
+    "resource": "Boss_Summon",
+    "source": "forceField_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "c2916f2a062c8ddd1aca2826d134fe90847037db31342726ffb0f9097afe339c",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_Summon",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "Enrage",
+    "name": "狂暴怒吼",
+    "resource": "Boss_Enrage",
+    "source": "lowFrequency_explosion_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "3cb48d86dab63140cfb9aaeea4d4a6846abaca5831d157d8adbec0490da26343",
+    "logicalPath": "Audio/Sfx/Boss/Common/Boss_Enrage",
+    "bundle": "audio_boss_common"
+  },
+  {
+    "skill": "MeteorShower",
+    "name": "流星陨落",
+    "resource": "Boss_MeteorShower",
+    "source": "explosionCrunch_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "fdd04d6f0032d4d57c134ad37f3587d2d00e58c9572715275bd8cf4f43593576",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_MeteorShower",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "CrossLaser",
+    "name": "十字天罚",
+    "resource": "Boss_CrossLaser",
+    "source": "laserLarge_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "e5e0b6ccc4d5720c8174a3e5b7cc6f9be3057352a89cbb2e99a00efc6fe5cc11",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_CrossLaser",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "FrostNova",
+    "name": "极寒新星",
+    "resource": "Boss_FrostNova",
+    "source": "impactGlass_medium_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "9252d50bfb85edb17d6073c4a7806e10cdb9de56d3dbfc93a4b9727146d2df6d",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_FrostNova",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "ChainLightning",
+    "name": "连锁雷暴",
+    "resource": "Boss_ChainLightning",
+    "source": "laserRetro_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "a0a99efaa755594982d5dfebf3d9cecaed5249bdf1f0de29cf26ca9ea24c191a",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_ChainLightning",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "PoisonMarsh",
+    "name": "腐蚀毒沼",
+    "resource": "Boss_PoisonMarsh",
+    "source": "slime_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "480ee82b690136ea9db6966a3c3033356b8274752795c4e37afd6b6defcfacff",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_PoisonMarsh",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "FlameWall",
+    "name": "烈焰火墙",
+    "resource": "Boss_FlameWall",
+    "source": "thrusterFire_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "0fdc474d93f209debf1fc4ea77765a669dcb7676db31b4d8a0a509685bccf374",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_FlameWall",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "IceLance",
+    "name": "冰晶贯穿",
+    "resource": "Boss_IceLance",
+    "source": "impactGlass_heavy_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "b44b39a940e8948e74b9bd3776bff980df43cf220abdaf0d467dc4c43c0244a5",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_IceLance",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "GravityWell",
+    "name": "引力坍缩",
+    "resource": "Boss_GravityWell",
+    "source": "spaceEngineLarge_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "885aeda16116b715be5e8fd03d0d77959761015e1ca5823fd3b53d4fd965107f",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_GravityWell",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "DoomSigil",
+    "name": "末日烙印",
+    "resource": "Boss_DoomSigil",
+    "source": "forceField_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "5574e69dd04e5f59322c5ddffde5978f077b09170ae5e29cec0bd9901828cd90",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_DoomSigil",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "StarStorm",
+    "name": "星辰风暴",
+    "resource": "Boss_StarStorm",
+    "source": "laserRetro_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "df6112dc4eba5444bc28a1c8b80f6ce942bb2696beb466ac8e736b2ebf3e15b9",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_StarStorm",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "BlackHole",
+    "name": "黑洞陷落",
+    "resource": "Boss_BlackHole",
+    "source": "spaceEngineLow_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "307dfd8fbfe7e6f2d59dec4de445cf02bd4fff86005803096b8c95e333836a70",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_BlackHole",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "SolarFlare",
+    "name": "日冕灼潮",
+    "resource": "Boss_SolarFlare",
+    "source": "explosionCrunch_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "be2b8ddc62e4a24c91e2e77793de98549ce216faf2f323a917e7d6f34321ff97",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_SolarFlare",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "SunBrand",
+    "name": "烈阳烙印",
+    "resource": "Boss_SunBrand",
+    "source": "thrusterFire_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "924636edc923fe4aab5829b69dc5dc1c5d659dec5739865434dabee752a3bb79",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_SunBrand",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "TidalSurge",
+    "name": "怒涛横卷",
+    "resource": "Boss_TidalSurge",
+    "source": "spaceEngine_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "c06e84fb6734ddd0ce7242351e0952d560b3b3e47430172e8944f761d7bb1fc8",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_TidalSurge",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "Maelstrom",
+    "name": "回流涡旋",
+    "resource": "Boss_Maelstrom",
+    "source": "engineCircular_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "8ab85f9fa85e9e692287f98acb36b9ac3ba15313b007c039055e286b736f4e3a",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_Maelstrom",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "SwampMaw",
+    "name": "沼泽巨口",
+    "resource": "Boss_SwampMaw",
+    "source": "slime_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "822ca475d71e18ef6bba707dbe6bff2bd493d3457b2552f7473d23022c1257ca",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_SwampMaw",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "MireChains",
+    "name": "泥沼缚射",
+    "resource": "Boss_MireChains",
+    "source": "impactSoft_heavy_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "49e7ca88743fca974bb8676ea138b751cfd8f9033b5e7af8736c2a215d6edbc1",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_MireChains",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "FrozenPrison",
+    "name": "极寒囚笼",
+    "resource": "Boss_FrozenPrison",
+    "source": "impactGlass_heavy_001.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "58686e0e562612cc566791844a10e269f8d1921f4766c14ba43976fd0a429f4e",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_FrozenPrison",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "GlacialAegis",
+    "name": "冰封终焉",
+    "resource": "Boss_GlacialAegis",
+    "source": "impactGlass_heavy_002.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "4978654ac840ad519692d5d5ba48a8101cabce13b9a577be73ad589185e5e9ed",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_GlacialAegis",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "DivineCross",
+    "name": "十字神罚",
+    "resource": "Boss_DivineCross",
+    "source": "impactBell_heavy_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "94b8bb5f2d43ab65e4bcc32b28562416e9bc2c51d9fd4be1e333660ee52f977f",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_DivineCross",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "Sanctuary",
+    "name": "圣域",
+    "resource": "Boss_Sanctuary",
+    "source": "forceField_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "051b0eafc479695af4ca3607d41fd4be41bae7c21f4f9508d004722b09f1bd63",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_Sanctuary",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "CometRails",
+    "name": "彗星轨道",
+    "resource": "Boss_CometRails",
+    "source": "laserSmall_000.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "72b589eadd41781257ac859e4f4d030222e623390e4a1a83f6d05329a6e026f1",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_CometRails",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "AstralShards",
+    "name": "星屑追爆",
+    "resource": "Boss_AstralShards",
+    "source": "laserSmall_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "ab87913aba9790a0c5fa173d086267ba521ad522fcad2252271db49988313cf5",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_AstralShards",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "SolarSpears",
+    "name": "烈阳贯枪",
+    "resource": "Boss_SolarSpears",
+    "source": "thrusterFire_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "5f7731c30196d73777d62eec7cb36a28bf63852e70244057b7625b888e71a3a8",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_SolarSpears",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "EmberFan",
+    "name": "炎羽扇扫",
+    "resource": "Boss_EmberFan",
+    "source": "thrusterFire_003.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "04f558ca5abf30788e49ed4370289dfd7e38c7f054d2ea35c2a013210374f1e5",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_EmberFan",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "MagmaRings",
+    "name": "熔岩环爆",
+    "resource": "Boss_MagmaRings",
+    "source": "explosionCrunch_003.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "8c7197bb3a1c504690319c3abe0e62a5423ee246dd70caab57963d0b7aa8144f",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_MagmaRings",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "TidalLances",
+    "name": "潮汐水枪",
+    "resource": "Boss_TidalLances",
+    "source": "spaceEngine_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "ee53af299758b664c086d9ca99efecb41168596ea9fb1c5c24ac4389f94aea6b",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_TidalLances",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "FoamBurst",
+    "name": "泡沫连爆",
+    "resource": "Boss_FoamBurst",
+    "source": "spaceEngineSmall_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "a87d5d8b2233f7bd803df78927b52c27be251e8d1354c6cc9ea00ce26215e3da",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_FoamBurst",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "Undertow",
+    "name": "暗流绞阵",
+    "resource": "Boss_Undertow",
+    "source": "engineCircular_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "e1df3a942842a24f7c4056db3177e8008edd73d4f3985fd95f55362bc85058bc",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_Undertow",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "ReefSpikes",
+    "name": "礁岩穿刺",
+    "resource": "Boss_ReefSpikes",
+    "source": "impactMining_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "36b4ea107222d073c67ca64dde26944975609202d5090b2f2021213c1a7e35cd",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_ReefSpikes",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "BogSpines",
+    "name": "腐沼骨刺",
+    "resource": "Boss_BogSpines",
+    "source": "impactSoft_heavy_001.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "4d0096364ba9e46119d2ff6df493fdc101bd2e1efae061da5e5f77a53b3fdcb6",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_BogSpines",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "VenomFan",
+    "name": "毒雾扇潮",
+    "resource": "Boss_VenomFan",
+    "source": "spaceEngineLow_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "3b1adf8645a40c35fcad25eee224c82c9836dc443102a9af5586eb22cbedabcc",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_VenomFan",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "MireRipples",
+    "name": "泥潭连震",
+    "resource": "Boss_MireRipples",
+    "source": "impactSoft_medium_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "7d3ba0bb5e60a11b5d3e558c141303dcf494256675fbf753c0d252d2cf0481e3",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_MireRipples",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "BlightSeeds",
+    "name": "疫种爆裂",
+    "resource": "Boss_BlightSeeds",
+    "source": "impactSoft_heavy_002.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "d130ae541951243d3f6ed963d0057450a445ffe117fbf9a084d34eb1635cb563",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_BlightSeeds",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "SnowCross",
+    "name": "寒霜十字",
+    "resource": "Boss_SnowCross",
+    "source": "impactGlass_light_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "d750cf88097d0c3e69920e6e14496e1444e1a9da01aa4cca8f5ec8cb44c57b4f",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_SnowCross",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "HailBarrage",
+    "name": "冰雹连坠",
+    "resource": "Boss_HailBarrage",
+    "source": "impactGlass_medium_001.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "d3d806cb3012c9ddd87010b30295ccb74d6d8b690077d19e67afd09a9d8feb03",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_HailBarrage",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "IceFault",
+    "name": "冰川断层",
+    "resource": "Boss_IceFault",
+    "source": "impactGlass_heavy_003.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "aed07b154f24410c17e5262bbef832842fb275d41fe297f721af7501d0e9c23a",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_IceFault",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "JudgementLances",
+    "name": "裁决光矛",
+    "resource": "Boss_JudgementLances",
+    "source": "impactBell_heavy_001.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "9df61e3ae9a83dc65e5a1fd3ed19d480876f3b22b963a1b9ef6fa293592dcec4",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_JudgementLances",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "HaloPulse",
+    "name": "圣环脉冲",
+    "resource": "Boss_HaloPulse",
+    "source": "forceField_003.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "15e3fe971ffd3415e5ab641d3a4d043fb31f6712b0956315b524ba29c3889cda",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_HaloPulse",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "RunicGrid",
+    "name": "律令棋阵",
+    "resource": "Boss_RunicGrid",
+    "source": "impactMetal_heavy_000.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "e07045693e4a2b3d165c424e3dab4c781d9ff8880a386880ac89a51315d7f831",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_RunicGrid",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "EventHorizon",
+    "name": "星界崩塌",
+    "resource": "Boss_EventHorizon",
+    "source": "spaceEngineLarge_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "fcf4aec5587aa29cdb82fd24801ebd37accd57d61eb67683de8c48cb73ba899e",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_EventHorizon",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "ConstellationSeal",
+    "name": "星座封阵",
+    "resource": "Boss_ConstellationSeal",
+    "source": "laserRetro_003.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "4442b847419f5f203ef8ba16f19957124884da176c843d68d48a22e9cd022796",
+    "logicalPath": "Audio/Sfx/Boss/Chapter01/Boss_ConstellationSeal",
+    "bundle": "audio_boss_chapter01"
+  },
+  {
+    "skill": "PhoenixDescent",
+    "name": "焚天凤陨",
+    "resource": "Boss_PhoenixDescent",
+    "source": "explosionCrunch_004.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "9c3a1c73cadf0de5d5a578b31a264f20b1ac7cb6ec9bbd34a203f58402ea5390",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_PhoenixDescent",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "SolarEclipse",
+    "name": "日蚀审判",
+    "resource": "Boss_SolarEclipse",
+    "source": "lowFrequency_explosion_001.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "cdda50600a4928f2f1b8371224d53c171ac799c1cf2c30b11999508985250b3b",
+    "logicalPath": "Audio/Sfx/Boss/Chapter02/Boss_SolarEclipse",
+    "bundle": "audio_boss_chapter02"
+  },
+  {
+    "skill": "LeviathanWake",
+    "name": "巨鲸破浪",
+    "resource": "Boss_LeviathanWake",
+    "source": "spaceEngine_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "5a1b1cc6d335944dd9ef94578b6bad939195d3020f61780c19425d2f6b3583db",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_LeviathanWake",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "AbyssalCage",
+    "name": "深渊潮牢",
+    "resource": "Boss_AbyssalCage",
+    "source": "engineCircular_002.ogg",
+    "pack": "Sci-fi Sounds",
+    "sha256": "5f364bd42269e111df1d421fa2b45f0b2f0cc99a873ceae2d55b34898ad0d779",
+    "logicalPath": "Audio/Sfx/Boss/Chapter03/Boss_AbyssalCage",
+    "bundle": "audio_boss_chapter03"
+  },
+  {
+    "skill": "PlagueBloom",
+    "name": "瘟疫绽放",
+    "resource": "Boss_PlagueBloom",
+    "source": "impactSoft_heavy_003.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "d00286a2dc62ee5cb4d42bf56120e7050a855f69e655fc1294410aadd337eba3",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_PlagueBloom",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "HydraFangs",
+    "name": "九首獠牙",
+    "resource": "Boss_HydraFangs",
+    "source": "impactSoft_heavy_004.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "e008f0b6b14f62339c8fe9f9b45cbd6317ba4f66604c4899053b8017020a36f0",
+    "logicalPath": "Audio/Sfx/Boss/Chapter04/Boss_HydraFangs",
+    "bundle": "audio_boss_chapter04"
+  },
+  {
+    "skill": "AbsoluteZero",
+    "name": "绝对零域",
+    "resource": "Boss_AbsoluteZero",
+    "source": "impactGlass_medium_002.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "48616f22c95589ed9fe55babf0fd012721d7b2ef1b9e85c2ad6408a2cd7c164f",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_AbsoluteZero",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "Avalanche",
+    "name": "万仞雪崩",
+    "resource": "Boss_Avalanche",
+    "source": "impactGlass_heavy_004.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "c7742b0e33c1733ddaf902aa68464a4f5364e4d4cb6ff11b76a7aa4151a138dd",
+    "logicalPath": "Audio/Sfx/Boss/Chapter05/Boss_Avalanche",
+    "bundle": "audio_boss_chapter05"
+  },
+  {
+    "skill": "Heavenfall",
+    "name": "天穹裁决",
+    "resource": "Boss_Heavenfall",
+    "source": "impactBell_heavy_002.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "a4171ed1a4a17fb858a38de1c59b5b42e50d8f046c525706c0e3ac8671f189f5",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_Heavenfall",
+    "bundle": "audio_boss_chapter06"
+  },
+  {
+    "skill": "FinalEdict",
+    "name": "终极律令",
+    "resource": "Boss_FinalEdict",
+    "source": "impactMetal_heavy_001.ogg",
+    "pack": "Impact Sounds",
+    "sha256": "83554049f81f4db9209379e103c30bfa63f65c42189a03f300b045c2c82e23ae",
+    "logicalPath": "Audio/Sfx/Boss/Chapter06/Boss_FinalEdict",
+    "bundle": "audio_boss_chapter06"
+  }
+]

@@ -135,10 +135,10 @@ Helper.RangedAttackLink	0.2	帮手攻击成长向玩家远程普攻传递比例�
 Helper.RangedSpeedLink	0.8	帮手实际攻速成长向玩家远程攻击进度传递比例
 Helper.RangedAttackCap	0.15	远程共鸣攻击最高增加15%，不影响敌方/环境技能
 Helper.RangedSpeedCap	0.6	远程共鸣攻速最高增加60%，钱包消费不降档，换章重置
-Boss.HpMultiplier	100	2026-10-29三种子18场Boss实测中位283秒（原164秒）；与百分比伤害折减0.13、攻击倍率0.4配套，不保证每局固定时长
+Boss.HpMultiplier	125	2026-10-29用户指定：原100乘1.25，仅出生时应用主将生命倍率
 Helper.BossSpeedBonus	1	Boss回合帮手普通弹幕额外攻速比例，1=提高100%；不提高远程共鸣。
 Helper.BossDamageScale	0.75	Boss回合帮手单发弹幕伤害倍率；与加速分开，避免火力翻倍秒杀。
-Boss.AttackMultiplier	0.4	主将独立攻击倍率；普攻和技能共同使用，不影响普通敌棋与护卫。
+Boss.AttackMultiplier	0.75	用户继续强化：0.6再乘1.25；实际普攻与技能攻击倍率，显示乘十独立
 Boss.PercentDamageScale	0.13	主将承受最大生命比例伤害系数；炸弹、区域、炮火共用，保留固定伤害下限。
 Helper.StormThreshold	3	风暴触发上界：存活玩家棋数大于0且小于此数
 Helper.StormMissileSeconds	2.4	风暴导弹间隔，模拟秒
@@ -155,3 +155,9 @@ Boss.CommonSkillsPerExclusive	3	每3次通用主动技能穿插1次本章专属�
 Helper.ProtectionHealPerSecond	0.3	战斗只剩1枚存活玩家棋时，每秒恢复其最大生命30%；不复活、不提供无敌
 Helper.ProtectionAttackBonus	0.5	最后单棋保护攻击+50%，同伴补入即撤销，不累计写回原始属性
 Helper.ProtectionSpeedBonus	0.5	最后单棋保护攻速+50%，与已有加成相乘，回合退出撤销
+Helper.BossStormAttackBonus	1	Boss回合风暴武器攻击额外+100%，普通少子风暴保持原倍率
+Helper.BossStormSpeedBonus	1	Boss回合风暴导弹/水母/激光冷却速度额外+100%
+Helper.BossHealPerSecond	0.7	Boss治疗每模拟秒恢复目标最大生命70%，不复活死棋
+Helper.BossHealingAttackBonus	1	Boss治疗连线的当前棋子攻击额外+100%，换人撤销
+Helper.BossHealingSpeedBonus	1	Boss治疗连线的当前棋子攻速额外+100%，换人撤销
+Presentation.DamageMultiplier	10	所有伤害飘字乘十，真实扣血、伤害事件、积分和伤害合并仍保留原数值

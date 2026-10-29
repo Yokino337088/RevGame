@@ -130,6 +130,11 @@ namespace RevGame.Data
         /// <summary>玩家普攻真实命中基础积分；主要能源来源。</summary>
         public int HelperPlayerHitScore;
         /// <summary>风暴触发上界：存活玩家棋数大于0且小于此数；由战斗服务消费，不能由视图改变。</summary>
+        /// <summary>Boss风暴攻击/速度增量及治疗倍率，均由Excel读取；不在回合内累计修改。</summary>
+        public float HelperBossStormAttackBonus, HelperBossStormSpeedBonus, HelperBossHealPerSecond;
+        public float HelperBossHealingAttackBonus, HelperBossHealingSpeedBonus;
+        /// <summary>纯显示倍率，禁止参与伤害计算与积分；Excel参数使文案显示规则可调整。</summary>
+        public int DamageDisplayMultiplier;
         public int HelperStormThreshold;
         /// <summary>风暴导弹间隔，模拟秒；由战斗服务消费，不能由视图改变。</summary>
         public float HelperStormMissileSeconds;
@@ -326,7 +331,8 @@ namespace RevGame.Data
             v.BossAccelerationSeconds = r.Float("Boss.AccelerationSeconds", 1f, 3600f);
             v.BossAccelerationBonus = r.Float("Boss.AccelerationBonus", 0f, 100f);
             v.BossHpGrowthPerChapter = r.Float("Boss.HpGrowthPerChapter", 0f, 100f);
-            v.BossHpMultiplier = r.Float("Boss.HpMultiplier", 1f, 100f);
+            // 用户要求从100提高到125；范围门禁允许后续调试，但仍拒绝非有限值与负生命倍率。
+            v.BossHpMultiplier = r.Float("Boss.HpMultiplier", 1f, 200f);
             v.BossCommonSkillsPerExclusive = r.Int("Boss.CommonSkillsPerExclusive", 1, 10);
             v.BossAttackMultiplier = r.Float("Boss.AttackMultiplier", 0.01f, 1f);
             v.BossPercentDamageScale = r.Float("Boss.PercentDamageScale", 0.01f, 1f);
@@ -413,6 +419,7 @@ namespace RevGame.Data
             v.RangedLimit = r.Int("Player.RangedLimit",1,81);
             v.BossPlayerPieceLimit = r.Int("Boss.PlayerPieceLimit",1,70);
             v.EnemyJumpSeconds = r.Float("Enemy.JumpSeconds",0.3f,20f);
+            v.DamageDisplayMultiplier = r.Int("Presentation.DamageMultiplier",1,100);
             v.HelperStormThreshold = r.Int("Helper.StormThreshold",1,10);
             v.HelperStormMissileSeconds = r.Float("Helper.StormMissileSeconds",0.2f,30f);
             v.HelperStormMissileDamage = r.Float("Helper.StormMissileDamage",1f,1000f);
@@ -434,6 +441,11 @@ namespace RevGame.Data
             v.HelperBaseInterval = r.Float("Helper.BaseInterval",0.2f,10f);
             v.HelperMinInterval = r.Float("Helper.MinInterval",0.2f,10f);
             v.HelperBossSpeedBonus = r.Float("Helper.BossSpeedBonus",0f,3f);
+            v.HelperBossStormAttackBonus = r.Float("Helper.BossStormAttackBonus",0f,4f);
+            v.HelperBossStormSpeedBonus = r.Float("Helper.BossStormSpeedBonus",0f,4f);
+            v.HelperBossHealPerSecond = r.Float("Helper.BossHealPerSecond",0f,1f);
+            v.HelperBossHealingAttackBonus = r.Float("Helper.BossHealingAttackBonus",0f,4f);
+            v.HelperBossHealingSpeedBonus = r.Float("Helper.BossHealingSpeedBonus",0f,4f);
             v.HelperProtectionHealPerSecond = r.Float("Helper.ProtectionHealPerSecond",0f,1f);
             v.HelperProtectionAttackBonus = r.Float("Helper.ProtectionAttackBonus",0f,2f);
             v.HelperProtectionSpeedBonus = r.Float("Helper.ProtectionSpeedBonus",0f,2f);
@@ -619,6 +631,7 @@ namespace RevGame.Data
         public static int RangedLimit => V.RangedLimit;
         public static int BossPlayerPieceLimit => V.BossPlayerPieceLimit;
         public static float EnemyJumpSeconds => V.EnemyJumpSeconds;
+        public static int DamageDisplayMultiplier => V.DamageDisplayMultiplier;
         public static int HelperStormThreshold => V.HelperStormThreshold;
         public static float HelperStormMissileSeconds => V.HelperStormMissileSeconds;
         public static float HelperStormMissileDamage => V.HelperStormMissileDamage;
@@ -640,6 +653,11 @@ namespace RevGame.Data
         public static float HelperBaseInterval => V.HelperBaseInterval;
         public static float HelperMinInterval => V.HelperMinInterval;
         public static float HelperBossSpeedBonus => V.HelperBossSpeedBonus;
+        public static float HelperBossStormAttackBonus => V.HelperBossStormAttackBonus;
+        public static float HelperBossStormSpeedBonus => V.HelperBossStormSpeedBonus;
+        public static float HelperBossHealPerSecond => V.HelperBossHealPerSecond;
+        public static float HelperBossHealingAttackBonus => V.HelperBossHealingAttackBonus;
+        public static float HelperBossHealingSpeedBonus => V.HelperBossHealingSpeedBonus;
         public static float HelperProtectionHealPerSecond => V.HelperProtectionHealPerSecond;
         public static float HelperProtectionAttackBonus => V.HelperProtectionAttackBonus;
         public static float HelperProtectionSpeedBonus => V.HelperProtectionSpeedBonus;

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using RevGame.Core;
+using RevGame.Data;
 using RevGame.View;
 using UnityEditor;
 using UnityEngine;
@@ -31,11 +32,14 @@ namespace RevGame.Editor
             }
             try
             {
+                GameConfigTestSupport.Ensure();
+                var names = new HashSet<string>();
                 foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
                 {
                     string resource = GameAudio.GetBossSkillSoundName(kind);
+                    Check(names.Add(resource),kind + "音效映射不与其它技能重复");
                     Check(!string.IsNullOrEmpty(resource), kind + "存在明确声音映射");
-                    var clip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/GameRes/Audio/Sfx/" + resource + ".ogg");
+                    var clip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/GameRes/Audio/Sfx/" + GameAudio.GetBossSkillSoundPath(kind) + ".ogg");
                     Check(clip != null && clip.samples > 0 && clip.length > 0, kind + "实际声音资源非空：" + resource);
                 }
                 Check(GameAudio.GetBossSkillSoundName((BossSkillKind)(-1)) == null, "负数技能拒绝声音映射");
@@ -48,7 +52,7 @@ namespace RevGame.Editor
                 }
                 foreach (BattleDamageKind kind in Enum.GetValues(typeof(BattleDamageKind)))
                 {
-                    bool expected = kind >= BattleDamageKind.BossCleave && kind <= BattleDamageKind.BossSanctuary;
+                    bool expected = kind >= BattleDamageKind.BossCleave && kind <= BattleDamageKind.BossFinalEdict;
                     var hit = new BattleHitInfo(1, default, 1, GameSide.Player, 10, true, default, fromSkill: true, damageKind: kind);
                     Check(GamePresentation.IsBossSkillPlayerHit(hit) == expected, "震动只接Boss来源：" + kind);
                 }

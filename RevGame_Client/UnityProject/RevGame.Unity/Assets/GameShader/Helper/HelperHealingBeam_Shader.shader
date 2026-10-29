@@ -1,4 +1,4 @@
-// 治疗束由白绿光芯、深绿轮廓和沿长度流动的加号组成；深轮廓保证雪地/神殿背景上仍有边界。
+// 治疗束由绿色光芯、深绿轮廓和沿长度流动的能量组成；深轮廓保证雪地/神殿背景上仍有边界。
 Shader "RevGame/Helper/HealingBeam"
 {
  Properties
@@ -8,12 +8,11 @@ Shader "RevGame/Helper/HealingBeam"
   _Intensity("光芯亮度",Range(0,5))=2.6
   _BeamWidth("射线世界宽度",Range(.2,1.5))=.62
   _Speed("能量流速",Range(.1,5))=1.3
-  _PlusSize("加号大小",Range(.05,.35))=.19
   [PerRendererData]_BeamLength("长度宽度比",Float)=8
  }
  SubShader
  {
-  Tags {"Queue"="Transparent+36" "RenderType"="Transparent"}
+  Tags {"Queue"="Transparent+7" "RenderType"="Transparent"}
   Blend SrcAlpha OneMinusSrcAlpha ZWrite Off Cull Off
   Pass
   {
@@ -23,14 +22,8 @@ Shader "RevGame/Helper/HealingBeam"
    #include "UnityCG.cginc"
    struct appdata {float4 vertex:POSITION;float2 uv:TEXCOORD0;float4 color:COLOR;};
    struct v2f {float4 vertex:SV_POSITION;float2 uv:TEXCOORD0;float4 color:COLOR;};
-   float4 _Tint,_Outline;float _Intensity,_Speed,_PlusSize,_BeamLength;
+   float4 _Tint,_Outline;float _Intensity,_Speed,_BeamLength;
    v2f vert(appdata v){v2f o;o.vertex=UnityObjectToClipPos(v.vertex);o.uv=v.uv;o.color=v.color;return o;}
-   float crossShape(float2 p,float size)
-   {
-    float horizontal=max(abs(p.x)-size,abs(p.y)-size*.28);
-    float vertical=max(abs(p.x)-size*.28,abs(p.y)-size);
-    return 1-smoothstep(-.013,.013,min(horizontal,vertical));
-   }
    float4 frag(v2f i):SV_Target
    {
     float t=_Time.y*_Speed;
@@ -42,13 +35,11 @@ Shader "RevGame/Helper/HealingBeam"
     float core=exp(-center*center*95);
     float ribbonOffset=(center-sin(p.x*23-t*8)*.12)*14;
     float ribbon=exp(-ribbonOffset*ribbonOffset);
-    float2 cell=float2(frac(p.x*max(2,_BeamLength*.48)-t*1.25)-.5,center);
-    float plus=crossShape(cell,_PlusSize);
     float pulse=.85+.15*sin(p.x*55-t*17);
     float endpoints=smoothstep(0,.02,p.x)*smoothstep(1,.98,p.x);
     float3 color=lerp(_Outline.rgb,_Tint.rgb, saturate(core*.5+ribbon*.65+rail*.6));
     color+=_Tint.rgb*(core*.48+ribbon*.2+rail*.25)*_Intensity*pulse;
-    color=lerp(color,float3(.9,1,.88)*_Intensity,plus);
+    // 线内仅保留绿色流动能量，不绘制白色加号颗粒。
     return float4(color*i.color.rgb,outer*endpoints*.94*i.color.a);
    }
    ENDCG
