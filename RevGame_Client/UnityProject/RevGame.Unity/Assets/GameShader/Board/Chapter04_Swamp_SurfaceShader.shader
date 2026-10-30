@@ -34,13 +34,16 @@ fixed4 frag(v2f i):SV_Target {
  float2 w=i.world*_PatternScale; float flowTime=t*_FlowSpeed;
  float swirl=sin(w.y*2.4-flowTime*.42)*_FlowWarp;
  float mud=sin(w.x*4.1+swirl*2+flowTime*.55)+sin(w.y*4.6-w.x*1.6-flowTime*.33)*.55;
- float vein=pow(saturate(mud*.46+.32),4);
+ float vein=power4(saturate(mud*.46+.32));
  float2 center=float2(sin(flowTime*.2+id.y),cos(flowTime*.24+id.x))*.12;
  float seed=hash21(id); float age=frac(t*_BubbleSpeed*.12+seed);
  // 泥涡只偶尔出现；连续弯曲的缓慢明暗带才是沼泽的主要运动。
- float eddy=thin(length(p-center)-(.17+.03*sin(flowTime*.8)),.006)*step(1-_EddyDensity,seed);
+ // seed是格子固定种子，本格没有泥涡/气泡时先跳昂贵length/sin，图案密度和有效格公式不变。
+ float eddy=0;
+ [branch] if (seed >= 1-_EddyDensity) { eddy=thin(length(p-center)-(.17+.03*sin(flowTime*.8)),.006); }
  float2 bubbleAt=float2(seed*.6-.3,-.34+age*.72);
- float bubble=thin(length(p-bubbleAt)-(.025+age*.035)*_BubbleSize,.005)*sin(age*3.14159)*step(1-_BubbleDensity,seed);
+ float bubble=0;
+ [branch] if (seed >= 1-_BubbleDensity) { bubble=thin(length(p-bubbleAt)-(.025+age*.035)*_BubbleSize,.005)*sin(age*3.14159); }
  float light=innerMask(p)*(vein*_MudStrength+eddy*_EddyStrength+bubble*_BubbleStrength)+rim(p)*_RimStrength;
  return finishTileShaded(i,light,mud*_MudContrast);
 }

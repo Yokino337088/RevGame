@@ -683,7 +683,7 @@ namespace RevGame.Services
             bool critical = attacker.Side == GameSide.Player && _random.NextDouble() < Balance.CriticalChance;
             int real = ResolveDamage(new DamageRequest(target, DamageBasis.Attack, critical ? BattleDamageKind.Critical : BattleDamageKind.Normal, attacker, fromSkill: false));
             // ★ 倍数从参数取，不写死“×2”：策划把锁死倍率改成 3 时，战报要跟着变。
-            RevEvent.DispatchEvent<string>(Events.BattleLog, attacker.Def.DisplayName + " → " + target.Def.DisplayName + " -" + real + (target.IsLocked ? "（锁死×" + Balance.LockedDamageMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "）" : ""));
+            RevEvent.DispatchEvent<string>(Events.BattleLog, FormatAttackLog(attacker, target, real));
             RefreshGoState();
         }
 

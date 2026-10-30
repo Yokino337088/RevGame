@@ -35,15 +35,16 @@ float _FrostStrength, _FrostWidth, _FrostSpeed, _SnowStrength, _SnowDensity, _Sn
 fixed4 frag(v2f i):SV_Target {
  float2 p=tileLocal(i.world); float t=clockTime(); float2 id=tileId(i.world);
  float2 crystalLocal=p*_CrystalScale;
- float angle=atan2(p.y,p.x); float radius=length(crystalLocal);
- float crystal=pow(abs(cos(angle*4+hash21(id)*4)),34)*smoothstep(.06,.12,radius)*(1-smoothstep(.24,.39,radius));
+ float angle=atan2(p.y,p.x); float radius=length(crystalLocal); float seed=hash21(id);
+ float crystal=pow(abs(cos(angle*4+seed*4)),34)*smoothstep(.06,.12,radius)*(1-smoothstep(.24,.39,radius));
  float branch=thin(abs(crystalLocal.x)+abs(crystalLocal.y)-.38,_CrackWidth)*_CrackStrength;
  // 凝霜厚度是格宽的比例；最小值大于0，避免smoothstep两端重合产生无效像素。
  float frost=smoothstep(.47-_FrostWidth,.47,max(abs(p.x),abs(p.y)))*(.29+.21*sin(angle*8+id.x+t*_FrostSpeed*.72));
- float sweep=pow(saturate(.5+.5*sin(i.world.x*.72+i.world.y*.88-t*_GlintSpeed*.82)),8);
+ float sweep=power8(saturate(.5+.5*sin(i.world.x*.72+i.world.y*.88-t*_GlintSpeed*.82)));
  float snowTime=t*_SnowSpeed;
- float2 flake=float2(sin(snowTime*.5+id.x*7)*.24,.42-frac(snowTime*.12+hash21(id))*.8);
- float snow=mote(p,flake,_SnowSize)*step(1-_SnowDensity,hash21(id));
+ // 同一格种子只算一次，雪点密度的原筛选语义保持。
+ float2 flake=float2(sin(snowTime*.5+id.x*7)*.24,.42-frac(snowTime*.12+seed)*.8);
+ float snow=mote(p,flake,_SnowSize)*step(1-_SnowDensity,seed);
  float light=innerMask(p)*(crystal*(_CrystalStrength+_GlintStrength*sweep)+branch+snow*_SnowStrength)+frost*_FrostStrength+rim(p)*_RimStrength;
  return finishTileShaded(i,light,-_ColdShade+sweep*_IceContrast);
 }

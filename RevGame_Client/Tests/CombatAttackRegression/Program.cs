@@ -24,6 +24,13 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+            if (args.Length > 1 && args[1] == "cache-threshold")
+            {
+                string output = args.Length > 2 ? args[2] : "cache-threshold.csv";
+                File.WriteAllText(output, BattleService.MeasureScoreCacheThreshold());
+                Console.WriteLine("真实计分属性1至81棋路径计时已写入 " + output);
+                return 0;
+            }
             // 新增明确模式只运行查询缓存对照。默认全套仍保留原断言与失败，不用这个模式冒充默认全部通过。
             if (args.Length > 1 && args[1] == "query-cache")
             {

@@ -733,6 +733,7 @@ namespace RevGame.View
             }
             _effects.Add(effect);
             _textEffects.Add(effect);
+            effect.UseProjection(_feedbackProjection.Camera != null ? _feedbackProjection : null);
             effect.ShowAttack(config, position, _effectFinishedCallback, _arrangeTextCallback);
         }
 

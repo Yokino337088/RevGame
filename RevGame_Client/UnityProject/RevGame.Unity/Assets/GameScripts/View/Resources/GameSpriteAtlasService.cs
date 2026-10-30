@@ -16,6 +16,8 @@ namespace RevGame.View
     /// </summary>
     public sealed class GameSpriteAtlasService : IDisposable
     {
+        /// <summary>图集像素绑定修订号；弹道缓存只在此号变化后重读UV/纹理，避免逐发原生查询。</summary>
+        public static int BindingVersion { get; private set; }
         /// <summary>第一章专用图集标签；它与图片/材质/Shader同包，仅由当前背景租约持有。</summary>
         public const string TutorialAtlasName = "SceneBackdrop_0fc7e394Atlas";
         /// <summary>每个标签只发出一次LoadAsync；多个同时等待的渲染器复用同一条请求。</summary>
@@ -49,9 +51,13 @@ namespace RevGame.View
         /// <summary>框架初始化后注册。不要用静态永久事件，否则反复Play会累积监听和加载次数。</summary>
         public GameSpriteAtlasService()
         {
+            BindingVersion++;
+            SpriteAtlasManager.atlasRegistered += OnAtlasRegistered;
             SpriteAtlasManager.atlasRequested += OnAtlasRequested;
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreenChanged, owner: this);
         }
+
+        private static void OnAtlasRegistered(SpriteAtlas atlas) { BindingVersion++; }
 
         /// <summary>开发验收读取当前租约数量；它表示本类持有数，不代表整个Unity进程纹理数。</summary>
         public int HeldCount { get { return _entries.Count; } }
@@ -285,6 +291,8 @@ namespace RevGame.View
                 return;
             }
             _disposed = true;
+            SpriteAtlasManager.atlasRegistered -= OnAtlasRegistered;
+            BindingVersion++;
             SpriteAtlasManager.atlasRequested -= OnAtlasRequested;
             RevEvent.RemoveAllByOwner(this);
             foreach (Entry entry in _entries.Values) { Release(entry); }

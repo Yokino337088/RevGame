@@ -26,6 +26,10 @@ namespace RevGame.Editor
         // 一段已完成采样的汇总结果（可序列化成JSON）。各字段口径如下；CPU/GPU与墙钟不相加。
         public sealed class Row
         {
+            // 慢帧关联摘要来自同窗口预分配样本；父标记不可相加，最后值可能跨帧延迟，不自动宣称因果。
+            public double drawCalls, dynamicBatches, instancedBatches, editorMs = -1, playerMs = -1, maxGcBytes;
+            public long logHits, logMisses, scoreScans, scoreCacheHits;
+            public List<SlowFrame> slowFrames = new List<SlowFrame>();
             // 一段完成的采样：帧时单位毫秒，fps=总帧/墙钟秒；-1代表计数器无有效样本而非零成本。
             // chapter为1～6，repeat从0计；frames为真实采样帧数，gpuSamples是新时间戳有效GPU帧数。
             // attacks为期间真实攻击事件数，min/maxPieces核对负载，防止空盘高FPS被当优化成功。
@@ -56,6 +60,13 @@ namespace RevGame.Editor
             public bool budget80, budget90;
         }
         [Serializable]
+        public sealed class SlowFrame
+        {
+            public int frame;
+            public double ms, gpuMs, mainMs, editorMs, playerMs;
+            public long gcBytes;
+        }
+        [Serializable]
         // 整个作业请求/设备/状态与多个Row的容器。status只能与runId、完整请求段数、cleaned一起解释。
         public sealed class Result
         {
@@ -69,6 +80,8 @@ namespace RevGame.Editor
             // 首页仍可保留大厅共享包，不能要求总AB数量为0再强制卸载。
             public int first, last, repeats, requestedSeconds, errors, returnBundles, returnLogic, returnPieceRefs;
             public int requestedPieces;
+            // 仅GPU诊断：交替保持原魔法格面/替成内置Sprite采样，不作为正式画质优化结果。
+            public bool boardProbe;
             // 只在一段完整Measure返回后追加；失败段不填伪造Row，最终数量要等于(终章-首章+1)×次数。
             public List<Row> chapters = new List<Row>();
         }
@@ -80,9 +93,11 @@ namespace RevGame.Editor
             public double frame, gpu, main, render;
             // GC字节以及自定义标记纳秒原值；汇总时/1e6转毫秒，单位必须分清。
             public long gc, hud, feedback, arrange;
+            public long editor, player;
             // 本帧绘制统计与存活数，只取必要计数，不逐帧创建完整场景对象快照。
             public int batches, setPass, pieces;
             public int views, floating, projectiles, melee;
+            public int drawCalls, dynamicBatches, instancedBatches;
         }
         // 当前Editor作业结果，下一次Begin替换。旧result.json只是证据，不是当前作业仍成功的标记。
         private static Result _result;
@@ -93,7 +108,7 @@ namespace RevGame.Editor
         // 只标记取消，不声称收尾完成；必须继续等state直到清理状态明确。
         public static string Cancel() { _cancel = true; return "取消已请求，等待回首页清理"; }
         /// <summary>600秒热态及十次往返可在目标笔记本执行；时长仅用于测量，不调整规则。</summary>
-        public static string Begin(string label, int first, int last, int seconds, int repeats, int pieces = 48)
+        public static string Begin(string label, int first, int last, int seconds, int repeats, int pieces = 48, bool boardProbe = false)
         {
             if (!Application.isPlaying || EditorApplication.isPaused || _result?.status == "running") { throw new InvalidOperationException("需要未暂停Play且无运行压测"); }
             if (!RevServices.GetRequired<StoryProgress>().IsIsolated) { throw new InvalidOperationException("需要隔离进度"); }
@@ -109,6 +124,7 @@ namespace RevGame.Editor
                 repeats = repeats,
                 requestedSeconds = seconds,
                 requestedPieces = pieces,
+                boardProbe = boardProbe,
                 cpu = SystemInfo.processorType,
                 gpu = SystemInfo.graphicsDeviceName,
                 graphicsApi = SystemInfo.graphicsDeviceType.ToString(),
@@ -119,6 +135,8 @@ namespace RevGame.Editor
             };
             Directory.CreateDirectory(_result.folder); _cancel = false; Run(); return State();
         }
+        /// <summary>第四/五章ABAB诊断格面Shader成本；每段实际棋盘/弹幕仍81，不替生产材质或关闭背景。</summary>
+        public static string BeginBoardProbe() { return Begin("board-shader-probe", 4, 5, 15, 4, 81, true); }
         // 逐帧看取消或Play退出，抛异常交给统一catch/finally，不把半段测量算完成。
         private static void Guard() { if (_cancel || !Application.isPlaying) { throw new OperationCanceledException("取消或Play退出"); } }
         // 轮询真实业务就绪，最多60秒；剧情只通过正式推进入口翻完，accepted不等于加载完成。
@@ -156,16 +174,36 @@ namespace RevGame.Editor
                         if (!b.LoadPerformanceScenario(chapter, r.requestedPieces)) { throw new InvalidOperationException(b.LastError); }
                         await Wait(() => !flow.IsGameplayBlocked && b.PreparationGranted && UnityEngine.Object.FindObjectOfType<BoardView>()?.IsReady == true, "固定输入未就绪");
                         if (!RevLogic.Get<BattleLogic>().BeginBattle()) { throw new InvalidOperationException(b.LastError); }
-                        double until = Time.realtimeSinceStartupAsDouble + 2.5, heal = 0;
-                        while (Time.realtimeSinceStartupAsDouble < until)
+                        Material diagnostic = null;
+                        BoardCellView[] probeCells = null;
+                        Material normal = null;
+                        if (r.boardProbe && repeat % 2 == 1)
                         {
-                            Guard(); if (Time.realtimeSinceStartupAsDouble >= heal) { b.SustainPerformanceScenario(); heal = Time.realtimeSinceStartupAsDouble + 1; }
-                            await RevTask.Yield();
+                            // 只改变棋格采样Shader作归因，六章大背景和所有战斗Renderer仍保留。
+                            // 新材质属本测试段，Measure失败也在finally还原引用并Destroy，不能泄露进正式战斗。
+                            probeCells = UnityEngine.Object.FindObjectsOfType<BoardCellView>();
+                            normal = UnityEngine.Object.FindObjectOfType<BoardView>().SurfaceMaterial;
+                            diagnostic = new Material(Shader.Find("Sprites/Default")) { hideFlags = HideFlags.HideAndDontSave };
+                            foreach (BoardCellView cell in probeCells) { cell.ApplySurface(diagnostic); }
                         }
-                        r.chapters.Add(await Measure(chapter, repeat)); Write();
-                        // 连拍独立于采样窗口，不将截图阻塞作为游戏帧时；画面保留全部动态效果。
-                        for (int frame = 0; frame < 12; frame++)
-                        { ScreenCapture.CaptureScreenshot(Path.Combine(r.folder, "ch" + chapter + "-r" + repeat + "-" + frame.ToString("00") + ".png")); await RevTask.Delay(120); }
+                        try
+                        {
+                            double until = Time.realtimeSinceStartupAsDouble + 2.5, heal = 0;
+                            while (Time.realtimeSinceStartupAsDouble < until)
+                            {
+                                Guard(); if (Time.realtimeSinceStartupAsDouble >= heal) { b.SustainPerformanceScenario(); heal = Time.realtimeSinceStartupAsDouble + 1; }
+                                await RevTask.Yield();
+                            }
+                            r.chapters.Add(await Measure(chapter, repeat)); Write();
+                            // 连拍独立于采样窗口，不将截图阻塞作为游戏帧时；画面保留全部动态效果。
+                            for (int frame = 0; frame < 12; frame++)
+                            { ScreenCapture.CaptureScreenshot(Path.Combine(r.folder, "ch" + chapter + "-r" + repeat + "-" + frame.ToString("00") + ".png")); await RevTask.Delay(120); }
+                        }
+                        finally
+                        {
+                            if (probeCells != null) { foreach (BoardCellView cell in probeCells) { if (cell != null) { cell.ApplySurface(normal); } } }
+                            if (diagnostic != null) { UnityEngine.Object.Destroy(diagnostic); }
+                        }
                         if (!flow.ReturnHome()) { throw new InvalidOperationException(flow.LastError); }
                         await Wait(() => flow.Screen == GameScreen.Home && !flow.IsTransitioning, "返回首页超时");
                         if (UnityEngine.Object.FindObjectOfType<BoardView>() != null || RevResManager.GetRefCount("Atlases", "PieceFrames") != 0) { throw new InvalidOperationException("棋盘/图集引用未回收"); }
@@ -215,11 +253,14 @@ namespace RevGame.Editor
             var hud = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "RevGame.Hud.Refresh", 1);
             var feedback = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "RevGame.Feedback.Frame", 1);
             var arrange = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "RevGame.Feedback.Arrange", 1);
+            var editor = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "EditorLoop", 1);
+            var player = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "PlayerLoop", 1);
             double start = Time.realtimeSinceStartupAsDouble, previous = start, heal = start; ulong stamp = 0;
             // 保存测量前计数，结束取差值。把预热命中也算进窗口会虚高命中率。
             long hitsBefore = b.Board.AttackCacheHits, missesBefore = b.Board.AttackCacheMisses;
             long copiesBefore = b.Board.TacticalSnapshotCopies, reusesBefore = b.Board.TacticalPieceReuses;
             long textHitsBefore = GameTextConfig.DamageTextCacheHits, textMissesBefore = GameTextConfig.DamageTextCacheMisses;
+            long logHits = b.AttackLogHits, logMisses = b.AttackLogMisses, scoreScans = b.ScorePopulationScans, scoreHits = b.ScoreMultiplierHits;
             try
             {
                 while (Time.realtimeSinceStartupAsDouble - start < _result.requestedSeconds)
@@ -241,7 +282,9 @@ namespace RevGame.Editor
                         views = board.PieceCount,
                         floating = board.ActiveFloatingTextCount,
                         projectiles = board.ActiveProjectileCount,
-                        melee = board.ActiveMeleeCount
+                        melee = board.ActiveMeleeCount,
+                        drawCalls = UnityStats.drawCalls, dynamicBatches = UnityStats.dynamicBatches, instancedBatches = UnityStats.instancedBatches,
+                        editor = editor.Valid ? editor.LastValue : -1, player = player.Valid ? player.LastValue : -1
                     }; previous = now;
                     foreach (var p in b.PlayerPieces) { if (p.IsAlive) { s.pieces++; } }
                     foreach (var p in b.EnemyPieces) { if (p.IsAlive) { s.pieces++; } }
@@ -253,14 +296,27 @@ namespace RevGame.Editor
                 }
             }
             // 先停止监听/Recorder，再进入汇总；任何异常也清理，避免下一场还累计上一场攻击。
-            finally { RevEvent.RemoveAllByOwner(owner); gc.Dispose(); hud.Dispose(); feedback.Dispose(); arrange.Dispose(); }
+            finally { RevEvent.RemoveAllByOwner(owner); gc.Dispose(); hud.Dispose(); feedback.Dispose(); arrange.Dispose(); editor.Dispose(); player.Dispose(); }
             var row = new Row { chapter = chapter, repeat = repeat, frames = count, seconds = previous - start, attacks = attacks, hits = hits, rangedHits = rangedHits, actualDamage = damage, minPieces = int.MaxValue, minViews = int.MaxValue, resolution = UnityStats.screenRes };
             foreach (bool didAttack in acted.Values) { if (didAttack) { row.uniqueAttackers++; } }
+            row.logHits = b.AttackLogHits - logHits; row.logMisses = b.AttackLogMisses - logMisses;
+            row.scoreScans = b.ScorePopulationScans - scoreScans; row.scoreCacheHits = b.ScoreMultiplierHits - scoreHits;
             var times = new double[count]; var gpuTimes = new List<double>(count); var mainTimes = new List<double>(count); var renderTimes = new List<double>(count);
             long gcSum = 0, hudSum = 0, feedbackSum = 0, arrangeSum = 0; bool gcValid = false, hudValid = false, feedbackValid = false, arrangeValid = false;
+            long editorSum = 0, playerSum = 0; bool editorValid = false, playerValid = false;
             for (int i = 0; i < count; i++)
             {
                 var s = buffer[i]; times[i] = s.frame; row.minPieces = Math.Min(row.minPieces, s.pieces); row.maxPieces = Math.Max(row.maxPieces, s.pieces); row.batches += s.batches; row.setPass += s.setPass;
+                row.drawCalls += s.drawCalls; row.dynamicBatches += s.dynamicBatches; row.instancedBatches += s.instancedBatches;
+                if (s.editor >= 0) { editorSum += s.editor; editorValid = true; }
+                if (s.player >= 0) { playerSum += s.player; playerValid = true; }
+                row.maxGcBytes = Math.Max(row.maxGcBytes, s.gc);
+                if (s.frame > 33.3333)
+                {
+                    var slow = new SlowFrame { frame = i, ms = s.frame, gpuMs = s.gpu, mainMs = s.main, gcBytes = s.gc, editorMs = s.editor < 0 ? -1 : s.editor / 1e6, playerMs = s.player < 0 ? -1 : s.player / 1e6 };
+                    int index = 0; while (index < row.slowFrames.Count && row.slowFrames[index].ms >= slow.ms) { index++; }
+                    if (index < 12) { row.slowFrames.Insert(index, slow); if (row.slowFrames.Count > 12) { row.slowFrames.RemoveAt(12); } }
+                }
                 row.minViews = Math.Min(row.minViews, s.views); row.maxViews = Math.Max(row.maxViews, s.views);
                 row.floatingPeak = Math.Max(row.floatingPeak, s.floating); row.projectilePeak = Math.Max(row.projectilePeak, s.projectiles); row.meleePeak = Math.Max(row.meleePeak, s.melee);
                 if (s.frame > 12.5) { row.over125Ratio++; }
@@ -281,6 +337,9 @@ namespace RevGame.Editor
             if (renderTimes.Count > 0) { row.renderP95Ms = P(renderTimes, .95); }
             row.gcBytesPerFrame = gcValid ? gcSum / (double)count : -1; row.hudMs = hudValid ? hudSum / (double)count / 1e6 : -1; row.feedbackMs = feedbackValid ? feedbackSum / (double)count / 1e6 : -1; row.arrangeMs = arrangeValid ? arrangeSum / (double)count / 1e6 : -1;
             row.batches /= count; row.setPass /= count; row.over125Ratio /= count; row.over167Ratio /= count; row.over333Ratio /= count;
+            row.drawCalls /= count; row.dynamicBatches /= count; row.instancedBatches /= count;
+            row.editorMs = editorValid ? editorSum / (double)count / 1e6 : -1;
+            row.playerMs = playerValid ? playerSum / (double)count / 1e6 : -1;
             row.allocatedBytes = Profiler.GetTotalAllocatedMemoryLong(); row.reservedBytes = Profiler.GetTotalReservedMemoryLong(); row.monoBytes = Profiler.GetMonoUsedSizeLong();
             row.attackCacheHits = b.Board.AttackCacheHits - hitsBefore; row.attackCacheMisses = b.Board.AttackCacheMisses - missesBefore;
             row.attackCacheHitRatio = (row.attackCacheHits + row.attackCacheMisses) > 0 ? row.attackCacheHits / (double)(row.attackCacheHits + row.attackCacheMisses) : 0;

@@ -1,3 +1,7 @@
+﻿// ============================================================
+// BattleService.Score.cs —— 积分先在真实命中时结算，HUD与飞星只显示。
+// 高频倍率查询按实测人数阈值选择路径；缓存必须覆盖名单、生死、章回与配置，避免画面快了但分数错了。
+// ============================================================
 using System;
 using RevGame.Core;
 using RevGame.Data;
@@ -17,17 +21,75 @@ namespace RevGame.Services
         public long ChapterScore { get; private set; }
         /// <summary>本设备永久累计总量，重新挑战/退出大厅均保留；取值0～long.MaxValue。</summary>
         public long LifetimeScore { get; private set; }
+        // 名单/生死版本决定人数，章回和配置决定倍率。死亡但尚未Remove也会递增TargetVersion，不能漏扣人数。
+        // 使用服务自有值缓存，不保存Piece引用；隐藏也可能让TargetVersion变化，保守重算不会漏规则。
+        private int _scoreTopology = -1, _scoreTargets = -1, _scorePlayerCount = -1, _scoreAlive;
+        // 章回不改变占格但改变积分成长，公式配置也作为收据，不能仅缓存“活棋数→倍率”。
+        private int _scoreShownChapter = -1, _scoreShownRound = -1, _scoreRoundsPerChapter;
+        // Cap为倍率上限，Growth无量纲；全从Excel读取，缓存只保存上次输入，不写死游戏成长参数。
+        private float _scoreCap, _scoreRoundGrowth, _scorePieceGrowth, _scoreMultiplier;
+        // 2026-10-30：相同生产属性、1～81棋、7轮中位数；.NET两轮及Unity自带Mono独立宿主两轮均从1棋获益。
+        // 因而当前测得的交叉点为1（不是猜测8/16/32）。0棋直接计算，>=1棋核对版本后复用。
+        // 注意这是稳定盘面重复查询的阈值，非目标笔记本/Editor实测；每次失效时缓存更贵，详见当天报告。
+        // 缓存是服务自有值字段，没有字典。以后改公式/运行后端须复测，不能照搬此阈值到射界/战报。
+        internal const int ScoreCacheThreshold = 1;
+#if UNITY_EDITOR || REVGAME_OFFLINE_TESTS
+        // 仅测试强制路径：0全缓存、82全扫描；默认-1按正式阈值，不在发行版本提供开关。
+        internal int ScoreCacheThresholdOverride = -1;
+#endif
+        /// <summary>人数扫描累计次数；启用缓存时稳定查询不增加，直接路径每次扫描，死亡/复活/移除后重算。</summary>
+        public long ScorePopulationScans { get; private set; }
+        /// <summary>完整公式输入相同时复用倍率的累计次数，供Editor采样差值核对。</summary>
+        public long ScoreMultiplierHits { get; private set; }
         /// <summary>依据当前存活棋数即时计算；后续死亡会降低棋数部分，章节进度部分继续递增。</summary>
         public float ScoreMultiplier
         {
             get
             {
-                int alive = 0;
-                foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { alive++; } }
-                int progress = Math.Max(0, (Chapter - 1) * Balance.RoundsPerChapter + Round - 1);
-                return Math.Min(Balance.ScoreMultiplierCap, (1f + progress * Balance.ScoreRoundGrowth)
-                    * (1f + Math.Max(0, alive - 1) * Balance.ScorePieceGrowth));
+                int threshold = ScoreCacheThreshold;
+#if UNITY_EDITOR || REVGAME_OFFLINE_TESTS
+                if (ScoreCacheThresholdOverride >= 0) { threshold = ScoreCacheThresholdOverride; }
+#endif
+                if (_playerPieces.Count < threshold) { return CalculateScoreMultiplierDirect(); }
+                return ReadScoreMultiplierCached();
             }
+        }
+
+        /// <summary>小名单直接扫描，保持原公式。没有缓存收据检查的成本；不会沿用大名单时缓存的旧人数。</summary>
+        private float CalculateScoreMultiplierDirect()
+        {
+            int alive = 0;
+            foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { alive++; } }
+            ScorePopulationScans++;
+            int progress = Math.Max(0, (Chapter - 1) * Balance.RoundsPerChapter + Round - 1);
+            return Math.Min(Balance.ScoreMultiplierCap, (1f + progress * Balance.ScoreRoundGrowth)
+                * (1f + Math.Max(0, alive - 1) * Balance.ScorePieceGrowth));
+        }
+
+        /// <summary>大名单复用版本收据。回到大名单时必须核对占格/生死/章回/配置，不能直接用切换前的结果。</summary>
+        private float ReadScoreMultiplierCached()
+        {
+            bool populationChanged = _scoreTopology != _board.TopologyVersion || _scoreTargets != _board.TargetVersion || _scorePlayerCount != _playerPieces.Count;
+            // 步骤1：任何成员/生死变化才扫描；普通非致死扣血不改变人数，反复得分不扫描整名单。
+            if (populationChanged)
+            {
+                _scoreAlive = 0;
+                foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { _scoreAlive++; } }
+                _scoreTopology = _board.TopologyVersion; _scoreTargets = _board.TargetVersion; _scorePlayerCount = _playerPieces.Count;
+                ScorePopulationScans++;
+            }
+            // 配置仍从Excel读取。把影响公式的值也作为键，改表后不能命中旧倍率。
+            int rounds = Balance.RoundsPerChapter;
+            float cap = Balance.ScoreMultiplierCap, roundGrowth = Balance.ScoreRoundGrowth, pieceGrowth = Balance.ScorePieceGrowth;
+            if (!populationChanged && _scoreShownChapter == Chapter && _scoreShownRound == Round && _scoreRoundsPerChapter == rounds
+                && _scoreCap == cap && _scoreRoundGrowth == roundGrowth && _scorePieceGrowth == pieceGrowth)
+            { ScoreMultiplierHits++; return _scoreMultiplier; }
+            int progress = Math.Max(0, (Chapter - 1) * Balance.RoundsPerChapter + Round - 1);
+            // 步骤2：只在公式输入变化时重算；先得完整人数，再乘章回与棋数成长，原浮点顺序保持。
+            _scoreShownChapter = Chapter; _scoreShownRound = Round; _scoreRoundsPerChapter = rounds;
+            _scoreCap = cap; _scoreRoundGrowth = roundGrowth; _scorePieceGrowth = pieceGrowth;
+            _scoreMultiplier = Math.Min(cap, (1f + progress * roundGrowth) * (1f + Math.Max(0, _scoreAlive - 1) * pieceGrowth));
+            return _scoreMultiplier;
         }
 
         /// <summary>

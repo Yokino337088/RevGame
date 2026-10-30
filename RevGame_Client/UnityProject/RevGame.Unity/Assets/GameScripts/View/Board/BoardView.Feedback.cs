@@ -47,6 +47,8 @@ namespace RevGame.View
         // 每帧只扫描一次81条待播记录，稳定选出最老八条；同时间戳仍保持字典原遍历次序。
         // 固定八个候选槽，保存本帧最老待播数字的值类型副本。它不占额外活动飘字名额，也不持有棋子。
         private readonly PendingDamageText[] _damageBatch = new PendingDamageText[8];
+        // 每帧相机矩阵只从Unity读取一次，文字共享只读收据；各文字位置变化仍独立使自己的rect失效。
+        private readonly FeedbackProjection _feedbackProjection = new FeedbackProjection();
         // 每个棋盘独占固定长度缓冲。上限20条，因此不需要每帧new List/ToArray，也不共享静态可变数组。
         // Rect是值类型，缓存的是本次动画推进后的快照；下一帧重新采样，缩放/移动不会用到旧矩形。
         private readonly BattleEffectView[] _textSnapshot = new BattleEffectView[MaxFloatingTexts];
@@ -229,6 +231,12 @@ namespace RevGame.View
             }
             using (FeedbackFrameMarker.Auto())
             {
+                Camera camera = Camera.main;
+                if (camera != null)
+                {
+                    _feedbackProjection.Capture(camera);
+                    foreach (BattleEffectView effect in _textEffects) { effect.UseProjection(_feedbackProjection); }
+                }
                 FlushProjectiles();
                 // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
                 FlushDamageTexts();
@@ -356,6 +364,7 @@ namespace RevGame.View
             }
             _effects.Add(effect);
             _textEffects.Add(effect);
+            effect.UseProjection(_feedbackProjection.Camera != null ? _feedbackProjection : null);
             effect.ShowDamage(message.Position, message.Damage, message.Kind, _effectFinishedCallback, message.Side, _arrangeTextCallback);
         }
 

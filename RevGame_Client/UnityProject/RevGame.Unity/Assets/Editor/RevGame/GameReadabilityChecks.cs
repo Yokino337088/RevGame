@@ -211,6 +211,9 @@ namespace RevGame.Editor
                         Require(body.sprite != null && body.sprite.name.IndexOf("UI_", StringComparison.Ordinal) < 0, "弹头使用下载的职业原画");
                         Require(body.sharedMaterial.shader.name == "RevGame/Combat/RangedProjectile" && body.sharedMaterial.shader.isSupported, "职业Shader已真正绑定并支持当前GPU");
                         if (RevResBootstrap.UseABInEditor) { Require(body.sprite.packed, "真实AB中的职业图片已绑定图集"); }
+                        Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(body.sprite);
+                        Require(body.sharedMaterial.GetVector("_SpriteUV") == uv, "共享职业材质UV与真实图集绑定相同");
+                        Require(!body.HasPropertyBlock(), "职业弹道使用共享材质，未留逐弹道参数块");
                         if (materialByKind.TryGetValue(effect.ProjectileKind, out Material shared)) { Require(shared == body.sharedMaterial, "同职业弹道共用材质，没有隐式克隆"); }
                         else { materialByKind.Add(effect.ProjectileKind, body.sharedMaterial); }
                     }
@@ -285,6 +288,18 @@ namespace RevGame.Editor
         // 直接改UI成预期文本只会制造假通过，故这里只读已经落屏结果。
         private static void VerifyHud(BattleService battle)
         {
+            var camera = Camera.main;
+            if (camera != null)
+            {
+                // 投影实现属于运行时程序集且保持internal；开发验收只反射固定类型，不扩大生产API。
+                Type projectionType = typeof(BattleEffectView).Assembly.GetType("RevGame.View.FeedbackProjection", true);
+                object projection = Activator.CreateInstance(projectionType, true);
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                projectionType.GetMethod("Capture", flags).Invoke(projection, new object[] { camera });
+                Vector3 point = new Vector3(1.25f, -.75f, 0f);
+                Vector3 screen = (Vector3)projectionType.GetMethod("WorldToScreen", flags).Invoke(projection, new object[] { point });
+                Require(Vector3.Distance(camera.WorldToScreenPoint(point), screen) < .01f, "共享投影与Unity原生屏幕坐标一致");
+            }
             var hud = UnityEngine.Object.FindObjectOfType<RevGame.UI.BattleHudPanel>();
             Require(hud != null, "真实HUD已打开");
             hud.RefreshView();

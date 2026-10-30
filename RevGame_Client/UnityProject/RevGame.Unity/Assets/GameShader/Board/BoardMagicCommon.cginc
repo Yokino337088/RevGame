@@ -21,10 +21,13 @@ float mote(float2 p,float2 center,float radius) { return 1-smoothstep(radius*.3,
 float2 tileLocal(float2 world) { return frac((world-_Origin)/_CellSize)-.5; }
 float2 tileId(float2 world) { return floor((world-_Origin)/_CellSize); }
 float innerMask(float2 p) { return 1-smoothstep(.36,.48,max(abs(p.x),abs(p.y))); }
+// 固定整数幂使用乘法，输入与原pow保持同一范围；共享给格面常亮纹，减少通用幂运算。
+float power4(float x) { float square=x*x; return square*square; }
+float power8(float x) { float fourth=power4(x); return fourth*fourth; }
 // Boss命中时使用深色格面衬底和粗亮菱纹；独立于章节底色，因此冰雪盘不会吞掉浅色法纹。
 // 只改变颜色，保留源alpha；每格仍共用章节材质，无新增Pass、贴图采样或全屏处理。
 float3 bossImpactColor(float3 baseColor,float2 world) {
- if (_BossPulse <= 0.001) { return baseColor; }
+ [branch] if (_BossPulse <= 0.001) { return baseColor; }
  float2 p=tileLocal(world);
  float diamond=abs(p.x)+abs(p.y);
  float seal=1-smoothstep(.025,.065,abs(diamond-.35));

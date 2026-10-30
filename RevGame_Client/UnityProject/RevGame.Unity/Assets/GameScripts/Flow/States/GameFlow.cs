@@ -27,6 +27,7 @@ namespace RevGame.Flow
 
         public GameFlow()
         {
+            //这里是直接遍历注册状态
             foreach (GameScreen screen in Enum.GetValues(typeof(GameScreen)))
             {
                 _states.Add(screen, new FlowState(this, screen));
@@ -112,6 +113,11 @@ namespace RevGame.Flow
             return true;
         }
 
+        /// <summary>
+        /// 整场战斗结束后的分流。只有首次打赢时才播 "ending"；
+        /// 重打最终 Boss 时 FinalBossStoryShown 已为 true，直接回首页，不重复放结局；
+        /// 失败不播剧情——中途失败没有结局可放，直接回首页。
+        /// </summary>
         private void OnFinished(bool won)
         {
             if (won && FinalBossStoryShown) { ReturnHome(); }
@@ -128,12 +134,18 @@ namespace RevGame.Flow
             RevEvent.DispatchEvent<GameScreen>(Events.ScreenChanged, screen);
         }
 
+        /// <summary>流程状态文本，给 GM 只读查询与自动化断言用：屏幕、场景、过场、加载进度，再附框架域与 Logic 数量。</summary>
         public string Snapshot()
         {
             return "流程=" + Screen + "，场景=" + RevScene.CurrentName + "，过场=" + IsTransitioning
                 + "，加载进度=" + LoadProgress.ToString("P0") + "，步骤=" + LoadStep + "\n" + RevScope.Dump() + "\nLogic数量=" + RevLogic.Count;
         }
 
+        /// <summary>
+        /// 退出前的收尾，顺序不能调换：先置 _disposed 挡住后续回调，
+        /// 再取消 Boss 演出与剧情、释放剧情资源和预热句柄、摘掉本对象注册的事件，
+        /// 最后才 Change(Exit) 让 FSM 关闭域——域一关服务就没了，此时还在跑的演出回调会直接打到空引用上。
+        /// </summary>
         public void Dispose()
         {
             _disposed = true;
@@ -153,7 +165,9 @@ namespace RevGame.Flow
         /// <summary>一个屏幕对应一个域句柄。只关闭自己Enter拿到的域，不能ExitAll误清别人的服务。</summary>
         private sealed class FlowState : RevLightStateBase
         {
+            /// <summary>外层的 GameFlow，用来读写章节号这类全流程共享的数据。</summary>
             private readonly GameFlow _owner;
+            /// <summary>这个状态代表哪个屏幕（首页/选关/战斗/退出），创建时就定死，之后不会变。</summary>
             private readonly GameScreen _screen;
             /// <summary>本状态拥有的域；退出后置null，避免重复退出与复用旧句柄。</summary>
             private RevScopeHandle _scope;
@@ -163,6 +177,14 @@ namespace RevGame.Flow
                 _screen = screen;
             }
 
+            /// <summary>
+            /// 切换到这个屏幕时执行一次（状态机的"进入"回调）。按顺序做四件事：
+            /// ① 先更新 Screen，这样外面任何时候问"现在在哪个屏幕"，读到的都是新值；
+            /// ② Exit 只是程序退出用的假屏幕，不需要开域，直接返回；
+            /// ③ 开一个"域"——域是这个屏幕的逻辑容器，里面的服务和 Logic 会随域一起销毁，
+            ///    所以每个屏幕自己开一个，不要共用；
+            /// ④ 如果进的是战斗屏幕，再把棋局真正建起来（见下方 if 块）。
+            /// </summary>
             public override void OnEnter()
             {
                 _owner.Screen = _screen;
@@ -171,7 +193,9 @@ namespace RevGame.Flow
                     return;
                 }
 
+                // 战斗屏幕用自己的战斗域，首页和选关共用大厅域。
                 string domain = _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
+                //开启对应的域
                 _scope = RevScope.Enter(domain);
                 if (_scope == null || !_scope.IsOpen)
                 {
@@ -180,10 +204,12 @@ namespace RevGame.Flow
 
                 if (_screen == GameScreen.Battle)
                 {
+                    // 进战斗屏幕要按顺序做三步：建首回合 → 配教学开局 → 启动计时逻辑。
                     // 模型先生成首回合，再启动计时Logic；过场门禁阻止这段时间消耗准备秒数。
                     var battle = RevServices.GetRequired<IBattleService>();
                     bool started;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    // 只有开发包能走这条分支：GM 可以让这一场直接以指定章节的 Boss 战开局，正式包一律正常开章。
                     bool bossStart = _owner._bossDevelopmentStartPending;
                     _owner._bossDevelopmentStartPending = false;
                     started = bossStart ? ((BattleService)battle).BeginBossCampaignForDevelopment(_owner._chapter) : battle.BeginCampaign(_owner._chapter);
@@ -195,11 +221,13 @@ namespace RevGame.Flow
                         throw new InvalidOperationException(battle.LastError);
                     }
 
+                    // 教学局要先配好引导用的初始棋面，再启动引导逻辑，顺序反了引导会拿到普通开局。
                     if (_owner.IsTutorialActive)
                     {
                         ((BattleService)battle).ConfigureTutorialOpening();
                         if (RevLogic.Start<TutorialLogic>() == null) { throw new InvalidOperationException("无法启动真实棋盘引导"); }
                     }
+                    // 最后才启动 BattleLogic：它一启动就开始按秒推进准备计时，必须放在棋局建好之后。
                     if (RevLogic.Start<BattleLogic>() == null)
                     {
                         throw new InvalidOperationException("无法启动战斗域逻辑");

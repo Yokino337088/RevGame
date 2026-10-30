@@ -37,7 +37,10 @@ Shader "RevGame/Combat/RangedProjectile"
                 float2 uv = saturate((i.texcoord - _SpriteUV.xy) / max(_SpriteUV.zw - _SpriteUV.xy, 0.00001));
                 float t = _Time.y;
                 float2 p = uv * 2 - 1;
-                fixed4 c = SampleSpriteTexture(i.texcoord);
+                // 尾迹/外环分支会完整覆盖RGBA，只在原画本体分支采图，避免无用纹理带宽。
+                // _Trail是共享材质常量，相邻片元走同分支；保留原画、环、尾迹和混合方式。
+                fixed4 c = 0;
+                [branch] if (_Trail <= 0.5) { c = SampleSpriteTexture(i.texcoord); }
                 if (_Trail > 1.5)
                 {
                     // 法球外层独立魔法环，超出原画透明边界仍能看清；两个反向旋转的断环与符文形成职业轮廓。

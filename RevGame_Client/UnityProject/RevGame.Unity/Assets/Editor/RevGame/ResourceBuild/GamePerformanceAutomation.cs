@@ -29,7 +29,22 @@ namespace RevGame.Editor
         public static object Begin(RevAutomationRequest request)
         {
             var options = JsonUtility.FromJson<Options>(request.payloadJson) ?? new Options();
-            return Invoke("Begin", new object[] { options.label, options.first, options.last, options.seconds, options.repeats, options.pieces });
+            return Invoke("Begin", new object[] { options.label, options.first, options.last, options.seconds, options.repeats, options.pieces, false });
+        }
+        [RevAutomationAction("game.perf.board-probe", Environment="play", Keys=new string[0], Description="第4/5章81棋格面Shader交替对照，诊断后恢复原材质，非正式画质优化")]
+        public static object BoardProbe(RevAutomationRequest request) { return Invoke("BeginBoardProbe", null); }
+        [RevAutomationAction("game.perf.cache-threshold", Environment="edit", Keys=new string[0], Description="独立服务1至81玩家棋实际计分扫描/缓存/失效路径计时，不进入Play或写存档")]
+        public static object CacheThreshold(RevAutomationRequest request)
+        {
+            Type support = Type.GetType("RevGame.Editor.GameConfigTestSupport, Assembly-CSharp-Editor", true);
+            support.GetMethod("Ensure").Invoke(null, null);
+            Type service = Type.GetType("RevGame.Services.BattleService, Assembly-CSharp", true);
+            string csv = (string)service.GetMethod("MeasureScoreCacheThreshold").Invoke(null, new object[] { 100000, 7 });
+            string folder = System.IO.Path.GetFullPath("../../../.codex/work/render-opt-2026-10-30");
+            System.IO.Directory.CreateDirectory(folder);
+            string path = System.IO.Path.Combine(folder, "threshold-unity-" + DateTime.Now.ToString("HHmmss") + ".csv");
+            System.IO.File.WriteAllText(path, csv);
+            return new Result { text = path };
         }
         [RevAutomationAction("game.perf.state",Environment="play",Keys=new string[0],Description="只读唯一runId的测量摘要、完成状态与清理")]
         // 只读当前唯一作业结果；动作不重新开始压测。

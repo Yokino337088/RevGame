@@ -32,6 +32,26 @@ namespace RevGame.View
             public Vector2 WorldSize;
             public Color TrailColor = Color.white;
             public Vector2 TrailSize;
+            // 一份配方归一件池对象持有。首次/图集重绑读取尺寸与UV；只缓存值，不额外保活Texture像素。
+            [System.NonSerialized] internal int BindingVersion = -1;
+            [System.NonSerialized] internal Sprite BoundSprite;
+            [System.NonSerialized] internal Vector3 SpriteSize;
+            [System.NonSerialized] internal Vector4 Uv;
+            internal void EnsureGeometry()
+            {
+                if (BindingVersion == GameSpriteAtlasService.BindingVersion && BoundSprite == Sprite) { return; }
+                BindingVersion = GameSpriteAtlasService.BindingVersion; BoundSprite = Sprite;
+                SpriteSize = Sprite.bounds.size; Uv = DataUtility.GetOuterUV(Sprite);
+                // 每种职业只有一份原画，三层共享材质也只对应这份Sprite。图集晚绑定时统一更新材质UV，
+                // 不再为每发弹道的三个Renderer各传一个相同参数块；仍保留颜色、排序和原画三层。
+                BindMaterial(BodyMaterial); BindMaterial(TrailMaterial); BindMaterial(AuraMaterial);
+            }
+            private void BindMaterial(Material material)
+            {
+                if (material == null) { return; }
+                material.SetVector(SpriteUvId, Uv);
+                // _MainTex仍由SpriteRenderer的Sprite/图集绑定提供；不将Texture挂到共享材质保活上章资源。
+            }
         }
         [SerializeField] private ProjectileAppearance[] projectileStyles = new ProjectileAppearance[0];
         [SerializeField] private Sprite swordSlash, shieldImpact;
@@ -111,6 +131,8 @@ namespace RevGame.View
         private Matrix4x4 _rectCameraView, _rectCameraProjection;
         // 上次相机像素视口；窗口改变时即使相机世界位置相同，也不能复用旧像素矩形。
         private Rect _rectViewport;
+        private FeedbackProjection _projection;
+        internal void UseProjection(FeedbackProjection projection) { _projection = projection; }
 
         /// <summary>屏幕上真实文字的矩形，供整个棋盘统一避让；不使用渲染位置以外的固定“第几条通道”。</summary>
         public Rect TextScreenRect
@@ -131,12 +153,15 @@ namespace RevGame.View
                 Vector3 position = textTransform.position;
                 Vector3 scale = textTransform.lossyScale;
                 Quaternion rotation = textTransform.rotation;
-                Matrix4x4 view = camera.worldToCameraMatrix, projection = camera.projectionMatrix;
+                bool shared = _projection != null && _projection.Camera == camera && _projection.Frame == Time.frameCount;
+                Matrix4x4 view = shared ? _projection.View : camera.worldToCameraMatrix;
+                Matrix4x4 projection = shared ? _projection.Projection : camera.projectionMatrix;
+                Rect viewport = shared ? _projection.Viewport : camera.pixelRect;
                 // 缓存必须同时满足帧号、文字变换、相机矩阵和像素视口相同。
                 // 只缓存Time.frameCount会漏掉本帧Arrange修改位置后再次查询的情况。
-                if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale && _rectRotation == rotation && _rectCameraView == view && _rectCameraProjection == projection && _rectViewport == camera.pixelRect)
+                if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale && _rectRotation == rotation && _rectCameraView == view && _rectCameraProjection == projection && _rectViewport == viewport)
                 { return _cachedTextRect; }
-                _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale; _rectRotation = rotation; _rectCameraView = view; _rectCameraProjection = projection; _rectViewport = camera.pixelRect;
+                _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale; _rectRotation = rotation; _rectCameraView = view; _rectCameraProjection = projection; _rectViewport = viewport;
                 // 内容/字号未变则不再向原生Renderer查localBounds；失效后仅取一次并记在本对象。
                 if (!_localTextBoundsValid) { _localTextBounds = _textRenderer.localBounds; _localTextBoundsValid = true; }
                 Bounds bounds;
@@ -148,8 +173,8 @@ namespace RevGame.View
                     bounds = new Bounds(textTransform.TransformPoint(_localTextBounds.center), Vector3.Scale(_localTextBounds.size, scale));
                 }
                 else { bounds = _textRenderer.bounds; }
-                Vector3 min = camera.WorldToScreenPoint(bounds.min);
-                Vector3 max = camera.WorldToScreenPoint(bounds.max);
+                Vector3 min = shared ? _projection.WorldToScreen(bounds.min) : camera.WorldToScreenPoint(bounds.min);
+                Vector3 max = shared ? _projection.WorldToScreen(bounds.max) : camera.WorldToScreenPoint(bounds.max);
                 _cachedTextRect = Rect.MinMaxRect(Mathf.Min(min.x, max.x) - 3f, Mathf.Min(min.y, max.y) - 3f,
                     Mathf.Max(min.x, max.x) + 3f, Mathf.Max(min.y, max.y) + 3f);
                 return _cachedTextRect;
@@ -170,7 +195,7 @@ namespace RevGame.View
                 if (camera != null)
                 {
                     float rise = camera.orthographic
-                        ? _textRise * camera.pixelHeight / (2f * camera.orthographicSize)
+                        ? _textRise * (_projection != null && _projection.Camera == camera && _projection.Frame == Time.frameCount ? _projection.PixelsPerWorldY : camera.pixelHeight / (2f * camera.orthographicSize))
                         : camera.WorldToScreenPoint(transform.position + Vector3.up * _textRise).y - camera.WorldToScreenPoint(transform.position).y;
                     rect.height += Mathf.Max(0f, rise);
                 }
@@ -337,15 +362,14 @@ namespace RevGame.View
             spriteRenderer.sprite = style.Sprite;
             spriteRenderer.sharedMaterial = style.BodyMaterial;
             spriteRenderer.drawMode = SpriteDrawMode.Simple;
-            Vector3 size = style.Sprite.bounds.size;
+            style.EnsureGeometry();
+            Vector3 size = style.SpriteSize;
             float length = Mathf.Min(style.WorldSize.x, Vector3.Distance(source, target) * 0.8f);
             Vector3 flightScale = new Vector3(length / Mathf.Max(0.01f, size.x), style.WorldSize.y / Mathf.Max(0.01f, size.y), 1f);
             // 使用实际packed矩形还原局部UV，Shader的流动和拖尾不会采到图集中相邻图片。
-            // SpriteRenderer自身的纹理绑定也使用参数块；显式带上当前Sprite的图集页，不能用空块抹掉_MainTex。
+            // 职业材质共享局部UV，原图像素由SpriteRenderer图集绑定；不再逐弹道传相同参数块。
             _projectileProperties.Clear();
-            _projectileProperties.SetTexture("_MainTex", style.Sprite.texture);
-            _projectileProperties.SetVector(SpriteUvId, DataUtility.GetOuterUV(style.Sprite));
-            spriteRenderer.SetPropertyBlock(_projectileProperties);
+            spriteRenderer.SetPropertyBlock(null);
             ConfigureProjectileLayer(projectileOutline, style.Sprite, _magicAura ? style.AuraMaterial : style.BodyMaterial,
                 Vector3.zero, _magicAura ? new Vector3(1.6f, 1.8f, 1f) : new Vector3(1.1f, 1.25f, 1f), spriteRenderer.sortingOrder - 2);
             ConfigureProjectileLayer(projectileTrail, style.Sprite, style.TrailMaterial, Vector3.left * (size.x * 1.1f),
@@ -382,7 +406,7 @@ namespace RevGame.View
             layer.sprite = art;
             layer.drawMode = SpriteDrawMode.Simple;
             layer.sharedMaterial = material;
-            layer.SetPropertyBlock(_projectileProperties);
+            layer.SetPropertyBlock(null);
             layer.sortingLayerID = spriteRenderer.sortingLayerID;
             layer.sortingOrder = order;
             layer.transform.localPosition = offset;
@@ -579,6 +603,7 @@ namespace RevGame.View
         // 保留字符串只省下一次相同字形的重建，不意味着该字仍在屏幕渲染。
         public void OnPoolReturn()
         {
+            _projection = null;
             StopAnimation();
             HideProjectileLayers();
             spriteRenderer.enabled = false;

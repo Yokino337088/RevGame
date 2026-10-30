@@ -42,8 +42,9 @@ namespace RevGame.View
             _bossTileTween?.Kill(false); _bossTileTween = null;
             if (_surfaceRenderer != null && _bossTileProperties != null)
             {
-                _bossTileProperties.SetFloat("_BossPulse", 0f);
-                _surfaceRenderer.SetPropertyBlock(_bossTileProperties);
+                // 短效结束后彻底撤销自定义参数块，恢复章节材质默认值与SpriteRenderer图集绑定。
+                // 保留零脉冲参数块会让81个静态格长久携带实例状态，影响共享批次条件。
+                _surfaceRenderer.SetPropertyBlock(null);
             }
             SetVictoryWave(1f);
         }

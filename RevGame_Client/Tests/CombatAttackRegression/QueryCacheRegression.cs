@@ -78,6 +78,7 @@ internal static class QueryCacheRegression
             }
         }
         RandomBoardChanges(cached, expected);
+        RevGame.Services.BattleService.VerifyPresentationCaches(Check);
         Benchmark(); Console.WriteLine("查询缓存通过：" + _checks + "条断言"); return _checks;
     }
     /// <summary>反复改变占格与目标状态；每次逐棋比对原算法，检查缓存失效和连通块顺序。</summary>

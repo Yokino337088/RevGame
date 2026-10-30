@@ -37,6 +37,8 @@ namespace RevGame.View
         private static readonly DamageTextKey[] DamageTextSlots = new DamageTextKey[128];
         // 下一个可覆盖槽，始终0～127。命中不移动，未命中才轮转，这是有界FIFO缓存而非LRU。
         private static int _damageTextCursor;
+        // 未命中才使用的可复用文字草稿；不在每击new StringBuilder。最终字符串仍需ToString并进入有界缓存。
+        private static readonly System.Text.StringBuilder DamageBuilder = new System.Text.StringBuilder(128);
         // 复用已有格式化文案的累计次数；用于摘要命中率，不是CPU硬件L1/L2缓存计数。
         public static long DamageTextCacheHits { get; private set; }
         // 本会话需要格式化新键的次数；表切换会清零，因此性能采样记录前后差值。
@@ -82,7 +84,17 @@ namespace RevGame.View
             _damageTextCursor = (slot + 1) % DamageTextSlots.Length;
             // 未命中时先移除当前环形槽旧键，再格式化并写新键；否则槽循环了，字典却仍无限增长。
             if (DamageTextSlots[slot].Row != null) { DamageTextCache.Remove(DamageTextSlots[slot]); }
-            content = row.Text.Replace("{damage}", key.Number.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            DamageBuilder.Clear();
+            string template = row.Text;
+            int start = 0, token;
+            while ((token = template.IndexOf("{damage}", start, System.StringComparison.Ordinal)) >= 0)
+            {
+                // Append原串的一段，不先Substring创建中间字符串；支持同文案出现多个占位符。
+                DamageBuilder.Append(template, start, token - start).AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "{0}", key.Number);
+                start = token + 8;
+            }
+            DamageBuilder.Append(template, start, template.Length - start);
+            content = DamageBuilder.ToString();
             DamageTextSlots[slot] = key; DamageTextCache[key] = content; return content;
         }
 
