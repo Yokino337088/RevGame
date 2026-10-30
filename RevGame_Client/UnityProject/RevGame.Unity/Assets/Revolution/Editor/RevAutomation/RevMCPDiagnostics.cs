@@ -49,7 +49,9 @@ namespace Revolution.Editor
                 ["summaries"] = rows.Skip(options.offset).Take(options.limit).Select(row => new Dictionary<string, object>
                 {
                     ["id"] = row.id, ["operation"] = RevMCPActivityDescription.Title(row), ["purpose"] = RevMCPActivityDescription.Purpose(row),
-                    ["agentIntent"] = row.intent, ["intentProvided"] = !string.IsNullOrWhiteSpace(row.intent)
+                    ["agentIntent"] = row.intent, ["intentProvided"] = !string.IsNullOrWhiteSpace(row.intent),
+                    ["runtimeGM"] = RevMCPActivityDescription.TryGetRuntimeGM(row, out _),
+                    ["gmCommand"] = RevMCPActivityDescription.TryGetRuntimeGM(row, out string command) ? command : null
                 }).ToArray(),
                 ["note"] = "只读活动记录；Agent 调用成功不等于计划断言或业务验收通过。"
             };

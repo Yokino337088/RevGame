@@ -161,10 +161,15 @@ namespace RevGame.View
             rangeRenderer.enabled = false;
         }
         /// <summary>先整块高亮，随后按指定延迟逐格抬起落回。动画只改显示位置，不改棋盘占格。</summary>
-        public void PlayHazardWave(float delay, float duration, Vector4 edges)
+        public void PlayHazardWave(float delay, float duration, Vector4 edges, float elapsed = 0f)
         {
             CancelHazardWave();
-
+            EnsureHazardRenderer();
+            BeginHazardWave(delay, duration, edges, elapsed);
+        }
+        /// <summary>只创建静态显示节点，不启动动画；过场分帧调用，缺素材仍由实际播放入口报告。</summary>
+        private void EnsureHazardRenderer()
+        {
             if (_hazardRenderer == null && hazardSprite != null)
             {
                 var child = new GameObject("HazardOverlay");
@@ -174,7 +179,20 @@ namespace RevGame.View
                 _hazardRenderer.sharedMaterial = hazardMaterial;
                 _hazardRenderer.sortingOrder = 6;
                 child.transform.localScale = Vector3.one * (Consts.CellSize / hazardSprite.bounds.size.x);
+                _hazardRenderer.enabled = false;
             }
+        }
+        /// <summary>预热危险区和棋格跳跃层。先创建危险层再缓存子节点，避免后创建的层漏出跳跃工作区。</summary>
+        public void PrepareTransientVisuals()
+        {
+            EnsureHazardRenderer();
+            _hazardProperties ??= new MaterialPropertyBlock();
+            _bossTileProperties ??= new MaterialPropertyBlock();
+            SetVictoryWave(.5f);
+            SetVictoryWave(1f);
+        }
+        private void BeginHazardWave(float delay, float duration, Vector4 edges, float elapsed)
+        {
             if (_hazardRenderer != null)
             {
                 _hazardRenderer.enabled = true;
@@ -241,6 +259,11 @@ namespace RevGame.View
                 }
             });
             _hazardTween = sequence;
+            // 分帧只摊开装配，时间仍以原事件为准；排队的秒数快进掉，不能把警告落地节奏整体拖后。
+            if (elapsed > 0f)
+            {
+                sequence.Goto(elapsed, true);
+            }
         }
         /// <summary>换阶段/回池主动恢复原位。Kill(false)不会执行旧回调，避免动画把新回合格子抬走。</summary>
         public void CancelHazardWave()

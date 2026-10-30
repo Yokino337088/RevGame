@@ -271,7 +271,16 @@ namespace RevGame.Editor
                         }
                         Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(body.sprite);
                         Require(body.sharedMaterial.GetVector("_SpriteUV") == uv, "共享职业材质UV与真实图集绑定相同");
-                        Require(!body.HasPropertyBlock(), "职业弹道使用共享材质，未留逐弹道参数块");
+                        // 参数块存在与否不是正确性标准：必须证明本体、轮廓与拖尾真正绑定当前图集页。
+                        // 清空SpriteRenderer参数块曾使Shader回退白图；只查sprite.packed会漏掉这个回归。
+                        var binding = new MaterialPropertyBlock();
+                        foreach (SpriteRenderer layer in new[] { body, GetField<SpriteRenderer>(effect, "projectileOutline"), GetField<SpriteRenderer>(effect, "projectileTrail") })
+                        {
+                            binding.Clear();
+                            layer.GetPropertyBlock(binding);
+                            Require(binding.GetTexture("_MainTex") == layer.sprite.texture, "弹道三层参数块保留真实图集纹理，禁止白图回退");
+                            Require(binding.GetVector("_SpriteUV") == uv, "弹道三层UV与图集页绑定一致");
+                        }
 
                         if (materialByKind.TryGetValue(effect.ProjectileKind, out Material shared))
                         {

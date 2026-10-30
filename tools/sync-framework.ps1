@@ -72,6 +72,59 @@ $Protect = @(
     "PACKAGE_VERSION.txt"
 )
 
+# 用 git 的 clean 过滤器算内容哈希：CRLF 与 LF 归一到同一份内容，
+# 避免“行尾不同”被误判成“文件有改动”（package 分支是 LF、工程里是 CRLF）。
+function Get-ContentHash([string]$path, [string]$rel)
+{
+    $out = & git -C $FrameworkRepo hash-object --path=$rel -- $path 2>$null
+    if ($LASTEXITCODE -eq 0 -and $out)
+    {
+        return ($out | Select-Object -First 1).Trim()
+    }
+    return ""
+}
+
+# 覆盖文本文件时恢复成“原文件的行尾风格”：包内 LF、工程里 CRLF，
+# 直接复制会让整仓 700 个文件变成“全文件 diff”。
+function Copy-PreservingEol([string]$src, [string]$dst)
+{
+    $textExt = @(".cs", ".md", ".json", ".txt", ".xml", ".meta", ".asmdef", ".shader",
+                 ".cginc", ".hlsl", ".yaml", ".yml", ".toml", ".ps1", ".asset", ".prefab", ".unity")
+    $ext = [System.IO.Path]::GetExtension($dst).ToLowerInvariant()
+    $wantCrlf = $false
+    if (Test-Path -LiteralPath $dst)
+    {
+        $old = [System.IO.File]::ReadAllBytes($dst)
+        $crlf = 0
+        $lf = 0
+        $limit = [Math]::Min($old.Length, 40000)
+        for ($i = 0; $i -lt $limit; $i++)
+        {
+            if ($old[$i] -eq 10)
+            {
+                if ($i -gt 0 -and $old[$i - 1] -eq 13) { $crlf++ } else { $lf++ }
+            }
+        }
+        $wantCrlf = ($crlf -gt $lf)
+    }
+    Copy-Item -LiteralPath $src -Destination $dst -Force
+    if (-not $wantCrlf -or -not ($textExt -contains $ext))
+    {
+        return
+    }
+    $bytes = [System.IO.File]::ReadAllBytes($dst)
+    $conv = New-Object System.Collections.Generic.List[byte]
+    for ($i = 0; $i -lt $bytes.Length; $i++)
+    {
+        if ($bytes[$i] -eq 10 -and ($i -eq 0 -or $bytes[$i - 1] -ne 13))
+        {
+            $conv.Add([byte]13)
+        }
+        $conv.Add($bytes[$i])
+    }
+    [System.IO.File]::WriteAllBytes($dst, $conv.ToArray())
+}
+
 function Write-Step([string]$Text)
 {
     Write-Host ""
@@ -214,11 +267,28 @@ try
     Write-Host ("  临时目录 : " + $tmpRoot)
 
     # ---------------- 4. 计算计划 ----------------
-    Write-Step "计算差异（git diff --name-status）"
-    $diffLines = & git -C $FrameworkRepo diff --name-status "$baselineSha..$targetSha"
-    if ($LASTEXITCODE -ne 0)
+    # 【为什么要有兜底】package 分支每次发布都会重建提交（publish: 框架本体…），
+    # 旧基线可能已被回收；此时 git diff 会报 "Invalid revision range"，
+    # 但同步本身仍可继续 —— 改成逐文件比对内容即可，语义与“增量覆盖”一致。
+    # 用 rev-parse --quiet 探测：找不到时只返回退出码，不往 stderr 打字，
+    # 否则在 $ErrorActionPreference = "Stop" 下会被当成异常直接中断脚本。
+    $probe = & git -C $FrameworkRepo rev-parse --verify --quiet "$baselineSha^{commit}" 2>$null
+    $baselineUsable = ($LASTEXITCODE -eq 0) -and [bool]$probe
+
+    $diffLines = @()
+    if ($baselineUsable)
     {
-        throw ("git diff 失败（exit=" + $LASTEXITCODE + "）")
+        Write-Step "计算差异（git diff --name-status）"
+        $diffLines = & git -C $FrameworkRepo diff --name-status "$baselineSha..$targetSha"
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw ("git diff 失败（exit=" + $LASTEXITCODE + "）")
+        }
+    }
+    else
+    {
+        Write-Step "基线提交已不在仓库中，改为按文件内容比对"
+        Write-Host ("  基线 " + $baselineSha.Substring(0, 7) + " 已被 package 分支重建丢弃；按内容比对同样只覆盖有差异的文件") -ForegroundColor Yellow
     }
 
     $planAdd = New-Object System.Collections.Generic.List[string]
@@ -284,6 +354,38 @@ try
         }
     }
 
+    # 内容比对模式：拿不到提交差异时，逐个文件比哈希。
+    # 只处理“目标版本里有”的文件；本地多出来的不自动删，避免误删项目自建内容。
+    if (-not $baselineUsable)
+    {
+        foreach ($src in Get-ChildItem -LiteralPath $tmpRoot -Recurse -File -Force)
+        {
+            if ($src.Name -eq ".git")
+            {
+                continue
+            }
+            $rel = $src.FullName.Substring($tmpRoot.Length).TrimStart('\', '/').Replace('\', '/')
+            if ($Protect -contains $rel)
+            {
+                $planProtected.Add($rel)
+                continue
+            }
+            $dst = Join-Path $frameworkRoot $rel
+            if (-not (Test-Path -LiteralPath $dst))
+            {
+                $planAdd.Add($rel)
+            }
+            elseif ((Get-ContentHash $src.FullName $rel) -eq (Get-ContentHash $dst $rel))
+            {
+                $planSame.Add($rel)
+            }
+            else
+            {
+                $planUpdate.Add($rel)
+            }
+        }
+    }
+
     # ---------------- 5. 报告 ----------------
     $modeText = "DryRun（预演，不落盘）"
     if ($Apply)
@@ -334,7 +436,7 @@ try
             {
                 New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
             }
-            Copy-Item -LiteralPath $src -Destination $dst -Force
+            Copy-PreservingEol $src $dst
             $written++
         }
         Write-Host ("  已写入 " + $written + " 个文件")

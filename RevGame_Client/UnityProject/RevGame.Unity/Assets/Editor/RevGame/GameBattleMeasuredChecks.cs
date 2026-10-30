@@ -26,6 +26,13 @@ namespace RevGame.Editor
         // 一段已完成采样的汇总结果（可序列化成JSON）。各字段口径如下；CPU/GPU与墙钟不相加。
         public sealed class Row
         {
+            // Tick同步调用的独立Stopwatch摘要；毫秒/次与毫秒/整段分开，不能当成整帧或GPU耗时。
+            public int modelTicks;
+            public int maxSkillTileStarts;
+            public double modelStepSeconds, tickTotalMs, tickMeanMs, tickMaxMs;
+            // 真实事件后的两秒窗口包含落地、动画、GPU与后续帧；仅是相关窗口，不将GPU延迟计时冒充同帧因果。
+            public int bombImpacts, regionWarnings, bombDamageEvents, regionDamageEvents;
+            public double bombTriggerMs, regionTriggerMs, bombWindowMaxMs, regionWindowMaxMs, bombGpuMaxMs, regionGpuMaxMs;
             // 慢帧关联摘要来自同窗口预分配样本；父标记不可相加，最后值可能跨帧延迟，不自动宣称因果。
             public double drawCalls, dynamicBatches, instancedBatches, editorMs = -1, playerMs = -1, maxGcBytes;
             public long logHits, logMisses, scoreScans, scoreCacheHits;
@@ -82,6 +89,7 @@ namespace RevGame.Editor
             public int requestedPieces;
             // 仅GPU诊断：交替保持原魔法格面/替成内置Sprite采样，不作为正式画质优化结果。
             public bool boardProbe;
+            public bool skillSpikes;
             // 只在一段完整Measure返回后追加；失败段不填伪造Row，最终数量要等于(终章-首章+1)×次数。
             public List<Row> chapters = new List<Row>();
         }
@@ -94,6 +102,8 @@ namespace RevGame.Editor
             // GC字节以及自定义标记纳秒原值；汇总时/1e6转毫秒，单位必须分清。
             public long gc, hud, feedback, arrange;
             public long editor, player;
+            public bool bombWindow, regionWindow;
+            public int skillTileStarts;
             // 本帧绘制统计与存活数，只取必要计数，不逐帧创建完整场景对象快照。
             public int batches, setPass, pieces;
             public int views, floating, projectiles, melee;
@@ -115,7 +125,7 @@ namespace RevGame.Editor
             return "取消已请求，等待回首页清理";
         }
         /// <summary>600秒热态及十次往返可在目标笔记本执行；时长仅用于测量，不调整规则。</summary>
-        public static string Begin(string label, int first, int last, int seconds, int repeats, int pieces = 48, bool boardProbe = false)
+        public static string Begin(string label, int first, int last, int seconds, int repeats, int pieces = 48, bool boardProbe = false, bool skillSpikes = false)
         {
             if (!Application.isPlaying || EditorApplication.isPaused || _result?.status == "running")
             {
@@ -144,6 +154,7 @@ namespace RevGame.Editor
                 requestedSeconds = seconds,
                 requestedPieces = pieces,
                 boardProbe = boardProbe,
+                skillSpikes = skillSpikes,
                 cpu = SystemInfo.processorType,
                 gpu = SystemInfo.graphicsDeviceName,
                 graphicsApi = SystemInfo.graphicsDeviceType.ToString(),
@@ -391,8 +402,21 @@ namespace RevGame.Editor
                 acted.Add(id, false);
             }
             int count = 0, attacks = 0, hits = 0, rangedHits = 0, errorStart = _result.errors;
+            int bombImpacts = 0, regionWarnings = 0, bombDamage = 0, regionDamage = 0;
+            double bombAt = -100, regionAt = -100, bombTriggerMs = 0, regionTriggerMs = 0;
+            bool triggeredBomb = false, triggeredRegion = false;
             long damage = 0;
             object owner = new object();
+            RevEvent.AddEventListener<EnergyBombInfo>(Events.EnergyBombImpact, info =>
+            {
+                bombImpacts++;
+                bombAt = Time.realtimeSinceStartupAsDouble;
+            }, owner: owner);
+            RevEvent.AddEventListener<RegionPulseInfo>(Events.RegionPulseWarning, info =>
+            {
+                regionWarnings++;
+                regionAt = Time.realtimeSinceStartupAsDouble;
+            }, owner: owner);
             RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info =>
             {
                 attacks++;
@@ -406,6 +430,14 @@ namespace RevGame.Editor
             {
                 hits++;
                 damage += info.Damage;
+                if (info.DamageKind == BattleDamageKind.EnergyBomb)
+                {
+                    bombDamage++;
+                }
+                if (info.DamageKind == BattleDamageKind.RegionPulse)
+                {
+                    regionDamage++;
+                }
 
                 if (info.SourceIsRanged && !info.FromSkill)
                 {
@@ -419,6 +451,7 @@ namespace RevGame.Editor
             var editor = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "EditorLoop", 1);
             var player = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "PlayerLoop", 1);
             double start = Time.realtimeSinceStartupAsDouble, previous = start, heal = start;
+            BattleLogic.ResetTickMeasurements();
             ulong stamp = 0;
             // 保存测量前计数，结束取差值。把预热命中也算进窗口会虚高命中率。
             long hitsBefore = b.Board.AttackCacheHits, missesBefore = b.Board.AttackCacheMisses;
@@ -440,6 +473,9 @@ namespace RevGame.Editor
                     var s = new Sample
                     {
                         frame = (now - previous) * 1000,
+                        bombWindow = now - bombAt <= 2,
+                        regionWindow = now - regionAt <= 4,
+                        skillTileStarts = board.LastSkillTileStarts,
                         gpu = -1,
                         main = -1,
                         render = -1,
@@ -490,6 +526,30 @@ namespace RevGame.Editor
                     }
                     buffer[count++] = s;
 
+                    // 先记录上一完整帧再发动作，下一帧包含真实触发成本；只执行一次，不因拒绝重放变更。
+                    if (_result.skillSpikes && !triggeredBomb && now - start >= 2)
+                    {
+                        triggeredBomb = true;
+                        long began = System.Diagnostics.Stopwatch.GetTimestamp();
+                        var response = RevGM.Execute("RevGame/能量巨大");
+                        bombTriggerMs = (System.Diagnostics.Stopwatch.GetTimestamp() - began) * 1000d / System.Diagnostics.Stopwatch.Frequency;
+                        if (!response.Success)
+                        {
+                            throw new InvalidOperationException(response.Message);
+                        }
+                    }
+                    if (_result.skillSpikes && !triggeredRegion && now - start >= 8)
+                    {
+                        triggeredRegion = true;
+                        long began = System.Diagnostics.Stopwatch.GetTimestamp();
+                        var response = RevGM.Execute("RevGame/区域波动");
+                        regionTriggerMs = (System.Diagnostics.Stopwatch.GetTimestamp() - began) * 1000d / System.Diagnostics.Stopwatch.Frequency;
+                        if (!response.Success)
+                        {
+                            throw new InvalidOperationException(response.Message);
+                        }
+                    }
+
                     if (now >= heal)
                     {
                         b.SustainPerformanceScenario();
@@ -500,6 +560,21 @@ namespace RevGame.Editor
             // 先停止监听/Recorder，再进入汇总；任何异常也清理，避免下一场还累计上一场攻击。
             finally { RevEvent.RemoveAllByOwner(owner); gc.Dispose(); hud.Dispose(); feedback.Dispose(); arrange.Dispose(); editor.Dispose(); player.Dispose(); }
             var row = new Row { chapter = chapter, repeat = repeat, frames = count, seconds = previous - start, attacks = attacks, hits = hits, rangedHits = rangedHits, actualDamage = damage, minPieces = int.MaxValue, minViews = int.MaxValue, resolution = UnityStats.screenRes };
+            row.modelStepSeconds = RevGame.Data.Balance.BattleSimulationStepSeconds;
+            row.modelTicks = BattleLogic.MeasuredTickCount;
+            row.tickTotalMs = BattleLogic.MeasuredTickTotalMs;
+            row.tickMeanMs = row.modelTicks == 0 ? -1 : row.tickTotalMs / row.modelTicks;
+            row.tickMaxMs = BattleLogic.MeasuredTickMaxMs;
+            row.bombImpacts = bombImpacts;
+            row.regionWarnings = regionWarnings;
+            row.bombDamageEvents = bombDamage;
+            row.regionDamageEvents = regionDamage;
+            row.bombTriggerMs = bombTriggerMs;
+            row.regionTriggerMs = regionTriggerMs;
+            if (_result.skillSpikes && (bombImpacts < 1 || regionWarnings < 1 || bombDamage < 1 || regionDamage < 1))
+            {
+                throw new InvalidOperationException("专项必须完成真实炸弹落地/区域波动且两者均实际扣血");
+            }
             foreach (bool didAttack in acted.Values)
             {
                 if (didAttack)
@@ -523,6 +598,21 @@ namespace RevGame.Editor
             {
                 var s = buffer[i];
                 times[i] = s.frame;
+                row.maxSkillTileStarts = Math.Max(row.maxSkillTileStarts, s.skillTileStarts);
+                if (s.skillTileStarts > 12)
+                {
+                    throw new InvalidOperationException("技能格面装配超过每帧12格预算");
+                }
+                if (s.bombWindow)
+                {
+                    row.bombWindowMaxMs = Math.Max(row.bombWindowMaxMs, s.frame);
+                    row.bombGpuMaxMs = Math.Max(row.bombGpuMaxMs, s.gpu);
+                }
+                if (s.regionWindow)
+                {
+                    row.regionWindowMaxMs = Math.Max(row.regionWindowMaxMs, s.frame);
+                    row.regionGpuMaxMs = Math.Max(row.regionGpuMaxMs, s.gpu);
+                }
                 row.minPieces = Math.Min(row.minPieces, s.pieces);
                 row.maxPieces = Math.Max(row.maxPieces, s.pieces);
                 row.batches += s.batches;

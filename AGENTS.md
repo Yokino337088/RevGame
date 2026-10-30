@@ -57,6 +57,13 @@
 - 会话首次使用、编译/域重载后按技能重新发现真实能力；不能为了速度跳过参数校验、业务断言、错误检查、资源依赖门禁或收尾。已有编辑器只用live，不另启batch Unity。
 - 测量范围是调用通道开销；AB构建本体仍调用同一套Unity/Revolution工具，不能宣称切换CLI/MCP会同比缩短打包时间。数据与边界见 `RevGame_Client/文档/进度同步/CLI与MCP速度对比-2026-10-23.md`。
 
+## RevMCP连接与调用展示（2026-10-31用户要求）
+
+- 后续游戏测试优先使用 `RevGame_Client/UnityProject/Revolution.RevMCP`，显式连接 `RevGame_Client/UnityProject/RevGame.Unity`，连续操作复用同一个常驻 stdio 会话。此要求优先于上述少量命令优先直接CLI的旧约定。
+- 先连接并执行真实 `rev_discover`；首次连接及编译/域重载后重新发现，再按运行期注册表通过 `rev_call` 调用完整GM名称。带断言与清理的测试计划使用 `rev_run`。
+- 在对话中明确展示实际 `rev_discover`、`rev_call`、`rev_run` 的调用顺序、关键参数、目的与结果。未执行的工具必须标明未执行，不能把直接CLI或Python Hub调用冒充MCP工具调用。
+- 连接成功不等于GM已注册或测试通过；编辑模式缺少运行期GM时如实说明。工具调用成功仍需核对业务断言与清理结果。
+
 ## 自动化报告约定（2026-10-26）
 
 - 用户明确要求：测试报告不生成 ZIP 压缩包。文档目录保留 HTML 与必要截图/GIF，详细机器证据放忽略目录 `.codex/work/`；此要求优先于技能中的 ZIP 归档默认规则。

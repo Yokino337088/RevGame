@@ -228,6 +228,7 @@ namespace RevGame.View
             }
             using (FeedbackFrameMarker.Auto())
             {
+                FlushSkillTileQueue();
                 Camera camera = Camera.main;
 
                 if (camera != null)

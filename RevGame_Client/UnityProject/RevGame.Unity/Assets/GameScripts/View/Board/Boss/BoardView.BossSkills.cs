@@ -20,6 +20,8 @@ namespace RevGame.View
         private readonly HashSet<BossSkillFxView> _bossFx = new HashSet<BossSkillFxView>();
         /// <summary>表现预算含异步预约；更频繁施法不能让持续特效无限堆积。最多8组，每组已有90片固定容量。</summary>
         private const int MaxBossFxGroups = 8;
+        /// <summary>过场预热容量，覆盖8组Boss和炸弹预警/落地重叠；不是减少技能或伤害数量的玩法参数。</summary>
+        public const int BossFxWarmCount = MaxBossFxGroups + 2;
         private int _pendingBossFx;
         /// <summary>当前在场的 Boss 特效数量（编辑器验收读取）。</summary>
         public int ActiveBossFxCount => _bossFx.Count;
@@ -122,7 +124,7 @@ namespace RevGame.View
                 }
                 // 9×9棋盘最远延迟限制为0.24秒，远处棋格也能及时响应；每格碰撞与数据坐标完全不变。
                 float delay = Mathf.Min(.24f, (Mathf.Abs(pos.X - focus.X) + Mathf.Abs(pos.Y - focus.Y)) * .024f);
-                cell.PlayBossTile(tint, .88f, delay);
+                QueueSkillTile(cell, tint, .88f, delay);
             }
         }
         /// <summary>原始九招没有逐格Contains，此处只计算“震动落在哪些格”的视觉集合，不参与结算。</summary>
@@ -211,6 +213,7 @@ namespace RevGame.View
 
         private void ClearBossFx()
         {
+            ClearSkillTileQueue();
             foreach (BossSkillFxView fx in _bossFx)
             {
                 if (fx != null)

@@ -95,7 +95,10 @@ namespace Revolution.Editor
         {
             string[] targetKeys = { "", "mcp", "editor", "game", "gm", "cli", "plan" };
             string[] stateKeys = { "", "Running", "Succeeded", "Failed", "Cancelled" };
-            if (_targetFilter > 0 && entry.target != targetKeys[_targetFilter]) { return false; }
+            bool runtimeGM = RevMCPActivityDescription.TryGetRuntimeGM(entry, out _);
+            if (_targetFilter == 4 && !runtimeGM) { return false; }
+            if (_targetFilter == 3 && entry.target != "game" && !runtimeGM) { return false; }
+            if (_targetFilter > 0 && _targetFilter != 3 && _targetFilter != 4 && entry.target != targetKeys[_targetFilter]) { return false; }
             if (_stateFilter > 0 && entry.state != stateKeys[_stateFilter]) { return false; }
             string query = (_query ?? "").Trim();
             return query.Length == 0 || (RevMCPActivityDescription.Title(entry) + " " + DisplayAction(entry) + " " + entry.argumentsJson + " " + entry.message + " " + entry.plan + " " + entry.intent)
@@ -105,6 +108,7 @@ namespace Revolution.Editor
         /// <summary>GM 行显示完整指令；runtime.call 显示实际业务能力，避免用户只看到适配器名字。</summary>
         internal static string DisplayAction(RevAutomationActivityEntry entry)
         {
+            if (RevMCPActivityDescription.TryGetRuntimeGM(entry, out string command)) { return "游戏运行时 · GM 指令：" + command; }
             try
             {
                 var args = RevAutomationJson.Object(RevAutomationJson.Parse(entry.argumentsJson ?? "{}"));
@@ -132,6 +136,11 @@ namespace Revolution.Editor
                 DetailText("有什么用", RevMCPActivityDescription.Purpose(entry));
                 DetailText("AI 说明的目的", string.IsNullOrWhiteSpace(entry.intent) ? "Agent 没有提供目的说明；以上用途来自接口契约。" : entry.intent);
                 DetailText("原始命令", DisplayAction(entry));
+                if (RevMCPActivityDescription.TryGetRuntimeGM(entry, out string gmCommand))
+                {
+                    DetailText("执行环境", "游戏运行时 · GM 指令（传输来源：" + entry.source + "）");
+                    DetailText("具体 GM 指令与参数", gmCommand);
+                }
                 if (!string.IsNullOrEmpty(entry.plan))
                 { GUILayout.Label("计划：" + entry.plan + " / " + (entry.phase == "finally" ? "收尾清理" : "执行") + " / " + entry.step, EditorStyles.wordWrappedMiniLabel); }
                 DetailText("参数", entry.argumentsJson);
@@ -150,7 +159,8 @@ namespace Revolution.Editor
         }
         private static bool ValidJobId(string id) => id != null && id.Length == 32 && id.All(Uri.IsHexDigit);
         private static string LocalTime(string utc) => DateTimeOffset.TryParse(utc, out DateTimeOffset value) ? value.LocalDateTime.ToString("HH:mm:ss") : "—";
-        private static string SourceLabel(RevAutomationActivityEntry entry) => entry.target == "mcp" ? "Agent / MCP"
+        private static string SourceLabel(RevAutomationActivityEntry entry) => RevMCPActivityDescription.TryGetRuntimeGM(entry, out _)
+            ? "游戏运行时 · GM 指令 · " + entry.source : entry.target == "mcp" ? "Agent / MCP"
             : entry.target == "plan" ? "计划断言" : entry.target == "cli" ? "外部工具"
             : entry.target == "gm" ? "GM 指令 · " + entry.source : entry.target == "game" ? "运行时 · " + entry.source : "编辑器 · " + entry.source;
         private static string StateLabel(string state) => state == "Running" ? "执行中" : state == "Succeeded" ? "成功" : state == "Failed" ? "失败" : state == "Cancelled" ? "取消" : state;

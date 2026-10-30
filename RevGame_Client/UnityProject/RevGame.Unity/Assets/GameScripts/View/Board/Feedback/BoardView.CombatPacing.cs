@@ -47,7 +47,7 @@ namespace RevGame.View
                 // 只画外轮廓亮边，九格连成一整片侵蚀地面；内部仍保留暗菱形纹理。
                 Vector4 edges = new Vector4(x == 0 ? 1 : 0, x == info.Size - 1 ? 1 : 0, y == 0 ? 1 : 0, y == info.Size - 1 ? 1 : 0);
                 float delay = info.WarningSeconds + index * info.CellDelaySeconds;
-                cell.PlayHazardWave(delay, delay + .85f, edges);
+                QueueHazardTile(cell, delay, delay + .85f, edges);
             }
         }
         private void OnEnergyBombWarning(EnergyBombInfo info)

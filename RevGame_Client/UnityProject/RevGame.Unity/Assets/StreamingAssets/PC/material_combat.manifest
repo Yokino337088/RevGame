@@ -3,13 +3,13 @@ CRC: 414970145
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0e260a989b5734795b14ed0fc8e20c04
+    Hash: 7fc002d21a54ebcffc62608e93a5154e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e762ccb57c4caaabbb5a4199ac82c23
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0e260a989b5734795b14ed0fc8e20c04
+    Hash: 7fc002d21a54ebcffc62608e93a5154e
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -38,4 +38,4 @@ Assets:
 - Assets/GameRes/Material/Combat/WaterOrbAura.mat
 - Assets/GameRes/Material/Combat/ArcherArrowTrail.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"

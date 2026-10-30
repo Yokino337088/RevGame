@@ -3,13 +3,13 @@ CRC: 3466316581
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 1d86b446384329452c1b961e958a2cea
+    Hash: e5a60fefadefe6c57787f7245388d5d6
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 5c52a0fbe14841ba94c3f0e052dab2f0
+    Hash: afd0a91a728fe258f02e5af66e4d3bd3
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 1d86b446384329452c1b961e958a2cea
+    Hash: e5a60fefadefe6c57787f7245388d5d6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -23,17 +23,17 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f5905d7344959e04384104fddd750e5f, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 07261afc6188a1f40b851010fb9aa08c, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: e81377aec51f86f4fbf47c632f0f31d8, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: f5905d7344959e04384104fddd750e5f, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -67,9 +67,9 @@ Assets:
 - Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab
 - Assets/GameRes/UI/Item/Card/CardItem.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui"

@@ -21,15 +21,17 @@ namespace RevGame.Editor
             public int first = 1, last = 6, seconds = 20, repeats = 1;
             // 48保留历史输入，81为满盘重弩对射，真实造局与采样门禁共同核对，不改变正式关卡。
             public int pieces = 48;
+            // 显式专项开关：在固定81棋中通过真实GM触发炸弹/区域波动，普通基线不额外注入技能。
+            public bool skillSpikes;
         }
         // 桥接层只包装text，里面的JSON仍需解析并核对status/errors/cleaned；工具成功不等于战斗通过。
         [Serializable] private sealed class Result { public string text; }
-        [RevAutomationAction("game.perf.begin",Environment="play",Keys=new[]{"label","first","last","seconds","repeats","pieces"},Description="48棋或81满盘真实攻击采样，预分配帧/GPU/GC并正式回首页")]
+        [RevAutomationAction("game.perf.begin",Environment="play",Keys=new[]{"label","first","last","seconds","repeats","pieces","skillSpikes"},Description="48棋或81满盘真实攻击采样；skillSpikes通过GM触发炸弹与波动峰值")]
         // 启动固定类型的异步作业并返回“运行中”；调用方后续查State，不阻塞MCP等十分钟而超时。
         public static object Begin(RevAutomationRequest request)
         {
             var options = JsonUtility.FromJson<Options>(request.payloadJson) ?? new Options();
-            return Invoke("Begin", new object[] { options.label, options.first, options.last, options.seconds, options.repeats, options.pieces, false });
+            return Invoke("Begin", new object[] { options.label, options.first, options.last, options.seconds, options.repeats, options.pieces, false, options.skillSpikes });
         }
         [RevAutomationAction("game.perf.board-probe", Environment="play", Keys=new string[0], Description="第4/5章81棋格面Shader交替对照，诊断后恢复原材质，非正式画质优化")]
         public static object BoardProbe(RevAutomationRequest request) { return Invoke("BeginBoardProbe", null); }

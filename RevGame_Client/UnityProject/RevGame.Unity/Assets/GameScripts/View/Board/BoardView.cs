@@ -215,6 +215,8 @@ namespace RevGame.View
             }
             var cell = RevServices.GetRequired<IBattleService>().Board.GetCell(pos);
             view.Bind(pos, cell.IsStarPoint, OnCellClicked, OnCellLongPressed);
+            // 本方法处于原有每帧4格/3ms的建盘流程；把首次危险层/跳跃层构造移到遮罩内，技能命中不再集中创建。
+            view.PrepareTransientVisuals();
 
             if (_surfaceMaterial != null)
             {

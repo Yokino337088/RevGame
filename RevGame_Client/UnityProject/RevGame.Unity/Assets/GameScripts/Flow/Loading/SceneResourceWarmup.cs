@@ -83,7 +83,9 @@ namespace RevGame.Flow
         public async RevTask WarmBattlePoolsAsync(Action<float> progress)
         {
             const int feedbackEnd = 24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles + BoardView.MaxMeleeEffects;
-            const int count = feedbackEnd + UI.BattleHudPanel.MaxScoreSparks + 2;
+            const int regularEnd = feedbackEnd + UI.BattleHudPanel.MaxScoreSparks + 2;
+            // 8组Boss预算加炸弹预警/落地的2组余量；资源预加载不等于实例已创建，必须同时持有全部租约。
+            const int count = regularEnd + BoardView.BossFxWarmCount;
             float sliceStart = Time.realtimeSinceStartup;
             try
             {
@@ -111,9 +113,13 @@ namespace RevGame.Flow
                             {
                                 instance = await GetAsync<ScoreSparkView>();
                             }
-                            else
+                            else if (i < regularEnd)
                             {
                                 instance = await GetAsync<BattleEventNoticeView>();
+                            }
+                            else
+                            {
+                                instance = await GetAsync<BossSkillFxView>();
                             }
                     // 退出发生在await期间时，不能再把迟到实例记入已经清空的清单。
                     if (_disposed)
@@ -129,6 +135,11 @@ namespace RevGame.Flow
                         throw new InvalidOperationException("对象池预热失败，序号" + i);
                     }
                     _instances.Add(instance);
+                    if (instance is BossSkillFxView skill)
+                    {
+                        // 先登记租约再await：取消/异常会由finally成对归还，不能在await后才记账。
+                        await skill.WarmSlotsAsync(() => _disposed);
+                    }
                     progress?.Invoke((i + 1f) / count);
 
                     if (i % 2 == 1 || Time.realtimeSinceStartup - sliceStart >= 0.003f)

@@ -39,6 +39,8 @@ namespace RevGame.View
             [System.NonSerialized] internal Sprite BoundSprite;
             [System.NonSerialized] internal Vector3 SpriteSize;
             [System.NonSerialized] internal Vector4 Uv;
+            // 与Sprite共用战斗图集租约；只在绑定版本变化时读取，不逐弹道查询原生纹理。
+            [System.NonSerialized] internal Texture AtlasTexture;
             internal void EnsureGeometry()
             {
                 if (BindingVersion == GameSpriteAtlasService.BindingVersion && BoundSprite == Sprite)
@@ -49,6 +51,7 @@ namespace RevGame.View
                 BoundSprite = Sprite;
                 SpriteSize = Sprite.bounds.size;
                 Uv = DataUtility.GetOuterUV(Sprite);
+                AtlasTexture = Sprite.texture;
                 // 每种职业只有一份原画，三层共享材质也只对应这份Sprite。图集晚绑定时统一更新材质UV，
                 // 不再为每发弹道的三个Renderer各传一个相同参数块；仍保留颜色、排序和原画三层。
                 BindMaterial(BodyMaterial);
@@ -448,9 +451,12 @@ namespace RevGame.View
             float length = Mathf.Min(style.WorldSize.x, Vector3.Distance(source, target) * 0.8f);
             Vector3 flightScale = new Vector3(length / Mathf.Max(0.01f, size.x), style.WorldSize.y / Mathf.Max(0.01f, size.y), 1f);
             // 使用实际packed矩形还原局部UV，Shader的流动和拖尾不会采到图集中相邻图片。
-            // 职业材质共享局部UV，原图像素由SpriteRenderer图集绑定；不再逐弹道传相同参数块。
+            // SpriteRenderer也用参数块绑定图集。赋Sprite后清空块会抹掉_MainTex，回退成白色长方块。
+            // 每次发射一次性绑定缓存的真实图集页与UV，三层复用同一个块；不克隆材质、不逐帧查询Sprite。
             _projectileProperties.Clear();
-            spriteRenderer.SetPropertyBlock(null);
+            _projectileProperties.SetTexture("_MainTex", style.AtlasTexture);
+            _projectileProperties.SetVector(SpriteUvId, style.Uv);
+            spriteRenderer.SetPropertyBlock(_projectileProperties);
             ConfigureProjectileLayer(projectileOutline, style.Sprite, _magicAura ? style.AuraMaterial : style.BodyMaterial,
                 Vector3.zero, _magicAura ? new Vector3(1.6f, 1.8f, 1f) : new Vector3(1.1f, 1.25f, 1f), spriteRenderer.sortingOrder - 2);
             ConfigureProjectileLayer(projectileTrail, style.Sprite, style.TrailMaterial, Vector3.left * (size.x * 1.1f),
@@ -490,7 +496,7 @@ namespace RevGame.View
             layer.sprite = art;
             layer.drawMode = SpriteDrawMode.Simple;
             layer.sharedMaterial = material;
-            layer.SetPropertyBlock(null);
+            layer.SetPropertyBlock(_projectileProperties);
             layer.sortingLayerID = spriteRenderer.sortingLayerID;
             layer.sortingOrder = order;
             layer.transform.localPosition = offset;

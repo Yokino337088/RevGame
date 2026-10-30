@@ -20,7 +20,11 @@ namespace RevGame.Editor
         private sealed class CaseResult
         {
             public int chapter, skill, casts, expectedCasts, damageEvents, damage, maxAnimatedCells, maxFx;
+            public int maxTileStarts;
             public string name, sound, screenshot;
+            // 失败仍保留原断言，只允许换回合后继续测其它技能；不是把失败改成通过。
+            public string failure;
+            public List<string> observedBossClips = new List<string>();
             public float realSeconds;
             public bool passed, heard, sawWave, sawVisualJump, sawFx, sawShake, rootsStayed;
         }
@@ -111,6 +115,10 @@ namespace RevGame.Editor
             var flow = RevServices.GetRequired<GameFlow>();
             var battle = (BattleService)RevServices.GetRequired<IBattleService>();
             float oldScale = Time.timeScale;
+            // FSM创建/切换诊断会输出大量带堆栈的Warning，足以跨过短音效播放窗口。
+            // 仅压住测试期间普通日志，继续保留Error/Exception；finally恢复用户设置，不改变游戏声音与文字。
+            RevLogLevel oldLog = RevLog.MinLevel;
+            LogType oldFilter = Debug.unityLogger.filterLogType;
             bool previousInvincible = battle.PlayerInvincible;
             Application.LogCallback logger = (message, stack, type) =>
             {
@@ -137,6 +145,8 @@ namespace RevGame.Editor
             try
             {
                 Time.timeScale = 1f;
+                RevLog.MinLevel = RevLogLevel.Error;
+                Debug.unityLogger.filterLogType = LogType.Error;
                 for (int chapter = _result.first; chapter <= _result.last; chapter++)
                 {
                     _result.current = "chapter-" + chapter;
@@ -170,6 +180,13 @@ namespace RevGame.Editor
                 }
                 Check(_result.errors == 0, "本轮无新增Unity Error/Exception");
                 Check(_result.audioErrors == 0, "本轮无音频加载或播放失败");
+                foreach (CaseResult item in _result.cases)
+                {
+                    if (!item.passed)
+                    {
+                        throw new InvalidOperationException("逐招执行完成，但存在失败：" + item.name + " / " + item.failure);
+                    }
+                }
                 _result.status = "passed";
             }
             catch (Exception error)
@@ -206,6 +223,8 @@ namespace RevGame.Editor
                 }
                 catch (Exception cleanupError) { _result.status = "failed"; _result.error += "\n" + cleanupError; }
                 Time.timeScale = oldScale;
+                RevLog.MinLevel = oldLog;
+                Debug.unityLogger.filterLogType = oldFilter;
                 RevSound.Failed -= audioError;
                 Application.logMessageReceived -= logger;
                 Write();
@@ -302,6 +321,7 @@ namespace RevGame.Editor
                     battle.HoldBossImpactFixture();
                     current.sawFx |= board.ActiveBossFxCount > 0;
                     current.maxFx = Mathf.Max(current.maxFx, board.ActiveBossFxCount);
+                    current.maxTileStarts = Mathf.Max(current.maxTileStarts, board.LastSkillTileStarts);
                     int animated = 0;
                     for (int i = 0; i < cells.Length; i++)
                     {
@@ -316,7 +336,7 @@ namespace RevGame.Editor
                     current.sawWave |= animated > 0;
                     current.maxAnimatedCells = Mathf.Max(current.maxAnimatedCells, animated);
                     current.sawShake |= presentation.ImpactAmplitude > 0f && presentation.BossHitFeedbackCount > initialFeedback;
-                    current.heard |= Heard(current.sound);
+                    current.heard |= Heard(current.sound, current.observedBossClips);
 
                     if (firstCastAt >= 0f && Time.realtimeSinceStartup - firstCastAt >= .12f)
                     {
@@ -344,7 +364,13 @@ namespace RevGame.Editor
                 Check(!damaging || current.sawShake, "真实Boss技能命中后观察到相机震动");
                 Check(damaging || presentation.BossHitFeedbackCount == initialFeedback, "无伤害强化/召唤不伪造玩家受击震动");
                 Check(current.maxFx <= 8, "Boss特效分组预算未超过8");
+                Check(current.maxTileStarts <= 12, "技能格面分帧装配每帧最多12格");
                 current.passed = true;
+                Write();
+            }
+            catch (InvalidOperationException error)
+            {
+                current.failure = error.Message;
                 Write();
             }
             finally { RevEvent.RemoveAllByOwner(ObserverOwner); }
@@ -382,10 +408,18 @@ namespace RevGame.Editor
             }
             throw new InvalidOperationException("十字线无可放置空格");
         }
-        private static bool Heard(string clipName)
+        private static bool Heard(string clipName, List<string> observed)
         {
             foreach (AudioSource source in UnityEngine.Object.FindObjectsOfType<AudioSource>())
             {
+                if (source.clip != null && source.clip.name.StartsWith("Boss_", StringComparison.Ordinal))
+                {
+                    string entry = source.clip.name + "/playing=" + source.isPlaying + "/seconds=" + source.clip.length.ToString("F3");
+                    if (observed.Count < 24 && !observed.Contains(entry))
+                    {
+                        observed.Add(entry);
+                    }
+                }
                 if (source.isPlaying && source.clip != null && source.clip.name == clipName)
                 {
                     return true;

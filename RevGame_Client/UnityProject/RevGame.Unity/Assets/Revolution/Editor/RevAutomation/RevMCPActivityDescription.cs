@@ -47,6 +47,10 @@ namespace Revolution.Editor
 
         public static string Title(RevAutomationActivityEntry entry)
         {
+            if (TryGetRuntimeGM(entry, out string command))
+            {
+                return (entry.target == "plan" ? "核对游戏运行时 GM 步骤：" : "游戏运行时 · 执行 GM 指令：") + command;
+            }
             string action = EffectiveAction(entry, out string gmLine);
             if (entry.target == "plan") { return "核对测试步骤：" + DescribeAction(action, entry); }
             if (!string.IsNullOrEmpty(gmLine)) { return "执行 GM 指令：" + gmLine; }
@@ -54,6 +58,60 @@ namespace Revolution.Editor
             if (Known.TryGetValue(action, out string[] text)) { return text[0]; }
             string description = Description(entry, action);
             return string.IsNullOrWhiteSpace(description) ? "调用已注册接口：" + action : description;
+        }
+
+        /// <summary>
+        /// 从实际调用契约识别 GM，而不是从说明里出现“GM”二字猜测。
+        /// 支持原始 gm.exec、runtime.call 转发、rev_call 外层，以及动态 GM 工具的内层记录。
+        /// 完整 command 原样显示；结构化 arg0/args 用 JSON 显示，避免重新拼引号改变参数含义。
+        /// 仅查询注册表的 runtime.capabilities/gm.list 不属于执行 GM，不能误标。
+        /// </summary>
+        public static bool TryGetRuntimeGM(RevAutomationActivityEntry entry, out string command)
+        {
+            command = null;
+            if (entry == null) { return false; }
+            string action = entry.action;
+            string target = entry.target;
+            var arguments = new Dictionary<string, object>();
+            try
+            {
+                arguments = ReadArguments(entry.argumentsJson);
+                if (action == "rev_call")
+                {
+                    if (arguments.TryGetValue("target", out object nestedTarget)) { target = nestedTarget as string; }
+                    if (arguments.TryGetValue("action", out object nestedAction)) { action = nestedAction as string; }
+                    arguments = arguments.TryGetValue("arguments", out object payload) ? ReadArguments(payload) : new Dictionary<string, object>();
+                }
+                if (action == "runtime.call")
+                {
+                    action = arguments.TryGetValue("runtimeAction", out object runtime) ? runtime as string : null;
+                    arguments = arguments.TryGetValue("argumentsJson", out object payload) ? ReadArguments(payload) : new Dictionary<string, object>();
+                }
+                if (action == "gm.exec")
+                {
+                    command = arguments.TryGetValue("command", out object line) && line is string text
+                        ? text : "gm.exec（日志未包含具体 command，请查看原参数）";
+                    return true;
+                }
+                if (target == "gm")
+                {
+                    command = action + (arguments.Count == 0 ? "" : "  参数：" + RevAutomationJson.Write(arguments));
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                // 旧日志可能因摘要限长而不是完整 JSON；仍明确标 GM，但绝不编造丢失的参数。
+                if (target == "gm" || action == "gm.exec")
+                { command = action + "（参数摘要不可解析，请查看原参数）"; return true; }
+            }
+            return false;
+        }
+
+        private static Dictionary<string, object> ReadArguments(object value)
+        {
+            if (value == null || value is string empty && string.IsNullOrWhiteSpace(empty)) { return new Dictionary<string, object>(); }
+            return RevAutomationJson.Object(value is string json ? RevAutomationJson.Parse(json) : value);
         }
 
         public static string Purpose(RevAutomationActivityEntry entry)

@@ -28,6 +28,28 @@ namespace RevGame.Flow
     [RevLogic(GameDomain.Battle)]
     public sealed class BattleLogic : RevLogicBase
     {
+#if UNITY_EDITOR
+        // 仅Editor诊断计数，涵盖Tick内同步规则和事件回调；不包含后续帧Tween/GPU，也不写Profiler录制。
+        // 测量作业独占窗口前清零，退出Play自然释放；正式Player没有此探针与计时开销。
+        public static int MeasuredTickCount
+        {
+            get; private set;
+        }
+        public static double MeasuredTickTotalMs
+        {
+            get; private set;
+        }
+        public static double MeasuredTickMaxMs
+        {
+            get; private set;
+        }
+        public static void ResetTickMeasurements()
+        {
+            MeasuredTickCount = 0;
+            MeasuredTickTotalMs = 0;
+            MeasuredTickMaxMs = 0;
+        }
+#endif
         /// <summary>
         /// 战斗服务入口。每次现取而不缓存成字段：域退出会销毁服务，缓存下来就是留着一个失效引用。
         /// 返回接口而不是 BattleService，让视图与自动化只拿到"读状态、发起动作"的窄面，
@@ -95,7 +117,22 @@ namespace RevGame.Flow
             }
             if (Battle.Phase == GamePhase.Battle || Battle.Phase == GamePhase.Prepare)
             {
+#if UNITY_EDITOR
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
+                try
+                {
+#endif
                 Battle.Tick(Balance.BattleSimulationStepSeconds);
+#if UNITY_EDITOR
+                }
+                finally
+                {
+                    double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000d / System.Diagnostics.Stopwatch.Frequency;
+                    MeasuredTickCount++;
+                    MeasuredTickTotalMs += elapsed;
+                    MeasuredTickMaxMs = System.Math.Max(MeasuredTickMaxMs, elapsed);
+                }
+#endif
             }
         }
 

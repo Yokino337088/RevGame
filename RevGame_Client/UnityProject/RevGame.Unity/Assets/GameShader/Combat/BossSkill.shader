@@ -117,9 +117,16 @@ Shader "RevGame/Combat/BossSkill"
             // ---------------- 1 冲击波 ----------------
             float4 Shockwave(float2 p, float t)
             {
-                float dist = length(p) + (Noise(p * 6.0 + _Time.y * 3.0) - 0.5) * 0.06;
                 float radius = lerp(0.1, 0.95, t);
                 float width = lerp(_OutlineWidth * 2.3, _OutlineWidth * .8, t);
+                float baseDist = length(p);
+                // 两圈以外原输出严格透明。Noise属于[0,1]，扰动最多0.03，留足这个边界后才能跳过噪声/角度。
+                // 全屏炸弹冲击波仍有原来的尺寸和两层圆环，只省掉大片透明区域的昂贵片元数学。
+                [branch] if (abs(baseDist - radius) > width + .03001 && abs(baseDist - radius * .72) > width * .55 + .03001)
+                {
+                    return 0;
+                }
+                float dist = baseDist + (Noise(p * 6.0 + _Time.y * 3.0) - 0.5) * 0.06;
                 float ring = saturate(1.0 - abs(dist - radius) / width);
                 ring *= ring;
                 float fade = 1.0 - t;
@@ -160,6 +167,11 @@ Shader "RevGame/Combat/BossSkill"
             float4 Explosion(float2 p, float t, float sourceAlpha)
             {
                 float dist = length(p);
+                // 两层噪声权重之和为1，最大半径不超过此上界；原公式在界外heat/alpha均为0。
+                [branch] if (dist > lerp(0.25, 1.0, sqrt(t)) * 1.15001 || t >= 1.0)
+                {
+                    return 0;
+                }
                 // 噪声扰动边缘，火球不是完美的圆；随时间翻滚。
                 float turbulence = Fbm(p * 3.5 + float2(0, -_Time.y * 2.5));
                 float radius = lerp(0.25, 1.0, sqrt(t)) * (0.8 + turbulence * 0.35);
@@ -223,7 +235,7 @@ Shader "RevGame/Combat/BossSkill"
                 float edge = 1.0-smoothstep(.82,1.0,r);
                 float energy = 0, body = 0;
                 float envelope = smoothstep(0,.065,t)*(1.0-smoothstep(.63,1.0,t));
-                if (_Mode < 16.5) // 陨星：翻涌火核与裂纹冲击壳。
+                [branch] if (_Mode < 16.5) // 陨星：翻涌火核与裂纹冲击壳。
                 {
                     float cloud = Fbm(p*4.0 + float2(_Time.y*1.2,-_Time.y*3.0));
                     body = (1.0-smoothstep(.5,.87,r+cloud*.18))*edge;
@@ -291,12 +303,17 @@ Shader "RevGame/Combat/BossSkill"
 
             float4 FragBossSkill(v2f input) : SV_Target
             {
-                float4 source = (float4)SampleSpriteTexture(input.texcoord) * (float4)input.color;
+                // 程序化圆环/场不使用原图像素；仅需要素材alpha/颜色的模式才采图。
+                float4 source = 0;
+                [branch] if ((_Mode > 1.5 && _Mode < 4.5) || (_Mode > 6.5 && _Mode < 7.5) || (_Mode > 8.5 && _Mode < 9.5))
+                {
+                    source = (float4)SampleSpriteTexture(input.texcoord) * (float4)input.color;
+                }
                 float2 uv = (input.texcoord - _FxUV.xy) / max(_FxUV.zw, float2(0.0001, 0.0001));
                 float2 p = uv * 2.0 - 1.0;
                 float t = saturate(_Progress);
                 float4 fx;
-                if (_Mode < 0.5)
+                [branch] if (_Mode < 0.5)
                 {
                     fx = Telegraph(p, t);
                 }
@@ -349,7 +366,7 @@ Shader "RevGame/Combat/BossSkill"
                     float envelope=smoothstep(0,.08,t)*(1-smoothstep(.82,1,t));
                     float edge=1-smoothstep(.85,1,r);
                     float energy=0;
-                    if (_Mode < 10.5) // 星空：旋臂、星点、暗色视界与发亮吸积环。
+                    [branch] if (_Mode < 10.5) // 星空：旋臂、星点、暗色视界与发亮吸积环。
                     {
                         float arms=pow(saturate(.5+.5*sin(angle*5+r*18-_Time.y*5)),5);
                         float disk=exp(-abs(r-.45)*18);

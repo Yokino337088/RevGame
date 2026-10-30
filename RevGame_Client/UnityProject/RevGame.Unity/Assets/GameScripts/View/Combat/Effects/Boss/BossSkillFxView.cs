@@ -7,7 +7,7 @@
 // 本类绝不读写血量、占格，也不保存 Piece 引用——快照里只有坐标和编号。
 //
 // 【怎么画】
-// · 一个池对象内部预先建好 MaxSlots 个子 SpriteRenderer（Awake 时一次性创建，之后反复复用）；
+// · 一个池对象内部预先建好 MaxSlots 个子 SpriteRenderer（过场中分帧创建，之后反复复用）；
 // · 每个“片”共享同一个材质 BossSkill.mat，通过 MaterialPropertyBlock 设置自己的
 //   模式（_Mode）、进度（_Progress）、颜色（_Tint）——不克隆材质；
 // · DOTween 负责时间轴：缩放、移动、旋转、淡出，以及把进度从 0 推到 1。
@@ -158,13 +158,18 @@ namespace RevGame.View
         private float[] _additive;
         /// <summary>写参数用的临时块，全对象复用一个，不在动画每帧分配。</summary>
         private MaterialPropertyBlock _block;
+        // 每片只在换Sprite/图集版本时查询原生UV和纹理；动画进度变化不需要重新查图集。
+        private Texture[] _textures;
+        private Vector4[] _uvs;
+        private int[] _bindingVersions;
+        private int _createdSlots;
         /// <summary>已经分配出去的片数；每次播放从 0 开始重新分配。</summary>
         private int _used;
         /// <summary>本次播放的时间轴；回池时 Kill(false)，不会触发完成回调。</summary>
         private Sequence _sequence;
         private Action<BossSkillFxView> _onFinished;
 
-        /// <summary>首次实例化时建好全部子片，之后只启用/隐藏，不再 new GameObject。</summary>
+        /// <summary>Awake只建容器；90个子Renderer交给过场分帧预热，避免第一发技能同步创建整个特效组。</summary>
         private void Awake()
         {
             _block = new MaterialPropertyBlock();
@@ -176,15 +181,39 @@ namespace RevGame.View
             _progress = new float[MaxSlots];
             _shapes = new float[MaxSlots];
             _additive = new float[MaxSlots];
-            for (int i = 0; i < MaxSlots; i++)
+            _textures = new Texture[MaxSlots];
+            _uvs = new Vector4[MaxSlots];
+            _bindingVersions = new int[MaxSlots];
+        }
+        /// <summary>过场持有本池租约时调用；每帧至多6片/3ms，取消时交还创建者收尾，不让迟到预热进入新场景。</summary>
+        public async RevTask WarmSlotsAsync(Func<bool> cancelled)
+        {
+            while (_createdSlots < MaxSlots)
             {
-                var child = new GameObject("fx" + i);
-                child.transform.SetParent(_pivot, false);
-                SpriteRenderer renderer = child.AddComponent<SpriteRenderer>();
-                renderer.sharedMaterial = material;
-                renderer.enabled = false;
-                _renderers[i] = renderer;
+                if (this == null || cancelled())
+                {
+                    throw new OperationCanceledException("技能特效分帧预热已取消");
+                }
+                double start = Time.realtimeSinceStartupAsDouble;
+                int limit = Mathf.Min(MaxSlots, _createdSlots + 6);
+                do
+                {
+                    CreateSlot();
+                } while (_createdSlots < limit && Time.realtimeSinceStartupAsDouble - start < .003);
+                await RevTask.Yield();
             }
+        }
+        /// <summary>单个Unity组件创建不可拆分；正式过场预热覆盖上限，未经过过场的开发夹具仍能按需兜底。</summary>
+        private void CreateSlot()
+        {
+            var child = new GameObject("fx" + _createdSlots);
+            child.transform.SetParent(_pivot, false);
+            SpriteRenderer renderer = child.AddComponent<SpriteRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.enabled = false;
+            _renderers[_createdSlots] = renderer;
+            _bindingVersions[_createdSlots] = -1;
+            _createdSlots++;
         }
         public void OnPoolGet()
         {
@@ -653,8 +682,13 @@ namespace RevGame.View
         {
             int index = Mathf.Min(_used, MaxSlots - 1);
             _used++;
+            while (_createdSlots <= index)
+            {
+                CreateSlot();
+            }
             SpriteRenderer renderer = _renderers[index];
             renderer.sprite = sprite;
+            _bindingVersions[index] = -1;
             renderer.sortingOrder = order;
             renderer.enabled = sprite != null;
             Transform t = renderer.transform;
@@ -683,10 +717,16 @@ namespace RevGame.View
             {
                 return;
             }
-            Vector4 outer = DataUtility.GetOuterUV(sprite);
+            if (_bindingVersions[index] != GameSpriteAtlasService.BindingVersion)
+            {
+                Vector4 outer = DataUtility.GetOuterUV(sprite);
+                _uvs[index] = new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y);
+                _textures[index] = sprite.texture;
+                _bindingVersions[index] = GameSpriteAtlasService.BindingVersion;
+            }
             _block.Clear();
-            _block.SetTexture(MainTexId, sprite.texture);
-            _block.SetVector(FxUvId, new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y));
+            _block.SetTexture(MainTexId, _textures[index]);
+            _block.SetVector(FxUvId, _uvs[index]);
             _block.SetFloat(ModeId, (float)_modes[index]);
             _block.SetFloat(ProgressId, _progress[index]);
             _block.SetColor(TintId, _tints[index]);
@@ -778,6 +818,7 @@ namespace RevGame.View
         /// <summary>隐藏所有片并复位 pivot；回池与重新播放前都会调用。</summary>
         private void ResetSlots()
         {
+            int used = Mathf.Min(_used, _createdSlots);
             _used = 0;
 
             if (_renderers == null)
@@ -788,10 +829,15 @@ namespace RevGame.View
             {
                 _pivot.localRotation = Quaternion.identity;
             }
-            foreach (SpriteRenderer renderer in _renderers)
+            // 炸弹实际只用2~3片；不能每次取池/播放/回池都清90片。只清本次真正借出的槽。
+            for (int i = 0; i < used; i++)
             {
+                SpriteRenderer renderer = _renderers[i];
                 renderer.enabled = false;
                 renderer.SetPropertyBlock(null);
+                renderer.sprite = null;
+                _textures[i] = null;
+                _bindingVersions[i] = -1;
             }
         }
         /// <summary>技能美术识别色，不参与玩法数值所以不进表；激光固定红/黄，其余技能狂暴后偏血红。</summary>

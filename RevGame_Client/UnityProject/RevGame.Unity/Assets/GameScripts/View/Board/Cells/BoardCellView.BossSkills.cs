@@ -14,7 +14,7 @@ namespace RevGame.View
         /// 技能格面双跳：首次冲击抬起，回落后再轻弹一次。延迟由到技能中心的距离决定，形成逐格传播的波浪。
         /// duration/delay仅决定表现，玩家能否被命中仍由服务判断；每格只保留一条Tween，后来的冲击替换旧冲击。
         /// </summary>
-        public void PlayBossTile(Color tint, float duration, float delay = 0f)
+        public void PlayBossTile(Color tint, float duration, float delay = 0f, float elapsed = 0f)
         {
             ClearBossTile();
 
@@ -48,6 +48,16 @@ namespace RevGame.View
                 }
             }, 1f, Mathf.Clamp(duration, .65f, 1.25f)).SetDelay(delay).SetEase(Ease.Linear)
                 .OnComplete(() => { _bossTileTween = null; ClearBossTile(); });
+            if (elapsed > delay)
+            {
+                // Goto不包含Tween的SetDelay：先扣除已经等待的延迟，再对齐原技能时钟。
+                _bossTileTween.SetDelay(0f);
+                _bossTileTween.Goto(elapsed - delay, true);
+            }
+            else
+            {
+                _bossTileTween.SetDelay(delay - elapsed);
+            }
         }
         public void ClearBossTile()
         {
