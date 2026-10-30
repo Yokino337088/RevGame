@@ -33,10 +33,15 @@ namespace RevGame.View
         private bool fitBackgroundToCamera;
         private bool _released;
         // 安全区布局只依赖屏幕/比例。相机震动和Boss特写仍每帧叠加，不能缓存最终相机位置。
+        // 上一渲染相机像素宽高，不是桌面分辨率；Game窗口尺寸变化后重算棋盘安全布局。
         private Vector2 _layoutPixels;
+        // 上一安全视口；安全区变化可能与像素尺寸变化独立，必须单独比较。
         private Rect _layoutSafe;
+        // 上次宽高比和计算得到的正交相机半高（世界单位）；几何输入未变时复用计算结果。
         private float _layoutAspect, _layoutCameraSize;
+        // 缓存的棋盘/HUD区域矩形，单位像素；相机与UI使用相同比例，避免缩放时布局错位。
         private GameBattleLayout.Regions _layoutRegions;
+        // 未叠加镜头震动/主将特写的基础相机中心（世界坐标）。缓存最终位置会使动态震动失效。
         private Vector2 _layoutCameraCenter;
         /// <summary>当前屏幕的异步装配版本；快速切换时旧面板加载回调不能覆盖新屏幕。</summary>
         private int _screenVersion;
@@ -82,6 +87,8 @@ namespace RevGame.View
             FitCamera();
         }
 
+        // 每次渲染前仍核对输入，尺寸/安全区/比例变了才重算布局。
+        // 基础几何可缓存，EnergyShakeOffset和ApplyBossFocus必须继续逐帧计算，保持原动态画面。
         private void FitCamera()
         {
             // 棋盘必须同时放得进横向与纵向；窄窗口不能仅固定 orthographicSize 导致两侧被裁。
@@ -98,6 +105,8 @@ namespace RevGame.View
                 return;
             }
             Rect safe = GameBattleLayout.SafeViewport();
+            // 完整几何输入没变就沿用_cameraSize/center/regions，省掉同一帧多次布局计算。
+            // 退出场景这些字段随组件释放；新场景重新计算，不设全局静态布局草稿。
             if (_layoutPixels != screenSize || _layoutSafe != safe || _layoutAspect != aspect)
             {
                 _layoutPixels = screenSize; _layoutSafe = safe; _layoutAspect = aspect;

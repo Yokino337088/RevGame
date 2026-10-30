@@ -44,6 +44,7 @@ namespace RevGame.Editor
             if (EditorApplication.isPlaying) { throw new InvalidOperationException("请退出Play再更改分包"); }
             // 资源制作约定随正式构建执行，防止旧导入菜单或重建预制体再次带回未压缩背景/旧字体。
             GameResourceCompressionBuild.Configure();
+            // 今天新增的数据场装配挂在既有构建总入口，确保菜单/自动化/重新构建都得到相同绑定和导入规则。
             GameBackgroundFieldBuild.Configure();
             // 文案或配置变化后必须先重新制作字库；不能继续使用旧子集发布缺字版本。
             GameFontSubsetBuild.Validate();
@@ -86,6 +87,8 @@ namespace RevGame.Editor
                     var textureImporter = AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
                     if (textureImporter == null || textureImporter.textureType == UnityEditor.TextureImporterType.Sprite) { continue; }
                     // 噪声/冰胞场是背景内部数据，不能按其文件名创建额外场景背景或独立全局包。
+                    // 按用途显式归第四/第五章背景包；不能套“文件名→独立背景”的一般规则，否则会创建不存在的噪声背景材质。
+                    // 随对应章资源加载，而不是放入全局包或所有Sprite图集。
                     if (path.EndsWith("Chapter04_SwampNoise.png",StringComparison.Ordinal))
                     { desired[path]="background_chapter04_swamp";continue; }
                     if (path.EndsWith("Chapter05_IceField.png",StringComparison.Ordinal))

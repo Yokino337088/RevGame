@@ -27,9 +27,12 @@ namespace RevGame.Board
         private readonly int _size;
         private readonly Cell[, ] _cells;
         private readonly Dictionary<BoardPos, Piece> _piecesByPos = new Dictionary<BoardPos, Piece>();
+        // 今日新增的身份索引：把Id映射到当前在场Piece，攻击/治疗/AI不必每次线性扫描所有棋子。
+        // 索引只是查找加速，真实占格仍由_cells和Place/Move/Remove/Reset维护；这些入口必须一起更新。
         private readonly Dictionary<int, Piece> _piecesById = new Dictionary<int, Piece>(81);
         /// <summary>目标可见/存活版本；普通非致死扣血不影响射界，隐藏/致死即时失效。</summary>
         internal int TargetVersion { get; private set; }
+        // 隐藏、死亡或复活通知射界缓存输入发生变化；只增加版本号，不在伤害回调里立刻重算全盘。
         internal void TargetStateChanged() { TargetVersion++; }
         /// <summary>占格版本：只有落子、移走、重置才改变。普通掉血不改变气眼，服务据此跳过重复计算。</summary>
         public int TopologyVersion { get; private set; }
@@ -77,6 +80,8 @@ namespace RevGame.Board
         }
 
         /// <summary>清空棋盘（新的一局用）。</summary>
+        // 生命周期入口：先断开Piece.QueryBoard归属，再清位置/Id索引和缓存；最后撤去所有格子占用与眼标记。
+        // 清缓存保留容量，清棋子引用防串局。Reset不表示玩家通关，也不能代替退出流程的事件/动画回收。
         public void Reset()
         {
             foreach (Piece piece in _piecesByPos.Values) { piece.IsEyeGarrison = false; piece.HasEyeGuardAura = false; }
@@ -140,6 +145,7 @@ namespace RevGame.Board
             }
 
             _piecesByPos[pos] = piece;
+            // 完整占格预检通过后才登记Id与归属。若允许同Id两棋，FindPiece会指错目标，故上方先拒绝重复Id。
             _piecesById.Add(piece.Id, piece); piece.QueryBoard = this;
             piece.Pos = pos;
             TopologyVersion++;
@@ -170,6 +176,7 @@ namespace RevGame.Board
             }
 
             _piecesByPos.Remove(piece.Pos);
+            // 格子撤销后同步删除Id；QueryBoard置空让离盘棋子的后续状态变化不能污染当前盘缓存。
             _piecesById.Remove(piece.Id); piece.QueryBoard = null;
             ForgetQuery(piece.Id);
             piece.IsEyeGarrison = false; piece.HasEyeGuardAura = false;
@@ -282,6 +289,8 @@ namespace RevGame.Board
         }
 
         /// <summary>按编号找在场棋子，不临时创建全盘名单；高频受击、UI刷新和AI快照都走此入口。</summary>
+        // 按身份字典直接查当前棋子，不再GetAllPieces后逐个比Id；不存在返回null，调用者要判空。
+        // Move不会改变身份，升星仍是同一Piece，死亡到Remove之间也保留索引，与原规则生命周期一致。
         public Piece FindPiece(int id)
         {
             _piecesById.TryGetValue(id, out Piece piece);

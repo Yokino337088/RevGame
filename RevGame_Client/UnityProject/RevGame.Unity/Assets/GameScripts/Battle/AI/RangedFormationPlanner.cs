@@ -22,6 +22,8 @@ namespace RevGame.Battle
     }
 
     /// <summary>无资源和动画依赖的整队算法；只产生计划，不修改实战棋盘，不持有跨轮次缓存。</summary>
+    // 远程整队是同步纯规划：一张独立试盘依次试摆，返回Id和落点给服务顺序提交。
+    // 本次只复用棋盘工作区，保留守眼、禁动、身体空间、阵型气数和安全距离条件。
     public static class RangedFormationPlanner
     {
         /// <summary>
@@ -33,6 +35,7 @@ namespace RevGame.Battle
         public static void Plan(BoardModel board, float elapsed, int minimumCount, int safeDistance, List<FormationMove> result)
         {
             result.Clear();
+            // 实盘候选名单借用专门的FormationRanged，不借Allies/Players，防止辅助评分把正在遍历的整队名单覆盖。
             List<Piece> ranged = board.Tactics.FormationRanged;
             ranged.Clear();
             foreach (Piece piece in board.Pieces)
@@ -50,10 +53,13 @@ namespace RevGame.Battle
                 foreach (Piece other in ranged) { if (piece != other && Distance(piece.Pos, piece.Size, other) == 1) { links++; } }
                 if (links > bestLinks) { bestLinks = links; anchor = piece; }
             }
+            // 连通Id集合每轮从锚点重新扩展；容量复用不意味着旧连通关系可继续使用。
             HashSet<int> connected = board.Tactics.FormationConnected;
             connected.Clear(); connected.Add(anchor.Id);
             GrowConnected(ranged, connected);
             if (connected.Count == ranged.Count) { return; }
+            // 完整深试盘本轮只建立/刷新一次。copies指向试盘Piece，移动它们不改变真实棋子。
+            // 候选循环照常Evaluate，最终只把已确认计划写入result，实际提交时服务仍复核。
             BoardModel trial = board.Tactics.Trial(board);
             List<Piece> copies = board.Tactics.FormationCopies;
             copies.Clear();

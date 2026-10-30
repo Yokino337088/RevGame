@@ -15,14 +15,19 @@ namespace RevGame.UI
         [SerializeField] private Button removePieceButton;
         [Tooltip("本章可用能源余额及成长档位，历史累计分数仍由原积分面板显示。")]
         [SerializeField] private Text helperScoreLabel;
+        // 上次显示的能源余额；-1表示未初始化，正常余额非负，打开面板必须强制刷新。
         private long _walletShown = -1;
+        // 上次显示的帮手档位/攻击/攻速百分比，余额不变时升级或增益也可能变，故需要完整比较。
         private int _walletTier = -1, _walletAttack = -1, _walletSpeed = -1;
+        // 上次画布尺寸，单位为画布坐标；钱包的布局只在尺寸或安全区改变时重算。
         private Vector2 _walletLayoutSize;
+        // 安全视口的上一值；手机安全区变化要重排，即使画布宽高没变也不能命中旧布局。
         private Rect _walletSafeArea;
         private int _removePieceId;
         private bool _swallowWaiting;
         private int _swallowShownChapter, _swallowShownRound;
 
+        // 每次打开重置钱包数值和布局哨兵，再绑定当前面板所有者的监听；防止跨场景旧显示。
         private void OpenPieceManagement()
         {
             _walletShown = -1; _walletLayoutSize = Vector2.zero;
@@ -40,6 +45,8 @@ namespace RevGame.UI
             RefreshPieceManagement();
         }
 
+        // 重新查选中棋子身份和真实可见前置，SetActive只在变化时调用。
+        // 按钮位置仍跟随当前棋子/相机，不能缓存旧坐标导致按钮点到已移走棋子的旁边。
         private void RefreshPieceManagement()
         {
             if (removePieceButton == null) { return; }
@@ -61,6 +68,7 @@ namespace RevGame.UI
                 Mathf.Clamp(local.y + 58, parent.rect.yMin + 40, parent.rect.yMax - 40));
         }
 
+        // 布局与文字分开缓存：尺寸变化只重排，余额/档位/加成变化只更新文案，避免重复布局与格式化。
         private void RefreshHelperWallet()
         {
             RefreshPieceManagement();
@@ -80,6 +88,7 @@ namespace RevGame.UI
             }
             long wallet = Battle.CombatScore; int tier = Battle.Helper.Tier;
             int attack = Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100), speed = Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100);
+            // 四个显示输入都相同才提前返回。真实服务数据没有被缓存替代，变化时照常更新。
             if (_walletShown == wallet && _walletTier == tier && _walletAttack == attack && _walletSpeed == speed) { return; }
             _walletShown = wallet; _walletTier = tier; _walletAttack = attack; _walletSpeed = speed;
             helperScoreLabel.text = "帮手能量 " + Battle.CombatScore.ToString("N0") + " · " + Battle.Helper.Tier + "档"

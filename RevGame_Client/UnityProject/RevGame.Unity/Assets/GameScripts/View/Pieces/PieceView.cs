@@ -64,7 +64,9 @@ namespace RevGame.View
         private bool _locked;
         private float _hpRatio = 1f;
         // 血条由本视图独占。绑定、回池或Boss演出隐藏血条时失效，首次刷新必须重新落屏。
+        // 上次血条几何是否已经落屏。绑定/出池/Clear强制失效，首次一定重写，不沿用上一颗棋子的长度。
         private bool _hpVisualValid;
+        // 上次血条使用图片；相同比例换了Sprite宽度时也要重算左锚点补偿，不能只比较HpRatio。
         private Sprite _hpVisualSprite;
         private Vector3 _hpFillScale = Vector3.one;
         private Vector3 _hpFillBasePosition = Vector3.zero;
@@ -597,6 +599,8 @@ namespace RevGame.View
         /// <summary>
         /// 设置血量比例（0~1）。只改血条长度，不改棋子本体缩放。
         /// </summary>
+        // 比例输入为0～1，只改血条子节点。先比较比例/图片/可见性，完全没变才跳过原生Transform写入。
+        // 演出曾隐藏血条时enabled不同，必须重新落屏；模型生命仍由BattleService/Piece维护。
         public void SetHp(float ratio)
         {
             float next = Mathf.Clamp01(ratio);
@@ -607,6 +611,7 @@ namespace RevGame.View
             }
             // 固定48棋每次同步都会调用这里；血量和Sprite未变时跳过原生Transform写入。
             // enabled也参与校验，演出曾隐藏血条时不能命中旧结果而一直看不到血条。
+            // 同时核对可见性：上一演出禁用了Renderer，即使血量没变也需要恢复；仅缓存比例会留下消失血条。
             bool visible = next > 0.001f;
             if (_hpVisualValid && _hpRatio == next && _hpVisualSprite == hpFillRenderer.sprite && hpFillRenderer.enabled == visible)
             {

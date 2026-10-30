@@ -35,6 +35,7 @@ namespace RevGame.UI
         private void RefreshScore(IBattleService battle)
         {
             if (roundReel == null || battle == null) { return; }
+            // 每次10Hz刷新先比较可见性，只在变化时SetActive。滚筒积分仍实时推送，不能因省激活写入漏显示新得分。
             bool visible = battle.Phase != GamePhase.Prepare;
             if (scoreFrame.gameObject.activeSelf != visible) { scoreFrame.gameObject.SetActive(visible); }
             bool snap = _scoreRound != battle.Round || _scoreChapter != battle.Chapter;

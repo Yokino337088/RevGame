@@ -51,7 +51,9 @@ Shader "RevGame/Background/Chapter05_Ice"
             // 全部为美术表现参数，单位/范围见Properties；不影响攻防、AI或战斗时间，不放策划数值表。
             float _IceFlow, _IceDepth, _IceCracks, _IceScale, _IceCoverage, _ColdBreath;
             float4 _ArtUVRect;
+            // 预计算冰胞数据RGBA：R=裂隙距离，G/B=编码斜面，A=固定种子。512²像素并非冰原原画副本。
             sampler2D _IceField;
+            // 构建成功绑定数据场才设1；旧材质或未绑定时0走IceCell原计算，不把默认黑贴图当有效几何。
             float _UseIceField;
 
             // 返回x=冰胞边界距离，yz=冰胞斜面方向，w=该块固定种子。
@@ -120,9 +122,13 @@ Shader "RevGame/Background/Chapter05_Ice"
                 // 场纹理由项目编辑器按原算法预算；范围内一次采样，超范围/旧AB缺贴图仍使用原算法。
                 float2 icePosition = p * _IceScale + grain * 0.22;
                 float4 ice;
+                // 线性数据场只覆盖[-12,12]，11.95内留双线性边界余量。范围内一次采样替代每像素九邻中心计算。
+                // 范围外仍原算法，雪/寒潮/原画流动继续按时间更新；省的是静态几何重复数学。
                 [branch] if (_UseIceField > 0.5 && max(abs(icePosition.x), abs(icePosition.y)) < 11.95)
                 {
                     ice = tex2D(_IceField, (icePosition + 12.0) / 24.0);
+                    // PNG只能存0～1，生成器把负方向编码成0.5附近；这里还原到-1～1。
+                    // 8位量化和双线性采样是精度/性能权衡，不是与原函数逐像素完全相同。
                     ice.yz = (ice.yz - 0.5) * 2.0;
                 }
                 else { ice = IceCell(icePosition); }

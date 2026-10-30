@@ -13,9 +13,11 @@ namespace RevGame.View
 {
     public sealed partial class BoardView
     {
-        /// <summary>包含正在异步取池对象的请求；不是等加载完才计数，避免同帧几十个请求穿透上限。</summary>
+        // 只计LateUpdate反馈调度/避让/遮挡工作。标记含子段Arrange时不可将两者相加成额外CPU成本。
         private static readonly ProfilerMarker FeedbackFrameMarker = new ProfilerMarker("RevGame.Feedback.Frame");
+        // 只计一次新飘字选位置的工作，供优化前后同场景测量，不在代码中打印每帧字符串。
         private static readonly ProfilerMarker FeedbackArrangeMarker = new ProfilerMarker("RevGame.Feedback.Arrange");
+        /// <summary>同时存在的文字预算，含尚未交付的异步预约；20是表现上限，不限制实际伤害结算。</summary>
         public const int MaxFloatingTexts = 20;
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
         public const int MaxProjectiles = 35;
@@ -43,11 +45,14 @@ namespace RevGame.View
         // 遍历字典时不能直接删除，用复用列表先收集过期编号，遍历结束后再移除。
         private readonly List<long> _expiredDamageIds = new List<long>(MaxPendingDamage);
         // 每帧只扫描一次81条待播记录，稳定选出最老八条；同时间戳仍保持字典原遍历次序。
+        // 固定八个候选槽，保存本帧最老待播数字的值类型副本。它不占额外活动飘字名额，也不持有棋子。
         private readonly PendingDamageText[] _damageBatch = new PendingDamageText[8];
         // 每个棋盘独占固定长度缓冲。上限20条，因此不需要每帧new List/ToArray，也不共享静态可变数组。
         // Rect是值类型，缓存的是本次动画推进后的快照；下一帧重新采样，缩放/移动不会用到旧矩形。
         private readonly BattleEffectView[] _textSnapshot = new BattleEffectView[MaxFloatingTexts];
+        // 本帧每条字的真实屏幕矩形（像素），先采样最多20次，再两两比较；不用在双循环重查Renderer。
         private readonly Rect[] _textRects = new Rect[MaxFloatingTexts];
+        // 一次选点中其它文字的预计放大/上浮范围（像素），25个候选位置共用这一份快照。
         private readonly Rect[] _reservationRects = new Rect[MaxFloatingTexts];
         // 已申请但还没加载好的名额也算占用；否则异步加载完成的同一帧会突然挤出大量飘字。
         private int _pendingTextLoads, _pendingProjectileLoads;
@@ -256,6 +261,8 @@ namespace RevGame.View
         }
 
         /// <summary>本帧直接显示已结算数字；超预算只替换表现，不更改战斗数值。</summary>
+        // 目标是选本帧最老的至多八条，保持原同时间戳遍历顺序。
+        // 先一次扫描过滤过期项并稳定插入八槽，后续显示失败就停，不提前删除未显示记录。
         private void FlushDamageTexts()
         {
             int count = 0;
@@ -268,9 +275,13 @@ namespace RevGame.View
                     _expiredDamageIds.Add(item.Key); continue;
                 }
                 // 最多八项的插入排序；不分配列表，也不在一帧内反复扫描整个字典八遍。
+                // 从当前最晚位置向前找插入点。使用严格小于：创建时间相等时排在已有项之后，保留原先顺序。
+                // 最多八次比较，不需要排序整张81项列表或分配排序临时数组。
                 int index = count;
                 while (index > 0 && item.CreatedAt < _damageBatch[index - 1].CreatedAt) { index--; }
                 if (index >= _damageBatch.Length) { continue; }
+                // 只把入选槽往右挪，多出来的第九名舍弃；它仍在_pendingDamage里，下帧可以再次竞争。
+                // 这是显示调度，不会舍弃该条伤害的模型结算。
                 int end = System.Math.Min(count, _damageBatch.Length - 1);
                 for (int i = end; i > index; i--) { _damageBatch[i] = _damageBatch[i - 1]; }
                 _damageBatch[index] = item;
@@ -308,6 +319,7 @@ namespace RevGame.View
             {
                 return false;
             }
+            // 已经确定有显示预算后才移出队列，并先预约名额再取池；异步加载未结束也必须算占用。
             _pendingDamage.Remove(oldest.Key);
             _pendingTextLoads++;
             int generation = _effectGeneration;
@@ -320,10 +332,12 @@ namespace RevGame.View
             return true;
         }
 
+        // 仅冷资源分配捕获闭包；message是值类型伤害快照，generation是请求产生时的阶段代次。
         private void LoadDamageText(PendingDamageText message, int generation)
         {
             GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentDamageText(effect, message, generation), _viewRoot);
         }
+        // 两条路径共用交付检查。迟到请求只归池，不减新阶段计数；当前请求失败则释放预约并记录中文警告。
         private void PresentDamageText(BattleEffectView effect, PendingDamageText message, int generation)
         {
             // 过期回调不能减新回合的计数：只有代次仍然一致，才有权释放当前这笔预约。
@@ -349,6 +363,8 @@ namespace RevGame.View
         /// 先预留放大和上浮范围，再尝试周围25个位置；加密文字时扩大可选位置，避免全挤在同一棋子头顶。
         /// 所有计算都在屏幕像素中进行，所以改变窗口大小后仍按可见尺寸避让，不靠固定世界坐标猜间距。
         /// </summary>
+        // 先采样其它字的预留矩形，再比较25个偏移位置的重叠面积和移动代价。
+        // 单位统一为屏幕像素，窗口变化后仍按可见大小避让；胜出位置转回世界坐标供Tween从那里开始。
         private void ArrangeFloatingText(BattleEffectView text)
         {
             using (FeedbackArrangeMarker.Auto())

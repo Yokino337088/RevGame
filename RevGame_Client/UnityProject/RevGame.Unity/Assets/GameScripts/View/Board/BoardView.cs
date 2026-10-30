@@ -56,7 +56,9 @@ namespace RevGame.View
         private readonly Dictionary<int, int> _lastHp = new Dictionary<int, int>();
         private readonly HashSet<BattleEffectView> _effects = new HashSet<BattleEffectView>();
         // 实例方法转换成Action也会创建委托；每个棋盘只建一次，所有池反馈复用，离场由棋盘一起释放。
+        // 所有飘字/弹道/近战结束共用的稳定实例委托；它只从活动集合摘除反馈，不再次结算伤害。
         private System.Action<BattleEffectView> _effectFinishedCallback;
+        // 文字出生时的稳定避让委托；每个BoardView一份，不能静态保存而把旧棋盘留在内存。
         private System.Action<BattleEffectView> _arrangeTextCallback;
         private Transform _viewRoot;
         private bool _released;
@@ -91,6 +93,7 @@ namespace RevGame.View
 
         private void OnEnable()
         {
+            // 首次启用才创建实例方法委托。复用GameObject时再次启用不必重复分配，但代次仍每次增加。
             if (_effectFinishedCallback == null)
             {
                 _effectFinishedCallback = OnEffectFinished;
@@ -706,11 +709,13 @@ namespace RevGame.View
         }
 
         /// <summary>捕获式回调只存在于冷加载；热路径不先创建lambda再发现缓存已命中。</summary>
+        // 冷路径才捕获config/position/generation；把lambda提到单独方法，避免热路径进入方法就创建闭包。
         private void LoadAttackText(BattleText config, Vector3 position, int generation)
         {
             GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentAttackText(effect, config, position, generation), _viewRoot);
         }
 
+        // 热取池和冷回调都在此交付。先验代次/离场，再释放本代预约并登记对象；旧回调只允许归池。
         private void PresentAttackText(BattleEffectView effect, BattleText config, Vector3 position, int generation)
         {
             if (_released || generation != _effectGeneration)
@@ -833,10 +838,13 @@ namespace RevGame.View
             }
             LoadEffect(kind, position, damage, targetSide, destination, sourceKind, generation);
         }
+        // 资源尚未准备才执行，闭包保存本次不可变表现参数和代次；正常预热后的齐射不走此分配路径。
         private void LoadEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide, Vector3 destination, PieceKind sourceKind, int generation)
         {
             GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentEffect(effect, kind, position, damage, targetSide, destination, sourceKind, generation), _viewRoot);
         }
+        // 统一交付弹道/近战，失败释放对应本代预约并报错；成功先记活动集合再启动动画。
+        // 即使攻击棋子已死亡，这里也只读已结算快照，不重查攻击者或再次扣血。
         private void PresentEffect(BattleEffectView effect, BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide, Vector3 destination, PieceKind sourceKind, int generation)
         {
             if (effect == null)

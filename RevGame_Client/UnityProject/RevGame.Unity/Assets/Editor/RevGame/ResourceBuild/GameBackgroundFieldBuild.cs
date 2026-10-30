@@ -8,6 +8,8 @@ using UnityEditor;
 using UnityEngine;
 namespace RevGame.Editor
 {
+    // Editor资源配方，GameResourceBuild.Configure调用；把预生成数据图片设成线性纹理并绑定章节材质。
+    // 不在运行时创建Texture2D，不碰Revolution内核，加载与卸载仍由章节AB/RevResManager负责。
     public static class GameBackgroundFieldBuild
     {
         /// <summary>构建时显式分类，不允许绕回散图Sprite或在战斗Update创建/克隆纹理材质。</summary>
@@ -29,10 +31,12 @@ namespace RevGame.Editor
             importer.textureShape=TextureImporterShape.Texture2D;
             // 距离/斜面必须线性读取，有损压缩和sRGB会改变解码值；禁止readable避免CPU像素副本常驻。
             importer.sRGBTexture=false;
+            // 这些图存距离/方向等算法数据，不是Sprite原画。无mipmap、不可读减少附加像素；NPOT不缩放避免坐标错位。
             importer.mipmapEnabled=false;importer.isReadable=false;importer.npotScale=TextureImporterNPOTScale.None;
             importer.filterMode=FilterMode.Bilinear;importer.wrapMode=repeat?TextureWrapMode.Repeat:TextureWrapMode.Clamp;
             importer.textureCompression=TextureImporterCompression.Uncompressed;
             importer.maxTextureSize=size;
+            // 两平台都用RGBA32保留四通道线性数值；约1MiB冰胞+256KiB噪声是新增GPU数据成本，不能只讲省指令不讲内存。
             importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings{name="Standalone",overridden=true,maxTextureSize=size,format=TextureImporterFormat.RGBA32});
             importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings{name="Android",overridden=true,maxTextureSize=size,format=TextureImporterFormat.RGBA32});
             importer.SaveAndReimport();

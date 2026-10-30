@@ -7,9 +7,11 @@ using RevGame.Data;
 using RevGame.Pieces;
 namespace RevGame.Battle
 {
+    // 专属技能的目标/身体相交几何，AI评分与真实预警共用。今日直接遍历实盘筛Player，结果规则保持原样。
     public static class BossExclusiveGeometry
     {
         /// <summary>先锁定目标，再蓄力。黑洞只选择已经成眼的玩家棋群，不偷偷改成任意吞棋。</summary>
+        // 即时同步读取当前成员，返回值类型坐标计划；不要把枚举中的Piece引用保留到蓄力结束。
         public static bool TryPlan(BoardModel board, Piece boss, BossSkillKind kind, out BossSkillPlan plan)
         {
             plan = new BossSkillPlan { Kind = kind, A = boss.Pos, B = boss.Pos, C = boss.Pos };
@@ -65,6 +67,7 @@ namespace RevGame.Battle
             }
             return false;
         }
+        // result归技能调用方持有，先Clear再收集；名单冻结后服务才可移棋或扣血，避免枚举字典时修改它。
         public static void Collect(BoardModel board, BossSkillInfo info, List<Piece> result)
         {
             result.Clear();

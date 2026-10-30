@@ -143,6 +143,8 @@ namespace RevGame.Battle
         /// 高频版本：结果写入调用方持有的列表，进入时Clear，容量保留。
         /// 服务为自己保存缓冲区，AI为一次查询保存局部缓冲区；不要用全局static列表，避免嵌套调用互相覆盖。
         /// </summary>
+        // 公开热查询入口仍接收调用方缓冲。缓存属于传入board，同一函数在实盘/试盤上不会互相覆盖。
+        // null输入保持旧行为：清结果并返回；合法输入由ReadAttackTargets判断命中与失效。
         public static void GetAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
             if (board != null && piece != null) { board.ReadAttackTargets(piece, result); return; }
@@ -150,6 +152,8 @@ namespace RevGame.Battle
         }
 
         /// <summary>未缓存版本只计算几何；目标Hp变化的威胁评分仍由调用者实时计算，缓存不冻结选敌。</summary>
+        // 原几何算法保留为独立内部函数：缓存未命中就调用它，离线回归也以它作为对照。
+        // 这里输出有序目标坐标，最终伤害/威胁评分在结算层完成；缓存不能冻结实时生命值。
         internal static void CalculateAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
             result.Clear();

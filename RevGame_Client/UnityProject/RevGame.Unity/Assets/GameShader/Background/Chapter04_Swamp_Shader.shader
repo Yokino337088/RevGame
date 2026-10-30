@@ -46,12 +46,16 @@ Shader "RevGame/Background/Chapter04_Swamp"
             #include "ChapterBackgroundCommon.cginc"
             float _Viscosity, _BubbleSize, _BubbleStrength, _MudDepth, _FlowDistance, _GasStrength, _GasHeight;
             float4 _WaterRegion, _ArtUVRect, _GasColor;
+            // GPU专用周期噪声数据纹理，随第四章AB加载；不是Sprite，不进入图集，不新增全屏绘制层。
             sampler2D _FlowNoise;
+            // 材质构建入口绑定贴图后设1；0保持旧算法回退。这是美术资源就绪标志，不影响战斗规则。
             float _UseFlowNoise;
 
             // 独立小纹理将周期噪声插值交给GPU采样；无纹理旧AB保留原hash函数作为可见失败回退。
             float SwampNoise(float2 p)
             {
+                // 把反复算hash/插值的噪声换成现有数据采样。p/64是周期映射，纹理Repeat在导入配方中保证。
+                // 该噪声是固定种子生成的另一种近似场，外观存在细微差别；不能承诺像素相同或目标GPU提升百分比。
                 [branch] if (_UseFlowNoise > 0.5) { return tex2D(_FlowNoise,p/64.0).r; }
                 return ChapterNoise(p);
             }
@@ -78,6 +82,8 @@ Shader "RevGame/Background/Chapter04_Swamp"
                 // 排气为局部效果：远离覆盖区时尾部贡献低于8位颜色一阶，不应执行全部exp/归一化。
                 // 冒泡/破裂范围小于0.16；毒气最宽0.105、高0.165，再为0.07卷曲和回流留余量。
                 // 分支对邻近像素连续，减少全屏九倍计算；材质密度关闭的口也直接跳过。
+                // 先做便宜的覆盖判断，再做exp/normalize等昂贵数学。九个口仍都存在，只跳过本像素几乎不受影响的口。
+                // 边界是按当前美术效果范围留余量的近似裁剪，不是每个硬件都保证更快；需要实际GPU复测。
                 float2 delta = p - center;
                 [branch] if (seed > _Particles || abs(delta.x) > 0.31 || delta.y < -0.27 || delta.y > _GasHeight + 0.29)
                 { return 0; }

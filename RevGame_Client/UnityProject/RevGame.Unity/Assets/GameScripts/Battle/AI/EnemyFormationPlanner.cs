@@ -292,6 +292,8 @@ namespace RevGame.Battle
         }
 
         /// <summary>敌人出生可以增加压力，但不能靠生成操作拆掉玩家的眼，或把原本有气的玩家直接锁死。</summary>
+        // 直接遍历before.Pieces并筛Player，省中间名单；after仍是独立规划盘。
+        // 每颗玩家的眼数/生存气底线保持原条件，不能为了速度只抽查一颗。
         private static bool PreservesPlayers(BoardModel before, BoardModel after)
         {
             foreach (Piece player in before.Pieces)
@@ -343,6 +345,8 @@ namespace RevGame.Battle
             return score;
         }
 
+        // 仅问“是否有锁死敌棋”时逐棋检查并在首个命中提前返回。
+        // 替代GetPiecesOf(...).Exists，省掉临时List；判定本身仍检查当前气眼状态。
         private static bool HasLockedEnemies(BoardModel board)
         {
             foreach (Piece p in board.Pieces) { if (p.Side == GameSide.Enemy && p.IsLocked) { return true; } }

@@ -15,6 +15,8 @@ using UnityEngine.Profiling;
 namespace RevGame.Editor
 {
     /// <summary>六章同输入图形Play压测。夹具维持48棋持续攻击，采样不包含读条/截图/Profiler分析自身；所有设置在finally恢复。</summary>
+    // 保留的旧格式压测入口，仅用于历史兼容；今天删除SaveProfile原始录制导出。
+    // 新增测量优先GameBattleMeasuredChecks，它有runId/完整请求段数/预分配窗口，不能从旧文件存在推断本次完成。
     public static class GameBattleStressChecks
     {
         public static string LastResult { get; private set; } = "未运行";

@@ -82,21 +82,33 @@ namespace RevGame.UI
         private bool _preparationLoading;
         private Tween _progressTween, _bossTween;
         // 两条血条各自持有稳定的读写/清理委托，不在10Hz刷新入口提前创建捕获闭包。
+        // Tween读取fillAmount的两个稳定委托，由面板OnBindView创建一次；不在每次Refresh时new。
         private DG.Tweening.Core.DOGetter<float> _readProgressBar, _readBossBar;
+        // 对应两条血条的写入委托，参数为0～1比例；动画只改表现，不影响服务HP或时间。
         private DG.Tweening.Core.DOSetter<float> _writeProgressBar, _writeBossBar;
+        // 每条血条单独清自己的Tween字段。对象自动归池前必须清句柄，否则可能误Kill被别人复用的Tween。
         private TweenCallback _clearProgressBar, _clearBossBar;
         private float _progressTarget = -1f, _bossTarget = -1f;
         public int PendingPreparationNoticeCount => _preparationQueue.Count;
         private bool _noticeClosed;
         private readonly List<string> _logs = new List<string>();
         public int ActiveNoticeCount { get { return _notices.Count; } }
+        // 性能标记只包HUD刷新段，单位由Profiler记录；不能把它当成整场CPU或GPU耗时。
         private static readonly ProfilerMarker HudRefreshMarker = new ProfilerMarker("RevGame.Hud.Refresh");
+        // “上次落屏记录是否有效”。首次打开强制false，保证即使数值碰巧与上一局相同也完整初始化。
         private bool _hudValid;
+        // 上次显示的准备/战斗/结算阶段，和服务当前Phase比较后才切图标/标签。
         private GamePhase _hudPhase;
+        // 一组纯值缓存：章节、回合、人数、AI档位、加成百分比、支援次数。
+        // 它们只是上一帧UI收据，不是真实业务数据，点击与战斗计算仍从服务读取。
         private int _hudChapter, _hudRound, _hudPlayers, _hudEnemies, _hudIntelligence, _hudAttack, _hudEvents;
+        // 上次显示的Boss回合与支援开关；同一章节/回合值不变时，标签后缀也可能变化，故要独立比较。
         private bool _hudBossRound, _hudAssist;
+        // 完整阵型用于变化比较，短阵型仅用于UI两行文案；支援与日志也在变化后才赋Text。
         private string _hudFormation, _hudFormationShort, _hudSupport, _hudLog;
+        // 主将身份、当前HP、上限HP和决死层加成缓存。主将换人或掉血都要刷新，不能只比较血条比例。
         private int _hudKingId, _hudKingHp, _hudKingMax, _hudRage;
+        // 上次擒王条件对应的提示状态；跨血线时必须改文案，与实际擒王判定仍共用表参数。
         private bool _hudCapturable;
         private IBattleService Battle
         {
@@ -106,6 +118,7 @@ namespace RevGame.UI
             }
         }
 
+        // 框架绑定Image节点后创建读写委托，生命周期与面板一致。此处只装配，不计算血量或决定胜负。
         protected override void OnBindView()
         {
             _readProgressBar = () => _progressFill.fillAmount;
@@ -116,6 +129,7 @@ namespace RevGame.UI
             _clearBossBar = ClearBossTween;
         }
 
+        // 打开后使所有旧UI缓存失效并重建监听/计时。面板重新出现时不能因数值相同沿用关闭前的显示。
         protected override void OnOpen()
         {
             _hudValid = false;
@@ -149,6 +163,8 @@ namespace RevGame.UI
         }
 
         /// <summary>只做"把服务状态画到屏上"，不修改任何游戏数据。</summary>
+        // 10Hz观察仍保留。先取真实状态，与上一份落屏收据比较，再格式化字符串/写Text。
+        // 减少的是没有变化时的字符串分配和UI脏标记；HP、日志、积分发生变化时仍立即在下一次观察刷新。
         protected override void OnRefreshView()
         {
             using (HudRefreshMarker.Auto())
@@ -190,7 +206,8 @@ namespace RevGame.UI
                     // 沿用两行高度：第二行放简短阵型和攻击加成，完整降级原因留给 GM，不挤出第三行遮住日志。
                     int players = CountAlive(_battle.PlayerPieces), enemies = CountAlive(_battle.EnemyPieces);
                     int attack = Mathf.RoundToInt(_battle.TeamAttackBonus * 100f);
-                    string formation = _battle.EnemyFormation;
+                    // 阵型字符串没变就复用已经截好的短文案，避免每100ms重做IndexOf/Substring。
+                string formation = _battle.EnemyFormation;
                     if (!_hudValid || _hudFormation != formation)
                     {
                         int bracket = formation.IndexOf('（');
@@ -233,6 +250,7 @@ namespace RevGame.UI
                     {
                         _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (king.HpRatio <= Balance.BossCaptureHpRatio ? " · 可擒王" : " · 降至" + ConfigText.Percent(Balance.BossCaptureHpRatio) + "后可擒王") + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
                     }
+                    // 先完成本次显示，再更新收据；如果先把缓存写成新值，变化条件会误判“不用显示”。
                     _hudKingHp = king.Hp; _hudKingMax = king.MaxHp; _hudRage = rage; _hudCapturable = capturable;
                 }
                 _hudKingId = king == null ? 0 : king.Id;
@@ -502,6 +520,8 @@ namespace RevGame.UI
         }
 
         /// <summary>只有目标值改变才接续缓动，避免每0.1秒刷新把同一动画反复从头启动。</summary>
+        // 此函数只有目标比例变化才创建Tween。read/write/onKilled来自面板已有委托，函数体不再捕获Image。
+        // 0.28秒是表现缓动，不修改生命；Kill回调清当前句柄，避免对象池复用后误伤另一条动画。
         private static void UpdateBar(Image image, float value, ref Tween tween, ref float target, bool instant, DG.Tweening.Core.DOGetter<float> read, DG.Tweening.Core.DOSetter<float> write, TweenCallback onKilled)
         {
             value = Mathf.Clamp01(value);

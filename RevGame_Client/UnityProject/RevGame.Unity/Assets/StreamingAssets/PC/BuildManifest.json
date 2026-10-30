@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-10-30 12:55:21",
+  "buildTime": "2026-10-30 13:39:20",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_bosschapter01frames", "size": 380310 },
@@ -48,7 +48,7 @@
     { "name": "config_piece_art", "size": 4335 },
     { "name": "config_story", "size": 7258 },
     { "name": "data_tables", "size": 21539 },
-    { "name": "font_cjk", "size": 659349 },
+    { "name": "font_cjk", "size": 664358 },
     { "name": "material_background", "size": 2722 },
     { "name": "material_board", "size": 2399 },
     { "name": "material_cards", "size": 2462 },

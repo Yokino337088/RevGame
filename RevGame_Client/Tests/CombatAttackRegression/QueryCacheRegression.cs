@@ -8,19 +8,26 @@ using RevGame.Core;
 using RevGame.Data;
 using RevGame.Pieces;
 
+// 控制台链接真实生产源码的对照测试，不复制另一套算法。
+// 逐次比较缓存/原函数的候选数与顺序，再检验随机变盘、快照独立和清理；通过不代表GPU或笔记本FPS。
 internal static class QueryCacheRegression
 {
+    // 本轮成功断言累计数，失败立即抛异常而不是继续“计通过”；重复坐标检查也计数，不等于场景数。
     private static int _checks;
+    // ok必须来自实际结果比较。失败包含中文原因并由Program返回非零退出，方便自动化识别。
     private static void Check(bool ok, string reason)
     {
         _checks++; if (!ok) { throw new InvalidOperationException("查询缓存回归：" + reason); }
     }
+    // 同一盘、同一actor、两个独立缓冲分别运行缓存入口和未缓存原函数。
+    // 目标顺序也必须一致，因为AI严格大于才换同分目标，数量相同但顺序不同仍是规则回归。
     private static void Compare(BoardModel board, Piece actor, List<BoardPos> cached, List<BoardPos> expected)
     {
         MoveRules.GetAttackTargets(board, actor, cached); MoveRules.CalculateAttackTargets(board, actor, expected);
         Check(cached.Count == expected.Count, "候选数相同 " + actor.Def.Kind);
         for (int i = 0; i < cached.Count; i++) { Check(cached[i] == expected[i], "候选顺序相同 " + actor.Def.Kind + "/" + i); }
     }
+    // 遍历全部棋种和阵营，依次制造掉血/死亡/隐藏/移动/冻结/升星/重置，再比较真实查询结果。
     public static int Run()
     {
         _checks = 0; var cached = new List<BoardPos>(81); var expected = new List<BoardPos>(81);
@@ -118,6 +125,8 @@ internal static class QueryCacheRegression
         Check(board.Tactics.FormationRanged.Count == 0 && board.Tactics.FormationCopies.Count == 0, "整队工作区不跨局持有棋子");
     }
     /// <summary>相同48棋与相同查询次数，对照未缓存和缓存计算；只测CPU/分配，不报告手机FPS。</summary>
+    // 测试排除首次字典扩容和JIT预热，每组同48棋同4800次查询重复五轮取中位。
+    // 快照对照也包含气眼Evaluate，不能只比清列表；.NET该方法分配为0不等于Unity整场零GC。
     private static void Benchmark()
     {
         var board = new BoardModel(9); int id = 1;

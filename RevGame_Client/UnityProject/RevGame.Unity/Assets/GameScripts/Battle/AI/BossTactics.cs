@@ -43,6 +43,8 @@ namespace RevGame.Battle
         public float Score;
     }
 
+    // Boss的同步计划算法：只返回坐标计划，技能状态负责后续预警/命中。
+    // 本次优化只去掉临时目标名单和仅为Count创建的List，不改评分、冷却和技能轮换规则。
     public static class BossTactics
     {
         /// <summary>重复使用上一招时的相对评分权重；只影响同组候选打分，不是策划战斗数值。</summary>
@@ -148,6 +150,7 @@ namespace RevGame.Battle
             {
                 return BossExpandedGeometry.TryPlan(board, boss, kind, out plan);
             }
+            // 借用当前棋盘专属Boss目标缓冲并清旧内容；计划只输出坐标，返回后不能把victims交给蓄力异步继续用。
             var victims = board.Tactics.BossVictims; victims.Clear();
             if ((int)kind >= (int)BossSkillKind.StarStorm)
             {
@@ -316,6 +319,8 @@ namespace RevGame.Battle
         /// 收集“与某块区域隔不超过 radius 格”的我方棋子（方形范围，切比雪夫距离）。
         /// result 由调用方复用，本方法会先清空它。
         /// </summary>
+        // 输出名单由调用者独占；直接遍历棋盘再筛Player，避免GetPiecesOf先new一份中间名单。
+        // 只有名单建完才允许服务扣血/移棋，不能遍历board.Pieces期间修改占格字典。
         public static void CollectInSquare(BoardModel board, BoardPos origin, int size, int radius, List<Piece> result)
         {
             result.Clear();
@@ -333,6 +338,7 @@ namespace RevGame.Battle
         /// 收集以 Boss 身体中心为圆心、半径 radius 内的我方棋子（圆形范围）。
         /// 扣掉目标半个身体：2×2 的棋子边缘进圈也算被扫到。
         /// </summary>
+        // 同上：只去掉中间List，保留圆形身体相交计算和原遍历顺序，大棋不能只按左下角距离判断。
         public static void CollectInCircle(BoardModel board, Piece boss, int radius, List<Piece> result)
         {
             result.Clear();
@@ -356,6 +362,7 @@ namespace RevGame.Battle
         }
 
         /// <summary>全屏技能收集全部存活我方棋子；与位置、距离和棋子身体大小无关。</summary>
+        // 名单写入result，存活与隐藏筛选保留；调用方可以使用冻结名单逐个结算，不在源集合枚举中删棋。
         public static void CollectAllPlayers(BoardModel board, List<Piece> result)
         {
             result.Clear();
@@ -372,6 +379,7 @@ namespace RevGame.Battle
         /// <summary>
         /// 收集生命比例最低的 count 颗我方棋子（灵魂汲取用）。同比例按编号小的优先，保证可复现。
         /// </summary>
+        // 只省候选名单的中间分配；当前HpRatio仍实时读取并排序，不能用缓存锁定上次残血目标。
         public static void CollectWeakest(BoardModel board, int count, List<Piece> result)
         {
             result.Clear();

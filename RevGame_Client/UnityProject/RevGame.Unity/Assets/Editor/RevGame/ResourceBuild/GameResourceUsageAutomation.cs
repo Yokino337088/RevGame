@@ -10,6 +10,7 @@ namespace RevGame.Editor
         [RevAutomationAction("game.battle.stress-before", Environment = "play", Keys = new string[0], Description = "六章48棋真实渲染性能基线，约两分钟，恢复首页与设置")]
         public static object StressBefore(RevAutomationRequest request) { return Stress("before"); }
         [RevAutomationAction("game.battle.stress-after", Environment = "play", Keys = new string[0], Description = "六章旧格式性能复测，仅摘要与截图；新测量优先game.perf.begin")]
+        // 旧压测兼容桥接，不再导出Profiler数据；新的稳定窗口采样从game.perf.begin启动并按runId核对。
         public static object StressAfter(RevAutomationRequest request) { return Stress("after"); }
         private static object Stress(string label)
         {

@@ -52,6 +52,7 @@ namespace RevGame.Pieces
             if (IsAlive || Side != GameSide.Player || !IsEyeGarrison || EyeReviveUsed) { return false; }
             EyeReviveUsed = true;
             Hp = System.Math.Max(1, (int)(MaxHp * Balance.EyeReviveHpRatio));
+            // 驻眼复活改变存活资格，即使格子没变，也必须使目标缓存失效；?.允许尚未入盘的棋子安全复活。
             QueryBoard?.TargetStateChanged();
             return true;
         }
@@ -61,10 +62,14 @@ namespace RevGame.Pieces
         /// <summary>敌棋下一次允许自动靠近的战斗时间；攻速增益不能提前这个时间。</summary>
         internal float NextMoveAt { get; set; }
 
-        /// <summary>Boss控制由本局服务写入；隐藏仍保留占格预约，防止返场时被挤掉。快照复制，离场清零。</summary>
         /// <summary>仅BoardModel.Place/Remove维护，用于隐藏/死亡时失效当前棋盘射界缓存，不持有Unity对象。</summary>
+        // 这不是另一份棋盘数据，只是“我当前属于哪张盘”的通知地址。Place登记、Remove/Reset清空。
+        // 深副本Place到试盘时只通知试盘，因此模拟隐藏/死亡不会使真实战斗缓存失效。
         internal Board.BoardModel QueryBoard;
+        // 隐藏属性的实际存储值；setter只有值变化时通知缓存，重复写false不会浪费版本号。
         private bool _bossHidden;
+        // 隐藏仍占格，但不能作为正常可见目标。恢复显示也需要版本失效，否则可能沿用隐藏期间的旧候选。
+        /// <summary>Boss控制由本局服务写入；隐藏保留占格，值改变才通知所属棋盘；深试盘只通知试盘。</summary>
         public bool BossHidden
         {
             get { return _bossHidden; }
@@ -163,6 +168,7 @@ namespace RevGame.Pieces
             return new Piece(this);
         }
 
+        // 首次深复制先固定身份，再统一调用全状态覆盖方法；首次复制和缓存复用共用同一字段清单，防止两套复制遗漏。
         private Piece(Piece source)
         {
             Id = source.Id; Side = source.Side; Size = source.Size; IsBoss = source.IsBoss; IsKing = source.IsKing;
@@ -170,6 +176,8 @@ namespace RevGame.Pieces
         }
 
         /// <summary>AI工作区独占副本复用：每轮覆盖全部可变字段，只共享只读Def，不共享原棋引用或缓存。</summary>
+        // 只允许复用身份一致的副本。Id/阵营/身体大小/Boss/主将身份不同就拒绝，调用者应new一个副本。
+        // 下方逐项复制Def、生命成长、血量、技能控制、驻眼、气、护盾、行动进度等；QueryBoard不从实棋复制。
         internal void CopySnapshotState(Piece source)
         {
             if (Id != source.Id || Side != source.Side || Size != source.Size || IsBoss != source.IsBoss || IsKing != source.IsKing)
@@ -182,6 +190,7 @@ namespace RevGame.Pieces
             IgnoreEncirclement = source.IgnoreEncirclement;
             ShieldCharges = source.ShieldCharges;
             Hp = source.Hp;
+            // 技能状态影响攻击资格和AI评分，必须与位置一起覆盖；不能让上一候选的冻结/无敌残留到下一候选。
             BossHidden = source.BossHidden; BossFrozen = source.BossFrozen;
             BossInvulnerable = source.BossInvulnerable;
             BossHiddenUntil = source.BossHiddenUntil; BossFrozenUntil = source.BossFrozenUntil;
@@ -262,6 +271,7 @@ namespace RevGame.Pieces
 
             int real = amount > Hp ? Hp : amount;
             Hp -= real;
+            // 致死是几何资格边界：目标虽然尚未Remove，也要让后续查询重算。非致死伤害只改实时评分，不重算几何。
             if (Hp == 0) { QueryBoard?.TargetStateChanged(); }
             return real;
         }

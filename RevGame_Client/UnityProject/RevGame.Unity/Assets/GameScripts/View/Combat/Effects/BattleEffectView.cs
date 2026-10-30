@@ -10,9 +10,12 @@ using UnityEngine.Sprites;
 
 namespace RevGame.View
 {
+    // 表现分型：数字、远程飞行、近战冲击。类型只决定如何播放，不决定伤害计算。
     public enum BattleEffectKind { Damage, Projectile, Melee }
 
     [RevPoolPrefab(RevResPath.Effects_Combat, "BattleEffect", Group = RevResGroup.Battle)]
+    // RevPool持有的可复用反馈对象。一个对象同一时刻只播一种效果、一条Tween。
+    // 攻击事件已经结算，这里只显示位置/颜色/文字；结束和回池不允许再次扣血。
     public sealed class BattleEffectView : MonoBehaviour, IRevPoolable
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -49,18 +52,29 @@ namespace RevGame.View
         [SerializeField] private TextMesh[] damageOutlines = new TextMesh[0];
         // 每个池对象只拥有一条动画。回池 Kill(false)：停止即可，不能强制完成再触发回池回调。
         private Tween _animation;
+        // 当前借用这件池对象的BoardView回调；Finish先清字段再调用，回池后不能继续引用旧棋盘。
         private System.Action<BattleEffectView> _onFinished;
+        // 当前动画统一进度0～1。DOTween只推进此值，位置/缩放/透明度由WriteAnimationProgress一起计算。
         private float _progress;
         // Tween委托每个池对象只创建一次；当前参数存字段，回池先Kill后覆盖，避免闭包保存上一发轨迹。
+        // 读进度委托，Awake创建一次并随对象复用，避免每次发射产生新的getter。
         private DG.Tweening.Core.DOGetter<float> _readProgress;
+        // 写进度委托，Awake创建一次；动画参数放对象字段而不捕获在每发闭包中。
         private DG.Tweening.Core.DOSetter<float> _writeProgress;
+        // 统一结束回调委托，连接Finish；回池时Kill(false)不会人为执行完成再重复归池。
         private TweenCallback _finishAnimation;
+        // 本发起点/终点（世界坐标）、基础缩放（倍数）、近战方向（单位向量）。
+        // 开始新反馈前停止旧Tween并覆盖，不能让旧动画继续读取新一发字段。
         private Vector3 _animationStart, _animationEnd, _animationScale, _animationDirection;
+        // 持续时间单位秒，朝向单位度；仅美术表现，不改变棋子攻速/攻击时钟。
         private float _animationDuration, _animationAngle;
+        // 口号使用较小抖动，盾击使用固定角度；模式细节由本发启动时写入，不回查已死亡棋子。
         private bool _animationAttack, _animationShield;
+        // 统一动画分支：0=飘字、1=弹道、2=近战。替代各类型每次创建捕获其参数的setter。
         private int _animationMode;
         // 透明度分成动画淡出与遮挡淡化两部分，相乘后落屏；避让刷新不能把快消失的旧字重新点亮。
         private float _fadeAlpha = 1f, _occlusionAlpha = 1f;
+        // 基础缩放/峰值为倍数，上浮距离为世界单位；TextReservationRect将未来放大和上浮换算成像素。
         private float _baseTextScale = 1f, _textPeak = 1f, _textRise;
         private Renderer _textRenderer;
         /// <summary>只在首次实例化时查找描边Renderer；反复出入池不再查找或分配数组。</summary>
@@ -77,15 +91,25 @@ namespace RevGame.View
         // 每条飘字同一帧会被新入场文字反复查询避让；缓存仍按位置/缩放失效，不复用动画移动前的矩形。
         // 相机只在本场景寿命内借用，Unity销毁后自动判空，下一次读取重新取得。
         private Camera _textCamera;
+        // 上次矩形计算的Unity帧号，-1强制重算；同帧还要比较变换和相机，不能仅凭帧号复用。
         private int _rectFrame = -1;
+        // 文字子Renderer上次世界位置和世界缩放，动画移动或缩放后矩形失效。
         private Vector3 _rectPosition, _rectScale;
+        // 上次文字子节点旋转；根节点没变但子节点变了，也要重算。旋转非零时回退真实Renderer.bounds。
         private Quaternion _rectRotation;
+        // 计算好的屏幕像素边界，包含三像素读字余量；只由TextScreenRect更新，调用方只拿值副本。
         private Rect _cachedTextRect;
+        // 字形网格的局部边界，坐标属于文字子Renderer。变换不改字形，可复用它推导世界边界。
         private Bounds _localTextBounds;
+        // 这件池对象上次配置的文字。相同文字/字号不重新给正文和四描边赋text，减少字形重建。
         private string _configuredContent;
+        // 上次配置字号，-1表示未配置；与内容一起组成局部字形缓存条件，字号改变必重取bounds。
         private int _configuredFontSize = -1;
+        // 本地字形范围是否有效；新文案/新字号/Font.textureRebuilt会置false，不能拿旧宽度避让新字。
         private bool _localTextBoundsValid;
+        // 上次相机视图/投影矩阵；镜头移动、Boss特写或投影变化都会使世界→屏幕换算结果不同。
         private Matrix4x4 _rectCameraView, _rectCameraProjection;
+        // 上次相机像素视口；窗口改变时即使相机世界位置相同，也不能复用旧像素矩形。
         private Rect _rectViewport;
 
         /// <summary>屏幕上真实文字的矩形，供整个棋盘统一避让；不使用渲染位置以外的固定“第几条通道”。</summary>
@@ -108,14 +132,19 @@ namespace RevGame.View
                 Vector3 scale = textTransform.lossyScale;
                 Quaternion rotation = textTransform.rotation;
                 Matrix4x4 view = camera.worldToCameraMatrix, projection = camera.projectionMatrix;
+                // 缓存必须同时满足帧号、文字变换、相机矩阵和像素视口相同。
+                // 只缓存Time.frameCount会漏掉本帧Arrange修改位置后再次查询的情况。
                 if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale && _rectRotation == rotation && _rectCameraView == view && _rectCameraProjection == projection && _rectViewport == camera.pixelRect)
                 { return _cachedTextRect; }
                 _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale; _rectRotation = rotation; _rectCameraView = view; _rectCameraProjection = projection; _rectViewport = camera.pixelRect;
+                // 内容/字号未变则不再向原生Renderer查localBounds；失效后仅取一次并记在本对象。
                 if (!_localTextBoundsValid) { _localTextBounds = _textRenderer.localBounds; _localTextBoundsValid = true; }
                 Bounds bounds;
                 if (rotation == Quaternion.identity)
                 {
                     // 飘字只平移/缩放，局部字形不变：避免每次新字摆位都向原生Renderer重查bounds。
+                    // 局部中心用文字子节点TransformPoint转世界坐标，局部尺寸乘世界缩放。
+                    // 必须用文字子节点，不能用池对象根节点代替，否则子节点偏移会导致避让位置不准。
                     bounds = new Bounds(textTransform.TransformPoint(_localTextBounds.center), Vector3.Scale(_localTextBounds.size, scale));
                 }
                 else { bounds = _textRenderer.bounds; }
@@ -222,6 +251,8 @@ namespace RevGame.View
         public Color TextColor => damageText.color;
         public string TextContent => damageText.text;
 
+        // 先判断内容和字号是否改变，只有改变才更新五份TextMesh字形；颜色/透明度仍独立初始化。
+        // 回池不清text，因此相同文案复用有效，但字体图集重建会另行使范围失效。
         private void ConfigureText(BattleText config, string content, Color color)
         {
             _rectFrame = -1;
@@ -419,11 +450,15 @@ namespace RevGame.View
             _animation = DOTween.To(_readProgress, _writeProgress, 1f, .34f).SetEase(Ease.OutCubic).OnComplete(_finishAnimation);
         }
 
+        // Tween稳定getter只读0～1进度；不捕获每发起点、终点或回调。
         private float ReadAnimationProgress() { return _progress; }
         /// <summary>统一单Tween驱动，只有当前模式更新对应图层；动画不提交伤害或占格。</summary>
+        // 一条Tween驱动所有属性：根据模式读本发参数字段，计算位移、缩放、抖动和透明度。
+        // value为0～1，秒数=value×持续时间；这个方法不发伤害事件、不改棋子模型。
         private void WriteAnimationProgress(float value)
         {
             _progress = value;
+            // 飘字把“弹出放大→轻抖→上浮→淡出”合并到同一进度；不是删除动画阶段来换性能。
             if (_animationMode == 0)
             {
                 float seconds = value * _animationDuration;
@@ -435,6 +470,7 @@ namespace RevGame.View
                 transform.position = Vector3.Lerp(_animationStart, _animationEnd, 1f - (1f - value) * (1f - value)) + Vector3.right * shake;
                 SetNumberAlpha(Mathf.Clamp01((_animationDuration - seconds) / .28f));
             }
+            // 弹道仍匀速从修正后的起点飞到终点，起步脉冲与末段淡出复用同一进度。
             else if (_animationMode == 1)
             {
                 transform.position = Vector3.Lerp(_animationStart, _animationEnd, value);
@@ -467,6 +503,8 @@ namespace RevGame.View
             return camera.ViewportToWorldPoint(viewport);
         }
 
+        // 新借用先停止旧Tween、隐藏旧层，再覆盖回调/进度/透明度/变换。
+        // 先Kill再写字段防止旧setter读取新参数；文字缓存可保留，因为ConfigureText会校验它。
         private void ResetVisual(Vector3 position, System.Action<BattleEffectView> onFinished)
         {
             StopAnimation();
@@ -482,6 +520,7 @@ namespace RevGame.View
             transform.rotation = Quaternion.identity;
         }
 
+        // 动画淡出与遮挡淡化相互独立；相同值跳过颜色写入，但改变时仍更新正文和描边。
         private void SetNumberAlpha(float alpha)
         {
             if (Mathf.Approximately(_fadeAlpha, alpha)) { return; }
@@ -489,6 +528,8 @@ namespace RevGame.View
             ApplyNumberAlpha();
         }
 
+        // 最终alpha=动画淡出×遮挡透明度，范围0～1。
+        // 否则新字避让刷新可能把快消失的旧字恢复到100%不透明，产生闪亮或叠字。
         private void ApplyNumberAlpha()
         {
             float alpha = _fadeAlpha * _occlusionAlpha;
@@ -508,6 +549,8 @@ namespace RevGame.View
             Finish();
         }
 
+        // 先清活动/图层，再摘掉旧回调引用并通知棋盘，最后RevPool.Return。
+        // 对象回池后可能立即借给另一发，之后不可再读写旧效果字段。
         private void Finish()
         {
             _projectileActive = false;
@@ -522,6 +565,7 @@ namespace RevGame.View
             RevPool.Return(this, 0);
         }
 
+        // 先置空句柄再Kill(false)，停止旧动画但不强制完成；避免完成回调二次归池或误用被池复用的Tween。
         private void StopAnimation()
         {
             Tween previous = _animation;
@@ -529,7 +573,10 @@ namespace RevGame.View
             previous?.Kill(false);
         }
 
+        // 借出时清旧活动层和动画；正式Show会覆盖本发参数，Awake创建的稳定委托继续复用。
         public void OnPoolGet() { StopAnimation(); HideProjectileLayers(); spriteRenderer.enabled = false; }
+        // 归还时清Tween、活动层、参数块和棋盘回调；保留有限的文字/字号/局部字形缓存。
+        // 保留字符串只省下一次相同字形的重建，不意味着该字仍在屏幕渲染。
         public void OnPoolReturn()
         {
             StopAnimation();
@@ -551,12 +598,15 @@ namespace RevGame.View
             spriteRenderer.enabled = false;
             _projectileActive = false;
         }
+        // 动态字体增加字形时可能重建网格；只有本对象使用的Font改变才使bounds缓存失效。
+        // 即使内容与字号相同，也不能继续使用字体重建前的范围。
         private void OnFontTextureRebuilt(Font font)
         {
             if (damageText.font != font) { return; }
             _localTextBoundsValid = false;
             _rectFrame = -1;
         }
+        // Font.textureRebuilt是静态事件，销毁必须退订同一个实例方法，避免字体事件一直引用已销毁池对象。
         private void OnDestroy()
         {
             Font.textureRebuilt -= OnFontTextureRebuilt;

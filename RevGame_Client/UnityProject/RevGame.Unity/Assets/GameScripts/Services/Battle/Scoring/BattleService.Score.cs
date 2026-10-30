@@ -69,8 +69,11 @@ namespace RevGame.Services
         public void FlushScore() { _scoreProgress?.Flush(); }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // 开发测试积分隔离开关，真实规则仍计算分数，但预览期间不写玩家存档。
+        // 只能由取得ScorePreview租约的所有者还原；嵌套租约会同时恢复两份不同积分，故明确拒绝。
         private bool _scorePreview;
         /// <summary>开发态只读隔离标记，测试复用已有租约，不允许嵌套或自行撤掉启动流程拥有的隔离。</summary>
+        // 测试夹具先检查启动流程是否已拥有隔离，已有时借其保护但不Dispose它，避免误解除别人的租约。
         public bool IsScorePreviewActive => _scorePreview;
         /// <summary>自动化视觉预览的隔离区：保存内存积分并停止写存档，Dispose必须放在finally里。</summary>
         public IDisposable BeginScorePreview()

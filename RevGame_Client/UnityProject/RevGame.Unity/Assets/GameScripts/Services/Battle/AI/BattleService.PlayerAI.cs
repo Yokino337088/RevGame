@@ -23,6 +23,8 @@ namespace RevGame.Services
             if (piece.Def.IsRanged && oldDistance > Balance.PlayerRetreatDistance) { return false; }
             piece.NextMoveAt = _battleElapsed + Balance.PlayerMoveSeconds;
             if (_board.IsSideWiped(GameSide.Enemy)) { return false; }
+            // 玩家与敌方一样借用该源盘的独立试盘，同一主线程依次完成查询后才提交。
+            // 每次Trial覆盖全状态；禁止把实棋piece放进trial或在试算过程中移动_board。
             BoardModel trial = _board.Tactics.Trial(_board);
             Piece copy = trial.FindPiece(piece.Id);
             // best初始为原位；只有严格更优且通过硬门槛的候选才会被采用。

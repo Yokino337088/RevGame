@@ -21,10 +21,13 @@ namespace RevGame.Editor
     {
         public static string LastResult { get; private set; } = "未运行";
         private static int _checks;
+        // 当前检查步骤，仅作诊断。不是模型阶段，测试工具不能通过改这个字符串强行使业务通过。
         public static string Stage { get; private set; } = "未开始";
+        // 只读结果/阶段/已完成断言数。断言数随渲染帧数可能略变，不代表这么多个独立玩法场景。
         public static string State() { return JsonUtility.ToJson(new Status { result=LastResult,stage=Stage,checks=_checks }); }
         [Serializable] private sealed class Status { public string result,stage;public int checks; }
         // 阶段记录只是诊断摘要，不在性能采样窗口运行，不能把生成状态文本算成玩法成本。
+        // 阶段文本在性能采样窗口外写忽略Temp目录，帮助定位超时；不是每帧生产日志。
         private static void Mark(string stage)
         {
             Stage=stage;
@@ -45,6 +48,8 @@ namespace RevGame.Editor
             {
                 var service = (BattleService)RevServices.GetRequired<IBattleService>();
                 // 隔离启动本身拥有积分预览租约；这里仅在尚未隔离时取得自己的租约，finally只还自己的。
+                // 隔离启动可能已有ScorePreview租约，此处只在没有保护时取得自己的。
+                // finally只Dispose本方法创建的租约，不能把启动流程的隔离开关提前解除。
                 if (!service.IsScorePreviewActive) { scorePreview = service.BeginScorePreview(); }
                 Mark("回首页");
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
@@ -276,6 +281,8 @@ namespace RevGame.Editor
         }
 
         /// <summary>读取真实面板，检查静态缓存命中与阶段/回合/主将掉血后的失效；不伪造UI文本。</summary>
+        // 对真实面板Refresh后核对真实服务阶段、章回与HP；再刷相同输入检查缓存没有造成文案消失。
+        // 直接改UI成预期文本只会制造假通过，故这里只读已经落屏结果。
         private static void VerifyHud(BattleService battle)
         {
             var hud = UnityEngine.Object.FindObjectOfType<RevGame.UI.BattleHudPanel>();

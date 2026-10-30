@@ -48,6 +48,8 @@ namespace RevGame.Battle
         bool PredictAttackDefeat(Piece attacker, Piece target);
     }
 
+    // 纯同步战术计算：接收BoardModel和真实棋子，输出目标/落点；不碰Unity视图或直接提交实战移动。
+    // 今天复用board.Tactics工具箱，持有者是一张棋盘，禁止改为全局static可变名单。
     public static class EnemyTactics
     {
         /// <summary>
@@ -156,6 +158,8 @@ namespace RevGame.Battle
             // 后排完全不可达时恢复原有接敌策略，不让无穷距离参与乘法评分。
             if (oldDistance == int.MaxValue) { pursuit = null; oldDistance = NearestPlayerDistance(board, piece.Pos); }
             int bestScore = int.MinValue;
+            // 本次移动查询只刷新一张独立深试盘，不为每个候选new一整盘。
+            // 后续候选仍要恢复副本位置并Evaluate，缓存优化不能省略气眼/安全门槛。
             BoardModel trial = board.Tactics.Trial(board);
             Piece moved = trial.FindPiece(piece.Id);
             List<BoardPos> hits = board.Tactics.Hits; hits.Clear();
@@ -271,6 +275,7 @@ namespace RevGame.Battle
             best = new BoardPos(-1, -1);
             intention = "连接补阵";
             int bestScore = int.MinValue;
+            // 先清并填入调用方持有的友军/玩家缓冲；它们保存当前同步查询的成员，不能带入下一帧或异步回调。
             List<Piece> allies = board.Tactics.Allies; board.CopyPieces(allies, GameSide.Enemy);
             List<Piece> players = board.Tactics.Players; board.CopyPieces(players, GameSide.Player);
             if (allies.Count == 0 || players.Count == 0)
@@ -283,11 +288,13 @@ namespace RevGame.Battle
                 intention = "远程驻守眼位";
                 return true;
             }
+            // 补子试放复用独立试盘和新棋副本；每个候选用副本Place/Remove，不把实棋移动到候选格来算。
             BoardModel trial = board.Tactics.Trial(board);
             Piece added = board.Tactics.Added(newcomer);
             List<BoardPos> hits = board.Tactics.Hits; hits.Clear();
             // 连通块只构建一次。共享一口气的五颗棋是一块，不应把打吃奖励算五遍。
             // 下面仍在同一张快照试落子；全盘最多81个候选，只在落子时钟到期时运行。
+            // 棋群连通关系只依赖占格，当前实盘未变就复用棋群；候选减气仍从before/after真实气数比较。
             List<List<Piece>> groups = board.TacticalGroups();
             for (int y = 0; y < board.Size; y++)
             {
@@ -561,6 +568,8 @@ namespace RevGame.Battle
         /// <summary>从目标身体外沿反向广度搜索；路径距离0表示已贴身，不会穿过第三方棋子或受保护眼位。</summary>
         private static int[,] BuildPursuitDistances(BoardModel board, Piece actor, Piece prey)
         {
+            // 距离数组和BFS队列复用，但下面会完整重置每格为不可达，随后从目标边界扩散。
+            // 省的是数组/队列创建，不是跳过障碍、眼位保护或大棋CanFit校验。
             var distances = board.Tactics.Distances;
             var queue = board.Tactics.Queue; queue.Clear();
             for (int y = 0; y < board.Size; y++)
@@ -580,6 +589,8 @@ namespace RevGame.Battle
                 BoardPos from = queue.Dequeue();
                 for (int direction = 0; direction < 4; direction++)
                 {
+                    // 这里用四个整数分支替代GetOrthogonalNeighbors创建的小数组。
+                    // 顺序也必须与原数组一致：距离相同的路径先后可能影响AI，性能优化不能暗改同分偏好。
                     // 保持原四邻数组的右、左、上、下顺序，省掉数组分配且不改同分路径偏好。
                     BoardPos next = new BoardPos(from.X + (direction == 0 ? 1 : direction == 1 ? -1 : 0), from.Y + (direction == 2 ? 1 : direction == 3 ? -1 : 0));
                     if (!board.CanFit(next, actor.Size, actor.Side, actor) || distances[next.X,next.Y] != int.MaxValue) { continue; }

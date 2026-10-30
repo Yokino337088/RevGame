@@ -13,12 +13,16 @@ namespace RevGame.View
         /// <summary>特性每种组件只解析一次；路径仍由组件的RevPoolPrefab声明，禁止复制磁盘路径。</summary>
         private static class Resource<T> where T : Component
         {
+            // 每种组件的资源特性只解析一次；Root/Name/Group来自原声明，不复制一套硬编码磁盘路径。
             internal static readonly RevPoolPrefabAttribute Definition =
                 (RevPoolPrefabAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(RevPoolPrefabAttribute));
+            // 资源逻辑名称，声明为空时按原约定用组件名。它是路径的一段，不是StreamingAssets文件地址。
             internal static readonly string Name = string.IsNullOrEmpty(Definition?.Name) ? typeof(T).Name : Definition.Name;
         }
 
         /// <summary>已加载资源的同步快速路径，不发起新加载；调用者在false时必须走冷异步入口。</summary>
+        // 只尝试已经加载的资源；false表示必须走GetAsync，不会为了快同步加载冷AB。
+        // true表示已执行池取用流程，消费者仍须检查item和阶段代次，资源已加载不保证玩法前置仍有效。
         public static bool TryGetReady<T>(out T item, Transform parent = null) where T : Component
         {
             RevPoolPrefabAttribute definition = Resource<T>.Definition;
@@ -46,6 +50,8 @@ namespace RevGame.View
         /// 捕获参数的加载回调只在冷资源路径创建。不能把lambda留在GetAsync方法里，
         /// C#编译器会在进入方法时先建闭包，导致已缓存的每发弹道也付出一次短命分配。
         /// </summary>
+        // 冷加载独立方法保存completed/parent/definition/name的闭包。
+        // 若闭包仍写在GetAsync内部，编译器可能进入热方法时就先分配，即使随后直接命中缓存返回。
         private static void LoadCold<T>(Action<T> completed,Transform parent,RevPoolPrefabAttribute definition,string name) where T : Component
         {
             RevResManager.LoadAsync(definition.Root, name, typeof(GameObject), handle =>

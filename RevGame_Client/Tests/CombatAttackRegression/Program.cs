@@ -24,6 +24,7 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+            // 新增明确模式只运行查询缓存对照。默认全套仍保留原断言与失败，不用这个模式冒充默认全部通过。
             if (args.Length > 1 && args[1] == "query-cache")
             {
                 QueryCacheRegression.Run();

@@ -165,6 +165,7 @@ namespace RevGame.Services
             int summoned = 0;
             for (int i = 0; i < count; i++)
             {
+                // 召唤每颗援军前检查当前人数；采用直接计数避免临时名单，不缓存人数以免上一颗Place后上限过期。
                 if (_board.CountSide(GameSide.Enemy) >= Balance.DeployLivingCap)
                 {
                     break;
