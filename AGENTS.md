@@ -9,6 +9,7 @@
 | 写任何玩法 / UI / 流程代码 | Revolution 框架技能 —— 本机若已装入 `.codex/skills/revolution-framework/SKILL.md` 就读本地那份；否则读源仓库 [Revolution](https://github.com/Yokino337088/Revolution) 的 `Skills/revolution-framework/`。按它的「30 秒分诊」只读命中的那 1 篇 `references/`，**不要通读内核** |
 | 对玩法有疑问 | `RevGame_Client/策划案/玩法拓展策划案.html`（v18，权威） |
 | 不确定某个 API 存不存在 | 技能 `references/decision-guide.md` §2「不存在 / 不做」清单，**不要凭印象写** |
+| 性能诊断 / 缓存 / CPU-GPU / 图集AB / 低端机验收 | `.codex/skills/revolution-performance/SKILL.md`，按热点读对应专题；仍遵循框架门面与本项目性能规范 |
 
 ## 工程事实
 

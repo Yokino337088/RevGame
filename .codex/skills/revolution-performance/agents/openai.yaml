@@ -1,0 +1,4 @@
+interface:
+  display_name: "Revolution 性能优化"
+  short_description: "以真实测量驱动CPU、GPU、缓存与资源优化，保持玩法和画面并验证收益"
+  default_prompt: "使用 $revolution-performance 优化当前项目性能，先建立同输入基线，再按瓶颈实施并验证收益、规则与资源生命周期。"

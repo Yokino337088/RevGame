@@ -5,6 +5,8 @@ description: 本指南适用于 Revolution Unity 游戏框架业务开发、官�
 
 # Revolution 框架开发 Skill
 
+性能诊断/优化/缓存与收益验收联合使用 `revolution-performance`（项目安装：[性能技能](../revolution-performance/SKILL.md)）。按热点只读对应专题，先测固定输入、保持规则与画面，再核对局部/整帧与目标设备结果；本技能继续约束门面/API/架构。
+
 Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏框架（C#）。2026-10-22 新增开发态 `RevAutomation` 模块与 `RevRuntimeAutomation` 门面，Runtime 目录由历史 21 个增为 22 个；下表保留基础模块索引。
 2026-10-16 已跟踪源码快照：Runtime **199** 个 `.cs`、Editor **44** 个 `.cs`、独立扩展包 `RevHotUpdate` **20** 个 `.cs`；Demo 仍为 **18 个 `.unity` 场景**，新增 `RevScopeFlowDemo.cs` 挂任意场景运行，不计作独立场景。
 
