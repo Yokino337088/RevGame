@@ -32,6 +32,12 @@ namespace RevGame.View
         [SerializeField]
         private bool fitBackgroundToCamera;
         private bool _released;
+        // 安全区布局只依赖屏幕/比例。相机震动和Boss特写仍每帧叠加，不能缓存最终相机位置。
+        private Vector2 _layoutPixels;
+        private Rect _layoutSafe;
+        private float _layoutAspect, _layoutCameraSize;
+        private GameBattleLayout.Regions _layoutRegions;
+        private Vector2 _layoutCameraCenter;
         /// <summary>当前屏幕的异步装配版本；快速切换时旧面板加载回调不能覆盖新屏幕。</summary>
         private int _screenVersion;
         private GameScreen _readyScreen = GameScreen.Exit;
@@ -91,14 +97,22 @@ namespace RevGame.View
             {
                 return;
             }
-            GameBattleLayout.Regions areas = GameBattleLayout.Calculate(screenSize, GameBattleLayout.SafeViewport());
-            float boardFraction = areas.Board.height / screenSize.y;
-            float boardWidth = Consts.BoardSize * Consts.CellSize;
-            boardCamera.orthographicSize = boardWidth / (2f * boardFraction);
-            Vector2 center = areas.Board.center;
+            Rect safe = GameBattleLayout.SafeViewport();
+            if (_layoutPixels != screenSize || _layoutSafe != safe || _layoutAspect != aspect)
+            {
+                _layoutPixels = screenSize; _layoutSafe = safe; _layoutAspect = aspect;
+                _layoutRegions = GameBattleLayout.Calculate(screenSize, safe);
+                float boardFraction = _layoutRegions.Board.height / screenSize.y;
+                _layoutCameraSize = Consts.BoardSize * Consts.CellSize / (2f * boardFraction);
+                Vector2 center = _layoutRegions.Board.center;
+                _layoutCameraCenter = new Vector2((0.5f-center.x/screenSize.x)*_layoutCameraSize*2f*aspect,
+                    (0.5f-center.y/screenSize.y)*_layoutCameraSize*2f);
+            }
+            GameBattleLayout.Regions areas = _layoutRegions;
+            boardCamera.orthographicSize = _layoutCameraSize;
             Vector3 cameraPosition = boardCamera.transform.position;
-            cameraPosition.x = (0.5f - center.x / screenSize.x) * boardCamera.orthographicSize * 2f * aspect;
-            cameraPosition.y = (0.5f - center.y / screenSize.y) * boardCamera.orthographicSize * 2f;
+            cameraPosition.x = _layoutCameraCenter.x;
+            cameraPosition.y = _layoutCameraCenter.y;
             boardCamera.transform.position = cameraPosition + EnergyShakeOffset();
             ApplyBossFocus();
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
@@ -110,7 +124,7 @@ namespace RevGame.View
                 {
                     // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
                     // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。
-                    backgroundRenderer.drawMode = SpriteDrawMode.Simple;
+                    if (backgroundRenderer.drawMode != SpriteDrawMode.Simple) { backgroundRenderer.drawMode = SpriteDrawMode.Simple; }
                     // ★ 用同一个比例同时缩放宽和高，背景中的房屋才不会被拉扁。
                     // 取宽、高需要的缩放中较大的一个，保证填满窗口；多出来的部分由相机自然裁掉。
                     Vector2 sourceSize = backgroundRenderer.sprite.bounds.size;

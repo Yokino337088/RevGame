@@ -51,6 +51,14 @@ namespace RevGame.View
         private Tween _animation;
         private System.Action<BattleEffectView> _onFinished;
         private float _progress;
+        // Tween委托每个池对象只创建一次；当前参数存字段，回池先Kill后覆盖，避免闭包保存上一发轨迹。
+        private DG.Tweening.Core.DOGetter<float> _readProgress;
+        private DG.Tweening.Core.DOSetter<float> _writeProgress;
+        private TweenCallback _finishAnimation;
+        private Vector3 _animationStart, _animationEnd, _animationScale, _animationDirection;
+        private float _animationDuration, _animationAngle;
+        private bool _animationAttack, _animationShield;
+        private int _animationMode;
         // 透明度分成动画淡出与遮挡淡化两部分，相乘后落屏；避让刷新不能把快消失的旧字重新点亮。
         private float _fadeAlpha = 1f, _occlusionAlpha = 1f;
         private float _baseTextScale = 1f, _textPeak = 1f, _textRise;
@@ -71,7 +79,14 @@ namespace RevGame.View
         private Camera _textCamera;
         private int _rectFrame = -1;
         private Vector3 _rectPosition, _rectScale;
+        private Quaternion _rectRotation;
         private Rect _cachedTextRect;
+        private Bounds _localTextBounds;
+        private string _configuredContent;
+        private int _configuredFontSize = -1;
+        private bool _localTextBoundsValid;
+        private Matrix4x4 _rectCameraView, _rectCameraProjection;
+        private Rect _rectViewport;
 
         /// <summary>屏幕上真实文字的矩形，供整个棋盘统一避让；不使用渲染位置以外的固定“第几条通道”。</summary>
         public Rect TextScreenRect
@@ -87,11 +102,23 @@ namespace RevGame.View
                 {
                     _textRenderer = damageText.GetComponent<Renderer>();
                 }
-                Vector3 position = transform.position;
-                Vector3 scale = transform.lossyScale;
-                if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale) { return _cachedTextRect; }
-                _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale;
-                Bounds bounds = _textRenderer.bounds;
+                // localBounds属于文字子节点，必须用该Renderer的变换；根节点的缩放不能代替子节点偏移。
+                Transform textTransform = _textRenderer.transform;
+                Vector3 position = textTransform.position;
+                Vector3 scale = textTransform.lossyScale;
+                Quaternion rotation = textTransform.rotation;
+                Matrix4x4 view = camera.worldToCameraMatrix, projection = camera.projectionMatrix;
+                if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale && _rectRotation == rotation && _rectCameraView == view && _rectCameraProjection == projection && _rectViewport == camera.pixelRect)
+                { return _cachedTextRect; }
+                _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale; _rectRotation = rotation; _rectCameraView = view; _rectCameraProjection = projection; _rectViewport = camera.pixelRect;
+                if (!_localTextBoundsValid) { _localTextBounds = _textRenderer.localBounds; _localTextBoundsValid = true; }
+                Bounds bounds;
+                if (rotation == Quaternion.identity)
+                {
+                    // 飘字只平移/缩放，局部字形不变：避免每次新字摆位都向原生Renderer重查bounds。
+                    bounds = new Bounds(textTransform.TransformPoint(_localTextBounds.center), Vector3.Scale(_localTextBounds.size, scale));
+                }
+                else { bounds = _textRenderer.bounds; }
                 Vector3 min = camera.WorldToScreenPoint(bounds.min);
                 Vector3 max = camera.WorldToScreenPoint(bounds.max);
                 _cachedTextRect = Rect.MinMaxRect(Mathf.Min(min.x, max.x) - 3f, Mathf.Min(min.y, max.y) - 3f,
@@ -110,10 +137,12 @@ namespace RevGame.View
                 Vector2 center = rect.center;
                 rect.size *= Mathf.Max(1f, scale);
                 rect.center = center;
-                Camera camera = Camera.main;
+                Camera camera = _textCamera != null ? _textCamera : (_textCamera = Camera.main);
                 if (camera != null)
                 {
-                    float rise = camera.WorldToScreenPoint(transform.position + Vector3.up * _textRise).y - camera.WorldToScreenPoint(transform.position).y;
+                    float rise = camera.orthographic
+                        ? _textRise * camera.pixelHeight / (2f * camera.orthographicSize)
+                        : camera.WorldToScreenPoint(transform.position + Vector3.up * _textRise).y - camera.WorldToScreenPoint(transform.position).y;
                     rect.height += Mathf.Max(0f, rise);
                 }
                 return rect;
@@ -131,8 +160,13 @@ namespace RevGame.View
         /// <summary>缓存组件不复制材质；TextMesh及其描边继续共享字体材质，保留动态合批条件。</summary>
         private void Awake()
         {
+            _readProgress = ReadAnimationProgress; _writeProgress = WriteAnimationProgress; _finishAnimation = Finish;
             _projectileProperties = new MaterialPropertyBlock();
+            damageText.fontStyle = FontStyle.Bold; damageText.anchor = TextAnchor.MiddleCenter; damageText.alignment = TextAlignment.Center;
+            foreach (TextMesh outline in damageOutlines) { outline.fontStyle = FontStyle.Bold; outline.anchor = TextAnchor.MiddleCenter; outline.alignment = TextAlignment.Center; }
             _textRenderer = damageText.GetComponent<Renderer>();
+            // 动态字体扩容会重建字形网格。即使文案没变，也必须重取局部范围，否则避让会读旧宽度。
+            Font.textureRebuilt += OnFontTextureRebuilt;
             _outlineRenderers = new Renderer[damageOutlines.Length];
             for (int i = 0; i < damageOutlines.Length; i++) { _outlineRenderers[i] = damageOutlines[i].GetComponent<Renderer>(); }
         }
@@ -170,7 +204,7 @@ namespace RevGame.View
             BattleText config = GameTextConfig.Damage(kind, targetSide);
             DamageKind = kind;
             Color color = GameTextConfig.ColorOf(config);
-            ConfigureText(config, config.Text.Replace("{damage}", GameTextConfig.DisplayDamage(damage).ToString()), color);
+            ConfigureText(config, GameTextConfig.FormatDamage(config, damage), color);
             StartFloatingText(config, position + new Vector3(0f, 0.35f, -0.5f), false, arrange);
         }
 
@@ -192,19 +226,12 @@ namespace RevGame.View
         {
             _rectFrame = -1;
             spriteRenderer.enabled = false;
-            damageText.text = content;
-            damageText.fontSize = config.FontSize;
             damageText.color = color;
-            damageText.fontStyle = FontStyle.Bold;
-            damageText.anchor = TextAnchor.MiddleCenter;
-            damageText.alignment = TextAlignment.Center;
-            foreach (TextMesh outline in damageOutlines)
+            if (_configuredContent != content || _configuredFontSize != config.FontSize)
             {
-                outline.text = content;
-                outline.fontSize = config.FontSize;
-                outline.fontStyle = FontStyle.Bold;
-                outline.anchor = TextAnchor.MiddleCenter;
-                outline.alignment = TextAlignment.Center;
+                _configuredContent = content; _configuredFontSize = config.FontSize; _localTextBoundsValid = false;
+                damageText.text = content; damageText.fontSize = config.FontSize;
+                foreach (TextMesh outline in damageOutlines) { outline.text = content; outline.fontSize = config.FontSize; }
             }
             // 复用时文字/颜色已替换，必须强制初始化描边；后续恒定透明度无需每帧重建五份字形颜色。
             _fadeAlpha = 1f;
@@ -237,17 +264,8 @@ namespace RevGame.View
             transform.localScale = Vector3.one * (_baseTextScale * 0.72f);
             // 一条DOTween同时驱动弹出、衰减振动、上浮、淡出，替代每条文字的Sequence+4个子Tween。
             // 振幅是表现尺度而非玩法数值；临界缩放和上浮范围仍交给BoardView预约避让。
-            _animation = DOTween.To(() => _progress, value =>
-            {
-                _progress = value;
-                float seconds = value * duration;
-                float scale = seconds < .14f ? Mathf.Lerp(.72f, _textPeak, 1f - Mathf.Pow(1f - seconds / .14f, 2f))
-                    : Mathf.Lerp(_textPeak, 1f, Mathf.Clamp01((seconds - .14f) / .18f));
-                float shake = attack ? 0f : Mathf.Sin(seconds * 72f) * Mathf.Max(0f, 1f - seconds / .42f) * Consts.CellSize * .045f;
-                transform.localScale = Vector3.one * (_baseTextScale * scale);
-                transform.position = Vector3.Lerp(start, end, 1f - (1f - value) * (1f - value)) + Vector3.right * shake;
-                SetNumberAlpha(Mathf.Clamp01((duration - seconds) / .28f));
-            }, 1f, duration).SetEase(Ease.Linear).OnComplete(Finish);
+            _animationMode = 0; _animationStart = start; _animationEnd = end; _animationDuration = duration; _animationAttack = attack;
+            _animation = DOTween.To(_readProgress, _writeProgress, 1f, duration).SetEase(Ease.Linear).OnComplete(_finishAnimation);
         }
 
         /// <summary>只播放已发生攻击的轨迹；扩大弹头、附带短尾与发射脉冲，动画绝不再次造成伤害。</summary>
@@ -309,14 +327,8 @@ namespace RevGame.View
             transform.localScale = normalScale * 0.88f;
             SetProjectileAlpha(1f);
             // 一条Tween同时推进飞行、发射脉冲和末段淡出；三个Sprite随同一个池对象回收，不额外创建计时器。
-            _animation = DOTween.To(() => _progress, value =>
-            {
-                _progress = value;
-                transform.position = Vector3.Lerp(source, target, value);
-                float pulse = value < 0.25f ? Mathf.Lerp(0.88f, 1.08f, value / 0.25f) : Mathf.Lerp(1.08f, 1f, (value - 0.25f) / 0.75f);
-                transform.localScale = normalScale * pulse;
-                SetProjectileAlpha(Mathf.Clamp01((1f - value) / 0.18f));
-            }, 1f, duration).SetEase(Ease.Linear).OnComplete(Finish);
+            _animationMode = 1; _animationStart = source; _animationEnd = target; _animationScale = normalScale;
+            _animation = DOTween.To(_readProgress, _writeProgress, 1f, duration).SetEase(Ease.Linear).OnComplete(_finishAnimation);
         }
 
         /// <summary>生命周期保险：寿命到期先停止旧动画再归池；不能让失去Tween驱动的弹头永久停留在棋子上。</summary>
@@ -354,7 +366,7 @@ namespace RevGame.View
             spriteRenderer.color = color;
             if (projectileOutline != null)
             {
-                projectileOutline.color = _magicAura ? new Color(1,1,1,alpha) : new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f);
+                projectileOutline.color = _magicAura ? new Color(1, 1, 1, alpha) : new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f);
             }
             if (projectileTrail != null)
             {
@@ -395,24 +407,49 @@ namespace RevGame.View
             _projectileProperties.Clear();
             _projectileProperties.SetTexture("_MainTex", art.texture);
             _projectileProperties.SetVector(SpriteUvId, DataUtility.GetOuterUV(art));
-            _projectileProperties.SetFloat("_Progress",0);
+            _projectileProperties.SetFloat("_Progress", 0);
             spriteRenderer.SetPropertyBlock(_projectileProperties);
-            float angle = Mathf.Atan2(target.y-source.y, target.x-source.x) * Mathf.Rad2Deg;
+            float angle = Mathf.Atan2(target.y - source.y, target.x - source.x) * Mathf.Rad2Deg;
             Vector3 origin = transform.position;
-            Vector3 direction = (target-source).normalized;
-            Vector3 baseScale = new Vector3((shield ? 1.2f : 1.6f)/art.bounds.size.x, 1.6f/art.bounds.size.y, 1);
+            Vector3 direction = (target - source).normalized;
+            Vector3 baseScale = new Vector3((shield ? 1.2f : 1.6f) / art.bounds.size.x, 1.6f / art.bounds.size.y, 1);
             _projectileActive = true;
             _projectileExpiresAt = Time.time + .5f;
-            _animation = DOTween.To(() => _progress, value =>
+            _animationMode = 2; _animationStart = origin; _animationDirection = direction; _animationAngle = angle; _animationScale = baseScale; _animationShield = shield;
+            _animation = DOTween.To(_readProgress, _writeProgress, 1f, .34f).SetEase(Ease.OutCubic).OnComplete(_finishAnimation);
+        }
+
+        private float ReadAnimationProgress() { return _progress; }
+        /// <summary>统一单Tween驱动，只有当前模式更新对应图层；动画不提交伤害或占格。</summary>
+        private void WriteAnimationProgress(float value)
+        {
+            _progress = value;
+            if (_animationMode == 0)
             {
-                _progress = value;
-                transform.position = origin + direction * value * .22f;
-                _projectileProperties.SetFloat("_Progress",value);
-                spriteRenderer.SetPropertyBlock(_projectileProperties);
-                transform.rotation = Quaternion.Euler(0,0,angle + (shield ? 0 : Mathf.Lerp(-60,65,value)));
-                transform.localScale = baseScale * Mathf.Lerp(.55f,1.2f,Mathf.Sin(value*Mathf.PI*.5f));
-                spriteRenderer.color = new Color(1,1,1,Mathf.Clamp01((1-value)*2.4f));
-            },1f,.34f).SetEase(Ease.OutCubic).OnComplete(Finish);
+                float seconds = value * _animationDuration;
+                float rise = 1f - seconds / .14f;
+                float scale = seconds < .14f ? Mathf.Lerp(.72f, _textPeak, 1f - rise * rise)
+                    : Mathf.Lerp(_textPeak, 1f, Mathf.Clamp01((seconds - .14f) / .18f));
+                float shake = _animationAttack ? 0f : Mathf.Sin(seconds * 72f) * Mathf.Max(0f, 1f - seconds / .42f) * Consts.CellSize * .045f;
+                transform.localScale = Vector3.one * (_baseTextScale * scale);
+                transform.position = Vector3.Lerp(_animationStart, _animationEnd, 1f - (1f - value) * (1f - value)) + Vector3.right * shake;
+                SetNumberAlpha(Mathf.Clamp01((_animationDuration - seconds) / .28f));
+            }
+            else if (_animationMode == 1)
+            {
+                transform.position = Vector3.Lerp(_animationStart, _animationEnd, value);
+                float pulse = value < .25f ? Mathf.Lerp(.88f, 1.08f, value / .25f) : Mathf.Lerp(1.08f, 1f, (value - .25f) / .75f);
+                transform.localScale = _animationScale * pulse;
+                SetProjectileAlpha(Mathf.Clamp01((1f - value) / .18f));
+            }
+            else
+            {
+                transform.position = _animationStart + _animationDirection * value * .22f;
+                _projectileProperties.SetFloat("_Progress", value); spriteRenderer.SetPropertyBlock(_projectileProperties);
+                transform.rotation = Quaternion.Euler(0, 0, _animationAngle + (_animationShield ? 0 : Mathf.Lerp(-60, 65, value)));
+                transform.localScale = _animationScale * Mathf.Lerp(.55f, 1.2f, Mathf.Sin(value * Mathf.PI * .5f));
+                spriteRenderer.color = new Color(1, 1, 1, Mathf.Clamp01((1 - value) * 2.4f));
+            }
         }
 
         /// <summary>文字离边缘留出可读空间；顶排命中时缩短上浮距离，防止数字被手机屏幕裁掉。</summary>
@@ -505,11 +542,7 @@ namespace RevGame.View
             _onFinished = null;
             IsFloatingText = IsAttackText = false;
             _fadeAlpha = _occlusionAlpha = 1f;
-            damageText.text = string.Empty;
-            foreach (TextMesh outline in damageOutlines)
-            {
-                outline.text = string.Empty;
-            }
+            // 池对象失活后不再渲染；保留有限字形缓存可在下次相同文案时复用，不清空再重建五份网格。
         }
         private void OnDisable()
         {
@@ -518,6 +551,16 @@ namespace RevGame.View
             spriteRenderer.enabled = false;
             _projectileActive = false;
         }
-        private void OnDestroy() { StopAnimation(); }
+        private void OnFontTextureRebuilt(Font font)
+        {
+            if (damageText.font != font) { return; }
+            _localTextBoundsValid = false;
+            _rectFrame = -1;
+        }
+        private void OnDestroy()
+        {
+            Font.textureRebuilt -= OnFontTextureRebuilt;
+            StopAnimation();
+        }
     }
 }

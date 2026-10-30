@@ -21,6 +21,15 @@ namespace RevGame.Editor
     {
         public static string LastResult { get; private set; } = "未运行";
         private static int _checks;
+        public static string Stage { get; private set; } = "未开始";
+        public static string State() { return JsonUtility.ToJson(new Status { result=LastResult,stage=Stage,checks=_checks }); }
+        [Serializable] private sealed class Status { public string result,stage;public int checks; }
+        // 阶段记录只是诊断摘要，不在性能采样窗口运行，不能把生成状态文本算成玩法成本。
+        private static void Mark(string stage)
+        {
+            Stage=stage;
+            System.IO.File.WriteAllText("Temp/ReadabilityVerification/Stage.txt",stage);
+        }
 
         /// <summary>必须在Play运行；finally返回大厅，让测试冻结的动画与时钟随原战斗域一起回收。</summary>
         public static async void Begin()
@@ -31,19 +40,34 @@ namespace RevGame.Editor
             string outcome = "失败：验收未完成";
             System.IO.Directory.CreateDirectory("Temp/ReadabilityVerification");
             GameFlow flow = RevServices.GetRequired<GameFlow>();
-            IDisposable scorePreview = ((BattleService)RevServices.GetRequired<IBattleService>()).BeginScorePreview();
+            IDisposable scorePreview = null;
             try
             {
+                var service = (BattleService)RevServices.GetRequired<IBattleService>();
+                // 隔离启动本身拥有积分预览租约；这里仅在尚未隔离时取得自己的租约，finally只还自己的。
+                if (!service.IsScorePreviewActive) { scorePreview = service.BeginScorePreview(); }
+                Mark("回首页");
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                Mark("进入战斗");
                 Require(flow.OpenLevels() && flow.EnterBattle(1), "进入真实战斗域");
                 await GameSceneTransitionChecks.WaitForFlowAsync(flow);
+                float storyDeadline = Time.realtimeSinceStartup + 45f;
+                while (flow.IsGameplayBlocked)
+                {
+                    if (Time.realtimeSinceStartup > storyDeadline) { throw new TimeoutException("反馈检查等待剧情/过场超时"); }
+                    if (flow.IsStoryPlaying && !flow.IsTransitioning) { flow.AdvanceStory(); }
+                    await RevTask.Yield();
+                }
                 await RevTask.Delay(650);
                 BattleService battle = (BattleService)RevServices.GetRequired<IBattleService>();
+                Mark("建立反馈场景");
                 Require(battle.LoadDevelopmentScenario("events"), "载入真实事件场景");
+                VerifyHud(battle);
                 // 暂停模型自动小步，仅由本夹具发出确定输入，避免随机攻击混入合计数字的断言。
                 RevTimer.CancelAllOf(RevLogic.Get<BattleLogic>());
                 battle.Tick(3f);
                 Require(battle.StartBattle(), "正常经过开战入口");
+                VerifyHud(battle);
                 await RevTask.Delay(100);
                 BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
                 Pieces.Piece player = battle.PlayerPieces[0];
@@ -68,9 +92,11 @@ namespace RevGame.Editor
                 // AB冷启动需要磁盘读取，60ms断言验证的是齐射调度，而不是磁盘速度。
                 // 先通过真实对象池预热一个对象；冷加载取消/回收由资源与跨回合测试另外覆盖。
                 var warm = new RevTaskCompletionSource<BattleEffectView>();
+                Mark("预热反馈对象");
                 RevPool.GetAsync<BattleEffectView>(effect => warm.SetResult(effect));
                 BattleEffectView warmed = await warm.Task;
                 Require(warmed != null, "实际AB弹道预制体预热成功");
+                Mark("注入同目标合并");
                 RevPool.Return(warmed, 0);
                 for (int i = 0; i < 120; i++)
                 {
@@ -106,7 +132,8 @@ namespace RevGame.Editor
                 bool shown = false;
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                 {
-                    if (effect.IsFloatingText && !effect.IsAttackText && GetField<TextMesh>(effect, "damageText").text.Contains("360")) { shown = true; }
+                    string displayed = GameTextConfig.DisplayDamage(360).ToString();
+                    if (effect.IsFloatingText && !effect.IsAttackText && GetField<TextMesh>(effect, "damageText").text.Contains(displayed)) { shown = true; }
                 }
                 Require(shown, "60ms内实际显示同帧合计360，不再等0.22秒");
 
@@ -115,6 +142,7 @@ namespace RevGame.Editor
                     RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(10000 + i, new BoardPos(4, 4), 1, GameSide.Enemy, i + 1, true, new BoardPos(0, 0), 5000 + i, false, PieceKind.Archer, 1, true));
                 }
                 Require(board.PendingDamageTextCount <= 81, "不同目标风暴仍保持有界待播队列");
+                Mark("密集数字与避让");
                 int peak = 0;
                 int projectilePeak = 0;
                 for (int frame = 0; frame < 12; frame++)
@@ -211,9 +239,19 @@ namespace RevGame.Editor
                 }
                 Require(board.PendingProjectileCount > 0 && board.PendingDamageTextCount > 0, "切轮前两种显示队列确实都有待播内容");
                 Require(battle.StartRound(1, 2), "密集动画尚未结束时切换回合");
+                Mark("切回合清理");
                 Require(board.ActiveEffectCount == 0 && board.PendingDamageTextCount == 0 && board.ActiveFloatingTextCount == 0 && board.ActiveProjectileCount == 0 && board.PendingProjectileCount == 0, "切阶段清空冻结文字、弹道、两个待播队列和预算");
                 await RevTask.Delay(450);
                 Require(board.ActiveEffectCount == 0, "旧异步请求没有在新准备期补播");
+                VerifyHud(battle);
+                Require(battle.LoadDevelopmentScenario("boss"), "HUD缓存验收建立真实主将回合");
+                await RevTask.Delay(150);
+                VerifyHud(battle);
+                Pieces.Piece king = null;
+                foreach (var enemy in battle.EnemyPieces) { if (enemy.IsKing) { king = enemy; break; } }
+                Require(king != null, "主将HUD存在真实数据源");
+                king.TakeDamage(3);
+                VerifyHud(battle);
                 outcome = "通过 " + _checks + " 条Play断言：120次合并、100目标控频、职业原画/即时伤害/35条连续齐射、避让/透明、居中、战斗换位与阶段清理；峰值飘字=" + peak + "，弹道=" + projectilePeak;
             }
             catch (Exception error)
@@ -223,9 +261,11 @@ namespace RevGame.Editor
             }
             finally
             {
+                Mark("回首页收尾");
                 try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
-                finally { scorePreview.Dispose(); }
+                finally { scorePreview?.Dispose(); }
                 LastResult = outcome;
+                Stage = "完成";
                 System.IO.File.WriteAllText("Temp/ReadabilityVerification/Result.txt", LastResult);
             }
         }
@@ -233,6 +273,27 @@ namespace RevGame.Editor
         private static T GetField<T>(object target, string name)
         {
             return (T)target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(target);
+        }
+
+        /// <summary>读取真实面板，检查静态缓存命中与阶段/回合/主将掉血后的失效；不伪造UI文本。</summary>
+        private static void VerifyHud(BattleService battle)
+        {
+            var hud = UnityEngine.Object.FindObjectOfType<RevGame.UI.BattleHudPanel>();
+            Require(hud != null, "真实HUD已打开");
+            hud.RefreshView();
+            string phase = battle.Phase == GamePhase.Battle ? "战斗" : battle.Phase == GamePhase.Settle ? "结算" : "准备";
+            Require(GetField<Text>(hud, "_phaseLabel").text == phase, "HUD阶段缓存随真实阶段更新");
+            string round = GetField<Text>(hud, "_roundText").text;
+            Require(round.Contains("第 " + battle.Chapter + " / 6 章") && round.Contains("第 " + battle.Round + " 回合"), "HUD章节回合缓存实时一致");
+            string counts = GetField<Text>(hud, "_countText").text;
+            hud.RefreshView();
+            Require(GetField<Text>(hud, "_countText").text == counts, "相同输入重复刷新保持文字");
+            foreach (var enemy in battle.EnemyPieces)
+            {
+                if (!enemy.IsKing) { continue; }
+                Text text = GetField<Text>(hud, "_bossText");
+                Require(text.gameObject.activeSelf && text.text.Contains(enemy.Hp + " / " + enemy.MaxHp), "主将血量变化使HUD缓存失效");
+            }
         }
 
         private static void Require(bool success, string reason)

@@ -165,7 +165,7 @@ namespace RevGame.Services
             int summoned = 0;
             for (int i = 0; i < count; i++)
             {
-                if (_board.GetPiecesOf(GameSide.Enemy).Count >= Balance.DeployLivingCap)
+                if (_board.CountSide(GameSide.Enemy) >= Balance.DeployLivingCap)
                 {
                     break;
                 }

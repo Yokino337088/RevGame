@@ -35,7 +35,8 @@ namespace RevGame.UI
         private void RefreshScore(IBattleService battle)
         {
             if (roundReel == null || battle == null) { return; }
-            scoreFrame.gameObject.SetActive(battle.Phase != GamePhase.Prepare);
+            bool visible = battle.Phase != GamePhase.Prepare;
+            if (scoreFrame.gameObject.activeSelf != visible) { scoreFrame.gameObject.SetActive(visible); }
             bool snap = _scoreRound != battle.Round || _scoreChapter != battle.Chapter;
             _scoreRound = battle.Round; _scoreChapter = battle.Chapter;
             roundReel.Display(battle.RoundScore, snap);

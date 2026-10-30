@@ -133,7 +133,7 @@ namespace RevGame.Battle
                         {
                             continue;
                         }
-                        if (trial.GetPiecesOf(GameSide.Enemy).Exists(p => p.IsLocked))
+                        if (HasLockedEnemies(trial))
                         {
                             continue;
                         }
@@ -169,7 +169,7 @@ namespace RevGame.Battle
             if (PlaceRemaining(fallback, ordered, fallbackReserved, variation))
             {
                 GoRules.Evaluate(fallback);
-                if (!fallback.GetPiecesOf(GameSide.Enemy).Exists(p => p.IsLocked) && PreservesPlayers(baseline, fallback))
+                if (!HasLockedEnemies(fallback) && PreservesPlayers(baseline, fallback))
                 {
                     CopyPositions(fallback, roster);
                     report = "合法散阵（残局无完整眼阵空间）";
@@ -294,8 +294,9 @@ namespace RevGame.Battle
         /// <summary>敌人出生可以增加压力，但不能靠生成操作拆掉玩家的眼，或把原本有气的玩家直接锁死。</summary>
         private static bool PreservesPlayers(BoardModel before, BoardModel after)
         {
-            foreach (Piece player in before.GetPiecesOf(GameSide.Player))
+            foreach (Piece player in before.Pieces)
             {
+                if (player.Side != GameSide.Player) { continue; }
                 Piece copy = Find(after, player.Id);
                 if (copy == null || copy.EyeCount < player.EyeCount || (player.Liberties > 0 && copy.Liberties == 0))
                 {
@@ -342,6 +343,11 @@ namespace RevGame.Battle
             return score;
         }
 
+        private static bool HasLockedEnemies(BoardModel board)
+        {
+            foreach (Piece p in board.Pieces) { if (p.Side == GameSide.Enemy && p.IsLocked) { return true; } }
+            return false;
+        }
         private static bool HasEnemy(BoardModel board)
         {
             foreach (Piece piece in board.Pieces) { if (piece.Side == GameSide.Enemy) { return true; } }

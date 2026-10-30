@@ -13,17 +13,57 @@ namespace RevGame.View
         private static BattleTextTable _cachedTable;
         private static readonly System.Collections.Generic.Dictionary<string, Color> Colors = new System.Collections.Generic.Dictionary<string, Color>();
         private static readonly System.Collections.Generic.Dictionary<Core.BattleDamageKind, BattleText> DamageRows = new System.Collections.Generic.Dictionary<Core.BattleDamageKind, BattleText>();
+        // 有界缓存常见伤害文案，整场最多128种；表切换立即清空，不能让长战斗收集无限数字字符串。
+        private struct DamageTextKey : System.IEquatable<DamageTextKey>
+        {
+            internal string Row;
+            internal long Number;
+            public bool Equals(DamageTextKey other) { return Row == other.Row && Number == other.Number; }
+            public override bool Equals(object other) { return other is DamageTextKey key && Equals(key); }
+            public override int GetHashCode() { return (Row.GetHashCode() * 397) ^ Number.GetHashCode(); }
+        }
+        private static readonly System.Collections.Generic.Dictionary<DamageTextKey, string> DamageTextCache = new System.Collections.Generic.Dictionary<DamageTextKey, string>(128);
+        private static readonly DamageTextKey[] DamageTextSlots = new DamageTextKey[128];
+        private static int _damageTextCursor;
+        public static long DamageTextCacheHits { get; private set; }
+        public static long DamageTextCacheMisses { get; private set; }
+        // 关闭Domain Reload时静态缓存仍活着；Play启动必须断开上次表引用，避免跨会话旧文案。
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetSession()
+        {
+            _cachedTable = null;
+            Colors.Clear(); DamageRows.Clear(); DamageTextCache.Clear();
+            System.Array.Clear(DamageTextSlots, 0, DamageTextSlots.Length);
+            _damageTextCursor = 0;
+            DamageTextCacheHits = DamageTextCacheMisses = 0;
+        }
         private static void EnsureCache()
         {
             BattleTextTable table = RevDataTableManager.Get<BattleTextTable>();
             if (table == _cachedTable) { return; }
-            _cachedTable = table; Colors.Clear(); DamageRows.Clear();
+            _cachedTable = table; Colors.Clear(); DamageRows.Clear(); DamageTextCache.Clear();
+            System.Array.Clear(DamageTextSlots, 0, DamageTextSlots.Length); _damageTextCursor = 0;
+            DamageTextCacheHits = DamageTextCacheMisses = 0;
         }
 
         /// <summary>仅飘字放大：long容纳int最大伤害乘十，规则/计分仍使用原始int。倍率由Excel读取。</summary>
         public static long DisplayDamage(int actualDamage)
         {
             return (long)actualDamage * Data.Balance.DamageDisplayMultiplier;
+        }
+        /// <summary>只有新数值才格式化；倍率与文案同源，使用显示值做键，改倍率后不会命中旧数字。</summary>
+        public static string FormatDamage(BattleText row, int actualDamage)
+        {
+            EnsureCache();
+            var key = new DamageTextKey { Row = row.Id, Number = DisplayDamage(actualDamage) };
+            if (DamageTextCache.TryGetValue(key, out string content)) { DamageTextCacheHits++; return content; }
+            DamageTextCacheMisses++;
+            // 游标始终在0～127内循环；长期战斗也不依赖int溢出后的负数取模。
+            int slot = _damageTextCursor;
+            _damageTextCursor = (slot + 1) % DamageTextSlots.Length;
+            if (DamageTextSlots[slot].Row != null) { DamageTextCache.Remove(DamageTextSlots[slot]); }
+            content = row.Text.Replace("{damage}", key.Number.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            DamageTextSlots[slot] = key; DamageTextCache[key] = content; return content;
         }
 
         public static BattleText Damage(Core.BattleDamageKind kind, Core.GameSide side)

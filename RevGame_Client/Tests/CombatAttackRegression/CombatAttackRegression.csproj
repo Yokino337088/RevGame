@@ -21,6 +21,7 @@
     <Compile Include="$(GameAssets)/GameScripts/Services/Progression/IScoreProgress.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Automation/Balance/GameBalanceTactics.cs" />
     <Compile Include="HelperBalanceRegression.cs" />
+    <Compile Include="QueryCacheRegression.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Generated/BattleDataTables.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Generated/BattleDataStructures.cs" />
     <Compile Include="$(GameAssets)/GameScripts/View/Combat/Feedback/FairFeedbackBuffer.cs" />

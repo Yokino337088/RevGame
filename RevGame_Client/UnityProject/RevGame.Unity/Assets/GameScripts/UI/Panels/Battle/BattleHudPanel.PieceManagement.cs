@@ -15,12 +15,17 @@ namespace RevGame.UI
         [SerializeField] private Button removePieceButton;
         [Tooltip("本章可用能源余额及成长档位，历史累计分数仍由原积分面板显示。")]
         [SerializeField] private Text helperScoreLabel;
+        private long _walletShown = -1;
+        private int _walletTier = -1, _walletAttack = -1, _walletSpeed = -1;
+        private Vector2 _walletLayoutSize;
+        private Rect _walletSafeArea;
         private int _removePieceId;
         private bool _swallowWaiting;
         private int _swallowShownChapter, _swallowShownRound;
 
         private void OpenPieceManagement()
         {
+            _walletShown = -1; _walletLayoutSize = Vector2.zero;
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshPieceManagement, owner: this);
             RevEvent.AddEventListener<string>(Events.BoardRuleNotice, OnBoardRuleNotice, owner: this);
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperScoreSpent, owner: this);
@@ -43,7 +48,7 @@ namespace RevGame.UI
                 && (Battle.Phase == GamePhase.Prepare || Battle.Phase == GamePhase.Battle);
             var flow = RevServices.GetRequired<Flow.GameFlow>();
             visible = visible && !flow.IsGameplayBlocked && !flow.IsTutorialActive;
-            removePieceButton.gameObject.SetActive(visible);
+            if (removePieceButton.gameObject.activeSelf != visible) { removePieceButton.gameObject.SetActive(visible); }
             _removePieceId = visible ? piece.Id : 0;
             if (!visible || Camera.main == null) { return; }
             RectTransform parent = (RectTransform)transform;
@@ -61,13 +66,22 @@ namespace RevGame.UI
             RefreshPieceManagement();
             if (helperScoreLabel == null) { return; }
             RectTransform parent = (RectTransform)transform;
-            var areas = GameBattleLayout.Calculate(parent.rect.size, GameBattleLayout.SafeViewport());
+            Rect safe = GameBattleLayout.SafeViewport();
+            if (_walletLayoutSize != parent.rect.size || _walletSafeArea != safe)
+            {
+            _walletLayoutSize = parent.rect.size; _walletSafeArea = safe;
+            var areas = GameBattleLayout.Calculate(parent.rect.size, safe);
             // 右栏信息牌下方留一行能源提示，避免底部棋盘格与存活棋子遮住数字。
             Rect slot = GameBattleLayout.InRegion(areas.Right, .68f, .92f, .08f);
             helperScoreLabel.rectTransform.sizeDelta = slot.size;
             helperScoreLabel.rectTransform.anchorMin = helperScoreLabel.rectTransform.anchorMax = new Vector2(.5f,.5f);
             helperScoreLabel.rectTransform.anchoredPosition = slot.center - parent.rect.size * .5f;
             helperScoreLabel.fontSize = 22;
+            }
+            long wallet = Battle.CombatScore; int tier = Battle.Helper.Tier;
+            int attack = Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100), speed = Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100);
+            if (_walletShown == wallet && _walletTier == tier && _walletAttack == attack && _walletSpeed == speed) { return; }
+            _walletShown = wallet; _walletTier = tier; _walletAttack = attack; _walletSpeed = speed;
             helperScoreLabel.text = "帮手能量 " + Battle.CombatScore.ToString("N0") + " · " + Battle.Helper.Tier + "档"
                 + "\n远程共鸣 攻击+" + Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100) + "% · 攻速+" + Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100) + "%";
         }

@@ -33,7 +33,8 @@ namespace RevGame.Battle
         public static void Plan(BoardModel board, float elapsed, int minimumCount, int safeDistance, List<FormationMove> result)
         {
             result.Clear();
-            var ranged = new List<Piece>();
+            List<Piece> ranged = board.Tactics.FormationRanged;
+            ranged.Clear();
             foreach (Piece piece in board.Pieces)
             {
                 if (piece.Side == GameSide.Player && piece.Def.IsRanged && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen) { ranged.Add(piece); }
@@ -49,11 +50,13 @@ namespace RevGame.Battle
                 foreach (Piece other in ranged) { if (piece != other && Distance(piece.Pos, piece.Size, other) == 1) { links++; } }
                 if (links > bestLinks) { bestLinks = links; anchor = piece; }
             }
-            var connected = new HashSet<int> { anchor.Id };
+            HashSet<int> connected = board.Tactics.FormationConnected;
+            connected.Clear(); connected.Add(anchor.Id);
             GrowConnected(ranged, connected);
             if (connected.Count == ranged.Count) { return; }
-            BoardModel trial = board.CreateSnapshot();
-            var copies = new List<Piece>();
+            BoardModel trial = board.Tactics.Trial(board);
+            List<Piece> copies = board.Tactics.FormationCopies;
+            copies.Clear();
             foreach (Piece piece in ranged) { copies.Add(trial.FindPiece(piece.Id)); }
             foreach (Piece original in ranged)
             {

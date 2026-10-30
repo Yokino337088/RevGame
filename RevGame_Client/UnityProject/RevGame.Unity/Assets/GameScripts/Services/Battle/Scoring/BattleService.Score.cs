@@ -70,6 +70,8 @@ namespace RevGame.Services
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private bool _scorePreview;
+        /// <summary>开发态只读隔离标记，测试复用已有租约，不允许嵌套或自行撤掉启动流程拥有的隔离。</summary>
+        public bool IsScorePreviewActive => _scorePreview;
         /// <summary>自动化视觉预览的隔离区：保存内存积分并停止写存档，Dispose必须放在finally里。</summary>
         public IDisposable BeginScorePreview()
         {

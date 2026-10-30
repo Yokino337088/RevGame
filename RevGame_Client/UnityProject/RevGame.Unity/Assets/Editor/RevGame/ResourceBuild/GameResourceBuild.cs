@@ -44,6 +44,7 @@ namespace RevGame.Editor
             if (EditorApplication.isPlaying) { throw new InvalidOperationException("请退出Play再更改分包"); }
             // 资源制作约定随正式构建执行，防止旧导入菜单或重建预制体再次带回未压缩背景/旧字体。
             GameResourceCompressionBuild.Configure();
+            GameBackgroundFieldBuild.Configure();
             // 文案或配置变化后必须先重新制作字库；不能继续使用旧子集发布缺字版本。
             GameFontSubsetBuild.Validate();
             ABBuildConfig config = ABBuildConfig.Instance;
@@ -84,6 +85,11 @@ namespace RevGame.Editor
                     // 第一章迁入同一目录后仍由 SpriteAtlas 管理，其余五章的材质+Default纹理逐章同包。
                     var textureImporter = AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
                     if (textureImporter == null || textureImporter.textureType == UnityEditor.TextureImporterType.Sprite) { continue; }
+                    // 噪声/冰胞场是背景内部数据，不能按其文件名创建额外场景背景或独立全局包。
+                    if (path.EndsWith("Chapter04_SwampNoise.png",StringComparison.Ordinal))
+                    { desired[path]="background_chapter04_swamp";continue; }
+                    if (path.EndsWith("Chapter05_IceField.png",StringComparison.Ordinal))
+                    { desired[path]="background_chapter05_ice";continue; }
                     string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
                     desired[path] = bundle;
                     string materialPath = "Assets/GameRes/Material/Background/" + Path.GetFileNameWithoutExtension(path) + "_Material.mat";

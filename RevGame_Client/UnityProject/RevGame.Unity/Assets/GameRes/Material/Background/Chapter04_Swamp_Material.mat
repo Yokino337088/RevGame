@@ -27,6 +27,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: d20d7077dd69eed4da848c4c45d45e96, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _FlowNoise:
+        m_Texture: {fileID: 2800000, guid: eb0e469f7444483386df573fd311dc45, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -49,13 +53,14 @@ Material:
     - _Speed: 0.72
     - _Strength: 0.95
     - _Transition: 1
+    - _UseFlowNoise: 1
     - _Viscosity: 1.65
     m_Colors:
     - _Accent: {r: 0.78, g: 0.66, b: 0.28, a: 1}
     - _ArtUVRect: {r: 0, g: 0.007751938, b: 1, a: 0.99224806}
     - _BoardRect: {r: 0, g: 0, b: 0, a: 0}
     - _GasColor: {r: 0.52, g: 0.65, b: 0.16, a: 1}
-    - _Secondary: {r: 0.32, g: 0.48, b: 0.10, a: 1}
+    - _Secondary: {r: 0.32, g: 0.48, b: 0.1, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
     - _WaterRegion: {r: 0, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []

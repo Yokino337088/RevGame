@@ -9,7 +9,7 @@ namespace RevGame.Editor
     {
         [RevAutomationAction("game.battle.stress-before", Environment = "play", Keys = new string[0], Description = "六章48棋真实渲染性能基线，约两分钟，恢复首页与设置")]
         public static object StressBefore(RevAutomationRequest request) { return Stress("before"); }
-        [RevAutomationAction("game.battle.stress-after", Environment = "play", Keys = new string[0], Description = "六章同输入性能复测，保存帧采样及Profiler原始文件")]
+        [RevAutomationAction("game.battle.stress-after", Environment = "play", Keys = new string[0], Description = "六章旧格式性能复测，仅摘要与截图；新测量优先game.perf.begin")]
         public static object StressAfter(RevAutomationRequest request) { return Stress("after"); }
         private static object Stress(string label)
         {

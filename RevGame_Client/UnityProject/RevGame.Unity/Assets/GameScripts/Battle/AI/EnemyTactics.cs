@@ -156,9 +156,9 @@ namespace RevGame.Battle
             // 后排完全不可达时恢复原有接敌策略，不让无穷距离参与乘法评分。
             if (oldDistance == int.MaxValue) { pursuit = null; oldDistance = NearestPlayerDistance(board, piece.Pos); }
             int bestScore = int.MinValue;
-            BoardModel trial = board.CreateSnapshot();
+            BoardModel trial = board.Tactics.Trial(board);
             Piece moved = trial.FindPiece(piece.Id);
-            var hits = new List<BoardPos>(board.Size * board.Size);
+            List<BoardPos> hits = board.Tactics.Hits; hits.Clear();
             foreach (BoardPos pos in moves)
             {
                 Cell cell = board.GetCell(pos);
@@ -271,8 +271,8 @@ namespace RevGame.Battle
             best = new BoardPos(-1, -1);
             intention = "连接补阵";
             int bestScore = int.MinValue;
-            List<Piece> allies = board.GetPiecesOf(GameSide.Enemy);
-            List<Piece> players = board.GetPiecesOf(GameSide.Player);
+            List<Piece> allies = board.Tactics.Allies; board.CopyPieces(allies, GameSide.Enemy);
+            List<Piece> players = board.Tactics.Players; board.CopyPieces(players, GameSide.Player);
             if (allies.Count == 0 || players.Count == 0)
             {
                 return false;
@@ -283,12 +283,12 @@ namespace RevGame.Battle
                 intention = "远程驻守眼位";
                 return true;
             }
-            BoardModel trial = board.CreateSnapshot();
-            Piece added = newcomer.CreateSnapshot();
-            var hits = new List<BoardPos>(board.Size * board.Size);
+            BoardModel trial = board.Tactics.Trial(board);
+            Piece added = board.Tactics.Added(newcomer);
+            List<BoardPos> hits = board.Tactics.Hits; hits.Clear();
             // 连通块只构建一次。共享一口气的五颗棋是一块，不应把打吃奖励算五遍。
             // 下面仍在同一张快照试落子；全盘最多81个候选，只在落子时钟到期时运行。
-            List<List<Piece>> groups = GoRules.BuildGroups(board);
+            List<List<Piece>> groups = board.TacticalGroups();
             for (int y = 0; y < board.Size; y++)
             {
                 for (int x = 0; x < board.Size; x++)
@@ -561,8 +561,8 @@ namespace RevGame.Battle
         /// <summary>从目标身体外沿反向广度搜索；路径距离0表示已贴身，不会穿过第三方棋子或受保护眼位。</summary>
         private static int[,] BuildPursuitDistances(BoardModel board, Piece actor, Piece prey)
         {
-            var distances = new int[board.Size, board.Size];
-            var queue = new Queue<BoardPos>();
+            var distances = board.Tactics.Distances;
+            var queue = board.Tactics.Queue; queue.Clear();
             for (int y = 0; y < board.Size; y++)
             {
                 for (int x = 0; x < board.Size; x++)
@@ -578,8 +578,10 @@ namespace RevGame.Battle
             while (queue.Count > 0)
             {
                 BoardPos from = queue.Dequeue();
-                foreach (BoardPos next in from.GetOrthogonalNeighbors())
+                for (int direction = 0; direction < 4; direction++)
                 {
+                    // 保持原四邻数组的右、左、上、下顺序，省掉数组分配且不改同分路径偏好。
+                    BoardPos next = new BoardPos(from.X + (direction == 0 ? 1 : direction == 1 ? -1 : 0), from.Y + (direction == 2 ? 1 : direction == 3 ? -1 : 0));
                     if (!board.CanFit(next, actor.Size, actor.Side, actor) || distances[next.X,next.Y] != int.MaxValue) { continue; }
                     distances[next.X,next.Y] = distances[from.X,from.Y] + 1; queue.Enqueue(next);
                 }

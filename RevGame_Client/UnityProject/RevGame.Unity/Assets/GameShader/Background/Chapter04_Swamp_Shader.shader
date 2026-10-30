@@ -6,6 +6,8 @@ Shader "RevGame/Background/Chapter04_Swamp"
     {
         [PerRendererData] _MainTex ("精灵贴图", 2D) = "white" {}
         _ChapterTex ("第四章 · 死亡沼泽原画", 2D) = "white" {}
+        _FlowNoise ("周期腐雾噪声（线性数据）", 2D) = "gray" {}
+        [HideInInspector] _UseFlowNoise ("噪声数据已绑定", Float) = 0
         _ArtUVRect ("原画有效UV（去透明留边）", Vector) = (0,0.007751938,1,0.99224806)
         _Strength ("死亡沼泽总强度", Range(0,1)) = 0.95
         _Speed ("厚泥回流与毒气速度", Range(0,2)) = 0.72
@@ -44,6 +46,15 @@ Shader "RevGame/Background/Chapter04_Swamp"
             #include "ChapterBackgroundCommon.cginc"
             float _Viscosity, _BubbleSize, _BubbleStrength, _MudDepth, _FlowDistance, _GasStrength, _GasHeight;
             float4 _WaterRegion, _ArtUVRect, _GasColor;
+            sampler2D _FlowNoise;
+            float _UseFlowNoise;
+
+            // 独立小纹理将周期噪声插值交给GPU采样；无纹理旧AB保留原hash函数作为可见失败回退。
+            float SwampNoise(float2 p)
+            {
+                [branch] if (_UseFlowNoise > 0.5) { return tex2D(_FlowNoise,p/64.0).r; }
+                return ChapterNoise(p);
+            }
 
             // 衰减让漩涡只拖拽附近泥水；反向回旋避免整张原画匀速平移。
             float2 SwampVortex(float2 p, float2 center, float spin)
@@ -64,7 +75,13 @@ Shader "RevGame/Background/Chapter04_Swamp"
             // 固定种子错峰循环：鼓起→破裂→毒气上升→消散；返回泡膜/凹坑/毒气/余波。
             float4 SwampVent(float2 p, float2 center, float time, float seed, float curl)
             {
-                float enabled = step(seed, _Particles);
+                // 排气为局部效果：远离覆盖区时尾部贡献低于8位颜色一阶，不应执行全部exp/归一化。
+                // 冒泡/破裂范围小于0.16；毒气最宽0.105、高0.165，再为0.07卷曲和回流留余量。
+                // 分支对邻近像素连续，减少全屏九倍计算；材质密度关闭的口也直接跳过。
+                float2 delta = p - center;
+                [branch] if (seed > _Particles || abs(delta.x) > 0.31 || delta.y < -0.27 || delta.y > _GasHeight + 0.29)
+                { return 0; }
+                float enabled = 1;
                 float age = frac(time * 0.14 + seed);
                 float grow = smoothstep(0.0, 0.62, age);
                 float alive = smoothstep(0.0, 0.10, age) * (1.0 - smoothstep(0.60, 0.70, age));
@@ -116,13 +133,13 @@ Shader "RevGame/Background/Chapter04_Swamp"
                 float3 normal = normalize(float3(-slope, 1.0));
                 float specular = pow(saturate(dot(normal, normalize(float3(-0.35, 0.5, 1.0)))), 24.0);
                 float ridge = pow(saturate(folds * 0.5 + 0.5), 7.0);
-                float oily = ChapterNoise(p * 4.2 + current * 0.9 - time * float2(0.08, 0.03));
+                float oily = SwampNoise(p * 4.2 + current * 0.9 - time * float2(0.08, 0.03));
                 float3 film = lerp(_Accent.rgb, _Secondary.rgb, oily);
                 float3 color = lerp(art, art * float3(0.68, 0.82, 0.47), effect * (0.2 + oily * 0.30) * _MudDepth);
                 color *= 1.0 - saturate(-folds * 0.7 + 0.2) * _MudDepth * effect;
                 color += film * (specular * 0.30 + ridge * 0.17) * _Glow * effect;
                 // 固定九处排气口，无动态数组/循环搜索；连续噪声在所有气柱间共享。
-                float curl = ChapterNoise(p * float2(18.0, 22.0) + float2(sin(p.y * 10.0) * 0.5, -time * 0.65));
+                float curl = SwampNoise(p * float2(18.0, 22.0) + float2(sin(p.y * 10.0) * 0.5, -time * 0.65));
                 float2 ventUV = p + current * 0.006;
                 float4 vent = SwampVent(ventUV, float2(-0.66, 0.25), time, 0.08, curl)
                     + SwampVent(ventUV, float2(0.66, 0.24), time, 0.23, curl)
@@ -137,7 +154,7 @@ Shader "RevGame/Background/Chapter04_Swamp"
                 color += (_Accent.rgb * vent.x * 0.50 + _Secondary.rgb * vent.w * 0.24) * _BubbleStrength * _Glow * effect;
                 // 低伏毒雾保留透明间隙；局部排气更亮，形成前后层次。
                 float2 fogUV = p * float2(3.0, 5.0) + float2(sin(p.y * 4.0 + time * 0.2) * 0.6, -time * 0.24);
-                float fog = ChapterNoise(fogUV) * 0.65 + ChapterNoise(fogUV * 2.1 + time * 0.11) * 0.35;
+                float fog = SwampNoise(fogUV) * 0.65 + SwampNoise(fogUV * 2.1 + time * 0.11) * 0.35;
                 float banks = smoothstep(0.42, 0.78, fog);
                 float gas = saturate((banks * 0.21 + vent.z * 0.85) * _GasStrength * effect);
                 float3 poison = _GasColor.rgb * (0.42 + fog * 0.48);

@@ -13,6 +13,8 @@ Shader "RevGame/Background/Chapter05_Ice"
         _Strength ("冰雪总强度", Range(0,1)) = 0.85
         _Speed ("冰下流动与风雪速度", Range(0,2)) = 0.8
         _Distortion ("冰下折射幅度（UV）", Range(0,0.01)) = 0.0055
+        _IceField ("预计算静态冰胞（线性数据）", 2D) = "black" {}
+        [HideInInspector] _UseIceField ("冰胞纹理已绑定", Float) = 0
         _IceFlow ("冰下微流动强度", Range(0,2)) = 1.15
         _IceDepth ("冰层厚度与内层视差", Range(0,1)) = 0.75
         _IceCracks ("蓝色冰晶裂隙强度", Range(0,1.5)) = 1.05
@@ -49,6 +51,8 @@ Shader "RevGame/Background/Chapter05_Ice"
             // 全部为美术表现参数，单位/范围见Properties；不影响攻防、AI或战斗时间，不放策划数值表。
             float _IceFlow, _IceDepth, _IceCracks, _IceScale, _IceCoverage, _ColdBreath;
             float4 _ArtUVRect;
+            sampler2D _IceField;
+            float _UseIceField;
 
             // 返回x=冰胞边界距离，yz=冰胞斜面方向，w=该块固定种子。
             // 最近/次近的随机中心像两块相邻冰晶；距离相近处就是接缝，距离差越小越靠近裂隙。
@@ -112,7 +116,16 @@ Shader "RevGame/Background/Chapter05_Ice"
                 float fog = ChapterNoise(p * float2(3.0, 5.5) + float2(-time * 0.12, time * 0.055));
                 float2 flow = float2(sin(p.y * 5.2 + time * 0.65) + sin(p.x * 3.7 - time * 0.41) * 0.45,
                     cos(p.x * 4.3 + time * 0.48) + sin(p.y * 3.3 - time * 0.37) * 0.4);
-                float4 ice = IceCell(p * _IceScale + grain * 0.22);
+                // 固定冰胞不随时间变化，每像素九次中心查询属于重复工作。
+                // 场纹理由项目编辑器按原算法预算；范围内一次采样，超范围/旧AB缺贴图仍使用原算法。
+                float2 icePosition = p * _IceScale + grain * 0.22;
+                float4 ice;
+                [branch] if (_UseIceField > 0.5 && max(abs(icePosition.x), abs(icePosition.y)) < 11.95)
+                {
+                    ice = tex2D(_IceField, (icePosition + 12.0) / 24.0);
+                    ice.yz = (ice.yz - 0.5) * 2.0;
+                }
+                else { ice = IceCell(icePosition); }
                 float2 warp = flow * _Distortion * _IceFlow;
                 float2 refraction = ice.yz * (_IceDepth * 0.0045);
                 float3 art = ChapterArtRect(uv, warp + refraction, amount, _ArtUVRect);

@@ -118,7 +118,7 @@ namespace RevGame.Editor
                     }
                     ProfilerDriver.enabled = false;
                     if (ProfilerDriver.firstFrameIndex < 0) { throw new InvalidOperationException("Profiler未生成有效帧：章节" + chapter); }
-                    ProfilerDriver.SaveProfile(dir + "/chapter-" + chapter + ".raw");
+                    // 用户明确要求不再导出Profiler录制；只保留独立区段的标记摘要。
                     File.WriteAllText(dir + "/markers-" + chapter + ".txt", ReadMarkers());
                     File.WriteAllText(dir + "/result.json", JsonUtility.ToJson(report, true));
                 }
@@ -201,7 +201,7 @@ namespace RevGame.Editor
                     ProfilerDriver.enabled = false;
                     string name = segment + (child.enabled ? "-canvas-on" : "-canvas-off");
                     if (ProfilerDriver.firstFrameIndex < 0) { throw new InvalidOperationException("Profiler未产生有效帧：" + name); }
-                    ProfilerDriver.SaveProfile(dir + "/" + name + ".raw");
+                    // 只记录标记摘要，不导出Profiler录制文件。
                     File.WriteAllText(dir + "/" + name + ".txt", ReadMarkers());
                 }
                 child.enabled = true;

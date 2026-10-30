@@ -63,6 +63,9 @@ namespace RevGame.View
         public int LockedAnimationFrameIndex => _lockedFrameIndex;
         private bool _locked;
         private float _hpRatio = 1f;
+        // 血条由本视图独占。绑定、回池或Boss演出隐藏血条时失效，首次刷新必须重新落屏。
+        private bool _hpVisualValid;
+        private Sprite _hpVisualSprite;
         private Vector3 _hpFillScale = Vector3.one;
         private Vector3 _hpFillBasePosition = Vector3.zero;
         private Vector3 _moveStart;
@@ -157,6 +160,7 @@ namespace RevGame.View
 
         public void OnPoolGet()
         {
+            _hpVisualValid = false;
             SetEyeGarrison(false);
             StopAttackPulse();
             StopBodyVisual();
@@ -586,6 +590,7 @@ namespace RevGame.View
             }
 
             SetLocked(false);
+            _hpVisualValid = false;
             SetHp(1f);
         }
 
@@ -594,11 +599,22 @@ namespace RevGame.View
         /// </summary>
         public void SetHp(float ratio)
         {
-            _hpRatio = Mathf.Clamp01(ratio);
+            float next = Mathf.Clamp01(ratio);
             if (hpFillRenderer == null)
+            {
+                _hpRatio = next;
+                return;
+            }
+            // 固定48棋每次同步都会调用这里；血量和Sprite未变时跳过原生Transform写入。
+            // enabled也参与校验，演出曾隐藏血条时不能命中旧结果而一直看不到血条。
+            bool visible = next > 0.001f;
+            if (_hpVisualValid && _hpRatio == next && _hpVisualSprite == hpFillRenderer.sprite && hpFillRenderer.enabled == visible)
             {
                 return;
             }
+            _hpRatio = next;
+            _hpVisualSprite = hpFillRenderer.sprite;
+            _hpVisualValid = true;
 
             // 用缩放表示血量。Sprite 的锚点在图片中心，所以除了缩 X 还要把位置往左补，
             // 视觉上才是"从左往右缩短"而不是"从两头往中间缩"。
@@ -669,6 +685,8 @@ namespace RevGame.View
             _frameIndex = 0;
             _frameTimer = 0f;
             _hpRatio = 1f;
+            _hpVisualValid = false;
+            _hpVisualSprite = null;
             _locked = false;
             _lockedFrameIndex = 0;
             _lockedFrameTimer = 0f;

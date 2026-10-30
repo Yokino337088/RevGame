@@ -55,6 +55,9 @@ namespace RevGame.View
         private readonly List<int> _removedIds = new List<int>();
         private readonly Dictionary<int, int> _lastHp = new Dictionary<int, int>();
         private readonly HashSet<BattleEffectView> _effects = new HashSet<BattleEffectView>();
+        // 实例方法转换成Action也会创建委托；每个棋盘只建一次，所有池反馈复用，离场由棋盘一起释放。
+        private System.Action<BattleEffectView> _effectFinishedCallback;
+        private System.Action<BattleEffectView> _arrangeTextCallback;
         private Transform _viewRoot;
         private bool _released;
         private int _generation;
@@ -88,6 +91,11 @@ namespace RevGame.View
 
         private void OnEnable()
         {
+            if (_effectFinishedCallback == null)
+            {
+                _effectFinishedCallback = OnEffectFinished;
+                _arrangeTextCallback = ArrangeFloatingText;
+            }
             _released = false;
             LoadError = null;
             _cellsReady = false;
@@ -689,25 +697,38 @@ namespace RevGame.View
             Vector3 position = attack.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             position += new Vector3(attack.Size - 1, attack.Size - 1, 0f) * Consts.CellSize * 0.5f;
             int generation = _effectGeneration;
-            GamePoolRequests.GetAsync<BattleEffectView>(effect =>
+            if (GamePoolRequests.TryGetReady<BattleEffectView>(out BattleEffectView ready, _viewRoot))
             {
-                if (_released || generation != _effectGeneration)
+                PresentAttackText(ready, config, position, generation);
+                return;
+            }
+            LoadAttackText(config, position, generation);
+        }
+
+        /// <summary>捕获式回调只存在于冷加载；热路径不先创建lambda再发现缓存已命中。</summary>
+        private void LoadAttackText(BattleText config, Vector3 position, int generation)
+        {
+            GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentAttackText(effect, config, position, generation), _viewRoot);
+        }
+
+        private void PresentAttackText(BattleEffectView effect, BattleText config, Vector3 position, int generation)
+        {
+            if (_released || generation != _effectGeneration)
+            {
+                if (effect != null)
                 {
-                    if (effect != null)
-                    {
-                        RevPool.Return(effect, 0);
-                    }
-                    return;
+                    RevPool.Return(effect, 0);
                 }
-                _pendingTextLoads--;
-                if (effect == null)
-                {
-                    RevLog.Warn("攻击文字加载失败", "RevGame"); return;
-                }
-                _effects.Add(effect);
-                _textEffects.Add(effect);
-                effect.ShowAttack(config, position, OnEffectFinished, ArrangeFloatingText);
-            }, _viewRoot);
+                return;
+            }
+            _pendingTextLoads--;
+            if (effect == null)
+            {
+                RevLog.Warn("攻击文字加载失败", "RevGame"); return;
+            }
+            _effects.Add(effect);
+            _textEffects.Add(effect);
+            effect.ShowAttack(config, position, _effectFinishedCallback, _arrangeTextCallback);
         }
 
         private void OnDamage(BattleHitInfo hit)
@@ -805,43 +826,53 @@ namespace RevGame.View
         private void ShowEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide = GameSide.Enemy, Vector3 destination = default(Vector3), PieceKind sourceKind = PieceKind.Archer)
         {
             int generation = _effectGeneration;
-            GamePoolRequests.GetAsync<BattleEffectView>(effect =>
+            if (GamePoolRequests.TryGetReady<BattleEffectView>(out BattleEffectView ready, _viewRoot))
             {
-                if (effect == null)
-                {
-                    if (generation == _effectGeneration && kind == BattleEffectKind.Projectile)
-                    {
-                        _pendingProjectileLoads--;
-                    }
-                    if (generation == _effectGeneration && kind == BattleEffectKind.Melee) { _pendingMeleeLoads--; }
-                    RevLog.Warn("战斗特效加载失败", "RevGame");
-                    return;
-                }
-
-                if (_released || generation != _effectGeneration)
-                {
-                    RevPool.Return(effect, 0);
-                    return;
-                }
-
-                _effects.Add(effect);
-                if (kind == BattleEffectKind.Projectile)
+                PresentEffect(ready, kind, position, damage, targetSide, destination, sourceKind, generation);
+                return;
+            }
+            LoadEffect(kind, position, damage, targetSide, destination, sourceKind, generation);
+        }
+        private void LoadEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide, Vector3 destination, PieceKind sourceKind, int generation)
+        {
+            GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentEffect(effect, kind, position, damage, targetSide, destination, sourceKind, generation), _viewRoot);
+        }
+        private void PresentEffect(BattleEffectView effect, BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide, Vector3 destination, PieceKind sourceKind, int generation)
+        {
+            if (effect == null)
+            {
+                if (generation == _effectGeneration && kind == BattleEffectKind.Projectile)
                 {
                     _pendingProjectileLoads--;
-                    _projectileEffects.Add(effect);
-                    effect.ShowProjectile(position, destination, OnEffectFinished, targetSide, sourceKind);
                 }
-                else if (kind == BattleEffectKind.Melee)
-                {
-                    _pendingMeleeLoads--;
-                    _meleeEffects.Add(effect);
-                    effect.ShowMelee(position, destination, sourceKind, OnEffectFinished);
-                }
-                else
-                {
-                    effect.Show(kind, position, damage, OnEffectFinished, targetSide);
-                }
-            }, _viewRoot);
+                if (generation == _effectGeneration && kind == BattleEffectKind.Melee) { _pendingMeleeLoads--; }
+                RevLog.Warn("战斗特效加载失败", "RevGame");
+                return;
+            }
+
+            if (_released || generation != _effectGeneration)
+            {
+                RevPool.Return(effect, 0);
+                return;
+            }
+
+            _effects.Add(effect);
+            if (kind == BattleEffectKind.Projectile)
+            {
+                _pendingProjectileLoads--;
+                _projectileEffects.Add(effect);
+                effect.ShowProjectile(position, destination, _effectFinishedCallback, targetSide, sourceKind);
+            }
+            else if (kind == BattleEffectKind.Melee)
+            {
+                _pendingMeleeLoads--;
+                _meleeEffects.Add(effect);
+                effect.ShowMelee(position, destination, sourceKind, _effectFinishedCallback);
+            }
+            else
+            {
+                effect.Show(kind, position, damage, _effectFinishedCallback, targetSide);
+            }
         }
 
         private void OnEffectFinished(BattleEffectView effect)

@@ -14,8 +14,9 @@ namespace RevGame.Battle
         {
             plan = new BossSkillPlan { Kind = kind, A = boss.Pos, B = boss.Pos, C = boss.Pos };
             Piece a = null, b = null, c = null;
-            foreach (Piece p in board.GetPiecesOf(GameSide.Player))
+            foreach (Piece p in board.Pieces)
             {
+                if (p.Side != GameSide.Player) { continue; }
                 if (!p.IsAlive || p.BossHidden) { continue; }
                 if (kind == BossSkillKind.BlackHole && p.EyeCount <= 0) { continue; }
                 if (kind == BossSkillKind.MireChains && !p.Def.IsRanged) { continue; }
@@ -67,8 +68,9 @@ namespace RevGame.Battle
         public static void Collect(BoardModel board, BossSkillInfo info, List<Piece> result)
         {
             result.Clear();
-            foreach (Piece p in board.GetPiecesOf(GameSide.Player))
+            foreach (Piece p in board.Pieces)
             {
+                if (p.Side != GameSide.Player) { continue; }
                 if (p.IsAlive && !p.BossHidden && Touches(p, info)) { result.Add(p); }
             }
         }

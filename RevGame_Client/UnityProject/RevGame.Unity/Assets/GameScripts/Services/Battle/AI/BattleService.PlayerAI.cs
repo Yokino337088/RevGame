@@ -23,7 +23,7 @@ namespace RevGame.Services
             if (piece.Def.IsRanged && oldDistance > Balance.PlayerRetreatDistance) { return false; }
             piece.NextMoveAt = _battleElapsed + Balance.PlayerMoveSeconds;
             if (_board.IsSideWiped(GameSide.Enemy)) { return false; }
-            BoardModel trial = _board.CreateSnapshot();
+            BoardModel trial = _board.Tactics.Trial(_board);
             Piece copy = trial.FindPiece(piece.Id);
             // best初始为原位；只有严格更优且通过硬门槛的候选才会被采用。
             int bestScore = PlayerPositionScore(trial, piece, piece.Pos, oldDistance);

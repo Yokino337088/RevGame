@@ -22,11 +22,15 @@ namespace RevGame.Board
     ///
     /// 一句话：**数据（本类）与规则（GoRules）与表现（Battle 层的 View）三层分开**。
     /// </summary>
-    public sealed class BoardModel
+    public sealed partial class BoardModel
     {
         private readonly int _size;
         private readonly Cell[, ] _cells;
         private readonly Dictionary<BoardPos, Piece> _piecesByPos = new Dictionary<BoardPos, Piece>();
+        private readonly Dictionary<int, Piece> _piecesById = new Dictionary<int, Piece>(81);
+        /// <summary>目标可见/存活版本；普通非致死扣血不影响射界，隐藏/致死即时失效。</summary>
+        internal int TargetVersion { get; private set; }
+        internal void TargetStateChanged() { TargetVersion++; }
         /// <summary>占格版本：只有落子、移走、重置才改变。普通掉血不改变气眼，服务据此跳过重复计算。</summary>
         public int TopologyVersion { get; private set; }
         // 每张棋盘独占草稿区，AI快照不能和实战共用，否则试算会覆盖实战的遍历状态。
@@ -76,7 +80,8 @@ namespace RevGame.Board
         public void Reset()
         {
             foreach (Piece piece in _piecesByPos.Values) { piece.IsEyeGarrison = false; piece.HasEyeGuardAura = false; }
-            _piecesByPos.Clear();
+            foreach (Piece piece in _piecesByPos.Values) { piece.QueryBoard = null; }
+            _piecesByPos.Clear(); _piecesById.Clear(); ClearQueryCache();
             TopologyVersion++;
             for (int y = 0; y < _size; y++)
             {
@@ -118,7 +123,7 @@ namespace RevGame.Board
         /// <summary>落子。成功返回 true；越界或已被占返回 false（**并且不改任何状态**）。</summary>
         public bool Place(Piece piece, BoardPos pos, bool respectEnemyEyes = true)
         {
-            if (piece == null || _piecesByPos.ContainsValue(piece) || !CanFit(pos, piece.Size, piece.Side, respectEnemyEyes: respectEnemyEyes))
+            if (piece == null || _piecesById.ContainsKey(piece.Id) || !CanFit(pos, piece.Size, piece.Side, respectEnemyEyes: respectEnemyEyes))
             {
                 return false;
             }
@@ -135,6 +140,7 @@ namespace RevGame.Board
             }
 
             _piecesByPos[pos] = piece;
+            _piecesById.Add(piece.Id, piece); piece.QueryBoard = this;
             piece.Pos = pos;
             TopologyVersion++;
             return true;
@@ -164,6 +170,8 @@ namespace RevGame.Board
             }
 
             _piecesByPos.Remove(piece.Pos);
+            _piecesById.Remove(piece.Id); piece.QueryBoard = null;
+            ForgetQuery(piece.Id);
             piece.IsEyeGarrison = false; piece.HasEyeGuardAura = false;
             TopologyVersion++;
             return true;
@@ -276,14 +284,8 @@ namespace RevGame.Board
         /// <summary>按编号找在场棋子，不临时创建全盘名单；高频受击、UI刷新和AI快照都走此入口。</summary>
         public Piece FindPiece(int id)
         {
-            foreach (Piece piece in _piecesByPos.Values)
-            {
-                if (piece.Id == id)
-                {
-                    return piece;
-                }
-            }
-            return null;
+            _piecesById.TryGetValue(id, out Piece piece);
+            return piece;
         }
 
         /// <summary>把名单填进调用方复用的缓冲区。先清空，调用方不可在遍历时让同一缓冲区被重入覆盖。</summary>

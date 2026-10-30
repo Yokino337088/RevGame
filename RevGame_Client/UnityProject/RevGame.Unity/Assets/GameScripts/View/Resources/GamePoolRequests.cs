@@ -18,6 +18,16 @@ namespace RevGame.View
             internal static readonly string Name = string.IsNullOrEmpty(Definition?.Name) ? typeof(T).Name : Definition.Name;
         }
 
+        /// <summary>已加载资源的同步快速路径，不发起新加载；调用者在false时必须走冷异步入口。</summary>
+        public static bool TryGetReady<T>(out T item, Transform parent = null) where T : Component
+        {
+            RevPoolPrefabAttribute definition = Resource<T>.Definition;
+            if (definition == null) { throw new InvalidOperationException(typeof(T).Name + "缺少RevPoolPrefab声明"); }
+            if (!RevResManager.Get(definition.Root, Resource<T>.Name).IsLoaded) { item = null; return false; }
+            item = RevPool.Get<T>(definition.Root, Resource<T>.Name, parent, definition.Group);
+            return true;
+        }
+
         /// <summary>命中缓存同步交付，冷资源异步加载。消费者仍负责过期检查与归池；失败交付null，临时资源引用总会归还。</summary>
         public static void GetAsync<T>(Action<T> completed, Transform parent = null) where T : Component
         {
@@ -29,6 +39,15 @@ namespace RevGame.View
                 completed(RevPool.Get<T>(definition.Root, name, parent, definition.Group));
                 return;
             }
+            LoadCold(completed,parent,definition,name);
+        }
+
+        /// <summary>
+        /// 捕获参数的加载回调只在冷资源路径创建。不能把lambda留在GetAsync方法里，
+        /// C#编译器会在进入方法时先建闭包，导致已缓存的每发弹道也付出一次短命分配。
+        /// </summary>
+        private static void LoadCold<T>(Action<T> completed,Transform parent,RevPoolPrefabAttribute definition,string name) where T : Component
+        {
             RevResManager.LoadAsync(definition.Root, name, typeof(GameObject), handle =>
             {
                 try

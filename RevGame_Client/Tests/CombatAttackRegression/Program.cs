@@ -24,6 +24,11 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+            if (args.Length > 1 && args[1] == "query-cache")
+            {
+                QueryCacheRegression.Run();
+                return 0;
+            }
             if (args.Length > 1 && args[1] == "boss-healing")
             {
                 BattleService.VerifyBossHealingRules((ok,message)=>{Assert(ok,message);Console.WriteLine("PASS "+message);});

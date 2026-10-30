@@ -148,7 +148,7 @@ namespace RevGame.Battle
             {
                 return BossExpandedGeometry.TryPlan(board, boss, kind, out plan);
             }
-            var victims = new List<Piece>(16);
+            var victims = board.Tactics.BossVictims; victims.Clear();
             if ((int)kind >= (int)BossSkillKind.StarStorm)
             {
                 return BossExclusiveGeometry.TryPlan(board, boss, kind, out plan);
@@ -172,8 +172,9 @@ namespace RevGame.Battle
                     // 只考虑与 Boss 至少隔一格的目标——贴脸的交给横扫，狙击要体现“远处点名”。
                     Piece target = null;
                     float bestThreat = 0f;
-                    foreach (Piece p in board.GetPiecesOf(GameSide.Player))
+                    foreach (Piece p in board.Pieces)
                     {
+                        if (p.Side != GameSide.Player) { continue; }
                         if (!(p.IsAlive && !p.BossHidden) || RectGap(p, boss.Pos, boss.Size) < 2)
                         {
                             continue;
@@ -284,7 +285,7 @@ namespace RevGame.Battle
                 case BossSkillKind.SoulDrain:
                 {
                     // 只有自己掉了血才值得吸：满血时吸血等于白放一个技能。
-                    if (boss.HpRatio >= 0.9f || board.GetPiecesOf(GameSide.Player).Count == 0)
+                    if (boss.HpRatio >= 0.9f || board.CountSide(GameSide.Player) == 0)
                     {
                         return false;
                     }
@@ -294,7 +295,7 @@ namespace RevGame.Battle
                 case BossSkillKind.Summon:
                 {
                     // 小兵越少越想召唤；场上已经很挤或达到上限就不召。
-                    int minions = board.GetPiecesOf(GameSide.Enemy).Count - 1;
+                    int minions = board.CountSide(GameSide.Enemy) - 1;
                     if (minions + 1 >= Balance.DeployLivingCap || EnemyTactics.CountEmptyCells(board) <= Balance.DeployMinEmptyCells)
                     {
                         return false;
@@ -318,8 +319,9 @@ namespace RevGame.Battle
         public static void CollectInSquare(BoardModel board, BoardPos origin, int size, int radius, List<Piece> result)
         {
             result.Clear();
-            foreach (Piece p in board.GetPiecesOf(GameSide.Player))
+            foreach (Piece p in board.Pieces)
             {
+                if (p.Side != GameSide.Player) { continue; }
                 if ((p.IsAlive && !p.BossHidden) && RectGap(p, origin, size) <= radius)
                 {
                     result.Add(p);
@@ -336,8 +338,9 @@ namespace RevGame.Battle
             result.Clear();
             float cx = boss.Pos.X + (boss.Size - 1) * 0.5f;
             float cy = boss.Pos.Y + (boss.Size - 1) * 0.5f;
-            foreach (Piece p in board.GetPiecesOf(GameSide.Player))
+            foreach (Piece p in board.Pieces)
             {
+                if (p.Side != GameSide.Player) { continue; }
                 if (!(p.IsAlive && !p.BossHidden))
                 {
                     continue;
@@ -356,8 +359,9 @@ namespace RevGame.Battle
         public static void CollectAllPlayers(BoardModel board, List<Piece> result)
         {
             result.Clear();
-            foreach (Piece piece in board.GetPiecesOf(GameSide.Player))
+            foreach (Piece piece in board.Pieces)
             {
+                if (piece.Side != GameSide.Player) { continue; }
                 if ((piece.IsAlive && !piece.BossHidden))
                 {
                     result.Add(piece);
@@ -371,8 +375,9 @@ namespace RevGame.Battle
         public static void CollectWeakest(BoardModel board, int count, List<Piece> result)
         {
             result.Clear();
-            foreach (Piece p in board.GetPiecesOf(GameSide.Player))
+            foreach (Piece p in board.Pieces)
             {
+                if (p.Side != GameSide.Player) { continue; }
                 if ((p.IsAlive && !p.BossHidden))
                 {
                     result.Add(p);

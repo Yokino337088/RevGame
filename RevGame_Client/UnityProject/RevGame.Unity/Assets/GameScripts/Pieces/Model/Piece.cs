@@ -52,6 +52,7 @@ namespace RevGame.Pieces
             if (IsAlive || Side != GameSide.Player || !IsEyeGarrison || EyeReviveUsed) { return false; }
             EyeReviveUsed = true;
             Hp = System.Math.Max(1, (int)(MaxHp * Balance.EyeReviveHpRatio));
+            QueryBoard?.TargetStateChanged();
             return true;
         }
         public int ConnectedCells { get; internal set; }
@@ -61,7 +62,19 @@ namespace RevGame.Pieces
         internal float NextMoveAt { get; set; }
 
         /// <summary>Boss控制由本局服务写入；隐藏仍保留占格预约，防止返场时被挤掉。快照复制，离场清零。</summary>
-        public bool BossHidden { get; internal set; }
+        /// <summary>仅BoardModel.Place/Remove维护，用于隐藏/死亡时失效当前棋盘射界缓存，不持有Unity对象。</summary>
+        internal Board.BoardModel QueryBoard;
+        private bool _bossHidden;
+        public bool BossHidden
+        {
+            get { return _bossHidden; }
+            internal set
+            {
+                if (_bossHidden == value) { return; }
+                _bossHidden = value;
+                QueryBoard?.TargetStateChanged();
+            }
+        }
         public bool BossFrozen { get; internal set; }
         public bool BossInvulnerable { get; internal set; }
         internal float BossHiddenUntil, BossFrozenUntil;
@@ -152,12 +165,16 @@ namespace RevGame.Pieces
 
         private Piece(Piece source)
         {
-            Id = source.Id;
+            Id = source.Id; Side = source.Side; Size = source.Size; IsBoss = source.IsBoss; IsKing = source.IsKing;
+            CopySnapshotState(source);
+        }
+
+        /// <summary>AI工作区独占副本复用：每轮覆盖全部可变字段，只共享只读Def，不共享原棋引用或缓存。</summary>
+        internal void CopySnapshotState(Piece source)
+        {
+            if (Id != source.Id || Side != source.Side || Size != source.Size || IsBoss != source.IsBoss || IsKing != source.IsKing)
+            { throw new System.InvalidOperationException("快照身份不一致，不能复用"); }
             Def = source.Def;
-            Side = source.Side;
-            Size = source.Size;
-            IsBoss = source.IsBoss;
-            IsKing = source.IsKing;
             _maxHp = source._maxHp;
             _baseMaxHp = source._baseMaxHp;
             _roundHealthScale = source._roundHealthScale;
@@ -245,6 +262,7 @@ namespace RevGame.Pieces
 
             int real = amount > Hp ? Hp : amount;
             Hp -= real;
+            if (Hp == 0) { QueryBoard?.TargetStateChanged(); }
             return real;
         }
 

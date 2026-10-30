@@ -4,6 +4,7 @@
 // partial表示同一个BoardView按职责分文件，不是新增管理器或另一套对象池。
 // ============================================================
 using System.Collections.Generic;
+using Unity.Profiling;
 using RevGame.Core;
 using Revolution;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace RevGame.View
     public sealed partial class BoardView
     {
         /// <summary>包含正在异步取池对象的请求；不是等加载完才计数，避免同帧几十个请求穿透上限。</summary>
+        private static readonly ProfilerMarker FeedbackFrameMarker = new ProfilerMarker("RevGame.Feedback.Frame");
+        private static readonly ProfilerMarker FeedbackArrangeMarker = new ProfilerMarker("RevGame.Feedback.Arrange");
         public const int MaxFloatingTexts = 20;
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
         public const int MaxProjectiles = 35;
@@ -39,6 +42,8 @@ namespace RevGame.View
         private readonly FairFeedbackBuffer<PendingAttackText> _attackQueue = new FairFeedbackBuffer<PendingAttackText>(MaxPendingAttackTexts, 1, 0.5f);
         // 遍历字典时不能直接删除，用复用列表先收集过期编号，遍历结束后再移除。
         private readonly List<long> _expiredDamageIds = new List<long>(MaxPendingDamage);
+        // 每帧只扫描一次81条待播记录，稳定选出最老八条；同时间戳仍保持字典原遍历次序。
+        private readonly PendingDamageText[] _damageBatch = new PendingDamageText[8];
         // 每个棋盘独占固定长度缓冲。上限20条，因此不需要每帧new List/ToArray，也不共享静态可变数组。
         // Rect是值类型，缓存的是本次动画推进后的快照；下一帧重新采样，缩放/移动不会用到旧矩形。
         private readonly BattleEffectView[] _textSnapshot = new BattleEffectView[MaxFloatingTexts];
@@ -130,11 +135,12 @@ namespace RevGame.View
                 return false;
             }
             int attacks = _pendingTextLoads;
-            foreach (BattleEffectView effect in _textEffects) {
-            if (effect.IsAttackText)
+            foreach (BattleEffectView effect in _textEffects)
             {
-                attacks++;
-            }
+                if (effect.IsAttackText)
+                {
+                    attacks++;
+                }
             }
             if (attacks >= MaxAttackTexts || (_attackTextAt.TryGetValue(pieceId, out last) && now - last < 0.65f))
             {
@@ -216,58 +222,74 @@ namespace RevGame.View
             {
                 return;
             }
-            FlushProjectiles();
-            // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
-            for (int i = 0; i < 8 && _pendingDamage.Count > 0; i++)
+            using (FeedbackFrameMarker.Auto())
             {
-                FlushOneDamageText();
-            }
-            FlushAttackText();
-            // 最多二十条文字。把昂贵的Renderer.bounds/WorldToScreenPoint从两重循环里提出来：
-            // 原来最多读取约800次矩形，现在只读取20次；两两比较仍保留，避免为省CPU改变遮挡规则。
-            int count = 0;
-            foreach (BattleEffectView effect in _textEffects)
-            {
-                _textSnapshot[count] = effect;
-                _textRects[count] = effect.TextScreenRect;
-                count++;
-            }
-            for (int i = 0; i < count; i++)
-            {
-                BattleEffectView older = _textSnapshot[i];
-                bool covered = false;
-                for (int j = 0; j < count; j++)
+                FlushProjectiles();
+                // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
+                FlushDamageTexts();
+                FlushAttackText();
+                // 最多二十条文字。把昂贵的Renderer.bounds/WorldToScreenPoint从两重循环里提出来：
+                // 原来最多读取约800次矩形，现在只读取20次；两两比较仍保留，避免为省CPU改变遮挡规则。
+                int count = 0;
+                foreach (BattleEffectView effect in _textEffects)
                 {
-                    if (_textSnapshot[j].TextOrder > older.TextOrder && _textRects[j].Overlaps(_textRects[i]))
-                    {
-                        covered = true; break;
-                    }
+                    _textSnapshot[count] = effect;
+                    _textRects[count] = effect.TextScreenRect;
+                    count++;
                 }
-                older.SetTextOccluded(covered);
+                for (int i = 0; i < count; i++)
+                {
+                    BattleEffectView older = _textSnapshot[i];
+                    bool covered = false;
+                    for (int j = 0; j < count; j++)
+                    {
+                        if (_textSnapshot[j].TextOrder > older.TextOrder && _textRects[j].Overlaps(_textRects[i]))
+                        {
+                            covered = true; break;
+                        }
+                    }
+                    older.SetTextOccluded(covered);
+                }
+                // 计算完就清引用，不让工作数组在回池之后还持有上一回合的视图。
+                System.Array.Clear(_textSnapshot, 0, count);
             }
-            // 计算完就清引用，不让工作数组在回池之后还持有上一回合的视图。
-            System.Array.Clear(_textSnapshot, 0, count);
         }
 
         /// <summary>本帧直接显示已结算数字；超预算只替换表现，不更改战斗数值。</summary>
-        private void FlushOneDamageText()
+        private void FlushDamageTexts()
         {
-            PendingDamageText oldest = default(PendingDamageText);
-            bool found = false;
+            int count = 0;
+            float now = Time.time;
             _expiredDamageIds.Clear();
             foreach (PendingDamageText item in _pendingDamage.Values)
             {
-                if (Time.time - item.CreatedAt > 1.2f)
+                if (now - item.CreatedAt > 1.2f)
                 {
                     _expiredDamageIds.Add(item.Key); continue;
                 }
-                if (!found || item.CreatedAt < oldest.CreatedAt)
-                {
-                    oldest = item; found = true;
-                }
+                // 最多八项的插入排序；不分配列表，也不在一帧内反复扫描整个字典八遍。
+                int index = count;
+                while (index > 0 && item.CreatedAt < _damageBatch[index - 1].CreatedAt) { index--; }
+                if (index >= _damageBatch.Length) { continue; }
+                int end = System.Math.Min(count, _damageBatch.Length - 1);
+                for (int i = end; i > index; i--) { _damageBatch[i] = _damageBatch[i - 1]; }
+                _damageBatch[index] = item;
+                count = System.Math.Min(count + 1, _damageBatch.Length);
             }
             foreach (long id in _expiredDamageIds) { _pendingDamage.Remove(id); }
-            if (!found) { return; }
+            for (int i = 0; i < count; i++)
+            {
+                if (!FlushOneDamageText(_damageBatch[i]))
+                {
+                    // 未能预约时保持余下记录，下帧重新按实时队列选择，不能提前删掉未显示的数字。
+                    break;
+                }
+            }
+        }
+
+        /// <summary>显示已经选中的一条数字；返回false代表本帧预约已满，记录继续留在待播队列。</summary>
+        private bool FlushOneDamageText(PendingDamageText oldest)
+        {
             if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
             {
                 BattleEffectView retire = null;
@@ -284,32 +306,43 @@ namespace RevGame.View
             }
             if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
             {
-                return;
+                return false;
             }
             _pendingDamage.Remove(oldest.Key);
             _pendingTextLoads++;
             int generation = _effectGeneration;
-            PendingDamageText message = oldest;
-            GamePoolRequests.GetAsync<BattleEffectView>(effect =>
+            if (GamePoolRequests.TryGetReady<BattleEffectView>(out BattleEffectView ready, _viewRoot))
             {
-                // 过期回调不能减新回合的计数：只有代次仍然一致，才有权释放当前这笔预约。
-                if (_released || generation != _effectGeneration)
+                PresentDamageText(ready, oldest, generation);
+                return true;
+            }
+            LoadDamageText(oldest, generation);
+            return true;
+        }
+
+        private void LoadDamageText(PendingDamageText message, int generation)
+        {
+            GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentDamageText(effect, message, generation), _viewRoot);
+        }
+        private void PresentDamageText(BattleEffectView effect, PendingDamageText message, int generation)
+        {
+            // 过期回调不能减新回合的计数：只有代次仍然一致，才有权释放当前这笔预约。
+            if (_released || generation != _effectGeneration)
+            {
+                if (effect != null)
                 {
-                    if (effect != null)
-                    {
-                        RevPool.Return(effect, 0);
-                    }
-                    return;
+                    RevPool.Return(effect, 0);
                 }
-                _pendingTextLoads--;
-                if (effect == null)
-                {
-                    RevLog.Warn("伤害文字加载失败", "RevGame"); return;
-                }
-                _effects.Add(effect);
-                _textEffects.Add(effect);
-                effect.ShowDamage(message.Position, message.Damage, message.Kind, OnEffectFinished, message.Side, ArrangeFloatingText);
-            }, _viewRoot);
+                return;
+            }
+            _pendingTextLoads--;
+            if (effect == null)
+            {
+                RevLog.Warn("伤害文字加载失败", "RevGame"); return;
+            }
+            _effects.Add(effect);
+            _textEffects.Add(effect);
+            effect.ShowDamage(message.Position, message.Damage, message.Kind, _effectFinishedCallback, message.Side, _arrangeTextCallback);
         }
 
         /// <summary>
@@ -318,55 +351,58 @@ namespace RevGame.View
         /// </summary>
         private void ArrangeFloatingText(BattleEffectView text)
         {
-            Camera camera = Camera.main;
-            if (camera == null)
+            using (FeedbackArrangeMarker.Auto())
             {
-                return;
-            }
-            text.SetTextOrder(++_textOrder);
-            Rect original = text.TextReservationRect;
-            Vector3 anchor = text.transform.position;
-            Rect allowed = FeedbackScreenRect(camera);
-            float bestCost = float.PositiveInfinity;
-            Vector2 best = Vector2.zero;
-            // 同一次选点过程中其它文字不移动，预留矩形只需采样一次，不必在25个候选点里重复计算。
-            int occupiedCount = 0;
-            foreach (BattleEffectView other in _textEffects)
-            {
-                if (other != text)
+                Camera camera = Camera.main;
+                if (camera == null)
                 {
-                    _reservationRects[occupiedCount++] = other.TextReservationRect;
+                    return;
                 }
-            }
-            for (int i = 0; i < 25; i++)
-            {
-                int row = i / 5;
-                int column = i % 5;
-                int horizontal = column == 0 ? 0 : ((column + 1) / 2) * (column % 2 == 1 ? -1 : 1);
-                int vertical = row == 0 ? 0 : ((row + 1) / 2) * (row % 2 == 1 ? 1 : -1);
-                Vector2 delta = new Vector2(horizontal * original.width * 1.02f, vertical * original.height * 0.86f);
-                Rect candidate = original;
-                candidate.position += delta;
-                delta += new Vector2(Mathf.Clamp(candidate.x, allowed.xMin, Mathf.Max(allowed.xMin, allowed.xMax - candidate.width)) - candidate.x,
-                    Mathf.Clamp(candidate.y, allowed.yMin, Mathf.Max(allowed.yMin, allowed.yMax - candidate.height)) - candidate.y);
-                candidate = original;
-                candidate.position += delta;
-                // 重叠面积的权重远大于移动距离；先争取不挡字，再尽量贴近受击棋子。
-                float cost = delta.sqrMagnitude * 0.001f;
-                for (int j = 0; j < occupiedCount; j++)
+                text.SetTextOrder(++_textOrder);
+                Rect original = text.TextReservationRect;
+                Vector3 anchor = text.transform.position;
+                Rect allowed = FeedbackScreenRect(camera);
+                float bestCost = float.PositiveInfinity;
+                Vector2 best = Vector2.zero;
+                // 同一次选点过程中其它文字不移动，预留矩形只需采样一次，不必在25个候选点里重复计算。
+                int occupiedCount = 0;
+                foreach (BattleEffectView other in _textEffects)
                 {
-                    Rect occupied = _reservationRects[j];
-                    float width = Mathf.Max(0f, Mathf.Min(candidate.xMax, occupied.xMax) - Mathf.Max(candidate.xMin, occupied.xMin));
-                    float height = Mathf.Max(0f, Mathf.Min(candidate.yMax, occupied.yMax) - Mathf.Max(candidate.yMin, occupied.yMin));
-                    cost += width * height * 100f;
+                    if (other != text)
+                    {
+                        _reservationRects[occupiedCount++] = other.TextReservationRect;
+                    }
                 }
-                if (cost < bestCost)
+                for (int i = 0; i < 25; i++)
                 {
-                    bestCost = cost; best = delta;
+                    int row = i / 5;
+                    int column = i % 5;
+                    int horizontal = column == 0 ? 0 : ((column + 1) / 2) * (column % 2 == 1 ? -1 : 1);
+                    int vertical = row == 0 ? 0 : ((row + 1) / 2) * (row % 2 == 1 ? 1 : -1);
+                    Vector2 delta = new Vector2(horizontal * original.width * 1.02f, vertical * original.height * 0.86f);
+                    Rect candidate = original;
+                    candidate.position += delta;
+                    delta += new Vector2(Mathf.Clamp(candidate.x, allowed.xMin, Mathf.Max(allowed.xMin, allowed.xMax - candidate.width)) - candidate.x,
+                        Mathf.Clamp(candidate.y, allowed.yMin, Mathf.Max(allowed.yMin, allowed.yMax - candidate.height)) - candidate.y);
+                    candidate = original;
+                    candidate.position += delta;
+                    // 重叠面积的权重远大于移动距离；先争取不挡字，再尽量贴近受击棋子。
+                    float cost = delta.sqrMagnitude * 0.001f;
+                    for (int j = 0; j < occupiedCount; j++)
+                    {
+                        Rect occupied = _reservationRects[j];
+                        float width = Mathf.Max(0f, Mathf.Min(candidate.xMax, occupied.xMax) - Mathf.Max(candidate.xMin, occupied.xMin));
+                        float height = Mathf.Max(0f, Mathf.Min(candidate.yMax, occupied.yMax) - Mathf.Max(candidate.yMin, occupied.yMin));
+                        cost += width * height * 100f;
+                    }
+                    if (cost < bestCost)
+                    {
+                        bestCost = cost; best = delta;
+                    }
                 }
+                Vector3 pixel = camera.WorldToScreenPoint(anchor);
+                text.transform.position = camera.ScreenToWorldPoint(pixel + new Vector3(best.x, best.y, 0f));
             }
-            Vector3 pixel = camera.WorldToScreenPoint(anchor);
-            text.transform.position = camera.ScreenToWorldPoint(pixel + new Vector3(best.x, best.y, 0f));
         }
 
         /// <summary>文字限定在棋盘可见矩形内，避免避让到顶部HUD、右栏或屏外；棋盘位置直接使用同一组常量。</summary>

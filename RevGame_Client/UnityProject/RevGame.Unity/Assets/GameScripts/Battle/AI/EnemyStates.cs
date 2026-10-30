@@ -347,7 +347,7 @@ namespace RevGame.Battle
                 if (Owner.DeploymentCount >= Balance.DeployBaseCount + Owner.Intelligence || Owner.KingCaptured
                     || Owner.Board.IsSideWiped(GameSide.Player) || Owner.Board.IsSideWiped(GameSide.Enemy)) { break; }
                 // 3) 在场上限与空格下限：留空间给玩家调阵和援军，不把棋盘塞满。
-                if (Owner.Board.GetPiecesOf(GameSide.Enemy).Count >= Balance.DeployLivingCap)
+                if (Owner.Board.CountSide(GameSide.Enemy) >= Balance.DeployLivingCap)
                 {
                     return;
                 }

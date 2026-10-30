@@ -145,6 +145,13 @@ namespace RevGame.Battle
         /// </summary>
         public static void GetAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
+            if (board != null && piece != null) { board.ReadAttackTargets(piece, result); return; }
+            result.Clear();
+        }
+
+        /// <summary>未缓存版本只计算几何；目标Hp变化的威胁评分仍由调用者实时计算，缓存不冻结选敌。</summary>
+        internal static void CalculateAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
+        {
             result.Clear();
             if (board == null || piece == null)
             {
@@ -480,6 +487,8 @@ namespace RevGame.Battle
                             continue;
                         }
 
+                        // 射线保持原有阻挡与候选顺序；死亡/隐藏能否受击由结算层判断。
+                        // 缓存优化不能顺手改选敌语义，否则同种子AI会出现不同决策和积分。
                         if (cell.Occupant.Side != piece.Side && !ContainsPiece(board, result, cell.Occupant))
                         {
                             result.Add(pos);
