@@ -52,6 +52,10 @@
 
 ## 3. 生成物（**不要手改**）
 
+2026-10-29：RevAB → 打包 → 代码生成新增 `RevResPath 生成路径`。填 `Assets` 下的目录或 `Assets/.../RevResPath.cs`，空值保持默认 `Assets/Revolution/Generation/RevResPath.cs`；“选择…”选择目录，“默认”清空配置。设置保存在 `ABBuildConfig.resPathCodePath`，菜单、打包、仅生成映射、自动重生成与 CLI 均读它。“打开 RevResPath.cs”也使用实际位置。生成时将带生成标记的旧文件移动并保留 GUID，不保留两份同名类；已有手写文件或新旧位置同时有文件时拒绝覆盖。自定义目录不能含 Editor，消费常量的 asmdef 要引用新位置所属程序集。RevSoundPath 保持原生成位置与接线。
+
+AI 可通过 `ab.configure` 的 `configJson` 设置 `resPathCodePath`，然后 `ab.res-paths` 生成；留空恢复默认。输出路径是 C# 文件位置，资源根目录 resRoot 是扫描资源位置，两个概念不能混用。
+
 | 文件 | 谁生成 | 作用 |
 |---|---|---|
 | `Assets/Revolution/Resources/ResourceSystem/ResMap.txt` | 打包工具「仅生成映射」/ 一键打包 | 逻辑名 → 包名 + 资源名（运行时引导表，随包体进 Resources） |

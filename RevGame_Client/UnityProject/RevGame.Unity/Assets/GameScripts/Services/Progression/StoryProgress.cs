@@ -47,6 +47,14 @@ namespace RevGame.Services
                 throw new System.ArgumentException("剧情进度键不能为空");
             }
             _storageKey = storageKey;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            // Player必须在首次读写进度之前隔离；不依赖Editor.SessionState，也不等AI连上才保护。
+            if (!Application.isEditor && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-revTestSession") >= 0)
+            {
+                _isolated = true;
+                _memory = 3;
+            }
+#endif
 #if UNITY_EDITOR
             // 编辑器SessionState不进入构建、不写玩家存档；由明确的测试准备入口启用。
             _isolated = storageKey == Key && UnityEditor.SessionState.GetBool("RevGame.Story.IsolatedTest", false);
@@ -75,7 +83,7 @@ namespace RevGame.Services
             PlayerPrefs.SetInt(_storageKey, flags);
             PlayerPrefs.Save();
         }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>仅开发接口：开始/结束隔离会话，不更改生产键。调用方须在finally结束隔离。</summary>
         public void SetTestSession(bool enabled)
         {

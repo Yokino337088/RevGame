@@ -2,6 +2,8 @@
 
 RevMCP 计划字段是 name/steps/finally。每步 target/action/arguments，可选 id/confirm/expect/until。与 Automation 的 steps/action/payload 格式不同，不混用。
 
+2026-10-29 起，计划和步骤支持可选 `intent`（最多 512 字符）。用人话说明本计划/本步要验证什么，例如“模拟玩家点击后核对计数增加”。它只写活动日志，不能改变业务参数/权限；步骤 intent 优先于计划。finally 没提供 intent 时按清理契约解释，不冒充 Agent 自述。
+
 ```json
 {
   "name": "按钮调用真实业务",

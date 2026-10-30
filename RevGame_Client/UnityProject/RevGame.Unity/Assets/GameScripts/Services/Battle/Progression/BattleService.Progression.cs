@@ -62,7 +62,7 @@ namespace RevGame.Services
         /// </summary>
         public int UnlockedChapter { get; private set; } = 1;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>GM解锁本次运行的全部章节。服务拥有解锁值；不伪造通关、发奖励或改当前战役，退出程序后不保存。</summary>
         public int UnlockAllChaptersForDevelopment()
         {
@@ -116,7 +116,7 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.ProgressChanged);
             return StartRound(chapter, round);
         }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>开发专用：不要求前章解锁，按该章真实Boss回合开新战役；不写通关/奖励存档。</summary>
         public bool BeginBossCampaignForDevelopment(int chapter)
         {

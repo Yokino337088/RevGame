@@ -35,7 +35,7 @@ namespace RevGame.View
                 return _bossArt == null ? 0 : _bossArt.Chapter;
             }
         }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>只读真实模型与视图绑定，验证该章全部Boss出现且8帧正确；没有Boss时不能空集合冒充就绪。</summary>
         public bool AreBossViewsReady(int chapter)
         {

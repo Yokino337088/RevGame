@@ -651,7 +651,7 @@ namespace RevGame.Services
             {
                 rate *= 1f + HelperRangedSpeedBonus;
             }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             // 测试计划显式申请的临时攻速；普通游玩没有租约时原样返回，发行包根本不包含此钩子。
             rate = ScaleAutomationAttackRate(rate);
 #endif

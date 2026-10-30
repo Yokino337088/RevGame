@@ -140,8 +140,9 @@ class RevMCPTests(unittest.TestCase):
                 send(dict(jsonrpc="2.0", method="notifications/initialized"))
                 send(dict(jsonrpc="2.0", id=2, method="tools/list"))
                 tools = receive()["result"]["tools"]
-                self.assertEqual(len(tools), 4)
-                tool = next(t for t in tools if t["name"].startswith("cli_"))
+                self.assertEqual(len(tools), 7)
+                self.assertEqual(sum(t["name"].startswith("cli_player_") for t in tools), 3)
+                tool = next(t for t in tools if t["name"].startswith("cli_echo_"))
                 send(dict(jsonrpc="2.0", id=3, method="tools/call", params=dict(name=tool["name"], arguments=dict(arguments={"seconds": 0}))))
                 result = receive()["result"]
                 self.assertFalse(result["isError"])

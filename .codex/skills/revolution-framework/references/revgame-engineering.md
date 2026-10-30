@@ -23,11 +23,11 @@ RevGame 是实践样本，框架 API 仍以目标项目安装版本为准。它�
 | 大厅/战斗/场景切换 | `GameScripts/Flow/States/GameFlow.cs`、`GameFlow.Scenes.cs`、`GameScripts/Flow/Logic/BattleLogic.cs` | FSM决定业务阶段，RevScope管理域，RevScene异步交割；accepted不是完成 |
 | 原子业务与失败边界 | `GameScripts/Services/Battle/Simulation/BattleService.cs`、`Preparation/BattleService.PieceManagement.cs` | 先完整预检再提交；失败不消费、不部分移除、不改当前流程 |
 | 战斗伤害/预判 | `GameScripts/Services/Battle/Support/BattleService.Damage.cs` | 查询与提交共用公式，预判不扣盾/血/积分；实际伤害只结算一次 |
-| 重量级AI | `GameScripts/Battle/AI/Enemy/EnemyAI.cs`、`EnemyStates.cs`、`EnemyTactics.cs` | 宿主提供动作，FSM管理时序，纯算法选目标；深快照不污染实战棋子 |
-| 独立支援演员 | `GameScripts/Battle/AI/Helper/HelperAI.cs`、`GameScripts/Services/Battle/Support/Helper/BattleService.Helper.cs` | 数据身份、胜负资格与表现身份分开；钱包/历史成绩分开；生命周期清理 |
-| UI转发与观察 | `GameScripts/UI/Panels/Battle/Hud/BattleHudPanel.cs`、`BattleHudPanel.PieceManagement.cs` | 钩子分工、实际按钮到Logic/Service、定频观察、状态门禁与复用清理 |
+| 重量级AI | `GameScripts/Battle/AI/EnemyAI.cs`、`EnemyStates.cs`、`EnemyTactics.cs` | 宿主提供动作，FSM管理时序，纯算法选目标；深快照不污染实战棋子 |
+| 独立支援演员 | `GameScripts/Battle/AI/HelperAI.cs`、`GameScripts/Services/Battle/Support/BattleService.Helper.cs` | 数据身份、胜负资格与表现身份分开；钱包/历史成绩分开；生命周期清理 |
+| UI转发与观察 | `GameScripts/UI/Panels/Battle/BattleHudPanel.cs`、`BattleHudPanel.PieceManagement.cs` | 钩子分工、实际按钮到Logic/Service、定频观察、状态门禁与复用清理 |
 | 剧情/真实场景教学 | `GameScripts/Flow/Logic/TutorialLogic.cs`、`GameScripts/UI/Panels/Story/StoryView.cs`、`GameScripts/Data/Story/StoryBook.cs` | UI只引导真实业务，打字/音效句柄归属；SO文案是项目需求选择 |
-| 顺序演出 | `GameScripts/Flow/States/Boss/GameFlow.BossIntro.cs`、`GameFlow.BossVictory.cs` | RevSequence缓存蓝图，等待资源，finally还原时间/镜头/UI，不二次判胜负 |
+| 顺序演出 | `GameScripts/Flow/States/GameFlow.BossIntro.cs`、`GameFlow.BossVictory.cs` | RevSequence缓存蓝图，等待资源，finally还原时间/镜头/UI，不二次判胜负 |
 | 共享图集/资源池 | `GameScripts/View/Resources/GameSpriteAtlasService.cs`、`GamePoolRequests.cs` | 一次租约、Release配对、晚绑定、在途请求、池持有与临时加载引用分开 |
 | 动态Shader/序列帧 | `GameScripts/View/Combat/Helper/HelperView.cs`、`HelperAttackView.cs`、`GameShader/Helper/HelperGoldReflect_Shader.shader` | 共享材质、每实例参数块显式当前帧纹理/局部UV、对象池停止旧动画 |
 | 配置/资源制作 | `GameScripts/Data/Config/Balance.cs`、`Editor/RevGame/ResourceBuild/GameResourceBuild.cs`、`GameSpriteAtlasBuild.cs` | Excel→工具生成→启动校验；项目入口串联框架工具，不手改生成代码 |

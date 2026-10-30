@@ -43,7 +43,7 @@
 | 主题 | 源码 | 契约 |
 |---|---|---|
 | 查询副本 | GameScripts/Board/Model/BoardModel.cs、BoardModel.Queries.cs；Pieces/Model/Piece.cs；Battle/Rules/MoveRules.cs | 索引/版本全入口、原算法、有序结果、全状态副本 |
-| AI预测 | Battle/AI/Enemy/EnemyTactics.cs、Battle/AI/Formation/RangedFormationPlanner.cs、Battle/AI/Enemy/EnemyFormationPlanner.cs、Battle/AI/Boss/BossTactics.cs；Services/Battle/AI/Player/BattleService.PlayerAI.cs；Support/BattleService.Damage.cs | 顺序、草稿、预测无副作用/唯一提交、实时评分 |
+| AI预测 | Battle/AI/EnemyTactics.cs、RangedFormationPlanner.cs、EnemyFormationPlanner.cs、BossTactics.cs；Services/Battle/AI/BattleService.PlayerAI.cs；Support/BattleService.Damage.cs | 顺序、草稿、预测无副作用/唯一提交、实时评分 |
 | UI/反馈 | UI/Panels/Battle/BattleHudPanel*.cs；View/Board/BoardView*.cs；Combat/Effects/BattleEffectView.cs；Text/GameTextConfig.cs；Pieces/PieceView.cs | 有界公平、字体矩形失效、脏写/稳定委托/回收 |
 | 资源 | View/Resources/GamePoolRequests.cs、GameSpriteAtlasService.cs；Scene/GamePresentation.cs；Editor/RevGame/ResourceBuild/GameSpriteAtlasBuild.cs、GameResourceBuild.cs | 临时池租约、冷交付、V2依赖、UV |
 | GPU | GameShader/Background/Chapter04_Swamp_Shader.shader、Chapter05_Ice_Shader.shader；Editor/RevGame/ResourceBuild/GameBackgroundFieldBuild.cs | 局部数学/静态查表/编码量化/章寿命 |

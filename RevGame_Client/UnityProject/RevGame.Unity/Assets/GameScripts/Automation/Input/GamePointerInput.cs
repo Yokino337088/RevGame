@@ -1,4 +1,4 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System.Collections.Generic;
 using RevGame.Core;
 using RevGame.UI;

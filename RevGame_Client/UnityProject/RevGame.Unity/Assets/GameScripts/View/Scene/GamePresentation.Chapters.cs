@@ -376,7 +376,7 @@ namespace RevGame.View
                 return;
             }
             _backgroundProperties.SetFloat(EffectTimeId, Time.unscaledTime);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             _backgroundProperties.SetFloat("_Strength", _previewBackgroundStrength >= 0f ? _previewBackgroundStrength : _currentBackground.Material.GetFloat("_Strength"));
 #endif
             _backgroundProperties.SetFloat(TransitionId, Mathf.Clamp01((Time.unscaledTime - _backgroundArrivalTime) / Mathf.Max(0.1f, backgroundArrivalSeconds)));
@@ -443,7 +443,7 @@ namespace RevGame.View
             }
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         private float _previewBackgroundStrength = -1f;
         // 固定渲染时间仅用于两帧 GPU 像素差异验收，不修改战斗计时、章节或存档。
         public void SetBackgroundPreviewStrength(float strength)

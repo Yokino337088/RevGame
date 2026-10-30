@@ -513,6 +513,7 @@ GameShader/Combat/ScoreSpark|shared_shaders|ScoreSpark
 GameShader/Pieces/ArcanePiece|shared_shaders|ArcanePiece
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
 GameShader/UI/SlimeTutorialHighlight|shared_shaders|SlimeTutorialHighlight
+UI/Panel/Diagnostics/PerformanceMonitorPanel|ui_diagnostics|PerformanceMonitorPanel
 UI/Item/Card/CardItem|ui_items|CardItem
 UI/Item/Notice/BattleEventNotice|ui_items|BattleEventNotice
 UI/Panel/Loading/LoadingPanel|ui_loading|LoadingPanel

@@ -127,7 +127,7 @@ class RevClient:
             return self.wait_ready()
         request_id = uuid.uuid4().hex
         mode = self.mode
-        endpoint = self.endpoint()
+        endpoint = self.ready_endpoint(cancel)
         if mode == "auto":
             mode = "live" if endpoint else "batch"
         if mode == "live" and not endpoint:
@@ -284,6 +284,21 @@ class RevClient:
             if (work / (name + ".json")).exists():
                 result[name] = read_json(work / (name + ".json"))
         return result
+
+    def ready_endpoint(self, cancel=None):
+        """长构建回执可能先于下一次心跳；只等待发现，不重发任何业务请求。"""
+        endpoint = self.endpoint()
+        if endpoint or self.mode == "batch" or not self._editor_open():
+            return endpoint
+        deadline = time.monotonic() + min(self.timeout, 15)
+        while time.monotonic() < deadline:
+            if cancel is not None and cancel.is_set():
+                raise RevCancelled("等待编辑器恢复心跳时取消，未提交新动作")
+            time.sleep(.1)
+            endpoint = self.endpoint()
+            if endpoint:
+                return endpoint
+        return None
 
     def _editor_open(self):
         if (self.project / "Temp/UnityLockfile").exists():

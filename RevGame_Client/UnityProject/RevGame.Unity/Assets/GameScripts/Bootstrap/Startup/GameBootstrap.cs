@@ -98,12 +98,17 @@ namespace RevGame.Bootstrap
             // 流程控制者目前只有一份实现、还没有接口，调用方会直接用到它的具体方法（切场景、Boss 演出、回大厅）。
             RevServices.Register<GameFlow, GameFlow>(owner: this);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
             GameGmCommands.RegisterAll();
             StoryAutomationCommands.Register();
+            // 诊断服务与启动宿主同寿命；正式包不注册，内部非开发包用显式REV_AUTOMATION。
+            RevServices.Register<RevGame.Automation.GamePerformanceMonitor, RevGame.Automation.GamePerformanceMonitor>(owner: this);
+            RevServices.GetRequired<RevGame.Automation.GamePerformanceMonitor>();
+            RevServices.Register<RevGame.Automation.GamePlayerPerformanceSession, RevGame.Automation.GamePlayerPerformanceSession>(owner: this);
+            RevServices.GetRequired<RevGame.Automation.GamePlayerPerformanceSession>();
 #endif
         }
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
@@ -148,8 +153,10 @@ namespace RevGame.Bootstrap
             }
             _released = true;
             _instance = null;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             // 必须先停测试再退出游戏域：测试可能还按着按钮，不能对已销毁的旧面板补发松手/点击。
+            RevServices.Unregister<RevGame.Automation.GamePlayerPerformanceSession>();
+            RevServices.Unregister<RevGame.Automation.GamePerformanceMonitor>();
             GameGmCommands.UnregisterAll();
             StoryAutomationCommands.Unregister();
             RevServices.Unregister<RevGame.Automation.GameAutomationRunner>();

@@ -1,5 +1,5 @@
 // 六章Boss手动/AI共用的受控开发GM；只提交真实流程，ready查询完全只读，不通过反复动作轮询造局。
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;

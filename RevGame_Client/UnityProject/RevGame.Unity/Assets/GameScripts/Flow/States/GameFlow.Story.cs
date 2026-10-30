@@ -60,7 +60,7 @@ namespace RevGame.Flow
                 return _storyBook;
             }
         }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>开发态重播开场：复用正式剧情锁输入/翻页流程，不写首次进度，也不串联教学。true只表示接受播放请求。</summary>
         public bool ReplayOpeningStory()
         {

@@ -75,7 +75,7 @@ namespace RevGame.Flow
             }
             _presentedChapter = 0;
             FinalBossStoryShown = false;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             _bossDevelopmentStartPending = false;
 #endif
             _chapter = chapter;
@@ -218,7 +218,7 @@ namespace RevGame.Flow
                     // 模型先生成首回合，再启动计时Logic；过场门禁阻止这段时间消耗准备秒数。
                     var battle = RevServices.GetRequired<IBattleService>();
                     bool started;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                     // 只有开发包能走这条分支：GM 可以让这一场直接以指定章节的 Boss 战开局，正式包一律正常开章。
                     bool bossStart = _owner._bossDevelopmentStartPending;
                     _owner._bossDevelopmentStartPending = false;

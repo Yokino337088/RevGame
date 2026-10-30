@@ -1,5 +1,5 @@
 // 六章Boss直达属于开发流程入口，不直接改场景或手牌；复用GameFlow的场景交割与BattleService真实配置。
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using RevGame.Automation;
 using RevGame.Core;
 using RevGame.Data;

@@ -30,7 +30,7 @@ namespace Revolution
     /// 整个文件只在 Editor、Development Build 或明确开启 REV_AUTOMATION 的构建中存在；
     /// 项目调用处也要使用相同的 #if，避免正式构建引用被裁掉的类型。
     /// </summary>
-    public static class RevRuntimeAutomation
+    public static partial class RevRuntimeAutomation
     {
         private sealed class Entry
         {

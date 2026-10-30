@@ -59,12 +59,35 @@ namespace Revolution
                 string url = "http://127.0.0.1:" + port;
                 host._listener.Prefixes.Add(url + "/"); host._listener.Start();
                 string folder = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "RevolutionAutomation")) : Path.Combine(Application.persistentDataPath, "RevolutionAutomation");
-                Directory.CreateDirectory(folder); host._endpoint = Path.Combine(folder, "runtime.json");
+                // launcher为每次进程指定独立凭据目录，不进入构建资源或Git。
+                string customEndpoint = Environment.GetEnvironmentVariable("REV_AUTOMATION_ENDPOINT");
+                if (!Application.isEditor && !string.IsNullOrEmpty(customEndpoint))
+                {
+                    if (!Path.IsPathRooted(customEndpoint))
+                    {
+                        throw new ArgumentException("REV_AUTOMATION_ENDPOINT必须是绝对路径");
+                    }
+                    host._endpoint = Path.GetFullPath(customEndpoint);
+                    folder = Path.GetDirectoryName(host._endpoint);
+                }
+                else
+                {
+                    host._endpoint = Path.Combine(folder, "runtime.json");
+                }
+                Directory.CreateDirectory(folder);
                 RevAutomationActivity.Configure(Path.Combine(folder, "activity"));
                 var endpoint = new Dictionary<string, object> { ["protocol"] = 1, ["url"] = url, ["token"] = host._token,
                     ["sessionId"] = host._session, ["pid"] = System.Diagnostics.Process.GetCurrentProcess().Id,
                     ["product"] = Application.productName, ["platform"] = Application.platform.ToString(), ["project"] = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..")) : "" };
-                File.WriteAllText(host._endpoint, RevAutomationJson.Write(endpoint), new UTF8Encoding(false));
+                endpoint["launchId"] = Environment.GetEnvironmentVariable("REV_AUTOMATION_LAUNCH_ID") ?? "";
+                endpoint["buildId"] = Application.buildGUID;
+                string temporary = host._endpoint + ".tmp";
+                File.WriteAllText(temporary, RevAutomationJson.Write(endpoint), new UTF8Encoding(false));
+                if (File.Exists(host._endpoint))
+                {
+                    File.Delete(host._endpoint);
+                }
+                File.Move(temporary, host._endpoint);
                 endpoint.Remove("token"); host._health = RevAutomationJson.Write(endpoint);
                 host._wasBackground = Application.runInBackground; Application.runInBackground = true;
                 host._thread = new Thread(host.Accept) { IsBackground = true, Name = "RevRuntimeAutomation.HTTP" };

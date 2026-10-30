@@ -106,6 +106,7 @@ namespace Revolution
         public const string UI_Item_Card = "UI/Item/Card/";
         public const string UI_Item_Notice = "UI/Item/Notice/";
         public const string UI_Panel = "UI/Panel/";
+        public const string UI_Panel_Diagnostics = "UI/Panel/Diagnostics/";
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
         public const string UI_Panel_Settings = "UI/Panel/Settings/";
         public const string UI_Panel_Story = "UI/Panel/Story/";

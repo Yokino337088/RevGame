@@ -11,14 +11,26 @@
   "actions": [
     {
       "id": "editor.activity-window",
-      "keys": ["floating", "page", "query", "targetFilter", "stateFilter"],
+      "keys": [
+        "floating",
+        "page",
+        "query",
+        "targetFilter",
+        "stateFilter"
+      ],
       "description": "打开 RevMCP 活动窗口并设置页签和筛选",
       "environment": "live",
       "readOnly": false
     },
     {
       "id": "editor.activity",
-      "keys": ["query", "target", "state", "offset", "limit"],
+      "keys": [
+        "query",
+        "target",
+        "state",
+        "offset",
+        "limit"
+      ],
       "description": "分页读取 RevMCP 实时活动记录与执行结果",
       "environment": "either",
       "readOnly": true
@@ -507,7 +519,10 @@
       "keys": [
         "target",
         "path",
-        "development"
+        "development",
+        "backend",
+        "automation",
+        "frameTiming"
       ],
       "description": "按已配置场景构建 Player，返回真实 BuildReport 摘要",
       "environment": "edit"
@@ -1212,7 +1227,10 @@
     "port": "int",
     "runtimeAction": "string",
     "argumentsJson": "string",
-    "development": "bool"
+    "development": "bool",
+    "backend": "string",
+    "automation": "bool",
+    "frameTiming": "bool"
   },
   "configFields": {
     "ab": [

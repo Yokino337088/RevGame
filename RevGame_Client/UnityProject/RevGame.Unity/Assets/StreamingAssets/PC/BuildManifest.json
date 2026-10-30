@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-10-30 23:13:15",
+  "buildTime": "2026-10-31 04:39:49",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_bosschapter01frames", "size": 380310 },
@@ -56,6 +56,7 @@
     { "name": "material_pieces", "size": 2458 },
     { "name": "material_ui", "size": 2829 },
     { "name": "shared_shaders", "size": 58883 },
+    { "name": "ui_diagnostics", "size": 6669 },
     { "name": "ui_items", "size": 8240 },
     { "name": "ui_loading", "size": 8017 },
     { "name": "ui_panels", "size": 39291 },

@@ -23,6 +23,7 @@ from revautomation.client import RevClient, RevError, RevCancelled, atomic_json,
 from revautomation.cli import validate_action
 from .schema import validate, check_schema, object_schema
 from .activity import Activity
+from revautomation import player
 
 
 class RuntimeClient:
@@ -216,7 +217,7 @@ class Hub:
     def discover(self, cancel=None):
         # 编辑模式没有游戏能力时仍可返回 Editor 能力，并把缺项放进 unavailable。
         # 不能拿 commands.json 里的离线说明冒充目标工程已经安装的工具。
-        result = dict(success=True, actions=[], commands=[], unavailable=[])
+        result = dict(success=True, actions=player.specs(), commands=[], unavailable=[])
         if self.editor:
             try:
                 response = self.editor.call("editor.capabilities", {}, cancel=cancel)
@@ -286,6 +287,8 @@ class Hub:
         if target == "game":
             return self.game_call(action, arguments, confirm, cancel)
         if target == "cli":
+            if action in ("player.launch", "player.status", "player.stop"):
+                return player.execute(action, arguments, cancel)
             return call_external(spec, arguments, confirm, cancel)
         raise RevError("Unknown target")
 

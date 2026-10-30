@@ -59,3 +59,7 @@ python scripts/analyze-results.py before.json --after after.json
 只读已完成 **RevGame game.perf JSON**，检查身份/时长/段数/负载/错误/清理，输出摘要、缓存率与观测差异；不运行Unity、不证明运行状态可比、不自动宣告优化成功。其它项目映射自己的真实契约，不能伪填字段。
 
 新报告默认必要摘要/HTML/图GIF，机器证据放项目忽略目录。RevGame现行不新建ZIP、不导出Profiler录制/内存快照；历史ZIP只索引。其它项目用户证据限制优先。提交/推送/安装依据用户授权与实际原远程，不因技能加载增加外部行动权限。
+
+## 独立Player、IL2CPP与真机性能面板
+
+涉及CLI打包到指定路径、Player启动/连接/退出、运行时GM/MCP、非开发自动化包或性能面板时，先读 [独立Player测试](references/player-testing.md)。复用现有RevRuntimeAutomation与RevMCP，项目负责隔离/业务负载，框架提供通用采样与构建；不要另造通信系统。

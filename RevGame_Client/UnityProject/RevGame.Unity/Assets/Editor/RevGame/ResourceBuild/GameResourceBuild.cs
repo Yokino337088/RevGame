@@ -23,6 +23,7 @@ namespace RevGame.Editor
             { "UI/Panel/Loading", "ui_loading" },
             { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
             { "UI/Panel/Settings", "ui_settings" },
+            { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },

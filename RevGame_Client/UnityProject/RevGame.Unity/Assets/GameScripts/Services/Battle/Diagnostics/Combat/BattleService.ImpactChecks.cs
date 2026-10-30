@@ -1,5 +1,5 @@
 // 开发态固定输入：生产包不包含造局入口；测试驱动同一战斗服务/状态机，不复制玩法算法。
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System;
 using System.Collections.Generic;
 using RevGame.Battle;

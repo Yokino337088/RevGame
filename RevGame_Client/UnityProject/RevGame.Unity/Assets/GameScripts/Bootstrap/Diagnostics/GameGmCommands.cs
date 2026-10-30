@@ -1,6 +1,6 @@
 // 所有RevGame GM的唯一文件与注册入口。Bootstrap只调用RegisterAll/UnregisterAll。
 // 玩家操作复用正式业务/真实指针，诊断造局明确标注；正式发布不编译这些入口。
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using RevGame.Automation;
 using RevGame.Battle;
 using RevGame.Core;

@@ -4,7 +4,7 @@
 // 正式发行包不会包含本文件中的调试入口。
 // 它属于 Services 目录是因为验收必须调用真实业务方法，而不是在测试里复制一套规则。
 // ============================================================
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Pieces;

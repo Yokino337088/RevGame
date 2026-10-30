@@ -218,7 +218,7 @@ namespace RevGame.Services
         /// <summary>原有准备生命与开发GM生命只有一个组合出口，换轮、援军、后落手牌均不漏算或重复相乘。</summary>
         private void ApplyPreparationHealth(Piece piece, float normalScale)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             normalScale = ScaleAutomationHealth(normalScale);
 #endif
             piece.SetRoundHealthScale(normalScale * (1f + _combatVitalityBonus));

@@ -146,7 +146,7 @@ namespace RevGame.Services
             LifetimeScore = AddScore(LifetimeScore, points);
             CombatScore = AddScore(CombatScore, points);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             if (!_scorePreview)
 #endif
             {

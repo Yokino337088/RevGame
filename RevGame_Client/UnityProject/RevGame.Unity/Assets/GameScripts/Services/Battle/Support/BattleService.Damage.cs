@@ -135,7 +135,7 @@ namespace RevGame.Services
                     int acceleration = (int)(_battleElapsed / Balance.BossAccelerationSeconds);
                     amount = ClampDamage(amount + Math.Max(acceleration, amount * (double)acceleration * Balance.BossAccelerationBonus), 1);
                 }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 // 开发态压测专用：给自动化攻击统一缩放，不影响正式包。
                 if (request.Basis == DamageBasis.Attack)
                 {
@@ -162,7 +162,7 @@ namespace RevGame.Services
                 }
                 amount = ClampDamage(basis * request.Factor, request.Floor);
             }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             if (PlayerInvincible && target.Side == GameSide.Player)
             {
                 amount = 0;
@@ -180,7 +180,7 @@ namespace RevGame.Services
             {
                 amount = ClampDamage(amount * (1d - _prepDamageReduction), 0);
             }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             amount = ScaleAutomationIncomingDamage(target, amount);
 
 #endif

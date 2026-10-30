@@ -218,6 +218,15 @@ namespace Revolution.Editor
                 return;
             }
             if (included.Contains(shader)) return;
+            // 动态Font导入器生成的材质由引擎字体通道处理，不是业务自行创建的Shader材质。
+            // 将它的Editor GUI/Text Shader加入Always Included会引入DontSave内部对象，导致Player构建失败。
+            // 仅豁免同一字体资产实际持有的材质；普通同名材质/自定义Shader仍走原门禁。
+            string materialPath = AssetDatabase.GetAssetPath(material);
+            Font generatedFont = string.IsNullOrEmpty(materialPath) ? null : AssetDatabase.LoadAssetAtPath<Font>(materialPath);
+            if (generatedFont != null && generatedFont.material == material && shader.name == "GUI/Text Shader")
+            {
+                return;
+            }
             string shaderPath = AssetDatabase.GetAssetPath(shader);
             if (!string.IsNullOrEmpty(shaderPath) && shaderPath.StartsWith("Assets/", StringComparison.Ordinal))
             {

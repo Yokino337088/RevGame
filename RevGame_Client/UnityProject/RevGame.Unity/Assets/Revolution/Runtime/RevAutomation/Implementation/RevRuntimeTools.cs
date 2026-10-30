@@ -47,6 +47,7 @@ namespace Revolution
             RevRuntimeAutomation.Register("ui.close", "RevUI.Close 关闭指定面板", Schema(TargetProperties), Close);
             RevRuntimeAutomation.Register("runtime.screenshot", "等待下一帧完整 PNG，返回路径和 base64 视觉证据", Empty, Screenshot, true);
             RevRuntimeAutomation.Register("runtime.ping", "运行实例身份", Empty, _ => new TextResult { text = Application.productName + " / " + Application.platform }, true);
+            RevRuntimeAutomation.RegisterPerformance();
             RevRuntimeAutomation.Register("runtime.logs", "最近 128 条运行日志及本局累计 Error/Exception 数", Empty, _ => RevRuntimeAutomation.RecentLogs(), true);
         }
         [Serializable] private sealed class PanelInfo { public string id, key, state, layer; public bool covered; }

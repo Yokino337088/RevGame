@@ -72,39 +72,10 @@ namespace Revolution.Editor
             }
         }
 
-        [RevAutomationAction("build.player", Keys = new[] { "target", "path", "development" }, Description = "按已配置场景构建 Player，返回真实 BuildReport 摘要")]
+        [RevAutomationAction("build.player", Keys = new[] { "target", "path", "development", "backend", "automation", "frameTiming" }, Description = "构建Player到指定空目录，支持IL2CPP与非开发自动化包，返回真实BuildReport")]
         public static object Player(RevAutomationRequest request)
         {
-            var p = RevAutomationEditorOptions.Read(request);
-            BuildTarget target = RevAutomationActions.Target(p.target);
-            if (target != EditorUserBuildSettings.activeBuildTarget) { throw new InvalidOperationException("请先 build.target 并等待平台切换完成"); }
-            if (!BuildPipeline.IsBuildTargetSupported(BuildPipeline.GetBuildTargetGroup(target), target)) { throw new InvalidOperationException("未安装构建平台支持"); }
-            if (Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount).Any(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i).isDirty))
-            { throw new InvalidOperationException("构建前请先 scene.save 保存修改"); }
-            string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
-            if (scenes.Length == 0) { throw new InvalidOperationException("没有启用的构建场景，请先 build.configure"); }
-            string extension = target == BuildTarget.StandaloneWindows || target == BuildTarget.StandaloneWindows64 ? ".exe" :
-                target == BuildTarget.Android ? (EditorUserBuildSettings.buildAppBundle ? ".aab" : ".apk") : target == BuildTarget.StandaloneOSX ? ".app" : "";
-            // Unity 禁止把 Player 构建到 Library；工单只存报告，发布产物放 Builds 的唯一子目录。
-            string path = string.IsNullOrEmpty(p.path) ? Path.GetFullPath(Path.Combine("Builds", "RevAutomation", request.id, "Player" + extension)) : Path.GetFullPath(p.path);
-            {
-                string allowed = Path.GetFullPath("Builds") + Path.DirectorySeparatorChar;
-                if (!path.StartsWith(allowed, StringComparison.OrdinalIgnoreCase)) { throw new ArgumentException("自定义构建输出必须位于当前工程 Builds/ 内"); }
-                for (var dir = new DirectoryInfo(Path.GetDirectoryName(path)); dir != null; dir = dir.Parent)
-                { if (dir.Exists && (dir.Attributes & FileAttributes.ReparsePoint) != 0) { throw new ArgumentException("构建输出不能经过目录链接"); } }
-            }
-            if (File.Exists(path) || Directory.Exists(path)) { throw new IOException("构建目标已存在，请使用新的输出路径：" + path); }
-            if (!string.IsNullOrEmpty(p.path) && Directory.Exists(Path.GetDirectoryName(path)) && Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(path)).Any())
-            { throw new IOException("自定义构建必须使用全新的空目录，防止覆盖同目录的旧 Player 文件"); }
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = scenes, target = target, locationPathName = path, options = p.development ? BuildOptions.Development : BuildOptions.None });
-            if (report == null) { throw new InvalidOperationException("Unity 未返回 BuildReport；请读取 editor.console 的构建错误，不能判为构建成功"); }
-            var summary = report.summary;
-            var result = new BuildResultData { path = path, target = target.ToString(), result = summary.result.ToString(), bytes = summary.totalSize,
-                errors = (int)summary.totalErrors, warnings = (int)summary.totalWarnings, seconds = summary.totalTime.TotalSeconds,
-                reportPath = Path.Combine(RevAutomationBridge.JobDirectory(request.id), "build-result.json") };
-            RevAutomationBridge.WriteJson(result.reportPath, result);
-            return new CompletedBuild(result, summary.result == BuildResult.Succeeded && summary.totalErrors == 0);
+            return RevAutomationPlayerBuild.Execute(request);
         }
 
         private sealed class CompletedBuild : RevAutomationOperation

@@ -30,7 +30,7 @@ namespace RevGame.Flow
         {
             get
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 if (_bossDevelopmentEntering)
                 {
                     return true;
@@ -60,7 +60,7 @@ namespace RevGame.Flow
         private static readonly string[] MenuAtlases = { "UIMenus", "UIBattle" };
         /// <summary>战斗实际用到的图集白名单，入场先准备，离场由图集服务释放战斗专用租约。</summary>
         private static readonly string[] BattleAtlases = { "PieceFrames", "CombatFrames", "BoardStatus", "UIBattle" };
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>验收专用的一次性故障；正式包不存在此入口，不修改真实AB文件来制造失败。</summary>
         private string _developmentFault;
         public bool ArmDevelopmentFailure(string stage)
@@ -116,7 +116,7 @@ namespace RevGame.Flow
                 await warmup.LoadAsync(target == GameScreen.Battle, p => Report(0.18f + p * 0.24f, "正在集结冒险队伍…"));
                 ThrowIfDisposed();
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 CheckDevelopmentFailure("before-scene");
 #endif
                 string sceneName = target == GameScreen.Battle ? BattleSceneName : StartSceneName;
@@ -143,7 +143,7 @@ namespace RevGame.Flow
                 // 新场景的Start完成订阅后才能广播ScreenChanged，否则会漏掉打开棋盘/菜单的通知。
                 await RevTask.Yield();
                 ThrowIfDisposed();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 CheckDevelopmentFailure("after-scene");
 #endif
                 GamePresentation presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();

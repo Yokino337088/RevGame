@@ -63,6 +63,15 @@ def parser():
     evidence.add_argument("--subtitle", default="证据与截图")
     evidence.add_argument("--summary", type=Path, help="指标 JSON（可选）")
     evidence.add_argument("--note", action="append", default=[])
+    player = sub.add_parser("player", help="独立Windows Player启动/状态/退出")
+    player_ops = player.add_subparsers(dest="operation", required=True)
+    for operation in ("launch", "status", "stop"):
+        command = player_ops.add_parser(operation)
+        command.add_argument("--directory", required=True)
+        if operation == "launch":
+            command.add_argument("--executable", required=True)
+            command.add_argument("--port", type=int, default=18766)
+            command.add_argument("--arguments", default="[]", help="Player参数JSON字符串数组")
     families = {}
     for spec in read_json(ROOT / "commands.json")["actions"]:
         family, operation = spec["id"].split(".", 1)
@@ -93,6 +102,11 @@ def parser():
                 action.add_argument("--" + flag, type=int)
             if family in ("ab", "hot", "build", "platform"):
                 action.add_argument("--target", help="如 StandaloneWindows64 / Android / WebGL")
+            if family == "build" and operation == "player":
+                action.add_argument("--backend", choices=("current", "mono", "il2cpp"))
+                action.add_argument("--development", action="store_true", default=None)
+                action.add_argument("--automation", action="store_true", default=None)
+                action.add_argument("--frame-timing", action="store_true", default=None)
             if family == "test":
                 action.add_argument("--test-mode", choices=("EditMode", "PlayMode"))
             if family == "excel":
@@ -119,7 +133,7 @@ def payload_of(args):
             data[key] = json.loads(raw)
         except ValueError as exc:
             raise RevError(f"--set 的值必须是合法 JSON；字符串需要双引号：{key}") from exc
-    for attr, key in (("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
+    for attr, key in (("backend", "backend"), ("development", "development"), ("automation", "automation"), ("frame_timing", "frameTiming"), ("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
                       ("source", "sources"), ("prefab", "prefab"), ("class_name", "className"),
                       ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"),
                       *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "offset", "limit", "index"))):
@@ -293,7 +307,13 @@ def main(argv=None):
     try:
         if args.timeout <= 0 or not args.timeout < 604800:
             raise RevError("--timeout 必须大于 0 且小于 604800 秒。")
-        if args.family == "commands":
+        if args.family == "player":
+            from . import player
+            payload = dict(directory=args.directory)
+            if args.operation == "launch":
+                payload.update(executable=args.executable, port=args.port, arguments=json.loads(args.arguments), timeout=min(args.timeout, 120))
+            result = player.execute("player." + args.operation, payload)
+        elif args.family == "commands":
             if args.live:
                 result = RevClient(args.project, "live", args.unity, args.timeout).call("editor.capabilities")
                 if result.get("success"):

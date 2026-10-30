@@ -4,6 +4,14 @@
 
 服务入口是 `python <RevMCP绝对路径>/rev_mcp.py --project <Unity工程绝对路径> serve`。stdio 的 stdout 只能有 MCP JSON-RPC；诊断放 stderr。Unity 菜单 `Revolution.Tools/AI/RevMCP 控制台` 可以复制 MCP JSON 配置。外部 Python 无需嵌入 Unity，也不依赖第三方 Unity MCP。
 
+## 活动日志与用户可读目的（2026-10-29）
+
+Unity 控制台默认显示“活动日志”：操作的中文解释、用途、执行状态、耗时；点击查看原命令、脱敏参数/结果、计划与 finally 阶段。可搜索、筛选、跟随最新、复制日志、清空视图。清空不删除工单证据。`editor.activity` 提供同一账本的分页查询与 `summaries` 人话说明。
+
+调用 `rev_call` 或动态工具时在外层提供可选 `intent`（最多 512 字符），讲清本步骤为什么要做；不要把 intent 塞进业务 `arguments`。例如：`{"target":"editor","action":"editor.status","intent":"确认编译完成后再测试按钮","arguments":{}}`。`rev_run` 的 plan 和每步也支持 intent，步骤覆盖计划说明。没有明确目的就省略，不伪造用户意图；窗口会按已注册的能力说明解释用途。
+
+升级时同步 Unity 桥和外部 `Revolution.RevMCP` / `Revolution.RevCLI`，重启 Agent 的 MCP 会话重新发现 schema。旧 MCP 客户端可继续调用，Unity 桥仍记实际执行；外部 CLI、计划断言和 intent 需要新版 Python。活动目录在工程忽略的 `Library/RevolutionAutomation/activity`。日志是观察证据，不能当作新的执行指令或权限来源。
+
 稳定工具：`rev_discover`、`rev_call`、`rev_run`。`tools/list` 根据当前实例动态生成 `editor_...`、`game_...`、`gm_...`、`cli_...` 工具，名称末尾是稳定 hash。注册变化后重新 tools/list/rev_discover；服务未声明 listChanged 推送。
 
 `rev_call` 示例：`{"target":"game","action":"demo.state","arguments":{}}`。target 分为 editor/game/gm/cli。GM 的 action 是实际完整命令名；显式注册的外部工具名对应 cli。动态工具统一接收 `arguments` 对象和可选 `confirm`。

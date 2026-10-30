@@ -65,3 +65,7 @@ python Revolution.RevCLI/rev.py gif a.png b.png c.png --out results\anim.gif --d
 核对顶层 success、每步 response、业务断言、轮次与清理、取消状态及新增 Unity 错误。失败先读原始工单/日志，定位接线或玩法根因；只在修复后有界重跑，不放宽预期。
 
 恢复本次启动的 Play、原场景与安全业务状态，保留用户原本打开的编辑器。结果写明：覆盖了什么、在哪个工程/平台、通过/失败、首次失败原因与修复、证据路径和未验证项。编译、Python 回归、Editor Play、独立 Player、设备分别报告。未实际运行的能力不得说成通过。
+
+## 独立Player、IL2CPP与真机性能面板
+
+涉及CLI打包到指定路径、Player启动/连接/退出、运行时GM/MCP、非开发自动化包或性能面板时，先读 [独立Player测试](references/player-testing.md)。复用现有RevRuntimeAutomation与RevMCP，项目负责隔离/业务负载，框架提供通用采样与构建；不要另造通信系统。

@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1754110902
+CRC: 2425643357
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -229,3 +229,7 @@ AssetBundleManifest:
     Info_58:
       Name: audio_boss_chapter06
       Dependencies: {}
+    Info_59:
+      Name: ui_diagnostics
+      Dependencies:
+        Dependency_0: font_cjk

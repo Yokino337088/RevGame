@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // BattleService.Score.cs —— 积分先在真实命中时结算，HUD与飞星只显示。
 // 高频倍率查询按实测人数阈值选择路径；缓存必须覆盖名单、生死、章回与配置，避免画面快了但分数错了。
 // ============================================================
@@ -165,7 +165,7 @@ namespace RevGame.Services
             LifetimeScore = AddScore(LifetimeScore, added);
             CombatScore = AddScore(CombatScore, added);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             if (!_scorePreview)
 #endif
             {
@@ -183,7 +183,7 @@ namespace RevGame.Services
         {
             _scoreProgress?.Flush();
         }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         // 开发测试积分隔离开关，真实规则仍计算分数，但预览期间不写玩家存档。
         // 只能由取得ScorePreview租约的所有者还原；嵌套租约会同时恢复两份不同积分，故明确拒绝。
         private bool _scorePreview;
