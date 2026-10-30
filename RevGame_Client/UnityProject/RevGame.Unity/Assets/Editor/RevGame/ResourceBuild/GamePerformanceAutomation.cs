@@ -19,15 +19,17 @@ namespace RevGame.Editor
             public string label = "repeat";
             // 起止章1～6，每段10～600秒，重复1～10次；这些上限防误启动无界作业。
             public int first = 1, last = 6, seconds = 20, repeats = 1;
+            // 48保留历史输入，81为满盘重弩对射，真实造局与采样门禁共同核对，不改变正式关卡。
+            public int pieces = 48;
         }
         // 桥接层只包装text，里面的JSON仍需解析并核对status/errors/cleaned；工具成功不等于战斗通过。
         [Serializable] private sealed class Result { public string text; }
-        [RevAutomationAction("game.perf.begin",Environment="play",Keys=new[]{"label","first","last","seconds","repeats"},Description="固定48棋预分配采样帧/GPU/GC摘要，无Profiler导出并正式回首页")]
+        [RevAutomationAction("game.perf.begin",Environment="play",Keys=new[]{"label","first","last","seconds","repeats","pieces"},Description="48棋或81满盘真实攻击采样，预分配帧/GPU/GC并正式回首页")]
         // 启动固定类型的异步作业并返回“运行中”；调用方后续查State，不阻塞MCP等十分钟而超时。
         public static object Begin(RevAutomationRequest request)
         {
             var options = JsonUtility.FromJson<Options>(request.payloadJson) ?? new Options();
-            return Invoke("Begin", new object[] { options.label, options.first, options.last, options.seconds, options.repeats });
+            return Invoke("Begin", new object[] { options.label, options.first, options.last, options.seconds, options.repeats, options.pieces });
         }
         [RevAutomationAction("game.perf.state",Environment="play",Keys=new string[0],Description="只读唯一runId的测量摘要、完成状态与清理")]
         // 只读当前唯一作业结果；动作不重新开始压测。

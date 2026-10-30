@@ -30,6 +30,9 @@ namespace RevGame.Editor
             // chapter为1～6，repeat从0计；frames为真实采样帧数，gpuSamples是新时间戳有效GPU帧数。
             // attacks为期间真实攻击事件数，min/maxPieces核对负载，防止空盘高FPS被当优化成功。
             public int chapter, repeat, frames, gpuSamples, attacks, minPieces, maxPieces;
+            // 名单来自真实攻击/掉血事件；满盘必须每一棋都出手。视觉预算记录实际活跃对象峰值。
+            public int uniqueAttackers, hits, rangedHits, floatingPeak, projectilePeak, meleePeak, minViews, maxViews;
+            public long actualDamage;
             // seconds为墙钟采样秒，fps=frames/seconds；p50/p95/p99/maxMs为帧间隔毫秒。
             // over125/167/333Ratio为超过12.5/16.67/33.33ms的帧占比0～1，不是毫秒。
             public double seconds, fps, p50Ms, p95Ms, p99Ms, maxMs, over125Ratio, over167Ratio, over333Ratio;
@@ -65,6 +68,7 @@ namespace RevGame.Editor
             // 请求章节范围/重复数/每段秒；errors累计新增错误，返回包数/逻辑数/图集引用用于收尾核对。
             // 首页仍可保留大厅共享包，不能要求总AB数量为0再强制卸载。
             public int first, last, repeats, requestedSeconds, errors, returnBundles, returnLogic, returnPieceRefs;
+            public int requestedPieces;
             // 只在一段完整Measure返回后追加；失败段不填伪造Row，最终数量要等于(终章-首章+1)×次数。
             public List<Row> chapters = new List<Row>();
         }
@@ -78,6 +82,7 @@ namespace RevGame.Editor
             public long gc, hud, feedback, arrange;
             // 本帧绘制统计与存活数，只取必要计数，不逐帧创建完整场景对象快照。
             public int batches, setPass, pieces;
+            public int views, floating, projectiles, melee;
         }
         // 当前Editor作业结果，下一次Begin替换。旧result.json只是证据，不是当前作业仍成功的标记。
         private static Result _result;
@@ -88,11 +93,12 @@ namespace RevGame.Editor
         // 只标记取消，不声称收尾完成；必须继续等state直到清理状态明确。
         public static string Cancel() { _cancel = true; return "取消已请求，等待回首页清理"; }
         /// <summary>600秒热态及十次往返可在目标笔记本执行；时长仅用于测量，不调整规则。</summary>
-        public static string Begin(string label, int first, int last, int seconds, int repeats)
+        public static string Begin(string label, int first, int last, int seconds, int repeats, int pieces = 48)
         {
             if (!Application.isPlaying || EditorApplication.isPaused || _result?.status == "running") { throw new InvalidOperationException("需要未暂停Play且无运行压测"); }
             if (!RevServices.GetRequired<StoryProgress>().IsIsolated) { throw new InvalidOperationException("需要隔离进度"); }
             if (first < 1 || last > 6 || first > last || seconds < 10 || seconds > 600 || repeats < 1 || repeats > 10) { throw new ArgumentException("章节1至6，时长10至600秒，重复1至10"); }
+            if (pieces != 48 && pieces != 81) { throw new ArgumentException("压力输入只接受48或81棋"); }
             string id = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             _result = new Result
             {
@@ -102,6 +108,7 @@ namespace RevGame.Editor
                 last = last,
                 repeats = repeats,
                 requestedSeconds = seconds,
+                requestedPieces = pieces,
                 cpu = SystemInfo.processorType,
                 gpu = SystemInfo.graphicsDeviceName,
                 graphicsApi = SystemInfo.graphicsDeviceType.ToString(),
@@ -146,7 +153,7 @@ namespace RevGame.Editor
                     {
                         Guard(); flow.OpenLevels(); if (!flow.EnterBattle(chapter)) { throw new InvalidOperationException(flow.LastError); }
                         await Wait(() => !flow.IsTransitioning && !flow.IsGameplayBlocked && b.Phase == GamePhase.Prepare, "准备未交付");
-                        if (!b.LoadPerformanceScenario(chapter)) { throw new InvalidOperationException(b.LastError); }
+                        if (!b.LoadPerformanceScenario(chapter, r.requestedPieces)) { throw new InvalidOperationException(b.LastError); }
                         await Wait(() => !flow.IsGameplayBlocked && b.PreparationGranted && UnityEngine.Object.FindObjectOfType<BoardView>()?.IsReady == true, "固定输入未就绪");
                         if (!RevLogic.Get<BattleLogic>().BeginBattle()) { throw new InvalidOperationException(b.LastError); }
                         double until = Time.realtimeSinceStartupAsDouble + 2.5, heal = 0;
@@ -192,7 +199,18 @@ namespace RevGame.Editor
         private static async RevTask<Row> Measure(int chapter, int repeat)
         {
             var b = (BattleService)RevServices.GetRequired<IBattleService>(); var buffer = new Sample[_result.requestedSeconds * 1000 + 1]; var timing = new FrameTiming[1];
-            int count = 0, attacks = 0, errorStart = _result.errors; object owner = new object(); RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, _ => attacks++, owner: owner);
+            BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
+            if (board == null) { throw new InvalidOperationException("真实棋盘视图不存在"); }
+            // 只在窗口前分配集合，81身份先登记计数器，事件内不扩容、不拼字符串。
+            var attackIds = new HashSet<int>();
+            foreach (var piece in b.PlayerPieces) { attackIds.Add(piece.Id); }
+            foreach (var piece in b.EnemyPieces) { attackIds.Add(piece.Id); }
+            var acted = new Dictionary<int, bool>(81);
+            foreach (int id in attackIds) { acted.Add(id, false); }
+            int count = 0, attacks = 0, hits = 0, rangedHits = 0, errorStart = _result.errors;
+            long damage = 0; object owner = new object();
+            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => { attacks++; if (acted.ContainsKey(info.PieceId)) { acted[info.PieceId] = true; } }, owner: owner);
+            RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, info => { hits++; damage += info.Damage; if (info.SourceIsRanged && !info.FromSkill) { rangedHits++; } }, owner: owner);
             var gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame", 1);
             var hud = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "RevGame.Hud.Refresh", 1);
             var feedback = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "RevGame.Feedback.Frame", 1);
@@ -219,7 +237,11 @@ namespace RevGame.Editor
                         feedback = feedback.Valid ? feedback.LastValue : -1,
                         arrange = arrange.Valid ? arrange.LastValue : -1,
                         batches = UnityStats.batches,
-                        setPass = UnityStats.setPassCalls
+                        setPass = UnityStats.setPassCalls,
+                        views = board.PieceCount,
+                        floating = board.ActiveFloatingTextCount,
+                        projectiles = board.ActiveProjectileCount,
+                        melee = board.ActiveMeleeCount
                     }; previous = now;
                     foreach (var p in b.PlayerPieces) { if (p.IsAlive) { s.pieces++; } }
                     foreach (var p in b.EnemyPieces) { if (p.IsAlive) { s.pieces++; } }
@@ -232,12 +254,15 @@ namespace RevGame.Editor
             }
             // 先停止监听/Recorder，再进入汇总；任何异常也清理，避免下一场还累计上一场攻击。
             finally { RevEvent.RemoveAllByOwner(owner); gc.Dispose(); hud.Dispose(); feedback.Dispose(); arrange.Dispose(); }
-            var row = new Row { chapter = chapter, repeat = repeat, frames = count, seconds = previous - start, attacks = attacks, minPieces = int.MaxValue, resolution = UnityStats.screenRes };
+            var row = new Row { chapter = chapter, repeat = repeat, frames = count, seconds = previous - start, attacks = attacks, hits = hits, rangedHits = rangedHits, actualDamage = damage, minPieces = int.MaxValue, minViews = int.MaxValue, resolution = UnityStats.screenRes };
+            foreach (bool didAttack in acted.Values) { if (didAttack) { row.uniqueAttackers++; } }
             var times = new double[count]; var gpuTimes = new List<double>(count); var mainTimes = new List<double>(count); var renderTimes = new List<double>(count);
             long gcSum = 0, hudSum = 0, feedbackSum = 0, arrangeSum = 0; bool gcValid = false, hudValid = false, feedbackValid = false, arrangeValid = false;
             for (int i = 0; i < count; i++)
             {
                 var s = buffer[i]; times[i] = s.frame; row.minPieces = Math.Min(row.minPieces, s.pieces); row.maxPieces = Math.Max(row.maxPieces, s.pieces); row.batches += s.batches; row.setPass += s.setPass;
+                row.minViews = Math.Min(row.minViews, s.views); row.maxViews = Math.Max(row.maxViews, s.views);
+                row.floatingPeak = Math.Max(row.floatingPeak, s.floating); row.projectilePeak = Math.Max(row.projectilePeak, s.projectiles); row.meleePeak = Math.Max(row.meleePeak, s.melee);
                 if (s.frame > 12.5) { row.over125Ratio++; }
                 if (s.frame > 16.6667) { row.over167Ratio++; }
                 if (s.frame > 33.3333) { row.over333Ratio++; }
@@ -264,6 +289,10 @@ namespace RevGame.Editor
             // 预算是平均FPS+P95联合检查；P99和最慢帧仍保留，不能拿budget=true掩盖慢帧。
             row.budget80 = row.fps >= 80 && row.p95Ms <= 12.5; row.budget90 = row.fps >= 90 && row.p95Ms <= 1000d / 90;
             if (row.minPieces < 40 || attacks < 40 || row.seconds < _result.requestedSeconds || _result.errors > errorStart) { throw new InvalidOperationException("负载/时长/错误门禁失败：章" + chapter); }
+            if (_result.requestedPieces == 81 && (row.minPieces != 81 || row.maxPieces != 81 || row.minViews != 81 || row.maxViews != 81 || row.uniqueAttackers != 81 || rangedHits < 81 || damage <= 0))
+            { throw new InvalidOperationException("满盘未满足81存活/81视图/81真实出手与扣血，拒绝空负载：章" + chapter); }
+            if (row.floatingPeak > BoardView.MaxFloatingTexts || row.projectilePeak > BoardView.MaxProjectiles || row.meleePeak > BoardView.MaxMeleeEffects)
+            { throw new InvalidOperationException("真实反馈峰值超过显示预算"); }
             return row;
         }
         // 输入必须已经按升序排序。fraction=0.95代表95%位置，返回的是帧时，不是95%CPU利用率。

@@ -12,14 +12,32 @@ namespace RevGame.Services
 {
     public sealed partial class BattleService
     {
-        /// <summary>六章压测专用固定48棋夹具；保留真实AI/伤害/支援，生命放大仅用于维持持续负载，不属于关卡难度。</summary>
-        public bool LoadPerformanceScenario(int chapter)
+        /// <summary>六章固定48混合棋或81满盘重弩夹具；真实AI/伤害/支援不变，高生命只维持压力，不代表难度。</summary>
+        public bool LoadPerformanceScenario(int chapter, int pieces = 48)
         {
+            if (pieces != 48 && pieces != 81) { return Reject("性能夹具只接受48或81棋"); }
             // 每章重置相同种子，使暴击/事件输入可复现；只存在于编辑器夹具。
             _random = new System.Random(1025 + chapter);
             if (!StartRound(chapter, 1)) { return false; }
             StopEnemyAI();
             _board.Reset(); _playerPieces.Clear(); _enemyPieces.Clear();
+            if (pieces == 81)
+            {
+                // 满盘必然零空格气，正常敌棋会停攻。只在这份Editor压力输入启用围困免疫，
+                // 让81颗一格重弩都经真实FSM/伤害公式持续射击；不使用假命中事件或改生产配置。
+                // 棋盘按上下两军分割，中央行归敌方，玩家36棋/敌方45棋。满盘无法移棋或补子。
+                for (int y = 0; y < _board.Size; y++)
+                {
+                    for (int x = 0; x < _board.Size; x++)
+                    {
+                        Piece piece = AddImpactPiece(y < 4 ? GameSide.Player : GameSide.Enemy, PieceKind.Crossbow, new BoardPos(x, y));
+                        piece.IgnoreEncirclement = true;
+                    }
+                }
+                RefreshGoState();
+                RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
+                return true;
+            }
             PieceKind[] kinds = { PieceKind.Archer, PieceKind.MageFire, PieceKind.MageWater, PieceKind.Crossbow, PieceKind.Shield, PieceKind.Swordman };
             for (int side = 0; side < 2; side++)
             {
