@@ -12,7 +12,7 @@
 | 开发态GM | `GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs` | 唯一注册账本、限定构建、正式Logic/Service动作、明确拒绝 |
 | 运行时能力/存档隔离 | `GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs` | 实际结构化状态、进度与积分隔离，避免嵌套已持有的预览租约 |
 | Editor动作桥 | `Editor/RevGame/ResourceBuild/GameHelperAutomation.cs` | 显式动作ID、Environment/Keys、程序集边界；只调用固定项目检查 |
-| 规则正反例 | `GameScripts/Services/Battle/Diagnostics/BattleService.HelperChecks.cs` | 真实服务固定输入、上限不扣牌、吞噬原子性、目标、积分与失误失败 |
+| 规则正反例 | `GameScripts/Services/Battle/Diagnostics/Helper/BattleService.HelperChecks.cs` | 真实服务固定输入、上限不扣牌、吞噬原子性、目标、积分与失误失败 |
 | 实际UI与动态画面 | `Editor/RevGame/GameHelperPlayChecks.cs` | 隔离Play、实际指针、帧/材质/可见几何、六章连拍与退出回收 |
 | 长时间战术回放 | `Editor/RevGame/Balance/GameBalanceCampaignChecks.cs`、`GameScripts/Automation/Balance/GameBalanceTactics.cs` | 固定种子、真实手牌、正常策略和换位、记录实际命中/死亡/胜负 |
 | 冷AB与重进场景 | `Editor/RevGame/Scenes/GameSceneTransitionChecks.cs` | 首次图集绑定、过场交付与反复出入，不能先预热全图集 |

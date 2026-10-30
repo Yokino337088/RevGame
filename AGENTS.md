@@ -62,3 +62,8 @@
 - 用户明确要求：测试报告不生成 ZIP 压缩包。文档目录保留 HTML 与必要截图/GIF，详细机器证据放忽略目录 `.codex/work/`；此要求优先于技能中的 ZIP 归档默认规则。
 - 2026-10-28用户更新：`.codex/skills/` 与项目协作说明需要入库；`.codex/work/` 原始测试证据、依赖缓存以及本机配置/凭据继续忽略，不提交。
 - 2026-10-29用户更新：后续性能测试不导出 Profiler 录制数据（如 `.raw` / `.data` / 内存快照），不自动调用 `SaveProfile`；报告仅保留必要的性能摘要、结论与截图/GIF。
+
+
+## 功能子目录（2026-10-30）
+
+同一层中不同演员/功能必须分目录：Battle/AI 按 Boss、Enemy、Helper、Player、Formation、Shared；Services/Battle/AI按角色，Diagnostics按Boss/Helper/Performance/Balance等用途；战斗UI按Hud/Boss/Preparation/Results，棋盘视图按Cells/Boss/Feedback/Helper/Magic。partial文件可按职责归档，类型与命名空间不随目录强制重命名。移动Unity资产必须连同原.meta保留GUID；生成目录与框架快照不随意搬迁。
