@@ -42,8 +42,15 @@ namespace RevGame.Services
         private sealed class EnemyOwner : IEnemyAIOwner
         {
             private readonly BattleService _service;
-            public Piece Actor { get; }
-            public EnemyOwner(BattleService service, Piece actor) { _service = service; Actor = actor; }
+            public Piece Actor
+            {
+                get;
+            }
+            public EnemyOwner(BattleService service, Piece actor)
+            {
+                _service = service;
+                Actor = actor;
+            }
             public RevGame.Board.BoardModel Board => _service._board;
             public GamePhase Phase => _service.Phase;
             public float Elapsed => _service._battleElapsed;
@@ -53,7 +60,17 @@ namespace RevGame.Services
             public bool KingCaptured => _service.IsKingCaptured();
             public int DeploymentCount => _service._enemyDeploymentCount;
             public IReadOnlyList<Piece> PlannedEnemies => _service._plannedEnemyFormation;
-            public float NextDeploymentAt { get { return _service._nextEnemyDeployAt; } set { _service._nextEnemyDeployAt = value; } }
+            public float NextDeploymentAt
+            {
+                get
+                {
+                    return _service._nextEnemyDeployAt;
+                }
+                set
+                {
+                    _service._nextEnemyDeployAt = value;
+                }
+            }
             public void CommitFormationPiece(Piece piece)
             {
                 if (!Board.Place(piece, piece.Pos))
@@ -68,9 +85,18 @@ namespace RevGame.Services
             {
                 return new Piece(_service._nextPieceId, definition, GameSide.Enemy, hpScale: round.HpScale, attackScale: round.AttackScale);
             }
-            public void CommitDeployment(Piece piece, BoardPos position, string intention) { _service.CommitEnemyDeployment(piece, position, intention); }
-            public bool PredictAttackDefeat(Piece attacker, Piece target) { return _service.PredictAttackDefeat(attacker, target); }
-            public void Attack(Piece attacker, Piece target) { _service.Attack(attacker, target); }
+            public void CommitDeployment(Piece piece, BoardPos position, string intention)
+            {
+                _service.CommitEnemyDeployment(piece, position, intention);
+            }
+            public bool PredictAttackDefeat(Piece attacker, Piece target)
+            {
+                return _service.PredictAttackDefeat(attacker, target);
+            }
+            public void Attack(Piece attacker, Piece target)
+            {
+                _service.Attack(attacker, target);
+            }
             public void Move(Piece piece, BoardPos position)
             {
                 if (!Board.Move(piece, position))
@@ -81,7 +107,6 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent<int>(piece.Def.IsRanged ? Events.PieceMoved : Events.PieceFormationMoved, piece.Id);
             }
         }
-
         /// <summary>
         /// 按棋子编号懒创建棋子状态机：已有就复用，没有才 new。
         /// 为什么懒创建：布阵、增援、旧回合残棋都走同一入口，调用方不必关心创建时机。
@@ -89,6 +114,7 @@ namespace RevGame.Services
         private EnemyAI EnsureEnemyAI(Piece piece)
         {
             EnemyAI ai;
+
             if (!_enemyAI.TryGetValue(piece.Id, out ai))
             {
                 ai = new EnemyAI(false, new EnemyOwner(this, piece));
@@ -96,7 +122,6 @@ namespace RevGame.Services
             }
             return ai;
         }
-
         /// <summary>
         /// 懒创建敌方指挥机器（负责布阵与增援），与单颗棋子的机器完全独立。
         /// 分开的原因：指挥的 Prepare/Deploy/Stopped 与棋子的 Attack/Hold 状态语义不同，
@@ -110,15 +135,16 @@ namespace RevGame.Services
             }
             return _enemyCommander;
         }
-
         /// <summary>布阵已完成纯算法预检；只有指挥Prepare状态才能提交。失败预检不能清掉旧回合AI。</summary>
         private void CommitEnemyFormation(List<Piece> planned)
         {
             _plannedEnemyFormation = planned;
-            try { EnsureEnemyCommander().Tick(EnemyAIState.Prepare, 0f, "敌阵预检完成，进入布阵状态"); }
+            try
+            {
+                EnsureEnemyCommander().Tick(EnemyAIState.Prepare, 0f, "敌阵预检完成，进入布阵状态");
+            }
             finally { _plannedEnemyFormation = null; }
         }
-
         /// <summary>
         /// 固定模拟小步驱动所有敌棋：只传时间，不替状态决定攻击还是移动。
         /// 每颗棋的机器自己感知并执行；擒王后立刻停止本步剩余棋子，避免继续扣血。
@@ -150,7 +176,6 @@ namespace RevGame.Services
                 }
             }
         }
-
         /// <summary>
         /// 真实扣血死亡后把该棋强制切到 Dead 终态。
         /// 为什么用强制入口：死亡是事实，不需要再经过感知；表现层动画是否播完与逻辑无关。
@@ -170,7 +195,6 @@ namespace RevGame.Services
                 EnsureEnemyAI(piece).Tick(EnemyAIState.Dead, 0f, "真实扣血后死亡");
             }
         }
-
         /// <summary>停止AI并释放状态实例/委托。用于结算、回合替换和域退出，不等死亡特效播放完。</summary>
         public void StopEnemyAI()
         {
@@ -181,15 +205,20 @@ namespace RevGame.Services
             ResetHelperProtection();
             ResetHelperStorm();
             ClearBossEffects();
-            foreach (EnemyAI ai in _enemyAI.Values) { ai.Dispose(); }
+            foreach (EnemyAI ai in _enemyAI.Values)
+            {
+                ai.Dispose();
+            }
             _enemyAI.Clear();
-            foreach (BossAI ai in _bossAI.Values) { ai.Dispose(); }
+            foreach (BossAI ai in _bossAI.Values)
+            {
+                ai.Dispose();
+            }
             _bossAI.Clear();
             _enemyCommander?.Dispose();
             _enemyCommander = null;
             _plannedEnemyFormation = null;
         }
-
         /// <summary>GM只读快照：列出当前状态、模拟状态时长及最近切换原因，不提供任意强制改状态。</summary>
         public string EnemyAIStatus()
         {

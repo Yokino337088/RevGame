@@ -34,15 +34,18 @@ namespace RevGame.Editor
             internal void Add(string path, string owner)
             {
                 Dependencies.Add(path);
+
                 if (!Reasons.TryGetValue(path, out List<string> owners))
                 {
                     owners = new List<string>();
                     Reasons.Add(path, owners);
                 }
-                if (!owners.Contains(owner)) { owners.Add(owner); }
+                if (!owners.Contains(owner))
+                {
+                    owners.Add(owner);
+                }
             }
         }
-
         /// <summary>
         /// 获取Unity真实序列化依赖，并补齐代码按名字取Sprite的情况。
         /// 不能从Atlases/Art自身出发，否则每张闲置图片都会因为图集或自己引用自己而被误判为正在使用。
@@ -58,7 +61,10 @@ namespace RevGame.Editor
                     && !p.EndsWith(".cs", StringComparison.Ordinal)));
             foreach (string root in snapshot.Roots.Distinct().OrderBy(p => p, StringComparer.Ordinal))
             {
-                foreach (string dependency in AssetDatabase.GetDependencies(root, true)) { snapshot.Add(dependency, root); }
+                foreach (string dependency in AssetDatabase.GetDependencies(root, true))
+                {
+                    snapshot.Add(dependency, root);
+                }
             }
             // 当前唯一的GetSprite业务入口是第一章背景：名字写在代码和场景参数中，场景不直接引用Sprite。
             // 同时扫描其余业务源码的图片名/逻辑路径字面量，保护直接按名称动态加载的图片。
@@ -67,13 +73,18 @@ namespace RevGame.Editor
             foreach (string source in Directory.GetFiles("Assets/GameScripts", "*.cs", SearchOption.AllDirectories))
             {
                 string path = source.Replace('\\', '/');
-                if (path.Contains("/Generated/")) { continue; }
+
+                if (path.Contains("/Generated/"))
+                {
+                    continue;
+                }
                 string code = File.ReadAllText(path);
                 foreach (string texture in textures)
                 {
                     string name = Path.GetFileNameWithoutExtension(texture);
                     string logical = texture.Substring(ResourceRoot.Length + 1);
                     logical = logical.Substring(0, logical.Length - Path.GetExtension(logical).Length);
+
                     if (code.Contains("\"" + name + "\"") || code.Contains("\"" + logical + "\""))
                     {
                         snapshot.Add(texture, "代码动态加载：" + path);
@@ -82,7 +93,6 @@ namespace RevGame.Editor
             }
             return snapshot;
         }
-
         /// <summary>只读审计结果，可经RevMCP取得。sourceBytes是PNG等源文件大小，不冒充压缩AB的实际节省。</summary>
         [Serializable]
         public sealed class AuditResult
@@ -91,7 +101,6 @@ namespace RevGame.Editor
             public long excludedSourceBytes;
             public AssetRow[] assets;
         }
-
         /// <summary>一行资源的去留及证据；markedBundle为空表示没有显式或继承的AB标记。</summary>
         [Serializable]
         public sealed class AssetRow
@@ -101,7 +110,6 @@ namespace RevGame.Editor
             public long sourceBytes;
             public string[] referencedBy;
         }
-
         /// <summary>输出逐资源清单，不以“设置成功”代替引用核查；未引用图集不会反过来保活其中的图片。</summary>
         public static AuditResult Audit()
         {
@@ -112,9 +120,14 @@ namespace RevGame.Editor
             foreach (string path in art)
             {
                 snapshot.Reasons.TryGetValue(path, out List<string> owners);
-                rows.Add(new AssetRow { path = path, required = snapshot.Dependencies.Contains(path),
-                    markedBundle = AssetDatabase.GetImplicitAssetBundleName(path), sourceBytes = new FileInfo(path).Length,
-                    referencedBy = owners == null ? Array.Empty<string>() : owners.ToArray() });
+                rows.Add(new AssetRow
+                {
+                    path = path,
+                    required = snapshot.Dependencies.Contains(path),
+                    markedBundle = AssetDatabase.GetImplicitAssetBundleName(path),
+                    sourceBytes = new FileInfo(path).Length,
+                    referencedBy = owners == null ? Array.Empty<string>() : owners.ToArray()
+                });
             }
             int packed = 0;
             string[] atlases = AssetDatabase.FindAssets("t:SpriteAtlas", new[] { AtlasRoot }).Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p, StringComparer.Ordinal).ToArray();
@@ -123,16 +136,33 @@ namespace RevGame.Editor
                 SpriteAtlas atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
                 string[] used = atlas.GetPackables().Select(AssetDatabase.GetAssetPath).Where(snapshot.Dependencies.Contains).ToArray();
                 string bundle = AssetDatabase.GetImplicitAssetBundleName(path);
-                if (!string.IsNullOrEmpty(bundle)) { packed++; }
-                rows.Add(new AssetRow { path = path, required = used.Length > 0 || snapshot.Dependencies.Contains(path),
-                    markedBundle = bundle, sourceBytes = new FileInfo(path).Length, referencedBy = used });
+
+                if (!string.IsNullOrEmpty(bundle))
+                {
+                    packed++;
+                }
+                rows.Add(new AssetRow
+                {
+                    path = path,
+                    required = used.Length > 0 || snapshot.Dependencies.Contains(path),
+                    markedBundle = bundle,
+                    sourceBytes = new FileInfo(path).Length,
+                    referencedBy = used
+                });
             }
             int usedArt = art.Count(snapshot.Dependencies.Contains);
-            return new AuditResult { roots = snapshot.Roots.Count, artTotal = art.Length, artUsed = usedArt, artExcluded = art.Length - usedArt,
-                atlasTotal = atlases.Length, atlasPacked = packed, assets = rows.ToArray(),
-                excludedSourceBytes = rows.Where(r => r.path.StartsWith(ArtRoot + "/", StringComparison.Ordinal) && !r.required).Sum(r => r.sourceBytes) };
+            return new AuditResult
+            {
+                roots = snapshot.Roots.Count,
+                artTotal = art.Length,
+                artUsed = usedArt,
+                artExcluded = art.Length - usedArt,
+                atlasTotal = atlases.Length,
+                atlasPacked = packed,
+                assets = rows.ToArray(),
+                excludedSourceBytes = rows.Where(r => r.path.StartsWith(ArtRoot + "/", StringComparison.Ordinal) && !r.required).Sum(r => r.sourceBytes)
+            };
         }
-
         /// <summary>
         /// 打包前检查真实标记和图集闭包。禁止只关闭框架漏标检查来消除警告：该进包的图片仍必须有标记，
         /// 不该进包的图片既不能有标记，也不能藏在已打包图集的packables中。
@@ -143,10 +173,15 @@ namespace RevGame.Editor
             foreach (AssetRow row in report.assets)
             {
                 bool marked = !string.IsNullOrEmpty(row.markedBundle);
-                if (row.required != marked) { throw new InvalidOperationException("资源引用与AB标记不一致：" + row.path + "，需要=" + row.required + "，包=" + row.markedBundle); }
+
+                if (row.required != marked)
+                {
+                    throw new InvalidOperationException("资源引用与AB标记不一致：" + row.path + "，需要=" + row.required + "，包=" + row.markedBundle);
+                }
                 if (marked && row.path.EndsWith(".spriteatlasv2", StringComparison.Ordinal))
                 {
                     SpriteAtlas atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(row.path);
+
                     if (atlas.GetPackables().Length != row.referencedBy.Length)
                     {
                         throw new InvalidOperationException("已打包图集仍包含未引用源图：" + row.path);

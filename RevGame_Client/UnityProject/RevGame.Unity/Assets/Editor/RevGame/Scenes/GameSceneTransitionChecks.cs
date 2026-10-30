@@ -28,7 +28,10 @@ namespace RevGame.Editor
 
         public static async void Begin(bool testFailures = true)
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _assertions = 0;
             Report.Clear();
@@ -67,6 +70,7 @@ namespace RevGame.Editor
                     IBattleService battle = RevServices.GetRequired<IBattleService>();
                     Require(battle.PreparationElapsed < 0.3f && !battle.PreparationGranted, "淡出结束后才启动准备三秒");
                     CheckImages("战斗" + cycle);
+
                     if (cycle == 0)
                     {
                         ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Battle.png");
@@ -95,6 +99,7 @@ namespace RevGame.Editor
                         && RevResManager.GetRefCount(RevResPath.Effects_Combat, "BattleEffect") == 0,
                         "退出无棋盘/棋子/反馈冷加载请求引用残留");
                     string[] bundles = AssetBundle.GetAllLoadedAssetBundles().Select(b => b.name).ToArray();
+
                     if (RevResBootstrap.UseABInEditor)
                     {
                         Require(!bundles.Contains("battle_units") && !bundles.Contains("battle_feedback") && !bundles.Contains("battle_board"), "战斗专用AB已实际卸载");
@@ -102,7 +107,6 @@ namespace RevGame.Editor
                     Report.Add("返回" + cycle + "已加载包" + bundles.Length + "：" + string.Join(",", bundles));
                     CheckImages("返回首页" + cycle);
                 }
-
                 if (testFailures)
                 {
                     foreach (string stage in new[] { "before-scene", "after-scene" })
@@ -119,6 +123,7 @@ namespace RevGame.Editor
                         CheckImages("故障恢复" + stage);
                     }
                 }
+
                 LastResult = "通过：" + mode + "，" + _assertions + "条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时"
                     + (testFailures ? "、2次失败回退" : "") + "\n" + string.Join("\n", Report);
             }
@@ -131,14 +136,16 @@ namespace RevGame.Editor
             {
                 if (Application.isPlaying && flow != null)
                 {
-                    try { await ReturnHomeAsync(flow); }
+                    try
+                    {
+                        await ReturnHomeAsync(flow);
+                    }
                     catch (Exception error) { LastResult += "\n收尾失败：" + error.Message; }
                 }
                 score?.Dispose();
             }
             File.WriteAllText("Temp/SceneTransitionChecks-" + mode + ".txt", LastResult);
         }
-
         /// <summary>按帧观察遮挡完整性；MCP/Editor本身会影响帧耗时，这里只证明跨帧装配，不冒充手机性能数据。</summary>
         private static async RevTask ObserveTransitionAsync(GameFlow flow, bool entering, string mode, int cycle)
         {
@@ -156,16 +163,25 @@ namespace RevGame.Editor
                 previous = flow.LoadProgress;
                 LoadingPanel cover = RevUI.Get<LoadingPanel>();
                 Require(cover != null, "全过程保留加载面板");
+
                 if (entering && flow.Screen == GameScreen.Battle)
                 {
                     Require(RevServices.GetRequired<IBattleService>().PreparationElapsed < 0.001f, "遮挡期间准备时间冻结");
                     BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
+
                     if (board != null)
                     {
-                        if (board.CellCount > 0 && board.CellCount < 81) { partialBoardFrames++; }
+                        if (board.CellCount > 0 && board.CellCount < 81)
+                        {
+                            partialBoardFrames++;
+                        }
                         maximumCellDelta = Mathf.Max(maximumCellDelta, board.CellCount - previousCells);
                         previousCells = board.CellCount;
-                        if (board.CellCount < 81) { Require(cover.GetComponent<CanvasGroup>().alpha >= 0.99f, "半成品棋盘绝不透出"); }
+
+                        if (board.CellCount < 81)
+                        {
+                            Require(cover.GetComponent<CanvasGroup>().alpha >= 0.99f, "半成品棋盘绝不透出");
+                        }
                     }
                 }
                 if (!captured && entering && flow.LoadProgress > 0.66f && cycle == 0)
@@ -177,13 +193,13 @@ namespace RevGame.Editor
                 await RevTask.Yield();
             }
             Require(!RevUI.IsOpen<LoadingPanel>(), "成功后过场面板已关闭");
+
             if (entering)
             {
                 Require(partialBoardFrames > 1 && maximumCellDelta <= 4, "81格实际分帧创建，每帧最多4格");
             }
             Report.Add((entering ? "进入" : "返回") + cycle + "：观察" + frames + "帧，分帧棋盘" + partialBoardFrames + "帧，最大每帧新增格" + maximumCellDelta);
         }
-
         private static void CheckImages(string step)
         {
             Image[] images = UnityEngine.Object.FindObjectsOfType<Image>().Where(i => i.sprite != null).ToArray();
@@ -192,11 +208,14 @@ namespace RevGame.Editor
             {
                 Require(image.sprite.texture != null && image.mainTexture != Texture2D.whiteTexture, step + "/" + image.name + "有实际图集像素");
                 Require(image.materialForRendering.shader.isSupported && image.canvasRenderer.materialCount > 0, step + "/" + image.name + "材质已提交且Shader支持");
-                if (RevResBootstrap.UseABInEditor) { Require(image.sprite.name == "UISprite" || image.sprite.packed, step + "/" + image.name + "真实AB图集绑定"); }
+
+                if (RevResBootstrap.UseABInEditor)
+                {
+                    Require(image.sprite.name == "UISprite" || image.sprite.packed, step + "/" + image.name + "真实AB图集绑定");
+                }
             }
             Report.Add(step + "：" + images.Length + "个可见Image材质/纹理通过");
         }
-
         /// <summary>注册/注销用同一实际账本，验证幂等与无遗漏；保留其它模块命令，不能Clear全局注册表。</summary>
         private static void VerifyGmRegistry()
         {
@@ -216,20 +235,27 @@ namespace RevGame.Editor
                 Require(RevGM.Commands.Any(c => c.Name == "RevGame/" + name), "玩家业务可由AI调用：" + name);
             }
         }
-
         /// <summary>既有Play夹具共用它，不再假设EnterBattle返回true就能立即取得BattleLogic。</summary>
         public static async RevTask WaitForFlowAsync(GameFlow flow)
         {
             await WaitUntilAsync(() => !flow.IsTransitioning && flow.Screen != GameScreen.Exit, "等待完整场景交付");
-            if (!string.IsNullOrEmpty(flow.LastError)) { throw new InvalidOperationException(flow.LastError); }
+
+            if (!string.IsNullOrEmpty(flow.LastError))
+            {
+                throw new InvalidOperationException(flow.LastError);
+            }
         }
 
         public static async RevTask ReturnHomeAsync(GameFlow flow)
         {
             await WaitForFlowAsync(flow);
+
             if (flow.Screen != GameScreen.Home)
             {
-                if (!flow.ReturnHome()) { throw new InvalidOperationException(flow.LastError); }
+                if (!flow.ReturnHome())
+                {
+                    throw new InvalidOperationException(flow.LastError);
+                }
                 await WaitForFlowAsync(flow);
             }
         }
@@ -239,16 +265,22 @@ namespace RevGame.Editor
             float deadline = Time.realtimeSinceStartup + 60f;
             while (!predicate())
             {
-                if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException(reason); }
+                if (Time.realtimeSinceStartup > deadline)
+                {
+                    throw new TimeoutException(reason);
+                }
                 await RevTask.Yield();
             }
             await RevTask.Yield(); // 让成功那帧的Canvas提交完成，检查对象实际用于渲染而不是仅刚构造。
         }
-
         private static void Require(bool condition, string message)
         {
             _assertions++;
-            if (!condition) { throw new InvalidOperationException(message); }
+
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
         }
     }
 }

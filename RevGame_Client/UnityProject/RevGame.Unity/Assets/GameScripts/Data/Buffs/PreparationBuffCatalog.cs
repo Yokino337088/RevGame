@@ -28,27 +28,49 @@ namespace RevGame.Data
         Liberties, // 气脉畅通：增加本轮气数。
         ArrowVolley // 万箭齐发：仅己方弓箭手攻击频率翻倍，包括领取后入场的弓箭手。
     }
-
     /// <summary>不可变的增益定义；界面用同一份说明，避免提示与实际效果各说各的。</summary>
     public sealed class PreparationBuffDef
     {
         /// <summary>用于选择真正执行哪一种业务规则。</summary>
-        public PreparationBuffKind Kind { get; }
+        public PreparationBuffKind Kind
+        {
+            get;
+        }
         /// <summary>横幅的短标题，不参与规则判断。</summary>
-        public string Title { get; }
+        public string Title
+        {
+            get;
+        }
         /// <summary>告诉玩家这一种增益具体改变什么；由 Excel 模板和同一行数值渲染，天然与实际效果一致。</summary>
-        public string Detail { get; }
+        public string Detail
+        {
+            get;
+        }
         /// <summary>主效果数值（比例用小数，次数/气数为整数值）；Excel 的 Amount。</summary>
-        public float Amount { get; }
+        public float Amount
+        {
+            get;
+        }
         /// <summary>副效果数值；Excel 的 Extra。</summary>
-        public float Extra { get; }
+        public float Extra
+        {
+            get;
+        }
         /// <summary>触发阈值；Excel 的 Threshold。</summary>
-        public float Threshold { get; }
+        public float Threshold
+        {
+            get;
+        }
         /// <summary>援军棋子外形（仅 Elite 有意义）。</summary>
-        public PieceKind Piece { get; }
+        public PieceKind Piece
+        {
+            get;
+        }
         /// <summary>援军星级（仅 Elite 有意义）。</summary>
-        public int Star { get; }
-
+        public int Star
+        {
+            get;
+        }
         public PreparationBuffDef(PreparationBuffKind kind, string title, string detail, float amount, float extra, float threshold, PieceKind piece, int star)
         {
             Kind = kind;
@@ -61,7 +83,6 @@ namespace RevGame.Data
             Star = star;
         }
     }
-
     public static class PreparationBuffCatalog
     {
         /// <summary>

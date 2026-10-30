@@ -19,30 +19,50 @@ namespace RevGame.Editor
         {
             EditorApplication.update += CheckPreviewWindows;
         }
-
         private static void CheckPreviewWindows()
         {
             // 每半秒检查一次；编译和进出 Play 时不碰窗口，避免在域重载的交接过程操作旧对象。
-            if (!EditorApplication.isPlaying || EditorApplication.isCompiling || EditorApplication.isUpdating) { return; }
-            if (EditorApplication.timeSinceStartup < _nextCheck) { return; }
+            if (!EditorApplication.isPlaying || EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                return;
+            }
+            if (EditorApplication.timeSinceStartup < _nextCheck)
+            {
+                return;
+            }
             _nextCheck = EditorApplication.timeSinceStartup + 0.5d;
             RepairDuplicatePreview();
         }
-
         /// <summary>只在本项目的 2022.3 游戏运行时去掉重复预览，Unity 编辑器和当前预览始终保留。</summary>
         public static string RepairDuplicatePreview()
         {
-            if (!Application.unityVersion.StartsWith("2022.3.") || !Application.isPlaying) { return "当前版本/状态不需要保护"; }
-            if (Object.FindObjectOfType<Bootstrap.GameBootstrap>() == null) { return "当前不是 RevGame 场景"; }
+            if (!Application.unityVersion.StartsWith("2022.3.") || !Application.isPlaying)
+            {
+                return "当前版本/状态不需要保护";
+            }
+            if (Object.FindObjectOfType<Bootstrap.GameBootstrap>() == null)
+            {
+                return "当前不是 RevGame 场景";
+            }
             EditorWindow game = null;
             EditorWindow simulator = null;
             foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
             {
                 // 使用类型全名，而不是可能被本地化的标签文字；不访问 Unity 私有渲染字段。
-                if (window.GetType().FullName == "UnityEditor.GameView") { game = window; }
-                if (window.GetType().FullName == "UnityEditor.DeviceSimulation.SimulatorWindow") { simulator = window; }
+                if (window.GetType().FullName == "UnityEditor.GameView")
+                {
+                    game = window;
+                }
+                if (window.GetType().FullName == "UnityEditor.DeviceSimulation.SimulatorWindow")
+                {
+                    simulator = window;
+                }
             }
-            if (game == null || simulator == null) { return "只有一个游戏预览，无需修复"; }
+
+            if (game == null || simulator == null)
+            {
+                return "只有一个游戏预览，无需修复";
+            }
             // 人工正看 Game 时保留 Game；其它情况下优先保留 Simulator，继续使用用户选定的手机型号。
             EditorWindow keep = EditorWindow.focusedWindow == game ? game : simulator;
             EditorWindow duplicate = keep == game ? simulator : game;

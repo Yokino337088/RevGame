@@ -24,20 +24,29 @@ namespace RevGame.Editor
         // 当前检查步骤，仅作诊断。不是模型阶段，测试工具不能通过改这个字符串强行使业务通过。
         public static string Stage { get; private set; } = "未开始";
         // 只读结果/阶段/已完成断言数。断言数随渲染帧数可能略变，不代表这么多个独立玩法场景。
-        public static string State() { return JsonUtility.ToJson(new Status { result=LastResult,stage=Stage,checks=_checks }); }
-        [Serializable] private sealed class Status { public string result,stage;public int checks; }
+        public static string State()
+        {
+            return JsonUtility.ToJson(new Status { result = LastResult, stage = Stage, checks = _checks });
+        }
+        [Serializable]
+        private sealed class Status
+        {
+            public string result, stage; public int checks;
+        }
         // 阶段记录只是诊断摘要，不在性能采样窗口运行，不能把生成状态文本算成玩法成本。
         // 阶段文本在性能采样窗口外写忽略Temp目录，帮助定位超时；不是每帧生产日志。
         private static void Mark(string stage)
         {
-            Stage=stage;
-            System.IO.File.WriteAllText("Temp/ReadabilityVerification/Stage.txt",stage);
+            Stage = stage;
+            System.IO.File.WriteAllText("Temp/ReadabilityVerification/Stage.txt", stage);
         }
-
         /// <summary>必须在Play运行；finally返回大厅，让测试冻结的动画与时钟随原战斗域一起回收。</summary>
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _checks = 0;
             string outcome = "失败：验收未完成";
@@ -47,10 +56,14 @@ namespace RevGame.Editor
             try
             {
                 var service = (BattleService)RevServices.GetRequired<IBattleService>();
+
                 // 隔离启动本身拥有积分预览租约；这里仅在尚未隔离时取得自己的租约，finally只还自己的。
                 // 隔离启动可能已有ScorePreview租约，此处只在没有保护时取得自己的。
                 // finally只Dispose本方法创建的租约，不能把启动流程的隔离开关提前解除。
-                if (!service.IsScorePreviewActive) { scorePreview = service.BeginScorePreview(); }
+                if (!service.IsScorePreviewActive)
+                {
+                    scorePreview = service.BeginScorePreview();
+                }
                 Mark("回首页");
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 Mark("进入战斗");
@@ -59,8 +72,14 @@ namespace RevGame.Editor
                 float storyDeadline = Time.realtimeSinceStartup + 45f;
                 while (flow.IsGameplayBlocked)
                 {
-                    if (Time.realtimeSinceStartup > storyDeadline) { throw new TimeoutException("反馈检查等待剧情/过场超时"); }
-                    if (flow.IsStoryPlaying && !flow.IsTransitioning) { flow.AdvanceStory(); }
+                    if (Time.realtimeSinceStartup > storyDeadline)
+                    {
+                        throw new TimeoutException("反馈检查等待剧情/过场超时");
+                    }
+                    if (flow.IsStoryPlaying && !flow.IsTransitioning)
+                    {
+                        flow.AdvanceStory();
+                    }
                     await RevTask.Yield();
                 }
                 await RevTask.Delay(650);
@@ -85,7 +104,11 @@ namespace RevGame.Editor
                     for (int x = 0; x < 9 && !empty.IsInside(9); x++)
                     {
                         var candidate = new BoardPos(x, y);
-                        if (candidate != old && battle.Board.GetPiece(candidate) == null && battle.CanPlaySelectedAt(candidate)) { empty = candidate; }
+
+                        if (candidate != old && battle.Board.GetPiece(candidate) == null && battle.CanPlaySelectedAt(candidate))
+                        {
+                            empty = candidate;
+                        }
                     }
                 }
                 Require(battle.CanPlaySelectedAt(empty), "实际棋盘点击选中并高亮战斗换位");
@@ -111,7 +134,10 @@ namespace RevGame.Editor
                 Require(board.PendingDamageTextCount == 1, "同目标120次伤害仅保留一条待播数字");
                 IDictionary pending = GetField<IDictionary>(board, "_pendingDamage");
                 int sum = 0;
-                foreach (object item in pending.Values) { sum += GetField<int>(item, "Damage"); }
+                foreach (object item in pending.Values)
+                {
+                    sum += GetField<int>(item, "Damage");
+                }
                 Require(sum == 360 && target.Hp == hp, "合计显示360，表现层不再额外扣血");
                 Require(board.PendingProjectileCount > 1 && board.PendingProjectileCount <= 70, "同帧齐射保留多发真实弹道，同时限制待播长度");
                 await RevTask.Delay(60);
@@ -122,6 +148,7 @@ namespace RevGame.Editor
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                 {
                     SpriteRenderer sprite = GetField<SpriteRenderer>(effect, "spriteRenderer");
+
                     if (sprite.enabled && sprite.sprite != null)
                     {
                         // bounds是旋转后的轴对齐包围盒；既检查确实放大，也防止又变成横贯棋盘的线条。
@@ -138,7 +165,11 @@ namespace RevGame.Editor
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                 {
                     string displayed = GameTextConfig.DisplayDamage(360).ToString();
-                    if (effect.IsFloatingText && !effect.IsAttackText && GetField<TextMesh>(effect, "damageText").text.Contains(displayed)) { shown = true; }
+
+                    if (effect.IsFloatingText && !effect.IsAttackText && GetField<TextMesh>(effect, "damageText").text.Contains(displayed))
+                    {
+                        shown = true;
+                    }
                 }
                 Require(shown, "60ms内实际显示同帧合计360，不再等0.22秒");
 
@@ -159,17 +190,32 @@ namespace RevGame.Editor
                 }
                 Require(peak >= 15 && peak <= 20 && projectilePeak > 6, "密集输入实际显示15~20条文字，齐射仍保留硬上限");
                 List<BattleEffectView> texts = new List<BattleEffectView>();
-                foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { if (effect.IsFloatingText) { texts.Add(effect); } }
+                foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
+                {
+                    if (effect.IsFloatingText)
+                    {
+                        texts.Add(effect);
+                    }
+                }
                 texts.Sort((a, b) => a.TextOrder.CompareTo(b.TextOrder));
                 Require(texts.Count >= 2, "存在可检查遮挡的两条活跃文字");
                 BattleEffectView lower = texts[0];
                 BattleEffectView upper = texts[texts.Count - 1];
-                foreach (BattleEffectView effect in texts) { GetField<Tween>(effect, "_animation").Pause(); }
+                foreach (BattleEffectView effect in texts)
+                {
+                    GetField<Tween>(effect, "_animation").Pause();
+                }
                 // 先检查自然避让后的实际包围盒，再人为制造不可避让的相交，验证半透明兜底真正落屏。
                 int overlaps = 0;
                 for (int i = 0; i < texts.Count; i++)
                 {
-                    for (int j = i + 1; j < texts.Count; j++) { if (texts[i].TextScreenRect.Overlaps(texts[j].TextScreenRect)) { overlaps++; } }
+                    for (int j = i + 1; j < texts.Count; j++)
+                    {
+                        if (texts[i].TextScreenRect.Overlaps(texts[j].TextScreenRect))
+                        {
+                            overlaps++;
+                        }
+                    }
                 }
                 Require(overlaps < texts.Count, "同一命中点的数字已分散到不同可见位置");
                 System.IO.Directory.CreateDirectory("Temp/ReadabilityVerification");
@@ -202,22 +248,44 @@ namespace RevGame.Editor
                     await RevTask.Delay(25);
                     densePeak = Math.Max(densePeak, board.ActiveProjectileCount);
                     Require(board.ActiveProjectileCount <= 35 && board.PendingProjectileCount <= 70 && board.ActiveFloatingTextCount <= 20, "持续齐射的活动、待播、文字三项硬预算");
-                    if (frame < 40) { continue; }
+
+                    if (frame < 40)
+                    {
+                        continue;
+                    }
                     foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                     {
                         SpriteRenderer body = GetField<SpriteRenderer>(effect, "spriteRenderer");
-                        if (!body.enabled) { continue; }
+
+                        if (!body.enabled)
+                        {
+                            continue;
+                        }
                         seen.Add(effect.ProjectileKind);
                         Require(body.sprite != null && body.sprite.name.IndexOf("UI_", StringComparison.Ordinal) < 0, "弹头使用下载的职业原画");
                         Require(body.sharedMaterial.shader.name == "RevGame/Combat/RangedProjectile" && body.sharedMaterial.shader.isSupported, "职业Shader已真正绑定并支持当前GPU");
-                        if (RevResBootstrap.UseABInEditor) { Require(body.sprite.packed, "真实AB中的职业图片已绑定图集"); }
+
+                        if (RevResBootstrap.UseABInEditor)
+                        {
+                            Require(body.sprite.packed, "真实AB中的职业图片已绑定图集");
+                        }
                         Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(body.sprite);
                         Require(body.sharedMaterial.GetVector("_SpriteUV") == uv, "共享职业材质UV与真实图集绑定相同");
                         Require(!body.HasPropertyBlock(), "职业弹道使用共享材质，未留逐弹道参数块");
-                        if (materialByKind.TryGetValue(effect.ProjectileKind, out Material shared)) { Require(shared == body.sharedMaterial, "同职业弹道共用材质，没有隐式克隆"); }
-                        else { materialByKind.Add(effect.ProjectileKind, body.sharedMaterial); }
+
+                        if (materialByKind.TryGetValue(effect.ProjectileKind, out Material shared))
+                        {
+                            Require(shared == body.sharedMaterial, "同职业弹道共用材质，没有隐式克隆");
+                        }
+                        else
+                        {
+                            materialByKind.Add(effect.ProjectileKind, body.sharedMaterial);
+                        }
                     }
-                    if (frame % 2 == 0) { ScreenCapture.CaptureScreenshot("Temp/ReadabilityVerification/Frame-" + ((frame - 40) / 2).ToString("00") + ".png"); }
+                    if (frame % 2 == 0)
+                    {
+                        ScreenCapture.CaptureScreenshot("Temp/ReadabilityVerification/Frame-" + ((frame - 40) / 2).ToString("00") + ".png");
+                    }
                 }
                 Require(densePeak >= 30 && densePeak <= 35, "持续实飞峰值达到30至35，不能只提高常量；实际=" + densePeak);
                 Require(seen.Count == 5 && materialByKind.Count == 5, "五职业箭矢、弩矢、水球、熔岩、圣光均实际出现");
@@ -256,7 +324,14 @@ namespace RevGame.Editor
                 await RevTask.Delay(150);
                 VerifyHud(battle);
                 Pieces.Piece king = null;
-                foreach (var enemy in battle.EnemyPieces) { if (enemy.IsKing) { king = enemy; break; } }
+                foreach (var enemy in battle.EnemyPieces)
+                {
+                    if (enemy.IsKing)
+                    {
+                        king = enemy;
+                        break;
+                    }
+                }
                 Require(king != null, "主将HUD存在真实数据源");
                 king.TakeDamage(3);
                 VerifyHud(battle);
@@ -270,25 +345,27 @@ namespace RevGame.Editor
             finally
             {
                 Mark("回首页收尾");
-                try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
+                try
+                {
+                    await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                }
                 finally { scorePreview?.Dispose(); }
                 LastResult = outcome;
                 Stage = "完成";
                 System.IO.File.WriteAllText("Temp/ReadabilityVerification/Result.txt", LastResult);
             }
         }
-
         private static T GetField<T>(object target, string name)
         {
             return (T)target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(target);
         }
-
         /// <summary>读取真实面板，检查静态缓存命中与阶段/回合/主将掉血后的失效；不伪造UI文本。</summary>
         // 对真实面板Refresh后核对真实服务阶段、章回与HP；再刷相同输入检查缓存没有造成文案消失。
         // 直接改UI成预期文本只会制造假通过，故这里只读已经落屏结果。
         private static void VerifyHud(BattleService battle)
         {
             var camera = Camera.main;
+
             if (camera != null)
             {
                 // 投影实现属于运行时程序集且保持internal；开发验收只反射固定类型，不扩大生产API。
@@ -312,15 +389,20 @@ namespace RevGame.Editor
             Require(GetField<Text>(hud, "_countText").text == counts, "相同输入重复刷新保持文字");
             foreach (var enemy in battle.EnemyPieces)
             {
-                if (!enemy.IsKing) { continue; }
+                if (!enemy.IsKing)
+                {
+                    continue;
+                }
                 Text text = GetField<Text>(hud, "_bossText");
                 Require(text.gameObject.activeSelf && text.text.Contains(enemy.Hp + " / " + enemy.MaxHp), "主将血量变化使HUD缓存失效");
             }
         }
-
         private static void Require(bool success, string reason)
         {
-            if (!success) { throw new InvalidOperationException(reason); }
+            if (!success)
+            {
+                throw new InvalidOperationException(reason);
+            }
             _checks++;
         }
     }

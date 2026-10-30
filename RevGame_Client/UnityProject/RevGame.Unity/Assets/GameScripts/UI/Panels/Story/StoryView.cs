@@ -18,22 +18,41 @@ namespace RevGame.UI
         private Tween _typing;
         private Tween _guideAnimation;
         /// <summary>帧序号仅用于验证动画确实切帧；表现时长不属于战斗数值。</summary>
-        public int GuideFrame { get; private set; }
+        public int GuideFrame
+        {
+            get; private set;
+        }
         private RevSoundHandle _sound;
         private float _nextSound;
         private int _version = -1;
         private int _index = -1;
-        public int VisibleCharacters { get; private set; }
+        public int VisibleCharacters
+        {
+            get; private set;
+        }
         /// <summary>可观察的播放证据：成功获得声音句柄才算发声；用于区分“调用了Play”和“确实开始播放”。</summary>
-        public bool SoundStarted { get; private set; }
-        public bool IsTyping { get { return _typing != null && _typing.IsActive(); } }
-
-        protected override void OnBindView() { _dialogue.supportRichText = false; }
-
+        public bool SoundStarted
+        {
+            get; private set;
+        }
+        public bool IsTyping
+        {
+            get
+            {
+                return _typing != null && _typing.IsActive();
+            }
+        }
+        protected override void OnBindView()
+        {
+            _dialogue.supportRichText = false;
+        }
         /// <summary>按Unicode文字元素切分，避免半个emoji/代理字符。DOTween用非缩放时间，暂停战斗仍可阅读。</summary>
         public void Show(StoryPanel.Frame frame)
         {
-            if (_version == frame.Version && _index == frame.Index) { return; }
+            if (_version == frame.Version && _index == frame.Index)
+            {
+                return;
+            }
             StopTyping();
             _version = frame.Version;
             _index = frame.Index;
@@ -57,10 +76,14 @@ namespace RevGame.UI
             _nextSound = 0;
             _typing = DOTween.To(() => VisibleCharacters, count =>
             {
-                if (count == VisibleCharacters) { return; }
+                if (count == VisibleCharacters)
+                {
+                    return;
+                }
                 VisibleCharacters = count;
                 int end = count >= ends.Length ? line.Text.Length : ends[count];
                 _dialogue.text = line.Text.Substring(0, end);
+
                 // 轻落子声作为棋旅打字节拍；限制最短间隔，逐字播放不会堆出几十条重叠音源。
                 if (Time.unscaledTime >= _nextSound)
                 {
@@ -72,11 +95,29 @@ namespace RevGame.UI
             }, ends.Length, ends.Length / frame.Book.CharactersPerSecond).SetEase(Ease.Linear).SetUpdate(true)
                 .OnComplete(() => _typing = null);
         }
-
         [RevButtonClick("btnNext")]
-        private void OnNext() { NotifyHost(); }
-        protected override void OnPartClose() { StopTyping(); _version = -1; _index = -1; }
-        protected override void OnDestroy() { StopTyping(); base.OnDestroy(); }
-        private void StopTyping() { _guideAnimation?.Kill(false); _guideAnimation = null; _typing?.Kill(false); _typing = null; _sound.Stop(); }
+        private void OnNext()
+        {
+            NotifyHost();
+        }
+        protected override void OnPartClose()
+        {
+            StopTyping();
+            _version = -1;
+            _index = -1;
+        }
+        protected override void OnDestroy()
+        {
+            StopTyping();
+            base.OnDestroy();
+        }
+        private void StopTyping()
+        {
+            _guideAnimation?.Kill(false);
+            _guideAnimation = null;
+            _typing?.Kill(false);
+            _typing = null;
+            _sound.Stop();
+        }
     }
 }

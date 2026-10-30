@@ -30,8 +30,10 @@ namespace RevGame.Battle
     /// 指挥：Prepare（提交已规划好的布阵）/ Deploy（按冷却战术增援）/ Stopped（停援或战斗结束）。
     /// 用同一个枚举是为了共用一台泛型机器；混用状态会在 Tick 时被明确拒绝，而不是悄悄跑错。
     /// </summary>
-    public enum EnemyAIState { Prepare, Hold, Attack, Advance, Locked, Dead, Deploy, Stopped }
-
+    public enum EnemyAIState
+    {
+        Prepare, Hold, Attack, Advance, Locked, Dead, Deploy, Stopped
+    }
     /// <summary>
     /// 一台敌方AI状态机的宿主包装。
     ///
@@ -82,6 +84,7 @@ namespace RevGame.Battle
             _commander = commander;
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
             _machine = new RevHeavyFSM<EnemyAIState, IEnemyAIOwner>(_owner);
+
             // 显式注册而非反射：IL2CPP 能看到所有状态类型，也没有 Activator 的隐藏开销。
             // 只注册本角色需要的状态，误切到另一半会在 ChangeState 时直接失败，而不是跑进空状态。
             if (commander)
@@ -101,7 +104,6 @@ namespace RevGame.Battle
             // 初始状态：指挥先停着等布阵；棋子先等待，第一步 Update 会自行感知成 Attack/Hold。
             _machine.ChangeState(commander ? EnemyAIState.Stopped : EnemyAIState.Hold, "创建AI");
         }
-
         /// <summary>
         /// 正常驱动：把本小步的模拟秒数交给当前状态。
         /// 感知、切换、执行都在 EnemyStates.cs 里完成；这里只校验时间和释放状态，
@@ -120,7 +122,6 @@ namespace RevGame.Battle
             }
             _machine.UpdateState(seconds);
         }
-
         /// <summary>
         /// 强制指定状态后再驱动一次，仅用于“事实已确定”的场合（死亡、提交布阵）。
         /// 与 Tick(float) 的区别：不经过状态自身的感知，调用方要为这个判断负责。
@@ -137,6 +138,7 @@ namespace RevGame.Battle
                 throw new ArgumentOutOfRangeException(nameof(seconds));
             }
             bool teamState = next == EnemyAIState.Prepare || next == EnemyAIState.Deploy;
+
             if ((_commander && !teamState && next != EnemyAIState.Stopped) || (!_commander && teamState))
             {
                 throw new InvalidOperationException("棋子AI与指挥AI的状态不能混用：" + next);
@@ -151,7 +153,6 @@ namespace RevGame.Battle
             }
             _machine.UpdateState(seconds);
         }
-
         /// <summary>
         /// 释放状态机与宿主引用。可重复调用（第二次直接返回）。
         /// 为什么用 Dispose 而不是“把机器禁用”：禁用只是不再驱动，状态对象和引用还在，

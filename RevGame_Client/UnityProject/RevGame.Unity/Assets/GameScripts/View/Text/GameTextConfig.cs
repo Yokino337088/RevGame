@@ -26,10 +26,19 @@ namespace RevGame.View
             // 乘表现倍率后的显示值，单位为显示伤害点；long容纳int最大值乘十，避免展示溢出为负数。
             internal long Number;
             // 字典比较键时同时比较行与数字；两者不同就不能复用上一次格式化字符串。
-            public bool Equals(DamageTextKey other) { return Row == other.Row && Number == other.Number; }
-            public override bool Equals(object other) { return other is DamageTextKey key && Equals(key); }
+            public bool Equals(DamageTextKey other)
+            {
+                return Row == other.Row && Number == other.Number;
+            }
+            public override bool Equals(object other)
+            {
+                return other is DamageTextKey key && Equals(key);
+            }
             // 哈希只是查找入口，碰撞时Dictionary仍用Equals核对；397是组合哈希常量，不是玩法数值。
-            public override int GetHashCode() { return (Row.GetHashCode() * 397) ^ Number.GetHashCode(); }
+            public override int GetHashCode()
+            {
+                return (Row.GetHashCode() * 397) ^ Number.GetHashCode();
+            }
         }
         // 最多128种显示文案，不无限保存整场所有伤害值。存的是已格式化字符串，命中时无需ToString/Replace。
         private static readonly System.Collections.Generic.Dictionary<DamageTextKey, string> DamageTextCache = new System.Collections.Generic.Dictionary<DamageTextKey, string>(128);
@@ -40,16 +49,24 @@ namespace RevGame.View
         // 未命中才使用的可复用文字草稿；不在每击new StringBuilder。最终字符串仍需ToString并进入有界缓存。
         private static readonly System.Text.StringBuilder DamageBuilder = new System.Text.StringBuilder(128);
         // 复用已有格式化文案的累计次数；用于摘要命中率，不是CPU硬件L1/L2缓存计数。
-        public static long DamageTextCacheHits { get; private set; }
+        public static long DamageTextCacheHits
+        {
+            get; private set;
+        }
         // 本会话需要格式化新键的次数；表切换会清零，因此性能采样记录前后差值。
-        public static long DamageTextCacheMisses { get; private set; }
+        public static long DamageTextCacheMisses
+        {
+            get; private set;
+        }
         // 关闭Domain Reload时静态缓存仍活着；Play启动必须断开上次表引用，避免跨会话旧文案。
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         // Unity每次新Play启动清静态引用，即使禁用了Domain Reload也不留上一次表或数字字符串。
         private static void ResetSession()
         {
             _cachedTable = null;
-            Colors.Clear(); DamageRows.Clear(); DamageTextCache.Clear();
+            Colors.Clear();
+            DamageRows.Clear();
+            DamageTextCache.Clear();
             System.Array.Clear(DamageTextSlots, 0, DamageTextSlots.Length);
             _damageTextCursor = 0;
             DamageTextCacheHits = DamageTextCacheMisses = 0;
@@ -59,12 +76,19 @@ namespace RevGame.View
         private static void EnsureCache()
         {
             BattleTextTable table = RevDataTableManager.Get<BattleTextTable>();
-            if (table == _cachedTable) { return; }
-            _cachedTable = table; Colors.Clear(); DamageRows.Clear(); DamageTextCache.Clear();
-            System.Array.Clear(DamageTextSlots, 0, DamageTextSlots.Length); _damageTextCursor = 0;
+
+            if (table == _cachedTable)
+            {
+                return;
+            }
+            _cachedTable = table;
+            Colors.Clear();
+            DamageRows.Clear();
+            DamageTextCache.Clear();
+            System.Array.Clear(DamageTextSlots, 0, DamageTextSlots.Length);
+            _damageTextCursor = 0;
             DamageTextCacheHits = DamageTextCacheMisses = 0;
         }
-
         /// <summary>仅飘字放大：long容纳int最大伤害乘十，规则/计分仍使用原始int。倍率由Excel读取。</summary>
         public static long DisplayDamage(int actualDamage)
         {
@@ -77,13 +101,22 @@ namespace RevGame.View
         {
             EnsureCache();
             var key = new DamageTextKey { Row = row.Id, Number = DisplayDamage(actualDamage) };
-            if (DamageTextCache.TryGetValue(key, out string content)) { DamageTextCacheHits++; return content; }
+
+            if (DamageTextCache.TryGetValue(key, out string content))
+            {
+                DamageTextCacheHits++;
+                return content;
+            }
             DamageTextCacheMisses++;
             // 游标始终在0～127内循环；长期战斗也不依赖int溢出后的负数取模。
             int slot = _damageTextCursor;
             _damageTextCursor = (slot + 1) % DamageTextSlots.Length;
+
             // 未命中时先移除当前环形槽旧键，再格式化并写新键；否则槽循环了，字典却仍无限增长。
-            if (DamageTextSlots[slot].Row != null) { DamageTextCache.Remove(DamageTextSlots[slot]); }
+            if (DamageTextSlots[slot].Row != null)
+            {
+                DamageTextCache.Remove(DamageTextSlots[slot]);
+            }
             DamageBuilder.Clear();
             string template = row.Text;
             int start = 0, token;
@@ -95,33 +128,46 @@ namespace RevGame.View
             }
             DamageBuilder.Append(template, start, template.Length - start);
             content = DamageBuilder.ToString();
-            DamageTextSlots[slot] = key; DamageTextCache[key] = content; return content;
+            DamageTextSlots[slot] = key;
+            DamageTextCache[key] = content;
+            return content;
         }
-
         // 把类型与阵营映射到已校验配置行；只缓存与类型有关的技能行，普通输出/受击仍分别选择。
         public static BattleText Damage(Core.BattleDamageKind kind, Core.GameSide side)
         {
             EnsureCache();
-            if (kind == Core.BattleDamageKind.Normal) { return Require(side == Core.GameSide.Player ? "Damage_Incoming" : "Damage"); }
-            if (!DamageRows.TryGetValue(kind, out BattleText row)) { row = Require("Damage_" + kind); DamageRows.Add(kind, row); }
+
+            if (kind == Core.BattleDamageKind.Normal)
+            {
+                return Require(side == Core.GameSide.Player ? "Damage_Incoming" : "Damage");
+            }
+            if (!DamageRows.TryGetValue(kind, out BattleText row))
+            {
+                row = Require("Damage_" + kind);
+                DamageRows.Add(kind, row);
+            }
             return row;
         }
         /// <summary>只读已异步加载完成的表；缺行即报错，不偷偷用旧文案掩盖导表问题。</summary>
         public static BattleText Require(string id)
         {
             BattleTextTable table = RevDataTableManager.Get<BattleTextTable>();
+
             if (table == null || !table.FindByKey(id, out BattleText row))
             {
                 throw new System.InvalidOperationException("弹幕配置缺少 " + id + "，请检查 Excel 并重新导表");
             }
             return row;
         }
-
         /// <summary>将表中的 #RRGGBB 或 #RRGGBBAA 转为 Unity 颜色；错误明确指出配置编号。</summary>
         public static Color ColorOf(BattleText row)
         {
             EnsureCache();
-            if (Colors.TryGetValue(row.Id, out Color cached)) { return cached; }
+
+            if (Colors.TryGetValue(row.Id, out Color cached))
+            {
+                return cached;
+            }
             if (!ColorUtility.TryParseHtmlString(row.ColorHex, out Color color))
             {
                 throw new System.InvalidOperationException("弹幕颜色不是有效十六进制：" + row.Id);
@@ -129,29 +175,38 @@ namespace RevGame.View
             Colors[row.Id] = color;
             return color;
         }
-
         /// <summary>开局先校验所有会用到的编号，缺行时立即报中文原因，避免战斗中途才丢失表现。</summary>
         public static void Validate()
         {
-            foreach (Core.PieceKind kind in System.Enum.GetValues(typeof(Core.PieceKind))) { Require("Attack_" + kind); }
+            foreach (Core.PieceKind kind in System.Enum.GetValues(typeof(Core.PieceKind)))
+            {
+                Require("Attack_" + kind);
+            }
             Require("Upgrade_2");
             Require("Upgrade_3");
             Require("Damage");
             Require("Damage_Incoming");
             foreach (Core.BattleDamageKind kind in System.Enum.GetValues(typeof(Core.BattleDamageKind)))
             {
-                if (kind != Core.BattleDamageKind.Normal) { Require("Damage_" + kind); }
+                if (kind != Core.BattleDamageKind.Normal)
+                {
+                    Require("Damage_" + kind);
+                }
             }
             Require("EnemyDeployment");
             // Boss 技能预警提示样式（标题 {skill}、副标题 {hint}），缺这一行时启动阶段就报错。
             Require("BossSkill");
-            foreach (Data.BattleEventKind kind in System.Enum.GetValues(typeof(Data.BattleEventKind))) { Require("Event_" + Data.BattleEventCatalog.NameOf(kind)); }
+            foreach (Data.BattleEventKind kind in System.Enum.GetValues(typeof(Data.BattleEventKind)))
+            {
+                Require("Event_" + Data.BattleEventCatalog.NameOf(kind));
+            }
             Require("Event_能量巨大");
             Require("Event_眼位成型");
             Require("Event_眼位复苏");
             foreach (BattleText row in RevDataTableManager.Get<BattleTextTable>().All)
             {
                 ColorOf(row);
+
                 // NaN 与任何数比较都为 false，必须显式拒绝，否则会绕过区间检查并破坏 Tween 时长。
                 if (string.IsNullOrWhiteSpace(row.Text) || float.IsNaN(row.Duration) || float.IsNaN(row.PeakScale))
                 {

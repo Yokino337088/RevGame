@@ -31,23 +31,33 @@ namespace RevGame.UI
             _scoreGeneration++;
             RevEvent.AddEventListener<ScoreGrantedInfo>(Events.ScoreGranted, OnScoreGranted, owner: this);
         }
-
         private void RefreshScore(IBattleService battle)
         {
-            if (roundReel == null || battle == null) { return; }
+            if (roundReel == null || battle == null)
+            {
+                return;
+            }
             // 每次10Hz刷新先比较可见性，只在变化时SetActive。滚筒积分仍实时推送，不能因省激活写入漏显示新得分。
             bool visible = battle.Phase != GamePhase.Prepare;
-            if (scoreFrame.gameObject.activeSelf != visible) { scoreFrame.gameObject.SetActive(visible); }
+
+            if (scoreFrame.gameObject.activeSelf != visible)
+            {
+                scoreFrame.gameObject.SetActive(visible);
+            }
             bool snap = _scoreRound != battle.Round || _scoreChapter != battle.Chapter;
-            _scoreRound = battle.Round; _scoreChapter = battle.Chapter;
+            _scoreRound = battle.Round;
+            _scoreChapter = battle.Chapter;
             roundReel.Display(battle.RoundScore, snap);
             lifetimeReel.Display(battle.LifetimeScore, snap);
             multiplierReel.Display(Mathf.RoundToInt(battle.ScoreMultiplier * 100f), snap);
+
             if (_pendingVisualGain > 0 && Time.unscaledTime >= _nextScorePulseAt)
             {
-                scoreGain.text = "+" + _pendingVisualGain.ToString("N0"); _pendingVisualGain = 0;
+                scoreGain.text = "+" + _pendingVisualGain.ToString("N0");
+                _pendingVisualGain = 0;
                 _nextScorePulseAt = Time.unscaledTime + .24f;
-                _scorePulse?.Kill(false); scoreFrame.localScale = Vector3.one;
+                _scorePulse?.Kill(false);
+                scoreFrame.localScale = Vector3.one;
                 _scorePulse = scoreFrame.DOPunchScale(Vector3.one * .045f, .25f, 4, .4f).SetUpdate(true).OnComplete(() => _scorePulse = null);
             }
         }
@@ -55,9 +65,17 @@ namespace RevGame.UI
         private void OnScoreGranted(ScoreGrantedInfo info)
         {
             _pendingVisualGain = _pendingVisualGain > long.MaxValue - info.Added ? long.MaxValue : _pendingVisualGain + info.Added;
-            if (_noticeClosed || _noticeRoot == null || scoreFrame == null) { return; }
+
+            if (_noticeClosed || _noticeRoot == null || scoreFrame == null)
+            {
+                return;
+            }
             Camera camera = Camera.main;
-            if (camera == null) { return; }
+
+            if (camera == null)
+            {
+                return;
+            }
             Vector3 world = info.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset)
                 + new Vector3(1, 1, 0) * ((info.Size - 1) * Consts.CellSize * .5f);
             Vector2 start, end;
@@ -73,32 +91,60 @@ namespace RevGame.UI
                 {
                     if (generation != _scoreGeneration || _noticeClosed)
                     {
-                        if (spark != null) { RevPool.Return(spark, 0); }
+                        if (spark != null)
+                        {
+                            RevPool.Return(spark, 0);
+                        }
                         return;
                     }
                     _scoreLoading--;
-                    if (spark == null) { RevLog.Warn("积分飞星加载失败，分数已入账", "RevGame"); return; }
-                    _scoreSparks.Add(spark); spark.Fly(start, end, info.Critical, lane, OnScoreSparkFinished);
+
+                    if (spark == null)
+                    {
+                        RevLog.Warn("积分飞星加载失败，分数已入账", "RevGame");
+                        return;
+                    }
+                    _scoreSparks.Add(spark);
+                    spark.Fly(start, end, info.Critical, lane, OnScoreSparkFinished);
                 }, _noticeRoot);
             }
         }
-
-        private void OnScoreSparkFinished(ScoreSparkView spark) { _scoreSparks.Remove(spark); }
-
+        private void OnScoreSparkFinished(ScoreSparkView spark)
+        {
+            _scoreSparks.Remove(spark);
+        }
         private void ClearScoreFlights()
         {
-            _scoreGeneration++; _scoreLoading = 0; _pendingVisualGain = 0;
-            foreach (ScoreSparkView spark in _scoreSparks) { if (spark != null) { RevPool.Return(spark, 0); } }
+            _scoreGeneration++;
+            _scoreLoading = 0;
+            _pendingVisualGain = 0;
+            foreach (ScoreSparkView spark in _scoreSparks)
+            {
+                if (spark != null)
+                {
+                    RevPool.Return(spark, 0);
+                }
+            }
             _scoreSparks.Clear();
-            _scorePulse?.Kill(false); _scorePulse = null;
-            if (scoreFrame != null) { scoreFrame.localScale = Vector3.one; }
-            if (scoreGain != null) { scoreGain.text = ""; }
+            _scorePulse?.Kill(false);
+            _scorePulse = null;
+
+            if (scoreFrame != null)
+            {
+                scoreFrame.localScale = Vector3.one;
+            }
+            if (scoreGain != null)
+            {
+                scoreGain.text = "";
+            }
         }
 
         private void CloseScore()
         {
             ClearScoreFlights();
-            roundReel?.StopRoll(); lifetimeReel?.StopRoll(); multiplierReel?.StopRoll();
+            roundReel?.StopRoll();
+            lifetimeReel?.StopRoll();
+            multiplierReel?.StopRoll();
             RevPool.DestroyPool<ScoreSparkView>();
         }
     }

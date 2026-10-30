@@ -20,7 +20,10 @@ namespace RevGame.Editor
     {
         public static string Apply()
         {
-            if (EditorApplication.isPlaying) { throw new InvalidOperationException("请退出Play再装配场景"); }
+            if (EditorApplication.isPlaying)
+            {
+                throw new InvalidOperationException("请退出Play再装配场景");
+            }
             BuildLoadingPanel();
             int imageCount = BindAtlasImages();
             Scene game = EditorSceneManager.OpenScene("Assets/Scenes/GameScene.unity", OpenSceneMode.Single);
@@ -39,6 +42,7 @@ namespace RevGame.Editor
             Scene start = EditorSceneManager.OpenScene("Assets/Scenes/StartScene.unity", OpenSceneMode.Additive);
             // StartScene只放入口、相机、光源和局外表现；每次按类型查找，重复执行不会多出第二套宿主。
             Camera camera = start.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Camera>(true)).FirstOrDefault();
+
             if (camera == null)
             {
                 var go = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
@@ -52,7 +56,11 @@ namespace RevGame.Editor
             camera.backgroundColor = new Color(0.035f, 0.10f, 0.10f);
             GetOrCreate<GameBootstrap>(start, "GameBootstrap");
             GamePresentation presentation = GetOrCreate<GamePresentation>(start, "GamePresentation");
-            if (presentation.GetComponent<GameAudio>() == null) { presentation.gameObject.AddComponent<GameAudio>(); }
+
+            if (presentation.GetComponent<GameAudio>() == null)
+            {
+                presentation.gameObject.AddComponent<GameAudio>();
+            }
             var fields = new SerializedObject(presentation);
             fields.FindProperty("boardRoot").objectReferenceValue = null;
             fields.FindProperty("boardCamera").objectReferenceValue = camera;
@@ -73,25 +81,35 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return "StartScene/GameScene已拆分，启动场景在Build Settings第0位；加载面板已保存；" + imageCount + "个Image已接图集晚绑定刷新";
         }
-
         private static T GetOrCreate<T>(Scene scene, string name) where T : Component
         {
             T found = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<T>(true)).FirstOrDefault();
-            if (found != null) { return found; }
+
+            if (found != null)
+            {
+                return found;
+            }
             var root = new GameObject(name);
             SceneManager.MoveGameObjectToScene(root, scene);
             return root.AddComponent<T>();
         }
-
         /// <summary>单独的ui_loading包只依赖字体与程序背景材质，不能因为打开加载界面就先拉入整套战斗图集。</summary>
         private static void BuildLoadingPanel()
         {
             const string folder = "Assets/GameRes/UI/Panel/Loading";
-            if (!AssetDatabase.IsValidFolder(folder)) { AssetDatabase.CreateFolder("Assets/GameRes/UI/Panel", "Loading"); }
+
+            if (!AssetDatabase.IsValidFolder(folder))
+            {
+                AssetDatabase.CreateFolder("Assets/GameRes/UI/Panel", "Loading");
+            }
             GameObject home = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/UI/Panel/HomePanel.prefab");
             Font font = home.GetComponentInChildren<Text>(true).font;
             Material backdrop = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Background/ArcaneBackdrop.mat");
-            if (backdrop == null || font == null) { throw new InvalidOperationException("加载面板缺少现有星雾材质或字体"); }
+
+            if (backdrop == null || font == null)
+            {
+                throw new InvalidOperationException("加载面板缺少现有星雾材质或字体");
+            }
             var root = new GameObject("LoadingPanel", typeof(RectTransform), typeof(CanvasGroup), typeof(LoadingPanel));
             try
             {
@@ -124,7 +142,6 @@ namespace RevGame.Editor
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
-
         /// <summary>所有UI/事件通知的Image统一接入。保留原Sprite、字体、材质和布局，只加生命周期适配组件。</summary>
         private static int BindAtlasImages()
         {
@@ -137,7 +154,10 @@ namespace RevGame.Editor
                 {
                     foreach (Image image in root.GetComponentsInChildren<Image>(true))
                     {
-                        if (image.GetComponent<AtlasImageBinding>() == null) { image.gameObject.AddComponent<AtlasImageBinding>(); }
+                        if (image.GetComponent<AtlasImageBinding>() == null)
+                        {
+                            image.gameObject.AddComponent<AtlasImageBinding>();
+                        }
                         count++;
                     }
                     PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -146,7 +166,6 @@ namespace RevGame.Editor
             }
             return count;
         }
-
         private static Image NewImage(Transform parent, string name, Color color)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
@@ -156,7 +175,6 @@ namespace RevGame.Editor
             image.raycastTarget = false;
             return image;
         }
-
         private static Text NewText(Transform parent, string name, string value, Font font, int size, Vector2 position, Vector2 dimensions)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Text), typeof(Shadow));
@@ -173,14 +191,12 @@ namespace RevGame.Editor
             Position(text.rectTransform, position, dimensions);
             return text;
         }
-
         private static void Position(RectTransform rect, Vector2 position, Vector2 size)
         {
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
         }
-
         private static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;

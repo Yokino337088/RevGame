@@ -26,7 +26,10 @@ namespace RevGame.Editor
         [MenuItem("RevGame/验收/落子身体燃烧（Play）")]
         public static async void Begin()
         {
-            if (LastResult == "运行中") { return; }
+            if (LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _checks = 0;
             PieceView piece = null;
@@ -52,7 +55,10 @@ namespace RevGame.Editor
                 Require(shared != null && shared.shader.isSupported, "棋子Shader未编译或不受支持");
                 foreach (SpriteRenderer renderer in piece.GetComponentsInChildren<SpriteRenderer>(true))
                 {
-                    if (renderer != body) { renderer.enabled = false; }
+                    if (renderer != body)
+                    {
+                        renderer.enabled = false;
+                    }
                 }
                 cameraObject = new GameObject("燃烧验收临时相机", typeof(Camera));
                 Camera camera = cameraObject.GetComponent<Camera>();
@@ -87,10 +93,21 @@ namespace RevGame.Editor
                         bool originallyWhite = normal[i].r > 238 && normal[i].g > 238 && normal[i].b > 238;
                         Require(!newlyWhite || originallyWhite, "火焰把原本有颜色的身体烧成了白色");
                         int delta = Difference(pixels[i], normal[i]);
-                        if (delta > 10) { changed++; }
-                        if (sample == samples.Length - 1) { Require(delta <= 2, "燃烧终点与普通身体不连续"); }
+
+                        if (delta > 10)
+                        {
+                            changed++;
+                        }
+                        if (sample == samples.Length - 1)
+                        {
+                            Require(delta <= 2, "燃烧终点与普通身体不连续");
+                        }
                     }
-                    if (sample == 3) { Require(changed > 100, "燃烧中段没有可见的身体火焰"); }
+
+                    if (sample == 3)
+                    {
+                        Require(changed > 100, "燃烧中段没有可见的身体火焰");
+                    }
                     sheet.SetPixels32(sample % 4 * Size, (1 - sample / 4) * Size, Size, Size, pixels);
                 }
                 piece.StopTransientVisuals();
@@ -112,7 +129,11 @@ namespace RevGame.Editor
                 while (piece.BirthProgress > 0f && Time.realtimeSinceStartup < deadline)
                 {
                     await RevTask.Yield();
-                    if (piece.BirthProgress <= 0f) { break; }
+
+                    if (piece.BirthProgress <= 0f)
+                    {
+                        break;
+                    }
                     advanced |= piece.AnimationFrameIndex != startFrame;
                     body.GetPropertyBlock(block);
                     Require(block.GetTexture("_MainTex") == body.sprite.texture, "换帧后仍采样旧纹理");
@@ -139,15 +160,31 @@ namespace RevGame.Editor
             finally
             {
                 RenderTexture.active = previous;
-                if (piece != null) { RevPool.Return(piece, 0); }
-                if (cameraObject != null) { UnityEngine.Object.Destroy(cameraObject); }
-                if (target != null) { target.Release(); UnityEngine.Object.Destroy(target); }
-                if (readback != null) { UnityEngine.Object.Destroy(readback); }
-                if (sheet != null) { UnityEngine.Object.Destroy(sheet); }
+
+                if (piece != null)
+                {
+                    RevPool.Return(piece, 0);
+                }
+                if (cameraObject != null)
+                {
+                    UnityEngine.Object.Destroy(cameraObject);
+                }
+                if (target != null)
+                {
+                    target.Release();
+                    UnityEngine.Object.Destroy(target);
+                }
+                if (readback != null)
+                {
+                    UnityEngine.Object.Destroy(readback);
+                }
+                if (sheet != null)
+                {
+                    UnityEngine.Object.Destroy(sheet);
+                }
                 File.WriteAllText("Temp/BirthFireChecks.txt", LastResult);
             }
         }
-
         /// <summary>读取真正渲染结果；仅用于小尺寸验收图，不把昂贵的ReadPixels带进战斗热路径。</summary>
         private static Color32[] Capture(Camera camera, RenderTexture target, Texture2D readback)
         {
@@ -157,16 +194,18 @@ namespace RevGame.Editor
             readback.Apply();
             return readback.GetPixels32();
         }
-
         private static int Difference(Color32 left, Color32 right)
         {
             return Mathf.Abs(left.r - right.r) + Mathf.Abs(left.g - right.g) + Mathf.Abs(left.b - right.b);
         }
-
         private static void Require(bool condition, string message)
         {
             _checks++;
-            if (!condition) { throw new InvalidOperationException(message); }
+
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
         }
     }
 }

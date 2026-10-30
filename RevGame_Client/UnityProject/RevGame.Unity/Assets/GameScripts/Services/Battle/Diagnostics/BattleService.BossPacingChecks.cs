@@ -42,6 +42,7 @@ namespace RevGame.Services
                     {
                         // OnEnter先统计本次施法再广播预警；同一招上次结束后才开始冷却，故两个开始时刻至少间隔冷却。
                         float previous = startedAt[(int)info.Kind];
+
                         if (previous >= 0f && info.Kind != BossSkillKind.Enrage)
                         {
                             float minimum = BossSkillCatalog.CooldownFor(info.Kind, chapter, owner.Enraged);
@@ -65,6 +66,7 @@ namespace RevGame.Services
                         foreach (int used in owner.SkillUseCounts)
                         {
                             total += used;
+
                             if (used > 0)
                             {
                                 distinct++;
@@ -75,14 +77,16 @@ namespace RevGame.Services
                         for (int i = 0; i < owner.SkillUseCounts.Length; i++)
                         {
                             BossSkillDef def = BossSkillCatalog.Get((BossSkillKind)i);
+
                             if (def.ExclusiveChapter == chapter)
                             {
                                 check(owner.SkillUseCounts[i] >= 2, "第" + chapter + "章专属" + def.Kind + "自然施放至少2次，实际=" + owner.SkillUseCounts[i]);
                             }
-                            else if (!BossSkillCatalog.IsUnlocked((BossSkillKind)i,chapter))
-                            {
-                                check(owner.SkillUseCounts[i] == 0, "第" + chapter + "章不会施放其它章专属" + def.Kind);
-                            }
+                            else
+                                if (!BossSkillCatalog.IsUnlocked((BossSkillKind)i, chapter))
+                                {
+                                    check(owner.SkillUseCounts[i] == 0, "第" + chapter + "章不会施放其它章专属" + def.Kind);
+                                }
                         }
                         summaries.Add("ch=" + chapter + ",seconds=" + observationSeconds + ",distinct=" + distinct + ",starts=" + total
                             + ",counts=" + string.Join(",", owner.SkillUseCounts));
@@ -96,7 +100,6 @@ namespace RevGame.Services
             }
             return string.Join("\n", summaries);
         }
-
         /// <summary>
         /// 不推进战斗的选招契约：配额、冷却、非法章节都由同一生产选择器验证。
         /// 只改调用方自己的冷却/次数数组；不扣血、不移动、不提交实际技能。
@@ -119,6 +122,7 @@ namespace RevGame.Services
                 BossSkillDef chosen = BossSkillCatalog.Get(plan.Kind);
                 bool expectedExclusive = common >= (exclusive + 1) * Balance.BossCommonSkillsPerExclusive;
                 check((chosen.ExclusiveChapter == chapter) == expectedExclusive, "第" + chapter + "章通用配额后准确插入专属，step=" + step);
+
                 if (chosen.ExclusiveChapter == chapter)
                 {
                     exclusive++;
@@ -133,7 +137,9 @@ namespace RevGame.Services
             for (int i = 0; i < length; i++)
             {
                 if (BossSkillCatalog.Get((BossSkillKind)i).ExclusiveChapter == chapter)
-                { check(counts[i] == 2,"第"+chapter+"章四种专属各轮到2次："+(BossSkillKind)i); }
+                {
+                    check(counts[i] == 2, "第" + chapter + "章四种专属各轮到2次：" + (BossSkillKind)i);
+                }
             }
             check(boss.Hp == hp, "选招查询不能改变Boss生命");
 
@@ -141,12 +147,18 @@ namespace RevGame.Services
             Array.Clear(counts, 0, length);
             foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
             {
-                if (BossSkillCatalog.IsUnlocked(kind,chapter) && !BossSkillCatalog.IsSpecial(kind) && kind != BossSkillKind.Enrage)
-                { counts[(int)kind] = Balance.BossCommonSkillsPerExclusive; break; }
+                if (BossSkillCatalog.IsUnlocked(kind, chapter) && !BossSkillCatalog.IsSpecial(kind) && kind != BossSkillKind.Enrage)
+                {
+                    counts[(int)kind] = Balance.BossCommonSkillsPerExclusive;
+                    break;
+                }
             }
             for (int i = 0; i < length; i++)
             {
-                if (BossSkillCatalog.Get((BossSkillKind)i).ExclusiveChapter == chapter) { ready[i] = 100f; }
+                if (BossSkillCatalog.Get((BossSkillKind)i).ExclusiveChapter == chapter)
+                {
+                    ready[i] = 100f;
+                }
             }
             check(BossTactics.TryChoose(battle._board, boss, chapter, battle.EnemyIntelligence, ready, 0f, null,
                 out BossSkillPlan fallback, counts) && BossSkillCatalog.Get(fallback.Kind).ExclusiveChapter == 0,

@@ -23,37 +23,53 @@ namespace RevGame.View
 
         public int TargetId => _targetId;
         public bool IsConnected => beam != null && beam.enabled && _target != null && _target.PieceId == _targetId;
-        public float OriginError { get; private set; }
-        public float TargetError { get; private set; }
-
+        public float OriginError
+        {
+            get; private set;
+        }
+        public float TargetError
+        {
+            get; private set;
+        }
         /// <summary>在模型刷新时重新绑定当前身份；目标被池借给另一颗棋时Id检查会立即隐藏旧保护。</summary>
         public void Bind(Transform source, PieceView target, int targetId)
         {
             // 视觉层结构：格面至多6，棋子从9开始，治疗线固定7，保持在棋子身体下面。
-            beam.sortingOrder = 7; impact.sortingOrder = 7;
-            _source = source; _target = target; _targetId = targetId;
+            beam.sortingOrder = 7;
+            impact.sortingOrder = 7;
+            _source = source;
+            _target = target;
+            _targetId = targetId;
             RefreshGeometry();
         }
-
         private void LateUpdate()
         {
             RefreshGeometry();
         }
-
         /// <summary>棋子和帮手的Tween在Update移动，因此LateUpdate读取最终坐标，不留下落后一帧的射线。</summary>
         private void RefreshGeometry()
         {
             bool valid = _source != null && _source.gameObject.activeInHierarchy && _target != null
                 && _target.gameObject.activeInHierarchy && _target.PieceId == _targetId && _targetId != 0;
-            beam.enabled = valid; impact.enabled = valid;
-            if (!valid) { return; }
+            beam.enabled = valid;
+            impact.enabled = valid;
+
+            if (!valid)
+            {
+                return;
+            }
             Vector3 start = _source.position, end = _target.transform.position;
             Material material = beam.sharedMaterial;
             float width = material != null && material.HasProperty("_BeamWidth") ? material.GetFloat("_BeamWidth") : .62f;
             float pulse = 1f + Mathf.Sin(Time.time * 9f) * .08f;
             beam.widthMultiplier = width * pulse;
-            beam.SetPosition(0, start); beam.SetPosition(1, end);
-            if (_properties == null) { _properties = new MaterialPropertyBlock(); }
+            beam.SetPosition(0, start);
+            beam.SetPosition(1, end);
+
+            if (_properties == null)
+            {
+                _properties = new MaterialPropertyBlock();
+            }
             _properties.SetFloat(BeamLength, Mathf.Max(.01f, Vector3.Distance(start, end)) / Mathf.Max(.1f, width));
             beam.SetPropertyBlock(_properties);
             impact.transform.position = end;
@@ -62,16 +78,34 @@ namespace RevGame.View
             OriginError = Vector3.Distance(beam.GetPosition(0), start);
             TargetError = Vector3.Distance(beam.GetPosition(1), end);
         }
-
         private void Clear()
         {
-            _source = null; _target = null; _targetId = 0;
+            _source = null;
+            _target = null;
+            _targetId = 0;
             OriginError = TargetError = 0;
-            if (beam != null) { beam.enabled = false; beam.SetPropertyBlock(null); }
-            if (impact != null) { impact.enabled = false; }
+
+            if (beam != null)
+            {
+                beam.enabled = false;
+                beam.SetPropertyBlock(null);
+            }
+            if (impact != null)
+            {
+                impact.enabled = false;
+            }
         }
-        public void OnPoolGet() { Clear(); }
-        public void OnPoolReturn() { Clear(); }
-        private void OnDisable() { Clear(); }
+        public void OnPoolGet()
+        {
+            Clear();
+        }
+        public void OnPoolReturn()
+        {
+            Clear();
+        }
+        private void OnDisable()
+        {
+            Clear();
+        }
     }
 }

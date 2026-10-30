@@ -24,7 +24,10 @@ namespace RevGame.Editor
         [UnityEditor.MenuItem("RevGame/验收/属性GM（Play）")]
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             Evidence.Clear();
             _assertions = 0;
@@ -43,19 +46,33 @@ namespace RevGame.Editor
                 VerifyBattle(battle);
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 VerifyOwnership(runner, battle);
-                runner.Start(new GameAutomationPlan { timeoutSeconds = 10, steps = new[]
+                runner.Start(new GameAutomationPlan
+                {
+                    timeoutSeconds = 10,
+                    steps = new[]
                 {
                     new GameAutomationStep { name = "设置四项", op = "gm", command = "RevGame/属性设置 250 100 20 30" },
                     new GameAutomationStep { name = "查询精确返回", op = "gm", command = "RevGame/属性查询", expected = Json(250, 100, 20, 30) },
                     new GameAutomationStep { name = "清除四项", op = "gm", command = "RevGame/属性清除", expected = Json(0, 0, 0, 0) },
                     new GameAutomationStep { name = "正常首页", op = "assert", screen = "Home" }
-                }});
-                for (int i = 0; i < 100 && runner.State == "running"; i++) { await RevTask.Delay(100); }
+                }
+                });
+                for (int i = 0; i < 100 && runner.State == "running"; i++)
+                {
+                    await RevTask.Delay(100);
+                }
                 Require(runner.State == "passed", "计划内属性GM实际执行与查询通过：" + runner.ReportJson());
                 Require(!battle.IsAutomationBoostActive, "完成路径释放租约");
-                runner.Start(new GameAutomationPlan { boost = new GameAutomationBoost { healthBonusPercent = 100 },
-                    timeoutSeconds = 5, steps = new[] { new GameAutomationStep { op = "assert", screen = "Battle" } } });
-                for (int i = 0; i < 50 && runner.State == "running"; i++) { await RevTask.Delay(100); }
+                runner.Start(new GameAutomationPlan
+                {
+                    boost = new GameAutomationBoost { healthBonusPercent = 100 },
+                    timeoutSeconds = 5,
+                    steps = new[] { new GameAutomationStep { op = "assert", screen = "Battle" } }
+                });
+                for (int i = 0; i < 50 && runner.State == "running"; i++)
+                {
+                    await RevTask.Delay(100);
+                }
                 Require(runner.State == "failed" && !battle.IsAutomationBoostActive, "错误断言使计划失败且释放强化");
                 LastResult = "通过 " + _assertions + " 条：七条注册、参数原子校验、真实攻击/攻速/防御/生命、继承/换轮/升星、租约与终止清理";
             }
@@ -66,19 +83,27 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (runner.State == "running") { runner.Cancel(); }
+                if (runner.State == "running")
+                {
+                    runner.Cancel();
+                }
                 RevGM.Execute("RevGame/属性清除");
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 System.IO.File.WriteAllText("Temp/GameAttributeGmChecks.txt", LastResult + "\n" + string.Join("\n", Evidence));
             }
         }
-
         private static void VerifyCommands()
         {
             foreach (string name in new[] { "属性设置", "属性查询", "属性清除", "加攻击", "加攻速", "加防御", "加血量" })
             {
                 bool found = false;
-                foreach (var command in RevGM.Commands) { if (command.Name == "RevGame/" + name) { found = true; } }
+                foreach (var command in RevGM.Commands)
+                {
+                    if (command.Name == "RevGame/" + name)
+                    {
+                        found = true;
+                    }
+                }
                 Require(found, "运行期已注册：" + name);
             }
             Command("属性清除");
@@ -86,7 +111,10 @@ namespace RevGame.Editor
             Require(Query() == Json(250, 100, 0, 0), "设置与精确JSON查询");
             Command("属性设置 250 100 0 0");
             Require(Query() == Json(250, 100, 0, 0), "重复设置不累计");
-            Command("加攻击 25"); Command("加攻速 20"); Command("加防御 50"); Command("加血量 100");
+            Command("加攻击 25");
+            Command("加攻速 20");
+            Command("加防御 50");
+            Command("加血量 100");
             Require(Query() == Json(275, 120, 50, 100), "四项分别累计");
             Command("加攻击 -25");
             Require(Query() == Json(250, 120, 50, 100), "负增量允许下调到合法范围");
@@ -101,13 +129,19 @@ namespace RevGame.Editor
             Require(Query() == Json(10000, 10000, 10000, 10000), "技术范围上界可设置");
             Command("属性清除");
         }
-
         private static void VerifyBattle(BattleService battle)
         {
             Piece player = battle.PlayerPieces[0];
             Piece small = battle.PlayerPieces[1];
             Piece enemy = null;
-            foreach (Piece item in battle.EnemyPieces) { if (!item.IsKing && item.IsAlive) { enemy = item; break; } }
+            foreach (Piece item in battle.EnemyPieces)
+            {
+                if (!item.IsKing && item.IsAlive)
+                {
+                    enemy = item;
+                    break;
+                }
+            }
             Require(enemy != null && player.IsAlive && small.IsAlive, "固定比较对象均存活");
             int enemyMax = enemy.MaxHp;
             int before = enemy.Hp;
@@ -164,46 +198,56 @@ namespace RevGame.Editor
             Command("属性清除");
             Require(player.MaxHp == baseMax && !battle.IsAutomationBoostActive, "清除恢复原上限并释放手动租约");
         }
-
         private static void VerifyOwnership(GameAutomationRunner runner, BattleService battle)
         {
             Command("属性设置 100 0 0 0");
-            runner.Start(new GameAutomationPlan { timeoutSeconds = 10, boost = new GameAutomationBoost { attackBonusPercent = 20 },
-                steps = new[] { new GameAutomationStep { op = "wait", screen = "LevelSelect" } } });
+            runner.Start(new GameAutomationPlan
+            {
+                timeoutSeconds = 10,
+                boost = new GameAutomationBoost { attackBonusPercent = 20 },
+                steps = new[] { new GameAutomationStep { op = "wait", screen = "LevelSelect" } }
+            });
             Require(Query() == Json(20, 0, 0, 0), "自动化接管手动租约并采用计划值");
             Command("加攻击 5");
             Require(Query() == Json(25, 0, 0, 0), "运行中的GM沿用自动化租约");
             runner.Cancel();
             Require(!battle.IsAutomationBoostActive && Query() == Json(0, 0, 0, 0), "取消路径清除强化");
         }
-
         private static object Call(object instance, string method, params object[] args)
         {
             return instance.GetType().GetMethod(method, PrivateInstance).Invoke(instance, args);
         }
-
         private static void Command(string command)
         {
             RevGMResult result = RevGM.Execute("RevGame/" + command);
             Require(result.Success, command + " → " + result.Message);
         }
-
         private static string Query()
         {
             RevGMResult result = RevGM.Execute("RevGame/属性查询");
-            if (!result.Success) { throw new InvalidOperationException(result.Message); }
+
+            if (!result.Success)
+            {
+                throw new InvalidOperationException(result.Message);
+            }
             return result.Message;
         }
-
         private static string Json(int attack, int speed, int defense, int health)
         {
-            return JsonUtility.ToJson(new GameAutomationBoost { attackBonusPercent = attack, attackSpeedBonusPercent = speed,
-                defenseBonusPercent = defense, healthBonusPercent = health });
+            return JsonUtility.ToJson(new GameAutomationBoost
+            {
+                attackBonusPercent = attack,
+                attackSpeedBonusPercent = speed,
+                defenseBonusPercent = defense,
+                healthBonusPercent = health
+            });
         }
-
         private static void Require(bool condition, string message)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             Evidence.Add("PASS " + (++_assertions) + " " + message);
         }
     }

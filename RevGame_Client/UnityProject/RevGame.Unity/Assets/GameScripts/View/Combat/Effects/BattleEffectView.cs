@@ -11,8 +11,10 @@ using UnityEngine.Sprites;
 namespace RevGame.View
 {
     // 表现分型：数字、远程飞行、近战冲击。类型只决定如何播放，不决定伤害计算。
-    public enum BattleEffectKind { Damage, Projectile, Melee }
-
+    public enum BattleEffectKind
+    {
+        Damage, Projectile, Melee
+    }
     [RevPoolPrefab(RevResPath.Effects_Combat, "BattleEffect", Group = RevResGroup.Battle)]
     // RevPool持有的可复用反馈对象。一个对象同一时刻只播一种效果、一条Tween。
     // 攻击事件已经结算，这里只显示位置/颜色/文字；结束和回池不允许再次扣血。
@@ -39,16 +41,26 @@ namespace RevGame.View
             [System.NonSerialized] internal Vector4 Uv;
             internal void EnsureGeometry()
             {
-                if (BindingVersion == GameSpriteAtlasService.BindingVersion && BoundSprite == Sprite) { return; }
-                BindingVersion = GameSpriteAtlasService.BindingVersion; BoundSprite = Sprite;
-                SpriteSize = Sprite.bounds.size; Uv = DataUtility.GetOuterUV(Sprite);
+                if (BindingVersion == GameSpriteAtlasService.BindingVersion && BoundSprite == Sprite)
+                {
+                    return;
+                }
+                BindingVersion = GameSpriteAtlasService.BindingVersion;
+                BoundSprite = Sprite;
+                SpriteSize = Sprite.bounds.size;
+                Uv = DataUtility.GetOuterUV(Sprite);
                 // 每种职业只有一份原画，三层共享材质也只对应这份Sprite。图集晚绑定时统一更新材质UV，
                 // 不再为每发弹道的三个Renderer各传一个相同参数块；仍保留颜色、排序和原画三层。
-                BindMaterial(BodyMaterial); BindMaterial(TrailMaterial); BindMaterial(AuraMaterial);
+                BindMaterial(BodyMaterial);
+                BindMaterial(TrailMaterial);
+                BindMaterial(AuraMaterial);
             }
             private void BindMaterial(Material material)
             {
-                if (material == null) { return; }
+                if (material == null)
+                {
+                    return;
+                }
                 material.SetVector(SpriteUvId, Uv);
                 // _MainTex仍由SpriteRenderer的Sprite/图集绑定提供；不将Texture挂到共享材质保活上章资源。
             }
@@ -63,7 +75,10 @@ namespace RevGame.View
         private MaterialPropertyBlock _projectileProperties;
         private static readonly int SpriteUvId = Shader.PropertyToID("_SpriteUV");
         private Color _trailColor;
-        public PieceKind ProjectileKind { get; private set; }
+        public PieceKind ProjectileKind
+        {
+            get; private set;
+        }
         public Sprite ProjectileArt => spriteRenderer.sprite;
         [Tooltip("同一个池对象内的深色轮廓，保证浅色棋盘上也能看清弹头。")]
         [SerializeField] private SpriteRenderer projectileOutline;
@@ -104,10 +119,18 @@ namespace RevGame.View
         // 使用游戏时间：正常暂停时整个战斗一起停，恢复后再继续回收。
         private bool _projectileActive;
         private float _projectileExpiresAt;
-        public bool IsFloatingText { get; private set; }
-        public bool IsAttackText { get; private set; }
-        public int TextOrder { get; private set; }
-
+        public bool IsFloatingText
+        {
+            get; private set;
+        }
+        public bool IsAttackText
+        {
+            get; private set;
+        }
+        public int TextOrder
+        {
+            get; private set;
+        }
         // 每条飘字同一帧会被新入场文字反复查询避让；缓存仍按位置/缩放失效，不复用动画移动前的矩形。
         // 相机只在本场景寿命内借用，Unity销毁后自动判空，下一次读取重新取得。
         private Camera _textCamera;
@@ -132,14 +155,17 @@ namespace RevGame.View
         // 上次相机像素视口；窗口改变时即使相机世界位置相同，也不能复用旧像素矩形。
         private Rect _rectViewport;
         private FeedbackProjection _projection;
-        internal void UseProjection(FeedbackProjection projection) { _projection = projection; }
-
+        internal void UseProjection(FeedbackProjection projection)
+        {
+            _projection = projection;
+        }
         /// <summary>屏幕上真实文字的矩形，供整个棋盘统一避让；不使用渲染位置以外的固定“第几条通道”。</summary>
         public Rect TextScreenRect
         {
             get
             {
                 Camera camera = _textCamera != null ? _textCamera : (_textCamera = Camera.main);
+
                 if (camera == null)
                 {
                     return new Rect();
@@ -157,14 +183,29 @@ namespace RevGame.View
                 Matrix4x4 view = shared ? _projection.View : camera.worldToCameraMatrix;
                 Matrix4x4 projection = shared ? _projection.Projection : camera.projectionMatrix;
                 Rect viewport = shared ? _projection.Viewport : camera.pixelRect;
+
                 // 缓存必须同时满足帧号、文字变换、相机矩阵和像素视口相同。
                 // 只缓存Time.frameCount会漏掉本帧Arrange修改位置后再次查询的情况。
                 if (_rectFrame == Time.frameCount && _rectPosition == position && _rectScale == scale && _rectRotation == rotation && _rectCameraView == view && _rectCameraProjection == projection && _rectViewport == viewport)
-                { return _cachedTextRect; }
-                _rectFrame = Time.frameCount; _rectPosition = position; _rectScale = scale; _rectRotation = rotation; _rectCameraView = view; _rectCameraProjection = projection; _rectViewport = viewport;
+                {
+                    return _cachedTextRect;
+                }
+                _rectFrame = Time.frameCount;
+                _rectPosition = position;
+                _rectScale = scale;
+                _rectRotation = rotation;
+                _rectCameraView = view;
+                _rectCameraProjection = projection;
+                _rectViewport = viewport;
+
                 // 内容/字号未变则不再向原生Renderer查localBounds；失效后仅取一次并记在本对象。
-                if (!_localTextBoundsValid) { _localTextBounds = _textRenderer.localBounds; _localTextBoundsValid = true; }
+                if (!_localTextBoundsValid)
+                {
+                    _localTextBounds = _textRenderer.localBounds;
+                    _localTextBoundsValid = true;
+                }
                 Bounds bounds;
+
                 if (rotation == Quaternion.identity)
                 {
                     // 飘字只平移/缩放，局部字形不变：避免每次新字摆位都向原生Renderer重查bounds。
@@ -172,7 +213,10 @@ namespace RevGame.View
                     // 必须用文字子节点，不能用池对象根节点代替，否则子节点偏移会导致避让位置不准。
                     bounds = new Bounds(textTransform.TransformPoint(_localTextBounds.center), Vector3.Scale(_localTextBounds.size, scale));
                 }
-                else { bounds = _textRenderer.bounds; }
+                else
+                {
+                    bounds = _textRenderer.bounds;
+                }
                 Vector3 min = shared ? _projection.WorldToScreen(bounds.min) : camera.WorldToScreenPoint(bounds.min);
                 Vector3 max = shared ? _projection.WorldToScreen(bounds.max) : camera.WorldToScreenPoint(bounds.max);
                 _cachedTextRect = Rect.MinMaxRect(Mathf.Min(min.x, max.x) - 3f, Mathf.Min(min.y, max.y) - 3f,
@@ -180,7 +224,6 @@ namespace RevGame.View
                 return _cachedTextRect;
             }
         }
-
         /// <summary>提前把后续放大和上浮也算入占用范围，避免初始不重叠、动画一放大又挤在一起。</summary>
         public Rect TextReservationRect
         {
@@ -192,6 +235,7 @@ namespace RevGame.View
                 rect.size *= Mathf.Max(1f, scale);
                 rect.center = center;
                 Camera camera = _textCamera != null ? _textCamera : (_textCamera = Camera.main);
+
                 if (camera != null)
                 {
                     float rise = camera.orthographic
@@ -202,33 +246,46 @@ namespace RevGame.View
                 return rect;
             }
         }
-
         /// <summary>数字越大越靠前，文字与自己的描边一起排序，不能让旧描边挡住新字。</summary>
         public void SetTextOrder(int order)
         {
             TextOrder = order;
             _textRenderer.sortingOrder = 100 + order * 2;
-            foreach (Renderer outline in _outlineRenderers) { outline.sortingOrder = 99 + order * 2; }
+            foreach (Renderer outline in _outlineRenderers)
+            {
+                outline.sortingOrder = 99 + order * 2;
+            }
         }
-
         /// <summary>缓存组件不复制材质；TextMesh及其描边继续共享字体材质，保留动态合批条件。</summary>
         private void Awake()
         {
-            _readProgress = ReadAnimationProgress; _writeProgress = WriteAnimationProgress; _finishAnimation = Finish;
+            _readProgress = ReadAnimationProgress;
+            _writeProgress = WriteAnimationProgress;
+            _finishAnimation = Finish;
             _projectileProperties = new MaterialPropertyBlock();
-            damageText.fontStyle = FontStyle.Bold; damageText.anchor = TextAnchor.MiddleCenter; damageText.alignment = TextAlignment.Center;
-            foreach (TextMesh outline in damageOutlines) { outline.fontStyle = FontStyle.Bold; outline.anchor = TextAnchor.MiddleCenter; outline.alignment = TextAlignment.Center; }
+            damageText.fontStyle = FontStyle.Bold;
+            damageText.anchor = TextAnchor.MiddleCenter;
+            damageText.alignment = TextAlignment.Center;
+            foreach (TextMesh outline in damageOutlines)
+            {
+                outline.fontStyle = FontStyle.Bold;
+                outline.anchor = TextAnchor.MiddleCenter;
+                outline.alignment = TextAlignment.Center;
+            }
             _textRenderer = damageText.GetComponent<Renderer>();
             // 动态字体扩容会重建字形网格。即使文案没变，也必须重取局部范围，否则避让会读旧宽度。
             Font.textureRebuilt += OnFontTextureRebuilt;
             _outlineRenderers = new Renderer[damageOutlines.Length];
-            for (int i = 0; i < damageOutlines.Length; i++) { _outlineRenderers[i] = damageOutlines[i].GetComponent<Renderer>(); }
+            for (int i = 0; i < damageOutlines.Length; i++)
+            {
+                _outlineRenderers[i] = damageOutlines[i].GetComponent<Renderer>();
+            }
         }
-
         /// <summary>空间不足时，下面那条提示降至35%透明度；动画本身的淡出比例仍然保留。</summary>
         public void SetTextOccluded(bool covered)
         {
             float alpha = covered ? 0.35f : 1f;
+
             // 遮挡关系没有变化就不重复写5份TextMesh颜色。Tween淡出仍由SetNumberAlpha逐帧更新。
             if (Mathf.Approximately(alpha, _occlusionAlpha))
             {
@@ -238,8 +295,13 @@ namespace RevGame.View
             ApplyNumberAlpha();
         }
         /// <summary>供开发验收读取；不参与战斗规则。</summary>
-        public bool HasActiveAnimation { get { return _animation != null && _animation.IsActive(); } }
-
+        public bool HasActiveAnimation
+        {
+            get
+            {
+                return _animation != null && _animation.IsActive();
+            }
+        }
         /// <summary>伤害只显示已结算数值；arrange在创建Tween前安排位置，避免动画下一帧把避让位置覆盖掉。</summary>
         public void Show(BattleEffectKind kind, Vector3 position, int damage, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy, System.Action<BattleEffectView> arrange = null)
         {
@@ -249,7 +311,6 @@ namespace RevGame.View
             }
             ShowDamage(position, damage, BattleDamageKind.Normal, onFinished, targetSide, arrange);
         }
-
         /// <summary>样式直接取服务发出的来源；纯表现函数，不查询棋子、不推测暴击、不再次结算伤害。</summary>
         public void ShowDamage(Vector3 position, int damage, BattleDamageKind kind, System.Action<BattleEffectView> onFinished, GameSide targetSide, System.Action<BattleEffectView> arrange = null)
         {
@@ -261,7 +322,6 @@ namespace RevGame.View
             ConfigureText(config, GameTextConfig.FormatDamage(config, damage), color);
             StartFloatingText(config, position + new Vector3(0f, 0.35f, -0.5f), false, arrange);
         }
-
         /// <summary>低频攻击口号；文案与基础字号仍来自Excel，整场数量和频率由BoardView统一控制。</summary>
         public void ShowAttack(BattleText config, Vector3 position, System.Action<BattleEffectView> onFinished, System.Action<BattleEffectView> arrange = null)
         {
@@ -270,9 +330,11 @@ namespace RevGame.View
             ConfigureText(config, config.Text, GameTextConfig.ColorOf(config));
             StartFloatingText(config, position + new Vector3(0f, 0.55f, -0.5f), true, arrange);
         }
-
         /// <summary>只读诊断：用于核对真实颜色和文案，避免测试只看Tween存在。</summary>
-        public BattleDamageKind DamageKind { get; private set; }
+        public BattleDamageKind DamageKind
+        {
+            get; private set;
+        }
         public Color TextColor => damageText.color;
         public string TextContent => damageText.text;
 
@@ -283,17 +345,25 @@ namespace RevGame.View
             _rectFrame = -1;
             spriteRenderer.enabled = false;
             damageText.color = color;
+
             if (_configuredContent != content || _configuredFontSize != config.FontSize)
             {
-                _configuredContent = content; _configuredFontSize = config.FontSize; _localTextBoundsValid = false;
-                damageText.text = content; damageText.fontSize = config.FontSize;
-                foreach (TextMesh outline in damageOutlines) { outline.text = content; outline.fontSize = config.FontSize; }
+                _configuredContent = content;
+                _configuredFontSize = config.FontSize;
+                _localTextBoundsValid = false;
+                damageText.text = content;
+                damageText.fontSize = config.FontSize;
+                foreach (TextMesh outline in damageOutlines)
+                {
+                    outline.text = content;
+                    outline.fontSize = config.FontSize;
+                }
             }
+
             // 复用时文字/颜色已替换，必须强制初始化描边；后续恒定透明度无需每帧重建五份字形颜色。
             _fadeAlpha = 1f;
             ApplyNumberAlpha();
         }
-
         /// <summary>先限定可见字宽，再避让，最后记录Tween起终点；文字最多保留约一秒，不积压上一轮攻击。</summary>
         private void StartFloatingText(BattleText config, Vector3 position, bool attack, System.Action<BattleEffectView> arrange)
         {
@@ -312,6 +382,7 @@ namespace RevGame.View
             arrange?.Invoke(this);
             Vector3 start = transform.position;
             Vector3 end = start + Vector3.up * _textRise;
+
             if (arrange == null)
             {
                 end = KeepTextOnScreen(end);
@@ -320,20 +391,25 @@ namespace RevGame.View
             transform.localScale = Vector3.one * (_baseTextScale * 0.72f);
             // 一条DOTween同时驱动弹出、衰减振动、上浮、淡出，替代每条文字的Sequence+4个子Tween。
             // 振幅是表现尺度而非玩法数值；临界缩放和上浮范围仍交给BoardView预约避让。
-            _animationMode = 0; _animationStart = start; _animationEnd = end; _animationDuration = duration; _animationAttack = attack;
+            _animationMode = 0;
+            _animationStart = start;
+            _animationEnd = end;
+            _animationDuration = duration;
+            _animationAttack = attack;
             _animation = DOTween.To(_readProgress, _writeProgress, 1f, duration).SetEase(Ease.Linear).OnComplete(_finishAnimation);
         }
-
         /// <summary>只播放已发生攻击的轨迹；扩大弹头、附带短尾与发射脉冲，动画绝不再次造成伤害。</summary>
         public void ShowProjectile(Vector3 source, Vector3 target, System.Action<BattleEffectView> onFinished, GameSide targetSide = GameSide.Enemy, PieceKind sourceKind = PieceKind.Archer)
         {
             ResetVisual(source, onFinished);
             Vector3 direction = target - source;
             float distance = direction.magnitude;
+
             // ★ 同格/极短距离没有可飞行空间：直接结束，禁止在原点播放一根“没有位移的子弹”。
             if (distance < 0.05f)
             {
-                Finish(); return;
+                Finish();
+                return;
             }
             Vector3 unit = direction / distance;
             float inset = Mathf.Min(Consts.CellSize * 0.46f, distance * 0.30f);
@@ -349,8 +425,13 @@ namespace RevGame.View
             ProjectileAppearance style = null;
             for (int i = 0; i < projectileStyles.Length; i++)
             {
-                if (projectileStyles[i].Kind == sourceKind) { style = projectileStyles[i]; break; }
+                if (projectileStyles[i].Kind == sourceKind)
+                {
+                    style = projectileStyles[i];
+                    break;
+                }
             }
+
             if (style == null || style.Sprite == null || style.BodyMaterial == null || style.TrailMaterial == null)
             {
                 RevLog.Warn("远程弹道缺少职业素材：" + sourceKind, "RevGame");
@@ -382,16 +463,19 @@ namespace RevGame.View
             transform.localScale = normalScale * 0.88f;
             SetProjectileAlpha(1f);
             // 一条Tween同时推进飞行、发射脉冲和末段淡出；三个Sprite随同一个池对象回收，不额外创建计时器。
-            _animationMode = 1; _animationStart = source; _animationEnd = target; _animationScale = normalScale;
+            _animationMode = 1;
+            _animationStart = source;
+            _animationEnd = target;
+            _animationScale = normalScale;
             _animation = DOTween.To(_readProgress, _writeProgress, 1f, duration).SetEase(Ease.Linear).OnComplete(_finishAnimation);
         }
-
         /// <summary>生命周期保险：寿命到期先停止旧动画再归池；不能让失去Tween驱动的弹头永久停留在棋子上。</summary>
         private void LateUpdate()
         {
             if (_projectileActive && Time.time >= _projectileExpiresAt)
             {
-                StopAnimation(); Finish();
+                StopAnimation();
+                Finish();
             }
         }
 
@@ -413,12 +497,12 @@ namespace RevGame.View
             layer.transform.localRotation = Quaternion.identity;
             layer.transform.localScale = scale;
         }
-
         private void SetProjectileAlpha(float alpha)
         {
             Color color = _projectileColor;
             color.a = alpha;
             spriteRenderer.color = color;
+
             if (projectileOutline != null)
             {
                 projectileOutline.color = _magicAura ? new Color(1, 1, 1, alpha) : new Color(0.12f, 0.07f, 0.02f, alpha * 0.85f);
@@ -454,7 +538,13 @@ namespace RevGame.View
             bool shield = kind == PieceKind.Shield;
             Sprite art = shield ? shieldImpact : swordSlash;
             Material material = shield ? shieldMaterial : (kind == PieceKind.Assassin ? assassinMaterial : swordMaterial);
-            if (art == null || material == null) { RevLog.Error("近战特效资源未装配", "RevGame"); Finish(); return; }
+
+            if (art == null || material == null)
+            {
+                RevLog.Error("近战特效资源未装配", "RevGame");
+                Finish();
+                return;
+            }
             damageText.gameObject.SetActive(false);
             spriteRenderer.enabled = true;
             spriteRenderer.sprite = art;
@@ -470,18 +560,26 @@ namespace RevGame.View
             Vector3 baseScale = new Vector3((shield ? 1.2f : 1.6f) / art.bounds.size.x, 1.6f / art.bounds.size.y, 1);
             _projectileActive = true;
             _projectileExpiresAt = Time.time + .5f;
-            _animationMode = 2; _animationStart = origin; _animationDirection = direction; _animationAngle = angle; _animationScale = baseScale; _animationShield = shield;
+            _animationMode = 2;
+            _animationStart = origin;
+            _animationDirection = direction;
+            _animationAngle = angle;
+            _animationScale = baseScale;
+            _animationShield = shield;
             _animation = DOTween.To(_readProgress, _writeProgress, 1f, .34f).SetEase(Ease.OutCubic).OnComplete(_finishAnimation);
         }
-
         // Tween稳定getter只读0～1进度；不捕获每发起点、终点或回调。
-        private float ReadAnimationProgress() { return _progress; }
+        private float ReadAnimationProgress()
+        {
+            return _progress;
+        }
         /// <summary>统一单Tween驱动，只有当前模式更新对应图层；动画不提交伤害或占格。</summary>
         // 一条Tween驱动所有属性：根据模式读本发参数字段，计算位移、缩放、抖动和透明度。
         // value为0～1，秒数=value×持续时间；这个方法不发伤害事件、不改棋子模型。
         private void WriteAnimationProgress(float value)
         {
             _progress = value;
+
             // 飘字把“弹出放大→轻抖→上浮→淡出”合并到同一进度；不是删除动画阶段来换性能。
             if (_animationMode == 0)
             {
@@ -495,27 +593,30 @@ namespace RevGame.View
                 SetNumberAlpha(Mathf.Clamp01((_animationDuration - seconds) / .28f));
             }
             // 弹道仍匀速从修正后的起点飞到终点，起步脉冲与末段淡出复用同一进度。
-            else if (_animationMode == 1)
-            {
-                transform.position = Vector3.Lerp(_animationStart, _animationEnd, value);
-                float pulse = value < .25f ? Mathf.Lerp(.88f, 1.08f, value / .25f) : Mathf.Lerp(1.08f, 1f, (value - .25f) / .75f);
-                transform.localScale = _animationScale * pulse;
-                SetProjectileAlpha(Mathf.Clamp01((1f - value) / .18f));
-            }
             else
-            {
-                transform.position = _animationStart + _animationDirection * value * .22f;
-                _projectileProperties.SetFloat("_Progress", value); spriteRenderer.SetPropertyBlock(_projectileProperties);
-                transform.rotation = Quaternion.Euler(0, 0, _animationAngle + (_animationShield ? 0 : Mathf.Lerp(-60, 65, value)));
-                transform.localScale = _animationScale * Mathf.Lerp(.55f, 1.2f, Mathf.Sin(value * Mathf.PI * .5f));
-                spriteRenderer.color = new Color(1, 1, 1, Mathf.Clamp01((1 - value) * 2.4f));
-            }
-        }
 
+                if (_animationMode == 1)
+                {
+                    transform.position = Vector3.Lerp(_animationStart, _animationEnd, value);
+                    float pulse = value < .25f ? Mathf.Lerp(.88f, 1.08f, value / .25f) : Mathf.Lerp(1.08f, 1f, (value - .25f) / .75f);
+                    transform.localScale = _animationScale * pulse;
+                    SetProjectileAlpha(Mathf.Clamp01((1f - value) / .18f));
+                }
+                else
+                {
+                    transform.position = _animationStart + _animationDirection * value * .22f;
+                    _projectileProperties.SetFloat("_Progress", value);
+                    spriteRenderer.SetPropertyBlock(_projectileProperties);
+                    transform.rotation = Quaternion.Euler(0, 0, _animationAngle + (_animationShield ? 0 : Mathf.Lerp(-60, 65, value)));
+                    transform.localScale = _animationScale * Mathf.Lerp(.55f, 1.2f, Mathf.Sin(value * Mathf.PI * .5f));
+                    spriteRenderer.color = new Color(1, 1, 1, Mathf.Clamp01((1 - value) * 2.4f));
+                }
+        }
         /// <summary>文字离边缘留出可读空间；顶排命中时缩短上浮距离，防止数字被手机屏幕裁掉。</summary>
         private static Vector3 KeepTextOnScreen(Vector3 position, float top = 0.88f)
         {
             Camera camera = Camera.main;
+
             if (camera == null)
             {
                 return position;
@@ -526,7 +627,6 @@ namespace RevGame.View
             viewport.y = Mathf.Clamp(viewport.y, 0.08f, top);
             return camera.ViewportToWorldPoint(viewport);
         }
-
         // 新借用先停止旧Tween、隐藏旧层，再覆盖回调/进度/透明度/变换。
         // 先Kill再写字段防止旧setter读取新参数；文字缓存可保留，因为ConfigureText会校验它。
         private void ResetVisual(Vector3 position, System.Action<BattleEffectView> onFinished)
@@ -543,15 +643,16 @@ namespace RevGame.View
             transform.localScale = Vector3.one;
             transform.rotation = Quaternion.identity;
         }
-
         // 动画淡出与遮挡淡化相互独立；相同值跳过颜色写入，但改变时仍更新正文和描边。
         private void SetNumberAlpha(float alpha)
         {
-            if (Mathf.Approximately(_fadeAlpha, alpha)) { return; }
+            if (Mathf.Approximately(_fadeAlpha, alpha))
+            {
+                return;
+            }
             _fadeAlpha = alpha;
             ApplyNumberAlpha();
         }
-
         // 最终alpha=动画淡出×遮挡透明度，范围0～1。
         // 否则新字避让刷新可能把快消失的旧字恢复到100%不透明，产生闪亮或叠字。
         private void ApplyNumberAlpha()
@@ -565,14 +666,12 @@ namespace RevGame.View
                 outline.color = new Color(0f, 0f, 0f, alpha);
             }
         }
-
         /// <summary>满屏时由棋盘替换最旧反馈；先停止动画，再走同一回池回调，不残留旧Tween。</summary>
         public void RetireFeedback()
         {
             StopAnimation();
             Finish();
         }
-
         // 先清活动/图层，再摘掉旧回调引用并通知棋盘，最后RevPool.Return。
         // 对象回池后可能立即借给另一发，之后不可再读写旧效果字段。
         private void Finish()
@@ -588,7 +687,6 @@ namespace RevGame.View
             callback?.Invoke(this);
             RevPool.Return(this, 0);
         }
-
         // 先置空句柄再Kill(false)，停止旧动画但不强制完成；避免完成回调二次归池或误用被池复用的Tween。
         private void StopAnimation()
         {
@@ -596,9 +694,13 @@ namespace RevGame.View
             _animation = null;
             previous?.Kill(false);
         }
-
         // 借出时清旧活动层和动画；正式Show会覆盖本发参数，Awake创建的稳定委托继续复用。
-        public void OnPoolGet() { StopAnimation(); HideProjectileLayers(); spriteRenderer.enabled = false; }
+        public void OnPoolGet()
+        {
+            StopAnimation();
+            HideProjectileLayers();
+            spriteRenderer.enabled = false;
+        }
         // 归还时清Tween、活动层、参数块和棋盘回调；保留有限的文字/字号/局部字形缓存。
         // 保留字符串只省下一次相同字形的重建，不意味着该字仍在屏幕渲染。
         public void OnPoolReturn()
@@ -608,8 +710,15 @@ namespace RevGame.View
             HideProjectileLayers();
             spriteRenderer.enabled = false;
             spriteRenderer.SetPropertyBlock(null);
-            if (projectileOutline != null) { projectileOutline.SetPropertyBlock(null); }
-            if (projectileTrail != null) { projectileTrail.SetPropertyBlock(null); }
+
+            if (projectileOutline != null)
+            {
+                projectileOutline.SetPropertyBlock(null);
+            }
+            if (projectileTrail != null)
+            {
+                projectileTrail.SetPropertyBlock(null);
+            }
             _projectileActive = false;
             _onFinished = null;
             IsFloatingText = IsAttackText = false;
@@ -627,7 +736,10 @@ namespace RevGame.View
         // 即使内容与字号相同，也不能继续使用字体重建前的范围。
         private void OnFontTextureRebuilt(Font font)
         {
-            if (damageText.font != font) { return; }
+            if (damageText.font != font)
+            {
+                return;
+            }
             _localTextBoundsValid = false;
             _rectFrame = -1;
         }

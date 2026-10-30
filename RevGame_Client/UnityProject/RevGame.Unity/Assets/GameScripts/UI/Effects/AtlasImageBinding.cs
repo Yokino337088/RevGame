@@ -14,18 +14,24 @@ namespace RevGame.UI
     {
         /// <summary>当前控件，Awake缓存一次；不是跨场景持有的资源租约。</summary>
         private Image _image;
-        private void Awake() { _image = GetComponent<Image>(); }
+        private void Awake()
+        {
+            _image = GetComponent<Image>();
+        }
         private void OnEnable()
         {
             SpriteAtlasManager.atlasRegistered += OnAtlasRegistered;
             _image.SetAllDirty();
         }
-        private void OnDisable() { SpriteAtlasManager.atlasRegistered -= OnAtlasRegistered; }
-
+        private void OnDisable()
+        {
+            SpriteAtlasManager.atlasRegistered -= OnAtlasRegistered;
+        }
         /// <summary>只刷新能够绑定到这张图集的Image；SetAllDirty同时重算九宫格UV和上传主纹理。</summary>
         private void OnAtlasRegistered(SpriteAtlas atlas)
         {
             Sprite sprite = _image.overrideSprite != null ? _image.overrideSprite : _image.sprite;
+
             if (sprite != null && atlas.CanBindTo(sprite))
             {
                 _image.SetAllDirty();

@@ -14,8 +14,10 @@ namespace RevGame.Services
     public sealed partial class BattleService
     {
         /// <summary>当前选中的己方棋子编号。0 是「没有选择」，不是有效棋子编号。</summary>
-        public int SelectedPieceId { get; private set; }
-
+        public int SelectedPieceId
+        {
+            get; private set;
+        }
         /// <summary>
         /// 按编号找仍在存活名单里的选中棋子；已死亡则视为未选中。
         /// 返回 null 时调用方按“没选棋子”处理，不能继续对旧坐标换位。
@@ -24,7 +26,6 @@ namespace RevGame.Services
         {
             return _playerPieces.Find(piece => piece.Id == SelectedPieceId && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen);
         }
-
         /// <summary>
         /// 手机单指操作：点己方棋子选中/取消；点空格落牌或换位。
         /// 准备期可以落手牌；战斗期只允许移动已在场的己方棋，不能偷打剩余手牌或眼位石。
@@ -36,21 +37,22 @@ namespace RevGame.Services
             {
                 return Reject("结算期间不能调整棋子，请先进入下一回合");
             }
-
             if (!pos.IsInside(Consts.BoardSize))
             {
                 return Reject("这个位置在棋盘之外");
             }
-
             Piece occupant = _board.GetPiece(pos);
+
             if (occupant != null)
             {
-                if (occupant.BossHidden || occupant.BossFrozen) { return Reject("棋子正在黑洞或冰封中，状态结束后才能调整"); }
+                if (occupant.BossHidden || occupant.BossFrozen)
+                {
+                    return Reject("棋子正在黑洞或冰封中，状态结束后才能调整");
+                }
                 if (occupant.Side != GameSide.Player)
                 {
                     return SetHelperTarget(occupant.Id);
                 }
-
                 SelectedPieceId = SelectedPieceId == occupant.Id ? 0 : occupant.Id;
                 SelectedCardId = 0;
                 EyeStoneSelected = false;
@@ -58,8 +60,8 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent(Events.SelectionChanged);
                 return true;
             }
-
             Piece selected = FindSelectedPiece();
+
             if (selected != null)
             {
                 // 自动AI仍遵守保眼和移动冷却；玩家主动操作允许拆眼，不拿自动移动限制来拒绝手动换位。
@@ -69,9 +71,9 @@ namespace RevGame.Services
                 {
                     return Reject("目标区域放不下整颗棋子：请检查占格和棋盘边界");
                 }
-
                 SelectedPieceId = 0;
                 LastError = string.Empty;
+
                 // 手动指令优先：暂缓下一次自动移动/整队，避免刚拖开的棋当步又被AI拉回去。
                 if (Phase == GamePhase.Battle)
                 {
@@ -82,7 +84,6 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent(Events.SelectionChanged);
                 return true;
             }
-
             if (Phase == GamePhase.Battle)
             {
                 return Reject("请先点击一颗存活的己方棋子，再点击空格换位");

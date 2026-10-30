@@ -38,14 +38,22 @@ namespace RevGame.Flow
         private int _victoryStoryVersion;
         /// <summary>开发GM仅预览表现；不派结算完成、不写剧情进度、不加积分，结束还原活棋。</summary>
         private bool _victoryPreview;
-        public bool IsBossVictoryPlaying { get; private set; }
+        public bool IsBossVictoryPlaying
+        {
+            get; private set;
+        }
         public string BossVictoryStage { get; private set; } = "idle";
-        public bool FinalBossStoryShown { get; private set; }
-
+        public bool FinalBossStoryShown
+        {
+            get; private set;
+        }
         /// <summary>胜利事实先于结算UI到达；立即锁流程，防玩家/AI在演出前点击继续。</summary>
         private void OnBossDefeated(BossDefeatedInfo info)
         {
-            if (_disposed || IsBossVictoryPlaying || Screen != GameScreen.Battle) { return; }
+            if (_disposed || IsBossVictoryPlaying || Screen != GameScreen.Battle)
+            {
+                return;
+            }
             _victoryPreview = false;
             StartVictorySequence(info);
         }
@@ -63,21 +71,34 @@ namespace RevGame.Flow
             RevMono.AddUpdate(TickVictorySequence, owner: this);
             _victoryHandle = _victoryRunner.Play(BossVictorySequence, this);
         }
-        private void TickVictorySequence() { _victoryRunner?.Tick(Time.unscaledDeltaTime); }
+        private void TickVictorySequence()
+        {
+            _victoryRunner?.Tick(Time.unscaledDeltaTime);
+        }
         private Vector3 VictoryCenter
         {
-            get { return _victoryInfo.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) + new Vector3(_victoryInfo.BodySize - 1, _victoryInfo.BodySize - 1, 0) * Consts.CellSize * .5f; }
+            get
+            {
+                return _victoryInfo.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) + new Vector3(_victoryInfo.BodySize - 1, _victoryInfo.BodySize - 1, 0) * Consts.CellSize * .5f;
+            }
         }
         private async RevTask VictoryFocusAsync()
         {
             BossVictoryStage = "focus";
-            if (_victoryBoard == null || _victoryPresentation == null) { throw new InvalidOperationException("Boss演出场景接线缺失"); }
+
+            if (_victoryBoard == null || _victoryPresentation == null)
+            {
+                throw new InvalidOperationException("Boss演出场景接线缺失");
+            }
             if (_victoryPreview)
             {
                 _victoryBoard.BorrowVictoryBossForPreview(_victoryInfo);
                 SetPrepareHidden(true);
             }
-            else { _victoryBoard.PrepareVictoryBoss(_victoryInfo); }
+            else
+            {
+                _victoryBoard.PrepareVictoryBoss(_victoryInfo);
+            }
             // 轻慢动作只比当前速度慢30%；镜头Tween使用非缩放时间，避免拉近/拉回被倍率再次拖慢。
             Time.timeScale = _victoryOldTimeScale * .7f;
             await VictoryTweenAsync(.4f, value => _victoryPresentation.SetBossFocus(VictoryCenter, _victoryInfo.BodySize, Mathf.SmoothStep(0, 1, value)));
@@ -96,7 +117,7 @@ namespace RevGame.Flow
             BossVictoryStage = "wave";
             await VictoryTweenAsync(1.7f, value =>
             {
-                _victoryPresentation.SetBossFocus(VictoryCenter, _victoryInfo.BodySize, 1f - Mathf.SmoothStep(0,1,Mathf.Clamp01(value * 4)));
+                _victoryPresentation.SetBossFocus(VictoryCenter, _victoryInfo.BodySize, 1f - Mathf.SmoothStep(0, 1, Mathf.Clamp01(value * 4)));
                 _victoryBoard.SetVictoryBoardWave(value, VictoryCenter);
             });
             _victoryBoard.ClearVictoryBoardWave();
@@ -111,29 +132,51 @@ namespace RevGame.Flow
             CheckVictoryVersion(version);
             BossDefeatedInfo snapshot = _victoryInfo;
             BossVictoryPanel panel = await RevUI.OpenAsync<BossVictoryPanel, BossDefeatedInfo>(snapshot);
+
             if (version != _victoryVersion || _disposed)
             {
                 // 资源加载可能晚于取消；仅关闭携带本次事实快照的实例，不能关闭下一次演出。
-                if (panel != null && ReferenceEquals(panel.Data, snapshot)) { RevUI.Close(panel); }
+                if (panel != null && ReferenceEquals(panel.Data, snapshot))
+                {
+                    RevUI.Close(panel);
+                }
                 throw new OperationCanceledException("Boss弹幕请求已过期");
             }
             CheckVictoryVersion(version);
-            if (panel == null) { throw new InvalidOperationException("Boss积分弹幕加载失败"); }
+
+            if (panel == null)
+            {
+                throw new InvalidOperationException("Boss积分弹幕加载失败");
+            }
             BossVictoryStage = "banner";
             await VictoryTweenAsync(2.2f, _ => { });
             RevUI.Close<BossVictoryPanel>();
         }
         private async RevTask VictoryStoryAsync()
         {
-            if (_victoryPreview) { return; }
+            if (_victoryPreview)
+            {
+                return;
+            }
             BossVictoryStage = "story";
             int version = _victoryVersion;
             PlayStory("boss_after_" + _victoryInfo.Chapter, null);
             _victoryStoryVersion = _storyVersion;
-            while (IsStoryPlaying) { CheckVictoryVersion(version); await RevTask.Yield(); }
+            while (IsStoryPlaying)
+            {
+                CheckVictoryVersion(version);
+                await RevTask.Yield();
+            }
             CheckVictoryVersion(version);
-            if (!string.IsNullOrEmpty(LastError)) { throw new InvalidOperationException(LastError); }
-            if (_victoryInfo.Chapter == Consts.ChapterCount) { FinalBossStoryShown = true; }
+
+            if (!string.IsNullOrEmpty(LastError))
+            {
+                throw new InvalidOperationException(LastError);
+            }
+            if (_victoryInfo.Chapter == Consts.ChapterCount)
+            {
+                FinalBossStoryShown = true;
+            }
         }
 
         /// <summary>每次只拥有一个表现Tween，非缩放时间避免慢动作把序列变成无限等待；版本检查阻止取消后提交。</summary>
@@ -143,48 +186,94 @@ namespace RevGame.Flow
             float progress = 0;
             Tween tween = DOTween.To(() => progress, value => { progress = value; update(value); }, 1f, seconds).SetUpdate(true).SetEase(Ease.Linear);
             _victoryTween = tween;
-            while (tween.IsActive() && tween.IsPlaying()) { CheckVictoryVersion(version); await RevTask.Yield(); }
+            while (tween.IsActive() && tween.IsPlaying())
+            {
+                CheckVictoryVersion(version);
+                await RevTask.Yield();
+            }
             CheckVictoryVersion(version);
-            if (progress < .999f) { throw new InvalidOperationException("Boss演出动画被提前停止"); }
-            if (ReferenceEquals(_victoryTween, tween)) { _victoryTween = null; }
+
+            if (progress < .999f)
+            {
+                throw new InvalidOperationException("Boss演出动画被提前停止");
+            }
+            if (ReferenceEquals(_victoryTween, tween))
+            {
+                _victoryTween = null;
+            }
         }
         private void CheckVictoryVersion(int version)
-        { if (_disposed || !IsBossVictoryPlaying || version != _victoryVersion) { throw new OperationCanceledException("Boss演出已取消"); } }
+        {
+            if (_disposed || !IsBossVictoryPlaying || version != _victoryVersion)
+            {
+                throw new OperationCanceledException("Boss演出已取消");
+            }
+        }
 
         /// <summary>finally即时清理，只停止本演出创建的动画，不使用KillAll/全局序列清空。</summary>
         private void CleanupVictoryVisuals()
         {
-            _victoryTween?.Kill(false); _victoryTween = null;
+            _victoryTween?.Kill(false);
+            _victoryTween = null;
             RevSound.Stop(_victorySound);
             _victorySound = default;
             RevSound.Unload("BossExit");
             Time.timeScale = _victoryOldTimeScale;
-            if (_victoryPresentation != null) { _victoryPresentation.ClearBossFocus(); }
-            if (_victoryBoard != null) { _victoryBoard.ReleaseVictoryBoss(); _victoryBoard.ClearVictoryBoardWave(); }
+
+            if (_victoryPresentation != null)
+            {
+                _victoryPresentation.ClearBossFocus();
+            }
+            if (_victoryBoard != null)
+            {
+                _victoryBoard.ReleaseVictoryBoss();
+                _victoryBoard.ClearVictoryBoardWave();
+            }
             RevUI.Close<BossVictoryPanel>();
-            if (_victoryPreview) { SetPrepareHidden(false); }
+
+            if (_victoryPreview)
+            {
+                SetPrepareHidden(false);
+            }
         }
         private void FinishVictory(bool success)
         {
-            if (!IsBossVictoryPlaying) { return; }
+            if (!IsBossVictoryPlaying)
+            {
+                return;
+            }
             IsBossVictoryPlaying = false;
             BossVictoryStage = success ? "completed" : "cancelled";
             RevMono.RemoveUpdate(TickVictorySequence);
+
             if (!success && !_disposed)
             {
                 RevLog.Warn("Boss演出未完整播放，已恢复视觉并开放真实结算", "RevGame");
-                if (_victoryStoryVersion != 0 && _storyVersion == _victoryStoryVersion) { CancelStory(); }
+
+                if (_victoryStoryVersion != 0 && _storyVersion == _victoryStoryVersion)
+                {
+                    CancelStory();
+                }
             }
+
             BossDefeatedInfo info = _victoryInfo;
             bool preview = _victoryPreview;
             _victoryPreview = false;
-            _victoryBoard = null; _victoryPresentation = null; _victoryInfo = null;
+            _victoryBoard = null;
+            _victoryPresentation = null;
+            _victoryInfo = null;
+
             if (!_disposed && !preview && info != null && Screen == GameScreen.Battle)
-            { RevEvent.DispatchEvent<BossDefeatedInfo>(Events.BossVictoryPresentationFinished, info); }
+            {
+                RevEvent.DispatchEvent<BossDefeatedInfo>(Events.BossVictoryPresentationFinished, info);
+            }
         }
         private void CancelBossVictory()
         {
-            if (!IsBossVictoryPlaying) { return; }
+            if (!IsBossVictoryPlaying)
+            {
+                return;
+            }
             ++_victoryVersion;
             _victoryHandle.Stop();
             _victoryRunner?.Tick(0);

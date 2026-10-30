@@ -31,7 +31,6 @@ namespace RevGame.View
             RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, OnBossTelegraph, owner: this);
             RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, OnBossCast, owner: this);
         }
-
         /// <summary>蓄力预警：画危险区域；Boss 身体做一次“蓄力”姿态，让玩家知道是谁在出招。</summary>
         private void OnBossTelegraph(BossSkillInfo info)
         {
@@ -43,10 +42,12 @@ namespace RevGame.View
             {
                 boss.PlayAttackPulse();
             }
-            if (BossSkillCatalog.IsSpecial(info.Kind) && boss != null) { boss.PlayBossCharge(info.Kind, info.Windup); }
+            if (BossSkillCatalog.IsSpecial(info.Kind) && boss != null)
+            {
+                boss.PlayBossCharge(info.Kind, info.Windup);
+            }
             SpawnBossFx(info, true);
         }
-
         /// <summary>
         /// 技能命中：先处理 Boss 图像本身（瞬移要立刻对齐，不能平滑滑过去），再播放命中特效。
         /// 服务端瞬移时已经派发过 PieceMoved，BoardView 会开始平滑移动；这里用 SnapTo 覆盖成瞬间到位。
@@ -69,12 +70,15 @@ namespace RevGame.View
             }
             if (BossSkillCatalog.IsSpecial(info.Kind))
             {
-                if (boss != null) { boss.PlayBossCharge(info.Kind, .6f, windingUp: false); }
+                if (boss != null)
+                {
+                    boss.PlayBossCharge(info.Kind, .6f, windingUp: false);
+                }
             }
+
             PlayBossBoardWave(info);
             SpawnBossFx(info, false);
         }
-
         /// <summary>
         /// 全部主动通用技能也推动棋格。几何技能复用规则Contains，近身/环绕按同一身体与半径定义画格面；
         /// 波浪只是已经施放后的动效，不增加伤害范围。最多81格、每格一条Tween，旧冲击不会叠加失控。
@@ -91,35 +95,51 @@ namespace RevGame.View
             {
                 BoardPos pos = cell.Position;
                 bool affected;
+
                 if (exclusive)
                 {
                     affected = BossExclusiveGeometry.Contains(info.Kind, info.A, info.B, info.C, info.Radius, info.Index, pos);
                 }
-                else if (BossSkillCatalog.IsExpanded(info.Kind))
-                {
-                    affected = BossExpandedGeometry.Contains(info.Kind,info.A,info.B,info.C,info.Radius,info.Index,pos);
-                }
-                else if (info.Kind >= BossSkillKind.MeteorShower)
-                {
-                    affected = BossPatternGeometry.Contains(info.Kind, info.Origin, info.OriginSize, plan, info.Radius, info.Index, pos);
-                }
                 else
+
+                    if (BossSkillCatalog.IsExpanded(info.Kind))
+                    {
+                        affected = BossExpandedGeometry.Contains(info.Kind, info.A, info.B, info.C, info.Radius, info.Index, pos);
+                    }
+                    else
+
+                        if (info.Kind >= BossSkillKind.MeteorShower)
+                        {
+                            affected = BossPatternGeometry.Contains(info.Kind, info.Origin, info.OriginSize, plan, info.Radius, info.Index, pos);
+                        }
+                        else
+                        {
+                            affected = CommonBossTileAffected(info, focus, pos);
+                        }
+                if (!affected)
                 {
-                    affected = CommonBossTileAffected(info, focus, pos);
+                    continue;
                 }
-                if (!affected) { continue; }
                 // 9×9棋盘最远延迟限制为0.24秒，远处棋格也能及时响应；每格碰撞与数据坐标完全不变。
                 float delay = Mathf.Min(.24f, (Mathf.Abs(pos.X - focus.X) + Mathf.Abs(pos.Y - focus.Y)) * .024f);
                 cell.PlayBossTile(tint, .88f, delay);
             }
         }
-
         /// <summary>原始九招没有逐格Contains，此处只计算“震动落在哪些格”的视觉集合，不参与结算。</summary>
         private static bool CommonBossTileAffected(BossSkillInfo info, BoardPos focus, BoardPos pos)
         {
-            if (info.Kind == BossSkillKind.BulletRing || info.Kind == BossSkillKind.Enrage) { return true; }
-            if (info.Kind == BossSkillKind.Snipe) { return pos == info.A; }
-            if (info.Kind == BossSkillKind.SoulDrain) { return pos == info.A || pos == info.B; }
+            if (info.Kind == BossSkillKind.BulletRing || info.Kind == BossSkillKind.Enrage)
+            {
+                return true;
+            }
+            if (info.Kind == BossSkillKind.Snipe)
+            {
+                return pos == info.A;
+            }
+            if (info.Kind == BossSkillKind.SoulDrain)
+            {
+                return pos == info.A || pos == info.B;
+            }
             if (info.Kind == BossSkillKind.LaserSpin)
             {
                 float halfBody = (info.OriginSize - 1) * .5f;
@@ -132,7 +152,6 @@ namespace RevGame.View
             return pos.X >= focus.X - reach && pos.X < focus.X + size + reach
                 && pos.Y >= focus.Y - reach && pos.Y < focus.Y + size + reach;
         }
-
         /// <summary>
         /// 从对象池取特效并播放。异步加载回来时要核对“批次”：
         /// 期间如果换了回合（_effectGeneration 变化）或离开了战斗（_released），直接回池，不补播旧技能。
@@ -140,12 +159,18 @@ namespace RevGame.View
         private void SpawnBossFx(BossSkillInfo info, bool telegraph)
         {
             // 预算只限制表现，不参与伤害或技能释放；格面波浪仍会按实际事件展示本次命中。
-            if (_bossFx.Count + _pendingBossFx >= MaxBossFxGroups) { return; }
+            if (_bossFx.Count + _pendingBossFx >= MaxBossFxGroups)
+            {
+                return;
+            }
             int generation = _effectGeneration;
             _pendingBossFx++;
             GamePoolRequests.GetAsync<BossSkillFxView>(fx =>
             {
-                if (generation == _effectGeneration) { _pendingBossFx = Mathf.Max(0, _pendingBossFx - 1); }
+                if (generation == _effectGeneration)
+                {
+                    _pendingBossFx = Mathf.Max(0, _pendingBossFx - 1);
+                }
                 if (fx == null)
                 {
                     RevLog.Warn("Boss 技能特效加载失败：" + info.Kind, "RevGame");
@@ -160,7 +185,6 @@ namespace RevGame.View
                 fx.Play(info, telegraph, OnBossFxFinished);
             }, _viewRoot);
         }
-
         /// <summary>动画完整播完才会走到这里；中途回池用 Kill(false)，不会重复回池。</summary>
         private void OnBossFxFinished(BossSkillFxView fx)
         {
@@ -173,9 +197,16 @@ namespace RevGame.View
         /// <summary>换回合 / 结算 / 退出时立即收回所有 Boss 特效。</summary>
         private void OnBossStatusChanged(int id)
         {
-            if (_released || !_pieces.TryGetValue(id, out PieceView view)) { return; }
+            if (_released || !_pieces.TryGetValue(id, out PieceView view))
+            {
+                return;
+            }
             var piece = FindPiece(id);
-            if (piece != null) { view.SetBossStatus(piece.BossHidden, piece.BossFrozen, piece.BossAttackFactor < 1f || piece.BossSpeedFactor < 1f); }
+
+            if (piece != null)
+            {
+                view.SetBossStatus(piece.BossHidden, piece.BossFrozen, piece.BossAttackFactor < 1f || piece.BossSpeedFactor < 1f);
+            }
         }
 
         private void ClearBossFx()
@@ -189,7 +220,10 @@ namespace RevGame.View
             }
             _bossFx.Clear();
             _pendingBossFx = 0;
-            foreach (BoardCellView cell in _cells) { cell.ClearBossTile(); }
+            foreach (BoardCellView cell in _cells)
+            {
+                cell.ClearBossTile();
+            }
         }
     }
 }

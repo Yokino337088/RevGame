@@ -18,16 +18,27 @@ namespace RevGame.Services
             {
                 _firepowerTopology = _board.TopologyVersion;
                 _firepowerAlive = 0;
-                foreach (Piece p in _playerPieces) { if (p.IsAlive) { _firepowerAlive++; } }
+                foreach (Piece p in _playerPieces)
+                {
+                    if (p.IsAlive)
+                    {
+                        _firepowerAlive++;
+                    }
+                }
             }
-            if (_firepowerAlive <= Balance.PlayerFirepowerSoftCount) { return 1f; }
+            if (_firepowerAlive <= Balance.PlayerFirepowerSoftCount)
+            {
+                return 1f;
+            }
             // 更多棋子仍提供占格、封气与生命；单位火力收益递减，防六十颗远程同时输出造成秒杀。
             double ratio = Balance.PlayerFirepowerSoftCount / (double)_firepowerAlive;
-            return (float)Math.Max(Balance.PlayerFirepowerMinScale, Math.Pow(ratio,Balance.PlayerFirepowerExponent));
+            return (float)Math.Max(Balance.PlayerFirepowerMinScale, Math.Pow(ratio, Balance.PlayerFirepowerExponent));
         }
         /// <summary>基础来源不同，但最终减伤/护盾/扣血出口相同；百分比技能不能误套普攻加成。</summary>
-        private enum DamageBasis { Fixed, Attack, BossSkill, MaxHp, CurrentHp }
-
+        private enum DamageBasis
+        {
+            Fixed, Attack, BossSkill, MaxHp, CurrentHp
+        }
         /// <summary>值类型请求只存本次同步结算的上下文；Factor是无量纲倍率，Floor是最少基础伤害，禁止跨帧持有棋子引用。</summary>
         private readonly struct DamageRequest
         {
@@ -39,38 +50,61 @@ namespace RevGame.Services
             public readonly bool FromSkill;
             public DamageRequest(Piece target, DamageBasis basis, BattleDamageKind kind, Piece attacker = null, float factor = 1f, int floor = 1, bool fromSkill = true)
             {
-                Target = target; Attacker = attacker; Basis = basis; Kind = kind;
-                Factor = factor; Floor = floor; FromSkill = fromSkill;
+                Target = target;
+                Attacker = attacker;
+                Basis = basis;
+                Kind = kind;
+                Factor = factor;
+                Floor = floor;
+                FromSkill = fromSkill;
             }
         }
-
         /// <summary>计算结果不改变任何状态；盾只在提交时扣一次，Damage已包含全部减伤但尚未触发回血/复活。</summary>
         private readonly struct DamageEvaluation
         {
             public readonly int Damage;
             public readonly bool ConsumeShield;
-            public DamageEvaluation(int damage, bool consumeShield) { Damage = damage; ConsumeShield = consumeShield; }
+            public DamageEvaluation(int damage, bool consumeShield)
+            {
+                Damage = damage;
+                ConsumeShield = consumeShield;
+            }
         }
-
         /// <summary>唯一公式出口；读取当前服务状态，不写棋盘/棋子，不调用随机源，允许AI在同一模拟步多次查询。</summary>
         private DamageEvaluation EvaluateDamage(DamageRequest request)
         {
             Piece target = request.Target;
             Piece attacker = request.Attacker;
-            if (target == null || !target.IsAlive || target.BossHidden || target.BossInvulnerable || _board.FindPiece(target.Id) != target) { return default; }
+
+            if (target == null || !target.IsAlive || target.BossHidden || target.BossInvulnerable || _board.FindPiece(target.Id) != target)
+            {
+                return default;
+            }
             int amount;
+
             if (request.Basis == DamageBasis.Attack || request.Basis == DamageBasis.BossSkill)
             {
-                if (attacker == null || !attacker.IsAlive || request.Factor <= 0f) { return default; }
+                if (attacker == null || !attacker.IsAlive || request.Factor <= 0f)
+                {
+                    return default;
+                }
                 float multiplier = target.IsLocked ? Balance.LockedDamageMultiplier : Balance.BaseDamageMultiplier;
+
                 if (request.Basis == DamageBasis.Attack)
                 {
-                    if (!target.IgnoreEncirclement && target.ConnectedCells <= 1) { multiplier *= Balance.IsolatedDamageMultiplier; }
+                    if (!target.IgnoreEncirclement && target.ConnectedCells <= 1)
+                    {
+                        multiplier *= Balance.IsolatedDamageMultiplier;
+                    }
                     float linked = Math.Min(Balance.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Balance.LinkAttackPerCell);
                     multiplier *= 1f + Math.Max(0f, linked) + ClassBonus(attacker.Side)
                         + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
                     float teamScale = attacker.Side == GameSide.Player ? PlayerFirepowerScale() : 1f;
-                    if (HasHelperProtection(attacker)) { teamScale *= 1f + (IsBossRound ? Balance.HelperBossHealingAttackBonus : Balance.HelperProtectionAttackBonus); }
+
+                    if (HasHelperProtection(attacker))
+                    {
+                        teamScale *= 1f + (IsBossRound ? Balance.HelperBossHealingAttackBonus : Balance.HelperProtectionAttackBonus);
+                    }
                     if (attacker.Side == GameSide.Player && attacker.Def.IsRanged)
                     {
                         // 共鸣只强化远程普攻；不修改图鉴共享数据，不改变敌方或技能伤害。
@@ -89,13 +123,21 @@ namespace RevGame.Services
                     amount = ClampDamage(amount + Math.Max(acceleration, amount * (double)acceleration * Balance.BossAccelerationBonus), 1);
                 }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (request.Basis == DamageBasis.Attack) { amount = ScaleAutomationAttackDamage(attacker, amount); }
+                if (request.Basis == DamageBasis.Attack)
+                {
+                    amount = ScaleAutomationAttackDamage(attacker, amount);
+                }
 #endif
-                if (request.Kind == BattleDamageKind.Critical) { amount = ClampDamage(Math.Ceiling(amount * (double)Balance.CriticalMultiplier), 1); }
+                if (request.Kind == BattleDamageKind.Critical)
+                {
+                    amount = ClampDamage(Math.Ceiling(amount * (double)Balance.CriticalMultiplier), 1);
+                }
             }
+
             else
             {
                 double basis = request.Basis == DamageBasis.MaxHp ? target.MaxHp : request.Basis == DamageBasis.CurrentHp ? target.Hp : 0;
+
                 // 炸弹/区域/炮火都经过这个出口。仅缩放主将的百分比部分，保留固定伤害下限；
                 // 否则单纯增加Boss最大生命也会同比放大支援伤害，厚血仍会被少量支援直接清空。
                 if (request.Basis == DamageBasis.MaxHp && IsBossMaster(target))
@@ -105,13 +147,24 @@ namespace RevGame.Services
                 amount = ClampDamage(basis * request.Factor, request.Floor);
             }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (PlayerInvincible && target.Side == GameSide.Player) { amount = 0; }
+            if (PlayerInvincible && target.Side == GameSide.Player)
+            {
+                amount = 0;
+            }
 #endif
             bool shield = target.Side == GameSide.Player && amount > 0 && target.ShieldCharges > 0;
-            if (shield) { return new DamageEvaluation(0, true); }
-            if (target.Side == GameSide.Player) { amount = ClampDamage(amount * (1d - _prepDamageReduction), 0); }
+
+            if (shield)
+            {
+                return new DamageEvaluation(0, true);
+            }
+            if (target.Side == GameSide.Player)
+            {
+                amount = ClampDamage(amount * (1d - _prepDamageReduction), 0);
+            }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             amount = ScaleAutomationIncomingDamage(target, amount);
+
 #endif
             if (target.Side == GameSide.Player && amount > 0)
             {
@@ -119,10 +172,11 @@ namespace RevGame.Services
             }
             return new DamageEvaluation(amount, false);
         }
-
         /// <summary>边界值统一用double夹紧，防止int溢出造成负伤害；0伤害请求仍然保持0。</summary>
-        private static int ClampDamage(double value, int floor) { return (int)Math.Max(floor, Math.Min(int.MaxValue, value)); }
-
+        private static int ClampDamage(double value, int floor)
+        {
+            return (int)Math.Max(floor, Math.Min(int.MaxValue, value));
+        }
         /// <summary>AI使用非暴击保守预测，不提前消费随机数；能原地复活的眼位棋不会误判为一击永久移除。</summary>
         public bool PredictAttackDefeat(Piece attacker, Piece target)
         {
@@ -130,25 +184,32 @@ namespace RevGame.Services
             return target != null && target.IsAlive && result.Damage >= target.Hp
                 && !(target.Side == GameSide.Player && target.IsEyeGarrison && !target.EyeReviveUsed);
         }
-
         /// <summary>开发夹具的固定伤害也必须走同一计算与提交，不允许绕过盾/复活/计分。</summary>
         private int DamagePiece(Piece target, int amount, Piece attacker = null, bool fromSkill = false, BattleDamageKind damageKind = BattleDamageKind.Normal)
         {
             return ResolveDamage(new DamageRequest(target, DamageBasis.Fixed, damageKind, attacker, floor: Math.Max(0, amount), fromSkill: fromSkill));
         }
-
         /// <summary>唯一提交出口：合法身份 → 公式 → 消费盾 → 扣血 → 回复/复活 → 计分/事件 → 死亡移除。多段伤害逐次结算，不复用过期计算。</summary>
         private int ResolveDamage(DamageRequest request)
         {
             Piece target = request.Target;
-            if (target == null || !target.IsAlive || target.BossHidden || target.BossInvulnerable || _board.FindPiece(target.Id) != target) { return 0; }
+
+            if (target == null || !target.IsAlive || target.BossHidden || target.BossInvulnerable || _board.FindPiece(target.Id) != target)
+            {
+                return 0;
+            }
             DamageEvaluation evaluation = EvaluateDamage(request);
             int amount = evaluation.Damage;
             Piece attacker = request.Attacker;
             bool fromSkill = request.FromSkill;
             BattleDamageKind damageKind = request.Kind;
-            if (evaluation.ConsumeShield) { target.ShieldCharges--; }
+
+            if (evaluation.ConsumeShield)
+            {
+                target.ShieldCharges--;
+            }
             int real = target.TakeDamage(amount);
+
             if (real > 0 && target.Side == GameSide.Player && _prepRecoveryRatio > 0f)
             {
                 // 复苏储备：首次实际受伤后回复一次，用完清零（比例来自 PrepBuffConfig[Recovery].Extra）。
@@ -164,15 +225,20 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
             }
             // 在死亡广播、移除占格、胜负与积分之前处理复活，视图不会被回池，后续伤害仍可真正击杀它。
-            if (!target.IsAlive && target.TryReviveInEye()) { HealRevivedEyeNeighbors(target); }
+            if (!target.IsAlive && target.TryReviveInEye())
+            {
+                HealRevivedEyeNeighbors(target);
+            }
             AwardHitScore(target, attacker, damageKind, real);
             AwardCombatHit(target, attacker, damageKind, real);
             RevEvent.DispatchEvent<int>(Events.DamageResolved, target.Id);
             RevEvent.DispatchEvent<int>(Events.PieceHpChanged, target.Id);
+
             if (!target.IsAlive)
             {
                 _board.Remove(target);
                 MarkEnemyDead(target);
+
                 if (_playerAI.TryGetValue(target.Id, out PlayerAI playerAI))
                 {
                     playerAI.Tick(0f);
@@ -190,7 +256,6 @@ namespace RevGame.Services
                 // 仍在本次DamagePiece返回前撤掉破眼增益，多段技能的后续伤害不会读到旧防御。
                 RefreshGoState();
             }
-
             // 吸血只按实际普攻掉血结算，环境伤害、被盾吸收和重复命中死棋都不能凭空治疗。
             if (request.Basis == DamageBasis.Attack && attacker.Side == GameSide.Player && _prepLifeSteal > 0f && attacker.Heal((int)(real * _prepLifeSteal)) > 0)
             {
@@ -198,6 +263,5 @@ namespace RevGame.Services
             }
             return real;
         }
-
     }
 }

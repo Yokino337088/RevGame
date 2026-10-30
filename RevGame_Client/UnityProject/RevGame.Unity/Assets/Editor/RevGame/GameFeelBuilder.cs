@@ -24,11 +24,13 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return "DOTween 增益提示预制体、手机布局、1.15 单位拼格和点击区域已保存。\n" + GameArtMigration.Audit();
         }
-
         /// <summary>可单独由MCP调用：只更新弹道预制体，不重建场景或其他UI；重复执行复用原节点。</summary>
         public static string ApplyProjectileStyle()
         {
-            if (EditorApplication.isPlaying) { throw new System.InvalidOperationException("请先退出Play再保存弹道预制体"); }
+            if (EditorApplication.isPlaying)
+            {
+                throw new System.InvalidOperationException("请先退出Play再保存弹道预制体");
+            }
             ImportProjectileArt();
             const string path = "Assets/GameRes/Effects/Combat/BattleEffect.prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
@@ -38,8 +40,8 @@ namespace RevGame.Editor
                 var so = new SerializedObject(view);
                 string[] artNames = { "ArcherArrow", "CrossbowBolt", "WaterOrb", "LavaFireball", "HolyOrb" };
                 PieceKind[] kinds = { PieceKind.Archer, PieceKind.Crossbow, PieceKind.MageWater, PieceKind.MageFire, PieceKind.Priest };
-                Vector2[] sizes = { new Vector2(.92f,.17f), new Vector2(.72f,.22f), new Vector2(.56f,.56f), new Vector2(.92f,.58f), new Vector2(.58f,.58f) };
-                Color[] colors = { new Color(.75f,.95f,1), new Color(1,.67f,.24f), new Color(.2f,.8f,1), new Color(1,.24f,.025f), new Color(1,.88f,.36f) };
+                Vector2[] sizes = { new Vector2(.92f, .17f), new Vector2(.72f, .22f), new Vector2(.56f, .56f), new Vector2(.92f, .58f), new Vector2(.58f, .58f) };
+                Color[] colors = { new Color(.75f, .95f, 1), new Color(1, .67f, .24f), new Color(.2f, .8f, 1), new Color(1, .24f, .025f), new Color(1, .88f, .36f) };
                 SerializedProperty styles = so.FindProperty("projectileStyles");
                 styles.arraySize = kinds.Length;
                 for (int i = 0; i < kinds.Length; i++)
@@ -60,9 +62,9 @@ namespace RevGame.Editor
                 so.FindProperty("projectileTrail").objectReferenceValue = ProjectileLayer(root.transform, "projectileTrail", arrow);
                 so.FindProperty("swordSlash").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Melee/SwordSlash.png");
                 so.FindProperty("shieldImpact").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Combat/Melee/ShieldImpact.png");
-                so.FindProperty("swordMaterial").objectReferenceValue = MeleeMaterial("SwordSlash", false, new Color(.18f,.78f,1));
-                so.FindProperty("shieldMaterial").objectReferenceValue = MeleeMaterial("ShieldBash", true, new Color(1,.62f,.08f));
-                so.FindProperty("assassinMaterial").objectReferenceValue = MeleeMaterial("AssassinSlash", false, new Color(.8f,.18f,1));
+                so.FindProperty("swordMaterial").objectReferenceValue = MeleeMaterial("SwordSlash", false, new Color(.18f, .78f, 1));
+                so.FindProperty("shieldMaterial").objectReferenceValue = MeleeMaterial("ShieldBash", true, new Color(1, .62f, .08f));
+                so.FindProperty("assassinMaterial").objectReferenceValue = MeleeMaterial("AssassinSlash", false, new Color(.8f, .18f, 1));
                 SpriteRenderer body = (SpriteRenderer)so.FindProperty("spriteRenderer").objectReferenceValue;
                 body.sprite = arrow;
                 body.sharedMaterial = ProjectileMaterial("ArcherArrow", 0, false, colors[0]);
@@ -77,7 +79,6 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
-
         /// <summary>仅设置本次五张原图的导入规则；图集归属仍由GameSpriteAtlasBuild统一配置。</summary>
         private static void ImportProjectileArt()
         {
@@ -104,33 +105,43 @@ namespace RevGame.Editor
                 importer.SaveAndReimport();
             }
         }
-
         private static Material ArcaneAuraMaterial(string name, int style, Color color)
         {
             Material material = SharedMaterial(name + "Aura", "RevGame/Combat/RangedProjectile");
-            material.SetFloat("_Style", style); material.SetFloat("_Trail", 2); material.SetColor("_Glow", color);
-            EditorUtility.SetDirty(material); return material;
+            material.SetFloat("_Style", style);
+            material.SetFloat("_Trail", 2);
+            material.SetColor("_Glow", color);
+            EditorUtility.SetDirty(material);
+            return material;
         }
-
         private static Material MeleeMaterial(string name, bool shield, Color color)
         {
             Material material = SharedMaterial(name, "RevGame/Combat/MeleeImpact");
-            material.SetFloat("_Shield", shield ? 1 : 0); material.SetColor("_Glow", color);
-            EditorUtility.SetDirty(material); return material;
+            material.SetFloat("_Shield", shield ? 1 : 0);
+            material.SetColor("_Glow", color);
+            EditorUtility.SetDirty(material);
+            return material;
         }
-
         /// <summary>编辑器创建共享资产，运行时只引用；不能以renderer.material克隆来调职业颜色。</summary>
         private static Material SharedMaterial(string name, string shaderName)
         {
             string path = "Assets/GameRes/Material/Combat/" + name + ".mat";
             Shader shader = Shader.Find(shaderName);
-            if (shader == null) { throw new System.InvalidOperationException("缺少Shader：" + shaderName); }
+
+            if (shader == null)
+            {
+                throw new System.InvalidOperationException("缺少Shader：" + shaderName);
+            }
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (material == null) { material = new Material(shader); AssetDatabase.CreateAsset(material,path); }
+
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
             material.shader = shader;
             return material;
         }
-
         private static void ConfigureRegion()
         {
             const string path = "Assets/GameRes/Board/Tile/BoardCell.prefab";
@@ -140,12 +151,11 @@ namespace RevGame.Editor
                 var so = new SerializedObject(root.GetComponent<BoardCellView>());
                 so.FindProperty("hazardMaterial").objectReferenceValue = SharedMaterial("RegionRift", "RevGame/Combat/RegionRift");
                 so.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.SaveAsPrefabAsset(root,path);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
                 AssetDatabase.SaveAssets();
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
-
         /// <summary>材质由预制体直接引用；每种职业共享一对，运行时禁止逐弹道克隆。</summary>
         private static Material ProjectileMaterial(string name, int style, bool trail, Color glow)
         {
@@ -154,7 +164,11 @@ namespace RevGame.Editor
             string path = directory + "/" + name + (trail ? "Trail" : "Body") + ".mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             Shader shader = Shader.Find("RevGame/Combat/RangedProjectile");
-            if (shader == null) { throw new System.InvalidOperationException("远程弹道Shader尚未导入"); }
+
+            if (shader == null)
+            {
+                throw new System.InvalidOperationException("远程弹道Shader尚未导入");
+            }
             if (material == null)
             {
                 material = new Material(shader);
@@ -167,24 +181,27 @@ namespace RevGame.Editor
             EditorUtility.SetDirty(material);
             return material;
         }
-
         /// <summary>编辑器装配时创建一次，运行时只启用/隐藏；不会每次开火都new一个拖尾物体。</summary>
         private static SpriteRenderer ProjectileLayer(Transform parent, string name, Sprite sprite)
         {
             Transform child = parent.Find(name);
+
             if (child == null)
             {
                 child = new GameObject(name).transform;
                 child.SetParent(parent, false);
             }
             SpriteRenderer renderer = child.GetComponent<SpriteRenderer>();
-            if (renderer == null) { renderer = child.gameObject.AddComponent<SpriteRenderer>(); }
+
+            if (renderer == null)
+            {
+                renderer = child.gameObject.AddComponent<SpriteRenderer>();
+            }
             renderer.sprite = sprite;
             renderer.drawMode = SpriteDrawMode.Simple;
             renderer.enabled = false;
             return renderer;
         }
-
         private static void BuildNotice()
         {
             GameObject root = GameAssetBuilder.Rect("BattleEventNotice", null, new Vector2(920, 148), Vector2.zero);

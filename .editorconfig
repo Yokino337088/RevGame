@@ -35,3 +35,16 @@ dotnet_diagnostic.IDE0052.severity = none
 #     真机要稳，请给这类方法加 [Preserve]（UnityEngine.Scripting.PreserveAttribute），
 #     或给业务程序集配 link.xml（本仓库目前还没有 link.xml / [Preserve]，需要时可以补）。
 # ------------------------------------------------------------
+
+# 项目业务if分支按用户示例展开；all防止类/方法/属性大括号被合到行尾。
+[RevGame_Client/UnityProject/RevGame.Unity/Assets/{GameScripts,Editor/RevGame}/**/*.cs]
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_preserve_single_line_blocks = false
+csharp_preserve_single_line_statements = false
+
+[RevGame_Client/Tests/**/*.cs]
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_preserve_single_line_blocks = false
+csharp_preserve_single_line_statements = false

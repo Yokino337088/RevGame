@@ -38,7 +38,7 @@ namespace RevGame.Battle
             -1
         };
         /// <summary>马步的 8 个落点（dx, dy）与对应的"蹩马腿"检查点。</summary>
-        private static readonly int[, ] KnightMoves =
+        private static readonly int[,] KnightMoves =
         {
             {
                 1,
@@ -83,7 +83,6 @@ namespace RevGame.Battle
             GetMoveTargets(board, piece, result);
             return result;
         }
-
         /// <summary>
         /// 高频版本：结果写入调用方持有的列表，进入时Clear，容量保留。
         /// 服务为自己保存缓冲区，AI为一次查询保存局部缓冲区；不要用全局static列表，避免嵌套调用互相覆盖。
@@ -91,22 +90,20 @@ namespace RevGame.Battle
         public static void GetMoveTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
             result.Clear();
+
             if (board == null || piece == null)
             {
                 return;
             }
-
             if (!piece.IsAlive || piece.BossHidden || piece.BossFrozen || piece.IsLocked || piece.EyeCount > 0)
             {
                 return;
             }
-
             if (piece.Size > 1)
             {
                 CollectSlide(board, piece, result, false);
                 return;
             }
-
             switch (piece.Def.Pattern)
             {
                 case MovePattern.Step:
@@ -123,10 +120,8 @@ namespace RevGame.Battle
                     CollectSlide(board, piece, result, false);
                     break;
             }
-
             return;
         }
-
         /// <summary>
         /// 取这颗棋子**能攻击到的敌方棋子位置**。
         /// 我方全体守阵攻击：近战优先接触目标，没有接触目标时援击全盘敌人；远程始终全盘搜敌。
@@ -138,7 +133,6 @@ namespace RevGame.Battle
             GetAttackTargets(board, piece, result);
             return result;
         }
-
         /// <summary>
         /// 高频版本：结果写入调用方持有的列表，进入时Clear，容量保留。
         /// 服务为自己保存缓冲区，AI为一次查询保存局部缓冲区；不要用全局static列表，避免嵌套调用互相覆盖。
@@ -147,31 +141,34 @@ namespace RevGame.Battle
         // null输入保持旧行为：清结果并返回；合法输入由ReadAttackTargets判断命中与失效。
         public static void GetAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
-            if (board != null && piece != null) { board.ReadAttackTargets(piece, result); return; }
+            if (board != null && piece != null)
+            {
+                board.ReadAttackTargets(piece, result);
+                return;
+            }
             result.Clear();
         }
-
         /// <summary>未缓存版本只计算几何；目标Hp变化的威胁评分仍由调用者实时计算，缓存不冻结选敌。</summary>
         // 原几何算法保留为独立内部函数：缓存未命中就调用它，离线回归也以它作为对照。
         // 这里输出有序目标坐标，最终伤害/威胁评分在结算层完成；缓存不能冻结实时生命值。
         internal static void CalculateAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
             result.Clear();
+
             if (board == null || piece == null)
             {
                 return;
             }
-
             if (!CanAttack(piece))
             {
                 return;
             }
-
             // 近战先保护身边的阵位；只有没有接触敌人时才改用守阵援击。
             // 查询只读棋盘，不为了够到目标移动棋子，因此不会拆掉玩家的一眼、两眼阵型。
             if (piece.Side == GameSide.Player && !piece.Def.IsRanged)
             {
                 CollectAttackRays(board, piece, result);
+
                 if (result.Count > 0)
                 {
                     return;
@@ -196,6 +193,7 @@ namespace RevGame.Battle
                     {
                         Piece previous = board.GetPiece(result[index - 1]);
                         int previousDistance = Distance(piece.Pos, previous.Pos);
+
                         if (previousDistance < distance || (previousDistance == distance && previous.Id < foe.Id))
                         {
                             break;
@@ -206,11 +204,9 @@ namespace RevGame.Battle
                 }
                 return;
             }
-
             CollectAttackRays(board, piece, result);
             return;
         }
-
         /// <summary>
         /// 取这颗棋子**攻击能覆盖到的格子**（几何射界，格子上不要求真有敌人）。
         ///
@@ -228,22 +224,20 @@ namespace RevGame.Battle
             GetAttackCoverage(board, piece, result);
             return result;
         }
-
         /// <summary>高频版本：结果写入调用方持有的列表，进入时Clear，容量保留。</summary>
         public static void GetAttackCoverage(BoardModel board, Piece piece, List<BoardPos> result)
         {
             result.Clear();
+
             if (board == null || piece == null)
             {
                 return;
             }
-
             // 与真实出手入口共用同一契约，不能出现长按显示全盘、战斗却被旧锁死判断拦住的情况。
             if (!CanAttack(piece))
             {
                 return;
             }
-
             if (piece.Side == GameSide.Player || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))
             {
                 // 全盘压制：除自己的身体格以外，每个格子都在弹幕覆盖内（含空格和敌方棋子）。
@@ -252,6 +246,7 @@ namespace RevGame.Battle
                     for (int x = 0; x < board.Size; x++)
                     {
                         var pos = new BoardPos(x, y);
+
                         if (!IsBodyCell(piece, pos))
                         {
                             result.Add(pos);
@@ -260,7 +255,6 @@ namespace RevGame.Battle
                 }
                 return;
             }
-
             bool cannon = piece.Def.Pattern == MovePattern.Cannon;
             int range = cannon ? board.Size : (piece.Def.IsRanged ? Balance.EnemyArcherRange : 1);
             for (int direction = 0; direction < 4; direction++)
@@ -269,6 +263,7 @@ namespace RevGame.Battle
                 for (int edge = 0; edge < piece.Size; edge++)
                 {
                     BoardPos origin = AttackOrigin(piece, direction, edge);
+
                     if (cannon)
                     {
                         CollectCannonCoverage(board, piece, origin, direction, range, result);
@@ -280,7 +275,6 @@ namespace RevGame.Battle
                 }
             }
         }
-
         /// <summary>
         /// 统一的攻击资格：存活我方即使零气也会守阵反击，敌人仍保留锁死不能出手的规则。
         /// 这里只放宽我方的攻击资格，不清除IsLocked、不增加气、不免除原有被围受击惩罚，也不允许自动移动。
@@ -290,7 +284,6 @@ namespace RevGame.Battle
         {
             return piece != null && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen && (piece.Side == GameSide.Player || !piece.IsLocked);
         }
-
         /// <summary>近战/弓：沿射线把空格都算进覆盖；遇到棋子时敌方格算覆盖，自己人挡住的格不算。</summary>
         private static void CollectStraightCoverage(BoardModel board, Piece piece, BoardPos origin, int direction, int range, List<BoardPos> result)
         {
@@ -298,17 +291,16 @@ namespace RevGame.Battle
             {
                 var pos = new BoardPos(origin.X + Dx[direction] * step, origin.Y + Dy[direction] * step);
                 Cell cell = board.GetCell(pos);
+
                 if (cell == null)
                 {
                     break;
                 }
-
                 if (cell.IsEmpty)
                 {
                     AddCoverage(result, pos);
                     continue;
                 }
-
                 // 有子就停：敌子这一格是着弹点，自己人这一格打不到也不该标黄。
                 if (cell.Occupant.Side != piece.Side)
                 {
@@ -317,7 +309,6 @@ namespace RevGame.Battle
                 break;
             }
         }
-
         /// <summary>
         /// 炮：炮架之前的空格都覆盖，炮架自身不算着弹点；
         /// 炮架之后**只有第一格**是唯一着弹点（空格也算 —— 敌人走到那里就会被打），再远打不到。
@@ -329,11 +320,11 @@ namespace RevGame.Battle
             {
                 var pos = new BoardPos(origin.X + Dx[direction] * step, origin.Y + Dy[direction] * step);
                 Cell cell = board.GetCell(pos);
+
                 if (cell == null)
                 {
                     break;
                 }
-
                 if (screen == null)
                 {
                     if (cell.IsEmpty)
@@ -344,13 +335,11 @@ namespace RevGame.Battle
                     screen = cell.Occupant;
                     continue;
                 }
-
                 // ★ 2×2/3×3 的后半截身体仍是同一个炮架，不能当成"架后第一子"。
                 if (cell.Occupant == screen)
                 {
                     continue;
                 }
-
                 if (cell.IsEmpty || cell.Occupant.Side != piece.Side)
                 {
                     AddCoverage(result, pos);
@@ -358,12 +347,10 @@ namespace RevGame.Battle
                 break;
             }
         }
-
         private static bool IsBodyCell(Piece piece, BoardPos pos)
         {
             return pos.X >= piece.Pos.X && pos.Y >= piece.Pos.Y && pos.X < piece.Pos.X + piece.Size && pos.Y < piece.Pos.Y + piece.Size;
         }
-
         /// <summary>最多81格，直接线性去重即可；不为一次长按分配 HashSet。</summary>
         private static void AddCoverage(List<BoardPos> result, BoardPos pos)
         {
@@ -376,7 +363,6 @@ namespace RevGame.Battle
             }
             result.Add(pos);
         }
-
         /// <summary>单步走法：四方向各走 1~MoveRange 格（遇到棋子就停）。</summary>
         private static void CollectStep(BoardModel board, Piece piece, List<BoardPos> result)
         {
@@ -387,40 +373,37 @@ namespace RevGame.Battle
                 {
                     BoardPos pos = new BoardPos(piece.Pos.X + Dx[i] * step, piece.Pos.Y + Dy[i] * step);
                     Cell cell = board.GetCell(pos);
+
                     if (cell == null)
                     {
                         break;
                     }
-
                     if (!board.CanFit(pos, piece.Size, piece.Side, piece))
                     {
                         break;
                     }
-
                     result.Add(pos);
                 }
             }
         }
-
         /// <summary>滑步（车）：沿四方向一直走，直到出界或撞到棋子。</summary>
         private static void CollectSlide(BoardModel board, Piece piece, List<BoardPos> result, bool allowCapture)
         {
             for (int i = 0; i < 4; i++)
             {
-                for (int step = 1;; step++)
+                for (int step = 1; ; step++)
                 {
                     BoardPos pos = new BoardPos(piece.Pos.X + Dx[i] * step, piece.Pos.Y + Dy[i] * step);
+
                     // 大棋每走一步都检查整个身体，不能从一格宽的缝里穿过去。
                     if (!board.CanFit(pos, piece.Size, piece.Side, piece))
                     {
                         break;
                     }
-
                     result.Add(pos);
                 }
             }
         }
-
         /// <summary>马步：8 个落点 + 蹩马腿（落点方向的邻格必须为空）。</summary>
         private static void CollectKnight(BoardModel board, Piece piece, List<BoardPos> result)
         {
@@ -432,27 +415,25 @@ namespace RevGame.Battle
                 int legX = piece.Pos.X + (System.Math.Abs(dx) == 2 ? dx / 2 : 0);
                 int legY = piece.Pos.Y + (System.Math.Abs(dy) == 2 ? dy / 2 : 0);
                 Cell leg = board.GetCell(new BoardPos(legX, legY));
+
                 if (leg == null || !leg.IsEmpty)
                 {
                     continue;
                 }
-
                 BoardPos pos = new BoardPos(piece.Pos.X + dx, piece.Pos.Y + dy);
                 Cell cell = board.GetCell(pos);
+
                 if (cell == null)
                 {
                     continue;
                 }
-
                 if (!board.CanFit(pos, piece.Size, piece.Side, piece))
                 {
                     continue;
                 }
-
                 result.Add(pos);
             }
         }
-
         /// <summary>从身体每个边缘格向外检查；同一颗大目标只进入候选列表一次。</summary>
         private static void CollectAttackRays(BoardModel board, Piece piece, List<BoardPos> result)
         {
@@ -469,41 +450,36 @@ namespace RevGame.Battle
                     {
                         var pos = new BoardPos(origin.X + Dx[direction] * step, origin.Y + Dy[direction] * step);
                         Cell cell = board.GetCell(pos);
+
                         if (cell == null)
                         {
                             break;
                         }
-
                         if (cell.IsEmpty)
                         {
                             continue;
                         }
-
                         if (cannon && screen == null)
                         {
                             screen = cell.Occupant;
                             continue;
                         }
-
                         // ★ 2×2/3×3 的第二个身体格仍是同一炮架，不可误算成「隔了一子后的目标」。
                         if (cannon && cell.Occupant == screen)
                         {
                             continue;
                         }
-
                         // 射线保持原有阻挡与候选顺序；死亡/隐藏能否受击由结算层判断。
                         // 缓存优化不能顺手改选敌语义，否则同种子AI会出现不同决策和积分。
                         if (cell.Occupant.Side != piece.Side && !ContainsPiece(board, result, cell.Occupant))
                         {
                             result.Add(pos);
                         }
-
                         break;
                     }
                 }
             }
         }
-
         /// <summary>射线结果最多是少量接触目标，直接比较已有目标即可去重，不为每次攻击new HashSet。</summary>
         private static bool ContainsPiece(BoardModel board, List<BoardPos> result, Piece target)
         {
@@ -516,12 +492,10 @@ namespace RevGame.Battle
             }
             return false;
         }
-
         private static int Distance(BoardPos a, BoardPos b)
         {
             return System.Math.Abs(a.X - b.X) + System.Math.Abs(a.Y - b.Y);
         }
-
         private static BoardPos AttackOrigin(Piece piece, int direction, int edge)
         {
             // 大棋只扩大接触面，射程格数仍与小棋相同；不能只从中心一条线打，漏掉贴着边角的敌人。
@@ -529,17 +503,14 @@ namespace RevGame.Battle
             {
                 return new BoardPos(piece.Pos.X + piece.Size - 1, piece.Pos.Y + edge);
             }
-
             if (direction == 1)
             {
                 return new BoardPos(piece.Pos.X, piece.Pos.Y + edge);
             }
-
             if (direction == 2)
             {
                 return new BoardPos(piece.Pos.X + edge, piece.Pos.Y + piece.Size - 1);
             }
-
             return new BoardPos(piece.Pos.X + edge, piece.Pos.Y);
         }
     }

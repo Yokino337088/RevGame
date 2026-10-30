@@ -23,33 +23,65 @@ namespace RevGame.View
             foreach (BoardCellView cell in _cells)
             {
                 SpriteRenderer surface = cell.SurfaceRenderer;
+
                 if (surface != null && surface.sharedMaterial != null)
                 {
                     materials.Add(surface.sharedMaterial.GetInstanceID());
                     supported &= surface.sharedMaterial.shader.isSupported;
-                    if (surface.sharedMaterial == _surfaceMaterial) { animatedCells++; }
+
+                    if (surface.sharedMaterial == _surfaceMaterial)
+                    {
+                        animatedCells++;
+                    }
                 }
+
                 renderers += cell.GetComponentsInChildren<SpriteRenderer>(true).Length;
                 bool expected = !guided && (battle.CanPlaySelectedAt(cell.Position) || (battle.SelectedPieceId != 0 && battle.Board.GetPiece(cell.Position)?.Id == battle.SelectedPieceId));
-                if (cell.IsHighlighted) { highlights++; if (!expected) { invalidHighlights++; } }
-                else if (expected) { missingHighlights++; }
+
+                if (cell.IsHighlighted)
+                {
+                    highlights++;
+
+                    if (!expected)
+                    {
+                        invalidHighlights++;
+                    }
+                }
+
+                else
+                    if (expected)
+                    {
+                        missingHighlights++;
+                    }
                 if (cell.IsEyeVisible)
                 {
                     SpriteRenderer eye = cell.transform.Find("眼").GetComponent<SpriteRenderer>();
                     eyePacked &= eye.sprite != null && eye.sprite.packed && cell.EyeFrameCount == 4;
-                    eyeStates.Add(new Dictionary<string,object> { ["x"] = cell.Position.X, ["y"] = cell.Position.Y, ["frame"] = cell.EyeFrame, ["name"] = eye.sprite == null ? "" : eye.sprite.name });
+                    eyeStates.Add(new Dictionary<string, object> { ["x"] = cell.Position.X, ["y"] = cell.Position.Y, ["frame"] = cell.EyeFrame, ["name"] = eye.sprite == null ? "" : eye.sprite.name });
                 }
             }
             var refs = new List<int>();
-            foreach (string name in SurfaceNames) { refs.Add(RevResManager.GetRefCount(SurfaceRoot, name + "_Surface")); }
-            return new Dictionary<string,object>
+            foreach (string name in SurfaceNames)
             {
-                ["chapter"] = SurfaceChapter, ["ready"] = _surfaceReady, ["cells"] = _cells.Count,
-                ["shader"] = _surfaceMaterial == null ? "" : _surfaceMaterial.shader.name, ["supported"] = supported,
-                ["materialCount"] = materials.Count, ["animatedCells"] = animatedCells, ["cellRenderers"] = renderers,
-                ["highlights"] = highlights, ["invalidHighlights"] = invalidHighlights, ["missingHighlights"] = missingHighlights,
+                refs.Add(RevResManager.GetRefCount(SurfaceRoot, name + "_Surface"));
+            }
+            return new Dictionary<string, object>
+            {
+                ["chapter"] = SurfaceChapter,
+                ["ready"] = _surfaceReady,
+                ["cells"] = _cells.Count,
+                ["shader"] = _surfaceMaterial == null ? "" : _surfaceMaterial.shader.name,
+                ["supported"] = supported,
+                ["materialCount"] = materials.Count,
+                ["animatedCells"] = animatedCells,
+                ["cellRenderers"] = renderers,
+                ["highlights"] = highlights,
+                ["invalidHighlights"] = invalidHighlights,
+                ["missingHighlights"] = missingHighlights,
                 ["placementShader"] = _cells.Count == 0 ? "" : _cells[0].PlacementRenderer.sharedMaterial.shader.name,
-                ["eyes"] = eyeStates, ["eyePacked"] = eyePacked, ["materialRefs"] = refs,
+                ["eyes"] = eyeStates,
+                ["eyePacked"] = eyePacked,
+                ["materialRefs"] = refs,
                 ["error"] = LoadError ?? ""
             };
         }

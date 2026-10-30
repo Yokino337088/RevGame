@@ -30,6 +30,7 @@ namespace RevGame.Editor
             Label("subtitle", root.transform, "落子布阵 · 连成一片 · 围住主将", new Vector2(1100, 60), new Vector2(0, 135), 32);
             MakeButton("btnPlay", root.transform, "开始闯关", new Vector2(370, 110), new Vector2(0, -70));
             Label("hint", root.transform, "点手牌，再点棋盘。准备完毕后，棋子自动作战。", new Vector2(1250, 60), new Vector2(0, -260), 30);
+
             // 首页已转为手工维护，不能让旧装配器覆盖三个按钮及其布局。
             if (AssetDatabase.LoadAssetAtPath<GameObject>(Ui + "HomePanel.prefab") == null)
             {
@@ -51,7 +52,6 @@ namespace RevGame.Editor
             {
                 MakeButton("chapter" + (i + 1), root.transform, "第 " + (i + 1) + " 章", new Vector2(350, 180), new Vector2((i % 3 - 1) * 400, 130 - (i / 3) * 220));
             }
-
             Label("hint", root.transform, "", new Vector2(1100, 100), new Vector2(0, -290), 30);
             MakeButton("btnHome", root.transform, "返回主界面", new Vector2(300, 80), new Vector2(0, -420));
             Save(root, "LevelSelectPanel");
@@ -63,14 +63,12 @@ namespace RevGame.Editor
                     var button = MakeButton("btnHome", root.transform, "返回主界面", new Vector2(260, 70), new Vector2(-160, -55));
                     Anchor(button.GetComponent<RectTransform>(), new Vector2(1, 1));
                 }
-
                 PrefabUtility.SaveAsPrefabAsset(root, Ui + "BattleHudPanel.prefab");
             }
             finally
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
-
             GameObject board = null;
             foreach (GameObject candidate in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
             {
@@ -85,20 +83,19 @@ namespace RevGame.Editor
             {
                 throw new System.InvalidOperationException("场景缺少 BoardView 根节点");
             }
-
             board.SetActive(false);
             GameObject host = GameObject.Find("GamePresentation");
+
             if (host == null)
             {
                 host = new GameObject("GamePresentation");
             }
-
             GamePresentation presentation = host.GetComponent<GamePresentation>();
+
             if (presentation == null)
             {
                 presentation = host.AddComponent<GamePresentation>();
             }
-
             SetReference(presentation, "boardRoot", board);
             SetReference(presentation, "boardCamera", Camera.main);
             EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -107,7 +104,6 @@ namespace RevGame.Editor
             GameArtMigration.ApplyAll();
             return "主界面、六章选关、返回按钮、场景流程接线已保存";
         }
-
         public static string BuildP1()
         {
             BuildCards();
@@ -125,7 +121,6 @@ namespace RevGame.Editor
                 label.anchoredPosition = new Vector2(0, -60);
                 Picture("icon", button.transform, null, new Vector2(100, 100), new Vector2(0, 100));
             }
-
             RewardPanel panel = root.AddComponent<RewardPanel>();
             var so = new SerializedObject(panel);
             var icons = so.FindProperty("rewardIcons");
@@ -141,7 +136,6 @@ namespace RevGame.Editor
             {
                 icons.GetArrayElementAtIndex(i).objectReferenceValue = Sprite("界面/新版/UI_Setting_Checkmark.png");
             }
-
             so.ApplyModifiedPropertiesWithoutUndo();
             Save(root, "RewardPanel");
             const string path = "Assets/GameRes/Pieces/Unit/SlimePiece.prefab";
@@ -165,12 +159,10 @@ namespace RevGame.Editor
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
-
             AssetDatabase.SaveAssets();
             GameArtMigration.ApplyAll();
             return "奖励、眼位石/跳过按钮、Boss 外观已保存";
         }
-
         /// <summary>只装配本项目拥有的资源，不修改框架快照。</summary>
         public static string BuildP0()
         {
@@ -178,20 +170,20 @@ namespace RevGame.Editor
             BuildCards();
             LayoutHud();
             LayoutSettle();
+
             if (!AssetDatabase.IsValidFolder("Assets/Editor"))
             {
                 AssetDatabase.CreateFolder("Assets", "Editor");
             }
-
             const string configPath = "Assets/Editor/ABBuildConfig.asset";
             var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>(configPath);
+
             if (config == null)
             {
                 // 框架编辑器程序集不自动引用到 Assembly-CSharp-Editor，资产仍通过公开序列化接口编辑。
                 config = ScriptableObject.CreateInstance("ABBuildConfig");
                 AssetDatabase.CreateAsset(config, configPath);
             }
-
             var serializedConfig = new SerializedObject(config);
             serializedConfig.FindProperty("resRoot").stringValue = "Assets/GameRes/";
             serializedConfig.ApplyModifiedPropertiesWithoutUndo();
@@ -200,7 +192,6 @@ namespace RevGame.Editor
             GameArtMigration.ApplyAll();
             return "棋盘格、卡牌、准备/HUD/结算布局和持久资源根目录已保存";
         }
-
         private static void BuildCell()
         {
             const string path = "Assets/GameRes/Board/Tile/BoardCell.prefab";
@@ -213,18 +204,18 @@ namespace RevGame.Editor
                 body.drawMode = SpriteDrawMode.Sliced;
                 body.size = Vector2.one;
                 var collider = root.GetComponent<BoxCollider2D>();
+
                 if (collider == null)
                 {
                     collider = root.AddComponent<BoxCollider2D>();
                 }
-
                 collider.size = Vector2.one;
                 var view = root.GetComponent<BoardCellView>();
+
                 if (view == null)
                 {
                     view = root.AddComponent<BoardCellView>();
                 }
-
                 SpriteRenderer star = SpriteChild(root, "星位", "棋盘/棋盘_星位点.png", 1);
                 SpriteRenderer highlight = SpriteChild(root, "可落点", "棋盘/棋盘_可落子高亮.png", 5);
                 highlight.drawMode = SpriteDrawMode.Sliced;
@@ -245,23 +236,21 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
-
         private static SpriteRenderer SpriteChild(GameObject root, string name, string path, int order)
         {
             Transform existing = root.transform.Find(name);
             GameObject child = existing != null ? existing.gameObject : new GameObject(name);
             child.transform.SetParent(root.transform, false);
             var renderer = child.GetComponent<SpriteRenderer>();
+
             if (renderer == null)
             {
                 renderer = child.AddComponent<SpriteRenderer>();
             }
-
             renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GameArtPaths.Resolve(Art + path));
             renderer.sortingOrder = order;
             return renderer;
         }
-
         private static void BuildCards()
         {
             GameObject card = Rect("CardItem", null, new Vector2(180, 178), Vector2.zero);
@@ -302,7 +291,6 @@ namespace RevGame.Editor
                 var slot = (GameObject)PrefabUtility.InstantiatePrefab(prefab, row.transform);
                 slot.name = "card" + i;
             }
-
             Button ready = MakeButton("btnReady", root.transform, "准备完毕", new Vector2(240, 80), new Vector2(-165, 105));
             Anchor(ready.GetComponent<RectTransform>(), new Vector2(1, 0));
             Button skip = MakeButton("btnSkip", root.transform, "跳过 · 攻击 +10%", new Vector2(240, 64), new Vector2(-165, 195));
@@ -313,7 +301,6 @@ namespace RevGame.Editor
             Anchor(refresh.GetComponent<RectTransform>(), new Vector2(1, 0));
             Save(root, "PreparePanel");
         }
-
         private static void LayoutHud()
         {
             GameObject root = PrefabUtility.LoadPrefabContents(Ui + "BattleHudPanel.prefab");
@@ -324,7 +311,6 @@ namespace RevGame.Editor
                 {
                     graphic.raycastTarget = false;
                 }
-
                 Move(root, "phaseIcon", new Vector2(0.5f, 1), new Vector2(-370, -55), new Vector2(170, 60));
                 Move(root, "roundText", new Vector2(0.5f, 1), new Vector2(0, -50), new Vector2(560, 55));
                 Move(root, "progressBar", new Vector2(0.5f, 1), new Vector2(0, -99), new Vector2(700, 18));
@@ -338,7 +324,6 @@ namespace RevGame.Editor
                     text.fontSize = 28;
                     text.alignment = TextAnchor.MiddleCenter;
                 }
-
                 PrefabUtility.SaveAsPrefabAsset(root, Ui + "BattleHudPanel.prefab");
             }
             finally
@@ -346,7 +331,6 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
-
         private static void LayoutSettle()
         {
             GameObject root = PrefabUtility.LoadPrefabContents(Ui + "SettlePanel.prefab");
@@ -362,7 +346,6 @@ namespace RevGame.Editor
                     text.font = Font();
                     text.color = Ink;
                 }
-
                 PrefabUtility.SaveAsPrefabAsset(root, Ui + "SettlePanel.prefab");
             }
             finally
@@ -370,7 +353,6 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
-
         public static GameObject Rect(string name, Transform parent, Vector2 size, Vector2 position)
         {
             var go = new GameObject(name, typeof(RectTransform));
@@ -380,7 +362,6 @@ namespace RevGame.Editor
             rect.anchoredPosition = position;
             return go;
         }
-
         public static Text Label(string name, Transform parent, string value, Vector2 size, Vector2 position, int fontSize)
         {
             Text text = Rect(name, parent, size, position).AddComponent<Text>();
@@ -393,7 +374,6 @@ namespace RevGame.Editor
             text.raycastTarget = false;
             return text;
         }
-
         public static Image Picture(string name, Transform parent, Sprite sprite, Vector2 size, Vector2 position)
         {
             Image image = Rect(name, parent, size, position).AddComponent<Image>();
@@ -402,7 +382,6 @@ namespace RevGame.Editor
             image.raycastTarget = false;
             return image;
         }
-
         public static Button MakeButton(string name, Transform parent, string text, Vector2 size, Vector2 position)
         {
             GameObject go = Rect(name, parent, size, position);
@@ -414,13 +393,11 @@ namespace RevGame.Editor
             Label("label", go.transform, text, size - new Vector2(12, 8), Vector2.zero, 28);
             return button;
         }
-
         public static void Anchor(RectTransform rect, Vector2 anchor)
         {
             rect.anchorMin = anchor;
             rect.anchorMax = anchor;
         }
-
         public static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
@@ -428,7 +405,6 @@ namespace RevGame.Editor
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
         }
-
         private static void Move(GameObject root, string child, Vector2 anchor, Vector2 pos, Vector2 size)
         {
             var rect = (RectTransform)root.transform.Find(child);
@@ -436,7 +412,6 @@ namespace RevGame.Editor
             rect.anchoredPosition = pos;
             rect.sizeDelta = size;
         }
-
         public static Sprite Sprite(string relativePath)
         {
             // 制作工具保留原来的素材分类参数；新版UI实际已进入可共享分包的GameRes/Art/UI。
@@ -446,26 +421,24 @@ namespace RevGame.Editor
             }
             return AssetDatabase.LoadAssetAtPath<Sprite>(GameArtPaths.Resolve(Art + relativePath));
         }
-
         public static Font Font()
         {
             // 使用随工程保存的开源中文黑体粗体，而不是依赖开发电脑安装的系统字体。
             // 原明朝体的细笔画在手机缩小显示时容易融进木纹；真正的粗体字形能保留清楚的主笔画。
             Font font = AssetDatabase.LoadAssetAtPath<Font>("Assets/GameRes/Fonts/CJK/NotoSansCJKsc-Bold.otf");
+
             if (font == null)
             {
                 throw new System.InvalidOperationException("缺少 UI 粗体字体，请先通过 Unity MCP 导入 NotoSansCJKsc-Bold.otf 及 OFL 许可。");
             }
             return font;
         }
-
         public static void SetReference(Object target, string field, Object value)
         {
             var serialized = new SerializedObject(target);
             serialized.FindProperty(field).objectReferenceValue = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
-
         public static void Save(GameObject root, string name)
         {
             PrefabUtility.SaveAsPrefabAsset(root, Ui + name + ".prefab");

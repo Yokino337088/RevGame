@@ -24,63 +24,93 @@ namespace RevGame.Editor
         {
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
             AssemblyReloadEvents.beforeAssemblyReload += StopListening;
-            if (!EditorApplication.isPlayingOrWillChangePlaymode) { StartListening(); }
+
+            if (!EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                StartListening();
+            }
         }
 
         private static void StartListening()
         {
-            if (_listening) { return; }
+            if (_listening)
+            {
+                return;
+            }
             SpriteAtlasManager.atlasRequested += BindEditorAtlas;
             _listening = true;
             EditorApplication.delayCall += RefreshVisibleImages;
         }
-
         private static void StopListening()
         {
             SpriteAtlasManager.atlasRequested -= BindEditorAtlas;
             EditorApplication.delayCall -= RefreshVisibleImages;
             _listening = false;
         }
-
         private static void OnPlayModeChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.ExitingEditMode) { StopListening(); }
-            if (state == PlayModeStateChange.EnteredEditMode) { StartListening(); }
+            if (state == PlayModeStateChange.ExitingEditMode)
+            {
+                StopListening();
+            }
+            if (state == PlayModeStateChange.EnteredEditMode)
+            {
+                StartListening();
+            }
         }
 
         private static void BindEditorAtlas(string tag, Action<SpriteAtlas> register)
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || !Known.Contains(tag)) { return; }
+            if (EditorApplication.isPlayingOrWillChangePlaymode || !Known.Contains(tag))
+            {
+                return;
+            }
             SpriteAtlas atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>("Assets/GameRes/Atlases/" + tag + ".spriteatlasv2");
-            if (atlas == null) { Debug.LogError("编辑器预览图集不存在：" + tag); return; }
+
+            if (atlas == null)
+            {
+                Debug.LogError("编辑器预览图集不存在：" + tag);
+                return;
+            }
             register(atlas);
         }
-
         /// <summary>只在编辑模式切换/显式修复时更新可见UI，不逐帧扫描，不保存预制体，不修改素材或包设置。</summary>
         private static void RefreshVisibleImages()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { return; }
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
             foreach (Image image in Resources.FindObjectsOfTypeAll<Image>())
             {
-                if (!EditorUtility.IsPersistent(image) && image.gameObject.scene.IsValid()) { image.SetAllDirty(); }
+                if (!EditorUtility.IsPersistent(image) && image.gameObject.scene.IsValid())
+                {
+                    image.SetAllDirty();
+                }
             }
             Canvas.ForceUpdateCanvases();
             EditorApplication.QueuePlayerLoopUpdate();
             InternalEditorUtility.RepaintAllViews();
         }
-
         /// <summary>显式编辑器恢复入口；加载真实HUD后读取Sprite纹理，不能以Image内置白纹理冒充图片恢复。</summary>
         public static string Recover()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("预览恢复只能在编辑态执行"); }
-            StartListening(); RefreshVisibleImages();
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("预览恢复只能在编辑态执行");
+            }
+            StartListening();
+            RefreshVisibleImages();
             GameObject root = PrefabUtility.LoadPrefabContents("Assets/GameRes/UI/Panel/BattleHudPanel.prefab");
             try
             {
                 var lines = new List<string>();
                 foreach (Image image in root.GetComponentsInChildren<Image>(true))
                 {
-                    if (image.sprite == null) { continue; }
+                    if (image.sprite == null)
+                    {
+                        continue;
+                    }
                     Texture2D texture = image.sprite.texture;
                     lines.Add(image.name + ": " + image.sprite.name + " → " + (texture == null ? "缺失纹理" : texture.name + " " + texture.width + "×" + texture.height));
                 }

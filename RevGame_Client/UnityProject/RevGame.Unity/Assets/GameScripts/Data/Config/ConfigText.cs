@@ -25,13 +25,11 @@ namespace RevGame.Data
         {
             return Math.Round((double)value, 3).ToString("0.###", CultureInfo.InvariantCulture);
         }
-
         /// <summary>按百分数显示（0.25 → "25%"）。先放大再取整到三位小数，避免 0.35f 显示成 34.99999%。</summary>
         public static string Percent(float value)
         {
             return Math.Round((double)value * 100.0, 3).ToString("0.###", CultureInfo.InvariantCulture) + "%";
         }
-
         public static string StarCn(int star) => StarCnNames[star];
 
         /// <summary>
@@ -48,11 +46,15 @@ namespace RevGame.Data
             while (i < template.Length)
             {
                 char c = template[i];
+
                 if (c != '{')
                 {
-                    sb.Append(c); i++; continue;
+                    sb.Append(c);
+                    i++;
+                    continue;
                 }
                 int close = template.IndexOf('}', i + 1);
+
                 if (close < 0)
                 {
                     problems.Add(where + " 的模板有未闭合的“{”：" + template);
@@ -61,6 +63,7 @@ namespace RevGame.Data
                 }
                 string token = template.Substring(i + 1, close - i - 1);
                 string value = resolver(token);
+
                 if (value == null)
                 {
                     problems.Add(where + " 的占位符 {" + token + "} 不可用（模板：" + template + "）");
@@ -74,12 +77,12 @@ namespace RevGame.Data
             }
             return sb.ToString();
         }
-
         /// <summary>给运行时再次渲染（如奖励里的棋子名）用：占位符缺失直接抛出，不再返回问题清单。</summary>
         public static string RenderOrThrow(string template, string where, Func<string, string> resolver)
         {
             var problems = new List<string>();
             string text = Render(template, where, problems, resolver);
+
             if (problems.Count > 0)
             {
                 throw new InvalidOperationException(string.Join("；", problems));

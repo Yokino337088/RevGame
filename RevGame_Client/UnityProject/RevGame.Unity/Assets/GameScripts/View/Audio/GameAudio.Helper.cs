@@ -21,17 +21,23 @@ namespace RevGame.View
         private void OpenHelperAudio()
         {
             _helperImpactDue = 0;
-            foreach (string name in HelperClipNames) { RevSound.Register(name,"Helper/" + name); }
+            foreach (string name in HelperClipNames)
+            {
+                RevSound.Register(name, "Helper/" + name);
+            }
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperShotAudio, owner: _helperAudioOwner);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnHelperAudioPrepare, owner: _helperAudioOwner);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnHelperAudioSettle, owner: _helperAudioOwner);
             RevTimer.Every(.12f, RefreshHelperHealingAudio, domain: RevTimeDomain.Unscaled, owner: _helperAudioOwner);
         }
-
         private void OnHelperShotAudio(HelperShotInfo info)
         {
             int index = (int)info.Weapon;
-            if (index < 0 || index >= _helperSoundDue.Length || Time.unscaledTime < _helperSoundDue[index]) { return; }
+
+            if (index < 0 || index >= _helperSoundDue.Length || Time.unscaledTime < _helperSoundDue[index])
+            {
+                return;
+            }
             float delay = info.Beam || info.Storm ? 0f : 1.4f;
             float spacing = info.Beam ? .8f : info.Weapon == HelperWeapon.Missile ? .28f : .16f;
             _helperSoundDue[index] = Time.unscaledTime + spacing;
@@ -42,18 +48,26 @@ namespace RevGame.View
             // 普通积分弹在飞星从HUD到帮手之后才出现，声音同步这个表现延迟；换回合时旧代次拒绝播放。
             RevTimer.After(delay, () =>
             {
-                if (generation == _helperAudioGeneration && _battleScreen) { RevSound.Play(sound, volume: volume); }
+                if (generation == _helperAudioGeneration && _battleScreen)
+                {
+                    RevSound.Play(sound, volume: volume);
+                }
             }, domain: RevTimeDomain.Unscaled, owner: _helperAudioOwner);
         }
-
         private void RefreshHelperHealingAudio()
         {
             var battle = RevServices.Get<IBattleService>();
             int target = _battleScreen && battle != null ? battle.HelperProtectionTargetId : 0;
-            if (target == 0) { _helperHealingTarget = 0; return; }
+
+            if (target == 0)
+            {
+                _helperHealingTarget = 0;
+                return;
+            }
             if (target != _helperHealingTarget || Time.unscaledTime >= _helperHealingDue)
             {
-                _helperHealingTarget = target; _helperHealingDue = Time.unscaledTime + 1.9f;
+                _helperHealingTarget = target;
+                _helperHealingDue = Time.unscaledTime + 1.9f;
                 RevSound.Play("HelperHeal", volume: .2f);
             }
         }
@@ -62,25 +76,45 @@ namespace RevGame.View
         public static void PlayHelperImpact(HelperWeapon weapon)
         {
             // 编辑器资源检查可逐步采样爆炸帧；非Play采样不能启动音频宿主或污染场景。
-            if (!Application.isPlaying) { return; }
-            if (Time.unscaledTime < _helperImpactDue) { return; }
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+            if (Time.unscaledTime < _helperImpactDue)
+            {
+                return;
+            }
             _helperImpactDue = Time.unscaledTime + .12f;
             RevSound.Play(weapon == HelperWeapon.Missile ? "HelperExplosion" : "HelperJellyImpact", volume: weapon == HelperWeapon.Missile ? .32f : .2f);
         }
-
-        private void OnHelperAudioPrepare(int round) { ResetHelperAudio(); }
-        private void OnHelperAudioSettle(GameSide side) { ResetHelperAudio(); }
+        private void OnHelperAudioPrepare(int round)
+        {
+            ResetHelperAudio();
+        }
+        private void OnHelperAudioSettle(GameSide side)
+        {
+            ResetHelperAudio();
+        }
         private void ResetHelperAudio()
         {
-            _helperAudioGeneration++; _helperHealingTarget = 0; _helperHealingDue = 0;
-            for (int i = 0; i < _helperSoundDue.Length; i++) { _helperSoundDue[i] = 0; }
+            _helperAudioGeneration++;
+            _helperHealingTarget = 0;
+            _helperHealingDue = 0;
+            for (int i = 0; i < _helperSoundDue.Length; i++)
+            {
+                _helperSoundDue[i] = 0;
+            }
         }
         private void CloseHelperAudio()
         {
             ResetHelperAudio();
             RevTimer.CancelAllOf(_helperAudioOwner);
             RevEvent.RemoveAllByOwner(_helperAudioOwner);
-            foreach (string name in HelperClipNames) { RevSound.Unload(name); RevSound.Unregister(name); }
+            foreach (string name in HelperClipNames)
+            {
+                RevSound.Unload(name);
+                RevSound.Unregister(name);
+            }
         }
     }
 }

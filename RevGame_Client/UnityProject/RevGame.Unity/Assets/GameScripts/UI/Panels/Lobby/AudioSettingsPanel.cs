@@ -16,36 +16,66 @@ namespace RevGame.UI
         [RevBind] private Toggle _tglMute;
         /// <summary>玩家可读的0～100%数值，不直接参与声音计算。</summary>
         [RevBind] private Text _volumeText;
-        protected override void OnBindView() { }
+        protected override void OnBindView()
+        {
+        }
         protected override void OnOpen()
         {
             // 关闭会清理owner监听；每次打开重新订阅，不能只在首次装配订阅。
             RevEvent.AddEventListener<AudioSettingsFrame>(GameAudioSettings.ChangedEvent, OnSettingsChanged, owner: this);
         }
-        private void OnSettingsChanged(AudioSettingsFrame frame) { SetData(frame); }
+        private void OnSettingsChanged(AudioSettingsFrame frame)
+        {
+            SetData(frame);
+        }
         protected override void OnRefreshView()
         {
-            if (Data == null) { return; }
+            if (Data == null)
+            {
+                return;
+            }
             // 无通知赋值防止刷新滑杆反过来触发业务，形成循环或把持久化值覆盖掉。
             _sldBgm.SetValueWithoutNotify(Data.Volume);
             _tglMute.SetIsOnWithoutNotify(Data.Muted);
             _volumeText.text = Mathf.RoundToInt(Data.Volume * 100f) + "%";
         }
         [RevSliderChanged("sldBgm")]
-        private void OnBgm(float value) { RevServices.GetRequired<GameAudioSettings>().SetVolume(value); }
+        private void OnBgm(float value)
+        {
+            RevServices.GetRequired<GameAudioSettings>().SetVolume(value);
+        }
         [RevToggleChanged("tglMute")]
-        private void OnMute(bool value) { RevServices.GetRequired<GameAudioSettings>().SetMuted(value); }
+        private void OnMute(bool value)
+        {
+            RevServices.GetRequired<GameAudioSettings>().SetMuted(value);
+        }
         [RevButtonClick("btnDefault")]
-        private void OnDefault() { RevServices.GetRequired<GameAudioSettings>().RestoreDefault(); }
+        private void OnDefault()
+        {
+            RevServices.GetRequired<GameAudioSettings>().RestoreDefault();
+        }
         [RevButtonClick("btnClose")]
-        private void OnCloseClick() { CloseSelf(); }
+        private void OnCloseClick()
+        {
+            CloseSelf();
+        }
         protected override void OnClose()
         {
             RevEvent.RemoveAllByOwner(this);
             GameAudioSettings settings = RevServices.Get<GameAudioSettings>();
-            if (settings != null) { settings.Save(); }
+
+            if (settings != null)
+            {
+                settings.Save();
+            }
         }
-        protected override void PlayOpenTransition(System.Action onDone) { RevUIAnim.Play(this, RevUIAnimPreset.FadeIn, .12f, onDone, owner: this); }
-        protected override void PlayCloseTransition(System.Action onDone) { RevUIAnim.Play(this, RevUIAnimPreset.PopOut, .1f, onDone, owner: this); }
+        protected override void PlayOpenTransition(System.Action onDone)
+        {
+            RevUIAnim.Play(this, RevUIAnimPreset.FadeIn, .12f, onDone, owner: this);
+        }
+        protected override void PlayCloseTransition(System.Action onDone)
+        {
+            RevUIAnim.Play(this, RevUIAnimPreset.PopOut, .1f, onDone, owner: this);
+        }
     }
 }

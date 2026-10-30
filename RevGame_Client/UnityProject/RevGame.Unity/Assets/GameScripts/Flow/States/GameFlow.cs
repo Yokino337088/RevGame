@@ -33,7 +33,6 @@ namespace RevGame.Flow
                 _states.Add(screen, new FlowState(this, screen));
             }
         }
-
         /// <summary>由Bootstrap唯一调用；启动本身也经过遮挡/资源/场景/画面四道就绪门禁。</summary>
         public async RevTask StartAsync()
         {
@@ -43,7 +42,11 @@ namespace RevGame.Flow
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnBossPrepare, priority: 200, owner: this);
             IsTransitioning = true;
             await SwitchSceneAsync(GameScreen.Home);
-            if (!_disposed && string.IsNullOrEmpty(LastError)) { BeginIntroduction(); }
+
+            if (!_disposed && string.IsNullOrEmpty(LastError))
+            {
+                BeginIntroduction();
+            }
         }
 
         /// <summary>大厅内部切页，不切Unity场景。必须已离开过场且处于首页，否则返回false与LastError。</summary>
@@ -54,11 +57,9 @@ namespace RevGame.Flow
                 LastError = "请从主界面进入选关";
                 return false;
             }
-
             Change(GameScreen.LevelSelect);
             return true;
         }
-
         /// <summary>提交进入指定章节的异步请求。true=已接受，完成请观察IsTransitioning和Screen。</summary>
         public bool EnterBattle(int chapter)
         {
@@ -67,13 +68,11 @@ namespace RevGame.Flow
                 LastError = "请先打开选关界面";
                 return false;
             }
-
             if (chapter < 1 || chapter > RevServices.GetRequired<IBattleService>().UnlockedChapter)
             {
                 LastError = "这一章尚未解锁";
                 return false;
             }
-
             _presentedChapter = 0;
             FinalBossStoryShown = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -86,7 +85,6 @@ namespace RevGame.Flow
             SwitchFromButtonAsync(GameScreen.Battle);
             return true;
         }
-
         /// <summary>选关返回只切页，战斗返回真实卸载GameScene。过场期间拒绝重入，避免两条异步链争抢场景。</summary>
         public bool ReturnHome()
         {
@@ -95,12 +93,12 @@ namespace RevGame.Flow
                 LastError = "当前已经离开战斗";
                 return false;
             }
-
             CancelStory();
             CancelBossVictory();
             CancelBossIntro();
             IsTutorialActive = false;
             _tutorialReplay = false;
+
             if (Screen == GameScreen.LevelSelect)
             {
                 Change(GameScreen.Home);
@@ -112,7 +110,6 @@ namespace RevGame.Flow
             }
             return true;
         }
-
         /// <summary>
         /// 整场战斗结束后的分流。只有首次打赢时才播 "ending"；
         /// 重打最终 Boss 时 FinalBossStoryShown 已为 true，直接回首页，不重复放结局；
@@ -120,11 +117,21 @@ namespace RevGame.Flow
         /// </summary>
         private void OnFinished(bool won)
         {
-            if (won && FinalBossStoryShown) { ReturnHome(); }
-            else if (won) { PlayStory("ending", () => ReturnHome()); }
-            else { ReturnHome(); }
-        }
+            if (won && FinalBossStoryShown)
+            {
+                ReturnHome();
+            }
+            else
 
+                if (won)
+                {
+                    PlayStory("ending", () => ReturnHome());
+                }
+                else
+                {
+                    ReturnHome();
+                }
+        }
         /// <summary>所有FSM交割的唯一位置；先更新状态/域，再通知视图，因此视图读到的一定是新模型。</summary>
         private void Change(GameScreen screen)
         {
@@ -133,14 +140,12 @@ namespace RevGame.Flow
             // ★ FSM 的 OnEnter 内不再切状态；广播放在交割后，按钮回调不能触发嵌套切换。
             RevEvent.DispatchEvent<GameScreen>(Events.ScreenChanged, screen);
         }
-
         /// <summary>流程状态文本，给 GM 只读查询与自动化断言用：屏幕、场景、过场、加载进度，再附框架域与 Logic 数量。</summary>
         public string Snapshot()
         {
             return "流程=" + Screen + "，场景=" + RevScene.CurrentName + "，过场=" + IsTransitioning
                 + "，加载进度=" + LoadProgress.ToString("P0") + "，步骤=" + LoadStep + "\n" + RevScope.Dump() + "\nLogic数量=" + RevLogic.Count;
         }
-
         /// <summary>
         /// 退出前的收尾，顺序不能调换：先置 _disposed 挡住后续回调，
         /// 再取消 Boss 演出与剧情、释放剧情资源和预热句柄、摘掉本对象注册的事件，
@@ -150,18 +155,24 @@ namespace RevGame.Flow
         {
             _disposed = true;
             CancelBossIntro();
-            _introRunner?.Dispose(); _introRunner = null;
+            _introRunner?.Dispose();
+            _introRunner = null;
             CancelBossVictory();
-            _victoryRunner?.Dispose(); _victoryRunner = null;
+            _victoryRunner?.Dispose();
+            _victoryRunner = null;
             CancelStory();
-            if (_storyHandle != null) { RevResManager.Release("Config/Story", "StoryBook"); _storyHandle = null; }
+
+            if (_storyHandle != null)
+            {
+                RevResManager.Release("Config/Story", "StoryBook");
+                _storyHandle = null;
+            }
             _storyBook = null;
             _activeWarmup?.Dispose();
             _activeWarmup = null;
             RevEvent.RemoveAllByOwner(this);
             Change(GameScreen.Exit);
         }
-
         /// <summary>一个屏幕对应一个域句柄。只关闭自己Enter拿到的域，不能ExitAll误清别人的服务。</summary>
         private sealed class FlowState : RevLightStateBase
         {
@@ -176,7 +187,6 @@ namespace RevGame.Flow
                 _owner = owner;
                 _screen = screen;
             }
-
             /// <summary>
             /// 切换到这个屏幕时执行一次（状态机的"进入"回调）。按顺序做四件事：
             /// ① 先更新 Screen，这样外面任何时候问"现在在哪个屏幕"，读到的都是新值；
@@ -188,20 +198,20 @@ namespace RevGame.Flow
             public override void OnEnter()
             {
                 _owner.Screen = _screen;
+
                 if (_screen == GameScreen.Exit)
                 {
                     return;
                 }
-
                 // 战斗屏幕用自己的战斗域，首页和选关共用大厅域。
                 string domain = _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
                 //开启对应的域
                 _scope = RevScope.Enter(domain);
+
                 if (_scope == null || !_scope.IsOpen)
                 {
                     throw new InvalidOperationException("无法进入游戏域：" + domain);
                 }
-
                 if (_screen == GameScreen.Battle)
                 {
                     // 进战斗屏幕要按顺序做三步：建首回合 → 配教学开局 → 启动计时逻辑。
@@ -213,20 +223,26 @@ namespace RevGame.Flow
                     bool bossStart = _owner._bossDevelopmentStartPending;
                     _owner._bossDevelopmentStartPending = false;
                     started = bossStart ? ((BattleService)battle).BeginBossCampaignForDevelopment(_owner._chapter) : battle.BeginCampaign(_owner._chapter);
+
 #else
                     started = battle.BeginCampaign(_owner._chapter);
+
 #endif
                     if (!started)
                     {
                         throw new InvalidOperationException(battle.LastError);
                     }
-
                     // 教学局要先配好引导用的初始棋面，再启动引导逻辑，顺序反了引导会拿到普通开局。
                     if (_owner.IsTutorialActive)
                     {
                         ((BattleService)battle).ConfigureTutorialOpening();
-                        if (RevLogic.Start<TutorialLogic>() == null) { throw new InvalidOperationException("无法启动真实棋盘引导"); }
+
+                        if (RevLogic.Start<TutorialLogic>() == null)
+                        {
+                            throw new InvalidOperationException("无法启动真实棋盘引导");
+                        }
                     }
+
                     // 最后才启动 BattleLogic：它一启动就开始按秒推进准备计时，必须放在棋局建好之后。
                     if (RevLogic.Start<BattleLogic>() == null)
                     {
@@ -234,7 +250,6 @@ namespace RevGame.Flow
                     }
                 }
             }
-
             public override void OnExit()
             {
                 // RevScope负责停Logic和关闭它持有的UI。全局加载面板已经Detach，不会被这里提前关闭。
@@ -242,7 +257,6 @@ namespace RevGame.Flow
                 {
                     RevScope.Exit(_scope);
                 }
-
                 _scope = null;
             }
         }

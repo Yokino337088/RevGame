@@ -25,6 +25,7 @@ namespace RevGame.Services
                 PieceDef first = PieceCatalog.Get(a.Kind, a.Star);
                 PieceDef second = PieceCatalog.Get(b.Kind, b.Star);
                 int ranged = second.IsRanged.CompareTo(first.IsRanged);
+
                 if (ranged != 0)
                 {
                     return ranged;
@@ -36,6 +37,7 @@ namespace RevGame.Services
             foreach (HandCard card in candidates)
             {
                 StarTier star = card.Star < StarTier.Two ? StarTier.Two : card.Star;
+
                 if (!TryDeployReinforcement(card.Kind, star))
                 {
                     continue;
@@ -49,19 +51,24 @@ namespace RevGame.Services
             PreparationBuffDef fallback = PreparationBuffCatalog.Get(PreparationBuffKind.Elite);
             return VictoryAssistEnabled && TryDeployReinforcement(fallback.Piece, (StarTier)fallback.Star);
         }
-
         /// <summary>寻找安全落点并一次性提交援军；不占手动落子额度，不参与双牌升级计数。</summary>
         private bool TryDeployReinforcement(PieceKind kind, StarTier star)
         {
             PieceDef def = PieceCatalog.Get(kind, star);
-            if (!CanAddPlayerRanged(def, false)) { return false; }
+
+            if (!CanAddPlayerRanged(def, false))
+            {
+                return false;
+            }
             int size = PieceCatalog.PlayerBodySize(star);
             BoardPos pos;
+
             if (!TryFindSupportPosition(def, size, out pos))
             {
                 return false;
             }
             var piece = new Piece(_nextPieceId++, def, GameSide.Player, size);
+
             // 近战只可突入外围已封完的最后敌眼，试放已确认不拆己方阵型；仍然不能覆盖已有棋子。
             if (!_board.Place(piece, pos, respectEnemyEyes: false))
             {
@@ -73,7 +80,6 @@ namespace RevGame.Services
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, piece.Id);
             return true;
         }
-
         /// <summary>
         /// 所有援军优先驻守本方空眼；无眼时远程靠近主体阵营，近战贴敌并遵守最后破眼门槛。
         /// 深快照内的气眼会被试算覆盖，最后只提交坐标；实战棋子不会被试算改血量、护盾或阵型。
@@ -101,6 +107,7 @@ namespace RevGame.Services
                 for (int x = 0; x < Consts.BoardSize; x++)
                 {
                     var pos = new BoardPos(x, y);
+
                     if (!CanSupportFit(pos, size, allowEnemyEyes: !def.IsRanged))
                     {
                         continue;
@@ -114,6 +121,7 @@ namespace RevGame.Services
                     // 否则后排格子会因全盘敌人多而拿高分，违背近战援军贴敌/破眼的原有要求。
                     // 直接数身体边缘相邻的存活敌棋，不在每一个候选格创建临时目标List。
                     int attacks = 0;
+
                     if (!def.IsRanged)
                     {
                         foreach (Piece enemy in _enemyPieces)
@@ -127,6 +135,7 @@ namespace RevGame.Services
                     bool ownEye = size == 1 && _board.GetCell(pos).EyeSide == GameSide.Player;
                     bool finalEnemyEye = _board.GetCell(pos).EyeSide == GameSide.Enemy;
                     bool safe = (!reinforcement.IsLocked || finalEnemyEye) && PreservesPlayerFormation(trial);
+
                     // 没有敌人时准备期仍能发远程援军；近战战斗支援仍需贴敌，避免援击新规则改变落点偏好。
                     if (safe && (ownEye || def.IsRanged || attacks > 0))
                     {
@@ -144,21 +153,25 @@ namespace RevGame.Services
                         {
                             int distance = BodyDistance(pos, size, ally);
                             mainDistance = System.Math.Min(mainDistance, distance);
+
                             if (distance <= 2)
                             {
                                 nearbyAllies++;
                             }
                         }
                         int score;
+
                         if (def.IsRanged)
                         {
                             // 距敌太近的格子受重罚；主体阵营附近的后排空格比孤零零的远角更优。
                             score = enemyDistance * 24 + nearbyAllies * 35 - mainDistance * 22 + FreeNeighbors(pos);
+
                             if (enemyDistance <= 2)
                             {
                                 score -= 500;
                             }
                         }
+
                         else
                         {
                             bool enemyEye = _board.GetCell(pos).EyeSide == GameSide.Enemy;
@@ -166,15 +179,17 @@ namespace RevGame.Services
                         }
                         if ((ownEye && !bestOwnEye) || (ownEye == bestOwnEye && score > bestScore))
                         {
-                            best = pos; bestScore = score; bestOwnEye = ownEye;
+                            best = pos;
+                            bestScore = score;
+                            bestOwnEye = ownEye;
                         }
                     }
+
                     trial.Remove(reinforcement);
                 }
             }
             return bestScore != int.MinValue;
         }
-
         /// <summary>比较旧棋的眼数和气，防止自动加棋堵死同伴；玩家手动换位则由玩家自行决定是否拆眼。</summary>
         private bool PreservesPlayerFormation(BoardModel trial, Piece allowedLocked = null)
         {
@@ -185,6 +200,7 @@ namespace RevGame.Services
                     continue;
                 }
                 Piece copy = EnemyFormationPlanner.Find(trial, original.Id);
+
                 if (copy == null || copy.EyeCount < original.EyeCount || (original != allowedLocked && original.Liberties > 0 && copy.Liberties <= 0 && copy.EyeCount == 0))
                 {
                     return false;
@@ -192,7 +208,6 @@ namespace RevGame.Services
             }
             return true;
         }
-
         /// <summary>两块身体最近边缘的曼哈顿距离；大棋不能只拿左下角算距离。</summary>
         private static int BodyDistance(BoardPos pos, int size, Piece other)
         {

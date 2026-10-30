@@ -12,7 +12,13 @@ namespace RevGame.View
             get
             {
                 int count = 0;
-                foreach (BoardCellView cell in _cells) { if (cell != null && cell.HasHazardAnimation) { count++; } }
+                foreach (BoardCellView cell in _cells)
+                {
+                    if (cell != null && cell.HasHazardAnimation)
+                    {
+                        count++;
+                    }
+                }
                 return count;
             }
         }
@@ -24,35 +30,62 @@ namespace RevGame.View
         }
         private void OnRegionWarning(RegionPulseInfo info)
         {
-            if (_released) { return; }
+            if (_released)
+            {
+                return;
+            }
             foreach (BoardCellView cell in _cells)
             {
                 int index = info.CellIndex(cell.Position);
-                if (index < 0) { continue; }
+
+                if (index < 0)
+                {
+                    continue;
+                }
                 int x = index % info.Size;
                 int y = index / info.Size;
                 // 只画外轮廓亮边，九格连成一整片侵蚀地面；内部仍保留暗菱形纹理。
-                Vector4 edges = new Vector4(x == 0 ? 1 : 0,x == info.Size-1 ? 1 : 0,y == 0 ? 1 : 0,y == info.Size-1 ? 1 : 0);
+                Vector4 edges = new Vector4(x == 0 ? 1 : 0, x == info.Size - 1 ? 1 : 0, y == 0 ? 1 : 0, y == info.Size - 1 ? 1 : 0);
                 float delay = info.WarningSeconds + index * info.CellDelaySeconds;
                 cell.PlayHazardWave(delay, delay + .85f, edges);
             }
         }
-        private void OnEnergyBombWarning(EnergyBombInfo info) { SpawnEnergyBomb(info, true); }
-        private void OnEnergyBombImpact(EnergyBombInfo info) { SpawnEnergyBomb(info, false); }
+        private void OnEnergyBombWarning(EnergyBombInfo info)
+        {
+            SpawnEnergyBomb(info, true);
+        }
+        private void OnEnergyBombImpact(EnergyBombInfo info)
+        {
+            SpawnEnergyBomb(info, false);
+        }
         private void SpawnEnergyBomb(EnergyBombInfo info, bool warning)
         {
             int generation = _effectGeneration;
             GamePoolRequests.GetAsync<BossSkillFxView>(fx =>
             {
-                if (fx == null) { RevLog.Warn("能量炸弹特效加载失败", "RevGame"); return; }
-                if (_released || this == null || generation != _effectGeneration) { RevPool.Return(fx, 0); return; }
+                if (fx == null)
+                {
+                    RevLog.Warn("能量炸弹特效加载失败", "RevGame");
+                    return;
+                }
+                if (_released || this == null || generation != _effectGeneration)
+                {
+                    RevPool.Return(fx, 0);
+                    return;
+                }
                 _bossFx.Add(fx);
                 fx.PlayEnergyBomb(info, warning, OnBossFxFinished);
             }, _viewRoot);
         }
         private void ClearCombatPacing()
         {
-            foreach (BoardCellView cell in _cells) { if (cell != null) { cell.CancelHazardWave(); } }
+            foreach (BoardCellView cell in _cells)
+            {
+                if (cell != null)
+                {
+                    cell.CancelHazardWave();
+                }
+            }
         }
     }
 }

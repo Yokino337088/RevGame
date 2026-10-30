@@ -40,25 +40,27 @@ namespace RevGame.Data
         public BossSkillConfigTable BossSkills;
         public BalanceRuleTable Balance;
     }
-
     /// <summary>配置装配失败。Message 里是完整的中文问题清单（每条带表名和行/编号）。</summary>
     public sealed class GameConfigException : Exception
     {
-        public IReadOnlyList<string> Problems { get; }
-
+        public IReadOnlyList<string> Problems
+        {
+            get;
+        }
         public GameConfigException(IReadOnlyList<string> problems) : base(BuildMessage(problems))
         {
             Problems = problems;
         }
-
         private static string BuildMessage(IReadOnlyList<string> problems)
         {
             var sb = new StringBuilder("配置表校验未通过，共 ").Append(problems.Count).Append(" 个问题：");
-            for (int i = 0; i < problems.Count; i++) { sb.Append("\n  ").Append(i + 1).Append(". ").Append(problems[i]); }
+            for (int i = 0; i < problems.Count; i++)
+            {
+                sb.Append("\n  ").Append(i + 1).Append(". ").Append(problems[i]);
+            }
             return sb.ToString();
         }
     }
-
     /// <summary>不可变的一份完整配置。所有目录类（PieceCatalog 等）都读它。</summary>
     internal sealed class ConfigSnapshot
     {
@@ -80,7 +82,6 @@ namespace RevGame.Data
         public readonly Dictionary<BossSkillKind, BossSkillDef> BossSkills = new Dictionary<BossSkillKind, BossSkillDef>();
         public BalanceValues Balance;
     }
-
     /// <summary>棋子外形的 1★ 模板（来自 PieceConfig）。</summary>
     internal sealed class PieceTemplate
     {
@@ -95,7 +96,6 @@ namespace RevGame.Data
         public bool IsRanged;
         public bool UnlockedAtStart;
     }
-
     /// <summary>星级成长规则（来自 StarConfig）。</summary>
     internal sealed class StarRule
     {
@@ -104,17 +104,30 @@ namespace RevGame.Data
         public float AttackScale;
         public int PlayerBodySize;
     }
-
     /// <summary>战斗事件的效果参数（来自 BattleEventConfig）。</summary>
     public sealed class BattleEventDef
     {
-        public BattleEventKind Kind { get; internal set; }
-        public string Name { get; internal set; }
-        public bool IsRare { get; internal set; }
-        public float Amount { get; internal set; }
-        public float Cap { get; internal set; }
+        public BattleEventKind Kind
+        {
+            get; internal set;
+        }
+        public string Name
+        {
+            get; internal set;
+        }
+        public bool IsRare
+        {
+            get; internal set;
+        }
+        public float Amount
+        {
+            get; internal set;
+        }
+        public float Cap
+        {
+            get; internal set;
+        }
     }
-
     /// <summary>一章的敌方与 Boss 配置（来自 ChapterConfig）。</summary>
     internal sealed class ChapterRule
     {
@@ -124,7 +137,6 @@ namespace RevGame.Data
         public int BossStar;
         public int[] BossBodySizes;
     }
-
     /// <summary>战斗中敌方补兵规则（来自 EnemyReinforceConfig）。</summary>
     internal sealed class ReinforceRule
     {
@@ -134,7 +146,6 @@ namespace RevGame.Data
         public int MinIntelligence;
         public int Priority;
     }
-
     /// <summary>奖励抽取规则（来自 RewardConfig）。</summary>
     internal sealed class RewardRule
     {
@@ -145,7 +156,6 @@ namespace RevGame.Data
         public int OutnumberedBonus;
         public int UnlockAfterCampaigns;
     }
-
     /// <summary>全队强化规则（来自 RewardBoostConfig）。</summary>
     internal sealed class BoostRule
     {
@@ -153,7 +163,6 @@ namespace RevGame.Data
         public string Detail;
         public float Amount;
     }
-
     public static class GameConfig
     {
         // 全局只有这一份“当前配置快照”。所有业务（Balance / 棋子图鉴 / 事件表…）都读它，
@@ -168,6 +177,7 @@ namespace RevGame.Data
             get
             {
                 ConfigSnapshot snapshot = _current;
+
                 if (snapshot == null)
                 {
                     throw new InvalidOperationException("配置表尚未装配：请先加载全部导表数据并调用 GameConfig.Initialize（正式游戏由 GameFlow 在启动加载阶段完成）");
@@ -175,13 +185,11 @@ namespace RevGame.Data
                 return snapshot;
             }
         }
-
         /// <summary>清除当前配置（退出游戏或测试结束时调用）。之后再读取会立刻报错。</summary>
         public static void Reset()
         {
             _current = null;
         }
-
         /// <summary>
         /// 校验并装配全部配置。任何一张表有问题都会汇总成一份清单一起抛出；
         /// 失败时旧配置保持不变（不会出现“装了一半”的状态）。
@@ -196,6 +204,7 @@ namespace RevGame.Data
         public static void Initialize(GameConfigTables tables)
         {
             var problems = new List<string>();
+
             if (tables == null)
             {
                 throw new ArgumentNullException(nameof(tables));
@@ -212,11 +221,11 @@ namespace RevGame.Data
             RequireLoaded(problems, "RewardBoostConfig", tables.RewardBoosts);
             RequireLoaded(problems, "BossSkillConfig", tables.BossSkills);
             RequireLoaded(problems, "BalanceRule", tables.Balance);
+
             if (problems.Count > 0)
             {
                 throw new GameConfigException(problems);
             }
-
             var snapshot = new ConfigSnapshot();
             // 先读参数表：增益文案里的 {Interval} 要引用它。
             snapshot.Balance = BalanceValues.Read(tables.Balance, problems);
@@ -229,6 +238,7 @@ namespace RevGame.Data
             BuildReinforce(tables, snapshot, problems);
             BuildRewards(tables, snapshot, problems);
             BossSkillCatalog.Build(tables, snapshot, problems);
+
             if (problems.Count > 0)
             {
                 throw new GameConfigException(problems);
@@ -237,7 +247,6 @@ namespace RevGame.Data
             // 玩家不会读到“新表一半 + 旧表一半”的混合状态。
             _current = snapshot;
         }
-
         // ------------------------------------------------------------ 通用工具
         private static void RequireLoaded(List<string> problems, string name, RevIDataTable table)
         {
@@ -245,15 +254,18 @@ namespace RevGame.Data
             {
                 problems.Add("表 " + name + " 尚未加载（先 RevDataTableManager.LoadAsync，或检查 GameRes/Data/" + name + ".txt 与 ResMap 映射）");
             }
-            else if (table.Count == 0)
-            {
-                problems.Add("表 " + name + " 没有任何数据行");
-            }
+            else
+
+                if (table.Count == 0)
+                {
+                    problems.Add("表 " + name + " 没有任何数据行");
+                }
         }
 
         internal static bool TryEnum<T>(string text, string where, string field, List<string> problems, out T value) where T : struct
         {
             string trimmed = (text ?? string.Empty).Trim();
+
             // 只接受枚举名本身：Enum.TryParse 会把数字字符串（如 "99"）当成合法值，必须拦掉。
             if (trimmed.Length == 0 || char.IsDigit(trimmed[0]) || trimmed[0] == '-' || !Enum.TryParse(trimmed, false, out value) || !Enum.IsDefined(typeof(T), value))
             {
@@ -263,7 +275,6 @@ namespace RevGame.Data
             }
             return true;
         }
-
         internal static bool Finite(float v) => !float.IsNaN(v) && !float.IsInfinity(v);
 
         /// <summary>数值必须是有限数且落在区间内；NaN 与任何数比较都为 false，必须显式拦截。</summary>
@@ -276,7 +287,6 @@ namespace RevGame.Data
             }
             return true;
         }
-
         internal static string Fmt(float v) => v.ToString("0.###", CultureInfo.InvariantCulture);
 
         /// <summary>按 Enum 全集检查：表里必须恰好覆盖每个枚举值一次（缺行、多行都报）。</summary>
@@ -305,7 +315,6 @@ namespace RevGame.Data
                 }
             }
         }
-
         // ------------------------------------------------------------ 棋子
         private static void BuildPieces(GameConfigTables t, ConfigSnapshot s, List<string> problems)
         {
@@ -319,25 +328,31 @@ namespace RevGame.Data
                 bool ok = TryEnum(row.Kind, where, "Kind", problems, out tpl.Kind);
                 ok &= TryEnum(row.Class, where, "Class", problems, out tpl.Class);
                 ok &= TryEnum(row.MovePattern, where, "MovePattern", problems, out tpl.Pattern);
+
                 if (string.IsNullOrWhiteSpace(row.DisplayName))
                 {
-                    problems.Add(where + " 的 DisplayName 不能为空"); ok = false;
+                    problems.Add(where + " 的 DisplayName 不能为空");
+                    ok = false;
                 }
                 if (string.IsNullOrWhiteSpace(row.SpriteKey))
                 {
-                    problems.Add(where + " 的 SpriteKey 不能为空"); ok = false;
+                    problems.Add(where + " 的 SpriteKey 不能为空");
+                    ok = false;
                 }
                 if (row.Hp <= 0)
                 {
-                    problems.Add(where + " 的 Hp 必须大于 0（当前 " + row.Hp + "）"); ok = false;
+                    problems.Add(where + " 的 Hp 必须大于 0（当前 " + row.Hp + "）");
+                    ok = false;
                 }
                 if (row.Attack <= 0)
                 {
-                    problems.Add(where + " 的 Attack 必须大于 0（当前 " + row.Attack + "）"); ok = false;
+                    problems.Add(where + " 的 Attack 必须大于 0（当前 " + row.Attack + "）");
+                    ok = false;
                 }
                 if (row.MoveRange < 0)
                 {
-                    problems.Add(where + " 的 MoveRange 不能为负数（当前 " + row.MoveRange + "）"); ok = false;
+                    problems.Add(where + " 的 MoveRange 不能为负数（当前 " + row.MoveRange + "）");
+                    ok = false;
                 }
                 if (!ok)
                 {
@@ -350,6 +365,7 @@ namespace RevGame.Data
                 tpl.MoveRange = row.MoveRange;
                 tpl.IsRanged = row.IsRanged;
                 tpl.UnlockedAtStart = row.UnlockedAtStart;
+
                 if (row.UnlockedAtStart)
                 {
                     unlocked++;
@@ -358,6 +374,7 @@ namespace RevGame.Data
                 s.PieceOrder.Add(tpl.Kind);
             }
             CheckCoverage<PieceKind>(keys, "PieceConfig", problems);
+
             if (unlocked == 0)
             {
                 problems.Add("PieceConfig 至少要有一个 UnlockedAtStart=TRUE 的棋子，否则开局没有牌可抽");
@@ -369,15 +386,19 @@ namespace RevGame.Data
             foreach (StarConfig row in t.Stars.All)
             {
                 string where = "StarConfig[" + row.Star + "]";
+
                 if (row.Star < 1 || row.Star > 3)
                 {
-                    problems.Add(where + " 星级必须是 1~3"); continue;
+                    problems.Add(where + " 星级必须是 1~3");
+                    continue;
                 }
                 bool ok = CheckRange(row.HpScale, 0.01f, 1000f, where, "HpScale", problems);
                 ok &= CheckRange(row.AttackScale, 0.01f, 1000f, where, "AttackScale", problems);
+
                 if (row.PlayerBodySize < 1 || row.PlayerBodySize > 3)
                 {
-                    problems.Add(where + " 的 PlayerBodySize 必须是 1~3（当前 " + row.PlayerBodySize + "）"); ok = false;
+                    problems.Add(where + " 的 PlayerBodySize 必须是 1~3（当前 " + row.PlayerBodySize + "）");
+                    ok = false;
                 }
                 if (!ok)
                 {
@@ -394,7 +415,6 @@ namespace RevGame.Data
                 }
             }
         }
-
         // ------------------------------------------------------------ 战斗事件
         private static void BuildEvents(GameConfigTables t, ConfigSnapshot s, List<string> problems)
         {
@@ -403,13 +423,15 @@ namespace RevGame.Data
             {
                 keys.Add(row.Kind);
                 string where = "BattleEventConfig[" + row.Kind + "]";
+
                 if (!TryEnum(row.Kind, where, "Kind", problems, out BattleEventKind kind))
                 {
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(row.Name))
                 {
-                    problems.Add(where + " 的 Name 不能为空"); continue;
+                    problems.Add(where + " 的 Name 不能为空");
+                    continue;
                 }
                 bool ok = CheckRange(row.Amount, 0f, 1000f, where, "Amount", problems);
                 ok &= CheckRange(row.Cap, 0f, 1000f, where, "Cap", problems);
@@ -421,9 +443,11 @@ namespace RevGame.Data
                     case BattleEventKind.Heal:
                     case BattleEventKind.Artillery:
                     case BattleEventKind.BreakChain:
+
                         if (row.Amount <= 0f)
                         {
-                            problems.Add(where + " 的 Amount 必须大于 0（该事件的主效果量）"); ok = false;
+                            problems.Add(where + " 的 Amount 必须大于 0（该事件的主效果量）");
+                            ok = false;
                         }
                         break;
                     case BattleEventKind.Attack:
@@ -431,9 +455,11 @@ namespace RevGame.Data
                     case BattleEventKind.Haste:
                     case BattleEventKind.Vitality:
                     case BattleEventKind.Combo:
+
                         if (row.Amount <= 0f || row.Cap <= 0f)
                         {
-                            problems.Add(where + " 的 Amount 与 Cap 都必须大于 0（攻速加成与累计上限）"); ok = false;
+                            problems.Add(where + " 的 Amount 与 Cap 都必须大于 0（攻速加成与累计上限）");
+                            ok = false;
                         }
                         break;
                 }
@@ -446,6 +472,7 @@ namespace RevGame.Data
                 (def.IsRare ? s.RareEvents : s.CommonEvents).Add(kind);
             }
             CheckCoverage<BattleEventKind>(keys, "BattleEventConfig", problems);
+
             if (s.CommonEvents.Count == 0 || s.RareEvents.Count == 0)
             {
                 problems.Add("BattleEventConfig 的普通组与稀有组（IsRare）都不能为空");
@@ -463,18 +490,19 @@ namespace RevGame.Data
             foreach (EventRotationConfig row in t.EventRotation.All)
             {
                 string where = "EventRotationConfig[" + row.Step + "]";
+
                 if (row.Step != step)
                 {
                     problems.Add(where + " 的 Step 应为 " + step + "（必须从 1 开始连续）");
                 }
                 step++;
+
                 if (TryEnum(row.Kind, where, "Kind", problems, out BattleEventKind kind))
                 {
                     s.EventRotation.Add(kind);
                 }
             }
         }
-
         // ------------------------------------------------------------ 准备增益
         private static void BuildBuffs(GameConfigTables t, ConfigSnapshot s, List<string> problems)
         {
@@ -483,18 +511,22 @@ namespace RevGame.Data
             {
                 keys.Add(row.Kind);
                 string where = "PrepBuffConfig[" + row.Kind + "]";
+
                 if (!TryEnum(row.Kind, where, "Kind", problems, out PreparationBuffKind kind))
                 {
                     continue;
                 }
                 bool ok = true;
+
                 if (string.IsNullOrWhiteSpace(row.Title))
                 {
-                    problems.Add(where + " 的 Title 不能为空"); ok = false;
+                    problems.Add(where + " 的 Title 不能为空");
+                    ok = false;
                 }
                 if (string.IsNullOrWhiteSpace(row.Detail))
                 {
-                    problems.Add(where + " 的 Detail 不能为空"); ok = false;
+                    problems.Add(where + " 的 Detail 不能为空");
+                    ok = false;
                 }
                 ok &= CheckRange(row.Amount, 0f, 1000f, where, "Amount", problems);
                 ok &= CheckRange(row.Extra, 0f, 1000f, where, "Extra", problems);
@@ -502,6 +534,7 @@ namespace RevGame.Data
                 ok &= CheckBuffRequirements(kind, row, where, problems);
                 PieceKind piece = default;
                 string pieceName = string.Empty;
+
                 if (kind == PreparationBuffKind.Elite)
                 {
                     if (TryEnum(row.Piece, where, "Piece", problems, out piece))
@@ -515,15 +548,18 @@ namespace RevGame.Data
                             pieceName = tpl.DisplayName;
                         }
                     }
+
                     else
                     {
                         ok = false;
                     }
                     if (row.Star < 1 || row.Star > 3)
                     {
-                        problems.Add(where + " 的 Star 必须是 1~3（当前 " + row.Star + "）"); ok = false;
+                        problems.Add(where + " 的 Star 必须是 1~3（当前 " + row.Star + "）");
+                        ok = false;
                     }
                 }
+
                 if (!ok)
                 {
                     continue;
@@ -532,6 +568,7 @@ namespace RevGame.Data
                 s.Buffs.Add(new PreparationBuffDef(kind, row.Title.Trim(), detail, row.Amount, row.Extra, row.Threshold, piece, row.Star));
             }
             CheckCoverage<PreparationBuffKind>(keys, "PrepBuffConfig", problems);
+
             // 洗牌顺序必须与枚举声明顺序一致无关，但抽取数量不能超过增益总数。
             if (s.Balance != null && s.Balance.PrepBuffCountMax > s.Buffs.Count)
             {
@@ -543,11 +580,13 @@ namespace RevGame.Data
         private static bool CheckBuffRequirements(PreparationBuffKind kind, PrepBuffConfig row, string where, List<string> problems)
         {
             bool ok = true;
-            void NeedAmount() {
-            if (row.Amount <= 0f)
+            void NeedAmount()
             {
-                problems.Add(where + " 的 Amount 必须大于 0（该增益的主效果量）"); ok = false;
-            }
+                if (row.Amount <= 0f)
+                {
+                    problems.Add(where + " 的 Amount 必须大于 0（该增益的主效果量）");
+                    ok = false;
+                }
             }
             switch (kind)
             {
@@ -565,53 +604,69 @@ namespace RevGame.Data
                     break;
                 case PreparationBuffKind.Armor:
                     NeedAmount();
+
                     if (row.Amount >= 1f)
                     {
-                        problems.Add(where + " 的 Amount 是减伤比例，必须小于 1（否则伤害变为 0 或负数）"); ok = false;
+                        problems.Add(where + " 的 Amount 是减伤比例，必须小于 1（否则伤害变为 0 或负数）");
+                        ok = false;
                     }
                     break;
                 case PreparationBuffKind.Recovery:
                     NeedAmount();
+
                     if (row.Extra <= 0f)
                     {
-                        problems.Add(where + " 的 Extra 必须大于 0（首次受伤后的回复比例）"); ok = false;
+                        problems.Add(where + " 的 Extra 必须大于 0（首次受伤后的回复比例）");
+                        ok = false;
                     }
                     break;
                 case PreparationBuffKind.Execution:
                     NeedAmount();
+
                     if (row.Threshold <= 0f)
                     {
-                        problems.Add(where + " 的 Threshold 必须大于 0（生命百分比线）"); ok = false;
+                        problems.Add(where + " 的 Threshold 必须大于 0（生命百分比线）");
+                        ok = false;
                     }
                     break;
                 case PreparationBuffKind.EyePower:
                     NeedAmount();
+
                     if (row.Extra <= 0f)
                     {
-                        problems.Add(where + " 的 Extra 必须大于 0（成眼棋周期回复比例）"); ok = false;
+                        problems.Add(where + " 的 Extra 必须大于 0（成眼棋周期回复比例）");
+                        ok = false;
                     }
                     break;
             }
             return ok;
         }
-
         private static string ResolveBuffToken(string token, PrepBuffConfig row, string pieceName, BalanceValues balance)
         {
             switch (token)
             {
-                case "Amount": return ConfigText.Number(row.Amount);
-                case "Amount%": return ConfigText.Percent(row.Amount);
-                case "Extra": return ConfigText.Number(row.Extra);
-                case "Extra%": return ConfigText.Percent(row.Extra);
-                case "Threshold": return ConfigText.Number(row.Threshold);
-                case "Threshold%": return ConfigText.Percent(row.Threshold);
-                case "Interval": return balance == null ? null : ConfigText.Number(balance.PrepRegenIntervalSeconds);
-                case "PieceName": return pieceName.Length == 0 ? null : pieceName;
-                case "StarCN": return row.Star >= 1 && row.Star <= 3 ? ConfigText.StarCn(row.Star) : null;
-                default: return null;
+                case "Amount":
+                    return ConfigText.Number(row.Amount);
+                case "Amount%":
+                    return ConfigText.Percent(row.Amount);
+                case "Extra":
+                    return ConfigText.Number(row.Extra);
+                case "Extra%":
+                    return ConfigText.Percent(row.Extra);
+                case "Threshold":
+                    return ConfigText.Number(row.Threshold);
+                case "Threshold%":
+                    return ConfigText.Percent(row.Threshold);
+                case "Interval":
+                    return balance == null ? null : ConfigText.Number(balance.PrepRegenIntervalSeconds);
+                case "PieceName":
+                    return pieceName.Length == 0 ? null : pieceName;
+                case "StarCN":
+                    return row.Star >= 1 && row.Star <= 3 ? ConfigText.StarCn(row.Star) : null;
+                default:
+                    return null;
             }
         }
-
         // ------------------------------------------------------------ 章节、敌方名单、补兵
         private static void BuildChapters(GameConfigTables t, ConfigSnapshot s, List<string> problems)
         {
@@ -619,21 +674,26 @@ namespace RevGame.Data
             foreach (ChapterConfig row in t.Chapters.All)
             {
                 string where = "ChapterConfig[" + row.Chapter + "]";
+
                 if (row.Chapter != expected)
                 {
                     problems.Add(where + " 的章节号应为 " + expected + "（必须从 1 开始连续）");
                 }
                 expected++;
                 bool ok = TryEnum(row.BossKind, where, "BossKind", problems, out PieceKind bossKind);
+
                 if (row.EnemyStar < 1 || row.EnemyStar > 3)
                 {
-                    problems.Add(where + " 的 EnemyStar 必须是 1~3（当前 " + row.EnemyStar + "）"); ok = false;
+                    problems.Add(where + " 的 EnemyStar 必须是 1~3（当前 " + row.EnemyStar + "）");
+                    ok = false;
                 }
                 if (row.BossStar < 1 || row.BossStar > 3)
                 {
-                    problems.Add(where + " 的 BossStar 必须是 1~3（当前 " + row.BossStar + "）"); ok = false;
+                    problems.Add(where + " 的 BossStar 必须是 1~3（当前 " + row.BossStar + "）");
+                    ok = false;
                 }
                 int[] sizes = ParseSizes(row.BossBodySizes, where, problems);
+
                 if (sizes == null || sizes.Length != 1)
                 {
                     problems.Add(where + " 每章只能配置一颗Boss，请仅填写一个占格边长（2或3）");
@@ -666,35 +726,39 @@ namespace RevGame.Data
             }
             return sizes.ToArray();
         }
-
         private static void BuildEnemyRoster(GameConfigTables t, ConfigSnapshot s, List<string> problems)
         {
             int expected = 1;
             foreach (EnemyRosterConfig row in t.EnemyRoster.All)
             {
                 string where = "EnemyRosterConfig[" + row.Id + "]";
+
                 if (row.Id != expected)
                 {
                     problems.Add(where + " 的 Id 应为 " + expected + "（必须从 1 开始连续）");
                 }
                 expected++;
+
                 if (!TryEnum(row.Kind, where, "Kind", problems, out PieceKind kind))
                 {
                     continue;
                 }
                 string group = (row.Group ?? string.Empty).Trim();
+
                 if (group == "Core")
                 {
                     s.CoreRoster.Add(kind);
                 }
-                else if (group == "Filler")
-                {
-                    s.FillerRoster.Add(kind);
-                }
                 else
-                {
-                    problems.Add(where + " 的 Group = \"" + group + "\" 不合法（只能是 Core 或 Filler）");
-                }
+
+                    if (group == "Filler")
+                    {
+                        s.FillerRoster.Add(kind);
+                    }
+                    else
+                    {
+                        problems.Add(where + " 的 Group = \"" + group + "\" 不合法（只能是 Core 或 Filler）");
+                    }
             }
             if (s.CoreRoster.Count == 0)
             {
@@ -716,17 +780,21 @@ namespace RevGame.Data
             {
                 string where = "EnemyReinforceConfig[" + row.Id + "]";
                 bool ok = TryEnum(row.Kind, where, "Kind", problems, out PieceKind kind);
+
                 if (row.Every < 1)
                 {
-                    problems.Add(where + " 的 Every 必须 ≥1（当前 " + row.Every + "）"); ok = false;
+                    problems.Add(where + " 的 Every 必须 ≥1（当前 " + row.Every + "）");
+                    ok = false;
                 }
                 if (row.Offset < 0 || row.Offset >= Math.Max(1, row.Every))
                 {
-                    problems.Add(where + " 的 Offset 必须满足 0 ≤ Offset < Every（当前 " + row.Offset + "）"); ok = false;
+                    problems.Add(where + " 的 Offset 必须满足 0 ≤ Offset < Every（当前 " + row.Offset + "）");
+                    ok = false;
                 }
                 if (row.MinIntelligence < 1 || row.MinIntelligence > 4)
                 {
-                    problems.Add(where + " 的 MinIntelligence 必须是 1~4"); ok = false;
+                    problems.Add(where + " 的 MinIntelligence 必须是 1~4");
+                    ok = false;
                 }
                 if (!ok)
                 {
@@ -756,7 +824,6 @@ namespace RevGame.Data
                 }
             }
         }
-
         // ------------------------------------------------------------ 奖励
         private static void BuildRewards(GameConfigTables t, ConfigSnapshot s, List<string> problems)
         {
@@ -765,30 +832,37 @@ namespace RevGame.Data
             {
                 rewardKeys.Add(row.Kind);
                 string where = "RewardConfig[" + row.Kind + "]";
+
                 if (!TryEnum(row.Kind, where, "Kind", problems, out RewardKind kind))
                 {
                     continue;
                 }
                 bool ok = true;
+
                 if (string.IsNullOrWhiteSpace(row.Title))
                 {
-                    problems.Add(where + " 的 Title 不能为空"); ok = false;
+                    problems.Add(where + " 的 Title 不能为空");
+                    ok = false;
                 }
                 if (row.Weight <= 0)
                 {
-                    problems.Add(where + " 的 Weight 必须大于 0（当前 " + row.Weight + "）"); ok = false;
+                    problems.Add(where + " 的 Weight 必须大于 0（当前 " + row.Weight + "）");
+                    ok = false;
                 }
                 if (row.OutnumberedBonus < 0)
                 {
-                    problems.Add(where + " 的 OutnumberedBonus 不能为负数"); ok = false;
+                    problems.Add(where + " 的 OutnumberedBonus 不能为负数");
+                    ok = false;
                 }
                 if (row.UnlockAfterCampaigns < 0)
                 {
-                    problems.Add(where + " 的 UnlockAfterCampaigns 不能为负数"); ok = false;
+                    problems.Add(where + " 的 UnlockAfterCampaigns 不能为负数");
+                    ok = false;
                 }
                 if (kind != RewardKind.TeamBoost && string.IsNullOrWhiteSpace(row.Detail))
                 {
-                    problems.Add(where + " 的 Detail 不能为空"); ok = false;
+                    problems.Add(where + " 的 Detail 不能为空");
+                    ok = false;
                 }
                 if (!ok)
                 {
@@ -807,14 +881,17 @@ namespace RevGame.Data
             {
                 boostKeys.Add(row.Boost);
                 string where = "RewardBoostConfig[" + row.Boost + "]";
+
                 if (!TryEnum(row.Boost, where, "Boost", problems, out BoostKind kind))
                 {
                     continue;
                 }
                 bool ok = CheckRange(row.Amount, 0.0001f, 1000f, where, "Amount", problems);
+
                 if (string.IsNullOrWhiteSpace(row.Detail))
                 {
-                    problems.Add(where + " 的 Detail 不能为空"); ok = false;
+                    problems.Add(where + " 的 Detail 不能为空");
+                    ok = false;
                 }
                 if (!ok)
                 {

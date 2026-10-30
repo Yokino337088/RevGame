@@ -42,9 +42,17 @@ namespace RevGame.UI
         /// <summary>卡牌默认保留预制体内的肖像和文字布局，不因运行时槽位尺寸变化偷偷重排。</summary>
         [Tooltip("旧版内部重排（默认关闭）。通常应直接在预制体里设置锚点和文字布局。")]
         [SerializeField] private bool useLegacyLayout;
-        public bool IsFlipping { get { return _flip != null && _flip.IsActive(); } }
-        public int CardId { get; private set; }
-
+        public bool IsFlipping
+        {
+            get
+            {
+                return _flip != null && _flip.IsActive();
+            }
+        }
+        public int CardId
+        {
+            get; private set;
+        }
         /// <summary>空槽位隐藏；选中框只比较唯一编号，不比较同名牌。</summary>
         public void Show(HandCard card, int selectedId)
         {
@@ -56,16 +64,15 @@ namespace RevGame.UI
             }
             RenderCard(card, selectedId);
         }
-
         private void RenderCard(HandCard card, int selectedId)
         {
             gameObject.SetActive(card != null);
+
             if (card == null)
             {
                 CardId = 0;
                 return;
             }
-
             CardId = card.Id;
             PieceDef def = PieceCatalog.Get(card.Kind, card.Star);
             title.text = def.DisplayName;
@@ -76,14 +83,15 @@ namespace RevGame.UI
             portrait.sprite = art != null && art.idleFrames.Length > 0 ? art.idleFrames[0] : null;
             portrait.enabled = portrait.sprite != null;
         }
-
         /// <summary>先保留旧正面，转到侧面时才换数据，再回弹到正面；动画只影响显示。</summary>
         public void FlipTo(HandCard card, int selectedId, float delay, Action completed)
         {
             StopFlip();
+
             if (card == null)
             {
-                RenderCard(null, 0); return;
+                RenderCard(null, 0);
+                return;
             }
             _pendingCard = card;
             _pendingSelection = selectedId;
@@ -117,7 +125,6 @@ namespace RevGame.UI
                 completed?.Invoke();
             });
         }
-
         private void StopFlip()
         {
             StopPress();
@@ -130,26 +137,35 @@ namespace RevGame.UI
             button.interactable = true;
             _pendingCard = null;
         }
-
-        private void OnDisable() { StopFlip(); }
-
-        private void OnRectTransformDimensionsChange() { LayoutContents(); }
-        private void OnEnable() { LayoutContents(); }
-
+        private void OnDisable()
+        {
+            StopFlip();
+        }
+        private void OnRectTransformDimensionsChange()
+        {
+            LayoutContents();
+        }
+        private void OnEnable()
+        {
+            LayoutContents();
+        }
         /// <summary>牌内的肖像和文字一起适配槽位，不能只缩小底板而让固定宽度的文字伸到相邻牌上。</summary>
         private void LayoutContents()
         {
             RectTransform rect = transform as RectTransform;
+
             if (!useLegacyLayout || rect == null || title == null || stats == null || portrait == null)
             {
                 return;
             }
             Vector2 size = rect.rect.size;
+
             if (size == _lastLayoutSize || size.x < 1f || size.y < 1f)
             {
                 return;
             }
             _lastLayoutSize = size;
+
             // 设计分辨率的卡牌内部布局已经保存到 CardItem.prefab，保留美术在预制体中调整的结果。
             if (Mathf.Abs(size.x - 162.93528f) < 0.01f && Mathf.Abs(size.y - 217.24704f) < 0.01f)
             {
@@ -164,21 +180,18 @@ namespace RevGame.UI
             title.resizeTextMaxSize = 24;
             stats.resizeTextMaxSize = 20;
         }
-
         private static void SetContentRect(RectTransform rect, Vector2 center, Vector2 size)
         {
             rect.anchorMin = rect.anchorMax = Vector2.one * 0.5f;
             rect.anchoredPosition = center;
             rect.sizeDelta = size;
         }
-
         /// <summary>回合交接主动复位；即使旧翻牌被暂停，也不允许旧内容覆盖新回合。</summary>
         public void ResetForRound()
         {
             StopFlip();
             CardId = 0;
         }
-
         /// <summary>点击由 PreparePanel 的反射标注接收；卡片只保留表现动画，不自行注册控件事件。</summary>
         public void PlayClickFeedback()
         {
@@ -211,7 +224,6 @@ namespace RevGame.UI
                 transform.localScale = Vector3.one;
             });
         }
-
         /// <summary>关闭、切回合和刷新都取消旧抖动；Kill(false)不会执行旧的完成回调。</summary>
         private void StopPress()
         {
@@ -221,11 +233,9 @@ namespace RevGame.UI
             transform.localRotation = Quaternion.identity;
             transform.localScale = Vector3.one;
         }
-
         public void Release()
         {
             StopFlip();
-
         }
     }
 }

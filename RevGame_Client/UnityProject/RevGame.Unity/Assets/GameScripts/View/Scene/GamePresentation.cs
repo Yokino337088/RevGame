@@ -60,14 +60,12 @@ namespace RevGame.View
             // Game 与 Simulator 的目标尺寸也可能不同，使用当前相机的像素大小，不用上次窗口的快照。
             Camera.onPreCull += OnCameraRendering;
         }
-
         private void OnDisable()
         {
             Camera.onPreCull -= OnCameraRendering;
             ClearBossFocus();
             ClearEnergyShake();
         }
-
         private void OnCameraRendering(Camera camera)
         {
             if (camera == boardCamera)
@@ -86,7 +84,6 @@ namespace RevGame.View
             // GameBootstrap 在配置表就绪后发出首次 ScreenChanged，此前不提前开放操作。
             FitCamera();
         }
-
         // 每次渲染前仍核对输入，尺寸/安全区/比例变了才重算布局。
         // 基础几何可缓存，EnergyShakeOffset和ApplyBossFocus必须继续逐帧计算，保持原动态画面。
         private void FitCamera()
@@ -96,26 +93,29 @@ namespace RevGame.View
             {
                 return;
             }
-
             float aspect = Mathf.Max(0.1f, boardCamera.aspect);
             // 与手牌/HUD 使用相同安全区域。这里用像素计算，UI 用画布单位计算，比例完全一致。
             Vector2 screenSize = new Vector2(boardCamera.pixelWidth, boardCamera.pixelHeight);
+
             if (screenSize.x < 1f || screenSize.y < 1f)
             {
                 return;
             }
             Rect safe = GameBattleLayout.SafeViewport();
+
             // 完整几何输入没变就沿用_cameraSize/center/regions，省掉同一帧多次布局计算。
             // 退出场景这些字段随组件释放；新场景重新计算，不设全局静态布局草稿。
             if (_layoutPixels != screenSize || _layoutSafe != safe || _layoutAspect != aspect)
             {
-                _layoutPixels = screenSize; _layoutSafe = safe; _layoutAspect = aspect;
+                _layoutPixels = screenSize;
+                _layoutSafe = safe;
+                _layoutAspect = aspect;
                 _layoutRegions = GameBattleLayout.Calculate(screenSize, safe);
                 float boardFraction = _layoutRegions.Board.height / screenSize.y;
                 _layoutCameraSize = Consts.BoardSize * Consts.CellSize / (2f * boardFraction);
                 Vector2 center = _layoutRegions.Board.center;
-                _layoutCameraCenter = new Vector2((0.5f-center.x/screenSize.x)*_layoutCameraSize*2f*aspect,
-                    (0.5f-center.y/screenSize.y)*_layoutCameraSize*2f);
+                _layoutCameraCenter = new Vector2((0.5f - center.x / screenSize.x) * _layoutCameraSize * 2f * aspect,
+                    (0.5f - center.y / screenSize.y) * _layoutCameraSize * 2f);
             }
             GameBattleLayout.Regions areas = _layoutRegions;
             boardCamera.orthographicSize = _layoutCameraSize;
@@ -124,16 +124,24 @@ namespace RevGame.View
             cameraPosition.y = _layoutCameraCenter.y;
             boardCamera.transform.position = cameraPosition + EnergyShakeOffset();
             ApplyBossFocus();
+
             if (backgroundRenderer != null && backgroundRenderer.sprite != null)
             {
                 UpdateChapterFrame(areas, screenSize);
-                if (_activeBackgroundChapter == 1) { UpdateBackgroundAtlasUv(); }
+
+                if (_activeBackgroundChapter == 1)
+                {
+                    UpdateBackgroundAtlasUv();
+                }
                 // 第一章尊重原有手调布局；新章节横向原画始终等比铺满，不能沿用旧竖图的非等比尺寸。
                 if (fitBackgroundToCamera || _activeBackgroundChapter > 1)
                 {
                     // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
                     // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。
-                    if (backgroundRenderer.drawMode != SpriteDrawMode.Simple) { backgroundRenderer.drawMode = SpriteDrawMode.Simple; }
+                    if (backgroundRenderer.drawMode != SpriteDrawMode.Simple)
+                    {
+                        backgroundRenderer.drawMode = SpriteDrawMode.Simple;
+                    }
                     // ★ 用同一个比例同时缩放宽和高，背景中的房屋才不会被拉扁。
                     // 取宽、高需要的缩放中较大的一个，保证填满窗口；多出来的部分由相机自然裁掉。
                     Vector2 sourceSize = backgroundRenderer.sprite.bounds.size;
@@ -147,7 +155,6 @@ namespace RevGame.View
                 }
             }
         }
-
         /// <summary>
         /// 图集异步绑定后Sprite对象没换，但UV会改变。每次取四个数比较，只有变化才上传参数。
         /// 不访问sprite.uv数组（它会分配），也不访问renderer.material（它会克隆材质）。
@@ -156,6 +163,7 @@ namespace RevGame.View
         {
             Vector4 outer = UnityEngine.Sprites.DataUtility.GetOuterUV(backgroundRenderer.sprite);
             Vector4 rect = new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y);
+
             if (_backgroundProperties != null && rect == _lastBackgroundUv)
             {
                 return;
@@ -169,13 +177,16 @@ namespace RevGame.View
             _backgroundProperties.SetVector(ArtUvRectId, rect);
             backgroundRenderer.SetPropertyBlock(_backgroundProperties);
         }
-
         private void OnScreen(GameScreen screen)
         {
             int version = ++_screenVersion;
             _readyScreen = GameScreen.Exit;
             _loadError = null;
-            if (screen == GameScreen.Battle) { ApplyChapterBackground(RevServices.GetRequired<RevGame.Services.IBattleService>().Chapter); }
+
+            if (screen == GameScreen.Battle)
+            {
+                ApplyChapterBackground(RevServices.GetRequired<RevGame.Services.IBattleService>().Chapter);
+            }
             if (boardRoot != null)
             {
                 boardRoot.SetActive(screen == GameScreen.Battle);
@@ -183,14 +194,17 @@ namespace RevGame.View
             RevUI.Close<HomePanel>();
             RevUI.Close<LevelSelectPanel>();
             RevUI.Close<TutorialPanel>();
+
             if (screen == GameScreen.Home || screen == GameScreen.LevelSelect)
             {
                 ShowMenuAsync(screen, version);
             }
-            else if (screen == GameScreen.Battle && boardRoot == null)
-            {
-                _loadError = "战斗场景没有接上棋盘根节点";
-            }
+            else
+
+                if (screen == GameScreen.Battle && boardRoot == null)
+                {
+                    _loadError = "战斗场景没有接上棋盘根节点";
+                }
         }
 
         /// <summary>局外面板在图集到齐之后才实例化；不能先显示白底，再等Unity稍后修复图片绑定。</summary>
@@ -199,11 +213,13 @@ namespace RevGame.View
             try
             {
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIMenus", "UIBattle" });
+
                 if (_released || version != _screenVersion)
                 {
                     return;
                 }
                 RevUIPanel panel;
+
                 if (screen == GameScreen.Home)
                 {
                     panel = await RevUI.OpenAsync<HomePanel>();
@@ -213,6 +229,7 @@ namespace RevGame.View
                     panel = await RevUI.OpenAsync<LevelSelectPanel>();
                 }
                 CheckOpened(panel, screen);
+
                 if (!_released && version == _screenVersion)
                 {
                     _readyScreen = screen;
@@ -224,7 +241,6 @@ namespace RevGame.View
                 RevLog.Exception(error, "局外面板装配失败", "RevGame");
             }
         }
-
         /// <summary>先让棋盘正常OnDisable回收对象，再交给RevScene清池/卸场景，避免双重归还或旧弹幕残留。</summary>
         public void SuspendBattle()
         {
@@ -263,15 +279,19 @@ namespace RevGame.View
                         throw new InvalidOperationException(board.LoadError);
                     }
                     progress?.Invoke(board.CellCount / (float)(Consts.BoardSize * Consts.BoardSize) * 0.8f);
+
                     if (board.IsReady && IsChapterBackgroundReady && RevUI.IsOpen<PreparePanel>() && RevUI.IsOpen<BattleHudPanel>())
                     {
                         break;
                     }
                 }
-                else if (_readyScreen == screen)
-                {
-                    break;
-                }
+
+                else
+
+                    if (_readyScreen == screen)
+                    {
+                        break;
+                    }
                 if (Time.realtimeSinceStartup > deadline)
                 {
                     throw new TimeoutException("画面装配超时：" + screen);
@@ -284,7 +304,10 @@ namespace RevGame.View
             }
             // 图集注册与UGUI提交不是同一个步骤。刷新后让引擎完成一次真实Canvas重建和渲染，再撤遮挡。
             Image[] images = UnityEngine.Object.FindObjectsOfType<Image>();
-            foreach (Image image in images) { image.SetAllDirty(); }
+            foreach (Image image in images)
+            {
+                image.SetAllDirty();
+            }
             Canvas.ForceUpdateCanvases();
             await RevTask.Yield();
             foreach (Image image in images)
@@ -298,22 +321,28 @@ namespace RevGame.View
                     throw new InvalidOperationException("UI图集像素未绑定：" + image.name + " / " + image.sprite.name);
                 }
             }
+
             if (screen == GameScreen.Battle)
             {
                 CardItem[] cards = RevUI.Get<PreparePanel>().GetComponentsInChildren<CardItem>();
+
                 if (cards.Length != 6)
                 {
                     throw new InvalidOperationException("开局手牌视图必须完整显示6张");
                 }
             }
+
             if (screen == GameScreen.Battle && RevServices.GetRequired<GameFlow>().IsTutorialActive)
             {
-                if (await RevUI.OpenAsync<TutorialPanel>() == null) { throw new InvalidOperationException("引导浮层加载失败"); }
+                if (await RevUI.OpenAsync<TutorialPanel>() == null)
+                {
+                    throw new InvalidOperationException("引导浮层加载失败");
+                }
             }
+
             progress?.Invoke(1f);
             await RevTask.Yield();
         }
-
         private void CheckOpened(RevUIPanel panel, GameScreen expected)
         {
             if (panel == null)
@@ -321,8 +350,8 @@ namespace RevGame.View
                 RevLog.Error("局外面板加载失败：" + expected, "RevGame");
                 return;
             }
-
             GameFlow flow = RevServices.Get<GameFlow>();
+
             if (_released || flow == null || flow.Screen != expected)
             {
                 RevUI.Close(panel);

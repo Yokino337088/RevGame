@@ -15,12 +15,22 @@ namespace RevGame.Services
         /// <summary>六章固定48混合棋或81满盘重弩夹具；真实AI/伤害/支援不变，高生命只维持压力，不代表难度。</summary>
         public bool LoadPerformanceScenario(int chapter, int pieces = 48)
         {
-            if (pieces != 48 && pieces != 81) { return Reject("性能夹具只接受48或81棋"); }
+            if (pieces != 48 && pieces != 81)
+            {
+                return Reject("性能夹具只接受48或81棋");
+            }
             // 每章重置相同种子，使暴击/事件输入可复现；只存在于编辑器夹具。
             _random = new System.Random(1025 + chapter);
-            if (!StartRound(chapter, 1)) { return false; }
+
+            if (!StartRound(chapter, 1))
+            {
+                return false;
+            }
             StopEnemyAI();
-            _board.Reset(); _playerPieces.Clear(); _enemyPieces.Clear();
+            _board.Reset();
+            _playerPieces.Clear();
+            _enemyPieces.Clear();
+
             if (pieces == 81)
             {
                 // 满盘必然零空格气，正常敌棋会停攻。只在这份Editor压力输入启用围困免疫，
@@ -53,95 +63,131 @@ namespace RevGame.Services
             RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
             return true;
         }
-
         /// <summary>持续负载夹具每秒补满生命，避免百分比技能清场后把空场帧率误记为48棋压测；报告必须披露。</summary>
         public void SustainPerformanceScenario()
         {
-            foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { piece.Heal(piece.MaxHp); } }
-            foreach (Piece piece in _enemyPieces) { if (piece.IsAlive) { piece.Heal(piece.MaxHp); } }
+            foreach (Piece piece in _playerPieces)
+            {
+                if (piece.IsAlive)
+                {
+                    piece.Heal(piece.MaxHp);
+                }
+            }
+            foreach (Piece piece in _enemyPieces)
+            {
+                if (piece.IsAlive)
+                {
+                    piece.Heal(piece.MaxHp);
+                }
+            }
         }
-
         /// <summary>只供自动化建立高生命展示棋盘；动画测试不会依赖随机手牌或先后死亡。</summary>
         public bool LoadImpactScenario()
         {
-            if (!StartRound(1,1)) { return false; }
-            StopEnemyAI();
-            _board.Reset(); _playerPieces.Clear(); _enemyPieces.Clear();
-            PieceKind[] ranged = { PieceKind.Archer,PieceKind.Crossbow,PieceKind.MageWater,PieceKind.MageFire,PieceKind.Priest };
-            BoardPos[] positions = { new BoardPos(0,0),new BoardPos(4,0),new BoardPos(8,0),new BoardPos(0,2),new BoardPos(8,2) };
-            for (int i=0;i<ranged.Length;i++) { AddImpactPiece(GameSide.Player,ranged[i],positions[i]); }
-            PieceKind[] melee = { PieceKind.Swordman,PieceKind.Shield,PieceKind.HeavySword,PieceKind.Assassin };
-            for (int i=0;i<melee.Length;i++)
+            if (!StartRound(1, 1))
             {
-                AddImpactPiece(GameSide.Player,melee[i],new BoardPos(1+i*2,4));
-                AddImpactPiece(GameSide.Enemy,PieceKind.Shield,new BoardPos(1+i*2,5));
+                return false;
             }
-            AddImpactPiece(GameSide.Enemy,PieceKind.MageFire,new BoardPos(4,8));
+            StopEnemyAI();
+            _board.Reset();
+            _playerPieces.Clear();
+            _enemyPieces.Clear();
+            PieceKind[] ranged = { PieceKind.Archer, PieceKind.Crossbow, PieceKind.MageWater, PieceKind.MageFire, PieceKind.Priest };
+            BoardPos[] positions = { new BoardPos(0, 0), new BoardPos(4, 0), new BoardPos(8, 0), new BoardPos(0, 2), new BoardPos(8, 2) };
+            for (int i = 0; i < ranged.Length; i++)
+            {
+                AddImpactPiece(GameSide.Player, ranged[i], positions[i]);
+            }
+            PieceKind[] melee = { PieceKind.Swordman, PieceKind.Shield, PieceKind.HeavySword, PieceKind.Assassin };
+            for (int i = 0; i < melee.Length; i++)
+            {
+                AddImpactPiece(GameSide.Player, melee[i], new BoardPos(1 + i * 2, 4));
+                AddImpactPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(1 + i * 2, 5));
+            }
+            AddImpactPiece(GameSide.Enemy, PieceKind.MageFire, new BoardPos(4, 8));
             RefreshGoState();
-            RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare,Round);
+            RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
             return true;
         }
-
         private Piece AddImpactPiece(GameSide side, PieceKind kind, BoardPos pos)
         {
-            var piece = new Piece(_nextPieceId++,PieceCatalog.Get(kind,StarTier.One),side,hpScale:1000f);
-            if (!_board.Place(piece,pos)) { throw new InvalidOperationException("特效夹具占格冲突"); }
+            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, StarTier.One), side, hpScale: 1000f);
+
+            if (!_board.Place(piece, pos))
+            {
+                throw new InvalidOperationException("特效夹具占格冲突");
+            }
             (side == GameSide.Player ? _playerPieces : _enemyPieces).Add(piece);
             return piece;
         }
-
         /// <summary>读取实际AI出手次数与真实掉血；固定输入相同，改Excel攻速后预期会按配置重新计算。</summary>
-        public static void VerifyImpactService(Action<bool,string> check)
+        public static void VerifyImpactService(Action<bool, string> check)
         {
-            var service = new BattleService(false,524);
-            service.Chapter=1; service.Round=1; service.Phase=GamePhase.Battle;
-            Piece player = service.AddImpactPiece(GameSide.Player,PieceKind.Shield,new BoardPos(3,3));
-            Piece enemy = service.AddImpactPiece(GameSide.Enemy,PieceKind.Swordman,new BoardPos(3,4));
+            var service = new BattleService(false, 524);
+            service.Chapter = 1;
+            service.Round = 1;
+            service.Phase = GamePhase.Battle;
+            Piece player = service.AddImpactPiece(GameSide.Player, PieceKind.Shield, new BoardPos(3, 3));
+            Piece enemy = service.AddImpactPiece(GameSide.Enemy, PieceKind.Swordman, new BoardPos(3, 4));
             service.RefreshGoState();
-            int attacks=0;
-            object owner=new object();
-            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked,info=> { if(info.PieceId==enemy.Id) { attacks++; } },owner:owner);
+            int attacks = 0;
+            object owner = new object();
+            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info =>
+            {
+                if (info.PieceId == enemy.Id)
+                {
+                    attacks++;
+                }
+            }, owner: owner);
             try
             {
-                EnemyAI ai=service.EnsureEnemyAI(enemy);
-                int hp=player.Hp;
-                const int steps=160;
-                for(int i=0;i<steps;i++) { service._battleElapsed+=Balance.BattleSimulationStepSeconds; ai.Tick(Balance.BattleSimulationStepSeconds); }
-                int expected=(int)(steps*Balance.BattleSimulationStepSeconds/Balance.BattleTickSeconds*Balance.AttackSpeedScale*Balance.EnemyAttackRate);
-                check(Math.Abs(attacks-expected)<=1,"真实敌方FSM出手符合Excel倍率：实际"+attacks+"，预期"+expected);
-                check(player.Hp<hp,"攻击事件伴随真实扣血，不是只播放特效");
-                service.Phase=GamePhase.Settle;
+                EnemyAI ai = service.EnsureEnemyAI(enemy);
+                int hp = player.Hp;
+                const int steps = 160;
+                for (int i = 0; i < steps; i++)
+                {
+                    service._battleElapsed += Balance.BattleSimulationStepSeconds;
+                    ai.Tick(Balance.BattleSimulationStepSeconds);
+                }
+                int expected = (int)(steps * Balance.BattleSimulationStepSeconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate);
+                check(Math.Abs(attacks - expected) <= 1, "真实敌方FSM出手符合Excel倍率：实际" + attacks + "，预期" + expected);
+                check(player.Hp < hp, "攻击事件伴随真实扣血，不是只播放特效");
+                service.Phase = GamePhase.Settle;
                 ai.Tick(10f);
-                check(Math.Abs(attacks-expected)<=1,"结算期不会继续出手");
+                check(Math.Abs(attacks - expected) <= 1, "结算期不会继续出手");
             }
             finally { RevEvent.RemoveAllByOwner(owner); service.StopEnemyAI(); }
 
-            service=new BattleService(false,525);
-            service.Chapter=1; service.Round=1; service.Phase=GamePhase.Battle;
-            service.AddImpactPiece(GameSide.Player,PieceKind.Archer,new BoardPos(0,0));
-            service.AddImpactPiece(GameSide.Player,PieceKind.MageFire,new BoardPos(4,0));
-            service.AddImpactPiece(GameSide.Player,PieceKind.Priest,new BoardPos(8,0));
-            service.AddImpactPiece(GameSide.Enemy,PieceKind.Shield,new BoardPos(4,8));
+            service = new BattleService(false, 525);
+            service.Chapter = 1;
+            service.Round = 1;
+            service.Phase = GamePhase.Battle;
+            service.AddImpactPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
+            service.AddImpactPiece(GameSide.Player, PieceKind.MageFire, new BoardPos(4, 0));
+            service.AddImpactPiece(GameSide.Player, PieceKind.Priest, new BoardPos(8, 0));
+            service.AddImpactPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(4, 8));
             service.RefreshGoState();
-            service._battleElapsed=Balance.RangedFormationSeconds;
-            int moved=0;
-            RevEvent.AddEventListener<int>(Events.PieceFormationMoved,id=>moved++,owner:owner);
+            service._battleElapsed = Balance.RangedFormationSeconds;
+            int moved = 0;
+            RevEvent.AddEventListener<int>(Events.PieceFormationMoved, id => moved++, owner: owner);
             try
             {
                 service.TryArrangeRangedFormation();
-                check(moved==2,"服务提交两颗散落远程并发送两次整队事实");
-                foreach(Piece piece in service._playerPieces)
-                { check(service.Board.GetPiece(piece.Pos)==piece && !piece.IsLocked,"整队后真实占格和气完整"); }
+                check(moved == 2, "服务提交两颗散落远程并发送两次整队事实");
+                foreach (Piece piece in service._playerPieces)
+                {
+                    check(service.Board.GetPiece(piece.Pos) == piece && !piece.IsLocked, "整队后真实占格和气完整");
+                }
                 service.TryArrangeRangedFormation();
-                check(moved==2,"冷却未到不重复整队");
-                service._battleElapsed+=Balance.RangedFormationSeconds;
+                check(moved == 2, "冷却未到不重复整队");
+                service._battleElapsed += Balance.RangedFormationSeconds;
                 service.TryArrangeRangedFormation();
-                check(moved==2,"已形成相连阵型保持稳定");
+                check(moved == 2, "已形成相连阵型保持稳定");
                 Piece manual = service._playerPieces[1];
-                check(service.HandleBoardClick(manual.Pos) && service.HandleBoardClick(new BoardPos(8,0)),"通过玩家点击入口手动拆开远程阵型");
+                check(service.HandleBoardClick(manual.Pos) && service.HandleBoardClick(new BoardPos(8, 0)), "通过玩家点击入口手动拆开远程阵型");
                 service._nextFormationAt = service._battleElapsed;
                 service.TryArrangeRangedFormation();
-                check(manual.Pos == new BoardPos(8,0),"自动整队尊重刚提交的玩家手动指令");
+                check(manual.Pos == new BoardPos(8, 0), "自动整队尊重刚提交的玩家手动指令");
             }
             finally { RevEvent.RemoveAllByOwner(owner); service.StopEnemyAI(); }
         }

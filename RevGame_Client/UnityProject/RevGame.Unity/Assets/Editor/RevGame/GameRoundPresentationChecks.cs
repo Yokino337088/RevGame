@@ -27,7 +27,10 @@ namespace RevGame.Editor
         /// <summary>在主界面开始；内部按真实 API 开战、结算、继续，不能只反复调用发牌函数。</summary>
         public static async void Begin()
         {
-            if (LastResult == "运行中") { return; }
+            if (LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _checks = 0;
             GameFlow flow = RevServices.GetRequired<GameFlow>();
@@ -47,7 +50,10 @@ namespace RevGame.Editor
                     {
                         for (int x = 0; x < Consts.BoardSize && placed < used; x++)
                         {
-                            if (battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(x, y))) { placed++; }
+                            if (battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(x, y)))
+                            {
+                                placed++;
+                            }
                         }
                     }
                     Require(placed == used && battle.Hand.Count == 6 - used, "消费后的剩余牌数不正确");
@@ -66,11 +72,13 @@ namespace RevGame.Editor
                     VerifySixCards(battle);
                     VerifyNoOldEffects();
                 }
-
                 // 故意让翻牌停在半途，再进入下一轮；回调不能覆盖刚发的六张牌。
                 Require(battle.RefreshHand(), "刷新未成功");
                 PreparePanel prepare = UnityEngine.Object.FindObjectOfType<PreparePanel>();
-                foreach (CardItem card in prepare.GetComponentsInChildren<CardItem>(true)) { PauseOwnedTween(card, "_flip"); }
+                foreach (CardItem card in prepare.GetComponentsInChildren<CardItem>(true))
+                {
+                    PauseOwnedTween(card, "_flip");
+                }
                 Require(battle.StartRound(1, 5), "准备中重新装配回合失败");
                 await RevTask.Delay(900);
                 VerifySixCards(battle);
@@ -82,22 +90,37 @@ namespace RevGame.Editor
                 PieceView pausedUpgrade = null;
                 foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>())
                 {
-                    if (view.StormProgress <= 0f) { continue; }
+                    if (view.StormProgress <= 0f)
+                    {
+                        continue;
+                    }
                     pausedUpgrade = view;
                     PauseOwnedTween(view, "_visualTween");
                     break;
                 }
                 Require(pausedUpgrade != null, "真实合成没有在原棋子上启动雷暴 Shader");
-                foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { PauseOwnedTween(effect, "_animation"); }
-                foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>()) { PauseOwnedTween(notice, "_animation"); }
+                foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
+                {
+                    PauseOwnedTween(effect, "_animation");
+                }
+                foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>())
+                {
+                    PauseOwnedTween(notice, "_animation");
+                }
                 battle.Tick(3f);
                 Require(battle.StartBattle(), "合成后开战失败");
                 Require(pausedUpgrade.StormProgress == 0f, "切阶段后原棋子残留暂停的雷暴 Shader 参数");
                 VerifyNoOldEffects();
                 battle.Tick(Balance.BattleEventDelay);
                 await RevTask.Delay(120);
-                foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>()) { PauseOwnedTween(effect, "_animation"); }
-                foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>()) { PauseOwnedTween(notice, "_animation"); }
+                foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
+                {
+                    PauseOwnedTween(effect, "_animation");
+                }
+                foreach (BattleEventNoticeView notice in UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>())
+                {
+                    PauseOwnedTween(notice, "_animation");
+                }
                 // 通知先进入本帧反馈队列，随即换回合，检查队列与迟到取池回调均被取消。
                 RevEvent.DispatchEvent(Events.BattleHit, new BattleHitInfo(1, new BoardPos(2, 2), 1, GameSide.Enemy, 999, true, new BoardPos(0, 0), 1, false, PieceKind.Archer, 1, true));
                 Require(battle.StartRound(1, 2), "切回准备失败");
@@ -122,7 +145,6 @@ namespace RevGame.Editor
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
-
         private static void VerifySixCards(IBattleService battle)
         {
             Require(battle.Hand.Count == 6 && battle.CardsRemaining == 6, "新回合没有六张牌/六次额度");
@@ -136,7 +158,6 @@ namespace RevGame.Editor
                 Require(!cards[i].IsFlipping && cards[i].transform.localRotation == Quaternion.identity, "旧翻牌动画未复原：" + i);
             }
         }
-
         private static void VerifyNoOldEffects()
         {
             BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
@@ -146,16 +167,22 @@ namespace RevGame.Editor
             Require(UnityEngine.Object.FindObjectsOfType<BattleEffectView>().Length == 0, "场景中有未归还的弹幕");
             Require(UnityEngine.Object.FindObjectsOfType<BattleEventNoticeView>().Length == 0, "场景中有未归还的升级/增益提示");
         }
-
         private static void PauseOwnedTween(object view, string field)
         {
             Tween tween = view.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view) as Tween;
-            if (tween != null) { tween.Pause(); }
+
+            if (tween != null)
+            {
+                tween.Pause();
+            }
         }
 
         private static void Require(bool condition, string message)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             _checks++;
         }
     }

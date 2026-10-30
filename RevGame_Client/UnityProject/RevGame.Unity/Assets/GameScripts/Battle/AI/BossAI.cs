@@ -61,7 +61,6 @@ namespace RevGame.Battle
         Dead,
         Stopped,
     }
-
     /// <summary>
     /// Boss 状态能调用的宿主能力。和 IEnemyAIOwner 一样是“窄接口”：
     /// 状态只能通过这些方法改变世界，伤害公式、占格预检、事件广播仍由服务统一负责。
@@ -70,36 +69,73 @@ namespace RevGame.Battle
     {
         // ---------------- 只读局面 ----------------
         /// <summary>真实棋盘（只读查询；改变棋盘必须走下面的动作方法）。</summary>
-        BoardModel Board { get; }
+        BoardModel Board
+        {
+            get;
+        }
         /// <summary>这台机器负责的 Boss 主将。</summary>
-        Piece Boss { get; }
+        Piece Boss
+        {
+            get;
+        }
         /// <summary>当前阶段；离开战斗时 Boss 停手。</summary>
-        GamePhase Phase { get; }
+        GamePhase Phase
+        {
+            get;
+        }
         /// <summary>战斗累计模拟秒数，所有冷却以它为准。</summary>
-        float Elapsed { get; }
+        float Elapsed
+        {
+            get;
+        }
         /// <summary>当前章节：决定解锁哪些技能、冷却和伤害的章节换算。</summary>
-        int Chapter { get; }
+        int Chapter
+        {
+            get;
+        }
         /// <summary>AI 档位（1~4），影响技能评分偏好。</summary>
-        int Intelligence { get; }
+        int Intelligence
+        {
+            get;
+        }
         /// <summary>主将是否已被擒（死亡或零气）；为 true 时立刻停止一切动作。</summary>
-        bool KingCaptured { get; }
-
+        bool KingCaptured
+        {
+            get;
+        }
         // ---------------- Boss 自己的运行数据（每个 Boss 一份，换回合随宿主一起丢弃） ----------------
         /// <summary>是否已经狂暴（每场只触发一次）。</summary>
-        bool Enraged { get; set; }
+        bool Enraged
+        {
+            get; set;
+        }
         /// <summary>下一次允许放技能的最早时刻（公共间隔）。</summary>
-        float NextSkillAt { get; set; }
+        float NextSkillAt
+        {
+            get; set;
+        }
         /// <summary>按 BossSkillKind 下标存放的各技能“冷却结束时刻”。</summary>
-        float[] SkillReadyAt { get; }
+        float[] SkillReadyAt
+        {
+            get;
+        }
         /// <summary>本局各技能开始施放的次数；通用/专属据此分组轮换，回合结束随宿主清理。</summary>
-        int[] SkillUseCounts { get; }
+        int[] SkillUseCounts
+        {
+            get;
+        }
         /// <summary>专属技能提交，仍由服务统一处理扣血、控制与占格。</summary>
         void ExclusiveHit(BossSkillInfo info);
         /// <summary>上一次使用的技能，用于“避免连放同一招”。</summary>
-        BossSkillKind? LastSkill { get; set; }
+        BossSkillKind? LastSkill
+        {
+            get; set;
+        }
         /// <summary>Idle 选好、等待技能状态在 OnEnter 读取的计划。</summary>
-        BossSkillPlan PendingPlan { get; set; }
-
+        BossSkillPlan PendingPlan
+        {
+            get; set;
+        }
         // ---------------- 原子动作（由服务实现） ----------------
         /// <summary>普通攻击：与小兵共用同一套伤害公式。</summary>
         void Attack(Piece attacker, Piece target);
@@ -116,7 +152,6 @@ namespace RevGame.Battle
         /// <summary>广播技能事件：telegraph=true 为蓄力预警，false 为命中。同时负责 HUD 弹幕与战报。</summary>
         void Announce(BossSkillInfo info, bool telegraph);
     }
-
     /// <summary>
     /// 一台 Boss 状态机的包装。与 EnemyAI 一样：只装配、驱动、释放，不写任何 AI 决策。
     /// </summary>
@@ -129,7 +164,10 @@ namespace RevGame.Battle
         /// <summary>是否已释放：释放后再驱动会抛异常，防止旧回合 Boss 被继续推进。</summary>
         private bool _disposed;
         /// <summary>当前机器实际注册数量：三种生命周期状态加本章十技能与狂暴，共十四；用于验收，不是内存字节测量。</summary>
-        public int RegisteredStateCount { get; private set; }
+        public int RegisteredStateCount
+        {
+            get; private set;
+        }
         /// <summary>当前状态，只读供GM和测试观察。</summary>
         public BossAIState State => _machine.CurrentStateType;
         /// <summary>当前状态已持续的模拟秒数。</summary>
@@ -146,6 +184,7 @@ namespace RevGame.Battle
             // 配置先确定本章六通用四专属，再创建对应状态；跨章技能不分配实例、名单缓冲或委托。
             _machine.AddState(BossAIState.Idle, new BossIdleState(_machine));
             RegisteredStateCount++;
+
             if (BossSkillCatalog.IsUnlocked(BossSkillKind.Cleave, owner.Chapter))
             {
                 _machine.AddState(BossAIState.Cleave, new BossCleaveState(_machine));
@@ -457,80 +496,136 @@ namespace RevGame.Battle
             RegisteredStateCount++;
             _machine.ChangeState(BossAIState.Idle, "创建Boss AI");
         }
-
         /// <summary>技能种类 → 对应的技能状态。新增技能时这里也要加一行。</summary>
         public static BossAIState StateOf(BossSkillKind kind)
         {
             switch (kind)
             {
-                case BossSkillKind.Cleave: return BossAIState.Cleave;
-                case BossSkillKind.Snipe: return BossAIState.Snipe;
-                case BossSkillKind.Bombard: return BossAIState.Bombard;
-                case BossSkillKind.BulletRing: return BossAIState.BulletRing;
-                case BossSkillKind.BlinkBlast: return BossAIState.BlinkBlast;
-                case BossSkillKind.LaserSpin: return BossAIState.LaserSpin;
-                case BossSkillKind.SoulDrain: return BossAIState.SoulDrain;
-                case BossSkillKind.Summon: return BossAIState.Summon;
-                case BossSkillKind.Enrage: return BossAIState.Enrage;
-                case BossSkillKind.MeteorShower: return BossAIState.MeteorShower;
-                case BossSkillKind.CrossLaser: return BossAIState.CrossLaser;
-                case BossSkillKind.FrostNova: return BossAIState.FrostNova;
-                case BossSkillKind.ChainLightning: return BossAIState.ChainLightning;
-                case BossSkillKind.PoisonMarsh: return BossAIState.PoisonMarsh;
-                case BossSkillKind.FlameWall: return BossAIState.FlameWall;
-                case BossSkillKind.IceLance: return BossAIState.IceLance;
-                case BossSkillKind.GravityWell: return BossAIState.GravityWell;
-                case BossSkillKind.DoomSigil: return BossAIState.DoomSigil;
-                case BossSkillKind.StarStorm: return BossAIState.StarStorm;
-                case BossSkillKind.BlackHole: return BossAIState.BlackHole;
-                case BossSkillKind.SolarFlare: return BossAIState.SolarFlare;
-                case BossSkillKind.SunBrand: return BossAIState.SunBrand;
-                case BossSkillKind.TidalSurge: return BossAIState.TidalSurge;
-                case BossSkillKind.Maelstrom: return BossAIState.Maelstrom;
-                case BossSkillKind.SwampMaw: return BossAIState.SwampMaw;
-                case BossSkillKind.MireChains: return BossAIState.MireChains;
-                case BossSkillKind.FrozenPrison: return BossAIState.FrozenPrison;
-                case BossSkillKind.GlacialAegis: return BossAIState.GlacialAegis;
-                case BossSkillKind.DivineCross: return BossAIState.DivineCross;
-                case BossSkillKind.Sanctuary: return BossAIState.Sanctuary;
-                case BossSkillKind.CometRails: return BossAIState.CometRails;
-                case BossSkillKind.AstralShards: return BossAIState.AstralShards;
-                case BossSkillKind.SolarSpears: return BossAIState.SolarSpears;
-                case BossSkillKind.EmberFan: return BossAIState.EmberFan;
-                case BossSkillKind.MagmaRings: return BossAIState.MagmaRings;
-                case BossSkillKind.TidalLances: return BossAIState.TidalLances;
-                case BossSkillKind.FoamBurst: return BossAIState.FoamBurst;
-                case BossSkillKind.Undertow: return BossAIState.Undertow;
-                case BossSkillKind.ReefSpikes: return BossAIState.ReefSpikes;
-                case BossSkillKind.BogSpines: return BossAIState.BogSpines;
-                case BossSkillKind.VenomFan: return BossAIState.VenomFan;
-                case BossSkillKind.MireRipples: return BossAIState.MireRipples;
-                case BossSkillKind.BlightSeeds: return BossAIState.BlightSeeds;
-                case BossSkillKind.SnowCross: return BossAIState.SnowCross;
-                case BossSkillKind.HailBarrage: return BossAIState.HailBarrage;
-                case BossSkillKind.IceFault: return BossAIState.IceFault;
-                case BossSkillKind.JudgementLances: return BossAIState.JudgementLances;
-                case BossSkillKind.HaloPulse: return BossAIState.HaloPulse;
-                case BossSkillKind.RunicGrid: return BossAIState.RunicGrid;
-                case BossSkillKind.EventHorizon: return BossAIState.EventHorizon;
-                case BossSkillKind.ConstellationSeal: return BossAIState.ConstellationSeal;
-                case BossSkillKind.PhoenixDescent: return BossAIState.PhoenixDescent;
-                case BossSkillKind.SolarEclipse: return BossAIState.SolarEclipse;
-                case BossSkillKind.LeviathanWake: return BossAIState.LeviathanWake;
-                case BossSkillKind.AbyssalCage: return BossAIState.AbyssalCage;
-                case BossSkillKind.PlagueBloom: return BossAIState.PlagueBloom;
-                case BossSkillKind.HydraFangs: return BossAIState.HydraFangs;
-                case BossSkillKind.AbsoluteZero: return BossAIState.AbsoluteZero;
-                case BossSkillKind.Avalanche: return BossAIState.Avalanche;
-                case BossSkillKind.Heavenfall: return BossAIState.Heavenfall;
-                case BossSkillKind.FinalEdict: return BossAIState.FinalEdict;
-
-
-
+                case BossSkillKind.Cleave:
+                    return BossAIState.Cleave;
+                case BossSkillKind.Snipe:
+                    return BossAIState.Snipe;
+                case BossSkillKind.Bombard:
+                    return BossAIState.Bombard;
+                case BossSkillKind.BulletRing:
+                    return BossAIState.BulletRing;
+                case BossSkillKind.BlinkBlast:
+                    return BossAIState.BlinkBlast;
+                case BossSkillKind.LaserSpin:
+                    return BossAIState.LaserSpin;
+                case BossSkillKind.SoulDrain:
+                    return BossAIState.SoulDrain;
+                case BossSkillKind.Summon:
+                    return BossAIState.Summon;
+                case BossSkillKind.Enrage:
+                    return BossAIState.Enrage;
+                case BossSkillKind.MeteorShower:
+                    return BossAIState.MeteorShower;
+                case BossSkillKind.CrossLaser:
+                    return BossAIState.CrossLaser;
+                case BossSkillKind.FrostNova:
+                    return BossAIState.FrostNova;
+                case BossSkillKind.ChainLightning:
+                    return BossAIState.ChainLightning;
+                case BossSkillKind.PoisonMarsh:
+                    return BossAIState.PoisonMarsh;
+                case BossSkillKind.FlameWall:
+                    return BossAIState.FlameWall;
+                case BossSkillKind.IceLance:
+                    return BossAIState.IceLance;
+                case BossSkillKind.GravityWell:
+                    return BossAIState.GravityWell;
+                case BossSkillKind.DoomSigil:
+                    return BossAIState.DoomSigil;
+                case BossSkillKind.StarStorm:
+                    return BossAIState.StarStorm;
+                case BossSkillKind.BlackHole:
+                    return BossAIState.BlackHole;
+                case BossSkillKind.SolarFlare:
+                    return BossAIState.SolarFlare;
+                case BossSkillKind.SunBrand:
+                    return BossAIState.SunBrand;
+                case BossSkillKind.TidalSurge:
+                    return BossAIState.TidalSurge;
+                case BossSkillKind.Maelstrom:
+                    return BossAIState.Maelstrom;
+                case BossSkillKind.SwampMaw:
+                    return BossAIState.SwampMaw;
+                case BossSkillKind.MireChains:
+                    return BossAIState.MireChains;
+                case BossSkillKind.FrozenPrison:
+                    return BossAIState.FrozenPrison;
+                case BossSkillKind.GlacialAegis:
+                    return BossAIState.GlacialAegis;
+                case BossSkillKind.DivineCross:
+                    return BossAIState.DivineCross;
+                case BossSkillKind.Sanctuary:
+                    return BossAIState.Sanctuary;
+                case BossSkillKind.CometRails:
+                    return BossAIState.CometRails;
+                case BossSkillKind.AstralShards:
+                    return BossAIState.AstralShards;
+                case BossSkillKind.SolarSpears:
+                    return BossAIState.SolarSpears;
+                case BossSkillKind.EmberFan:
+                    return BossAIState.EmberFan;
+                case BossSkillKind.MagmaRings:
+                    return BossAIState.MagmaRings;
+                case BossSkillKind.TidalLances:
+                    return BossAIState.TidalLances;
+                case BossSkillKind.FoamBurst:
+                    return BossAIState.FoamBurst;
+                case BossSkillKind.Undertow:
+                    return BossAIState.Undertow;
+                case BossSkillKind.ReefSpikes:
+                    return BossAIState.ReefSpikes;
+                case BossSkillKind.BogSpines:
+                    return BossAIState.BogSpines;
+                case BossSkillKind.VenomFan:
+                    return BossAIState.VenomFan;
+                case BossSkillKind.MireRipples:
+                    return BossAIState.MireRipples;
+                case BossSkillKind.BlightSeeds:
+                    return BossAIState.BlightSeeds;
+                case BossSkillKind.SnowCross:
+                    return BossAIState.SnowCross;
+                case BossSkillKind.HailBarrage:
+                    return BossAIState.HailBarrage;
+                case BossSkillKind.IceFault:
+                    return BossAIState.IceFault;
+                case BossSkillKind.JudgementLances:
+                    return BossAIState.JudgementLances;
+                case BossSkillKind.HaloPulse:
+                    return BossAIState.HaloPulse;
+                case BossSkillKind.RunicGrid:
+                    return BossAIState.RunicGrid;
+                case BossSkillKind.EventHorizon:
+                    return BossAIState.EventHorizon;
+                case BossSkillKind.ConstellationSeal:
+                    return BossAIState.ConstellationSeal;
+                case BossSkillKind.PhoenixDescent:
+                    return BossAIState.PhoenixDescent;
+                case BossSkillKind.SolarEclipse:
+                    return BossAIState.SolarEclipse;
+                case BossSkillKind.LeviathanWake:
+                    return BossAIState.LeviathanWake;
+                case BossSkillKind.AbyssalCage:
+                    return BossAIState.AbyssalCage;
+                case BossSkillKind.PlagueBloom:
+                    return BossAIState.PlagueBloom;
+                case BossSkillKind.HydraFangs:
+                    return BossAIState.HydraFangs;
+                case BossSkillKind.AbsoluteZero:
+                    return BossAIState.AbsoluteZero;
+                case BossSkillKind.Avalanche:
+                    return BossAIState.Avalanche;
+                case BossSkillKind.Heavenfall:
+                    return BossAIState.Heavenfall;
+                case BossSkillKind.FinalEdict:
+                    return BossAIState.FinalEdict;
             }
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "没有对应的Boss技能状态");
         }
-
         /// <summary>
         /// 正常驱动：把固定模拟小步交给当前状态。感知、切换、执行都在 BossStates.cs 里完成。
         /// </summary>
@@ -547,7 +642,6 @@ namespace RevGame.Battle
             }
             _machine.UpdateState(seconds);
         }
-
         /// <summary>
         /// 强制进入终态（死亡/停止）。只用于“事实已确定”的场合，例如真实扣血后死亡。
         /// 死亡是终态：已死后再调用不会把 Boss 切回别的状态。
@@ -579,6 +673,7 @@ namespace RevGame.Battle
                 return false;
             }
             BossSkillPlan plan;
+
             if (!BossTactics.TryPlan(_owner.Board, _owner.Boss, kind, _owner.Intelligence, out plan))
             {
                 return false;
@@ -586,7 +681,6 @@ namespace RevGame.Battle
             _owner.PendingPlan = plan;
             return _machine.ChangeState(StateOf(kind), "测试/GM 指定技能");
         }
-
         /// <summary>释放状态机与宿主引用；可重复调用。</summary>
         public void Dispose()
         {

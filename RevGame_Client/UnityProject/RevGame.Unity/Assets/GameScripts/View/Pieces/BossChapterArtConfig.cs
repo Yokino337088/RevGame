@@ -34,9 +34,17 @@ namespace RevGame.View
         {
             if (Chapter != chapter || Frames == null || Frames.Length != 8 || Array.Exists(Frames, sprite => sprite == null)
                 || FrameSeconds < .05f || FrameSeconds > 1f || BodyScale <= 0 || BodyScale > 2f)
-            { throw new InvalidOperationException("Boss关键帧美术配置无效：" + name); }
+            {
+                throw new InvalidOperationException("Boss关键帧美术配置无效：" + name);
+            }
         }
-        public static string ResourceName(int chapter) { return "BossChapter" + chapter.ToString("D2"); }
-        public static string AtlasName(int chapter) { return "BossChapter" + chapter.ToString("D2") + "Frames"; }
+        public static string ResourceName(int chapter)
+        {
+            return "BossChapter" + chapter.ToString("D2");
+        }
+        public static string AtlasName(int chapter)
+        {
+            return "BossChapter" + chapter.ToString("D2") + "Frames";
+        }
     }
 }

@@ -47,7 +47,6 @@ namespace RevGame.View
             [Tooltip("被锁死标识每帧停留秒数")]
             public float lockedInterval = 0.14f;
         }
-
         [SerializeField]
         private Entry[] entries = new Entry[0];
         /// <summary>按（种类, 星级, 阵营）查表；没有就返回 null（调用方判空，不抛异常）。</summary>
@@ -56,32 +55,27 @@ namespace RevGame.View
             for (int i = 0; i < entries.Length; i++)
             {
                 Entry e = entries[i];
+
                 if (e == null)
                 {
                     continue;
                 }
-
                 if (e.kind != kind)
                 {
                     continue;
                 }
-
                 if (e.star != star)
                 {
                     continue;
                 }
-
                 if (e.side != side)
                 {
                     continue;
                 }
-
                 return e;
             }
-
             return null;
         }
-
         /// <summary>条目总数（编辑器工具/自检用）。</summary>
         public int EntryCount
         {
@@ -90,7 +84,6 @@ namespace RevGame.View
                 return entries != null ? entries.Length : 0;
             }
         }
-
         /// <summary>给编辑器工具批量填表用（运行期不要调）。</summary>
         public void SetEntries(Entry[] newEntries)
         {

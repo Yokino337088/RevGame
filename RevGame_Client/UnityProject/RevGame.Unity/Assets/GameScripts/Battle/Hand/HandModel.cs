@@ -11,10 +11,18 @@ namespace RevGame.Battle
     /// <summary>一张不可变的手牌；Id 在本次游戏中不重复，避免旧按钮误打新牌。</summary>
     public sealed class HandCard
     {
-        public int Id { get; }
-        public PieceKind Kind { get; }
-        public StarTier Star { get; }
-
+        public int Id
+        {
+            get;
+        }
+        public PieceKind Kind
+        {
+            get;
+        }
+        public StarTier Star
+        {
+            get;
+        }
         public HandCard(int id, PieceKind kind, StarTier star)
         {
             Id = id;
@@ -22,7 +30,6 @@ namespace RevGame.Battle
             Star = star;
         }
     }
-
     /// <summary>只处理手牌增删；阶段、额度和落点由 BattleService 统一校验。</summary>
     public sealed class HandModel
     {
@@ -36,13 +43,11 @@ namespace RevGame.Battle
                 return _readOnlyCards;
             }
         }
-
         public HandModel()
         {
             // ★ 不直接把 List 当接口返回，否则外部仍可以强转回 List 并篡改手牌。
             _readOnlyCards = _cards.AsReadOnly();
         }
-
         public HandCard Find(int id)
         {
             for (int i = 0; i < _cards.Count; i++)
@@ -55,24 +60,20 @@ namespace RevGame.Battle
 
             return null;
         }
-
         internal bool Add(PieceKind kind, StarTier star)
         {
             if (_cards.Count >= Consts.MaxHandSize)
             {
                 return false;
             }
-
             _cards.Add(new HandCard(_nextId++, kind, star));
             return true;
         }
-
         internal bool Remove(int id)
         {
             HandCard card = Find(id);
             return card != null && _cards.Remove(card);
         }
-
         internal void Clear()
         {
             _cards.Clear();

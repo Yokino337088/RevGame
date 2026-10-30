@@ -25,10 +25,19 @@ namespace RevGame.Flow
             public readonly string Root;
             public readonly string Name;
             /// <summary>分组以第一次加载为准，所以预载必须沿用正式消费者的组，不能一律塞进Scene。</summary>
-            public RevResGroup Group { get { return Root == RevResPath.UI_Panel ? RevResGroup.UI : RevResGroup.Battle; } }
-            public Resource(string root, string name) { Root = root; Name = name; }
+            public RevResGroup Group
+            {
+                get
+                {
+                    return Root == RevResPath.UI_Panel ? RevResGroup.UI : RevResGroup.Battle;
+                }
+            }
+            public Resource(string root, string name)
+            {
+                Root = root;
+                Name = name;
+            }
         }
-
         /// <summary>按屏幕寿命选择资源；每次异步完成后Yield，即使全部命中缓存也不会一次集中处理所有对象。</summary>
         public async RevTask LoadAsync(bool battle, Action<float> progress)
         {
@@ -58,6 +67,7 @@ namespace RevGame.Flow
                 var completion = new RevTaskCompletionSource<RevResHandle>();
                 RevResManager.LoadAsync(resource.Root, resource.Name, typeof(GameObject), h => completion.SetResult(h), resource.Group);
                 RevResHandle handle = await completion.Task;
+
                 if (!handle.IsLoaded)
                 {
                     throw new InvalidOperationException(resource.Name + "预载失败：" + handle.ErrorReason);
@@ -66,7 +76,6 @@ namespace RevGame.Flow
                 await RevTask.Yield();
             }
         }
-
         /// <summary>
         /// 预创建24颗棋子、71个反馈实例（35弹道+20文字+16近战）、2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
         /// 每帧最多2个，且单批累计超过3毫秒就主动让帧；单个Unity实例化不可拆分，不能承诺绝对无卡帧。
@@ -85,22 +94,27 @@ namespace RevGame.Flow
                         throw new OperationCanceledException("对象池预热已取消");
                     }
                     Component instance;
+
                     if (i < 24)
                     {
                         instance = await GetAsync<PieceView>();
                     }
-                    else if (i < feedbackEnd)
-                    {
-                        instance = await GetAsync<BattleEffectView>();
-                    }
-                    else if (i < feedbackEnd + UI.BattleHudPanel.MaxScoreSparks)
-                    {
-                        instance = await GetAsync<ScoreSparkView>();
-                    }
                     else
-                    {
-                        instance = await GetAsync<BattleEventNoticeView>();
-                    }
+
+                        if (i < feedbackEnd)
+                        {
+                            instance = await GetAsync<BattleEffectView>();
+                        }
+                        else
+
+                            if (i < feedbackEnd + UI.BattleHudPanel.MaxScoreSparks)
+                            {
+                                instance = await GetAsync<ScoreSparkView>();
+                            }
+                            else
+                            {
+                                instance = await GetAsync<BattleEventNoticeView>();
+                            }
                     // 退出发生在await期间时，不能再把迟到实例记入已经清空的清单。
                     if (_disposed)
                     {
@@ -116,6 +130,7 @@ namespace RevGame.Flow
                     }
                     _instances.Add(instance);
                     progress?.Invoke((i + 1f) / count);
+
                     if (i % 2 == 1 || Time.realtimeSinceStartup - sliceStart >= 0.003f)
                     {
                         await RevTask.Yield();
@@ -125,25 +140,23 @@ namespace RevGame.Flow
             }
             finally { ReturnInstances(); }
         }
-
         private static RevTask<T> GetAsync<T>() where T : Component
         {
             var completion = new RevTaskCompletionSource<T>();
             GamePoolRequests.GetAsync<T>(value => completion.SetResult(value));
             return completion.Task;
         }
-
         private void ReturnInstances()
         {
-            foreach (Component instance in _instances) {
-            if (instance != null)
+            foreach (Component instance in _instances)
             {
-                RevPool.Return(instance, 0);
-            }
+                if (instance != null)
+                {
+                    RevPool.Return(instance, 0);
+                }
             }
             _instances.Clear();
         }
-
         public void Dispose()
         {
             if (_disposed)
@@ -152,7 +165,10 @@ namespace RevGame.Flow
             }
             _disposed = true;
             ReturnInstances();
-            foreach (Resource resource in _leases) { RevResManager.Release(resource.Root, resource.Name); }
+            foreach (Resource resource in _leases)
+            {
+                RevResManager.Release(resource.Root, resource.Name);
+            }
             _leases.Clear();
         }
     }

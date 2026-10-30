@@ -16,9 +16,16 @@ namespace RevGame.Editor
         /// <summary>美术导入按Atlas V2约定配置，保留透明边缘；失败直接报路径，不留白图引用。</summary>
         public static string Configure()
         {
-            if (Application.isPlaying) { throw new InvalidOperationException("眼位资产只能在编辑态配置"); }
+            if (Application.isPlaying)
+            {
+                throw new InvalidOperationException("眼位资产只能在编辑态配置");
+            }
             var importer = AssetImporter.GetAtPath(EyePath) as TextureImporter;
-            if (importer == null) { throw new InvalidOperationException("缺少卡通双眼图片：" + EyePath); }
+
+            if (importer == null)
+            {
+                throw new InvalidOperationException("缺少卡通双眼图片：" + EyePath);
+            }
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.spritePixelsPerUnit = 100f;
@@ -28,7 +35,11 @@ namespace RevGame.Editor
             importer.filterMode = FilterMode.Bilinear;
             importer.SaveAndReimport();
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(EyePath);
-            if (sprite == null) { throw new InvalidOperationException("双眼Sprite导入失败"); }
+
+            if (sprite == null)
+            {
+                throw new InvalidOperationException("双眼Sprite导入失败");
+            }
             GameObject root = PrefabUtility.LoadPrefabContents(CellPath);
             try
             {

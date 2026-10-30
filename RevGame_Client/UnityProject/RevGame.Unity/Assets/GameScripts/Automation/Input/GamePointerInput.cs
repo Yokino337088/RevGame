@@ -25,8 +25,14 @@ namespace RevGame.Automation
         private Vector2 _position;
         /// <summary>最近一次失败原因，如被遮罩挡住或按钮不可交互；交给步骤超时报告，不吞掉。</summary>
         public string LastError { get; private set; }
-        public bool IsPressed { get { return _pointer != null; } }
 
+        public bool IsPressed
+        {
+            get
+            {
+                return _pointer != null;
+            }
+        }
         /// <summary>从已打开的业务面板解析唯一按钮。每次重新解析，不能跨场景缓存可能已回收的面板。</summary>
         public Button FindButton(string target)
         {
@@ -62,22 +68,27 @@ namespace RevGame.Automation
             }
             return result;
         }
-
         /// <summary>显式面板白名单；新增页面时在此接项目面板，不使用反射执行任意类型。</summary>
         private static RevUIPanel FindPanel(string name)
         {
             switch (name)
             {
-                case "HomePanel": return RevUI.Get<HomePanel>();
-                case "LevelSelectPanel": return RevUI.Get<LevelSelectPanel>();
-                case "PreparePanel": return RevUI.Get<PreparePanel>();
-                case "SettlePanel": return RevUI.Get<SettlePanel>();
-                case "RewardPanel": return RevUI.Get<RewardPanel>();
-                case "BattleHudPanel": return RevUI.Get<BattleHudPanel>();
-                default: return null;
+                case "HomePanel":
+                    return RevUI.Get<HomePanel>();
+                case "LevelSelectPanel":
+                    return RevUI.Get<LevelSelectPanel>();
+                case "PreparePanel":
+                    return RevUI.Get<PreparePanel>();
+                case "SettlePanel":
+                    return RevUI.Get<SettlePanel>();
+                case "RewardPanel":
+                    return RevUI.Get<RewardPanel>();
+                case "BattleHudPanel":
+                    return RevUI.Get<BattleHudPanel>();
+                default:
+                    return null;
             }
         }
-
         /// <summary>按按钮可见矩形中心发送指针，保留 Canvas 相机换算，不依赖 1920×1080 的硬编码像素位置。</summary>
         public bool PressButton(Button button)
         {
@@ -92,7 +103,6 @@ namespace RevGame.Automation
             Vector2 point = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center));
             return Press(button.gameObject, point);
         }
-
         /// <summary>棋盘同样经过 Physics2DRaycaster；若格子被 UI 挡住就拒绝，不能直接调用 OnCellClicked 绕过遮挡。</summary>
         public bool PressCell(BoardCellView cell)
         {
@@ -104,13 +114,11 @@ namespace RevGame.Automation
             }
             return Press(cell.gameObject, camera.WorldToScreenPoint(cell.transform.position));
         }
-
         /// <summary>仅检查这个格子此刻是否能被用户点到，用于选择候选落点；不发送输入，不修改棋盘。</summary>
         public bool CanReachCell(BoardCellView cell)
         {
             return cell != null && Camera.main != null && Hit(cell.gameObject, Camera.main.WorldToScreenPoint(cell.transform.position), out _);
         }
-
         private bool Press(GameObject target, Vector2 point)
         {
             if (IsPressed || !Hit(target, point, out RaycastResult hit))
@@ -121,9 +129,15 @@ namespace RevGame.Automation
             _pressed = ExecuteEvents.GetEventHandler<IPointerClickHandler>(target);
             _pointer = new PointerEventData(EventSystem.current)
             {
-                pointerId = -100, button = PointerEventData.InputButton.Left,
-                position = point, pressPosition = point, eligibleForClick = true,
-                pointerCurrentRaycast = hit, pointerPressRaycast = hit, clickCount = 1, clickTime = Time.unscaledTime
+                pointerId = -100,
+                button = PointerEventData.InputButton.Left,
+                position = point,
+                pressPosition = point,
+                eligibleForClick = true,
+                pointerCurrentRaycast = hit,
+                pointerPressRaycast = hit,
+                clickCount = 1,
+                clickTime = Time.unscaledTime
             };
             ExecuteEvents.ExecuteHierarchy(target, _pointer, ExecuteEvents.pointerEnterHandler);
             GameObject down = ExecuteEvents.ExecuteHierarchy(target, _pointer, ExecuteEvents.pointerDownHandler);
@@ -132,7 +146,6 @@ namespace RevGame.Automation
             LastError = "";
             return true;
         }
-
         /// <summary>
         /// 复用 EventSystem 的排序结果，只接受最上层命中。不能从射线列表中挑自己想要的后排物体，
         /// 否则加载遮罩/结算页挡住棋盘时，测试仍能点穿并产生虚假的“通过”。
@@ -160,7 +173,6 @@ namespace RevGame.Automation
             LastError = "目标被遮挡或没有输入射线：" + target.name + "；最上层=" + (hit.gameObject != null ? hit.gameObject.name : "无");
             return false;
         }
-
         /// <summary>在后续轮询释放手势；再次检查最上层目标，防止按下后出现弹窗却仍点击旧按钮。</summary>
         public bool Release(bool click)
         {

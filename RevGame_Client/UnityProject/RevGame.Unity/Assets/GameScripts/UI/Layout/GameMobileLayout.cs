@@ -25,21 +25,25 @@ namespace RevGame.UI
             _lastSize = Vector2.zero;
             ApplyLayout();
         }
-
         private void OnEnable()
         {
             _lastSize = Vector2.zero;
             ApplyLayout();
         }
-
-        private void OnRectTransformDimensionsChange() { ApplyLayout(); }
+        private void OnRectTransformDimensionsChange()
+        {
+            ApplyLayout();
+        }
         // 刘海/模拟器旋转可能只改变安全区，不改变 RectTransform 尺寸，因此还要轻量比较一次。
-        private void LateUpdate() { ApplyLayout(); }
-
+        private void LateUpdate()
+        {
+            ApplyLayout();
+        }
         /// <summary>只在尺寸变化时重排；防止设置子节点尺寸触发递归排版。</summary>
         private void ApplyLayout()
         {
             RectTransform root = transform as RectTransform;
+
             // 不按节点名重新摆放：新增控件、字体行高与手工坐标必须一起来自预制体。
             // 画布等比缩放和预制体锚点仍正常生效；安全区布局需要在预制体中显式设计。
             if (!useLegacyLayout || _applying || root == null || string.IsNullOrEmpty(panelName))
@@ -48,6 +52,7 @@ namespace RevGame.UI
             }
             Vector2 size = root.rect.size;
             Rect safe = GameBattleLayout.SafeViewport();
+
             if (size.x < 10f || size.y < 10f || (size == _lastSize && safe == _lastSafe))
             {
                 return;
@@ -55,6 +60,7 @@ namespace RevGame.UI
             _applying = true;
             _lastSize = size;
             _lastSafe = safe;
+
             // 两个战斗面板的预制体已按 1920×1080 无刘海布局保存；在设计分辨率下
             // 直接使用可编辑的预制体坐标，只有设备尺寸/安全区变化时才重新适配。
             if ((panelName == "PreparePanel" || panelName == "BattleHudPanel")
@@ -66,63 +72,76 @@ namespace RevGame.UI
                 return;
             }
             float width = size.x;
+
             if (panelName == "PreparePanel")
             {
                 LayoutHand(GameBattleLayout.Calculate(size, safe));
             }
-            else if (panelName == "BattleHudPanel")
-            {
-                LayoutHud(GameBattleLayout.Calculate(size, safe));
-            }
-            else if (panelName == "HomePanel")
-            {
-                Place("contentPlate", 0.5f, 0.5f, 0, 0, 1140, 800);
-                Place("title", 0.5f, 0.5f, 0, 230, width * 0.85f, 130);
-                Place("subtitle", 0.5f, 0.5f, 0, 100, width * 0.8f, 90);
-                Place("btnPlay", 0.5f, 0.5f, 0, -70, 420, 130);
-                Place("hint", 0.5f, 0.5f, 0, -270, width * 0.75f, 110);
-            }
-            else if (panelName == "LevelSelectPanel")
-            {
-                Place("contentPlate", 0.5f, 0.5f, 0, 0, 1660, 960);
-                Place("title", 0.5f, 0.5f, 0, 345, width * 0.8f, 100);
-                for (int i = 0; i < 6; i++)
+            else
+
+                if (panelName == "BattleHudPanel")
                 {
-                    float x = (i % 3 - 1) * 400;
-                    float y = 130 - i / 3 * 220;
-                    Place("chapter" + (i + 1), 0.5f, 0.5f, x, y, 350, 190);
+                    LayoutHud(GameBattleLayout.Calculate(size, safe));
                 }
-                Place("hint", 0.5f, 0.5f, 0, -290, width * 0.8f, 100);
-                Place("btnHome", 0.5f, 0.5f, 0, -385, 340, 100);
-            }
-            else if (panelName == "SettlePanel")
-            {
-                Place("background", 0.5f, 0.5f, 0, 0, 1000, 670);
-                Place("titleText", 0.5f, 0.5f, 0, 160, 800, 100);
-                Place("detailText", 0.5f, 0.5f, 0, 20, 800, 150);
-                Place("btnContinue", 0.5f, 0.5f, 0, -180, 350, 110);
-            }
-            else if (panelName == "RewardPanel")
-            {
-                Place("background", 0.5f, 0.5f, 0, 0, 1380, 778);
-                Place("heading", 0.5f, 0.5f, 0, 245, width * 0.85f, 100);
-                for (int i = 0; i < 3; i++)
-                {
-                    float cardWidth = 340f;
-                    Place("choice" + i, 0.5f, 0.5f, (i - 1) * (cardWidth + 20), -30, cardWidth, 350);
-                    Place("choice" + i + "/label", 0.5f, 0.5f, 0, -70, cardWidth - 26, 190);
-                }
-            }
+                else
+
+                    if (panelName == "HomePanel")
+                    {
+                        Place("contentPlate", 0.5f, 0.5f, 0, 0, 1140, 800);
+                        Place("title", 0.5f, 0.5f, 0, 230, width * 0.85f, 130);
+                        Place("subtitle", 0.5f, 0.5f, 0, 100, width * 0.8f, 90);
+                        Place("btnPlay", 0.5f, 0.5f, 0, -70, 420, 130);
+                        Place("hint", 0.5f, 0.5f, 0, -270, width * 0.75f, 110);
+                    }
+                    else
+
+                        if (panelName == "LevelSelectPanel")
+                        {
+                            Place("contentPlate", 0.5f, 0.5f, 0, 0, 1660, 960);
+                            Place("title", 0.5f, 0.5f, 0, 345, width * 0.8f, 100);
+                            for (int i = 0; i < 6; i++)
+                            {
+                                float x = (i % 3 - 1) * 400;
+                                float y = 130 - i / 3 * 220;
+                                Place("chapter" + (i + 1), 0.5f, 0.5f, x, y, 350, 190);
+                            }
+                            Place("hint", 0.5f, 0.5f, 0, -290, width * 0.8f, 100);
+                            Place("btnHome", 0.5f, 0.5f, 0, -385, 340, 100);
+                        }
+                        else
+
+                            if (panelName == "SettlePanel")
+                            {
+                                Place("background", 0.5f, 0.5f, 0, 0, 1000, 670);
+                                Place("titleText", 0.5f, 0.5f, 0, 160, 800, 100);
+                                Place("detailText", 0.5f, 0.5f, 0, 20, 800, 150);
+                                Place("btnContinue", 0.5f, 0.5f, 0, -180, 350, 110);
+                            }
+                            else
+
+                                if (panelName == "RewardPanel")
+                                {
+                                    Place("background", 0.5f, 0.5f, 0, 0, 1380, 778);
+                                    Place("heading", 0.5f, 0.5f, 0, 245, width * 0.85f, 100);
+                                    for (int i = 0; i < 3; i++)
+                                    {
+                                        float cardWidth = 340f;
+                                        Place("choice" + i, 0.5f, 0.5f, (i - 1) * (cardWidth + 20), -30, cardWidth, 350);
+                                        Place("choice" + i + "/label", 0.5f, 0.5f, 0, -70, cardWidth - 26, 190);
+                                    }
+                                }
+
             _applying = false;
         }
-
         private void LayoutHand(GameBattleLayout.Regions areas)
         {
             Transform row = transform.Find("cards");
+
             if (row != null)
             {
                 // 自己计算每个槽位，避免 HorizontalLayoutGroup 在横屏侧栏里又把牌挤回一行。
                 HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
+
                 if (layout != null)
                 {
                     layout.enabled = false;
@@ -138,6 +157,7 @@ namespace RevGame.UI
                     Place("cards/" + row.GetChild(i).name, 0f, 0f, center.x, center.y, card.width, card.height);
                 }
             }
+
             InRegion("hintText", areas.Left, 0.92f, 0.94f, 0.12f);
             InRegion("hintPlate", areas.Left, 0.92f, 1f, 0.15f);
             InRegion("btnReady", areas.Right, 0.06f, 0.94f, 0.10f);
@@ -145,7 +165,6 @@ namespace RevGame.UI
             InRegion("btnEye", areas.Right, 0.30f, 0.88f, 0.095f);
             InRegion("btnSkip", areas.Right, 0.42f, 0.88f, 0.095f);
         }
-
         private void LayoutHud(GameBattleLayout.Regions areas)
         {
             Rect header = areas.Header;
@@ -168,18 +187,17 @@ namespace RevGame.UI
             InRegion("bossBar", areas.Right, 0.70f, 0.90f, 0.018f);
             InRegion("bossText", areas.Right, 0.675f, 0.94f, 0.025f);
         }
-
         private void InRegion(string path, Rect area, float y, float width, float height)
         {
             PlaceAbsolute(path, GameBattleLayout.InRegion(area, y, width, height));
         }
-
         /// <summary>每次由原始区域计算绝对位置，不在上次位置上继续加偏移，反复缩放不会越移越远。</summary>
         private void PlaceAbsolute(string path, Rect area)
         {
             Place(path, 0f, 0f, area.center.x, area.center.y, area.width, area.height);
             Transform node = transform.Find(path);
             Text text = node == null ? null : node.GetComponent<Text>();
+
             if (text != null)
             {
                 text.resizeTextForBestFit = true;
@@ -194,6 +212,7 @@ namespace RevGame.UI
         private void Place(string path, float ax, float ay, float x, float y, float width, float height)
         {
             RectTransform rect = transform.Find(path) as RectTransform;
+
             if (rect == null)
             {
                 return;

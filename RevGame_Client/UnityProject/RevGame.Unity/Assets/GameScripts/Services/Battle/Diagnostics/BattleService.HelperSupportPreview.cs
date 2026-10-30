@@ -17,14 +17,19 @@ namespace RevGame.Services
         {
             if (!RevServices.GetRequired<StoryProgress>().IsIsolated || Phase != GamePhase.Battle
                 || targetId != HelperProtectionTargetId || ratio <= 0 || ratio > .35f || float.IsNaN(ratio))
-            { throw new InvalidOperationException("受伤夹具只允许隔离战斗中的单棋，比例必须在0～35%之间"); }
+            {
+                throw new InvalidOperationException("受伤夹具只允许隔离战斗中的单棋，比例必须在0～35%之间");
+            }
             Piece target = _board.FindPiece(targetId);
-            if (target == null || !target.IsAlive) { throw new InvalidOperationException("受伤目标已经离场"); }
+
+            if (target == null || !target.IsAlive)
+            {
+                throw new InvalidOperationException("受伤目标已经离场");
+            }
             // 仍走护盾、减伤、实际伤害事件、HP更新与死亡门禁，不直接调用TakeDamage制造期望结果。
             int requested = Math.Min(target.Hp - 1, (int)Math.Floor(target.MaxHp * (double)ratio));
             return DamagePiece(target, Math.Max(0, requested), fromSkill: true);
         }
-
         /// <summary>
         /// 调用正式援军的选牌、空位预检、Board.Place、属性继承和手牌消费流程。
         /// 这个夹具仅提前请求一次援军动作，不改自动事件冷却；用于证明真实增员能撤掉单棋保护。
@@ -32,7 +37,9 @@ namespace RevGame.Services
         public bool ReinforceHelperSupportPreview()
         {
             if (!RevServices.GetRequired<StoryProgress>().IsIsolated || Phase != GamePhase.Battle || HelperProtectionTargetId == 0)
-            { throw new InvalidOperationException("援军夹具只允许隔离战斗的单棋保护阶段"); }
+            {
+                throw new InvalidOperationException("援军夹具只允许隔离战斗的单棋保护阶段");
+            }
             return ReinforceFromHand();
         }
     }

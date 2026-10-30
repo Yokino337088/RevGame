@@ -42,7 +42,6 @@ namespace RevGame.Data
             };
             GameConfig.Initialize(tables);
         }
-
         /// <summary>
         /// 文件名用表自己的 ResourceName，而不是另写一份字符串常量：
         /// 这样改了 Excel 表名、重新导表后，这里和 RevDataTableManager 读的是同一个名字，不会一边对一边错。
@@ -50,12 +49,14 @@ namespace RevGame.Data
         private static T Read<T>(T table, string dataDirectory) where T : RevIDataTable
         {
             string path = Path.Combine(dataDirectory, table.ResourceName + ".txt");
+
             if (!File.Exists(path))
             {
                 throw new GameConfigException(new List<string> { "找不到配置数据文件 " + path + "（请先用导表工具导出）" });
             }
             int errors;
             table.LoadText(File.ReadAllText(path), out errors);
+
             if (errors > 0)
             {
                 // 单行解析失败/主键重复在运行时只是“跳过这行”，但配置缺一行就是缺一个数，不能当没发生。

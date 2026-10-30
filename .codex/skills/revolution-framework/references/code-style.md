@@ -33,12 +33,17 @@ Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern '\(\s+[A-Za-z"]'
 
 ```csharp
 // ✓
-if (handle.IsLoaded == false) { return; }
+if (handle.IsLoaded == false)
+{
+    return;
+}
 // ✗
 if (handle.IsLoaded == false) return;
 ```
 
-- 单行 `if` 也要大括号；`for` / `foreach` / `while` 同理。`=>` 表达式体成员（一行方法、属性）是允许的。
+- 所有 `if` / `else if` / `else` 必须按上例展开，包括Lambda、事件回调、宏分支与生成器输出。禁止条件、左大括号、语句或右大括号挤在同一行。类、方法、属性和访问器的大括号必须独占一行。
+- `.editorconfig` 使用 `csharp_new_line_before_open_brace = all`、`csharp_new_line_before_else = true`、`csharp_preserve_single_line_blocks = false`、`csharp_preserve_single_line_statements = false`；只配置 `control_blocks` 会令其它大括号合到行尾，禁止这样配置。
+- 批量格式化必须逐token确认语句和注释不变，核对宏分支与Lambda内if；发现生成器输出缺少大括号时同步修正生成模板。不得绕过目标项目对框架快照/生成目录的边界。
 
 ## 3. 注释：核心 / 易错 / 易忽略处要写"为什么"
 

@@ -32,12 +32,15 @@ namespace RevGame.Editor
                 Verify(board, ref checks);
                 // 再移除一颗，验证草稿数组没有留下上一轮棋群/气的痕迹。
                 var all = board.GetAllPieces();
-                if (all.Count > 0) { board.Remove(all[0]); }
+
+                if (all.Count > 0)
+                {
+                    board.Remove(all[0]);
+                }
                 Verify(board, ref checks);
             }
             return "通过 " + checks + " 条优化等价断言（300张随机棋盘及移除后重算）";
         }
-
         private static void Verify(BoardModel board, ref int checks)
         {
             GoRules.Evaluate(board);
@@ -51,7 +54,10 @@ namespace RevGame.Editor
                     cells += piece.Size * piece.Size;
                     foreach (BoardPos pos in BoardModel.Boundary(piece))
                     {
-                        if (GoRules.IsEye(board, pos, piece.Side)) { eyes.Add(pos); }
+                        if (GoRules.IsEye(board, pos, piece.Side))
+                        {
+                            eyes.Add(pos);
+                        }
                     }
                 }
                 foreach (Piece piece in group)

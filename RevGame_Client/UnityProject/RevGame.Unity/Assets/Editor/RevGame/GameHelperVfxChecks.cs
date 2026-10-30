@@ -14,11 +14,17 @@ namespace RevGame.Editor
     /// </summary>
     public static class GameHelperVfxChecks
     {
-        [Serializable] private sealed class Result { public string status, error; public List<string> assertions = new List<string>(); }
-
+        [Serializable]
+        private sealed class Result
+        {
+            public string status, error; public List<string> assertions = new List<string>();
+        }
         public static string Run()
         {
-            if (EditorApplication.isPlaying) { throw new InvalidOperationException("帮手资源边界检查需要编辑态"); }
+            if (EditorApplication.isPlaying)
+            {
+                throw new InvalidOperationException("帮手资源边界检查需要编辑态");
+            }
             var result = new Result { status = "running" };
             GameObject attack = null, healing = null;
             try
@@ -50,14 +56,19 @@ namespace RevGame.Editor
             catch (Exception error) { result.status = "failed"; result.error = error.ToString(); throw; }
             finally
             {
-                if (attack != null) { PrefabUtility.UnloadPrefabContents(attack); }
-                if (healing != null) { PrefabUtility.UnloadPrefabContents(healing); }
+                if (attack != null)
+                {
+                    PrefabUtility.UnloadPrefabContents(attack);
+                }
+                if (healing != null)
+                {
+                    PrefabUtility.UnloadPrefabContents(healing);
+                }
                 string folder = Path.GetFullPath("../../../.codex/work/boss-helper-2026-10-29");
                 Directory.CreateDirectory(folder);
                 File.WriteAllText(Path.Combine(folder, "helper-vfx-assets.json"), JsonUtility.ToJson(result, true));
             }
         }
-
         private static void CheckContact(HelperStormVisual storm, HelperWeapon weapon, float scale, bool mushroom, Result result)
         {
             storm.Begin(weapon, 3);
@@ -73,10 +84,12 @@ namespace RevGame.Editor
             storm.Clear();
             Require(!storm.ProjectileVisible && !storm.MushroomVisible && !storm.IsExplosion, weapon + "回池清除所有爆炸和飞行状态", result);
         }
-
         private static void Require(bool condition, string message, Result result)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             result.assertions.Add(message);
         }
     }

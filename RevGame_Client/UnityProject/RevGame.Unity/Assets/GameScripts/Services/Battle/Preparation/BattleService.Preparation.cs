@@ -75,7 +75,6 @@ namespace RevGame.Services
                 ApplyPreparationHealth(piece, 1f);
             }
         }
-
         /// <summary>等待 Prep.DelaySeconds 后洗牌取出若干种不重复增益。业务先生效，随后通知UI播放动画。</summary>
         private void TickPreparation(float deltaSeconds)
         {
@@ -84,6 +83,7 @@ namespace RevGame.Services
                 return;
             }
             _preparationElapsed += deltaSeconds;
+
             if (_preparationElapsed < Balance.PrepDelaySeconds)
             {
                 return;
@@ -91,7 +91,8 @@ namespace RevGame.Services
             // 基础规则验收显式关闭通关辅助时，不赠送增益，便于隔离比较同一攻击/走法的结果。
             if (!VictoryAssistEnabled)
             {
-                _preparationGranted = true; return;
+                _preparationGranted = true;
+                return;
             }
             // ★ 先标记再派事件。界面刷新/GM重入都不能让同一轮重复抽取一批奖励。
             _preparationGranted = true;
@@ -122,7 +123,6 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.PreparationBuffsGranted);
             RevEvent.DispatchEvent(Events.HandChanged);
         }
-
         /// <summary>所有效果在模型生效，弹幕只是告知。空棋盘也保存团队加成和待升级次数，不会白领。</summary>
         private void ApplyPreparationBuff(PreparationBuffDef buff)
         {
@@ -130,6 +130,7 @@ namespace RevGame.Services
             {
                 case PreparationBuffKind.Upgrade:
                     var candidates = _playerPieces.FindAll(p => p.IsAlive && p.Def.Star < StarTier.Three);
+
                     if (candidates.Count > 0)
                     {
                         UpgradePiece(candidates[_random.Next(candidates.Count)]);
@@ -139,21 +140,54 @@ namespace RevGame.Services
                         _pendingUpgrade++;
                     }
                     break;
-                case PreparationBuffKind.Elite: SpawnPreparationElite(buff); break;
-                case PreparationBuffKind.Attack: _prepAttack += buff.Amount; break;
-                case PreparationBuffKind.Recovery: HealTeam(buff.Amount); _prepRecoveryRatio = buff.Extra; break;
-                case PreparationBuffKind.EncirclementImmunity: _prepImmune = true; break;
-                case PreparationBuffKind.Haste: _roundSpeedBonus += buff.Amount; break;
-                case PreparationBuffKind.Vitality: _prepHealthScale = 1f + buff.Amount; break;
-                case PreparationBuffKind.Armor: _prepDamageReduction = buff.Amount; break;
-                case PreparationBuffKind.LifeSteal: _prepLifeSteal = buff.Amount; break;
-                case PreparationBuffKind.Regeneration: _prepRegenRatio = buff.Amount; break;
-                case PreparationBuffKind.Shields: _prepShieldCharges = (int)buff.Amount; break;
-                case PreparationBuffKind.Ranged: _prepRanged = buff.Amount; break;
-                case PreparationBuffKind.Execution: _prepExecution = buff.Amount; _prepExecutionThreshold = buff.Threshold; break;
-                case PreparationBuffKind.EyePower: _prepEyeAttack = buff.Amount; _prepEyeRegenRatio = buff.Extra; break;
-                case PreparationBuffKind.Liberties: _roundLibertyBonus += (int)buff.Amount; break;
-                case PreparationBuffKind.ArrowVolley: _prepArrowRate = 1f + buff.Amount; break;
+                case PreparationBuffKind.Elite:
+                    SpawnPreparationElite(buff);
+                    break;
+                case PreparationBuffKind.Attack:
+                    _prepAttack += buff.Amount;
+                    break;
+                case PreparationBuffKind.Recovery:
+                    HealTeam(buff.Amount);
+                    _prepRecoveryRatio = buff.Extra;
+                    break;
+                case PreparationBuffKind.EncirclementImmunity:
+                    _prepImmune = true;
+                    break;
+                case PreparationBuffKind.Haste:
+                    _roundSpeedBonus += buff.Amount;
+                    break;
+                case PreparationBuffKind.Vitality:
+                    _prepHealthScale = 1f + buff.Amount;
+                    break;
+                case PreparationBuffKind.Armor:
+                    _prepDamageReduction = buff.Amount;
+                    break;
+                case PreparationBuffKind.LifeSteal:
+                    _prepLifeSteal = buff.Amount;
+                    break;
+                case PreparationBuffKind.Regeneration:
+                    _prepRegenRatio = buff.Amount;
+                    break;
+                case PreparationBuffKind.Shields:
+                    _prepShieldCharges = (int)buff.Amount;
+                    break;
+                case PreparationBuffKind.Ranged:
+                    _prepRanged = buff.Amount;
+                    break;
+                case PreparationBuffKind.Execution:
+                    _prepExecution = buff.Amount;
+                    _prepExecutionThreshold = buff.Threshold;
+                    break;
+                case PreparationBuffKind.EyePower:
+                    _prepEyeAttack = buff.Amount;
+                    _prepEyeRegenRatio = buff.Extra;
+                    break;
+                case PreparationBuffKind.Liberties:
+                    _roundLibertyBonus += (int)buff.Amount;
+                    break;
+                case PreparationBuffKind.ArrowVolley:
+                    _prepArrowRate = 1f + buff.Amount;
+                    break;
             }
             foreach (Piece piece in _playerPieces)
             {
@@ -167,13 +201,13 @@ namespace RevGame.Services
                 piece.ShieldCharges = _prepShieldCharges;
             }
         }
-
         /// <summary>让手牌和援军继承已领取的效果；只初始化这颗新棋，避免把老棋消耗过的护盾补满。</summary>
         private void ApplyPreparationToNewPiece(Piece piece)
         {
             ApplyPreparationHealth(piece, _prepHealthScale);
             piece.IgnoreEncirclement = _prepImmune;
             piece.ShieldCharges = _prepShieldCharges;
+
             if (_pendingUpgrade > 0 && piece.Def.Star < StarTier.Three)
             {
                 _pendingUpgrade--;
@@ -189,7 +223,6 @@ namespace RevGame.Services
 #endif
             piece.SetRoundHealthScale(normalScale * (1f + _combatVitalityBonus));
         }
-
         /// <summary>寻找不破坏现有眼阵的安全空格加入强援（外形与星级来自 Excel）；全盘无安全格时转换为攻击加成。</summary>
         private void SpawnPreparationElite(PreparationBuffDef buff)
         {
@@ -201,24 +234,22 @@ namespace RevGame.Services
             // 日志里的比例与上面实际增加的是同一个数，不再手写“+10%”。
             RevEvent.DispatchEvent<string>(Events.BattleLog, buff.Title + "：无安全空格，改为本轮全队攻击加成+" + ConfigText.Percent(buff.Amount));
         }
-
         /// <summary>按这一次攻击的攻击者和目标计算附加比例；不修改共享图鉴，也不会让敌人继承玩家增益。</summary>
         private float PreparationAttackBonus(Piece attacker, Piece target)
         {
             return _prepAttack + (attacker.Def.IsRanged ? _prepRanged : 0f)
                 + (target.HpRatio < _prepExecutionThreshold ? _prepExecution : 0f) + (_prepEyeAttack > 0f && attacker.EyeCount > 0 ? _prepEyeAttack : 0f);
         }
-
         /// <summary>万箭齐发在已有攻速上乘倍率（1 + Amount，默认翻倍）；重弩、法师和敌方弓箭手不受影响。</summary>
         private float PreparationAttackRate(Piece piece)
         {
             return _prepArrowRate > 1f && piece.Side == GameSide.Player && piece.Def.Kind == PieceKind.Archer ? _prepArrowRate : 1f;
         }
-
         /// <summary>只在战斗阶段驱动准备增益的持续回复；没领取对应效果时，回复比例为零。</summary>
         private void TickPreparationCombat(float seconds)
         {
             _prepRegenClock += seconds;
+
             if (_prepRegenClock < Balance.PrepRegenIntervalSeconds)
             {
                 return;
@@ -227,6 +258,7 @@ namespace RevGame.Services
             foreach (Piece piece in _playerPieces)
             {
                 float ratio = _prepRegenRatio + (_prepEyeAttack > 0f && piece.EyeCount > 0 ? _prepEyeRegenRatio : 0f);
+
                 if (ratio > 0f && piece.Heal(System.Math.Max(1, (int)(piece.MaxHp * ratio))) > 0)
                 {
                     RevEvent.DispatchEvent<int>(Events.PieceHpChanged, piece.Id);

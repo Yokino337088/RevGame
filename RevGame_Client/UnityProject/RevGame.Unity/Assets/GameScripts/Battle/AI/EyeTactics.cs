@@ -19,12 +19,23 @@ namespace RevGame.Battle
                 for (int x = 0; x < size; x++)
                 {
                     Cell cell = board.GetCell(new BoardPos(pos.X + x, pos.Y + y));
-                    if (cell == null) { return false; }
-                    if (!cell.EyeSide.HasValue || cell.EyeSide == side) { continue; }
-                    if (ranged || !cell.IsEmpty) { return false; }
+
+                    if (cell == null)
+                    {
+                        return false;
+                    }
+                    if (!cell.EyeSide.HasValue || cell.EyeSide == side)
+                    {
+                        continue;
+                    }
+                    if (ranged || !cell.IsEmpty)
+                    {
+                        return false;
+                    }
                     foreach (BoardPos neighbor in cell.Pos.GetOrthogonalNeighbors())
                     {
                         Piece guard = board.GetPiece(neighbor);
+
                         if (guard != null && (guard.Side == side || guard.OpenLiberties != 1 || guard.EyeCount != 1))
                         {
                             return false;
@@ -34,17 +45,21 @@ namespace RevGame.Battle
             }
             return true;
         }
-
         /// <summary>一格眼只能容纳一格棋；返回稳定扫描顺序中的首个本方空眼，没有则明确返回false。</summary>
         public static bool TryFindOwnEye(BoardModel board, GameSide side, int size, out BoardPos position)
         {
             position = new BoardPos(-1, -1);
-            if (size != 1) { return false; }
+
+            if (size != 1)
+            {
+                return false;
+            }
             for (int y = 0; y < board.Size; y++)
             {
                 for (int x = 0; x < board.Size; x++)
                 {
                     Cell cell = board.GetCell(new BoardPos(x, y));
+
                     if (cell.IsEmpty && cell.EyeSide == side)
                     {
                         position = cell.Pos;

@@ -13,7 +13,10 @@ namespace RevGame.Editor
     {
         public static string Run()
         {
-            if (UnityEngine.Application.isPlaying) { throw new InvalidOperationException("Boss直达独立检查只能在编辑态执行"); }
+            if (UnityEngine.Application.isPlaying)
+            {
+                throw new InvalidOperationException("Boss直达独立检查只能在编辑态执行");
+            }
             bool configAlreadyLoaded = GameConfig.IsLoaded;
             bool commandsAlreadyRegistered = RevGM.Commands.Any(c => c.Name == "RevGame/第一章Boss关卡");
             int checks = 0;
@@ -48,7 +51,9 @@ namespace RevGame.Editor
                 // 仅编辑器GM目录，不执行有效造局命令；非法参数在取得游戏服务前应被校验拒绝。
                 GameGmCommands.RegisterAll();
                 foreach (string label in new[] { "第一章", "第二章", "第三章", "第四章", "第五章", "第六章" })
-                { Require(RevGM.Commands.Count(c => c.Name == "RevGame/" + label + "Boss关卡") == 1, "章别GM缺失或重复", ref checks); }
+                {
+                    Require(RevGM.Commands.Count(c => c.Name == "RevGame/" + label + "Boss关卡") == 1, "章别GM缺失或重复", ref checks);
+                }
                 Require(RevGM.Commands.Any(c => c.Name == "RevGame/进入Boss关卡")
                     && RevGM.Commands.Any(c => c.Name == "RevGame/Boss关卡就绪"), "通用/只读查询GM未注册", ref checks);
                 Require(!RevGM.Execute("RevGame/进入Boss关卡 0").Success && !RevGM.Execute("RevGame/Boss关卡就绪 7").Success,
@@ -57,13 +62,22 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (!commandsAlreadyRegistered) { GameGmCommands.UnregisterAll(); }
-                if (!configAlreadyLoaded) { GameConfig.Reset(); }
+                if (!commandsAlreadyRegistered)
+                {
+                    GameGmCommands.UnregisterAll();
+                }
+                if (!configAlreadyLoaded)
+                {
+                    GameConfig.Reset();
+                }
             }
         }
         private static void Require(bool condition, string message, ref int checks)
         {
-            if (!condition) { throw new InvalidOperationException("Boss入口检查失败：" + message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException("Boss入口检查失败：" + message);
+            }
             checks++;
         }
     }

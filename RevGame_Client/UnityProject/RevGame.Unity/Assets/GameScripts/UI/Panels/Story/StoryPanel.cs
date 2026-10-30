@@ -18,11 +18,22 @@ namespace RevGame.UI
             public int Version;
         }
         [RevBind] private StoryView _storyView;
-        protected override void OnBindView() { }
-        protected override void OnRefreshView() { if (Data != null) { _storyView.Show(Data); } }
+        protected override void OnBindView()
+        {
+        }
+        protected override void OnRefreshView()
+        {
+            if (Data != null)
+            {
+                _storyView.Show(Data);
+            }
+        }
         protected override void OnPartChanged(RevUIPart part)
         {
-            if (part == _storyView) { RevServices.GetRequired<GameFlow>().AdvanceStory(); }
+            if (part == _storyView)
+            {
+                RevServices.GetRequired<GameFlow>().AdvanceStory();
+            }
         }
     }
 }

@@ -41,7 +41,10 @@ namespace RevGame.Editor
         /// <summary>幂等标记并用框架生成ResMap、路径和音效目录常量；有漏标/重名/非法名就中止，不掩盖错误。</summary>
         public static string Configure()
         {
-            if (EditorApplication.isPlaying) { throw new InvalidOperationException("请退出Play再更改分包"); }
+            if (EditorApplication.isPlaying)
+            {
+                throw new InvalidOperationException("请退出Play再更改分包");
+            }
             // 资源制作约定随正式构建执行，防止旧导入菜单或重建预制体再次带回未压缩背景/旧字体。
             GameResourceCompressionBuild.Configure();
             // 今天新增的数据场装配挂在既有构建总入口，确保菜单/自动化/重新构建都得到相同绑定和导入规则。
@@ -56,7 +59,10 @@ namespace RevGame.Editor
             // 此排除只免除素材库的“无标记即报错”，不能代替下面GameResourceUsage的逐张引用/图集闭包校验。
             foreach (string folder in new[] { "Art", "Atlases" })
             {
-                if (!config.excludeFolders.Contains(folder)) { config.excludeFolders.Add(folder); }
+                if (!config.excludeFolders.Contains(folder))
+                {
+                    config.excludeFolders.Add(folder);
+                }
             }
             EditorUtility.SetDirty(config);
             // 先计算最终标记再一次写入，避免旧流程先清空再恢复数百个meta，减少重复保存与资源重导入。
@@ -66,18 +72,27 @@ namespace RevGame.Editor
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 AssetImporter importer = AssetImporter.GetAtPath(path);
+
                 if (importer != null && !path.StartsWith("Assets/GameRes/Art/", StringComparison.Ordinal)
-                    && !path.StartsWith("Assets/GameRes/Atlases/", StringComparison.Ordinal)) { desired[path] = string.Empty; }
+                    && !path.StartsWith("Assets/GameRes/Atlases/", StringComparison.Ordinal))
+                {
+                    desired[path] = string.Empty;
+                }
             }
             for (int i = 0; i < Groups.GetLength(0); i++)
             {
                 string path = config.resRoot + "/" + Groups[i, 0];
                 AssetImporter importer = AssetImporter.GetAtPath(path);
-                if (importer == null) { throw new InvalidOperationException("分包目录不存在：" + path); }
+
+                if (importer == null)
+                {
+                    throw new InvalidOperationException("分包目录不存在：" + path);
+                }
                 desired[path] = Groups[i, 1];
             }
             // 章节大图由背景 Shader 独立采样、逐章加载，不进常驻 SpriteAtlas，也不共包拖入其它章节。
             const string chapterRoot = "Assets/GameRes/ChapterBackground";
+
             if (AssetDatabase.IsValidFolder(chapterRoot))
             {
                 foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { chapterRoot }))
@@ -85,22 +100,37 @@ namespace RevGame.Editor
                     string path = AssetDatabase.GUIDToAssetPath(guid);
                     // 第一章迁入同一目录后仍由 SpriteAtlas 管理，其余五章的材质+Default纹理逐章同包。
                     var textureImporter = AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
-                    if (textureImporter == null || textureImporter.textureType == UnityEditor.TextureImporterType.Sprite) { continue; }
+
+                    if (textureImporter == null || textureImporter.textureType == UnityEditor.TextureImporterType.Sprite)
+                    {
+                        continue;
+                    }
                     // 噪声/冰胞场是背景内部数据，不能按其文件名创建额外场景背景或独立全局包。
                     // 按用途显式归第四/第五章背景包；不能套“文件名→独立背景”的一般规则，否则会创建不存在的噪声背景材质。
                     // 随对应章资源加载，而不是放入全局包或所有Sprite图集。
-                    if (path.EndsWith("Chapter04_SwampNoise.png",StringComparison.Ordinal))
-                    { desired[path]="background_chapter04_swamp";continue; }
-                    if (path.EndsWith("Chapter05_IceField.png",StringComparison.Ordinal))
-                    { desired[path]="background_chapter05_ice";continue; }
+                    if (path.EndsWith("Chapter04_SwampNoise.png", StringComparison.Ordinal))
+                    {
+                        desired[path] = "background_chapter04_swamp";
+                        continue;
+                    }
+                    if (path.EndsWith("Chapter05_IceField.png", StringComparison.Ordinal))
+                    {
+                        desired[path] = "background_chapter05_ice";
+                        continue;
+                    }
                     string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
                     desired[path] = bundle;
                     string materialPath = "Assets/GameRes/Material/Background/" + Path.GetFileNameWithoutExtension(path) + "_Material.mat";
                     AssetImporter materialImporter = AssetImporter.GetAtPath(materialPath);
-                    if (materialImporter == null) { throw new InvalidOperationException("章节图片缺少对应的独立材质：" + path); }
+
+                    if (materialImporter == null)
+                    {
+                        throw new InvalidOperationException("章节图片缺少对应的独立材质：" + path);
+                    }
                     desired[materialPath] = bundle;
                 }
             }
+
             // Shader仍按用户要求放在GameShader，而不是复制到每个材质目录。
             // 显式归入共享包后，依赖它的材质/预制体只引用一份编译结果，避免Shader再次隐式重复。
             foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Assets/GameShader" }))
@@ -119,7 +149,11 @@ namespace RevGame.Editor
                 foreach (string path in new[] { shaderPath, materialPath })
                 {
                     AssetImporter importer = AssetImporter.GetAtPath(path);
-                    if (importer == null) { throw new InvalidOperationException("章节独立资源缺失：" + path); }
+
+                    if (importer == null)
+                    {
+                        throw new InvalidOperationException("章节独立资源缺失：" + path);
+                    }
                     desired[path] = bundle;
                 }
             }
@@ -173,7 +207,10 @@ namespace RevGame.Editor
                 desired["Assets/GameRes/Material/BossDeath/" + deathName + "_Body.mat"] = bossBundle;
                 desired["Assets/GameRes/Material/BossDeath/" + deathName + "_Aura.mat"] = bossBundle;
             }
-            foreach (var pair in desired) { SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value); }
+            foreach (var pair in desired)
+            {
+                SetBundleIfChanged(AssetImporter.GetAtPath(pair.Key), pair.Value);
+            }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。
             GameSpriteAtlasBuild.Configure();
             string atlasReport = GameSpriteAtlasBuild.Validate();
@@ -183,8 +220,13 @@ namespace RevGame.Editor
             ABCollectResult collect = ABCollector.Collect();
             ABValidateResult validation = ABValidator.Validate(collect);
             ABValidator.ValidateAndroidShaders(collect, validation, BuildTarget.Android);
-            if (!validation.CanBuild) { throw new InvalidOperationException(string.Join("\n", validation.errors)); }
+
+            if (!validation.CanBuild)
+            {
+                throw new InvalidOperationException(string.Join("\n", validation.errors));
+            }
             ABDependencyReport dependencies = ABDependencyAnalyzer.AnalyzeFromDatabase(collect);
+
             if (dependencies.HasIssue)
             {
                 throw new InvalidOperationException("分包依赖门禁：隐式重复" + dependencies.sharedAssets.Count + "，循环依赖" + dependencies.circularBundles.Count);
@@ -195,7 +237,6 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return count + "条映射，" + validation.bundleCount + "个包，" + atlasReport + "；" + usageReport + "；隐式重复/循环/漏标/重名/Android Shader错误均0条";
         }
-
         /// <summary>项目侧幂等打标；不改框架，不关闭漏标/重复依赖校验。</summary>
         internal static void SetBundleIfChanged(AssetImporter importer, string bundle)
         {
@@ -210,13 +251,16 @@ namespace RevGame.Editor
         {
             Configure();
             ABBuildResult built = ABBuilderCore.Build(target);
-            if (!built.success) { throw new InvalidOperationException("AB构建失败：" + target); }
+
+            if (!built.success)
+            {
+                throw new InvalidOperationException("AB构建失败：" + target);
+            }
             ValidateChapterBundleClosure(built.manifest.raw);
             PruneObsoleteBundles(built);
             ABManifestWriter.WriteBuildManifest(built);
             return target + "：" + built.manifest.allBundles.Length + "个包；六章背景包依赖为0，其它包不引用背景包 → " + Path.GetFullPath(built.outputDir);
         }
-
         /// <summary>查真正构建出来的Manifest，而非仅看编辑器标记，防止图集/材质隐式把其它章节一起带入。</summary>
         private static void ValidateChapterBundleClosure(AssetBundleManifest manifest)
         {
@@ -226,20 +270,32 @@ namespace RevGame.Editor
             foreach (string bundle in manifest.GetAllAssetBundles())
             {
                 string[] dependencies = manifest.GetAllDependencies(bundle);
+
                 if (expected.Contains(bundle))
                 {
                     chapters++;
-                    if (dependencies.Length != 0) { throw new InvalidOperationException("章节包必须自包含：" + bundle + " → " + string.Join(",", dependencies)); }
+
+                    if (dependencies.Length != 0)
+                    {
+                        throw new InvalidOperationException("章节包必须自包含：" + bundle + " → " + string.Join(",", dependencies));
+                    }
                 }
+
                 else
                 {
                     foreach (string dependency in dependencies)
                     {
-                        if (expected.Contains(dependency)) { throw new InvalidOperationException("非章节资源包不应依赖背景：" + bundle + " → " + dependency); }
+                        if (expected.Contains(dependency))
+                        {
+                            throw new InvalidOperationException("非章节资源包不应依赖背景：" + bundle + " → " + dependency);
+                        }
                     }
                 }
             }
-            if (chapters != chapterBundles.Length) { throw new InvalidOperationException("实际构建未包含全部六个章节背景包"); }
+            if (chapters != chapterBundles.Length)
+            {
+                throw new InvalidOperationException("实际构建未包含全部六个章节背景包");
+            }
         }
 
         /// <summary>
@@ -250,6 +306,7 @@ namespace RevGame.Editor
         {
             string output = Path.GetFullPath(built.outputDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             string allowed = Path.GetFullPath("AssetBundles") + Path.DirectorySeparatorChar;
+
             if (!output.StartsWith(allowed, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("旧包清理只允许项目AssetBundles平台子目录：" + output);
@@ -259,27 +316,32 @@ namespace RevGame.Editor
             foreach (string candidate in Directory.GetFiles(output))
             {
                 string name = Path.GetFileName(candidate);
-                if (Path.HasExtension(name) || keep.Contains(name) || !File.Exists(candidate + ".manifest")) { continue; }
+
+                if (Path.HasExtension(name) || keep.Contains(name) || !File.Exists(candidate + ".manifest"))
+                {
+                    continue;
+                }
                 // candidate来自已验证目录的非递归枚举，不能带外部用户路径；仅删除可再生成的旧二进制和清单。
                 File.Delete(candidate);
                 File.Delete(candidate + ".manifest");
             }
         }
-
         /// <summary>构建并使用框架工具发布到允许入库的StreamingAssets；外部AssetBundles仍是可再生成产物。</summary>
         public static string BuildAndCopy(BuildTarget target)
         {
             string result = Build(target);
             return result + PublishBuilt(target);
         }
-
         /// <summary>
         /// 只发布已经构建成功的平台目录，供复制被文件占用打断后恢复，不需要再次构建所有AB。
         /// 常规路径仍调用Revolution复制工具；编辑器持有未改动字体包时使用逐文件校验补齐，避免关闭Unity。
         /// </summary>
         public static string PublishBuilt(BuildTarget target)
         {
-            if (EditorApplication.isPlaying) { throw new InvalidOperationException("不能在Play时覆盖正在使用的AB"); }
+            if (EditorApplication.isPlaying)
+            {
+                throw new InvalidOperationException("不能在Play时覆盖正在使用的AB");
+            }
             ABBuildConfig config = ABBuildConfig.Instance;
             bool previousCopy = config.copyToStreamingAssets;
             string previousTarget = config.copyTarget;
@@ -287,17 +349,24 @@ namespace RevGame.Editor
             string output = Path.GetFullPath("AssetBundles/" + platform);
             string allowed = Path.GetFullPath("Assets/StreamingAssets") + Path.DirectorySeparatorChar;
             string destination = Path.GetFullPath(Path.Combine(allowed, platform));
+
             // 框架复制会重建目标平台目录，所以在调用前验证最终绝对路径；不能拿任意配置字符串作递归清理目标。
             if (!destination.StartsWith(allowed, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("StreamingAssets发布目标越界：" + destination);
             }
-            if (!File.Exists(Path.Combine(output, platform))) { throw new InvalidOperationException("没有已构建的平台主清单：" + output); }
+            if (!File.Exists(Path.Combine(output, platform)))
+            {
+                throw new InvalidOperationException("没有已构建的平台主清单：" + output);
+            }
             try
             {
                 config.copyToStreamingAssets = true;
                 config.copyTarget = "StreamingAssets";
-                try { ABBuilderCore.CopyToStreamingAssets(output); }
+                try
+                {
+                    ABBuilderCore.CopyToStreamingAssets(output);
+                }
                 catch (IOException)
                 {
                     // Unity原生字体可能继续持有文件，整目录删除因而失败；旧字体与新字体字节相同就无需碰它。
@@ -315,7 +384,6 @@ namespace RevGame.Editor
             AssetDatabase.Refresh();
             return "；已复制到 " + destination;
         }
-
         /// <summary>仅用于上方已验证的两个平台目录；保留Unity的.meta，补齐失败复制并删除已经过时的生成包。</summary>
         private static void CopyChangedFiles(string output, string destination)
         {
@@ -326,25 +394,39 @@ namespace RevGame.Editor
                 string name = Path.GetFileName(source);
                 expected.Add(name);
                 string target = Path.Combine(destination, name);
-                if (!SameBytes(source, target)) { File.Copy(source, target, true); }
+
+                if (!SameBytes(source, target))
+                {
+                    File.Copy(source, target, true);
+                }
             }
             foreach (string target in Directory.GetFiles(destination))
             {
                 string name = Path.GetFileName(target);
-                if (expected.Contains(name) || name.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)) { continue; }
+
+                if (expected.Contains(name) || name.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 // 只删除AB工具生成的无扩展名包/manifest/构建清单，不递归删任意目录或其他项目文件。
                 if (!Path.HasExtension(name) || name.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase) || name == "BuildManifest.json")
                 {
                     File.Delete(target);
-                    if (File.Exists(target + ".meta")) { File.Delete(target + ".meta"); }
+
+                    if (File.Exists(target + ".meta"))
+                    {
+                        File.Delete(target + ".meta");
+                    }
                 }
             }
         }
-
         /// <summary>流式比较，最多两个64KB缓冲；不把大字体包整份读入内存。长度相同仍须比较内容。</summary>
         private static bool SameBytes(string source, string destination)
         {
-            if (!File.Exists(destination) || new FileInfo(source).Length != new FileInfo(destination).Length) { return false; }
+            if (!File.Exists(destination) || new FileInfo(source).Length != new FileInfo(destination).Length)
+            {
+                return false;
+            }
             using (FileStream left = File.OpenRead(source))
             using (FileStream right = File.OpenRead(destination))
             {
@@ -353,8 +435,17 @@ namespace RevGame.Editor
                 int count;
                 while ((count = left.Read(a, 0, a.Length)) > 0)
                 {
-                    if (right.Read(b, 0, count) != count) { return false; }
-                    for (int i = 0; i < count; i++) { if (a[i] != b[i]) { return false; } }
+                    if (right.Read(b, 0, count) != count)
+                    {
+                        return false;
+                    }
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (a[i] != b[i])
+                        {
+                            return false;
+                        }
+                    }
                 }
                 return true;
             }

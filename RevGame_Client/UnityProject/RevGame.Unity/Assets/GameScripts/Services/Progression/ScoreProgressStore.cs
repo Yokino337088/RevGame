@@ -14,16 +14,22 @@ namespace RevGame.Services
     {
         private readonly string _key;
         private bool _dirty;
-        public long Total { get; private set; }
-
+        public long Total
+        {
+            get; private set;
+        }
         public ScoreProgressStore() : this("RevGame.Score.Total.v1") { }
 
         /// <summary>显式存储键供隔离持久化验收使用，正式启动使用无参构造；绝不在测试中备份覆盖玩家键。</summary>
         public ScoreProgressStore(string key)
         {
-            if (string.IsNullOrWhiteSpace(key)) { throw new ArgumentException("积分存档键不能为空", nameof(key)); }
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException("积分存档键不能为空", nameof(key));
+            }
             _key = key;
             string saved = PlayerPrefs.GetString(_key, "0");
+
             if (!long.TryParse(saved, NumberStyles.None, CultureInfo.InvariantCulture, out long total) || total < 0)
             {
                 RevLog.Warn("永久积分存档无效，按0显示；下一次真实得分后重建。", "RevGame");
@@ -34,22 +40,26 @@ namespace RevGame.Services
             RevEvent.AddEventListener(RevAppLifecycle.Paused, Flush, owner: this);
             RevEvent.AddEventListener(RevAppLifecycle.Quitting, Flush, owner: this);
         }
-
         /// <summary>只接受递增总量，避免旧动画或迟到回调覆盖新积分；真正计分只在BattleService。</summary>
         public void Record(long total)
         {
-            if (total <= Total) { return; }
-            Total = total; _dirty = true;
+            if (total <= Total)
+            {
+                return;
+            }
+            Total = total;
+            _dirty = true;
         }
-
         public void Flush()
         {
-            if (!_dirty) { return; }
+            if (!_dirty)
+            {
+                return;
+            }
             PlayerPrefs.SetString(_key, Total.ToString(CultureInfo.InvariantCulture));
             PlayerPrefs.Save();
             _dirty = false;
         }
-
         public void Dispose()
         {
             Flush();

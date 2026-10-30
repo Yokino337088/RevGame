@@ -22,7 +22,6 @@ namespace RevGame.Automation
         /// <summary>依次执行的步骤，最多 256 项；失败即停止，不会继续点击后面的界面。</summary>
         public GameAutomationStep[] steps;
     }
-
     /// <summary>四项均为额外整数百分比：0为原值，250为原值×3.5；只作用于开发态我方棋子。</summary>
     [Serializable]
     public sealed class GameAutomationBoost
@@ -35,33 +34,35 @@ namespace RevGame.Automation
         public int defenseBonusPercent;
         /// <summary>我方最大生命额外百分比；调整时保持当前生命比例，死亡棋子不复活，后续新棋同样继承。</summary>
         public int healthBonusPercent;
-
         // 这是调试输入的技术边界，不是正式玩法数值；防止整数溢出与一次模拟累积过量攻击动作。
         public const int MaxBonusPercent = 10000;
-
         public static void Validate(GameAutomationBoost value)
         {
-            if (value == null) { return; }
-            if (!Valid(value.attackBonusPercent) || !Valid(value.attackSpeedBonusPercent)
-                || !Valid(value.defenseBonusPercent) || !Valid(value.healthBonusPercent))
+            if (value == null)
+            {
+                return;
+            }
+            if (!Valid(value.attackBonusPercent) || !Valid(value.attackSpeedBonusPercent) || !Valid(value.defenseBonusPercent) || !Valid(value.healthBonusPercent))
             {
                 throw new Revolution.RevGMUsageException("四项额外加成均需为0～" + MaxBonusPercent + "%的整数");
             }
         }
-
         private static bool Valid(int value)
         {
             return value >= 0 && value <= MaxBonusPercent;
         }
-
         /// <summary>租约持有自己的快照；GM的后续编辑不能悄悄改写旧报告或另一个测试。</summary>
         public GameAutomationBoost Copy()
         {
-            return new GameAutomationBoost { attackBonusPercent = attackBonusPercent, attackSpeedBonusPercent = attackSpeedBonusPercent,
-                defenseBonusPercent = defenseBonusPercent, healthBonusPercent = healthBonusPercent };
+            return new GameAutomationBoost
+            {
+                attackBonusPercent = attackBonusPercent,
+                attackSpeedBonusPercent = attackSpeedBonusPercent,
+                defenseBonusPercent = defenseBonusPercent,
+                healthBonusPercent = healthBonusPercent
+            };
         }
     }
-
     /// <summary>单步契约。支持 wait、assert、click、deployHand、gm；未识别的操作必须拒绝。</summary>
     [Serializable]
     public sealed class GameAutomationStep
@@ -93,7 +94,6 @@ namespace RevGame.Automation
         /// <summary>gm的可选精确返回值；为空时仅要求命令成功，不能用它覆盖业务状态断言。</summary>
         public string expected;
     }
-
     /// <summary>一次执行的可序列化证据。只在步骤完成/失败时记录，不在每帧拼接整个棋盘。</summary>
     [Serializable]
     public sealed class GameAutomationReport
@@ -137,7 +137,6 @@ namespace RevGame.Automation
         /// <summary>按输入和步骤完成顺序追加；只在低频动作处生成记录。</summary>
         public List<GameAutomationEvidence> evidence = new List<GameAutomationEvidence>();
     }
-
     /// <summary>每一回合的真实交战证据；伤害、攻击计数均来自游戏既有事件。</summary>
     [Serializable]
     public sealed class GameAutomationRound
@@ -182,7 +181,6 @@ namespace RevGame.Automation
         public bool victoryAssistEnabled;
         public string[] preparationBuffs;
     }
-
     /// <summary>单条审计记录：动作、输入来源、执行时的章/回合/阶段与真实时间。</summary>
     [Serializable]
     public sealed class GameAutomationEvidence

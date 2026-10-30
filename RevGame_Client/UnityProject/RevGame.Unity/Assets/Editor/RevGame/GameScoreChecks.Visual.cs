@@ -20,8 +20,13 @@ namespace RevGame.Editor
         /// <summary>真实AB流程内验收：伤害/积分走服务，密集渲染用明确标注的快照夹具，所有造分都在存档隔离区。</summary>
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { throw new InvalidOperationException("需要空闲Play"); }
-            LastResult = "运行中"; _checks = 0; Directory.CreateDirectory(Output);
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                throw new InvalidOperationException("需要空闲Play");
+            }
+            LastResult = "运行中";
+            _checks = 0;
+            Directory.CreateDirectory(Output);
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             var battle = (BattleService)RevServices.GetRequired<IBattleService>();
             long saved = RevServices.GetRequired<IScoreProgress>().Total;
@@ -35,7 +40,8 @@ namespace RevGame.Editor
                 await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 RevTimer.CancelAllOf(RevLogic.Get<BattleLogic>());
                 Require(battle.LoadImpactScenario(), "加载固定高生命棋盘");
-                battle.Tick(3); Require(battle.StartBattle(), "真实开战");
+                battle.Tick(3);
+                Require(battle.StartBattle(), "真实开战");
                 await RevTask.Delay(500);
                 BattleHudPanel hud = UnityEngine.Object.FindObjectOfType<BattleHudPanel>();
                 BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
@@ -45,7 +51,10 @@ namespace RevGame.Editor
                     int visibleDigits = 0;
                     foreach (UnityEngine.UI.Text digit in reel.GetComponentsInChildren<UnityEngine.UI.Text>())
                     {
-                        if (digit.name == "Current" && digit.cachedTextGenerator.vertexCount > 0 && !digit.canvasRenderer.cull) { visibleDigits++; }
+                        if (digit.name == "Current" && digit.cachedTextGenerator.vertexCount > 0 && !digit.canvasRenderer.cull)
+                        {
+                            visibleDigits++;
+                        }
                     }
                     Require(visibleDigits > 0, "滚筒必须生成可见数字网格，不能只有Tween句柄：" + reel.name);
                 }
@@ -55,15 +64,24 @@ namespace RevGame.Editor
                 bool criticalText = false;
                 foreach (BattleEffectView effect in UnityEngine.Object.FindObjectsOfType<BattleEffectView>())
                 {
-                    if (effect.DamageKind != BattleDamageKind.Critical || !effect.IsFloatingText) { continue; }
+                    if (effect.DamageKind != BattleDamageKind.Critical || !effect.IsFloatingText)
+                    {
+                        continue;
+                    }
                     Color color = effect.TextColor;
                     criticalText |= effect.TextContent.Contains("暴击") && color.r > .9f && color.g > .4f && color.g < .7f && color.b < .25f;
                 }
                 Require(criticalText, "实际文字包含暴击且为Excel橙色");
                 for (int i = 0; i < 24; i++)
                 {
-                    if (i % 5 == 0) { battle.PreviewScoreHit(BattleDamageKind.Critical, false); }
-                    if (i == 8) { battle.PreviewScoreHit(BattleDamageKind.Normal, true); }
+                    if (i % 5 == 0)
+                    {
+                        battle.PreviewScoreHit(BattleDamageKind.Critical, false);
+                    }
+                    if (i == 8)
+                    {
+                        battle.PreviewScoreHit(BattleDamageKind.Normal, true);
+                    }
                     // 技能外观展示只注入已结算快照；真实来源/归属另由服务规则断言覆盖。
                     if (i == 3 || i == 12)
                     {
@@ -74,6 +92,7 @@ namespace RevGame.Editor
                                 GameSide.Enemy, 27 + n * 5, false, default(BoardPos), fromSkill: true, damageKind: styles[n]));
                         }
                     }
+
                     await RevTask.Delay(70);
                     Require(hud.ActiveScoreSparks <= BattleHudPanel.MaxScoreSparks, "积分飞星严格有界");
                     ScreenCapture.CaptureScreenshot(Output + "/score-" + i.ToString("D2") + ".png");
@@ -95,34 +114,44 @@ namespace RevGame.Editor
             catch (Exception error) { outcome = "失败：" + error; }
             finally
             {
-                try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
+                try
+                {
+                    await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                }
                 catch (Exception cleanup) { outcome += "；清理失败：" + cleanup.Message; }
                 preview.Dispose();
-                LastResult = outcome; File.WriteAllText(Output + "/play.txt", outcome);
+                LastResult = outcome;
+                File.WriteAllText(Output + "/play.txt", outcome);
             }
         }
-
         /// <summary>使用本轮专属测试键检验原生存储往返，finally仅清本次创建的键，不读写玩家生产键。</summary>
         private static void VerifyLocalPersistence()
         {
             string key = "RevGame.Score.Verification." + Guid.NewGuid().ToString("N");
             try
             {
-                using (var first = new ScoreProgressStore(key)) { first.Record(1234567890123L); first.Flush(); }
+                using (var first = new ScoreProgressStore(key))
+                {
+                    first.Record(1234567890123L);
+                    first.Flush();
+                }
                 using (var second = new ScoreProgressStore(key))
                 {
                     Require(second.Total == 1234567890123L, "本地存储重建恢复64位永久总积分");
-                    second.Record(1); Require(second.Total == 1234567890123L, "迟到旧总量不能覆盖新存档");
+                    second.Record(1);
+                    Require(second.Total == 1234567890123L, "迟到旧总量不能覆盖新存档");
                 }
             }
             finally { PlayerPrefs.DeleteKey(key); PlayerPrefs.Save(); }
         }
-
         /// <summary>同一高生命棋盘，不截图、不推进AI；采样的是编辑器渲染帧，不冒充低端机帧率或GPU耗时。</summary>
         private static async RevTask MeasureRendering(BattleService battle, BoardView board, BattleHudPanel hud)
         {
-            var frames = new List<double>(180); var draws = new List<int>(180); var batches = new List<int>(180);
-            var gpu = new List<double>(); var timing = new FrameTiming[1];
+            var frames = new List<double>(180);
+            var draws = new List<int>(180);
+            var batches = new List<int>(180);
+            var gpu = new List<double>();
+            var timing = new FrameTiming[1];
             long before = Profiler.GetTotalAllocatedMemoryLong();
             int peakProjectiles = 0, peakText = 0, peakStars = 0;
             for (int frame = 0; frame < 210; frame++)
@@ -139,17 +168,31 @@ namespace RevGame.Editor
                 }
                 await RevTask.Yield();
                 FrameTimingManager.CaptureFrameTimings();
-                if (frame < 30) { continue; }
-                frames.Add(Time.unscaledDeltaTime * 1000d); draws.Add(UnityEditor.UnityStats.drawCalls); batches.Add(UnityEditor.UnityStats.batches);
-                if (FrameTimingManager.GetLatestTimings(1, timing) > 0 && timing[0].gpuFrameTime > 0) { gpu.Add(timing[0].gpuFrameTime); }
-                peakProjectiles = Math.Max(peakProjectiles, board.ActiveProjectileCount); peakText = Math.Max(peakText, board.ActiveFloatingTextCount);
+
+                if (frame < 30)
+                {
+                    continue;
+                }
+                frames.Add(Time.unscaledDeltaTime * 1000d);
+                draws.Add(UnityEditor.UnityStats.drawCalls);
+                batches.Add(UnityEditor.UnityStats.batches);
+
+                if (FrameTimingManager.GetLatestTimings(1, timing) > 0 && timing[0].gpuFrameTime > 0)
+                {
+                    gpu.Add(timing[0].gpuFrameTime);
+                }
+                peakProjectiles = Math.Max(peakProjectiles, board.ActiveProjectileCount);
+                peakText = Math.Max(peakText, board.ActiveFloatingTextCount);
                 peakStars = Math.Max(peakStars, hud.ActiveScoreSparks);
                 Require(board.ActiveProjectileCount <= 35 && board.ActiveFloatingTextCount <= 20 && hud.ActiveScoreSparks <= 12, "密集表现预算");
             }
             long peakMemory = Profiler.GetTotalAllocatedMemoryLong();
             await RevTask.Delay(1700);
             Require(board.ActiveEffectCount == 0 && hud.ActiveScoreSparks == 0, "压力停止后所有活动反馈归零");
-            frames.Sort(); draws.Sort(); batches.Sort(); gpu.Sort();
+            frames.Sort();
+            draws.Sort();
+            batches.Sort();
+            gpu.Sort();
             string report = "180帧采样（30帧预热，不含截图；编辑器，非手机）\n"
                 + "帧间隔中位数ms=" + frames[90].ToString("F3") + "；P95=" + frames[171].ToString("F3")
                 + "\nDrawCalls中位数=" + draws[90] + "；Batches=" + batches[90]

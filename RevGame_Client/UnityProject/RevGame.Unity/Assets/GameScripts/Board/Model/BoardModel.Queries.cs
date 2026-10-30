@@ -33,13 +33,25 @@ namespace RevGame.Board
         // 每张棋盘最多81颗在场棋。移动与AI试盘复位时复用条目及其列表，不能因失效又每次new。
         private readonly Stack<AttackEntry> _freeAttackEntries = new Stack<AttackEntry>(81);
         /// <summary>累计命中/重算计数供摘要使用，不在热循环格式化字符串；Reset清零。</summary>
-        public long AttackCacheHits { get; private set; }
+        public long AttackCacheHits
+        {
+            get; private set;
+        }
         /// <summary>累计几何重算次数；可见/存活或拓扑变化后首次查询计一次，供实际命中率核对。</summary>
-        public long AttackCacheMisses { get; private set; }
+        public long AttackCacheMisses
+        {
+            get; private set;
+        }
         /// <summary>独立试盘完整刷新次数，不等于候选个数；只在调用Trial时累计。</summary>
-        public long TacticalSnapshotCopies { get; private set; }
+        public long TacticalSnapshotCopies
+        {
+            get; private set;
+        }
         /// <summary>已存在的深副本完整覆盖次数；首次构造不计复用，避免虚报缓存收益。</summary>
-        public long TacticalPieceReuses { get; private set; }
+        public long TacticalPieceReuses
+        {
+            get; private set;
+        }
         // 外层是一盘的棋群，内层是同阵营四邻相连的棋子。只在同步评分期间借给AI读取。
         private readonly List<List<Piece>> _tacticalGroups = new List<List<Piece>>(81);
         // 旧棋群清空后存放在这里，复用List容量；入栈前Clear，避免池里仍引用死棋。
@@ -54,14 +66,25 @@ namespace RevGame.Board
         internal List<List<Piece>> TacticalGroups()
         {
             // 步骤1：盘面版本没变，直接使用已经建好的棋群，不再重新分配队列和成员列表。
-            if (_groupsTopology == TopologyVersion) { return _tacticalGroups; }
-            foreach (List<Piece> group in _tacticalGroups) { group.Clear(); _freeGroups.Push(group); }
-            _tacticalGroups.Clear(); _groupVisited.Clear();
+            if (_groupsTopology == TopologyVersion)
+            {
+                return _tacticalGroups;
+            }
+            foreach (List<Piece> group in _tacticalGroups)
+            {
+                group.Clear();
+                _freeGroups.Push(group);
+            }
+            _tacticalGroups.Clear();
+            _groupVisited.Clear();
             // 步骤2：每颗未访问棋子当一个起点，使用group本身作为BFS队列。
             // 循环索引i逐个处理，新发现的同阵营邻居追加到末尾，随后也会被访问。
             foreach (Piece root in Pieces)
             {
-                if (!_groupVisited.Add(root)) { continue; }
+                if (!_groupVisited.Add(root))
+                {
+                    continue;
+                }
                 List<Piece> group = _freeGroups.Count > 0 ? _freeGroups.Pop() : new List<Piece>(81);
                 group.Add(root);
                 // group也作为BFS队列，避免每个棋群新建Queue与yield邻格枚举器。
@@ -78,13 +101,19 @@ namespace RevGame.Board
                                 : direction == 1 ? new BoardPos(p.Pos.X + p.Size, p.Pos.Y + edge)
                                 : direction == 2 ? new BoardPos(p.Pos.X + edge, p.Pos.Y - 1) : new BoardPos(p.Pos.X + edge, p.Pos.Y + p.Size);
                             Piece other = GetPiece(pos);
-                            if (other != null && other.Side == p.Side && _groupVisited.Add(other)) { group.Add(other); }
+
+                            if (other != null && other.Side == p.Side && _groupVisited.Add(other))
+                            {
+                                group.Add(other);
+                            }
                         }
                     }
                 }
                 _tacticalGroups.Add(group);
             }
-            _groupVisited.Clear(); _groupsTopology = TopologyVersion; return _tacticalGroups;
+            _groupVisited.Clear();
+            _groupsTopology = TopologyVersion;
+            return _tacticalGroups;
         }
         // 试算工作区归源棋盘持有；首次需要才创建。实盘与试盘是两个对象，不是共享可变草稿。
         private TacticsWorkspace _tactics;
@@ -94,8 +123,14 @@ namespace RevGame.Board
         // 其它条目不必逐一删除：下一次读取会因为TopologyVersion变化而重算。
         internal void ForgetQuery(int id)
         {
-            if (!_attackCache.TryGetValue(id, out AttackEntry entry)) { return; }
-            _attackCache.Remove(id); entry.Cells.Clear(); entry.Definition = null; entry.Topology = -1;
+            if (!_attackCache.TryGetValue(id, out AttackEntry entry))
+            {
+                return;
+            }
+            _attackCache.Remove(id);
+            entry.Cells.Clear();
+            entry.Definition = null;
+            entry.Topology = -1;
             _freeAttackEntries.Push(entry);
         }
         // 回合重置时清名单和旧资源引用，但保留容器容量；这样既不串局，也减少下局重新扩容。
@@ -104,18 +139,36 @@ namespace RevGame.Board
         {
             foreach (AttackEntry entry in _attackCache.Values)
             {
-                entry.Cells.Clear(); entry.Definition = null; entry.Topology = -1; _freeAttackEntries.Push(entry);
+                entry.Cells.Clear();
+                entry.Definition = null;
+                entry.Topology = -1;
+                _freeAttackEntries.Push(entry);
             }
-            _attackCache.Clear(); AttackCacheHits = AttackCacheMisses = 0; TargetVersion++;
+            _attackCache.Clear();
+            AttackCacheHits = AttackCacheMisses = 0;
+            TargetVersion++;
             // 清旧棋引用但保留容量：新回合第一次查询会按新Topology重建，长期试盘也不会持有已离场棋子。
-            foreach (List<Piece> group in _tacticalGroups) { group.Clear(); _freeGroups.Push(group); }
-            _tacticalGroups.Clear(); _groupVisited.Clear(); _groupsTopology = -1;
+            foreach (List<Piece> group in _tacticalGroups)
+            {
+                group.Clear();
+                _freeGroups.Push(group);
+            }
+            _tacticalGroups.Clear();
+            _groupVisited.Clear();
+            _groupsTopology = -1;
             _tactics?.Clear();
         }
         // 需要“有几颗”时只累计，不先new List再取Count。保持原GetPiecesOf语义，包含尚未撤盘的死亡棋。
         internal int CountSide(GameSide side)
         {
-            int n = 0; foreach (Piece p in Pieces) { if (p.Side == side) { n++; } }
+            int n = 0;
+            foreach (Piece p in Pieces)
+            {
+                if (p.Side == side)
+                {
+                    n++;
+                }
+            }
             return n;
         }
         // 输入actor必须来自当前盘，result由调用者预留并独占。未入盘临时棋走原计算，避免相同Id覆盖实棋缓存。
@@ -123,26 +176,41 @@ namespace RevGame.Board
         internal void ReadAttackTargets(Piece actor, List<BoardPos> result)
         {
             // 临时尚未入盘棋子不可污染Id缓存，供布阵评分等兼容查询使用。
-            if (FindPiece(actor.Id) != actor) { MoveRules.CalculateAttackTargets(this, actor, result); return; }
+            if (FindPiece(actor.Id) != actor)
+            {
+                MoveRules.CalculateAttackTargets(this, actor, result);
+                return;
+            }
             if (!_attackCache.TryGetValue(actor.Id, out AttackEntry entry))
-            { entry = _freeAttackEntries.Count > 0 ? _freeAttackEntries.Pop() : new AttackEntry(); _attackCache.Add(actor.Id, entry); }
+            {
+                entry = _freeAttackEntries.Count > 0 ? _freeAttackEntries.Pop() : new AttackEntry();
+                _attackCache.Add(actor.Id, entry);
+            }
             // 步骤1：收集本次查询真正影响射界的输入。CanAttack包括存活/隐藏/冻结/敌方锁死；Def更换代表升星。
             // 普通非致死扣血不改变几何，故不使所有射界重算；威胁和伤害评分由调用方读取当前血量。
-            bool allowed = MoveRules.CanAttack(actor); int range = Balance.EnemyArcherRange;
+            bool allowed = MoveRules.CanAttack(actor);
+            int range = Balance.EnemyArcherRange;
+
             // 步骤2：完整输入相同才计命中。只缓存几何和顺序，不缓存“最值得攻击谁”。
             // 任何一个版本或资格不同都执行原算法，再更新条目；不能为了命中率故意漏掉失效条件。
             if (entry.Topology == TopologyVersion && entry.Targets == TargetVersion && entry.Definition == actor.Def && entry.Allowed == allowed && entry.Range == range)
-            { AttackCacheHits++; }
+            {
+                AttackCacheHits++;
+            }
             else
             {
                 AttackCacheMisses++;
                 MoveRules.CalculateAttackTargets(this, actor, entry.Cells);
-                entry.Topology = TopologyVersion; entry.Targets = TargetVersion; entry.Definition = actor.Def; entry.Allowed = allowed; entry.Range = range;
+                entry.Topology = TopologyVersion;
+                entry.Targets = TargetVersion;
+                entry.Definition = actor.Def;
+                entry.Allowed = allowed;
+                entry.Range = range;
             }
             // 步骤3：清结果的旧内容，复用它已分配的容量，再复制有序坐标。Clear不会把List容量释放。
-            result.Clear(); result.AddRange(entry.Cells);
+            result.Clear();
+            result.AddRange(entry.Cells);
         }
-
         /// <summary>每张源棋盘单独持有一份深试盘与列表，查询结束副本可变，下一轮必须全字段覆盖。</summary>
         // 单张源棋盘的同步试算工具箱：深试盘、棋子副本和多个职责缓冲。
         // 深复制表示位置/血量/护盾等可变字段独立；Def是只读图鉴，允许共享。禁止将本工作区传给异步表现。
@@ -176,48 +244,92 @@ namespace RevGame.Board
             // 一次补子评分的临时新棋副本。Id/阵营/大小等身份不同时重建，不能复用成另一颗棋。
             private Piece _added;
             // 构造仅创建辅助数组和容器；真正深试盘仍延后到首次Trial，避免完全不试算的战斗额外占内存。
-            internal TacticsWorkspace(int size) { _size = size; Distances = new int[size, size]; }
+            internal TacticsWorkspace(int size)
+            {
+                _size = size;
+                Distances = new int[size, size];
+            }
             /// <summary>源棋盘回合重置/离场时断开全部旧棋引用，保留容器容量与试盘本身，防止串局。</summary>
             internal void Clear()
             {
                 _trial?.Reset();
-                _copies.Clear(); _obsolete.Clear(); _added = null;
-                Hits.Clear(); Allies.Clear(); Players.Clear(); BossVictims.Clear(); Queue.Clear();
-                FormationRanged.Clear(); FormationCopies.Clear(); FormationConnected.Clear();
+                _copies.Clear();
+                _obsolete.Clear();
+                _added = null;
+                Hits.Clear();
+                Allies.Clear();
+                Players.Clear();
+                BossVictims.Clear();
+                Queue.Clear();
+                FormationRanged.Clear();
+                FormationCopies.Clear();
+                FormationConnected.Clear();
             }
             // 每轮试算入口：把源盘当前状态完整覆盖到独立试盘，返回可修改副本。
             // 身份不匹配重建Piece，匹配就CopySnapshotState；任何占格复制失败立即抛错，不能给AI残缺盘面。
             internal BoardModel Trial(BoardModel source)
             {
-                if (_trial == null) { _trial = new BoardModel(_size); }
+                if (_trial == null)
+                {
+                    _trial = new BoardModel(_size);
+                }
                 source.TacticalSnapshotCopies++;
                 // 先撤销上一候选占格，再覆盖棋子，最后Evaluate；反过来会让旧眼身份或旧位置污染新评分。
-                _trial.Reset(); _obsolete.Clear();
+                _trial.Reset();
+                _obsolete.Clear();
                 // 只保留当前在场身份，历史死棋不能在长期缓存中积累；使用Id字典O(1)检查。
                 // 先剔除已经离开实盘的身份。只保留容量和有效副本，不允许“为了缓存”让每个历史棋子永久常驻。
-                foreach (int id in _copies.Keys) { if (source.FindPiece(id) == null) { _obsolete.Add(id); } }
-                foreach (int id in _obsolete) { _copies.Remove(id); }
+                foreach (int id in _copies.Keys)
+                {
+                    if (source.FindPiece(id) == null)
+                    {
+                        _obsolete.Add(id);
+                    }
+                }
+                foreach (int id in _obsolete)
+                {
+                    _copies.Remove(id);
+                }
                 // 再逐棋覆盖全部可变状态并按原顺序Place；不能只覆盖Pos/Hp，护盾、冻结、驻眼和行动进度也影响评分。
                 foreach (Piece original in source.Pieces)
                 {
                     if (!_copies.TryGetValue(original.Id, out Piece copy) || copy.Side != original.Side || copy.Size != original.Size || copy.IsBoss != original.IsBoss || copy.IsKing != original.IsKing)
-                    { copy = original.CreateSnapshot(); _copies[original.Id] = copy; }
-                    else { copy.CopySnapshotState(original); source.TacticalPieceReuses++; }
-                    if (!_trial.Place(copy, original.Pos, respectEnemyEyes: false)) { throw new InvalidOperationException("深快照占格复制失败"); }
+                    {
+                        copy = original.CreateSnapshot();
+                        _copies[original.Id] = copy;
+                    }
+                    else
+                    {
+                        copy.CopySnapshotState(original);
+                        source.TacticalPieceReuses++;
+                    }
+                    if (!_trial.Place(copy, original.Pos, respectEnemyEyes: false))
+                    {
+                        throw new InvalidOperationException("深快照占格复制失败");
+                    }
                 }
                 // 最后复制每格驻眼身份，再完整Evaluate气眼。驻眼Id不能按落子顺序重新猜，否则试盘规则与实盘不同。
                 for (int y = 0; y < _size; y++)
                 {
-                    for (int x = 0; x < _size; x++) { _trial._cells[x, y].EyeGarrisonId = source._cells[x, y].EyeGarrisonId; }
+                    for (int x = 0; x < _size; x++)
+                    {
+                        _trial._cells[x, y].EyeGarrisonId = source._cells[x, y].EyeGarrisonId;
+                    }
                 }
-                GoRules.Evaluate(_trial); return _trial;
+                GoRules.Evaluate(_trial);
+                return _trial;
             }
             // 补子候选也必须深复制；候选循环可多次Place/Remove这个副本，但不能将original入试盘来试放。
             internal Piece Added(Piece original)
             {
                 if (_added == null || _added.Id != original.Id || _added.Side != original.Side || _added.Size != original.Size || _added.IsBoss != original.IsBoss || _added.IsKing != original.IsKing)
-                { _added = original.CreateSnapshot(); }
-                else { _added.CopySnapshotState(original); }
+                {
+                    _added = original.CreateSnapshot();
+                }
+                else
+                {
+                    _added.CopySnapshotState(original);
+                }
                 return _added;
             }
         }

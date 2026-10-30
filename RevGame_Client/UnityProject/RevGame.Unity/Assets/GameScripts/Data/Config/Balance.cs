@@ -29,13 +29,14 @@ namespace RevGame.Data
             _table = table;
             _problems = problems;
         }
-
         public float Float(string key, float min, float max)
         {
             _used.Add(key);
+
             if (!_table.FindByKey(key, out BalanceRule row))
             {
-                _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）"); return min;
+                _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）");
+                return min;
             }
             if (float.IsNaN(row.Value) || float.IsInfinity(row.Value) || row.Value < min || row.Value > max)
             {
@@ -44,15 +45,17 @@ namespace RevGame.Data
             }
             return row.Value;
         }
-
         public int Int(string key, int min, int max)
         {
             _used.Add(key);
+
             if (!_table.FindByKey(key, out BalanceRule row))
             {
-                _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）"); return min;
+                _problems.Add("BalanceRule 缺少参数 " + key + "（代码需要它，请在“战斗数值参数.xlsx”补一行）");
+                return min;
             }
             float v = row.Value;
+
             if (float.IsNaN(v) || float.IsInfinity(v) || v != (float)Math.Floor(v) || v < min || v > max)
             {
                 _problems.Add("BalanceRule[" + key + "] = " + v.ToString("R", CultureInfo.InvariantCulture) + " 必须是 [" + min + ", " + max + "] 内的整数");
@@ -60,7 +63,6 @@ namespace RevGame.Data
             }
             return (int)v;
         }
-
         /// <summary>读完全部参数后调用：表里没被读到的键都是多余的。</summary>
         public void ReportUnused()
         {
@@ -73,7 +75,6 @@ namespace RevGame.Data
             }
         }
     }
-
     /// <summary>一份不可变的参数快照。</summary>
     internal sealed class BalanceValues
     {
@@ -412,70 +413,77 @@ namespace RevGame.Data
             v.BombWarningSeconds = r.Float("Bomb.WarningSeconds", 0.5f, 5f);
             v.BombDamageHpRatio = r.Float("Bomb.DamageHpRatio", 0.001f, 1f);
             v.CombatBuffCap = r.Float("Combat.BuffCap", 0.1f, 10f);
-            v.EmergencyFirstSeconds = r.Float("Assist.EmergencyFirstSeconds",0f,120f);
-            v.EmergencyIntervalSeconds = r.Float("Assist.EmergencyIntervalSeconds",1f,120f);
-            v.EmergencyHpRatio = r.Float("Assist.EmergencyHpRatio",.05f,1f);
-            v.EmergencyHealRatio = r.Float("Assist.EmergencyHealRatio",.01f,.8f);
-            v.RangedLimit = r.Int("Player.RangedLimit",1,81);
-            v.BossPlayerPieceLimit = r.Int("Boss.PlayerPieceLimit",1,70);
-            v.EnemyJumpSeconds = r.Float("Enemy.JumpSeconds",0.3f,20f);
-            v.DamageDisplayMultiplier = r.Int("Presentation.DamageMultiplier",1,100);
-            v.HelperStormThreshold = r.Int("Helper.StormThreshold",1,10);
-            v.HelperStormMissileSeconds = r.Float("Helper.StormMissileSeconds",0.2f,30f);
-            v.HelperStormMissileDamage = r.Float("Helper.StormMissileDamage",1f,1000f);
-            v.HelperStormBlastRadius = r.Float("Helper.StormBlastRadius",0.1f,5f);
-            v.HelperStormJellySeconds = r.Float("Helper.StormJellySeconds",0.2f,30f);
-            v.HelperStormJellyCount = r.Int("Helper.StormJellyCount",1,32);
-            v.HelperStormJellyDamage = r.Float("Helper.StormJellyDamage",1f,100f);
-            v.HelperStormBeamSeconds = r.Float("Helper.StormBeamSeconds",0.2f,10f);
-            v.HelperStormBeamCooldown = r.Float("Helper.StormBeamCooldown",1f,60f);
-            v.HelperStormBeamDps = r.Float("Helper.StormBeamDps",1f,1000f);
-            v.HelperStormBeamWidth = r.Float("Helper.StormBeamWidth",0.2f,5f);
-            v.HelperPlayerHitScore = r.Int("Helper.PlayerHitScore",1,100);
-            v.HelperHitScore = r.Int("Helper.HitScore",0,10);
-            v.HelperShotCost = r.Int("Helper.ShotCost",1,100);
-            v.HelperBaseDamage = r.Float("Helper.BaseDamage",1f,100f);
-            v.HelperScoreStep = r.Int("Helper.ScoreStep",10,10000);
-            v.HelperMaxTier = r.Int("Helper.MaxTier",1,10);
-            v.HelperDamageGrowth = r.Float("Helper.DamageGrowth",0f,1f);
-            v.HelperBaseInterval = r.Float("Helper.BaseInterval",0.2f,10f);
-            v.HelperMinInterval = r.Float("Helper.MinInterval",0.2f,10f);
-            v.HelperBossSpeedBonus = r.Float("Helper.BossSpeedBonus",0f,3f);
-            v.HelperBossStormAttackBonus = r.Float("Helper.BossStormAttackBonus",0f,4f);
-            v.HelperBossStormSpeedBonus = r.Float("Helper.BossStormSpeedBonus",0f,4f);
-            v.HelperBossHealPerSecond = r.Float("Helper.BossHealPerSecond",0f,1f);
-            v.HelperBossHealingAttackBonus = r.Float("Helper.BossHealingAttackBonus",0f,4f);
-            v.HelperBossHealingSpeedBonus = r.Float("Helper.BossHealingSpeedBonus",0f,4f);
-            v.HelperProtectionHealPerSecond = r.Float("Helper.ProtectionHealPerSecond",0f,1f);
-            v.HelperProtectionAttackBonus = r.Float("Helper.ProtectionAttackBonus",0f,2f);
-            v.HelperProtectionSpeedBonus = r.Float("Helper.ProtectionSpeedBonus",0f,2f);
-            v.HelperBossDamageScale = r.Float("Helper.BossDamageScale",0.1f,1f);
-            v.HelperMoveSeconds = r.Float("Helper.MoveSeconds",0.3f,10f);
-            v.HelperCrowdedCount = r.Int("Helper.CrowdedCount",1,81);
-            v.HelperBeamScore = r.Int("Helper.BeamScore",10,100000);
-            v.HelperBeamReserve = r.Int("Helper.BeamReserve",10,10000);
-            v.HelperBeamTickCost = r.Int("Helper.BeamTickCost",1,100);
-            v.HelperBeamDamage = r.Float("Helper.BeamDamage",1f,200f);
-            v.HelperBeamSeconds = r.Float("Helper.BeamSeconds",0.3f,10f);
-            v.HelperBeamCooldown = r.Float("Helper.BeamCooldown",3f,120f);
-            v.HelperRangedAttackLink = r.Float("Helper.RangedAttackLink",0f,2f);
-            v.HelperRangedSpeedLink = r.Float("Helper.RangedSpeedLink",0f,2f);
-            v.HelperRangedAttackCap = r.Float("Helper.RangedAttackCap",0f,2f);
-            v.HelperRangedSpeedCap = r.Float("Helper.RangedSpeedCap",0f,2f);
-            v.EmergencyMaxCount = r.Int("Assist.EmergencyMaxCount",0,10);
-            v.PlayerFirepowerSoftCount = r.Int("Player.FirepowerSoftCount",1,81);
-            v.PlayerFirepowerExponent = r.Float("Player.FirepowerExponent",0f,3f);
-            v.PlayerFirepowerMinScale = r.Float("Player.FirepowerMinScale",.01f,1f);
+            v.EmergencyFirstSeconds = r.Float("Assist.EmergencyFirstSeconds", 0f, 120f);
+            v.EmergencyIntervalSeconds = r.Float("Assist.EmergencyIntervalSeconds", 1f, 120f);
+            v.EmergencyHpRatio = r.Float("Assist.EmergencyHpRatio", .05f, 1f);
+            v.EmergencyHealRatio = r.Float("Assist.EmergencyHealRatio", .01f, .8f);
+            v.RangedLimit = r.Int("Player.RangedLimit", 1, 81);
+            v.BossPlayerPieceLimit = r.Int("Boss.PlayerPieceLimit", 1, 70);
+            v.EnemyJumpSeconds = r.Float("Enemy.JumpSeconds", 0.3f, 20f);
+            v.DamageDisplayMultiplier = r.Int("Presentation.DamageMultiplier", 1, 100);
+            v.HelperStormThreshold = r.Int("Helper.StormThreshold", 1, 10);
+            v.HelperStormMissileSeconds = r.Float("Helper.StormMissileSeconds", 0.2f, 30f);
+            v.HelperStormMissileDamage = r.Float("Helper.StormMissileDamage", 1f, 1000f);
+            v.HelperStormBlastRadius = r.Float("Helper.StormBlastRadius", 0.1f, 5f);
+            v.HelperStormJellySeconds = r.Float("Helper.StormJellySeconds", 0.2f, 30f);
+            v.HelperStormJellyCount = r.Int("Helper.StormJellyCount", 1, 32);
+            v.HelperStormJellyDamage = r.Float("Helper.StormJellyDamage", 1f, 100f);
+            v.HelperStormBeamSeconds = r.Float("Helper.StormBeamSeconds", 0.2f, 10f);
+            v.HelperStormBeamCooldown = r.Float("Helper.StormBeamCooldown", 1f, 60f);
+            v.HelperStormBeamDps = r.Float("Helper.StormBeamDps", 1f, 1000f);
+            v.HelperStormBeamWidth = r.Float("Helper.StormBeamWidth", 0.2f, 5f);
+            v.HelperPlayerHitScore = r.Int("Helper.PlayerHitScore", 1, 100);
+            v.HelperHitScore = r.Int("Helper.HitScore", 0, 10);
+            v.HelperShotCost = r.Int("Helper.ShotCost", 1, 100);
+            v.HelperBaseDamage = r.Float("Helper.BaseDamage", 1f, 100f);
+            v.HelperScoreStep = r.Int("Helper.ScoreStep", 10, 10000);
+            v.HelperMaxTier = r.Int("Helper.MaxTier", 1, 10);
+            v.HelperDamageGrowth = r.Float("Helper.DamageGrowth", 0f, 1f);
+            v.HelperBaseInterval = r.Float("Helper.BaseInterval", 0.2f, 10f);
+            v.HelperMinInterval = r.Float("Helper.MinInterval", 0.2f, 10f);
+            v.HelperBossSpeedBonus = r.Float("Helper.BossSpeedBonus", 0f, 3f);
+            v.HelperBossStormAttackBonus = r.Float("Helper.BossStormAttackBonus", 0f, 4f);
+            v.HelperBossStormSpeedBonus = r.Float("Helper.BossStormSpeedBonus", 0f, 4f);
+            v.HelperBossHealPerSecond = r.Float("Helper.BossHealPerSecond", 0f, 1f);
+            v.HelperBossHealingAttackBonus = r.Float("Helper.BossHealingAttackBonus", 0f, 4f);
+            v.HelperBossHealingSpeedBonus = r.Float("Helper.BossHealingSpeedBonus", 0f, 4f);
+            v.HelperProtectionHealPerSecond = r.Float("Helper.ProtectionHealPerSecond", 0f, 1f);
+            v.HelperProtectionAttackBonus = r.Float("Helper.ProtectionAttackBonus", 0f, 2f);
+            v.HelperProtectionSpeedBonus = r.Float("Helper.ProtectionSpeedBonus", 0f, 2f);
+            v.HelperBossDamageScale = r.Float("Helper.BossDamageScale", 0.1f, 1f);
+            v.HelperMoveSeconds = r.Float("Helper.MoveSeconds", 0.3f, 10f);
+            v.HelperCrowdedCount = r.Int("Helper.CrowdedCount", 1, 81);
+            v.HelperBeamScore = r.Int("Helper.BeamScore", 10, 100000);
+            v.HelperBeamReserve = r.Int("Helper.BeamReserve", 10, 10000);
+            v.HelperBeamTickCost = r.Int("Helper.BeamTickCost", 1, 100);
+            v.HelperBeamDamage = r.Float("Helper.BeamDamage", 1f, 200f);
+            v.HelperBeamSeconds = r.Float("Helper.BeamSeconds", 0.3f, 10f);
+            v.HelperBeamCooldown = r.Float("Helper.BeamCooldown", 3f, 120f);
+            v.HelperRangedAttackLink = r.Float("Helper.RangedAttackLink", 0f, 2f);
+            v.HelperRangedSpeedLink = r.Float("Helper.RangedSpeedLink", 0f, 2f);
+            v.HelperRangedAttackCap = r.Float("Helper.RangedAttackCap", 0f, 2f);
+            v.HelperRangedSpeedCap = r.Float("Helper.RangedSpeedCap", 0f, 2f);
+            v.EmergencyMaxCount = r.Int("Assist.EmergencyMaxCount", 0, 10);
+            v.PlayerFirepowerSoftCount = r.Int("Player.FirepowerSoftCount", 1, 81);
+            v.PlayerFirepowerExponent = r.Float("Player.FirepowerExponent", 0f, 3f);
+            v.PlayerFirepowerMinScale = r.Float("Player.FirepowerMinScale", .01f, 1f);
             r.ReportUnused();
 
             // ---- 跨参数的逻辑约束：单个值合法，组合起来不合法也会出事
-            if (v.HelperHitScore >= v.HelperShotCost) { problems.Add("帮手命中返分必须小于单发消耗，避免自给自足无限开火"); }
-            if (v.HelperMinInterval > v.HelperBaseInterval) { problems.Add("帮手最快间隔不能超过基础间隔"); }
-            void Rule(bool ok, string message) {
-            if (!ok)
+            if (v.HelperHitScore >= v.HelperShotCost)
             {
-                problems.Add("BalanceRule 参数组合不合法：" + message);
+                problems.Add("帮手命中返分必须小于单发消耗，避免自给自足无限开火");
             }
+            if (v.HelperMinInterval > v.HelperBaseInterval)
+            {
+                problems.Add("帮手最快间隔不能超过基础间隔");
+            }
+            void Rule(bool ok, string message)
+            {
+                if (!ok)
+                {
+                    problems.Add("BalanceRule 参数组合不合法：" + message);
+                }
             }
             Rule(v.PrepBuffCountMin <= v.PrepBuffCountMax, "Prep.BuffCountMin 不能大于 Prep.BuffCountMax");
             Rule(v.ClassThresholdLow <= v.ClassThresholdHigh, "Damage.ClassThresholdLow 不能大于 Damage.ClassThresholdHigh");
@@ -487,7 +495,6 @@ namespace RevGame.Data
             return v;
         }
     }
-
     /// <summary>
     /// 战斗数值参数的强类型只读入口（业务一律读这里，不要在代码里再写一份数值）。
     /// 未装配配置就读取会立刻抛异常。
@@ -503,7 +510,6 @@ namespace RevGame.Data
         public static float ScoreRoundGrowth => V.ScoreRoundGrowth;
         public static float ScorePieceGrowth => V.ScorePieceGrowth;
         public static float ScoreMultiplierCap => V.ScoreMultiplierCap;
-
 
         // ---- 战斗节奏
         public static float BattleDurationSeconds => V.BattleDurationSeconds;

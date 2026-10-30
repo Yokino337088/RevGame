@@ -67,14 +67,41 @@ namespace RevGame.View
         // 若复用 _generation，清弹幕时会误拦仍在加载的 81 个棋盘格，造成缺格。
         private int _effectGeneration;
         /// <summary>过场读取的装配状态；不是玩法阶段。失败必须显示原因，不能用“格子少几个”悄悄继续。</summary>
-        public string LoadError { get; private set; }
+        public string LoadError
+        {
+            get; private set;
+        }
         private bool _cellsReady;
-        public bool IsReady { get { return _surfaceReady && IsBossArtReady && HelperVisualReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0; } }
-        public int ActiveEffectCount { get { return _effects.Count; } }
+        public bool IsReady
+        {
+            get
+            {
+                return _surfaceReady && IsBossArtReady && HelperVisualReady && _cellsReady && _pendingPieces.Count == 0 && _pieces.Count > 0;
+            }
+        }
+        public int ActiveEffectCount
+        {
+            get
+            {
+                return _effects.Count;
+            }
+        }
         /// <summary>攻击范围是否正在显示；编辑器/自动化验收直接读，不看渲染器状态。</summary>
-        public bool AttackRangeVisible { get { return _attackRangeVisible; } }
+        public bool AttackRangeVisible
+        {
+            get
+            {
+                return _attackRangeVisible;
+            }
+        }
         /// <summary>本次已亮起的范围格数（波纹没走完时会小于最终覆盖数）。</summary>
-        public int AttackRangeCellCount { get { return _rangeCells.Count; } }
+        public int AttackRangeCellCount
+        {
+            get
+            {
+                return _rangeCells.Count;
+            }
+        }
         public int CellCount
         {
             get
@@ -82,7 +109,6 @@ namespace RevGame.View
                 return _cells.Count;
             }
         }
-
         public int PieceCount
         {
             get
@@ -90,7 +116,6 @@ namespace RevGame.View
                 return _pieces.Count;
             }
         }
-
         private void OnEnable()
         {
             // 首次启用才创建实例方法委托。复用GameObject时再次启用不必重复分配，但代次仍每次增加。
@@ -129,7 +154,6 @@ namespace RevGame.View
             BuildCellsAsync(generation);
             RefreshBoard();
         }
-
         /// <summary>
         /// 一次创建81格会把Instantiate、Collider、Sprite装配堆在一帧，异步加载预制体也无法消除这个尖峰。
         /// 这里按行遍历，每批最多4格或耗时3毫秒就Yield；每格只刷新自己，末尾统一刷新全盘。
@@ -151,6 +175,7 @@ namespace RevGame.View
                     GamePoolRequests.GetAsync<BoardCellView>(cell => completion.SetResult(cell), _viewRoot);
                     BoardCellView view = await completion.Task;
                     OnCellLoaded(view, pos, generation);
+
                     if (view == null)
                     {
                         return;
@@ -161,6 +186,7 @@ namespace RevGame.View
                         sliceStart = Time.realtimeSinceStartup;
                     }
                 }
+
                 if (_released || this == null || generation != _generation)
                 {
                     return;
@@ -174,7 +200,6 @@ namespace RevGame.View
                 RevLog.Exception(error, LoadError, "RevGame");
             }
         }
-
         private void OnCellLoaded(BoardCellView view, BoardPos pos, int generation)
         {
             if (view == null)
@@ -183,22 +208,23 @@ namespace RevGame.View
                 RevLog.Error(LoadError, "RevGame");
                 return;
             }
-
             if (_released || this == null || generation != _generation)
             {
                 RevPool.Return(view, 0);
                 return;
             }
-
             var cell = RevServices.GetRequired<IBattleService>().Board.GetCell(pos);
             view.Bind(pos, cell.IsStarPoint, OnCellClicked, OnCellLongPressed);
-            if (_surfaceMaterial != null) { view.ApplySurface(_surfaceMaterial); }
+
+            if (_surfaceMaterial != null)
+            {
+                view.ApplySurface(_surfaceMaterial);
+            }
             view.name = "格子_" + pos.X + "_" + pos.Y;
             _cells.Add(view);
             _cellByPos[pos] = view;
             // 构建期间没有玩家输入，最后统一RefreshCells；避免1+2+…+81次重复遍历。
         }
-
         /// <summary>真实鼠标/触屏点击和自动验收走同一个入口，表现层不直接改棋盘。</summary>
         public void OnCellClicked(BoardPos pos)
         {
@@ -213,16 +239,14 @@ namespace RevGame.View
                 HideAttackRange();
                 return;
             }
-
             Flow.BattleLogic logic = RevLogic.Get<Flow.BattleLogic>();
+
             if (logic == null)
             {
                 return;
             }
-
             logic.ClickBoard(pos);
         }
-
         /// <summary>
         /// 长按棋盘格 = 查看站在这一格上的棋子能打到哪。
         /// 只读规则、只画表现，不改变选中、不消耗出牌额度。
@@ -239,24 +263,23 @@ namespace RevGame.View
                 HideAttackRange();
                 return;
             }
-
             Piece piece = RevServices.GetRequired<IBattleService>().Board.GetPiece(pos);
+
             if (piece == null || !piece.IsAlive)
             {
                 return;
             }
             ShowAttackRange(piece.Id);
         }
-
         /// <summary>点击棋盘之外的任意位置（背景/HUD）也收起范围，和点击棋盘格保持同一手感。</summary>
         private void Update()
         {
             AnimateBoardEyes();
+
             if (!_attackRangeVisible || !Input.GetMouseButtonDown(0))
             {
                 return;
             }
-
             // 点在棋盘格上时交给 BoardCellView → OnCellClicked 处理；这里再收一次会变成"先收起、随后又落子"。
             if (IsPointerOnBoardCell())
             {
@@ -264,10 +287,10 @@ namespace RevGame.View
             }
             HideAttackRange();
         }
-
         private static bool IsPointerOnBoardCell()
         {
             Camera camera = Camera.main;
+
             if (camera == null)
             {
                 return false;
@@ -276,7 +299,6 @@ namespace RevGame.View
             Collider2D hit = Physics2D.OverlapPoint(world);
             return hit != null && hit.GetComponentInParent<BoardCellView>() != null;
         }
-
         /// <summary>
         /// 显示某颗棋子的攻击覆盖格。返回 false 表示没有可显示的内容（棋子不存在/敌方被锁死/射界为空），
         /// 由调用方决定是否给玩家提示——表现层不吞掉"为什么没反应"。
@@ -289,26 +311,27 @@ namespace RevGame.View
             }
             BoardModel board = RevServices.GetRequired<IBattleService>().Board;
             Piece piece = board.FindPiece(pieceId);
+
             if (piece == null || !piece.IsAlive)
             {
                 RevLog.Debug("攻击范围：棋子不存在或已死亡 #" + pieceId, "RevGame");
                 return false;
             }
-
             HideAttackRange();
             MoveRules.GetAttackCoverage(board, piece, _attackCoverage);
+
             if (_attackCoverage.Count == 0)
             {
                 RevLog.Debug("攻击范围：棋子 #" + pieceId + " 没有可覆盖的格子（可能是敌方被锁死或射界被挡）", "RevGame");
                 return false;
             }
-
             BuildRingDistances(piece);
             int size = Consts.BoardSize;
             int maxRing = 0;
             for (int i = 0; i < _attackCoverage.Count; i++)
             {
                 int distance = _ringDistance[_attackCoverage[i].ToIndex(size)];
+
                 if (distance > maxRing)
                 {
                     maxRing = distance;
@@ -320,11 +343,13 @@ namespace RevGame.View
             for (int ring = 1; ring <= maxRing; ring++)
             {
                 List<BoardCellView> views = CollectRangeRing(ring);
+
                 if (views.Count == 0)
                 {
                     continue;
                 }
                 float delay = (ring - 1) * RangeRingSeconds;
+
                 if (delay <= 0f)
                 {
                     PlayRangeRing(views);
@@ -338,10 +363,12 @@ namespace RevGame.View
             RevLog.Debug("攻击范围：棋子 #" + pieceId + " 覆盖 " + _attackCoverage.Count + " 格，共 " + maxRing + " 圈", "RevGame");
             return true;
         }
-
         public void HideAttackRange()
         {
-            for (int i = 0; i < _rangeTimers.Count; i++) { _rangeTimers[i].Stop(); }
+            for (int i = 0; i < _rangeTimers.Count; i++)
+            {
+                _rangeTimers[i].Stop();
+            }
             _rangeTimers.Clear();
             for (int i = 0; i < _rangeCells.Count; i++)
             {
@@ -353,7 +380,6 @@ namespace RevGame.View
             _rangeCells.Clear();
             _attackRangeVisible = false;
         }
-
         /// <summary>
         /// 以棋子身体为起点做一次 4 邻域 BFS，得到每格到棋子的最短步数 —— 这就是"水波扩散"的圈号。
         /// 不用曼哈顿距离而是真 BFS：以后若棋盘出现障碍/异形区域，圈号仍然正确。
@@ -362,18 +388,23 @@ namespace RevGame.View
         private void BuildRingDistances(Piece piece)
         {
             int size = Consts.BoardSize;
-            for (int i = 0; i < _ringDistance.Length; i++) { _ringDistance[i] = -1; }
+            for (int i = 0; i < _ringDistance.Length; i++)
+            {
+                _ringDistance[i] = -1;
+            }
             _ringQueue.Clear();
             for (int y = 0; y < piece.Size; y++)
             {
                 for (int x = 0; x < piece.Size; x++)
                 {
                     var pos = new BoardPos(piece.Pos.X + x, piece.Pos.Y + y);
+
                     if (!pos.IsInside(size))
                     {
                         continue;
                     }
                     int index = pos.ToIndex(size);
+
                     if (_ringDistance[index] >= 0)
                     {
                         continue;
@@ -382,7 +413,6 @@ namespace RevGame.View
                     _ringQueue.Enqueue(pos);
                 }
             }
-
             while (_ringQueue.Count > 0)
             {
                 BoardPos current = _ringQueue.Dequeue();
@@ -390,11 +420,13 @@ namespace RevGame.View
                 for (int i = 0; i < 4; i++)
                 {
                     var neighbor = new BoardPos(current.X + RingDx[i], current.Y + RingDy[i]);
+
                     if (!neighbor.IsInside(size))
                     {
                         continue;
                     }
                     int index = neighbor.ToIndex(size);
+
                     if (_ringDistance[index] >= 0)
                     {
                         continue;
@@ -404,7 +436,6 @@ namespace RevGame.View
                 }
             }
         }
-
         /// <summary>取出覆盖格里距离正好等于 ring 的那些格；格子还没加载完时直接跳过。</summary>
         private List<BoardCellView> CollectRangeRing(int ring)
         {
@@ -413,11 +444,13 @@ namespace RevGame.View
             for (int i = 0; i < _attackCoverage.Count; i++)
             {
                 BoardPos pos = _attackCoverage[i];
+
                 if (_ringDistance[pos.ToIndex(size)] != ring)
                 {
                     continue;
                 }
                 BoardCellView view;
+
                 if (_cellByPos.TryGetValue(pos, out view) && view != null)
                 {
                     views.Add(view);
@@ -425,12 +458,12 @@ namespace RevGame.View
             }
             return views;
         }
-
         private void PlayRangeRing(List<BoardCellView> views)
         {
             for (int i = 0; i < views.Count; i++)
             {
                 BoardCellView view = views[i];
+
                 if (view == null)
                 {
                     continue;
@@ -440,7 +473,6 @@ namespace RevGame.View
                 _rangeCells.Add(view);
             }
         }
-
         private Piece FindPiece(int id)
         {
             var board = RevServices.GetRequired<IBattleService>().Board;
@@ -448,7 +480,6 @@ namespace RevGame.View
             Piece piece = board.FindPiece(id);
             return piece != null && piece.IsAlive ? piece : null;
         }
-
         private void RefreshBoard()
         {
             if (_released)
@@ -467,32 +498,39 @@ namespace RevGame.View
 
             foreach (int id in _removedIds)
             {
-                if (!HoldVictoryBoss(_pieces[id])) { RevPool.Return(_pieces[id], 0); }
+                if (!HoldVictoryBoss(_pieces[id]))
+                {
+                    RevPool.Return(_pieces[id], 0);
+                }
                 _pieces.Remove(id);
                 _lastHp.Remove(id);
             }
-
             foreach (Piece piece in RevServices.GetRequired<IBattleService>().Board.Pieces)
             {
                 // 擒王时模型主将可能还有残血，视图已归演出拥有，不能重新从池生成第二颗。
-                if (_victoryBossId != 0 && piece.Id == _victoryBossId) { continue; }
+                if (_victoryBossId != 0 && piece.Id == _victoryBossId)
+                {
+                    continue;
+                }
                 PieceView view;
+
                 if (_pieces.TryGetValue(piece.Id, out view))
                 {
                     RefreshPiece(view, piece);
                     _lastHp[piece.Id] = piece.Hp;
                 }
-                else if (_pendingPieces.Add(piece.Id))
-                {
-                    int id = piece.Id;
-                    int generation = _generation;
-                    GamePoolRequests.GetAsync<PieceView>(loaded => OnPieceLoaded(loaded, id, generation), _viewRoot);
-                }
+                else
+
+                    if (_pendingPieces.Add(piece.Id))
+                    {
+                        int id = piece.Id;
+                        int generation = _generation;
+                        GamePoolRequests.GetAsync<PieceView>(loaded => OnPieceLoaded(loaded, id, generation), _viewRoot);
+                    }
             }
 
             RefreshCells();
         }
-
         private void OnPieceLoaded(PieceView view, int id, int generation)
         {
             if (view == null)
@@ -502,16 +540,15 @@ namespace RevGame.View
                 RevLog.Error(LoadError, "RevGame");
                 return;
             }
-
             // ★ 加载结束前可能已经死亡、换章或退出场景。此时归还对象，不能把过期棋子画回来。
             if (_released || this == null || generation != _generation)
             {
                 RevPool.Return(view, 0);
                 return;
             }
-
             _pendingPieces.Remove(id);
             Piece piece = FindPiece(id);
+
             if (piece == null)
             {
                 _pendingBirths.Remove(id);
@@ -519,41 +556,53 @@ namespace RevGame.View
                 RevPool.Return(view, 0);
                 return;
             }
-
             _pieces.Add(id, view);
             _lastHp[id] = piece.Hp;
             view.Bind(id, piece.Def.Kind, piece.Def.Star, piece.Side);
             RefreshPiece(view, piece);
             PlayPendingPieceVisual(id, view);
         }
-
         private void PlayPendingPieceVisual(int id, PieceView view)
         {
-            if (view.HasBossDeathVisual) { _pendingUpgrades.Remove(id); _pendingBirths.Remove(id); return; }
+            if (view.HasBossDeathVisual)
+            {
+                _pendingUpgrades.Remove(id);
+                _pendingBirths.Remove(id);
+                return;
+            }
             // 星级升级可能在落子事件之前触发；只有新帧绑定好、尺寸落定后才播，不能闪回旧星级。
             if (_pendingUpgrades.Remove(id))
             {
                 _pendingBirths.Remove(id);
                 view.PlayUpgradeStorm();
             }
-            else if (_pendingBirths.Remove(id))
-            {
-                view.PlayBirthFire();
-            }
+            else
+
+                if (_pendingBirths.Remove(id))
+                {
+                    view.PlayBirthFire();
+                }
         }
 
         private void RefreshPiece(PieceView view, Piece piece)
         {
             // 入场已经借出死亡材质/参数块；准备计时被门禁暂停，重复气眼刷新不能把显现效果覆盖掉。
-            if (view.HasBossDeathVisual) { return; }
+            if (view.HasBossDeathVisual)
+            {
+                return;
+            }
             Vector3 position = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             // Pos 指身体左下格，图像要放在整个占格的中心，而不是压在左下角那一格。
             position += new Vector3(piece.Size - 1, piece.Size - 1, 0f) * (Consts.CellSize * 0.5f);
             view.MoveTo(position);
             // 原位升级保留Id，所以每次同步检查外观；Bind内部只在种类/星级真的变化时重绑。
             view.Bind(piece.Id, piece.Def.Kind, piece.Def.Star, piece.Side);
+
             // 换章异步加载期间不能把上一章配置临时贴给新Boss；画面门禁会等对应章完成。
-            if (piece.IsBoss) { view.BindBossArt(_bossArt != null && _bossArt.Chapter == RevServices.GetRequired<IBattleService>().Chapter ? _bossArt : null); }
+            if (piece.IsBoss)
+            {
+                view.BindBossArt(_bossArt != null && _bossArt.Chapter == RevServices.GetRequired<IBattleService>().Chapter ? _bossArt : null);
+            }
             view.SetBodySize(piece.Size, piece.IsBoss, piece.IsKing);
             view.SetHp(piece.HpRatio);
             view.SetLocked(piece.IsLocked);
@@ -561,14 +610,12 @@ namespace RevGame.View
             view.SetBossStatus(piece.BossHidden, piece.BossFrozen, piece.BossAttackFactor < 1f || piece.BossSpeedFactor < 1f);
             PrimeBossIntro(view);
         }
-
         private void RefreshCells()
         {
             if (_released)
             {
                 return;
             }
-
             IBattleService battle = RevServices.GetRequired<IBattleService>();
             foreach (BoardCellView view in _cells)
             {
@@ -581,24 +628,24 @@ namespace RevGame.View
                 view.SetEye(battle.Board.GetCell(view.Position).IsEyeMarked);
             }
         }
-
         private void OnRound(int round)
         {
-            if (RevServices.GetRequired<IBattleService>().Phase == GamePhase.Prepare) { CancelVictoryViews(); }
+            if (RevServices.GetRequired<IBattleService>().Phase == GamePhase.Prepare)
+            {
+                CancelVictoryViews();
+            }
             RequestBoardSurface();
             // 换阶段后旧棋子的射界已经过期，必须先收起再清弹幕。
             HideAttackRange();
             ClearRoundEffects();
             RefreshBoard();
         }
-
         private void OnSettle(GameSide side)
         {
             HideAttackRange();
             ClearRoundEffects();
             RefreshBoard();
         }
-
         /// <summary>阶段交接时立即收走旧弹幕，不等待动画自然结束；暂停的动画也必须清除。</summary>
         private void ClearRoundEffects()
         {
@@ -629,7 +676,6 @@ namespace RevGame.View
             ClearHelperAttacks();
             ClearCombatPacing();
         }
-
         private void OnPlaced(int id)
         {
             if (_released)
@@ -638,11 +684,13 @@ namespace RevGame.View
             }
             // 落子=占格变了，旧范围可能指向已经打不到的格子。
             HideAttackRange();
+
             if (!_upgradeBeforeBirth.Remove(id))
             {
                 _pendingBirths.Add(id);
             }
             RefreshBoard();
+
             if (_pieces.TryGetValue(id, out PieceView view))
             {
                 PlayPendingPieceVisual(id, view);
@@ -654,45 +702,55 @@ namespace RevGame.View
             HideAttackRange();
             RefreshBoard();
         }
-
         /// <summary>服务已经提交完整阵型；先启动专用位移，随后的常规刷新看到同一目标不会重启动画。</summary>
         private void OnFormationMoved(int id)
         {
             Piece piece = FindPiece(id);
-            if (_released || piece == null || !_pieces.TryGetValue(id, out PieceView view)) { return; }
+
+            if (_released || piece == null || !_pieces.TryGetValue(id, out PieceView view))
+            {
+                return;
+            }
             Vector3 destination = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             destination += new Vector3(piece.Size - 1, piece.Size - 1, 0) * Consts.CellSize * 0.5f;
-            if (piece.Side == GameSide.Enemy && !piece.Def.IsRanged) { view.JumpTo(destination); }
-            else { view.MoveFormationTo(destination); }
-        }
 
+            if (piece.Side == GameSide.Enemy && !piece.Def.IsRanged)
+            {
+                view.JumpTo(destination);
+            }
+            else
+            {
+                view.MoveFormationTo(destination);
+            }
+        }
         private void OnHpChanged(int id)
         {
             Piece p = FindPiece(id);
             PieceView view;
+
             if (_pieces.TryGetValue(id, out view))
             {
                 view.SetHp(p == null ? 0f : p.HpRatio);
+
                 if (p != null)
                 {
                     _lastHp[id] = p.Hp;
                 }
             }
         }
-
         private void OnAttack(PieceAttackInfo attack)
         {
             // ★ 口号和子弹受全场预算限制，但每颗真实出手的棋子仍要有本地动作。
             // 否则后排/新落的一星棋即使已经造成伤害，也会被玩家误认为“整场不攻击”。
             // 这里只播身体姿态，不移动根节点、不改占格、不再结算一次伤害。
             PieceView view;
+
             if (_pieces.TryGetValue(attack.PieceId, out view))
             {
                 view.PlayAttackPulse();
             }
             QueueAttackText(attack);
         }
-
         /// <summary>预算预约成功后再取池对象；多个真实攻击口号错开播放，仍不更改任何模型伤害。</summary>
         private void ShowAttackText(PieceAttackInfo attack)
         {
@@ -700,6 +758,7 @@ namespace RevGame.View
             Vector3 position = attack.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             position += new Vector3(attack.Size - 1, attack.Size - 1, 0f) * Consts.CellSize * 0.5f;
             int generation = _effectGeneration;
+
             if (GamePoolRequests.TryGetReady<BattleEffectView>(out BattleEffectView ready, _viewRoot))
             {
                 PresentAttackText(ready, config, position, generation);
@@ -707,14 +766,12 @@ namespace RevGame.View
             }
             LoadAttackText(config, position, generation);
         }
-
         /// <summary>捕获式回调只存在于冷加载；热路径不先创建lambda再发现缓存已命中。</summary>
         // 冷路径才捕获config/position/generation；把lambda提到单独方法，避免热路径进入方法就创建闭包。
         private void LoadAttackText(BattleText config, Vector3 position, int generation)
         {
             GamePoolRequests.GetAsync<BattleEffectView>(effect => PresentAttackText(effect, config, position, generation), _viewRoot);
         }
-
         // 热取池和冷回调都在此交付。先验代次/离场，再释放本代预约并登记对象；旧回调只允许归池。
         private void PresentAttackText(BattleEffectView effect, BattleText config, Vector3 position, int generation)
         {
@@ -727,16 +784,17 @@ namespace RevGame.View
                 return;
             }
             _pendingTextLoads--;
+
             if (effect == null)
             {
-                RevLog.Warn("攻击文字加载失败", "RevGame"); return;
+                RevLog.Warn("攻击文字加载失败", "RevGame");
+                return;
             }
             _effects.Add(effect);
             _textEffects.Add(effect);
             effect.UseProjection(_feedbackProjection.Camera != null ? _feedbackProjection : null);
             effect.ShowAttack(config, position, _effectFinishedCallback, _arrangeTextCallback);
         }
-
         private void OnDamage(BattleHitInfo hit)
         {
             Vector3 target = hit.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
@@ -744,21 +802,23 @@ namespace RevGame.View
             target.z = 0f;
             Vector3 source = hit.HasAttacker ? hit.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset) : target + Vector3.up * 2f;
             source += new Vector3(hit.SourceSize - 1, hit.SourceSize - 1, 0f) * Consts.CellSize * 0.5f;
+
             // 只为真实远程普攻发射职业弹道；近战和自带特效的Boss技能仅反馈真实伤害。
             if (hit.HasAttacker && hit.SourceIsRanged && !hit.FromSkill)
             {
                 QueueProjectile(source, target, hit.TargetSide, hit.SourceId, hit.SourceKind);
             }
-            else if (hit.HasAttacker && !hit.FromSkill && _meleeEffects.Count + _pendingMeleeLoads < MaxMeleeEffects)
-            {
-                _pendingMeleeLoads++;
-                ShowEffect(BattleEffectKind.Melee, source, 0, hit.TargetSide, target, hit.SourceKind);
-            }
+            else
+
+                if (hit.HasAttacker && !hit.FromSkill && _meleeEffects.Count + _pendingMeleeLoads < MaxMeleeEffects)
+                {
+                    _pendingMeleeLoads++;
+                    ShowEffect(BattleEffectKind.Melee, source, 0, hit.TargetSide, target, hit.SourceKind);
+                }
             // ★ 伤害取自扣血当刻的快照，即使受击棋子已经死亡回池，这个数字仍能正常显示。
             // 只在同一画面帧内合并同目标连击；弹道和数字各自受显示预算约束，都不再创建每次命中独立的Timer。
             QueueDamageText(hit, target);
         }
-
         private void OnDied(int id)
         {
             HideAttackRange();
@@ -766,14 +826,21 @@ namespace RevGame.View
             _pendingUpgrades.Remove(id);
             _upgradeBeforeBirth.Remove(id);
             PieceView view;
+
             if (_pieces.TryGetValue(id, out view))
             {
                 // 规则层已在发事件前移除占格；这里也立即摘出存活视图字典，但让原物体留场消融。
                 // 切阶段保留这段短动画；完成或独立期限到达后归池，离场则由 CancelDissolvingPieces 收尾。
                 _pieces.Remove(id);
                 _lastHp.Remove(id);
-                if (HoldVictoryBoss(view)) { RefreshBoard(); return; }
+
+                if (HoldVictoryBoss(view))
+                {
+                    RefreshBoard();
+                    return;
+                }
                 _dissolvingPieces.Add(view);
+
                 if (!view.BeginDeathDissolve(OnDeathDissolved))
                 {
                     _dissolvingPieces.Remove(view);
@@ -784,7 +851,6 @@ namespace RevGame.View
 
             RefreshBoard();
         }
-
         private void OnDeathDissolved(PieceView view)
         {
             // 动画自然完成或表现期限到达都走这里；中途离场会取消两者，不允许旧回调归还新棋子。
@@ -806,7 +872,6 @@ namespace RevGame.View
             // OnPoolReturn Kill(false)，不会重入 OnDeathDissolved 修改这个集合。
             _dissolvingPieces.Clear();
         }
-
         private void OnMerged(int id)
         {
             if (_released)
@@ -815,6 +880,7 @@ namespace RevGame.View
             }
             // 升星会换攻击/射程，旧范围不再可信。
             HideAttackRange();
+
             // 若尚未见到落子事件，记下这次更高优先级的升级；同步池命中时可能在落子前已播完待请求。
             if (!_pendingBirths.Contains(id))
             {
@@ -823,6 +889,7 @@ namespace RevGame.View
             // 升级改用原棋子的身体 Shader；BattleEffect 仍供伤害数字、攻击口号和弹道使用，不能删除整个预制体。
             _pendingUpgrades.Add(id);
             RefreshBoard();
+
             if (_pieces.TryGetValue(id, out PieceView view))
             {
                 PlayPendingPieceVisual(id, view);
@@ -832,6 +899,7 @@ namespace RevGame.View
         private void ShowEffect(BattleEffectKind kind, Vector3 position, int damage, GameSide targetSide = GameSide.Enemy, Vector3 destination = default(Vector3), PieceKind sourceKind = PieceKind.Archer)
         {
             int generation = _effectGeneration;
+
             if (GamePoolRequests.TryGetReady<BattleEffectView>(out BattleEffectView ready, _viewRoot))
             {
                 PresentEffect(ready, kind, position, damage, targetSide, destination, sourceKind, generation);
@@ -854,36 +922,39 @@ namespace RevGame.View
                 {
                     _pendingProjectileLoads--;
                 }
-                if (generation == _effectGeneration && kind == BattleEffectKind.Melee) { _pendingMeleeLoads--; }
+                if (generation == _effectGeneration && kind == BattleEffectKind.Melee)
+                {
+                    _pendingMeleeLoads--;
+                }
                 RevLog.Warn("战斗特效加载失败", "RevGame");
                 return;
             }
-
             if (_released || generation != _effectGeneration)
             {
                 RevPool.Return(effect, 0);
                 return;
             }
-
             _effects.Add(effect);
+
             if (kind == BattleEffectKind.Projectile)
             {
                 _pendingProjectileLoads--;
                 _projectileEffects.Add(effect);
                 effect.ShowProjectile(position, destination, _effectFinishedCallback, targetSide, sourceKind);
             }
-            else if (kind == BattleEffectKind.Melee)
-            {
-                _pendingMeleeLoads--;
-                _meleeEffects.Add(effect);
-                effect.ShowMelee(position, destination, sourceKind, _effectFinishedCallback);
-            }
             else
-            {
-                effect.Show(kind, position, damage, _effectFinishedCallback, targetSide);
-            }
-        }
 
+                if (kind == BattleEffectKind.Melee)
+                {
+                    _pendingMeleeLoads--;
+                    _meleeEffects.Add(effect);
+                    effect.ShowMelee(position, destination, sourceKind, _effectFinishedCallback);
+                }
+                else
+                {
+                    effect.Show(kind, position, damage, _effectFinishedCallback, targetSide);
+                }
+        }
         private void OnEffectFinished(BattleEffectView effect)
         {
             _effects.Remove(effect);
@@ -891,7 +962,6 @@ namespace RevGame.View
             _projectileEffects.Remove(effect);
             _meleeEffects.Remove(effect);
         }
-
         private void OnDisable()
         {
             _released = true;
@@ -937,6 +1007,7 @@ namespace RevGame.View
             RevPool.DestroyPool<PieceView>();
             RevPool.DestroyPool<BoardCellView>();
             RevPool.DestroyPool<BattleEffectView>();
+
             if (_viewRoot != null)
             {
                 Destroy(_viewRoot.gameObject);

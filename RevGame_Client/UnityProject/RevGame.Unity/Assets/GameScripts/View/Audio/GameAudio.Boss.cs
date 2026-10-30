@@ -80,72 +80,104 @@ namespace RevGame.View
         private readonly RevSoundHandle[] _bossAudioHandles = new RevSoundHandle[BossClipNames.Length];
         private readonly float[] _bossAudioReadyAt = new float[BossClipNames.Length];
         private readonly string[] _bossAudioAliases = new string[BossClipNames.Length];
-        public int BossAudioRequestCount { get; private set; }
-        public string LastBossAudioResource { get; private set; }
-
+        public int BossAudioRequestCount
+        {
+            get; private set;
+        }
+        public string LastBossAudioResource
+        {
+            get; private set;
+        }
         /// <summary>返回实际资源名供Editor逐项核对；无效枚举给出空值，不能默默映射成任意技能。</summary>
         public static string GetBossSkillSoundName(BossSkillKind kind)
         {
             int index = (int)kind;
             return index >= 0 && index < BossClipNames.Length ? BossClipNames[index] : null;
         }
-
         /// <summary>场景独占这些别名，销毁时成对注销。Frame去重仍由RevSound处理，业务层不创建AudioSource。</summary>
         /// <summary>真实逻辑子路径；常用狂暴单独共包，六章技能各十段录音分别独立打包。</summary>
         public static string GetBossSkillSoundPath(BossSkillKind kind)
         {
             string name = GetBossSkillSoundName(kind);
-            if (name == null) { return null; }
+
+            if (name == null)
+            {
+                return null;
+            }
             return kind == BossSkillKind.Enrage ? "Boss/Common/" + name
                 : "Boss/Chapter" + BossSkillCatalog.ThemeChapter(kind).ToString("00") + "/" + name;
         }
-
         /// <summary>本场景登记的当前章节；换章先停声音、归还加载引用再注销别名，不加载其它章。</summary>
         private int _bossAudioChapter;
         public int BossAudioChapter => _bossAudioChapter;
-        public int RegisteredBossAudioCount { get; private set; }
+        public int RegisteredBossAudioCount
+        {
+            get; private set;
+        }
         private void RefreshBossAudio()
         {
             int chapter = _battleScreen ? RevServices.GetRequired<IBattleService>().Chapter : 0;
-            if (chapter == _bossAudioChapter) { return; }
+
+            if (chapter == _bossAudioChapter)
+            {
+                return;
+            }
             CloseBossAudio();
             _bossAudioChapter = chapter;
-            if (chapter <= 0) { return; }
+
+            if (chapter <= 0)
+            {
+                return;
+            }
             for (int index = 0; index < BossClipNames.Length; index++)
             {
                 var kind = (BossSkillKind)index;
-                if (!BossSkillCatalog.IsUnlocked(kind,chapter)) { continue; }
+
+                if (!BossSkillCatalog.IsUnlocked(kind, chapter))
+                {
+                    continue;
+                }
                 string alias = "Boss_" + kind;
                 _bossAudioAliases[index] = alias;
-                if (!RevSound.Register(alias,GetBossSkillSoundPath(kind)))
-                { throw new System.InvalidOperationException("Boss音效登记失败：" + alias); }
+
+                if (!RevSound.Register(alias, GetBossSkillSoundPath(kind)))
+                {
+                    throw new System.InvalidOperationException("Boss音效登记失败：" + alias);
+                }
                 RegisteredBossAudioCount++;
             }
             // 按需首次播放再加载本章Clip；不调用PreloadAll，目录登记不占其它章音频引用。
         }
-
         private void OpenBossAudio()
         {
-
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, _ => StopBossAudio(), owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, _ => StopBossAudio(), owner: this);
         }
-
         /// <summary>每段技能均有声音反馈；同技能最短0.18真实秒，并用较轻的续段音量保留层次，避免高频Boss遮住所有游戏声音。</summary>
         private void PlayBossSkillAudio(BossSkillInfo info)
         {
             int index = (int)info.Kind;
+
             if (index < 0 || index >= BossClipNames.Length)
             {
                 RevLog.Warn("Boss声音未映射：" + info.Kind, "RevGame");
                 return;
             }
             RefreshBossAudio();
-            if (_bossAudioAliases[index] == null) { RevLog.Warn("当前章未登记Boss技能：" + info.Kind,"RevGame"); return; }
-            if (Time.unscaledTime < _bossAudioReadyAt[index]) { return; }
+
+            if (_bossAudioAliases[index] == null)
+            {
+                RevLog.Warn("当前章未登记Boss技能：" + info.Kind, "RevGame");
+                return;
+            }
+            if (Time.unscaledTime < _bossAudioReadyAt[index])
+            {
+                return;
+            }
             _bossAudioReadyAt[index] = Time.unscaledTime + 0.18f;
             _bossAudioHandles[index].Stop();
             _bossAudioHandles[index] = RevSound.Play(_bossAudioAliases[index], volume: info.Index == 0 ? 0.38f : 0.23f);
+
             if (!_bossAudioHandles[index].IsEmpty)
             {
                 BossAudioRequestCount++;
@@ -162,14 +194,17 @@ namespace RevGame.View
                 _bossAudioReadyAt[index] = 0f;
             }
         }
-
         private void CloseBossAudio()
         {
             StopBossAudio();
             for (int index = 0; index < _bossAudioAliases.Length; index++)
             {
                 string alias = _bossAudioAliases[index];
-                if (string.IsNullOrEmpty(alias)) { continue; }
+
+                if (string.IsNullOrEmpty(alias))
+                {
+                    continue;
+                }
                 // Unload必须在Unregister之前：框架按别名解析真实子路径，先注销会找不到原加载引用。
                 RevSound.Unload(alias);
                 RevSound.Unregister(alias);

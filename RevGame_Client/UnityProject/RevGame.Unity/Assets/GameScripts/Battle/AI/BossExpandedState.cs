@@ -17,10 +17,13 @@ namespace RevGame.Battle
         protected override BossSkillKind Kind => _kind;
         protected override void Hit(int index)
         {
-            if (BossSkillCatalog.IsSpecial(_kind)) { Owner.ExclusiveHit(Info.WithIndex(index)); }
+            if (BossSkillCatalog.IsSpecial(_kind))
+            {
+                Owner.ExclusiveHit(Info.WithIndex(index));
+            }
             else
             {
-                BossExpandedGeometry.Collect(Owner.Board,Info.WithIndex(index),Victims);
+                BossExpandedGeometry.Collect(Owner.Board, Info.WithIndex(index), Victims);
                 DamageAll(Victims);
             }
         }

@@ -32,11 +32,12 @@ namespace RevGame.UI
         {
             get
             {
-                foreach (CardItem card in _cards) {
-                if (card.IsFlipping)
+                foreach (CardItem card in _cards)
                 {
-                    return true;
-                }
+                    if (card.IsFlipping)
+                    {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -46,7 +47,6 @@ namespace RevGame.UI
             _cards = GetComponentsInChildren<CardItem>(true);
             // 六槽按钮随预制体一同装配，由方法特性接线；点击时读取当前 CardId。
         }
-
         protected override void OnOpen()
         {
             ResetRoundCards();
@@ -57,39 +57,39 @@ namespace RevGame.UI
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshView, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnPrepare, owner: this);
         }
-
         private void ResetRoundCards()
         {
             _refreshAnimation = false;
             // 保留 OnBindView 中“含隐藏项”的全部六槽，不因旧回合只剩一张而缩短缓存。
             // 每次开面板都主动清旧动画并逐槽重新绘制，不能等待某个旧翻牌回调来刷新。
-            foreach (CardItem card in _cards) { card.ResetForRound(); }
+            foreach (CardItem card in _cards)
+            {
+                card.ResetForRound();
+            }
         }
-
         private void OnPrepare(int round)
         {
             ResetRoundCards();
             RefreshView();
         }
-
         protected override void OnClose()
         {
             RevTimer.CancelAllOf(this);
             ResetRoundCards();
         }
-
         protected override void OnRefreshView()
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();
             _hintText.text = "剩余落子 " + battle.CardsRemaining + " 次  ·  " + (battle.SelectedPieceId != 0 ? "点空格调整位置（免费）" : battle.SelectedCardId == 0 ? "选手牌落子，或点己方棋子换位" : "全盘空格均可落子");
+
             if (!string.IsNullOrEmpty(battle.LastError))
             {
                 _hintText.text += "\n" + battle.LastError;
             }
-
             for (int i = 0; i < _cards.Length; i++)
             {
                 var card = i < battle.Hand.Count ? battle.Hand[i] : null;
+
                 if (_refreshAnimation && card != null)
                 {
                     _cards[i].FlipTo(card, battle.SelectedCardId, i * 0.055f, RefreshView);
@@ -99,18 +99,22 @@ namespace RevGame.UI
                     _cards[i].Show(card, battle.SelectedCardId);
                 }
             }
-
             var lesson = RevLogic.Get<TutorialLogic>();
             bool guided = lesson != null && lesson.Active;
             _btnReady.interactable = (!guided || lesson.Step == TutorialStep.Ready) && battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !AnyCardFlipping;
             _btnReady.GetComponentInChildren<Text>().text = battle.PreparationGranted ? "开始战斗" : "增益抵达 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed)) + "秒";
-            if (guided && lesson.Step != TutorialStep.Ready) { _btnReady.GetComponentInChildren<Text>().text = "完成引导后开战"; }
+
+            if (guided && lesson.Step != TutorialStep.Ready)
+            {
+                _btnReady.GetComponentInChildren<Text>().text = "完成引导后开战";
+            }
             _btnRefresh.interactable = !guided && battle.Hand.Count > 0 && !AnyCardFlipping;
             _btnRefresh.GetComponentInChildren<Text>().text = "刷新手牌（" + battle.Hand.Count + "张）";
             _btnSkip.gameObject.SetActive(battle.Round == Balance.NormalRoundsPerChapter);
             _btnSkip.interactable = !guided && !AnyCardFlipping;
             _btnEye.gameObject.SetActive(battle.EyeStones > 0);
             _btnEye.GetComponentInChildren<Text>(true).text = "眼位石 ×" + battle.EyeStones;
+
             if (battle.EyeStoneSelected)
             {
                 _hintText.text = "点击金色亮格补眼；没有亮格时可保留眼位石";
@@ -123,7 +127,6 @@ namespace RevGame.UI
             RefreshView();
             _refreshAnimation = false;
         }
-
         [RevButtonClick("btnRefresh")]
         private void OnRefreshClick()
         {
@@ -139,37 +142,31 @@ namespace RevGame.UI
         {
             SelectCardSlot(nodeName);
         }
-
         [RevButtonClick("card1")]
         private void OnCard1(string nodeName)
         {
             SelectCardSlot(nodeName);
         }
-
         [RevButtonClick("card2")]
         private void OnCard2(string nodeName)
         {
             SelectCardSlot(nodeName);
         }
-
         [RevButtonClick("card3")]
         private void OnCard3(string nodeName)
         {
             SelectCardSlot(nodeName);
         }
-
         [RevButtonClick("card4")]
         private void OnCard4(string nodeName)
         {
             SelectCardSlot(nodeName);
         }
-
         [RevButtonClick("card5")]
         private void OnCard5(string nodeName)
         {
             SelectCardSlot(nodeName);
         }
-
         private void SelectCardSlot(string nodeName)
         {
             foreach (CardItem card in _cards)
@@ -182,7 +179,6 @@ namespace RevGame.UI
                 }
             }
         }
-
         [RevButtonClick("btnReady")]
         private void OnReadyClick()
         {
@@ -197,13 +193,11 @@ namespace RevGame.UI
         {
             RevLogic.Get<BattleLogic>().SkipRound();
         }
-
         [RevButtonClick("btnEye")]
         private void OnEyeClick()
         {
             RevLogic.Get<BattleLogic>().SelectEyeStone();
         }
-
         protected override void OnRelease()
         {
             foreach (CardItem card in _cards)

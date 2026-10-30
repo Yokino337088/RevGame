@@ -13,8 +13,14 @@ namespace RevGame.Data
     /// </summary>
     public sealed class RoundDef
     {
-        public int Chapter { get; }
-        public int Round { get; }
+        public int Chapter
+        {
+            get;
+        }
+        public int Round
+        {
+            get;
+        }
         /// <summary>连续进度从零起算；跨章不归零，防止第2章第1轮比上一章Boss前还弱。</summary>
         public int Progress => (Chapter - 1) * Balance.RoundsPerChapter + Round - 1;
         /// <summary>
@@ -26,10 +32,15 @@ namespace RevGame.Data
         /// <summary>四档逐步开放选目标、收残血、压气和规避火力；移动冷却始终不缩短。</summary>
         public int Intelligence => LevelCatalog.GetIntelligence(Chapter, Round);
         /// <summary>是否 Boss 回合（每章最后一个回合）。</summary>
-        public bool IsBoss { get; }
+        public bool IsBoss
+        {
+            get;
+        }
         /// <summary>敌方普通棋名单；布阵算法优先用前三种远程构建眼阵，Boss 大棋由战斗服务另加。</summary>
-        public IReadOnlyList<PieceKind> EnemyKinds { get; }
-
+        public IReadOnlyList<PieceKind> EnemyKinds
+        {
+            get;
+        }
         public RoundDef(int chapter, int round, bool isBoss, IReadOnlyList<PieceKind> enemyKinds)
         {
             Chapter = chapter;
@@ -37,21 +48,27 @@ namespace RevGame.Data
             IsBoss = isBoss;
             EnemyKinds = enemyKinds;
         }
-
         public override string ToString()
         {
             return "第 " + Chapter + " 章 · 第 " + Round + " 回合" + (IsBoss ? "（Boss）" : "");
         }
     }
-
     /// <summary>一章的 Boss 阵容（来自 ChapterConfig）。</summary>
     public sealed class BossLineup
     {
-        public PieceKind Kind { get; }
-        public StarTier Star { get; }
+        public PieceKind Kind
+        {
+            get;
+        }
+        public StarTier Star
+        {
+            get;
+        }
         /// <summary>每颗 Boss 大棋的占格边长，第一颗是带王冠的主将。</summary>
-        public IReadOnlyList<int> BodySizes { get; }
-
+        public IReadOnlyList<int> BodySizes
+        {
+            get;
+        }
         internal BossLineup(PieceKind kind, StarTier star, int[] sizes)
         {
             Kind = kind;
@@ -59,7 +76,6 @@ namespace RevGame.Data
             BodySizes = sizes;
         }
     }
-
     /// <summary>补兵规则命中的计算放在这里，装配校验与战斗运行共用同一份逻辑。</summary>
     internal static class LevelCatalogInternals
     {
@@ -84,7 +100,6 @@ namespace RevGame.Data
             return best == null ? (PieceKind?)null : best.Kind;
         }
     }
-
     /// <summary>
     /// 关卡表：章数 × 每章（普通回合数 + 1 个 Boss）。
     /// 敌方阵容生成规则（有意做得简单、可预期，参数都在 Excel）：
@@ -106,7 +121,6 @@ namespace RevGame.Data
             int progress = (chapter - 1) * Balance.RoundsPerChapter + round - 1;
             return System.Math.Min(Balance.EnemyAiMaxLevel, 1 + progress / Balance.EnemyAiRoundsPerLevel);
         }
-
         /// <summary>取某一章某一回合的配置。参数越界返回 null（调用方判空）。</summary>
         public static RoundDef GetRound(int chapter, int round)
         {
@@ -114,12 +128,10 @@ namespace RevGame.Data
             {
                 return null;
             }
-
             if (round < 1 || round > Balance.RoundsPerChapter)
             {
                 return null;
             }
-
             ConfigSnapshot snapshot = GameConfig.Current;
             bool isBoss = round == Balance.BossRoundIndex;
             List<PieceKind> enemies = new List<PieceKind>();
@@ -132,10 +144,8 @@ namespace RevGame.Data
             {
                 enemies.Add(snapshot.FillerRoster[(i + progress) % snapshot.FillerRoster.Count]);
             }
-
             return new RoundDef(chapter, round, isBoss, enemies);
         }
-
         /// <summary>
         /// 某个回合敌方棋子的星级（ChapterConfig.EnemyStar）。Boss 额外增加大棋，不临时提高普通兵星级。
         /// </summary>
@@ -144,30 +154,27 @@ namespace RevGame.Data
             // Boss 已有大棋和额外生命，不再临时升普通兵星级；否则下一轮普通兵会出现倒退。
             return (StarTier)ChapterOf(chapter).EnemyStar;
         }
-
         /// <summary>本章 Boss 大棋阵容（外形、星级、每颗占格）。</summary>
         public static BossLineup BossOf(int chapter)
         {
             ChapterRule rule = ChapterOf(chapter);
             return new BossLineup(rule.BossKind, (StarTier)rule.BossStar, rule.BossBodySizes);
         }
-
         /// <summary>战斗中敌方补兵的外形：按“已补兵次数 + AI 档位”套用 EnemyReinforceConfig；没有命中返回 null。</summary>
         public static PieceKind? PickReinforcement(int deployedCount, int intelligence)
         {
             return LevelCatalogInternals.PickReinforce(GameConfig.Current, deployedCount, intelligence);
         }
-
         private static ChapterRule ChapterOf(int chapter)
         {
             ConfigSnapshot snapshot = GameConfig.Current;
+
             if (chapter < 1 || chapter > snapshot.Chapters.Count)
             {
                 throw new System.ArgumentOutOfRangeException(nameof(chapter), "章节 " + chapter + " 不在配置表 ChapterConfig 范围内（1~" + snapshot.Chapters.Count + "）");
             }
             return snapshot.Chapters[chapter - 1];
         }
-
         /// <summary>整局总回合数（章数 × 每章回合数）。</summary>
         public static int TotalRounds
         {

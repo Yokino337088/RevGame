@@ -47,7 +47,6 @@ namespace RevGame.Battle
     {
         bool PredictAttackDefeat(Piece attacker, Piece target);
     }
-
     // 纯同步战术计算：接收BoardModel和真实棋子，输出目标/落点；不碰Unity视图或直接提交实战移动。
     // 今天复用board.Tactics工具箱，持有者是一张棋盘，禁止改为全局static可变名单。
     public static class EnemyTactics
@@ -72,19 +71,29 @@ namespace RevGame.Battle
                 foreach (BoardPos pos in targets)
                 {
                     Piece candidate = board.GetPiece(pos);
-                    if (candidate == null || !candidate.IsAlive || candidate.BossHidden || candidate.Side == attacker.Side || !candidate.Def.IsRanged) { continue; }
+
+                    if (candidate == null || !candidate.IsAlive || candidate.BossHidden || candidate.Side == attacker.Side || !candidate.Def.IsRanged)
+                    {
+                        continue;
+                    }
                     if (focus == null || candidate.Hp < focus.Hp || (candidate.Hp == focus.Hp && candidate.Id < focus.Id))
                     {
                         focus = candidate;
                     }
                 }
-                if (focus != null) { return focus; }
+
+                if (focus != null)
+                {
+                    return focus;
+                }
             }
+
             Piece best = null;
             int bestScore = int.MinValue;
             foreach (BoardPos pos in targets)
             {
                 Piece target = board.GetPiece(pos);
+
                 if (target == null || !target.IsAlive || target.BossHidden || target.Side == attacker.Side)
                 {
                     continue;
@@ -94,6 +103,7 @@ namespace RevGame.Battle
                 // 第一档就近交战；第二档识别远程威胁；第三档会收残血；第四档优先断开脆弱连接。
                 // 规则安全检查不分档：低级AI也不能故意拆自己眼阵，只是看问题没有后期全面。
                 int score = -Distance(attacker.Pos, target.Pos) * 10;
+
                 if (target.Def.IsRanged)
                 {
                     score += 1000;
@@ -101,11 +111,13 @@ namespace RevGame.Battle
                 if (intelligence >= 3)
                 {
                     score += (int)((1f - target.HpRatio) * 500f);
+
                     if (prediction != null && prediction.PredictAttackDefeat(attacker, target))
                     {
                         score += 10000;
                     }
                 }
+
                 if (intelligence >= 4)
                 {
                     score += target.EyeCount == 0 ? 300 : 0;
@@ -120,7 +132,6 @@ namespace RevGame.Battle
             }
             return best;
         }
-
         /// <summary>
         /// 没有射界且移动冷却完成时，从合法走法里选一个安全落点。
         ///
@@ -146,26 +157,38 @@ namespace RevGame.Battle
                     for (int x = 0; x < board.Size; x++)
                     {
                         BoardPos candidate = new BoardPos(x, y);
-                        if (board.CanFit(candidate, piece.Size, piece.Side, piece)) { moves.Add(candidate); }
+
+                        if (board.CanFit(candidate, piece.Size, piece.Side, piece))
+                        {
+                            moves.Add(candidate);
+                        }
                     }
                 }
             }
+
             BoardPos best = piece.Pos;
             // 无眼近战优先选后排；距离场会绕开占格，不能只比曼哈顿距离而在墙边左右横跳。
             Piece prey = !piece.Def.IsRanged ? FindRangedPrey(board, piece) : null;
             int[,] pursuit = prey != null ? BuildPursuitDistances(board, piece, prey) : null;
             int oldDistance = pursuit != null ? pursuit[piece.Pos.X, piece.Pos.Y] : NearestPlayerDistance(board, piece.Pos);
+
             // 后排完全不可达时恢复原有接敌策略，不让无穷距离参与乘法评分。
-            if (oldDistance == int.MaxValue) { pursuit = null; oldDistance = NearestPlayerDistance(board, piece.Pos); }
+            if (oldDistance == int.MaxValue)
+            {
+                pursuit = null;
+                oldDistance = NearestPlayerDistance(board, piece.Pos);
+            }
             int bestScore = int.MinValue;
             // 本次移动查询只刷新一张独立深试盘，不为每个候选new一整盘。
             // 后续候选仍要恢复副本位置并Evaluate，缓存优化不能省略气眼/安全门槛。
             BoardModel trial = board.Tactics.Trial(board);
             Piece moved = trial.FindPiece(piece.Id);
-            List<BoardPos> hits = board.Tactics.Hits; hits.Clear();
+            List<BoardPos> hits = board.Tactics.Hits;
+            hits.Clear();
             foreach (BoardPos pos in moves)
             {
                 Cell cell = board.GetCell(pos);
+
                 if (cell == null || cell.IsEyeMarked)
                 {
                     continue;
@@ -177,11 +200,13 @@ namespace RevGame.Battle
                     trial.Move(moved, piece.Pos, respectEnemyEyes: false);
                 }
                 GoRules.Evaluate(trial);
+
                 if (!trial.Move(moved, pos))
                 {
                     continue;
                 }
                 GoRules.Evaluate(trial);
+
                 if (moved.IsLocked || !PreservesFormation(board, trial))
                 {
                     continue;
@@ -189,6 +214,7 @@ namespace RevGame.Battle
                 MoveRules.GetAttackTargets(trial, moved, hits);
                 int targets = hits.Count;
                 int distance = pursuit != null ? pursuit[pos.X, pos.Y] : NearestPlayerDistance(trial, pos);
+
                 // 只接受能打开射界或真正接近的格子，堵路时等待，避免左右横跳。
                 if (distance == int.MaxValue || (targets == 0 && distance >= oldDistance))
                 {
@@ -198,6 +224,7 @@ namespace RevGame.Battle
                 int score = pursuit != null ? (oldDistance - distance) * 450 + (distance == 0 ? 2600 : 0) + targets * 80
                     : targets * 1000 - distance * 20;
                 score += System.Math.Min(moved.Liberties, 12);
+
                 if (intelligence >= 3)
                 {
                     // 前后棋盘都是深快照，比较压气成果不回写真实棋子的气与眼。
@@ -211,6 +238,7 @@ namespace RevGame.Battle
                         score += System.Math.Max(0, player.Liberties - copy.Liberties) * 70;
                     }
                 }
+
                 if (intelligence >= 4)
                 {
                     // 后期AI会估计走到该格后有多少玩家能立即反击，避开集火区；不提高移动频率。
@@ -225,19 +253,21 @@ namespace RevGame.Battle
                         {
                             if (trial.GetPiece(hit) == moved)
                             {
-                                score -= 220; break;
+                                score -= 220;
+                                break;
                             }
                         }
                     }
                 }
+
                 if (score > bestScore)
                 {
-                    bestScore = score; best = pos;
+                    bestScore = score;
+                    best = pos;
                 }
             }
             return best;
         }
-
         /// <summary>
         /// 安全门槛优先于分数：逐个Id找到同一颗棋子的副本，比较它原先与现在的气眼。
         /// 眼数减少或把原本有气的友军堵成零气，立即否决；再高的攻击评分也不能越过此门槛。
@@ -251,6 +281,7 @@ namespace RevGame.Battle
                     continue;
                 }
                 Piece copy = EnemyFormationPlanner.Find(after, ally.Id);
+
                 if (copy == null || copy.EyeCount < ally.EyeCount || (ally.Liberties > 0 && copy.Liberties == 0))
                 {
                     return false;
@@ -258,7 +289,6 @@ namespace RevGame.Battle
             }
             return true;
         }
-
         /// <summary>
         /// 按“补活自己的棋、连接断点、压缩对手的气、形成射界”给空格评分。
         /// 这是可解释的一手启发式，不是职业围棋搜索：最多81个候选，只在配置指定的落子窗口运行，不在每个渲染帧运行。
@@ -276,8 +306,11 @@ namespace RevGame.Battle
             intention = "连接补阵";
             int bestScore = int.MinValue;
             // 先清并填入调用方持有的友军/玩家缓冲；它们保存当前同步查询的成员，不能带入下一帧或异步回调。
-            List<Piece> allies = board.Tactics.Allies; board.CopyPieces(allies, GameSide.Enemy);
-            List<Piece> players = board.Tactics.Players; board.CopyPieces(players, GameSide.Player);
+            List<Piece> allies = board.Tactics.Allies;
+            board.CopyPieces(allies, GameSide.Enemy);
+            List<Piece> players = board.Tactics.Players;
+            board.CopyPieces(players, GameSide.Player);
+
             if (allies.Count == 0 || players.Count == 0)
             {
                 return false;
@@ -291,7 +324,8 @@ namespace RevGame.Battle
             // 补子试放复用独立试盘和新棋副本；每个候选用副本Place/Remove，不把实棋移动到候选格来算。
             BoardModel trial = board.Tactics.Trial(board);
             Piece added = board.Tactics.Added(newcomer);
-            List<BoardPos> hits = board.Tactics.Hits; hits.Clear();
+            List<BoardPos> hits = board.Tactics.Hits;
+            hits.Clear();
             // 连通块只构建一次。共享一口气的五颗棋是一块，不应把打吃奖励算五遍。
             // 下面仍在同一张快照试落子；全盘最多81个候选，只在落子时钟到期时运行。
             // 棋群连通关系只依赖占格，当前实盘未变就复用棋群；候选减气仍从before/after真实气数比较。
@@ -302,6 +336,7 @@ namespace RevGame.Battle
                 {
                     var pos = new BoardPos(x, y);
                     Cell cell = board.GetCell(pos);
+
                     // 真眼受现有围棋规则保护，敌方不能直接塞进已成立的玩家眼位；压气要从外围进行。
                     if (!cell.IsEmpty || cell.IsEyeMarked || !board.CanFit(pos, newcomer.Size, newcomer.Side))
                     {
@@ -316,11 +351,13 @@ namespace RevGame.Battle
                         int dy = System.Math.Max(0, System.Math.Max(ally.Pos.Y - y, y - (ally.Pos.Y + ally.Size - 1)));
                         int distance = dx + dy;
                         allyDistance = System.Math.Min(allyDistance, distance);
+
                         if (distance == 1)
                         {
                             neighbors++;
                         }
                     }
+
                     // 从既有阵线延伸，避免敌人在玩家后排凭空刷出一颗贴脸棋。
                     if (allyDistance > (intelligence >= 3 ? 3 : 2))
                     {
@@ -328,6 +365,7 @@ namespace RevGame.Battle
                     }
                     // 上一个候选无论通过还是被continue否决，都在这里撤回；不创建81份棋盘/棋子。
                     trial.Remove(added);
+
                     // 候选在原棋盘已通过整个身体的占格/眼位检查，撤回上个候选后占格正好恢复原状。
                     // 忽略试盘残留眼标记再放入，随后仍完整重算气眼；省去每候选一次重复Evaluate，不省安全验收。
                     if (!trial.Place(added, pos, respectEnemyEyes: false))
@@ -335,6 +373,7 @@ namespace RevGame.Battle
                         continue;
                     }
                     GoRules.Evaluate(trial);
+
                     if (added.IsLocked || !PreservesFormation(board, trial))
                     {
                         continue;
@@ -345,6 +384,7 @@ namespace RevGame.Battle
                     {
                         Piece copy = EnemyFormationPlanner.Find(trial, ally.Id);
                         eyeGain += System.Math.Max(0, copy.EyeCount - ally.EyeCount);
+
                         if (ally.Liberties <= 2)
                         {
                             rescue += System.Math.Max(0, copy.Liberties - ally.Liberties);
@@ -377,12 +417,16 @@ namespace RevGame.Battle
                     // 追击兵接近远程后，增援优先沿其阵线封掉该远程棋群的气；眼位仍由前面的门槛保护。
                     foreach (Piece player in players)
                     {
-                        if (!player.Def.IsRanged) { continue; }
+                        if (!player.Def.IsRanged)
+                        {
+                            continue;
+                        }
                         Piece copy = trial.FindPiece(player.Id);
                         int lost = System.Math.Max(0, player.Liberties - copy.Liberties);
                         score += lost * 900 + (lost > 0 && copy.Liberties == 0 ? 2200 : 0);
                     }
                     score += System.Math.Min(added.Liberties, 8) * 8 - NearestPlayerDistance(trial, pos) * 8;
+
                     if (intelligence >= 4)
                     {
                         foreach (Piece player in trial.Pieces)
@@ -392,6 +436,7 @@ namespace RevGame.Battle
                                 continue;
                             }
                             MoveRules.GetAttackTargets(trial, player, hits);
+
                             if (hits.Contains(pos))
                             {
                                 score -= 24;
@@ -413,7 +458,6 @@ namespace RevGame.Battle
             }
             return best.X >= 0;
         }
-
         /// <summary>
         /// 围追堵截评分：先看真实减气，再看打吃、封逃路和断点。
         ///
@@ -448,14 +492,17 @@ namespace RevGame.Battle
                     {
                         if (boundary == pos)
                         {
-                            touched = true; break;
+                            touched = true;
+                            break;
                         }
                     }
+
                     if (touched)
                     {
                         break;
                     }
                 }
+
                 if (!touched)
                 {
                     continue;
@@ -464,30 +511,40 @@ namespace RevGame.Battle
                 Piece old = group[0];
                 Piece copy = after.FindPiece(old.Id);
                 int lost = System.Math.Max(0, old.Liberties - copy.Liberties);
+
                 if (lost == 0)
                 {
                     continue;
                 }
                 int benefit = lost * 180;
                 string reason = "压气封堵";
+
                 if (old.Liberties > 0 && copy.Liberties == 0)
                 {
-                    benefit += 3200; reason = "收网围困";
+                    benefit += 3200;
+                    reason = "收网围困";
                 }
-                else if (old.Liberties > 1 && copy.Liberties == 1)
-                {
-                    benefit += 1800; reason = "打吃逼应";
-                }
-                else if (copy.Liberties <= 3)
-                {
-                    benefit += 600; reason = "夹击压气";
-                }
+                else
+
+                    if (old.Liberties > 1 && copy.Liberties == 1)
+                    {
+                        benefit += 1800;
+                        reason = "打吃逼应";
+                    }
+                    else
+
+                        if (copy.Liberties <= 3)
+                        {
+                            benefit += 600;
+                            reason = "夹击压气";
+                        }
                 // 一口气若通向许多空格，往往是出头通道；先封它比填后方狭窄空点更有效。
                 // 这里只观察一层邻居，是有界的一手启发式，不能冒称AlphaGo多层搜索。
                 int exits = 0;
                 foreach (BoardPos next in pos.GetOrthogonalNeighbors())
                 {
                     Cell cell = before.GetCell(next);
+
                     if (cell != null && cell.IsEmpty && !cell.IsEyeMarked)
                     {
                         exits++;
@@ -495,22 +552,26 @@ namespace RevGame.Battle
                 }
                 benefit += exits * 90;
                 score += benefit;
+
                 if (benefit > strongest)
                 {
-                    strongest = benefit; plan = reason;
+                    strongest = benefit;
+                    plan = reason;
                 }
             }
+
             if (touchedGroups >= 2)
             {
                 score += (touchedGroups - 1) * 1100;
+
                 if (strongest < 1800)
                 {
                     plan = "切断接应";
                 }
             }
+
             return score;
         }
-
         /// <summary>
         /// 查询一次推进的合法候选：无眼近战追远程时允许配置长度的直线冲锋，逐格检查占用；
         /// 没有远程目标时过滤普通棋跨多格落点，马步保留原有跳法，守眼棋不主动离阵。
@@ -519,7 +580,11 @@ namespace RevGame.Battle
         /// </summary>
         public static void GetAdvanceCandidates(BoardModel board, Piece actor, List<BoardPos> result)
         {
-            if (actor.EyeCount > 0) { result.Clear(); return; }
+            if (actor.EyeCount > 0)
+            {
+                result.Clear();
+                return;
+            }
             if (!actor.Def.IsRanged && actor.Def.Pattern != MovePattern.Knight && FindRangedPrey(board, actor) != null)
             {
                 // 冲锋沿四个直线方向连续走空格，显示层直线滑动也不会斜穿拐角里的棋子。
@@ -532,7 +597,11 @@ namespace RevGame.Battle
                     for (int step = 1; step <= Balance.EnemyChaseSteps; step++)
                     {
                         var next = new BoardPos(actor.Pos.X + dx * step, actor.Pos.Y + dy * step);
-                        if (!board.CanFit(next, actor.Size, actor.Side, actor)) { break; }
+
+                        if (!board.CanFit(next, actor.Size, actor.Side, actor))
+                        {
+                            break;
+                        }
                         result.Add(next);
                     }
                 }
@@ -547,7 +616,6 @@ namespace RevGame.Battle
                 }
             }
         }
-
         /// <summary>先按曼哈顿距离选最近玩家远程，同距按Id稳定选择；调用者再检查可达性，不可达时回退常规接敌。</summary>
         private static Piece FindRangedPrey(BoardModel board, Piece actor)
         {
@@ -555,33 +623,43 @@ namespace RevGame.Battle
             int nearest = int.MaxValue;
             foreach (Piece player in board.Pieces)
             {
-                if (player.Side != GameSide.Player || !player.IsAlive || !player.Def.IsRanged) { continue; }
+                if (player.Side != GameSide.Player || !player.IsAlive || !player.Def.IsRanged)
+                {
+                    continue;
+                }
                 int distance = Distance(actor.Pos, player.Pos);
+
                 if (distance < nearest || (distance == nearest && (best == null || player.Id < best.Id)))
                 {
-                    best = player; nearest = distance;
+                    best = player;
+                    nearest = distance;
                 }
             }
             return best;
         }
-
         /// <summary>从目标身体外沿反向广度搜索；路径距离0表示已贴身，不会穿过第三方棋子或受保护眼位。</summary>
         private static int[,] BuildPursuitDistances(BoardModel board, Piece actor, Piece prey)
         {
             // 距离数组和BFS队列复用，但下面会完整重置每格为不可达，随后从目标边界扩散。
             // 省的是数组/队列创建，不是跳过障碍、眼位保护或大棋CanFit校验。
             var distances = board.Tactics.Distances;
-            var queue = board.Tactics.Queue; queue.Clear();
+            var queue = board.Tactics.Queue;
+            queue.Clear();
             for (int y = 0; y < board.Size; y++)
             {
                 for (int x = 0; x < board.Size; x++)
                 {
-                    distances[x,y] = int.MaxValue;
-                    var pos = new BoardPos(x,y);
+                    distances[x, y] = int.MaxValue;
+                    var pos = new BoardPos(x, y);
                     int dx = System.Math.Max(0, System.Math.Max(prey.Pos.X - (x + actor.Size - 1), x - (prey.Pos.X + prey.Size - 1)));
                     int dy = System.Math.Max(0, System.Math.Max(prey.Pos.Y - (y + actor.Size - 1), y - (prey.Pos.Y + prey.Size - 1)));
-                    if (dx + dy != 1 || !board.CanFit(pos, actor.Size, actor.Side, actor)) { continue; }
-                    distances[x,y] = 0; queue.Enqueue(pos);
+
+                    if (dx + dy != 1 || !board.CanFit(pos, actor.Size, actor.Side, actor))
+                    {
+                        continue;
+                    }
+                    distances[x, y] = 0;
+                    queue.Enqueue(pos);
                 }
             }
             while (queue.Count > 0)
@@ -593,13 +671,17 @@ namespace RevGame.Battle
                     // 顺序也必须与原数组一致：距离相同的路径先后可能影响AI，性能优化不能暗改同分偏好。
                     // 保持原四邻数组的右、左、上、下顺序，省掉数组分配且不改同分路径偏好。
                     BoardPos next = new BoardPos(from.X + (direction == 0 ? 1 : direction == 1 ? -1 : 0), from.Y + (direction == 2 ? 1 : direction == 3 ? -1 : 0));
-                    if (!board.CanFit(next, actor.Size, actor.Side, actor) || distances[next.X,next.Y] != int.MaxValue) { continue; }
-                    distances[next.X,next.Y] = distances[from.X,from.Y] + 1; queue.Enqueue(next);
+
+                    if (!board.CanFit(next, actor.Size, actor.Side, actor) || distances[next.X, next.Y] != int.MaxValue)
+                    {
+                        continue;
+                    }
+                    distances[next.X, next.Y] = distances[from.X, from.Y] + 1;
+                    queue.Enqueue(next);
                 }
             }
             return distances;
         }
-
         /// <summary>
         /// 统计真正未占用的格子，不等于合法增援点数：眼位保护、气眼安全仍由选点算法检查。
         /// 此查询只返回数字，不读增援预算、不改模型，也不决定是否停援。
@@ -619,7 +701,6 @@ namespace RevGame.Battle
             }
             return count;
         }
-
         /// <summary>与最近玩家锚点的曼哈顿距离，用来鼓励接近。这里只作评分，合法攻击仍由MoveRules确定。</summary>
         private static int NearestPlayerDistance(BoardModel board, BoardPos from)
         {
@@ -633,7 +714,6 @@ namespace RevGame.Battle
             }
             return nearest;
         }
-
         /// <summary>横向格数+纵向格数；棋盘按四邻连接，所以不用屏幕像素或欧氏距离。</summary>
         private static int Distance(BoardPos a, BoardPos b)
         {

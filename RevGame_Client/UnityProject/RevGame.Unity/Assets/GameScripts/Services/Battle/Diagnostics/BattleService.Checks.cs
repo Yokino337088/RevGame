@@ -46,7 +46,8 @@ namespace RevGame.Services
                         {
                             if (other != player)
                             {
-                                service._board.Remove(other); service._playerPieces.Remove(other);
+                                service._board.Remove(other);
+                                service._playerPieces.Remove(other);
                             }
                         }
                         service._board.Move(player, new BoardPos(4, 6));
@@ -58,7 +59,13 @@ namespace RevGame.Services
                             * (1f + service._speedBonus + service._roundSpeedBonus + service._combatHasteBonus) * player.EyeSpeedMultiplier);
                         int attacks = 0;
                         object comboOwner = new object();
-                        RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => { if (info.PieceId == player.Id) { attacks++; } }, owner: comboOwner);
+                        RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info =>
+                        {
+                            if (info.PieceId == player.Id)
+                            {
+                                attacks++;
+                            }
+                        }, owner: comboOwner);
                         try
                         {
                             player.ActionProgress = 0f;
@@ -67,7 +74,8 @@ namespace RevGame.Services
                             check(attacks == 1 && target.Hp < before, "连击第一步真实出手一次并扣血");
                             player.ActionProgress = 0.9f;
                             target.Heal(target.MaxHp);
-                            before = target.Hp; attacks = 0;
+                            before = target.Hp;
+                            attacks = 0;
                             service.StepSide(GameSide.Player, comboStep);
                             check(attacks == 2 && target.Hp < before, "连击累计进度达到阈值时真实多攻击一次：次数=" + attacks + "，目标=" + before + "→" + target.Hp + "，进度=" + player.ActionProgress + "，阶段=" + service.Phase);
                         }
@@ -86,10 +94,8 @@ namespace RevGame.Services
                         check(service._enemyPieces.TrueForAll(p => p.Hp == p.MaxHp - Math.Max(Balance.SupportDamage, (int)(p.MaxHp * BattleEventCatalog.DefOf(kind).Amount * Balance.EventEffectMultiplier))), "炮火按配置翻倍对密集区域三颗敌子逐一扣血");
                         break;
                 }
-
                 check(!service.TriggerBattleEvent(kind), "事件效果不可重复领取：" + kind);
             }
-
             var battle = new BattleService();
             battle.StartRound(1, Balance.NormalRoundsPerChapter);
             battle._board.Reset();
@@ -102,7 +108,6 @@ namespace RevGame.Services
                     battle.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(x, y));
                 }
             }
-
             string oldBoard = battle.Board.Dump();
             int oldCard = battle.Hand[0].Id;
             check(!battle.SkipRound(), "Boss无完整出生空间时拒绝跳过");
@@ -118,7 +123,6 @@ namespace RevGame.Services
                     battle.AddCheckPiece(GameSide.Player, material ? PieceKind.Shield : PieceKind.Archer, new BoardPos(x, y), material ? StarTier.Two : StarTier.Three, 1);
                 }
             }
-
             Piece original = battle._playerPieces.Find(p => p.Def.Kind == PieceKind.Shield);
             BoardPos originalPosition = original.Pos;
             battle.UpgradePiece(original);
@@ -133,17 +137,15 @@ namespace RevGame.Services
                 {
                     continue;
                 }
-
                 Piece occupant = battle.Board.GetPiece(pos);
+
                 if (occupant != null)
                 {
                     battle.Board.Remove(occupant);
                     battle._enemyPieces.Remove(occupant);
                 }
-
                 battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, pos);
             }
-
             battle.Tick(3f);
             battle.StartBattle();
             battle.Tick(Balance.BattleSimulationStepSeconds);
@@ -164,7 +166,7 @@ namespace RevGame.Services
             battle.Tick(Balance.BattleTickSeconds);
             check(battle.LastWinner == GameSide.Player && battle._board.GetPiecesOf(GameSide.Enemy).Count > 0, "只击杀主将也能胜利，护卫不必清场");
             int finished = 0;
-            object owner = new object ();
+            object owner = new object();
             RevEvent.AddEventListener<bool>(Events.GameFinished, won => finished++, owner: owner);
             try
             {
@@ -174,7 +176,6 @@ namespace RevGame.Services
             {
                 RevEvent.RemoveAllByOwner(owner);
             }
-
             battle = new BattleService(false);
             battle.Chapter = 1;
             battle.Round = Balance.BossRoundIndex;
@@ -209,6 +210,7 @@ namespace RevGame.Services
             for (int x = 0; x < 5; x++)
             {
                 battle.AddCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(x, 0));
+
                 if (x == 2)
                 {
                     check(Math.Abs(battle.ClassBonus(GameSide.Player) - 0.1f) < 0.001f, "三同职业全队攻击+10%");
@@ -225,14 +227,12 @@ namespace RevGame.Services
                     check(battle.Hand.Count == 6 && battle.CardsRemaining == 6, "普通/Boss均为六张手牌：" + chapter + "/" + round);
                 }
             }
-
             VerifyPreparationContracts(check);
             VerifyComfortContracts(check);
             VerifyPlacementAndMovement(check);
             VerifyReinforcementContracts(check);
             VerifyHandRefreshAndAttackRate(check);
         }
-
         /// <summary>逐项验证16种增益的真实结果，并检查延时、唯一发放、双牌事务和换轮清理。</summary>
         private static void VerifyPreparationContracts(Action<bool, string> check)
         {
@@ -243,7 +243,10 @@ namespace RevGame.Services
             delayed.Tick(0.01f);
             check(delayed.PreparationGranted && delayed.PreparationBuffs.Count >= Balance.PrepBuffCountMin && delayed.PreparationBuffs.Count <= Balance.PrepBuffCountMax, "按配置时刻和数量范围发准备奖励");
             var unique = new HashSet<PreparationBuffKind>();
-            foreach (PreparationBuffDef buff in delayed.PreparationBuffs) { check(unique.Add(buff.Kind), "本轮准备奖励不重复：" + buff.Title); }
+            foreach (PreparationBuffDef buff in delayed.PreparationBuffs)
+            {
+                check(unique.Add(buff.Kind), "本轮准备奖励不重复：" + buff.Title);
+            }
             int count = delayed.PreparationBuffs.Count;
             delayed.Tick(30f);
             check(delayed.PreparationBuffs.Count == count && delayed.BattleElapsed == 0f, "准备时钟不会重复抽奖或偷跑战斗");
@@ -270,15 +273,18 @@ namespace RevGame.Services
                 switch (kind)
                 {
                     case PreparationBuffKind.Upgrade:
-                        check(service._playerPieces.Exists(p => p.Def.Star == StarTier.Two), "觉醒确实升星"); break;
+                        check(service._playerPieces.Exists(p => p.Def.Star == StarTier.Two), "觉醒确实升星");
+                        break;
                     case PreparationBuffKind.Elite:
-                        check(service._playerPieces.Count == 3 && service._playerPieces.Exists(p => p.Def.Kind == PieceKind.Crossbow && p.Def.Star == StarTier.Two), "免费二星重弩真实入场"); break;
+                        check(service._playerPieces.Count == 3 && service._playerPieces.Exists(p => p.Def.Kind == PieceKind.Crossbow && p.Def.Star == StarTier.Two), "免费二星重弩真实入场");
+                        break;
                     case PreparationBuffKind.Recovery:
                         check(player.Hp > wounded, "复苏立即回血");
                         player.TakeDamage(max / 3);
                         int hp = player.Hp;
                         service.DamagePiece(player, 1);
-                        check(player.Hp > hp && service._prepRecoveryRatio == 0f, "储备在真实受伤后只消费一次"); break;
+                        check(player.Hp > hp && service._prepRecoveryRatio == 0f, "储备在真实受伤后只消费一次");
+                        break;
                     case PreparationBuffKind.EncirclementImmunity:
                         service._board.Move(player, new BoardPos(4, 4));
                         service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(3, 4));
@@ -289,28 +295,38 @@ namespace RevGame.Services
                         check(player.Liberties == 0 && !player.IsLocked, "围困免疫在真实零气时移除锁死标记及额外受击惩罚");
                         int before = service.TotalHp(GameSide.Enemy);
                         service.StepSide(GameSide.Player);
-                        check(service.TotalHp(GameSide.Enemy) < before, "免疫围困后仍真实发动远程攻击"); break;
+                        check(service.TotalHp(GameSide.Enemy) < before, "免疫围困后仍真实发动远程攻击");
+                        break;
                     case PreparationBuffKind.Vitality:
                         check(player.MaxHp > max && Math.Abs(player.HpRatio - (float)wounded / max) < 0.02f, "生命加成保留伤势比例");
                         service.ResetPreparation();
-                        check(player.MaxHp == max, "生命加成换轮可移除"); break;
+                        check(player.MaxHp == max, "生命加成换轮可移除");
+                        break;
                     case PreparationBuffKind.Armor:
-                        hp = player.Hp; service.DamagePiece(player, 10);
-                        check(hp - player.Hp < 10, "护甲确实减少扣血"); break;
+                        hp = player.Hp;
+                        service.DamagePiece(player, 10);
+                        check(hp - player.Hp < 10, "护甲确实减少扣血");
+                        break;
                     case PreparationBuffKind.Shields:
                         hp = player.Hp;
-                        for (int i = 0; i < 3; i++) { service.DamagePiece(player, 10); }
+                        for (int i = 0; i < 3; i++)
+                        {
+                            service.DamagePiece(player, 10);
+                        }
                         check(player.Hp == hp && player.ShieldCharges == 0, "三次护盾真实挡伤");
                         service.DamagePiece(player, 10);
-                        check(player.Hp < hp, "第四次不再挡伤"); break;
+                        check(player.Hp < hp, "第四次不再挡伤");
+                        break;
                     case PreparationBuffKind.Regeneration:
                         service.TickPreparationCombat(4f);
-                        check(player.Hp > wounded, "持续恢复实际回血"); break;
+                        check(player.Hp > wounded, "持续恢复实际回血");
+                        break;
                     case PreparationBuffKind.Haste:
                         player.ActionProgress = 0f;
                         before = enemy.Hp;
                         service.StepSide(GameSide.Player, 0.4f);
-                        check(enemy.Hp < before, "攻速加成使未满普通间隔时确实多攻击"); break;
+                        check(enemy.Hp < before, "攻速加成使未满普通间隔时确实多攻击");
+                        break;
                     case PreparationBuffKind.ArrowVolley:
                         player.ActionProgress = 0f;
                         before = enemy.Hp;
@@ -324,12 +340,17 @@ namespace RevGame.Services
                         service.ResetPreparation();
                         // 这里只测万箭齐发移除后的冷却。近战现在也能援击，必须隔离全队旧进度，
                         // 否则未来调整基础攻速时，近战恰好满条会被误判成“弓箭手增益没有移除”。
-                        foreach (Piece ally in service._playerPieces) { ally.ActionProgress = 0f; }
+                        foreach (Piece ally in service._playerPieces)
+                        {
+                            ally.ActionProgress = 0f;
+                        }
                         before = enemy.Hp;
                         service.StepSide(GameSide.Player, 0.25f);
-                        check(enemy.Hp == before && service.PreparationAttackRate(futureArcher) == 1f, "换轮移除万箭齐发，原本未满冷却不再射击"); break;
+                        check(enemy.Hp == before && service.PreparationAttackRate(futureArcher) == 1f, "换轮移除万箭齐发，原本未满冷却不再射击");
+                        break;
                     case PreparationBuffKind.Liberties:
-                        check(player.Liberties == oldLiberties + (int)buffDef.Amount, "配置的额外气数实际参与规则"); break;
+                        check(player.Liberties == oldLiberties + (int)buffDef.Amount, "配置的额外气数实际参与规则");
+                        break;
                     case PreparationBuffKind.EyePower:
                         service.TickPreparationCombat(4f);
                         check(player.EyeCount > 0 && player.Hp > wounded, "真实眼阵共鸣产生回复");
@@ -345,15 +366,16 @@ namespace RevGame.Services
                         service._prepEyeAttack = 0f;
                         BattleDamageKind plainKind;
                         int plain = service.MeasureComparableHit(player, enemy, out plainKind, enhancedKind);
-                        check(enhanced > plain, "相同暴击状态下增益确实提高攻击伤害：" + kind); break;
+                        check(enhanced > plain, "相同暴击状态下增益确实提高攻击伤害：" + kind);
+                        break;
                     case PreparationBuffKind.LifeSteal:
                         service.Attack(player, enemy);
-                        check(player.Hp > wounded, "吸血按真实命中回血"); break;
+                        check(player.Hp > wounded, "吸血按真实命中回血");
+                        break;
                 }
                 Piece snapshot = player.CreateSnapshot();
                 check(snapshot.MaxHp == player.MaxHp && snapshot.ShieldCharges == player.ShieldCharges && snapshot.IgnoreEncirclement == player.IgnoreEncirclement, "快照保留增益状态：" + kind);
             }
-
             var pairs = new BattleService(false);
             pairs._hand.Add(PieceKind.Shield, StarTier.One);
             pairs._hand.Add(PieceKind.Shield, StarTier.One);
@@ -374,7 +396,6 @@ namespace RevGame.Services
             pairs.BeginCampaign(1);
             check(pairs._playedPairs.Count == 0, "新战役重置双牌累计，避免新局第一张错误升星");
         }
-
         /// <summary>验证不再保胜：最后一子允许死亡，结算必须真实判负。</summary>
         private static void VerifyComfortContracts(Action<bool, string> check)
         {
@@ -402,7 +423,11 @@ namespace RevGame.Services
                     foreach (Piece extra in new List<Piece>(service._playerPieces))
                     {
                         extra.ShieldCharges = 0;
-                        if (extra != survivor) { service.DamagePiece(extra, int.MaxValue); }
+
+                        if (extra != survivor)
+                        {
+                            service.DamagePiece(extra, int.MaxValue);
+                        }
                     }
                     survivor.ShieldCharges = 0;
                     service._prepDamageReduction = service._prepRecoveryRatio = 0f;
@@ -412,7 +437,6 @@ namespace RevGame.Services
                     check(service.LastWinner == GameSide.Enemy && service.Phase == GamePhase.Settle, "玩家全灭真实判负：" + chapter + "/" + round);
                 }
             }
-
             var battle = EventFixture();
             battle._eventScheduled = false;
             check(battle.TriggerBattleEvent(BattleEventKind.Heal), "首次事件成功");
@@ -441,7 +465,6 @@ namespace RevGame.Services
                 RevEvent.RemoveAllByOwner(owner);
             }
         }
-
         /// <summary>直接验证援军最终兵种、落点和实际攻击范围，避免只测“评分函数返回了true”。</summary>
         private static void VerifyReinforcementContracts(Action<bool, string> check)
         {
@@ -487,7 +510,6 @@ namespace RevGame.Services
             check(born.Pos == new BoardPos(0, 0) && born.IsEyeGarrison, "支援严格优先己方眼，不提前钻敌眼");
             check(service._board.GetCell(new BoardPos(0, 0)).EyeSide == GameSide.Player, "己方驻眼保留眼位身份");
         }
-
         /// <summary>
         /// 事件验收用的固定局面：关闭通关辅助、固定随机种子，保证同一断言可重复。
         /// </summary>
@@ -504,12 +526,10 @@ namespace RevGame.Services
             {
                 service.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(x, 7));
             }
-
             service._hand.Add(PieceKind.Archer, StarTier.One);
             service.RefreshGoState();
             return service;
         }
-
         /// <summary>
         /// 验收造局：走正式占格并加入名单，不直接改血量、气或眼睛字段。
         /// 这样断言验证的是真实规则链，而不是测试自己伪造的状态。
@@ -525,24 +545,25 @@ namespace RevGame.Services
                 for (int attempt = 0; attempt < 256 && target.IsAlive; attempt++)
                 {
                     Attack(attacker, target);
+
                     if (!required.HasValue || observed.DamageKind == required.Value)
                     {
-                        kind = observed.DamageKind; return observed.Damage;
+                        kind = observed.DamageKind;
+                        return observed.Damage;
                     }
                 }
                 throw new InvalidOperationException("伤害对照未采到相同暴击状态");
             }
             finally { RevEvent.RemoveAllByOwner(owner); }
         }
-
         private Piece AddCheckPiece(GameSide side, PieceKind kind, BoardPos pos, StarTier star = StarTier.One, int size = 0)
         {
             var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, star), side, size);
+
             if (!_board.Place(piece, pos))
             {
                 throw new InvalidOperationException("测试夹具占格冲突：" + pos);
             }
-
             (side == GameSide.Player ? _playerPieces : _enemyPieces).Add(piece);
             return piece;
         }

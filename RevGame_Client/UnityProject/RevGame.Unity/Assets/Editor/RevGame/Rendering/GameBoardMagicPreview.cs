@@ -27,7 +27,10 @@ namespace RevGame.Editor
 
         public static string Capture()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("棋盘离屏预览只能在编辑态运行"); }
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("棋盘离屏预览只能在编辑态运行");
+            }
             const string folder = "Temp/BoardMagicPreview";
             Directory.CreateDirectory(folder);
             Scene scene = EditorSceneManager.NewPreviewScene();
@@ -40,7 +43,11 @@ namespace RevGame.Editor
             {
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/Board/Tile/BoardCell.prefab");
                 Material placementAsset = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Board/PlacementMagic.mat");
-                if (prefab == null || placementAsset == null) { throw new InvalidOperationException("棋格预制体或落点材质缺失"); }
+
+                if (prefab == null || placementAsset == null)
+                {
+                    throw new InvalidOperationException("棋格预制体或落点材质缺失");
+                }
                 placement = new Material(placementAsset) { hideFlags = HideFlags.HideAndDontSave };
                 var cells = new SpriteRenderer[81];
                 for (int y = 0; y < 9; y++)
@@ -78,30 +85,49 @@ namespace RevGame.Editor
                 {
                     string name = Names[chapter];
                     Material asset = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Board/" + name + "_Surface.mat");
+
                     if (asset == null || asset.shader == null || !asset.shader.isSupported || ShaderUtil.ShaderHasError(asset.shader))
-                    { throw new InvalidOperationException("章节材质或Shader不可用：" + name); }
+                    {
+                        throw new InvalidOperationException("章节材质或Shader不可用：" + name);
+                    }
                     surface = new Material(asset) { hideFlags = HideFlags.HideAndDontSave };
-                    foreach (SpriteRenderer cell in cells) { cell.sharedMaterial = surface; }
+                    foreach (SpriteRenderer cell in cells)
+                    {
+                        cell.sharedMaterial = surface;
+                    }
                     Color32[] first = Render(camera, target, readback, surface, placement, 0, folder + "/" + name + "_t0.png");
                     Color32[] second = Render(camera, target, readback, surface, placement, 4, folder + "/" + name + "_t4.png");
                     double change = Difference(first, second);
-                    if (change < .0005) { throw new InvalidOperationException("四秒前后几乎无像素变化：" + name + " / " + change.ToString("F5")); }
+
+                    if (change < .0005)
+                    {
+                        throw new InvalidOperationException("四秒前后几乎无像素变化：" + name + " / " + change.ToString("F5"));
+                    }
                     results[chapter] = name + "=" + change.ToString("F4");
+
                     if (chapter < IntensityControls.Length)
                     {
                         foreach (string property in IntensityControls[chapter])
                         {
-                            if (!surface.HasProperty(property)) { throw new InvalidOperationException("材质缺少调节项：" + name + "/" + property); }
+                            if (!surface.HasProperty(property))
+                            {
+                                throw new InvalidOperationException("材质缺少调节项：" + name + "/" + property);
+                            }
                             float original = surface.GetFloat(property);
                             surface.SetFloat(property, 0f);
                             Color32[] disabled = Render(camera, target, readback, surface, placement, 0, null);
                             surface.SetFloat(property, 1f);
                             Color32[] enabled = Render(camera, target, readback, surface, placement, 0, null);
-                            if (Difference(disabled, enabled) < .00003) { throw new InvalidOperationException("材质调节没有改变GPU输出：" + name + "/" + property); }
+
+                            if (Difference(disabled, enabled) < .00003)
+                            {
+                                throw new InvalidOperationException("材质调节没有改变GPU输出：" + name + "/" + property);
+                            }
                             surface.SetFloat(property, original);
                             controlCount++;
                         }
                     }
+
                     Object.DestroyImmediate(surface);
                     surface = null;
                 }
@@ -110,14 +136,27 @@ namespace RevGame.Editor
             finally
             {
                 RenderTexture.active = previous;
-                if (surface != null) { Object.DestroyImmediate(surface); }
-                if (placement != null) { Object.DestroyImmediate(placement); }
-                if (readback != null) { Object.DestroyImmediate(readback); }
-                if (target != null) { target.Release(); Object.DestroyImmediate(target); }
+
+                if (surface != null)
+                {
+                    Object.DestroyImmediate(surface);
+                }
+                if (placement != null)
+                {
+                    Object.DestroyImmediate(placement);
+                }
+                if (readback != null)
+                {
+                    Object.DestroyImmediate(readback);
+                }
+                if (target != null)
+                {
+                    target.Release();
+                    Object.DestroyImmediate(target);
+                }
                 EditorSceneManager.ClosePreviewScene(scene);
             }
         }
-
         private static Color32[] Render(Camera camera, RenderTexture target, Texture2D readback, Material surface, Material placement, float seconds, string path)
         {
             surface.SetFloat("_PreviewTime", seconds);
@@ -128,10 +167,13 @@ namespace RevGame.Editor
             readback.ReadPixels(new Rect(0, 0, Size, Size), 0, 0);
             readback.Apply();
             Color32[] pixels = readback.GetPixels32();
-            if (path != null) { File.WriteAllBytes(path, readback.EncodeToPNG()); }
+
+            if (path != null)
+            {
+                File.WriteAllBytes(path, readback.EncodeToPNG());
+            }
             return pixels;
         }
-
         private static double Difference(Color32[] first, Color32[] second)
         {
             double sum = 0;

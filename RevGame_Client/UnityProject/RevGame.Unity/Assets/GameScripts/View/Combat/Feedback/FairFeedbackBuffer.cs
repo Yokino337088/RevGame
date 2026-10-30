@@ -34,7 +34,6 @@ namespace RevGame.View
             public T Snapshot;
             public float CreatedAt;
         }
-
         /// <summary>当前待播候选数，始终不超过构造时的容量；可能包含尚未轮到清理的过期项。</summary>
         public int Count => _entries.Count;
 
@@ -54,7 +53,6 @@ namespace RevGame.View
             _lifetime = lifetime;
             _entries = new List<Entry>(capacity);
         }
-
         /// <summary>
         /// 登记一次刚刚真实发生的表现。返回 false 仅代表此次没有取得有限显示名额，不能回滚伤害。
         /// 同来源达到待播上限时更新其最新快照；队满时比较“谁更久没显示”，允许后来者替换近期常显示者。
@@ -64,6 +62,7 @@ namespace RevGame.View
         {
             RemoveExpired(now);
             var incoming = new Entry { SourceId = sourceId, Snapshot = snapshot, CreatedAt = now };
+
             if (sourceId > 0)
             {
                 int count = 0;
@@ -75,11 +74,13 @@ namespace RevGame.View
                         continue;
                     }
                     count++;
+
                     if (newest < 0 || _entries[i].CreatedAt > _entries[newest].CreatedAt)
                     {
                         newest = i;
                     }
                 }
+
                 if (count >= _perSourceLimit)
                 {
                     // 保留少量真实连射即可；不能让一颗高攻速棋子塞满全场队列，挤掉新落下的一星棋子。
@@ -87,12 +88,12 @@ namespace RevGame.View
                     return true;
                 }
             }
+
             if (_entries.Count < _capacity)
             {
                 _entries.Add(incoming);
                 return true;
             }
-
             int worst = 0;
             for (int i = 1; i < _entries.Count; i++)
             {
@@ -101,6 +102,7 @@ namespace RevGame.View
                     worst = i;
                 }
             }
+
             if (!HasHigherPriority(sourceId, _entries[worst].SourceId))
             {
                 return false;
@@ -109,7 +111,6 @@ namespace RevGame.View
             _entries[worst] = incoming;
             return true;
         }
-
         /// <summary>
         /// 找出当前最应显示且同来源冷却已结束的候选，但暂不移除。
         /// 全局预算不足时调用者可直接等待；不会像旧代码一样把整队 Dequeue 后全部丢掉。
@@ -123,6 +124,7 @@ namespace RevGame.View
             {
                 Entry candidate = _entries[i];
                 float last = LastDisplayed(candidate.SourceId);
+
                 if (now - last < sourceInterval)
                 {
                     continue;
@@ -133,6 +135,7 @@ namespace RevGame.View
                     best = i;
                 }
             }
+
             if (best < 0)
             {
                 snapshot = default(T);
@@ -143,7 +146,6 @@ namespace RevGame.View
             sourceId = _entries[best].SourceId;
             return true;
         }
-
         /// <summary>
         /// 只有显示预约成功后才提交：移除这颗来源最早的一份候选，并记住它已经获得过名额。
         /// 异步加载是否成功仍由 BoardView 收尾；本类不会保存资源句柄或参与对象池生命周期。
@@ -162,6 +164,7 @@ namespace RevGame.View
                     oldest = i;
                 }
             }
+
             if (oldest < 0)
             {
                 return;
@@ -169,14 +172,12 @@ namespace RevGame.View
             _entries.RemoveAt(oldest);
             _lastDisplayedAt[sourceId] = now;
         }
-
         /// <summary>回合或场景退出时由所有者调用；候选和公平性历史一起清掉，新回合从相同起点开始。</summary>
         public void Clear()
         {
             _entries.Clear();
             _lastDisplayedAt.Clear();
         }
-
         /// <summary>倒序删除不会漏过相邻的过期项，容器容量保留；过期项不再抢占任何显示名额。</summary>
         private void RemoveExpired(float now)
         {
@@ -188,14 +189,12 @@ namespace RevGame.View
                 }
             }
         }
-
         /// <summary>没显示过用负无穷表示，因此天然排在已显示来源之前，不需要为每次攻击创建额外状态对象。</summary>
         private float LastDisplayed(int sourceId)
         {
             float last;
             return _lastDisplayedAt.TryGetValue(sourceId, out last) ? last : float.NegativeInfinity;
         }
-
         /// <summary>只比较公平性；不看星级、攻击力或落子顺序，同分编号只用于保持固定输入下的确定性。</summary>
         private bool HasHigherPriority(int sourceId, int otherId)
         {

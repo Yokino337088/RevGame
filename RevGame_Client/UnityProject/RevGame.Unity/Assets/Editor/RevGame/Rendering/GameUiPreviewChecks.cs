@@ -18,7 +18,10 @@ namespace RevGame.Editor
     {
         public static string Capture()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("预览检查只能在编辑态运行"); }
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("预览检查只能在编辑态运行");
+            }
             var scene = EditorSceneManager.NewPreviewScene();
             RenderTexture target = null;
             Texture2D readback = null;
@@ -76,7 +79,10 @@ namespace RevGame.Editor
                 }
                 foreach (Image item in root.GetComponentsInChildren<Image>(true))
                 {
-                    if (item.sprite == null) { continue; }
+                    if (item.sprite == null)
+                    {
+                        continue;
+                    }
                     Texture texture = item.mainTexture;
                     Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(item.sprite);
                     lines.Add(item.name + " texture=" + (texture == null ? "null" : texture.name + "/" + texture.width + "x" + texture.height)
@@ -90,8 +96,16 @@ namespace RevGame.Editor
             {
                 RenderTexture.active = previous;
                 EditorSceneManager.ClosePreviewScene(scene);
-                if (target != null) { target.Release(); Object.DestroyImmediate(target); }
-                if (readback != null) { Object.DestroyImmediate(readback); }
+
+                if (target != null)
+                {
+                    target.Release();
+                    Object.DestroyImmediate(target);
+                }
+                if (readback != null)
+                {
+                    Object.DestroyImmediate(readback);
+                }
             }
         }
     }

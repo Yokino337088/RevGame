@@ -28,7 +28,6 @@ namespace RevGame.UI
             public int Round;
             public bool LastRoundOfChapter;
         }
-
         [RevBind]
         private Text _titleText;
         [RevBind]
@@ -37,7 +36,6 @@ namespace RevGame.UI
         private Button _btnContinue;
         protected override void OnBindView()
         {
-
         }
 
         protected override void OnRefreshView()
@@ -46,13 +44,12 @@ namespace RevGame.UI
             {
                 return;
             }
-
             bool win = Data.Winner == GameSide.Player;
+
             if (_titleText != null)
             {
                 _titleText.text = win ? "胜" : "负";
             }
-
             if (_detailText != null)
             {
                 string tail = Data.LastRoundOfChapter ? (win ? "本章通过！" : "本章重来") : (win ? "进入下一回合" : "本章重来");
@@ -64,22 +61,25 @@ namespace RevGame.UI
         private void OnContinueClick()
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();
+
             if (battle.Phase != GamePhase.Settle)
             {
                 CloseSelf();
                 return;
             }
-
             Flow.BattleLogic logic = RevLogic.Get<Flow.BattleLogic>();
+
             if (logic != null && logic.ContinueToNextRound())
             {
                 CloseSelf();
             }
-            else if (_detailText != null)
-            {
-                // 下一回合出生空间不足时保留结算页并说明原因，不能关闭后留下无法操作的空界面。
-                _detailText.text = battle.LastError;
-            }
+            else
+
+                if (_detailText != null)
+                {
+                    // 下一回合出生空间不足时保留结算页并说明原因，不能关闭后留下无法操作的空界面。
+                    _detailText.text = battle.LastError;
+                }
         }
     }
 }

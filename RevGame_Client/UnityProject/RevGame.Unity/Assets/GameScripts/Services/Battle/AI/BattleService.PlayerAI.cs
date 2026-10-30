@@ -18,11 +18,23 @@ namespace RevGame.Services
         {
             best = piece.Pos;
             breaksEye = false;
-            if (piece.IsLocked || piece.EyeCount > 0 || _battleElapsed < Math.Max(Balance.PlayerMoveSeconds, piece.NextMoveAt)) { return false; }
+
+            if (piece.IsLocked || piece.EyeCount > 0 || _battleElapsed < Math.Max(Balance.PlayerMoveSeconds, piece.NextMoveAt))
+            {
+                return false;
+            }
             int oldDistance = NearestEnemyDistance(piece.Pos, piece.Size);
-            if (piece.Def.IsRanged && oldDistance > Balance.PlayerRetreatDistance) { return false; }
+
+            if (piece.Def.IsRanged && oldDistance > Balance.PlayerRetreatDistance)
+            {
+                return false;
+            }
             piece.NextMoveAt = _battleElapsed + Balance.PlayerMoveSeconds;
-            if (_board.IsSideWiped(GameSide.Enemy)) { return false; }
+
+            if (_board.IsSideWiped(GameSide.Enemy))
+            {
+                return false;
+            }
             // 玩家与敌方一样借用该源盘的独立试盘，同一主线程依次完成查询后才提交。
             // 每次Trial覆盖全状态；禁止把实棋piece放进trial或在试算过程中移动_board。
             BoardModel trial = _board.Tactics.Trial(_board);
@@ -34,27 +46,56 @@ namespace RevGame.Services
                 for (int x = 0; x <= _board.Size - piece.Size; x++)
                 {
                     BoardPos pos = new BoardPos(x, y);
-                    if (pos == piece.Pos || !_board.CanFit(pos, piece.Size, GameSide.Player, piece, respectEnemyEyes: false)) { continue; }
-                    if (!EyeTactics.CanEnter(_board, pos, piece.Size, GameSide.Player, piece.Def.IsRanged)) { continue; }
+
+                    if (pos == piece.Pos || !_board.CanFit(pos, piece.Size, GameSide.Player, piece, respectEnemyEyes: false))
+                    {
+                        continue;
+                    }
+                    if (!EyeTactics.CanEnter(_board, pos, piece.Size, GameSide.Player, piece.Def.IsRanged))
+                    {
+                        continue;
+                    }
                     int distance = NearestEnemyDistance(pos, piece.Size);
-                    if (piece.Def.IsRanged ? distance <= oldDistance : (oldDistance > 1 && distance > 1)) { continue; }
+
+                    if (piece.Def.IsRanged ? distance <= oldDistance : (oldDistance > 1 && distance > 1))
+                    {
+                        continue;
+                    }
                     // 试算棋盘每个候选先恢复；绝不能借用实战棋子进行Evaluate。
-                    if (copy.Pos != piece.Pos) { trial.Move(copy, piece.Pos, respectEnemyEyes: false); }
+                    if (copy.Pos != piece.Pos)
+                    {
+                        trial.Move(copy, piece.Pos, respectEnemyEyes: false);
+                    }
                     GoRules.Evaluate(trial);
-                    if (!trial.Move(copy, pos, respectEnemyEyes: false)) { continue; }
+
+                    if (!trial.Move(copy, pos, respectEnemyEyes: false))
+                    {
+                        continue;
+                    }
                     GoRules.Evaluate(trial);
                     bool finalEnemyEye = _board.GetCell(pos).EyeSide == GameSide.Enemy;
+
                     // 最后一眼中的突入棋天然零气；我方零气仍可反击，不能用通用安全筛选把明确授权的破眼永远挡掉。
-                    if ((copy.IsLocked && !finalEnemyEye) || !PreservesPlayerFormation(trial, finalEnemyEye ? piece : null)) { continue; }
+                    if ((copy.IsLocked && !finalEnemyEye) || !PreservesPlayerFormation(trial, finalEnemyEye ? piece : null))
+                    {
+                        continue;
+                    }
                     int score = PlayerPositionScore(trial, piece, pos, distance);
-                    if (score > bestScore) { best = pos; bestScore = score; }
+
+                    if (score > bestScore)
+                    {
+                        best = pos;
+                        bestScore = score;
+                    }
                 }
             }
-            if (best == piece.Pos) { return false; }
+            if (best == piece.Pos)
+            {
+                return false;
+            }
             breaksEye = _board.GetCell(best).EyeSide == GameSide.Enemy;
             return true;
         }
-
         /// <summary>每颗棋一台机器；回合结束统一释放，不持有场景对象。</summary>
         private readonly Dictionary<int, PlayerAI> _playerAI = new Dictionary<int, PlayerAI>();
         public int PlayerAICount => _playerAI.Count;
@@ -62,14 +103,29 @@ namespace RevGame.Services
         private sealed class PlayerOwner : IPlayerAIOwner
         {
             private readonly BattleService _service;
-            public Piece Actor { get; }
+            public Piece Actor
+            {
+                get;
+            }
             public GamePhase Phase => _service.Phase;
-            public PlayerOwner(BattleService service, Piece actor) { _service = service; Actor = actor; }
-            public bool PlanMove(out BoardPos position, out bool breaksEye) { return _service.TryPlanPlayerMove(Actor, out position, out breaksEye); }
-            public void Move(BoardPos position) { _service.CommitPlayerMove(Actor, position); }
-            public void Attack(float seconds) { _service.StepPlayerAttack(Actor, seconds / Balance.BattleTickSeconds); }
+            public PlayerOwner(BattleService service, Piece actor)
+            {
+                _service = service;
+                Actor = actor;
+            }
+            public bool PlanMove(out BoardPos position, out bool breaksEye)
+            {
+                return _service.TryPlanPlayerMove(Actor, out position, out breaksEye);
+            }
+            public void Move(BoardPos position)
+            {
+                _service.CommitPlayerMove(Actor, position);
+            }
+            public void Attack(float seconds)
+            {
+                _service.StepPlayerAttack(Actor, seconds / Balance.BattleTickSeconds);
+            }
         }
-
         private PlayerAI EnsurePlayerAI(Piece piece)
         {
             if (!_playerAI.TryGetValue(piece.Id, out PlayerAI ai))
@@ -79,7 +135,6 @@ namespace RevGame.Services
             }
             return ai;
         }
-
         /// <summary>按真实占格提交；最后再检查眼位硬规则，不能因先前试算合法而跳过提交门槛。</summary>
         private void CommitPlayerMove(Piece piece, BoardPos position)
         {
@@ -91,19 +146,23 @@ namespace RevGame.Services
             RefreshGoState();
             RevEvent.DispatchEvent<int>(Events.PieceMoved, piece.Id);
         }
-
         /// <summary>原有规则夹具复用此入口；规划和提交与状态机一致，不另造测试用移动算法。</summary>
         private void TryPlayerTacticalMove(Piece piece)
         {
-            if (TryPlanPlayerMove(piece, out BoardPos position, out bool breaksEye)) { CommitPlayerMove(piece, position); }
+            if (TryPlanPlayerMove(piece, out BoardPos position, out bool breaksEye))
+            {
+                CommitPlayerMove(piece, position);
+            }
         }
 
         private void StopPlayerAI()
         {
-            foreach (PlayerAI ai in _playerAI.Values) { ai.Dispose(); }
+            foreach (PlayerAI ai in _playerAI.Values)
+            {
+                ai.Dispose();
+            }
             _playerAI.Clear();
         }
-
         /// <summary>开发态观察真实状态及最近切换原因；只查询，不允许强制修改AI状态。</summary>
         public string PlayerAIStatus()
         {
@@ -115,17 +174,18 @@ namespace RevGame.Services
             }
             return result.ToString();
         }
-
         private int NearestEnemyDistance(BoardPos pos, int size)
         {
             int nearest = _board.Size * 2;
             foreach (Piece enemy in _enemyPieces)
             {
-                if (enemy.IsAlive) { nearest = Math.Min(nearest, BodyDistance(pos, size, enemy)); }
+                if (enemy.IsAlive)
+                {
+                    nearest = Math.Min(nearest, BodyDistance(pos, size, enemy));
+                }
             }
             return nearest;
         }
-
         /// <summary>以下权重仅是算法相对排序，不是伤害/距离/冷却数值。围住整块的收益高于追击落单者。</summary>
         private int PlayerPositionScore(BoardModel trial, Piece actor, BoardPos pos, int enemyDistance)
         {
@@ -134,18 +194,32 @@ namespace RevGame.Services
                 int friendlyDistance = _board.Size;
                 foreach (Piece ally in _playerPieces)
                 {
-                    if (ally.IsAlive && ally != actor) { friendlyDistance = Math.Min(friendlyDistance, BodyDistance(pos, actor.Size, ally)); }
+                    if (ally.IsAlive && ally != actor)
+                    {
+                        friendlyDistance = Math.Min(friendlyDistance, BodyDistance(pos, actor.Size, ally));
+                    }
                 }
                 return enemyDistance * 100 - friendlyDistance * 8;
             }
             int score = -enemyDistance * 60;
             foreach (Piece enemy in _enemyPieces)
             {
-                if (!enemy.IsAlive) { continue; }
+                if (!enemy.IsAlive)
+                {
+                    continue;
+                }
                 Piece candidate = trial.FindPiece(enemy.Id);
-                if (candidate == null) { continue; }
-                if (candidate.IsLocked && !enemy.IsLocked) { score += 2000; }
+
+                if (candidate == null)
+                {
+                    continue;
+                }
+                if (candidate.IsLocked && !enemy.IsLocked)
+                {
+                    score += 2000;
+                }
                 score += Math.Max(0, enemy.Liberties - candidate.Liberties) * 100;
+
                 if (BodyDistance(pos, actor.Size, enemy) == 1)
                 {
                     score += 150 + (enemy.ConnectedCells <= enemy.Size * enemy.Size ? 180 : 0);

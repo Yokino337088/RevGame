@@ -42,8 +42,10 @@ namespace RevGame.View
         private SpriteRenderer _hazardRenderer;
         private Tween _hazardTween;
         public bool HasHazardAnimation => _hazardTween != null && _hazardTween.IsActive();
-        public BoardPos Position { get; private set; }
-
+        public BoardPos Position
+        {
+            get; private set;
+        }
         public bool IsHighlighted
         {
             get
@@ -51,7 +53,6 @@ namespace RevGame.View
                 return highlightRenderer != null && highlightRenderer.enabled;
             }
         }
-
         /// <summary>范围是否正在显示；验收直接读这个字段，不用去猜渲染器状态。</summary>
         public bool IsRangeVisible
         {
@@ -60,7 +61,6 @@ namespace RevGame.View
                 return rangeRenderer != null && rangeRenderer.enabled;
             }
         }
-
         private void Awake()
         {
             // 颜色以预制体为准（策划可在 Inspector 直接调成别的警示色），运行时只改透明度做弹入。
@@ -79,16 +79,15 @@ namespace RevGame.View
             _pressed = false;
             _longPressFired = false;
             transform.position = pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
+
             if (starRenderer != null)
             {
                 starRenderer.enabled = isStar;
             }
-
             SetHighlight(false);
             SetEye(false);
             SetRange(false);
         }
-
         public void SetHighlight(bool visible)
         {
             if (highlightRenderer != null)
@@ -102,10 +101,13 @@ namespace RevGame.View
             if (eyeRenderer != null)
             {
                 eyeRenderer.enabled = visible;
-                if (visible) { AnimateEye(Time.unscaledTime); }
+
+                if (visible)
+                {
+                    AnimateEye(Time.unscaledTime);
+                }
             }
         }
-
         public void SetRange(bool visible)
         {
             if (!visible)
@@ -113,7 +115,6 @@ namespace RevGame.View
                 HideRange();
                 return;
             }
-
             if (rangeRenderer != null)
             {
                 rangeRenderer.enabled = true;
@@ -130,7 +131,6 @@ namespace RevGame.View
             {
                 return;
             }
-
             Transform target = rangeRenderer.transform;
             _rangeTween?.Kill(false);
             rangeRenderer.enabled = true;
@@ -145,27 +145,26 @@ namespace RevGame.View
                 // 范围波纹也使用可复用 Tween；自然结束就解除引用，避免下次收起范围误停别人的序列。
                 .OnKill(() => _rangeTween = null);
         }
-
         /// <summary>立即收起范围格：先停动画再清状态，避免淡出动画在回池后又改了一次颜色。</summary>
         public void HideRange()
         {
             Tween previous = _rangeTween;
             _rangeTween = null;
             previous?.Kill(false);
+
             if (rangeRenderer == null)
             {
                 return;
             }
-
             rangeRenderer.transform.localScale = Vector3.one;
             rangeRenderer.color = _rangeBaseColor;
             rangeRenderer.enabled = false;
         }
-
         /// <summary>先整块高亮，随后按指定延迟逐格抬起落回。动画只改显示位置，不改棋盘占格。</summary>
         public void PlayHazardWave(float delay, float duration, Vector4 edges)
         {
             CancelHazardWave();
+
             if (_hazardRenderer == null && hazardSprite != null)
             {
                 var child = new GameObject("HazardOverlay");
@@ -180,54 +179,87 @@ namespace RevGame.View
             {
                 _hazardRenderer.enabled = true;
                 _hazardRenderer.color = Color.white;
-                if (_hazardProperties == null) { _hazardProperties = new MaterialPropertyBlock(); }
+
+                if (_hazardProperties == null)
+                {
+                    _hazardProperties = new MaterialPropertyBlock();
+                }
                 _hazardProperties.Clear();
                 _hazardProperties.SetTexture("_MainTex", hazardSprite.texture);
                 _hazardProperties.SetVector("_SpriteUV", UnityEngine.Sprites.DataUtility.GetOuterUV(hazardSprite));
-                _hazardProperties.SetVector("_Timing", new Vector4(Time.time,delay,duration,Position.X*3+Position.Y*7));
+                _hazardProperties.SetVector("_Timing", new Vector4(Time.time, delay, duration, Position.X * 3 + Position.Y * 7));
                 _hazardProperties.SetVector("_Edges", edges);
-                _hazardProperties.SetFloat("_Age",0);
+                _hazardProperties.SetFloat("_Age", 0);
                 _hazardRenderer.SetPropertyBlock(_hazardProperties);
             }
-            if (_hazardRenderer == null || hazardMaterial == null) { RevLog.Error("区域波动材质未配置", "RevGame"); return; }
+            if (_hazardRenderer == null || hazardMaterial == null)
+            {
+                RevLog.Error("区域波动材质未配置", "RevGame");
+                return;
+            }
             // 只动显示层，格子点击区域始终在原位；否则飞起时点击会错格。
             Transform overlay = _hazardRenderer.transform;
             Vector3 restScale = Vector3.one * (Consts.CellSize / hazardSprite.bounds.size.x);
             overlay.localPosition = Vector3.zero;
             overlay.localScale = restScale * .08f;
             Sequence sequence = DOTween.Sequence();
-            sequence.Append(overlay.DOScale(restScale,.2f).SetEase(Ease.OutBack));
+            sequence.Append(overlay.DOScale(restScale, .2f).SetEase(Ease.OutBack));
             // Shader内建_Time与跨场景后的Time.time不保证同一起点。把本次租约的局部秒数交给Shader，
             // 显隐/命中闪光与DOTween共用同一时钟，暂停、场景重入也不会变成永久透明。
             float age = 0;
-            sequence.Insert(0,DOTween.To(() => age,value =>
+            sequence.Insert(0, DOTween.To(() => age, value =>
             {
-                age=value; _hazardProperties.SetFloat("_Age",value); _hazardRenderer.SetPropertyBlock(_hazardProperties);
-            },duration,duration).SetEase(Ease.Linear));
-            sequence.Insert(delay,overlay.DOLocalMoveY(Consts.CellSize*.28f,.12f).SetEase(Ease.OutQuad));
-            sequence.Insert(delay+.12f,overlay.DOLocalMoveY(0,.22f).SetEase(Ease.OutBounce));
-            sequence.Insert(duration-.25f,overlay.DOScale(restScale*.05f,.25f).SetEase(Ease.InBack));
-            sequence.OnComplete(() => { _hazardTween = null; if (_hazardRenderer != null) { _hazardRenderer.enabled = false; } });
+                age = value;
+                _hazardProperties.SetFloat("_Age", value);
+                _hazardRenderer.SetPropertyBlock(_hazardProperties);
+            }, duration, duration).SetEase(Ease.Linear));
+            sequence.Insert(delay, overlay.DOLocalMoveY(Consts.CellSize * .28f, .12f).SetEase(Ease.OutQuad));
+            sequence.Insert(delay + .12f, overlay.DOLocalMoveY(0, .22f).SetEase(Ease.OutBounce));
+            sequence.Insert(duration - .25f, overlay.DOScale(restScale * .05f, .25f).SetEase(Ease.InBack));
+            sequence.OnComplete(() =>
+            {
+                _hazardTween = null;
+
+                if (_hazardRenderer != null)
+                {
+                    _hazardRenderer.enabled = false;
+                }
+            });
             // DOTween会复用句柄；外部Kill后及时解绑，下一次取消不能误杀已经借给别处的动画。
             sequence.OnKill(() =>
             {
-                if (!ReferenceEquals(_hazardTween, sequence)) { return; }
+                if (!ReferenceEquals(_hazardTween, sequence))
+                {
+                    return;
+                }
                 _hazardTween = null;
                 overlay.localPosition = Vector3.zero;
-                if (_hazardRenderer != null) { _hazardRenderer.enabled = false; }
+
+                if (_hazardRenderer != null)
+                {
+                    _hazardRenderer.enabled = false;
+                }
             });
             _hazardTween = sequence;
         }
-
         /// <summary>换阶段/回池主动恢复原位。Kill(false)不会执行旧回调，避免动画把新回合格子抬走。</summary>
         public void CancelHazardWave()
         {
             if (_hazardTween != null)
             {
-                _hazardTween.Kill(false); _hazardTween = null;
-                if (_hazardRenderer != null) { _hazardRenderer.transform.localPosition = Vector3.zero; }
+                _hazardTween.Kill(false);
+                _hazardTween = null;
+
+                if (_hazardRenderer != null)
+                {
+                    _hazardRenderer.transform.localPosition = Vector3.zero;
+                }
             }
-            if (_hazardRenderer != null) { _hazardRenderer.enabled = false; }
+
+            if (_hazardRenderer != null)
+            {
+                _hazardRenderer.enabled = false;
+            }
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -236,26 +268,22 @@ namespace RevGame.View
             {
                 return;
             }
-
             // 每次按下重新计时：上一轮的标记必须先清掉，否则这一次的点击会被吞。
             _pressed = true;
             _longPressFired = false;
             RevTimer.CancelAllOf(this);
             RevTimer.After(longPressSeconds, OnLongPressElapsed, owner: this);
         }
-
         public void OnPointerUp(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
             {
                 return;
             }
-
             _pressed = false;
             // 松手时停掉还没到点的长按计时器；已经触发过的计时器是空操作。
             RevTimer.CancelAllOf(this);
         }
-
         private void OnLongPressElapsed()
         {
             // 物体可能在计时期间被回池/禁用；没有按住状态就不该再弹范围。
@@ -263,25 +291,21 @@ namespace RevGame.View
             {
                 return;
             }
-
             _longPressFired = true;
             _onLongPress(Position);
         }
-
         public void OnPointerClick(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
             {
                 return;
             }
-
             // 长按已展示范围：这次松手只负责结束手势，不能再当成一次点击去选棋/落子。
             if (_longPressFired)
             {
                 _longPressFired = false;
                 return;
             }
-
             if (_onClick != null)
             {
                 _onClick(Position);
@@ -290,9 +314,8 @@ namespace RevGame.View
 
         public void OnPoolGet()
         {
-        // 实际位置由 Bind 设置，出池时不要读取上一局的服务。
+            // 实际位置由 Bind 设置，出池时不要读取上一局的服务。
         }
-
         public void OnPoolReturn()
         {
             ClearBossTile();

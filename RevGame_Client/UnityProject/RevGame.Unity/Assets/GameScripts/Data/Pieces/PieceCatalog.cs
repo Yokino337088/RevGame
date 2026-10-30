@@ -27,6 +27,7 @@ namespace RevGame.Data
             get
             {
                 ConfigSnapshot snapshot = GameConfig.Current;
+
                 if (!ReferenceEquals(_cachedFor, snapshot))
                 {
                     Rebuild(snapshot);
@@ -34,7 +35,6 @@ namespace RevGame.Data
                 return _defs;
             }
         }
-
         private static void Rebuild(ConfigSnapshot snapshot)
         {
             var defs = new Dictionary<(PieceKind, int), PieceDef>();
@@ -56,19 +56,16 @@ namespace RevGame.Data
             _all = all;
             _cachedFor = snapshot;
         }
-
         /// <summary>立绘资源名约定：棋子_&lt;名&gt;&lt;星级&gt;_立绘（与 ArtRes/Pieces 下的文件一一对应；这是美术命名约定，不是数值）。</summary>
         private static string SpriteNameOf(string spriteKey, int star)
         {
             return "棋子_" + spriteKey + star + "_立绘";
         }
-
         /// <summary>外形 → 立绘文件名里的棋子名（来自 PieceConfig.SpriteKey）。</summary>
         public static string SpriteKeyOf(PieceKind kind)
         {
             return GameConfig.Current.Pieces[kind].SpriteKey;
         }
-
         /// <summary>
         /// 按外形 + 星级取定义。找不到返回 null（**不抛异常**：调用方要能优雅降级，
         /// 但必须自己判空 —— 这是框架“失败必须可见”的约定）。配置尚未装配则抛异常。
@@ -76,14 +73,13 @@ namespace RevGame.Data
         public static PieceDef Get(PieceKind kind, StarTier star)
         {
             PieceDef def;
+
             if (Defs.TryGetValue((kind, (int)star), out def))
             {
                 return def;
             }
-
             return null;
         }
-
         /// <summary>全部定义（给图鉴/编辑器工具遍历用）。</summary>
         public static IEnumerable<PieceDef> All
         {
@@ -94,13 +90,11 @@ namespace RevGame.Data
                 return _all;
             }
         }
-
         /// <summary>我方该星级棋子占的格子边长（StarConfig.PlayerBodySize）。</summary>
         public static int PlayerBodySize(StarTier star)
         {
             return GameConfig.Current.Stars[(int)star].PlayerBodySize;
         }
-
         /// <summary>开局已在手牌池的棋种（PieceConfig.UnlockedAtStart=TRUE），按表内顺序。</summary>
         internal static HashSet<PieceKind> CreateInitialUnlockedSet()
         {

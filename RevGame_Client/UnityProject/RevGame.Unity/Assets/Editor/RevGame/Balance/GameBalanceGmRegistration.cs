@@ -8,15 +8,24 @@ namespace RevGame.Editor
     [InitializeOnLoad]
     public static class GameBalanceGmRegistration
     {
-        static GameBalanceGmRegistration(){EditorApplication.playModeStateChanged+=OnPlayState;}
+        static GameBalanceGmRegistration()
+        {
+            EditorApplication.playModeStateChanged += OnPlayState;
+        }
         private static void OnPlayState(PlayModeStateChange change)
         {
-            if(change!=PlayModeStateChange.EnteredPlayMode){return;}
-            EditorApplication.delayCall+=Register;
+            if (change != PlayModeStateChange.EnteredPlayMode)
+            {
+                return;
+            }
+            EditorApplication.delayCall += Register;
         }
         private static void Register()
         {
-            if(!EditorApplication.isPlaying){return;}
+            if (!EditorApplication.isPlaying)
+            {
+                return;
+            }
             // 唯一账本负责退出注销；Editor测试类不进入正式发布包。
             GameGmCommands.RegisterEditorBalanceCommands();
         }

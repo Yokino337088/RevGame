@@ -21,7 +21,11 @@ namespace RevGame.Editor
                 foreach (string line in File.ReadAllLines("Assets/Editor/RevGame/SpriteMigration.tsv"))
                 {
                     string[] columns = line.Split('\t');
-                    if (columns.Length == 3) { _moved.Add(columns[0], columns[1]); }
+
+                    if (columns.Length == 3)
+                    {
+                        _moved.Add(columns[0], columns[1]);
+                    }
                 }
             }
             string path;

@@ -32,12 +32,14 @@ namespace RevGame.Services
             _nextEnemyDeployAt = Balance.DeployStartSeconds;
             _enemyDeploymentCount = 0;
         }
-
         /// <summary>每回合敌阵成立后，向首个空眼部署远程守军；没有眼或达到人数上限则不强塞、不覆盖棋子。</summary>
         private void DeployInitialEyeGarrison()
         {
             if (_enemyPieces.Count >= Balance.DeployLivingCap
-                || !EyeTactics.TryFindOwnEye(_board, GameSide.Enemy, 1, out BoardPos position)) { return; }
+                || !EyeTactics.TryFindOwnEye(_board, GameSide.Enemy, 1, out BoardPos position))
+            {
+                return;
+            }
             // 重弩已有跨盘射界，驻眼时不会被四周友军挡住而永远不出手；血攻/星级/成长仍读现有表。
             RoundDef round = LevelCatalog.GetRound(Chapter, Round);
             PieceDef def = PieceCatalog.Get(PieceKind.Crossbow, LevelCatalog.GetEnemyStar(Chapter, false));
@@ -45,11 +47,11 @@ namespace RevGame.Services
             newcomer.NextMoveAt = Balance.PlayerMoveSeconds;
             CommitEnemyDeployment(newcomer, position, "远程驻守眼位", countAgainstBudget: false);
         }
-
         /// <summary>只能在战斗固定步调用；失败同样进入冷却，避免满盘时每0.3125秒重做整盘试算。</summary>
         private void TickEnemyDeployment()
         {
             EnemyAI commander = EnsureEnemyCommander();
+
             if (commander.State == EnemyAIState.Prepare)
             {
                 commander.Tick(EnemyAIState.Deploy, Balance.BattleSimulationStepSeconds, "开战，进入战术增援");
@@ -59,7 +61,6 @@ namespace RevGame.Services
                 commander.Tick(Balance.BattleSimulationStepSeconds);
             }
         }
-
         /// <summary>
         /// 增援的唯一提交点：占格、编号、入名单、建 AI、刷新气眼、广播事件。
         /// 顺序不能调换：先占格再广播，界面收到事件时棋盘与气眼已经是最终状态；
@@ -74,8 +75,12 @@ namespace RevGame.Services
             _nextPieceId++;
             _enemyPieces.Add(newcomer);
             EnsureEnemyAI(newcomer);
+
             // 开局驻眼属于本轮初始阵容；战斗中的额外补子才消耗原有增援预算。
-            if (countAgainstBudget) { _enemyDeploymentCount++; }
+            if (countAgainstBudget)
+            {
+                _enemyDeploymentCount++;
+            }
             // 新棋的初始移动冷却已由Deploy状态设置；这里不再重复决定AI行为。
             RefreshGoState();
             // 模型先就绪，视图后收到通知：新棋第一次显示时已能读到正确气眼和锁死状态。

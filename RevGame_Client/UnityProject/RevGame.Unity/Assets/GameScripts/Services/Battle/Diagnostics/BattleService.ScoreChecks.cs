@@ -15,13 +15,20 @@ namespace RevGame.Services
             var memory = new ScoreMemory();
             var service = new BattleService(false, 381, memory);
             check(service.StartRound(1, 1), "积分夹具开局");
-            service.StopEnemyAI(); service._board.Reset(); service._playerPieces.Clear(); service._enemyPieces.Clear();
+            service.StopEnemyAI();
+            service._board.Reset();
+            service._playerPieces.Clear();
+            service._enemyPieces.Clear();
             var player = new Piece(9001, PieceCatalog.Get(PieceKind.Archer, StarTier.One), GameSide.Player);
             var enemy = new Piece(9002, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy);
-            service._board.Place(player, new BoardPos(0, 0)); service._playerPieces.Add(player);
-            service._board.Place(enemy, new BoardPos(5, 5)); service._enemyPieces.Add(enemy);
+            service._board.Place(player, new BoardPos(0, 0));
+            service._playerPieces.Add(player);
+            service._board.Place(enemy, new BoardPos(5, 5));
+            service._enemyPieces.Add(enemy);
             service.Phase = GamePhase.Battle;
-            object owner = new object(); int awards = 0; BattleHitInfo observed = default(BattleHitInfo);
+            object owner = new object();
+            int awards = 0;
+            BattleHitInfo observed = default(BattleHitInfo);
             RevEvent.AddEventListener<ScoreGrantedInfo>(Events.ScoreGranted, info => awards++, owner: owner);
             RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => observed = hit, owner: owner);
             try
@@ -43,7 +50,8 @@ namespace RevGame.Services
                 check(resumed.LifetimeScore == expected && resumed.RoundScore == 0, "重建服务恢复永久积分，回合积分归零");
                 check(service.StartRound(1, 2) && service.RoundScore == 0 && service.LifetimeScore == expected, "换回合只清本回合积分");
                 check(service.ScoreMultiplier > 1f, "后续回合倍率递增");
-                service.StopEnemyAI(); service.Phase = GamePhase.Battle;
+                service.StopEnemyAI();
+                service.Phase = GamePhase.Battle;
                 Piece victim = service._enemyPieces[0];
                 long old = service.LifetimeScore;
                 service.DamagePiece(victim, int.MaxValue, damageKind: BattleDamageKind.RegionPulse, fromSkill: true);
@@ -61,30 +69,59 @@ namespace RevGame.Services
                 }
                 // 真实普攻抽样测试，不给随机逻辑偷偷开100%暴击；固定种子保证可重复。
                 check(service.StartRound(1, 1), "重开挑战仍保留永久积分");
-                service.StopEnemyAI(); service.Phase = GamePhase.Battle;
+                service.StopEnemyAI();
+                service.Phase = GamePhase.Battle;
                 int critical = 0, normal = 0;
-                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.DamageKind == BattleDamageKind.Critical) { critical++; } else { normal++; } }, owner: owner);
+                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit =>
+                {
+                    if (hit.DamageKind == BattleDamageKind.Critical)
+                    {
+                        critical++;
+                    }
+                    else
+                    {
+                        normal++;
+                    }
+                }, owner: owner);
                 victim = service._enemyPieces[0];
-                for (int i = 0; i < 100; i++) { victim.Heal(victim.MaxHp); service.Attack(player, victim); }
+                for (int i = 0; i < 100; i++)
+                {
+                    victim.Heal(victim.MaxHp);
+                    service.Attack(player, victim);
+                }
                 check(critical > 0 && normal > 0, "固定种子真实普攻既有暴击又有普通命中");
             }
             finally { RevEvent.RemoveAllByOwner(owner); service.StopEnemyAI(); }
         }
-
         private sealed class ScoreMemory : IScoreProgress
         {
-            public long Total { get; private set; }
+            public long Total
+            {
+                get; private set;
+            }
             public int FlushCount;
-            public void Record(long total) { Total = total; }
-            public void Flush() { FlushCount++; }
+            public void Record(long total)
+            {
+                Total = total;
+            }
+            public void Flush()
+            {
+                FlushCount++;
+            }
         }
-
         /// <summary>仅用于本次Play视觉夹具：调用真实统一扣血，目标仍来自当前占格。不得给正式包开放任意加分。</summary>
         public void PreviewScoreHit(BattleDamageKind kind, bool lethal)
         {
-            if (!_scorePreview) { throw new InvalidOperationException("必须在积分预览隔离区调用"); }
+            if (!_scorePreview)
+            {
+                throw new InvalidOperationException("必须在积分预览隔离区调用");
+            }
             Piece player = _playerPieces.Find(p => p.IsAlive), enemy = _enemyPieces.Find(p => p.IsAlive);
-            if (player == null || enemy == null) { throw new InvalidOperationException("预览需要双方存活棋"); }
+
+            if (player == null || enemy == null)
+            {
+                throw new InvalidOperationException("预览需要双方存活棋");
+            }
             DamagePiece(enemy, lethal ? int.MaxValue : 7, player, damageKind: kind, fromSkill: kind != BattleDamageKind.Critical);
             RefreshGoState();
         }

@@ -29,7 +29,6 @@ namespace RevGame.Editor
             public int pacingAssertions;
             public List<string> assertions = new List<string>();
         }
-
         /// <summary>
         /// 当前正式配置已装配时复用，未装配时由项目测试入口读取同一导表；退出恢复测试前的装配状态。
         /// 任一断言失败先保留第一原因，再抛给自动化桥，不能只返回“命令执行成功”。
@@ -51,13 +50,19 @@ namespace RevGame.Editor
                 RevLog.MinLevel = RevLogLevel.Error;
                 BattleService.VerifyHelperProtectionRules((ok, message) =>
                 {
-                    if (!ok) { throw new InvalidOperationException("单棋保护：" + message); }
+                    if (!ok)
+                    {
+                        throw new InvalidOperationException("单棋保护：" + message);
+                    }
                     result.protectionAssertions++;
                     result.assertions.Add("单棋保护：" + message);
                 });
                 result.summary = BattleService.VerifyBossPacingRules((ok, message) =>
                 {
-                    if (!ok) { throw new InvalidOperationException("Boss调度：" + message); }
+                    if (!ok)
+                    {
+                        throw new InvalidOperationException("Boss调度：" + message);
+                    }
                     result.pacingAssertions++;
                     result.assertions.Add("Boss调度：" + message);
                 });
@@ -72,7 +77,11 @@ namespace RevGame.Editor
             {
                 // 先恢复全局测试环境，证据写入即使失败也不能留下配置/日志的半清理状态。
                 RevLog.MinLevel = originalLogLevel;
-                if (!loaded) { GameConfig.Reset(); }
+
+                if (!loaded)
+                {
+                    GameConfig.Reset();
+                }
                 Directory.CreateDirectory(folder);
                 File.WriteAllText(Path.Combine(folder, "rules.json"), JsonUtility.ToJson(result, true));
             }

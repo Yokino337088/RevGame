@@ -24,7 +24,10 @@ namespace RevGame.Editor
 
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _checks = 0;
             GameFlow flow = RevServices.GetRequired<GameFlow>();
@@ -60,9 +63,23 @@ namespace RevGame.Editor
                 Require(hud.ActiveNoticeCount == 0 && hud.PendingPreparationNoticeCount == 0, "换轮立即回收冻结横幅及队列");
                 await RevTask.Delay(850);
                 Pieces.Piece king = null;
-                foreach (Pieces.Piece piece in battle.EnemyPieces) { if (piece.IsKing) { king = piece; break; } }
+                foreach (Pieces.Piece piece in battle.EnemyPieces)
+                {
+                    if (piece.IsKing)
+                    {
+                        king = piece;
+                        break;
+                    }
+                }
                 PieceView kingView = null;
-                foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>()) { if (view.PieceId == king.Id) { kingView = view; break; } }
+                foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>())
+                {
+                    if (view.PieceId == king.Id)
+                    {
+                        kingView = view;
+                        break;
+                    }
+                }
                 Require(kingView != null && kingView.AnimationFrameCount > 1, "Boss绑定真实多帧序列");
                 SpriteRenderer body = GetField<SpriteRenderer>(kingView, "bodyRenderer");
                 Sprite frame = body.sprite;
@@ -84,7 +101,10 @@ namespace RevGame.Editor
                 bool placed = false;
                 for (int y = 0; y < 9 && !placed; y++)
                 {
-                    for (int x = 0; x < 9 && !placed; x++) { placed = battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(x, y)); }
+                    for (int x = 0; x < 9 && !placed; x++)
+                    {
+                        placed = battle.TryPlayCard(battle.Hand[0].Id, new BoardPos(x, y));
+                    }
                 }
                 battle.Tick(3f);
                 Require(placed && battle.StartBattle(), "普通回合正常开战");
@@ -106,15 +126,16 @@ namespace RevGame.Editor
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
-
         private static T GetField<T>(object target, string name)
         {
             return (T)target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(target);
         }
-
         private static void Require(bool condition, string message)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             _checks++;
         }
     }

@@ -26,7 +26,10 @@ namespace RevGame.Services
         /// <summary>保留既有 HUD/GM 契约：这里仅描述正常节奏，绝不保证通关。</summary>
         public string VictorySupportStatus => "真实胜负 · 不限时 · 区域波动与能量炸弹";
         /// <summary>兼容旧构造参数：只决定自动事件轮换方式，不再提供免死或清敌。</summary>
-        public bool VictoryAssistEnabled { get; }
+        public bool VictoryAssistEnabled
+        {
+            get;
+        }
         /// <summary>
         /// 本轮已触发的战斗事件次数；同时用于上限判断与轮换下标。
         /// </summary>
@@ -56,6 +59,7 @@ namespace RevGame.Services
         private void RefreshGoState()
         {
             int bonus = _libertyBonus + _roundLibertyBonus - (IsBossRound && Chapter == 3 ? 1 : 0);
+
             if (_evaluatedTopology == _board.TopologyVersion && _evaluatedLibertyBonus == bonus && _evaluatedImmunity == _prepImmune)
             {
                 return;
@@ -68,12 +72,14 @@ namespace RevGame.Services
             {
                 p.BonusLiberties = p.Side == GameSide.Player ? bonus : 0;
             }
-
             // 只比较真实棋盘刷新前后的驻眼身份；AI快照不经过服务，不会冒出弹幕。
             _previousEyeGarrisons.Clear();
             foreach (Piece p in _board.Pieces)
             {
-                if (p.IsEyeGarrison) { _previousEyeGarrisons.Add(p.Id); }
+                if (p.IsEyeGarrison)
+                {
+                    _previousEyeGarrisons.Add(p.Id);
+                }
             }
             GoRules.Evaluate(_board);
             bool newlyOccupied = false;
@@ -81,10 +87,12 @@ namespace RevGame.Services
             {
                 newlyOccupied |= p.Side == GameSide.Player && p.IsEyeGarrison && !_previousEyeGarrisons.Contains(p.Id);
             }
-            if (newlyOccupied) { RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, "眼位成型"); }
+            if (newlyOccupied)
+            {
+                RevEvent.DispatchEvent<string>(Events.BattleEventTriggered, "眼位成型");
+            }
             RevEvent.DispatchEvent(Events.GoStateRefreshed);
         }
-
         /// <summary>
         /// 切换“补眼模式”：仅准备阶段且持有眼位石时可用。
         /// 切换时清掉手牌与棋子选择，保证一次点击只会走一条操作路径。
@@ -95,7 +103,6 @@ namespace RevGame.Services
             {
                 return Reject("准备阶段持有眼位石才能使用");
             }
-
             SelectedPieceId = 0;
             EyeStoneSelected = !EyeStoneSelected;
             SelectedCardId = 0;
@@ -103,7 +110,6 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.SelectionChanged);
             return true;
         }
-
         /// <summary>候选落点必须恰好补齐邻近空点的最后一个邻居；空点本身必须留空才叫眼。</summary>
         private bool CanCompleteEye(BoardPos placement)
         {
@@ -111,30 +117,28 @@ namespace RevGame.Services
             {
                 return false;
             }
-
             foreach (BoardPos center in placement.GetOrthogonalNeighbors())
             {
                 if (!_board.CanPlace(center))
                 {
                     continue;
                 }
-
                 bool valid = true;
                 int count = 0;
                 foreach (BoardPos neighbor in center.GetOrthogonalNeighbors())
                 {
                     Cell cell = _board.GetCell(neighbor);
+
                     if (cell == null)
                     {
                         continue;
                     }
-
                     count++;
+
                     if (neighbor == placement)
                     {
                         continue;
                     }
-
                     if (cell.IsEmpty || cell.Occupant.Side != GameSide.Player)
                     {
                         valid = false;
@@ -150,7 +154,6 @@ namespace RevGame.Services
 
             return false;
         }
-
         /// <summary>
         /// 在合法空格补一颗支援棋并扣一枚眼位石。
         /// 不合法（不能补成眼）时拒绝且不扣石头；没有亮格时可以保留到以后用。
@@ -161,12 +164,10 @@ namespace RevGame.Services
             {
                 return Reject("请先选中一颗眼位石");
             }
-
             if (!CanCompleteEye(pos))
             {
                 return Reject("这个位置不能补成眼，请点金色高亮格；没有亮格时可以先保留眼位石");
             }
-
             SpawnSupport(pos);
             EyeStones--;
             EyeStoneSelected = false;
@@ -176,7 +177,6 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.SelectionChanged);
             return true;
         }
-
         /// <summary>
         /// 受控触发一次战斗事件（自动事件与 GM 共用）。
         /// 先校验阶段、每回合上限与冷却，再执行效果；没有合法目标时转全队回复，
@@ -188,22 +188,18 @@ namespace RevGame.Services
             {
                 return Reject("战斗事件只能在战斗阶段触发");
             }
-
             if (_battleEventCount >= Balance.MaxBattleEventsPerRound)
             {
                 return Reject("本回合支援次数已达上限");
             }
-
             if (_battleEventCount > 0 && _battleElapsed < _nextEventAt)
             {
                 return Reject("支援尚未冷却，请等待下一次战斗事件");
             }
-
             if (!System.Enum.IsDefined(typeof(BattleEventKind), kind))
             {
                 return Reject("未知战斗事件");
             }
-
             _battleEventCount++;
             _nextEventAt = _battleElapsed + Balance.BattleEventInterval;
             bool applied = true;
@@ -219,7 +215,10 @@ namespace RevGame.Services
                     break;
                 case BattleEventKind.Reinforcement:
                     applied = false;
-                    for (int n = 0; n < (int)Balance.EventEffectMultiplier; n++) { applied |= ReinforceFromHand(); }
+                    for (int n = 0; n < (int)Balance.EventEffectMultiplier; n++)
+                    {
+                        applied |= ReinforceFromHand();
+                    }
                     break;
                 case BattleEventKind.Liberty:
                     _roundLibertyBonus += (int)(eventDef.Amount * Balance.EventEffectMultiplier);
@@ -232,7 +231,10 @@ namespace RevGame.Services
                     break;
                 case BattleEventKind.Eye:
                     applied = false;
-                    for (int n = 0; n < (int)Balance.EventEffectMultiplier; n++) { applied |= CompleteOneEye(); }
+                    for (int n = 0; n < (int)Balance.EventEffectMultiplier; n++)
+                    {
+                        applied |= CompleteOneEye();
+                    }
                     break;
                 case BattleEventKind.BreakChain:
                     applied = BreakEnemyChain();
@@ -244,12 +246,10 @@ namespace RevGame.Services
                     applied = FireSupport();
                     break;
             }
-
             if (!applied)
             {
                 HealTeam(Balance.EventFallbackHealRatio);
             }
-
             RefreshGoState();
             string title = BattleEventCatalog.NameOf(kind);
             LastError = string.Empty;
@@ -258,7 +258,6 @@ namespace RevGame.Services
             RevEvent.DispatchEvent<string>(Events.BattleLog, title + (applied ? "：已生效" : "：没有合法目标，转为全队回复 " + ConfigText.Percent(Balance.EventFallbackHealRatio) + " 生命"));
             return true;
         }
-
         /// <summary>
         /// 自动事件的调度：开启辅助时按配置顺序轮换，关闭时按概率随机抽组。
         /// 只在冷却与上限都满足时触发，不在每个模拟小步里重复尝试。
@@ -269,7 +268,6 @@ namespace RevGame.Services
             {
                 return;
             }
-
             if (VictoryAssistEnabled)
             {
                 // 顺序轮换，保证援军、治疗和炮火都会出现，避免连续随机到没有目标的事件。
@@ -278,12 +276,10 @@ namespace RevGame.Services
                 TriggerBattleEvent(support[_battleEventCount % support.Count]);
                 return;
             }
-
             // 先按稀有概率决定抽哪一组，再在组内等概率随机；分组来自 BattleEventConfig.IsRare。
             IReadOnlyList<BattleEventKind> pool = BattleEventCatalog.Pool(_random.NextDouble() < Balance.RareEventChance);
             TriggerBattleEvent(pool[_random.Next(pool.Count)]);
         }
-
         /// <summary>
         /// 全队按最大生命比例回复，并逐颗广播血条变化。
         /// 实际回复量为 0 的棋子不发事件，避免无意义的界面刷新。
@@ -298,7 +294,6 @@ namespace RevGame.Services
                 }
             }
         }
-
         /// <summary>
         /// 生成我方支援棋：占格后加入名单并继承本轮准备增益。
         /// 调用前必须已经预检过空格，失败直接抛错而不是悄悄少一颗援军。
@@ -306,18 +301,21 @@ namespace RevGame.Services
         private void SpawnSupport(BoardPos pos, PieceKind kind = PieceKind.Shield)
         {
             PieceDef definition = PieceCatalog.Get(kind, StarTier.One);
-            if (!CanAddPlayerRanged(definition, false)) { return; }
+
+            if (!CanAddPlayerRanged(definition, false))
+            {
+                return;
+            }
             var piece = new Piece(_nextPieceId++, definition, GameSide.Player);
+
             if (!_board.Place(piece, pos))
             {
                 throw new System.InvalidOperationException("已预检的援兵落点不可用：" + pos);
             }
-
             _playerPieces.Add(piece);
             ApplyPreparationToNewPiece(piece);
             RevEvent.DispatchEvent<int>(Events.PiecePlaced, piece.Id);
         }
-
         /// <summary>
         /// 扫描全盘，找到第一个可以补成眼的位置并生成支援棋。
         /// 找不到返回 false，由调用方转为回复兜底，不能强行塞进不合法位置。
@@ -329,6 +327,7 @@ namespace RevGame.Services
                 for (int x = 0; x < Consts.BoardSize; x++)
                 {
                     var pos = new BoardPos(x, y);
+
                     if (CanCompleteEye(pos))
                     {
                         SpawnSupport(pos);
@@ -336,10 +335,8 @@ namespace RevGame.Services
                     }
                 }
             }
-
             return false;
         }
-
         /// <summary>
         /// 统计四邻空格数量，用于选点/评估出入口；不代表该点可以落子。
         /// </summary>
@@ -356,14 +353,12 @@ namespace RevGame.Services
 
             return n;
         }
-
         /// <summary>支援允许驻守本方眼；敌眼沿用与玩家AI相同的“最后一眼”硬门槛。</summary>
         private bool CanSupportFit(BoardPos pos, int size, bool allowEnemyEyes = false)
         {
             return _board.CanFit(pos, size, GameSide.Player, respectEnemyEyes: false)
                 && EyeTactics.CanEnter(_board, pos, size, GameSide.Player, ranged: !allowEnemyEyes);
         }
-
         /// <summary>保留旧事件入口，但用回气替代自动传送；玩家布阵不被任何增益事件搬走。</summary>
         private bool TeleportToMoreLiberties()
         {
@@ -371,7 +366,6 @@ namespace RevGame.Services
             RefreshGoState();
             return true;
         }
-
         /// <summary>
         /// 切断敌方最大连通块：在临时图里试删一颗，确认会分成两块才算断点。
         /// 只在真实存在割点时生效；不能为了“有伤害”随便击杀一颗普通棋。
@@ -392,14 +386,12 @@ namespace RevGame.Services
             {
                 return false;
             }
-
             foreach (Piece cut in largest)
             {
                 if (cut.IsKing)
                 {
                     continue;
                 }
-
                 // 只在临时图上忽略候选连接点，不移动真实棋盘试算，事件观察者不会看到中间状态。
                 var visited = new HashSet<Piece>
                 {
@@ -414,13 +406,13 @@ namespace RevGame.Services
                     foreach (BoardPos next in BoardModel.Boundary(queue.Dequeue()))
                     {
                         Piece p = _board.GetPiece(next);
+
                         if (p != null && p.Side == GameSide.Enemy && visited.Add(p))
                         {
                             queue.Enqueue(p);
                         }
                     }
                 }
-
                 if (visited.Count < largest.Count)
                 {
                     ResolveDamage(new DamageRequest(cut, DamageBasis.CurrentHp, BattleDamageKind.Execution, factor: 1f));
@@ -430,7 +422,6 @@ namespace RevGame.Services
 
             return false;
         }
-
         /// <summary>
         /// 炮火支援：以敌人最密集的位置为中心，对范围内敌人造成比例伤害。
         /// 半径与比例都来自配置表；没有敌人时返回 false，由调用方转为回复。
@@ -438,11 +429,11 @@ namespace RevGame.Services
         private bool FireSupport()
         {
             var enemies = _board.GetPiecesOf(GameSide.Enemy);
+
             if (enemies.Count == 0)
             {
                 return false;
             }
-
             // 炮击范围半径与伤害比例都来自参数/事件表：伤害 = max(固定下限, 目标最大生命 × 比例)。
             int radius = Balance.EventArtilleryRadius;
             float hpRatio = BattleEventCatalog.DefOf(BattleEventKind.Artillery).Amount * Balance.EventEffectMultiplier;
@@ -451,6 +442,7 @@ namespace RevGame.Services
             foreach (Piece candidate in enemies)
             {
                 int n = enemies.FindAll(p => System.Math.Abs(p.Pos.X - candidate.Pos.X) <= radius && System.Math.Abs(p.Pos.Y - candidate.Pos.Y) <= radius).Count;
+
                 if (n > density)
                 {
                     center = candidate;
@@ -468,7 +460,5 @@ namespace RevGame.Services
 
             return true;
         }
-
-
     }
 }

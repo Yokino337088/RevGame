@@ -20,31 +20,45 @@ namespace RevGame.Editor
     public static class GameBattleStressChecks
     {
         public static string LastResult { get; private set; } = "未运行";
-        [Serializable] public sealed class Row
+        [Serializable]
+        public sealed class Row
         {
             public int chapter, frames, minPieces, maxPieces, attacks;
             public double fps, p50Ms, p95Ms, p99Ms, batches, drawCalls, setPass, dynamicBatches, instancedBatches, allocatedMB, reservedMB, monoMB;
             public string resolution;
         }
-        [Serializable] public sealed class Report
+        [Serializable]
+        public sealed class Report
         {
             public string label, device, cpu, gpu, mode, error;
             public int originalVsync, originalTarget, homeBundles, battleBundles, returnBundles;
             public List<Row> chapters = new List<Row>();
             public string[] returnBundleNames;
         }
-
         /// <summary>固定标签避免覆盖其它文件；仅在真实Play首页发起，积分租约隔离玩家存档。</summary>
         public static async void Begin(string label)
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
-            if (label != "before" && label != "after") { throw new ArgumentException("只接受before/after"); }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
+            if (label != "before" && label != "after")
+            {
+                throw new ArgumentException("只接受before/after");
+            }
             LastResult = "运行中";
             string dir = "Temp/BattleStress/" + label;
             Directory.CreateDirectory(dir);
-            var report = new Report { label = label, cpu = SystemInfo.processorType, gpu = SystemInfo.graphicsDeviceName,
-                device = SystemInfo.operatingSystem, mode = RevResBootstrap.UseABInEditor ? "AB" : "Direct",
-                originalVsync = QualitySettings.vSyncCount, originalTarget = Application.targetFrameRate };
+            var report = new Report
+            {
+                label = label,
+                cpu = SystemInfo.processorType,
+                gpu = SystemInfo.graphicsDeviceName,
+                device = SystemInfo.operatingSystem,
+                mode = RevResBootstrap.UseABInEditor ? "AB" : "Direct",
+                originalVsync = QualitySettings.vSyncCount,
+                originalTarget = Application.targetFrameRate
+            };
             GameFlow flow = null;
             IDisposable score = null;
             bool wasProfiler = ProfilerDriver.enabled;
@@ -59,15 +73,27 @@ namespace RevGame.Editor
                 // 解开同步上限只用于测量吞吐；退出恢复，不修改玩家项目质量设置。
                 QualitySettings.vSyncCount = 0;
                 Application.targetFrameRate = -1;
-                if (!flow.OpenLevels() || !flow.EnterBattle(1)) { throw new InvalidOperationException(flow.LastError); }
+
+                if (!flow.OpenLevels() || !flow.EnterBattle(1))
+                {
+                    throw new InvalidOperationException(flow.LastError);
+                }
                 await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 for (int chapter = 1; chapter <= 6; chapter++)
                 {
                     ProfilerDriver.enabled = false;
-                    if (!battle.LoadPerformanceScenario(chapter)) { throw new InvalidOperationException(battle.LastError); }
+
+                    if (!battle.LoadPerformanceScenario(chapter))
+                    {
+                        throw new InvalidOperationException(battle.LastError);
+                    }
                     await UnityEngine.Object.FindObjectOfType<GamePresentation>().WaitUntilReadyAsync(GameScreen.Battle, null);
                     await RevTask.Delay(3500);
-                    if (!battle.StartBattle()) { throw new InvalidOperationException(battle.LastError); }
+
+                    if (!battle.StartBattle())
+                    {
+                        throw new InvalidOperationException(battle.LastError);
+                    }
                     await RevTask.Delay(2000);
                     var row = new Row { chapter = chapter, minPieces = int.MaxValue, resolution = UnityStats.screenRes };
                     RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => row.attacks++, owner: owner);
@@ -83,24 +109,58 @@ namespace RevGame.Editor
                         double ms = (now - previous) * 1000.0;
                         previous = now;
                         int pieces = 0;
-                        foreach (var piece in battle.PlayerPieces) { if (piece.IsAlive) { pieces++; } }
-                        foreach (var piece in battle.EnemyPieces) { if (piece.IsAlive) { pieces++; } }
-                        frames.Add(ms); row.minPieces = Math.Min(row.minPieces, pieces); row.maxPieces = Math.Max(row.maxPieces, pieces);
-                        row.batches += UnityStats.batches; row.drawCalls += UnityStats.drawCalls; row.setPass += UnityStats.setPassCalls;
-                        row.dynamicBatches += UnityStats.dynamicBatches; row.instancedBatches += UnityStats.instancedBatches;
+                        foreach (var piece in battle.PlayerPieces)
+                        {
+                            if (piece.IsAlive)
+                            {
+                                pieces++;
+                            }
+                        }
+                        foreach (var piece in battle.EnemyPieces)
+                        {
+                            if (piece.IsAlive)
+                            {
+                                pieces++;
+                            }
+                        }
+                        frames.Add(ms);
+                        row.minPieces = Math.Min(row.minPieces, pieces);
+                        row.maxPieces = Math.Max(row.maxPieces, pieces);
+                        row.batches += UnityStats.batches;
+                        row.drawCalls += UnityStats.drawCalls;
+                        row.setPass += UnityStats.setPassCalls;
+                        row.dynamicBatches += UnityStats.dynamicBatches;
+                        row.instancedBatches += UnityStats.instancedBatches;
                         long allocated = Profiler.GetTotalAllocatedMemoryLong();
                         row.allocatedMB = Math.Max(row.allocatedMB, allocated / 1048576.0);
                         row.reservedMB = Math.Max(row.reservedMB, Profiler.GetTotalReservedMemoryLong() / 1048576.0);
                         row.monoMB = Math.Max(row.monoMB, Profiler.GetMonoUsedSizeLong() / 1048576.0);
                         csv.Append(frames.Count).Append(',').Append(ms.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append(',').Append(pieces).Append(',')
                             .Append(UnityStats.batches).Append(',').Append(UnityStats.drawCalls).Append(',').Append(UnityStats.setPassCalls).Append(',').Append(UnityStats.dynamicBatches).Append(',').Append(allocated).Append('\n');
-                        if (now >= healAt) { battle.SustainPerformanceScenario(); healAt = now + 1.0; }
+
+                        if (now >= healAt)
+                        {
+                            battle.SustainPerformanceScenario();
+                            healAt = now + 1.0;
+                        }
                     }
                     RevEvent.RemoveAllByOwner(owner);
-                    row.frames = frames.Count; row.fps = frames.Count / (previous - start);
-                    frames.Sort(); row.p50Ms = Percentile(frames, .5); row.p95Ms = Percentile(frames, .95); row.p99Ms = Percentile(frames, .99);
-                    row.batches /= row.frames; row.drawCalls /= row.frames; row.setPass /= row.frames; row.dynamicBatches /= row.frames; row.instancedBatches /= row.frames;
-                    if (row.minPieces < 40 || row.attacks < 40) { throw new InvalidOperationException("持续负载不足：章节" + chapter + "，棋子" + row.minPieces + "，攻击" + row.attacks); }
+                    row.frames = frames.Count;
+                    row.fps = frames.Count / (previous - start);
+                    frames.Sort();
+                    row.p50Ms = Percentile(frames, .5);
+                    row.p95Ms = Percentile(frames, .95);
+                    row.p99Ms = Percentile(frames, .99);
+                    row.batches /= row.frames;
+                    row.drawCalls /= row.frames;
+                    row.setPass /= row.frames;
+                    row.dynamicBatches /= row.frames;
+                    row.instancedBatches /= row.frames;
+
+                    if (row.minPieces < 40 || row.attacks < 40)
+                    {
+                        throw new InvalidOperationException("持续负载不足：章节" + chapter + "，棋子" + row.minPieces + "，攻击" + row.attacks);
+                    }
                     report.chapters.Add(row);
                     File.WriteAllText(dir + "/chapter-" + chapter + ".csv", csv.ToString());
                     ScreenCapture.CaptureScreenshot(dir + "/chapter-" + chapter + ".png");
@@ -119,7 +179,11 @@ namespace RevGame.Editor
                         await RevTask.Delay(250);
                     }
                     ProfilerDriver.enabled = false;
-                    if (ProfilerDriver.firstFrameIndex < 0) { throw new InvalidOperationException("Profiler未生成有效帧：章节" + chapter); }
+
+                    if (ProfilerDriver.firstFrameIndex < 0)
+                    {
+                        throw new InvalidOperationException("Profiler未生成有效帧：章节" + chapter);
+                    }
                     // 用户明确要求不再导出Profiler录制；只保留独立区段的标记摘要。
                     File.WriteAllText(dir + "/markers-" + chapter + ".txt", ReadMarkers());
                     File.WriteAllText(dir + "/result.json", JsonUtility.ToJson(report, true));
@@ -129,6 +193,7 @@ namespace RevGame.Editor
                 await RevTask.Delay(500);
                 report.returnBundles = AssetBundle.GetAllLoadedAssetBundles().Count();
                 report.returnBundleNames = AssetBundle.GetAllLoadedAssetBundles().Select(b => b.name).ToArray();
+
                 if (report.returnBundleNames.Contains("battle_feedback") || report.returnBundleNames.Contains("battle_units") || report.returnBundleNames.Contains("battle_board"))
                 {
                     throw new InvalidOperationException("六章连续战斗退出后仍残留战斗专用AB");
@@ -140,10 +205,15 @@ namespace RevGame.Editor
             {
                 ProfilerDriver.enabled = wasProfiler;
                 RevEvent.RemoveAllByOwner(owner);
-                QualitySettings.vSyncCount = report.originalVsync; Application.targetFrameRate = report.originalTarget;
+                QualitySettings.vSyncCount = report.originalVsync;
+                Application.targetFrameRate = report.originalTarget;
+
                 if (flow != null)
                 {
-                    try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
+                    try
+                    {
+                        await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                    }
                     catch (Exception error) { report.error += "\n清理失败：" + error; LastResult += "\n清理失败：" + error; }
                 }
                 score?.Dispose();
@@ -151,13 +221,17 @@ namespace RevGame.Editor
                 File.WriteAllText(dir + "/status.txt", LastResult);
             }
         }
-
-        private static double Percentile(List<double> values, double p) { return values[Math.Min(values.Count - 1, (int)(values.Count * p))]; }
-
+        private static double Percentile(List<double> values, double p)
+        {
+            return values[Math.Min(values.Count - 1, (int)(values.Count * p))];
+        }
         /// <summary>第四章同场交替启停积分子Canvas，检查合批收益；只在独立采样中录Profiler，结果不混入六章FPS。</summary>
         public static async void InspectHud()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             string dir = "Temp/BattleStress/hud-inspection";
             Directory.CreateDirectory(dir);
@@ -170,23 +244,41 @@ namespace RevGame.Editor
             {
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 QualitySettings.vSyncCount = 0;
-                if (!flow.OpenLevels() || !flow.EnterBattle(1)) { throw new InvalidOperationException(flow.LastError); }
+
+                if (!flow.OpenLevels() || !flow.EnterBattle(1))
+                {
+                    throw new InvalidOperationException(flow.LastError);
+                }
                 await GameSceneTransitionChecks.WaitForFlowAsync(flow);
-                if (!battle.LoadPerformanceScenario(4)) { throw new InvalidOperationException(battle.LastError); }
+
+                if (!battle.LoadPerformanceScenario(4))
+                {
+                    throw new InvalidOperationException(battle.LastError);
+                }
                 await UnityEngine.Object.FindObjectOfType<GamePresentation>().WaitUntilReadyAsync(GameScreen.Battle, null);
                 float deadline = Time.realtimeSinceStartup + 10f;
                 while (!battle.PreparationGranted)
                 {
-                    if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException("准备时间未推进"); }
+                    if (Time.realtimeSinceStartup > deadline)
+                    {
+                        throw new TimeoutException("准备时间未推进");
+                    }
                     await RevTask.Yield();
                 }
-                if (!battle.StartBattle()) { throw new InvalidOperationException(battle.LastError); }
+                if (!battle.StartBattle())
+                {
+                    throw new InvalidOperationException(battle.LastError);
+                }
                 var hud = UnityEngine.Object.FindObjectOfType<RevGame.UI.BattleHudPanel>();
                 // 正式代码不采用无收益子Canvas；此处只在诊断场景临时建立，随HUD销毁。
                 var scoreField = typeof(RevGame.UI.BattleHudPanel).GetField("scoreFrame", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 var scoreFrame = (RectTransform)scoreField.GetValue(hud);
                 Canvas child = scoreFrame.GetComponent<Canvas>();
-                if (child == null) { child = scoreFrame.gameObject.AddComponent<Canvas>(); }
+
+                if (child == null)
+                {
+                    child = scoreFrame.gameObject.AddComponent<Canvas>();
+                }
                 for (int segment = 0; segment < 4; segment++)
                 {
                     // 交替顺序减弱编辑器随时间升温的偏差；保留相同交战、积分与动画，不能关特效来刷帧。
@@ -202,7 +294,11 @@ namespace RevGame.Editor
                     await RevTask.Delay(2500);
                     ProfilerDriver.enabled = false;
                     string name = segment + (child.enabled ? "-canvas-on" : "-canvas-off");
-                    if (ProfilerDriver.firstFrameIndex < 0) { throw new InvalidOperationException("Profiler未产生有效帧：" + name); }
+
+                    if (ProfilerDriver.firstFrameIndex < 0)
+                    {
+                        throw new InvalidOperationException("Profiler未产生有效帧：" + name);
+                    }
                     // 只记录标记摘要，不导出Profiler录制文件。
                     File.WriteAllText(dir + "/" + name + ".txt", ReadMarkers());
                 }
@@ -219,13 +315,15 @@ namespace RevGame.Editor
             {
                 ProfilerDriver.enabled = profiler;
                 QualitySettings.vSyncCount = vsync;
-                try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
+                try
+                {
+                    await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                }
                 catch (Exception error) { LastResult += "\n清理失败：" + error; }
                 score.Dispose();
                 File.WriteAllText(dir + "/status.txt", LastResult);
             }
         }
-
         /// <summary>按标记聚合包含子调用的时间；父子不可相加。原始raw保留供Profiler Timeline进一步定位。</summary>
         private static string ReadMarkers()
         {
@@ -235,12 +333,16 @@ namespace RevGame.Editor
             {
                 using (var view = ProfilerDriver.GetRawFrameDataView(frame, 0))
                 {
-                    if (!view.valid) { continue; }
+                    if (!view.valid)
+                    {
+                        continue;
+                    }
                     count++;
                     for (int i = 0; i < view.sampleCount; i++)
                     {
                         string name = view.GetSampleName(i);
-                        totals.TryGetValue(name, out double ms); totals[name] = ms + view.GetSampleTimeMs(i);
+                        totals.TryGetValue(name, out double ms);
+                        totals[name] = ms + view.GetSampleTimeMs(i);
                     }
                 }
             }

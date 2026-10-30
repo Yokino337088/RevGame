@@ -24,6 +24,7 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+
             if (args.Length > 1 && args[1] == "cache-threshold")
             {
                 string output = args.Length > 2 ? args[2] : "cache-threshold.csv";
@@ -39,8 +40,8 @@ internal static class Program
             }
             if (args.Length > 1 && args[1] == "boss-healing")
             {
-                BattleService.VerifyBossHealingRules((ok,message)=>{Assert(ok,message);Console.WriteLine("PASS "+message);});
-                Console.WriteLine("Boss风暴治疗与分章状态断言通过："+_assertions);
+                BattleService.VerifyBossHealingRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
+                Console.WriteLine("Boss风暴治疗与分章状态断言通过：" + _assertions);
                 return 0;
             }
             if (args.Length > 1 && args[1] == "boss-patterns")
@@ -50,13 +51,14 @@ internal static class Program
             }
             if (args.Length > 1 && args[1] == "boss-support")
             {
-                BattleService.VerifyHelperProtectionRules((ok,message)=>{Assert(ok,message);Console.WriteLine("PASS "+message);});
-                Console.WriteLine(BattleService.VerifyBossPacingRules((ok,message)=>{Assert(ok,message);}));
-                Console.WriteLine("Boss支援规则通过："+_assertions);return 0;
+                BattleService.VerifyHelperProtectionRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
+                Console.WriteLine(BattleService.VerifyBossPacingRules((ok, message) => { Assert(ok, message); }));
+                Console.WriteLine("Boss支援规则通过：" + _assertions);
+                return 0;
             }
             if (args.Length > 1 && args[1] == "boss-expansion")
             {
-                BattleService.VerifyExpandedBossSkills((ok,message)=>{Assert(ok,message);Console.WriteLine("PASS "+message);});
+                BattleService.VerifyExpandedBossSkills((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
                 Console.WriteLine(BattleService.VerifyBossSkillExpansion((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); }));
                 Console.WriteLine("Boss专属与轮换断言通过：" + _assertions);
                 return 0;
@@ -64,7 +66,8 @@ internal static class Program
             if (args.Length > 1 && args[1] == "storm")
             {
                 BattleService.VerifyStormRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
-                Console.WriteLine("风暴与集火断言通过：" + _assertions); return 0;
+                Console.WriteLine("风暴与集火断言通过：" + _assertions);
+                return 0;
             }
             if (args.Length > 1 && args[1] == "boss")
             {
@@ -72,7 +75,10 @@ internal static class Program
                 Console.WriteLine("BossRegression: " + scenarios + " scenarios, " + assertions + " assertions passed.");
                 return 0;
             }
-            if (args.Length > 1 && args[1] == "helper-balance") { return HelperBalanceRegression.Run(args.Length > 2 ? args[2] : "."); }
+            if (args.Length > 1 && args[1] == "helper-balance")
+            {
+                return HelperBalanceRegression.Run(args.Length > 2 ? args[2] : ".");
+            }
             if (args.Length > 1 && args[1] == "helper")
             {
                 BattleService.VerifyHelperRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
@@ -122,7 +128,6 @@ internal static class Program
             GameConfig.Reset();
         }
     }
-
     /// <summary>
     /// 从工程输出目录向上找已提交的导表数据，避免依赖调用命令时的工作目录。
     /// 这是测试宿主的文件定位；正式游戏仍经 RevResManager 加载资源，不得把此办法搬进游戏。
@@ -133,6 +138,7 @@ internal static class Program
         while (root != null)
         {
             string candidate = Path.Combine(root.FullName, "RevGame_Client", "UnityProject", "RevGame.Unity", "Assets", "GameRes", "Data");
+
             if (File.Exists(Path.Combine(candidate, "PieceConfig.txt")))
             {
                 return candidate;
@@ -141,7 +147,6 @@ internal static class Program
         }
         throw new DirectoryNotFoundException("找不到导表数据，可把 Assets/GameRes/Data 绝对目录作为第一个参数。");
     }
-
     /// <summary>基础攻击：远程隔友军、非直线跨盘仍能打；近战相邻时不受移动走法误限。所有类型的远处援击另设场景。</summary>
     private static void VerifyNormalAttack(PieceKind kind, StarTier star)
     {
@@ -149,6 +154,7 @@ internal static class Program
         Piece actor = battle.AddRegressionPiece(kind, star, GameSide.Player, new BoardPos(1, 1));
         BoardPos destination = actor.Def.IsRanged ? new BoardPos(7, 6) : new BoardPos(1 + actor.Size, 1);
         Piece target = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, destination, 100f);
+
         if (actor.Def.IsRanged)
         {
             battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(1 + actor.Size, 1));
@@ -159,7 +165,6 @@ internal static class Program
         AssertActualAttack(battle, actor, target, "正常攻击");
         _scenarios++;
     }
-
     /// <summary>
     /// 用户要求所有我方棋子参战，因此我方零气现在仍有真实反击。
     /// 围困对我方的代价仍由原有受击增伤规则承担，不在此另造攻击削弱倍率。
@@ -179,6 +184,7 @@ internal static class Program
                 continue;
             }
             Piece added = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, pos, 100f);
+
             if (blocker == null)
             {
                 blocker = added;
@@ -205,7 +211,6 @@ internal static class Program
         Assert(recoveredDamagePerHit > 0f, Label(actor) + "解除零气后仍继续真实攻击");
         _scenarios++;
     }
-
     /// <summary>全部九种棋子即使隔着友军且敌人不相邻，也必须守住原位参与攻击，不再等敌人主动贴脸。</summary>
     private static void VerifyDistantAttackThroughFriendlyLine(PieceKind kind, StarTier star)
     {
@@ -221,7 +226,6 @@ internal static class Program
         Assert(actor.Pos == origin, Label(actor) + "援击过程中保持玩家布置的位置");
         _scenarios++;
     }
-
     /// <summary>同样的零气状态，敌方仍不能攻击；玩家专属反击不能意外提升敌人或破坏围棋制衡。</summary>
     private static void VerifyEnemyLockStillStopsAttack(PieceKind kind, StarTier star)
     {
@@ -266,7 +270,6 @@ internal static class Program
         }
         _scenarios++;
     }
-
     /// <summary>只收集当前棋子针对指定目标的实际伤害，未出手直接失败，不自行重写业务伤害公式。</summary>
     private static float MeasureDamagePerHit(BattleService battle, Piece actor, Piece target, GameSide side = GameSide.Player)
     {
@@ -302,7 +305,6 @@ internal static class Program
             RevEvent.RemoveAllByOwner(owner);
         }
     }
-
     /// <summary>一眼/两眼只让阵型守住位置，绝不能把不能移动误解成不能攻击。</summary>
     private static void VerifyEyeAttack(PieceKind kind, StarTier star, bool twoEyes)
     {
@@ -311,6 +313,7 @@ internal static class Program
         // 仍严格断言恰好两眼；修正输入而不是放宽预期，更不修改正式判眼规则。
         BoardPos origin = twoEyes ? new BoardPos(5, 2) : new BoardPos(1, 0);
         Piece actor = battle.AddRegressionPiece(kind, star, GameSide.Player, origin);
+
         if (twoEyes)
         {
             for (int y = 1; y <= 3; y++)
@@ -319,6 +322,7 @@ internal static class Program
                 {
                     BoardPos pos = new BoardPos(x, y);
                     bool bodyCell = x >= origin.X && x < origin.X + actor.Size && y >= origin.Y && y < origin.Y + actor.Size;
+
                     if (bodyCell || (y == 2 && (x == 2 || x == 4)))
                     {
                         continue;
@@ -327,9 +331,11 @@ internal static class Program
                 }
             }
         }
+
         else
         {
             battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(0, 1));
+
             if (actor.Size == 1)
             {
                 battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(1, 1));
@@ -344,7 +350,6 @@ internal static class Program
         Assert(actor.Pos == origin, Label(actor) + "攻击不能拆散眼阵");
         _scenarios++;
     }
-
     /// <summary>
     /// 同时核对真实攻击通知和敌人扣血。只看到弹幕不代表伤害生效，只看到目标数量也不代表真的出手。
     /// 监听限定为当前 actor，眼阵里的辅助棋子不能替它“冒领”通过结果；结束时必须解除监听。
@@ -384,12 +389,10 @@ internal static class Program
             RevEvent.RemoveAllByOwner(owner);
         }
     }
-
     private static string Label(Piece actor)
     {
         return actor.Def.Kind + " " + (int)actor.Def.Star + "★";
     }
-
     /// <summary>
     /// 同场检验名单后段，专门复现“先落下高星，后落下一级”的顺序。
     /// 前十颗从一星原位升到三星，所以身体仍是一格（正式业务同样保留原有身体）；
@@ -403,6 +406,7 @@ internal static class Program
         for (int index = 0; index < 40; index++)
         {
             Piece actor = battle.AddRegressionPiece(rangedKinds[index % rangedKinds.Length], StarTier.One, GameSide.Player, new BoardPos(index % 8, index / 8));
+
             if (index < 10)
             {
                 Assert(actor.UpgradeInPlace() && actor.UpgradeInPlace(), "同场夹具的前十颗棋子真实原位升到三星");
@@ -444,7 +448,6 @@ internal static class Program
         }
         _scenarios++;
     }
-
     /// <summary>一轮连射的第一发击败首目标后，后续额度应重查目标，不能对旧空格一直打空枪。</summary>
     private static void VerifyBurstRetargetsAfterKill()
     {
@@ -476,7 +479,6 @@ internal static class Program
         }
         _scenarios++;
     }
-
     /// <summary>援击只是没有贴脸目标时的后备；普通单格近战和两格马步近战都应先保护身边阵线。</summary>
     private static void VerifyMeleeAdjacentPriority(PieceKind kind, StarTier star)
     {
@@ -493,7 +495,6 @@ internal static class Program
         Assert(distant.Hp == distantHp && actor.Pos == origin, Label(actor) + "守阵优先攻击身边敌人，远处敌人和原阵位保持不变");
         _scenarios++;
     }
-
     /// <summary>单独制造死亡但仍在名单中的旧引用，确认新 CanAttack 不会把“我方都攻击”误写成尸体也出手。</summary>
     private static void VerifyDeadAttackerStaysSilent()
     {
@@ -520,7 +521,6 @@ internal static class Program
         }
         _scenarios++;
     }
-
     /// <summary>我方有资格出手但敌人全灭时，应安静结束该次行动，不能凭空创建攻击目标或通知。</summary>
     private static void VerifyNoEnemyStaysSilent()
     {
@@ -542,7 +542,6 @@ internal static class Program
         }
         _scenarios++;
     }
-
     /// <summary>
     /// 我方被围仍能反击，不等于移除了围棋惩罚：相同敌人攻击同一目标，零气时应比解围后每击更痛。
     /// 四名同职业敌人围住玩家，移走一名后仍有三名，维持同一职业档位，避免职业加成变化污染比较。
@@ -566,7 +565,6 @@ internal static class Program
         Assert(lockedDamage > normalDamage && normalDamage > 0f, "同一攻击者的真实单击伤害证明零气受击增伤仍在");
         _scenarios++;
     }
-
     /// <summary>真实造出最后一口气和共同断点；验证AI选点而非只验证评分常量。</summary>
     private static void VerifyGoDeploymentTactics()
     {
@@ -592,7 +590,6 @@ internal static class Program
         Assert(pos == new BoardPos(4, 4) && plan == "切断接应", "AI抢占两个棋群的共同连接点");
         _scenarios += 2;
     }
-
     /// <summary>跳过攻击只推进真实落子入口，核对冷却和事件一次提交一次发布。</summary>
     private static void VerifyFrequentEnemyDeployment()
     {
@@ -618,14 +615,20 @@ internal static class Program
             float due = battle.NextEnemyDeploymentAt;
             battle.RunRegressionDeploymentAt(due - 0.01f);
             Assert(battle.EnemyDeploymentCount == first, "冷却未到不能重复落子");
-            for (int i = 0; i < 7; i++) { battle.RunRegressionDeploymentAt(battle.NextEnemyDeploymentAt); }
+            for (int i = 0; i < 7; i++)
+            {
+                battle.RunRegressionDeploymentAt(battle.NextEnemyDeploymentAt);
+            }
             Assert(battle.EnemyDeploymentCount >= 5, "多个连续战术窗口真实提交至少五手，不再仅补两三手");
             Assert(events == battle.EnemyDeploymentCount, "每手真实落子仅发布一次弹幕事件");
             Assert(battle.NextEnemyDeploymentAt < 40f, "多手落子在前段完成，而不是等待十几秒一手");
             int finished = battle.EnemyDeploymentCount;
             battle.RunRegressionDeploymentAt(Balance.DeployStopSeconds);
             Assert(battle.EnemyDeploymentCount == finished && events == finished, "停手时刻后不再生成敌棋或虚构落子通知");
-            foreach (Piece enemy in new List<Piece>(battle.EnemyPieces)) { battle.RemoveRegressionPiece(enemy); }
+            foreach (Piece enemy in new List<Piece>(battle.EnemyPieces))
+            {
+                battle.RemoveRegressionPiece(enemy);
+            }
             battle.ResetRegressionDeployment();
             battle.RunRegressionDeploymentAt(Balance.DeployStartSeconds);
             Assert(battle.EnemyDeploymentCount == 0 && battle.Board.IsSideWiped(GameSide.Enemy), "敌方全灭不能借频繁增援复活");
@@ -633,7 +636,6 @@ internal static class Program
         finally { RevEvent.RemoveAllByOwner(owner); }
         _scenarios++;
     }
-
     /// <summary>多种子验证保底、去重和后入场继承，不以单次随机碰巧抽到为证据。</summary>
     private static void VerifyGuaranteedArrowVolley()
     {
@@ -646,7 +648,11 @@ internal static class Program
             foreach (PreparationBuffDef buff in battle.PreparationBuffs)
             {
                 Assert(kinds.Add(buff.Kind), "准备增益不重复：种子 " + seed);
-                if (buff.Kind == PreparationBuffKind.ArrowVolley) { volleys++; }
+
+                if (buff.Kind == PreparationBuffKind.ArrowVolley)
+                {
+                    volleys++;
+                }
             }
             Assert(volleys == 1, "每个随机种子都有且只有一次万箭齐发");
             Assert(kinds.Count >= Balance.PrepBuffCountMin && kinds.Count <= Balance.PrepBuffCountMax, "保底计入本轮总增益名额");
@@ -658,7 +664,6 @@ internal static class Program
         }
         _scenarios++;
     }
-
     /// <summary>直接装配真实RevHeavyFSM，核对状态行为、时间、历史、终态与服务回合回收。</summary>
     private static void VerifyHeavyEnemyAI()
     {
@@ -687,7 +692,10 @@ internal static class Program
         ai.Dispose();
         ai.Dispose();
         bool rejected = false;
-        try { ai.Tick(0f); }
+        try
+        {
+            ai.Tick(0f);
+        }
         catch (ObjectDisposedException) { rejected = true; }
         Assert(rejected, "已处置AI不能再次驱动");
         actionBattle.StopEnemyAI();
@@ -714,10 +722,10 @@ internal static class Program
         Assert(battle.EnemyAICount == 0 && battle.EnemyAIStatus().Contains("已停止"), "域退出清空敌棋与指挥机器");
         _scenarios++;
     }
-
     private static void Assert(bool condition, string message)
     {
         _assertions++;
+
         if (!condition)
         {
             throw new InvalidOperationException(message);

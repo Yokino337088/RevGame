@@ -19,13 +19,20 @@ namespace RevGame.Services
         /// <summary>固定模拟步中执行；先完成全部模型变化再派发事实事件，失败显式抛出以暴露预检契约破坏。</summary>
         private void TryArrangeRangedFormation()
         {
-            if (!Balance.RangedFormationEnabled || _battleElapsed < _nextFormationAt) { return; }
+            if (!Balance.RangedFormationEnabled || _battleElapsed < _nextFormationAt)
+            {
+                return;
+            }
             _nextFormationAt = _battleElapsed + Balance.RangedFormationSeconds;
             RangedFormationPlanner.Plan(_board, _battleElapsed, Balance.RangedFormationMinCount, Balance.PlayerRetreatDistance, _formationMoves);
             foreach (FormationMove move in _formationMoves)
             {
                 Piece piece = _board.FindPiece(move.PieceId);
-                if (piece == null || !_board.Move(piece, move.Position)) { throw new InvalidOperationException("自动整队预检与提交不一致"); }
+
+                if (piece == null || !_board.Move(piece, move.Position))
+                {
+                    throw new InvalidOperationException("自动整队预检与提交不一致");
+                }
                 // 本轮整队后不立刻被常规后撤推翻；也给玩家手动覆盖留下清晰窗口。
                 piece.NextMoveAt = _battleElapsed + Balance.PlayerMoveSeconds;
                 RefreshGoState();

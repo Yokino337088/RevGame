@@ -23,21 +23,32 @@ namespace RevGame.Editor
 
         public static string RunRules()
         {
-            if (Application.isPlaying) { throw new InvalidOperationException("规则检查要求编辑态"); }
+            if (Application.isPlaying)
+            {
+                throw new InvalidOperationException("规则检查要求编辑态");
+            }
             GameConfigFileLoader.LoadFromDirectory("Assets/GameRes/Data");
             _checks = 0;
             BattleService.VerifyEyeRules(Require);
             string result = "通过 " + _checks + " 条眼位、属性、真实攻速、补兵、重量级AI规则断言";
-            Directory.CreateDirectory(Output); File.WriteAllText(Output + "/rules.txt", result);
+            Directory.CreateDirectory(Output);
+            File.WriteAllText(Output + "/rules.txt", result);
             return result;
         }
-
         /// <summary>由现有RevMCP操作逐帧等待结果；finally回大厅并归还预览租约，失败仍写完整原因。</summary>
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { throw new InvalidOperationException("需要未暂停的空闲Play"); }
-            if (!RevResBootstrap.UseABInEditor) { throw new InvalidOperationException("眼位图像验收必须冷启动真实AB模式"); }
-            LastResult = "运行中"; _checks = 0; Directory.CreateDirectory(Output);
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                throw new InvalidOperationException("需要未暂停的空闲Play");
+            }
+            if (!RevResBootstrap.UseABInEditor)
+            {
+                throw new InvalidOperationException("眼位图像验收必须冷启动真实AB模式");
+            }
+            LastResult = "运行中";
+            _checks = 0;
+            Directory.CreateDirectory(Output);
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             var battle = (BattleService)RevServices.GetRequired<IBattleService>();
             IDisposable preview = battle.BeginScorePreview();
@@ -60,7 +71,11 @@ namespace RevGame.Editor
                 foreach (BoardCellView cell in UnityEngine.Object.FindObjectsOfType<BoardCellView>())
                 {
                     SpriteRenderer eye = cell.transform.Find("眼").GetComponent<SpriteRenderer>();
-                    if (!eye.enabled) { continue; }
+
+                    if (!eye.enabled)
+                    {
+                        continue;
+                    }
                     Require(eye.sprite != null && eye.sprite.name.StartsWith("EyeBlink_", StringComparison.Ordinal) && cell.EyeFrameCount == 4, "眼位不再引用Checkmark");
                     Require(eye.sprite.packed && eye.sprite.texture.width > 72, "眼图标来自真实AB的Atlas V2页面");
                     eyeIcons++;
@@ -70,14 +85,30 @@ namespace RevGame.Editor
                 foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>())
                 {
                     var model = battle.Board.FindPiece(view.PieceId);
-                    if (model == null) { continue; }
+
+                    if (model == null)
+                    {
+                        continue;
+                    }
                     Require(view.IsEyeGarrisonVisual == model.IsEyeGarrison, "视图驻眼特效与模型一致");
-                    if (!model.IsEyeGarrison) { continue; }
-                    if (model.Side == GameSide.Player) { player = view; } else { enemy = view; }
+
+                    if (!model.IsEyeGarrison)
+                    {
+                        continue;
+                    }
+                    if (model.Side == GameSide.Player)
+                    {
+                        player = view;
+                    }
+                    else
+                    {
+                        enemy = view;
+                    }
                     // 冻住序列帧，只剩Shader时间变化；不能把换帧误当作驻眼Shader动态证据。
                     RevTimer.CancelAllOf(view);
                     SpriteRenderer body = Body(view);
-                    var block = new MaterialPropertyBlock(); body.GetPropertyBlock(block);
+                    var block = new MaterialPropertyBlock();
+                    body.GetPropertyBlock(block);
                     Require(block.GetFloat("_EyeGarrison") == (model.Side == GameSide.Player ? 1f : 2f), "真实渲染参数正确区分两方");
                     Require(body.sharedMaterial.shader.name == "RevGame/Pieces/ArcanePiece" && body.sprite.packed, "共享棋子Shader使用真实打包帧");
                 }
@@ -105,7 +136,8 @@ namespace RevGame.Editor
                 await RevTask.Delay(180);
                 Require(battle.HandleBoardClick(new BoardPos(2, 0)) && battle.HandleBoardClick(new BoardPos(1, 0)), "真实点击补齐四邻，中心棋始终不移动");
                 Require(battle.Board.FindPiece(player.PieceId).IsEyeGarrison && player.IsEyeGarrisonVisual, "后成型全盘刷新同步激活既有中心棋Shader");
-                var lateBlock = new MaterialPropertyBlock(); Body(player).GetPropertyBlock(lateBlock);
+                var lateBlock = new MaterialPropertyBlock();
+                Body(player).GetPropertyBlock(lateBlock);
                 Require(lateBlock.GetFloat("_EyeGarrison") == 1f, "既有中心棋的实际GPU属性同步为我方驻眼");
                 await CaptureNotice("late", "眼位成型");
                 int playerId = player.PieceId;
@@ -125,18 +157,20 @@ namespace RevGame.Editor
             catch (Exception error) { outcome = "失败：" + error; }
             finally
             {
-                try { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
+                try
+                {
+                    await GameSceneTransitionChecks.ReturnHomeAsync(flow);
+                }
                 catch (Exception error) { outcome += "；清理失败：" + error.Message; }
                 preview.Dispose();
-                LastResult = outcome; File.WriteAllText(Output + "/play.txt", outcome);
+                LastResult = outcome;
+                File.WriteAllText(Output + "/play.txt", outcome);
             }
         }
-
         private static SpriteRenderer Body(PieceView view)
         {
             return (SpriteRenderer)new SerializedObject(view).FindProperty("bodyRenderer").objectReferenceValue;
         }
-
         /// <summary>拍摄实际池化弹幕；检查文字确实激活且位于屏幕中央，而非仅收到事件就宣称显示成功。</summary>
         private static async RevTask CaptureNotice(string name, string expectedTitle)
         {
@@ -147,21 +181,25 @@ namespace RevGame.Editor
                 await RevTask.Delay(110);
                 foreach (UnityEngine.UI.Text text in UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Text>())
                 {
-                    if (text.text != expectedTitle || !text.isActiveAndEnabled) { continue; }
+                    if (text.text != expectedTitle || !text.isActiveAndEnabled)
+                    {
+                        continue;
+                    }
                     Vector2 point = RectTransformUtility.WorldToScreenPoint(null, text.rectTransform.position);
                     visible |= point.x > Screen.width * 0.35f && point.x < Screen.width * 0.65f;
                 }
             }
             Require(visible, expectedTitle + "中央弹幕实际可见");
         }
-
         /// <summary>读取已经落盘的真实GameView，比较指定棋子身体范围；不采UI、弹道或其它棋子的动画。</summary>
         private static float ChangedPixels(PieceView view, string beforePath, string afterPath)
         {
-            var before = new Texture2D(2, 2); var after = new Texture2D(2, 2);
+            var before = new Texture2D(2, 2);
+            var after = new Texture2D(2, 2);
             try
             {
-                before.LoadImage(File.ReadAllBytes(beforePath)); after.LoadImage(File.ReadAllBytes(afterPath));
+                before.LoadImage(File.ReadAllBytes(beforePath));
+                after.LoadImage(File.ReadAllBytes(afterPath));
                 Bounds bounds = Body(view).bounds;
                 Camera camera = Camera.main;
                 Vector3 min = camera.WorldToViewportPoint(bounds.min), max = camera.WorldToViewportPoint(bounds.max);
@@ -174,16 +212,21 @@ namespace RevGame.Editor
                 int changed = 0;
                 for (int i = 0; i < a.Length; i++)
                 {
-                    if (Mathf.Abs(a[i].r - b[i].r) + Mathf.Abs(a[i].g - b[i].g) + Mathf.Abs(a[i].b - b[i].b) > 0.12f) { changed++; }
+                    if (Mathf.Abs(a[i].r - b[i].r) + Mathf.Abs(a[i].g - b[i].g) + Mathf.Abs(a[i].b - b[i].b) > 0.12f)
+                    {
+                        changed++;
+                    }
                 }
                 return (float)changed / a.Length;
             }
             finally { UnityEngine.Object.DestroyImmediate(before); UnityEngine.Object.DestroyImmediate(after); }
         }
-
         private static void Require(bool condition, string message)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             _checks++;
         }
     }

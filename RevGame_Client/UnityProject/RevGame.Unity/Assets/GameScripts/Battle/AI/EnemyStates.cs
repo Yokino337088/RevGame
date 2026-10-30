@@ -49,26 +49,59 @@ namespace RevGame.Battle
     public interface IEnemyAIOwner : RevIHeavyFSMOwner, IAttackPrediction
     {
         /// <summary>当前棋盘，只读用于查询；落子/移动必须走下面的提交方法。</summary>
-        BoardModel Board { get; }
+        BoardModel Board
+        {
+            get;
+        }
         /// <summary>这台机器负责的棋子；指挥机器为 null。</summary>
-        Piece Actor { get; }
+        Piece Actor
+        {
+            get;
+        }
         /// <summary>当前阶段；非战斗时棋子应停止行动。</summary>
-        GamePhase Phase { get; }
+        GamePhase Phase
+        {
+            get;
+        }
         /// <summary>战斗累计模拟秒数，移动冷却与增援冷却都以它为准。</summary>
-        float Elapsed { get; }
+        float Elapsed
+        {
+            get;
+        }
         /// <summary>AI 档位 1~4，只影响评分因素，不改变固定时钟。</summary>
-        int Intelligence { get; }
+        int Intelligence
+        {
+            get;
+        }
         /// <summary>当前章节与回合，用于读取本回合的成长倍率和增援兵种。</summary>
-        int Chapter { get; }
-        int Round { get; }
+        int Chapter
+        {
+            get;
+        }
+        int Round
+        {
+            get;
+        }
         /// <summary>主将是否已被擒；已擒时立即停止一切攻击/移动。</summary>
-        bool KingCaptured { get; }
+        bool KingCaptured
+        {
+            get;
+        }
         /// <summary>下一次允许尝试增援的时刻；由 Deploy 状态推进，服务只保存。</summary>
-        float NextDeploymentAt { get; set; }
+        float NextDeploymentAt
+        {
+            get; set;
+        }
         /// <summary>本回合已成功增援次数；同时作为兵种轮换下标与预算判断。</summary>
-        int DeploymentCount { get; }
+        int DeploymentCount
+        {
+            get;
+        }
         /// <summary>已通过预检、等待提交的完整敌军名单；Prepare 状态据此落子。</summary>
-        IReadOnlyList<Piece> PlannedEnemies { get; }
+        IReadOnlyList<Piece> PlannedEnemies
+        {
+            get;
+        }
         /// <summary>提交一颗已规划好的敌棋；服务负责真实占格并创建它的棋子机器。</summary>
         void CommitFormationPiece(Piece piece);
         /// <summary>提交一次增援：服务负责占格、编号、事件和提示，状态不直接改名单。</summary>
@@ -80,7 +113,6 @@ namespace RevGame.Battle
         /// <summary>按本回合成长倍率创建一颗待出生敌棋；只在真正提交前调用。</summary>
         Piece CreateDeployment(PieceDef definition, RoundDef round);
     }
-
     /// <summary>
     /// 所有棋子状态的共同基类：集中“感知 + 切换 + 执行”三步，子类只实现 Act。
     ///
@@ -105,39 +137,53 @@ namespace RevGame.Battle
             EnemyAIState next;
             string reason;
             Piece actor = Owner.Actor;
+
             // 1) 死亡优先于一切：真实扣血已经移除棋子，状态不能再攻击或移动。
             if (!actor.IsAlive)
             {
-                next = EnemyAIState.Dead; reason = "真实死亡";
+                next = EnemyAIState.Dead;
+                reason = "真实死亡";
             }
             // 2) 离开战斗（结算/返回大厅）后停止，避免在非战斗阶段继续改棋盘。
-            else if (Owner.Phase != GamePhase.Battle)
-            {
-                next = EnemyAIState.Stopped; reason = "非战斗阶段";
-            }
-            // 3) 零气锁死：本游戏规则下敌方锁死不能出手，也不能积攒攻击额度。
-            else if (!MoveRules.CanAttack(actor))
-            {
-                next = EnemyAIState.Locked; reason = "零气锁死";
-            }
             else
-            {
-                // 4) 有合法目标就接敌；没有则等独立移动冷却，冷却到了才推进。
-                //    查询使用服务提供的复用缓冲，返回的坐标只在本小步有效。
-                MoveRules.GetAttackTargets(Owner.Board, actor, Targets);
-                if (Targets.Count > 0)
+
+                if (Owner.Phase != GamePhase.Battle)
                 {
-                    next = EnemyAIState.Attack; reason = "发现合法攻击目标";
+                    next = EnemyAIState.Stopped;
+                    reason = "非战斗阶段";
                 }
-                else if (Owner.Elapsed >= Math.Max((actor.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds), actor.NextMoveAt))
-                {
-                    next = EnemyAIState.Advance; reason = "没有射界且移动冷却完成";
-                }
+                // 3) 零气锁死：本游戏规则下敌方锁死不能出手，也不能积攒攻击额度。
                 else
-                {
-                    next = EnemyAIState.Hold; reason = "等待移动冷却";
-                }
-            }
+
+                    if (!MoveRules.CanAttack(actor))
+                    {
+                        next = EnemyAIState.Locked;
+                        reason = "零气锁死";
+                    }
+                    else
+                    {
+                        // 4) 有合法目标就接敌；没有则等独立移动冷却，冷却到了才推进。
+                        //    查询使用服务提供的复用缓冲，返回的坐标只在本小步有效。
+                        MoveRules.GetAttackTargets(Owner.Board, actor, Targets);
+
+                        if (Targets.Count > 0)
+                        {
+                            next = EnemyAIState.Attack;
+                            reason = "发现合法攻击目标";
+                        }
+                        else
+
+                            if (Owner.Elapsed >= Math.Max((actor.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds), actor.NextMoveAt))
+                            {
+                                next = EnemyAIState.Advance;
+                                reason = "没有射界且移动冷却完成";
+                            }
+                            else
+                            {
+                                next = EnemyAIState.Hold;
+                                reason = "等待移动冷却";
+                            }
+                    }
             // 5) 只在目标不同的时候切换，避免同状态反复 OnExit/OnEnter 重置 StateTime。
             //    框架允许在 OnUpdate 中同步切换；禁止的是在 OnEnter/OnExit 里再切。
             if (next != StateType)
@@ -147,10 +193,10 @@ namespace RevGame.Battle
             // 6) 框架切换不会自动执行新状态，所以这里补执行一次，且不再递归感知。
             ((EnemyState)Machine.CurrentState).Act(seconds);
         }
-
         /// <summary>当前状态真正做的事；等待/锁死/死亡不需要覆盖（默认什么也不做）。</summary>
-        protected virtual void Act(float seconds) { }
-
+        protected virtual void Act(float seconds)
+        {
+        }
         /// <summary>
         /// 按标准行动周期积攒攻击进度，返回“本步可以出手几次”。
         ///
@@ -168,7 +214,6 @@ namespace RevGame.Battle
             return actions;
         }
     }
-
     /// <summary>
     /// 接敌状态：每个模拟步先攒攻击进度，攒满几次就出手几次。
     /// 每一发都重新查询目标：上一发可能已经击杀，不能继续打一个已移除的棋子对象。
@@ -184,12 +229,14 @@ namespace RevGame.Battle
             for (int i = 0; i < actions; i++)
             {
                 MoveRules.GetAttackTargets(Owner.Board, Owner.Actor, Targets);
+
                 if (Targets.Count == 0)
                 {
                     break;
                 }
                 Piece target = EnemyTactics.ChooseTarget(Owner.Board, Owner.Actor, Targets, Owner.Intelligence, Owner);
                 Owner.Attack(Owner.Actor, target);
+
                 // 擒王后整场立即结束，不再处理本步剩余连击。
                 if (Owner.KingCaptured)
                 {
@@ -198,7 +245,6 @@ namespace RevGame.Battle
             }
         }
     }
-
     /// <summary>
     /// 推进状态：没有射界且移动冷却已到时，安全靠近一次。
     ///
@@ -219,18 +265,19 @@ namespace RevGame.Battle
             actor.NextMoveAt = Owner.Elapsed + (actor.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds);
             // 状态决定何时推进、失败是否消费冷却；通用合法候选与距离过滤交给算法。
             EnemyTactics.GetAdvanceCandidates(Owner.Board, actor, Targets);
+
             if (Targets.Count == 0 && (actor.Def.IsRanged || actor.EyeCount > 0))
             {
                 return;
             }
             BoardPos best = EnemyTactics.ChooseSafeMove(Owner.Board, actor, Targets, Owner.Intelligence);
+
             if (best != actor.Pos)
             {
                 Owner.Move(actor, best);
             }
         }
     }
-
     /// <summary>
     /// 等待状态：没有射界，且移动冷却还没到。
     ///
@@ -242,9 +289,11 @@ namespace RevGame.Battle
     {
         public EnemyHoldState(RevHeavyFSM<EnemyAIState, IEnemyAIOwner> machine) : base(machine) { }
         public override EnemyAIState StateType => EnemyAIState.Hold;
-        protected override void Act(float seconds) { ConsumeActions(seconds); }
+        protected override void Act(float seconds)
+        {
+            ConsumeActions(seconds);
+        }
     }
-
     /// <summary>
     /// 锁死状态：零气，按规则不能出手。
     /// 与 Hold 的区别是不积攒攻击额度，避免一解围就连打多下；
@@ -255,7 +304,6 @@ namespace RevGame.Battle
         public EnemyLockedState(RevHeavyFSM<EnemyAIState, IEnemyAIOwner> machine) : base(machine) { }
         public override EnemyAIState StateType => EnemyAIState.Locked;
     }
-
     /// <summary>
     /// 死亡终态：不再感知、不执行、不会被“下一次 Tick”复活。
     /// 逻辑死亡由真实扣血触发，与表现层的溶解动画无关——动画没播完也不影响 AI 停手。
@@ -265,9 +313,10 @@ namespace RevGame.Battle
     {
         public EnemyDeadState(RevHeavyFSM<EnemyAIState, IEnemyAIOwner> machine) : base(machine) { }
         public override EnemyAIState StateType => EnemyAIState.Dead;
-        public override void OnUpdate(float seconds) { }
+        public override void OnUpdate(float seconds)
+        {
+        }
     }
-
     /// <summary>
     /// 停止状态：
     /// · 棋子：战斗结束/返回大厅后停手，不再改棋盘；
@@ -288,7 +337,6 @@ namespace RevGame.Battle
             }
         }
     }
-
     /// <summary>
     /// 布阵状态：把“已经通过纯算法预检”的名单逐颗提交到棋盘。
     ///
@@ -307,10 +355,12 @@ namespace RevGame.Battle
             {
                 return;
             }
-            foreach (Piece piece in Owner.PlannedEnemies) { Owner.CommitFormationPiece(piece); }
+            foreach (Piece piece in Owner.PlannedEnemies)
+            {
+                Owner.CommitFormationPiece(piece);
+            }
         }
     }
-
     /// <summary>
     /// 增援状态（指挥）：按“停援条件 → 冷却 → 在场上限 → 空格 → 兵种 → 快照选点 → 原子提交”执行。
     ///
@@ -345,7 +395,10 @@ namespace RevGame.Battle
             for (int batch = 0; batch < Balance.DeployBatchCount; batch++)
             {
                 if (Owner.DeploymentCount >= Balance.DeployBaseCount + Owner.Intelligence || Owner.KingCaptured
-                    || Owner.Board.IsSideWiped(GameSide.Player) || Owner.Board.IsSideWiped(GameSide.Enemy)) { break; }
+                    || Owner.Board.IsSideWiped(GameSide.Player) || Owner.Board.IsSideWiped(GameSide.Enemy))
+                {
+                    break;
+                }
                 // 3) 在场上限与空格下限：留空间给玩家调阵和援军，不把棋盘塞满。
                 // 只需要人数就直接累计，省掉每次部署状态轮询new List；CountSide仍保留原在盘成员口径。
                 if (Owner.Board.CountSide(GameSide.Enemy) >= Balance.DeployLivingCap)
@@ -358,6 +411,7 @@ namespace RevGame.Battle
                 }
                 // 4) 兵种来自 EnemyReinforceConfig：按已补次数与 AI 档位交替，缺规则时明确报错而不是瞎猜。
                 RoundDef round = LevelCatalog.GetRound(Owner.Chapter, Owner.Round);
+
                 if (round == null)
                 {
                     throw new InvalidOperationException("敌方落子缺少当前回合配置");
@@ -365,25 +419,33 @@ namespace RevGame.Battle
                 PieceKind? kind = LevelCatalog.PickReinforcement(Owner.DeploymentCount, Owner.Intelligence);
                 // 本方空眼优先补远程，普通阵位仍按原增援表轮换。每次提交后重查，不能连续覆盖同一格。
                 bool hasEye = EyeTactics.TryFindOwnEye(Owner.Board, GameSide.Enemy, 1, out BoardPos eyePosition);
-                if (hasEye) { kind = PieceKind.Crossbow; }
+
+                if (hasEye)
+                {
+                    kind = PieceKind.Crossbow;
+                }
                 if (!kind.HasValue)
                 {
-                    RevLog.Warn("敌方补兵规则没有命中，请检查EnemyReinforceConfig", "RevGame"); return;
+                    RevLog.Warn("敌方补兵规则没有命中，请检查EnemyReinforceConfig", "RevGame");
+                    return;
                 }
                 PieceDef def = PieceCatalog.Get(kind.Value, LevelCatalog.GetEnemyStar(Owner.Chapter, false));
                 Piece newcomer = Owner.CreateDeployment(def, round);
                 BoardPos position;
                 string intention;
+
                 // 5) 选点：深快照里试落，不污染实战气眼；无安全点就放弃本次窗口（冷却已消耗）。
                 if (hasEye)
                 {
                     position = eyePosition;
                     intention = "远程驻守眼位";
                 }
-                else if (!EnemyTactics.TryChooseDeployment(Owner.Board, newcomer, Owner.Intelligence, out position, out intention))
-                {
-                    return;
-                }
+                else
+
+                    if (!EnemyTactics.TryChooseDeployment(Owner.Board, newcomer, Owner.Intelligence, out position, out intention))
+                    {
+                        return;
+                    }
                 // 6) 新棋落地不立即攻击/移动，先攒满一个完整移动冷却，玩家有机会反应。
                 newcomer.NextMoveAt = Owner.Elapsed + (newcomer.Def.IsRanged ? Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks : Balance.EnemyJumpSeconds);
                 Owner.CommitDeployment(newcomer, position, intention);

@@ -23,20 +23,19 @@ namespace RevGame.Editor
             foreach (string source in Directory.GetFiles(sourceAudioDirectory, "*.mp3"))
             {
                 string target = "Assets/ArtRes/音频/" + Path.GetFileName(source);
+
                 if (!File.Exists(target))
                 {
                     File.Copy(source, target);
                 }
-
                 AssetDatabase.ImportAsset(target);
             }
-
             string bgm = "Assets/GameRes/Audio/Bgm/MainTheme.mp3";
+
             if (!File.Exists(bgm))
             {
                 File.Copy(Path.Combine(sourceAudioDirectory, "普通朋友.mp3"), bgm);
             }
-
             AssetDatabase.ImportAsset(bgm);
             Tone("Place", 420, 0.09f);
             Tone("Hit", 155, 0.08f);
@@ -47,29 +46,26 @@ namespace RevGame.Editor
             BuildHud();
             PolishReadability();
             var host = GameObject.Find("GamePresentation");
+
             if (host.GetComponent<GameAudio>() == null)
             {
                 host.AddComponent<GameAudio>();
             }
-
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             UnityEditor.SceneManagement.EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
             return "8首音乐已导入；1首运行时BGM、5个短音效、破碎/升星/飘字、Boss血条和事件提示已保存";
         }
-
         private static void Folder(string path)
         {
             if (AssetDatabase.IsValidFolder(path))
             {
                 return;
             }
-
             string parent = Path.GetDirectoryName(path).Replace('\\', '/');
             Folder(parent);
             AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
         }
-
         private static void Tone(string name, float frequency, float duration)
         {
             const int rate = 22050;
@@ -97,10 +93,8 @@ namespace RevGame.Editor
                     float sample = Mathf.Sin(2f * Mathf.PI * frequency * i / rate) * envelope * 0.35f;
                     writer.Write((short)(sample * short.MaxValue));
                 }
-
                 File.WriteAllBytes(path, stream.ToArray());
             }
-
             AssetDatabase.ImportAsset(path);
             var importer = (AudioImporter)AssetImporter.GetAtPath(path);
             var settings = importer.defaultSampleSettings;
@@ -108,7 +102,6 @@ namespace RevGame.Editor
             importer.defaultSampleSettings = settings;
             importer.SaveAndReimport();
         }
-
         private static void BuildEffects()
         {
             Folder("Assets/GameRes/Effects");
@@ -133,7 +126,6 @@ namespace RevGame.Editor
             PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Effects/Combat/BattleEffect.prefab");
             Object.DestroyImmediate(root);
         }
-
         private static void BuildHud()
         {
             const string path = "Assets/GameRes/UI/Panel/BattleHudPanel.prefab";
@@ -160,7 +152,6 @@ namespace RevGame.Editor
                     GameAssetBuilder.Picture("eventIcon", notice.transform, null, new Vector2(90, 90), new Vector2(-225, 0));
                     GameAssetBuilder.Label("eventText", notice.transform, "", new Vector2(430, 90), new Vector2(45, 0), 40);
                 }
-
                 var panel = root.GetComponent<BattleHudPanel>();
                 var so = new SerializedObject(panel);
                 var icons = so.FindProperty("eventIcons");
@@ -169,7 +160,6 @@ namespace RevGame.Editor
                 {
                     icons.GetArrayElementAtIndex(i).objectReferenceValue = GameAssetBuilder.Sprite("界面/新版/UI_Setting_Checkmark.png");
                 }
-
                 so.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
@@ -178,7 +168,6 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
-
         /// <summary>根据实际 Play 画面修正可读性。尺寸按 Sprite 的真实世界宽度换算，不能把缩放当作宽度。</summary>
         public static void PolishReadability()
         {
@@ -204,7 +193,6 @@ namespace RevGame.Editor
                     "血条底图",
                     "血条"
                 }
-
                 )
                 {
                     var bar = root.transform.Find(name).GetComponent<SpriteRenderer>();
@@ -214,14 +202,12 @@ namespace RevGame.Editor
                     bar.transform.localPosition = new Vector3(0f, 0.53f, 0f);
                     bar.color = name == "血条" ? new Color(0.22f, 0.65f, 0.32f) : new Color(0.18f, 0.12f, 0.08f);
                 }
-
                 PrefabUtility.SaveAsPrefabAsset(root, piecePath);
             }
             finally
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
-
             foreach (string panel in new[]
             {
                 "HomePanel",
@@ -232,7 +218,6 @@ namespace RevGame.Editor
                 "SettlePanel",
                 "RewardPanel"
             }
-
             )
             {
                 string path = "Assets/GameRes/UI/Panel/" + panel + ".prefab";
@@ -242,6 +227,7 @@ namespace RevGame.Editor
                     foreach (Text text in root.GetComponentsInChildren<Text>(true))
                     {
                         text.fontStyle = FontStyle.Bold;
+
                         if (text.name == "stats")
                         {
                             text.fontSize = 20;
@@ -255,12 +241,12 @@ namespace RevGame.Editor
                         var frame = root.transform.Find("bossFrame").GetComponent<Image>();
                         frame.rectTransform.anchoredPosition = new Vector2(0, -132);
                         frame.rectTransform.sizeDelta = new Vector2(700, 38);
+
                         if (frame.transform.Find("backdrop") == null)
                         {
                             Image backdrop = GameAssetBuilder.Picture("backdrop", frame.transform, null, new Vector2(700, 38), Vector2.zero);
                             backdrop.color = new Color(0.2f, 0.1f, 0.08f);
                         }
-
                         var bar = root.transform.Find("bossBar").GetComponent<Image>();
                         // Filled Image 必须有 Sprite；空 Sprite 只会画普通四边形，fillAmount=0 仍是满条。
                         bar.sprite = AssetDatabase.LoadAssetAtPath<GameObject>(piecePath).transform.Find("血条").GetComponent<SpriteRenderer>().sprite;
@@ -270,7 +256,6 @@ namespace RevGame.Editor
                         title.rectTransform.anchoredPosition = new Vector2(0, -132);
                         title.fontSize = 23;
                     }
-
                     if (panel == "PreparePanel")
                     {
                         // 提示原来压在棋盘最后一行，改放右侧按钮上方，手牌仍位于屏幕下边。
@@ -279,7 +264,6 @@ namespace RevGame.Editor
                         hint.anchoredPosition = new Vector2(-180f, 285f);
                         hint.sizeDelta = new Vector2(300f, 120f);
                     }
-
                     PrefabUtility.SaveAsPrefabAsset(root, path);
                 }
                 finally
@@ -287,7 +271,6 @@ namespace RevGame.Editor
                     PrefabUtility.UnloadPrefabContents(root);
                 }
             }
-
             AssetDatabase.SaveAssets();
             // ★ 最后统一应用新版美术，防止可读性修整把填充图或颜色恢复成旧占位样式。
             GameArtMigration.ApplyAll();

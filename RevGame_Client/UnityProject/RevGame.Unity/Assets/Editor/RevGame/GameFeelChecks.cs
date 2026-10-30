@@ -17,8 +17,15 @@ namespace RevGame.Editor
         [UnityEditor.MenuItem("RevGame/验收/池化动画（Play）")]
         public static async void BeginPoolCheck()
         {
-            if (!Application.isPlaying) { RevLog.Warn("请先从StartScene进入Play再验收池化动画", "RevGame"); return; }
-            if (LastResult == "运行中") { return; }
+            if (!Application.isPlaying)
+            {
+                RevLog.Warn("请先从StartScene进入Play再验收池化动画", "RevGame");
+                return;
+            }
+            if (LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             GameObject container = new GameObject("池化动画验收", typeof(RectTransform));
             container.GetComponent<RectTransform>().sizeDelta = new Vector2(1920, 1080);
@@ -153,32 +160,41 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (effect != null) { RevPool.Return(effect, 0); }
-                if (piece != null) { RevPool.Return(piece, 0); }
-                if (notice != null) { RevPool.Return(notice, 0); }
+                if (effect != null)
+                {
+                    RevPool.Return(effect, 0);
+                }
+                if (piece != null)
+                {
+                    RevPool.Return(piece, 0);
+                }
+                if (notice != null)
+                {
+                    RevPool.Return(notice, 0);
+                }
                 Object.Destroy(container);
                 // 留下可读取的结果；这些文件只在忽略目录Temp中，不修改场景资产或正式资源。
                 System.IO.File.WriteAllText("Temp/GameFeelChecks.txt", LastResult);
             }
         }
-
         private static RevTask<T> Load<T>(Transform parent) where T : Component
         {
             var source = new RevTaskCompletionSource<T>();
             RevPool.GetAsync<T>(item => source.SetResult(item), parent);
             return source.Task;
         }
-
         /// <summary>仅验收夹具读取业务视图的私有身体引用，不向正式玩法公开修改渲染器的接口。</summary>
         private static SpriteRenderer BodyOf(PieceView piece)
         {
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
             return (SpriteRenderer)typeof(PieceView).GetField("bodyRenderer", flags).GetValue(piece);
         }
-
         private static void Require(bool condition, string message)
         {
-            if (!condition) { throw new System.InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new System.InvalidOperationException(message);
+            }
         }
     }
 }

@@ -17,11 +17,19 @@ namespace RevGame.View
         public void PlayBossTile(Color tint, float duration, float delay = 0f)
         {
             ClearBossTile();
-            if (_surfaceRenderer == null) { return; }
+
+            if (_surfaceRenderer == null)
+            {
+                return;
+            }
             _bossTileProperties ??= new MaterialPropertyBlock();
             _surfaceRenderer.GetPropertyBlock(_bossTileProperties);
+
             // 自定义参数块必须携带真实图集页；仅写颜色可能让某些SpriteRenderer路径退回材质的白色默认贴图。
-            if (_surfaceRenderer.sprite != null) { _bossTileProperties.SetTexture("_MainTex", _surfaceRenderer.sprite.texture); }
+            if (_surfaceRenderer.sprite != null)
+            {
+                _bossTileProperties.SetTexture("_MainTex", _surfaceRenderer.sprite.texture);
+            }
             _bossTileProperties.SetColor("_BossTint", tint);
             _bossTilePulse = 0f;
             _bossTileTween = DOTween.To(() => _bossTilePulse, value =>
@@ -33,13 +41,19 @@ namespace RevGame.View
                 // 复用已有的纯视觉起伏层：只动Sprite，绝不移动根节点上的格子碰撞器。
                 float wave = value < .65f ? value / .65f : (value - .65f) / .35f;
                 SetVictoryWave(Mathf.Clamp01(wave), value < .65f ? .62f : .23f);
-                if (_victorySurface != null && _victorySurface.enabled) { _victorySurface.SetPropertyBlock(_bossTileProperties); }
+
+                if (_victorySurface != null && _victorySurface.enabled)
+                {
+                    _victorySurface.SetPropertyBlock(_bossTileProperties);
+                }
             }, 1f, Mathf.Clamp(duration, .65f, 1.25f)).SetDelay(delay).SetEase(Ease.Linear)
                 .OnComplete(() => { _bossTileTween = null; ClearBossTile(); });
         }
         public void ClearBossTile()
         {
-            _bossTileTween?.Kill(false); _bossTileTween = null;
+            _bossTileTween?.Kill(false);
+            _bossTileTween = null;
+
             if (_surfaceRenderer != null && _bossTileProperties != null)
             {
                 // 短效结束后彻底撤销自定义参数块，恢复章节材质默认值与SpriteRenderer图集绑定。

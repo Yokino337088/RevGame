@@ -23,7 +23,10 @@ namespace RevGame.Editor
         /// <summary>只有AB模式的真实Play才执行；每次取用都释放自己的租约，避免验收改变正式资源寿命。</summary>
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             int count = 0;
             PieceView piece = null;
@@ -40,17 +43,34 @@ namespace RevGame.Editor
                 foreach (string guid in AssetDatabase.FindAssets("", new[] { "Assets/GameRes" }))
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
-                    if (AssetDatabase.IsValidFolder(path)) { continue; }
+
+                    if (AssetDatabase.IsValidFolder(path))
+                    {
+                        continue;
+                    }
                     // GameRes现在同时保留“已打包资源”和“未启用素材”。只验收有AB标记的资源，
                     // 不能强求已经按真实引用剔除的备用图片仍然能从AB加载；去留正确性由GameResourceUsage独立校验。
-                    if (string.IsNullOrEmpty(AssetDatabase.GetImplicitAssetBundleName(path))) { continue; }
+                    if (string.IsNullOrEmpty(AssetDatabase.GetImplicitAssetBundleName(path)))
+                    {
+                        continue;
+                    }
                     string root = Path.GetDirectoryName(path).Replace('\\', '/').Substring("Assets/GameRes/".Length) + "/";
                     string name = Path.GetFileNameWithoutExtension(path);
                     var source = new RevTaskCompletionSource<RevResHandle>();
                     RevResGroup group = root.StartsWith("UI/Panel/") ? RevResGroup.UI : RevResGroup.Battle;
-                    if (root.StartsWith("Material/")) { group = RevResGroup.Scene; }
-                    if (root.StartsWith("Data/") || root.StartsWith("Config/")) { group = RevResGroup.Config; }
-                    if (root.StartsWith("Audio/")) { group = RevResGroup.Sound; }
+
+                    if (root.StartsWith("Material/"))
+                    {
+                        group = RevResGroup.Scene;
+                    }
+                    if (root.StartsWith("Data/") || root.StartsWith("Config/"))
+                    {
+                        group = RevResGroup.Config;
+                    }
+                    if (root.StartsWith("Audio/"))
+                    {
+                        group = RevResGroup.Sound;
+                    }
                     // 入图集后AB会剥离源Texture2D像素，只保留Sprite元数据和图集页面。
                     // 因此图片必须按Sprite加载；用Texture2D测试会强求本就应该被剥离的散图副本。
                     TextureImporter textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -64,7 +84,11 @@ namespace RevGame.Editor
                         string bundle = AssetDatabase.GetImplicitAssetBundleName(path);
                         Require(handle.IsLoaded && AssetBundle.GetAllLoadedAssetBundles().Any(b => b.name == bundle), path + "：" + handle.ErrorReason);
                         Material material = handle.Content as Material;
-                        if (material != null) { Require(material.shader != null && material.shader.isSupported, "AB材质Shader可用：" + path); }
+
+                        if (material != null)
+                        {
+                            Require(material.shader != null && material.shader.isSupported, "AB材质Shader可用：" + path);
+                        }
                         count++;
                     }
                     finally { RevResManager.Release(root, name); }
@@ -143,15 +167,20 @@ namespace RevGame.Editor
             catch (Exception error) { LastResult = "失败：" + error; RevLog.Exception(error, "资源Play验收失败", "RevGame"); }
             finally
             {
-                if (piece != null && piece.gameObject.activeInHierarchy) { RevPool.Return(piece, 0); }
+                if (piece != null && piece.gameObject.activeInHierarchy)
+                {
+                    RevPool.Return(piece, 0);
+                }
                 UnityEngine.Object.Destroy(container);
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
-
         private static void Require(bool value, string message)
         {
-            if (!value) { throw new InvalidOperationException(message); }
+            if (!value)
+            {
+                throw new InvalidOperationException(message);
+            }
         }
     }
 }

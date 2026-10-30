@@ -36,7 +36,6 @@ namespace RevGame.Board
                 {
                     continue;
                 }
-
                 var group = new List<Piece>();
                 var queue = new Queue<Piece>();
                 queue.Enqueue(piece);
@@ -47,19 +46,17 @@ namespace RevGame.Board
                     foreach (BoardPos next in BoardModel.Boundary(current))
                     {
                         Piece neighbor = board.GetPiece(next);
+
                         if (neighbor != null && neighbor.Side == current.Side && visited.Add(neighbor))
                         {
                             queue.Enqueue(neighbor);
                         }
                     }
                 }
-
                 groups.Add(group);
             }
-
             return groups;
         }
-
         /// <summary>气是空格的并集，不是每颗棋子气数相加，共用的一口气只能算一次。</summary>
         public static int CountLiberties(BoardModel board, List<Piece> group)
         {
@@ -69,37 +66,37 @@ namespace RevGame.Board
                 foreach (BoardPos pos in BoardModel.Boundary(piece))
                 {
                     Cell cell = board.GetCell(pos);
+
                     if (cell != null && cell.IsEmpty)
                     {
                         empty.Add(pos);
                     }
                 }
             }
-
             return empty.Count;
         }
-
         /// <summary>按当前完整占格判眼，不依赖落子顺序；角上两邻、边上三邻也有效。中心可为空或本方单格棋，大棋内部不算眼。</summary>
         public static bool IsEye(BoardModel board, BoardPos pos, GameSide side)
         {
             Cell center = board.GetCell(pos);
+
             // 不能要求中心棋曾经“落入已成型空眼”：中心先落、外围最后补齐也必须在本次全盘刷新获得驻眼状态。
             if (center == null || (!center.IsEmpty && (center.Occupant.Side != side || center.Occupant.Size != 1)))
             {
                 return false;
             }
-
             int neighbors = 0;
             for (int direction = 0; direction < 4; direction++)
             {
                 BoardPos next = Neighbor(pos, direction);
                 Cell cell = board.GetCell(next);
+
                 if (cell == null)
                 {
                     continue;
                 }
-
                 neighbors++;
+
                 if (cell.IsEmpty || cell.Occupant.Side != side || cell.Occupant == center.Occupant)
                 {
                     return false;
@@ -108,7 +105,6 @@ namespace RevGame.Board
 
             return neighbors >= 2;
         }
-
         private static int CountEyes(BoardModel board, List<Piece> group)
         {
             var eyes = new HashSet<BoardPos>();
@@ -122,15 +118,12 @@ namespace RevGame.Board
                     }
                 }
             }
-
             return eyes.Count;
         }
-
         public static bool HasTwoEyes(BoardModel board, List<Piece> group)
         {
             return CountEyes(board, group) >= 2;
         }
-
         public static void Evaluate(BoardModel board)
         {
             for (int y = 0; y < board.Size; y++)
@@ -139,11 +132,10 @@ namespace RevGame.Board
                 {
                     var pos = new BoardPos(x, y);
                     Cell cell = board.GetCell(pos);
-                    cell.EyeSide = IsEye(board, pos, GameSide.Player) ? GameSide.Player : (IsEye(board, pos, GameSide.Enemy) ? (GameSide? )GameSide.Enemy : null);
+                    cell.EyeSide = IsEye(board, pos, GameSide.Player) ? GameSide.Player : (IsEye(board, pos, GameSide.Enemy) ? (GameSide?)GameSide.Enemy : null);
                     cell.IsEyeMarked = cell.EyeSide.HasValue;
                 }
             }
-
             Workspace scratch = board.RuleWorkspace;
             scratch.Visited.Clear();
             foreach (Piece root in board.Pieces)
@@ -171,6 +163,7 @@ namespace RevGame.Board
                         for (int x = 0; x < piece.Size; x++)
                         {
                             Cell own = board.GetCell(new BoardPos(piece.Pos.X + x, piece.Pos.Y + y));
+
                             if (own.EyeSide == piece.Side)
                             {
                                 piece.IsEyeGarrison = true;
@@ -186,6 +179,7 @@ namespace RevGame.Board
                         {
                             BoardPos pos = BoundaryAt(piece, edge, direction);
                             Cell cell = board.GetCell(pos);
+
                             if (cell == null)
                             {
                                 continue;
@@ -198,26 +192,30 @@ namespace RevGame.Board
                             if (cell.IsEmpty)
                             {
                                 int index = pos.Y * board.Size + pos.X;
+
                                 if (scratch.Empty[index])
                                 {
                                     continue;
                                 }
                                 scratch.Empty[index] = true;
                                 liberties++;
+
                                 // 全盘第一遍已经判过眼，此处直接读结果，不对同一空格重复算四邻。
                                 if (cell.EyeSide == root.Side)
                                 {
                                     eyes++;
                                 }
                             }
-                            else if (cell.Occupant.Side == root.Side && scratch.Visited.Add(cell.Occupant))
-                            {
-                                scratch.Group.Add(cell.Occupant);
-                            }
+
+                            else
+
+                                if (cell.Occupant.Side == root.Side && scratch.Visited.Add(cell.Occupant))
+                                {
+                                    scratch.Group.Add(cell.Occupant);
+                                }
                         }
                     }
                 }
-
                 int openLiberties = liberties;
                 liberties = System.Math.Max(0, liberties + bonus);
                 GroupState state = eyes > 0 ? GroupState.Normal : (liberties == 0 ? GroupState.Locked : (liberties == 1 ? GroupState.Atari : GroupState.Normal));
@@ -234,7 +232,6 @@ namespace RevGame.Board
             scratch.Group.Clear();
             scratch.Visited.Clear();
         }
-
         /// <summary>四邻查询不使用yield迭代器，避免整盘判眼时创建大量短命枚举对象。</summary>
         private static BoardPos Neighbor(BoardPos pos, int direction)
         {
@@ -252,7 +249,6 @@ namespace RevGame.Board
             }
             return new BoardPos(pos.X, pos.Y + 1);
         }
-
         /// <summary>按“边上的第edge格、四个方向”取得外边界；只创建值类型坐标。</summary>
         private static BoardPos BoundaryAt(Piece piece, int edge, int direction)
         {

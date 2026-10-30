@@ -14,8 +14,14 @@ namespace RevGame.Editor
         /// <summary>只写Boss独立美术配置，普通PieceArtConfig不引用新帧，避免进入战斗时六章全加载。</summary>
         public static string Configure()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("Boss关键帧制作只能在编辑态执行"); }
-            if (!AssetDatabase.IsValidFolder("Assets/GameRes/Config/Boss")) { AssetDatabase.CreateFolder("Assets/GameRes/Config", "Boss"); }
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("Boss关键帧制作只能在编辑态执行");
+            }
+            if (!AssetDatabase.IsValidFolder("Assets/GameRes/Config/Boss"))
+            {
+                AssetDatabase.CreateFolder("Assets/GameRes/Config", "Boss");
+            }
             for (int chapter = 1; chapter <= 6; chapter++)
             {
                 string role = Roles[chapter - 1];
@@ -25,7 +31,11 @@ namespace RevGame.Editor
                     string name = "Boss" + chapter.ToString("D2") + "_" + role + "_Idle_" + (frame + 1).ToString("D2");
                     string path = "Assets/GameRes/Art/Boss/Chapter" + chapter.ToString("D2") + "_" + role + "/" + name + ".png";
                     var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-                    if (importer == null) { throw new InvalidOperationException("Boss关键帧缺失：" + path); }
+
+                    if (importer == null)
+                    {
+                        throw new InvalidOperationException("Boss关键帧缺失：" + path);
+                    }
                     importer.textureType = TextureImporterType.Sprite;
                     importer.spriteImportMode = SpriteImportMode.Single;
                     importer.spritePixelsPerUnit = 384f;
@@ -46,6 +56,7 @@ namespace RevGame.Editor
                 }
                 string assetPath = "Assets/GameRes/Config/Boss/" + BossChapterArtConfig.ResourceName(chapter) + ".asset";
                 BossChapterArtConfig config = AssetDatabase.LoadAssetAtPath<BossChapterArtConfig>(assetPath);
+
                 if (config == null)
                 {
                     config = ScriptableObject.CreateInstance<BossChapterArtConfig>();
@@ -64,7 +75,6 @@ namespace RevGame.Editor
             }
             return "六章Boss各8张关键帧已装配；384px、统一中心、往返播放，普通棋子配置不变";
         }
-
         public static string Check()
         {
             int count = 0;
@@ -72,19 +82,32 @@ namespace RevGame.Editor
             {
                 string path = "Assets/GameRes/Config/Boss/" + BossChapterArtConfig.ResourceName(chapter) + ".asset";
                 BossChapterArtConfig config = AssetDatabase.LoadAssetAtPath<BossChapterArtConfig>(path);
-                if (config == null) { throw new InvalidOperationException("Boss配置缺失：" + path); }
+
+                if (config == null)
+                {
+                    throw new InvalidOperationException("Boss配置缺失：" + path);
+                }
                 config.Validate(chapter);
-                if (config.Appearance.ToString() != Roles[chapter - 1]) { throw new InvalidOperationException("Boss章节职业美术映射错误"); }
+
+                if (config.Appearance.ToString() != Roles[chapter - 1])
+                {
+                    throw new InvalidOperationException("Boss章节职业美术映射错误");
+                }
                 foreach (Sprite sprite in config.Frames)
                 {
                     string framePath = AssetDatabase.GetAssetPath(sprite);
                     string expected = "atlas_" + BossChapterArtConfig.AtlasName(chapter).ToLowerInvariant();
+
                     if (AssetDatabase.GetImplicitAssetBundleName(framePath) != expected || Mathf.Abs(sprite.pixelsPerUnit - 384) > .001f)
-                    { throw new InvalidOperationException("Boss帧分包/尺寸异常：" + framePath); }
+                    {
+                        throw new InvalidOperationException("Boss帧分包/尺寸异常：" + framePath);
+                    }
                     count++;
                 }
                 if (AssetDatabase.GetImplicitAssetBundleName(path) != "atlas_" + BossChapterArtConfig.AtlasName(chapter).ToLowerInvariant())
-                { throw new InvalidOperationException("Boss配置与其图集没有同包"); }
+                {
+                    throw new InvalidOperationException("Boss配置与其图集没有同包");
+                }
             }
             return count + "帧、六章职业映射、配置/图集同包检查通过";
         }

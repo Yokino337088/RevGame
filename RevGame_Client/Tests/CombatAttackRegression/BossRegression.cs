@@ -20,18 +20,26 @@ internal static class BossRegression
     {
         _assertions = 0;
         scenarios = 0;
-        VerifyChapterDifficulty(); scenarios++;
-        VerifySkillRhythm(); scenarios++;
-        VerifySnipeCanBeDodged(); scenarios++;
-        VerifyEverySkill(); scenarios++;
-        VerifyBulletRingIsGlobal(); scenarios++;
-        VerifyChapterOneNeverUsesLockedSkills(); scenarios++;
-        VerifyEnrageOnce(); scenarios++;
-        VerifyLifecycle(); scenarios++;
-        VerifyBossDurability(); scenarios++;
+        VerifyChapterDifficulty();
+        scenarios++;
+        VerifySkillRhythm();
+        scenarios++;
+        VerifySnipeCanBeDodged();
+        scenarios++;
+        VerifyEverySkill();
+        scenarios++;
+        VerifyBulletRingIsGlobal();
+        scenarios++;
+        VerifyChapterOneNeverUsesLockedSkills();
+        scenarios++;
+        VerifyEnrageOnce();
+        scenarios++;
+        VerifyLifecycle();
+        scenarios++;
+        VerifyBossDurability();
+        scenarios++;
         return _assertions;
     }
-
     /// <summary>厚血必须来自真实出生配置；主将百分比减伤不能蔓延到护卫或吞掉炮火的固定下限。</summary>
     private static void VerifyBossDurability()
     {
@@ -55,14 +63,20 @@ internal static class BossRegression
         {
             Assert(spawn.BeginHelperBalanceFixture(1, Balance.BossRoundIndex), "从真实关卡配置创建主将");
             Piece boss = null;
-            foreach (Piece p in spawn.EnemyPieces) { if (p.IsKing) { boss = p; break; } }
+            foreach (Piece p in spawn.EnemyPieces)
+            {
+                if (p.IsKing)
+                {
+                    boss = p;
+                    break;
+                }
+            }
             Assert(boss != null, "Boss回合实际生成主将");
             float expected = LevelCatalog.GetRound(1, Balance.BossRoundIndex).AttackScale * Balance.BossAttackMultiplier;
             Assert(Math.Abs(boss.AttackScale - expected) < .00001f, "主将实例攻击乘入Excel独立倍率");
         }
         finally { spawn.StopEnemyAI(); }
     }
-
     /// <summary>章节越高：技能越多、冷却越短、伤害越高；第六章拥有全部技能。</summary>
     private static void VerifyChapterDifficulty()
     {
@@ -90,7 +104,6 @@ internal static class BossRegression
             Assert(BossSkillCatalog.PowerFor(kind, 6) > BossSkillCatalog.PowerFor(kind, 1), kind + " 第六章伤害更高");
         }
     }
-
     /// <summary>真实驱动：开战等待 → 选技能并预警 → 蓄力结束才命中 → 收招回 Idle 并记录冷却。</summary>
     private static void VerifySkillRhythm()
     {
@@ -104,7 +117,13 @@ internal static class BossRegression
         object owner = new object();
         RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, telegraphs.Add, owner: owner);
         RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, casts.Add, owner: owner);
-        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.FromSkill) { skillHits.Add(hit); } }, owner: owner);
+        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit =>
+        {
+            if (hit.FromSkill)
+            {
+                skillHits.Add(hit);
+            }
+        }, owner: owner);
         try
         {
             BossAI ai = battle.RegressionBossAI(boss);
@@ -144,7 +163,6 @@ internal static class BossRegression
             battle.StopEnemyAI();
         }
     }
-
     /// <summary>狙击锁定的是“格子”：预警期间把目标挪走，命中时不会打到它。</summary>
     private static void VerifySnipeCanBeDodged()
     {
@@ -156,9 +174,21 @@ internal static class BossRegression
         var hits = new List<BattleHitInfo>();
         object owner = new object();
         RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, telegraphs.Add, owner: owner);
-        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.DamageKind == BattleDamageKind.BossSnipe) { hits.Add(hit); } }, owner: owner);
+        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit =>
+        {
+            if (hit.DamageKind == BattleDamageKind.BossSnipe)
+            {
+                hits.Add(hit);
+            }
+        }, owner: owner);
         int snipeCasts = 0;
-        RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, cast => { if (cast.Kind == BossSkillKind.Snipe) { snipeCasts++; } }, owner: owner);
+        RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, cast =>
+        {
+            if (cast.Kind == BossSkillKind.Snipe)
+            {
+                snipeCasts++;
+            }
+        }, owner: owner);
         try
         {
             battle.RegressionBossAI(boss);
@@ -179,7 +209,6 @@ internal static class BossRegression
             battle.StopEnemyAI();
         }
     }
-
     /// <summary>弹幕不受距离限制：只放两个远角目标，验证全屏选招、每目标仅一次技能伤害和收招。</summary>
     private static void VerifyBulletRingIsGlobal()
     {
@@ -191,7 +220,13 @@ internal static class BossRegression
         var hits = new List<BattleHitInfo>();
         var casts = new List<BossSkillInfo>();
         object owner = new object();
-        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.FromSkill) { hits.Add(hit); } }, owner: owner);
+        RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit =>
+        {
+            if (hit.FromSkill)
+            {
+                hits.Add(hit);
+            }
+        }, owner: owner);
         RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillCast, casts.Add, owner: owner);
         try
         {
@@ -212,13 +247,17 @@ internal static class BossRegression
             battle.StopEnemyAI();
         }
     }
-
     /// <summary>第六章逐个强制施放全部技能：段数正确、能回到待机，瞬移/汲取/召唤/狂暴的副作用真实发生。</summary>
     private static void VerifyEverySkill()
     {
         foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
         {
-            if ((int)kind >= 18) { continue; } // 专属技能由BossSkillExpansion规则和六章Play逐招验收。
+            if ((int)kind >= 18)
+            {
+                continue;
+
+            } // 专属技能由BossSkillExpansion规则和六章Play逐招验收。
+
             BattleService battle = BattleService.CreateBossRegressionFixture(BossSkillCatalog.ThemeChapter(kind));
             Piece boss = battle.AddRegressionBoss(new BoardPos(3, 3), 2);
             // 布置：一颗贴身、一颗在圈内、三颗远处扎堆——让每个技能都有合法目标。
@@ -275,7 +314,6 @@ internal static class BossRegression
             }
         }
     }
-
     /// <summary>即使局面最适合弹幕/激光（多人围在身边），第一章也只能从已解锁技能里选。</summary>
     private static void VerifyChapterOneNeverUsesLockedSkills()
     {
@@ -295,7 +333,6 @@ internal static class BossRegression
         BossSkillPlan second;
         Assert(BossTactics.TryChoose(battle.Board, boss, 6, 4, ready, 0f, null, out second) && second.Kind != plan.Kind, "冷却中的技能不会被再次选中");
     }
-
     /// <summary>第四章起残血自动狂暴，且整场只触发一次；第一章残血不会狂暴。</summary>
     private static void VerifyEnrageOnce()
     {
@@ -326,7 +363,6 @@ internal static class BossRegression
             }
         }
     }
-
     /// <summary>死亡是终态；StopEnemyAI 释放 Boss 机器；释放后不能再驱动。</summary>
     private static void VerifyLifecycle()
     {
@@ -351,10 +387,10 @@ internal static class BossRegression
         }
         Assert(rejected, "已释放的 Boss 状态机不能再驱动");
     }
-
     private static void Assert(bool condition, string message)
     {
         _assertions++;
+
         if (!condition)
         {
             throw new InvalidOperationException("Boss 回归失败：" + message);

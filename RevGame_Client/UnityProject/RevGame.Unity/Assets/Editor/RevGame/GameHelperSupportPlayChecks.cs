@@ -18,7 +18,8 @@ namespace RevGame.Editor
     /// </summary>
     public static class GameHelperSupportPlayChecks
     {
-        [Serializable] private sealed class Evidence
+        [Serializable]
+        private sealed class Evidence
         {
             public string status = "idle", stage, error, directory;
             public int chapter, unityErrors, missileFlights, jellyFlights, missileImpacts, jellyImpacts, mushroomSamples;
@@ -41,126 +42,197 @@ namespace RevGame.Editor
         private static int _captureRemaining, _captureIndex;
         private static string _captureTitle;
 
-        public static string State() { return JsonUtility.ToJson(_result); }
-
+        public static string State()
+        {
+            return JsonUtility.ToJson(_result);
+        }
         public static string Begin(int chapter = 1)
         {
             if (!Application.isPlaying || UnityEditor.EditorApplication.isPaused || chapter < 1 || chapter > 6
                 || !RevServices.GetRequired<StoryProgress>().IsIsolated || _result.status == "running")
-            { throw new InvalidOperationException("帮手保护检查要求未暂停的隔离Play，章节1～6，且无本检查运行中"); }
+            {
+                throw new InvalidOperationException("帮手保护检查要求未暂停的隔离Play，章节1～6，且无本检查运行中");
+            }
             GameFlow flow = RevServices.GetRequired<GameFlow>();
-            if (flow.Screen != GameScreen.Home || flow.IsGameplayBlocked) { throw new InvalidOperationException("请先等隔离首页完全就绪"); }
+
+            if (flow.Screen != GameScreen.Home || flow.IsGameplayBlocked)
+            {
+                throw new InvalidOperationException("请先等隔离首页完全就绪");
+            }
             _folder = Path.GetFullPath("../../../.codex/work/boss-helper-2026-10-29/helper-support-ch" + chapter + "-" + DateTime.Now.ToString("HHmmssfff"));
             Directory.CreateDirectory(_folder);
             _result = new Evidence { status = "running", stage = "进入准备", chapter = chapter, directory = _folder };
-            AudioObserved.Clear(); MissileFlights.Clear(); JellyFlights.Clear(); MissileImpacts.Clear(); JellyImpacts.Clear();
-            _hasPreviousHealing = false; _captureRemaining = 0;
+            AudioObserved.Clear();
+            MissileFlights.Clear();
+            JellyFlights.Clear();
+            MissileImpacts.Clear();
+            JellyImpacts.Clear();
+            _hasPreviousHealing = false;
+            _captureRemaining = 0;
             Run(chapter);
             return State();
         }
-
         private static void Check(bool condition, string message)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             _result.assertions.Add(message);
         }
-
         private static async RevTask Wait(Func<bool> condition, string message, float seconds = 35f)
         {
             float deadline = Time.realtimeSinceStartup + seconds;
             while (!condition())
             {
-                if (!Application.isPlaying || Time.realtimeSinceStartup > deadline) { throw new InvalidOperationException(message); }
+                if (!Application.isPlaying || Time.realtimeSinceStartup > deadline)
+                {
+                    throw new InvalidOperationException(message);
+                }
                 GameFlow flow = RevServices.GetRequired<GameFlow>();
-                if (flow.IsStoryPlaying && !flow.IsTransitioning) { flow.AdvanceStory(); }
+
+                if (flow.IsStoryPlaying && !flow.IsTransitioning)
+                {
+                    flow.AdvanceStory();
+                }
                 await RevTask.Yield();
             }
         }
-
         private static async RevTask Observe(float seconds)
         {
             float deadline = Time.realtimeSinceStartup + seconds;
             while (Time.realtimeSinceStartup < deadline)
             {
-                if (!Application.isPlaying) { throw new InvalidOperationException("检查中途退出Play"); }
+                if (!Application.isPlaying)
+                {
+                    throw new InvalidOperationException("检查中途退出Play");
+                }
                 await RevTask.Yield();
             }
         }
-
         /// <summary>LateUpdate采样在两端Tween和治疗线刷新后执行；不把正常的一帧刷新顺序误报成端点漂移。</summary>
         private static void Sample()
         {
             foreach (AudioSource source in UnityEngine.Object.FindObjectsOfType<AudioSource>())
             {
                 if (source.isPlaying && source.clip != null && source.clip.name.StartsWith("Helper", StringComparison.Ordinal))
-                { AudioObserved.Add(source.clip.name); }
+                {
+                    AudioObserved.Add(source.clip.name);
+                }
             }
             foreach (HelperAttackView attack in UnityEngine.Object.FindObjectsOfType<HelperAttackView>())
             {
                 HelperStormVisual visual = attack.StormVisual;
-                if (!attack.IsStorm || attack.IsBeam || visual == null) { continue; }
+
+                if (!attack.IsStorm || attack.IsBeam || visual == null)
+                {
+                    continue;
+                }
                 long id = ((long)attack.GetInstanceID() << 32) | (uint)attack.PlaySerial;
+
                 if (visual.ProjectileVisible && visual.Visible)
                 {
-                    if (visual.Weapon == HelperWeapon.Missile) { MissileFlights.Add(id); _result.missileFlights++; }
-                    if (visual.Weapon == HelperWeapon.Jellyfish) { JellyFlights.Add(id); _result.jellyFlights++; }
+                    if (visual.Weapon == HelperWeapon.Missile)
+                    {
+                        MissileFlights.Add(id);
+                        _result.missileFlights++;
+                    }
+                    if (visual.Weapon == HelperWeapon.Jellyfish)
+                    {
+                        JellyFlights.Add(id);
+                        _result.jellyFlights++;
+                    }
                 }
+
                 if (visual.IsExplosion && visual.Visible)
                 {
-                    if (visual.ProjectileVisible) { _result.error = "爆炸阶段仍显示飞行弹体"; }
+                    if (visual.ProjectileVisible)
+                    {
+                        _result.error = "爆炸阶段仍显示飞行弹体";
+                    }
                     if (visual.Weapon == HelperWeapon.Missile && MissileFlights.Contains(id))
-                    { MissileImpacts.Add(id); _result.missileImpacts++; }
+                    {
+                        MissileImpacts.Add(id);
+                        _result.missileImpacts++;
+                    }
                     if (visual.Weapon == HelperWeapon.Jellyfish && JellyFlights.Contains(id))
-                    { JellyImpacts.Add(id); _result.jellyImpacts++; }
-                    if (visual.MushroomOnCamera) { _result.mushroomSamples++; }
+                    {
+                        JellyImpacts.Add(id);
+                        _result.jellyImpacts++;
+                    }
+                    if (visual.MushroomOnCamera)
+                    {
+                        _result.mushroomSamples++;
+                    }
                 }
             }
             HelperHealingView healing = UnityEngine.Object.FindObjectOfType<HelperHealingView>();
             HelperView helper = UnityEngine.Object.FindObjectOfType<HelperView>();
+
             if (healing != null && healing.IsConnected && helper != null)
             {
                 PieceView target = FindPieceView(healing.TargetId);
                 _result.healingSamples++;
                 _result.maxOriginError = Math.Max(_result.maxOriginError, healing.OriginError);
                 _result.maxTargetError = Math.Max(_result.maxTargetError, healing.TargetError);
+
                 if (target != null)
                 {
                     if (_hasPreviousHealing && (Vector3.Distance(helper.transform.position, _previousHelper) > .0001f
-                        || Vector3.Distance(target.transform.position, _previousTarget) > .0001f)) { _result.movingHealingSamples++; }
-                    _previousHelper = helper.transform.position; _previousTarget = target.transform.position; _hasPreviousHealing = true;
+                        || Vector3.Distance(target.transform.position, _previousTarget) > .0001f))
+                    {
+                        _result.movingHealingSamples++;
+                    }
+                    _previousHelper = helper.transform.position;
+                    _previousTarget = target.transform.position;
+                    _hasPreviousHealing = true;
                 }
             }
+
             if (_captureRemaining > 0 && Time.realtimeSinceStartup >= _nextCapture)
             {
                 ScreenCapture.CaptureScreenshot(Path.Combine(_folder, _captureTitle + "-" + (_captureIndex++).ToString("00") + ".png"));
-                _captureRemaining--; _result.capturedFrames++; _nextCapture = Time.realtimeSinceStartup + .12f;
+                _captureRemaining--;
+                _result.capturedFrames++;
+                _nextCapture = Time.realtimeSinceStartup + .12f;
             }
         }
 
         private static PieceView FindPieceView(int id)
         {
-            foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>()) { if (view.PieceId == id) { return view; } }
+            foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>())
+            {
+                if (view.PieceId == id)
+                {
+                    return view;
+                }
+            }
             return null;
         }
-
         private static void CaptureBurst(string title, int frames = 16)
         {
-            _captureTitle = title; _captureIndex = 0; _captureRemaining = frames; _nextCapture = 0;
+            _captureTitle = title;
+            _captureIndex = 0;
+            _captureRemaining = frames;
+            _nextCapture = 0;
         }
-
         private static void Gm(string command, string assertion)
         {
             RevGMResult result = RevGM.Execute(command);
             Check(result.Success, assertion + "：" + result.Message);
         }
-
         private static int AlivePlayers(BattleService battle)
         {
             int count = 0;
-            foreach (Piece player in battle.PlayerPieces) { if (player.IsAlive && battle.Board.FindPiece(player.Id) == player) { count++; } }
+            foreach (Piece player in battle.PlayerPieces)
+            {
+                if (player.IsAlive && battle.Board.FindPiece(player.Id) == player)
+                {
+                    count++;
+                }
+            }
             return count;
         }
-
         private static async void Run(int chapter)
         {
             GameFlow flow = RevServices.GetRequired<GameFlow>();
@@ -169,7 +241,11 @@ namespace RevGame.Editor
             object owner = new object();
             Application.LogCallback logger = (message, stack, type) =>
             {
-                if (type == LogType.Error || type == LogType.Exception) { _result.unityErrors++; _result.error = message; }
+                if (type == LogType.Error || type == LogType.Exception)
+                {
+                    _result.unityErrors++;
+                    _result.error = message;
+                }
             };
             Application.logMessageReceived += logger;
             RevMono.AddLateUpdate(Sample, owner: owner);
@@ -178,12 +254,15 @@ namespace RevGame.Editor
                 Time.timeScale = 1f;
                 battle.SetBalanceTestSeed(102900 + chapter);
                 battle.UnlockAllChaptersForDevelopment();
-                flow.OpenLevels(); Check(flow.EnterBattle(chapter), "正式GameFlow接受进入章节" + chapter);
+                flow.OpenLevels();
+                Check(flow.EnterBattle(chapter), "正式GameFlow接受进入章节" + chapter);
                 await Wait(() => !flow.IsGameplayBlocked && battle.Phase == GamePhase.Prepare, "过场未交付准备界面");
                 Check(battle.LoadHelperPreview(chapter, false), "创建高生命视觉输入，与正常Boss时长统计分开");
                 await Wait(() => UnityEngine.Object.FindObjectOfType<BoardView>()?.HelperVisualReady == true, "帮手图集/预制体/材质未就绪");
                 while (AlivePlayers(battle) > 3)
-                { Gm("RevGame/移除棋子 " + battle.PlayerPieces[battle.PlayerPieces.Count - 1].Id, "准备期通过GM真实撤棋"); }
+                {
+                    Gm("RevGame/移除棋子 " + battle.PlayerPieces[battle.PlayerPieces.Count - 1].Id, "准备期通过GM真实撤棋");
+                }
                 battle.SetHelperPreviewTier(1);
                 Gm("RevGame/开始战斗", "GM经正式BattleLogic开始战斗");
                 _result.stage = "普通攻击声音";
@@ -205,7 +284,8 @@ namespace RevGame.Editor
                 long healingBefore = battle.HelperProtectionHealing;
                 float simulationBefore = battle.BattleElapsed;
                 await Wait(() => battle.HelperProtectionHealing > healingBefore && last.Hp > _result.hpBefore, "单棋保护没有自然恢复实际生命", 3f);
-                _result.hpAfter = last.Hp; _result.healingDelta = battle.HelperProtectionHealing - healingBefore;
+                _result.hpAfter = last.Hp;
+                _result.healingDelta = battle.HelperProtectionHealing - healingBefore;
                 _result.healingSeconds = battle.BattleElapsed - simulationBefore;
                 long expectedCeiling = (long)Math.Ceiling(last.MaxHp * (double)Balance.HelperProtectionHealPerSecond * _result.healingSeconds) + 1;
                 Check(_result.healingDelta > 0 && _result.healingDelta <= expectedCeiling, "实际治疗为正且不超过30%每模拟秒上限");
@@ -247,7 +327,8 @@ namespace RevGame.Editor
                 Check(UnityEngine.Object.FindObjectOfType<HelperView>() == null && UnityEngine.Object.FindObjectOfType<HelperHealingView>() == null
                     && UnityEngine.Object.FindObjectsOfType<HelperAttackView>().Length == 0, "退场回收帮手、治疗与全部攻击池实例");
                 Check(battle.HelperProtectionTargetId == 0, "退出后单棋保护Id归零");
-                flow.OpenLevels(); Check(flow.EnterBattle(chapter), "重新进入章节被接受");
+                flow.OpenLevels();
+                Check(flow.EnterBattle(chapter), "重新进入章节被接受");
                 await Wait(() => !flow.IsGameplayBlocked && battle.Phase == GamePhase.Prepare, "重入准备交付失败");
                 Check(!UnityEngine.Object.FindObjectOfType<BoardView>().HelperHealingVisible && battle.HelperProtectionTargetId == 0,
                     "重入准备没有上局残留治疗线");
@@ -258,7 +339,11 @@ namespace RevGame.Editor
             catch (Exception error)
             {
                 _result.error = error.ToString();
-                if (Application.isPlaying) { ScreenCapture.CaptureScreenshot(Path.Combine(_folder, "failure.png")); }
+
+                if (Application.isPlaying)
+                {
+                    ScreenCapture.CaptureScreenshot(Path.Combine(_folder, "failure.png"));
+                }
             }
             finally
             {
@@ -268,8 +353,14 @@ namespace RevGame.Editor
                 {
                     if (Application.isPlaying && flow.Screen != GameScreen.Home)
                     {
-                        if (flow.IsTransitioning) { await Wait(() => !flow.IsTransitioning, "清理等待过场超时"); }
-                        if (flow.Screen != GameScreen.Home) { flow.ReturnHome(); }
+                        if (flow.IsTransitioning)
+                        {
+                            await Wait(() => !flow.IsTransitioning, "清理等待过场超时");
+                        }
+                        if (flow.Screen != GameScreen.Home)
+                        {
+                            flow.ReturnHome();
+                        }
                         await Wait(() => flow.Screen == GameScreen.Home && !flow.IsTransitioning, "失败后的返回清理未完成");
                     }
                 }
@@ -278,11 +369,11 @@ namespace RevGame.Editor
                 Application.logMessageReceived -= logger;
                 _result.cleanupComplete = Application.isPlaying && flow.Screen == GameScreen.Home && !flow.IsTransitioning;
                 _result.status = string.IsNullOrEmpty(_result.error) && _result.cleanupComplete ? "passed" : "failed";
-                _result.audioPlayed = new List<string>(AudioObserved); _result.audioPlayed.Sort(StringComparer.Ordinal);
+                _result.audioPlayed = new List<string>(AudioObserved);
+                _result.audioPlayed.Sort(StringComparer.Ordinal);
                 File.WriteAllText(Path.Combine(_folder, "result.json"), JsonUtility.ToJson(_result, true));
             }
         }
-
         /// <summary>使用玩家同一选棋/空格入口制造可见移动，不直接改Transform或Board坐标。</summary>
         private static bool MoveLastPlayer(BattleService battle, Piece last)
         {
@@ -291,9 +382,19 @@ namespace RevGame.Editor
                 for (int x = 0; x < Consts.BoardSize; x++)
                 {
                     var target = new BoardPos(x, y);
-                    if (target == last.Pos || !battle.Board.CanFit(target, last.Size, GameSide.Player, respectEnemyEyes: false)) { continue; }
-                    if (battle.SelectedPieceId != last.Id && !battle.HandleBoardClick(last.Pos)) { continue; }
-                    if (battle.HandleBoardClick(target)) { return true; }
+
+                    if (target == last.Pos || !battle.Board.CanFit(target, last.Size, GameSide.Player, respectEnemyEyes: false))
+                    {
+                        continue;
+                    }
+                    if (battle.SelectedPieceId != last.Id && !battle.HandleBoardClick(last.Pos))
+                    {
+                        continue;
+                    }
+                    if (battle.HandleBoardClick(target))
+                    {
+                        return true;
+                    }
                 }
             }
             return false;

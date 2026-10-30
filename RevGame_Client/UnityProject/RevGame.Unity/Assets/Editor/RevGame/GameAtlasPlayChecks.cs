@@ -25,7 +25,10 @@ namespace RevGame.Editor
         /// <summary>与其它Play夹具串行运行，因为它会真实进入/退出战斗。所有临时租约都在finally配对释放。</summary>
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             int sprites = 0;
             var report = new List<string>();
@@ -54,7 +57,13 @@ namespace RevGame.Editor
                         finally
                         {
                             // GetSprites产生Sprite克隆；测试用完也必须销毁，正式动画直接用GUID引用，没有这笔克隆开销。
-                            foreach (Sprite frame in frames) { if (frame != null) { UnityEngine.Object.Destroy(frame); } }
+                            foreach (Sprite frame in frames)
+                            {
+                                if (frame != null)
+                                {
+                                    UnityEngine.Object.Destroy(frame);
+                                }
+                            }
                         }
                     }
                     finally { RevResManager.Release(RevResPath.Atlases, name); }
@@ -81,7 +90,11 @@ namespace RevGame.Editor
                     await RevTask.Delay(600);
                     Require(RevResManager.GetRefCount(RevResPath.Atlases, "PieceFrames") == 0 && RevResManager.GetRefCount(RevResPath.Atlases, "CombatFrames") == 0 && RevResManager.GetRefCount(RevResPath.Atlases, "BoardStatus") == 0, "返回大厅释放战斗图集租约");
                     int held = RevServices.GetRequired<GameSpriteAtlasService>().HeldCount;
-                    if (baselineHeld < 0) { baselineHeld = held; }
+
+                    if (baselineHeld < 0)
+                    {
+                        baselineHeld = held;
+                    }
                     Require(held == baselineHeld, "重复进入/退出不能累积服务租约");
                 }
                 LastResult = "通过：" + GameSpriteAtlases.Names.Length + "张实际AB图集、" + sprites + "张Sprite、3次战斗重入与引用释放\n" + string.Join("\n", report);
@@ -89,10 +102,12 @@ namespace RevGame.Editor
             catch (Exception error) { LastResult = "失败：" + error; RevLog.Exception(error, "图集Play验收失败", "RevGame"); }
             File.WriteAllText("Temp/AtlasPlayChecks.txt", LastResult);
         }
-
         private static void Require(bool success, string reason)
         {
-            if (!success) { throw new InvalidOperationException(reason); }
+            if (!success)
+            {
+                throw new InvalidOperationException(reason);
+            }
         }
     }
 }

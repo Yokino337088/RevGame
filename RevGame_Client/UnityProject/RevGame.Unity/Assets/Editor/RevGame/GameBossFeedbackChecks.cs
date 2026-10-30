@@ -19,15 +19,20 @@ namespace RevGame.Editor
             public string error;
             public List<string> assertions = new List<string>();
         }
-
         /// <summary>编辑态只读审计，失败直接抛出并落原始证据；不操作场景、不播放声音、不写用户存档。</summary>
         public static string Audit()
         {
-            if (Application.isPlaying) { throw new InvalidOperationException("Boss反馈资源审计要求编辑态"); }
+            if (Application.isPlaying)
+            {
+                throw new InvalidOperationException("Boss反馈资源审计要求编辑态");
+            }
             var result = new Result();
             void Check(bool ok, string message)
             {
-                if (!ok) { throw new InvalidOperationException(message); }
+                if (!ok)
+                {
+                    throw new InvalidOperationException(message);
+                }
                 result.assertions.Add(message);
             }
             try
@@ -37,7 +42,7 @@ namespace RevGame.Editor
                 foreach (BossSkillKind kind in Enum.GetValues(typeof(BossSkillKind)))
                 {
                     string resource = GameAudio.GetBossSkillSoundName(kind);
-                    Check(names.Add(resource),kind + "音效映射不与其它技能重复");
+                    Check(names.Add(resource), kind + "音效映射不与其它技能重复");
                     Check(!string.IsNullOrEmpty(resource), kind + "存在明确声音映射");
                     var clip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/GameRes/Audio/Sfx/" + GameAudio.GetBossSkillSoundPath(kind) + ".ogg");
                     Check(clip != null && clip.samples > 0 && clip.length > 0, kind + "实际声音资源非空：" + resource);
@@ -77,7 +82,6 @@ namespace RevGame.Editor
             }
             return JsonUtility.ToJson(result);
         }
-
         [Serializable]
         private sealed class Observation
         {
@@ -85,7 +89,6 @@ namespace RevGame.Editor
             public float cameraAmplitude;
             public string audioResource;
         }
-
         /// <summary>只读观察当前真实画面对象；AudioRequest不是已发声证明，Play测试还须观察AudioSource.clip/isPlaying。</summary>
         public static string State()
         {
@@ -94,6 +97,7 @@ namespace RevGame.Editor
             var presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
             var audio = UnityEngine.Object.FindObjectOfType<GameAudio>();
             result.bossFx = board == null ? 0 : board.ActiveBossFxCount;
+
             if (presentation != null)
             {
                 result.hitFeedbackCount = presentation.BossHitFeedbackCount;
@@ -106,7 +110,10 @@ namespace RevGame.Editor
             }
             foreach (var cell in UnityEngine.Object.FindObjectsOfType<BoardCellView>())
             {
-                if (cell.HasBossSkillAnimation) { result.animatedCells++; }
+                if (cell.HasBossSkillAnimation)
+                {
+                    result.animatedCells++;
+                }
             }
             return JsonUtility.ToJson(result);
         }

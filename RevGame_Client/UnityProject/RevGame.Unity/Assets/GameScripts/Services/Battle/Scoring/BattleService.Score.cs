@@ -16,11 +16,20 @@ namespace RevGame.Services
         /// <summary>启动宿主拥有的永久存储；服务不释放它。纯规则测试允许为null，杜绝改写真实存档。</summary>
         private readonly IScoreProgress _scoreProgress;
         /// <summary>本回合分数，成功进入新回合时清零；准备失败时保留旧值。</summary>
-        public long RoundScore { get; private set; }
+        public long RoundScore
+        {
+            get; private set;
+        }
         /// <summary>当前章累计积分，同章回合继承；换章、失败重开和新战役清零，不等于永久总积分。</summary>
-        public long ChapterScore { get; private set; }
+        public long ChapterScore
+        {
+            get; private set;
+        }
         /// <summary>本设备永久累计总量，重新挑战/退出大厅均保留；取值0～long.MaxValue。</summary>
-        public long LifetimeScore { get; private set; }
+        public long LifetimeScore
+        {
+            get; private set;
+        }
         // 名单/生死版本决定人数，章回和配置决定倍率。死亡但尚未Remove也会递增TargetVersion，不能漏扣人数。
         // 使用服务自有值缓存，不保存Piece引用；隐藏也可能让TargetVersion变化，保守重算不会漏规则。
         private int _scoreTopology = -1, _scoreTargets = -1, _scorePlayerCount = -1, _scoreAlive;
@@ -38,60 +47,93 @@ namespace RevGame.Services
         internal int ScoreCacheThresholdOverride = -1;
 #endif
         /// <summary>人数扫描累计次数；启用缓存时稳定查询不增加，直接路径每次扫描，死亡/复活/移除后重算。</summary>
-        public long ScorePopulationScans { get; private set; }
+        public long ScorePopulationScans
+        {
+            get; private set;
+        }
         /// <summary>完整公式输入相同时复用倍率的累计次数，供Editor采样差值核对。</summary>
-        public long ScoreMultiplierHits { get; private set; }
+        public long ScoreMultiplierHits
+        {
+            get; private set;
+        }
         /// <summary>依据当前存活棋数即时计算；后续死亡会降低棋数部分，章节进度部分继续递增。</summary>
         public float ScoreMultiplier
         {
             get
             {
                 int threshold = ScoreCacheThreshold;
+
 #if UNITY_EDITOR || REVGAME_OFFLINE_TESTS
-                if (ScoreCacheThresholdOverride >= 0) { threshold = ScoreCacheThresholdOverride; }
+                if (ScoreCacheThresholdOverride >= 0)
+                {
+                    threshold = ScoreCacheThresholdOverride;
+                }
 #endif
-                if (_playerPieces.Count < threshold) { return CalculateScoreMultiplierDirect(); }
+                if (_playerPieces.Count < threshold)
+                {
+                    return CalculateScoreMultiplierDirect();
+                }
                 return ReadScoreMultiplierCached();
             }
         }
-
         /// <summary>小名单直接扫描，保持原公式。没有缓存收据检查的成本；不会沿用大名单时缓存的旧人数。</summary>
         private float CalculateScoreMultiplierDirect()
         {
             int alive = 0;
-            foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { alive++; } }
+            foreach (Piece piece in _playerPieces)
+            {
+                if (piece.IsAlive)
+                {
+                    alive++;
+                }
+            }
             ScorePopulationScans++;
             int progress = Math.Max(0, (Chapter - 1) * Balance.RoundsPerChapter + Round - 1);
             return Math.Min(Balance.ScoreMultiplierCap, (1f + progress * Balance.ScoreRoundGrowth)
                 * (1f + Math.Max(0, alive - 1) * Balance.ScorePieceGrowth));
         }
-
         /// <summary>大名单复用版本收据。回到大名单时必须核对占格/生死/章回/配置，不能直接用切换前的结果。</summary>
         private float ReadScoreMultiplierCached()
         {
             bool populationChanged = _scoreTopology != _board.TopologyVersion || _scoreTargets != _board.TargetVersion || _scorePlayerCount != _playerPieces.Count;
+
             // 步骤1：任何成员/生死变化才扫描；普通非致死扣血不改变人数，反复得分不扫描整名单。
             if (populationChanged)
             {
                 _scoreAlive = 0;
-                foreach (Piece piece in _playerPieces) { if (piece.IsAlive) { _scoreAlive++; } }
-                _scoreTopology = _board.TopologyVersion; _scoreTargets = _board.TargetVersion; _scorePlayerCount = _playerPieces.Count;
+                foreach (Piece piece in _playerPieces)
+                {
+                    if (piece.IsAlive)
+                    {
+                        _scoreAlive++;
+                    }
+                }
+                _scoreTopology = _board.TopologyVersion;
+                _scoreTargets = _board.TargetVersion;
+                _scorePlayerCount = _playerPieces.Count;
                 ScorePopulationScans++;
             }
             // 配置仍从Excel读取。把影响公式的值也作为键，改表后不能命中旧倍率。
             int rounds = Balance.RoundsPerChapter;
             float cap = Balance.ScoreMultiplierCap, roundGrowth = Balance.ScoreRoundGrowth, pieceGrowth = Balance.ScorePieceGrowth;
+
             if (!populationChanged && _scoreShownChapter == Chapter && _scoreShownRound == Round && _scoreRoundsPerChapter == rounds
                 && _scoreCap == cap && _scoreRoundGrowth == roundGrowth && _scorePieceGrowth == pieceGrowth)
-            { ScoreMultiplierHits++; return _scoreMultiplier; }
+            {
+                ScoreMultiplierHits++;
+                return _scoreMultiplier;
+            }
             int progress = Math.Max(0, (Chapter - 1) * Balance.RoundsPerChapter + Round - 1);
             // 步骤2：只在公式输入变化时重算；先得完整人数，再乘章回与棋数成长，原浮点顺序保持。
-            _scoreShownChapter = Chapter; _scoreShownRound = Round; _scoreRoundsPerChapter = rounds;
-            _scoreCap = cap; _scoreRoundGrowth = roundGrowth; _scorePieceGrowth = pieceGrowth;
+            _scoreShownChapter = Chapter;
+            _scoreShownRound = Round;
+            _scoreRoundsPerChapter = rounds;
+            _scoreCap = cap;
+            _scoreRoundGrowth = roundGrowth;
+            _scorePieceGrowth = pieceGrowth;
             _scoreMultiplier = Math.Min(cap, (1f + progress * roundGrowth) * (1f + Math.Max(0, _scoreAlive - 1) * pieceGrowth));
             return _scoreMultiplier;
         }
-
         /// <summary>
         /// 唯一积分入口：必须已有真实扣血，敌方目标只在本次由活变死时给击杀分。
         /// 区域波动是中立伤害，不能冒充玩家击杀；能量炸弹/炮火/断链是友方支援，可以计击杀分。
@@ -99,7 +141,10 @@ namespace RevGame.Services
         /// </summary>
         private void AwardHitScore(Piece target, Piece attacker, BattleDamageKind kind, int real)
         {
-            if (Phase != GamePhase.Battle || real <= 0 || target.Side != GameSide.Enemy) { return; }
+            if (Phase != GamePhase.Battle || real <= 0 || target.Side != GameSide.Enemy)
+            {
+                return;
+            }
             bool friendly = attacker != null && attacker.Side == GameSide.Player;
             bool critical = friendly && kind == BattleDamageKind.Critical;
             bool kill = !target.IsAlive && (friendly || kind == BattleDamageKind.EnergyBomb
@@ -108,13 +153,18 @@ namespace RevGame.Services
             bool basic = friendly && (kind == BattleDamageKind.Normal || kind == BattleDamageKind.Critical);
             int basis = (kill ? Balance.ScoreKillPoints : 0) + (critical ? Balance.ScoreCriticalPoints : 0)
                 + (basic ? Balance.HelperPlayerHitScore : 0);
-            if (basis <= 0) { return; }
+
+            if (basis <= 0)
+            {
+                return;
+            }
             float multiplier = ScoreMultiplier;
             long added = Math.Max(1L, (long)Math.Round(basis * (double)multiplier, MidpointRounding.AwayFromZero));
             RoundScore = AddScore(RoundScore, added);
             ChapterScore = AddScore(ChapterScore, added);
             LifetimeScore = AddScore(LifetimeScore, added);
             CombatScore = AddScore(CombatScore, added);
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!_scorePreview)
 #endif
@@ -124,12 +174,15 @@ namespace RevGame.Services
             RevEvent.DispatchEvent<ScoreGrantedInfo>(Events.ScoreGranted,
                 new ScoreGrantedInfo(target.Pos, target.Size, added, RoundScore, LifetimeScore, multiplier, kill, critical));
         }
-
-        private static long AddScore(long total, long added) { return total > long.MaxValue - added ? long.MaxValue : total + added; }
-
+        private static long AddScore(long total, long added)
+        {
+            return total > long.MaxValue - added ? long.MaxValue : total + added;
+        }
         /// <summary>回合结束、退战斗域立即刷盘；实现可为空，使离线规则测试完全不碰玩家存档。</summary>
-        public void FlushScore() { _scoreProgress?.Flush(); }
-
+        public void FlushScore()
+        {
+            _scoreProgress?.Flush();
+        }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // 开发测试积分隔离开关，真实规则仍计算分数，但预览期间不写玩家存档。
         // 只能由取得ScorePreview租约的所有者还原；嵌套租约会同时恢复两份不同积分，故明确拒绝。
@@ -140,7 +193,10 @@ namespace RevGame.Services
         /// <summary>自动化视觉预览的隔离区：保存内存积分并停止写存档，Dispose必须放在finally里。</summary>
         public IDisposable BeginScorePreview()
         {
-            if (_scorePreview) { throw new InvalidOperationException("积分预览不可嵌套"); }
+            if (_scorePreview)
+            {
+                throw new InvalidOperationException("积分预览不可嵌套");
+            }
             return new ScorePreview(this);
         }
         private sealed class ScorePreview : IDisposable
@@ -149,12 +205,25 @@ namespace RevGame.Services
             private readonly long _round, _total, _chapter, _wallet;
             public ScorePreview(BattleService service)
             {
-                _service = service; _round = service.RoundScore; _total = service.LifetimeScore; _chapter = service.ChapterScore; _wallet = service.CombatScore; service._scorePreview = true;
+                _service = service;
+                _round = service.RoundScore;
+                _total = service.LifetimeScore;
+                _chapter = service.ChapterScore;
+                _wallet = service.CombatScore;
+                service._scorePreview = true;
             }
             public void Dispose()
             {
-                if (_service == null) { return; }
-                _service.RoundScore = _round; _service.LifetimeScore = _total; _service.ChapterScore = _chapter; _service.CombatScore = _wallet; _service._scorePreview = false; _service = null;
+                if (_service == null)
+                {
+                    return;
+                }
+                _service.RoundScore = _round;
+                _service.LifetimeScore = _total;
+                _service.ChapterScore = _chapter;
+                _service.CombatScore = _wallet;
+                _service._scorePreview = false;
+                _service = null;
             }
         }
 #endif

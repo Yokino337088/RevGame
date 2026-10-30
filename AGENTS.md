@@ -27,6 +27,10 @@
 - 面板里不直接 `Destroy(gameObject)`，关自己用 `CloseSelf()`；
 - UI = 面板类 + 职责钩子（`OnBindView` 只装配 / `OnRefreshView` 只落屏 / 交互回调只转发）。
 
+## 条件分支排版（2026-10-30用户要求）
+
+项目业务代码所有 `if` / `else if` / `else` 分支必须展开：条件独占一行，左大括号独占下一行，代码体缩进，右大括号独占一行。禁止 `if (...) { return; }`。保留类、方法、属性的大括号独占一行，不可为了展开if将其它大括号合到行尾。此要求优先于技能中允许单行if的旧示例。
+
 ## 不要提交
 
 `Library/`、`Temp/`、`Logs/`、生成的 `*.csproj` / `*.sln`、外部 `AssetBundles/` 导出目录、安装包 —— 详见 `.gitignore`。美术资源、`Assets/`、`策划案/` 是**要**入库的。用户指定的 `Assets/StreamingAssets/` 平台资源允许入库。

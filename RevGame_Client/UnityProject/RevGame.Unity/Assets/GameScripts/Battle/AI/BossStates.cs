@@ -58,7 +58,6 @@ namespace RevGame.Battle
             return Owner.KingCaptured;
         }
     }
-
     /// <summary>
     /// 待机状态：Boss 的“大脑”。每个模拟步依次判断：
     /// 1) 是否该狂暴（只触发一次）；2) 公共间隔到了没、有没有值得放的技能；
@@ -80,6 +79,7 @@ namespace RevGame.Battle
             }
             Piece boss = Owner.Boss;
             Reposition();
+
             // ① 狂暴优先：血线一到立刻怒吼，不等公共间隔——这是各章 Boss 的“二阶段”信号。
             if (!Owner.Enraged && BossSkillCatalog.IsUnlocked(BossSkillKind.Enrage, Owner.Chapter) && boss.HpRatio <= Balance.BossEnrageHpRatio)
             {
@@ -91,6 +91,7 @@ namespace RevGame.Battle
             }
             // ② 公共间隔到了才挑技能：BossTactics 会过滤掉未解锁、冷却中、打不到人的技能。
             BossSkillPlan plan;
+
             if (Owner.Elapsed >= Owner.NextSkillAt
                 && BossTactics.TryChoose(Owner.Board, boss, Owner.Chapter, Owner.Intelligence, Owner.SkillReadyAt, Owner.Elapsed, Owner.LastSkill, out plan, Owner.SkillUseCounts))
             {
@@ -101,16 +102,22 @@ namespace RevGame.Battle
             // ③ 没有技能可放：普通攻击/靠近。只有待机时才积攒攻击进度——放技能期间不会“偷偷攒普攻”。
             NormalAction(seconds);
         }
-
         /// <summary>每个独立移动周期换位；不依赖普攻是否有目标，也不受小兵守眼策略限制。</summary>
         private void Reposition()
         {
             Piece boss = Owner.Boss;
-            if (Owner.Elapsed < boss.NextMoveAt) { return; }
+
+            if (Owner.Elapsed < boss.NextMoveAt)
+            {
+                return;
+            }
             boss.NextMoveAt = Owner.Elapsed + Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks;
             // 轮转的巡游目标只是算法评分，不是玩法数值。整块身体仍经CanFit检查，不穿越占格。
             int turn = 0;
-            foreach (int count in Owner.SkillUseCounts) { turn += count; }
+            foreach (int count in Owner.SkillUseCounts)
+            {
+                turn += count;
+            }
             BoardPos goal = new BoardPos((turn % 2 == 0 ? 1 : Owner.Board.Size - boss.Size - 1),
                 ((turn / 2) % 2 == 0 ? 1 : Owner.Board.Size - boss.Size - 1));
             BoardPos best = boss.Pos;
@@ -119,14 +126,29 @@ namespace RevGame.Battle
             {
                 for (int dx = -1; dx <= 1; dx++)
                 {
-                    if (dx == 0 && dy == 0) { continue; }
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
                     BoardPos pos = new BoardPos(boss.Pos.X + dx, boss.Pos.Y + dy);
-                    if (!Owner.Board.CanFit(pos, boss.Size, GameSide.Enemy, boss, respectEnemyEyes: false)) { continue; }
+
+                    if (!Owner.Board.CanFit(pos, boss.Size, GameSide.Enemy, boss, respectEnemyEyes: false))
+                    {
+                        continue;
+                    }
                     int candidate = Math.Abs(pos.X - goal.X) + Math.Abs(pos.Y - goal.Y);
-                    if (candidate < score) { score = candidate; best = pos; }
+
+                    if (candidate < score)
+                    {
+                        score = candidate;
+                        best = pos;
+                    }
                 }
             }
-            if (best != boss.Pos) { Owner.Teleport(best); }
+            if (best != boss.Pos)
+            {
+                Owner.Teleport(best);
+            }
         }
 
         /// <summary>与普通敌棋相同的攻击/推进规则：射程内有人就打，没有就等移动冷却后靠近一格。</summary>
@@ -137,17 +159,20 @@ namespace RevGame.Battle
             int actions = boss.ConsumeCompletedActions();
 
             MoveRules.GetAttackTargets(Owner.Board, boss, _targets);
+
             if (_targets.Count > 0)
             {
                 for (int i = 0; i < actions; i++)
                 {
                     // 每一发都重新查目标：上一发可能已经击杀，不能打一个已移除的棋子。
                     MoveRules.GetAttackTargets(Owner.Board, boss, _targets);
+
                     if (_targets.Count == 0)
                     {
                         break;
                     }
                     Owner.Attack(boss, EnemyTactics.ChooseTarget(Owner.Board, boss, _targets, Owner.Intelligence, Owner));
+
                     if (Owner.KingCaptured)
                     {
                         return;
@@ -155,10 +180,8 @@ namespace RevGame.Battle
                 }
                 return;
             }
-
         }
     }
-
     /// <summary>
     /// 技能状态基类：实现“蓄力 → 多段命中 → 收招 → 回 Idle”的通用节奏。
     /// 子类只需要说明自己是哪个技能（Kind），以及每一段命中时做什么（Hit）。
@@ -183,7 +206,10 @@ namespace RevGame.Battle
         protected BossSkillState(RevHeavyFSM<BossAIState, IBossAIOwner> machine) : base(machine) { }
 
         /// <summary>对应的技能种类。</summary>
-        protected abstract BossSkillKind Kind { get; }
+        protected abstract BossSkillKind Kind
+        {
+            get;
+        }
         /// <summary>伤害段数：默认等于表里的 Count；Count 另有含义的技能（弹幕/汲取/召唤）改成 1。</summary>
         protected virtual int HitCount => Def.Count;
         /// <summary>本章换算后的伤害倍率。</summary>
@@ -200,6 +226,7 @@ namespace RevGame.Battle
             _elapsed = 0f;
             _hits = 0;
             _invalid = false;
+
             if (Plan.Kind != Kind && !BossTactics.TryPlan(Owner.Board, Owner.Boss, Kind, Owner.Intelligence, out Plan))
             {
                 _invalid = true;
@@ -211,10 +238,10 @@ namespace RevGame.Battle
             Info = new BossSkillInfo(boss.Id, Kind, boss.Pos, boss.Size, Plan.A, Plan.B, Plan.C, Def.Radius, Def.Windup, 0, Def.Count, Owner.Enraged);
             Owner.Announce(Info, true);
         }
-
         /// <summary>计划确定后、广播预警前的钩子：子类可以在这里锁定目标（例如汲取锁定残血棋子）。</summary>
-        protected virtual void OnPlanned() { }
-
+        protected virtual void OnPlanned()
+        {
+        }
         public override void OnUpdate(float seconds)
         {
             if (StopIfOver())
@@ -236,11 +263,13 @@ namespace RevGame.Battle
                 Hit(index);
                 // 先结算再广播：表现层收到命中事件时，伤害数字与死亡已经发生，二者在画面上同步。
                 Owner.Announce(Info.WithIndex(index), false);
+
                 if (Owner.KingCaptured || !Owner.Boss.IsAlive)
                 {
                     return;
                 }
             }
+
             if (_hits >= count && _elapsed >= Def.Windup + (count - 1) * Def.Interval + Balance.BossRecoverSeconds)
             {
                 Finish();
@@ -261,7 +290,6 @@ namespace RevGame.Battle
             Owner.LastSkill = Kind;
             ChangeTo(BossAIState.Idle, Kind + " 收招");
         }
-
         /// <summary>对名单里的每颗棋子造成一次技能伤害。名单是自己的副本，扣血导致死亡移除也不影响遍历。</summary>
         protected void DamageAll(List<Piece> victims)
         {
@@ -274,7 +302,6 @@ namespace RevGame.Battle
             }
         }
     }
-
     /// <summary>横扫震地：命中时打 Boss 身体周围 Radius 格内的所有我方棋子。蓄力期间离开范围就能躲开。</summary>
     internal sealed class BossCleaveState : BossSkillState
     {
@@ -289,7 +316,6 @@ namespace RevGame.Battle
             DamageAll(Victims);
         }
     }
-
     /// <summary>
     /// 致命狙击：预警锁定 A 格（威胁最大的那颗棋子所在位置），命中时打“此刻站在 A 格上的棋子”。
     /// 准星锁的是位置不是人：玩家把棋子挪开就能躲掉这一枪——这正是预警存在的意义。
@@ -302,13 +328,13 @@ namespace RevGame.Battle
         protected override void Hit(int index)
         {
             Piece target = Owner.Board.GetPiece(Plan.A);
+
             if (target != null && target.Side == GameSide.Player && target.IsAlive)
             {
                 Owner.SkillDamage(target, Power);
             }
         }
     }
-
     /// <summary>三连轰炸：锁定一块区域，依次在 A、B、C 三个落点爆炸，每发各自结算一次范围伤害。</summary>
     internal sealed class BossBombardState : BossSkillState
     {
@@ -323,7 +349,6 @@ namespace RevGame.Battle
             DamageAll(Victims);
         }
     }
-
     /// <summary>
     /// 弹幕风暴：以 Boss 身体中心生成一圈子弹同时向全屏散射，没有距离限制。
     /// 表里的 Count 是“子弹数量”（只影响画面密度），
@@ -342,7 +367,6 @@ namespace RevGame.Battle
             DamageAll(Victims);
         }
     }
-
     /// <summary>
     /// 瞬影爆破：蓄力时在落点 A 显示传送门，命中时整块身体瞬移过去并立刻爆炸。
     /// 落点在蓄力期间被占（玩家把棋子挪进去堵门）时，瞬移失败，Boss 原地爆炸——这是一种“反制”。
@@ -364,7 +388,6 @@ namespace RevGame.Battle
             DamageAll(Victims);
         }
     }
-
     /// <summary>天光回旋：激光环绕自身旋转，按 Interval 结算多段伤害；每段都重新判定谁还在圈里。</summary>
     internal sealed class BossLaserSpinState : BossSkillState
     {
@@ -377,7 +400,6 @@ namespace RevGame.Battle
             DamageAll(Victims);
         }
     }
-
     /// <summary>
     /// 灵魂汲取：蓄力时锁定生命比例最低的 Count 颗棋子（锁人不锁格，躲不掉，所以伤害倍率较低），
     /// 命中时扣血，并把实际造成的伤害全部回到 Boss 身上。应对方法：别让残血棋子拖到 Boss 残血时。
@@ -404,25 +426,25 @@ namespace RevGame.Battle
             Plan.A = Victims.Count > 0 ? Victims[0].Pos : Owner.Boss.Pos;
             Plan.B = Victims.Count > 1 ? Victims[1].Pos : Plan.A;
         }
-
         protected override void Hit(int index)
         {
             int drained = 0;
             foreach (int id in _lockedIds)
             {
                 Piece target = Owner.Board.FindPiece(id);
+
                 if (target != null && target.IsAlive && target.Side == GameSide.Player)
                 {
                     drained += Owner.SkillDamage(target, Power);
                 }
             }
+
             if (drained > 0)
             {
                 Owner.HealBoss(drained);
             }
         }
     }
-
     /// <summary>召唤影卫：在 Boss 附近召出 Count 个小兵。小兵走普通敌棋的状态机，与 Boss 互不干扰。</summary>
     internal sealed class BossSummonState : BossSkillState
     {
@@ -435,7 +457,6 @@ namespace RevGame.Battle
             Owner.Summon(Def.Count);
         }
     }
-
     /// <summary>
     /// 狂暴怒吼：每场只触发一次。命中时把 Enraged 置为 true，此后所有技能冷却乘以
     /// Boss.EnrageCooldownScale，特效也换成红色调。怒吼本身不造成伤害。
@@ -453,15 +474,15 @@ namespace RevGame.Battle
             Info = new BossSkillInfo(Info.BossId, Info.Kind, Info.Origin, Info.OriginSize, Info.A, Info.B, Info.C, Info.Radius, Info.Windup, 0, Info.Count, true);
         }
     }
-
     /// <summary>死亡终态：不感知、不执行，下一次 Tick 也不会把它复活。</summary>
     internal sealed class BossDeadState : BossState
     {
         public BossDeadState(RevHeavyFSM<BossAIState, IBossAIOwner> machine) : base(machine) { }
         public override BossAIState StateType => BossAIState.Dead;
-        public override void OnUpdate(float seconds) { }
+        public override void OnUpdate(float seconds)
+        {
+        }
     }
-
     /// <summary>停止：离开战斗阶段后停手；若重新回到战斗且 Boss 仍存活，则回到待机。</summary>
     internal sealed class BossStoppedState : BossState
     {
@@ -473,10 +494,12 @@ namespace RevGame.Battle
             {
                 ChangeTo(BossAIState.Dead, "Boss 真实死亡");
             }
-            else if (Owner.Phase == GamePhase.Battle)
-            {
-                ChangeTo(BossAIState.Idle, "重新进入战斗");
-            }
+            else
+
+                if (Owner.Phase == GamePhase.Battle)
+                {
+                    ChangeTo(BossAIState.Idle, "重新进入战斗");
+                }
         }
     }
 }

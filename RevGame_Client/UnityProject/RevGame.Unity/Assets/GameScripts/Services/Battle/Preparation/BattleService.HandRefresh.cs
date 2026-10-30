@@ -24,7 +24,6 @@ namespace RevGame.Services
             }
             RangedActionsPerTick = value;
         }
-
         /// <summary>免费刷新剩余手牌；剩六张刷六张，落掉两张后只刷四张，不会补回已用额度。</summary>
         public bool RefreshHand()
         {
@@ -36,7 +35,6 @@ namespace RevGame.Services
             {
                 return Reject("手牌已用完，下一回合再刷新");
             }
-
             var old = new List<Battle.HandCard>(Hand);
             var kinds = new List<PieceKind>();
             foreach (Battle.HandCard card in old)
@@ -53,7 +51,10 @@ namespace RevGame.Services
                 kinds.Add(choices.Count == 0 ? card.Kind : choices[_random.Next(choices.Count)]);
             }
             _hand.Clear();
-            for (int i = 0; i < old.Count; i++) { _hand.Add(kinds[i], old[i].Star); }
+            for (int i = 0; i < old.Count; i++)
+            {
+                _hand.Add(kinds[i], old[i].Star);
+            }
             SelectedCardId = SelectedPieceId = 0;
             EyeStoneSelected = false;
             LastError = string.Empty;

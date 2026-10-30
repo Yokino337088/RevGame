@@ -14,7 +14,10 @@ namespace RevGame.Services
     {
 #if REVGAME_OFFLINE_TESTS
         /// <summary>控制台独立回合覆盖只接真实关卡重置，绝不设胜负或加属性；失败后的下一轮覆盖不冒充连续通关。</summary>
-        public bool BeginHelperBalanceFixture(int chapter, int round) { return BeginCampaignAtRound(chapter, round); }
+        public bool BeginHelperBalanceFixture(int chapter, int round)
+        {
+            return BeginCampaignAtRound(chapter, round);
+        }
 #endif
         public static void VerifyHelperRules(Action<bool, string> check)
         {
@@ -27,7 +30,8 @@ namespace RevGame.Services
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, info => { shots++; lastShot = info; }, owner: owner);
             try
             {
-                battle.Chapter = 1; battle.Round = 1;
+                battle.Chapter = 1;
+                battle.Round = 1;
                 var player = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
                 var enemy = battle.AddHelperCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(8, 8));
                 battle.RefreshGoState();
@@ -38,7 +42,9 @@ namespace RevGame.Services
                 check(battle.RemovePlayerPiece(player.Id) && battle.Board.FindPiece(player.Id) == null && battle.SelectedPieceId == 0, "移除清占格/名单/选择");
                 check(battle.LifetimeScore == historical, "移除不发击杀分");
 
-                battle._board.Reset(); battle._playerPieces.Clear(); battle._enemyPieces.Clear();
+                battle._board.Reset();
+                battle._playerPieces.Clear();
+                battle._enemyPieces.Clear();
                 for (int i = 0; i < Balance.RangedLimit; i++)
                 {
                     battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(i % 9, i / 9));
@@ -51,8 +57,12 @@ namespace RevGame.Services
                 check(!battle.TryDeployReinforcement(PieceKind.Crossbow, StarTier.Two), "远程援军同样遵守三十上限");
                 check(battle.RemovePlayerPiece(battle._playerPieces[0].Id) && battle.PlaceCard(PieceKind.Archer, StarTier.One, new BoardPos(8, 7)), "移除远程后可以重新部署");
 
-                battle.StopEnemyAI(); battle._board.Reset(); battle._playerPieces.Clear(); battle._enemyPieces.Clear();
-                battle.Chapter = 5; battle.Round = 9;
+                battle.StopEnemyAI();
+                battle._board.Reset();
+                battle._playerPieces.Clear();
+                battle._enemyPieces.Clear();
+                battle.Chapter = 5;
+                battle.Round = 9;
                 for (int i = 0; i < 54; i++)
                 {
                     battle.AddHelperCheckPiece(GameSide.Player, i < 40 ? PieceKind.Swordman : PieceKind.Archer, new BoardPos(i % 9, i / 9));
@@ -65,46 +75,65 @@ namespace RevGame.Services
                 check(battle.StartRound(5, 10), "拥挤盘吞噬后完整三乘三Boss必须出生");
                 check(battle._playerPieces.Count == Balance.BossPlayerPieceLimit && battle.LastBossSwallowedCount == 9, "成功交割实际只吞九颗");
 
-                battle.StopEnemyAI(); battle._board.Reset(); battle._playerPieces.Clear(); battle._enemyPieces.Clear();
-                battle.Chapter = 1; battle.Round = 1; battle.IsBossRound = false;
+                battle.StopEnemyAI();
+                battle._board.Reset();
+                battle._playerPieces.Clear();
+                battle._enemyPieces.Clear();
+                battle.Chapter = 1;
+                battle.Round = 1;
+                battle.IsBossRound = false;
                 player = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
                 enemy = battle.AddHelperCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(8, 8));
                 var ranged = battle.AddHelperCheckPiece(GameSide.Enemy, PieceKind.Archer, new BoardPos(7, 8));
                 // 普通耗能模式必须有三颗玩家棋，少子救场另由VerifyStormRules覆盖。
                 var reserve1 = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(2, 0));
                 var reserve2 = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(4, 0));
-                battle.Phase = GamePhase.Battle; battle.RefreshGoState(); battle.ResetHelperRound();
+                battle.Phase = GamePhase.Battle;
+                battle.RefreshGoState();
+                battle.ResetHelperRound();
                 check(battle.SetHelperTarget(enemy.Id), "点击敌棋可以指定帮手目标");
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(battle.Helper.TargetId == enemy.Id, "指定目标覆盖默认远程优先");
-                battle.SetHelperTarget(0); battle.TickHelper(Balance.BattleSimulationStepSeconds);
+                battle.SetHelperTarget(0);
+                battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(battle.Helper.TargetId == ranged.Id, "无指令优先敌远程");
                 battle.DamagePiece(enemy, 1, player);
                 check(battle.CombatScore == Balance.HelperPlayerHitScore, "玩家真实普攻赚战斗能源");
                 long before = battle.LifetimeScore;
-                battle.CombatScore = 20; battle._battleElapsed = 4; battle._helperNextMove = 100;
+                battle.CombatScore = 20;
+                battle._battleElapsed = 4;
+                battle._helperNextMove = 100;
                 battle._helperNextShot = 0;
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(shots > 0 && !lastShot.Beam && battle.CombatScore < 20, "普通弹幕真实扣分，返分不足自给自足");
                 check(battle.LifetimeScore >= before && battle.Board.FindPiece(0) == null, "花能源不扣历史积分；帮手没有占格身份");
-                battle.CombatScore = 0; shots = 0; battle._battleElapsed += 10;
+                battle.CombatScore = 0;
+                shots = 0;
+                battle._battleElapsed += 10;
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(shots == 0, "钱包为空不发免费弹幕");
                 int scaledBeamCost = (int)Math.Ceiling(Balance.HelperBeamTickCost * (double)battle.ScoreMultiplier);
                 battle.CombatScore = Balance.HelperBeamReserve + scaledBeamCost;
-                battle.ChapterScore = Balance.HelperBeamScore; battle._battleElapsed += 1;
+                battle.ChapterScore = Balance.HelperBeamScore;
+                battle._battleElapsed += 1;
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(lastShot.Beam && battle.CombatScore == Balance.HelperBeamReserve, "足够本章成绩解锁持续激光并逐步扣积分");
-                battle.CombatScore = 0; battle._battleElapsed += Balance.BattleSimulationStepSeconds;
+                battle.CombatScore = 0;
+                battle._battleElapsed += Balance.BattleSimulationStepSeconds;
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(battle._helperBeamUntil == 0, "持续激光能量耗尽立即停止");
-                battle.RemovePlayerPiece(reserve1.Id); battle.RemovePlayerPiece(reserve2.Id);
+                battle.RemovePlayerPiece(reserve1.Id);
+                battle.RemovePlayerPiece(reserve2.Id);
                 check(battle.RemovePlayerPiece(player.Id) && battle.LastWinner == GameSide.Enemy, "无敌帮手不能把玩家全灭改为胜利");
 
-                battle.StopEnemyAI(); battle._board.Reset(); battle._playerPieces.Clear(); battle._enemyPieces.Clear();
+                battle.StopEnemyAI();
+                battle._board.Reset();
+                battle._playerPieces.Clear();
+                battle._enemyPieces.Clear();
                 player = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
                 enemy = battle.AddHelperCheckPiece(GameSide.Enemy, PieceKind.Swordman, new BoardPos(8, 8));
-                battle.Phase = GamePhase.Battle; battle.RefreshGoState();
+                battle.Phase = GamePhase.Battle;
+                battle.RefreshGoState();
                 var candidates = new List<BoardPos>();
                 EnemyTactics.GetAdvanceCandidates(battle.Board, enemy, candidates);
                 BoardPos jump = EnemyTactics.ChooseSafeMove(battle.Board, enemy, candidates, 4);
@@ -114,11 +143,14 @@ namespace RevGame.Services
                 battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(4, 0));
                 battle.IsBossRound = true;
                 var boss = new Piece(battle._nextPieceId++, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy, 1, true, true);
-                battle._board.Place(boss, new BoardPos(6, 6)); battle._enemyPieces.Add(boss);
-                battle.ResetHelperRound(); battle.SetHelperTarget(enemy.Id);
+                battle._board.Place(boss, new BoardPos(6, 6));
+                battle._enemyPieces.Add(boss);
+                battle.ResetHelperRound();
+                battle.SetHelperTarget(enemy.Id);
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(battle.Helper.TargetId == boss.Id, "Boss回合主将优先于玩家指定普通目标");
-                battle._board.Remove(boss); battle._enemyPieces.Remove(boss);
+                battle._board.Remove(boss);
+                battle._enemyPieces.Remove(boss);
                 battle.TickHelper(Balance.BattleSimulationStepSeconds);
                 check(battle.Helper.TargetId == enemy.Id, "Boss消失后恢复玩家指定目标");
                 var host = new HelperOwner(battle);
@@ -128,7 +160,11 @@ namespace RevGame.Services
                     for (int x = 0; x < 8; x++)
                     {
                         var pos = new BoardPos(x, y);
-                        if (battle.Board.GetPiece(pos) == null) { battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Swordman, pos); }
+
+                        if (battle.Board.GetPiece(pos) == null)
+                        {
+                            battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Swordman, pos);
+                        }
                     }
                 }
                 version = battle.Board.TopologyVersion;
@@ -142,25 +178,38 @@ namespace RevGame.Services
                 int pieces = battle.Board.Pieces.Count;
                 check(battle.BeginHelperFreshCampaignForCheck(1) && battle.CombatScore == 0 && battle.ChapterScore == 0, "同章重新挑战清可用积分与成长档位");
                 check(battle.LifetimeScore == before, "重开仍保留历史累计成绩");
-                battle.StopEnemyAI(); battle._board.Reset(); battle._playerPieces.Clear(); battle._enemyPieces.Clear();
-                battle.Chapter = 6; battle.Round = 9; battle.Phase = GamePhase.Prepare;
+                battle.StopEnemyAI();
+                battle._board.Reset();
+                battle._playerPieces.Clear();
+                battle._enemyPieces.Clear();
+                battle.Chapter = 6;
+                battle.Round = 9;
+                battle.Phase = GamePhase.Prepare;
                 for (int i = 0; i < 81; i++)
                 {
                     // 五十四枚低星+二十七枚高星全盘占满：吞噬预算三十六，必须保留全部高星。
                     var piece = new Piece(battle._nextPieceId++, PieceCatalog.Get(PieceKind.Swordman, i < 54 ? StarTier.One : StarTier.Three), GameSide.Player, 1);
-                    battle._board.Place(piece, new BoardPos(i % 9, i / 9), respectEnemyEyes: false); battle._playerPieces.Add(piece);
+                    battle._board.Place(piece, new BoardPos(i % 9, i / 9), respectEnemyEyes: false);
+                    battle._playerPieces.Add(piece);
                 }
                 bool entered = battle.StartRound(6, 10);
                 check(entered && battle.LastBossSwallowedCount == 36 && battle._playerPieces.Count == Balance.BossPlayerPieceLimit,
                     "满盘八十一棋按预算吞噬至四十五且完整Boss出生");
                 check(battle._playerPieces.FindAll(p => p.Def.Star == StarTier.Three).Count == 27,
                     "吞噬优先低级棋，不误吞高星棋");
-                battle.StopEnemyAI(); battle._board.Reset(); battle._playerPieces.Clear(); battle._enemyPieces.Clear();
-                battle.Chapter = 1; battle.Round = 1; battle.IsBossRound = false; battle.Phase = GamePhase.Battle;
+                battle.StopEnemyAI();
+                battle._board.Reset();
+                battle._playerPieces.Clear();
+                battle._enemyPieces.Clear();
+                battle.Chapter = 1;
+                battle.Round = 1;
+                battle.IsBossRound = false;
+                battle.Phase = GamePhase.Battle;
                 player = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(2, 2));
                 Piece melee = battle.AddHelperCheckPiece(GameSide.Player, PieceKind.Swordman, new BoardPos(0, 0));
                 enemy = battle.AddHelperCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(5, 5));
-                battle.RefreshGoState(); battle.ChapterScore = 0;
+                battle.RefreshGoState();
+                battle.ChapterScore = 0;
                 int baseRangedDamage = battle.EvaluateDamage(new DamageRequest(enemy, DamageBasis.Attack, BattleDamageKind.Normal, player)).Damage;
                 int baseMeleeDamage = battle.EvaluateDamage(new DamageRequest(enemy, DamageBasis.Attack, BattleDamageKind.Normal, melee)).Damage;
                 int baseEnemyDamage = battle.EvaluateDamage(new DamageRequest(player, DamageBasis.Attack, BattleDamageKind.Normal, enemy)).Damage;
@@ -177,9 +226,11 @@ namespace RevGame.Services
                     "共鸣不误提高玩家近战伤害");
                 check(battle.EvaluateDamage(new DamageRequest(player, DamageBasis.Attack, BattleDamageKind.Normal, enemy)).Damage == baseEnemyDamage,
                     "共鸣不误提高敌人伤害");
-                player.ActionProgress = 0; battle.StepPlayerAttack(player, .01f);
+                player.ActionProgress = 0;
+                battle.StepPlayerAttack(player, .01f);
                 check(player.ActionProgress > baseProgress, "共鸣实际加快玩家远程攻击进度");
-                battle.CombatScore = 100; battle.SpendCombatScore(50);
+                battle.CombatScore = 100;
+                battle.SpendCombatScore(50);
                 check(battle.HelperRangedAttackBonus == attackBonus && battle.HelperRangedSpeedBonus == speedBonus,
                     "花费帮手能源不降低累计成长共鸣");
                 battle.BeginHelperFreshCampaignForCheck(1);
@@ -188,17 +239,22 @@ namespace RevGame.Services
             }
             finally { battle.StopEnemyAI(); RevEvent.RemoveAllByOwner(owner); }
         }
-
         /// <summary>测试输入明确占格后才入名单，血攻仍读真实表。只用于独立Editor/控制台夹具。</summary>
         private Piece AddHelperCheckPiece(GameSide side, PieceKind kind, BoardPos position)
         {
             var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, StarTier.One), side, 1);
-            if (!_board.Place(piece, position, respectEnemyEyes: false)) { throw new InvalidOperationException("帮手规则夹具占格冲突"); }
+
+            if (!_board.Place(piece, position, respectEnemyEyes: false))
+            {
+                throw new InvalidOperationException("帮手规则夹具占格冲突");
+            }
             (side == GameSide.Player ? _playerPieces : _enemyPieces).Add(piece);
             return piece;
         }
-        private bool BeginHelperFreshCampaignForCheck(int chapter) { return BeginCampaignAtRound(chapter, 1); }
-
+        private bool BeginHelperFreshCampaignForCheck(int chapter)
+        {
+            return BeginCampaignAtRound(chapter, 1);
+        }
         /// <summary>隔离高生命靶只测固定时长的真实开火次数与单发伤害；不用于胜率，不影响生产盘面。</summary>
         private static void VerifyHelperBossCadence(Action<bool, string> check)
         {
@@ -212,7 +268,6 @@ namespace RevGame.Services
                 "四十模拟秒真实弹幕次数达到Boss攻速目标，允许首末固定步误差");
             check(bossDamage <= normalDamage && bossDamage >= 1, "Boss加密弹幕的单发伤害受独立倍率限制，不随频率翻倍");
         }
-
         private static int SampleHelperCadence(bool bossRound, out int firstDamage, out float interval)
         {
             var sample = new BattleService(false, 782);
@@ -220,18 +275,35 @@ namespace RevGame.Services
             int shots = 0, damage = 0;
             try
             {
-                sample.Chapter = 1; sample.Round = bossRound ? Balance.RoundsPerChapter : 1;
-                sample.IsBossRound = bossRound; sample.Phase = GamePhase.Battle;
+                sample.Chapter = 1;
+                sample.Round = bossRound ? Balance.RoundsPerChapter : 1;
+                sample.IsBossRound = bossRound;
+                sample.Phase = GamePhase.Battle;
                 sample.AddHelperCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
                 sample.AddHelperCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(2, 0));
                 sample.AddHelperCheckPiece(GameSide.Player, PieceKind.Shield, new BoardPos(4, 0));
                 var target = new Piece(sample._nextPieceId++, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy, hpScale: 1000f);
-                sample._board.Place(target, new BoardPos(8, 8)); sample._enemyPieces.Add(target);
-                sample.RefreshGoState(); sample.ResetHelperRound();
-                sample._helperNextMove = float.MaxValue; sample.CombatScore = 100000;
+                sample._board.Place(target, new BoardPos(8, 8));
+                sample._enemyPieces.Add(target);
+                sample.RefreshGoState();
+                sample.ResetHelperRound();
+                sample._helperNextMove = float.MaxValue;
+                sample.CombatScore = 100000;
                 interval = sample.HelperShotInterval;
-                RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, info => { if (!info.Beam) { shots++; } }, owner: owner);
-                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, info => { if (damage == 0) { damage = info.Damage; } }, owner: owner);
+                RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, info =>
+                {
+                    if (!info.Beam)
+                    {
+                        shots++;
+                    }
+                }, owner: owner);
+                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, info =>
+                {
+                    if (damage == 0)
+                    {
+                        damage = info.Damage;
+                    }
+                }, owner: owner);
                 for (float t = 0; t < 40f; t += Balance.BattleSimulationStepSeconds)
                 {
                     sample._battleElapsed = t;

@@ -30,13 +30,13 @@ namespace RevGame.UI
         // 每次打开重置钱包数值和布局哨兵，再绑定当前面板所有者的监听；防止跨场景旧显示。
         private void OpenPieceManagement()
         {
-            _walletShown = -1; _walletLayoutSize = Vector2.zero;
+            _walletShown = -1;
+            _walletLayoutSize = Vector2.zero;
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshPieceManagement, owner: this);
             RevEvent.AddEventListener<string>(Events.BoardRuleNotice, OnBoardRuleNotice, owner: this);
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperScoreSpent, owner: this);
             NotifyBossSwallow();
         }
-
         /// <summary>节点名是RevUI自动绑定契约。处理时重新验证Id，死亡/移除后旧按钮无法删另一颗棋。</summary>
         [RevButtonClick("btnRemovePiece")]
         private void OnRemovePiece()
@@ -44,20 +44,30 @@ namespace RevGame.UI
             RevLogic.Get<Flow.BattleLogic>()?.RemovePiece(_removePieceId);
             RefreshPieceManagement();
         }
-
         // 重新查选中棋子身份和真实可见前置，SetActive只在变化时调用。
         // 按钮位置仍跟随当前棋子/相机，不能缓存旧坐标导致按钮点到已移走棋子的旁边。
         private void RefreshPieceManagement()
         {
-            if (removePieceButton == null) { return; }
+            if (removePieceButton == null)
+            {
+                return;
+            }
             var piece = Battle.Board.FindPiece(Battle.SelectedPieceId);
             bool visible = piece != null && piece.IsAlive && piece.Side == GameSide.Player
                 && (Battle.Phase == GamePhase.Prepare || Battle.Phase == GamePhase.Battle);
             var flow = RevServices.GetRequired<Flow.GameFlow>();
             visible = visible && !flow.IsGameplayBlocked && !flow.IsTutorialActive;
-            if (removePieceButton.gameObject.activeSelf != visible) { removePieceButton.gameObject.SetActive(visible); }
+
+            if (removePieceButton.gameObject.activeSelf != visible)
+            {
+                removePieceButton.gameObject.SetActive(visible);
+            }
             _removePieceId = visible ? piece.Id : 0;
-            if (!visible || Camera.main == null) { return; }
+
+            if (!visible || Camera.main == null)
+            {
+                return;
+            }
             RectTransform parent = (RectTransform)transform;
             Vector3 world = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset)
                 + Vector3.one * ((piece.Size - 1) * Consts.CellSize * .5f);
@@ -67,34 +77,46 @@ namespace RevGame.UI
             rect.anchoredPosition = new Vector2(Mathf.Clamp(local.x, parent.rect.xMin + 95, parent.rect.xMax - 95),
                 Mathf.Clamp(local.y + 58, parent.rect.yMin + 40, parent.rect.yMax - 40));
         }
-
         // 布局与文字分开缓存：尺寸变化只重排，余额/档位/加成变化只更新文案，避免重复布局与格式化。
         private void RefreshHelperWallet()
         {
             RefreshPieceManagement();
-            if (helperScoreLabel == null) { return; }
+
+            if (helperScoreLabel == null)
+            {
+                return;
+            }
             RectTransform parent = (RectTransform)transform;
             Rect safe = GameBattleLayout.SafeViewport();
+
             if (_walletLayoutSize != parent.rect.size || _walletSafeArea != safe)
             {
-            _walletLayoutSize = parent.rect.size; _walletSafeArea = safe;
-            var areas = GameBattleLayout.Calculate(parent.rect.size, safe);
-            // 右栏信息牌下方留一行能源提示，避免底部棋盘格与存活棋子遮住数字。
-            Rect slot = GameBattleLayout.InRegion(areas.Right, .68f, .92f, .08f);
-            helperScoreLabel.rectTransform.sizeDelta = slot.size;
-            helperScoreLabel.rectTransform.anchorMin = helperScoreLabel.rectTransform.anchorMax = new Vector2(.5f,.5f);
-            helperScoreLabel.rectTransform.anchoredPosition = slot.center - parent.rect.size * .5f;
-            helperScoreLabel.fontSize = 22;
+                _walletLayoutSize = parent.rect.size;
+                _walletSafeArea = safe;
+                var areas = GameBattleLayout.Calculate(parent.rect.size, safe);
+                // 右栏信息牌下方留一行能源提示，避免底部棋盘格与存活棋子遮住数字。
+                Rect slot = GameBattleLayout.InRegion(areas.Right, .68f, .92f, .08f);
+                helperScoreLabel.rectTransform.sizeDelta = slot.size;
+                helperScoreLabel.rectTransform.anchorMin = helperScoreLabel.rectTransform.anchorMax = new Vector2(.5f, .5f);
+                helperScoreLabel.rectTransform.anchoredPosition = slot.center - parent.rect.size * .5f;
+                helperScoreLabel.fontSize = 22;
             }
-            long wallet = Battle.CombatScore; int tier = Battle.Helper.Tier;
+            long wallet = Battle.CombatScore;
+            int tier = Battle.Helper.Tier;
             int attack = Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100), speed = Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100);
+
             // 四个显示输入都相同才提前返回。真实服务数据没有被缓存替代，变化时照常更新。
-            if (_walletShown == wallet && _walletTier == tier && _walletAttack == attack && _walletSpeed == speed) { return; }
-            _walletShown = wallet; _walletTier = tier; _walletAttack = attack; _walletSpeed = speed;
+            if (_walletShown == wallet && _walletTier == tier && _walletAttack == attack && _walletSpeed == speed)
+            {
+                return;
+            }
+            _walletShown = wallet;
+            _walletTier = tier;
+            _walletAttack = attack;
+            _walletSpeed = speed;
             helperScoreLabel.text = "帮手能量 " + Battle.CombatScore.ToString("N0") + " · " + Battle.Helper.Tier + "档"
                 + "\n远程共鸣 攻击+" + Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100) + "% · 攻速+" + Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100) + "%";
         }
-
         /// <summary>规则事实复用既有木纹弹幕底板、对象池与安全区通道，闪烁只改变透明度，不拦棋盘输入。</summary>
         private void OnBoardRuleNotice(string message)
         {
@@ -106,34 +128,49 @@ namespace RevGame.UI
             BattleText config = GameTextConfig.Require("EnemyDeployment");
             ShowEnemyNotice(config, message, "", "棋盘规则提示加载失败");
         }
-
         /// <summary>Boss演出锁定期间延后播报，避免提示被入场预制体遮住。回合/面板改变取消旧提示。</summary>
         private void NotifyBossSwallow()
         {
-            if (!Battle.IsBossRound || !(Battle is Services.BattleService service) || service.LastBossSwallowedCount <= 0) { return; }
-            if (_swallowWaiting || (_swallowShownChapter == Battle.Chapter && _swallowShownRound == Battle.Round)) { return; }
+            if (!Battle.IsBossRound || !(Battle is Services.BattleService service) || service.LastBossSwallowedCount <= 0)
+            {
+                return;
+            }
+            if (_swallowWaiting || (_swallowShownChapter == Battle.Chapter && _swallowShownRound == Battle.Round))
+            {
+                return;
+            }
             _swallowWaiting = true;
             int generation = _noticeGeneration;
             int chapter = Battle.Chapter, round = Battle.Round;
             async void WaitForIntro()
             {
                 while (this != null && !_noticeClosed && generation == _noticeGeneration
-                    && RevServices.GetRequired<Flow.GameFlow>().IsGameplayBlocked) { await RevTask.Yield(); }
+                    && RevServices.GetRequired<Flow.GameFlow>().IsGameplayBlocked)
+                {
+                    await RevTask.Yield();
+                }
                 _swallowWaiting = false;
-                if (this == null || _noticeClosed || generation != _noticeGeneration || Battle.Chapter != chapter || Battle.Round != round) { return; }
-                _swallowShownChapter = chapter; _swallowShownRound = round;
+
+                if (this == null || _noticeClosed || generation != _noticeGeneration || Battle.Chapter != chapter || Battle.Round != round)
+                {
+                    return;
+                }
+                _swallowShownChapter = chapter;
+                _swallowShownRound = round;
                 OnBoardRuleNotice("不好，boss发动了技能，强制吞噬了你的棋子");
             }
             WaitForIntro();
         }
-
         /// <summary>先让入账飞星抵达积分面板，再从面板流向帮手。钱包扣款早已完成，粒子取消不退费或重复扣款。</summary>
         private void OnHelperScoreSpent(HelperShotInfo info)
         {
             int generation = _scoreGeneration;
             RevTimer.After(.72f, () =>
             {
-                if (generation != _scoreGeneration || _noticeClosed || _noticeRoot == null || scoreFrame == null || Camera.main == null) { return; }
+                if (generation != _scoreGeneration || _noticeClosed || _noticeRoot == null || scoreFrame == null || Camera.main == null)
+                {
+                    return;
+                }
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(_noticeRoot, RectTransformUtility.WorldToScreenPoint(null, scoreFrame.position), null, out Vector2 start);
                 Vector3 world = Battle.Helper.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(_noticeRoot, Camera.main.WorldToScreenPoint(world), null, out Vector2 end);
@@ -146,11 +183,19 @@ namespace RevGame.UI
                     {
                         if (generation != _scoreGeneration || _noticeClosed)
                         {
-                            if (spark != null) { RevPool.Return(spark, 0); }
+                            if (spark != null)
+                            {
+                                RevPool.Return(spark, 0);
+                            }
                             return;
                         }
                         _scoreLoading--;
-                        if (spark == null) { RevLog.Warn("帮手积分粒子加载失败", "RevGame"); return; }
+
+                        if (spark == null)
+                        {
+                            RevLog.Warn("帮手积分粒子加载失败", "RevGame");
+                            return;
+                        }
                         _scoreSparks.Add(spark);
                         spark.Fly(start, end, false, lane, OnScoreSparkFinished);
                     }, _noticeRoot);

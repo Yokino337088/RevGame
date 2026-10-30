@@ -18,7 +18,6 @@ namespace RevGame.UI
         {
             public IReadOnlyList<RewardDef> Options;
         }
-
         [RevBind]
         private Button _choice0;
         [RevBind]
@@ -29,7 +28,6 @@ namespace RevGame.UI
         private Sprite[] rewardIcons;
         protected override void OnBindView()
         {
-
         }
 
         protected override void OnRefreshView()
@@ -38,7 +36,6 @@ namespace RevGame.UI
             {
                 return;
             }
-
             Button[] buttons =
             {
                 _choice0,
@@ -52,25 +49,20 @@ namespace RevGame.UI
                 buttons[i].transform.Find("icon").GetComponent<Image>().sprite = rewardIcons[(int)reward.Kind];
             }
         }
-
         [RevButtonClick("choice0")]
         private void OnFirst()
         {
             RevLogic.Get<BattleLogic>().ChooseReward(0);
         }
-
         [RevButtonClick("choice1")]
         private void OnSecond()
         {
             RevLogic.Get<BattleLogic>().ChooseReward(1);
         }
-
         [RevButtonClick("choice2")]
         private void OnThird()
         {
             RevLogic.Get<BattleLogic>().ChooseReward(2);
         }
-
-
     }
 }

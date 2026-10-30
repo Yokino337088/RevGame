@@ -21,14 +21,20 @@ namespace RevGame.Flow
         public const string BattleSceneName = "GameScene";
 
         /// <summary>跨整个加载及淡出期间的互斥锁。战斗Logic据此暂停Tick，防止准备增益被遮罩吃掉。</summary>
-        public bool IsTransitioning { get; private set; }
+        public bool IsTransitioning
+        {
+            get; private set;
+        }
         /// <summary>失败遮挡仍开着时也不能推进玩法；IsTransitioning只表示异步任务是否仍在执行。</summary>
         public bool IsGameplayBlocked
         {
             get
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (_bossDevelopmentEntering) { return true; }
+                if (_bossDevelopmentEntering)
+                {
+                    return true;
+                }
 #endif
                 return IsBossIntroPlaying || IsBossVictoryPlaying || IsAudioSettingsVisible || IsStoryPlaying || IsTransitioning || _loading != null
                     || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady);
@@ -36,7 +42,10 @@ namespace RevGame.Flow
         }
         private GamePresentation _activePresentation;
         /// <summary>诊断用真实阶段进度，不是DOTween插值后的视觉值；范围0~1。</summary>
-        public float LoadProgress { get; private set; }
+        public float LoadProgress
+        {
+            get; private set;
+        }
         /// <summary>当前阶段的人话描述，GM可查询，面板也直接显示；不携带文件系统路径。</summary>
         public string LoadStep { get; private set; } = "尚未开始";
         /// <summary>仅GameBootstrap注销服务时置true，禁止退出Play后的异步续体重新打开面板。</summary>
@@ -75,8 +84,10 @@ namespace RevGame.Flow
 #endif
 
         /// <summary>按钮不能await，因此使用唯一的async void边界；异常在SwitchSceneAsync内部收口并显示原因。</summary>
-        private async void SwitchFromButtonAsync(GameScreen target) { await SwitchSceneAsync(target); }
-
+        private async void SwitchFromButtonAsync(GameScreen target)
+        {
+            await SwitchSceneAsync(target);
+        }
         /// <summary>
         /// 执行一次完整交接。调用者须先置IsTransitioning=true，且只有本方法的finally能解除互斥。
         /// 异常保留遮挡和原因，不冒充成功；资源账本无论成功/失败都会释放，旧域到真实交割时才退出。
@@ -94,6 +105,7 @@ namespace RevGame.Flow
                 _loading.ResetCover();
                 Report(0.02f, target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…");
                 await RevTask.Yield(); // 让遮挡层先实际画一帧，再开始资源解码与场景工作。
+
                 if (!_startupComplete)
                 {
                     await LoadStartupDataAsync();
@@ -108,22 +120,26 @@ namespace RevGame.Flow
                 CheckDevelopmentFailure("before-scene");
 #endif
                 string sceneName = target == GameScreen.Battle ? BattleSceneName : StartSceneName;
+
                 if (RevScene.CurrentName != sceneName)
                 {
                     // 离开战斗时先停用视图：它们回池之后RevScene才可以安全清池。
                     // 此时旧域仍在，加载失败可重新激活旧画面；计时已由IsTransitioning暂停。
                     GamePresentation old = UnityEngine.Object.FindObjectOfType<GamePresentation>();
+
                     if (old != null)
                     {
                         old.SuspendBattle();
                     }
                     await RevScene.LoadAsync(sceneName, p => Report(0.42f + p * 0.23f, "正在穿越迷雾…"));
                     ThrowIfDisposed();
+
                     if (RevScene.CurrentName != sceneName)
                     {
                         throw new InvalidOperationException("场景未完成交接：" + sceneName + "，RevScene状态=" + RevScene.State);
                     }
                 }
+
                 // 新场景的Start完成订阅后才能广播ScreenChanged，否则会漏掉打开棋盘/菜单的通知。
                 await RevTask.Yield();
                 ThrowIfDisposed();
@@ -131,11 +147,13 @@ namespace RevGame.Flow
                 CheckDevelopmentFailure("after-scene");
 #endif
                 GamePresentation presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
+
                 if (presentation == null)
                 {
                     throw new InvalidOperationException("场景缺少GamePresentation接线：" + sceneName);
                 }
                 Report(0.66f, "正在点亮前路…");
+
                 if (target == GameScreen.Battle)
                 {
                     await warmup.WarmBattlePoolsAsync(p => Report(0.66f + p * 0.12f, "正在集结棋子与魔法…"));
@@ -150,6 +168,7 @@ namespace RevGame.Flow
                 // 旧视图/池与战斗图集退出通知已完成，新视图持有自己的引用；预热账本也必须先放手。
                 // Release只把资源放进闲置表，这里在遮挡内调用门面真正卸载零引用AB，绝不force卸共享资源。
                 warmup.Dispose();
+
                 if (target != GameScreen.Battle)
                 {
                     // RevScene只清空闲实例，运行中首次创建的技能池可能仍持有prefab。
@@ -172,6 +191,7 @@ namespace RevGame.Flow
                 {
                     LastError = "加载失败：" + error.Message;
                     RevLog.Exception(error, "场景交接失败，保留遮挡并提供返回入口", "RevGame");
+
                     // 失败时绝不以100%掩盖缺失画面；按钮执行真实回退流程，不让玩家对着残缺棋盘操作。
                     if (_loading != null)
                     {
@@ -182,6 +202,7 @@ namespace RevGame.Flow
             finally
             {
                 warmup.Dispose();
+
                 if (ReferenceEquals(_activeWarmup, warmup))
                 {
                     _activeWarmup = null;
@@ -189,7 +210,6 @@ namespace RevGame.Flow
                 IsTransitioning = false;
             }
         }
-
         /// <summary>
         /// 首次启动的表/背景也纳入同一错误出口，不能只在Bootstrap打印错误然后把玩家锁在空屏。
         /// 每次await后检查流程寿命；表由全局Bootstrap在最终退出时Unload，跨场景不会重复初始化框架。
@@ -209,6 +229,7 @@ namespace RevGame.Flow
             ThrowIfDisposed();
             GameTextConfig.Validate();
             BattleTuningTable tuning = RevDataTableManager.Get<BattleTuningTable>();
+
             if (!tuning.FindByKey("PlayerRangedActionsPerTick", out BattleTuning rate))
             {
                 throw new InvalidOperationException("BattleTuning缺少我方远程攻击频率");
@@ -218,7 +239,6 @@ namespace RevGame.Flow
             ThrowIfDisposed();
             _startupComplete = true;
         }
-
         /// <summary>
         /// 通过框架 RevDataTableManager 逐张异步加载游戏配置表（走资源系统：AB、热更、缓存与编辑器直读一致），
         /// 全部就绪后交给 GameConfig.Initialize 统一校验装配。每次 await 后检查流程寿命。
@@ -284,16 +304,22 @@ namespace RevGame.Flow
                 Balance = RevDataTableManager.Get<BalanceRuleTable>(),
             });
         }
-
         /// <summary>连续通章不重载场景；背景失败仍走既有错误面板和返回流程，而非留在冻结的棋盘上。</summary>
         public async void ShowChapterBackgroundFailure(string reason)
         {
-            if (_disposed || IsTransitioning || Screen != GameScreen.Battle) { return; }
+            if (_disposed || IsTransitioning || Screen != GameScreen.Battle)
+            {
+                return;
+            }
             LastError = "章节背景失败：" + reason;
             try
             {
                 LoadingPanel panel = await RevUI.OpenAsync<LoadingPanel>();
-                if (_disposed || IsTransitioning || Screen != GameScreen.Battle) { return; }
+
+                if (_disposed || IsTransitioning || Screen != GameScreen.Battle)
+                {
+                    return;
+                }
                 _loading = panel;
                 RevScope.Detach(panel);
                 panel.ResetCover();
@@ -301,7 +327,6 @@ namespace RevGame.Flow
             }
             catch (Exception error) { RevLog.Exception(error, "章节背景错误面板打开失败", "RevGame"); }
         }
-
         /// <summary>只在过场失败后可用。回退同样通过RevScene和资源屏障，不直接删UI或重初始化框架。</summary>
         public void DismissLoadingFailure()
         {
@@ -312,13 +337,13 @@ namespace RevGame.Flow
             IsTransitioning = true;
             SwitchFromButtonAsync(GameScreen.Home);
         }
-
         /// <summary>进度按工作量分段，单次过场内单调增长；UI通过SetData消费快照，不反过来启动业务。</summary>
         private void Report(float value, string message)
         {
             ThrowIfDisposed();
             // 0.02是新一次过场的起点，允许从上次的1重新开始。
             float next = value <= 0.02f ? value : Mathf.Max(LoadProgress, Mathf.Clamp01(value));
+
             // 轮询就绪时可能多帧没有新格子；不重复分配数据/重建文字/重启同一段Tween。
             if (Mathf.Approximately(next, LoadProgress) && message == LoadStep)
             {
@@ -326,6 +351,7 @@ namespace RevGame.Flow
             }
             LoadProgress = next;
             LoadStep = message;
+
             if (_loading != null)
             {
                 _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, message));

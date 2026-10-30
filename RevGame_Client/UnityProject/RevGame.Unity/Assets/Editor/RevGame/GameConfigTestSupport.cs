@@ -21,7 +21,10 @@ namespace RevGame.Editor
         /// <summary>已装配则什么都不做；否则从磁盘上的导表数据文件装配。失败会抛带中文原因的异常。</summary>
         public static void Ensure()
         {
-            if (GameConfig.IsLoaded) { return; }
+            if (GameConfig.IsLoaded)
+            {
+                return;
+            }
             GameConfigFileLoader.LoadFromDirectory(DataDirectory);
         }
     }

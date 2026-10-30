@@ -20,7 +20,6 @@ namespace RevGame.Battle
             Position = position;
         }
     }
-
     /// <summary>无资源和动画依赖的整队算法；只产生计划，不修改实战棋盘，不持有跨轮次缓存。</summary>
     // 远程整队是同步纯规划：一张独立试盘依次试摆，返回Id和落点给服务顺序提交。
     // 本次只复用棋盘工作区，保留守眼、禁动、身体空间、阵型气数和安全距离条件。
@@ -40,33 +39,62 @@ namespace RevGame.Battle
             ranged.Clear();
             foreach (Piece piece in board.Pieces)
             {
-                if (piece.Side == GameSide.Player && piece.Def.IsRanged && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen) { ranged.Add(piece); }
+                if (piece.Side == GameSide.Player && piece.Def.IsRanged && piece.IsAlive && !piece.BossHidden && !piece.BossFrozen)
+                {
+                    ranged.Add(piece);
+                }
             }
-            if (ranged.Count < minimumCount) { return; }
-            ranged.Sort((a,b) => a.Id.CompareTo(b.Id));
+
+            if (ranged.Count < minimumCount)
+            {
+                return;
+            }
+            ranged.Sort((a, b) => a.Id.CompareTo(b.Id));
             // 锚点优先选已有最多相邻同伴的远程，减少移动人数；同分保留最早入场的棋。
             Piece anchor = ranged[0];
             int bestLinks = -1;
             foreach (Piece piece in ranged)
             {
                 int links = 0;
-                foreach (Piece other in ranged) { if (piece != other && Distance(piece.Pos, piece.Size, other) == 1) { links++; } }
-                if (links > bestLinks) { bestLinks = links; anchor = piece; }
+                foreach (Piece other in ranged)
+                {
+                    if (piece != other && Distance(piece.Pos, piece.Size, other) == 1)
+                    {
+                        links++;
+                    }
+                }
+
+                if (links > bestLinks)
+                {
+                    bestLinks = links;
+                    anchor = piece;
+                }
             }
             // 连通Id集合每轮从锚点重新扩展；容量复用不意味着旧连通关系可继续使用。
             HashSet<int> connected = board.Tactics.FormationConnected;
-            connected.Clear(); connected.Add(anchor.Id);
+            connected.Clear();
+            connected.Add(anchor.Id);
             GrowConnected(ranged, connected);
-            if (connected.Count == ranged.Count) { return; }
+
+            if (connected.Count == ranged.Count)
+            {
+                return;
+            }
             // 完整深试盘本轮只建立/刷新一次。copies指向试盘Piece，移动它们不改变真实棋子。
             // 候选循环照常Evaluate，最终只把已确认计划写入result，实际提交时服务仍复核。
             BoardModel trial = board.Tactics.Trial(board);
             List<Piece> copies = board.Tactics.FormationCopies;
             copies.Clear();
-            foreach (Piece piece in ranged) { copies.Add(trial.FindPiece(piece.Id)); }
+            foreach (Piece piece in ranged)
+            {
+                copies.Add(trial.FindPiece(piece.Id));
+            }
             foreach (Piece original in ranged)
             {
-                if (connected.Contains(original.Id) || original.IsLocked || original.EyeCount > 0 || elapsed < original.NextMoveAt) { continue; }
+                if (connected.Contains(original.Id) || original.IsLocked || original.EyeCount > 0 || elapsed < original.NextMoveAt)
+                {
+                    continue;
+                }
                 Piece moving = trial.FindPiece(original.Id);
                 BoardPos start = moving.Pos;
                 BoardPos best = start;
@@ -75,39 +103,81 @@ namespace RevGame.Battle
                 {
                     for (int x = 0; x <= board.Size - moving.Size; x++)
                     {
-                        var pos = new BoardPos(x,y);
-                        if (moving.Pos != start) { trial.Move(moving, start, respectEnemyEyes: false); }
+                        var pos = new BoardPos(x, y);
+
+                        if (moving.Pos != start)
+                        {
+                            trial.Move(moving, start, respectEnemyEyes: false);
+                        }
                         GoRules.Evaluate(trial);
-                        if (pos == start || !trial.CanFit(pos, moving.Size, moving.Side, moving)) { continue; }
+
+                        if (pos == start || !trial.CanFit(pos, moving.Size, moving.Side, moving))
+                        {
+                            continue;
+                        }
                         int links = 0;
                         int nearestEnemy = board.Size * 2;
                         foreach (Piece other in trial.Pieces)
                         {
                             int distance = Distance(pos, moving.Size, other);
-                            if (other.Side == GameSide.Enemy) { nearestEnemy = Math.Min(nearestEnemy, distance); }
-                            else if (connected.Contains(other.Id) && distance == 1) { links++; }
+
+                            if (other.Side == GameSide.Enemy)
+                            {
+                                nearestEnemy = Math.Min(nearestEnemy, distance);
+                            }
+                            else
+
+                                if (connected.Contains(other.Id) && distance == 1)
+                                {
+                                    links++;
+                                }
                         }
-                        if (links == 0 || nearestEnemy <= safeDistance) { continue; }
-                        if (!trial.Move(moving, pos)) { continue; }
+
+                        if (links == 0 || nearestEnemy <= safeDistance)
+                        {
+                            continue;
+                        }
+                        if (!trial.Move(moving, pos))
+                        {
+                            continue;
+                        }
                         GoRules.Evaluate(trial);
-                        if (!PreservesPlayers(board, trial)) { continue; }
+
+                        if (!PreservesPlayers(board, trial))
+                        {
+                            continue;
+                        }
                         int travel = Math.Abs(pos.X - start.X) + Math.Abs(pos.Y - start.Y);
                         int anchorDistance = Distance(pos, moving.Size, trial.FindPiece(anchor.Id));
                         int score = links * 200 - anchorDistance * 40 + Math.Min(nearestEnemy, 5) * 20 - travel;
-                        if (score > bestScore) { best = pos; bestScore = score; }
+
+                        if (score > bestScore)
+                        {
+                            best = pos;
+                            bestScore = score;
+                        }
                     }
                 }
-                if (moving.Pos != start) { trial.Move(moving, start, respectEnemyEyes: false); }
+                if (moving.Pos != start)
+                {
+                    trial.Move(moving, start, respectEnemyEyes: false);
+                }
                 GoRules.Evaluate(trial);
-                if (best == start) { continue; }
-                if (!trial.Move(moving, best)) { throw new InvalidOperationException("整队快照落点失效"); }
+
+                if (best == start)
+                {
+                    continue;
+                }
+                if (!trial.Move(moving, best))
+                {
+                    throw new InvalidOperationException("整队快照落点失效");
+                }
                 GoRules.Evaluate(trial);
                 result.Add(new FormationMove(original.Id, best));
                 connected.Add(original.Id);
                 GrowConnected(copies, connected);
             }
         }
-
         /// <summary>四邻身体连接就是有效火力阵，不强制视觉对称，不拆玩家已经摆好的队形。</summary>
         private static void GrowConnected(List<Piece> pieces, HashSet<int> connected)
         {
@@ -117,28 +187,40 @@ namespace RevGame.Battle
                 changed = false;
                 foreach (Piece piece in pieces)
                 {
-                    if (connected.Contains(piece.Id)) { continue; }
+                    if (connected.Contains(piece.Id))
+                    {
+                        continue;
+                    }
                     foreach (Piece other in pieces)
                     {
                         if (connected.Contains(other.Id) && Distance(piece.Pos, piece.Size, other) == 1)
-                        { connected.Add(piece.Id); changed = true; break; }
+                        {
+                            connected.Add(piece.Id);
+                            changed = true;
+                            break;
+                        }
                     }
                 }
             } while (changed);
         }
-
         /// <summary>以本次规划开始时的实战盘为底线：不能拆眼，也不能让原本有气的友军变成零气。</summary>
         private static bool PreservesPlayers(BoardModel before, BoardModel after)
         {
             foreach (Piece piece in before.Pieces)
             {
-                if (piece.Side != GameSide.Player) { continue; }
+                if (piece.Side != GameSide.Player)
+                {
+                    continue;
+                }
                 Piece copy = after.FindPiece(piece.Id);
-                if (copy.EyeCount < piece.EyeCount || (piece.Liberties > 0 && copy.Liberties == 0)) { return false; }
+
+                if (copy.EyeCount < piece.EyeCount || (piece.Liberties > 0 && copy.Liberties == 0))
+                {
+                    return false;
+                }
             }
             return true;
         }
-
         /// <summary>按身体边缘计算格距，二阶/三阶大棋也遵守同一占格规则。</summary>
         private static int Distance(BoardPos pos, int size, Piece other)
         {

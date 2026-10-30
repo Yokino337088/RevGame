@@ -33,7 +33,10 @@ namespace RevGame.Services
         private sealed class BossOwner : IBossAIOwner
         {
             private readonly BattleService _service;
-            public Piece Boss { get; }
+            public Piece Boss
+            {
+                get;
+            }
             public BossOwner(BattleService service, Piece boss)
             {
                 _service = service;
@@ -47,16 +50,37 @@ namespace RevGame.Services
             public int Chapter => _service.Chapter;
             public int Intelligence => _service.EnemyIntelligence;
             public bool KingCaptured => _service.IsKingCaptured();
-            public bool Enraged { get; set; }
-            public float NextSkillAt { get; set; }
+            public bool Enraged
+            {
+                get; set;
+            }
+            public float NextSkillAt
+            {
+                get; set;
+            }
             /// <summary>长度 = 技能枚举数量；初始全是 0，表示所有技能一开始都不在冷却。</summary>
             public float[] SkillReadyAt { get; } = new float[Enum.GetValues(typeof(BossSkillKind)).Length];
             public int[] SkillUseCounts { get; } = new int[System.Enum.GetValues(typeof(BossSkillKind)).Length];
-            public void ExclusiveHit(BossSkillInfo info) { _service.ApplyExclusiveHit(Boss, info); }
-            public BossSkillKind? LastSkill { get; set; }
-            public BossSkillPlan PendingPlan { get; set; }
-            public bool PredictAttackDefeat(Piece attacker, Piece target) { return _service.PredictAttackDefeat(attacker, target); }
-            public void Attack(Piece attacker, Piece target) { _service.Attack(attacker, target); }
+            public void ExclusiveHit(BossSkillInfo info)
+            {
+                _service.ApplyExclusiveHit(Boss, info);
+            }
+            public BossSkillKind? LastSkill
+            {
+                get; set;
+            }
+            public BossSkillPlan PendingPlan
+            {
+                get; set;
+            }
+            public bool PredictAttackDefeat(Piece attacker, Piece target)
+            {
+                return _service.PredictAttackDefeat(attacker, target);
+            }
+            public void Attack(Piece attacker, Piece target)
+            {
+                _service.Attack(attacker, target);
+            }
             public void Move(Piece piece, BoardPos position)
             {
                 if (!Board.Move(piece, position))
@@ -66,21 +90,33 @@ namespace RevGame.Services
                 _service.RefreshGoState();
                 RevEvent.DispatchEvent<int>(Events.PieceMoved, piece.Id);
             }
-            public int SkillDamage(Piece target, float power) { return _service.BossSkillDamage(Boss, target, power, PendingPlan.Kind); }
-            public bool Teleport(BoardPos position) { return _service.TeleportBoss(Boss, position); }
+            public int SkillDamage(Piece target, float power)
+            {
+                return _service.BossSkillDamage(Boss, target, power, PendingPlan.Kind);
+            }
+            public bool Teleport(BoardPos position)
+            {
+                return _service.TeleportBoss(Boss, position);
+            }
             public int HealBoss(int amount)
             {
                 int healed = Boss.Heal(amount);
+
                 if (healed > 0)
                 {
                     RevEvent.DispatchEvent<int>(Events.PieceHpChanged, Boss.Id);
                 }
                 return healed;
             }
-            public int Summon(int count) { return _service.SummonNearBoss(Boss, count); }
-            public void Announce(BossSkillInfo info, bool telegraph) { _service.AnnounceBossSkill(info, telegraph); }
+            public int Summon(int count)
+            {
+                return _service.SummonNearBoss(Boss, count);
+            }
+            public void Announce(BossSkillInfo info, bool telegraph)
+            {
+                _service.AnnounceBossSkill(info, telegraph);
+            }
         }
-
         /// <summary>
         /// 按“是不是 Boss 主将”为敌棋创建对应的状态机：主将 → BossAI，其他（含 Boss 护卫） → EnemyAI。
         /// 布阵、增援、驱动都经过这里，保证同一颗棋只会有一台机器。
@@ -96,17 +132,16 @@ namespace RevGame.Services
                 EnsureEnemyAI(piece);
             }
         }
-
         /// <summary>只有 Boss 回合里带王冠的主将使用 Boss 状态机。</summary>
         private bool IsBossMaster(Piece piece)
         {
             return IsBossRound && piece.Side == GameSide.Enemy && piece.IsKing;
         }
-
         /// <summary>懒创建 Boss 状态机：已有就复用，没有才 new。</summary>
         private BossAI EnsureBossAI(Piece boss)
         {
             BossAI ai;
+
             if (!_bossAI.TryGetValue(boss.Id, out ai))
             {
                 ai = new BossAI(new BossOwner(this, boss));
@@ -114,7 +149,6 @@ namespace RevGame.Services
             }
             return ai;
         }
-
         /// <summary>
         /// 技能伤害公式：Boss 一次普通攻击 × 技能倍率（已含章节换算）× 锁死倍率，
         /// 再叠加 Boss 回合的“决死加速”。走 DamagePiece 统一出口，护盾、减伤、眼位复活照常生效。
@@ -130,7 +164,6 @@ namespace RevGame.Services
             RefreshGoState();
             return real;
         }
-
         /// <summary>
         /// 瞬移：整块身体放得下才移动（无视眼位，这是技能），成功后刷新气眼并广播移动。
         /// 返回 false 时 Boss 原地不动，由技能状态决定原地爆炸。
@@ -149,7 +182,6 @@ namespace RevGame.Services
             RevEvent.DispatchEvent<int>(Events.PieceMoved, boss.Id);
             return true;
         }
-
         /// <summary>
         /// 在 Boss 附近召唤小兵：兵种沿用增援规则（EnemyReinforceConfig），落点取离 Boss 最近的空格。
         /// 复用 CommitEnemyDeployment 提交，因此占格、编号、AI 创建、事件广播与普通增援完全一致；
@@ -158,6 +190,7 @@ namespace RevGame.Services
         private int SummonNearBoss(Piece boss, int count)
         {
             RoundDef round = LevelCatalog.GetRound(Chapter, Round);
+
             if (round == null)
             {
                 return 0;
@@ -172,6 +205,7 @@ namespace RevGame.Services
                 }
                 PieceKind? kind = LevelCatalog.PickReinforcement(_enemyDeploymentCount, EnemyIntelligence);
                 BoardPos position;
+
                 if (!kind.HasValue || !TryFindCellNear(boss, out position))
                 {
                     break;
@@ -185,7 +219,6 @@ namespace RevGame.Services
             }
             return summoned;
         }
-
         /// <summary>找离 Boss 身体最近的可放置空格（同距离按扫描顺序，结果可复现）。</summary>
         private bool TryFindCellNear(Piece boss, out BoardPos position)
         {
@@ -196,11 +229,13 @@ namespace RevGame.Services
                 for (int x = 0; x < _board.Size; x++)
                 {
                     var cell = new BoardPos(x, y);
+
                     if (!_board.CanFit(cell, 1, GameSide.Enemy))
                     {
                         continue;
                     }
                     int gap = Math.Max(Math.Max(0, Math.Max(x - (boss.Pos.X + boss.Size - 1), boss.Pos.X - x)), Math.Max(0, Math.Max(y - (boss.Pos.Y + boss.Size - 1), boss.Pos.Y - y)));
+
                     if (gap < best)
                     {
                         best = gap;
@@ -210,7 +245,6 @@ namespace RevGame.Services
             }
             return best != int.MaxValue;
         }
-
         /// <summary>
         /// 广播技能事件。预警时额外写一条战报（HUD 弹幕由面板订阅预警事件自己显示）。
         /// 事件只携带值类型快照，订阅者不能借此修改规则数据。
@@ -228,7 +262,6 @@ namespace RevGame.Services
                 RevEvent.DispatchEvent<BossSkillInfo>(Events.BossSkillCast, info);
             }
         }
-
         /// <summary>
         /// 测试/GM 入口：让当前 Boss 立刻放指定技能（仍会检查是否有合法目标）。
         /// 正式战斗由 Boss 自己挑技能；这里只用于验收每个技能的效果与特效。
@@ -241,7 +274,6 @@ namespace RevGame.Services
             }
             return false;
         }
-
         /// <summary>当前 Boss 状态（GM/测试只读）；没有 Boss 时返回 null。</summary>
         public BossAIState? BossState
         {

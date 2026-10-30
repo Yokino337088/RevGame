@@ -31,14 +31,13 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("请先退出 Play，再保存美术替换，避免修改只留在运行时实例里。");
             }
-
             string sourceUi = Path.Combine(sourceRoot, "03_UI图片");
             string sourceBackground = Path.Combine(sourceRoot, "02_精灵图片/棋盘地图/棋盘_开始场景_背景.png");
+
             if (!Directory.Exists(sourceUi) || !File.Exists(sourceBackground))
             {
                 throw new DirectoryNotFoundException("原版美术目录不完整：" + sourceRoot);
             }
-
             Folder(NewUi.TrimEnd('/'));
             Folder("Assets/ArtRes/背景");
             int imported = 0;
@@ -46,23 +45,27 @@ namespace RevGame.Editor
             {
                 // ★ UI_ 开头不代表新版。旧文件也有这个前缀，所以必须检查整个文件名是否全为英文/ASCII。
                 string name = Path.GetFileName(file);
+
                 if (!Regex.IsMatch(name, @"^[\x00-\x7F]+$"))
                 {
                     continue;
                 }
-
                 // 原素材虽然全是英文，空格和括号仍无法通过RevAB逻辑名校验；导入时固定映射，避免重建复发。
-                if (name == "UI_Game_imgBK (1).png") { name = "UI_Game_imgBK_Alt.png"; }
-                if (name == "UI_Tavern_Scrollbar Vertical.png") { name = "UI_Tavern_ScrollbarVertical.png"; }
+                if (name == "UI_Game_imgBK (1).png")
+                {
+                    name = "UI_Game_imgBK_Alt.png";
+                }
+                if (name == "UI_Tavern_Scrollbar Vertical.png")
+                {
+                    name = "UI_Tavern_ScrollbarVertical.png";
+                }
                 ImportSprite(file, NewUi + name);
                 imported++;
             }
-
             ImportSprite(sourceBackground, BackgroundPath);
             ApplyAll();
             return "已通过 Unity MCP 导入 " + imported + " 张英文新版 UI 和指定背景。\n" + Audit();
         }
-
         /// <summary>供原有生成器在最后调用：重新生成面板也必须继续使用新版皮肤。</summary>
         public static void ApplyAll(bool rebuildLayout = false)
         {
@@ -73,17 +76,22 @@ namespace RevGame.Editor
                 try
                 {
                     ReplaceSerializedSprites(root);
+
                     // 美术引用迁移不能顺便重排/隐藏手工编辑的控件；旧样式仅供明确的重建操作使用。
                     if (rebuildLayout && root.name != "HomePanel")
                     {
                         StylePanel(root);
                     }
                     GameMobileLayout mobile = root.GetComponent<GameMobileLayout>();
+
                     if (mobile == null && root.GetComponent<Revolution.RevUIPanel>() != null)
                     {
                         mobile = root.AddComponent<GameMobileLayout>();
                     }
-                    if (mobile != null) { mobile.Configure(root.name); }
+                    if (mobile != null)
+                    {
+                        mobile.Configure(root.name);
+                    }
                     PrefabUtility.SaveAsPrefabAsset(root, path);
                 }
                 finally
@@ -92,7 +100,6 @@ namespace RevGame.Editor
                     PrefabUtility.UnloadPrefabContents(root);
                 }
             }
-
             ApplySceneBackground();
             ApplyBoardArt();
             StyleBattleEffects();
@@ -100,7 +107,6 @@ namespace RevGame.Editor
             GameArcaneArtBuilder.Apply();
             AssetDatabase.SaveAssets();
         }
-
         /// <summary>只更新文字资产；由 Unity MCP 执行并保存，运行时无需逐帧扫描面板或动态创建字体。</summary>
         public static string ApplyTypography()
         {
@@ -129,13 +135,27 @@ namespace RevGame.Editor
                         text.verticalOverflow = VerticalWrapMode.Truncate;
                         // 描边只负责把文字边缘从木纹中分离。过粗描边会堵住“回、眼”等字的内部，所以只用细边。
                         Outline outline = text.GetComponent<Outline>();
-                        if (outline == null) { outline = text.gameObject.AddComponent<Outline>(); }
+
+                        if (outline == null)
+                        {
+                            outline = text.gameObject.AddComponent<Outline>();
+                        }
                         outline.effectColor = light ? new Color(0.035f, 0.025f, 0.015f, 0.95f) : new Color(1f, 0.98f, 0.90f, 0.65f);
                         outline.effectDistance = light ? new Vector2(0.8f, -0.8f) : new Vector2(0.45f, -0.45f);
                         outline.useGraphicAlpha = true;
-                        if (text.name == "label") { text.fontSize = 32; }
-                        if (text.name == "detailText") { text.fontSize = 28; }
-                        if (root.name == "BattleHudPanel" && text.name == "countText") { text.fontSize = 30; }
+
+                        if (text.name == "label")
+                        {
+                            text.fontSize = 32;
+                        }
+                        if (text.name == "detailText")
+                        {
+                            text.fontSize = 28;
+                        }
+                        if (root.name == "BattleHudPanel" && text.name == "countText")
+                        {
+                            text.fontSize = 30;
+                        }
                         count++;
                     }
                     PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -149,7 +169,6 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return "已保存 " + count + " 个 UI 文字节点：中文黑体粗体、居中、深浅底对比色与细描边。";
         }
-
         /// <summary>查完整序列化引用，包括脚本数组及 Button 的选中/按下状态，避免只换 Image 漏掉动态切图。</summary>
         private static void ReplaceSerializedSprites(GameObject root)
         {
@@ -159,7 +178,6 @@ namespace RevGame.Editor
                 {
                     throw new InvalidOperationException("预制体含丢失脚本：" + root.name);
                 }
-
                 var serialized = new SerializedObject(component);
                 SerializedProperty property = serialized.GetIterator();
                 while (property.NextVisible(true))
@@ -168,9 +186,9 @@ namespace RevGame.Editor
                     {
                         continue;
                     }
-
                     string oldPath = AssetDatabase.GetAssetPath(oldSprite);
                     string replacement = ReplacementPath(oldPath);
+
                     if (replacement != oldPath)
                     {
                         property.objectReferenceValue = Load(replacement);
@@ -180,41 +198,45 @@ namespace RevGame.Editor
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
         }
-
         private static string ReplacementPath(string path)
         {
             if (path.StartsWith(NewUi, StringComparison.Ordinal) || path == BackgroundPath)
             {
                 return path;
             }
-
             string name = Path.GetFileNameWithoutExtension(path);
             switch (name)
             {
-                case "选关_背景": return BackgroundPath;
+                case "选关_背景":
+                    return BackgroundPath;
                 case "结算_背景":
-                case "UI_三选一_弹窗底": return NewUi + "UI_Pvp_imgBK.png";
-                case "UI_卡牌底_默认": return NewUi + "UI_roleItem_imgBK.png";
-                case "UI_卡牌底_选中": return NewUi + "UI_roleItem_roleItem.png";
-                case "UI_准备按钮_默认": return NewUi + "UI_Tavern_btnClose.png";
+                case "UI_三选一_弹窗底":
+                    return NewUi + "UI_Pvp_imgBK.png";
+                case "UI_卡牌底_默认":
+                    return NewUi + "UI_roleItem_imgBK.png";
+                case "UI_卡牌底_选中":
+                    return NewUi + "UI_roleItem_roleItem.png";
+                case "UI_准备按钮_默认":
+                    return NewUi + "UI_Tavern_btnClose.png";
                 case "UI_阶段指示_准备":
                 case "UI_阶段指示_战斗":
-                case "UI_阶段指示_结算": return NewUi + "UI_Tavern_Background.png";
+                case "UI_阶段指示_结算":
+                    return NewUi + "UI_Tavern_Background.png";
                 case "UI_回合进度条_底":
-                case "UI_Boss血条框": return NewUi + "UI_Game_imgMobilityBK.png";
-                case "UI_回合进度条_填充": return NewUi + "UI_Game_imgEnemyMobility.png";
-                case "UI_战斗日志_弹条": return NewUi + "UI_Tip_imgBK.png";
+                case "UI_Boss血条框":
+                    return NewUi + "UI_Game_imgMobilityBK.png";
+                case "UI_回合进度条_填充":
+                    return NewUi + "UI_Game_imgEnemyMobility.png";
+                case "UI_战斗日志_弹条":
+                    return NewUi + "UI_Tip_imgBK.png";
             }
-
             // 新版没有独立的事件/奖励插画，用新版对勾表示通知，具体含义仍由原有中文标题和说明表达。
             if (name.StartsWith("图标_事件_", StringComparison.Ordinal) || name.StartsWith("图标_奖励_", StringComparison.Ordinal))
             {
                 return NewUi + "UI_Setting_Checkmark.png";
             }
-
             return path;
         }
-
         private static void StylePanel(GameObject root)
         {
             foreach (Image image in root.GetComponentsInChildren<Image>(true))
@@ -223,19 +245,18 @@ namespace RevGame.Editor
                 {
                     continue;
                 }
-
                 image.color = Color.white;
+
                 if (image.type != Image.Type.Filled)
                 {
                     image.type = image.sprite.border == Vector4.zero ? Image.Type.Simple : Image.Type.Sliced;
                 }
-
                 image.preserveAspect = false;
             }
-
             if (root.name == "HomePanel" || root.name == "LevelSelectPanel")
             {
                 AddScreenBackground(root);
+
                 if (root.name == "HomePanel")
                 {
                     Image plate = EnsurePicture(root, "contentPlate", "UI_Pvp_imgBK.png", new Vector2(1140, 660), Vector2.zero);
@@ -257,64 +278,73 @@ namespace RevGame.Editor
                     {
                         SetImage(root.transform.Find("chapter" + i).GetComponent<Image>(), "UI_Tavern_Background.png", false);
                     }
-
                     root.transform.Find("btnHome").GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -385);
                 }
             }
-            else if (root.name == "SettlePanel" || root.name == "RewardPanel")
-            {
-                Image blocker = root.GetComponent<Image>();
-                if (blocker == null)
-                {
-                    blocker = root.AddComponent<Image>();
-                }
 
-                blocker.sprite = null;
-                blocker.color = new Color(0.06f, 0.04f, 0.025f, 0.7f);
-                blocker.raycastTarget = true;
-                Image background = root.transform.Find("background").GetComponent<Image>();
-                SetImage(background, "UI_Pvp_imgBK.png", true);
-                float width = root.name == "RewardPanel" ? 1380f : 1000f;
-                background.rectTransform.sizeDelta = new Vector2(width, width * 571f / 1013f);
-                if (root.name == "RewardPanel")
+            else
+
+                if (root.name == "SettlePanel" || root.name == "RewardPanel")
                 {
-                    for (int i = 0; i < 3; i++)
+                    Image blocker = root.GetComponent<Image>();
+
+                    if (blocker == null)
                     {
-                        SetImage(root.transform.Find("choice" + i).GetComponent<Image>(), "UI_roleItem_imgBK.png", false);
+                        blocker = root.AddComponent<Image>();
+                    }
+                    blocker.sprite = null;
+                    blocker.color = new Color(0.06f, 0.04f, 0.025f, 0.7f);
+                    blocker.raycastTarget = true;
+                    Image background = root.transform.Find("background").GetComponent<Image>();
+                    SetImage(background, "UI_Pvp_imgBK.png", true);
+                    float width = root.name == "RewardPanel" ? 1380f : 1000f;
+                    background.rectTransform.sizeDelta = new Vector2(width, width * 571f / 1013f);
+
+                    if (root.name == "RewardPanel")
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            SetImage(root.transform.Find("choice" + i).GetComponent<Image>(), "UI_roleItem_imgBK.png", false);
+                        }
                     }
                 }
-            }
-            else if (root.name == "BattleHudPanel")
-            {
-                StyleHud(root);
-            }
-            else if (root.name == "PreparePanel")
-            {
-                // 已存在的预制体不会因为改常量自动长出第六张牌，必须一起迁移资产。
-                // 使用含隐藏项的固定槽位，恢复激活仅用于保存模板；运行时由 Hand 数据决定显隐。
-                Transform cards = root.transform.Find("cards");
-                GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/UI/Item/Card/CardItem.prefab");
-                while (cards.childCount < Consts.MaxHandSize)
-                {
-                    GameObject slot = (GameObject)PrefabUtility.InstantiatePrefab(cardPrefab, cards);
-                    slot.name = "card" + (cards.childCount - 1);
-                }
-                foreach (Transform slot in cards) { slot.gameObject.SetActive(true); }
-                // 老预制体也要补上刷新入口；此装配每次可重复执行，不会叠出多个按钮。
-                if (root.transform.Find("btnRefresh") == null)
-                {
-                    Button refresh = GameAssetBuilder.MakeButton("btnRefresh", root.transform, "刷新手牌（6张）", new Vector2(330, 100), new Vector2(-205, 225));
-                    GameAssetBuilder.Anchor(refresh.GetComponent<RectTransform>(), new Vector2(1, 0));
-                }
-                SetImage(root.transform.Find("btnRefresh").GetComponent<Image>(), "UI_Tavern_Background.png", false);
-                RectTransform hint = root.transform.Find("hintText").GetComponent<RectTransform>();
-                Image plate = EnsurePicture(root, "hintPlate", "UI_Tip_imgBK.png", hint.sizeDelta + new Vector2(24, 20), hint.anchoredPosition);
-                GameAssetBuilder.Anchor(plate.rectTransform, hint.anchorMin);
-                plate.preserveAspect = false;
-                plate.transform.SetAsFirstSibling();
-                hint.GetComponent<Text>().color = Color.white;
-            }
+                else
 
+                    if (root.name == "BattleHudPanel")
+                    {
+                        StyleHud(root);
+                    }
+                    else
+
+                        if (root.name == "PreparePanel")
+                        {
+                            // 已存在的预制体不会因为改常量自动长出第六张牌，必须一起迁移资产。
+                            // 使用含隐藏项的固定槽位，恢复激活仅用于保存模板；运行时由 Hand 数据决定显隐。
+                            Transform cards = root.transform.Find("cards");
+                            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/UI/Item/Card/CardItem.prefab");
+                            while (cards.childCount < Consts.MaxHandSize)
+                            {
+                                GameObject slot = (GameObject)PrefabUtility.InstantiatePrefab(cardPrefab, cards);
+                                slot.name = "card" + (cards.childCount - 1);
+                            }
+                            foreach (Transform slot in cards)
+                            {
+                                slot.gameObject.SetActive(true);
+                            }
+                            // 老预制体也要补上刷新入口；此装配每次可重复执行，不会叠出多个按钮。
+                            if (root.transform.Find("btnRefresh") == null)
+                            {
+                                Button refresh = GameAssetBuilder.MakeButton("btnRefresh", root.transform, "刷新手牌（6张）", new Vector2(330, 100), new Vector2(-205, 225));
+                                GameAssetBuilder.Anchor(refresh.GetComponent<RectTransform>(), new Vector2(1, 0));
+                            }
+                            SetImage(root.transform.Find("btnRefresh").GetComponent<Image>(), "UI_Tavern_Background.png", false);
+                            RectTransform hint = root.transform.Find("hintText").GetComponent<RectTransform>();
+                            Image plate = EnsurePicture(root, "hintPlate", "UI_Tip_imgBK.png", hint.sizeDelta + new Vector2(24, 20), hint.anchoredPosition);
+                            GameAssetBuilder.Anchor(plate.rectTransform, hint.anchorMin);
+                            plate.preserveAspect = false;
+                            plate.transform.SetAsFirstSibling();
+                            hint.GetComponent<Text>().color = Color.white;
+                        }
             foreach (Text text in root.GetComponentsInChildren<Text>(true))
             {
                 if (text.name == "stats")
@@ -323,7 +353,6 @@ namespace RevGame.Editor
                 }
             }
         }
-
         private static void StyleHud(GameObject root)
         {
             if (root.transform.Find("assistText") == null)
@@ -337,18 +366,18 @@ namespace RevGame.Editor
                 plate.preserveAspect = false;
                 plate.transform.SetSiblingIndex(assist.transform.GetSiblingIndex());
             }
-
             Image phase = root.transform.Find("phaseIcon").GetComponent<Image>();
             phase.color = Color.white;
+
             if (root.transform.Find("phaseLabel") == null)
             {
                 Text label = GameAssetBuilder.Label("phaseLabel", root.transform, "准备", phase.rectTransform.sizeDelta, phase.rectTransform.anchoredPosition, 28);
                 GameAssetBuilder.Anchor(label.rectTransform, phase.rectTransform.anchorMin);
                 label.fontStyle = FontStyle.Bold;
             }
-
             SetImage(root.transform.Find("progressBar").GetComponent<Image>(), "UI_Game_imgMobilityBK.png", false);
             SetImage(root.transform.Find("progressFill").GetComponent<Image>(), "UI_Game_imgEnemyMobility.png", false);
+
             if (root.transform.Find("bossFrame") == null)
             {
                 return;
@@ -370,16 +399,15 @@ namespace RevGame.Editor
             GameAssetBuilder.Anchor(info.rectTransform, new Vector2(0, 0.5f));
             info.transform.SetAsFirstSibling();
         }
-
         private static void AddScreenBackground(GameObject root)
         {
             // ★ 背景缩放器只挂到图片子节点，不能挂在面板根上，否则按钮和文字会跟着背景一起变形。
             Image oldRootImage = root.GetComponent<Image>();
+
             if (oldRootImage != null)
             {
                 Object.DestroyImmediate(oldRootImage);
             }
-
             Transform existing = root.transform.Find("screenBackground");
             Image image = existing == null ? GameAssetBuilder.Picture("screenBackground", root.transform, Load(BackgroundPath), Vector2.zero, Vector2.zero) : existing.GetComponent<Image>();
             image.transform.SetAsFirstSibling();
@@ -387,7 +415,6 @@ namespace RevGame.Editor
             // 改为低速程序星雾，并移除原来的纵向地图比例适配器，始终铺满横屏画布。
             GameArcaneArtBuilder.StyleBackdrop(image);
         }
-
         private static Image EnsurePicture(GameObject root, string name, string sprite, Vector2 size, Vector2 position)
         {
             Transform existing = root.transform.Find(name);
@@ -397,7 +424,6 @@ namespace RevGame.Editor
             SetImage(image, sprite, true);
             return image;
         }
-
         private static void SetImage(Image image, string name, bool preserveAspect)
         {
             bool filled = image.type == Image.Type.Filled;
@@ -407,29 +433,31 @@ namespace RevGame.Editor
             image.preserveAspect = preserveAspect;
             image.type = filled ? Image.Type.Filled : image.sprite.border == Vector4.zero ? Image.Type.Simple : Image.Type.Sliced;
         }
-
         private static void ApplySceneBackground()
         {
             GameObject host = GameObject.Find("GamePresentation");
+
             if (host == null)
             {
                 throw new InvalidOperationException("当前场景缺少 GamePresentation，请先打开游戏的 SampleScene。");
             }
-
             GameObject background = GameObject.Find("GameBackground");
+
             if (background == null)
             {
                 background = new GameObject("GameBackground");
             }
-
             SpriteRenderer renderer = background.GetComponent<SpriteRenderer>();
+
             if (renderer == null)
             {
                 renderer = background.AddComponent<SpriteRenderer>();
             }
-
             // 用户可以在场景里挑选另一张背景；重建UI不能顺带把其选择覆盖回开始场景图。
-            if (renderer.sprite == null) { renderer.sprite = Load(BackgroundPath); }
+            if (renderer.sprite == null)
+            {
+                renderer.sprite = Load(BackgroundPath);
+            }
             renderer.sortingOrder = -1000;
             renderer.color = Color.white;
             Camera camera = Camera.main;
@@ -442,7 +470,6 @@ namespace RevGame.Editor
             EditorSceneManager.MarkSceneDirty(host.scene);
             EditorSceneManager.SaveScene(host.scene);
         }
-
         /// <summary>用户确认恢复逐格拼接：一个逻辑格就是一个世界单位，图像、高亮与点击区域共用同一坐标。</summary>
         private static void ApplyBoardArt()
         {
@@ -475,11 +502,11 @@ namespace RevGame.Editor
             {
                 PrefabUtility.UnloadPrefabContents(cell);
             }
-
             GamePresentation presentation = Object.FindObjectOfType<GamePresentation>();
             var serialized = new SerializedObject(presentation);
             GameObject board = (GameObject)serialized.FindProperty("boardRoot").objectReferenceValue;
             Transform existing = board.transform.Find("boardArt");
+
             if (existing != null)
             {
                 Object.DestroyImmediate(existing.gameObject);
@@ -487,7 +514,6 @@ namespace RevGame.Editor
             EditorSceneManager.MarkSceneDirty(board.scene);
             EditorSceneManager.SaveScene(board.scene);
         }
-
         /// <summary>通过 MCP 保存弹道和大号描边数字的预制体，运行时只做池化播放。</summary>
         private static void StyleBattleEffects()
         {
@@ -513,11 +539,11 @@ namespace RevGame.Editor
                     go.transform.SetParent(text.transform, false);
                     go.transform.localPosition = offsets[i];
                     TextMesh outline = go.GetComponent<TextMesh>();
+
                     if (outline == null)
                     {
                         outline = go.AddComponent<TextMesh>();
                     }
-
                     outline.font = text.font;
                     outline.fontSize = text.fontSize;
                     outline.characterSize = text.characterSize;
@@ -528,7 +554,6 @@ namespace RevGame.Editor
                     renderer.sortingOrder = 89;
                     outlines.GetArrayElementAtIndex(i).objectReferenceValue = outline;
                 }
-
                 so.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
@@ -537,7 +562,6 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
-
         /// <summary>交付检查：UI 内除棋子立绘外，不能继续引用旧版界面/图标文件夹中的图片。</summary>
         public static string Audit()
         {
@@ -551,7 +575,11 @@ namespace RevGame.Editor
             }
             // 升级/增益提示属于池化 UI 零件，放在 Effects 下，也必须纳入新版美术引用检查。
             const string notice = "Assets/GameRes/UI/Item/Notice/BattleEventNotice.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(notice) != null) { paths.Add(notice); }
+
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(notice) != null)
+            {
+                paths.Add(notice);
+            }
             foreach (string prefabPath in paths)
             {
                 prefabs++;
@@ -565,10 +593,10 @@ namespace RevGame.Editor
                         {
                             continue;
                         }
-
                         count++;
                         string path = AssetDatabase.GetAssetPath(property.objectReferenceValue);
                         bool oldUi = path.StartsWith("Assets/ArtRes/界面/", StringComparison.Ordinal) && !path.StartsWith(NewUi, StringComparison.Ordinal);
+
                         if (oldUi || path.StartsWith("Assets/ArtRes/图标/", StringComparison.Ordinal))
                         {
                             failures.AppendLine(root.name + "/" + component.name + ": " + path);
@@ -576,28 +604,24 @@ namespace RevGame.Editor
                     }
                 }
             }
-
             if (failures.Length > 0)
             {
                 throw new InvalidOperationException("仍有旧版 UI 图片引用：\n" + failures);
             }
-
             return "已检查 " + prefabs + " 个界面/提示预制体，共 " + count + " 个 Sprite 引用；旧版 UI 引用为 0。";
         }
-
         public static Sprite Load(string path)
         {
             // 图集整理只搬迁资产，不改变GUID；旧制作配方必须查迁移表，不能重新复制旧目录的散图。
             path = GameArtPaths.Resolve(path);
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+
             if (sprite == null)
             {
                 throw new InvalidOperationException("美术未导入或不是 Sprite：" + path);
             }
-
             return sprite;
         }
-
         private static void ImportSprite(string source, string target)
         {
             target = GameArtPaths.Resolve(target);
@@ -614,18 +638,23 @@ namespace RevGame.Editor
             importer.maxTextureSize = 4096;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             string name = Path.GetFileNameWithoutExtension(target);
+
             if (name == "UI_Tavern_btnClose")
             {
                 importer.spriteBorder = new Vector4(32, 25, 32, 25);
             }
-            else if (name == "UI_roleItem_imgBK" || name == "UI_roleItem_roleItem")
-            {
-                importer.spriteBorder = new Vector4(16, 16, 16, 16);
-            }
-            else if (name == "UI_Tavern_Background" || name == "UI_Tavern_Checkmark")
-            {
-                importer.spriteBorder = new Vector4(24, 20, 24, 20);
-            }
+            else
+
+                if (name == "UI_roleItem_imgBK" || name == "UI_roleItem_roleItem")
+                {
+                    importer.spriteBorder = new Vector4(16, 16, 16, 16);
+                }
+                else
+
+                    if (name == "UI_Tavern_Background" || name == "UI_Tavern_Checkmark")
+                    {
+                        importer.spriteBorder = new Vector4(24, 20, 24, 20);
+                    }
             if (name == "UI_Game_imgEnemyMobility")
             {
                 // 此条形图也用于弹道九宫格。FullRect 保证重导美术后仍可拉伸，不再出现 Tiling 警告。
@@ -634,17 +663,14 @@ namespace RevGame.Editor
                 settings.spriteMeshType = SpriteMeshType.FullRect;
                 importer.SetTextureSettings(settings);
             }
-
             importer.SaveAndReimport();
         }
-
         private static void Folder(string path)
         {
             if (AssetDatabase.IsValidFolder(path))
             {
                 return;
             }
-
             string parent = Path.GetDirectoryName(path).Replace('\\', '/');
             Folder(parent);
             AssetDatabase.CreateFolder(parent, Path.GetFileName(path));

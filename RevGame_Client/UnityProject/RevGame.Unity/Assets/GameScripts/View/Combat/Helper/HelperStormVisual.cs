@@ -23,8 +23,14 @@ namespace RevGame.View
         private int _lane;
         private float _impactAt;
         private Vector3 _impactPosition;
-        public int FrameIndex { get; private set; }
-        public bool IsExplosion { get; private set; }
+        public int FrameIndex
+        {
+            get; private set;
+        }
+        public bool IsExplosion
+        {
+            get; private set;
+        }
         public bool Visible => body != null && body.enabled && body.isVisible;
         /// <summary>开发态读取实际爆炸状态，不能用“弹道播放完成”代替命中后弹体已消失的检查。</summary>
         public bool ProjectileVisible => body != null && body.enabled && !IsExplosion;
@@ -37,14 +43,26 @@ namespace RevGame.View
 
         public void Begin(HelperWeapon weapon, int lane)
         {
-            if (_block == null) { _block = new MaterialPropertyBlock(); }
-            if (_mushroomBlock == null) { _mushroomBlock = new MaterialPropertyBlock(); }
-            _weapon = weapon; _lane = lane; IsExplosion = false; FrameIndex = -1;
+            if (_block == null)
+            {
+                _block = new MaterialPropertyBlock();
+            }
+            if (_mushroomBlock == null)
+            {
+                _mushroomBlock = new MaterialPropertyBlock();
+            }
+            _weapon = weapon;
+            _lane = lane;
+            IsExplosion = false;
+            FrameIndex = -1;
             _impactAt = -1f;
-            if (mushroom != null) { mushroom.enabled = false; }
+
+            if (mushroom != null)
+            {
+                mushroom.enabled = false;
+            }
             body.enabled = true;
         }
-
         /// <summary>
         /// progress是0～1的纯表现时间。接触目标的可见身体后立刻隐藏弹体并切爆炸帧，水母不会黏在目标上。
         /// 真实伤害已经由服务提交；这里的距离检测只决定换画面，绝不再次扣血或选择第二个受害者。
@@ -55,9 +73,12 @@ namespace RevGame.View
             Vector3 delta = end - start;
             Vector3 bend = Vector3.Cross(delta.normalized, Vector3.forward) * ((_lane % 7 - 3) * .3f);
             Vector3 next = Vector3.Lerp(start, end, t) + bend * Mathf.Sin(t * Mathf.PI);
+
             if (!IsExplosion && (progress >= .6f || (next - end).sqrMagnitude <= contactRadius * contactRadius))
             {
-                IsExplosion = true; _impactAt = progress; _impactPosition = end;
+                IsExplosion = true;
+                _impactAt = progress;
+                _impactPosition = end;
                 // 只通知声音表现。每条攻击只会跨过这道门一次，即使目标被回池也不会反复爆炸。
                 GameAudio.PlayHelperImpact(_weapon);
             }
@@ -65,11 +86,16 @@ namespace RevGame.View
             body.transform.rotation = IsExplosion || _weapon == HelperWeapon.Jellyfish ? Quaternion.identity
                 : Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90);
             Sprite[] frames = IsExplosion ? explosionFrames : _weapon == HelperWeapon.Missile ? missileFrames : jellyFrames;
-            if (frames == null || frames.Length == 0) { return; }
+
+            if (frames == null || frames.Length == 0)
+            {
+                return;
+            }
             float burst = IsExplosion ? Mathf.Clamp01((progress - _impactAt) / Mathf.Max(.05f, 1 - _impactAt)) : 0;
             FrameIndex = IsExplosion ? Mathf.Min(frames.Length - 1, (int)(burst * frames.Length))
                 : (int)(progress * 14 + _lane) % frames.Length;
             Sprite sprite = frames[FrameIndex];
+
             if (sprite == null || sprite.texture == null)
             {
                 // 冷AB下Sprite引用可能先于图集像素到达；缺图时隐藏这一帧，不能把默认白纹理画成方块。
@@ -77,6 +103,7 @@ namespace RevGame.View
                 return;
             }
             body.enabled = true;
+
             if (body.sprite != sprite)
             {
                 body.sprite = sprite;
@@ -91,9 +118,11 @@ namespace RevGame.View
                 : _weapon == HelperWeapon.Missile ? missileScale : jellyScale;
             body.transform.localScale = Vector3.one * size;
             body.color = new Color(1, 1, 1, IsExplosion ? 1 - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.35f, 1f, burst)) : 1);
+
             if (mushroom != null)
             {
                 mushroom.enabled = IsExplosion && _weapon == HelperWeapon.Missile;
+
                 if (mushroom.enabled)
                 {
                     mushroom.transform.position = _impactPosition + Vector3.up * .9f;
@@ -103,12 +132,19 @@ namespace RevGame.View
                 }
             }
         }
-
         public void Clear()
         {
-            body.enabled = false; body.sprite = null; body.SetPropertyBlock(null);
-            if (mushroom != null) { mushroom.enabled = false; mushroom.SetPropertyBlock(null); }
-            IsExplosion = false; FrameIndex = -1;
+            body.enabled = false;
+            body.sprite = null;
+            body.SetPropertyBlock(null);
+
+            if (mushroom != null)
+            {
+                mushroom.enabled = false;
+                mushroom.SetPropertyBlock(null);
+            }
+            IsExplosion = false;
+            FrameIndex = -1;
             _impactAt = -1f;
         }
     }

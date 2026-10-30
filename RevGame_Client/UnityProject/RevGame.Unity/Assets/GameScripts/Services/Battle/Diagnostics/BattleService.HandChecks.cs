@@ -65,7 +65,6 @@ namespace RevGame.Services
             {
                 RevEvent.RemoveAllByOwner(owner);
             }
-
             for (int rate = 1; rate <= 2; rate++)
             {
                 battle = new BattleService(false);
@@ -79,7 +78,13 @@ namespace RevGame.Services
                 var hits = new List<BattleHitInfo>();
                 owner = new object();
                 RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, attacks.Add, owner: owner);
-                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit => { if (hit.TargetId == victim.Id) { hits.Add(hit); } }, owner: owner);
+                RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit =>
+                {
+                    if (hit.TargetId == victim.Id)
+                    {
+                        hits.Add(hit);
+                    }
+                }, owner: owner);
                 try
                 {
                     battle.Tick(0.3125f);
@@ -95,7 +100,10 @@ namespace RevGame.Services
                     }
                     // 暴击逐次抽样，不能再假设第二发必定和第一发等伤害；独立核对每次命中和实际扣血守恒。
                     int resolved = 0;
-                    foreach (BattleHitInfo hit in hits) { resolved += hit.Damage; }
+                    foreach (BattleHitInfo hit in hits)
+                    {
+                        resolved += hit.Damage;
+                    }
                     check(hits.Count == rate && hp - victim.Hp == resolved, "出手倍率对应真实命中次数，逐次含暴击伤害之和等于真实扣血");
                 }
                 finally
@@ -103,7 +111,6 @@ namespace RevGame.Services
                     RevEvent.RemoveAllByOwner(owner);
                 }
             }
-
             // 高频回归必须观察真实五秒出手次数，不能只检查常量改没改；高生命靶子避免因提前击败目标少算攻击。
             battle = new BattleService(false);
             Piece fastArcher = battle.AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(0, 0));
@@ -114,11 +121,12 @@ namespace RevGame.Services
             battle.StartBattle();
             int acceleratedAttacks = 0;
             owner = new object();
-            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info => {
-            if (info.PieceId == fastArcher.Id)
+            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, info =>
             {
-                acceleratedAttacks++;
-            }
+                if (info.PieceId == fastArcher.Id)
+                {
+                    acceleratedAttacks++;
+                }
             }, owner: owner);
             try
             {
@@ -131,7 +139,10 @@ namespace RevGame.Services
             foreach (float invalid in new[] { 0f, -1f, 5f, float.NaN, float.PositiveInfinity })
             {
                 bool rejected = false;
-                try { battle.ConfigureRangedAttackRate(invalid); }
+                try
+                {
+                    battle.ConfigureRangedAttackRate(invalid);
+                }
                 catch (ArgumentOutOfRangeException) { rejected = true; }
                 check(rejected && battle.RangedActionsPerTick == 2f, "非法攻速拒绝且保留旧配置：" + invalid);
             }

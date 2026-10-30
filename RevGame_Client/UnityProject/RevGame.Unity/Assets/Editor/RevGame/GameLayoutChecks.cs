@@ -38,6 +38,7 @@ namespace RevGame.Editor
                     {
                         Rect button = GameBattleLayout.InRegion(areas.Right, buttonY[i], 0.94f, 0.10f);
                         Require(Contains(areas.Right, button) && !button.Overlaps(notice), "操作按钮越界或遮挡增益提示", ref count);
+
                         if (i > 0)
                         {
                             Require(!button.Overlaps(GameBattleLayout.InRegion(areas.Right, buttonY[i - 1], 0.94f, 0.10f)), "操作按钮互相遮挡", ref count);
@@ -51,7 +52,6 @@ namespace RevGame.Editor
             Require(GameBattleLayout.NormalizeSafeArea(Rect.zero, Vector2.zero) == new Rect(0, 0, 1, 1), "零尺寸初始化没有安全兜底", ref count);
             return "通过 " + count + " 条横屏布局断言（5种尺寸×3种安全区、六牌间距/放大边界/重复排版、侧栏/棋盘/按钮/提示不重叠）";
         }
-
         /// <summary>检查真实排版返回的六张牌，避免只验证手牌区域却漏掉区域内部的拥挤。</summary>
         private static void CheckHandCards(GameBattleLayout.Regions areas, Rect hand, ref int count)
         {
@@ -67,7 +67,6 @@ namespace RevGame.Editor
                     Require(!cards[i].Overlaps(cards[previous]), "手牌彼此遮挡", ref count);
                 }
             }
-
             for (int row = 0; row < 3; row++)
             {
                 Rect left = cards[row * 2];
@@ -85,28 +84,27 @@ namespace RevGame.Editor
                 Require(ContainsHorizontally(areas.Left, enlargedLeft) && ContainsHorizontally(areas.Left, enlargedRight), "手牌放大时横向越出左侧操作区", ref count);
             }
         }
-
         private static Rect ScaleAroundCenter(Rect source, float scale)
         {
             Vector2 size = source.size * scale;
             return new Rect(source.center - size * 0.5f, size);
         }
-
         private static bool ContainsHorizontally(Rect outer, Rect inner)
         {
             const float tolerance = 0.01f;
             return inner.xMin >= outer.xMin - tolerance && inner.xMax <= outer.xMax + tolerance;
         }
-
         private static bool Contains(Rect outer, Rect inner)
         {
             const float tolerance = 0.01f;
             return inner.xMin >= outer.xMin - tolerance && inner.yMin >= outer.yMin - tolerance && inner.xMax <= outer.xMax + tolerance && inner.yMax <= outer.yMax + tolerance;
         }
-
         private static void Require(bool condition, string message, ref int count)
         {
-            if (!condition) { throw new InvalidOperationException(message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             count++;
         }
     }

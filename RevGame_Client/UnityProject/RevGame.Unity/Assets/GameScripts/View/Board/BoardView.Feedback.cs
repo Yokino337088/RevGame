@@ -75,12 +75,10 @@ namespace RevGame.View
             public GameSide TargetSide;
             public PieceKind SourceKind;
         }
-
         private struct PendingAttackText
         {
             public PieceAttackInfo Attack;
         }
-
         /// <summary>
         /// 只登记真实攻击；同棋最多一条最新快照，最多十二条待播，过半秒舍弃。
         /// 满额时未显示过的棋子可以替换近期频繁显示者，不再把名单后面的新棋子一直挡在队外。
@@ -89,7 +87,6 @@ namespace RevGame.View
         {
             _attackQueue.Offer(attack.PieceId, new PendingAttackText { Attack = attack }, Time.time);
         }
-
         /// <summary>
         /// 每次选择最久没有显示过、且自身冷却已到的棋子；全局预算不足时留下未过期候选等下一帧。
         /// 不能先出队再试预约，否则满屏时整队会被清空，随后仍只有固定顺序的前几颗棋子抢到反馈。
@@ -97,12 +94,14 @@ namespace RevGame.View
         private void FlushAttackText()
         {
             float now = Time.time;
+
             if (now < _nextAttackAt)
             {
                 return;
             }
             PendingAttackText pending;
             int sourceId;
+
             if (!_attackQueue.TryPeek(now, 0.65f, out pending, out sourceId))
             {
                 return;
@@ -114,7 +113,6 @@ namespace RevGame.View
             _attackQueue.MarkDisplayed(sourceId, now);
             ShowAttackText(pending.Attack);
         }
-
         /// <summary>短时间内同一目标受到的真实伤害合计；不持有棋子对象，目标死亡回池后仍可正确播报。</summary>
         private struct PendingDamageText
         {
@@ -127,12 +125,12 @@ namespace RevGame.View
             // CreatedAt控制过期；同帧合并后立即允许显示，不再人为等待0.22秒。
             public float CreatedAt;
         }
-
         /// <summary>口号最多七条，与数字共用二十条总预算；间隔缩短，但同一棋子不能连续刷屏。</summary>
         private bool TryReserveAttackText(int pieceId)
         {
             float now = Time.time;
             float last;
+
             if (now < _nextAttackAt || _pendingDamage.Count >= 16)
             {
                 return false;
@@ -149,6 +147,7 @@ namespace RevGame.View
                     attacks++;
                 }
             }
+
             if (attacks >= MaxAttackTexts || (_attackTextAt.TryGetValue(pieceId, out last) && now - last < 0.65f))
             {
                 return false;
@@ -158,7 +157,6 @@ namespace RevGame.View
             _pendingTextLoads++;
             return true;
         }
-
         /// <summary>
         /// 保存真实命中的弹道快照；来源编号用于公平轮流显示，同棋最多待播四发，总数不超过七十发。
         /// 来源职业直接取结算快照；环境伤害与近战不会进入此队列。
@@ -169,7 +167,6 @@ namespace RevGame.View
             var shot = new PendingProjectile { Source = source, Target = target, TargetSide = targetSide, SourceKind = sourceKind };
             _projectileQueue.Offer(sourceId, shot, Time.time);
         }
-
         /// <summary>真实齐射分散到相邻画面帧；最多35个活动/预约弹道，半秒前的旧弹道不追着新战况补播。</summary>
         private void FlushProjectiles()
         {
@@ -185,6 +182,7 @@ namespace RevGame.View
                 }
                 PendingProjectile shot;
                 int sourceId;
+
                 if (!_projectileQueue.TryPeek(now, 0f, out shot, out sourceId))
                 {
                     return;
@@ -196,7 +194,6 @@ namespace RevGame.View
                 ShowEffect(BattleEffectKind.Projectile, shot.Source, 0, shot.TargetSide, shot.Target, shot.SourceKind);
             }
         }
-
         /// <summary>把已结算伤害放入有界显示队列；队列满时略过显示，绝不能因此撤销或重复扣血。</summary>
         private void QueueDamageText(BattleHitInfo hit, Vector3 position)
         {
@@ -208,6 +205,7 @@ namespace RevGame.View
             // 用值类型复合键与值类型快照，每次入队不再分配一个PendingDamageText对象。
             long key = ((long)hit.TargetId << 8) | (byte)hit.DamageKind;
             PendingDamageText pending;
+
             if (!_pendingDamage.TryGetValue(key, out pending))
             {
                 // 有界队列：屏幕显示不完时不积压几百条旧数字，也不为每次命中创建一个Timer。
@@ -221,7 +219,6 @@ namespace RevGame.View
             pending.Position = position; // 玩家换位后，以最近一次命中位置播报。
             _pendingDamage[key] = pending;
         }
-
         /// <summary>在本帧动画推进后检查文字位置，让移动和放大的字也能获得遮挡淡化。</summary>
         private void LateUpdate()
         {
@@ -232,11 +229,16 @@ namespace RevGame.View
             using (FeedbackFrameMarker.Auto())
             {
                 Camera camera = Camera.main;
+
                 if (camera != null)
                 {
                     _feedbackProjection.Capture(camera);
-                    foreach (BattleEffectView effect in _textEffects) { effect.UseProjection(_feedbackProjection); }
+                    foreach (BattleEffectView effect in _textEffects)
+                    {
+                        effect.UseProjection(_feedbackProjection);
+                    }
                 }
+
                 FlushProjectiles();
                 // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
                 FlushDamageTexts();
@@ -258,7 +260,8 @@ namespace RevGame.View
                     {
                         if (_textSnapshot[j].TextOrder > older.TextOrder && _textRects[j].Overlaps(_textRects[i]))
                         {
-                            covered = true; break;
+                            covered = true;
+                            break;
                         }
                     }
                     older.SetTextOccluded(covered);
@@ -267,7 +270,6 @@ namespace RevGame.View
                 System.Array.Clear(_textSnapshot, 0, count);
             }
         }
-
         /// <summary>本帧直接显示已结算数字；超预算只替换表现，不更改战斗数值。</summary>
         // 目标是选本帧最老的至多八条，保持原同时间戳遍历顺序。
         // 先一次扫描过滤过期项并稳定插入八槽，后续显示失败就停，不提前删除未显示记录。
@@ -280,22 +282,35 @@ namespace RevGame.View
             {
                 if (now - item.CreatedAt > 1.2f)
                 {
-                    _expiredDamageIds.Add(item.Key); continue;
+                    _expiredDamageIds.Add(item.Key);
+                    continue;
                 }
                 // 最多八项的插入排序；不分配列表，也不在一帧内反复扫描整个字典八遍。
                 // 从当前最晚位置向前找插入点。使用严格小于：创建时间相等时排在已有项之后，保留原先顺序。
                 // 最多八次比较，不需要排序整张81项列表或分配排序临时数组。
                 int index = count;
-                while (index > 0 && item.CreatedAt < _damageBatch[index - 1].CreatedAt) { index--; }
-                if (index >= _damageBatch.Length) { continue; }
+                while (index > 0 && item.CreatedAt < _damageBatch[index - 1].CreatedAt)
+                {
+                    index--;
+                }
+                if (index >= _damageBatch.Length)
+                {
+                    continue;
+                }
                 // 只把入选槽往右挪，多出来的第九名舍弃；它仍在_pendingDamage里，下帧可以再次竞争。
                 // 这是显示调度，不会舍弃该条伤害的模型结算。
                 int end = System.Math.Min(count, _damageBatch.Length - 1);
-                for (int i = end; i > index; i--) { _damageBatch[i] = _damageBatch[i - 1]; }
+                for (int i = end; i > index; i--)
+                {
+                    _damageBatch[i] = _damageBatch[i - 1];
+                }
                 _damageBatch[index] = item;
                 count = System.Math.Min(count + 1, _damageBatch.Length);
             }
-            foreach (long id in _expiredDamageIds) { _pendingDamage.Remove(id); }
+            foreach (long id in _expiredDamageIds)
+            {
+                _pendingDamage.Remove(id);
+            }
             for (int i = 0; i < count; i++)
             {
                 if (!FlushOneDamageText(_damageBatch[i]))
@@ -305,7 +320,6 @@ namespace RevGame.View
                 }
             }
         }
-
         /// <summary>显示已经选中的一条数字；返回false代表本帧预约已满，记录继续留在待播队列。</summary>
         private bool FlushOneDamageText(PendingDamageText oldest)
         {
@@ -320,9 +334,14 @@ namespace RevGame.View
                         retire = text;
                     }
                 }
+
                 // 先结束遍历，再调用会摘除集合元素的回池回调。
-                if (retire != null) { retire.RetireFeedback(); }
+                if (retire != null)
+                {
+                    retire.RetireFeedback();
+                }
             }
+
             if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
             {
                 return false;
@@ -331,6 +350,7 @@ namespace RevGame.View
             _pendingDamage.Remove(oldest.Key);
             _pendingTextLoads++;
             int generation = _effectGeneration;
+
             if (GamePoolRequests.TryGetReady<BattleEffectView>(out BattleEffectView ready, _viewRoot))
             {
                 PresentDamageText(ready, oldest, generation);
@@ -339,7 +359,6 @@ namespace RevGame.View
             LoadDamageText(oldest, generation);
             return true;
         }
-
         // 仅冷资源分配捕获闭包；message是值类型伤害快照，generation是请求产生时的阶段代次。
         private void LoadDamageText(PendingDamageText message, int generation)
         {
@@ -358,16 +377,17 @@ namespace RevGame.View
                 return;
             }
             _pendingTextLoads--;
+
             if (effect == null)
             {
-                RevLog.Warn("伤害文字加载失败", "RevGame"); return;
+                RevLog.Warn("伤害文字加载失败", "RevGame");
+                return;
             }
             _effects.Add(effect);
             _textEffects.Add(effect);
             effect.UseProjection(_feedbackProjection.Camera != null ? _feedbackProjection : null);
             effect.ShowDamage(message.Position, message.Damage, message.Kind, _effectFinishedCallback, message.Side, _arrangeTextCallback);
         }
-
         /// <summary>
         /// 先预留放大和上浮范围，再尝试周围25个位置；加密文字时扩大可选位置，避免全挤在同一棋子头顶。
         /// 所有计算都在屏幕像素中进行，所以改变窗口大小后仍按可见尺寸避让，不靠固定世界坐标猜间距。
@@ -379,6 +399,7 @@ namespace RevGame.View
             using (FeedbackArrangeMarker.Auto())
             {
                 Camera camera = Camera.main;
+
                 if (camera == null)
                 {
                     return;
@@ -422,14 +443,14 @@ namespace RevGame.View
                     }
                     if (cost < bestCost)
                     {
-                        bestCost = cost; best = delta;
+                        bestCost = cost;
+                        best = delta;
                     }
                 }
                 Vector3 pixel = camera.WorldToScreenPoint(anchor);
                 text.transform.position = camera.ScreenToWorldPoint(pixel + new Vector3(best.x, best.y, 0f));
             }
         }
-
         /// <summary>文字限定在棋盘可见矩形内，避免避让到顶部HUD、右栏或屏外；棋盘位置直接使用同一组常量。</summary>
         private static Rect FeedbackScreenRect(Camera camera)
         {
@@ -440,7 +461,6 @@ namespace RevGame.View
             return Rect.MinMaxRect(Mathf.Max(camera.pixelRect.xMin + 8f, min.x), Mathf.Max(camera.pixelRect.yMin + 8f, min.y),
                 Mathf.Min(camera.pixelRect.xMax - 8f, max.x), Mathf.Min(camera.pixelRect.yMax - 8f, max.y));
         }
-
         /// <summary>切阶段先使加载代次失效，再清本地预算；上一轮的异步结果只能归池，不能占用新一轮名额。</summary>
         private void ResetFeedbackBudget()
         {

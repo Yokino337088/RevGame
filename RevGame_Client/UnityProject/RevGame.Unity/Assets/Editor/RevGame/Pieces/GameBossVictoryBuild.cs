@@ -15,27 +15,44 @@ namespace RevGame.Editor
     public static class GameBossVictoryBuild
     {
         public static readonly string[] Names = { "Chapter01_Stardust", "Chapter02_Sunlight", "Chapter03_Water", "Chapter04_Swamp", "Chapter05_Ice", "Chapter06_Cross" };
-        private static readonly Color[] Primary = { new Color(.28f,.56f,1), new Color(1,.69f,.17f), new Color(.08f,.58f,.96f), new Color(.3f,.2f,.08f), new Color(.45f,.81f,1), new Color(1,.83f,.37f) };
-        private static readonly Color[] Secondary = { new Color(.88f,.7f,1), new Color(1,.98f,.72f), new Color(.62f,1,1), new Color(.5f,.62f,.16f), Color.white, Color.white };
+        private static readonly Color[] Primary = { new Color(.28f, .56f, 1), new Color(1, .69f, .17f), new Color(.08f, .58f, .96f), new Color(.3f, .2f, .08f), new Color(.45f, .81f, 1), new Color(1, .83f, .37f) };
+        private static readonly Color[] Secondary = { new Color(.88f, .7f, 1), new Color(1, .98f, .72f), new Color(.62f, 1, 1), new Color(.5f, .62f, .16f), Color.white, Color.white };
         private const string MaterialRoot = "Assets/GameRes/Material/BossDeath";
         private const string PanelRoot = "Assets/GameRes/UI/Panel/Victory";
 
         /// <summary>六章各用独立Shader和两份共享材质；表现时长只影响演出，允许SO调整，不进战斗数值表。</summary>
         public static string Configure()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("Boss演出制作需要编辑态"); }
-            Folder(MaterialRoot); Folder(PanelRoot);
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("Boss演出制作需要编辑态");
+            }
+            Folder(MaterialRoot);
+            Folder(PanelRoot);
             for (int chapter = 1; chapter <= 6; chapter++)
             {
                 string name = Names[chapter - 1];
                 Shader shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/GameShader/BossDeath/" + name + ".shader");
-                if (shader == null) { throw new InvalidOperationException("Boss死亡Shader缺失：" + name); }
+
+                if (shader == null)
+                {
+                    throw new InvalidOperationException("Boss死亡Shader缺失：" + name);
+                }
                 BossChapterArtConfig config = AssetDatabase.LoadAssetAtPath<BossChapterArtConfig>("Assets/GameRes/Config/Boss/" + BossChapterArtConfig.ResourceName(chapter) + ".asset");
-                if (config == null) { throw new InvalidOperationException("Boss章节美术缺失"); }
+
+                if (config == null)
+                {
+                    throw new InvalidOperationException("Boss章节美术缺失");
+                }
                 config.DeathMaterial = Material(name, shader, false, chapter);
                 config.DeathAuraMaterial = Material(name, shader, true, chapter);
-                if (config.DeathSeconds < 2 || config.DeathSeconds > 6) { config.DeathSeconds = 3.2f; }
-                EditorUtility.SetDirty(config); AssetDatabase.SaveAssetIfDirty(config);
+
+                if (config.DeathSeconds < 2 || config.DeathSeconds > 6)
+                {
+                    config.DeathSeconds = 3.2f;
+                }
+                EditorUtility.SetDirty(config);
+                AssetDatabase.SaveAssetIfDirty(config);
             }
             CreatePanel();
             CreateIntroPanel();
@@ -43,22 +60,34 @@ namespace RevGame.Editor
             StyleBanner("BossIntroPanel");
             EnsurePrepareGroup();
             var book = AssetDatabase.LoadAssetAtPath<StoryBook>("Assets/GameRes/Config/Story/StoryBook.asset");
-            if (book == null) { throw new InvalidOperationException("先制作现有剧情资产"); }
+
+            if (book == null)
+            {
+                throw new InvalidOperationException("先制作现有剧情资产");
+            }
             var episodes = new List<StoryBook.Episode>(book.Episodes);
             foreach (StoryBook.Episode episode in CreateAfterStories())
             {
-                if (!episodes.Any(item => item.Id == episode.Id)) { episodes.Add(episode); }
+                if (!episodes.Any(item => item.Id == episode.Id))
+                {
+                    episodes.Add(episode);
+                }
             }
-            book.Episodes = episodes.ToArray(); book.Validate();
-            EditorUtility.SetDirty(book); AssetDatabase.SaveAssetIfDirty(book);
+            book.Episodes = episodes.ToArray();
+            book.Validate();
+            EditorUtility.SetDirty(book);
+            AssetDatabase.SaveAssetIfDirty(book);
             return "六个死亡Shader/十二共享材质、胜利积分预制体和六章收尾SO已装配；保留已有参数/剧情/场景";
         }
-
         private static Material Material(string name, Shader shader, bool aura, int chapter)
         {
             string path = MaterialRoot + "/" + name + (aura ? "_Aura" : "_Body") + ".mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (material != null) { return material; }
+
+            if (material != null)
+            {
+                return material;
+            }
             material = new Material(shader);
             material.SetFloat("_Overlay", aura ? 1 : 0);
             material.SetFloat("_Intensity", aura ? 1.65f : 1.4f);
@@ -67,70 +96,106 @@ namespace RevGame.Editor
             AssetDatabase.CreateAsset(material, path);
             return material;
         }
-
         /// <summary>用现有结算羊皮纸与Noto字体；整体居中，动画由面板类负责，制作代码不进入安装包。</summary>
         private static void CreatePanel()
         {
             string path = PanelRoot + "/BossVictoryPanel.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) { return; }
+
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null)
+            {
+                return;
+            }
             var root = new GameObject("BossVictoryPanel", typeof(RectTransform), typeof(CanvasGroup), typeof(BossVictoryPanel));
             try
             {
-                ((RectTransform)root.transform).sizeDelta = new Vector2(1920,1080);
-                var banner = GameAssetBuilder.Rect("banner", root.transform, new Vector2(960,300), Vector2.zero);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(1920, 1080);
+                var banner = GameAssetBuilder.Rect("banner", root.transform, new Vector2(960, 300), Vector2.zero);
                 var image = banner.AddComponent<Image>();
                 string guid = AssetDatabase.FindAssets("UI_Settlement_imgBK t:Sprite", new[] { "Assets/GameRes/Art" }).FirstOrDefault();
                 image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(guid));
-                if (image.sprite == null) { throw new InvalidOperationException("胜利面板底图缺失"); }
-                image.type = Image.Type.Sliced; image.color = new Color(1,.98f,.87f,.96f); image.raycastTarget = false;
-                Text title = Label("headline", banner.transform, "BOSS 已击败！", new Vector2(880,88), new Vector2(0,58), 52);
-                Text score = Label("chapterScore", banner.transform, "本章总积分", new Vector2(880,66), new Vector2(0,-38), 38);
-                title.color = new Color(.2f,.3f,.22f); score.color = new Color(.43f,.28f,.1f);
-                title.raycastTarget = false; score.raycastTarget = false;
-                if (PrefabUtility.SaveAsPrefabAsset(root, path) == null) { throw new InvalidOperationException("胜利弹幕保存失败"); }
+
+                if (image.sprite == null)
+                {
+                    throw new InvalidOperationException("胜利面板底图缺失");
+                }
+                image.type = Image.Type.Sliced;
+                image.color = new Color(1, .98f, .87f, .96f);
+                image.raycastTarget = false;
+                Text title = Label("headline", banner.transform, "BOSS 已击败！", new Vector2(880, 88), new Vector2(0, 58), 52);
+                Text score = Label("chapterScore", banner.transform, "本章总积分", new Vector2(880, 66), new Vector2(0, -38), 38);
+                title.color = new Color(.2f, .3f, .22f);
+                score.color = new Color(.43f, .28f, .1f);
+                title.raycastTarget = false;
+                score.raycastTarget = false;
+
+                if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
+                {
+                    throw new InvalidOperationException("胜利弹幕保存失败");
+                }
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
-
         /// <summary>复用HUD支援提示的原图与共享材质。只改背景，保留已有横幅位置、尺寸、标题与动画绑定。</summary>
         private static void StyleBanner(string name)
         {
             GameObject hud = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameRes/UI/Panel/BattleHudPanel.prefab");
             Image source = hud == null ? null : hud.transform.Find("assistPlate")?.GetComponent<Image>();
+
             if (source == null || source.sprite == null || source.material == null)
-            { throw new InvalidOperationException("战斗增益提示背景缺失，不能用纯色矩形代替"); }
+            {
+                throw new InvalidOperationException("战斗增益提示背景缺失，不能用纯色矩形代替");
+            }
             string path = PanelRoot + "/" + name + ".prefab";
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
                 var banner = (RectTransform)root.transform.Find("banner");
                 Image image = banner.GetComponent<Image>();
-                image.sprite = source.sprite; image.material = source.material; image.type = source.type;
-                image.color = source.color; image.pixelsPerUnitMultiplier = source.pixelsPerUnitMultiplier;
+                image.sprite = source.sprite;
+                image.material = source.material;
+                image.type = source.type;
+                image.color = source.color;
+                image.pixelsPerUnitMultiplier = source.pixelsPerUnitMultiplier;
                 image.raycastTarget = false;
+
                 // 同一ArcanePanel共享材质需要独立UV1坐标；图集晚绑定组件负责刷新，不在运行时复制资源。
-                if (banner.GetComponent<ArcaneImageCoordinates>() == null) { banner.gameObject.AddComponent<ArcaneImageCoordinates>(); }
-                if (banner.GetComponent<AtlasImageBinding>() == null) { banner.gameObject.AddComponent<AtlasImageBinding>(); }
-                foreach (Text text in banner.GetComponentsInChildren<Text>(true)) { text.color = Color.white; }
+                if (banner.GetComponent<ArcaneImageCoordinates>() == null)
+                {
+                    banner.gameObject.AddComponent<ArcaneImageCoordinates>();
+                }
+                if (banner.GetComponent<AtlasImageBinding>() == null)
+                {
+                    banner.gameObject.AddComponent<AtlasImageBinding>();
+                }
+                foreach (Text text in banner.GetComponentsInChildren<Text>(true))
+                {
+                    text.color = Color.white;
+                }
                 Transform flare = banner.Find("flare");
+
                 if (flare != null)
                 {
                     Image overlay = flare.GetComponent<Image>();
-                    overlay.sprite = null; overlay.type = Image.Type.Simple; overlay.color = Color.clear;
+                    overlay.sprite = null;
+                    overlay.type = Image.Type.Simple;
+                    overlay.color = Color.clear;
                 }
-                if (PrefabUtility.SaveAsPrefabAsset(root,path) == null) { throw new InvalidOperationException("魔法提示背景弹幕保存失败"); }
+                if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
+                {
+                    throw new InvalidOperationException("魔法提示背景弹幕保存失败");
+                }
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
-
         private static Text Label(string name, Transform parent, string value, Vector2 size, Vector2 position, int fontSize)
         {
             Text text = GameAssetBuilder.Rect(name, parent, size, position).AddComponent<Text>();
-            text.font = GameAssetBuilder.Font(); text.text = value; text.fontSize = fontSize;
+            text.font = GameAssetBuilder.Font();
+            text.text = value;
+            text.fontSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
             return text;
         }
-
         /// <summary>只补整体透明度组件，保留用户原有六张手牌和全部布局；出生期间隐藏整组而非销毁重开。</summary>
         private static void EnsurePrepareGroup()
         {
@@ -138,36 +203,54 @@ namespace RevGame.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
-                if (root.GetComponent<CanvasGroup>() != null) { return; }
-                root.AddComponent<CanvasGroup>(); PrefabUtility.SaveAsPrefabAsset(root,path);
+                if (root.GetComponent<CanvasGroup>() != null)
+                {
+                    return;
+                }
+                root.AddComponent<CanvasGroup>();
+                PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
-
         /// <summary>登场横幅复用现有羊皮纸，单独金色闪光层，不新增大贴图；闪烁由序列传入进度。</summary>
         private static void CreateIntroPanel()
         {
             string path = PanelRoot + "/BossIntroPanel.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) { return; }
-            var root = new GameObject("BossIntroPanel",typeof(RectTransform),typeof(CanvasGroup),typeof(BossIntroPanel));
+
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null)
+            {
+                return;
+            }
+            var root = new GameObject("BossIntroPanel", typeof(RectTransform), typeof(CanvasGroup), typeof(BossIntroPanel));
             try
             {
-                ((RectTransform)root.transform).sizeDelta = new Vector2(1920,1080);
-                GameObject banner = GameAssetBuilder.Rect("banner",root.transform,new Vector2(1040,300),new Vector2(0,140));
+                ((RectTransform)root.transform).sizeDelta = new Vector2(1920, 1080);
+                GameObject banner = GameAssetBuilder.Rect("banner", root.transform, new Vector2(1040, 300), new Vector2(0, 140));
                 Image image = banner.AddComponent<Image>();
-                string guid = AssetDatabase.FindAssets("UI_Settlement_imgBK t:Sprite",new[]{"Assets/GameRes/Art"}).FirstOrDefault();
+                string guid = AssetDatabase.FindAssets("UI_Settlement_imgBK t:Sprite", new[] { "Assets/GameRes/Art" }).FirstOrDefault();
                 image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(guid));
-                if (image.sprite == null) { throw new InvalidOperationException("登场底图缺失"); }
-                image.type = Image.Type.Sliced; image.raycastTarget=false;
-                Image flare = GameAssetBuilder.Rect("flare",banner.transform,new Vector2(990,242),Vector2.zero).AddComponent<Image>();
-                flare.sprite = image.sprite; flare.type=Image.Type.Sliced; flare.color=new Color(1,.82f,.3f,.2f); flare.raycastTarget=false;
-                Label("headline",banner.transform,"BOSS 已出现！",new Vector2(920,85),new Vector2(0,50),54);
-                Label("subtitle",banner.transform,"强敌降临 · 布阵迎战",new Vector2(920,65),new Vector2(0,-44),34);
-                if (PrefabUtility.SaveAsPrefabAsset(root,path)==null) { throw new InvalidOperationException("登场面板保存失败"); }
+
+                if (image.sprite == null)
+                {
+                    throw new InvalidOperationException("登场底图缺失");
+                }
+                image.type = Image.Type.Sliced;
+                image.raycastTarget = false;
+                Image flare = GameAssetBuilder.Rect("flare", banner.transform, new Vector2(990, 242), Vector2.zero).AddComponent<Image>();
+                flare.sprite = image.sprite;
+                flare.type = Image.Type.Sliced;
+                flare.color = new Color(1, .82f, .3f, .2f);
+                flare.raycastTarget = false;
+                Label("headline", banner.transform, "BOSS 已出现！", new Vector2(920, 85), new Vector2(0, 50), 54);
+                Label("subtitle", banner.transform, "强敌降临 · 布阵迎战", new Vector2(920, 65), new Vector2(0, -44), 34);
+
+                if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
+                {
+                    throw new InvalidOperationException("登场面板保存失败");
+                }
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
-
         private static StoryBook.Episode Episode(int chapter, string title, params string[] texts)
         {
             var lines = new StoryBook.Line[texts.Length];
@@ -178,7 +261,6 @@ namespace RevGame.Editor
             }
             return new StoryBook.Episode { Id = "boss_after_" + chapter, Title = title, Lines = lines };
         }
-
         /// <summary>仅首次创建SO的文案种子；运行时以SO为准，后续编辑不会被覆盖。</summary>
         public static StoryBook.Episode[] CreateAfterStories()
         {
@@ -217,12 +299,15 @@ namespace RevGame.Editor
                     "冒险家|会的。替我留个位置吧。下一手，我们明天再下。")
             };
         }
-
         private static void Folder(string path)
         {
-            if (AssetDatabase.IsValidFolder(path)) { return; }
+            if (AssetDatabase.IsValidFolder(path))
+            {
+                return;
+            }
             int split = path.LastIndexOf('/');
-            Folder(path.Substring(0,split)); AssetDatabase.CreateFolder(path.Substring(0,split),path.Substring(split+1));
+            Folder(path.Substring(0, split));
+            AssetDatabase.CreateFolder(path.Substring(0, split), path.Substring(split + 1));
         }
     }
 }

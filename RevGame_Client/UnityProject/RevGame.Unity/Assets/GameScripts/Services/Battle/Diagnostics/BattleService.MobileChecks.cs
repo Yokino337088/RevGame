@@ -29,7 +29,6 @@ namespace RevGame.Services
                     check(service.TryPlayCard(id, new BoardPos(x, y)), "全盘任意空格可落子：" + x + "," + y);
                 }
             }
-
             var battle = new BattleService(false);
             battle.AddCheckPiece(GameSide.Enemy, PieceKind.Shield, new BoardPos(0, 7));
             battle.AddCheckPiece(GameSide.Enemy, PieceKind.Archer, new BoardPos(1, 8));
@@ -129,6 +128,7 @@ namespace RevGame.Services
                     battle.AddCheckPiece(GameSide.Player, kinds[n++ % 3], new BoardPos(x, 1));
                 }
                 battle.AddCheckPiece(GameSide.Player, kinds[n++ % 3], new BoardPos(1, 0));
+
                 if (eyes == 2)
                 {
                     battle.AddCheckPiece(GameSide.Player, kinds[n % 3], new BoardPos(3, 0));
@@ -142,7 +142,10 @@ namespace RevGame.Services
                 battle.RefreshGoState();
                 check(battle._playerPieces.TrueForAll(p => p.EyeCount == eyes), "真实形成眼阵：" + eyes);
                 var eyePositions = new BoardPos[battle._playerPieces.Count];
-                for (int i = 0; i < eyePositions.Length; i++) { eyePositions[i] = battle._playerPieces[i].Pos; }
+                for (int i = 0; i < eyePositions.Length; i++)
+                {
+                    eyePositions[i] = battle._playerPieces[i].Pos;
+                }
                 before = battle._board.Dump();
                 battle.StartBattle();
                 battle.Tick(3.75f);

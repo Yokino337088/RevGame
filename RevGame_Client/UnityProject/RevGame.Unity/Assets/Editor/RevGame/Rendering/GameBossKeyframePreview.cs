@@ -20,9 +20,14 @@ namespace RevGame.Editor
         /// <summary>测试只通过固定业务类型的方法推进动画，不提供任意反射调用。</summary>
         public static string Run()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("关键帧预览只能在编辑态执行"); }
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("关键帧预览只能在编辑态执行");
+            }
             foreach (AssetBundle existing in AssetBundle.GetAllLoadedAssetBundles())
-            { throw new InvalidOperationException("其它预览持有AB：" + existing.name); }
+            {
+                throw new InvalidOperationException("其它预览持有AB：" + existing.name);
+            }
             Directory.CreateDirectory(Folder);
             var bundles = new List<AssetBundle>();
             var configs = new List<BossChapterArtConfig>();
@@ -35,11 +40,22 @@ namespace RevGame.Editor
             {
                 AssetBundle main = Load("PC", bundles);
                 AssetBundleManifest manifest = main.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-                if (manifest == null) { throw new InvalidOperationException("PC Manifest缺失"); }
-                foreach (string dependency in manifest.GetAllDependencies("battle_units")) { Load(dependency, bundles); }
+
+                if (manifest == null)
+                {
+                    throw new InvalidOperationException("PC Manifest缺失");
+                }
+                foreach (string dependency in manifest.GetAllDependencies("battle_units"))
+                {
+                    Load(dependency, bundles);
+                }
                 AssetBundle units = Load("battle_units", bundles);
                 GameObject prefab = units.LoadAsset<GameObject>("assets/gameres/pieces/unit/slimepiece.prefab");
-                if (prefab == null) { throw new InvalidOperationException("真实棋子预制体缺失"); }
+
+                if (prefab == null)
+                {
+                    throw new InvalidOperationException("真实棋子预制体缺失");
+                }
                 GameObject instance = UnityEngine.Object.Instantiate(prefab);
                 SceneManager.MoveGameObjectToScene(instance, scene);
                 PieceView view = instance.GetComponent<PieceView>();
@@ -69,7 +85,11 @@ namespace RevGame.Editor
                     AssetBundle bundle = Load("atlas_" + BossChapterArtConfig.AtlasName(chapter).ToLowerInvariant(), bundles);
                     SpriteAtlas atlas = bundle.LoadAsset<SpriteAtlas>(("assets/gameres/atlases/" + BossChapterArtConfig.AtlasName(chapter) + ".spriteatlasv2").ToLowerInvariant());
                     BossChapterArtConfig asset = bundle.LoadAsset<BossChapterArtConfig>(("assets/gameres/config/boss/" + BossChapterArtConfig.ResourceName(chapter) + ".asset").ToLowerInvariant());
-                    if (atlas == null || asset == null || atlas.spriteCount != 8) { throw new InvalidOperationException("真实Boss包缺少8帧图集或配置"); }
+
+                    if (atlas == null || asset == null || atlas.spriteCount != 8)
+                    {
+                        throw new InvalidOperationException("真实Boss包缺少8帧图集或配置");
+                    }
                     asset.Validate(chapter);
                     BossChapterArtConfig config = UnityEngine.Object.Instantiate(asset);
                     configs.Add(config);
@@ -78,7 +98,11 @@ namespace RevGame.Editor
                     for (int frame = 0; frame < 8; frame++)
                     {
                         Sprite sprite = atlas.GetSprite(asset.Frames[frame].name);
-                        if (sprite == null || !sprite.packed || sprite.texture == null) { throw new InvalidOperationException("真实Boss帧无图集像素"); }
+
+                        if (sprite == null || !sprite.packed || sprite.texture == null)
+                        {
+                            throw new InvalidOperationException("真实Boss帧无图集像素");
+                        }
                         config.Frames[frame] = sprite;
                         sprites.Add(sprite);
                     }
@@ -86,8 +110,14 @@ namespace RevGame.Editor
                     view.Bind(chapter, PieceKind.HeavySword, StarTier.Three, GameSide.Enemy);
                     view.BindBossArt(config);
                     view.SetBodySize(2, true, true);
-                    foreach (SpriteRenderer renderer in instance.GetComponentsInChildren<SpriteRenderer>(true)) { renderer.enabled = renderer == body; }
-                    if (view.AnimationFrameCount != 8 || view.BossAppearanceChapter != chapter) { throw new InvalidOperationException("实际视图未绑定Boss8帧"); }
+                    foreach (SpriteRenderer renderer in instance.GetComponentsInChildren<SpriteRenderer>(true))
+                    {
+                        renderer.enabled = renderer == body;
+                    }
+                    if (view.AnimationFrameCount != 8 || view.BossAppearanceChapter != chapter)
+                    {
+                        throw new InvalidOperationException("实际视图未绑定Boss8帧");
+                    }
                     string prefix = "Chapter" + chapter.ToString("D2");
                     Color32[] first = Capture(camera, target, readback, prefix + "-00.png");
                     bool pixelsChanged = false;
@@ -95,31 +125,55 @@ namespace RevGame.Editor
                     for (int sample = 1; sample <= 14; sample++)
                     {
                         int previousFrame = view.AnimationFrameIndex;
-                        for (int step = 0; step < 8 && view.AnimationFrameIndex == previousFrame; step++) { tick.Invoke(view, null); }
+                        for (int step = 0; step < 8 && view.AnimationFrameIndex == previousFrame; step++)
+                        {
+                            tick.Invoke(view, null);
+                        }
                         int frameIndex = view.AnimationFrameIndex;
-                        if (frameIndex == previousFrame) { throw new InvalidOperationException("真实动画计时未换帧"); }
+
+                        if (frameIndex == previousFrame)
+                        {
+                            throw new InvalidOperationException("真实动画计时未换帧");
+                        }
                         indices.Add(frameIndex);
                         // 和HUD/血量刷新相同：重复Bind、BindBossArt、SetBodySize不能把动画归零。
                         view.Bind(chapter, PieceKind.HeavySword, StarTier.Three, GameSide.Enemy);
                         view.BindBossArt(config);
                         view.SetBodySize(2, true, true);
+
                         if (view.AnimationFrameIndex != frameIndex || body.sprite != config.Frames[frameIndex])
-                        { throw new InvalidOperationException("重复刷新重置了Boss动画"); }
+                        {
+                            throw new InvalidOperationException("重复刷新重置了Boss动画");
+                        }
                         Color32[] pixels = Capture(camera, target, readback, prefix + "-" + sample.ToString("D2") + ".png");
                         for (int pixel = 0; pixel < pixels.Length && !pixelsChanged; pixel++)
                         {
                             if (Math.Abs(first[pixel].r - pixels[pixel].r) + Math.Abs(first[pixel].g - pixels[pixel].g) + Math.Abs(first[pixel].b - pixels[pixel].b) > 10)
-                            { pixelsChanged = true; }
+                            {
+                                pixelsChanged = true;
+                            }
                         }
                     }
-                    if (!pixelsChanged) { throw new InvalidOperationException("帧索引变化但GPU画面没有变化：" + prefix); }
-                    if (indices[7] != 7 || indices[14] != 0) { throw new InvalidOperationException("往返播放端点异常"); }
+                    if (!pixelsChanged)
+                    {
+                        throw new InvalidOperationException("帧索引变化但GPU画面没有变化：" + prefix);
+                    }
+                    if (indices[7] != 7 || indices[14] != 0)
+                    {
+                        throw new InvalidOperationException("往返播放端点异常");
+                    }
                     view.OnPoolReturn();
+
                     if (view.BossAppearanceChapter != 0 || view.AnimationFrameCount != 0 || body.sprite != null)
-                    { throw new InvalidOperationException("回池未清Boss帧引用"); }
+                    {
+                        throw new InvalidOperationException("回池未清Boss帧引用");
+                    }
                     view.Bind(chapter + 100, PieceKind.Archer, StarTier.One, GameSide.Player);
+
                     if (view.BossAppearanceChapter != 0 || view.AnimationFrameCount == 8)
-                    { throw new InvalidOperationException("复用普通棋子串入Boss动画"); }
+                    {
+                        throw new InvalidOperationException("复用普通棋子串入Boss动画");
+                    }
                     results.Add(prefix + ":8帧、往返/刷新/回池/复用通过");
                 }
                 return string.Join("；", results) + "；" + Path.GetFullPath(Folder);
@@ -128,18 +182,37 @@ namespace RevGame.Editor
             {
                 RenderTexture.active = previous;
                 EditorSceneManager.ClosePreviewScene(scene);
-                foreach (BossChapterArtConfig config in configs) { UnityEngine.Object.DestroyImmediate(config); }
-                foreach (Sprite sprite in sprites) { UnityEngine.Object.DestroyImmediate(sprite); }
-                if (readback != null) { UnityEngine.Object.DestroyImmediate(readback); }
-                if (target != null) { target.Release(); UnityEngine.Object.DestroyImmediate(target); }
-                for (int i = bundles.Count - 1; i >= 0; i--) { bundles[i].Unload(true); }
+                foreach (BossChapterArtConfig config in configs)
+                {
+                    UnityEngine.Object.DestroyImmediate(config);
+                }
+                foreach (Sprite sprite in sprites)
+                {
+                    UnityEngine.Object.DestroyImmediate(sprite);
+                }
+                if (readback != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(readback);
+                }
+                if (target != null)
+                {
+                    target.Release();
+                    UnityEngine.Object.DestroyImmediate(target);
+                }
+                for (int i = bundles.Count - 1; i >= 0; i--)
+                {
+                    bundles[i].Unload(true);
+                }
             }
         }
-
         private static AssetBundle Load(string name, List<AssetBundle> owned)
         {
             AssetBundle bundle = AssetBundle.LoadFromFile("Assets/StreamingAssets/PC/" + name);
-            if (bundle == null) { throw new InvalidOperationException("Boss预览AB加载失败：" + name); }
+
+            if (bundle == null)
+            {
+                throw new InvalidOperationException("Boss预览AB加载失败：" + name);
+            }
             owned.Add(bundle);
             return bundle;
         }

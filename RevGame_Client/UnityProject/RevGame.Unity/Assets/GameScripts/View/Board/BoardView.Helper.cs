@@ -42,12 +42,18 @@ namespace RevGame.View
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperShot, owner: this);
             RevTimer.Every(.06f, RefreshHelperVisual, owner: _helperRefreshOwner);
         }
-
         private void RefreshHelperVisual()
         {
-            if (_released || _viewRoot == null) { return; }
+            if (_released || _viewRoot == null)
+            {
+                return;
+            }
             var battle = Battle;
-            if (_helperVisualChapter != battle.Chapter) { LoadHelperMaterials(battle.Chapter); }
+
+            if (_helperVisualChapter != battle.Chapter)
+            {
+                LoadHelperMaterials(battle.Chapter);
+            }
             if (_helperView == null && !_helperLoading)
             {
                 _helperLoading = true;
@@ -56,19 +62,29 @@ namespace RevGame.View
                 {
                     if (_released || generation != _generation)
                     {
-                        if (view != null) { RevPool.Return(view, 0); }
+                        if (view != null)
+                        {
+                            RevPool.Return(view, 0);
+                        }
                         return;
                     }
                     _helperLoading = false;
-                    if (view == null) { RevLog.Error("助阵帮手预制体加载失败", "RevGame"); return; }
+
+                    if (view == null)
+                    {
+                        RevLog.Error("助阵帮手预制体加载失败", "RevGame");
+                        return;
+                    }
                     _helperView = view;
                     view.Present(Battle.Helper);
                 }, _viewRoot);
             }
-            if (_helperView != null) { _helperView.Present(battle.Helper); }
+            if (_helperView != null)
+            {
+                _helperView.Present(battle.Helper);
+            }
             RefreshHelperHealing(battle.HelperProtectionTargetId);
         }
-
         /// <summary>
         /// 无保护/回合结束立即回池。异步取池同时捕获目标Id与代次，目标改变后晚到的实例会直接归还，
         /// 不会在已经死亡的棋子或下一回合重新出现一条“幽灵治疗线”。
@@ -86,18 +102,29 @@ namespace RevGame.View
                 _helperHealing.Bind(_helperView.transform, target, targetId);
                 return;
             }
-            if (_helperHealingLoading) { return; }
+            if (_helperHealingLoading)
+            {
+                return;
+            }
             _helperHealingLoading = true;
             int generation = _helperHealingGeneration;
             GamePoolRequests.GetAsync<HelperHealingView>(view =>
             {
                 if (_released || generation != _helperHealingGeneration)
                 {
-                    if (view != null) { RevPool.Return(view, 0); }
+                    if (view != null)
+                    {
+                        RevPool.Return(view, 0);
+                    }
                     return;
                 }
                 _helperHealingLoading = false;
-                if (view == null) { RevLog.Warn("帮手治疗射线预制体加载失败", "RevGame"); return; }
+
+                if (view == null)
+                {
+                    RevLog.Warn("帮手治疗射线预制体加载失败", "RevGame");
+                    return;
+                }
                 if (Battle.HelperProtectionTargetId != targetId || _helperView == null
                     || !_pieces.TryGetValue(targetId, out PieceView current) || current == null || current.PieceId != targetId)
                 {
@@ -108,12 +135,16 @@ namespace RevGame.View
                 view.Bind(_helperView.transform, current, targetId);
             }, _viewRoot);
         }
-
         private void ClearHelperHealing()
         {
             _helperHealingGeneration++;
             _helperHealingLoading = false;
-            if (_helperHealing != null) { RevPool.Return(_helperHealing, 0); _helperHealing = null; }
+
+            if (_helperHealing != null)
+            {
+                RevPool.Return(_helperHealing, 0);
+                _helperHealing = null;
+            }
         }
 
         /// <summary>只加载当前章节材质；切章或关闭时配对Release，六章Shader不会被预制体同时引用。</summary>
@@ -121,7 +152,11 @@ namespace RevGame.View
         {
             ReleaseHelperMaterials();
             _helperVisualChapter = chapter;
-            if (chapter < 1 || chapter > 6) { return; }
+
+            if (chapter < 1 || chapter > 6)
+            {
+                return;
+            }
             int generation = ++_helperVisualGeneration;
             string name = "HelperChapter" + chapter.ToString("00");
             RevResManager.LoadAsync<Material>("Material/Helper", name, mat =>
@@ -129,24 +164,43 @@ namespace RevGame.View
                 if (!_released && generation == _helperVisualGeneration)
                 {
                     _helperProjectile = mat;
-                    if (mat == null) { LoadError = "当前章助阵弹幕材质加载失败"; RevLog.Error(LoadError, "RevGame"); }
+
+                    if (mat == null)
+                    {
+                        LoadError = "当前章助阵弹幕材质加载失败";
+                        RevLog.Error(LoadError, "RevGame");
+                    }
                 }
+
             }, RevResGroup.Battle);
             RevResManager.LoadAsync<Material>("Material/Helper", "HelperBlueBeam", mat =>
             {
                 if (!_released && generation == _helperVisualGeneration)
                 {
                     _helperBeam = mat;
-                    if (mat == null) { LoadError = "助阵蓝色激光材质加载失败"; RevLog.Error(LoadError, "RevGame"); }
+
+                    if (mat == null)
+                    {
+                        LoadError = "助阵蓝色激光材质加载失败";
+                        RevLog.Error(LoadError, "RevGame");
+                    }
                 }
+
             }, RevResGroup.Battle);
         }
-
         private void OnHelperShot(HelperShotInfo info)
         {
-            if (_released || _viewRoot == null) { return; }
+            if (_released || _viewRoot == null)
+            {
+                return;
+            }
             Material material = info.Beam ? _helperBeam : _helperProjectile;
-            if (material == null) { RevLog.Warn("帮手攻击材质尚未就绪，伤害已正常结算", "RevGame"); return; }
+
+            if (material == null)
+            {
+                RevLog.Warn("帮手攻击材质尚未就绪，伤害已正常结算", "RevGame");
+                return;
+            }
             Vector3 start = info.Source.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             Vector3 end = info.Target.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             for (int i = 0; i < info.Projectiles && _helperAttacks.Count + _helperPendingAttacks < 40; i++)
@@ -157,16 +211,27 @@ namespace RevGame.View
                 // 这里只延迟画面，模型早已同步扣款与伤害。预约也计预算，退出时owner计时器会取消。
                 RevTimer.After(info.Beam || info.Storm ? 0 : 1.4f, () =>
                 {
-                    if (_released || generation != _helperAttackGeneration) { return; }
+                    if (_released || generation != _helperAttackGeneration)
+                    {
+                        return;
+                    }
                     GamePoolRequests.GetAsync<HelperAttackView>(view =>
                     {
                         if (_released || generation != _helperAttackGeneration)
                         {
-                            if (view != null) { RevPool.Return(view, 0); }
+                            if (view != null)
+                            {
+                                RevPool.Return(view, 0);
+                            }
                             return;
                         }
                         _helperPendingAttacks--;
-                        if (view == null) { RevLog.Warn("帮手攻击预制体加载失败", "RevGame"); return; }
+
+                        if (view == null)
+                        {
+                            RevLog.Warn("帮手攻击预制体加载失败", "RevGame");
+                            return;
+                        }
                         _helperAttacks.Add(view);
                         _pieces.TryGetValue(info.TargetId, out PieceView target);
                         view.Play(start, end, material, info.Beam, lane + _helperAttacks.Count, attack => _helperAttacks.Remove(attack),
@@ -175,7 +240,6 @@ namespace RevGame.View
                 }, domain: RevTimeDomain.Unscaled, owner: _helperAttackOwner);
             }
         }
-
         private void ReleaseHelperMaterials()
         {
             if (_helperVisualChapter > 0)
@@ -187,29 +251,41 @@ namespace RevGame.View
             _helperVisualChapter = 0;
             _helperProjectile = _helperBeam = null;
         }
-
         private void CloseHelperVisual()
         {
             RevTimer.CancelAllOf(_helperRefreshOwner);
             ClearHelperAttacks();
-            if (_helperView != null) { RevPool.Return(_helperView, 0); _helperView = null; }
-            _helperAtlas?.Dispose(); _helperAtlas = null;
-            _helperStormAtlas?.Dispose(); _helperStormAtlas = null;
+
+            if (_helperView != null)
+            {
+                RevPool.Return(_helperView, 0);
+                _helperView = null;
+            }
+            _helperAtlas?.Dispose();
+            _helperAtlas = null;
+            _helperStormAtlas?.Dispose();
+            _helperStormAtlas = null;
             _helperLoading = false;
             RevPool.DestroyPool<HelperAttackView>();
             RevPool.DestroyPool<HelperHealingView>();
             RevPool.DestroyPool<HelperView>();
             ReleaseHelperMaterials();
         }
-
         /// <summary>准备/战斗/结算切换只收短效，演员和刷新租约活到整个BoardView退出。</summary>
         private void ClearHelperAttacks()
         {
             ClearHelperHealing();
             _helperAttackGeneration++;
             RevTimer.CancelAllOf(_helperAttackOwner);
-            foreach (HelperAttackView attack in _helperAttacks) { if (attack != null) { RevPool.Return(attack, 0); } }
-            _helperAttacks.Clear(); _helperPendingAttacks = 0;
+            foreach (HelperAttackView attack in _helperAttacks)
+            {
+                if (attack != null)
+                {
+                    RevPool.Return(attack, 0);
+                }
+            }
+            _helperAttacks.Clear();
+            _helperPendingAttacks = 0;
         }
     }
 }

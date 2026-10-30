@@ -34,15 +34,19 @@ namespace RevGame.View
         private bool _enemyDeploymentMode;
         // 长规则文案使用横幅留足阅读宽度，仍复用底板和池，不挤在右侧小栏内缩成14号字。
         private bool _boardRuleMode;
-        public bool HasActiveAnimation { get { return _animation != null && _animation.IsActive(); } }
-
+        public bool HasActiveAnimation
+        {
+            get
+            {
+                return _animation != null && _animation.IsActive();
+            }
+        }
         /// <summary>调用者拥有当前提示，关闭 HUD 时须归还；动画自己结束也会回池。</summary>
         public void Show(string title, Sprite sprite, Action<BattleEventNoticeView> onFinished)
         {
             BattleText config = GameTextConfig.Require("Event_" + title);
             Show(config, config.Text, sprite, onFinished);
         }
-
         /// <summary>升级和增益共用池化提示，标题替换占位符，其余参数直接来自 Excel。</summary>
         public void Show(BattleText config, string title, Sprite sprite, Action<BattleEventNoticeView> onFinished, string detail = null, bool enemyDeployment = false)
         {
@@ -81,6 +85,7 @@ namespace RevGame.View
             sequence.Join(DOTween.To(() => rect.localScale, value => rect.localScale = value, Vector3.one * config.PeakScale, 0.24f).SetEase(Ease.OutBack));
             sequence.Join(DOTween.To(() => group.alpha, value => group.alpha = value, 1f, 0.12f));
             sequence.Append(DOTween.To(() => rect.localScale, value => rect.localScale = value, Vector3.one, 0.14f));
+
             if (title == "能量巨大")
             {
                 sequence.Append(titleText.rectTransform.DOShakeAnchorPos(0.42f, new Vector2(14f, 9f), 24, 90f, false, true));
@@ -96,7 +101,6 @@ namespace RevGame.View
             sequence.Join(DOTween.To(() => _slide, value => _slide = value, -1f, 0.4f));
             _animation = sequence.OnComplete(Finish);
         }
-
         /// <summary>准备增益：右侧进入中央后立即弹跳0.5秒，再停0.25秒，最后飞出左侧；对象由框架池回收。</summary>
         public void ShowPreparation(string title, string detail, Action<BattleEventNoticeView> onFinished)
         {
@@ -135,10 +139,10 @@ namespace RevGame.View
             sequence.Append(DOTween.To(() => _slide, x => _slide = x, -1f, 0.46f).SetEase(Ease.InCubic));
             _animation = sequence.OnComplete(Finish);
         }
-
         private static void ConfigureOutline(Text text)
         {
             Outline outline = text.GetComponent<Outline>();
+
             if (outline == null)
             {
                 outline = text.gameObject.AddComponent<Outline>();
@@ -146,19 +150,22 @@ namespace RevGame.View
             outline.effectColor = new Color(0.04f, 0.07f, 0.12f, 1f);
             outline.effectDistance = new Vector2(2f, -2f);
         }
-
-        private void LateUpdate() { ApplySafeLayout(); }
-
+        private void LateUpdate()
+        {
+            ApplySafeLayout();
+        }
         /// <summary>提示独占右栏中部空位，不盖住棋盘、信息栏或准备按钮；连同冲击放大的范围一起预留。</summary>
         private void ApplySafeLayout()
         {
             RectTransform rect = (RectTransform)transform;
             RectTransform parent = rect.parent as RectTransform;
+
             if (parent == null)
             {
                 return;
             }
             GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, GameBattleLayout.SafeViewport());
+
             if (_boardRuleMode)
             {
                 float bannerWidth = Mathf.Min(1080f, parent.rect.width * .68f);
@@ -202,7 +209,6 @@ namespace RevGame.View
             titleText.resizeTextMaxSize = titleText.fontSize;
             detailText.resizeTextMaxSize = detailText.fontSize;
         }
-
         private static void SetChildRect(RectTransform rect, Vector2 center, Vector2 size)
         {
             rect.anchorMin = rect.anchorMax = Vector2.one * 0.5f;
@@ -210,7 +216,6 @@ namespace RevGame.View
             rect.anchoredPosition = center;
             rect.sizeDelta = size;
         }
-
         private void Finish()
         {
             _animation = null;
@@ -220,15 +225,16 @@ namespace RevGame.View
             RevPool.Return(this, 0);
             callback?.Invoke(this);
         }
-
         private void StopAnimation()
         {
             Tween previous = _animation;
             _animation = null;
             previous?.Kill(false);
         }
-
-        public void OnPoolGet() { StopAnimation(); }
+        public void OnPoolGet()
+        {
+            StopAnimation();
+        }
         public void OnPoolReturn()
         {
             StopAnimation();
@@ -238,7 +244,13 @@ namespace RevGame.View
             titleText.text = detailText.text = string.Empty;
             group.alpha = 0f;
         }
-        private void OnDisable() { StopAnimation(); }
-        private void OnDestroy() { StopAnimation(); }
+        private void OnDisable()
+        {
+            StopAnimation();
+        }
+        private void OnDestroy()
+        {
+            StopAnimation();
+        }
     }
 }

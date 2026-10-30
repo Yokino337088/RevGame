@@ -22,41 +22,88 @@ namespace RevGame.Data
     public sealed class BossSkillDef
     {
         /// <summary>技能种类，与枚举一一对应。</summary>
-        public BossSkillKind Kind { get; internal set; }
+        public BossSkillKind Kind
+        {
+            get; internal set;
+        }
         /// <summary>技能中文名（HUD 弹幕标题、战报）。</summary>
-        public string Name { get; internal set; }
+        public string Name
+        {
+            get; internal set;
+        }
         /// <summary>给玩家的应对提示（HUD 弹幕副标题）。</summary>
-        public string Hint { get; internal set; }
+        public string Hint
+        {
+            get; internal set;
+        }
         /// <summary>从第几章开始可用。</summary>
-        public int UnlockChapter { get; internal set; }
+        public int UnlockChapter
+        {
+            get; internal set;
+        }
         /// <summary>挑选权重；0 = 只能由条件触发（狂暴）。</summary>
-        public int Weight { get; internal set; }
+        public int Weight
+        {
+            get; internal set;
+        }
         /// <summary>第 1 章的冷却秒数。</summary>
-        public float Cooldown { get; internal set; }
+        public float Cooldown
+        {
+            get; internal set;
+        }
         /// <summary>蓄力预警秒数（不随章节缩短：再难也要给玩家看清的时间）。</summary>
-        public float Windup { get; internal set; }
+        public float Windup
+        {
+            get; internal set;
+        }
         /// <summary>多段之间的间隔秒数。</summary>
-        public float Interval { get; internal set; }
+        public float Interval
+        {
+            get; internal set;
+        }
         /// <summary>段数/数量，含义见表格说明。</summary>
-        public int Count { get; internal set; }
+        public int Count
+        {
+            get; internal set;
+        }
         /// <summary>第 1 章的伤害倍率（相对 Boss 一次普通攻击）。</summary>
-        public float Power { get; internal set; }
+        public float Power
+        {
+            get; internal set;
+        }
         /// <summary>伤害半径（格）。</summary>
-        public int Radius { get; internal set; }
+        public int Radius
+        {
+            get; internal set;
+        }
         /// <summary>
         /// 弹幕飞行速度（格/秒）。只有弹幕类技能使用，0 表示该技能不发射飞行弹幕。
         /// 单位取"格/秒"而不是"世界单位/秒"：策划改棋盘大小时手感不会跟着变。
         /// </summary>
-        public float BulletSpeed { get; internal set; }
+        public float BulletSpeed
+        {
+            get; internal set;
+        }
         /// <summary>0表示通用技能（UnlockChapter指定唯一章节），否则仅对应章节使用，不随解锁向后继承。</summary>
-        public int ExclusiveChapter { get; internal set; }
+        public int ExclusiveChapter
+        {
+            get; internal set;
+        }
         /// <summary>持续状态的模拟秒数；视图不能自行决定何时解冻或返场。</summary>
-        public float Duration { get; internal set; }
+        public float Duration
+        {
+            get; internal set;
+        }
         /// <summary>区域内实际攻击/攻速倍率，1表示不削弱；每步重算，离开或结束即还原。</summary>
-        public float AttackFactor { get; internal set; }
-        public float SpeedFactor { get; internal set; }
+        public float AttackFactor
+        {
+            get; internal set;
+        }
+        public float SpeedFactor
+        {
+            get; internal set;
+        }
     }
-
     public static class BossSkillCatalog
     {
         /// <summary>新增几何招式使用独立执行器；枚举范围是接线结构，不是策划数值。</summary>
@@ -64,33 +111,28 @@ namespace RevGame.Data
         {
             return kind >= BossSkillKind.CometRails;
         }
-
         /// <summary>专属由配置字段判定，禁止用枚举大小推断，新增通用技能也可能排在旧专属后。</summary>
         public static bool IsSpecial(BossSkillKind kind)
         {
             return Get(kind).ExclusiveChapter > 0;
         }
-
         /// <summary>主题章节从同一配置读取，供身体、声音与地面统一配色。</summary>
         public static int ThemeChapter(BossSkillKind kind)
         {
             BossSkillDef def = Get(kind);
             return def.ExclusiveChapter > 0 ? def.ExclusiveChapter : def.UnlockChapter;
         }
-
         /// <summary>按种类取技能定义；配置装配时已保证每个枚举都有一行，所以这里不会返回 null。</summary>
         public static BossSkillDef Get(BossSkillKind kind)
         {
             return GameConfig.Current.BossSkills[kind];
         }
-
         /// <summary>该章节的 Boss 能不能使用这个技能。</summary>
         public static bool IsUnlocked(BossSkillKind kind, int chapter)
         {
             BossSkillDef def = Get(kind);
             return kind == BossSkillKind.Enrage || (def.ExclusiveChapter == 0 ? chapter == def.UnlockChapter : chapter == def.ExclusiveChapter);
         }
-
         /// <summary>
         /// 换算后的冷却：章节越高越短，狂暴后再乘一次系数。
         /// 最少保留 0.5 秒，避免策划把系数填得过大时技能每个模拟步都触发。
@@ -98,19 +140,18 @@ namespace RevGame.Data
         public static float CooldownFor(BossSkillKind kind, int chapter, bool enraged)
         {
             float scale = 1f - (System.Math.Max(1, chapter) - 1) * Balance.BossCooldownPerChapter;
+
             if (enraged)
             {
                 scale *= Balance.BossEnrageCooldownScale;
             }
             return System.Math.Max(0.5f, Get(kind).Cooldown * scale);
         }
-
         /// <summary>换算后的伤害倍率：章节越高越痛。</summary>
         public static float PowerFor(BossSkillKind kind, int chapter)
         {
             return Get(kind).Power * (1f + (System.Math.Max(1, chapter) - 1) * Balance.BossPowerPerChapter);
         }
-
         /// <summary>
         /// 校验并装配 BossSkillConfig。由 GameConfig.Initialize 调用；问题写入 problems，不在这里抛出，
         /// 这样所有表的问题能汇总成一份清单一起给策划。
@@ -122,32 +163,46 @@ namespace RevGame.Data
             {
                 keys.Add(row.Skill);
                 string where = "BossSkillConfig[" + row.Skill + "]";
+
                 if (!GameConfig.TryEnum(row.Skill, where, "Skill", problems, out BossSkillKind kind))
                 {
                     continue;
                 }
                 // 每个检查都要执行（不用 && 短路），这样同一行的多个问题能一次全部报出来。
                 bool ok = true;
+
                 if (string.IsNullOrWhiteSpace(row.Name))
                 {
-                    problems.Add(where + " 的 Name 不能为空"); ok = false;
+                    problems.Add(where + " 的 Name 不能为空");
+                    ok = false;
                 }
                 if (string.IsNullOrWhiteSpace(row.Hint))
                 {
-                    problems.Add(where + " 的 Hint 不能为空"); ok = false;
+                    problems.Add(where + " 的 Hint 不能为空");
+                    ok = false;
                 }
                 ok &= GameConfig.CheckRange(row.UnlockChapter, 1, 6, where, "UnlockChapter", problems);
                 ok &= GameConfig.CheckRange(row.ExclusiveChapter, 0, 6, where, "ExclusiveChapter", problems);
                 ok &= GameConfig.CheckRange(row.Duration, 0f, 30f, where, "Duration", problems);
                 ok &= GameConfig.CheckRange(row.AttackFactor, 0f, 1f, where, "AttackFactor", problems);
                 ok &= GameConfig.CheckRange(row.SpeedFactor, 0f, 1f, where, "SpeedFactor", problems);
+
                 if ((kind == BossSkillKind.SolarFlare || kind == BossSkillKind.SunBrand) && (row.Interval <= 0f || row.Duration <= row.Interval))
-                { problems.Add(where + " 的灼烧必须配置正间隔，持续时间必须超过间隔"); ok = false; }
+                {
+                    problems.Add(where + " 的灼烧必须配置正间隔，持续时间必须超过间隔");
+                    ok = false;
+                }
                 if ((kind == BossSkillKind.BlackHole || kind == BossSkillKind.SwampMaw || kind == BossSkillKind.FrozenPrison
                     || kind == BossSkillKind.MireChains || kind == BossSkillKind.Sanctuary) && row.Duration <= 0f)
-                { problems.Add(where + " 的持续状态必须有正持续时间"); ok = false; }
+                {
+                    problems.Add(where + " 的持续状态必须有正持续时间");
+                    ok = false;
+                }
                 if (kind >= BossSkillKind.StarStorm && kind <= BossSkillKind.Sanctuary && row.ExclusiveChapter != ((int)kind - (int)BossSkillKind.StarStorm) / 2 + 1)
-                { problems.Add(where + " 的专属章节与技能主题不符"); ok = false; }
+                {
+                    problems.Add(where + " 的专属章节与技能主题不符");
+                    ok = false;
+                }
                 ok &= GameConfig.CheckRange(row.Weight, 0, 1000, where, "Weight", problems);
                 ok &= GameConfig.CheckRange(row.Cooldown, 0f, 600f, where, "Cooldown", problems);
                 // 蓄力至少 0.3 秒：再短玩家根本看不到预警，等于没有预警。
@@ -157,19 +212,23 @@ namespace RevGame.Data
                 ok &= GameConfig.CheckRange(row.Power, 0f, 50f, where, "Power", problems);
                 ok &= GameConfig.CheckRange(row.Radius, 0, 8, where, "Radius", problems);
                 ok &= GameConfig.CheckRange(row.BulletSpeed, 0f, 60f, where, "BulletSpeed", problems);
+
                 if (kind != BossSkillKind.Enrage && kind != BossSkillKind.Summon && row.Power <= 0f)
                 {
-                    problems.Add(where + " 是伤害技能，Power 必须大于 0"); ok = false;
+                    problems.Add(where + " 是伤害技能，Power 必须大于 0");
+                    ok = false;
                 }
                 // 弹幕技能必须有飞行速度，否则子弹会停在 Boss 身上（表现为"没打出去"），
                 // 这类配置错误在编辑器里很难看出来，所以启动期直接报出来。
                 if (kind == BossSkillKind.BulletRing && row.BulletSpeed <= 0f)
                 {
-                    problems.Add(where + " 是弹幕技能，BulletSpeed 必须大于 0（单位：格/秒）"); ok = false;
+                    problems.Add(where + " 是弹幕技能，BulletSpeed 必须大于 0（单位：格/秒）");
+                    ok = false;
                 }
                 if (kind != BossSkillKind.Enrage && row.Weight == 0)
                 {
-                    problems.Add(where + " 的 Weight = 0 会让技能永远不被使用；只有 Enrage 允许为 0"); ok = false;
+                    problems.Add(where + " 的 Weight = 0 会让技能永远不被使用；只有 Enrage 允许为 0");
+                    ok = false;
                 }
                 if (!ok)
                 {
@@ -189,8 +248,10 @@ namespace RevGame.Data
                     Power = row.Power,
                     Radius = row.Radius,
                     BulletSpeed = row.BulletSpeed,
-                    ExclusiveChapter = row.ExclusiveChapter, Duration = row.Duration,
-                    AttackFactor = row.AttackFactor, SpeedFactor = row.SpeedFactor,
+                    ExclusiveChapter = row.ExclusiveChapter,
+                    Duration = row.Duration,
+                    AttackFactor = row.AttackFactor,
+                    SpeedFactor = row.SpeedFactor,
                 };
             }
             GameConfig.CheckCoverage<BossSkillKind>(keys, "BossSkillConfig", problems);
@@ -200,12 +261,26 @@ namespace RevGame.Data
                 int common = 0, special = 0;
                 foreach (BossSkillDef def in snapshot.BossSkills.Values)
                 {
-                    if (def.Kind == BossSkillKind.Enrage) { continue; }
-                    if (def.ExclusiveChapter == chapter) { special++; }
-                    else if (def.ExclusiveChapter == 0 && def.UnlockChapter == chapter) { common++; }
+                    if (def.Kind == BossSkillKind.Enrage)
+                    {
+                        continue;
+                    }
+                    if (def.ExclusiveChapter == chapter)
+                    {
+                        special++;
+                    }
+                    else
+
+                        if (def.ExclusiveChapter == 0 && def.UnlockChapter == chapter)
+                        {
+                            common++;
+                        }
                 }
+
                 if (common != 6 || special != 4)
-                { problems.Add("第" + chapter + "章技能池必须六通用四专属，实际=" + common + "/" + special); }
+                {
+                    problems.Add("第" + chapter + "章技能池必须六通用四专属，实际=" + common + "/" + special);
+                }
             }
         }
     }

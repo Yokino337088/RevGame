@@ -26,7 +26,10 @@ namespace RevGame.Editor
         [UnityEditor.MenuItem("RevGame/验收/死棋回收（Play）")]
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _assertions = 0;
             Evidence.Clear();
@@ -59,13 +62,23 @@ namespace RevGame.Editor
                 {
                     PieceView interrupted = KillGuard(battle);
                     Tween tween = VisualTween(interrupted);
-                    if (pause) { tween.Pause(); } else { tween.Kill(false); }
-                    if (!pause) { Require(VisualTween(interrupted) == null, "外部Kill后解除死亡Tween引用，不误伤复用者"); }
+
+                    if (pause)
+                    {
+                        tween.Pause();
+                    }
+                    else
+                    {
+                        tween.Kill(false);
+                    }
+                    if (!pause)
+                    {
+                        Require(VisualTween(interrupted) == null, "外部Kill后解除死亡Tween引用，不误伤复用者");
+                    }
                     await RevTask.Delay(1550);
                     Require(!interrupted.gameObject.activeSelf && interrupted.PieceId == 0,
                         pause ? "死亡Tween暂停后仍按期限归池" : "死亡Tween被Kill后仍按期限归池");
                 }
-
                 // 中途归池马上复用，超过旧期限后新棋子仍必须存活；旧回调不能收走下一位借用者。
                 reused = await LoadPiece();
                 reused.Bind(99021, PieceKind.Archer, StarTier.One, GameSide.Enemy);
@@ -100,25 +113,35 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (reused != null) { RevPool.Return(reused, 0); }
+                if (reused != null)
+                {
+                    RevPool.Return(reused, 0);
+                }
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
                 System.IO.File.WriteAllText("Temp/GamePieceDeathChecks.txt", LastResult + "\n" + string.Join("\n", Evidence));
             }
         }
-
         private static int _lastKilledId;
         private static PieceView KillGuard(BattleService battle)
         {
             Piece target = null;
             foreach (Piece piece in battle.EnemyPieces)
             {
-                if (piece.Side == GameSide.Enemy && piece.IsAlive && !piece.IsKing) { target = piece; break; }
+                if (piece.Side == GameSide.Enemy && piece.IsAlive && !piece.IsKing)
+                {
+                    target = piece;
+                    break;
+                }
             }
             Require(target != null, "固定夹具存在存活敌方护卫");
             PieceView view = null;
             foreach (PieceView item in UnityEngine.Object.FindObjectsOfType<PieceView>())
             {
-                if (item.PieceId == target.Id) { view = item; break; }
+                if (item.PieceId == target.Id)
+                {
+                    view = item;
+                    break;
+                }
             }
             Require(view != null, "死亡前已有真实棋子视图");
             _lastKilledId = target.Id;
@@ -130,7 +153,6 @@ namespace RevGame.Editor
             Require(view.DeathDissolveProgress > 0f && DissolvingCount() > 0, "原视图只进入短期死亡表现集合");
             return view;
         }
-
         private static void CompleteBar(BattleHudPanel hud, bool boss)
         {
             string prefix = boss ? "_boss" : "_progress";
@@ -144,32 +166,31 @@ namespace RevGame.Editor
             tween.Complete(true);
             Require(field.GetValue(hud) == null, (boss ? "Boss血条" : "回合进度条") + "自然结束后清空Tween引用");
         }
-
         private static Tween VisualTween(PieceView view)
         {
             return (Tween)typeof(PieceView).GetField("_visualTween", PrivateInstance).GetValue(view);
         }
-
         private static int DissolvingCount()
         {
             var board = UnityEngine.Object.FindObjectOfType<BoardView>();
             return ((HashSet<PieceView>)typeof(BoardView).GetField("_dissolvingPieces", PrivateInstance).GetValue(board)).Count;
         }
-
         private static RevTask<PieceView> LoadPiece()
         {
             var completion = new RevTaskCompletionSource<PieceView>();
             RevPool.GetAsync<PieceView>(item => completion.SetResult(item));
             return completion.Task;
         }
-
         private static void Require(bool condition, string message)
         {
             _assertions++;
-            if (!condition) { throw new InvalidOperationException(message); }
+
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
             Evidence.Add("PASS " + message);
         }
-
         // 整章观察器只读取死亡后的状态，不扣血、不跳关；按业务死亡事件延时检查原Id是否还在画面。
         private static readonly object MonitorOwner = new object();
         private static int _observedDeaths, _checkedDeaths;
@@ -182,7 +203,6 @@ namespace RevGame.Editor
             MonitorFailures.Clear();
             RevEvent.AddEventListener<int>(Events.PieceDied, MonitorDeath, owner: MonitorOwner);
         }
-
         private static void MonitorDeath(int id)
         {
             _observedDeaths++;
@@ -191,17 +211,18 @@ namespace RevGame.Editor
                 _checkedDeaths++;
                 foreach (PieceView view in UnityEngine.Object.FindObjectsOfType<PieceView>())
                 {
-                    if (view.PieceId == id) { MonitorFailures.Add("死亡1.6游戏秒后仍有活动视图，Id=" + id); }
+                    if (view.PieceId == id)
+                    {
+                        MonitorFailures.Add("死亡1.6游戏秒后仍有活动视图，Id=" + id);
+                    }
                 }
             }, owner: MonitorOwner);
         }
-
         public static string MonitorReport()
         {
             return "observed=" + _observedDeaths + ";checked=" + _checkedDeaths + ";failures=" + MonitorFailures.Count
                 + "\n" + string.Join("\n", MonitorFailures);
         }
-
         public static void StopMonitor()
         {
             RevEvent.RemoveAllByOwner(MonitorOwner);

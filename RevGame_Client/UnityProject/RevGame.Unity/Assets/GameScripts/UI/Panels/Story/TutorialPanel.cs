@@ -24,7 +24,11 @@ namespace RevGame.UI
 
         private readonly Vector3[] _corners = new Vector3[4];
 
-        protected override void OnBindView() { _instruction.supportRichText = false; _uiFocusMaterial = _focus.material; }
+        protected override void OnBindView()
+        {
+            _instruction.supportRichText = false;
+            _uiFocusMaterial = _focus.material;
+        }
         protected override void OnOpen()
         {
             // 动画由共享Shader的时间驱动，不克隆材质，也不对原按钮做缩放或透明度动画。
@@ -33,7 +37,12 @@ namespace RevGame.UI
         protected override void OnRefreshView()
         {
             var lesson = RevLogic.Get<TutorialLogic>();
-            if (lesson == null || !lesson.Active) { _focus.enabled = false; return; }
+
+            if (lesson == null || !lesson.Active)
+            {
+                _focus.enabled = false;
+                return;
+            }
             var flow = RevServices.GetRequired<GameFlow>();
             _instruction.text = flow.StoryContent.Find("lesson").Lines[(int)lesson.Step].Text;
             _progress.text = "团团的引导  " + ((int)lesson.Step + 1) + " / 5";
@@ -44,14 +53,24 @@ namespace RevGame.UI
             Rect box = FindHintSpace(root, areas.Right);
             var hint = (RectTransform)_instruction.transform.parent;
             hint.anchorMin = hint.anchorMax = Vector2.zero;
-            hint.pivot = Vector2.zero; hint.anchoredPosition = box.position; hint.sizeDelta = box.size;
+            hint.pivot = Vector2.zero;
+            hint.anchoredPosition = box.position;
+            hint.sizeDelta = box.size;
             var prepare = RevUI.Get<PreparePanel>();
             Transform target = prepare == null ? null : FindTarget(prepare.transform, lesson.Step == TutorialStep.SelectCard ? "card0" : "btnReady");
             bool uiTarget = lesson.Step == TutorialStep.SelectCard || lesson.Step == TutorialStep.Ready;
             Material targetMaterial = uiTarget ? _uiFocusMaterial : boardFocusMaterial;
-            if (_focus.material != targetMaterial) { _focus.material = targetMaterial; }
+
+            if (_focus.material != targetMaterial)
+            {
+                _focus.material = targetMaterial;
+            }
             _focus.enabled = uiTarget ? target != null : Camera.main != null;
-            if (!_focus.enabled) { return; }
+
+            if (!_focus.enabled)
+            {
+                return;
+            }
             // 把真实按钮的世界四角换算到本浮层坐标；窗口尺寸变化后也能准确跟随，不写死屏幕像素。
             if (!uiTarget)
             {
@@ -71,7 +90,6 @@ namespace RevGame.UI
             Vector3 max = root.InverseTransformPoint(_corners[2]);
             SetFocus(root, min, max);
         }
-
         /// <summary>把目标边界扩出少量留白；中心透明，文字/棋子仍然可见且可以点击。</summary>
         private void SetFocus(RectTransform root, Vector2 min, Vector2 max)
         {
@@ -92,44 +110,76 @@ namespace RevGame.UI
             for (int i = 0; i <= _occupied.Count; i++)
             {
                 float next = i == _occupied.Count ? right.yMax : _occupied[i].yMin;
-                if (next - cursor > bestTop - bestBottom) { bestBottom = cursor; bestTop = next; }
-                if (i < _occupied.Count) { cursor = Mathf.Max(cursor, _occupied[i].yMax); }
+
+                if (next - cursor > bestTop - bestBottom)
+                {
+                    bestBottom = cursor;
+                    bestTop = next;
+                }
+                if (i < _occupied.Count)
+                {
+                    cursor = Mathf.Max(cursor, _occupied[i].yMax);
+                }
             }
             float padding = right.height * 0.018f;
             float height = Mathf.Min(right.height * 0.29f, Mathf.Max(0f, bestTop - bestBottom - padding * 2f));
             float center = Mathf.Clamp(right.yMin + right.height * 0.50f, bestBottom + padding + height * 0.5f, bestTop - padding - height * 0.5f);
             return new Rect(right.center.x - right.width * 0.49f, center - height * 0.5f, right.width * 0.98f, height);
         }
-
         /// <summary>只读实际按钮和状态面板的矩形；停用按钮不占空间，不通过猜测旧版锚点来避让。</summary>
         private void CollectOccupied(RectTransform root, Rect right, Component panel)
         {
-            if (panel == null) { return; }
+            if (panel == null)
+            {
+                return;
+            }
             _controls.Clear();
             panel.GetComponentsInChildren<RectTransform>(false, _controls);
             foreach (var rect in _controls)
             {
-                if (!rect.gameObject.activeInHierarchy || (rect.GetComponent<Button>() == null && rect.name != "infoPlate")) { continue; }
+                if (!rect.gameObject.activeInHierarchy || (rect.GetComponent<Button>() == null && rect.name != "infoPlate"))
+                {
+                    continue;
+                }
                 rect.GetWorldCorners(_corners);
                 Vector2 min = (Vector2)root.InverseTransformPoint(_corners[0]) + Vector2.Scale(root.rect.size, root.pivot);
                 Vector2 max = (Vector2)root.InverseTransformPoint(_corners[2]) + Vector2.Scale(root.rect.size, root.pivot);
-                if (max.x <= right.xMin || min.x >= right.xMax || max.y <= right.yMin || min.y >= right.yMax) { continue; }
+
+                if (max.x <= right.xMin || min.x >= right.xMax || max.y <= right.yMin || min.y >= right.yMax)
+                {
+                    continue;
+                }
                 _occupied.Add(Rect.MinMaxRect(min.x, Mathf.Max(min.y, right.yMin), max.x, Mathf.Min(max.y, right.yMax)));
             }
         }
-
         private static Transform FindTarget(Transform parent, string name)
         {
-            if (parent.name == name) { return parent; }
+            if (parent.name == name)
+            {
+                return parent;
+            }
             for (int i = 0; i < parent.childCount; i++)
             {
                 Transform found = FindTarget(parent.GetChild(i), name);
-                if (found != null) { return found; }
+
+                if (found != null)
+                {
+                    return found;
+                }
             }
             return null;
         }
-        protected override void OnClose() { StopEffects(); }
-        protected override void OnRelease() { StopEffects(); }
-        private void StopEffects() { RevTimer.CancelAllOf(this); }
+        protected override void OnClose()
+        {
+            StopEffects();
+        }
+        protected override void OnRelease()
+        {
+            StopEffects();
+        }
+        private void StopEffects()
+        {
+            RevTimer.CancelAllOf(this);
+        }
     }
 }

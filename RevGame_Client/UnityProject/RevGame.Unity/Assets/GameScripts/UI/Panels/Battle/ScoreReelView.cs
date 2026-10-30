@@ -34,31 +34,60 @@ namespace RevGame.UI
 
         private void Awake()
         {
-            _from = new float[lower.Length]; _to = new float[lower.Length]; _shown = new int[lower.Length];
+            _from = new float[lower.Length];
+            _to = new float[lower.Length];
+            _shown = new int[lower.Length];
             _paintedPosition = new float[lower.Length];
-            for (int i = 0; i < _shown.Length; i++) { _shown[i] = -1; _paintedPosition[i] = float.NaN; }
+            for (int i = 0; i < _shown.Length; i++)
+            {
+                _shown[i] = -1;
+                _paintedPosition[i] = float.NaN;
+            }
         }
-
         /// <summary>snap用于换回合/首次打开，必须直接落到真实分数，避免播放上一回合的旧分。</summary>
         public void Display(long value, bool snap)
         {
             value = System.Math.Max(0, value);
-            if (_target == value && !snap) { return; }
+
+            if (_target == value && !snap)
+            {
+                return;
+            }
             _target = value;
             long limit = 1;
-            for (int i = 0; i < lower.Length; i++) { limit *= 10; }
+            for (int i = 0; i < lower.Length; i++)
+            {
+                limit *= 10;
+            }
             bool tooLarge = value >= limit;
             overflow.gameObject.SetActive(tooLarge);
-            if (decimalPoint != null) { decimalPoint.gameObject.SetActive(!tooLarge); }
-            if (tooLarge) { overflow.text = fractionalDigits == 2 ? (value / 100d).ToString("0.00") : value.ToString("N0"); }
-            foreach (Text digit in lower) { digit.transform.parent.gameObject.SetActive(!tooLarge); }
+
+            if (decimalPoint != null)
+            {
+                decimalPoint.gameObject.SetActive(!tooLarge);
+            }
+            if (tooLarge)
+            {
+                overflow.text = fractionalDigits == 2 ? (value / 100d).ToString("0.00") : value.ToString("N0");
+            }
+            foreach (Text digit in lower)
+            {
+                digit.transform.parent.gameObject.SetActive(!tooLarge);
+            }
             if (snap || tooLarge)
             {
                 StopRoll();
-                for (int i = lower.Length - 1; i >= 0; i--) { Paint(i, value % 10); value /= 10; }
+                for (int i = lower.Length - 1; i >= 0; i--)
+                {
+                    Paint(i, value % 10);
+                    value /= 10;
+                }
                 return;
             }
-            if (_roll == null) { BeginRoll(); }
+            if (_roll == null)
+            {
+                BeginRoll();
+            }
         }
 
         /// <summary>捕获本轮终值；播放中再得分只更新_target，本轮结束后最多追播一轮，避免无限堆动画。</summary>
@@ -67,7 +96,8 @@ namespace RevGame.UI
             long landing = _target, digits = landing;
             for (int i = lower.Length - 1; i >= 0; i--)
             {
-                int next = (int)(digits % 10); digits /= 10;
+                int next = (int)(digits % 10);
+                digits /= 10;
                 _from[i] = Mathf.Max(0, _shown[i]);
                 // 未变化的高位不转。变化位多转一周，有“刷屏”感，但不会每击新增一套Tween。
                 _to[i] = next == (int)_from[i] ? _from[i] : _from[i] + 10 + (next - _from[i] + 10) % 10;
@@ -85,28 +115,46 @@ namespace RevGame.UI
             }, 1f, .62f).SetUpdate(true).SetEase(Ease.Linear).OnComplete(() =>
             {
                 _roll = null;
-                if (_target != landing) { BeginRoll(); }
+
+                if (_target != landing)
+                {
+                    BeginRoll();
+                }
             });
         }
-
         /// <summary>整数部分决定字形，小数部分决定上下偏移；只有数字真的变化时才重建该Text的字形网格。</summary>
         private void Paint(int column, float position)
         {
-            if (_paintedPosition[column] == position) { return; }
+            if (_paintedPosition[column] == position)
+            {
+                return;
+            }
             _paintedPosition[column] = position;
             int whole = Mathf.FloorToInt(position), digit = whole % 10;
+
             if (_shown[column] != digit)
             {
-                _shown[column] = digit; lower[column].text = Digits[digit]; upper[column].text = Digits[(digit + 1) % 10];
+                _shown[column] = digit;
+                lower[column].text = Digits[digit];
+                upper[column].text = Digits[(digit + 1) % 10];
             }
             float y = -(position - whole) * rowHeight;
             lower[column].rectTransform.anchoredPosition = new Vector2(0, y);
             upper[column].rectTransform.anchoredPosition = new Vector2(0, y + rowHeight);
         }
-
         /// <summary>关闭/隐藏时终止回调，不强行触发OnComplete，防止失活后又续播下一轮。</summary>
-        public void StopRoll() { _roll?.Kill(false); _roll = null; }
-        private void OnDisable() { StopRoll(); }
-        private void OnDestroy() { StopRoll(); }
+        public void StopRoll()
+        {
+            _roll?.Kill(false);
+            _roll = null;
+        }
+        private void OnDisable()
+        {
+            StopRoll();
+        }
+        private void OnDestroy()
+        {
+            StopRoll();
+        }
     }
 }

@@ -31,38 +31,39 @@ namespace RevGame.View
             OpenHelperAudio();
             RevSound.Failed += OnFailed;
         }
-
-        private void OnEnergyBomb(EnergyBombInfo info) { RevSound.Play("EnergyHuge", volume: 0.48f); }
-        private void OnRegion(RegionPulseInfo info) { RevSound.Play("RegionWave", volume: 0.22f); }
+        private void OnEnergyBomb(EnergyBombInfo info)
+        {
+            RevSound.Play("EnergyHuge", volume: 0.48f);
+        }
+        private void OnRegion(RegionPulseInfo info)
+        {
+            RevSound.Play("RegionWave", volume: 0.22f);
+        }
         private void OnBossSkill(BossSkillInfo info)
         {
             PlayBossSkillAudio(info);
         }
-
         private void OnPlaced(int id)
         {
             RevSound.Play("Place", volume: 0.35f);
         }
-
         private void OnDamage(int id)
         {
             RevSound.Play("Hit", volume: 0.18f);
         }
-
         private void OnMerged(int id)
         {
             RevSound.Play("Upgrade", volume: 0.4f);
         }
-
         private void OnSettle(GameSide winner)
         {
             RevSound.Play(winner == GameSide.Player ? "Victory" : "Defeat", volume: 0.4f);
         }
-
         private void OnScreen(GameScreen screen)
         {
             // 从按钮触发流程后才播音乐，也适配浏览器必须先有用户手势才能出声的限制。
             _battleScreen = screen == GameScreen.Battle;
+
             if (_battleScreen)
             {
                 RefreshChapterMusic();
@@ -74,11 +75,14 @@ namespace RevGame.View
                 ReleaseChapterMusic();
             }
         }
-
         /// <summary>同章下一回合保持播放位置；跨章仍在GameScene时由准备事件选择新音乐。</summary>
         private void OnPrepare(int round)
         {
-            if (_battleScreen) { RefreshChapterMusic(); RefreshBossAudio(); }
+            if (_battleScreen)
+            {
+                RefreshChapterMusic();
+                RefreshBossAudio();
+            }
         }
 
         /// <summary>章节到音乐的资源绑定，不是玩法数值；六章均有独立曲目。</summary>
@@ -86,23 +90,34 @@ namespace RevGame.View
         {
             switch (chapter)
             {
-                case 1: return "Chapter01_CafeByTheSea";
-                case 2: return "Chapter02_AzureBlue";
-                case 3: return "Chapter03_ToTheSouth";
-                case 4: return "Chapter04_Adventure";
-                case 5: return "Chapter05_IceWalls";
-                case 6: return "Chapter06_Swing";
-                default: return "MainTheme";
+                case 1:
+                    return "Chapter01_CafeByTheSea";
+                case 2:
+                    return "Chapter02_AzureBlue";
+                case 3:
+                    return "Chapter03_ToTheSouth";
+                case 4:
+                    return "Chapter04_Adventure";
+                case 5:
+                    return "Chapter05_IceWalls";
+                case 6:
+                    return "Chapter06_Swing";
+                default:
+                    return "MainTheme";
             }
         }
-
         /// <summary>只在曲目变化时发起框架异步播放；不预加载其它章，不自己创建AudioSource。</summary>
         private void RefreshChapterMusic()
         {
             string name = GetChapterMusicName(RevServices.GetRequired<IBattleService>().Chapter);
-            if (_currentBgm == name) { return; }
+
+            if (_currentBgm == name)
+            {
+                return;
+            }
             ReleaseChapterMusic();
             _currentBgm = name;
+
             // 先停旧曲再释放其流式资源，新曲淡入，避免正在读旧Clip时卸载其AB。
             if (RevSound.PlayBgm(name, fadeSeconds: 0.6f, volume: GameAudioSettings.MusicBaseVolume).IsEmpty)
             {
@@ -115,21 +130,29 @@ namespace RevGame.View
         private void ReleaseChapterMusic()
         {
             RevSound.StopBgm();
-            if (string.IsNullOrEmpty(_currentBgm)) { return; }
+
+            if (string.IsNullOrEmpty(_currentBgm))
+            {
+                return;
+            }
             RevSound.Unload(_currentBgm);
             _currentBgm = null;
         }
-
         private void OnFailed(string name, RevSoundErrorReason reason)
         {
             // 多颗棋同帧命中时，框架只播放一次同名声音以免音量叠爆。
             // Duplicated代表正常去重；其它加载/播放错误仍必须显示出来供排错。
-            if (reason == RevSoundErrorReason.Duplicated) { return; }
+            if (reason == RevSoundErrorReason.Duplicated)
+            {
+                return;
+            }
             // 首次资源加载异步失败后允许下次准备/屏幕刷新重试，不能留下“曲名相同所以不播”的假状态。
-            if (name == _currentBgm) { _currentBgm = null; }
+            if (name == _currentBgm)
+            {
+                _currentBgm = null;
+            }
             RevLog.Warn("声音播放失败：" + name + "，原因：" + reason, "RevGame");
         }
-
         private void OnDestroy()
         {
             CloseHelperAudio();

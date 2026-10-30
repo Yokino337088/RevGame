@@ -23,7 +23,10 @@ namespace RevGame.Editor
         /// <summary>非 Play 运行，防止独立服务的广播被当前 UI 当成实战事件。</summary>
         public static string Run()
         {
-            if (UnityEngine.Application.isPlaying) { return "请先退出 Play 再运行战术断言"; }
+            if (UnityEngine.Application.isPlaying)
+            {
+                return "请先退出 Play 再运行战术断言";
+            }
             GameConfigTestSupport.Ensure();
             _count = 0;
             var report = new StringBuilder();
@@ -36,6 +39,7 @@ namespace RevGame.Editor
                     var battle = new BattleService(true, 1024);
                     Check(battle.StartRound(chapter, round), "眼阵完整生成：" + chapter + "/" + round);
                     RoundDef current = LevelCatalog.GetRound(chapter, round);
+
                     if (previous != null)
                     {
                         Check(current.HpScale > previous.HpScale && current.AttackScale > previous.AttackScale, "敌方生命与攻击基础倍率逐轮增长，跨章不倒退");
@@ -62,7 +66,6 @@ namespace RevGame.Editor
             LastResult = "通过 " + _count + " 条战术断言\n" + report;
             return LastResult;
         }
-
         private static void VerifySnapshotAndFallback()
         {
             var board = new BoardModel(9);
@@ -86,7 +89,10 @@ namespace RevGame.Editor
             {
                 for (int x = 0; x < 9; x++)
                 {
-                    if (x != 0 && x != 8 && y != 0 && y != 8) { continue; }
+                    if (x != 0 && x != 8 && y != 0 && y != 8)
+                    {
+                        continue;
+                    }
                     var player = new Piece(id++, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player);
                     playerPositions.Place(player, new BoardPos(x, y));
                     players.Add(player);
@@ -110,7 +116,6 @@ namespace RevGame.Editor
             Check(!EnemyFormationPlanner.TryArrange(enemies, players, false, out reason) && reason.Contains("保持不变"), "满盘明确拒绝，不吞掉关键敌棋");
             Check(enemies.TrueForAll(p => p.Pos == default(BoardPos)), "布阵失败不提交部分落点");
         }
-
         /// <summary>推进真实战斗，记录每次人数增长的时刻；不能只验证一个“AI开启”开关。</summary>
         private static void VerifyBattleDeployment()
         {
@@ -135,7 +140,11 @@ namespace RevGame.Editor
                     while (battle.Phase == GamePhase.Battle && steps++ < 4000)
                     {
                         battle.Tick(Balance.BattleSimulationStepSeconds);
-                        if (battle.EnemyDeploymentCount == previous) { continue; }
+
+                        if (battle.EnemyDeploymentCount == previous)
+                        {
+                            continue;
+                        }
                         Check(battle.EnemyDeploymentCount > previous && battle.EnemyDeploymentCount - previous <= Balance.DeployBatchCount, "每个落子窗口遵守配置的最多两子");
                         float interval = previous == 0 ? Balance.DeployStartSeconds : System.Math.Max(Balance.DeployIntervalMinSeconds, Balance.DeployIntervalBaseSeconds - battle.EnemyIntelligence * Balance.DeployIntervalPerLevelSeconds);
                         Check(battle.BattleElapsed - lastTime >= interval && battle.BattleElapsed < Balance.DeployStopSeconds, "遵守配置落子间隔与停援时刻");
@@ -147,6 +156,7 @@ namespace RevGame.Editor
                         total++;
                     }
                     Check(battle.Phase == GamePhase.Settle && battle.LastWinner.HasValue, "增援对局通过真实胜负结算，孤立单兵允许失败");
+
                     if (!battle.IsBossRound)
                     {
                         Check(battle.Board.IsSideWiped(GameSide.Player) || battle.Board.IsSideWiped(GameSide.Enemy), "普通回合胜负对应一方真实全灭，不靠验收期限清场");
@@ -171,7 +181,6 @@ namespace RevGame.Editor
             Check(probe.Board.Dump() == original && probe.Board.GetPiece(chosen) == null, "候选试算没有把棋落进实盘");
             Check(probe.Board.GetCell(chosen).EyeSide != GameSide.Player, "敌方自动落子不闯玩家眼位");
         }
-
         private static List<Piece> MakeEnemies()
         {
             var result = new List<Piece>();
@@ -181,7 +190,6 @@ namespace RevGame.Editor
             }
             return result;
         }
-
         private static void VerifyRangedAndMovement()
         {
             var board = new BoardModel(9);
@@ -209,7 +217,10 @@ namespace RevGame.Editor
             battle.StartRound(1, 9);
             foreach (Piece enemy in battle.EnemyPieces)
             {
-                if (enemy.EyeCount > 0) { Check(MoveRules.GetMoveTargets(battle.Board, enemy).Count == 0, "两眼守子不自动拆阵"); }
+                if (enemy.EyeCount > 0)
+                {
+                    Check(MoveRules.GetMoveTargets(battle.Board, enemy).Count == 0, "两眼守子不自动拆阵");
+                }
             }
             var prediction = new BattleService(false, 1025);
             var aim = prediction.Board;
@@ -231,7 +242,6 @@ namespace RevGame.Editor
             BoardPos result = EnemyTactics.ChooseSafeMove(snapshot, bone, new List<BoardPos> { new BoardPos(5, 5) });
             Check(result == bone.Pos && before == snapshot.Dump(), "错误候选也不能损伤原有眼阵或污染输入棋盘");
         }
-
         private static void VerifyReplay(StringBuilder report)
         {
             foreach (int chapter in new[] { 1, 3, 6 })
@@ -257,15 +267,24 @@ namespace RevGame.Editor
                     object owner = new object();
                     RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, hit =>
                     {
-                        if (hit.TargetSide == GameSide.Player) { playerDamage += hit.Damage; }
-                        else { enemyDamage += hit.Damage; }
+                        if (hit.TargetSide == GameSide.Player)
+                        {
+                            playerDamage += hit.Damage;
+                        }
+                        else
+                        {
+                            enemyDamage += hit.Damage;
+                        }
                     }, owner: owner);
                     try
                     {
                         battle.Tick(3f);
                         Check(battle.StartBattle(), "固定种子实际开战");
                         // 测试期限仅约束验收程序，超时必须失败，不能反过来删除实战敌人保证通过。
-                        for (int step = 0; step < 4000 && battle.Phase == GamePhase.Battle; step++) { battle.Tick(Balance.BattleSimulationStepSeconds); }
+                        for (int step = 0; step < 4000 && battle.Phase == GamePhase.Battle; step++)
+                        {
+                            battle.Tick(Balance.BattleSimulationStepSeconds);
+                        }
                         Check(battle.LastWinner.HasValue && battle.Phase == GamePhase.Settle, "固定种子对局按真实存活结果结束，允许玩家失败");
                         Check(playerDamage > 0 && enemyDamage > 0, "双方均有真实伤害，敌方不是纯站桩挨打");
                         Check(battle.BattleElapsed > 0f, "真实推进了战斗时钟，不通过超时清敌结算");
@@ -275,13 +294,14 @@ namespace RevGame.Editor
                 }
             }
         }
-
         private static void Check(bool condition, string message)
         {
-            if (!condition) { throw new InvalidOperationException("战术验收失败：" + message); }
+            if (!condition)
+            {
+                throw new InvalidOperationException("战术验收失败：" + message);
+            }
             _count++;
         }
-
         /// <summary>
         /// 真正用同一份服务连续推进六章，而不是每回合重新造空棋盘。
         /// 这能检查“残局继承 + 新敌阵 + 六牌 + 奖励”一起运行时是否挤满棋盘或卡住流程。
@@ -299,7 +319,13 @@ namespace RevGame.Editor
                 int wins = 0;
                 bool lost = false;
                 object owner = new object();
-                RevEvent.AddEventListener<bool>(Events.GameFinished, won => { if (won) { finished++; } }, owner: owner);
+                RevEvent.AddEventListener<bool>(Events.GameFinished, won =>
+                {
+                    if (won)
+                    {
+                        finished++;
+                    }
+                }, owner: owner);
                 try
                 {
                     for (int index = 0; index < LevelCatalog.TotalRounds; index++)
@@ -316,18 +342,29 @@ namespace RevGame.Editor
                                 for (int x = 0; x < Consts.BoardSize && !placed; x++)
                                 {
                                     var pos = new BoardPos(x, y);
-                                    if (battle.CanPlaySelectedAt(pos)) { placed = battle.TryPlayCard(cardId, pos); }
+
+                                    if (battle.CanPlaySelectedAt(pos))
+                                    {
+                                        placed = battle.TryPlayCard(cardId, pos);
+                                    }
                                 }
                             }
                             // 极满残局下允许保留手牌；服务本来就允许至少一颗己方棋子开战。
-                            if (!placed) { break; }
+                            if (!placed)
+                            {
+                                break;
+                            }
                         }
                         battle.Tick(3f);
                         Check(battle.StartBattle(), "带残局正常开战");
-                        for (int step = 0; step < 4000 && battle.Phase == GamePhase.Battle; step++) { battle.Tick(Balance.BattleSimulationStepSeconds); }
+                        for (int step = 0; step < 4000 && battle.Phase == GamePhase.Battle; step++)
+                        {
+                            battle.Tick(Balance.BattleSimulationStepSeconds);
+                        }
                         Check(battle.Phase == GamePhase.Settle && battle.LastWinner.HasValue, "连续闯关在有界验收期限内通过真实胜负结算");
                         seconds += battle.BattleElapsed;
                         events += battle.BattleEventCount;
+
                         if (battle.LastWinner == GameSide.Enemy)
                         {
                             // 固定“从左下填空”的策略不是必胜策略；当前正式服务明确不再免死/保胜。
@@ -341,9 +378,17 @@ namespace RevGame.Editor
                         }
                         wins++;
                         Check(battle.CompleteSettle(), "完整敌阵可在真实残局上生成（" + seed + "，" + battle.Chapter + "/" + battle.Round + "）：" + battle.LastError);
-                        if (battle.Phase == GamePhase.Reward) { Check(battle.ChooseReward(0), "第一项章节奖励可正常进入下一章"); }
+
+                        if (battle.Phase == GamePhase.Reward)
+                        {
+                            Check(battle.ChooseReward(0), "第一项章节奖励可正常进入下一章");
+                        }
                     }
-                    if (!lost) { Check(finished == 1 && battle.UnlockedChapter == Consts.ChapterCount, "最终通关只通知一次且解锁六章"); }
+
+                    if (!lost)
+                    {
+                        Check(finished == 1 && battle.UnlockedChapter == Consts.ChapterCount, "最终通关只通知一次且解锁六章");
+                    }
                     report.AppendLine("连续闯关种子" + seed + "：实际胜利" + wins + "轮，" + (lost ? "失败重开分支通过" : "六章通关分支通过") + "，战斗合计" + seconds + "秒，事件" + events + "次");
                 }
                 finally { RevEvent.RemoveAllByOwner(owner); }

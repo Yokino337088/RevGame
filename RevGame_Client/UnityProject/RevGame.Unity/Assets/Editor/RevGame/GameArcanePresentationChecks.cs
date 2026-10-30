@@ -25,7 +25,10 @@ namespace RevGame.Editor
 
         public static async void Begin()
         {
-            if (!Application.isPlaying || LastResult == "运行中") { return; }
+            if (!Application.isPlaying || LastResult == "运行中")
+            {
+                return;
+            }
             LastResult = "运行中";
             _checks = 0;
             GameFlow flow = RevServices.GetRequired<GameFlow>();
@@ -56,7 +59,10 @@ namespace RevGame.Editor
                 }
                 CardItem clicked = cards[0];
                 Button button = Get<Button>(clicked, "button");
-                for (int i = 0; i < 8; i++) { button.onClick.Invoke(); }
+                for (int i = 0; i < 8; i++)
+                {
+                    button.onClick.Invoke();
+                }
                 Require(Get<Tween>(clicked, "_press").IsActive(), "连续点击实际启动DOTween抖动");
                 await RevTask.Delay(70);
                 Require(Quaternion.Angle(clicked.transform.localRotation, Quaternion.identity) > 0.1f, "卡面真实发生倾斜");
@@ -90,7 +96,10 @@ namespace RevGame.Editor
                     current.ShowProjectile(Vector3.zero, Vector3.right * distance, item => callbacks++);
                     await RevTask.Delay(650);
                     Require(callbacks == before + 1 && !current.gameObject.activeInHierarchy && !current.HasActiveAnimation, "零距/近距/远距自然结束仅回调一次：" + distance);
-                    foreach (SpriteRenderer layer in current.GetComponentsInChildren<SpriteRenderer>(true)) { Require(!layer.enabled, "回池本体/轮廓/尾巴全部关闭"); }
+                    foreach (SpriteRenderer layer in current.GetComponentsInChildren<SpriteRenderer>(true))
+                    {
+                        Require(!layer.enabled, "回池本体/轮廓/尾巴全部关闭");
+                    }
                     effect = null;
                 }
                 effect = await Load(container.transform);
@@ -109,29 +118,37 @@ namespace RevGame.Editor
             }
             finally
             {
-                if (effect != null && effect.gameObject.activeInHierarchy) { RevPool.Return(effect, 0); }
+                if (effect != null && effect.gameObject.activeInHierarchy)
+                {
+                    RevPool.Return(effect, 0);
+                }
                 UnityEngine.Object.Destroy(container);
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
             }
         }
-
         private static RevTask<BattleEffectView> Load(Transform parent)
         {
             var source = new RevTaskCompletionSource<BattleEffectView>();
             RevPool.GetAsync<BattleEffectView>(item => source.SetResult(item), parent);
             return source.Task;
         }
-
         /// <summary>保存真实1920×1080画面的连续帧，供交付报告展示流光；只暂停模型自动推进，不修改分辨率。</summary>
         public static async void CapturePreview()
         {
-            if (!Application.isPlaying || LastPreview == "运行中") { return; }
+            if (!Application.isPlaying || LastPreview == "运行中")
+            {
+                return;
+            }
             LastPreview = "运行中";
             GameFlow flow = RevServices.GetRequired<GameFlow>();
             try
             {
                 await GameSceneTransitionChecks.ReturnHomeAsync(flow);
-                if (!flow.OpenLevels() || !flow.EnterBattle(1)) { throw new InvalidOperationException("无法进入准备预览"); }
+
+                if (!flow.OpenLevels() || !flow.EnterBattle(1))
+                {
+                    throw new InvalidOperationException("无法进入准备预览");
+                }
                 await GameSceneTransitionChecks.WaitForFlowAsync(flow);
                 await RevTask.Delay(650);
                 RevTimer.CancelAllOf(RevLogic.Get<BattleLogic>());
@@ -139,7 +156,10 @@ namespace RevGame.Editor
                 CardItem card = UnityEngine.Object.FindObjectOfType<CardItem>();
                 for (int frame = 0; frame < 30; frame++)
                 {
-                    if (frame == 1) { Get<Button>(card, "button").onClick.Invoke(); }
+                    if (frame == 1)
+                    {
+                        Get<Button>(card, "button").onClick.Invoke();
+                    }
                     ScreenCapture.CaptureScreenshot("Temp/ArcaneVerification/Frames/" + frame.ToString("D2") + ".png");
                     await RevTask.Delay(200);
                 }
@@ -148,15 +168,16 @@ namespace RevGame.Editor
             catch (Exception error) { LastPreview = "失败：" + error.Message; RevLog.Exception(error, "预览采集失败", "RevGame"); }
             finally { await GameSceneTransitionChecks.ReturnHomeAsync(flow); }
         }
-
         private static T Get<T>(object target, string name)
         {
             return (T)target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(target);
         }
-
         private static void Require(bool value, string message)
         {
-            if (!value) { throw new InvalidOperationException(message); }
+            if (!value)
+            {
+                throw new InvalidOperationException(message);
+            }
             _checks++;
         }
     }

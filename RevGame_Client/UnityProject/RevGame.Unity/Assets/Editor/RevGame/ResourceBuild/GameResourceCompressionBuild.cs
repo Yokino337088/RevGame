@@ -22,27 +22,44 @@ namespace RevGame.Editor
         /// <summary>制作先于分包；原图位于Unity工程之外，运行时只加载GameRes下的RGB副本。</summary>
         public static void Configure()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode) { throw new InvalidOperationException("资源瘦身仅可在编辑态执行"); }
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("资源瘦身仅可在编辑态执行");
+            }
             string sourceRoot = Path.GetFullPath("../../美术/AI生成");
-            for (int i = 0; i < Names.Length; i++) { PrepareBackground(Path.Combine(sourceRoot, Sources[i]), Root + Names[i] + ".png"); }
+            for (int i = 0; i < Names.Length; i++)
+            {
+                PrepareBackground(Path.Combine(sourceRoot, Sources[i]), Root + Names[i] + ".png");
+            }
             ConfigureCombatFont();
         }
-
         /// <summary>源图SHA标识生成版本，画面RGB双线性采样、Alpha不参与背景Shader；不裁透明留边，归一化UV保持不变。</summary>
         public static void PrepareBackground(string source, string destination)
         {
-            if (!File.Exists(source)) { throw new FileNotFoundException("背景原图缺失", source); }
+            if (!File.Exists(source))
+            {
+                throw new FileNotFoundException("背景原图缺失", source);
+            }
             byte[] bytes = File.ReadAllBytes(source);
             string digest;
-            using (SHA256 sha = SHA256.Create()) { digest = Convert.ToBase64String(sha.ComputeHash(bytes)); }
+            using (SHA256 sha = SHA256.Create())
+            {
+                digest = Convert.ToBase64String(sha.ComputeHash(bytes));
+            }
             string marker = "RevGameRGB1408x792-v1:" + digest;
             var importer = AssetImporter.GetAtPath(destination) as TextureImporter;
+
             // 重建AB只核对已有制作结果，不无条件触发五次SaveAndReimport；源图或导入配置变化时才重做。
             if (importer != null && importer.userData == marker && IsConfigured(importer))
             {
                 Texture2D prepared = AssetDatabase.LoadAssetAtPath<Texture2D>(destination);
-                if (prepared != null && prepared.width == Width && prepared.height == Height) { return; }
+
+                if (prepared != null && prepared.width == Width && prepared.height == Height)
+                {
+                    return;
+                }
             }
+
             if (importer == null || importer.userData != marker)
             {
                 Texture2D original = null;
@@ -50,7 +67,11 @@ namespace RevGame.Editor
                 try
                 {
                     original = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                    if (!original.LoadImage(bytes, false)) { throw new InvalidOperationException("无法解码背景原图：" + source); }
+
+                    if (!original.LoadImage(bytes, false))
+                    {
+                        throw new InvalidOperationException("无法解码背景原图：" + source);
+                    }
                     Color32[] pixels = original.GetPixels32();
                     var resized = new Color32[Width * Height];
                     for (int y = 0; y < Height; y++)
@@ -77,8 +98,14 @@ namespace RevGame.Editor
                 }
                 finally
                 {
-                    if (original != null) { UnityEngine.Object.DestroyImmediate(original); }
-                    if (output != null) { UnityEngine.Object.DestroyImmediate(output); }
+                    if (original != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(original);
+                    }
+                    if (output != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(output);
+                    }
                 }
                 importer = (TextureImporter)AssetImporter.GetAtPath(destination);
             }
@@ -95,7 +122,6 @@ namespace RevGame.Editor
             importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = 2048, format = TextureImporterFormat.ETC2_RGB4 });
             importer.SaveAndReimport();
         }
-
         /// <summary>判断会影响色彩、UV、尺寸和压缩的制作设置是否一致，不用PNG源文件体积代替导入格式。</summary>
         private static bool IsConfigured(TextureImporter importer)
         {
@@ -108,13 +134,16 @@ namespace RevGame.Editor
                 && pc.maxTextureSize == 2048 && android.maxTextureSize == 2048
                 && pc.format == TextureImporterFormat.DXT1 && android.format == TextureImporterFormat.ETC2_RGB4;
         }
-
         /// <summary>更新TextMesh字体和MeshRenderer的配套字体材质；只保存发生变化的预制体，避免旧字体隐式入包。</summary>
         private static void ConfigureCombatFont()
         {
             const string path = "Assets/GameRes/Effects/Combat/BattleEffect.prefab";
             Font font = AssetDatabase.LoadAssetAtPath<Font>("Assets/GameRes/Fonts/CJK/NotoSansCJKsc-Bold.otf");
-            if (font == null || font.material == null) { throw new InvalidOperationException("统一战斗字体或材质缺失"); }
+
+            if (font == null || font.material == null)
+            {
+                throw new InvalidOperationException("统一战斗字体或材质缺失");
+            }
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
@@ -122,68 +151,104 @@ namespace RevGame.Editor
                 foreach (TextMesh text in root.GetComponentsInChildren<TextMesh>(true))
                 {
                     MeshRenderer renderer = text.GetComponent<MeshRenderer>();
-                    if (renderer == null) { throw new InvalidOperationException("飘字缺少MeshRenderer：" + text.name); }
-                    if (text.font == font && renderer.sharedMaterial == font.material) { continue; }
+
+                    if (renderer == null)
+                    {
+                        throw new InvalidOperationException("飘字缺少MeshRenderer：" + text.name);
+                    }
+                    if (text.font == font && renderer.sharedMaterial == font.material)
+                    {
+                        continue;
+                    }
                     text.font = font;
                     renderer.sharedMaterial = font.material;
                     changed = true;
                 }
-                if (changed) { PrefabUtility.SaveAsPrefabAsset(root, path); }
+                if (changed)
+                {
+                    PrefabUtility.SaveAsPrefabAsset(root, path);
+                }
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
-
         /// <summary>检查源图标识、实际导入格式和旧字体依赖；真实跨平台AB仍要在构建后核对。</summary>
         public static void ValidateBackground(string source, string destination)
         {
             string digest;
-            using (SHA256 sha = SHA256.Create()) { digest = Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(source))); }
+            using (SHA256 sha = SHA256.Create())
+            {
+                digest = Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(source)));
+            }
             var importer = (TextureImporter)AssetImporter.GetAtPath(destination);
+
             if (importer.userData != "RevGameRGB1408x792-v1:" + digest || !IsConfigured(importer))
-            { throw new InvalidOperationException("背景制作版本与原图不一致：" + destination); }
+            {
+                throw new InvalidOperationException("背景制作版本与原图不一致：" + destination);
+            }
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(destination);
+
             if (texture == null || texture.width != Width || texture.height != Height)
-            { throw new InvalidOperationException("背景没有使用可压缩的16:9尺寸：" + destination); }
+            {
+                throw new InvalidOperationException("背景没有使用可压缩的16:9尺寸：" + destination);
+            }
             if (importer.GetPlatformTextureSettings("Android").format != TextureImporterFormat.ETC2_RGB4
                 || importer.GetPlatformTextureSettings("Standalone").format != TextureImporterFormat.DXT1)
-            { throw new InvalidOperationException("背景的平台压缩格式错误：" + destination); }
+            {
+                throw new InvalidOperationException("背景的平台压缩格式错误：" + destination);
+            }
         }
 
         [RevAutomationAction("game.resources.compression-check", Environment = "edit", Keys = new string[0], Description = "检查五章背景制作版本和统一战斗字体，不切场景")]
         public static object Check(RevAutomationRequest request)
         {
             string sourceRoot = Path.GetFullPath("../../美术/AI生成");
-            for (int i = 0; i < Names.Length; i++) { ValidateBackground(Path.Combine(sourceRoot, Sources[i]), Root + Names[i] + ".png"); }
+            for (int i = 0; i < Names.Length; i++)
+            {
+                ValidateBackground(Path.Combine(sourceRoot, Sources[i]), Root + Names[i] + ".png");
+            }
             string oldFont = AssetDatabase.GUIDToAssetPath("870596c7b091cbf4993bf97518a6a16a");
             foreach (string dependency in AssetDatabase.GetDependencies("Assets/GameRes/Effects/Combat/BattleEffect.prefab", true))
             {
-                if (!string.IsNullOrEmpty(oldFont) && dependency == oldFont) { throw new InvalidOperationException("战斗飘字仍引用明朝体"); }
+                if (!string.IsNullOrEmpty(oldFont) && dependency == oldFont)
+                {
+                    throw new InvalidOperationException("战斗飘字仍引用明朝体");
+                }
             }
             Font font = AssetDatabase.LoadAssetAtPath<Font>("Assets/GameRes/Fonts/CJK/NotoSansCJKsc-Bold.otf");
             GameObject root = PrefabUtility.LoadPrefabContents("Assets/GameRes/Effects/Combat/BattleEffect.prefab");
             try
             {
                 TextMesh[] texts = root.GetComponentsInChildren<TextMesh>(true);
-                if (texts.Length != 5) { throw new InvalidOperationException("伤害正文和四处描边数量异常"); }
+
+                if (texts.Length != 5)
+                {
+                    throw new InvalidOperationException("伤害正文和四处描边数量异常");
+                }
                 foreach (TextMesh text in texts)
                 {
                     if (text.font != font || text.GetComponent<MeshRenderer>().sharedMaterial != font.material)
-                    { throw new InvalidOperationException("伤害正文/描边没有同步统一字体材质：" + text.name); }
+                    {
+                        throw new InvalidOperationException("伤害正文/描边没有同步统一字体材质：" + text.name);
+                    }
                 }
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
             return new Result { text = "五张RGB背景1408×792、源图SHA标识一致；战斗飘字无明朝体依赖" };
         }
-
         [RevAutomationAction("game.resources.compression-preview", Environment = "edit", Keys = new string[0], Description = "隔离加载真实PC AB绘制五章动态背景与Noto飘字，不切场景")]
         public static object Preview(RevAutomationRequest request)
         {
             Type type = Type.GetType("RevGame.Editor.GameResourceCompressionPreview, Assembly-CSharp-Editor", true);
-            try { return new Result { text = (string)type.GetMethod("Run").Invoke(null, null) }; }
+            try
+            {
+                return new Result { text = (string)type.GetMethod("Run").Invoke(null, null) };
+            }
             catch (System.Reflection.TargetInvocationException error) { throw error.InnerException ?? error; }
         }
-
         [Serializable]
-        private sealed class Result { public string text; }
+        private sealed class Result
+        {
+            public string text;
+        }
     }
 }

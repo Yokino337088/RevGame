@@ -106,7 +106,6 @@ namespace RevGame.Bootstrap
             StoryAutomationCommands.Register();
 #endif
         }
-
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
         private async void Start()
         {
@@ -118,6 +117,7 @@ namespace RevGame.Bootstrap
             {
                 // 让场景表现先订阅 ScreenChanged，避免表已缓存时同步完成而漏掉首页事件。
                 await RevTask.Yield();
+
                 if (_released)
                 {
                     return;
@@ -130,7 +130,6 @@ namespace RevGame.Bootstrap
                 RevLog.Exception(error, "游戏启动失败：请检查过场面板与资源配置", "RevGame");
             }
         }
-
         /// <summary>统一应用退出入口；停止 Play 或退出 Player 后复用 OnDestroy 的服务/域清理链。</summary>
         public static void RequestQuit()
         {
@@ -140,7 +139,6 @@ namespace RevGame.Bootstrap
             Application.Quit();
 #endif
         }
-
         private void OnDestroy()
         {
             // 重复启动器没有注册过服务，绝不能在销毁时注销真正的全局宿主。

@@ -55,7 +55,6 @@ namespace RevGame.Editor
             Save();
             return "started";
         }
-
         private static void EnsureFair()
         {
             if (Battle.PlayerInvincible || Battle.IsAutomationBoostActive)
@@ -76,7 +75,6 @@ namespace RevGame.Editor
             AdvanceAsync(seconds, speed);
             return "accepted";
         }
-
         private static async void AdvanceAsync(float seconds, float speed)
         {
             try
@@ -86,73 +84,156 @@ namespace RevGame.Editor
                 float deadline = Time.realtimeSinceStartup + 45f;
                 while (_active && Application.isPlaying)
                 {
-                    if (Time.realtimeSinceStartup > deadline) { throw new TimeoutException("实测推进窗口超时"); }
+                    if (Time.realtimeSinceStartup > deadline)
+                    {
+                        throw new TimeoutException("实测推进窗口超时");
+                    }
                     // 演出/过场不在中途冻住；故事仍由Agent的下一句GM决定，不替玩家跳过内容。
                     if (!Flow.IsGameplayBlocked && (Time.time >= target
-                        || (Battle.Phase == GamePhase.Settle && RevUI.IsOpen<SettlePanel>()))) { break; }
-                    if (Flow.IsStoryPlaying && !Flow.IsTransitioning) { break; }
+                        || (Battle.Phase == GamePhase.Settle && RevUI.IsOpen<SettlePanel>())))
+                    {
+                        break;
+                    }
+                    if (Flow.IsStoryPlaying && !Flow.IsTransitioning)
+                    {
+                        break;
+                    }
                     await RevTask.Yield();
                 }
             }
             catch (Exception error)
             {
-                if (_report != null) { _report.error = error.ToString(); _report.status = "failed"; }
+                if (_report != null)
+                {
+                    _report.error = error.ToString();
+                    _report.status = "failed";
+                }
             }
             finally
             {
                 _window = false;
-                if (_active && Application.isPlaying) { Time.timeScale = 0f; Observe(); Save(); }
+
+                if (_active && Application.isPlaying)
+                {
+                    Time.timeScale = 0f;
+                    Observe();
+                    Save();
+                }
             }
         }
-
         /// <summary>独立只读快照供GM与截图交叉判断；不返回未来随机数、隐藏AI计划或可变模型引用。</summary>
         public static string State()
         {
-            if (!_active) { return "{\"active\":false}"; }
+            if (!_active)
+            {
+                return "{\"active\":false}";
+            }
             EnsureFair();
             var b = Battle;
             var s = new Snapshot
             {
-                active = true, window = _window, chapter = b.Chapter, round = b.Round,
-                phase = b.Phase.ToString(), screen = Flow.Screen.ToString(), blocked = Flow.IsGameplayBlocked,
-                story = Flow.IsStoryPlaying, seconds = b.BattleElapsed, cardsRemaining = b.CardsRemaining,
-                winner = b.LastWinner?.ToString() ?? "none", wallet = b.CombatScore, score = b.ChapterScore,
-                helperTarget = b.Helper.TargetId, helperInterval = b.HelperShotInterval,
-                error = _report.error, completed = _report.completed,
+                active = true,
+                window = _window,
+                chapter = b.Chapter,
+                round = b.Round,
+                phase = b.Phase.ToString(),
+                screen = Flow.Screen.ToString(),
+                blocked = Flow.IsGameplayBlocked,
+                story = Flow.IsStoryPlaying,
+                seconds = b.BattleElapsed,
+                cardsRemaining = b.CardsRemaining,
+                winner = b.LastWinner?.ToString() ?? "none",
+                wallet = b.CombatScore,
+                score = b.ChapterScore,
+                helperTarget = b.Helper.TargetId,
+                helperInterval = b.HelperShotInterval,
+                error = _report.error,
+                completed = _report.completed,
                 helperSpeechFits = UnityEngine.Object.FindObjectOfType<HelperView>()?.SpeechFits == true
             };
-            foreach (var card in b.Hand) { s.cards.Add(card.Id + ":" + card.Kind + ":" + (int)card.Star); }
-            foreach (Piece p in b.PlayerPieces) { if (p.IsAlive) { s.players.Add(Describe(p)); } }
-            foreach (Piece p in b.EnemyPieces) { if (p.IsAlive) { s.enemies.Add(Describe(p)); } }
-            foreach (var reward in b.Rewards) { s.rewards.Add(reward.Kind + ":" + reward.Title); }
+            foreach (var card in b.Hand)
+            {
+                s.cards.Add(card.Id + ":" + card.Kind + ":" + (int)card.Star);
+            }
+            foreach (Piece p in b.PlayerPieces)
+            {
+                if (p.IsAlive)
+                {
+                    s.players.Add(Describe(p));
+                }
+            }
+            foreach (Piece p in b.EnemyPieces)
+            {
+                if (p.IsAlive)
+                {
+                    s.enemies.Add(Describe(p));
+                }
+            }
+            foreach (var reward in b.Rewards)
+            {
+                s.rewards.Add(reward.Kind + ":" + reward.Title);
+            }
             return JsonUtility.ToJson(s);
         }
-
         private static string Describe(Piece p)
         {
             return p.Id + ":" + p.Def.Kind + ":" + (int)p.Def.Star + "@" + p.Pos.X + "," + p.Pos.Y
                 + "/" + p.Size + "/" + p.Hp + "/" + p.MaxHp + (p.IsKing ? "/boss" : "")
                 + (p.IsEyeGarrison ? "/eye" : "");
         }
-
         private static void Observe()
         {
-            if (!_active) { return; }
-            if (!Application.isPlaying) { End(); return; }
+            if (!_active)
+            {
+                return;
+            }
+            if (!Application.isPlaying)
+            {
+                End();
+                return;
+            }
             var b = Battle;
+
             if (b.Phase == GamePhase.Battle)
             {
                 if (_round == null || _round.chapter != b.Chapter || _round.round != b.Round)
                 {
                     _round = new Round { chapter = b.Chapter, round = b.Round, boss = b.IsBossRound, minPlayerHpRatio = 1f };
-                    foreach (Piece p in b.PlayerPieces) { if (p.IsAlive) { _round.playersStart++; _round.playerHpStart += p.MaxHp; } }
-                    foreach (Piece p in b.EnemyPieces) { if (p.IsAlive) { _round.enemyHpStart += p.MaxHp; if (p.IsKing) { _round.bossHpStart = p.MaxHp; } } }
+                    foreach (Piece p in b.PlayerPieces)
+                    {
+                        if (p.IsAlive)
+                        {
+                            _round.playersStart++;
+                            _round.playerHpStart += p.MaxHp;
+                        }
+                    }
+                    foreach (Piece p in b.EnemyPieces)
+                    {
+                        if (p.IsAlive)
+                        {
+                            _round.enemyHpStart += p.MaxHp;
+
+                            if (p.IsKing)
+                            {
+                                _round.bossHpStart = p.MaxHp;
+                            }
+                        }
+                    }
                     _report.rounds.Add(_round);
                 }
                 int hp = 0, alive = 0;
-                foreach (Piece p in b.PlayerPieces) { if (p.IsAlive) { hp += p.Hp; alive++; } }
+                foreach (Piece p in b.PlayerPieces)
+                {
+                    if (p.IsAlive)
+                    {
+                        hp += p.Hp;
+                        alive++;
+                    }
+                }
                 _round.minPlayerHpRatio = Math.Min(_round.minPlayerHpRatio, hp / (float)Math.Max(1, _round.playerHpStart));
-                _round.playersEnd = alive; _round.playerHpEnd = hp; _round.seconds = b.BattleElapsed;
+                _round.playersEnd = alive;
+                _round.playerHpEnd = hp;
+                _round.seconds = b.BattleElapsed;
             }
             if (b.Phase == GamePhase.Settle && _round != null && _round.winner == null)
             {
@@ -166,45 +247,102 @@ namespace RevGame.Editor
         private static void OnHit(BattleHitInfo hit)
         {
             Observe();
-            if (_round == null) { return; }
-            if (hit.TargetSide == GameSide.Player) { _round.damageTaken += hit.Damage; }
-            else if (hit.DamageKind == BattleDamageKind.Helper || hit.DamageKind == BattleDamageKind.HelperBeam)
-            { _round.helperDamage += hit.Damage; }
-            else { _round.otherDamage += hit.Damage; }
+
+            if (_round == null)
+            {
+                return;
+            }
+            if (hit.TargetSide == GameSide.Player)
+            {
+                _round.damageTaken += hit.Damage;
+            }
+            else
+
+                if (hit.DamageKind == BattleDamageKind.Helper || hit.DamageKind == BattleDamageKind.HelperBeam)
+                {
+                    _round.helperDamage += hit.Damage;
+                }
+                else
+                {
+                    _round.otherDamage += hit.Damage;
+                }
         }
         private static void OnAttack(PieceAttackInfo info)
         {
             Observe();
-            if (_round == null) { return; }
-            if (info.Side == GameSide.Player) { _round.playerAttacks++; } else { _round.enemyAttacks++; }
+
+            if (_round == null)
+            {
+                return;
+            }
+            if (info.Side == GameSide.Player)
+            {
+                _round.playerAttacks++;
+            }
+            else
+            {
+                _round.enemyAttacks++;
+            }
         }
         private static void OnHelper(HelperShotInfo info)
         {
-            if (_round == null) { return; }
-            if (info.Beam) { _round.beamTicks++; } else { _round.barrages++; _round.projectiles += info.Projectiles; }
+            if (_round == null)
+            {
+                return;
+            }
+            if (info.Beam)
+            {
+                _round.beamTicks++;
+            }
+            else
+            {
+                _round.barrages++;
+                _round.projectiles += info.Projectiles;
+            }
         }
-        private static void OnBoss(BossSkillInfo info) { if (_round != null) { _round.bossCasts++; } }
+        private static void OnBoss(BossSkillInfo info)
+        {
+            if (_round != null)
+            {
+                _round.bossCasts++;
+            }
+        }
         private static void OnLog(string message, string stack, LogType type)
         {
-            if (type == LogType.Error || type == LogType.Exception) { _report.unityErrors++; _report.error = message; }
+            if (type == LogType.Error || type == LogType.Exception)
+            {
+                _report.unityErrors++;
+                _report.error = message;
+            }
         }
 
         /// <summary>显式收尾也用于退出Play的兜底；恢复时间和订阅，即使中途失败也保存原始结果。</summary>
         public static string End()
         {
-            if (!_active) { return "inactive"; }
-            _active = false; _window = false;
+            if (!_active)
+            {
+                return "inactive";
+            }
+            _active = false;
+            _window = false;
             EditorApplication.update -= Observe;
             Application.logMessageReceived -= OnLog;
             RevEvent.RemoveAllByOwner(Owner);
             Time.timeScale = _oldScale;
-            if (_report.status != "failed") { _report.status = "ended"; }
+
+            if (_report.status != "failed")
+            {
+                _report.status = "ended";
+            }
             Save();
             return _folder;
         }
-        private static void Save() { File.WriteAllText(Path.Combine(_folder, "result.json"), JsonUtility.ToJson(_report, true)); }
-
-        [Serializable] private sealed class Snapshot
+        private static void Save()
+        {
+            File.WriteAllText(Path.Combine(_folder, "result.json"), JsonUtility.ToJson(_report, true));
+        }
+        [Serializable]
+        private sealed class Snapshot
         {
             public bool active, window, blocked, story, helperSpeechFits;
             public int chapter, round, cardsRemaining, helperTarget, completed;
@@ -213,13 +351,15 @@ namespace RevGame.Editor
             public string phase, screen, winner, error;
             public List<string> cards = new List<string>(), players = new List<string>(), enemies = new List<string>(), rewards = new List<string>();
         }
-        [Serializable] private sealed class Evidence
+        [Serializable]
+        private sealed class Evidence
         {
             public string status, error;
             public int seed, completed, unityErrors;
             public List<Round> rounds = new List<Round>();
         }
-        [Serializable] private sealed class Round
+        [Serializable]
+        private sealed class Round
         {
             public int chapter, round, playersStart, playersEnd, playerHpStart, playerHpEnd, enemyHpStart, bossHpStart;
             public int damageTaken, helperDamage, otherDamage, playerAttacks, enemyAttacks, bossCasts, barrages, projectiles, beamTicks;

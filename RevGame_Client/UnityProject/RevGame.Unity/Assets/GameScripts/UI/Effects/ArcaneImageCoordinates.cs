@@ -17,13 +17,11 @@ namespace RevGame.UI
             base.OnEnable();
             EnableCoordinates();
         }
-
         protected override void OnCanvasHierarchyChanged()
         {
             base.OnCanvasHierarchyChanged();
             EnableCoordinates();
         }
-
         /// <summary>Canvas默认不传UV1；只增加通道，不覆盖其他组件已启用的通道。</summary>
         private void EnableCoordinates()
         {

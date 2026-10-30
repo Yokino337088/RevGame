@@ -19,10 +19,8 @@ namespace RevGame.Editor
             {
                 throw new System.InvalidOperationException("验收失败：" + message);
             }
-
             _count++;
         }
-
         /// <summary>在非 Play 状态跑，避免事件通知到当前游戏的 UI。</summary>
         public static string Run()
         {
@@ -30,7 +28,6 @@ namespace RevGame.Editor
             {
                 return "请先退出 Play 再运行独立规则断言";
             }
-
             GameConfigTestSupport.Ensure();
             _count = 0;
             var board = new BoardModel(9);
@@ -95,7 +92,6 @@ namespace RevGame.Editor
                     {
                         bosses++;
                     }
-
                     if (piece.IsKing)
                     {
                         kings++;
@@ -105,7 +101,6 @@ namespace RevGame.Editor
                 Check(bosses == expected && kings == 1, "第 " + chapter + " 章大棋和主将数量");
                 Check(float.IsPositiveInfinity(battle.BattleDuration), "Boss 不按60秒判负");
             }
-
             foreach (BattleEventKind kind in System.Enum.GetValues(typeof(BattleEventKind)))
             {
                 battle = new BattleService();
@@ -115,7 +110,6 @@ namespace RevGame.Editor
                 Check(battle.TriggerBattleEvent(kind), "事件可触发：" + kind);
                 Check(!battle.TriggerBattleEvent(kind), "冷却中拒绝重复事件：" + kind);
             }
-
             battle = new BattleService();
             battle.LoadDevelopmentScenario("round10");
             Check(battle.SkipRound() && battle.Round == Balance.BossRoundIndex && battle.TeamAttackBonus >= 0.1f, "跳过最后普通回合换强化");
@@ -124,7 +118,6 @@ namespace RevGame.Editor
             BattleService.VerifyDamageContracts(Check);
             return "通过 " + _count + " 条真实业务断言（全盘落子/重摆、守眼、刷新事务、分时远程攻击、升星、Boss、支援与清理）";
         }
-
         /// <summary>
         /// 阵营规则必须分别验收：我方零气仍守阵反击，敌方保留接触射程与锁死停攻。
         /// 使用真实围子计算零气，不直接写 IsLocked/气眼字段，防止测试绕过围棋状态刷新。

@@ -13,13 +13,21 @@ namespace RevGame.Editor
             Type type = Type.GetType("RevGame.Editor.GameStoryBuild, Assembly-CSharp-Editor", true);
             return new Result { text = (string)type.GetMethod("CheckProgress", BindingFlags.Public | BindingFlags.Static).Invoke(null, null) };
         }
-        [Serializable] private sealed class TestOptions { public int flags; }
+        [Serializable]
+        private sealed class TestOptions
+        {
+            public int flags;
+        }
         [RevAutomationAction("game.story.test-arm", Environment = "edit", Keys = new[] { "flags" }, Description = "下次Play使用内存剧情进度；flags=0首次/1仅开场完成/3全完成")]
         public static object Arm(RevAutomationRequest request)
         {
             var options = UnityEngine.JsonUtility.FromJson<TestOptions>(request.payloadJson);
             int flags = options == null ? 0 : options.flags;
-            if (flags != 0 && flags != 1 && flags != 3) { throw new ArgumentException("flags只支持0、1、3"); }
+
+            if (flags != 0 && flags != 1 && flags != 3)
+            {
+                throw new ArgumentException("flags只支持0、1、3");
+            }
             UnityEditor.SessionState.SetBool("RevGame.Story.IsolatedTest", true);
             UnityEditor.SessionState.SetInt("RevGame.Story.TestFlags", flags);
             return new Result { text = "isolated" };
@@ -35,13 +43,20 @@ namespace RevGame.Editor
         public static object Configure(RevAutomationRequest request)
         {
             Type type = Type.GetType("RevGame.Editor.GameStoryBuild, Assembly-CSharp-Editor", true);
-            try { return new Result { text = (string)type.GetMethod("Configure", BindingFlags.Public | BindingFlags.Static).Invoke(null, null) }; }
+            try
+            {
+                return new Result { text = (string)type.GetMethod("Configure", BindingFlags.Public | BindingFlags.Static).Invoke(null, null) };
+            }
             catch (TargetInvocationException error)
             {
                 // 保留真实资产门禁错误，MCP才知道哪个资源不合规，而不只看到“反射调用失败”。
                 throw new InvalidOperationException(error.InnerException?.Message ?? error.Message, error.InnerException ?? error);
             }
         }
-        [Serializable] private sealed class Result { public string text; }
+        [Serializable]
+        private sealed class Result
+        {
+            public string text;
+        }
     }
 }

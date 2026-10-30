@@ -17,7 +17,6 @@ internal static class FeedbackRegression
         Console.WriteLine("FairFeedbackBuffer: " + _assertions + " assertions passed (12/24 capacity, 40 sources, pause/expiry/clear).");
         return _assertions;
     }
-
     /// <summary>
     /// 模拟四十颗棋子始终按编号顺序齐射，数量超过手机预算。
     /// 若回到旧的先来先得算法，靠后棋子会一直抢不到名额，此处会稳定失败。
@@ -31,6 +30,7 @@ internal static class FeedbackRegression
         for (int step = 0; step <= 800; step++)
         {
             float now = step * 0.01f;
+
             if (now + 0.0001f >= nextOffer)
             {
                 for (int id = 1; id <= 40; id++)
@@ -54,7 +54,6 @@ internal static class FeedbackRegression
         Require(displayed.Count == 40, capacity + " 容量下，连续固定顺序齐射的 40 颗棋子应全部轮到显示；实际 " + displayed.Count);
         Require(displayed.Contains(40), "最后落下的一星棋子不能永久饿死");
     }
-
     /// <summary>口号每颗只保留最新一条；弹道保留最多四发连射，但不能被一颗高攻速棋子塞满。</summary>
     private static void VerifyMergeAndBurst()
     {
@@ -78,7 +77,6 @@ internal static class FeedbackRegression
         }
         Require(projectiles.Count == 24, "没有攻击者编号的旧事件仍可齐射，但必须受总量上限约束");
     }
-
     /// <summary>
     /// 用同一组固定输入比较“旧式满队拒收”与真实新缓冲。
     /// 旧侧只是十二容量 FIFO 入队/过期规则的摘要模拟，不是旧 BoardView 的完整复刻；
@@ -116,6 +114,7 @@ internal static class FeedbackRegression
                     newPeak = Math.Max(newPeak, current.Count);
                 }
             }
+
             if (milliseconds % 120 == 0)
             {
                 if (oldFifo.Count > 0)
@@ -134,7 +133,6 @@ internal static class FeedbackRegression
         Require(newDisplayed.Count == 20 && newDisplayed.Contains(20), "相同二十来源/0.625秒输入下，真实新缓冲应让所有来源轮到显示");
         Console.WriteLine("FIFO admission summary baseline (not full old BoardView): " + oldDisplayed.Count + "/20 sources; real FairFeedbackBuffer: " + newDisplayed.Count + "/20 sources (0.625s volleys, 10s).");
     }
-
     /// <summary>预算暂停时只查看不消费；超时后丢弃旧战况，Clear 同时重置候选和公平历史。</summary>
     private static void VerifyPauseExpiryAndClear()
     {
@@ -155,10 +153,10 @@ internal static class FeedbackRegression
         feedback.Offer(1, 14, 1.1f);
         Require(feedback.TryPeek(1.1f, 0.5f, out _, out _), "Clear 必须清掉上一回合的来源冷却");
     }
-
     private static void Require(bool condition, string message)
     {
         _assertions++;
+
         if (!condition)
         {
             throw new InvalidOperationException(message);

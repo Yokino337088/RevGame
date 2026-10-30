@@ -27,7 +27,6 @@ namespace RevGame.UI
                 _chapters[i] = transform.Find("chapter" + (i + 1)).GetComponent<Button>();
             }
         }
-
         protected override void OnRefreshView()
         {
             int unlocked = RevServices.GetRequired<IBattleService>().UnlockedChapter;
@@ -36,13 +35,12 @@ namespace RevGame.UI
                 _chapters[i].interactable = i < unlocked;
                 _chapters[i].GetComponentInChildren<Text>().text = "第 " + (i + 1) + " 章\n" + (i < unlocked ? "开始挑战" : "通关前章解锁");
             }
-
             _hint.text = "每章 10 个普通回合 + 1 个 Boss 回合\n同章保留残局，失败重开本章";
         }
-
         private void OnChapter(int chapter)
         {
             var flow = RevServices.GetRequired<GameFlow>();
+
             if (!flow.EnterBattle(chapter))
             {
                 _hint.text = flow.LastError;
@@ -54,43 +52,40 @@ namespace RevGame.UI
         {
             OnChapter(1);
         }
-
         [RevButtonClick("chapter2")]
         private void OnChapter2()
         {
             OnChapter(2);
         }
-
         [RevButtonClick("chapter3")]
         private void OnChapter3()
         {
             OnChapter(3);
         }
-
         [RevButtonClick("chapter4")]
         private void OnChapter4()
         {
             OnChapter(4);
         }
-
         [RevButtonClick("chapter5")]
         private void OnChapter5()
         {
             OnChapter(5);
         }
-
         [RevButtonClick("chapter6")]
         private void OnChapter6()
         {
             OnChapter(6);
         }
-
         [RevButtonClick("btnHome")]
         private void OnHome()
         {
             RevServices.GetRequired<GameFlow>().ReturnHome();
         }
         [RevButtonClick("btnSettings")]
-        private void OnSettings() { RevServices.GetRequired<GameFlow>().OpenAudioSettings(); }
+        private void OnSettings()
+        {
+            RevServices.GetRequired<GameFlow>().OpenAudioSettings();
+        }
     }
 }

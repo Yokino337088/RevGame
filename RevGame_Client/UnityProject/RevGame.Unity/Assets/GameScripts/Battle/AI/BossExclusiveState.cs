@@ -12,17 +12,26 @@ namespace RevGame.Battle
         protected override BossSkillKind Kind => _kind;
         protected override void OnPlanned()
         {
-            if (_kind == BossSkillKind.GlacialAegis) { Owner.Boss.BossInvulnerable = true; }
+            if (_kind == BossSkillKind.GlacialAegis)
+            {
+                Owner.Boss.BossInvulnerable = true;
+            }
         }
         protected override void Hit(int index)
         {
             // 爆炸之前先撤无敌；被GM打断、死亡或离场时OnExit同样兜底撤销。
-            if (_kind == BossSkillKind.GlacialAegis) { Owner.Boss.BossInvulnerable = false; }
+            if (_kind == BossSkillKind.GlacialAegis)
+            {
+                Owner.Boss.BossInvulnerable = false;
+            }
             Owner.ExclusiveHit(Info.WithIndex(index));
         }
         public override void OnExit()
         {
-            if (_kind == BossSkillKind.GlacialAegis) { Owner.Boss.BossInvulnerable = false; }
+            if (_kind == BossSkillKind.GlacialAegis)
+            {
+                Owner.Boss.BossInvulnerable = false;
+            }
             base.OnExit();
         }
     }

@@ -40,36 +40,53 @@ namespace RevGame.View
         {
             get
             {
-                if (frames == null || frames.Length != 4) { return false; }
-                foreach (Sprite frame in frames) { if (frame == null || frame.texture == null) { return false; } }
+                if (frames == null || frames.Length != 4)
+                {
+                    return false;
+                }
+                foreach (Sprite frame in frames)
+                {
+                    if (frame == null || frame.texture == null)
+                    {
+                        return false;
+                    }
+                }
                 return true;
             }
         }
-
         /// <summary>按服务快照落屏；不碰积分、不改位置规则。移动被新目标覆盖时先停止旧Tween。</summary>
         public void Present(HelperSnapshot snapshot)
         {
             gameObject.SetActive(snapshot.Active);
-            if (!snapshot.Active) { return; }
+
+            if (!snapshot.Active)
+            {
+                return;
+            }
             Vector3 target = snapshot.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
+
             if (!_placed)
             {
-                transform.position = target; _placed = true; _lastPosition = snapshot.Position;
-            }
-            else if (_lastPosition != snapshot.Position)
-            {
-                _movement?.Kill(false);
+                transform.position = target;
+                _placed = true;
                 _lastPosition = snapshot.Position;
-                Vector3 start = transform.position;
-                float progress = 0;
-                // 用小幅起伏表现攀爬，跨盘位移增加跳跃高度；纯动画参数不影响移动冷却/战斗规则。
-                float height = Vector3.Distance(start, target) > Consts.CellSize * 2 ? .28f : .09f;
-                _movement = DOTween.To(() => progress, value =>
-                {
-                    progress = value;
-                    transform.position = Vector3.Lerp(start, target, value) + Vector3.up * (Mathf.Sin(value * Mathf.PI) * height);
-                }, 1f, .42f).SetEase(Ease.InOutSine).OnComplete(() => _movement = null);
             }
+            else
+
+                if (_lastPosition != snapshot.Position)
+                {
+                    _movement?.Kill(false);
+                    _lastPosition = snapshot.Position;
+                    Vector3 start = transform.position;
+                    float progress = 0;
+                    // 用小幅起伏表现攀爬，跨盘位移增加跳跃高度；纯动画参数不影响移动冷却/战斗规则。
+                    float height = Vector3.Distance(start, target) > Consts.CellSize * 2 ? .28f : .09f;
+                    _movement = DOTween.To(() => progress, value =>
+                    {
+                        progress = value;
+                        transform.position = Vector3.Lerp(start, target, value) + Vector3.up * (Mathf.Sin(value * Mathf.PI) * height);
+                    }, 1f, .42f).SetEase(Ease.InOutSine).OnComplete(() => _movement = null);
+                }
             if (speech != null && (speech.text != snapshot.Speech || !_bubbleLayoutReady))
             {
                 speech.text = snapshot.Speech;
@@ -80,9 +97,16 @@ namespace RevGame.View
         /// <summary>按当前文案测宽，再在有限宽度内换行测高；不缩小字体，避免长句被固定高度截掉。</summary>
         private void RefreshSpeechLayout()
         {
-            if (bubble == null || speech == null) { return; }
+            if (bubble == null || speech == null)
+            {
+                return;
+            }
             var rect = (RectTransform)bubble.transform;
-            if (!_bubbleLayoutReady) { _bubbleAnchor = rect.localPosition; }
+
+            if (!_bubbleLayoutReady)
+            {
+                _bubbleAnchor = rect.localPosition;
+            }
             speech.horizontalOverflow = HorizontalWrapMode.Wrap;
             speech.verticalOverflow = VerticalWrapMode.Truncate;
             speech.resizeTextForBestFit = false;
@@ -94,23 +118,33 @@ namespace RevGame.View
             speech.rectTransform.offsetMin = new Vector2(16f, 10f);
             speech.rectTransform.offsetMax = new Vector2(-16f, -10f);
             Transform background = rect.Find("Background");
+
             if (background is RectTransform bg)
             {
-                bg.anchorMin = Vector2.zero; bg.anchorMax = Vector2.one;
+                bg.anchorMin = Vector2.zero;
+                bg.anchorMax = Vector2.one;
                 bg.offsetMin = bg.offsetMax = Vector2.zero;
             }
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(72f, speech.preferredHeight + 24f));
             _bubbleLayoutReady = true;
         }
-
         /// <summary>只读验收完整字形所需高度；独立于截图，能抓到“背景变大但文字仍截断”。</summary>
         public bool SpeechFits => speech != null && speech.preferredHeight <= speech.rectTransform.rect.height + 1f;
 
         private void LateUpdate()
         {
-            if (bubble == null || !_bubbleLayoutReady) { return; }
-            if (_bubbleCamera == null) { _bubbleCamera = Camera.main; }
-            if (_bubbleCamera == null || !_bubbleCamera.orthographic) { return; }
+            if (bubble == null || !_bubbleLayoutReady)
+            {
+                return;
+            }
+            if (_bubbleCamera == null)
+            {
+                _bubbleCamera = Camera.main;
+            }
+            if (_bubbleCamera == null || !_bubbleCamera.orthographic)
+            {
+                return;
+            }
             var rect = (RectTransform)bubble.transform;
             rect.localPosition = _bubbleAnchor;
             rect.GetWorldCorners(_bubbleCorners);
@@ -122,28 +156,51 @@ namespace RevGame.View
             rect.position += _bubbleCamera.transform.right * (dx * _bubbleCamera.orthographicSize * 2f * _bubbleCamera.aspect)
                 + _bubbleCamera.transform.up * (dy * _bubbleCamera.orthographicSize * 2f);
         }
-
         private void Update()
         {
-            if (!FramesReady) { body.enabled = false; return; }
+            if (!FramesReady)
+            {
+                body.enabled = false;
+                return;
+            }
             body.enabled = true;
             _animationTime += Time.deltaTime;
             int frame = (int)(_animationTime / .14f) % frames.Length;
+
             if (_lastFrame != frame)
             {
-                body.sprite = frames[frame]; _lastFrame = frame;
-                if (_goldProperties == null) { _goldProperties = new MaterialPropertyBlock(); }
+                body.sprite = frames[frame];
+                _lastFrame = frame;
+
+                if (_goldProperties == null)
+                {
+                    _goldProperties = new MaterialPropertyBlock();
+                }
                 // 自定义参数块须显式写当前图集贴图；否则SpriteRenderer会退回白图，金光变成白色剪影。
                 Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(body.sprite);
                 _goldProperties.SetTexture(MainTexId, body.sprite.texture);
-                _goldProperties.SetVector(FrameUvId, new Vector4(uv.x,uv.y,uv.z-uv.x,uv.w-uv.y));
+                _goldProperties.SetVector(FrameUvId, new Vector4(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y));
                 body.SetPropertyBlock(_goldProperties);
             }
             body.transform.localPosition = new Vector3(0, Mathf.Sin(_animationTime * 7f) * .022f, 0);
             // 正交2D相机无需每帧LookAt；台词框固定朝向屏幕，且不阻挡点击敌棋。
         }
-        public void OnPoolGet() { _placed = false; _lastFrame = -1; _animationTime = 0; }
-        public void OnPoolReturn() { _movement?.Kill(false); _movement = null; _placed = false; }
-        private void OnDisable() { _movement?.Kill(false); _movement = null; }
+        public void OnPoolGet()
+        {
+            _placed = false;
+            _lastFrame = -1;
+            _animationTime = 0;
+        }
+        public void OnPoolReturn()
+        {
+            _movement?.Kill(false);
+            _movement = null;
+            _placed = false;
+        }
+        private void OnDisable()
+        {
+            _movement?.Kill(false);
+            _movement = null;
+        }
     }
 }

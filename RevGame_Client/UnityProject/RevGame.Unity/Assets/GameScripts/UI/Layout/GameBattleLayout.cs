@@ -21,7 +21,6 @@ namespace RevGame.UI
             public Rect Board;
             public Rect Header;
         }
-
         /// <summary>先用设备自己的宽高归一化安全区，不能拿模拟手机的像素直接套到 Game 窗口。</summary>
         public static Rect SafeViewport()
         {
@@ -30,7 +29,6 @@ namespace RevGame.UI
             Vector2 deviceSize = new Vector2(UnityEngine.Device.Screen.width, UnityEngine.Device.Screen.height);
             return NormalizeSafeArea(UnityEngine.Device.Screen.safeArea, deviceSize);
         }
-
         /// <summary>独立纯计算入口，方便验证刘海、左右旋转和非法的零尺寸输入。</summary>
         public static Rect NormalizeSafeArea(Rect safe, Vector2 size)
         {
@@ -42,13 +40,13 @@ namespace RevGame.UI
             float right = Mathf.Clamp01(safe.xMax / size.x);
             float bottom = Mathf.Clamp01(safe.yMin / size.y);
             float top = Mathf.Clamp01(safe.yMax / size.y);
+
             if (right <= left || top <= bottom)
             {
                 return new Rect(0f, 0f, 1f, 1f);
             }
             return Rect.MinMaxRect(left, bottom, right, top);
         }
-
         /// <summary>先预留左右操作区和顶栏，再给棋盘尽可能大的正方形；窄横屏也不会挤进手牌。</summary>
         public static Regions Calculate(Vector2 size, Rect viewport)
         {
@@ -69,7 +67,6 @@ namespace RevGame.UI
                 Header = new Rect(board.xMin, safe.yMax - headerHeight, side, headerHeight)
             };
         }
-
         /// <summary>把“某区域中的比例”换成画布坐标，参数 (0.5, 0.5) 就是该区域中心。</summary>
         public static Rect InRegion(Rect region, float centerY, float widthRatio, float heightRatio)
         {
@@ -77,7 +74,6 @@ namespace RevGame.UI
             Vector2 center = new Vector2(region.center.x, region.yMin + region.height * centerY);
             return new Rect(center - size * 0.5f, size);
         }
-
         /// <summary>计算两列三行中的一张牌；返回手牌区域内的绝对矩形，供真实布局与边界检查共用。</summary>
         public static Rect HandCard(Rect hand, float safeHeight, int index)
         {

@@ -25,20 +25,28 @@ namespace RevGame.Services
             internal readonly float Multiplier;
             internal AttackLogKey(Piece attacker, Piece target, int damage)
             {
-                Attacker = attacker.Def.DisplayName; Target = target.Def.DisplayName; Damage = damage;
-                Locked = target.IsLocked; Multiplier = Locked ? Balance.LockedDamageMultiplier : 0f;
+                Attacker = attacker.Def.DisplayName;
+                Target = target.Def.DisplayName;
+                Damage = damage;
+                Locked = target.IsLocked;
+                Multiplier = Locked ? Balance.LockedDamageMultiplier : 0f;
             }
             public bool Equals(AttackLogKey other)
             {
                 return Attacker == other.Attacker && Target == other.Target && Damage == other.Damage && Locked == other.Locked && Multiplier == other.Multiplier;
             }
-            public override bool Equals(object other) { return other is AttackLogKey key && Equals(key); }
+            public override bool Equals(object other)
+            {
+                return other is AttackLogKey key && Equals(key);
+            }
             public override int GetHashCode()
             {
-                unchecked { return (((Attacker.GetHashCode() * 397) ^ Target.GetHashCode()) * 397 ^ Damage) * 397 ^ Multiplier.GetHashCode() ^ (Locked ? 1 : 0); }
+                unchecked
+                {
+                    return (((Attacker.GetHashCode() * 397) ^ Target.GetHashCode()) * 397 ^ Damage) * 397 ^ Multiplier.GetHashCode() ^ (Locked ? 1 : 0);
+                }
             }
         }
-
         // 256是有限战报工作集容量，不是策划数值。环形FIFO覆盖最旧新键，命中不生成Builder或字符串。
         private readonly Dictionary<AttackLogKey, string> _attackLogCache = new Dictionary<AttackLogKey, string>(256);
         private readonly AttackLogKey[] _attackLogSlots = new AttackLogKey[256];
@@ -46,29 +54,45 @@ namespace RevGame.Services
         // 下一个可替换槽0～255，不使用无限递增游标，长时间战斗不受int负溢出影响。
         private int _attackLogCursor;
         /// <summary>累计复用/新格式化次数，用于采样差值；不是硬件缓存命中率。</summary>
-        public long AttackLogHits { get; private set; }
+        public long AttackLogHits
+        {
+            get; private set;
+        }
         /// <summary>本服务遇到新文案键而格式化的次数；新键超过容量淘汰旧键，但不清业务日志。</summary>
-        public long AttackLogMisses { get; private set; }
-
+        public long AttackLogMisses
+        {
+            get; private set;
+        }
         /// <summary>只格式化已结算攻击，保持旧战报逐字一致；不改伤害、不合并业务攻击事件。</summary>
         internal string FormatAttackLog(Piece attacker, Piece target, int realDamage)
         {
             var key = new AttackLogKey(attacker, target, realDamage);
+
             // 步骤1命中直接借已生成不可变字符串，不Clear/Append/ToString、不再产生这次文案分配。
-            if (_attackLogCache.TryGetValue(key, out string content)) { AttackLogHits++; return content; }
+            if (_attackLogCache.TryGetValue(key, out string content))
+            {
+                AttackLogHits++;
+                return content;
+            }
             AttackLogMisses++;
             int slot = _attackLogCursor;
             _attackLogCursor = (slot + 1) % _attackLogSlots.Length;
-            if (_attackLogSlots[slot].Attacker != null) { _attackLogCache.Remove(_attackLogSlots[slot]); }
+
+            if (_attackLogSlots[slot].Attacker != null)
+            {
+                _attackLogCache.Remove(_attackLogSlots[slot]);
+            }
             // 步骤2未命中先淘汰，再复用Builder；最后只建一个结果字符串，字典总数始终有界。
             _attackLogBuilder.Clear();
             _attackLogBuilder.Append(key.Attacker).Append(" → ").Append(key.Target).Append(" -").Append(realDamage);
+
             if (key.Locked)
             {
                 _attackLogBuilder.Append("（锁死×").Append(key.Multiplier.ToString("0.##", CultureInfo.InvariantCulture)).Append('）');
             }
             content = _attackLogBuilder.ToString();
-            _attackLogSlots[slot] = key; _attackLogCache.Add(key, content);
+            _attackLogSlots[slot] = key;
+            _attackLogCache.Add(key, content);
             return content;
         }
     }
