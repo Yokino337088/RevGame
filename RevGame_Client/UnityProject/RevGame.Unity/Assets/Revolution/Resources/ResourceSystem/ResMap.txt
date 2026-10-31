@@ -484,6 +484,9 @@ Material/Combat/AssassinSlash|material_combat|AssassinSlash
 Material/Combat/BossSkill|material_combat|BossSkill
 Material/Combat/CrossbowBoltBody|material_combat|CrossbowBoltBody
 Material/Combat/CrossbowBoltTrail|material_combat|CrossbowBoltTrail
+Material/Combat/ElementalFireImpact|material_combat|ElementalFireImpact
+Material/Combat/ElementalHolyImpact|material_combat|ElementalHolyImpact
+Material/Combat/ElementalWaterImpact|material_combat|ElementalWaterImpact
 Material/Combat/HolyOrbAura|material_combat|HolyOrbAura
 Material/Combat/HolyOrbBody|material_combat|HolyOrbBody
 Material/Combat/HolyOrbTrail|material_combat|HolyOrbTrail
@@ -506,6 +509,7 @@ GameShader/Background/ArcaneBackdrop|shared_shaders|ArcaneBackdrop
 GameShader/Board/PlacementMagic|shared_shaders|PlacementMagic
 GameShader/Cards/CardGleam|shared_shaders|CardGleam
 GameShader/Combat/BossSkill|shared_shaders|BossSkill
+GameShader/Combat/ElementalImpact|shared_shaders|ElementalImpact
 GameShader/Combat/MeleeImpact|shared_shaders|MeleeImpact
 GameShader/Combat/RangedProjectile|shared_shaders|RangedProjectile
 GameShader/Combat/RegionRift|shared_shaders|RegionRift

@@ -34,6 +34,10 @@ namespace RevGame.Bootstrap
                 RevGame.Automation.GameAutomationCommands.RegisterGroup();
                 RegisterPlayerActions();
 #if UNITY_EDITOR
+                RegisterCommand("RevGame/元素攻击视觉开始", "隔离Play验证火焰、水浪、圣光专用Shader及分帧上限，连续截图并正式回大厅", args =>
+                    (string)Type.GetType("RevGame.Editor.GamePieceAttackVisualChecks, Assembly-CSharp-Editor", true).GetMethod("BeginElemental").Invoke(null, null));
+                RegisterCommand("RevGame/元素攻击视觉状态", "只读三元素验收进度、关键帧、每帧写入峰值和清理结果", args =>
+                    (string)Type.GetType("RevGame.Editor.GamePieceAttackVisualChecks, Assembly-CSharp-Editor", true).GetMethod("State").Invoke(null, null));
                 RegisterCommand("RevGame/棋子差异化视觉开始", "隔离Play逐棋种真实攻击、池预算和连续截图；返回状态后查询至完成并清理", args =>
                     (string)Type.GetType("RevGame.Editor.GamePieceAttackVisualChecks, Assembly-CSharp-Editor", true).GetMethod("Begin").Invoke(null, null));
                 RegisterCommand("RevGame/棋子差异化视觉状态", "只读九棋种视觉验收进度、首个失败原因及清理结果", args =>

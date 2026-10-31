@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "7013a9c03433df92f4e4864101cf4cd9e9d1396d2176e05fb8e235a3cc5c3d09",
-  "inputDigest": "3d56671fd1b2d67ce73290e21152f5da9fa2125e955ec70a78b375f79d131fd2",
+  "outputSha256": "d126112a3096516a5aa779b4f278de714d3da4758d8afe048585ff8770731510",
+  "inputDigest": "16ca01c01e9dc763cf2137c9e30523e3c1846855295a8b41e8ca7884ffd8cf7e",
   "originalBytes": 17002248,
-  "outputBytes": 727596,
-  "characterCount": 1649,
-  "glyphCount": 3280,
+  "outputBytes": 728280,
+  "characterCount": 1651,
+  "glyphCount": 3284,
   "codepoints": [
     32,
     33,
@@ -918,6 +918,7 @@
     26579,
     26580,
     26597,
+    26609,
     26631,
     26632,
     26639,
@@ -1319,6 +1320,7 @@
     33322,
     33324,
     33394,
+    33402,
     33410,
     33426,
     33455,
@@ -1765,7 +1767,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Effects/Combat/BattleEffect.prefab",
-      "sha256": "be4d0ff673599eddf61455e4e0cc90a784e8bb81817db827920a5820f78441ac"
+      "sha256": "1e4aaef432fe546ad86a2e504dfbd62c1b44b6eebec16e1c385ad59f99431b5e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Effects/Combat/BossSkillFx.prefab",
@@ -1993,7 +1995,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs",
-      "sha256": "2d29b23ebc41255f58edcb4a5f8a171e853d77ce51208a46b2d785cd389638e6"
+      "sha256": "0d5bee4aa49a2391f4b36ef93a686f8af5e33233207da90f28b3bea14f1b11a7"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
@@ -2493,7 +2495,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.cs",
-      "sha256": "84517df5f17de50e56b9ff2ac2ed44359f88b57b1a39a018a3415cf5307d966b"
+      "sha256": "fd9fdefac42477330b2f5ef90d541416ea23166d38fd13fdbd0ad21f8f337aad"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Boss/BoardView.BossArt.cs",
@@ -2533,11 +2535,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Feedback/BoardView.Feedback.cs",
-      "sha256": "0b2a1efd730cc755d33e3b41e2662efbc23f2ad74dba5295257801712c0153e0"
+      "sha256": "593f37854381eadde241d9357a983263103ce6d6129bbb4b697686826456f935"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Feedback/BoardView.PiecePatterns.cs",
-      "sha256": "ecf6758a3f9cbf038753744e18438f0147268dd0c20a47a0c3e4ee20145ff1b2"
+      "sha256": "b48acb66a28127916bc33120207e2b426dd0e40f21b753f588e4227508b97b9f"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Feedback/BoardView.SkillScheduling.cs",
@@ -2561,11 +2563,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BattleEffectView.cs",
-      "sha256": "888083a3f18d421541663ac75fdf7af70319df0d47474b2e44cee4ea21e159ae"
+      "sha256": "aac840053f653eca293e9f8c05295e2c91bc86490bc5ca4c40256f0434b3f297"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BattleEffectView.Pattern.cs",
-      "sha256": "ccf619deaa921f83249e9547999d1455df46271c981d60f6cb6116b0c02fc3f9"
+      "sha256": "2d7959ec70ecad8b621a713efe9a69cdf9c37984220810a3164d7920b1f7220c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/Boss/BossSkillFxView.cs",

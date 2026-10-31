@@ -949,14 +949,14 @@ namespace RevGame.View
 
                 if (kind == BattleEffectKind.Melee || kind == BattleEffectKind.Pattern)
                 {
-                    _pendingMeleeLoads--;
-                    _meleeEffects.Add(effect);
                     if (kind == BattleEffectKind.Pattern)
                     {
-                        effect.ShowPattern(position, destination, sourceKind, damage, _effectFinishedCallback);
+                        QueueReadyPattern(effect, position, destination, sourceKind, damage);
                     }
                     else
                     {
+                        _pendingMeleeLoads--;
+                        _meleeEffects.Add(effect);
                         effect.ShowMelee(position, destination, sourceKind, _effectFinishedCallback);
                     }
                 }
@@ -967,6 +967,7 @@ namespace RevGame.View
         }
         private void OnEffectFinished(BattleEffectView effect)
         {
+            UnregisterPattern(effect);
             _effects.Remove(effect);
             _textEffects.Remove(effect);
             _projectileEffects.Remove(effect);
@@ -975,6 +976,7 @@ namespace RevGame.View
         private void OnDisable()
         {
             _released = true;
+            ClearPatternSchedule();
             EndBossIntroVisual();
             CancelVictoryViews();
             // 先收起范围（停波纹计时器、清黄格），再把棋子/格子归池；顺序反了会对已回池的对象调 Hide。

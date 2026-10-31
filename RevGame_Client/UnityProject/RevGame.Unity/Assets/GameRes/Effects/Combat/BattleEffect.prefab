@@ -253,6 +253,9 @@ MonoBehaviour:
   - {fileID: 8867052721259285965}
   - {fileID: 3930355825693004845}
   - {fileID: 413448034751553882}
+  firePatternMaterial: {fileID: 2100000, guid: db1564e2c50956a4c847b2eb9b8b58a7, type: 2}
+  waterPatternMaterial: {fileID: 2100000, guid: 5dca161e1d179b749846588452fc2e69, type: 2}
+  holyPatternMaterial: {fileID: 2100000, guid: 83436d0c4254bd743a45dce32c786e50, type: 2}
 --- !u!1 &2286677135174893203
 GameObject:
   m_ObjectHideFlags: 0

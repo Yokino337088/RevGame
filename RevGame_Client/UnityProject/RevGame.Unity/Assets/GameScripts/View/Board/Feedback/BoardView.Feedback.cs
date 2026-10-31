@@ -471,6 +471,7 @@ namespace RevGame.View
             _pendingDamage.Clear();
             _projectileQueue.Clear();
             _patternQueue.Clear();
+            ClearPatternSchedule();
             _attackQueue.Clear();
             _textEffects.Clear();
             _projectileEffects.Clear();

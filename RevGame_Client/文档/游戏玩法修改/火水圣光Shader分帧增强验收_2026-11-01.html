@@ -1,0 +1,54 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>火水圣光Shader分帧增强验收 · 2026-11-01</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}figure{margin:0;min-width:0}figure img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}figcaption{color:var(--muted);font-size:13px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#edf1ea;padding:18px;border-radius:10px;font-size:13px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}th{background:#e6efe1}@media(max-width:760px){.compare{grid-template-columns:1fr}}
+</style></head><body><header class="topbar"><span class="brand">REVGAME · REVOLUTION</span><span class="tag">2026-11-01 / SHADER / MCP</span></header><div class="hero"><div class="wrap"><div class="eyebrow">元素表现与分帧调度</div><h1>火焰、水浪、圣光<br>Shader分帧增强验收</h1><p>实现与编译已完成；Unity内存压力及MCP离线导致视觉验收阻塞。先验证真实攻击、材质、关键帧和回收，再说明性能边界。</p></div></div><main>
+<section class="chapter"><h2>本次结果</h2><ul><li>开发基线7bd9e4f；Unity 2022.3.15f1c1，Windows Editor / DX11，真实PC AssetBundle，StartScene入口。</li><li>仅修改表现与调度，攻击伤害、射程、连锁和治疗仍由原服务结算；本轮规则专项96条断言通过。</li><li>图形完成0/3种，1条检查，0帧；已观察到0个按棋种累计的不同关键帧。</li><li>调度实际峰值尚未采集；源码中的预算不代替运行期证明；视觉作业自行清理状态 True。</li><li>Shader修复后编译、PC首包发布和AB映射检查通过。最新编辑器测试源码另用Unity自带Roslyn及当前响应参数离线编译，退出码0；它不代替Play验收。</li><li>没有新增纹理或Renderer层；复用CombatFrames的FullRect精灵，新增一个单Pass Shader和三份共享材质。</li></ul><pre>{
+  &quot;stage&quot;: &quot;failed&quot;,
+  &quot;error&quot;: &quot;System.TimeoutException: 等待完整场景交付\r\n  at RevGame.Editor.GamePieceAttackVisualChecks.Run (System.Boolean elementalOnly) [0x00144] in D:\\AAAAAAA王者荣耀项目组工作日志\\RevGame\\RevGame_Client\\UnityProject\\RevGame.Unity\\Assets\\Editor\\RevGame\\Balance\\GamePieceAttackVisualChecks.cs:77 &quot;,
+  &quot;kind&quot;: &quot;&quot;,
+  &quot;directory&quot;: &quot;Temp/ElementalAttackVerification&quot;,
+  &quot;completed&quot;: 0,
+  &quot;assertions&quot;: 1,
+  &quot;frames&quot;: 0,
+  &quot;cleaned&quot;: true,
+  &quot;maxPatternWrites&quot;: 0,
+  &quot;maxPatternStarts&quot;: 0,
+  &quot;distinctKeyframes&quot;: 0
+}</pre></section>
+<article class="chapter"><h2>火法师 · 实现已写入</h2><p>爆燃亮芯、起伏火舌、余烬和冲击环，保留真实3×3范围边界。</p><p><strong>新版真实画面尚未采集，未生成或伪造GIF。</strong>下图仅为旧版参考，不能作为本轮效果通过的证据。</p><figure><img loading="lazy" src="元素特效分帧增强_2026-11-01/MageFire-before.jpg"><figcaption>旧版7bd9e4f，2026-10-31真实截图。</figcaption></figure></article><article class="chapter"><h2>水法师 · 实现已写入</h2><p>加宽水浪、白色浪花与水滴，逐段沿实际连锁轨迹播放。</p><p><strong>新版真实画面尚未采集，未生成或伪造GIF。</strong>下图仅为旧版参考，不能作为本轮效果通过的证据。</p><figure><img loading="lazy" src="元素特效分帧增强_2026-11-01/MageWater-before.jpg"><figcaption>旧版7bd9e4f，2026-10-31真实截图。</figcaption></figure></article><article class="chapter"><h2>牧师 · 实现已写入</h2><p>圣光柱、双层法阵和明亮星芒，标记实际获得治疗的友军。</p><p><strong>新版真实画面尚未采集，未生成或伪造GIF。</strong>下图仅为旧版参考，不能作为本轮效果通过的证据。</p><figure><img loading="lazy" src="元素特效分帧增强_2026-11-01/Priest-before.jpg"><figcaption>旧版7bd9e4f，2026-10-31真实截图。</figcaption></figure></article>
+<section class="chapter"><h2>分帧如何工作</h2><table><tr><th>阶段</th><th>处理方式</th><th>上限与所有者</th></tr><tr><td>真实出手</td><td>服务已结算伤害，再发送只含编号和坐标的表现快照。</td><td>表现不再次扣血或发积分。</td></tr><tr><td>候选等待</td><td>沿用按来源公平的有界队列，满时不让固定名单前段长期挤掉后来者。</td><td>棋盘持有81条候选，每来源最多3段。</td></tr><tr><td>资源交付</td><td>冷加载集中返回也先停放关闭Renderer的池对象，保留预约名额。</td><td>待启播固定16槽，不在回调内同时显示全部。</td></tr><tr><td>实际启播</td><td>LateUpdate统一从停放队列交付首帧。</td><td>每帧最多3份，实际计数验证。</td></tr><tr><td>在播推进</td><td>固定槽位轮询，每次用开始时刻计算应显示的关键帧；相同帧号不重复写参数块。</td><td>每帧最多推进4份，范围特效不再逐份创建Tween。</td></tr><tr><td>完成/退出</td><td>先断开旧槽位引用，再回池；退出清空候选、待启播与活动槽位，旧加载回调按代次只归池。</td><td>总短效仍为16，弹道仍为35，原预算未提高。</td></tr></table>
+<p>火焰0.8秒、水浪0.6秒、圣光0.9秒是纯美术寿命，不是攻击冷却或技能时间。离散进度最多18/24个艺术关键帧；低帧时直接跳到正确位置，不补播过期帧，不把效果拖长。</p><p>分帧减少同帧CPU启动和参数提交峰值；已经启用的透明Renderer仍参与每帧绘制。不能仅由“每帧推进4份”推出GPU快了多少，也没有宣称全场零GC或手机稳定帧率。</p></section>
+<section class="chapter"><h2>实现与新手阅读顺序</h2><ol><li>ElementalImpact.shader：只读离散_Progress，不使用_Time自行推进；火舌、水浪和圣光用局部数学形状绘制，无新噪声贴图、GrabPass或全屏后处理。</li><li>BattleEffectView.Pattern.cs：选共享材质、配置世界尺寸和本次寿命；AdvancePattern返回是否真的写了参数，不依赖已经死亡的棋子。</li><li>BoardView.PiecePatterns.cs：所有候选、冷交付和活动槽位归当前棋盘；轮询游标保证逐个推进，Finish可能同步回收，所以调用后不继续访问旧租约。</li><li>GameElementalEffectBuild：编辑期幂等制作共享资产，检查FullRect与Shader编译。运行期仍通过RevPool与RevResManager持有的预制体依赖取用。</li><li>GamePieceAttackVisualChecks：通过真实攻击输入检查命中、启用Renderer、专用Shader、多个关键帧与实际调度峰值；finally正式返回大厅。</li></ol><p>类、字段、方法及生命周期关键步骤均补有中文注释，解释为什么分开预约与活动计数、为什么回收前撤槽、为什么低帧不追补。</p></section>
+<section class="chapter"><h2>实际MCP调用</h2><ol><li>常驻stdio显式连接RevGame.Unity，rev_discover发现真实能力；记录原场景无未保存修改、Play关闭。</li><li>rev_call(editor, game.elemental-fx.configure)制作并绑定三份共享材质。</li><li>编译后重新rev_discover；rev_run执行材质/Shader检查、项目BuildAndCopy和AB映射检查。</li><li>rev_run启用真实AB与内存隔离，进入Play；再次发现后，通过完整GM“RevGame/棋子差异化规则检查”执行96条断言。</li><li>rev_call(gm, RevGame/元素攻击视觉开始)，使用“RevGame/元素攻击视觉状态”只读查询，未将running或工具接单成功当作通过。</li><li>视觉作业已自行清理回大厅，但随后桥接心跳中断，最后心跳仍标为Play=true；MCP停止Play未能执行，不能声称完整收尾已确认。</li></ol><p>全程通过RevMCP/GM及项目接口测试，没有使用电脑控制。截图只证明画面，业务正确性由实际断言决定。</p></section>
+<section class="chapter"><h2>失败记录与验证边界</h2><p>第一次资源构建捕获HLSL保留字冲突：辅助函数参数point无法在DX11编译。已改为position，并在制作检查中增加Shader编译门禁，随后重新构建和发布，资源与映射检查通过；首次失败工单仍保存在忽略目录。</p><p>计划采集的截图使用高生命演示靶阵；本轮尚未取得新版画面。该夹具中自动帮手继续运行，因此局部帧可能有帮手弹幕叠加，不作为普通难度胜率或性能计时。旧图只作美术参考，不作相同负载的FPS对照。本轮没有得到有效前台固定负载GPU耗时或手机结果，不借用上一轮失焦数据证明优化。</p><p>无ZIP、Profiler录制或内存快照。详细JSON与原始PNG在.codex/work/elemental-vfx-2026-11-01，文档目录只保留HTML和必要JPEG/GIF。旧全量增援首手断言属于既有问题，本次不据专项通过宣称旧全套回归全过。</p></section>
+<section class="chapter"><h2>运行环境阻塞记录</h2><p>第一次元素视觉作业等待完整场景交付超过原工具60秒期限，0帧，已自行回大厅。随后runtime.logs记录7条系统内存不足错误，提示物理及分页内存使用约93%；目标Editor进程仍在，但RevMCP心跳停止在2026-11-01 04:10:52，后续发现返回“没有在线Unity桥接”。不存在已启用的HTTP运行期端点可切换。</p><p>只为元素专项增加了180秒有限看门狗，保留相同完整交付条件并记录实际入场秒数；这份最新测试代码已离线编译，但因为桥接离线，尚未重新在Unity执行。等待预算不作为加载性能合格线，首次失败没有被覆盖。</p></section>
+<section class="chapter"><h2>框架可行性</h2><p>现有RevPool、RevEvent、资源引用与异步代次契约足以承载更强的元素表现。项目补充固定预算的视图调度和共享材质配方即可；未修改Assets/Revolution快照，也没有另建资源加载或通信系统。</p></section></main></body></html>
