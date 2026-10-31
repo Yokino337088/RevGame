@@ -78,7 +78,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Waiting for runtime counters
+  m_Text: "\u7B49\u5F85\u6027\u80FD\u91C7\u6837"
 --- !u!1 &1404320280341021188
 GameObject:
   m_ObjectHideFlags: 0
@@ -157,7 +157,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Close
+  m_Text: "\u5173\u95ED"
 --- !u!1 &4009671596693274781
 GameObject:
   m_ObjectHideFlags: 0
@@ -478,7 +478,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "PERFORMANCE \xB7 F8"
+  m_Text: "\u6027\u80FD\u76D1\u6D4B \xB7 F8 \u5F00\u5173"
 --- !u!1 &5354813328623206516
 GameObject:
   m_ObjectHideFlags: 0
@@ -698,4 +698,4 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Fold
+  m_Text: "\u6298\u53E0"

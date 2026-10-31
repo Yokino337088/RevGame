@@ -101,3 +101,6 @@ RevGame_Client/音乐/
 # .codex/skills/**/templates 下是给人复制使用的工程模板，必须随技能一起入库。
 !.codex/skills/**/templates/*.csproj
 !.codex/skills/**/templates/*.sln
+
+# 本机IL2CPP验证包与构建产物
+/打包测试(不入库)/

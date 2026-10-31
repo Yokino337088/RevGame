@@ -15,10 +15,21 @@ namespace RevGame.Automation
         private string _stage = "idle", _error = "";
         private int _version, _attacks;
         private bool _disposed;
+        private readonly int _originalSync = QualitySettings.vSyncCount;
+        private readonly int _originalLimit = Application.targetFrameRate;
+        private readonly bool _benchmark;
+
         private readonly object _loadOwner = new object();
 
         public GamePlayerPerformanceSession()
         {
+            // 仅显式隔离基准启动解除同步等待，报告必须与默认VSync运行区分。
+            _benchmark = RevServices.GetRequired<StoryProgress>().IsIsolated && Array.IndexOf(Environment.GetCommandLineArgs(), "-revBenchmark") >= 0;
+            if (_benchmark)
+            {
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = -1;
+            }
             const string empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
             const string options = "{\"type\":\"object\",\"properties\":{\"chapter\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":6},\"pieces\":{\"type\":\"integer\",\"enum\":[48,81]}},\"required\":[\"chapter\",\"pieces\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("game.performance.prepare", "隔离会话固定48/81棋持续负载；仅接受后需等state.ready", options, json =>
@@ -48,7 +59,8 @@ namespace RevGame.Automation
         [Serializable] private sealed class Status
         {
             public string stage, error, screen;
-            public bool ready, isolated, transitioning, cleaned;
+            public bool ready, isolated, transitioning, cleaned, fullscreen, benchmark;
+            public string resolution, windowMode;
             public int pieces, attacks, logic, pieceRefs;
         }
 
@@ -59,6 +71,7 @@ namespace RevGame.Automation
             int refs = RevResManager.GetRefCount("Atlases", "PieceFrames");
             return new Status
             {
+                fullscreen = Screen.fullScreen, windowMode = Screen.fullScreenMode.ToString(), resolution = Screen.width + "x" + Screen.height, benchmark = _benchmark,
                 stage = _stage, error = _error, screen = flow.Screen.ToString(), ready = _stage == "ready",
                 isolated = RevServices.GetRequired<StoryProgress>().IsIsolated, transitioning = flow.IsTransitioning,
                 pieces = battle.PlayerPieces.Count + battle.EnemyPieces.Count, attacks = _attacks,
@@ -176,6 +189,11 @@ namespace RevGame.Automation
         public void Dispose()
         {
             _disposed = true;
+            if (_benchmark)
+            {
+                QualitySettings.vSyncCount = _originalSync;
+                Application.targetFrameRate = _originalLimit;
+            }
             _version++;
             ReleaseLoad();
             RevRuntimeAutomation.UnregisterAllOf(this);

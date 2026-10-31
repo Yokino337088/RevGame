@@ -23,6 +23,17 @@ namespace RevGame.Bootstrap
         //作者原话：这个状态变量代表是否已经被释放掉了
         private bool _released;
 
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        private void LateUpdate()
+        {
+            // 防止系统快捷键或旧窗口首选项重新切换模式；尺寸不变时不重复调用SetResolution。
+            if (Screen.fullScreenMode != FullScreenMode.Windowed || Screen.width != 1920 || Screen.height != 1080)
+            {
+                Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
+            }
+        }
+#endif
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -33,6 +44,11 @@ namespace RevGame.Bootstrap
             _instance = this;
             _ownsServices = true;
             DontDestroyOnLoad(gameObject);
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            // PC测试与交付固定为1080p窗口；覆盖旧PlayerPrefs或启动器保存的全屏选择。
+            // 这是显示规格，不是策划战斗参数；手机和Editor不修改设备分辨率。
+            Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
+#endif
 #if UNITY_EDITOR
             // 配置资产负责持久化；此赋值防止域重载后编辑器延迟同步晚于场景 Awake。
             RevEditorResPolicy.ResRoot = "Assets/GameRes/";
@@ -40,7 +56,7 @@ namespace RevGame.Bootstrap
 #endif
             RevUISetting.CanvasOrientation = RevUICanvasOrientation.Landscape;
             // 用户指定后续统一按 1920×1080 布局。框架自带 Canvas 也是这个基准；这里显式约束兜底 Canvas。
-            // 这是 UI 的“设计尺子”，不是强制把手机硬件改成另一种分辨率，运行时不调用 SetResolution。
+            // 这是 UI 的“设计尺子”，不强制修改手机硬件；Windows独立包在上方单独固定为1920×1080窗口。
             RevUISetting.ReferenceResolution = UI.GameBattleLayout.DesignResolution;
             // 结算与奖励是必经步骤，点遮罩不能把唯一的继续入口关掉。
             RevUISetting.ClickMaskClosesTop = false;

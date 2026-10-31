@@ -20,6 +20,10 @@ namespace RevGame.Editor
                 var details = (RectTransform)card.Find("details");
                 details.sizeDelta = new Vector2(590, 670);
                 details.anchoredPosition = new Vector2(-305, -470);
+                card.Find("btnFold/caption").GetComponent<Text>().text = "折叠";
+                card.Find("btnClose/caption").GetComponent<Text>().text = "关闭";
+                card.Find("summary").GetComponent<Text>().text = "性能监测 · F8 开关";
+                details.GetComponent<Text>().text = "等待性能采样";
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally
@@ -50,10 +54,10 @@ namespace RevGame.Editor
                     var image = card.AddComponent<Image>();
                     image.color = new Color(.07f, .13f, .13f, .94f);
                     image.raycastTarget = true;
-                    Label("summary", card.transform, "PERFORMANCE · F8", 26, new Vector2(410, 95), new Vector2(-395, -58));
-                    Label("details", card.transform, "Waiting for runtime counters", 20, new Vector2(590, 670), new Vector2(-305, -470));
-                    Button("btnFold", card.transform, "Fold", -140);
-                    Button("btnClose", card.transform, "Close", -55);
+                    Label("summary", card.transform, "性能监测 · F8 开关", 26, new Vector2(410, 95), new Vector2(-395, -58));
+                    Label("details", card.transform, "等待性能采样", 20, new Vector2(590, 670), new Vector2(-305, -470));
+                    Button("btnFold", card.transform, "折叠", -140);
+                    Button("btnClose", card.transform, "关闭", -55);
                     if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
                     {
                         throw new InvalidOperationException("性能面板Prefab保存失败");

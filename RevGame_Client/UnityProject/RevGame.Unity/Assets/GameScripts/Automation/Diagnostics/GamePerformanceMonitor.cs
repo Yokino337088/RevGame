@@ -96,34 +96,56 @@ namespace RevGame.Automation
             }
             RevPerformanceSnapshot s = RevRuntimeAutomation.PerformanceSnapshot();
             _text.Clear();
-            _text.Append(s.backend).Append(s.development ? " · Development" : " · Release").Append(" · ").Append(s.editor ? "Editor" : "Player").AppendLine();
-            _text.Append(s.resolution).Append("  VSync ").Append(s.vSyncCount).Append("  Limit ").Append(s.targetFrameRate).Append(s.focused ? "  Focus" : "  Background").AppendLine();
-            _text.Append("P50 / P95 / P99: ").Append(s.p50Ms.ToString("F2")).Append(" / ").Append(s.p95Ms.ToString("F2")).Append(" / ").Append(s.p99Ms.ToString("F2")).AppendLine(" ms");
-            _text.Append("GPU: ").Append(s.gpuMs < 0 ? "N/A" : s.gpuMs.ToString("F2") + " ms").Append("  Max: ").Append(s.maxMs.ToString("F2")).AppendLine(" ms");
+            _text.Append(s.backend).Append(s.development ? " · 开发构建" : " · 发布构建").Append(" · ").Append(s.editor ? "编辑器" : "独立游戏").AppendLine();
+            _text.Append(s.resolution).Append("  垂直同步 ").Append(s.vSyncCount).Append("  帧率上限 ").Append(s.targetFrameRate).Append(s.focused ? "  前台" : "  后台").AppendLine();
+            _text.Append("帧时中位／95%／99%：").Append(s.p50Ms.ToString("F2")).Append(" / ").Append(s.p95Ms.ToString("F2")).Append(" / ").Append(s.p99Ms.ToString("F2")).AppendLine(" 毫秒");
+            _text.Append("显卡耗时：").Append(s.gpuMs < 0 ? "不可用" : s.gpuMs.ToString("F2") + " 毫秒").Append("  最慢：").Append(s.maxMs.ToString("F2")).AppendLine(" 毫秒");
             foreach (RevPerformanceMetric metric in s.metrics)
             {
-                _text.Append(metric.name.Replace(" Count", ""));
+                _text.Append(MetricLabel(metric.name));
                 _text.Append(": ");
                 if (!metric.available)
                 {
-                    _text.AppendLine("N/A");
+                    _text.AppendLine("不可用");
                 }
                 else if (metric.unit == "bytes")
                 {
-                    _text.Append((metric.value / 1024).ToString("F1")).AppendLine(" KiB");
+                    _text.Append((metric.value / 1024).ToString("F1")).AppendLine(" 千字节");
                 }
                 else
                 {
-                    _text.Append(metric.value.ToString(metric.unit == "ms" ? "F2" : "F0")).Append(' ').AppendLine(metric.unit);
+                    _text.Append(metric.value.ToString(metric.unit == "ms" ? "F2" : "F0")).Append(' ').AppendLine(metric.unit == "ms" ? "毫秒" : "次");
                 }
             }
             var battle = RevServices.Get<IBattleService>();
             if (battle != null)
             {
-                _text.Append("Pieces: ").Append(battle.PlayerPieces.Count).Append(" / ").Append(battle.EnemyPieces.Count).AppendLine();
+                _text.Append("棋子（我方／敌方）：").Append(battle.PlayerPieces.Count).Append(" / ").Append(battle.EnemyPieces.Count).AppendLine();
             }
-            _text.AppendLine(s.gpu).Append("N/A = unavailable; hide panel during benchmark");
-            panel.SetData(new PerformanceMonitorFrame { Summary = "PERFORMANCE · F8\n" + s.fps.ToString("F1") + " FPS  /  " + s.frames + " frames", Details = _text.ToString() });
+            _text.AppendLine(s.gpu).Append("不可用＝当前构建不提供；正式采样时请隐藏面板");
+            panel.SetData(new PerformanceMonitorFrame { Summary = "性能监测 · F8 开关\n" + s.fps.ToString("F1") + " 帧／秒  ·  " + s.frames + " 帧样本", Details = _text.ToString() });
+        }
+
+        private static string MetricLabel(string name)
+        {
+            switch (name)
+            {
+                case "Draw Calls Count": return "绘制调用";
+                case "Total Batches Count": return "总绘制批次";
+                case "SetPass Calls Count": return "着色通道切换";
+                case "Triangles Count": return "三角形";
+                case "Vertices Count": return "顶点";
+                case "Dynamic Batches Count": return "动态合批";
+                case "Static Batches Count": return "静态合批";
+                case "Instanced Batches Count": return "实例化批次";
+                case "GC Allocated In Frame": return "本帧托管分配";
+                case "Total Used Memory": return "已用内存";
+                case "Total Reserved Memory": return "保留内存";
+                case "GC Used Memory": return "托管堆已用";
+                case "Main Thread": return "主线程";
+                case "Render Thread": return "渲染线程";
+                default: return "其他计数器";
+            }
         }
 
         public void Dispose()
