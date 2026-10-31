@@ -21,6 +21,8 @@ namespace RevGame.Core
         public const string HandRerolled = "RevGame.Hand.Rerolled";
         /// <summary>唯一签名 PieceAttackInfo：每次真实攻击的起点与棋种快照。</summary>
         public const string PieceAttacked = "RevGame.Piece.Attacked";
+        /// <summary>普通棋子攻击范围的只读表现快照，唯一参数签名为PiecePatternInfo。</summary>
+        public const string PiecePattern = "RevGame.Piece.Pattern";
         /// <summary>无参数：本轮按配置抽取的准备增益（含保底万箭齐发）已全部生效；HUD读取 PreparationBuffs 播报。</summary>
         public const string PreparationBuffsGranted = "RevGame.Preparation.BuffsGranted";
         // ---------------- 流程 ----------------

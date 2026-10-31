@@ -144,6 +144,7 @@ namespace RevGame.View
             RevEvent.AddEventListener<int>(Events.PieceHpChanged, OnHpChanged, owner: this);
             RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, OnAttack, owner: this);
             RevEvent.AddEventListener<BattleHitInfo>(Events.BattleHit, OnDamage, priority: 10, owner: this);
+            RevEvent.AddEventListener<PiecePatternInfo>(Events.PiecePattern, OnPiecePattern, owner: this);
             RevEvent.AddEventListener<int>(Events.PieceMerged, OnMerged, owner: this);
             RevEvent.AddEventListener(Events.GoStateRefreshed, RefreshBoard, owner: this);
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshCells, owner: this);
@@ -924,7 +925,7 @@ namespace RevGame.View
                 {
                     _pendingProjectileLoads--;
                 }
-                if (generation == _effectGeneration && kind == BattleEffectKind.Melee)
+                if (generation == _effectGeneration && (kind == BattleEffectKind.Melee || kind == BattleEffectKind.Pattern))
                 {
                     _pendingMeleeLoads--;
                 }
@@ -946,11 +947,18 @@ namespace RevGame.View
             }
             else
 
-                if (kind == BattleEffectKind.Melee)
+                if (kind == BattleEffectKind.Melee || kind == BattleEffectKind.Pattern)
                 {
                     _pendingMeleeLoads--;
                     _meleeEffects.Add(effect);
-                    effect.ShowMelee(position, destination, sourceKind, _effectFinishedCallback);
+                    if (kind == BattleEffectKind.Pattern)
+                    {
+                        effect.ShowPattern(position, destination, sourceKind, damage, _effectFinishedCallback);
+                    }
+                    else
+                    {
+                        effect.ShowMelee(position, destination, sourceKind, _effectFinishedCallback);
+                    }
                 }
                 else
                 {

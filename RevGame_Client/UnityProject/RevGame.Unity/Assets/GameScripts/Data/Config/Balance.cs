@@ -78,6 +78,8 @@ namespace RevGame.Data
     /// <summary>一份不可变的参数快照。</summary>
     internal sealed class BalanceValues
     {
+        /// <summary>普通棋子攻击配方归属当前配置快照；重新装配时整份替换，热路径不解析字符串。</summary>
+        public Dictionary<RevGame.Core.PieceKind, PieceAttackProfile> PieceAttacks;
         // ---- 积分与暴击；所有数值来自Excel，范围在Read中一次性校验。
         public int DeployBatchCount;
         public float CriticalChance;
@@ -208,6 +210,10 @@ namespace RevGame.Data
         public float AttackSpeedScale;
         /// <summary>敌军普通攻击的独立倍率；不影响移动、技能冷却或玩家攻速。</summary>
         public float EnemyAttackRate;
+        /// <summary>普通敌方远程的独立普攻倍率；配置值1为原强度，不改变共享图鉴或Boss。</summary>
+        public float EnemyRangedAttackMultiplier;
+        /// <summary>普通敌方远程的攻击频率倍率；只乘攻击进度，不加速移动和技能。</summary>
+        public float EnemyRangedSpeedMultiplier;
         /// <summary>无眼近战一次冲锋最多经过的空格数，路径上的每一格都必须放得下整个身体。</summary>
         public int EnemyChaseSteps;
         public int RangedFormationEnabled;
@@ -306,6 +312,8 @@ namespace RevGame.Data
             v.ScoreMultiplierCap = r.Float("Score.MultiplierCap", 1f, 1000f);
 
             v.EnemyAttackRate = r.Float("EnemyAI.AttackRate", 0.1f, 5f);
+            v.EnemyRangedAttackMultiplier = r.Float("Enemy.RangedAttackMultiplier", 0.1f, 10f);
+            v.EnemyRangedSpeedMultiplier = r.Float("Enemy.RangedSpeedMultiplier", 0.1f, 10f);
             v.EnemyChaseSteps = r.Int("EnemyAI.ChaseSteps", 1, 4);
             v.RangedFormationEnabled = r.Int("PlayerAI.FormationEnabled", 0, 1);
             v.RangedFormationMinCount = r.Int("PlayerAI.FormationMinCount", 2, 20);
@@ -467,6 +475,7 @@ namespace RevGame.Data
             v.PlayerFirepowerSoftCount = r.Int("Player.FirepowerSoftCount", 1, 81);
             v.PlayerFirepowerExponent = r.Float("Player.FirepowerExponent", 0f, 3f);
             v.PlayerFirepowerMinScale = r.Float("Player.FirepowerMinScale", .01f, 1f);
+            v.PieceAttacks = PieceAttackProfile.Read(r);
             r.ReportUnused();
 
             // ---- 跨参数的逻辑约束：单个值合法，组合起来不合法也会出事
@@ -502,6 +511,11 @@ namespace RevGame.Data
     public static class Balance
     {
         private static BalanceValues V => GameConfig.Current.Balance;
+        /// <summary>按棋种读取已校验的攻击配方；配置尚未完成时沿用统一失败出口，不返回静默默认值。</summary>
+        public static PieceAttackProfile AttackProfile(RevGame.Core.PieceKind kind)
+        {
+            return V.PieceAttacks[kind];
+        }
         public static int DeployBatchCount => V.DeployBatchCount;
         public static float CriticalChance => V.CriticalChance;
         public static float CriticalMultiplier => V.CriticalMultiplier;
@@ -519,6 +533,10 @@ namespace RevGame.Data
         public static float AttackSpeedScale => V.AttackSpeedScale;
         /// <summary>敌人普攻倍率，包含主将普攻；不缩短主将技能预警。</summary>
         public static float EnemyAttackRate => V.EnemyAttackRate;
+        /// <summary>普通敌方远程普攻攻击倍率，来自战斗数值参数Excel。</summary>
+        public static float EnemyRangedAttackMultiplier => V.EnemyRangedAttackMultiplier;
+        /// <summary>普通敌方远程攻击频率倍率，来自战斗数值参数Excel。</summary>
+        public static float EnemyRangedSpeedMultiplier => V.EnemyRangedSpeedMultiplier;
         public static int EnemyChaseSteps => V.EnemyChaseSteps;
         public static bool RangedFormationEnabled => V.RangedFormationEnabled == 1;
         public static int RangedFormationMinCount => V.RangedFormationMinCount;

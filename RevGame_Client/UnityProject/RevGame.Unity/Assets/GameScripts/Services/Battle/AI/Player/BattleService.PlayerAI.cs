@@ -13,7 +13,7 @@ namespace RevGame.Services
 {
     public sealed partial class BattleService
     {
-        /// <summary>近战靠近落单敌军/封气，远程贴敌时后撤。守眼者与零气棋不自动拆阵，仍能攻击。</summary>
+        /// <summary>近战接敌，远程射程外靠近、贴身时后撤。守眼和零气棋不自动拆阵，只攻击其射程内目标。</summary>
         private bool TryPlanPlayerMove(Piece piece, out BoardPos best, out bool breaksEye)
         {
             best = piece.Pos;
@@ -24,8 +24,10 @@ namespace RevGame.Services
                 return false;
             }
             int oldDistance = NearestEnemyDistance(piece.Pos, piece.Size);
+            int attackRange = Balance.AttackProfile(piece.Def.Kind).Range;
+            bool approaching = piece.Def.IsRanged && oldDistance > attackRange;
 
-            if (piece.Def.IsRanged && oldDistance > Balance.PlayerRetreatDistance)
+            if (piece.Def.IsRanged && !approaching && oldDistance > Balance.PlayerRetreatDistance)
             {
                 return false;
             }
@@ -57,7 +59,11 @@ namespace RevGame.Services
                     }
                     int distance = NearestEnemyDistance(pos, piece.Size);
 
-                    if (piece.Def.IsRanged ? distance <= oldDistance : (oldDistance > 1 && distance > 1))
+                    // 有限射程下远程不能永远只后撤：射程外缩短距离，受贴身威胁时后撤但不主动退到射程外。
+                    bool wrongDistance = piece.Def.IsRanged
+                        ? (approaching ? distance >= oldDistance : distance <= oldDistance || distance > attackRange)
+                        : oldDistance > attackRange && distance >= oldDistance;
+                    if (wrongDistance)
                     {
                         continue;
                     }
@@ -199,7 +205,10 @@ namespace RevGame.Services
                         friendlyDistance = Math.Min(friendlyDistance, BodyDistance(pos, actor.Size, ally));
                     }
                 }
-                return enemyDistance * 100 - friendlyDistance * 8;
+                int range = Balance.AttackProfile(actor.Def.Kind).Range;
+                // 距离收益在射程边缘达到峰值，超过射程反而扣分；权重只用于候选排序，不参与伤害。
+                int rangeScore = enemyDistance <= range ? enemyDistance : range - (enemyDistance - range);
+                return rangeScore * 100 - friendlyDistance * 8;
             }
             int score = -enemyDistance * 60;
             foreach (Piece enemy in _enemyPieces)

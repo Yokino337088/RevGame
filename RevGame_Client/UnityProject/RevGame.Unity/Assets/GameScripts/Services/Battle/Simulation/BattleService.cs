@@ -642,6 +642,11 @@ namespace RevGame.Services
         private void StepPlayerAttack(Piece piece, float stepFraction)
         {
             float rate = piece.Def.IsRanged ? RangedActionsPerTick : 1f;
+            // 普攻配方只缩放攻击进度；不能改模拟步长，否则移动、区域与Boss技能会一起加速。
+            if (!piece.IsBoss)
+            {
+                rate /= Balance.AttackProfile(piece.Def.Kind).IntervalScale;
+            }
 
             if (HasHelperProtection(piece))
             {
@@ -665,6 +670,10 @@ namespace RevGame.Services
 
                 if (_attackTargets.Count == 0)
                 {
+                    if (piece.Def.Kind == PieceKind.Priest)
+                    {
+                        ApplyPieceSupport(piece);
+                    }
                     break;
                 }
                 Attack(piece, _board.GetPiece(_attackTargets[0]));
@@ -687,6 +696,11 @@ namespace RevGame.Services
             }
             if (!target.IsAlive || target.BossHidden || attacker.BossHidden || attacker.BossFrozen)
             {
+                return;
+            }
+            if (!attacker.IsBoss)
+            {
+                ExecuteDistinctAttack(attacker, target);
                 return;
             }
             // 攻击表现先发事实；暴击只在真正出手时抽样，AI预判绝不消耗随机序列。

@@ -15,7 +15,7 @@
   <div class="eyebrow">REV GAME / BUG JOURNAL</div>
   <h1>所有我方原地参战，<br>每颗棋子的出手都应看得见。</h1>
   <p class="lead">修复近战超距、我方零气导致的停攻，并解决密集齐射时的<strong>攻击反馈遗漏</strong>。全体存活我方守阵攻击，限量弹道与口号公平分配。</p>
-  <p class="meta">2026-10-19 · Unity 2022.3.15f1c1 · 编辑器直读资源 · <a href="2026-10-19-低星棋子攻击反馈遗漏.md">Markdown 版本</a></p>
+  <p class="meta">2026-10-19 · Unity 2022.3.15f1c1 · 编辑器直读资源 · <a href="2026-10-19-低星棋子攻击反馈遗漏.html">Markdown 版本</a></p>
 </header>
 <div class="layout">
   <nav aria-label="文档目录">
@@ -110,7 +110,7 @@
       <p>终端编译 Unity 生成的 <code>.csproj</code> 未通过：已有 Rider 编辑器包缺少 <code>PathLocator</code>，产生 8 个错误、112 个警告。不能把编辑器重编译和离线回归成功写成全部工程构建通过；本轮不为战斗修复改依赖包配置。</p>
       <p>本轮不打包 AB。编辑器直读通过不代表首次 AB 加载或手机性能通过。对象池能避免反复创建销毁，但不代表活跃对象没有 CPU、GPU 成本。</p>
       <p>旧 AB 未重建时，身体渲染器可能仍在根节点；代码会跳过该压缩姿态以保护根大小，真实攻击与公平反馈仍执行。以后在 AB 模式看新姿态前需重新构建对应预制体包，本轮没有打包。</p>
-      <p>身体动作只在短时动画中更新 Transform；GC、CPU、GPU 与手机帧率仍按<a href="../战斗性能优化规则/战斗性能优化规则.md">战斗性能优化规则</a>测量，不凭实现方式宣称零开销。</p>
+      <p>身体动作只在短时动画中更新 Transform；GC、CPU、GPU 与手机帧率仍按<a href="../战斗性能优化规则/战斗性能优化规则.html">战斗性能优化规则</a>测量，不凭实现方式宣称零开销。</p>
     </section>
     <section id="framework"><span class="step">08 / FRAMEWORK</span><h2>框架可行性与后续约束</h2>
       <p>改动位于业务规则与表现调度，现有 <code>RevEvent + RevMono + RevPool</code> 能承载，不需要改框架内核。模型规则、只读查询与表现快照继续分开，运行稳定性以实际回归为准。</p>

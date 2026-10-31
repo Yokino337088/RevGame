@@ -65,6 +65,10 @@ namespace RevGame.Pieces
         public float EyeAttackMultiplier => IsEyeGarrison ? 1f + (Side == GameSide.Player ? Balance.PlayerEyeAttackBonus : Balance.EnemyEyeAttackBonus) : 1f;
         /// <summary>驻眼独立攻速倍率；只影响攻击进度，不缩短移动冷却。</summary>
         public float EyeSpeedMultiplier => IsEyeGarrison ? 1f + (Side == GameSide.Player ? Balance.PlayerEyeSpeedBonus : Balance.EnemyEyeSpeedBonus) : 1f;
+        /// <summary>普通敌方远程专属攻击倍率；按当前职业查询，升星/换职业后自动一致，不污染共享图鉴。</summary>
+        public float EnemyRangedAttackMultiplier => Side == GameSide.Enemy && !IsBoss && Def.IsRanged ? Balance.EnemyRangedAttackMultiplier : 1f;
+        /// <summary>普通敌方远程专属频率倍率；我方、近战和Boss恒为1，驻眼增益仍独立相乘。</summary>
+        public float EnemyRangedSpeedMultiplier => Side == GameSide.Enemy && !IsBoss && Def.IsRanged ? Balance.EnemyRangedSpeedMultiplier : 1f;
         /// <summary>敌方眼位不给防御；我方按等效生命倍率抵消伤害，至少保留1点有效伤害。</summary>
         public float EyeDefenseMultiplier => IsEyeGarrison && Side == GameSide.Player ? 1f + Balance.PlayerEyeDefenseBonus : 1f;
         /// <summary>是否为有效我方眼的上下左右守子；规则层重算，多个眼共享一颗棋也只给一份光环。</summary>

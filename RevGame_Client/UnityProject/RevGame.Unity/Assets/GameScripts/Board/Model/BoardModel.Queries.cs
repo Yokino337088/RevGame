@@ -21,7 +21,7 @@ namespace RevGame.Board
         private sealed class AttackEntry
         {
             // Topology/Targets是计算时的版本，Range单位为格；-1强制首次重算。
-            internal int Topology = -1, Targets = -1, Range;
+            internal int Topology = -1, Targets = -1, Range, EnemyRange;
             // Def是只读图鉴引用；原位升星更换Def会失效。Allowed捕捉冻结/围困/禁攻变化。
             internal PieceDef Definition;
             internal bool Allowed;
@@ -189,11 +189,13 @@ namespace RevGame.Board
             // 步骤1：收集本次查询真正影响射界的输入。CanAttack包括存活/隐藏/冻结/敌方锁死；Def更换代表升星。
             // 普通非致死扣血不改变几何，故不使所有射界重算；威胁和伤害评分由调用方读取当前血量。
             bool allowed = MoveRules.CanAttack(actor);
-            int range = Balance.EnemyArcherRange;
+            // 两个射程独立参与缓存键，避免把数字拼接后发生碰撞，也不依赖配置上限永远不变。
+            int range = actor.IsBoss ? Balance.EnemyArcherRange : Balance.AttackProfile(actor.Def.Kind).Range;
+            int enemyRange = Balance.EnemyArcherRange;
 
             // 步骤2：完整输入相同才计命中。只缓存几何和顺序，不缓存“最值得攻击谁”。
             // 任何一个版本或资格不同都执行原算法，再更新条目；不能为了命中率故意漏掉失效条件。
-            if (entry.Topology == TopologyVersion && entry.Targets == TargetVersion && entry.Definition == actor.Def && entry.Allowed == allowed && entry.Range == range)
+            if (entry.Topology == TopologyVersion && entry.Targets == TargetVersion && entry.Definition == actor.Def && entry.Allowed == allowed && entry.Range == range && entry.EnemyRange == enemyRange)
             {
                 AttackCacheHits++;
             }
@@ -206,6 +208,7 @@ namespace RevGame.Board
                 entry.Definition = actor.Def;
                 entry.Allowed = allowed;
                 entry.Range = range;
+                entry.EnemyRange = enemyRange;
             }
             // 步骤3：清结果的旧内容，复用它已分配的容量，再复制有序坐标。Clear不会把List容量释放。
             result.Clear();

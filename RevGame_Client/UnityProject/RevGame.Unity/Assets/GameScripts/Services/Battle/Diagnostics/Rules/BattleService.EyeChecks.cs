@@ -103,7 +103,8 @@ namespace RevGame.Services
                                 service.EnsureEnemyAI(garrison).Tick(Balance.BattleSimulationStepSeconds);
                             }
                         }
-                        float rate = side == GameSide.Player ? service.RangedActionsPerTick : Balance.EnemyAttackRate;
+                        float rate = side == GameSide.Player ? service.RangedActionsPerTick : Balance.EnemyAttackRate * garrison.EnemyRangedSpeedMultiplier;
+                        rate /= Balance.AttackProfile(garrison.Def.Kind).IntervalScale;
                         int expected = (int)(steps * Balance.BattleSimulationStepSeconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * rate * (side == GameSide.Player ? 1f + Balance.PlayerEyeSpeedBonus : 1f + Balance.EnemyEyeSpeedBonus));
                         check(Math.Abs(attacks - expected) <= 1, side + "真实FSM驻眼攻速：实际" + attacks + "，预期" + expected);
                         check(garrison.Pos == new BoardPos(0, 0), "驻眼AI持续守阵，攻击不离眼");

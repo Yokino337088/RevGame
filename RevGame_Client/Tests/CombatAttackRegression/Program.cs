@@ -25,6 +25,19 @@ internal static class Program
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
 
+            if (args.Length > 1 && args[1] == "piece-patterns")
+            {
+                Console.WriteLine(BattleService.VerifyPieceAttackRules((ok, message) => Assert(ok, message)));
+                return 0;
+            }
+
+            if (args.Length > 1 && args[1] == "enemy-ranged")
+            {
+                BattleService.VerifyEnemyRangedRules((ok, message) => { Assert(ok, message); Console.WriteLine("PASS " + message); });
+                Console.WriteLine("敌方远程攻击与频率回归通过：" + _assertions);
+                return 0;
+            }
+
             if (args.Length > 1 && args[1] == "cache-threshold")
             {
                 string output = args.Length > 2 ? args[2] : "cache-threshold.csv";
@@ -147,17 +160,17 @@ internal static class Program
         }
         throw new DirectoryNotFoundException("找不到导表数据，可把 Assets/GameRes/Data 绝对目录作为第一个参数。");
     }
-    /// <summary>基础攻击：远程隔友军、非直线跨盘仍能打；近战相邻时不受移动走法误限。所有类型的远处援击另设场景。</summary>
+    /// <summary>九种棋子的共同正例使用身体边缘相邻目标；射程外与穿友军行为由独立场景验证。</summary>
     private static void VerifyNormalAttack(PieceKind kind, StarTier star)
     {
         BattleService battle = BattleService.CreateAttackRegressionFixture();
         Piece actor = battle.AddRegressionPiece(kind, star, GameSide.Player, new BoardPos(1, 1));
-        BoardPos destination = actor.Def.IsRanged ? new BoardPos(7, 6) : new BoardPos(1 + actor.Size, 1);
+        BoardPos destination = new BoardPos(1 + actor.Size, 1);
         Piece target = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, destination, 100f);
 
         if (actor.Def.IsRanged)
         {
-            battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(1 + actor.Size, 1));
+            battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(1, 1 + actor.Size));
         }
         battle.RefreshRegressionGoState();
         Assert(!actor.IsLocked, Label(actor) + "正常场景没有被锁死");
@@ -211,7 +224,7 @@ internal static class Program
         Assert(recoveredDamagePerHit > 0f, Label(actor) + "解除零气后仍继续真实攻击");
         _scenarios++;
     }
-    /// <summary>全部九种棋子即使隔着友军且敌人不相邻，也必须守住原位参与攻击，不再等敌人主动贴脸。</summary>
+    /// <summary>有限射程取代旧全盘援击：同时验证射程内正例与射程外拒绝，显示与实际目标保持一致。</summary>
     private static void VerifyDistantAttackThroughFriendlyLine(PieceKind kind, StarTier star)
     {
         BattleService battle = BattleService.CreateAttackRegressionFixture();
@@ -220,9 +233,20 @@ internal static class Program
         battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(origin.X + actor.Size, origin.Y));
         Piece target = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(7, 6), 100f);
         battle.RefreshRegressionGoState();
-        Assert(MoveRules.GetAttackTargets(battle.Board, actor).Contains(target.Pos), Label(actor) + "隔友军/非相邻仍有真实援击目标");
-        Assert(MoveRules.GetAttackCoverage(battle.Board, actor).Contains(target.Pos), Label(actor) + "显示射界必须包含真实援击目标");
-        AssertActualAttack(battle, actor, target, "远处守阵援击");
+        int distance = Math.Max(7 - (origin.X + actor.Size - 1), 6 - (origin.Y + actor.Size - 1));
+        bool expected = distance <= Balance.AttackProfile(kind).Range && kind != PieceKind.Crossbow;
+        Assert(MoveRules.GetAttackTargets(battle.Board, actor).Contains(target.Pos) == expected, Label(actor) + "远处目标遵守棋种射程与重弩直线");
+        Assert(MoveRules.GetAttackCoverage(battle.Board, actor).Contains(target.Pos) == expected, Label(actor) + "显示射界与实际射程一致");
+        if (expected)
+        {
+            AssertActualAttack(battle, actor, target, "射程内远处攻击");
+        }
+        else
+        {
+            int hp = target.Hp;
+            battle.RunRegressionPlayerStep();
+            Assert(target.Hp == hp, Label(actor) + "射程外不产生真实扣血");
+        }
         Assert(actor.Pos == origin, Label(actor) + "援击过程中保持玩家布置的位置");
         _scenarios++;
     }
@@ -401,7 +425,8 @@ internal static class Program
     private static void VerifyFortyAttackersInOneStep()
     {
         BattleService battle = BattleService.CreateAttackRegressionFixture();
-        PieceKind[] rangedKinds = { PieceKind.Archer, PieceKind.Crossbow, PieceKind.MageWater, PieceKind.MageFire, PieceKind.Priest };
+        // 此项只验证名单后段公平出手，统一弓箭射程让40颗都能看到同一靶子；九棋种形状另有专项断言。
+        PieceKind[] rangedKinds = { PieceKind.Archer };
         var actors = new List<Piece>();
         for (int index = 0; index < 40; index++)
         {
@@ -413,7 +438,7 @@ internal static class Program
             }
             actors.Add(actor);
         }
-        Piece target = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(8, 8), 10000f);
+        Piece target = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(4, 5), 10000f);
         battle.RefreshRegressionGoState();
         var attackingIds = new HashSet<int>();
         var damageBySource = new Dictionary<int, int>();

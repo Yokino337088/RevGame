@@ -109,8 +109,9 @@ namespace RevGame.Services
                     // 把连击、职业加成，以及玩家侧的通用/战斗/准备三项加成一次性乘进倍率。
                     multiplier *= 1f + Math.Max(0f, linked) + ClassBonus(attacker.Side)
                         + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
-                    // 玩家火力随存活棋子数递减，防止几十颗远程同时输出直接秒杀；敌方恒为 1。
-                    float teamScale = attacker.Side == GameSide.Player ? PlayerFirepowerScale() : 1f;
+                    // 玩家火力随存活棋子数递减，防止几十颗远程同时输出直接秒杀；敌方不参与人数递减。
+                    // 敌方远程的专属倍率在取整前合入；预测与提交共用此处，技能分支不受影响。
+                    float teamScale = attacker.Side == GameSide.Player ? PlayerFirepowerScale() : attacker.EnemyRangedAttackMultiplier;
 
                     if (HasHelperProtection(attacker))
                     {
@@ -122,7 +123,7 @@ namespace RevGame.Services
                         teamScale *= 1f + HelperRangedAttackBonus;
                     }
                     // 普攻最终公式：基础攻击力 × 自身各项倍率 × 上面攒出的 multiplier × 团队火力，最低伤害 1。
-                    amount = ClampDamage(attacker.Def.Attack * attacker.AttackScale * attacker.BossAttackFactor * attacker.EyeAttackMultiplier * multiplier * Balance.CombatDamageScale * teamScale, 1);
+                    amount = ClampDamage(attacker.Def.Attack * attacker.AttackScale * attacker.BossAttackFactor * attacker.EyeAttackMultiplier * multiplier * Balance.CombatDamageScale * teamScale * request.Factor, 1);
                 }
                 else
                 {
@@ -201,7 +202,8 @@ namespace RevGame.Services
         /// <summary>AI使用非暴击保守预测，不提前消费随机数；能原地复活的眼位棋不会误判为一击永久移除。</summary>
         public bool PredictAttackDefeat(Piece attacker, Piece target)
         {
-            DamageEvaluation result = EvaluateDamage(new DamageRequest(target, DamageBasis.Attack, BattleDamageKind.Normal, attacker, fromSkill: false));
+            float factor = attacker == null || attacker.IsBoss ? 1f : DistinctAttackFactor(attacker, target, true);
+            DamageEvaluation result = EvaluateDamage(new DamageRequest(target, DamageBasis.Attack, BattleDamageKind.Normal, attacker, factor, fromSkill: false));
             return target != null && target.IsAlive && result.Damage >= target.Hp
                 && !(target.Side == GameSide.Player && target.IsEyeGarrison && !target.EyeReviveUsed);
         }

@@ -202,13 +202,15 @@ namespace RevGame.Battle
         ///
         /// 细节：扣掉整数次数、保留小数余量，所以 4 个小步正好攒满 1 次，
         /// 而不是每步四舍五入成 1 次（那会让低频攻击变成高频）。
-        /// 指数只乘 AttackSpeedScale，不受玩家“万箭齐发”影响——那张牌只服务我方弓箭手。
+        /// 频率叠加敌军、远程与驻眼倍率，不受玩家“万箭齐发”影响；移动与技能仍使用原时钟。
         /// </summary>
         protected int ConsumeActions(float seconds)
         {
             Piece actor = Owner.Actor;
             // 敌方专属倍率只作用于普攻额度，不乘模拟时间，避免连带加快技能、补兵与区域伤害。
-            actor.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate * actor.EyeSpeedMultiplier;
+            actor.ActionProgress += seconds / Balance.BattleTickSeconds * Balance.AttackSpeedScale * Balance.EnemyAttackRate
+                * actor.EnemyRangedSpeedMultiplier * actor.EyeSpeedMultiplier
+                / Balance.AttackProfile(actor.Def.Kind).IntervalScale;
             int actions = actor.ConsumeCompletedActions();
 
             return actions;

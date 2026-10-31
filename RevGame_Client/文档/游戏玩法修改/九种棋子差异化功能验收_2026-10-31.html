@@ -1,0 +1,256 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>九种棋子差异化功能验收 · 2026-10-31</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}figure{margin:0;padding:16px;border:1px solid var(--line);border-radius:12px;background:white}figure img{width:100%;height:auto}figcaption{font-size:13px;color:var(--muted)}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}th{background:#e6efe1}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;background:#edf1ea;padding:16px;border-radius:10px}.scroll{overflow:auto}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style></head><body><header class="topbar"><span class="brand">REVGAME · REVOLUTION</span><span class="tag">MCP / GM / PC AB</span></header><div class="hero"><div class="wrap"><div class="eyebrow">2026-10-31 · 实际测试记录</div><h1>九种棋子差异化功能验收</h1><p>九棋种业务与图形专项通过；性能未获有效前台验收。规则、画面、资源清理和性能证据分别判定。</p></div></div><main>
+<section class="chapter"><h2>结论与覆盖</h2><ul><li>真实RevMCP stdio会话显式连接RevGame.Unity，编辑态发现216个能力，Play后发现246个能力、103条GM。</li><li>攻击规则专项96条断言通过：命中数量、实际扣血、事件一致性、九格爆区、大棋去重、穿透不拐弯、治疗与收割。</li><li>本轮视觉：9/9种，172条检查，144帧，清理状态 True。</li><li>最终生产配置三种子六章回放：180胜/0负；中位17.81秒，Boss中位247.50秒。固定策略不代表任意牌序必胜。</li><li>未执行独立Player、Android真机或手机GPU验收，不承诺目标设备帧率。</li></ul></section>
+<section class="chapter"><h2>环境与隔离</h2><p>Unity 2022.3.15f1c1，Windows Editor / DX11，正式StartScene入口，PC真实AssetBundle。初始场景无未保存修改。测试使用隔离剧情与积分状态，不写正式进度。演示靶阵高生命仅维持画面，不作为正常数值胜率证据。</p><p>工程：RevGame_Client/UnityProject/RevGame.Unity。使用RevMCP的真实tools/call协议，不把直接Python Hub调用冒充MCP。原始工单、负结果与采样摘要在忽略目录 .codex/work/piece-differentiation/。</p></section>
+<section class="chapter"><h2>九种棋子配方</h2><p>全部数值来自战斗数值参数.xlsx。间隔为相对原职业周期的倍率，最终伤害仍受原有加成、护盾与阵营倍率影响。敌方保留既有直线、炮架与零气禁攻门槛。</p><div class="scroll"><table><tr><th>棋子</th><th>射程上限</th><th>间隔倍率</th><th>首目标倍率</th><th>后续倍率</th><th>目标上限</th><th>职责</th></tr><tr><td>剑士</td><td>2格</td><td>0.7</td><td>0.72</td><td>0</td><td>1</td><td>高频单点</td></tr><tr><td>盾战</td><td>1格</td><td>1.25</td><td>0.8</td><td>0.35</td><td>2</td><td>邻近盾击与自疗</td></tr><tr><td>重剑</td><td>2格</td><td>1.6</td><td>1.45</td><td>0.45</td><td>3</td><td>前向多目标重击</td></tr><tr><td>弓箭手</td><td>6格</td><td>0.9</td><td>2.1</td><td>0</td><td>1</td><td>单格高伤</td></tr><tr><td>重弩</td><td>7格</td><td>1.8</td><td>1.55</td><td>0.55</td><td>3</td><td>直线穿透</td></tr><tr><td>水法师</td><td>4格</td><td>1.45</td><td>0.8</td><td>0.4</td><td>3</td><td>逐段连锁</td></tr><tr><td>火法师</td><td>4格</td><td>1.9</td><td>1.4</td><td>0.15</td><td>9</td><td>中心强化3×3爆破</td></tr><tr><td>牧师</td><td>4格</td><td>1.3</td><td>0.65</td><td>0</td><td>1</td><td>攻击与低血友军治疗</td></tr><tr><td>刺客</td><td>3格</td><td>1.4</td><td>1.2</td><td>0</td><td>1</td><td>低血目标收割</td></tr></table></div></section>
+<section class="chapter"><h2>实际调用顺序与断言</h2><ol><li>rev_discover：重新发现当前实例，区分编辑态与运行期注册。</li><li>rev_run：editor.status、scene.list、editor.console、game.piece-attacks.rules，记录原状态并执行规则。</li><li>rev_run：ab.mode(enabled=true)、game.story.test-arm(flags=3)、editor.play；域重载后再次rev_discover。</li><li>rev_call：GM完整名称 RevGame/棋子差异化规则检查，确认96条业务断言。</li><li>rev_call：RevGame/棋子差异化视觉开始；通过RevGame/棋子差异化视觉状态读取结果。每种16帧、150ms间隔，同时检查实际命中、范围事件、启用Renderer和池预算。</li><li>rev_run：runtime.screenshot、runtime.logs及清理后置，截图证明画面，业务结论由断言决定。</li></ol><pre>{
+  &quot;stage&quot;: &quot;completed&quot;,
+  &quot;error&quot;: &quot;&quot;,
+  &quot;kind&quot;: &quot;Assassin&quot;,
+  &quot;directory&quot;: &quot;Temp/PieceAttackVerification&quot;,
+  &quot;completed&quot;: 9,
+  &quot;assertions&quot;: 172,
+  &quot;frames&quot;: 144,
+  &quot;cleaned&quot;: true
+}</pre></section>
+<section class="chapter"><h2>真实动态画面</h2><p>仅缩放与压缩，不裁剪、不拼接、不补画。GIF宽不超过720；静态JPEG宽不超过1600。自动支援保持运行，因此部分帧存在帮手弹幕遮挡；本报告不把Renderer启用等同于所有帧都无遮挡。</p><div class="grid"><figure><h3>剑士</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/Swordman.gif" alt="剑士真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>盾战</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/Shield.gif" alt="盾战真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>重剑</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/HeavySword.gif" alt="重剑真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>弓箭手</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/Archer.gif" alt="弓箭手真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>重弩</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/Crossbow.gif" alt="重弩真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>水法师</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/MageWater.gif" alt="水法师真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>火法师</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/MageFire.gif" alt="火法师真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>牧师</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/Priest.gif" alt="牧师真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure><figure><h3>刺客</h3><img loading="lazy" src="棋子差异化验收画面_2026-10-31/Assassin.gif" alt="刺客真实连续截图"><figcaption>16帧，采集等待150ms/帧；高生命演示靶阵，只证明表现与业务断言，不计入正常关卡胜率。</figcaption></figure></div><h3>MCP场景证据</h3><div class="grid"><figure><img loading="lazy" src="棋子差异化验收画面_2026-10-31/初始画面-01-066cb548b0344a3f90d7f0067d146a65.jpg" alt="MCP真实场景截图"><figcaption>通过runtime.screenshot获取的完整画面，保留初始、负载或收尾现场。</figcaption></figure><figure><img loading="lazy" src="棋子差异化验收画面_2026-10-31/初始画面-01-7da9c09f9261438e85ada11487e293c8.jpg" alt="MCP真实场景截图"><figcaption>通过runtime.screenshot获取的完整画面，保留初始、负载或收尾现场。</figcaption></figure><figure><img loading="lazy" src="棋子差异化验收画面_2026-10-31/初始画面-01-8a8c27379f434f00b21fadc79cdf4f0e.jpg" alt="MCP真实场景截图"><figcaption>通过runtime.screenshot获取的完整画面，保留初始、负载或收尾现场。</figcaption></figure><figure><img loading="lazy" src="棋子差异化验收画面_2026-10-31/初始画面-01-f5119a4ddea0483381704b2bb5767aec.jpg" alt="MCP真实场景截图"><figcaption>通过runtime.screenshot获取的完整画面，保留初始、负载或收尾现场。</figcaption></figure><figure><img loading="lazy" src="棋子差异化验收画面_2026-10-31/初始画面-02-2824024c105648118ff23ba05e4c1742.jpg" alt="MCP真实场景截图"><figcaption>通过runtime.screenshot获取的完整画面，保留初始、负载或收尾现场。</figcaption></figure></div></section>
+<section class="chapter"><h2>性能与生命周期</h2><p>复用私有缓冲、几何缓存、共享材质和RevPool。范围反馈通过有界公平队列调度，仍受16个短效预算限制，弹道保持35个上限。退出清除队列、停止Tween并归还对象。</p><p><strong>采样完成不等于性能达标。</strong>本轮81棋、20秒、0预热，平均3.59 FPS，帧间隔P95 912.57ms，GPU P95 36.52ms。该轮72/72帧全部失焦，性能样本不具前台验收资格，不能用来判定前台帧率或归因于棋子规则。此前48棋采样又存在负载增至52棋的问题，两轮均保留原始数据，但不宣称性能已达标。Editor整帧含编辑器与工具开销，也不能代替手机或独立Player验收。</p><p>环境为i7-12700H / Intel Iris Xe / DX11 / 1920×1080，VSync=1，采样期间不截图。采样前后核对81棋与实际攻击，后台夹具每秒补生命以维持负载。没有降低棋数、关闭效果或导出Profiler录制。缺失计数不能解释为0。</p><pre>{
+  &quot;runId&quot;: &quot;8f59eea6e46f4a71b8640fe26a666901&quot;,
+  &quot;status&quot;: &quot;completed&quot;,
+  &quot;error&quot;: &quot;&quot;,
+  &quot;startedUtc&quot;: &quot;2026-10-31T15:36:31.8935268Z&quot;,
+  &quot;endedUtc&quot;: &quot;2026-10-31T15:36:52.0250340Z&quot;,
+  &quot;success&quot;: true,
+  &quot;cancelled&quot;: false,
+  &quot;frames&quot;: 72,
+  &quot;gpuSamples&quot;: 72,
+  &quot;unfocusedFrames&quot;: 72,
+  &quot;errors&quot;: 0,
+  &quot;requestedSeconds&quot;: 20.0,
+  &quot;warmupSeconds&quot;: 0.0,
+  &quot;seconds&quot;: 20.079378099995665,
+  &quot;fps&quot;: 3.5857684257669087,
+  &quot;p50Ms&quot;: 224.21790000225883,
+  &quot;p95Ms&quot;: 912.5726999918697,
+  &quot;p99Ms&quot;: 1081.8685999984154,
+  &quot;maxMs&quot;: 1081.8685999984154,
+  &quot;gpuP50Ms&quot;: 5.09823,
+  &quot;gpuP95Ms&quot;: 36.524374,
+  &quot;over125Ratio&quot;: 1.0,
+  &quot;over167Ratio&quot;: 1.0,
+  &quot;over333Ratio&quot;: 1.0,
+  &quot;environment&quot;: {
+    &quot;product&quot;: &quot;RevGame.Unity&quot;,
+    &quot;buildId&quot;: &quot;00000000000000000000000000000000&quot;,
+    &quot;unityVersion&quot;: &quot;2022.3.15f1c1&quot;,
+    &quot;platform&quot;: &quot;WindowsEditor&quot;,
+    &quot;backend&quot;: &quot;Mono&quot;,
+    &quot;cpu&quot;: &quot;12th Gen Intel(R) Core(TM) i7-12700H&quot;,
+    &quot;gpu&quot;: &quot;Intel(R) Iris(R) Xe Graphics&quot;,
+    &quot;graphicsApi&quot;: &quot;Direct3D11&quot;,
+    &quot;resolution&quot;: &quot;1920x1080&quot;,
+    &quot;editor&quot;: true,
+    &quot;development&quot;: true,
+    &quot;focused&quot;: false,
+    &quot;runInBackground&quot;: true,
+    &quot;enabled&quot;: true,
+    &quot;frames&quot;: 0,
+    &quot;targetFrameRate&quot;: -1,
+    &quot;vSyncCount&quot;: 1,
+    &quot;seconds&quot;: 0.0,
+    &quot;fps&quot;: 0.0,
+    &quot;p50Ms&quot;: 0.0,
+    &quot;p95Ms&quot;: 0.0,
+    &quot;p99Ms&quot;: 0.0,
+    &quot;maxMs&quot;: 0.0,
+    &quot;gpuMs&quot;: -1.0,
+    &quot;metrics&quot;: []
+  },
+  &quot;averages&quot;: [
+    {
+      &quot;name&quot;: &quot;Draw Calls Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 39.44444444444444
+    },
+    {
+      &quot;name&quot;: &quot;Total Batches Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 39.44444444444444
+    },
+    {
+      &quot;name&quot;: &quot;SetPass Calls Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 27.375
+    },
+    {
+      &quot;name&quot;: &quot;Triangles Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 4538.930555555556
+    },
+    {
+      &quot;name&quot;: &quot;Vertices Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 8632.125
+    },
+    {
+      &quot;name&quot;: &quot;Dynamic Batches Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 14.11111111111111
+    },
+    {
+      &quot;name&quot;: &quot;Static Batches Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 0.0
+    },
+    {
+      &quot;name&quot;: &quot;Instanced Batches Count&quot;,
+      &quot;unit&quot;: &quot;count&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 0.0
+    },
+    {
+      &quot;name&quot;: &quot;GC Allocated In Frame&quot;,
+      &quot;unit&quot;: &quot;bytes&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 817661.9722222222
+    },
+    {
+      &quot;name&quot;: &quot;Total Used Memory&quot;,
+      &quot;unit&quot;: &quot;bytes&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 2204598649.6805553
+    },
+    {
+      &quot;name&quot;: &quot;Total Reserved Memory&quot;,
+      &quot;unit&quot;: &quot;bytes&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 3105410003.1666665
+    },
+    {
+      &quot;name&quot;: &quot;GC Used Memory&quot;,
+      &quot;unit&quot;: &quot;bytes&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 730797511.1111112
+    },
+    {
+      &quot;name&quot;: &quot;Main Thread&quot;,
+      &quot;unit&quot;: &quot;ms&quot;,
+      &quot;available&quot;: true,
+      &quot;value&quot;: 278.67053888888887
+    },
+    {
+      &quot;name&quot;: &quot;Render Thread&quot;,
+      &quot;unit&quot;: &quot;ms&quot;,
+      &quot;available&quot;: false,
+      &quot;value&quot;: -1.0
+    }
+  ],
+  &quot;workload&quot;: {
+    &quot;piecesBefore&quot;: 81,
+    &quot;piecesAfter&quot;: 81,
+    &quot;attacksBefore&quot;: 0,
+    &quot;attacksAfter&quot;: 954,
+    &quot;kind&quot;: &quot;81满盘重弩，高生命及围困免疫压力夹具，非普通难度&quot;
+  },
+  &quot;cleanup&quot;: {
+    &quot;game.performance.state&quot;: {
+      &quot;stage&quot;: &quot;cleaned&quot;,
+      &quot;error&quot;: &quot;&quot;,
+      &quot;screen&quot;: &quot;Home&quot;,
+      &quot;ready&quot;: false,
+      &quot;isolated&quot;: true,
+      &quot;transitioning&quot;: false,
+      &quot;cleaned&quot;: true,
+      &quot;fullscreen&quot;: false,
+      &quot;benchmark&quot;: false,
+      &quot;resolution&quot;: &quot;1920x1080&quot;,
+      &quot;windowMode&quot;: &quot;Windowed&quot;,
+      &quot;pieces&quot;: 81,
+      &quot;attacks&quot;: 1026,
+      &quot;logic&quot;: 0,
+      &quot;pieceRefs&quot;: 0
+    },
+    &quot;story.state&quot;: {
+      &quot;scene&quot;: &quot;StartScene&quot;,
+      &quot;tutorialLayout&quot;: null,
+      &quot;unlockedChapter&quot;: 6,
+      &quot;chapter&quot;: 1,
+      &quot;tutorialActive&quot;: false,
+      &quot;tutorialOpen&quot;: false,
+      &quot;scoreIsolated&quot;: true,
+      &quot;preparationGranted&quot;: true,
+      &quot;battleElapsed&quot;: 17.1875,
+      &quot;enemyHp&quot;: 3150000,
+      &quot;playerHp&quot;: 2520000,
+      &quot;sameBoard&quot;: false,
+      &quot;handCount&quot;: 6,
+      &quot;phase&quot;: &quot;Battle&quot;,
+      &quot;playerCount&quot;: 36,
+      &quot;enemyCount&quot;: 45,
+      &quot;renderedCells&quot;: 0,
+      &quot;renderedPieces&quot;: 0,
+      &quot;prepareOpen&quot;: false,
+      &quot;hudOpen&quot;: false,
+      &quot;guideFrame&quot;: -1,
+      &quot;guideFrameCount&quot;: 3,
+      &quot;screen&quot;: &quot;Home&quot;,
+      &quot;transitioning&quot;: false,
+      &quot;blocked&quot;: false,
+      &quot;playing&quot;: false,
+      &quot;episode&quot;: &quot;&quot;,
+      &quot;line&quot;: 3,
+      &quot;error&quot;: &quot;&quot;,
+      &quot;openingComplete&quot;: true,
+      &quot;tutorialComplete&quot;: true,
+      &quot;isolated&quot;: true,
+      &quot;step&quot;: &quot;none&quot;,
+      &quot;liberties&quot;: -1,
+      &quot;locked&quot;: false,
+      &quot;typing&quot;: false,
+      &quot;soundStarted&quot;: false,
+      &quot;visibleCharacters&quot;: 0,
+      &quot;guidePacked&quot;: true
+    }
+  }
+}</pre></section>
+<section class="chapter"><h2>失败、修复与未验证项</h2><ul><li>初次视觉夹具重复申请隔离会话已经持有的积分租约，未进入截图阶段；已修复为仅在没有租约时申请，并只释放自己持有的租约。</li><li>开发阶段曾遇到通用AB构建未复制首包，冷启动读取旧配置；已通过项目BuildAndCopy发布并重新验证。</li><li>首轮48棋采样完成，但后置检查实际已因正常增援增加到52棋，固定数量断言失败。保留该轮25.05 FPS/P95 97.22ms原始结果，不作为固定48棋性能结论；改用既有81满盘夹具重新采样，不改生产增援规则、不放宽数量断言。</li><li>旧默认全量回归仍失败于开工前已存在的“首手时刻到期真实提交一手”；没有删除或放宽该断言，不能将专项通过称为全部旧回归通过。</li></ul><p>完整失败工单未覆盖删除。图形状态不是completed或清理不为true时，不判整体图形通过。未采集Profiler录制文件、内存快照或ZIP。</p></section>
+<section class="chapter"><h2>框架可行性结论</h2><p>本次通过项目配方、纯规则与受控GM扩展普通棋子行为，沿用RevEvent、RevPool、RevTask、RevDataTableManager、RevScene及既有域生命周期，无需修改Assets/Revolution快照。运行期查询、正式动作、伤害事实和图形快照可以分开验收；隔离租约必须遵守唯一所有者契约。</p></section>
+</main></body></html>

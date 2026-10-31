@@ -13,12 +13,12 @@ namespace RevGame.View
     // 表现分型：数字、远程飞行、近战冲击。类型只决定如何播放，不决定伤害计算。
     public enum BattleEffectKind
     {
-        Damage, Projectile, Melee
+        Damage, Projectile, Melee, Pattern
     }
     [RevPoolPrefab(RevResPath.Effects_Combat, "BattleEffect", Group = RevResGroup.Battle)]
     // RevPool持有的可复用反馈对象。一个对象同一时刻只播一种效果、一条Tween。
     // 攻击事件已经结算，这里只显示位置/颜色/文字；结束和回池不允许再次扣血。
-    public sealed class BattleEffectView : MonoBehaviour, IRevPoolable
+    public sealed partial class BattleEffectView : MonoBehaviour, IRevPoolable
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private TextMesh damageText;
@@ -585,6 +585,15 @@ namespace RevGame.View
         private void WriteAnimationProgress(float value)
         {
             _progress = value;
+
+            if (_animationMode == 3)
+            {
+                // 范围的世界尺寸固定等于规则格数，只推进Shader亮度与波纹，不能用放大动画误导命中边界。
+                _projectileProperties.SetFloat("_Progress", value);
+                spriteRenderer.SetPropertyBlock(_projectileProperties);
+                spriteRenderer.color = new Color(1f, 1f, 1f, Mathf.Clamp01((1f - value) * 3f));
+                return;
+            }
 
             // 飘字把“弹出放大→轻抖→上浮→淡出”合并到同一进度；不是删除动画阶段来换性能。
             if (_animationMode == 0)

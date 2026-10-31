@@ -139,7 +139,7 @@ namespace RevGame.Battle
                     case PlayerAIState.BreakEye:
                         return "敌群外围已封完，只剩最后一眼";
                     case PlayerAIState.Retreat:
-                        return "远程受近身威胁，安全后撤";
+                        return "远程按射程调整站位，贴身后撤或射程外靠近";
                     case PlayerAIState.Dead:
                         return "真实死亡";
                     case PlayerAIState.Stopped:

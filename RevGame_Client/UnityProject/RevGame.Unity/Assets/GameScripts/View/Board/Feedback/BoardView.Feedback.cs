@@ -240,6 +240,7 @@ namespace RevGame.View
                     }
                 }
 
+                FlushPiecePatterns();
                 FlushProjectiles();
                 // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
                 FlushDamageTexts();
@@ -469,6 +470,7 @@ namespace RevGame.View
             _pendingMeleeLoads = 0;
             _pendingDamage.Clear();
             _projectileQueue.Clear();
+            _patternQueue.Clear();
             _attackQueue.Clear();
             _textEffects.Clear();
             _projectileEffects.Clear();

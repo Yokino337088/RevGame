@@ -153,6 +153,25 @@ namespace RevGame.Battle
         // 这里输出有序目标坐标，最终伤害/威胁评分在结算层完成；缓存不能冻结实时生命值。
         internal static void CalculateAttackTargets(BoardModel board, Piece piece, List<BoardPos> result)
         {
+            CalculateAttackTargetsCore(board, piece, result);
+            if (piece == null || piece.IsBoss || piece.Side != GameSide.Enemy)
+            {
+                return;
+            }
+            // 敌方保留原有直线/炮架门槛，再收紧到棋种射程。新增差异化不能顺便把敌弓变成全向远射。
+            for (int i = result.Count - 1; i >= 0; i--)
+            {
+                Piece target = board.GetPiece(result[i]);
+                if (target == null || !PieceAttackRules.InRange(piece, target))
+                {
+                    result.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>保留Boss及敌方旧瞄准约束，普通我方使用棋种配方；外层统一裁剪敌方配方射程。</summary>
+        private static void CalculateAttackTargetsCore(BoardModel board, Piece piece, List<BoardPos> result)
+        {
             result.Clear();
 
             if (board == null || piece == null)
@@ -161,6 +180,11 @@ namespace RevGame.Battle
             }
             if (!CanAttack(piece))
             {
+                return;
+            }
+            if (!piece.IsBoss && piece.Side == GameSide.Player)
+            {
+                PieceAttackRules.Targets(board, piece, result);
                 return;
             }
             // 近战先保护身边的阵位；只有没有接触敌人时才改用守阵援击。
@@ -215,8 +239,8 @@ namespace RevGame.Battle
         /// - 这里回答"火力能伸到哪些格"，空格也算 —— 玩家想看的是射界，不是当前目标。
         ///
         /// 分支必须与 GetAttackTargets 保持一致，否则玩家看到黄色格子却打不到，比不显示更糟：
-        /// 我方所有棋种/敌方重弩全盘；其余按四方向射线 —— 近战一格、敌弓六格、炮先找炮架再打架后第一格。
-        /// 我方近战当前优先打身边目标，但全盘仍是可援击的潜在范围；敌方被锁死时没有射界。
+        /// 普通我方按棋种射程，重弩额外限制横纵直线；敌方保留直线/炮架门槛，再按棋种射程裁剪。
+        /// 这里显示的是可瞄准格，火法的溅射与水法连锁在出手后按实际目标计算；敌方锁死时没有射界。
         /// </summary>
         public static List<BoardPos> GetAttackCoverage(BoardModel board, Piece piece)
         {
@@ -227,6 +251,23 @@ namespace RevGame.Battle
         /// <summary>高频版本：结果写入调用方持有的列表，进入时Clear，容量保留。</summary>
         public static void GetAttackCoverage(BoardModel board, Piece piece, List<BoardPos> result)
         {
+            GetAttackCoverageCore(board, piece, result);
+            if (piece == null || piece.IsBoss || piece.Side != GameSide.Enemy)
+            {
+                return;
+            }
+            for (int i = result.Count - 1; i >= 0; i--)
+            {
+                if (!PieceAttackRules.Covers(piece, result[i]))
+                {
+                    result.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>空格预览保留与实际选敌相同的阵营约束；半径裁剪在外层统一执行。</summary>
+        private static void GetAttackCoverageCore(BoardModel board, Piece piece, List<BoardPos> result)
+        {
             result.Clear();
 
             if (board == null || piece == null)
@@ -236,6 +277,21 @@ namespace RevGame.Battle
             // 与真实出手入口共用同一契约，不能出现长按显示全盘、战斗却被旧锁死判断拦住的情况。
             if (!CanAttack(piece))
             {
+                return;
+            }
+            if (!piece.IsBoss && piece.Side == GameSide.Player)
+            {
+                for (int y = 0; y < board.Size; y++)
+                {
+                    for (int x = 0; x < board.Size; x++)
+                    {
+                        var point = new BoardPos(x, y);
+                        if (PieceAttackRules.Covers(piece, point))
+                        {
+                            result.Add(point);
+                        }
+                    }
+                }
                 return;
             }
             if (piece.Side == GameSide.Player || (piece.Side == GameSide.Enemy && piece.Def.Kind == PieceKind.Crossbow))

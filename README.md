@@ -369,8 +369,8 @@ RevGame/
 - [数值平衡报告与历史对照](RevGame_Client/文档/数值平衡/2026年10月28日测试报告/六章数值平衡测试报告_2026-10-28.html)
 - [项目架构与 Revolution 讲解](RevGame_Client/文档/架构/RevGame项目架构与Revolution框架讲解.html)
 - [面向新手的代码阅读指南](RevGame_Client/文档/架构/RevGame代码阅读指南-新手版.html)
-- [剧情与真实棋盘教学](RevGame_Client/文档/架构/剧情与新手教学系统.md)
-- [战斗性能优化规则](RevGame_Client/文档/战斗性能优化规则/战斗性能优化规则.md)
+- [剧情与真实棋盘教学](RevGame_Client/文档/架构/剧情与新手教学系统.html)
+- [战斗性能优化规则](RevGame_Client/文档/战斗性能优化规则/战斗性能优化规则.html)
 - [进度与验收归档](RevGame_Client/文档/进度同步/)
 - [协作者规范](AGENTS.md)
 

@@ -62,7 +62,7 @@
 <ul class="todo-list"><li><strong>Boss 九技能验收</strong><small>需要独立场景与强制施法入口，本轮未执行。</small></li><li><strong>第二章及以后章节</strong><small>已进入第二章准备，但未继续游玩。</small></li><li><strong>逐回合过程截图</strong><small>本轮只在结束后补了一张画面。</small></li><li><strong>真机 / AB 冷启动</strong><small>全部在编辑器 PlayMode + AssetDatabase 直读下完成。</small></li></ul></section>
 <section id="evidence" class="chapter"><div class="section-label">REPORT / 08</div><h2>证据与复现</h2>
 <p>所有结果来自运行期只读 GM（<code>RevGame/面板</code>、<code>RevGame/战斗状态</code>、<code>RevGame/手牌</code>、<code>RevGame/棋子</code>、<code>RevGame/落点</code>）与真实点击（<code>RevGame/点击</code>、<code>RevGame/点格子</code>），未读取或修改内存。</p>
-<div class="resource-links"><a href="附件/ch1-chapter2-prepare.png">通关后画面 ↗</a><a href="第一章AI实时决策游玩实测-2026-10-23.md">Markdown 版本 ↗</a></div>
+<div class="resource-links"><a href="附件/ch1-chapter2-prepare.png">通关后画面 ↗</a><a href="第一章AI实时决策游玩实测-2026-10-23.html">Markdown 版本 ↗</a></div>
 <details><summary>复现方式</summary><pre><code># 1) Unity 打开 RevGame.Unity，等待编译完成
 # 2) 用 RevMCP 读局面
 python Revolution.RevMCP/rev_mcp.py --project "<Unity 工程目录>" call gm "RevGame/棋子"

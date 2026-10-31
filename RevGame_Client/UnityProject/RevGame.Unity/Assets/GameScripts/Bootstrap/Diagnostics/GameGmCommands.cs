@@ -34,6 +34,25 @@ namespace RevGame.Bootstrap
                 RevGame.Automation.GameAutomationCommands.RegisterGroup();
                 RegisterPlayerActions();
 #if UNITY_EDITOR
+                RegisterCommand("RevGame/棋子差异化视觉开始", "隔离Play逐棋种真实攻击、池预算和连续截图；返回状态后查询至完成并清理", args =>
+                    (string)Type.GetType("RevGame.Editor.GamePieceAttackVisualChecks, Assembly-CSharp-Editor", true).GetMethod("Begin").Invoke(null, null));
+                RegisterCommand("RevGame/棋子差异化视觉状态", "只读九棋种视觉验收进度、首个失败原因及清理结果", args =>
+                    (string)Type.GetType("RevGame.Editor.GamePieceAttackVisualChecks, Assembly-CSharp-Editor", true).GetMethod("State").Invoke(null, null));
+                RegisterCommand("RevGame/棋子差异化规则检查", "独立服务验证九棋种真实伤害与范围；请在大厅调用以隔离棋盘表现事件", args =>
+                {
+                    GameFlow flow = RevServices.GetRequired<GameFlow>();
+                    if (flow.IsTransitioning || flow.Screen != GameScreen.Home)
+                    {
+                        throw new RevGMUsageException("请在大厅且场景交接完成后执行规则检查");
+                    }
+                    return BattleService.VerifyPieceAttackRules((ok, message) =>
+                    {
+                        if (!ok)
+                        {
+                            throw new InvalidOperationException(message);
+                        }
+                    });
+                });
                 RegisterCommand("RevGame/Boss技能扩展测试开始", "隔离Play通过真实Boss技能入口验证每章四个专属及三层特效，自动截图并回首页", args =>
                     (string)Type.GetType("RevGame.Editor.GameBossSkillExpansionPlayChecks, Assembly-CSharp-Editor", true).GetMethod("Begin").Invoke(null, null));
                 RegisterCommand("RevGame/Boss技能扩展测试状态", "只读六章技能Play断言与证据进度", args =>
