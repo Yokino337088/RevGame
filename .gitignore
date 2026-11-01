@@ -13,7 +13,12 @@
 [Bb]uild/
 [Bb]uilds/
 [Ll]ogs/
-[Uu]ser[Ss]ettings/
+# Unity 的个人状态（窗口布局、搜索索引等）不入库。
+# 带斜杠的规则会被锚定到仓库根，所以要加 **/ 才能匹配任意层级的 UserSettings。
+**/[Uu]ser[Ss]ettings/*
+# 例外：导表来源属于工程配置，不是个人状态。存的是相对工程根目录的路径，
+# 换机器直接可用；不入库的话新机器导表会没有来源。
+!**/[Uu]ser[Ss]ettings/RevExcelTool.asset
 [Mm]emoryCaptures/
 [Rr]ecordings/
 ExportedObj/
