@@ -52,10 +52,10 @@ namespace RevGame.Editor
                 camera.tag = "MainCamera";
                 Camera c = camera.GetComponent<Camera>();
                 c.orthographic = true;
-                c.orthographicSize = 7.2f;
+                c.orthographicSize = 6.4f;
                 c.clearFlags = CameraClearFlags.SolidColor;
                 c.backgroundColor = new Color(0.01f, 0.02f, 0.05f);
-                camera.transform.position = new Vector3(3.2f, 4, -10);
+                camera.transform.position = new Vector3(4, 4, -10);
                 EditorSceneManager.SaveScene(scene, "Assets/Scenes/EndlessScene.unity");
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
                 if (!scenes.Exists(s => s.path == "Assets/Scenes/EndlessScene.unity"))
@@ -111,7 +111,7 @@ namespace RevGame.Editor
                 var arena = new SerializedObject(root.GetComponent<EndlessArena>());
                 string[] configs = AssetDatabase.FindAssets("t:PieceArtConfig");
                 arena.FindProperty("art").objectReferenceValue = AssetDatabase.LoadAssetAtPath<PieceArtConfig>(AssetDatabase.GUIDToAssetPath(configs[0]));
-                arena.FindProperty("backgroundRenderer").objectReferenceValue = Quad(root.transform, "古希腊神殿", TempleBackground(), new Vector3(3.2f, 4, 5), new Vector3(25.6f, 14.4f, 1));
+                arena.FindProperty("backgroundRenderer").objectReferenceValue = Quad(root.transform, "古希腊神殿", TempleBackground(), new Vector3(4, 4, 5), new Vector3(25.6f, 14.4f, 1));
                 arena.FindProperty("gridRenderer").objectReferenceValue = Quad(root.transform, "象牙金圣坛棋盘", Material("EndlessGrid", "RevGame/Endless/StarGrid"), new Vector3(4, 4, 2), new Vector3(9, 9, 1));
                 arena.FindProperty("hordeRenderer").objectReferenceValue = Quad(root.transform, "外围敌潮批次", Material("EndlessHorde", "RevGame/Endless/Horde"), Vector3.zero, Vector3.one);
                 arena.FindProperty("effectRenderer").objectReferenceValue = Quad(root.transform, "攻击脉冲批次", Material("EndlessImpact", "RevGame/Endless/Impact"), Vector3.zero, Vector3.one);
@@ -155,10 +155,12 @@ namespace RevGame.Editor
         {
             GameObject go = Panel(name, parent, x0, y0, x1, y1);
             Image image = go.GetComponent<Image>();
-            ApplyTempleImage(image, name, true);
             Button button = go.AddComponent<Button>();
             button.targetGraphic = image;
-            Label("label", go.transform, text, 0.03f, 0.04f, 0.97f, 0.96f, size);
+            if (text.Length > 0)
+            {
+                Label("label", go.transform, text, 0.06f, 0.06f, 0.94f, 0.94f, size);
+            }
         }
         private static GameObject Root(string name, Type component)
         {
@@ -166,59 +168,49 @@ namespace RevGame.Editor
             ((RectTransform)go.transform).sizeDelta = new Vector2(1920, 1080);
             return go;
         }
+        /// <summary>
+        /// 战斗 HUD。节点越少越好：常驻的只有顶部血条、暂停、等级、手牌。
+        /// 按钮都做得足够大（手机上手指能点准），两侧留给棋盘外的敌潮，不放任何面板。
+        /// </summary>
         private static void BuildHud()
         {
             GameObject root = Root("EndlessHudPanel", typeof(EndlessHudPanel));
             try
             {
-                Transform top = Panel("top", root.transform, 0, .92f, 1, 1).transform;
-                Label("status", top, "棋阵幸存者", .02f, 0, .86f, 1, 28);
-                Transform track = Panel("heartTrack", top, .03f, .02f, .84f, .075f).transform;
-                Panel("heartFill", track, 0, 0, 1, 1);
-                Button("pause", top, "暂停", .88f, .15f, .98f, .85f);
-                Transform left = Panel("left", root.transform, .01f, .16f, .19f, .9f).transform;
-                Label("build", left, "构筑档案", .05f, .25f, .95f, .97f, 19).alignment = TextAnchor.UpperLeft;
-                string[] routeNames =
-                {
-                    "弩雨配方", "炎爆配方", "守眼配方", "雷链配方", "寒潮配方", "连气配方"
-                };
-                for (int i = 0; i < routeNames.Length; i++)
-                {
-                    float x = .04f + (i % 2) * .48f, y = .02f + (2 - i / 2) * .073f;
-                    Button("route" + i, left, routeNames[i], x, y, x + .44f, y + .062f, 19);
-                }
-                Transform right = Panel("right", root.transform, .82f, .16f, .99f, .9f).transform;
-                Label("info", right, "敌潮导演", .05f, .60f, .95f, .98f, 19);
-                string[] actions =
-                {
-                    "start", "rearrange", "merge", "evolve", "disassemble", "exchange", "effects", "flash", "shake"
-                };
-                string[] titles =
-                {
-                    "完成布阵 · 迎战", "本分钟改阵", "选中主力 · 三合一", "满足配方 · 进化", "分解选中手牌", "兑换选中棋同名牌", "切换特效强度", "开关攻击闪光", "开关受击震动"
-                };
-                for (int i = 0; i < actions.Length; i++)
-                {
-                    float y = .53f - i * .06f;
-                    Button(actions[i], right, titles[i], .05f, y, .95f, y + .055f, 18);
-                }
-                Transform bottom = Panel("bottom", root.transform, .01f, .01f, .99f, .14f).transform;
-                Label("experience", bottom, "经验", .01f, .67f, .99f, .98f, 23);
+                Transform top = Panel("top", root.transform, .28f, .905f, .72f, .995f).transform;
+                Label("status", top, "棋心", .05f, .42f, .95f, .94f, 30);
+                Transform heart = Panel("heartTrack", top, .08f, .12f, .92f, .44f).transform;
+                Panel("heartFill", heart, 0, 0, 1, 1);
+                Button("pause", root.transform, "", .925f, .885f, .985f, .99f);
+                // 领主血条放在左侧空白区、提示框上方：不遮挡棋盘，也不和顶栏抢位置。
+                Transform boss = Rect("boss", root.transform, .015f, .7f, .2f, .8f).transform;
+                Transform bossTrack = Panel("bossTrack", boss, 0, 0, 1, .4f).transform;
+                Panel("bossFill", bossTrack, 0, 0, 1, 1).GetComponent<Image>().color = new Color(1f, .42f, .3f);
+                Label("name", boss, "领主", 0, .42f, 1, 1, 28);
+                Transform tip = Panel("tip", root.transform, .015f, .42f, .2f, .68f).transform;
+                Label("text", tip, "", .08f, .08f, .92f, .92f, 28);
+                Transform level = Panel("level", root.transform, .015f, .025f, .135f, .125f).transform;
+                Label("label", level, "Lv 1", .05f, .05f, .95f, .95f, 34);
+                Transform bottom = Rect("bottom", root.transform, 0, 0, 1, .17f).transform;
+                Transform xp = Panel("xpTrack", bottom, .15f, .84f, .85f, .98f).transform;
+                Panel("xpFill", xp, 0, 0, 1, 1);
                 for (int i = 0; i < 6; i++)
                 {
-                    Button("card" + i, bottom, "手牌", .01f + i * .164f, .08f, .16f + i * .164f, .62f);
+                    GameObject card = Panel("card" + i, bottom, .15f + i * .118f, .05f, .259f + i * .118f, .8f);
+                    UnityEngine.UI.Button button = card.AddComponent<UnityEngine.UI.Button>();
+                    button.targetGraphic = card.GetComponent<Image>();
+                    Panel("icon", card.transform, .12f, .3f, .88f, .96f).GetComponent<Image>().raycastTarget = false;
+                    Label("label", card.transform, "手牌", .02f, .02f, .98f, .32f, 24);
                 }
-                Transform modal = Panel("modal", root.transform, .2f, .23f, .81f, .83f).transform;
-                Label("title", modal, "升级选择", .04f, .66f, .96f, .97f, 26);
+                Button("start", root.transform, "开战", .855f, .02f, .99f, .14f, 40);
+                // 弹窗比例贴近 UI_Pvp_imgBK 原图（1013x571），中间的木纹才不会被拉花。
+                Transform modal = Panel("modal", root.transform, .17f, .14f, .83f, .86f).transform;
+                Label("title", modal, "升级！选一个", .1f, .7f, .9f, .92f, 38);
                 for (int i = 0; i < 3; i++)
                 {
-                    Button("choice" + i, modal, "选择", .03f + i * .325f, .24f, .32f + i * .325f, .64f, 24);
-                    Button("banish" + i, modal, "放逐此项", .05f + i * .325f, .12f, .30f + i * .325f, .21f, 18);
+                    Button("choice" + i, modal, "选择", .09f + i * .28f, .2f, .35f + i * .28f, .68f, 28);
                 }
-                Button("reroll", modal, "免费重抽", .35f, .015f, .65f, .095f, 20);
-                Button("detailClose", modal, "关闭配方", .35f, .015f, .65f, .095f, 20);
-                Button("breakthrough", modal, "切换突破印", .07f, .08f, .45f, .2f, 20);
-                Button("affix", modal, "切换侵袭词条", .55f, .08f, .93f, .2f, 20);
+                Button("reroll", modal, "换一批", .38f, .05f, .62f, .17f, 28);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab");
             }
             finally
@@ -226,30 +218,30 @@ namespace RevGame.Editor
                 UnityEngine.Object.DestroyImmediate(root);
             }
         }
+        /// <summary>入口：选棋阵、开始。其余一律不放。</summary>
         private static void BuildEntry()
         {
             GameObject root = Root("EndlessEntryPanel", typeof(EndlessEntryPanel));
             try
             {
-                // 底层铺神殿原画（RawImage 不走图集，和战斗背景共用同一张图），上层是藤蔓框面板。
+                // 底层铺神殿原画（RawImage 不走图集，和战斗背景共用同一张图）。
                 RawImage temple = Rect("templeArt", root.transform, 0, 0, 1, 1).AddComponent<RawImage>();
                 temple.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(TempleTexture);
                 temple.raycastTarget = true;
-                Panel("entry", root.transform, .1f, .03f, .9f, .97f);
-                Label("title", root.transform, "无尽圣坛\nENDLESS · 守住棋心，长成自己的流派", .1f, .77f, .9f, .94f, 36);
-                Label("description", root.transform, "", .15f, .34f, .85f, .75f, 30);
+                Panel("entry", root.transform, .16f, .1f, .84f, .9f);
+                Label("title", root.transform, "无尽圣坛", .2f, .74f, .8f, .85f, 56);
+                Label("best", root.transform, "", .2f, .68f, .8f, .74f, 28);
+                string[] names =
+                {
+                    "弩雨\n远程穿透", "炎环\n燃烧爆炸", "守眼\n稳扎稳打"
+                };
                 for (int i = 0; i < 3; i++)
                 {
-                    string[] names =
-                    {
-                        "弩雨棋阵", "炎环棋阵", "守眼棋阵"
-                    };
-                    Button("formation" + i, root.transform, names[i], .15f + i * .24f, .25f, .36f + i * .24f, .33f, 26);
+                    Button("formation" + i, root.transform, names[i], .235f + i * .18f, .36f, .405f + i * .18f, .66f, 34);
                 }
-                Button("difficulty", root.transform, "切换难度 / 每日", .15f, .15f, .36f, .23f);
-                Button("start", root.transform, "开启新局", .39f, .15f, .6f, .23f, 26);
-                Button("resume", root.transform, "继续本局", .63f, .15f, .84f, .23f, 26);
-                Button("close", root.transform, "返回大厅", .39f, .04f, .6f, .12f);
+                Button("start", root.transform, "开始", .38f, .17f, .62f, .32f, 44);
+                Button("resume", root.transform, "继续上局", .635f, .185f, .79f, .305f, 28);
+                Button("close", root.transform, "", .775f, .78f, .825f, .87f);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Panel/Endless/EndlessEntryPanel.prefab");
             }
             finally

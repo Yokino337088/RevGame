@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3042309675
+CRC: 2488822724
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -232,8 +232,9 @@ AssetBundleManifest:
       Name: ui_endless
       Dependencies:
         Dependency_0: font_cjk
-        Dependency_1: endless_arena
-        Dependency_2: atlas_uiendless
+        Dependency_1: atlas_uibattle
+        Dependency_2: atlas_uimenus
+        Dependency_3: endless_arena
     Info_61:
       Name: ui_chapters_shared
       Dependencies:
@@ -251,6 +252,3 @@ AssetBundleManifest:
         Dependency_2: material_background
         Dependency_3: atlas_uibattle
         Dependency_4: atlas_uimenus
-    Info_63:
-      Name: atlas_uiendless
-      Dependencies: {}

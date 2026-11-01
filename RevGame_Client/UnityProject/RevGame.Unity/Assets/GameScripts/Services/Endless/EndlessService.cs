@@ -228,14 +228,23 @@ namespace RevGame.Endless
         }
         public bool ClickCell(int x, int y)
         {
-            if (!CanArrange())
-            {
-                return Reject("请先整备或开启本分钟改阵");
-            }
             var pos = new BoardPos(x, y);
             if (!pos.IsInside(9))
             {
                 return Reject("落点超出棋盘");
+            }
+            // 战斗中点自己的棋子，就直接进入慢动作改阵，不需要额外的按钮。每分钟一次的限制仍由 Rearrange 把关。
+            if (Run.phase == EndlessPhase.Fighting && Run.slowLeft <= 0)
+            {
+                Piece tapped = Board.GetPiece(pos);
+                if (tapped != null && tapped.Side == GameSide.Player && !Rearrange())
+                {
+                    return false;
+                }
+            }
+            if (!CanArrange())
+            {
+                return Reject("点自己的棋子可以调整站位");
             }
             if (Run.selectedCard >= 0)
             {
@@ -278,7 +287,7 @@ namespace RevGame.Endless
         {
             if (index >= Run.hand.Count || PlayerCount() >= N("PlayerLimit") || Occupied(GameSide.Player) + 1 > N("PlayerCells"))
             {
-                return Reject("主力或占地已满，可先合星或分解");
+                return Reject("棋盘放满了，把牌放到同名棋子上可以升星");
             }
             if (!Fits(pos, 1, GameSide.Player))
             {
@@ -289,7 +298,37 @@ namespace RevGame.Endless
             Run.hand.RemoveAt(index);
             Run.selectedCard = -1;
             RefreshRules();
+            AutoMerge();
             return true;
+        }
+        /// <summary>
+        /// 自动三合一：场上凑齐三枚同名同星就自动升星，玩家不用找按钮。
+        /// 合完可能又凑齐高一星的三枚，所以循环到没有可合的为止。
+        /// 放不下等合不了的情况不算错误，不提示玩家，也不消耗棋子。
+        /// </summary>
+        private void AutoMerge()
+        {
+            string error = LastError;
+            bool merged = true;
+            while (merged)
+            {
+                merged = false;
+                for (int i = 0; i < Units.Count; i++)
+                {
+                    if (Units[i].Piece.Side != GameSide.Player)
+                    {
+                        continue;
+                    }
+                    Run.selectedUnit = Units[i].Piece.Id;
+                    if (MergeSelected())
+                    {
+                        merged = true;
+                        break;
+                    }
+                }
+            }
+            Run.selectedUnit = -1;
+            LastError = error;
         }
         private EndlessUnit Find(int id)
         {

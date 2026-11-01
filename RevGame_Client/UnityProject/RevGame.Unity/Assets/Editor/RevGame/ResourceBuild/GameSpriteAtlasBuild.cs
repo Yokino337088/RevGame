@@ -179,10 +179,6 @@ namespace RevGame.Editor
             {
                 return "BoardStatus";
             }
-            if (path.Contains("/Art/UI/Endless/"))
-            {
-                return "UIEndless";
-            }
             if (path.Contains("/Art/UI/"))
             {
                 string name = Path.GetFileNameWithoutExtension(path);

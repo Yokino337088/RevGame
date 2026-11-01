@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2068930513
+CRC: 635874417
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3c1163576b497995cb1da10e0ecdb99d
+    Hash: 2f9440c9f71712dc69ab2d25c2648b1d
   TypeTreeHash:
     serializedVersion: 2
     Hash: f74e90010a2d9a63ee1956abb9c14c33
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3c1163576b497995cb1da10e0ecdb99d
+    Hash: 2f9440c9f71712dc69ab2d25c2648b1d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -61,6 +61,7 @@ Assets:
 - Assets/GameRes/UI/Panel/Endless/EndlessEntryPanel.prefab
 - Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiendless"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/endless_arena"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"

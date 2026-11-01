@@ -38,6 +38,14 @@ namespace RevGame.Endless
         /// <summary>预警期间格子保持的亮度，比命中闪光暗，避免遮挡棋子。</summary>
         private const float CellWarnLevel = .55f;
 
+        /// <summary>无尽棋盘每格 1 个世界单位。</summary>
+        private const float FxCellSize = 1f;
+        /// <summary>
+        /// 特效的棋盘原点，也就是第 0 格的左下角。
+        /// 特效用 原点 + (格号 + 0.5) * 格宽 算格子中心；无尽棋盘第 N 格的中心就在坐标 N，
+        /// 棋盘左下角是 -0.5。这里写 0 的话，所有特效都会往右上偏半格，落在格线交点上。
+        /// </summary>
+        private const float FxBoardOrigin = -.5f;
         private static readonly int CellFxId = Shader.PropertyToID("_CellFx");
         private static readonly int SkillTintId = Shader.PropertyToID("_SkillTint");
         private static readonly int ShockId = Shader.PropertyToID("_Shock");
@@ -156,8 +164,7 @@ namespace RevGame.Endless
                     return;
                 }
                 _bossFx.Add(fx);
-                // 无尽棋盘的格子是 1 个世界单位、原点在 0，和六章不同，所以显式传入坐标系。
-                fx.Play(info, telegraph, OnSkillFxFinished, 1f, 0f);
+                fx.Play(info, telegraph, OnSkillFxFinished, FxCellSize, FxBoardOrigin);
             }, transform);
         }
 

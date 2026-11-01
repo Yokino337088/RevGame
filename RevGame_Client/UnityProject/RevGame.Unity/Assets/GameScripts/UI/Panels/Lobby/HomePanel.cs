@@ -47,7 +47,7 @@ namespace RevGame.UI
         private async void OnEndless()
         {
             // Entry首次打开前等待真实图集像素，避免AB冷启动出现白膜。
-            await RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIEndless" });
+            await RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus" });
             await RevUI.OpenAsync<RevGame.Endless.EndlessEntryPanel>();
         }
 

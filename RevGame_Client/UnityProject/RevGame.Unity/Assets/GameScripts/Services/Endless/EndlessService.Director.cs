@@ -23,6 +23,22 @@ namespace RevGame.Endless
                 MaxTickMilliseconds = Math.Max(MaxTickMilliseconds, ms);
             }
         }
+        /// <summary>配方（满级主祝福 + 对应辅印 + 核心）一凑齐就自动进化，这是爽点，不应该藏在按钮后面。</summary>
+        private void AutoEvolve()
+        {
+            if (Run.cores <= 0)
+            {
+                return;
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                if (Run.mains[i] >= N("MainMax") && Run.seals[i] > 0 && !Run.evolved[i])
+                {
+                    Evolve(i);
+                    return;
+                }
+            }
+        }
         private void TickCore(float realStep)
         {
             if (Run == null || Run.phase == EndlessPhase.Result)
@@ -60,6 +76,7 @@ namespace RevGame.Endless
             ResolveDeaths();
             RefreshRules();
             UpdateRisk();
+            AutoEvolve();
             if (Run.heart <= 0)
             {
                 Finish();

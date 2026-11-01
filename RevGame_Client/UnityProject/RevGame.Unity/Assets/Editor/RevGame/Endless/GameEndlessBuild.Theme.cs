@@ -9,61 +9,56 @@ namespace RevGame.Editor
     /// <summary>
     /// 无尽模式的 UI 美术配方（新手先读这段）。
     ///
-    /// 【规矩】UI 预制体绝对不能出现白膜：每个 Image 都必须有 Sprite，并使用九宫格（Sliced）。
-    /// 九宫格的意思是把图切成 9 块：四个角不缩放、四条边单向拉伸、中间双向拉伸，
-    /// 这样同一张小图能撑满任意大小的面板，边框也不会变形。切割线就是 spriteBorder。
+    /// 【规矩】UI 预制体绝对不能出现白膜：每个 Image 都必须有 Sprite。
+    /// 面板、按钮、血条用九宫格（Sliced）：图被切成 9 块，四个角不缩放，边和中间才拉伸，
+    /// 所以同一张图能撑满不同尺寸，边框也不变形。切割线就是 spriteBorder。
+    /// 图标（齿轮、关闭叉、棋子头像）不需要拉伸，用 Simple 并保持比例。
     ///
-    /// 【差异化】不同用途用不同的图，而不是一张图改颜色，玩家一眼能分清主次：
-    /// 面板/弹窗/按钮/手牌/血条各有自己的图。
+    /// 【素材来源】全部用项目 Art/UI 里的原图，它们已经属于 UIBattle / UIMenus 图集，
+    /// 不再单独裁一份，这样无尽和六章风格一致，也不会多占一张图集。
     /// </summary>
     public static partial class GameEndlessBuild
     {
-        /// <summary>无尽 UI 素材目录。放在这里的图会被 GameSpriteAtlasBuild 打进 UIEndless 图集。</summary>
-        private const string TempleArt = "Assets/GameRes/Art/UI/Endless/";
+        /// <summary>项目 UI 原图目录。</summary>
+        private const string TempleArt = "Assets/GameRes/Art/UI/";
         /// <summary>神殿背景原图。它走材质采样，不进 Sprite 图集，所以单独配置。</summary>
         private const string TempleTexture = "Assets/GameRes/ChapterBackground/EndlessTemple.png";
 
-        /// <summary>每张图的九宫格切割线（左、下、右、上，单位像素），和 tools/make-endless-ui.py 的裁剪一一对应。</summary>
+        /// <summary>需要补九宫格切割线的原图（左、下、右、上，单位像素）。已有正确切割线的图不在这里。</summary>
         private static readonly Dictionary<string, Vector4> Borders = new Dictionary<string, Vector4>
         {
-            { "EndlessFrame", new Vector4(54, 54, 54, 54) },
-            { "EndlessVine", new Vector4(110, 100, 110, 100) },
-            { "EndlessBar", new Vector4(48, 26, 48, 26) },
-            { "EndlessButton", new Vector4(44, 44, 44, 44) },
-            { "EndlessPrimary", new Vector4(44, 40, 44, 40) },
-            { "EndlessField", new Vector4(12, 12, 12, 12) },
-            { "EndlessCard", new Vector4(24, 24, 24, 24) },
-            { "EndlessTrack", new Vector4(30, 6, 30, 6) },
-            { "EndlessFill", new Vector4(20, 4, 20, 4) },
+            // 藤蔓都在四角和上边，切割线要把藤蔓整个留在“不拉伸”的角里。
+            { "UI_Pvp_imgBK", new Vector4(130, 95, 130, 95) },
+            { "UI_Game_imgMobilityBK", new Vector4(26, 0, 26, 0) },
+            { "UI_Game_imgEnemyMobility", new Vector4(26, 0, 26, 0) },
         };
 
         /// <summary>
-        /// 设置 Sprite 的导入参数。FullRect 让网格保持完整矩形，九宫格拉伸才正确；
-        /// 关掉 Mipmap 和 Readable，UI 用不到，开着只会白占内存。
+        /// 设置 Sprite 的切割线。这些图也被六章面板使用，但那些 Image 是 Simple 模式，
+        /// 切割线只对 Sliced 生效，所以不会影响六章的显示。
+        /// FullRect 让网格保持完整矩形，九宫格拉伸才正确。
         /// </summary>
         private static void ConfigureTempleArt()
         {
             foreach (KeyValuePair<string, Vector4> pair in Borders)
             {
                 string path = TempleArt + pair.Key + ".png";
-                AssetDatabase.ImportAsset(path);
                 var importer = AssetImporter.GetAtPath(path) as TextureImporter;
                 if (importer == null)
                 {
-                    throw new InvalidOperationException("无尽UI原图缺失，请先运行 tools/make-endless-ui.py：" + path);
+                    throw new InvalidOperationException("无尽UI原图缺失：" + path);
                 }
-                importer.textureType = TextureImporterType.Sprite;
-                importer.spriteImportMode = SpriteImportMode.Single;
-                importer.spriteBorder = pair.Value;
-                importer.spritePixelsPerUnit = 100;
-                importer.mipmapEnabled = false;
-                importer.isReadable = false;
-                importer.alphaIsTransparency = true;
                 var settings = new TextureImporterSettings();
                 importer.ReadTextureSettings(settings);
-                settings.spriteMeshType = SpriteMeshType.FullRect;
-                importer.SetTextureSettings(settings);
-                importer.SaveAndReimport();
+                if (settings.spriteBorder != pair.Value || settings.spriteMeshType != SpriteMeshType.FullRect)
+                {
+                    // 切割线要写在 settings 上再整体写回：先改 importer.spriteBorder 再 SetTextureSettings，
+                    // 会被 settings 里的旧值（0）覆盖掉，meta 里看起来就像从没设置过。
+                    settings.spriteBorder = pair.Value;
+                    settings.spriteMeshType = SpriteMeshType.FullRect;
+                    importer.SetTextureSettings(settings);
+                    importer.SaveAndReimport();
+                }
             }
             var background = (TextureImporter)AssetImporter.GetAtPath(TempleTexture);
             background.textureType = TextureImporterType.Default;
@@ -76,66 +71,60 @@ namespace RevGame.Editor
             background.SaveAndReimport();
         }
 
-        /// <summary>按节点名字决定用哪张图。名字约定写在这一处，生成器其余代码不用关心美术。</summary>
-        private static string SpriteFor(string name, bool button)
+        /// <summary>图标类节点：不拉伸，保持原比例。</summary>
+        private static bool IsIcon(string name)
         {
-            if (name == "heartTrack")
+            return name == "pause" || name == "close" || name == "icon";
+        }
+
+        /// <summary>按节点名字决定用哪张图。名字约定写在这一处，生成器其余代码不用关心美术。</summary>
+        private static string SpriteFor(string name)
+        {
+            switch (name)
             {
-                return "EndlessTrack";
+                case "pause": return "UI_Pvp_btnSetting";
+                case "close": return "UI_Buy_btnClose";
+                case "icon": return "UI_Setting_Background";
+                case "modal": case "entry": return "UI_Pvp_imgBK";
+                case "tip": return "UI_Settlement_imgBK";
+                case "heartTrack": case "bossTrack": case "xpTrack": return "UI_Game_imgMobilityBK";
+                case "heartFill": case "bossFill": case "xpFill": return "UI_Game_imgEnemyMobility";
+                case "start": return "UI_Tavern_Checkmark";
+                case "resume": case "reroll": return "UI_Tavern_btnClose";
             }
-            if (name == "heartFill")
+            if (name.StartsWith("card", StringComparison.Ordinal))
             {
-                return "EndlessFill";
+                return "UI_roleItem_imgBK";
             }
-            if (name == "top" || name == "bottom")
+            if (name.StartsWith("choice", StringComparison.Ordinal) || name.StartsWith("formation", StringComparison.Ordinal))
             {
-                return "EndlessBar";
+                return "UI_roleItem_roleItem";
             }
-            if (name == "modal" || name == "entry")
-            {
-                return "EndlessVine";
-            }
-            if (name.StartsWith("card", StringComparison.Ordinal) || name.StartsWith("choice", StringComparison.Ordinal)
-                || name.StartsWith("formation", StringComparison.Ordinal))
-            {
-                return "EndlessCard";
-            }
-            if (!button)
-            {
-                return "EndlessFrame";
-            }
-            if (name == "start" || name == "resume" || name == "btnEndless")
-            {
-                return "EndlessPrimary";
-            }
-            if (name.StartsWith("route", StringComparison.Ordinal) || name.StartsWith("banish", StringComparison.Ordinal)
-                || name == "effects" || name == "flash" || name == "shake")
-            {
-                return "EndlessField";
-            }
-            return "EndlessButton";
+            return "UI_Tavern_Background";
         }
 
         /// <summary>给 Image 配图。找不到图或没配切割线就直接报错，绝不退回白膜。</summary>
-        private static void ApplyTempleImage(Image image, string name, bool button = false)
+        private static void ApplyTempleImage(Image image, string name)
         {
-            string spriteName = SpriteFor(name, button);
+            string spriteName = SpriteFor(name);
             image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(TempleArt + spriteName + ".png");
-            if (image.sprite == null || image.sprite.border == Vector4.zero)
+            if (image.sprite == null)
             {
-                throw new InvalidOperationException("无尽UI缺图或九宫格边界：" + spriteName);
+                throw new InvalidOperationException("无尽UI缺图：" + spriteName);
+            }
+            image.color = Color.white;
+            if (IsIcon(name))
+            {
+                image.type = Image.Type.Simple;
+                image.preserveAspect = true;
+                return;
+            }
+            // 血条这类细长图只切左右（上下为 0）也算有效切割，所以只要求至少有一条切割线。
+            if (image.sprite.border == Vector4.zero)
+            {
+                throw new InvalidOperationException("无尽UI缺九宫格切割线：" + spriteName);
             }
             image.type = Image.Type.Sliced;
-            image.color = Color.white;
-            // 染色只做色相提示：主操作偏金，设置类偏淡紫。原图已经区分主次，这里不再改变明暗结构。
-            if (spriteName == "EndlessPrimary")
-            {
-                image.color = new Color(1f, .90f, .58f);
-            }
-            else if (name == "effects" || name == "flash" || name == "shake")
-            {
-                image.color = new Color(.92f, .86f, .98f);
-            }
         }
 
         /// <summary>
@@ -154,7 +143,7 @@ namespace RevGame.Editor
                     {
                         throw new InvalidOperationException("无尽UI出现白膜：" + path + " / " + image.name);
                     }
-                    if (image.type != Image.Type.Sliced || image.sprite.border == Vector4.zero)
+                    if (!IsIcon(image.name) && (image.type != Image.Type.Sliced || image.sprite.border == Vector4.zero))
                     {
                         throw new InvalidOperationException("无尽UI未使用九宫格：" + path + " / " + image.name);
                     }

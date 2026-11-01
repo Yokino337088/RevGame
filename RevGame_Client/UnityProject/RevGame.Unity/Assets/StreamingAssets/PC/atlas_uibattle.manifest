@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3726785784
+CRC: 3045880477
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: f788c58275cf5826badeac95ff3047d7
+    Hash: eefdf0f1893bc9a239be0d571406cd4c
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: f788c58275cf5826badeac95ff3047d7
+    Hash: eefdf0f1893bc9a239be0d571406cd4c
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -28,4 +28,5 @@ Assets:
 - Assets/GameRes/Art/UI/UI_roleItem_imgBK.png
 - Assets/GameRes/Atlases/UIBattle.spriteatlasv2
 - Assets/GameRes/Art/UI/UI_Setting_Checkmark.png
+- Assets/GameRes/Art/UI/UI_Pvp_btnSetting.png
 Dependencies: []

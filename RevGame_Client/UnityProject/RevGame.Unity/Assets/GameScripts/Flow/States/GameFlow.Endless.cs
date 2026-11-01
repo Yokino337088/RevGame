@@ -40,7 +40,7 @@ namespace RevGame.Flow
                 ThrowIfDisposed();
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[]
                 {
-                    "PieceFrames", "BoardStatus", "CombatFrames", "UIEndless"
+                    "PieceFrames", "BoardStatus", "CombatFrames", "UIBattle", "UIMenus"
                 }
                 );
                 ThrowIfDisposed();

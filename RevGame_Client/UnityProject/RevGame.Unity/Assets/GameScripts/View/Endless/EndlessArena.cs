@@ -89,6 +89,12 @@ namespace RevGame.Endless
             }
             RefreshAtlas();
         }
+        /// <summary>手牌上显示的棋子头像。用棋子待机第一帧，它所在的图集进局时已经加载好。</summary>
+        public Sprite PieceIcon(PieceKind kind)
+        {
+            Sprite[] frames = art.Find(kind, StarTier.One, GameSide.Player).idleFrames;
+            return frames != null && frames.Length > 0 ? frames[0] : null;
+        }
         private static Mesh CreateMesh(int count, out Vector3[] vertices, out Vector2[] uv, out Color[] colors)
         {
             vertices = new Vector3[count * 4];
@@ -164,11 +170,9 @@ namespace RevGame.Endless
             BindBossArt(service, boss);
             _gridProperties.SetVector(ShockId, _shock);
             _gridProperties.SetFloat("_Clock", run.seconds);
-            _gridProperties.SetFloat("_WarningLine", boss != null && boss.WarningAt > 0 ? boss.WarningLine : -10);
             _gridProperties.SetFloat("_Theme", run.circuit % 4);
             _gridProperties.SetFloat("_Heart", run.heart / EndlessConfig.Value("HeartHp"));
             _gridProperties.SetVector("_GateWarning", new Vector4(run.gateWarnings[0] > 0 ? 1 : 0, run.gateWarnings[1] > 0 ? 1 : 0, run.gateWarnings[2] > 0 ? 1 : 0, run.gateWarnings[3] > 0 ? 1 : 0));
-            _gridProperties.SetFloat("_WarningMode", boss == null ? -1 : boss.BossTemplate);
             Vector4 breaker = new Vector4(-10, -10, 0, 0);
             for (int i = 0; i < service.Units.Count; i++)
             {
@@ -190,8 +194,9 @@ namespace RevGame.Endless
             if (_camera != null)
             {
                 _camera.orthographic = true;
-                _camera.orthographicSize = Mathf.Max(7.2f, 11f / Mathf.Max(0.5f, _camera.aspect));
-                _camera.transform.position = new Vector3(3.2f + _shakeOffset, 4, -10);
+                // 棋盘放在屏幕正中并尽量放大；窄屏时再拉远，保证两侧的敌潮看得见。
+                _camera.orthographicSize = Mathf.Max(6.4f, 11f / Mathf.Max(0.5f, _camera.aspect));
+                _camera.transform.position = new Vector3(4 + _shakeOffset, 4, -10);
                 // 原画等比覆盖相机；宽屏裁上下、窄屏裁左右，建筑不会被拉伸。
                 float height = Mathf.Max(_camera.orthographicSize * 2, _camera.orthographicSize * 2 * _camera.aspect / (16f / 9f));
                 backgroundRenderer.transform.localScale = new Vector3(height * (16f / 9f), height, 1);
