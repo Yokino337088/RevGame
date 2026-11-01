@@ -18,13 +18,14 @@ namespace RevGame.Editor
         // 配置由团队入库，下一次新增同类资源会自动继承所在目录的分包，不需要每个文件重新打标。
         private static readonly string[,] Groups =
         {
-            { "UI/Panel", "ui_panels" }, { "UI/Item", "ui_items" },
+            { "UI/Panel", "ui_chapters_shared" }, { "UI/Item", "ui_items" },
             // 过场只依赖字体/程序星雾；单独分包，不能为显示加载条先拉入所有战斗界面的依赖。
             { "UI/Panel/Loading", "ui_loading" },
             { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
             { "UI/Panel/Settings", "ui_settings" },
             { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },
+            { "UI/Panel/Endless", "ui_endless" }, { "Endless", "endless_arena" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
@@ -119,6 +120,11 @@ namespace RevGame.Editor
                         desired[path] = "background_chapter05_ice";
                         continue;
                     }
+                    if (path.EndsWith("/EndlessTemple.png", StringComparison.Ordinal))
+                    {
+                        desired[path] = "endless_arena";
+                        continue;
+                    }
                     string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
                     desired[path] = bundle;
                     string materialPath = "Assets/GameRes/Material/Background/" + Path.GetFileNameWithoutExtension(path) + "_Material.mat";
@@ -132,6 +138,24 @@ namespace RevGame.Editor
                 }
             }
 
+            // 无尽 BGM 一首一个包：这样才能做到“快播完才加载下一首、切完就卸载上一首”。
+            // 如果打进同一个包，加载任意一首都会把三首一起装进内存，轮播就失去了意义。
+            foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/GameRes/Audio/Bgm/Endless" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                desired[path] = "audio_bgm_endless_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+            }
+            // 大厅独立于六章战斗UI；跨章节共享面板只保留一份，专属面板按章独立归包。
+            desired["Assets/GameRes/UI/Panel/HomePanel.prefab"] = "ui_lobby";
+            desired["Assets/GameRes/UI/Panel/LevelSelectPanel.prefab"] = "ui_lobby";
+            for (int chapter = 1; chapter <= 6; chapter++)
+            {
+                string folder = "Assets/GameRes/UI/Panel/Chapter" + chapter.ToString("D2");
+                if (AssetDatabase.IsValidFolder(folder))
+                {
+                    desired[folder] = "ui_chapter" + chapter.ToString("D2");
+                }
+            }
             // Shader仍按用户要求放在GameShader，而不是复制到每个材质目录。
             // 显式归入共享包后，依赖它的材质/预制体只引用一份编译结果，避免Shader再次隐式重复。
             foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Assets/GameShader" }))

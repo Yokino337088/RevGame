@@ -204,13 +204,20 @@ namespace RevGame.Flow
                     return;
                 }
                 // 战斗屏幕用自己的战斗域，首页和选关共用大厅域。
-                string domain = _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
+                string domain = _screen == GameScreen.Endless ? GameDomain.Endless : _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
                 //开启对应的域
                 _scope = RevScope.Enter(domain);
 
                 if (_scope == null || !_scope.IsOpen)
                 {
                     throw new InvalidOperationException("无法进入游戏域：" + domain);
+                }
+                if (_screen == GameScreen.Endless)
+                {
+                    if (RevLogic.Start<RevGame.Endless.EndlessLogic>() == null)
+                    {
+                        throw new InvalidOperationException("无法启动无尽逻辑");
+                    }
                 }
                 if (_screen == GameScreen.Battle)
                 {

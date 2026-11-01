@@ -19,5 +19,7 @@ namespace RevGame.Core
         public const string Battle = "RevGame.Battle";
         /// <summary>局外主界面与章节选择；离开时由流程统一关闭当前大厅域。</summary>
         public const string Lobby = "RevGame.Lobby";
+        /// <summary>无尽专用域，退出时统一关闭HUD与固定节拍Logic。</summary>
+        public const string Endless = "RevGame.Endless";
     }
 }

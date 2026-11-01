@@ -57,12 +57,12 @@ namespace RevGame.View
                     }
                     if (warning)
                     {
-                        Zone(Center(pos, 1), Consts.CellSize * .94f, 1f, tint, duration);
+                        Zone(Center(pos, 1), _cellSize * .94f, 1f, tint, duration);
                     }
                     else
                     {
                         int tile = Take(glow, (FxMode)(10 + theme), tint, .15f, GroundOrder + 1);
-                        Place(tile, Center(pos, 1), Consts.CellSize * 1.1f);
+                        Place(tile, Center(pos, 1), _cellSize * 1.1f);
                         TweenProgress(tile, 0f, 1f, duration);
                         _sequence.Insert(0f, _renderers[tile].transform.DOPunchScale(Vector3.one * .15f, .45f, 4));
                     }
@@ -80,7 +80,7 @@ namespace RevGame.View
             }
             float diameter = info.Kind == BossSkillKind.StarStorm ? (info.Index + 1) * 2f
                 : info.Kind == BossSkillKind.GlacialAegis ? Consts.BoardSize : def.Radius * 2f + 2f;
-            Place(core, center, diameter * Consts.CellSize);
+            Place(core, center, diameter * _cellSize);
             _sequence.Insert(0f, _renderers[core].transform.DORotate(new Vector3(0, 0, theme == 5 ? 45 : 160), duration, RotateMode.LocalAxisAdd));
             _sequence.Insert(0f, _renderers[core].transform.DOScale(_renderers[core].transform.localScale * (warning ? .8f : 1.25f), duration).SetEase(Ease.OutCubic));
             TweenProgress(core, warning ? .12f : 0f, warning ? .5f : 1f, duration);
@@ -96,7 +96,7 @@ namespace RevGame.View
             }
             if (!warning && info.Kind != BossSkillKind.BlackHole && info.Kind != BossSkillKind.SwampMaw)
             {
-                Shockwave(center, diameter * Consts.CellSize, tint, .8f);
+                Shockwave(center, diameter * _cellSize, tint, .8f);
             }
             return duration;
         }

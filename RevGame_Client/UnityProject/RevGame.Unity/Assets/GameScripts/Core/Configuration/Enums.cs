@@ -10,7 +10,9 @@ namespace RevGame.Core
         Home,
         LevelSelect,
         Battle,
-        Exit
+        Exit,
+        /// <summary>棋阵幸存者独立战斗，不复用六章回合与胜利条件。</summary>
+        Endless
     }
 
     /// <summary>

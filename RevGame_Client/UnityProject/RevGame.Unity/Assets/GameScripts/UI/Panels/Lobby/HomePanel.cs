@@ -42,6 +42,15 @@ namespace RevGame.UI
             RevServices.GetRequired<GameFlow>().OpenLevels();
         }
 
+        /// <summary>默认解锁的独立模式入口，不查询六章通关条件。</summary>
+        [RevButtonClick("btnEndless")]
+        private async void OnEndless()
+        {
+            // Entry首次打开前等待真实图集像素，避免AB冷启动出现白膜。
+            await RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIEndless" });
+            await RevUI.OpenAsync<RevGame.Endless.EndlessEntryPanel>();
+        }
+
         /// <summary>公平对战入口预留：只给未开放提示，不误进入单人章节。</summary>
         [RevButtonClick("btnPvP")]
         private void OnPvP()

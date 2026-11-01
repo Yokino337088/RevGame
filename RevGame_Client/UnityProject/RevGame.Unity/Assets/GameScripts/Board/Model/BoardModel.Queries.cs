@@ -274,7 +274,7 @@ namespace RevGame.Board
             {
                 if (_trial == null)
                 {
-                    _trial = new BoardModel(_size);
+                    _trial = new BoardModel(_size, source._objective);
                 }
                 source.TacticalSnapshotCopies++;
                 // 先撤销上一候选占格，再覆盖棋子，最后Evaluate；反过来会让旧眼身份或旧位置污染新评分。

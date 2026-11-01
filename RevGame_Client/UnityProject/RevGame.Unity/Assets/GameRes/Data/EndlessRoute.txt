@@ -1,0 +1,9 @@
+#EndlessRoute
+#Id	Name	Blessing	Seal	Evolution	Description	PieceKind
+#路线编号	流派	主祝福	辅印	进化名称	效果说明	参考外形
+0	弩雨	穿云弩	贯穿印	九路箭幕	直线穿透与击杀散射	Crossbow
+1	炎爆	灼心火	引燃印	焚棋燎原	炮架火弹、灼烧与两代爆炸	MageFire
+2	守眼	守眼脉冲	回响印	万象眼阵	驻眼脉冲与有限弩兵召唤	Priest
+3	雷链	跃雷	连气印	雷网封盘	不重复目标的邻近弹射	MageWater
+4	寒潮	寒息	碎晶印	霜潮崩解	冻结杂兵、碎冰与Boss有限减速	MageWater
+5	连气	回锋	护阵印	回天棋环	真实敌方伤害触发反击	Shield

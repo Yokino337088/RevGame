@@ -74,3 +74,9 @@
 ## 功能子目录（2026-10-30）
 
 同一层中不同演员/功能必须分目录：Battle/AI 按 Boss、Enemy、Helper、Player、Formation、Shared；Services/Battle/AI按角色，Diagnostics按Boss/Helper/Performance/Balance等用途；战斗UI按Hud/Boss/Preparation/Results，棋盘视图按Cells/Boss/Feedback/Helper/Magic。partial文件可按职责归档，类型与命名空间不随目录强制重命名。移动Unity资产必须连同原.meta保留GUID；生成目录与框架快照不随意搬迁。
+
+## UI素材约定（2026-11-01用户要求）
+
+- 新增和重制UI预制体必须使用项目已有UI图片，禁止无Sprite的白膜底板/按钮。优先对照原预制体，正确裁切Sprite并设置九宫格border，适用底板使用Image.Type.Sliced。
+- UI Sprite必须纳入唯一Sprite Atlas V2；按大厅、章节共享/章节专属、无尽模式划分面板和图片生命周期，禁止所有面板塞入单一AB。
+- 无尽采用用户提供的古希腊神殿原画和不透明象牙金棋盘；长BGM逐曲独立AB，临近结尾异步预载下一曲，结束后释放上一曲。

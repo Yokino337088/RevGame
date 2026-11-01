@@ -59,6 +59,7 @@ namespace Revolution
         public const string Art_Status_EyeBlink = "Art/Status/EyeBlink/";
         public const string Art_Story = "Art/Story/";
         public const string Art_UI = "Art/UI/";
+        public const string Art_UI_Endless = "Art/UI/Endless/";
         public const string Atlases = "Atlases/";
         public const string Audio = "Audio/";
         public const string Audio_Bgm = "Audio/Bgm/";
@@ -85,6 +86,7 @@ namespace Revolution
         public const string Effects = "Effects/";
         public const string Effects_Combat = "Effects/Combat/";
         public const string Effects_Helper = "Effects/Helper/";
+        public const string Endless = "Endless/";
         public const string Fonts = "Fonts/";
         public const string Fonts_CJK = "Fonts/CJK/";
         public const string HelperTextures = "HelperTextures/";
@@ -107,6 +109,7 @@ namespace Revolution
         public const string UI_Item_Notice = "UI/Item/Notice/";
         public const string UI_Panel = "UI/Panel/";
         public const string UI_Panel_Diagnostics = "UI/Panel/Diagnostics/";
+        public const string UI_Panel_Endless = "UI/Panel/Endless/";
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
         public const string UI_Panel_Settings = "UI/Panel/Settings/";
         public const string UI_Panel_Story = "UI/Panel/Story/";

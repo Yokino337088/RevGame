@@ -81,7 +81,7 @@ namespace RevGame.Board
             Cell center = board.GetCell(pos);
 
             // 不能要求中心棋曾经“落入已成型空眼”：中心先落、外围最后补齐也必须在本次全盘刷新获得驻眼状态。
-            if (center == null || (!center.IsEmpty && (center.Occupant.Side != side || center.Occupant.Size != 1)))
+            if (center == null || board.IsObjective(pos) || (!center.IsEmpty && (center.Occupant.Side != side || center.Occupant.Size != 1)))
             {
                 return false;
             }

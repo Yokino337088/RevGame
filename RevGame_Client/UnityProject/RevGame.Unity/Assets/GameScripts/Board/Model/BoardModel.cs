@@ -55,8 +55,15 @@ namespace RevGame.Board
                 return _size;
             }
         }
-        public BoardModel(int size)
+        /// <summary>可选中立目标格，只供独立无尽棋心使用；旧六章默认没有目标格，规则保持原样。</summary>
+        private readonly BoardPos? _objective;
+        public bool IsObjective(BoardPos pos)
         {
+            return _objective.HasValue && _objective.Value.Equals(pos);
+        }
+        public BoardModel(int size, BoardPos? objective = null)
+        {
+            _objective = objective;
             _size = size;
             _cells = new Cell[size, size];
             RuleWorkspace = new GoRules.Workspace(size * size);
@@ -131,7 +138,7 @@ namespace RevGame.Board
         public bool CanPlace(BoardPos pos)
         {
             Cell cell = GetCell(pos);
-            return cell != null && cell.IsEmpty;
+            return cell != null && cell.IsEmpty && !IsObjective(pos);
         }
         /// <summary>落子。成功返回 true；越界或已被占返回 false（**并且不改任何状态**）。</summary>
         public bool Place(Piece piece, BoardPos pos, bool respectEnemyEyes = true)
@@ -232,7 +239,7 @@ namespace RevGame.Board
                     {
                         return false;
                     }
-                    if (cell.Occupant != null && cell.Occupant != ignore && (consumed == null || !consumed.Contains(cell.Occupant)))
+                    if (IsObjective(cell.Pos) || (cell.Occupant != null && cell.Occupant != ignore && (consumed == null || !consumed.Contains(cell.Occupant))))
                     {
                         return false;
                     }

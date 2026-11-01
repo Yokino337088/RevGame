@@ -111,6 +111,8 @@ namespace RevGame.Bootstrap
             RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
             // 战斗服务是全项目最核心的契约：UI、流程、AI 都只认 IBattleService，实现可以整体替换（含固定种子的测试实例）。
             RevServices.Register<IBattleService, BattleService>(owner: this);
+            // 跨暂停/存档页面共享无尽状态；棋局停止由EndlessLogic负责，宿主退出最终注销。
+            RevServices.Register<RevGame.Endless.EndlessService, RevGame.Endless.EndlessService>(owner: this);
             // 流程控制者目前只有一份实现、还没有接口，调用方会直接用到它的具体方法（切场景、Boss 演出、回大厅）。
             RevServices.Register<GameFlow, GameFlow>(owner: this);
 
@@ -120,6 +122,7 @@ namespace RevGame.Bootstrap
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
             GameGmCommands.RegisterAll();
             StoryAutomationCommands.Register();
+            RevGame.Endless.EndlessAutomation.Register();
             // 诊断服务与启动宿主同寿命；正式包不注册，内部非开发包用显式REV_AUTOMATION。
             RevServices.Register<RevGame.Automation.GamePerformanceMonitor, RevGame.Automation.GamePerformanceMonitor>(owner: this);
             RevServices.GetRequired<RevGame.Automation.GamePerformanceMonitor>();
@@ -175,6 +178,7 @@ namespace RevGame.Bootstrap
             RevServices.Unregister<RevGame.Automation.GamePerformanceMonitor>();
             GameGmCommands.UnregisterAll();
             StoryAutomationCommands.Unregister();
+            RevGame.Endless.EndlessAutomation.Unregister();
             RevServices.Unregister<RevGame.Automation.GameAutomationRunner>();
 
 #endif
@@ -187,6 +191,11 @@ namespace RevGame.Bootstrap
             // 顺序不强制，但必须先 Reset 快照（上一行）：让迟到的读取立刻报“配置尚未装配”，
             // 而不是读到正在被卸载的数据；重复 Play 也不会残留上一局的表。
             RevDataTableManager.Unload<BattleTextTable>();
+            RevDataTableManager.Unload<EndlessRuleTable>();
+            RevDataTableManager.Unload<EndlessRouteTable>();
+            RevDataTableManager.Unload<EndlessBossTable>();
+            RevDataTableManager.Unload<EndlessBossSkillTable>();
+            RevDataTableManager.Unload<EndlessMusicTable>();
             RevDataTableManager.Unload<BattleTuningTable>();
             RevDataTableManager.Unload<PieceConfigTable>();
             RevDataTableManager.Unload<StarConfigTable>();

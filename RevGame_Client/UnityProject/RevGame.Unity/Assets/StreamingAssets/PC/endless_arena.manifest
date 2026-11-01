@@ -1,0 +1,47 @@
+ManifestFileVersion: 0
+CRC: 2868897811
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 28df469aa1e8c0dde2797de572f6e7d4
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b583d7d2ffcbe543bd98bbd97c5beac7
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 28df469aa1e8c0dde2797de572f6e7d4
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: f5905d7344959e04384104fddd750e5f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a78887e3114a70498fc2804083b0fb4, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Endless/EndlessBackground.mat
+- Assets/GameRes/Endless/EndlessHorde.mat
+- Assets/GameRes/Endless/EndlessGrid.mat
+- Assets/GameRes/Endless/EndlessImpact.mat
+- Assets/GameRes/ChapterBackground/EndlessTemple.png
+- Assets/GameRes/Endless/EndlessArena.prefab
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"

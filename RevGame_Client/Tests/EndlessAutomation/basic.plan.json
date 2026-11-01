@@ -1,0 +1,486 @@
+{
+  "name": "棋阵幸存者无尽模式基本功能验收",
+  "intent": "真实PC AB冷启动，验证独立入口、落牌拒绝、敌潮升级、暂停、保存恢复、结算和清理；包含明确标注的隔离规则夹具",
+  "steps": [
+    {
+      "target": "gm",
+      "action": "无尽/进入测试局",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Endless"
+        },
+        {
+          "path": "/data/error",
+          "equals": ""
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 45,
+        "intervalSeconds": 0.5
+      }
+    },
+    {
+      "target": "game",
+      "action": "endless.rules",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.extended-rules",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/players",
+          "equals": 3
+        },
+        {
+          "path": "/data/hand",
+          "equals": 3
+        },
+        {
+          "path": "/data/isolated",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "endless.card",
+      "arguments": {
+        "index": 0
+      },
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.cell",
+      "arguments": {
+        "x": 4,
+        "y": 4
+      },
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/hand",
+          "equals": 3
+        },
+        {
+          "path": "/data/players",
+          "equals": 3
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.cell",
+      "arguments": {
+        "x": 1,
+        "y": 3
+      },
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/hand",
+          "equals": 2
+        },
+        {
+          "path": "/data/players",
+          "equals": 4
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.start",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [],
+      "until": {
+        "path": "/data/hasKills",
+        "equals": true,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 1
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [],
+      "until": {
+        "path": "/data/phase",
+        "equals": "Upgrade",
+        "timeoutSeconds": 70,
+        "intervalSeconds": 2
+      }
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "endless.choose",
+      "arguments": {
+        "index": 0
+      },
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.pause",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/phase",
+          "equals": "Paused"
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "endless.save-exit",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/accepted",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/error",
+          "equals": ""
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 45,
+        "intervalSeconds": 0.5
+      }
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/units",
+          "equals": 0
+        },
+        {
+          "path": "/data/horde",
+          "equals": 0
+        },
+        {
+          "path": "/data/logicCount",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "无尽/继续测试局",
+      "arguments": {}
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Endless"
+        },
+        {
+          "path": "/data/error",
+          "equals": ""
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 45,
+        "intervalSeconds": 0.5
+      }
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/seed",
+          "equals": 1101
+        },
+        {
+          "path": "/data/hand",
+          "equals": 2
+        },
+        {
+          "path": "/data/isolated",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.finish",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/settled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.finish",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/settled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot",
+      "arguments": {},
+      "expect": []
+    }
+  ],
+  "finally": [
+    {
+      "target": "game",
+      "action": "endless.home",
+      "arguments": {},
+      "expect": []
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/error",
+          "equals": ""
+        }
+      ],
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 45,
+        "intervalSeconds": 0.5
+      }
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "arguments": {},
+      "expect": [
+        {
+          "path": "/data/units",
+          "equals": 0
+        },
+        {
+          "path": "/data/horde",
+          "equals": 0
+        },
+        {
+          "path": "/data/logicCount",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "target": "editor",
+      "action": "editor.stop",
+      "arguments": {}
+    },
+    {
+      "target": "editor",
+      "action": "game.story.test-disarm",
+      "arguments": {}
+    }
+  ]
+}

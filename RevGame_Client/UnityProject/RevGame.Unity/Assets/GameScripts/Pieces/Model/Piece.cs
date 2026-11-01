@@ -241,6 +241,22 @@ namespace RevGame.Pieces
         {
             return new Piece(this);
         }
+        /// <summary>
+        /// 独立无尽存档/外围转盘的整数生命恢复入口。只能在未放入棋盘时调用，
+        /// 避免用“最大生命÷基础生命”的浮点倍率重建后少一滴血，也不能拿它在实战中绕过伤害结算。
+        /// </summary>
+        internal void RestoreDetachedVitals(int maximum, int current, bool eyeReviveUsed)
+        {
+            if (QueryBoard != null || maximum < 1 || current < 1 || current > maximum)
+            {
+                throw new System.InvalidOperationException("仅能为未占格棋子恢复合法生命快照");
+            }
+            _baseMaxHp = maximum;
+            _maxHp = maximum;
+            _roundHealthScale = 1f;
+            Hp = current;
+            EyeReviveUsed = eyeReviveUsed;
+        }
         // 首次深复制先固定身份，再统一调用全状态覆盖方法；首次复制和缓存复用共用同一字段清单，防止两套复制遗漏。
         private Piece(Piece source)
         {

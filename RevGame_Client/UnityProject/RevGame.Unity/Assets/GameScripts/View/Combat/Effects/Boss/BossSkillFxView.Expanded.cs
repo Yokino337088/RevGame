@@ -44,19 +44,19 @@ namespace RevGame.View
 
                     if (warning)
                     {
-                        Zone(position, Consts.CellSize * .94f, 1f, tint, duration);
+                        Zone(position, _cellSize * .94f, 1f, tint, duration);
                     }
                     else
                     {
                         int tile = Take(glow, (FxMode)(10 + theme), tint, .18f, GroundOrder + 1);
-                        Place(tile, position, Consts.CellSize * 1.18f);
+                        Place(tile, position, _cellSize * 1.18f);
                         TweenProgress(tile, 0f, 1f, duration);
                         _sequence.Insert(0f, _renderers[tile].transform.DOPunchScale(Vector3.one * .32f, .5f, 5));
                     }
                 }
             }
             // 两层反向旋转与快速膨胀形成“大招”轮廓。颜色与几何不同，避免每招只换名称。
-            float diameter = Mathf.Max(3f, def.Radius * 2f + 2f) * Consts.CellSize;
+            float diameter = Mathf.Max(3f, def.Radius * 2f + 2f) * _cellSize;
             int core = Take(glow, (FxMode)(10 + theme), tint, .18f, ImpactOrder);
             Place(core, focus, diameter * (warning ? .65f : 1.2f));
             _sequence.Insert(0f, _renderers[core].transform.DORotate(new Vector3(0f, 0f, (info.Index % 2 == 0 ? 1 : -1) * 240f), duration, RotateMode.LocalAxisAdd));
