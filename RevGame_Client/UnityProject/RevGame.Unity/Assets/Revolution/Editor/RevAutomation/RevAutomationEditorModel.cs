@@ -21,6 +21,8 @@ namespace Revolution.Editor
         public string target, mode = "Single", text;
         public int offset, limit = 200, index, port = 18766;
         public string runtimeAction, argumentsJson;
+        public string space = "local";
+        public float[] position, eulerAngles, localScale;
         public bool additive, includeInactive = true, worldPositionStays = true;
         public bool submit, development;
         public string[] folders, testNames, categories, assemblies;
@@ -105,6 +107,10 @@ namespace Revolution.Editor
         {
             if (string.IsNullOrWhiteSpace(path) || path.Contains('\\') || path.Split('/').Any(p => p == ".." || p == "."))
             { throw new ArgumentException("需要规范的 Assets/... 路径：" + path); }
+            // Windows 会悄悄去掉路径段末尾的点和空格："Main.unity." 实际写的是 Main.unity，扩展名检查却看到空串。
+            // 冒号会落到 NTFS 备用数据流上。两种写法都没有正当用途，一律拒绝。
+            if (path.Contains(':') || path.Split('/').Any(p => p.Length == 0 || p.EndsWith(".", StringComparison.Ordinal) || p.EndsWith(" ", StringComparison.Ordinal) || p.StartsWith(" ", StringComparison.Ordinal)))
+            { throw new ArgumentException("路径段不能为空、不能以点或空格结尾、不能含冒号：" + path); }
             if (write) { RevAutomationActions.RequireAssetPath(path); }
             else if (path != "Assets" && !path.StartsWith("Assets/", StringComparison.Ordinal) && !path.StartsWith("Packages/", StringComparison.Ordinal))
             { throw new ArgumentException("资产查询限定在 Assets 或 Packages"); }
@@ -115,8 +121,8 @@ namespace Revolution.Editor
                     if (dir.Exists && (dir.Attributes & FileAttributes.ReparsePoint) != 0) { throw new ArgumentException("写入路径不能经过目录链接：" + path); }
                     if (dir.FullName == Path.GetFullPath(".")) { break; }
                 }
-                if (Directory.Exists(path) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
-                { throw new ArgumentException("不能写入目录链接：" + path); }
+                if ((Directory.Exists(path) || File.Exists(path)) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                { throw new ArgumentException("不能写入链接（会写到链接指向的位置）：" + path); }
             }
             return path;
         }
@@ -197,6 +203,31 @@ namespace Revolution.Editor
             if (save && EditorUtility.IsPersistent(target)) { AssetDatabase.SaveAssets(); }
         }
 
+        /// <summary>
+        /// 给对象引用字段赋值，行为对齐 Inspector 拖拽。
+        /// 为什么不能直接 objectReferenceValue = obj：字段类型不符时 Unity 不报错，只是悄悄写成 null，
+        /// 调用方拿到"成功"，运行时才发现引用是空的。拖拽能成功是因为 Inspector 会自动换算，例如：
+        /// 把 GameObject 拖到 Transform 字段（取其组件）、把贴图拖到 Sprite 字段（取其子资产）。
+        /// 这里按同样顺序逐个试探候选对象，全部不被接受才报错。
+        /// </summary>
+        private static void AssignReference(SerializedProperty p, string value)
+        {
+            if (value == "null" || string.IsNullOrEmpty(value)) { p.objectReferenceValue = null; return; }
+            Object source = Resolve(value);
+            var candidates = new List<Object> { source };
+            if (source is GameObject go) { candidates.AddRange(go.GetComponents<Component>()); }
+            if (source is Component component) { candidates.Add(component.gameObject); }
+            if (EditorUtility.IsPersistent(source)) { candidates.AddRange(AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(source))); }
+            foreach (Object candidate in candidates)
+            {
+                if (candidate == null) { continue; }
+                p.objectReferenceValue = candidate;
+                if (p.objectReferenceValue == candidate) { return; }
+            }
+            p.objectReferenceValue = null;
+            throw new ArgumentException("引用类型不匹配：" + p.propertyPath + " 需要 " + p.type + "，给的是 " + source.GetType().Name + "（" + value + "）");
+        }
+
         private static void SetValue(SerializedProperty p, string value)
         {
             switch (p.propertyType)
@@ -212,7 +243,7 @@ namespace Revolution.Editor
                     p.doubleValue = number; break;
                 case SerializedPropertyType.String: p.stringValue = value ?? ""; break;
                 case SerializedPropertyType.Enum: p.intValue = int.Parse(value, CultureInfo.InvariantCulture); break;
-                case SerializedPropertyType.ObjectReference: p.objectReferenceValue = value == "null" || string.IsNullOrEmpty(value) ? null : Resolve(value); break;
+                case SerializedPropertyType.ObjectReference: AssignReference(p, value); break;
                 case SerializedPropertyType.Vector2: p.vector2Value = JsonUtility.FromJson<Vector2>(value); break;
                 case SerializedPropertyType.Vector3: p.vector3Value = JsonUtility.FromJson<Vector3>(value); break;
                 case SerializedPropertyType.Vector4: p.vector4Value = JsonUtility.FromJson<Vector4>(value); break;

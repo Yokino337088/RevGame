@@ -86,6 +86,7 @@ namespace Revolution.Editor
         private sealed class RevAutomationStatus
         {
             public string unityVersion;
+            public string editorPath;
             public string project;
             public bool playing;
             public bool paused;
@@ -153,6 +154,8 @@ namespace Revolution.Editor
         private static readonly string[] BatchDeferredActions =
         {
             "editor.refresh", "editor.menu", "editor.play", "editor.stop", "editor.pause", "editor.resume", "editor.step",
+            // 下面这些要么触发编译重载，要么返回跨帧工单：批量是同一帧跑完的，后续步骤只会读到旧状态。
+            "editor.recompile", "script.create", "package.list", "package.add", "package.remove",
         };
 
         private static string BatchRejectReason(string action)
@@ -248,7 +251,8 @@ namespace Revolution.Editor
                     object value = Execute(sub);
                     item.success = true;
                     item.message = "完成";
-                    item.dataJson = value == null ? "" : JsonUtility.ToJson(value, false);
+                    // 不能用 JsonUtility：它不支持 Dictionary，excel.check、ab.issues 这类结果会变成 "{}"。
+                    item.dataJson = value == null ? "" : RevAutomationJson.Write(value);
                     RevAutomationActivity.Finish(activity, true, item.message, value);
                 }
                 catch (Exception error)
@@ -283,7 +287,7 @@ namespace Revolution.Editor
             if (extension != null) { return RevAutomationCatalog.Invoke(extension, request); }
             if (action == "editor.status")
             {
-                return new RevAutomationStatus { unityVersion = Application.unityVersion, project = Path.GetFullPath("."),
+                return new RevAutomationStatus { unityVersion = Application.unityVersion, project = Path.GetFullPath("."), editorPath = EditorApplication.applicationPath,
                     playing = EditorApplication.isPlaying, paused = EditorApplication.isPaused, compiling = EditorApplication.isCompiling,
                     updating = EditorApplication.isUpdating, gmEnabled = RevGM.Enabled, gmCount = RevGM.Count };
             }
@@ -292,6 +296,7 @@ namespace Revolution.Editor
             if (action == "editor.menu") { RequireEditMode(); return ExecuteMenu(p.path); }
             if (action == "gm.list")
             {
+                if (p.refresh) { RevGMEditorCatalog.Invalidate(); }
                 return new RevAutomationGMList
                 {
                     playing = EditorApplication.isPlaying,
@@ -456,6 +461,7 @@ namespace Revolution.Editor
                 case "ab.config": return config;
                 case "ab.configure":
                     if (string.IsNullOrEmpty(p.configJson)) { throw new ArgumentException("需要 configJson（配置字段 JSON 字符串）"); }
+                    ValidateAbConfig(config, p.configJson, confirm);
                     JsonUtility.FromJsonOverwrite(p.configJson, config);
                     config.ApplyToRuntime();
                     EditorUtility.SetDirty(config);
@@ -525,7 +531,8 @@ namespace Revolution.Editor
                     ABLayoutSnapshotStore.Save(ABLayoutSnapshotStore.BaselinePath, snapshot);
                     return snapshot;
                 case "ab.diff":
-                    string baseline = string.IsNullOrEmpty(p.baseline) ? ABLayoutSnapshotStore.BaselinePath : p.baseline;
+                    // last-build 与窗口"与上次打包对比"同义，调用方不用知道内部文件放在哪。
+                    string baseline = string.IsNullOrEmpty(p.baseline) ? ABLayoutSnapshotStore.BaselinePath : p.baseline == "last-build" ? ABLayoutSnapshotStore.LastBuildPath : p.baseline;
                     if (!File.Exists(baseline)) { throw new FileNotFoundException("没有布局基准，请先 ab.snapshot", baseline); }
                     ABLayoutSnapshot before = ABLayoutSnapshotStore.Load(baseline);
                     if (before == null) { throw new InvalidOperationException("基准快照损坏：" + baseline); }
@@ -573,6 +580,27 @@ namespace Revolution.Editor
             ABMapGenerator.WriteOutputs(collect, "CLI build");
             ABBuilderCore.CopyToStreamingAssets(build.outputDir);
             return new RevAutomationText("已构建 " + build.manifest.allBundles.Length + " 包 -> " + build.outputDir);
+        }
+
+        /// <summary>
+        /// 写入前用副本预演 ab.configure，配置有问题时一个字段都不落盘。
+        /// 切到按目录自动分包会重写全部 AB 标记，窗口里要点确认，CLI 不能比窗口更容易误触，所以要求 confirm。
+        /// </summary>
+        private static void ValidateAbConfig(ABBuildConfig config, string json, bool confirm)
+        {
+            ABBuildConfig preview = UnityEngine.Object.Instantiate(config);
+            try
+            {
+                JsonUtility.FromJsonOverwrite(json, preview);
+                if (preview.markMode == ABMarkMode.AutoByFolder && config.markMode != ABMarkMode.AutoByFolder && !confirm)
+                { throw new InvalidOperationException("切换到按目录自动分包会重写全部 AB 标记，需要 --confirm"); }
+                foreach (string folder in new[] { preview.resRoot, preview.sfxRoot, preview.bgmRoot })
+                {
+                    if (string.IsNullOrEmpty(folder)) { continue; }
+                    if (folder != "Assets" && !folder.StartsWith("Assets/", StringComparison.Ordinal)) { throw new ArgumentException("资源目录必须在 Assets 内：" + folder); }
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(preview); }
         }
 
         /// <summary>
@@ -640,8 +668,10 @@ namespace Revolution.Editor
             }
             var sources = p.sources ?? RevExcelUserSettings.instance.sources.ToArray();
             RevExcelReadResult read = RevExcelService.Read(sources, p.recursive, false);
+            // skipInvalid 对齐窗口"有错的表跳过、其余照常导出"；工作簿打不开仍然失败，因为那意味着整份数据缺失。
+            bool skipTables = action == "excel.export" && p.skipInvalid;
             var errors = read.FileErrors.Select(x => x.Key + ": " + x.Value)
-                .Concat(read.Tables.Where(t => !t.Ignored && !t.IsValid).SelectMany(t => t.Errors.Select(e => t.Name + ": " + e.Message))).ToArray();
+                .Concat(skipTables ? Enumerable.Empty<string>() : read.Tables.Where(t => !t.Ignored && !t.IsValid).SelectMany(t => t.Errors.Select(e => t.Name + ": " + e.Message))).ToArray();
             if (errors.Length > 0 || read.Files.Count == 0) { throw new InvalidOperationException("Excel 读取失败或无输入：\n" + string.Join("\n", errors)); }
             if (action == "excel.read") { return new RevAutomationRows(read.Tables.Select(t => t.Name + (t.Ignored ? " [ignored]" : " [valid]"))); }
             ExcelExportPlan plan = RevExcelService.Plan(read.Tables);

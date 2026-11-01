@@ -18,6 +18,9 @@ namespace Revolution.Editor
         [NonSerialized] private bool _messageError;
         [NonSerialized] private Vector2 _settingsScroll;
         [NonSerialized] private double _refresh;
+        [NonSerialized] private int _editorState = -1;
+        [NonSerialized] private string _logError;
+        [NonSerialized] private bool _clearActivity, _runtimeEndpointExists;
         [NonSerialized] private RevMCPActivityReader _reader;
         [NonSerialized] private GUIStyle _titleStyle, _cardStyle;
         private static string EndpointPath => Path.Combine(RevAutomationBridge.Root, "runtime.json");
@@ -51,6 +54,7 @@ namespace Revolution.Editor
         {
             minSize = new Vector2(480, 360);
             _reader = new RevMCPActivityReader(ActivityPath);
+            _viewVersion = -1;
             _script = EditorPrefs.GetString(Preference("Script"), _script ?? "");
             _python = EditorPrefs.GetString(Preference("Python"), _python ?? "python");
             ResolveScript();
@@ -64,8 +68,17 @@ namespace Revolution.Editor
             if (EditorApplication.timeSinceStartup < _refresh) { return; }
             _refresh = EditorApplication.timeSinceStartup + .25;
             _reader ??= new RevMCPActivityReader(ActivityPath);
-            if (_reader.Poll() && _follow) { _activityScroll.y = float.MaxValue; }
-            Repaint();
+            bool cleared = _clearActivity;
+            if (cleared) { _reader.ClearView(); _clearActivity = false; }
+            bool changed = _reader.Poll() || cleared;
+            if (changed && _follow) { _activityScroll.y = float.MaxValue; }
+            RefreshActivityRows();
+            int state = (EditorApplication.isCompiling ? 1 : 0) | (EditorApplication.isPlaying ? 2 : 0)
+                | (EditorApplication.isPaused ? 4 : 0) | (EditorApplication.isUpdating ? 8 : 0);
+            string error = (_reader.LastError ?? "") + (RevAutomationActivity.LastError ?? "");
+            bool endpointExists = File.Exists(EndpointPath);
+            if (changed || state != _editorState || error != _logError || endpointExists != _runtimeEndpointExists) { Repaint(); }
+            _editorState = state; _logError = error; _runtimeEndpointExists = endpointExists;
         }
 
         private static string Preference(string suffix) => "Revolution.RevMCP." + Path.GetFullPath(".") + "." + suffix;
@@ -141,7 +154,7 @@ namespace Revolution.Editor
                         }
                     }
                     GUILayout.Space(8);
-                    bool running = File.Exists(EndpointPath);
+                    bool running = _runtimeEndpointExists;
                     GUILayout.Label("运行时 HTTP：" + (running ? "凭据已生成；实际连接由 Agent 校验" : "未启动"), EditorStyles.miniBoldLabel);
                     _port = EditorGUILayout.IntField("本机端口", _port);
                     using (new EditorGUILayout.HorizontalScope())

@@ -4,6 +4,8 @@
 
 2026-10-22新增 `Revolution.Tools/AI/RevMCP 控制台`：显示工程/Play/GM、管理本机运行时服务、复制Agent配置。CLI用`editor.capabilities`与`editor.coverage`核对实际能力；当前20个菜单已映射。Editor场景/Inspector/资产/Prefab/测试/构建和游戏接口见`automation-integration.md`与RevMCP使用说明。
 
+2026-11-01：**AI 操作编辑器一律走 RevCLI**，Play 中调 GM 也可以用 CLI 的 `game gm`；RevMCP 为可选项。开工先 `rev.py connect`；导表用 `excel.*`、打 AB 用 `ab.*`、整包用 `ship`、搭场景挂脚本用 `scene.compose`。配方见 `revolution-unity-editor` Skill。不要让 AI 点这些窗口，窗口里的功能都有对应动作，用 `commands --query <关键词>` 查。
+
 ## 1. 菜单一览
 
 | 菜单 | 用途 |

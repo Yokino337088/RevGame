@@ -65,6 +65,7 @@ namespace Revolution.Editor
         public int protocol = 1;
         public int pid;
         public string sessionId;
+        public string domainId;
         public string project;
         public string unityVersion;
         public double heartbeatUnix;
@@ -94,6 +95,8 @@ namespace Revolution.Editor
         public string command;
         public string configJson;
         public string userConfigJson;
+        public bool skipInvalid;
+        public bool refresh;
         public string baseline;
         public string outputDir;
         public string appVersion;

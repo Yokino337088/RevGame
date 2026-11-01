@@ -1,6 +1,6 @@
 ---
 name: revolution-ai-automation
-description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使用。通过 RevMCP 发现并调用实际注册的 GM、运行时业务、UI、截图、Editor 和显式 CLI/Python 接口，执行带业务断言与清理的测试并保留证据；也用于接入或排查 RevMCP、补项目测试接口。普通玩法实现仍由 revolution-framework 指导，不凭工具成功宣布玩法通过。
+description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使用。按测试轻重自动选通道：轻量操作（调一两条 GM、点一下 UI、读状态）用 RevCLI，重量级测试（长流程、多步断言、必须清理、要带截图和 GIF 的 HTML 报告）用 RevMCP 的 rev_run。通过 RevMCP 发现并调用实际注册的 GM、运行时业务、UI、截图、Editor 和显式 CLI/Python 接口，执行带业务断言与清理的测试并保留证据；也用于接入或排查 RevMCP、补项目测试接口。普通玩法实现仍由 revolution-framework 指导，不凭工具成功宣布玩法通过。
 ---
 
 # Revolution AI 自动化
@@ -14,7 +14,11 @@ description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使�
 ## 找到并连接真实入口
 
 - 定位 Unity 工程、`Revolution.RevMCP/rev_mcp.py` 和相邻 `Revolution.RevCLI/rev.py`。始终显式传目标工程，不能默认运行框架 Demo。
-- MCP 已连接时先 `rev_discover`；否则执行 `python <rev_mcp.py> --project <工程> discover`。独立 Player 使用 `--runtime-endpoint <runtime.json>`。需要配置时读 [连接和注册](references/connection.md)。
+- MCP 已连接时先 `rev_discover`；新版支持 `target/query/offset/limit` 按需筛选，旧版退回空参数完整发现。需要减少握手工具体积时可配置 `--compact-tools`，三稳定入口仍能调用全部真实能力。否则执行 `python <rev_mcp.py> --project <工程> discover`。独立 Player 使用 `--runtime-endpoint <runtime.json>`。需要配置时读 [连接和注册](references/connection.md)。
+- **按测试轻重选通道（先判定，再动手）**：轻量操作用 RevCLI，重量级测试（长流程、多步断言、必须清理、要带截图/GIF 的 HTML 报告）用 RevMCP 的 `rev_run`。判定信号：要 HTML 报告/截图/GIF、步骤约超过 5 步或要跨帧等待、每步要业务断言、失败也必须清理、要反复跑回归，命中任一条即重量级。拿不准时：要报告就 MCP，不要报告就 CLI。编辑器操作一律 CLI，见相邻 `revolution-unity-editor`。用户明确指定时听用户的。完整规则与 MCP 不可用时的降级做法见 [按测试轻重选通道](references/channel-choice.md)。
+- 通用场景/对象/资产编辑与工具延迟诊断按相邻 `revolution-unity-editor` 的操作配方执行；常驻连接少往返，同步检查可 batch，业务跨帧测试保持计划等待与 finally，不并发修改 Unity。
+- **选定通道后再按 token 压调用**：CLI 零固定开销，单次结果也最便宜，适合轻量操作。MCP 全量模式的工具 schema 每轮约 1.7 万 token，紧凑模式仅约 325；重量级测试用 `rev_run` 一份计划把调用次数压到 1；编辑器多步用 `scene.compose`、`batch.call` 或 `pipeline`。查能力用 `commands --query <词>` 或带 `query` 的 `rev_discover`（不带词要 12,007，带词只用 340），不要读 `commands.json` 全文。实测数字与判据见 [token 成本](references/token-cost.md)。
+- **连接**：会话开始、电脑重启后或连接报错时，先按相邻 `revolution-unity-editor` 的 reconnect 配方跑 `rev.py connect`，再继续测试；不要在 Unity 未就绪时反复重试 MCP。
 - `unavailable` 会说明缺 Play、桥接、编译或凭据等原因。编辑模式下没有游戏能力是正常边界，不能从离线 commands 清单推断已注册业务。
 - 在进行场景切换、Play、构建之前记录原场景、dirty/playing/paused 与当前工单。普通测试已授权的启动/停止可自行执行；未保存内容必须保留，不能为了测试丢弃。编译后用 `editor.wait` 等到新心跳稳定，再重新发现能力。
 - Editor 请求使用 live；已有工程绝不另开 batch 争用。开发版 Player 可通过启动参数 `-revAutomation` 或项目显式 `RevRuntimeAutomation.Start()` 开启本机 HTTP。正式构建默认无运行时测试接口。

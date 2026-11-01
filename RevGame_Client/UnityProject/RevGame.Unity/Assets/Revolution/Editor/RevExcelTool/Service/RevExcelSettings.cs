@@ -13,7 +13,6 @@
 // 【为什么用 ScriptableSingleton】Unity 自带的"工程级单例设置"：
 //   按 FilePath 读写、不进 Assets（不产生导入 / 不会被打进包）、改完调 Save 就落盘。
 // ============================================================
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -49,22 +48,6 @@ namespace Revolution.Editor.ExcelTool
 
         [Tooltip("数据文件有新增 / 删除时，导出后自动生成资源映射（ResMap.txt）—— 否则 AB 模式 / 真机读不到新表")]
         public bool generateMapAfterExport = true;
-
-        public void SaveNow() => Save(true);
-    }
-
-    /// <summary>只属于自己的导表设置（UserSettings/RevExcelTool.asset，不进版本库）</summary>
-    [FilePath("UserSettings/RevExcelTool.asset", FilePathAttribute.Location.ProjectFolder)]
-    internal sealed class RevExcelUserSettings : ScriptableSingleton<RevExcelUserSettings>
-    {
-        [Tooltip("Excel 源：.xlsx 文件或装着 .xlsx 的文件夹（可以多个；绝对路径，或相对工程根目录）")]
-        public List<string> sources = new List<string>();
-
-        [Tooltip("来源是文件夹时，连子文件夹里的 .xlsx 一起读")]
-        public bool includeSubfolders;
-
-        [Tooltip("Excel 保存后自动重新读取（窗口开着时每 1.5 秒看一次文件修改时间，很便宜）")]
-        public bool autoReload = true;
 
         public void SaveNow() => Save(true);
     }

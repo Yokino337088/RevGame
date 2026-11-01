@@ -6,6 +6,7 @@
 // ============================================================
 // 场景、Hierarchy、Inspector、Project 与 Prefab 的可调用入口。
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -25,7 +26,7 @@ namespace Revolution.Editor
 
         private static SceneInfo DescribeScene(Scene scene) => new SceneInfo { path = scene.path, name = scene.name, handle = scene.handle,
             roots = scene.rootCount, loaded = scene.isLoaded, dirty = scene.isDirty, active = scene == SceneManager.GetActiveScene() };
-        private static Scene FindScene(string path)
+        internal static Scene FindScene(string path)
         {
             if (string.IsNullOrEmpty(path)) { return SceneManager.GetActiveScene(); }
             var scene = SceneManager.GetSceneByPath(path);
@@ -126,7 +127,117 @@ namespace Revolution.Editor
             return RevAutomationEditorModel.Describe(go);
         }
 
-        private static Transform Parent(string id)
+        [Serializable] public sealed class TransformInfo
+        {
+            public RevAutomationEditorModel.ObjectInfo target;
+            public string parent;
+            public float[] position, localPosition, eulerAngles, localEulerAngles, rotation, localRotation, localScale, lossyScale;
+        }
+
+        private static float[] Coordinates(Vector3 value) => new[] { value.x, value.y, value.z };
+        private static float[] Coordinates(Quaternion value) => new[] { value.x, value.y, value.z, value.w };
+        private static TransformInfo DescribeTransform(Transform transform) => new TransformInfo
+        {
+            target = RevAutomationEditorModel.Describe(transform.gameObject),
+            parent = transform.parent == null ? null : RevAutomationEditorModel.Identity(transform.parent.gameObject),
+            position = Coordinates(transform.position), localPosition = Coordinates(transform.localPosition),
+            eulerAngles = Coordinates(transform.eulerAngles), localEulerAngles = Coordinates(transform.localEulerAngles),
+            rotation = Coordinates(transform.rotation), localRotation = Coordinates(transform.localRotation),
+            localScale = Coordinates(transform.localScale), lossyScale = Coordinates(transform.lossyScale)
+        };
+
+        [RevAutomationAction("transform.get", Environment = "either", Keys = new[] { "id", "objectPath", "scene" }, Description = "读取对象的世界与局部位置、旋转、缩放和父节点身份")]
+        public static object GetTransform(RevAutomationRequest request) => DescribeTransform(RevAutomationEditorModel.GameObject(RevAutomationEditorOptions.Read(request)).transform);
+
+        private static Vector3? VectorArgument(System.Collections.Generic.Dictionary<string, object> values, string key)
+        {
+            if (!values.TryGetValue(key, out var raw)) { return null; }
+            if (!(raw is System.Collections.Generic.List<object> items) || items.Count != 3)
+            { throw new ArgumentException(key + " 必须为三个有限数字组成的数组"); }
+            var coordinates = new float[3];
+            for (int i = 0; i < 3; i++)
+            {
+                if (!(items[i] is double value) || double.IsNaN(value) || double.IsInfinity(value) || Math.Abs(value) > float.MaxValue)
+                { throw new ArgumentException(key + " 必须为 Single 范围内的有限数字，不能包含字符串或布尔值"); }
+                coordinates[i] = (float)value;
+            }
+            return new Vector3(coordinates[0], coordinates[1], coordinates[2]);
+        }
+
+        private static void RequireFinite(Vector3 value)
+        {
+            if (float.IsNaN(value.x) || float.IsNaN(value.y) || float.IsNaN(value.z)
+                || float.IsInfinity(value.x) || float.IsInfinity(value.y) || float.IsInfinity(value.z))
+            { throw new ArgumentException("父级变换使目标局部位置溢出，不能写入非有限坐标"); }
+        }
+
+        [RevAutomationAction("transform.set", Keys = new[] { "id", "objectPath", "scene", "space", "position", "eulerAngles", "localScale" }, Description = "修改三维变换并支持 Undo；space 为 local/world，localScale 始终是局部缩放")]
+        public static object SetTransform(RevAutomationRequest request)
+        {
+            // 先验证原始 JSON，不能让 JsonUtility 把错误的数组元素静默转成零；所有坐标都通过后才写入。
+            var values = RevAutomationJson.Object(RevAutomationJson.Parse(request.payloadJson ?? "{}"));
+            Vector3? position = VectorArgument(values, "position"), euler = VectorArgument(values, "eulerAngles"), scale = VectorArgument(values, "localScale");
+            if (!position.HasValue && !euler.HasValue && !scale.HasValue) { throw new ArgumentException("需要 position、eulerAngles 或 localScale 至少一项"); }
+            var p = RevAutomationEditorOptions.Read(request);
+            if (p.space != "local" && p.space != "world") { throw new ArgumentException("space 必须为 local 或 world"); }
+            Transform transform = RevAutomationEditorModel.GameObject(p).transform;
+            Vector3 targetPosition = position ?? transform.localPosition;
+            Quaternion targetRotation = euler.HasValue ? Quaternion.Euler(euler.Value) : transform.localRotation;
+            if (p.space == "world" && transform.parent != null)
+            {
+                if (position.HasValue)
+                {
+                    // 零缩放父节点无法逆变换世界位置。拒绝而不是让 Unity 写出错误的局部坐标。
+                    float determinant = transform.parent.localToWorldMatrix.determinant;
+                    if (determinant == 0 || float.IsNaN(determinant) || float.IsInfinity(determinant))
+                    { throw new ArgumentException("父节点变换不可逆，无法设置世界位置"); }
+                    targetPosition = transform.parent.InverseTransformPoint(position.Value);
+                }
+                if (euler.HasValue) { targetRotation = Quaternion.Inverse(transform.parent.rotation) * targetRotation; }
+            }
+            if (position.HasValue) { RequireFinite(targetPosition); }
+            if (euler.HasValue && Coordinates(targetRotation).Any(value => float.IsNaN(value) || float.IsInfinity(value)))
+            { throw new ArgumentException("旋转计算溢出，不能写入非有限四元数"); }
+            Undo.RecordObject(transform, "Revolution Automation Transform");
+            if (position.HasValue) { transform.localPosition = targetPosition; }
+            if (euler.HasValue) { transform.localRotation = targetRotation; }
+            if (scale.HasValue) { transform.localScale = scale.Value; }
+            EditorUtility.SetDirty(transform);
+            if (PrefabUtility.IsPartOfPrefabInstance(transform)) { PrefabUtility.RecordPrefabInstancePropertyModifications(transform); }
+            EditorSceneManager.MarkSceneDirty(transform.gameObject.scene);
+            return DescribeTransform(transform);
+        }
+
+        [RevAutomationAction("gameobject.primitive", Keys = new[] { "type", "name", "parent", "scene" }, Description = "创建 Cube/Sphere/Capsule/Cylinder/Plane/Quad 原始体，保留网格、Collider 和 Undo")]
+        public static object CreatePrimitive(RevAutomationRequest request)
+        {
+            var p = RevAutomationEditorOptions.Read(request);
+            // 只允许六个公开名称，拒绝数字枚举和组合字符串；预检失败不会留下半个对象。
+            if (!new[] { "Cube", "Sphere", "Capsule", "Cylinder", "Plane", "Quad" }.Contains(p.type))
+            { throw new ArgumentException("type 必须为 Cube/Sphere/Capsule/Cylinder/Plane/Quad"); }
+            if (string.IsNullOrWhiteSpace(p.name)) { throw new ArgumentException("需要 name"); }
+            Transform parent = Parent(p.parent);
+            Scene scene = FindScene(p.scene);
+            if (parent != null && !string.IsNullOrEmpty(p.scene) && parent.gameObject.scene != scene)
+            { throw new ArgumentException("parent 与 scene 不一致"); }
+            GameObject go = GameObject.CreatePrimitive((PrimitiveType)Enum.Parse(typeof(PrimitiveType), p.type));
+            try
+            {
+                go.name = p.name;
+                SceneManager.MoveGameObjectToScene(go, parent != null ? parent.gameObject.scene : scene);
+                if (parent != null) { go.transform.SetParent(parent, false); }
+                Undo.RegisterCreatedObjectUndo(go, "Revolution Automation Primitive");
+                EditorSceneManager.MarkSceneDirty(go.scene);
+                return RevAutomationEditorModel.Describe(go);
+            }
+            catch
+            {
+                Object.DestroyImmediate(go);
+                throw;
+            }
+        }
+
+        internal static Transform Parent(string id)
         {
             if (string.IsNullOrEmpty(id)) { return null; }
             return RevAutomationEditorModel.GameObject(new RevAutomationEditorOptions { id = id }).transform;
@@ -351,6 +462,213 @@ namespace Revolution.Editor
             RevAutomationEditorModel.Set(importer, p.changes, false);
             importer.SaveAndReimport();
             return new RevAutomationActions.RevAutomationText(p.path);
+        }
+
+        [Serializable] public sealed class ShaderInfo { public string name, path; public bool supported, findable; }
+        [Serializable] public sealed class ShaderPage { public int total, offset; public bool truncated; public string limitation; public ShaderInfo[] items; }
+        [Serializable] public sealed class MaterialPropertyInfo
+        {
+            public string name, type, texturePath;
+            public float number;
+            public int integer;
+            public float[] vector, textureScale, textureOffset;
+        }
+        [Serializable] public sealed class MaterialInfo
+        {
+            public RevAutomationEditorModel.ObjectInfo target;
+            public string shader;
+            public int renderQueue;
+            public string[] keywords;
+            public MaterialPropertyInfo[] properties;
+        }
+
+        [RevAutomationAction("shader.list", Environment = "either", Keys = new[] { "query", "offset", "limit" }, Description = "分页查询资产与当前已加载 Shader 的真实名称、路径和支持状态，不宣称列全未加载内置 Shader")]
+        public static object ListShaders(RevAutomationRequest request)
+        {
+            var p = RevAutomationEditorOptions.Read(request); p.CheckPage();
+            if (p.limit > 500) { throw new ArgumentException("Shader 查询 limit 为 1..500"); }
+            var shaders = AssetDatabase.FindAssets("t:Shader").Select(guid => AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(guid)))
+                .Concat(Resources.FindObjectsOfTypeAll<Shader>()).Where(shader => shader != null).Distinct()
+                .Where(shader => string.IsNullOrEmpty(p.query) || shader.name.IndexOf(p.query, StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(shader => shader.name, StringComparer.Ordinal).ThenBy(shader => AssetDatabase.GetAssetPath(shader), StringComparer.Ordinal).ToArray();
+            return new ShaderPage { total = shaders.Length, offset = p.offset, truncated = shaders.Length > p.offset + p.limit,
+                limitation = "包含资产与当前已加载 Shader；未加载内置 Shader 不保证列全。findable 表示 Shader.Find 能解析该名称；supported 不替代目标平台编译与视觉验证",
+                items = shaders.Skip(p.offset).Take(p.limit).Select(shader => new ShaderInfo { name = shader.name,
+                    path = AssetDatabase.GetAssetPath(shader), supported = shader.isSupported, findable = Shader.Find(shader.name) != null }).ToArray() };
+        }
+
+        private static string TextArgument(Dictionary<string, object> values, string key)
+        {
+            if (!values.TryGetValue(key, out var value) || !(value is string text) || string.IsNullOrWhiteSpace(text))
+            { throw new ArgumentException(key + " 需要非空字符串"); }
+            return text;
+        }
+        private static Material LoadMaterial(string path, bool write)
+        {
+            RevAutomationEditorModel.AssetPath(path, write);
+            if (!path.EndsWith(".mat", StringComparison.OrdinalIgnoreCase)) { throw new ArgumentException("需要 .mat 材质资产"); }
+            return AssetDatabase.LoadAssetAtPath<Material>(path) ?? throw new ArgumentException("材质不存在：" + path);
+        }
+        private static Shader FindShader(string name) => Shader.Find(name) ?? throw new ArgumentException("Shader 名称无法解析；先 shader.list 选择 findable=true 的名称：" + name);
+        private static void NewMaterialPath(string path)
+        {
+            RevAutomationEditorModel.RequireNewAsset(path);
+            if (!path.EndsWith(".mat", StringComparison.OrdinalIgnoreCase)) { throw new ArgumentException("需要 .mat 后缀"); }
+        }
+
+        private static MaterialInfo DescribeMaterial(Material material)
+        {
+            Shader shader = material.shader;
+            if (shader == null) { throw new ArgumentException("材质没有有效 Shader"); }
+            int count = shader.GetPropertyCount();
+            if (count > 512) { throw new ArgumentException("Shader 属性超过 512 项输出边界"); }
+            var properties = new List<MaterialPropertyInfo>();
+            for (int i = 0; i < count; i++)
+            {
+                string name = shader.GetPropertyName(i);
+                var type = shader.GetPropertyType(i);
+                var property = new MaterialPropertyInfo { name = name, type = type.ToString() };
+                switch (type)
+                {
+                    case UnityEngine.Rendering.ShaderPropertyType.Float:
+                    case UnityEngine.Rendering.ShaderPropertyType.Range: property.number = material.GetFloat(name); break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Int: property.integer = material.GetInteger(name); break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Color:
+                        Color color = material.GetColor(name); property.vector = new[] { color.r, color.g, color.b, color.a }; break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Vector: Vector4 vector = material.GetVector(name); property.vector = new[] { vector.x, vector.y, vector.z, vector.w }; break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                        Texture texture = material.GetTexture(name); property.texturePath = texture == null ? null : AssetDatabase.GetAssetPath(texture);
+                        Vector2 scale = material.GetTextureScale(name), offset = material.GetTextureOffset(name);
+                        property.textureScale = new[] { scale.x, scale.y }; property.textureOffset = new[] { offset.x, offset.y }; break;
+                }
+                properties.Add(property);
+            }
+            return new MaterialInfo { target = RevAutomationEditorModel.Describe(material), shader = shader.name, renderQueue = material.renderQueue,
+                keywords = material.enabledKeywords.Select(keyword => keyword.name).OrderBy(name => name, StringComparer.Ordinal).ToArray(), properties = properties.ToArray() };
+        }
+
+        [RevAutomationAction("material.inspect", Environment = "either", Keys = new[] { "path" }, Description = "读取材质 Shader 声明的属性名、类型与当前值、关键字和渲染队列")]
+        public static object InspectMaterial(RevAutomationRequest request) => DescribeMaterial(LoadMaterial(RevAutomationEditorOptions.Read(request).path, false));
+
+        private static object PersistNewMaterial(Material material, string path)
+        {
+            try
+            {
+                material.name = Path.GetFileNameWithoutExtension(path);
+                AssetDatabase.CreateAsset(material, path);
+                AssetDatabase.SaveAssetIfDirty(material);
+                return RevAutomationEditorModel.Describe(material);
+            }
+            catch { if (!EditorUtility.IsPersistent(material)) { Object.DestroyImmediate(material); } throw; }
+        }
+
+        [RevAutomationAction("material.create", Keys = new[] { "path", "shader" }, Description = "按真实 Shader 名创建新 .mat；拒绝覆盖，磁盘资产创建不属于 Undo")]
+        public static object CreateMaterial(RevAutomationRequest request)
+        {
+            var values = RevAutomationJson.Object(RevAutomationJson.Parse(request.payloadJson ?? "{}"));
+            string path = TextArgument(values, "path"); NewMaterialPath(path);
+            Shader shader = FindShader(TextArgument(values, "shader"));
+            return PersistNewMaterial(new Material(shader), path);
+        }
+
+        [RevAutomationAction("material.clone", Keys = new[] { "path", "destination" }, Description = "克隆材质到新 .mat，保留源与其 GUID、拒绝覆盖；磁盘资产创建不属于 Undo")]
+        public static object CloneMaterial(RevAutomationRequest request)
+        {
+            var p = RevAutomationEditorOptions.Read(request);
+            Material source = LoadMaterial(p.path, false); NewMaterialPath(p.destination);
+            return PersistNewMaterial(new Material(source), p.destination);
+        }
+
+        private static float MaterialNumber(object raw)
+        {
+            if (!(raw is double value) || double.IsNaN(value) || double.IsInfinity(value) || Math.Abs(value) > float.MaxValue)
+            { throw new ArgumentException("材质数值必须为 Single 范围内的有限数字"); }
+            return (float)value;
+        }
+        private static Vector4 MaterialVector(object raw)
+        {
+            if (!(raw is List<object> values) || values.Count != 4) { throw new ArgumentException("Color/Vector 属性需要四个有限数字组成的数组"); }
+            return new Vector4(MaterialNumber(values[0]), MaterialNumber(values[1]), MaterialNumber(values[2]), MaterialNumber(values[3]));
+        }
+        private static string[] MaterialKeywords(Dictionary<string, object> values, string key)
+        {
+            if (!values.TryGetValue(key, out var raw)) { return new string[0]; }
+            if (!(raw is List<object> items) || items.Count > 256 || items.Any(item => !(item is string text) || string.IsNullOrWhiteSpace(text) || text.Length > 128))
+            { throw new ArgumentException(key + " 需要最多 256 个非空关键字，每个最多 128 字符"); }
+            return items.Cast<string>().Distinct(StringComparer.Ordinal).ToArray();
+        }
+
+        private static void ApplyMaterialProperty(Material candidate, string name, object value)
+        {
+            if (string.IsNullOrWhiteSpace(name) || name.Length > 128) { throw new ArgumentException("材质属性名需要 1..128 字符的非空字符串"); }
+            int index = candidate.shader.FindPropertyIndex(name);
+            if (index < 0) { throw new ArgumentException("Shader 未声明属性：" + name); }
+            switch (candidate.shader.GetPropertyType(index))
+            {
+                case UnityEngine.Rendering.ShaderPropertyType.Float:
+                case UnityEngine.Rendering.ShaderPropertyType.Range: candidate.SetFloat(name, MaterialNumber(value)); break;
+                case UnityEngine.Rendering.ShaderPropertyType.Int:
+                    if (!(value is double integer) || integer < int.MinValue || integer > int.MaxValue || Math.Truncate(integer) != integer)
+                    { throw new ArgumentException(name + " 需要 Int32 整数"); }
+                    candidate.SetInteger(name, (int)integer); break;
+                case UnityEngine.Rendering.ShaderPropertyType.Color:
+                    Vector4 color = MaterialVector(value); candidate.SetColor(name, new Color(color.x, color.y, color.z, color.w)); break;
+                case UnityEngine.Rendering.ShaderPropertyType.Vector: candidate.SetVector(name, MaterialVector(value)); break;
+                case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                    Texture texture = null;
+                    if (value != null)
+                    {
+                        if (!(value is string path)) { throw new ArgumentException(name + " 纹理需要资产路径字符串或 null"); }
+                        texture = AssetDatabase.LoadAssetAtPath<Texture>(RevAutomationEditorModel.AssetPath(path, false));
+                        if (texture == null) { throw new ArgumentException("纹理不存在或类型错误：" + path); }
+                        var dimension = candidate.shader.GetPropertyTextureDimension(index);
+                        if (dimension != UnityEngine.Rendering.TextureDimension.Any && dimension != texture.dimension)
+                        { throw new ArgumentException(name + " 纹理维度应为 " + dimension + "，实际为 " + texture.dimension); }
+                    }
+                    candidate.SetTexture(name, texture); break;
+                default: throw new ArgumentException("尚未支持的 Shader 属性类型：" + name);
+            }
+        }
+
+        [RevAutomationAction("material.set", Keys = new[] { "path", "shader", "properties", "renderQueue", "enableKeywords", "disableKeywords" }, Description = "完整预检后修改材质 Shader 属性、关键字与队列，支持 Undo；properties 为名称到 typed 值的对象")]
+        public static object SetMaterial(RevAutomationRequest request)
+        {
+            var values = RevAutomationJson.Object(RevAutomationJson.Parse(request.payloadJson ?? "{}"));
+            Material source = LoadMaterial(TextArgument(values, "path"), true);
+            var properties = values.TryGetValue("properties", out var raw) ? RevAutomationJson.Object(raw) : new Dictionary<string, object>();
+            if (properties.Count > 512) { throw new ArgumentException("properties 最多 512 项"); }
+            string[] enable = MaterialKeywords(values, "enableKeywords"), disable = MaterialKeywords(values, "disableKeywords");
+            if (enable.Intersect(disable, StringComparer.Ordinal).Any()) { throw new ArgumentException("同一个关键字不能同时启用和禁用"); }
+            if (properties.Count == 0 && !values.ContainsKey("shader") && !values.ContainsKey("renderQueue") && enable.Length == 0 && disable.Length == 0)
+            { throw new ArgumentException("material.set 需要至少一项修改"); }
+            // 所有试写发生在不持久化的候选材质上。后面的坏属性/坏纹理/坏关键字绝不会先改动源资产。
+            var candidate = new Material(source);
+            try
+            {
+                if (values.ContainsKey("shader")) { candidate.shader = FindShader(TextArgument(values, "shader")); }
+                if (candidate.shader == null) { throw new ArgumentException("材质没有有效 Shader"); }
+                foreach (var property in properties) { ApplyMaterialProperty(candidate, property.Key, property.Value); }
+                if (values.TryGetValue("renderQueue", out var queue))
+                {
+                    if (!(queue is double number) || Math.Truncate(number) != number || number < -1 || number > 5000)
+                    { throw new ArgumentException("renderQueue 需要 -1..5000 整数，-1 表示继承 Shader"); }
+                    candidate.renderQueue = (int)number;
+                }
+                foreach (string keyword in enable.Concat(disable))
+                {
+                    var local = candidate.shader.keywordSpace.FindKeyword(keyword);
+                    if (!local.isValid) { throw new ArgumentException("Shader 未声明关键字：" + keyword); }
+                    candidate.SetKeyword(local, enable.Contains(keyword));
+                }
+                DescribeMaterial(candidate); // 输出上限也在修改源资产前检查。
+                Undo.RecordObject(source, "Revolution Automation Material");
+                source.shader = candidate.shader;
+                source.CopyPropertiesFromMaterial(candidate);
+                EditorUtility.SetDirty(source);
+                AssetDatabase.SaveAssetIfDirty(source);
+                return DescribeMaterial(source);
+            }
+            finally { Object.DestroyImmediate(candidate); }
         }
 
         private static GameObject Prefab(string path)

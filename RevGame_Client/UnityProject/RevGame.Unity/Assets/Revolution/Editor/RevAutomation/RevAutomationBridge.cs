@@ -41,6 +41,8 @@ namespace Revolution.Editor
         private const string SessionKey = "Revolution.RevCLI.Session";
         public const string TestJobKey = "Revolution.RevCLI.TestJob";
         private static readonly string Session;
+        // Session 为跨重载工单恢复而保留；域代际单独变化，防止能力缓存沿用旧程序集契约。
+        private static readonly string DomainId = Guid.NewGuid().ToString("N");
         private static RevAutomationRequest _active;
         private static RevAutomationScenario _scenario;
         private static RevAutomationOperation _operation;
@@ -229,7 +231,7 @@ namespace Revolution.Editor
                     _heartbeat = now + 1;
                     WriteJson(Path.Combine(Root, "endpoint.json"), new RevAutomationEndpoint
                     {
-                        pid = Process.GetCurrentProcess().Id, sessionId = Session, project = Path.GetFullPath("."),
+                        pid = Process.GetCurrentProcess().Id, sessionId = Session, domainId = DomainId, project = Path.GetFullPath("."),
                         unityVersion = Application.unityVersion, heartbeatUnix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d,
                         playing = EditorApplication.isPlaying, compiling = EditorApplication.isCompiling,
                         paused = EditorApplication.isPaused, updating = EditorApplication.isUpdating,

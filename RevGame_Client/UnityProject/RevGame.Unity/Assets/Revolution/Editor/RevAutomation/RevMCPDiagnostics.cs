@@ -2,6 +2,8 @@
 // 日志返回实际账本，summary 只是用途解释，不能把文字当作待执行指令或业务验收结论。
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -31,12 +33,27 @@ namespace Revolution.Editor
         }
         [RevAutomationAction("editor.activity", Environment = "either", Keys = new[] { "query", "target", "state", "offset", "limit" },
             Description = "分页读取 RevMCP 活动记录：Agent 请求、Editor、运行时 GM、外部工具与计划断言")]
-        public static object Activity(RevAutomationRequest request)
+        public static object Activity(RevAutomationRequest request) => ReadActivity(request, RevMCPWindow.ActivityPath);
+
+        private static RevMCPActivityReader _activityReader;
+        private static string _activityDirectory;
+        private const int SnapshotPollLimit = 8;
+        private const double SnapshotDrainMilliseconds = 20;
+
+        private static object ReadActivity(RevAutomationRequest request, string directory)
         {
             var options = JsonUtility.FromJson<Options>(request.payloadJson ?? "{}");
             if (options.offset < 0 || options.limit < 1 || options.limit > 500) { throw new ArgumentException("offset >= 0，limit 为 1..500"); }
-            var reader = new RevMCPActivityReader(RevMCPWindow.ActivityPath);
-            reader.Poll();
+            string path = Path.GetFullPath(directory);
+            if (_activityReader == null || _activityDirectory != path || !Directory.Exists(path))
+            { _activityReader = new RevMCPActivityReader(path); _activityDirectory = path; }
+            var reader = _activityReader;
+            // 不能每次新建读取器：预算外的数据会永远从同一首批开始。复用游标，仅补齐有界批次。
+            // 20ms只在批次间检查，不是主线程硬期限；单批仍受256KiB/128行限制。
+            var timer = Stopwatch.StartNew();
+            int polls = 0;
+            do { reader.Poll(); polls++; }
+            while (reader.HasPendingData && polls < SnapshotPollLimit && timer.Elapsed.TotalMilliseconds < SnapshotDrainMilliseconds);
             var rows = reader.Entries.Where(row =>
                 (string.IsNullOrEmpty(options.target) || row.target == options.target)
                 && (string.IsNullOrEmpty(options.state) || row.state == options.state)
@@ -46,6 +63,10 @@ namespace Revolution.Editor
             {
                 ["total"] = rows.Length, ["offset"] = options.offset, ["capacity"] = RevMCPActivityReader.Capacity,
                 ["entries"] = rows.Skip(options.offset).Take(options.limit).ToArray(), ["error"] = reader.LastError,
+                ["pending"] = reader.HasPendingData,
+                ["totalIsFinal"] = !reader.HasPendingData && string.IsNullOrEmpty(reader.LastError),
+                ["invalidLines"] = reader.InvalidLines, ["polls"] = polls,
+                ["scope"] = "当前读取视图，最近最多64个流/每个新流尾部256KiB/最多500条；不代表全部历史。半行与无效行不计入total。",
                 ["summaries"] = rows.Skip(options.offset).Take(options.limit).Select(row => new Dictionary<string, object>
                 {
                     ["id"] = row.id, ["operation"] = RevMCPActivityDescription.Title(row), ["purpose"] = RevMCPActivityDescription.Purpose(row),
