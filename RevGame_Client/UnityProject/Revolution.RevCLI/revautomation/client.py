@@ -9,14 +9,7 @@ import subprocess
 import time
 import uuid
 
-
-class RevError(RuntimeError):
-    pass
-
-
-class RevCancelled(RevError):
-    pass
-
+from .errors import RevCancelled, RevError  # noqa: F401  保持 `from revautomation.client import RevError` 可用
 
 _COMMANDS_CACHE = {}
 
@@ -84,21 +77,101 @@ def find_unity(project: Path, explicit=None):
         if not path.is_file():
             raise RevError(f"Unity Editor 不存在：{path}")
         return path
-    version_file = project / "ProjectSettings/ProjectVersion.txt"
-    version = None
+    version = project_version(project)
+    remembered = read_remembered_editor(project)
+    if remembered and (not version or remembered.get("version") in (None, version)):
+        path = Path(remembered.get("path", ""))
+        if path.is_file():
+            return path
+    installed = hub_editors()
+    matches = sorted({path for found, path in installed if found == version}) if version else sorted({path for _, path in installed})
+    if len(matches) == 1:
+        return matches[0]
+    detail = f"工程版本 {version}" if version else "工程缺少 ProjectVersion.txt"
+    known = sorted({found for found, _ in installed if found})
+    raise RevError(f"无法确定 Unity 编辑器（{detail}，已知安装：{', '.join(known) or '无'}）。请用 --unity <Unity.exe> 或 UNITY_EDITOR 指定，避免猜错版本。")
+
+
+def project_version(project: Path):
+    version_file = Path(project) / "ProjectSettings/ProjectVersion.txt"
     if version_file.exists():
         for line in version_file.read_text(encoding="utf-8").splitlines():
             if line.startswith("m_EditorVersion:"):
-                version = line.split(":", 1)[1].strip()
-    roots = [Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Unity/Hub/Editor"]
-    if version:
-        matches = [root / version / "Editor/Unity.exe" for root in roots]
-    else:
-        matches = [p for root in roots for p in root.glob("*/Editor/Unity.exe")]
-    matches = [p for p in matches if p.is_file()]
-    if len(matches) == 1:
-        return matches[0]
-    raise RevError("请使用 --unity <Unity.exe> 或 UNITY_EDITOR 指定编辑器，避免猜错工程版本。")
+                return line.split(":", 1)[1].strip()
+    return None
+
+
+def hub_editors():
+    """返回 [(版本, Unity 可执行文件)]。
+
+    只搜默认目录不够：Unity 可以装在任意盘，Hub 会把位置记在 editors-v2.json 与 secondaryInstallPath.json 里。
+    """
+    found = []
+    appdata = os.environ.get("APPDATA")
+    hub = Path(appdata) / "UnityHub" if appdata else Path.home() / ".config/UnityHub"
+    for name in ("editors-v2.json", "editors.json"):
+        try:
+            value = read_json(hub / name)
+        except (OSError, ValueError):
+            continue
+        rows = value.get("data") if isinstance(value, dict) and isinstance(value.get("data"), list) else list(value.values()) if isinstance(value, dict) else []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            locations = row.get("location")
+            for location in locations if isinstance(locations, list) else [locations]:
+                if isinstance(location, str) and Path(location).is_file():
+                    found.append((row.get("version"), Path(location)))
+    roots = [Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Unity/Hub/Editor", Path("/Applications/Unity/Hub/Editor"), Path.home() / "Unity/Hub/Editor"]
+    try:
+        secondary = read_json(hub / "secondaryInstallPath.json")
+        if isinstance(secondary, str) and secondary:
+            roots.append(Path(secondary))
+    except (OSError, ValueError):
+        pass
+    for root in roots:
+        if root.is_dir():
+            for relative in ("Editor/Unity.exe", "Unity.app/Contents/MacOS/Unity", "Editor/Unity"):
+                found.extend((path.parts[-(len(Path(relative).parts) + 1)], path) for path in root.glob("*/" + relative))
+    return found
+
+
+def _editor_memo(project: Path) -> Path:
+    return Path(project) / "Library/RevolutionAutomation/editor-path.json"
+
+
+def read_remembered_editor(project: Path):
+    try:
+        value = read_json(_editor_memo(project))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def remember_editor(project: Path, path, version=None):
+    """记住这次真实连上的编辑器。Library 不入库、重启不丢，下次 connect 不用再猜。"""
+    memo = _editor_memo(project)
+    memo.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json(memo, dict(path=str(Path(path)), version=version))
+
+
+def stale_lock(project: Path):
+    """判断 Temp/UnityLockfile：True=残留（没人持有），False=真有 Unity 占用，None=没有锁文件或无法判断。
+
+    断电或强杀后 Unity 来不及删除这个文件，只看"文件是否存在"就会把重启后的工程误判成"已打开"。
+    Windows 上 Unity 独占打开它，所以能否打开才是真实依据。
+    """
+    path = Path(project) / "Temp/UnityLockfile"
+    if not path.exists() or os.name != "nt":
+        return None
+    try:
+        handle = os.open(path, os.O_RDWR)
+    except PermissionError:
+        return False
+    except OSError:
+        return None
+    os.close(handle)
+    return True
 
 
 class RevClient:
@@ -113,16 +186,21 @@ class RevClient:
 
     def endpoint(self):
         try:
-            value = read_json(self.root / "endpoint.json")
-            if Path(value.get("project", "")).resolve() != self.project:
+            value = read_json_settled(self.root / "endpoint.json", attempts=3, delay=.002)
+            if not isinstance(value, dict) or Path(value.get("project", "")).resolve() != self.project:
                 return None
             # Long builds block Unity's main thread; a stale heartbeat is not permission
             # to launch another editor. PID and UnityLockfile are checked below too.
-            return value if isinstance(value, dict) and value.get("protocol") == 1 and -5 <= time.time() - value["heartbeatUnix"] < 15 else None
+            fresh = isinstance(value, dict) and value.get("protocol") == 1 and -5 <= time.time() - value["heartbeatUnix"] < 15
+            # 心跳新鲜不代表 Unity 还活着：被强杀或崩溃后的 15 秒内心跳仍算新鲜，launch 会把死进程当成"已打开"
+            # 然后一直等到超时。锁没人持有就一定没有 Unity 在用这个工程，比心跳可靠。
+            return value if fresh and stale_lock(self.project) is not True else None
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
     def call(self, action, payload=None, confirm=False, progress=None, cancel=None):
+        if cancel is not None and cancel.is_set():
+            raise RevCancelled("请求在提交前已取消，未执行任何动作")
         if action == "editor.wait":
             return self.wait_ready()
         request_id = uuid.uuid4().hex
@@ -149,6 +227,8 @@ class RevClient:
         process = None
         atomic_json(request_path, request)
         try:
+            if cancel is not None and cancel.is_set():
+                raise RevCancelled("请求发布前已取消，未提交到编辑器")
             if mode == "live":
                 atomic_json(self.root / "inbox" / (request_id + ".json"), request)
             else:
@@ -213,7 +293,8 @@ class RevClient:
     def batch(self, steps, stop_on_error=True, confirm=False):
         """一次请求执行多个动作，省掉"每步一次往返"。
 
-        实测单次往返约 110ms 且几乎全花在编辑器 tick 上，所以批量是唯一有效的提速方式。
+        批量减少编辑器 tick 往返；完整 MCP 链路还需避免重复发现与无关证据生成。
+        本方法不缓存业务结果，也不把跨帧操作压成同帧执行。
         steps 形如 [{"action": "editor.status"}, {"action": "ab.config"}]，
         每步可单独带 payloadJson 与 confirm；默认遇错即停，避免后续步骤依赖错误状态。
         """
@@ -254,12 +335,21 @@ class RevClient:
             raise RevError("editor.wait 需要在线编辑器。batch 请求由子编辑器自行完成编译。")
         end, stable, session = time.monotonic() + self.timeout, None, None
         first_heartbeat = None
+        gone_since = None
         while time.monotonic() < end:
             endpoint = self.endpoint()
+            if endpoint is None and not self._editor_open():
+                # 没有心跳、也没有 Unity 占着工程：它已经退出了，等多久都不会好。留几秒宽限给刚启动的编辑器。
+                gone_since = gone_since or time.monotonic()
+                if time.monotonic() - gone_since > 5:
+                    raise RevError("Unity 没有在运行（工程未被打开或已退出）；用 connect 重新打开。")
+            else:
+                gone_since = None
             ready = endpoint and not any(endpoint.get(k) for k in ("batchMode", "compiling", "updating", "activeRequest"))
             if ready:
-                if stable is None or session != endpoint.get("sessionId"):
-                    stable, session = time.monotonic(), endpoint.get("sessionId")
+                ready_key = (endpoint.get("sessionId"), endpoint.get("domainId"))
+                if stable is None or session != ready_key:
+                    stable, session = time.monotonic(), ready_key
                     first_heartbeat = endpoint.get("heartbeatUnix")
                 # 至少跨过两个心跳，避免 refresh 回执早于实际开始编译。
                 if time.monotonic() - stable >= 2 and endpoint.get("heartbeatUnix", 0) > first_heartbeat:
@@ -301,6 +391,9 @@ class RevClient:
         return None
 
     def _editor_open(self):
+        if os.name == "nt":
+            # Windows 上独占锁是唯一可靠依据：重启后 endpoint.json 里的 PID 可能已被别的进程复用。
+            return stale_lock(self.project) is False
         if (self.project / "Temp/UnityLockfile").exists():
             return True
         # A persisted endpoint can survive a crash. Check that PID before treating it as live.
@@ -318,7 +411,10 @@ class RevClient:
                     kernel.CloseHandle(handle)
                     return True
             else:
-                os.kill(pid, 0)
+                try:
+                    os.kill(pid, 0)
+                except PermissionError:
+                    return True  # EPERM：进程存在，只是属于别的用户
                 return True
         except (OSError, ValueError, KeyError):
             pass

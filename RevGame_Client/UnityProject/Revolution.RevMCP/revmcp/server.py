@@ -18,6 +18,9 @@ from . import workflow
 
 VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 STRING = {"type": "string"}
+DISCOVER_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "game", "gm", "cli"]},
+    "query": {"type": "string", "maxLength": 128}, "offset": {"type": "integer", "minimum": 0},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 500}})
 CALL_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "game", "gm", "cli"]},
     "action": STRING, "arguments": {"type": "object"}, "confirm": {"type": "boolean"},
     "intent": {"type": "string", "maxLength": 512, "description": "给用户的一句话目的：为什么调用这个动作；不参与业务参数校验"}}, ("target", "action"))
@@ -42,8 +45,9 @@ def action_schema(spec, manifest):
 
 class Server:
     """将 MCP 工具请求转换为 Hub 调用，并把图片作为 image 内容返回 Agent。"""
-    def __init__(self, hub, stdin=None, stdout=None):
+    def __init__(self, hub, stdin=None, stdout=None, compact_tools=False):
         self.hub = hub
+        self.compact_tools = compact_tools
         self.stdin, self.stdout = stdin or sys.stdin.buffer, stdout or sys.stdout.buffer
         self.write_lock = threading.Lock()
         self.pending_lock = threading.Lock()
@@ -64,11 +68,13 @@ class Server:
     def tools(self, cancel=None):
         # 三个稳定工具负责发现/调用/计划；动态工具由当前真实注册表生成。
         # 中文 GM 名称保留在 description 中，MCP 工具名使用稳定 hash 避免重名。
-        catalog = self.hub.discover(cancel)
         self.dynamic = {}
-        tools = [dict(name="rev_discover", description="发现当前工程/游戏实际注册的编辑器、GM、运行时、CLI能力；不可用项包含原因。先发现再调用。", inputSchema=object_schema()),
+        tools = [dict(name="rev_discover", description="发现真实 Editor/GM/业务/CLI 能力；支持 target/query/offset/limit 筛选。不可用项包含原因，先发现再调用。", inputSchema=DISCOVER_SCHEMA),
             dict(name="rev_call", description="统一调用真实注册能力。GM使用完整名；confirm仅用于已授权动作。业务成功应另做状态断言。", inputSchema=CALL_SCHEMA),
             dict(name="rev_run", description="执行带业务断言、有界轮询和 finally 清理的跨接口测试计划。失败不重放变更，保存完整证据。", inputSchema=object_schema({"plan": {"type": "object"}}, ("plan",)))]
+        if self.compact_tools:
+            return dict(tools=tools)
+        catalog = self.hub.discover(cancel)
         for spec in catalog["actions"] + [dict(c, target="gm", id=c["name"]) for c in catalog["commands"]]:
             target, action = spec["target"], spec["id"]
             if target == "cli":
@@ -112,7 +118,17 @@ class Server:
         if not isinstance(arguments, dict):
             raise ValueError("Tool arguments must be an object")
         if name == "rev_discover":
-            validate(arguments, object_schema()); result = self.hub.discover(token)
+            validate(arguments, DISCOVER_SCHEMA)
+            result = self.hub.discover(token)
+            if arguments:
+                target, query = arguments.get("target"), arguments.get("query", "").casefold()
+                def matches(spec, kind):
+                    return (not target or target == kind) and query in (spec.get("id", spec.get("name", "")) + " " + spec.get("description", "")).casefold()
+                actions = [s for s in result["actions"] if matches(s, s["target"])]
+                commands = [s for s in result["commands"] if matches(s, "gm")]
+                offset, limit = arguments.get("offset", 0), arguments.get("limit", 100)
+                result = dict(result, actions=actions[offset:offset + limit], commands=commands[offset:offset + limit],
+                              actionTotal=len(actions), commandTotal=len(commands), offset=offset, limit=limit)
         elif name == "rev_call":
             validate(arguments, CALL_SCHEMA)
             result = self.hub.call(arguments["target"], arguments["action"], arguments.get("arguments", {}), arguments.get("confirm", False), token)
@@ -160,7 +176,7 @@ class Server:
         except Exception:
             return None
 
-        directory = Path(report_path).parent
+        directory = Path(report_path).parent / Path(report_path).stem
         shots = []
 
         def collect(value):
@@ -173,8 +189,10 @@ class Server:
                 for item in value:
                     collect(item)
 
-        collect(result.get("steps"))
-        collect(result.get("cleanup"))
+        collect(result)
+        if "steps" not in result and "cleanup" not in result and not shots:
+            return None
+        directory.mkdir(parents=True, exist_ok=True)
 
         copied = []
         for index, shot in enumerate(shots, 1):

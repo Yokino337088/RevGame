@@ -55,9 +55,13 @@ class RuntimeClient:
     def call(self, action, payload=None, confirm=False, cancel=None):
         # POST 只接单，后续 GET 才读取最终结果。取消时 DELETE 同一个 id，
         # 不重新 POST 一个新 id；否则网络抖动可能让业务动作执行两次。
+        if cancel is not None and cancel.is_set():
+            raise RevCancelled("Runtime request cancelled before submission")
         request_id = uuid.uuid4().hex
         self.request("POST", "/call", dict(id=request_id, action=action, payload=payload or {}, confirm=confirm, timeoutSeconds=min(self.timeout, 3600)))
-        deadline = time.monotonic() + self.timeout
+        started = time.monotonic()
+        deadline = started + self.timeout
+        polls = 0
         try:
             while True:
                 if cancel is not None and cancel.is_set():
@@ -69,7 +73,10 @@ class RuntimeClient:
                     return response
                 if time.monotonic() >= deadline:
                     raise TimeoutError("Runtime timeout; inspect job " + request_id)
-                time.sleep(.08)
+                # 短操作不白等固定80ms；长作业退让到50ms，仍只GET原工单。
+                polls += 1
+                cadence = .005 if polls == 1 else .02 if time.monotonic() - started < .3 else .05
+                time.sleep(min(cadence, max(0, deadline - time.monotonic())))
         except (RevCancelled, TimeoutError, KeyboardInterrupt):
             try:
                 self.request("DELETE", "/jobs/" + request_id)
@@ -200,6 +207,35 @@ class Hub:
         # Unity 执行日志由桥自身记录，Agent 流补足外部 CLI、调用拒绝和计划断言等 Unity 看不到的工作。
         activity_root = self.editor.root if self.editor else self.runtime_endpoint.parent if self.runtime_endpoint else self.reports.parent
         self.activity = Activity(activity_root / "activity")
+        self._editor_catalog = None
+        self._editor_catalog_key = None
+        self._editor_catalog_until = 0.0
+
+    def _editor_key(self):
+        endpoint = self.editor.endpoint() if self.editor else None
+        if not endpoint:
+            return None
+        return tuple(endpoint.get(key) for key in
+                     ("sessionId", "domainId", "playing", "paused", "compiling", "updating", "compilationFailed"))
+
+    def _catalog(self, target, cancel=None):
+        """编辑器只发现编辑器；短缓存不缓存业务状态，也不能跨会话复用。"""
+        if cancel is not None and cancel.is_set():
+            raise RevCancelled("Capability lookup cancelled")
+        if target == "cli":
+            return dict(success=True, actions=player.specs() + external_specs(self.external_manifest), commands=[], unavailable=[])
+        if target != "editor":
+            return self.discover(cancel)
+        key = self._editor_key()
+        if self._editor_catalog is not None and key is not None and key == self._editor_catalog_key and time.monotonic() < self._editor_catalog_until:
+            return self._editor_catalog
+        result = self.discover(cancel, editor_only=True)
+        if key is not None and not result["unavailable"]:
+            self._editor_catalog, self._editor_catalog_key = result, key
+            self._editor_catalog_until = time.monotonic() + 2.0
+        else:
+            self._editor_catalog = None
+        return result
 
     def game_call(self, action, arguments, confirm=False, cancel=None):
         if self.runtime_endpoint:
@@ -214,7 +250,8 @@ class Hub:
             return self.editor.call(action, arguments, confirm, cancel=cancel)
         return self.editor.call("runtime.call", {"runtimeAction": action, "argumentsJson": json.dumps(arguments, ensure_ascii=False)}, confirm, cancel=cancel)
 
-    def discover(self, cancel=None):
+    def discover(self, cancel=None, editor_only=False):
+        self._editor_catalog = None
         # 编辑模式没有游戏能力时仍可返回 Editor 能力，并把缺项放进 unavailable。
         # 不能拿 commands.json 里的离线说明冒充目标工程已经安装的工具。
         result = dict(success=True, actions=player.specs(), commands=[], unavailable=[])
@@ -232,6 +269,8 @@ class Hub:
                 if isinstance(exc, RevCancelled):
                     raise
                 result["unavailable"].append(dict(target="editor", reason=str(exc)))
+        if editor_only:
+            return result
         try:
             response = self.game_call("runtime.capabilities", {}, cancel=cancel)
             if not response.get("success"):
@@ -251,21 +290,24 @@ class Hub:
         with self.activity.scope(description=self.known.get(action, {}).get("description", "")):
             ticket = self.activity.start(target, action, arguments)
         try:
-            catalog = catalog or self.discover(cancel)
+            catalog = catalog if catalog is not None else self._catalog(target, cancel)
             specs = catalog.get("commands", []) if target == "gm" else catalog.get("actions", [])
             spec = next((s for s in specs if (s.get("name") if target == "gm" else s.get("id")) == action
                          and (target == "gm" or s.get("target") == target)), {})
             ticket[0]["description"] = spec.get("description", "")
             response = self._call(target, action, arguments, confirm, cancel, catalog)
         except (Exception, KeyboardInterrupt) as exc:
+            self._editor_catalog = None
             self.activity.finish(ticket, error=exc)
             raise
+        if not spec.get("readOnly") or not response.get("success"):
+            self._editor_catalog = None
         self.activity.finish(ticket, response)
         return response
 
     def _call(self, target, action, arguments=None, confirm=False, cancel=None, catalog=None):
         arguments = arguments or {}
-        catalog = catalog or self.discover(cancel)
+        catalog = catalog if catalog is not None else self._catalog(target, cancel)
         if target == "gm":
             command = next((c for c in catalog["commands"] if c["name"] == action), None)
             if command is None:

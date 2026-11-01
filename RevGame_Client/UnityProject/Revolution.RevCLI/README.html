@@ -146,10 +146,13 @@ td,th{overflow-wrap:anywhere;}section>p{overflow-wrap:anywhere;}
 <header class="hero"><div class="wrap"><span class="kicker">REVOLUTION · AI AUTOMATION</span><h1>Revolution.RevCLI 2.0</h1><p>Unity 内接线 · 真实业务契约 · 断言、截图与清理</p><div class="meta">2026-10-22 · Python 3.10+ · Unity 2022.3</div></div><div class="deco"></div></header>
 <main><section id="intro">
 <p>Python 3.10+ 标准库 CLI，通过 Unity 主线程桥调用编辑器、GM 和测试。新增场景/对象/组件/资产/Importer/Prefab/项目设置、Console/编译、Test Runner、Player 构建、运行时 UI/截图，以及流程引用、断言、有界轮询和 finally 清理。</p>
+<p>2026-11-01 全链路：<code>connect</code> 重启恢复、<code>scene.compose</code> 一份 JSON 搭场景、<code>script.create/attach</code> 写脚本挂载、<code>scene.capture</code> 看画面、动画、烘焙、包管理、Excel 预览、AB 问题清单、<code>ship</code> 一键打整包。编辑器操作默认走 RevCLI；Play 中或独立 Player 里调 GM 用 <code>runtime start</code> + <code>game gm</code>，RevMCP 为可选项，见 <a href="../Revolution.Document/自动化工具/RevCLI与RevMCP怎么选.html">RevCLI 与 RevMCP 怎么选</a>。详见 <a href="../Revolution.Document/自动化工具/RevCLI全链路开发与重启连接使用说明.html">全链路开发与重启连接</a>。</p>
+<p>2026-10-31 增量：<code>transform.get/set</code>、<code>gameobject.primitive</code>、<code>shader.list</code>、<code>material.inspect/create/clone/set</code>，完整参数预检、Undo/Prefab与GUID约束；MCP按需发现与紧凑目录，活动窗口预算/缓存/虚拟化。新教程：<a href="../Revolution.Document/自动化工具/RevCLI与RevMCP通用Unity扩展使用说明.html">通用Unity扩展</a>、<a href="../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html">提速与窗口</a>；Skill：<code>Skills/revolution-unity-editor/</code>。</p>
 <blockquote><p><strong>关于名字</strong>：本目录原名 <code>Revolution.Automation</code>，因为“automation”容易和游戏内的自动化玩法混在一起，现改名为 <code>Revolution.RevCLI</code>。目录、文档、工作流和参数（<code>--cli-root</code>）都已同步；Python 包名仍是 <code>revautomation</code>，那是内部 import 名，不影响对外使用。发布分支沿用 <code>automation</code> 名称，避免已经克隆过的人失效。</p></blockquote>
-<p>先用 Unity 打开目标工程，等待编译；下面命令从仓库根目录执行：</p>
+<p>开工和电脑重启后，让 AI 跑 <code>connect</code>（可重复执行）：它会体检环境、打开 Unity、等编译、起常驻服务并核对能力，不用先手工开 Unity。下面命令从仓库根目录执行：</p>
 <pre><code class="language-powershell">$project = &#39;<本仓库绝对路径>/RevolutionFrameWork_Unity&#39;
 $env:PYTHONIOENCODING = &#39;utf-8&#39;
+python Revolution.RevCLI/rev.py --project $project connect
 python Revolution.RevCLI/rev.py --project $project doctor
 python Revolution.RevCLI/rev.py --project $project --mode live commands --live
 python Revolution.RevCLI/rev.py --project $project --mode live editor coverage

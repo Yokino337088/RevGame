@@ -106,7 +106,7 @@ class ActivityTests(unittest.TestCase):
             spec = dict(target="cli", id="echo", description="回传调用者文本", command=[sys.executable, "-c", "import json,sys; print(json.dumps(json.load(sys.stdin)))"], cwd=folder,
                         inputSchema=object_schema({"text": {"type": "string"}}))
             server = Server(hub)
-            with patch.object(hub, "discover", return_value=dict(commands=[], actions=[spec])):
+            with patch("revmcp.backends.external_specs", return_value=[spec]):
                 result = server.call({"name": "rev_call", "arguments": {"target": "cli", "action": "echo", "arguments": {"text": "中文"}, "intent": "确认中文输入不会乱码"}}, None)
             self.assertFalse(result["isError"])
             self.assertEqual(result["structuredContent"]["data"], {"text": "中文"})

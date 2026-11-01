@@ -20,6 +20,7 @@ def main():
     parser.add_argument("--external-manifest", type=Path, help="显式注册的外部工具清单")
     parser.add_argument("--reports", type=Path, default=root / "results")
     parser.add_argument("--timeout", type=float, default=120)
+    parser.add_argument("--compact-tools", action="store_true", help="仅暴露三个稳定 MCP 工具；通过 rev_discover 按需查真实能力")
     sub = parser.add_subparsers(dest="operation", required=True)
     sub.add_parser("serve", help="MCP stdio 服务；stdout 仅输出 JSON-RPC")
     sub.add_parser("discover", help="读取实际注册能力")
@@ -43,7 +44,7 @@ def main():
     from revmcp.workflow import run as run_plan
     hub = Hub(args.project, args.runtime_endpoint, args.cli_root, args.external_manifest, args.reports, args.timeout)
     if args.operation == "serve":
-        Server(hub).serve()
+        Server(hub, compact_tools=args.compact_tools).serve()
         return 0
     try:
         if args.operation == "discover":

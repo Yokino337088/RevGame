@@ -4,20 +4,38 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 import sys
 import time
 
-from .client import RevClient, RevError, atomic_json, find_unity, read_json
+from .client import RevClient, RevError, atomic_json, read_json
 from .media import write_gif
 from .report import export_evidence, export_report
+from . import daemon
 from . import pipeline as pipelines
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PROJECT = ROOT.parent / "RevolutionFrameWork_Unity"
+UI_KINDS = ("Canvas", "EventSystem", "Panel", "Image", "RawImage", "Text", "Button", "Toggle", "Slider", "Scrollbar", "Dropdown", "InputField", "ScrollView")
+
+
+_PARSER = None
 
 
 def parser():
+    """argparse 解析器：构建要遍历整份 commands.json（约 65ms），而它解析时不保存状态，所以进程内只建一次。
+
+    一次性的命令行进程只调用一次，没有任何区别；常驻服务每条命令都会解析（先判定能否转发、再真正执行），
+    不缓存就会白白多花两次构建。
+    """
+    global _PARSER
+    if _PARSER is None:
+        _PARSER = _build_parser()
+    return _PARSER
+
+
+def _build_parser():
     p = argparse.ArgumentParser(description="Revolution 编辑器与 GM 自动化（Python 3.10+，无需 pip）")
     p.add_argument("--project", type=Path, default=DEFAULT_PROJECT)
     p.add_argument("--mode", choices=("auto", "live", "batch"), default="auto")
@@ -26,11 +44,35 @@ def parser():
     p.add_argument("--no-graphics", action="store_true", help="batch 禁用图形；不适合渲染性能测量")
     p.add_argument("--output", type=Path, help="同时保存完整 JSON 响应")
     p.add_argument("--confirm", action="store_true", help="显式允许已标记高危 GM、移除旧表或覆盖已生成骨架")
+    p.add_argument("--no-daemon", action="store_true", help="不转发给常驻服务，强制在本进程执行")
     sub = p.add_subparsers(dest="family", required=True)
-    sub.add_parser("doctor", help="检查工程、桥接与编辑器定位")
+    sub.add_parser("doctor", help="只读体检：Python、工程、桥接代码、Unity 位置、编辑器、常驻服务、IL2CPP 工具链")
+    connecting = sub.add_parser("connect", help="开机后的一键连接：体检、打开 Unity、等编译、起常驻服务、核对能力；可重复执行")
+    connecting.add_argument("--no-launch", action="store_true", help="Unity 没开时不自动打开")
+    connecting.add_argument("--no-service", action="store_true", help="不启动常驻服务")
+    connecting.add_argument("--idle-timeout", type=float, default=1800, help="常驻服务空闲多少秒后退出，0 表示不退出")
+    shipping = sub.add_parser("ship", help="一键打整包：切平台 → 导表 → 打 AB → 构建 Player，失败即停")
+    shipping.add_argument("--target", help="如 StandaloneWindows64 / Android；不给则用当前平台")
+    shipping.add_argument("--excel", choices=("none", "full", "data"), default="none", help="导表方式；full 会生成代码并等待编译")
+    shipping.add_argument("--no-ab", action="store_true", help="跳过 AB 打包")
+    shipping.add_argument("--player", type=Path, help="Player 输出的完整路径，必须在新建空目录下；不给则不构建 Player")
+    shipping.add_argument("--backend", choices=("current", "mono", "il2cpp"), default="current")
+    shipping.add_argument("--development", action="store_true")
+    shipping.add_argument("--automation", action="store_true", help="带 REV_AUTOMATION 宏，供运行时 GM 与自动化测试")
+    shipping.add_argument("--frame-timing", action="store_true")
+    shipping.add_argument("--force", action="store_true", help="导表时忽略未改动判断")
+    shipping.add_argument("--skip-invalid", action="store_true", help="导表时跳过有错的表")
+    service = sub.add_parser("daemon", help="常驻服务：启动一次，之后的调用不再付 Python 启动代价")
+    service_ops = service.add_subparsers(dest="operation", required=True)
+    for operation in ("start", "stop", "status", "serve"):
+        command = service_ops.add_parser(operation)
+        if operation in ("start", "serve"):
+            command.add_argument("--idle-timeout", type=float, default=1800, help="空闲多少秒后自动退出，0 表示不自动退出")
+            command.add_argument("--port", type=int, default=0, help="0 表示随机端口")
     commands = sub.add_parser("commands", help="查询离线命令清单，或当前工程实际安装的能力")
     commands.add_argument("--live", action="store_true", help="从 Unity 获取当前实际注册的能力")
     commands.add_argument("--action", help="只显示指定动作的参数契约")
+    commands.add_argument("--query", help="按关键词筛选动作 ID 与说明；不要读 commands.json 全文")
     job = sub.add_parser("job", help="离线查看作业进度或请求取消")
     job.add_argument("id")
     job.add_argument("--cancel", action="store_true")
@@ -72,6 +114,21 @@ def parser():
             command.add_argument("--executable", required=True)
             command.add_argument("--port", type=int, default=18766)
             command.add_argument("--arguments", default="[]", help="Player参数JSON字符串数组")
+    game = sub.add_parser("game", help="直连游戏运行时（编辑器 Play 或独立 Player）：调 GM、调游戏能力、看状态")
+    game_ops = game.add_subparsers(dest="operation", required=True)
+    for operation, text in (("status", "运行时服务身份与连通性"), ("actions", "本局注册的游戏能力"), ("gms", "本局注册的 GM 及参数"),
+                            ("gm", "执行一条 GM"), ("call", "调用一个游戏能力")):
+        command = game_ops.add_parser(operation, help=text)
+        command.add_argument("--session", help="独立 Player 的会话目录；不给则用编辑器 Play 的凭据")
+        if operation in ("actions", "gms"):
+            command.add_argument("--query", help="按名称或说明筛选")
+        if operation == "gm":
+            command.add_argument("name", help="GM 完整名称，例如 背包/添加道具")
+            command.add_argument("values", nargs="*", help="按顺序的参数")
+        if operation == "call":
+            command.add_argument("name", help="游戏能力 id，例如 ui.click")
+            command.add_argument("--json", type=Path, help="参数 JSON 文件")
+            command.add_argument("--set", action="append", default=[], metavar="KEY=JSON")
     families = {}
     for spec in read_json(ROOT / "commands.json")["actions"]:
         family, operation = spec["id"].split(".", 1)
@@ -96,7 +153,7 @@ def parser():
                 action.add_argument("path", help="菜单全路径，不带快捷键")
             if not (family == "editor" and operation == "menu"):
                 action.add_argument("--path")
-            for flag in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value"):
+            for flag in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind"):
                 action.add_argument("--" + flag)
             for flag in ("offset", "limit", "index"):
                 action.add_argument("--" + flag, type=int)
@@ -109,6 +166,11 @@ def parser():
                 action.add_argument("--frame-timing", action="store_true", default=None)
             if family == "test":
                 action.add_argument("--test-mode", choices=("EditMode", "PlayMode"))
+            if family == "script":
+                action.add_argument("--script", help="Assets 下的 .cs 路径")
+                action.add_argument("--class-name")
+                action.add_argument("--namespace", dest="name_space")
+                action.add_argument("--base-class")
             if family == "excel":
                 action.add_argument("--source", action="append")
                 action.add_argument("--data-only", action="store_true")
@@ -135,8 +197,8 @@ def payload_of(args):
             raise RevError(f"--set 的值必须是合法 JSON；字符串需要双引号：{key}") from exc
     for attr, key in (("backend", "backend"), ("development", "development"), ("automation", "automation"), ("frame_timing", "frameTiming"), ("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
                       ("source", "sources"), ("prefab", "prefab"), ("class_name", "className"),
-                      ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"),
-                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "offset", "limit", "index"))):
+                      ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"), ("script", "script"), ("base_class", "baseClass"),
+                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind", "offset", "limit", "index"))):
         value = getattr(args, attr, None)
         if value is not None:
             data[key] = value
@@ -240,6 +302,147 @@ def validate_action(action, payload, allow_refs=False):
                 required = {"property", "value"} if key == "changes" else {"path"}
                 if required - set(item):
                     raise RevError(f"{key} 元素缺少 {sorted(required - set(item))}。")
+    def unresolved(value):
+        if allow_refs and isinstance(value, dict) and "$ref" in value:
+            list(pipelines.references(value))
+            return True
+        return False
+    if action == "transform.set":
+        if not any(key in payload for key in ("position", "eulerAngles", "localScale")):
+            raise RevError("transform.set 需要 position、eulerAngles 或 localScale 至少一项。")
+        space = payload.get("space", "local")
+        if not unresolved(space) and space not in ("local", "world"):
+            raise RevError("space 必须为 local 或 world。")
+        for key in ("position", "eulerAngles", "localScale"):
+            if key not in payload or unresolved(payload[key]):
+                continue
+            vector = payload[key]
+            if not isinstance(vector, list) or len(vector) != 3:
+                raise RevError(f"{key} 必须是三个有限数字组成的数组。")
+            for coordinate in vector:
+                if unresolved(coordinate):
+                    continue
+                if type(coordinate) not in (int, float) or abs(coordinate) > 3.4028234663852886e38 or not math.isfinite(coordinate):
+                    raise RevError(f"{key} 必须为 Single 范围内的有限数字。")
+    if action == "gameobject.primitive":
+        primitive = payload.get("type")
+        if not unresolved(primitive) and primitive not in ("Cube", "Sphere", "Capsule", "Cylinder", "Plane", "Quad"):
+            raise RevError("type 必须为 Cube/Sphere/Capsule/Cylinder/Plane/Quad。")
+        name = payload.get("name")
+        if not unresolved(name) and (not isinstance(name, str) or not name.strip()):
+            raise RevError("gameobject.primitive 需要非空 name。")
+    if action == "rect.set":
+        pair_keys = ("anchorMin", "anchorMax", "pivot", "anchoredPosition", "sizeDelta", "offsetMin", "offsetMax")
+        if not any(key in payload for key in pair_keys):
+            raise RevError("rect.set 需要 anchorMin/anchorMax/pivot/anchoredPosition/sizeDelta/offsetMin/offsetMax 至少一项。")
+        if ("offsetMin" in payload or "offsetMax" in payload) and ("anchoredPosition" in payload or "sizeDelta" in payload):
+            raise RevError("offsetMin/offsetMax 不能与 anchoredPosition/sizeDelta 同时使用。")
+        for key in pair_keys:
+            if key not in payload or unresolved(payload[key]):
+                continue
+            pair = payload[key]
+            if not isinstance(pair, list) or len(pair) != 2:
+                raise RevError(f"{key} 必须是两个有限数字组成的数组。")
+            for coordinate in pair:
+                if unresolved(coordinate):
+                    continue
+                if type(coordinate) not in (int, float) or abs(coordinate) > 1e7 or not math.isfinite(coordinate):
+                    raise RevError(f"{key} 必须为绝对值不超过 1e7 的有限数字。")
+    if action == "ui.create":
+        kind = payload.get("kind")
+        if unresolved(kind):
+            pass
+        elif kind not in UI_KINDS:
+            raise RevError("kind 必须为 " + "/".join(UI_KINDS) + "。")
+        name = payload.get("name")
+        if not unresolved(name) and name is not None and (not isinstance(name, str) or not name.strip()):
+            raise RevError("name 不能是空白字符串；不需要自定义名称时省略它。")
+        if kind not in ("Canvas", "EventSystem") and not unresolved(kind) and not payload.get("parent"):
+            raise RevError("该节点必须提供 parent（某个 Canvas 或其子节点的 id）。")
+    if action == "scene.compose":
+        nodes = payload.get("nodes")
+        if not unresolved(nodes) and (not isinstance(nodes, list) or not nodes):
+            raise RevError("scene.compose 需要非空 nodes 数组；节点字段见 commands --action scene.compose。")
+    if action == "scene.capture":
+        view = payload.get("view", "iso")
+        if not unresolved(view) and view not in ("iso", "top", "front", "side", "camera", "sceneview"):
+            raise RevError("view 必须为 iso/top/front/side/camera/sceneview。")
+        for key in ("width", "height"):
+            value = payload.get(key, 16)
+            if not unresolved(value) and not 16 <= value <= 4096:
+                raise RevError(f"{key} 必须为 16..4096。")
+    if action == "script.create":
+        path = payload.get("path")
+        if not unresolved(path) and (not isinstance(path, str) or not path.startswith("Assets/") or not path.endswith(".cs")):
+            raise RevError("script.create 的 path 需要 Assets 下的 .cs 文件。")
+    if action == "script.attach" and not any(key in payload for key in ("id", "objectPath")):
+        raise RevError("script.attach 需要 id 或 objectPath。")
+    if action == "script.attach" and not payload.get("script"):
+        raise RevError("script.attach 需要 script（Assets 下的 .cs 路径）。")
+    if action == "prefab.unpack":
+        unpack = payload.get("unpackMode", "root")
+        if not unresolved(unpack) and unpack not in ("root", "completely"):
+            raise RevError("unpackMode 必须为 root 或 completely。")
+    if action.startswith("material."):
+        fields = ("path", "destination") if action == "material.clone" else ("path",)
+        for field in fields:
+            path = payload.get(field)
+            if unresolved(path):
+                continue
+            write = action in ("material.create", "material.set") or field == "destination"
+            roots = ("Assets/",) if write else ("Assets/", "Packages/")
+            if not isinstance(path, str) or not path.startswith(roots) or "\\" in path or any(part in (".", "..") for part in path.split("/")) or not path.lower().endswith(".mat"):
+                raise RevError(f"{field} 必须是规范的 {'Assets' if write else 'Assets/Packages'} 下 .mat 路径。")
+        if action == "material.create" or "shader" in payload:
+            shader = payload.get("shader")
+            if not unresolved(shader) and (not isinstance(shader, str) or not shader.strip()):
+                raise RevError("shader 必须是非空真实 Shader 名称。")
+    if action == "shader.list":
+        for field, default in (("offset", 0), ("limit", 200)):
+            value = payload.get(field, default)
+            if not unresolved(value) and (type(value) is not int or value < (0 if field == "offset" else 1) or (field == "limit" and value > 500)):
+                raise RevError("Shader 查询 offset >= 0，limit 为 1..500。")
+    if action == "material.set":
+        properties = payload.get("properties", {})
+        if not unresolved(properties):
+            if not isinstance(properties, dict) or len(properties) > 512:
+                raise RevError("properties 必须是最多 512 项的名称到 typed 值对象。")
+            for name, value in properties.items():
+                if not isinstance(name, str) or not name.strip() or len(name) > 128:
+                    raise RevError("材质属性名必须是 1..128 字符的非空字符串。")
+                if unresolved(value):
+                    continue
+                if isinstance(value, list):
+                    if len(value) != 4:
+                        raise RevError("Color/Vector 需要四个有限数字。")
+                    coordinates = value
+                elif type(value) in (int, float):
+                    coordinates = [value]
+                elif value is None:
+                    continue
+                elif isinstance(value, str):
+                    if not value.startswith(("Assets/", "Packages/")) or "\\" in value or any(part in (".", "..") for part in value.split("/")):
+                        raise RevError("纹理引用需要规范的 Assets/Packages 资产路径，清空使用 null。")
+                    continue
+                else:
+                    raise RevError("材质属性值只能是数字、四维数组、纹理资产路径或 null。")
+                for coordinate in coordinates:
+                    if unresolved(coordinate):
+                        continue
+                    if type(coordinate) not in (int, float) or abs(coordinate) > 3.4028234663852886e38 or not math.isfinite(coordinate):
+                        raise RevError("材质数值必须为 Single 范围内的有限数字。")
+        for field in ("enableKeywords", "disableKeywords"):
+            names = payload.get(field, [])
+            if not unresolved(names) and (not isinstance(names, list) or len(names) > 256 or any(not isinstance(name, str) or not name.strip() or len(name) > 128 for name in names)):
+                raise RevError(f"{field} 需要最多 256 个非空关键字，每个最多 128 字符。")
+        enable, disable = payload.get("enableKeywords", []), payload.get("disableKeywords", [])
+        if not unresolved(enable) and not unresolved(disable) and set(enable) & set(disable):
+            raise RevError("同一个关键字不能同时启用和禁用。")
+        queue = payload.get("renderQueue", -1)
+        if not unresolved(queue) and (type(queue) is not int or not -1 <= queue <= 5000):
+            raise RevError("renderQueue 必须是 -1..5000 整数。")
+        if not properties and "shader" not in payload and "renderQueue" not in payload and not enable and not disable:
+            raise RevError("material.set 需要至少一项修改。")
     for key, group in (("configJson", action.split(".")[0]), ("userConfigJson", "excelUser")):
         if key not in payload:
             continue
@@ -288,14 +491,17 @@ def capture_frames(client, args):
     return shots
 
 
-def invoke_action(client, action, payload, confirm, report_dir=None):
+def print_progress(update):
+    print(json.dumps(update, ensure_ascii=False), file=sys.stderr)
+
+
+def invoke_action(client, action, payload, confirm, report_dir=None, progress=print_progress):
     if action == "editor.launch":
         response = client.launch()
     elif action == "editor.wait":
         response = client.wait_ready()
     else:
-        response = client.call(action, payload, confirm,
-            lambda update: print(json.dumps(update, ensure_ascii=False), file=sys.stderr))
+        response = client.call(action, payload, confirm, progress)
     if action == "scenario.run" and (response.get("data") or {}).get("resultPath"):
         directory = report_dir or ROOT / "results" / Path(response["jobDirectory"]).name
         response["reports"] = export_report(Path(response["data"]["resultPath"]), directory)
@@ -303,11 +509,48 @@ def invoke_action(client, action, payload, confirm, report_dir=None):
 
 
 def main(argv=None):
-    args = parser().parse_args(argv)
+    raw = list(sys.argv[1:] if argv is None else argv)
+    args = parser().parse_args(raw)
     try:
         if args.timeout <= 0 or not args.timeout < 604800:
             raise RevError("--timeout 必须大于 0 且小于 604800 秒。")
-        if args.family == "player":
+        if args.family != "daemon" and daemon.should_forward(args):
+            forwarded = daemon.forward(args.project, raw, os.getcwd(), args.timeout)
+            if forwarded is not None:
+                sys.stdout.write(forwarded.get("stdout", ""))
+                sys.stderr.write(forwarded.get("stderr", ""))
+                return int(forwarded["exitCode"])
+        if args.family == "daemon":
+            result = daemon.control(args.operation, args.project, getattr(args, "idle_timeout", 1800.0), getattr(args, "port", 0))
+        elif args.family == "connect":
+            from . import connect as linking
+            # 没有 Library 时要全量导入和编译，实测十几分钟；沿用单次调用的 120 秒会把正常启动判成失败。
+            result = linking.connect(args.project, args.unity, max(args.timeout, 1800), args.idle_timeout, not args.no_service, not args.no_launch)
+        elif args.family == "doctor":
+            from . import connect as linking
+            result = linking.inspect(args.project, args.unity, args.timeout)
+        elif args.family == "ship":
+            from . import ship
+            client = RevClient(args.project, "live", args.unity, max(args.timeout, 14400))
+            quiet = lambda c, action, payload, confirm: invoke_action(c, action, payload, confirm)
+            result = ship.run(client, args.target, args.excel, not args.no_ab, args.player, args.backend, args.development,
+                              args.automation, args.frame_timing, args.confirm, args.force, args.skip_invalid, quiet)
+        elif args.family == "game":
+            from . import game
+            payload = None
+            if args.operation == "call":
+                payload = json.loads(args.json.read_text(encoding="utf-8-sig")) if args.json else {}
+                for item in args.set:
+                    key, sep, value = item.partition("=")
+                    if not sep or not key:
+                        raise RevError("--set 需要 KEY=JSON")
+                    try:
+                        payload[key] = json.loads(value)
+                    except ValueError:
+                        payload[key] = value
+            result = game.run(args.operation, args.project, args.session, args.timeout, args.confirm,
+                              getattr(args, "name", None), getattr(args, "values", ()), payload, getattr(args, "query", None))
+        elif args.family == "player":
             from . import player
             payload = dict(directory=args.directory)
             if args.operation == "launch":
@@ -325,6 +568,10 @@ def main(argv=None):
                 if not found:
                     raise RevError(f"动作未找到：{args.action}")
                 result = dict(success=True, actions=found)
+            elif args.query:
+                needle = args.query.lower()
+                found = [item for item in result.get("actions", []) if needle in item["id"].lower() or needle in (item.get("description") or "").lower()]
+                result = dict(success=True, total=len(found), actions=found)
         elif args.family == "report":
             result = export_report(args.result, args.directory)
         elif args.family == "gif":
@@ -342,14 +589,7 @@ def main(argv=None):
             result = pipelines.run(None, args.file, args.confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"), validate_only=True)
         else:
             client = RevClient(args.project, args.mode, args.unity, args.timeout, not args.no_graphics)
-            if args.family == "doctor":
-                try:
-                    unity = str(find_unity(client.project, args.unity))
-                except RevError as exc:
-                    unity = str(exc)
-                result = dict(project=str(client.project), endpoint=client.endpoint(), unity=unity,
-                              bridgeInstalled=bool(list((client.project / "Assets").rglob("RevAutomationBridge.cs"))))
-            elif args.family == "job":
+            if args.family == "job":
                 result = client.job(args.id, args.cancel)
             elif args.family == "capture":
                 frames = capture_frames(client, args)

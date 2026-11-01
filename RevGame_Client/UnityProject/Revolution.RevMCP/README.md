@@ -20,7 +20,7 @@ Unity 控制台的“活动日志”实时显示 Agent 请求、编辑器执行�
 
 CLI 目录默认取同级 `Revolution.RevCLI`；若放在别处用 `--cli-root` 指定（改名前的 `--automation-root` 仍可用）。
 
-关于速度：真实编辑器上单次往返约 110ms，实测改造轮询间隔（100ms→20ms）前后没有可测差异——空闲编辑器 `EditorApplication.update` 本身约 110ms 才触发一次，瓶颈在编辑器 tick 而不是轮询。要减少耗时，应当减少往返次数（一次调用做更多事），而不是继续压轮询间隔。
+关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，测试计划与本次截图才生成独立 HTML。可选 `--compact-tools` 只暴露三个稳定工具，配合 `rev_discover` 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 [提速教程](../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html)。
 
 独立 Player 显式 `-revAutomation` 开启服务，MCP 使用 `--runtime-endpoint <runtime.json>`。正式包默认无运行时测试接口。game 业务能力通过 `RevRuntimeAutomation.Register` 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。
 

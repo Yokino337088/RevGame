@@ -193,7 +193,7 @@
       "keys": [
         "baseline"
       ],
-      "description": "比较基准与当前布局",
+      "description": "比较基准与当前布局；baseline=last-build 表示与上次打包对比",
       "environment": "edit",
       "readOnly": true
     },
@@ -311,9 +311,10 @@
         "sources",
         "recursive",
         "dataOnly",
-        "force"
+        "force",
+        "skipInvalid"
       ],
-      "description": "全量或仅数据导出，移除旧表需要 confirm",
+      "description": "全量或仅数据导出，移除旧表需要 confirm；skipInvalid 跳过有错的表继续导出",
       "environment": "edit"
     },
     {
@@ -456,8 +457,10 @@
     },
     {
       "id": "gm.list",
-      "keys": [],
-      "description": "列出实际 GM 及参数、高危标记、注册错误",
+      "keys": [
+        "refresh"
+      ],
+      "description": "列出实际 GM 及参数、高危标记、注册错误；refresh=true 重新扫描",
       "environment": "either"
     },
     {
@@ -728,6 +731,85 @@
       "environment": "edit"
     },
     {
+      "id": "gameobject.primitive",
+      "keys": [
+        "type",
+        "name",
+        "parent",
+        "scene"
+      ],
+      "description": "创建 Cube/Sphere/Capsule/Cylinder/Plane/Quad 原始体，保留网格、Collider 和 Undo",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "transform.get",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "读取对象的世界与局部位置、旋转、缩放和父节点身份",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "transform.set",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "space",
+        "position",
+        "eulerAngles",
+        "localScale"
+      ],
+      "description": "修改三维变换并支持 Undo；space 为 local/world，localScale 始终是局部缩放",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "rect.get",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "读取 RectTransform 的锚点、轴心、位置、尺寸、偏移、本地矩形与所属 Canvas",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "rect.set",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "anchorMin",
+        "anchorMax",
+        "pivot",
+        "anchoredPosition",
+        "sizeDelta",
+        "offsetMin",
+        "offsetMax"
+      ],
+      "description": "修改 RectTransform 排版并支持 Undo；offsetMin/offsetMax 与 anchoredPosition/sizeDelta 二选一；只写给出的字段，单独改锚点会让矩形实际位置变化，要保持位置请同时给偏移",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "ui.create",
+      "keys": [
+        "kind",
+        "name",
+        "parent",
+        "scene"
+      ],
+      "description": "创建 UGUI 节点（Canvas/EventSystem/Panel/Image/RawImage/Text/Button/Toggle/Slider/Scrollbar/Dropdown/InputField/ScrollView）并支持 Undo；除 Canvas、EventSystem 外必须放在 Canvas 之下，Text 为内置 UnityEngine.UI.Text",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
       "id": "gameobject.inspect",
       "keys": [
         "id",
@@ -949,6 +1031,60 @@
       "environment": "edit"
     },
     {
+      "id": "shader.list",
+      "keys": [
+        "query",
+        "offset",
+        "limit"
+      ],
+      "description": "分页查询资产与当前已加载 Shader 的真实名称、路径和支持状态，不宣称列全未加载内置 Shader",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "material.create",
+      "keys": [
+        "path",
+        "shader"
+      ],
+      "description": "按真实 Shader 名创建新 .mat；拒绝覆盖，磁盘资产创建不属于 Undo",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "material.inspect",
+      "keys": [
+        "path"
+      ],
+      "description": "读取材质 Shader 声明的属性名、类型与当前值、关键字和渲染队列",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "material.set",
+      "keys": [
+        "path",
+        "shader",
+        "properties",
+        "renderQueue",
+        "enableKeywords",
+        "disableKeywords"
+      ],
+      "description": "完整预检后修改材质 Shader 属性、关键字与队列，支持 Undo；properties 为名称到 typed 值的对象",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "material.clone",
+      "keys": [
+        "path",
+        "destination"
+      ],
+      "description": "克隆材质到新 .mat，保留源与其 GUID、拒绝覆盖；磁盘资产创建不属于 Undo",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
       "id": "asset.importer",
       "keys": [
         "path",
@@ -989,6 +1125,29 @@
       ],
       "description": "将场景对象保存为新 Prefab",
       "environment": "edit"
+    },
+    {
+      "id": "prefab.apply",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "把场景中 Prefab 实例的全部覆盖写回其 Prefab 资产并保存；写盘不可 Undo，只允许 Assets 下的 Prefab",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "prefab.unpack",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "unpackMode"
+      ],
+      "description": "解除场景中 Prefab 实例与资产的关联，不支持 Undo（需要时用 prefab.instantiate 重建）；unpackMode 为 root（默认，仅最外层）或 completely（含嵌套）",
+      "environment": "edit",
+      "readOnly": false
     },
     {
       "id": "prefab.inspect",
@@ -1164,6 +1323,405 @@
       "description": "核对 Revolution.Tools 菜单与 CLI 接线，列出未映射入口",
       "environment": "either",
       "readOnly": true
+    },
+    {
+      "id": "gameobject.configure",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "name",
+        "active",
+        "layer",
+        "tag",
+        "isStatic"
+      ],
+      "description": "一次修改对象的名称、激活、Layer、Tag、Static 并支持 Undo；Layer/Tag 必须已存在，缺失时先用 settings.layer-add/tag-add",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "scene.compose",
+      "keys": [
+        "nodes",
+        "parent",
+        "scene"
+      ],
+      "description": "用一份 JSON 一次建好对象树：节点可写 name、primitive/prefab/ui、position/eulerAngles/localScale、rect、active/layer/tag/isStatic、components（type 或 script 路径 + properties）、children；属性值写 \"@相对路径\" 可引用同批节点。先预检，任何失败都销毁本次创建的全部对象，整批一次 Undo",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "scene.capture",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "view",
+        "width",
+        "height"
+      ],
+      "description": "把场景渲染成 PNG 交回路径，让 AI 看见搭建结果：view 为 iso/top/front/side（自动框住全部 Renderer）、camera（用 id/objectPath 或主相机）、sceneview（当前 Scene 窗口）。不含 Screen Space Overlay UI",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "scene.save-all",
+      "keys": [],
+      "description": "保存全部已打开且有路径的场景；存在未命名的脏场景时拒绝，先用 scene.save 指定 path",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "sceneview.frame",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "选中对象并让 Scene 窗口框住它，方便人工查看 AI 搭好的内容",
+      "environment": "live",
+      "readOnly": false
+    },
+    {
+      "id": "settings.tag-add",
+      "keys": [
+        "name"
+      ],
+      "description": "向工程添加 Tag；已存在时不改动并返回现状",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "settings.layer-add",
+      "keys": [
+        "name"
+      ],
+      "description": "把 Layer 写入第一个空槽（8..31）；已存在时不改动并返回现状",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "script.create",
+      "keys": [
+        "path",
+        "className",
+        "nameSpace",
+        "baseClass",
+        "text"
+      ],
+      "description": "在 Assets 下写 C# 脚本并触发编译：给 text 写入原文，否则按 className/nameSpace/baseClass 生成空类；自动建父目录，覆盖需要 confirm。写完用 editor.wait 等编译，再 script.attach",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "script.attach",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "script"
+      ],
+      "description": "把已编译的脚本（Assets 下 .cs 路径）挂到场景对象并支持 Undo，返回组件 id，随后用 component.set 连字段",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "editor.recompile",
+      "keys": [],
+      "description": "请求重新编译全部脚本；随后用 editor.wait 等待，用 editor.compilation 读错误",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "asset.read-text",
+      "keys": [
+        "path"
+      ],
+      "description": "读取 Assets 或 Packages 下的 UTF-8 文本文件，最大 1 MiB，二进制文件拒绝",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "asset.write-text",
+      "keys": [
+        "path",
+        "text"
+      ],
+      "description": "写 Assets 下的 UTF-8 文本文件并导入，自动建父目录，覆盖需要 confirm；.meta/.unity/.prefab/.asset/.mat 等序列化资产拒绝，请用对应动作",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "asset.import-file",
+      "keys": [
+        "source",
+        "path"
+      ],
+      "description": "把工程外的文件（贴图、模型、音频等）复制进 Assets 并导入；source 是本机绝对路径，覆盖需要 confirm，单文件上限 2 GiB",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "prefab.revert",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "丢弃场景中 Prefab 实例的全部覆盖，回到资产原样；不可 Undo，需要 confirm",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "prefab.variant",
+      "keys": [
+        "path",
+        "destination"
+      ],
+      "description": "基于现有 Prefab 创建 Prefab Variant 资产，不覆盖已有目标，也不改动当前场景",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "ui.snapshot",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "offset",
+        "limit"
+      ],
+      "description": "读取某个 UI 节点及全部子节点的分页快照（路径、矩形、组件、文本、是否接收射线），不需要 Play；这是几何事实，不代表真实遮挡，点击验证用 ui.dump/ui.click",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "clip.create",
+      "keys": [
+        "path",
+        "frameRate",
+        "loop"
+      ],
+      "description": "创建空的 .anim 动画片段，可设帧率与循环；不覆盖已有资产",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "clip.inspect",
+      "keys": [
+        "path"
+      ],
+      "description": "读取动画片段的时长、帧率、循环与全部浮点曲线绑定",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "clip.curve",
+      "keys": [
+        "path",
+        "targetPath",
+        "componentType",
+        "property",
+        "keys"
+      ],
+      "description": "新增或替换一条浮点曲线：targetPath 为子节点相对路径（根为空），property 如 m_LocalPosition.x，keys 为 [[时间,值],...]；时间必须严格递增；支持 Undo",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "animator.create",
+      "keys": [
+        "path"
+      ],
+      "description": "创建 .controller 动画控制器（含默认 Base Layer），不覆盖已有资产",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "animator.inspect",
+      "keys": [
+        "path",
+        "layer"
+      ],
+      "description": "读取控制器的参数、指定 Layer 的状态与过渡结构",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "animator.parameter",
+      "keys": [
+        "path",
+        "name",
+        "parameterType"
+      ],
+      "description": "添加控制器参数，parameterType 为 Float/Int/Bool/Trigger，重名拒绝",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "animator.state",
+      "keys": [
+        "path",
+        "name",
+        "clip",
+        "layer",
+        "isDefault"
+      ],
+      "description": "向 Layer 添加状态，可绑定 .anim 片段并设为默认状态，重名拒绝",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "animator.transition",
+      "keys": [
+        "path",
+        "from",
+        "to",
+        "layer",
+        "hasExitTime",
+        "exitTime",
+        "duration",
+        "conditions"
+      ],
+      "description": "添加过渡：from 可为状态名或 Any，to 可为状态名或 Exit；conditions 为 [{parameter,mode,threshold}]，mode 为 If/IfNot/Greater/Less/Equals/NotEqual。无条件且无 exitTime 的过渡会被拒绝，否则它永远不触发",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "lighting.bake",
+      "keys": [],
+      "description": "烘焙已打开场景的光照并等待结束，取消或超时会停止烘焙；场景必须已保存，只有 Contribute GI 的静态物体参与",
+      "environment": "live",
+      "readOnly": false
+    },
+    {
+      "id": "lighting.clear",
+      "keys": [],
+      "description": "清除已打开场景的烘焙光照数据，需要 confirm",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "bake.status",
+      "keys": [],
+      "description": "读取光照烘焙进度、光照贴图数量与 NavMesh 三角形数量",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "navmesh.bake",
+      "keys": [],
+      "description": "用内置 NavMeshBuilder 同步烘焙已打开场景；场景必须已保存，只有 Navigation Static 的物体参与，结果三角形为 0 时判失败",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "navmesh.clear",
+      "keys": [],
+      "description": "清除已打开场景的 NavMesh，需要 confirm",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "package.list",
+      "keys": [],
+      "description": "列出工程当前解析出的全部包（名称、版本、来源），只读且不联网",
+      "environment": "edit",
+      "readOnly": true
+    },
+    {
+      "id": "package.add",
+      "keys": [
+        "package"
+      ],
+      "description": "安装包（名称、名称@版本或 git 地址），会改 manifest 并触发编译，需要 confirm；之后用 editor.wait 与 package.list 确认",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "package.remove",
+      "keys": [
+        "package"
+      ],
+      "description": "移除包，会改 manifest 并触发编译，需要 confirm；之后用 editor.wait 与 package.list 确认",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "build.targets",
+      "keys": [],
+      "description": "列出常用构建平台及当前 Unity 是否装了对应支持，切平台前先查",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "build.scene-add",
+      "keys": [
+        "path",
+        "enabled"
+      ],
+      "description": "把场景加入 Build Settings，已存在时只更新启用状态",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "build.scene-remove",
+      "keys": [
+        "path"
+      ],
+      "description": "把场景移出 Build Settings，不删除场景文件；不在列表时不报错",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "excel.check",
+      "keys": [],
+      "description": "导表前体检：代码目录、容器目录、数据目录是否可写可用，以及数据目录所在 AB 包",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "excel.preview",
+      "keys": [
+        "sources",
+        "recursive",
+        "table",
+        "offset",
+        "limit"
+      ],
+      "description": "预览 Excel：不给 table 时列出每张表的字段数、行数、是否忽略和错误；给 table 时返回字段、分页行和带行号的错误。坏表也会返回详情，不直接失败",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "ab.issues",
+      "keys": [
+        "target"
+      ],
+      "description": "返回 AB 检查页的结构化问题：校验错误与警告、同包重名、被多包重复引用的资源、循环依赖、映射一致性；有问题也正常返回，canBuild 表示能否打包",
+      "environment": "edit",
+      "readOnly": true
+    },
+    {
+      "id": "ab.extract-shared",
+      "keys": [
+        "bundle",
+        "assets"
+      ],
+      "description": "把被多个包重复引用的资源移进共享包，消除重复打包；不给 assets 时处理全部重复资源，需要 confirm",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "ab.top-assets",
+      "keys": [
+        "bundle",
+        "limit"
+      ],
+      "description": "按源文件体积列出最大的资源，可限定某个包，用于定位包体热点",
+      "environment": "edit",
+      "readOnly": true
     }
   ],
   "parameterTypes": {
@@ -1206,6 +1764,24 @@
     "type": "string",
     "name": "string",
     "parent": "string",
+    "space": "string",
+    "position": "array",
+    "eulerAngles": "array",
+    "localScale": "array",
+    "anchorMin": "array",
+    "anchorMax": "array",
+    "pivot": "array",
+    "anchoredPosition": "array",
+    "sizeDelta": "array",
+    "offsetMin": "array",
+    "offsetMax": "array",
+    "kind": "string",
+    "unpackMode": "string",
+    "shader": "string",
+    "properties": "object",
+    "renderQueue": "int",
+    "enableKeywords": "string[]",
+    "disableKeywords": "string[]",
     "property": "string",
     "value": "string",
     "severity": "string",
@@ -1230,7 +1806,35 @@
     "development": "bool",
     "backend": "string",
     "automation": "bool",
-    "frameTiming": "bool"
+    "frameTiming": "bool",
+    "nodes": "array",
+    "active": "bool",
+    "tag": "string",
+    "isStatic": "bool",
+    "view": "string",
+    "width": "int",
+    "height": "int",
+    "script": "string",
+    "baseClass": "string",
+    "source": "string",
+    "package": "string",
+    "frameRate": "float",
+    "loop": "bool",
+    "targetPath": "string",
+    "componentType": "string",
+    "keys": "array",
+    "parameterType": "string",
+    "clip": "string",
+    "isDefault": "bool",
+    "from": "string",
+    "to": "string",
+    "hasExitTime": "bool",
+    "exitTime": "float",
+    "duration": "float",
+    "conditions": "array",
+    "skipInvalid": "bool",
+    "refresh": "bool",
+    "table": "string"
   },
   "configFields": {
     "ab": [
