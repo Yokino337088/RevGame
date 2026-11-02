@@ -1,0 +1,27 @@
+#EndlessFormation
+#Id	Formation	Kind	X	Y	Stone
+#行编号	棋阵编号：0弩雨 1炎环 2守眼	开局棋种（PieceKind枚举名）	格子X（0~8，不能是棋心4,4）	格子Y（0~8）	1=石子（守眼骨架，不攻击不计人口）
+0	0	Crossbow	3	3	0
+1	0	Crossbow	5	5	0
+2	0	Archer	3	5	0
+3	0	Archer	5	3	0
+4	0	Shield	1	4	0
+5	0	Shield	7	4	0
+6	0	Swordman	4	2	0
+7	0	Swordman	4	6	0
+8	1	MageFire	3	3	0
+9	1	MageFire	5	5	0
+10	1	Archer	5	3	0
+11	1	MageWater	3	5	0
+12	1	Shield	1	4	0
+13	1	HeavySword	7	4	0
+14	1	Swordman	4	2	0
+15	1	Assassin	4	6	0
+16	2	Priest	3	3	0
+17	2	Priest	5	5	0
+18	2	Shield	4	3	1
+19	2	Shield	3	4	1
+20	2	Crossbow	5	3	0
+21	2	Archer	3	5	0
+22	2	HeavySword	1	4	0
+23	2	Swordman	7	4	0

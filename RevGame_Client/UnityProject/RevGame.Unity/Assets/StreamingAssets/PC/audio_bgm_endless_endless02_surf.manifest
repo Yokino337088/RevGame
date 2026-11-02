@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1605890516
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 47a55e5819311b803758db095c2582c4
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 47a55e5819311b803758db095c2582c4
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Endless/Endless02_Surf.mp3
+Dependencies: []

@@ -31,6 +31,11 @@ namespace RevGame.Editor
             { "UI_Pvp_imgBK", new Vector4(130, 95, 130, 95) },
             { "UI_Game_imgMobilityBK", new Vector4(26, 0, 26, 0) },
             { "UI_Game_imgEnemyMobility", new Vector4(26, 0, 26, 0) },
+            // 2026-11-02 HUD 重做用到的用户指定原图：奶油长条、深色面板、木纹竖卡（棕色按钮原本就有切割线）。
+            // 切割线只包住圆角描边，中间纹理才拉伸；六章里这些图是 Simple 模式，不受影响。
+            { "UI_achieveItem_imgBK", new Vector4(36, 30, 36, 30) },
+            { "UI_Tip_imgBK", new Vector4(34, 34, 34, 34) },
+            { "UI_Tavern_imgBK", new Vector4(64, 64, 64, 64) },
         };
 
         /// <summary>
@@ -71,10 +76,62 @@ namespace RevGame.Editor
             background.SaveAndReimport();
         }
 
+        /// <summary>剑气刃贴图（Kenney Particle Pack 的 twirl_03，CC0），已缩到 256×256。</summary>
+        private const string SwordAuraTexture = "Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png";
+
+        /// <summary>
+        /// 剑气材质。刃贴图被 Shader 旋转采样，所以不能进 Sprite 图集（图集里的 UV 不是 0~1，旋转会采到邻图）：
+        /// 按“非 Sprite 采样纹理”导入，钳制寻址、关 mipmap、只保留 256 尺寸，跟着 endless_arena 包走。
+        /// </summary>
+        private static Material SwordAuraMaterial()
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(SwordAuraTexture);
+            if (importer == null)
+            {
+                throw new InvalidOperationException("剑气贴图缺失：" + SwordAuraTexture);
+            }
+            importer.textureType = TextureImporterType.Default;
+            importer.alphaSource = TextureImporterAlphaSource.FromInput;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.maxTextureSize = 256;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.isReadable = false;
+            importer.SaveAndReimport();
+            Material material = Material("EndlessSwordAura", "RevGame/Endless/SwordAura");
+            material.SetTexture("_BladeTex", AssetDatabase.LoadAssetAtPath<Texture2D>(SwordAuraTexture));
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        /// <summary>
+        /// 无尽音频导入设置：三首 BGM 走流式加载（不一次解压进内存，配合 EndlessMusicPlaylist 的“快播完才加载下一首”），
+        /// 打击音效体积很小、播放频繁，加载时解压，播放零延迟。
+        /// </summary>
+        private static void ConfigureEndlessAudio()
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/GameRes/Audio/Bgm/Endless", "Assets/GameRes/Audio/Sfx/Endless" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = (AudioImporter)AssetImporter.GetAtPath(path);
+                bool music = path.Contains("/Bgm/");
+                AudioImporterSampleSettings settings = importer.defaultSampleSettings;
+                settings.loadType = music ? AudioClipLoadType.Streaming : AudioClipLoadType.DecompressOnLoad;
+                settings.compressionFormat = AudioCompressionFormat.Vorbis;
+                settings.quality = music ? .5f : .7f;
+                settings.preloadAudioData = !music;
+                importer.defaultSampleSettings = settings;
+                importer.loadInBackground = music;
+                importer.forceToMono = !music;
+                importer.SaveAndReimport();
+            }
+        }
+
         /// <summary>图标类节点：不拉伸，保持原比例。</summary>
         private static bool IsIcon(string name)
         {
-            return name == "pause" || name == "close" || name == "icon";
+            return name == "pause" || name == "close" || name == "icon" || name == "modalClose";
         }
 
         /// <summary>按节点名字决定用哪张图。名字约定写在这一处，生成器其余代码不用关心美术。</summary>
@@ -83,20 +140,24 @@ namespace RevGame.Editor
             switch (name)
             {
                 case "pause": return "UI_Pvp_btnSetting";
-                case "close": return "UI_Buy_btnClose";
+                case "close": case "modalClose": return "UI_Buy_btnClose";
                 case "icon": return "UI_Setting_Background";
-                case "modal": case "entry": return "UI_Pvp_imgBK";
-                case "tip": return "UI_Settlement_imgBK";
+                case "entry": return "UI_Pvp_imgBK";
+                case "top": return "UI_achieveItem_imgBK";
+                case "modal": case "tip": case "boss": case "banner": return "UI_Tip_imgBK";
                 case "heartTrack": case "bossTrack": case "xpTrack": return "UI_Game_imgMobilityBK";
                 case "heartFill": case "bossFill": case "xpFill": return "UI_Game_imgEnemyMobility";
-                case "start": return "UI_Tavern_Checkmark";
-                case "resume": case "reroll": return "UI_Tavern_btnClose";
+                case "start": case "level": case "resume": case "reroll": return "UI_Tavern_btnClose";
             }
             if (name.StartsWith("card", StringComparison.Ordinal))
             {
                 return "UI_roleItem_imgBK";
             }
-            if (name.StartsWith("choice", StringComparison.Ordinal) || name.StartsWith("formation", StringComparison.Ordinal))
+            if (name.StartsWith("choice", StringComparison.Ordinal))
+            {
+                return "UI_Tavern_imgBK";
+            }
+            if (name.StartsWith("formation", StringComparison.Ordinal))
             {
                 return "UI_roleItem_roleItem";
             }
@@ -125,6 +186,12 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("无尽UI缺九宫格切割线：" + spriteName);
             }
             image.type = Image.Type.Sliced;
+            // 木纹竖卡原图 828×1454、圆角 64 像素；缩到手牌这么小时，原尺寸的圆角会把整张卡挤成胶囊形。
+            // pixelsPerUnitMultiplier 把九宫格的角按比例缩小（4 倍 → 角约 16 像素），卡片形状才和原图一致。
+            if (name.StartsWith("choice", StringComparison.Ordinal))
+            {
+                image.pixelsPerUnitMultiplier = 2.5f;
+            }
         }
 
         /// <summary>

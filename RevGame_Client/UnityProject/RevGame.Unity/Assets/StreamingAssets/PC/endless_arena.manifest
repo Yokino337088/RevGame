@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 360827321
+CRC: 4112437104
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6fb9fdd761b391eb4c9a9e9badf60e80
+    Hash: e8df5e3173a84b750b0e5a6f7034e1d0
   TypeTreeHash:
     serializedVersion: 2
-    Hash: b583d7d2ffcbe543bd98bbd97c5beac7
+    Hash: 1aa63f14457cabec86fb1436af983cc0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6fb9fdd761b391eb4c9a9e9badf60e80
+    Hash: e8df5e3173a84b750b0e5a6f7034e1d0
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -34,14 +34,20 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 2a78887e3114a70498fc2804083b0fb4, type: 3}
 - Class: 115
   Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Endless/EndlessBackground.mat
 - Assets/GameRes/Endless/EndlessHorde.mat
 - Assets/GameRes/Endless/EndlessGrid.mat
-- Assets/GameRes/Endless/EndlessImpact.mat
+- Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png
+- Assets/GameRes/Endless/EndlessHpBar.mat
 - Assets/GameRes/ChapterBackground/EndlessTemple.png
 - Assets/GameRes/Endless/EndlessArena.prefab
+- Assets/GameRes/Endless/EndlessSwordAura.mat
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

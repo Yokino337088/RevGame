@@ -37,7 +37,9 @@ namespace RevGame.Editor
             { "Audio/Sfx/Helper", "audio_helper" }, { "Audio/Sfx/Boss/Common", "audio_boss_common" },
             { "Audio/Sfx/Boss/Chapter01", "audio_boss_chapter01" }, { "Audio/Sfx/Boss/Chapter02", "audio_boss_chapter02" },
             { "Audio/Sfx/Boss/Chapter03", "audio_boss_chapter03" }, { "Audio/Sfx/Boss/Chapter04", "audio_boss_chapter04" },
-            { "Audio/Sfx/Boss/Chapter05", "audio_boss_chapter05" }, { "Audio/Sfx/Boss/Chapter06", "audio_boss_chapter06" }
+            { "Audio/Sfx/Boss/Chapter05", "audio_boss_chapter05" }, { "Audio/Sfx/Boss/Chapter06", "audio_boss_chapter06" },
+            // 无尽模式专用的割草打击音效（Kenney CC0），只在无尽里加载，不拖进六章的公共音效包。
+            { "Audio/Sfx/Endless", "audio_endless" }
         };
 
         /// <summary>幂等标记并用框架生成ResMap、路径和音效目录常量；有漏标/重名/非法名就中止，不掩盖错误。</summary>

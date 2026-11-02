@@ -63,7 +63,8 @@ namespace RevGame.Endless
                         skillAX = u.SkillA.X, skillAY = u.SkillA.Y, skillBX = u.SkillB.X, skillBY = u.SkillB.Y, skillCX = u.SkillC.X, skillCY = u.SkillC.Y,
                         bornAt = u.BornAt, bossTemplate = u.BossTemplate, warningLine = u.WarningLine,
                         role = u.Role, gate = u.Gate, breakEyeAt = u.BreakEyeAt, breakEyeTarget = u.BreakEyeTarget,
-                        furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield
+                        furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield,
+                        auraAt = u.AuraAt, comboCount = u.ComboCount
                     }
                     );
                 }
@@ -169,7 +170,8 @@ namespace RevGame.Endless
                         SkillA = new BoardPos(s.skillAX, s.skillAY), SkillB = new BoardPos(s.skillBX, s.skillBY), SkillC = new BoardPos(s.skillCX, s.skillCY),
                         BornAt = s.bornAt, BossTemplate = s.bossTemplate, WarningLine = s.warningLine,
                         Role = s.role, Gate = s.gate, BreakEyeAt = s.breakEyeAt, BreakEyeTarget = s.breakEyeTarget,
-                        FuryUntil = s.furyUntil, StationarySince = s.stationarySince, SteadyShield = s.steadyShield
+                        FuryUntil = s.furyUntil, StationarySince = s.stationarySince, SteadyShield = s.steadyShield,
+                        AuraAt = s.auraAt, ComboCount = s.comboCount
                     }
                     );
                 }

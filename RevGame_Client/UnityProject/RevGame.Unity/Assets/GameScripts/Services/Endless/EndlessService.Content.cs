@@ -42,12 +42,13 @@ namespace RevGame.Endless
             scale *= boss >= 0 ? Mathf.Min(V("BossHpCap"), 1 + (Run.circuit - 1) * V("CircuitHpGrowth")) : 1 + Math.Min(Run.circuit - 1, N("CircuitHpCap")) * V("CircuitHpGrowth");
             scale *= Run.difficulty == 1 ? V("DifficultyHp") : 1;
             float hp = Mathf.Max(1, Mathf.Floor(PieceCatalog.Get(kind, StarTier.One).MaxHp * scale));
-            int gate = Next(4), along = Next(9);
+            // 入侵者和杂兵共用左右两侧 × 九行的出生口，进盘时也沿这一行进入（见 TryEnterBoard）。
+            NextLane(out int gate, out int row);
             Run.horde[slot] = new EndlessHorde
             {
                 active = true, id = Run.nextId++, gate = gate, kind = role, hp = hp, maxHp = hp,
-                x = gate == 0 ? -3 : gate == 1 ? 11 : along,
-                y = gate == 2 ? -3 : gate == 3 ? 11 : along,
+                x = gate == 0 ? -3 : 11,
+                y = row,
                 speed = V("HordeSpeed") * (role == 1 ? V("CircuitSpeedCap") : 1)
             };
             return true;

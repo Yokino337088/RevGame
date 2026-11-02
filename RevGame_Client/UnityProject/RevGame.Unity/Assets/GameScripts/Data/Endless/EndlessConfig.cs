@@ -37,6 +37,43 @@ namespace RevGame.Endless
             {
                 throw new InvalidOperationException("无尽BGM曲目表为空");
             }
+            // 组合技：棋种名和效果名写错会在入场时直接报出是哪一行，不会打到一半才发现不生效。
+            foreach (EndlessCombo row in RevDataTableManager.Get<EndlessComboTable>().All)
+            {
+                ComboKindA(row);
+                ComboKindB(row);
+                ComboEffect(row);
+                if (row.Every <= 0 || row.Count <= 0 || row.Power <= 0 || row.Radius < 0 || row.FontSize <= 0 || string.IsNullOrEmpty(row.Name))
+                {
+                    throw new InvalidOperationException("无尽组合技数值非法：" + row.Id);
+                }
+                if (!UnityEngine.ColorUtility.TryParseHtmlString(row.ColorHex, out _))
+                {
+                    throw new InvalidOperationException("无尽组合技颜色不是十六进制：" + row.Id);
+                }
+            }
+            // 剑气参数在下方统一读取一次，缺项或非正数会立刻报错。
+            Value("AuraRadius");
+            Value("AuraStarRadius");
+            Value("AuraTickSeconds");
+            Value("AuraDamageRatio");
+            Count("AuraTargetLimit");
+            Value("MeleeMoveSeconds");
+            // 开局棋阵：三个棋阵都要有棋子，棋种名、坐标合法且不压棋心（具体占格冲突由开局时 Board.Place 再检查一次）。
+            var formations = new bool[3];
+            foreach (EndlessFormation row in RevDataTableManager.Get<EndlessFormationTable>().All)
+            {
+                FormationKind(row);
+                if (row.Formation < 0 || row.Formation > 2 || row.X < 0 || row.X > 8 || row.Y < 0 || row.Y > 8 || (row.X == 4 && row.Y == 4))
+                {
+                    throw new InvalidOperationException("无尽开局棋阵坐标或棋阵编号非法：" + row.Id);
+                }
+                formations[row.Formation] = true;
+            }
+            if (!formations[0] || !formations[1] || !formations[2])
+            {
+                throw new InvalidOperationException("无尽开局棋阵缺少某个棋阵的棋子");
+            }
             for (int i = 0; i < RevDataTableManager.Get<EndlessMusicTable>().All.Count; i++)
             {
                 Music(i);
@@ -103,6 +140,38 @@ namespace RevGame.Endless
                 throw new InvalidOperationException("无尽BGM曲目不存在：" + id);
             }
             return row;
+        }
+        /// <summary>开局棋阵一行的棋种（Excel 写 PieceKind 枚举名）。</summary>
+        public static PieceKind FormationKind(EndlessFormation row)
+        {
+            return ParseKind(row.Kind, row.Id);
+        }
+        /// <summary>组合技的触发棋种（Excel 里写 PieceKind 枚举名）。</summary>
+        public static PieceKind ComboKindA(EndlessCombo row)
+        {
+            return ParseKind(row.KindA, row.Id);
+        }
+        /// <summary>组合技需要同时在场的搭档棋种。</summary>
+        public static PieceKind ComboKindB(EndlessCombo row)
+        {
+            return ParseKind(row.KindB, row.Id);
+        }
+        /// <summary>组合技效果类型（Excel 写枚举名）。</summary>
+        public static EndlessComboEffect ComboEffect(EndlessCombo row)
+        {
+            if (!Enum.TryParse(row.Effect, out EndlessComboEffect effect))
+            {
+                throw new InvalidOperationException("无尽组合技效果名不存在：" + row.Effect + "（编号 " + row.Id + "）");
+            }
+            return effect;
+        }
+        private static PieceKind ParseKind(string name, int id)
+        {
+            if (!Enum.TryParse(name, out PieceKind kind))
+            {
+                throw new InvalidOperationException("无尽组合技棋种名不存在：" + name + "（编号 " + id + "）");
+            }
+            return kind;
         }
         public static EndlessBoss Boss(int id)
         {

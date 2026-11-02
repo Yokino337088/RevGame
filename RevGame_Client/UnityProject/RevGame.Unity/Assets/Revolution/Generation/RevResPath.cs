@@ -62,6 +62,7 @@ namespace Revolution
         public const string Atlases = "Atlases/";
         public const string Audio = "Audio/";
         public const string Audio_Bgm = "Audio/Bgm/";
+        public const string Audio_Bgm_Endless = "Audio/Bgm/Endless/";
         public const string Audio_Sfx = "Audio/Sfx/";
         public const string Audio_Sfx_Boss = "Audio/Sfx/Boss/";
         public const string Audio_Sfx_Boss_Chapter01 = "Audio/Sfx/Boss/Chapter01/";
@@ -71,6 +72,7 @@ namespace Revolution
         public const string Audio_Sfx_Boss_Chapter05 = "Audio/Sfx/Boss/Chapter05/";
         public const string Audio_Sfx_Boss_Chapter06 = "Audio/Sfx/Boss/Chapter06/";
         public const string Audio_Sfx_Boss_Common = "Audio/Sfx/Boss/Common/";
+        public const string Audio_Sfx_Endless = "Audio/Sfx/Endless/";
         public const string Audio_Sfx_Helper = "Audio/Sfx/Helper/";
         public const string Audio_Sfx_Helper_Helper = "Audio/Sfx/Helper/Helper/";
         public const string Board = "Board/";
@@ -86,6 +88,7 @@ namespace Revolution
         public const string Effects_Combat = "Effects/Combat/";
         public const string Effects_Helper = "Effects/Helper/";
         public const string Endless = "Endless/";
+        public const string Endless_Textures = "Endless/Textures/";
         public const string Fonts = "Fonts/";
         public const string Fonts_CJK = "Fonts/CJK/";
         public const string HelperTextures = "HelperTextures/";

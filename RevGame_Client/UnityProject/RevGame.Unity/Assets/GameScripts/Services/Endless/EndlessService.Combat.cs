@@ -21,7 +21,8 @@ namespace RevGame.Endless
                 }
                 if (unit.BurnUntil > Run.seconds && unit.BurnAt <= Run.seconds)
                 {
-                    p.TakeDamage(Mathf.CeilToInt(unit.BurnDamage));
+                    int burned = p.TakeDamage(Mathf.CeilToInt(unit.BurnDamage));
+                    ReportDamage(p.Id, Position(p), burned, p.Side);
                     unit.BurnAt = Run.seconds + 1;
                 }
                 if (!p.IsAlive)
@@ -38,6 +39,9 @@ namespace RevGame.Endless
                     {
                         unit.SteadyShield = true;
                     }
+                    // 近战棋的剑气独立于普攻计时，持续切割身边一圈（吸血鬼幸存者式的被动武器）。
+                    UpdateAura(unit);
+                    MeleeAdvance(unit);
                     if (unit.AttackAt <= Run.seconds && MoveRules.CanAttack(p))
                     {
                         PlayerAttack(unit);
@@ -75,11 +79,12 @@ namespace RevGame.Endless
                 EndlessUnit victim = Find(target.Id);
                 float front = victim != null && victim.Role == 2 && FacingGate(victim.Gate, Position(p), Position(target)) ? V("ShieldFrontRatio") : 1;
                 HitUnit(victim, damage * front, route);
-                Impact(from, Position(target), route);
+                Impact(from, Position(target), route, 0, p);
                 if (Run.mains[1] > 0 && route == 1)
                 {
                     Area(Position(target), Mathf.Min(V("AreaLimit"), 1 + Run.mains[1] * V("BlessingDamage")), damage * V("BurnRatio"), 1, target.Id);
                 }
+                TryCombo(unit, Position(target), damage);
                 return;
             }
             if (!p.Def.IsRanged && Run.mains[5] == 0)
@@ -112,7 +117,7 @@ namespace RevGame.Endless
             {
                 HitHorde(best, damage, route);
             }
-            Impact(from, to, route);
+            Impact(from, to, route, 0, p);
             // 派生链只在主攻击这里展开；Area/Hit不会递归重新调用PlayerAttack，天然没有无限反应链。
             if (route == 0 && Run.mains[0] > 0)
             {
@@ -125,7 +130,7 @@ namespace RevGame.Endless
                     if (i != best && h.active && Vector2.Dot(delta, ray) > 0 && Mathf.Abs(delta.x * ray.y - delta.y * ray.x) < 0.7f && delta.magnitude <= V("OuterRange"))
                     {
                         HitHorde(i, damage, route);
-                        Impact(from, new Vector2(h.x, h.y), route);
+                        Impact(from, new Vector2(h.x, h.y), route, 0, p);
                         remaining--;
                     }
                 }
@@ -138,6 +143,7 @@ namespace RevGame.Endless
             {
                 Chain(to, best, damage * V("BurnRatio"));
             }
+            TryCombo(unit, to, damage);
         }
         private bool OuterInRange(Piece p, EndlessHorde h)
         {
@@ -220,6 +226,8 @@ namespace RevGame.Endless
                 return;
             }
             Run.damage[route] += Math.Min(h.hp, damage);
+            // 数字显示实际打掉的血：溢出部分不算，和六章“真实扣血”口径一致。
+            ReportDamage(h.id, new Vector2(h.x, h.y), Math.Min(h.hp, damage), GameSide.Enemy);
             h.hp -= damage;
             if ((route == 1 && Run.mains[1] > 0) || (route == 0 && Run.seals[1] > 0))
             {
@@ -248,6 +256,7 @@ namespace RevGame.Endless
             }
             int applied = unit.Piece.TakeDamage(Mathf.CeilToInt(damage));
             Run.damage[route] += applied;
+            ReportDamage(unit.Piece.Id, Position(unit.Piece), applied, GameSide.Enemy);
             if (route == 1 && Run.mains[1] > 0)
             {
                 unit.BurnUntil = Run.seconds + V("BurnSeconds");
@@ -258,7 +267,7 @@ namespace RevGame.Endless
                 unit.SlowUntil = Run.seconds + V("FreezeSeconds");
             }
         }
-        private void Area(Vector2 center, float radius, float damage, int route, int excluded)
+        private void Area(Vector2 center, float radius, float damage, int route, int excluded, bool emit = true)
         {
             damage *= Run.rare[2] ? 1 + V("PaperAreaBonus") : 1;
             float squared = radius * radius;
@@ -278,7 +287,11 @@ namespace RevGame.Endless
                     HitUnit(Units[i], damage, route);
                 }
             }
-            Impact(center, center, route, radius);
+            // emit=false：组合技自己指定了更贴切的六章特效外观，这里就不再按路线补画一层。
+            if (emit)
+            {
+                Impact(center, center, route, radius);
+            }
         }
         private void EnemyAct(EndlessUnit unit)
         {
@@ -294,7 +307,7 @@ namespace RevGame.Endless
                 {
                     Piece target = Board.GetPiece(_targets[0]);
                     HurtPlayer(Find(target.Id), p.Def.Attack * p.AttackScale, unit);
-                    Impact(Position(p), Position(target), 6);
+                    Impact(Position(p), Position(target), 6, 0, p);
                 }
                 else if (PieceAttackRules.Distance(p, new BoardPos(4, 4)) <= 1)
                 {
@@ -329,7 +342,8 @@ namespace RevGame.Endless
                 unit.MoveAt = Run.seconds + V("EnemyMoveSeconds") / (unit.Role == 1 ? V("CircuitSpeedCap") : 1);
             }
         }
-        private void HurtPlayer(EndlessUnit victim, float damage, EndlessUnit attacker)
+        /// <summary>敌方打玩家棋。kind 决定伤害数字的样式：普攻用受击红字，领主技能用六章同款技能字。</summary>
+        private void HurtPlayer(EndlessUnit victim, float damage, EndlessUnit attacker, BattleDamageKind kind = BattleDamageKind.Normal)
         {
             if (victim == null || !victim.Piece.IsAlive)
             {
@@ -345,6 +359,7 @@ namespace RevGame.Endless
             float defense = p.EyeDefenseMultiplier * p.EyeGuardDefenseMultiplier;
             damage *= Mathf.Max(1 - V("DamageReductionCap"), 1 / defense);
             int applied = p.TakeDamage(Mathf.CeilToInt(damage));
+            ReportDamage(p.Id, Position(p), applied, GameSide.Player, kind);
             if (applied > 0 && Run.mains[5] > 0 && victim.CounterAt <= Run.seconds)
             {
                 victim.CounterAt = Run.seconds + V("CounterSeconds");
@@ -424,6 +439,8 @@ namespace RevGame.Endless
                     Impact(Position(p), Position(p), 2, 1);
                     continue;
                 }
+                // 先记死亡再移除：表现层看到棋子消失时，靠这条回执决定播溶解而不是直接收走。
+                ReportDeath(p.Id, Position(p), false);
                 Board.Remove(p);
                 Units.RemoveAt(i);
                 if (p.Side == GameSide.Enemy)
@@ -447,7 +464,8 @@ namespace RevGame.Endless
             {
                 OnSurgeKilled(h, pos);
             }
-            Impact(pos, pos, h.burnUntil > Run.seconds ? 1 : 0, 0.5f);
+            // 杂兵死亡改为六章同款溶解（见 EndlessArena.CombatFx），不再画一圈自制光环。
+            ReportDeath(h.id, pos, true);
             // 二代伤害写入待死亡目标，但不再赋予灼烧标志，避免递归爆炸。
             if (h.burnUntil > Run.seconds && Run.evolved[1] && h.chainGeneration < 2)
             {

@@ -139,6 +139,8 @@ namespace RevGame.Editor
                 .Where(p => AssetImporter.GetAtPath(p) is TextureImporter importer
                     // 激光是LineRenderer非Sprite采样纹理，保持完整0～1UV；禁止误归Sprite图集。
                     && !p.StartsWith("Assets/GameRes/HelperTextures/", StringComparison.Ordinal)
+                    // 无尽剑气刃贴图由SwordAura Shader旋转采样，同样需要完整0～1UV；随endless_arena目录包加载，不进图集。
+                    && !p.StartsWith("Assets/GameRes/Endless/Textures/", StringComparison.Ordinal)
                     && (!p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) || importer.textureType == TextureImporterType.Sprite))
                 .Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
         }

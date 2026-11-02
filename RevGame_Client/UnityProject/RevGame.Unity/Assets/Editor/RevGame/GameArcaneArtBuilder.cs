@@ -96,6 +96,37 @@ namespace RevGame.Editor
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             Coordinates(image);
         }
+        /// <summary>
+        /// 代码生成的面板（如无尽 HUD/入口）在保存前调用，套用和 Apply 完全相同的规则：
+        /// 底板/按钮挂 ArcanePanel，名为 card* 的手牌按钮挂 CardGleam，二者都加独立流光坐标和图集晚绑定刷新。
+        /// 这样重新生成面板不会丢掉六章同款的 Shader 效果，也不会多建一份材质。
+        /// </summary>
+        public static void StyleGeneratedPanel(GameObject root)
+        {
+            Material card = MaterialOf("CardGleam", "RevGame/UI/CardGleam", 0.30f, 0.18f, 1f);
+            Material panel = MaterialOf("ArcanePanel", "RevGame/UI/ArcanePanel", 0.38f, 0.28f, 1f);
+            foreach (Image image in root.GetComponentsInChildren<Image>(true))
+            {
+                string spritePath = AssetDatabase.GetAssetPath(image.sprite);
+                if ((image.name.StartsWith("card", StringComparison.Ordinal) || image.name.StartsWith("choice", StringComparison.Ordinal)) && image.GetComponent<Button>() != null)
+                {
+                    image.material = card;
+                }
+                else if (IsSurface(spritePath))
+                {
+                    image.material = panel;
+                }
+                else
+                {
+                    continue;
+                }
+                Coordinates(image);
+                if (image.GetComponent<AtlasImageBinding>() == null)
+                {
+                    image.gameObject.AddComponent<AtlasImageBinding>();
+                }
+            }
+        }
         /// <summary>只给底图加特效坐标，肖像、字体、血条和图标保留原渲染。</summary>
         private static void Coordinates(Image image)
         {

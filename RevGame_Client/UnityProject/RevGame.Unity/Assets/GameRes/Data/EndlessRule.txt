@@ -28,14 +28,14 @@ BrokenEyeSpeed	0.4	逆风换眼攻速增量
 SteadySeconds	10	静守抵挡等待秒
 RelicHp	10	临时边缘遗迹生命
 GateQueueRows	7	门外排队纵深层数
-GateQueueSpacing	0.22	门外层间距/格
+GateQueueSpacing	0.5	同一行杂兵排队间距/格（涌入后前后排距离）
 HordeLaneJitter	0.18	外围队列横向错位/格
 HordeLimit	120	外围并发上限
 PlayerLimit	12	玩家主力上限
 PlayerCells	40	玩家占地含棋心
 EnemyCells	32	敌军占地上限
 SummonLimit	4	眼召唤上限
-HandLimit	6	手牌上限
+HandLimit	3	手牌上限（底部只放3张，割草时少看手牌）
 MinuteCards	2	分钟补牌
 MainSlots	4	主祝福槽
 SealSlots	3	辅印槽
@@ -59,7 +59,7 @@ GateWait	8	门口等待投射间隔
 WarningSeconds	2	入侵与Boss预警秒
 RescueSeconds	10	全员阵亡救援秒
 SaveSeconds	30	自动保存战斗秒
-SpawnInterval	0.42	积累阶段出生间隔
+SpawnInterval	0.28	积累阶段出生间隔/秒（越小敌潮越密，配合加快的攻速保持满屏火拼）
 PeakSpawnFactor	0.55	峰值出生间隔倍率
 HordeHp	16	杂兵基础血量
 HordeAttack	2	杂兵突破伤害
@@ -84,7 +84,7 @@ CircuitAttackCap	10	攻击增长最多巡回数
 CircuitSpeedCap	1.35	速度倍率上限
 CircuitHeal	0.25	巡回棋心回复比例
 BossHpCap	4	Boss血量巡回倍率上限
-PlayerAttackSeconds	0.75	基础玩家攻击间隔
+PlayerAttackSeconds	0.4	基础玩家攻击间隔/秒（越小攻速越快）
 EnemyAttackSeconds	1.6	敌人攻击间隔
 EnemyMoveSeconds	1.2	入侵棋移动间隔
 OuterRange	4	外围最大射程/格
@@ -146,3 +146,9 @@ PustuleRadius	1.5	瘟沼毒囊杂兵死亡的爆炸半径/格
 MusicPreloadLead	20	当前曲目还剩多少秒时开始异步加载下一首的AB包/秒
 MusicCrossfade	3	两首BGM交叉淡入淡出的时长/秒
 BossContactHeartScale	0.2	领主贴着棋心时普攻伤害的倍率：棋心主要应被可躲避的技能威胁
+AuraRadius	1.35	近战剑气切割半径/格（1星）
+AuraStarRadius	0.25	每升1星剑气半径增加比例
+AuraTickSeconds	0.45	剑气每次切割间隔/秒（战斗时间）
+AuraDamageRatio	0.4	剑气单次伤害=棋子攻击×该比例
+AuraTargetLimit	14	剑气每次最多切中的敌人数（含外围与盘内）
+MeleeMoveSeconds	0.8	近战棋自动逼近最近敌人的移动间隔/秒

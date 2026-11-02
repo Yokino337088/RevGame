@@ -164,9 +164,11 @@ namespace RevGame.Endless
 
             // Collect 先把命中名单存下来再扣血：边遍历棋盘边死棋会破坏遍历。
             BossExpandedGeometry.Collect(Board, info, _skillHits);
+            // 伤害数字沿用六章的领主技能样式：BattleDamageKind 的 Boss 段与 BossSkillKind 顺序一致（见 BattleService.BossAI）。
+            var damageKind = (BattleDamageKind)((int)BattleDamageKind.BossCleave + (int)kind);
             for (int i = 0; i < _skillHits.Count; i++)
             {
-                HurtPlayer(Find(_skillHits[i].Id), damage, boss);
+                HurtPlayer(Find(_skillHits[i].Id), damage, boss, damageKind);
             }
             if (BossExpandedGeometry.Contains(kind, info.A, info.B, info.C, info.Radius, info.Index, new BoardPos(4, 4)))
             {

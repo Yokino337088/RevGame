@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: EndlessImpact
-  m_Shader: {fileID: 4800000, guid: 8d0157a7796b88e418f1122c750b8910, type: 3}
+  m_Name: EndlessSwordAura
+  m_Shader: {fileID: 4800000, guid: 31fe5e66606fa3b45a51aeafc59b48d0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -22,8 +22,16 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _BladeTex:
+        m_Texture: {fileID: 2800000, guid: 2c20d93c962ad83419db13201974db80, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _RingWidth: 0.028
+    - _Speed: 1.35
+    - _Strength: 1.15
+    - _Trail: 0.55
     m_Colors: []
   m_BuildTextureStacks: []

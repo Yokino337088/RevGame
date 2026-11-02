@@ -17,11 +17,29 @@ namespace RevGame.Endless
         public readonly BoardModel Board = new BoardModel(9, new BoardPos(4, 4));
         public readonly List<EndlessUnit> Units = new List<EndlessUnit>(81);
         public readonly EndlessImpact[] Impacts = new EndlessImpact[256];
+        /// <summary>伤害数字回执，表现层按 DamageSerial 读取新增部分；容量只影响显示，不影响结算。</summary>
+        public readonly EndlessDamageReceipt[] DamageReceipts = new EndlessDamageReceipt[256];
+        /// <summary>死亡回执，表现层据此播放六章同款溶解；同上，只是显示用的有界缓冲。</summary>
+        public readonly EndlessDeathReceipt[] DeathReceipts = new EndlessDeathReceipt[128];
         // 81格棋盘和256条短效收据是布局/表现结构容量，伤害不依赖表现缓冲容量。
         private readonly List<BoardPos> _targets = new List<BoardPos>(81);
         private readonly HashSet<Piece> _consumed = new HashSet<Piece>();
         private int _ruleVersion = -1, _impactSerial;
         private bool _saveAtStepEnd;
+        /// <summary>最新一条伤害回执的序号；表现层记住自己读到哪，只处理比它新的。</summary>
+        public int DamageSerial
+        {
+            get;
+            private set;
+        }
+        /// <summary>最新一条攻击/范围回执（Impacts）的序号，用法同 DamageSerial。</summary>
+        public int ImpactSerial => _impactSerial;
+        /// <summary>最新一条死亡回执的序号。</summary>
+        public int DeathSerial
+        {
+            get;
+            private set;
+        }
         public EndlessRun Run
         {
             get;
@@ -84,13 +102,13 @@ namespace RevGame.Endless
                 nextEvent = V("EventSeconds"), nextSave = V("SaveSeconds"), horde = new EndlessHorde[N("HordeLimit")]
             };
             PieceKind primary = formation == 0 ? PieceKind.Crossbow : formation == 1 ? PieceKind.MageFire : PieceKind.Priest;
-            AddPlayer(primary, 3, 3, false);
-            AddPlayer(formation == 0 ? PieceKind.Crossbow : PieceKind.Shield, 2, 3, false);
-            AddPlayer(PieceKind.Shield, 3, 2, false);
-            if (formation == 2)
+            // 开局棋阵来自 Excel EndlessFormation：每个棋阵 8 枚左右，开局就能凑出组合技、近战带剑气守门，满屏开火。
+            foreach (EndlessFormation row in RevDataTableManager.Get<EndlessFormationTable>().All)
             {
-                AddPlayer(PieceKind.Shield, 4, 3, true);
-                AddPlayer(PieceKind.Shield, 3, 4, true);
+                if (row.Formation == formation)
+                {
+                    AddPlayer(EndlessConfig.FormationKind(row), row.X, row.Y, row.Stone != 0);
+                }
             }
             Run.hand.Add((int)primary);
             Run.hand.Add((int)PieceKind.Shield);
@@ -350,13 +368,104 @@ namespace RevGame.Endless
             GoRules.Evaluate(Board);
             _ruleVersion = Board.TopologyVersion;
         }
-        private void Impact(Vector2 from, Vector2 to, int route, float radius = 0)
+        private void Impact(Vector2 from, Vector2 to, int route, float radius = 0, Piece source = null)
+        {
+            ImpactFx(from, to, route, radius, source == null ? 0 : source.Id, source == null ? PieceKind.Swordman : source.Def.Kind, source != null, 0);
+        }
+        /// <summary>完整版回执：可以单独指定外观棋种（组合技的弹道/范围没有出手棋子）和组合技编号。</summary>
+        private void ImpactFx(Vector2 from, Vector2 to, int route, float radius, int sourceId, PieceKind kind, bool hasKind, int combo)
         {
             int serial = ++_impactSerial;
             Impacts[serial % Impacts.Length] = new EndlessImpact
             {
-                serial = serial, from = from, to = to, route = route, time = Run.seconds, radius = radius
+                serial = serial, from = from, to = to, route = route, time = Run.seconds, radius = radius,
+                sourceId = sourceId, sourceKind = kind, hasKind = hasKind, combo = combo
             };
+        }
+        /// <summary>
+        /// 记一条伤害数字。调用方必须已经把血扣完，这里只抄结果；0 伤害（被挡、溢出）不显示。
+        /// </summary>
+        private void ReportDamage(int target, Vector2 position, float damage, GameSide side, BattleDamageKind kind = BattleDamageKind.Normal)
+        {
+            int shown = Mathf.CeilToInt(damage);
+            if (shown <= 0)
+            {
+                return;
+            }
+            int serial = ++DamageSerial;
+            DamageReceipts[serial % DamageReceipts.Length] = new EndlessDamageReceipt
+            {
+                serial = serial, target = target, damage = shown, position = position, side = side, kind = kind
+            };
+        }
+        /// <summary>记一条死亡。只在真正死亡处调用；三合一吃掉、进盘转身份都不算死亡。</summary>
+        private void ReportDeath(int id, Vector2 position, bool horde)
+        {
+            int serial = ++DeathSerial;
+            DeathReceipts[serial % DeathReceipts.Length] = new EndlessDeathReceipt
+            {
+                serial = serial, id = id, position = position, horde = horde
+            };
+        }
+        /// <summary>
+        /// 外围敌人的出生槽：左右两侧交替，九行按步长 4 轮转（0,4,8,3,7,2,6,1,5…）。
+        /// 这样连续刷出的敌人在两侧九条横线上均匀铺开，不会扎堆在中间几行；
+        /// 步长 4 与 9 互质，每 18 只正好把两侧 18 个出生口各用一次。
+        /// 这是棋盘结构（9 行、左右两侧），不是策划数值，所以不进表。
+        /// </summary>
+        private void NextLane(out int gate, out int row)
+        {
+            int slot = Run.laneCursor++;
+            gate = slot & 1;
+            row = (slot >> 1) * 4 % 9;
+        }
+        /// <summary>
+        /// 绿色落子提示用：当前选中的手牌或棋子能不能落到这一格。
+        /// 和 ClickCell 走同一套判断（占格、棋心、人口/占地上限、同名升星），保证“亮的格子点下去一定成功”。
+        /// 只读查询，不改任何状态。
+        /// </summary>
+        public bool CanPlaceAt(int x, int y)
+        {
+            if (Run == null || !CanArrange())
+            {
+                return false;
+            }
+            var pos = new BoardPos(x, y);
+            if (Run.selectedCard >= 0 && Run.selectedCard < Run.hand.Count)
+            {
+                Piece at = Board.GetPiece(pos);
+                if (at != null)
+                {
+                    // 点同名一星棋子可以升星（规则见 MergeWithCard：还需要场上另一枚同名一星），六章同样把这类格子点亮。
+                    return Run.phase != EndlessPhase.Fighting && CanMergeCardInto(at, (PieceKind)Run.hand[Run.selectedCard]);
+                }
+                return PlayerCount() < N("PlayerLimit") && Occupied(GameSide.Player) + 1 <= N("PlayerCells") && Fits(pos, 1, GameSide.Player);
+            }
+            EndlessUnit unit = Find(Run.selectedUnit);
+            if (unit == null)
+            {
+                return false;
+            }
+            // 选中棋子自己脚下也点亮，和六章“已选中的棋子格子高亮”一致。
+            return unit.Piece.Pos.Equals(pos) || Fits(pos, unit.Piece.Size, GameSide.Player, unit.Piece);
+        }
+        /// <summary>手牌合星的前置条件预检（不含升星后的占地检查，那一步需要临时占格，交给真正点击时判断）。</summary>
+        private bool CanMergeCardInto(Piece target, PieceKind card)
+        {
+            EndlessUnit first = Find(target.Id);
+            if (first == null || first.Stone || first.Summoned || target.Side != GameSide.Player || target.Def.Star != StarTier.One || target.Def.Kind != card)
+            {
+                return false;
+            }
+            for (int i = 0; i < Units.Count; i++)
+            {
+                EndlessUnit other = Units[i];
+                if (other != first && !other.Summoned && !other.Stone && other.Piece.Side == GameSide.Player && other.Piece.Def.Kind == card && other.Piece.Def.Star == StarTier.One)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         private void AddScore(long value)
         {
@@ -376,6 +485,11 @@ namespace RevGame.Endless
             _ruleVersion = -1;
             _impactSerial = 0;
             Array.Clear(Impacts, 0, Impacts.Length);
+            DamageSerial = DeathSerial = 0;
+            ComboCasts = 0;
+            Banner = "";
+            Array.Clear(DamageReceipts, 0, DamageReceipts.Length);
+            Array.Clear(DeathReceipts, 0, DeathReceipts.Length);
             TickCount = 0;
             TickMilliseconds = MaxTickMilliseconds = 0;
             _saveAtStepEnd = false;

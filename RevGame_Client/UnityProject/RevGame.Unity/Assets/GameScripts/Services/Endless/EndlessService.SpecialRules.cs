@@ -26,6 +26,7 @@ namespace RevGame.Endless
                     EndlessHorde h = Run.horde[i];
                     if (h.active && (new Vector2(h.x, h.y) - center).sqrMagnitude <= V("AreaLimit"))
                     {
+                        ReportDamage(h.id, new Vector2(h.x, h.y), Mathf.Min(h.hp, Run.burnZoneDamage[cell]), GameSide.Enemy);
                         h.hp -= Run.burnZoneDamage[cell];
                         h.chainGeneration = 2;
                         Run.horde[i] = h;
@@ -75,8 +76,10 @@ namespace RevGame.Endless
                     EndlessUnit target = Find(unit.BreakEyeTarget);
                     if (target != null && target.Piece.HasEyeGuardAura && PieceAttackRules.Distance(unit.Piece, target.Piece) <= N("OuterRange"))
                     {
-                        target.Piece.TakeDamage(target.Piece.Hp);
-                        Impact(Position(unit.Piece), Position(target.Piece), 6, 1);
+                        int applied = target.Piece.TakeDamage(target.Piece.Hp);
+                        // 破眼是一击处决，数字沿用六章“处决”样式。
+                        ReportDamage(target.Piece.Id, Position(target.Piece), applied, GameSide.Player, BattleDamageKind.Execution);
+                        Impact(Position(unit.Piece), Position(target.Piece), 6, 1, unit.Piece);
                     }
                     unit.BreakEyeAt = 0;
                     unit.NextSkillAt = Run.seconds + V("BreakEyeInterval");

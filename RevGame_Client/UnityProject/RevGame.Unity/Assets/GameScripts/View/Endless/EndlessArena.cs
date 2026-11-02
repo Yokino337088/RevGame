@@ -10,6 +10,7 @@ namespace RevGame.Endless
 {
     /// <summary>
     /// 无尽棋盘表现根，整块经RevPool租用。盘内复用PieceView，外围只用一个动态网格，
+    /// 弹道、飘字、出生/死亡等战斗反馈全部复用六章资源（见 EndlessArena.CombatFx），落子提示见 EndlessArena.Placement。
     /// 伤害在Service中已完成，少画一个光效绝不会少一次伤害。退出先使回调过期再归还棋子。
     /// </summary>
     [RevPoolPrefab("Endless", "EndlessArena", Group = RevResGroup.Battle)]
@@ -17,29 +18,27 @@ namespace RevGame.Endless
     {
         [SerializeField] private PieceArtConfig art;
         [SerializeField] private MeshRenderer hordeRenderer;
-        [SerializeField] private MeshRenderer effectRenderer;
         [SerializeField] private MeshRenderer gridRenderer;
         [SerializeField] private MeshRenderer backgroundRenderer;
         private readonly Dictionary<int, PieceView> _pieces = new Dictionary<int, PieceView>(81);
         private readonly HashSet<int> _pending = new HashSet<int>();
         private readonly List<int> _remove = new List<int>(81);
-        private Mesh _hordeMesh, _effectMesh;
-        private Vector3[] _vertices, _effectVertices;
-        private Vector2[] _uv, _effectUv;
-        private Color[] _colors, _effectColors;
+        private Mesh _hordeMesh;
+        private Vector3[] _vertices;
+        private Vector2[] _uv;
+        private Color[] _colors;
         private Sprite[] _frames;
         private Vector4[] _frameUvs;
-        private MaterialPropertyBlock _hordeProperties, _gridProperties, _effectProperties, _backgroundProperties;
+        private MaterialPropertyBlock _hordeProperties, _gridProperties, _backgroundProperties;
         private int _generation, _bindingVersion = -1;
         private bool _active;
         private Camera _camera;
         // 开发机观测窗口：预分配30秒左右样本，统计时才复制/排序，热帧不格式化报告。
         private readonly float[] _frameSamples = new float[1800];
-        private int _frameCount, _lastSoundSerial;
+        private int _frameCount;
         private long _gcBytes;
         private bool _gcObserved;
         private ProfilerRecorder _gcRecorder;
-        private float _lastSoundAt;
         private float _shakeOffset;
         /// <summary>技能命中时的额外震屏幅度，随时间衰减到 0。</summary>
         private float _shakeBoost;
@@ -80,14 +79,17 @@ namespace RevGame.Endless
                 int count = EndlessConfig.Count("HordeLimit");
                 _hordeMesh = CreateMesh(count, out _vertices, out _uv, out _colors);
                 hordeRenderer.GetComponent<MeshFilter>().sharedMesh = _hordeMesh;
-                _effectMesh = CreateMesh(256, out _effectVertices, out _effectUv, out _effectColors);
-                effectRenderer.GetComponent<MeshFilter>().sharedMesh = _effectMesh;
                 _hordeProperties = new MaterialPropertyBlock();
                 _gridProperties = new MaterialPropertyBlock();
-                _effectProperties = new MaterialPropertyBlock();
                 _backgroundProperties = new MaterialPropertyBlock();
             }
             RefreshAtlas();
+            BeginFeel();
+            EndlessService service = RevServices.Get<EndlessService>();
+            if (service?.Run != null)
+            {
+                BeginCombatFx(service);
+            }
         }
         /// <summary>手牌上显示的棋子头像。用棋子待机第一帧，它所在的图集进局时已经加载好。</summary>
         public Sprite PieceIcon(PieceKind kind)
@@ -160,11 +162,23 @@ namespace RevGame.Endless
                     _gcObserved |= allocated > 0;
                 }
             }
+            if (!_fxBegun)
+            {
+                // 竞技场在服务开局前就被取出（例如自动化先取池）时，第一帧补做初始化。
+                BeginCombatFx(service);
+            }
+            // 顺序有讲究：先读死亡回执，SyncPieces 才知道消失的棋子该溶解；出生视图要在画批量网格前确定，网格才知道隐藏谁。
+            ReadDeaths(service);
             SyncPieces(service);
+            // 死亡回执和棋盘移除在服务的同一步里发生，本帧没对上的编号（视图还没加载出来）不再保留。
+            _dyingIds.Clear();
+            UpdateCombatFx(service);
             UpdateHorde(run);
+            UpdateHordeBars(run);
+            UpdateAuras(service);
+            UpdatePlacement(service);
             _shakeBoost = Mathf.MoveTowards(_shakeBoost, 0, Time.unscaledDeltaTime * .5f);
             _shakeOffset = service.Run.shake ? Mathf.Sin(Time.unscaledTime * 62) * _shakeBoost : 0;
-            UpdateEffects(service);
             EndlessUnit boss = service.BossUnit();
             UpdateBossFx(service, Time.unscaledDeltaTime);
             BindBossArt(service, boss);
@@ -215,7 +229,8 @@ namespace RevGame.Endless
             {
                 if (service.Board.FindPiece(pair.Key) == null)
                 {
-                    RevPool.Return(pair.Value);
+                    // 死亡的播六章溶解，三合一被吃掉的直接回池（见 RetirePieceView）。
+                    RetirePieceView(pair.Key, pair.Value);
                     _remove.Add(pair.Key);
                 }
             }
@@ -236,6 +251,7 @@ namespace RevGame.Endless
                     continue;
                 }
                 view.Bind(p.Id, p.Def.Kind, p.Def.Star, p.Side);
+                CheckUpgrade(view, p.Id, p.Def.Star);
                 view.SetBodySize(p.Size, p.IsBoss, false);
                 Vector2 pos = EndlessService.Position(p);
                 view.MoveTo(new Vector3(pos.x, pos.y, -0.5f));
@@ -264,13 +280,22 @@ namespace RevGame.Endless
                     Error = "棋子预制体加载失败";
                     return;
                 }
-                _pieces[id] = view;
                 var p = RevServices.GetRequired<EndlessService>().Board.FindPiece(id);
-                if (p != null)
+                if (p == null)
                 {
-                    Vector2 pos = EndlessService.Position(p);
-                    view.SnapTo(new Vector3(pos.x, pos.y, -0.5f));
+                    // 加载期间已经阵亡或被合掉：不画一颗不存在的棋子。
+                    RevPool.Return(view);
+                    _dyingIds.Remove(id);
+                    return;
                 }
+                _pieces[id] = view;
+                Vector2 pos = EndlessService.Position(p);
+                view.Bind(p.Id, p.Def.Kind, p.Def.Star, p.Side);
+                view.SetBodySize(p.Size, p.IsBoss, false);
+                view.SnapTo(new Vector3(pos.x, pos.y, -0.5f));
+                _stars[id] = p.Def.Star;
+                // 新落子、援军、入侵者进盘，都和六章落子一样从身体里烧起来。
+                PlayPieceBirth(view);
             }
             , transform);
         }
@@ -283,7 +308,8 @@ namespace RevGame.Endless
             for (int i = 0; i < run.horde.Length; i++)
             {
                 EndlessHorde h = run.horde[i];
-                float half = h.active ? (h.kind >= 6 ? .8f : .38f) : 0;
+                // 正在播出生燃烧的杂兵由 PieceView 代画，网格里先隐藏，避免同一只怪画两遍。
+                float half = h.active && !HordeDrawnByView(i) ? (h.kind >= 6 ? .8f : .38f) : 0;
                 // 颜色就是信息：金色=献祭潮（杀了伤领主），绿色=毒囊（杀了会爆炸）。
                 Color color = h.frozenUntil > run.seconds ? Palette[4] : h.burnUntil > run.seconds ? new Color(1, 0.55f, 0.25f)
                     : h.pustule ? new Color(.45f, 1, .35f) : h.surge ? new Color(1, .84f, .3f) : Color.white;
@@ -296,53 +322,6 @@ namespace RevGame.Endless
             _hordeMesh.vertices = _vertices;
             _hordeMesh.uv = _uv;
             _hordeMesh.colors = _colors;
-        }
-        private void UpdateEffects(EndlessService service)
-        {
-            for (int i = 0; i < service.Impacts.Length; i++)
-            {
-                EndlessImpact hit = service.Impacts[i];
-                float age = service.Run.seconds - hit.time;
-                float alpha = hit.serial > 0 && age >= 0 && age < 0.45f ? 1 - age / 0.45f : 0;
-                Color color = Palette[Mathf.Clamp(hit.route, 0, Palette.Length - 1)];
-                color.a = alpha * (service.Run.lowEffects ? 0.6f : 1) * (service.Run.flashes ? 1 : .3f);
-                if (alpha > 0 && hit.serial > _lastSoundSerial && Time.unscaledTime - _lastSoundAt > .12f)
-                {
-                    RevSound.Play(hit.radius > 1 ? "RegionWave" : "Hit", volume: .18f);
-                    _lastSoundSerial = hit.serial;
-                    _lastSoundAt = Time.unscaledTime;
-                }
-                if (hit.route == 6 && alpha > .7f && service.Run.shake && _camera != null)
-                {
-                    _shakeOffset = Mathf.Sin(Time.unscaledTime * 75) * .04f;
-                }
-                if (hit.radius > 0)
-                {
-                    float radius = hit.radius * (0.4f + age * 2);
-                    Quad(_effectVertices, _effectUv, _effectColors, i, hit.to, radius, radius, new Vector4(0, 0, 1, 1), color, -1);
-                }
-                else
-                {
-                    Vector2 direction = (hit.to - hit.from).normalized;
-                    Vector2 side = new Vector2(-direction.y, direction.x) * 0.08f;
-                    int v = i * 4;
-                    _effectVertices[v] = new Vector3(hit.from.x - side.x, hit.from.y - side.y, -1);
-                    _effectVertices[v + 1] = new Vector3(hit.to.x - side.x, hit.to.y - side.y, -1);
-                    _effectVertices[v + 2] = new Vector3(hit.to.x + side.x, hit.to.y + side.y, -1);
-                    _effectVertices[v + 3] = new Vector3(hit.from.x + side.x, hit.from.y + side.y, -1);
-                    _effectUv[v] = new Vector2(0, 0);
-                    _effectUv[v + 1] = new Vector2(1, 0);
-                    _effectUv[v + 2] = new Vector2(1, 1);
-                    _effectUv[v + 3] = new Vector2(0, 1);
-                    for (int n = 0; n < 4; n++)
-                    {
-                        _effectColors[v + n] = color;
-                    }
-                }
-            }
-            _effectMesh.vertices = _effectVertices;
-            _effectMesh.uv = _effectUv;
-            _effectMesh.colors = _effectColors;
         }
         private static void Quad(Vector3[] vertices, Vector2[] uv, Color[] colors, int index, Vector2 center, float x, float y, Vector4 rect, Color color, float z)
         {
@@ -372,8 +351,9 @@ namespace RevGame.Endless
                 _gcRecorder.Dispose();
             }
             ReleaseBossFx();
-            RevSound.Unload("Hit");
-            RevSound.Unload("RegionWave");
+            ReleaseCombatFx();
+            ReleaseFeel();
+            ResetPlacement();
             _generation++;
             foreach (var pair in _pieces)
             {
@@ -389,8 +369,8 @@ namespace RevGame.Endless
             if (_hordeMesh != null)
             {
                 Destroy(_hordeMesh);
-                Destroy(_effectMesh);
             }
+            DestroyFeelMeshes();
         }
         /// <summary>只读观测，GC计数全零时标记未验证，不以零宣称无分配；Editor帧时不能替代手机。</summary>
         public object Metrics()

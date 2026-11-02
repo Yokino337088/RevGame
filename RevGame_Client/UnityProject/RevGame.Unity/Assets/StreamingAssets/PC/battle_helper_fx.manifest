@@ -3,13 +3,13 @@ CRC: 3528369856
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2801e071774e3bd23a720468844bdb34
+    Hash: fc67c31a722464c01bad2f257a5b2184
   TypeTreeHash:
     serializedVersion: 2
     Hash: f2cacbb371e45ecb6e03b0d339f40733
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2801e071774e3bd23a720468844bdb34
+    Hash: fc67c31a722464c01bad2f257a5b2184
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -64,4 +64,4 @@ Assets:
 - Assets/GameShader/Helper/HelperRune_Shader.shader
 - Assets/GameRes/Effects/Helper/HelperAttack.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_helperstormframes"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_helperstormframes

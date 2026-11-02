@@ -73,6 +73,10 @@ namespace RevGame.Endless
             int[] values = seal ? Run.seals : Run.mains;
             return values[route] < N(seal ? "SealMax" : "MainMax") && (values[route] > 0 || SlotCount(values) + (seal ? 0 : RareSlots()) < N(seal ? "SealSlots" : "MainSlots"));
         }
+        /// <summary>
+        /// 升级不再弹三选一（会打断割草）：照常抽出三个候选，直接拿第一项——抽签规则本来就让第一项优先强化已有路线，
+        /// 等于替玩家做了最顺手的选择；然后推一条横幅告诉玩家拿到了什么。随机仍走存档随机源，读档结果一致。
+        /// </summary>
         private void OfferUpgrade()
         {
             if (Run.phase != EndlessPhase.Fighting)
@@ -81,6 +85,47 @@ namespace RevGame.Endless
             }
             Run.phase = EndlessPhase.Upgrade;
             RollChoices();
+            string text = ChoiceText(Run.choices[0]).Replace("\n", " ");
+            if (Choose(0))
+            {
+                PushBanner("升级 Lv" + Run.level + "！" + text);
+            }
+        }
+        /// <summary>风险事件同样不弹窗：自动选“稳一手”的收益，推横幅说明。</summary>
+        private void AutoEvent()
+        {
+            int kind = Run.eventKind;
+            if (SelectEvent(false))
+            {
+                PushBanner("事件 · " + EventNames[kind] + "：" + EventSafeText(kind));
+            }
+        }
+        /// <summary>四种风险事件的名字，HUD 横幅和旧版弹窗共用。</summary>
+        public static readonly string[] EventNames =
+        {
+            "遗迹守阵", "暴走潮", "刻印交换", "救援棋手"
+        };
+        /// <summary>“稳一手”实际给了什么，数字从表里读，和真实效果一致。</summary>
+        private static string EventSafeText(int kind)
+        {
+            return kind == 0 ? "获得一张同名牌" : kind == 1 ? "回复棋心 " + N("EventHeal") : kind == 2 ? "刻印保持不变" : "免费补一张牌";
+        }
+        /// <summary>最新一条横幅文字与序号；HUD 记住读到的序号，序号变了就弹一次。</summary>
+        public string Banner
+        {
+            get;
+            private set;
+        }
+        = "";
+        public int BannerSerial
+        {
+            get;
+            private set;
+        }
+        private void PushBanner(string text)
+        {
+            Banner = text;
+            BannerSerial++;
         }
         private void RollChoices()
         {
@@ -330,7 +375,8 @@ namespace RevGame.Endless
                     Run.riskEnds = Run.seconds + V("RiskSeconds");
                     Run.riskKillsAt = Run.kills + Run.invaderKills;
                     Run.riskDamageAt = Run.heartDamageEvents;
-                    Run.relicGate = Next(4);
+                    // 敌人只从左右两侧来（见 NextLane），遗迹也只能放在这两个门点上，否则永远没人去打它。
+                    Run.relicGate = Next(2);
                     Run.relicHp = V("RelicHp");
                     Run.riskObjectiveDone = false;
                     if (Run.eventKind == 1)

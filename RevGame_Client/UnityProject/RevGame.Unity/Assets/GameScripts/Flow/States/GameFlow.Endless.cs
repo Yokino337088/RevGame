@@ -36,11 +36,14 @@ namespace RevGame.Flow
                 await RevDataTableManager.LoadAsync<EndlessBossTable>();
                 await RevDataTableManager.LoadAsync<EndlessBossSkillTable>();
                 await RevDataTableManager.LoadAsync<EndlessMusicTable>();
+                await RevDataTableManager.LoadAsync<EndlessComboTable>();
+                await RevDataTableManager.LoadAsync<EndlessFormationTable>();
                 EndlessConfig.Validate();
                 ThrowIfDisposed();
+                // UI_Tavern_imgBK（升级卡牌底板）单独成图集，只在无尽里用，进场前一起预载，避免首次弹窗白图。
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[]
                 {
-                    "PieceFrames", "BoardStatus", "CombatFrames", "UIBattle", "UIMenus"
+                    "PieceFrames", "BoardStatus", "CombatFrames", "UIBattle", "UIMenus", "UI_Tavern_imgBKAtlas"
                 }
                 );
                 ThrowIfDisposed();

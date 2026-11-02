@@ -79,6 +79,57 @@ namespace RevGame.Endless
             }
             , owner: Owner);
             RevRuntimeAutomation.Register("endless.extended-rules", "独立规则夹具：身份转换、Boss破阵、六配方、有限巡回、损坏存档及画质一致性", Empty, _ => EndlessService.CheckExtendedRules(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.feedback", "只读：六章同款战斗反馈的在播/累计次数、绿色落子提示格数、外围敌人出生口分布", Empty, _ => Feedback(), readOnly: true, owner: Owner);
+        }
+        /// <summary>
+        /// 表现验收用的只读快照。arena 部分来自 EndlessArena.FeedbackSnapshot；
+        /// lanes 部分直接数服务里的外围敌人：左右各占几只、各铺了几行、有没有不在横线上或从上下门来的。
+        /// </summary>
+        private static object Feedback()
+        {
+            EndlessRun run = Service.Run;
+            int left = 0, right = 0, otherGates = 0, offRow = 0;
+            var leftRows = new HashSet<int>();
+            var rightRows = new HashSet<int>();
+            if (run != null)
+            {
+                for (int i = 0; i < run.horde.Length; i++)
+                {
+                    EndlessHorde h = run.horde[i];
+                    if (!h.active)
+                    {
+                        continue;
+                    }
+                    int row = Mathf.RoundToInt(h.y);
+                    if (Mathf.Abs(h.y - row) > .01f)
+                    {
+                        offRow++;
+                    }
+                    if (h.gate == 0)
+                    {
+                        left++;
+                        leftRows.Add(row);
+                    }
+                    else if (h.gate == 1)
+                    {
+                        right++;
+                        rightRows.Add(row);
+                    }
+                    else
+                    {
+                        otherGates++;
+                    }
+                }
+            }
+            return new Dictionary<string, object>
+            {
+                ["arena"] = UnityEngine.Object.FindObjectOfType<EndlessArena>()?.FeedbackSnapshot(),
+                ["hordeLeft"] = left, ["hordeRight"] = right, ["hordeOtherGates"] = otherGates, ["hordeOffRow"] = offRow,
+                ["leftRows"] = leftRows.Count, ["rightRows"] = rightRows.Count,
+                ["comboCasts"] = Service.ComboCasts, ["banner"] = Service.Banner, ["bannerSerial"] = Service.BannerSerial,
+                ["phase"] = run == null ? "None" : run.phase.ToString(),
+                ["selectedCard"] = run?.selectedCard ?? -1, ["selectedUnit"] = run?.selectedUnit ?? -1
+            };
         }
         public static void Unregister()
         {

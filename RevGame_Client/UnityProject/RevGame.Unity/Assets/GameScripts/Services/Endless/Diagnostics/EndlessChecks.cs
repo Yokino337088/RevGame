@@ -13,7 +13,12 @@ namespace RevGame.Endless
             using (var service = new EndlessService())
             {
                 service.Begin(0, 0, 1101, true);
-                Require(service.PlayerCount() == 3, "起手三枚主力", checks);
+                int roster = 0;
+                foreach (Revolution.EndlessFormation row in Revolution.RevDataTableManager.Get<Revolution.EndlessFormationTable>().All)
+                {
+                    roster += row.Formation == 0 && row.Stone == 0 ? 1 : 0;
+                }
+                Require(service.PlayerCount() == roster, "起手主力与开局棋阵表一致", checks);
                 Require(service.SelectCard(0), "选择真实手牌", checks);
                 int hand = service.Run.hand.Count;
                 int version = service.Board.TopologyVersion;
@@ -29,8 +34,10 @@ namespace RevGame.Endless
                 Require(service.Rearrange(), "首次改阵接受", checks);
                 Require(!service.Rearrange(), "同一分钟改阵重复拒绝", checks);
                 uint random = service.Run.random;
+                // 部署第三枚同名一星会触发自动三合一，场上数量不再是固定的 4；只核对“存前多少、恢复后还是多少”。
+                int players = service.PlayerCount();
                 Require(service.Save(), "完整快照保存", checks);
-                Require(service.Restore(true) && service.Run.random == random && service.PlayerCount() == 4, "恢复随机源和单位占格", checks);
+                Require(service.Restore(true) && service.Run.random == random && service.PlayerCount() == players, "恢复随机源和单位占格", checks);
                 service.Finish();
                 long score = service.Run.score;
                 service.Finish();

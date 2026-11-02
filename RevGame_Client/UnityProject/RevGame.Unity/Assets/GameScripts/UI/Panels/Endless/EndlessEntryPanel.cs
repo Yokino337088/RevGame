@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using RevGame.Flow;
 using Revolution;
 using UnityEngine;
@@ -8,6 +9,7 @@ namespace RevGame.Endless
     /// <summary>
     /// 无尽入口：选一个棋阵，点开始。只收集输入，实际加载与存档恢复由唯一的 GameFlow 执行。
     /// 新手不需要看规则说明，也不用选难度；“继续”只在有存档时才出现。
+    /// 动画沿用六章弹窗手感：打开回弹弹入、关闭弹出收起，选中的棋阵卡弹一下；底板流光来自预制体上的 ArcanePanel 共享材质。
     /// </summary>
     [RevUIPanel("UI/Panel/Endless", RevUILayer.Popup)]
     public sealed class EndlessEntryPanel : RevUIPanel
@@ -22,6 +24,16 @@ namespace RevGame.Endless
         /// <summary>当前选中的棋阵序号。</summary>
         private int _formation;
         private EndlessRecordBook _records;
+        /// <summary>弹窗打开：回弹弹入（六章弹窗默认手感）；onDone 交给动画，播完框架才算打开完成。</summary>
+        protected override void PlayOpenTransition(Action onDone)
+        {
+            RevUIAnim.Play(this, RevUIAnimPreset.PopIn, .3f, onDone, owner: this);
+        }
+        /// <summary>弹窗关闭：弹出收起（六章设置面板同款），播完才真正隐藏。</summary>
+        protected override void PlayCloseTransition(Action onDone)
+        {
+            RevUIAnim.Play(this, RevUIAnimPreset.PopOut, .12f, onDone, owner: this);
+        }
         protected override void OnBindView()
         {
             for (int i = 0; i < _formations.Length; i++)
@@ -81,6 +93,11 @@ namespace RevGame.Endless
         private void Pick(int index)
         {
             _formation = index;
+            // 选中的棋阵卡弹一下，和六章选牌的反馈一致；先收尾上一次弹跳，连点不会越弹越大。
+            Transform card = _formations[index].transform;
+            card.DOKill(true);
+            card.localScale = Vector3.one;
+            card.DOPunchScale(Vector3.one * .08f, .28f, 6, .5f).SetUpdate(true);
             RefreshView();
         }
         [RevButtonClick("formation0")] private void Formation0()

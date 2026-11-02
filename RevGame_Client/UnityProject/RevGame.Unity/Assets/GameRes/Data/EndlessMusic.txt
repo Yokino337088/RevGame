@@ -1,6 +1,6 @@
 #EndlessMusic
 #Id	Root	Sound	Title
 #播放顺序	资源根目录（相对GameRes）	资源名（不带扩展名），每首歌必须独占一个AB包	曲目说明
-0	Audio/Bgm	Chapter04_Adventure	临时曲：待换成用户指定的B站音乐
-1	Audio/Bgm	Chapter05_IceWalls	临时曲：待换成用户指定的B站音乐
-2	Audio/Bgm	Chapter06_Swing	临时曲：待换成用户指定的B站音乐
+0	Audio/Bgm/Endless	Endless01_Checkpoint	Hyper Potions - Checkpoint（用户指定）
+1	Audio/Bgm/Endless	Endless02_Surf	Hyper Potions - Surf（用户指定）
+2	Audio/Bgm/Endless	Endless03_Unbreakable	Hyper Potions - Unbreakable（用户指定）

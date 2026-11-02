@@ -10,6 +10,16 @@ namespace RevGame.Endless
     {
         Formation, Fighting, Upgrade, Preparation, Event, Circuit, Paused, Result
     }
+    /// <summary>
+    /// 组合技的效果类型，Excel EndlessCombo.Effect 写这些名字：
+    /// Pierce 贯穿一条线并在末端爆炸；Spread 扇形多发；Rain 从天而降的箭雨；Burst 目标处范围爆裂；
+    /// Pillar 目标处光柱；Chain 依次瞬斩附近敌人；Ring 以自身为中心的冲击环。
+    /// 枚举只决定“怎么打”，伤害倍率、半径、数量全在表里。
+    /// </summary>
+    public enum EndlessComboEffect
+    {
+        Pierce, Spread, Rain, Burst, Pillar, Chain, Ring
+    }
     /// <summary>单个盘内演员的附属状态，归本局所有；离场从有限名单移除，不保留历史对象。</summary>
     public sealed class EndlessUnit
     {
@@ -33,6 +43,10 @@ namespace RevGame.Endless
         /// <summary>稀有祝福的局内寿命：破眼攻速结束、静守起点和一次抵挡，不使用全局静态计时。</summary>
         public float FuryUntil, StationarySince;
         public bool SteadyShield;
+        /// <summary>近战剑气下次切割的战斗时间（秒）；只有近战棋使用。存档保存，读档后不会立刻多切一次。</summary>
+        public float AuraAt;
+        /// <summary>组合技计数：本棋子满足搭档条件后已打出的普攻次数，到 Every 次就放一次组合技。存档保存。</summary>
+        public int ComboCount;
     }
     /// <summary>外围敌人是值类型，不挂MonoBehaviour，不参与围棋连通块。Id在转入棋盘后保持。</summary>
     [Serializable]
@@ -45,6 +59,8 @@ namespace RevGame.Endless
         /// <summary>瘟沼毒囊杂兵：被杀时爆炸波及周围。</summary>
         public bool pustule;
         public float x, y, hp, maxHp, speed, arrivedAt, burnUntil, burnAt, burnDamage, frozenUntil, slowUntil;
+        /// <summary>涌入后贴住己方棋子时下次出手的战斗时间（秒）。旧存档为 0，表示可以立刻出手。</summary>
+        public float attackAt;
     }
     /// <summary>表现只读伤害结果；环形缓冲覆盖旧画面不会删除任何业务伤害。</summary>
     public struct EndlessImpact
@@ -52,6 +68,38 @@ namespace RevGame.Endless
         public int serial, route;
         public Vector2 from, to;
         public float time, radius;
+        /// <summary>
+        /// 出手棋子的编号与棋种，0 表示环境/连锁这类没有具体出手者的效果。
+        /// 表现层据此挑六章同款弹道或斩击、播出手动作和攻击口号；只是快照，棋子死后仍能正确播放。
+        /// </summary>
+        public int sourceId;
+        public PieceKind sourceKind;
+        /// <summary>sourceKind 是否有效。组合技的弹道/范围没有具体出手者（sourceId=0），但要指定六章棋种外观。</summary>
+        public bool hasKind;
+        /// <summary>组合技喊招回执：组合技编号 + 1（0 表示普通回执）。表现层据此弹出组合技名字飘字并播组合技音效。</summary>
+        public int combo;
+    }
+    /// <summary>
+    /// 一次真实扣血的表现回执，用来显示六章同款伤害数字。
+    /// target 是被打者编号（外围杂兵和盘内棋子共用 Run.nextId 发号，不会重复），同目标同帧的数字由表现层合并。
+    /// 写入时伤害已经结算完毕；环形缓冲被覆盖只会少显示一个数字，不影响任何血量。
+    /// </summary>
+    public struct EndlessDamageReceipt
+    {
+        public int serial, target, damage;
+        public Vector2 position;
+        public GameSide side;
+        public BattleDamageKind kind;
+    }
+    /// <summary>
+    /// 一次真实死亡的表现回执。盘内棋子靠它区分“死亡”（播溶解）和“三合一被吃掉”（直接收走）；
+    /// 外围杂兵没有 PieceView，表现层按 position 临时借一枚棋子视图播放同款溶解。
+    /// </summary>
+    public struct EndlessDeathReceipt
+    {
+        public int serial, id;
+        public Vector2 position;
+        public bool horde;
     }
     /// <summary>可序列化完整局状态。所有随机抽选、导演期限和奖励状态都属于它，读档不得重新抽选。</summary>
     [Serializable]
@@ -72,6 +120,11 @@ namespace RevGame.Endless
         public int eventKind, riskKind = -1, riskKillsAt, riskDamageAt;
         public float riskEnds, heartShieldUntil, heartShieldReady, doubleShotUntil, adaptiveBudget = 1, minuteHeart;
         public int heartDamageEvents, replacementMinute = -1, upgradeStreak;
+        /// <summary>
+        /// 出生槽游标：每刷一只外围敌人加 1，由它推出“左/右哪一侧、第几行”。
+        /// 存进档里，读档后接着轮转，不会重新从第 0 行开始把敌人挤在一起。
+        /// </summary>
+        public int laneCursor;
         public float nextChoiceAt;
         public float healRemainder;
         public float relicHp;
@@ -101,5 +154,8 @@ namespace RevGame.Endless
         public bool summoned, stone, revived, elite, steadyShield;
         public float attackScale, attackAt, moveAt, burnUntil, burnAt, burnDamage, slowUntil, counterAt;
         public float brokenUntil, nextSkillAt, warningAt, bornAt, breakEyeAt, furyUntil, stationarySince;
+        /// <summary>剑气与组合技状态（新增字段，旧存档读出来是 0，等于“马上可以切/从头计数”，不会出错）。</summary>
+        public float auraAt;
+        public int comboCount;
     }
 }
