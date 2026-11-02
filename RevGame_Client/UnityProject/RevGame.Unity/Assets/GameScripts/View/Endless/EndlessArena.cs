@@ -176,6 +176,7 @@ namespace RevGame.Endless
             UpdateHorde(run);
             UpdateHordeBars(run);
             UpdateAuras(service);
+            UpdateGuard(service);
             UpdatePlacement(service);
             _shakeBoost = Mathf.MoveTowards(_shakeBoost, 0, Time.unscaledDeltaTime * .5f);
             _shakeOffset = service.Run.shake ? Mathf.Sin(Time.unscaledTime * 62) * _shakeBoost : 0;
@@ -309,7 +310,7 @@ namespace RevGame.Endless
             {
                 EndlessHorde h = run.horde[i];
                 // 正在播出生燃烧的杂兵由 PieceView 代画，网格里先隐藏，避免同一只怪画两遍。
-                float half = h.active && !HordeDrawnByView(i) ? (h.kind >= 6 ? .8f : .38f) : 0;
+                float half = h.active && !HordeDrawnByView(i) ? (h.kind >= 6 ? .8f : HordeQuadHalf) : 0;
                 // 颜色就是信息：金色=献祭潮（杀了伤领主），绿色=毒囊（杀了会爆炸）。
                 Color color = h.frozenUntil > run.seconds ? Palette[4] : h.burnUntil > run.seconds ? new Color(1, 0.55f, 0.25f)
                     : h.pustule ? new Color(.45f, 1, .35f) : h.surge ? new Color(1, .84f, .3f) : Color.white;
@@ -353,6 +354,7 @@ namespace RevGame.Endless
             ReleaseBossFx();
             ReleaseCombatFx();
             ReleaseFeel();
+            ReleaseGuard();
             ResetPlacement();
             _generation++;
             foreach (var pair in _pieces)
@@ -371,6 +373,7 @@ namespace RevGame.Endless
                 Destroy(_hordeMesh);
             }
             DestroyFeelMeshes();
+            DestroyGuardMeshes();
         }
         /// <summary>只读观测，GC计数全零时标记未验证，不以零宣称无分配；Editor帧时不能替代手机。</summary>
         public object Metrics()

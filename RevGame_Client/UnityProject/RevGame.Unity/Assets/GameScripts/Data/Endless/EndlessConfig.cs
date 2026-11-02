@@ -59,6 +59,32 @@ namespace RevGame.Endless
             Value("AuraDamageRatio");
             Count("AuraTargetLimit");
             Value("MeleeMoveSeconds");
+            // 第三轮：战斗不停顿 + 盾战防御区 + 刺客突刺；整数项在这里就确认是整数。
+            Value("CardRefillSeconds");
+            Value("RangedAttackSpeedBonus");
+            Value("ManualHoldSeconds");
+            Value("ShieldDefenseBonus");
+            Value("AssassinRange");
+            // 第四轮：盾击、波次成长、领主奖励表。
+            Value("ShieldBashRatio");
+            Value("WaveHpGrowth");
+            Value("WaveAttackGrowth");
+            if (RevDataTableManager.Get<EndlessBoonTable>().All.Count == 0)
+            {
+                throw new InvalidOperationException("无尽领主奖励表为空");
+            }
+            foreach (EndlessBoon row in RevDataTableManager.Get<EndlessBoonTable>().All)
+            {
+                BoonEffect(row);
+                if (!(row.Value > 0) || float.IsInfinity(row.Value) || string.IsNullOrEmpty(row.Name) || !UnityEngine.ColorUtility.TryParseHtmlString(row.ColorHex, out _))
+                {
+                    throw new InvalidOperationException("无尽领主奖励数值、名称或颜色非法：" + row.Id);
+                }
+            }
+            if (Count("ShieldZoneSize") > 9 || Count("HandLimit") > 4)
+            {
+                throw new InvalidOperationException("无尽防御区边长不能超过棋盘，手牌上限不能超过 HUD 的 4 个槽位");
+            }
             // 开局棋阵：三个棋阵都要有棋子，棋种名、坐标合法且不压棋心（具体占格冲突由开局时 Board.Place 再检查一次）。
             var formations = new bool[3];
             foreach (EndlessFormation row in RevDataTableManager.Get<EndlessFormationTable>().All)
@@ -78,7 +104,7 @@ namespace RevGame.Endless
             {
                 Music(i);
             }
-            if (Count("MainSlots") > 6 || Count("SealSlots") > 6 || Count("HandLimit") > 6 || Count("HordeLimit") > 200
+            if (Count("MainSlots") > 6 || Count("SealSlots") > 6 || Count("HandLimit") > 6 || Count("HordeLimit") > 240
             || Count("PlayerCells") + Count("EnemyCells") > 81 || Count("ChainLimit") > 8 || Value("DamageReductionCap") >= 1
             || Value("SimulationStep") > Value("CounterSeconds") || Value("PeakStart") >= Value("TailStart") || Value("TailStart") >= Value("MinuteSeconds"))
             {
@@ -162,6 +188,15 @@ namespace RevGame.Endless
             if (!Enum.TryParse(row.Effect, out EndlessComboEffect effect))
             {
                 throw new InvalidOperationException("无尽组合技效果名不存在：" + row.Effect + "（编号 " + row.Id + "）");
+            }
+            return effect;
+        }
+        /// <summary>领主奖励效果名转枚举；写错在入场校验时报出编号。</summary>
+        public static EndlessBoonEffect BoonEffect(EndlessBoon row)
+        {
+            if (!Enum.TryParse(row.Effect, out EndlessBoonEffect effect))
+            {
+                throw new InvalidOperationException("无尽领主奖励效果名不存在：" + row.Effect + "（编号 " + row.Id + "）");
             }
             return effect;
         }

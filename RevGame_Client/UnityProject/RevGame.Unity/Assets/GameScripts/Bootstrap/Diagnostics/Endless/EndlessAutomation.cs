@@ -79,6 +79,15 @@ namespace RevGame.Endless
             }
             , owner: Owner);
             RevRuntimeAutomation.Register("endless.extended-rules", "独立规则夹具：身份转换、Boss破阵、六配方、有限巡回、损坏存档及画质一致性", Empty, _ => EndlessService.CheckExtendedRules(), owner: Owner);
+            const string formationSchema = "{\"type\":\"object\",\"properties\":{\"formation\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":2}},\"required\":[\"formation\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.enter", "从大厅经正式流程进入指定棋阵的固定种子隔离测试局（0弩雨 1炎环 2守眼）", formationSchema, json =>
+            {
+                return Accepted(RevServices.GetRequired<GameFlow>().EnterEndless(JsonUtility.FromJson<FormationArgs>(json).formation, 0, 1101, false, true));
+            }
+            , owner: Owner);
+            RevRuntimeAutomation.Register("endless.guard-rules", "隔离实例验证盾战3×3防御区与盾击、格挡回执、刺客贯穿射程、远程攻速与一步连发、不停顿补牌、智能驻守与手动保持、选牌后点棋可移动", Empty, _ => EndlessService.CheckGuardRules(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.boss-reward", "隔离局立刻走一次击杀领主的真实奖励（随机增益+大横幅），正式局拒绝", Empty, _ => Accepted(Service.DebugBossReward()), owner: Owner);
+            RevRuntimeAutomation.Register("endless.snowball-rules", "隔离实例验证波次血攻成长、一步连刷与上限、10波领主来袭横幅、领主奖励随机累加与彩色横幅、增益接入伤害攻速范围生命", Empty, _ => EndlessService.CheckSnowballRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.feedback", "只读：六章同款战斗反馈的在播/累计次数、绿色落子提示格数、外围敌人出生口分布", Empty, _ => Feedback(), readOnly: true, owner: Owner);
         }
         /// <summary>
@@ -126,7 +135,7 @@ namespace RevGame.Endless
                 ["arena"] = UnityEngine.Object.FindObjectOfType<EndlessArena>()?.FeedbackSnapshot(),
                 ["hordeLeft"] = left, ["hordeRight"] = right, ["hordeOtherGates"] = otherGates, ["hordeOffRow"] = offRow,
                 ["leftRows"] = leftRows.Count, ["rightRows"] = rightRows.Count,
-                ["comboCasts"] = Service.ComboCasts, ["banner"] = Service.Banner, ["bannerSerial"] = Service.BannerSerial,
+                ["comboCasts"] = Service.ComboCasts, ["guardZones"] = GuardZones(), ["handLimit"] = EndlessConfig.Count("HandLimit"), ["banner"] = Service.Banner, ["bannerSerial"] = Service.BannerSerial, ["majorBanner"] = Service.MajorBanner, ["majorBannerSerial"] = Service.MajorBannerSerial, ["wave"] = Service.WaveNumber, ["boons"] = Service.BoonCount,
                 ["phase"] = run == null ? "None" : run.phase.ToString(),
                 ["selectedCard"] = run?.selectedCard ?? -1, ["selectedUnit"] = run?.selectedUnit ?? -1
             };
@@ -156,6 +165,7 @@ namespace RevGame.Endless
                 ["seconds"] = r?.seconds ?? 0, ["heart"] = r?.heart ?? 0, ["score"] = r?.score ?? 0,
                 ["players"] = s.PlayerCount(), ["hand"] = r?.hand.Count ?? 0, ["horde"] = r == null ? 0 : s.HordeCount(),
                 ["level"] = r?.level ?? 0, ["kills"] = r?.kills ?? 0, ["circuit"] = r?.circuit ?? 0,
+                ["wave"] = s.WaveNumber, ["boons"] = s.BoonCount, ["bossKills"] = r?.bossKills ?? 0, ["selectedCard"] = r?.selectedCard ?? -1, ["selectedUnit"] = r?.selectedUnit ?? -1,
                 ["isolated"] = s.Isolated, ["settled"] = r?.settled ?? false, ["random"] = r?.random ?? 0,
                 ["tickCount"] = s.TickCount, ["tickTotalMs"] = s.TickMilliseconds, ["tickMaxMs"] = s.MaxTickMilliseconds,
                 ["units"] = s.Units.Count, ["logicCount"] = RevLogic.Count, ["pool"] = RevPool.DumpStats(),
@@ -166,6 +176,36 @@ namespace RevGame.Endless
                 ["bossCasts"] = s.BossUnit()?.SkillCasts ?? 0, ["bossCastSerial"] = s.BossCastSerial, ["bossBanner"] = s.BossBanner,
                 ["performance"] = RevUI.Get<EndlessHudPanel>()?.PerformanceSnapshot()
             };
+        }
+        /// <summary>近战智能驻守的分配情况：分到区的近战数、覆盖了几个不同的区、手动保持中的近战数。</summary>
+        private static object GuardZones()
+        {
+            int assigned = 0, held = 0;
+            var zones = new HashSet<int>();
+            foreach (EndlessUnit u in Service.Units)
+            {
+                if (u.Piece.Side != GameSide.Player || !EndlessService.IsMelee(u.Piece.Def.Kind) || u.Stone)
+                {
+                    continue;
+                }
+                if (u.Zone >= 0)
+                {
+                    assigned++;
+                    zones.Add(u.Zone);
+                }
+                if (u.HoldUntil > (Service.Run?.seconds ?? 0))
+                {
+                    held++;
+                }
+            }
+            return new Dictionary<string, object>
+            {
+                ["assigned"] = assigned, ["distinctZones"] = zones.Count, ["held"] = held
+            };
+        }
+        [Serializable] private sealed class FormationArgs
+        {
+            public int formation;
         }
         [Serializable] private sealed class IndexArgs
         {

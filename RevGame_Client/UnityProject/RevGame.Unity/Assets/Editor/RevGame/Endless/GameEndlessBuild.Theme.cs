@@ -79,6 +79,36 @@ namespace RevGame.Editor
         /// <summary>剑气刃贴图（Kenney Particle Pack 的 twirl_03，CC0），已缩到 256×256。</summary>
         private const string SwordAuraTexture = "Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png";
 
+        /// <summary>盾牌剪影（Kenney Board Game Icons 的 shield.png，CC0）与突刺速度残影（Kenney Particle Pack 的 trace_01，CC0，已转横向）。</summary>
+        private const string ShieldIconTexture = "Assets/GameRes/Endless/Textures/EndlessShieldIcon.png";
+        private const string ThrustTrailTexture = "Assets/GameRes/Endless/Textures/EndlessThrustTrail.png";
+
+        /// <summary>
+        /// 通用“非 Sprite 采样纹理 + 共享材质”配方：Shader 需要完整 0~1 UV（旋转/拉伸采样），所以按 Default 纹理导入，
+        /// 钳制寻址、关 mipmap、不可读，随 endless_arena 包走（与剑气刃贴图同一规则）。
+        /// </summary>
+        private static Material SampledMaterial(string name, string shader, string property, string texturePath)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(texturePath);
+            if (importer == null)
+            {
+                throw new InvalidOperationException("无尽贴图缺失：" + texturePath);
+            }
+            importer.textureType = TextureImporterType.Default;
+            importer.alphaSource = TextureImporterAlphaSource.FromInput;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.maxTextureSize = 256;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.isReadable = false;
+            importer.SaveAndReimport();
+            Material material = Material(name, shader);
+            material.SetTexture(property, AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath));
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
         /// <summary>
         /// 剑气材质。刃贴图被 Shader 旋转采样，所以不能进 Sprite 图集（图集里的 UV 不是 0~1，旋转会采到邻图）：
         /// 按“非 Sprite 采样纹理”导入，钳制寻址、关 mipmap、只保留 256 尺寸，跟着 endless_arena 包走。
@@ -144,7 +174,7 @@ namespace RevGame.Editor
                 case "icon": return "UI_Setting_Background";
                 case "entry": return "UI_Pvp_imgBK";
                 case "top": return "UI_achieveItem_imgBK";
-                case "modal": case "tip": case "boss": case "banner": return "UI_Tip_imgBK";
+                case "modal": case "tip": case "boss": case "banner": case "boon": return "UI_Tip_imgBK";
                 case "heartTrack": case "bossTrack": case "xpTrack": return "UI_Game_imgMobilityBK";
                 case "heartFill": case "bossFill": case "xpFill": return "UI_Game_imgEnemyMobility";
                 case "start": case "level": case "resume": case "reroll": return "UI_Tavern_btnClose";

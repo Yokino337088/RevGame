@@ -44,101 +44,31 @@ namespace RevGame.Endless
             private set;
         }
 
-        /// <summary>近战棋（剑士、盾战、重剑、刺客）才带剑气。</summary>
+        /// <summary>近战棋：剑士、盾战、重剑、刺客。它们都会被智能索敌派去驻守（见 EndlessService.Guard）。</summary>
         public static bool IsMelee(PieceKind kind)
         {
             return kind == PieceKind.Swordman || kind == PieceKind.Shield || kind == PieceKind.HeavySword || kind == PieceKind.Assassin;
         }
-        /// <summary>这枚棋子此刻是否显示剑气：己方、近战、不是石子。表现层每帧用它决定画不画剑气。</summary>
+        /// <summary>
+        /// 只有剑士和重剑带环绕剑气。盾战改为环绕盾牌 + 防御区（见 Guard），刺客改为直线贯穿突刺，都不切剑气。
+        /// </summary>
+        public static bool IsSwordAuraKind(PieceKind kind)
+        {
+            return kind == PieceKind.Swordman || kind == PieceKind.HeavySword;
+        }
+        /// <summary>这枚棋子此刻是否显示剑气：己方、剑士/重剑、不是石子。表现层每帧用它决定画不画剑气。</summary>
         public static bool HasAura(EndlessUnit unit)
         {
-            return unit.Piece.Side == GameSide.Player && !unit.Stone && unit.Piece.IsAlive && IsMelee(unit.Piece.Def.Kind);
+            return unit.Piece.Side == GameSide.Player && !unit.Stone && unit.Piece.IsAlive && IsSwordAuraKind(unit.Piece.Def.Kind);
         }
-        /// <summary>剑气半径（格）：一星取 AuraRadius，每升一星按 AuraStarRadius 放大；表现层用同一个值画圈，保证“看到多大就切多大”。</summary>
-        public static float AuraRadius(Piece p)
-        {
-            return V("AuraRadius") * (1 + ((int)p.Def.Star - 1) * V("AuraStarRadius")) + (p.Size - 1) * .5f;
-        }
-
         /// <summary>
-        /// 近战棋自动逼近：每 MeleeMoveSeconds 秒看一次最近的敌人（外围杂兵或盘内入侵者），
-        /// 已经在剑气圈里就原地切；否则按自己的走法挑一步最接近目标的合法格子走过去（Board.Move，围棋规则照常刷新）。
-        /// 这样近战棋会主动扑向敌潮，和远程弹幕一起形成“满屏火拼”。石子、召唤物、被锁死的棋不动。
+        /// 剑气半径（格）：一星取 AuraRadius，每升一星按 AuraStarRadius 放大，再乘领主奖励“领域扩张”；
+        /// 表现层用同一个值画圈，保证“看到多大就切多大”。
         /// </summary>
-        private void MeleeAdvance(EndlessUnit unit)
+        public float AuraRadius(Piece p)
         {
-            Piece p = unit.Piece;
-            if (unit.Stone || unit.Summoned || !IsMelee(p.Def.Kind) || p.IsLocked || unit.MoveAt > Run.seconds)
-            {
-                return;
-            }
-            unit.MoveAt = Run.seconds + V("MeleeMoveSeconds");
-            Vector2 center = Position(p);
-            if (!NearestEnemy(center, out Vector2 target))
-            {
-                return;
-            }
-            float reach = AuraRadius(p) * .85f;
-            float best = (target - center).sqrMagnitude;
-            if (best <= reach * reach)
-            {
-                return;
-            }
-            MoveRules.GetMoveTargets(Board, p, _targets);
-            BoardPos chosen = p.Pos;
-            float offset = (p.Size - 1) * .5f;
-            for (int i = 0; i < _targets.Count; i++)
-            {
-                BoardPos pos = _targets[i];
-                float distance = (new Vector2(pos.X + offset, pos.Y + offset) - target).sqrMagnitude;
-                if (distance < best && Fits(pos, p.Size, GameSide.Player, p))
-                {
-                    best = distance;
-                    chosen = pos;
-                }
-            }
-            if (!chosen.Equals(p.Pos) && Board.Move(p, chosen))
-            {
-                RefreshRules();
-                unit.StationarySince = Run.seconds;
-                unit.SteadyShield = false;
-            }
-        }
-        /// <summary>离 from 最近的敌人位置（外围活着的杂兵/入侵者，或盘内敌方棋子）；一个都没有返回 false。</summary>
-        private bool NearestEnemy(Vector2 from, out Vector2 target)
-        {
-            target = from;
-            float best = float.MaxValue;
-            for (int i = 0; i < Run.horde.Length; i++)
-            {
-                EndlessHorde h = Run.horde[i];
-                if (!h.active || h.hp <= 0)
-                {
-                    continue;
-                }
-                Vector2 at = new Vector2(h.x, h.y);
-                float distance = (at - from).sqrMagnitude;
-                if (distance < best)
-                {
-                    best = distance;
-                    target = at;
-                }
-            }
-            for (int i = 0; i < Units.Count; i++)
-            {
-                Piece e = Units[i].Piece;
-                if (e.Side != GameSide.Enemy || !e.IsAlive)
-                {
-                    continue;
-                }
-                float distance = (Position(e) - from).sqrMagnitude;
-                if (distance < best)
-                {
-                    best = distance;
-                    target = Position(e);
-                }
-            }
-            return best < float.MaxValue;
+            float boon = Run == null ? 0 : Run.boonAura;
+            return (V("AuraRadius") * (1 + ((int)p.Def.Star - 1) * V("AuraStarRadius")) + (p.Size - 1) * .5f) * (1 + boon);
         }
 
         /// <summary>
@@ -148,13 +78,13 @@ namespace RevGame.Endless
         private void UpdateAura(EndlessUnit unit)
         {
             Piece p = unit.Piece;
-            if (unit.Stone || !IsMelee(p.Def.Kind) || unit.AuraAt > Run.seconds || p.IsLocked)
+            if (unit.Stone || !IsSwordAuraKind(p.Def.Kind) || unit.AuraAt > Run.seconds || p.IsLocked)
             {
                 return;
             }
             unit.AuraAt = Run.seconds + V("AuraTickSeconds");
             float radius = AuraRadius(p);
-            float damage = p.Def.Attack * p.AttackScale * p.EyeAttackMultiplier * V("AuraDamageRatio") * (1 + Run.mains[5] * V("BlessingDamage"));
+            float damage = p.Def.Attack * p.AttackScale * p.EyeAttackMultiplier * V("AuraDamageRatio") * (1 + Run.mains[5] * V("BlessingDamage")) * BoonDamage();
             if (Run.evolved[5])
             {
                 damage *= V("EvolutionDamage");
@@ -270,7 +200,7 @@ namespace RevGame.Endless
                 ComboRule rule = combos[i];
                 if (rule.KindA == kind && unit.ComboCount % rule.Row.Every == 0 && HasPlayerKind(rule.KindB, unit))
                 {
-                    CastCombo(unit, rule, target, damage * rule.Row.Power);
+                    CastCombo(unit, rule, target, damage * rule.Row.Power * (1 + Run.boonCombo));
                 }
             }
         }

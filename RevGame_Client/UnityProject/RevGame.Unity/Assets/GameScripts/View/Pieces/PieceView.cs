@@ -664,6 +664,21 @@ namespace RevGame.View
             hpFillRenderer.enabled = _hpRatio > 0.001f;
         }
         /// <summary>身体放大与占格数据一致；王冠只标主将，玩家能清楚知道要击败谁。</summary>
+        /// <summary>
+        /// 身体贴图当前在世界里的宽度（格）。无尽外围杂兵用批量网格画、尺寸和棋子视图不同，
+        /// 借视图播出生/溶解时用它算缩放，让视图和网格方块一样大，切换时不跳变。没有贴图时返回 0。
+        /// </summary>
+        public float BodyWorldWidth
+        {
+            get
+            {
+                if (bodyRenderer == null || bodyRenderer.sprite == null)
+                {
+                    return 0;
+                }
+                return bodyRenderer.sprite.bounds.size.x * Mathf.Abs(bodyRenderer.transform.lossyScale.x);
+            }
+        }
         public void SetBodySize(int size, bool boss, bool king)
         {
             IsKingVisual = boss && king;

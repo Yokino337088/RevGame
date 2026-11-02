@@ -100,6 +100,15 @@ namespace RevGame.Endless
                 PushBanner("事件 · " + EventNames[kind] + "：" + EventSafeText(kind));
             }
         }
+        /// <summary>巡回突破与敌方词条的名字（按巡回数轮换），横幅与 HUD 共用。</summary>
+        public static readonly string[] BreakthroughNames =
+        {
+            "多重弩阵", "灼尽再燃", "棋心回响", "临阵换锋"
+        };
+        public static readonly string[] AffixNames =
+        {
+            "双门奔袭", "碎盾潮", "潮汐冲锋", "断线精英"
+        };
         /// <summary>四种风险事件的名字，HUD 横幅和旧版弹窗共用。</summary>
         public static readonly string[] EventNames =
         {
@@ -122,10 +131,42 @@ namespace RevGame.Endless
             get;
             private set;
         }
+        /// <summary>
+        /// 大横幅（领主来袭、领主奖励）单独一条通道：击杀领主的同一步里往往还会升级、推小横幅，
+        /// 如果和小横幅共用“只显示最新一条”，增益提示会被立刻盖掉。HUD 按 MajorBannerSerial 单独弹出奖励卡。
+        /// </summary>
+        public string MajorBanner
+        {
+            get;
+            private set;
+        }
+        = "";
+        public int MajorBannerSerial
+        {
+            get;
+            private set;
+        }
+        /// <summary>大横幅正文颜色（#RRGGBB，来自 Excel；空串表示 HUD 默认金色）。</summary>
+        public string MajorBannerColor
+        {
+            get;
+            private set;
+        }
+        = "";
+        /// <summary>领主来袭横幅的文字颜色（纯表现常量：警示红，不是战斗数值）。</summary>
+        private const string BossBannerColor = "#FF5A5A";
+        /// <summary>推一条小横幅（右上角，2.8 秒）。</summary>
         private void PushBanner(string text)
         {
             Banner = text;
             BannerSerial++;
+        }
+        /// <summary>推一条大横幅（右侧奖励卡，放大回弹弹入、停留更久）；color 为空用 HUD 默认金色。</summary>
+        private void PushMajorBanner(string text, string color)
+        {
+            MajorBanner = text;
+            MajorBannerColor = color ?? "";
+            MajorBannerSerial++;
         }
         private void RollChoices()
         {
@@ -211,7 +252,7 @@ namespace RevGame.Endless
                     {
                         if (Units[i].Piece.Side == GameSide.Player)
                         {
-                            Units[i].Piece.SetRoundHealthScale(1 - V("PaperHealthLoss"));
+                            Units[i].Piece.SetRoundHealthScale(PlayerHealthScale());
                         }
                     }
                 }
@@ -278,9 +319,10 @@ namespace RevGame.Endless
         /// <summary>三枚同名同星盘内主力合成；消耗前完整预检大身体，继承已消耗的一生复活标记。</summary>
         public bool MergeSelected()
         {
-            if (Run.phase != EndlessPhase.Preparation && Run.phase != EndlessPhase.Formation)
+            // 无尽全程不停顿：战斗中补牌落子后也要能自动三合一，所以和落子用同一个“可操作”判断。
+            if (!CanArrange())
             {
-                return Reject("只能在整备合星");
+                return Reject("暂停中不能合星");
             }
             EndlessUnit selected = Find(Run.selectedUnit);
             if (selected == null || selected.Stone || selected.Summoned || selected.Piece.Def.Star == StarTier.Three)
@@ -424,7 +466,8 @@ namespace RevGame.Endless
             Run.affixes.Add(affix);
             Run.circuit++;
             Run.heart = Mathf.Min(V("HeartHp"), Run.heart + V("HeartHp") * V("CircuitHeal"));
-            Run.phase = EndlessPhase.Preparation;
+            // 直接回到战斗：无尽全程不停顿。
+            Run.phase = EndlessPhase.Fighting;
             Save();
             return true;
         }

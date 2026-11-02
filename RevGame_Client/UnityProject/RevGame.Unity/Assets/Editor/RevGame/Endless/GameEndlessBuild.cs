@@ -122,6 +122,15 @@ namespace RevGame.Editor
                 // 近战剑气与外围血条：各一张动态批量网格，整场各 1 次绘制调用（见 EndlessArena.Feel）。
                 arena.FindProperty("auraRenderer").objectReferenceValue = Quad(root.transform, "近战剑气批量", SwordAuraMaterial(), Vector3.zero, Vector3.one);
                 arena.FindProperty("hpBarRenderer").objectReferenceValue = Quad(root.transform, "外围血条批量", Material("EndlessHpBar", "RevGame/Endless/HpBar"), Vector3.zero, Vector3.one);
+                // 盾战/刺客的四种表现（见 EndlessArena.Guard）：三张批量网格 + 一块覆盖 9×9 棋盘的防御区面片（z=1.8 在棋盘网格之上、落子提示之下）。
+                Material orbit = SampledMaterial("EndlessShieldOrbit", "RevGame/Endless/ShieldOrbit", "_ShieldTex", ShieldIconTexture);
+                // 盾牌公转半径约 1 格（方块半宽 1.35 × 0.72）、盾牌半宽约 0.32 格：内沿离棋子身体留出明显空隙，不贴身。
+                orbit.SetFloat("_Orbit", .72f);
+                orbit.SetFloat("_Scale", .24f);
+                arena.FindProperty("shieldOrbitRenderer").objectReferenceValue = Quad(root.transform, "盾战环绕盾牌批量", orbit, Vector3.zero, Vector3.one);
+                arena.FindProperty("shieldZoneRenderer").objectReferenceValue = Quad(root.transform, "盾战防御区", Material("EndlessShieldZone", "RevGame/Endless/ShieldZone"), new Vector3(4, 4, 1.8f), new Vector3(9, 9, 1));
+                arena.FindProperty("bubbleRenderer").objectReferenceValue = Quad(root.transform, "防御区护盾泡泡批量", Material("EndlessShieldBubble", "RevGame/Endless/ShieldBubble"), Vector3.zero, Vector3.one);
+                arena.FindProperty("thrustRenderer").objectReferenceValue = Quad(root.transform, "刺客突刺批量", SampledMaterial("EndlessThrust", "RevGame/Endless/Thrust", "_TrailTex", ThrustTrailTexture), Vector3.zero, Vector3.one);
                 arena.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Endless/EndlessArena.prefab");
             }
@@ -222,12 +231,12 @@ namespace RevGame.Editor
                 Label("name", boss, "领主", .08f, .5f, .92f, .92f, 26).color = Cream;
                 Transform bossTrack = Panel("bossTrack", boss, .08f, .16f, .92f, .44f).transform;
                 Panel("bossFill", bossTrack, 0, 0, 1, 1).GetComponent<Image>().color = new Color(1f, .42f, .3f);
-                // 底部：三张手牌（UI_roleItem_imgBK，选中换 UI_roleItem_roleItem），居中在棋盘正下方的空白里。
-                Transform bottom = Rect("bottom", root.transform, .392f, .008f, .608f, .148f).transform;
-                for (int i = 0; i < 3; i++)
+                // 底部：四张手牌（UI_roleItem_imgBK，选中换 UI_roleItem_roleItem），居中在棋盘正下方的空白里。
+                Transform bottom = Rect("bottom", root.transform, .358f, .008f, .642f, .148f).transform;
+                for (int i = 0; i < 4; i++)
                 {
-                    float x0 = i / 3f + .012f;
-                    GameObject card = Panel("card" + i, bottom, x0, 0, x0 + 1 / 3f - .024f, 1);
+                    float x0 = i / 4f + .01f;
+                    GameObject card = Panel("card" + i, bottom, x0, 0, x0 + 1 / 4f - .02f, 1);
                     UnityEngine.UI.Button button = card.AddComponent<UnityEngine.UI.Button>();
                     button.targetGraphic = card.GetComponent<Image>();
                     Panel("icon", card.transform, .16f, .3f, .84f, .92f).GetComponent<Image>().raycastTarget = false;
@@ -241,6 +250,21 @@ namespace RevGame.Editor
                 Transform banner = Panel("banner", root.transform, .672f, .912f, .935f, .99f).transform;
                 Label("text", banner, "", .05f, .08f, .95f, .92f, 22).color = Cream;
                 banner.gameObject.SetActive(false);
+                // 大横幅（领主来袭 / 领主奖励）：最右侧的装饰柱区域没有敌人经过（敌人在棋盘两侧 x≈0.2~0.3 / 0.7~0.8），
+                // 放一张深色奖励竖卡（与横幅同底图），不遮挡任何棋子。标题金色、正文颜色由运行时按 Excel 染色。
+                Transform boon = Panel("boon", root.transform, .832f, .28f, .994f, .84f).transform;
+                Text boonTitle = Label("title", boon, "", .08f, .66f, .92f, .94f, 36);
+                boonTitle.color = new Color(1f, .86f, .42f);
+                Text boonText = Label("text", boon, "", .08f, .08f, .92f, .64f, 30);
+                boonText.color = Cream;
+                // 奖励文字长短不一（增益名 + 效果），竖卡又窄：自动缩字号保证整句放得下，不被截断或硬折成半个词。
+                foreach (Text text in new[] { boonTitle, boonText })
+                {
+                    text.resizeTextForBestFit = true;
+                    text.resizeTextMinSize = 18;
+                    text.resizeTextMaxSize = text.fontSize;
+                }
+                boon.gameObject.SetActive(false);
                 Transform tip = Panel("tip", root.transform, .012f, .015f, .235f, .13f).transform;
                 Label("text", tip, "", .07f, .1f, .93f, .9f, 22).color = Cream;
                 Button("start", root.transform, "开战", .84f, .02f, .985f, .12f, 36);

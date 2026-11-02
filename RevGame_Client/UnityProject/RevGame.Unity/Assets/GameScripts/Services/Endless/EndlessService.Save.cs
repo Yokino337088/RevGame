@@ -64,7 +64,7 @@ namespace RevGame.Endless
                         bornAt = u.BornAt, bossTemplate = u.BossTemplate, warningLine = u.WarningLine,
                         role = u.Role, gate = u.Gate, breakEyeAt = u.BreakEyeAt, breakEyeTarget = u.BreakEyeTarget,
                         furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield,
-                        auraAt = u.AuraAt, comboCount = u.ComboCount
+                        auraAt = u.AuraAt, comboCount = u.ComboCount, holdUntil = u.HoldUntil
                     }
                     );
                 }
@@ -171,7 +171,7 @@ namespace RevGame.Endless
                         BornAt = s.bornAt, BossTemplate = s.bossTemplate, WarningLine = s.warningLine,
                         Role = s.role, Gate = s.gate, BreakEyeAt = s.breakEyeAt, BreakEyeTarget = s.breakEyeTarget,
                         FuryUntil = s.furyUntil, StationarySince = s.stationarySince, SteadyShield = s.steadyShield,
-                        AuraAt = s.auraAt, ComboCount = s.comboCount
+                        AuraAt = s.auraAt, ComboCount = s.comboCount, HoldUntil = s.holdUntil
                     }
                     );
                 }

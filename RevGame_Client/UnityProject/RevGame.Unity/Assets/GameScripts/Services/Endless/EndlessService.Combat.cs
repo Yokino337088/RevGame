@@ -11,6 +11,8 @@ namespace RevGame.Endless
         /// <summary>固定步内先攻击再移动；只遍历现有名单，死亡移除统一延后，避免漏掉交换到当前索引的单位。</summary>
         private void UpdateUnits(float step)
         {
+            // 每 MeleeMoveSeconds 秒按威胁/守军重新给近战棋分配驻守区（见 EndlessService.Guard）。
+            PlanZones();
             for (int i = 0; i < Units.Count; i++)
             {
                 EndlessUnit unit = Units[i];
@@ -41,12 +43,25 @@ namespace RevGame.Endless
                     }
                     // 近战棋的剑气独立于普攻计时，持续切割身边一圈（吸血鬼幸存者式的被动武器）。
                     UpdateAura(unit);
+                    UpdateShieldBash(unit);
                     MeleeAdvance(unit);
-                    if (unit.AttackAt <= Run.seconds && MoveRules.CanAttack(p))
+                    // 积压最多算一个模拟步：被锁/没目标/读档后恢复时只补本步内该打的几发，不会一口气补打一大串。
+                    unit.AttackAt = Mathf.Max(unit.AttackAt, Run.seconds - step);
+                    // 攻速很高时一次出手间隔会比 0.1 秒的模拟步还短（远程 ×12 约 0.03 秒），
+                    // 所以一步内按到点次数连续出手，最多 MaxAttacksPerStep 次；不这样做远程攻速会被模拟步“截”到每秒 10 次。
+                    for (int shot = 0; shot < MaxAttacksPerStep && unit.AttackAt <= Run.seconds && p.IsAlive && MoveRules.CanAttack(p); shot++)
                     {
-                        PlayerAttack(unit);
-                        float speed = Mathf.Min(V("AttackSpeedCap"), p.EyeSpeedMultiplier * (unit.FuryUntil > Run.seconds ? 1 + V("BrokenEyeSpeed") : 1));
-                        unit.AttackAt = Run.seconds + V("PlayerAttackSeconds") / speed;
+                        if (p.Def.Kind == PieceKind.Assassin)
+                        {
+                            AssassinThrust(unit);
+                        }
+                        else
+                        {
+                            PlayerAttack(unit);
+                        }
+                        float interval = V("PlayerAttackSeconds") / PlayerAttackSpeed(unit);
+                        // 期限严格按间隔累加，攻速多快、一步就打几发（上限 MaxAttacksPerStep）。
+                        unit.AttackAt += interval;
                     }
                 }
                 else
@@ -56,13 +71,30 @@ namespace RevGame.Endless
                 }
             }
         }
+        /// <summary>每枚己方棋子每个模拟步最多出手几次（结构预算，防止极端攻速一次结算过多；不是策划数值）。</summary>
+        private const int MaxAttacksPerStep = 4;
+        /// <summary>
+        /// 己方攻速倍率：眼位/狂怒先按 AttackSpeedCap 封顶；远程额外攻速（RangedAttackSpeedBonus，11 = ×12）
+        /// 和领主奖励攻速乘在上限之后——上限只管眼位叠加，不吃掉这两条整体加成。
+        /// </summary>
+        private float PlayerAttackSpeed(EndlessUnit unit)
+        {
+            Piece p = unit.Piece;
+            float speed = Mathf.Min(V("AttackSpeedCap"), p.EyeSpeedMultiplier * (unit.FuryUntil > Run.seconds ? 1 + V("BrokenEyeSpeed") : 1));
+            if (p.Def.IsRanged)
+            {
+                speed *= 1 + V("RangedAttackSpeedBonus");
+            }
+            return speed * (1 + Run.boonSpeed);
+        }
         /// <summary>玩家正常攻击沿用盘内射界；外围目标另按格距/炮架检查，不把外围怪当气或炮架。</summary>
         private void PlayerAttack(EndlessUnit unit)
         {
             Piece p = unit.Piece;
             MoveRules.GetAttackTargets(Board, p, _targets);
             int route = p.Def.Kind == PieceKind.MageFire ? 1 : p.Def.Kind == PieceKind.Priest ? 2 : p.Def.Kind == PieceKind.MageWater ? 4 : p.Def.IsRanged ? 0 : 5;
-            float damage = p.Def.Attack * p.AttackScale * p.EyeAttackMultiplier;
+            // BoonDamage：领主奖励累计的伤害加成（滚雪球），所有己方主动伤害都乘它。
+            float damage = p.Def.Attack * p.AttackScale * p.EyeAttackMultiplier * BoonDamage();
             if (Run.rare[0] && p.ConnectedCells <= p.Size * p.Size)
             {
                 damage *= 1 + V("LoneAttackBonus");
@@ -358,12 +390,18 @@ namespace RevGame.Endless
             }
             float defense = p.EyeDefenseMultiplier * p.EyeGuardDefenseMultiplier;
             damage *= Mathf.Max(1 - V("DamageReductionCap"), 1 / defense);
+            // 盾战防御区：区内棋子防御 +ShieldDefenseBonus（1 = +100%，伤害减半）。多块区重叠按并集算，不叠加。
+            if (InShieldZone(p))
+            {
+                damage /= 1 + V("ShieldDefenseBonus");
+                ReportBlock(p.Id, Position(p));
+            }
             int applied = p.TakeDamage(Mathf.CeilToInt(damage));
             ReportDamage(p.Id, Position(p), applied, GameSide.Player, kind);
             if (applied > 0 && Run.mains[5] > 0 && victim.CounterAt <= Run.seconds)
             {
                 victim.CounterAt = Run.seconds + V("CounterSeconds");
-                float power = p.Def.Attack * (1 + Run.mains[5] * V("BlessingDamage"));
+                float power = p.Def.Attack * (1 + Run.mains[5] * V("BlessingDamage")) * BoonDamage();
                 Area(Position(p), Mathf.Min(V("AreaLimit"), 1 + Run.mains[5] * V("BlessingDamage")), power, 5, -1);
             }
         }
@@ -514,7 +552,7 @@ namespace RevGame.Endless
                     Piece p = Units[i].Piece;
                     if (p.Side == GameSide.Player && p.IsEyeGarrison)
                     {
-                        Area(Position(p), V("AreaLimit"), p.Def.Attack * (1 + Run.mains[2] * V("BlessingDamage")), 2, -1);
+                        Area(Position(p), V("AreaLimit"), p.Def.Attack * (1 + Run.mains[2] * V("BlessingDamage")) * BoonDamage(), 2, -1);
                         if (Run.evolved[2])
                         {
                             PercentPulse(Position(p), V("AreaLimit"), V("PulseRatio"), 2);

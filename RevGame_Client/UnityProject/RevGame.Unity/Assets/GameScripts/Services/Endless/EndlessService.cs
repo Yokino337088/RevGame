@@ -16,12 +16,12 @@ namespace RevGame.Endless
     {
         public readonly BoardModel Board = new BoardModel(9, new BoardPos(4, 4));
         public readonly List<EndlessUnit> Units = new List<EndlessUnit>(81);
-        public readonly EndlessImpact[] Impacts = new EndlessImpact[256];
+        public readonly EndlessImpact[] Impacts = new EndlessImpact[512];
         /// <summary>伤害数字回执，表现层按 DamageSerial 读取新增部分；容量只影响显示，不影响结算。</summary>
-        public readonly EndlessDamageReceipt[] DamageReceipts = new EndlessDamageReceipt[256];
+        public readonly EndlessDamageReceipt[] DamageReceipts = new EndlessDamageReceipt[512];
         /// <summary>死亡回执，表现层据此播放六章同款溶解；同上，只是显示用的有界缓冲。</summary>
         public readonly EndlessDeathReceipt[] DeathReceipts = new EndlessDeathReceipt[128];
-        // 81格棋盘和256条短效收据是布局/表现结构容量，伤害不依赖表现缓冲容量。
+        // 81格棋盘和512条短效收据是布局/表现结构容量，伤害不依赖表现缓冲容量。
         private readonly List<BoardPos> _targets = new List<BoardPos>(81);
         private readonly HashSet<Piece> _consumed = new HashSet<Piece>();
         private int _ruleVersion = -1, _impactSerial;
@@ -132,10 +132,8 @@ namespace RevGame.Endless
         private EndlessUnit AddPlayer(PieceKind kind, int x, int y, bool stone, bool summoned = false)
         {
             var piece = new Piece(Run.nextId++, PieceCatalog.Get(kind, StarTier.One), GameSide.Player);
-            if (Run.rare[2])
-            {
-                piece.SetRoundHealthScale(1 - V("PaperHealthLoss"));
-            }
+            // 纸甲祝福与领主“不灭圣体”都改生命上限；新上场的棋子也要吃到，否则滚雪球只对老棋子生效。
+            piece.SetRoundHealthScale(PlayerHealthScale());
             if (!Fits(new BoardPos(x, y), piece.Size, GameSide.Player) || !Board.Place(piece, new BoardPos(x, y)))
             {
                 throw new InvalidOperationException("无尽初始棋阵占格冲突");
@@ -230,13 +228,17 @@ namespace RevGame.Endless
             Run.slowMoves = N("SlowMoves");
             return true;
         }
+        /// <summary>
+        /// 能否操作棋盘（选牌、落子、移动棋子）。战斗中也可以：无尽模式全程不暂停，玩家随时调整阵型、随时放牌。
+        /// 只有暂停、结算等弹窗状态下不能操作。
+        /// </summary>
         private bool CanArrange()
         {
-            return Run.phase == EndlessPhase.Formation || Run.phase == EndlessPhase.Preparation || (Run.phase == EndlessPhase.Fighting && Run.slowLeft > 0 && Run.slowMoves > 0);
+            return Run.phase == EndlessPhase.Formation || Run.phase == EndlessPhase.Preparation || Run.phase == EndlessPhase.Fighting;
         }
         public bool SelectCard(int index)
         {
-            if (!CanArrange() || Run.phase == EndlessPhase.Fighting || index < 0 || index >= Run.hand.Count)
+            if (!CanArrange() || index < 0 || index >= Run.hand.Count)
             {
                 return Reject("现在不能部署这张牌");
             }
@@ -251,27 +253,29 @@ namespace RevGame.Endless
             {
                 return Reject("落点超出棋盘");
             }
-            // 战斗中点自己的棋子，就直接进入慢动作改阵，不需要额外的按钮。每分钟一次的限制仍由 Rearrange 把关。
-            if (Run.phase == EndlessPhase.Fighting && Run.slowLeft <= 0)
-            {
-                Piece tapped = Board.GetPiece(pos);
-                if (tapped != null && tapped.Side == GameSide.Player && !Rearrange())
-                {
-                    return false;
-                }
-            }
             if (!CanArrange())
             {
-                return Reject("点自己的棋子可以调整站位");
+                return Reject("暂停中不能操作棋盘");
             }
             if (Run.selectedCard >= 0)
             {
                 Piece mergeTarget = Board.GetPiece(pos);
-                if (mergeTarget != null)
+                if (mergeTarget == null)
+                {
+                    return Deploy(Run.selectedCard, pos);
+                }
+                if (Run.selectedCard < Run.hand.Count && CanMergeCardInto(mergeTarget, (PieceKind)Run.hand[Run.selectedCard]))
                 {
                     return MergeWithCard(mergeTarget);
                 }
-                return Deploy(Run.selectedCard, pos);
+                // 选着手牌却点了一枚不能合星的棋子：玩家的意图是“改去操作这枚棋子”。
+                // 以前这里直接走合星并失败，选牌状态没清掉，棋子既选不中也显示不出移动范围。
+                // 现在放下手牌，落到下面的“选中己方棋子”分支；点到敌人/棋心则保持选牌并给出原因。
+                if (mergeTarget.Side != GameSide.Player)
+                {
+                    return Reject("这里不能部署，点空位落子或点同名一星棋子升星");
+                }
+                Run.selectedCard = -1;
             }
             Piece at = Board.GetPiece(pos);
             if (at != null && at.Side == GameSide.Player)
@@ -289,10 +293,8 @@ namespace RevGame.Endless
             {
                 return Reject("落点非法或棋子处于锁定状态");
             }
-            if (Run.phase == EndlessPhase.Fighting)
-            {
-                Run.slowMoves--;
-            }
+            // 玩家亲手摆的位置优先：近战棋在 ManualHoldSeconds 秒内不被自动索敌拉走。
+            unit.HoldUntil = Run.seconds + V("ManualHoldSeconds");
             Run.selectedUnit = -1;
             RefreshRules();
             unit.StationarySince = Run.seconds;
@@ -312,7 +314,8 @@ namespace RevGame.Endless
                 return Reject("此格不可部署");
             }
             PieceKind kind = (PieceKind)Run.hand[index];
-            AddPlayer(kind, pos.X, pos.Y, false);
+            EndlessUnit placed = AddPlayer(kind, pos.X, pos.Y, false);
+            placed.HoldUntil = Run.seconds + V("ManualHoldSeconds");
             Run.hand.RemoveAt(index);
             Run.selectedCard = -1;
             RefreshRules();
@@ -437,7 +440,7 @@ namespace RevGame.Endless
                 if (at != null)
                 {
                     // 点同名一星棋子可以升星（规则见 MergeWithCard：还需要场上另一枚同名一星），六章同样把这类格子点亮。
-                    return Run.phase != EndlessPhase.Fighting && CanMergeCardInto(at, (PieceKind)Run.hand[Run.selectedCard]);
+                    return CanMergeCardInto(at, (PieceKind)Run.hand[Run.selectedCard]);
                 }
                 return PlayerCount() < N("PlayerLimit") && Occupied(GameSide.Player) + 1 <= N("PlayerCells") && Fits(pos, 1, GameSide.Player);
             }
@@ -487,7 +490,11 @@ namespace RevGame.Endless
             Array.Clear(Impacts, 0, Impacts.Length);
             DamageSerial = DeathSerial = 0;
             ComboCasts = 0;
-            Banner = "";
+            Banner = MajorBanner = MajorBannerColor = "";
+            BlockSerial = 0;
+            System.Array.Clear(ShieldZone, 0, ShieldZone.Length);
+            ShieldZoneVersion++;
+            _zonePlanAt = 0;
             Array.Clear(DamageReceipts, 0, DamageReceipts.Length);
             Array.Clear(DeathReceipts, 0, DeathReceipts.Length);
             TickCount = 0;

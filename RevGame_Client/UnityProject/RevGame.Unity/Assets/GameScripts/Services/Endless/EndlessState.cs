@@ -20,6 +20,15 @@ namespace RevGame.Endless
     {
         Pierce, Spread, Rain, Burst, Pillar, Chain, Ring
     }
+    /// <summary>
+    /// 领主奖励（滚雪球）的效果类型，Excel EndlessBoon.Effect 写这些名字：
+    /// Attack 全体伤害、AttackSpeed 全体攻速、Health 生命上限（并回满）、AuraRange 剑气/盾击范围、ComboPower 组合技伤害、Heart 棋心回复。
+    /// 枚举只决定“加到哪”，加多少全在表里。
+    /// </summary>
+    public enum EndlessBoonEffect
+    {
+        Attack, AttackSpeed, Health, AuraRange, ComboPower, Heart
+    }
     /// <summary>单个盘内演员的附属状态，归本局所有；离场从有限名单移除，不保留历史对象。</summary>
     public sealed class EndlessUnit
     {
@@ -47,6 +56,10 @@ namespace RevGame.Endless
         public float AuraAt;
         /// <summary>组合技计数：本棋子满足搭档条件后已打出的普攻次数，到 Every 次就放一次组合技。存档保存。</summary>
         public int ComboCount;
+        /// <summary>玩家手动摆放/移动后，自动索敌暂停到这个战斗时间（秒）。存档保存。</summary>
+        public float HoldUntil;
+        /// <summary>智能索敌这一轮分配到的驻守区（0~5，-1 未分配）。每次规划重算，不进存档。</summary>
+        public int Zone = -1;
     }
     /// <summary>外围敌人是值类型，不挂MonoBehaviour，不参与围棋连通块。Id在转入棋盘后保持。</summary>
     [Serializable]
@@ -95,6 +108,12 @@ namespace RevGame.Endless
     /// 一次真实死亡的表现回执。盘内棋子靠它区分“死亡”（播溶解）和“三合一被吃掉”（直接收走）；
     /// 外围杂兵没有 PieceView，表现层按 position 临时借一枚棋子视图播放同款溶解。
     /// </summary>
+    /// <summary>一次盾战防御区格挡的表现回执：哪枚己方棋子的护盾挡了伤害，表现层让它的护盾泡泡波动。</summary>
+    public struct EndlessBlockReceipt
+    {
+        public int serial, id;
+        public Vector2 position;
+    }
     public struct EndlessDeathReceipt
     {
         public int serial, id;
@@ -125,6 +144,15 @@ namespace RevGame.Endless
         /// 存进档里，读档后接着轮转，不会重新从第 0 行开始把敌人挤在一起。
         /// </summary>
         public int laneCursor;
+        /// <summary>下次自动补手牌的战斗时间（秒）。无尽全程不停顿，手牌由它定时补到上限，存档保存。</summary>
+        public float nextCardAt;
+        /// <summary>
+        /// 领主奖励累计（滚雪球）：每击杀一只领主从 EndlessBoon 表抽一条累加到这里，整局永久生效、跟存档走。
+        /// boonAttack 伤害加成比例、boonSpeed 攻速加成比例、boonHealth 生命上限加成比例、
+        /// boonAura 剑气/盾击范围加成比例、boonCombo 组合技伤害加成比例；boonCount 已领取次数。
+        /// </summary>
+        public float boonAttack, boonSpeed, boonHealth, boonAura, boonCombo;
+        public int boonCount;
         public float nextChoiceAt;
         public float healRemainder;
         public float relicHp;
@@ -155,7 +183,7 @@ namespace RevGame.Endless
         public float attackScale, attackAt, moveAt, burnUntil, burnAt, burnDamage, slowUntil, counterAt;
         public float brokenUntil, nextSkillAt, warningAt, bornAt, breakEyeAt, furyUntil, stationarySince;
         /// <summary>剑气与组合技状态（新增字段，旧存档读出来是 0，等于“马上可以切/从头计数”，不会出错）。</summary>
-        public float auraAt;
+        public float auraAt, holdUntil;
         public int comboCount;
     }
 }

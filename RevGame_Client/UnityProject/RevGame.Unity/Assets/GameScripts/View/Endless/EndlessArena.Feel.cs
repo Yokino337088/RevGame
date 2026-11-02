@@ -170,8 +170,8 @@ namespace RevGame.Endless
                     continue;
                 }
                 Piece p = unit.Piece;
-                Vector2 center = EndlessService.Position(p);
-                float half = EndlessService.AuraRadius(p) / AuraRingRatio;
+                Vector2 center = VisualCenter(p);
+                float half = service.AuraRadius(p) / AuraRingRatio;
                 float flash = 0;
                 if (_auraFlash.TryGetValue(p.Id, out float at))
                 {

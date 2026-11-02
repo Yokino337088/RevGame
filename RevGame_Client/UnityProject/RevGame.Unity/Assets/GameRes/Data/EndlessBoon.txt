@@ -1,0 +1,9 @@
+#EndlessBoon
+#Id	Name	Effect	Value	ColorHex	Description
+#增益编号	增益名称（横幅文案）	效果：Attack伤害 AttackSpeed攻速 Health生命上限 AuraRange剑气/盾击范围 ComboPower组合技伤害 Heart棋心回复	数值：比例类为加成比例（0.35=+35%，每次领主奖励累加）；Heart为回复点数	横幅文字颜色	策划备注（不显示，显示文案由名称+效果+数值拼出）
+0	战神之怒	Attack	0.35	#FF7A4A	全体伤害提升
+1	疾风连击	AttackSpeed	0.3	#7FE3FF	全体攻速提升
+2	不灭圣体	Health	0.4	#8CFF9E	全体生命上限提升并回满
+3	领域扩张	AuraRange	0.3	#C9A6FF	剑气与盾击范围扩大
+4	合击精通	ComboPower	0.6	#FFE27A	组合技伤害提升
+5	棋心祝福	Heart	40	#FFC2D6	棋心回复

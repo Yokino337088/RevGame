@@ -479,6 +479,7 @@ Data/BattleText|data_tables|BattleText
 Data/BattleTuning|data_tables|BattleTuning
 Data/BossSkillConfig|data_tables|BossSkillConfig
 Data/ChapterConfig|data_tables|ChapterConfig
+Data/EndlessBoon|data_tables|EndlessBoon
 Data/EndlessBoss|data_tables|EndlessBoss
 Data/EndlessBossSkill|data_tables|EndlessBossSkill
 Data/EndlessCombo|data_tables|EndlessCombo
@@ -500,8 +501,14 @@ Endless/EndlessBackground|endless_arena|EndlessBackground
 Endless/EndlessGrid|endless_arena|EndlessGrid
 Endless/EndlessHorde|endless_arena|EndlessHorde
 Endless/EndlessHpBar|endless_arena|EndlessHpBar
+Endless/EndlessShieldBubble|endless_arena|EndlessShieldBubble
+Endless/EndlessShieldOrbit|endless_arena|EndlessShieldOrbit
+Endless/EndlessShieldZone|endless_arena|EndlessShieldZone
 Endless/EndlessSwordAura|endless_arena|EndlessSwordAura
+Endless/EndlessThrust|endless_arena|EndlessThrust
+Endless/Textures/EndlessShieldIcon|endless_arena|EndlessShieldIcon
 Endless/Textures/EndlessSwordAuraBlade|endless_arena|EndlessSwordAuraBlade
+Endless/Textures/EndlessThrustTrail|endless_arena|EndlessThrustTrail
 Fonts/CJK/NotoSansCJKsc-Bold|font_cjk|NotoSansCJKsc-Bold
 Material/Background/ArcaneBackdrop|material_background|ArcaneBackdrop
 Material/Board/PlacementMagic|material_board|PlacementMagic
@@ -546,7 +553,11 @@ GameShader/Endless/EndlessBatch|shared_shaders|EndlessBatch
 GameShader/Endless/EndlessField|shared_shaders|EndlessField
 GameShader/Endless/EndlessGrid|shared_shaders|EndlessGrid
 GameShader/Endless/EndlessHpBar|shared_shaders|EndlessHpBar
+GameShader/Endless/EndlessShieldBubble|shared_shaders|EndlessShieldBubble
+GameShader/Endless/EndlessShieldOrbit|shared_shaders|EndlessShieldOrbit
+GameShader/Endless/EndlessShieldZone|shared_shaders|EndlessShieldZone
 GameShader/Endless/EndlessSwordAura|shared_shaders|EndlessSwordAura
+GameShader/Endless/EndlessThrust|shared_shaders|EndlessThrust
 GameShader/Pieces/ArcanePiece|shared_shaders|ArcanePiece
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
 GameShader/UI/SlimeTutorialHighlight|shared_shaders|SlimeTutorialHighlight

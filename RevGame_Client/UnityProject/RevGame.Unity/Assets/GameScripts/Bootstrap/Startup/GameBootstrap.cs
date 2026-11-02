@@ -198,6 +198,7 @@ namespace RevGame.Bootstrap
             RevDataTableManager.Unload<EndlessMusicTable>();
             RevDataTableManager.Unload<EndlessComboTable>();
             RevDataTableManager.Unload<EndlessFormationTable>();
+            RevDataTableManager.Unload<EndlessBoonTable>();
             RevDataTableManager.Unload<BattleTuningTable>();
             RevDataTableManager.Unload<PieceConfigTable>();
             RevDataTableManager.Unload<StarConfigTable>();

@@ -50,6 +50,13 @@ namespace RevGame.Endless
         /// <summary>右上角横幅：自动获得的升级 / 自动处理的事件用它弹一句话，2.8 秒后自己收起，不打断战斗。</summary>
         [RevBind("banner")] private GameObject _banner;
         [RevBind("banner/text")] private Text _bannerText;
+        /// <summary>
+        /// 大横幅（领主来袭 / 领主击破后的强力增益）：右侧空白栏里一张木纹奖励卡，旋转回弹弹入、停留 4 秒再缩回。
+        /// 放在棋盘右侧空栏，不遮挡任何棋子；颜色取自 Excel（EndlessBoon.ColorHex）。
+        /// </summary>
+        [RevBind("boon")] private GameObject _boon;
+        [RevBind("boon/title")] private Text _boonTitle;
+        [RevBind("boon/text")] private Text _boonText;
         /// <summary>手牌底图：平时用 UI_roleItem_imgBK，选中时换成带金光的 UI_roleItem_roleItem（由无尽资产生成器装配）。</summary>
         [SerializeField] private Sprite cardNormal;
         [SerializeField] private Sprite cardSelected;
@@ -57,12 +64,20 @@ namespace RevGame.Endless
         private int _bannerSerial;
         private float _bannerUntil;
         private const float BannerSeconds = 2.8f;
+        /// <summary>大横幅停留时间（真实秒，纯表现节奏）。</summary>
+        private const float MajorSeconds = 4f;
+        private float _boonUntil;
+        private int _majorSerial;
+        private RectTransform _boonRect;
+        /// <summary>大横幅默认的金色字（Excel 没给颜色时用，纯表现常量）。</summary>
+        private static readonly Color BoonGold = new Color(1f, .86f, .42f);
         /// <summary>棋心血条的图片，危险时染红。</summary>
         private Image _heartImage;
         /// <summary>手牌的三部分：按钮本身、棋子头像、名字。下标就是手牌序号。</summary>
-        private readonly GameObject[] _cards = new GameObject[3];
-        private readonly Image[] _cardImages = new Image[3], _cardIcons = new Image[3];
-        private readonly Text[] _cardNames = new Text[3];
+        /// <summary>手牌槽位：4 张（与 Excel HandLimit 对应的预制体结构，改上限需同时重建 HUD）。</summary>
+        private readonly GameObject[] _cards = new GameObject[4];
+        private readonly Image[] _cardImages = new Image[4], _cardIcons = new Image[4];
+        private readonly Text[] _cardNames = new Text[4];
         /// <summary>弹窗里的三个大选项。只有两个选项时用左右两张（0 和 2），只有一个时用中间（1）。</summary>
         private readonly GameObject[] _choices = new GameObject[3];
         private readonly Text[] _choiceTexts = new Text[3];
@@ -122,6 +137,7 @@ namespace RevGame.Endless
             _tipRect = (RectTransform)_tip.transform;
             _bossRect = (RectTransform)_boss.transform;
             _startRect = (RectTransform)_start.transform;
+            _boonRect = (RectTransform)_boon.transform;
             for (int i = 0; i < _cards.Length; i++)
             {
                 Transform card = transform.Find("bottom/card" + i);
@@ -220,7 +236,7 @@ namespace RevGame.Endless
             // 血条图本身是金色：健康时不染色，危险时才染红，提示更醒目。
             _heartImage.color = heartRatio < 0.3f ? new Color(1, .3f, .22f) : Color.white;
             int kills = run.kills + run.invaderKills;
-            Set(_status, "棋心 " + Mathf.CeilToInt(run.heart) + "     " + ((int)run.seconds / 60).ToString("00") + ":" + ((int)run.seconds % 60).ToString("00") + "     击杀 " + kills);
+            Set(_status, "第" + Service.WaveNumber + "波   棋心 " + Mathf.CeilToInt(run.heart) + "   " + ((int)run.seconds / 60).ToString("00") + ":" + ((int)run.seconds % 60).ToString("00") + "   击杀 " + kills);
             if (_shownHeart >= 0 && run.heart < _shownHeart)
             {
                 Shake(_top, new Vector2(16, 6));
@@ -252,7 +268,9 @@ namespace RevGame.Endless
         /// <summary>底部：手牌（没牌的格子直接隐藏）、等级、经验条、开战按钮。</summary>
         private void RefreshHand(EndlessRun run)
         {
+            // 开战按钮只在开局布阵时出现；手牌在布阵和战斗中都能随时打出（无尽全程不停顿）。
             bool arranging = run.phase == EndlessPhase.Formation || run.phase == EndlessPhase.Preparation;
+            bool playable = arranging || run.phase == EndlessPhase.Fighting;
             for (int i = 0; i < _cards.Length; i++)
             {
                 bool has = i < run.hand.Count;
@@ -274,7 +292,7 @@ namespace RevGame.Endless
                 {
                     _cardImages[i].sprite = face;
                 }
-                _cardImages[i].color = arranging ? Color.white : DimCard;
+                _cardImages[i].color = playable ? Color.white : DimCard;
                 Sprite icon = _arena == null ? null : _arena.PieceIcon(kind);
                 if (icon != null && _cardIcons[i].sprite != icon)
                 {
@@ -331,13 +349,13 @@ namespace RevGame.Endless
             {
                 tip = "点棋盘空格摆放\n点同名棋子可升星";
             }
+            else if (run.selectedUnit >= 0)
+            {
+                tip = "点亮起的空格\n把棋子移过去";
+            }
             else if (run.phase == EndlessPhase.Formation || run.phase == EndlessPhase.Preparation)
             {
                 tip = run.hand.Count > 0 ? "点手牌，再点棋盘\n摆好后点开战" : "点棋子可移动\n准备好就开战";
-            }
-            else if (run.phase == EndlessPhase.Fighting && run.slowLeft > 0)
-            {
-                tip = run.selectedUnit >= 0 ? "点空格移动过去" : "时间变慢了\n点棋子再点空格";
             }
             else
             {
@@ -367,10 +385,53 @@ namespace RevGame.Endless
                 RevUIAnim.PopIn(_banner.transform, .3f, null, this);
                 _bannerUntil = Time.unscaledTime + BannerSeconds;
             }
+            if (Service.MajorBannerSerial != _majorSerial)
+            {
+                _majorSerial = Service.MajorBannerSerial;
+                ShowMajor(Service.MajorBanner, Service.MajorBannerColor);
+            }
             else if (_banner.activeSelf && Time.unscaledTime > _bannerUntil)
             {
                 Show(_banner, false);
             }
+            if (_boon.activeSelf && _boonUntil > 0 && Time.unscaledTime > _boonUntil)
+            {
+                _boonUntil = 0;
+                // 缩回去再隐藏；InBack 先微微放大再收，像卡片被收走。
+                _boonRect.DOKill(false);
+                _boonRect.DOScale(0f, .22f).SetEase(Ease.InBack).SetUpdate(true).SetTarget(_boonRect).OnComplete(HideMajor);
+            }
+        }
+        /// <summary>
+        /// 大横幅弹入：从 0.35 倍、倾斜 -10° 回弹放大到 1.15 倍并摆正，再落回原大小，最后弹两下；
+        /// 同时顶栏抖一下、标题文字跟着拉伸，强调“变强了 / 大的来了”。文案第一个“！”前当标题，其余当正文。
+        /// </summary>
+        private void ShowMajor(string text, string colorHex)
+        {
+            int split = text.IndexOf('！');
+            Set(_boonTitle, split > 0 ? text.Substring(0, split + 1) : "");
+            Set(_boonText, split > 0 ? text.Substring(split + 1) : text);
+            _boonText.color = !string.IsNullOrEmpty(colorHex) && ColorUtility.TryParseHtmlString(colorHex, out Color color) ? color : BoonGold;
+            Show(_boon, true);
+            _boonRect.DOKill(false);
+            _boonTitle.transform.DOKill(false);
+            _boonRect.localScale = Vector3.one * .35f;
+            _boonRect.localRotation = Quaternion.Euler(0, 0, -10);
+            DOTween.Sequence()
+                .Append(_boonRect.DOScale(1.15f, .3f).SetEase(Ease.OutBack))
+                .Join(_boonRect.DOLocalRotate(Vector3.zero, .3f).SetEase(Ease.OutCubic))
+                .Append(_boonRect.DOScale(1f, .16f).SetEase(Ease.OutQuad))
+                .Append(_boonRect.DOPunchScale(Vector3.one * .07f, .45f, 5, .6f))
+                .SetUpdate(true).SetTarget(_boonRect);
+            _boonTitle.transform.localScale = Vector3.one;
+            _boonTitle.transform.DOPunchScale(new Vector3(.25f, -.1f, 0), .5f, 6, .5f).SetDelay(.3f).SetUpdate(true);
+            Shake(_top, new Vector2(18, 8));
+            _boonUntil = Time.unscaledTime + MajorSeconds;
+        }
+        private void HideMajor()
+        {
+            Show(_boon, false);
+            _boonRect.localScale = Vector3.one;
         }
         /// <summary>弹窗：巡回二选一、暂停、结算（升级和事件已改为自动，旧存档里残留的也能正常处理）。每种都只有大按钮。</summary>
         private void RefreshModal(EndlessRun run)
@@ -580,6 +641,10 @@ namespace RevGame.Endless
         {
             Card(2);
         }
+        [RevButtonClick("bottom/card3")] private void Card3()
+        {
+            Card(3);
+        }
         /// <summary>
         /// 三张选项错开 0.07 秒依次从 0 回弹放大（BossIntroPanel 同款 OutBack）。
         /// 这里用 DOTween 而不是 RevUIAnim：RevUIAnim 会把第一次播放时的缩放记成“原始大小”，先缩到 0 再播会被记成 0。
@@ -656,6 +721,13 @@ namespace RevGame.Endless
             _bannerSerial = Service.BannerSerial;
             _bannerUntil = 0;
             _banner.SetActive(false);
+            _boonUntil = 0;
+            _majorSerial = Service.MajorBannerSerial;
+            _boonRect.DOKill(false);
+            _boonTitle.transform.DOKill(false);
+            _boonRect.localScale = _boonTitle.transform.localScale = Vector3.one;
+            _boonRect.localRotation = Quaternion.identity;
+            _boon.SetActive(false);
             _modalSignature = int.MinValue;
             _shownLevel = _shownKills = 0;
             _shownCards = _shownSelected = -1;

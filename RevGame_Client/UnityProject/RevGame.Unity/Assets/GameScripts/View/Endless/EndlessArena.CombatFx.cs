@@ -23,6 +23,7 @@
 // 所有异步取池都带 _fxGeneration 版本号；退出无尽时版本号 +1，迟到的回调发现版本不对就把对象还回池。
 // ============================================================
 using System.Collections.Generic;
+using DG.Tweening;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.View;
@@ -123,6 +124,10 @@ namespace RevGame.Endless
         /// <summary>正在播出生燃烧的杂兵视图及开始时间，下标与 Run.horde 一致；有视图时批量网格里对应的方块隐藏。</summary>
         private PieceView[] _hordeBirth = new PieceView[0];
         private float[] _hordeBirthAt = new float[0];
+        /// <summary>出生视图“由大渐小”的缩放补间，下标同上；视图回池前 Kill(false)，不留悬空回调。</summary>
+        private Tweener[] _hordeBirthTween = new Tweener[0];
+        /// <summary>批量网格里普通杂兵方块的半宽（格），必须和 UpdateHorde 里的 .38 一致（纯表现尺寸）。</summary>
+        private const float HordeQuadHalf = .38f;
         private int _hordeBirthCount, _pendingHordeBirths;
         /// <summary>第一帧只记录现有敌人、不补播出生（读档或开局时它们早就在场上了）。</summary>
         private bool _hordeSynced;
@@ -146,6 +151,7 @@ namespace RevGame.Endless
             }
             _fxGeneration++;
             _fxBegun = true;
+            BeginGuard(service);
             // 从当前序号开始读：读档恢复时不补播存档前的旧回执。
             _impactRead = service.ImpactSerial;
             _damageRead = service.DamageSerial;
@@ -268,6 +274,12 @@ namespace RevGame.Endless
                     source.PlayAttackPulse();
                 }
                 TryAttackText(run, hit.sourceId, hit.sourceKind, from);
+            }
+            if (hit.route == EndlessService.ThrustRoute)
+            {
+                // 刺客突刺：画尖刺冲击（EndlessArena.Guard），不再走普通近战斩击。
+                PushThrust(hit.from, hit.to);
+                return;
             }
             if (hit.radius > 0)
             {
@@ -691,6 +703,8 @@ namespace RevGame.Endless
                 return;
             }
             BindHordeLook(view);
+            // 尸体和死前的网格方块一样大，不会“死的瞬间突然变大”。
+            view.transform.localScale = HordeScale(view);
             view.SnapTo(position);
             if (view.BeginDeathDissolve(_corpseFinished))
             {
@@ -706,6 +720,13 @@ namespace RevGame.Endless
         {
             view.Bind(--_corpseId, PieceKind.Swordman, StarTier.One, GameSide.Enemy);
             view.SetBodySize(1, false, false);
+        }
+        /// <summary>让视图身体宽度等于网格方块宽度（2 × HordeQuadHalf）所需的缩放；拿不到贴图尺寸时保持原缩放。</summary>
+        private static Vector3 HordeScale(PieceView view)
+        {
+            Vector3 scale = view.transform.localScale;
+            float width = view.BodyWorldWidth;
+            return width > .0001f ? scale * (HordeQuadHalf * 2 / width) : scale;
         }
         /// <summary>溶解播完（或保险期限到）后回池；离场时已统一回收的视图不会再进来。</summary>
         private void OnCorpseFinished(PieceView view)
@@ -728,6 +749,7 @@ namespace RevGame.Endless
                 _hordeSeen = new int[length];
                 _hordeBirth = new PieceView[length];
                 _hordeBirthAt = new float[length];
+                _hordeBirthTween = new Tweener[length];
             }
             float now = Time.time;
             for (int i = 0; i < length; i++)
@@ -805,6 +827,9 @@ namespace RevGame.Endless
             BindHordeLook(view);
             view.SnapTo(new Vector3(h.x, h.y, -0.5f));
             view.PlayBirthFire();
+            // 出生时是六章同款的大身体，烧完要换回较小的网格方块。以前到点直接换，看起来“啪”地一下缩小；
+            // 现在用 DOTween 在整段出生时间里平滑缩到网格方块大小（先慢后快再慢），到点换回网格时尺寸正好一致。
+            _hordeBirthTween[slot] = view.transform.DOScale(HordeScale(view), HordeBirthSeconds).SetEase(Ease.InOutSine);
             _hordeBirthsShown++;
             _hordeBirth[slot] = view;
             _hordeBirthAt[slot] = Time.time;
@@ -816,6 +841,13 @@ namespace RevGame.Endless
             {
                 return;
             }
+            if (_hordeBirthTween[slot] != null)
+            {
+                _hordeBirthTween[slot].Kill(false);
+                _hordeBirthTween[slot] = null;
+            }
+            // 还池前把缩放复原成标准一格身体，下一位借用者（盘内棋子/尸体）不会继承缩小后的尺寸。
+            _hordeBirth[slot].SetBodySize(1, false, false);
             RevPool.Return(_hordeBirth[slot]);
             _hordeBirth[slot] = null;
             _hordeBirthCount--;
@@ -847,6 +879,7 @@ namespace RevGame.Endless
                 ["activePatterns"] = _activeFx[(int)FxKind.Pattern].Count, ["activeTexts"] = TextCount(), ["activeDissolves"] = _dissolving.Count,
                 ["projectiles"] = _fxShown[(int)FxKind.Projectile], ["melee"] = _fxShown[(int)FxKind.Melee], ["patterns"] = _fxShown[(int)FxKind.Pattern],
                 ["damageTexts"] = _fxShown[(int)FxKind.Damage], ["attackTexts"] = _fxShown[(int)FxKind.Attack],
+                ["guard"] = GuardSnapshot(),
                 ["auras"] = AuraCount, ["auraFlashes"] = AuraFlashCount, ["comboShouts"] = ComboShoutCount, ["hordeBars"] = HordeBarCount,
                 ["births"] = _birthsShown, ["hordeBirths"] = _hordeBirthsShown, ["upgrades"] = _upgradesShown, ["dissolves"] = _dissolvesShown,
                 ["withinBudget"] = _activeFx[(int)FxKind.Projectile].Count <= MaxProjectiles && _activeFx[(int)FxKind.Melee].Count <= MaxMeleeEffects

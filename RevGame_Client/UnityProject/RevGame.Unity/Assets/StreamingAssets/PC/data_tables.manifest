@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1651883716
+CRC: 2748421751
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 75dee6f9246b613abcefbe7a61417eeb
+    Hash: d65ecdfd6b46de66f2b38a2cf9281e74
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5ad585dd02dfb5016c0dad519eab8f49
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 75dee6f9246b613abcefbe7a61417eeb
+    Hash: d65ecdfd6b46de66f2b38a2cf9281e74
 HashAppended: 0
 ClassTypes:
 - Class: 49
@@ -33,6 +33,7 @@ Assets:
 - Assets/GameRes/Data/BattleTuning.txt
 - Assets/GameRes/Data/EnemyRosterConfig.txt
 - Assets/GameRes/Data/PieceConfig.txt
+- Assets/GameRes/Data/EndlessBoon.txt
 - Assets/GameRes/Data/EndlessFormation.txt
 - Assets/GameRes/Data/BossSkillConfig.txt
 - Assets/GameRes/Data/ChapterConfig.txt

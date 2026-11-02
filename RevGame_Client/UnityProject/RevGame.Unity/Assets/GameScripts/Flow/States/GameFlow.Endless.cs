@@ -38,6 +38,7 @@ namespace RevGame.Flow
                 await RevDataTableManager.LoadAsync<EndlessMusicTable>();
                 await RevDataTableManager.LoadAsync<EndlessComboTable>();
                 await RevDataTableManager.LoadAsync<EndlessFormationTable>();
+                await RevDataTableManager.LoadAsync<EndlessBoonTable>();
                 EndlessConfig.Validate();
                 ThrowIfDisposed();
                 // UI_Tavern_imgBK（升级卡牌底板）单独成图集，只在无尽里用，进场前一起预载，避免首次弹窗白图。

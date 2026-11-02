@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4112437104
+CRC: 2194961173
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e8df5e3173a84b750b0e5a6f7034e1d0
+    Hash: 146f64a1dafe548ca6491a694b786ea9
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1aa63f14457cabec86fb1436af983cc0
+    Hash: 50776bb146eca5145d5bfa421f6c9917
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e8df5e3173a84b750b0e5a6f7034e1d0
+    Hash: 146f64a1dafe548ca6491a694b786ea9
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -39,12 +39,18 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Endless/EndlessBackground.mat
+- Assets/GameRes/Endless/EndlessShieldOrbit.mat
+- Assets/GameRes/Endless/EndlessShieldZone.mat
 - Assets/GameRes/Endless/EndlessHorde.mat
 - Assets/GameRes/Endless/EndlessGrid.mat
-- Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png
+- Assets/GameRes/Endless/Textures/EndlessShieldIcon.png
 - Assets/GameRes/Endless/EndlessHpBar.mat
+- Assets/GameRes/Endless/Textures/EndlessThrustTrail.png
+- Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png
+- Assets/GameRes/Endless/EndlessShieldBubble.mat
 - Assets/GameRes/ChapterBackground/EndlessTemple.png
 - Assets/GameRes/Endless/EndlessArena.prefab
+- Assets/GameRes/Endless/EndlessThrust.mat
 - Assets/GameRes/Endless/EndlessSwordAura.mat
 Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus

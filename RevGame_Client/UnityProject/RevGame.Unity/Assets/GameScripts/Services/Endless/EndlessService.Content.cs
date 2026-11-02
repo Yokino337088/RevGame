@@ -41,6 +41,7 @@ namespace RevGame.Endless
             float scale = V("EnemyHpScale") * (elite ? V("EliteHpScale") : 1) * (boss >= 0 ? V("BossHpScale") : 1);
             scale *= boss >= 0 ? Mathf.Min(V("BossHpCap"), 1 + (Run.circuit - 1) * V("CircuitHpGrowth")) : 1 + Math.Min(Run.circuit - 1, N("CircuitHpCap")) * V("CircuitHpGrowth");
             scale *= Run.difficulty == 1 ? V("DifficultyHp") : 1;
+            scale *= WaveHpScale();
             float hp = Mathf.Max(1, Mathf.Floor(PieceCatalog.Get(kind, StarTier.One).MaxHp * scale));
             // 入侵者和杂兵共用左右两侧 × 九行的出生口，进盘时也沿这一行进入（见 TryEnterBoard）。
             NextLane(out int gate, out int row);
@@ -125,7 +126,7 @@ namespace RevGame.Endless
                     continue;
                 }
                 var def = PieceCatalog.Get(RoleKind(h.kind), StarTier.One);
-                Piece piece = new Piece(h.id, def, GameSide.Enemy, size, h.kind >= 6, false, h.maxHp / def.MaxHp, V("EnemyAttackScale"));
+                Piece piece = new Piece(h.id, def, GameSide.Enemy, size, h.kind >= 6, false, h.maxHp / def.MaxHp, V("EnemyAttackScale") * WaveAttackScale());
                 piece.RestoreDetachedVitals(Mathf.CeilToInt(h.maxHp), Mathf.Max(1, Mathf.CeilToInt(h.hp)), false);
                 if (!Board.Place(piece, pos))
                 {
@@ -159,6 +160,8 @@ namespace RevGame.Endless
             {
                 Run.bossKills++;
                 Run.cores++;
+                // 滚雪球：每只领主都给一条强力增益（随机、永久、可叠加）。
+                GrantBossBoon();
                 GainExperience(N("ExperienceBoss"));
                 AddScore(N("ScoreBoss"));
                 if (role == 9)
@@ -168,6 +171,12 @@ namespace RevGame.Endless
                     Run.bankedScore = Run.score;
                     Run.phase = EndlessPhase.Circuit;
                     RecordProgress();
+                    // 巡回完成不再弹“继续/带走”：自动继续下一轮（想带走战绩可用暂停页的“结束本局”），横幅说明新增的突破和词条。
+                    int next = Run.circuit % BreakthroughNames.Length;
+                    if (ContinueCircuit(next, next))
+                    {
+                        PushBanner("巡回完成！获得" + BreakthroughNames[next] + " · 敌人新增" + AffixNames[next]);
+                    }
                 }
                 _saveAtStepEnd = true;
             }
@@ -305,7 +314,7 @@ namespace RevGame.Endless
         {
             int index = Run.selectedCard;
             EndlessUnit first = Find(target.Id), second = null;
-            if (Run.phase == EndlessPhase.Fighting || index < 0 || index >= Run.hand.Count || first == null || first.Stone || first.Summoned || target.Side != GameSide.Player || target.Def.Star != StarTier.One || Run.hand[index] != (int)target.Def.Kind)
+            if (index < 0 || index >= Run.hand.Count || first == null || first.Stone || first.Summoned || target.Side != GameSide.Player || target.Def.Star != StarTier.One || Run.hand[index] != (int)target.Def.Kind)
             {
                 return Reject("手牌合星需要两枚同名一星主力");
             }
@@ -332,10 +341,7 @@ namespace RevGame.Endless
                 return Reject("升级占地不合法，未扣牌");
             }
             var merged = new Piece(target.Id, PieceCatalog.Get(target.Def.Kind, StarTier.Two), GameSide.Player);
-            if (Run.rare[2])
-            {
-                merged.SetRoundHealthScale(1 - V("PaperHealthLoss"));
-            }
+            merged.SetRoundHealthScale(PlayerHealthScale());
             Board.Remove(target);
             Board.Remove(second.Piece);
             Units.Remove(first);
