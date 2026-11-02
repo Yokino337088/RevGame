@@ -1,0 +1,4 @@
+interface:
+  display_name: "RevGame 项目开发"
+  short_description: "按项目架构与目录规范快速迭代，联动 Revolution 技能并优先使用 RevCLI"
+  default_prompt: "使用 $revgame-development 根据 RevGame 当前代码与规范完成这个需求，选择必要的框架技能，通过 RevCLI 完成编辑器和预制体制作，并验证结果。"
