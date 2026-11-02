@@ -1,0 +1,95 @@
+{
+  "name": "无尽真实突刺视觉夹具",
+  "steps": [
+    {
+      "target": "gm",
+      "action": "无尽/进入测试局"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Endless"
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.thrust-preview",
+      "expect": [
+        {
+          "path": "/data/actualDamage",
+          "equals": true
+        },
+        {
+          "path": "/data/newReceipt",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot"
+    },
+    {
+      "target": "game",
+      "action": "endless.thrust-preview",
+      "expect": [
+        {
+          "path": "/data/actualDamage",
+          "equals": true
+        },
+        {
+          "path": "/data/newReceipt",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot"
+    }
+  ],
+  "finally": [
+    {
+      "target": "game",
+      "action": "endless.drag-cancel"
+    },
+    {
+      "target": "game",
+      "action": "endless.home"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/logicCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/enemyCapacity",
+          "equals": 0
+        }
+      ]
+    }
+  ]
+}

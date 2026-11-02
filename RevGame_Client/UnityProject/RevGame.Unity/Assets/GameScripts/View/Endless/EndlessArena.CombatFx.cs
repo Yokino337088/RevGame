@@ -591,7 +591,12 @@ namespace RevGame.Endless
                     break;
                 case FxKind.Pattern:
                     _patterns.Add(effect);
-                    effect.ShowPattern(request.From, request.To, request.Piece, request.Radius, _fxFinished);
+                    effect.ShowPattern(request.From, request.To, request.Piece, request.Radius, _fxFinished, subtleFire: true);
+                    if (request.Piece == PieceKind.MageFire && effect.IsPatternActive)
+                    {
+                        _fireShown++;
+                        _fireParametersCorrect &= effect.PatternOpacity < .5f && effect.PatternBorder == 0 && effect.PatternOrder < 8;
+                    }
                     break;
                 case FxKind.Damage:
                     effect.ShowDamage(request.To, request.Damage, request.DamageKind, _fxFinished, request.Side, _arrangeText);
@@ -869,13 +874,27 @@ namespace RevGame.Endless
 
         /// <summary>本局累计真正播出的反馈次数（只增不减，退出清零）；供自动化验收断言“确实用六章资源播了”。</summary>
         private readonly int[] _fxShown = new int[5];
+        /// <summary>实际租约中累计火焰次数与属性验收；查询无火焰也不能冒充已验证。</summary>
+        private int _fireShown;
+        private bool _fireParametersCorrect = true;
         private int _birthsShown, _hordeBirthsShown, _upgradesShown, _dissolvesShown;
 
         /// <summary>只读快照：当前在播数量 + 本局累计次数 + 落子提示格数。不改任何状态。</summary>
         public object FeedbackSnapshot()
         {
+            bool fireCorrect = true;
+            int fires = 0;
+            foreach (BattleEffectView effect in _patterns)
+            {
+                if (effect.IsPatternActive && effect.PatternKind == PieceKind.MageFire)
+                {
+                    fires++;
+                    fireCorrect &= effect.PatternOpacity < .5f && effect.PatternBorder == 0 && effect.PatternOrder < 8;
+                }
+            }
             return new Dictionary<string, object>
             {
+                ["fireCorrect"] = fireCorrect && _fireParametersCorrect, ["activeFire"] = fires, ["fireShown"] = _fireShown,
                 ["placementHints"] = PlacementHintCount,
                 ["activeProjectiles"] = _activeFx[(int)FxKind.Projectile].Count, ["activeMelee"] = _activeFx[(int)FxKind.Melee].Count,
                 ["activePatterns"] = _activeFx[(int)FxKind.Pattern].Count, ["activeTexts"] = TextCount(), ["activeDissolves"] = _dissolving.Count,
@@ -928,6 +947,8 @@ namespace RevGame.Endless
             _dyingIds.Clear();
             _stars.Clear();
             System.Array.Clear(_fxShown, 0, _fxShown.Length);
+            _fireShown = 0;
+            _fireParametersCorrect = true;
             _birthsShown = _hordeBirthsShown = _upgradesShown = _dissolvesShown = 0;
         }
     }

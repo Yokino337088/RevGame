@@ -291,7 +291,7 @@ namespace RevGame.Endless
                 // 现在放下手牌，落到下面的“选中己方棋子”分支；点到敌人/棋心则保持选牌并给出原因。
                 if (mergeTarget.Side != GameSide.Player)
                 {
-                    return Reject("这里不能部署，点空位落子或点同名一星棋子升星");
+                    return Reject("这里不能部署，点空位落子或点同名未满星棋子升星");
                 }
                 Run.selectedCard = -1;
             }
@@ -320,7 +320,7 @@ namespace RevGame.Endless
             ApplyBrokenEyeBonus();
             return true;
         }
-        /// <summary>先预检空间/上限，再扣牌。失败不改变手牌、随机数或占格。</summary>
+        /// <summary>先预检合法空格，再随机升级一个同名未满星主力；没有目标才部署，成功后只扣一张牌。</summary>
         private bool Deploy(int index, BoardPos pos)
         {
             if (index < 0 || index >= Run.hand.Count)
@@ -332,42 +332,20 @@ namespace RevGame.Endless
                 return Reject("此格不可部署");
             }
             PieceKind kind = (PieceKind)Run.hand[index];
+            EndlessUnit upgrade = RandomCardTarget(kind);
+            if (upgrade != null)
+            {
+                return UpgradeWithCard(index, upgrade);
+            }
             EndlessUnit placed = AddPlayer(kind, pos.X, pos.Y, false);
             placed.HoldUntil = Run.seconds + V("ManualHoldSeconds");
             Run.hand.RemoveAt(index);
             Run.selectedCard = -1;
+            CardPlaySerial++;
+            LastCardAction = "Deploy";
+            LastCardTarget = placed.Piece.Id;
             RefreshRules();
-            AutoMerge();
             return true;
-        }
-        /// <summary>
-        /// 自动三合一：场上凑齐三枚同名同星就自动升星，玩家不用找按钮。
-        /// 合完可能又凑齐高一星的三枚，所以循环到没有可合的为止。
-        /// 放不下等合不了的情况不算错误，不提示玩家，也不消耗棋子。
-        /// </summary>
-        private void AutoMerge()
-        {
-            string error = LastError;
-            bool merged = true;
-            while (merged)
-            {
-                merged = false;
-                for (int i = 0; i < Units.Count; i++)
-                {
-                    if (Units[i].Piece.Side != GameSide.Player)
-                    {
-                        continue;
-                    }
-                    Run.selectedUnit = Units[i].Piece.Id;
-                    if (MergeSelected())
-                    {
-                        merged = true;
-                        break;
-                    }
-                }
-            }
-            Run.selectedUnit = -1;
-            LastError = error;
         }
         /// <summary>Id来自本局实体注册表，死亡/升星移除时同步失效，不扫描整个演员名单。</summary>
         public EndlessUnit Find(int id)
@@ -464,23 +442,11 @@ namespace RevGame.Endless
             // 选中棋子自己脚下也点亮，和六章“已选中的棋子格子高亮”一致。
             return unit.Piece.Pos.Equals(pos) || Fits(pos, unit.Piece.Size, GameSide.Player, unit.Piece);
         }
-        /// <summary>手牌合星的前置条件预检（不含升星后的占地检查，那一步需要临时占格，交给真正点击时判断）。</summary>
+        /// <summary>一张同名手牌可升级一个未满星主力；不再要求第二个场上伙伴，不消费其它棋子。</summary>
         private bool CanMergeCardInto(Piece target, PieceKind card)
         {
-            EndlessUnit first = Find(target.Id);
-            if (first == null || first.Stone || first.Summoned || target.Side != GameSide.Player || target.Def.Star != StarTier.One || target.Def.Kind != card)
-            {
-                return false;
-            }
-            for (int i = 0; i < Units.Count; i++)
-            {
-                EndlessUnit other = Units[i];
-                if (other != first && !other.Summoned && !other.Stone && other.Piece.Side == GameSide.Player && other.Piece.Def.Kind == card && other.Piece.Def.Star == StarTier.One)
-                {
-                    return true;
-                }
-            }
-            return false;
+            EndlessUnit actor = target == null ? null : Find(target.Id);
+            return actor != null && !actor.Stone && !actor.Summoned && target.IsAlive && target.Side == GameSide.Player && target.Def.Kind == card && target.Def.Star < StarTier.Three;
         }
         private void AddScore(long value)
         {
@@ -503,6 +469,9 @@ namespace RevGame.Endless
             Array.Clear(Impacts, 0, Impacts.Length);
             DamageSerial = DeathSerial = 0;
             ComboCasts = 0;
+            CardPlaySerial = 0;
+            LastCardAction = "";
+            LastCardTarget = 0;
             Banner = MajorBanner = MajorBannerColor = "";
             BlockSerial = 0;
             System.Array.Clear(ShieldZone, 0, ShieldZone.Length);

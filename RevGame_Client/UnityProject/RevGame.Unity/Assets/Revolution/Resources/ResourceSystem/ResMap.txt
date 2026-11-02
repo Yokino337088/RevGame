@@ -125,6 +125,9 @@ Art/Combat/Projectiles/LavaFireball|atlas_combatframes|LavaFireball
 Art/Combat/Projectiles/WaterOrb|atlas_combatframes|WaterOrb
 Art/Combat/RegionHazard|atlas_combatframes|RegionHazard
 Atlases/CombatFrames|atlas_combatframes|CombatFrames
+Art/Endless/CardArrow/CardArrowHead|atlas_endlesscardarrow|CardArrowHead
+Art/Endless/CardArrow/CardArrowRibbon|atlas_endlesscardarrow|CardArrowRibbon
+Atlases/EndlessCardArrow|atlas_endlesscardarrow|EndlessCardArrow
 Art/Endless/HeartEye/HeartEye_00|atlas_endlesshearteye|HeartEye_00
 Art/Endless/HeartEye/HeartEye_01|atlas_endlesshearteye|HeartEye_01
 Art/Endless/HeartEye/HeartEye_02|atlas_endlesshearteye|HeartEye_02
@@ -529,6 +532,7 @@ Endless/EndlessSwordAura|endless_arena|EndlessSwordAura
 Endless/EndlessThrust|endless_arena|EndlessThrust
 Endless/Textures/EndlessShieldIcon|endless_arena|EndlessShieldIcon
 Endless/Textures/EndlessSwordAuraBlade|endless_arena|EndlessSwordAuraBlade
+Endless/Textures/EndlessThrustBlade|endless_arena|EndlessThrustBlade
 Endless/Textures/EndlessThrustTrail|endless_arena|EndlessThrustTrail
 Fonts/CJK/NotoSansCJKsc-Bold|font_cjk|NotoSansCJKsc-Bold
 Material/Background/ArcaneBackdrop|material_background|ArcaneBackdrop

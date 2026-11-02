@@ -34,7 +34,7 @@ namespace RevGame.Endless
                 Require(service.Rearrange(), "首次改阵接受", checks);
                 Require(!service.Rearrange(), "同一分钟改阵重复拒绝", checks);
                 uint random = service.Run.random;
-                // 部署第三枚同名一星会触发自动三合一，场上数量不再是固定的 4；只核对“存前多少、恢复后还是多少”。
+                // 同名手牌只升级一枚主力，场上数量保持；只核对“存前多少、恢复后还是多少”。
                 int players = service.PlayerCount();
                 Require(service.Save(), "完整快照保存", checks);
                 Require(service.Restore(true) && service.Run.random == random && service.PlayerCount() == players, "恢复随机源和单位占格", checks);

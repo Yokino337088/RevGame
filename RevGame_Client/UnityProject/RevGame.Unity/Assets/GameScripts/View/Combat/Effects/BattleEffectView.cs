@@ -136,6 +136,8 @@ namespace RevGame.View
         }
         // 每条飘字同一帧会被新入场文字反复查询避让；缓存仍按位置/缩放失效，不复用动画移动前的矩形。
         // 相机只在本场景寿命内借用，Unity销毁后自动判空，下一次读取重新取得。
+        /// <summary>原预制体排序，无尽火焰临时降低后下一租约恢复，不能污染六章弹道。</summary>
+        private int _defaultSpriteOrder;
         private Camera _textCamera;
         // 上次矩形计算的Unity帧号，-1强制重算；同帧还要比较变换和相机，不能仅凭帧号复用。
         private int _rectFrame = -1;
@@ -262,6 +264,7 @@ namespace RevGame.View
         /// <summary>缓存组件不复制材质；TextMesh及其描边继续共享字体材质，保留动态合批条件。</summary>
         private void Awake()
         {
+            _defaultSpriteOrder = spriteRenderer.sortingOrder;
             _readProgress = ReadAnimationProgress;
             _writeProgress = WriteAnimationProgress;
             _finishAnimation = Finish;
@@ -639,6 +642,7 @@ namespace RevGame.View
         {
             StopAnimation();
             HideProjectileLayers();
+            spriteRenderer.sortingOrder = _defaultSpriteOrder;
             _projectileActive = false;
             _onFinished = onFinished;
             _progress = 0f;

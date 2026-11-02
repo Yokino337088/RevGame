@@ -316,60 +316,10 @@ namespace RevGame.Endless
                 Run.hand.Add(Next(Enum.GetValues(typeof(PieceKind)).Length));
             }
         }
-        /// <summary>三枚同名同星盘内主力合成；消耗前完整预检大身体，继承已消耗的一生复活标记。</summary>
+        /// <summary>旧按钮契约明确拒绝三合一；无尽升级只能消费一张同名手牌，不自动吃掉场上同名棋子。</summary>
         public bool MergeSelected()
         {
-            // 无尽全程不停顿：战斗中补牌落子后也要能自动三合一，所以和落子用同一个“可操作”判断。
-            if (!CanArrange())
-            {
-                return Reject("暂停中不能合星");
-            }
-            EndlessUnit selected = Find(Run.selectedUnit);
-            if (selected == null || selected.Stone || selected.Summoned || selected.Piece.Def.Star == StarTier.Three)
-            {
-                return Reject("请选择未满星的主力");
-            }
-            _consumed.Clear();
-            _consumed.Add(selected.Piece);
-            bool revived = selected.Revived;
-            for (int i = 0; i < Units.Count && _consumed.Count < 3; i++)
-            {
-                EndlessUnit u = Units[i];
-                if (u != selected && u.Piece.Side == GameSide.Player && !u.Stone && !u.Summoned && u.Piece.Def.Kind == selected.Piece.Def.Kind && u.Piece.Def.Star == selected.Piece.Def.Star)
-                {
-                    _consumed.Add(u.Piece);
-                    revived |= u.Revived;
-                }
-            }
-            if (_consumed.Count < 3)
-            {
-                return Reject("需要三枚同名同星主力");
-            }
-            StarTier star = (StarTier)((int)selected.Piece.Def.Star + 1);
-            int size = 1; // 无尽升星只改变战力与星标，始终占一格；六章尺寸规则继续原样。
-            BoardPos pos = selected.Piece.Pos;
-            if (!Fits(pos, size, GameSide.Player, null, _consumed))
-            {
-                return Reject("升星后的完整占地不合法，未消耗任何棋子");
-            }
-            Piece merged = new Piece(selected.Piece.Id, PieceCatalog.Get(selected.Piece.Def.Kind, star), GameSide.Player, size: 1);
-            for (int i = Units.Count - 1; i >= 0; i--)
-            {
-                if (_consumed.Contains(Units[i].Piece))
-                {
-                    Board.Remove(Units[i].Piece);
-                    Units.RemoveAt(i);
-                }
-            }
-            Board.Place(merged, pos);
-            Units.Add(new EndlessUnit
-            {
-                Piece = merged, Revived = revived
-            }
-            );
-            _consumed.Clear();
-            RefreshRules();
-            return true;
+            return Reject("选择同名手牌打出即可升级一枚棋子，场上棋子不会自动融合");
         }
         public bool Disassemble()
         {

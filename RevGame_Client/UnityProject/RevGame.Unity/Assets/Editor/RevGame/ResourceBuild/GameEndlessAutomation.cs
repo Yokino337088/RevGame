@@ -5,6 +5,15 @@ namespace RevGame.Editor
     /// <summary>只公开固定无尽资产制作配方，不提供任意反射执行入口。</summary>
     public static class GameEndlessAutomation
     {
+        /// <summary>调用固定项目配方导入素材与修改原预制体；跨程序集只桥接已知方法，不执行外部脚本。</summary>
+        [RevAutomationAction("game.endless.interaction", Environment = "edit", Keys = new string[0], Description = "装配手牌弹性曲线箭头、拖曳与长型突刺剑气，保留预制体GUID")]
+        public static object Interaction(RevAutomationRequest request)
+        {
+            return new Result
+            {
+                text = (string)Type.GetType("RevGame.Editor.GameEndlessBuild, Assembly-CSharp-Editor", true).GetMethod("BuildInteraction").Invoke(null, null)
+            };
+        }
         [RevAutomationAction("game.endless.publish", Environment = "edit", Keys = new string[0], Description = "通过项目已有发布入口复制已构建PC资源到StreamingAssets")]
         public static object Publish(RevAutomationRequest request)
         {

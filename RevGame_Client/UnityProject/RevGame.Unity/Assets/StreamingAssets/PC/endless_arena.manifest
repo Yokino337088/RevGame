@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1713009810
+CRC: 1632088325
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c1918d55ea691af8943b01d9c316b614
+    Hash: 1a89f8eada5aee11b9dcd9ae205ac24a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 921e4bdc2ba7178c71f6b0b1bdf13c24
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c1918d55ea691af8943b01d9c316b614
+    Hash: 1a89f8eada5aee11b9dcd9ae205ac24a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -54,6 +54,7 @@ Assets:
 - Assets/GameRes/Endless/EndlessArena.prefab
 - Assets/GameRes/Endless/EndlessThrust.mat
 - Assets/GameRes/Endless/EndlessSwordAura.mat
+- Assets/GameRes/Endless/Textures/EndlessThrustBlade.png
 Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye"

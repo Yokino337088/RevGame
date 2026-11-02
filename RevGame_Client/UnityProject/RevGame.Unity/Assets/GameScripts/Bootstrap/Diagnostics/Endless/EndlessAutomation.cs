@@ -68,6 +68,26 @@ namespace RevGame.Endless
             , owner: Owner);
             const string stressSchema = "{\"type\":\"object\",\"properties\":{\"enemies\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1024}},\"required\":[\"enemies\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("endless.stress", "隔离压力局沿正式出生入口创建指定敌数", stressSchema, json => Accepted(Service.DebugStress(JsonUtility.FromJson<StressArgs>(json).enemies)), owner: Owner);
+            RevRuntimeAutomation.Register("endless.thrust-preview", "隔离横向四格目标真实刺客突刺与美术预览", Empty, _ => Service.PreviewThrust(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.card-rules", "单卡随机/指定升级与非法手牌原子性检查", Empty, _ => EndlessService.CheckCardRules(), owner: Owner);
+            const string dragSchema = "{\"type\":\"object\",\"properties\":{\"index\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":3},\"x\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8},\"y\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8}},\"required\":[\"index\",\"x\",\"y\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.drag-begin", "隔离局通过EventSystem开始真实手牌拖曳", dragSchema, json =>
+            {
+                var p = JsonUtility.FromJson<DragArgs>(json);
+                return EndlessDragInput.Begin(p.index, p.x, p.y);
+            }, owner: Owner);
+            RevRuntimeAutomation.Register("endless.drag-move", "移动已按下的指针，手牌固定箭头弹性跟随", dragSchema, json =>
+            {
+                var p = JsonUtility.FromJson<DragArgs>(json);
+                return EndlessDragInput.Move(p.x, p.y);
+            }, owner: Owner);
+            RevRuntimeAutomation.Register("endless.drag-end", "真实松手事件，只提交一次打牌", Empty, _ => EndlessDragInput.End(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.drag-state", "只读箭头/手势和手牌固定状态", Empty, _ => EndlessDragInput.State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("endless.drag-cancel", "取消测试手势，非法屏外松开保留手牌", Empty, _ =>
+            {
+                EndlessDragInput.Cancel();
+                return EndlessDragInput.State();
+            }, owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-rules", "隔离验证80格部署、一格升星、盘外Boss总预算与存档", Empty, _ => EndlessService.CheckEcsRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
             RevRuntimeAutomation.Register("endless.rules", "隔离实例验证占格、暂停、存档随机源、上限和重复结算", Empty, _ => EndlessChecks.Run(), owner: Owner);
@@ -106,9 +126,9 @@ namespace RevGame.Endless
             var rightRows = new HashSet<int>();
             if (run != null)
             {
-                for (int i = 0; i < run.horde.Length; i++)
+                for (int i = 0; i < Service.Horde.Length; i++)
                 {
-                    EndlessHorde h = run.horde[i];
+                    EndlessHorde h = Service.Horde[i];
                     if (!h.active)
                     {
                         continue;
@@ -146,6 +166,7 @@ namespace RevGame.Endless
         }
         public static void Unregister()
         {
+            EndlessDragInput.Cancel();
             RevRuntimeAutomation.UnregisterAllOf(Owner);
             RevGM.Unregister("无尽/进入测试局");
             RevGM.Unregister("无尽/继续测试局");
@@ -169,7 +190,8 @@ namespace RevGame.Endless
                 ["seconds"] = r?.seconds ?? 0, ["heart"] = r?.heart ?? 0, ["score"] = r?.score ?? 0,
                 ["players"] = s.PlayerCount(), ["hand"] = r?.hand.Count ?? 0, ["horde"] = r == null ? 0 : s.HordeCount(),
                 ["level"] = r?.level ?? 0, ["kills"] = r?.kills ?? 0, ["circuit"] = r?.circuit ?? 0,
-                ["wave"] = s.WaveNumber, ["boons"] = s.BoonCount, ["bossKills"] = r?.bossKills ?? 0, ["selectedCard"] = r?.selectedCard ?? -1, ["selectedUnit"] = r?.selectedUnit ?? -1,
+                ["wave"] = s.WaveNumber, ["boons"] = s.BoonCount, ["bossKills"] = r?.bossKills ?? 0, ["cardPlays"] = s.CardPlaySerial, ["cardAction"] = s.LastCardAction, ["cardTarget"] = s.LastCardTarget,
+                ["selectedCard"] = r?.selectedCard ?? -1, ["selectedUnit"] = r?.selectedUnit ?? -1,
                 ["isolated"] = s.Isolated, ["settled"] = r?.settled ?? false, ["random"] = r?.random ?? 0,
                 ["tickCount"] = s.TickCount, ["tickTotalMs"] = s.TickMilliseconds, ["tickMaxMs"] = s.MaxTickMilliseconds,
                 ["units"] = s.Units.Count, ["logicCount"] = RevLogic.Count, ["pool"] = RevPool.DumpStats(),
@@ -210,6 +232,10 @@ namespace RevGame.Endless
             {
                 ["assigned"] = assigned, ["distinctZones"] = zones.Count, ["held"] = held
             };
+        }
+        [Serializable] private sealed class DragArgs
+        {
+            public int index, x, y;
         }
         [Serializable] private sealed class StressArgs
         {

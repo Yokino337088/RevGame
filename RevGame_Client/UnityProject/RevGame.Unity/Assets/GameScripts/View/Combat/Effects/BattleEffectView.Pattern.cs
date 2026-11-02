@@ -20,6 +20,10 @@ namespace RevGame.View
         /// <summary>诊断用只读身份与帧号，不暴露修改表现状态的入口。</summary>
         public PieceKind PatternKind => _patternKind;
         public int PatternKeyframe => _patternKeyframe;
+        /// <summary>只读实际渲染参数，供无尽视觉验收核对透明度/边框和层级，不能替代真实截图。</summary>
+        public float PatternOpacity => _projectileProperties == null ? 1f : _projectileProperties.GetFloat("_Opacity");
+        public float PatternBorder => _projectileProperties == null ? 1f : _projectileProperties.GetFloat("_FireBorder");
+        public int PatternOrder => spriteRenderer.sortingOrder;
         public bool UsesElementalShader => IsPatternActive && spriteRenderer.sharedMaterial != null
             && spriteRenderer.sharedMaterial.shader.name == "RevGame/Combat/ElementalImpact";
         /// <summary>只读验收标记：必须处于本次范围动画的有效租约内，不能把已经回池的旧模式算作在画。</summary>
@@ -28,7 +32,7 @@ namespace RevGame.View
         /// 棋盘攻击形状复用既有池和FullRect盾击Sprite；元素使用独立共享材质，其他棋种保留既有共享Shader。
         /// radius为结算快照中的格子半径，source/center为世界位置；函数只画事实，不持有棋子、不修改模型。
         /// </summary>
-        public void ShowPattern(Vector3 source, Vector3 center, PieceKind kind, int radius, System.Action<BattleEffectView> onFinished)
+        public void ShowPattern(Vector3 source, Vector3 center, PieceKind kind, int radius, System.Action<BattleEffectView> onFinished, bool subtleFire = false)
         {
             ResetVisual(center, onFinished);
             if (shieldImpact == null || shieldMaterial == null)
@@ -58,6 +62,14 @@ namespace RevGame.View
             _projectileProperties.SetFloat("_Pattern", (int)kind + 1);
             _projectileProperties.SetFloat("_PatternCells", radius * 2 + 1);
             _projectileProperties.SetFloat("_Progress", 0f);
+            // 无尽火焰低于棋子/杂兵与弹幕排序，关闭外框；六章默认参数保持原样。
+            bool soft = subtleFire && kind == PieceKind.MageFire;
+            _projectileProperties.SetFloat("_FireBorder", soft ? 0f : 1f);
+            _projectileProperties.SetFloat("_Opacity", soft ? .38f : 1f);
+            if (soft)
+            {
+                spriteRenderer.sortingOrder = 7;
+            }
             float width = Consts.CellSize;
             float height = Consts.CellSize;
             if (kind == PieceKind.MageFire)

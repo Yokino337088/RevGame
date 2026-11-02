@@ -314,54 +314,10 @@ namespace RevGame.Endless
             }
             return Reject("只能兑换已上场主力同名牌");
         }
-        /// <summary>满主力时仍可把手牌当第三枚一星：先检验两枚同名与完整升星占地，再一次提交。</summary>
+        /// <summary>点击同名棋子升级，复用和拖放相同的单卡入口。</summary>
         private bool MergeWithCard(Piece target)
         {
-            int index = Run.selectedCard;
-            EndlessUnit first = Find(target.Id), second = null;
-            if (index < 0 || index >= Run.hand.Count || first == null || first.Stone || first.Summoned || target.Side != GameSide.Player || target.Def.Star != StarTier.One || Run.hand[index] != (int)target.Def.Kind)
-            {
-                return Reject("手牌合星需要两枚同名一星主力");
-            }
-            for (int i = 0; i < Units.Count; i++)
-            {
-                EndlessUnit candidate = Units[i];
-                if (candidate != first && !candidate.Summoned && !candidate.Stone && candidate.Piece.Side == GameSide.Player && candidate.Piece.Def.Kind == target.Def.Kind && candidate.Piece.Def.Star == StarTier.One)
-                {
-                    second = candidate;
-                    break;
-                }
-            }
-            if (second == null)
-            {
-                return Reject("场上还缺一枚同名一星，手牌未消耗");
-            }
-            _consumed.Clear();
-            _consumed.Add(first.Piece);
-            _consumed.Add(second.Piece);
-            int size = 1; // 无尽升星不增加占地。
-            if (!Fits(target.Pos, size, GameSide.Player, null, _consumed))
-            {
-                _consumed.Clear();
-                return Reject("升级占地不合法，未扣牌");
-            }
-            var merged = new Piece(target.Id, PieceCatalog.Get(target.Def.Kind, StarTier.Two), GameSide.Player, size: 1);
-            merged.SetRoundHealthScale(PlayerHealthScale());
-            Board.Remove(target);
-            Board.Remove(second.Piece);
-            Units.Remove(first);
-            Units.Remove(second);
-            Board.Place(merged, target.Pos);
-            Units.Add(new EndlessUnit
-            {
-                Piece = merged, Revived = first.Revived || second.Revived
-            }
-            );
-            Run.hand.RemoveAt(index);
-            Run.selectedCard = -1;
-            _consumed.Clear();
-            RefreshRules();
-            return true;
+            return UpgradeWithCard(Run.selectedCard, Find(target.Id));
         }
     }
 }

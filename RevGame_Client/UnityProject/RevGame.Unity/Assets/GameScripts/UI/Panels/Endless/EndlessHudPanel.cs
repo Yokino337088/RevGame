@@ -18,7 +18,7 @@ namespace RevGame.Endless
     ///   - “开战”只在布阵和整备时出现；
     ///   - 领主血条只在领主在场时出现；
     ///   - 提示框只在需要告诉玩家下一步时出现。
-    /// 三合一、进化由规则自动完成，移动棋子只要点棋子，都不需要按钮。
+    /// 同名手牌升级一枚棋子，进化由规则自动完成，移动棋子只要点棋子，都不需要按钮。
     ///
     /// 【代码分工】OnBindView 只找节点，OnRefreshView 只把数据写到屏幕，按钮方法只转发给 EndlessService。
     /// 每秒刷新 5 次文字，不是每帧，这样不会频繁重建整块 Canvas。
@@ -29,7 +29,7 @@ namespace RevGame.Endless
     /// 底板/按钮的流光与手牌光泽来自预制体上的六章共享材质（ArcanePanel / CardGleam），这里不碰材质。
     /// </summary>
     [RevUIPanel("UI/Panel/Endless", RevUILayer.Normal)]
-    public sealed class EndlessHudPanel : RevUIPanel
+    public sealed partial class EndlessHudPanel : RevUIPanel
     {
         [RevBind("top/status")] private Text _status;
         [RevBind("top/heartTrack/heartFill")] private RectTransform _heartFill;
@@ -146,6 +146,7 @@ namespace RevGame.Endless
                 _cardIcons[i] = card.Find("icon").GetComponent<Image>();
                 _cardNames[i] = card.Find("label").GetComponent<Text>();
             }
+            BindCardDrag();
             for (int i = 0; i < _choices.Length; i++)
             {
                 Transform choice = transform.Find("modal/choice" + i);
@@ -156,6 +157,7 @@ namespace RevGame.Endless
         protected override void OnOpen()
         {
             _opening = true;
+            SetCardDragBinding(true);
             _version++;
             _lastError = "";
             _errorUntil = 0;
@@ -347,7 +349,7 @@ namespace RevGame.Endless
             }
             else if (run.selectedCard >= 0)
             {
-                tip = "点棋盘空格摆放\n点同名棋子可升星";
+                tip = "拖到棋盘空格出牌\n同名牌升级一枚棋子";
             }
             else if (run.selectedUnit >= 0)
             {
@@ -590,6 +592,10 @@ namespace RevGame.Endless
         }
         private void Card(int index)
         {
+            if (_dragSuppressClick)
+            {
+                return;
+            }
             Service.SelectCard(index);
             RefreshView();
         }
@@ -762,6 +768,8 @@ namespace RevGame.Endless
         }
         protected override void OnClose()
         {
+            CancelCardDrag();
+            SetCardDragBinding(false);
             _opening = false;
             _version++;
             RevTimer.CancelAllOf(this);

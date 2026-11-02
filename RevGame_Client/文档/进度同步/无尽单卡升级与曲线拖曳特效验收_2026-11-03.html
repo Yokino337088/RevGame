@@ -1,0 +1,52 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>无尽单卡升级与曲线拖曳特效验收_2026-11-03</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head><body>
+<header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">FRAMEWORK VALIDATION</span></div><span class="tag">2026-11-03</span></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">REVOLUTION / 无尽玩法与表现</div><h1>单卡升级、弹性曲线与长剑气</h1><p>通过规则与真实AB画面验收。场上同名棋子保留，一张手牌升级一枚；拖曳只移动曲线箭头。</p><div class="stamp">Unity 2022.3.15f1c1 · Windows Editor · PC真实AB · 隔离种子1101 · 基线69b6513</div></div></div>
+<main><div class="legend">框架可行性：既有RevUI、RevPool、RevResManager、RevTask和独立无尽服务足以接入原生UGUI指针事件、DOTween弹性动画、共享Shader及按生命周期分包。本次未更改Revolution内核与前六章战斗架构。</div>
+<section class="chapter"><h2>最终行为与断言</h2><div class="table-scroll"><table><thead><tr><th>项目</th><th>最终行为</th><th>证据</th></tr></thead><tbody><tr><td>单卡升级</td><td>场上一个或多个同名未满星主力时，一张手牌只升级其中一个，星级提高一级；场上其他棋子保留。空格出牌随机选择，拖到同名棋子可指定目标。</td><td>单卡规则9项通过；两个同名棋子升级后仍有两个，非法动作不扣牌、不改随机源或占格。</td></tr><tr><td>占格与继承</td><td>升级始终占1格；保留Id、位置、演员计时、复活状态、攻击倍率，生命按原比例继承。最高3星，只有满星同名时可在空格新增棋子，直接投满星目标拒绝。</td><td>ECS回归9项通过，包含80格、单格升星、存档与盘外Boss预算；驻守/突刺等回归28项通过。</td></tr><tr><td>弹性曲线拖曳</td><td>原手牌不移动。UGUI事件转画布坐标，三次贝塞尔48段丝带与真实箭头尖组成102顶点网格；DOTween OutElastic伸展、指数跟手、InBack收回。</td><td>10张真实截图；曲率/可见性/同图集页/卡牌固定断言通过，松手消费1次。最终生命周期修正后再次入场可拖，棋心松手消费0次。</td></tr><tr><td>火焰排序</td><td>无尽火焰透明倍率0.38，排序7，关闭外框与地面格线；杂兵排序8，弹幕原排序30。池对象下次租约恢复原排序。</td><td>实战累计火焰243→267，实际渲染属性均正确；长剑气82→88；反馈未超过既有表现预算。截图可见敌人和弹幕。</td></tr><tr><td>长型剑气</td><td>Kenney trace_07改为水平透明刃光，Shader叠加逐段展开、亮芯、速度细束与末端闪光；沿真实攻击射线播放0.4秒。</td><td>实战有真实突刺反馈；隔离横向四目标夹具调用真正AssassinThrust，actualDamage/newReceipt均为true，并有截图。</td></tr><tr><td>资源与编辑器</td><td>原HUD/Arena预制体GUID保留，CLI固定配方装配；箭头独立EndlessCardArrow V2图集与AB，随无尽进入加载、退出释放。剑气Default采样纹理按规范不当Sprite打图集。</td><td>70个PC包构建并发布；18图集/286图片唯一覆盖；AB问题门禁canBuild=true，errors/shared/circular/mapErrors为空。字库1711字符可用。</td></tr><tr><td>收尾</td><td>RevMCP常驻stdio连接；重载后重新发现注册表，完整GM进入隔离局，rev_run执行业务断言和finally。</td><td>所有交付运行success=true；Home、IsTransitioning=false、Logic=0、EnemyCapacity=0、池清空。Unity停止Play，StartScene干净且保持打开。</td></tr></tbody></table></div></section>
+<section class="chapter"><h2>真实画面</h2><div class="gallery"><figure><img src="无尽单卡与特效_2026-11-03_证据/arrow.jpg" alt="最终代码再次入场：半透明曲线箭头，原手牌保留在底栏。" loading="lazy"><figcaption>最终代码再次入场：半透明曲线箭头，原手牌保留在底栏。</figcaption></figure><figure><img src="无尽单卡与特效_2026-11-03_证据/arrow.gif" alt="10次拖曳连拍。实际截图调用约1～2秒，GIF每帧120毫秒，属于加速回放；不用于证明动画时长或帧率。" loading="lazy"><figcaption>10次拖曳连拍。实际截图调用约1～2秒，GIF每帧120毫秒，属于加速回放；不用于证明动画时长或帧率。</figcaption></figure><figure><img src="无尽单卡与特效_2026-11-03_证据/fire.jpg" alt="无尽实际战斗：橙色火焰透明叠加，外层红方框消失，敌人和弹道仍可见。" loading="lazy"><figcaption>无尽实际战斗：橙色火焰透明叠加，外层红方框消失，敌人和弹道仍可见。</figcaption></figure><figure><img src="无尽单卡与特效_2026-11-03_证据/fire.gif" alt="12帧实际战斗连拍，同样为加速回放。" loading="lazy"><figcaption>12帧实际战斗连拍，同样为加速回放。</figcaption></figure><figure><img src="无尽单卡与特效_2026-11-03_证据/thrust.jpg" alt="隔离美术预览：刺客真实横向突刺命中四个高生命目标，显示长剑气。" loading="lazy"><figcaption>隔离美术预览：刺客真实横向突刺命中四个高生命目标，显示长剑气。</figcaption></figure><figure><img src="无尽单卡与特效_2026-11-03_证据/thrust.gif" alt="两张真实突刺预览截图，不代表完整0.4秒动画时间线。" loading="lazy"><figcaption>两张真实突刺预览截图，不代表完整0.4秒动画时间线。</figcaption></figure></div><p>截图仅缩放压缩，不裁剪、不拼接、不美化。原始机器证据保留在忽略目录 .codex/work/endless-cards-vfx/，报告不生成ZIP或Profiler录制文件。</p></section>
+<section class="chapter"><h2>实际调用顺序</h2><ol>
+<li>显式连接 Revolution.RevMCP/rev_mcp.py --project RevGame.Unity --reports .codex/work/endless-cards-vfx/mcp serve，复用同一个stdio会话。</li>
+<li>rev_discover：编辑态缺运行时能力如实返回unavailable；编译/Play重载后再发现endless.*共32个动作，完整GM“无尽/进入测试局”实际存在。</li>
+<li>rev_call：editor.play(scene=Assets/Scenes/StartScene.unity)；GM“无尽/进入测试局”；endless.state等待transitioning=false、screen=Endless。game.background.status实际abMode=true（其text=未运行仅指背景专项夹具，本次未执行该夹具）。</li>
+<li>rev_run：单卡/曲线验收、最终10帧连拍、火焰实战12帧连拍、横向真实突刺预览，以及最后两次入场的手牌复用回归。每个计划都有finally撤销手势、返回大厅并检查Logic=0。</li>
+<li>CLI live：game.endless.interaction装配资源；ab.build(target=StandaloneWindows64)、game.endless.publish；game.resources.validate、ab.issues与字体校验。编辑器资产操作串行，不启动第二个Unity。</li>
+<li>rev_call(editor.stop)；scene.list确认StartScene dirty=false，playing=false。未执行独立Player、IL2CPP和手机真机测试。</li>
+</ol><p>复现入口：<a href="../../Tests/EndlessAutomation/cards-drag.plan.json">单卡与再次入场拖放计划</a>、<a href="../../Tests/EndlessAutomation/thrust-preview.plan.json">真实突刺视觉夹具计划</a>。运行前从StartScene冷启动真实AB模式，重新执行rev_discover确认注册，再交给rev_run。</p></section>
+<section class="chapter"><h2>素材与实现依据</h2><p>Kenney Particle Pack、UI Pack，随原包保留CC0许可及原图。下载镜像为 <a href="https://opengameart.org/content/particle-pack-80-sprites">Particle Pack</a> 与 <a href="https://opengameart.org/content/ui-pack">UI Pack</a>；原作者页面请求被拒绝时使用作者发布镜像。箭头源图按有效Alpha裁切；粒子原图黑底转为亮度Alpha及白色RGB，避免Shader出现黑色长方块。</p><p>弹性参数依据 <a href="https://dotween.demigiant.com/documentation.php">DOTween官方文档</a> 的OutElastic与SetUpdate；曲线使用标准三次贝塞尔公式，末端切线控制尖头朝向。丝带/箭头尖属于变形图形，不适用底板九宫格；HUD已有底板继续使用现有Sliced图片。</p><p><a href="../../美术/第三方素材/Kenney_无尽剑气与指示箭头/许可与来源.md">许可、来源和改制记录</a></p></section>
+<section class="chapter"><h2>排错记录与验证边界</h2><ul>
+<li>初次模拟拖曳使用Transform位置而非卡牌Rect中心，射线落在槽边缘：改为Rect中心，真实UGUI命中断言通过。</li>
+<li>最初自定义Graphic未带CanvasRenderer，Tween运行但不提交可见网格：添加RequireComponent和CLI配方兜底，验证102顶点实际提交。</li>
+<li>粒子源图Alpha全255、黑底不透明：改为亮度Alpha，实际剑气截图消除黑色方块。</li>
+<li>面板关闭显式解绑/停Tween，重开重绑；用成功与非法两次拖放检查复用。第二指针不能抢走现有手势。</li>
+</ul><p>火焰实战计划内endless.start曾返回accepted=false，因为局已处于Fighting；报告以实际Fighting和累计火焰/突刺反馈增加为证，未将这次拒绝当作启动成功。AB门禁仍有既有大写文件名与单资源包建议，不能宣称全部warning=0。</p><p>本次指针由EventSystem模拟，非操作系统鼠标或手机触屏。截图与工具调用会污染Editor整帧性能数据；未使用这些样本承诺零GC、极限优化或手机帧率。前六章未做全流程回归，共享表现默认参数保持原有值，并在每次效果租约恢复默认排序。</p></section>
+</main><footer><span>RevGame · 第一交付物为框架可行性结论</span><span>2026-11-03 · HTML + 必要截图/GIF</span></footer></body></html>

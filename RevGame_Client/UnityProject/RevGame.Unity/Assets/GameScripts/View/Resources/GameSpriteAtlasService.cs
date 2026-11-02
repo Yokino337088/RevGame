@@ -328,7 +328,7 @@ namespace RevGame.View
                 return;
             }
             // 仅在流程边界分配这个小清单；不能一边遍历Dictionary一边删除元素。
-            var names = new[] { "PieceFrames", "CombatFrames", "BoardStatus", "EndlessHeartEye" };
+            var names = new[] { "PieceFrames", "CombatFrames", "BoardStatus", "EndlessHeartEye", "EndlessCardArrow" };
             foreach (string name in names)
             {
                 Entry entry;

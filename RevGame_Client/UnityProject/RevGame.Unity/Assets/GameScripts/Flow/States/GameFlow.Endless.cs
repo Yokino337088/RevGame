@@ -44,7 +44,7 @@ namespace RevGame.Flow
                 // UI_Tavern_imgBK（升级卡牌底板）单独成图集，只在无尽里用，进场前一起预载，避免首次弹窗白图。
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[]
                 {
-                    "PieceFrames", "BoardStatus", "CombatFrames", "EndlessHeartEye", "UIBattle", "UIMenus", "UI_Tavern_imgBKAtlas"
+                    "PieceFrames", "BoardStatus", "CombatFrames", "EndlessHeartEye", "EndlessCardArrow", "UIBattle", "UIMenus", "UI_Tavern_imgBKAtlas"
                 }
                 );
                 ThrowIfDisposed();

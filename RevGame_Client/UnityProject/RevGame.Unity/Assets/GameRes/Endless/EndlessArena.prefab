@@ -81,7 +81,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &509801868706965230
 GameObject:
@@ -164,7 +164,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 8
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &1179708566761286238
 GameObject:

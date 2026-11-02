@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3909768139
+CRC: 3948703147
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -241,6 +241,7 @@ AssetBundleManifest:
         Dependency_4: atlas_uimenus
         Dependency_5: endless_arena
         Dependency_6: atlas_ui_tavern_imgbkatlas
+        Dependency_7: atlas_endlesscardarrow
     Info_61:
       Name: ui_chapters_shared
       Dependencies:
@@ -275,4 +276,7 @@ AssetBundleManifest:
       Dependencies: {}
     Info_68:
       Name: atlas_endlesshearteye
+      Dependencies: {}
+    Info_69:
+      Name: atlas_endlesscardarrow
       Dependencies: {}

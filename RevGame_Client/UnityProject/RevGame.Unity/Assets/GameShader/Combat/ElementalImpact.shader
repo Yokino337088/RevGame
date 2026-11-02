@@ -4,6 +4,8 @@ Shader "RevGame/Combat/ElementalImpact"
 {
     Properties
     {
+        _FireBorder ("火焰范围方框", Range(0,1)) = 1
+        _Opacity ("特效透明度", Range(0,1)) = 1
         [PerRendererData] _MainTex ("已有图集载体", 2D) = "white" {}
         [PerRendererData] _SpriteUV ("图集矩形", Vector) = (0,0,1,1)
         [PerRendererData] _Progress ("离散关键帧进度", Float) = 0
@@ -29,7 +31,7 @@ Shader "RevGame/Combat/ElementalImpact"
             #pragma multi_compile _ ETC1_EXTERNAL_ALPHA
             #include "UnitySprites.cginc"
             float4 _SpriteUV;
-            float _Progress, _PatternCells, _Element;
+            float _Progress, _PatternCells, _Element, _FireBorder, _Opacity;
 
             // 这些常数仅是美术的宽度、颜色与衰减曲线，不参与伤害、治疗或攻击时钟，因此不进策划表。
             float Ring(float radius, float center, float width)
@@ -67,7 +69,7 @@ Shader "RevGame/Combat/ElementalImpact"
                 float border=1-smoothstep(.018,.055,abs(max(abs(p.x),abs(p.y))-.95));
                 float2 cell=abs(frac(uv*_PatternCells)-.5);
                 float grid=smoothstep(.45,.49,max(cell.x,cell.y))*.16;
-                float ground=(border*.7+grid)*life;
+                float ground=(border*.7+grid)*life*_FireBorder;
                 float alpha=saturate(body*.94+shock*.8+flash+embers*life+ground*.48);
                 half3 color=lerp(half3(.55,.025,.005),half3(1,.22,.015),saturate(body*1.5));
                 color=lerp(color,half3(1,.78,.08),saturate(inner+shock*.75));
@@ -130,6 +132,7 @@ Shader "RevGame/Combat/ElementalImpact"
                 }
                 // 材质、Sprite图集和对象颜色继续遵守SpriteRenderer契约；只在最终输出做一次预乘。
                 color*=input.color;
+                color.a*=_Opacity;
                 color.rgb*=color.a;
                 return color;
             }

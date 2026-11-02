@@ -58,8 +58,10 @@ namespace RevGame.Endless
                     s.AddPlayer(PieceKind.Archer, 0, 0, false);
                     s.AddPlayer(PieceKind.Archer, 1, 0, false);
                     s.AddPlayer(PieceKind.Archer, 2, 0, false);
-                    s.Run.selectedUnit = s.Units[0].Piece.Id;
-                    Check(s.MergeSelected() && s.Units.Count == 1 && s.Units[0].Piece.Size == 1 && s.Units[0].Piece.Def.Star == StarTier.Two, "二星升星只改变战力，身体仍一格", passed);
+                    int id = s.Units[0].Piece.Id;
+                    s.Run.hand.Clear();
+                    s.Run.hand.Add((int)PieceKind.Archer);
+                    Check(s.PlayCardAt(0, 0, 0) && s.Units.Count == 3 && s.Find(id).Piece.Size == 1 && s.Find(id).Piece.Def.Star == StarTier.Two, "单卡升星只改变一枚棋的战力，身体仍一格且伙伴保留", passed);
                     s.Run.seconds = V("MinuteSeconds") * 12;
                     Check(s.WaveDensityScale() > 1 && s.WaveSpeedScale() > 1, "后续波次增加出生数量和现存敌人移速", passed);
                 }

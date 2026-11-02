@@ -2,7 +2,7 @@
 // EndlessThrust —— 刺客直线突刺（新手先读这段）
 //
 // 参考常见的动作游戏“突刺/穿刺”表现：一个极亮的尖头沿直线飞速扎出，身后拖着被拉长的速度残影和细速度线，
-// 尖头扎到线尾时爆一下闪光，然后整条残影迅速收细消失。整个过程约 0.28 秒。
+// 尖头扎到线尾时爆一下闪光，然后整条残影迅速收细消失。整个过程约 0.4 秒。
 // 所有刺客的突刺画在一张动态网格里，一次突刺一个沿攻击线摆放的长方块，整场 1 次绘制：
 //   uv.x  从刺客（0）到线尾（1）；uv.y 横跨线宽（0~1，中线 0.5）；
 //   uv2.x 进度（0~1，表现层按时间推进）；color.rgb 主色（紫影），color.a 整体强度。
@@ -12,6 +12,7 @@ Shader "RevGame/Endless/Thrust"
 {
     Properties
     {
+        _BladeTex ("长型剑气刃光（Kenney CC0）", 2D) = "white" {}
         _TrailTex ("速度残影（非Sprite，钳制采样）", 2D) = "white" {}
         _TipLength ("尖头长度（占整条线的比例）", Range(.03, .3)) = .11
     }
@@ -27,7 +28,7 @@ Shader "RevGame/Endless/Thrust"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
-            sampler2D _TrailTex;
+            sampler2D _TrailTex, _BladeTex;
             float _TipLength;
             struct app { float4 vertex:POSITION; float2 uv:TEXCOORD0; float2 data:TEXCOORD1; fixed4 color:COLOR; };
             struct v2f { float4 vertex:SV_POSITION; float2 uv:TEXCOORD0; float2 data:TEXCOORD1; fixed4 color:COLOR; };
@@ -64,10 +65,14 @@ Shader "RevGame/Endless/Thrust"
                 float arrive = saturate((progress - .45) / .15) * fade;
                 float flash = (1 - smoothstep(0, .18, length(float2((x - 1) * 4, i.uv.y - .5)))) * arrive;
                 float core = saturate(tip * 1.2 + flash);
-                float alpha = saturate(tip + trail * .9 + lines + flash) * i.color.a * (progress < 1 ? 1 : 0);
+                // 长型刃光沿整条攻击线展开，边缘透明，亮芯与三条细束构成真正的剑气。
+                float reveal = 1-smoothstep(head-.06,head+.025,x);
+                float blade = tex2D(_BladeTex,float2(x,i.uv.y)).a * reveal;
+                float spine = (1-smoothstep(.015,.12,y))*smoothstep(0,.08,x)*(1-smoothstep(.92,1,x))*reveal;
+                float alpha = saturate(tip + trail * .7 + lines + flash + blade*.8 + spine*.9) * i.color.a * (progress < 1 ? 1 : 0);
                 fixed3 tint = i.color.rgb;
                 fixed3 color = lerp(tint * .45, tint, saturate(trail * 1.5 + lines));
-                color = lerp(color, fixed3(1, 1, 1), core);
+                color = lerp(color, fixed3(1, 1, 1), saturate(core+spine*.8));
                 return fixed4(color, alpha * max(fade, tip));
             }
             ENDCG

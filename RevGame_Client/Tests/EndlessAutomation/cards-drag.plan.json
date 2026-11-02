@@ -1,0 +1,258 @@
+{
+  "name": "手牌拖放复用与单卡规则回归_2026-11-03",
+  "intent": "验证最终面板复用绑定、原卡牌固定、曲线可画及单次消费",
+  "steps": [
+    {
+      "target": "gm",
+      "action": "无尽/进入测试局"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Endless"
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.card-rules",
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.ecs-rules",
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.guard-rules",
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.drag-begin",
+      "arguments": {
+        "index": 0,
+        "x": 2,
+        "y": 4
+      },
+      "expect": [
+        {
+          "path": "/data/cardStayed",
+          "equals": true
+        },
+        {
+          "path": "/data/dragging",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.drag-state",
+      "until": {
+        "path": "/data/curve",
+        "equals": true,
+        "timeoutSeconds": 5,
+        "intervalSeconds": 0.1
+      },
+      "expect": [
+        {
+          "path": "/data/arrowVisible",
+          "equals": true
+        },
+        {
+          "path": "/data/cardStayed",
+          "equals": true
+        },
+        {
+          "path": "/data/arrow/samePage",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "runtime.screenshot"
+    },
+    {
+      "target": "game",
+      "action": "endless.drag-end",
+      "expect": [
+        {
+          "path": "/data/playsDelta",
+          "equals": 1
+        },
+        {
+          "path": "/data/handDelta",
+          "equals": 1
+        },
+        {
+          "path": "/data/cardStayed",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.home"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/logicCount",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "target": "gm",
+      "action": "无尽/进入测试局"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Endless"
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.drag-begin",
+      "arguments": {
+        "index": 0,
+        "x": 4,
+        "y": 4
+      },
+      "expect": [
+        {
+          "path": "/data/dragging",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.drag-state",
+      "until": {
+        "path": "/data/arrowVisible",
+        "equals": true,
+        "timeoutSeconds": 5,
+        "intervalSeconds": 0.1
+      },
+      "expect": [
+        {
+          "path": "/data/cardStayed",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.drag-end",
+      "expect": [
+        {
+          "path": "/data/playsDelta",
+          "equals": 0
+        },
+        {
+          "path": "/data/handDelta",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "target": "editor",
+      "action": "editor.console",
+      "arguments": {
+        "severity": "error",
+        "limit": 10
+      },
+      "expect": [
+        {
+          "path": "/data/total",
+          "equals": 0
+        }
+      ]
+    }
+  ],
+  "finally": [
+    {
+      "target": "game",
+      "action": "endless.drag-cancel"
+    },
+    {
+      "target": "game",
+      "action": "endless.home"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/logicCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/enemyCapacity",
+          "equals": 0
+        }
+      ]
+    }
+  ]
+}

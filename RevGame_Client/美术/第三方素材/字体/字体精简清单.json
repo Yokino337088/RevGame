@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "5ccce077f9d6a80b902caa2222712b20d576f395ca5cbdd666ce7f236a1bd8a3",
-  "inputDigest": "1aea5f8485326668687cbdadb02581f3111f905a763d0e7a232da56b659948bd",
+  "outputSha256": "7ac09af7aa5130e19a3da0fa92f565bc212620c91f2cbf8376f747799da97c16",
+  "inputDigest": "1e19e68273a1040073ea314e56fdb74550df2ce1be388d212886b6f46ada5962",
   "originalBytes": 17002248,
-  "outputBytes": 755764,
-  "characterCount": 1707,
-  "glyphCount": 3389,
+  "outputBytes": 758464,
+  "characterCount": 1711,
+  "glyphCount": 3397,
   "codepoints": [
     32,
     33,
@@ -901,6 +901,7 @@
     26263,
     26292,
     26354,
+    26355,
     26356,
     26364,
     26366,
@@ -971,6 +972,7 @@
     27169,
     27178,
     27225,
+    27233,
     27424,
     27425,
     27426,
@@ -1069,6 +1071,7 @@
     28342,
     28369,
     28378,
+    28382,
     28385,
     28388,
     28404,
@@ -1246,6 +1249,7 @@
     31532,
     31548,
     31561,
+    31563,
     31569,
     31570,
     31572,
@@ -1879,7 +1883,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Endless/EndlessArena.prefab",
-      "sha256": "669d578b0bf8a3c89700b4a901c430b6fc95ff8b43a937cdd4f6525548e83391"
+      "sha256": "feaa5953fe68566ef98358eeb1733c58fdc3c6e428ad6ee76c0e37f8afdeb1dc"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Pieces/Boss/BossPieceView.prefab",
@@ -1919,7 +1923,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab",
-      "sha256": "3f165f13706a9629608414356cfa8245ba6609226e2d10b8ce4159527c170124"
+      "sha256": "97ff426314f53ee0c968394495bd9abcdbd8b40456aabb6e513a6d533483743e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/HomePanel.prefab",
@@ -2091,7 +2095,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Endless/EndlessAutomation.cs",
-      "sha256": "f0ef8b57ff4925ce9a458964600ab55fbcb8d2ae5dee86a229c6a8238e39ca00"
+      "sha256": "dedc6df319fc645f2fe4d67edb38dd5086fb8909c75914f6e1b33c27e578f0d2"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Endless/EndlessDragInput.cs",
+      "sha256": "bcd1b47945b85ee977cf9170435fe3250e7a913bb4c55311e54e2c33907b525d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.BossChapters.cs",
@@ -2263,7 +2271,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Endless.cs",
-      "sha256": "bfd18c2ec7f448adfc4a3dcce84943a5e53487132a30575a9ba516f659d8f805"
+      "sha256": "91731b7c441d628e1c4212210fd1175f2b3480ebb8f52b572eed224082d0650d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs",
@@ -2495,11 +2503,15 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessChecks.cs",
-      "sha256": "a374b13907b5f9421cae145b5a16179bbec7fd58d5d1906a9cfcd29e85365cdf"
+      "sha256": "dc42ee2a905fb17d2e2e34bd6879d27d3768f5689e0fe7510b53e4ff9e440099"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.BossChecks.cs",
       "sha256": "76d5b3c5146d76fb65f23be5d0d1c6f62bd212f7f0bc6f72a89a81d4baf1821b"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.CardChecks.cs",
+      "sha256": "80ca934109b610da4a20af57fa894fc1f49f47f2c9d47160c3c76c36186e36f3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.Checks.cs",
@@ -2507,7 +2519,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.EcsChecks.cs",
-      "sha256": "1ae4cdaf8524310e5fd21c11ec1df21fc18f70d175cf42968ea874cb5d1783f8"
+      "sha256": "dbdcb5cf2ecc03215f3bb76e2e6498ffbfebfcb1ace34d86e78d3421ab4e209e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.GuardChecks.cs",
@@ -2516,6 +2528,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.SnowballChecks.cs",
       "sha256": "2414ebed75f59d71bc288434c3b73384a7de407ba8be86294f08f6a51ae3d8e0"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Diagnostics/EndlessService.ThrustPreview.cs",
+      "sha256": "f3111c386079d3a958cc6289fa8b54d739f2be1688820bcf11e2cd9c436e75ad"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Ecs/EndlessActorComponents.cs",
@@ -2542,16 +2558,20 @@
       "sha256": "ddc40597d8d3905f5a8b16b77172dbc514cb50d9870f7b19dfc542d6c82f299b"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Cards.cs",
+      "sha256": "2639f8abcac568ac3197fa9fb81dafb1e87a7c1ca80632e7daf5db2e64fdc65d"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Combat.cs",
       "sha256": "714e26b83a3ec0840bba32158ced3a05270a44cac37f99a50350cde8fac8d56a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Content.cs",
-      "sha256": "c50afdf4f218d485a7cf1c8019899312889d29008aaba2851819acf7cd48b5f2"
+      "sha256": "c637a532d4f5e637b239ba4f9528c3314f428bf5888be1e7688716f1bc88c08e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.cs",
-      "sha256": "95c213b232d5f32316127837a0f9e41abcc3de0c2d78c83f8f1dd2c8acb03c8f"
+      "sha256": "bb739144995424765def7f16f0cb403531fe3a76d70b0dd76e072d3afe7caeb2"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Director.cs",
@@ -2563,7 +2583,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Growth.cs",
-      "sha256": "c1993b328ac6bdcfa6e0418ffbc21cbe8dc3c450c509349d4ee221e4d43205bd"
+      "sha256": "67903e67f42f6e9c84aed5074b5c20d3b12f52e657d176d999f0ac12588b98e3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Guard.cs",
@@ -2666,12 +2686,24 @@
       "sha256": "214785d7b0958c21b9b8c8be506844226cbbd12e00463b514615c0520e726583"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessCardDrag.cs",
+      "sha256": "f5d57695d684be8af4bb24ba0c0d3a7b0ec4030763a19f078d7cd06ca7d65194"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessCurveArrow.cs",
+      "sha256": "fa6a55150290ce9a4e2129628c66aa1aae3fe343619eb965ebd7259e9fa03e2f"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessEntryPanel.cs",
       "sha256": "eaca8f42f5b9989ef0304ef047b0ced4007627629c20e8c2dfa6ff41e2b35478"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessHudPanel.cs",
-      "sha256": "89ef1c7bee6ca100ac3e8b5914985c55aa43da26132b33764d8776da782b8001"
+      "sha256": "eebe215476c7eac96888a1bbbdec97f29d062390aed343e2efff1fe84f6b7421"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessHudPanel.Drag.cs",
+      "sha256": "c6d27a02ba90c5c29b68bc54579c31f1c6f92fbc69a60a67db64517e71a308b8"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Loading/LoadingPanel.cs",
@@ -2783,11 +2815,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BattleEffectView.cs",
-      "sha256": "aac840053f653eca293e9f8c05295e2c91bc86490bc5ca4c40256f0434b3f297"
+      "sha256": "34c9a7fe6c41b0f077efe0ff82261dd9e0744470f9d8cfbffc67239beb1bb854"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/BattleEffectView.Pattern.cs",
-      "sha256": "2d7959ec70ecad8b621a713efe9a69cdf9c37984220810a3164d7920b1f7220c"
+      "sha256": "825adca079fba3febc064cb34601eb35320fdb34e48b364d5de38d417e8f47b2"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Effects/Boss/BossSkillFxView.cs",
@@ -2839,7 +2871,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessArena.CombatFx.cs",
-      "sha256": "c03733530239e8ba81cbf76ceae4041c969f04f4fa8a1e32aa44218fcdb5cac3"
+      "sha256": "3a68ceafb038560c8c2a51419fce7ab8b944cb12a2edba27006ad03dbd969b8e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessArena.cs",
@@ -2851,7 +2883,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessArena.Guard.cs",
-      "sha256": "06f1ef760ea459181d3d32db346d738ec2100b4fa7b1fc009b0ab8173985bba5"
+      "sha256": "6637380659c0d087aa3ea37d826df990127bcc4e5b2a4e7ec8d1877b9c2629a0"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessArena.Heart.cs",
@@ -2895,7 +2927,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GameSpriteAtlasService.cs",
-      "sha256": "8794dbfdc647a0d0e5244099b2e7966338636b1bc29c8a169ff4ded3b3e316c5"
+      "sha256": "ae3164e1f64720bd262c466af14dfecd8c494d31acb75f0eb9454ee9d0cf2305"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/GamePresentation.BossFocus.cs",
@@ -2919,7 +2951,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/EndlessScene.unity",
-      "sha256": "e40d4bcd485421ef41358675d702c48fd99ac695c9f9ecbf8e52986bfeac7f2e"
+      "sha256": "a1d399619a366ffb6fbf24cda412bfad3c73cfe918b1db1240053d0ad026ed47"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/GameScene.unity",

@@ -134,6 +134,8 @@ namespace RevGame.Editor
                 arena.FindProperty("thrustRenderer").objectReferenceValue = Quad(root.transform, "刺客突刺批量", SampledMaterial("EndlessThrust", "RevGame/Endless/Thrust", "_TrailTex", ThrustTrailTexture), Vector3.zero, Vector3.one);
                 BuildHeart(root.transform, arena);
                 arena.ApplyModifiedPropertiesWithoutUndo();
+                ((MeshRenderer)arena.FindProperty("hordeRenderer").objectReferenceValue).sortingOrder = 8;
+                ((MeshRenderer)arena.FindProperty("thrustRenderer").objectReferenceValue).sortingOrder = 20;
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Endless/EndlessArena.prefab");
             }
             finally
@@ -284,6 +286,7 @@ namespace RevGame.Editor
                 modal.Find("reroll/label").GetComponent<Text>().color = Cream;
                 // 与六章面板同一套共享材质：底板/按钮流光（ArcanePanel）、手牌与升级卡光泽（CardGleam）。
                 GameArcaneArtBuilder.StyleGeneratedPanel(root);
+                InstallCardDrag(root);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab");
             }
             finally

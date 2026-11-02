@@ -93,6 +93,7 @@ GameObject:
   - component: {fileID: 2841019172032058223}
   - component: {fileID: 7970691137141774620}
   - component: {fileID: 2202034591193516702}
+  - component: {fileID: 5982959489918436950}
   m_Layer: 0
   m_Name: card3
   m_TagString: Untagged
@@ -225,6 +226,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5982959489918436950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 545525600200369815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f593ff3106b61e4f90d0b6e0c17c698, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &711363039631034079
@@ -543,6 +556,7 @@ GameObject:
   - component: {fileID: 1499437306981422434}
   - component: {fileID: 6881054290901773098}
   - component: {fileID: 6472933846171832523}
+  - component: {fileID: 2184299249079020304}
   m_Layer: 0
   m_Name: card0
   m_TagString: Untagged
@@ -677,6 +691,85 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2184299249079020304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1455838264430887814}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f593ff3106b61e4f90d0b6e0c17c698, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &1525056826872646610
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8215038216869839643}
+  - component: {fileID: 7574565699924909173}
+  - component: {fileID: 7197711842816144903}
+  m_Layer: 0
+  m_Name: cardArrow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8215038216869839643
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1525056826872646610}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 836309678289152074}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7574565699924909173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1525056826872646610}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6c7f8c8bb672d4c83fc1d60ca86085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  ribbon: {fileID: 21300000, guid: ccdee4f183e010b4fa82aaeb6c2e1443, type: 3}
+  arrowHead: {fileID: 21300000, guid: 4921ff13d9ceed14cb98ecbf43569e0c, type: 3}
+--- !u!222 &7197711842816144903
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1525056826872646610}
+  m_CullTransparentMesh: 1
 --- !u!1 &1680342236445707923
 GameObject:
   m_ObjectHideFlags: 0
@@ -917,6 +1010,7 @@ GameObject:
   - component: {fileID: 5312345665962227578}
   - component: {fileID: 7292950932602254333}
   - component: {fileID: 3269273336959892712}
+  - component: {fileID: 2053346086850937495}
   m_Layer: 0
   m_Name: card2
   m_TagString: Untagged
@@ -1049,6 +1143,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2053346086850937495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1798430714875974890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f593ff3106b61e4f90d0b6e0c17c698, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2095457037258041793
@@ -2032,6 +2138,7 @@ GameObject:
   - component: {fileID: 616368623550095465}
   - component: {fileID: 8598412928639332273}
   - component: {fileID: 3349982122390173889}
+  - component: {fileID: 5036063991025485677}
   m_Layer: 0
   m_Name: card1
   m_TagString: Untagged
@@ -2164,6 +2271,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5036063991025485677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3136271358638329298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f593ff3106b61e4f90d0b6e0c17c698, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &3202692412489241061
@@ -2734,6 +2853,7 @@ RectTransform:
   - {fileID: 4827146038765498554}
   - {fileID: 4893036690622408635}
   - {fileID: 3433497064259217895}
+  - {fileID: 8215038216869839643}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2767,6 +2887,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardNormal: {fileID: 21300000, guid: cba82457de84bcc449df520be7f5dc01, type: 3}
   cardSelected: {fileID: 21300000, guid: 227acdd951bc57e42a9d52a500a75889, type: 3}
+  cardArrow: {fileID: 7574565699924909173}
 --- !u!1 &4363911298307136983
 GameObject:
   m_ObjectHideFlags: 0
