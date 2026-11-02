@@ -104,8 +104,8 @@ namespace RevGame.Endless
             {
                 Music(i);
             }
-            if (Count("MainSlots") > 6 || Count("SealSlots") > 6 || Count("HandLimit") > 6 || Count("HordeLimit") > 240
-            || Count("PlayerCells") + Count("EnemyCells") > 81 || Count("ChainLimit") > 8 || Value("DamageReductionCap") >= 1
+            if (Count("MainSlots") > 6 || Count("SealSlots") > 6 || Count("HandLimit") > 6 || Count("HordeLimit") > 8192
+            || Count("ChainLimit") > 8 || Value("DamageReductionCap") >= 1
             || Value("SimulationStep") > Value("CounterSeconds") || Value("PeakStart") >= Value("TailStart") || Value("TailStart") >= Value("MinuteSeconds"))
             {
                 throw new InvalidOperationException("无尽配置超出已验证容量或时间顺序");

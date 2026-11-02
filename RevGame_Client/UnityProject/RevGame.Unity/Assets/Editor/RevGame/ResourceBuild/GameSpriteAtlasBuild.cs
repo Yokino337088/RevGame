@@ -147,6 +147,10 @@ namespace RevGame.Editor
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path)
         {
+            if (path.Contains("/Art/Endless/HeartEye/"))
+            {
+                return "EndlessHeartEye";
+            }
             if (path.Contains("/Art/Pieces/Helper/Storm/"))
             {
                 return "HelperStormFrames";

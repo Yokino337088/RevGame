@@ -227,8 +227,8 @@ namespace RevGame.Endless
             {
                 return;
             }
-            _bossArtChapter = chapter;
             int version = ++_bossArtVersion;
+            // 先按旧章名称释放旧配置，再记录新章；否则Release会错误扣减新章引用。
             ReleaseBossArt();
             _bossArtChapter = chapter;
             string name = BossChapterArtConfig.ResourceName(chapter);
@@ -257,6 +257,15 @@ namespace RevGame.Endless
         /// <summary>把 Boss 美术应用到棋子上。每帧调用但只在真正变化时生效（由 _bossArtBound 判断）。</summary>
         private void BindBossArt(EndlessService service, EndlessUnit boss)
         {
+            if (boss == null && _bossArt != null)
+            {
+                // Boss尸体完成六章溶解后才归还帧，保留完整死亡表现。
+                if (_dissolving.Count == 0)
+                {
+                    ReleaseBossArt();
+                }
+                return;
+            }
             if (boss == null || _bossArt == null || _bossArt.Chapter != boss.BossChapter || _bossArtBound == boss.Piece.Id)
             {
                 return;

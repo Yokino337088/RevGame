@@ -70,12 +70,8 @@ namespace RevGame.Endless
             Run.seconds += step;
             AddScore(((int)Run.seconds - oldSeconds) * N("ScoreSeconds"));
             RefreshRules();
-            UpdateDirector(step);
-            UpdateHorde(step);
-            UpdateUnits(step);
-            UpdateEyes(step);
-            UpdateBurnZones();
-            ResolveDeaths();
+            // ECS系统顺序固定：先生成/移动，更新空间桶，再攻击/技能，最后统一死亡提交。
+            World.Simulate(this, step);
             RefreshRules();
             UpdateRisk();
             AutoEvolve();
@@ -154,14 +150,14 @@ namespace RevGame.Endless
         /// 比 0.1 秒的模拟步还密，一步只刷一只就达不到表里的密度。上限防止外围缓冲满后积压的期限一次性喷出一大坨。
         /// </summary>
         private const int MaxSpawnsPerStep = 4;
-        private void UpdateDirector(float step)
+        internal void UpdateDirector(float step)
         {
             float minute = Run.seconds % V("MinuteSeconds");
             // 积压最多算一个模拟步：外围缓冲满、尾段停刷后恢复时，只补本步内该刷的几只。
             Run.nextSpawn = Mathf.Max(Run.nextSpawn, Run.seconds - step);
             for (int spawned = 0; spawned < MaxSpawnsPerStep && minute < V("TailStart") && Run.seconds >= Run.nextSpawn; spawned++)
             {
-                float interval = V("SpawnInterval") * (minute >= V("PeakStart") ? V("PeakSpawnFactor") : 1) / Run.adaptiveBudget;
+                float interval = V("SpawnInterval") * (minute >= V("PeakStart") ? V("PeakSpawnFactor") : 1) / (Run.adaptiveBudget * WaveDensityScale());
                 if (Run.affixes.Contains(2) && minute >= V("PeakStart"))
                 {
                     interval /= V("RiskSpawn");
@@ -208,9 +204,9 @@ namespace RevGame.Endless
         }
         private bool SpawnHorde()
         {
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                if (Run.horde[i].active)
+                if (Horde[i].active)
                 {
                     continue;
                 }
@@ -223,18 +219,19 @@ namespace RevGame.Endless
                 // 血量 = 基础 × 巡回成长 × 波次成长：越往后越硬，逼玩家靠领主奖励滚雪球。
                 float hp = V("HordeHp") * (1 + V("CircuitHpGrowth") * Math.Min(Run.circuit - 1, N("CircuitHpCap"))) * WaveHpScale();
                 hp *= Run.difficulty == 1 ? V("DifficultyHp") : 1;
-                Run.horde[i] = new EndlessHorde
+                Horde[i] = new EndlessHorde
                 {
                     active = true, id = Run.nextId++, gate = gate, hp = hp, maxHp = hp,
                     x = gate == 0 ? -3 : 11,
                     y = row,
                     speed = V("HordeSpeed") * Mathf.Min(V("CircuitSpeedCap"), 1 + (Run.circuit - 1) * V("CircuitAttackGrowth"))
                 };
+                World.InvalidateSpatial();
                 return true;
             }
             return false;
         }
-        /// <summary>每只外围敌人在自己那一行里的排队名次（0 = 最前排），下标与 Run.horde 一致；每步重算，不进存档。</summary>
+        /// <summary>每只外围敌人在自己那一行里的排队名次（0 = 最前排），下标与 Horde 一致；每步重算，不进存档。</summary>
         private int[] _queueRank = new int[0];
         /// <summary>RankHordeQueues 的排序工作区（编号、下标）和每条队伍的计数；容量随外围上限，进局后不再分配。</summary>
         private int[] _rankIds = new int[0], _rankSlots = new int[0];
@@ -248,7 +245,7 @@ namespace RevGame.Endless
         /// </summary>
         private void RankHordeQueues()
         {
-            int length = Run.horde.Length;
+            int length = Horde.Length;
             if (_queueRank.Length != length)
             {
                 _queueRank = new int[length];
@@ -259,9 +256,9 @@ namespace RevGame.Endless
             for (int i = 0; i < length; i++)
             {
                 _queueRank[i] = 0;
-                if (Run.horde[i].active)
+                if (Horde[i].active)
                 {
-                    _rankIds[count] = Run.horde[i].id;
+                    _rankIds[count] = Horde[i].id;
                     _rankSlots[count] = i;
                     count++;
                 }
@@ -271,7 +268,7 @@ namespace RevGame.Endless
             for (int n = 0; n < count; n++)
             {
                 int slot = _rankSlots[n];
-                EndlessHorde h = Run.horde[slot];
+                EndlessHorde h = Horde[slot];
                 // 杂兵和入侵者各排各的队：入侵者停在棋盘边等进盘，杂兵要涌进去，混排会互相卡位。
                 int bucket = LaneOf(h) * 2 + (h.kind == 0 ? 0 : 1);
                 _queueRank[slot] = _laneCounts[bucket]++;
@@ -283,28 +280,38 @@ namespace RevGame.Endless
             // 行列号夹到 0~15：被击退/特殊出生时坐标可能略出界，不能越出队伍桶。
             return Mathf.Clamp(h.gate, 0, 3) * 16 + Mathf.Clamp(Mathf.RoundToInt(h.gate < 2 ? h.y : h.x), 0, 15);
         }
-        private void UpdateHorde(float step)
+        internal void UpdateHorde(float step)
         {
             RankHordeQueues();
-            for (int i = 0; i < Run.horde.Length; i++)
+            int active = Horde.ActiveCount;
+            if (_marchSlots.Length != Horde.Length)
             {
-                if (!Run.horde[i].active)
+                _marchSlots = new int[Horde.Length];
+            }
+            for (int cursor = 0; cursor < active; cursor++)
+            {
+                _marchSlots[cursor] = Horde.ActiveSlot(cursor);
+            }
+            for (int cursor = 0; cursor < active; cursor++)
+            {
+                int i = _marchSlots[cursor];
+                if (!Horde[i].active)
                 {
                     continue;
                 }
-                EndlessHorde h = Run.horde[i];
+                EndlessHorde h = Horde[i];
                 if (h.burnUntil > Run.seconds && h.burnAt <= Run.seconds)
                 {
                     ReportDamage(h.id, new Vector2(h.x, h.y), Mathf.Min(h.hp, h.burnDamage), GameSide.Enemy);
                     h.hp -= h.burnDamage;
                     h.burnAt = Run.seconds + 1;
                 }
-                float speed = h.frozenUntil > Run.seconds ? 0 : h.speed * (h.slowUntil > Run.seconds ? 1 - V("SlowRatio") : 1);
+                float speed = h.frozenUntil > Run.seconds ? 0 : h.speed * WaveSpeedScale() * (h.slowUntil > Run.seconds ? 1 - V("SlowRatio") : 1);
                 if (h.kind == 0 && h.gate < 2)
                 {
                     // 普通杂兵：沿自己那一行涌进棋盘（见 MarchHorde），和棋子正面火拼。
                     MarchHorde(ref h, speed * step, _queueRank[i]);
-                    Run.horde[i] = h;
+                    Horde[i] = h;
                     if (h.hp <= 0)
                     {
                         KillHorde(i);
@@ -346,7 +353,7 @@ namespace RevGame.Endless
                 {
                     Run.gateWarnings[h.gate] = Run.seconds + V("WarningSeconds");
                 }
-                Run.horde[i] = h;
+                Horde[i] = h;
                 if (h.hp <= 0)
                 {
                     KillHorde(i);
@@ -361,9 +368,9 @@ namespace RevGame.Endless
                 if (Run.gateWarnings[gate] > 0 && Run.gateWarnings[gate] <= Run.seconds)
                 {
                     bool alive = false;
-                    for (int i = 0; i < Run.horde.Length; i++)
+                    for (int i = 0; i < Horde.Length; i++)
                     {
-                        alive |= Run.horde[i].active && Run.horde[i].gate == gate && Run.horde[i].arrivedAt > 0;
+                        alive |= Horde[i].active && Horde[i].gate == gate && Horde[i].arrivedAt > 0;
                     }
                     if (alive)
                     {

@@ -22,19 +22,19 @@ namespace RevGame.Endless
                         s.Board.Remove(s.Units[i].Piece);
                     }
                     s.Units.Clear();
-                    s.QueueInvader(false, 0);
+                    s.QueueInvader(true, -1);
                     int index = -1;
-                    for (int i = 0; i < s.Run.horde.Length; i++)
+                    for (int i = 0; i < s.Horde.Length; i++)
                     {
-                        if (s.Run.horde[i].active)
+                        if (s.Horde[i].active)
                         {
                             index = i;
                             break;
                         }
                     }
-                    int identity = s.Run.horde[index].id;
+                    int identity = s.Horde[index].id;
                     s.HitHorde(index, 10, 0);
-                    float remaining = s.Run.horde[index].hp;
+                    float remaining = s.Horde[index].hp;
                     s.StartWave();
                     // 精确推进外围移动，保持真实预警和转盘入口。
                     for (int i = 0; i < 150 && s.Find(identity) == null; i++)
@@ -43,22 +43,13 @@ namespace RevGame.Endless
                         s.UpdateHorde(.1f);
                     }
                     EndlessUnit boss = s.Find(identity);
-                    Check(boss != null && !s.Run.horde[index].active && boss.Piece.Hp == remaining, "外围转盘保留唯一身份与生命，不复制敌人", passed);
+                    Check(boss != null && !s.Horde[index].active && boss.Piece.Hp == remaining, "外围转盘保留唯一身份与生命，不复制敌人", passed);
                     Check(s.Run.bossKills == 0 && s.Run.cores == 0, "转盘不发死亡奖励", passed);
-                    s.Board.Move(boss.Piece, new BoardPos(0, 0));
-                    for (int i = 0; i < 3; i++)
-                    {
-                        s.AddPlayer(PieceKind.Shield, 3, i, true);
-                        s.AddPlayer(PieceKind.Shield, i, 3, true);
-                    }
-                    s.RefreshRules();
-                    s.UpdateBoss(boss);
-                    Check(boss.Piece.OpenLiberties == 0 && boss.BrokenUntil > s.Run.seconds && boss.Piece.IsAlive && s.Run.bossKills == 0, "Boss气零进入破阵，不自动击杀或结束本局", passed);
                     s.HitUnit(boss, boss.Piece.MaxHp, 0);
                     s.ResolveDeaths();
-                    Check(s.Run.bossKills == 1 && s.Run.cores == 1, "真实伤害击杀Boss仅结算一个核心", passed);
+                    Check(s.Run.eliteKills == 1 && s.Run.bossKills == 0, "普通精英死亡只领精英奖励，未冒充领主", passed);
                     s.ResolveDeaths();
-                    Check(s.Run.bossKills == 1 && s.Run.cores == 1, "重复死亡清理不重复发奖", passed);
+                    Check(s.Run.eliteKills == 1, "重复死亡清理不重复发奖", passed);
                     s.Run.score = long.MaxValue - 1;
                     s.AddScore(10);
                     Check(s.Run.score == long.MaxValue, "long计分饱和不溢出", passed);

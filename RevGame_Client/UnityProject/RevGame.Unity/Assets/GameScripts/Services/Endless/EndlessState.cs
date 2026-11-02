@@ -33,6 +33,11 @@ namespace RevGame.Endless
     public sealed class EndlessUnit
     {
         public Piece Piece;
+        /// <summary>盘外领主不参与占格/气眼；Center保存连续世界坐标（单位棋格），视图只消费它。</summary>
+        public bool Outside;
+        public Vector2 Center;
+        /// <summary>本模拟步累计承伤，限制的是所有来源的合计，防止高攻速/献祭连锁在同一步秒杀。</summary>
+        public float DamageBudgetAt = -1, DamageBudgetUsed;
         public bool Summoned, Stone, Revived, Elite;
         public float AttackAt, MoveAt, BurnUntil, BurnAt, BurnDamage, SlowUntil, CounterAt;
         public float BrokenUntil, NextSkillAt, WarningAt, BornAt;
@@ -179,7 +184,8 @@ namespace RevGame.Endless
     {
         public int id, kind, star, side, x, y, size, hp, maxHp, bossTemplate, warningLine, role, gate, breakEyeTarget;
         public int skillCasts, bossChapter, chapterSkill, skillStage, skillAX, skillAY, skillBX, skillBY, skillCX, skillCY;
-        public bool summoned, stone, revived, elite, steadyShield;
+        public bool summoned, stone, revived, elite, steadyShield, outside;
+        public float centerX, centerY, damageBudgetAt, damageBudgetUsed;
         public float attackScale, attackAt, moveAt, burnUntil, burnAt, burnDamage, slowUntil, counterAt;
         public float brokenUntil, nextSkillAt, warningAt, bornAt, breakEyeAt, furyUntil, stationarySince;
         /// <summary>剑气与组合技状态（新增字段，旧存档读出来是 0，等于“马上可以切/从头计数”，不会出错）。</summary>

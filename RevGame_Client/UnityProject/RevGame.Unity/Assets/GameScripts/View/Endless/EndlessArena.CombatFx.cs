@@ -121,7 +121,7 @@ namespace RevGame.Endless
         private int _corpseId;
         /// <summary>每个外围槽位上次看到的敌人编号；编号变了说明这个槽刷出了新敌人。</summary>
         private int[] _hordeSeen = new int[0];
-        /// <summary>正在播出生燃烧的杂兵视图及开始时间，下标与 Run.horde 一致；有视图时批量网格里对应的方块隐藏。</summary>
+        /// <summary>正在播出生燃烧的杂兵视图及开始时间，下标与 Horde 一致；有视图时批量网格里对应的方块隐藏。</summary>
         private PieceView[] _hordeBirth = new PieceView[0];
         private float[] _hordeBirthAt = new float[0];
         /// <summary>出生视图“由大渐小”的缩放补间，下标同上；视图回池前 Kill(false)，不留悬空回调。</summary>
@@ -164,6 +164,7 @@ namespace RevGame.Endless
         /// <summary>每帧入口第一段：读死亡回执。必须在 SyncPieces 之前，否则棋子会先被当成“普通移除”收走。</summary>
         private void ReadDeaths(EndlessService service)
         {
+            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
             int latest = service.DeathSerial;
             if (latest < _deathRead)
             {
@@ -743,7 +744,8 @@ namespace RevGame.Endless
         /// </summary>
         private void UpdateHordeBirths(EndlessRun run)
         {
-            int length = run.horde.Length;
+            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
+            int length = horde.Length;
             if (_hordeSeen.Length != length)
             {
                 _hordeSeen = new int[length];
@@ -754,7 +756,7 @@ namespace RevGame.Endless
             float now = Time.time;
             for (int i = 0; i < length; i++)
             {
-                EndlessHorde h = run.horde[i];
+                EndlessHorde h = horde[i];
                 if (!h.active)
                 {
                     ReturnHordeBirth(i);
@@ -818,12 +820,12 @@ namespace RevGame.Endless
                 return;
             }
             EndlessService service = RevServices.Get<EndlessService>();
-            if (service?.Run == null || slot >= service.Run.horde.Length || !service.Run.horde[slot].active || service.Run.horde[slot].id != id || _hordeBirth[slot] != null)
+            if (service?.Run == null || slot >= service.Horde.Length || !service.Horde[slot].active || service.Horde[slot].id != id || _hordeBirth[slot] != null)
             {
                 RevPool.Return(view);
                 return;
             }
-            EndlessHorde h = service.Run.horde[slot];
+            EndlessHorde h = service.Horde[slot];
             BindHordeLook(view);
             view.SnapTo(new Vector3(h.x, h.y, -0.5f));
             view.PlayBirthFire();

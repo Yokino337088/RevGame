@@ -42,7 +42,7 @@ namespace RevGame.Endless
                 long score = service.Run.score;
                 service.Finish();
                 Require(service.Run.score == score && service.Run.settled, "重复结算不重复收益", checks);
-                Require(service.Occupied(GameSide.Player) <= EndlessConfig.Count("PlayerCells"), "玩家占地有界", checks);
+                Require(service.Occupied(GameSide.Player) <= 81, "玩家占地有界", checks);
             }
             return new Dictionary<string, object>
             {

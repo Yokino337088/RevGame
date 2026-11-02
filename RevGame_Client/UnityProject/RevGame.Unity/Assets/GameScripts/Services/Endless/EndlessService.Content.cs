@@ -11,10 +11,14 @@ namespace RevGame.Endless
         /// <summary>把入侵者先登记在外围队列。转盘不再生成新Id，因此外围/盘内只能领一次死亡奖励。</summary>
         private bool QueueInvader(bool elite, int boss)
         {
-            int slot = -1;
-            for (int i = 0; i < Run.horde.Length; i++)
+            if (boss >= 0)
             {
-                if (!Run.horde[i].active)
+                return SpawnOutsideBoss(boss);
+            }
+            int slot = -1;
+            for (int i = 0; i < Horde.Length; i++)
+            {
+                if (!Horde[i].active)
                 {
                     slot = i;
                     break;
@@ -45,13 +49,14 @@ namespace RevGame.Endless
             float hp = Mathf.Max(1, Mathf.Floor(PieceCatalog.Get(kind, StarTier.One).MaxHp * scale));
             // 入侵者和杂兵共用左右两侧 × 九行的出生口，进盘时也沿这一行进入（见 TryEnterBoard）。
             NextLane(out int gate, out int row);
-            Run.horde[slot] = new EndlessHorde
+            Horde[slot] = new EndlessHorde
             {
                 active = true, id = Run.nextId++, gate = gate, kind = role, hp = hp, maxHp = hp,
                 x = gate == 0 ? -3 : 11,
                 y = row,
                 speed = V("HordeSpeed") * (role == 1 ? V("CircuitSpeedCap") : 1)
             };
+            World.InvalidateSpatial();
             return true;
         }
         private bool HasBossIdentity()
@@ -60,9 +65,9 @@ namespace RevGame.Endless
             {
                 return true;
             }
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                if (Run.horde[i].active && Run.horde[i].kind >= 6)
+                if (Horde[i].active && Horde[i].kind >= 6)
                 {
                     return true;
                 }
@@ -78,9 +83,9 @@ namespace RevGame.Endless
                     return true;
                 }
             }
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                if (Run.horde[i].active && Run.horde[i].kind == role)
+                if (Horde[i].active && Horde[i].kind == role)
                 {
                     return true;
                 }
@@ -110,7 +115,7 @@ namespace RevGame.Endless
         /// <summary>沿原门点寻找完整身体；先Board.Place成功，再清外围active。满盘继续门外排队且可被攻击。</summary>
         private bool TryEnterBoard(int index)
         {
-            EndlessHorde h = Run.horde[index];
+            EndlessHorde h = Horde[index];
             int size = h.kind >= 6 ? 3 : 1;
             if (Occupied(GameSide.Enemy) + size * size > N("EnemyCells"))
             {
@@ -143,7 +148,7 @@ namespace RevGame.Endless
                 }
                 );
                 h.active = false;
-                Run.horde[index] = h;
+                Horde[index] = h;
                 RefreshRules();
                 return true;
             }
@@ -334,13 +339,13 @@ namespace RevGame.Endless
             _consumed.Clear();
             _consumed.Add(first.Piece);
             _consumed.Add(second.Piece);
-            int size = PieceCatalog.PlayerBodySize(StarTier.Two);
+            int size = 1; // 无尽升星不增加占地。
             if (!Fits(target.Pos, size, GameSide.Player, null, _consumed))
             {
                 _consumed.Clear();
                 return Reject("升级占地不合法，未扣牌");
             }
-            var merged = new Piece(target.Id, PieceCatalog.Get(target.Def.Kind, StarTier.Two), GameSide.Player);
+            var merged = new Piece(target.Id, PieceCatalog.Get(target.Def.Kind, StarTier.Two), GameSide.Player, size: 1);
             merged.SetRoundHealthScale(PlayerHealthScale());
             Board.Remove(target);
             Board.Remove(second.Piece);

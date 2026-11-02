@@ -9,7 +9,7 @@ namespace RevGame.Endless
     public sealed partial class EndlessService
     {
         /// <summary>固定步内先攻击再移动；只遍历现有名单，死亡移除统一延后，避免漏掉交换到当前索引的单位。</summary>
-        private void UpdateUnits(float step)
+        internal void UpdateUnits(float step)
         {
             // 每 MeleeMoveSeconds 秒按威胁/守军重新给近战棋分配驻守区（见 EndlessService.Guard）。
             PlanZones();
@@ -23,7 +23,7 @@ namespace RevGame.Endless
                 }
                 if (unit.BurnUntil > Run.seconds && unit.BurnAt <= Run.seconds)
                 {
-                    int burned = p.TakeDamage(Mathf.CeilToInt(unit.BurnDamage));
+                    int burned = ApplyUnitDamage(unit, unit.BurnDamage);
                     ReportDamage(p.Id, Position(p), burned, p.Side);
                     unit.BurnAt = Run.seconds + 1;
                 }
@@ -33,7 +33,12 @@ namespace RevGame.Endless
                 }
                 if (unit.BossTemplate >= 0)
                 {
+                    MarchOutsideBoss(unit, step);
                     UpdateBoss(unit);
+                    if (unit.Outside)
+                    {
+                        continue;
+                    }
                 }
                 if (p.Side == GameSide.Player)
                 {
@@ -125,9 +130,12 @@ namespace RevGame.Endless
             }
             int best = -1;
             float nearest = float.MaxValue;
-            for (int i = 0; i < Run.horde.Length; i++)
+            float queryRange = V("OuterRange");
+            World.Query(from.x - queryRange, from.y - queryRange, from.x + queryRange, from.y + queryRange, _attackCandidates);
+            for (int cursor = 0; cursor < _attackCandidates.Count; cursor++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _attackCandidates[cursor];
+                EndlessHorde h = Horde[i];
                 if (!h.active || h.hp <= 0 || !OuterInRange(p, h))
                 {
                     continue;
@@ -139,11 +147,24 @@ namespace RevGame.Endless
                     best = i;
                 }
             }
+            EndlessUnit lord = BossUnit();
+            if (lord != null && lord.Outside && lord.Piece.IsAlive)
+            {
+                Vector2 point = lord.Center;
+                float lordDistance = (point - from).sqrMagnitude;
+                if (lordDistance < nearest && OuterInRange(p, new EndlessHorde { x = point.x, y = point.y }))
+                {
+                    HitUnit(lord, damage, route);
+                    Impact(from, point, route, 0, p);
+                    TryCombo(unit, point, damage);
+                    return;
+                }
+            }
             if (best < 0)
             {
                 return;
             }
-            Vector2 to = new Vector2(Run.horde[best].x, Run.horde[best].y);
+            Vector2 to = new Vector2(Horde[best].x, Horde[best].y);
             HitHorde(best, damage, route);
             if (Run.doubleShotUntil > Run.seconds)
             {
@@ -155,9 +176,10 @@ namespace RevGame.Endless
             {
                 int remaining = Mathf.Min(N("PierceLimit"), Run.mains[0] + (Run.evolved[0] ? 1 : 0));
                 Vector2 ray = (to - from).normalized;
-                for (int i = 0; i < Run.horde.Length && remaining > 0; i++)
+                for (int cursor = 0; cursor < _attackCandidates.Count && remaining > 0; cursor++)
                 {
-                    EndlessHorde h = Run.horde[i];
+                    int i = _attackCandidates[cursor];
+                    EndlessHorde h = Horde[i];
                     Vector2 delta = new Vector2(h.x, h.y) - from;
                     if (i != best && h.active && Vector2.Dot(delta, ray) > 0 && Mathf.Abs(delta.x * ray.y - delta.y * ray.x) < 0.7f && delta.magnitude <= V("OuterRange"))
                     {
@@ -221,9 +243,12 @@ namespace RevGame.Endless
             {
                 int best = -1;
                 float nearest = V("AreaLimit") * V("AreaLimit");
-                for (int i = 0; i < Run.horde.Length; i++)
+                float reach = V("AreaLimit");
+                World.Query(origin.x - reach, origin.y - reach, origin.x + reach, origin.y + reach, _chainCandidates);
+                for (int cursor = 0; cursor < _chainCandidates.Count; cursor++)
                 {
-                    if (!Run.horde[i].active || Run.horde[i].hp <= 0)
+                    int i = _chainCandidates[cursor];
+                    if (!Horde[i].active || Horde[i].hp <= 0)
                     {
                         continue;
                     }
@@ -232,7 +257,7 @@ namespace RevGame.Endless
                     {
                         seen |= _chainHit[n] == i;
                     }
-                    float distance = (new Vector2(Run.horde[i].x, Run.horde[i].y) - origin).sqrMagnitude;
+                    float distance = (new Vector2(Horde[i].x, Horde[i].y) - origin).sqrMagnitude;
                     if (!seen && distance < nearest)
                     {
                         best = i;
@@ -243,7 +268,7 @@ namespace RevGame.Endless
                 {
                     break;
                 }
-                Vector2 next = new Vector2(Run.horde[best].x, Run.horde[best].y);
+                Vector2 next = new Vector2(Horde[best].x, Horde[best].y);
                 HitHorde(best, damage * (Run.evolved[3] ? V("EvolutionDamage") : 1), 3);
                 Impact(origin, next, 3);
                 _chainHit[count++] = best;
@@ -252,7 +277,7 @@ namespace RevGame.Endless
         }
         private void HitHorde(int index, float damage, int route)
         {
-            EndlessHorde h = Run.horde[index];
+            EndlessHorde h = Horde[index];
             if (!h.active || h.hp <= 0)
             {
                 return;
@@ -274,7 +299,7 @@ namespace RevGame.Endless
                     h.frozenUntil = h.slowUntil;
                 }
             }
-            Run.horde[index] = h;
+            Horde[index] = h;
         }
         private void HitUnit(EndlessUnit unit, float damage, int route)
         {
@@ -286,9 +311,9 @@ namespace RevGame.Endless
             {
                 damage *= V("BossBreakDamage");
             }
-            int applied = unit.Piece.TakeDamage(Mathf.CeilToInt(damage));
+            int applied = ApplyUnitDamage(unit, damage);
             Run.damage[route] += applied;
-            ReportDamage(unit.Piece.Id, Position(unit.Piece), applied, GameSide.Enemy);
+            ReportDamage(unit.Piece.Id, ActorPosition(unit), applied, GameSide.Enemy);
             if (route == 1 && Run.mains[1] > 0)
             {
                 unit.BurnUntil = Run.seconds + V("BurnSeconds");
@@ -303,9 +328,11 @@ namespace RevGame.Endless
         {
             damage *= Run.rare[2] ? 1 + V("PaperAreaBonus") : 1;
             float squared = radius * radius;
-            for (int i = 0; i < Run.horde.Length; i++)
+            World.Query(center.x - radius, center.y - radius, center.x + radius, center.y + radius, _areaCandidates);
+            for (int cursor = 0; cursor < _areaCandidates.Count; cursor++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _areaCandidates[cursor];
+                EndlessHorde h = Horde[i];
                 if (h.active && (new Vector2(h.x, h.y) - center).sqrMagnitude <= squared)
                 {
                     HitHorde(i, damage, route);
@@ -314,7 +341,7 @@ namespace RevGame.Endless
             for (int i = 0; i < Units.Count; i++)
             {
                 Piece p = Units[i].Piece;
-                if (p.Side == GameSide.Enemy && p.Id != excluded && (Position(p) - center).sqrMagnitude <= squared)
+                if (p.Side == GameSide.Enemy && p.Id != excluded && (ActorPosition(Units[i]) - center).sqrMagnitude <= squared)
                 {
                     HitUnit(Units[i], damage, route);
                 }
@@ -371,7 +398,7 @@ namespace RevGame.Endless
                     Board.Move(p, chosen);
                     RefreshRules();
                 }
-                unit.MoveAt = Run.seconds + V("EnemyMoveSeconds") / (unit.Role == 1 ? V("CircuitSpeedCap") : 1);
+                unit.MoveAt = Run.seconds + V("EnemyMoveSeconds") / ((unit.Role == 1 ? V("CircuitSpeedCap") : 1) * WaveSpeedScale());
             }
         }
         /// <summary>敌方打玩家棋。kind 决定伤害数字的样式：普攻用受击红字，领主技能用六章同款技能字。</summary>
@@ -408,7 +435,7 @@ namespace RevGame.Endless
         /// <summary>Boss不走六章气零胜利事件。破阵窗口结束再等待重新开气，避免气零每帧重置8秒。</summary>
         private void UpdateBoss(EndlessUnit boss)
         {
-            if (boss.Piece.OpenLiberties == 0 && boss.BrokenUntil == 0)
+            if (!boss.Outside && boss.Piece.OpenLiberties == 0 && boss.BrokenUntil == 0)
             {
                 boss.BrokenUntil = Run.seconds + V("BossBreakSeconds");
                 boss.WarningAt = 0;
@@ -441,14 +468,14 @@ namespace RevGame.Endless
             var def = BossSkillCatalog.Get(kind);
             return BossExpandedGeometry.Contains(kind, boss.SkillA, boss.SkillB, boss.SkillC, def.Radius, boss.SkillStage, new BoardPos(x, y));
         }
-        private void ResolveDeaths()
+        internal void ResolveDeaths()
         {
             // 主攻击加两代爆炸最多三轮；先耗尽本步死亡链，再允许存档和升级弹窗。
             for (int generation = 0; generation < 3; generation++)
             {
-                for (int i = 0; i < Run.horde.Length; i++)
+                for (int i = 0; i < Horde.Length; i++)
                 {
-                    if (Run.horde[i].active && Run.horde[i].hp <= 0)
+                    if (Horde[i].active && Horde[i].hp <= 0)
                     {
                         KillHorde(i);
                     }
@@ -478,8 +505,11 @@ namespace RevGame.Endless
                     continue;
                 }
                 // 先记死亡再移除：表现层看到棋子消失时，靠这条回执决定播溶解而不是直接收走。
-                ReportDeath(p.Id, Position(p), false);
-                Board.Remove(p);
+                ReportDeath(p.Id, ActorPosition(unit), false);
+                if (!unit.Outside)
+                {
+                    Board.Remove(p);
+                }
                 Units.RemoveAt(i);
                 if (p.Side == GameSide.Enemy)
                 {
@@ -489,13 +519,13 @@ namespace RevGame.Endless
         }
         private void KillHorde(int index)
         {
-            EndlessHorde h = Run.horde[index];
+            EndlessHorde h = Horde[index];
             if (!h.active)
             {
                 return;
             }
             h.active = false;
-            Run.horde[index] = h;
+            Horde[index] = h;
             RewardEnemy(h.kind, h.gate);
             Vector2 pos = new Vector2(h.x, h.y);
             if (h.surge)
@@ -515,14 +545,14 @@ namespace RevGame.Endless
                 }
                 float damage = h.burnDamage * V("ExplosionSecondRatio");
                 int chain = 0;
-                for (int i = 0; i < Run.horde.Length; i++)
+                for (int i = 0; i < Horde.Length; i++)
                 {
-                    EndlessHorde other = Run.horde[i];
+                    EndlessHorde other = Horde[i];
                     if (other.active && other.hp > 0 && (new Vector2(other.x, other.y) - pos).sqrMagnitude <= V("AreaLimit"))
                     {
                         other.hp -= damage;
                         other.chainGeneration = Math.Max(other.chainGeneration, h.chainGeneration + 1);
-                        Run.horde[i] = other;
+                        Horde[i] = other;
                         chain++;
                     }
                 }
@@ -530,7 +560,7 @@ namespace RevGame.Endless
                 Impact(pos, pos, 1, 1.5f);
             }
         }
-        private void UpdateEyes(float step)
+        internal void UpdateEyes(float step)
         {
             Run.healRemainder += step;
             if (Run.healRemainder >= 1)
@@ -579,7 +609,7 @@ namespace RevGame.Endless
                     summons++;
                 }
             }
-            if (summons >= N("SummonLimit") || Occupied(GameSide.Player) >= N("PlayerCells"))
+            if (summons >= N("SummonLimit"))
             {
                 return;
             }

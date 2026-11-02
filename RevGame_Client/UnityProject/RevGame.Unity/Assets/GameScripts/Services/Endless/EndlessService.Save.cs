@@ -64,11 +64,14 @@ namespace RevGame.Endless
                         bornAt = u.BornAt, bossTemplate = u.BossTemplate, warningLine = u.WarningLine,
                         role = u.Role, gate = u.Gate, breakEyeAt = u.BreakEyeAt, breakEyeTarget = u.BreakEyeTarget,
                         furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield,
-                        auraAt = u.AuraAt, comboCount = u.ComboCount, holdUntil = u.HoldUntil
+                        auraAt = u.AuraAt, comboCount = u.ComboCount, holdUntil = u.HoldUntil,
+                        outside = u.Outside, centerX = u.Center.x, centerY = u.Center.y, damageBudgetAt = u.DamageBudgetAt, damageBudgetUsed = u.DamageBudgetUsed
                     }
                     );
                 }
+                Run.horde = Horde.Export();
                 string payload = JsonUtility.ToJson(Run);
+                Run.horde = null;
                 string encoded = JsonUtility.ToJson(new Envelope
                 {
                     payload = payload, checksum = Digest(payload)
@@ -124,6 +127,7 @@ namespace RevGame.Endless
                     // 只接受可识别的旧版结算摘要，不把旧单位强行塞入新规则；原存档不覆盖。
                     Clear();
                     Isolated = isolated;
+                    World = new EndlessEcsWorld(N("HordeLimit"));
                     Run = new EndlessRun
                     {
                         runId = loaded.runId, seed = loaded.seed, difficulty = loaded.difficulty,
@@ -134,7 +138,7 @@ namespace RevGame.Endless
                     RecordProgress();
                     return true;
                 }
-                if (loaded.horde == null || loaded.horde.Length != N("HordeLimit") || loaded.units == null || loaded.units.Count > 81
+                if (loaded.horde == null || loaded.horde.Length > N("HordeLimit") || loaded.units == null || loaded.units.Count > 81
                 || loaded.random == 0 || loaded.mains == null || loaded.mains.Length != 6 || loaded.seals == null || loaded.seals.Length != 6
                 || loaded.rare == null || loaded.rare.Length != 4 || loaded.banned == null || loaded.banned.Length != 16
                 || loaded.choices == null || loaded.choices.Length != 3 || loaded.hand == null || loaded.hand.Count > N("HandLimit")
@@ -154,11 +158,18 @@ namespace RevGame.Endless
                         return Reject("存档单位字段非法或身份重复");
                     }
                     var def = PieceCatalog.Get((PieceKind)s.kind, (StarTier)s.star);
-                    Piece p = new Piece(s.id, def, (GameSide)s.side, s.size, s.bossTemplate >= 0, false, (float)s.maxHp / def.MaxHp, s.attackScale);
+                    Piece p = new Piece(s.id, def, (GameSide)s.side, s.side == (int)GameSide.Player ? 1 : s.size, s.bossTemplate >= 0, false, (float)s.maxHp / def.MaxHp, s.attackScale);
                     p.RestoreDetachedVitals(s.maxHp, s.hp, s.revived);
-                    if (!trial.Place(p, new BoardPos(s.x, s.y)))
+                    p.Pos = new BoardPos(s.x, s.y);
+                    if (!s.outside && s.bossTemplate < 0 && !trial.Place(p, p.Pos))
                     {
                         throw new InvalidDataException("存档占格冲突：" + s.id);
+                    }
+                    bool outside = s.outside || s.bossTemplate >= 0;
+                    // 旧存档的盘内Boss迁为同一身份/生命的盘外演员，玩家高星身体已显式缩为一格。
+                    if (outside && !s.outside)
+                    {
+                        trial.Remove(p);
                     }
                     units.Add(new EndlessUnit
                     {
@@ -171,7 +182,8 @@ namespace RevGame.Endless
                         BornAt = s.bornAt, BossTemplate = s.bossTemplate, WarningLine = s.warningLine,
                         Role = s.role, Gate = s.gate, BreakEyeAt = s.breakEyeAt, BreakEyeTarget = s.breakEyeTarget,
                         FuryUntil = s.furyUntil, StationarySince = s.stationarySince, SteadyShield = s.steadyShield,
-                        AuraAt = s.auraAt, ComboCount = s.comboCount, HoldUntil = s.holdUntil
+                        AuraAt = s.auraAt, ComboCount = s.comboCount, HoldUntil = s.holdUntil,
+                        Outside = outside, Center = s.outside ? new Vector2(s.centerX, s.centerY) : new Vector2(s.gate == 0 ? -V("BossStandoff") : 8 + V("BossStandoff"), Mathf.Clamp(s.y, 1, 7)), DamageBudgetAt = s.damageBudgetAt, DamageBudgetUsed = s.damageBudgetUsed
                     }
                     );
                 }
@@ -186,10 +198,16 @@ namespace RevGame.Endless
                 trial.Reset();
                 Clear();
                 Run = loaded;
+                World = new EndlessEcsWorld(N("HordeLimit"));
+                World.Horde.Import(loaded.horde);
+                Run.horde = null;
                 Isolated = isolated;
                 for (int i = 0; i < units.Count; i++)
                 {
-                    Board.Place(units[i].Piece, units[i].Piece.Pos);
+                    if (!units[i].Outside)
+                    {
+                        Board.Place(units[i].Piece, units[i].Piece.Pos);
+                    }
                     Units.Add(units[i]);
                 }
                 RefreshRules();

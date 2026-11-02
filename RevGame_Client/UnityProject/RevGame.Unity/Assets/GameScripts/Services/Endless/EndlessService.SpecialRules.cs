@@ -7,7 +7,7 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
-        private void UpdateBurnZones()
+        internal void UpdateBurnZones()
         {
             if (Run.nextZoneTick > Run.seconds)
             {
@@ -21,15 +21,15 @@ namespace RevGame.Endless
                     continue;
                 }
                 Vector2 center = new Vector2(cell % 9, cell / 9);
-                for (int i = 0; i < Run.horde.Length; i++)
+                for (int i = 0; i < Horde.Length; i++)
                 {
-                    EndlessHorde h = Run.horde[i];
+                    EndlessHorde h = Horde[i];
                     if (h.active && (new Vector2(h.x, h.y) - center).sqrMagnitude <= V("AreaLimit"))
                     {
                         ReportDamage(h.id, new Vector2(h.x, h.y), Mathf.Min(h.hp, Run.burnZoneDamage[cell]), GameSide.Enemy);
                         h.hp -= Run.burnZoneDamage[cell];
                         h.chainGeneration = 2;
-                        Run.horde[i] = h;
+                        Horde[i] = h;
                     }
                 }
                 Impact(center, center, 1, 1);
@@ -155,9 +155,9 @@ namespace RevGame.Endless
             }
             attack /= Math.Max(1, count);
             float squared = radius * radius;
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                EndlessHorde h = Run.horde[i];
+                EndlessHorde h = Horde[i];
                 if (h.active && (new Vector2(h.x, h.y) - center).sqrMagnitude <= squared)
                 {
                     float damage = h.maxHp * fraction;
@@ -171,7 +171,7 @@ namespace RevGame.Endless
             for (int i = 0; i < Units.Count; i++)
             {
                 EndlessUnit unit = Units[i];
-                if (unit.Piece.Side == GameSide.Enemy && (Position(unit.Piece) - center).sqrMagnitude <= squared)
+                if (unit.Piece.Side == GameSide.Enemy && (ActorPosition(unit) - center).sqrMagnitude <= squared)
                 {
                     float damage = unit.Piece.MaxHp * fraction;
                     if (unit.Elite || unit.BossTemplate >= 0)

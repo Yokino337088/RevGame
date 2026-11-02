@@ -66,6 +66,10 @@ namespace RevGame.Endless
                 return Accepted(Service.ClickCell(p.x, p.y));
             }
             , owner: Owner);
+            const string stressSchema = "{\"type\":\"object\",\"properties\":{\"enemies\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1024}},\"required\":[\"enemies\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.stress", "隔离压力局沿正式出生入口创建指定敌数", stressSchema, json => Accepted(Service.DebugStress(JsonUtility.FromJson<StressArgs>(json).enemies)), owner: Owner);
+            RevRuntimeAutomation.Register("endless.ecs-rules", "隔离验证80格部署、一格升星、盘外Boss总预算与存档", Empty, _ => EndlessService.CheckEcsRules(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
             RevRuntimeAutomation.Register("endless.rules", "隔离实例验证占格、暂停、存档随机源、上限和重复结算", Empty, _ => EndlessChecks.Run(), owner: Owner);
             RevRuntimeAutomation.Register("endless.boss-rules", "隔离实例跑完六章领主：招式归属、专属技周期、献祭潮掉血与预警一致性", Empty, _ => EndlessService.CheckBossSkills(), owner: Owner);
             const string chapterSchema = "{\"type\":\"object\",\"properties\":{\"chapter\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":6}},\"required\":[\"chapter\"],\"additionalProperties\":false}";
@@ -172,6 +176,10 @@ namespace RevGame.Endless
                 ["hasEnemies"] = r != null && (s.HordeCount() > 0 || s.Occupied(GameSide.Enemy) > 0),
                 ["hasKills"] = r != null && r.kills + r.invaderKills > 0,
                 ["seed"] = r?.seed ?? 0,
+                ["heartReady"] = UnityEngine.Object.FindObjectOfType<EndlessArena>()?.HeartReady ?? false,
+                ["bossOutside"] = s.BossUnit()?.Outside ?? false, ["ecsCandidates"] = s.World.CandidateChecks,
+                ["ecsBuilds"] = s.World.SpatialBuilds, ["enemyCapacity"] = s.Horde.Length,
+                ["densityScale"] = r == null ? 1 : s.WaveDensityScale(), ["speedScale"] = r == null ? 1 : s.WaveSpeedScale(),
                 ["bossChapter"] = s.BossUnit()?.BossChapter ?? 0, ["bossHp"] = s.BossUnit()?.Piece.Hp ?? 0, ["bossSkill"] = s.BossUnit() == null ? "" : ((BossSkillKind)s.BossUnit().ChapterSkill).ToString(),
                 ["bossCasts"] = s.BossUnit()?.SkillCasts ?? 0, ["bossCastSerial"] = s.BossCastSerial, ["bossBanner"] = s.BossBanner,
                 ["performance"] = RevUI.Get<EndlessHudPanel>()?.PerformanceSnapshot()
@@ -202,6 +210,10 @@ namespace RevGame.Endless
             {
                 ["assigned"] = assigned, ["distinctZones"] = zones.Count, ["held"] = held
             };
+        }
+        [Serializable] private sealed class StressArgs
+        {
+            public int enemies;
         }
         [Serializable] private sealed class FormationArgs
         {

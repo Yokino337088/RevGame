@@ -39,6 +39,7 @@ namespace RevGame.Editor
             AssetDatabase.Refresh();
             _font = GameAssetBuilder.Font();
             ConfigureTempleArt();
+            ConfigureHeartFrames();
             ConfigureEndlessAudio();
             BuildArena();
             BuildHud();
@@ -131,6 +132,7 @@ namespace RevGame.Editor
                 arena.FindProperty("shieldZoneRenderer").objectReferenceValue = Quad(root.transform, "盾战防御区", Material("EndlessShieldZone", "RevGame/Endless/ShieldZone"), new Vector3(4, 4, 1.8f), new Vector3(9, 9, 1));
                 arena.FindProperty("bubbleRenderer").objectReferenceValue = Quad(root.transform, "防御区护盾泡泡批量", Material("EndlessShieldBubble", "RevGame/Endless/ShieldBubble"), Vector3.zero, Vector3.one);
                 arena.FindProperty("thrustRenderer").objectReferenceValue = Quad(root.transform, "刺客突刺批量", SampledMaterial("EndlessThrust", "RevGame/Endless/Thrust", "_TrailTex", ThrustTrailTexture), Vector3.zero, Vector3.one);
+                BuildHeart(root.transform, arena);
                 arena.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Endless/EndlessArena.prefab");
             }

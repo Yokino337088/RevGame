@@ -34,9 +34,9 @@ namespace RevGame.Endless
                     PutHorde(s, 1, 3.2f, 4);
                     shield.AuraAt = 0;
                     s.UpdateShieldBash(shield);
-                    Check(s.Run.horde[0].hp < 1000 && s.Run.horde[1].hp == 1000, "盾战盾击打到自身3×3范围内的敌人，范围外不受伤", passed);
+                    Check(s.Horde[0].hp < 1000 && s.Horde[1].hp == 1000, "盾战盾击打到自身3×3范围内的敌人，范围外不受伤", passed);
                     Check(shield.AuraAt > s.Run.seconds, "盾击按AuraTickSeconds间隔冷却", passed);
-                    s.Run.horde[0] = s.Run.horde[1] = default(EndlessHorde);
+                    s.Horde[0] = s.Horde[1] = default(EndlessHorde);
 
                     // 第二个盾战 (2,5)：区为 x1~3、y4~6，与第一块重叠 2×2=4 格，并集应为 9+9-4=14。
                     s.AddPlayer(PieceKind.Shield, 2, 5, false);
@@ -63,7 +63,7 @@ namespace RevGame.Endless
                     PutHorde(s, 2, 9.5f, 6);
                     int impacts = s.ImpactSerial;
                     s.AssassinThrust(assassin);
-                    Check(s.Run.horde[0].hp < 1000 && s.Run.horde[1].hp < 1000 && s.Run.horde[2].hp == 1000, "刺客直线贯穿4格内全部敌人，射程外不受伤", passed);
+                    Check(s.Horde[0].hp < 1000 && s.Horde[1].hp < 1000 && s.Horde[2].hp == 1000, "刺客直线贯穿4格内全部敌人，射程外不受伤", passed);
                     bool thrust = false;
                     for (int serial = impacts + 1; serial <= s.ImpactSerial; serial++)
                     {
@@ -72,7 +72,7 @@ namespace RevGame.Endless
                     Check(thrust, "刺客出手写突刺回执", passed);
                     for (int i = 0; i < 3; i++)
                     {
-                        s.Run.horde[i] = default(EndlessHorde);
+                        s.Horde[i] = default(EndlessHorde);
                     }
 
                     // 远程攻速：开战后第一步弓箭手出手，下一次出手间隔 = 基础间隔 ÷ (眼位攻速 × (1 + 远程加成))。
@@ -98,7 +98,7 @@ namespace RevGame.Endless
                     }
                     Check(shots >= 3 && shots <= MaxAttacksPerStep, "攻速高于模拟步时一步内连发且不超过每步上限（本次 " + shots + " 发）", passed);
                     Check(archer.AttackAt > s.Run.seconds - .001f && archer.AttackAt <= s.Run.seconds + expected + .001f, "连发后下次期限落在一个间隔之内", passed);
-                    s.Run.horde[0] = default(EndlessHorde);
+                    s.Horde[0] = default(EndlessHorde);
 
                     // 不停顿：分钟节点与补牌都不改变战斗阶段；手牌按间隔补一张。
                     s.Run.hand.Clear();
@@ -179,7 +179,7 @@ namespace RevGame.Endless
         /// <summary>在指定槽位放一只高血量外围敌人（夹具用，确保一击不死，好比较是否受伤）。</summary>
         private static void PutHorde(EndlessService s, int slot, float x, float y)
         {
-            s.Run.horde[slot] = new EndlessHorde
+            s.Horde[slot] = new EndlessHorde
             {
                 active = true, id = s.Run.nextId++, gate = x < 4 ? 0 : 1, hp = 1000, maxHp = 1000, x = x, y = y, speed = 0
             };

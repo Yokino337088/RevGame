@@ -24,6 +24,7 @@ namespace RevGame.Endless
         private readonly HashSet<int> _pending = new HashSet<int>();
         private readonly List<int> _remove = new List<int>(81);
         private Mesh _hordeMesh;
+        private int _hordeDrawCount;
         private Vector3[] _vertices;
         private Vector2[] _uv;
         private Color[] _colors;
@@ -62,6 +63,8 @@ namespace RevGame.Endless
         public void OnPoolGet()
         {
             _generation++;
+            _heartFrame = -1;
+            _heartRatio = -1;
             _active = true;
             Ready = false;
             Error = "";
@@ -178,6 +181,7 @@ namespace RevGame.Endless
             UpdateAuras(service);
             UpdateGuard(service);
             UpdatePlacement(service);
+            UpdateHeart(service);
             _shakeBoost = Mathf.MoveTowards(_shakeBoost, 0, Time.unscaledDeltaTime * .5f);
             _shakeOffset = service.Run.shake ? Mathf.Sin(Time.unscaledTime * 62) * _shakeBoost : 0;
             EndlessUnit boss = service.BossUnit();
@@ -221,14 +225,14 @@ namespace RevGame.Endless
                 Vector3 world = _camera.ScreenToWorldPoint(Input.mousePosition);
                 service.ClickCell(Mathf.RoundToInt(world.x), Mathf.RoundToInt(world.y));
             }
-            Ready = _pieces.Count == service.Units.Count && _pending.Count == 0 && _frames[0].texture != null;
+            Ready = _pieces.Count == service.Units.Count && _pending.Count == 0 && _frames[0].texture != null && HeartReady;
         }
         private void SyncPieces(EndlessService service)
         {
             _remove.Clear();
             foreach (var pair in _pieces)
             {
-                if (service.Board.FindPiece(pair.Key) == null)
+                if (service.Find(pair.Key) == null)
                 {
                     // 死亡的播六章溶解，三合一被吃掉的直接回池（见 RetirePieceView）。
                     RetirePieceView(pair.Key, pair.Value);
@@ -254,7 +258,7 @@ namespace RevGame.Endless
                 view.Bind(p.Id, p.Def.Kind, p.Def.Star, p.Side);
                 CheckUpgrade(view, p.Id, p.Def.Star);
                 view.SetBodySize(p.Size, p.IsBoss, false);
-                Vector2 pos = EndlessService.Position(p);
+                Vector2 pos = service.ActorPosition(unit);
                 view.MoveTo(new Vector3(pos.x, pos.y, -0.5f));
                 view.SetHp(p.HpRatio);
                 view.SetLocked(p.IsLocked);
@@ -281,7 +285,7 @@ namespace RevGame.Endless
                     Error = "棋子预制体加载失败";
                     return;
                 }
-                var p = RevServices.GetRequired<EndlessService>().Board.FindPiece(id);
+                var p = RevServices.GetRequired<EndlessService>().Find(id)?.Piece;
                 if (p == null)
                 {
                     // 加载期间已经阵亡或被合掉：不画一颗不存在的棋子。
@@ -290,7 +294,7 @@ namespace RevGame.Endless
                     return;
                 }
                 _pieces[id] = view;
-                Vector2 pos = EndlessService.Position(p);
+                Vector2 pos = RevServices.GetRequired<EndlessService>().ActorPosition(RevServices.GetRequired<EndlessService>().Find(id));
                 view.Bind(p.Id, p.Def.Kind, p.Def.Star, p.Side);
                 view.SetBodySize(p.Size, p.IsBoss, false);
                 view.SnapTo(new Vector3(pos.x, pos.y, -0.5f));
@@ -302,13 +306,16 @@ namespace RevGame.Endless
         }
         private void UpdateHorde(EndlessRun run)
         {
+            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
             int frame = (int)(run.seconds * 5) % _frames.Length;
             // 图集分页可能让帧换页；每批只使用当前统一帧的真实纹理，UV与纹理总是配对。
             _hordeProperties.SetTexture("_MainTex", _frames[frame].texture);
             hordeRenderer.SetPropertyBlock(_hordeProperties);
-            for (int i = 0; i < run.horde.Length; i++)
+            int active = horde.ActiveCount;
+            for (int cursor = 0; cursor < active; cursor++)
             {
-                EndlessHorde h = run.horde[i];
+                int i = horde.ActiveSlot(cursor);
+                EndlessHorde h = horde[i];
                 // 正在播出生燃烧的杂兵由 PieceView 代画，网格里先隐藏，避免同一只怪画两遍。
                 float half = h.active && !HordeDrawnByView(i) ? (h.kind >= 6 ? .8f : HordeQuadHalf) : 0;
                 // 颜色就是信息：金色=献祭潮（杀了伤领主），绿色=毒囊（杀了会爆炸）。
@@ -318,8 +325,14 @@ namespace RevGame.Endless
                 {
                     color = h.kind >= 5 ? new Color(1, .35f, .4f) : h.kind == 3 ? Palette[3] : h.kind == 4 ? Palette[2] : Color.white;
                 }
-                Quad(_vertices, _uv, _colors, i, new Vector2(h.x, h.y), half, half, _frameUvs[frame], color, -0.3f);
+                Quad(_vertices, _uv, _colors, cursor, new Vector2(h.x, h.y), half, half, _frameUvs[frame], color, -0.3f);
             }
+            // 顶点区只写当前实体，清掉上一帧尾部；渲染不再为1024个空槽重复写颜色和UV。
+            for (int i = active * 4; i < _hordeDrawCount * 4; i++)
+            {
+                _vertices[i] = Vector3.zero;
+            }
+            _hordeDrawCount = active;
             _hordeMesh.vertices = _vertices;
             _hordeMesh.uv = _uv;
             _hordeMesh.colors = _colors;

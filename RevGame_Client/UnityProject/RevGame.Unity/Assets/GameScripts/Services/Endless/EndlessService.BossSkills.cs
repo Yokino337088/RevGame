@@ -196,9 +196,9 @@ namespace RevGame.Endless
         private void StrikeHorde(BossSkillInfo info, int openingEffect, int stageEffect)
         {
             float hitRatio = V("SkillHordeHit");
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                EndlessHorde h = Run.horde[i];
+                EndlessHorde h = Horde[i];
                 if (!h.active || h.hp <= 0)
                 {
                     continue;
@@ -221,7 +221,7 @@ namespace RevGame.Endless
                     h.x += h.gate == 0 ? -1.5f : h.gate == 1 ? 1.5f : 0;
                     h.y += h.gate == 2 ? -1.5f : h.gate == 3 ? 1.5f : 0;
                 }
-                Run.horde[i] = h;
+                Horde[i] = h;
                 if (struck)
                 {
                     // 圣裁直接打掉全部生命，其余招式按比例。HitHorde 只扣血，死亡统一在 ResolveDeaths 结算，奖励不会重复。
@@ -239,18 +239,19 @@ namespace RevGame.Endless
             int count = row.Effect == 0 ? row.Surge * 3 / 2 : row.Surge;
             for (int n = 0; n < count; n++)
             {
-                int slot = Array.FindIndex(Run.horde, h => !h.active);
+                int slot = Horde.FirstFree();
                 if (slot < 0 || !SpawnHorde())
                 {
                     return;
                 }
-                EndlessHorde spawned = Run.horde[slot];
+                EndlessHorde spawned = Horde[slot];
                 spawned.surge = true;
                 spawned.pustule = row.Effect == 3;
                 spawned.hp = Mathf.Max(1, spawned.hp * V("SurgeHpScale"));
                 spawned.maxHp = spawned.hp;
                 spawned.speed *= V("SurgeSpeedScale");
-                Run.horde[slot] = spawned;
+                Horde[slot] = spawned;
+                World.InvalidateSpatial();
             }
         }
 
@@ -265,7 +266,7 @@ namespace RevGame.Endless
             if (boss != null && boss.Piece.IsAlive)
             {
                 HitUnit(boss, boss.Piece.MaxHp * V("SurgeBossDamage"), Run.formation);
-                Impact(pos, Position(boss.Piece), Run.formation);
+                Impact(pos, ActorPosition(boss), Run.formation);
             }
             if (h.pustule)
             {

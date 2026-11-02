@@ -26,7 +26,7 @@ namespace RevGame.Endless
                 {
                     s.Begin(1, 0, 2202, true);
                     s.StartWave();
-                    Check(s.Run.horde.Length == N("HordeLimit") && N("HordeLimit") >= 240, "外围并发上限按表加倍到240", passed);
+                    Check(s.Horde.Length == N("HordeLimit") && N("HordeLimit") >= 240, "外围并发上限按表加倍到240", passed);
 
                     // 波次：第 4 波（已过 3 波）的杂兵血量 = 基础 × (1 + 3 × WaveHpGrowth)，攻击同理。
                     s.Run.seconds = V("MinuteSeconds") * 3 + 1;
@@ -34,9 +34,9 @@ namespace RevGame.Endless
                     int slot = FreeSlot(s);
                     Check(s.SpawnHorde(), "可以刷出外围杂兵", passed);
                     float expectedHp = V("HordeHp") * (1 + 3 * V("WaveHpGrowth"));
-                    Check(Mathf.Abs(s.Run.horde[slot].hp - expectedHp) < .01f, "敌人血量随波次成长", passed);
+                    Check(Mathf.Abs(s.Horde[slot].hp - expectedHp) < .01f, "敌人血量随波次成长", passed);
                     Check(Mathf.Abs(s.HordeAttackScale() - (1 + 3 * V("WaveAttackGrowth"))) < .0001f, "敌人攻击随波次成长", passed);
-                    s.Run.horde[slot] = default(EndlessHorde);
+                    s.Horde[slot] = default(EndlessHorde);
 
                     // 快节奏敌潮：出生期限积压时，一步内连刷（期限追上“现在”后再补一只），不会一口气补刷一大坨。
                     s.Run.nextInvader = s.Run.nextElite = s.Run.nextBoss = float.MaxValue;
@@ -53,9 +53,9 @@ namespace RevGame.Endless
                     s.UpdateDirector(.5f);
                     spawned = s.HordeCount() - hordeBefore;
                     Check(spawned == MaxSpawnsPerStep, "积压很久也最多每步刷 " + MaxSpawnsPerStep + " 只（本次 " + spawned + " 只）", passed);
-                    for (int i = 0; i < s.Run.horde.Length; i++)
+                    for (int i = 0; i < s.Horde.Length; i++)
                     {
-                        s.Run.horde[i] = default(EndlessHorde);
+                        s.Horde[i] = default(EndlessHorde);
                     }
 
                     // 领主来袭：每 BossInterval（10 波）刷一只领主，并推一条大横幅。
@@ -67,9 +67,9 @@ namespace RevGame.Endless
                     s.UpdateDirector(.1f);
                     Check(s.HasBossIdentity() && s.Run.nextBoss > s.Run.seconds, "到点刷出领主", passed);
                     Check(s.MajorBannerSerial > banner && s.MajorBanner.Contains("领主来袭"), "领主来袭推大横幅", passed);
-                    for (int i = 0; i < s.Run.horde.Length; i++)
+                    for (int i = 0; i < s.Horde.Length; i++)
                     {
-                        s.Run.horde[i] = default(EndlessHorde);
+                        s.Horde[i] = default(EndlessHorde);
                     }
 
                     // 领主奖励：击杀领主（RewardEnemy 角色 ≥ 6）随机获得 EndlessBoon 表里的一条增益，推彩色大横幅。
@@ -154,9 +154,9 @@ namespace RevGame.Endless
         }
         private static int FreeSlot(EndlessService s)
         {
-            for (int i = 0; i < s.Run.horde.Length; i++)
+            for (int i = 0; i < s.Horde.Length; i++)
             {
-                if (!s.Run.horde[i].active)
+                if (!s.Horde[i].active)
                 {
                     return i;
                 }

@@ -346,22 +346,13 @@ namespace RevGame.Endless
                 return Reject("需要三枚同名同星主力");
             }
             StarTier star = (StarTier)((int)selected.Piece.Def.Star + 1);
-            int size = PieceCatalog.PlayerBodySize(star);
+            int size = 1; // 无尽升星只改变战力与星标，始终占一格；六章尺寸规则继续原样。
             BoardPos pos = selected.Piece.Pos;
             if (!Fits(pos, size, GameSide.Player, null, _consumed))
             {
                 return Reject("升星后的完整占地不合法，未消耗任何棋子");
             }
-            int oldArea = 0;
-            foreach (Piece p in _consumed)
-            {
-                oldArea += p.Size * p.Size;
-            }
-            if (Occupied(GameSide.Player) - oldArea + size * size > N("PlayerCells"))
-            {
-                return Reject("合星后超过占地上限");
-            }
-            Piece merged = new Piece(selected.Piece.Id, PieceCatalog.Get(selected.Piece.Def.Kind, star), GameSide.Player);
+            Piece merged = new Piece(selected.Piece.Id, PieceCatalog.Get(selected.Piece.Def.Kind, star), GameSide.Player, size: 1);
             for (int i = Units.Count - 1; i >= 0; i--)
             {
                 if (_consumed.Contains(Units[i].Piece))

@@ -15,7 +15,24 @@ namespace RevGame.Endless
     public sealed partial class EndlessService : IDisposable
     {
         public readonly BoardModel Board = new BoardModel(9, new BoardPos(4, 4));
-        public readonly List<EndlessUnit> Units = new List<EndlessUnit>(81);
+        /// <summary>本局轻量ECS世界，出生后持有组件与索引，退出即清空；六章不会创建它。</summary>
+        public EndlessEcsWorld World
+        {
+            get;
+            private set;
+        }
+        = new EndlessEcsWorld(0);
+        /// <summary>敌潮组件池唯一真源；保存时才导出快照，不从Run.horde驱动热循环。</summary>
+        public EndlessHordeComponents Horde => World.Horde;
+        /// <summary>盘内演员和盘外领主的实体组件索引，随World一起释放。</summary>
+        public EndlessActorComponents Units => World.Actors;
+        /// <summary>按用途拥有独立候选缓冲，范围攻击嵌套不覆盖普攻/雷链正在遍历的名单。</summary>
+        private readonly List<int> _attackCandidates = new List<int>(256), _areaCandidates = new List<int>(256);
+        private readonly List<int> _chainCandidates = new List<int>(256), _auraCandidates = new List<int>(256);
+        private readonly List<int> _rayCandidates = new List<int>(256);
+        private readonly List<int> _comboCandidates = new List<int>(1024), _slowCandidates = new List<int>(1024);
+        /// <summary>移动遍历快照只保存槽号；死亡回调会重建活跃索引，不能让它改变正在推进的名单。</summary>
+        private int[] _marchSlots = new int[0];
         public readonly EndlessImpact[] Impacts = new EndlessImpact[512];
         /// <summary>伤害数字回执，表现层按 DamageSerial 读取新增部分；容量只影响显示，不影响结算。</summary>
         public readonly EndlessDamageReceipt[] DamageReceipts = new EndlessDamageReceipt[512];
@@ -93,13 +110,14 @@ namespace RevGame.Endless
             }
             Clear();
             Isolated = isolated;
+            World = new EndlessEcsWorld(N("HordeLimit"));
             Run = new EndlessRun
             {
                 formation = formation, difficulty = difficulty, seed = seed, random = unchecked((uint)seed) | 1u,
                 runId = Guid.NewGuid().ToString("N"), heart = V("HeartHp"), phase = EndlessPhase.Formation,
                 formationLeft = V("PreparationSeconds"), rerolls = N("Rerolls"), banishes = N("Banishes"),
                 nextMinute = V("MinuteSeconds"), nextBoss = V("BossInterval"), nextElite = V("EliteInterval"),
-                nextEvent = V("EventSeconds"), nextSave = V("SaveSeconds"), horde = new EndlessHorde[N("HordeLimit")]
+                nextEvent = V("EventSeconds"), nextSave = V("SaveSeconds"), horde = null
             };
             PieceKind primary = formation == 0 ? PieceKind.Crossbow : formation == 1 ? PieceKind.MageFire : PieceKind.Priest;
             // 开局棋阵来自 Excel EndlessFormation：每个棋阵 8 枚左右，开局就能凑出组合技、近战带剑气守门，满屏开火。
@@ -131,7 +149,7 @@ namespace RevGame.Endless
         }
         private EndlessUnit AddPlayer(PieceKind kind, int x, int y, bool stone, bool summoned = false)
         {
-            var piece = new Piece(Run.nextId++, PieceCatalog.Get(kind, StarTier.One), GameSide.Player);
+            var piece = new Piece(Run.nextId++, PieceCatalog.Get(kind, StarTier.One), GameSide.Player, size: 1);
             // 纸甲祝福与领主“不灭圣体”都改生命上限；新上场的棋子也要吃到，否则滚雪球只对老棋子生效。
             piece.SetRoundHealthScale(PlayerHealthScale());
             if (!Fits(new BoardPos(x, y), piece.Size, GameSide.Player) || !Board.Place(piece, new BoardPos(x, y)))
@@ -173,7 +191,7 @@ namespace RevGame.Endless
             for (int i = 0; i < Units.Count; i++)
             {
                 Piece p = Units[i].Piece;
-                if (p.Side == side)
+                if (p.Side == side && !Units[i].Outside)
                 {
                     cells += p.Size * p.Size;
                 }
@@ -183,9 +201,9 @@ namespace RevGame.Endless
         public int HordeCount()
         {
             int count = 0;
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                if (Run.horde[i].active)
+                if (Horde[i].active)
                 {
                     count++;
                 }
@@ -305,7 +323,7 @@ namespace RevGame.Endless
         /// <summary>先预检空间/上限，再扣牌。失败不改变手牌、随机数或占格。</summary>
         private bool Deploy(int index, BoardPos pos)
         {
-            if (index >= Run.hand.Count || PlayerCount() >= N("PlayerLimit") || Occupied(GameSide.Player) + 1 > N("PlayerCells"))
+            if (index < 0 || index >= Run.hand.Count)
             {
                 return Reject("棋盘放满了，把牌放到同名棋子上可以升星");
             }
@@ -351,16 +369,10 @@ namespace RevGame.Endless
             Run.selectedUnit = -1;
             LastError = error;
         }
-        private EndlessUnit Find(int id)
+        /// <summary>Id来自本局实体注册表，死亡/升星移除时同步失效，不扫描整个演员名单。</summary>
+        public EndlessUnit Find(int id)
         {
-            for (int i = 0; i < Units.Count; i++)
-            {
-                if (Units[i].Piece.Id == id)
-                {
-                    return Units[i];
-                }
-            }
-            return null;
+            return Units.Find(id);
         }
         private void RefreshRules()
         {
@@ -442,7 +454,7 @@ namespace RevGame.Endless
                     // 点同名一星棋子可以升星（规则见 MergeWithCard：还需要场上另一枚同名一星），六章同样把这类格子点亮。
                     return CanMergeCardInto(at, (PieceKind)Run.hand[Run.selectedCard]);
                 }
-                return PlayerCount() < N("PlayerLimit") && Occupied(GameSide.Player) + 1 <= N("PlayerCells") && Fits(pos, 1, GameSide.Player);
+                return Fits(pos, 1, GameSide.Player);
             }
             EndlessUnit unit = Find(Run.selectedUnit);
             if (unit == null)
@@ -484,6 +496,7 @@ namespace RevGame.Endless
         private void Clear()
         {
             Units.Clear();
+            World?.Horde.Clear();
             Board.Reset();
             _ruleVersion = -1;
             _impactSerial = 0;
@@ -503,6 +516,7 @@ namespace RevGame.Endless
             _targets.Clear();
             _consumed.Clear();
             Run = null;
+            World = new EndlessEcsWorld(0);
         }
     }
 }

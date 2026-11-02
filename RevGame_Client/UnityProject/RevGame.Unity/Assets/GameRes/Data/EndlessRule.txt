@@ -30,7 +30,7 @@ RelicHp	10	临时边缘遗迹生命
 GateQueueRows	7	门外排队纵深层数
 GateQueueSpacing	0.5	同一行杂兵排队间距/格（涌入后前后排距离）
 HordeLaneJitter	0.18	外围队列横向错位/格
-HordeLimit	240	外围并发上限（数量加倍）
+HordeLimit	1024	ECS外围并发容量，按需活跃
 PlayerLimit	37	玩家主力上限（在12的基础上+25）
 PlayerCells	49	玩家占地含棋心（与EnemyCells合计不超过81格）
 EnemyCells	32	敌军占地上限
@@ -161,3 +161,11 @@ AssassinRange	4	刺客直线贯穿攻击长度/格
 ShieldBashRatio	0.5	盾战环绕盾牌对3×3范围内敌人的单次伤害=攻击×该比例（间隔同AuraTickSeconds）
 WaveHpGrowth	0.08	敌人每过一波血量增量（第N波×(1+N×该值)，与巡回成长相乘）
 WaveAttackGrowth	0.04	敌人每过一波攻击增量（同上）
+WaveDensityGrowth	0.1	每过一波出生密度增加比例
+WaveDensityCap	4	波次出生密度倍率上限
+WaveSpeedGrowth	0.035	每过一波现存/新生敌人的移速增加比例
+WaveSpeedCap	2.5	波次移速倍率上限
+BossEntranceSeconds	2.5	盘外领主入场演出和受伤开放前的秒数
+BossStandoff	1.2	领主中心停在棋盘边缘外多少格
+BossMoveScale	0.75	盘外领主行走速度相对杂兵倍率
+BossDamagePerSecond	0.08	全部伤害来源每秒最多扣领主最大生命的比例

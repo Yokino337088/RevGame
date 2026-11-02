@@ -156,9 +156,11 @@ namespace RevGame.Endless
             }
             Vector2 first = from + ray * length;
             float nearest = float.MaxValue;
-            for (int i = 0; i < Run.horde.Length; i++)
+            QueryRay(from, ray, length, _rayCandidates);
+            for (int cursor = 0; cursor < _rayCandidates.Count; cursor++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _rayCandidates[cursor];
+                EndlessHorde h = Horde[i];
                 if (h.active && h.hp > 0 && OnRay(from, ray, new Vector2(h.x, h.y), length, out float along))
                 {
                     HitHorde(i, damage, 5);
@@ -172,13 +174,13 @@ namespace RevGame.Endless
             for (int i = 0; i < Units.Count; i++)
             {
                 Piece e = Units[i].Piece;
-                if (e.Side == GameSide.Enemy && e.IsAlive && OnRay(from, ray, Position(e), length + (e.Size - 1) * .5f, out float along))
+                if (e.Side == GameSide.Enemy && e.IsAlive && OnRay(from, ray, ActorPosition(Units[i]), length + (e.Size - 1) * .5f, out float along))
                 {
                     HitUnit(Units[i], damage, 5);
                     if (along < nearest)
                     {
                         nearest = along;
-                        first = Position(e);
+                        first = ActorPosition(Units[i]);
                     }
                 }
             }
@@ -189,9 +191,11 @@ namespace RevGame.Endless
         private int CountOnRay(Vector2 from, Vector2 ray, float length)
         {
             int count = 0;
-            for (int i = 0; i < Run.horde.Length; i++)
+            QueryRay(from, ray, length, _rayCandidates);
+            for (int cursor = 0; cursor < _rayCandidates.Count; cursor++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _rayCandidates[cursor];
+                EndlessHorde h = Horde[i];
                 if (h.active && h.hp > 0 && OnRay(from, ray, new Vector2(h.x, h.y), length, out _))
                 {
                     count++;
@@ -200,7 +204,7 @@ namespace RevGame.Endless
             for (int i = 0; i < Units.Count; i++)
             {
                 Piece e = Units[i].Piece;
-                if (e.Side == GameSide.Enemy && e.IsAlive && OnRay(from, ray, Position(e), length + (e.Size - 1) * .5f, out _))
+                if (e.Side == GameSide.Enemy && e.IsAlive && OnRay(from, ray, ActorPosition(Units[i]), length + (e.Size - 1) * .5f, out _))
                 {
                     count++;
                 }
@@ -238,9 +242,9 @@ namespace RevGame.Endless
             System.Array.Clear(_zoneThreat, 0, ZoneCount);
             System.Array.Clear(_zoneDefense, 0, ZoneCount);
             bool anyThreat = false;
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                EndlessHorde h = Run.horde[i];
+                EndlessHorde h = Horde[i];
                 if (h.active && h.hp > 0)
                 {
                     _zoneThreat[ZoneOf(new Vector2(h.x, h.y))] += h.hp;
@@ -389,9 +393,9 @@ namespace RevGame.Endless
         {
             target = from;
             float best = float.MaxValue;
-            for (int i = 0; i < Run.horde.Length; i++)
+            for (int i = 0; i < Horde.Length; i++)
             {
-                EndlessHorde h = Run.horde[i];
+                EndlessHorde h = Horde[i];
                 Vector2 at = new Vector2(h.x, h.y);
                 if (!h.active || h.hp <= 0 || ZoneOf(at) != zone)
                 {

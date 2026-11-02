@@ -1,0 +1,91 @@
+{
+  "name": "无尽ECS完整规则收尾_2026-11-02",
+  "steps": [
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Endless"
+        },
+        {
+          "path": "/data/heartReady",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.ecs-rules",
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.ecs-benchmark",
+      "expect": [
+        {
+          "path": "/data/success",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.extended-rules"
+    },
+    {
+      "target": "game",
+      "action": "endless.guard-rules"
+    },
+    {
+      "target": "game",
+      "action": "endless.snowball-rules"
+    },
+    {
+      "target": "game",
+      "action": "endless.boss-rules"
+    }
+  ],
+  "finally": [
+    {
+      "target": "game",
+      "action": "endless.home"
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {
+        "path": "/data/transitioning",
+        "equals": false,
+        "timeoutSeconds": 40,
+        "intervalSeconds": 0.5
+      },
+      "expect": [
+        {
+          "path": "/data/screen",
+          "equals": "Home"
+        },
+        {
+          "path": "/data/logicCount",
+          "equals": 0
+        },
+        {
+          "path": "/data/enemyCapacity",
+          "equals": 0
+        }
+      ]
+    }
+  ]
+}

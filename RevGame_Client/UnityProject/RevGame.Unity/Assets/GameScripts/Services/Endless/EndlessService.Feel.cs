@@ -92,9 +92,11 @@ namespace RevGame.Endless
             Vector2 center = Position(p);
             float squared = radius * radius;
             int limit = N("AuraTargetLimit"), hits = 0, shown = 0;
-            for (int i = 0; i < Run.horde.Length && hits < limit; i++)
+            World.Query(center.x - radius, center.y - radius, center.x + radius, center.y + radius, _auraCandidates);
+            for (int cursor = 0; cursor < _auraCandidates.Count && hits < limit; cursor++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _auraCandidates[cursor];
+                EndlessHorde h = Horde[i];
                 Vector2 at = new Vector2(h.x, h.y);
                 if (!h.active || h.hp <= 0 || (at - center).sqrMagnitude > squared)
                 {
@@ -117,7 +119,7 @@ namespace RevGame.Endless
                     continue;
                 }
                 float reach = radius + (e.Size - 1) * .5f;
-                if ((Position(e) - center).sqrMagnitude > reach * reach)
+                if ((ActorPosition(enemy) - center).sqrMagnitude > reach * reach)
                 {
                     continue;
                 }
@@ -125,7 +127,7 @@ namespace RevGame.Endless
                 hits++;
                 if (shown < AuraSlashVisuals)
                 {
-                    ImpactFx(center, Position(e), AuraRoute, 0, p.Id, p.Def.Kind, true, 0);
+                    ImpactFx(center, ActorPosition(enemy), AuraRoute, 0, p.Id, p.Def.Kind, true, 0);
                     shown++;
                 }
             }
@@ -269,9 +271,11 @@ namespace RevGame.Endless
             Vector2 ray = (target - from).sqrMagnitude > .0001f ? (target - from).normalized : Vector2.right;
             float length = V("OuterRange");
             float farthest = Mathf.Min(length, Vector2.Distance(from, target));
-            for (int i = 0; i < Run.horde.Length; i++)
+            QueryRay(from, ray, length, _comboCandidates);
+            for (int cursorIndex = 0; cursorIndex < _comboCandidates.Count; cursorIndex++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _comboCandidates[cursorIndex];
+                EndlessHorde h = Horde[i];
                 if (!h.active || h.hp <= 0 || !OnRay(from, ray, new Vector2(h.x, h.y), length, out float along))
                 {
                     continue;
@@ -283,7 +287,7 @@ namespace RevGame.Endless
             for (int i = 0; i < Units.Count; i++)
             {
                 Piece e = Units[i].Piece;
-                if (e.Side == GameSide.Enemy && e.IsAlive && OnRay(from, ray, Position(e), length, out float along))
+                if (e.Side == GameSide.Enemy && e.IsAlive && OnRay(from, ray, ActorPosition(Units[i]), length, out float along))
                 {
                     HitUnit(Units[i], damage, route);
                     farthest = Mathf.Max(farthest, along);
@@ -308,9 +312,11 @@ namespace RevGame.Endless
                 Vector2 ray = Quaternion.Euler(0, 0, angle) * forward;
                 int best = -1;
                 float nearest = float.MaxValue;
-                for (int i = 0; i < Run.horde.Length; i++)
+                QueryRay(from, ray, length, _comboCandidates);
+                for (int cursorIndex = 0; cursorIndex < _comboCandidates.Count; cursorIndex++)
                 {
-                    EndlessHorde h = Run.horde[i];
+                    int i = _comboCandidates[cursorIndex];
+                    EndlessHorde h = Horde[i];
                     if (h.active && h.hp > 0 && OnRay(from, ray, new Vector2(h.x, h.y), length, out float along) && along < nearest)
                     {
                         best = i;
@@ -321,9 +327,9 @@ namespace RevGame.Endless
                 if (best >= 0)
                 {
                     HitHorde(best, damage, route);
-                    EndlessHorde h = Run.horde[best];
+                    EndlessHorde h = Horde[best];
                     h.slowUntil = Run.seconds + V("FreezeSeconds");
-                    Run.horde[best] = h;
+                    Horde[best] = h;
                 }
                 ImpactFx(from, end, 0, 0, 0, PieceKind.Crossbow, true, 0);
             }
@@ -334,10 +340,12 @@ namespace RevGame.Endless
             float range = V("OuterRange");
             for (int n = 0; n < count; n++)
             {
+                World.Query(from.x - range, from.y - range, from.x + range, from.y + range, _comboCandidates);
                 int candidates = 0;
-                for (int i = 0; i < Run.horde.Length; i++)
+                for (int cursorIndex = 0; cursorIndex < _comboCandidates.Count; cursorIndex++)
                 {
-                    EndlessHorde h = Run.horde[i];
+                    int i = _comboCandidates[cursorIndex];
+                    EndlessHorde h = Horde[i];
                     if (h.active && h.hp > 0 && Mathf.Max(Mathf.Abs(h.x - from.x), Mathf.Abs(h.y - from.y)) <= range)
                     {
                         candidates++;
@@ -349,9 +357,10 @@ namespace RevGame.Endless
                 }
                 // 第 pick 个候选；Next 来自存档随机源，读档后结果一致。
                 int pick = Next(candidates);
-                for (int i = 0; i < Run.horde.Length; i++)
+                for (int cursorIndex = 0; cursorIndex < _comboCandidates.Count; cursorIndex++)
                 {
-                    EndlessHorde h = Run.horde[i];
+                    int i = _comboCandidates[cursorIndex];
+                    EndlessHorde h = Horde[i];
                     if (!h.active || h.hp <= 0 || Mathf.Max(Mathf.Abs(h.x - from.x), Mathf.Abs(h.y - from.y)) > range)
                     {
                         continue;
@@ -381,9 +390,11 @@ namespace RevGame.Endless
             {
                 int best = -1;
                 float nearest = squared;
-                for (int i = 0; i < Run.horde.Length; i++)
+                World.Query(from.x - radius, from.y - radius, from.x + radius, from.y + radius, _comboCandidates);
+                for (int cursorIndex = 0; cursorIndex < _comboCandidates.Count; cursorIndex++)
                 {
-                    EndlessHorde h = Run.horde[i];
+                    int i = _comboCandidates[cursorIndex];
+                    EndlessHorde h = Horde[i];
                     if (!h.active || h.hp <= 0 || i == previous)
                     {
                         continue;
@@ -406,7 +417,7 @@ namespace RevGame.Endless
                 }
                 _chainHit[n] = best;
                 previous = best;
-                Vector2 at = new Vector2(Run.horde[best].x, Run.horde[best].y);
+                Vector2 at = new Vector2(Horde[best].x, Horde[best].y);
                 HitHorde(best, damage, route);
                 ImpactFx(cursor, at, 5, 0, 0, kind, true, 0);
                 cursor = at;
@@ -415,22 +426,24 @@ namespace RevGame.Endless
         /// <summary>点燃外围敌人：沿用原有灼烧规则（BurnSeconds 秒、每秒 BurnRatio×伤害）。</summary>
         private void Ignite(int index, float damage)
         {
-            EndlessHorde h = Run.horde[index];
+            EndlessHorde h = Horde[index];
             h.burnUntil = Run.seconds + V("BurnSeconds");
             h.burnDamage = damage * V("BurnRatio");
-            Run.horde[index] = h;
+            Horde[index] = h;
         }
         /// <summary>半径内外围敌人减速 FreezeSeconds 秒。</summary>
         private void SlowAround(Vector2 center, float radius)
         {
             float squared = radius * radius;
-            for (int i = 0; i < Run.horde.Length; i++)
+            World.Query(center.x - radius, center.y - radius, center.x + radius, center.y + radius, _slowCandidates);
+            for (int cursorIndex = 0; cursorIndex < _slowCandidates.Count; cursorIndex++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _slowCandidates[cursorIndex];
+                EndlessHorde h = Horde[i];
                 if (h.active && (new Vector2(h.x, h.y) - center).sqrMagnitude <= squared)
                 {
                     h.slowUntil = Run.seconds + V("FreezeSeconds");
-                    Run.horde[i] = h;
+                    Horde[i] = h;
                 }
             }
         }

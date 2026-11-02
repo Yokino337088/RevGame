@@ -48,6 +48,7 @@ namespace RevGame.Endless
         private readonly float[] _soundAt = new float[5];
 
         private Mesh _auraMesh, _barMesh;
+        private int _barDrawCount;
         private Vector3[] _auraVertices, _barVertices;
         private Vector2[] _auraUv, _auraData, _barUv;
         private Color[] _auraColors, _barColors;
@@ -227,14 +228,16 @@ namespace RevGame.Endless
         /// <summary>每帧重写外围血条：只画活着、受过伤、且没有被出生视图代画的敌人。</summary>
         private void UpdateHordeBars(EndlessRun run)
         {
+            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
             int bars = 0;
-            for (int i = 0; i < run.horde.Length; i++)
+            int active = horde.ActiveCount;
+            for (int cursor = 0; cursor < active; cursor++)
             {
-                EndlessHorde h = run.horde[i];
-                int v = i * 4;
+                int i = horde.ActiveSlot(cursor);
+                EndlessHorde h = horde[i];
+                int v = bars * 4;
                 if (!h.active || h.hp >= h.maxHp || h.maxHp <= 0 || HordeDrawnByView(i))
                 {
-                    _barVertices[v] = _barVertices[v + 1] = _barVertices[v + 2] = _barVertices[v + 3] = Vector3.zero;
                     continue;
                 }
                 float ratio = Mathf.Clamp01(h.hp / h.maxHp);
@@ -253,6 +256,11 @@ namespace RevGame.Endless
                 }
                 bars++;
             }
+            for (int i = bars * 4; i < _barDrawCount * 4; i++)
+            {
+                _barVertices[i] = Vector3.zero;
+            }
+            _barDrawCount = bars;
             _barMesh.vertices = _barVertices;
             _barMesh.colors = _barColors;
             HordeBarCount = bars;

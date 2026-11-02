@@ -38,21 +38,14 @@ namespace RevGame.Endless
             {
                 return Reject("场上已有领主");
             }
-            if (!QueueInvader(false, 0))
+            if (!SpawnOutsideBoss(0))
             {
-                return Reject("外围队列已满");
+                return Reject("场上已有领主");
             }
-            for (int i = 0; i < Run.horde.Length; i++)
-            {
-                if (Run.horde[i].active && Run.horde[i].kind >= 6 && TryEnterBoard(i))
-                {
-                    EndlessUnit boss = BossUnit();
-                    boss.BossChapter = chapter;
-                    boss.NextSkillAt = Run.seconds;
-                    return true;
-                }
-            }
-            return Reject("棋盘放不下领主");
+            EndlessUnit boss = BossUnit();
+            boss.BossChapter = chapter;
+            boss.NextSkillAt = Run.seconds;
+            return true;
         }
 
         /// <summary>跑完六章领主：每章都要能放普通招式和专属技，且满足下面逐条断言。</summary>
@@ -104,9 +97,9 @@ namespace RevGame.Endless
                 }
                 Check((BossSkillKind)boss.ChapterSkill == EndlessConfig.ParseSkill(row) && IsExclusiveCast(boss), tag + "每隔固定次数释放专属技", passed);
                 int surge = 0, index = -1;
-                for (int i = 0; i < s.Run.horde.Length; i++)
+                for (int i = 0; i < s.Horde.Length; i++)
                 {
-                    if (s.Run.horde[i].active && s.Run.horde[i].surge)
+                    if (s.Horde[i].active && s.Horde[i].surge)
                     {
                         surge++;
                         index = i;
@@ -116,7 +109,9 @@ namespace RevGame.Endless
 
                 // 割草的核心约定：杀一只献祭潮，领主一定掉血，而且只掉一次。
                 int before = boss.Piece.Hp;
-                s.Run.horde[index].hp = 0;
+                EndlessHorde dead = s.Horde[index];
+                dead.hp = 0;
+                s.Horde[index] = dead;
                 s.ResolveDeaths();
                 Check(boss.Piece.Hp < before, tag + "击杀献祭潮会让领主掉血", passed);
                 int after = boss.Piece.Hp;

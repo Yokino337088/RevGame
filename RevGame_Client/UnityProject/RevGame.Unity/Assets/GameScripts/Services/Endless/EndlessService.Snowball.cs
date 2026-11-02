@@ -23,7 +23,17 @@ namespace RevGame.Endless
     {
         /// <summary>当前是第几波（从 1 开始，给玩家看）。</summary>
         public int WaveNumber => Run == null ? 0 : (int)(Run.seconds / V("MinuteSeconds")) + 1;
-        /// <summary>按波次的敌人血量倍率：第 1 波为 1，之后每波加 WaveHpGrowth。</summary>
+        /// <summary>出生密度随每波递增并封顶；改变下一次出生间隔，不降低后期单位预算。</summary>
+        public float WaveDensityScale()
+        {
+            return Mathf.Min(V("WaveDensityCap"), 1 + (WaveNumber - 1) * V("WaveDensityGrowth"));
+        }
+        /// <summary>全场现存敌人也随波提速，避免只有新生单位变快。上限由Excel控制。</summary>
+        public float WaveSpeedScale()
+        {
+            return Mathf.Min(V("WaveSpeedCap"), 1 + (WaveNumber - 1) * V("WaveSpeedGrowth"));
+        }
+        /// <summary>按波次的敌人血量倍率，与出生密度和速度分别计算。</summary>
         private float WaveHpScale()
         {
             return 1 + (WaveNumber - 1) * V("WaveHpGrowth");
@@ -126,9 +136,11 @@ namespace RevGame.Endless
             }
             Vector2 center = Position(p);
             int hits = 0, shown = 0;
-            for (int i = 0; i < Run.horde.Length; i++)
+            World.Query(center.x - reach, center.y - reach, center.x + reach, center.y + reach, _auraCandidates);
+            for (int cursor = 0; cursor < _auraCandidates.Count; cursor++)
             {
-                EndlessHorde h = Run.horde[i];
+                int i = _auraCandidates[cursor];
+                EndlessHorde h = Horde[i];
                 Vector2 at = new Vector2(h.x, h.y);
                 if (!h.active || h.hp <= 0 || Mathf.Abs(at.x - center.x) > reach || Mathf.Abs(at.y - center.y) > reach)
                 {
@@ -149,7 +161,7 @@ namespace RevGame.Endless
                 {
                     continue;
                 }
-                Vector2 at = Position(e);
+                Vector2 at = ActorPosition(Units[i]);
                 float bodyReach = reach + (e.Size - 1) * .5f;
                 if (Mathf.Abs(at.x - center.x) > bodyReach || Mathf.Abs(at.y - center.y) > bodyReach)
                 {

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2194961173
+CRC: 1713009810
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 146f64a1dafe548ca6491a694b786ea9
+    Hash: c1918d55ea691af8943b01d9c316b614
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 50776bb146eca5145d5bfa421f6c9917
+    Hash: 921e4bdc2ba7178c71f6b0b1bdf13c24
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 146f64a1dafe548ca6491a694b786ea9
+    Hash: c1918d55ea691af8943b01d9c316b614
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -34,6 +34,8 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 2a78887e3114a70498fc2804083b0fb4, type: 3}
 - Class: 115
   Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
@@ -53,7 +55,8 @@ Assets:
 - Assets/GameRes/Endless/EndlessThrust.mat
 - Assets/GameRes/Endless/EndlessSwordAura.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"
