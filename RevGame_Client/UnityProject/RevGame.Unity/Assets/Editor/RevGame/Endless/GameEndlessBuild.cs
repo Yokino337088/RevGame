@@ -136,6 +136,8 @@ namespace RevGame.Editor
                 arena.ApplyModifiedPropertiesWithoutUndo();
                 ((MeshRenderer)arena.FindProperty("hordeRenderer").objectReferenceValue).sortingOrder = 8;
                 ((MeshRenderer)arena.FindProperty("thrustRenderer").objectReferenceValue).sortingOrder = 20;
+                // 完整重建和局部交互配方共用装配，防止以后重建竞技场丢失手牌升级目标与大爆发材质。
+                InstallUpgradeFeedback(root);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Endless/EndlessArena.prefab");
             }
             finally

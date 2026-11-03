@@ -62,11 +62,12 @@ namespace RevGame.View
             _projectileProperties.SetFloat("_Pattern", (int)kind + 1);
             _projectileProperties.SetFloat("_PatternCells", radius * 2 + 1);
             _projectileProperties.SetFloat("_Progress", 0f);
-            // 无尽火焰低于棋子/杂兵与弹幕排序，关闭外框；六章默认参数保持原样。
+            // 火焰是地面范围提示，两个模式都放到棋子/弹幕下方；无尽从旧0.38提高30%，六章alpha系数为0.70。
+            // 系数属于纯表现，不改变真实范围/伤害；仍乘程序火焰的边缘和寿命遮罩，保留柔和消失。
             bool soft = subtleFire && kind == PieceKind.MageFire;
             _projectileProperties.SetFloat("_FireBorder", soft ? 0f : 1f);
-            _projectileProperties.SetFloat("_Opacity", soft ? .38f : 1f);
-            if (soft)
+            _projectileProperties.SetFloat("_Opacity", kind == PieceKind.MageFire ? (soft ? .494f : .70f) : 1f);
+            if (kind == PieceKind.MageFire)
             {
                 spriteRenderer.sortingOrder = 7;
             }

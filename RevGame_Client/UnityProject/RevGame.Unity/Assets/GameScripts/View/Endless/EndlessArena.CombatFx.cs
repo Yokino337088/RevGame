@@ -8,7 +8,7 @@
 //   - 弹道 / 近战斩击 / 火水圣光范围 / 伤害数字 / 攻击口号 → BattleEffectView（Effects/Combat/BattleEffect）；
 //   - 出生燃烧 / 升星雷暴 / 死亡溶解 → PieceView 自带的 ArcanePiece Shader 效果；
 //   - 文案、字号、颜色 → BattleText 表（Excel），和六章完全一致。
-// 没有任何自制 Shader、贴图或材质。
+// 通用反馈复用六章资源；无尽专属升级高亮与刺客剑气使用共享Shader批量网格，不复制通用池或结算规则。
 //
 // 【为什么要预算】
 // 无尽一屏可能有上百只敌人，每次命中都播特效会把手机拖垮。这里沿用六章 BoardView 的上限：
@@ -595,7 +595,7 @@ namespace RevGame.Endless
                     if (request.Piece == PieceKind.MageFire && effect.IsPatternActive)
                     {
                         _fireShown++;
-                        _fireParametersCorrect &= effect.PatternOpacity < .5f && effect.PatternBorder == 0 && effect.PatternOrder < 8;
+                        _fireParametersCorrect &= Mathf.Approximately(effect.PatternOpacity, .494f) && effect.PatternBorder == 0 && effect.PatternOrder < 8;
                     }
                     break;
                 case FxKind.Damage:
@@ -631,6 +631,7 @@ namespace RevGame.Endless
             if (_stars.TryGetValue(id, out StarTier old) && star > old)
             {
                 view.PlayUpgradeStorm();
+                FlashCardUpgrade(id);
                 _upgradesShown++;
             }
             _stars[id] = star;
@@ -889,7 +890,7 @@ namespace RevGame.Endless
                 if (effect.IsPatternActive && effect.PatternKind == PieceKind.MageFire)
                 {
                     fires++;
-                    fireCorrect &= effect.PatternOpacity < .5f && effect.PatternBorder == 0 && effect.PatternOrder < 8;
+                    fireCorrect &= Mathf.Approximately(effect.PatternOpacity, .494f) && effect.PatternBorder == 0 && effect.PatternOrder < 8;
                 }
             }
             return new Dictionary<string, object>
@@ -901,6 +902,8 @@ namespace RevGame.Endless
                 ["projectiles"] = _fxShown[(int)FxKind.Projectile], ["melee"] = _fxShown[(int)FxKind.Melee], ["patterns"] = _fxShown[(int)FxKind.Pattern],
                 ["damageTexts"] = _fxShown[(int)FxKind.Damage], ["attackTexts"] = _fxShown[(int)FxKind.Attack],
                 ["guard"] = GuardSnapshot(),
+                ["upgrade"] = UpgradeVisualSnapshot(),
+                ["soundsPlayed"] = _feelSoundsPlayed, ["soundsSuppressed"] = _feelSoundsSuppressed,
                 ["auras"] = AuraCount, ["auraFlashes"] = AuraFlashCount, ["comboShouts"] = ComboShoutCount, ["hordeBars"] = HordeBarCount,
                 ["births"] = _birthsShown, ["hordeBirths"] = _hordeBirthsShown, ["upgrades"] = _upgradesShown, ["dissolves"] = _dissolvesShown,
                 ["withinBudget"] = _activeFx[(int)FxKind.Projectile].Count <= MaxProjectiles && _activeFx[(int)FxKind.Melee].Count <= MaxMeleeEffects

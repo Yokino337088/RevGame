@@ -75,7 +75,10 @@ namespace RevGame.Endless
                 }
                 float budget = unit.Piece.MaxHp * V("BossDamagePerSecond") * V("SimulationStep");
                 int allowed = Mathf.Max(0, Mathf.FloorToInt(budget - unit.DamageBudgetUsed));
-                int actual = unit.Piece.TakeDamage(Mathf.Min(allowed, Mathf.CeilToInt(damage)));
+                // 防御倍率来自无尽Excel，先减伤再进入同一步总预算；任何伤害来源都不能绕过防御。
+                // 倍率1为旧无额外防御，1.5为提高50%防御，等价承受原伤害的2/3；不改变六章Boss。
+                float defended = damage / V("BossDefenseScale");
+                int actual = unit.Piece.TakeDamage(Mathf.Min(allowed, Mathf.CeilToInt(defended)));
                 unit.DamageBudgetUsed += actual;
                 return actual;
             }

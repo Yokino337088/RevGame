@@ -70,6 +70,17 @@ namespace RevGame.Endless
             RevRuntimeAutomation.Register("endless.stress", "隔离压力局沿正式出生入口创建指定敌数", stressSchema, json => Accepted(Service.DebugStress(JsonUtility.FromJson<StressArgs>(json).enemies)), owner: Owner);
             RevRuntimeAutomation.Register("endless.thrust-preview", "隔离横向四格目标真实刺客突刺与美术预览", Empty, _ => Service.PreviewThrust(), owner: Owner);
             RevRuntimeAutomation.Register("endless.card-rules", "单卡随机/指定升级与非法手牌原子性检查", Empty, _ => EndlessService.CheckCardRules(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.upgrade-preview", "隔离局建立两枚同名主力，验真实箭头吸附与松手升级", Empty, _ => Service.PreviewUpgradeDrag(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.durability-rules", "隔离检查Boss生命防御倍率与真实减伤", Empty, _ => Service.CheckBossDurability(), owner: Owner);
+            const string firePreviewSchema = "{\"type\":\"object\",\"properties\":{\"endless\":{\"type\":\"boolean\"}},\"required\":[\"endless\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.fire-preview", "隔离视觉夹具重播火法范围，不提交伤害；核对两个模式参数与排序", firePreviewSchema, json => UnityEngine.Object.FindObjectOfType<EndlessArena>().PreviewFire(JsonUtility.FromJson<FirePreviewArgs>(json).endless), owner: Owner);
+            RevRuntimeAutomation.Register("endless.fire-state", "只读当前火焰租约真实透明度、排序与Shader", Empty, _ => UnityEngine.Object.FindObjectOfType<EndlessArena>()?.FireVisualSnapshot(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("endless.audio-rules", "固定10秒1000请求验证生产声音控频门禁，玩家密集帮手低频", Empty, _ => RevGame.View.GameAudioRateChecks.Run(), owner: Owner);
+            const string captureSchema = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"upgrade\",\"thrust\",\"fire-endless\",\"fire-campaign\"]}},\"required\":[\"mode\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.visual-capture", "隔离连拍真实升级拖曳/突刺/火焰16帧，原始证据写忽略目录", captureSchema, json => EndlessVisualCapture.Begin(JsonUtility.FromJson<CaptureArgs>(json).mode), owner: Owner);
+            RevRuntimeAutomation.Register("endless.visual-capture-state", "只读连拍完成、错误和清理结果", Empty, _ => EndlessVisualCapture.State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("campaign.fire-check", "隔离大厅正式进入六章，核对火法0.70透明度与排序7并连拍，完成归池返回", Empty, _ => RevGame.View.GameCampaignFireCheck.Begin(), owner: Owner);
+            RevRuntimeAutomation.Register("campaign.fire-check-state", "只读六章火焰视觉参数、连拍和归池返回结果", Empty, _ => RevGame.View.GameCampaignFireCheck.State(), readOnly: true, owner: Owner);
             const string dragSchema = "{\"type\":\"object\",\"properties\":{\"index\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":3},\"x\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8},\"y\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8}},\"required\":[\"index\",\"x\",\"y\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("endless.drag-begin", "隔离局通过EventSystem开始真实手牌拖曳", dragSchema, json =>
             {
@@ -232,6 +243,18 @@ namespace RevGame.Endless
             {
                 ["assigned"] = assigned, ["distinctZones"] = zones.Count, ["held"] = held
             };
+        }
+        /// <summary>视觉夹具的模式参数，仅控制显示透明度，不允许通过它改变伤害。</summary>
+        [Serializable]
+        private sealed class FirePreviewArgs
+        {
+            public bool endless;
+        }
+        /// <summary>只允许固定表现白名单，不接收路径、代码或任意反射目标。</summary>
+        [Serializable]
+        private sealed class CaptureArgs
+        {
+            public string mode;
         }
         [Serializable] private sealed class DragArgs
         {

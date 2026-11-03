@@ -349,7 +349,7 @@ namespace RevGame.Endless
             }
             else if (run.selectedCard >= 0)
             {
-                tip = "拖到棋盘空格出牌\n同名牌升级一枚棋子";
+                tip = Service.CardUpgradeTarget(run.selectedCard) != null ? "箭头指向升级目标\n松手升级高亮棋子" : "拖到棋盘空格出牌\n松手放置新棋子";
             }
             else if (run.selectedUnit >= 0)
             {

@@ -522,6 +522,7 @@ Data/StarConfig|data_tables|StarConfig
 ChapterBackground/EndlessTemple|endless_arena|EndlessTemple
 Endless/EndlessArena|endless_arena|EndlessArena
 Endless/EndlessBackground|endless_arena|EndlessBackground
+Endless/EndlessCardUpgrade|endless_arena|EndlessCardUpgrade
 Endless/EndlessGrid|endless_arena|EndlessGrid
 Endless/EndlessHorde|endless_arena|EndlessHorde
 Endless/EndlessHpBar|endless_arena|EndlessHpBar
@@ -575,6 +576,7 @@ GameShader/Combat/RangedProjectile|shared_shaders|RangedProjectile
 GameShader/Combat/RegionRift|shared_shaders|RegionRift
 GameShader/Combat/ScoreSpark|shared_shaders|ScoreSpark
 GameShader/Endless/EndlessBatch|shared_shaders|EndlessBatch
+GameShader/Endless/EndlessCardUpgrade|shared_shaders|EndlessCardUpgrade
 GameShader/Endless/EndlessField|shared_shaders|EndlessField
 GameShader/Endless/EndlessGrid|shared_shaders|EndlessGrid
 GameShader/Endless/EndlessHpBar|shared_shaders|EndlessHpBar

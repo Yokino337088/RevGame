@@ -89,13 +89,13 @@ namespace RevGame.Endless
             ExecuteEvents.Execute(_target, _pointer, ExecuteEvents.endDragHandler);
             _pointer = null;
             var s = RevServices.GetRequired<EndlessService>();
-            return new Dictionary<string, object> { ["playsDelta"] = s.CardPlaySerial - _playsBefore, ["handDelta"] = _handBefore - s.Run.hand.Count, ["cardStayed"] = _target != null && (_target.transform.position - _cardPosition).sqrMagnitude < .001f, ["action"] = s.LastCardAction };
+            return new Dictionary<string, object> { ["playsDelta"] = s.CardPlaySerial - _playsBefore, ["handDelta"] = _handBefore - s.Run.hand.Count, ["cardStayed"] = _target != null && (_target.transform.position - _cardPosition).sqrMagnitude < .001f, ["action"] = s.LastCardAction, ["target"] = s.LastCardTarget };
         }
         /// <summary>读取实际面板/网格状态，不推进业务；供rev_run带期限轮询。</summary>
         public static object State()
         {
             EndlessHudPanel panel = RevUI.Get<EndlessHudPanel>();
-            return new Dictionary<string, object> { ["dragging"] = panel != null && panel.IsCardDragging, ["cardStayed"] = _target != null && (_target.transform.position - _cardPosition).sqrMagnitude < .001f, ["arrowVisible"] = panel?.ArrowVisible ?? false, ["curve"] = panel?.ArrowCurved ?? false, ["arrow"] = panel?.ArrowSnapshot() };
+            return new Dictionary<string, object> { ["dragging"] = panel != null && panel.IsCardDragging, ["cardStayed"] = _target != null && (_target.transform.position - _cardPosition).sqrMagnitude < .001f, ["arrowVisible"] = panel?.ArrowVisible ?? false, ["curve"] = panel?.ArrowCurved ?? false, ["upgradeTarget"] = panel?.DragUpgradeTarget ?? 0, ["arrow"] = panel?.ArrowSnapshot() };
         }
         /// <summary>用屏幕外落点释放旧事件，再清空引用和箭头；测试finally共用，禁止扣牌。</summary>
         public static void Cancel()

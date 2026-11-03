@@ -35,6 +35,7 @@ namespace RevGame.Editor
                 horde.sortingOrder = 8;
                 var renderer = (MeshRenderer)serialized.FindProperty("thrustRenderer").objectReferenceValue;
                 renderer.sortingOrder = 20;
+                InstallUpgradeFeedback(arena);
                 PrefabUtility.SaveAsPrefabAsset(arena, arenaPath);
             }
             finally
@@ -43,6 +44,40 @@ namespace RevGame.Editor
             }
             AssetDatabase.SaveAssets();
             return "曲线箭头/拖曳/刺客长剑气已装配；杂兵8层、火焰7层、弹道原30层";
+        }
+        /// <summary>固定项目配方装配升级共享材质和网格；仅加载既有竞技场内容，不改当前场景，不更换Prefab GUID。</summary>
+        private static void InstallUpgradeFeedback(GameObject arena)
+        {
+            const string path = "Assets/GameRes/Endless/EndlessCardUpgrade.mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader shader = Shader.Find("RevGame/Endless/CardUpgrade");
+                if (shader == null)
+                {
+                    throw new InvalidOperationException("升级Shader尚未导入");
+                }
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            Transform existing = arena.transform.Find("CardUpgradeFeedback");
+            GameObject node = existing != null ? existing.gameObject : new GameObject("CardUpgradeFeedback");
+            node.transform.SetParent(arena.transform, false);
+            if (node.GetComponent<MeshFilter>() == null)
+            {
+                node.AddComponent<MeshFilter>();
+            }
+            MeshRenderer renderer = node.GetComponent<MeshRenderer>();
+            if (renderer == null)
+            {
+                renderer = node.AddComponent<MeshRenderer>();
+            }
+            renderer.sharedMaterial = material;
+            renderer.sortingOrder = 21;
+            renderer.enabled = false;
+            var serialized = new SerializedObject(arena.GetComponent<EndlessArena>());
+            serialized.FindProperty("upgradeRenderer").objectReferenceValue = renderer;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
         /// <summary>源图已经裁到独立箭头/丝带区域；以Single Sprite导入供唯一V2图集收纳。</summary>
         private static void ConfigureArrowSprite(string name)

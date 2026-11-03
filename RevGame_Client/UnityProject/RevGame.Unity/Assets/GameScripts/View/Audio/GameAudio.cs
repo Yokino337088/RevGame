@@ -19,7 +19,7 @@ namespace RevGame.View
         private void Start()
         {
             RevEvent.AddEventListener<int>(Events.PiecePlaced, OnPlaced, owner: this);
-            RevEvent.AddEventListener<int>(Events.DamageResolved, OnDamage, owner: this);
+            RevEvent.AddEventListener<PieceAttackInfo>(Events.PieceAttacked, OnPlayerAttackAudio, owner: this);
             RevEvent.AddEventListener<int>(Events.PieceMerged, OnMerged, owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, owner: this);
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
@@ -47,9 +47,24 @@ namespace RevGame.View
         {
             RevSound.Play("Place", volume: 0.35f);
         }
-        private void OnDamage(int id)
+        /// <summary>玩家实际出手的声音入口；只观察己方攻击快照，敌方/帮手不会占用玩家攻击声预算。</summary>
+        private void OnPlayerAttackAudio(PieceAttackInfo attack)
         {
-            RevSound.Play("Hit", volume: 0.18f);
+            if (_battleScreen && attack.Side == GameSide.Player)
+            {
+                PlayPlayerAttackAudio();
+            }
+        }
+        /// <summary>玩家出手共用全场最短间隔（现实秒），不再用所有伤害事件重复补声，避免环境/帮手抢声部。</summary>
+        private readonly GameAudioRateLimit _playerAttackRate = new GameAudioRateLimit();
+        /// <summary>最多每秒约十声，较帮手更密集；音量固定且框架仍负责同帧去重/加载，不改攻击与伤害。</summary>
+        private void PlayPlayerAttackAudio()
+        {
+            if (!_playerAttackRate.Try(Time.unscaledTime, GameAudioRateLimit.PlayerSeconds))
+            {
+                return;
+            }
+            RevSound.Play("Hit", volume: .19f);
         }
         private void OnMerged(int id)
         {
@@ -63,6 +78,7 @@ namespace RevGame.View
         {
             // 从按钮触发流程后才播音乐，也适配浏览器必须先有用户手势才能出声的限制。
             _battleScreen = screen == GameScreen.Battle;
+            _playerAttackRate.Reset();
 
             if (_battleScreen)
             {

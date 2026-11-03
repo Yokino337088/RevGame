@@ -69,7 +69,7 @@ EnemyHpScale	0.7	入侵棋生命倍率
 EnemyAttackScale	0.3	入侵棋伤害倍率
 EliteInterval	120	精英间隔/秒（缩减50%）
 EliteHpScale	3	精英生命倍率
-BossHpScale	12	Boss生命倍率
+BossHpScale	18	Boss生命倍率（在原12基础上提高50%）
 BossAttackScale	0.8	Boss攻击倍率
 BossSkillInterval	12	Boss技能间隔
 BossBreakSeconds	8	气零破阵秒
@@ -169,3 +169,4 @@ BossEntranceSeconds	2.5	盘外领主入场演出和受伤开放前的秒数
 BossStandoff	1.2	领主中心停在棋盘边缘外多少格
 BossMoveScale	0.75	盘外领主行走速度相对杂兵倍率
 BossDamagePerSecond	0.08	全部伤害来源每秒最多扣领主最大生命的比例
+BossDefenseScale	1.5	无尽领主防御倍率：1为旧防御，1.5为提高50%，所有伤害先除以此倍率再进入总预算

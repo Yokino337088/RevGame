@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1632088325
+CRC: 750368244
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 1a89f8eada5aee11b9dcd9ae205ac24a
+    Hash: eeabefbd482063aed68bc8945fc12f77
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 921e4bdc2ba7178c71f6b0b1bdf13c24
+    Hash: 2fc5c51c9f93ac826d584b7add8ca092
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 1a89f8eada5aee11b9dcd9ae205ac24a
+    Hash: eeabefbd482063aed68bc8945fc12f77
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -55,9 +55,10 @@ Assets:
 - Assets/GameRes/Endless/EndlessThrust.mat
 - Assets/GameRes/Endless/EndlessSwordAura.mat
 - Assets/GameRes/Endless/Textures/EndlessThrustBlade.png
+- Assets/GameRes/Endless/EndlessCardUpgrade.mat
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

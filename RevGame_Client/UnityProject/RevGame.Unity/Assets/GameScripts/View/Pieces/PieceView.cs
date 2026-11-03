@@ -433,6 +433,7 @@ namespace RevGame.View
             _birthProgress = 0f;
             _stormProgress = 0f;
             // ★ 不仅清 Renderer，也清复用的草稿。下一次换帧只更新纹理和UV，不能带回旧死亡进度。
+            _cardHighlight = 0;
             _visualProperties?.Clear();
             ApplyBossShader();
 

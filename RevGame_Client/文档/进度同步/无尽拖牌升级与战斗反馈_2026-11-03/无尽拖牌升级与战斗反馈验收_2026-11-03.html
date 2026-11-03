@@ -1,0 +1,38 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>无尽拖牌升级与战斗反馈验收_2026-11-03</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+
+body{max-width:1200px;margin:auto;padding:24px}img{max-width:100%;height:auto}.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}table{width:100%;border-collapse:collapse}td,th{padding:10px;border:1px solid #dce3da}pre{white-space:pre-wrap}section{margin:20px 0} </style><body>
+<header class="topbar">RevGame · Revolution 工程验证</header><section class="hero"><p>2026-11-03 · Unity 2022.3.15f1c1 · PC真实AB · 基线 af0a16d</p><h1>拖牌明确指向升级棋子，战斗反馈更清晰</h1><p>单卡预览与提交一致，松手恰好消费一张牌；升级身体高亮与大环光柱、连续刺客剑气、火焰层级、Boss耐久和声音门禁均已实现并验证。</p></section>
+<section><h2>实现与数值</h2><table><tr><th>需求</th><th>当前实现</th></tr><tr><td>无尽拖牌升级</td><td>同名未满星主力自动吸附；低星/低Id稳定预览，明确指到另一枚同名主力可改选。松手只提交所指Id，失效/满星/暂停拒绝且不扣牌；没有升级对象仍走部署。</td></tr><tr><td>升级特效</td><td>原身体ArcanePiece单Pass高亮 + 一张共享网格绘制金环/约3.6格爆发、蓝白光柱与星芒。最多82块，普通无反馈帧跳过上传，回池清身份/时刻。</td></tr><tr><td>刺客突刺</td><td>去掉三角尖头，连续长束、亮芯、平行刃线和紫色外晕；半宽0.34→0.52格，仍同一32道上限网格，不改变伤害/射程。</td></tr><tr><td>火法</td><td>无尽0.38×1.3=0.494，关闭外框；六章0.70。范围效果排序7，低于棋子10和弹幕30；透明系数仍乘原程序边缘/寿命遮罩。</td></tr><tr><td>无尽Boss</td><td>Excel生命倍率12→18；防御倍率1→1.5，伤害先除1.5，再进入既有单模拟步总预算。六章Boss数值不变。</td></tr><tr><td>音效控频</td><td>玩家真实出手声部间隔0.10秒；帮手跨武器申请与延迟实播各0.45秒，普通0.5/导弹0.65/光束1.5秒，命中0.4、治疗3秒。无尽常规割草声音另有0.08秒跨种类门禁。</td></tr></table></section>
+<section><h2>验证与清理</h2><p>真实EventSystem拖曳：预览Id9→移到Id10→松手只升级Id10，playsDelta=1、handDelta=1、原卡槽位置不变。共享Shader已在真实AB加载、目标环与升级爆发实际可见。所有计划finally返回Home、transitioning=false并清手势。</p><ul><li>场上一个同名时一张牌直接升级，不要求第二枚伙伴</li><li>单卡升级准确消耗一张牌一次</li><li>箭头默认优先低星级，明确指定目标保持同一身份</li><li>反复预览不抽随机、不改占格、不消费手牌</li><li>直接指向同名棋子只升级目标，另一枚同名保留</li><li>空格出牌随机升级恰好一枚同名，场上不会三合一</li><li>两种升级路径始终一格</li><li>满星目标提交拒绝，不换另一枚同名棋子、不扣牌</li><li>棋心和不同名目标拒绝，不扣牌不改随机源占格</li><li>没有可升级同名时仍可正常新增一枚棋子</li><li>暂停拖放拒绝且保留手牌</li><li>单卡升级与同名伙伴可完整读档</li><li>无尽Boss生命12→18与防御1→1.5均来自导表</li><li>固定局沿真实出生口生成领主</li><li>3点伤害先经1.5防御变2再记录实际扣血</li></ul><p>固定10秒1000声音请求：玩家允许99，帮手允许23；这是生产门禁输入验证，不冒充AudioSource实播数。既有六章帮手Play回归通过33项检查，观察到7种Helper音效实播，治疗/导弹/水母及重入清理正常，新增Error/Exception=0。</p><p>四组16帧动态连拍均完成，另有六章真实GameScene火法8帧，参数0.70与排序7断言通过。编译0 error；资源门禁重复/循环/漏标/重名/Android Shader错误0条，18张图集286张图片唯一覆盖，70包PC AB构建。</p></section>
+<section><h2>真实截图与GIF</h2><div class="gallery"><figure><figcaption>upgrade</figcaption><img src="画面/upgrade.gif" alt="upgrade真实连续帧"></figure><figure><figcaption>thrust</figcaption><img src="画面/thrust.gif" alt="thrust真实连续帧"></figure><figure><figcaption>fire-endless</figcaption><img src="画面/fire-endless.gif" alt="fire-endless真实连续帧"></figure><figure><figcaption>fire-campaign</figcaption><img src="画面/fire-campaign.gif" alt="fire-campaign真实连续帧"></figure><figure><figcaption>六章真实场景火法</figcaption><img src="画面/六章火法.gif" alt="六章真实场景火法真实连续帧"></figure></div></section>
+<section><h2>框架可行性与边界</h2><p>本次使用RevTask、RevUI、RevPool、RevResManager、RevEvent、RevTimer、RevSound与GameFlow/RevScope现有链路。项目自有共享Shader、有限网格和固定诊断动作即可完成需求，没有修改框架内核或新增异步/资源系统。</p><p>当前RevMCP的expect不解析动态$ref，固定夹具Id已另做断言；运行时桥匿名对象回执为空，诊断改Dictionary。首次Boss小伤害测试碰总预算，改3→2的独立防御断言而保留预算。</p><p>性能边界：共享单Pass/有限网格与普通帧跳过上传已经落实，未测手机GPU帧率、长时热稳定性和Android真机；不宣称零GC或性能提升百分比。测试里已有Placement Sprite非FullRect警告不属于本次新增Shader，原始日志保留。</p></section>
+<footer>原始计划/JSON/PNG均位于项目忽略目录 .codex/work/endless-feedback-2026-11-03 与实际RevMCP工单；本目录只保留HTML、说明与必要图片/GIF，不生成ZIP或Profiler录制。</footer></body></html>

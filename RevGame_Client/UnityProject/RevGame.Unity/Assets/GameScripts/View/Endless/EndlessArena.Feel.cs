@@ -46,6 +46,10 @@ namespace RevGame.Endless
         private static readonly float[] SoundGap = { .07f, .05f, .045f, .12f, .15f };
         private static readonly float[] SoundVolume = { .32f, .26f, .3f, .4f, .55f };
         private readonly float[] _soundAt = new float[5];
+        /// <summary>所有常规割草音效共享的现实秒门禁，跨种类不能叠成几十声；重要组合提示另留一条低频声部。</summary>
+        private float _feelSoundDue;
+        /// <summary>本局实际播放和控频舍弃的计数，诊断读取；退出清零，不记录到玩家存档。</summary>
+        private int _feelSoundsPlayed, _feelSoundsSuppressed;
 
         private Mesh _auraMesh, _barMesh;
         private int _barDrawCount;
@@ -99,17 +103,25 @@ namespace RevGame.Endless
             }
             _auraFlash.Clear();
             _comboShouts = _auraFlashes = 0;
+            _feelSoundDue = 0;
+            _feelSoundsPlayed = _feelSoundsSuppressed = 0;
         }
 
         /// <summary>播一种割草音效；距离上次同类声音太近就跳过。</summary>
         private void PlayFeelSound(int index)
         {
             float now = Time.unscaledTime;
-            if (now - _soundAt[index] < SoundGap[index])
+            if (now - _soundAt[index] < SoundGap[index] || (index != SoundCombo && now < _feelSoundDue))
             {
+                _feelSoundsSuppressed++;
                 return;
             }
             _soundAt[index] = now;
+            if (index != SoundCombo)
+            {
+                _feelSoundDue = now + .08f;
+            }
+            _feelSoundsPlayed++;
             RevSound.Play(FeelSounds[index], volume: SoundVolume[index]);
         }
 

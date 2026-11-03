@@ -69,6 +69,11 @@ namespace RevGame.Endless
             Value("ShieldBashRatio");
             Value("WaveHpGrowth");
             Value("WaveAttackGrowth");
+            // 无尽专属防御必须存在并且至少为1，防止缺项或负数导致领主反向增伤/除零。
+            if (Value("BossDefenseScale") < 1f)
+            {
+                throw new InvalidOperationException("无尽领主防御倍率不能小于1");
+            }
             if (RevDataTableManager.Get<EndlessBoonTable>().All.Count == 0)
             {
                 throw new InvalidOperationException("无尽领主奖励表为空");

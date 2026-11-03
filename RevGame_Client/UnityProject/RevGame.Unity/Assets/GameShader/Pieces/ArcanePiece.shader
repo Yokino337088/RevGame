@@ -20,6 +20,7 @@ Shader "RevGame/Pieces/ArcanePiece"
         [PerRendererData] _BossIce ("冻结冰壳", Range(0,1)) = 0
         [PerRendererData] _BossTint ("章节技能主色", Color) = (0.5,0.3,1,1)
         [PerRendererData] _EyeGarrison ("驻眼阵营：0关闭1玩家2敌方", Float) = 0
+        [PerRendererData] _CardHighlight ("无尽手牌升级高亮强度", Range(0,1)) = 0
         [PerRendererData] _DissolveUV ("当前帧图集UV矩形", Vector) = (0,0,1,1)
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
@@ -54,6 +55,7 @@ Shader "RevGame/Pieces/ArcanePiece"
             half _Birth;
             half _Storm;
             half _EyeGarrison;
+            half _CardHighlight;
             half _BossCharge, _BossIce;
             fixed4 _BossTint;
             float4 _DissolveUV;
@@ -199,6 +201,11 @@ Shader "RevGame/Pieces/ArcanePiece"
                     half shard = pow(saturate(1 - abs(frac((p.x + p.y) * 8) - .5) * 12), 2);
                     source.rgb = lerp(source.rgb, _BossTint.rgb * (.6 + spiral * 1.8), _BossCharge * .7);
                     source.rgb = lerp(source.rgb, half3(.2,.7,1) + shard * .8, _BossIce * .72);
+                }
+                // 无尽拖牌/升级在原图轮廓内提亮，0为其它模式原样；不扩大轮廓或增加Pass。
+                if (_CardHighlight > 0)
+                {
+                    source.rgb = lerp(source.rgb, source.rgb*.65+half3(.50,.43,.15), saturate(_CardHighlight)*.6);
                 }
                 // 全部动画沿用 Unity Sprite 预乘透明度，不扩大轮廓，不额外增加Pass。
                 source.rgb *= source.a;

@@ -45,6 +45,12 @@ namespace RevGame.Endless
         {
             EndlessRun run = service.Run;
             bool selecting = run.selectedCard >= 0 || run.selectedUnit >= 0;
+            // 单卡能升级时，落空格也只会升级同名主力，不能继续点亮满盘“可部署”格误导玩家。
+            // 目标由HUD箭头和专属金环显示；没有可升级对象时才保留原部署范围。
+            if (run.selectedCard >= 0 && service.CardUpgradeTarget(run.selectedCard) != null)
+            {
+                selecting = false;
+            }
             int signature = -1;
             if (selecting)
             {

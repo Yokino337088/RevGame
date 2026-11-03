@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2744176561
+CRC: 2458537033
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0b2f54a8f9a725e51b6760edd43a76cd
+    Hash: f8522b2df04cf916d8e78e0b19efae64
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0b2f54a8f9a725e51b6760edd43a76cd
+    Hash: f8522b2df04cf916d8e78e0b19efae64
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -29,6 +29,7 @@ Assets:
 - Assets/GameShader/Endless/EndlessShieldZone.shader
 - Assets/GameShader/Board/PlacementMagic.shader
 - Assets/GameShader/Combat/BossSkill.shader
+- Assets/GameShader/Endless/EndlessCardUpgrade.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
 - Assets/GameShader/Endless/EndlessBatch.shader
 - Assets/GameShader/UI/SlimeTutorialHighlight.shader

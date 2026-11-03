@@ -181,6 +181,7 @@ namespace RevGame.Endless
             UpdateAuras(service);
             UpdateGuard(service);
             UpdatePlacement(service);
+            UpdateCardUpgradeVisual(service);
             UpdateHeart(service);
             _shakeBoost = Mathf.MoveTowards(_shakeBoost, 0, Time.unscaledDeltaTime * .5f);
             _shakeOffset = service.Run.shake ? Mathf.Sin(Time.unscaledTime * 62) * _shakeBoost : 0;
@@ -369,6 +370,7 @@ namespace RevGame.Endless
             ReleaseFeel();
             ReleaseGuard();
             ResetPlacement();
+            ResetCardUpgradeVisual();
             _generation++;
             foreach (var pair in _pieces)
             {
@@ -387,6 +389,7 @@ namespace RevGame.Endless
             }
             DestroyFeelMeshes();
             DestroyGuardMeshes();
+            DestroyCardUpgradeMesh();
         }
         /// <summary>只读观测，GC计数全零时标记未验证，不以零宣称无分配；Editor帧时不能替代手机。</summary>
         public object Metrics()

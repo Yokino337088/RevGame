@@ -35,7 +35,7 @@ namespace RevGame.Endless
         /// <summary>一道突刺的播放时长、护盾格挡波动时长（秒，纯表现节奏）。</summary>
         private const float ThrustSeconds = .4f, BlockSeconds = .35f;
         /// <summary>突刺线半宽（格）、护盾泡泡相对棋子的半径、盾牌公转方块半宽（格，1.35 让盾牌离身体约 1 格），纯表现尺寸。</summary>
-        private const float ThrustHalfWidth = .34f, BubbleRadius = .62f, OrbitHalf = 1.35f;
+        private const float ThrustHalfWidth = .52f, BubbleRadius = .62f, OrbitHalf = 1.35f;
         private static readonly int ZoneId = Shader.PropertyToID("_Zone");
         private static readonly Color ThrustTint = new Color(.8f, .56f, 1f, 1f);
         private static readonly Color OrbitTint = new Color(.55f, .75f, 1f, 1f);
