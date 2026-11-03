@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>红箭头与Unity快捷启动验收_2026-11-03</title>
+<style>body{font-family:system-ui;background:#f6f7f2;color:#25352f;max-width:1050px;margin:auto;padding:32px;line-height:1.8}section{background:white;border:1px solid #dce3da;padding:24px;margin:20px 0}h1,h2{color:#326956}img{max-width:100%}code{background:#eef1ea;padding:3px}</style>
+<body><header>RevGame · 2026-11-03 · Unity 2022.3.15f1c1</header><section><h1>无尽拖牌改亮红色，双击脚本直接打开Unity工程</h1><p>红色箭头沿用已有图集与网格，合法目标alpha=1，浅色棋盘上清晰可见。快捷启动器首次配置Unity安装路径，JSON持久化，以后双击即可打开相邻RevGame工程。</p></section>
+<section><h2>真实拖曳验证</h2><p>实际rev_discover→rev_call→rev_run：正式大厅进入隔离无尽局，EventSystem拖曳；箭头红色r=1、alpha=1、卡槽位置保持，松手playsDelta=1、handDelta=1。finally释放手势并返回Home，资源制作/编译通过。</p><img src="红色箭头.jpg" alt="真实GameView红色箭头"></section>
+<section><h2>Unity启动器</h2><p><a href="../../../Start_Unity/使用说明.md">启动器使用说明</a>。入口<code>RevGame_Client/Start_Unity/Start_Unity.cmd</code>，支持Unity安装目录、Editor目录、Unity.exe完整路径，JSON仅保存本机引擎位置，工程根据脚本目录推导。</p><ul><li>中文/空格路径配置、JSON写入和重新读取通过。</li><li>无效Unity路径明确拒绝且保留旧配置。</li><li>CMD入口检查通过，现有RevGame Unity进程复用，不重复打开。</li><li>本机unity-launcher.local.json被Git忽略，不带入提交。</li></ul><p>检查未关闭当前用户编辑器，实际启动验证使用已有工程复用分支。未在另一台机器执行首次交互输入；脚本使用Windows内置PowerShell。</p></section>
+<section><h2>今天音频成果</h2><p>音频AB从27.49MB降到17.34MB，减少36.94%。统一导入设置、构建后容量门禁与PC/Android产物一并交付。详情见<a href="../音频压缩与体积管线_2026-11-03/音频压缩与体积管线验收_2026-11-03.html">音频报告</a>。</p></section><footer>本机路径/测试原始JSON留忽略目录，文档链接均为相对路径。</footer></body></html>

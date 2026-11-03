@@ -1,0 +1,44 @@
+ManifestFileVersion: 0
+CRC: 2805015197
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3916914d4ab3d8adb4c01c2fd838eedc
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 3916914d4ab3d8adb4c01c2fd838eedc
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_03.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_11.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_07.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_18.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_06.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_13.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_01.png
+- Assets/GameRes/Atlases/EndlessHeartEye.spriteatlasv2
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_19.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_15.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_00.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_17.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_08.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_10.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_09.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_14.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_05.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_16.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_02.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_04.png
+- Assets/GameRes/Art/Endless/HeartEye/HeartEye_12.png
+Dependencies: []

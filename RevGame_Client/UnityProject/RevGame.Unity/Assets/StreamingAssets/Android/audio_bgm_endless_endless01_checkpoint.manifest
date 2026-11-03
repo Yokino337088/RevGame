@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2481222334
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 37c624ae0ef880a3d02670fc19aa4d89
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 37c624ae0ef880a3d02670fc19aa4d89
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Endless/Endless01_Checkpoint.mp3
+Dependencies: []

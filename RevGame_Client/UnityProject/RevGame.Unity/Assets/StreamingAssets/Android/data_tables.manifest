@@ -1,32 +1,40 @@
 ManifestFileVersion: 0
-CRC: 1034235837
+CRC: 352242152
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 5612f9a5ae36cb8a314d49efc022f05f
+    Hash: 796bc7b2905019102710bc4db5eb1f5d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5ad585dd02dfb5016c0dad519eab8f49
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 5612f9a5ae36cb8a314d49efc022f05f
+    Hash: 796bc7b2905019102710bc4db5eb1f5d
 HashAppended: 0
 ClassTypes:
 - Class: 49
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Data/EndlessRule.txt
 - Assets/GameRes/Data/RewardBoostConfig.txt
+- Assets/GameRes/Data/EndlessRoute.txt
 - Assets/GameRes/Data/StarConfig.txt
+- Assets/GameRes/Data/EndlessBoss.txt
+- Assets/GameRes/Data/EndlessCombo.txt
 - Assets/GameRes/Data/EnemyReinforceConfig.txt
 - Assets/GameRes/Data/RewardConfig.txt
 - Assets/GameRes/Data/BalanceRule.txt
+- Assets/GameRes/Data/EndlessMusic.txt
 - Assets/GameRes/Data/PrepBuffConfig.txt
 - Assets/GameRes/Data/BattleEventConfig.txt
 - Assets/GameRes/Data/BattleText.txt
-- Assets/GameRes/Data/EnemyRosterConfig.txt
+- Assets/GameRes/Data/EndlessBossSkill.txt
 - Assets/GameRes/Data/BattleTuning.txt
+- Assets/GameRes/Data/EnemyRosterConfig.txt
 - Assets/GameRes/Data/PieceConfig.txt
+- Assets/GameRes/Data/EndlessBoon.txt
+- Assets/GameRes/Data/EndlessFormation.txt
 - Assets/GameRes/Data/BossSkillConfig.txt
 - Assets/GameRes/Data/ChapterConfig.txt
 - Assets/GameRes/Data/EventRotationConfig.txt

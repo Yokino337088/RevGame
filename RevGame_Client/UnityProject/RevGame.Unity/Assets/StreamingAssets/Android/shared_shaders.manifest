@@ -1,30 +1,41 @@
 ManifestFileVersion: 0
-CRC: 3016394577
+CRC: 2585629486
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 864e8e971daa8a4c05cf9ffbf691b6b0
+    Hash: 2faffe1f703bf833059db0733f42f724
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 864e8e971daa8a4c05cf9ffbf691b6b0
+    Hash: 2faffe1f703bf833059db0733f42f724
 HashAppended: 0
 ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameShader/Endless/EndlessGrid.shader
+- Assets/GameShader/Endless/EndlessThrust.shader
+- Assets/GameShader/Endless/EndlessShieldBubble.shader
 - Assets/GameShader/UI/ArcanePanel.shader
 - Assets/GameShader/Cards/CardGleam.shader
+- Assets/GameShader/Endless/EndlessSwordAura.shader
 - Assets/GameShader/Combat/MeleeImpact.shader
+- Assets/GameShader/Endless/EndlessField.shader
 - Assets/GameShader/Pieces/ArcanePiece.shader
 - Assets/GameShader/Combat/RegionRift.shader
+- Assets/GameShader/Endless/EndlessShieldZone.shader
 - Assets/GameShader/Board/PlacementMagic.shader
 - Assets/GameShader/Combat/BossSkill.shader
+- Assets/GameShader/Endless/EndlessCardUpgrade.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
+- Assets/GameShader/Endless/EndlessBatch.shader
 - Assets/GameShader/UI/SlimeTutorialHighlight.shader
 - Assets/GameShader/Combat/RangedProjectile.shader
+- Assets/GameShader/Combat/ElementalImpact.shader
+- Assets/GameShader/Endless/EndlessHpBar.shader
+- Assets/GameShader/Endless/EndlessShieldOrbit.shader
 - Assets/GameShader/Combat/ScoreSpark.shader
 Dependencies: []

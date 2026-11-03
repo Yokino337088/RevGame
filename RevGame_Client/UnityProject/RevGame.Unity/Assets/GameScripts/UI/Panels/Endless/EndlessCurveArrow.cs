@@ -17,6 +17,9 @@ namespace RevGame.Endless
         [SerializeField] private Sprite ribbon, arrowHead;
         /// <summary>设计画布单位的宽度和箭头尖大小，纯表现结构，不参与棋盘判定。</summary>
         private const float Width = 12f, HeadSize = 52f;
+        /// <summary>合法目标使用不透明亮红，非法目标使用深红；浅色棋盘上保持清晰，颜色只影响表现。</summary>
+        private static readonly Color ValidAimColor = new Color(1f, .10f, .12f, 1f);
+        private static readonly Color InvalidAimColor = new Color(.65f, .12f, .16f, .85f);
         /// <summary>固定采样段数，足够平滑又限制网格规模；两侧98顶点加箭头尖4顶点。</summary>
         private const int Segments = 48;
         /// <summary>全部以画布局部单位表示：卡牌中心、指针目标、缓动端点与每帧位移。</summary>
@@ -55,7 +58,8 @@ namespace RevGame.Endless
                 ["extension"] = _extension, ["deviation"] = _curveDeviation,
                 ["meshCalls"] = _meshCalls, ["vertices"] = _meshVertices,
                 ["culled"] = canvasRenderer.cull, ["depth"] = canvasRenderer.absoluteDepth,
-                ["rect"] = rectTransform.rect, ["samePage"] = ribbon != null && arrowHead != null && ribbon.texture == arrowHead.texture
+                ["rect"] = rectTransform.rect, ["samePage"] = ribbon != null && arrowHead != null && ribbon.texture == arrowHead.texture,
+                ["color"] = new Vector4(color.r, color.g, color.b, color.a)
             };
         }
 #endif
@@ -74,14 +78,14 @@ namespace RevGame.Endless
             _bindingVersion = -1;
             SetAllDirty();
             raycastTarget = false;
-            color = new Color(.3f, .82f, .65f, .72f);
+            color = ValidAimColor;
             _stretch = DOTween.To(ReadExtension, WriteExtension, 1f, .55f).SetEase(Ease.OutElastic, .85f, .22f).SetUpdate(true).OnComplete(ClearStretch);
         }
         /// <summary>输入实际指针目标与合法性，只改变目标及颜色，不动手牌与战斗状态。</summary>
         public void Aim(Vector2 destination, bool valid)
         {
             _wanted = destination;
-            color = valid ? new Color(.3f, .82f, .65f, .72f) : new Color(1f, .55f, .42f, .5f);
+            color = valid ? ValidAimColor : InvalidAimColor;
         }
         /// <summary>收线时先停止跟手，DOTween让箭头沿曲线缩回起点；业务已经在松手时提交，动画不再扣牌。</summary>
         public void Retract()

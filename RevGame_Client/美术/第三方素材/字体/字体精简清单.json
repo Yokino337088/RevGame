@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "002258a10e3eee810f738d59a2f873638da2ea29dfcf4af75133e2cdda592738",
-  "inputDigest": "17eaba7a88c913aa124018db4126365d53bc9722a2a18e4345256da9c76fab6b",
+  "inputDigest": "731809358d47bf823a178f5aecbe4d3c626e5940264d3923cb751e42ac154296",
   "originalBytes": 17002248,
   "outputBytes": 759352,
   "characterCount": 1713,
@@ -2701,7 +2701,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessCurveArrow.cs",
-      "sha256": "fa6a55150290ce9a4e2129628c66aa1aae3fe343619eb965ebd7259e9fa03e2f"
+      "sha256": "ccecb8faf73d9c837b15562883444940b1a3c1ca9cfce4ce993344261c9b99ee"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessEntryPanel.cs",

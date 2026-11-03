@@ -109,3 +109,7 @@ RevGame_Client/音乐/
 
 # 本机IL2CPP验证包与构建产物
 /打包测试(不入库)/
+
+# Unity快捷启动器的本机引擎路径，不随仓库分发。
+/RevGame_Client/Start_Unity/unity-launcher.local.json
+/RevGame_Client/Start_Unity/unity-launcher.local.json.tmp

@@ -221,6 +221,8 @@ namespace RevGame.Editor
                 desired["Assets/GameShader/Helper/" + name + "_Shader.shader"] = bundle;
             }
             GameChapterAudioBuild.Configure(desired);
+            // 全部使用中的音效/BGM沿统一用途规则；后续新增文件在正式构建自动获得平台压缩覆盖。
+            GameAudioCompressionBuild.ConfigureAll();
             // 每章Boss配置只引用该章8帧，配置和图集同包；普通棋子预制体不能引用六章配置。
             for (int chapter = 1; chapter <= 6; chapter++)
             {
@@ -285,6 +287,7 @@ namespace RevGame.Editor
             }
             ValidateChapterBundleClosure(built.manifest.raw);
             PruneObsoleteBundles(built);
+            GameAudioCompressionBuild.ValidateBundleBudget(Path.GetFullPath(built.outputDir));
             ABManifestWriter.WriteBuildManifest(built);
             return target + "：" + built.manifest.allBundles.Length + "个包；六章背景包依赖为0，其它包不引用背景包 → " + Path.GetFullPath(built.outputDir);
         }

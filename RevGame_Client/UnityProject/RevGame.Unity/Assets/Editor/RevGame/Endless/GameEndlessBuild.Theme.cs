@@ -144,17 +144,7 @@ namespace RevGame.Editor
             foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/GameRes/Audio/Bgm/Endless", "Assets/GameRes/Audio/Sfx/Endless" }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                var importer = (AudioImporter)AssetImporter.GetAtPath(path);
-                bool music = path.Contains("/Bgm/");
-                AudioImporterSampleSettings settings = importer.defaultSampleSettings;
-                settings.loadType = music ? AudioClipLoadType.Streaming : AudioClipLoadType.DecompressOnLoad;
-                settings.compressionFormat = AudioCompressionFormat.Vorbis;
-                settings.quality = music ? .5f : .7f;
-                settings.preloadAudioData = !music;
-                importer.defaultSampleSettings = settings;
-                importer.loadInBackground = music;
-                importer.forceToMono = !music;
-                importer.SaveAndReimport();
+                GameAudioCompressionBuild.ConfigureClip(path);
             }
         }
 

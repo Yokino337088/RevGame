@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 3387526517
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a3342eefa82e535626a31716e84ef6fa
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a3342eefa82e535626a31716e84ef6fa
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_SnowCross.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_FrostNova.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_Avalanche.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_HailBarrage.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_LaserSpin.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_GlacialAegis.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_IceFault.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_FrozenPrison.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_IceLance.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter05/Boss_AbsoluteZero.ogg
+Dependencies: []

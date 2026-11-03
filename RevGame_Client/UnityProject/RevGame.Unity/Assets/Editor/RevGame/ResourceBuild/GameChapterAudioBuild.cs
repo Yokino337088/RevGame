@@ -11,7 +11,7 @@ namespace RevGame.Editor
     {
         // 资源构建asmdef不能引用默认Assembly-CSharp；此处的固定名字属于资源制作清单。
         private static readonly string[] Names = { "Chapter01_CafeByTheSea", "Chapter02_AzureBlue", "Chapter03_ToTheSouth", "Chapter04_Adventure", "Chapter05_IceWalls", "Chapter06_Swing" };
-        /// <summary>统一默认与PC/Android的长音乐设置；质量0.5为包体与听感的折中，保持立体声和原采样率。</summary>
+        /// <summary>章节保持独立分包，导入质量由项目统一压缩配方拥有，避免重建时恢复旧高质量。</summary>
         internal static void Configure(Dictionary<string, string> desired)
         {
             for (int chapter = 1; chapter <= Names.Length; chapter++)
@@ -24,17 +24,7 @@ namespace RevGame.Editor
                 {
                     throw new InvalidOperationException("章节音乐缺失：" + path);
                 }
-                AudioImporterSampleSettings settings = importer.defaultSampleSettings;
-                settings.loadType = AudioClipLoadType.Streaming;
-                settings.compressionFormat = AudioCompressionFormat.Vorbis;
-                settings.quality = 0.5f;
-                settings.sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate;
-                importer.defaultSampleSettings = settings;
-                importer.SetOverrideSampleSettings("Standalone", settings);
-                importer.SetOverrideSampleSettings("Android", settings);
-                importer.forceToMono = false;
-                importer.loadInBackground = true;
-                importer.SaveAndReimport();
+                GameAudioCompressionBuild.ConfigureClip(path);
             }
         }
         /// <summary>只读导入、时长与六章绑定断言，不切换当前场景，不启动Play。</summary>
@@ -78,7 +68,8 @@ namespace RevGame.Editor
                         AudioImporterSampleSettings target = importer.GetOverrideSampleSettings(platform);
 
                         if (target.loadType != AudioClipLoadType.Streaming || target.compressionFormat != AudioCompressionFormat.Vorbis
-                            || Mathf.Abs(target.quality - 0.5f) > 0.001f || target.sampleRateSetting != AudioSampleRateSetting.PreserveSampleRate)
+                            || Mathf.Abs(target.quality - GameAudioCompressionBuild.MusicQuality) > 0.001f || target.sampleRateSetting != AudioSampleRateSetting.OverrideSampleRate
+                            || target.sampleRateOverride != GameAudioCompressionBuild.MusicRate)
                         {
                             throw new InvalidOperationException("音乐平台压缩设置不一致：" + platform + "/" + path);
                         }
