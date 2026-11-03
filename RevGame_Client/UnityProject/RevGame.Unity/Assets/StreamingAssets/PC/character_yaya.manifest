@@ -1,0 +1,39 @@
+ManifestFileVersion: 0
+CRC: 677093626
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 96bc3f536fb0478051f0c1864221ffdb
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 1a6e6df4c68eda0efa33cf89ab3bb76f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 96bc3f536fb0478051f0c1864221ffdb
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Characters/Yaya/YayaIdle24.prefab
+- Assets/GameRes/Characters/Yaya/YayaIdle24Controller.controller
+- Assets/GameRes/Characters/Yaya/YayaIdle24Clip.anim
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaidle24"

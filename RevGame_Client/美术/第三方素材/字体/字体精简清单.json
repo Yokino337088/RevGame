@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "002258a10e3eee810f738d59a2f873638da2ea29dfcf4af75133e2cdda592738",
-  "inputDigest": "81ae74435f6e30edbacb1a986f371567fed8e2d6346a8ba3c2bcf517633b07fd",
+  "outputSha256": "535f6dfb0bb46308c85c3a0a929e07731fb60e8e1561e3d0917281a70c7e6c15",
+  "inputDigest": "26967ec7b380dfbc9b3011172483e55bb07b83f5aaf1ad5978342d69e64c89b3",
   "originalBytes": 17002248,
-  "outputBytes": 759352,
-  "characterCount": 1713,
-  "glyphCount": 3401,
+  "outputBytes": 759772,
+  "characterCount": 1714,
+  "glyphCount": 3402,
   "codepoints": [
     32,
     33,
@@ -1697,6 +1697,7 @@
     39764,
     40120,
     40483,
+    40486,
     40644,
     40655,
     40657,
@@ -1738,6 +1739,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Board/Tile/BoardCell.prefab",
       "sha256": "0f882b1d6da531105c76ec734a33fc69c676bdc3a4d4fa35d568117d626365ec"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Characters/Yaya/YayaIdle24.prefab",
+      "sha256": "deaa4f95abb7f1d07d641c03ecb65cad5802ddd6eab9e497c159282b96724bdb"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Config/Art/PieceArt.asset",
@@ -2234,6 +2239,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Story/StoryBook.cs",
       "sha256": "95757ce991709fb57335b69996a3519ed0a4eef1801a67e7f2d92a12e9502e03"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Diagnostics/CharacterPreview/YayaIdleTestBootstrap.cs",
+      "sha256": "22ba4b09f0c893f224cd9785da92d20c58d5ed88309413931af42f9fe7f1240e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/Loading/SceneResourceWarmup.cs",
@@ -2997,7 +3006,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/TestScene.unity",
-      "sha256": "fef510dc62c4e4fcb20cee3e047d2bf7c38a58eac22a049347465c816eb658cf"
+      "sha256": "03151cc833e78d2f1421570ac962b7722338003a84e7374747807d054f7b97f1"
     },
     {
       "path": "RevGame_Client/美术/第三方素材/字体/额外保留字符.txt",

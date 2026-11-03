@@ -173,6 +173,10 @@ namespace RevGame.Editor
             {
                 return Path.GetFileNameWithoutExtension(path) + "Atlas";
             }
+            if (path.Contains("/Art/Characters/Yaya/"))
+            {
+                return "YayaIdle24";
+            }
             if (path.Contains("/Art/Story/"))
             {
                 return "StoryGuide";
@@ -263,7 +267,7 @@ namespace RevGame.Editor
                 AssetDatabase.ImportAsset(atlasPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             }
             // 2160高的备用竖棋盘图独占4096页；常规图集仍限制2048，不能为一张大图放大全部常驻页。
-            int maxSize = paths.Any(p => { var t = AssetDatabase.LoadAssetAtPath<Texture2D>(p); return t.width + 8 > 2048 || t.height + 8 > 2048; }) ? 4096 : 2048;
+            int maxSize = name == "YayaIdle24" ? 4096 : paths.Any(p => { var t = AssetDatabase.LoadAssetAtPath<Texture2D>(p); return t.width + 8 > 2048 || t.height + 8 > 2048; }) ? 4096 : 2048;
             // 第一章图片必须保留图集，但整个图集同样属于第一章独立包，不能留在常驻公共资源里。
             string bundle = name == "SceneBackdrop_0fc7e394Atlas" ? "background_chapter01_tutorial" : "atlas_" + name.ToLowerInvariant();
             // V2以Importer设置为准；只改源资产而不改Importer，旧.meta会在导入时覆盖Include In Build等设置。
