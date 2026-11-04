@@ -3,13 +3,13 @@ CRC: 2444255816
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9a06be924e6a929509275223d17445ca
+    Hash: 0743f270b77cd61e380b3cf918bfb18e
   TypeTreeHash:
     serializedVersion: 2
-    Hash: e0dbee21d2b6570ab8c7a42353c2c0e4
+    Hash: 4c0ea6d7961f029f5570c56b2db44315
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9a06be924e6a929509275223d17445ca
+    Hash: 0743f270b77cd61e380b3cf918bfb18e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -23,21 +23,21 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 7f593ff3106b61e4f90d0b6e0c17c698, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: dc65bd67cbe82d24ca74f732d7eda18a, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 0718f01dc3bbb8140ad14a1819ef719b, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: dc65bd67cbe82d24ca74f732d7eda18a, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 3f6c7f8c8bb672d4c83fc1d60ca86085, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7f593ff3106b61e4f90d0b6e0c17c698, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -71,11 +71,11 @@ Assets:
 - Assets/GameRes/UI/Panel/Endless/EndlessEntryPanel.prefab
 - Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesscardarrow"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_ui_tavern_imgbkatlas"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/endless_arena"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesscardarrow
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_ui_tavern_imgbkatlas
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/endless_arena
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui

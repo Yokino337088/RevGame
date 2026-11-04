@@ -66,6 +66,12 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("请退出Play再装配剧情");
             }
+            // 鸦鸦版本已迁移后，旧菜单也走新配方，不能重新把立绘和对白改回史莱姆向导。
+            StoryBook current = AssetDatabase.LoadAssetAtPath<StoryBook>(BookPath);
+            if (current != null && current.YayaRevision > 0)
+            {
+                return GameYayaStoryBuild.Configure();
+            }
             Directory("Assets/GameRes/Art/Story");
             Directory(Root);
             Directory("Assets/GameRes/Config/Story");

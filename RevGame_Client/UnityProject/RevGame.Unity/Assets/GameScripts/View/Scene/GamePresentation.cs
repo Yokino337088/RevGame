@@ -20,6 +20,8 @@ namespace RevGame.View
         private GameObject boardRoot;
         [SerializeField]
         private Camera boardCamera;
+        /// <summary>StartScene专用场景画面；GameScene不绑定，不把大厅角色资源带进战斗。</summary>
+        [SerializeField] private LobbySceneView lobbyScene;
         [Header("章节背景渲染节点（图片、材质全部按章加载）")]
         [Tooltip("场景不直接引用背景 Sprite/专属材质；第 1 章经图集服务绑定，其余章按逻辑名异步加载。")]
         [SerializeField]
@@ -88,6 +90,11 @@ namespace RevGame.View
         // 基础几何可缓存，EnergyShakeOffset和ApplyBossFocus必须继续逐帧计算，保持原动态画面。
         private void FitCamera()
         {
+            if (lobbyScene != null)
+            {
+                lobbyScene.FitCamera();
+                return;
+            }
             // 棋盘必须同时放得进横向与纵向；窄窗口不能仅固定 orthographicSize 导致两侧被裁。
             if (boardCamera == null)
             {
@@ -213,6 +220,10 @@ namespace RevGame.View
             try
             {
                 await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIMenus", "UIBattle" });
+                if (lobbyScene != null)
+                {
+                    await lobbyScene.PrepareAsync(screen);
+                }
 
                 if (_released || version != _screenVersion)
                 {

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2345655004
+CRC: 1612201490
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 267959d381aab77b4de01531fb9d9153
+    Hash: b701226076e4f2c4c28152849419b432
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 436cae0edbdbd7b6a08d9dd80e13e1eb
+    Hash: 4923ba7478fe24c9d85796c3878ee8a1
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 267959d381aab77b4de01531fb9d9153
+    Hash: b701226076e4f2c4c28152849419b432
 HashAppended: 0
 ClassTypes:
 - Class: 114
@@ -26,4 +26,4 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Config/Story/StoryBook.asset
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_storyguide
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_yayaexpressions

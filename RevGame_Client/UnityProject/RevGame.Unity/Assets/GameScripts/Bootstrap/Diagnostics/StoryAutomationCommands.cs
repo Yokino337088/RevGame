@@ -39,6 +39,9 @@ namespace RevGame.Bootstrap
 #endif
             RevRuntimeAutomation.Register("story.state", "查询剧情、教学与隔离进度", Empty, _ => State(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("story.next", "点击剧情下一句", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().AdvanceStory() }, owner: Owner);
+            RevRuntimeAutomation.Register("story.skip", "与右上角跳过按钮共用正式剧情收尾", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().SkipStory() }, owner: Owner);
+            RevRuntimeAutomation.Register("story.yaya-state", "只读鸦鸦立绘/表情、全屏背景、层级与文本布局", Empty, _ => RevGame.UI.StoryPanel.YayaSnapshot(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("lobby.yaya-state", "只读StartScene实际场景对象、背景遮罩、待机与HomePanel无旧背景", Empty, _ => LobbySnapshot(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("tutorial.card", "选择练习手牌", Empty, _ => Accepted(RevLogic.Get<TutorialLogic>()?.SelectCard() == true), owner: Owner);
             RevRuntimeAutomation.Register("tutorial.cell", "点击练习棋盘的格子", "{\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8},\"y\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8}},\"required\":[\"x\",\"y\"],\"additionalProperties\":false}", json =>
             {
@@ -196,6 +199,18 @@ namespace RevGame.Bootstrap
                 ["soundStarted"] = view != null && view.SoundStarted,
                 ["visibleCharacters"] = view == null ? 0 : view.VisibleCharacters,
                 ["guidePacked"] = flow.StoryContent != null && flow.StoryContent.Guide != null && flow.StoryContent.Guide.packed
+            };
+        }
+        /// <summary>读取场景Renderer与UI边界，验证没有把大厅背景/角色放回HomePanel。</summary>
+        private static object LobbySnapshot()
+        {
+            var lobby = Object.FindObjectOfType<RevGame.View.LobbySceneView>();
+            var home = RevUI.Get<RevGame.UI.HomePanel>();
+            return new Dictionary<string, object>
+            {
+                ["lobby"] = lobby?.Snapshot(),
+                ["noUIBackdrop"] = home != null && home.transform.Find("screenBackground") == null && home.transform.Find("LobbyBackground") == null,
+                ["noUICharacter"] = home != null && home.transform.Find("Yaya") == null
             };
         }
     }

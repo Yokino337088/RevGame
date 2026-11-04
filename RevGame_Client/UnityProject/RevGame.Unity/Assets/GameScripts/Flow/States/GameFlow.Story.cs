@@ -13,6 +13,8 @@ namespace RevGame.Flow
         /// <summary>全局流程自己的资源引用；只在重试或Dispose释放，不随章节重复加载。</summary>
         private RevResHandle _storyHandle;
         private StoryBook _storyBook;
+        /// <summary>当前面板的表情图集绑定租约，进入时借、关闭时还；StoryBook直接图片依赖仍由全局配置句柄持有。</summary>
+        private View.GameSpriteAtlasService.ScopedAtlasLease _storyAtlas;
         /// <summary>当前播放篇章及从0开始的行号；未播放时篇章为空。</summary>
         private StoryBook.Episode _episode;
         private int _storyLine;
@@ -112,10 +114,28 @@ namespace RevGame.Flow
         /// <summary>只允许隔离测试存档预览文案；普通玩家不能借此改章节或标记完成。</summary>
         public bool PreviewStoryForTest(string id)
         {
-            if (_disposed || IsTransitioning || _storyBusy || !RevServices.GetRequired<StoryProgress>().IsIsolated)
+            if (_disposed || IsTransitioning || _storyBusy || IsTutorialActive || _storyBook == null || !RevServices.GetRequired<StoryProgress>().IsIsolated)
             {
+                LastError = "篇章预览需要隔离存档、剧情资源就绪且没有过场、剧情或实操教学";
                 return false;
             }
+            // 先检查配置和场景，再进入异步播放。输入错误是GM拒绝，不应把玩家送进资源故障面板。
+            StoryBook.Episode episode;
+            try
+            {
+                episode = _storyBook.Find(id);
+            }
+            catch (InvalidOperationException error)
+            {
+                LastError = error.Message;
+                return false;
+            }
+            if (episode.BackgroundChapter > 0 && (Screen != GameScreen.Battle || _activePresentation == null || !_activePresentation.IsChapterBackgroundReady || _activePresentation.BackgroundChapter != episode.BackgroundChapter))
+            {
+                LastError = "篇章背景需要先进入对应章节：" + episode.BackgroundChapter;
+                return false;
+            }
+            LastError = string.Empty;
             PlayStory(id, null);
             return true;
         }
@@ -142,7 +162,7 @@ namespace RevGame.Flow
                 throw new InvalidOperationException("剧情资产加载失败：" + _storyHandle.ErrorReason);
             }
             _storyBook.Validate();
-            await RevServices.GetRequired<View.GameSpriteAtlasService>().PreloadAsync(new[] { "StoryGuide", "UIMenus" });
+            await RevServices.GetRequired<View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIMenus" });
             RevSound.Preload("Place");
         }
         /// <summary>启动顺序：开场→教学引子→GameScene真实第一章。未完成教学的老存档也会补教学。</summary>
@@ -154,12 +174,10 @@ namespace RevGame.Flow
             {
                 PlayStory("opening", () => { progress.CompleteOpening(); BeginTutorialIntroduction(); });
             }
-            else
-
-                if (!progress.TutorialComplete)
-                {
-                    BeginTutorialIntroduction();
-                }
+            else if (!progress.TutorialComplete)
+            {
+                BeginTutorialIntroduction();
+            }
         }
 
         private void BeginTutorialIntroduction()
@@ -203,6 +221,12 @@ namespace RevGame.Flow
                 {
                     return;
                 }
+                _storyAtlas = RevServices.GetRequired<View.GameSpriteAtlasService>().AcquireScopedAtlas("YayaExpressions");
+                await _storyAtlas.WaitReadyAsync();
+                if (_disposed || version != _storyVersion)
+                {
+                    return;
+                }
                 var panel = await RevUI.OpenAsync<StoryPanel, StoryPanel.Frame>(StoryFrame());
 
                 if (_disposed || version != _storyVersion)
@@ -217,6 +241,11 @@ namespace RevGame.Flow
                 if (panel == null)
                 {
                     throw new InvalidOperationException("剧情面板加载失败");
+                }
+                await panel.PrepareBackdropAsync();
+                if (_disposed || version != _storyVersion)
+                {
+                    return;
                 }
                 _storyVisible = true;
             }
@@ -272,6 +301,21 @@ namespace RevGame.Flow
             completed?.Invoke();
             return true;
         }
+        /// <summary>
+        /// 跳过整篇对白走正常完成回调：首次开场仍能进入教学，章节对白解除门禁。
+        /// 不伪造完成棋盘实操；跳过/结束均只取走一次完成委托，取消/失败仍不写进度。
+        /// </summary>
+        public bool SkipStory()
+        {
+            if (!_storyVisible || _episode == null || _disposed)
+            {
+                return false;
+            }
+            Action completed = _storyCompleted;
+            CancelStory();
+            completed?.Invoke();
+            return true;
+        }
         private void CancelStory()
         {
             ++_storyVersion;
@@ -280,6 +324,8 @@ namespace RevGame.Flow
             _storyCompleted = null;
             _episode = null;
             RevUI.Close<StoryPanel>();
+            _storyAtlas?.Dispose();
+            _storyAtlas = null;
         }
         /// <summary>只有教程Logic实操完成才可写进度；不让普通按钮/GM直接跳过教学并伪造完成。</summary>
         public bool CompleteTutorial()

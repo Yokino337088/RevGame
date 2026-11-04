@@ -30,6 +30,7 @@ namespace Revolution
         public const string Art_Boss_Chapter06_Priest = "Art/Boss/Chapter06_Priest/";
         public const string Art_Characters = "Art/Characters/";
         public const string Art_Characters_Yaya = "Art/Characters/Yaya/";
+        public const string Art_Characters_Yaya_Expressions = "Art/Characters/Yaya/Expressions/";
         public const string Art_Characters_Yaya_Idle24 = "Art/Characters/Yaya/Idle24/";
         public const string Art_Combat = "Art/Combat/";
         public const string Art_Combat_Melee = "Art/Combat/Melee/";
@@ -100,6 +101,7 @@ namespace Revolution
         public const string Fonts = "Fonts/";
         public const string Fonts_CJK = "Fonts/CJK/";
         public const string HelperTextures = "HelperTextures/";
+        public const string Lobby = "Lobby/";
         public const string Material = "Material/";
         public const string Material_Background = "Material/Background/";
         public const string Material_Board = "Material/Board/";

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 25055639
+CRC: 2922659483
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 8a099037a0199febea72ee3e67bb377f
+    Hash: df7b65f1c4f55d8ad59c9496cec91a8d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 8a099037a0199febea72ee3e67bb377f
+    Hash: df7b65f1c4f55d8ad59c9496cec91a8d
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -23,6 +23,7 @@ Assets:
 - Assets/GameRes/Art/UI/UI_Settlement_imgBK.png
 - Assets/GameRes/Art/UI/UI_Buy_btnClose.png
 - Assets/GameRes/Art/UI/UI_achieveItem_imgBK.png
+- Assets/GameRes/Art/UI/UI_ChooseLevel_imgTip2.png
 - Assets/GameRes/Art/UI/UI_Tavern_btnClose.png
 - Assets/GameRes/Art/UI/UI_Tip_imgBK.png
 - Assets/GameRes/Art/UI/UI_Tavern_Handle.png

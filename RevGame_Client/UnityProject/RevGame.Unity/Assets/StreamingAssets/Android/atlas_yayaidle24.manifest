@@ -1,0 +1,48 @@
+ManifestFileVersion: 0
+CRC: 3915602081
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ddbcd70edb43a0f0ed70d8cf1cd5ce5f
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: ddbcd70edb43a0f0ed70d8cf1cd5ce5f
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_021.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_007.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_023.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_002.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_006.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_018.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_019.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_022.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_020.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_011.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_003.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_012.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_009.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_008.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_004.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_001.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_017.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_015.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_016.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_013.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_010.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_014.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_005.png
+- Assets/GameRes/Art/Characters/Yaya/Idle24/frame_000.png
+- Assets/GameRes/Atlases/YayaIdle24.spriteatlasv2
+Dependencies: []
