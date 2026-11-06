@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "Android",
-  "buildTime": "2026-11-06 13:47:32",
+  "buildTime": "2026-11-06 14:50:06",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 38102 },
     { "name": "atlas_bosschapter01frames", "size": 432488 },
@@ -58,7 +58,7 @@
     { "name": "config_piece_art", "size": 4335 },
     { "name": "config_story", "size": 6904 },
     { "name": "config_yaya", "size": 2203 },
-    { "name": "data_tables", "size": 32377 },
+    { "name": "data_tables", "size": 32430 },
     { "name": "endless_arena", "size": 1082171 },
     { "name": "font_cjk", "size": 717529 },
     { "name": "lobby_cottage", "size": 545209 },
@@ -69,7 +69,7 @@
     { "name": "material_pieces", "size": 2497 },
     { "name": "material_ui", "size": 2829 },
     { "name": "shared_shaders", "size": 270820 },
-    { "name": "ui_chapters_shared", "size": 30210 },
+    { "name": "ui_chapters_shared", "size": 30168 },
     { "name": "ui_diagnostics", "size": 6672 },
     { "name": "ui_endless", "size": 16494 },
     { "name": "ui_items", "size": 8240 },

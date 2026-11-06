@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>鸦鸦局内互动验收 · 2026-11-06</title><style>body{margin:0;background:#f3f0e6;color:#263a2e;font:16px/1.75 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1100px;margin:30px auto;padding:30px;background:#fffdf6;border:1px solid #ccd7c5;border-radius:15px}img{width:100%;height:auto;border-radius:10px}figure{margin:24px 0}figcaption{color:#52674c}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}.notice{padding:20px;background:#f2e9d3;border-radius:8px}a{color:#345c3b}</style><main><h1>鸦鸦局内互动</h1><p class="notice">只在战斗阶段出现，准备/暂停/剧情均拒绝。早期业务回归和退出清理通过；最终分包与恢复原手牌的业务检查成立，但整体报告因框架Editor文件桥Sharing violation失败。验证边界保留。</p><figure><img src="media/prepare.jpg" loading="lazy"><figcaption>准备阶段：原手牌布局，鸦鸦不显示</figcaption></figure><figure><img src="media/campaign-band1-0.jpg" loading="lazy"><figcaption>战斗夸奖，积分位于左上</figcaption></figure><figure><img src="media/campaign-band3-2.jpg" loading="lazy"><figcaption>表现不佳时的嘲讽</figcaption></figure><figure><img src="media/endless-band1.jpg" loading="lazy"><figcaption>无尽左侧场景互动</figcaption></figure><figure><img src="media/endless-band3.jpg" loading="lazy"><figcaption>无尽嘲讽与身体避让</figcaption></figure><figure><img src="media/弹性弹出.gif"><figcaption>真实战斗弹出截图GIF，非补画</figcaption></figure><figure><img src="media/互动表预览.png"><figcaption>Excel互动台词配置</figcaption></figure><p><a href="配置与验收.md">完整配置说明与证据边界</a></p><pre># 鸦鸦局内互动 · 2026-11-06
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>鸦鸦局内互动验收 · 2026-11-06</title><style>body{margin:0;background:#f3f0e6;color:#263a2e;font:16px/1.75 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1100px;margin:30px auto;padding:30px;background:#fffdf6;border:1px solid #ccd7c5;border-radius:15px}img{width:100%;height:auto;border-radius:10px}figure{margin:24px 0}figcaption{color:#52674c}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}.notice{padding:20px;background:#f2e9d3;border-radius:8px}a{color:#345c3b}</style><main><h1>鸦鸦局内互动</h1><p class="notice">只在战斗阶段出现，准备/暂停/剧情均拒绝。早期业务回归和退出清理通过；最终分包与恢复原手牌的业务检查成立，但整体报告因框架Editor文件桥Sharing violation失败。验证边界保留。</p><figure><img src="media/prepare.jpg" loading="lazy"><figcaption>准备阶段：原手牌布局，鸦鸦不显示</figcaption></figure><figure><img src="media/campaign-band1-0.jpg" loading="lazy"><figcaption>战斗夸奖，积分位于左上</figcaption></figure><figure><img src="media/campaign-band3-2.jpg" loading="lazy"><figcaption>表现不佳时的嘲讽</figcaption></figure><figure><img src="media/endless-band1.jpg" loading="lazy"><figcaption>无尽左侧场景互动</figcaption></figure><figure><img src="media/endless-band3.jpg" loading="lazy"><figcaption>无尽嘲讽与身体避让</figcaption></figure><figure><img src="media/弹性弹出.gif"><figcaption>真实战斗弹出截图GIF，非补画</figcaption></figure><figure><img src="media/互动表预览.png"><figcaption>Excel互动台词配置</figcaption></figure><p><a href="高频互动验收_2026-11-06.html">最新2.5秒频率与1.5秒停留验收</a></p><p><a href="高频互动验收_2026-11-06.html">最新2.5秒频率与1.5秒停留验收</a></p><p><a href="配置与验收.md">完整配置说明与证据边界</a></p><pre># 鸦鸦局内互动 · 2026-11-06
 
 六章远征和独立无尽已接入三档表现互动：表现好夸奖、一般鞭策、表现不佳嘲讽。立绘由场景SpriteRenderer显示在左下空区，头顶使用仿助阵帮手的世界空间对话框，平时隐藏；DOTween执行快速弹出、停留与缩回。
 
@@ -7,9 +7,9 @@
 ## 触发与控频
 
 - 六章仅GamePhase.Battle，无尽仅EndlessPhase.Fighting；剧情、过场、实操教学、暂停/准备都拒绝，并在阶段改变时收回立绘。加载完成后也再查阶段，防止迟到弹出。
-- 一个8秒的实际战斗观察窗口累计真实敌方死亡、己方死亡及伤害。无伤害/击杀/损失的空窗口不评价。六章换回合清窗口，无尽与六章状态分别归本域。
+- 一个2.5秒的实际战斗观察窗口累计真实敌方死亡、己方死亡及伤害。空窗口使用普通鼓励，不虚构击杀/损失，也不延续上一窗口的夸奖或嘲讽。六章换回合清窗口，无尽与六章状态分别归本域。
 - 真实损失达到1或窗口承伤占起始总生命达到35%时为不佳；六章至少3击杀、无尽至少18击杀且承伤不超过12%时为好；其余有交战的窗口为一般。所有阈值都来自Excel。
-- 最初等待8战斗秒，全局冷却14秒，同档冷却32秒，每次只显示一条。台词按权重选择并避开连续重复。互动随机源独立，不消费战斗掉落/AI随机数。
+- 最初等待2.5战斗秒，全局冷却2.5秒，同档冷却2.5秒，每次只显示一条。正常连续战斗按此节奏每6秒至少两次；完整尺寸停留1.5秒，另有0.24秒弹出和0.18秒缩回。台词按权重选择并避开连续重复。互动随机源独立，不消费战斗掉落/AI随机数。
 - 主动拆子、三合一吞掉不算死亡。六章事实来自伤害提交和真正死亡出口；无尽同样来自真实伤害/死亡/棋心掉血出口。表现不反向改血量、积分或胜负。
 - 评价是局势指标，不等于长期玩家技术评级。帮手/环境造成的实际伤害也可能进入局势窗口；规则可通过Excel继续调整，未宣称能识别所有战术水平。
 
@@ -50,6 +50,12 @@ Band：1夸奖、2鞭策、3嘲讽。Mode：0两模式共用、1仅六章、2仅
 
 所有运行期能力由GameBootstrap集中注册/注销。生产非开发版本不提供变更夹具。RevMCP实际执行顺序：rev_discover → rev_call读取状态/GM → rev_run断言并finally清理；Unity制作/导表/构建优先RevCLI live。
 
+2026-11-06高频修订增加只读展示证据：`recentStarts`是最近三次真实落屏时间（非缩放秒），`cadenceReady`表示这三次跨度不超过6秒；`holdSeconds`为本次完整尺寸停留参数，`lastVisibleSeconds`为上一次实际可见总时长。这些字段只在开发态提供，不写玩家存档；固定长度数组不随长局增长。当前36条台词Duration均0，因此全部使用默认1.5秒；后续显式Duration会覆盖默认值。
+
+本次高频验收为47主步骤、3清理步骤全部通过，PC真实AB自然战斗连续三次跨度：六章4.941秒、无尽4.986秒；默认停留1.5秒，正常结束实际总时长约1.92秒。准备/暂停拒绝、台词完整、无重叠、显示后引用释放通过，本轮日志Error为0。此结果不代表下方历史文件桥Sharing violation已修复。最新证据见[高频互动验收](高频互动验收_2026-11-06.html)。
+
+PC/Android各76包已重新构建发布。首次Android构建完成复制，但Unity BuildPipeline报两条“Trying to reload asset from disk that is not stored on disk”，工单明确失败；切到GameScene卸载大厅编辑态预览后再次构建成功。未将首轮复制成功冒充构建无错误，也未改框架内核。最终逐包核对发布与构建目录字节/大小一致，再恢复StartScene。
+
 ## 验收结果与限制
 
 环境：Unity 2022.3.15f1c1、Windows Editor、真实PC AB、固定隔离存档/无尽种子1101。没有把工具success或单张截图当全部规则通过。
@@ -82,4 +88,4 @@ Band：1夸奖、2鞭策、3嘲讽。Mode：0两模式共用、1仅六章、2仅
 共享剧情表情图集仍为原6张，PC1180124字节，没有因局内四张增加开场依赖。中文子集1745字，777932字节。源码、美术和允许入库的StreamingAssets提交，外部AssetBundles、Library、原始JSON/参数、Profiler与安装包不提交；报告不生成ZIP。
 
 框架可行性：RevLogic+RevScope支撑两个模式的观察生命周期，RevEvent只广播已提交事实，RevResManager/RevPool支撑短显示和退出清理，RevTask支撑取消/迟到防护，Excel生成表和SO区分玩法阈值与美术绑定。主要未解框架边界是Editor自动化文件桥的偶发共享占用。Android完成AB与Shader构建，真机/IL2CPP/独立Player/手机帧率未执行。
-</pre></main></html>
+</pre></main>

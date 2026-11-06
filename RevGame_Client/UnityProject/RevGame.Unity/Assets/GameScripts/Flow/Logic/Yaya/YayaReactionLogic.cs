@@ -150,6 +150,12 @@ namespace RevGame.Flow
                 return;
             }
             int band = Classify(Mode, _kills, _losses, _taken, _dealt, _initialHealth);
+            // 已确认处于战斗阶段。空窗口只使用普通鼓励，不凭空捏造击杀/损失，也不延用上一窗的夸奖或嘲讽。
+            // 这样短暂无结算事件时仍能按Excel节奏互动；准备、剧情和暂停已经在上面的门禁提前返回。
+            if (band == 0)
+            {
+                band = 2;
+            }
             TryPublish(band);
             ResetWindow();
         }

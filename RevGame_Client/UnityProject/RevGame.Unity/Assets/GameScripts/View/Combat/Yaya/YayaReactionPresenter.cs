@@ -45,6 +45,12 @@ namespace RevGame.View
         {
             get; private set;
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>仅开发态保存最近三次真正落屏的非缩放时间秒，不包含资源请求；固定数组不会随长局增长。</summary>
+        private readonly float[] _recentStarts = new float[3];
+        /// <summary>最近一次实际停留参数与可见总时长，用于验收1.5秒停留和动画结束；被暂停收回时总时长可能较短。</summary>
+        private float _lastHoldSeconds, _lastVisibleSeconds;
+#endif
         /// <summary>域进入时只接线，不预载立绘；先清上一会话，保证重进没有旧Tween或目录引用。</summary>
         public void BeginSession(int mode)
         {
@@ -150,6 +156,12 @@ namespace RevGame.View
                 // 场景归属为当前场景；Show回池不挂在UIRoot，场景根生命周期负责清理。
                 _view.Play(catalog.Find(line.Expression), line, _camera, _area, Hide);
                 ShownCount++;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                _recentStarts[0] = _recentStarts[1];
+                _recentStarts[1] = _recentStarts[2];
+                _recentStarts[2] = Time.unscaledTime;
+                _lastHoldSeconds = _view.HoldSeconds;
+#endif
             }
             catch (Exception error)
             {
@@ -304,6 +316,9 @@ namespace RevGame.View
             _loading = false;
             if (_view != null)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                _lastVisibleSeconds = _view.VisibleSeconds;
+#endif
                 RevPool.Return(_view, 0);
                 _view = null;
             }
@@ -336,7 +351,9 @@ namespace RevGame.View
         /// <summary>只读实际显示、资源租约和非遮挡检查，GM不可直接改Visible凑断言。</summary>
         public object Snapshot()
         {
-            return new Dictionary<string, object> { ["mode"] = _mode, ["visible"] = _view != null && _view.Visible, ["settled"] = _view != null && _view.Settled, ["busy"] = Busy, ["lineId"] = _line.Id, ["band"] = _line.Band, ["expression"] = _line.Expression, ["text"] = _line.Text, ["shown"] = ShownCount, ["error"] = LastError, ["speechFits"] = _view != null && _view.SpeechFits, ["overlap"] = _view != null && HasOverlap(_area), ["areaX"] = _area.x, ["areaY"] = _area.y, ["areaWidth"] = _area.width, ["areaHeight"] = _area.height, ["catalogHeld"] = _catalogHandle != null, ["atlasHeld"] = _atlases.Length > 0 };
+            return new Dictionary<string, object> { ["mode"] = _mode, ["visible"] = _view != null && _view.Visible, ["settled"] = _view != null && _view.Settled, ["busy"] = Busy, ["lineId"] = _line.Id, ["band"] = _line.Band, ["expression"] = _line.Expression, ["text"] = _line.Text, ["shown"] = ShownCount, ["error"] = LastError, ["speechFits"] = _view != null && _view.SpeechFits, ["overlap"] = _view != null && HasOverlap(_area), ["areaX"] = _area.x, ["areaY"] = _area.y, ["areaWidth"] = _area.width, ["areaHeight"] = _area.height, ["catalogHeld"] = _catalogHandle != null, ["atlasHeld"] = _atlases.Length > 0,
+                ["recentStarts"] = _recentStarts, ["cadenceReady"] = ShownCount >= 3 && _recentStarts[2] - _recentStarts[0] <= 6,
+                ["holdSeconds"] = _lastHoldSeconds, ["lastVisibleSeconds"] = _lastVisibleSeconds, ["visibleSeconds"] = _view != null ? _view.VisibleSeconds : 0 };
         }
 #endif
     }

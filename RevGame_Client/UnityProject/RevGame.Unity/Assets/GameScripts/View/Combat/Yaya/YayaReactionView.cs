@@ -22,6 +22,10 @@ namespace RevGame.View
         private Vector3 _baseScale;
         private Action _finished;
         private float _openedAt;
+        /// <summary>本次完整尺寸停留秒数，不含0.24秒弹出与0.18秒缩回；状态查询用于核对Excel是否真正生效。</summary>
+        public float HoldSeconds { get; private set; }
+        /// <summary>本实例本次已显示的非缩放秒数；回池后不作为有效可见证据。</summary>
+        public float VisibleSeconds => Visible ? Time.unscaledTime - _openedAt : 0;
         /// <summary>实际Renderer已能画图时为true，不用请求状态代替可见证据。</summary>
         public bool Visible => portrait != null && portrait.enabled && portrait.sprite != null;
         /// <summary>等待弹出Tween的0.24秒结束后才检查最终大小，不能拿首帧5%缩放作为完整立绘尺寸。</summary>
@@ -41,6 +45,7 @@ namespace RevGame.View
             _baseScale = transform.localScale;
             transform.localScale = _baseScale * .05f;
             float hold = line.Duration > 0 ? line.Duration : YayaReactionConfig.Value("PopupSeconds");
+            HoldSeconds = hold;
             // Back弹出略微超过目标大小，布局已预留边距；单纯表现秒数不决定战斗冷却。
             _sequence = DOTween.Sequence().SetUpdate(true)
                 .Append(transform.DOScale(_baseScale, .24f).SetEase(Ease.OutBack, 1.35f))
