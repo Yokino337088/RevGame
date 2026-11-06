@@ -30,6 +30,10 @@ namespace Revolution
 
     internal static class RevLog
     {
+        internal static void Warn(string message, string tag)
+        {
+            Console.WriteLine(tag + ": " + message);
+        }
         internal static void Exception(Exception error, string message, string tag)
         {
             throw new InvalidOperationException(tag + ": " + message, error);
@@ -43,7 +47,7 @@ namespace UnityEngine
     {
         internal static T FromJson<T>(string value)
         {
-            throw new NotSupportedException("本测试不验证 Unity JSON 或局域网消息解析。");
+            return System.Text.Json.JsonSerializer.Deserialize<T>(value, new System.Text.Json.JsonSerializerOptions { IncludeFields = true });
         }
         internal static string ToJson(object value)
         {

@@ -12,7 +12,7 @@ public sealed class OnCreateScene_InitializeGoLobby : AsyncEventSystem<OnCreateS
         if (value.Scene.SceneType == SceneType.Gate && value.Scene.SceneRuntimeType == SceneRuntimeType.Root)
         {
             value.Scene.AddComponent<GoLobbyComponent>(false);
-            Log.Info("九路围棋中转大厅已就绪：TCP 20000，规则由双方同源客户端校验。");
+            Log.Info("九路围棋中转大厅已就绪：Fantasy KCP / UDP 20000，规则由双方同源客户端校验。");
         }
         await FTask.CompletedTask;
     }

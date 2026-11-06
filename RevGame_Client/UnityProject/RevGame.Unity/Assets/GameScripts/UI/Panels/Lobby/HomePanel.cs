@@ -53,11 +53,17 @@ namespace RevGame.UI
 
         /// <summary>标准围棋经过唯一流程入口进入专属场景，联网方式在模式面板中选择。</summary>
         [RevButtonClick("btnPvP")]
-        private void OnPvP()
+        private async void OnPvP()
         {
-            if (!RevServices.GetRequired<GameFlow>().EnterPvp())
+            try
             {
-                _pvpLabel.text = RevServices.GetRequired<GameFlow>().LastError;
+                await RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus" });
+                await RevUI.OpenAsync<RevGame.Pvp.PvpEntryPanel>();
+            }
+            catch (System.Exception error)
+            {
+                _pvpLabel.text = "对战入口加载失败";
+                RevLog.Exception(error, "对战入口加载失败", "Pvp");
             }
         }
 

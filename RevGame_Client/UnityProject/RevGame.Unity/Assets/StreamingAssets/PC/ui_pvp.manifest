@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4100227313
+CRC: 2833568007
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: da910bd65b724f8230007977a24924d9
+    Hash: 57bf4f5e1560d23f8066822d0c777ff1
   TypeTreeHash:
     serializedVersion: 2
-    Hash: a75646fbda88386006ec124fe570bf86
+    Hash: c1151127deab1b80cb490dcb52860c78
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: da910bd65b724f8230007977a24924d9
+    Hash: 57bf4f5e1560d23f8066822d0c777ff1
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -23,9 +23,23 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 888ce27ad223d664681d170376ac15e9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 504225b50b7c49442ae9a254f8fbb2f4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 42432c2906b8f93428448d712d5650a6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: c694d967325a62347b68783a231fe826, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2bad428e4bfb4c346a4ac2d597557458, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 140c32e5f0b90d248a362c7d168f01ed, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -58,9 +72,17 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Navigation
 - AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.SpriteState
 Assets:
+- Assets/GameRes/UI/Panel/Pvp/Menu/PvpServerPanel.prefab
+- Assets/GameRes/UI/Panel/Pvp/Menu/PvpEntryPanel.prefab
+- Assets/GameRes/UI/Panel/Pvp/Menu/PvpLanPanel.prefab
+- Assets/GameRes/UI/Panel/Pvp/Menu/PvpNoticePanel.prefab
 - Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab
+- Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"

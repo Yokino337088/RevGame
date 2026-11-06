@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace RevGame.Editor
 {
     /// <summary>九路围棋固定资产配方。通过Unity API保留GUID，复用已有Sprite与字体，禁止白膜按钮或直接改YAML。</summary>
-    public static class GamePvpBuild
+    public static partial class GamePvpBuild
     {
         private static Font _font;
         private static readonly Color Cream = new Color(1, .95f, .80f);
@@ -35,6 +35,8 @@ namespace RevGame.Editor
             _font = GameAssetBuilder.Font();
             BuildBoard();
             BuildPanel();
+            BuildMenus();
+            BuildAgentAssets();
             SceneSetup[] setup = EditorSceneManager.GetSceneManagerSetup();
             try
             {
@@ -45,7 +47,7 @@ namespace RevGame.Editor
                 camera.orthographic = true;
                 camera.orthographicSize = 6.4f;
                 camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.backgroundColor = new Color(.05f, .07f, .09f);
+                camera.backgroundColor = new Color(.84f, .73f, .54f);
                 camera.transform.position = new Vector3(4, 4, -10);
                 EditorSceneManager.SaveScene(scene, "Assets/Scenes/PvpScene.unity");
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
@@ -103,13 +105,21 @@ namespace RevGame.Editor
             Material background = Material("PvpTemple", existing.shader);
             background.CopyPropertiesFromMaterial(existing);
             Material board = Material("PvpIvoryBoard", Shader.Find("RevGame/Pvp/IvoryGoBoard"));
+            Material endlessGrid = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Endless/EndlessGrid.mat");
+            if (endlessGrid == null)
+            {
+                throw new InvalidOperationException("缺少无尽棋盘配色材质");
+            }
+            // 直接读取无尽的真实配色，避免旧材质序列化值覆盖Shader新默认值。
+            board.SetColor("_Ivory", endlessGrid.GetColor("_Ivory"));
+            board.SetColor("_Gold", endlessGrid.GetColor("_Gold"));
             var root = new GameObject("PvpBoardView", typeof(PvpBoardView));
             try
             {
                 var data = new SerializedObject(root.GetComponent<PvpBoardView>());
                 data.FindProperty("backgroundRenderer").objectReferenceValue = Quad(root.transform, "无尽神殿背景", background,
                     new Vector3(4, 4, 5), new Vector3(23, 12.94f, 1));
-                data.FindProperty("boardRenderer").objectReferenceValue = Quad(root.transform, "象牙白九路交叉点棋盘", board,
+                data.FindProperty("boardRenderer").objectReferenceValue = Quad(root.transform, "无尽同款象牙金格棋盘", board,
                     new Vector3(4, 4, 2), new Vector3(9, 9, 1));
                 data.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Pvp/PvpBoardView.prefab");
@@ -198,28 +208,6 @@ namespace RevGame.Editor
                 Label("white", top, "同样规则 · 公平落子", .66f, .08f, .98f, .88f, 29);
                 Label("turn", top, "选择一种对战方式", .29f, .05f, .71f, .59f, 26);
                 Label("preview", root.transform, "", .26f, .82f, .74f, .855f, 23, true);
-
-                RectTransform lobby = Modal("lobby", root.transform);
-                Label("heading", lobby, "九路围棋 · 选择连接方式", .2f, .84f, .8f, .93f, 40);
-                Label("nameLabel", lobby, "你的称呼", .16f, .72f, .25f, .78f, 24);
-                Input("nickname", lobby, "棋友", .26f, .72f, .46f, .78f, 16);
-                Button("mode", lobby, "新手场 · 点两次落子", .55f, .72f, .84f, .78f, 25);
-                Label("serverTitle", lobby, "服务器匹配", .16f, .62f, .46f, .69f, 33);
-                Label("lanTitle", lobby, "同一局域网 · 邀请棋友", .54f, .62f, .84f, .69f, 32);
-                Input("endpoint", lobby, "127.0.0.1:20000", .17f, .54f, .45f, .60f, 100);
-                Button("connect", lobby, "连接服务器 / 重连", .17f, .45f, .45f, .52f);
-                Button("match", lobby, "开始匹配", .17f, .36f, .305f, .43f);
-                Button("cancel", lobby, "取消匹配", .315f, .36f, .45f, .43f);
-                Label("serverNote", lobby, "服务器关闭时仍可游玩远征、无尽和局域网对战", .17f, .24f, .45f, .34f, 24);
-                Button("local", lobby, "本地双人练习", .17f, .16f, .45f, .23f);
-                Button("lan", lobby, "搜索局域网设备", .55f, .54f, .83f, .60f);
-                RectTransform peers = Rect("peers", lobby, .55f, .15f, .83f, .52f);
-                for (int i = 0; i < 6; i++)
-                {
-                    float y = 1 - i / 6f;
-                    Button("peer" + i, peers, "等待设备", 0, y - .145f, 1, y - .008f, 22);
-                }
-                Label("help", lobby, "", .18f, .05f, .84f, .13f, 23);
 
                 RectTransform controls = Rect("controls", root.transform, 0, 0, 1, 1);
                 Button("pass", controls, "停一手", .31f, .025f, .43f, .095f, 30);

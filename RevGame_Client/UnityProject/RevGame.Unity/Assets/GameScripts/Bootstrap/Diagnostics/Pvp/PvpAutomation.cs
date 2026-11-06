@@ -16,6 +16,7 @@ namespace RevGame.Pvp
     public static class PvpAutomation
     {
         private static readonly object Owner = new object();
+        private static PvpKcpOpponentCheck _kcpOpponent;
         private static readonly object CheckOwner = new object();
         private static readonly object GameCheckOwner = new object();
         private const string Empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
@@ -47,7 +48,42 @@ namespace RevGame.Pvp
         /// <summary>只在 Bootstrap 的开发态分支调用一次。输入Schema限定枚举、坐标与字符串长度，正式包不保留这些入口。</summary>
         public static void Register()
         {
+            RevRuntimeAutomation.Register("pvp.agent-fixture", "仅开发态安装固定停一手HTTP替身，联机仍走真实连接；不访问云端", Empty,
+                _ => { PvpAgentChecks.Install(Service); return Result(true, "已安装固定响应"); }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-on", "联机自己的座位通过正式入口开启托管", Empty,
+                _ => Result(Service.SetAgentControl(true), Service.AgentStatus), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-off", "关闭托管并移除测试HTTP替身", Empty,
+                _ => { PvpAgentChecks.Restore(Service); return Result(true, "已恢复真实HTTP边界"); }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.computer", "通过正式入口开始人机，玩家只能手动执黑", Empty,
+                _ => { Service.StartComputer(); return Result(true, "人机已开始"); }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-check", "隔离棋局验证Agent人机闭环、取消、非法输出与回退，不访问云端或玩家存档", Empty,
+                _ => new Dictionary<string, object> { ["passed"] = true, ["text"] = PvpAgentChecks.Run(Service.Config) }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-settings", "打开真实Agent设置面板，不读取或返回Key", Empty,
+                _ => { PvpAgentSettingsPanel.OpenSettings(); return Result(true, "已打开设置"); }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.state", "只读九路围棋流程、棋谱指纹、双方状态、设备列表和配置加载状态", Empty, _ => State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.lan-scroll", "向局域网列表注入原生滚轮事件，验证超出六行仍可滚动", Empty, _ =>
+            {
+                RevUI.Get<PvpLanPanel>().ScrollForCheck();
+                return Result(true, "已发送滚轮事件");
+            }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.lan-list-state", "读取局域网ScrollRect真实尺寸和位置", Empty,
+                _ => RevUI.Get<PvpLanPanel>().ScrollStateForCheck(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.notice-check", "播放真实顶部匹配提示，供截图连拍验证DOTween滑入和收回", Empty, _ =>
+            {
+                PvpNoticePanel.ShowMessage("正在寻找棋友…");
+                return Result(true, "已播放真实顶部提示");
+            }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.kcp-opponent", "独立Fantasy Scene/KCP连接本机UDP20000并自动停一手和确认计分，仅开发态", Empty, _ =>
+            {
+                _kcpOpponent?.Dispose();
+                _kcpOpponent = new PvpKcpOpponentCheck(Service.Config.RulesJson, Service.Config.komiHalfPoints);
+                _kcpOpponent.Start();
+                return Result(true, "已启动独立KCP对手");
+            }, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.kcp-opponent-state", "读取独立KCP对手协议、序号和指纹", Empty,
+                _ => _kcpOpponent == null ? (object)new Dictionary<string, object> { ["running"] = false } : _kcpOpponent.State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.drop-socket", "开发态释放当前真实Fantasy Session和Socket，保留棋谱供正式连接入口恢复", Empty,
+                _ => Result(FantasyGoTransport.Active != null && FantasyGoTransport.Active.DropSocketForCheck(), "真实Socket断开请求"), owner: Owner);
             RevRuntimeAutomation.Register("pvp.enter", "从大厅经正式GameFlow进入九路围棋；需等待过场完成再操作", Empty, _ =>
             {
                 bool accepted = Flow.EnterPvp();
@@ -144,6 +180,7 @@ namespace RevGame.Pvp
 
             RevRuntimeAutomation.Register("pvp.lan-check-begin", "创建独立双端真实UDP/UTP夹具，验证发现、拒绝重试、握手、有序分片与清理；不修改玩家棋局", Empty, _ => BeginLanCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-check-state", "只读真实局域网传输夹具的完成、断言与清理结果", Empty, _ => LanCheckState(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.lan-agent-begin", "真实UTP双端提子后交给Agent自动停一手与数子，HTTP固定响应，不消费Key", Empty, _ => BeginLanGameCheck(true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-game-begin", "两份隔离PvpService真实局域网对弈：发现邀请、版本握手、提子、双停与计分确认，20秒护栏", Empty, _ => BeginLanGameCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-game-state", "只读真实局域网业务对局的双端序号、指纹、提子、终局与清理结果", Empty, _ => LanGameCheckState(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.test-cleanup", "幂等停止测试夹具，并沿正式入口离开当前PvP房间；保留当前场景供后续返回", Empty, _ => Cleanup(), owner: Owner);
@@ -161,6 +198,8 @@ namespace RevGame.Pvp
         /// <summary>Bootstrap销毁时对称注销；先清理夹具，再撤掉能力，避免异常退出后静态检查继续占端口。</summary>
         public static void Unregister()
         {
+            _kcpOpponent?.Dispose();
+            _kcpOpponent = null;
             StopLanCheck();
             StopLanGameCheck();
             _lanCheck = null;
@@ -191,6 +230,8 @@ namespace RevGame.Pvp
                 ["reason"] = reason ?? string.Empty,
                 ["screen"] = Flow.Screen.ToString(),
                 ["transitioning"] = Flow.IsTransitioning,
+                ["agentControl"] = Service.AgentControlsHumanSeat,
+                ["agentStatus"] = Service.AgentStatus,
                 ["sequence"] = Service.Core?.Sequence ?? 0,
                 ["stateHash"] = Service.Core?.StateHash.ToString() ?? string.Empty,
                 ["status"] = Service.Status
@@ -232,6 +273,20 @@ namespace RevGame.Pvp
                 }
             }
             bool tableLoaded = RevDataTableManager.IsLoaded<PvpRuleTable>();
+            var territory = new GoBoardAnalysis();
+            core?.Analyze(territory);
+            int blackTerritory = 0, whiteTerritory = 0;
+            for (int i = 0; i < 81; i++)
+            {
+                if ((int)territory.Territory[i] == 1)
+                {
+                    blackTerritory++;
+                }
+                else if ((int)territory.Territory[i] == 2)
+                {
+                    whiteTerritory++;
+                }
+            }
             int tableRows = 0;
             if (tableLoaded)
             {
@@ -247,15 +302,19 @@ namespace RevGame.Pvp
             return new Dictionary<string, object>
             {
                 ["screen"] = Flow.Screen.ToString(), ["transitioning"] = Flow.IsTransitioning, ["flowError"] = Flow.LastError,
+                ["agentStatus"] = service.AgentStatus, ["agentControl"] = service.AgentControlsHumanSeat,
                 ["mode"] = service.Mode.ToString(), ["phase"] = core?.Phase.ToString() ?? "None", ["turn"] = core?.Turn.ToString() ?? "None",
                 ["sequence"] = core?.Sequence ?? 0, ["moveNumber"] = core?.MoveNumber ?? 0, ["stateHash"] = core?.StateHash.ToString() ?? string.Empty,
                 ["positionHash"] = core?.PositionHash.ToString() ?? string.Empty, ["connected"] = service.Connected, ["queued"] = service.Queued,
-                ["status"] = service.Status, ["mySide"] = service.MySide.ToString(), ["roomId"] = service.RoomId,
+                ["status"] = service.Status, ["lastNetworkError"] = service.LastNetworkError, ["transport"] = "Fantasy.KCP", ["mySide"] = service.MySide.ToString(), ["roomId"] = service.RoomId,
                 ["blackName"] = service.BlackName, ["whiteName"] = service.WhiteName, ["blackStones"] = black, ["whiteStones"] = white,
                 ["blackCaptures"] = core?.BlackCaptures ?? 0, ["whiteCaptures"] = core?.WhiteCaptures ?? 0,
                 ["blackConfirmed"] = core != null && core.HasConfirmed(GoSide.Black), ["whiteConfirmed"] = core != null && core.HasConfirmed(GoSide.White),
                 ["winner"] = core?.Winner.ToString() ?? "None", ["endReason"] = core?.EndReason.ToString() ?? "None",
                 ["board"] = board, ["historyCount"] = service.Moves.Count, ["revision"] = service.Revision,
+                ["computer"] = service.IsComputerGame, ["menu"] = RevUI.Get<PvpPanel>()?.Menu ?? "",
+                ["blackTerritory"] = blackTerritory, ["whiteTerritory"] = whiteTerritory,
+                ["battleVisible"] = RevUI.Get<PvpPanel>()?.BattleVisible ?? false,
                 ["hintsVisible"] = service.HintsVisible, ["hintsRemaining"] = service.HintsRemaining, ["selectedPoint"] = service.SelectedPoint,
                 ["preview"] = service.PreviewText, ["blackClock"] = service.ClockText(GoSide.Black), ["whiteClock"] = service.ClockText(GoSide.White),
                 ["configLoaded"] = service.Config != null, ["tableLoaded"] = tableLoaded, ["tableRows"] = tableRows,
@@ -341,6 +400,8 @@ namespace RevGame.Pvp
 
         private static object Cleanup()
         {
+            _kcpOpponent?.Dispose();
+            _kcpOpponent = null;
             if (_checkRunning)
             {
                 _checkCancelled = true;
@@ -351,6 +412,7 @@ namespace RevGame.Pvp
                 _gameCheckCancelled = true;
             }
             StopLanGameCheck();
+            PvpAgentChecks.Restore(Service);
             if (Flow.Screen == GameScreen.Pvp && !Flow.IsTransitioning)
             {
                 Service.LeaveRoom();
@@ -361,7 +423,7 @@ namespace RevGame.Pvp
             };
         }
 
-        private static object BeginLanGameCheck()
+        private static object BeginLanGameCheck(bool agents = false)
         {
             if (_gameCheckRunning)
             {
@@ -374,7 +436,7 @@ namespace RevGame.Pvp
             StopLanGameCheck();
             _gameCheckCancelled = false;
             _gameCheckError = string.Empty;
-            _lanGameCheck = new PvpLanGameChecks(Service.Config);
+            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents);
             if (!_lanGameCheck.Start(out reason))
             {
                 return Result(false, reason);

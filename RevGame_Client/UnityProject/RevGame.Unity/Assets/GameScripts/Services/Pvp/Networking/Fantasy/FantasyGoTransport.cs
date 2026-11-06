@@ -1,8 +1,4 @@
 using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using System.IO.Pipelines;
 using Fantasy;
 using Fantasy.Async;
 using Fantasy.Network;
@@ -41,6 +37,19 @@ namespace RevGame.Pvp.Networking
         public bool Busy { get; private set; }
         public string ResumeToken { get; private set; } = "";
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>开发态断网夹具：释放真实Session及Socket，保留Service持有的棋谱与恢复令牌。</summary>
+        internal bool DropSocketForCheck()
+        {
+            if (_session == null || _session.IsDisposed)
+            {
+                return false;
+            }
+            _session.Dispose();
+            return true;
+        }
+#endif
+
         /// <summary>只在用户进入服务器模式后调用；失败不阻断游戏启动。</summary>
         public void Connect(string endpoint, string nickname, string rulesJson, string matchKind = "rookie", string resumeToken = "")
         {
@@ -63,7 +72,6 @@ namespace RevGame.Pvp.Networking
             ResumeToken = resumeToken ?? "";
             Busy = true;
             _deadline = Time.realtimeSinceStartup + RequestTimeoutSeconds;
-            DiagnoseSocketReceive().Coroutine();
             ConnectAsync(host, port, _generation).Coroutine();
         }
 
@@ -71,8 +79,8 @@ namespace RevGame.Pvp.Networking
         {
             try
             {
-                // 禁用框架自带心跳，使用业务心跳同时验证身份是否过期。
-                _session = await Runtime.Connect(host, port, FantasyRuntime.NetworkProtocolType.TCP, false, 5000, false, 0, 0, 0, 0,
+                // PvP外网固定使用Fantasy原生KCP；业务心跳继续验证身份，不另造可靠UDP或TCP回退。
+                _session = await Runtime.Connect(host, port, FantasyRuntime.NetworkProtocolType.KCP, false, 5000, false, 0, 0, 0, 0,
                     () => OnSocketConnected(generation),
                     () => Fail(generation, "暂时无法连接对战服务器。你仍可游玩远征、无尽或局域网对战。"),
                     () => Fail(generation, "服务器连接已中断，可重连恢复对局；其它游戏功能不受影响。"));
@@ -93,7 +101,7 @@ namespace RevGame.Pvp.Networking
             {
                 return;
             }
-            // Runtime 已持有连接；TCP 完成回调可能早于 ConnectAsync 赋值语句。
+            // Runtime 已持有连接；完成回调可能早于 ConnectAsync 赋值语句。
             _session = Runtime.Session;
             HelloAsync(generation).Coroutine();
         }

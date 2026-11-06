@@ -1,4 +1,4 @@
-# 开发态单进程启动。对外 TCP 20000，内部 TCP 11002 仅绑定回环地址。
+# 开发态单进程启动。PvP对外 Fantasy KCP / UDP 20000，内部 TCP 11002 仅绑定回环地址。
 $ErrorActionPreference = 'Stop'
 $serverProject = Join-Path $PSScriptRoot 'Server/Main/Main.csproj'
 Push-Location $PSScriptRoot

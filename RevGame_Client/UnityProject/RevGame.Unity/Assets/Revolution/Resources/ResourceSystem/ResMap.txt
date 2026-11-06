@@ -650,6 +650,11 @@ UI/Item/Notice/BattleEventNotice|ui_items|BattleEventNotice
 UI/Panel/Loading/LoadingPanel|ui_loading|LoadingPanel
 UI/Panel/HomePanel|ui_lobby|HomePanel
 UI/Panel/LevelSelectPanel|ui_lobby|LevelSelectPanel
+UI/Panel/Pvp/Menu/PvpAgentSettingsPanel|ui_pvp|PvpAgentSettingsPanel
+UI/Panel/Pvp/Menu/PvpEntryPanel|ui_pvp|PvpEntryPanel
+UI/Panel/Pvp/Menu/PvpLanPanel|ui_pvp|PvpLanPanel
+UI/Panel/Pvp/Menu/PvpNoticePanel|ui_pvp|PvpNoticePanel
+UI/Panel/Pvp/Menu/PvpServerPanel|ui_pvp|PvpServerPanel
 UI/Panel/Pvp/PvpPanel|ui_pvp|PvpPanel
 UI/Panel/Settings/AudioSettingsPanel|ui_settings|AudioSettingsPanel
 UI/Panel/Story/StoryPanel|ui_story|StoryPanel

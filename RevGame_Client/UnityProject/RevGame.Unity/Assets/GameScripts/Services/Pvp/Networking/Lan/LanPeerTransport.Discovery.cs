@@ -19,6 +19,8 @@ namespace RevGame.Pvp.Networking
             public string id;
             public string target;
             public string name;
+            public string deviceName;
+            public string deviceModel;
             public int controlPort;
             public int transportPort;
             public string ticket;
@@ -74,6 +76,9 @@ namespace RevGame.Pvp.Networking
                 id = LocalId,
                 target = target,
                 name = _name,
+                // 只广播玩家可见的设备名和机型，不发送设备唯一标识或账号信息。
+                deviceName = SanitizeName(SystemInfo.deviceName),
+                deviceModel = SanitizeName(SystemInfo.deviceModel),
                 controlPort = LocalControlPort,
                 transportPort = _transportPort,
                 ticket = ticket,
@@ -215,8 +220,12 @@ namespace RevGame.Pvp.Networking
             }
             string name = SanitizeName(packet.name);
             string address = remote.Address.ToString();
-            bool changed = peer.Name != name || peer.Address != address || peer.ControlPort != remote.Port || peer.Busy != packet.busy;
+            string deviceName = SanitizeName(packet.deviceName);
+            string deviceModel = SanitizeName(packet.deviceModel);
+            bool changed = peer.Name != name || peer.DeviceName != deviceName || peer.DeviceModel != deviceModel || peer.Address != address || peer.ControlPort != remote.Port || peer.Busy != packet.busy;
             peer.Name = name;
+            peer.DeviceName = deviceName;
+            peer.DeviceModel = deviceModel;
             peer.Address = address;
             peer.ControlPort = remote.Port;
             peer.Busy = packet.busy;
@@ -268,6 +277,8 @@ namespace RevGame.Pvp.Networking
             {
                 Id = peer.Id,
                 Name = peer.Name,
+                DeviceName = peer.DeviceName,
+                DeviceModel = peer.DeviceModel,
                 Address = peer.Address,
                 ControlPort = peer.ControlPort,
                 Busy = peer.Busy,

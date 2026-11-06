@@ -13,6 +13,7 @@ namespace RevGame.Pvp
     public sealed class PvpLanGameChecks : IDisposable
     {
         private readonly PvpConfig _config;
+        private readonly bool _agents;
         private PvpService _host;
         private PvpService _guest;
         private double _deadline;
@@ -31,9 +32,10 @@ namespace RevGame.Pvp
         public string Winner { get; private set; } = string.Empty;
         public int BlackCaptures { get; private set; }
 
-        public PvpLanGameChecks(PvpConfig config)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false)
         {
             _config = config;
+            _agents = agents;
         }
 
         public bool Start(out string reason)
@@ -156,6 +158,19 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
+                    if (_agents)
+                    {
+                        // 仅替换HTTP策略，两端仍通过真实UTP发送、解析并独立重算每手指纹。
+                        PvpAgentChecks.Install(_host);
+                        PvpAgentChecks.Install(_guest);
+                        if (!Check(_host.SetAgentControl(true) && _guest.SetAgentControl(true), "双方Agent托管未开启"))
+                        {
+                            return;
+                        }
+                        BlackCaptures = _host.Core.BlackCaptures;
+                        _step = 20;
+                        return;
+                    }
                     bool capture = _host.Core.BlackCaptures == 1 && _guest.Core.BlackCaptures == 1
                         && _host.Core.GetStone(0, 0) == GoSide.Empty && _guest.Core.GetStone(0, 0) == GoSide.Empty;
                     if (!Check(capture, "角上提子结果或双方提子计数不一致") || !Submit(_guest, GoAction.Pass))
@@ -196,6 +211,13 @@ namespace RevGame.Pvp
                         return;
                     }
                     Next("等待双方完成同一终局");
+                    break;
+                case 20:
+                    if (_host.Core.Phase != GoPhase.Finished || _guest.Core.Phase != GoPhase.Finished)
+                    {
+                        return;
+                    }
+                    _step = 9;
                     break;
                 case 9:
                     if (!Synced(7))

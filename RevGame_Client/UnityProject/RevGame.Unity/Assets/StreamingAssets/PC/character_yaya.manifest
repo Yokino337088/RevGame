@@ -3,13 +3,13 @@ CRC: 677093626
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 35a71ee4c84f52e0404fce622f2c042e
+    Hash: 96bc3f536fb0478051f0c1864221ffdb
   TypeTreeHash:
     serializedVersion: 2
     Hash: 1a6e6df4c68eda0efa33cf89ab3bb76f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 35a71ee4c84f52e0404fce622f2c042e
+    Hash: 96bc3f536fb0478051f0c1864221ffdb
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -36,4 +36,4 @@ Assets:
 - Assets/GameRes/Characters/Yaya/YayaIdle24Controller.controller
 - Assets/GameRes/Characters/Yaya/YayaIdle24Clip.anim
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaidle24
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaidle24"

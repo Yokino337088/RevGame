@@ -12,13 +12,16 @@ namespace RevGame.Flow
         public const string PvpSceneName = "PvpScene";
 
         /// <summary>接受请求和实际完成分开；所有UI/GM只走此入口，防止连点创建两条连接或场景加载链。</summary>
-        public bool EnterPvp()
+        public string PvpDestination { get; private set; } = "Entry";
+
+        public bool EnterPvp(string destination = "Entry")
         {
             if (IsGameplayBlocked || Screen != GameScreen.Home)
             {
                 LastError = "请从大厅进入九路围棋";
                 return false;
             }
+            PvpDestination = destination;
             IsTransitioning = true;
             EnterPvpFromButton();
             return true;
@@ -66,6 +69,7 @@ namespace RevGame.Flow
             Change(GameScreen.Pvp);
             PvpPanel panel = await RevUI.OpenAsync<PvpPanel>();
             await panel.PrepareAsync();
+            panel.ShowDestination(PvpDestination);
             ThrowIfDisposed();
             Report(1, "九路围棋已就绪");
             await _loading.FadeOutAsync();

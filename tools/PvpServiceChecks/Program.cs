@@ -12,6 +12,7 @@ internal static class Program
 
     private static void Main()
     {
+        AgentChecks.Run();
         PvpService service = Local();
         ExpireTurn(service);
         Check(service.Submit(GoAction.Play, 4, 4), "expired click accepted as terminal action");
@@ -53,6 +54,38 @@ internal static class Program
         FantasyGoTransport.Latest.Push(state);
         Check((double)typeof(PvpService).GetField("_turnStarted", Private).GetValue(service) == started, "same-history reconnect preserves running thinking time");
         Check(!service.Invite("missing") && !service.ReplyInvitation(true), "invitation API reports rejection honestly");
+        service = Local();
+        Check(service.Submit(GoAction.Pass) && service.Submit(GoAction.Pass), "double pass enters scoring");
+        candidate = service.Core.Clone();
+        candidate.TryApply(GoAction.ConfirmScore, GoSide.Black, -1, -1, out _);
+        PvpMove confirmation = new PvpMove { sequence = candidate.Sequence, side = 1, kind = (int)GoAction.ConfirmScore,
+            x = -1, y = -1, elapsedMs = 100, before = service.Core.StateHash.ToString(), after = candidate.StateHash.ToString() };
+        before = service.Core.StateHash;
+        args = new object[] { confirmation, null };
+        accepted = (bool)typeof(PvpService).GetMethod("ApplyMove", Private).Invoke(service, args);
+        Check(!accepted && service.Core.StateHash == before && service.Moves.Count == 2, "scoring cannot inject elapsed time or mutate history on rejection");
+        confirmation.elapsedMs = 0;
+        args = new object[] { confirmation, null };
+        Check((bool)typeof(PvpService).GetMethod("ApplyMove", Private).Invoke(service, args), "zero-time remote confirmation accepted");
+        Check(service.Submit(GoAction.ConfirmScore) && service.Core.Phase == GoPhase.Finished, "second confirmation finishes game");
+        service = Local();
+        service.StartComputer();
+        Check(service.IsComputerGame && service.MySide == GoSide.Black, "computer game owns white seat");
+        Check(service.Submit(GoAction.Play, 4, 4), "human black move accepted");
+        Check(!service.Submit(GoAction.Play, 3, 3) && service.Core.Sequence == 1, "human cannot move for computer");
+        service.Poll();
+        Check(service.Core.Sequence == 2 && service.Core.Turn == GoSide.Black, "computer uses real rule entry for legal reply");
+        service.StartComputer();
+        Check(service.Submit(GoAction.Pass), "human can propose scoring");
+        typeof(PvpService).GetField("_computerAt", Private).SetValue(service, 0d);
+        service.Poll();
+        Check(service.Core.Phase == GoPhase.Scoring, "computer accepts double pass");
+        typeof(PvpService).GetField("_computerAt", Private).SetValue(service, 0d);
+        service.Poll();
+        Check(service.Core.HasConfirmed(GoSide.White), "computer confirms only its own score seat");
+        Check(service.Submit(GoAction.ConfirmScore) && service.Core.Phase == GoPhase.Finished, "human and computer finish scoring");
+        service.StartLocal();
+        Check(!service.IsComputerGame, "switching local mode clears computer lifetime");
         Console.WriteLine("PASS: " + _checks + " service timing/state assertions. Unity, JSON and sockets are not covered by this harness.");
     }
 

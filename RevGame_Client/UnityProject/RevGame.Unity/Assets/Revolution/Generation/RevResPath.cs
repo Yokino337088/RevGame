@@ -127,6 +127,7 @@ namespace Revolution
         public const string UI_Panel_Endless = "UI/Panel/Endless/";
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
         public const string UI_Panel_Pvp = "UI/Panel/Pvp/";
+        public const string UI_Panel_Pvp_Menu = "UI/Panel/Pvp/Menu/";
         public const string UI_Panel_Settings = "UI/Panel/Settings/";
         public const string UI_Panel_Story = "UI/Panel/Story/";
         public const string UI_Panel_Victory = "UI/Panel/Victory/";

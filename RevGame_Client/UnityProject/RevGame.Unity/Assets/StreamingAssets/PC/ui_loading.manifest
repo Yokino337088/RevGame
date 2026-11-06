@@ -3,13 +3,13 @@ CRC: 2507693807
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b09092cc211c3a907c0d71cc8e4428e9
+    Hash: d20a1defce6e7862f28955fd7b9ba0b1
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 7a4531213013ed5c9381ca38e4c91d8a
+    Hash: 7b5ef95c524d89c2e9613487beded367
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b09092cc211c3a907c0d71cc8e4428e9
+    Hash: d20a1defce6e7862f28955fd7b9ba0b1
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -25,13 +25,13 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 73f43010159730045ab9b1b6f32361dd, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fb06450cbc3a70d44b1a87c12252b9b4, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -64,5 +64,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background"

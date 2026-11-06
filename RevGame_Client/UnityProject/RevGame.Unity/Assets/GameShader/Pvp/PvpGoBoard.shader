@@ -1,11 +1,11 @@
-// 标准九路交叉点棋盘：沿用无尽的象牙大理石/金线语言，规则数据只由GoCore上传。
+// 九路围棋使用无尽同款象牙金格外观；每格中心对应一个规则落点，规则数据只由GoCore上传。
 // 一个面片、共享材质、81点参数块；所有呼吸光都是表现，不参与提子或死活判定。
 Shader "RevGame/Pvp/IvoryGoBoard"
 {
     Properties
     {
         _Ivory("象牙白棋盘",Color)=(.95,.91,.81,1)
-        _Gold("神殿金线",Color)=(.47,.33,.13,1)
+        _Gold("神殿金线",Color)=(.70,.51,.24,1)
     }
     SubShader
     {
@@ -63,19 +63,25 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 float r=length(p), t=_Clock;
                 float marble=sin(boardPoint.x*2.2+sin(boardPoint.y*1.8))*.012+sin(boardPoint.y*5.1+boardPoint.x*.7)*.006;
                 float3 col=_Ivory.rgb+marble;
-                // 边框和九条线使用交叉点坐标；不会把无尽的9格误当成10路围棋。
-                float inside=step(0,boardPoint.x)*step(boardPoint.x,8)*step(0,boardPoint.y)*step(boardPoint.y,8);
-                float grid=max(Line(p.x,.011)*step(0,boardPoint.y)*step(boardPoint.y,8),Line(p.y,.011)*step(0,boardPoint.x)*step(boardPoint.x,8));
-                float border=Line(max(abs(boardPoint.x-4),abs(boardPoint.y-4))-4.43,.025);
-                col=lerp(col,_Gold.rgb,max(grid*.82,border));
-                bool star=(id.x==2||id.x==6)&&(id.y==2||id.y==6)||(id.x==4&&id.y==4);
-                if(star) col=lerp(col,_Gold.rgb,Disk(r,.06));
+                // 与无尽StarGrid同一格面公式：金线围绕格子，棋子落在格心，不画经典交叉点与星位。
+                float edge=max(abs(p.x),abs(p.y));
+                float grid=smoothstep(.465,.49,edge);
+                float rim=smoothstep(.38,.47,edge)*(1-grid);
+                float angle=atan2(p.y,p.x);
+                float breath=.64+.36*sin(t*.85);
+                float ray=pow(saturate(.5+.5*cos(angle*8-t*.12)),14)*smoothstep(.12,.22,r)*(1-smoothstep(.38,.49,r));
+                float halo=Line(r-.29,.006)*(.53+.47*sin(angle*8-t*.23));
+                float diamond=Line(abs(p.x)+abs(p.y)-.36,.005);
+                float shaft=pow(saturate(.5+.5*sin(boardPoint.x*.42-boardPoint.y*.68-t*.3)),8);
+                float light=ray*.34+halo*.30+diamond*.16+shaft*.20+rim*(.16+breath*.08);
+                col*=fmod(id.x+id.y,2)<1?1:.965;
+                col=lerp(col,_Gold.rgb,grid*.78);
+                col+=float3(1,.80,.36)*light*breath*.55;
                 if(_ShowTerritory>.5&&cell.z>.5)
                 {
                     float3 territory=cell.z<1.5?float3(.05,.37,.32):float3(.62,.74,1);
-                    float edge=max(abs(p.x),abs(p.y));
                     float wave=.8+.2*sin(t*2-length(boardPoint-4)*1.5);
-                    col=lerp(col,territory,(.25+.16*Line(edge-.44,.012))*wave);
+                    col=lerp(col,territory,(.25+.22*Line(edge-.44,.012))*wave);
                 }
                 if(_ShowHints>.5&&cell.x<.5)
                 {
@@ -144,7 +150,6 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 }
                 if(abs(index-_Selected)<.1)
                 {
-                    float edge=max(abs(p.x),abs(p.y));
                     col=lerp(col,float3(.1,.56,.61),Line(edge-.46,.018)*(.65+.25*sin(t*3)));
                 }
                 return float4(col,1);

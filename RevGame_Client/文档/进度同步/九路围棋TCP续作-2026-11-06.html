@@ -1,0 +1,13 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>九路围棋TCP续作</title><style>body{max-width:960px;margin:40px auto;padding:0 24px;font:16px/1.8 system-ui;background:#faf8f2;color:#242424}pre{white-space:pre-wrap}</style><h1>九路围棋编译修复与TCP接收定位</h1><pre>
+## 本次续作：编译修复与 TCP 接收定位（2026-11-06）
+
+- 已移除 FantasyGoTransport.Connect 中不存在的 DiagnoseSocketReceive 调用及孤立 using；最终 Unity editor.compilation：compiling=false、failed=false、messages=[]。
+- 新增固定字节回环对照动作 game.pvp.socket-check / game.pvp.socket-check-state。Unity 2022.3.15f1c1 实测：Memory 接收 count=8，但数组全零；ArraySegment 接收 13-27-00-18-FE-80-31-42 全部正确。不是协议未导出的推测。
+- Fantasy.Unity 2026.1.2003 改为 Packages/com.fantasy.unity 内嵌依赖，保留原 meta；唯一运行时修改为 TCPClientNetwork 已有 UNITY_2021 兼容接收分支扩展至 UNITY_2022。没有修改 PackageCache 或 Revolution 快照。来源和边界见内嵌包 REVGAME-PATCH.md。
+- 实际 RevCLI 顺序：connect（初始编译失败）→ editor.refresh → editor.compilation → game.pvp.socket-check → game.pvp.socket-check-state → 内嵌依赖后刷新/重载/重新连接 → editor.play → runtime start → pvp.enter → pvp.state（Pvp 且 transitioning=false）→ pvp.connect → pvp.state（connected=true，abMode=true）→ pvp.match → 真实 GoRelayProbe opponent → pvp.action Pass。
+- 真实 AB 模式已完成 Fantasy 握手、匹配、双方停一手进入 Scoring，sequence=2，StateHash=17718909131280888801。随后客户端 connected=false，ConfirmScore 被正确拒绝；探针对手完成自己的确认，Unity 端完整终局尚未通过。不能把握手修复写成全部 CS 功能验收通过。
+- 同时发现 PvpBoardView.ReadInput 在鼠标坐标无穷时持续产生 Screen position out of view frustum 警告；下一步需保留首个连接失败原因并排查稳定性，修复输入边界，再验完整对局/重连/停服。
+- 离线 tools/PvpServiceChecks：14 条通过，仅覆盖服务时序与状态，不覆盖真实 Socket。
+- 收尾：pvp.test-cleanup 返回 cleaned=true，editor.stop 已完成，编辑器恢复非Play、非暂停、无编译；本次启动的服务器和探针已退出。
+- 本轮未执行 rev_discover/rev_call/rev_run（使用用户指定的 RevCLI），未执行跨设备/手机、最终冷启动视觉截图与 GIF。原始状态在忽略目录 .codex/work/pvp-fix-20261106，未生成ZIP或Profiler录制。
+- 框架结论：Revolution 的资源、流程与业务入口足以复现联机问题，当前已定位的是旧 Unity Socket 接收兼容边界；修复不涉及 Revolution 内核。在线稳定性仍需后续验收。</pre></html>

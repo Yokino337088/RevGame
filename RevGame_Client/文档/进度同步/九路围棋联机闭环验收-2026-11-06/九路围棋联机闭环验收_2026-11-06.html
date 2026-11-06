@@ -1,0 +1,36 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>九路围棋联机闭环验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+body{max-width:1200px;margin:auto;padding:32px}section{margin:24px 0;padding:24px;border:1px solid #c9cbb5;border-radius:12px}td,th{padding:8px;text-align:left}</style><body><h1>九路围棋联机闭环验收</h1><p>2026-11-06 · Unity 2022.3.15f1c1 · Fantasy 2026.1.2003 · Windows Editor / 真实AB / 本机真实TCP</p>
+<section><h2>结论</h2><p>完整对局、真实Socket断开重连、停服回退与本地可用性均已验证。计分阶段失败的根因为GoRelayProbe将ConfirmScore的ElapsedMs写成100，违反正式客户端非计时动作必须为0的契约；修正探针，不放宽棋谱校验。</p></section>
+<section><h2>修复与验证范围</h2><ul><li>棋盘投影前拒绝NaN、Infinity、摄像机范围外坐标，并清除旧悬停。最新PvpBoardView导入后Editor.log中Screen position out of view frustum新增0条。</li><li>Service保留LastNetworkError并通过RevLog输出，避免后续按钮提示覆盖故障诊断。</li><li>开发态pvp.drop-socket释放真实Fantasy Session/Socket；沿pvp.connect重新握手，无私改状态。重连前后房间与StateHash=14421651896872703491一致。</li><li>真实一手落子、双方停一手、对方确认、计分阶段静置20秒、本方确认，Finished且双方confirmed=true、connected=true。最终sequence=5，StateHash=16397823797521264391。</li><li>停止本次服务端进程后，Unity连接不可用；拒绝落子且原棋谱指纹保持不变。返回大厅后再连接已停服地址失败，仍可返回大厅、开启本地棋局并成功落子sequence=1。</li><li>离线服务检查18条通过，新增计分非法耗时拒绝且棋谱不变、合法确认完成终局；Unity最终编译failed=false、messages=[]。</li></ul></section>
+<section><h2>执行通道与证据</h2><p>Editor操作通过RevCLI connect / editor.refresh / editor.compilation / editor.play / runtime start / editor.stop。业务测试由Python启动项目RevMCP serve，通过真实MCP JSON-RPC在同一会话中执行rev_discover(target=game,query=pvp)、rev_call和rev_run。回归脚本、JSON与日志留在忽略目录.codex/work/pvp-fix-20261106。</p><p>通过计划：20261106-194645-201bf54c（终局）；20261106-194909-522ba808（停服后回退及本地可用）。真实Socket重连的对比断言在同一编排脚本内执行。</p><p>保留失败：原计分非法耗时已复现；20261106-194759-4814956f中停服拒绝及指纹保持已通过，但大厅Screen先变Home、transitioning仍为true，计划过早断言失败。修正计划为等待transitioning=false后核对Screen，重新执行通过，未修改业务过场以迎合测试。</p></section>
+<section><h2>框架可行性与限制</h2><p>Revolution的GameFlow、RevScope、RevLogic、RevUI、RevResManager与运行时自动化支持模式交接、资源加载、错误回退及正式入口回归；本轮未修改Revolution快照。旧Unity的Memory TCP接收兼容补丁继续由同版本内嵌Fantasy包承载。本机Unity+独立TCP对手证据不代表手机、跨设备LAN、生产公网或对抗安全验收。本轮未重建AB，无美术/Prefab变更；截图来自真实AB模式。GIF仅为真实关键状态截图串联，不是连续帧动画或帧率证据。</p></section>
+<section><h2>断言执行表</h2><table><tr><th>计划</th><th>动作</th><th>结果</th></tr><tr><td>九路围棋完整终局与重连验收</td><td>pvp.state</td><td>通过</td></tr><tr><td>九路围棋完整终局与重连验收</td><td>runtime.screenshot</td><td>通过</td></tr><tr><td>九路围棋完整终局与重连验收</td><td>pvp.action</td><td>通过</td></tr><tr><td>九路围棋完整终局与重连验收</td><td>pvp.state</td><td>通过</td></tr><tr><td>九路围棋完整终局与重连验收</td><td>runtime.screenshot</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.state</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>runtime.screenshot</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.return</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.state</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>runtime.screenshot</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.enter</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.state</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.local</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.action</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>pvp.state</td><td>通过</td></tr><tr><td>九路围棋停服后连接失败回退与本地可用性验收</td><td>runtime.screenshot</td><td>通过</td></tr></table></section><section><h2>真实画面</h2><figure><img style="max-width:100%" src="01-实测画面.png"><figcaption>实测关键画面 1</figcaption></figure><figure><img style="max-width:100%" src="02-实测画面.png"><figcaption>实测关键画面 2</figcaption></figure><figure><img style="max-width:100%" src="03-实测画面.png"><figcaption>实测关键画面 3</figcaption></figure><figure><img style="max-width:100%" src="04-实测画面.png"><figcaption>实测关键画面 4</figcaption></figure><figure><img style="max-width:100%" src="05-实测画面.png"><figcaption>实测关键画面 5</figcaption></figure><img style="max-width:100%" src="实测阶段回放.gif"></section><p>收尾：运行期清理cleaned=true，返回Home且transitioning=false；Unity已停止Play，本次服务器及对手均退出。无ZIP、无Profiler录制，未提交推送。</p></body></html>

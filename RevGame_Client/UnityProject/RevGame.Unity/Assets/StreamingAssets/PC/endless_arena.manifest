@@ -3,13 +3,13 @@ CRC: 4021555115
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3373002bd80d2c223764048e161f8c4a
+    Hash: 8ebb7cb64db9f7630c8c53c814916a13
   TypeTreeHash:
     serializedVersion: 2
-    Hash: ccd41d3e4b647b71e9b3a9b13a447b7f
+    Hash: 2fc5c51c9f93ac826d584b7add8ca092
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3373002bd80d2c223764048e161f8c4a
+    Hash: 8ebb7cb64db9f7630c8c53c814916a13
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -29,9 +29,9 @@ ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 2a78887e3114a70498fc2804083b0fb4, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: f5905d7344959e04384104fddd750e5f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a78887e3114a70498fc2804083b0fb4, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 212
@@ -56,9 +56,9 @@ Assets:
 - Assets/GameRes/Endless/Textures/EndlessThrustBlade.png
 - Assets/GameRes/Endless/EndlessCardUpgrade.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"

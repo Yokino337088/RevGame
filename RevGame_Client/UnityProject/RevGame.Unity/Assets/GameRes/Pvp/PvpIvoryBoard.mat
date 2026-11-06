@@ -26,6 +26,6 @@ Material:
     m_Ints: []
     m_Floats: []
     m_Colors:
-    - _Gold: {r: 0.4699999, g: 0.32999998, b: 0.12999997, a: 1}
+    - _Gold: {r: 0.7, g: 0.5099999, b: 0.23999992, a: 1}
     - _Ivory: {r: 0.95, g: 0.91, b: 0.81, a: 1}
   m_BuildTextureStacks: []

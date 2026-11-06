@@ -1,0 +1,91 @@
+using Fantasy.Entitas.Interface;
+using MemoryPack;
+// ReSharper disable SuspiciousTypeConversion.Global
+#pragma warning disable CS9074 // The 'scoped' modifier of parameter doesn't match overridden or implemented member.
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+
+namespace Fantasy.Entitas
+{
+    public sealed class EntityMultiCollectionFormatter : MemoryPackFormatter<EntityMultiCollection>
+    {
+#if FANTASY_UNITY
+        public override void Serialize<TBufferWriter>(ref MemoryPackWriter<TBufferWriter> writer, ref EntityMultiCollection? value)
+#endif
+#if FANTASY_NET
+        public override void Serialize<TBufferWriter>(ref MemoryPackWriter<TBufferWriter> writer, scoped ref EntityMultiCollection? value)
+#endif
+        {
+            if (value == null)
+            {
+                writer.WriteNullCollectionHeader();
+                return;
+            }
+            
+            var count = 0;
+            
+            // 先统计真正参与序列化的实体数量
+            foreach (var kv in value)
+            {
+                if (kv.Value is ISupportedSerialize)
+                {
+                    count++;
+                }
+            }
+
+            // 直接写入正确的集合长度，避免后续扩容导致引用失效
+            writer.WriteCollectionHeader(count);
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            var formatter = writer.GetFormatter<Entity>();
+
+            foreach (var kv in value)
+            {
+                var entity = kv.Value;
+
+                if (entity is not ISupportedSerialize)
+                {
+                    continue;
+                }
+
+                formatter.Serialize(ref writer, ref entity!);
+            }
+        }
+#if FANTASY_UNITY
+        public override void Deserialize(ref MemoryPackReader reader, ref EntityMultiCollection? value)
+#endif
+#if FANTASY_NET
+        public override void Deserialize(ref MemoryPackReader reader, scoped ref EntityMultiCollection? value)
+#endif
+        {
+            if (!reader.TryReadCollectionHeader(out var length))
+            {
+                value = null;
+                return;
+            }
+
+            if (value == null)
+            {
+                value = EntityMultiCollection.Create(true);
+            }
+            else
+            {
+                value.Clear();
+            }
+            
+            var formatter = reader.GetFormatter<Entity>();
+            
+            for (var i = 0; i < length; i++)
+            {
+                Entity entity = null;
+                formatter.Deserialize(ref reader, ref entity);
+                value.Add(entity.Id, entity);
+            }
+        }
+    }
+}

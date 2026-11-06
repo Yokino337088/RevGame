@@ -40,7 +40,9 @@ static GoRelayCommand Apply(GoCore core, GoAction kind, GoSide side, int x = 0, 
     string before = core.StateHash.ToString();
     Check(core.TryApply(kind, side, x, y, out var result), "共享 GoCore 接受 " + kind + ":" + result.Error);
     return new GoRelayCommand { Sequence = core.Sequence, Side = (int)side, Kind = (int)kind, X = x, Y = y,
-        Payload = "", ElapsedMs = 100, PreviousHash = before, ResultHash = core.StateHash.ToString() };
+        // 只有落子、停一手和超时消耗思考时间；确认计分等动作必须为0，与正式客户端契约一致。
+        Payload = "", ElapsedMs = kind == GoAction.Play || kind == GoAction.Pass || kind == GoAction.Timeout ? 100 : 0,
+        PreviousHash = before, ResultHash = core.StateHash.ToString() };
 }
 
 static GoCore Replay(GoRelayState state)

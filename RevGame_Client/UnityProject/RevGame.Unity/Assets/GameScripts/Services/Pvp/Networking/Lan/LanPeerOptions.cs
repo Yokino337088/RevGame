@@ -30,6 +30,8 @@ namespace RevGame.Pvp.Networking
     {
         public string Id { get; internal set; }
         public string Name { get; internal set; }
+        public string DeviceName { get; internal set; }
+        public string DeviceModel { get; internal set; }
         public string Address { get; internal set; }
         public int ControlPort { get; internal set; }
         public bool Busy { get; internal set; }

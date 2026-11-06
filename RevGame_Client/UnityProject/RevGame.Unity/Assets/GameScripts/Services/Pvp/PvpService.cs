@@ -47,11 +47,18 @@ namespace RevGame.Pvp
         public string Endpoint { get; private set; }
         public bool Queued { get; private set; }
         public bool Connected { get; private set; }
+        /// <summary>本地人机由服务推进白方，UI/视图不能代替AI提交规则。</summary>
+        public bool IsComputerGame { get; private set; }
+        public double QueueElapsedSeconds { get { return Queued ? Math.Max(0, _clock.Elapsed.TotalSeconds - _queueStarted) : 0; } }
+        private readonly GoHint[] _computerHints = new GoHint[3];
+        private double _computerAt;
+        /// <summary>保留最近一次连接失败，交互提示刷新不能覆盖故障诊断；不含身份令牌。</summary>
+        public string LastNetworkError { get; private set; } = string.Empty;
         public bool HintsVisible { get; private set; } = true;
         public int HintsRemaining { get; private set; }
         public int SelectedPoint { get; private set; } = -1;
         public int Revision { get; private set; }
-        public string PreviewText { get; private set; } = "点击交叉点落子";
+        public string PreviewText { get; private set; } = "点击格子落子";
         public string RoomId { get; private set; } = "";
         public LanPeerTransport Lan { get; private set; }
         public IReadOnlyList<PvpMove> Moves { get { return _moves; } }
@@ -83,7 +90,7 @@ namespace RevGame.Pvp
             HintsVisible = true;
             SelectedPoint = -1;
             ResetPresentation();
-            Status = "选择服务器匹配，或搜索同一局域网中的玩家";
+            Status = "请选择一种对战方式";
             Revision++;
         }
 
@@ -101,6 +108,16 @@ namespace RevGame.Pvp
             WhiteName = "本地白方";
             NewGame();
             Status = "本地双人练习 · 双方轮流落子";
+        }
+
+        public void StartComputer()
+        {
+            StartLocal();
+            IsComputerGame = true;
+            MySide = GoSide.Black;
+            BlackName = "你 · 黑方";
+            WhiteName = "棋盘助手 · 白方";
+            Status = "本地人机 · 你执黑先行";
         }
 
         public void StartServer(string endpoint, string nickname)
@@ -439,12 +456,37 @@ namespace RevGame.Pvp
         /// <summary>玩家和GM共用这条入口；先在副本试算，网络提交失败不会留下半手棋。</summary>
         public bool Submit(GoAction action, int x = -1, int y = -1)
         {
-            if (!CanAct || _goClock == null)
+            if (AgentControlsHumanSeat && action != GoAction.Timeout)
+            {
+                Status = "请先停止 Agent 托管再手动操作";
+                return false;
+            }
+            if (Core == null)
+            {
+                Status = "对局尚未就绪，请先选择对战方式";
+                return false;
+            }
+            GoSide side = Mode == PvpConnectionMode.Local && !IsComputerGame ? LocalActor(action) : MySide;
+            return SubmitActor(action, side, x, y);
+        }
+
+        /// <summary>
+        /// 玩家、电脑与云端Agent唯一提交入口。座位来自本地控制策略，绝不采信模型返回的身份或用时。
+        /// 副本预检后才发送/提交，非法动作不会消耗回合；网络回执未到前沿用原有等待锁。
+        /// </summary>
+        private bool SubmitActor(GoAction action, GoSide side, int x = -1, int y = -1)
+        {
+            if (!CanAct || _goClock == null || (side != GoSide.Black && side != GoSide.White))
             {
                 Status = "对局尚未就绪或正在同步，请稍候";
                 return false;
             }
-            GoSide side = Mode == PvpConnectionMode.Local ? LocalActor(action) : MySide;
+            if ((Mode != PvpConnectionMode.Local && side != MySide) ||
+                (IsComputerGame && side == GoSide.Black && Core.Phase == GoPhase.Playing && Core.Turn != GoSide.Black))
+            {
+                Status = "当前座位不能操作";
+                return false;
+            }
             bool timedAction = action == GoAction.Play || action == GoAction.Pass || action == GoAction.Timeout;
             long elapsed = timedAction && Core.Phase == GoPhase.Playing ? (long)(Math.Max(0, _clock.Elapsed.TotalSeconds - _turnStarted) * 1000) : 0;
             if (timedAction && Core.Phase == GoPhase.Playing && side == Core.Turn && _goClock.IsTimedOut(side, elapsed / 1000.0))
@@ -566,7 +608,7 @@ namespace RevGame.Pvp
         }
         public void SelectPoint(int x, int y)
         {
-            if (!CanAct || Core.Phase == GoPhase.Finished || x < 0 || x >= 9 || y < 0 || y >= 9)
+            if (AgentControlsHumanSeat || !CanAct || Core.Phase == GoPhase.Finished || x < 0 || x >= 9 || y < 0 || y >= 9)
             {
                 return;
             }
@@ -618,6 +660,8 @@ namespace RevGame.Pvp
             }
             _server?.Poll();
             Lan?.Poll();
+            PollAgent();
+            PollComputer();
             if (_leaving)
             {
                 if (!_leaveSent && _server != null && _server.Connected && !_server.Busy)
@@ -643,7 +687,7 @@ namespace RevGame.Pvp
                 double elapsed = Math.Max(0, _clock.Elapsed.TotalSeconds - _turnStarted);
                 if (_goClock.IsTimedOut(Core.Turn, elapsed))
                 {
-                    Submit(GoAction.Timeout);
+                    SubmitActor(GoAction.Timeout, Core.Turn);
                 }
             }
             if (Queued && _clock.Elapsed.TotalSeconds - _queueStarted >= Config.matchTimeoutSeconds)
@@ -653,6 +697,8 @@ namespace RevGame.Pvp
         }
         private void OnNetworkError(string reason)
         {
+            LastNetworkError = reason;
+            RevLog.Warn("连接不可用：" + reason, "Pvp");
             if (_server != null)
             {
                 _resumeToken = _server.ResumeToken;
@@ -683,6 +729,7 @@ namespace RevGame.Pvp
             {
                 return;
             }
+            CancelAgent();
             _leaving = true;
             _leaveSent = false;
             _leaveDeadline = _clock.Elapsed.TotalSeconds + Config.connectTimeoutSeconds;
@@ -719,6 +766,9 @@ namespace RevGame.Pvp
         }
         private void CloseConnection()
         {
+            CancelAgent();
+            AgentControlsHumanSeat = false;
+            IsComputerGame = false;
             _server?.Dispose();
             _server = null;
             Lan?.Dispose();

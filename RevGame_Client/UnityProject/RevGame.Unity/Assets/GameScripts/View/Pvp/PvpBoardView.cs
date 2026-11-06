@@ -20,8 +20,6 @@ namespace RevGame.Pvp
         private readonly GoBoardAnalysis _analysis = new GoBoardAnalysis();
         private MaterialPropertyBlock _boardBlock, _backgroundBlock;
         private int _revision = -1, _hover = -1, _width, _height;
-        private float _territoryUntil;
-        private int _shownTerritoryMove = -1;
         private Camera _camera;
         public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null; } }
 
@@ -31,7 +29,6 @@ namespace RevGame.Pvp
             _revision = -1;
             _hover = -1;
             _width = 0;
-            _shownTerritoryMove = -1;
             _boardBlock = _boardBlock ?? new MaterialPropertyBlock();
             _backgroundBlock = _backgroundBlock ?? new MaterialPropertyBlock();
         }
@@ -50,8 +47,8 @@ namespace RevGame.Pvp
                 RefreshBoard(service);
             }
             GoCore core = service.DisplayCore;
-            // 这是表现时钟：改变Time不会改变落子或胜负。正常局中按策划分段显地，终局/复盘常显。
-            bool reveal = core != null && (core.Phase != GoPhase.Playing || service.ReplayStep >= 0 || Time.unscaledTime < _territoryUntil);
+            // 围住的区域按规则分析结果常显；Shader时钟只控制呼吸光，不改变落子、领地或胜负。
+            bool reveal = core != null;
             _boardBlock.SetFloat("_ShowTerritory", service.HintsVisible && reveal ? 1 : 0);
             _boardBlock.SetFloat("_Clock", Time.unscaledTime);
             boardRenderer.SetPropertyBlock(_boardBlock);
@@ -83,6 +80,17 @@ namespace RevGame.Pvp
             }
             bool touch = Input.touchCount > 0;
             Vector2 screen = touch ? Input.GetTouch(0).position : (Vector2)Input.mousePosition;
+            // 编辑器失焦、鼠标离开Game窗口时可能返回无穷坐标；投影前拒绝，避免逐帧刷警告和伪落点。
+            if (float.IsNaN(screen.x) || float.IsInfinity(screen.x) || float.IsNaN(screen.y) || float.IsInfinity(screen.y)
+                || !_camera.pixelRect.Contains(screen))
+            {
+                if (_hover != -1)
+                {
+                    _hover = -1;
+                    RefreshBoard(service);
+                }
+                return;
+            }
             bool click = touch ? Input.GetTouch(0).phase == TouchPhase.Ended : Input.GetMouseButtonDown(0);
             bool overUi = EventSystem.current != null && (touch
                 ? EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)
@@ -177,12 +185,7 @@ namespace RevGame.Pvp
                     GoHint hint = service.Suggestions[i];
                     _marks[hint.Y * 9 + hint.X].z = i + 1;
                 }
-                if (core.MoveNumber != _shownTerritoryMove && core.MoveNumber >= service.Config.territoryRevealFrom
-                    && (core.MoveNumber - service.Config.territoryRevealFrom) % service.Config.territoryRevealEvery == 0)
-                {
-                    _shownTerritoryMove = core.MoveNumber;
-                    _territoryUntil = Time.unscaledTime + 1.2f;
-                }
+
             }
             _boardBlock.SetVectorArray("_Cells", _cells);
             _boardBlock.SetVectorArray("_Marks", _marks);
@@ -196,7 +199,6 @@ namespace RevGame.Pvp
         {
             _revision = -1;
             _hover = -1;
-            _territoryUntil = 0;
         }
     }
 }
