@@ -6,7 +6,7 @@ namespace Fantasy;
 /// <summary>
 /// 单 Gate 的休闲围棋大厅数据。所有访问都发生在所属 Scene 线程，
 /// 不需要给 Dictionary 加锁；离开该 Scene 时由 Fantasy 统一销毁。
-/// 服务端不引用 GoCore，因此不会把围棋规则变成第二套实现。
+/// 大厅数据不依赖 GoCore；Hotfix仅为终局日志审计链接同源规则，不维护第二套规则。
 /// </summary>
 public sealed class GoLobbyComponent : Entity
 {
@@ -49,6 +49,8 @@ public sealed class GoRoomEntity : Entity
     public long ClosedAt;
     public string CloseReason = "";
     public int NextSide = 1;
+    // 只去重终局日志，不改变房间接收/广播的协议行为。
+    public bool ResultLogged;
 }
 
 /// <summary>挂在 Session 上的身份索引；断开时其 DestroySystem 通知大厅保留重连窗口。</summary>

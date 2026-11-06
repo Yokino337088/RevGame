@@ -14,6 +14,7 @@ namespace RevGame.Pvp
     {
         private readonly PvpConfig _config;
         private readonly bool _agents;
+        private readonly bool _longGame;
         private PvpService _host;
         private PvpService _guest;
         private double _deadline;
@@ -32,10 +33,11 @@ namespace RevGame.Pvp
         public string Winner { get; private set; } = string.Empty;
         public int BlackCaptures { get; private set; }
 
-        public PvpLanGameChecks(PvpConfig config, bool agents = false)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false)
         {
             _config = config;
             _agents = agents;
+            _longGame = longGame;
         }
 
         public bool Start(out string reason)
@@ -45,7 +47,7 @@ namespace RevGame.Pvp
                 reason = "局域网业务夹具已使用或缺少真实导表配置。";
                 return false;
             }
-            _deadline = Now + 20;
+            _deadline = Now + (_longGame ? 120 : 20);
             _host = new PvpService();
             _guest = new PvpService();
             try
@@ -161,8 +163,16 @@ namespace RevGame.Pvp
                     if (_agents)
                     {
                         // 仅替换HTTP策略，两端仍通过真实UTP发送、解析并独立重算每手指纹。
-                        PvpAgentChecks.Install(_host);
-                        PvpAgentChecks.Install(_guest);
+                        if (_longGame)
+                        {
+                            PvpAgentChecks.InstallLongGame(_host);
+                            PvpAgentChecks.InstallLongGame(_guest);
+                        }
+                        else
+                        {
+                            PvpAgentChecks.Install(_host);
+                            PvpAgentChecks.Install(_guest);
+                        }
                         if (!Check(_host.SetAgentControl(true) && _guest.SetAgentControl(true), "双方Agent托管未开启"))
                         {
                             return;
@@ -217,10 +227,14 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
+                    if (_longGame && !Check(_host.Core.MoveNumber >= 60 && _host.Core.StateHash == _guest.Core.StateHash, "长局未达到60手或指纹分歧"))
+                    {
+                        return;
+                    }
                     _step = 9;
                     break;
                 case 9:
-                    if (!Synced(7))
+                    if (!Synced(_longGame ? _host.Core.Sequence : 7))
                     {
                         return;
                     }
@@ -240,7 +254,7 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
-                    if (!Check(_guest.Core != null && _guest.Core.Sequence == 7 && _guest.Core.Phase == GoPhase.Finished, "对方退出不应删掉本端已完成棋谱"))
+                    if (!Check(_guest.Core != null && (_longGame ? _guest.Core.MoveNumber >= 60 : _guest.Core.Sequence == 7) && _guest.Core.Phase == GoPhase.Finished, "对方退出不应删掉本端已完成棋谱"))
                     {
                         return;
                     }

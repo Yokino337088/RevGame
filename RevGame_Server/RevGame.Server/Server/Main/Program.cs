@@ -18,8 +18,8 @@ try
     // 通过访问 AssemblyMarker 强制加载程序集并调用 ModuleInitializer
     // 注意：Native AOT 不存在延迟加载问题，所有程序集在编译时打包
     AssemblyHelper.Initialize();
-    // 使用默认控制台日志启动 Fantasy.Net 框架
-    await Fantasy.Platform.Net.Entry.Start();
+    // 使用项目彩色ILog启动；业务仍走Fantasy.Log统一出口
+    await Fantasy.Platform.Net.Entry.Start(new GameConsoleLog());
 }
 catch (Exception ex)
 {

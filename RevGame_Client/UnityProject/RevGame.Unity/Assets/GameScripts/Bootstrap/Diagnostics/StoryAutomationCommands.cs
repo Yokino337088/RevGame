@@ -181,6 +181,11 @@ namespace RevGame.Bootstrap
             var lesson = RevLogic.Get<TutorialLogic>();
             var panel = RevUI.Get<RevGame.UI.StoryPanel>();
             var view = panel == null ? null : panel.GetComponentInChildren<RevGame.UI.StoryView>();
+            // 正式Player固定走AB；编辑器开关只在编辑器定义，开发包不能直接引用。
+            bool abMode = true;
+#if UNITY_EDITOR
+            abMode = RevResBootstrap.UseABInEditor;
+#endif
             return new Dictionary<string, object>
             {
                 ["scene"] = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
@@ -223,7 +228,7 @@ namespace RevGame.Bootstrap
                 ["soundStarted"] = view != null && view.SoundStarted,
                 ["visibleCharacters"] = view == null ? 0 : view.VisibleCharacters,
                 ["guidePacked"] = flow.StoryContent != null && flow.StoryContent.Guide != null && flow.StoryContent.Guide.packed,
-                ["abMode"] = RevResBootstrap.UseABInEditor
+                ["abMode"] = abMode
             };
         }
         /// <summary>读取场景Renderer与UI边界，验证没有把大厅背景/角色放回HomePanel。</summary>

@@ -100,6 +100,7 @@ public static class GoLobbyComponentSystem
             player.MatchWindowMs = matchWindow;
             self.Players.Add(player.Token, player);
         }
+        Log.Info($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 事件=握手或恢复成功 房间={player.Room?.RoomId ?? "无"}");
         player.Connection = session;
         player.DisconnectedAt = 0;
         session.GetOrAddComponent<GoSessionComponent>().Player = player;
@@ -117,6 +118,7 @@ public static class GoLobbyComponentSystem
         player.QueuedAt = 0;
         if (cancel)
         {
+            Log.Info($"[PVP/匹配] 玩家={GoEventLog.PlayerLabel(player)} 事件=取消匹配");
             return 0;
         }
         if (player.Room != null)
@@ -130,6 +132,7 @@ public static class GoLobbyComponentSystem
         {
             player.QueuedAt = Now();
             self.Waiting.Add(player);
+            Log.Info($"[PVP/匹配] 玩家={GoEventLog.PlayerLabel(player)} 场次={player.MatchKind} 事件=进入队列 等待人数={self.Waiting.Count}");
             return 0;
         }
         self.Waiting.Remove(opponent);
@@ -147,7 +150,7 @@ public static class GoLobbyComponentSystem
         room.White.Room = room;
         self.Rooms.Add(room.RoomId, room);
         self.Broadcast(room);
-        Log.Info($"九路围棋已配对，房间 {room.RoomId}，当前房间数 {self.Rooms.Count}。");
+        Log.Info($"[PVP/房间] 房间={room.RoomId} 事件=匹配成功/双方入房/对局开始 黑方={GoEventLog.PlayerLabel(room.Black)} 白方={GoEventLog.PlayerLabel(room.White)} 当前房间数={self.Rooms.Count}");
         return 0;
     }
 
@@ -203,6 +206,7 @@ public static class GoLobbyComponentSystem
             return 15;
         }
         room.Commands.Add(command.DeepCopy());
+        GoEventLog.Command(room, player, command);
         if (command.Kind == 1 || command.Kind == 2)
         {
             room.NextSide = 3 - room.NextSide;
@@ -291,6 +295,7 @@ public static class GoLobbyComponentSystem
         {
             return;
         }
+        Log.Info($"[PVP/房间] 房间={room.RoomId} 玩家={GoEventLog.PlayerLabel(player)} 事件=离开对局");
         room.ClosedAt = Now();
         room.CloseReason = "一方已退出对局。";
         self.Broadcast(room);
@@ -305,6 +310,7 @@ public static class GoLobbyComponentSystem
         {
             return;
         }
+        Log.Warning($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 房间={player.Room?.RoomId ?? "无"} 事件=连接中断/等待重连");
         player.Connection = null;
         player.DisconnectedAt = Now();
         self.Waiting.Remove(player);

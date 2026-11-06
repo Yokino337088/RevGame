@@ -121,6 +121,18 @@ internal static class AgentChecks
         RevGame.Pvp.Networking.FantasyGoTransport.Latest.Busy = false;
         Assert(s.SetAgentControl(false) && response.Disposed, "停止联机托管立即取消请求");
         s.Dispose();
+        s = new PvpService();
+        s.Begin(new PvpConfig());
+        s.StartComputer();
+        s.ConfigureAgent("test-key-not-real", "fixture", true);
+        response = new Response { Done = false };
+        s.AgentRequestFactory = (_, position) => response;
+        s.Submit(GoAction.Play, 4, 4);
+        s.Poll();
+        typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -30d);
+        s.Poll();
+        Assert(response.Disposed && s.Core.Sequence == 2, "HTTP永不结束也须绝对超时并完成本地合法回退");
+        s.Dispose();
         Console.WriteLine("PASS: Agent 人机闭环、权限、取消、单请求、非法输出、本地回退、候选隔离。");
     }
 }

@@ -13,6 +13,7 @@ namespace RevGame.Pvp
     {
         private readonly string _rules;
         private readonly int _komi;
+        private readonly bool _longGame;
         private Scene _scene;
         private Session _session;
         private bool _disposed;
@@ -22,10 +23,11 @@ namespace RevGame.Pvp
         private string _hash = "";
         private string _room = "";
 
-        internal PvpKcpOpponentCheck(string rules, int komi)
+        internal PvpKcpOpponentCheck(string rules, int komi, bool longGame = false)
         {
             _rules = rules;
             _komi = komi;
+            _longGame = longGame;
         }
 
         internal void Start()
@@ -37,6 +39,7 @@ namespace RevGame.Pvp
         {
             return new Dictionary<string, object>
             {
+                ["matchesPlayer"] = _sequence == RevServices.GetRequired<PvpService>().Core?.Sequence && _hash == RevServices.GetRequired<PvpService>().Core?.StateHash.ToString(),
                 ["running"] = !_disposed, ["connected"] = _connected, ["error"] = _error,
                 ["sequence"] = _sequence, ["stateHash"] = _hash, ["roomId"] = _room, ["transport"] = "Fantasy.KCP"
             };
@@ -97,9 +100,23 @@ namespace RevGame.Pvp
                         {
                             string before = core.StateHash.ToString();
                             GoAction action = pass ? GoAction.Pass : GoAction.ConfirmScore;
-                            Require(core.TryApply(action, side, -1, -1, out _), "对手动作拒绝");
+                            int x = -1, y = -1;
+                            if (pass && _longGame && core.MoveNumber < 60)
+                            {
+                                for (int point = 0; point < GoCore.PointCount; point++)
+                                {
+                                    if (core.Clone().TryPlay(side, point % 9, point / 9, out _))
+                                    {
+                                        action = GoAction.Play;
+                                        x = point % 9;
+                                        y = point / 9;
+                                        break;
+                                    }
+                                }
+                            }
+                            Require(core.TryApply(action, side, x, y, out _), "对手动作拒绝");
                             var command = new GoRelayCommand { Sequence = core.Sequence, Side = (int)side, Kind = (int)action,
-                                X = -1, Y = -1, ElapsedMs = 0, Payload = "", PreviousHash = before, ResultHash = core.StateHash.ToString() };
+                                X = x, Y = y, ElapsedMs = 0, Payload = "", PreviousHash = before, ResultHash = core.StateHash.ToString() };
                             using var response = await _session.C2G_GoCommandRequest(_room, command);
                             Require(response.ErrorCode == 0, response.Reason);
                         }

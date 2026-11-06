@@ -27,6 +27,7 @@ namespace RevGame.Pvp.Networking
         private float _deadline;
         private float _heartbeatAt;
         private bool _disposed;
+        private string _deferredFailure;
 
         /// <summary>快照已脱离 Fantasy 消息池，调用者可以保存并从头重放。</summary>
         public event Action<GoRelayState> StateReceived;
@@ -80,14 +81,15 @@ namespace RevGame.Pvp.Networking
             try
             {
                 // PvP外网固定使用Fantasy原生KCP；业务心跳继续验证身份，不另造可靠UDP或TCP回退。
-                _session = await Runtime.Connect(host, port, FantasyRuntime.NetworkProtocolType.KCP, false, 5000, false, 0, 0, 0, 0,
+                Session connected = await Runtime.Connect(host, port, FantasyRuntime.NetworkProtocolType.KCP, false, 5000, false, 0, 0, 0, 0,
                     () => OnSocketConnected(generation),
                     () => Fail(generation, "暂时无法连接对战服务器。你仍可游玩远征、无尽或局域网对战。"),
                     () => Fail(generation, "服务器连接已中断，可重连恢复对局；其它游戏功能不受影响。"));
-                if (generation != _generation || _disposed)
+                if (generation == _generation && !_disposed)
                 {
-                    _session?.Dispose();
+                    _session = connected;
                 }
+                // 过期连接由统一的延后Disconnect收尾，不覆盖较新连接，也不重入销毁Session。
             }
             catch (Exception exception)
             {
@@ -179,6 +181,13 @@ namespace RevGame.Pvp.Networking
         {
             if (_disposed)
             {
+                return;
+            }
+            if (_deferredFailure != null)
+            {
+                string reason = _deferredFailure;
+                Disconnect(false);
+                Error?.Invoke(reason);
                 return;
             }
             float now = Time.realtimeSinceStartup;
@@ -294,13 +303,17 @@ namespace RevGame.Pvp.Networking
             {
                 return;
             }
-            // 先让旧回调过期，再Dispose会话；否则断开回调会重复报告同一次故障。
-            Disconnect(false);
-            Error?.Invoke(reason);
+            // KCP的断开回调仍位于网络实体Dispose栈中，此处销毁Runtime会再次Dispose同一实体。
+            // 先使所有旧回调失效，实际销毁延迟到服务下一次Poll，避开Fantasy.Update的重入栈。
+            ++_generation;
+            Connected = false;
+            Busy = false;
+            _deferredFailure = reason;
         }
 
         private void Disconnect(bool dispose)
         {
+            _deferredFailure = null;
             ++_generation;
             Connected = false;
             Busy = false;

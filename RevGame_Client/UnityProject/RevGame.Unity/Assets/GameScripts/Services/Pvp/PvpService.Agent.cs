@@ -25,6 +25,9 @@ namespace RevGame.Pvp
         private int _agentGeneration;
         private int _requestGeneration;
         private GoSide _requestSide;
+        private double _requestStarted;
+        // 工程通信护栏，防平台HTTP超时未回调；不改变导表的对局计时规则。
+        private const double DecisionDeadlineSeconds = 25;
         // 失败仅回退当前一手，下个回合可重新请求。序号避免每帧重复付费重试。
         private int _fallbackSequence = -1;
         private GoSide _fallbackSide;
@@ -119,6 +122,10 @@ namespace RevGame.Pvp
         {
             GoSide side = IsComputerGame ? GoSide.White : MySide;
             bool active = UseCloudOpponent || AgentControlsHumanSeat;
+            if (active && Core != null && Core.Phase == GoPhase.Finished)
+            {
+                AgentStatus = "对局已结束：" + Core.EndReason + "，空格不代表必须继续落子";
+            }
             if (!active || Core == null || _leaving || _disposed || (Mode != PvpConnectionMode.Local && !Connected) || Core.Phase == GoPhase.Finished ||
                 (Core.Phase == GoPhase.Playing && Core.Turn != side) ||
                 (Core.Phase == GoPhase.Scoring && Core.HasConfirmed(side)))
@@ -133,6 +140,14 @@ namespace RevGame.Pvp
             {
                 CancelAgent();
             }
+            if (_agentRequest != null && _clock.Elapsed.TotalSeconds - _requestStarted >= DecisionDeadlineSeconds)
+            {
+                _agentRequest.Dispose();
+                _agentRequest = null;
+                _fallbackSequence = Core.Sequence;
+                _fallbackSide = side;
+                AgentStatus = "Agent请求超过等待上限，本手改用本地合法策略";
+            }
             // Fantasy心跳会短暂设置Busy，不能把传输等待当成撤销授权，否则长思考会被反复取消并计费。
             // 保留同一请求，等传输空闲后再消费响应；只有真正断线/换盘/退出才取消。
             if (!CanAct)
@@ -143,6 +158,7 @@ namespace RevGame.Pvp
             // 自动方固定黑先白后；白方等待已同步的黑方确认，仍允许人工先行确认。
             if (Mode != PvpConnectionMode.Local && Core.Phase == GoPhase.Scoring && side == GoSide.White && !Core.HasConfirmed(GoSide.Black))
             {
+                AgentStatus = "双方已停一手，数子阶段：等待黑方确认后白方确认";
                 return;
             }
             // 思考照常计时。不能让无响应的网络阻止本地电脑超时结算。
@@ -162,6 +178,7 @@ namespace RevGame.Pvp
                 if (_agentRequest == null)
                 {
                     _agentPosition = GoAgentPosition.Create(Core, side);
+                    _requestStarted = _clock.Elapsed.TotalSeconds;
                     _requestGeneration = _agentGeneration;
                     _requestSide = side;
                     _agentRequest = AgentRequestFactory(AgentSettings, _agentPosition);

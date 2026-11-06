@@ -111,3 +111,10 @@
 - Windows当前用户DPAPI加密保存Key、模型和授权，启动恢复；关闭并清除删除本地密文。
 - 官方DeepSeek蓝鲸Logo通过独立PvpAgent Sprite Atlas V2接入设置模型旁；默认显示V4.1 Flash 1017，API使用官方deepseek-flash别名。
 - 增加独立存储槽的跨Play恢复、损坏拒绝和清除检查，不接触玩家真实凭据。
+
+## 2026-11-07 Agent联机与首次设置修复
+
+- 大厅四选一菜单首次打开Agent设置不再被错误的PVP屏幕检查立即关闭。
+- PVP桌面后台保活、KCP断线延后销毁及旧连接防覆盖；Agent绝对请求超时本地回退，显示拒绝/数子/终局状态。
+- 服务端Fantasy.Log接彩色ILog，增加匹配、入房、落子、数子、胜负复盘及断线/拒绝日志。
+- 修复Mono Development剧情诊断条件编译；真实UTP及独立Mono最小化KCP60手、重连、普通无桥保活回归通过。

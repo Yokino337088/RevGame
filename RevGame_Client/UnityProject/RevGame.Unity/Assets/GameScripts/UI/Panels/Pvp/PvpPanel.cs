@@ -160,7 +160,7 @@ namespace RevGame.Pvp
             bool canAct = service.CanAct && !service.AgentControlsHumanSeat;
             _agent.interactable = hasGame && !finished && service.Mode != PvpConnectionMode.Local;
             Set(_agentLabel, service.AgentControlsHumanSeat ? "停止托管" : "Agent托管");
-            Set(_agentState, service.AgentStatus);
+            Set(_agentState, service.AgentStatus + " · " + service.Status);
             bool myTurn = playing && ((service.Mode == PvpConnectionMode.Local && !service.IsComputerGame) || core.Turn == service.MySide);
             string connection = service.Mode == PvpConnectionMode.Server ? "服务器匹配" : service.Mode == PvpConnectionMode.Lan ? "局域网直连" : service.IsComputerGame ? "本地人机" : "本地双人";
             Set(_title, hasGame ? "九路围棋 · " + connection : "九路围棋");

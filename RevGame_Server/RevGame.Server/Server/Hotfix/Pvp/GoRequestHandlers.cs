@@ -53,6 +53,10 @@ public sealed class C2G_GoCommandRequestHandler : MessageRPC<C2G_GoCommandReques
             return;
         }
         response.ErrorCode = lobby.Relay(player, request, out var reason);
+        if (response.ErrorCode != 0)
+        {
+            Log.Warning($"[PVP/拒绝] 房间={request.RoomId} 玩家={GoEventLog.PlayerLabel(player)} 序号={request.Command?.Sequence} 错误码={response.ErrorCode} 原因={reason}");
+        }
         response.Reason = reason;
         response.State = lobby.Snapshot(player);
         await FTask.CompletedTask;

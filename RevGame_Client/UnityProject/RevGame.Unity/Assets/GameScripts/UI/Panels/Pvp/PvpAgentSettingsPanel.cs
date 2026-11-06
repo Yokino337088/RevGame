@@ -10,6 +10,9 @@ namespace RevGame.Pvp
         /// <summary>首次AB加载必须异步；迟到回调核对流程，离开PVP后不允许弹出设置。</summary>
         public static void OpenSettings()
         {
+            var flow = RevServices.GetRequired<RevGame.Flow.GameFlow>();
+            var origin = flow.Screen;
+            var entry = RevUI.Get<PvpEntryPanel>();
             RevUI.Open<PvpAgentSettingsPanel>(panel =>
             {
                 if (panel == null)
@@ -17,7 +20,11 @@ namespace RevGame.Pvp
                     RevLog.Warn("Agent设置加载失败，请返回重试", "Pvp");
                     return;
                 }
-                if (RevServices.GetRequired<RevGame.Flow.GameFlow>().Screen != RevGame.Core.GameScreen.Pvp)
+                // 大厅的四选一菜单本来就先于PVP场景打开，不能把合法的Home入口当作迟到回调。
+                // 同时保留原屏幕和菜单实例校验：返回/切场景后不能弹出旧设置。
+                if (flow.IsTransitioning || flow.Screen != origin ||
+                    (origin == RevGame.Core.GameScreen.Home && (entry == null || !RevUI.IsOpen<PvpEntryPanel>() || RevUI.Get<PvpEntryPanel>() != entry)) ||
+                    (origin != RevGame.Core.GameScreen.Home && origin != RevGame.Core.GameScreen.Pvp))
                 {
                     RevUI.Close<PvpAgentSettingsPanel>();
                 }

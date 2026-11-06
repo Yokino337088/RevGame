@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Entity\Entity.csproj" />
+    <!-- 仅用于终局日志审计，链接客户端同一份纯规则，不能重写第二套围棋规则。 -->
+    <Compile Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/*.cs" Link="PvpAudit/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

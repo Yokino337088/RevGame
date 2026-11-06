@@ -53,6 +53,30 @@ internal static class PvpAgentChecks
         };
     }
 
+    public static void InstallLongGame(PvpService service)
+    {
+        service.ConfigureAgent("development-fixture-not-a-real-key", "fixture", true);
+        service.AgentRequestFactory = (_, position) =>
+        {
+            string action = "pass";
+            if (position.Prompt.Contains("阶段=Scoring"))
+            {
+                action = "confirm";
+            }
+            else if (service.Core.MoveNumber < 60)
+            {
+                // 只选生产代码列出的合法候选，不直接操作实盘；60手后双停以覆盖后半局与终局。
+                int first = position.Prompt.IndexOf("play_", StringComparison.Ordinal);
+                if (first >= 0)
+                {
+                    int end = position.Prompt.IndexOf(' ', first);
+                    action = position.Prompt.Substring(first, end - first);
+                }
+            }
+            return new Response { Content = "{\"actionId\":\"" + action + "\"}" };
+        };
+    }
+
     public static void Restore(PvpService service)
     {
         service.ConfigureAgent("", "deepseek-flash", false);
@@ -127,6 +151,18 @@ internal static class PvpAgentChecks
         Assert(!position.TryReadAction("{\"actionId\":\"play_4_4\"}", out _), "已占落点不在候选中");
         Assert(!position.TryReadAction(" ", out _) && !position.TryReadAction("not-json", out _), "空白和畸形响应被拒绝");
         Assert(s.Core.StateHash == hash && position.Matches(s.Core), "候选生成与解析不改变实盘");
+        s.Dispose();
+        s = new PvpService();
+        s.Begin(config);
+        s.StartComputer();
+        s.ConfigureAgent("test-key-not-real", "fixture", true);
+        response = new Response { Done = false };
+        s.AgentRequestFactory = (_, position) => response;
+        s.Submit(GoAction.Play, 4, 4);
+        s.Poll();
+        typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -30d);
+        s.Poll();
+        Assert(response.Disposed && s.Core.Sequence == 2, "HTTP永不结束也须绝对超时并完成本地合法回退");
         s.Dispose();
         return "PASS: Agent 人机闭环、权限、取消、单请求、非法输出、本地回退、候选隔离";
     }

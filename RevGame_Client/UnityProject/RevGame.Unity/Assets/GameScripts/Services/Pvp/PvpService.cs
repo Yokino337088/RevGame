@@ -625,7 +625,12 @@ namespace RevGame.Pvp
                 Revision++;
                 return;
             }
-            Submit(GoAction.Play, x, y);
+            if (!Submit(GoAction.Play, x, y))
+            {
+                // UI不能把禁入点、劫、等待回执等拒绝都表现成“点了没反应”。保留规则给出的真实原因。
+                PreviewText = Status;
+                Revision++;
+            }
         }
         public void Preview(int x, int y)
         {
