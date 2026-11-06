@@ -8,6 +8,7 @@ using UnityEngine;
 namespace RevGame.View
 {
     /// <summary>大厅场景画面所有者；背景MeshRenderer和角色SpriteRenderer/Animator均为场景对象，无Canvas或Image。</summary>
+    [ExecuteAlways]
     public sealed class LobbySceneView : MonoBehaviour
     {
         /// <summary>StartScene固定相机和画面节点，由Editor配方绑定；显示位置在原画圆台上。</summary>
@@ -15,6 +16,21 @@ namespace RevGame.View
         [SerializeField] private MeshRenderer cottageRenderer;
         [SerializeField] private SpriteRenderer yayaRenderer;
         [SerializeField] private Animator yayaAnimator;
+        /// <summary>独立的人工位移节点；相机适配只移动其子Sprite，保留用户用移动工具调整的Transform。</summary>
+        [SerializeField] private Transform yayaPlacement;
+#if UNITY_EDITOR
+        /// <summary>只供编辑态构图预览，由配方设置；正式Play由Rev资源句柄替换，不初始化框架或改剧情。</summary>
+        [HideInInspector][SerializeField] private Material editorBackdrop;
+        [HideInInspector][SerializeField] private Sprite editorPortrait;
+#endif
+        /// <summary>原画中的脚底锚点，范围0～1，左下角为原点。属于美术构图而非玩法数值。</summary>
+        [Header("看板娘构图（可在运行时调整）")]
+        [InspectorName("脚底原画锚点")][SerializeField] private Vector2 yayaFootAnchor = new Vector2(.255f, .195f);
+        /// <summary>人物全身高度，单位为场景世界单位；与相机半高6搭配，默认帽顶完整可见。</summary>
+        [InspectorName("人物高度")][Range(1f, 12f)][SerializeField] private float yayaHeight = 9.2f;
+        /// <summary>缓存构图输入。Inspector改变后下一次布局刷新，不每帧重新求Sprite边界。</summary>
+        private Vector2 _lastFootAnchor;
+        private float _lastHeight;
         /// <summary>本场景加载的材质和正式控制器，销毁前先停止使用，再成对Release。</summary>
         private RevResHandle _materialHandle, _controllerHandle;
         /// <summary>待机图集独立租约，不能归还故事表情图集；离场Dispose。</summary>
@@ -32,6 +48,29 @@ namespace RevGame.View
         {
             get;
             private set;
+        }
+        /// <summary>从编辑态进入Play先撤静帧预览，实际资源可画之前不能拿编辑器直读图片冒充冷AB已就绪。</summary>
+        private void OnEnable()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+            if (cottageRenderer != null)
+            {
+                cottageRenderer.enabled = false;
+                cottageRenderer.sharedMaterial = null;
+            }
+            if (yayaRenderer != null)
+            {
+                yayaRenderer.enabled = false;
+                yayaRenderer.sprite = null;
+            }
+#if UNITY_EDITOR
+            // 只清本次Play实例的编辑预览引用，退出Play由Unity恢复保存的场景字段；不写资产。
+            editorBackdrop = null;
+            editorPortrait = null;
+#endif
         }
         /// <summary>由局外表现等待实际材质/图集/控制器可画，再显示场景；不决定GameFlow状态。</summary>
         public async RevTask PrepareAsync(GameScreen screen)
@@ -118,16 +157,18 @@ namespace RevGame.View
         /// <summary>原画等比cover相机，角色全身站左侧圆台。结构比例为原画构图约定，不是游戏数值。</summary>
         public void FitCamera()
         {
-            if (!Ready || lobbyCamera == null)
+            if (lobbyCamera == null || cottageRenderer.sharedMaterial == null || yayaRenderer.sprite == null || (Application.isPlaying && !Ready))
             {
                 return;
             }
             var pixels = new Vector2Int(lobbyCamera.pixelWidth, lobbyCamera.pixelHeight);
-            if (_pixels == pixels)
+            if (_pixels == pixels && _lastFootAnchor == yayaFootAnchor && _lastHeight == yayaHeight)
             {
                 return;
             }
             _pixels = pixels;
+            _lastFootAnchor = yayaFootAnchor;
+            _lastHeight = yayaHeight;
             lobbyCamera.orthographic = true;
             lobbyCamera.orthographicSize = 6f;
             lobbyCamera.transform.position = new Vector3(0, 0, -10);
@@ -136,15 +177,35 @@ namespace RevGame.View
             float height = Mathf.Max(12f, 12f * lobbyCamera.aspect / aspect);
             cottageRenderer.transform.localScale = new Vector3(height * aspect, height, 1);
             cottageRenderer.transform.position = new Vector3(0, 0, 5);
-            // 9.2世界单位使帽顶留在相机内；圆台落脚点仍随原画缩放，不能单独拉长人物。
-            const float characterHeight = 9.2f;
+            // 用户配置人物高度与脚底锚点，人工位移留在YayaPlacement父节点，不被自动cover布局覆盖。
+            float characterHeight = yayaHeight;
             yayaRenderer.transform.localScale = Vector3.one * (characterHeight / yayaRenderer.sprite.bounds.size.y);
-            Vector3 center = new Vector3(-height * aspect * .245f, -height * .305f + characterHeight * .5f, 0);
-            yayaRenderer.transform.position = center - Vector3.Scale(yayaRenderer.sprite.bounds.center, yayaRenderer.transform.localScale);
+            Vector3 center = new Vector3(height * aspect * (yayaFootAnchor.x - .5f), height * (yayaFootAnchor.y - .5f) + characterHeight * .5f, 0);
+            yayaRenderer.transform.localPosition = center - Vector3.Scale(yayaRenderer.sprite.bounds.center, yayaRenderer.transform.localScale);
         }
+#if UNITY_EDITOR
+        /// <summary>编辑态仅显示固定预览图片并复用正式构图；不播放业务、不调RevInitialize，不克隆材质。</summary>
+        private void Update()
+        {
+            if (Application.isPlaying || editorBackdrop == null || editorPortrait == null || cottageRenderer == null || yayaRenderer == null)
+            {
+                return;
+            }
+            if (cottageRenderer.sharedMaterial != editorBackdrop || yayaRenderer.sprite != editorPortrait)
+            {
+                cottageRenderer.sharedMaterial = editorBackdrop;
+                yayaRenderer.sprite = editorPortrait;
+                _pixels = Vector2Int.zero;
+            }
+            cottageRenderer.enabled = true;
+            yayaRenderer.enabled = true;
+            FitCamera();
+        }
+#endif
         /// <summary>只读真实场景、Shader遮罩与动画状态，不能用此入口更改图像或流程。</summary>
         public object Snapshot()
         {
+            Material material = cottageRenderer.sharedMaterial;
             return new Dictionary<string, object>
             {
                 ["ready"] = Ready,
@@ -155,9 +216,35 @@ namespace RevGame.View
                 ["sprite"] = yayaRenderer.sprite == null ? "" : yayaRenderer.sprite.name,
                 ["animatorPlaying"] = yayaAnimator.enabled && yayaAnimator.runtimeAnimatorController != null,
                 ["visible"] = cottageRenderer.enabled && yayaRenderer.enabled,
+                ["placementOffset"] = yayaPlacement == null ? Vector3.zero : yayaPlacement.localPosition,
+                ["footAnchor"] = yayaFootAnchor,
+                ["characterHeight"] = yayaHeight,
+                ["windMaskUsed"] = cottageRenderer.sharedMaterial != null && cottageRenderer.sharedMaterial.GetTexture("_NatureMask") != null,
+                ["waterAmount"] = material == null ? 0 : material.GetFloat("_WaterAmount"),
+                ["waterLight"] = material == null ? 0 : material.GetFloat("_WaterLight"),
+                ["windAmount"] = material == null ? 0 : material.GetFloat("_WindAmount"),
+                ["magicGlow"] = material == null ? 0 : material.GetFloat("_MagicGlow"),
+                ["cottageMagic"] = material == null ? 0 : material.GetFloat("_CottageMagic"),
                 ["portraitFullyVisible"] = yayaRenderer.bounds.max.y <= lobbyCamera.orthographicSize && yayaRenderer.bounds.min.y >= -lobbyCamera.orthographicSize
             };
         }
+#if UNITY_EDITOR
+        /// <summary>仅开发态固定时钟与构图夹具，复用正式布局；PropertyBlock保持共享材质资产不变。</summary>
+        public void ApplyPreview(Vector3 offset, float effectTime)
+        {
+            if (!Ready || yayaPlacement == null)
+            {
+                throw new InvalidOperationException("大厅画面未就绪");
+            }
+            yayaPlacement.localPosition = offset;
+            var block = new MaterialPropertyBlock();
+            cottageRenderer.GetPropertyBlock(block);
+            block.SetFloat("_EffectTime", effectTime);
+            cottageRenderer.SetPropertyBlock(block);
+            _pixels = Vector2Int.zero;
+            FitCamera();
+        }
+#endif
         /// <summary>场景销毁先解除Renderer/Animator引用，再释放资源和图集；不会清其它游戏域。</summary>
         private void OnDestroy()
         {

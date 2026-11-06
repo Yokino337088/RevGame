@@ -42,6 +42,17 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("story.skip", "与右上角跳过按钮共用正式剧情收尾", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().SkipStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.yaya-state", "只读鸦鸦立绘/表情、全屏背景、层级与文本布局", Empty, _ => RevGame.UI.StoryPanel.YayaSnapshot(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("lobby.yaya-state", "只读StartScene实际场景对象、背景遮罩、待机与HomePanel无旧背景", Empty, _ => LobbySnapshot(), readOnly: true, owner: Owner);
+#if UNITY_EDITOR
+            const string portraitSchema = "{\"type\":\"object\",\"properties\":{\"fixture\":{\"type\":\"string\",\"enum\":[\"none\",\"episode\",\"line\",\"default\"]}},\"required\":[\"fixture\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("story.presentation-preview", "隔离Play修改立绘配置并调用正式播放，cleanup恢复", portraitSchema, json => StoryPresentationPreview.Portrait(JsonUtility.FromJson<PresentationArgs>(json).fixture), owner: Owner);
+            const string lobbySchema = "{\"type\":\"object\",\"properties\":{\"offsetY\":{\"type\":\"number\",\"minimum\":-1,\"maximum\":1},\"time\":{\"type\":\"number\",\"minimum\":-1,\"maximum\":60}},\"required\":[\"offsetY\",\"time\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("lobby.presentation-preview", "隔离Play调整构图输入和Shader时钟，不修改资产", lobbySchema, json =>
+            {
+                PresentationArgs args = JsonUtility.FromJson<PresentationArgs>(json);
+                return StoryPresentationPreview.Lobby(args.offsetY, args.time);
+            }, owner: Owner);
+            RevRuntimeAutomation.Register("story.presentation-cleanup", "还原本次立绘、偏移与Shader时钟预览", Empty, _ => StoryPresentationPreview.Cleanup(), owner: Owner);
+#endif
             RevRuntimeAutomation.Register("tutorial.card", "选择练习手牌", Empty, _ => Accepted(RevLogic.Get<TutorialLogic>()?.SelectCard() == true), owner: Owner);
             RevRuntimeAutomation.Register("tutorial.cell", "点击练习棋盘的格子", "{\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8},\"y\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8}},\"required\":[\"x\",\"y\"],\"additionalProperties\":false}", json =>
             {
@@ -54,10 +65,23 @@ namespace RevGame.Bootstrap
         }
         public static void Unregister()
         {
+#if UNITY_EDITOR
+            StoryPresentationPreview.Cleanup();
+#endif
             RevRuntimeAutomation.UnregisterAllOf(Owner);
             _scoreIsolation?.Dispose();
             _scoreIsolation = null;
         }
+#if UNITY_EDITOR
+        /// <summary>开发态预览的输入DTO，参数范围由实时schema限制，不允许传任意资源/路径。</summary>
+        [System.Serializable]
+        private sealed class PresentationArgs
+        {
+            public string fixture;
+            public float offsetY;
+            public float time;
+        }
+#endif
         private static object Accepted(bool value)
         {
             return new Dictionary<string, object> { ["accepted"] = value };
@@ -198,7 +222,8 @@ namespace RevGame.Bootstrap
                 ["typing"] = view != null && view.IsTyping,
                 ["soundStarted"] = view != null && view.SoundStarted,
                 ["visibleCharacters"] = view == null ? 0 : view.VisibleCharacters,
-                ["guidePacked"] = flow.StoryContent != null && flow.StoryContent.Guide != null && flow.StoryContent.Guide.packed
+                ["guidePacked"] = flow.StoryContent != null && flow.StoryContent.Guide != null && flow.StoryContent.Guide.packed,
+                ["abMode"] = RevResBootstrap.UseABInEditor
             };
         }
         /// <summary>读取场景Renderer与UI边界，验证没有把大厅背景/角色放回HomePanel。</summary>

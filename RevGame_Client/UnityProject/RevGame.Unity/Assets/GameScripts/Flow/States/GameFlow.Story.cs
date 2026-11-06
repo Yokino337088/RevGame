@@ -14,7 +14,7 @@ namespace RevGame.Flow
         private RevResHandle _storyHandle;
         private StoryBook _storyBook;
         /// <summary>当前面板的表情图集绑定租约，进入时借、关闭时还；StoryBook直接图片依赖仍由全局配置句柄持有。</summary>
-        private View.GameSpriteAtlasService.ScopedAtlasLease _storyAtlas;
+        private View.GameSpriteAtlasService.ScopedAtlasLease[] _storyAtlases = Array.Empty<View.GameSpriteAtlasService.ScopedAtlasLease>();
         /// <summary>当前播放篇章及从0开始的行号；未播放时篇章为空。</summary>
         private StoryBook.Episode _episode;
         private int _storyLine;
@@ -221,8 +221,22 @@ namespace RevGame.Flow
                 {
                     return;
                 }
-                _storyAtlas = RevServices.GetRequired<View.GameSpriteAtlasService>().AcquireScopedAtlas("YayaExpressions");
-                await _storyAtlas.WaitReadyAsync();
+                // 新立绘可能属于不同用途图集，按构建生成的本篇列表取得租约，不能继续写死鸦鸦六表情图集。
+                string[] atlasNames = _episode.PortraitAtlasNames;
+                if (atlasNames == null || atlasNames.Length == 0)
+                {
+                    throw new InvalidOperationException("篇章立绘图集列表未生成，请重新配置资源：" + id);
+                }
+                _storyAtlases = new View.GameSpriteAtlasService.ScopedAtlasLease[atlasNames.Length];
+                for (int i = 0; i < atlasNames.Length; i++)
+                {
+                    _storyAtlases[i] = RevServices.GetRequired<View.GameSpriteAtlasService>().AcquireScopedAtlas(atlasNames[i]);
+                    await _storyAtlases[i].WaitReadyAsync();
+                    if (_disposed || version != _storyVersion)
+                    {
+                        return;
+                    }
+                }
                 if (_disposed || version != _storyVersion)
                 {
                     return;
@@ -324,8 +338,11 @@ namespace RevGame.Flow
             _storyCompleted = null;
             _episode = null;
             RevUI.Close<StoryPanel>();
-            _storyAtlas?.Dispose();
-            _storyAtlas = null;
+            foreach (var atlas in _storyAtlases)
+            {
+                atlas?.Dispose();
+            }
+            _storyAtlases = Array.Empty<View.GameSpriteAtlasService.ScopedAtlasLease>();
         }
         /// <summary>只有教程Logic实操完成才可写进度；不让普通按钮/GM直接跳过教学并伪造完成。</summary>
         public bool CompleteTutorial()

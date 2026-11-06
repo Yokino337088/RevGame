@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2490020522
+CRC: 1316661568
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6d20d9c478650754a9f5e79657b515a3
+    Hash: b2e88288e49ba769c67b38967873178d
   TypeTreeHash:
     serializedVersion: 2
     Hash: b30fce1a9ad74efb72be6c308c56e365
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6d20d9c478650754a9f5e79657b515a3
+    Hash: b2e88288e49ba769c67b38967873178d
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -23,5 +23,6 @@ Assets:
 - Assets/GameRes/Lobby/MagicCottageMask.png
 - Assets/GameRes/Lobby/MagicCottageMaterial.mat
 - Assets/GameRes/Lobby/MagicCottage.png
+- Assets/GameRes/Lobby/MagicCottageNatureMask.png
 Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

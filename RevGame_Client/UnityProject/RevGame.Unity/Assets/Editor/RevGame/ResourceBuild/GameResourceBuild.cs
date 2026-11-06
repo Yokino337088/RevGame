@@ -55,6 +55,7 @@ namespace RevGame.Editor
             GameResourceCompressionBuild.Configure();
             // 今天新增的数据场装配挂在既有构建总入口，确保菜单/自动化/重新构建都得到相同绑定和导入规则。
             GameBackgroundFieldBuild.Configure();
+            GameLobbyArtBuild.Configure();
             // 文案或配置变化后必须先重新制作字库；不能继续使用旧子集发布缺字版本。
             GameFontSubsetBuild.Validate();
             ABBuildConfig config = ABBuildConfig.Instance;
@@ -244,6 +245,7 @@ namespace RevGame.Editor
             }
             // 图集必须在目录默认打标之后执行：源图和图集归同一个包，不能被粗目录标记覆盖。
             GameSpriteAtlasBuild.Configure();
+            GameStoryPortraitBuild.Configure();
             string atlasReport = GameSpriteAtlasBuild.Validate();
             string usageReport = GameResourceUsage.Validate();
             AssetDatabase.RemoveUnusedAssetBundleNames();

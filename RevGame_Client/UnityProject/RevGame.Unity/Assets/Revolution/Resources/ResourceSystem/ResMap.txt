@@ -571,6 +571,7 @@ Fonts/CJK/NotoSansCJKsc-Bold|font_cjk|NotoSansCJKsc-Bold
 Lobby/MagicCottage|lobby_cottage|MagicCottage
 Lobby/MagicCottageMask|lobby_cottage|MagicCottageMask
 Lobby/MagicCottageMaterial|lobby_cottage|MagicCottageMaterial
+Lobby/MagicCottageNatureMask|lobby_cottage|MagicCottageNatureMask
 Material/Background/ArcaneBackdrop|material_background|ArcaneBackdrop
 Material/Board/PlacementMagic|material_board|PlacementMagic
 Material/Cards/CardGleam|material_cards|CardGleam

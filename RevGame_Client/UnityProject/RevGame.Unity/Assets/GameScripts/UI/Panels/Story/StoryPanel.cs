@@ -78,6 +78,8 @@ namespace RevGame.UI
                 ["open"] = true,
                 ["expression"] = line.Expression,
                 ["portrait"] = portrait.sprite == null ? "" : portrait.sprite.name,
+                ["portraitSource"] = line.Portrait != null ? "line" : panel.Data.Episode.Portrait != null ? "episode" : line.Expression == 0 ? "default" : "expression",
+                ["portraitPacked"] = portrait.sprite != null && portrait.sprite.packed,
                 ["portraitTop"] = portrait.transform.GetSiblingIndex() == view.childCount - 1,
                 ["separate"] = rect.anchorMax.x <= card.anchorMin.x,
                 ["backdropReady"] = panel._storyBackdrop.Ready,

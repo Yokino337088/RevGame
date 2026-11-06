@@ -57,11 +57,12 @@ namespace RevGame.Editor
             PatchHome();
             GameLobbySceneBuild.Configure();
             StoryBook book = AssetDatabase.LoadAssetAtPath<StoryBook>("Assets/GameRes/Config/Story/StoryBook.asset");
-            book.ExpressionIds = ExpressionIds;
-            book.GuideFrames = ExpressionIds.Select(id => AssetDatabase.LoadAssetAtPath<Sprite>(Expressions + "/YayaExpression_" + id.ToString("D2") + ".png")).ToArray();
-            book.Guide = book.GuideFrames[1];
             if (book.YayaRevision < 1)
             {
+                // 只在旧版迁移时设置初始立绘。资源配方重跑不得覆盖策划拖入的新图片、映射与逐句覆盖。
+                book.ExpressionIds = ExpressionIds;
+                book.GuideFrames = ExpressionIds.Select(id => AssetDatabase.LoadAssetAtPath<Sprite>(Expressions + "/YayaExpression_" + id.ToString("D2") + ".png")).ToArray();
+                book.Guide = book.GuideFrames[1];
                 book.Episodes = GameYayaStoryContent.Create();
                 book.YayaRevision = 1;
             }

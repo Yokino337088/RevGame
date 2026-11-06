@@ -27,15 +27,25 @@ Material:
         m_Texture: {fileID: 2800000, guid: 0b3a7b68bf1fab74aab92658eb45cbc7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NatureMask:
+        m_Texture: {fileID: 2800000, guid: 5ecc38ca1b418e8499c4870a99032cde, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _RegionMask:
         m_Texture: {fileID: 2800000, guid: e5b779e92b07861408174ba76dfc3fa6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _CottageMagic: 0.38
     - _EffectTime: -1
-    - _MagicGlow: 0.18
+    - _MagicGlow: 0.55
     - _SkyGlow: 0.025
-    - _WaterAmount: 0.002
+    - _SmokeAmount: 0.003
+    - _WaterAmount: 0.006
+    - _WaterLight: 0.32
+    - _WaterSpeed: 0.8
+    - _WindAmount: 0.0045
+    - _WindSpeed: 1.2
     m_Colors: []
   m_BuildTextureStacks: []

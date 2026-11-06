@@ -67,7 +67,7 @@ namespace RevGame.UI
             _speaker.text = line.Speaker;
             _counter.text = (frame.Index + 1) + " / " + frame.Episode.Lines.Length + "    点击任意处 · 下一句";
             // 每句配置明确指定表情，不把六张不同情绪当序列帧循环；立绘缩放保留原图比例。
-            _guide.sprite = frame.Book.ExpressionSprite(line.Expression, out int expressionIndex);
+            _guide.sprite = frame.Book.ResolvePortrait(frame.Episode, line, out int expressionIndex);
             GuideFrame = expressionIndex;
             _guide.preserveAspect = true;
             _guide.transform.SetAsLastSibling();

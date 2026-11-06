@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "dd94958d632b0aa920940ce9cab85a80a940a866fd20e313be3b02d455544782",
-  "inputDigest": "3b8796b4fc409e55a0488c9f9e8824e9355745abdc76e1e2d8eb2845ab55753c",
+  "outputSha256": "edce02870d20a5cc30c397e9bc8db621c7d9502de3ad780ae64207fe46379563",
+  "inputDigest": "fed535b617c126e71854e4ba8d2f70a1ccabf57ff3138463032f014e5554451a",
   "originalBytes": 17002248,
-  "outputBytes": 768884,
-  "characterCount": 1726,
-  "glyphCount": 3434,
+  "outputBytes": 769820,
+  "characterCount": 1727,
+  "glyphCount": 3437,
   "codepoints": [
     32,
     33,
@@ -562,6 +562,7 @@
     22996,
     23039,
     23041,
+    23064,
     23376,
     23380,
     23383,
@@ -1786,7 +1787,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Config/Story/StoryBook.asset",
-      "sha256": "2027b31f7f07e4223aa6dabfe284079f24505b8e1efb67a17a76da62b616ea2b"
+      "sha256": "4502664d9dfd0f78d808190aa9832b1bb7f6e4b26c0b1760e53ae184bf866a0e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/BalanceRule.txt",
@@ -2138,7 +2139,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
-      "sha256": "150dff597006d6072fcec83afe3ac20f6d459af04bb5b54b188403442585d59d"
+      "sha256": "91d7823706d2e2bd44b0c63e46ef24c14b001fc3edb2dfd544d83cc7992d3f4e"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryPresentationPreview.cs",
+      "sha256": "4f83bd1fc329d88d02f2a22cb0c97134f47f8035cd53820507ea3c55034c4c3d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
@@ -2254,7 +2259,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Story/StoryBook.cs",
-      "sha256": "44fac94826633399e70f92fcab590c72d0666bfe11a064e7e17ce8b4746ad8f7"
+      "sha256": "4d577847d1f7b63d381731d357f00a59220c4b63020858482d72f3ce10143e96"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Diagnostics/CharacterPreview/YayaIdleTestBootstrap.cs",
@@ -2310,7 +2315,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Story.cs",
-      "sha256": "66efe3bfc5275d2e6e82ca662ea418d7bfbab4c6f3f1c56c51e7593321506306"
+      "sha256": "ba4b97133a5ab1c64494c74281bd7779c26ba8c5230d975959167e3a08009996"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pieces/Model/Piece.cs",
@@ -2758,11 +2763,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryPanel.cs",
-      "sha256": "503ae0a47d7c3ac5b7420273534a02fff115ed15814c8fc9aa398f4439e77fed"
+      "sha256": "d1ac0a42fcea64c769c75bfeb724060b5a8950012b1690a24fb3a9690d4362a1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryView.cs",
-      "sha256": "fd33d89b03de0075007ec70d23371161e032d4be8dd247789c5e2818fb2d4b5c"
+      "sha256": "f1ec0c932eced6182bbe8568fab3689ffcf1f6d26b2eb0d85d40741cdf0f3a21"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/TutorialPanel.cs",
@@ -3006,7 +3011,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/LobbySceneView.cs",
-      "sha256": "c939217e5846be99f51918e6b44c1d955dfea28553937f14bb5814aa47d4963c"
+      "sha256": "427cece727d4b0a051968950629a20e51cce1f2d7ffddf5b8fba689ccf61b368"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/StoryBackdrop.cs",
@@ -3026,7 +3031,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/StartScene.unity",
-      "sha256": "5e42a792212360f4cdc4b5a3b0e7c43c484c541b1f8f8caf6893d280a58aa2d5"
+      "sha256": "409243c7be0b35c89063e66277bc321b7342705039d6e3145c6627ec50b41ff6"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/TestScene.unity",
