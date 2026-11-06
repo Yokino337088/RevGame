@@ -12,7 +12,9 @@ namespace RevGame.Core
         Battle,
         Exit,
         /// <summary>棋阵幸存者独立战斗，不复用六章回合与胜利条件。</summary>
-        Endless
+        Endless,
+        /// <summary>独立九路围棋：黑白标准规则，不启用单机技能或成长。</summary>
+        Pvp
     }
 
     /// <summary>

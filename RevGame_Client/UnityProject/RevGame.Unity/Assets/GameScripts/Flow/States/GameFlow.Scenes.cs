@@ -105,6 +105,11 @@ namespace RevGame.Flow
                 _loading.ResetCover();
                 Report(0.02f, target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…");
                 await RevTask.Yield(); // 让遮挡层先实际画一帧，再开始资源解码与场景工作。
+                if (Screen == GameScreen.Pvp)
+                {
+                    await RevServices.GetRequired<RevGame.Pvp.PvpService>().LeaveAsync();
+                    ThrowIfDisposed();
+                }
 
                 if (!_startupComplete)
                 {

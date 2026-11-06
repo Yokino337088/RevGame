@@ -204,7 +204,7 @@ namespace RevGame.Flow
                     return;
                 }
                 // 战斗屏幕用自己的战斗域，首页和选关共用大厅域。
-                string domain = _screen == GameScreen.Endless ? GameDomain.Endless : _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
+                string domain = _screen == GameScreen.Pvp ? GameDomain.Pvp : _screen == GameScreen.Endless ? GameDomain.Endless : _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
                 //开启对应的域
                 _scope = RevScope.Enter(domain);
 
@@ -221,6 +221,13 @@ namespace RevGame.Flow
                     if (RevLogic.Start<EndlessYayaReactionLogic>() == null)
                     {
                         throw new InvalidOperationException("无法启动无尽鸦鸦互动");
+                    }
+                }
+                if (_screen == GameScreen.Pvp)
+                {
+                    if (RevLogic.Start<RevGame.Pvp.PvpLogic>() == null)
+                    {
+                        throw new InvalidOperationException("无法启动九路围棋逻辑");
                     }
                 }
                 if (_screen == GameScreen.Battle)

@@ -1,0 +1,95 @@
+syntax = "proto3";
+package Fantasy;
+
+/// 一条已排序的围棋操作；服务器只保存和转发，不计算围棋合法性。
+message GoRelayCommand
+{
+    int32 Sequence = 1;
+    int32 Side = 2;
+    int32 Kind = 3;
+    int32 X = 4;
+    int32 Y = 5;
+    string Payload = 6;
+    int64 ElapsedMs = 7;
+    string PreviousHash = 8;
+    string ResultHash = 9;
+}
+/// 小棋盘采用完整操作序列快照，重连双方都从同一份记录重放。
+message GoRelayState
+{
+    string RoomId = 1;
+    string Phase = 2;
+    int32 MySide = 3;
+    string BlackName = 4;
+    string WhiteName = 5;
+    string CoreVersion = 6;
+    string RulesJson = 7;
+    repeated GoRelayCommand Commands = 8;
+    int64 StartUtcMs = 9;
+    int64 ServerUtcMs = 10;
+    int64 ReconnectDeadlineUtcMs = 11;
+    string Reason = 12;
+    string MatchKind = 13;
+}
+/// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
+message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
+{
+    string CoreVersion = 1;
+    string Nickname = 2;
+    string ResumeToken = 3;
+    string RulesJson = 4;
+    string MatchKind = 5;
+}
+message G2C_GoHelloResponse // IResponse
+{
+    string Token = 1;
+    GoRelayState State = 2;
+    string Reason = 3;
+}
+message C2G_GoMatchRequest // IRequest,G2C_GoMatchResponse
+{
+    bool Cancel = 1;
+}
+message G2C_GoMatchResponse // IResponse
+{
+    GoRelayState State = 1;
+    string Reason = 2;
+}
+message C2G_GoCommandRequest // IRequest,G2C_GoCommandResponse
+{
+    string RoomId = 1;
+    GoRelayCommand Command = 2;
+}
+message G2C_GoCommandResponse // IResponse
+{
+    GoRelayState State = 1;
+    string Reason = 2;
+}
+message C2G_GoSyncRequest // IRequest,G2C_GoSyncResponse
+{
+}
+message G2C_GoSyncResponse // IResponse
+{
+    GoRelayState State = 1;
+    string Reason = 2;
+}
+message C2G_GoLeaveRequest // IRequest,G2C_GoLeaveResponse
+{
+}
+message G2C_GoLeaveResponse // IResponse
+{
+    GoRelayState State = 1;
+    string Reason = 2;
+}
+message C2G_GoHeartbeatRequest // IRequest,G2C_GoHeartbeatResponse
+{
+}
+message G2C_GoHeartbeatResponse // IResponse
+{
+    int64 ServerUtcMs = 1;
+    string Reason = 2;
+}
+message G2C_GoState // IMessage
+{
+    GoRelayState State = 1;
+}

@@ -1,0 +1,42 @@
+ManifestFileVersion: 0
+CRC: 2543906712
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 754e565ec2cd33f81711595af79cb25b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 4454c3c624c8289f05ccbf67143411b4
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 754e565ec2cd33f81711595af79cb25b
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 302eeeefa74255840bc9dd4821767555, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Pvp/PvpTemple.mat
+- Assets/GameRes/Pvp/PvpIvoryBoard.mat
+- Assets/GameRes/Pvp/PvpBoardView.prefab
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

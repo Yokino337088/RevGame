@@ -26,6 +26,7 @@ namespace RevGame.Editor
             { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },
             { "UI/Panel/Endless", "ui_endless" }, { "Endless", "endless_arena" },
+            { "UI/Panel/Pvp", "ui_pvp" }, { "Pvp", "pvp_arena" },
             { "Characters/Yaya", "character_yaya" },
             { "Characters/Yaya/Reaction", "yaya_reaction" }, { "Config/Yaya", "config_yaya" },
             { "Lobby", "lobby_cottage" },
@@ -128,7 +129,8 @@ namespace RevGame.Editor
                     }
                     if (path.EndsWith("/EndlessTemple.png", StringComparison.Ordinal))
                     {
-                        desired[path] = "endless_arena";
+                        // 两模式共享神殿原画，不让PvP顺带加载整套无尽战斗资源。
+                        desired[path] = "background_temple_shared";
                         continue;
                     }
                     string bundle = "background_" + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
@@ -398,15 +400,18 @@ namespace RevGame.Editor
             {
                 config.copyToStreamingAssets = true;
                 config.copyTarget = "StreamingAssets";
+                AssetDatabase.DisallowAutoRefresh();
+                AssetDatabase.StartAssetEditing();
                 try
                 {
-                    ABBuilderCore.CopyToStreamingAssets(output);
-                }
-                catch (IOException)
-                {
-                    // Unity原生字体可能继续持有文件，整目录删除因而失败；旧字体与新字体字节相同就无需碰它。
-                    // 只跳过逐字节相同的文件，发生变化又被占用时仍报错，不能假装发布成功。
+                    // 编辑器可能仍持有字体包，整目录重建还会与.meta自动导入竞争。
+                    // 按已构建清单逐文件发布并保留GUID；变化文件被占用仍会报错，不跳过失败。
                     CopyChangedFiles(output, destination);
+                }
+                finally
+                {
+                    AssetDatabase.StopAssetEditing();
+                    AssetDatabase.AllowAutoRefresh();
                 }
             }
             finally

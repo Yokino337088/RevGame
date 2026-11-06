@@ -111,6 +111,8 @@ namespace RevGame.Bootstrap
             RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
             // 战斗服务是全项目最核心的契约：UI、流程、AI 都只认 IBattleService，实现可以整体替换（含固定种子的测试实例）。
             RevServices.Register<IBattleService, BattleService>(owner: this);
+            // PvP构造不联网；只有玩家进入此模式才创建连接，因此停服不会卡住大厅和单机。
+            RevServices.Register<RevGame.Pvp.PvpService, RevGame.Pvp.PvpService>(owner: this);
             // 跨暂停/存档页面共享无尽状态；棋局停止由EndlessLogic负责，宿主退出最终注销。
             RevServices.Register<RevGame.Endless.EndlessService, RevGame.Endless.EndlessService>(owner: this);
             // 流程控制者目前只有一份实现、还没有接口，调用方会直接用到它的具体方法（切场景、Boss 演出、回大厅）。
@@ -124,6 +126,7 @@ namespace RevGame.Bootstrap
             StoryAutomationCommands.Register();
             YayaReactionAutomation.Register();
             RevGame.Endless.EndlessAutomation.Register();
+            RevGame.Pvp.PvpAutomation.Register();
             // 诊断服务与启动宿主同寿命；正式包不注册，内部非开发包用显式REV_AUTOMATION。
             RevServices.Register<RevGame.Automation.GamePerformanceMonitor, RevGame.Automation.GamePerformanceMonitor>(owner: this);
             RevServices.GetRequired<RevGame.Automation.GamePerformanceMonitor>();
@@ -181,6 +184,7 @@ namespace RevGame.Bootstrap
             StoryAutomationCommands.Unregister();
             YayaReactionAutomation.Unregister();
             RevGame.Endless.EndlessAutomation.Unregister();
+            RevGame.Pvp.PvpAutomation.Unregister();
             RevServices.Unregister<RevGame.Automation.GameAutomationRunner>();
 
 #endif

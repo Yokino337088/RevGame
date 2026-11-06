@@ -117,6 +117,7 @@ namespace Revolution
         public const string Pieces_Boss = "Pieces/Boss/";
         public const string Pieces_Helper = "Pieces/Helper/";
         public const string Pieces_Unit = "Pieces/Unit/";
+        public const string Pvp = "Pvp/";
         public const string UI = "UI/";
         public const string UI_Item = "UI/Item/";
         public const string UI_Item_Card = "UI/Item/Card/";
@@ -125,6 +126,7 @@ namespace Revolution
         public const string UI_Panel_Diagnostics = "UI/Panel/Diagnostics/";
         public const string UI_Panel_Endless = "UI/Panel/Endless/";
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
+        public const string UI_Panel_Pvp = "UI/Panel/Pvp/";
         public const string UI_Panel_Settings = "UI/Panel/Settings/";
         public const string UI_Panel_Story = "UI/Panel/Story/";
         public const string UI_Panel_Victory = "UI/Panel/Victory/";

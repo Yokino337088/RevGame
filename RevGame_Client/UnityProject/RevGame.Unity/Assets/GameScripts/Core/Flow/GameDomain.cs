@@ -21,5 +21,7 @@ namespace RevGame.Core
         public const string Lobby = "RevGame.Lobby";
         /// <summary>无尽专用域，退出时统一关闭HUD与固定节拍Logic。</summary>
         public const string Endless = "RevGame.Endless";
+        /// <summary>九路围棋连接、面板与棋盘的独立生命周期。</summary>
+        public const string Pvp = "RevGame.Pvp";
     }
 }

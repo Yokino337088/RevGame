@@ -49,8 +49,6 @@ namespace RevGame.UI
         [RevBind]
         private Text _phaseLabel;
         [RevBind]
-        private Text _assistText;
-        [RevBind]
         private Text _roundText;
         [RevBind]
         private Image _progressFill;
@@ -108,13 +106,13 @@ namespace RevGame.UI
         private bool _hudValid;
         // 上次显示的准备/战斗/结算阶段，和服务当前Phase比较后才切图标/标签。
         private GamePhase _hudPhase;
-        // 一组纯值缓存：章节、回合、人数、AI档位、加成百分比、支援次数。
+        // 一组纯值缓存：章节、回合、人数、AI档位、加成百分比。
         // 它们只是上一帧UI收据，不是真实业务数据，点击与战斗计算仍从服务读取。
-        private int _hudChapter, _hudRound, _hudPlayers, _hudEnemies, _hudIntelligence, _hudAttack, _hudEvents;
-        // 上次显示的Boss回合与支援开关；同一章节/回合值不变时，标签后缀也可能变化，故要独立比较。
-        private bool _hudBossRound, _hudAssist;
-        // 完整阵型用于变化比较，短阵型仅用于UI两行文案；支援与日志也在变化后才赋Text。
-        private string _hudFormation, _hudFormationShort, _hudSupport, _hudLog;
+        private int _hudChapter, _hudRound, _hudPlayers, _hudEnemies, _hudIntelligence, _hudAttack;
+        // 上次显示的Boss回合；同一章节/回合值不变时，标签后缀也可能变化，故要独立比较。
+        private bool _hudBossRound;
+        // 完整阵型用于变化比较，短阵型仅用于UI两行文案；日志也在变化后才赋Text。
+        private string _hudFormation, _hudFormationShort, _hudLog;
         // 主将身份、当前HP、上限HP和决死层加成缓存。主将换人或掉血都要刷新，不能只比较血条比例。
         private int _hudKingId, _hudKingHp, _hudKingMax, _hudRage;
         // 上次擒王条件对应的提示状态；跨血线时必须改文案，与实际擒王判定仍共用表参数。
@@ -193,16 +191,6 @@ namespace RevGame.UI
                 {
                     _roundText.text = "第 " + _battle.Chapter + " / 6 章 · 第 " + _battle.Round + " 回合" + (_battle.IsBossRound ? "（擒王 · 不限时）" : "（不限时）");
                 }
-                string support = _battle.VictorySupportStatus;
-
-                if (!_hudValid || _hudAssist != _battle.VictoryAssistEnabled || _hudEvents != _battle.BattleEventCount || _hudSupport != support)
-                {
-                    _assistText.text = _battle.VictoryAssistEnabled ? "战斗增益 · 支援事件 " + _battle.BattleEventCount + " 次\n" + support : "";
-                }
-                _hudSupport = support;
-                _hudAssist = _battle.VictoryAssistEnabled;
-                _hudEvents = _battle.BattleEventCount;
-
                 if (_progressFill != null)
                 {
                     float duration = _battle.BattleDuration;

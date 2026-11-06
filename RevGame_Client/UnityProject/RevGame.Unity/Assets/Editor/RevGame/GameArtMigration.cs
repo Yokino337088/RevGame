@@ -366,6 +366,9 @@ namespace RevGame.Editor
                 plate.preserveAspect = false;
                 plate.transform.SetSiblingIndex(assist.transform.GetSiblingIndex());
             }
+            // 美术重新迁移也不能恢复已移除的常驻支援说明；节点仅保留给已有制作配方引用背景Sprite。
+            root.transform.Find("assistText").gameObject.SetActive(false);
+            root.transform.Find("assistPlate").gameObject.SetActive(false);
             Image phase = root.transform.Find("phaseIcon").GetComponent<Image>();
             phase.color = Color.white;
 

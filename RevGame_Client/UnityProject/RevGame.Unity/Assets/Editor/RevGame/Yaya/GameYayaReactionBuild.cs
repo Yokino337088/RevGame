@@ -117,6 +117,8 @@ namespace RevGame.Editor
                     var rect = hud.transform.Find(node) as RectTransform;
                     if (rect != null)
                     {
+                        // 常驻支援说明已从战斗界面移除；保留节点与Sprite供既有胜利面板制作配方读取。
+                        rect.gameObject.SetActive(false);
                         rect.anchorMin = new Vector2(.76f, .33f);
                         rect.anchorMax = new Vector2(.98f, .42f);
                         rect.offsetMin = rect.offsetMax = Vector2.zero;

@@ -1,36 +1,9 @@
 {
-    "Export": {
-        "NetworkProtocolDirectory": {
-            "Value": "/Users/fantasy/Code/Git/Fantasy/Examples/Config/NetworkProtocol",
-            "Comment": "ProtoBuf文件所在的文件夹位置"
-        },
-        "NetworkProtocolServerDirectory": {
-            "Value": "/Users/fantasy/Code/Git/Fantasy/Examples/Server/APP/Entity/Generate/NetworkProtocol",
-            "Comment": "ProtoBuf生成到服务端的文件夹位置"
-        },
-        "NetworkProtocolClientDirectory": {
-            "Value": "/Users/fantasy/Code/Git/Fantasy/Examples/Client/Unity/Assets/Scripts/Hotfix/Generate/NetworkProtocol",
-            "Comment": "ProtoBuf生成到客户端的文件夹位置"
-        },
-        "SharedOpCodeCacheFile": {
-            "Value": "/Users/fantasy/Code/Git/Fantasy/Examples/Config/NetworkProtocol/OpCode.Cache",
-            "Comment": "主协议与子包共享的OpCode缓存文件"
-        },
-        "PackageExports": [
-            {
-                "NetworkProtocolDirectory": {
-                    "Value": "/Users/fantasy/Code/Git/Fantasy/Fantasy.Packages/Fantasy.Room/Protocol",
-                    "Comment": "子包ProtoBuf文件所在的文件夹位置"
-                },
-                "NetworkProtocolServerDirectory": {
-                    "Value": "/Users/fantasy/Code/Git/Fantasy/Fantasy.Packages/Fantasy.Room/Runtime/Protocol",
-                    "Comment": "子包ProtoBuf生成到服务端的文件夹位置"
-                },
-                "NetworkProtocolClientDirectory": {
-                    "Value": "/Users/fantasy/Code/Git/Fantasy/Fantasy.Packages/Fantasy.Room.Unity/Runtime/Protocol",
-                    "Comment": "子包ProtoBuf生成到客户端的文件夹位置"
-                }
-            }
-        ]
-    }
+  "Export": {
+    "NetworkProtocolDirectory": { "Value": "../NetworkProtocol", "Comment": "以导出工具目录为工作目录" },
+    "NetworkProtocolServerDirectory": { "Value": "../../Server/Entity/Generated/Protocol", "Comment": "服务端生成协议，禁止手改" },
+    "NetworkProtocolClientDirectory": { "Value": "../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Protocol", "Comment": "Unity客户端同源协议" },
+    "SharedOpCodeCacheFile": { "Value": "../NetworkProtocol/OpCode.Cache", "Comment": "协议号必须入库，避免增量导出改变旧消息编号" },
+    "PackageExports": []
+  }
 }

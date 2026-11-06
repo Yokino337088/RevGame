@@ -29,6 +29,27 @@ font:700 13px/1.6 Consolas,monospace;color:#326956}
 <div class="progress" aria-hidden="true"></div>
 <header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">REVGAME / 玩法策划 / PVP</span></div>
 <span class="tag">2026.10.26 · 九路围棋 PvP · 策划案 v1</span></header>
+<section id="revision-20261106" class="chapter" style="max-width:1180px;margin:28px auto 0;border:2px solid #a76e2d;background:#fff9e9" aria-labelledby="revision-title">
+<div class="section-label">2026-11-06 · 本次实现修订</div>
+<h2 id="revision-title">服务器匹配与局域网邀请分开，双方共用正规的九路围棋规则</h2>
+<div class="callout warn"><p><strong>阅读口径：</strong>下方 2026-10-26 正文保留为原始设计记录；与本修订冲突的旧流程、旧示例、旧状态和旧性能估计不代表当前实现。当前范围以本修订和源码为准，实际通过情况以本轮验收报告为准；此说明不宣称 Unity 视觉、AB、双设备或真机已经验收通过。</p></div>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>入口</th><th>连接与所有者</th><th>玩家流程与故障边界</th></tr></thead><tbody>
+<tr><td>服务器匹配 · CS</td><td>Fantasy 2026.1.2003，单 Gate Root Scene + 房间 Entity，TCP 20000。服务端配对、绑定身份、检查序号并保存/转发操作序列；客户端同源 GoCore 重放、检查合法性和前后状态哈希。</td><td>填写开发机 IP → 连接 → 入门/进阶同规则匹配 → 分配黑白 → 对局。匹配可取消，短线按配置窗口恢复；服务端不可用或租期结束时给出明确提示，仍可返回远征、无尽和局域网。默认同机测试用 127.0.0.1，另一台设备使用开发机当前局域网 IPv4。</td></tr>
+<tr><td>局域网邀请 · LAN / P2P</td><td>Unity 官方 Unity Transport 2.0.2 负责可靠有序对局传输；项目补充 UDP 广播发现、设备列表、邀请与接受。邀请方临时成为 host，另一方直连该 host；这是两端直接连接，不是全互联 mesh。</td><td>同一局域网搜索 → 选择在线棋友 → 发邀请 → 对方接受 → 版本/配置握手 → 对局。无需云服务器、Unity Relay 或云端匹配；离开本模式释放广播与连接。可发现的是运行本游戏且开启该页面的棋友，不是扫描任意终端。</td></tr>
+</tbody></table></div>
+<p>Unity 官方提供的是底层连接与发送能力，本项目在其上实现局域网发现/邀请界面。版本和连接写法参考 <a href="https://docs.unity.cn/Packages/com.unity.transport%402.0/manual/index.html" target="_blank" rel="noopener">Unity Transport 2.0.2 官方说明</a> 与 <a href="https://mp-docs.dl.it.unity3d.com/transport/2.0.0/minimal-workflow-udp/" target="_blank" rel="noopener">官方 UDP 客户端/服务端示例</a>。不将“有 Transport”写成“Unity 已内置本项目设备发现和邀请”。</p>
+<h3>规则、数子与界面口径</h3>
+<ul>
+<li><strong>黑白单点棋、9×9 交叉点、黑先，气/提子/禁自杀/位置超级劫独立于单机变体规则。</strong>原有远征、无尽 BoardModel 与战斗数值不参与本模式。</li>
+<li><strong>连续双方停一手进入数子协商，不能立即跳过死子确认。</strong>双方可点选整组死子，各自确认；标记变化清除旧确认。双方确认同一草稿才结算，有分歧可继续对弈。中途地盘和眼的视觉提示是辅助，不冒充自动死活裁判。</li>
+<li><strong>纠正原文贴子/目混用：</strong>黑贴 3.75 子等价白方加 7.5 目；内部配置 <code>KomiHalfPoints=15</code>，单位为半目。面积差为 <code>黑面积 − 白面积 − 7.5</code>（目），换算为子再除以 2。黑 43、白 38 时是<strong>白胜 2.5 目（1.25 子）</strong>；无中立点且面积合计 81 时黑需至少 45 点才能获胜。有中立点时直接比较双方实际面积，不能套固定的 81 点阈值。</li>
+<li><strong>画面复用无尽的象牙白棋盘和背景，UI 使用现有项目素材。</strong>布局突出双方黑白身份、轮到谁、时钟、棋盘与必要操作；气口、叫吃、领地与最近一步采用清晰的 Shader 标记，提供辅助开关，避免装饰挤压棋盘。</li>
+</ul>
+<h3>配置源与当前范围</h3>
+<p>可调参数统一来自 <a href="../配置表/九路围棋配置.xlsx">九路围棋配置.xlsx</a> 的 <code>PvpRule</code> 表，经 RevCLI 导表生成强类型表与数据；双方握手比对 <code>revgo-1</code> 和同一份规则配置。贴目、主时限/读秒、提示次数、匹配/重连期限和局域网发现参数均以表为源，不以本页旧建议值覆盖运行配置。</p>
+<p><strong>本轮边界：</strong>提供本地双人练习、Fantasy 服务器匹配与局域网邀请；不做官方段位/排行榜、自由聊天、赌注、服务端围棋反作弊或人机对弈 AI。落子建议是本地辅助，不能当作人机对手；旧文“匹配超时转人机”、段位演出与容量结论保留为历史设想。服务器数据驻内存，服务器进程重启后的旧房间不提供跨进程恢复。</p>
+<p class="muted">修订日期：2026-11-06。服务端结构、协议导出与开发启动见 <a href="../../RevGame_Server/RevGame.Server/九路围棋联机说明.html">九路围棋联机说明</a>。其余旧文从下方标题开始。</p>
+</section>
 <div class="hero"><div><div class="eyebrow">REVGAME / 玩法策划 / PVP</div>
 <h1>九路围棋，<br><em>先让新手看懂棋。</em></h1>
 <p class="lead">正经规则、正经计分，但把"气、眼、提子、地盘"这些原本只在棋手脑子里的东西，全部搬到屏幕上。
@@ -79,9 +100,9 @@ font:700 13px/1.6 Consolas,monospace;color:#326956}
 <ul>
 <li>己方地 = 己方棋子数 + 被己方独占包围的空点数（空点四周都被同一方围住才算）。</li>
 <li>黑贴 3.75 子（7.5 目），配置化；M1 阶段用手工对局样本校准，落在 6.5–7.5 目区间。</li>
-<li>黑胜条件：黑地 &gt; (81 + 贴子) ÷ 2。贴 3.75 子时临界值是 42.375，即<strong>黑需 43 子及以上获胜</strong>。</li>
+<li><strong>2026-11-06 修正：</strong>按目比较的差值为 <code>黑地 − 白地 − 7.5</code>，大于 0 黑胜，小于 0 白胜，等于 0 和棋；以子表达的胜差为该值除以 2。仅当双方面积合计 81、没有中立点时，黑胜要求黑地 &gt; (81 + 7.5) ÷ 2 = 44.25，即黑至少 45 点。存在中立点时必须按实际黑白面积差判断。</li>
 </ul>
-<div class="table-scroll" tabindex="0"><table><thead><tr><th>局面</th><th style="text-align:right">黑地</th><th style="text-align:right">白地</th><th style="text-align:right">判定（黑 − 白 − 贴子）</th></tr></thead><tbody><tr><td>黑小胜</td><td style="text-align:right">43</td><td style="text-align:right">38</td><td style="text-align:right">黑胜 1.25 子（43 − 38 − 3.75）</td></tr><tr><td>白小胜</td><td style="text-align:right">42</td><td style="text-align:right">39</td><td style="text-align:right">白胜 0.75 子（42 − 39 − 3.75 = −0.75）</td></tr><tr><td>大差</td><td style="text-align:right">52</td><td style="text-align:right">29</td><td style="text-align:right">黑胜 19.25 子</td></tr></tbody></table></div>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>局面（修正版）</th><th style="text-align:right">黑面积</th><th style="text-align:right">白面积</th><th style="text-align:right">判定（黑 − 白 − 7.5 目）</th></tr></thead><tbody><tr><td>原 43/38 示例</td><td style="text-align:right">43</td><td style="text-align:right">38</td><td style="text-align:right">白胜 2.5 目 / 1.25 子（43 − 38 − 7.5 = −2.5）</td></tr><tr><td>黑小胜</td><td style="text-align:right">45</td><td style="text-align:right">36</td><td style="text-align:right">黑胜 1.5 目 / 0.75 子</td></tr><tr><td>白小胜</td><td style="text-align:right">42</td><td style="text-align:right">39</td><td style="text-align:right">白胜 4.5 目 / 2.25 子</td></tr><tr><td>大差</td><td style="text-align:right">52</td><td style="text-align:right">29</td><td style="text-align:right">黑胜 15.5 目 / 7.75 子</td></tr><tr><td>另有 6 个中立点</td><td style="text-align:right">40</td><td style="text-align:right">35</td><td style="text-align:right">白胜 2.5 目 / 1.25 子，按实际面积差计算</td></tr></tbody></table></div>
 <h3>3.3 时间规则</h3>
 <p>主时限 10 分钟 + 读秒 30 秒，读秒 3 次。超时判负。<strong>不做"限时每步"</strong>——围棋有的手要长考，固定每步时间会让高手难受，而总时长 10 分钟已经足够压住单局时长。</p>
 <h3>3.4 和单机玩法的边界</h3>

@@ -497,6 +497,7 @@ Material/Helper/HelperChapter06|background_chapter06_temple|HelperChapter06
 GameShader/Background/Chapter06_Temple_Shader|background_chapter06_temple|Chapter06_Temple_Shader
 GameShader/Board/Chapter06_Temple_SurfaceShader|background_chapter06_temple|Chapter06_Temple_SurfaceShader
 GameShader/Helper/HelperChapter06_Shader|background_chapter06_temple|HelperChapter06_Shader
+ChapterBackground/EndlessTemple|background_temple_shared|EndlessTemple
 Board/Indicator/BoardDeployZone|battle_board|BoardDeployZone
 Board/Indicator/BoardMoveHighlight|battle_board|BoardMoveHighlight
 Board/Indicator/BoardStarPoint|battle_board|BoardStarPoint
@@ -554,12 +555,12 @@ Data/EnemyRosterConfig|data_tables|EnemyRosterConfig
 Data/EventRotationConfig|data_tables|EventRotationConfig
 Data/PieceConfig|data_tables|PieceConfig
 Data/PrepBuffConfig|data_tables|PrepBuffConfig
+Data/PvpRule|data_tables|PvpRule
 Data/RewardBoostConfig|data_tables|RewardBoostConfig
 Data/RewardConfig|data_tables|RewardConfig
 Data/StarConfig|data_tables|StarConfig
 Data/YayaReactionLine|data_tables|YayaReactionLine
 Data/YayaReactionRule|data_tables|YayaReactionRule
-ChapterBackground/EndlessTemple|endless_arena|EndlessTemple
 Endless/EndlessArena|endless_arena|EndlessArena
 Endless/EndlessBackground|endless_arena|EndlessBackground
 Endless/EndlessCardUpgrade|endless_arena|EndlessCardUpgrade
@@ -610,6 +611,9 @@ Material/UI/ArcanePanel|material_ui|ArcanePanel
 Material/UI/SlimeTutorialCell|material_ui|SlimeTutorialCell
 Material/UI/SlimeTutorialHighlight|material_ui|SlimeTutorialHighlight
 Material/UI/SlimeTutorialHint|material_ui|SlimeTutorialHint
+Pvp/PvpBoardView|pvp_arena|PvpBoardView
+Pvp/PvpIvoryBoard|pvp_arena|PvpIvoryBoard
+Pvp/PvpTemple|pvp_arena|PvpTemple
 GameShader/Background/ArcaneBackdrop|shared_shaders|ArcaneBackdrop
 GameShader/Background/LobbyMagicCottage|shared_shaders|LobbyMagicCottage
 GameShader/Board/PlacementMagic|shared_shaders|PlacementMagic
@@ -631,6 +635,7 @@ GameShader/Endless/EndlessShieldZone|shared_shaders|EndlessShieldZone
 GameShader/Endless/EndlessSwordAura|shared_shaders|EndlessSwordAura
 GameShader/Endless/EndlessThrust|shared_shaders|EndlessThrust
 GameShader/Pieces/ArcanePiece|shared_shaders|ArcanePiece
+GameShader/Pvp/PvpGoBoard|shared_shaders|PvpGoBoard
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
 GameShader/UI/SlimeTutorialHighlight|shared_shaders|SlimeTutorialHighlight
 UI/Panel/BattleHudPanel|ui_chapters_shared|BattleHudPanel
@@ -645,6 +650,7 @@ UI/Item/Notice/BattleEventNotice|ui_items|BattleEventNotice
 UI/Panel/Loading/LoadingPanel|ui_loading|LoadingPanel
 UI/Panel/HomePanel|ui_lobby|HomePanel
 UI/Panel/LevelSelectPanel|ui_lobby|LevelSelectPanel
+UI/Panel/Pvp/PvpPanel|ui_pvp|PvpPanel
 UI/Panel/Settings/AudioSettingsPanel|ui_settings|AudioSettingsPanel
 UI/Panel/Story/StoryPanel|ui_story|StoryPanel
 UI/Panel/Story/TutorialPanel|ui_story|TutorialPanel

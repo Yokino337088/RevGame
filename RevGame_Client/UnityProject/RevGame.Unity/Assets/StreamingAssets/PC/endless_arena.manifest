@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 750368244
+CRC: 4021555115
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: eeabefbd482063aed68bc8945fc12f77
+    Hash: 3373002bd80d2c223764048e161f8c4a
   TypeTreeHash:
     serializedVersion: 2
     Hash: ccd41d3e4b647b71e9b3a9b13a447b7f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: eeabefbd482063aed68bc8945fc12f77
+    Hash: 3373002bd80d2c223764048e161f8c4a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -50,7 +50,6 @@ Assets:
 - Assets/GameRes/Endless/Textures/EndlessThrustTrail.png
 - Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png
 - Assets/GameRes/Endless/EndlessShieldBubble.mat
-- Assets/GameRes/ChapterBackground/EndlessTemple.png
 - Assets/GameRes/Endless/EndlessArena.prefab
 - Assets/GameRes/Endless/EndlessThrust.mat
 - Assets/GameRes/Endless/EndlessSwordAura.mat
@@ -59,6 +58,7 @@ Assets:
 Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

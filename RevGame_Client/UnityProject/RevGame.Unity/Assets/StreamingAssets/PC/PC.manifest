@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1264967633
+CRC: 681983612
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -232,9 +232,9 @@ AssetBundleManifest:
         Dependency_2: material_cards
         Dependency_3: font_cjk
         Dependency_4: material_ui
-        Dependency_5: endless_arena
-        Dependency_6: atlas_ui_tavern_imgbkatlas
-        Dependency_7: atlas_endlesscardarrow
+        Dependency_5: atlas_ui_tavern_imgbkatlas
+        Dependency_6: atlas_endlesscardarrow
+        Dependency_7: background_temple_shared
     Info_59:
       Name: endless_arena
       Dependencies:
@@ -243,6 +243,7 @@ AssetBundleManifest:
         Dependency_2: config_piece_art
         Dependency_3: material_board
         Dependency_4: atlas_endlesshearteye
+        Dependency_5: background_temple_shared
     Info_60:
       Name: ui_chapters_shared
       Dependencies:
@@ -304,3 +305,16 @@ AssetBundleManifest:
     Info_75:
       Name: atlas_yayacombatexpressions
       Dependencies: {}
+    Info_76:
+      Name: background_temple_shared
+      Dependencies: {}
+    Info_77:
+      Name: pvp_arena
+      Dependencies:
+        Dependency_0: shared_shaders
+        Dependency_1: background_temple_shared
+    Info_78:
+      Name: ui_pvp
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk

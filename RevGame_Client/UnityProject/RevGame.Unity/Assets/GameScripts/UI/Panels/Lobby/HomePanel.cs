@@ -51,11 +51,14 @@ namespace RevGame.UI
             await RevUI.OpenAsync<RevGame.Endless.EndlessEntryPanel>();
         }
 
-        /// <summary>公平对战入口预留：只给未开放提示，不误进入单人章节。</summary>
+        /// <summary>标准围棋经过唯一流程入口进入专属场景，联网方式在模式面板中选择。</summary>
         [RevButtonClick("btnPvP")]
         private void OnPvP()
         {
-            _pvpLabel.text = "玩家对战暂未开放";
+            if (!RevServices.GetRequired<GameFlow>().EnterPvp())
+            {
+                _pvpLabel.text = RevServices.GetRequired<GameFlow>().LastError;
+            }
         }
 
         [RevButtonClick("btnQuit")]
