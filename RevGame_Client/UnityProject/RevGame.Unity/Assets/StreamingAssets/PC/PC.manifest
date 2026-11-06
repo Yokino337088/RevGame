@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3305227175
+CRC: 2862070989
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -319,3 +319,7 @@ AssetBundleManifest:
         Dependency_0: font_cjk
         Dependency_1: atlas_uibattle
         Dependency_2: atlas_uimenus
+        Dependency_3: atlas_pvpagent
+    Info_79:
+      Name: atlas_pvpagent
+      Dependencies: {}

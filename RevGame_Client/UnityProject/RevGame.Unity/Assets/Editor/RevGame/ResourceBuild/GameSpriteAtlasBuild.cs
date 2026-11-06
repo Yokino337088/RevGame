@@ -149,6 +149,11 @@ namespace RevGame.Editor
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path)
         {
+            // PVP供应商标识只随PVP面板使用，不能因为一个小Logo扩大大厅或章节常用图集寿命。
+            if (path.Contains("/Art/UI/Pvp/"))
+            {
+                return "PvpAgent";
+            }
             if (path.Contains("/Art/Endless/CardArrow/"))
             {
                 return "EndlessCardArrow";

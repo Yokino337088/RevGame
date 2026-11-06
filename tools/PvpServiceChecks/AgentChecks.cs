@@ -47,6 +47,16 @@ internal static class AgentChecks
     }
     public static void Run()
     {
+        const string slot = "isolated-memory-storage";
+        var saved = new PvpAgentSettings();
+        saved.TrySet("fake-storage-test-key", "deepseek-flash", true, out _);
+        PvpAgentSettingsStore.Save(saved, slot);
+        Assert(!UnityEngine.PlayerPrefs.GetString(slot).Contains(saved.Key), "本地密文不包含明文Key");
+        Assert(PvpAgentSettingsStore.Load(out var loaded, out _, slot) && loaded.Key == saved.Key && loaded.Model == saved.Model && loaded.Enabled, "真实Windows DPAPI往返");
+        UnityEngine.PlayerPrefs.SetString(slot, "bad-record");
+        Assert(!PvpAgentSettingsStore.Load(out loaded, out _, slot) && !loaded.Ready, "损坏存储失败关闭");
+        PvpAgentSettingsStore.Clear(slot);
+        Assert(!UnityEngine.PlayerPrefs.HasKey(slot), "清除删除本地记录");
         var s = new PvpService();
         Assert(!s.Submit(GoAction.Play, 4, 4), "未开局提交返回拒绝，不访问空棋局");
         s.Begin(new PvpConfig());

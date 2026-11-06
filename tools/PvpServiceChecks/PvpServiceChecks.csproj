@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <DefineConstants>$(DefineConstants);UNITY_STANDALONE_WIN</DefineConstants>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
@@ -8,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="*.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettingsStore.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Agent.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettings.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoAgentPosition.cs" />

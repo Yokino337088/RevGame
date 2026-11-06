@@ -5,7 +5,7 @@ namespace RevGame.Pvp
 {
     public sealed partial class PvpService
     {
-        /// <summary>设置归服务而非面板所有；关闭设置不清Key，退出应用自然丢弃。棋谱与网络协议不包含凭据。</summary>
+        /// <summary>设置归服务而非面板所有；关闭设置不清Key，由启动入口恢复本地加密配置。棋谱与网络协议不包含凭据。</summary>
         public PvpAgentSettings AgentSettings
         {
             get;
@@ -62,6 +62,44 @@ namespace RevGame.Pvp
             AgentStatus = enabled ? "云端对手已启用；本地人机玩家保持手动" : "云端调用已关闭";
             Revision++;
             return true;
+        }
+
+        /// <summary>生产设置入口：先验证和写入磁盘，成功后才替换运行状态，避免显示“已保存”但重启丢失。</summary>
+        public bool ConfigureSavedAgent(string key, string model, bool enabled)
+        {
+            var candidate = new PvpAgentSettings();
+            if (!candidate.TrySet(key, model, enabled, out string reason))
+            {
+                AgentStatus = reason;
+                return false;
+            }
+            try
+            {
+                PvpAgentSettingsStore.Save(candidate);
+            }
+            catch (Exception)
+            {
+                AgentStatus = "本地保存失败：当前平台需支持Windows凭据保护，原配置未变更";
+                return false;
+            }
+            ConfigureAgent(candidate.Key, candidate.Model, candidate.Enabled);
+            AgentStatus = enabled ? "已加密保存到本机，重启后自动恢复" : "云端已关闭，本地Key已清除";
+            return true;
+        }
+
+        /// <summary>只由正式Bootstrap装配后调用；隔离棋局不自动读取玩家凭据，测试不会触发真实云端。</summary>
+        public void RestoreSavedAgent()
+        {
+            if (!PvpAgentSettingsStore.Load(out PvpAgentSettings restored, out string reason))
+            {
+                AgentStatus = reason;
+                return;
+            }
+            ConfigureAgent(restored.Key, restored.Model, restored.Enabled);
+            if (restored.Ready)
+            {
+                AgentStatus = "已恢复本地加密Agent配置";
+            }
         }
 
         private void CancelAgent()

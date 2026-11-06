@@ -105,3 +105,9 @@
 - C#直连DeepSeek，设置Key/模型与云端授权（Key仅会话），人机玩家手动执黑；联机面板支持本方托管开关。
 - 玩家、电脑和Agent统一提交、时钟与棋谱校验；取消/迟到/非法输出回退，修复自动数子确认竞态与心跳等待取消边界。
 - 真实PC AB人机、UTP双端及KCP匹配托管闭环、设置UI通过；未提供真实Key，付费模型效果未验证。详见Agent开发与验收报告。
+
+## 2026-11-06 Agent本地保存与DeepSeek品牌标识
+
+- Windows当前用户DPAPI加密保存Key、模型和授权，启动恢复；关闭并清除删除本地密文。
+- 官方DeepSeek蓝鲸Logo通过独立PvpAgent Sprite Atlas V2接入设置模型旁；默认显示V4.1 Flash 1017，API使用官方deepseek-flash别名。
+- 增加独立存储槽的跨Play恢复、损坏拒绝和清除检查，不接触玩家真实凭据。

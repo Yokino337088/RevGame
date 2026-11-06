@@ -43,6 +43,24 @@ namespace Revolution
 
 namespace UnityEngine
 {
+    // 测试内存槽仅替代Unity的注册表读写；加密仍调用Windows真实DPAPI。
+    internal static class PlayerPrefs
+    {
+        private static readonly Dictionary<string, string> Values = new Dictionary<string, string>();
+        internal static bool HasKey(string key) => Values.ContainsKey(key);
+        internal static string GetString(string key) => Values.TryGetValue(key, out string value) ? value : "";
+        internal static void SetString(string key, string value)
+        {
+            Values[key] = value;
+        }
+        internal static void DeleteKey(string key)
+        {
+            Values.Remove(key);
+        }
+        internal static void Save()
+        {
+        }
+    }
     internal static class JsonUtility
     {
         internal static T FromJson<T>(string value)
@@ -51,7 +69,7 @@ namespace UnityEngine
         }
         internal static string ToJson(object value)
         {
-            throw new NotSupportedException("本测试不验证 Unity JSON 或局域网消息编码。");
+            return System.Text.Json.JsonSerializer.Serialize(value, value.GetType(), new System.Text.Json.JsonSerializerOptions { IncludeFields = true });
         }
     }
 }

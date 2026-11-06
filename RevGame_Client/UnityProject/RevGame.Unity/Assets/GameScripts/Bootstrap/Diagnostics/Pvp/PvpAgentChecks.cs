@@ -5,6 +5,44 @@ namespace RevGame.Pvp
 {
 internal static class PvpAgentChecks
 {
+    // 固定假Key写入独立槽，不能读写PlayerSlot。返回值只含断言，不含Key或密文。
+    private const string StorageCheckSlot = "RevGame.DeepSeek.IsolatedStorageCheck.v1";
+    private const string FixtureKey = "revgame-storage-check-not-an-api-key";
+
+    public static object PrepareStorageCheck()
+    {
+        var settings = new PvpAgentSettings();
+        Assert(settings.TrySet(FixtureKey, "deepseek-flash", true, out _), "存储测试配置有效");
+        PvpAgentSettingsStore.Save(settings, StorageCheckSlot);
+        Assert(!UnityEngine.PlayerPrefs.GetString(StorageCheckSlot).Contains(FixtureKey), "落盘内容不含明文Key");
+        return new System.Collections.Generic.Dictionary<string, object> { ["prepared"] = true, ["encrypted"] = true };
+    }
+
+    public static object VerifyStorageCheck()
+    {
+        try
+        {
+            Assert(PvpAgentSettingsStore.Load(out PvpAgentSettings loaded, out _, StorageCheckSlot), "重新加载可解密");
+            Assert(loaded.Key == FixtureKey && loaded.Model == "deepseek-flash" && loaded.Enabled, "跨Play恢复Key模型和授权");
+            UnityEngine.PlayerPrefs.SetString(StorageCheckSlot, "corrupt-fixture");
+            UnityEngine.PlayerPrefs.Save();
+            Assert(!PvpAgentSettingsStore.Load(out loaded, out _, StorageCheckSlot) && !loaded.Ready, "损坏记录不启用云端");
+            PvpAgentSettingsStore.Clear(StorageCheckSlot);
+            Assert(!UnityEngine.PlayerPrefs.HasKey(StorageCheckSlot), "清除删除持久化记录");
+            return new System.Collections.Generic.Dictionary<string, object> { ["passed"] = true, ["cleaned"] = true };
+        }
+        finally
+        {
+            PvpAgentSettingsStore.Clear(StorageCheckSlot);
+        }
+    }
+
+    public static object ClearStorageCheck()
+    {
+        PvpAgentSettingsStore.Clear(StorageCheckSlot);
+        return new System.Collections.Generic.Dictionary<string, object> { ["cleaned"] = true };
+    }
+
     /// <summary>开发态固定策略，只有测试能力可安装；正式包通过预编译排除整个类型。</summary>
     public static void Install(PvpService service)
     {

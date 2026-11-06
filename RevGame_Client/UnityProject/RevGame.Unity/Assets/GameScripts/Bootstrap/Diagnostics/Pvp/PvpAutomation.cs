@@ -48,6 +48,12 @@ namespace RevGame.Pvp
         /// <summary>只在 Bootstrap 的开发态分支调用一次。输入Schema限定枚举、坐标与字符串长度，正式包不保留这些入口。</summary>
         public static void Register()
         {
+            RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "独立测试槽保存DPAPI假Key，不修改玩家配置；跨Play后调用verify", Empty,
+                _ => PvpAgentChecks.PrepareStorageCheck(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-storage-verify", "验证独立测试槽跨Play恢复、损坏拒绝与清除，不返回凭据", Empty,
+                _ => PvpAgentChecks.VerifyStorageCheck(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-storage-clear", "清除独立测试槽，不修改玩家配置", Empty,
+                _ => PvpAgentChecks.ClearStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-fixture", "仅开发态安装固定停一手HTTP替身，联机仍走真实连接；不访问云端", Empty,
                 _ => { PvpAgentChecks.Install(Service); return Result(true, "已安装固定响应"); }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-on", "联机自己的座位通过正式入口开启托管", Empty,

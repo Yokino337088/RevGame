@@ -1,6 +1,6 @@
 namespace RevGame.Pvp.Agent
 {
-    /// <summary>会话配置。Key不落盘、不进PlayerPrefs、不发给联机服务器，只直连DeepSeek官方HTTPS端点。</summary>
+    /// <summary>运行时配置。Key仅在内存使用；持久化由独立存储类加密后写入本地，不发给联机服务器。</summary>
     public sealed class PvpAgentSettings
     {
         public string Key

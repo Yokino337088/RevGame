@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "efad4ee1f6255d027dce5840473de8635c7af42e6f2bf3686923edae26041769",
-  "inputDigest": "9c1ffd6485ad5b0db8fce21504047d00c707196c0d6cce1f323ce7e9728a9309",
+  "outputSha256": "975ff703fa8e9b81d64104ddcfbc9b4425b400032cff3d14dfb687e9c3a98280",
+  "inputDigest": "4f01356ecc89a5bb261f68046313cc19a432daccdb556b426e466dc53376b7b3",
   "originalBytes": 17002248,
-  "outputBytes": 787664,
-  "characterCount": 1762,
-  "glyphCount": 3499,
+  "outputBytes": 790200,
+  "characterCount": 1764,
+  "glyphCount": 3513,
   "codepoints": [
     32,
     33,
@@ -943,6 +943,7 @@
     26366,
     26367,
     26368,
+    26376,
     26377,
     26381,
     26391,
@@ -1634,6 +1635,7 @@
     38024,
     38047,
     38050,
+    38053,
     38057,
     38062,
     38065,
@@ -2022,7 +2024,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab",
-      "sha256": "7a33f1f110e6da33833f6e6d535776a181dfcc5f85a237540321504b59b9aa51"
+      "sha256": "5eadc1486f9cdb46fb4c0d202a2689650f6c495ccb49fbb8d713e5e1ed03dba7"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpEntryPanel.prefab",
@@ -2222,11 +2224,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAgentChecks.cs",
-      "sha256": "9c63f6c33b277873477b03636b959f2f0d161b4a808e7c9c4f292dec2ae2b0fe"
+      "sha256": "6826621991eadfb1f895b76040bd6d7f58dc077547819d9ba8c033c9d48339c5"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.cs",
-      "sha256": "6fc45b1e2ef7382a8c9e945f6b292e19438ce2da852218fd6d7b4fcf5420032b"
+      "sha256": "7ec2acc8bd89f7302281540cc047e60995846c41acb6a44c277912d55dc6c671"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpKcpOpponentCheck.cs",
@@ -2250,7 +2252,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
-      "sha256": "1a6f0130ef4665a1a58e0e8e3650ec32f88ea9405658d0b24a92a287c8fa06ad"
+      "sha256": "a4e3f3d27a9a6bfb7d734cf7336269dc8a32051721e4142949cfd2f14c7b4ea6"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Board/BoardPos.cs",
@@ -2462,7 +2464,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettings.cs",
-      "sha256": "5d3b32f2626e4e33dd9927aa94e413d0fe5b7174adc06ed162d6127c685e3f46"
+      "sha256": "05f90530b6142019403a459266554ed43e520eefa6b734c975fc4bad8350a979"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettingsStore.cs",
+      "sha256": "17850b323bb97ce08d4e8f06e8fe3e1af2c069c144b8c111b5a2864adebfbde1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/GoClock.cs",
@@ -2870,7 +2876,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Agent.cs",
-      "sha256": "e210992b32db3d249f320324b30ee18428671a885a4a6213aaeacfdedf5a50d9"
+      "sha256": "5c3e6bae0640a47ffca4573d8482e7d2fd4be54c8654bad16033ae5df7d0651e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Computer.cs",
@@ -2982,7 +2988,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpAgentSettingsPanel.cs",
-      "sha256": "4c16113b9461afe5a4756a053dd2b7f3e9c8b8a9cb6c57f8b462989b28e78b4e"
+      "sha256": "42a99f255a19101c866d39dfeaa2111c7b94c29f320ea376d22a461a5bf57636"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpEntryPanel.cs",

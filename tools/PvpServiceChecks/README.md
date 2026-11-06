@@ -20,3 +20,5 @@ dotnet run --project tools/PvpServiceChecks/PvpServiceChecks.csproj -c Release
 测试中把“本手开始时间”前移来复现临界时刻，实际超时判断仍由真实 `Submit/Poll` 执行，不直接伪造终局字段。传输可靠性、断线重连窗口与双客户端一致性需要另外执行真实网络测试。
 
 2026-11-06续作：当前18条断言通过，新增双停进入计分、非法确认耗时拒绝且棋谱不变、零耗时远端确认及双方确认终局。本机真实网络终局/重连/停服结果另见项目进度同步目录的九路围棋联机闭环验收报告。
+
+Agent本地存储检查当前面向Windows：链接生产DPAPI适配器，PlayerPrefs仅以隔离内存槽替代；真实注册表持久化和跨Play恢复由项目RevMCP报告覆盖。不会读写玩家正式存储项或调用付费API。

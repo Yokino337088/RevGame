@@ -113,6 +113,7 @@ namespace RevGame.Bootstrap
             RevServices.Register<IBattleService, BattleService>(owner: this);
             // PvP构造不联网；只有玩家进入此模式才创建连接，因此停服不会卡住大厅和单机。
             RevServices.Register<RevGame.Pvp.PvpService, RevGame.Pvp.PvpService>(owner: this);
+            RevServices.GetRequired<RevGame.Pvp.PvpService>().RestoreSavedAgent();
             // 跨暂停/存档页面共享无尽状态；棋局停止由EndlessLogic负责，宿主退出最终注销。
             RevServices.Register<RevGame.Endless.EndlessService, RevGame.Endless.EndlessService>(owner: this);
             // 流程控制者目前只有一份实现、还没有接口，调用方会直接用到它的具体方法（切场景、Boss 演出、回大厅）。

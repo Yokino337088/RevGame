@@ -303,6 +303,8 @@ Art/Pieces/Player/Swordman/Player_Swordman_2_Idle_002|atlas_pieceframes|Player_S
 Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_001|atlas_pieceframes|Player_Swordman_3_Idle_001
 Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_002|atlas_pieceframes|Player_Swordman_3_Idle_002
 Atlases/PieceFrames|atlas_pieceframes|PieceFrames
+Art/UI/Pvp/DeepSeekLogo|atlas_pvpagent|DeepSeekLogo
+Atlases/PvpAgent|atlas_pvpagent|PvpAgent
 Art/UI/UI_Tavern_imgBK|atlas_ui_tavern_imgbkatlas|UI_Tavern_imgBK
 Atlases/UI_Tavern_imgBKAtlas|atlas_ui_tavern_imgbkatlas|UI_Tavern_imgBKAtlas
 Art/UI/UI_Game_imgEnemyMobility|atlas_uibattle|UI_Game_imgEnemyMobility

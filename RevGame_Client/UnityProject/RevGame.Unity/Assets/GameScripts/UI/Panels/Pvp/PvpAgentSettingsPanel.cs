@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace RevGame.Pvp
 {
-    /// <summary>设置只装配和转发。Key使用密码输入；关闭时清空控件，只有服务持有本次会话配置。</summary>
+    /// <summary>设置只装配和转发。Key使用密码输入；关闭时清空控件，持久化由服务写入本地加密存储。</summary>
     [RevUIPanel("UI/Panel/Pvp/Menu", RevUILayer.Popup, CacheMode = RevUICacheMode.DestroyOnClose, Mask = RevUIMaskMode.ClickBlock)]
     public sealed class PvpAgentSettingsPanel : RevUIPanel
     {
@@ -44,13 +44,13 @@ namespace RevGame.Pvp
         [RevButtonClick("enable")]
         private void EnableCloud()
         {
-            RevServices.GetRequired<PvpService>().ConfigureAgent(_key.text, _model.text, true);
+            RevServices.GetRequired<PvpService>().ConfigureSavedAgent(_key.text, _model.text, true);
             RefreshView();
         }
         [RevButtonClick("disable")]
         private void DisableCloud()
         {
-            RevServices.GetRequired<PvpService>().ConfigureAgent("", _model.text, false);
+            RevServices.GetRequired<PvpService>().ConfigureSavedAgent("", _model.text, false);
             _key.SetTextWithoutNotify("");
             RefreshView();
         }
