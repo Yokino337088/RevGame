@@ -23,7 +23,10 @@ namespace RevGame.View
         private Action _finished;
         private float _openedAt;
         /// <summary>本次完整尺寸停留秒数，不含0.24秒弹出与0.18秒缩回；状态查询用于核对Excel是否真正生效。</summary>
-        public float HoldSeconds { get; private set; }
+        public float HoldSeconds
+        {
+            get; private set;
+        }
         /// <summary>本实例本次已显示的非缩放秒数；回池后不作为有效可见证据。</summary>
         public float VisibleSeconds => Visible ? Time.unscaledTime - _openedAt : 0;
         /// <summary>实际Renderer已能画图时为true，不用请求状态代替可见证据。</summary>
