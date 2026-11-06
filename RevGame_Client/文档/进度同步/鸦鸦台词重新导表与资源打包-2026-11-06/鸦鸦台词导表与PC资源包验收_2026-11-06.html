@@ -1,0 +1,35 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>鸦鸦台词导表与PC资源包验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head><body><header>REVOLUTION / RevGame · 2026-11-06</header><div class="hero"><div class="wrap"><div class="eyebrow">UNITY 2022.3.15f1c1 · 1920 × 1080 · 真实PC AB</div><h1>鸦鸦新版台词重新导表与打包</h1><p>通过：36条新台词已导出，字库更新，PC资源包构建并复制完成；冷启动与重入均正确显示新文案。</p></div></div><main>
+<section class="chapter"><h2>配置与构建</h2><p>源文件为配置表/鸦鸦互动配置.xlsx中的YayaReactionLine。ID 1～36的Text全部更新，另外6个字段及YayaReactionRule保持源表原样；导出36行×7字段与Excel逐项相同。新文案4～20字符，表情仍为1/2/3/8/13/14/23/26，不新增图片。</p><p>RevCLI执行excel.plan → excel.read → excel.export：扫描24表、750行，25个输出不变，仅写入YayaReactionLine.txt，生成代码不变，错误/警告/孤立表均为0。使用现有工具重制字库，1749字符全部可用（原1745字符）。</p><p>game.yaya-reaction.rules的两模式配置和8项分类检查通过；AB依赖门禁canBuild=true，无重复同名、共享重复、循环或映射错误。使用game.background.build调用项目GameResourceBuild.BuildAndCopy，构建76个PC包；Assets/StreamingAssets/PC与构建输出的155个非meta文件SHA256全部相同。保留已有meta GUID。</p></section>
+<section class="chapter"><h2>运行期精确核对</h2><p>通过真实rev_discover确认能力，rev_call从StartScene开启隔离进度和真实AB模式；rev_run沿大厅→选关→第一章进入，等待过场结束、81格与准备增益完成，再布阵并开始战斗。三档事实窗口经正式分类器、图集和池实例显示，按返回lineId对照新表Text，全部一致。</p><div class="table-scroll"><table><thead><tr><th>台词ID</th><th>档位</th><th>真实显示文案</th><th>断言</th></tr></thead><tbody><tr><td>6</td><td>1</td><td>啊啊啊冒险家你简直就是我的男神！</td><td>与导出表一致，无遮挡且完整</td></tr><tr><td>23</td><td>2</td><td>冒险家，你到底行不行啊~</td><td>与导出表一致，无遮挡且完整</td></tr><tr><td>30</td><td>3</td><td>冒险家，你还是给我舔脚吧</td><td>与导出表一致，无遮挡且完整</td></tr></tbody></table></div><p>三次立绘高度均为屏幕56.16%，保持原版两倍，台词完整且无遮挡。返回大厅后再次进入战斗复核新文案、尺寸与排版通过。两份rev_run的全部步骤与finally均通过；最终Console错误0，测试已停止并解除隔离，恢复StartScene编辑态。</p></section>
+<section class="chapter"><h2>真实画面</h2><div class="gallery"><figure><img src="01-夸奖.jpg" alt="夸奖新版台词"><figcaption>夸奖新台词，真实PC AB</figcaption></figure><figure><img src="02-鞭策.jpg" alt="鞭策新版台词"><figcaption>鞭策新台词，真实PC AB</figcaption></figure><figure><img src="03-嘲讽.jpg" alt="嘲讽新版台词"><figcaption>嘲讽新台词，真实PC AB</figcaption></figure></div><img src="新版台词三档.gif" alt="三档新台词实际切换"></section>
+<section class="chapter"><h2>框架可行性与范围</h2><p>Revolution现有Excel导出、强类型配置、RevResManager资源加载、图集与RevPool角色租约、RevRuntimeAutomation验收链支撑本次文案更新，无需修改框架快照。冷启动与重入证明本次新数据和字库实际进入PC资源包，工具成功不单独作为业务通过依据。</p><p>本次“打包”为PC AssetBundle资源包，未构建EXE/APK，未做独立Player或真机验证。原始JSON/PNG位于.codex/work/yaya-export-2026-11-06，不归档ZIP或Profiler文件。旧导表脚本的相对source路径曾读表失败，改用当前Unity已配置的有效来源后预览/读取/导出成功，未跳过坏表。</p></section></main><footer>RevGame · 配置到真实资源包的业务验证 · 2026-11-06</footer></body></html>

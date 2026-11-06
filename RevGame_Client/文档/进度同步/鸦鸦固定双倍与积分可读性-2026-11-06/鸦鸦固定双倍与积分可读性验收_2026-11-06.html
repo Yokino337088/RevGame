@@ -1,0 +1,39 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>鸦鸦固定双倍与积分可读性验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head><body>
+<header><span>REVOLUTION / RevGame</span><span>2026-11-06</span></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">真实PC AB · Unity 2022.3.15f1c1 · 1920 × 1080</div><h1>鸦鸦固定双倍与积分可读性验收</h1><p>通过：立绘从首次出现到收回保持固定尺寸；积分使用弹幕同款背景与更大文字；对话框已下移贴近头顶。</p></div></div><main>
+<section class="chapter"><h2>需求结果与测量</h2><p>对话框改为根据实际立绘上沿定位，下沿距离Renderer上沿为屏幕高度1.17%（1920×1080时约12.6像素）；原画顶部少量透明留白之外，视觉上仅保留一小段头顶间距。对话框随人物位置排版，人物尺寸保持不变。此次下移后重新冷启动真实PC AB，三档表情12帧回归及finally再次全部通过。</p><p>六章战斗原立绘区域高0.39，人物占72%，原高度为屏幕28.08%；现区域高0.78，实测Renderer高度56.16%，比例正好2.00。删除候选区域缩小和进退场弹性缩放，只允许候选位置平移。空间不足时跳过，不再改变大小。</p><p>积分底板改用已有UI_Tip_imgBK的Sliced九宫格，字号与滚筒显示比例统一增大；保留真实滚筒和计分事件。中文字的竖向溢出设为Overflow，避免字号增大后整行标签因行高被裁掉。</p><div class="table-scroll"><table><thead><tr><th>评价档位</th><th>表情编号</th><th>实测高度</th><th>固定区域宽×高</th><th>显示断言</th></tr></thead><tbody><tr><td>1</td><td>3</td><td>56.16%</td><td>0.24 × 0.78</td><td>无遮挡、台词完整</td></tr><tr><td>2</td><td>2</td><td>56.16%</td><td>0.24 × 0.78</td><td>无遮挡、台词完整</td></tr><tr><td>3</td><td>13</td><td>56.16%</td><td>0.24 × 0.78</td><td>无遮挡、台词完整</td></tr></tbody></table></div></section>
+<section class="chapter"><h2>实际执行与清理</h2><p>rev_discover确认当前工程与运行期注册 → rev_call启用真实AB及内存隔离进度 → rev_run经大厅、选关进入第一章，等待IsTransitioning=false、81格与准备增益完成，经真实布阵/开始战斗入口开战。</p><p>使用yaya.evaluate-window输入三档表现事实，每次出现及四张截图之后检查Renderer高度；15次几何查询全部为0.5616，12帧实际截图。三次首次可画即为完整固定尺寸，台词完整，无遮挡。41个步骤与3个finally收尾步骤全部通过。</p><p>finally归还互动、返回大厅并等待过场完成；之后停止Play、解除隔离，恢复StartScene编辑状态。最终Unity Console错误查询为0；脚本编译与1745字字库检查通过。发布目录155个非meta文件与构建输出逐字节哈希一致。</p></section>
+<section class="chapter"><h2>真实画面</h2><div class="gallery"><figure><img src="01-夸奖.jpg" alt="夸奖实际画面"><figcaption>夸奖：固定高度56.16%，原尺寸的两倍</figcaption></figure><figure><img src="02-鞭策.jpg" alt="鞭策实际画面"><figcaption>鞭策：固定高度56.16%，原尺寸的两倍</figcaption></figure><figure><img src="03-嘲讽.jpg" alt="嘲讽实际画面"><figcaption>嘲讽：固定高度56.16%，原尺寸的两倍</figcaption></figure></div></section>
+<section class="chapter"><h2>连续画面</h2><p>12帧来自三次正式表现播放，观察立绘大小固定、表情切换与积分滚动。仅等比缩小报告图片，未裁剪或美化游戏内容。</p><img src="三表情固定大小.gif" alt="三档表情与固定大小连续截图"></section>
+<section class="chapter"><h2>发现的问题及修复</h2><p>初版仍有候选区域缩小和弹性缩放，不能满足固定两倍要求；已移除。随后发现积分滚筒在RectMask2D之外的数字被误判为遮挡，已按实际裁剪矩形相交。删除缩放动画后同时移除旧的7%弹性外扩，避免积分跳字令立绘提前收回。</p><p>构建的字库输入校验曾拦截Prefab变更，已按项目工具重建清单；复制AB时出现meta写入冲突，已恢复原GUID并核对155个发布文件哈希一致。早期验证计划还有大厅未就绪和expect不支持动态引用的问题；修正等待与精确数值断言后重新完整执行，最终结果如上。</p></section>
+<section class="chapter"><h2>Revolution框架可行性与边界</h2><p>复用RevUI面板、RevResManager与GameSpriteAtlasService图集引用、RevPool角色实例和RevRuntimeAutomation受控事实入口，既有资源/池/流程链能支撑本次界面修改及退出清理。修改只在项目表现、制作配方和场景参数，未改框架快照。</p><p>本次覆盖Editor真实PC AB冷启动与重新进入战斗；未覆盖独立Player、Android/手机、无尽画面及其它分辨率，不宣称设备性能或所有屏幕比例通过。原始JSON与PNG留在.codex/work/yaya-readability；无ZIP或Profiler录制。</p></section></main><footer>RevGame · 框架真实业务验证 · 2026-11-06</footer></body></html>

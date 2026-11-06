@@ -7,22 +7,21 @@ using UnityEngine;
 using UnityEngine.UI;
 namespace RevGame.View
 {
-    /// <summary>短时互动池对象，弹出、停留、缩回均拥有自己的Tween，回池先停止再清Sprite和文字。</summary>
+        /// <summary>短时互动池对象，显示期间固定尺寸，回池先停止自己的计时再清Sprite和文字。</summary>
     [RevPoolPrefab("Characters/Yaya/Reaction", "YayaReaction", Group = RevResGroup.Battle)]
     public sealed class YayaReactionView : MonoBehaviour, IRevPoolable
     {
-        /// <summary>图片节点独立于根缩放，根只负责弹性动画；立绘尺寸来自安全区域布局。</summary>
+        /// <summary>图片节点独立于根缩放；立绘尺寸来自固定区域布局，不随入场、退场或候选位置改变。</summary>
         [SerializeField] private SpriteRenderer portrait;
         /// <summary>世界空间台词板，使用项目已有UI_Tip_imgBK九宫格图，无输入组件。</summary>
         [SerializeField] private Canvas bubble;
         /// <summary>本次纯文本台词，换句才排字，不支持富文本与交互链接。</summary>
         [SerializeField] private Text speech;
-        /// <summary>只持有本实例的动画、目标缩放和完成回调，回池Kill(false)取消旧回调。</summary>
+        /// <summary>只持有本实例的显示计时和完成回调，回池Kill(false)取消旧回调。</summary>
         private Tween _sequence;
-        private Vector3 _baseScale;
         private Action _finished;
         private float _openedAt;
-        /// <summary>本次完整尺寸停留秒数，不含0.24秒弹出与0.18秒缩回；状态查询用于核对Excel是否真正生效。</summary>
+        /// <summary>本次主停留秒数；保留原有前后共0.42秒显示时间，但整个过程都不缩放。</summary>
         public float HoldSeconds
         {
             get; private set;
@@ -31,8 +30,8 @@ namespace RevGame.View
         public float VisibleSeconds => Visible ? Time.unscaledTime - _openedAt : 0;
         /// <summary>实际Renderer已能画图时为true，不用请求状态代替可见证据。</summary>
         public bool Visible => portrait != null && portrait.enabled && portrait.sprite != null;
-        /// <summary>等待弹出Tween的0.24秒结束后才检查最终大小，不能拿首帧5%缩放作为完整立绘尺寸。</summary>
-        public bool Settled => Visible && Time.unscaledTime - _openedAt >= .30f;
+        /// <summary>没有缩放过渡，图片首次可画即为最终尺寸，供自动化跨帧核对大小恒定。</summary>
+        public bool Settled => Visible;
         /// <summary>只在新的互动发生时换Sprite/台词并排版；不逐帧GetSprite、不访问renderer.material。</summary>
         public void Play(Sprite sprite, YayaReactionLine line, Camera camera, Rect viewport, Action finished)
         {
@@ -45,15 +44,11 @@ namespace RevGame.View
             bubble.worldCamera = camera;
             speech.text = line.Text;
             Layout(camera, viewport);
-            _baseScale = transform.localScale;
-            transform.localScale = _baseScale * .05f;
             float hold = line.Duration > 0 ? line.Duration : YayaReactionConfig.Value("PopupSeconds");
             HoldSeconds = hold;
-            // Back弹出略微超过目标大小，布局已预留边距；单纯表现秒数不决定战斗冷却。
+            // 立绘从出现到收回始终使用固定尺寸；不再弹性放大、缩小，计时只控制本次显示寿命。
             _sequence = DOTween.Sequence().SetUpdate(true)
-                .Append(transform.DOScale(_baseScale, .24f).SetEase(Ease.OutBack, 1.35f))
-                .AppendInterval(hold)
-                .Append(transform.DOScale(_baseScale * .04f, .18f).SetEase(Ease.InBack))
+                .AppendInterval(.24f + hold + .18f)
                 .OnComplete(() =>
                 {
                     _sequence = null;
@@ -62,7 +57,7 @@ namespace RevGame.View
                     callback?.Invoke();
                 });
         }
-        /// <summary>区域为相机Viewport 0～1。人物占下方72%，对话框占上方28%，用相同尺子保证不盖脸。</summary>
+        /// <summary>区域为相机Viewport 0～1。人物尺寸固定，对话框从立绘顶部向上排，保留小间距，避免悬在远处。</summary>
         private void Layout(Camera camera, Rect area)
         {
             Vector3 low = camera.ViewportToWorldPoint(new Vector3(area.xMin, area.yMin, 10));
@@ -79,7 +74,9 @@ namespace RevGame.View
             rect.sizeDelta = new Vector2(360, Mathf.Max(85, speech.preferredHeight + 28));
             float bubbleScale = Mathf.Min(width / 360, height * .25f / rect.sizeDelta.y);
             rect.localScale = Vector3.one * bubbleScale;
-            rect.localPosition = new Vector3(0, height - rect.sizeDelta.y * bubbleScale * .5f, 0);
+            // 使用实际立绘上沿定位，宽屏或窄侧栏下也贴近头顶；透明画布顶部另有少量原画留白。
+            float portraitTop = bodyHeight * .5f + portrait.sprite.bounds.size.y * scale * .5f;
+            rect.localPosition = new Vector3(0, portraitTop + height * .015f + rect.sizeDelta.y * bubbleScale * .5f, 0);
         }
         /// <summary>真实字体排版所需高度不超文字矩形，长台词仍能完整阅读。</summary>
         public bool SpeechFits => speech != null && speech.preferredHeight <= speech.rectTransform.rect.height + 1;

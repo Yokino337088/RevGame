@@ -571,12 +571,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9f19def14af25f449e465cae5df8908, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  preferredViewport:
+  campaignViewport:
+    serializedVersion: 2
+    x: 0.01
+    y: 0.028
+    width: 0.24
+    height: 0.78
+  endlessViewport:
     serializedVersion: 2
     x: 0.012
     y: 0.145
-    width: 0.17
-    height: 0.32
+    width: 0.145
+    height: 0.48
 --- !u!4 &1550438847
 Transform:
   m_ObjectHideFlags: 0

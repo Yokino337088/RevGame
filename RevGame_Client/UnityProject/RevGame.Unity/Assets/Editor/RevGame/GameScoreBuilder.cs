@@ -85,11 +85,57 @@ namespace RevGame.Editor
                 GameAssetBuilder.SetReference(hud, "scoreGain", gain);
                 // 独立Canvas仅隔离积分滚动重建；没有GraphicRaycaster，绝不挡住落子触控。
                 frame.AddComponent<Canvas>().overrideSorting = false;
+                ApplyReadableLayout(frame.transform);
                 PrefabUtility.SaveAsPrefabAsset(root, hudPath);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();
             return "积分HUD、三组滚筒、共享Shader飞星已装配；待统一资源配置及真实AB验收";
+        }
+        /// <summary>积分区复用弹幕九宫格，放大三行字号并留出滚筒窗口；完整重建和局部更新共用此配方。</summary>
+        public static void ApplyReadableLayout(Transform frame)
+        {
+            var rect = (RectTransform)frame;
+            rect.anchorMin = new Vector2(.015f, .83f);
+            rect.anchorMax = new Vector2(.25f, .99f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            Image background = frame.GetComponent<Image>();
+            background.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/UI/UI_Tip_imgBK.png");
+            if (background.sprite == null)
+            {
+                throw new InvalidOperationException("积分背景缺少弹幕共用Sprite");
+            }
+            background.type = Image.Type.Sliced;
+            background.color = Color.white;
+            background.raycastTarget = false;
+            frame.Find("GoldRule").gameObject.SetActive(false);
+            PlaceScore(frame, "RoundCaption", new Vector2(0, 65), new Vector2(400, 28), 22, 1);
+            PlaceScore(frame, "RoundReel", new Vector2(0, 34), Vector2.zero, 0, 1.15f);
+            PlaceScore(frame, "MultiplierCaption", new Vector2(-105, -7), new Vector2(190, 34), 26, 1);
+            PlaceScore(frame, "MultiplierReel", new Vector2(100, -7), Vector2.zero, 0, 1);
+            PlaceScore(frame, "Times", new Vector2(38, -7), new Vector2(28, 34), 26, 1);
+            PlaceScore(frame, "LifetimeCaption", new Vector2(-118, -43), new Vector2(184, 32), 22, 1);
+            PlaceScore(frame, "LifetimeReel", new Vector2(87, -43), Vector2.zero, 0, .9f);
+            PlaceScore(frame, "scoreGain", new Vector2(0, -62), new Vector2(400, 28), 20, 1);
+        }
+        /// <summary>只改变表现尺寸，保留HUD引用、滚筒行高和上下数字的滚动距离，避免放大后错位。</summary>
+        private static void PlaceScore(Transform parent, string name, Vector2 position, Vector2 size, int fontSize, float scale)
+        {
+            var rect = (RectTransform)parent.Find(name);
+            rect.anchorMin = rect.anchorMax = Vector2.one * .5f;
+            rect.anchoredPosition = position;
+            if (size != Vector2.zero)
+            {
+                rect.sizeDelta = size;
+            }
+            rect.localScale = Vector3.one * scale;
+            Text text = rect.GetComponent<Text>();
+            if (text != null && fontSize > 0)
+            {
+                text.fontSize = fontSize;
+                // CJK字体行高大于字号，紧凑行不能用Truncate，否则标签会整行消失。
+                text.verticalOverflow = VerticalWrapMode.Overflow;
+            }
         }
         private static Text Label(Transform parent, string name, string content, Vector2 position, int fontSize, Color color)
         {

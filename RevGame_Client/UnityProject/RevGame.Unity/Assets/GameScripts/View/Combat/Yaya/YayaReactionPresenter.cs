@@ -15,8 +15,8 @@ namespace RevGame.View
     public sealed class YayaReactionPresenter : MonoBehaviour
     {
         /// <summary>构图比例允许美术调整；区域位于左下侧栏，发生UI/棋子占用时选邻近空位，找不到则暂不显示。</summary>
-        [Tooltip("六章Viewport区域（0～1），连同气泡和弹性外扩必须避开棋盘与手牌。")]
-        [SerializeField] private Rect campaignViewport = new Rect(.023f, .018f, .20f, .39f);
+        [Tooltip("六章Viewport区域（0～1），固定大小的立绘与气泡必须避开棋盘与手牌。")]
+        [SerializeField] private Rect campaignViewport = new Rect(.01f, .028f, .24f, .78f);
         /// <summary>无尽左外侧空区，避开敌潮出生横线；只移动表现，不修改敌人路径。</summary>
         [SerializeField] private Rect endlessViewport = new Rect(.012f, .145f, .145f, .48f);
         /// <summary>加载代次与本域模式，过期回调只清理自己的加载结果。</summary>
@@ -31,6 +31,8 @@ namespace RevGame.View
         private YayaReactionLine _line;
         private Camera _camera;
         private Rect _area;
+        /// <summary>最近一次候选被拒绝的遮挡来源，开发态查询用于定位实际矩形，不改变棋局。</summary>
+        private string _blockedBy = "";
         /// <summary>下次遮挡检查的非缩放时间秒；检查复用角点缓冲与本次UI数组。</summary>
         private float _nextLayoutCheck;
         private readonly Vector3[] _corners = new Vector3[4];
@@ -202,7 +204,7 @@ namespace RevGame.View
                 Hide();
             }
         }
-        /// <summary>有限候选靠左下侧边，面积包含Back弹性外扩；任何候选遮挡则丢弃，绝不盖棋盘换显示。</summary>
+        /// <summary>左下候选只平移、不缩小；每次都使用同一尺寸，空间不足时跳过，不盖棋盘或改变立绘大小。</summary>
         private bool TryFindArea(out Rect chosen)
         {
             chosen = _mode == 1 ? campaignViewport : endlessViewport;
@@ -212,28 +214,25 @@ namespace RevGame.View
             }
             // 无尽敌潮出生x=-3，左侧最外条带仍是场景空白；窄而高的区域放大人物但不盖出生横线。
             Rect preferred = chosen;
-            for (int size = 0; size < 3; size++)
+            for (int row = 0; row < 3; row++)
             {
-                float shrink = 1 - size * .16f;
-                for (int row = 0; row < 3; row++)
+                var area = new Rect(preferred.x, preferred.y + row * .01f, preferred.width, preferred.height);
+                if (!HasOverlap(area))
                 {
-                    var area = new Rect(preferred.x, preferred.y + row * .05f, preferred.width * shrink, preferred.height * shrink);
-                    if (!HasOverlap(area))
-                    {
-                        chosen = area;
-                        return true;
-                    }
+                    chosen = area;
+                    return true;
                 }
             }
             return false;
         }
-        /// <summary>只在显示/低频监测时读UI矩形，忽略背景板但检查按钮、文本与棋盘；动画外扩仍留边距。</summary>
+        /// <summary>只在显示/低频监测时读UI矩形，检查固定区域与实际可画的文字；没有缩放动画，不再预留弹性外扩。</summary>
         private bool HasOverlap(Rect area)
         {
-            Rect expanded = new Rect(area.x - area.width * .035f, area.y - area.height * .035f, area.width * 1.07f, area.height * 1.07f);
+            Rect expanded = area;
             Rect safe = GameBattleLayout.SafeViewport();
             if (expanded.xMin < safe.xMin || expanded.yMin < safe.yMin || expanded.xMax > safe.xMax || expanded.yMax > safe.yMax)
             {
+                _blockedBy = "安全区";
                 return true;
             }
             Rect board = _mode == 1 ? GameBattleLayout.Calculate(new Vector2(_camera.pixelWidth, _camera.pixelHeight), safe).Board : new Rect();
@@ -249,6 +248,7 @@ namespace RevGame.View
             }
             if (expanded.Overlaps(board))
             {
+                _blockedBy = "棋盘";
                 return true;
             }
             foreach (Graphic graphic in _graphics)
@@ -267,8 +267,27 @@ namespace RevGame.View
                 Vector2 a = RectTransformUtility.WorldToScreenPoint(cam, _corners[0]);
                 Vector2 b = RectTransformUtility.WorldToScreenPoint(cam, _corners[2]);
                 Rect rect = Rect.MinMaxRect(a.x / _camera.pixelWidth, a.y / _camera.pixelHeight, b.x / _camera.pixelWidth, b.y / _camera.pixelHeight);
+                // 积分滚筒的上下数字会移出裁剪窗口。只用实际可画的矩形检查遮挡，不能让隐藏数字挤走或收回立绘。
+                for (Transform parent = graphic.transform.parent; parent != null; parent = parent.parent)
+                {
+                    RectMask2D mask = parent.GetComponent<RectMask2D>();
+                    if (mask == null || !mask.isActiveAndEnabled)
+                    {
+                        continue;
+                    }
+                    mask.rectTransform.GetWorldCorners(_corners);
+                    Vector2 maskLow = RectTransformUtility.WorldToScreenPoint(cam, _corners[0]);
+                    Vector2 maskHigh = RectTransformUtility.WorldToScreenPoint(cam, _corners[2]);
+                    rect = Rect.MinMaxRect(Mathf.Max(rect.xMin, maskLow.x / _camera.pixelWidth), Mathf.Max(rect.yMin, maskLow.y / _camera.pixelHeight),
+                        Mathf.Min(rect.xMax, maskHigh.x / _camera.pixelWidth), Mathf.Min(rect.yMax, maskHigh.y / _camera.pixelHeight));
+                }
+                if (rect.width <= 0 || rect.height <= 0)
+                {
+                    continue;
+                }
                 if (expanded.Overlaps(rect))
                 {
+                    _blockedBy = graphic.transform.parent.name + "/" + graphic.name;
                     return true;
                 }
             }
@@ -351,7 +370,10 @@ namespace RevGame.View
         /// <summary>只读实际显示、资源租约和非遮挡检查，GM不可直接改Visible凑断言。</summary>
         public object Snapshot()
         {
+            SpriteRenderer body = _view != null ? _view.GetComponentInChildren<SpriteRenderer>() : null;
+            float portraitHeight = body != null && _camera != null ? _camera.WorldToViewportPoint(body.bounds.max).y - _camera.WorldToViewportPoint(body.bounds.min).y : 0;
             return new Dictionary<string, object> { ["mode"] = _mode, ["visible"] = _view != null && _view.Visible, ["settled"] = _view != null && _view.Settled, ["busy"] = Busy, ["lineId"] = _line.Id, ["band"] = _line.Band, ["expression"] = _line.Expression, ["text"] = _line.Text, ["shown"] = ShownCount, ["error"] = LastError, ["speechFits"] = _view != null && _view.SpeechFits, ["overlap"] = _view != null && HasOverlap(_area), ["areaX"] = _area.x, ["areaY"] = _area.y, ["areaWidth"] = _area.width, ["areaHeight"] = _area.height, ["catalogHeld"] = _catalogHandle != null, ["atlasHeld"] = _atlases.Length > 0,
+                ["blockedBy"] = _blockedBy, ["portraitHeight"] = portraitHeight,
                 ["recentStarts"] = _recentStarts, ["cadenceReady"] = ShownCount >= 3 && _recentStarts[2] - _recentStarts[0] <= 6,
                 ["holdSeconds"] = _lastHoldSeconds, ["lastVisibleSeconds"] = _lastVisibleSeconds, ["visibleSeconds"] = _view != null ? _view.VisibleSeconds : 0 };
         }

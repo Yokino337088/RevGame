@@ -88,12 +88,14 @@ namespace RevGame.Editor
                 foreach (string path in new[] { "Assets/Scenes/GameScene.unity", "Assets/Scenes/EndlessScene.unity" })
                 {
                     var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
-                    if (!scene.GetRootGameObjects().Any(g => g.GetComponent<YayaReactionPresenter>() != null))
+                    var presenter = scene.GetRootGameObjects().Select(g => g.GetComponent<YayaReactionPresenter>()).FirstOrDefault(p => p != null);
+                    if (presenter == null)
                     {
-                        new GameObject("YayaReactionScene", typeof(YayaReactionPresenter));
-                        EditorSceneManager.MarkSceneDirty(scene);
-                        EditorSceneManager.SaveScene(scene);
+                        presenter = new GameObject("YayaReactionScene", typeof(YayaReactionPresenter)).GetComponent<YayaReactionPresenter>();
                     }
+                    SetCampaignArea(presenter);
+                    EditorSceneManager.MarkSceneDirty(scene);
+                    EditorSceneManager.SaveScene(scene);
                 }
             }
             finally
@@ -123,19 +125,7 @@ namespace RevGame.Editor
                 RectTransform score = hud.transform.Find("scoreFrame") as RectTransform;
                 if (score != null)
                 {
-                    score.anchorMin = new Vector2(.015f, .85f);
-                    score.anchorMax = new Vector2(.25f, .99f);
-                    score.offsetMin = score.offsetMax = Vector2.zero;
-                    // 原积分面板内部按310像素高固定排版；上移后使用紧凑三行，不能只缩外框造成滚筒出界。
-                    PlaceScore(score, "GoldRule", new Vector2(0, 71), new Vector2(420, 2), 0, 1);
-                    PlaceScore(score, "RoundCaption", new Vector2(0, 52), new Vector2(400, 22), 18, 1);
-                    PlaceScore(score, "RoundReel", new Vector2(0, 24), Vector2.zero, 0, .72f);
-                    PlaceScore(score, "MultiplierCaption", new Vector2(-83, -10), new Vector2(170, 24), 16, 1);
-                    PlaceScore(score, "MultiplierReel", new Vector2(78, -10), Vector2.zero, 0, .70f);
-                    PlaceScore(score, "Times", new Vector2(20, -10), new Vector2(20, 24), 17, 1);
-                    PlaceScore(score, "LifetimeCaption", new Vector2(-95, -40), new Vector2(160, 22), 14, 1);
-                    PlaceScore(score, "LifetimeReel", new Vector2(64, -40), Vector2.zero, 0, .56f);
-                    PlaceScore(score, "scoreGain", new Vector2(0, -65), new Vector2(400, 18), 14, 1);
+                    GameScoreBuilder.ApplyReadableLayout(score);
                 }
                 PrefabUtility.SaveAsPrefabAsset(hud, hudPath);
             }
@@ -144,26 +134,40 @@ namespace RevGame.Editor
                 PrefabUtility.UnloadPrefabContents(hud);
             }
         }
-        /// <summary>只调整积分零件的显示布局，滚筒数值与到账动画仍由原HUD管理，保留所有序列化引用。</summary>
-        private static void PlaceScore(Transform parent, string name, Vector2 position, Vector2 size, int fontSize, float scale)
+        /// <summary>局部更新既有HUD和六章立绘区域，不重导图片、不重建台词Prefab；有未保存场景时保留现场并拒绝。</summary>
+        public static string ConfigureReadability()
         {
-            RectTransform rect = parent.Find(name) as RectTransform;
-            if (rect == null)
+            if (EditorApplication.isPlaying)
             {
-                return;
+                throw new InvalidOperationException("可读性制作要求编辑态");
             }
-            rect.anchorMin = rect.anchorMax = Vector2.one * .5f;
-            rect.anchoredPosition = position;
-            if (size != Vector2.zero)
+            SceneSetup[] setup = EditorSceneManager.GetSceneManagerSetup();
+            if (setup.Any(s => s.isLoaded && UnityEngine.SceneManagement.SceneManager.GetSceneByPath(s.path).isDirty))
             {
-                rect.sizeDelta = size;
+                throw new InvalidOperationException("请先保存场景，可读性制作未改变现场");
             }
-            rect.localScale = Vector3.one * scale;
-            Text text = rect.GetComponent<Text>();
-            if (text != null && fontSize > 0)
+            ReserveCampaignCorner();
+            try
             {
-                text.fontSize = fontSize;
+                var scene = EditorSceneManager.OpenScene("Assets/Scenes/GameScene.unity", OpenSceneMode.Single);
+                var presenter = scene.GetRootGameObjects().Select(g => g.GetComponent<YayaReactionPresenter>()).First(p => p != null);
+                SetCampaignArea(presenter);
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
             }
+            finally
+            {
+                EditorSceneManager.RestoreSceneManagerSetup(setup);
+            }
+            AssetDatabase.SaveAssets();
+            return "六章立绘区域高度翻倍，积分复用弹幕九宫格并放大三行文字；等待真实AB画面验收";
+        }
+        /// <summary>区域高度由0.39提升到0.78，人物仍占72%，得到原来的两倍高度；宽度容纳全身并避开中央棋盘。</summary>
+        private static void SetCampaignArea(YayaReactionPresenter presenter)
+        {
+            var so = new SerializedObject(presenter);
+            so.FindProperty("campaignViewport").rectValue = new Rect(.01f, .028f, .24f, .78f);
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
         /// <summary>SpriteRenderer身体+世界Canvas台词，Prefab不引用全部立绘，目录只有发生互动才加载。</summary>
         private static void BuildPrefab()
