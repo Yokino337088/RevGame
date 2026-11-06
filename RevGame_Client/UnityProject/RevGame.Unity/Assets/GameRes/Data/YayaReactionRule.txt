@@ -1,0 +1,15 @@
+#YayaReactionRule
+#Id	Value	Note
+#参数键（代码契约）	数值	用途、单位与边界
+WindowSeconds	8	每8个实际战斗秒评估一次；暂停/剧情期间不计时
+GlobalCooldown	14	所有互动共用冷却秒数
+SameBandCooldown	32	同一档评价的再次触发间隔秒数
+InitialDelay	8	开战后至少等待的实际战斗秒数
+CampaignGoodKills	3	六章一个窗口内达到此击杀数且无损失可夸奖
+EndlessGoodKills	18	无尽一个窗口内达到此击杀数且无损失可夸奖
+GoodTakenRatio	0.12	表现好要求承受伤害占窗口起始总生命不高于此比例
+PoorTakenRatio	0.35	承受伤害占起始总生命达到此比例则表现不佳
+PoorLosses	1	窗口内实际死亡达到此数则表现不佳；合并/主动移除不算
+PopupSeconds	4.2	互动默认显示秒数；台词Duration可覆盖
+SampleSeconds	0.25	评价采样间隔秒数，不逐帧遍历棋子
+MaximumLines	48	台词配置最大数量，防止错误配置造成无限增长

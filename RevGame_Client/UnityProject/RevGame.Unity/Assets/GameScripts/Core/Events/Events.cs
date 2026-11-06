@@ -13,6 +13,8 @@ namespace RevGame.Core
     /// </summary>
     public static class Events
     {
+        /// <summary>唯一签名YayaCombatFact：已结算的伤害与真正死亡，供局内互动观察，不承载任何战斗规则。</summary>
+        public const string YayaCombatObserved = "RevGame.Yaya.CombatObserved";
         /// <summary>string：吞噬/数量上限等规则事实提示，UI只能播放动画。</summary>
         public const string BoardRuleNotice = "RevGame.Board.RuleNotice";
         /// <summary>HelperShotInfo：帮手已扣积分并提交伤害后的攻击快照。</summary>

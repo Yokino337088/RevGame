@@ -246,6 +246,11 @@ namespace RevGame.Flow
         /// </summary>
         private async RevTask LoadGameConfigAsync()
         {
+            await RevDataTableManager.LoadAsync<YayaReactionRuleTable>();
+            ThrowIfDisposed();
+            await RevDataTableManager.LoadAsync<YayaReactionLineTable>();
+            ThrowIfDisposed();
+            YayaReactionConfig.Validate();
             // ==================== 配置表加载（新手必读） ====================
             // 【谁负责什么】流程层（GameFlow）只决定“什么时候加载”，GameConfig 只负责“怎么校验装配”。
             //   所以这个方法里只有 LoadAsync，没有任何数值计算或默认值——数值一律来自导表。

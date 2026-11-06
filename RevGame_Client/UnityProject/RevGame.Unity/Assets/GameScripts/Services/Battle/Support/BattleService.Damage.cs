@@ -257,6 +257,7 @@ namespace RevGame.Services
                 int sourceId = attacker == null ? 0 : attacker.Id;
                 var hit = new BattleHitInfo(target.Id, target.Pos, target.Size, target.Side, real, attacker != null, attacker == null ? target.Pos : attacker.Pos, sourceId, fromSkill, attacker == null ? PieceKind.Swordman : attacker.Def.Kind, attacker == null ? 1 : attacker.Size, attacker != null && attacker.Def.IsRanged, damageKind);
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, hit);
+                RevEvent.DispatchEvent<YayaCombatFact>(Events.YayaCombatObserved, new YayaCombatFact(1, target.Side, real));
             }
             // 在死亡广播、移除占格、胜负与积分之前处理复活，视图不会被回池，后续伤害仍可真正击杀它。
             if (!target.IsAlive && target.TryReviveInEye())
@@ -290,6 +291,7 @@ namespace RevGame.Services
                     RevEvent.DispatchEvent(Events.SelectionChanged);
                 }
                 RevEvent.DispatchEvent<int>(Events.PieceDied, target.Id);
+                RevEvent.DispatchEvent<YayaCombatFact>(Events.YayaCombatObserved, new YayaCombatFact(1, target.Side, 0, target.Side == GameSide.Enemy ? 1 : 0, target.Side == GameSide.Player ? 1 : 0));
                 // ★ 先通知死亡，让原棋子转入溶解表现，再刷新棋盘；顺序反过来会把视图提前归池、吞掉死亡动画。
                 // 仍在本次DamagePiece返回前撤掉破眼增益，多段技能的后续伤害不会读到旧防御。
                 RefreshGoState();

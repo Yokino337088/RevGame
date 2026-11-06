@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-11-06 11:33:37",
+  "buildTime": "2026-11-06 13:58:43",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_bosschapter01frames", "size": 380310 },
@@ -19,6 +19,7 @@
     { "name": "atlas_ui_tavern_imgbkatlas", "size": 491211 },
     { "name": "atlas_uibattle", "size": 283696 },
     { "name": "atlas_uimenus", "size": 407413 },
+    { "name": "atlas_yayacombatexpressions", "size": 787041 },
     { "name": "atlas_yayaexpressions", "size": 1180124 },
     { "name": "atlas_yayaidle24", "size": 5670530 },
     { "name": "audio_bgm", "size": 703889 },
@@ -56,9 +57,10 @@
     { "name": "character_yaya", "size": 13255 },
     { "name": "config_piece_art", "size": 4335 },
     { "name": "config_story", "size": 6906 },
-    { "name": "data_tables", "size": 29975 },
+    { "name": "config_yaya", "size": 2203 },
+    { "name": "data_tables", "size": 32377 },
     { "name": "endless_arena", "size": 1080933 },
-    { "name": "font_cjk", "size": 709956 },
+    { "name": "font_cjk", "size": 717529 },
     { "name": "lobby_cottage", "size": 584610 },
     { "name": "material_background", "size": 2722 },
     { "name": "material_board", "size": 2399 },
@@ -67,7 +69,7 @@
     { "name": "material_pieces", "size": 2497 },
     { "name": "material_ui", "size": 2829 },
     { "name": "shared_shaders", "size": 85934 },
-    { "name": "ui_chapters_shared", "size": 30136 },
+    { "name": "ui_chapters_shared", "size": 30168 },
     { "name": "ui_diagnostics", "size": 6672 },
     { "name": "ui_endless", "size": 16494 },
     { "name": "ui_items", "size": 8240 },
@@ -75,6 +77,7 @@
     { "name": "ui_lobby", "size": 11891 },
     { "name": "ui_settings", "size": 9338 },
     { "name": "ui_story", "size": 8699 },
-    { "name": "ui_victory", "size": 5972 }
+    { "name": "ui_victory", "size": 5972 },
+    { "name": "yaya_reaction", "size": 7358 }
   ]
 }

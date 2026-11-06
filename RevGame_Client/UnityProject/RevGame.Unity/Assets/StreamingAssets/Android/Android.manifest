@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 656396648
+CRC: 743150698
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -290,4 +290,17 @@ AssetBundleManifest:
         Dependency_0: shared_shaders
     Info_72:
       Name: atlas_yayaexpressions
+      Dependencies: {}
+    Info_73:
+      Name: yaya_reaction
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk
+    Info_74:
+      Name: config_yaya
+      Dependencies:
+        Dependency_0: atlas_yayaexpressions
+        Dependency_1: atlas_yayacombatexpressions
+    Info_75:
+      Name: atlas_yayacombatexpressions
       Dependencies: {}

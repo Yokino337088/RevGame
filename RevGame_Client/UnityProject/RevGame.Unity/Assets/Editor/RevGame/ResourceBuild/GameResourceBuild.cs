@@ -27,6 +27,7 @@ namespace RevGame.Editor
             { "UI/Panel/Victory", "ui_victory" },
             { "UI/Panel/Endless", "ui_endless" }, { "Endless", "endless_arena" },
             { "Characters/Yaya", "character_yaya" },
+            { "Characters/Yaya/Reaction", "yaya_reaction" }, { "Config/Yaya", "config_yaya" },
             { "Lobby", "lobby_cottage" },
             { "Fonts/CJK", "font_cjk" },
             { "Board", "battle_board" }, { "Pieces/Unit", "battle_units" },

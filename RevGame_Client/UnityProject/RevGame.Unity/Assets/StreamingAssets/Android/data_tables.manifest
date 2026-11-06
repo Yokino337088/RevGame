@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 352242152
+CRC: 2440241787
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 796bc7b2905019102710bc4db5eb1f5d
+    Hash: 6e1e2e1270aeb9b122fa918917119d8a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5ad585dd02dfb5016c0dad519eab8f49
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 796bc7b2905019102710bc4db5eb1f5d
+    Hash: 6e1e2e1270aeb9b122fa918917119d8a
 HashAppended: 0
 ClassTypes:
 - Class: 49
@@ -21,6 +21,7 @@ Assets:
 - Assets/GameRes/Data/EndlessRoute.txt
 - Assets/GameRes/Data/StarConfig.txt
 - Assets/GameRes/Data/EndlessBoss.txt
+- Assets/GameRes/Data/YayaReactionRule.txt
 - Assets/GameRes/Data/EndlessCombo.txt
 - Assets/GameRes/Data/EnemyReinforceConfig.txt
 - Assets/GameRes/Data/RewardConfig.txt
@@ -35,6 +36,7 @@ Assets:
 - Assets/GameRes/Data/PieceConfig.txt
 - Assets/GameRes/Data/EndlessBoon.txt
 - Assets/GameRes/Data/EndlessFormation.txt
+- Assets/GameRes/Data/YayaReactionLine.txt
 - Assets/GameRes/Data/BossSkillConfig.txt
 - Assets/GameRes/Data/ChapterConfig.txt
 - Assets/GameRes/Data/EventRotationConfig.txt

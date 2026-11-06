@@ -122,6 +122,7 @@ namespace RevGame.Bootstrap
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
             GameGmCommands.RegisterAll();
             StoryAutomationCommands.Register();
+            YayaReactionAutomation.Register();
             RevGame.Endless.EndlessAutomation.Register();
             // 诊断服务与启动宿主同寿命；正式包不注册，内部非开发包用显式REV_AUTOMATION。
             RevServices.Register<RevGame.Automation.GamePerformanceMonitor, RevGame.Automation.GamePerformanceMonitor>(owner: this);
@@ -178,6 +179,7 @@ namespace RevGame.Bootstrap
             RevServices.Unregister<RevGame.Automation.GamePerformanceMonitor>();
             GameGmCommands.UnregisterAll();
             StoryAutomationCommands.Unregister();
+            YayaReactionAutomation.Unregister();
             RevGame.Endless.EndlessAutomation.Unregister();
             RevServices.Unregister<RevGame.Automation.GameAutomationRunner>();
 

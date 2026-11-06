@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 133363396
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: c08cb44ba1488ae5602c021051128af1
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: c08cb44ba1488ae5602c021051128af1
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_26.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_08.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_02.png
+- Assets/GameRes/Atlases/YayaCombatExpressions.spriteatlasv2
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_14.png
+Dependencies: []

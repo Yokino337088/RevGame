@@ -177,6 +177,12 @@ namespace RevGame.Editor
             }
             if (path.Contains("/Art/Characters/Yaya/Expressions/"))
             {
+                // 仅局内新增差分不跟开场SO常驻；已用于剧情的六张仍复用原图集，图片永远只有一份。
+                string expression = Path.GetFileNameWithoutExtension(path);
+                if (expression == "YayaExpression_02" || expression == "YayaExpression_08" || expression == "YayaExpression_14" || expression == "YayaExpression_26")
+                {
+                    return "YayaCombatExpressions";
+                }
                 return "YayaExpressions";
             }
             if (path.Contains("/Art/Characters/Yaya/"))

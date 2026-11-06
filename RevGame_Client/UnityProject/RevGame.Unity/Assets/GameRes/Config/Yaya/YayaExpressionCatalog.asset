@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea4a85cf03af4224fb6e6a1d6ca5d34e, type: 3}
+  m_Name: YayaExpressionCatalog
+  m_EditorClassIdentifier: 
+  Entries:
+  - Id: 1
+    Sprite: {fileID: 21300000, guid: 1d50d4a123883f74d8b44dc1d21c7f74, type: 3}
+  - Id: 8
+    Sprite: {fileID: 21300000, guid: 95fba00c9eb38a740a7d0f157d50e7fb, type: 3}
+  - Id: 3
+    Sprite: {fileID: 21300000, guid: 7816f51d67145b8449685be1a0427861, type: 3}
+  - Id: 2
+    Sprite: {fileID: 21300000, guid: 573846bb5bdaa2143b08295984afb519, type: 3}
+  - Id: 14
+    Sprite: {fileID: 21300000, guid: 2efb7b4ef8d072745b9f19f8851e0ab3, type: 3}
+  - Id: 23
+    Sprite: {fileID: 21300000, guid: d3dffa351e3b27742bd1d404f0433d1f, type: 3}
+  - Id: 26
+    Sprite: {fileID: 21300000, guid: 232ef48988dd4c14db92971b5f74cd0e, type: 3}
+  - Id: 13
+    Sprite: {fileID: 21300000, guid: a86abd92c8e399244b7fb41143ac7c11, type: 3}
+  AtlasNames:
+  - YayaExpressions
+  - YayaCombatExpressions

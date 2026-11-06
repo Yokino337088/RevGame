@@ -323,6 +323,11 @@ Art/UI/UI_Tavern_btnClose|atlas_uimenus|UI_Tavern_btnClose
 Art/UI/UI_Tavern_Handle|atlas_uimenus|UI_Tavern_Handle
 Art/UI/UI_Tip_imgBK|atlas_uimenus|UI_Tip_imgBK
 Atlases/UIMenus|atlas_uimenus|UIMenus
+Art/Characters/Yaya/Expressions/YayaExpression_02|atlas_yayacombatexpressions|YayaExpression_02
+Art/Characters/Yaya/Expressions/YayaExpression_08|atlas_yayacombatexpressions|YayaExpression_08
+Art/Characters/Yaya/Expressions/YayaExpression_14|atlas_yayacombatexpressions|YayaExpression_14
+Art/Characters/Yaya/Expressions/YayaExpression_26|atlas_yayacombatexpressions|YayaExpression_26
+Atlases/YayaCombatExpressions|atlas_yayacombatexpressions|YayaCombatExpressions
 Art/Characters/Yaya/Expressions/YayaExpression_01|atlas_yayaexpressions|YayaExpression_01
 Art/Characters/Yaya/Expressions/YayaExpression_03|atlas_yayaexpressions|YayaExpression_03
 Art/Characters/Yaya/Expressions/YayaExpression_11|atlas_yayaexpressions|YayaExpression_11
@@ -529,6 +534,7 @@ Characters/Yaya/YayaIdle24Clip|character_yaya|YayaIdle24Clip
 Characters/Yaya/YayaIdle24Controller|character_yaya|YayaIdle24Controller
 Config/Art/PieceArt|config_piece_art|PieceArt
 Config/Story/StoryBook|config_story|StoryBook
+Config/Yaya/YayaExpressionCatalog|config_yaya|YayaExpressionCatalog
 Data/BalanceRule|data_tables|BalanceRule
 Data/BattleEventConfig|data_tables|BattleEventConfig
 Data/BattleText|data_tables|BattleText
@@ -551,6 +557,8 @@ Data/PrepBuffConfig|data_tables|PrepBuffConfig
 Data/RewardBoostConfig|data_tables|RewardBoostConfig
 Data/RewardConfig|data_tables|RewardConfig
 Data/StarConfig|data_tables|StarConfig
+Data/YayaReactionLine|data_tables|YayaReactionLine
+Data/YayaReactionRule|data_tables|YayaReactionRule
 ChapterBackground/EndlessTemple|endless_arena|EndlessTemple
 Endless/EndlessArena|endless_arena|EndlessArena
 Endless/EndlessBackground|endless_arena|EndlessBackground
@@ -642,3 +650,4 @@ UI/Panel/Story/StoryPanel|ui_story|StoryPanel
 UI/Panel/Story/TutorialPanel|ui_story|TutorialPanel
 UI/Panel/Victory/BossIntroPanel|ui_victory|BossIntroPanel
 UI/Panel/Victory/BossVictoryPanel|ui_victory|BossVictoryPanel
+Characters/Yaya/Reaction/YayaReaction|yaya_reaction|YayaReaction

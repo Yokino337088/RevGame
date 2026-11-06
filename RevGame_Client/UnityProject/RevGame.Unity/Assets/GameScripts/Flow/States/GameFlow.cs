@@ -218,6 +218,10 @@ namespace RevGame.Flow
                     {
                         throw new InvalidOperationException("无法启动无尽逻辑");
                     }
+                    if (RevLogic.Start<EndlessYayaReactionLogic>() == null)
+                    {
+                        throw new InvalidOperationException("无法启动无尽鸦鸦互动");
+                    }
                 }
                 if (_screen == GameScreen.Battle)
                 {
@@ -254,6 +258,10 @@ namespace RevGame.Flow
                     if (RevLogic.Start<BattleLogic>() == null)
                     {
                         throw new InvalidOperationException("无法启动战斗域逻辑");
+                    }
+                    if (RevLogic.Start<CampaignYayaReactionLogic>() == null)
+                    {
+                        throw new InvalidOperationException("无法启动六章鸦鸦互动");
                     }
                 }
             }

@@ -2,6 +2,7 @@ using System;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Pieces;
+using Revolution;
 using UnityEngine;
 namespace RevGame.Endless
 {
@@ -467,7 +468,9 @@ namespace RevGame.Endless
                 Run.heartShieldReady = Run.seconds + V("MinuteSeconds");
             }
             Run.heartDamageEvents++;
+            float heartBefore = Run.heart;
             Run.heart = Mathf.Max(0, Run.heart - amount * scale);
+            RevEvent.DispatchEvent<YayaCombatFact>(Events.YayaCombatObserved, new YayaCombatFact(2, GameSide.Player, Mathf.CeilToInt(heartBefore - Run.heart)));
             Run.lastDamage = source;
             Impact(new Vector2(4, 9), new Vector2(4, 4), 6, 1);
         }

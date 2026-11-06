@@ -390,10 +390,14 @@ namespace RevGame.Endless
             {
                 serial = serial, target = target, damage = shown, position = position, side = side, kind = kind
             };
+            RevEvent.DispatchEvent<YayaCombatFact>(Events.YayaCombatObserved, new YayaCombatFact(2, side, shown));
         }
         /// <summary>记一条死亡。只在真正死亡处调用；三合一吃掉、进盘转身份都不算死亡。</summary>
         private void ReportDeath(int id, Vector2 position, bool horde)
         {
+            // 仍在Units移除前取得身份；外围敌潮必为敌方，三合一和主动拆子不会走此出口。
+            GameSide side = horde ? GameSide.Enemy : Units.Find(id).Piece.Side;
+            RevEvent.DispatchEvent<YayaCombatFact>(Events.YayaCombatObserved, new YayaCombatFact(2, side, 0, side == GameSide.Enemy ? 1 : 0, side == GameSide.Player ? 1 : 0));
             int serial = ++DeathSerial;
             DeathReceipts[serial % DeathReceipts.Length] = new EndlessDeathReceipt
             {

@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 1404364572
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ba122e804e3d2afc565b70fe16d844c7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: a826259da4f5a5227648bf5b592d28d8
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: ba122e804e3d2afc565b70fe16d844c7
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: ea4a85cf03af4224fb6e6a1d6ca5d34e, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Assembly-CSharp
+  ClassName: RevGame.Data.YayaExpressionCatalog/Entry
+Assets:
+- Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_yayacombatexpressions
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_yayaexpressions

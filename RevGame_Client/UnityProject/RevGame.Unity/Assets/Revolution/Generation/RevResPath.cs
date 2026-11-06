@@ -88,10 +88,12 @@ namespace Revolution
         public const string ChapterBackground = "ChapterBackground/";
         public const string Characters = "Characters/";
         public const string Characters_Yaya = "Characters/Yaya/";
+        public const string Characters_Yaya_Reaction = "Characters/Yaya/Reaction/";
         public const string Config = "Config/";
         public const string Config_Art = "Config/Art/";
         public const string Config_Boss = "Config/Boss/";
         public const string Config_Story = "Config/Story/";
+        public const string Config_Yaya = "Config/Yaya/";
         public const string Data = "Data/";
         public const string Effects = "Effects/";
         public const string Effects_Combat = "Effects/Combat/";
