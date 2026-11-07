@@ -48,6 +48,7 @@ internal static class Program
         Check(service.Submit(GoAction.Play, 4, 4) && !service.CanAct, "pending command locks action");
         FantasyGoTransport.Latest.Push(state);
         Check(!service.CanAct && service.Core.Sequence == 0, "older push cannot unlock unacknowledged command");
+        Check(service.Status != "服务器已连接" && !service.ShouldShowStatusNotice, "重复快照不覆盖待回执状态或触发已连接横幅");
         FantasyGoTransport.Latest.Reject("retry");
         Check(service.Connected && service.CanAct && service.Core.Sequence == 0, "business rejection unlocks without disconnecting or mutating board");
         service.StartServer("127.0.0.1:20000", "test");

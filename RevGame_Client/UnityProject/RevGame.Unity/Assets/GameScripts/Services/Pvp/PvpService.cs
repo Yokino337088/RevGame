@@ -346,7 +346,19 @@ namespace RevGame.Pvp
                 _resumeToken = _server.ResumeToken;
                 Queued = state.Phase == "queued";
                 RoomId = state.RoomId ?? "";
-                Status = string.IsNullOrEmpty(state.Reason) ? (Queued ? "正在匹配，可随时取消" : "服务器已连接") : state.Reason;
+                // 快照是事实同步，不是连接事件。不能每手把状态重置为“已连接”，再被UI当作新通知。
+                if (!string.IsNullOrEmpty(state.Reason))
+                {
+                    Status = state.Reason;
+                }
+                else if (Queued)
+                {
+                    Status = "正在匹配，可随时取消";
+                }
+                else if (string.IsNullOrEmpty(RoomId))
+                {
+                    Status = "服务器已连接";
+                }
                 if (string.IsNullOrEmpty(RoomId))
                 {
                     Revision++;
@@ -374,6 +386,10 @@ namespace RevGame.Pvp
                 _awaiting = _pendingSequence > Core.Sequence;
                 if (!_awaiting)
                 {
+                    if (Status == "正在同步落子…")
+                    {
+                        Status = "落子已同步";
+                    }
                     _pendingSequence = 0;
                 }
                 _recoveringServer = false;

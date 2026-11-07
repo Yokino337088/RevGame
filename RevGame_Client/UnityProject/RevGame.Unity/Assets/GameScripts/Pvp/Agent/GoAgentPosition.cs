@@ -5,6 +5,14 @@ using UnityEngine;
 
 namespace RevGame.Pvp.Agent
 {
+    /// <summary>仅携带本地白名单原因，不保存响应正文、标头或Key，日志可安全输出。</summary>
+    internal sealed class GoAgentRequestException : Exception
+    {
+        internal GoAgentRequestException(string reason) : base(reason)
+        {
+        }
+    }
+
     /// <summary>模型只选择候选ID。动作身份、棋谱序号、用时和结果指纹全部由本地规则生成。</summary>
     public sealed class GoAgentAction
     {
@@ -76,7 +84,7 @@ namespace RevGame.Pvp.Agent
             {
                 text.Append(action.Id).Append(' ');
             }
-            text.Append("\n只返回json对象，例如{\"actionId\":\"pass\"}，必须选择本次候选之一。避免无意义填满己方眼位；无有益着手时停一手。");
+            text.Append("\n只返回json对象{\"actionId\":候选ID}。避免填己方眼位，无有益着手可pass。");
             result.Prompt = text.ToString();
             return result;
         }

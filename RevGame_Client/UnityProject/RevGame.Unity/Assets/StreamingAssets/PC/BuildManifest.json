@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-11-07 00:13:05",
+  "buildTime": "2026-11-07 10:39:45",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_bosschapter01frames", "size": 380310 },
@@ -62,7 +62,7 @@
     { "name": "config_yaya", "size": 2203 },
     { "name": "data_tables", "size": 32152 },
     { "name": "endless_arena", "size": 66978 },
-    { "name": "font_cjk", "size": 728526 },
+    { "name": "font_cjk", "size": 727454 },
     { "name": "lobby_cottage", "size": 584610 },
     { "name": "material_background", "size": 2722 },
     { "name": "material_board", "size": 2399 },

@@ -27,7 +27,38 @@ namespace RevGame.Pvp
         private GoSide _requestSide;
         private double _requestStarted;
         // 工程通信护栏，防平台HTTP超时未回调；不改变导表的对局计时规则。
-        private const double DecisionDeadlineSeconds = 25;
+        private const double DecisionDeadlineSeconds = 60;
+        private double _decisionBudget;
+        private int _consecutiveFailures;
+        private double _cooldownUntil;
+        public string AgentLastFailure
+        {
+            get;
+            private set;
+        } = "";
+        public double AgentLastSeconds
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>一个时钟预算内只尝试一次；连续失败进入冷却，避免每手都付出完整等待。</summary>
+        private void AgentFailure(string reason)
+        {
+            AgentLastSeconds = Math.Max(0, _clock.Elapsed.TotalSeconds - _requestStarted);
+            AgentLastFailure = reason;
+            _consecutiveFailures++;
+            if (_consecutiveFailures >= 3)
+            {
+                _cooldownUntil = _clock.Elapsed.TotalSeconds + 60;
+            }
+            AgentStatus = reason + "（" + AgentLastSeconds.ToString("F1") + "秒），本手使用本地策略";
+            Revolution.RevLog.Warn("Agent 序号=" + Core.Sequence + " 原因=" + reason + " 用时秒=" + AgentLastSeconds.ToString("F1"), "PvpAgent");
+            _agentRequest?.Dispose();
+            _agentRequest = null;
+            _fallbackSequence = Core.Sequence;
+            _fallbackSide = _requestSide;
+        }
         // 失败仅回退当前一手，下个回合可重新请求。序号避免每帧重复付费重试。
         private int _fallbackSequence = -1;
         private GoSide _fallbackSide;
@@ -58,6 +89,8 @@ namespace RevGame.Pvp
                 return false;
             }
             CancelAgent();
+            _consecutiveFailures = 0;
+            _cooldownUntil = 0;
             if (!enabled)
             {
                 AgentControlsHumanSeat = false;
@@ -140,13 +173,9 @@ namespace RevGame.Pvp
             {
                 CancelAgent();
             }
-            if (_agentRequest != null && _clock.Elapsed.TotalSeconds - _requestStarted >= DecisionDeadlineSeconds)
+            if (_agentRequest != null && _clock.Elapsed.TotalSeconds - _requestStarted >= _decisionBudget)
             {
-                _agentRequest.Dispose();
-                _agentRequest = null;
-                _fallbackSequence = Core.Sequence;
-                _fallbackSide = side;
-                AgentStatus = "Agent请求超过等待上限，本手改用本地合法策略";
+                AgentFailure("达到本手等待预算");
             }
             // Fantasy心跳会短暂设置Busy，不能把传输等待当成撤销授权，否则长思考会被反复取消并计费。
             // 保留同一请求，等传输空闲后再消费响应；只有真正断线/换盘/退出才取消。
@@ -177,8 +206,18 @@ namespace RevGame.Pvp
             {
                 if (_agentRequest == null)
                 {
+                    if (_clock.Elapsed.TotalSeconds < _cooldownUntil)
+                    {
+                        AgentStatus = "云端连续失败冷却中，使用本地合法策略";
+                        ApplyAgentFallback(side);
+                        return;
+                    }
                     _agentPosition = GoAgentPosition.Create(Core, side);
                     _requestStarted = _clock.Elapsed.TotalSeconds;
+                    // 留出提交与同步余量。读秒较短时主动回退，不能因扩大网络等待而白送超时负。
+                    _decisionBudget = Core.Phase == GoPhase.Playing
+                        ? Math.Min(DecisionDeadlineSeconds, Math.Max(.05, _goClock.PeekRemaining(side, _requestStarted - _turnStarted) * .8))
+                        : DecisionDeadlineSeconds;
                     _requestGeneration = _agentGeneration;
                     _requestSide = side;
                     _agentRequest = AgentRequestFactory(AgentSettings, _agentPosition);
@@ -196,10 +235,13 @@ namespace RevGame.Pvp
                 string content = _agentRequest.ReadContent();
                 if (!_agentPosition.TryReadAction(content, out GoAgentAction selected))
                 {
-                    throw new InvalidOperationException("模型未返回当前候选中的合法动作");
+                    throw new GoAgentRequestException("模型返回非法动作或空白JSON");
                 }
                 _agentRequest.Dispose();
                 _agentRequest = null;
+                AgentLastSeconds = _clock.Elapsed.TotalSeconds - _requestStarted;
+                AgentLastFailure = "";
+                _consecutiveFailures = 0;
                 bool accepted = SubmitActor(selected.Kind, side, selected.X, selected.Y);
                 AgentStatus = accepted ? "Agent 动作已提交" : "Agent 动作被拒绝：" + Status;
                 if (!accepted)
@@ -208,14 +250,10 @@ namespace RevGame.Pvp
                     _fallbackSide = side;
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                // 不输出供应商响应/异常正文：它可能含请求标头或敏感信息。
-                _agentRequest?.Dispose();
-                _agentRequest = null;
-                AgentStatus = "云端请求失败或响应无效：本手改用本地策略；请检查 Key、模型、额度和网络";
-                _fallbackSequence = Core.Sequence;
-                _fallbackSide = side;
+                // 仅输出受控分类；普通异常正文可能包含供应商响应或请求信息，不能直接进入日志。
+                AgentFailure(error is GoAgentRequestException ? error.Message : "请求或响应处理失败");
             }
         }
 

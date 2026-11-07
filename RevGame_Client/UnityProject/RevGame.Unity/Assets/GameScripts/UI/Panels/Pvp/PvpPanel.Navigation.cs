@@ -82,7 +82,10 @@ namespace RevGame.Pvp
             else if (Service.Status != _seenStatus && !string.IsNullOrEmpty(Service.Status))
             {
                 _seenStatus = Service.Status;
-                PvpNoticePanel.ShowMessage(_seenStatus);
+                if (Service.ShouldShowStatusNotice)
+                {
+                    PvpNoticePanel.ShowMessage(_seenStatus);
+                }
             }
             var invitation = Service.Lan?.IncomingInvitation;
             Show(_invite, invitation != null && Service.Core == null);

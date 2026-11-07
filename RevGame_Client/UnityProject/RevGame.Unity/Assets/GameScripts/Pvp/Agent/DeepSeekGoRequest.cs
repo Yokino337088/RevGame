@@ -23,7 +23,7 @@ namespace RevGame.Pvp.Agent
     {
         private UnityWebRequest _request;
         // 通信保护参数是工程上限，不是对局规则；实际超时胜负始终由原有GoClock决定。
-        private const int RequestTimeoutSeconds = 20;
+        private const int RequestTimeoutSeconds = 65;
         [Serializable] private sealed class Message
         {
             public string role, content;
@@ -91,14 +91,36 @@ namespace RevGame.Pvp.Agent
         {
             if (!IsDone || _request.result != UnityWebRequest.Result.Success)
             {
-                throw new InvalidOperationException("DeepSeek请求未成功");
+                string kind = _request == null ? "已取消" : _request.responseCode == 401 || _request.responseCode == 403 ? "认证失败" :
+                    _request.responseCode == 402 ? "余额不足" : _request.responseCode == 429 ? "供应商限流" :
+                    _request.responseCode >= 500 ? "供应商服务错误" : _request.responseCode >= 400 ? "请求参数错误" : NetworkFailure(_request.error);
+                throw new GoAgentRequestException(kind);
             }
             Reply reply = JsonUtility.FromJson<Reply>(_request.downloadHandler.text);
             if (reply?.choices == null || reply.choices.Length != 1 || reply.choices[0].finish_reason != "stop")
             {
-                throw new InvalidOperationException("DeepSeek响应不完整");
+                throw new GoAgentRequestException("响应截断或格式不完整");
             }
             return reply.choices[0].message?.content;
+        }
+
+        /// <summary>底层异常只映射到白名单分类，不把响应正文或认证标头带进日志。</summary>
+        private static string NetworkFailure(string error)
+        {
+            string normalized = (error ?? "").ToLowerInvariant();
+            if (normalized.Contains("timeout") || normalized.Contains("timed out"))
+            {
+                return "HTTP等待超时";
+            }
+            if (normalized.Contains("resolve"))
+            {
+                return "DNS解析失败";
+            }
+            if (normalized.Contains("ssl") || normalized.Contains("tls") || normalized.Contains("certificate"))
+            {
+                return "TLS或证书失败";
+            }
+            return "网络连接失败";
         }
 
         public void Dispose()

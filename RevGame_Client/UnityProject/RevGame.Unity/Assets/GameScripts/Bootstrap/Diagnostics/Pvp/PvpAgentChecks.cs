@@ -160,7 +160,7 @@ internal static class PvpAgentChecks
         s.AgentRequestFactory = (_, position) => response;
         s.Submit(GoAction.Play, 4, 4);
         s.Poll();
-        typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -30d);
+        typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -120d);
         s.Poll();
         Assert(response.Disposed && s.Core.Sequence == 2, "HTTP永不结束也须绝对超时并完成本地合法回退");
         s.Dispose();

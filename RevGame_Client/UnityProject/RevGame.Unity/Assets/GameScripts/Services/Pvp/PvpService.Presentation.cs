@@ -13,6 +13,15 @@ namespace RevGame.Pvp
         public int SuggestionCount { get { return _suggestionCount; } }
         public bool CanAct { get { return Core != null && !_awaiting && !_leaving && ReplayStep < 0 && (Mode == PvpConnectionMode.Local || Connected) && (Mode != PvpConnectionMode.Server || (_server != null && !_server.Busy)); } }
 
+        /// <summary>对局普通状态留在HUD，横幅只接收菜单提示和需要玩家处理的异常。</summary>
+        public bool ShouldShowStatusNotice
+        {
+            get
+            {
+                return Status != "服务器已连接" && (Core == null || Status.StartsWith("连接不可用") || Status.StartsWith("操作未被接受"));
+            }
+        }
+
         /// <summary>只消耗本地建议次数；三候选是启发式而非胜率预测，与两端规则裁判完全分开。</summary>
         public void RequestHint()
         {

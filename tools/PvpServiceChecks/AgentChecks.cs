@@ -129,9 +129,40 @@ internal static class AgentChecks
         s.AgentRequestFactory = (_, position) => response;
         s.Submit(GoAction.Play, 4, 4);
         s.Poll();
-        typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -30d);
+        typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -120d);
         s.Poll();
         Assert(response.Disposed && s.Core.Sequence == 2, "HTTP永不结束也须绝对超时并完成本地合法回退");
+        s.Dispose();
+        s = new PvpService();
+        s.Begin(new PvpConfig());
+        s.StartServer("127.0.0.1:20000", "notice-check");
+        var synced = new Fantasy.GoRelayState { Phase = "playing", RoomId = "room", CoreVersion = PvpService.ProtocolVersion, RulesJson = s.Config.RulesJson, MySide = 1, BlackName = "B", WhiteName = "W" };
+        RevGame.Pvp.Networking.FantasyGoTransport.Latest.Push(synced);
+        Assert(!s.ShouldShowStatusNotice, "对局快照不能触发已连接横幅");
+        s.ConfigureAgent("fake", "fixture", true);
+        s.AgentRequestFactory = (_, position) => throw new GoAgentRequestException("认证失败");
+        s.SetAgentControl(true);
+        s.Poll();
+        Assert(s.AgentLastFailure == "认证失败", "认证失败不能伪装成超时");
+        s.Dispose();
+        s = new PvpService();
+        s.Begin(new PvpConfig());
+        s.StartComputer();
+        s.ConfigureAgent("fake", "fixture", true);
+        int attempts = 0;
+        s.AgentRequestFactory = (_, position) => { attempts++; throw new GoAgentRequestException("供应商限流"); };
+        for (int round = 0; round < 4; round++)
+        {
+            bool moved = false;
+            for (int point = 0; point < 81 && !moved; point++)
+            {
+                moved = s.Submit(GoAction.Play, point % 9, point / 9);
+            }
+            Assert(moved, "黑方须有合法输入");
+            s.Poll();
+            s.Poll();
+        }
+        Assert(attempts == 3 && s.Core.Sequence == 8, "连续限流后冷却，第4手无需再次等待云端");
         s.Dispose();
         Console.WriteLine("PASS: Agent 人机闭环、权限、取消、单请求、非法输出、本地回退、候选隔离。");
     }
