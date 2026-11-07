@@ -137,6 +137,8 @@ namespace RevGame.Editor
                 // 章节背景是独立 GPU 纹理（显式 _ChapterTex 采样），按需租约，不纳入 Sprite 图集预热。
                 // 第一章也归档进 ChapterBackground，但仍是 Sprite，必须保留图集；其余五章是独立采样的 Default 纹理。
                 .Where(p => AssetImporter.GetAtPath(p) is TextureImporter importer
+                    // 决斗场景直接持有序列帧与全 UV 擂台图，由场景打包；引用边界由 GameResourceUsage.Validate 检查。
+                    && !GameResourceUsage.IsDuelSceneArt(p)
                     // 激光是LineRenderer非Sprite采样纹理，保持完整0～1UV；禁止误归Sprite图集。
                     && !p.StartsWith("Assets/GameRes/HelperTextures/", StringComparison.Ordinal)
                     // 大厅小屋原画和RGB遮罩由专用Shader采样完整UV，非Sprite，随lobby_cottage独立包交付。

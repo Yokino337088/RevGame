@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-11-07 16:14:58",
+  "buildTime": "2026-11-07 21:49:20",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 33803 },
     { "name": "atlas_bosschapter01frames", "size": 380310 },
@@ -64,7 +64,7 @@
     { "name": "config_yaya", "size": 2203 },
     { "name": "data_tables", "size": 33222 },
     { "name": "endless_arena", "size": 66978 },
-    { "name": "font_cjk", "size": 733131 },
+    { "name": "font_cjk", "size": 734698 },
     { "name": "lobby_cottage", "size": 584610 },
     { "name": "material_background", "size": 2722 },
     { "name": "material_board", "size": 2399 },
@@ -72,8 +72,8 @@
     { "name": "material_combat", "size": 4078 },
     { "name": "material_pieces", "size": 2458 },
     { "name": "material_ui", "size": 2829 },
-    { "name": "pvp_arena", "size": 5630 },
-    { "name": "shared_shaders", "size": 91471 },
+    { "name": "pvp_arena", "size": 5277 },
+    { "name": "shared_shaders", "size": 95140 },
     { "name": "ui_chapters_shared", "size": 30138 },
     { "name": "ui_diagnostics", "size": 6672 },
     { "name": "ui_endless", "size": 16502 },

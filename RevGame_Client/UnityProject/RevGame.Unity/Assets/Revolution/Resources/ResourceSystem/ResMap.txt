@@ -644,6 +644,8 @@ GameShader/Endless/EndlessShieldZone|shared_shaders|EndlessShieldZone
 GameShader/Endless/EndlessSwordAura|shared_shaders|EndlessSwordAura
 GameShader/Endless/EndlessThrust|shared_shaders|EndlessThrust
 GameShader/Pieces/ArcanePiece|shared_shaders|ArcanePiece
+GameShader/Pvp/PvpArenaBackdrop|shared_shaders|PvpArenaBackdrop
+GameShader/Pvp/PvpDuelStrike|shared_shaders|PvpDuelStrike
 GameShader/Pvp/PvpGoBoard|shared_shaders|PvpGoBoard
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
 GameShader/UI/SlimeTutorialHighlight|shared_shaders|SlimeTutorialHighlight

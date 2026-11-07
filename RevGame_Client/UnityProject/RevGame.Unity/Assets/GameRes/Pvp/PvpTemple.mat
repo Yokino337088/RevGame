@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PvpTemple
-  m_Shader: {fileID: 4800000, guid: 0bc2ff0acae7ff94d94abeca2b2bb2da, type: 3}
+  m_Shader: {fileID: 4800000, guid: 2cec418f2f8f2d841a51c078a52e707e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -23,39 +23,13 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _ChapterTex:
-        m_Texture: {fileID: 2800000, guid: c6c4997676fb0a34a8dc0877c3947603, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: c6c4997676fb0a34a8dc0877c3947603, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Aspect: 1.7777778
-    - _BoardProtection: 0.85
-    - _Clock: 0
-    - _Distortion: 0.0015
-    - _DustStrength: 1
-    - _EffectTime: -1
-    - _Glow: 0.72
-    - _GodRays: 0.95
-    - _HaloStrength: 0.9
-    - _Particles: 0.32
-    - _PreviewTime: -1
-    - _RingRadius: 0.29
-    - _RuneStrength: 0.55
-    - _Speed: 0.65
-    - _Strength: 0.62
-    - _Theme: 0
-    - _Transition: 1
-    m_Colors:
-    - _Accent: {r: 1, g: 0.8, b: 0.31999996, a: 1}
-    - _BoardRect: {r: 0, g: 0, b: 0, a: 0}
-    - _Focus: {r: 0.5, g: 0.5, b: 0, a: 0}
-    - _LightOrigin: {r: 0.5, g: 1.18, b: 0, a: 0}
-    - _RuneColor: {r: 1, g: 0.76, b: 0.27999997, a: 1}
-    - _Secondary: {r: 1, g: 0.96999997, b: 0.82, a: 1}
-    - _Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Strength: 1
+    - _Style: 1
+    m_Colors: []
   m_BuildTextureStacks: []

@@ -114,6 +114,15 @@ namespace RevGame.Editor
             return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildMatchHud").Invoke(null, null);
         }
 
+        /// <summary>给 RevCLI 的固定入口，只执行项目中已审查的双背景配方。</summary>
+        [RevAutomationAction("game.pvp.arena-backgrounds", Environment = "edit", Keys = new string[0], Description = "更新决斗擂台与围棋无尽神殿的背景 Shader 绑定")]
+        public static object ArenaBackgrounds(RevAutomationRequest request)
+        {
+            string result = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("BuildArenaBackgrounds").Invoke(null, null);
+            return new Result { text = result };
+        }
+
         [Serializable]
         private sealed class Result
         {

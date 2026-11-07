@@ -97,13 +97,7 @@ namespace RevGame.Editor
         }
         private static void BuildBoard()
         {
-            Material existing = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Endless/EndlessBackground.mat");
-            if (existing == null)
-            {
-                throw new InvalidOperationException("缺少无尽神殿背景材质");
-            }
-            Material background = Material("PvpTemple", existing.shader);
-            background.CopyPropertiesFromMaterial(existing);
+            Material background = GetTempleArenaMaterial();
             Material board = Material("PvpIvoryBoard", Shader.Find("RevGame/Pvp/IvoryGoBoard"));
             Material endlessGrid = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Endless/EndlessGrid.mat");
             if (endlessGrid == null)

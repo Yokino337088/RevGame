@@ -52,10 +52,8 @@ namespace RevGame.Editor
                 scaler.referenceResolution = new Vector2(1920, 1080);
                 scaler.matchWidthOrHeight = .5f;
                 var view = root.AddComponent<PvpDuelView>();
-                var backdrop = Rect("TempleBackdrop", root.transform, 0, 0, 1, 1).gameObject.AddComponent<Image>();
-                backdrop.sprite = LoadDuelSprite("Temple");
-                backdrop.raycastTarget = false;
-                backdrop.preserveAspect = false;
+                var backdrop = Rect(DuelBackdropName, root.transform, 0, 0, 1, 1).gameObject.AddComponent<Image>();
+                ApplyBoxingRing(backdrop);
                 view.First = AddFighter("BlackFighter", root.transform, -.25f);
                 view.Second = AddFighter("WhiteFighter", root.transform, .25f);
                 view.FirstAnimator = AddActorAnimation(view.First, "");

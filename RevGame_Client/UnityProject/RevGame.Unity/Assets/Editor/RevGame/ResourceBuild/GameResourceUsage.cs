@@ -174,6 +174,17 @@ namespace RevGame.Editor
             {
                 bool marked = !string.IsNullOrEmpty(row.markedBundle);
 
+                // 决斗随内置场景直接加载角色序列帧和擂台。禁止把这组图片再分进AB或接到其他入口，
+                // 否则播放器会重复携带资源，擂台的 Shader 也会误把图集坐标当成原画坐标。
+                if (IsDuelSceneArt(row.path))
+                {
+                    if (marked || row.referencedBy.Any(owner => owner != "Assets/Scenes/PvpDuelScene.unity"))
+                    {
+                        throw new InvalidOperationException("内置决斗美术只能由决斗场景直接引用：" + row.path);
+                    }
+                    continue;
+                }
+
                 if (row.required != marked)
                 {
                     throw new InvalidOperationException("资源引用与AB标记不一致：" + row.path + "，需要=" + row.required + "，包=" + row.markedBundle);
@@ -189,6 +200,12 @@ namespace RevGame.Editor
                 }
             }
             return "保留" + report.artUsed + "/" + report.artTotal + "个Art资源，排除" + report.artExcluded + "个，打包" + report.atlasPacked + "/" + report.atlasTotal + "张图集";
+        }
+
+        /// <summary>识别只随内置决斗场景交付的美术目录。它们不走 AB，但仍接受真实引用与包标记校验。</summary>
+        internal static bool IsDuelSceneArt(string path)
+        {
+            return path.StartsWith(ArtRoot + "/Pvp/Duel/", StringComparison.Ordinal);
         }
     }
 }
