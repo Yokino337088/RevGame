@@ -61,6 +61,8 @@ namespace Revolution
         public const string Art_Pieces_Player_Priest = "Art/Pieces/Player/Priest/";
         public const string Art_Pieces_Player_Shield = "Art/Pieces/Player/Shield/";
         public const string Art_Pieces_Player_Swordman = "Art/Pieces/Player/Swordman/";
+        public const string Art_Pvp = "Art/Pvp/";
+        public const string Art_Pvp_Duel = "Art/Pvp/Duel/";
         public const string Art_Status = "Art/Status/";
         public const string Art_Status_Encircled = "Art/Status/Encircled/";
         public const string Art_Status_EyeBlink = "Art/Status/EyeBlink/";
