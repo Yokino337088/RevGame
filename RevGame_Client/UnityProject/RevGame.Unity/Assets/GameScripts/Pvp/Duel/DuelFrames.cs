@@ -92,7 +92,7 @@ namespace RevGame.Pvp.Duel
             }
             if (_inputMask == 3 && now >= _nextSeal && Snapshot.Result == 0)
             {
-                int packed = _input[0] | (_input[1] << 4);
+                int packed = _input[0] | (_input[1] << DuelCorePipe.InputBits);
                 _judge.Append(Frame + 1, packed);
                 _frames.Add(packed);
                 _inputMask = 0;

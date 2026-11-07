@@ -7,7 +7,7 @@
 
 namespace
 {
-    constexpr int WireVersion = 1;
+    constexpr int WireVersion = 2;
     constexpr int Capacity = 128;
     constexpr int OutputBytes = RevGameCore::SnapshotWords * 4;
 
@@ -108,7 +108,7 @@ int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
     const auto frame = ReadWord(data + 8);
     const auto first = ReadWord(data + 12);
     const auto second = ReadWord(data + 16);
-    if (frame != static_cast<uint32_t>(pipe->LastSealed + 1) || first > 15 || second > 15 ||
+    if (frame != static_cast<uint32_t>(pipe->LastSealed + 1) || first > 31 || second > 31 ||
         (first & 3u) == 3u || (second & 3u) == 3u)
     {
         return -1;

@@ -16,6 +16,7 @@ namespace RevGame.Pvp
         private int _duelReadyMask;
         private int _duelQueuedAction;
         private int _duelDirection;
+        private bool _duelQueuedJump;
         private int _duelIntent;
         private int _duelIntentFrame;
         private double _duelNextSend;
@@ -123,9 +124,11 @@ namespace RevGame.Pvp
             _duelSceneReady = DuelId.Length != 0;
         }
 
-        public void SetDuelInput(int direction, int action)
+        public void SetDuelInput(int direction, int action, bool jump = false)
         {
             _duelDirection = direction < 0 ? 1 : direction > 0 ? 2 : 0;
+            // 点按可能发生在两个网络帧之间。锁存跳跃，直到它被打包进下一帧意图。
+            _duelQueuedJump |= jump;
             if (action >= 1 && action <= 3)
             {
                 _duelQueuedAction = action;
@@ -157,7 +160,8 @@ namespace RevGame.Pvp
                 if (_duelIntentFrame != next)
                 {
                     _duelIntentFrame = next;
-                    _duelIntent = _duelDirection | (_duelQueuedAction << 2);
+                    _duelIntent = _duelDirection | (_duelQueuedAction << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
+                    _duelQueuedJump = false;
                     _duelQueuedAction = 0;
                 }
                 request.inputFrame = _duelIntentFrame;
@@ -289,6 +293,7 @@ namespace RevGame.Pvp
             _duelReadyMask = 0;
             _duelQueuedAction = 0;
             _duelDirection = 0;
+            _duelQueuedJump = false;
             _duelIntent = 0;
             _duelIntentFrame = 0;
             _duelNextSend = 0;

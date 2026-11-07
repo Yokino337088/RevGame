@@ -1,3 +1,6 @@
 Moss swordsman by SpriteCanvas, CC0 1.0. https://spritecanvas.com/free-sprite-sheets/swordsman/
 Idle, run and attack sheets cropped/resampled. Jab uses first combo beat, skill uses remaining combo, ultimate uses ground slam.
 Temple backdrop supplied by RevGame project owner.
+Assassin animation: Kaori by Sprite Kitchen. Author-published animation previews sampled for use in this game. https://spritekitchen.com/blog/kaori-animated-oni-masked-assassin/
+Strike animation: SpriteCanvas Effects, CC0 1.0. https://spritecanvas.com/free-sprite-sheets/effects/
+Imported frames are resized for the scene. Strike shaders and action playback belong to RevGame.

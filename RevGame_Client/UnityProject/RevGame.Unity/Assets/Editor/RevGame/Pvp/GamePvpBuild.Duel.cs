@@ -52,16 +52,18 @@ namespace RevGame.Editor
                 backdrop.sprite = LoadDuelSprite("Temple");
                 backdrop.raycastTarget = false;
                 backdrop.preserveAspect = false;
-                AddCage(root.transform);
                 view.First = AddFighter("BlackFighter", root.transform, -.25f);
                 view.Second = AddFighter("WhiteFighter", root.transform, .25f);
-                view.Idle = LoadDuelSequence("Idle");
-                view.Run = LoadDuelSequence("Run");
-                view.AttackOne = LoadDuelSequence("Attack1");
-                view.AttackTwo = LoadDuelSequence("Attack2");
-                view.AttackThree = LoadDuelSequence("Attack3");
-                view.First.sprite = view.Idle[0];
-                view.Second.sprite = view.Idle[0];
+                view.FirstAnimator = AddActorAnimation(view.First, "");
+                view.SecondAnimator = AddActorAnimation(view.Second, "Assassin");
+                view.Effects = root.AddComponent<DuelStrikeEffects>();
+                view.Effects.First = AddFighter("BlackEffects", root.transform, -.25f);
+                view.Effects.Second = AddFighter("WhiteEffects", root.transform, .25f);
+                view.Effects.StrikeShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/GameShader/Pvp/PvpDuelStrike.shader") ??
+                    throw new InvalidOperationException("决斗招式 Shader 未导入。");
+                view.Effects.Jab = LoadDuelSequence("FxJab");
+                view.Effects.Skill = LoadDuelSequence("FxSkill");
+                view.Effects.Ultimate = LoadDuelSequence("FxUltimate");
                 view.FirstHealth = AddMeter("BlackHealth", root.transform, .075f, .876f, .455f, .912f, new Color(.86f,.25f,.25f), false);
                 view.SecondHealth = AddMeter("WhiteHealth", root.transform, .545f, .876f, .925f, .912f, new Color(.23f,.65f,.9f), true);
                 view.FirstEnergy = AddMeter("BlackEnergy", root.transform, .075f, .837f, .455f, .852f, new Color(1,.74f,.21f), false);
@@ -71,15 +73,17 @@ namespace RevGame.Editor
                 view.Names = Label("FighterNames", root.transform, "", .08f, .92f, .92f, .98f, 30);
                 Plate(Rect("TimerPlate", root.transform, .455f, .854f, .545f, .953f), "UI_achieveItem_imgBK", Color.white);
                 view.Clock = Label("Clock", root.transform, "", .45f, .862f, .55f, .941f, 55, true);
-                view.Banner = Label("Banner", root.transform, "等待双方进入八角笼", .15f, .64f, .85f, .82f, 54);
+                view.Banner = Label("Banner", root.transform, "等待双方进入决斗场", .15f, .64f, .85f, .82f, 54);
                 var shadow = view.Banner.gameObject.AddComponent<Shadow>();
                 shadow.effectColor = new Color(.08f, .04f, .12f, .92f);
                 shadow.effectDistance = new Vector2(2,-3);
-                view.Jab = Button("Jab", root.transform, "普攻 · J", .57f, .07f, .69f, .135f);
-                view.Skill = Button("Skill", root.transform, "技能 · K", .70f, .07f, .82f, .135f);
-                view.Ultimate = Button("Ultimate", root.transform, "大招 · L", .83f, .07f, .95f, .135f);
-                view.Exit = Button("Back", root.transform, "返回大厅", .035f, .18f, .165f, .235f);
-                view.Reconnect = Button("Reconnect", root.transform, "重连", .17f, .18f, .29f, .235f);
+                // 草图的三角布局：右下普攻，左下技能，正上大招。左手上方是跳跃。
+                view.Jab = Button("Jab", root.transform, "普攻 · J", .865f, .045f, .972f, .112f);
+                view.Skill = Button("Skill", root.transform, "技能 · K", .746f, .045f, .853f, .112f);
+                view.Ultimate = Button("Ultimate", root.transform, "大招 · L", .865f, .128f, .972f, .195f);
+                view.Jump = Button("Jump", root.transform, "↑ · 跳跃", .102f, .128f, .209f, .195f);
+                view.Exit = Button("Back", root.transform, "返回大厅", .02f, .735f, .13f, .792f);
+                view.Reconnect = Button("Reconnect", root.transform, "重连", .14f, .735f, .25f, .792f);
                 view.Reconnect.gameObject.SetActive(false);
                 AddDirection(Button("Left", root.transform, "← · A", .06f, .07f, .17f, .135f), view, -1);
                 AddDirection(Button("Right", root.transform, "→ · D", .18f, .07f, .29f, .135f), view, 1);
@@ -93,8 +97,7 @@ namespace RevGame.Editor
                     scenes.Add(new EditorBuildSettingsScene(DuelScenePath, true));
                     EditorBuildSettings.scenes = scenes.ToArray();
                 }
-                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2,
-                    ["animationFrames"] = view.Idle.Length + view.Run.Length + view.AttackOne.Length + view.AttackTwo.Length + view.AttackThree.Length };
+                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = 14 };
             }
             finally
             {
@@ -165,20 +168,48 @@ namespace RevGame.Editor
             return fill;
         }
 
-        private static void AddCage(Transform parent)
+        private static DuelActorAnimator AddActorAnimation(Image actor, string prefix)
         {
-            // 这是八角笼的只读舞台标记，边线不参与原生范围判定。
-            Vector2[] points = { new Vector2(-680,-45), new Vector2(-485,-175), new Vector2(485,-175), new Vector2(680,-45),
-                new Vector2(680,90), new Vector2(485,202), new Vector2(-485,202), new Vector2(-680,90) };
-            for (int i = 0; i < points.Length; i++)
+            // 两个角色共享状态枚举，各自持有 Clip。生成时就写好 Image.sprite 曲线，运行期只播放。
+            string folder = "Assets/Scenes/PvpDuelAnimations";
+            if (!AssetDatabase.IsValidFolder(folder))
             {
-                Vector2 a = points[i], b = points[(i + 1) % points.Length], d = b - a;
-                var line = Rect("CageEdge" + i, parent, .5f, .36f, .5f, .36f);
-                line.anchoredPosition = (a + b) * .5f;
-                line.sizeDelta = new Vector2(d.magnitude + 5, 8);
-                line.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
-                Plate(line, "UI_achieveItem_imgBK", new Color(.53f,.29f,.10f,.86f));
+                AssetDatabase.CreateFolder("Assets/Scenes", "PvpDuelAnimations");
             }
+            var animation = actor.gameObject.AddComponent<Animation>();
+            animation.playAutomatically = false;
+            var clips = new List<AnimationClip>();
+            foreach (string pose in new[] { "Idle", "Run", "Jump", "Attack1", "Attack2", "Attack3", "Down" })
+            {
+                Sprite[] frames = LoadDuelSequence(prefix + pose);
+                string path = $"{folder}/{(prefix.Length == 0 ? "Swordsman" : prefix)}_{pose}.anim";
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                if (clip == null)
+                {
+                    clip = new AnimationClip();
+                    AssetDatabase.CreateAsset(clip, path);
+                }
+                clip.legacy = true;
+                clip.name = pose;
+                clip.frameRate = 15;
+                clip.wrapMode = pose == "Idle" || pose == "Run" ? WrapMode.Loop : WrapMode.ClampForever;
+                var keys = new ObjectReferenceKeyframe[frames.Length + 1];
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    keys[i] = new ObjectReferenceKeyframe { time = i / clip.frameRate, value = frames[Math.Min(i, frames.Length - 1)] };
+                }
+                AnimationUtility.SetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite"), keys);
+                EditorUtility.SetDirty(clip);
+                clips.Add(clip);
+                if (pose == "Idle")
+                {
+                    animation.clip = clip;
+                    actor.sprite = frames[0];
+                }
+            }
+            AnimationUtility.SetAnimationClips(animation, clips.ToArray());
+            AssetDatabase.SaveAssets();
+            return actor.gameObject.AddComponent<DuelActorAnimator>();
         }
 
         private static void AddDirection(Button button, PvpDuelView view, int direction)

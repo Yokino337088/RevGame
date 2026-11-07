@@ -343,7 +343,8 @@ internal static class GoKcpLoadProbe
             {
                 int previous = replicaA.Snapshot.Frame;
                 int frame = previous + 1;
-                using (var input = await AskDuel(black, DuelAuthority.Input, previous, frame, frame <= 10 ? 2 : 4))
+                int blackInput = frame == 1 ? 2 | DuelCorePipe.Jump : frame <= 10 ? 2 : 4;
+                using (var input = await AskDuel(black, DuelAuthority.Input, previous, frame, blackInput))
                 {
                     Check(input.ErrorCode == 0 && input.Frames.Count == 0, "单边输入不得封帧");
                 }
@@ -357,6 +358,11 @@ internal static class GoKcpLoadProbe
                 Check(a.Frames.Count == 1 && b.Frames.Count == 1 && a.Frames[0] == b.Frames[0], "封口帧广播一致");
                 replicaA.Append(frame, a.Frames[0]);
                 replicaB.Append(frame, b.Frames[0]);
+                if (frame == 1)
+                {
+                    Check(replicaA.Snapshot.FirstY > 0 && replicaB.Snapshot.FirstY == replicaA.Snapshot.FirstY,
+                        "跳跃意图经过完整帧，在两端产生相同的原生高度");
+                }
                 Check(replicaA.Snapshot.Hash == replicaB.Snapshot.Hash && replicaA.Snapshot.Hash == a.FinalHash,
                     "双 C# 宿主经真实 P/Invoke 与服务端原生世界逐帧一致");
             }

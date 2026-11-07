@@ -19,9 +19,13 @@ namespace RevGame.Pvp
             RevRuntimeAutomation.Register("pvp.duel-state", "只读决斗场景、双方就绪和原生快照", Empty, _ =>
             {
                 var state = Service.DuelSnapshot;
+                var view = UnityEngine.Object.FindObjectOfType<RevGame.View.PvpDuelView>();
                 return new Dictionary<string, object> { ["scene"] = RevScene.CurrentName, ["transitioning"] = Flow.IsTransitioning,
                     ["eligible"] = Service.CanChallengeDuel, ["ready"] = Service.DuelBothReady, ["frame"] = state.Frame,
                     ["fighting"] = state.Frame >= 5, ["result"] = state.Result, ["hash"] = state.Hash, ["error"] = Service.DuelError,
+                    ["airborne"] = state.FirstY > 0, ["firstY"] = state.FirstY,
+                    ["bothAnimated"] = view != null && view.FirstAnimator.IsPlaying && view.SecondAnimator.IsPlaying,
+                    ["strikeVisible"] = view != null && (view.Effects.First.enabled || view.Effects.Second.enabled),
                     ["firstHealth"] = state.FirstHealth, ["secondHealth"] = state.SecondHealth };
             }, readOnly: true, owner: Owner);
         }

@@ -1,6 +1,7 @@
 {
   "eligibility": { "minimumMove": 24, "minimumLeadHalfPoints": 24 },
   "arena": { "health": 100, "extent": 4500, "movePerFrame": 140, "frameLimit": 1200, "spawnOffset": 1700, "energy": 100, "energyPerFrame": 1, "energyPerHit": 12, "frameMilliseconds": 50 },
+  "jump": { "speed": 270, "gravity": 34, "hitHeight": 480 },
   "attacks": [
     { "damage": 9, "range": 1020, "hitFrame": 3, "duration": 8, "cost": 0 },
     { "damage": 17, "range": 1630, "hitFrame": 5, "duration": 13, "cost": 22 },

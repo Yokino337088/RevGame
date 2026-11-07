@@ -13,14 +13,15 @@ namespace RevGame.View
     {
         public Image First, Second, FirstHealth, SecondHealth, FirstEnergy, SecondEnergy;
         public Text Clock, Banner, Names, FirstHealthText, SecondHealthText;
-        public Button Exit, Reconnect, Jab, Skill, Ultimate;
-        public Sprite[] Idle, Run, AttackOne, AttackTwo, AttackThree;
+        public Button Exit, Reconnect, Jump, Jab, Skill, Ultimate;
+        public DuelActorAnimator FirstAnimator, SecondAnimator;
+        public DuelStrikeEffects Effects;
         private int _seenFrame = -1;
         private int _presentedResult;
         private int _clickedAction;
         private int _pointerDirection;
-        private float _firstX, _secondX;
-        private float _timeSinceSnapshot;
+        private bool _clickedJump;
+        private Vector2 _firstPosition, _secondPosition;
 
         private void Start()
         {
@@ -29,6 +30,7 @@ namespace RevGame.View
             Jab.onClick.AddListener(() => _clickedAction = 1);
             Skill.onClick.AddListener(() => _clickedAction = 2);
             Ultimate.onClick.AddListener(() => _clickedAction = 3);
+            Jump.onClick.AddListener(() => _clickedJump = true);
         }
 
         private void ReconnectServer()
@@ -55,7 +57,8 @@ namespace RevGame.View
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
                 Input.GetKeyDown(KeyCode.L) ? 3 : _clickedAction;
             _clickedAction = 0;
-            service.SetDuelInput(direction, action);
+            service.SetDuelInput(direction, action, _clickedJump || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow));
+            _clickedJump = false;
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 ReturnHome();
@@ -69,7 +72,8 @@ namespace RevGame.View
             if (_seenFrame != view.Frame)
             {
                 _seenFrame = view.Frame;
-                _timeSinceSnapshot = 0;
+                Effects.Observe(0, view.FirstAction, view.FirstAge, view.FirstFacing, First.rectTransform.anchoredPosition);
+                Effects.Observe(1, view.SecondAction, view.SecondAge, view.SecondFacing, Second.rectTransform.anchoredPosition);
                 if (view.FirstHit != 0)
                 {
                     Flash(Second);
@@ -79,15 +83,16 @@ namespace RevGame.View
                     Flash(First);
                 }
             }
-            _timeSinceSnapshot += Time.unscaledDeltaTime;
             // 逻辑坐标是千分格。屏幕宽度换算和插值使用浮点，因为它们只影响绘制。
-            float firstTarget = view.FirstX * .138f;
-            float secondTarget = view.SecondX * .138f;
+            var firstTarget = new Vector2(view.FirstX, view.FirstY) * .138f;
+            var secondTarget = new Vector2(view.SecondX, view.SecondY) * .138f;
             float blend = 1 - Mathf.Exp(-22 * Time.unscaledDeltaTime);
-            _firstX = Mathf.Lerp(_firstX, firstTarget, blend);
-            _secondX = Mathf.Lerp(_secondX, secondTarget, blend);
-            PaintActor(First, _firstX, view.FirstFacing, view.FirstAction, view.FirstAge, Mathf.Abs(_firstX - firstTarget) > 4);
-            PaintActor(Second, _secondX, view.SecondFacing, view.SecondAction, view.SecondAge, Mathf.Abs(_secondX - secondTarget) > 4);
+            _firstPosition = Vector2.Lerp(_firstPosition, firstTarget, blend);
+            _secondPosition = Vector2.Lerp(_secondPosition, secondTarget, blend);
+            PaintActor(First, _firstPosition, view.FirstFacing);
+            PaintActor(Second, _secondPosition, view.SecondFacing);
+            FirstAnimator.Paint(view.FirstHealth, view.FirstY, view.FirstAction, Mathf.Abs(_firstPosition.x - firstTarget.x) > 4);
+            SecondAnimator.Paint(view.SecondHealth, view.SecondY, view.SecondAction, Mathf.Abs(_secondPosition.x - secondTarget.x) > 4);
             FirstHealth.fillAmount = Mathf.Clamp01(view.FirstHealth / (float)DuelConfig.Health);
             SecondHealth.fillAmount = Mathf.Clamp01(view.SecondHealth / (float)DuelConfig.Health);
             FirstEnergy.fillAmount = Mathf.Clamp01(view.FirstEnergy / (float)DuelConfig.Energy);
@@ -100,7 +105,7 @@ namespace RevGame.View
             Reconnect.gameObject.SetActive(disconnected && service.Mode == PvpConnectionMode.Server && service.DuelReconnectAvailable);
             Banner.text = service.DuelError.Length != 0 ? service.DuelError :
                 disconnected ? "连接中断 · 决斗等待同步" :
-                !service.DuelBothReady ? "等待双方进入八角笼" :
+                !service.DuelBothReady ? "等待双方进入决斗场" :
                 view.Result == 0 ? (view.Frame < 18 ? "开打！" : "") :
                 view.Result == 3 ? "平局" : (view.Result == (int)service.MySide ? "决斗胜利" : "决斗落败");
             if (_presentedResult == 0 && view.Result != 0)
@@ -110,18 +115,11 @@ namespace RevGame.View
             }
         }
 
-        private void PaintActor(Image actor, float x, int facing, int action, int age, bool moving)
+        private static void PaintActor(Image actor, Vector2 position, int facing)
         {
             var rect = actor.rectTransform;
-            rect.anchoredPosition = new Vector2(x, rect.anchoredPosition.y);
+            rect.anchoredPosition = position;
             rect.localScale = new Vector3(facing < 0 ? -1 : 1, 1, 1);
-            var sequence = action == 1 ? AttackOne : action == 2 ? AttackTwo : action == 3 ? AttackThree : moving ? Run : Idle;
-            if (sequence != null && sequence.Length > 0)
-            {
-                int index = action == 0 ? (int)(Time.unscaledTime * 12) % sequence.Length :
-                    Mathf.Min(sequence.Length - 1, (int)((age * DuelConfig.FrameMs / 1000f + _timeSinceSnapshot) * 15));
-                actor.sprite = sequence[index];
-            }
         }
 
         private void Flash(Image image)

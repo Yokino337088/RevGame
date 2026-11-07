@@ -6,8 +6,8 @@
 namespace RevGameCore
 {
     // 对外包全部是小端 int32 字段，内部位置单位为千分格。结构体布局不会跨 ABI。
-    constexpr int ConfigWords = 24;
-    constexpr int SnapshotWords = 17;
+    constexpr int ConfigWords = 27;
+    constexpr int SnapshotWords = 19;
     using Settings = std::array<int32_t, ConfigWords>;
     using Snapshot = std::array<int32_t, SnapshotWords>;
 
@@ -19,6 +19,8 @@ namespace RevGameCore
         int32_t Action = 0;
         int32_t Age = 0;
         int32_t Facing = 1;
+        int32_t Y = 0;
+        int32_t VerticalSpeed = 0;
     };
 
     class DuelWorld

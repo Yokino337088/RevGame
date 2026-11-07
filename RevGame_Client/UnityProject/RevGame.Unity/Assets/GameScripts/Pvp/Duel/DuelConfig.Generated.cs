@@ -13,10 +13,10 @@ namespace RevGame.Pvp.Duel
         public const int UltimateCost = 78;
         public const int FrameLimit = 1200;
         public const int FrameMs = 50;
-        public const int Fingerprint = 1893904762;
+        public const int Fingerprint = 182341838;
         public static int[] CreateCoreWords()
         {
-            return new[] { 100, 4500, 140, 1200, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78 };
+            return new[] { 100, 4500, 140, 1200, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78, 270, 34, 480 };
         }
     }
 }

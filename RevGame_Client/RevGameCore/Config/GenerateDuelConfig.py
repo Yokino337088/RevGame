@@ -10,6 +10,7 @@ words = [arena[k] for k in ("health", "extent", "movePerFrame", "frameLimit", "s
 assert len(data["attacks"]) == 3
 for attack in data["attacks"]:
     words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
+words += [data["jump"][k] for k in ("speed", "gravity", "hitHeight")]
 assert all(type(x) is int and 0 <= x <= 100000 for x in words)
 fingerprint = 2166136261
 for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"]]:
