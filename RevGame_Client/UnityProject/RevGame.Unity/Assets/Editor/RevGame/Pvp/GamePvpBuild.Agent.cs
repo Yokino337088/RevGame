@@ -22,7 +22,7 @@ namespace RevGame.Editor
             Menu("PvpAgentSettingsPanel", typeof(PvpAgentSettingsPanel), root =>
             {
                 Label("heading", root, "DeepSeek Agent 设置", .22f, .79f, .78f, .9f, 38, true);
-                Label("disclosure", root, "启用后棋局将发送到DeepSeek并消耗你的API额度。\nKey在本机加密保存；本地人机你只手动落子。", .18f, .62f, .82f, .77f, 24, true);
+                Label("disclosure", root, "启用后人机对手和落子建议可调用DeepSeek并消耗API额度。\nKey在本机加密保存；本地人机你只手动落子。", .18f, .62f, .82f, .77f, 24, true);
                 Label("keyLabel", root, "API Key（本机加密保存）", .22f, .59f, .78f, .625f, 18, true);
                 Label("modelLabel", root, "DeepSeek V4.1 Flash · 1017（10月17日版）", .29f, .47f, .78f, .505f, 18, true);
                 var logo = Rect("deepseekLogo", root, .22f, .395f, .285f, .465f).gameObject.AddComponent<Image>();
@@ -44,7 +44,6 @@ namespace RevGame.Editor
                 {
                     Button("agent", controls, "Agent托管", .025f, .32f, .20f, .40f, 24);
                     Button("agentSettings", controls, "Agent设置", .025f, .22f, .20f, .30f, 24);
-                    Label("agentState", panel.transform, "Agent 未启用", .22f, .11f, .8f, .17f, 20, true);
                 }
                 PrefabUtility.SaveAsPrefabAsset(panel, path);
             }

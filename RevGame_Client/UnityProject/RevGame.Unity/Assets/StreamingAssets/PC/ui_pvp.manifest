@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1835629658
+CRC: 642957275
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 492ef041e3d62e658f89a5c2f41d1921
+    Hash: 3c021ed1a56813312c5fd90af67a06e5
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 306b234caa6925ab68d149c52ab499fc
+    Hash: 40160d551caeab2319e9d8ae3ded6856
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 492ef041e3d62e658f89a5c2f41d1921
+    Hash: 3c021ed1a56813312c5fd90af67a06e5
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -33,9 +33,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 42432c2906b8f93428448d712d5650a6, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 504225b50b7c49442ae9a254f8fbb2f4, type: 3}
+  Script: {fileID: 11500000, guid: ea4a85cf03af4224fb6e6a1d6ca5d34e, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  Script: {fileID: 11500000, guid: 504225b50b7c49442ae9a254f8fbb2f4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: c694d967325a62347b68783a231fe826, type: 3}
 - Class: 114
@@ -49,6 +49,8 @@ ClassTypes:
 - Class: 222
   Script: {instanceID: 0}
 - Class: 224
+  Script: {instanceID: 0}
+- Class: 225
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
@@ -86,4 +88,6 @@ Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pvpagent"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayacombatexpressions"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_yaya"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"

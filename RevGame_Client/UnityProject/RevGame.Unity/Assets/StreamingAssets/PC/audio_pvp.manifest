@@ -1,0 +1,23 @@
+ManifestFileVersion: 0
+CRC: 3213705338
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a5b297ba3fedadab6cecc699d3a8b8cc
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a5b297ba3fedadab6cecc699d3a8b8cc
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Pvp/PvpCapture.ogg
+- Assets/GameRes/Audio/Sfx/Pvp/PvpResult.ogg
+- Assets/GameRes/Audio/Sfx/Pvp/PvpPlace.ogg
+- Assets/GameRes/Audio/Sfx/Pvp/PvpEye.ogg
+Dependencies: []

@@ -83,6 +83,7 @@ namespace Revolution
         public const string Audio_Sfx_Endless = "Audio/Sfx/Endless/";
         public const string Audio_Sfx_Helper = "Audio/Sfx/Helper/";
         public const string Audio_Sfx_Helper_Helper = "Audio/Sfx/Helper/Helper/";
+        public const string Audio_Sfx_Pvp = "Audio/Sfx/Pvp/";
         public const string Board = "Board/";
         public const string Board_Indicator = "Board/Indicator/";
         public const string Board_Tile = "Board/Tile/";

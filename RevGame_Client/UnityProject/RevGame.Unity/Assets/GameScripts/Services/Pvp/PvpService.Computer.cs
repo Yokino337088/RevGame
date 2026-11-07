@@ -32,7 +32,10 @@ namespace RevGame.Pvp
         private void ApplyComputer(GoAction action, int x, int y)
         {
             // 与玩家使用同一个提交入口，时钟、规则、棋谱只在该入口结算一次。
-            SubmitActor(action, GoSide.White, x, y);
+            if (SubmitActor(action, GoSide.White, x, y) && Core.Phase == GoPhase.Playing)
+            {
+                SpeakAgent(action == GoAction.Play ? "OpponentPlay" : "OpponentPass", x, y);
+            }
             _computerAt = _clock.Elapsed.TotalSeconds + .45;
         }
     }

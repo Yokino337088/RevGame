@@ -312,7 +312,7 @@ namespace RevGame.View
         {
             int version = ++_screenVersion;
 
-            if (screen != GameScreen.Battle && screen != GameScreen.Endless)
+            if (screen != GameScreen.Battle && screen != GameScreen.Endless && screen != GameScreen.Pvp)
             {
                 ReleaseBattleAfterViewsAsync(version);
             }

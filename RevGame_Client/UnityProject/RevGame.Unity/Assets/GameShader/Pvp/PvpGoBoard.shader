@@ -6,6 +6,7 @@ Shader "RevGame/Pvp/IvoryGoBoard"
     {
         _Ivory("象牙白棋盘",Color)=(.95,.91,.81,1)
         _Gold("神殿金线",Color)=(.70,.51,.24,1)
+        _EyeTex("双眼图集",2D)="white" {}
     }
     SubShader
     {
@@ -19,8 +20,9 @@ Shader "RevGame/Pvp/IvoryGoBoard"
             #pragma fragment frag
             #include "UnityCG.cginc"
             float4 _Cells[81], _Marks[81];
-            float4 _Ivory, _Gold;
-            float _Clock, _ShowHints, _ShowTerritory, _Selected, _Last, _Turn;
+            float4 _Ivory, _Gold, _EyeUv;
+            sampler2D _EyeTex;
+            float _Clock, _ShowHints, _ShowTerritory, _Selected, _Last, _Turn, _ScoreProgress;
             struct V { float4 pos:SV_POSITION; float2 uv:TEXCOORD0; };
             V vert(appdata_base v)
             {
@@ -34,24 +36,6 @@ Shader "RevGame/Pvp/IvoryGoBoard"
             float Disk(float d,float r)
             {
                 return 1-smoothstep(r,r+max(min(fwidth(d),.02),.003),d);
-            }
-            float Segment(float2 p,float2 a,float2 b)
-            {
-                float2 q=p-a;float2 v=b-a;
-                return Line(length(q-v*saturate(dot(q,v)/dot(v,v))),.055);
-            }
-            // 气数使用七段小徽标，不依赖动态图集字形。十气以上显示9+，避免误写成精确9。
-            float Digit(float2 p,float value)
-            {
-                int d=(int)min(9,value);float n=0;
-                if(d!=1&&d!=4) n=max(n,Segment(p,float2(-.2,.37),float2(.2,.37)));
-                if(d!=1&&d!=2&&d!=3&&d!=7) n=max(n,Segment(p,float2(-.25,.32),float2(-.25,.05)));
-                if(d!=5&&d!=6) n=max(n,Segment(p,float2(.25,.32),float2(.25,.05)));
-                if(d!=0&&d!=1&&d!=7) n=max(n,Segment(p,float2(-.2,0),float2(.2,0)));
-                if(d==0||d==2||d==6||d==8) n=max(n,Segment(p,float2(-.25,-.05),float2(-.25,-.32)));
-                if(d!=2) n=max(n,Segment(p,float2(.25,-.05),float2(.25,-.32)));
-                if(d!=1&&d!=4&&d!=7) n=max(n,Segment(p,float2(-.2,-.37),float2(.2,-.37)));
-                return n;
             }
             fixed4 frag(V input):SV_Target
             {
@@ -77,11 +61,24 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 col*=fmod(id.x+id.y,2)<1?1:.965;
                 col=lerp(col,_Gold.rgb,grid*.78);
                 col+=float3(1,.80,.36)*light*breath*.55;
-                if(_ShowTerritory>.5&&cell.z>.5)
+                // 同色空点连成片，轮廓只沿所有权交界流光。终局用同一格序号驱动扫光和右栏计数。
+                bool scoring=_ScoreProgress>=0;
+                float counted=step(cell.y,_ScoreProgress);
+                float sweep=counted*saturate(1-(_ScoreProgress-cell.y)/4);
+                float3 teal=float3(.035,.37,.40);
+                float3 amber=float3(.95,.54,.11);
+                if((_ShowTerritory>.5&&!scoring||scoring&&counted>.5)&&cell.z>.5)
                 {
-                    float3 territory=cell.z<1.5?float3(.05,.37,.32):float3(.62,.74,1);
-                    float wave=.8+.2*sin(t*2-length(boardPoint-4)*1.5);
-                    col=lerp(col,territory,(.25+.22*Line(edge-.44,.012))*wave);
+                    float3 territory=cell.z<1.5?teal:amber;
+                    float2 adjacent=id+step(abs(p.yx),abs(p))*sign(p);
+                    int neighbor=(int)(clamp(adjacent.y,0,8)*9+clamp(adjacent.x,0,8));
+                    float border=step(.1,abs(_Cells[neighbor].z-cell.z));
+                    border=max(border,step(.1,length(adjacent-clamp(adjacent,0,8))));
+                    float contour=Line(edge-.44,.032)*border;
+                    float hatch=.5+.5*sin((boardPoint.x+boardPoint.y*(cell.z<1.5?1:-1))*13-t*.9);
+                    float flow=.65+.35*sin(t*3-boardPoint.x*1.5-boardPoint.y);
+                    col=lerp(col,territory,.57+hatch*.09);
+                    col=lerp(col,cell.z<1.5?float3(.25,1,.91):float3(1,.94,.54),contour*flow);
                 }
                 if(_ShowHints>.5&&cell.x<.5)
                 {
@@ -91,13 +88,11 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                         float ring=Line(r-(.19+.025*sin(t*4)),.025);
                         col=lerp(col,float3(.02,.65,.67),saturate(ring*breath+Disk(r,.065)*.85));
                     }
-                    if(cell.w>.5)
+                    if(cell.w>.5&&!scoring&&abs(p.x)<.33&&abs(p.y)<.22)
                     {
-                        float angle=atan2(p.y,p.x);
-                        float ring=Line(r-.30,.017);
-                        float dash=cell.w>1.5?step(0,sin(angle*8)):1;
-                        float center=cell.w>1.5?max(Line(p.x-p.y,.018),Line(p.x+p.y,.018))*Disk(r,.09):Disk(r,.045);
-                        col=lerp(col,cell.w>1.5?float3(.85,.41,.09):float3(.04,.48,.64),max(ring*dash,center));
+                        float2 localUv=p/float2(.66,.44)+.5;
+                        float4 eyes=tex2D(_EyeTex,lerp(_EyeUv.xy,_EyeUv.zw,localUv));
+                        col=lerp(col,eyes.rgb,eyes.a);
                     }
                     if(mark.z>.5)
                     {
@@ -108,7 +103,7 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 float stone=cell.x;
                 bool preview=abs(index-_Selected)<.1&&stone<.5;
                 if(preview) stone=_Turn;
-                if(stone>.5)
+                if(stone>.5&&(!scoring||mark.w<.5))
                 {
                     float shadow=Disk(length(p-float2(.035,-.055)),.42)*.22;
                     col*=1-shadow;
@@ -121,7 +116,7 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                     float opacity=preview?.38:1;
                     if(mark.w>.5) opacity=.35;
                     col=lerp(col,body,mask*opacity);
-                    if(_ShowHints>.5&&abs(cell.y)==1)
+                    if(_ShowHints>.5&&!scoring&&cell.y==1)
                     {
                         float pulse=.58+.42*sin(t*10.472);
                         col=lerp(col,float3(1,.10,.06),Line(r-.41,.027)*pulse);
@@ -139,14 +134,19 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                     {
                         col=lerp(col,float3(.98,.63,.12),Line(r-.12,.018));
                     }
-                    if(_ShowHints>.5&&cell.y>0)
+                    if(scoring&&counted>.5)
                     {
-                        float2 badge=(p-float2(.24,-.24))/.26;
-                        float bg=Disk(length(badge),.57);
-                        col=lerp(col,cell.y<=2?float3(.75,.08,.07):float3(.03,.28,.30),bg);
-                        col=lerp(col,float3(1,.97,.85),Digit(badge,cell.y));
-                        if(cell.y>9) col=lerp(col,float3(1,.97,.85),max(Line(badge.x-.43,.02)*step(abs(badge.y),.1),Line(badge.y,.02)*step(abs(badge.x-.43),.09)));
+                        float3 tally=stone<1.5?float3(.32,1,.94):float3(1,.75,.27);
+                        col=lerp(col,tally,Line(r-.39,.025)*(.6+.4*sweep));
                     }
+                }
+                if(scoring)
+                {
+                    if(counted>.5&&cell.z<.5&&(cell.x<.5||mark.w>.5))
+                    {
+                        col=lerp(col,float3(.46,.53,.57),.32);
+                    }
+                    col=lerp(col,float3(1,.94,.68),sweep*(.26+.74*Line(edge-.42,.043)));
                 }
                 if(abs(index-_Selected)<.1)
                 {

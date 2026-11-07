@@ -23,6 +23,7 @@ namespace RevGame.Pvp
         protected override void OnStop()
         {
             RevServices.Get<PvpService>()?.Dispose();
+            RevDataTableManager.Unload<PvpYayaLineTable>();
 #if UNITY_STANDALONE || UNITY_EDITOR
             // 只在本模式生命周期内改变桌面后台策略，退出归还原设置，不干涉移动端系统挂起。
             UnityEngine.Application.runInBackground = _backgroundBefore;

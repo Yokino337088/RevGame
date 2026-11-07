@@ -37,7 +37,7 @@ namespace RevGame.Pvp
                 AnalyzeEye(i, destination);
             }
             bool removeDead = Phase == GoPhase.Scoring || (Phase == GoPhase.Finished && EndReason == GoEndReason.Scored);
-            destination.Score = CalculateScore(removeDead, destination.Territory);
+            destination.Score = CalculateScore(removeDead, destination.Territory, destination.OpenTerritory);
         }
 
         /// <summary>返回指定棋块的气坐标，按固定下标升序。目标数组由调用方复用，容量至少为 81。</summary>
@@ -155,11 +155,15 @@ namespace RevGame.Pvp
         /// 面积法按空点连通块找相邻颜色：只接触黑或只接触白才归属，混合/完全空盘为中立。
         /// 不是“最近棋子占地”，也不把提子再加一次分；未协商死子前只是当前拓扑的估算。
         /// </summary>
-        private GoScore CalculateScore(bool removeDead, byte[] territory)
+        private GoScore CalculateScore(bool removeDead, byte[] territory, bool[] openTerritory = null)
         {
             Array.Copy(_board, _working, PointCount);
             Array.Clear(_visited, 0, PointCount);
             GoScore score = new GoScore { KomiHalfPoints = KomiHalfPoints };
+            if (openTerritory != null)
+            {
+                Array.Clear(openTerritory, 0, PointCount);
+            }
             for (int i = 0; i < PointCount; i++)
             {
                 if (removeDead && _dead.Contains(i))
@@ -187,13 +191,21 @@ namespace RevGame.Pvp
                 }
                 int count = 1;
                 int borders = 0;
+                int edges = 0;
                 _group[0] = start;
                 _visited[start] = true;
                 for (int head = 0; head < count; head++)
                 {
+                    int point = _group[head];
+                    if (openTerritory != null)
+                    {
+                        int x = point % BoardSize;
+                        int y = point / BoardSize;
+                        edges |= (x == 0 ? 1 : x == BoardSize - 1 ? 2 : 0) | (y == 0 ? 4 : y == BoardSize - 1 ? 8 : 0);
+                    }
                     for (int direction = 0; direction < 4; direction++)
                     {
-                        int next = Neighbor(_group[head], direction);
+                        int next = Neighbor(point, direction);
                         if (next < 0)
                         {
                             continue;
@@ -229,7 +241,13 @@ namespace RevGame.Pvp
                 {
                     for (int member = 0; member < count; member++)
                     {
-                        territory[_group[member]] = owner;
+                        int point = _group[member];
+                        territory[point] = owner;
+                        if (openTerritory != null)
+                        {
+                            // 三位或四位为1代表空区还沿棋盘外缘敞开。只压制预览，终局仍按边界棋色计。
+                            openTerritory[point] = edges == 7 || edges == 11 || edges >= 13;
+                        }
                     }
                 }
             }

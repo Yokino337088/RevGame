@@ -83,6 +83,27 @@ internal static class PvpAgentChecks
         service.AgentRequestFactory = DeepSeekGoRequest.Start;
     }
 
+    /// <summary>固定白方与建议响应，真实候选、提交、回合和计分仍由正式代码处理。</summary>
+    public static void InstallPresentation(PvpService service, bool rejectHint)
+    {
+        service.ConfigureAgent("presentation-fixture-not-a-real-key", "fixture", true);
+        string[] white = { "play_0_0", "play_7_7", "play_8_7", "play_7_8", "play_7_6", "play_8_6", "play_8_5" };
+        service.AgentRequestFactory = (_, position) =>
+        {
+            if (position.Prompt.Contains("阶段=Scoring"))
+            {
+                return new Response { Content = "{\"actionId\":\"confirm\"}" };
+            }
+            if (position.Prompt.Contains("这是给玩家的落子建议"))
+            {
+                return new Response { Content = rejectHint ? "{\"actionIndex\":999}" : "{\"actionId\":\"play_6_6\"}" };
+            }
+            int number = service.Core.MoveNumber / 2;
+            string action = service.Core.ConsecutivePasses > 0 || number >= white.Length ? "pass" : white[number];
+            return new Response { Content = "{\"actionId\":\"" + action + "\"}" };
+        };
+    }
+
     private sealed class Response : IGoAgentRequest
     {
         public bool Done = true, Disposed;

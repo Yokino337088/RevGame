@@ -1,0 +1,19 @@
+#PvpYayaLine
+#Id	Cue	Line	Seconds	Expression
+#唯一编号	触发事件	鸦鸦台词，{point}由真实棋盘坐标替换	气泡停留秒数	鸦鸦正式表情编号
+1	Opening	获得了蓝色大肥鱼的力量，对弈简简单单！	3.8	8
+2	Taunt	还在想？蓝色大肥鱼都绕神殿游了两圈啦！	3.6	23
+3	Taunt	棋盘那么大，你怎么偏要跟我的鱼抢地盘？	3.6	26
+4	Taunt	别只盯着大肥鱼！你那一串棋子还剩几口气呀？	3.8	14
+5	Taunt	鸦鸦可以等你，可大肥鱼已经饿得在拍尾巴啦！	3.8	13
+6	HintThinking	等一下，让鸦鸦和大肥鱼一起瞧瞧这盘棋！	3.6	2
+7	HintCloud	大肥鱼用尾巴一拍，指的就是 {point}！这手可以试试。	4.2	3
+8	HintCloud	鸦鸦给你圈了 {point}，先想想对面会怎么接招！	4.2	8
+9	HintLocal	鸦鸦先给你一个盘面参考，瞧瞧 {point} 那边！	4	1
+10	HintPass	大肥鱼拍水说，先停一手也可以考虑！	3.8	14
+11	OpponentThinking	嘘，让大肥鱼闻闻，哪一格藏着好棋！	3.8	2
+12	OpponentPlay	{point}，啪嗒！这是大肥鱼给鸦鸦挑的好位置！	3.7	26
+13	OpponentPlay	鸦鸦先抢下 {point} 啦，你追得上吗？	3.7	23
+14	OpponentPlay	看好了，鸦鸦的棋子落在 {point}！轮到你伤脑筋啦。	3.8	13
+15	OpponentPass	鸦鸦先停一手，等你看清这盘棋！	3.6	14
+16	OpponentFallback	大肥鱼溜去吐泡泡了，这一手鸦鸦自己来！	3.8	2

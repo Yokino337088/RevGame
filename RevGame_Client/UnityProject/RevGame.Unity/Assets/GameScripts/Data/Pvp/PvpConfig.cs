@@ -13,6 +13,7 @@ namespace RevGame.Pvp
         public int mainTimeSeconds;
         public int byoyomiSeconds;
         public int byoyomiCount;
+        // 旧房间握手仍包含该字段，落子建议已改成不限次数。
         public int hintCount;
         public int territoryRevealFrom;
         public int territoryRevealEvery;

@@ -79,6 +79,7 @@ namespace RevGame.Pvp
             Revolution.RevLog.Warn("Agent 序号=" + Core.Sequence + " 原因=" + reason + " 用时秒=" + AgentLastSeconds.ToString("F1"), "PvpAgent");
             _agentRequest?.Dispose();
             _agentRequest = null;
+            SpeakAgent("OpponentFallback");
             _fallbackSequence = Core.Sequence;
             _fallbackSide = _requestSide;
         }
@@ -163,6 +164,7 @@ namespace RevGame.Pvp
 
         private void CancelAgent()
         {
+            CancelHint();
             if (_agentRequest != null)
             {
                 TraceAgent("request_cancelled", "状态变化或停止托管");
@@ -237,6 +239,7 @@ namespace RevGame.Pvp
                     if (_clock.Elapsed.TotalSeconds < _cooldownUntil)
                     {
                         AgentStatus = "云端连续失败冷却中，使用本地合法策略";
+                        SpeakAgent("OpponentFallback");
                         ApplyAgentFallback(side);
                         return;
                     }
@@ -250,6 +253,7 @@ namespace RevGame.Pvp
                     _requestSide = side;
                     _agentRequest = AgentRequestFactory(AgentSettings, _agentPosition);
                     AgentStatus = "Agent 正在思考（计时继续）";
+                    SpeakAgent("OpponentThinking");
                 }
                 if (!_agentPosition.Matches(Core) || _requestGeneration != _agentGeneration || _requestSide != side)
                 {
@@ -273,6 +277,10 @@ namespace RevGame.Pvp
                 _consecutiveFailures = 0;
                 bool accepted = SubmitActor(selected.Kind, side, selected.X, selected.Y);
                 AgentStatus = accepted ? "Agent 动作已提交" : "Agent 动作被拒绝：" + Status;
+                if (accepted && Core.Phase == GoPhase.Playing)
+                {
+                    SpeakAgent(selected.Kind == GoAction.Play ? "OpponentPlay" : "OpponentPass", selected.X, selected.Y);
+                }
                 if (!accepted)
                 {
                     _fallbackSequence = Core.Sequence;

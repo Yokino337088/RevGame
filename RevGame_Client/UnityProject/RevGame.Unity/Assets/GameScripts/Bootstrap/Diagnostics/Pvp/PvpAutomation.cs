@@ -13,7 +13,7 @@ namespace RevGame.Pvp
     /// 九路围棋的开发态窄入口。MCP 发现的是这些明确注册的能力，不反射任意服务方法。
     /// 玩家按钮与测试共用 Service / GameFlow，查询不推进棋局；网络夹具另有 owner，失败也能独立收回。
     /// </summary>
-    public static class PvpAutomation
+    public static partial class PvpAutomation
     {
         private static readonly object Owner = new object();
         private static PvpKcpOpponentCheck _kcpOpponent;
@@ -48,6 +48,7 @@ namespace RevGame.Pvp
         /// <summary>只在 Bootstrap 的开发态分支调用一次。输入Schema限定枚举、坐标与字符串长度，正式包不保留这些入口。</summary>
         public static void Register()
         {
+            RegisterPresentation();
             RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "独立测试槽保存DPAPI假Key，不修改玩家配置；跨Play后调用verify", Empty,
                 _ => PvpAgentChecks.PrepareStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-storage-verify", "验证独立测试槽跨Play恢复、损坏拒绝与清除，不返回凭据", Empty,
@@ -344,7 +345,7 @@ namespace RevGame.Pvp
                 ["computer"] = service.IsComputerGame, ["menu"] = RevUI.Get<PvpPanel>()?.Menu ?? "",
                 ["blackTerritory"] = blackTerritory, ["whiteTerritory"] = whiteTerritory,
                 ["battleVisible"] = RevUI.Get<PvpPanel>()?.BattleVisible ?? false,
-                ["hintsVisible"] = service.HintsVisible, ["hintsRemaining"] = service.HintsRemaining, ["selectedPoint"] = service.SelectedPoint,
+                ["hintsVisible"] = service.HintsVisible, ["unlimitedHints"] = true, ["selectedPoint"] = service.SelectedPoint,
                 ["preview"] = service.PreviewText, ["blackClock"] = service.ClockText(GoSide.Black), ["whiteClock"] = service.ClockText(GoSide.White),
                 ["configLoaded"] = service.Config != null, ["tableLoaded"] = tableLoaded, ["tableRows"] = tableRows,
                 ["rulesVersion"] = PvpService.ProtocolVersion, ["rulesJson"] = service.Config?.RulesJson ?? string.Empty,

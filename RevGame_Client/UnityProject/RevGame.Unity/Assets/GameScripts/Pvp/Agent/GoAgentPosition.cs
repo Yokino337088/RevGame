@@ -52,7 +52,7 @@ namespace RevGame.Pvp.Agent
             return core != null && core.Sequence == _sequence && core.StateHash == _hash;
         }
 
-        public static GoAgentPosition Create(GoCore core, GoSide side)
+        public static GoAgentPosition Create(GoCore core, GoSide side, bool advice = false)
         {
             var result = new GoAgentPosition { _sequence = core.Sequence, _hash = core.StateHash };
             GoCore snapshot = core.Clone();
@@ -95,6 +95,10 @@ namespace RevGame.Pvp.Agent
                 text.Append(i).Append('=').Append(result._actions[i].Id).Append(' ');
             }
             text.Append("\n调用choose_go_action工具，actionIndex选本次候选的索引。避免填己方眼位，无有益着手可pass。");
+            if (advice)
+            {
+                text.Append("\n这是给玩家的落子建议。优先指出当下最值得考虑的一手；有意义的着手尚存时不要停一手。");
+            }
             result.Prompt = text.ToString();
             return result;
         }

@@ -7,7 +7,56 @@ namespace RevGame.Pvp
         private readonly GoHint[] _suggestions = new GoHint[3];
         private int _suggestionCount;
         private GoCore _replay;
-        public int ReplayStep { get; private set; } = -1;
+        public int FeedbackVersion
+        {
+            get;
+            private set;
+        }
+        public string Feedback
+        {
+            get;
+            private set;
+        } = "";
+        public int SpeechVersion
+        {
+            get;
+            private set;
+        }
+        public string SpeechCue
+        {
+            get;
+            private set;
+        } = "";
+        public string SpeechPoint
+        {
+            get;
+            private set;
+        } = "";
+
+        /// <summary>只发布确实发生的对局事件，鼠标移过棋盘不会不断重播弹幕。</summary>
+        private void NotifyBoard(string text)
+        {
+            Feedback = text;
+            FeedbackVersion++;
+        }
+
+        private void SpeakAgent(string cue, int x = -1, int y = -1)
+        {
+            SpeechCue = cue;
+            SpeechPoint = x < 0 ? "" : FormatPoint(x, y);
+            SpeechVersion++;
+        }
+
+        /// <summary>落点坐标给旁白用。列从左到右 A–H、J，行号从下往上 1–9。</summary>
+        internal static string FormatPoint(int x, int y)
+        {
+            return "ABCDEFGHJ"[x].ToString() + (y + 1);
+        }
+        public int ReplayStep
+        {
+            get;
+            private set;
+        } = -1;
         public GoCore DisplayCore { get { return _replay ?? Core; } }
         public GoHint[] Suggestions { get { return _suggestions; } }
         public int SuggestionCount { get { return _suggestionCount; } }
@@ -22,23 +71,123 @@ namespace RevGame.Pvp
             }
         }
 
-        /// <summary>只消耗本地建议次数；三候选是启发式而非胜率预测，与两端规则裁判完全分开。</summary>
+        /// <summary>建议是独立的只读请求。玩家落子、离开或改变授权后取消，绝不代替玩家提交。</summary>
+        private Agent.IGoAgentRequest _hintRequest;
+        private GoCore _hintCore;
+        private Agent.GoAgentPosition _hintPosition;
+        private double _hintDeadline;
+        public bool HintPending => _hintRequest != null;
+        public string HintSource
+        {
+            get;
+            private set;
+        } = "";
+        public int HintRevision
+        {
+            get;
+            private set;
+        }
+
+        public bool CanRequestHint => CanAct && !AgentControlsHumanSeat && Core.Phase == GoPhase.Playing &&
+            (Mode == PvpConnectionMode.Local && !IsComputerGame || Core.Turn == MySide);
+
         public void RequestHint()
         {
-            if (!CanAct || Core.Phase != GoPhase.Playing || HintsRemaining <= 0 || (Mode != PvpConnectionMode.Local && Core.Turn != MySide))
+            if (!CanRequestHint || HintPending)
             {
-                Status = "当前不能请求建议，或建议次数已经用完";
                 return;
             }
-            _suggestionCount = Core.GetHints(Core.Turn, _suggestions);
-            if (_suggestionCount > 0)
+            if (AgentSettings.Ready && _clock.Elapsed.TotalSeconds >= _cooldownUntil)
             {
-                HintsRemaining--;
-                HintsVisible = true;
-                Status = "建议：" + _suggestions[0].Reason + "（启发式参考，并非必胜下法）";
-                Revision++;
+                try
+                {
+                    _hintCore = Core;
+                    _hintPosition = Agent.GoAgentPosition.Create(Core, Core.Turn, advice: true);
+                    _hintDeadline = _clock.Elapsed.TotalSeconds + DecisionDeadlineSeconds;
+                    _hintRequest = AgentRequestFactory(AgentSettings, _hintPosition);
+                    PublishHint("HintThinking", 0);
+                    return;
+                }
+                catch (Exception)
+                {
+                    CancelHint();
+                    // 不把供应商响应、请求地址或凭据写到玩家台词里。
+                }
             }
+            PublishLocalHint();
         }
+
+        private void PollHint()
+        {
+            if (!HintPending)
+            {
+                return;
+            }
+            // 同一快照只对同一手有效。离开或收到远端新盘后不会发布旧落点。
+            if (!ReferenceEquals(_hintCore, Core) || !CanRequestHint)
+            {
+                CancelHint();
+                return;
+            }
+            try
+            {
+                if (_clock.Elapsed.TotalSeconds < _hintDeadline)
+                {
+                    if (!_hintRequest.IsDone)
+                    {
+                        return;
+                    }
+                    if (_hintPosition.TryReadAction(_hintRequest.ReadContent(), out Agent.GoAgentAction action))
+                    {
+                        CancelHint();
+                        if (action.Kind == GoAction.Play)
+                        {
+                            _suggestions[0] = new GoHint { X = action.X, Y = action.Y };
+                            PublishHint("HintCloud", 1);
+                        }
+                        else
+                        {
+                            PublishHint("HintPass", 0);
+                        }
+                        return;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // 超时、响应格式错误与网络故障统一使用同一份当前盘面的本地候选。
+            }
+            CancelHint();
+            PublishLocalHint();
+        }
+
+        private void PublishLocalHint()
+        {
+            int count = Core.GetHints(Core.Turn, _suggestions);
+            PublishHint(count > 0 ? "HintLocal" : "HintPass", count);
+        }
+
+        private void PublishHint(string source, int count)
+        {
+            HintSource = source;
+            HintRevision++;
+            _suggestionCount = count;
+            if (count > 0)
+            {
+                HintsVisible = true;
+            }
+            Revision++;
+        }
+
+        private void CancelHint()
+        {
+            _hintRequest?.Dispose();
+            _hintRequest = null;
+            _hintCore = null;
+            _hintPosition = null;
+            HintSource = "";
+        }
+
         public void SetRookie(bool rookie)
         {
             if (Core != null || Queued || Connected)
@@ -47,7 +196,6 @@ namespace RevGame.Pvp
                 return;
             }
             Config = PvpConfig.Read(rookie);
-            HintsRemaining = Config.hintCount;
             Revision++;
         }
         /// <summary>显示时钟只做无副作用估算；每次真实落子用ElapsedMs重放，读秒不会因UI刷新而重复扣减。</summary>
@@ -123,6 +271,9 @@ namespace RevGame.Pvp
             _replay = null;
             ReplayStep = -1;
             _suggestionCount = 0;
+            Feedback = "";
+            SpeechCue = "";
+            CancelHint();
         }
     }
 }

@@ -154,6 +154,8 @@ namespace RevGame.Pvp
         public readonly int[] Liberties = new int[GoCore.PointCount];
         /// <summary>0 中立 / 1 黑 / 2 白；仅拓扑独占区域估计，不自动判死活。</summary>
         public readonly byte[] Territory = new byte[GoCore.PointCount];
+        /// <summary>接触至少三条盘边的大开口不着色。只供对弈中预览，终局计分保留所有规则所属空点。</summary>
+        public readonly bool[] OpenTerritory = new bool[GoCore.PointCount];
         /// <summary>0 无 / 1 眼形 / 2 假眼风险；眼形不等于证明活棋，视图不得据此显示“必活”。</summary>
         public readonly byte[] Eye = new byte[GoCore.PointCount];
         public readonly byte[] EyeOwner = new byte[GoCore.PointCount];

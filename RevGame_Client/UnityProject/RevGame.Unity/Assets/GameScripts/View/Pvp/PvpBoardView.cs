@@ -2,6 +2,7 @@ using RevGame.View;
 using Revolution;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Sprites;
 
 namespace RevGame.Pvp
 {
@@ -10,7 +11,7 @@ namespace RevGame.Pvp
     /// 棋局改变时只上传81点数据，Shader负责呼吸/流光，不在每帧遍历围棋连通块或克隆材质。
     /// </summary>
     [RevPoolPrefab("Pvp", "PvpBoardView", Group = RevResGroup.Battle)]
-    public sealed class PvpBoardView : MonoBehaviour
+    public sealed partial class PvpBoardView : MonoBehaviour
     {
         [SerializeField] private MeshRenderer boardRenderer;
         [SerializeField] private MeshRenderer backgroundRenderer;
@@ -18,10 +19,31 @@ namespace RevGame.Pvp
         private readonly Vector4[] _marks = new Vector4[81];
         private readonly int[] _liberties = new int[81];
         private readonly GoBoardAnalysis _analysis = new GoBoardAnalysis();
+        [SerializeField] private Sprite eyeSprite;
+        private GoCore _analyzedCore;
+        private GoPointSet _previousEyes;
+        private int _eyeAtlasVersion;
+        public int EyeVersion
+        {
+            get;
+            private set;
+        }
+        internal int VisibleEyeCount
+        {
+            get;
+            private set;
+        }
+        internal int VisibleTerritoryCount
+        {
+            get;
+            private set;
+        }
+        internal bool EyePacked => eyeSprite != null && eyeSprite.packed;
+        internal bool ShaderReady => Ready && boardRenderer.sharedMaterial.shader.isSupported;
         private MaterialPropertyBlock _boardBlock, _backgroundBlock;
         private int _revision = -1, _hover = -1, _width, _height;
         private Camera _camera;
-        public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null; } }
+        public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null && eyeSprite != null; } }
 
         private void OnEnable()
         {
@@ -29,6 +51,10 @@ namespace RevGame.Pvp
             _revision = -1;
             _hover = -1;
             _width = 0;
+            _eyeAtlasVersion = -1;
+            EyeVersion = 0;
+            _previousEyes = default;
+            _analyzedCore = null;
             _boardBlock = _boardBlock ?? new MaterialPropertyBlock();
             _backgroundBlock = _backgroundBlock ?? new MaterialPropertyBlock();
         }
@@ -48,9 +74,11 @@ namespace RevGame.Pvp
             }
             GoCore core = service.DisplayCore;
             // 围住的区域按规则分析结果常显；Shader时钟只控制呼吸光，不改变落子、领地或胜负。
-            bool reveal = core != null;
-            _boardBlock.SetFloat("_ShowTerritory", service.HintsVisible && reveal ? 1 : 0);
+            bool counting = core != null && ReferenceEquals(_scoreCore, core);
+            _boardBlock.SetFloat("_ShowTerritory", core != null && (service.HintsVisible || core.Phase == GoPhase.Scoring) ? 1 : 0);
+            _boardBlock.SetFloat("_ScoreProgress", counting ? _scoreProgress : -1);
             _boardBlock.SetFloat("_Clock", Time.unscaledTime);
+            BindEyeTexture();
             boardRenderer.SetPropertyBlock(_boardBlock);
         }
         private void FitCamera()
@@ -62,7 +90,7 @@ namespace RevGame.Pvp
             _width = Screen.width;
             _height = Screen.height;
             float aspect = _width / (float)Mathf.Max(1, _height);
-            _camera.orthographicSize = Mathf.Max(6.4f, 5.2f / aspect);
+            _camera.orthographicSize = Mathf.Max(6.4f, 8.6f / aspect);
             _camera.transform.position = new Vector3(4, 4, -10);
             float height = _camera.orthographicSize * 2;
             float backgroundWidth = Mathf.Max(height * aspect, height * (16f / 9f));
@@ -105,10 +133,6 @@ namespace RevGame.Pvp
             if (_hover != point)
             {
                 _hover = point;
-                if (point >= 0)
-                {
-                    service.Preview(x, y);
-                }
                 RefreshBoard(service);
             }
             if (click && point >= 0)
@@ -124,18 +148,24 @@ namespace RevGame.Pvp
                 _cells[i] = Vector4.zero;
                 _marks[i] = Vector4.zero;
             }
-            int selected = service.SelectedPoint >= 0 ? service.SelectedPoint : _hover;
+            int selected = core != null && core.Phase == GoPhase.Playing && service.ReplayStep < 0
+                ? (service.SelectedPoint >= 0 ? service.SelectedPoint : _hover) : -1;
             int last = -1;
             if (core != null)
             {
-                core.Analyze(_analysis);
-                for (int i = 0; i < 81; i++)
+                AnalyzeBoard(core, service.ReplayStep < 0);
+                bool counting = ReferenceEquals(_scoreCore, core);
+                VisibleTerritoryCount = 0;
+                VisibleEyeCount = 0;
+                for (int i = 0; i < GoCore.PointCount; i++)
                 {
-                    int liberties = _analysis.Liberties[i];
-                    // 同一块只在代表点画一个气数徽标，其他点用负号保留叫吃标记，避免满盘重复数字。
-                    _cells[i] = new Vector4((int)core.GetStone(i), _analysis.Group[i] == i ? liberties : -liberties,
-                        _analysis.Territory[i], _analysis.Eye[i]);
+                    bool open = core.Phase == GoPhase.Playing && _analysis.OpenTerritory[i];
+                    int owner = open ? 0 : _analysis.Territory[i];
+                    int eye = core.Phase == GoPhase.Playing && _analysis.Eye[i] == 1 ? 1 : 0;
+                    _cells[i] = new Vector4((int)core.GetStone(i), counting ? _scoreOrder[i] : _analysis.Liberties[i], owner, eye);
                     _marks[i].w = core.DeadStones.Contains(i) ? 1 : 0;
+                    VisibleTerritoryCount += owner == 0 ? 0 : 1;
+                    VisibleEyeCount += eye;
                 }
                 int visibleMoves = service.ReplayStep >= 0 ? service.ReplayStep : service.Moves.Count;
                 if (visibleMoves > 0)
@@ -191,14 +221,59 @@ namespace RevGame.Pvp
             _boardBlock.SetVectorArray("_Marks", _marks);
             _boardBlock.SetFloat("_ShowHints", service.HintsVisible ? 1 : 0);
             _boardBlock.SetFloat("_Selected", selected);
-            _boardBlock.SetFloat("_Last", last);
+            _boardBlock.SetFloat("_Last", core != null && core.Phase == GoPhase.Playing ? last : -1);
             _boardBlock.SetFloat("_Turn", core == null ? 1 : (int)core.Turn);
             boardRenderer.SetPropertyBlock(_boardBlock);
         }
+        private void AnalyzeBoard(GoCore core, bool live)
+        {
+            if (ReferenceEquals(core, _analyzedCore))
+            {
+                return;
+            }
+            core.Analyze(_analysis);
+            _analyzedCore = core;
+            if (live && core.Phase == GoPhase.Playing)
+            {
+                GoPointSet eyes = default;
+                for (int i = 0; i < GoCore.PointCount; i++)
+                {
+                    if (_analysis.Eye[i] == 1)
+                    {
+                        eyes.Add(i);
+                    }
+                }
+                if ((eyes.Low & ~_previousEyes.Low) != 0 || (eyes.High & ~_previousEyes.High) != 0)
+                {
+                    EyeVersion++;
+                }
+                _previousEyes = eyes;
+            }
+        }
+
+        private void BindEyeTexture()
+        {
+            if (_eyeAtlasVersion == GameSpriteAtlasService.BindingVersion)
+            {
+                return;
+            }
+            // atlasRequested绑定后重读一次四边UV。图集禁旋转和紧密打包，Shader可直接在矩形内采样。
+            _eyeAtlasVersion = GameSpriteAtlasService.BindingVersion;
+            _boardBlock.SetTexture("_EyeTex", eyeSprite.texture);
+            _boardBlock.SetVector("_EyeUv", DataUtility.GetOuterUV(eyeSprite));
+        }
+
         private void OnDisable()
         {
             _revision = -1;
             _hover = -1;
+            _analyzedCore = null;
+            ResetScoreCount();
+            if (boardRenderer != null)
+            {
+                boardRenderer.SetPropertyBlock(null);
+            }
+            _boardBlock?.Clear();
         }
     }
 }

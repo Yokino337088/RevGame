@@ -55,7 +55,6 @@ namespace RevGame.Pvp
         /// <summary>保留最近一次连接失败，交互提示刷新不能覆盖故障诊断；不含身份令牌。</summary>
         public string LastNetworkError { get; private set; } = string.Empty;
         public bool HintsVisible { get; private set; } = true;
-        public int HintsRemaining { get; private set; }
         public int SelectedPoint { get; private set; } = -1;
         public int Revision { get; private set; }
         public string PreviewText { get; private set; } = "点击格子落子";
@@ -86,7 +85,6 @@ namespace RevGame.Pvp
             Config = config;
             Core = null;
             _moves.Clear();
-            HintsRemaining = config.hintCount;
             HintsVisible = true;
             SelectedPoint = -1;
             ResetPresentation();
@@ -463,7 +461,6 @@ namespace RevGame.Pvp
             _goClock = new GoClock(Config.mainTimeSeconds, Config.byoyomiSeconds, Config.byoyomiCount);
             _moves.Clear();
             _turnStarted = _clock.Elapsed.TotalSeconds;
-            HintsRemaining = Config.hintCount;
             ResetPresentation();
             SelectedPoint = -1;
             Revision++;
@@ -565,12 +562,23 @@ namespace RevGame.Pvp
                 Status = reason;
                 return false;
             }
+            int captured = next.BlackCaptures + next.WhiteCaptures - Core.BlackCaptures - Core.WhiteCaptures;
+            CancelHint();
             Core = next;
             _goClock = nextClock;
             _moves.Add(move);
             _turnStarted = _clock.Elapsed.TotalSeconds;
             SelectedPoint = -1;
             Status = Core.Phase == GoPhase.Scoring ? "双方停一手：点选死子后分别确认；有分歧可继续对弈" : "落子已同步";
+            if (captured > 0)
+            {
+                NotifyBoard((move.side == (int)GoSide.Black ? "黑方" : "白方") + "提了 " + captured + " 子");
+            }
+            else if ((GoAction)move.kind == GoAction.Pass)
+            {
+                NotifyBoard(Core.Phase == GoPhase.Scoring ? "双方停一手 · 请点选死子" :
+                    (move.side == (int)GoSide.Black ? "黑方" : "白方") + "停一手");
+            }
             _suggestionCount = 0;
             Revision++;
             return true;
@@ -638,6 +646,7 @@ namespace RevGame.Pvp
             {
                 SelectedPoint = point;
                 Preview(x, y);
+                NotifyBoard(PreviewText);
                 Revision++;
                 return;
             }
@@ -645,6 +654,7 @@ namespace RevGame.Pvp
             {
                 // UI不能把禁入点、劫、等待回执等拒绝都表现成“点了没反应”。保留规则给出的真实原因。
                 PreviewText = Status;
+                NotifyBoard(Status);
                 Revision++;
             }
         }
@@ -683,6 +693,7 @@ namespace RevGame.Pvp
             Lan?.Poll();
             PollAgent();
             PollComputer();
+            PollHint();
             if (_leaving)
             {
                 if (!_leaveSent && _server != null && _server.Connected && !_server.Busy)

@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1020934709
+CRC: 1014793281
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -304,7 +304,8 @@ AssetBundleManifest:
       Name: pvp_arena
       Dependencies:
         Dependency_0: shared_shaders
-        Dependency_1: background_temple_shared
+        Dependency_1: atlas_boardstatus
+        Dependency_2: background_temple_shared
     Info_76:
       Name: background_temple_shared
       Dependencies: {}
@@ -319,7 +320,12 @@ AssetBundleManifest:
         Dependency_0: font_cjk
         Dependency_1: atlas_uibattle
         Dependency_2: atlas_uimenus
-        Dependency_3: atlas_pvpagent
+        Dependency_3: atlas_yayacombatexpressions
+        Dependency_4: config_yaya
+        Dependency_5: atlas_pvpagent
     Info_79:
       Name: atlas_pvpagent
+      Dependencies: {}
+    Info_80:
+      Name: audio_pvp
       Dependencies: {}

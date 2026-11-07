@@ -55,6 +55,7 @@ namespace RevGame.Flow
             _loading.ResetCover();
             Report(.05f, "正在铺开九路棋盘…");
             await RevDataTableManager.LoadAsync<PvpRuleTable>();
+            await RevDataTableManager.LoadAsync<PvpYayaLineTable>();
             PvpConfig config = PvpConfig.Read(true);
             await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus" });
             ThrowIfDisposed();

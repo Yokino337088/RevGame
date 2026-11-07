@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Pvp.Networking;
 using RevGame.View;
@@ -18,15 +20,14 @@ namespace RevGame.Pvp
     {
         protected override void OnBindView()
         {
-            // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
+            // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
+            _idlePortrait = _portrait.sprite;
         }
 
         [RevBind("top/title")] private Text _title;
         [RevBind("top/black")] private Text _black;
         [RevBind("top/white")] private Text _white;
         [RevBind("top/turn")] private Text _turn;
-        [RevBind("status")] private Text _status;
-        [RevBind("preview")] private Text _preview;
         [RevBind("controls/pass")] private Button _pass;
         [RevBind("controls/resign")] private Button _resign;
         [RevBind("controls/hint")] private Button _hint;
@@ -50,7 +51,6 @@ namespace RevGame.Pvp
 
         [RevBind("controls/agent/label")] private Text _agentLabel;
         [RevBind("controls/agent")] private Button _agent;
-        [RevBind("agentState")] private Text _agentState;
 
         [RevButtonClick("agentSettings")]
         private void OpenAgentSettings()
@@ -61,10 +61,17 @@ namespace RevGame.Pvp
         [RevButtonClick("agent")]
         private void ToggleAgent()
         {
-            Run(() => Service.SetAgentControl(!Service.AgentControlsHumanSeat));
+            Run(() =>
+            {
+                Service.SetAgentControl(!Service.AgentControlsHumanSeat);
+                PopToast(Service.AgentStatus);
+            });
         }
 
         private PvpBoardView _board;
+        [SerializeField] private YayaExpressionCatalog portraitCatalog;
+        // 持有双眼和正式表情图集的租约，关闭面板时成对释放。
+        private readonly List<GameSpriteAtlasService.ScopedAtlasLease> _matchAtlases = new List<GameSpriteAtlasService.ScopedAtlasLease>();
         private Action _confirmedAction;
         private bool _opening;
         private int _leaseVersion;
@@ -97,6 +104,7 @@ namespace RevGame.Pvp
             _feedback = string.Empty;
             _confirmedAction = null;
             Show(_confirm, false);
+            ResetMatchFeedback();
             // 文字每秒五次足够读秒显示；网络收包由独立的 PvP Logic 轮询，不能依赖面板是否显示。
             RevTimer.Every(.2f, TickPresentation, domain: RevTimeDomain.Unscaled, owner: this);
         }
@@ -115,6 +123,25 @@ namespace RevGame.Pvp
         public async RevTask PrepareAsync()
         {
             int version = _leaseVersion;
+            var atlases = RevServices.GetRequired<GameSpriteAtlasService>();
+            // 面板持有两张实际用到的图集。先等像素就绪，再让GameFlow撤掉转场遮挡。
+            if (portraitCatalog == null)
+            {
+                throw new InvalidOperationException("九路围棋缺少鸦鸦表情目录");
+            }
+            _matchAtlases.Add(atlases.AcquireScopedAtlas("BoardStatus"));
+            foreach (string name in portraitCatalog.AtlasNames)
+            {
+                _matchAtlases.Add(atlases.AcquireScopedAtlas(name));
+            }
+            for (int i = 0; i < _matchAtlases.Count; i++)
+            {
+                await _matchAtlases[i].WaitReadyAsync();
+                if (!_opening || version != _leaseVersion)
+                {
+                    throw new OperationCanceledException("九路围棋资源加载已取消");
+                }
+            }
             bool returned = false;
             GamePoolRequests.GetAsync<PvpBoardView>(board =>
             {
@@ -145,6 +172,8 @@ namespace RevGame.Pvp
                 throw new InvalidOperationException("九路围棋棋盘未就绪或本次进入已取消。");
             }
             _board.gameObject.SetActive(false);
+            _yayaLines = new PvpYayaLines(portraitCatalog);
+            PrepareMatchSound();
             RefreshView();
         }
 
@@ -160,16 +189,13 @@ namespace RevGame.Pvp
             bool canAct = service.CanAct && !service.AgentControlsHumanSeat;
             _agent.interactable = hasGame && !finished && service.Mode != PvpConnectionMode.Local;
             Set(_agentLabel, service.AgentControlsHumanSeat ? "停止托管" : "Agent托管");
-            Set(_agentState, service.AgentStatus + " · " + service.Status);
             bool myTurn = playing && ((service.Mode == PvpConnectionMode.Local && !service.IsComputerGame) || core.Turn == service.MySide);
             string connection = service.Mode == PvpConnectionMode.Server ? "服务器匹配" : service.Mode == PvpConnectionMode.Lan ? "局域网直连" : service.IsComputerGame ? "本地人机" : "本地双人";
             Set(_title, hasGame ? "九路围棋 · " + connection : "九路围棋");
             Set(_black, hasGame ? "● " + service.BlackName + "\n" + service.ClockText(GoSide.Black) + "   提子 " + core.BlackCaptures : "黑先白后");
             Set(_white, hasGame ? "○ " + service.WhiteName + "\n" + service.ClockText(GoSide.White) + "   提子 " + core.WhiteCaptures : "同样规则 · 公平落子");
-            Set(_turn, hasGame ? service.ResultText().Split('\n')[0] : "选择一种对战方式");
-            Set(_status, string.IsNullOrEmpty(_feedback) ? service.Status : _feedback);
-            Set(_preview, playing ? service.PreviewText : scoring ? "点选整块死子；双方确认同一方案后结算" : string.Empty);
-            _status.gameObject.SetActive(false);
+            RefreshMatchFeedback(service, playing);
+            Set(_turn, _counting ? "终局 · 正在清点" : hasGame ? service.ResultText().Split('\n')[0] : "选择一种对战方式");
             Show(_scoring, scoring);
             Show(_result, finished);
             Show(_pass.gameObject, playing);
@@ -179,15 +205,14 @@ namespace RevGame.Pvp
             Show(_reconnect.gameObject, hasGame && service.Mode == PvpConnectionMode.Server && !service.Connected);
             _pass.interactable = canAct && myTurn;
             _resign.interactable = canAct;
-            _hint.interactable = canAct && myTurn && service.HintsRemaining > 0;
-            Set(_hintLabel, "落子建议 " + service.HintsRemaining);
+            _hint.interactable = service.CanRequestHint && !service.HintPending;
+            Set(_hintLabel, service.HintPending ? "鸦鸦思考中" : "落子建议");
             Set(_toggleLabel, service.HintsVisible ? "隐藏辅助" : "显示辅助");
             Set(_scoringText, service.ResultText());
             _confirmScore.interactable = canAct && scoring && (service.Mode == PvpConnectionMode.Local || !core.HasConfirmed(service.MySide));
             _resume.interactable = canAct && scoring;
-            Set(_resultText, service.ResultText());
-            _previous.interactable = finished && service.Moves.Count > 0 && service.ReplayStep != 0;
-            _next.interactable = finished && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
+            _previous.interactable = finished && !_counting && service.Moves.Count > 0 && service.ReplayStep != 0;
+            _next.interactable = finished && !_counting && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
             _replayExit.interactable = service.ReplayStep >= 0;
         }
 
@@ -204,6 +229,7 @@ namespace RevGame.Pvp
                 _feedback = "操作未完成：" + error.Message;
                 RevLog.Warn(_feedback, "Pvp");
             }
+            PopToast(_feedback);
             RefreshView();
         }
 
@@ -340,11 +366,19 @@ namespace RevGame.Pvp
             _confirmedAction = null;
             RevTimer.CancelAllOf(this);
             RevUIAnim.StopAllOf(this);
+            ResetMatchFeedback();
+            ReleaseMatchSound();
+            _yayaLines = null;
             if (_board != null)
             {
                 RevPool.Return(_board);
                 _board = null;
             }
+            foreach (var atlas in _matchAtlases)
+            {
+                atlas.Dispose();
+            }
+            _matchAtlases.Clear();
         }
     }
 }

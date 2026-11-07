@@ -121,6 +121,7 @@ namespace RevGame.Editor
                     new Vector3(4, 4, 5), new Vector3(23, 12.94f, 1));
                 data.FindProperty("boardRenderer").objectReferenceValue = Quad(root.transform, "无尽同款象牙金格棋盘", board,
                     new Vector3(4, 4, 2), new Vector3(9, 9, 1));
+                BindEyeSprite(data);
                 data.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/Pvp/PvpBoardView.prefab");
             }
@@ -207,7 +208,6 @@ namespace RevGame.Editor
                 Label("black", top, "黑先白后", .02f, .08f, .34f, .88f, 29);
                 Label("white", top, "同样规则 · 公平落子", .66f, .08f, .98f, .88f, 29);
                 Label("turn", top, "选择一种对战方式", .29f, .05f, .71f, .59f, 26);
-                Label("preview", root.transform, "", .26f, .82f, .74f, .855f, 23, true);
 
                 RectTransform controls = Rect("controls", root.transform, 0, 0, 1, 1);
                 Button("pass", controls, "停一手", .31f, .025f, .43f, .095f, 30);
@@ -216,11 +216,6 @@ namespace RevGame.Editor
                 Button("toggleHints", controls, "隐藏辅助", .81f, .025f, .97f, .085f, 25);
                 Button("reconnect", controls, "重连对局", .025f, .45f, .20f, .53f, 28);
                 Button("back", controls, "返回大厅", .02f, .025f, .15f, .085f, 26);
-                // 状态放在所有主页面之上，停服提示在连接页面和对局中都能立即看见。
-                Text status = Label("status", root.transform, "", .17f, .105f, .83f, .145f, 24);
-                var outline = status.gameObject.AddComponent<Outline>();
-                outline.effectColor = new Color(.04f, .08f, .10f, .95f);
-                outline.effectDistance = new Vector2(1.5f, -1.5f);
 
                 RectTransform scoring = Rect("scoring", root.transform, .72f, .30f, .985f, .70f);
                 Plate(scoring, "UI_Tip_imgBK", Color.white, true);
@@ -247,6 +242,7 @@ namespace RevGame.Editor
                 confirm.gameObject.SetActive(false);
                 scoring.gameObject.SetActive(false);
                 result.gameObject.SetActive(false);
+                ConfigureMatchHud(root.transform);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab");
             }
             finally

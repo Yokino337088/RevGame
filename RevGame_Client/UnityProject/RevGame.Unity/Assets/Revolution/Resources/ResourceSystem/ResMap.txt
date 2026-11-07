@@ -8,6 +8,7 @@ Art/Board/BoardSprite_736665ce|atlas_boardstatus|BoardSprite_736665ce
 Art/Board/BoardSprite_a6f4bd8e|atlas_boardstatus|BoardSprite_a6f4bd8e
 Art/Board/BoardSprite_a69ff108|atlas_boardstatus|BoardSprite_a69ff108
 Art/Board/BoardSprite_e26b7dcd|atlas_boardstatus|BoardSprite_e26b7dcd
+Art/Status/CartoonEyes|atlas_boardstatus|CartoonEyes
 Art/Status/Encircled/Encircled_001|atlas_boardstatus|Encircled_001
 Art/Status/Encircled/Encircled_002|atlas_boardstatus|Encircled_002
 Art/Status/Encircled/Encircled_003|atlas_boardstatus|Encircled_003
@@ -445,6 +446,10 @@ Audio/Sfx/Helper/HelperHeal|audio_helper|HelperHeal
 Audio/Sfx/Helper/HelperJellyfish|audio_helper|HelperJellyfish
 Audio/Sfx/Helper/HelperJellyImpact|audio_helper|HelperJellyImpact
 Audio/Sfx/Helper/HelperMissile|audio_helper|HelperMissile
+Audio/Sfx/Pvp/PvpCapture|audio_pvp|PvpCapture
+Audio/Sfx/Pvp/PvpEye|audio_pvp|PvpEye
+Audio/Sfx/Pvp/PvpPlace|audio_pvp|PvpPlace
+Audio/Sfx/Pvp/PvpResult|audio_pvp|PvpResult
 Audio/Sfx/BossEntrance|audio_sfx|BossEntrance
 Audio/Sfx/BossExit|audio_sfx|BossExit
 Audio/Sfx/Defeat|audio_sfx|Defeat
@@ -558,6 +563,7 @@ Data/EventRotationConfig|data_tables|EventRotationConfig
 Data/PieceConfig|data_tables|PieceConfig
 Data/PrepBuffConfig|data_tables|PrepBuffConfig
 Data/PvpRule|data_tables|PvpRule
+Data/PvpYayaLine|data_tables|PvpYayaLine
 Data/RewardBoostConfig|data_tables|RewardBoostConfig
 Data/RewardConfig|data_tables|RewardConfig
 Data/StarConfig|data_tables|StarConfig
