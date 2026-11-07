@@ -36,7 +36,11 @@ namespace RevGame.Pvp
                     ["eligible"] = Service.CanChallengeDuel, ["ready"] = Service.DuelBothReady, ["frame"] = state.Frame,
                     ["fighting"] = state.Frame >= 5, ["result"] = state.Result, ["hash"] = state.Hash, ["error"] = Service.DuelError,
                     ["airborne"] = state.FirstY > 0, ["firstY"] = state.FirstY,
-                    ["bothAnimated"] = view != null && view.FirstAnimator.IsPlaying && view.SecondAnimator.IsPlaying,
+                    ["bothPlaying"] = view != null && view.FirstAnimator.IsPlaying && view.SecondAnimator.IsPlaying,
+                    ["bothAnimated"] = view != null && view.FirstAnimator.HasSpriteMotion && view.SecondAnimator.HasSpriteMotion,
+                    ["firstIdleAnimated"] = view != null && view.FirstAnimator.IdleSpriteMotion,
+                    ["firstJumpAnimated"] = view != null && view.FirstAnimator.JumpSpriteMotion,
+                    ["secondAttackAnimated"] = view != null && view.SecondAnimator.AttackSpriteMotion,
                     ["strikeVisible"] = view != null && (view.Effects.First.enabled || view.Effects.Second.enabled),
                     ["firstHealth"] = state.FirstHealth, ["secondHealth"] = state.SecondHealth };
             }, readOnly: true, owner: Owner);

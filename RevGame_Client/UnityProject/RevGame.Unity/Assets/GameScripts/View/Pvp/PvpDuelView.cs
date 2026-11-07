@@ -110,6 +110,10 @@ namespace RevGame.View
             PaintActor(Second, _secondPosition, view.SecondFacing);
             FirstAnimator.Paint(view.FirstHealth, view.FirstY, view.FirstAction, Mathf.Abs(_firstPosition.x - firstTarget.x) > 4);
             SecondAnimator.Paint(view.SecondHealth, view.SecondY, view.SecondAction, Mathf.Abs(_secondPosition.x - secondTarget.x) > 4);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            FirstAnimator.ObserveSprite(First.sprite);
+            SecondAnimator.ObserveSprite(Second.sprite);
+#endif
             FirstHealth.fillAmount = Mathf.Clamp01(view.FirstHealth / (float)DuelConfig.Health);
             SecondHealth.fillAmount = Mathf.Clamp01(view.SecondHealth / (float)DuelConfig.Health);
             FirstEnergy.fillAmount = Mathf.Clamp01(view.FirstEnergy / (float)DuelConfig.Energy);

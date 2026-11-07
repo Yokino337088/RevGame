@@ -114,6 +114,14 @@ namespace RevGame.Editor
             return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildMatchHud").Invoke(null, null);
         }
 
+        /// <summary>将现有决斗场景的角色帧序列保存到场景组件。</summary>
+        [RevAutomationAction("game.pvp.duel-sprites", Environment = "edit", Keys = new string[0], Description = "为现有决斗场景绑定两席的动画帧")]
+        public static object BindDuelSprites(RevAutomationRequest request)
+        {
+            return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("BindExistingDuelSpriteSequences").Invoke(null, null);
+        }
+
         /// <summary>给 RevCLI 的固定入口，只执行项目中已审查的双背景配方。</summary>
         [RevAutomationAction("game.pvp.arena-backgrounds", Environment = "edit", Keys = new string[0], Description = "更新决斗擂台与围棋无尽神殿的背景 Shader 绑定")]
         public static object ArenaBackgrounds(RevAutomationRequest request)

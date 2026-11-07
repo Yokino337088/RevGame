@@ -20,6 +20,8 @@ namespace RevGame.Editor
         private const string DuelScenePath = "Assets/Scenes/PvpDuelScene.unity";
         // 编辑器查找角色帧和背景的资产目录。
         private const string DuelArt = "Assets/GameRes/Art/Pvp/Duel/";
+        // 与 DuelActorAnimator 的 Pose 顺序对应。制作片段和绑定图片都使用同一张表。
+        private static readonly string[] DuelPoses = { "Idle", "Run", "Jump", "Attack1", "Attack2", "Attack3", "Down" };
 
         // 导入素材、构建场景和 HUD、保存并登记构建列表；最后恢复用户原活动场景。
         public static object BuildDuel()
@@ -187,7 +189,7 @@ namespace RevGame.Editor
             var animation = actor.gameObject.AddComponent<Animation>();
             animation.playAutomatically = false;
             var clips = new List<AnimationClip>();
-            foreach (string pose in new[] { "Idle", "Run", "Jump", "Attack1", "Attack2", "Attack3", "Down" })
+            foreach (string pose in DuelPoses)
             {
                 Sprite[] frames = LoadDuelSequence(prefix + pose);
                 string path = $"{folder}/{(prefix.Length == 0 ? "Swordsman" : prefix)}_{pose}.anim";
@@ -217,7 +219,63 @@ namespace RevGame.Editor
             }
             AnimationUtility.SetAnimationClips(animation, clips.ToArray());
             AssetDatabase.SaveAssets();
-            return actor.gameObject.AddComponent<DuelActorAnimator>();
+            var presenter = actor.gameObject.AddComponent<DuelActorAnimator>();
+            BindDuelSpriteSequences(presenter, prefix);
+            return presenter;
+        }
+
+        // 把图片按姿态写进场景，运行时无需查找资产或解析编辑器动画曲线。
+        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, string prefix)
+        {
+            using var data = new SerializedObject(presenter);
+            SerializedProperty sequences = data.FindProperty("spriteSequences");
+            sequences.arraySize = DuelPoses.Length;
+            for (int i = 0; i < DuelPoses.Length; i++)
+            {
+                Sprite[] images = LoadDuelSequence(prefix + DuelPoses[i]);
+                SerializedProperty frames = sequences.GetArrayElementAtIndex(i).FindPropertyRelative("frames");
+                frames.arraySize = images.Length;
+                for (int frame = 0; frame < images.Length; frame++)
+                {
+                    frames.GetArrayElementAtIndex(frame).objectReferenceValue = images[frame];
+                }
+            }
+            data.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>给已制作的场景补上角色帧序列，保留场景原有画面与对象引用。</summary>
+        public static object BindExistingDuelSpriteSequences()
+        {
+            Scene current = SceneManager.GetActiveScene();
+            Scene duel = SceneManager.GetSceneByPath(DuelScenePath);
+            bool wasLoaded = duel.isLoaded;
+            if (EditorApplication.isPlayingOrWillChangePlaymode || (wasLoaded && duel.isDirty))
+            {
+                throw new InvalidOperationException("请退出 Play 并保存决斗场景后再装配序列帧。");
+            }
+            if (!wasLoaded)
+            {
+                duel = EditorSceneManager.OpenScene(DuelScenePath, OpenSceneMode.Additive);
+            }
+            try
+            {
+                var view = duel.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
+                BindDuelSpriteSequences(view.FirstAnimator, "");
+                BindDuelSpriteSequences(view.SecondAnimator, "Assassin");
+                if (!EditorSceneManager.SaveScene(duel))
+                {
+                    throw new InvalidOperationException("决斗角色序列帧保存失败。");
+                }
+                return new { scene = DuelScenePath, actors = 2, posesPerActor = DuelPoses.Length };
+            }
+            finally
+            {
+                SceneManager.SetActiveScene(current);
+                if (!wasLoaded)
+                {
+                    EditorSceneManager.CloseScene(duel, true);
+                }
+            }
         }
 
         // 把指针按下、松开与移出转发为方向意图，避免按住后移出产生粘键。
