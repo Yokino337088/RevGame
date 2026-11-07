@@ -54,6 +54,19 @@ namespace RevGame.Pvp
                 _ => PvpAgentChecks.VerifyStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-storage-clear", "清除独立测试槽，不修改玩家配置", Empty,
                 _ => PvpAgentChecks.ClearStorageCheck(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-schema-check", "仅检查两手示例棋局的实际序列化工具Schema，不发送HTTP，不读取Key", Empty, payload =>
+            {
+                var core = new GoCore(Service.Config.komiHalfPoints);
+                core.TryPlay(GoSide.Black, 4, 4, out _);
+                core.TryPlay(GoSide.White, 4, 2, out _);
+                var position = Agent.GoAgentPosition.Create(core, GoSide.Black);
+                return new Dictionary<string, object> { ["expectedCount"] = position.CopyActionIds().Length,
+                    ["wire"] = Agent.DeepSeekGoRequest.InspectWireSchema("deepseek-flash", position) };
+            }, readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-trace", "只读导出每手请求耗时/HTTP分类，不返回Key、响应正文或设置对象", Empty,
+                _ => new Dictionary<string, object> { ["ready"] = Service.AgentSettings.Ready, ["realTransport"] = Service.AgentRequestFactory.Method.DeclaringType == typeof(Agent.DeepSeekGoRequest), ["records"] = Service.AgentTrace, ["moves"] = Service.Moves }, readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-live", "使用启动时已解密的本地真实Key开启本方Agent，不安装任何响应替身", Empty,
+                _ => Result(Service.SetAgentControl(true), Service.AgentStatus), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-fixture", "仅开发态安装固定停一手HTTP替身，联机仍走真实连接；不访问云端", Empty,
                 _ => { PvpAgentChecks.Install(Service); return Result(true, "已安装固定响应"); }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-on", "联机自己的座位通过正式入口开启托管", Empty,

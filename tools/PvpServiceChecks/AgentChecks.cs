@@ -164,6 +164,13 @@ internal static class AgentChecks
         }
         Assert(attempts == 3 && s.Core.Sequence == 8, "连续限流后冷却，第4手无需再次等待云端");
         s.Dispose();
+        var indexedCore = new GoCore(15);
+        var indexed = GoAgentPosition.Create(indexedCore, GoSide.Black);
+        Assert(indexed.TryReadAction("{\"actionIndex\":0}", out var picked) && picked.X == 0 && picked.Y == 0, "索引映射到当前合法候选");
+        Assert(!indexed.TryReadAction("{\"actionIndex\":82}", out _) && !indexed.TryReadAction("{\"actionIndex\":-1}", out _), "越界索引不能取模或越权落子");
+        indexedCore.TryPlay(4, 4, out _);
+        indexed = GoAgentPosition.Create(indexedCore, GoSide.White);
+        Assert(Array.IndexOf(indexed.CopyActionIds(), "play_4_4") < 0, "当前候选排除已占位置");
         Console.WriteLine("PASS: Agent 人机闭环、权限、取消、单请求、非法输出、本地回退、候选隔离。");
     }
 }

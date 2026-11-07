@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RevGame.Pvp.Agent;
 
 namespace RevGame.Pvp
@@ -42,11 +43,33 @@ namespace RevGame.Pvp
             private set;
         }
 
+        // 每个服务只拥有自己的观测列表；上限防长局常驻增长，导出入口不读取设置对象。
+        private readonly List<Dictionary<string, object>> _agentTrace = new List<Dictionary<string, object>>();
+        public IReadOnlyList<Dictionary<string, object>> AgentTrace => _agentTrace;
+        private void TraceAgent(string outcome, string reason, string action = "")
+        {
+            var metrics = _agentRequest as IGoAgentMetrics;
+            metrics?.ObserveProgress();
+            if (_agentTrace.Count >= 512)
+            {
+                _agentTrace.RemoveAt(0);
+            }
+            _agentTrace.Add(new Dictionary<string, object>
+            {
+                ["index"] = _agentTrace.Count + 1, ["baseSequence"] = Core?.Sequence ?? 0,
+                ["side"] = _requestSide.ToString(), ["outcome"] = outcome, ["reason"] = reason,
+                ["action"] = action, ["seconds"] = Math.Max(0, _clock.Elapsed.TotalSeconds - _requestStarted),
+                ["budgetSeconds"] = _decisionBudget, ["httpStatus"] = metrics?.HttpStatus ?? 0,
+                ["responseBytes"] = metrics?.ResponseBytes ?? 0, ["sentSchema"] = outcome == "request_failed" ? metrics?.SchemaJson ?? "" : "", ["firstByteSeconds"] = metrics?.FirstByteSeconds ?? -1
+            });
+        }
+
         /// <summary>一个时钟预算内只尝试一次；连续失败进入冷却，避免每手都付出完整等待。</summary>
         private void AgentFailure(string reason)
         {
             AgentLastSeconds = Math.Max(0, _clock.Elapsed.TotalSeconds - _requestStarted);
             AgentLastFailure = reason;
+            TraceAgent("request_failed", reason);
             _consecutiveFailures++;
             if (_consecutiveFailures >= 3)
             {
@@ -140,6 +163,10 @@ namespace RevGame.Pvp
 
         private void CancelAgent()
         {
+            if (_agentRequest != null)
+            {
+                TraceAgent("request_cancelled", "状态变化或停止托管");
+            }
             _agentGeneration++;
             _agentRequest?.Dispose();
             _agentRequest = null;
@@ -169,6 +196,7 @@ namespace RevGame.Pvp
                 }
                 return;
             }
+            (_agentRequest as IGoAgentMetrics)?.ObserveProgress();
             if (_agentRequest != null && !_agentPosition.Matches(Core))
             {
                 CancelAgent();
@@ -235,8 +263,9 @@ namespace RevGame.Pvp
                 string content = _agentRequest.ReadContent();
                 if (!_agentPosition.TryReadAction(content, out GoAgentAction selected))
                 {
-                    throw new GoAgentRequestException("模型返回非法动作或空白JSON");
+                    throw new GoAgentRequestException(_agentPosition.RejectionReason(content));
                 }
+                TraceAgent("response_valid", "", selected.Id);
                 _agentRequest.Dispose();
                 _agentRequest = null;
                 AgentLastSeconds = _clock.Elapsed.TotalSeconds - _requestStarted;

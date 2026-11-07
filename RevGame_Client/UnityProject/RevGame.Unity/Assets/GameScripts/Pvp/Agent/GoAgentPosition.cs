@@ -5,6 +5,16 @@ using UnityEngine;
 
 namespace RevGame.Pvp.Agent
 {
+    /// <summary>可选的只读传输观测，不包含认证信息或响应正文；固定响应测试无需实现。</summary>
+    internal interface IGoAgentMetrics
+    {
+        void ObserveProgress();
+        long HttpStatus { get; }
+        ulong ResponseBytes { get; }
+        double FirstByteSeconds { get; }
+        string SchemaJson { get; }
+    }
+
     /// <summary>仅携带本地白名单原因，不保存响应正文、标头或Key，日志可安全输出。</summary>
     internal sealed class GoAgentRequestException : Exception
     {
@@ -80,13 +90,54 @@ namespace RevGame.Pvp.Agent
                 text.Append("数子阶段：接受当前双方可见方案；死活争议由玩家恢复对弈。\n");
             }
             text.Append("合法候选：");
-            foreach (GoAgentAction action in result._actions)
+            for (int i = 0; i < result._actions.Count; i++)
             {
-                text.Append(action.Id).Append(' ');
+                text.Append(i).Append('=').Append(result._actions[i].Id).Append(' ');
             }
-            text.Append("\n只返回json对象{\"actionId\":候选ID}。避免填己方眼位，无有益着手可pass。");
+            text.Append("\n调用choose_go_action工具，actionIndex选本次候选的索引。避免填己方眼位，无有益着手可pass。");
             result.Prompt = text.ToString();
             return result;
+        }
+
+        /// <summary>为本手严格工具Schema复制全部合法ID，不把候选缩成启发式前三手。</summary>
+        public string[] CopyActionIds()
+        {
+            var ids = new string[_actions.Count];
+            for (int i = 0; i < ids.Length; i++)
+            {
+                ids[i] = _actions[i].Id;
+            }
+            return ids;
+        }
+
+        /// <summary>失败诊断仅返回受控形状/坐标，绝不返回任意模型正文。</summary>
+        public string RejectionReason(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return "模型JSON为空白";
+            }
+            if (content.Contains("actionIndex"))
+            {
+                return "模型动作索引越界或格式不符";
+            }
+            try
+            {
+                string id = JsonUtility.FromJson<Selection>(content)?.actionId;
+                if (string.IsNullOrEmpty(id))
+                {
+                    return "模型JSON缺少actionId";
+                }
+                if (System.Text.RegularExpressions.Regex.IsMatch(id, "^play_[0-8]_[0-8]$"))
+                {
+                    return "模型选择了非合法候选:" + id;
+                }
+                return "模型actionId类型或格式不符";
+            }
+            catch (Exception)
+            {
+                return "模型JSON解析失败";
+            }
         }
 
         public bool TryReadAction(string content, out GoAgentAction action)
@@ -95,6 +146,17 @@ namespace RevGame.Pvp.Agent
             if (string.IsNullOrWhiteSpace(content) || content.Length > 4096)
             {
                 return false;
+            }
+            // 整数协议是生产工具调用；旧actionId仅兼容既有离线夹具，两个协议都严格校验成员。
+            var match = System.Text.RegularExpressions.Regex.Match(content, "^\\s*\\{\\s*\"actionIndex\"\\s*:\\s*(\\d+)\\s*\\}\\s*$");
+            if (match.Success)
+            {
+                if (!int.TryParse(match.Groups[1].Value, out int index) || index < 0 || index >= _actions.Count)
+                {
+                    return false;
+                }
+                action = _actions[index];
+                return true;
             }
             Selection selected;
             try
