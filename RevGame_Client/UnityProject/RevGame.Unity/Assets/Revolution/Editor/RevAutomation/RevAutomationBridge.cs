@@ -56,6 +56,15 @@ namespace Revolution.Editor
         private static bool _quitting;
         // 与活动工单分开保存：被 Busy 拒绝的请求也需要一条完成记录，不能覆盖正在运行的记录。
         private static readonly Dictionary<string, RevAutomationActivity.Ticket> ActivityTickets = new Dictionary<string, RevAutomationActivity.Ticket>();
+        internal static string ActiveRequestId
+        {
+            get
+            {
+                if (_active != null) { return _active.id; }
+                string stored = SessionState.GetString(ActiveKey, "");
+                return stored.Length == 0 ? null : JsonUtility.FromJson<RevAutomationRequest>(stored)?.id;
+            }
+        }
 
         static RevAutomationBridge()
         {
@@ -118,7 +127,7 @@ namespace Revolution.Editor
             if (request == null) { throw new ArgumentException("请求不能为空"); }
             string work = JobDirectory(request.id);
             if (batch) { _batch = true; }
-            if (File.Exists(Path.Combine(work, "response.json")))
+            if (!request.memoryTransport && File.Exists(Path.Combine(work, "response.json")))
             {
                 if (batch)
                 {
@@ -139,7 +148,8 @@ namespace Revolution.Editor
             { Reply(request, false, "TestsRunning", "Test Runner 仍在执行：" + testJob + "；请等待 test.result，避免交叉修改编辑器", null); return; }
             if (request.protocol != 1) { Reply(request, false, "Protocol", "不支持的自动化协议", null); return; }
             if (string.IsNullOrWhiteSpace(request.action)) { Reply(request, false, "Action", "缺少动作 ID", null); return; }
-            if (File.Exists(Path.Combine(work, "cancel"))) { Reply(request, false, "Cancelled", "请求在开始前已取消", null); return; }
+            if (request.memoryTransport ? RevAutomationHttp.Cancelled(request.id) : File.Exists(Path.Combine(work, "cancel")))
+            { Reply(request, false, "Cancelled", "请求在开始前已取消", null); return; }
             if (!batch && request.sessionId != Session) { Reply(request, false, "Session", "编辑器会话已变化，请重新请求", null); return; }
             if (!DateTimeOffset.TryParse(request.deadlineUtc, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTimeOffset deadline)
                 || deadline <= DateTimeOffset.UtcNow)
@@ -226,6 +236,8 @@ namespace Revolution.Editor
             double now = EditorApplication.timeSinceStartup;
             try
             {
+                // 首次心跳和后续请求发现必须晚于 HTTP 账本恢复，避免发布半初始化的域。
+                if (!_recovered && !EditorApplication.isCompiling && !EditorApplication.isUpdating) { Recover(); }
                 if (now >= _heartbeat)
                 {
                     _heartbeat = now + 1;
@@ -237,13 +249,15 @@ namespace Revolution.Editor
                         paused = EditorApplication.isPaused, updating = EditorApplication.isUpdating,
                         compilationFailed = EditorUtility.scriptCompilationFailed,
                         scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path,
-                        batchMode = Application.isBatchMode, activeRequest = _active?.id
+                        batchMode = Application.isBatchMode, activeRequest = _active?.id, memoryUrl = RevAutomationHttp.Url,
+                        memoryRequired = !Application.isBatchMode
                     });
                 }
                 if (_active != null)
                 {
                     RevRuntimeAutomation.EditorBusy = true;
-                    bool cancelled = File.Exists(Path.Combine(JobDirectory(_active.id), "cancel")) || DeadlinePassed(_active);
+                    bool cancelled = (_active.memoryTransport ? RevAutomationHttp.Cancelled(_active.id) :
+                        File.Exists(Path.Combine(JobDirectory(_active.id), "cancel"))) || DeadlinePassed(_active);
                     if (_operation != null)
                     {
                         if (cancelled) { _operation.Cancel(); Complete(false, "Cancelled", "操作取消或超时", _operation.Result); }
@@ -277,17 +291,20 @@ namespace Revolution.Editor
                 }
                 // 某些包的 delayCall 抛异常会打断同一轮回调链；Update 再兜一次恢复，
                 // 否则心跳看似正常，收发室却会永远停在“尚未恢复”的状态。
-                if (!_recovered && !EditorApplication.isCompiling && !EditorApplication.isUpdating) { Recover(); }
                 if (!_recovered || now < _poll || EditorApplication.isCompiling || EditorApplication.isUpdating) { return; }
+                RevAutomationStorageActions.Tick();
                 // 20ms 而不是原来的 100ms：空目录检查只是一次 GetFiles，
                 // 但它决定了每个请求要等多久才开始执行，属于纯等待成本。
                 // 实际耗时仍在 Complete 里回报，不靠缩短轮询掩盖真实执行时间。
                 _poll = now + .02;
+                if (RevAutomationHttp.Pump()) { return; }
                 foreach (string path in Directory.GetFiles(Inbox, "*.json").OrderBy(File.GetLastWriteTimeUtc))
                 {
                     string text = File.ReadAllText(path);
                     File.Delete(path);
-                    Begin(JsonUtility.FromJson<RevAutomationRequest>(text));
+                    var request = JsonUtility.FromJson<RevAutomationRequest>(text);
+                    request.memoryTransport = false; // 路由只能由内部 HTTP Pump 指定，旧文件请求不得伪装内存任务。
+                    Begin(request);
                     break;
                 }
             }
@@ -318,12 +335,14 @@ namespace Revolution.Editor
 
         private static void Recover()
         {
+            // 先恢复 HTTP 身份账本，再恢复活动执行器；否则跨重载的完成回执找不到原任务。
+            RevAutomationHttp.Start(Session); RevAutomationHttp.WriteCredentials();
             _recovered = true;
             if (_active != null) { return; }
             string json = SessionState.GetString(ActiveKey, "");
             if (json.Length == 0) { return; }
             var request = JsonUtility.FromJson<RevAutomationRequest>(json);
-            if (File.Exists(Path.Combine(JobDirectory(request.id), "response.json"))) { SessionState.EraseString(ActiveKey); return; }
+            if (!request.memoryTransport && File.Exists(Path.Combine(JobDirectory(request.id), "response.json"))) { SessionState.EraseString(ActiveKey); return; }
             _active = request;
             RevRuntimeAutomation.EditorBusy = true;
             _batch = Application.isBatchMode;
@@ -348,11 +367,18 @@ namespace Revolution.Editor
             object activityResult = request.action == "editor.activity" ? "已读取活动记录" : data;
             RevAutomationActivity.Finish(ticket, success, message, activityResult, error);
             ActivityTickets.Remove(request.id);
-            WriteJson(Path.Combine(JobDirectory(request.id), "response.json"), new RevAutomationResponse
+            var response = new RevAutomationResponse
             {
                 id = request.id, success = success, error = error, message = message,
                 dataJson = dataJson
-            });
+            };
+            if (request.memoryTransport) { RevAutomationHttp.Publish(request, response); }
+            else
+            {
+                // 文件桥回执不长期复制图像 base64；Python 从真实 PNG 路径读取 MCP image。
+                response.dataJson = RevAutomationEvidence.WithoutImages(dataJson);
+                WriteJson(Path.Combine(JobDirectory(request.id), "response.json"), response);
+            }
             if (_batch && !_quitting && _active == null) { EditorApplication.delayCall += () => EditorApplication.Exit(success ? 0 : 1); }
         }
 

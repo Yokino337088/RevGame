@@ -35,6 +35,7 @@ namespace Revolution
         // _gate 只保护短暂的数据登记，不能持锁等待 Unity 帧或网络返回。
         private readonly Dictionary<string, Job> _jobs = new Dictionary<string, Job>(StringComparer.Ordinal);
         private readonly object _gate = new object();
+        private readonly RevAutomationMemoryJobs _memory = new RevAutomationMemoryJobs();
         private HttpListener _listener;
         private Thread _thread;
         private Job _active;
@@ -81,6 +82,7 @@ namespace Revolution
                     ["product"] = Application.productName, ["platform"] = Application.platform.ToString(), ["project"] = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..")) : "" };
                 endpoint["launchId"] = Environment.GetEnvironmentVariable("REV_AUTOMATION_LAUNCH_ID") ?? "";
                 endpoint["buildId"] = Application.buildGUID;
+                endpoint["memoryJobs"] = true;
                 string temporary = host._endpoint + ".tmp";
                 File.WriteAllText(temporary, RevAutomationJson.Write(endpoint), new UTF8Encoding(false));
                 if (File.Exists(host._endpoint))
@@ -141,37 +143,45 @@ namespace Revolution
                     if (req.InputStream.CanTimeout) { req.InputStream.ReadTimeout = 2000; }
                     string body; using (var reader = new StreamReader(req.InputStream, Encoding.UTF8)) { body = reader.ReadToEnd(); }
                     var data = RevAutomationJson.Object(RevAutomationJson.Parse(body));
-                    if (data.Keys.Except(new[] { "id", "action", "payload", "confirm", "timeoutSeconds" }).Any()) { throw new ArgumentException("未知请求字段"); }
+                    if (data.Keys.Except(new[] { "id", "action", "payload", "confirm", "timeoutSeconds", "deadlineUtc" }).Any()) { throw new ArgumentException("未知请求字段"); }
                     string id = data["id"] as string, action = data["action"] as string;
                     if (id == null || id.Length != 32 || id.Any(c => !Uri.IsHexDigit(c)) || string.IsNullOrEmpty(action)) { throw new ArgumentException("请求 id/action 无效"); }
                     double timeout = data.TryGetValue("timeoutSeconds", out object t) && t is double seconds ? seconds : 120;
                     if (timeout <= 0 || timeout > 3600) { throw new ArgumentException("timeoutSeconds 为 0..3600"); }
+                    bool expirable = data.TryGetValue("deadlineUtc", out object absoluteDeadline);
+                    DateTime deadline = DateTime.UtcNow.AddSeconds(timeout);
+                    if (expirable && (!(absoluteDeadline is string deadlineText) || !DateTimeOffset.TryParse(deadlineText, out DateTimeOffset parsed)
+                        || parsed <= DateTimeOffset.UtcNow || parsed > DateTimeOffset.UtcNow.AddHours(1)))
+                    { throw new ArgumentException("Expired：原始请求期限无效，未执行操作"); }
+                    if (expirable) { deadline = DateTimeOffset.Parse((string)absoluteDeadline).UtcDateTime; }
                     object payload = data.TryGetValue("payload", out object p) ? p : new Dictionary<string, object>(); RevAutomationJson.Object(payload);
                     if (data.TryGetValue("confirm", out object confirmation) && !(confirmation is bool)) { throw new ArgumentException("confirm 需要 bool"); }
                     var job = new Job { Id = id, Action = action, Payload = RevAutomationJson.Write(payload), Confirm = confirmation is bool c && c,
-                        Deadline = DateTime.UtcNow.AddSeconds(timeout), Fingerprint = body };
+                        Deadline = deadline, Fingerprint = RevAutomationMemoryJobs.Fingerprint(body) };
                     lock (_gate)
                     {
-                        if (_jobs.TryGetValue(id, out Job previous))
-                        { if (previous.Fingerprint != body) { throw new ArgumentException("请求 id 已被其他参数使用"); } }
-                        else
+                        if (_stopping) { throw new InvalidOperationException("服务正在停止"); }
+                        if (_queue.Count >= 16 && _memory.Find(id) == null) { throw new InvalidOperationException("Busy：运行时队列已满"); }
+                        if (_memory.Add(new RevAutomationMemoryJobs.Job { id = id, action = action, fingerprint = job.Fingerprint,
+                            deadlineTicks = deadline.Ticks, expirable = expirable }, DateTime.UtcNow))
                         {
-                            if (_stopping) { throw new InvalidOperationException("服务正在停止"); }
-                            if (_queue.Count >= 16) { throw new InvalidOperationException("Busy：主线程队列已满"); }
-                            // 有界保留：达到容量时拒绝新工单，防止旧 id 被遗忘后再次执行变更。重启产生新 session。
-                            if (_jobs.Count >= 1024) { throw new InvalidOperationException("SessionJobLimit：请结束本轮并重启运行时服务"); }
                             _jobs.Add(id, job); _queue.Enqueue(job);
+                            _memory.Take(); // Runtime 继续用既有业务队列，内存账本仅负责身份和结果。
                         }
                     }
                     Send(context, 202, "{\"success\":true,\"id\":\"" + id + "\",\"sessionId\":\"" + _session + "\"}"); return;
                 }
-                if (path.StartsWith("/jobs/", StringComparison.Ordinal) && (req.HttpMethod == "GET" || req.HttpMethod == "DELETE"))
+                if (path.StartsWith("/jobs/", StringComparison.Ordinal))
                 {
-                    string id = path.Substring(6); Job job;
+                    string id = path.Substring(6); bool ack = id.EndsWith("/ack", StringComparison.Ordinal);
+                    if (ack) { id = id.Substring(0, id.Length - 4); }
+                    if (ack && req.HttpMethod == "POST") { Send(context, 200, RevAutomationJson.Write(new Dictionary<string, object> { ["success"] = _memory.Ack(id) })); return; }
+                    if (req.HttpMethod != "GET" && req.HttpMethod != "DELETE") { Send(context, 404, "{\"success\":false}"); return; }
+                    Job job;
                     lock (_gate) { _jobs.TryGetValue(id, out job); }
-                    if (job == null) { Send(context, 404, "{\"success\":false,\"error\":\"JobNotFound\"}"); return; }
-                    if (req.HttpMethod == "DELETE") { job.Cancelled = true; }
-                    Send(context, 200, job.Response ?? "{\"success\":true,\"pending\":true,\"id\":\"" + id + "\"}"); return;
+                    if (req.HttpMethod == "DELETE" && job != null) { job.Cancelled = true; _memory.Cancel(id); }
+                    string response = _memory.Response(id, _session);
+                    Send(context, response == null ? 404 : 200, response ?? "{\"success\":false,\"error\":\"JobNotFound\"}"); return;
                 }
                 Send(context, 404, "{\"success\":false,\"error\":\"RouteNotFound\"}");
             }
@@ -241,6 +251,9 @@ namespace Revolution
             job.Activity ??= RevAutomationActivity.Begin("Unity HTTP", job.Action == "gm.exec" ? "gm" : "game",
                 job.Action, job.Payload, "http-" + job.Id);
             RevAutomationActivity.Finish(job.Activity, success, message, data, error);
+            _memory.Complete(job.Id, job.Response);
+            lock (_gate) { _jobs.Remove(job.Id); }
+            job.Payload = null; job.Response = null;
             if (_active == job) { _active = null; }
         }
         private void Shutdown()

@@ -32,6 +32,8 @@ namespace Revolution.Editor
         public string deadlineUtc;
         public double timeoutSeconds = 120;
         public bool confirm;
+        // 内部执行器路由标记：HTTP 接单后由主线程设置，外部不允许传它来绕过文件桥校验。
+        public bool memoryTransport;
     }
 
     [Serializable]
@@ -77,6 +79,8 @@ namespace Revolution.Editor
         public string scene;
         public bool batchMode;
         public string activeRequest;
+        public string memoryUrl;
+        public bool memoryRequired;
     }
 
     // 只有这些明确命名的字段才会进入适配器。具体动作只读取自己需要的字段。

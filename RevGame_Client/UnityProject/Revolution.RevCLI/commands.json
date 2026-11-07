@@ -9,6 +9,9 @@
     "play": "图形编辑器中未暂停的 Play"
   },
   "actions": [
+    {"id":"storage.status","keys":[],"description":"预览自动化缓存容量与保留策略","environment":"either","readOnly":true},
+    {"id":"storage.configure","keys":["configJson"],"description":"设置自动化工单、截图和报告保留期限与容量","environment":"either","readOnly":false},
+    {"id":"storage.prune","keys":["dryRun"],"description":"回收已完成的自动化缓存；默认只预览","environment":"either","readOnly":false},
     {
       "id": "editor.activity-window",
       "keys": [
@@ -1725,6 +1728,7 @@
     }
   ],
   "parameterTypes": {
+    "dryRun":"bool",
     "floating": "bool",
     "page": "int",
     "targetFilter": "int",

@@ -58,7 +58,11 @@ class RuntimeClient:
         if cancel is not None and cancel.is_set():
             raise RevCancelled("Runtime request cancelled before submission")
         request_id = uuid.uuid4().hex
-        self.request("POST", "/call", dict(id=request_id, action=action, payload=payload or {}, confirm=confirm, timeoutSeconds=min(self.timeout, 3600)))
+        memory = self.endpoint.get("memoryJobs", False)
+        body = dict(id=request_id, action=action, payload=payload or {}, confirm=confirm, timeoutSeconds=min(self.timeout, 3600))
+        if memory:
+            body["deadlineUtc"] = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=min(self.timeout, 3600))).isoformat()
+        self.request("POST", "/call", body)
         started = time.monotonic()
         deadline = started + self.timeout
         polls = 0
@@ -70,6 +74,11 @@ class RuntimeClient:
                 if not response.get("pending"):
                     if response.get("id") != request_id or response.get("sessionId") != self.endpoint["sessionId"]:
                         raise RevError("Runtime response identity mismatch")
+                    if memory:
+                        try:
+                            self.request("POST", "/jobs/" + request_id + "/ack", {})
+                        except (OSError, RevError):
+                            pass
                     return response
                 if time.monotonic() >= deadline:
                     raise TimeoutError("Runtime timeout; inspect job " + request_id)
@@ -210,6 +219,7 @@ class Hub:
         self._editor_catalog = None
         self._editor_catalog_key = None
         self._editor_catalog_until = 0.0
+        self._storage_next = 0.0
 
     def _editor_key(self):
         endpoint = self.editor.endpoint() if self.editor else None
@@ -364,4 +374,12 @@ class Hub:
                 return [trim(v) for v in value]
             return value
         atomic_json(path, trim(result))
+        from revautomation.storage import policy, prune_reports
+        try:
+            settings = policy(self.editor.root if self.editor else self.reports.parent)
+            if settings["automatic"] and time.monotonic() >= self._storage_next:
+                self._storage_next = time.monotonic() + 600
+                prune_reports(self.reports, settings, dry_run=False)
+        except (OSError, ValueError):
+            pass
         return str(path)

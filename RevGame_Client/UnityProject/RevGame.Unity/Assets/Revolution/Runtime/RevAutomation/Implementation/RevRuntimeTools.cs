@@ -223,7 +223,8 @@ namespace Revolution
                 try { png = File.ReadAllBytes(_path); } catch (IOException) { return false; }
                 if (png.Length < 32 || png[0] != 137 || png[1] != 80 || png[png.Length - 8] != 73 || png[png.Length - 5] != 68) { return false; }
                 if (png.Length > 8 * 1024 * 1024) { Success = false; Message = "截图超过 8 MiB，请降低游戏分辨率"; return true; }
-                Result = new Dictionary<string, object> { ["path"] = _path, ["bytes"] = png.Length, ["mimeType"] = "image/png", ["base64"] = Convert.ToBase64String(png) };
+                // 图片已经在本机路径，不再编码进所有工单回执。MCP 需要 image 时由 Python 读取此 PNG。
+                Result = new Dictionary<string, object> { ["path"] = _path, ["bytes"] = png.Length, ["mimeType"] = "image/png" };
                 return true;
             }
         }

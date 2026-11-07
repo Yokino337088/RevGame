@@ -175,9 +175,47 @@ namespace Revolution.Editor
                 }
             }
             GUILayout.Space(8);
+            DrawStorageSettings();
             if (GUILayout.Button("打开工单与证据目录", EditorStyles.miniButton)) { OpenDirectory(RevAutomationBridge.Root); }
             GUILayout.Space(8);
             EditorGUILayout.EndScrollView();
+        }
+
+        [NonSerialized] private bool _storageOpen;
+        [NonSerialized] private RevAutomationStoragePolicy _storagePolicy;
+        private void DrawStorageSettings()
+        {
+            using (new EditorGUILayout.VerticalScope(_cardStyle))
+            {
+                GUILayout.Label("普通调用：" + (RevAutomationHttp.Available ? "本机 HTTP · 内存任务（不新增 JSON 工单）" : "兼容文件桥"), EditorStyles.wordWrappedMiniLabel);
+                _storageOpen = EditorGUILayout.Foldout(_storageOpen, "缓存与证据保留", true);
+                if (!_storageOpen) { return; }
+                if (!string.IsNullOrEmpty(RevAutomationStorageActions.LastCleanupError))
+                { EditorGUILayout.HelpBox("缓存回收未完成：" + RevAutomationStorageActions.LastCleanupError, MessageType.Warning); }
+                _storagePolicy ??= RevAutomationStorage.Read(RevAutomationBridge.Root);
+                _storagePolicy.automatic = EditorGUILayout.Toggle("自动回收旧缓存", _storagePolicy.automatic);
+                _storagePolicy.jobDays = EditorGUILayout.IntField("成功工单保留天数", _storagePolicy.jobDays);
+                _storagePolicy.failureDays = EditorGUILayout.IntField("失败工单保留天数", _storagePolicy.failureDays);
+                _storagePolicy.jobMaxMiB = EditorGUILayout.IntField("工单容量上限 MiB", _storagePolicy.jobMaxMiB);
+                _storagePolicy.screenshotDays = EditorGUILayout.IntField("截图保留天数", _storagePolicy.screenshotDays);
+                _storagePolicy.screenshotMaxMiB = EditorGUILayout.IntField("截图容量上限 MiB", _storagePolicy.screenshotMaxMiB);
+                _storagePolicy.reportDays = EditorGUILayout.IntField("MCP 报告保留天数", _storagePolicy.reportDays);
+                _storagePolicy.reportMaxMiB = EditorGUILayout.IntField("报告容量上限 MiB", _storagePolicy.reportMaxMiB);
+                GUILayout.Label("执行中/未完成工单、最近15分钟证据和 .keep 标记保留。容量满时先回收最老的已完成缓存。", EditorStyles.wordWrappedMiniLabel);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("保存策略")) { Try(() => { RevAutomationStorage.Save(RevAutomationBridge.Root, _storagePolicy); _message = "保留策略已保存。"; }); }
+                    if (GUILayout.Button("预览可回收工单"))
+                    {
+                        Try(() =>
+                        {
+                            var result = RevAutomationStorage.Jobs(RevAutomationBridge.Root, _storagePolicy, true,
+                                RevAutomationBridge.ActiveRequestId, SessionState.GetString(RevAutomationBridge.TestJobKey, ""));
+                            _message = $"可回收 {result.candidates} 个已完成工单，约 {result.removableBytes / 1048576d:F1} MiB；保护 {result.protectedCount} 项。";
+                        });
+                    }
+                }
+            }
         }
 
         private static void DrawPath(string label, string path)

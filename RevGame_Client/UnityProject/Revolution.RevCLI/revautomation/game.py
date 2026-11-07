@@ -10,6 +10,7 @@
 - 超时或中断只 DELETE 同一个 id，绝不换新 id 重发：否则 GM 可能被执行两次。
 """
 import json
+import datetime as dt
 from pathlib import Path
 import time
 import urllib.error
@@ -78,8 +79,10 @@ class GameClient:
 
     def call(self, action, payload=None, confirm=False):
         request_id = uuid.uuid4().hex
-        accepted = self.request("POST", "/call", dict(id=request_id, action=action, payload=payload or {},
-                                                      confirm=bool(confirm), timeoutSeconds=min(self.timeout, 3600)))
+        body = dict(id=request_id, action=action, payload=payload or {}, confirm=bool(confirm), timeoutSeconds=min(self.timeout, 3600))
+        if self.endpoint.get("memoryJobs"):
+            body["deadlineUtc"] = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=min(self.timeout, 3600))).isoformat()
+        accepted = self.request("POST", "/call", body)
         if not accepted.get("success"):
             raise RevError(accepted.get("message") or accepted.get("error") or "运行时拒绝接单")
         started = time.monotonic()
@@ -90,6 +93,11 @@ class GameClient:
                 if not result.get("pending"):
                     if result.get("id") != request_id or result.get("sessionId") != self.endpoint["sessionId"]:
                         raise RevError("运行时返回的身份与请求不符")
+                    if self.endpoint.get("memoryJobs"):
+                        try:
+                            self.request("POST", "/jobs/" + request_id + "/ack", {})
+                        except (OSError, RevError):
+                            pass
                     return result
                 if time.monotonic() - started >= self.timeout:
                     raise TimeoutError(f"运行时动作超时，结果未知，不要重放；工单 {request_id}")

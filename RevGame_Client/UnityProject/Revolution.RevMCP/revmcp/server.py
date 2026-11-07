@@ -152,6 +152,14 @@ class Server:
             # A plan can contain screenshots below steps[].response.data. Surface
             # those as actual MCP images, and keep JSON small and inspectable.
             if isinstance(value, dict):
+                if value.get("mimeType") == "image/png" and not value.get("base64") and value.get("path") and len(content) < 4:
+                    # 截图在磁盘只存一次。需要 MCP image 时读取 PNG，不把 base64 写回工单或报告。
+                    import base64
+                    source = Path(value["path"])
+                    if source.is_file() and source.stat().st_size <= 8 * 1024 * 1024:
+                        png = source.read_bytes()
+                        if png.startswith(b"\x89PNG\r\n\x1a\n"):
+                            content.append(dict(type="image", mimeType="image/png", data=base64.b64encode(png).decode("ascii")))
                 if value.get("mimeType") == "image/png" and value.get("base64") and len(content) < 4:
                     content.append(dict(type="image", mimeType="image/png", data=value["base64"]))
                 return {k: visual_evidence(v) for k, v in value.items() if k != "base64"}
@@ -217,6 +225,7 @@ class Server:
             }
             info = export_evidence(directory, title, "由 RevMCP 计划执行自动生成", summary,
                                    ["结论只由断言决定；图片是当时画面的直接证据。"])
+            (directory / ".complete").write_text("completed", encoding="utf-8")
             return info.get("html")
         except Exception:
             return None
