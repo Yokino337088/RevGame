@@ -52,7 +52,7 @@ namespace RevGame.Pvp.Agent
             return core != null && core.Sequence == _sequence && core.StateHash == _hash;
         }
 
-        public static GoAgentPosition Create(GoCore core, GoSide side, bool advice = false)
+        public static GoAgentPosition Create(GoCore core, GoSide side, bool advice = false, GoHint[] shortlist = null, int shortlistCount = 0)
         {
             var result = new GoAgentPosition { _sequence = core.Sequence, _hash = core.StateHash };
             GoCore snapshot = core.Clone();
@@ -68,7 +68,15 @@ namespace RevGame.Pvp.Agent
                 text.Append('\n');
             }
             text.Append("连续停一手次数=").Append(core.ConsecutivePasses).Append("；当前死子标记=").Append(core.DeadStones.Low).Append(',').Append(core.DeadStones.High).Append('\n');
-            if (core.Phase == GoPhase.Playing)
+            if (core.Phase == GoPhase.Playing && shortlist != null)
+            {
+                for (int i = 0; i < shortlistCount; i++)
+                {
+                    GoHint move = shortlist[i];
+                    result._actions.Add(new GoAgentAction { Id = "play_" + move.X + "_" + move.Y, Kind = GoAction.Play, X = move.X, Y = move.Y });
+                }
+            }
+            else if (core.Phase == GoPhase.Playing)
             {
                 for (int y = 0; y < 9; y++)
                 {

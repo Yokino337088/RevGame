@@ -48,6 +48,18 @@ namespace RevGame.Pvp
             get;
             private set;
         }
+        /// <summary>只数实际放到盘上的棋子，停一手和死子确认都不占预算。0 上限表示标准对局。</summary>
+        public int PlacementCount
+        {
+            get;
+            private set;
+        }
+        public int PlacementLimit
+        {
+            get;
+        }
+        public bool PlacementLimitReached => PlacementLimit > 0 && PlacementCount >= PlacementLimit;
+
         public int Sequence
         {
             get;
@@ -107,17 +119,22 @@ namespace RevGame.Pvp
                 hash = Mix(hash ^ (ulong)Turn ^ ((ulong)Phase << 8) ^ ((ulong)_confirmed << 16) ^ ((ulong)_passes << 24));
                 hash = Mix(hash ^ (ulong)Winner ^ ((ulong)EndReason << 8));
                 hash = Mix(hash ^ (ulong)BlackCaptures ^ ((ulong)WhiteCaptures << 32));
+                if (PlacementLimit > 0)
+                {
+                    hash = Mix(hash ^ (ulong)PlacementLimit ^ ((ulong)PlacementCount << 32));
+                }
                 return Mix(hash ^ _dead.Low ^ Mix(_dead.High));
             }
         }
 
         /// <summary>贴目由导表配置传入，单位半目；构造参数非法属于接线错误，不偷偷改成默认数值。</summary>
-        public GoCore(int komiHalfPoints)
+        public GoCore(int komiHalfPoints, int placementLimit = 0)
         {
             if (komiHalfPoints < 0 || komiHalfPoints > PointCount * 2)
             {
                 throw new ArgumentOutOfRangeException(nameof(komiHalfPoints), "贴目须在 0 至棋盘总面积之间，单位为半目。");
             }
+            PlacementLimit = placementLimit;
             KomiHalfPoints = komiHalfPoints;
             Turn = GoSide.Black;
             _positions.Add(new PositionKey(_board));
@@ -251,7 +268,12 @@ namespace RevGame.Pvp
             }
             Turn = Opponent(side);
             MoveNumber++;
+            PlacementCount++;
             _passes = 0;
+            if (PlacementLimitReached)
+            {
+                BeginScoring();
+            }
             return Accept(captured, captureCount, out result);
         }
 
@@ -267,12 +289,17 @@ namespace RevGame.Pvp
             _passes++;
             if (_passes == 2)
             {
-                Phase = GoPhase.Scoring;
-                _dead = new GoPointSet();
-                _confirmed = 0;
-                Score = CalculateScore(false, null);
+                BeginScoring();
             }
             return Accept(new GoPointSet(), 0, out result);
+        }
+
+        private void BeginScoring()
+        {
+            Phase = GoPhase.Scoring;
+            _dead = default;
+            _confirmed = 0;
+            Score = CalculateScore(false, null);
         }
 
         public bool TryResign(GoSide side, out GoPlayResult result)
@@ -356,6 +383,10 @@ namespace RevGame.Pvp
             {
                 return Reject(error, out result);
             }
+            if (PlacementLimitReached)
+            {
+                return Reject("已达到本局落子上限，请确认死子并数子。", out result);
+            }
             Phase = GoPhase.Playing;
             _passes = 0;
             _dead = new GoPointSet();
@@ -367,25 +398,32 @@ namespace RevGame.Pvp
         /// <summary>深复制只用于显式悬停预览、建议和测试；复制全部劫历史，绝不在实盘上试着落下再撤销。</summary>
         public GoCore Clone()
         {
-            GoCore clone = new GoCore(KomiHalfPoints);
-            Array.Copy(_board, clone._board, PointCount);
-            clone._positions.Clear();
-            clone._positions.UnionWith(_positions);
-            clone._dead = _dead;
-            clone._confirmed = _confirmed;
-            clone._passes = _passes;
-            clone._historyHash = _historyHash;
-            clone.Turn = Turn;
-            clone.Phase = Phase;
-            clone.Winner = Winner;
-            clone.EndReason = EndReason;
-            clone.MoveNumber = MoveNumber;
-            clone.Sequence = Sequence;
-            clone.BlackCaptures = BlackCaptures;
-            clone.WhiteCaptures = WhiteCaptures;
-            clone.PositionHash = PositionHash;
-            clone.Score = Score;
+            var clone = new GoCore(KomiHalfPoints, PlacementLimit);
+            clone.CopyPositionFrom(this);
             return clone;
+        }
+
+        /// <summary>搜索同一局时反复重填私有棋盘，保留完整劫历史和规则预算。禁止用在正在进行的实盘上。</summary>
+        internal void CopyPositionFrom(GoCore source)
+        {
+            Array.Copy(source._board, _board, PointCount);
+            _positions.Clear();
+            _positions.UnionWith(source._positions);
+            _dead = source._dead;
+            _confirmed = source._confirmed;
+            _passes = source._passes;
+            _historyHash = source._historyHash;
+            Turn = source.Turn;
+            Phase = source.Phase;
+            Winner = source.Winner;
+            EndReason = source.EndReason;
+            MoveNumber = source.MoveNumber;
+            PlacementCount = source.PlacementCount;
+            Sequence = source.Sequence;
+            BlackCaptures = source.BlackCaptures;
+            WhiteCaptures = source.WhiteCaptures;
+            PositionHash = source.PositionHash;
+            Score = source.Score;
         }
 
         /// <summary>回放在新实例中执行。任一命令非法即返回失败及准确索引，不发布半份“已同步”棋盘。</summary>

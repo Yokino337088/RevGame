@@ -8,7 +8,6 @@ Art/Board/BoardSprite_736665ce|atlas_boardstatus|BoardSprite_736665ce
 Art/Board/BoardSprite_a6f4bd8e|atlas_boardstatus|BoardSprite_a6f4bd8e
 Art/Board/BoardSprite_a69ff108|atlas_boardstatus|BoardSprite_a69ff108
 Art/Board/BoardSprite_e26b7dcd|atlas_boardstatus|BoardSprite_e26b7dcd
-Art/Status/CartoonEyes|atlas_boardstatus|CartoonEyes
 Art/Status/Encircled/Encircled_001|atlas_boardstatus|Encircled_001
 Art/Status/Encircled/Encircled_002|atlas_boardstatus|Encircled_002
 Art/Status/Encircled/Encircled_003|atlas_boardstatus|Encircled_003
@@ -306,6 +305,8 @@ Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_002|atlas_pieceframes|Player_S
 Atlases/PieceFrames|atlas_pieceframes|PieceFrames
 Art/UI/Pvp/DeepSeekLogo|atlas_pvpagent|DeepSeekLogo
 Atlases/PvpAgent|atlas_pvpagent|PvpAgent
+Art/UI/PvpDefeat/PvpDefeatArt|atlas_pvpdefeat|PvpDefeatArt
+Atlases/PvpDefeat|atlas_pvpdefeat|PvpDefeat
 Art/UI/UI_Tavern_imgBK|atlas_ui_tavern_imgbkatlas|UI_Tavern_imgBK
 Atlases/UI_Tavern_imgBKAtlas|atlas_ui_tavern_imgbkatlas|UI_Tavern_imgBKAtlas
 Art/UI/UI_Game_imgEnemyMobility|atlas_uibattle|UI_Game_imgEnemyMobility

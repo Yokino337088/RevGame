@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 1014793281
+CRC: 2501041093
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -323,9 +323,13 @@ AssetBundleManifest:
         Dependency_3: atlas_yayacombatexpressions
         Dependency_4: config_yaya
         Dependency_5: atlas_pvpagent
+        Dependency_6: atlas_pvpdefeat
     Info_79:
       Name: atlas_pvpagent
       Dependencies: {}
     Info_80:
       Name: audio_pvp
+      Dependencies: {}
+    Info_81:
+      Name: atlas_pvpdefeat
       Dependencies: {}

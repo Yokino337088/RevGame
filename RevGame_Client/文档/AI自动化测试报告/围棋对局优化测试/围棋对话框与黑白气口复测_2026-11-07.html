@@ -1,0 +1,20 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>围棋对话框与黑白气口复测</title>
+<style>
+body{margin:0;background:#f5f1e6;color:#19382e;font:16px/1.7 system-ui,"Microsoft YaHei",sans-serif}
+header{background:#204b3b;color:#fff3ce;padding:32px 6%}h1{margin:0}main{width:min(1130px,95vw);margin:24px auto}
+section{padding:22px;background:#fffdf6;border:1px solid #dbcfac;border-radius:14px;margin-bottom:18px}h2{margin-top:0}
+table{width:100%;border-collapse:collapse}th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #dbcfac}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+figure{margin:0}img{width:100%;display:block;border-radius:7px}figcaption{padding:5px;color:#694a1b}
+</style>
+<header><h1>围棋对话框与黑白气口复测</h1><p>2026-11-07 · Unity 2022.3.15f1c1 · Editor Play · 真实 PC AB · 本地人机</p></header>
+<main><section><h2>复测通过</h2>
+<p>RevMCP 执行 29 步与 5 步清理。回到大厅后 PvP 域已关闭，新增运行期错误为零。</p>
+<table><tr><th>检查</th><th>运行期实测</th></tr>
+<tr><td>鸦鸦对话框</td><td>横向 22%，纵向 10.5%。以上次缩窄前的 21% 高度为基准减半。标题节点已移除，正文最大字号 30，开场和建议台词均能完整显示。</td></tr>
+<tr><td>白棋气口</td><td>固定棋谱第二手后 A2 只属于白棋，标记为 2，棋盘画出白圈。</td></tr>
+<tr><td>黑棋与共用气口</td><td>第四手后选中黑棋，C1 和 C2 标记为 1，画黑圈。A2 的标记为 3，画外黑内白双圈。选点保持棋谱序号为 4。</td></tr>
+<tr><td>辅助开关</td><td>点击真实按钮关闭辅助，气口圈隐藏，棋谱序号仍为 4。</td></tr></table>
+<p>依次使用 <code>rev_discover</code> 发现运行期能力，<code>rev_call</code> 查询 <code>pvp.state</code> 与 <code>RevGame/流程状态</code>，再用 <code>rev_run</code> 执行断言、截图和清理。白方与建议使用开发态固定响应以复现同一棋谱。</p>
+</section><section><h2>实际画面</h2><div class="grid"><figure><img src="气口复测_宽框矮排版与开场大字.jpg" alt="宽框矮排版与开场大字"><figcaption>宽框矮排版与开场大字</figcaption></figure><figure><img src="气口复测_无标题的落子建议.jpg" alt="无标题的落子建议"><figcaption>无标题的落子建议</figcaption></figure><figure><img src="气口复测_白棋单独气口白圈.jpg" alt="白棋单独气口白圈"><figcaption>白棋单独气口白圈</figcaption></figure><figure><img src="气口复测_黑圈与黑白共用气口.jpg" alt="黑圈与黑白共用气口"><figcaption>黑圈与黑白共用气口</figcaption></figure></div></section></main></html>

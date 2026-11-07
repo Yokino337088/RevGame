@@ -76,6 +76,7 @@ namespace RevGame.Pvp
         private GoCore _hintCore;
         private Agent.GoAgentPosition _hintPosition;
         private double _hintDeadline;
+        private int _hintRequests;
         public bool HintPending => _hintRequest != null;
         public string HintSource
         {
@@ -96,6 +97,17 @@ namespace RevGame.Pvp
             if (!CanRequestHint || HintPending)
             {
                 return;
+            }
+            // 本地挑战里鸦鸦偶尔选一个确有反制的合法着法。每局独立计次，正常建议仍走原入口。
+            if (IsComputerGame && Config.localBaitEvery > 0 && ++_hintRequests % Config.localBaitEvery == 0)
+            {
+                int count = RankComputerMoves(_suggestions, out GoHint bait);
+                if (count > 0 && bait.Reason != null)
+                {
+                    _suggestions[0] = bait;
+                    PublishHint("HintBait", 1);
+                    return;
+                }
             }
             if (AgentSettings.Ready && _clock.Elapsed.TotalSeconds >= _cooldownUntil)
             {
@@ -220,7 +232,7 @@ namespace RevGame.Pvp
                 return;
             }
             int requestedStep = Math.Max(0, Math.Min(_moves.Count, step));
-            var replay = new GoCore(Config.komiHalfPoints);
+            var replay = new GoCore(Config.komiHalfPoints, Core.PlacementLimit);
             for (int i = 0; i < requestedStep; i++)
             {
                 PvpMove move = _moves[i];
@@ -249,12 +261,13 @@ namespace RevGame.Pvp
             }
             if (Core.Phase == GoPhase.Scoring)
             {
-                return "确认死子 · 黑" + (Core.HasConfirmed(GoSide.Black) ? "已确认" : "未确认")
+                return (Core.PlacementLimitReached ? "落子已满 · " : "") + "确认死子 · 黑" + (Core.HasConfirmed(GoSide.Black) ? "已确认" : "未确认")
                     + " / 白" + (Core.HasConfirmed(GoSide.White) ? "已确认" : "未确认");
             }
             if (Core.Phase != GoPhase.Finished)
             {
-                return (Core.Turn == GoSide.Black ? "黑方" : "白方") + "落子 · 第 " + (Core.MoveNumber + 1) + " 手";
+                string limit = Core.PlacementLimit > 0 ? " · 落子 " + Core.PlacementCount + "/" + Core.PlacementLimit : "";
+                return (Core.Turn == GoSide.Black ? "黑方" : "白方") + "落子 · 第 " + (Core.MoveNumber + 1) + " 手" + limit;
             }
             string winner = Core.Winner == GoSide.Black ? "黑方胜" : Core.Winner == GoSide.White ? "白方胜" : "和棋";
             if (Core.EndReason == GoEndReason.Scored)
@@ -274,6 +287,7 @@ namespace RevGame.Pvp
             Feedback = "";
             SpeechCue = "";
             CancelHint();
+            ResetComputerPresentation();
         }
     }
 }

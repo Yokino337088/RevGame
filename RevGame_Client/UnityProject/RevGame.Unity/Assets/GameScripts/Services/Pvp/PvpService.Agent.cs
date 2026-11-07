@@ -209,7 +209,7 @@ namespace RevGame.Pvp
             }
             // Fantasy心跳会短暂设置Busy，不能把传输等待当成撤销授权，否则长思考会被反复取消并计费。
             // 保留同一请求，等传输空闲后再消费响应；只有真正断线/换盘/退出才取消。
-            if (!CanAct)
+            if (!CanAct || ComputerPreviewPoint >= 0)
             {
                 return;
             }
@@ -243,7 +243,25 @@ namespace RevGame.Pvp
                         ApplyAgentFallback(side);
                         return;
                     }
-                    _agentPosition = GoAgentPosition.Create(Core, side);
+                    // 真正的本地云端对手只在战术筛过的优质着法中选。固定测试响应仍可使用完整合法棋谱。
+                    if (IsComputerGame && Core.Phase == GoPhase.Playing && AgentRequestFactory == DeepSeekGoRequest.Start)
+                    {
+                        int count = ComputerShouldPass() ? 0 : RankComputerMoves(_computerHints, out _);
+                        if (count == 0)
+                        {
+                            ApplyComputer(GoAction.Pass, -1, -1);
+                            return;
+                        }
+                        while (count > 1 && _computerHints[0].Score - _computerHints[count - 1].Score > 6)
+                        {
+                            count--;
+                        }
+                        _agentPosition = GoAgentPosition.Create(Core, side, shortlist: _computerHints, shortlistCount: count);
+                    }
+                    else
+                    {
+                        _agentPosition = GoAgentPosition.Create(Core, side);
+                    }
                     _requestStarted = _clock.Elapsed.TotalSeconds;
                     // 留出提交与同步余量。读秒较短时主动回退，不能因扩大网络等待而白送超时负。
                     _decisionBudget = Core.Phase == GoPhase.Playing
@@ -275,6 +293,12 @@ namespace RevGame.Pvp
                 AgentLastSeconds = _clock.Elapsed.TotalSeconds - _requestStarted;
                 AgentLastFailure = "";
                 _consecutiveFailures = 0;
+                if (IsComputerGame && selected.Kind == GoAction.Play)
+                {
+                    QueueComputerPlacement(selected.X, selected.Y);
+                    AgentStatus = "Agent 已选定落点";
+                    return;
+                }
                 bool accepted = SubmitActor(selected.Kind, side, selected.X, selected.Y);
                 AgentStatus = accepted ? "Agent 动作已提交" : "Agent 动作被拒绝：" + Status;
                 if (accepted && Core.Phase == GoPhase.Playing)
@@ -299,6 +323,11 @@ namespace RevGame.Pvp
             if (Core.Phase == GoPhase.Scoring)
             {
                 SubmitActor(GoAction.ConfirmScore, side);
+                return;
+            }
+            if (IsComputerGame)
+            {
+                QueueBestComputerMove();
                 return;
             }
             bool passed = _moves.Count > 0 && _moves[_moves.Count - 1].kind == (int)GoAction.Pass;

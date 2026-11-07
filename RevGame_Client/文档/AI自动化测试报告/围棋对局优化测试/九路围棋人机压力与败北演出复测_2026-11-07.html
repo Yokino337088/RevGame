@@ -1,0 +1,19 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>九路围棋人机压力与败北演出复测</title>
+<style>body{margin:0;background:#f5f1e6;color:#19382e;font:16px/1.72 system-ui,"Microsoft YaHei",sans-serif}header{background:#204b3b;color:#fff3ce;padding:36px 6%}h1{margin:0}h2{margin-top:0}main{max-width:1160px;margin:auto;padding:24px}section{background:#fffdf6;border:1px solid #dbcfac;border-radius:13px;padding:22px;margin-bottom:18px}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 12px;border-bottom:1px solid #dbcfac}figure{margin:0}img{width:100%;border-radius:8px}figcaption{color:#694a1b;padding:4px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,410px),1fr));gap:14px}.anim{max-width:720px}a{color:#205741}</style>
+<header><h1>九路围棋人机压力与败北演出复测</h1><p>2026-11-07 · Windows Unity Editor Play · 真实 PC AB · 本地人机</p></header><main>
+<section><h2>Unity 验收</h2>
+<table><tr><th>计划</th><th>结果</th></tr><tr><td>固定人机棋谱、先亮后落、眨眼和败北演出</td><td>47 步和 5 步清理通过</td></tr>
+<tr><td>实际本地搜索和误导建议</td><td>37 步和 4 步清理通过</td></tr>
+<tr><td>最终全屏实底、立绘和台词</td><td>15 步和 4 步清理通过</td></tr></table>
+<p>三个计划都回到大厅、关闭 PvP 域，运行期错误为零。固定棋谱用可重复的 Agent 响应，另一个计划由真正的本地搜索走完 10 个白方回合。第三次建议出现 D7，棋谱保持 20 手，仍由玩家决定下在哪儿。</p>
+<p>第 1 手黑棋落下后，白棋目标 A1 先高亮，当时只有一颗已下棋子。随后白棋入盘并提交为第 2 手。眼位观察到六章 EyeBlink 的全部四帧。自然数子确认白方胜出，分数动画结束后弹出全屏败北面板，点击可回到分项。</p>
+<figure class="anim"><img src="人机压力_亮格与白棋落下.gif" alt="白棋落下前后的两帧取证"><figcaption>高亮和已落子的两个取证画面</figcaption></figure></section>
+<section><h2>棋力对照与落子上限</h2>
+<p>同一 GoCore、六个固定开局、双方换色，共十二局。新搜索对旧启发式策略 11 胜 1 负，其中执白 6 胜 0 负。新策略在每次决策中保持实盘指纹不变，共核对 396 次。棋力结论只覆盖该旧版基准。</p>
+<p>十九路参考预算取 300，按 81/361 折算并向上取整为 68 子。这是本地速战配置。十二局都在第 68 子切入数子。小上限隔离断言覆盖停着不占预算、到限拒绝继续、指纹与快照一致、双方确认后结束。传统规则的常见结束条件是双方连续停着。<a href="https://britgo.org/intro/intro2.html">英国围棋协会规则说明</a></p>
+<table><tr><th>局</th><th>新搜索执棋</th><th>胜方</th><th>黑方净胜目</th><th>实际落子</th></tr><tr><td>1</td><td>Black</td><td>Black</td><td>1.5</td><td>68</td></tr><tr><td>2</td><td>White</td><td>White</td><td>-43.5</td><td>68</td></tr><tr><td>3</td><td>Black</td><td>Black</td><td>13.5</td><td>68</td></tr><tr><td>4</td><td>White</td><td>White</td><td>-46.5</td><td>68</td></tr><tr><td>5</td><td>Black</td><td>Black</td><td>16.5</td><td>68</td></tr><tr><td>6</td><td>White</td><td>White</td><td>-55.5</td><td>68</td></tr><tr><td>7</td><td>Black</td><td>Black</td><td>6.5</td><td>68</td></tr><tr><td>8</td><td>White</td><td>White</td><td>-23.5</td><td>68</td></tr><tr><td>9</td><td>Black</td><td>Black</td><td>0.5</td><td>68</td></tr><tr><td>10</td><td>White</td><td>White</td><td>-43.5</td><td>68</td></tr><tr><td>11</td><td>Black</td><td>White</td><td>-4.5</td><td>68</td></tr><tr><td>12</td><td>White</td><td>White</td><td>-53.5</td><td>68</td></tr></table></section>
+<section><h2>真实对局画面</h2><div class="grid"><figure><img src="人机压力_红色建议格.jpg" alt="红色建议格"><figcaption>红色建议格</figcaption></figure><figure><img src="人机压力_白棋落子前高亮.jpg" alt="白棋落子前高亮"><figcaption>白棋落子前高亮</figcaption></figure><figure><img src="人机压力_白棋落下.jpg" alt="白棋落下"><figcaption>白棋落下</figcaption></figure><figure><img src="人机压力_围棋六章眨眼帧.jpg" alt="围棋六章眨眼帧"><figcaption>围棋六章眨眼帧</figcaption></figure><figure><img src="人机压力_第三次建议的可反制落点.jpg" alt="第三次建议的可反制落点"><figcaption>第三次建议的可反制落点</figcaption></figure><figure><img src="人机压力_本地人机败北全屏面板.jpg" alt="本地人机败北全屏面板"><figcaption>本地人机败北全屏面板</figcaption></figure></div></section>
+<section><h2>框架与工具</h2><p>RevUI 管理全屏面板和点击，RevPool 租用原棋盘，RevDataTableManager 加载限额和误导频率，RevResManager 配合原有图集服务提供四帧眨眼和败北立绘。落子预告与动画使用同一张棋盘的材质参数，提交仍走正式规则入口。</p>
+<p>RevCLI 导表并构建 Editor 使用的 PC AB。RevMCP 在 Play 后依次调用 <code>rev_discover(target=game, query=pvp.)</code>、<code>rev_call(game, pvp.state)</code>、<code>rev_call(gm, RevGame/流程状态)</code> 和 <code>rev_run</code>，以状态、棋谱和画面分别验收。资源构建过程中恢复了 Unity 的目标程序集缓存，并重新导入缺少像素数据的两张图集。最终包内实测棋盘图集 15 项、败北图集 1 项，Shader 绑定四张眨眼 Sprite。</p></section>
+</main></html>

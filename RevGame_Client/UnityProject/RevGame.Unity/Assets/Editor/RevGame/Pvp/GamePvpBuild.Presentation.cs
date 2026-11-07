@@ -45,12 +45,18 @@ namespace RevGame.Editor
 
         private static void BindEyeSprite(SerializedObject data)
         {
-            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Status/CartoonEyes.png");
-            if (sprite == null)
+            SerializedProperty frames = data.FindProperty("eyeBlinkFrames");
+            frames.arraySize = 4;
+            for (int i = 0; i < frames.arraySize; i++)
             {
-                throw new InvalidOperationException("缺少闯关模式双眼图标");
+                string path = "Assets/GameRes/Art/Status/EyeBlink/EyeBlink_" + i.ToString("D2") + ".png";
+                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite == null)
+                {
+                    throw new InvalidOperationException("缺少六章眼位帧 " + path);
+                }
+                frames.GetArrayElementAtIndex(i).objectReferenceValue = sprite;
             }
-            data.FindProperty("eyeSprite").objectReferenceValue = sprite;
         }
 
         private static void ConfigureMatchHud(Transform root)
@@ -90,16 +96,15 @@ namespace RevGame.Editor
             image.raycastTarget = false;
             portrait.gameObject.SetActive(false);
 
-            // 右栏宽度是画布22%，对话框居中占其中一半，向上留出长台词换行空间。
-            RectTransform bubble = Rect("yayaBubble", root, .82f, .61f, .93f, .84f);
+            // 恢复原横向跨度22%，原高21%减半。正文用整个对话框居中换行。
+            RectTransform bubble = Rect("yayaBubble", root, .765f, .61f, .985f, .715f);
             Plate(bubble, "UI_Tip_imgBK", Color.white);
             bubble.gameObject.AddComponent<CanvasGroup>();
-            Label("name", bubble, "鸦鸦", .08f, .73f, .92f, .96f, 22).color = new Color(1, .80f, .39f);
-            var line = Label("text", bubble, "", .075f, .07f, .925f, .75f, 23);
+            var line = Label("text", bubble, "", .07f, .09f, .93f, .91f, 30);
             line.verticalOverflow = VerticalWrapMode.Truncate;
             line.resizeTextForBestFit = true;
-            line.resizeTextMinSize = 15;
-            line.resizeTextMaxSize = 23;
+            line.resizeTextMinSize = 20;
+            line.resizeTextMaxSize = 30;
             bubble.gameObject.SetActive(false);
 
             foreach (string name in new[] { "scoring", "result" })
@@ -127,6 +132,45 @@ namespace RevGame.Editor
             toast.SetSiblingIndex(overlayIndex);
             portrait.SetSiblingIndex(overlayIndex + 1);
             bubble.SetSiblingIndex(overlayIndex + 2);
+            ConfigureDefeat(root);
+        }
+
+        private static void ConfigureDefeat(Transform root)
+        {
+            const string path = "Assets/GameRes/Art/UI/PvpDefeat/PvpDefeatArt.png";
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null)
+            {
+                throw new InvalidOperationException("缺少用户提供的败北立绘");
+            }
+            if (importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.maxTextureSize = 4096;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
+            Transform old = root.Find("defeat");
+            if (old != null)
+            {
+                UnityEngine.Object.DestroyImmediate(old.gameObject);
+            }
+
+            // 全屏底板拦截下层按钮，立绘维持原比例，台词落在画面右侧留白。
+            RectTransform defeat = Rect("defeat", root, 0, 0, 1, 1);
+            // 底板沿用对战菜单的不透明Sprite。向外多铺一圈，屏幕边缘也看不到下层棋盘。
+            Plate(Rect("backdrop", defeat, -.12f, -.12f, 1.12f, 1.12f), "UI_Pvp_imgBK", new Color(.12f, .16f, .21f, 1), true);
+            var art = Rect("art", defeat, 0, 0, 1, 1).gameObject.AddComponent<Image>();
+            art.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            art.preserveAspect = true;
+            art.raycastTarget = false;
+            Text line = Label("line", defeat, "弱者就应该被本鸦踩在脚下狠狠地羞辱一番", .66f, .48f, .95f, .74f, 45);
+            line.resizeTextForBestFit = true;
+            line.resizeTextMinSize = 25;
+            line.resizeTextMaxSize = 45;
+            Button("closeDefeat", defeat, "查看结算", .76f, .12f, .93f, .19f, 27);
+            defeat.gameObject.SetActive(false);
         }
     }
 }

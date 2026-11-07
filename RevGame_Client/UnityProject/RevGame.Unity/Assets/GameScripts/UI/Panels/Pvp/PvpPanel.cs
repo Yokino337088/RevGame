@@ -90,7 +90,7 @@ namespace RevGame.Pvp
         {
             get
             {
-                return (_confirm != null && _confirm.activeSelf) || (_invite != null && _invite.activeSelf) || !_battleVisible || _battleTransition;
+                return (_confirm != null && _confirm.activeSelf) || (_invite != null && _invite.activeSelf) || DefeatVisible || !_battleVisible || _battleTransition;
             }
         }
 
@@ -129,7 +129,9 @@ namespace RevGame.Pvp
             {
                 throw new InvalidOperationException("九路围棋缺少鸦鸦表情目录");
             }
-            _matchAtlases.Add(atlases.AcquireScopedAtlas("BoardStatus"));
+            var eyeAtlas = atlases.AcquireScopedAtlas("BoardStatus");
+            _matchAtlases.Add(eyeAtlas);
+            _matchAtlases.Add(atlases.AcquireScopedAtlas("PvpDefeat"));
             foreach (string name in portraitCatalog.AtlasNames)
             {
                 _matchAtlases.Add(atlases.AcquireScopedAtlas(name));
@@ -171,6 +173,7 @@ namespace RevGame.Pvp
             {
                 throw new InvalidOperationException("九路围棋棋盘未就绪或本次进入已取消。");
             }
+            _board.BindEyeFrames(eyeAtlas);
             _board.gameObject.SetActive(false);
             _yayaLines = new PvpYayaLines(portraitCatalog);
             PrepareMatchSound();
@@ -210,7 +213,7 @@ namespace RevGame.Pvp
             Set(_toggleLabel, service.HintsVisible ? "隐藏辅助" : "显示辅助");
             Set(_scoringText, service.ResultText());
             _confirmScore.interactable = canAct && scoring && (service.Mode == PvpConnectionMode.Local || !core.HasConfirmed(service.MySide));
-            _resume.interactable = canAct && scoring;
+            _resume.interactable = canAct && scoring && !core.PlacementLimitReached;
             _previous.interactable = finished && !_counting && service.Moves.Count > 0 && service.ReplayStep != 0;
             _next.interactable = finished && !_counting && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
             _replayExit.interactable = service.ReplayStep >= 0;
@@ -371,6 +374,7 @@ namespace RevGame.Pvp
             _yayaLines = null;
             if (_board != null)
             {
+                _board.ReleaseEyeFrames();
                 RevPool.Return(_board);
                 _board = null;
             }

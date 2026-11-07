@@ -159,6 +159,22 @@ namespace RevGame.View
                     throw new InvalidOperationException("Boss图集加载失败：" + _entry.Name);
                 }
             }
+
+            /// <summary>无 SpriteRenderer 的 Shader 可在入场时取一次已打包的 Sprite。调用方离场时销毁返回的副本。</summary>
+            internal Sprite GetPackedSprite(string name)
+            {
+                if (_released || _entry.Released || _entry.Atlas == null)
+                {
+                    throw new InvalidOperationException("图集尚未就绪或已释放：" + _entry.Name);
+                }
+                Sprite sprite = _entry.Atlas.GetSprite(name);
+                if (sprite == null)
+                {
+                    throw new InvalidOperationException("图集没有登记图片：" + name);
+                }
+                return sprite;
+            }
+
             public void Dispose()
             {
                 if (_released)

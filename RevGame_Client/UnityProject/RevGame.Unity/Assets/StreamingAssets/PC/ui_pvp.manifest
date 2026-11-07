@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 642957275
+CRC: 1551729487
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3c021ed1a56813312c5fd90af67a06e5
+    Hash: ebe9e4ec2ed6da318bbb80185243d087
   TypeTreeHash:
     serializedVersion: 2
     Hash: 40160d551caeab2319e9d8ae3ded6856
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3c021ed1a56813312c5fd90af67a06e5
+    Hash: ebe9e4ec2ed6da318bbb80185243d087
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -86,6 +86,7 @@ Assets:
 - Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab
 Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pvpagent"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pvpdefeat"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayacombatexpressions"

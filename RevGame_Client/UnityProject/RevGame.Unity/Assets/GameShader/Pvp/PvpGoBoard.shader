@@ -37,6 +37,20 @@ Shader "RevGame/Pvp/IvoryGoBoard"
             {
                 return 1-smoothstep(r,r+max(min(fwidth(d),.02),.003),d);
             }
+            float _ComputerPreview, _ComputerLand, _ComputerDrop;
+
+            // 流光铺在整格内，距离方形边缘决定亮边。数值只控制画面，不参与落子规则。
+            float3 MagicTile(float3 baseColor, float2 p, float edge, float clock, bool incoming)
+            {
+                float wave = .5 + .5 * sin(p.x * 17 + p.y * 12 - clock * 7 + sin(p.y * 15 + clock * 3));
+                float veins = pow(wave, 4);
+                float rim = Line(edge - .43, .028);
+                float3 glow = incoming ? float3(1,.86,.38) : float3(1,.085,.12);
+                float3 tint = incoming ? float3(.85,.39,.075) : float3(.64,.025,.05);
+                float inside = 1 - smoothstep(.45,.50,edge);
+                return lerp(baseColor, lerp(tint, glow, saturate(veins*.8+rim)), inside*(.56+.36*rim));
+            }
+
             fixed4 frag(V input):SV_Target
             {
                 float2 boardPoint=input.uv*9-.5;
@@ -82,11 +96,27 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 }
                 if(_ShowHints>.5&&cell.x<.5)
                 {
+                    if(mark.z>.5)
+                    {
+                        // 流光先铺底，再画气口与眼位。共用格上的黑白标记保持自己的颜色。
+                        col=MagicTile(col,p,edge,t,false);
+                    }
                     if(mark.x>.5)
                     {
-                        float breath=.7+.3*sin(t*5);
-                        float ring=Line(r-(.19+.025*sin(t*4)),.025);
-                        col=lerp(col,float3(.02,.65,.67),saturate(ring*breath+Disk(r,.065)*.85));
+                        // 同格兼属两边时画外黑内白；浅底上的白圈用深描边保持可读。
+                        float radius=.22+.012*sin(t*4);
+                        if(mark.x<1.5||mark.x>2.5)
+                        {
+                            float blackRing=r-radius;
+                            col=lerp(col,float3(.83,.85,.87),Line(blackRing,.034));
+                            col=lerp(col,float3(.04,.045,.055),Line(blackRing,.024));
+                        }
+                        if(mark.x>1.5)
+                        {
+                            float whiteRing=r-(mark.x>2.5?radius-.095:radius);
+                            col=lerp(col,float3(.28,.25,.22),Line(whiteRing,.035));
+                            col=lerp(col,float3(1,1,1),Line(whiteRing,.023));
+                        }
                     }
                     if(cell.w>.5&&!scoring&&abs(p.x)<.33&&abs(p.y)<.22)
                     {
@@ -94,22 +124,26 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                         float4 eyes=tex2D(_EyeTex,lerp(_EyeUv.xy,_EyeUv.zw,localUv));
                         col=lerp(col,eyes.rgb,eyes.a);
                     }
-                    if(mark.z>.5)
-                    {
-                        float ring=Line(r-(mark.z<1.5?.36:.25),.025);
-                        col=lerp(col,float3(.91,.51,.04),ring*(.72+.28*sin(t*4)));
-                    }
+                }
+                if(!scoring&&abs(index-_ComputerPreview)<.1)
+                {
+                    col=MagicTile(col,p,edge,t,true);
                 }
                 float stone=cell.x;
                 bool preview=abs(index-_Selected)<.1&&stone<.5;
                 if(preview) stone=_Turn;
                 if(stone>.5&&(!scoring||mark.w<.5))
                 {
-                    float shadow=Disk(length(p-float2(.035,-.055)),.42)*.22;
+                    // 棋子已经通过规则提交。这里仅把新白子从格子上方压到中心并放大，棋谱仍只有一手。
+                    float drop = abs(index-_ComputerLand)<.1 ? _ComputerDrop : 1;
+                    float2 stonePoint = p - float2(0,(1-drop)*.17);
+                    float stoneRadius = lerp(.27,.395,drop);
+                    float shadow=Disk(length(p-float2(.035,-.055)),.42)*.22*drop;
                     col*=1-shadow;
-                    float mask=Disk(r,.395);
-                    float z=sqrt(saturate(1-dot(p/.4,p/.4)));
-                    float3 normal=float3(p/.4,z);
+                    float mask=Disk(length(stonePoint),stoneRadius);
+                    float2 normalXY=stonePoint/(stoneRadius+.005);
+                    float z=sqrt(saturate(1-dot(normalXY,normalXY)));
+                    float3 normal=float3(normalXY,z);
                     float light=saturate(dot(normal,normalize(float3(-.45,.65,1))));
                     float spec=pow(saturate(dot(normal,normalize(float3(-.28,.38,1)))),32);
                     float3 body=stone<1.5?float3(.025,.035,.045)+light*.065+spec*.25:float3(.66,.68,.69)+light*.28+spec*.12;
@@ -132,7 +166,7 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                     }
                     if(abs(index-_Last)<.1)
                     {
-                        col=lerp(col,float3(.98,.63,.12),Line(r-.12,.018));
+                        col=lerp(col,float3(.95,.18,.16),Line(edge-.44,.014)*(.65+.35*sin(t*4)));
                     }
                     if(scoring&&counted>.5)
                     {

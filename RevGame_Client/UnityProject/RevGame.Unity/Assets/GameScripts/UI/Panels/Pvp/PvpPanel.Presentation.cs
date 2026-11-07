@@ -27,7 +27,16 @@ namespace RevGame.Pvp
         private Sprite _idlePortrait;
         private RevSoundScope _matchSound;
         private Tween _toastTween, _speechTween, _countTween;
-        private GoCore _lastPresented, _countCore;
+        private GoCore _lastPresented, _countCore, _shownDefeat;
+        [RevBind("defeat")] private GameObject _defeat;
+
+        internal bool DefeatVisible => _defeat.activeInHierarchy;
+
+        [RevButtonClick("closeDefeat")]
+        private void CloseDefeat()
+        {
+            Show(_defeat, false);
+        }
         private int _feedbackVersion, _speechVersion, _hintVersion, _moveCursor, _captures, _eyeVersion;
         private float _nextTaunt;
         private bool _counting;
@@ -57,6 +66,9 @@ namespace RevGame.Pvp
         internal string PortraitSpriteForCheck => PortraitVisible ? _portrait.sprite.name : "";
         internal bool PortraitPackedForCheck => PortraitVisible && _portrait.sprite.packed;
         internal float BubbleWidthFraction => ((RectTransform)_bubble.transform).rect.width / ((RectTransform)transform).rect.width;
+        internal float BubbleHeightFraction => ((RectTransform)_bubble.transform).rect.height / ((RectTransform)transform).rect.height;
+        internal bool BubbleHasTitle => _bubble.transform.Find("name") != null;
+        internal int SpeechMaxFontSize => _speech.resizeTextMaxSize;
         internal bool SpeechFits => !BubbleVisible || _speech.preferredHeight <= _speech.rectTransform.rect.height + 1;
 
         private void PrepareMatchSound()
@@ -88,7 +100,8 @@ namespace RevGame.Pvp
             _speechTween?.Kill(false);
             _countTween?.Kill(false);
             _toastTween = _speechTween = _countTween = null;
-            _lastPresented = _countCore = null;
+            _lastPresented = _countCore = _shownDefeat = null;
+            Show(_defeat, false);
             _moveCursor = _captures = _eyeVersion = 0;
             _feedbackVersion = _speechVersion = _hintVersion = 0;
             _nextTaunt = 0;
@@ -156,6 +169,13 @@ namespace RevGame.Pvp
             {
                 BeginResult(service, core);
             }
+            // 面积结算先播完数字，认输或超时可立刻展示。关闭后同一局不会再次弹出。
+            if (!_counting && core.Phase == GoPhase.Finished && service.IsComputerGame &&
+                core.Winner == GoSide.White && !ReferenceEquals(_shownDefeat, core))
+            {
+                _shownDefeat = core;
+                Show(_defeat, true);
+            }
         }
 
         private void RefreshSpeech(PvpService service, bool starting)
@@ -168,7 +188,7 @@ namespace RevGame.Pvp
             }
             else if (_hintVersion != service.HintRevision)
             {
-                cue = service.HintSource;
+                cue = service.HintSource == "HintBait" ? "HintLocal" : service.HintSource;
                 if (service.SuggestionCount > 0)
                 {
                     var hint = service.Suggestions[0];

@@ -16,3 +16,5 @@
 13	PeerExpirySeconds	5	设备离线判定秒数
 14	InvitationTimeoutSeconds	20	邀请过期秒数
 15	ConnectTimeoutSeconds	8	联机建立超时秒数
+16	LocalReferenceMoves19	300	本地速战的十九路参考预算，按棋盘面积折为九路，向上取整。
+17	LocalBaitEvery	3	本地人机每几次建议尝试一次可反制的合法着法。

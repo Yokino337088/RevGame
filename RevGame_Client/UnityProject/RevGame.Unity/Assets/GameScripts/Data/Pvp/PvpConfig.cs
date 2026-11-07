@@ -25,6 +25,9 @@ namespace RevGame.Pvp
         public float invitationTimeoutSeconds;
         public float connectTimeoutSeconds;
         public bool rookie;
+        // 速战和试探建议只属于本地模式，不进入旧联机握手的 JSON。
+        [NonSerialized] public int localPlacementLimit;
+        [NonSerialized] public int localBaitEvery;
 
         /// <summary>同一份规则JSON用于云端匹配和局域网握手，参数不同的两端拒绝开局，避免各算各的。</summary>
         public string RulesJson { get { return JsonUtility.ToJson(this); } }
@@ -56,16 +59,22 @@ namespace RevGame.Pvp
                 peerExpirySeconds = Get(values, "PeerExpirySeconds"),
                 invitationTimeoutSeconds = Get(values, "InvitationTimeoutSeconds"),
                 connectTimeoutSeconds = Get(values, "ConnectTimeoutSeconds"),
-                rookie = rookie
+                rookie = rookie,
+                localPlacementLimit = (int)Math.Ceiling(Integer(values, "LocalReferenceMoves19") * (double)GoCore.PointCount / (19 * 19)),
+                localBaitEvery = Integer(values, "LocalBaitEvery")
             };
             if (result.discoveryPort > 65535 || result.peerExpirySeconds <= result.announceSeconds || result.komiHalfPoints > 162)
             {
                 throw new InvalidOperationException("九路围棋端口、广播有效期或贴目越界");
             }
+            if (result.localPlacementLimit < 1 || result.localPlacementLimit > GoCore.PointCount * 2)
+            {
+                throw new InvalidOperationException("本地速战落子预算超出棋盘容量约定");
+            }
             // 两个提示次数均校验，未选中的场次也不能藏着坏配置。
             Integer(values, "HintCountRookie");
             Integer(values, "HintCountAdvanced");
-            if (values.Count != 15)
+            if (values.Count != 17)
             {
                 throw new InvalidOperationException("九路围棋配置包含未知参数，请核对参数名");
             }

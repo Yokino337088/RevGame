@@ -150,6 +150,10 @@ namespace RevGame.Editor
         private static string GroupFor(string path)
         {
             // PVP供应商标识只随PVP面板使用，不能因为一个小Logo扩大大厅或章节常用图集寿命。
+            if (path.Contains("/Art/UI/PvpDefeat/"))
+            {
+                return "PvpDefeat";
+            }
             if (path.Contains("/Art/UI/Pvp/"))
             {
                 return "PvpAgent";

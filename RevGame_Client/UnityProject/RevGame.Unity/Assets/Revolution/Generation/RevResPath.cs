@@ -67,6 +67,7 @@ namespace Revolution
         public const string Art_Story = "Art/Story/";
         public const string Art_UI = "Art/UI/";
         public const string Art_UI_Pvp = "Art/UI/Pvp/";
+        public const string Art_UI_PvpDefeat = "Art/UI/PvpDefeat/";
         public const string Atlases = "Atlases/";
         public const string Audio = "Audio/";
         public const string Audio_Bgm = "Audio/Bgm/";

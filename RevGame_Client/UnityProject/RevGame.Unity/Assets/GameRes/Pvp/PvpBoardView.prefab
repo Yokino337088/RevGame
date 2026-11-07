@@ -48,7 +48,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boardRenderer: {fileID: 4350297119970749483}
   backgroundRenderer: {fileID: 3039935878837991522}
-  eyeSprite: {fileID: 21300000, guid: cb2e0efe60ad5a843b6c3911e7bb08ce, type: 3}
+  eyeBlinkFrames:
+  - {fileID: 21300000, guid: 595000e2b2521ef48aa28da3acb9c482, type: 3}
+  - {fileID: 21300000, guid: 2917137f832eff94a91a2ee813df8a65, type: 3}
+  - {fileID: 21300000, guid: fcaae7a6125d4fb4dbe6db60d7513d39, type: 3}
+  - {fileID: 21300000, guid: 4aab9dee19c36414f802cb2e54248752, type: 3}
 --- !u!1 &4305183880063694859
 GameObject:
   m_ObjectHideFlags: 0

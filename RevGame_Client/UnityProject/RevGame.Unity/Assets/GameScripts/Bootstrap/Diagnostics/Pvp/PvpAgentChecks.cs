@@ -125,6 +125,13 @@ internal static class PvpAgentChecks
             throw new Exception("Agent: " + message);
         }
     }
+    private static void CompletePlacement(PvpService service)
+    {
+        // 与本文件原有的HTTP时间夹具一致，只推进表现时限，仍由正式Poll提交合法棋步。
+        typeof(PvpService).GetField("_previewDue", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(service, -1d);
+        service.Poll();
+    }
+
     public static string Run(PvpConfig config)
     {
         var s = new PvpService();
@@ -166,7 +173,9 @@ internal static class PvpAgentChecks
         Assert(s.Core.Sequence == 1, "非法云端动作不提交");
         count = requests;
         s.Poll();
-        Assert(s.Core.Sequence == 2 && requests == count, "本手本地回退且不重复付费请求");
+        Assert(s.Core.Sequence == 1 && s.ComputerPreviewPoint >= 0 && requests == count, "本地回退先亮格且不重复付费");
+        CompletePlacement(s);
+        Assert(s.Core.Sequence == 2, "亮格结束后只提交一次落子");
         var position = GoAgentPosition.Create(s.Core, GoSide.Black);
         ulong hash = s.Core.StateHash;
         Assert(!position.TryReadAction("{\"actionId\":\"play_4_4\"}", out _), "已占落点不在候选中");
@@ -183,7 +192,9 @@ internal static class PvpAgentChecks
         s.Poll();
         typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -120d);
         s.Poll();
-        Assert(response.Disposed && s.Core.Sequence == 2, "HTTP永不结束也须绝对超时并完成本地合法回退");
+        Assert(response.Disposed && s.ComputerPreviewPoint >= 0, "HTTP绝对超时后排入本地应手");
+        CompletePlacement(s);
+        Assert(s.Core.Sequence == 2, "超时回退完成合法落子");
         s.Dispose();
         return "PASS: Agent 人机闭环、权限、取消、单请求、非法输出、本地回退、候选隔离";
     }

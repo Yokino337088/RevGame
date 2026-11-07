@@ -19,7 +19,10 @@ namespace RevGame.Pvp
         private readonly Vector4[] _marks = new Vector4[81];
         private readonly int[] _liberties = new int[81];
         private readonly GoBoardAnalysis _analysis = new GoBoardAnalysis();
-        [SerializeField] private Sprite eyeSprite;
+        [SerializeField] private Sprite[] eyeBlinkFrames;
+        // 棋盘Shader不经过SpriteRenderer，预先取四张图集副本，避免运行时反复找帧。
+        private readonly Sprite[] _packedEyeFrames = new Sprite[4];
+        private int _eyeFrame = -1;
         private GoCore _analyzedCore;
         private GoPointSet _previousEyes;
         private int _eyeAtlasVersion;
@@ -38,12 +41,27 @@ namespace RevGame.Pvp
             get;
             private set;
         }
-        internal bool EyePacked => eyeSprite != null && eyeSprite.packed;
+        internal bool EyePacked => _eyeFrame >= 0 && _packedEyeFrames[_eyeFrame] != null && _packedEyeFrames[_eyeFrame].packed;
+        internal string EyeFrameName => _eyeFrame < 0 ? "" : eyeBlinkFrames[_eyeFrame].name;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        internal int EyeFramesSeen { get; private set; }
+#endif
         internal bool ShaderReady => Ready && boardRenderer.sharedMaterial.shader.isSupported;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        internal int[] CopyLibertyMarksForCheck()
+        {
+            var marks = new int[GoCore.PointCount];
+            for (int i = 0; i < marks.Length; i++)
+            {
+                marks[i] = (int)_marks[i].x;
+            }
+            return marks;
+        }
+#endif
         private MaterialPropertyBlock _boardBlock, _backgroundBlock;
         private int _revision = -1, _hover = -1, _width, _height;
         private Camera _camera;
-        public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null && eyeSprite != null; } }
+        public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null && eyeBlinkFrames != null && eyeBlinkFrames.Length == 4 && eyeBlinkFrames[0] != null; } }
 
         private void OnEnable()
         {
@@ -52,7 +70,11 @@ namespace RevGame.Pvp
             _hover = -1;
             _width = 0;
             _eyeAtlasVersion = -1;
+            _eyeFrame = -1;
             EyeVersion = 0;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            EyeFramesSeen = 0;
+#endif
             _previousEyes = default;
             _analyzedCore = null;
             _boardBlock = _boardBlock ?? new MaterialPropertyBlock();
@@ -78,6 +100,10 @@ namespace RevGame.Pvp
             _boardBlock.SetFloat("_ShowTerritory", core != null && (service.HintsVisible || core.Phase == GoPhase.Scoring) ? 1 : 0);
             _boardBlock.SetFloat("_ScoreProgress", counting ? _scoreProgress : -1);
             _boardBlock.SetFloat("_Clock", Time.unscaledTime);
+            bool live = service.ReplayStep < 0;
+            _boardBlock.SetFloat("_ComputerPreview", live ? service.ComputerPreviewPoint : -1);
+            _boardBlock.SetFloat("_ComputerLand", live ? service.ComputerLandingPoint : -1);
+            _boardBlock.SetFloat("_ComputerDrop", Mathf.Clamp01(service.ComputerLandingAge / PvpService.LandingSeconds));
             BindEyeTexture();
             boardRenderer.SetPropertyBlock(_boardBlock);
         }
@@ -184,11 +210,7 @@ namespace RevGame.Pvp
                 {
                     if (core.GetStone(selected) != GoSide.Empty)
                     {
-                        int count = core.CopyLiberties(selected, _liberties);
-                        for (int i = 0; i < count; i++)
-                        {
-                            _marks[_liberties[i]].x = 1;
-                        }
+                        MarkLiberties(core, selected);
                     }
                     else if (core.TryPreview(core.Turn, selected % 9, selected / 9, out GoPlayResult preview))
                     {
@@ -198,16 +220,12 @@ namespace RevGame.Pvp
                         }
                     }
                 }
-                // 所有仅剩1气的棋块常显其唯一气口，玩家无需悬停也能发现危险。
+                // 两气以内的棋块常显气口，玩家无需悬停也能发现危险。
                 for (int i = 0; i < 81; i++)
                 {
                     if (_analysis.Group[i] == i && _analysis.Liberties[i] <= 2)
                     {
-                        int count = core.CopyLiberties(i, _liberties);
-                        for (int j = 0; j < count; j++)
-                        {
-                            _marks[_liberties[j]].x = 1;
-                        }
+                        MarkLiberties(core, i);
                     }
                 }
                 for (int i = 0; i < service.SuggestionCount; i++)
@@ -225,6 +243,19 @@ namespace RevGame.Pvp
             _boardBlock.SetFloat("_Turn", core == null ? 1 : (int)core.Turn);
             boardRenderer.SetPropertyBlock(_boardBlock);
         }
+
+        /// <summary>气口按所属棋块着色。黑1、白2，可合并为3，避免共用气口被最后遍历的棋块覆盖。</summary>
+        private void MarkLiberties(GoCore core, int stone)
+        {
+            int side = (int)core.GetStone(stone);
+            int count = core.CopyLiberties(stone, _liberties);
+            for (int i = 0; i < count; i++)
+            {
+                int point = _liberties[i];
+                _marks[point].x = (int)_marks[point].x | side;
+            }
+        }
+
         private void AnalyzeBoard(GoCore core, bool live)
         {
             if (ReferenceEquals(core, _analyzedCore))
@@ -253,14 +284,59 @@ namespace RevGame.Pvp
 
         private void BindEyeTexture()
         {
-            if (_eyeAtlasVersion == GameSpriteAtlasService.BindingVersion)
+            // 与六章一致：平时睁眼，短时依次闭合再睁开。整张棋盘共用时钟和图集UV。
+            float age = Mathf.Repeat(Time.unscaledTime, 3.8f);
+            int frame = age < 3.25f ? 0 : age < 3.35f ? 1 : age < 3.43f ? 2 : age < 3.55f ? 3 : age < 3.63f ? 2 : age < 3.73f ? 1 : 0;
+            if (frame == _eyeFrame && _eyeAtlasVersion == GameSpriteAtlasService.BindingVersion)
             {
                 return;
             }
-            // atlasRequested绑定后重读一次四边UV。图集禁旋转和紧密打包，Shader可直接在矩形内采样。
+            _eyeFrame = frame;
             _eyeAtlasVersion = GameSpriteAtlasService.BindingVersion;
-            _boardBlock.SetTexture("_EyeTex", eyeSprite.texture);
-            _boardBlock.SetVector("_EyeUv", DataUtility.GetOuterUV(eyeSprite));
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (VisibleEyeCount > 0)
+            {
+                EyeFramesSeen |= 1 << frame;
+            }
+#endif
+            Sprite sprite = _packedEyeFrames[frame] ?? eyeBlinkFrames[frame];
+            _boardBlock.SetTexture("_EyeTex", sprite.texture);
+            _boardBlock.SetVector("_EyeUv", DataUtility.GetOuterUV(sprite));
+        }
+
+        internal void BindEyeFrames(GameSpriteAtlasService.ScopedAtlasLease atlas)
+        {
+            ReleaseEyeFrames();
+            try
+            {
+                for (int i = 0; i < _packedEyeFrames.Length; i++)
+                {
+                    _packedEyeFrames[i] = atlas.GetPackedSprite(eyeBlinkFrames[i].name);
+                }
+            }
+            catch
+            {
+                ReleaseEyeFrames();
+                throw;
+            }
+        }
+
+        internal void ReleaseEyeFrames()
+        {
+            for (int i = 0; i < _packedEyeFrames.Length; i++)
+            {
+                if (_packedEyeFrames[i] != null)
+                {
+                    Destroy(_packedEyeFrames[i]);
+                    _packedEyeFrames[i] = null;
+                }
+            }
+            _eyeFrame = -1;
+        }
+
+        private void OnDestroy()
+        {
+            ReleaseEyeFrames();
         }
 
         private void OnDisable()

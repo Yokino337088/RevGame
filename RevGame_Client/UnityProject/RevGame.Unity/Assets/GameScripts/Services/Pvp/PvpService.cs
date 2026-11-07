@@ -457,7 +457,7 @@ namespace RevGame.Pvp
 
         private void NewGame()
         {
-            Core = new GoCore(Config.komiHalfPoints);
+            Core = new GoCore(Config.komiHalfPoints, Mode == PvpConnectionMode.Local ? Config.localPlacementLimit : 0);
             _goClock = new GoClock(Config.mainTimeSeconds, Config.byoyomiSeconds, Config.byoyomiCount);
             _moves.Clear();
             _turnStarted = _clock.Elapsed.TotalSeconds;
@@ -569,7 +569,9 @@ namespace RevGame.Pvp
             _moves.Add(move);
             _turnStarted = _clock.Elapsed.TotalSeconds;
             SelectedPoint = -1;
-            Status = Core.Phase == GoPhase.Scoring ? "双方停一手：点选死子后分别确认；有分歧可继续对弈" : "落子已同步";
+            Status = Core.PlacementLimitReached && Core.Phase == GoPhase.Scoring
+                ? "本局落子已满，请点选死子并确认计分"
+                : Core.Phase == GoPhase.Scoring ? "双方停一手：点选死子后分别确认；有分歧可继续对弈" : "落子已同步";
             if (captured > 0)
             {
                 NotifyBoard((move.side == (int)GoSide.Black ? "黑方" : "白方") + "提了 " + captured + " 子");
@@ -691,6 +693,7 @@ namespace RevGame.Pvp
             }
             _server?.Poll();
             Lan?.Poll();
+            PollComputerPlacement();
             PollAgent();
             PollComputer();
             PollHint();
