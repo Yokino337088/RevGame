@@ -36,6 +36,10 @@ namespace RevGame.Pvp
     public sealed partial class PvpService : IDisposable
     {
         public const string ProtocolVersion = "revgo-1";
+        private const string LocalRatingKey = "RevGame.Pvp.OnlineRating.v1";
+        private const int InitialRating = 1500;
+        private const int MinRating = 100;
+        private const int MaxRating = 3000;
         public PvpConfig Config { get; private set; }
         public GoCore Core { get; private set; }
         public PvpConnectionMode Mode { get; private set; }
@@ -66,7 +70,7 @@ namespace RevGame.Pvp
         private double _turnStarted, _queueStarted;
         private FantasyGoTransport _server;
         private string _resumeToken = "";
-        // 服务跨场景常驻。退局只清棋谱和当前连接，保留同地址、昵称及规则下的短期棋力身份。
+        // 服务跨场景常驻。同地址、昵称及规则可复用连接令牌，棋力由独立的本机存档保存。
         private (string Endpoint, string Nickname, string Rules, string Kind, string Token) _matchIdentity;
         private bool _disposed, _awaiting, _lanHello;
         // 一个尚未回执的命令只占一个序号；旧状态推送不能把它误当作已完成，也不能因此允许连续下两手。
@@ -166,7 +170,7 @@ namespace RevGame.Pvp
                 Status = "正在等待服务器回应，请稍后操作";
                 return;
             }
-            _server.Match(Queued);
+            _server.Match(Queued, Queued ? 0 : ReadLocalRating(out _));
             if (!Queued)
             {
                 _queueStarted = _clock.Elapsed.TotalSeconds;
@@ -415,6 +419,7 @@ namespace RevGame.Pvp
                     _pendingSequence = 0;
                 }
                 _recoveringServer = false;
+                ApplyLocalRating(state);
                 if (state.Phase == "disconnected" || state.Phase == "closed")
                 {
                     Connected = false;
@@ -424,6 +429,40 @@ namespace RevGame.Pvp
             {
                 OnNetworkError("收到的棋谱校验失败：" + error.Message);
             }
+        }
+
+        /// <summary>按当前设备读取棋力。旧版本没有本机档案，首次从初始分起算。</summary>
+        private static int ReadLocalRating(out string lastRatedRoom)
+        {
+            string record = PlayerPrefs.GetString(LocalRatingKey);
+            int separator = record.IndexOf('|');
+            lastRatedRoom = "";
+            if (separator < 0 || !int.TryParse(record.Substring(0, separator), System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out int rating) || rating < MinRating || rating > MaxRating)
+            {
+                return InitialRating;
+            }
+            lastRatedRoom = record.Substring(separator + 1);
+            return rating;
+        }
+
+        /// <summary>棋谱和终局校验完成后才写盘。分数和末次房间号一起写，避免重连或重复快照重复记分。</summary>
+        private void ApplyLocalRating(GoRelayState state)
+        {
+            if (!state.RatingFinalized || Core.Phase != GoPhase.Finished ||
+                (Core.EndReason != GoEndReason.Scored && Core.EndReason != GoEndReason.Resigned) ||
+                state.RatingDelta < -32 || state.RatingDelta > 32 || !Guid.TryParseExact(RoomId, "N", out _))
+            {
+                return;
+            }
+            int rating = ReadLocalRating(out string lastRatedRoom);
+            if (lastRatedRoom == RoomId)
+            {
+                return;
+            }
+            int updatedRating = Math.Max(MinRating, Math.Min(MaxRating, rating + state.RatingDelta));
+            PlayerPrefs.SetString(LocalRatingKey, updatedRating.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + RoomId);
+            PlayerPrefs.Save();
         }
 
         private void ApplyServerDelta(GoRelayState state)

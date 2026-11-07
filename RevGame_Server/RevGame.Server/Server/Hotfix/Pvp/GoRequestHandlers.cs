@@ -33,7 +33,7 @@ public sealed class C2G_GoMatchRequestHandler : MessageRPC<C2G_GoMatchRequest, G
             response.Reason = "请先连接服务器，或稍后再试。";
             return;
         }
-        response.ErrorCode = lobby.Match(player, request.Cancel, out var reason);
+        response.ErrorCode = lobby.Match(player, request.Cancel, request.LocalRating, out var reason);
         response.Reason = reason;
         response.State = lobby.Snapshot(player);
         await FTask.CompletedTask;

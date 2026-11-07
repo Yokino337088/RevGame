@@ -60,7 +60,6 @@ public sealed class GoLobbyComponentDestroySystem : DestroySystem<GoLobbyCompone
             }
         }
         self.PendingBattleSteps.Clear();
-        self.RatingProfiles.Clear();
         self.Rooms.Clear();
         self.Players.Clear();
     }
@@ -105,7 +104,7 @@ public sealed class GoPlayerEntityDestroySystem : DestroySystem<GoPlayerEntity>
         self.ReconnectWindowMs = 0;
         self.MatchWindowMs = 0;
         self.Komi = 0;
-        self.Rating = 0;
+        self.QueuedRating = 0;
     }
 }
 
@@ -127,6 +126,9 @@ public sealed class GoRoomEntityDestroySystem : DestroySystem<GoRoomEntity>
         self.WorkerAddress = 0;
         self.WorkerReleased = false;
         self.Finished = false;
+        self.BlackExpectedResult = 0;
+        self.RatingFinalized = false;
+        self.BlackRatingDelta = 0;
         self.StepPending = false;
         self.StartedAt = 0;
         self.ClosedAt = 0;

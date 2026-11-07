@@ -127,13 +127,22 @@ static void Smoke(string host, int port, string rules)
 
 static void Ranking(string host, int port, string rules)
 {
-    using var a = new RelayClient(host, port);
-    using var b = new RelayClient(host, port);
+    using var a = new RelayClient(host, port) { LocalRating = 1500 };
+    using var b = new RelayClient(host, port) { LocalRating = 1500 };
     var helloA = a.Hello("棋力验收甲", rules);
     var helloB = b.Hello("棋力验收乙", rules);
     Check(helloA.ErrorCode == 0 && helloB.ErrorCode == 0, "棋力验收双方握手");
     using var ruleDocument = JsonDocument.Parse(rules);
     int komi = ruleDocument.RootElement.GetProperty("komiHalfPoints").GetInt32();
+    void StoreResult(RelayClient winner, RelayClient loser)
+    {
+        var won = winner.Sync().State;
+        var lost = loser.Sync().State;
+        Check(won.RatingFinalized && lost.RatingFinalized && won.RatingDelta > 0 && lost.RatingDelta == -won.RatingDelta,
+            "服务端只回传终局双方分差，供客户端各自保存");
+        winner.LocalRating += won.RatingDelta;
+        loser.LocalRating += lost.RatingDelta;
+    }
     void ScoreWin(RelayClient winner, RelayClient loser)
     {
         Check(winner.Match().State.Phase == "queued", "固定赢家先进入队列");
@@ -162,6 +171,7 @@ static void Ranking(string host, int port, string rules)
         Step(black, GoAction.ConfirmScore, GoSide.Black);
         Step(white, GoAction.ConfirmScore, GoSide.White);
         Check(core.Winner == (room.MySide == 1 ? GoSide.White : GoSide.Black), "指定玩家赢得经双方确认的正常计分");
+        StoreResult(winner, loser);
         winner.Leave();
         loser.Leave();
         Thread.Sleep(1100);
@@ -176,6 +186,7 @@ static void Ranking(string host, int port, string rules)
     var resign = Apply(resigningBoard, GoAction.Resign, (GoSide)resignation.MySide);
     Check(b.Send(resignation.RoomId, resign).ErrorCode == 0, "本人认输有效");
     Check(b.Send(resignation.RoomId, resign).ErrorCode == 0, "同一条认输指令允许幂等重发");
+    StoreResult(a, b);
     a.Leave();
     b.Leave();
     Thread.Sleep(1100);
@@ -195,8 +206,8 @@ static void Ranking(string host, int port, string rules)
         }
     }
     Check(a.Sync().State.Phase == "idle" && b.Sync().State.Phase == "idle", "放宽后对局可正常退出");
-    using var c = new RelayClient(host, port);
-    using var d = new RelayClient(host, port);
+    using var c = new RelayClient(host, port) { LocalRating = 1500 };
+    using var d = new RelayClient(host, port) { LocalRating = 1500 };
     Check(c.Hello("棋力验收丙", rules).ErrorCode == 0 && d.Hello("棋力验收丁", rules).ErrorCode == 0, "新玩家从初始棋力分入场");
     // 甲额外赢一局，离 1500 分更远。让甲先排队，丁入队后仍应优先选更接近的乙。
     ScoreWin(a, c);
@@ -216,8 +227,11 @@ static void Ranking(string host, int port, string rules)
         using var returnedB = new RelayClient(host, port);
         var recoveredA = returnedA.Hello("棋力验收甲", rules, helloA.Token);
         var recoveredB = returnedB.Hello("棋力验收乙", rules, helloB.Token);
-        Check(recoveredA.ErrorCode == 0 && recoveredB.ErrorCode == 0 && recoveredA.State.Phase == "idle" && recoveredB.State.Phase == "idle",
-            "房间重连窗口已过，原匿名令牌可恢复棋力且不恢复旧房间");
+        Check(recoveredA.ErrorCode == 4 && recoveredB.ErrorCode == 4, "旧令牌随匿名会话过期，服务端没有棋力档案");
+        Check(returnedA.Hello("棋力验收甲", rules).ErrorCode == 0 && returnedB.Hello("棋力验收乙", rules).ErrorCode == 0,
+            "两名玩家建立全新匿名连接");
+        returnedA.LocalRating = a.LocalRating;
+        returnedB.LocalRating = b.LocalRating;
         Check(returnedA.Match().State.Phase == "queued" && returnedB.Match().State.Phase == "queued", "重建连接后仍保留棋力分差");
         returnedA.Match(true);
         returnedB.Match(true);
@@ -362,6 +376,8 @@ sealed class RelayClient : IDisposable
     private readonly TcpClient _tcp;
     private readonly NetworkStream _stream;
     private uint _rpcId;
+    // 探针模拟本机档案。默认零值让其它测试继续覆盖旧客户端的兼容路径。
+    public int LocalRating;
 
     public RelayClient(string host, int port)
     {
@@ -378,7 +394,7 @@ sealed class RelayClient : IDisposable
     }
     public G2C_GoMatchResponse Match(bool cancel = false)
     {
-        return Call<C2G_GoMatchRequest, G2C_GoMatchResponse>(new C2G_GoMatchRequest { Cancel = cancel });
+        return Call<C2G_GoMatchRequest, G2C_GoMatchResponse>(new C2G_GoMatchRequest { Cancel = cancel, LocalRating = cancel ? 0 : LocalRating });
     }
     public G2C_GoSyncResponse Sync()
     {

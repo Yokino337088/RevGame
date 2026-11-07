@@ -18,14 +18,9 @@ public sealed class GoLobbyComponent : Entity
     public readonly Dictionary<long, int> WorkerLoads = new();
     // 同一个 Gate 更新周期内，每个 Battle 收一批来自不同房间的操作。
     public readonly Dictionary<long, List<GoPendingBattleStep>> PendingBattleSteps = new();
-    // 已计分匿名玩家的短期档案，与在线人数和房间重连窗口分别计数。
-    public readonly Dictionary<string, GoRatingProfile> RatingProfiles = new(StringComparer.Ordinal);
     public long SweepTimer;
     public bool Closing;
 }
-
-/// <summary>房间保留期过后仅存棋力与规则桶。过期时间以 UTC 毫秒表示，不持有连接或棋谱。</summary>
-public sealed record GoRatingProfile(string Kind, string Rules, int Rating, long ExpiresAt);
 
 /// <summary>匿名玩家身份归大厅所有，Session 只是可替换的连接；令牌不可公开或写日志。</summary>
 public sealed class GoPlayerEntity : Entity
@@ -45,9 +40,9 @@ public sealed class GoPlayerEntity : Entity
     public int Side;
     public long ReconnectWindowMs;
     public long MatchWindowMs;
-    // 半目贴目从握手规则读取，棋力分归匿名身份所有，重连沿用。
+    // 半目贴目从握手规则读取。本机棋力只在排队期间参与匹配，离队即清除。
     public int Komi;
-    public int Rating;
+    public int QueuedRating;
 }
 
 /// <summary>
@@ -73,6 +68,10 @@ public sealed class GoRoomEntity : Entity
     public bool WorkerReleased;
     public bool Finished;
     public bool StepPending;
+    // 入房时冻结黑方预期胜率，房间只保留结算参数与本局分差供重连补发。
+    public double BlackExpectedResult;
+    public bool RatingFinalized;
+    public int BlackRatingDelta;
 }
 
 /// <summary>挂在 Session 上的身份索引；断开时其 DestroySystem 通知大厅保留重连窗口。</summary>

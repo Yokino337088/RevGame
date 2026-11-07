@@ -18,8 +18,6 @@ public static class GoLobbyComponentSystem
     public const int MaxPlayers = 1024;
     public const int MaxCommands = 1024;
     private const int MaxRoomsPerWorker = 128;
-    private const int MaxRatingProfiles = 4096;
-    private const long RatingRetentionMs = 30 * 60 * 1000;
 
     public static long Now()
     {
@@ -62,7 +60,6 @@ public static class GoLobbyComponentSystem
         {
             return 0;
         }
-        GoRatingProfile? profile = null;
         if (!string.IsNullOrEmpty(request.ResumeToken))
         {
             if (request.ResumeToken.Length != 64)
@@ -70,13 +67,12 @@ public static class GoLobbyComponentSystem
                 reason = "恢复令牌无效，请重新匹配。";
                 return 4;
             }
-            self.Players.TryGetValue(request.ResumeToken, out player);
-            if (player == null && (!self.RatingProfiles.TryGetValue(request.ResumeToken, out profile) || profile.ExpiresAt <= Now()))
+            if (!self.Players.TryGetValue(request.ResumeToken, out player))
             {
                 reason = "恢复令牌已过期，请重新匹配。";
                 return 4;
             }
-            if ((player?.RulesJson ?? profile!.Rules) != request.RulesJson || (player?.MatchKind ?? profile!.Kind) != request.MatchKind)
+            if (player.RulesJson != request.RulesJson || player.MatchKind != request.MatchKind)
             {
                 player = null;
                 reason = "恢复对局的规则配置不一致。";
@@ -106,7 +102,7 @@ public static class GoLobbyComponentSystem
                 return 6;
             }
             player = Entity.Create<GoPlayerEntity>(self.Scene, false, true);
-            player.Token = profile != null ? request.ResumeToken : Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            player.Token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
             player.Nickname = request.Nickname.Trim();
             player.LogNickname = new string(player.Nickname.Where(c => !char.IsControl(c)).ToArray());
             player.RulesJson = request.RulesJson;
@@ -114,11 +110,10 @@ public static class GoLobbyComponentSystem
             player.ReconnectWindowMs = reconnectWindow;
             player.MatchWindowMs = matchWindow;
             player.Komi = komi;
-            player.Rating = profile?.Rating ?? GoMatchPolicy.InitialRating;
             self.Players.Add(player.Token, player);
         }
-        string identity = profile != null ? "恢复棋力" : string.IsNullOrEmpty(request.ResumeToken) ? "新建" : "恢复连接";
-        Log.Info($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 事件=握手或恢复成功 身份={identity} 棋力分={player.Rating} 房间={player.Room?.RoomId ?? "无"}");
+        string identity = string.IsNullOrEmpty(request.ResumeToken) ? "新建" : "恢复连接";
+        Log.Info($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 事件=握手或恢复成功 身份={identity} 房间={player.Room?.RoomId ?? "无"}");
         player.Connection = session;
         player.DisconnectedAt = 0;
         var binding = session.GetOrAddComponent<GoSessionComponent>();
@@ -131,7 +126,7 @@ public static class GoLobbyComponentSystem
         return 0;
     }
 
-    public static uint Match(this GoLobbyComponent self, GoPlayerEntity player, bool cancel, out string reason)
+    public static uint Match(this GoLobbyComponent self, GoPlayerEntity player, bool cancel, int localRating, out string reason)
     {
         reason = "";
         if (cancel)
@@ -159,10 +154,11 @@ public static class GoLobbyComponentSystem
             self.Waiting.Add(key, queue);
         }
         player.QueuedAt = now;
+        player.QueuedRating = localRating == 0 ? GoMatchPolicy.InitialRating : Math.Clamp(localRating, 100, 3000);
         player.WaitingNode = queue.AddLast(player);
         if (!self.TryMatch(queue, player, now, player))
         {
-            Log.Info($"[PVP/匹配] 玩家={GoEventLog.PlayerLabel(player)} 场次={player.MatchKind} 事件=进入队列 棋力分={player.Rating} 同规则等待人数={queue.Count}");
+            Log.Info($"[PVP/匹配] 玩家={GoEventLog.PlayerLabel(player)} 场次={player.MatchKind} 事件=进入队列 同规则等待人数={queue.Count}");
         }
         return 0;
     }
@@ -184,7 +180,7 @@ public static class GoLobbyComponentSystem
             {
                 continue;
             }
-            int distance = GoMatchPolicy.Distance(player.Rating, candidate.Rating, Math.Min(playerWaitMs, candidateWaitMs));
+            int distance = GoMatchPolicy.Distance(player.QueuedRating, candidate.QueuedRating, Math.Min(playerWaitMs, candidateWaitMs));
             if (distance >= 0 && distance < bestDistance)
             {
                 opponent = candidate;
@@ -201,8 +197,6 @@ public static class GoLobbyComponentSystem
         }
         long opponentWaitMs = now - opponent.QueuedAt;
         var room = Entity.Create<GoRoomEntity>(self.Scene, false, true);
-        self.RemoveFromQueue(player);
-        self.RemoveFromQueue(opponent);
         room.RoomId = Guid.NewGuid().ToString("N");
         room.WorkerAddress = workerAddress;
         int workerLoad = ++self.WorkerLoads[workerAddress];
@@ -212,6 +206,9 @@ public static class GoLobbyComponentSystem
         bool firstBlack = RandomNumberGenerator.GetInt32(2) == 0;
         room.Black = firstBlack ? player : opponent;
         room.White = firstBlack ? opponent : player;
+        room.BlackExpectedResult = GoMatchPolicy.BlackExpectedResult(room.Black.QueuedRating, room.White.QueuedRating);
+        self.RemoveFromQueue(player);
+        self.RemoveFromQueue(opponent);
         room.BlackName = room.Black.Nickname;
         room.WhiteName = room.White.Nickname;
         room.Black.Side = 1;
@@ -220,7 +217,7 @@ public static class GoLobbyComponentSystem
         room.White.Room = room;
         self.Rooms.Add(room.RoomId, room);
         self.Broadcast(room, responseRecipient);
-        Log.Info($"[PVP/房间] 房间={room.RoomId} 事件=匹配成功/双方入房/对局开始 黑方={GoEventLog.PlayerLabel(room.Black)} 白方={GoEventLog.PlayerLabel(room.White)} 节点={workerAddress} 节点在局={workerLoad} 分差={Math.Abs(player.Rating - opponent.Rating)} 等待毫秒={playerWaitMs}/{opponentWaitMs}");
+        Log.Info($"[PVP/房间] 房间={room.RoomId} 事件=匹配成功/双方入房/对局开始 黑方={GoEventLog.PlayerLabel(room.Black)} 白方={GoEventLog.PlayerLabel(room.White)} 节点={workerAddress} 节点在局={workerLoad} 等待毫秒={playerWaitMs}/{opponentWaitMs}");
         return true;
     }
 
@@ -253,6 +250,7 @@ public static class GoLobbyComponentSystem
         }
         player.WaitingNode = null;
         player.QueuedAt = 0;
+        player.QueuedRating = 0;
     }
 
     private static void NotifyMatchExpired(this GoLobbyComponent self, GoPlayerEntity player)
@@ -363,8 +361,11 @@ public static class GoLobbyComponentSystem
                 GoEventLog.Result(room, outcome);
                 if ((GoEndReason)outcome.EndReason is GoEndReason.Scored or GoEndReason.Resigned)
                 {
-                    self.UpdateRatings(room, (GoSide)outcome.Winner);
+                    double blackResult = (GoSide)outcome.Winner == GoSide.Empty ? 0.5 : (GoSide)outcome.Winner == GoSide.Black ? 1.0 : 0.0;
+                    room.BlackRatingDelta = GoMatchPolicy.BlackRatingDelta(room.BlackExpectedResult, blackResult);
+                    room.RatingFinalized = true;
                 }
+                room.BlackExpectedResult = 0;
                 self.ReleaseWorker(room);
             }
             // 若提交者重连，旧 RPC 已发不到他，需把当前状态也推送给新连接。
@@ -392,30 +393,6 @@ public static class GoLobbyComponentSystem
                 room.StepPending = false;
             }
         }
-    }
-
-    /// <summary>双方确认数子或本人认输才改棋力分。客户端申报的掉线和超时沿用原协议。</summary>
-    private static void UpdateRatings(this GoLobbyComponent self, GoRoomEntity room, GoSide winner)
-    {
-        var black = room.Black!;
-        var white = room.White!;
-        double actualBlackResult = winner == GoSide.Empty ? 0.5 : winner == GoSide.Black ? 1.0 : 0.0;
-        int delta = GoMatchPolicy.BlackRatingDelta(black.Rating, white.Rating, actualBlackResult);
-        black.Rating = Math.Clamp(black.Rating + delta, 100, 3000);
-        white.Rating = Math.Clamp(white.Rating - delta, 100, 3000);
-        self.RememberRating(black);
-        self.RememberRating(white);
-        Log.Info($"[PVP/棋力] 房间={room.RoomId} 黑方变化={delta} 黑方棋力分={black.Rating} 白方棋力分={white.Rating}");
-    }
-
-    private static void RememberRating(this GoLobbyComponent self, GoPlayerEntity player)
-    {
-        // 只有完成可计分对局才占档案容量。达到上限时淘汰最先到期的档案。
-        if (self.RatingProfiles.Count == MaxRatingProfiles && !self.RatingProfiles.ContainsKey(player.Token))
-        {
-            self.RatingProfiles.Remove(self.RatingProfiles.MinBy(entry => entry.Value.ExpiresAt).Key);
-        }
-        self.RatingProfiles[player.Token] = new GoRatingProfile(player.MatchKind, player.RulesJson, player.Rating, Now() + RatingRetentionMs);
     }
 
     /// <summary>一个房间只释放一次计算席位。大厅可继续保留原有客户端快照供重连。</summary>
@@ -467,6 +444,8 @@ public static class GoLobbyComponentSystem
         {
             return state;
         }
+        state.RatingFinalized = room.RatingFinalized;
+        state.RatingDelta = player.Side == (int)GoSide.Black ? room.BlackRatingDelta : -room.BlackRatingDelta;
         // 只对显式协商的新客户端发送当前一手。握手、重连、主动同步与旧客户端仍用完整棋谱。
         if (afterSequence > 0 && afterSequence == room.Commands.Count - 1 &&
             player.Connection?.GetComponent<GoSessionComponent>()?.SupportsDelta == true)

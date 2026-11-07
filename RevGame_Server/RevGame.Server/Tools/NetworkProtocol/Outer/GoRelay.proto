@@ -32,6 +32,9 @@ message GoRelayState
     string MatchKind = 13;
     // 大于 0 时，Commands 只含 BaseSequence + 1 这一手。0 为完整快照。
     int32 BaseSequence = 14;
+    // Battle 确认终局后给当前座位的本局分差，客户端按房间号应用一次。
+    bool RatingFinalized = 15;
+    int32 RatingDelta = 16;
 }
 /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
 message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
@@ -52,6 +55,8 @@ message G2C_GoHelloResponse // IResponse
 message C2G_GoMatchRequest // IRequest,G2C_GoMatchResponse
 {
     bool Cancel = 1;
+    // 本机棋力，仅用于本次排队。旧客户端缺省为 0，按初始分匹配。
+    int32 LocalRating = 2;
 }
 message G2C_GoMatchResponse // IResponse
 {

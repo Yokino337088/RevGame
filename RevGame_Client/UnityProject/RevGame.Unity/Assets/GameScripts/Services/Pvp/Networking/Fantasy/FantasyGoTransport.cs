@@ -147,9 +147,9 @@ namespace RevGame.Pvp.Networking
             }
         }
 
-        public void Match(bool cancel = false)
+        public void Match(bool cancel = false, int localRating = 0)
         {
-            StartRequest(cancel ? 2 : 1, null);
+            StartRequest(cancel ? 2 : 1, null, localRating);
         }
 
         public void Send(GoRelayCommand command)
@@ -167,7 +167,7 @@ namespace RevGame.Pvp.Networking
             StartRequest(5, null);
         }
 
-        private void StartRequest(int operation, GoRelayCommand command)
+        private void StartRequest(int operation, GoRelayCommand command, int localRating = 0)
         {
             if (!Connected || _session == null || _session.IsDisposed || _disposed)
             {
@@ -181,7 +181,7 @@ namespace RevGame.Pvp.Networking
             }
             Busy = true;
             _deadline = Time.realtimeSinceStartup + RequestTimeoutSeconds;
-            RequestAsync(operation, command, _generation).Coroutine();
+            RequestAsync(operation, command, _generation, localRating).Coroutine();
         }
 
         /// <summary>每帧由 PvP 服务调用；使用不受暂停影响的时间，不占用单机战斗时钟。</summary>
@@ -211,7 +211,7 @@ namespace RevGame.Pvp.Networking
             }
         }
 
-        private async FTask RequestAsync(int operation, GoRelayCommand command, int generation)
+        private async FTask RequestAsync(int operation, GoRelayCommand command, int generation, int localRating)
         {
             uint code = 0;
             string reason = "";
@@ -223,7 +223,7 @@ namespace RevGame.Pvp.Networking
                 {
                     case 1:
                     case 2:
-                        using (var response = await _session.C2G_GoMatchRequest(operation == 2))
+                        using (var response = await _session.C2G_GoMatchRequest(operation == 2, localRating))
                         {
                             code = response.ErrorCode;
                             reason = response.Reason;

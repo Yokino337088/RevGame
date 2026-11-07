@@ -31,10 +31,11 @@ namespace Fantasy
 			return (G2C_GoMatchResponse)await session.Call(C2G_GoMatchRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static async FTask<G2C_GoMatchResponse> C2G_GoMatchRequest(this Session session, bool cancel)
+		public static async FTask<G2C_GoMatchResponse> C2G_GoMatchRequest(this Session session, bool cancel, int localRating)
 		{
 			using var C2G_GoMatchRequest_request = Fantasy.C2G_GoMatchRequest.Create();
 			C2G_GoMatchRequest_request.Cancel = cancel;
+			C2G_GoMatchRequest_request.LocalRating = localRating;
 			return (G2C_GoMatchResponse)await session.Call(C2G_GoMatchRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

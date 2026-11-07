@@ -23,10 +23,15 @@ internal static class GoMatchPolicy
         return tierGap * 1000 + ratingGap;
     }
 
-    /// <summary>根据预期胜率计算黑方 Elo 增量。白方应用相反值；和棋取 0.5。</summary>
-    public static int BlackRatingDelta(int blackRating, int whiteRating, double actualBlackResult)
+    /// <summary>将排队分数换算成黑方预期胜率，房间只需要保留这个结算参数。</summary>
+    public static double BlackExpectedResult(int blackRating, int whiteRating)
     {
-        double expectedBlackResult = 1.0 / (1.0 + Math.Pow(10.0, (whiteRating - blackRating) / 400.0));
+        return 1.0 / (1.0 + Math.Pow(10.0, (whiteRating - blackRating) / 400.0));
+    }
+
+    /// <summary>按实际胜负计算黑方本局 Elo 分差。白方取相反值，和棋结果取 0.5。</summary>
+    public static int BlackRatingDelta(double expectedBlackResult, double actualBlackResult)
+    {
         return (int)Math.Round(EloK * (actualBlackResult - expectedBlackResult), MidpointRounding.AwayFromZero);
     }
 }

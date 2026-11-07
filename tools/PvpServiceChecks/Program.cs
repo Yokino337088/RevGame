@@ -24,6 +24,12 @@ internal static class Program
             Console.WriteLine("PASS: " + _checks + " online delta assertions.");
             return;
         }
+        if (options.Length == 1 && options[0] == "--rating")
+        {
+            CheckLocalRating();
+            Console.WriteLine("PASS: " + _checks + " local rating assertions.");
+            return;
+        }
         AgentChecks.Run();
         PvpService service = Local();
         ExpireTurn(service);
@@ -100,6 +106,42 @@ internal static class Program
         service.StartLocal();
         Check(!service.IsComputerGame, "switching local mode clears computer lifetime");
         Console.WriteLine("PASS: " + _checks + " service timing/state assertions. Unity, JSON and sockets are not covered by this harness.");
+    }
+
+    private static void CheckLocalRating()
+    {
+        const string key = "RevGame.Pvp.OnlineRating.v1";
+        const string endpoint = "127.0.0.1:20000";
+        var config = new PvpConfig();
+        string room = Guid.NewGuid().ToString("N");
+        using var service = new PvpService();
+        service.Begin(config);
+        service.StartServer(endpoint, "棋力验收");
+        var transport = FantasyGoTransport.Latest;
+        service.Match();
+        Check(transport.SubmittedRating == 1500, "首次从本机读取初始分");
+
+        var state = new GoRelayState { Phase = "playing", RoomId = room, CoreVersion = PvpService.ProtocolVersion,
+            RulesJson = config.RulesJson, MySide = 1, RatingFinalized = true, RatingDelta = -16 };
+        transport.Push(state);
+        Check(!UnityEngine.PlayerPrefs.HasKey(key), "未完成棋局不能提前记分");
+        var core = new GoCore(config.komiHalfPoints);
+        string previous = core.StateHash.ToString();
+        Check(core.TryApply(GoAction.Resign, GoSide.Black, -1, -1, out _), "生成可重放认输");
+        state.Commands.Add(new GoRelayCommand { Sequence = 1, Side = 1, Kind = (int)GoAction.Resign,
+            X = -1, Y = -1, PreviousHash = previous, ResultHash = core.StateHash.ToString() });
+        transport.Push(state);
+        transport.Push(state);
+        Check(UnityEngine.PlayerPrefs.GetString(key) == "1484|" + room, "有效终局写入本机且重复包只记一次");
+
+        using var reopened = new PvpService();
+        reopened.Begin(config);
+        reopened.StartServer(endpoint, "棋力验收");
+        reopened.Match();
+        Check(FantasyGoTransport.Latest.SubmittedRating == 1484, "新服务实例使用本机档案发起匹配");
+        FantasyGoTransport.Latest.Push(state);
+        Check(UnityEngine.PlayerPrefs.GetString(key) == "1484|" + room, "新服务实例重收同局终局仍幂等");
+        UnityEngine.PlayerPrefs.DeleteKey(key);
     }
 
     private static void CheckServerDelta()

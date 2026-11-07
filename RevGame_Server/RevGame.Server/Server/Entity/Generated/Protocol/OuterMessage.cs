@@ -168,6 +168,8 @@ namespace Fantasy
             Reason = default;
             MatchKind = default;
             BaseSequence = default;
+            RatingFinalized = default;
+            RatingDelta = default;
             MessageObjectPool<GoRelayState>.Return(this);
         }
 
@@ -192,6 +194,8 @@ namespace Fantasy
             other.Reason = Reason;
             other.MatchKind = MatchKind;
             other.BaseSequence = BaseSequence;
+            other.RatingFinalized = RatingFinalized;
+            other.RatingDelta = RatingDelta;
 
         }
 
@@ -229,6 +233,10 @@ namespace Fantasy
         public string MatchKind { get; set; }
         [ProtoMember(14)]
         public int BaseSequence { get; set; }
+        [ProtoMember(15)]
+        public bool RatingFinalized { get; set; }
+        [ProtoMember(16)]
+        public int RatingDelta { get; set; }
     }
     /// <summary>
     /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
@@ -422,6 +430,7 @@ namespace Fantasy
         {
             if (!IsPool()) return; 
             Cancel = default;
+            LocalRating = default;
             MessageObjectPool<C2G_GoMatchRequest>.Return(this);
         }
 
@@ -432,6 +441,7 @@ namespace Fantasy
                 other = Create(false);
             }
             other.Cancel = Cancel;
+            other.LocalRating = LocalRating;
 
         }
 
@@ -446,6 +456,8 @@ namespace Fantasy
         public G2C_GoMatchResponse ResponseType { get; set; }
         [ProtoMember(1)]
         public bool Cancel { get; set; }
+        [ProtoMember(2)]
+        public int LocalRating { get; set; }
     }
     [Serializable]
     [ProtoContract]

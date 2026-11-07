@@ -85,7 +85,8 @@ namespace Fantasy
     public sealed class GoRelayState
     {
         public string Phase, RoomId, Reason, CoreVersion, RulesJson, BlackName, WhiteName;
-        public int MySide, BaseSequence;
+        public int MySide, BaseSequence, RatingDelta;
+        public bool RatingFinalized;
         public List<GoRelayCommand> Commands = new List<GoRelayCommand>();
     }
 }
@@ -127,8 +128,10 @@ namespace RevGame.Pvp.Networking
             SubmittedToken = token;
             AllowsNewIdentity = allowNewIdentity;
         }
-        public void Match(bool cancel)
+        public int SubmittedRating;
+        public void Match(bool cancel, int localRating = 0)
         {
+            SubmittedRating = localRating;
         }
         public void Sync()
         {

@@ -71,7 +71,7 @@ namespace RevGame.Pvp
                 {
                     Require(hello.ErrorCode == 0, hello.Reason);
                 }
-                using (var match = await _session.C2G_GoMatchRequest(false))
+                using (var match = await _session.C2G_GoMatchRequest(false, localRating: 0))
                 {
                     Require(match.ErrorCode == 0, match.Reason);
                 }
