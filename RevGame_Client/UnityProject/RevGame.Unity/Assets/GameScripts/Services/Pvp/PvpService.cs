@@ -27,6 +27,8 @@ namespace RevGame.Pvp
         public PvpMove move;
         public List<PvpMove> moves;
         public int from, total;
+        public RevGame.Pvp.Duel.DuelRequest duelRequest;
+        public RevGame.Pvp.Duel.DuelReply duelReply;
     }
 
     /// <summary>
@@ -239,7 +241,8 @@ namespace RevGame.Pvp
         {
             MySide = isHost ? GoSide.Black : GoSide.White;
             _lanHello = false;
-            SendLan(new PvpLanMessage { type = "hello", version = ProtocolVersion, rules = Config.RulesJson, name = Nickname });
+            SendLan(new PvpLanMessage { type = "hello", version = ProtocolVersion, rules = Config.RulesJson, name = Nickname,
+                duelRequest = DuelRequestFor(RevGame.Pvp.Duel.DuelAuthority.Read) });
             Status = "正在核对双方规则版本…";
         }
         private void ReceiveLan(string payload)
@@ -258,6 +261,7 @@ namespace RevGame.Pvp
                         throw new InvalidOperationException("双方版本或场次规则不一致，请使用同一版本和场次");
                     }
                     _lanHello = true;
+                    _duelPeerCompatible = message.duelRequest?.fingerprint == RevGame.Pvp.Duel.DuelConfig.Fingerprint;
                     BlackName = MySide == GoSide.Black ? Nickname : CleanName(message.name);
                     WhiteName = MySide == GoSide.White ? Nickname : CleanName(message.name);
                     NewGame();
@@ -268,6 +272,10 @@ namespace RevGame.Pvp
                 if (!_lanHello || Core == null)
                 {
                     throw new InvalidOperationException("尚未完成规则握手");
+                }
+                if (ReceiveLanDuel(message) || (DuelId.Length != 0 && message.type == "move"))
+                {
+                    return;
                 }
                 if (message.type == "move")
                 {
@@ -420,6 +428,8 @@ namespace RevGame.Pvp
                 }
                 _recoveringServer = false;
                 ApplyLocalRating(state);
+                _duelPeerCompatible = state.DuelAvailable;
+                ActivateDuel(state.DuelId);
                 if (state.Phase == "disconnected" || state.Phase == "closed")
                 {
                     Connected = false;
@@ -795,10 +805,6 @@ namespace RevGame.Pvp
             }
             _server?.Poll();
             Lan?.Poll();
-            PollComputerPlacement();
-            PollAgent();
-            PollComputer();
-            PollHint();
             if (_leaving)
             {
                 if (!_leaveSent && _server != null && _server.Connected && !_server.Busy)
@@ -813,6 +819,15 @@ namespace RevGame.Pvp
                 }
                 return;
             }
+            if (DuelId.Length != 0)
+            {
+                PollDuel();
+                return;
+            }
+            PollComputerPlacement();
+            PollAgent();
+            PollComputer();
+            PollHint();
             if (_needsServerSync && _server != null && _server.Connected && !_server.Busy &&
                 _clock.Elapsed.TotalSeconds >= _serverSyncRetryAt)
             {
@@ -914,6 +929,7 @@ namespace RevGame.Pvp
         }
         private void CloseConnection()
         {
+            ResetDuel();
             CancelAgent();
             AgentControlsHumanSeat = false;
             IsComputerGame = false;

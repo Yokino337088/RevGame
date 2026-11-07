@@ -18,6 +18,8 @@
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs" Link="PvpService.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Presentation.cs" Link="PvpService.Presentation.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Computer.cs" Link="PvpService.Computer.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Duel.cs" Link="PvpService.Duel.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/*.cs" Link="Duel/%(Filename)%(Extension)" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Revolution/Runtime/RevTask/RevTask.cs" Link="Revolution/RevTask.cs" />
   </ItemGroup>
 </Project>

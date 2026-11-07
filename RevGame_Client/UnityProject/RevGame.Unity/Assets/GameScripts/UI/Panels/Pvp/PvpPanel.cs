@@ -7,6 +7,7 @@ using RevGame.View;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace RevGame.Pvp
 {
@@ -22,6 +23,39 @@ namespace RevGame.Pvp
         {
             // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
             _idlePortrait = _portrait.sprite;
+            // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
+            _duelButton = Instantiate(_resign, _resign.transform.parent);
+            _duelButton.name = "DuelChallenge";
+            _duelButton.onClick.RemoveAllListeners();
+            _duelButton.onClick.AddListener(ChallengeDuelFromPanel);
+            _duelButton.GetComponentInChildren<Text>().text = "跟对面爆了";
+            var rect = (RectTransform)_duelButton.transform;
+            // 左下空位避开中央棋盘，不盖住最后一排交叉点。
+            rect.anchoredPosition += new Vector2(-665, 102);
+            _duelButton.gameObject.SetActive(false);
+        }
+
+        private Button _duelButton;
+
+        private void ChallengeDuelFromPanel()
+        {
+            Service.ChallengeDuel();
+        }
+
+        private void RefreshDuelChallenge()
+        {
+            bool visible = _battleVisible && Service.CanChallengeDuel;
+            if (_duelButton == null || _duelButton.gameObject.activeSelf == visible)
+            {
+                return;
+            }
+            _duelButton.transform.DOKill();
+            _duelButton.gameObject.SetActive(visible);
+            if (visible)
+            {
+                _duelButton.transform.localScale = Vector3.one * .7f;
+                _duelButton.transform.DOScale(1, .24f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(_duelButton.gameObject);
+            }
         }
 
         [RevBind("top/title")] private Text _title;
@@ -182,6 +216,7 @@ namespace RevGame.Pvp
 
         protected override void OnRefreshView()
         {
+            RefreshDuelChallenge();
             PvpService service = Service;
             GoCore core = service.Core;
             bool hasGame = core != null;

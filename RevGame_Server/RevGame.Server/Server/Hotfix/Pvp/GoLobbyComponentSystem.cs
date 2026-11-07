@@ -119,6 +119,7 @@ public static class GoLobbyComponentSystem
         var binding = session.GetOrAddComponent<GoSessionComponent>();
         binding.Player = player;
         binding.SupportsDelta = request.SupportsDelta;
+        binding.DuelFingerprint = request.DuelFingerprint;
         if (player.Room != null)
         {
             self.Broadcast(player.Room, player);
@@ -265,7 +266,7 @@ public static class GoLobbyComponentSystem
     {
         var room = player.Room;
         var command = request.Command;
-        if (room == null || room.RoomId != request.RoomId || room.ClosedAt != 0)
+        if (room == null || room.RoomId != request.RoomId || room.ClosedAt != 0 || room.Duel != null)
         {
             return (8, "该对局不存在或已经结束。");
         }
@@ -420,7 +421,7 @@ public static class GoLobbyComponentSystem
             player.RequestCount = 0;
         }
         // 一秒二十条足够支持落子/心跳/重试，避免完整历史广播被高频请求放大。
-        return ++player.RequestCount <= 20;
+        return ++player.RequestCount <= (player.Room?.Duel == null ? 20 : 60);
     }
 
     public static GoRelayState Snapshot(this GoLobbyComponent self, GoPlayerEntity player, string reason = "", int afterSequence = 0)
@@ -445,6 +446,8 @@ public static class GoLobbyComponentSystem
             return state;
         }
         state.RatingFinalized = room.RatingFinalized;
+        state.DuelId = room.Duel?.Id ?? "";
+        state.DuelAvailable = room.HasDuelPeers();
         state.RatingDelta = player.Side == (int)GoSide.Black ? room.BlackRatingDelta : -room.BlackRatingDelta;
         // 只对显式协商的新客户端发送当前一手。握手、重连、主动同步与旧客户端仍用完整棋谱。
         if (afterSequence > 0 && afterSequence == room.Commands.Count - 1 &&

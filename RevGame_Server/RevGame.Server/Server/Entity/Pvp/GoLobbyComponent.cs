@@ -1,5 +1,6 @@
 using Fantasy.Entitas;
 using Fantasy.Network;
+using RevGame.Pvp.Duel;
 
 namespace Fantasy;
 
@@ -72,6 +73,7 @@ public sealed class GoRoomEntity : Entity
     public double BlackExpectedResult;
     public bool RatingFinalized;
     public int BlackRatingDelta;
+    public DuelAuthority? Duel;
 }
 
 /// <summary>挂在 Session 上的身份索引；断开时其 DestroySystem 通知大厅保留重连窗口。</summary>
@@ -79,4 +81,5 @@ public sealed class GoSessionComponent : Entity
 {
     public GoPlayerEntity? Player;
     public bool SupportsDelta;
+    public int DuelFingerprint;
 }

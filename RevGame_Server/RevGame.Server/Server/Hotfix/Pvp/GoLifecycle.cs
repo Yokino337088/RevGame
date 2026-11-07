@@ -72,6 +72,7 @@ public sealed class GoSessionComponentDestroySystem : DestroySystem<GoSessionCom
         var player = self.Player;
         self.Player = null;
         self.SupportsDelta = false;
+        self.DuelFingerprint = 0;
         if (player == null || player.IsDisposed || player.Connection != self.Parent)
         {
             return;
@@ -129,6 +130,8 @@ public sealed class GoRoomEntityDestroySystem : DestroySystem<GoRoomEntity>
         self.BlackExpectedResult = 0;
         self.RatingFinalized = false;
         self.BlackRatingDelta = 0;
+        self.Duel?.Dispose();
+        self.Duel = null;
         self.StepPending = false;
         self.StartedAt = 0;
         self.ClosedAt = 0;

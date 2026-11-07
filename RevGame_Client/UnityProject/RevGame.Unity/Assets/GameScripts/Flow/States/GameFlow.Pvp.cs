@@ -10,6 +10,7 @@ namespace RevGame.Flow
     public sealed partial class GameFlow
     {
         public const string PvpSceneName = "PvpScene";
+        public const string DuelSceneName = "PvpDuelScene";
 
         /// <summary>接受请求和实际完成分开；所有UI/GM只走此入口，防止连点创建两条连接或场景加载链。</summary>
         public string PvpDestination { get; private set; } = "Entry";
@@ -25,6 +26,50 @@ namespace RevGame.Flow
             IsTransitioning = true;
             EnterPvpFromButton();
             return true;
+        }
+
+        // 决斗仍属于 PvP 域：切独立表现场景，但保留原房间的传输和权威命令流。
+        internal void TryEnterPvpDuel()
+        {
+            var service = RevServices.GetRequired<PvpService>();
+            if (Screen == GameScreen.Pvp && !IsTransitioning && RevScene.CurrentName == DuelSceneName && service.DuelId.Length != 0)
+            {
+                // 换连接后完整棋谱仍先恢复；场景没有重载，可重新确认 Ready 并从零补决斗帧。
+                service.MarkDuelSceneReady();
+                return;
+            }
+            if (Screen != GameScreen.Pvp || IsTransitioning || RevScene.CurrentName != PvpSceneName ||
+                service.DuelId.Length == 0 || service.DuelError.Length != 0)
+            {
+                return;
+            }
+            IsTransitioning = true;
+            EnterPvpDuelAsync();
+        }
+
+        private async void EnterPvpDuelAsync()
+        {
+            try
+            {
+                RevUI.Close<PvpPanel>();
+                await RevScene.LoadAsync(DuelSceneName);
+                ThrowIfDisposed();
+                if (RevScene.CurrentName != DuelSceneName)
+                {
+                    throw new InvalidOperationException("独立决斗场景未加载完成。");
+                }
+                RevServices.GetRequired<PvpService>().MarkDuelSceneReady();
+            }
+            catch (Exception error)
+            {
+                LastError = error.Message;
+                RevServices.Get<PvpService>()?.SetDuelError(error.Message);
+                RevLog.Exception(error, "决斗切场失败", "Pvp");
+            }
+            finally
+            {
+                IsTransitioning = false;
+            }
         }
         /// <summary>Unity按钮的void适配仅捕获异常；实际跨帧工作仍由RevTask承载。</summary>
         private async void EnterPvpFromButton()

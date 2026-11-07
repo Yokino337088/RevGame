@@ -9,6 +9,7 @@ using Fantasy.Network.Interface;
 using Fantasy.PacketParser.Interface;
 using Fantasy.Scheduler;
 using RevGame.Pvp;
+using RevGame.Pvp.Duel;
 
 namespace Fantasy;
 
@@ -100,6 +101,7 @@ internal sealed class GoLoadClientScheduler(Scene scene) : ANetworkMessageSchedu
                 OuterOpcode.G2C_GoSyncResponse => typeof(G2C_GoSyncResponse),
                 OuterOpcode.G2C_GoLeaveResponse => typeof(G2C_GoLeaveResponse),
                 OuterOpcode.G2C_GoHeartbeatResponse => typeof(G2C_GoHeartbeatResponse),
+                OuterOpcode.G2C_GoDuelResponse => typeof(G2C_GoDuelResponse),
                 _ => throw new InvalidOperationException("探针收到未预期的协议号 " + packet.ProtocolCode)
             };
             var response = (IResponse)packet.Deserialize(type);
@@ -145,6 +147,11 @@ internal static class GoKcpLoadProbe
 
     private static async FTask RunLoad(Scene scene, string endpoint)
     {
+        if (Environment.GetEnvironmentVariable("REVGO_DUEL_PROBE") == "1")
+        {
+            await RunDuel(scene, endpoint);
+            return;
+        }
         int players = ReadCount("REVGO_LOAD_PLAYERS", 1000);
         int buckets = ReadCount("REVGO_LOAD_BUCKETS", 100);
         int turns = ReadCount("REVGO_LOAD_TURNS", 30);
@@ -284,6 +291,114 @@ internal static class GoKcpLoadProbe
         }));
     }
 
+    private static async FTask RunDuel(Scene scene, string endpoint)
+    {
+        const string rules = "{\"komiHalfPoints\":15,\"reconnectWindowSeconds\":90,\"matchTimeoutSeconds\":60}";
+        var first = Connect(scene, endpoint, rules, "rookie");
+        var second = Connect(scene, endpoint, rules, "rookie");
+        try
+        {
+            await WaitConnected(scene, first);
+            await WaitConnected(scene, second);
+            await Hello(first);
+            await Hello(second);
+            using (var pending = (G2C_GoMatchResponse)await first.Session.Call(new C2G_GoMatchRequest()))
+            {
+                Check(pending.ErrorCode == 0, "决斗探针首席匹配");
+            }
+            using (var paired = (G2C_GoMatchResponse)await second.Session.Call(new C2G_GoMatchRequest()))
+            {
+                Check(paired.ErrorCode == 0, "决斗探针两席匹配");
+            }
+            await ReadRoom(first);
+            await ReadRoom(second);
+            Check(first.Room == second.Room, "两席在同一原围棋房间");
+            var black = first.Side == 1 ? first : second;
+            var white = first.Side == 2 ? first : second;
+            using (var denied = await AskDuel(black, DuelAuthority.Challenge))
+            {
+                Check(denied.ErrorCode != 0, "开局时禁止挑战");
+            }
+            var go = new GoCore(15);
+            for (int i = 0; i < (DuelConfig.MinimumMove + 1) / 2; i++)
+            {
+                await GoStep(black, GoAction.Pass, -1, -1);
+                await GoStep(white, GoAction.Play, i % 9, i / 9);
+            }
+            using (var open = await AskDuel(black, DuelAuthority.Challenge))
+            {
+                Check(open.ErrorCode == 0 && !string.IsNullOrEmpty(open.DuelId), "中局劣势允许决斗");
+            }
+            using (var ready = await AskDuel(black, DuelAuthority.Ready))
+            {
+                Check(ready.ReadyMask == 1 && ready.Frames.Count == 0, "单边就绪不能出帧");
+            }
+            using (var ready = await AskDuel(white, DuelAuthority.Ready))
+            {
+                Check(ready.ReadyMask == 3 && ready.Frames.Count == 0, "双方就绪后等待完整输入");
+            }
+            using var replicaA = new DuelCorePipe();
+            using var replicaB = new DuelCorePipe();
+            while (replicaA.Snapshot.Result == 0 && replicaA.Snapshot.Frame < 300)
+            {
+                int previous = replicaA.Snapshot.Frame;
+                int frame = previous + 1;
+                using (var input = await AskDuel(black, DuelAuthority.Input, previous, frame, frame <= 10 ? 2 : 4))
+                {
+                    Check(input.ErrorCode == 0 && input.Frames.Count == 0, "单边输入不得封帧");
+                }
+                using (var input = await AskDuel(white, DuelAuthority.Input, previous, frame, frame <= 10 ? 1 : 0))
+                {
+                    Check(input.ErrorCode == 0, "第二席输入被接纳");
+                }
+                await scene.TimerComponent.Net.WaitAsync(DuelConfig.FrameMs + 5);
+                using var a = await AskDuel(black, DuelAuthority.Read, previous);
+                using var b = await AskDuel(white, DuelAuthority.Read, previous);
+                Check(a.Frames.Count == 1 && b.Frames.Count == 1 && a.Frames[0] == b.Frames[0], "封口帧广播一致");
+                replicaA.Append(frame, a.Frames[0]);
+                replicaB.Append(frame, b.Frames[0]);
+                Check(replicaA.Snapshot.Hash == replicaB.Snapshot.Hash && replicaA.Snapshot.Hash == a.FinalHash,
+                    "双 C# 宿主经真实 P/Invoke 与服务端原生世界逐帧一致");
+            }
+            Check(replicaA.Snapshot.Result == 1, "黑方决斗获胜");
+            using (var replay = await AskDuel(white, DuelAuthority.Read, 0))
+            {
+                Check(replay.Frames.Count > 0 && replay.Frames.Count <= 64, "按连续窗口拉取已提交历史");
+            }
+            using var leaveA = (G2C_GoLeaveResponse)await black.Session.Call(new C2G_GoLeaveRequest());
+            using var leaveB = (G2C_GoLeaveResponse)await white.Session.Call(new C2G_GoLeaveRequest());
+            Check(leaveA.ErrorCode == 0 && leaveB.ErrorCode == 0, "决斗房间退出清理");
+            Console.WriteLine($"GO_KCP_DUEL_PASS frame={replicaA.Snapshot.Frame} hash={replicaA.Snapshot.Hash}");
+
+            async FTask GoStep(GoLoadPeer peer, GoAction action, int x, int y)
+            {
+                string before = go.StateHash.ToString();
+                Check(go.TryApply(action, (GoSide)peer.Side, x, y, out _), "探针围棋动作合法");
+                using var result = (G2C_GoCommandResponse)await peer.Session.Call(new C2G_GoCommandRequest
+                {
+                    RoomId = peer.Room,
+                    Command = new GoRelayCommand { Sequence = go.Sequence, Side = peer.Side, Kind = (int)action,
+                        X = x, Y = y, PreviousHash = before, ResultHash = go.StateHash.ToString(), Payload = "" }
+                });
+                Check(result.ErrorCode == 0, "服务端接受实际围棋动作");
+            }
+        }
+        finally
+        {
+            first.Network.Dispose();
+            second.Network.Dispose();
+        }
+    }
+
+    private static async FTask<G2C_GoDuelResponse> AskDuel(GoLoadPeer peer, int operation, int afterFrame = 0, int frame = 0, int input = 0)
+    {
+        return (G2C_GoDuelResponse)await peer.Session.Call(new C2G_GoDuelRequest
+        {
+            RoomId = peer.Room, Operation = operation, Fingerprint = DuelConfig.Fingerprint,
+            AfterFrame = afterFrame, InputFrame = frame, Input = input
+        });
+    }
+
     private static GoLoadPeer Connect(Scene scene, string endpoint, string rules, string kind)
     {
         var network = CreateClient(scene, NetworkProtocolType.KCP, NetworkTarget.Outer, false);
@@ -336,7 +451,8 @@ internal static class GoKcpLoadProbe
             MatchKind = peer.Kind,
             RulesJson = peer.Rules,
             ResumeToken = token,
-            SupportsDelta = true
+            SupportsDelta = true,
+            DuelFingerprint = DuelConfig.Fingerprint
         });
         Check(result.ErrorCode == 0 && !string.IsNullOrEmpty(result.Token), "匿名握手或恢复失败 " + result.ErrorCode);
         peer.Token = result.Token;

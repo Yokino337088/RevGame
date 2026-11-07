@@ -14,6 +14,8 @@
     <PackageReference Include="Fantasy-Net" Version="2026.1.2003" />
     <!-- Battle 与 Unity 使用同一份纯围棋规则。 -->
     <Compile Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/*.cs" Link="GoCore/%(Filename)%(Extension)" />
+    <Compile Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/*.cs" Link="Duel/%(Filename)%(Extension)" />
+    <None Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Plugins/RevGameCore/x86_64/RevGameCore.dll" Link="RevGameCore.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(OS)' == 'Windows_NT'" />
   </ItemGroup>
 
 </Project>

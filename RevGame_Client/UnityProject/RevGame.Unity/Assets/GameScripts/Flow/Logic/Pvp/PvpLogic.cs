@@ -19,6 +19,7 @@ namespace RevGame.Pvp
         protected override void OnTick(float deltaTime)
         {
             RevServices.GetRequired<PvpService>().Poll();
+            RevServices.GetRequired<RevGame.Flow.GameFlow>().TryEnterPvpDuel();
         }
         protected override void OnStop()
         {

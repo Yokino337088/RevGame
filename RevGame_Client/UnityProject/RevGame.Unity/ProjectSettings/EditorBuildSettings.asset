@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/PvpScene.unity
     guid: 10b8b30e1ee3882459deaca6cb16cc6b
+  - enabled: 1
+    path: Assets/Scenes/PvpDuelScene.unity
+    guid: 05c9a9249bd759542b9c2bfea913f906
   m_configObjects: {}

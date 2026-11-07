@@ -101,6 +101,12 @@ namespace RevGame.Editor
         {
             return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildAgentAssets").Invoke(null, null);
         }
+        [RevAutomationAction("game.pvp.duel-build", Environment = "edit", Keys = new string[0], Description = "生成独立八角笼决斗场景并加入构建列表")]
+        public static object BuildDuel(RevAutomationRequest request)
+        {
+            return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildDuel").Invoke(null, null);
+        }
+
         [RevAutomationAction("game.pvp.match-hud", Environment = "edit", Keys = new string[0], Description = "更新围棋对局HUD与双眼图集绑定，不修改场景")]
         public static object MatchHud(RevAutomationRequest request)
         {

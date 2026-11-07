@@ -15,6 +15,8 @@ namespace RevGame.Pvp
         private readonly PvpConfig _config;
         private readonly bool _agents;
         private readonly bool _longGame;
+        private readonly bool _duel;
+        private int _duelSeedSequence;
         private PvpService _host;
         private PvpService _guest;
         private double _deadline;
@@ -33,11 +35,12 @@ namespace RevGame.Pvp
         public string Winner { get; private set; } = string.Empty;
         public int BlackCaptures { get; private set; }
 
-        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false)
         {
             _config = config;
             _agents = agents;
             _longGame = longGame;
+            _duel = duel;
         }
 
         public bool Start(out string reason)
@@ -47,7 +50,7 @@ namespace RevGame.Pvp
                 reason = "局域网业务夹具已使用或缺少真实导表配置。";
                 return false;
             }
-            _deadline = Now + (_longGame ? 120 : 20);
+            _deadline = Now + (_longGame ? 120 : _duel ? 45 : 20);
             _host = new PvpService();
             _guest = new PvpService();
             try
@@ -135,11 +138,70 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
+                    if (_duel)
+                    {
+                        _step = 30;
+                        return;
+                    }
                     if (!Submit(_host, GoAction.Play, 1, 0))
                     {
                         return;
                     }
                     Next("等待黑(1,0)在双方提交");
+                    break;
+                case 30:
+                    if (!Synced(_duelSeedSequence))
+                    {
+                        return;
+                    }
+                    if (_duelSeedSequence >= Duel.DuelConfig.MinimumMove && _guest.CanChallengeDuel)
+                    {
+                        if (Check(!_host.CanChallengeDuel && _guest.ChallengeDuel(), "只有劣势白方可走 P2P 决斗入口"))
+                        {
+                            Next("等待实际 UTP 传送决斗邀请");
+                        }
+                        return;
+                    }
+                    int point = _duelSeedSequence / 2;
+                    bool blackTurn = _duelSeedSequence % 2 == 0;
+                    if (Submit(blackTurn ? _host : _guest, blackTurn ? GoAction.Play : GoAction.Pass, point % 9, point / 9))
+                    {
+                        _duelSeedSequence++;
+                    }
+                    break;
+                case 31:
+                    if (_host.DuelId.Length == 0 || _guest.DuelId.Length == 0)
+                    {
+                        return;
+                    }
+                    if (Check(_host.DuelId == _guest.DuelId, "P2P 双端决斗标识一致"))
+                    {
+                        _host.MarkDuelSceneReady();
+                        Next("只标记一端就绪");
+                    }
+                    break;
+                case 32:
+                    if (!Check(_host.DuelSnapshot.Frame == 0 && _guest.DuelSnapshot.Frame == 0, "单边就绪不能推进帧"))
+                    {
+                        return;
+                    }
+                    _guest.MarkDuelSceneReady();
+                    Next("等待双方原生 FIFO 和 UTP 帧流推进");
+                    break;
+                case 33:
+                    int frame = _host.DuelSnapshot.Frame;
+                    _host.SetDuelInput(frame < 12 ? 1 : 0, frame >= 12 ? 1 : 0);
+                    _guest.SetDuelInput(frame < 12 ? -1 : 0, 0);
+                    if (frame >= 25 && frame == _guest.DuelSnapshot.Frame &&
+                        Check(_host.DuelSnapshot.Hash == _guest.DuelSnapshot.Hash &&
+                              _host.DuelSnapshot.SecondHealth < Duel.DuelConfig.Health &&
+                              _host.DuelError.Length == 0 && _guest.DuelError.Length == 0, "P2P 同帧原生指纹和实际命中一致"))
+                    {
+                        Passed = true;
+                        Complete = true;
+                        Detail = "P2P UTP 封帧验证通过，帧=" + frame + " 指纹=" + _host.DuelSnapshot.Hash;
+                        Dispose();
+                    }
                     break;
                 case 3:
                     if (!Synced(1) || !Submit(_guest, GoAction.Play, 0, 0))

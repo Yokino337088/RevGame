@@ -3,6 +3,7 @@ using Fantasy;
 using Fantasy.Async;
 using Fantasy.Network;
 using UnityEngine;
+using RevGame.Pvp.Duel;
 
 namespace RevGame.Pvp.Networking
 {
@@ -28,6 +29,7 @@ namespace RevGame.Pvp.Networking
         private float _deadline;
         private float _heartbeatAt;
         private bool _disposed;
+        private bool _duelBusy;
         private string _deferredFailure;
 
         /// <summary>快照已脱离 Fantasy 消息池，调用者可以保存并从头重放。</summary>
@@ -114,7 +116,8 @@ namespace RevGame.Pvp.Networking
         {
             try
             {
-                using var response = await _session.C2G_GoHelloRequest(ProtocolVersion, _nickname, ResumeToken, _rulesJson, _matchKind, supportsDelta: true);
+                using var response = await _session.C2G_GoHelloRequest(ProtocolVersion, _nickname, ResumeToken, _rulesJson, _matchKind,
+                    supportsDelta: true, duelFingerprint: DuelConfig.Fingerprint);
                 if (!IsCurrent(generation))
                 {
                     return;
@@ -160,6 +163,44 @@ namespace RevGame.Pvp.Networking
         public void Sync()
         {
             StartRequest(4, null);
+        }
+
+        /// <summary>决斗使用独立 RPC 窗口；围棋同步与心跳不能覆盖它的输入回执。</summary>
+        public bool ExchangeDuel(DuelRequest request, Action<DuelReply> onReply)
+        {
+            if (!Connected || _duelBusy || _session == null || _session.IsDisposed)
+            {
+                return false;
+            }
+            _duelBusy = true;
+            ExchangeDuelAsync(request, onReply, _generation).Coroutine();
+            return true;
+        }
+
+        private async FTask ExchangeDuelAsync(DuelRequest request, Action<DuelReply> onReply, int generation)
+        {
+            try
+            {
+                using var response = await _session.C2G_GoDuelRequest(_roomId, request.operation, request.fingerprint,
+                    request.afterFrame, request.inputFrame, request.input);
+                if (IsCurrent(generation))
+                {
+                    onReply(new DuelReply { id = response.DuelId, error = response.ErrorCode == 0 ? "" : response.Reason,
+                        readyMask = response.ReadyMask, afterFrame = response.AfterFrame, frames = response.Frames.ToArray(),
+                        result = response.Result, finalHash = response.FinalHash });
+                }
+            }
+            catch (Exception error)
+            {
+                Fail(generation, "决斗通信中断：" + error.Message);
+            }
+            finally
+            {
+                if (IsCurrent(generation))
+                {
+                    _duelBusy = false;
+                }
+            }
         }
 
         public void Leave()
@@ -322,6 +363,7 @@ namespace RevGame.Pvp.Networking
         private void Disconnect(bool dispose)
         {
             _deferredFailure = null;
+            _duelBusy = false;
             ++_generation;
             Connected = false;
             Busy = false;

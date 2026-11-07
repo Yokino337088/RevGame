@@ -81,6 +81,7 @@ namespace RevGame.Pvp
             RevRuntimeAutomation.Register("pvp.agent-settings", "打开真实Agent设置面板，不读取或返回Key", Empty,
                 _ => { PvpAgentSettingsPanel.OpenSettings(); return Result(true, "已打开设置"); }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.state", "只读九路围棋流程、棋谱指纹、双方状态、设备列表和配置加载状态", Empty, _ => State(), readOnly: true, owner: Owner);
+            RegisterDuelAutomation();
             RevRuntimeAutomation.Register("pvp.lan-scroll", "向局域网列表注入原生滚轮事件，验证超出六行仍可滚动", Empty, _ =>
             {
                 RevUI.Get<PvpLanPanel>().ScrollForCheck();
@@ -453,7 +454,7 @@ namespace RevGame.Pvp
             };
         }
 
-        private static object BeginLanGameCheck(bool agents = false, bool longGame = false)
+        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false)
         {
             if (_gameCheckRunning)
             {
@@ -466,7 +467,7 @@ namespace RevGame.Pvp
             StopLanGameCheck();
             _gameCheckCancelled = false;
             _gameCheckError = string.Empty;
-            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame);
+            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel);
             if (!_lanGameCheck.Start(out reason))
             {
                 return Result(false, reason);

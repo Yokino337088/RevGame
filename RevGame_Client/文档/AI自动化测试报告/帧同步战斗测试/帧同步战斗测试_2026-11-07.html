@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>帧同步战斗测试</title>
+<style>
+body{margin:0;background:#f4f1e8;color:#223c32;font:16px/1.75 system-ui,sans-serif}
+header{background:#214b3b;color:#f6edcf;padding:32px 6%}
+main{max-width:1080px;margin:auto;padding:20px}section{background:#fffdf6;border:1px solid #d9cca5;border-radius:12px;padding:20px 24px;margin:18px 0}
+table{border-collapse:collapse;width:100%}td,th{padding:9px;border-bottom:1px solid #ded3b6;text-align:left;vertical-align:top}
+img{max-width:100%;height:auto;border-radius:8px}figcaption{font-weight:bold}a{color:#226148}
+</style>
+<header><h1>帧同步战斗测试</h1><p>2026-11-07 · Windows x64 · Unity 2022.3.15f1c1 · C++17 · Fantasy KCP / UTP</p></header>
+<main>
+<section><h2>已验证的玩法和网络</h2><table><thead><tr><th>路径</th><th>实测断言</th></tr></thead><tbody>
+<tr><td>原生 CTest</td><td>双实例接收 128 个相同的整帧命令，输出逐帧完全一致。缺帧、队列背压及过小读取缓冲均按契约拒绝，重试可继续。</td></tr>
+<tr><td>服务器 KCP</td><td>真实双端先打围棋。开局挑战拒绝，中局劣势挑战通过，单边就绪与单边输入均无法推进。两个 C# 原生副本逐帧核对服务端指纹，于第 113 帧结算，终局指纹 1653238394，随后验证历史窗口和双方离席。</td></tr>
+<tr><td>局域网 UTP</td><td>Unity 内两份隔离 PvP 服务实际发现、邀请、走棋及切换到决斗命令流。只标记一席就绪不推进。两席原生指纹与命中一致，连接清理完成。P2P UTP 封帧验证通过，帧=25 指纹=1969221115</td></tr>
+<tr><td>本地人机 Unity Play</td><td>由 GameFlow 进入围棋人机，通过合法棋谱形成劣势。资格检查、决斗入口、独立场景加载和双席就绪均通过。第 102 帧真人生命归零，电脑获胜。运行时无 Error，返回大厅和收尾通过。</td></tr>
+</tbody></table></section>
+<section><h2>画面证据</h2>
+<figure><img src="劣势入口.jpg" alt="围棋劣势入口"><figcaption>围棋 HUD 出现「跟对面爆了」</figcaption></figure>
+<figure><img src="八角笼战斗.jpg" alt="八角笼战斗"><figcaption>独立场景的计时、生命、能量与招式按钮</figcaption></figure>
+<figure><img src="八角笼实测.gif" alt="实测动作连拍"><figcaption>真实 Play 连拍，采样回放间隔统一为 130 毫秒</figcaption></figure>
+<figure><img src="本地终局.jpg" alt="本地终局"><figcaption>电脑赢得决斗，画面只消费 C++ 结果</figcaption></figure>
+</section>
+<section><h2>工具、复现和边界</h2>
+<p>RevCLI 实际执行 game.pvp.duel-build，创建独立场景并验证两席共用 55 张动作帧。RevMCP 依次执行 rev_discover、rev_call 和 rev_run。先等大厅交割，再进入棋局，运行 UTP 与本地人机两份断言，最后返回大厅并停止 Play。首轮在大厅仍过场时发起测试被拒绝，复测加入交割等待。</p>
+<p>RevScene 保持原 PvP 域和传输，新的 HUD 只读显示快照。帧同步参考 MiniGameCore 的 FrameWindow、CorePipeline 和战斗阶段划分，并采用版本化小端 FIFO。<a href="../../../RevGameCore/README.md">内核构建与契约</a></p>
+<p>P2P 自动化在单一编辑器中运行两份真实 UTP 服务，场景 Ready 由夹具模拟。KCP 测试使用两个真实外网传输客户端和原生副本。实际独立场景与 HUD 由本地人机 Play 验证。公网弱网、P2P 宿主迁移、移动端、IL2CPP 与持久化录像界面不在验收范围。</p>
+<p>背景为项目提供的魔法神殿图。替代角色使用 <a href="https://spritecanvas.com/free-sprite-sheets/swordsman/">SpriteCanvas Moss Swordsman · CC0</a>，普通攻击和技能取组合动作的不同段，大招使用砸地动作。指定的 Bilibili 视频在本环境无法读取，HUD 使用常见横版对战布局。原始证据在 .codex/work/rev-duel-unity。</p>
+</section>
+</main></html>

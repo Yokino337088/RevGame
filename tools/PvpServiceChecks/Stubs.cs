@@ -84,6 +84,8 @@ namespace Fantasy
     }
     public sealed class GoRelayState
     {
+        public string DuelId = "";
+        public bool DuelAvailable;
         public string Phase, RoomId, Reason, CoreVersion, RulesJson, BlackName, WhiteName;
         public int MySide, BaseSequence, RatingDelta;
         public bool RatingFinalized;
@@ -132,6 +134,10 @@ namespace RevGame.Pvp.Networking
         public void Match(bool cancel, int localRating = 0)
         {
             SubmittedRating = localRating;
+        }
+        public bool ExchangeDuel(RevGame.Pvp.Duel.DuelRequest request, Action<RevGame.Pvp.Duel.DuelReply> reply)
+        {
+            return false;
         }
         public void Sync()
         {

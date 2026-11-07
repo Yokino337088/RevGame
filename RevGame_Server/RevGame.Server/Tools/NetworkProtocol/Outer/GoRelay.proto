@@ -35,6 +35,8 @@ message GoRelayState
     // Battle 确认终局后给当前座位的本局分差，客户端按房间号应用一次。
     bool RatingFinalized = 15;
     int32 RatingDelta = 16;
+    string DuelId = 17;
+    bool DuelAvailable = 18;
 }
 /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
 message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
@@ -45,6 +47,7 @@ message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
     string RulesJson = 4;
     string MatchKind = 5;
     bool SupportsDelta = 6;
+    int32 DuelFingerprint = 7;
 }
 message G2C_GoHelloResponse // IResponse
 {
@@ -100,4 +103,26 @@ message G2C_GoHeartbeatResponse // IResponse
 message G2C_GoState // IMessage
 {
     GoRelayState State = 1;
+}
+
+// 原围棋房间内的决斗通道。Ready 与 Input 独立于围棋序号；FrameWords 只含完整封口帧。
+message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
+{
+    string RoomId = 1;
+    int32 Operation = 2;
+    int32 Fingerprint = 3;
+    int32 AfterFrame = 4;
+    int32 InputFrame = 5;
+    int32 Input = 6;
+}
+
+message G2C_GoDuelResponse // IResponse
+{
+    string DuelId = 1;
+    string Reason = 2;
+    int32 ReadyMask = 3;
+    int32 AfterFrame = 4;
+    repeated int32 Frames = 5;
+    int32 Result = 6;
+    int32 FinalHash = 7;
 }

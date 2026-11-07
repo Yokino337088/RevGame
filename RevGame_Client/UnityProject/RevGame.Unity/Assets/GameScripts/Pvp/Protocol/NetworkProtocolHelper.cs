@@ -14,7 +14,7 @@ namespace Fantasy
 			return (G2C_GoHelloResponse)await session.Call(C2G_GoHelloRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static async FTask<G2C_GoHelloResponse> C2G_GoHelloRequest(this Session session, string coreVersion, string nickname, string resumeToken, string rulesJson, string matchKind, bool supportsDelta)
+		public static async FTask<G2C_GoHelloResponse> C2G_GoHelloRequest(this Session session, string coreVersion, string nickname, string resumeToken, string rulesJson, string matchKind, bool supportsDelta, int duelFingerprint)
 		{
 			using var C2G_GoHelloRequest_request = Fantasy.C2G_GoHelloRequest.Create();
 			C2G_GoHelloRequest_request.CoreVersion = coreVersion;
@@ -23,6 +23,7 @@ namespace Fantasy
 			C2G_GoHelloRequest_request.RulesJson = rulesJson;
 			C2G_GoHelloRequest_request.MatchKind = matchKind;
 			C2G_GoHelloRequest_request.SupportsDelta = supportsDelta;
+			C2G_GoHelloRequest_request.DuelFingerprint = duelFingerprint;
 			return (G2C_GoHelloResponse)await session.Call(C2G_GoHelloRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -95,6 +96,23 @@ namespace Fantasy
 			using var G2C_GoState_message = Fantasy.G2C_GoState.Create();
 			G2C_GoState_message.State = state;
 			session.Send(G2C_GoState_message);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static async FTask<G2C_GoDuelResponse> C2G_GoDuelRequest(this Session session, C2G_GoDuelRequest C2G_GoDuelRequest_request)
+		{
+			return (G2C_GoDuelResponse)await session.Call(C2G_GoDuelRequest_request);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static async FTask<G2C_GoDuelResponse> C2G_GoDuelRequest(this Session session, string roomId, int operation, int fingerprint, int afterFrame, int inputFrame, int input)
+		{
+			using var C2G_GoDuelRequest_request = Fantasy.C2G_GoDuelRequest.Create();
+			C2G_GoDuelRequest_request.RoomId = roomId;
+			C2G_GoDuelRequest_request.Operation = operation;
+			C2G_GoDuelRequest_request.Fingerprint = fingerprint;
+			C2G_GoDuelRequest_request.AfterFrame = afterFrame;
+			C2G_GoDuelRequest_request.InputFrame = inputFrame;
+			C2G_GoDuelRequest_request.Input = input;
+			return (G2C_GoDuelResponse)await session.Call(C2G_GoDuelRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void C2G_TestMessage(this Session session, C2G_TestMessage C2G_TestMessage_message)

@@ -170,6 +170,8 @@ namespace Fantasy
             BaseSequence = default;
             RatingFinalized = default;
             RatingDelta = default;
+            DuelId = default;
+            DuelAvailable = default;
             MessageObjectPool<GoRelayState>.Return(this);
         }
 
@@ -196,6 +198,8 @@ namespace Fantasy
             other.BaseSequence = BaseSequence;
             other.RatingFinalized = RatingFinalized;
             other.RatingDelta = RatingDelta;
+            other.DuelId = DuelId;
+            other.DuelAvailable = DuelAvailable;
 
         }
 
@@ -237,6 +241,10 @@ namespace Fantasy
         public bool RatingFinalized { get; set; }
         [ProtoMember(16)]
         public int RatingDelta { get; set; }
+        [ProtoMember(17)]
+        public string DuelId { get; set; }
+        [ProtoMember(18)]
+        public bool DuelAvailable { get; set; }
     }
     /// <summary>
     /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
@@ -281,6 +289,7 @@ namespace Fantasy
             RulesJson = default;
             MatchKind = default;
             SupportsDelta = default;
+            DuelFingerprint = default;
             MessageObjectPool<C2G_GoHelloRequest>.Return(this);
         }
 
@@ -296,6 +305,7 @@ namespace Fantasy
             other.RulesJson = RulesJson;
             other.MatchKind = MatchKind;
             other.SupportsDelta = SupportsDelta;
+            other.DuelFingerprint = DuelFingerprint;
 
         }
 
@@ -320,6 +330,8 @@ namespace Fantasy
         public string MatchKind { get; set; }
         [ProtoMember(6)]
         public bool SupportsDelta { get; set; }
+        [ProtoMember(7)]
+        public int DuelFingerprint { get; set; }
     }
     [Serializable]
     [ProtoContract]
@@ -1102,6 +1114,172 @@ namespace Fantasy
         public uint OpCode() { return OuterOpcode.G2C_GoState; } 
         [ProtoMember(1)]
         public GoRelayState State { get; set; }
+    }
+    [Serializable]
+    [ProtoContract]
+    public partial class C2G_GoDuelRequest : AMessage, IRequest
+    {
+        public static C2G_GoDuelRequest Create(bool autoReturn = true)
+        {
+            var c2G_GoDuelRequest = MessageObjectPool<C2G_GoDuelRequest>.Rent();
+            c2G_GoDuelRequest.AutoReturn = autoReturn;
+            
+            if (!autoReturn)
+            {
+                c2G_GoDuelRequest.SetIsPool(false);
+            }
+            
+            return c2G_GoDuelRequest;
+        }
+        
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return; 
+            RoomId = default;
+            Operation = default;
+            Fingerprint = default;
+            AfterFrame = default;
+            InputFrame = default;
+            Input = default;
+            MessageObjectPool<C2G_GoDuelRequest>.Return(this);
+        }
+
+        public void CopyTo(ref C2G_GoDuelRequest other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+            other.RoomId = RoomId;
+            other.Operation = Operation;
+            other.Fingerprint = Fingerprint;
+            other.AfterFrame = AfterFrame;
+            other.InputFrame = InputFrame;
+            other.Input = Input;
+
+        }
+
+        public C2G_GoDuelRequest DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return OuterOpcode.C2G_GoDuelRequest; } 
+        [ProtoIgnore]
+        public G2C_GoDuelResponse ResponseType { get; set; }
+        [ProtoMember(1)]
+        public string RoomId { get; set; }
+        [ProtoMember(2)]
+        public int Operation { get; set; }
+        [ProtoMember(3)]
+        public int Fingerprint { get; set; }
+        [ProtoMember(4)]
+        public int AfterFrame { get; set; }
+        [ProtoMember(5)]
+        public int InputFrame { get; set; }
+        [ProtoMember(6)]
+        public int Input { get; set; }
+    }
+    [Serializable]
+    [ProtoContract]
+    public partial class G2C_GoDuelResponse : AMessage, IResponse
+    {
+        public static G2C_GoDuelResponse Create(bool autoReturn = true)
+        {
+            var g2C_GoDuelResponse = MessageObjectPool<G2C_GoDuelResponse>.Rent();
+            g2C_GoDuelResponse.AutoReturn = autoReturn;
+            
+            if (!autoReturn)
+            {
+                g2C_GoDuelResponse.SetIsPool(false);
+            }
+            
+            return g2C_GoDuelResponse;
+        }
+        
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return; 
+            ErrorCode = 0;
+            DuelId = default;
+            Reason = default;
+            ReadyMask = default;
+            AfterFrame = default;
+            Frames.Clear();
+            Result = default;
+            FinalHash = default;
+            MessageObjectPool<G2C_GoDuelResponse>.Return(this);
+        }
+
+        public void CopyTo(ref G2C_GoDuelResponse other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+            other.ErrorCode = ErrorCode;
+            other.DuelId = DuelId;
+            other.Reason = Reason;
+            other.ReadyMask = ReadyMask;
+            other.AfterFrame = AfterFrame;
+            other.Frames = new List<int>(Frames);
+            other.Result = Result;
+            other.FinalHash = FinalHash;
+
+        }
+
+        public G2C_GoDuelResponse DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return OuterOpcode.G2C_GoDuelResponse; } 
+        [ProtoMember(8)]
+        public uint ErrorCode { get; set; }
+        [ProtoMember(1)]
+        public string DuelId { get; set; }
+        [ProtoMember(2)]
+        public string Reason { get; set; }
+        [ProtoMember(3)]
+        public int ReadyMask { get; set; }
+        [ProtoMember(4)]
+        public int AfterFrame { get; set; }
+        [ProtoMember(5)]
+        public List<int> Frames { get; set; } = new List<int>();
+        [ProtoMember(6)]
+        public int Result { get; set; }
+        [ProtoMember(7)]
+        public int FinalHash { get; set; }
     }
     [Serializable]
     [ProtoContract]

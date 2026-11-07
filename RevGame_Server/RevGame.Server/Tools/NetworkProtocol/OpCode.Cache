@@ -2,6 +2,7 @@
 B2G_GoBatchResponse = 1207969554
 B2G_GoStepResponse = 1207969553
 C2G_GoCommandRequest = 268445457
+C2G_GoDuelRequest = 268445464
 C2G_GoHeartbeatRequest = 268445458
 C2G_GoHelloRequest = 268445459
 C2G_GoLeaveRequest = 268445460
@@ -13,6 +14,7 @@ G2B_CloseGoRoom = 939534097
 G2B_GoBatchRequest = 1073751826
 G2B_GoStepRequest = 1073751825
 G2C_GoCommandResponse = 402663185
+G2C_GoDuelResponse = 402663192
 G2C_GoHeartbeatResponse = 402663186
 G2C_GoHelloResponse = 402663187
 G2C_GoLeaveResponse = 402663188

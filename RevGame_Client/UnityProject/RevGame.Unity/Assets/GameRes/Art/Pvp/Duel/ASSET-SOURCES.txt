@@ -1,0 +1,3 @@
+Moss swordsman by SpriteCanvas, CC0 1.0. https://spritecanvas.com/free-sprite-sheets/swordsman/
+Idle, run and attack sheets cropped/resampled. Jab uses first combo beat, skill uses remaining combo, ultimate uses ground slam.
+Temple backdrop supplied by RevGame project owner.

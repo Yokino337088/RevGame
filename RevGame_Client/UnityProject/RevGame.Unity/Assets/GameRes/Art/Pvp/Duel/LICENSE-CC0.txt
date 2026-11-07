@@ -1,0 +1,10 @@
+CC0 1.0 Universal (Public Domain Dedication)
+
+To the extent possible under law, SpriteCanvas has waived all copyright and related or neighboring
+rights to the sprite sheets in this pack. You can copy, modify, distribute and use them, including
+for commercial purposes, without asking permission or giving credit.
+
+Full legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+The art was generated with AI in the SpriteCanvas workflow. Credit is welcome but not required:
+"Sprites by SpriteCanvas (spritecanvas.com)".
