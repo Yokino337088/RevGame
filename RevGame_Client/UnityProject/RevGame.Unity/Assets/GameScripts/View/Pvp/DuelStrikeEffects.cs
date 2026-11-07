@@ -6,18 +6,30 @@ namespace RevGame.View
     /// <summary>场景内复用两份 Shader 材质。收到逻辑快照中的动作起点才播放，不从按钮直接播放。</summary>
     public sealed class DuelStrikeEffects : MonoBehaviour
     {
+        // 黑白各自的 UI 特效层，分别放在对应角色附近。
         public Image First, Second;
+        // 两席共同使用的扩散和扭曲着色器资产。
         public Shader StrikeShader;
+        // 普攻、技能和大招各自的序列帧，按进度读取。
         public Sprite[] Jab, Skill, Ultimate;
+        // 每席一份可写表现材质，场景创建时分配、离开时销毁。
         private readonly Material[] _materials = new Material[2];
+        // 按座位缓存上一份招式编号，用来识别新的招式开始。
         private readonly int[] _lastAction = new int[2];
+        // 上次招式年龄（逻辑帧数），年龄回绕表示同一编号的下一次出招。
         private readonly int[] _lastAge = new int[2];
+        // 当前两席正在播放的特效种类，0 表示无。
         private readonly int[] _playing = new int[2];
+        // 每个特效启动时的本地不缩放秒数。
         private readonly float[] _began = new float[2];
+        // Shader 的染色属性 ID，避免每帧进行字符串查找。
         private static readonly int Tint = Shader.PropertyToID("_Tint");
+        // Shader 的表现进度属性 ID，值域为 0 到 1。
         private static readonly int Phase = Shader.PropertyToID("_Phase");
+        // Shader 的扩散冲击强度属性 ID。
         private static readonly int Power = Shader.PropertyToID("_Power");
 
+        // 为两席各建可复用材质并关闭默认显示。
         private void Awake()
         {
             for (int i = 0; i < _materials.Length; i++)
@@ -29,6 +41,7 @@ namespace RevGame.View
             }
         }
 
+        // 从快照识别出招边沿，按座位、朝向和位置初始化特效层。
         public void Observe(int seat, int action, int age, int facing, Vector2 position)
         {
             if (action != 0 && (action != _lastAction[seat] || age < _lastAge[seat]))
@@ -49,6 +62,7 @@ namespace RevGame.View
             _lastAge[seat] = age;
         }
 
+        // 按本地表现时间推进序列帧和 Shader，播完关闭，不写回战斗状态。
         private void Update()
         {
             for (int i = 0; i < _playing.Length; i++)
@@ -72,6 +86,7 @@ namespace RevGame.View
             }
         }
 
+        // 离开场景释放该组件创建的材质实例。
         private void OnDestroy()
         {
             foreach (Material material in _materials)

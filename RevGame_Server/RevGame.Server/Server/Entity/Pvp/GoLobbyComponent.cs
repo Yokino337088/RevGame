@@ -73,6 +73,7 @@ public sealed class GoRoomEntity : Entity
     public double BlackExpectedResult;
     public bool RatingFinalized;
     public int BlackRatingDelta;
+    // Gate 房间独占的原生决斗权威；空值表示未开启。随房间回收释放。
     public DuelAuthority? Duel;
 }
 
@@ -81,5 +82,6 @@ public sealed class GoSessionComponent : Entity
 {
     public GoPlayerEntity? Player;
     public bool SupportsDelta;
+    // 此连接声明的决斗配置指纹，旧客户端默认为零。
     public int DuelFingerprint;
 }

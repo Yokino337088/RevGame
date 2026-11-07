@@ -19,6 +19,7 @@ namespace RevGame.Pvp
         protected override void OnTick(float deltaTime)
         {
             RevServices.GetRequired<PvpService>().Poll();
+            // 先轮询网络拿到权威邀请，再由统一流程切表现场景。PvP 域继续持有原连接。
             RevServices.GetRequired<RevGame.Flow.GameFlow>().TryEnterPvpDuel();
         }
         protected override void OnStop()

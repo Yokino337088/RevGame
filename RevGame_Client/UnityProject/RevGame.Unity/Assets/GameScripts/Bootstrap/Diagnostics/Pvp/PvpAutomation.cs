@@ -454,6 +454,7 @@ namespace RevGame.Pvp
             };
         }
 
+        // 开启真实 UTP 隔离夹具，按参数选择围棋或决斗分支。
         private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false)
         {
             if (_gameCheckRunning)

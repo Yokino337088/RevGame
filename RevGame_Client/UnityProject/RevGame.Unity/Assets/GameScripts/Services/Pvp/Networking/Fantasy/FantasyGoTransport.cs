@@ -29,6 +29,7 @@ namespace RevGame.Pvp.Networking
         private float _deadline;
         private float _heartbeatAt;
         private bool _disposed;
+        // 当前连接是否有决斗请求在途，避免每次轮询并发发送同一输入。
         private bool _duelBusy;
         private string _deferredFailure;
 
@@ -116,6 +117,7 @@ namespace RevGame.Pvp.Networking
         {
             try
             {
+                // 同时声明围棋增量能力和决斗指纹。对端必须匹配当前规则才显示新入口。
                 using var response = await _session.C2G_GoHelloRequest(ProtocolVersion, _nickname, ResumeToken, _rulesJson, _matchKind,
                     supportsDelta: true, duelFingerprint: DuelConfig.Fingerprint);
                 if (!IsCurrent(generation))
@@ -166,6 +168,7 @@ namespace RevGame.Pvp.Networking
         }
 
         /// <summary>决斗使用独立 RPC 窗口；围棋同步与心跳不能覆盖它的输入回执。</summary>
+        // 提交前确认连接有效且没有决斗 RPC 在途。返回 true 只表示请求已发起，封帧结果由回调读取。
         public bool ExchangeDuel(DuelRequest request, Action<DuelReply> onReply)
         {
             if (!Connected || _duelBusy || _session == null || _session.IsDisposed)
@@ -177,6 +180,7 @@ namespace RevGame.Pvp.Networking
             return true;
         }
 
+        // 用现有房间发送一条决斗 RPC。回包先核对连接代际，再复制数据，避免引用已回池对象。
         private async FTask ExchangeDuelAsync(DuelRequest request, Action<DuelReply> onReply, int generation)
         {
             try

@@ -119,6 +119,7 @@ public static class GoLobbyComponentSystem
         var binding = session.GetOrAddComponent<GoSessionComponent>();
         binding.Player = player;
         binding.SupportsDelta = request.SupportsDelta;
+        // 握手能力随 Session 绑定；换连接时按新握手重新确认版本。
         binding.DuelFingerprint = request.DuelFingerprint;
         if (player.Room != null)
         {
@@ -421,6 +422,7 @@ public static class GoLobbyComponentSystem
             player.RequestCount = 0;
         }
         // 一秒二十条足够支持落子/心跳/重试，避免完整历史广播被高频请求放大。
+        // 决斗输入频率高于围棋，继续使用同一个会话限流计数器但提高上限。
         return ++player.RequestCount <= (player.Room?.Duel == null ? 20 : 60);
     }
 
@@ -446,6 +448,7 @@ public static class GoLobbyComponentSystem
             return state;
         }
         state.RatingFinalized = room.RatingFinalized;
+        // 把权威决斗标识和两席兼容性附在围棋状态上，供入场和重连恢复。
         state.DuelId = room.Duel?.Id ?? "";
         state.DuelAvailable = room.HasDuelPeers();
         state.RatingDelta = player.Side == (int)GoSide.Black ? room.BlackRatingDelta : -room.BlackRatingDelta;

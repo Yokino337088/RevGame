@@ -60,6 +60,7 @@ namespace RevGame.Pvp
         public GoCore DisplayCore { get { return _replay ?? Core; } }
         public GoHint[] Suggestions { get { return _suggestions; } }
         public int SuggestionCount { get { return _suggestionCount; } }
+        // 只允许当前围棋场景消费棋盘交互；决斗接管后，围棋入口即使仍有连接也会冻结。
         public bool CanAct { get { return Core != null && DuelId.Length == 0 && !_awaiting && !_leaving && ReplayStep < 0 && (Mode == PvpConnectionMode.Local || Connected) && (Mode != PvpConnectionMode.Server || (_server != null && !_server.Busy && !_needsServerSync)); } }
 
         /// <summary>对局普通状态留在HUD，横幅只接收菜单提示和需要玩家处理的异常。</summary>

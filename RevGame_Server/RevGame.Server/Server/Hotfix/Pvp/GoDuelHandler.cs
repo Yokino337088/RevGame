@@ -10,6 +10,7 @@ namespace Fantasy;
 /// <summary>Gate 校验座位、棋盘资格与版本，再把输入交给每局权威封帧器。Battle 线程的棋盘保持冻结。</summary>
 public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C_GoDuelResponse>
 {
+    // 在 Gate 线程验证 Session、房间与配置，再按已认证座位处理决斗请求。错误通过响应返回。
     protected override async FTask Run(Session session, C2G_GoDuelRequest request, G2C_GoDuelResponse response, Action reply)
     {
         var lobby = session.Scene.GetComponent<GoLobbyComponent>();
@@ -73,6 +74,7 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
         await FTask.CompletedTask;
     }
 
+    // 用已通过 Battle 校验的棋谱重放围棋终态，再判发起座位的分差，不跨场景读活棋盘。
     private static bool CanChallenge(GoRoomEntity room, GoPlayerEntity player)
     {
         // 发起频率低，复用已通过 Battle 验证的棋谱计算资格，不跨线程读取工作节点棋盘。
@@ -92,8 +94,10 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
     }
 }
 
+// 服务器房间的决斗兼容性查询，复用两席现有 Session 握手结果。
 internal static class GoDuelRoomRules
 {
+    // 两席连接都声明同一决斗配置指纹才允许开启入口。
     public static bool HasDuelPeers(this GoRoomEntity room)
     {
         return room.Black?.Connection?.GetComponent<GoSessionComponent>()?.DuelFingerprint == DuelConfig.Fingerprint &&

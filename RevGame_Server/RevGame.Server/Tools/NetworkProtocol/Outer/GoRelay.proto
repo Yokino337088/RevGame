@@ -35,7 +35,9 @@ message GoRelayState
     // Battle 确认终局后给当前座位的本局分差，客户端按房间号应用一次。
     bool RatingFinalized = 15;
     int32 RatingDelta = 16;
+    // 权威决斗标识，空字符串表示仍在棋局。
     string DuelId = 17;
+    // 两席的决斗能力和规则指纹均匹配时才开放入口。
     bool DuelAvailable = 18;
 }
 /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
@@ -47,6 +49,7 @@ message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
     string RulesJson = 4;
     string MatchKind = 5;
     bool SupportsDelta = 6;
+    // 连接声明的规则版本指纹，旧客户端缺省为 0。
     int32 DuelFingerprint = 7;
 }
 message G2C_GoHelloResponse // IResponse
@@ -108,21 +111,34 @@ message G2C_GoState // IMessage
 // 原围棋房间内的决斗通道。Ready 与 Input 独立于围棋序号；FrameWords 只含完整封口帧。
 message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
 {
+    // 原围棋房间号，用来避免迟到的请求串进新房间。
     string RoomId = 1;
+    // 0 读历史、1 发起、2 就绪、3 提交意图。
     int32 Operation = 2;
+    // 客户端规则指纹，房间在接纳命令前校验。
     int32 Fingerprint = 3;
+    // 调用方最后已消费的连续帧，0 表示从开局起拉取。
     int32 AfterFrame = 4;
+    // Input 操作使用，表示本席意图对应的下一帧。
     int32 InputFrame = 5;
+    // 单席五位意图，座位由 Session 决定而不是由包声明。
     int32 Input = 6;
 }
 
 message G2C_GoDuelResponse // IResponse
 {
+    // 权威方发出的决斗标识，用来过滤旧局回复。
     string DuelId = 1;
+    // 失败原因；成功时可为空。
     string Reason = 2;
+    // 低两位对应黑白就绪，场景完成后才置位。
     int32 ReadyMask = 3;
+    // 本包历史的起算游标，第一条命令属于此值加一的帧。
     int32 AfterFrame = 4;
+    // 从回复 AfterFrame 加一开始的连续帧，每个整数打包两席。
     repeated int32 Frames = 5;
+    // 权威端最新快照的胜负码。
     int32 Result = 6;
+    // 权威端最新已执行帧的指纹，只能与相同帧号比较。
     int32 FinalHash = 7;
 }

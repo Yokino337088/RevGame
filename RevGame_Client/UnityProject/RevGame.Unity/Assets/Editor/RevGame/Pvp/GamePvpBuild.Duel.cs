@@ -13,11 +13,15 @@ using UnityEngine.UI;
 
 namespace RevGame.Editor
 {
+    // 决斗场景的编辑器配方。运行期由已保存场景消费绑定。
     public static partial class GamePvpBuild
     {
+        // 决斗场景保存路径，与 GameFlow 场景名对应。
         private const string DuelScenePath = "Assets/Scenes/PvpDuelScene.unity";
+        // 编辑器查找角色帧和背景的资产目录。
         private const string DuelArt = "Assets/GameRes/Art/Pvp/Duel/";
 
+        // 导入素材、构建场景和 HUD、保存并登记构建列表；最后恢复用户原活动场景。
         public static object BuildDuel()
         {
             ImportDuelSprites();
@@ -109,6 +113,7 @@ namespace RevGame.Editor
             }
         }
 
+        // 确保动画素材按单 Sprite、关闭 Mipmap 的设置导入。
         private static void ImportDuelSprites()
         {
             foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { DuelArt.TrimEnd('/') }))
@@ -125,12 +130,14 @@ namespace RevGame.Editor
             }
         }
 
+        // 按约定名称加载单个场景 Sprite，缺失时让构建明确失败。
         private static Sprite LoadDuelSprite(string asset)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>(DuelArt + asset + ".png") ??
                 throw new InvalidOperationException("决斗素材缺失：" + asset);
         }
 
+        // 按文件名前缀和编号排序加载动作序列，保证每次生成顺序相同。
         private static Sprite[] LoadDuelSequence(string action)
         {
             string folder = DuelArt.TrimEnd('/');
@@ -146,6 +153,7 @@ namespace RevGame.Editor
             return frames;
         }
 
+        // 创建可被显示快照定位的角色或特效图层，center 是初始水平布局比例。
         private static Image AddFighter(string name, Transform parent, float center)
         {
             var rect = Rect(name, parent, .5f, .30f, .5f, .30f);
@@ -157,6 +165,7 @@ namespace RevGame.Editor
             return image;
         }
 
+        // 生成条框和独立填充层，mirror 决定血量从哪一侧开始变化。
         private static Image AddMeter(string name, Transform parent, float x0, float y0, float x1, float y1, Color color, bool mirror)
         {
             var shell = Rect(name, parent, x0, y0, x1, y1);
@@ -168,6 +177,7 @@ namespace RevGame.Editor
             return fill;
         }
 
+        // 为一个角色生成七个 Legacy Clip 并绑定到播放组件；已有资产原地更新以保留 GUID。
         private static DuelActorAnimator AddActorAnimation(Image actor, string prefix)
         {
             // 两个角色共享状态枚举，各自持有 Clip。生成时就写好 Image.sprite 曲线，运行期只播放。
@@ -212,6 +222,7 @@ namespace RevGame.Editor
             return actor.gameObject.AddComponent<DuelActorAnimator>();
         }
 
+        // 把指针按下、松开与移出转发为方向意图，避免按住后移出产生粘键。
         private static void AddDirection(Button button, PvpDuelView view, int direction)
         {
             var trigger = button.gameObject.AddComponent<EventTrigger>();

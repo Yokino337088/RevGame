@@ -84,7 +84,9 @@ namespace Fantasy
     }
     public sealed class GoRelayState
     {
+        // 离线夹具中的决斗房间标识，模拟网络状态字段。
         public string DuelId = "";
+        // 离线夹具模拟服务端通知的决斗版本兼容位。
         public bool DuelAvailable;
         public string Phase, RoomId, Reason, CoreVersion, RulesJson, BlackName, WhiteName;
         public int MySide, BaseSequence, RatingDelta;
@@ -135,6 +137,7 @@ namespace RevGame.Pvp.Networking
         {
             SubmittedRating = localRating;
         }
+        // 离线传输替身没有对端，拒绝决斗 RPC，真实联机由 KCP / UTP 探针验收。
         public bool ExchangeDuel(RevGame.Pvp.Duel.DuelRequest request, Action<RevGame.Pvp.Duel.DuelReply> reply)
         {
             return false;

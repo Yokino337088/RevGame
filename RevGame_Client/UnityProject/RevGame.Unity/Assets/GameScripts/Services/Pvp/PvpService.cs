@@ -27,7 +27,9 @@ namespace RevGame.Pvp
         public PvpMove move;
         public List<PvpMove> moves;
         public int from, total;
+        // P2P 信封中用于能力声明、就绪和战斗输入的请求数据。
         public RevGame.Pvp.Duel.DuelRequest duelRequest;
+        // P2P 宿主返回的就绪掩码与已提交完整帧。
         public RevGame.Pvp.Duel.DuelReply duelReply;
     }
 
@@ -273,6 +275,7 @@ namespace RevGame.Pvp
                 {
                     throw new InvalidOperationException("尚未完成规则握手");
                 }
+                // 先路由决斗消息。进入决斗后不再接纳迟到的围棋落子。
                 if (ReceiveLanDuel(message) || (DuelId.Length != 0 && message.type == "move"))
                 {
                     return;
@@ -428,6 +431,7 @@ namespace RevGame.Pvp
                 }
                 _recoveringServer = false;
                 ApplyLocalRating(state);
+                // 服务端根据两席握手计算入口可用性，本端用权威状态刷新按钮。
                 _duelPeerCompatible = state.DuelAvailable;
                 ActivateDuel(state.DuelId);
                 if (state.Phase == "disconnected" || state.Phase == "closed")
@@ -821,6 +825,7 @@ namespace RevGame.Pvp
             }
             if (DuelId.Length != 0)
             {
+                // 围棋冻结后只推进决斗收发和补帧。前面的退出分支仍可正常退房。
                 PollDuel();
                 return;
             }
@@ -929,6 +934,7 @@ namespace RevGame.Pvp
         }
         private void CloseConnection()
         {
+            // 断开旧连接时连同决斗副本一起释放，防止迟到消息污染下一局。
             ResetDuel();
             CancelAgent();
             AgentControlsHumanSeat = false;

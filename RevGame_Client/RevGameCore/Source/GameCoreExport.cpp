@@ -7,36 +7,56 @@
 
 namespace
 {
+    // 当前小端消息版本；与托管端协议常量一致。
     constexpr int WireVersion = 2;
+    // 每个 FIFO 的固定容量。队列满时保留内容，等待宿主消费后重试。
     constexpr int Capacity = 128;
+    // 单条输出消息的字节数，每个整数占 4 字节。
     constexpr int OutputBytes = RevGameCore::SnapshotWords * 4;
 
+    // 一条已接纳的完整帧，以值拷贝入队，不持有托管数组地址。
     struct InputPacket
     {
+        // 该整帧的连续编号，首帧为 1。
         int32_t Frame = 0;
+        // 黑方位打包意图，0 为明确空操作。
         int32_t First = 0;
+        // 白方位打包意图，与黑方一起进入同一帧。
         int32_t Second = 0;
     };
 
+    // 每局一份，由调用方在同一线程拥有，管理世界与双向 FIFO。
     struct Pipe
     {
+        // 原生权威世界，仅 Drain 消费完整帧时推进。
         RevGameCore::DuelWorld World;
+        // 已接纳但尚未执行的输入环。
         std::array<InputPacket, Capacity> Input{};
+        // 已执行但尚未被宿主取走的输出环。
         std::array<RevGameCore::Snapshot, Capacity> Output{};
+        // 下一条待执行输入的槽位，而非逻辑帧号。
         int32_t ReadInput = 0;
+        // 输入环有效条数，配合读槽计算追加位置。
         int32_t InputCount = 0;
+        // 下一条应返回给宿主的结果槽位。
         int32_t ReadOutput = 0;
+        // 等待消费的结果条数，满时暂停执行下一帧。
         int32_t OutputCount = 0;
+        // 已接纳的最大连续帧号，可领先于世界的已执行帧。
         int32_t LastSealed = 0;
+        // 配置通过后才允许接受整帧命令。
         bool Open = false;
+        // 原生步进已失败；后续读写明确返回错误，由宿主销毁该实例。
         bool Fault = false;
     };
 
+    // 从已验证长度的消息中读取四字节，不依赖结构体对齐。
     uint32_t ReadWord(const uint8_t* bytes)
     {
         return uint32_t(bytes[0]) | (uint32_t(bytes[1]) << 8) | (uint32_t(bytes[2]) << 16) | (uint32_t(bytes[3]) << 24);
     }
 
+    // 写出固定顺序的小端字节，保留原始整数位模式。
     void WriteWord(uint8_t* bytes, uint32_t word)
     {
         for (int i = 0; i < 4; ++i)
@@ -45,6 +65,7 @@ namespace
         }
     }
 
+    // 有输出容量才执行下一帧，确保背压下仍保留每条结果。
     void Drain(Pipe& pipe)
     {
         // C++ 根据队列中的完整帧自行推进。输出队列满则停在下一帧前，绝不跳过离散命中。
@@ -64,16 +85,19 @@ namespace
     }
 }
 
+// 创建独立实例，内存不足时返回空指针，避免异常跨越 ABI。
 void* GameCore_Create(void)
 {
     return new (std::nothrow) Pipe();
 }
 
+// 释放整局状态；托管端通过 SafeHandle 确保只释放一次。
 void GameCore_Destroy(void* handle)
 {
     delete static_cast<Pipe*>(handle);
 }
 
+// 检查配置或完整帧。返回 1 接纳、0 背压、-1 非法，失败时保留原上界。
 int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
 {
     auto* pipe = static_cast<Pipe*>(handle);
@@ -125,6 +149,7 @@ int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
     return 1;
 }
 
+// 读取最老输出，返回字节数、0 无结果或 -1 失败。短缓冲不会消费结果。
 int32_t GameCore_Read(void* handle, uint8_t* data, int32_t capacity)
 {
     auto* pipe = static_cast<Pipe*>(handle);

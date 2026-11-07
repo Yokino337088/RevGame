@@ -4,8 +4,10 @@ using Revolution;
 
 namespace RevGame.Pvp
 {
+    // 开发态决斗验收入口，和正式 PvP 服务复用同一业务动作。
     public static partial class PvpAutomation
     {
+        // 注册本机、P2P 与只读快照查询，支持场景、封帧、动画和特效断言。
         private static void RegisterDuelAutomation()
         {
             RevRuntimeAutomation.Register("pvp.duel-enter-computer", "经正式 GameFlow 直接打开围棋人机棋盘",

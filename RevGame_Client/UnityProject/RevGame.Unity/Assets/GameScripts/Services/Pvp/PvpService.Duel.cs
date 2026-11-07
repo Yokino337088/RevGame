@@ -4,29 +4,51 @@ using UnityEngine;
 
 namespace RevGame.Pvp
 {
+    // 围棋服务的决斗接线，负责接纳、收发、补帧与退出，伤害和移动由原生实例结算。
     public sealed partial class PvpService
     {
+        // 资格检查复用的棋盘分析缓冲，避免界面刷新重复分配。
         private readonly GoBoardAnalysis _duelAnalysis = new GoBoardAnalysis();
+        // 缓存上一次算过资格的棋盘引用。新棋面才重算。
         private GoCore _duelExaminedBoard;
+        // 当前棋面下本座位是否达到劣势条件。
         private bool _duelEligible;
+        // 对端已确认支持当前决斗指纹。旧客户端仍可围棋对弈。
         private bool _duelPeerCompatible;
+        // 只有本机人机宿主或 LAN 黑方持有的封帧器。服务器模式由远端持有。
         private DuelAuthority _duelAuthority;
+        // 本端显示副本，按收到的权威整帧重放并生成快照。
         private DuelCorePipe _duelPipe;
+        // 本端独立决斗场景是否真正加载完成。
         private bool _duelSceneReady;
+        // 来自权威方的就绪位，不用本端加载状态推测对手就绪。
         private int _duelReadyMask;
+        // 尚未装入下一帧的按键招式编号，0 表示未排队。
         private int _duelQueuedAction;
+        // 最近一帧表现层采样到的方向，1 左、2 右、0 无。
         private int _duelDirection;
+        // 锁存两次网络采样之间的跳跃点按，打包后清除。
         private bool _duelQueuedJump;
+        // 已经锁定的一席意图。同一帧重试用完全相同的值。
         private int _duelIntent;
+        // 当前锁定意图所属帧号，消费新帧后才换下一份。
         private int _duelIntentFrame;
+        // 下次轮询的本地单调秒数，和原生逻辑帧号独立。
         private double _duelNextSend;
+        // 挑战请求冷却截止的本地秒数，抑制连点。
         private double _duelChallengeUntil;
+        // 当前决斗标识。空串表示仍在围棋或已经退场。
         public string DuelId { get; private set; } = "";
+        // 切场、插件或指纹错误，场景 HUD 可直接展示。
         public string DuelError { get; private set; } = "";
+        // 本端最近已执行的快照；未创建副本时返回空值。
         public DuelSnapshot DuelSnapshot => _duelPipe?.Snapshot ?? default;
+        // 权威掩码中的黑白两位都已就绪才为真。
         public bool DuelBothReady => _duelReadyMask == 3;
+        // 已有服务器传输且没有在处理其它连接操作时，允许发起重连。
         public bool DuelReconnectAvailable => _server != null && !_server.Busy;
 
+        // 汇总棋局资格、连接兼容和当前操作状态，供 HUD 判断是否显示入口。
         public bool CanChallengeDuel
         {
             get
@@ -45,6 +67,7 @@ namespace RevGame.Pvp
             }
         }
 
+        // 经正式业务入口发起决斗；服务器 RPC、LAN 转发或本地创建按模式选择。
         public bool ChallengeDuel()
         {
             if (!CanChallengeDuel || _clock.Elapsed.TotalSeconds < _duelChallengeUntil)
@@ -65,6 +88,7 @@ namespace RevGame.Pvp
             return OpenOwnedDuel(Mode == PvpConnectionMode.Lan);
         }
 
+        // 为权威位创建封帧器，必要时通知 LAN 对端；创建失败后报告错误。
         private bool OpenOwnedDuel(bool notifyPeer)
         {
             string id = Guid.NewGuid().ToString("N");
@@ -94,6 +118,7 @@ namespace RevGame.Pvp
             }
         }
 
+        // 接受当前局标识并创建本端副本。重复通知不会重新创建。
         private void ActivateDuel(string id)
         {
             if (string.IsNullOrEmpty(id) || DuelId.Length != 0)
@@ -119,11 +144,13 @@ namespace RevGame.Pvp
             }
         }
 
+        // 场景加载成功后登记本端就绪，后续 Poll 才会发送 Ready。
         public void MarkDuelSceneReady()
         {
             _duelSceneReady = DuelId.Length != 0;
         }
 
+        // 接收键盘或 HUD 采样，只缓存意图，不立即修改原生世界。
         public void SetDuelInput(int direction, int action, bool jump = false)
         {
             _duelDirection = direction < 0 ? 1 : direction > 0 ? 2 : 0;
@@ -135,16 +162,19 @@ namespace RevGame.Pvp
             }
         }
 
+        // 记录可展示的决斗失败原因，使轮询停止。
         public void SetDuelError(string error)
         {
             DuelError = error;
         }
 
+        // 用本端已消费帧号和共享配置指纹创建请求。
         private DuelRequest DuelRequestFor(int operation)
         {
             return new DuelRequest { operation = operation, fingerprint = DuelConfig.Fingerprint, afterFrame = DuelSnapshot.Frame };
         }
 
+        // 按本地单调时钟发送 Ready 或锁定输入，并按对局模式选择传输边界。
         private void PollDuel()
         {
             if (!_duelSceneReady || DuelSnapshot.Result != 0 || DuelError.Length != 0 ||
@@ -156,6 +186,7 @@ namespace RevGame.Pvp
             var request = DuelRequestFor(DuelBothReady ? DuelAuthority.Input : DuelAuthority.Ready);
             if (request.operation == DuelAuthority.Input)
             {
+                // 按本端连续执行的上界生成下一帧。没收到封口结果前重复请求仍使用旧意图。
                 int next = DuelSnapshot.Frame + 1;
                 if (_duelIntentFrame != next)
                 {
@@ -189,6 +220,7 @@ namespace RevGame.Pvp
             }
         }
 
+        // 由权威位从快照生成电脑意图，跟真人一起进入下一完整帧。
         private int ComputerDuelInput()
         {
             // AI 只生成一个座位的意图。它与真人一样经过权威帧，伤害和距离判定仍由 C++ 负责。
@@ -201,6 +233,7 @@ namespace RevGame.Pvp
             return view.SecondEnergy >= DuelConfig.UltimateCost ? 12 : view.SecondEnergy >= DuelConfig.SkillCost ? 8 : 4;
         }
 
+        // 核对房间，按连续游标补帧并消费结果。缺口保留到下一次从现有上界重取。
         private void AcceptDuelReply(DuelReply reply)
         {
             if (reply == null)
@@ -227,6 +260,7 @@ namespace RevGame.Pvp
             }
             try
             {
+                // 回复可能和本端历史重叠。从第一条未消费的位置继续，不重复调用 C++。
                 for (int i = current - reply.afterFrame; i < reply.frames.Length; i++)
                 {
                     _duelPipe.Append(reply.afterFrame + i + 1, reply.frames[i]);
@@ -242,6 +276,7 @@ namespace RevGame.Pvp
             }
         }
 
+        // 识别 P2P 决斗消息，区分宿主授权、客端请求与回执。
         private bool ReceiveLanDuel(PvpLanMessage message)
         {
             switch (message.type)
@@ -279,6 +314,7 @@ namespace RevGame.Pvp
             }
         }
 
+        // 离开或换连接时清空决斗状态，成对释放权威和本端副本。
         private void ResetDuel()
         {
             _duelAuthority?.Dispose();
@@ -301,6 +337,7 @@ namespace RevGame.Pvp
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 开发态用合法棋步构造明显劣势，再进入本机人机控制，供实际入口回归。
         public bool PrepareDuelFixture()
         {
             // 不改存档或直接伪造棋盘。黑方停手，白方每轮下一个合法点，最后接回正式人机控制。

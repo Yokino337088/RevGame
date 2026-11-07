@@ -35,13 +35,16 @@ namespace RevGame.Pvp
             _duelButton.gameObject.SetActive(false);
         }
 
+        // 按当前面板生命周期持有的挑战按钮，位置避开棋盘。
         private Button _duelButton;
 
+        // 点击仅转发给 PvP 服务；界面不能自行宣布挑战获准。
         private void ChallengeDuelFromPanel()
         {
             Service.ChallengeDuel();
         }
 
+        // 根据业务资格更新显示，仅在可见性变化时启动或停止 Tween。
         private void RefreshDuelChallenge()
         {
             bool visible = _battleVisible && Service.CanChallengeDuel;

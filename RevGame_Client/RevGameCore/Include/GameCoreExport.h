@@ -17,6 +17,7 @@ extern "C" {
 
 // 每局一个不透明句柄。宿主线程独占；托管数组只借用到函数返回。
 GAME_CORE_API void* GameCore_Create(void);
+// 只接受本库创建的句柄。销毁后调用方不能再读写该实例。
 GAME_CORE_API void GameCore_Destroy(void* handle);
 // 全包写入；1 成功、0 背压、-1 非法。背压时调用方保留原包并稍后重试。
 GAME_CORE_API int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size);

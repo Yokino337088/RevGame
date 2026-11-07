@@ -291,6 +291,7 @@ internal static class GoKcpLoadProbe
         }));
     }
 
+    // 经两条实际 KCP 连接走到中局，再检查资格、就绪屏障、整帧双端对账与离场。
     private static async FTask RunDuel(Scene scene, string endpoint)
     {
         const string rules = "{\"komiHalfPoints\":15,\"reconnectWindowSeconds\":90,\"matchTimeoutSeconds\":60}";
@@ -343,6 +344,7 @@ internal static class GoKcpLoadProbe
             {
                 int previous = replicaA.Snapshot.Frame;
                 int frame = previous + 1;
+                // 首帧显式携带跳跃，后续移动或攻击，用来核对高度也属于原生确定性状态。
                 int blackInput = frame == 1 ? 2 | DuelCorePipe.Jump : frame <= 10 ? 2 : 4;
                 using (var input = await AskDuel(black, DuelAuthority.Input, previous, frame, blackInput))
                 {
@@ -376,6 +378,7 @@ internal static class GoKcpLoadProbe
             Check(leaveA.ErrorCode == 0 && leaveB.ErrorCode == 0, "决斗房间退出清理");
             Console.WriteLine($"GO_KCP_DUEL_PASS frame={replicaA.Snapshot.Frame} hash={replicaA.Snapshot.Hash}");
 
+            // 探针本地先校验棋步和指纹，再经真实房间 RPC 提交同一棋步。
             async FTask GoStep(GoLoadPeer peer, GoAction action, int x, int y)
             {
                 string before = go.StateHash.ToString();
@@ -396,6 +399,7 @@ internal static class GoKcpLoadProbe
         }
     }
 
+    // 向真实 KCP 连接发送一次决斗请求；可附上连续游标和下一帧意图。
     private static async FTask<G2C_GoDuelResponse> AskDuel(GoLoadPeer peer, int operation, int afterFrame = 0, int frame = 0, int input = 0)
     {
         return (G2C_GoDuelResponse)await peer.Session.Call(new C2G_GoDuelRequest

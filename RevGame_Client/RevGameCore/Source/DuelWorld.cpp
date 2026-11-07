@@ -5,6 +5,7 @@
 
 namespace RevGameCore
 {
+    // 先校验配置范围，再初始化角色，保证后续定点整数运算有界。
     bool DuelWorld::Start(const Settings& settings)
     {
         if (Valid || settings[0] < 1 || settings[0] > 10000 || settings[1] < 1000 || settings[1] > 100000 ||
@@ -38,6 +39,7 @@ namespace RevGameCore
         return true;
     }
 
+    // 只处理单个座位的意图与时钟。两席使用同一规则，伤害统一延后结算。
     void DuelWorld::MoveAndStart(Fighter& fighter, int32_t input)
     {
         // 跳跃用定步长整数积分。空中也推进重力，攻击硬直不会让角色悬停。
@@ -76,6 +78,7 @@ namespace RevGameCore
         }
     }
 
+    // 命中同时依赖生效帧、正面水平距离和高度差；这里只读当前状态。
     int32_t DuelWorld::ResolveHit(const Fighter& attacker, const Fighter& defender) const
     {
         if (attacker.Action == 0)
@@ -92,6 +95,7 @@ namespace RevGameCore
         return 0;
     }
 
+    // 先验整帧再推进世界。胜负确定后，继续接收连续帧但冻结战斗状态。
     bool DuelWorld::Advance(int32_t frame, int32_t first, int32_t second, Snapshot& snapshot)
     {
         if (!Valid || frame != Frame + 1 || first < 0 || first > 31 || second < 0 || second > 31 ||
@@ -129,6 +133,7 @@ namespace RevGameCore
         return true;
     }
 
+    // 把快照字段按固定次序写出；插值、粒子等表现数据不进入指纹。
     void DuelWorld::Produce(Snapshot& snapshot) const
     {
         snapshot[0] = Frame;
@@ -145,6 +150,7 @@ namespace RevGameCore
             snapshot[offset + 5] = fighter.Facing;
         }
         // 核对所有会影响未来执行的世界字段和配置；没有未纳入的计时器或随机源。
+        // 使用明确回绕的无符号乘法，保证同一整数状态在双端混合方式相同。
         uint32_t hash = 2166136261u;
         for (int i = 0; i < 14; ++i)
         {
@@ -154,6 +160,7 @@ namespace RevGameCore
         {
             hash = (hash ^ static_cast<uint32_t>(word)) * 16777619u;
         }
+        // 高度会被 HUD 读取，速度虽不展示，但会改变未来落点，因此同样参与指纹。
         snapshot[17] = Fighters[0].Y;
         snapshot[18] = Fighters[1].Y;
         for (const auto& fighter : Fighters)

@@ -15,7 +15,9 @@ namespace RevGame.Pvp
         private readonly PvpConfig _config;
         private readonly bool _agents;
         private readonly bool _longGame;
+        // 是否运行本次决斗分支；旧围棋回归仍使用原路径。
         private readonly bool _duel;
+        // 两端已核对的布置棋谱序号；下一手必须等双方同步才提交。
         private int _duelSeedSequence;
         private PvpService _host;
         private PvpService _guest;
@@ -35,6 +37,7 @@ namespace RevGame.Pvp
         public string Winner { get; private set; } = string.Empty;
         public int BlackCaptures { get; private set; }
 
+        // 创建隔离 UTP 夹具，duel 模式验证从棋局到原生封帧。
         public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false)
         {
             _config = config;
@@ -149,6 +152,7 @@ namespace RevGame.Pvp
                     }
                     Next("等待黑(1,0)在双方提交");
                     break;
+                // 用真实传输让黑方下子、白方停手，构造有分差的局面。
                 case 30:
                     if (!Synced(_duelSeedSequence))
                     {
@@ -169,6 +173,7 @@ namespace RevGame.Pvp
                         _duelSeedSequence++;
                     }
                     break;
+                // 先对齐双端决斗标识，只标记宿主就绪以检验屏障。
                 case 31:
                     if (_host.DuelId.Length == 0 || _guest.DuelId.Length == 0)
                     {
@@ -180,6 +185,7 @@ namespace RevGame.Pvp
                         Next("只标记一端就绪");
                     }
                     break;
+                // 确认单边就绪没有推进后，再让白方就绪。
                 case 32:
                     if (!Check(_host.DuelSnapshot.Frame == 0 && _guest.DuelSnapshot.Frame == 0, "单边就绪不能推进帧"))
                     {
@@ -188,6 +194,7 @@ namespace RevGame.Pvp
                     _guest.MarkDuelSceneReady();
                     Next("等待双方原生 FIFO 和 UTP 帧流推进");
                     break;
+                // 两端通过正式意图入口移动和攻击，在同一帧核对世界指纹与命中。
                 case 33:
                     int frame = _host.DuelSnapshot.Frame;
                     _host.SetDuelInput(frame < 12 ? 1 : 0, frame >= 12 ? 1 : 0);
