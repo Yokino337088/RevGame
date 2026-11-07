@@ -24,6 +24,17 @@ namespace RevGame.Pvp.Duel
         public const int FrameLimit = 1200;
         // 逻辑帧对应的毫秒数，用于宿主限速和显示时间换算。
         public const int FrameMs = 50;
+        // 招式持续的逻辑帧数，用于表现采样和输入缓冲。
+        public static int ActionDuration(int action)
+        {
+            return action switch
+            {
+                1 => 8,
+                2 => 13,
+                3 => 21,
+                _ => 0
+            };
+        }
         // 两席握手比较的 31 位规则指纹。
         public const int Fingerprint = 182341838;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。

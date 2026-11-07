@@ -98,7 +98,7 @@ namespace RevGameCore
     // 先验整帧再推进世界。胜负确定后，继续接收连续帧但冻结战斗状态。
     bool DuelWorld::Advance(int32_t frame, int32_t first, int32_t second, Snapshot& snapshot)
     {
-        if (!Valid || frame != Frame + 1 || first < 0 || first > 31 || second < 0 || second > 31 ||
+        if (!Valid || frame != Frame + 1 || first < 0 || first > (31 | NoDamageFrameBit) || second < 0 || second > 31 ||
             (first & 3) == 3 || (second & 3) == 3)
         {
             return false;
@@ -118,8 +118,12 @@ namespace RevGameCore
             // 先取两个命中再修改血量，避免同帧互击由座位顺序决定胜负。
             firstHit = ResolveHit(Fighters[0], Fighters[1]);
             secondHit = ResolveHit(Fighters[1], Fighters[0]);
-            Fighters[0].Hp = std::max(0, Fighters[0].Hp - secondHit);
-            Fighters[1].Hp = std::max(0, Fighters[1].Hp - firstHit);
+            // 测试帧仍产生正常命中、回能和受击表现，只跳过扣血。每帧独立携带开关，回放能得到同一结果。
+            if ((first & NoDamageFrameBit) == 0)
+            {
+                Fighters[0].Hp = std::max(0, Fighters[0].Hp - secondHit);
+                Fighters[1].Hp = std::max(0, Fighters[1].Hp - firstHit);
+            }
             Fighters[0].Energy = std::min(Config[5], Fighters[0].Energy + Config[6] + (firstHit ? Config[7] : 0));
             Fighters[1].Energy = std::min(Config[5], Fighters[1].Energy + Config[6] + (secondHit ? Config[7] : 0));
             if (Fighters[0].Hp == 0 || Fighters[1].Hp == 0 || Frame >= Config[3])

@@ -1,4 +1,5 @@
 using Revolution;
+using RevGame.Pvp.Duel;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,8 +28,11 @@ namespace RevGame.View
         // 本角色的重量级表现状态机，离场时释放。
         private RevHeavyFSM<Pose, DuelActorAnimator> _machine;
         // 当前片段和帧序列。只在切换姿态时查找，普通渲染帧直接复用。
-        private AnimationState _playingState;
         private Sprite[] _playingFrames;
+        // 片段采样率和长度来自既有 Legacy 资源。普通姿态用独立的表现秒数。
+        private float _sampleRate, _clipLength, _poseSeconds;
+        // 同一招式可连续出现。用逻辑起始帧识别每一次，而不是只看招式编号。
+        private int _attackStart = -1;
         // 待机与跑动循环，其余片段播到最后一张时保持该姿势。
         private bool _loop;
         // 只读播放检查，供验收判断片段确实在运行。
@@ -43,6 +47,7 @@ namespace RevGame.View
         public bool HasSpriteMotion => _animatedPoses != 0;
         public bool IdleSpriteMotion => (_animatedPoses & (1 << (int)Pose.Idle)) != 0;
         public bool JumpSpriteMotion => (_animatedPoses & (1 << (int)Pose.Jump)) != 0;
+        public bool RunSpriteMotion => (_animatedPoses & (1 << (int)Pose.Run)) != 0;
         public bool AttackSpriteMotion => (_animatedPoses & (7 << (int)Pose.Attack1)) != 0;
 
         // 比较实际落屏图片，排除切换姿态时仅替换第一帧导致的误报。
@@ -95,42 +100,54 @@ namespace RevGame.View
         }
 
         // 按生命、招式、离地和移动确定表现姿态。没有状态变化时继续原片段。
-        public void Paint(int health, int altitude, int action, bool moving)
+        public void Paint(int health, int altitude, int action, bool moving, int frame, int age, float frameFraction)
         {
             Pose next = health == 0 ? Pose.Down : action == 1 ? Pose.Attack1 :
                 action == 2 ? Pose.Attack2 : action == 3 ? Pose.Attack3 :
                 altitude > 0 ? Pose.Jump : moving ? Pose.Run : Pose.Idle;
+            int attackStart = action != 0 && health > 0 ? frame - age : -1;
             if (_machine.CurrentStateType != next)
             {
                 _machine.ChangeState(next, "收到决斗快照");
             }
+            else if (attackStart >= 0 && attackStart != _attackStart)
+            {
+                // 连续普攻可能在同一逻辑帧结束旧招并开始新招，状态没有机会经过 Idle。
+                PlayPose(next, next.ToString());
+            }
+            _attackStart = attackStart;
             _machine.UpdateState(Time.unscaledDeltaTime);
-            PaintSpriteFrame();
+            PaintSpriteFrame(attackStart >= 0 ? DuelConfig.ActionDuration(action) : 0, age, frameFraction);
+            _poseSeconds += Time.unscaledDeltaTime;
         }
 
-        // 保留 Animation.Play 的片段时间。即使 Legacy 曲线没有更新 UGUI 图片，也能由同一时钟驱动画面。
+        // 重启 Legacy 片段并读取资源采样率，UGUI 图片仍由表现层显式换帧。
         private void PlayPose(Pose pose, string clip)
         {
-            _playingState = _animation.Play(clip) ? _animation[clip] : null;
+            _animation.Stop(clip);
+            _animation.Play(clip);
+            AnimationClip asset = _animation.GetClip(clip);
+            _sampleRate = asset == null ? 0 : asset.frameRate;
+            _clipLength = asset == null ? 0 : asset.length;
+            _poseSeconds = 0;
             int index = (int)pose;
             _playingFrames = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index]?.frames : null;
             _loop = pose == Pose.Idle || pose == Pose.Run;
         }
 
-        // 片段时间的单位为秒，乘以采样率得到图片下标。只修改 Sprite，逻辑快照和伤害都不经过这里。
-        private void PaintSpriteFrame()
+        // 招式图按逻辑年龄铺满整段动作。渲染只在当前逻辑帧内插值，断流时不会提前播完。
+        private void PaintSpriteFrame(int duration, int age, float frameFraction)
         {
-            if (_playingState == null || _playingFrames == null || _playingFrames.Length == 0)
+            if (_playingFrames == null || _playingFrames.Length == 0)
             {
                 return;
             }
 
-            float seconds = _playingState.time;
-            if (_loop && _playingState.length > 0f)
-            {
-                seconds = Mathf.Repeat(seconds, _playingState.length);
-            }
-            int index = Mathf.Clamp(Mathf.FloorToInt(seconds * _playingState.clip.frameRate), 0, _playingFrames.Length - 1);
+            float seconds = _loop && _clipLength > 0 ? Mathf.Repeat(_poseSeconds, _clipLength) : _poseSeconds;
+            float sample = duration > 0
+                ? (age + frameFraction) * _playingFrames.Length / (duration + 1)
+                : seconds * _sampleRate;
+            int index = Mathf.Clamp(Mathf.FloorToInt(sample), 0, _playingFrames.Length - 1);
             Sprite frame = _playingFrames[index];
             if (_image.sprite != frame)
             {

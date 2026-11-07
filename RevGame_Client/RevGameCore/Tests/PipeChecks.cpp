@@ -1,5 +1,6 @@
 // Release 也执行断言，验证双实例回放、缺帧拒绝与整包背压。
 #include "GameCoreExport.h"
+#include "DuelWorld.h"
 #include <array>
 #include <cstdlib>
 #include <cstdio>
@@ -62,5 +63,23 @@ int main()
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);
     GameCore_Destroy(first);
     GameCore_Destroy(second);
+
+    // 双方同时命中时，免伤帧保留两个命中事件；关闭开关后的下一轮攻击正常扣血。
+    auto duel = GameCore_Create();
+    Check(GameCore_Write(duel, config.data(), int(config.size())) == 1);
+    for (int frame = 1; frame <= 23; ++frame)
+    {
+        const bool approach = frame <= 10;
+        const int protectedFrame = frame <= 14 ? RevGameCore::NoDamageFrameBit : 0;
+        auto input = Encode(std::array<int32_t, 5>{2,2,frame,(approach ? 2 : 4) | protectedFrame,approach ? 1 : 4});
+        Check(GameCore_Write(duel, input.data(), int(input.size())) == 1);
+        Check(GameCore_Read(duel, left.data(), int(left.size())) == int(left.size()));
+        if (frame == 14 || frame == 23)
+        {
+            Check(left[56] == 9 && left[60] == 9);
+            Check(left[12] == (frame == 14 ? 100 : 91) && left[36] == left[12]);
+        }
+    }
+    GameCore_Destroy(duel);
     std::puts("RevGameCore deterministic FIFO checks passed");
 }

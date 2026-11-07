@@ -93,6 +93,10 @@ namespace RevGame.Pvp.Duel
         public int Frame => _frames.Count;
         // 原生权威世界最后一帧的值副本。
         public DuelSnapshot Snapshot => _judge.Snapshot;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 仅本机人机的开发指令可设置，每局实例创建时默认关闭。
+        internal bool DebugNoDamage { get; set; }
+#endif
 
         // 按已认证座位处理请求，返回游标后的历史。缺一席时保持当前世界。
         public DuelReply Exchange(int side, DuelRequest request, long now)
@@ -126,6 +130,12 @@ namespace RevGame.Pvp.Duel
             {
                 // 用低五位放黑方、高五位放白方。必须先成功执行，再把整帧加入可重放历史。
                 int packed = _input[0] | (_input[1] << DuelCorePipe.InputBits);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                if (DebugNoDamage)
+                {
+                    packed |= DuelCorePipe.NoDamageFrame;
+                }
+#endif
                 _judge.Append(Frame + 1, packed);
                 _frames.Add(packed);
                 _inputMask = 0;

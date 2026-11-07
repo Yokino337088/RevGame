@@ -262,6 +262,8 @@ namespace RevGame.Editor
                 var view = duel.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
                 BindDuelSpriteSequences(view.FirstAnimator, "");
                 BindDuelSpriteSequences(view.SecondAnimator, "Assassin");
+                AddDirection(view.transform.Find("Left").GetComponent<Button>(), view, -1);
+                AddDirection(view.transform.Find("Right").GetComponent<Button>(), view, 1);
                 if (!EditorSceneManager.SaveScene(duel))
                 {
                     throw new InvalidOperationException("决斗角色序列帧保存失败。");
@@ -281,13 +283,15 @@ namespace RevGame.Editor
         // 把指针按下、松开与移出转发为方向意图，避免按住后移出产生粘键。
         private static void AddDirection(Button button, PvpDuelView view, int direction)
         {
-            var trigger = button.gameObject.AddComponent<EventTrigger>();
+            var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerDown ||
+                entry.eventID == EventTriggerType.PointerUp || entry.eventID == EventTriggerType.PointerExit);
             foreach (var kind in new[] { EventTriggerType.PointerDown, EventTriggerType.PointerUp, EventTriggerType.PointerExit })
             {
                 var entry = new EventTrigger.Entry { eventID = kind };
                 var callback = new EventTrigger.TriggerEvent();
-                UnityAction<int> move = view.MovePointer;
-                UnityEventTools.AddIntPersistentListener(callback, move, kind == EventTriggerType.PointerDown ? direction : 0);
+                UnityAction<int> move = kind == EventTriggerType.PointerDown ? view.MovePointer : view.ReleasePointer;
+                UnityEventTools.AddIntPersistentListener(callback, move, direction);
                 entry.callback = callback;
                 trigger.triggers.Add(entry);
             }

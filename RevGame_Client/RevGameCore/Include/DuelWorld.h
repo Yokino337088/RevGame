@@ -5,6 +5,8 @@
 
 namespace RevGameCore
 {
+    // 黑方 FIFO 字的第 5 位保留给完整帧的双席免伤，低五位仍是角色输入。
+    constexpr int32_t NoDamageFrameBit = 1 << 5;
     // 对外包全部是小端 int32 字段，内部位置单位为千分格。结构体布局不会跨 ABI。
     // 开局配置的 32 位整数字段数，C# 打包与 C++ 解包必须一致。
     constexpr int ConfigWords = 27;

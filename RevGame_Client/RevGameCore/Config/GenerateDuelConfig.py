@@ -46,6 +46,17 @@ namespace RevGame.Pvp.Duel
         public const int FrameLimit = {arena["frameLimit"]};
         // 逻辑帧对应的毫秒数，用于宿主限速和显示时间换算。
         public const int FrameMs = {arena["frameMilliseconds"]};
+        // 招式持续的逻辑帧数，用于表现采样和输入缓冲。
+        public static int ActionDuration(int action)
+        {{
+            return action switch
+            {{
+                1 => {data["attacks"][0]["duration"]},
+                2 => {data["attacks"][1]["duration"]},
+                3 => {data["attacks"][2]["duration"]},
+                _ => 0
+            }};
+        }}
         // 两席握手比较的 31 位规则指纹。
         public const int Fingerprint = {fingerprint & 0x7fffffff};
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。

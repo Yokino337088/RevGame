@@ -25,6 +25,8 @@ namespace RevGame.Pvp
         private int _duelReadyMask;
         // 尚未装入下一帧的按键招式编号，0 表示未排队。
         private int _duelQueuedAction;
+        // 恢复期最多缓存四个逻辑帧的按键时间。掉线或长时间无帧时，旧按键也会过期。
+        private double _duelActionUntil;
         // 最近一帧表现层采样到的方向，1 左、2 右、0 无。
         private int _duelDirection;
         // 锁存两次网络采样之间的跳跃点按，打包后清除。
@@ -43,6 +45,8 @@ namespace RevGame.Pvp
         public string DuelError { get; private set; } = "";
         // 本端最近已执行的快照；未创建副本时返回空值。
         public DuelSnapshot DuelSnapshot => _duelPipe?.Snapshot ?? default;
+        // 最近一次执行前的快照，供画面判断真实移动方向。补帧后也保留与当前帧相邻的样本。
+        public DuelSnapshot DuelPreviousSnapshot { get; private set; }
         // 权威掩码中的黑白两位都已就绪才为真。
         public bool DuelBothReady => _duelReadyMask == 3;
         // 已有服务器传输且没有在处理其它连接操作时，允许发起重连。
@@ -159,7 +163,29 @@ namespace RevGame.Pvp
             if (action >= 1 && action <= 3)
             {
                 _duelQueuedAction = action;
+                _duelActionUntil = _clock.Elapsed.TotalSeconds + 4 * DuelConfig.FrameMs / 1000.0;
             }
+        }
+
+        // 下一帧若会结束恢复期，就允许带上缓存的攻击意图。是否成功出招仍由原生内核决定。
+        private int TakeDuelAction()
+        {
+            if (_duelQueuedAction == 0 || _clock.Elapsed.TotalSeconds > _duelActionUntil)
+            {
+                _duelQueuedAction = 0;
+                return 0;
+            }
+            DuelSnapshot snapshot = DuelSnapshot;
+            bool black = MySide == GoSide.Black;
+            int action = black ? snapshot.FirstAction : snapshot.SecondAction;
+            int age = black ? snapshot.FirstAge : snapshot.SecondAge;
+            if (age < DuelConfig.ActionDuration(action))
+            {
+                return 0;
+            }
+            int queued = _duelQueuedAction;
+            _duelQueuedAction = 0;
+            return queued;
         }
 
         // 记录可展示的决斗失败原因，使轮询停止。
@@ -191,9 +217,8 @@ namespace RevGame.Pvp
                 if (_duelIntentFrame != next)
                 {
                     _duelIntentFrame = next;
-                    _duelIntent = _duelDirection | (_duelQueuedAction << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
+                    _duelIntent = _duelDirection | (TakeDuelAction() << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
                     _duelQueuedJump = false;
-                    _duelQueuedAction = 0;
                 }
                 request.inputFrame = _duelIntentFrame;
                 request.input = _duelIntent;
@@ -263,7 +288,13 @@ namespace RevGame.Pvp
                 // 回复可能和本端历史重叠。从第一条未消费的位置继续，不重复调用 C++。
                 for (int i = current - reply.afterFrame; i < reply.frames.Length; i++)
                 {
+                    if ((reply.frames[i] & DuelCorePipe.NoDamageFrame) != 0 && (Mode != PvpConnectionMode.Local || !IsComputerGame))
+                    {
+                        throw new InvalidOperationException("联机决斗收到本地测试帧。");
+                    }
+                    DuelSnapshot before = _duelPipe.Snapshot;
                     _duelPipe.Append(reply.afterFrame + i + 1, reply.frames[i]);
+                    DuelPreviousSnapshot = before;
                 }
                 if (DuelSnapshot.Result != 0 && (DuelSnapshot.Result != reply.result || DuelSnapshot.Hash != reply.finalHash))
                 {
@@ -317,6 +348,8 @@ namespace RevGame.Pvp
         // 离开或换连接时清空决斗状态，成对释放权威和本端副本。
         private void ResetDuel()
         {
+            DuelPreviousSnapshot = default;
+            _duelActionUntil = 0;
             _duelAuthority?.Dispose();
             _duelPipe?.Dispose();
             _duelAuthority = null;
@@ -337,6 +370,18 @@ namespace RevGame.Pvp
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 仅本机人机且处于决斗时才修改当前权威的封帧选项。离场销毁权威后自动复位。
+        internal bool TrySetDuelNoDamage(bool enabled)
+        {
+            if (Mode != PvpConnectionMode.Local || !IsComputerGame || !_duelSceneReady ||
+                _duelAuthority == null || DuelSnapshot.Result != 0)
+            {
+                return false;
+            }
+            _duelAuthority.DebugNoDamage = enabled;
+            return true;
+        }
+
         // 开发态用合法棋步构造明显劣势，再进入本机人机控制，供实际入口回归。
         public bool PrepareDuelFixture()
         {

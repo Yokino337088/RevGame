@@ -8,7 +8,7 @@ namespace RevGame.Pvp.Duel
     public struct DuelSnapshot
     {
         // Frame 为已执行帧号；Result 为 0 进行中、1 黑胜、2 白胜、3 平局；Hash 用于同帧对账。
-        // FirstHit、SecondHit 分别是黑、白在该帧造成的伤害，0 表示没有命中。
+        // FirstHit、SecondHit 是黑、白命中的原始伤害值，0 表示没有命中。免伤帧也保留此值供表现读取。
         public int Frame, Result, Hash, FirstHit, SecondHit;
         // FirstY 和 SecondY 是黑白两席的离地高度，单位千分格。
         public int FirstY, SecondY;
@@ -31,6 +31,8 @@ namespace RevGame.Pvp.Duel
         public const int InputMask = (1 << InputBits) - 1;
         // 跳跃占第 4 位（从 0 数起），可与方向及招式同时存在。
         public const int Jump = 1 << 4;
+        // 完整帧第 10 位由本地测试权威设置，不属于黑白任一席的输入。
+        internal const int NoDamageFrame = 1 << (2 * InputBits);
         // 当前 C# 实例独占的原生句柄，释放后不能继续写入。
         private readonly Handle _handle;
         // 复用的整帧写缓冲，五项各占四字节。
@@ -98,11 +100,16 @@ namespace RevGame.Pvp.Duel
         // 写入完整帧后取回相同帧号的快照。桥接失败时抛错，由上层停止继续播放。
         public void Append(int frame, int packed)
         {
+            if ((packed & ~(NoDamageFrame | (NoDamageFrame - 1))) != 0)
+            {
+                throw new InvalidOperationException("封帧包含未知标记。");
+            }
             Write(_frame, 0, Protocol);
             Write(_frame, 1, 2);
             Write(_frame, 2, frame);
-            Write(_frame, 3, packed & InputMask);
-            Write(_frame, 4, packed >> InputBits);
+            // 原生 FIFO 用黑方字的第 5 位承载双席免伤标记，白方字仍只承载输入。
+            Write(_frame, 3, (packed & InputMask) | ((packed & NoDamageFrame) >> InputBits));
+            Write(_frame, 4, (packed >> InputBits) & InputMask);
             // 一次送一整帧并及时消费结果，输入和输出 FIFO 都有固定容量。
             if (GameCore_Write(_handle, _frame, _frame.Length) != 1 ||
                 GameCore_Read(_handle, _output, _output.Length) != _output.Length || Read(0) != frame)

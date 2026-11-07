@@ -132,7 +132,7 @@ int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
     const auto frame = ReadWord(data + 8);
     const auto first = ReadWord(data + 12);
     const auto second = ReadWord(data + 16);
-    if (frame != static_cast<uint32_t>(pipe->LastSealed + 1) || first > 31 || second > 31 ||
+    if (frame != static_cast<uint32_t>(pipe->LastSealed + 1) || first > (31u | RevGameCore::NoDamageFrameBit) || second > 31 ||
         (first & 3u) == 3u || (second & 3u) == 3u)
     {
         return -1;

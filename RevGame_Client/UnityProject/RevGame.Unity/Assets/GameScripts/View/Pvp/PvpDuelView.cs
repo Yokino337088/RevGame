@@ -27,12 +27,14 @@ namespace RevGame.View
         private int _presentedResult;
         // HUD 点按后的招式编号，由下一次输入采样取走。
         private int _clickedAction;
-        // 方向按钮按住时的 -1、0、1，松手或离开时归零。
-        private int _pointerDirection;
+        // 每个方向只清除自己的按住状态，旧按钮的松手不能盖掉新按钮的输入。
+        private bool _leftHeld, _rightHeld;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
         // 黑白角色的当前显示坐标，浮点插值只用于画面。
         private Vector2 _firstPosition, _secondPosition;
+        // 当前逻辑快照抵达的本地时间，用于在一个逻辑帧内平滑采样招式。
+        private float _snapshotTime;
 
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
@@ -52,10 +54,29 @@ namespace RevGame.View
             service.StartServer(service.Endpoint, service.Nickname);
         }
 
-        // 由方向按钮的按下、抬起和移出事件维护当前触摸方向。
+        // 由方向按钮的按下事件记录各自的状态。
         public void MovePointer(int direction)
         {
-            _pointerDirection = direction;
+            _leftHeld |= direction < 0;
+            _rightHeld |= direction > 0;
+        }
+
+        // 抬起和移出都只释放触发事件的按钮。
+        public void ReleasePointer(int direction)
+        {
+            _leftHeld &= direction >= 0;
+            _rightHeld &= direction <= 0;
+        }
+
+        // 窗口失焦时可能收不到 PointerUp。清除本地按住状态，回到窗口后重新接收输入。
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused)
+            {
+                _leftHeld = _rightHeld = _clickedJump = false;
+                _clickedAction = 0;
+                RevServices.Get<PvpService>()?.SetDuelInput(0, 0);
+            }
         }
 
         // 交给统一 GameFlow 退房和换场景。
@@ -68,8 +89,9 @@ namespace RevGame.View
         private void Update()
         {
             var service = RevServices.GetRequired<PvpService>();
-            int direction = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? -1 :
-                Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1 : _pointerDirection;
+            bool left = _leftHeld || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+            bool right = _rightHeld || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+            int direction = (right ? 1 : 0) - (left ? 1 : 0);
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
                 Input.GetKeyDown(KeyCode.L) ? 3 : _clickedAction;
             _clickedAction = 0;
@@ -86,11 +108,29 @@ namespace RevGame.View
         {
             var service = RevServices.GetRequired<PvpService>();
             DuelSnapshot view = service.DuelSnapshot;
+            DuelSnapshot previous = service.DuelPreviousSnapshot;
+            int firstMove = view.Result == 0 ? view.FirstX.CompareTo(previous.FirstX) : 0;
+            int secondMove = view.Result == 0 ? view.SecondX.CompareTo(previous.SecondX) : 0;
+            if (view.Frame == 0)
+            {
+                firstMove = secondMove = 0;
+            }
+            // 移动图跟随实际位移，出招仍按权威命中朝向绘制。
+            int firstFacing = view.FirstAction == 0 && firstMove != 0 ? firstMove : view.FirstFacing;
+            int secondFacing = view.SecondAction == 0 && secondMove != 0 ? secondMove : view.SecondFacing;
+            var firstTarget = new Vector2(view.FirstX, view.FirstY) * .138f;
+            var secondTarget = new Vector2(view.SecondX, view.SecondY) * .138f;
+            if (_seenFrame < 0)
+            {
+                _firstPosition = firstTarget;
+                _secondPosition = secondTarget;
+            }
             if (_seenFrame != view.Frame)
             {
                 _seenFrame = view.Frame;
-                Effects.Observe(0, view.FirstAction, view.FirstAge, view.FirstFacing, First.rectTransform.anchoredPosition);
-                Effects.Observe(1, view.SecondAction, view.SecondAge, view.SecondFacing, Second.rectTransform.anchoredPosition);
+                _snapshotTime = Time.unscaledTime;
+                Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, _firstPosition);
+                Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, _secondPosition);
                 if (view.FirstHit != 0)
                 {
                     Flash(Second);
@@ -101,15 +141,14 @@ namespace RevGame.View
                 }
             }
             // 逻辑坐标是千分格。屏幕宽度换算和插值使用浮点，因为它们只影响绘制。
-            var firstTarget = new Vector2(view.FirstX, view.FirstY) * .138f;
-            var secondTarget = new Vector2(view.SecondX, view.SecondY) * .138f;
             float blend = 1 - Mathf.Exp(-22 * Time.unscaledDeltaTime);
-            _firstPosition = Vector2.Lerp(_firstPosition, firstTarget, blend);
-            _secondPosition = Vector2.Lerp(_secondPosition, secondTarget, blend);
-            PaintActor(First, _firstPosition, view.FirstFacing);
-            PaintActor(Second, _secondPosition, view.SecondFacing);
-            FirstAnimator.Paint(view.FirstHealth, view.FirstY, view.FirstAction, Mathf.Abs(_firstPosition.x - firstTarget.x) > 4);
-            SecondAnimator.Paint(view.SecondHealth, view.SecondY, view.SecondAction, Mathf.Abs(_secondPosition.x - secondTarget.x) > 4);
+            _firstPosition = FollowPosition(_firstPosition, firstTarget, firstMove, blend);
+            _secondPosition = FollowPosition(_secondPosition, secondTarget, secondMove, blend);
+            PaintActor(First, _firstPosition, firstFacing);
+            PaintActor(Second, _secondPosition, secondFacing);
+            float fraction = Mathf.Clamp01((Time.unscaledTime - _snapshotTime) * 1000f / DuelConfig.FrameMs);
+            FirstAnimator.Paint(view.FirstHealth, view.FirstY, view.FirstAction, firstMove != 0, view.Frame, view.FirstAge, fraction);
+            SecondAnimator.Paint(view.SecondHealth, view.SecondY, view.SecondAction, secondMove != 0, view.Frame, view.SecondAge, fraction);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
@@ -134,6 +173,16 @@ namespace RevGame.View
                 _presentedResult = view.Result;
                 Banner.transform.DOPunchScale(Vector3.one * .16f, .4f).SetUpdate(true).SetLink(gameObject);
             }
+        }
+
+        // 刚转向时，插值可能仍落在旧方向的一侧。先保持显示横坐标，等新目标追过来再跟随。
+        private static Vector2 FollowPosition(Vector2 current, Vector2 target, int direction, float blend)
+        {
+            if ((target.x - current.x) * direction < 0)
+            {
+                target.x = current.x;
+            }
+            return Vector2.Lerp(current, target, blend);
         }
 
         // 更新屏幕位置和镜像方向，只修改 RectTransform。
