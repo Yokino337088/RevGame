@@ -60,7 +60,7 @@ namespace RevGame.Pvp
         public GoCore DisplayCore { get { return _replay ?? Core; } }
         public GoHint[] Suggestions { get { return _suggestions; } }
         public int SuggestionCount { get { return _suggestionCount; } }
-        public bool CanAct { get { return Core != null && !_awaiting && !_leaving && ReplayStep < 0 && (Mode == PvpConnectionMode.Local || Connected) && (Mode != PvpConnectionMode.Server || (_server != null && !_server.Busy)); } }
+        public bool CanAct { get { return Core != null && !_awaiting && !_leaving && ReplayStep < 0 && (Mode == PvpConnectionMode.Local || Connected) && (Mode != PvpConnectionMode.Server || (_server != null && !_server.Busy && !_needsServerSync)); } }
 
         /// <summary>对局普通状态留在HUD，横幅只接收菜单提示和需要玩家处理的异常。</summary>
         public bool ShouldShowStatusNotice

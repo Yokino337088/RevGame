@@ -1,5 +1,5 @@
 // 真实 TCP 协议探针：不是游戏服务，也不注册伪 Handler。
-// 直接编译客户端同一份 GoCore 和已导出协议，验证真实 Fantasy 服务的收包/回包/重连。
+// 使用与客户端同源的 GoCore 和已导出协议，验证真实 Fantasy 服务的收包/回包/重连。
 // 测试工具使用有界阻塞 Socket，避免把测试专用 Task/线程模型带进生产业务。
 using System.Buffers.Binary;
 using System.Net.Sockets;
@@ -8,6 +8,13 @@ using Fantasy;
 using Fantasy.Network.Interface;
 using LightProto;
 using RevGame.Pvp;
+
+// KCP 压测使用独立 Fantasy 进程和 Scene，旧 TCP 探针命令保持兼容。
+if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("REVGO_LOAD_ENDPOINT")))
+{
+    await Fantasy.Platform.Net.Entry.Start(new GameConsoleLog());
+    return;
+}
 
 string host = args.Length > 0 ? args[0] : "127.0.0.1";
 int port = args.Length > 1 ? int.Parse(args[1]) : 20000;
@@ -20,6 +27,14 @@ if (mode == "opponent")
 else if (mode == "expiry")
 {
     Expiry(host, port, rules);
+}
+else if (mode == "ranking")
+{
+    Ranking(host, port, rules);
+}
+else if (mode == "capacity")
+{
+    Capacity(host, port, rules);
 }
 else
 {
@@ -81,6 +96,9 @@ static void Smoke(string host, int port, string rules)
     var move = Apply(core, GoAction.Play, GoSide.Black, 2, 2);
     var rejected = white.Send(stateA.RoomId, move);
     Check(rejected.ErrorCode != 0 && rejected.State.Commands.Count == 0, "不能冒用另一方身份");
+    var forged = move.DeepCopy();
+    forged.ResultHash = "0";
+    Check(black.Send(stateA.RoomId, forged).ErrorCode == 17 && white.Sync().State.Commands.Count == 0, "Battle 拒绝伪造首手，双方棋谱仍为空");
     var first = black.Send(stateA.RoomId, move);
     Check(first.ErrorCode == 0 && first.State.Commands.Count == 1, "黑方落子已转发");
     Check(black.Send(stateA.RoomId, move).State.Commands.Count == 1, "完全相同重发幂等");
@@ -89,7 +107,9 @@ static void Smoke(string host, int port, string rules)
     Check(black.Send(stateA.RoomId, altered).ErrorCode != 0, "重复序号改内容拒绝");
     Check(white.Sync().State.Commands.Single().ResultHash == core.StateHash.ToString(), "对手收到同一哈希");
     var whiteMove = Apply(core, GoAction.Play, GoSide.White, 6, 6);
-    Check(white.Send(stateA.RoomId, whiteMove).ErrorCode == 0, "白方合法顺序转发");
+    var legacy = white.Send(stateA.RoomId, whiteMove);
+    Check(legacy.ErrorCode == 0 && legacy.State.BaseSequence == 0 && legacy.State.Commands.Count == 2,
+        "未协商增量的旧客户端仍收到完整棋谱");
     Check(Replay(a.Sync().State).StateHash == Replay(b.Sync().State).StateHash, "双方同源重放完全一致");
     // 断开甲连接，恢复令牌重新建 Socket；不是复用旧会话伪造重连。
     string token = helloA.Token;
@@ -103,6 +123,149 @@ static void Smoke(string host, int port, string rules)
     Check(b.Sync().State.Phase == "closed", "对手收到明确离开状态");
     Check(b.Leave().State.Phase == "idle", "双方退出回到大厅");
     Console.WriteLine("GO_RELAY_SMOKE_PASS");
+}
+
+static void Ranking(string host, int port, string rules)
+{
+    using var a = new RelayClient(host, port);
+    using var b = new RelayClient(host, port);
+    var helloA = a.Hello("棋力验收甲", rules);
+    var helloB = b.Hello("棋力验收乙", rules);
+    Check(helloA.ErrorCode == 0 && helloB.ErrorCode == 0, "棋力验收双方握手");
+    using var ruleDocument = JsonDocument.Parse(rules);
+    int komi = ruleDocument.RootElement.GetProperty("komiHalfPoints").GetInt32();
+    void ScoreWin(RelayClient winner, RelayClient loser)
+    {
+        Check(winner.Match().State.Phase == "queued", "固定赢家先进入队列");
+        var room = loser.Match().State;
+        Check(room.Phase == "playing", "尚在初始棋力窗时立即配对");
+        var core = new GoCore(komi);
+        var black = room.MySide == 1 ? loser : winner;
+        var white = room.MySide == 2 ? loser : winner;
+        void Step(RelayClient player, GoAction action, GoSide side)
+        {
+            var command = Apply(core, action, side);
+            Check(player.Send(room.RoomId, command).ErrorCode == 0, "Battle 接受 " + action);
+        }
+        // 棋盘上只留固定赢家的棋子，其余空点归同一颜色。
+        if (black == winner)
+        {
+            Step(black, GoAction.Play, GoSide.Black);
+        }
+        else
+        {
+            Step(black, GoAction.Pass, GoSide.Black);
+            Step(white, GoAction.Play, GoSide.White);
+        }
+        Step(core.Turn == GoSide.Black ? black : white, GoAction.Pass, core.Turn);
+        Step(core.Turn == GoSide.Black ? black : white, GoAction.Pass, core.Turn);
+        Step(black, GoAction.ConfirmScore, GoSide.Black);
+        Step(white, GoAction.ConfirmScore, GoSide.White);
+        Check(core.Winner == (room.MySide == 1 ? GoSide.White : GoSide.Black), "指定玩家赢得经双方确认的正常计分");
+        winner.Leave();
+        loser.Leave();
+        Thread.Sleep(1100);
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        ScoreWin(a, b);
+    }
+    Check(a.Match().State.Phase == "queued", "第四局进入匹配");
+    var resignation = b.Match().State;
+    var resigningBoard = new GoCore(komi);
+    var resign = Apply(resigningBoard, GoAction.Resign, (GoSide)resignation.MySide);
+    Check(b.Send(resignation.RoomId, resign).ErrorCode == 0, "本人认输有效");
+    Check(b.Send(resignation.RoomId, resign).ErrorCode == 0, "同一条认输指令允许幂等重发");
+    a.Leave();
+    b.Leave();
+    Thread.Sleep(1100);
+    Check(a.Match().State.Phase == "queued" && b.Match().State.Phase == "queued", "三次数子加一次认输后超出初始棋力窗");
+    var wait = System.Diagnostics.Stopwatch.StartNew();
+    while (wait.Elapsed.TotalSeconds < 11)
+    {
+        Thread.Sleep(250);
+        var stateA = a.Sync().State;
+        var stateB = b.Sync().State;
+        if (stateA.Phase == "playing" && stateB.RoomId == stateA.RoomId)
+        {
+            Check(wait.Elapsed.TotalSeconds >= 7.9, "双方等待满 8 秒才放宽，定时扫描配成同一房间");
+            a.Leave();
+            b.Leave();
+            break;
+        }
+    }
+    Check(a.Sync().State.Phase == "idle" && b.Sync().State.Phase == "idle", "放宽后对局可正常退出");
+    using var c = new RelayClient(host, port);
+    using var d = new RelayClient(host, port);
+    Check(c.Hello("棋力验收丙", rules).ErrorCode == 0 && d.Hello("棋力验收丁", rules).ErrorCode == 0, "新玩家从初始棋力分入场");
+    // 甲额外赢一局，离 1500 分更远。让甲先排队，丁入队后仍应优先选更接近的乙。
+    ScoreWin(a, c);
+    Check(a.Match().State.Phase == "queued" && b.Match().State.Phase == "queued", "两个分差过大的候选保持等待");
+    var preferred = d.Match().State;
+    Check(preferred.Phase == "playing" && b.Sync().State.RoomId == preferred.RoomId && a.Sync().State.Phase == "queued",
+        "同段内优先选分差更小的对手");
+    a.Match(true);
+    b.Leave();
+    d.Leave();
+    if (ruleDocument.RootElement.GetProperty("reconnectWindowSeconds").GetInt32() == 1)
+    {
+        a.Dispose();
+        b.Dispose();
+        Thread.Sleep(2300);
+        using var returnedA = new RelayClient(host, port);
+        using var returnedB = new RelayClient(host, port);
+        var recoveredA = returnedA.Hello("棋力验收甲", rules, helloA.Token);
+        var recoveredB = returnedB.Hello("棋力验收乙", rules, helloB.Token);
+        Check(recoveredA.ErrorCode == 0 && recoveredB.ErrorCode == 0 && recoveredA.State.Phase == "idle" && recoveredB.State.Phase == "idle",
+            "房间重连窗口已过，原匿名令牌可恢复棋力且不恢复旧房间");
+        Check(returnedA.Match().State.Phase == "queued" && returnedB.Match().State.Phase == "queued", "重建连接后仍保留棋力分差");
+        returnedA.Match(true);
+        returnedB.Match(true);
+    }
+    Console.WriteLine("GO_RELAY_RANKING_PASS");
+}
+
+// 用仅启用一个 Battle 的测试配置，把该节点的 128 席占满再验证候补。
+static void Capacity(string host, int port, string rules)
+{
+    const int players = 258;
+    var clients = new List<RelayClient>(players);
+    try
+    {
+        for (int i = 0; i < players; i++)
+        {
+            var client = new RelayClient(host, port);
+            clients.Add(client);
+            if (client.Hello($"容量验收{i}", rules).ErrorCode != 0 || client.Match().State.Phase != (i < 256 && i % 2 == 1 ? "playing" : "queued"))
+            {
+                throw new InvalidOperationException($"容量验收玩家 {i} 的开房状态错误");
+            }
+        }
+        Check(clients[0].Sync().State.Phase == "playing" && clients[255].Sync().State.Phase == "playing", "单节点已有 128 局");
+        Check(clients[256].Sync().State.Phase == "queued" && clients[257].Sync().State.Phase == "queued", "容量耗尽时双方继续排队");
+        clients[0].Leave();
+        clients[1].Leave();
+        var wait = System.Diagnostics.Stopwatch.StartNew();
+        while (wait.Elapsed.TotalSeconds < 3)
+        {
+            Thread.Sleep(250);
+            var first = clients[256].Sync().State;
+            var second = clients[257].Sync().State;
+            if (first.Phase == "playing" && first.RoomId == second.RoomId)
+            {
+                Console.WriteLine("GO_RELAY_CAPACITY_PASS");
+                return;
+            }
+        }
+        throw new InvalidOperationException("释放计算席位后未自动匹配候补");
+    }
+    finally
+    {
+        foreach (var client in clients)
+        {
+            client.Dispose();
+        }
+    }
 }
 
 static void Opponent(string host, int port, string rules)

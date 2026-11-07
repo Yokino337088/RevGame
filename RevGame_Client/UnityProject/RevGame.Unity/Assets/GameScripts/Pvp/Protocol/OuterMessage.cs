@@ -25,7 +25,7 @@ using Fantasy.Serialize;
 namespace Fantasy
 {
     /// <summary>
-    /// 一条已排序的围棋操作；服务器只保存和转发，不计算围棋合法性。
+    /// 一条经 Battle 校验并排序的围棋操作。
     /// </summary>
     [Serializable]
     [ProtoContract]
@@ -117,7 +117,7 @@ namespace Fantasy
         public string ResultHash { get; set; }
     }
     /// <summary>
-    /// 小棋盘采用完整操作序列快照，重连双方都从同一份记录重放。
+    /// 首次同步和重连携带完整操作序列，协商后普通操作可只带最新一手。
     /// </summary>
     [Serializable]
     [ProtoContract]
@@ -167,6 +167,7 @@ namespace Fantasy
             ReconnectDeadlineUtcMs = default;
             Reason = default;
             MatchKind = default;
+            BaseSequence = default;
             MessageObjectPool<GoRelayState>.Return(this);
         }
 
@@ -190,6 +191,7 @@ namespace Fantasy
             other.ReconnectDeadlineUtcMs = ReconnectDeadlineUtcMs;
             other.Reason = Reason;
             other.MatchKind = MatchKind;
+            other.BaseSequence = BaseSequence;
 
         }
 
@@ -225,6 +227,8 @@ namespace Fantasy
         public string Reason { get; set; }
         [ProtoMember(13)]
         public string MatchKind { get; set; }
+        [ProtoMember(14)]
+        public int BaseSequence { get; set; }
     }
     /// <summary>
     /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
@@ -268,6 +272,7 @@ namespace Fantasy
             ResumeToken = default;
             RulesJson = default;
             MatchKind = default;
+            SupportsDelta = default;
             MessageObjectPool<C2G_GoHelloRequest>.Return(this);
         }
 
@@ -282,6 +287,7 @@ namespace Fantasy
             other.ResumeToken = ResumeToken;
             other.RulesJson = RulesJson;
             other.MatchKind = MatchKind;
+            other.SupportsDelta = SupportsDelta;
 
         }
 
@@ -304,6 +310,8 @@ namespace Fantasy
         public string RulesJson { get; set; }
         [ProtoMember(5)]
         public string MatchKind { get; set; }
+        [ProtoMember(6)]
+        public bool SupportsDelta { get; set; }
     }
     [Serializable]
     [ProtoContract]

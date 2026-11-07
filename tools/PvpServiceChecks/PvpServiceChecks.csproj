@@ -13,6 +13,7 @@
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Agent.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettings.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoAgentPosition.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoTacticalSearch.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/*.cs" Link="Core/%(Filename)%(Extension)" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs" Link="PvpService.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Presentation.cs" Link="PvpService.Presentation.cs" />

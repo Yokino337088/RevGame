@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>围棋落子延迟优化测试</title>
+<style>
+body{margin:0;background:#f4f1e8;color:#223c32;font:16px/1.75 system-ui,sans-serif}
+header{background:#214b3b;color:#f6edcf;padding:28px max(5%,24px)}
+main{max-width:1120px;margin:auto;padding:20px}section{background:#fffdf6;border:1px solid #d9cca5;border-radius:12px;padding:20px 24px;margin:18px 0}
+h1,h2{line-height:1.3}h2{margin-top:0}table{border-collapse:collapse;width:100%;white-space:nowrap}
+td,th{padding:9px 12px;border-bottom:1px solid #ded3b6;text-align:left}.scroll{overflow-x:auto}
+</style>
+<header><h1>围棋落子延迟优化测试</h1><p>2026-11-07 · Windows · .NET 8 Release · Fantasy 2026.1.2003 · i7-12700H · 本机回环</p></header>
+<main>
+<section><h2>千人匹配和 500 局结果</h2>
+<p>最终版落子请求 P99 为 <strong>133.22 ms</strong>，相对本次同条件基线下降 10.0%。三轮分别启动同机服务与 KCP 探针，分批完成 1000 个登录，再同时发起同场次同规则的匹配。四个 Battle 节点各分配 125 局，每轮 30 手合法着法、双停、两次确认，共 17000 条操作。首手全部计入分位数。</p>
+<div class="scroll"><table><thead><tr><th>版本</th><th>匹配批次 ms</th><th>落子 P50</th><th>落子 P95</th><th>落子 P99</th><th>首手 P99</th><th>内部 RPC / 最大实收批</th><th>回包棋谱条数 / 推送棋谱条数</th></tr></thead><tbody>
+<tr><td>优化前</td><td>88.22</td><td>64.29</td><td>104.66</td><td>148.01</td><td>104.90</td><td>17,000 / 1</td><td>297,500 / 297,500</td></tr>
+<tr><td>试验版 · 最大批 128</td><td>88.44</td><td>51.19</td><td>85.10</td><td>163.81</td><td>171.51</td><td>368 / 125</td><td>17,000 / 17,000</td></tr>
+<tr><td>最终版 · 最大批 32</td><td>85.23</td><td>48.61</td><td>95.07</td><td>133.22</td><td>138.03</td><td>657 / 32</td><td>17,000 / 17,000</td></tr>
+</tbody></table></div>
+<p>上一轮编辑器及其他回归并行时曾出现 1441.74 ms 的 P99。本次受控基线没有复现该数值，收益按同轮基线计算。128 手试验的首手尾延迟恶化，因此改为达到 32 手立即发出，未满由 1 毫秒定时器发出。</p>
+</section>
+<section><h2>分段定位</h2>
+<p>两进程用同机单调时钟，按房间与操作序号逐条关联。各段 P99 分别排序。最慢 1% 的均值则对每轮总耗时最高的 170 条请求按段拆解。</p>
+<div class="scroll"><table><thead><tr><th>区段</th><th>优化前 P99 ms</th><th>128 手版 P99</th><th>最终版 P99</th><th>优化前慢请求均值</th><th>最终版慢请求均值</th></tr></thead><tbody>
+<tr><td>探针发起至 Gate Handler</td><td>44.39</td><td>33.51</td><td>45.92</td><td>21.77</td><td>35.32</td></tr>
+<tr><td>Gate 房间和序号检查</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Gate 交付至 Battle 结果返回</td><td>59.04</td><td>103.48</td><td>70.62</td><td>66.34</td><td>66.09</td></tr>
+<tr><td>落子日志写入</td><td>0.09</td><td>0.10</td><td>0.10</td><td>0.02</td><td>0.03</td></tr>
+<tr><td>结算、快照及对手推送入队</td><td>0.09</td><td>0.08</td><td>0.08</td><td>0.09</td><td>0.03</td></tr>
+<tr><td>提交者回包入队</td><td>0.04</td><td>0.01</td><td>0.01</td><td>0.02</td><td>0.01</td></tr>
+<tr><td>回包入队至探针收到</td><td>77.08</td><td>51.41</td><td>50.38</td><td>67.76</td><td>35.20</td></tr>
+</tbody></table></div>
+<p>Battle 段包含合批等待、跨 Scene 调度、棋规校验和 Gate 继续执行。回包入队后的时间包含 KCP 刷出、回环传输、探针排队及解包。这两段无法细分为纯棋规 CPU 或纯网络传输。普通落子日志在基线慢请求中平均约 0.02 ms。</p>
+<p>最终版最慢 1% 的回程均值从 67.76 ms 降至 35.20 ms。跨 Scene 段的慢请求均值仍约 66 ms，首手 P99 高于全量基线首手。这解释了总 P99 的收益小于消息减量比例。</p>
+<p>Gate 同一局只允许一手在途，每批按位置返回各房间的结果。对协商增量的客户端，服务端每手只回传一条新棋谱，回包和推送的棋谱条数各减少 94.3%。旧客户端及握手、重连、主动同步仍接收全量。客户端遇到断序时锁定操作并限频请求全量。</p>
+</section>
+<section><h2>正确性与清理</h2>
+<ul>
+<li>最终版 KCP 压测逐席核对棋谱序号与指纹链，1000 个座位均拼接到同一终局指纹。满载换 Socket 能恢复原房间和全量棋谱，所有座位离席后均为空闲。</li>
+<li>旧客户端 TCP 烟测通过，包括第二手收到全量棋谱、伪造首手被拒绝、幂等重发和重连。</li>
+<li>客户端离线增量与身份专项断言通过，覆盖缺口补齐、锁定与限频、重复命令和指纹篡改。</li>
+<li>Unity 2022.3.15f1c1 实际 Play 以新客户端和旧协议探针对弈。先用 <code>rev_discover</code> 找到编辑器能力，再用 <code>rev_call</code> 刷新、编译及启动 Play。随后 <code>rev_discover(game,pvp.)</code> 找到实际业务入口。两段 <code>rev_run</code> 验证双停、双方数子、终局序号 4、掉线全量恢复和退局，最后用 <code>rev_call(editor.stop)</code> 退出 Play。</li>
+</ul>
+<p>原始计时、探针和 Unity 证据在忽略目录 <code>.codex/work/pvp-scale/</code>。最终压测 <code>Hotfix.dll</code> SHA-256 为 <code>020b655ba748a5b8c817a8c53a44adbf0295fb0dc599e66f32fe1860b32baee4</code>。结论覆盖当前单机 Gate 与 Battle 组合和固定回环突发。公网抖动、多机和长时间负载的尾延迟尚未测量。</p>
+</section></main></html>

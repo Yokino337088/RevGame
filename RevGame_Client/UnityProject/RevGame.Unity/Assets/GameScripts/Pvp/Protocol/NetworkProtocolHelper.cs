@@ -14,7 +14,7 @@ namespace Fantasy
 			return (G2C_GoHelloResponse)await session.Call(C2G_GoHelloRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static async FTask<G2C_GoHelloResponse> C2G_GoHelloRequest(this Session session, string coreVersion, string nickname, string resumeToken, string rulesJson, string matchKind)
+		public static async FTask<G2C_GoHelloResponse> C2G_GoHelloRequest(this Session session, string coreVersion, string nickname, string resumeToken, string rulesJson, string matchKind, bool supportsDelta)
 		{
 			using var C2G_GoHelloRequest_request = Fantasy.C2G_GoHelloRequest.Create();
 			C2G_GoHelloRequest_request.CoreVersion = coreVersion;
@@ -22,6 +22,7 @@ namespace Fantasy
 			C2G_GoHelloRequest_request.ResumeToken = resumeToken;
 			C2G_GoHelloRequest_request.RulesJson = rulesJson;
 			C2G_GoHelloRequest_request.MatchKind = matchKind;
+			C2G_GoHelloRequest_request.SupportsDelta = supportsDelta;
 			return (G2C_GoHelloResponse)await session.Call(C2G_GoHelloRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>围棋棋力匹配与房间分流测试</title>
+<style>
+  body{margin:0;background:#f4f1e8;color:#223c32;font:16px/1.75 system-ui,sans-serif}
+  header{background:#214b3b;color:#f6edcf;padding:28px max(5%,24px)}
+  main{max-width:1080px;margin:auto;padding:20px}
+  section{background:#fffdf6;border:1px solid #d9cca5;border-radius:12px;padding:20px 24px;margin:18px 0}
+  h1,h2{line-height:1.3}h1{margin-bottom:8px}h2{margin-top:0}
+  table{border-collapse:collapse;width:100%}td,th{padding:9px;border-bottom:1px solid #ded3b6;text-align:left}
+  .scroll{overflow-x:auto}.limit{color:#754c1d}a{color:#226148}
+</style>
+<header>
+  <h1>围棋棋力匹配与房间分流测试</h1>
+  <p>2026-11-07 · Windows · .NET 8 Release · Fantasy 2026.1.2003 · 本机回环</p>
+</header>
+<main>
+  <section>
+    <h2>匹配与房间归属</h2>
+    <p>玩家从同一个 KCP Gate 进入，按场次和规则分组。在同组内先比段差，再比分差，距离相同时优先等待更久的人。窗口按双方较短的等待时间，在 8 秒、16 秒放宽，分别允许 1、2 段差与最多 200、300 分差。两人一旦配成，Gate 选当前房间数最少的 Battle 根场景并固定该局的 Address。该线程校验棋规并管理实盘，Gate 负责棋谱下发和恢复。</p>
+    <p>新身份从 1500 分开始，双方确认数子或本人认输后更新棋力。Unity 在同一次游戏运行中复用同地址、同昵称、同规则的匿名令牌。服务端短期档案最多 4096 条，最后一次计分后有效 30 分钟。</p>
+  </section>
+  <section>
+    <h2>KCP 千人并发</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>场景</th><th>开房数</th><th>四节点分布</th><th>匹配批次</th><th>落子 P50</th><th>P95</th><th>P99</th></tr></thead>
+      <tbody>
+        <tr><td>同一匹配桶</td><td>500</td><td>125 / 125 / 125 / 125</td><td>111.97 ms</td><td>105.40 ms</td><td>207.55 ms</td><td>262.56 ms</td></tr>
+        <tr><td>100 个匹配桶</td><td>500</td><td>125 / 125 / 125 / 125</td><td>106.76 ms</td><td>84.69 ms</td><td>128.89 ms</td><td>177.69 ms</td></tr>
+        <tr><td>加入棋力档案后的同桶复测</td><td>500</td><td>125 / 125 / 125 / 125</td><td>140.58 ms</td><td>218.97 ms</td><td>451.16 ms</td><td>1441.74 ms</td></tr>
+      </tbody>
+    </table></div>
+    <p>i7-12700H，14 核 20 线程。探针先分批登录并保活，再同时发起匹配。每轮 500 局各走 30 手，再执行双停与两次计分确认，共 17,000 条操作。探针核对双方棋谱与哈希、满载重连、离席和回大厅。服务端日志核对每局的分配、结算和释放地址一致，每轮均有 500 次棋力更新。</p>
+    <p class="limit">批次匹配耗时从开始并发匹配算起，单手延迟为同机客户端请求到收到回包的往返时间，包含网络、排队、棋规与快照。三轮共用本机的运行负载不同，特别是第三轮同时执行了编辑器和其他本机回归。尾延迟在该条件下明显波动。这些数据验证功能容量，公网延迟和长期稳定性仍需线上环境验证。千人压测使用的构建早于内部 RPC 响应归还的修订，最终版再通过 20 人 KCP 和下列定向回归。</p>
+  </section>
+  <section>
+    <h2>定向回归</h2>
+    <table><thead><tr><th>入口</th><th>断言</th></tr></thead><tbody>
+      <tr><td>TCP smoke</td><td>冒用座位和伪造首手被拒绝；合法落子、幂等重发、原棋谱恢复、离席均通过。</td></tr>
+      <tr><td>TCP ranking</td><td>胜负可改变匹配分，分差更小的对手优先。等待不足 8 秒不配对，放宽后自动开房。房间重连窗口到期后，旧令牌仍能恢复分数，房间状态为空。</td></tr>
+      <tr><td>TCP capacity</td><td>单 Battle 场景用 258 个连接压满 128 个房间。剩下两人继续排队，释放一个席位后自动开局。</td></tr>
+      <tr><td>KCP 20 人</td><td>两组规则形成 10 个房间，四节点分配 3 / 3 / 2 / 2。100 条操作、结算、重连及清理通过。</td></tr>
+      <tr><td>Unity 2022.3.15f1c1</td><td>从正式 StartScene 入场。玩家通过真实 KCP 匹配、认输、退回大厅并重新连接。服务端首次记录新身份 1500 分，再次记录恢复原连接身份 1484 分，房间为空。运行时无 Error，计划清理并退出 Play。</td></tr>
+      <tr><td>客户端离线身份断言</td><td>5 项通过，包括首次无令牌、退局重入复用、正在恢复房间时保留错误、不同昵称和地址不借用身份。旧版全量人机回退断言仍按即时落子编写，与现有预亮动画等待不一致。</td></tr>
+    </tbody></table>
+    <p>原始压测与运行期机器证据保留在项目忽略目录 <code>.codex/work/pvp-scale/</code>。</p>
+  </section>
+  <section>
+    <h2>Unity 自动化调用</h2>
+    <ol>
+      <li><code>rev_discover(editor, editor.status)</code> 确认目标编辑器。<code>rev_call(editor.status / editor.refresh / editor.compilation)</code> 等待新程序集，编译诊断无错误。</li>
+      <li>编译后 <code>rev_discover(editor, editor.play)</code>。<code>rev_call(scene.list / editor.play / runtime.start)</code> 从 <code>Assets/Scenes/StartScene.unity</code> 进入 Play。<code>rev_discover(game, pvp.)</code> 找到 41 项真实业务能力。</li>
+      <li><code>rev_run</code> 分两段。第一段调用 <code>pvp.enter / pvp.connect / pvp.match / pvp.kcp-opponent</code> 组成真实 KCP 房间。第二段等到当前座位执棋，提交认输、回大厅并重新连接，对照服务端棋力记录和运行时日志。两段断言均通过。</li>
+      <li>最后执行计划清理及 <code>rev_call(editor.stop)</code>。该回归走 game 业务能力，没有调用 GM 目标。身份验证以服务器和业务断言为证据，未做视觉采样。</li>
+    </ol>
+    <p>早先两次尝试分别遇到 Play 等待超时、旧程序集和对手停手指令竞争。最终复测使用刷新后的程序集，并在轮到验收玩家时提交认输。</p>
+  </section>
+  <section>
+    <h2>框架与部署边界</h2>
+    <p>Fantasy <code>MultiThread</code> Root Scene 与 Address RPC 可支撑同一进程内的房间分流。Gate 仍集中处理连接、排队和棋谱下发。当前结果覆盖单机单进程。跨机容灾、账号级长期段位和公网延迟属于另外的验证范围。</p>
+    <ul>
+      <li><a href="https://bbs.4399.cn/thread-view-tid-51696899">王者荣耀 S42 版本公告，段位优先及等待窗口</a></li>
+      <li><a href="https://weibo.com/ttarticle/p/show?id=2309404239710208836296">王者荣耀早期匹配机制说明，Elo 与实力估计</a></li>
+      <li><a href="https://developer.cloud.tencent.com/article/1547409">腾讯云工程分享，按房间和对局数调度</a></li>
+      <li><a href="https://github.com/qq362946/Fantasy/blob/main/Docs/04-Advanced/CoreSystems/03-Scene.md">Fantasy 官方 Scene 文档</a></li>
+    </ul>
+  </section>
+</main>
+</html>

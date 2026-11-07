@@ -1,4 +1,6 @@
 // Fantasy OpCode cache. Generated automatically; do not edit manually.
+B2G_GoBatchResponse = 1207969554
+B2G_GoStepResponse = 1207969553
 C2G_GoCommandRequest = 268445457
 C2G_GoHeartbeatRequest = 268445458
 C2G_GoHelloRequest = 268445459
@@ -7,6 +9,9 @@ C2G_GoMatchRequest = 268445461
 C2G_GoSyncRequest = 268445462
 C2G_TestMessage = 134227729
 C2G_TestRequest = 268445463
+G2B_CloseGoRoom = 939534097
+G2B_GoBatchRequest = 1073751826
+G2B_GoStepRequest = 1073751825
 G2C_GoCommandResponse = 402663185
 G2C_GoHeartbeatResponse = 402663186
 G2C_GoHelloResponse = 402663187

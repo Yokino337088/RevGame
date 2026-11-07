@@ -66,10 +66,15 @@ namespace RevGame.Pvp
         private double _turnStarted, _queueStarted;
         private FantasyGoTransport _server;
         private string _resumeToken = "";
+        // 服务跨场景常驻。退局只清棋谱和当前连接，保留同地址、昵称及规则下的短期棋力身份。
+        private (string Endpoint, string Nickname, string Rules, string Kind, string Token) _matchIdentity;
         private bool _disposed, _awaiting, _lanHello;
         // 一个尚未回执的命令只占一个序号；旧状态推送不能把它误当作已完成，也不能因此允许连续下两手。
         private int _pendingSequence;
         private bool _recoveringServer;
+        // 增量先到或本地缺少前序时，在当前 RPC 完成后请求一份完整棋谱。
+        private bool _needsServerSync;
+        private double _serverSyncRetryAt;
         private GoClock _goClock;
         private bool _leaving, _leaveSent;
         private double _leaveDeadline, _leaveEarliest;
@@ -130,12 +135,14 @@ namespace RevGame.Pvp
             Mode = PvpConnectionMode.Server;
             Endpoint = requestedEndpoint;
             Nickname = CleanName(nickname);
+            string kind = Config.rookie ? "rookie" : "advanced";
             _recoveringServer = resume;
             if (!resume)
             {
                 Core = null;
                 _moves.Clear();
-                _resumeToken = string.Empty;
+                _resumeToken = (_matchIdentity.Endpoint, _matchIdentity.Nickname, _matchIdentity.Rules, _matchIdentity.Kind) ==
+                    (Endpoint, Nickname, Config.RulesJson, kind) ? _matchIdentity.Token : string.Empty;
                 ResetPresentation();
             }
             Status = resume ? "正在恢复服务器对局，原有棋谱与思考时间已保留…" : "正在连接匹配服务器…";
@@ -143,7 +150,7 @@ namespace RevGame.Pvp
             _server.StateReceived += ReceiveServer;
             _server.Error += OnNetworkError;
             _server.RequestRejected += OnRequestRejected;
-            _server.Connect(Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced", _resumeToken);
+            _server.Connect(Endpoint, Nickname, Config.RulesJson, kind, _resumeToken, allowNewIdentity: !resume);
             Revision++;
         }
 
@@ -340,10 +347,21 @@ namespace RevGame.Pvp
             }
             try
             {
+                bool delta = state.BaseSequence > 0;
+                if (delta && (RoomId != state.RoomId || Core == null || state.BaseSequence > Core.Sequence))
+                {
+                    _needsServerSync = true;
+                    return;
+                }
                 Connected = _server.Connected;
                 _resumeToken = _server.ResumeToken;
+                _matchIdentity = (Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced", _resumeToken);
                 Queued = state.Phase == "queued";
                 RoomId = state.RoomId ?? "";
+                if (!delta)
+                {
+                    _needsServerSync = false;
+                }
                 // 快照是事实同步，不是连接事件。不能每手把状态重置为“已连接”，再被UI当作新通知。
                 if (!string.IsNullOrEmpty(state.Reason))
                 {
@@ -373,14 +391,20 @@ namespace RevGame.Pvp
                 }
                 BlackName = state.BlackName;
                 WhiteName = state.WhiteName;
-                var history = new List<PvpMove>();
-                foreach (GoRelayCommand command in state.Commands)
+                if (delta)
                 {
-                    history.Add(new PvpMove { sequence = command.Sequence, side = command.Side, kind = command.Kind,
-                        x = command.X, y = command.Y, elapsedMs = command.ElapsedMs, before = command.PreviousHash, after = command.ResultHash });
+                    ApplyServerDelta(state);
                 }
-                ValidatePrefix(history);
-                ReplaceHistory(history);
+                else
+                {
+                    var history = new List<PvpMove>(state.Commands.Count);
+                    foreach (GoRelayCommand command in state.Commands)
+                    {
+                        history.Add(ToMove(command));
+                    }
+                    ValidatePrefix(history);
+                    ReplaceHistory(history);
+                }
                 _awaiting = _pendingSequence > Core.Sequence;
                 if (!_awaiting)
                 {
@@ -402,6 +426,46 @@ namespace RevGame.Pvp
             }
         }
 
+        private void ApplyServerDelta(GoRelayState state)
+        {
+            if (state.Commands.Count != 1 || state.Commands[0]?.Sequence != state.BaseSequence + 1)
+            {
+                throw new InvalidOperationException("增量棋谱序号非法");
+            }
+            PvpMove move = ToMove(state.Commands[0]);
+            if (move.sequence <= Core.Sequence)
+            {
+                // 响应重试可能再次到达。只接受与当前已确认历史完全相同的操作。
+                if (!SameMove(_moves[move.sequence - 1], move))
+                {
+                    throw new InvalidOperationException("增量修改了已确认棋谱");
+                }
+                return;
+            }
+            if (!TryPrepareMove(Core, _goClock, move, out GoCore next, out GoClock nextClock, out string reason))
+            {
+                throw new InvalidOperationException(reason);
+            }
+            Core = next;
+            _goClock = nextClock;
+            _moves.Add(move);
+            _turnStarted = _clock.Elapsed.TotalSeconds;
+            SelectedPoint = -1;
+            Revision++;
+        }
+
+        private static PvpMove ToMove(GoRelayCommand command)
+        {
+            return new PvpMove { sequence = command.Sequence, side = command.Side, kind = command.Kind,
+                x = command.X, y = command.Y, elapsedMs = command.ElapsedMs, before = command.PreviousHash, after = command.ResultHash };
+        }
+
+        private static bool SameMove(PvpMove a, PvpMove b)
+        {
+            return a != null && b != null && a.sequence == b.sequence && a.kind == b.kind && a.side == b.side &&
+                a.x == b.x && a.y == b.y && a.before == b.before && a.after == b.after && a.elapsedMs == b.elapsedMs;
+        }
+
         private void ValidatePrefix(List<PvpMove> history)
         {
             if (history == null || history.Count < _moves.Count || history.Count > 4096)
@@ -410,8 +474,7 @@ namespace RevGame.Pvp
             }
             for (int i = 0; i < _moves.Count; i++)
             {
-                PvpMove a = history[i], b = _moves[i];
-                if (a == null || a.sequence != b.sequence || a.kind != b.kind || a.side != b.side || a.x != b.x || a.y != b.y || a.before != b.before || a.after != b.after || a.elapsedMs != b.elapsedMs)
+                if (!SameMove(history[i], _moves[i]))
                 {
                     throw new InvalidOperationException("既有棋谱被修改，已保留本地对局");
                 }
@@ -711,6 +774,13 @@ namespace RevGame.Pvp
                 }
                 return;
             }
+            if (_needsServerSync && _server != null && _server.Connected && !_server.Busy &&
+                _clock.Elapsed.TotalSeconds >= _serverSyncRetryAt)
+            {
+                // 保留缺口锁直到完整快照抵达。限流或断线期间，重试最多一秒一次。
+                _serverSyncRetryAt = _clock.Elapsed.TotalSeconds + 1;
+                _server.Sync();
+            }
             if (_syncOutgoing.Count > 0 && Lan != null && Lan.IsConnected)
             {
                 // 每帧只发一个分片，避免整盘棋谱一次塞满可靠传输的有界窗口。
@@ -737,6 +807,10 @@ namespace RevGame.Pvp
             if (_server != null)
             {
                 _resumeToken = _server.ResumeToken;
+                if (string.IsNullOrEmpty(_resumeToken) && _matchIdentity.Endpoint == Endpoint && _matchIdentity.Nickname == Nickname)
+                {
+                    _matchIdentity = default;
+                }
             }
             Connected = false;
             Queued = false;
@@ -812,6 +886,8 @@ namespace RevGame.Pvp
             Queued = false;
             _awaiting = false;
             _pendingSequence = 0;
+            _needsServerSync = false;
+            _serverSyncRetryAt = 0;
             _syncMoves = null;
             _syncTotal = 0;
             _recoveringServer = false;

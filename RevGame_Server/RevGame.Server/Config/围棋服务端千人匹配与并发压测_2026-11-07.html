@@ -1,0 +1,17 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>围棋服务端千人匹配与并发压测</title>
+<style>body{margin:0;background:#f5f1e6;color:#19382e;font:16px/1.75 system-ui,"Microsoft YaHei",sans-serif}header{background:#204b3b;color:#fff3ce;padding:36px 6%}h1{margin:0}h2{margin-top:0}main{max-width:1120px;margin:auto;padding:24px}section{background:#fffdf6;border:1px solid #dbcfac;border-radius:13px;padding:22px;margin-bottom:18px}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid #dbcfac}a{color:#205741}code{background:#f1ebdb;padding:2px 4px}</style>
+<header><h1>围棋服务端千人匹配与并发压测</h1><p>2026-11-07 · Fantasy.Net 2026.1.2003 · Windows x64 · i7-12700H · Release · 真实 KCP 回环</p></header><main>
+<section><h2>结果</h2>
+<p>三个千人场景均形成 500 个双人房，每局提交 30 手落子和 4 次数子操作。全部 17,000 条命令在对应房间校验序号及结果指纹，服务端各记录了 500 局同源规则审计结果，错误日志为零。满载时换 Socket 能恢复原身份、房间和棋谱，双方离席后回到 idle。</p>
+<table><thead><tr><th>环境</th><th>在线 / 房间</th><th>匹配整批 ms</th><th>命令 P50 ms</th><th>命令 P95 ms</th><th>命令 P99 ms</th><th>实收棋谱条目</th></tr></thead><tbody><tr><td>改动前 · 100 桶</td><td>1000 / 500</td><td>90.1</td><td>73.1</td><td>135.3</td><td>165.8</td><td>892,500</td></tr><tr><td>改动后 · 100 桶</td><td>1000 / 500</td><td>50.3</td><td>44.5</td><td>116.2</td><td>159.4</td><td>595,000</td></tr><tr><td>改动后 · 1 桶</td><td>1000 / 500</td><td>105.1</td><td>51.8</td><td>119.0</td><td>162.0</td><td>595,000</td></tr></tbody></table>
+<p>基线取自 cc7d4e4 的服务端源码。同一百桶负载下，命令回复和对手推送合计由 892,500 条棋谱记录降至 595,000 条，减少 33.3%。计数是实收记录条数。延迟是探针在回环链路上观察到的端到端命令 RPC，包含探针调度和服务器日志开销。</p></section>
+<section><h2>并发输入和断言</h2>
+<ul><li>探针在同一机器独立进程运行，按批建连登录并保活，所有 1,000 个已登录会话就绪后一次发起匹配。每个局内命令波次同时提交 500 条 RPC，间隔约 90 ms，并穿插业务心跳。</li>
+<li>百桶测试包含相同规则但不同场次、相同场次但不同规则。每间房恰有两个不同执色的客户端，且场次与规则一致。另跑了同规则的千人突发。</li>
+<li>匹配前验证重复请求仍在等待、取消后回到 idle。数子结束后核对对手推送。以原令牌换真实 KCP Socket 后读取原房间和 34 条棋谱。全部离席并主动同步确认状态为空。</li>
+<li>小批量以 20 个真实 KCP 客户端验证探针连通，形成 10 局，执行 100 条操作。压测首次卡在客户端批量创建 Socket 的缓冲区探测，改成建连分批并保活后，匹配测量仍从全员就绪开始。</li><li>原有 TCP 探针回归通过，覆盖冒用执色、相同操作重发、同序号改写、重放指纹和重连离席。</li></ul></section>
+<section><h2>实现与容量边界</h2>
+<p>在原有 Fantasy Gate Scene 线程内，以场次和完整规则作为键管理 FIFO 链表。排队、取消和断线摘队直接访问对应桶或节点。单局仍由独立房间 Entity 持有棋谱。已有响应覆盖的落子者、当前匹配请求者和重连者不重复收同一份推送。棋谱、协议和重连入口保持原契约。</p>
+<p>这个结果验证了当前主机上的单 Gate、KCP、500 局突发负载。现有 1,024 份匿名身份上限也计入重连保留身份。公网延迟、生产硬件、持续时长和多进程故障恢复需要各自的压测。Root Scene 可按配置独立调度。更大的共享匹配池需要独立的配对所有者、通过 Address 路由的多个房间所有者和可恢复的归属目录。<a href="https://github.com/qq362946/Fantasy/blob/main/Docs/04-Advanced/CoreSystems/03-Scene.md">Fantasy Scene 文档</a></p>
+<p>服务端和探针 Release 编译通过。服务端保留了基线中共享 GoCore 的 7 条可空性警告。探针独立于生产服务，为使用锁定版本 Net 包内的真实 KCP，探针进程一次绑定客户端工厂并接收已导出的协议响应。生产大厅继续使用框架正常 Handler 注册和 FTask。源码和启动方法见 <a href="README.md">部署配置说明</a>。</p></section></main></html>

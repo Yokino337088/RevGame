@@ -1,7 +1,7 @@
 syntax = "proto3";
 package Fantasy;
 
-/// 一条已排序的围棋操作；服务器只保存和转发，不计算围棋合法性。
+/// 一条经 Battle 校验并排序的围棋操作。
 message GoRelayCommand
 {
     int32 Sequence = 1;
@@ -14,7 +14,7 @@ message GoRelayCommand
     string PreviousHash = 8;
     string ResultHash = 9;
 }
-/// 小棋盘采用完整操作序列快照，重连双方都从同一份记录重放。
+/// 首次同步和重连携带完整操作序列，协商后普通操作可只带最新一手。
 message GoRelayState
 {
     string RoomId = 1;
@@ -30,6 +30,8 @@ message GoRelayState
     int64 ReconnectDeadlineUtcMs = 11;
     string Reason = 12;
     string MatchKind = 13;
+    // 大于 0 时，Commands 只含 BaseSequence + 1 这一手。0 为完整快照。
+    int32 BaseSequence = 14;
 }
 /// 匿名身份只用于本次休闲联机；恢复令牌不可作为日志或公开昵称。
 message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
@@ -39,6 +41,7 @@ message C2G_GoHelloRequest // IRequest,G2C_GoHelloResponse
     string ResumeToken = 3;
     string RulesJson = 4;
     string MatchKind = 5;
+    bool SupportsDelta = 6;
 }
 message G2C_GoHelloResponse // IResponse
 {

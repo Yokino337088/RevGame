@@ -10,8 +10,20 @@ internal static class Program
     private static int _checks;
     private static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
-    private static void Main()
+    private static void Main(string[] options)
     {
+        if (options.Length == 1 && options[0] == "--identity")
+        {
+            CheckMatchIdentity();
+            Console.WriteLine("PASS: " + _checks + " online identity assertions.");
+            return;
+        }
+        if (options.Length == 1 && options[0] == "--delta")
+        {
+            CheckServerDelta();
+            Console.WriteLine("PASS: " + _checks + " online delta assertions.");
+            return;
+        }
         AgentChecks.Run();
         PvpService service = Local();
         ExpireTurn(service);
@@ -88,6 +100,81 @@ internal static class Program
         service.StartLocal();
         Check(!service.IsComputerGame, "switching local mode clears computer lifetime");
         Console.WriteLine("PASS: " + _checks + " service timing/state assertions. Unity, JSON and sockets are not covered by this harness.");
+    }
+
+    private static void CheckServerDelta()
+    {
+        using var service = new PvpService();
+        var config = new PvpConfig();
+        service.Begin(config);
+        service.StartServer("127.0.0.1:20000", "增量验收");
+        var transport = FantasyGoTransport.Latest;
+        var expected = new GoCore(config.komiHalfPoints);
+        GoRelayCommand Move(int x)
+        {
+            var side = expected.Turn;
+            string before = expected.StateHash.ToString();
+            Check(expected.TryApply(GoAction.Play, side, x, 0, out _), "生成一手合法棋谱");
+            return new GoRelayCommand { Sequence = expected.Sequence, Side = (int)side, Kind = (int)GoAction.Play,
+                X = x, Y = 0, PreviousHash = before, ResultHash = expected.StateHash.ToString() };
+        }
+        void Push(int baseSequence, params GoRelayCommand[] commands)
+        {
+            var state = new GoRelayState { Phase = "playing", RoomId = "delta-fixture", CoreVersion = PvpService.ProtocolVersion,
+                RulesJson = config.RulesJson, MySide = 1, BaseSequence = baseSequence };
+            state.Commands.AddRange(commands);
+            transport.Push(state);
+        }
+
+        var first = Move(0);
+        var second = Move(1);
+        var third = Move(2);
+        var fourth = Move(3);
+        Push(0, first);
+        Push(2, third);
+        service.Poll();
+        service.Poll();
+        Check(service.Core.Sequence == 1 && !service.CanAct && transport.SyncCalls == 1,
+            "收到跳号增量时保留旧盘、锁定操作并限频请求全量");
+        Push(0, first, second, third);
+        Check(service.Core.Sequence == 3 && service.CanAct, "完整棋谱补齐缺口后解锁");
+        Push(3, fourth);
+        Check(service.Core.Sequence == 4 && service.Core.StateHash == expected.StateHash, "连续增量只应用一手且指纹正确");
+        Push(3, fourth);
+        Check(service.Core.Sequence == 4 && service.Moves.Count == 4, "重复增量幂等");
+        fourth.ResultHash = "0";
+        Push(3, fourth);
+        Check(!service.Connected && service.Core.StateHash == expected.StateHash, "篡改历史的重复包被拒绝且棋盘不变");
+    }
+
+    private static void CheckMatchIdentity()
+    {
+        const string endpoint = "127.0.0.1:20000";
+        using var service = new PvpService();
+        var config = new PvpConfig();
+        service.Begin(config);
+        service.StartServer(endpoint, "同一棋友");
+        var transport = FantasyGoTransport.Latest;
+        Check(transport.SubmittedToken == "", "首次匹配不带旧令牌");
+        transport.Push(new GoRelayState { Phase = "idle", RoomId = "" });
+        service.LeaveRoom();
+        // 保留真实退局流程，测试只把完成退局的最早时刻移到当前帧。
+        typeof(PvpService).GetField("_leaveEarliest", Private).SetValue(service, 0d);
+        service.Poll();
+        service.Begin(config);
+        service.StartServer(endpoint, "同一棋友");
+        transport = FantasyGoTransport.Latest;
+        Check(transport.SubmittedToken == "test-token" && transport.AllowsNewIdentity, "退局重入复用棋力令牌，过期可申请新身份");
+        transport.Push(new GoRelayState { Phase = "playing", RoomId = "fixture", CoreVersion = PvpService.ProtocolVersion,
+            RulesJson = config.RulesJson, MySide = 1 });
+        service.StartServer(endpoint, "同一棋友");
+        transport = FantasyGoTransport.Latest;
+        Check(transport.SubmittedToken == "test-token" && !transport.AllowsNewIdentity, "正在恢复房间时保留明确的令牌失效结果");
+        service.Begin(config);
+        service.StartServer(endpoint, "新棋友");
+        Check(FantasyGoTransport.Latest.SubmittedToken == "", "不同昵称不借用其他身份");
+        service.StartServer("127.0.0.1:20001", "同一棋友");
+        Check(FantasyGoTransport.Latest.SubmittedToken == "", "不同服务器不接收旧令牌");
     }
 
     private static PvpService Local()

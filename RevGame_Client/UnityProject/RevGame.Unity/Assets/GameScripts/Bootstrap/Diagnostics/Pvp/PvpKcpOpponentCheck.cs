@@ -67,7 +67,7 @@ namespace RevGame.Pvp
                 {
                     return;
                 }
-                using (var hello = await _session.C2G_GoHelloRequest("revgo-1", "KCP验收对手", "", _rules, "rookie"))
+                using (var hello = await _session.C2G_GoHelloRequest("revgo-1", "KCP验收对手", "", _rules, "rookie", supportsDelta: false))
                 {
                     Require(hello.ErrorCode == 0, hello.Reason);
                 }

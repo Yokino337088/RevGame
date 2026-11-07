@@ -1,7 +1,7 @@
 # RevGame_Server · Fantasy 服务端
 
 本目录是 RevGame 的服务端，基于 [Fantasy](https://github.com/qq362946/Fantasy)（零反射、源生成注册、支持 Native AOT 的 C# 分布式服务器框架）。
-**当前只做到框架接入**：工程能编译、客户端能拿到包、协议与配置工具就位，业务逻辑还没写。
+当前服务端提供九路围棋匿名握手、棋力匹配、对局节点分流、服务端棋规校验和断线恢复。匹配窗口、房间归属及 KCP 并发压测见 [部署配置说明](RevGame.Server/Config/README.md)。
 
 - 客户端在 [`../RevGame_Client`](../RevGame_Client)；
 - 玩法见 [`../RevGame_Client/策划案/玩法拓展策划案.html`](../RevGame_Client/策划案/玩法拓展策划案.html)；

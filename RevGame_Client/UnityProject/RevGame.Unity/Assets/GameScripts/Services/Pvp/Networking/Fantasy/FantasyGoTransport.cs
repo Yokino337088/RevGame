@@ -22,6 +22,7 @@ namespace RevGame.Pvp.Networking
         private string _nickname;
         private string _rulesJson;
         private string _matchKind;
+        private bool _allowNewIdentity;
         private string _roomId = "";
         private int _generation;
         private float _deadline;
@@ -52,7 +53,7 @@ namespace RevGame.Pvp.Networking
 #endif
 
         /// <summary>只在用户进入服务器模式后调用；失败不阻断游戏启动。</summary>
-        public void Connect(string endpoint, string nickname, string rulesJson, string matchKind = "rookie", string resumeToken = "")
+        public void Connect(string endpoint, string nickname, string rulesJson, string matchKind = "rookie", string resumeToken = "", bool allowNewIdentity = false)
         {
             Disconnect(false);
             _disposed = false;
@@ -70,6 +71,7 @@ namespace RevGame.Pvp.Networking
             _nickname = nickname;
             _rulesJson = rulesJson;
             _matchKind = matchKind;
+            _allowNewIdentity = allowNewIdentity;
             ResumeToken = resumeToken ?? "";
             Busy = true;
             _deadline = Time.realtimeSinceStartup + RequestTimeoutSeconds;
@@ -112,23 +114,29 @@ namespace RevGame.Pvp.Networking
         {
             try
             {
-                using var response = await _session.C2G_GoHelloRequest(ProtocolVersion, _nickname, ResumeToken, _rulesJson, _matchKind);
+                using var response = await _session.C2G_GoHelloRequest(ProtocolVersion, _nickname, ResumeToken, _rulesJson, _matchKind, supportsDelta: true);
                 if (!IsCurrent(generation))
                 {
                     return;
                 }
-                Busy = false;
                 if (response.ErrorCode != 0)
                 {
                     if (response.ErrorCode == 4)
                     {
-                        // 服务进程重启或保留期结束后，旧令牌已不存在；下一次用户点击连接可建新身份。
+                        // 新开匹配可以在同一连接上申请新身份。恢复旧房间时保留原错误给玩家。
+                        bool retry = _allowNewIdentity && !string.IsNullOrEmpty(ResumeToken);
                         ResumeToken = "";
+                        if (retry)
+                        {
+                            await HelloAsync(generation);
+                            return;
+                        }
                     }
                     Fail(generation, response.Reason);
                     return;
                 }
                 ResumeToken = response.Token;
+                Busy = false;
                 Connected = true;
                 _heartbeatAt = Time.realtimeSinceStartup + HeartbeatIntervalSeconds;
                 Receive(response.State);

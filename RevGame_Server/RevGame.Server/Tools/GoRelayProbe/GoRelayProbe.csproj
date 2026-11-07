@@ -7,6 +7,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Server/Entity/Entity.csproj" />
-    <Compile Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/*.cs" Link="Core/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

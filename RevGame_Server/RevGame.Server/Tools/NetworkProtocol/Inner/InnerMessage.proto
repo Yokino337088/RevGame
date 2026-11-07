@@ -13,3 +13,44 @@ package Sining.Message;
 // 通过添加 // using 导出时添加自定义命名空间
 // 例如: // using System.Runtime // using System.Reflection
 
+// 大厅把同一房间的操作发往分配好的 Battle Scene。该消息不出现在客户端协议。
+message GoBattleStepInput
+{
+    string RoomId = 1;
+    int32 Komi = 2;
+    int32 Sequence = 3;
+    int32 Side = 4;
+    int32 Kind = 5;
+    int32 X = 6;
+    int32 Y = 7;
+    int64 ElapsedMs = 8;
+    string Payload = 9;
+    string PreviousHash = 10;
+    string ResultHash = 11;
+}
+
+message GoBattleStepResult
+{
+    string Reason = 1;
+    bool Finished = 2;
+    int32 Winner = 3;
+    int32 EndReason = 4;
+    int32 DifferenceHalfPoints = 5;
+}
+
+// 同一批中的请求对应不同房间。结果按输入下标返回，单局错误不会影响其它房间。
+message G2B_GoBatchRequest // IAddressRequest,B2G_GoBatchResponse
+{
+    repeated GoBattleStepInput Steps = 1;
+}
+
+message B2G_GoBatchResponse // IAddressResponse
+{
+    repeated GoBattleStepResult Results = 1;
+}
+
+message G2B_CloseGoRoom // IAddressMessage
+{
+    string RoomId = 1;
+}
+

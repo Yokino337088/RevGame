@@ -85,7 +85,7 @@ namespace Fantasy
     public sealed class GoRelayState
     {
         public string Phase, RoomId, Reason, CoreVersion, RulesJson, BlackName, WhiteName;
-        public int MySide;
+        public int MySide, BaseSequence;
         public List<GoRelayCommand> Commands = new List<GoRelayCommand>();
     }
 }
@@ -95,6 +95,7 @@ namespace RevGame.Pvp
     public sealed class PvpConfig
     {
         public int komiHalfPoints = 15, mainTimeSeconds = 1, byoyomiSeconds = 1, byoyomiCount = 1;
+        public int localPlacementLimit = 0, localBaitEvery = 0;
         public int hintCount = 3, discoveryPort = 48581, matchTimeoutSeconds = 60, reconnectWindowSeconds = 90;
         public float announceSeconds = 1, peerExpirySeconds = 5, invitationTimeoutSeconds = 30, connectTimeoutSeconds = 10;
         public bool rookie;
@@ -113,16 +114,25 @@ namespace RevGame.Pvp.Networking
         public static FantasyGoTransport Latest;
         public bool Connected, Busy;
         public string ResumeToken = "test-token";
+        public string SubmittedToken;
+        public bool AllowsNewIdentity;
+        public int SyncCalls;
         public event Action<Fantasy.GoRelayState> StateReceived;
         public event Action<string> Error;
         public event Action<string> RequestRejected;
-        public void Connect(string endpoint, string nickname, string rules, string kind, string token)
+        public void Connect(string endpoint, string nickname, string rules, string kind, string token, bool allowNewIdentity = false)
         {
             Latest = this;
             Connected = true;
+            SubmittedToken = token;
+            AllowsNewIdentity = allowNewIdentity;
         }
         public void Match(bool cancel)
         {
+        }
+        public void Sync()
+        {
+            SyncCalls++;
         }
         public void Send(Fantasy.GoRelayCommand command)
         {

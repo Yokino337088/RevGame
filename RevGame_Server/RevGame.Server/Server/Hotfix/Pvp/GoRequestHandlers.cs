@@ -52,14 +52,24 @@ public sealed class C2G_GoCommandRequestHandler : MessageRPC<C2G_GoCommandReques
             response.Reason = "请先连接服务器，或稍后再试。";
             return;
         }
-        response.ErrorCode = lobby.Relay(player, request, out var reason);
+        var timing = GoMoveTiming.Start();
+        var (code, reason) = await lobby.Relay(session, player, request, timing);
+        response.ErrorCode = code;
         if (response.ErrorCode != 0)
         {
             Log.Warning($"[PVP/拒绝] 房间={request.RoomId} 玩家={GoEventLog.PlayerLabel(player)} 序号={request.Command?.Sequence} 错误码={response.ErrorCode} 原因={reason}");
         }
         response.Reason = reason;
-        response.State = lobby.Snapshot(player);
-        await FTask.CompletedTask;
+        int sequence = request.Command?.Sequence ?? 0;
+        if (lobby.Player(session) == player)
+        {
+            response.State = lobby.Snapshot(player, afterSequence: code == 0 ? sequence - 1 : 0);
+        }
+        if (timing?.PushEnd > 0)
+        {
+            reply();
+            timing.Record(request.RoomId, sequence);
+        }
     }
 }
 
