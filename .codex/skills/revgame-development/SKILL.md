@@ -39,6 +39,10 @@ description: 用于 RevGame（围棋史莱姆）项目的功能开发、快速�
 
 跨任务只增加必要技能。Prefab 编辑使用 CLI 与 Play 验收使用 MCP 可以出现在同一迭代；直接 CLI 调用不能写成已执行 MCP。仅改文本、技能或纯代码时不为了“走流程”启动 Unity。API 不确定先查框架 `references/decision-guide.md` §2，再查公开门面与本地同类调用，不凭印象补 API。
 
+## Android 出包与手机 UI
+
+遇到 Android 工具链、APK 体积、宽屏黑边、安全区、剧情/鸦鸦表现或凭据问题，按 [RevGame Android 出包、宽屏 UI 与真机回归](references/android-build-and-mobile-ui.md) 对照项目做法和证据。
+
 ## 快速迭代闭环
 
 1. **定位最小链路。** 找“输入入口 → Logic/Service → 模型/配置 → 事件或回执 → View/UI”，只读相关文件。简短说明参考文件、复用契约、目标文件和验收后置条件。

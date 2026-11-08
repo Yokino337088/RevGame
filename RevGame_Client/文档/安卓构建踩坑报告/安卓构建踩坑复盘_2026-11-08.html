@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>RevGame 安卓构建踩坑复盘 · 2026-11-08</title>
+<style>
+:root{color-scheme:light;--paper:#f7f5ee;--card:#fffdf8;--ink:#172e26;--sub:#455b51;--brand:#235b47;--line:#dbdfd1;--gold:#87611e;--soft:#ebf1e9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+main{max-width:1136px;margin:auto;padding:30px clamp(14px,4vw,44px) 60px}
+header,section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,4vw,36px);margin:0 0 20px}
+header{background:linear-gradient(130deg,#edf4eb,#fff9e7)}
+h1,h2,h3{line-height:1.35;margin:0 0 .55em}
+h1{font-size:clamp(30px,5vw,48px);letter-spacing:.02em}
+h2{font-size:clamp(22px,3vw,31px)}
+h3{font-size:19px}
+p{margin:.45em 0 .95em}
+p:last-child,ul:last-child,ol:last-child{margin-bottom:0}
+.eyebrow{font-weight:750;color:var(--brand);letter-spacing:.12em;font-size:.82rem}
+.lead,.note{color:var(--sub)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:19px 0 0}
+nav a,.tag{background:var(--soft);padding:3px 10px;border-radius:7px;font-size:.86rem;display:inline-block}
+a{color:#1b5b48;text-decoration-thickness:1px;text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+article{border-top:1px solid var(--line);padding:17px 0 2px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.metric{background:#fffdf5;border:1px solid #dedfcf;border-radius:12px;padding:12px 14px}
+.metric strong{display:block;color:var(--brand);font-size:1.27rem}
+.warning{border-left:4px solid #aa7c32;background:#faf0d8;border-radius:5px;padding:10px 13px;margin:12px 0;color:#3d321c}
+.table-wrap{overflow-x:auto;margin:12px 0 16px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:.93rem}
+caption{text-align:left;color:var(--sub);font-weight:650;margin-bottom:5px}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);color:var(--ink)}
+code{background:#eff1e8;padding:.06em .26em;border-radius:4px;overflow-wrap:anywhere;font-size:.92em}
+li{margin:.3em 0}
+.source-list{color:var(--sub)}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.table-wrap table{min-width:485px}main{padding-top:13px}}
+@media print{body{background:white}main{padding:0;max-width:none}header,section{box-shadow:none}article,.metric{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<header id="top">
+<p class="eyebrow">REVGAME · ANDROID · 2026-11-08</p>
+<h1>安卓构建踩坑复盘</h1>
+<p class="lead">从 Unity 工程导出、Gradle 组包、签名与验包，到宽屏 UI、Android AB 和真机反馈。工具链版本均为当天 RevGame 的实测组合。</p>
+<div class="grid" aria-label="当天交付摘要">
+<div class="metric"><strong>81.17 MiB</strong>Mono ARMv7 开发测试 APK</div>
+<div class="metric"><strong>70.93 MiB</strong>宽屏 ARM64 Release APK · 1.0.1</div>
+<div class="metric"><strong>21 + 1</strong>RevUI 面板盘点与独立决斗 HUD</div>
+</div>
+<nav aria-label="目录">
+<a href="#build">构建与签名</a><a href="#assets">AB 与包体</a><a href="#layout">手机宽屏</a><a href="#runtime">运行时故障</a><a href="#matrix">验收范围</a><a href="#checklist">复用清单</a><a href="#evidence">证据索引</a>
+</nav>
+</header>
+
+<section id="build">
+<h2>01 · 构建与签名</h2>
+<article>
+<h3>非 ASCII 项目路径阻断 Unity Android 工具</h3>
+<p>Unity 日志明确报 <code>Project path … contains non-ASCII characters</code>。把最终 APK 改到英文目录无法解决 Unity 读取源项目时的检查。实际在纯 ASCII 的独立工程同步 <code>Assets</code>、<code>Packages</code>、<code>ProjectSettings</code> 与目标 AB，原项目继续用 live 编辑，Gradle/Bee/IL2CPP 中间产物留在构建副本，验证后才把 APK 复制回 <code>RevGame/Android</code>。</p>
+<p>复用副本时，增量复制会留下源工程已移除的文件。宽屏复包前归档旧导出及残留 <code>RevGameActivity.java</code>、对应 meta 和 PC AB。核对 SDK、NDK、JDK 与导出后的 <code>local.properties</code> 实际指向；构建副本的路径校验先于任何移动或清理。</p>
+</article>
+<article>
+<h3>旧 D8 读取 API 35 的 android.jar 崩溃</h3>
+<p>搬到 ASCII 路径后又遇到 <code>:launcher:desugarDebugFileDependencies</code>，具体错误为 API 35 的 <code>android.jar</code> 触发 D8 <code>NullPointerException</code>。临时 Mono 测试工程在 Unity 导出后按 API 32 组包，Gradle 复跑通过。这个组合只用于当时的开发测试。Release 仍按 API 35 单独导出和验包。</p>
+</article>
+<article>
+<h3>Release 迁移需要同时核对 AGP、Java 和 NDK</h3>
+<p>当天正式链路为 Unity 2022.3.15f1c1、IL2CPP ARM64、JDK 17、Gradle 8.9、AGP 8.7.3、compile/target SDK 35。适配集中在导出的 Gradle 工程，包括两模块 namespace、清理旧 manifest package 声明、Java UTF-8、依赖仓库、移除 debug signingConfig 和本地 SDK 路径。</p>
+<p><code>CXX1100</code> 后跟的 <code>NDK is not installed</code> 实际是 AGP 期望 NDK <code>27.0.12077973</code>，配置路径指向 Unity 的 <code>23.1.7779620</code>。两模块显式对齐 <code>ndkVersion</code> 和 <code>ndkPath</code> 后通过。依赖预热之后才用 offline，Gradle 与 IL2CPP 分别限制并发。首次修正后的 Gradle 用时 27m55s，宽屏复包在同链路复用可重建 IL2CPP 缓存后用时 3m36s。这两次包含的编译工作量不同。</p>
+</article>
+<article>
+<h3>后端、ABI、签名和版本号各自验收</h3>
+<p>Mono 开发测试包是 ARMv7。正式包使用 IL2CPP ARM64，同时核对 <code>libRevGameCore.so</code> 的 PluginImporter CPU 与 APK 中实际 <code>arm64-v8a</code> 产物。签名前做 zipalign，签后用 <code>apksigner verify --print-certs</code> 比对上一版证书，用 <code>aapt dump badging</code> 检查包名、版本、SDK、ABI 和启动 Activity。宽屏包 <code>1.0.1</code> / <code>versionCode 2</code>、同包名及同签名已核对。私钥、口令和 APK 都留在交付环境。<a href="https://developer.android.com/tools/apksigner">Android apksigner</a></p>
+<p class="warning">ARM64 与 16 KB 页兼容分开。当天记录的 ELF LOAD 对齐中，自研库为 16384，Unity、IL2CPP、Burst 和 libmain 为 4096。当前记录只能证明包内 ABI；16 KB 兼容还需要逐库 ELF、APK ZIP 对齐与 16 KB 环境启动验证。<a href="https://developer.android.com/guide/practices/page-sizes">Android 16 KB 页尺寸指南</a></p>
+</article>
+</section>
+
+<section id="assets">
+<h2>02 · AB、包体和资源质量</h2>
+<article>
+<h3>从源工程构建目标 AB，副本和 APK 都查串包</h3>
+<p>用项目 <code>game.background.build</code> 生成并发布目标 AB，核对主包、<code>BuildManifest.json</code>、映射与依赖。Android 构建副本屏蔽 <code>Assets/StreamingAssets/PC</code> 及残留 meta，Gradle 导出后再次确认。宽屏 APK 实际验得 167 个 Android 资源文件、0 个 PC 包。两个平台后来各重建 82 个业务 AB，连同主包、清单和清单 JSON 共 167 个发布文件，逐文件校验 SHA-256。</p>
+</article>
+<article>
+<h3>包体减少来自多部分变化</h3>
+<div class="table-wrap" tabindex="0">
+<table>
+<caption>同日 APK 分项对照，单位为字节。两列的后端、ABI 和压缩配置不同。</caption>
+<thead><tr><th scope="col">分项</th><th scope="col">Mono ARMv7 测试包</th><th scope="col">首个 IL2CPP ARM64 Release</th></tr></thead>
+<tbody>
+<tr><td>APK 总体</td><td>85,115,458</td><td>74,375,319</td></tr>
+<tr><td>Android AB</td><td>39,813,277</td><td>40,331,104</td></tr>
+<tr><td>原生库</td><td>25,458,414</td><td>26,921,201</td></tr>
+<tr><td>Player 数据</td><td>19,336,299</td><td>6,761,858</td></tr>
+</tbody></table></div>
+<p>体积净减少约 10.24 MiB，主要来自 Player 数据缩小。宽屏签名包是 74,379,415 字节。后续画质提升只更新资源库中的 AB，不能用本表推算新 APK 的最终大小。</p>
+</article>
+<article>
+<h3>图集切片、透明度和清晰度一起验</h3>
+<p>决斗序列帧要保持原有动作、帧名、切片、播放顺序和引用，生成 Sprite Atlas V2 后观察真实动画换帧。仅在 Project 窗口看到 Sprite 子资产无法证明 Player 已用到打包图集。关键图集和帧资产按用途分组，避免所有帧常驻。</p>
+<p>鸦鸦 10 张表情原图为 1600×2400。导入上限由 1024 提到 2048，切片约由 683×1024 变成 1365×2044。源图直读，最终图集才做一次有损压缩，PC 用 BC7，Android 用 ASTC 6×6，剧情与战斗分包。两套合计由约 1.9 MiB 增至 Android 6.6 MiB、PC 12.8 MiB。用实际保留像素报告提升，并把 AB 大小和真机显存分开测。</p>
+</article>
+<article>
+<h3>剧情源文件在打包中更新，第二个平台的字库门禁拒绝继续</h3>
+<p>Android 首轮构建后，PC 校验发现 StoryBook 在打包期间再次保存。重新读取最新版并核对 Excel 仍是已导出的版本，重建字库后按相同输入哈希构建两端。保留源 Excel、生成文本、字体和字体清单的配套关系。Git 验证按已暂存源码生成清单，工作区的换行与未提交内容可能使本地字库输入哈希不同。</p>
+</article>
+</section>
+
+<section id="layout">
+<h2>03 · 横屏、黑边和手机 UI</h2>
+<article>
+<h3>分离设计画幅、原生窗口、安全区与棋盘占位</h3>
+<p>固定 16:9 原生壳在宽屏会留下左右黑边，直接把 16:9 内容拉到全宽又会让人物和棋格变形。RevGame 保留 1920×1080 设计坐标，运行窗口按真实设备画幅，背景等比 cover。宽屏包验得可调整大小的 <code>UnityPlayerActivity</code>，移除旧固定比例壳。交互内容由 <code>GameBattleLayout</code> 与 <code>GameMobileLayout</code> 按安全区和棋盘实际投影定位。原生窗口、相机背景和 UI 锚点各验一遍。<a href="https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Screen-safeArea.html">Unity Screen.safeArea</a></p>
+</article>
+<article>
+<h3>手机横向多出来的空间优先给两侧，棋盘维持比例</h3>
+<p>同一个 1920×1080 设计坐标在 Game 窗口和 Device Simulator 上可以对应不同的安全画幅。用预制体锚点、CanvasScaler 和原始偏移映射，窗口或安全区改变时重新计算，避免把上一次偏移继续叠加。保留棋盘位置与比例，远征手牌、无尽备战牌组、九路围棋的 Agent 和结算操作分别约束在棋盘外。验边界、交叠和真实点击。</p>
+<div class="table-wrap" tabindex="0"><table>
+<caption>布局分层与验收对象</caption>
+<thead><tr><th scope="col">类型</th><th scope="col">布局策略</th><th scope="col">可复查的断言</th></tr></thead>
+<tbody>
+<tr><td>战斗面板</td><td>同一棋盘投影和安全区，侧栏展开</td><td>按钮不挡棋盘，不超安全区，准备与战斗分别验证</td></tr>
+<tr><td>普通面板</td><td>大厅、选关、设置、弹窗放安全设计框</td><td>锚点、标题、滚动区和可点击边界</td></tr>
+<tr><td>剧情、教学、加载</td><td>背景、遮罩和必要的输入覆盖铺满。立绘、对话、跳过放安全区</td><td>宽屏两边无底层穿帮，长句可容纳，跳过与翻页正确</td></tr>
+<tr><td>独立决斗 HUD</td><td>场景 Canvas 按原始锚点映射到安全框</td><td>血条和动作按钮独立验，当日预览检查 17 个控件</td></tr>
+</tbody></table></div>
+<p>当天盘点 21 个 RevUI 面板加独立决斗 HUD。Huawei P40 Pro 的 Unity Device Simulator 等宽屏预览覆盖剧情与多个玩法，普通 Game 用于 16:9 对照。清单数量表示布局分类范围，不能当作逐页真机点按数量。</p>
+</article>
+<article>
+<h3>无尽鸦鸦立绘大小和对白排序是两个问题</h3>
+<p>用可见视口比例定义立绘高度，最终移动端目标为 50%。对白使用独立覆盖 Canvas，排序 200，使敌方棋子无法遮住文本。检查触发、配置、表情租约、对白内容完整性和重叠，再核对真实画面。早期无尽断言曾失败，后来分开重跑入场和互动，50% 高度与对白排序有预览断言。</p>
+</article>
+</section>
+
+<section id="runtime">
+<h2>04 · 装得上之后的故障</h2>
+<article>
+<h3>Android 目标 Play 启动时大厅鸦鸦没有可画 Sprite</h3>
+<p>控制器接上和 Renderer 已有可绘制帧是两回事。大厅借用 <code>YayaIdle24</code>，重绑 Animator 并采样待机首帧，再检查 Sprite 和实际换帧。Android 目标在编辑器直读及 AB 模式均验过大厅显示和帧推进；这只覆盖大厅，不能代表棋盘材质和全部图形路径。</p>
+</article>
+<article>
+<h3>前六章与无尽互动缺失</h3>
+<p>排查顺序是实际触发条件、配置表、表情图集、显示面积、占位冲突、对白排序。Android 目标直读有六章逐章记录，无尽在后续移动预览单独复验。正式 APK 中自然触发的频率、弱设备表现与排序仍需真机记录。</p>
+</article>
+<article>
+<h3>Windows Editor 载入 Android AB 的棋盘 Shader 不可用</h3>
+<p>第一章棋盘材质请求返回资源错误 <code>None</code>，但宿主对其 Shader 判定不可用，首章场景屏障因此拒绝进场。Android 目标只说明本次使用目标 AB 和编译条件，宿主仍是 Windows Editor。保留原始失败，用 Android 直读验证业务、PC 真 AB 验证资源交接，实际 Android 图形兼容由目标设备验。</p>
+</article>
+<article>
+<h3>第一章 Boss 领奖卡在第二章剧情，PC 也复现</h3>
+<p>准备事件同时通知剧情和场景背景。命中缓存的剧情先拿到旧章 Ready，尝试为第二章借用第一章背景，出现「剧情背景与当前章节未交付：2」。修复后让事件完成交接，等到场景背景就绪并核对目标章号再开剧情。背景真正失败时沿用已有返回入口。PC 真 AB 做了修复前后对照，Android 目标直读用同一领奖路径验证了剧情、棋盘和下一次落子。<a href="https://github.com/Yokino337088/RevGame/commit/9eed179b5f1db49148b9d5f8faa157aeaa1ebc57">章间交接修复</a></p>
+</article>
+<article>
+<h3>DeepSeek Key 保存曾误用 Windows 凭据保护</h3>
+<p>Windows DPAPI 在 Android 不可用。项目按实际运行平台分流，Android 在 <code>Application.persistentDataPath</code> 写入用户授权的明文 <code>DeepSeekAgentSettings.txt</code>，同目录临时写入后再替换。Windows 保留 DPAPI，Device Simulator 的手机标志只用于布局。用假 Key 和隔离槽跨 Play 验证写入、读回和清除。报告与 Git 均不得带 Key、用户配置或签名凭据。<a href="https://github.com/Yokino337088/RevGame/commit/d9e1d8a">Android 凭据与宽屏修复</a></p>
+</article>
+<article>
+<h3>决斗本地联机入口与测试地址</h3>
+<p>开发包的服务器默认值使用当时电脑的局域网地址和 20000 端口。换电脑或网段要核对新地址、监听端口和可达性。构建、按钮显示、触屏命中、原生战斗推进和两设备帧哈希是不同层的验收。预览和 APK 文件检查无法证明真实 Android 局域网对局同步。</p>
+</article>
+<article>
+<h3>Unity 崩溃、重载与旧工单标记</h3>
+<p>一次原生崩溃出现在编辑器 Play 预热附近，日志保留了最后的资源池和 RevTask 调用。该堆栈不足以定出原生根因。重连并重新完成相关 Play 流程后记录通过与仍未复验的项目。另一次 HTTP 模式下 <code>build.target</code> 仍写 <code>jobs/&lt;id&gt;/target-started</code>，目录不存在而失败。用临时项目编辑器动作异步切换并读回目标，复测后删除动作、恢复 Android，继续通过 HTTP 通信。</p>
+</article>
+</section>
+
+<section id="matrix">
+<h2>05 · 验收范围</h2>
+<div class="table-wrap" tabindex="0"><table>
+<caption>按运行环境区分通过项与待验证项</caption>
+<thead><tr><th scope="col">证据</th><th scope="col">实际覆盖</th><th scope="col">边界</th></tr></thead>
+<tbody>
+<tr><td>构建与验包</td><td>Mono ARMv7 开发 APK；IL2CPP ARM64 Release；宽屏包签名、版本、启动 Activity 与 Android AB</td><td>签名与包内容不证明设备可点、P/Invoke 或 16 KB 启动</td></tr>
+<tr><td>Game 与 Device Simulator</td><td>安全区、远征/无尽/九路围棋 HUD、剧情覆盖、决斗布局及可点性</td><td>设备原生系统栏、横屏和屏幕触点另验</td></tr>
+<tr><td>Windows Editor 的 PC 真 AB</td><td>真实剧情资源、表情、第一章领奖到第二章及落子</td><td>PC 与 Android 图形能力分别记录</td></tr>
+<tr><td>Android 目标 Editor</td><td>大厅在 AB 模式可画。直读可验六章与无尽互动及章间交接</td><td>真实 Android AB 的第一章棋盘 Shader 在此宿主失败</td></tr>
+<tr><td>Android 真机</td><td>用户真机截图记录旧版章间失败和移动端反馈</td><td>未连设备复测最终代码、凭据重启持久化、原生决斗或 16 KB。后续提交晚于 1.0.1 APK</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="checklist">
+<h2>06 · 下次按此顺序</h2>
+<ol>
+<li>确定测试或 Release、目标 ABI、SDK、项目版本、已有签名身份及输出位置。</li>
+<li>核对源版本、导表和字库，按目标发布 AB，再用 ASCII 副本隔离构建。排除 PC AB 与残留 Activity。</li>
+<li>先核对 Unity 导出 BuildReport，再核对 Gradle 错误中的首个失败任务。比对 JDK、AGP、Gradle、SDK、NDK 实际值。</li>
+<li>核对包体分项、切片、图集、SHA-256、ELF 与合并 Manifest。对齐后签名，验证签名和更新身份再交付。</li>
+<li>普通 Game 与异形宽屏模拟对照。背景全屏、内容安全、控件避棋盘，并验证真实点击。</li>
+<li>隔离 Play 走正式流程，用 RevMCP 的 rev_discover、rev_call 与 rev_run 保留动作、断言、截图和 finally 清理。</li>
+<li>真机用实际 APK 验证冷启动、两侧画幅、系统栏和点击、决斗原生插件、凭据存取、Boss 领奖到下一章。有 16 KB 目标时单独验环境和所有原生库。</li>
+<li>按构建、验包、编辑器直读、目标 AB 和真机记录结论，恢复 Unity 与原目标。仓库只提交源码、文档和约定内资源。</li>
+</ol>
+</section>
+
+<section id="evidence">
+<h2>07 · 证据索引</h2>
+<p class="source-list">仓库节点 <a href="https://github.com/Yokino337088/RevGame/commit/917d26a9c970821ed7978199ea139b8f78b50570">Mono 出包与决斗图集</a> · <a href="https://github.com/Yokino337088/RevGame/commit/c90517271481a1725ed2ea3e16438d3ead2b7679">原生宽屏与棋盘操作区</a> · <a href="https://github.com/Yokino337088/RevGame/commit/a5b8511">远征侧栏</a> · <a href="https://github.com/Yokino337088/RevGame/commit/47a0a2a01dc39f3e8a429f7cde844fc87ac94a29">高清图集、手机面板及 ARM64</a> · <a href="https://github.com/Yokino337088/RevGame/commit/9eed179b5f1db49148b9d5f8faa157aeaa1ebc57">第二章交接修复</a></p>
+<ul class="source-list">
+<li>本机证据以仓库相对目录归档。构建、签名与包体见 <code>.codex/work/duel-android-build</code>、<code>android-release</code>、<code>android-release-wide</code>。</li>
+<li>布局证据见 <code>.codex/work/android-board-viewport</code>、<code>campaign-hud-mobile</code>、<code>phone-story-layout</code>、<code>phone-layout-endless-pvp</code>、<code>all-mobile-panels</code>。</li>
+<li>AB 质量与章间回归见 <code>.codex/work/yaya-quality-ab</code>、<code>chapter-handoff</code>。原始日志包含本地环境，留在忽略目录。</li>
+</ul>
+<p><a href="#top">回到顶部</a></p>
+</section>
+</main>
+</body>
+</html>

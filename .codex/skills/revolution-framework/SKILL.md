@@ -221,6 +221,10 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 - **审查**：`REFERENCE_GUIDELINES.md`
 - **骨架模板**（`templates/`）：`RevBoot.cs.txt`（启动入口）· `RevXxxPanel.cs.txt`（UI 面板）· `RevXxxService.cs.txt`（业务服务）· `RevXxxDemo.cs.txt`（Demo 场景脚本）· `offline-harness/`（工程外断言工程）
 
+## Android 运行时与宽屏
+
+遇到手机黑边、异形安全区、UI 挡棋盘、Android AB 的 Shader/首帧、换章剧情竞态或平台凭据问题，读 [Android 运行时与宽屏验收](references/android-runtime-and-layout.md)。区分 Editor 直读、目标 AB 与真机证据。
+
 ## 独立Player、IL2CPP与真机性能面板
 
 涉及CLI打包到指定路径、Player启动/连接/退出、运行时GM/MCP、非开发自动化包或性能面板时，先读 [独立Player测试](references/player-testing.md)。复用现有RevRuntimeAutomation与RevMCP，项目负责隔离/业务负载，框架提供通用采样与构建；不要另造通信系统。

@@ -47,6 +47,10 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 
 多步互不依赖的同步动作用 `call batch.call`，有顺序依赖用 `pipeline`。
 
+## Android 构建、签名与手机预览
+
+出 Android 包或排查 ASCII 路径、D8/Gradle/NDK、ARM64、16 KB、签名、AB 串包与横屏启动配置时，先读 [Android 构建与验包](references/android-build-and-verification.md)。宽屏和触点用 Game、Device Simulator 与真机分层验收。
+
 ## 建立目标与保护现场
 
 1. 从用户路径定位 Unity 工程及相邻的 `Revolution.RevCLI/rev.py`。显式传 `--project`，不猜 Demo 或正在运行的工程。
