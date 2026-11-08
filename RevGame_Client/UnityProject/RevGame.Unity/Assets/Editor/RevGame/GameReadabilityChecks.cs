@@ -27,25 +27,31 @@ namespace RevGame.Editor
         /// <summary>用真实布局函数校验常见安卓横屏和刘海，检查设计比例、包含关系与棋盘侧栏。</summary>
         public static string CheckBoardViewport()
         {
-            var sizes = new[] { new Vector2(1920, 1080), new Vector2(2400, 1080), new Vector2(2340, 1080), new Vector2(1440, 1080) };
-            var safeAreas = new[] { new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1), new Rect(.01f, .035f, .94f, .965f), new Rect(0, 0, 1, 1) };
+            var sizes = new[] { new Vector2(1920, 1080), new Vector2(2400, 1080), new Vector2(2340, 1080), new Vector2(1440, 1080), new Vector2(1920, 1080) };
+            var safeAreas = new[] { new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1), new Rect(.01f, .035f, .94f, .965f), new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1) };
             for (int i = 0; i < sizes.Length; i++)
             {
                 Vector2 pixels = sizes[i];
                 Rect safe = safeAreas[i];
                 Rect frame = RevGame.UI.GameBattleLayout.FitBoardViewport(pixels, safe);
                 var layout = RevGame.UI.GameBattleLayout.Calculate(pixels, frame);
+                Vector2 offsets = RevGame.UI.GameBattleLayout.SidebarOffsets(safe, frame);
+                float normalizedScale = frame.width / RevGame.UI.GameBattleLayout.DesignResolution.x;
+                bool hasHorizontalRoom = i == 1 || i == 2;
                 if (!Mathf.Approximately(frame.width * pixels.x / (frame.height * pixels.y), 16f / 9f) ||
                     frame.xMin < safe.xMin - .0001f || frame.xMax > safe.xMax + .0001f ||
                     frame.yMin < safe.yMin - .0001f || frame.yMax > safe.yMax + .0001f ||
-                    frame.center != Vector2.one * .5f ||
+                    frame.center != safe.center ||
+                    frame.xMin + offsets.x * normalizedScale < safe.xMin - .0001f ||
+                    frame.xMax + offsets.y * normalizedScale > safe.xMax + .0001f ||
+                    (hasHorizontalRoom ? offsets.x >= 0f || offsets.y <= 0f : offsets.sqrMagnitude > .001f) ||
                     !Mathf.Approximately(layout.Board.width, layout.Board.height) ||
                     layout.Board.Overlaps(layout.Left) || layout.Board.Overlaps(layout.Right) || layout.Board.Overlaps(layout.Header))
                 {
                     throw new InvalidOperationException("横屏控制区超出安全区域或遮挡棋盘：" + pixels);
                 }
             }
-            return "通过 1920×1080、2400×1080、2340×1080、1440×1080 的设计画幅、安全区、正方形棋盘与侧栏避让检查";
+            return "通过五组画幅与安全区的居中、正方形棋盘、宽屏侧栏扩展和 16:9 原位置检查";
         }
         // 只读结果/阶段/已完成断言数。断言数随渲染帧数可能略变，不代表这么多个独立玩法场景。
         public static string State()

@@ -251,7 +251,11 @@ namespace RevGame.Bootstrap
             Vector3 low = camera.WorldToScreenPoint(new Vector3(-edge, -edge, 0f));
             Vector3 high = camera.WorldToScreenPoint(new Vector3(edge, edge, 0f));
             Rect board = Rect.MinMaxRect(low.x + Tolerance, low.y + Tolerance, high.x - Tolerance, high.y - Tolerance);
+            Rect safe = RevGame.UI.GameBattleLayout.SafeViewport();
+            Rect safePixels = Rect.MinMaxRect(safe.xMin * camera.pixelWidth, safe.yMin * camera.pixelHeight,
+                safe.xMax * camera.pixelWidth, safe.yMax * camera.pixelHeight);
             var collisions = new List<string>();
+            var outsideSafeArea = new List<string>();
             var corners = new Vector3[4];
             foreach (Transform panel in new[] { hud.transform, prepare == null ? null : prepare.transform })
             {
@@ -268,9 +272,15 @@ namespace RevGame.Bootstrap
                     control.GetWorldCorners(corners);
                     Vector2 a = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
                     Vector2 b = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
-                    if (board.Overlaps(Rect.MinMaxRect(a.x, a.y, b.x, b.y)))
+                    Rect bounds = Rect.MinMaxRect(a.x, a.y, b.x, b.y);
+                    if (board.Overlaps(bounds))
                     {
                         collisions.Add(name);
+                    }
+                    if (bounds.xMin < safePixels.xMin - Tolerance || bounds.xMax > safePixels.xMax + Tolerance ||
+                        bounds.yMin < safePixels.yMin - Tolerance || bounds.yMax > safePixels.yMax + Tolerance)
+                    {
+                        outsideSafeArea.Add(name);
                     }
                 }
             }
@@ -279,7 +289,14 @@ namespace RevGame.Bootstrap
                 ["designWidth"] = root.rect.width,
                 ["designHeight"] = root.rect.height,
                 ["fullCamera"] = camera.rect == new Rect(0f, 0f, 1f, 1f),
-                ["controlOverlaps"] = collisions.ToArray()
+                ["controlOverlaps"] = collisions.ToArray(),
+                ["outsideSafeArea"] = outsideSafeArea.ToArray(),
+                ["deviceWidth"] = UnityEngine.Device.Screen.width,
+                ["deviceHeight"] = UnityEngine.Device.Screen.height,
+                ["mobilePreview"] = UnityEngine.Device.Application.isMobilePlatform,
+                ["deviceModel"] = UnityEngine.Device.SystemInfo.deviceModel,
+                ["sidebarOffset"] = RevGame.UI.GameBattleLayout.SidebarOffsets(safe,
+                    RevGame.UI.GameBattleLayout.BoardViewport(new Vector2(camera.pixelWidth, camera.pixelHeight)))
             };
         }
 

@@ -76,6 +76,44 @@ namespace RevGame.Editor
             }
         }
 
+        [RevAutomationAction("game.board-preview", Environment = "edit", Keys = new[] { "view" }, Description = "读取或切换 Game 与 Device Simulator 预览")]
+        public static object BoardPreview(RevAutomationRequest request)
+        {
+            var args = UnityEngine.JsonUtility.FromJson<BoardPreviewOptions>(request.payloadJson);
+            if (!string.IsNullOrEmpty(args?.view))
+            {
+                if (args.view != "game" && args.view != "simulator")
+                {
+                    throw new ArgumentException("只接受 game 或 simulator 预览");
+                }
+                UnityEditor.PlayModeWindow.SetViewType(args.view == "game"
+                    ? UnityEditor.PlayModeWindow.PlayModeViewTypes.GameView
+                    : UnityEditor.PlayModeWindow.PlayModeViewTypes.SimulatorView);
+            }
+            UnityEditor.PlayModeWindow.GetRenderingResolution(out uint width, out uint height);
+            return new BoardPreviewState
+            {
+                view = UnityEditor.PlayModeWindow.GetViewType() == UnityEditor.PlayModeWindow.PlayModeViewTypes.SimulatorView
+                    ? "simulator" : "game",
+                width = width,
+                height = height
+            };
+        }
+
+        [Serializable]
+        private sealed class BoardPreviewOptions
+        {
+            public string view;
+        }
+
+        [Serializable]
+        private sealed class BoardPreviewState
+        {
+            public string view;
+            public uint width;
+            public uint height;
+        }
+
         [RevAutomationAction("game.perf.feedback-state",Environment="play",Keys=new string[0],Description="只读密集反馈阶段、结果与已执行断言数")]
         // 只查当前夹具进度/断言，不重复注入反馈，因此安全等待较长视觉检查。
         public static object FeedbackState(RevAutomationRequest request)

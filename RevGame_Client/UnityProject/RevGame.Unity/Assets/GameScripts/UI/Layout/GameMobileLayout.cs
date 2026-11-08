@@ -19,7 +19,15 @@ namespace RevGame.UI
         private Rect _lastSafe;
         private bool _applying;
         private bool _boardFrame;
+        private SidebarNode[] _leftSidebar;
+        private SidebarNode[] _rightSidebar;
         public bool HasBoardFrame => _boardFrame;
+
+        private struct SidebarNode
+        {
+            public RectTransform Transform;
+            public Vector2 DesignPosition;
+        }
 
         /// <summary>只给战斗控制面板装上 Android 设计框，背景和相机仍使用完整屏幕。</summary>
         public static void EnableBoardFrame(Transform panel)
@@ -30,8 +38,33 @@ namespace RevGame.UI
                 layout = panel.gameObject.AddComponent<GameMobileLayout>();
             }
             layout._boardFrame = true;
+            layout._lastSize = Vector2.zero;
+            // 装配时只读取一次预制体坐标，后续换设备都从设计原点重算，不累加偏移。
+            if (layout.panelName == "PreparePanel")
+            {
+                layout._leftSidebar = ReadSidebar(panel, "cards", "hintPlate", "hintText");
+                layout._rightSidebar = ReadSidebar(panel, "btnReady", "btnRefresh", "btnEye", "btnSkip");
+            }
+            else if (layout.panelName == "BattleHudPanel")
+            {
+                layout._leftSidebar = ReadSidebar(panel, "scoreFrame", "assistPlate", "assistText");
+                layout._rightSidebar = ReadSidebar(panel, "infoPlate", "btnHome", "btnSettings");
+            }
             layout.ApplyLayout();
 #endif
+        }
+
+        private static SidebarNode[] ReadSidebar(Transform panel, params string[] names)
+        {
+            var nodes = new SidebarNode[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                if (panel.Find(names[i]) is RectTransform node)
+                {
+                    nodes[i] = new SidebarNode { Transform = node, DesignPosition = node.anchoredPosition };
+                }
+            }
+            return nodes;
         }
 
         public void Configure(string value)
@@ -177,7 +210,25 @@ namespace RevGame.UI
             root.anchoredPosition = Vector2.zero;
             root.sizeDelta = GameBattleLayout.DesignResolution;
             root.localScale = Vector3.one * (frame.height * size.y / GameBattleLayout.DesignResolution.y);
+            Vector2 sidebar = GameBattleLayout.SidebarOffsets(safe, frame);
+            MoveSidebar(_leftSidebar, sidebar.x);
+            MoveSidebar(_rightSidebar, sidebar.y);
             _applying = false;
+        }
+
+        private static void MoveSidebar(SidebarNode[] nodes, float offset)
+        {
+            if (nodes == null)
+            {
+                return;
+            }
+            foreach (SidebarNode node in nodes)
+            {
+                if (node.Transform != null)
+                {
+                    node.Transform.anchoredPosition = node.DesignPosition + Vector2.right * offset;
+                }
+            }
         }
         private void LayoutHand(GameBattleLayout.Regions areas)
         {

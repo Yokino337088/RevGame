@@ -40,7 +40,7 @@ namespace RevGame.UI
 #endif
         }
 
-        /// <summary>从对称安全边界等比内接设计矩形。刘海只缩小控制区，不挤移中心棋盘或裁切背景。</summary>
+        /// <summary>在真实安全区内等比内接设计矩形。单边刘海只扣除一次，中心随安全区平移。</summary>
         public static Rect FitBoardViewport(Vector2 size, Rect safe)
         {
             if (size.x <= 0f || size.y <= 0f)
@@ -48,19 +48,20 @@ namespace RevGame.UI
                 return new Rect(0f, 0f, 1f, 1f);
             }
 
-            // 极窄或偏心的窗口可能没有围绕屏幕中心的安全区，此时以实际安全区中心排版。
-            float width = 2f * Mathf.Min(.5f - safe.xMin, safe.xMax - .5f);
-            float height = 2f * Mathf.Min(.5f - safe.yMin, safe.yMax - .5f);
-            Vector2 center = Vector2.one * .5f;
-            if (width <= 0f || height <= 0f)
-            {
-                width = safe.width;
-                height = safe.height;
-                center = safe.center;
-            }
-            float scale = Mathf.Min(width * size.x / DesignResolution.x, height * size.y / DesignResolution.y);
+            float scale = Mathf.Min(safe.width * size.x / DesignResolution.x, safe.height * size.y / DesignResolution.y);
             Vector2 fit = new Vector2(DesignResolution.x * scale / size.x, DesignResolution.y * scale / size.y);
-            return new Rect(center - fit * .5f, fit);
+            return new Rect(safe.center - fit * .5f, fit);
+        }
+
+        /// <summary>将棋盘设计框之外的安全空间分给两侧控件。返回设计坐标中的偏移，按钮和字体仍等比缩放。</summary>
+        public static Vector2 SidebarOffsets(Rect safe, Rect frame)
+        {
+            // 用掉八成额外宽度，超宽窗口也保留相邻关系和外侧余量。
+            const float Spread = .8f;
+            const float Limit = .12f;
+            float left = Mathf.Clamp((frame.xMin - safe.xMin) * Spread / frame.width, 0f, Limit);
+            float right = Mathf.Clamp((safe.xMax - frame.xMax) * Spread / frame.width, 0f, Limit);
+            return new Vector2(-left, right) * DesignResolution.x;
         }
         /// <summary>独立纯计算入口，方便验证刘海、左右旋转和非法的零尺寸输入。</summary>
         public static Rect NormalizeSafeArea(Rect safe, Vector2 size)

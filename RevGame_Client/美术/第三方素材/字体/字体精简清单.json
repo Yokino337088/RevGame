@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "36eb5084fb5cda2bdb44d601a0640ab4a58e4f15865df3cfaa05466e8d675ddd",
-  "inputDigest": "4d6dcf4b36e7cc25a40317ac6ba12aa6150e1a2d09eb4ae4b467677908a5670f",
+  "inputDigest": "ca210a3b7d6a838691808e2796b7ec1b5080bfa8df1b5c8d6671917897fa58b4",
   "originalBytes": 17002248,
   "outputBytes": 796868,
   "characterCount": 1784,
@@ -2280,7 +2280,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
-      "sha256": "c0e6a41c85a8afaf6174bf3043fc7d38c48ad6ca63497306550fcf831ab1cd10"
+      "sha256": "8e82bc2cef9b445be28f53a78c9a175680b5cdac568b33d3f8ff2bfd4150353b"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryPresentationPreview.cs",
@@ -2972,11 +2972,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Layout/GameBattleLayout.cs",
-      "sha256": "c0d151a0f42fc4fff26987a19c0c43ce968f1368fd09363d594b27846e333f75"
+      "sha256": "2f4e50e985feecf2eaef5d0087a6a96d82954258a1c96162b29385e5d1116fbc"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Layout/GameMobileLayout.cs",
-      "sha256": "dd3dc99cc53e3415a893cdbb51f3006c1697559c816009ce0ee1fdad2fd93b21"
+      "sha256": "79160a800ec8be3671c379581fc1c21efb859fc8ec737ff2d7a456d2ab9330fa"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/Boss/BossIntroPanel.cs",
