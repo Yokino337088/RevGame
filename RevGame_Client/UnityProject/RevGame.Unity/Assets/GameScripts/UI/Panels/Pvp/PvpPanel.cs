@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+using System.Linq;
+#endif
 using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Pvp.Networking;
@@ -19,9 +22,30 @@ namespace RevGame.Pvp
     [RevUIPanel("UI/Panel/Pvp", RevUILayer.Normal)]
     public sealed partial class PvpPanel : RevUIPanel
     {
+        // 对局两侧各自使用实际安全宽度；顶部计时与棋盘下方的三个操作留在设计框内。
+        private static readonly string[] LeftSidebarPaths =
+        {
+            "controls/back", "controls/reconnect", "controls/agent", "controls/agentSettings",
+            "controls/DuelChallenge", "controls/DuelTest", "boardToast"
+        };
+        private static readonly string[] RightSidebarPaths =
+        {
+            "controls/toggleHints", "yayaPortrait", "yayaBubble", "scoring", "result"
+        };
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        private static readonly string[] MatchLayoutPaths = LeftSidebarPaths.Concat(RightSidebarPaths)
+            .Concat(new[] { "top", "controls/pass", "controls/resign", "controls/hint" }).ToArray();
+
+        /// <summary>只读对局的实际控制区。菜单或切场时没有可测棋盘，直接返回空。</summary>
+        internal object BoardLayoutSnapshot()
+        {
+            return _battleVisible && _board != null ? _board.InspectControls(transform, MatchLayoutPaths) : null;
+        }
+#endif
+
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform);
             // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
             _idlePortrait = _portrait.sprite;
             // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
@@ -37,6 +61,8 @@ namespace RevGame.Pvp
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             BindDuelTestButton();
 #endif
+            // 动态按钮先创建，再读取原始锚点；设备变化只从这一份设计坐标重算。
+            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform, LeftSidebarPaths, RightSidebarPaths);
         }
 
         // 按当前面板生命周期持有的挑战按钮，位置避开棋盘。

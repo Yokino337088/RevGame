@@ -48,6 +48,18 @@ namespace RevGame.Pvp
 #endif
         internal bool ShaderReady => Ready && boardRenderer.sharedMaterial.shader.isSupported;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>以正在绘制的棋盘网格边界校验 HUD，避免把预制体参考坐标误当成屏幕尺寸。</summary>
+        internal object InspectControls(Transform panel, string[] paths)
+        {
+            if (_camera == null || boardRenderer == null)
+            {
+                return null;
+            }
+            Bounds bounds = boardRenderer.bounds;
+            Rect board = Rect.MinMaxRect(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y);
+            return RevGame.UI.GameMobileLayout.InspectBoardControls(panel, _camera, board, paths);
+        }
+
         internal int[] CopyLibertyMarksForCheck()
         {
             var marks = new int[GoCore.PointCount];

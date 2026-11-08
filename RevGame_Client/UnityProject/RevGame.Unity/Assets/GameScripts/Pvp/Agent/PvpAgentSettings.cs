@@ -1,6 +1,6 @@
 namespace RevGame.Pvp.Agent
 {
-    /// <summary>运行时配置。Key仅在内存使用；持久化由独立存储类加密后写入本地，不发给联机服务器。</summary>
+    /// <summary>运行时配置。持久化由独立存储类按平台写入本地，联机服务器无需持有 Key。</summary>
     public sealed class PvpAgentSettings
     {
         public string Key

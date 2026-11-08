@@ -49,7 +49,7 @@ namespace RevGame.Pvp
         public static void Register()
         {
             RegisterPresentation();
-            RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "独立测试槽保存DPAPI假Key，不修改玩家配置；跨Play后调用verify", Empty,
+            RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "用独立测试槽保存假Key，覆盖平台存储和安卓TXT；跨Play后调用verify", Empty,
                 _ => PvpAgentChecks.PrepareStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-storage-verify", "验证独立测试槽跨Play恢复、损坏拒绝与清除，不返回凭据", Empty,
                 _ => PvpAgentChecks.VerifyStorageCheck(), owner: Owner);
@@ -346,6 +346,7 @@ namespace RevGame.Pvp
                 ["computer"] = service.IsComputerGame, ["menu"] = RevUI.Get<PvpPanel>()?.Menu ?? "",
                 ["blackTerritory"] = blackTerritory, ["whiteTerritory"] = whiteTerritory,
                 ["battleVisible"] = RevUI.Get<PvpPanel>()?.BattleVisible ?? false,
+                ["boardLayout"] = RevUI.Get<PvpPanel>()?.BoardLayoutSnapshot(),
                 ["hintsVisible"] = service.HintsVisible, ["unlimitedHints"] = true, ["selectedPoint"] = service.SelectedPoint,
                 ["preview"] = service.PreviewText, ["blackClock"] = service.ClockText(GoSide.Black), ["whiteClock"] = service.ClockText(GoSide.White),
                 ["configLoaded"] = service.Config != null, ["tableLoaded"] = tableLoaded, ["tableRows"] = tableRows,

@@ -130,7 +130,10 @@ namespace RevGame.Endless
         }
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform);
+            // 顶部公共状态和底部手牌保留中心位置，只把边栏控件移动到宽屏安全区。
+            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform,
+                leftNodes: new[] { "level", "boss", "tip" },
+                rightNodes: new[] { "pause", "start", "boon", "banner" });
             _heartImage = _heartFill.GetComponent<Image>();
             _top = (RectTransform)transform.Find("top");
             _modalRect = (RectTransform)_modal.transform;

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System;
+using System.IO;
 using RevGame.Pvp.Agent;
 namespace RevGame.Pvp
 {
@@ -7,39 +8,64 @@ internal static class PvpAgentChecks
 {
     // 固定假Key写入独立槽，不能读写PlayerSlot。返回值只含断言，不含Key或密文。
     private const string StorageCheckSlot = "RevGame.DeepSeek.IsolatedStorageCheck.v1";
+    private const string TextCheckSlot = "RevGame.DeepSeek.IsolatedTextStorageCheck.v1";
     private const string FixtureKey = "revgame-storage-check-not-an-api-key";
 
     public static object PrepareStorageCheck()
     {
         var settings = new PvpAgentSettings();
         Assert(settings.TrySet(FixtureKey, "deepseek-flash", true, out _), "存储测试配置有效");
+        bool encrypted = !PvpAgentSettingsStore.UsesTextStorage;
         PvpAgentSettingsStore.Save(settings, StorageCheckSlot);
-        Assert(!UnityEngine.PlayerPrefs.GetString(StorageCheckSlot).Contains(FixtureKey), "落盘内容不含明文Key");
-        return new System.Collections.Generic.Dictionary<string, object> { ["prepared"] = true, ["encrypted"] = true };
+        if (encrypted)
+        {
+            Assert(UnityEngine.PlayerPrefs.HasKey(StorageCheckSlot) && !UnityEngine.PlayerPrefs.GetString(StorageCheckSlot).Contains(FixtureKey), "Windows落盘内容不含明文Key");
+        }
+
+        // 模拟器仍运行在 Windows；另走一次 Android 同用的 TXT 路径，测试已有文件被替换。
+        Assert(settings.TrySet(FixtureKey, "previous-fixture", true, out _), "旧TXT测试模型有效");
+        PvpAgentSettingsStore.SaveText(settings, TextCheckSlot);
+        Assert(settings.TrySet(FixtureKey, "deepseek-flash", true, out _), "新TXT测试模型有效");
+        PvpAgentSettingsStore.SaveText(settings, TextCheckSlot);
+        string text = File.ReadAllText(PvpAgentSettingsStore.TextPath(TextCheckSlot));
+        Assert(text.Contains(FixtureKey) && text.Contains("deepseek-flash") && !text.Contains("previous-fixture"), "TXT保留明文并替换旧模型");
+        return new System.Collections.Generic.Dictionary<string, object> { ["prepared"] = true, ["encrypted"] = encrypted, ["plaintext"] = true };
     }
 
     public static object VerifyStorageCheck()
     {
         try
         {
-            Assert(PvpAgentSettingsStore.Load(out PvpAgentSettings loaded, out _, StorageCheckSlot), "重新加载可解密");
+            Assert(PvpAgentSettingsStore.Load(out PvpAgentSettings loaded, out _, StorageCheckSlot), "正式平台入口可重新加载");
             Assert(loaded.Key == FixtureKey && loaded.Model == "deepseek-flash" && loaded.Enabled, "跨Play恢复Key模型和授权");
-            UnityEngine.PlayerPrefs.SetString(StorageCheckSlot, "corrupt-fixture");
-            UnityEngine.PlayerPrefs.Save();
-            Assert(!PvpAgentSettingsStore.Load(out loaded, out _, StorageCheckSlot) && !loaded.Ready, "损坏记录不启用云端");
+            if (!PvpAgentSettingsStore.UsesTextStorage)
+            {
+                UnityEngine.PlayerPrefs.SetString(StorageCheckSlot, "corrupt-fixture");
+                UnityEngine.PlayerPrefs.Save();
+                Assert(!PvpAgentSettingsStore.Load(out loaded, out _, StorageCheckSlot) && !loaded.Ready, "损坏密文不启用云端");
+            }
+            Assert(PvpAgentSettingsStore.LoadText(out loaded, out _, TextCheckSlot) &&
+                loaded.Key == FixtureKey && loaded.Model == "deepseek-flash" && loaded.Enabled, "跨Play从TXT恢复Key模型和授权");
+            string path = PvpAgentSettingsStore.TextPath(TextCheckSlot);
+            File.WriteAllText(path, "corrupt-fixture");
+            Assert(!PvpAgentSettingsStore.LoadText(out loaded, out _, TextCheckSlot) && !loaded.Ready, "损坏TXT不启用云端");
+            File.WriteAllText(path + ".tmp", FixtureKey);
+            PvpAgentSettingsStore.ClearText(TextCheckSlot);
+            Assert(!File.Exists(path) && !File.Exists(path + ".tmp"), "清除删除正式和临时TXT");
             PvpAgentSettingsStore.Clear(StorageCheckSlot);
-            Assert(!UnityEngine.PlayerPrefs.HasKey(StorageCheckSlot), "清除删除持久化记录");
-            return new System.Collections.Generic.Dictionary<string, object> { ["passed"] = true, ["cleaned"] = true };
+            Assert(!UnityEngine.PlayerPrefs.HasKey(StorageCheckSlot) && !File.Exists(PvpAgentSettingsStore.TextPath(StorageCheckSlot)), "清除删除平台持久化记录");
+            return new System.Collections.Generic.Dictionary<string, object> { ["passed"] = true, ["cleaned"] = true, ["plaintext"] = true };
         }
         finally
         {
-            PvpAgentSettingsStore.Clear(StorageCheckSlot);
+            ClearStorageCheck();
         }
     }
 
     public static object ClearStorageCheck()
     {
         PvpAgentSettingsStore.Clear(StorageCheckSlot);
+        PvpAgentSettingsStore.ClearText(TextCheckSlot);
         return new System.Collections.Generic.Dictionary<string, object> { ["cleaned"] = true };
     }
 

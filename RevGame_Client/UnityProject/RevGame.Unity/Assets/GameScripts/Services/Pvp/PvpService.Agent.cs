@@ -6,7 +6,7 @@ namespace RevGame.Pvp
 {
     public sealed partial class PvpService
     {
-        /// <summary>设置归服务而非面板所有；关闭设置不清Key，由启动入口恢复本地加密配置。棋谱与网络协议不包含凭据。</summary>
+        /// <summary>设置归服务而非面板所有；启动时恢复本机配置，棋谱与网络协议无需持有凭据。</summary>
         public PvpAgentSettings AgentSettings
         {
             get;
@@ -137,13 +137,20 @@ namespace RevGame.Pvp
             {
                 PvpAgentSettingsStore.Save(candidate);
             }
+            catch (PlatformNotSupportedException)
+            {
+                AgentStatus = "当前平台不支持保存Agent配置，原配置未变更";
+                return false;
+            }
             catch (Exception)
             {
-                AgentStatus = "本地保存失败：当前平台需支持Windows凭据保护，原配置未变更";
+                AgentStatus = "本地保存失败，请检查应用存储后重试，原配置未变更";
                 return false;
             }
             ConfigureAgent(candidate.Key, candidate.Model, candidate.Enabled);
-            AgentStatus = enabled ? "已加密保存到本机，重启后自动恢复" : "云端已关闭，本地Key已清除";
+            AgentStatus = enabled
+                ? (PvpAgentSettingsStore.UsesTextStorage ? "已保存到本机明文TXT，重启后自动恢复" : "已加密保存到本机，重启后自动恢复")
+                : "云端已关闭，本地Key已清除";
             return true;
         }
 
@@ -158,7 +165,7 @@ namespace RevGame.Pvp
             ConfigureAgent(restored.Key, restored.Model, restored.Enabled);
             if (restored.Ready)
             {
-                AgentStatus = "已恢复本地加密Agent配置";
+                AgentStatus = "已恢复本地Agent配置";
             }
         }
 

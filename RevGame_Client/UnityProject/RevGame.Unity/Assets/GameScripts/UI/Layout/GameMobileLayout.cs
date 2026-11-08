@@ -5,6 +5,9 @@
 // ============================================================
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+using System.Collections.Generic;
+#endif
 
 namespace RevGame.UI
 {
@@ -30,7 +33,7 @@ namespace RevGame.UI
         }
 
         /// <summary>只给战斗控制面板装上 Android 设计框，背景和相机仍使用完整屏幕。</summary>
-        public static void EnableBoardFrame(Transform panel)
+        public static void EnableBoardFrame(Transform panel, string[] leftNodes = null, string[] rightNodes = null)
         {
 #if UNITY_ANDROID
             if (!panel.TryGetComponent(out GameMobileLayout layout))
@@ -40,7 +43,12 @@ namespace RevGame.UI
             layout._boardFrame = true;
             layout._lastSize = Vector2.zero;
             // 装配时只读取一次预制体坐标，后续换设备都从设计原点重算，不累加偏移。
-            if (layout.panelName == "PreparePanel")
+            if (leftNodes != null || rightNodes != null)
+            {
+                layout._leftSidebar = ReadSidebar(panel, leftNodes);
+                layout._rightSidebar = ReadSidebar(panel, rightNodes);
+            }
+            else if (layout.panelName == "PreparePanel")
             {
                 layout._leftSidebar = ReadSidebar(panel, "cards", "hintPlate", "hintText");
                 layout._rightSidebar = ReadSidebar(panel, "btnReady", "btnRefresh", "btnEye", "btnSkip");
@@ -56,6 +64,10 @@ namespace RevGame.UI
 
         private static SidebarNode[] ReadSidebar(Transform panel, params string[] names)
         {
+            if (names == null)
+            {
+                return null;
+            }
             var nodes = new SidebarNode[names.Length];
             for (int i = 0; i < names.Length; i++)
             {
@@ -66,6 +78,60 @@ namespace RevGame.UI
             }
             return nodes;
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>用实际控件角点、相机投影与设备安全区验收，不用布局公式替代落屏证据。</summary>
+        public static object InspectBoardControls(Transform panel, Camera camera, Rect boardWorld, params string[] paths)
+        {
+            if (!(panel is RectTransform root) || camera == null || !panel.TryGetComponent(out GameMobileLayout layout) || !layout.HasBoardFrame)
+            {
+                return null;
+            }
+
+            const float Tolerance = 1f;
+            Vector3 low = camera.WorldToScreenPoint(boardWorld.min);
+            Vector3 high = camera.WorldToScreenPoint(boardWorld.max);
+            Rect board = Rect.MinMaxRect(low.x + Tolerance, low.y + Tolerance, high.x - Tolerance, high.y - Tolerance);
+            var pixels = new Vector2(camera.pixelWidth, camera.pixelHeight);
+            Rect safe = GameBattleLayout.SafeViewport();
+            Rect safePixels = new Rect(Vector2.Scale(safe.position, pixels), Vector2.Scale(safe.size, pixels));
+            var collisions = new List<string>();
+            var outside = new List<string>();
+            var corners = new Vector3[4];
+            int checkedCount = 0;
+            foreach (string path in paths)
+            {
+                if (!(panel.Find(path) is RectTransform control) || !control.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+                checkedCount++;
+                control.GetWorldCorners(corners);
+                Vector2 min = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+                Vector2 max = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+                Rect bounds = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+                if (board.Overlaps(bounds))
+                {
+                    collisions.Add(path);
+                }
+                if (bounds.xMin < safePixels.xMin - Tolerance || bounds.xMax > safePixels.xMax + Tolerance ||
+                    bounds.yMin < safePixels.yMin - Tolerance || bounds.yMax > safePixels.yMax + Tolerance)
+                {
+                    outside.Add(path);
+                }
+            }
+            return new Dictionary<string, object>
+            {
+                ["designWidth"] = root.rect.width,
+                ["designHeight"] = root.rect.height,
+                ["controlsChecked"] = checkedCount,
+                ["controlOverlaps"] = collisions.ToArray(),
+                ["outsideSafeArea"] = outside.ToArray(),
+                ["sidebarOffset"] = GameBattleLayout.SidebarOffsets(safe, GameBattleLayout.BoardViewport(pixels)),
+                ["mobilePreview"] = UnityEngine.Device.Application.isMobilePlatform
+            };
+        }
+#endif
 
         public void Configure(string value)
         {
