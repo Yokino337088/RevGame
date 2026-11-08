@@ -21,6 +21,7 @@ namespace RevGame.UI
         // 六个固定章节按钮由方法特性接线，数组只用于刷新可交互状态。
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             _chapters = new Button[Core.Consts.ChapterCount];
             for (int i = 0; i < _chapters.Length; i++)
             {

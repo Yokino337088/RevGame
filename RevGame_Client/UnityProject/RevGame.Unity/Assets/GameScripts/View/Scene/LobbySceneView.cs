@@ -125,8 +125,22 @@ namespace RevGame.View
                 yayaAnimator.runtimeAnimatorController = controller;
                 yayaAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
                 yayaAnimator.enabled = true;
+                // 刚装入控制器时，重新建立 SpriteRenderer 的动画绑定，再采样待机首帧。
+                yayaAnimator.Rebind();
                 yayaAnimator.Play(0, 0, 0);
                 yayaAnimator.Update(0);
+                // 图集注册与 Animator 求值不一定在同一个 Unity 更新阶段。
+                float spriteDeadline = Time.realtimeSinceStartup + 2f;
+                while (!_released && generation == _generation &&
+                    (yayaRenderer.sprite == null || yayaRenderer.sprite.texture == null) &&
+                    Time.realtimeSinceStartup < spriteDeadline)
+                {
+                    await RevTask.Yield();
+                }
+                if (_released || generation != _generation)
+                {
+                    return;
+                }
                 if (yayaRenderer.sprite == null || yayaRenderer.sprite.texture == null)
                 {
                     throw new InvalidOperationException("鸦鸦大厅待机没有可画Sprite");

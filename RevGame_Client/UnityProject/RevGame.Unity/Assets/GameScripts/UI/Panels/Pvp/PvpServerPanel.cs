@@ -10,6 +10,7 @@ namespace RevGame.Pvp
         public const string DefaultEndpoint = "192.168.10.3:20000";
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "opaqueBacking");
             // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
         }
 

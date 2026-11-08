@@ -16,6 +16,13 @@ namespace RevGame.UI
         [RevBind] private Text _counter;
         /// <summary>剧情表情立绘，面板关闭必须清Sprite引用再归还表情图集。</summary>
         [RevBind] private Image _guide;
+        [RevBind("DialogueCard")] private RectTransform _card;
+        [RevBind("btnSkip")] private RectTransform _skip;
+        private Rect _guideAnchors;
+        private Rect _cardAnchors;
+        private Rect _skipAnchors;
+        private Rect _lastSafeArea;
+        private bool _layoutReady;
         /// <summary>只保存自己创建的Tween/音效句柄，换句、关闭、销毁均收尾，绝不KillAll。</summary>
         private Tween _typing;
         /// <summary>当前表情在Book集合里的索引，仅用于检查切换，与大厅待机帧分开。</summary>
@@ -51,6 +58,45 @@ namespace RevGame.UI
         protected override void OnBindView()
         {
             _dialogue.supportRichText = false;
+            _guideAnchors = ReadAnchors(_guide.rectTransform);
+            _cardAnchors = ReadAnchors(_card);
+            _skipAnchors = ReadAnchors(_skip);
+            _layoutReady = true;
+            ApplySafeArea();
+        }
+
+        private void LateUpdate()
+        {
+            if (_layoutReady)
+            {
+                ApplySafeArea();
+            }
+        }
+
+        /// <summary>预制体的比例作为基准。旋转或换预览设备时只调整内容区，翻页点击区始终铺满。</summary>
+        private void ApplySafeArea()
+        {
+            Rect safe = GameBattleLayout.SafeViewport();
+            if (safe == _lastSafeArea)
+            {
+                return;
+            }
+
+            _lastSafeArea = safe;
+            SetSafeAnchors(_guide.rectTransform, _guideAnchors, safe);
+            SetSafeAnchors(_card, _cardAnchors, safe);
+            SetSafeAnchors(_skip, _skipAnchors, safe);
+        }
+
+        private static Rect ReadAnchors(RectTransform rect)
+        {
+            return new Rect(rect.anchorMin, rect.anchorMax - rect.anchorMin);
+        }
+
+        private static void SetSafeAnchors(RectTransform rect, Rect design, Rect safe)
+        {
+            rect.anchorMin = safe.position + Vector2.Scale(design.min, safe.size);
+            rect.anchorMax = safe.position + Vector2.Scale(design.max, safe.size);
         }
         /// <summary>按Unicode文字元素切分，避免半个emoji/代理字符。DOTween用非缩放时间，暂停战斗仍可阅读。</summary>
         public void Show(StoryPanel.Frame frame)

@@ -33,6 +33,7 @@ namespace RevGame.UI
 
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
         }
 
         /// <summary>框架按按钮节点名自动接线，面板复用时不会叠加手动监听。</summary>

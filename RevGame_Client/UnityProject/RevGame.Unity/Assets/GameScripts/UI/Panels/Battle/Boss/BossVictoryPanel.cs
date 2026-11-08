@@ -16,6 +16,7 @@ namespace RevGame.UI
         private Tween _animation;
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
         }
         protected override void OnRefreshView()
         {

@@ -41,6 +41,7 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("story.next", "点击剧情下一句", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().AdvanceStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.skip", "与右上角跳过按钮共用正式剧情收尾", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().SkipStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.yaya-state", "只读鸦鸦立绘/表情、全屏背景、层级与文本布局", Empty, _ => RevGame.UI.StoryPanel.YayaSnapshot(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("ui.mobile-panels", "只读当前面板的安全设计框和全屏遮罩覆盖", Empty, _ => RevGame.UI.GameMobileLayout.InspectMobilePanels(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("lobby.yaya-state", "只读StartScene实际场景对象、背景遮罩、待机与HomePanel无旧背景", Empty, _ => LobbySnapshot(), readOnly: true, owner: Owner);
 #if UNITY_EDITOR
             const string portraitSchema = "{\"type\":\"object\",\"properties\":{\"fixture\":{\"type\":\"string\",\"enum\":[\"none\",\"episode\",\"line\",\"default\"]}},\"required\":[\"fixture\"],\"additionalProperties\":false}";

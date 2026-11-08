@@ -20,6 +20,7 @@ namespace RevGame.UI
 
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
             // 控件由真实Prefab绑定；这里不采样或访问业务服务。
         }
 

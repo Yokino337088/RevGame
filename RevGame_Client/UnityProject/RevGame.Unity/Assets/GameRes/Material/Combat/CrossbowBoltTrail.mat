@@ -19,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -41,5 +41,5 @@ Material:
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _Glow: {r: 1, g: 0.67, b: 0.24, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-    - _SpriteUV: {r: 0, g: 0, b: 1, a: 1}
+    - _SpriteUV: {r: 0.09326172, g: 0.8017578, b: 0.19580078, a: 0.8417969}
   m_BuildTextureStacks: []

@@ -11,6 +11,7 @@ namespace RevGame.Pvp
     {
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
             // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
         }
 

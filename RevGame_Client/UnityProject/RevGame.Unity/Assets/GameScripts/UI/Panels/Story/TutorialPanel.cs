@@ -26,6 +26,7 @@ namespace RevGame.UI
 
         protected override void OnBindView()
         {
+            GameMobileLayout.StretchToParent((RectTransform)transform);
             _instruction.supportRichText = false;
             _uiFocusMaterial = _focus.material;
         }

@@ -30,9 +30,10 @@ namespace RevGame.UI
         {
             return _storyBackdrop.PrepareAsync(Data.Episode.BackgroundChapter);
         }
-        /// <summary>节点由RevBind自动装配，不在绑定时启动剧情或加载资源。</summary>
+        /// <summary>旧预制体的根是固定设计尺寸。把背景和翻页区一起铺满 UI 层，内容由 StoryView 适配安全区。</summary>
         protected override void OnBindView()
         {
+            GameMobileLayout.StretchToParent((RectTransform)transform);
         }
         /// <summary>只把当前帧落屏，换句必须由流程SetData驱动。</summary>
         protected override void OnRefreshView()
@@ -69,6 +70,12 @@ namespace RevGame.UI
             var card = view.Find("DialogueCard").GetComponent<RectTransform>();
             var rect = portrait.rectTransform;
             var dialogue = card.Find("dialogue").GetComponent<UnityEngine.UI.Text>();
+            var layer = (RectTransform)panel.transform.parent;
+            Rect layerBounds = ScreenBounds(layer);
+            Rect safe = GameBattleLayout.SafeViewport();
+            Rect safeBounds = new Rect(layerBounds.position + Vector2.Scale(safe.position, layerBounds.size),
+                Vector2.Scale(safe.size, layerBounds.size));
+            var skip = (RectTransform)view.Find("btnSkip");
             StoryBook.Line line = panel.Data.Episode.Lines[panel.Data.Index];
             // 检查整句的排版高度，不能因打字刚开始只有几个字就误判长对白能放下。
             var settings = dialogue.GetGenerationSettings(dialogue.rectTransform.rect.size);
@@ -83,12 +90,34 @@ namespace RevGame.UI
                 ["portraitTop"] = portrait.transform.GetSiblingIndex() == view.childCount - 1,
                 ["separate"] = rect.anchorMax.x <= card.anchorMin.x,
                 ["backdropReady"] = panel._storyBackdrop.Ready,
+                ["backdropCoversScreen"] = Contains(ScreenBounds((RectTransform)panel._storyBackdrop.transform), layerBounds),
+                ["clickAreaCoversScreen"] = Contains(ScreenBounds((RectTransform)view.Find("btnNext")), layerBounds),
+                ["contentInSafeArea"] = Contains(safeBounds, ScreenBounds(rect)) &&
+                    Contains(safeBounds, ScreenBounds(card)) && Contains(safeBounds, ScreenBounds(skip)),
+                ["mobilePreview"] = UnityEngine.Device.Application.isMobilePlatform,
+                ["deviceModel"] = UnityEngine.Device.SystemInfo.deviceModel,
                 ["backgroundChapter"] = panel._storyBackdrop.Chapter,
                 ["speaker"] = line.Speaker,
                 ["text"] = line.Text,
                 ["textFits"] = required <= dialogue.rectTransform.rect.height + 1,
-                ["skipActive"] = view.Find("btnSkip").gameObject.activeInHierarchy
+                ["skipActive"] = skip.gameObject.activeInHierarchy
             };
+        }
+
+        private static Rect ScreenBounds(RectTransform rect)
+        {
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            Vector2 min = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+            Vector2 max = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        private static bool Contains(Rect outer, Rect inner)
+        {
+            const float Tolerance = 1f;
+            return outer.xMin <= inner.xMin + Tolerance && outer.xMax >= inner.xMax - Tolerance &&
+                outer.yMin <= inner.yMin + Tolerance && outer.yMax >= inner.yMax - Tolerance;
         }
 #endif
     }

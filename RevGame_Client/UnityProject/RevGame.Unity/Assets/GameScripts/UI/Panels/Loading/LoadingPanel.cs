@@ -42,6 +42,7 @@ namespace RevGame.UI
 
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             _cover = GetComponent<CanvasGroup>();
         }
         /// <summary>缓存面板再次使用时必须归零；不能把上次100%和透明状态带进下一次加载。</summary>

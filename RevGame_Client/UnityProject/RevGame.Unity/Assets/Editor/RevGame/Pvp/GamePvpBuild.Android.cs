@@ -14,6 +14,7 @@ namespace RevGame.Editor
     {
         // Unity 2022 的安卓 Mono Player 只有 ARMv7。目录和导入器都明确限定对应 ABI。
         private const string AndroidDuelLibrary = "Assets/Plugins/Android/libs/armeabi-v7a/libRevGameCore.so";
+        private const string AndroidReleaseLibrary = "Assets/Plugins/Android/libs/arm64-v8a/libRevGameCore.so";
         private const string ServerMenuPrefab = "Assets/GameRes/UI/Panel/Pvp/Menu/PvpServerPanel.prefab";
 
         // 异步切换平台。调用端通过编辑器状态等待重导入和编译结束，不依赖磁盘工单。
@@ -41,6 +42,55 @@ namespace RevGame.Editor
             }
             EditorUserBuildSettings.buildAppBundle = false;
             Debug.Log(BuildAndroidDuelTest("Builds/AndroidDuelTest/Player/RevGame-Android-Mono-DuelTest.apk"));
+        }
+
+        /// <summary>在 ASCII 构建副本中导出正式 ARM64 工程，Gradle 负责打包，签名凭据留在工程外。</summary>
+        public static void ExportAndroidReleaseBatch()
+        {
+            if (!Application.isBatchMode || EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android ||
+                Directory.Exists("Assets/StreamingAssets/PC") || !File.Exists("Assets/StreamingAssets/Android/Android"))
+            {
+                throw new InvalidOperationException("请使用仅含 Android AB 的独立 Android 构建副本。");
+            }
+
+            var nativeCore = AssetImporter.GetAtPath(AndroidReleaseLibrary) as PluginImporter;
+            if (nativeCore == null || !nativeCore.GetCompatibleWithPlatform(BuildTarget.Android) ||
+                nativeCore.GetPlatformData(BuildTarget.Android, "CPU") != "ARM64")
+            {
+                throw new InvalidOperationException("缺少 ARM64 决斗原生库或其导入配置错误。");
+            }
+
+            string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path).ToArray();
+            if (!scenes.Contains("Assets/Scenes/StartScene.unity") || !scenes.Contains("Assets/Scenes/PvpDuelScene.unity"))
+            {
+                throw new InvalidOperationException("Android 构建场景列表缺少大厅或决斗。");
+            }
+
+            // 副本中只启用 ARM64，避免 APK 同时装入两套引擎和决斗库。
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+            PlayerSettings.Android.useCustomKeystore = false;
+            PlayerSettings.Android.forceInternetPermission = true;
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+            PlayerSettings.defaultScreenWidth = 1920;
+            PlayerSettings.defaultScreenHeight = 1080;
+            EditorUserBuildSettings.buildAppBundle = false;
+            EditorUserBuildSettings.exportAsGoogleAndroidProject = true;
+
+            BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = scenes,
+                target = BuildTarget.Android,
+                locationPathName = "Builds/AndroidRelease/Gradle",
+                options = BuildOptions.AcceptExternalModificationsToPlayer | BuildOptions.CompressWithLz4HC | BuildOptions.StrictMode
+            });
+            var summary = report.summary;
+            Debug.Log($"Android release export {summary.result}, errors={summary.totalErrors}, warnings={summary.totalWarnings}");
+            if (summary.result != BuildResult.Succeeded || summary.totalErrors != 0)
+            {
+                throw new InvalidOperationException("Android 正式包的 Unity 导出失败。");
+            }
         }
 
         // 固定构建范围是仓库的测试包目录。出包之前验证 Android 资源完整且 PC 目录已隔离。

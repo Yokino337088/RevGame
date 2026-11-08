@@ -39,6 +39,7 @@ namespace RevGame.Pvp
         [RevBind("state")] private Text _state;
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "opaqueBacking");
             _key.contentType = InputField.ContentType.Password;
             if (PvpAgentSettingsStore.UsesTextStorage)
             {

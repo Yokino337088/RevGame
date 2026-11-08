@@ -22,8 +22,11 @@ namespace RevGame.UI
         private Rect _lastSafe;
         private bool _applying;
         private bool _boardFrame;
+        private float _frameScale;
         private SidebarNode[] _leftSidebar;
         private SidebarNode[] _rightSidebar;
+        private FullBleedNode[] _fullBleed;
+        private SafeHudNode[] _sceneHud;
         public bool HasBoardFrame => _boardFrame;
 
         private struct SidebarNode
@@ -32,14 +35,93 @@ namespace RevGame.UI
             public Vector2 DesignPosition;
         }
 
+        private struct SafeHudNode
+        {
+            public RectTransform Transform;
+            public Vector2 AnchorMin, AnchorMax, OffsetMin, OffsetMax;
+        }
+
+        private struct FullBleedNode
+        {
+            public RectTransform Transform;
+            public RawImage Artwork;
+            public Rect SourceUv;
+        }
+
+        /// <summary>菜单、弹窗和全屏过场共用同一个设计框。指定的背景或遮罩穿过设计框，覆盖整个 UI 层。</summary>
+        public static void EnableSafePanel(Transform panel, params string[] fullBleedPaths)
+        {
+            if (!UsesMobilePreview())
+            {
+                return;
+            }
+            GameMobileLayout layout = GetLayout(panel);
+            layout._boardFrame = true;
+            layout._lastSize = Vector2.zero;
+            layout._fullBleed = new FullBleedNode[fullBleedPaths.Length];
+            for (int i = 0; i < fullBleedPaths.Length; i++)
+            {
+                var node = panel.Find(fullBleedPaths[i]) as RectTransform;
+                RawImage artwork = node == null ? null : node.GetComponent<RawImage>();
+                layout._fullBleed[i] = new FullBleedNode
+                {
+                    Transform = node, Artwork = artwork, SourceUv = artwork == null ? default : artwork.uvRect
+                };
+            }
+            layout.ApplyLayout();
+        }
+
+        /// <summary>场景 Canvas 保留全屏，决斗的按钮和状态条分别使用原始锚点映射到安全设计框。</summary>
+        public static void EnableSceneHud(Transform canvas, params string[] paths)
+        {
+            if (!UsesMobilePreview())
+            {
+                return;
+            }
+            GameMobileLayout layout = GetLayout(canvas);
+            layout._lastSize = Vector2.zero;
+            layout._sceneHud = new SafeHudNode[paths.Length];
+            for (int i = 0; i < paths.Length; i++)
+            {
+                if (canvas.Find(paths[i]) is RectTransform node)
+                {
+                    layout._sceneHud[i] = new SafeHudNode
+                    {
+                        Transform = node, AnchorMin = node.anchorMin, AnchorMax = node.anchorMax,
+                        OffsetMin = node.offsetMin, OffsetMax = node.offsetMax
+                    };
+                }
+            }
+            layout.ApplyLayout();
+        }
+
+        /// <summary>背景或屏幕坐标引导的宿主需要完整画幅，安全区只作用于其中的内容。</summary>
+        public static void StretchToParent(RectTransform root)
+        {
+            root.anchorMin = Vector2.zero;
+            root.anchorMax = Vector2.one;
+            root.offsetMin = root.offsetMax = Vector2.zero;
+        }
+
+        private static bool UsesMobilePreview()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            return true;
+#else
+            return UnityEngine.Device.Application.isMobilePlatform;
+#endif
+        }
+
+        private static GameMobileLayout GetLayout(Transform panel)
+        {
+            return panel.TryGetComponent(out GameMobileLayout layout) ? layout : panel.gameObject.AddComponent<GameMobileLayout>();
+        }
+
         /// <summary>只给战斗控制面板装上 Android 设计框，背景和相机仍使用完整屏幕。</summary>
         public static void EnableBoardFrame(Transform panel, string[] leftNodes = null, string[] rightNodes = null)
         {
 #if UNITY_ANDROID
-            if (!panel.TryGetComponent(out GameMobileLayout layout))
-            {
-                layout = panel.gameObject.AddComponent<GameMobileLayout>();
-            }
+            GameMobileLayout layout = GetLayout(panel);
             layout._boardFrame = true;
             layout._lastSize = Vector2.zero;
             // 装配时只读取一次预制体坐标，后续换设备都从设计原点重算，不累加偏移。
@@ -80,6 +162,77 @@ namespace RevGame.UI
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>读取正在显示的面板设计框和全屏遮罩，验证实际落屏边界。</summary>
+        public static object InspectMobilePanels()
+        {
+            var panels = new Dictionary<string, object>();
+            var screen = new Rect(0f, 0f, UnityEngine.Device.Screen.width, UnityEngine.Device.Screen.height);
+            Rect safe = GameBattleLayout.SafeViewport();
+            var safePixels = new Rect(Vector2.Scale(safe.position, screen.size), Vector2.Scale(safe.size, screen.size));
+            var corners = new Vector3[4];
+            foreach (var panel in FindObjectsOfType<Revolution.RevUIPanel>())
+            {
+                if (!panel.TryGetComponent(out GameMobileLayout layout) || !layout.HasBoardFrame)
+                {
+                    continue;
+                }
+                bool coversScreen = true;
+                int covers = 0;
+                if (layout._fullBleed != null)
+                {
+                    foreach (FullBleedNode backdrop in layout._fullBleed)
+                    {
+                        covers++;
+                        coversScreen &= backdrop.Transform != null && Contains(ScreenBounds(backdrop.Transform, corners), screen);
+                    }
+                }
+                panels[panel.GetType().Name] = new Dictionary<string, object>
+                {
+                    ["frameInSafeArea"] = Contains(safePixels, ScreenBounds((RectTransform)panel.transform, corners)),
+                    ["fullBleedCount"] = covers,
+                    ["fullBleedCoversScreen"] = coversScreen
+                };
+            }
+            foreach (GameMobileLayout layout in FindObjectsOfType<GameMobileLayout>())
+            {
+                if (layout._sceneHud == null)
+                {
+                    continue;
+                }
+                int checkedCount = 0;
+                bool inSafeArea = true;
+                foreach (SafeHudNode node in layout._sceneHud)
+                {
+                    if (node.Transform != null && node.Transform.gameObject.activeInHierarchy)
+                    {
+                        checkedCount++;
+                        inSafeArea &= Contains(safePixels, ScreenBounds(node.Transform, corners));
+                    }
+                }
+                panels[layout.name] = new Dictionary<string, object>
+                {
+                    ["frameInSafeArea"] = inSafeArea,
+                    ["controlsChecked"] = checkedCount
+                };
+            }
+            return panels;
+        }
+
+        private static Rect ScreenBounds(RectTransform rect, Vector3[] corners)
+        {
+            rect.GetWorldCorners(corners);
+            Vector2 min = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+            Vector2 max = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        private static bool Contains(Rect outer, Rect inner)
+        {
+            const float Tolerance = 1f;
+            return outer.xMin <= inner.xMin + Tolerance && outer.xMax >= inner.xMax - Tolerance &&
+                outer.yMin <= inner.yMin + Tolerance && outer.yMax >= inner.yMax - Tolerance;
+        }
+
         /// <summary>用实际控件角点、相机投影与设备安全区验收，不用布局公式替代落屏证据。</summary>
         public static object InspectBoardControls(Transform panel, Camera camera, Rect boardWorld, params string[] paths)
         {
@@ -157,6 +310,11 @@ namespace RevGame.UI
         private void ApplyLayout()
         {
             RectTransform root = transform as RectTransform;
+            if (_sceneHud != null)
+            {
+                ApplySceneHud(root);
+                return;
+            }
             if (_boardFrame)
             {
                 ApplyBoardFrame(root);
@@ -256,13 +414,15 @@ namespace RevGame.UI
         /// <summary>固定预制体设计坐标，只移动及等比缩放面板根。父级仍是覆盖全屏的 Revolution UI 层。</summary>
         private void ApplyBoardFrame(RectTransform root)
         {
-            if (_applying || root == null || !(root.parent is RectTransform parent))
+            // 弹窗转场会临时改缩放；等原有动画结束后才应用新的设计框，避免互相覆盖。
+            if (_applying || root == null || !(root.parent is RectTransform parent) || Revolution.RevUIAnim.IsPlaying(this))
             {
                 return;
             }
             Vector2 size = parent.rect.size;
             Rect safe = GameBattleLayout.SafeViewport();
-            if (size.x <= 0f || size.y <= 0f || (size == _lastSize && safe == _lastSafe))
+            if (size.x <= 0f || size.y <= 0f ||
+                (size == _lastSize && safe == _lastSafe && Mathf.Approximately(root.localScale.x, _frameScale)))
             {
                 return;
             }
@@ -275,10 +435,74 @@ namespace RevGame.UI
             root.pivot = Vector2.one * .5f;
             root.anchoredPosition = Vector2.zero;
             root.sizeDelta = GameBattleLayout.DesignResolution;
-            root.localScale = Vector3.one * (frame.height * size.y / GameBattleLayout.DesignResolution.y);
+            _frameScale = frame.height * size.y / GameBattleLayout.DesignResolution.y;
+            root.localScale = Vector3.one * _frameScale;
             Vector2 sidebar = GameBattleLayout.SidebarOffsets(safe, frame);
             MoveSidebar(_leftSidebar, sidebar.x);
             MoveSidebar(_rightSidebar, sidebar.y);
+            if (_fullBleed != null)
+            {
+                // 从全屏坐标反算设计框内锚点，背景仍覆盖刘海外侧与宽屏留边。
+                Vector2 min = new Vector2(-frame.xMin / frame.width, -frame.yMin / frame.height);
+                Vector2 max = new Vector2((1f - frame.xMin) / frame.width, (1f - frame.yMin) / frame.height);
+                foreach (FullBleedNode backdrop in _fullBleed)
+                {
+                    if (backdrop.Transform != null)
+                    {
+                        backdrop.Transform.anchorMin = min;
+                        backdrop.Transform.anchorMax = max;
+                        backdrop.Transform.offsetMin = backdrop.Transform.offsetMax = Vector2.zero;
+                    }
+                    CropArtwork(backdrop, size.x / size.y);
+                }
+            }
+            _applying = false;
+        }
+
+        /// <summary>图片使用原始 UV 等比裁切，重复旋转时不会在已经裁过的范围上继续裁。</summary>
+        private static void CropArtwork(FullBleedNode backdrop, float viewportAspect)
+        {
+            Texture texture = backdrop.Artwork == null ? null : backdrop.Artwork.texture;
+            Rect uv = backdrop.SourceUv;
+            if (texture == null || uv.width <= 0f || uv.height <= 0f)
+            {
+                return;
+            }
+            float aspect = texture.width * uv.width / (texture.height * uv.height);
+            float width = uv.width * Mathf.Min(1f, viewportAspect / aspect);
+            float height = uv.height * Mathf.Min(1f, aspect / viewportAspect);
+            backdrop.Artwork.uvRect = new Rect(uv.center - new Vector2(width, height) * .5f, new Vector2(width, height));
+        }
+
+        private void ApplySceneHud(RectTransform root)
+        {
+            if (_applying || root == null)
+            {
+                return;
+            }
+            Vector2 size = root.rect.size;
+            Rect safe = GameBattleLayout.SafeViewport();
+            if (size.x <= 0f || size.y <= 0f || (size == _lastSize && safe == _lastSafe))
+            {
+                return;
+            }
+
+            Rect frame = GameBattleLayout.FitBoardViewport(size, safe);
+            float scale = frame.height * size.y / GameBattleLayout.DesignResolution.y;
+            _applying = true;
+            _lastSize = size;
+            _lastSafe = safe;
+            foreach (SafeHudNode node in _sceneHud)
+            {
+                if (node.Transform == null)
+                {
+                    continue;
+                }
+                node.Transform.anchorMin = frame.position + Vector2.Scale(node.AnchorMin, frame.size);
+                node.Transform.anchorMax = frame.position + Vector2.Scale(node.AnchorMax, frame.size);
+                node.Transform.offsetMin = node.OffsetMin * scale;
+                node.Transform.offsetMax = node.OffsetMax * scale;
+            }
             _applying = false;
         }
 

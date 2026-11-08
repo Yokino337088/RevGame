@@ -18,6 +18,7 @@ namespace RevGame.UI
         [RevBind] private Text _volumeText;
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "veil");
         }
         protected override void OnOpen()
         {

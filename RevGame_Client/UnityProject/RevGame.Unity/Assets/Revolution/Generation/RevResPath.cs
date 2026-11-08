@@ -38,6 +38,7 @@ namespace Revolution
         public const string Art_Endless = "Art/Endless/";
         public const string Art_Endless_CardArrow = "Art/Endless/CardArrow/";
         public const string Art_Endless_HeartEye = "Art/Endless/HeartEye/";
+        public const string Art_Icon = "Art/Icon/";
         public const string Art_Pieces = "Art/Pieces/";
         public const string Art_Pieces_Enemy = "Art/Pieces/Enemy/";
         public const string Art_Pieces_Enemy_Archer = "Art/Pieces/Enemy/Archer/";

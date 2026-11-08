@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 959691909
+CRC: 1333888977
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 85a98d88589002dab9117deb1952c372
+    Hash: 53daf16e1b282252832cdf3d44b5d27e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 85a98d88589002dab9117deb1952c372
+    Hash: 53daf16e1b282252832cdf3d44b5d27e
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,6 +20,7 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Art/Board/BoardSprite_6acf7bce.png
 - Assets/GameRes/Art/Status/Encircled/Encircled_003.png
 - Assets/GameRes/Art/Board/BoardSprite_9e3fb542.png
 - Assets/GameRes/Art/Status/EyeBlink/EyeBlink_02.png

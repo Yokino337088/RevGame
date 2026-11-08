@@ -36,6 +36,7 @@ namespace RevGame.Endless
         }
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "templeArt");
             for (int i = 0; i < _formations.Length; i++)
             {
                 _formations[i] = transform.Find("formation" + i).GetComponent<Image>();

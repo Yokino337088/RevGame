@@ -44,6 +44,10 @@ namespace RevGame.View
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
         {
+            RevGame.UI.GameMobileLayout.EnableSceneHud(transform,
+                "Left", "Right", "Jump", "Jab", "Skill", "Ultimate", "Back", "Reconnect",
+                "BlackHealth", "WhiteHealth", "BlackEnergy", "WhiteEnergy", "BlackHp", "WhiteHp",
+                "FighterNames", "Clock", "TimerPlate", "Banner");
             BindDirectionButton("Left", _leftPointers);
             BindDirectionButton("Right", _rightPointers);
             Exit.onClick.AddListener(ReturnHome);

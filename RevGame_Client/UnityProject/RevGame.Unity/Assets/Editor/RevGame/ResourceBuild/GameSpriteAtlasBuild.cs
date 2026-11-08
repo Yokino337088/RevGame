@@ -57,6 +57,10 @@ namespace RevGame.Editor
                     importer.SaveAndReimport();
                 }
                 string group = GroupFor(path);
+                if (IsYayaExpressionAtlas(group))
+                {
+                    ConfigureExpressionSource(importer);
+                }
                 List<string> paths;
 
                 if (!groups.TryGetValue(group, out paths))
@@ -257,7 +261,7 @@ namespace RevGame.Editor
         }
         /// <summary>
         /// 图集源图与图集同包。禁旋转/紧密裁切保证九宫格Image、矩形弹道和背景UV保持正确。
-        /// PC用BC3，Android用ETC2_RGBA8保留透明；这里不启用会丢失alpha的RGB格式。
+        /// 鸦鸦表情使用较高分辨率的源图，PC 用 BC7，Android 用保留透明的 ASTC。
         /// </summary>
         private static void ConfigureAtlas(string name, List<string> paths)
         {
@@ -300,8 +304,21 @@ namespace RevGame.Editor
             atlasImporter.packingSettings = new SpriteAtlasPackingSettings { enableRotation = false, enableTightPacking = false, padding = 4 };
             atlasImporter.textureSettings = new SpriteAtlasTextureSettings { readable = false, generateMipMaps = false, sRGB = true, filterMode = FilterMode.Bilinear };
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "DefaultTexturePlatform", maxTextureSize = maxSize, textureCompression = TextureImporterCompression.Compressed });
-            atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Standalone", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.DXT5 });
-            atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = maxSize, format = TextureImporterFormat.ETC2_RGBA8 });
+            bool expression = IsYayaExpressionAtlas(name);
+            atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings
+            {
+                name = "Standalone", overridden = true, maxTextureSize = maxSize,
+                format = expression ? TextureImporterFormat.BC7 : TextureImporterFormat.DXT5,
+                compressionQuality = expression ? 100 : 50
+            });
+            // 大幅角色序列帧占用的像素最多。只改块压缩格式，保留原尺寸、切片、帧序和透明通道。
+            TextureImporterFormat androidFormat = name == "YayaIdle24" || name == "YayaExpressions" || name == "YayaCombatExpressions"
+                ? TextureImporterFormat.ASTC_6x6
+                : TextureImporterFormat.ETC2_RGBA8;
+            atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings
+            {
+                name = "Android", overridden = true, maxTextureSize = maxSize, format = androidFormat, compressionQuality = 100
+            });
 
             if (name == "HelperFrames" || name == "HelperStormFrames")
             {
@@ -321,6 +338,39 @@ namespace RevGame.Editor
             foreach (string path in paths)
             {
                 GameResourceBuild.SetBundleIfChanged(AssetImporter.GetAtPath(path), bundle);
+            }
+        }
+
+        private static bool IsYayaExpressionAtlas(string name)
+        {
+            return name == "YayaExpressions" || name == "YayaCombatExpressions";
+        }
+
+        /// <summary>原画长边 2400，旧导入上限 1024 会先丢掉细节。保留更高采样，只在最终图集压缩一次。</summary>
+        private static void ConfigureExpressionSource(TextureImporter importer)
+        {
+            const int ExpressionMaxSize = 2048;
+            bool changed = false;
+            foreach (string platform in new[] { "DefaultTexturePlatform", "Standalone", "Android" })
+            {
+                TextureImporterPlatformSettings settings = importer.GetPlatformTextureSettings(platform);
+                bool overridden = platform != "DefaultTexturePlatform";
+                TextureImporterFormat format = overridden ? TextureImporterFormat.RGBA32 : TextureImporterFormat.Automatic;
+                if (settings.maxTextureSize == ExpressionMaxSize && settings.overridden == overridden &&
+                    settings.format == format && settings.textureCompression == TextureImporterCompression.Uncompressed)
+                {
+                    continue;
+                }
+                settings.maxTextureSize = ExpressionMaxSize;
+                settings.overridden = overridden;
+                settings.format = format;
+                settings.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SetPlatformTextureSettings(settings);
+                changed = true;
+            }
+            if (changed)
+            {
+                importer.SaveAndReimport();
             }
         }
         /// <summary>每张待打包图片必须恰好属于一张图集，并且源图/图集包名一致；漏图会中止构建。</summary>
