@@ -190,6 +190,7 @@ namespace RevGame.Bootstrap
             {
                 ["scene"] = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
                 ["tutorialLayout"] = TutorialLayout(),
+                ["boardControlFrame"] = BoardControlFrame(),
                 ["unlockedChapter"] = battle.UnlockedChapter,
                 ["chapter"] = battle.Chapter,
                 ["tutorialActive"] = flow.IsTutorialActive,
@@ -233,6 +234,55 @@ namespace RevGame.Bootstrap
             };
         }
         /// <summary>读取场景Renderer与UI边界，验证没有把大厅背景/角色放回HomePanel。</summary>
+        /// <summary>在 Play 读取实际 UI 角点和相机投影，验收控件根确实落在棋盘外。</summary>
+        private static object BoardControlFrame()
+        {
+            var hud = RevUI.Get<RevGame.UI.BattleHudPanel>();
+            var prepare = RevUI.Get<RevGame.UI.PreparePanel>();
+            Camera camera = Camera.main;
+            if (hud == null || camera == null || !hud.TryGetComponent(out RevGame.UI.GameMobileLayout frame) || !frame.HasBoardFrame)
+            {
+                return null;
+            }
+
+            var root = (RectTransform)hud.transform;
+            const float Tolerance = 1f;
+            float edge = RevGame.Core.Consts.BoardSize * RevGame.Core.Consts.CellSize * .5f;
+            Vector3 low = camera.WorldToScreenPoint(new Vector3(-edge, -edge, 0f));
+            Vector3 high = camera.WorldToScreenPoint(new Vector3(edge, edge, 0f));
+            Rect board = Rect.MinMaxRect(low.x + Tolerance, low.y + Tolerance, high.x - Tolerance, high.y - Tolerance);
+            var collisions = new List<string>();
+            var corners = new Vector3[4];
+            foreach (Transform panel in new[] { hud.transform, prepare == null ? null : prepare.transform })
+            {
+                if (panel == null || !panel.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+                foreach (string name in new[] { "cards", "infoPlate", "scoreFrame", "btnHome", "btnSettings", "btnReady", "btnRefresh", "btnEye", "btnSkip" })
+                {
+                    if (!(panel.Find(name) is RectTransform control) || !control.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+                    control.GetWorldCorners(corners);
+                    Vector2 a = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+                    Vector2 b = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+                    if (board.Overlaps(Rect.MinMaxRect(a.x, a.y, b.x, b.y)))
+                    {
+                        collisions.Add(name);
+                    }
+                }
+            }
+            return new Dictionary<string, object>
+            {
+                ["designWidth"] = root.rect.width,
+                ["designHeight"] = root.rect.height,
+                ["fullCamera"] = camera.rect == new Rect(0f, 0f, 1f, 1f),
+                ["controlOverlaps"] = collisions.ToArray()
+            };
+        }
+
         private static object LobbySnapshot()
         {
             var lobby = Object.FindObjectOfType<RevGame.View.LobbySceneView>();

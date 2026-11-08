@@ -60,6 +60,9 @@ namespace RevGame.Pvp
 #endif
         private MaterialPropertyBlock _boardBlock, _backgroundBlock;
         private int _revision = -1, _hover = -1, _width, _height;
+#if UNITY_ANDROID
+        private Rect _layoutViewport;
+#endif
         private Camera _camera;
         public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null && eyeBlinkFrames != null && eyeBlinkFrames.Length == 4 && eyeBlinkFrames[0] != null; } }
 
@@ -109,6 +112,26 @@ namespace RevGame.Pvp
         }
         private void FitCamera()
         {
+#if UNITY_ANDROID
+            Vector2 pixels = new Vector2(_camera.pixelWidth, _camera.pixelHeight);
+            Rect viewport = RevGame.UI.GameBattleLayout.BoardViewport(pixels);
+            if (_width == pixels.x && _height == pixels.y && _layoutViewport == viewport)
+            {
+                return;
+            }
+            _width = (int)pixels.x;
+            _height = (int)pixels.y;
+            _layoutViewport = viewport;
+            float aspect = _camera.aspect;
+            _camera.orthographicSize = 6.4f / viewport.height;
+            float halfHeight = _camera.orthographicSize;
+            Vector2 offset = (Vector2.one * .5f - viewport.center) * (halfHeight * 2f);
+            _camera.transform.position = new Vector3(4 + offset.x * aspect, 4 + offset.y, -10);
+            Vector3 backgroundPosition = backgroundRenderer.transform.position;
+            backgroundPosition.x = _camera.transform.position.x;
+            backgroundPosition.y = _camera.transform.position.y;
+            backgroundRenderer.transform.position = backgroundPosition;
+#else
             if (_width == Screen.width && _height == Screen.height)
             {
                 return;
@@ -118,6 +141,7 @@ namespace RevGame.Pvp
             float aspect = _width / (float)Mathf.Max(1, _height);
             _camera.orthographicSize = Mathf.Max(6.4f, 8.6f / aspect);
             _camera.transform.position = new Vector3(4, 4, -10);
+#endif
             float height = _camera.orthographicSize * 2;
             float backgroundWidth = Mathf.Max(height * aspect, height * (16f / 9f));
             backgroundRenderer.transform.localScale = new Vector3(backgroundWidth, backgroundWidth * 9f / 16f, 1);

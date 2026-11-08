@@ -108,7 +108,7 @@ namespace RevGame.View
             {
                 return;
             }
-            Rect safe = GameBattleLayout.SafeViewport();
+            Rect safe = GameBattleLayout.BoardViewport(screenSize);
 
             // 完整几何输入没变就沿用_cameraSize/center/regions，省掉同一帧多次布局计算。
             // 退出场景这些字段随组件释放；新场景重新计算，不设全局静态布局草稿。
@@ -140,8 +140,12 @@ namespace RevGame.View
                 {
                     UpdateBackgroundAtlasUv();
                 }
-                // 第一章尊重原有手调布局；新章节横向原画始终等比铺满，不能沿用旧竖图的非等比尺寸。
-                if (fitBackgroundToCamera || _activeBackgroundChapter > 1)
+                // 安卓全屏时第一章也必须覆盖实际窗口，PC 的第一章仍按原有场景美术配置。
+                bool coverViewport = fitBackgroundToCamera || _activeBackgroundChapter > 1;
+#if UNITY_ANDROID
+                coverViewport |= _activeBackgroundChapter == 1;
+#endif
+                if (coverViewport)
                 {
                     // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。
                     // 统一使用完整矩形Sprite，缩放才与下面的源图尺寸一一对应；背景不参与安全区内缩。

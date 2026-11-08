@@ -99,6 +99,7 @@ namespace RevGame.UI
         // 框架绑定Image节点后创建读写委托，生命周期与面板一致。此处只装配，不计算血量或决定胜负。
         protected override void OnBindView()
         {
+            GameMobileLayout.EnableBoardFrame(transform);
             _readBossBar = () => _bossBar.fillAmount;
             _writeBossBar = value => _bossBar.fillAmount = value;
             _clearBossBar = ClearBossTween;

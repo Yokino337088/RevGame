@@ -130,6 +130,7 @@ namespace RevGame.Endless
         }
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform);
             _heartImage = _heartFill.GetComponent<Image>();
             _top = (RectTransform)transform.Find("top");
             _modalRect = (RectTransform)_modal.transform;

@@ -49,7 +49,7 @@ namespace RevGame.UI
             _liberty.text = "敌气 " + lesson.EnemyLiberties + (lesson.EnemyLocked ? " · 封锁" : "");
             // 查询当前可见控件的实际边界，利用最大空隙放大提示；不覆盖手工调整过的真实UI布局。
             RectTransform root = (RectTransform)transform;
-            var areas = GameBattleLayout.Calculate(root.rect.size, GameBattleLayout.SafeViewport());
+            var areas = GameBattleLayout.Calculate(root.rect.size, GameBattleLayout.BoardViewport(root.rect.size));
             Rect box = FindHintSpace(root, areas.Right);
             var hint = (RectTransform)_instruction.transform.parent;
             hint.anchorMin = hint.anchorMax = Vector2.zero;

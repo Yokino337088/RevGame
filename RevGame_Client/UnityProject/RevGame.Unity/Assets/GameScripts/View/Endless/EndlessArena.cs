@@ -224,12 +224,27 @@ namespace RevGame.Endless
             if (_camera != null)
             {
                 _camera.orthographic = true;
+#if UNITY_ANDROID
+                Vector2 pixels = new Vector2(_camera.pixelWidth, _camera.pixelHeight);
+                Rect viewport = RevGame.UI.GameBattleLayout.BoardViewport(pixels);
+                _camera.orthographicSize = 6.4f / viewport.height;
+                Vector2 offset = (Vector2.one * .5f - viewport.center) * (_camera.orthographicSize * 2f);
+                _camera.transform.position = new Vector3(4 + offset.x * _camera.aspect + _shakeOffset, 4 + offset.y, -10);
+#else
                 // 棋盘放在屏幕正中并尽量放大；窄屏时再拉远，保证两侧的敌潮看得见。
                 _camera.orthographicSize = Mathf.Max(6.4f, 11f / Mathf.Max(0.5f, _camera.aspect));
                 _camera.transform.position = new Vector3(4 + _shakeOffset, 4, -10);
+#endif
                 // 原画等比覆盖相机；宽屏裁上下、窄屏裁左右，建筑不会被拉伸。
                 float height = Mathf.Max(_camera.orthographicSize * 2, _camera.orthographicSize * 2 * _camera.aspect / (16f / 9f));
                 backgroundRenderer.transform.localScale = new Vector3(height * (16f / 9f), height, 1);
+#if UNITY_ANDROID
+                // 背景跟随画幅中心覆盖超出的两侧，震屏仍由棋盘相机表现。
+                Vector3 backgroundPosition = backgroundRenderer.transform.position;
+                backgroundPosition.x = _camera.transform.position.x - _shakeOffset;
+                backgroundPosition.y = _camera.transform.position.y;
+                backgroundRenderer.transform.position = backgroundPosition;
+#endif
             }
             if (Input.GetMouseButtonDown(0) && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {

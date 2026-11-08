@@ -164,7 +164,11 @@ namespace RevGame.View
             {
                 return;
             }
-            GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, GameBattleLayout.SafeViewport());
+            // 控制面板的根已避开刘海，局部坐标可使用完整的 1920×1080，避免重复套入手机安全区。
+            Rect viewport = parent.TryGetComponent(out GameMobileLayout layout) && layout.HasBoardFrame
+                ? new Rect(0f, 0f, 1f, 1f)
+                : GameBattleLayout.BoardViewport(parent.rect.size);
+            GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, viewport);
 
             if (_boardRuleMode)
             {

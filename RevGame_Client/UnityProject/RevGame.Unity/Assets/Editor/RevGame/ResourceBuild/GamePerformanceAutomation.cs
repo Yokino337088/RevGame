@@ -62,6 +62,20 @@ namespace RevGame.Editor
             type.GetMethod("Begin").Invoke(null, null);
             return new Result { text = (string)type.GetMethod("State").Invoke(null, null) };
         }
+        [RevAutomationAction("game.board-viewport.rules", Environment = "edit", Keys = new string[0], Description = "检查多种安卓横屏下的设计画幅和棋盘侧栏")]
+        public static object BoardViewportRules(RevAutomationRequest request)
+        {
+            var type = Type.GetType("RevGame.Editor.GameReadabilityChecks, Assembly-CSharp-Editor", true);
+            try
+            {
+                return new Result { text = (string)type.GetMethod("CheckBoardViewport").Invoke(null, null) };
+            }
+            catch (System.Reflection.TargetInvocationException error)
+            {
+                throw new InvalidOperationException(error.InnerException?.Message ?? error.Message, error.InnerException ?? error);
+            }
+        }
+
         [RevAutomationAction("game.perf.feedback-state",Environment="play",Keys=new string[0],Description="只读密集反馈阶段、结果与已执行断言数")]
         // 只查当前夹具进度/断言，不重复注入反馈，因此安全等待较长视觉检查。
         public static object FeedbackState(RevAutomationRequest request)

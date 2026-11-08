@@ -29,6 +29,39 @@ namespace RevGame.UI
             Vector2 deviceSize = new Vector2(UnityEngine.Device.Screen.width, UnityEngine.Device.Screen.height);
             return NormalizeSafeArea(UnityEngine.Device.Screen.safeArea, deviceSize);
         }
+        /// <summary>Android 的相机保留完整屏幕；只有棋盘和控制区使用同一块居中的 16:9 设计视口。</summary>
+        public static Rect BoardViewport(Vector2 size)
+        {
+            Rect safe = SafeViewport();
+#if UNITY_ANDROID
+            return FitBoardViewport(size, safe);
+#else
+            return safe;
+#endif
+        }
+
+        /// <summary>从对称安全边界等比内接设计矩形。刘海只缩小控制区，不挤移中心棋盘或裁切背景。</summary>
+        public static Rect FitBoardViewport(Vector2 size, Rect safe)
+        {
+            if (size.x <= 0f || size.y <= 0f)
+            {
+                return new Rect(0f, 0f, 1f, 1f);
+            }
+
+            // 极窄或偏心的窗口可能没有围绕屏幕中心的安全区，此时以实际安全区中心排版。
+            float width = 2f * Mathf.Min(.5f - safe.xMin, safe.xMax - .5f);
+            float height = 2f * Mathf.Min(.5f - safe.yMin, safe.yMax - .5f);
+            Vector2 center = Vector2.one * .5f;
+            if (width <= 0f || height <= 0f)
+            {
+                width = safe.width;
+                height = safe.height;
+                center = safe.center;
+            }
+            float scale = Mathf.Min(width * size.x / DesignResolution.x, height * size.y / DesignResolution.y);
+            Vector2 fit = new Vector2(DesignResolution.x * scale / size.x, DesignResolution.y * scale / size.y);
+            return new Rect(center - fit * .5f, fit);
+        }
         /// <summary>独立纯计算入口，方便验证刘海、左右旋转和非法的零尺寸输入。</summary>
         public static Rect NormalizeSafeArea(Rect safe, Vector2 size)
         {

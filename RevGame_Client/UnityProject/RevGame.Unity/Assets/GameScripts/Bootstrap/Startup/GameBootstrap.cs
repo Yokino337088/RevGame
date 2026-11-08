@@ -82,10 +82,6 @@ namespace RevGame.Bootstrap
             // 用户明确要求手机横屏；设备方向和根 Canvas 都固定横屏。
             Screen.orientation = ScreenOrientation.LandscapeLeft;
 #endif
-#if UNITY_ANDROID && !UNITY_EDITOR
-            // 启动时请求 1080p 全屏渲染，Unity 在帧末应用。UI 继续使用同一个 1920×1080 设计基准。
-            Screen.SetResolution(1920, 1080, true);
-#endif
             // ==================== 全局服务注册（新手必读） ====================
             // 【两个泛型参数是什么】Register<TService, TImpl>() 的第一个是「取用键」，第二个是「实现类」，
             //   并不是固定「接口 + 实现」的写法：

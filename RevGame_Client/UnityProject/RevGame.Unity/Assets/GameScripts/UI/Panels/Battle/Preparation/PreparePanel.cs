@@ -44,6 +44,7 @@ namespace RevGame.UI
         }
         protected override void OnBindView()
         {
+            GameMobileLayout.EnableBoardFrame(transform);
             _cards = GetComponentsInChildren<CardItem>(true);
             // 六槽按钮随预制体一同装配，由方法特性接线；点击时读取当前 CardId。
         }

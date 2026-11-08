@@ -23,6 +23,30 @@ namespace RevGame.Editor
         private static int _checks;
         // 当前检查步骤，仅作诊断。不是模型阶段，测试工具不能通过改这个字符串强行使业务通过。
         public static string Stage { get; private set; } = "未开始";
+
+        /// <summary>用真实布局函数校验常见安卓横屏和刘海，检查设计比例、包含关系与棋盘侧栏。</summary>
+        public static string CheckBoardViewport()
+        {
+            var sizes = new[] { new Vector2(1920, 1080), new Vector2(2400, 1080), new Vector2(2340, 1080), new Vector2(1440, 1080) };
+            var safeAreas = new[] { new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1), new Rect(.01f, .035f, .94f, .965f), new Rect(0, 0, 1, 1) };
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                Vector2 pixels = sizes[i];
+                Rect safe = safeAreas[i];
+                Rect frame = RevGame.UI.GameBattleLayout.FitBoardViewport(pixels, safe);
+                var layout = RevGame.UI.GameBattleLayout.Calculate(pixels, frame);
+                if (!Mathf.Approximately(frame.width * pixels.x / (frame.height * pixels.y), 16f / 9f) ||
+                    frame.xMin < safe.xMin - .0001f || frame.xMax > safe.xMax + .0001f ||
+                    frame.yMin < safe.yMin - .0001f || frame.yMax > safe.yMax + .0001f ||
+                    frame.center != Vector2.one * .5f ||
+                    !Mathf.Approximately(layout.Board.width, layout.Board.height) ||
+                    layout.Board.Overlaps(layout.Left) || layout.Board.Overlaps(layout.Right) || layout.Board.Overlaps(layout.Header))
+                {
+                    throw new InvalidOperationException("横屏控制区超出安全区域或遮挡棋盘：" + pixels);
+                }
+            }
+            return "通过 1920×1080、2400×1080、2340×1080、1440×1080 的设计画幅、安全区、正方形棋盘与侧栏避让检查";
+        }
         // 只读结果/阶段/已完成断言数。断言数随渲染帧数可能略变，不代表这么多个独立玩法场景。
         public static string State()
         {

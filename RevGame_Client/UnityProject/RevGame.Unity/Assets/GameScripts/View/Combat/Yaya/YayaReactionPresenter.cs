@@ -323,7 +323,8 @@ namespace RevGame.View
         {
             if (_mode == 1)
             {
-                Rect board = GameBattleLayout.Calculate(new Vector2(_camera.pixelWidth, _camera.pixelHeight), safe).Board;
+                Vector2 pixels = new Vector2(_camera.pixelWidth, _camera.pixelHeight);
+                Rect board = GameBattleLayout.Calculate(pixels, GameBattleLayout.BoardViewport(pixels)).Board;
                 return new Rect(board.x / _camera.pixelWidth, board.y / _camera.pixelHeight, board.width / _camera.pixelWidth, board.height / _camera.pixelHeight);
             }
 

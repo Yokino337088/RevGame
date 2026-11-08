@@ -18,6 +18,21 @@ namespace RevGame.UI
         private Vector2 _lastSize;
         private Rect _lastSafe;
         private bool _applying;
+        private bool _boardFrame;
+        public bool HasBoardFrame => _boardFrame;
+
+        /// <summary>只给战斗控制面板装上 Android 设计框，背景和相机仍使用完整屏幕。</summary>
+        public static void EnableBoardFrame(Transform panel)
+        {
+#if UNITY_ANDROID
+            if (!panel.TryGetComponent(out GameMobileLayout layout))
+            {
+                layout = panel.gameObject.AddComponent<GameMobileLayout>();
+            }
+            layout._boardFrame = true;
+            layout.ApplyLayout();
+#endif
+        }
 
         public void Configure(string value)
         {
@@ -43,6 +58,11 @@ namespace RevGame.UI
         private void ApplyLayout()
         {
             RectTransform root = transform as RectTransform;
+            if (_boardFrame)
+            {
+                ApplyBoardFrame(root);
+                return;
+            }
 
             // 不按节点名重新摆放：新增控件、字体行高与手工坐标必须一起来自预制体。
             // 画布等比缩放和预制体锚点仍正常生效；安全区布局需要在预制体中显式设计。
@@ -131,6 +151,32 @@ namespace RevGame.UI
                                     }
                                 }
 
+            _applying = false;
+        }
+
+        /// <summary>固定预制体设计坐标，只移动及等比缩放面板根。父级仍是覆盖全屏的 Revolution UI 层。</summary>
+        private void ApplyBoardFrame(RectTransform root)
+        {
+            if (_applying || root == null || !(root.parent is RectTransform parent))
+            {
+                return;
+            }
+            Vector2 size = parent.rect.size;
+            Rect safe = GameBattleLayout.SafeViewport();
+            if (size.x <= 0f || size.y <= 0f || (size == _lastSize && safe == _lastSafe))
+            {
+                return;
+            }
+
+            Rect frame = GameBattleLayout.FitBoardViewport(size, safe);
+            _applying = true;
+            _lastSize = size;
+            _lastSafe = safe;
+            root.anchorMin = root.anchorMax = frame.center;
+            root.pivot = Vector2.one * .5f;
+            root.anchoredPosition = Vector2.zero;
+            root.sizeDelta = GameBattleLayout.DesignResolution;
+            root.localScale = Vector3.one * (frame.height * size.y / GameBattleLayout.DesignResolution.y);
             _applying = false;
         }
         private void LayoutHand(GameBattleLayout.Regions areas)

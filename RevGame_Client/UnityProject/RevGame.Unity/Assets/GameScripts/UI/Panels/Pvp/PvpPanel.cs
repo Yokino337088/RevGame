@@ -21,6 +21,7 @@ namespace RevGame.Pvp
     {
         protected override void OnBindView()
         {
+            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform);
             // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
             _idlePortrait = _portrait.sprite;
             // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
