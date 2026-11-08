@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1049559321
+CRC: 337237639
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b5a22ac7e64a1f0c2bf0b61968c01839
+    Hash: 4e44e2fd41351e014e5be76abd466cb6
   TypeTreeHash:
     serializedVersion: 2
     Hash: ccd41d3e4b647b71e9b3a9b13a447b7f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b5a22ac7e64a1f0c2bf0b61968c01839
+    Hash: 4e44e2fd41351e014e5be76abd466cb6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -50,15 +50,15 @@ Assets:
 - Assets/GameRes/Endless/Textures/EndlessThrustTrail.png
 - Assets/GameRes/Endless/Textures/EndlessSwordAuraBlade.png
 - Assets/GameRes/Endless/EndlessShieldBubble.mat
-- Assets/GameRes/ChapterBackground/EndlessTemple.png
 - Assets/GameRes/Endless/EndlessArena.prefab
 - Assets/GameRes/Endless/EndlessThrust.mat
 - Assets/GameRes/Endless/EndlessSwordAura.mat
 - Assets/GameRes/Endless/Textures/EndlessThrustBlade.png
 - Assets/GameRes/Endless/EndlessCardUpgrade.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_endlesshearteye
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_board
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_endlesshearteye"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/background_temple_shared"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_board"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders"

@@ -23,6 +23,12 @@ namespace RevGameCore
     using Settings = std::array<int32_t, ConfigWords>;
     using Snapshot = std::array<int32_t, SnapshotWords>;
 
+    // 不限时使用 0。运行和检查点验收共用判定，避免同一帧在恢复时被误当作超时终局。
+    constexpr bool ReachedTimeLimit(const Settings& config, int32_t frame)
+    {
+        return config[3] > 0 && frame >= config[3];
+    }
+
     // 由一局原生世界持有的单席权威状态。
     struct Fighter
     {

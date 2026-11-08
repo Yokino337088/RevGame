@@ -122,6 +122,21 @@ namespace RevGame.Editor
                 .GetMethod("BindExistingDuelSpriteSequences").Invoke(null, null);
         }
 
+        /// <summary>校验决斗的真实切片和动画引用，打包并读回内置角色图集。</summary>
+        [RevAutomationAction("game.pvp.duel-atlas", Environment = "edit", Keys = new string[0], Description = "构建内置决斗 Sprite Atlas V2 并核对两席动画切片")]
+        public static object BuildDuelFighterAtlas(RevAutomationRequest request)
+        {
+            try
+            {
+                return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                    .GetMethod("BuildDuelFighterAtlas").Invoke(null, null);
+            }
+            catch (System.Reflection.TargetInvocationException error)
+            {
+                throw new InvalidOperationException(error.InnerException?.ToString() ?? error.ToString());
+            }
+        }
+
         /// <summary>给 RevCLI 的固定入口，只执行项目中已审查的双背景配方。</summary>
         [RevAutomationAction("game.pvp.arena-backgrounds", Environment = "edit", Keys = new string[0], Description = "更新决斗擂台与围棋无尽神殿的背景 Shader 绑定")]
         public static object ArenaBackgrounds(RevAutomationRequest request)
@@ -129,6 +144,40 @@ namespace RevGame.Editor
             string result = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
                 .GetMethod("BuildArenaBackgrounds").Invoke(null, null);
             return new Result { text = result };
+        }
+
+        /// <summary>固定安卓测试包准备动作，绑定 ARMv7 原生插件与服务器地址。</summary>
+        [RevAutomationAction("game.pvp.android-duel-prepare", Environment = "edit", Keys = new string[0], Description = "装配安卓 Mono 决斗原生库和默认地址")]
+        public static object PrepareAndroidDuel(RevAutomationRequest request)
+        {
+            string result = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("PrepareAndroidDuelTest").Invoke(null, null);
+            return new Result { text = result };
+        }
+
+        /// <summary>通过内存桥发起平台切换，等待由 CLI 状态检查完成。</summary>
+        [RevAutomationAction("game.pvp.android-duel-target", Environment = "edit", Keys = new string[0], Description = "异步切换到 Android")]
+        public static object SelectAndroidDuelTarget(RevAutomationRequest request)
+        {
+            string result = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("SelectAndroidDuelTarget").Invoke(null, null);
+            return new Result { text = result };
+        }
+
+        /// <summary>固定的 Android Mono 测试包构建入口，输出真实构建清单。</summary>
+        [RevAutomationAction("game.pvp.android-duel-player", Environment = "edit", Keys = new[] { "path" }, Description = "构建 Android Mono 决斗开发 APK")]
+        public static object BuildAndroidDuelPlayer(RevAutomationRequest request)
+        {
+            var options = UnityEngine.JsonUtility.FromJson<AndroidDuelPlayerOptions>(request.payloadJson);
+            string result = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("BuildAndroidDuelTest").Invoke(null, new object[] { options.path });
+            return new Result { text = result };
+        }
+
+        [Serializable]
+        private sealed class AndroidDuelPlayerOptions
+        {
+            public string path;
         }
 
         [Serializable]

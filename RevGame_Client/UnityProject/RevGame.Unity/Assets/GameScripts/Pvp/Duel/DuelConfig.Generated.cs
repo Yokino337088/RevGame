@@ -5,7 +5,7 @@ namespace RevGame.Pvp.Duel
     public static class DuelConfig
     {
         // 原生 FIFO 协议版本，同时纳入联机决斗指纹。
-        internal const int CoreProtocol = 3;
+        internal const int CoreProtocol = 5;
         // 从第几手开始允许判定中局劣势。
         public const int MinimumMove = 24;
         // 入场最小估算分差，单位为半目。
@@ -22,10 +22,12 @@ namespace RevGame.Pvp.Duel
         public const int SkillCost = 22;
         // AI 选择大招意图需要的能量。
         public const int UltimateCost = 78;
-        // 本局最多执行的逻辑帧数，到达上限时由原生按生命结算。
-        public const int FrameLimit = 1200;
+        // 0 表示不限时。正数是限时规则的逻辑帧上限。
+        public const int FrameLimit = 0;
         // 逻辑帧对应的毫秒数，用于宿主限速和显示时间换算。
         public const int FrameMs = 50;
+        // 联机每隔多少个已执行逻辑帧交换一次指纹。终局另外校验。
+        public const int HashSampleFrames = 40;
         // 招式持续的逻辑帧数，用于表现采样和输入缓冲。
         public static int ActionDuration(int action)
         {
@@ -38,11 +40,11 @@ namespace RevGame.Pvp.Duel
             };
         }
         // 两席握手比较的 31 位规则指纹。
-        public const int Fingerprint = 1761161911;
+        public const int Fingerprint = 191955659;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
         public static int[] CreateCoreWords()
         {
-            return new[] { 100, 4500, 140, 1200, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78, 270, 34, 480 };
+            return new[] { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78, 270, 34, 480 };
         }
     }
 }

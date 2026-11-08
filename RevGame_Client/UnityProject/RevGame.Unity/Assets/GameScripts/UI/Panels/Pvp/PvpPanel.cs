@@ -33,6 +33,9 @@ namespace RevGame.Pvp
             // 左下空位避开中央棋盘，不盖住最后一排交叉点。
             rect.anchoredPosition += new Vector2(-665, 102);
             _duelButton.gameObject.SetActive(false);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            BindDuelTestButton();
+#endif
         }
 
         // 按当前面板生命周期持有的挑战按钮，位置避开棋盘。
@@ -43,6 +46,32 @@ namespace RevGame.Pvp
         {
             Service.ChallengeDuel();
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 开发测试控件和面板同寿命，不写入正式 AB 或影响原战术挑战控件。
+        private Button _duelTestButton;
+
+        private void BindDuelTestButton()
+        {
+            _duelTestButton = Instantiate(_resign, _resign.transform.parent);
+            _duelTestButton.name = "DuelTest";
+            _duelTestButton.onClick = new Button.ButtonClickedEvent();
+            _duelTestButton.onClick.AddListener(TestDuelFromPanel);
+            _duelTestButton.GetComponentInChildren<Text>().text = "决斗测试";
+            var rect = (RectTransform)_duelTestButton.transform;
+            // 放在左侧联机重连按钮上方，避开棋盘、Agent 按钮和原有战术挑战。
+            rect.anchorMin = new Vector2(.025f, .56f);
+            rect.anchorMax = new Vector2(.20f, .64f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            _duelTestButton.gameObject.SetActive(false);
+        }
+
+        // 面板转发测试动作，只有权威回执才能触发换场。
+        private void TestDuelFromPanel()
+        {
+            Service.TestDuel();
+        }
+#endif
 
         // 根据业务资格更新显示，仅在可见性变化时启动或停止 Tween。
         private void RefreshDuelChallenge()
@@ -221,6 +250,9 @@ namespace RevGame.Pvp
         {
             RefreshDuelChallenge();
             PvpService service = Service;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            Show(_duelTestButton.gameObject, !IsModalOpen && service.CanTestDuel);
+#endif
             GoCore core = service.Core;
             bool hasGame = core != null;
             transform.Find("top").gameObject.SetActive(hasGame);

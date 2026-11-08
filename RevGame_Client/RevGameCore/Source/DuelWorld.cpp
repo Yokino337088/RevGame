@@ -2,15 +2,18 @@
 #include "DuelWorld.h"
 #include "DuelDamage.h"
 #include "DuelProtocol.Generated.h"
+#include "Fnv1a.h"
 #include <algorithm>
+#include <limits>
 
 namespace RevGameCore
 {
     // 先校验配置范围，再初始化角色，保证后续定点整数运算有界。
     bool DuelWorld::Start(const Settings& settings, uint64_t seed)
     {
+        const int32_t frameLimit = settings[3];
         if (Valid || settings[0] < 1 || settings[0] > 10000 || settings[1] < 1000 || settings[1] > 100000 ||
-            settings[2] < 1 || settings[2] > 1000 || settings[3] < 10 || settings[3] > 10000 ||
+            settings[2] < 1 || settings[2] > 1000 || (frameLimit != 0 && (frameLimit < 10 || frameLimit > 10000)) ||
             settings[4] < 1 || settings[4] >= settings[1] || settings[5] < 1 || settings[5] > 1000 ||
             settings[6] < 0 || settings[6] > settings[5] || settings[7] < 0 || settings[7] > settings[5] ||
             settings[8] != FrameMilliseconds)
@@ -34,6 +37,7 @@ namespace RevGameCore
             }
         }
         Config = settings;
+        InitialSeed = seed;
         Random = DeterministicRandom(seed);
         for (const Seat seat : SeatOrder)
         {
@@ -90,7 +94,8 @@ namespace RevGameCore
     // 先验整帧再推进世界。胜负确定后，继续接收连续帧但冻结战斗状态。
     bool DuelWorld::Advance(int32_t frame, int32_t first, int32_t second, Snapshot& snapshot)
     {
-        if (!Valid || frame != Frame + 1 || first < 0 || first > (31 | NoDamageFrameBit) || second < 0 || second > 31 ||
+        if (!Valid || Frame == std::numeric_limits<int32_t>::max() || frame != Frame + 1 ||
+            first < 0 || first > (31 | NoDamageFrameBit) || second < 0 || second > 31 ||
             (first & 3) == 3 || (second & 3) == 3)
         {
             return false;
@@ -117,7 +122,7 @@ namespace RevGameCore
                 Fighter& fighter = Fighters[seat];
                 fighter.Energy = std::min(Config[5], fighter.Energy + Config[6] + (hits[seat] ? Config[7] : 0));
             }
-            if (black.Hp == 0 || white.Hp == 0 || Frame >= Config[3])
+            if (black.Hp == 0 || white.Hp == 0 || ReachedTimeLimit(Config, Frame))
             {
                 Result = black.Hp == white.Hp ? 3 : black.Hp > white.Hp ? 1 : 2;
             }
@@ -144,32 +149,33 @@ namespace RevGameCore
             snapshot[offset + 4] = fighter.Age;
             snapshot[offset + 5] = fighter.Facing;
         }
-        // 核对所有会影响未来执行的世界字段和配置；没有未纳入的计时器或随机源。
-        // 使用明确回绕的无符号乘法，保证同一整数状态在双端混合方式相同。
-        uint32_t hash = 2166136261u;
+        // 按帧号和胜负、黑白席可见字段、配置、开局种子、垂直状态、完整随机状态的顺序对账。
+        // 参考 MiniGameCore 的 HashInt32，整数按小端逐字节混入，而不是一次异或整个整数。
+        uint32_t hash = Fnv1aOffsetBasis;
         for (int i = 0; i < 14; ++i)
         {
-            hash = (hash ^ static_cast<uint32_t>(snapshot[i])) * 16777619u;
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(snapshot[i]));
         }
         for (auto word : Config)
         {
-            hash = (hash ^ static_cast<uint32_t>(word)) * 16777619u;
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(word));
         }
+        hash = Fnv1aDoubleWord(hash, InitialSeed);
         // 高度会被 HUD 读取，速度虽不展示，但会改变未来落点，因此同样参与指纹。
         snapshot[17] = Fighters[Black].Y.RawValue();
         snapshot[18] = Fighters[White].Y.RawValue();
         for (const Seat seat : SeatOrder)
         {
             const Fighter& fighter = Fighters[seat];
-            hash = (hash ^ static_cast<uint32_t>(fighter.Y.RawValue())) * 16777619u;
-            hash = (hash ^ static_cast<uint32_t>(fighter.VerticalSpeed.RawValue())) * 16777619u;
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.Y.RawValue()));
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.VerticalSpeed.RawValue()));
         }
         // 随机状态的高低字按固定顺序混入。读取状态不抽样，避免对账改变战斗结果。
         for (const uint64_t word : Random.StateWords())
         {
-            hash = (hash ^ static_cast<uint32_t>(word)) * 16777619u;
-            hash = (hash ^ static_cast<uint32_t>(word >> 32)) * 16777619u;
+            hash = Fnv1aDoubleWord(hash, word);
         }
+        // 快照和联机消息沿用非负 int32。只在输出时截去最高位，不缩短内部混合。
         snapshot[16] = static_cast<int32_t>(hash & 0x7fffffffu);
     }
 }

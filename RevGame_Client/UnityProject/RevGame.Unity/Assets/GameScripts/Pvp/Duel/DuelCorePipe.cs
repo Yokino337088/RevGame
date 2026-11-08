@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
@@ -31,6 +32,8 @@ namespace RevGame.Pvp.Duel
         public const int Jump = 1 << 4;
         // 完整帧第 10 位由本地测试权威设置，不属于黑白任一席的输入。
         internal const int NoDamageFrame = 1 << (2 * InputBits);
+        // 防止错误 DLL 返回超大长度。当前检查点为固定的小端数据包。
+        private const int MaxCheckpointBytes = 4096;
         // 当前 C# 实例独占的原生句柄，释放后不能继续写入。
         private readonly Handle _handle;
         // 复用的整帧写缓冲，五项各占四字节。
@@ -64,7 +67,15 @@ namespace RevGame.Pvp.Duel
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         // 原生同步写入托管缓冲并返回实际字节数，缓冲所有权仍在 C#。
         private static extern int GameCore_Read(Handle handle, [Out] byte[] buffer, int size);
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        // 空缓冲查询所需字节数，实际保存要求两侧 FIFO 都已消费完。
+        private static extern int GameCore_SaveCheckpoint(Handle handle, [Out] byte[]? buffer, int capacity);
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        // 校验同局检查点后一次提交，并写回恢复帧的显示基线。
+        private static extern int GameCore_RestoreCheckpoint(Handle handle, byte[] buffer, int size, [Out] byte[] snapshot, int capacity);
 
+        // 开局身份，录像和恢复必须使用同一个 ID。
+        public string DuelId { get; }
         // 本端最后一帧的值副本；只在完整结果校验成功后替换。
         public DuelSnapshot Snapshot { get; private set; }
 
@@ -76,6 +87,7 @@ namespace RevGame.Pvp.Duel
                 throw new ArgumentException("决斗需要统一的对局标识。", nameof(duelId));
             }
             ulong seed = SeedFor(duelId);
+            DuelId = duelId;
             _handle = GameCore_Create();
             int[] settings = DuelConfig.CreateCoreWords();
             byte[] start = new byte[(settings.Length + 4) * 4];
@@ -134,6 +146,40 @@ namespace RevGame.Pvp.Duel
             {
                 throw new InvalidOperationException("原生 FIFO 拒绝封帧或输出序号分歧。");
             }
+            ReadSnapshot();
+        }
+
+        // 保存的是原生权威状态。托管显示快照缺少随机状态、垂直速度等字段，不能用来恢复。
+        public byte[] SaveCheckpoint()
+        {
+            int size = GameCore_SaveCheckpoint(_handle, null, 0);
+            if (size <= 0 || size > MaxCheckpointBytes)
+            {
+                throw new InvalidOperationException("决斗检查点大小无效或仍有待消费帧。");
+            }
+            var checkpoint = new byte[size];
+            if (GameCore_SaveCheckpoint(_handle, checkpoint, checkpoint.Length) != size)
+            {
+                throw new InvalidOperationException("决斗检查点保存失败。");
+            }
+            return checkpoint;
+        }
+
+        // 失败时保留原生实例和当前快照。成功后只返回显示基线，恢复帧的旧命中不会再发一次。
+        public bool TryRestoreCheckpoint(byte[]? checkpoint)
+        {
+            if (checkpoint == null || checkpoint.Length == 0 || checkpoint.Length > MaxCheckpointBytes ||
+                GameCore_RestoreCheckpoint(_handle, checkpoint, checkpoint.Length, _output, _output.Length) != 1)
+            {
+                return false;
+            }
+            ReadSnapshot();
+            return true;
+        }
+
+        // 执行帧与恢复基线共享同一个显示快照解码顺序。
+        private void ReadSnapshot()
+        {
             Snapshot = new DuelSnapshot { Frame = Read(0), Result = Read(1), FirstX = Read(2), FirstHealth = Read(3),
                 FirstEnergy = Read(4), FirstAction = Read(5), FirstAge = Read(6), FirstFacing = Read(7),
                 SecondX = Read(8), SecondHealth = Read(9), SecondEnergy = Read(10), SecondAction = Read(11),

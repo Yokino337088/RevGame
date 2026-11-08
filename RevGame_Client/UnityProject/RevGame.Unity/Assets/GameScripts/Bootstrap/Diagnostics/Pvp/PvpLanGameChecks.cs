@@ -1,6 +1,8 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using RevGame.Pvp.Duel;
 using RevGame.Pvp.Networking;
 
 namespace RevGame.Pvp
@@ -8,7 +10,7 @@ namespace RevGame.Pvp
     /// <summary>
     /// 两份隔离 PvP 服务的真实局域网业务验收。两端只走 Begin、StartLan、Invite、ReplyInvitation、Submit、LeaveRoom。
     /// 不注入消息、不修改棋盘、不共享 GoCore：每手实际经过 UDP/UTP、版本握手、协议解析与独立规则重算。
-    /// 外层每帧 Tick；20秒是测试护栏，不是游戏规则。失败和取消都 Dispose 两端，不影响玩家服务或存档。
+    /// 外层每帧 Tick。超时只用于测试收尾，失败和取消都 Dispose 两端，保留玩家服务和存档。
     /// </summary>
     public sealed class PvpLanGameChecks : IDisposable
     {
@@ -17,6 +19,20 @@ namespace RevGame.Pvp
         private readonly bool _longGame;
         // 是否运行本次决斗分支；旧围棋回归仍使用原路径。
         private readonly bool _duel;
+        // 通过白方真实 UTP 连接验证空棋盘测试入口，不伪造局面或权威回包。
+        private readonly bool _duelTestEntry;
+        // 对账验收延长决斗到真实终局。错误样本测试只改白方发出的对账值，原生命令和快照均不变。
+        private readonly bool _duelHashAudit;
+        private readonly bool _duelHashMismatch;
+        // Dispose 会清理服务的局内计数，报告保留最后一次观测。
+        private int _hostMatchedFrame, _guestMatchedFrame, _hostMismatchFrame, _guestMismatchFrame;
+        private int _hostAcknowledged, _guestAcknowledged, _authorityBlackReports, _authorityWhiteReports;
+        private int _hostDuelFrame, _guestDuelFrame, _hostDuelHash, _guestDuelHash, _duelTerminalFrame, _firstPeriodicMatchedFrame;
+        private string _hostDuelError = "", _guestDuelError = "";
+        // 双方收到分歧后，跨过三个逻辑帧的墙钟时间再核对双方没有继续推进。
+        private double _duelMismatchObservedAt;
+        private int _hostFrameAtMismatch, _guestFrameAtMismatch;
+        private bool _frozenAfterMismatch;
         // 两端已核对的布置棋谱序号；下一手必须等双方同步才提交。
         private int _duelSeedSequence;
         private PvpService _host;
@@ -38,12 +54,34 @@ namespace RevGame.Pvp
         public int BlackCaptures { get; private set; }
 
         // 创建隔离 UTP 夹具，duel 模式验证从棋局到原生封帧。
-        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false)
         {
             _config = config;
             _agents = agents;
             _longGame = longGame;
             _duel = duel;
+            _duelTestEntry = duelTestEntry;
+            _duelHashAudit = duelHashAudit;
+            _duelHashMismatch = duelHashMismatch;
+        }
+
+        // 把同一 UTP 夹具的两席观测与宿主权威收包计数一起交给验收工具。
+        internal Dictionary<string, object> DuelHashState()
+        {
+            return new Dictionary<string, object>
+            {
+                ["enabled"] = _duelHashAudit, ["injectMismatch"] = _duelHashMismatch,
+                ["sampleInterval"] = DuelConfig.HashSampleFrames, ["terminalFrame"] = _duelTerminalFrame,
+                ["firstPeriodicMatchedFrame"] = _firstPeriodicMatchedFrame,
+                ["hostFrame"] = _hostDuelFrame, ["guestFrame"] = _guestDuelFrame,
+                ["hostHash"] = _hostDuelHash, ["guestHash"] = _guestDuelHash,
+                ["hostMatchedFrame"] = _hostMatchedFrame, ["guestMatchedFrame"] = _guestMatchedFrame,
+                ["hostMismatchFrame"] = _hostMismatchFrame, ["guestMismatchFrame"] = _guestMismatchFrame,
+                ["hostAcknowledged"] = _hostAcknowledged, ["guestAcknowledged"] = _guestAcknowledged,
+                ["authorityBlackReports"] = _authorityBlackReports, ["authorityWhiteReports"] = _authorityWhiteReports,
+                ["frozenAfterMismatch"] = _frozenAfterMismatch,
+                ["hostError"] = _hostDuelError, ["guestError"] = _guestDuelError
+            };
         }
 
         public bool Start(out string reason)
@@ -93,7 +131,7 @@ namespace RevGame.Pvp
                 CaptureState();
                 if (Now >= _deadline)
                 {
-                    Fail("20秒业务护栏超时，步骤 " + _step + "：" + Detail + "；黑方=" + _host.Status + "；白方=" + _guest.Status);
+                    Fail("局域网业务护栏超时，步骤 " + _step + "：" + Detail + "；黑方=" + _host.Status + "；白方=" + _guest.Status);
                     return;
                 }
                 Advance();
@@ -154,6 +192,17 @@ namespace RevGame.Pvp
                     break;
                 // 用真实传输让黑方下子、白方停手，构造有分差的局面。
                 case 30:
+                    if (_duelTestEntry)
+                    {
+                        if (Check(_host.Core.MoveNumber == 0 && _guest.Core.MoveNumber == 0 &&
+                                  !_host.CanChallengeDuel && !_guest.CanChallengeDuel &&
+                                  _host.CanTestDuel && _guest.CanTestDuel && _guest.TestDuel(),
+                                  "空棋盘正常挑战关闭，白方测试入口可经真实 UTP 请求"))
+                        {
+                            Next("等待黑方批准空棋盘测试并同步同一决斗标识");
+                        }
+                        return;
+                    }
                     if (!Synced(_duelSeedSequence))
                     {
                         return;
@@ -191,6 +240,11 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
+                    if (_duelHashMismatch)
+                    {
+                        // 配置只属于本测试的客端。它仍走真实白方 UTP 请求，宿主不会收到本地伪造的结果。
+                        _guest.DuelHashCorruptFrameForCheck = DuelConfig.HashSampleFrames;
+                    }
                     _guest.MarkDuelSceneReady();
                     Next("等待双方原生 FIFO 和 UTP 帧流推进");
                     break;
@@ -199,6 +253,11 @@ namespace RevGame.Pvp
                     int frame = _host.DuelSnapshot.Frame;
                     _host.SetDuelInput(frame < 12 ? 1 : 0, frame >= 12 ? 1 : 0);
                     _guest.SetDuelInput(frame < 12 ? -1 : 0, 0);
+                    if (_duelHashAudit)
+                    {
+                        CheckDuelHashExchange();
+                        return;
+                    }
                     if (frame >= 25 && frame == _guest.DuelSnapshot.Frame &&
                         Check(_host.DuelSnapshot.Hash == _guest.DuelSnapshot.Hash &&
                               _host.DuelSnapshot.SecondHealth < Duel.DuelConfig.Health &&
@@ -206,7 +265,8 @@ namespace RevGame.Pvp
                     {
                         Passed = true;
                         Complete = true;
-                        Detail = "P2P UTP 封帧验证通过，帧=" + frame + " 指纹=" + _host.DuelSnapshot.Hash;
+                        Detail = (_duelTestEntry ? "P2P UTP 空棋盘白方测试入口与封帧通过，棋步=0 帧=" : "P2P UTP 封帧验证通过，帧=") +
+                            frame + " 指纹=" + _host.DuelSnapshot.Hash;
                         Dispose();
                     }
                     break;
@@ -337,6 +397,104 @@ namespace RevGame.Pvp
                     Detail = "双端真实业务联机、版本规则握手、三手提子、每手指纹一致、双停一手、双方计分确认及退出清理通过";
                     break;
             }
+        }
+
+        // 健康用例必须等到两席收到终局确认。失败用例必须是同一个已封口样本的分歧。
+        private void CheckDuelHashExchange()
+        {
+            DuelSnapshot host = _host.DuelSnapshot;
+            DuelSnapshot guest = _guest.DuelSnapshot;
+            _hostDuelFrame = host.Frame;
+            _guestDuelFrame = guest.Frame;
+            _hostDuelHash = host.Hash;
+            _guestDuelHash = guest.Hash;
+            _hostMatchedFrame = _host.DuelHashMatchedFrame;
+            _guestMatchedFrame = _guest.DuelHashMatchedFrame;
+            _hostMismatchFrame = _host.DuelHashMismatchFrame;
+            _guestMismatchFrame = _guest.DuelHashMismatchFrame;
+            _hostAcknowledged = _host.DuelHashSamplesAcknowledgedForCheck;
+            _guestAcknowledged = _guest.DuelHashSamplesAcknowledgedForCheck;
+            _authorityBlackReports = _host.DuelHashReportsForCheck((int)GoSide.Black);
+            _authorityWhiteReports = _host.DuelHashReportsForCheck((int)GoSide.White);
+            _hostDuelError = _host.DuelError;
+            _guestDuelError = _guest.DuelError;
+            if (_duelHashMismatch)
+            {
+                if (_hostMismatchFrame == 0 || _guestMismatchFrame == 0)
+                {
+                    return;
+                }
+                if (_duelMismatchObservedAt == 0)
+                {
+                    if (!Check(_hostMismatchFrame == DuelConfig.HashSampleFrames &&
+                               _guestMismatchFrame == _hostMismatchFrame &&
+                               _hostDuelError.Length > 0 && _guestDuelError.Length > 0 &&
+                               host.Frame >= _hostMismatchFrame && guest.Frame >= _guestMismatchFrame,
+                               "白方错误指纹应通过 UTP 被权威发现，并由两端报告同一个样本帧。"))
+                    {
+                        return;
+                    }
+                    _hostFrameAtMismatch = host.Frame;
+                    _guestFrameAtMismatch = guest.Frame;
+                    _duelMismatchObservedAt = Now;
+                    return;
+                }
+                if (Now - _duelMismatchObservedAt < 3 * DuelConfig.FrameMs / 1000.0)
+                {
+                    return;
+                }
+                _frozenAfterMismatch = host.Frame == _hostFrameAtMismatch && guest.Frame == _guestFrameAtMismatch;
+                if (!Check(_frozenAfterMismatch, "两端发现指纹分歧后不应继续推进。"))
+                {
+                    return;
+                }
+                CompleteDuelHashCheck("白方错误样本经 UTP 被权威拒绝，两端报告帧 " + _hostMismatchFrame + " 分歧并停止推进。");
+                return;
+            }
+            if (_hostMismatchFrame != 0 || _guestMismatchFrame != 0 ||
+                _hostDuelError.Length != 0 || _guestDuelError.Length != 0)
+            {
+                Fail("正常决斗的同帧对账不应报错。");
+                return;
+            }
+            int interval = DuelConfig.HashSampleFrames;
+            if (host.Result == 0 || guest.Result == 0)
+            {
+                if (_firstPeriodicMatchedFrame == 0 && _hostMatchedFrame >= interval && _guestMatchedFrame >= interval)
+                {
+                    _firstPeriodicMatchedFrame = Math.Min(_hostMatchedFrame, _guestMatchedFrame);
+                }
+                return;
+            }
+            _duelTerminalFrame = host.Frame;
+            if (host.Frame != guest.Frame || host.Result != guest.Result || host.Hash != guest.Hash || host.SecondHealth != 0)
+            {
+                Fail("两个副本必须在实际命中结束后得到同一终局。");
+                return;
+            }
+            if (_hostMatchedFrame < _duelTerminalFrame || _guestMatchedFrame < _duelTerminalFrame)
+            {
+                return;
+            }
+            // 终局恰好落在周期采样帧时，两种理由只产生一份报告。
+            int expectedSamples = (_duelTerminalFrame + interval - 1) / interval;
+            if (!Check(_firstPeriodicMatchedFrame == interval && _duelTerminalFrame > interval &&
+                       _hostMatchedFrame == _duelTerminalFrame &&
+                       _guestMatchedFrame == _duelTerminalFrame && _hostAcknowledged == expectedSamples &&
+                       _guestAcknowledged == expectedSamples && _authorityBlackReports == expectedSamples &&
+                       _authorityWhiteReports == expectedSamples, "黑白两席每个周期及终局样本应恰好被权威确认一次"))
+            {
+                return;
+            }
+            CompleteDuelHashCheck("P2P UTP 周期和终局对账通过，终局帧=" + _duelTerminalFrame + "，每席样本=" + expectedSamples);
+        }
+
+        private void CompleteDuelHashCheck(string detail)
+        {
+            Passed = true;
+            Complete = true;
+            Detail = detail;
+            Dispose();
         }
 
         private bool Synced(int sequence)

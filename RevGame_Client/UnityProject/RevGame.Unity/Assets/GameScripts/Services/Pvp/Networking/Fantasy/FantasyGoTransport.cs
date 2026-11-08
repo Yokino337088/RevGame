@@ -186,12 +186,13 @@ namespace RevGame.Pvp.Networking
             try
             {
                 using var response = await _session.C2G_GoDuelRequest(_roomId, request.operation, request.fingerprint,
-                    request.afterFrame, request.inputFrame, request.input);
+                    request.afterFrame, request.inputFrame, request.input, request.hashFrame, request.hash);
                 if (IsCurrent(generation))
                 {
                     onReply(new DuelReply { id = response.DuelId, error = response.ErrorCode == 0 ? "" : response.Reason,
                         readyMask = response.ReadyMask, afterFrame = response.AfterFrame, frames = response.Frames.ToArray(),
-                        result = response.Result, finalHash = response.FinalHash });
+                        result = response.Result, finalHash = response.FinalHash, hashAckFrame = response.HashAckFrame,
+                        hashMatchedFrame = response.HashMatchedFrame, hashMismatchFrame = response.HashMismatchFrame });
                 }
             }
             catch (Exception error)

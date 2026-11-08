@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using RevGame.Flow;
 using RevGame.Pvp;
 using RevGame.Pvp.Duel;
 using Revolution;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace RevGame.View
@@ -27,8 +29,11 @@ namespace RevGame.View
         private int _presentedResult;
         // HUD 点按后的招式编号，由下一次输入采样取走。
         private int _clickedAction;
-        // 每个方向只清除自己的按住状态，旧按钮的松手不能盖掉新按钮的输入。
-        private bool _leftHeld, _rightHeld;
+        // 以 EventSystem 的指针 ID 区分同一按钮上的多根手指。
+        private readonly HashSet<int> _leftPointers = new HashSet<int>();
+        private readonly HashSet<int> _rightPointers = new HashSet<int>();
+        // 兼容已有场景配方里的旧持久监听。运行期绑定会用实际指针替换它。
+        private const int LegacyPointerId = int.MinValue;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
         // 黑白角色的当前显示坐标，浮点插值只用于画面。
@@ -39,6 +44,8 @@ namespace RevGame.View
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
         {
+            BindDirectionButton("Left", _leftPointers);
+            BindDirectionButton("Right", _rightPointers);
             Exit.onClick.AddListener(ReturnHome);
             Reconnect.onClick.AddListener(ReconnectServer);
             Jab.onClick.AddListener(() => _clickedAction = 1);
@@ -54,18 +61,60 @@ namespace RevGame.View
             service.StartServer(service.Endpoint, service.Nickname);
         }
 
-        // 由方向按钮的按下事件记录各自的状态。
+        // 保留旧场景配方的方向绑定入口。正式运行时由 Start 更换为带指针 ID 的事件。
         public void MovePointer(int direction)
         {
-            _leftHeld |= direction < 0;
-            _rightHeld |= direction > 0;
+            if (direction != 0)
+            {
+                (direction < 0 ? _leftPointers : _rightPointers).Add(LegacyPointerId);
+            }
         }
 
-        // 抬起和移出都只释放触发事件的按钮。
+        // 旧序列化回调与按下入口成对保留，便于已有场景继续导入。
         public void ReleasePointer(int direction)
         {
-            _leftHeld &= direction >= 0;
-            _rightHeld &= direction <= 0;
+            if (direction == 0)
+            {
+                return;
+            }
+            (direction < 0 ? _leftPointers : _rightPointers).Remove(LegacyPointerId);
+        }
+
+        // 重用场景中已有方向按钮的事件触发器。攻击和跳跃继续走 Button.onClick。
+        private void BindDirectionButton(string path, HashSet<int> pointers)
+        {
+            var button = transform.Find(path)?.GetComponent<Button>();
+            if (button == null)
+            {
+                Debug.LogError("决斗方向按钮缺少绑定：" + path, this);
+                return;
+            }
+            var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerDown ||
+                entry.eventID == EventTriggerType.PointerUp || entry.eventID == EventTriggerType.PointerExit);
+            AddDirectionEvent(trigger, EventTriggerType.PointerDown, pointer =>
+            {
+                if (pointer.button == PointerEventData.InputButton.Left && button.IsInteractable())
+                {
+                    pointers.Add(pointer.pointerId);
+                }
+            });
+            AddDirectionEvent(trigger, EventTriggerType.PointerUp, pointer => pointers.Remove(pointer.pointerId));
+            AddDirectionEvent(trigger, EventTriggerType.PointerExit, pointer => pointers.Remove(pointer.pointerId));
+        }
+
+        // 保留 Unity 每根手指的原始事件数据，释放时只删除该触点。
+        private static void AddDirectionEvent(EventTrigger trigger, EventTriggerType kind, System.Action<PointerEventData> listener)
+        {
+            var entry = new EventTrigger.Entry { eventID = kind, callback = new EventTrigger.TriggerEvent() };
+            entry.callback.AddListener(data =>
+            {
+                if (data is PointerEventData pointer)
+                {
+                    listener(pointer);
+                }
+            });
+            trigger.triggers.Add(entry);
         }
 
         // 窗口失焦时可能收不到 PointerUp。清除本地按住状态，回到窗口后重新接收输入。
@@ -73,10 +122,32 @@ namespace RevGame.View
         {
             if (!focused)
             {
-                _leftHeld = _rightHeld = _clickedJump = false;
-                _clickedAction = 0;
-                RevServices.Get<PvpService>()?.ClearDuelUnsealedInput();
+                ClearHeldControls();
             }
+        }
+
+        // Android 切到后台时不保证先收到失焦或抬起事件。
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                ClearHeldControls();
+            }
+        }
+
+        private void OnDisable()
+        {
+            ClearHeldControls();
+        }
+
+        // 只清还没封帧的意图。已经发送的帧仍沿原链路等待权威确认。
+        private void ClearHeldControls()
+        {
+            _leftPointers.Clear();
+            _rightPointers.Clear();
+            _clickedJump = false;
+            _clickedAction = 0;
+            RevServices.Get<PvpService>()?.ClearDuelUnsealedInput();
         }
 
         // 交给统一 GameFlow 退房和换场景。
@@ -89,8 +160,8 @@ namespace RevGame.View
         private void Update()
         {
             var service = RevServices.GetRequired<PvpService>();
-            bool left = _leftHeld || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
-            bool right = _rightHeld || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+            bool left = _leftPointers.Count > 0 || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+            bool right = _rightPointers.Count > 0 || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
             int direction = (right ? 1 : 0) - (left ? 1 : 0);
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
                 Input.GetKeyDown(KeyCode.L) ? 3 : _clickedAction;
@@ -160,7 +231,9 @@ namespace RevGame.View
             FirstHealthText.text = view.FirstHealth.ToString();
             SecondHealthText.text = view.SecondHealth.ToString();
             Names.text = service.BlackName + "                                      " + service.WhiteName;
-            Clock.text = Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
+            Clock.text = DuelConfig.FrameLimit == 0
+                ? "∞"
+                : Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             bool disconnected = service.Mode != PvpConnectionMode.Local && !service.Connected;
             Reconnect.gameObject.SetActive(disconnected && service.Mode == PvpConnectionMode.Server && service.DuelReconnectAvailable);
             Banner.text = service.DuelError.Length != 0 ? service.DuelError :

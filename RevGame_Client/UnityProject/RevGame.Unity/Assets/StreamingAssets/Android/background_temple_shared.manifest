@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 413356208
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 2e17a3e8235093d046c7c023dfc0cfd8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 2e17a3e8235093d046c7c023dfc0cfd8
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/ChapterBackground/EndlessTemple.png
+Dependencies: []

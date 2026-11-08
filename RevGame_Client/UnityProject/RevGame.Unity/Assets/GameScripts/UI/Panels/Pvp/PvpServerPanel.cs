@@ -6,6 +6,8 @@ namespace RevGame.Pvp
     [RevUIPanel("UI/Panel/Pvp/Menu", RevUILayer.Popup, ExclusiveGroup = "PvpMenu", Mask = RevUIMaskMode.None)]
     public sealed class PvpServerPanel : RevUIPanel
     {
+        // 本次联机测试使用开发机的局域网入口，仍允许在面板中输入其他地址。
+        public const string DefaultEndpoint = "192.168.10.3:20000";
         protected override void OnBindView()
         {
             // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
@@ -23,7 +25,7 @@ namespace RevGame.Pvp
         protected override void OnOpen()
         {
             _nickname.text = string.IsNullOrEmpty(Service.Nickname) ? "棋友" : Service.Nickname;
-            _endpoint.text = string.IsNullOrEmpty(Service.Endpoint) ? "127.0.0.1:20000" : Service.Endpoint;
+            _endpoint.text = string.IsNullOrEmpty(Service.Endpoint) ? DefaultEndpoint : Service.Endpoint;
             RevTimer.Every(.2f, RefreshView, domain: RevTimeDomain.Unscaled, owner: this);
         }
         protected override void OnRefreshView()

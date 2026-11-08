@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RevGame.Pvp.Duel;
 using UnityEngine;
 
@@ -47,6 +48,22 @@ namespace RevGame.Pvp
 #endif
         // 下次轮询的本地单调秒数，和原生逻辑帧号独立。
         private double _duelNextSend;
+        // 活跃对局每两秒（40 个逻辑帧）产生一个样本。追帧积压和重试每半秒最多送一个。
+        private const double DuelHashRetrySeconds = .5;
+        // 允许积压样本先对账，再确认终局。到期后停止终局查询，保留已收到的共同上界。
+        private const double DuelTerminalHashTimeoutSeconds = 20;
+        private readonly Queue<(int Frame, int Hash)> _duelHashPending = new Queue<(int, int)>();
+        private double _duelHashNextSend;
+        private double _duelTerminalHashUntil;
+        // 两个客户端都已与同一权威帧指纹核对的最新帧。
+        public int DuelHashMatchedFrame { get; private set; }
+        public int DuelHashMismatchFrame { get; private set; }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        internal int DuelHashSamplesAcknowledgedForCheck { get; private set; }
+        // 验收只篡改指定帧的上行样本，原生世界与现场快照仍原样运行。
+        internal int DuelHashCorruptFrameForCheck { get; set; }
+        internal int DuelHashReportsForCheck(int side) => _duelAuthority?.HashReportsForCheck(side) ?? 0;
+#endif
         // 挑战请求冷却截止的本地秒数，抑制连点。
         private double _duelChallengeUntil;
         // 当前决斗标识。空串表示仍在围棋或已经退场。
@@ -81,29 +98,53 @@ namespace RevGame.Pvp
             }
         }
 
-        // 经正式业务入口发起决斗；服务器 RPC、LAN 转发或本地创建按模式选择。
+        // 测试按钮只在开发客户端编译。正式 LAN 客端也据此拒绝测试启动通知。
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        private const bool DuelTestEnabled = true;
+#else
+        private const bool DuelTestEnabled = false;
+#endif
+
+        // 测试跳过劣势门槛，仍需要已入局、有效座位、同步完成且双方协议兼容。
+        internal bool CanTestDuel => DuelTestEnabled && Mode != PvpConnectionMode.Local && CanAct &&
+            _duelPeerCompatible && (MySide == GoSide.Black || MySide == GoSide.White) && Core.Phase == GoPhase.Playing;
+
+        // 正常挑战使用原围棋劣势资格。
         public bool ChallengeDuel()
         {
-            if (!CanChallengeDuel || _clock.Elapsed.TotalSeconds < _duelChallengeUntil)
+            return RequestDuel(DuelAuthority.Challenge);
+        }
+
+        // 明确标记为开发测试，服务端与局域网宿主仍要重新校验。
+        internal bool TestDuel()
+        {
+            return RequestDuel(DuelAuthority.TestChallenge);
+        }
+
+        // 两种入口共用服务器 RPC、LAN 转发、就绪屏障和原生开局。
+        private bool RequestDuel(int operation)
+        {
+            bool allowed = operation == DuelAuthority.TestChallenge ? CanTestDuel : CanChallengeDuel;
+            if (!allowed || _clock.Elapsed.TotalSeconds < _duelChallengeUntil)
             {
                 return false;
             }
             _duelChallengeUntil = _clock.Elapsed.TotalSeconds + 1;
             if (Mode == PvpConnectionMode.Server)
             {
-                return _server.ExchangeDuel(DuelRequestFor(DuelAuthority.Challenge), AcceptDuelReply);
+                return _server.ExchangeDuel(DuelRequestFor(operation), AcceptDuelReply);
             }
             if (Mode == PvpConnectionMode.Lan && MySide == GoSide.White)
             {
                 SendLan(new PvpLanMessage { type = "duel-challenge", name = Core.StateHash.ToString(),
-                    duelRequest = DuelRequestFor(DuelAuthority.Challenge) });
+                    duelRequest = DuelRequestFor(operation) });
                 return true;
             }
-            return OpenOwnedDuel(Mode == PvpConnectionMode.Lan);
+            return OpenOwnedDuel(Mode == PvpConnectionMode.Lan, operation);
         }
 
         // 为权威位创建封帧器，必要时通知 LAN 对端；创建失败后报告错误。
-        private bool OpenOwnedDuel(bool notifyPeer)
+        private bool OpenOwnedDuel(bool notifyPeer, int operation)
         {
             string id = Guid.NewGuid().ToString("N");
             try
@@ -119,7 +160,7 @@ namespace RevGame.Pvp
                 if (notifyPeer)
                 {
                     SendLan(new PvpLanMessage { type = "duel-start", name = id, rules = Core.StateHash.ToString(),
-                        duelRequest = DuelRequestFor(DuelAuthority.Challenge) });
+                        duelRequest = DuelRequestFor(operation) });
                 }
                 return true;
             }
@@ -237,13 +278,18 @@ namespace RevGame.Pvp
         // 按本地单调时钟发送 Ready 或锁定输入，并按对局模式选择传输边界。
         private void PollDuel()
         {
-            if (!_duelSceneReady || DuelSnapshot.Result != 0 || DuelError.Length != 0 ||
-                _clock.Elapsed.TotalSeconds < _duelNextSend)
+            double seconds = _clock.Elapsed.TotalSeconds;
+            DuelSnapshot snapshot = DuelSnapshot;
+            bool finished = snapshot.Result != 0;
+            if (!_duelSceneReady || DuelError.Length != 0 || seconds < _duelNextSend ||
+                (finished && (Mode == PvpConnectionMode.Local || DuelHashMatchedFrame >= snapshot.Frame ||
+                    seconds >= _duelTerminalHashUntil)))
             {
                 return;
             }
-            _duelNextSend = _clock.Elapsed.TotalSeconds + DuelConfig.FrameMs / 1000.0;
-            var request = DuelRequestFor(DuelBothReady ? DuelAuthority.Input : DuelAuthority.Ready);
+            // 终局只查询对账，不再生成输入或推动原生世界。
+            _duelNextSend = seconds + (finished ? DuelHashRetrySeconds : DuelConfig.FrameMs / 1000.0);
+            var request = DuelRequestFor(finished ? DuelAuthority.Read : DuelBothReady ? DuelAuthority.Input : DuelAuthority.Ready);
             if (request.operation == DuelAuthority.Input)
             {
                 // 按本端连续执行的上界生成下一帧。没收到封口结果前重复请求仍使用旧意图。
@@ -265,6 +311,7 @@ namespace RevGame.Pvp
                 request.inputFrame = _duelIntentFrame;
                 request.input = _duelIntent;
             }
+            AttachDuelHashSample(request, seconds);
             if (Mode == PvpConnectionMode.Server)
             {
                 _server?.ExchangeDuel(request, AcceptDuelReply);
@@ -284,6 +331,67 @@ namespace RevGame.Pvp
                     _duelAuthority.Exchange(2, bot, now);
                 }
                 AcceptDuelReply(_duelAuthority.Exchange((int)MySide, request, now));
+            }
+        }
+
+        // 始终重发最早未确认的样本。普通输入包不携带已经确认的样本。
+        private void AttachDuelHashSample(DuelRequest request, double seconds)
+        {
+            if (_duelHashPending.Count == 0 || seconds < _duelHashNextSend)
+            {
+                return;
+            }
+            var sample = _duelHashPending.Peek();
+            request.hashFrame = sample.Frame;
+            request.hash = sample.Hash;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (sample.Frame == DuelHashCorruptFrameForCheck)
+            {
+                request.hash ^= 1;
+            }
+#endif
+            _duelHashNextSend = seconds + DuelHashRetrySeconds;
+        }
+
+        // 在消费每条完整帧时取样。补帧一包包含多个采样点时，按顺序保留每一个。
+        private void RecordDuelHashSample(DuelSnapshot before)
+        {
+            DuelSnapshot frame = DuelSnapshot;
+            if (Mode == PvpConnectionMode.Local || before.Result != 0 ||
+                (frame.Frame % DuelConfig.HashSampleFrames != 0 && frame.Result == 0))
+            {
+                return;
+            }
+            _duelHashPending.Enqueue((frame.Frame, frame.Hash));
+            if (frame.Result != 0)
+            {
+                // 无时限决斗可能积压更多样本，按当前队列长度预留低频补送时间。
+                double wait = Math.Max(DuelTerminalHashTimeoutSeconds, _duelHashPending.Count * DuelHashRetrySeconds + 5);
+                _duelTerminalHashUntil = _clock.Elapsed.TotalSeconds + wait;
+            }
+        }
+
+        // 回包属于当前对局才消费。P2P 宿主也观察转发给客端的共同结论，但不能替自己确认样本。
+        private void ObserveDuelHashReceipt(DuelReply reply, bool localAcknowledgement)
+        {
+            if (reply.id != DuelId)
+            {
+                return;
+            }
+            if (reply.hashMismatchFrame > 0)
+            {
+                DuelHashMismatchFrame = reply.hashMismatchFrame;
+                DuelError = "决斗在第 " + DuelHashMismatchFrame + " 帧的指纹不一致。";
+                return;
+            }
+            DuelHashMatchedFrame = Math.Max(DuelHashMatchedFrame, reply.hashMatchedFrame);
+            if (localAcknowledgement && _duelHashPending.Count > 0 &&
+                reply.hashAckFrame == _duelHashPending.Peek().Frame)
+            {
+                _duelHashPending.Dequeue();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                DuelHashSamplesAcknowledgedForCheck++;
+#endif
             }
         }
 
@@ -318,6 +426,11 @@ namespace RevGame.Pvp
             {
                 return;
             }
+            ObserveDuelHashReceipt(reply, true);
+            if (DuelHashMismatchFrame != 0)
+            {
+                return;
+            }
             _duelReadyMask = reply.readyMask;
             int current = DuelSnapshot.Frame;
             if (reply.afterFrame > current || reply.frames == null)
@@ -337,10 +450,10 @@ namespace RevGame.Pvp
                     DuelSnapshot before = _duelPipe.Snapshot;
                     _duelPipe.Append(reply.afterFrame + i + 1, reply.frames[i]);
                     DuelPreviousSnapshot = before;
+                    RecordDuelHashSample(before);
                 }
-                // 满包还可能有历史，等补齐后对账。终局会停止轮询，所以最后一包恰好满包也必须检查。
-                if (DuelSnapshot.Frame > 0 && (reply.frames.Length < DuelAuthority.MaxBatch || DuelSnapshot.Result != 0) &&
-                    DuelSnapshot.Frame == reply.afterFrame + reply.frames.Length &&
+                // 平时只交换稀疏样本。终局输出另核对一次，确认结果与权威一致。
+                if (DuelSnapshot.Result != 0 && DuelSnapshot.Frame == reply.afterFrame + reply.frames.Length &&
                     (DuelSnapshot.Result != reply.result || DuelSnapshot.Hash != reply.finalHash))
                 {
                     DuelError = "决斗同帧指纹不一致。";
@@ -358,16 +471,22 @@ namespace RevGame.Pvp
             switch (message.type)
             {
                 case "duel-challenge":
-                    if (MySide == GoSide.Black && DuelId.Length == 0 && message.name == Core.StateHash.ToString() &&
-                        message.duelRequest?.fingerprint == DuelConfig.Fingerprint &&
-                        DuelEligibility.CanChallenge(Core, GoSide.White, _duelAnalysis))
+                    if (MySide == GoSide.Black && Core != null && DuelId.Length == 0 && message.name == Core.StateHash.ToString() &&
+                        message.duelRequest?.fingerprint == DuelConfig.Fingerprint)
                     {
-                        OpenOwnedDuel(true);
+                        int operation = message.duelRequest.operation;
+                        if ((operation == DuelAuthority.TestChallenge && CanTestDuel) ||
+                            (operation == DuelAuthority.Challenge && DuelEligibility.CanChallenge(Core, GoSide.White, _duelAnalysis)))
+                        {
+                            OpenOwnedDuel(true, operation);
+                        }
                     }
                     return true;
                 case "duel-start":
-                    if (MySide == GoSide.White && message.rules == Core.StateHash.ToString() &&
-                        message.duelRequest?.fingerprint == DuelConfig.Fingerprint)
+                    if (MySide == GoSide.White && Core != null && message.rules == Core.StateHash.ToString() &&
+                        message.duelRequest?.fingerprint == DuelConfig.Fingerprint &&
+                        (message.duelRequest.operation == DuelAuthority.Challenge ||
+                         (DuelTestEnabled && message.duelRequest.operation == DuelAuthority.TestChallenge)))
                     {
                         ActivateDuel(message.name);
                     }
@@ -376,6 +495,7 @@ namespace RevGame.Pvp
                     if (_duelAuthority != null && message.name == DuelId)
                     {
                         var reply = _duelAuthority.Exchange(2, message.duelRequest, _clock.ElapsedMilliseconds);
+                        ObserveDuelHashReceipt(reply, false);
                         SendLan(new PvpLanMessage { type = "duel-frame", duelReply = reply });
                     }
                     return true;
@@ -397,6 +517,8 @@ namespace RevGame.Pvp
             DuelLastAttackIntentForCheck = 0;
             DuelLastAttackIntentFrameForCheck = 0;
             DuelAttackExpiredAtFrameForCheck = 0;
+            DuelHashSamplesAcknowledgedForCheck = 0;
+            DuelHashCorruptFrameForCheck = 0;
 #endif
             DuelPreviousSnapshot = default;
             _duelAuthority?.Dispose();
@@ -413,10 +535,37 @@ namespace RevGame.Pvp
             _duelIntent = 0;
             _duelIntentFrame = 0;
             _duelNextSend = 0;
+            _duelHashPending.Clear();
+            _duelHashNextSend = 0;
+            _duelTerminalHashUntil = 0;
+            DuelHashMatchedFrame = 0;
+            DuelHashMismatchFrame = 0;
             _duelChallengeUntil = 0;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 恢复验收只读取已就绪的本地人机权威，正式联机房间不开放这个入口。
+        internal bool DuelRecoveryAvailableForCheck => Mode == PvpConnectionMode.Local && IsComputerGame &&
+            _duelSceneReady && DuelBothReady && _duelAuthority != null;
+
+        // 在 Unity 主线程读取同一局的权威快照和检查点。没有暂停、换局或替换当前内核。
+        internal byte[] SaveDuelCheckpointForCheck(out DuelSnapshot snapshot)
+        {
+            snapshot = default;
+            if (!DuelRecoveryAvailableForCheck)
+            {
+                return null;
+            }
+            snapshot = _duelAuthority.Snapshot;
+            return _duelAuthority.SaveCheckpoint();
+        }
+
+        // 只复制本局已封口的输入历史。测试会在新的原生实例中回放。
+        internal DuelReplay CaptureDuelReplayForCheck()
+        {
+            return DuelRecoveryAvailableForCheck ? _duelAuthority.CaptureReplay() : null;
+        }
+
         // 仅本机人机且处于决斗时才修改当前权威的封帧选项。离场销毁权威后自动复位。
         internal bool TrySetDuelNoDamage(bool enabled)
         {

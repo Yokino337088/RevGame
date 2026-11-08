@@ -17,6 +17,9 @@ namespace RevGame.Pvp.Duel
         public int inputFrame;
         // 单席五位方向、招式和跳跃意图。
         public int input;
+        // 稀疏对账附在现有请求上。帧号 0 表示本包没有样本，指纹值 0 本身合法。
+        public int hashFrame;
+        public int hash;
     }
 
     [Serializable]
@@ -37,6 +40,10 @@ namespace RevGame.Pvp.Duel
         public int result;
         // 最新权威世界指纹，必须在相同帧号对账。
         public int finalHash;
+        // 本次收到的有效样本、双方共同对上的最新帧，以及停局时首个不一致帧。
+        public int hashAckFrame;
+        public int hashMatchedFrame;
+        public int hashMismatchFrame;
     }
 
     // 共享的挑战资格，界面用来展示，权威方用来重新校验。
@@ -66,10 +73,12 @@ namespace RevGame.Pvp.Duel
         public const int Ready = 2;
         // 提交本席对下一逻辑帧的意图。
         public const int Input = 3;
+        // 开发环境从同一围棋房间强制发起决斗；传输入口校验后再转为 Read。
+        public const int TestChallenge = 4;
         // 单个回复最多 64 帧，落后端按连续游标分批补。
         internal const int MaxBatch = 64;
         // 已执行的整帧历史，数组下标 0 对应逻辑帧 1。
-        private readonly List<int> _frames = new List<int>(DuelConfig.FrameLimit);
+        private readonly List<DuelReplayFrame> _frames = new List<DuelReplayFrame>(1200);
         // 下一待封帧的黑白输入槽，必须齐备才执行。
         private readonly int[] _input = new int[2];
         // 权威原生实例，和客户端副本执行同一整帧协议。
@@ -80,6 +89,16 @@ namespace RevGame.Pvp.Duel
         private int _inputMask;
         // 允许下一次封帧的单调时间（毫秒），只用于限速。
         private long _nextSeal;
+        // 每席只顺序接纳固定间隔样本，再接纳终局样本。两者最小值就是共同对账上界。
+        private readonly int[] _hashAccepted = new int[2];
+        // 已经向各席发送的共同对账上界，避免每次普通回包都重复携带它。
+        private readonly int[] _hashAnnounced = new int[2];
+        // 首个有效样本分歧后冻结权威执行，保留原历史供诊断。
+        private int _hashMismatchFrame;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        private readonly int[] _hashReportsForCheck = new int[2];
+        internal int HashReportsForCheck(int side) => _hashReportsForCheck[side - 1];
+#endif
 
         // 创建权威封帧器，由所属房间或本地宿主结束时释放。
         public DuelAuthority(string id)
@@ -94,6 +113,18 @@ namespace RevGame.Pvp.Duel
         public int Frame => _frames.Count;
         // 原生权威世界最后一帧的值副本。
         public DuelSnapshot Snapshot => _judge.Snapshot;
+
+        // 调用方必须仍持有本局线程。只导出已执行的世界边界，不包含两席尚未封口的输入。
+        public byte[] SaveCheckpoint()
+        {
+            return _judge.SaveCheckpoint();
+        }
+
+        // 复制截至当前的权威帧。后续继续对战不会改动已经交给调用方的录像。
+        public DuelReplay CaptureReplay()
+        {
+            return new DuelReplay(Id, _frames.ToArray());
+        }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         // 仅本机人机的开发指令可设置，每局实例创建时默认关闭。
         internal bool DebugNoDamage { get; set; }
@@ -107,6 +138,15 @@ namespace RevGame.Pvp.Duel
                 (request.operation != Read && request.operation != Ready && request.operation != Input))
             {
                 return new DuelReply { error = "决斗协议或配置版本不一致。" };
+            }
+            int seat = side - 1;
+            if (_hashMismatchFrame == 0 && !AcceptHashSample(seat, request))
+            {
+                return new DuelReply { id = Id, error = "决斗对账样本的帧号或顺序无效。" };
+            }
+            if (_hashMismatchFrame != 0)
+            {
+                return new DuelReply { id = Id, hashMismatchFrame = _hashMismatchFrame };
             }
             // 从已认证的 1/2 座位换算到掩码位，输入包本身不能指定替谁操作。
             int bit = 1 << (side - 1);
@@ -138,16 +178,66 @@ namespace RevGame.Pvp.Duel
                 }
 #endif
                 _judge.Append(Frame + 1, packed);
-                _frames.Add(packed);
+                _frames.Add(new DuelReplayFrame(packed, _judge.Snapshot));
                 _inputMask = 0;
                 _nextSeal = now + DuelConfig.FrameMs;
             }
             // 只返回请求游标之后的已执行帧，避免客户端自行填空或重播已经消费的输入。
             int count = Math.Min(MaxBatch, Frame - request.afterFrame);
             int[] frames = new int[count];
-            _frames.CopyTo(request.afterFrame, frames, 0, count);
+            for (int i = 0; i < count; i++)
+            {
+                frames[i] = _frames[request.afterFrame + i].Packed;
+            }
+            int matched = Math.Min(_hashAccepted[0], _hashAccepted[1]);
+            // 终局 Read 会低频重询。即使共同确认的首个回包丢了，也能拿回相同上界。
+            int announce = request.hashFrame > 0 || request.operation == Read || matched > _hashAnnounced[seat] ? matched : 0;
+            if (announce > 0)
+            {
+                _hashAnnounced[seat] = announce;
+            }
             return new DuelReply { id = Id, readyMask = _readyMask, afterFrame = request.afterFrame, frames = frames,
-                result = Snapshot.Result, finalHash = Snapshot.Hash };
+                result = Snapshot.Result, finalHash = Snapshot.Result != 0 ? Snapshot.Hash : 0,
+                hashAckFrame = request.hashFrame, hashMatchedFrame = announce };
+        }
+
+        // 在收输入之前，用记录的同帧原生指纹核对样本。重复报文可重新确认，但不会增加已核对数量。
+        private bool AcceptHashSample(int seat, DuelRequest request)
+        {
+            int frame = request.hashFrame;
+            if (frame == 0)
+            {
+                return request.hash == 0;
+            }
+            bool finished = Snapshot.Result != 0;
+            if (frame < 0 || frame > request.afterFrame || request.hash < 0 ||
+                (frame % DuelConfig.HashSampleFrames != 0 && (!finished || frame != Frame)))
+            {
+                return false;
+            }
+            int accepted = _hashAccepted[seat];
+            int next = accepted + DuelConfig.HashSampleFrames;
+            if (finished)
+            {
+                next = Math.Min(next, Frame);
+            }
+            if (frame > accepted && frame != next)
+            {
+                return false;
+            }
+            if (_frames[frame - 1].Hash != request.hash)
+            {
+                _hashMismatchFrame = frame;
+                return true;
+            }
+            if (frame > accepted)
+            {
+                _hashAccepted[seat] = frame;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                _hashReportsForCheck[seat]++;
+#endif
+            }
+            return true;
         }
 
         // 释放权威原生实例，随对局或房间退出调用。

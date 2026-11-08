@@ -1155,6 +1155,8 @@ namespace Fantasy
             AfterFrame = default;
             InputFrame = default;
             Input = default;
+            HashFrame = default;
+            Hash = default;
             MessageObjectPool<C2G_GoDuelRequest>.Return(this);
         }
 
@@ -1170,6 +1172,8 @@ namespace Fantasy
             other.AfterFrame = AfterFrame;
             other.InputFrame = InputFrame;
             other.Input = Input;
+            other.HashFrame = HashFrame;
+            other.Hash = Hash;
 
         }
 
@@ -1194,6 +1198,10 @@ namespace Fantasy
         public int InputFrame { get; set; }
         [ProtoMember(6)]
         public int Input { get; set; }
+        [ProtoMember(7)]
+        public int HashFrame { get; set; }
+        [ProtoMember(8)]
+        public int Hash { get; set; }
     }
     [Serializable]
     [ProtoContract]
@@ -1237,6 +1245,10 @@ namespace Fantasy
             Frames.Clear();
             Result = default;
             FinalHash = default;
+            ErrorCode = default;
+            HashAckFrame = default;
+            HashMatchedFrame = default;
+            HashMismatchFrame = default;
             MessageObjectPool<G2C_GoDuelResponse>.Return(this);
         }
 
@@ -1246,7 +1258,6 @@ namespace Fantasy
             {
                 other = Create(false);
             }
-            other.ErrorCode = ErrorCode;
             other.DuelId = DuelId;
             other.Reason = Reason;
             other.ReadyMask = ReadyMask;
@@ -1254,6 +1265,10 @@ namespace Fantasy
             other.Frames = new List<int>(Frames);
             other.Result = Result;
             other.FinalHash = FinalHash;
+            other.ErrorCode = ErrorCode;
+            other.HashAckFrame = HashAckFrame;
+            other.HashMatchedFrame = HashMatchedFrame;
+            other.HashMismatchFrame = HashMismatchFrame;
 
         }
 
@@ -1264,8 +1279,6 @@ namespace Fantasy
             return other;
         }
         public uint OpCode() { return OuterOpcode.G2C_GoDuelResponse; } 
-        [ProtoMember(8)]
-        public uint ErrorCode { get; set; }
         [ProtoMember(1)]
         public string DuelId { get; set; }
         [ProtoMember(2)]
@@ -1280,6 +1293,14 @@ namespace Fantasy
         public int Result { get; set; }
         [ProtoMember(7)]
         public int FinalHash { get; set; }
+        [ProtoMember(8)]
+        public uint ErrorCode { get; set; }
+        [ProtoMember(9)]
+        public int HashAckFrame { get; set; }
+        [ProtoMember(10)]
+        public int HashMatchedFrame { get; set; }
+        [ProtoMember(11)]
+        public int HashMismatchFrame { get; set; }
     }
     [Serializable]
     [ProtoContract]

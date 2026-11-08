@@ -1,6 +1,7 @@
 ﻿# 自动生成，请勿手改。格式：逻辑名|包名|资源名
 # 逻辑名 = 资源相对资源根目录的路径（去扩展名）；包名由你在资源上自行设置
 Art/Board/BoardSprite_5a487af7|atlas_boardstatus|BoardSprite_5a487af7
+Art/Board/BoardSprite_6acf7bce|atlas_boardstatus|BoardSprite_6acf7bce
 Art/Board/BoardSprite_9e3fb542|atlas_boardstatus|BoardSprite_9e3fb542
 Art/Board/BoardSprite_81fb5e21|atlas_boardstatus|BoardSprite_81fb5e21
 Art/Board/BoardSprite_4816b6aa|atlas_boardstatus|BoardSprite_4816b6aa

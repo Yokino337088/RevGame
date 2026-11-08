@@ -23,6 +23,12 @@ namespace RevGame.View
         [SerializeField] private SpriteSequence[] spriteSequences;
         // 屏幕上的角色图片。由本组件按片段时钟显式换帧。
         private Image _image;
+        // 旧姿态的最后一张图只在过渡期间保留。两个图层复用整局，不逐帧创建对象。
+        private Image _outgoingImage;
+        private const float PoseFadeSeconds = .09f;
+        private float _fadeStarted;
+        private int _paintedFacing = 1, _outgoingFacing = 1;
+        private bool _hasPainted;
         // 本角色的 Legacy Animation 组件，只执行画面播放。
         private Animation _animation;
         // 本角色的重量级表现状态机，离场时释放。
@@ -45,6 +51,7 @@ namespace RevGame.View
         // 攻击以逻辑起始帧区分实例。上一次攻击的结果保留到下一次攻击开始，方便测试异步读取。
         private int _lastObservedAttackStart = -1;
         private int _attackSpriteChanges;
+        private int _attackFadeSamples;
         // 每个姿态占一位。同一个姿态至少绘制过两张不同的图片才设置对应位。
         private int _animatedPoses;
         public bool HasSpriteMotion => _animatedPoses != 0;
@@ -54,6 +61,8 @@ namespace RevGame.View
         public bool AttackSpriteMotion => (_animatedPoses & (7 << (int)Pose.Attack1)) != 0;
         internal int LastObservedAttackStart => _lastObservedAttackStart;
         internal int AttackSpriteChanges => _attackSpriteChanges;
+        internal int AttackFadeSamples => _attackFadeSamples;
+        internal bool IsPoseFadingForCheck => _outgoingImage != null && _outgoingImage.enabled;
 
         // 比较实际落屏图片，排除切换姿态时仅替换第一帧导致的误报。
         internal void ObserveSprite(Sprite sprite)
@@ -64,6 +73,20 @@ namespace RevGame.View
             {
                 _lastObservedAttackStart = _attackStart;
                 _attackSpriteChanges = 0;
+                _attackFadeSamples = 0;
+            }
+            float alpha = _image.canvasRenderer.GetAlpha();
+            if (_attackStart >= 0 && IsPoseFadingForCheck && alpha > 0 && alpha < 1 &&
+                _outgoingImage.canvasRenderer.GetAlpha() > 0)
+            {
+                _attackFadeSamples++;
+            }
+            if (alpha <= 0)
+            {
+                // 透明的新图还没进入画面，不能作为真实换帧的观察基线。
+                _observedSprite = null;
+                _observedPose = pose;
+                return;
             }
             if (!newAttack && sprite != null && _observedSprite != null && pose == _observedPose && sprite != _observedSprite)
             {
@@ -106,6 +129,7 @@ namespace RevGame.View
         {
             _animation = GetComponent<Animation>();
             _image = GetComponent<Image>();
+            CreateTransitionImage();
             _machine = new RevHeavyFSM<Pose, DuelActorAnimator>(this);
             foreach (Pose pose in System.Enum.GetValues(typeof(Pose)))
             {
@@ -133,12 +157,14 @@ namespace RevGame.View
             _attackStart = attackStart;
             _machine.UpdateState(Time.unscaledDeltaTime);
             PaintSpriteFrame(attackStart >= 0 ? DuelConfig.ActionDuration(action) : 0, age, frameFraction);
+            PaintPoseFade();
             _poseSeconds += Time.unscaledDeltaTime;
         }
 
         // 重启 Legacy 片段并读取资源采样率，UGUI 图片仍由表现层显式换帧。
         private void PlayPose(Pose pose, string clip)
         {
+            BeginPoseFade();
             _animation.Stop(clip);
             _animation.Play(clip);
             AnimationClip asset = _animation.GetClip(clip);
@@ -148,6 +174,77 @@ namespace RevGame.View
             int index = (int)pose;
             _playingFrames = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index]?.frames : null;
             _loop = pose == Pose.Idle || pose == Pose.Run;
+        }
+
+        // 旧图层是当前角色的表现子节点，随场景一起退出；关闭射线检测，避免覆盖 HUD 的触屏输入。
+        private void CreateTransitionImage()
+        {
+            var layer = new GameObject("PreviousPose", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var rect = (RectTransform)layer.transform;
+            rect.SetParent(_image.rectTransform, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            _outgoingImage = layer.GetComponent<Image>();
+            _outgoingImage.preserveAspect = _image.preserveAspect;
+            _outgoingImage.useSpriteMesh = _image.useSpriteMesh;
+            _outgoingImage.raycastTarget = false;
+            _outgoingImage.enabled = false;
+        }
+
+        // 只在权威姿态或动作实例切换时采样旧画面。过渡中再次切换，沿用当时更清楚的图层。
+        private void BeginPoseFade()
+        {
+            if (!_hasPainted || _image.sprite == null)
+            {
+                return;
+            }
+            if (!_outgoingImage.enabled || _outgoingImage.canvasRenderer.GetAlpha() <= _image.canvasRenderer.GetAlpha())
+            {
+                _outgoingImage.sprite = _image.sprite;
+                _outgoingImage.color = _image.color;
+                _outgoingFacing = _paintedFacing;
+            }
+            _outgoingImage.enabled = true;
+            _fadeStarted = Time.unscaledTime;
+        }
+
+        // 用渲染时钟交叠两个图层。逻辑帧照常驱动动作年龄，受击颜色仍由 View 控制。
+        private void PaintPoseFade()
+        {
+            _paintedFacing = _image.rectTransform.localScale.x < 0 ? -1 : 1;
+            _hasPainted = true;
+            if (!_outgoingImage.enabled)
+            {
+                return;
+            }
+            float progress = Mathf.Clamp01((Time.unscaledTime - _fadeStarted) / PoseFadeSeconds);
+            if (progress >= 1)
+            {
+                FinishPoseFade();
+                return;
+            }
+            float blend = progress * progress * (3 - 2 * progress);
+            _outgoingImage.rectTransform.localScale = new Vector3(_outgoingFacing * _paintedFacing, 1, 1);
+            _image.canvasRenderer.SetAlpha(blend);
+            _outgoingImage.canvasRenderer.SetAlpha(1 - blend);
+        }
+
+        // 离场、对象停用或过渡结束时清掉临时图层，重新启用不出现上一局的残影。
+        private void FinishPoseFade()
+        {
+            _image.canvasRenderer.SetAlpha(1);
+            _outgoingImage.enabled = false;
+            _outgoingImage.sprite = null;
+        }
+
+        private void OnDisable()
+        {
+            if (_outgoingImage != null)
+            {
+                FinishPoseFade();
+            }
+            _hasPainted = false;
         }
 
         // 招式图按逻辑年龄铺满整段动作。渲染只在当前逻辑帧内插值，断流时不会提前播完。

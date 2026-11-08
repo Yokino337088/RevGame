@@ -455,7 +455,7 @@ namespace RevGame.Pvp
         }
 
         // 开启真实 UTP 隔离夹具，按参数选择围棋或决斗分支。
-        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false)
+        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false)
         {
             if (_gameCheckRunning)
             {
@@ -468,7 +468,7 @@ namespace RevGame.Pvp
             StopLanGameCheck();
             _gameCheckCancelled = false;
             _gameCheckError = string.Empty;
-            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel);
+            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel, duelHashAudit, duelHashMismatch, duelTestEntry);
             if (!_lanGameCheck.Start(out reason))
             {
                 return Result(false, reason);
@@ -513,6 +513,7 @@ namespace RevGame.Pvp
                 ["hostSequence"] = _lanGameCheck?.HostSequence ?? 0, ["guestSequence"] = _lanGameCheck?.GuestSequence ?? 0,
                 ["hostHash"] = _lanGameCheck?.HostHash ?? string.Empty, ["guestHash"] = _lanGameCheck?.GuestHash ?? string.Empty,
                 ["blackCaptures"] = _lanGameCheck?.BlackCaptures ?? 0, ["winner"] = _lanGameCheck?.Winner ?? string.Empty,
+                ["duelHash"] = _lanGameCheck?.DuelHashState(),
                 ["monoCount"] = RevMono.Count
             };
         }

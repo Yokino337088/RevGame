@@ -7,6 +7,13 @@ folder = Path(__file__).resolve().parent
 data = json.loads((folder / "Duel.v1.json").read_text(encoding="utf-8"))
 arena = data["arena"]
 protocol = data["coreProtocol"]
+hash_sample_frames = data["hashSampleFrames"]
+frame_limit = arena["frameLimit"]
+if type(frame_limit) is not int or (frame_limit != 0 and not 10 <= frame_limit <= 10000):
+    raise ValueError("决斗帧上限必须为 0（不限时）或 10 到 10000")
+if (type(hash_sample_frames) is not int or not 1 <= hash_sample_frames <= 10000
+        or (frame_limit > 0 and hash_sample_frames > frame_limit)):
+    raise ValueError("决斗对账间隔必须是正整数，限时对局中不得超过对局帧上限")
 if arena["frameMilliseconds"] != 50:
     raise ValueError("决斗逻辑帧固定为 50 毫秒（20 Hz）")
 # 顺序是小端配置包的契约。新增字段需要同时核对托管端协议与 C++ 消费位置。
@@ -19,7 +26,7 @@ words += [data["jump"][k] for k in ("speed", "gravity", "hitHeight")]
 assert all(type(x) is int and 0 <= x <= 100000 for x in words)
 # 同时把入场资格和战斗数值纳入指纹，防止两端只更新了一半。
 fingerprint = 2166136261
-for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"], protocol]:
+for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"], protocol, hash_sample_frames]:
     fingerprint = ((fingerprint ^ word) * 16777619) & 0xffffffff
 target = folder.parents[1] / "UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs"
 target.parent.mkdir(parents=True, exist_ok=True)
@@ -47,10 +54,12 @@ namespace RevGame.Pvp.Duel
         public const int SkillCost = {data["attacks"][1]["cost"]};
         // AI 选择大招意图需要的能量。
         public const int UltimateCost = {data["attacks"][2]["cost"]};
-        // 本局最多执行的逻辑帧数，到达上限时由原生按生命结算。
-        public const int FrameLimit = {arena["frameLimit"]};
+        // 0 表示不限时。正数是限时规则的逻辑帧上限。
+        public const int FrameLimit = {frame_limit};
         // 逻辑帧对应的毫秒数，用于宿主限速和显示时间换算。
         public const int FrameMs = {arena["frameMilliseconds"]};
+        // 联机每隔多少个已执行逻辑帧交换一次指纹。终局另外校验。
+        public const int HashSampleFrames = {hash_sample_frames};
         // 招式持续的逻辑帧数，用于表现采样和输入缓冲。
         public static int ActionDuration(int action)
         {{

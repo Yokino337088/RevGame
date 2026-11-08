@@ -103,7 +103,7 @@ namespace Fantasy
 			return (G2C_GoDuelResponse)await session.Call(C2G_GoDuelRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static async FTask<G2C_GoDuelResponse> C2G_GoDuelRequest(this Session session, string roomId, int operation, int fingerprint, int afterFrame, int inputFrame, int input)
+		public static async FTask<G2C_GoDuelResponse> C2G_GoDuelRequest(this Session session, string roomId, int operation, int fingerprint, int afterFrame, int inputFrame, int input, int hashFrame, int hash)
 		{
 			using var C2G_GoDuelRequest_request = Fantasy.C2G_GoDuelRequest.Create();
 			C2G_GoDuelRequest_request.RoomId = roomId;
@@ -112,6 +112,8 @@ namespace Fantasy
 			C2G_GoDuelRequest_request.AfterFrame = afterFrame;
 			C2G_GoDuelRequest_request.InputFrame = inputFrame;
 			C2G_GoDuelRequest_request.Input = input;
+			C2G_GoDuelRequest_request.HashFrame = hashFrame;
+			C2G_GoDuelRequest_request.Hash = hash;
 			return (G2C_GoDuelResponse)await session.Call(C2G_GoDuelRequest_request);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

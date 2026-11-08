@@ -3,13 +3,13 @@ CRC: 1499634544
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d81495b0c4453a8f2f7c6dab26bca27e
+    Hash: d1bdc6f3fe62d5fe75c3e68cf3d63e9c
   TypeTreeHash:
     serializedVersion: 2
     Hash: b30fce1a9ad74efb72be6c308c56e365
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d81495b0c4453a8f2f7c6dab26bca27e
+    Hash: d1bdc6f3fe62d5fe75c3e68cf3d63e9c
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -25,4 +25,4 @@ Assets:
 - Assets/GameRes/Lobby/MagicCottage.png
 - Assets/GameRes/Lobby/MagicCottageNatureMask.png
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders"

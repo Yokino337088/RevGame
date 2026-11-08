@@ -2,12 +2,15 @@
 #include "GameCoreExport.h"
 #include "DuelWorld.h"
 #include "DuelProtocol.Generated.h"
+#include "WireWords.h"
 #include <array>
 #include <cstddef>
 #include <new>
 
 namespace
 {
+    using RevGameCore::ReadWord;
+    using RevGameCore::WriteWord;
     // 每个 FIFO 的固定容量。队列满时保留内容，等待宿主消费后重试。
     constexpr int Capacity = 128;
     // 单条输出消息的字节数，每个整数占 4 字节。
@@ -49,18 +52,12 @@ namespace
         bool Fault = false;
     };
 
-    // 从已验证长度的消息中读取四字节，不依赖结构体对齐。
-    uint32_t ReadWord(const uint8_t* bytes)
+    // 普通帧输出和恢复基线共用相同字段编码，调用方需提供完整输出缓冲。
+    void WriteSnapshot(uint8_t* bytes, const RevGameCore::Snapshot& snapshot)
     {
-        return uint32_t(bytes[0]) | (uint32_t(bytes[1]) << 8) | (uint32_t(bytes[2]) << 16) | (uint32_t(bytes[3]) << 24);
-    }
-
-    // 写出固定顺序的小端字节，保留原始整数位模式。
-    void WriteWord(uint8_t* bytes, uint32_t word)
-    {
-        for (int i = 0; i < 4; ++i)
+        for (std::size_t i = 0; i < snapshot.size(); ++i)
         {
-            bytes[i] = static_cast<uint8_t>(word >> (i * 8));
+            WriteWord(bytes + i * 4, static_cast<uint32_t>(snapshot[i]));
         }
     }
 
@@ -168,12 +165,53 @@ int32_t GameCore_Read(void* handle, uint8_t* data, int32_t capacity)
     {
         return 0;
     }
-    const auto& result = pipe->Output[pipe->ReadOutput];
-    for (std::size_t i = 0; i < result.size(); ++i)
-    {
-        WriteWord(data + i * 4, static_cast<uint32_t>(result[i]));
-    }
+    WriteSnapshot(data, pipe->Output[pipe->ReadOutput]);
     pipe->ReadOutput = (pipe->ReadOutput + 1) % Capacity;
     --pipe->OutputCount;
     return OutputBytes;
+}
+
+// 检查点只包含已执行的世界，拒绝在任何队列有未消费材料时保存。
+int32_t GameCore_SaveCheckpoint(void* handle, uint8_t* data, int32_t capacity)
+{
+    auto* pipe = static_cast<Pipe*>(handle);
+    constexpr int32_t bytes = RevGameCore::DuelWorld::CheckpointBytes;
+    if (!pipe || !pipe->Open || pipe->Fault || (data ? capacity < bytes : capacity != 0))
+    {
+        return -1;
+    }
+    if (pipe->InputCount != 0 || pipe->OutputCount != 0)
+    {
+        return 0;
+    }
+    if (data)
+    {
+        pipe->World.SaveCheckpoint(data);
+    }
+    return bytes;
+}
+
+// 只在完整验证后更新输入游标与基线，确保重试和跨帧接续都以恢复帧为准。
+int32_t GameCore_RestoreCheckpoint(void* handle, const uint8_t* data, int32_t size, uint8_t* snapshot, int32_t capacity)
+{
+    auto* pipe = static_cast<Pipe*>(handle);
+    if (!pipe || !pipe->Open || pipe->Fault || !data || size != RevGameCore::DuelWorld::CheckpointBytes ||
+        !snapshot || capacity < OutputBytes)
+    {
+        return -1;
+    }
+    if (pipe->InputCount != 0 || pipe->OutputCount != 0)
+    {
+        return 0;
+    }
+    RevGameCore::Snapshot baseline{};
+    if (!pipe->World.RestoreCheckpoint(data, baseline))
+    {
+        return -1;
+    }
+    pipe->LastSealed = baseline[0];
+    pipe->ReadInput = 0;
+    pipe->ReadOutput = 0;
+    WriteSnapshot(snapshot, baseline);
+    return 1;
 }

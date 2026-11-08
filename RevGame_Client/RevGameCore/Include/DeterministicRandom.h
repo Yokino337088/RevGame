@@ -21,6 +21,9 @@ namespace RevGameCore
         // 按状态字 0、1 返回值副本，用于固定顺序的对账，读取不抽样。
         std::array<uint64_t, 2> StateWords() const;
 
+        // 只供状态恢复使用。全零是无效的 xorshift 状态，失败时保留原随机序列。
+        bool RestoreState(const std::array<uint64_t, 2>& words);
+
       private:
         // xorshift128+ 的完整状态。两个字均参加帧指纹。
         uint64_t State0;

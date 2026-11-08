@@ -123,6 +123,10 @@ message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
     int32 InputFrame = 5;
     // 单席五位意图，座位由 Session 决定而不是由包声明。
     int32 Input = 6;
+    // 这次上报的是已执行的抽样帧。0 表示不携带对账样本。
+    int32 HashFrame = 7;
+    // 同一逻辑帧的本地指纹。指纹本身允许为 0，以 HashFrame 判断是否上报。
+    int32 Hash = 8;
 }
 
 message G2C_GoDuelResponse // IResponse
@@ -139,6 +143,14 @@ message G2C_GoDuelResponse // IResponse
     repeated int32 Frames = 5;
     // 权威端最新快照的胜负码。
     int32 Result = 6;
-    // 权威端最新已执行帧的指纹，只能与相同帧号比较。
+    // 终局帧的权威指纹，只能与相同帧号比较。
     int32 FinalHash = 7;
+    // 保留 Fantasy 在旧版隐式生成的错误码编号，避免扩展后旧版把确认帧读成错误码。
+    uint32 ErrorCode = 8;
+    // 本次成功确认的样本帧号。客户端据此停止重发该样本。
+    int32 HashAckFrame = 9;
+    // 两席均确认一致的最新样本帧号。0 表示本包没有公告。
+    int32 HashMatchedFrame = 10;
+    // 本房间首次发现分歧时的样本帧号。0 表示尚未发现分歧。
+    int32 HashMismatchFrame = 11;
 }

@@ -46,7 +46,7 @@ namespace RevGame.Bootstrap
             DontDestroyOnLoad(gameObject);
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             // PC测试与交付固定为1080p窗口；覆盖旧PlayerPrefs或启动器保存的全屏选择。
-            // 这是显示规格，不是策划战斗参数；手机和Editor不修改设备分辨率。
+            // 这是 Windows 独立包的窗口规格。
             Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
 #endif
 #if UNITY_EDITOR
@@ -81,6 +81,10 @@ namespace RevGame.Bootstrap
 #if !UNITY_EDITOR
             // 用户明确要求手机横屏；设备方向和根 Canvas 都固定横屏。
             Screen.orientation = ScreenOrientation.LandscapeLeft;
+#endif
+#if UNITY_ANDROID && !UNITY_EDITOR
+            // 启动时请求 1080p 全屏渲染，Unity 在帧末应用。UI 继续使用同一个 1920×1080 设计基准。
+            Screen.SetResolution(1920, 1080, true);
 #endif
             // ==================== 全局服务注册（新手必读） ====================
             // 【两个泛型参数是什么】Register<TService, TImpl>() 的第一个是「取用键」，第二个是「实现类」，

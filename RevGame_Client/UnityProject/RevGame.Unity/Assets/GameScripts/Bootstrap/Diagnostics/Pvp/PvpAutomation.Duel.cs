@@ -24,6 +24,14 @@ namespace RevGame.Pvp
         private static string _controlCheckError = "";
         // 仅开发测试记录输入、封帧和落屏证据。每次检查独立重建，禁止进入逻辑状态或协议。
         private static Dictionary<string, object> _controlCheckTrace = new Dictionary<string, object>();
+        // 恢复测试记录实际封口的帧号和结果，只在开发自动化中保留最近一次。
+        private static bool _recoveryCheckRunning, _recoveryCheckPassed;
+        private static string _recoveryCheckError = "";
+        private static Dictionary<string, object> _recoveryCheckTrace = new Dictionary<string, object>();
+
+        // 20 Hz 下等至少一秒再取检查点，之后至少执行 16 个真实逻辑帧。
+        private const int RecoveryCheckpointMinimumFrame = 20;
+        private const int RecoveryMinimumSuffixFrames = 16;
 
         [Serializable]
         private sealed class DuelControlArgs
@@ -45,12 +53,23 @@ namespace RevGame.Pvp
                 _ => Result(Service.ChallengeDuel(), Service.Status), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-lan-check", "使用实际 UTP 邀请、两席就绪和原生帧同步检查", Empty,
                 _ => BeginLanGameCheck(duel: true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-test-lan-check", "空棋盘从白方经实际 UTP 发起开发决斗并检查双端就绪", Empty,
+                _ => BeginLanGameCheck(duel: true, duelTestEntry: true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-lan-hash-check", "实际 UTP 双端打到终局，核对周期和终局帧指纹", Empty,
+                _ => BeginLanGameCheck(duel: true, duelHashAudit: true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-lan-hash-mismatch-check", "实际 UTP 发送一份错误的白方对账值，验证两端报告同帧分歧", Empty,
+                _ => BeginLanGameCheck(duel: true, duelHashAudit: true, duelHashMismatch: true), owner: Owner);
             const string controlSchema = "{\"type\":\"object\",\"properties\":{\"stallMs\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":400}}}";
             RevRuntimeAutomation.Register("pvp.duel-control-check", "通过真实按钮验收转向和连续普攻，可在入队后模拟主线程卡顿", controlSchema,
                 json => BeginDuelControlCheck(JsonUtility.FromJson<DuelControlArgs>(json)?.stallMs ?? 0), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-control-state", "读取决斗操作验收结果", Empty,
                 _ => new Dictionary<string, object>(_controlCheckTrace) { ["done"] = !_controlCheckRunning,
                     ["passed"] = _controlCheckPassed, ["error"] = _controlCheckError }, readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-recovery-check", "读取本地人机检查点和封帧历史，在隔离实例中对照回放", Empty,
+                _ => BeginDuelRecoveryCheck(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-recovery-state", "读取检查点恢复和回放的逐帧对账结果", Empty,
+                _ => new Dictionary<string, object>(_recoveryCheckTrace) { ["done"] = !_recoveryCheckRunning,
+                    ["passed"] = _recoveryCheckPassed, ["error"] = _recoveryCheckError }, readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-state", "只读决斗场景、双方就绪和原生快照", Empty, _ =>
             {
                 var state = Service.DuelSnapshot;
@@ -61,6 +80,8 @@ namespace RevGame.Pvp
                     ["airborne"] = state.FirstY > 0, ["firstY"] = state.FirstY,
                     ["bothPlaying"] = view != null && view.FirstAnimator.IsPlaying && view.SecondAnimator.IsPlaying,
                     ["bothAnimated"] = view != null && view.FirstAnimator.HasSpriteMotion && view.SecondAnimator.HasSpriteMotion,
+                    ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
+                        view.First.sprite.packed && view.Second.sprite.packed,
                     ["firstIdleAnimated"] = view != null && view.FirstAnimator.IdleSpriteMotion,
                     ["firstJumpAnimated"] = view != null && view.FirstAnimator.JumpSpriteMotion,
                     ["secondAttackAnimated"] = view != null && view.SecondAnimator.AttackSpriteMotion,
@@ -68,6 +89,135 @@ namespace RevGame.Pvp
                     ["firstHealth"] = state.FirstHealth, ["secondHealth"] = state.SecondHealth,
                     ["firstHit"] = state.FirstHit, ["secondHit"] = state.SecondHit };
             }, readOnly: true, owner: Owner);
+        }
+
+        // 从正常进入的本地人机决斗开始。测试只读取当前局，两个回放实例由本次检查持有。
+        private static object BeginDuelRecoveryCheck()
+        {
+            PvpService service = Service;
+            if (_recoveryCheckRunning || !service.DuelRecoveryAvailableForCheck || service.DuelSnapshot.Result != 0)
+            {
+                return Result(false, "请先进入进行中的本地人机决斗。");
+            }
+            _recoveryCheckRunning = true;
+            _recoveryCheckPassed = false;
+            _recoveryCheckError = "";
+            _recoveryCheckTrace = new Dictionary<string, object>();
+            CheckDuelRecovery(service).Forget();
+            return Result(true, "");
+        }
+
+        // 对照从零回放和从检查点续算。前者提供基准快照，后者逐帧核对实际输出。
+        private static async RevTask CheckDuelRecovery(PvpService service)
+        {
+            string id = service.DuelId;
+            try
+            {
+                await WaitForDuelControl(id, () => service.DuelSnapshot.Frame >= RecoveryCheckpointMinimumFrame, "决斗进行中检查点");
+                byte[] checkpoint = service.SaveDuelCheckpointForCheck(out DuelSnapshot atCheckpoint);
+                if (checkpoint == null || checkpoint.Length == 0 || atCheckpoint.Result != 0 ||
+                    !DuelSnapshotsMatch(atCheckpoint, service.DuelSnapshot))
+                {
+                    throw new InvalidOperationException("当前权威检查点与本地副本不一致。");
+                }
+                _recoveryCheckTrace["checkpointFrame"] = atCheckpoint.Frame;
+                _recoveryCheckTrace["checkpointHash"] = atCheckpoint.Hash;
+                _recoveryCheckTrace["checkpointBytes"] = checkpoint.Length;
+
+                await WaitForDuelControl(id, () => service.DuelSnapshot.Frame >= atCheckpoint.Frame + RecoveryMinimumSuffixFrames,
+                    "继续实际封帧");
+                DuelSnapshot live = service.DuelSnapshot;
+                DuelReplay captured = service.CaptureDuelReplayForCheck();
+                if (captured == null)
+                {
+                    throw new InvalidOperationException("未取得本局封口历史。");
+                }
+                byte[] recording = captured.Serialize();
+                DuelReplay replay = DuelReplay.Deserialize(recording);
+                if (replay.DuelId != id || replay.FrameCount != live.Frame)
+                {
+                    throw new InvalidOperationException("回放记录的对局或帧上界与现场不一致。");
+                }
+                _recoveryCheckTrace["replayBytes"] = recording.Length;
+                _recoveryCheckTrace["replayFrames"] = replay.FrameCount;
+                _recoveryCheckTrace["liveFrame"] = live.Frame;
+                _recoveryCheckTrace["liveHash"] = live.Hash;
+
+                using var full = new DuelCorePipe(id);
+                using var restored = new DuelCorePipe(id);
+                if (!restored.TryRestoreCheckpoint(checkpoint) ||
+                    restored.Snapshot.Frame != atCheckpoint.Frame || restored.Snapshot.Hash != atCheckpoint.Hash)
+                {
+                    throw new InvalidOperationException("检查点恢复后的帧号或指纹与权威不一致。");
+                }
+                _recoveryCheckTrace["restoredFrame"] = restored.Snapshot.Frame;
+                _recoveryCheckTrace["restoredHash"] = restored.Snapshot.Hash;
+
+                int expectedSuffix = live.Frame - atCheckpoint.Frame;
+                var baseline = new List<DuelSnapshot>(expectedSuffix);
+                replay.ReplayInto(full, snapshot =>
+                {
+                    if (snapshot.Frame == atCheckpoint.Frame && !DuelSnapshotsMatch(snapshot, atCheckpoint))
+                    {
+                        throw new InvalidOperationException("完整回放在检查点帧与权威输出不一致。");
+                    }
+                    if (snapshot.Frame > atCheckpoint.Frame)
+                    {
+                        baseline.Add(snapshot);
+                    }
+                });
+
+                // 比较完整输出而非仅比较哈希，包括对账哈希之外的一次性命中数据。
+                int compared = 0;
+                int hitFrames = 0;
+                replay.ReplayInto(restored, snapshot =>
+                {
+                    if (compared >= baseline.Count || !DuelSnapshotsMatch(snapshot, baseline[compared]))
+                    {
+                        throw new InvalidOperationException($"检查点续算在第 {snapshot.Frame} 帧与完整回放不一致。");
+                    }
+                    compared++;
+                    if (snapshot.FirstHit != 0 || snapshot.SecondHit != 0)
+                    {
+                        hitFrames++;
+                    }
+                });
+
+                _recoveryCheckTrace["suffixFrames"] = expectedSuffix;
+                _recoveryCheckTrace["comparedFrames"] = compared;
+                _recoveryCheckTrace["suffixHitFrames"] = hitFrames;
+                _recoveryCheckTrace["fullReplayHash"] = full.Snapshot.Hash;
+                _recoveryCheckTrace["restoredReplayHash"] = restored.Snapshot.Hash;
+                bool liveUnchanged = service.DuelId == id && DuelSnapshotsMatch(live, service.DuelSnapshot);
+                _recoveryCheckTrace["liveUnchanged"] = liveUnchanged;
+                if (compared != expectedSuffix || !DuelSnapshotsMatch(full.Snapshot, live) ||
+                    !DuelSnapshotsMatch(restored.Snapshot, live) || !liveUnchanged)
+                {
+                    throw new InvalidOperationException("回放结束帧、续算帧数或现场状态不一致。");
+                }
+                _recoveryCheckPassed = true;
+            }
+            catch (Exception error)
+            {
+                _recoveryCheckError = error.Message;
+            }
+            finally
+            {
+                _recoveryCheckRunning = false;
+            }
+        }
+
+        // 对照现有 FIFO 输出的 19 个整数，命中属于表现所需的瞬时输出，也要逐帧一致。
+        private static bool DuelSnapshotsMatch(DuelSnapshot a, DuelSnapshot b)
+        {
+            return a.Frame == b.Frame && a.Result == b.Result && a.Hash == b.Hash &&
+                a.FirstHit == b.FirstHit && a.SecondHit == b.SecondHit &&
+                a.FirstX == b.FirstX && a.FirstY == b.FirstY && a.FirstHealth == b.FirstHealth &&
+                a.FirstEnergy == b.FirstEnergy && a.FirstAction == b.FirstAction && a.FirstAge == b.FirstAge &&
+                a.FirstFacing == b.FirstFacing &&
+                a.SecondX == b.SecondX && a.SecondY == b.SecondY && a.SecondHealth == b.SecondHealth &&
+                a.SecondEnergy == b.SecondEnergy && a.SecondAction == b.SecondAction && a.SecondAge == b.SecondAge &&
+                a.SecondFacing == b.SecondFacing;
         }
 
         // 只在当前人机决斗中驱动已有 UI，所有输入仍经过 PvpService 封帧。
@@ -95,31 +245,42 @@ namespace RevGame.Pvp
         {
             GameObject left = view.transform.Find("Left").gameObject;
             GameObject right = view.transform.Find("Right").gameObject;
-            var pointer = new PointerEventData(EventSystem.current);
+            var firstFinger = new PointerEventData(EventSystem.current) { pointerId = 11 };
+            var secondFinger = new PointerEventData(EventSystem.current) { pointerId = 12 };
+            var rightFinger = new PointerEventData(EventSystem.current) { pointerId = 13 };
+            var jabFinger = new PointerEventData(EventSystem.current) { pointerId = 14 };
             var service = Service;
             string id = service.DuelId;
             try
             {
                 int start = service.DuelSnapshot.FirstX;
-                ExecuteEvents.Execute(left, pointer, ExecuteEvents.pointerDownHandler);
+                PressDuelHudButton(left, firstFinger);
+                PressDuelHudButton(left, secondFinger);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstX < start &&
                     view.First.rectTransform.localScale.x < 0 && view.FirstAnimator.RunSpriteMotion, "左移与跑动");
+                int oneReleasedAt = service.DuelSnapshot.Frame;
+                ExecuteEvents.Execute(left, firstFinger, ExecuteEvents.pointerUpHandler);
+                // 多等三个逻辑帧，排除松手前已经提交的一帧左移被当作多指成功。
+                await WaitForDuelControl(id, () => service.DuelSnapshot.Frame >= oneReleasedAt + 3 &&
+                    service.DuelSnapshot.FirstX < service.DuelPreviousSnapshot.FirstX, "同一按钮松开一根手指后仍左移");
+                _controlCheckTrace["multiTouchReleasePreserved"] = true;
                 int turned = service.DuelSnapshot.FirstX;
-                ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerDownHandler);
-                ExecuteEvents.Execute(left, pointer, ExecuteEvents.pointerUpHandler);
+                PressDuelHudButton(right, rightFinger);
+                ExecuteEvents.Execute(left, secondFinger, ExecuteEvents.pointerExitHandler);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstX > turned &&
                     view.First.rectTransform.localScale.x > 0, "右移与旧按钮松手");
-                ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
+                ExecuteEvents.Execute(right, rightFinger, ExecuteEvents.pointerUpHandler);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.Frame > 0 &&
                     service.DuelSnapshot.FirstX == service.DuelPreviousSnapshot.FirstX, "松手停止");
-                ExecuteEvents.Execute(view.Jab.gameObject, pointer, ExecuteEvents.submitHandler);
+                ClickDuelHudButton(view.Jab.gameObject, jabFinger);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 1, "首次普攻");
                 int firstStart = service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge;
                 int expectedSecondStart = firstStart + DuelConfig.ActionDuration(1) + 1;
                 _controlCheckTrace["firstStart"] = firstStart;
                 _controlCheckTrace["expectedSecondStart"] = expectedSecondStart;
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAge == DuelConfig.ActionDuration(1) - 2, "恢复期输入窗口");
-                ExecuteEvents.Execute(view.Jab.gameObject, pointer, ExecuteEvents.submitHandler);
+                ClickDuelHudButton(view.Jab.gameObject, jabFinger);
+                _controlCheckTrace["duelHudRaycasts"] = 5;
                 // 先确认真实 UI 采样已经把第二次按键交给业务，再暂停 Unity 主线程。
                 await WaitForDuelControl(id, () => service.DuelQueuedAttackForCheck == 1, "第二次普攻入缓冲");
                 _controlCheckTrace["queueFrame"] = service.DuelSnapshot.Frame;
@@ -139,7 +300,8 @@ namespace RevGame.Pvp
                     throw new InvalidOperationException("决斗验收失败：两次普攻之间存在空档。");
                 }
                 await WaitForDuelControl(id, () => view.FirstAnimator.LastObservedAttackStart == secondStart &&
-                    view.FirstAnimator.AttackSpriteChanges > 0, "第二次普攻 Sprite 实际换帧");
+                    view.FirstAnimator.AttackSpriteChanges > 0 && view.FirstAnimator.AttackFadeSamples > 0 &&
+                    !view.FirstAnimator.IsPoseFadingForCheck, "第二次普攻实际换帧和图层过渡");
                 await WaitForDuelControl(id, () =>
                     view.SecondAnimator.RunSpriteMotion && view.SecondAnimator.AttackSpriteMotion, "刺客跑动与攻击实际换帧");
                 _controlCheckPassed = true;
@@ -153,12 +315,42 @@ namespace RevGame.Pvp
                 if (view != null && service.DuelId == id)
                 {
                     CaptureDuelControlTrace(service, view);
-                    ExecuteEvents.Execute(left, pointer, ExecuteEvents.pointerUpHandler);
-                    ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(left, firstFinger, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(left, secondFinger, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(right, rightFinger, ExecuteEvents.pointerUpHandler);
                     service.TrySetDuelNoDamage(false);
                 }
                 _controlCheckRunning = false;
             }
+        }
+
+        // 使用实际 Canvas 的屏幕坐标、EventSystem 和 GraphicRaycaster，保证 HUD 不被遮挡。
+        private static void PressDuelHudButton(GameObject button, PointerEventData pointer)
+        {
+            var rect = (RectTransform)button.transform;
+            Canvas canvas = button.GetComponentInParent<Canvas>().rootCanvas;
+            Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            pointer.position = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center));
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, hits);
+            GameObject hit = hits.Count == 0 ? null : hits[0].gameObject;
+            if (hit == null || (hit != button && !hit.transform.IsChildOf(button.transform)))
+            {
+                throw new InvalidOperationException("屏幕触点没有命中决斗按钮：" + button.name);
+            }
+            pointer.pointerCurrentRaycast = hits[0];
+            if (ExecuteEvents.ExecuteHierarchy(hit, pointer, ExecuteEvents.pointerDownHandler) != button)
+            {
+                throw new InvalidOperationException("决斗按钮没有处理触点按下：" + button.name);
+            }
+        }
+
+        // 触摸普攻使用 Button 实际的 PointerClick 入口，不直接调用业务或模拟键盘 Submit。
+        private static void ClickDuelHudButton(GameObject button, PointerEventData pointer)
+        {
+            PressDuelHudButton(button, pointer);
+            ExecuteEvents.Execute(button, pointer, ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(button, pointer, ExecuteEvents.pointerClickHandler);
         }
 
         // 记录最后一次可见的权威快照、输入字和呈现结果，区分丢按键、漏封帧与动画故障。
@@ -175,6 +367,8 @@ namespace RevGame.Pvp
             _controlCheckTrace["attackExpiredAtFrame"] = service.DuelAttackExpiredAtFrameForCheck;
             _controlCheckTrace["observedAttackStart"] = view.FirstAnimator.LastObservedAttackStart;
             _controlCheckTrace["attackSpriteChanges"] = view.FirstAnimator.AttackSpriteChanges;
+            _controlCheckTrace["attackFadeSamples"] = view.FirstAnimator.AttackFadeSamples;
+            _controlCheckTrace["clockText"] = view.Clock.text;
             _controlCheckTrace["duelError"] = service.DuelError;
         }
 

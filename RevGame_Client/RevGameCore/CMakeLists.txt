@@ -3,6 +3,7 @@ project(RevGameCore LANGUAGES CXX)
 add_library(RevGameCore SHARED
     Source/GameCoreExport.cpp
     Source/DuelWorld.cpp
+    Source/DuelCheckpoint.cpp
     Source/DuelDamage.cpp
     Source/FixedPoint.cpp
     Source/DeterministicRandom.cpp)

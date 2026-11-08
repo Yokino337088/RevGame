@@ -2,6 +2,8 @@
 #include "GameCoreExport.h"
 #include "DuelWorld.h"
 #include "DuelProtocol.Generated.h"
+#include "Fnv1a.h"
+#include "WireWords.h"
 #include <array>
 #include <cstdlib>
 #include <cstdio>
@@ -36,6 +38,10 @@ auto Encode(const std::array<int32_t, Size>& words)
 // 用独立计算得到的随机黄金值、负数舍入与溢出边界固定数值语义。
 void CheckMathAndRandom()
 {
+    constexpr uint8_t knownBytes[]{'h', 'e', 'l', 'l', 'o'};
+    static_assert(Fnv1aBytes(knownBytes, sizeof(knownBytes)) == 0x4f9f2cabu);
+    constexpr uint8_t littleEndian[]{0x04, 0x03, 0x02, 0x81};
+    static_assert(Fnv1aWord(Fnv1aOffsetBasis, 0x81020304u) == Fnv1aBytes(littleEndian, sizeof(littleEndian)));
     const auto half = FixedPoint::FromRaw(500);
     Check((FixedPoint::FromRaw(-1235) * half).RawValue() == -617);
     const int32_t minimum = std::numeric_limits<int32_t>::min();
@@ -59,6 +65,197 @@ void CheckMathAndRandom()
         Check(value < 0x80000001u && value == replay.NextBelow(0x80000001u));
     }
     Check(first.StateWords() == replay.StateWords() && separate.StateWords() != first.StateWords());
+    // 隐藏随机状态恢复后，后续随机序列也必须完全相同。全零恢复失败不能改变序列。
+    Check(separate.RestoreState(first.StateWords()));
+    Check(!separate.RestoreState({0, 0}));
+    Check(first.NextUInt64() == separate.NextUInt64());
+}
+
+using Checkpoint = std::array<uint8_t, DuelWorld::CheckpointBytes>;
+using DisplayBytes = std::array<uint8_t, SnapshotWords * 4>;
+
+// 为篡改后的测试包重算校验值，用于覆盖语义校验，而非只测文件损坏。
+void Recheck(Checkpoint& checkpoint)
+{
+    uint32_t hash = 2166136261u;
+    for (std::size_t i = 0; i < checkpoint.size() - 4; ++i)
+    {
+        hash = (hash ^ checkpoint[i]) * 16777619u;
+    }
+    WriteWord(checkpoint.data() + checkpoint.size() - 4, hash);
+}
+
+// 固定输入覆盖空中恢复、互击、命中帧无旧事件、移动、锁帧和双实例长后缀。
+void CheckCheckpoint(const std::array<int32_t, 31>& settings)
+{
+    auto source = GameCore_Create();
+    auto target = GameCore_Create();
+    auto alien = GameCore_Create();
+    const auto start = Encode(settings);
+    Check(GameCore_SaveCheckpoint(source, nullptr, 0) == -1);
+    Check(GameCore_Write(source, start.data(), int(start.size())) == 1);
+    Check(GameCore_Write(target, start.data(), int(start.size())) == 1);
+
+    Checkpoint initial{}, air{}, saved{};
+    DisplayBytes first{}, second{}, unchanged{};
+    unchanged.fill(0xa5);
+    Check(GameCore_SaveCheckpoint(source, nullptr, 0) == int(initial.size()));
+    Check(GameCore_SaveCheckpoint(source, initial.data(), int(initial.size()) - 1) == -1);
+    Check(GameCore_SaveCheckpoint(source, initial.data(), int(initial.size())) == int(initial.size()));
+    Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
+    Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
+    Check(ReadWord(first.data()) == 0);
+    // 独立按约定序列打包 204 字节计算出的开局指纹，包含高位非零的种子和负坐标。
+    Check(ReadWord(first.data() + 64) == 0x7ebfb31cu);
+
+    auto foreign = settings;
+    ++foreign[30];
+    auto foreignPacket = Encode(foreign);
+    Check(GameCore_Write(alien, foreignPacket.data(), int(foreignPacket.size())) == 1);
+    Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
+    GameCore_Destroy(alien);
+    alien = GameCore_Create();
+    foreign = settings;
+    ++foreign[2]; // 保持种子相同，改变初始生命配置。
+    foreignPacket = Encode(foreign);
+    Check(GameCore_Write(alien, foreignPacket.data(), int(foreignPacket.size())) == 1);
+    Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
+    GameCore_Destroy(alien);
+
+    for (int frame = 1; frame <= 310; ++frame)
+    {
+        const int firstIntent = frame == 1 ? 18 : frame <= 10 ? 2 : frame == 20 ? 4 : 0;
+        const int secondIntent = frame <= 10 ? 1 : frame == 20 ? 4 : 0;
+        const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, firstIntent, secondIntent});
+        Check(GameCore_Write(source, packet.data(), int(packet.size())) == 1);
+        if (frame == 4)
+        {
+            second = unchanged;
+            Check(GameCore_SaveCheckpoint(source, nullptr, 0) == 0);
+            Check(GameCore_RestoreCheckpoint(source, initial.data(), int(initial.size()), second.data(), int(second.size())) == 0);
+            Check(second == unchanged);
+        }
+        Check(GameCore_Read(source, first.data(), int(first.size())) == int(first.size()));
+        if (frame == 4)
+        {
+            Check(ReadSignedWord(first.data() + 68) > 0);
+            Check(GameCore_SaveCheckpoint(source, air.data(), int(air.size())) == int(air.size()));
+
+            // 错帧、截断、短输出和多个语义错误都不得移动目标游标或覆盖输出。
+            second = unchanged;
+            auto bad = air;
+            bad[39] ^= 1;
+            Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == -1);
+            Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()) - 1, second.data(), int(second.size())) == -1);
+            Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()), second.data(), int(second.size()) - 1) == -1);
+            for (const int offset : {4, 8, 12, 16, 136 + 12, 136 + 28})
+            {
+                bad = air;
+                WriteWord(bad.data() + offset, 0x7fffffffu);
+                Recheck(bad);
+                Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == -1);
+            }
+            bad = air;
+            for (int offset = 200; offset < 216; offset += 4)
+            {
+                WriteWord(bad.data() + offset, 0);
+            }
+            Recheck(bad);
+            Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == -1);
+            Check(second == unchanged);
+            Check(GameCore_SaveCheckpoint(target, saved.data(), int(saved.size())) == int(saved.size()) && saved == initial);
+
+            // 改写一个有效的隐藏随机状态后，恢复必须原样保存，并生成不同状态指纹。
+            bad = air;
+            bad[200] ^= 1;
+            Recheck(bad);
+            Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == 1);
+            Check(ReadWord(second.data() + 64) != ReadWord(first.data() + 64));
+            Check(GameCore_SaveCheckpoint(target, saved.data(), int(saved.size())) == int(saved.size()) && saved == bad);
+            Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()), second.data(), int(second.size())) == 1);
+            Check(first == second);
+            Check(GameCore_Write(target, packet.data(), int(packet.size())) == -1);
+        }
+        else if (frame > 4)
+        {
+            Check(GameCore_Write(target, packet.data(), int(packet.size())) == 1);
+            Check(GameCore_Read(target, second.data(), int(second.size())) == int(second.size()));
+            Check(first == second);
+        }
+        if (frame == 23)
+        {
+            Check(ReadWord(first.data() + 56) == 9 && ReadWord(first.data() + 60) == 9);
+            Check(GameCore_SaveCheckpoint(source, saved.data(), int(saved.size())) == int(saved.size()));
+            Check(GameCore_RestoreCheckpoint(target, saved.data(), int(saved.size()), second.data(), int(second.size())) == 1);
+            WriteWord(first.data() + 56, 0);
+            WriteWord(first.data() + 60, 0);
+            Check(first == second);
+        }
+    }
+
+    // Read 会将两个输入都执行到输出队列。只读出第一条时，仍禁止检查点覆盖第二条。
+    for (const int frame : {311, 312})
+    {
+        const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, 0, 0});
+        Check(GameCore_Write(target, packet.data(), int(packet.size())) == 1);
+    }
+    Check(GameCore_Read(target, second.data(), int(second.size())) == int(second.size()));
+    Check(ReadWord(second.data()) == 311 && GameCore_SaveCheckpoint(target, nullptr, 0) == 0);
+    Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()), second.data(), int(second.size())) == 0);
+    Check(ReadWord(second.data()) == 311);
+    Check(GameCore_Read(target, second.data(), int(second.size())) == int(second.size()));
+    Check(ReadWord(second.data()) == 312);
+    Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()), second.data(), int(second.size())) == 1);
+    Check(ReadWord(second.data()) == 4);
+    Check(GameCore_Read(target, second.data(), int(second.size())) == 0);
+    GameCore_Destroy(source);
+    GameCore_Destroy(target);
+}
+
+// 超过旧的 60 秒上限时仍可恢复同一局，继续靠实际伤害决出胜负。
+void CheckUnlimitedDuel(const std::array<int32_t, 31>& settings)
+{
+    auto config = settings;
+    config[2] = 9; // 用真实普攻击倒对方，便于只测试一次命中。
+    config[5] = 0; // 跳过两个协议头字后，第四个配置字是可选的决斗帧上限。
+    const auto start = Encode(config);
+    auto source = GameCore_Create();
+    auto recovered = GameCore_Create();
+    Check(GameCore_Write(source, start.data(), int(start.size())) == 1);
+    Check(GameCore_Write(recovered, start.data(), int(start.size())) == 1);
+
+    DisplayBytes first{}, second{};
+    constexpr int32_t OldTimeLimit = 1200;
+    constexpr int32_t SaveFrame = OldTimeLimit + 1;
+    constexpr int32_t AttackFrame = SaveFrame + 11;
+    constexpr int32_t HitFrame = AttackFrame + 3;
+    for (int32_t frame = 1; frame <= HitFrame; ++frame)
+    {
+        const bool approach = frame > SaveFrame && frame < AttackFrame;
+        const int firstIntent = approach ? 2 : frame == AttackFrame ? 4 : 0;
+        const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, firstIntent, approach ? 1 : 0});
+        Check(GameCore_Write(source, packet.data(), int(packet.size())) == 1);
+        Check(GameCore_Read(source, first.data(), int(first.size())) == int(first.size()));
+        Check(ReadWord(first.data()) == static_cast<uint32_t>(frame));
+        Check(ReadWord(first.data() + 4) == (frame == HitFrame ? 1u : 0u));
+        if (frame == SaveFrame)
+        {
+            Checkpoint saved{};
+            Check(GameCore_SaveCheckpoint(source, saved.data(), int(saved.size())) == int(saved.size()));
+            Check(GameCore_RestoreCheckpoint(recovered, saved.data(), int(saved.size()), second.data(), int(second.size())) == 1);
+            Check(first == second);
+        }
+        else if (frame > SaveFrame)
+        {
+            Check(GameCore_Write(recovered, packet.data(), int(packet.size())) == 1);
+            Check(GameCore_Read(recovered, second.data(), int(second.size())) == int(second.size()));
+            Check(first == second);
+        }
+    }
+    Check(ReadWord(first.data() + 12) == 9 && ReadWord(first.data() + 36) == 0);
+    Check(ReadWord(first.data() + 56) == 9 && ReadWord(first.data() + 60) == 0);
+    GameCore_Destroy(source);
+    GameCore_Destroy(recovered);
 }
 
 // 检查双实例确定性、缺帧拒绝、跳跃输出、FIFO 背压和短缓冲。
@@ -69,9 +266,11 @@ int main()
     auto second = GameCore_Create();
     const std::array<int32_t, 31> settings{WireVersion, 1, 100, 4500, 140, 1200, 1700, 100, 1, 12, FrameMilliseconds,
         9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78, 270, 34, 480, 42, -123};
+    CheckCheckpoint(settings);
+    CheckUnlimitedDuel(settings);
     const auto config = Encode(settings);
     auto invalidSettings = settings;
-    invalidSettings[0] = 2;
+    invalidSettings[0] = WireVersion - 1;
     auto invalid = Encode(invalidSettings);
     Check(GameCore_Write(first, invalid.data(), int(invalid.size())) == -1);
     invalidSettings = settings;
@@ -103,6 +302,8 @@ int main()
         if (frame == 1)
         {
             Check(left[68] != 0 || left[69] != 0);
+            // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
+            Check(ReadWord(left.data() + 64) == 0x20c3c5acu);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);

@@ -31,7 +31,7 @@ namespace RevGame.Editor
                 Label("nameLabel", root, "棋友昵称", .22f, .66f, .36f, .73f, 27, true);
                 Input("nickname", root, "棋友", .38f, .66f, .76f, .73f, 16);
                 Label("endpointLabel", root, "对战地址", .22f, .55f, .36f, .62f, 27, true);
-                Input("endpoint", root, "127.0.0.1:20000", .38f, .55f, .76f, .62f, 100);
+                Input("endpoint", root, PvpServerPanel.DefaultEndpoint, .38f, .55f, .76f, .62f, 100);
                 Button("mode", root, "新手场 · 二次确认落子", .29f, .44f, .71f, .51f, 25);
                 Label("state", root, "准备连接", .2f, .33f, .8f, .42f, 29, true);
                 Label("duration", root, "准备好后开始匹配", .25f, .24f, .75f, .32f, 30, true);

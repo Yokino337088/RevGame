@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 2850417905
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8ea80f31399d75066e76c12fda91c0a8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8ea80f31399d75066e76c12fda91c0a8
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/PvpDefeat/PvpDefeatArt.png
+- Assets/GameRes/Atlases/PvpDefeat.spriteatlasv2
+Dependencies: []

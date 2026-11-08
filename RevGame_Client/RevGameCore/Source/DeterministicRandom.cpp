@@ -49,4 +49,15 @@ namespace RevGameCore
     {
         return {State0, State1};
     }
+
+    bool DeterministicRandom::RestoreState(const std::array<uint64_t, 2>& words)
+    {
+        if ((words[0] | words[1]) == 0)
+        {
+            return false;
+        }
+        State0 = words[0];
+        State1 = words[1];
+        return true;
+    }
 }

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 108336357
+CRC: 3614580274
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: f6392394298df9c8261df87f3623c54d
+    Hash: 49aebd74c4d178e0b66c03c58754a9c3
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5ad585dd02dfb5016c0dad519eab8f49
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: f6392394298df9c8261df87f3623c54d
+    Hash: 49aebd74c4d178e0b66c03c58754a9c3
 HashAppended: 0
 ClassTypes:
 - Class: 49
@@ -39,5 +39,7 @@ Assets:
 - Assets/GameRes/Data/YayaReactionLine.txt
 - Assets/GameRes/Data/BossSkillConfig.txt
 - Assets/GameRes/Data/ChapterConfig.txt
+- Assets/GameRes/Data/PvpYayaLine.txt
+- Assets/GameRes/Data/PvpRule.txt
 - Assets/GameRes/Data/EventRotationConfig.txt
 Dependencies: []
