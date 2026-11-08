@@ -861,6 +861,7 @@ namespace RevGame.Pvp
         }
         private void OnNetworkError(string reason)
         {
+            ClearDuelUnsealedInput();
             LastNetworkError = reason;
             RevLog.Warn("连接不可用：" + reason, "Pvp");
             if (_server != null)

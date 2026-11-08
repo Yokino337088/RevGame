@@ -25,8 +25,10 @@ namespace RevGame.Pvp
         private int _duelReadyMask;
         // 尚未装入下一帧的按键招式编号，0 表示未排队。
         private int _duelQueuedAction;
-        // 恢复期最多缓存四个逻辑帧的按键时间。掉线或长时间无帧时，旧按键也会过期。
-        private double _duelActionUntil;
+        // 从按键时已确认的快照向后最多保留四个可执行帧。卡顿时逻辑帧不走，缓冲也不老化。
+        private const int DuelAttackBufferFrames = 4;
+        // 允许带上该招式的最后一个逻辑帧号，包含该帧。
+        private int _duelActionLastFrame;
         // 最近一帧表现层采样到的方向，1 左、2 右、0 无。
         private int _duelDirection;
         // 锁存两次网络采样之间的跳跃点按，打包后清除。
@@ -35,6 +37,14 @@ namespace RevGame.Pvp
         private int _duelIntent;
         // 当前锁定意图所属帧号，消费新帧后才换下一份。
         private int _duelIntentFrame;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 开发验收读取待发送输入、最近锁定的招式及过期帧，区分缓冲丢失与封帧失败。
+        internal int DuelQueuedAttackForCheck => _duelQueuedAction;
+        internal int DuelLastIntentForCheck => _duelIntent;
+        internal int DuelLastAttackIntentFrameForCheck { get; private set; }
+        internal int DuelLastAttackIntentForCheck { get; private set; }
+        internal int DuelAttackExpiredAtFrameForCheck { get; private set; }
+#endif
         // 下次轮询的本地单调秒数，和原生逻辑帧号独立。
         private double _duelNextSend;
         // 挑战请求冷却截止的本地秒数，抑制连点。
@@ -157,21 +167,45 @@ namespace RevGame.Pvp
         // 接收键盘或 HUD 采样，只缓存意图，不立即修改原生世界。
         public void SetDuelInput(int direction, int action, bool jump = false)
         {
+            if (Mode != PvpConnectionMode.Local && !Connected)
+            {
+                ClearDuelUnsealedInput();
+                return;
+            }
             _duelDirection = direction < 0 ? 1 : direction > 0 ? 2 : 0;
             // 点按可能发生在两个网络帧之间。锁存跳跃，直到它被打包进下一帧意图。
             _duelQueuedJump |= jump;
-            if (action >= 1 && action <= 3)
+            if (DuelBothReady && DuelSnapshot.Result == 0 && action >= 1 && action <= 3)
             {
                 _duelQueuedAction = action;
-                _duelActionUntil = _clock.Elapsed.TotalSeconds + 4 * DuelConfig.FrameMs / 1000.0;
+                _duelActionLastFrame = DuelSnapshot.Frame + DuelAttackBufferFrames;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                DuelAttackExpiredAtFrameForCheck = 0;
+#endif
             }
         }
 
-        // 下一帧若会结束恢复期，就允许带上缓存的攻击意图。是否成功出招仍由原生内核决定。
-        private int TakeDuelAction()
+        // 失焦、掉线或退出时丢掉尚未锁定的按键。已编号的意图仍必须原样重发。
+        internal void ClearDuelUnsealedInput()
         {
-            if (_duelQueuedAction == 0 || _clock.Elapsed.TotalSeconds > _duelActionUntil)
+            _duelDirection = 0;
+            _duelQueuedAction = 0;
+            _duelQueuedJump = false;
+            _duelActionLastFrame = 0;
+        }
+
+        // 下一帧若会结束恢复期，就允许带上缓存的攻击意图。是否成功出招仍由原生内核决定。
+        private int TakeDuelAction(int nextFrame)
+        {
+            if (_duelQueuedAction == 0)
             {
+                return 0;
+            }
+            if (nextFrame > _duelActionLastFrame)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                DuelAttackExpiredAtFrameForCheck = nextFrame;
+#endif
                 _duelQueuedAction = 0;
                 return 0;
             }
@@ -217,7 +251,15 @@ namespace RevGame.Pvp
                 if (_duelIntentFrame != next)
                 {
                     _duelIntentFrame = next;
-                    _duelIntent = _duelDirection | (TakeDuelAction() << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
+                    int action = TakeDuelAction(next);
+                    _duelIntent = _duelDirection | (action << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                    if (action != 0)
+                    {
+                        DuelLastAttackIntentForCheck = action;
+                        DuelLastAttackIntentFrameForCheck = next;
+                    }
+#endif
                     _duelQueuedJump = false;
                 }
                 request.inputFrame = _duelIntentFrame;
@@ -351,8 +393,12 @@ namespace RevGame.Pvp
         // 离开或换连接时清空决斗状态，成对释放权威和本端副本。
         private void ResetDuel()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            DuelLastAttackIntentForCheck = 0;
+            DuelLastAttackIntentFrameForCheck = 0;
+            DuelAttackExpiredAtFrameForCheck = 0;
+#endif
             DuelPreviousSnapshot = default;
-            _duelActionUntil = 0;
             _duelAuthority?.Dispose();
             _duelPipe?.Dispose();
             _duelAuthority = null;
@@ -363,9 +409,7 @@ namespace RevGame.Pvp
             DuelError = "";
             _duelSceneReady = false;
             _duelReadyMask = 0;
-            _duelQueuedAction = 0;
-            _duelDirection = 0;
-            _duelQueuedJump = false;
+            ClearDuelUnsealedInput();
             _duelIntent = 0;
             _duelIntentFrame = 0;
             _duelNextSend = 0;

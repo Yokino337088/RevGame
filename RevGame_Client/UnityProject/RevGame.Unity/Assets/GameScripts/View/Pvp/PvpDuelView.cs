@@ -75,7 +75,7 @@ namespace RevGame.View
             {
                 _leftHeld = _rightHeld = _clickedJump = false;
                 _clickedAction = 0;
-                RevServices.Get<PvpService>()?.SetDuelInput(0, 0);
+                RevServices.Get<PvpService>()?.ClearDuelUnsealedInput();
             }
         }
 

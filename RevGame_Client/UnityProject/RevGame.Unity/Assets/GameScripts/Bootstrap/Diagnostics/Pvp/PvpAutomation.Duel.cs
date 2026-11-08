@@ -22,6 +22,15 @@ namespace RevGame.Pvp
         // 本地操作回归的结果。运行中只允许一个夹具占用方向按钮。
         private static bool _controlCheckRunning, _controlCheckPassed;
         private static string _controlCheckError = "";
+        // 仅开发测试记录输入、封帧和落屏证据。每次检查独立重建，禁止进入逻辑状态或协议。
+        private static Dictionary<string, object> _controlCheckTrace = new Dictionary<string, object>();
+
+        [Serializable]
+        private sealed class DuelControlArgs
+        {
+            // 可选的主线程停顿毫秒数，用来复现已经入缓冲的按键遇到掉帧的情况。
+            public int stallMs;
+        }
 
         // 注册本机、P2P 与只读快照查询，支持场景、封帧、动画和特效断言。
         private static void RegisterDuelAutomation()
@@ -36,10 +45,11 @@ namespace RevGame.Pvp
                 _ => Result(Service.ChallengeDuel(), Service.Status), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-lan-check", "使用实际 UTP 邀请、两席就绪和原生帧同步检查", Empty,
                 _ => BeginLanGameCheck(duel: true), owner: Owner);
-            RevRuntimeAutomation.Register("pvp.duel-control-check", "通过真实按钮验收转向和连续普攻", Empty,
-                _ => BeginDuelControlCheck(), owner: Owner);
+            const string controlSchema = "{\"type\":\"object\",\"properties\":{\"stallMs\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":400}}}";
+            RevRuntimeAutomation.Register("pvp.duel-control-check", "通过真实按钮验收转向和连续普攻，可在入队后模拟主线程卡顿", controlSchema,
+                json => BeginDuelControlCheck(JsonUtility.FromJson<DuelControlArgs>(json)?.stallMs ?? 0), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-control-state", "读取决斗操作验收结果", Empty,
-                _ => new Dictionary<string, object> { ["done"] = !_controlCheckRunning,
+                _ => new Dictionary<string, object>(_controlCheckTrace) { ["done"] = !_controlCheckRunning,
                     ["passed"] = _controlCheckPassed, ["error"] = _controlCheckError }, readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-state", "只读决斗场景、双方就绪和原生快照", Empty, _ =>
             {
@@ -61,8 +71,12 @@ namespace RevGame.Pvp
         }
 
         // 只在当前人机决斗中驱动已有 UI，所有输入仍经过 PvpService 封帧。
-        private static object BeginDuelControlCheck()
+        private static object BeginDuelControlCheck(int stallMs)
         {
+            if (stallMs < 0 || stallMs > 400)
+            {
+                return Result(false, "停顿时间须在 0 到 400 毫秒之间。");
+            }
             var view = UnityEngine.Object.FindObjectOfType<PvpDuelView>();
             if (_controlCheckRunning || view == null || !Service.TrySetDuelNoDamage(true))
             {
@@ -71,12 +85,13 @@ namespace RevGame.Pvp
             _controlCheckRunning = true;
             _controlCheckPassed = false;
             _controlCheckError = "";
-            CheckDuelControls(view).Forget();
+            _controlCheckTrace = new Dictionary<string, object> { ["stallMs"] = stallMs, ["actualStallMs"] = 0L };
+            CheckDuelControls(view, stallMs).Forget();
             return Result(true, "");
         }
 
         // 以逻辑帧判定两次输入的时机，以实际 Sprite 和镜像判定表现，避免用 isPlaying 冒充换帧。
-        private static async RevTask CheckDuelControls(PvpDuelView view)
+        private static async RevTask CheckDuelControls(PvpDuelView view, int stallMs)
         {
             GameObject left = view.transform.Find("Left").gameObject;
             GameObject right = view.transform.Find("Right").gameObject;
@@ -100,12 +115,33 @@ namespace RevGame.Pvp
                 ExecuteEvents.Execute(view.Jab.gameObject, pointer, ExecuteEvents.submitHandler);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 1, "首次普攻");
                 int firstStart = service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge;
+                int expectedSecondStart = firstStart + DuelConfig.ActionDuration(1) + 1;
+                _controlCheckTrace["firstStart"] = firstStart;
+                _controlCheckTrace["expectedSecondStart"] = expectedSecondStart;
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAge == DuelConfig.ActionDuration(1) - 2, "恢复期输入窗口");
                 ExecuteEvents.Execute(view.Jab.gameObject, pointer, ExecuteEvents.submitHandler);
+                // 先确认真实 UI 采样已经把第二次按键交给业务，再暂停 Unity 主线程。
+                await WaitForDuelControl(id, () => service.DuelQueuedAttackForCheck == 1, "第二次普攻入缓冲");
+                _controlCheckTrace["queueFrame"] = service.DuelSnapshot.Frame;
+                _controlCheckTrace["queuedAge"] = service.DuelSnapshot.FirstAge;
+                if (stallMs > 0)
+                {
+                    var stallClock = System.Diagnostics.Stopwatch.StartNew();
+                    System.Threading.Thread.Sleep(stallMs);
+                    _controlCheckTrace["actualStallMs"] = stallClock.ElapsedMilliseconds;
+                }
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 1 &&
-                    service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge == firstStart + DuelConfig.ActionDuration(1) + 1, "无空档连续普攻");
-                await WaitForDuelControl(id, () => view.FirstAnimator.AttackSpriteMotion &&
-                    view.SecondAnimator.RunSpriteMotion && view.SecondAnimator.AttackSpriteMotion, "剑士攻击与刺客跑动、攻击实际换帧");
+                    service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge > firstStart, "权威第二次普攻");
+                int secondStart = service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge;
+                _controlCheckTrace["secondStart"] = secondStart;
+                if (secondStart != expectedSecondStart)
+                {
+                    throw new InvalidOperationException("决斗验收失败：两次普攻之间存在空档。");
+                }
+                await WaitForDuelControl(id, () => view.FirstAnimator.LastObservedAttackStart == secondStart &&
+                    view.FirstAnimator.AttackSpriteChanges > 0, "第二次普攻 Sprite 实际换帧");
+                await WaitForDuelControl(id, () =>
+                    view.SecondAnimator.RunSpriteMotion && view.SecondAnimator.AttackSpriteMotion, "刺客跑动与攻击实际换帧");
                 _controlCheckPassed = true;
             }
             catch (Exception error)
@@ -116,12 +152,30 @@ namespace RevGame.Pvp
             {
                 if (view != null && service.DuelId == id)
                 {
+                    CaptureDuelControlTrace(service, view);
                     ExecuteEvents.Execute(left, pointer, ExecuteEvents.pointerUpHandler);
                     ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
                     service.TrySetDuelNoDamage(false);
                 }
                 _controlCheckRunning = false;
             }
+        }
+
+        // 记录最后一次可见的权威快照、输入字和呈现结果，区分丢按键、漏封帧与动画故障。
+        private static void CaptureDuelControlTrace(PvpService service, PvpDuelView view)
+        {
+            DuelSnapshot snapshot = service.DuelSnapshot;
+            _controlCheckTrace["lastFrame"] = snapshot.Frame;
+            _controlCheckTrace["lastAction"] = snapshot.FirstAction;
+            _controlCheckTrace["lastAge"] = snapshot.FirstAge;
+            _controlCheckTrace["lastQueuedAttack"] = service.DuelQueuedAttackForCheck;
+            _controlCheckTrace["lastIntentWord"] = service.DuelLastIntentForCheck;
+            _controlCheckTrace["lastAttackIntentFrame"] = service.DuelLastAttackIntentFrameForCheck;
+            _controlCheckTrace["lastAttackIntentAction"] = service.DuelLastAttackIntentForCheck;
+            _controlCheckTrace["attackExpiredAtFrame"] = service.DuelAttackExpiredAtFrameForCheck;
+            _controlCheckTrace["observedAttackStart"] = view.FirstAnimator.LastObservedAttackStart;
+            _controlCheckTrace["attackSpriteChanges"] = view.FirstAnimator.AttackSpriteChanges;
+            _controlCheckTrace["duelError"] = service.DuelError;
         }
 
         // 逐渲染帧等待真实结果。离开原局或超时都结束，不把测试操作带进下一场。

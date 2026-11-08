@@ -42,6 +42,9 @@ namespace RevGame.View
         // 上一帧真正交给 Image 绘制的 Sprite 和姿态。状态切换时只建立新基线。
         private Sprite _observedSprite;
         private Pose _observedPose;
+        // 攻击以逻辑起始帧区分实例。上一次攻击的结果保留到下一次攻击开始，方便测试异步读取。
+        private int _lastObservedAttackStart = -1;
+        private int _attackSpriteChanges;
         // 每个姿态占一位。同一个姿态至少绘制过两张不同的图片才设置对应位。
         private int _animatedPoses;
         public bool HasSpriteMotion => _animatedPoses != 0;
@@ -49,14 +52,26 @@ namespace RevGame.View
         public bool JumpSpriteMotion => (_animatedPoses & (1 << (int)Pose.Jump)) != 0;
         public bool RunSpriteMotion => (_animatedPoses & (1 << (int)Pose.Run)) != 0;
         public bool AttackSpriteMotion => (_animatedPoses & (7 << (int)Pose.Attack1)) != 0;
+        internal int LastObservedAttackStart => _lastObservedAttackStart;
+        internal int AttackSpriteChanges => _attackSpriteChanges;
 
         // 比较实际落屏图片，排除切换姿态时仅替换第一帧导致的误报。
         internal void ObserveSprite(Sprite sprite)
         {
             Pose pose = _machine.CurrentStateType;
-            if (sprite != null && _observedSprite != null && pose == _observedPose && sprite != _observedSprite)
+            bool newAttack = _attackStart >= 0 && _attackStart != _lastObservedAttackStart;
+            if (newAttack)
+            {
+                _lastObservedAttackStart = _attackStart;
+                _attackSpriteChanges = 0;
+            }
+            if (!newAttack && sprite != null && _observedSprite != null && pose == _observedPose && sprite != _observedSprite)
             {
                 _animatedPoses |= 1 << (int)pose;
+                if (_attackStart >= 0)
+                {
+                    _attackSpriteChanges++;
+                }
             }
             _observedSprite = sprite;
             _observedPose = pose;
