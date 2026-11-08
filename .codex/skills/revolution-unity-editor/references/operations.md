@@ -94,6 +94,18 @@ python Revolution.RevCLI/rev.py --project $project --mode live call atlas.create
 python Revolution.RevCLI/rev.py --project $project --mode live --confirm call atlas.set-packables --json atlas.json
 ```
 
+## 用命令、JSON 配方还是项目 Editor 代码
+
+1. **先发现通用动作。** 一处属性、Prefab 节点、材质或图集成员的编辑，优先用当次注册的动作完成检查、写入、读回。只要输入能用数据表达，就把需要重复的固定对象树或步骤保存成 JSON 配方，注明生成范围与执行顺序。
+2. **项目规则随项目维护。** 跨多类资产、根据真实依赖计算、需要业务门禁或要维护自定义 Inspector/预览时，先找现有项目制作类和 `game.*` 入口。新增代码前确定源、产物和重建范围。小改用现有局部动作，持久变化同步修改负责重建的配方。
+3. **通用缺口回源补齐。** 先区分桥版本过旧、扩展尚未安装、动作未注册与真正缺少操作。跨项目可复用的操作在框架源码增加受控动作并发布，项目配方仍负责选对象与分组。例如框架图集动作写入已指定成员，RevGame 自己计算章节和无尽的 AB 边界。
+
+### 扩展项目动作的契约
+
+- 在 Editor 程序集注册稳定、按职责分组的动作 ID。先核对 `RevAutomationAction` 的现有签名、键白名单、`Environment` 和确认契约。入口只解析和校验参数，再调用固定的制作或检查方法。禁止传任意方法名、表达式或脚本执行。
+- 把查询和变更分开，描述明确写盘范围。资产写入在编辑态串行，先检查路径、引用类型和覆盖策略，再写入。Prefab 内容在 `finally` 卸载。保存并重新加载后核对实际 GUID、节点、字段和引用。遇到超时或域重载，先查工单与实际产物再决定是否重试。
+- 变更动作后正常编译，检查 Console 并重新发现实时注册项。验证一次合法请求和一个可预见的拒绝场景，确认原资源及临时现场。重复执行的配方再验证第二次执行的差异。若影响运行时资源，交接给相应项目的 Play、AB 与平台验收流程。
+
 ## 覆盖边界
 
 通用序列化入口对任何组件都生效：装了 Cinemachine、Input System、URP、TMP、Timeline 后，它们的组件和资产也能用 component.* 与 asset.* 操作，只是没有专用的语义化动作。没有的能力：eval、Terrain/Tilemap 专用绘制、BlendTree、Android 设备控制和未注册业务能力。`script.create` 写的是普通工程文件，走 Unity 正常编译并能被 git 看到，不等于 eval。缺接口明确记录，新增扩展应采用可验证的注册动作和受控 schema，不照搬参考工具的任意代码后门。

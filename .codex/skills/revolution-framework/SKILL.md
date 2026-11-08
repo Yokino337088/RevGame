@@ -26,7 +26,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 游戏架构、玩法/UI/流程、资源与测试接线以 [RevGame GitHub工程](https://github.com/Yokino337088/RevGame) 为真实实践参考。编码前按 [工程实践索引](references/revgame-engineering.md) 找到并阅读同类源码，记录版本、参考文件与复用契约；仅查API或读Demo不替代工程实践。目标项目的安装版本与用户约束优先，不照搬游戏数值或项目专用夹具。
 
 - 架构/编程/资源：[revgame-engineering.md](references/revgame-engineering.md)。
-- Unity资产、Prefab、导表、构建、Play：[revgame-editor-practice.md](references/revgame-editor-practice.md)。
+- Unity 资产、Prefab、导表、构建、Play 和项目 Editor 代码选型：[revgame-editor-practice.md](references/revgame-editor-practice.md)。
 - 需求→实现→真实验证→报告/发布：[revgame-ai-workflow.md](references/revgame-ai-workflow.md)。
 
 只读当前任务命中的参考与源码，不通读整个项目。引用失效先在当前checkout或GitHub核对；无法访问明确未读，不假称参考成功。样本是可review实践，不是无需校验的标准答案。
@@ -82,6 +82,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 | 面板传数据 / 刷新时机 / 动画 / Part / Back / 横竖屏选择及预览 | **UI 专题** | `references/ui-and-layering.md` |
 | 接热更 / 排查热更 | **热更专题** | `references/hot-update.md` |
 | 编辑器菜单（打包 / 导表 / GM 面板 / UI 生成器 / 平台工具） | **工具** | `references/editor-tools.md` |
+| 项目 Editor 代码、生成配方、资产工具的归属 | **编辑器职责** | [RevGame 编辑器实践](references/revgame-editor-practice.md) |
 | 代码 / 注释规范（**本项目硬规范**） | **规范** | `references/code-style.md` |
 | 怎么证明"改对了" / 提交推送 | **验证交付** | `references/verify-and-test.md` |
 | 权威文档 / 全局文档在哪 | **找文档** | `references/docs-map.md` |

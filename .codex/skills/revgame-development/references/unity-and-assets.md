@@ -41,11 +41,7 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 | 材质、Shader、动画 | 查询 `material.*`、`shader.*`、`clip.*`、`animator.*` | 改共享资产与每实例参数的职责；池对象停旧动画；不逐棋子克隆材质 |
 | 项目固定制作配方 | 查询 `game.*` 动作并检查被调用的项目 Build 类 | 小改用局部动作；只有要重建整套目标资产时执行完整生成器，先核对会覆盖哪些资产 |
 
-不手工文本替换 `.unity/.prefab/.asset/.mat` 等 Unity 序列化 YAML 来绕过资产 API。移动已有 Unity 资产通过 `asset.move` / AssetDatabase，保留 GUID 和引用；不复制一份兼容资源掩盖旧引用。缺少工具能力时，按需求补普通项目 Editor 文件和固定参数的受控动作，正常编译后经 RevCLI 调用；不加 eval 或任意反射执行后门。
-
-`Editor/RevGame/ResourceBuild` 有独立 asmdef，部分项目制作类在其它 Editor 目录。新增动作前核对所属程序集和可引用类型，沿用现有固定目标的桥接写法；不改 asmdef 依赖只为从运行期访问 Editor 类型。
-
-生成器必须保留手工修改策略：若该 Prefab 会被项目 Build 配方重建，把永久规则写回对应生成器，避免下次重建丢失。不要为了改一个按钮重跑会重写场景、HUD、入口、棋盘的整套 `GameEndlessBuild.Build`。
+需要维护制作配方或补动作时，按 [RevGame Editor 代码规范](editor-code.md) 选择 JSON、项目 Editor 或 Revolution 源框架，明确 asmdef、写盘范围和重建所有权。已有生成器管理的永久修改要进入源配方。只改一个按钮时，沿用局部 Prefab 编辑入口。
 
 ## UI 原画与真实显示
 

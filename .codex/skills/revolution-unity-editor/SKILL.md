@@ -62,6 +62,8 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 
 按 [操作配方](references/operations.md) 选择动作。场景对象用对象/组件动作，资产用 AssetDatabase 动作，Prefab 用加载内容→修改→保存→卸载入口，项目设置用序列化设置动作。
 
+涉及项目 Editor 代码时，按 [命令、JSON 配方与项目 Editor 代码](references/operations.md#用命令json-配方还是项目-editor-代码) 选择。一次性编辑复用现有动作。项目专属的跨资产规则、制作门禁和验证留在项目配方，通用操作缺口回框架源码。
+
 - 修改前先 inspect/get，核对目标唯一、类型、属性路径和可写性。保持 GUID、Undo 和 Prefab override，不用文本替换 YAML 绕过 Unity。
 - 参数含中文或复杂数组时用 `call <action> --json <参数文件>`，避免 shell 转义改变数据。
 - UI 面板：`ui.create` → `rect.set` → `ui.snapshot` 读回。除 Canvas、EventSystem 外必须在 Canvas 下。单独改锚点会移动矩形，要保持位置须同时给偏移。
