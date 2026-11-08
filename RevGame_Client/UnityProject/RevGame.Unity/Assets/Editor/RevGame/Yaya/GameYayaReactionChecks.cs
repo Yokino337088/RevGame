@@ -1,9 +1,12 @@
 // 非Play规则夹具共用Excel生成表与正式分类算法，边界、空窗、模式阈值和损失优先级分别验证。
 using System;
+using System.Collections.Generic;
 using System.IO;
 using RevGame.Data;
 using RevGame.Flow;
+using RevGame.View;
 using Revolution;
+using UnityEngine;
 namespace RevGame.Editor
 {
     /// <summary>互动纯规则与Excel校验，编辑态仅读生成表，不修改正式配置、随机源或玩家存档。</summary>
@@ -33,7 +36,33 @@ namespace RevGame.Editor
             Check(Classify(1, good + 10, 1, 0, 100) == 3, "损失优先于击杀");
             Check(Classify(1, 0, 0, (int)(V("PoorTakenRatio") * 1000) + 1, 100) == 3, "高损伤嘲讽");
             Check(Classify(1, good, 0, (int)(V("GoodTakenRatio") * 1000) + 1, 100) == 2, "受伤过高不能夸奖");
-            return "8项表现分类边界与两模式台词配置检查通过";
+            Check(V("CampaignIdleTauntSeconds") >= V("SampleSeconds"), "六章无操作观察期能覆盖一个采样");
+            var idleLines = new HashSet<string>();
+            foreach (YayaReactionLine line in lines.All)
+            {
+                if (line.Band == YayaReactionConfig.CampaignIdleTauntBand)
+                {
+                    idleLines.Add(line.Text);
+                }
+            }
+            Check(idleLines.Count > 1, "六章无操作重复触发时能换台词");
+            CheckSidebar(new Rect(.01f, .028f, .24f, .78f), .25f);
+            CheckSidebar(new Rect(.012f, .145f, .145f, .48f), .18f);
+            // 16:9 下无尽棋盘投影的左边约为 .302，安全区全宽时应能装下完整两倍区域。
+            var mobile = new Rect(.012f, .145f, .29f, .96f);
+            Check(YayaReactionPresenter.TryFitSidebar(mobile, new Rect(0, 0, 1, 1), new Rect(.302f, .15f, .396f, .7f), out Rect expanded)
+                && Mathf.Approximately(expanded.width, mobile.width) && Mathf.Approximately(expanded.height, mobile.height), "安卓无尽两倍布局");
+            return "8项表现分类边界、两模式台词、六章无操作配置、横屏刘海和安卓无尽两倍布局检查通过";
+        }
+        /// <summary>模拟左边有刘海的横屏。原坐标落在刘海内，适配后应在安全区与棋盘之间保留等比区域。</summary>
+        private static void CheckSidebar(Rect preferred, float boardLeft)
+        {
+            Rect safe = Rect.MinMaxRect(.055f, .035f, .99f, .96f);
+            Rect board = Rect.MinMaxRect(boardLeft, .04f, .75f, .9f);
+            Check(preferred.xMin < safe.xMin, "原坐标在刘海内");
+            Check(YayaReactionPresenter.TryFitSidebar(preferred, safe, board, out Rect area), "刘海内移");
+            Check(area.xMin >= safe.xMin && area.yMin >= safe.yMin && area.yMax <= safe.yMax && !area.Overlaps(board), "安全区和棋盘边界");
+            Check(Mathf.Approximately(area.width / area.height, preferred.width / preferred.height), "互动区域等比");
         }
         /// <summary>断言失败携带具体场景名交给自动化，禁止只打印日志后计为通过。</summary>
         private static void Check(bool condition, string name)

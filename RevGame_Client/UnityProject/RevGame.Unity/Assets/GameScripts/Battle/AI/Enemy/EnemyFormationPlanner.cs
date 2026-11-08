@@ -51,7 +51,8 @@ namespace RevGame.Battle
         /// <param name="newBoard">true代表新开局，false代表保留玩家原有阵型。</param>
         /// <param name="report">成功返回实际眼阵/降级说明，失败返回明确的空间不足原因。</param>
         /// <param name="intelligence">1～4档评分因素，所有档位都遵守不重叠、不破眼的安全检查。</param>
-        public static bool TryArrange(List<Piece> roster, IReadOnlyList<Piece> players, bool newBoard, out string report, int intelligence = 4, int variation = 0)
+        /// <param name="eyeGarrison">从总名额预留的一颗驻眼守军；找不到己方空眼时交回服务用普通棋补足。</param>
+        public static bool TryArrange(List<Piece> roster, IReadOnlyList<Piece> players, bool newBoard, out string report, int intelligence = 4, int variation = 0, Piece eyeGarrison = null)
         {
             var baseline = new BoardModel(Consts.BoardSize);
 
@@ -162,9 +163,8 @@ namespace RevGame.Battle
                         // 只有被残局阻挡时才进入后面的全候选评分；不能以节省搜索为理由绕过前面的安全断言。
                         if (edgeIndex == 0 && offsetIndex == 0)
                         {
-                            CopyPositions(trial, roster);
                             report = Describe(variation, eyes, requested);
-                            return true;
+                            return TryCopyPositions(trial, roster, eyeGarrison, ref report);
                         }
                         int score = Score(trial, intelligence, hits, hitIds)
                             + (rotation == preferredEdge ? 10000 : 0) - System.Math.Abs(offset - preferredOffset) * 1000;
@@ -178,9 +178,8 @@ namespace RevGame.Battle
                 }
                 if (best != null)
                 {
-                    CopyPositions(best, roster);
                     report = Describe(variation, eyes, requested);
-                    return true;
+                    return TryCopyPositions(best, roster, eyeGarrison, ref report);
                 }
             }
 
@@ -198,9 +197,8 @@ namespace RevGame.Battle
 
                 if (!HasLockedEnemies(fallback) && PreservesPlayers(baseline, fallback))
                 {
-                    CopyPositions(fallback, roster);
                     report = "合法散阵（残局无完整眼阵空间）";
-                    return true;
+                    return TryCopyPositions(fallback, roster, eyeGarrison, ref report);
                 }
             }
 
@@ -445,13 +443,25 @@ namespace RevGame.Battle
         {
             return board.FindPiece(id);
         }
-        /// <summary>唯一提交点：方案全部验证成功才写真实待出生名单的Pos，不复制快照中的临时气眼或血量。</summary>
-        private static void CopyPositions(BoardModel board, List<Piece> roster)
+        /// <summary>先在试盘验证预留驻眼名额可用，再提交整队坐标；找不到眼时原名单仍可改用普通棋重试。</summary>
+        private static bool TryCopyPositions(BoardModel board, List<Piece> roster, Piece eyeGarrison, ref string report)
         {
+            if (eyeGarrison != null)
+            {
+                if (!EyeTactics.TryFindOwnEye(board, GameSide.Enemy, eyeGarrison.Size, out BoardPos eye) ||
+                    !board.Place(eyeGarrison.CreateSnapshot(), eye))
+                {
+                    report = "本轮没有可驻守的敌方空眼";
+                    return false;
+                }
+                // 守军排在最后，正式棋盘先落眼位外围，BoardModel.Place 才能登记驻眼身份。
+                roster.Add(eyeGarrison);
+            }
             foreach (Piece piece in roster)
             {
                 piece.Pos = Find(board, piece.Id).Pos;
             }
+            return true;
         }
     }
 }

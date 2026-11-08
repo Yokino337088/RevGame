@@ -30,8 +30,37 @@ namespace RevGame.Editor
             GameConfigTestSupport.Ensure();
             _count = 0;
             var report = new StringBuilder();
-            RoundDef previous = null;
             var watch = System.Diagnostics.Stopwatch.StartNew();
+            VerifyOpenings();
+            watch.Stop();
+            report.AppendLine("60个敌阵生成耗时合计 " + watch.ElapsedMilliseconds + "ms（编辑器单次测量，不代表手机性能）");
+            VerifySnapshotAndFallback();
+            VerifyRangedAndMovement();
+            VerifyBattleDeployment();
+            VerifyReplay(report);
+            VerifyCampaign(report);
+            LastResult = "通过 " + _count + " 条战术断言\n" + report;
+            return LastResult;
+        }
+
+        /// <summary>编辑态独立验收六章敌军开局人数、生命和统一防御计算，避免被其它历史战术夹具中断。</summary>
+        public static string RunCampaignOpening()
+        {
+            if (UnityEngine.Application.isPlaying)
+            {
+                throw new InvalidOperationException("请先退出 Play 再运行六章开局验收");
+            }
+            GameConfigTestSupport.Ensure();
+            _count = 0;
+            VerifyOpenings();
+            BattleService.VerifyCampaignEnemyDefense(Check);
+            return "通过 " + _count + " 条六章开局与防御断言，覆盖 " + LevelCatalog.TotalRounds + " 个真实回合";
+        }
+
+        /// <summary>每轮建立独立真实服务，分别核对敌阵、最终占格和出生属性。</summary>
+        private static void VerifyOpenings()
+        {
+            RoundDef previous = null;
             for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
             {
                 for (int round = 1; round <= Balance.RoundsPerChapter; round++)
@@ -43,12 +72,27 @@ namespace RevGame.Editor
                     if (previous != null)
                     {
                         Check(current.HpScale > previous.HpScale && current.AttackScale > previous.AttackScale, "敌方生命与攻击基础倍率逐轮增长，跨章不倒退");
-                        Check(current.EnemyKinds.Count >= previous.EnemyKinds.Count && current.Intelligence >= previous.Intelligence, "数量与AI档位不倒退");
+                        Check(current.Intelligence >= previous.Intelligence, "AI档位跨章不倒退");
+                        if (round > 1 && Balance.EnemyCountRoundsPerExtra == 1)
+                        {
+                            Check(current.OpeningEnemyCount == Math.Min(Balance.EnemyCountMax, previous.OpeningEnemyCount + 1), "本章开局敌棋逐轮加一，Boss回合也计入总数");
+                        }
                     }
                     previous = current;
+                    if (round == 1)
+                    {
+                        Check(current.OpeningEnemyCount == Balance.EnemyCountBase, "每章首回合恢复基础敌棋数");
+                    }
+                    Check(battle.EnemyPieces.Count == current.OpeningEnemyCount, "实际开局人数包含Boss和驻眼守军");
+                    foreach (Piece enemy in battle.EnemyPieces)
+                    {
+                        float hpScale = enemy.IsBoss
+                            ? current.HpScale * Balance.BossHpMultiplier * (1f + (chapter - 1) * Balance.BossHpGrowthPerChapter)
+                            : current.HpScale;
+                        Check(enemy.MaxHp == Math.Max(1, (int)(enemy.Def.MaxHp * hpScale)), "敌棋出生生命使用关卡配置，Boss再叠加独立倍率");
+                    }
                     List<Piece> guards = new List<Piece>(battle.EnemyPieces).FindAll(p => !p.IsBoss);
                     int garrisons = guards.FindAll(p => p.IsEyeGarrison).Count;
-                    Check(guards.Count >= Balance.EnemyCountBase && guards.Count - garrisons <= Balance.EnemyCountMax, "初始普通敌阵遵守配置，额外驻眼远程单独计算");
                     Check(guards.Exists(p => p.Def.Kind == PieceKind.Crossbow) && guards.Exists(p => p.Def.Kind == PieceKind.Archer) && guards.Exists(p => p.Def.Kind == PieceKind.MageFire), "重弩/弓箭/火法均存在");
                     int expectedEyes = guards.Count - garrisons >= 8 ? 2 : 1;
                     Check(guards.FindAll(p => p.EyeCount >= expectedEyes).Count >= (expectedEyes == 2 ? 8 : 5), "真实规则确认完整守眼骨架");
@@ -56,15 +100,6 @@ namespace RevGame.Editor
                     Check(battle.Board.GetAllPieces().Count == battle.EnemyPieces.Count, "全部名单都有完整棋盘占格");
                 }
             }
-            watch.Stop();
-            report.AppendLine("60个敌阵生成耗时合计 " + watch.ElapsedMilliseconds + "ms（编辑器单次测量，不代表手机性能）");
-            VerifySnapshotAndFallback();
-            VerifyRangedAndMovement();
-            VerifyBattleDeployment();
-            VerifyReplay(report);
-            VerifyCampaign(report);
-            LastResult = "通过 " + _count + " 条战术断言\n" + report;
-            return LastResult;
         }
         private static void VerifySnapshotAndFallback()
         {

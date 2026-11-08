@@ -18,11 +18,7 @@ namespace RevGame.UI
     /// <summary>
     /// 战斗 HUD（策划案 §03：局内只有"落子"一个操作，其余全部自动 —— 所以 HUD 只负责**读**）。
     ///
-    /// 显示四件事：
-    /// 1. 阶段图标（准备 / 战斗 / 结算）；
-    /// 2. 第几章第几回合；
-    /// 3. 普通回合时间进度，Boss 主将血条与决死伤害层数；
-    /// 4. 双方存活数 + 一行战斗日志。
+    /// 常驻显示章节回合、全队三项加成和 Boss 血条，局内事件继续走独立弹幕提示。
     ///
     /// 【为什么 HUD 自己读服务，而不是等别人 SetData】
     /// HUD 是"常驻观察者"：它关心的不是某一次数据快照，而是**服务的实时状态**。
@@ -37,25 +33,10 @@ namespace RevGame.UI
         {
             RevServices.GetRequired<RevGame.Flow.GameFlow>().OpenAudioSettings();
         }
-        [Header("阶段图标（三种阶段各一张，由预制体指定）")]
-        [SerializeField]
-        private Sprite phasePrepareSprite;
-        [SerializeField]
-        private Sprite phaseBattleSprite;
-        [SerializeField]
-        private Sprite phaseSettleSprite;
-        [RevBind]
-        private Image _phaseIcon;
-        [RevBind]
-        private Text _phaseLabel;
         [RevBind]
         private Text _roundText;
         [RevBind]
-        private Image _progressFill;
-        [RevBind]
         private Text _countText;
-        [RevBind]
-        private Text _logText;
         [RevBind]
         private Button _btnHome;
         [RevBind]
@@ -81,18 +62,16 @@ namespace RevGame.UI
         private BattleEventNoticeView _enemyNotice;
         private int _enemyNoticeGeneration;
         private bool _preparationLoading;
-        private Tween _progressTween, _bossTween;
-        // 两条血条各自持有稳定的读写/清理委托，不在10Hz刷新入口提前创建捕获闭包。
-        // Tween读取fillAmount的两个稳定委托，由面板OnBindView创建一次；不在每次Refresh时new。
-        private DG.Tweening.Core.DOGetter<float> _readProgressBar, _readBossBar;
-        // 对应两条血条的写入委托，参数为0～1比例；动画只改表现，不影响服务HP或时间。
-        private DG.Tweening.Core.DOSetter<float> _writeProgressBar, _writeBossBar;
-        // 每条血条单独清自己的Tween字段。对象自动归池前必须清句柄，否则可能误Kill被别人复用的Tween。
-        private TweenCallback _clearProgressBar, _clearBossBar;
-        private float _progressTarget = -1f, _bossTarget = -1f;
+        private Tween _bossTween;
+        // 血条复用绑定期创建的委托，0～1 的填充比例只影响显示。Tween 归池前先清引用。
+        private DG.Tweening.Core.DOGetter<float> _readBossBar;
+        private DG.Tweening.Core.DOSetter<float> _writeBossBar;
+        private TweenCallback _clearBossBar;
+        private float _bossTarget = -1f;
         public int PendingPreparationNoticeCount => _preparationQueue.Count;
         private bool _noticeClosed;
-        private readonly List<string> _logs = new List<string>();
+        // 已发布 AB 和编辑器配方还带着这些节点。面板绑定时统一停用，无需替换素材或路径。
+        private static readonly string[] HiddenInfoNodes = { "phaseIcon", "phaseLabel", "progressBar", "progressFill", "logText", "helperScoreLabel" };
         public int ActiveNoticeCount
         {
             get
@@ -104,19 +83,12 @@ namespace RevGame.UI
         private static readonly ProfilerMarker HudRefreshMarker = new ProfilerMarker("RevGame.Hud.Refresh");
         // “上次落屏记录是否有效”。首次打开强制false，保证即使数值碰巧与上一局相同也完整初始化。
         private bool _hudValid;
-        // 上次显示的准备/战斗/结算阶段，和服务当前Phase比较后才切图标/标签。
-        private GamePhase _hudPhase;
-        // 一组纯值缓存：章节、回合、人数、AI档位、加成百分比。
-        // 它们只是上一帧UI收据，不是真实业务数据，点击与战斗计算仍从服务读取。
-        private int _hudChapter, _hudRound, _hudPlayers, _hudEnemies, _hudIntelligence, _hudAttack;
+        // 只缓存已经显示的整数百分比。真实增益由战斗服务拥有，刷新不重复格式化相同文字。
+        private int _hudChapter, _hudRound, _hudAttack, _hudSpeed, _hudDefense;
         // 上次显示的Boss回合；同一章节/回合值不变时，标签后缀也可能变化，故要独立比较。
         private bool _hudBossRound;
-        // 完整阵型用于变化比较，短阵型仅用于UI两行文案；日志也在变化后才赋Text。
-        private string _hudFormation, _hudFormationShort, _hudLog;
-        // 主将身份、当前HP、上限HP和决死层加成缓存。主将换人或掉血都要刷新，不能只比较血条比例。
-        private int _hudKingId, _hudKingHp, _hudKingMax, _hudRage;
-        // 上次擒王条件对应的提示状态；跨血线时必须改文案，与实际擒王判定仍共用表参数。
-        private bool _hudCapturable;
+        // 主将换人或实际生命值变化时才更新数字，不能只比较血条比例。
+        private int _hudKingId, _hudKingHp, _hudKingMax;
         private IBattleService Battle
         {
             get
@@ -127,18 +99,80 @@ namespace RevGame.UI
         // 框架绑定Image节点后创建读写委托，生命周期与面板一致。此处只装配，不计算血量或决定胜负。
         protected override void OnBindView()
         {
-            _readProgressBar = () => _progressFill.fillAmount;
-            _writeProgressBar = value => _progressFill.fillAmount = value;
             _readBossBar = () => _bossBar.fillAmount;
             _writeBossBar = value => _bossBar.fillAmount = value;
-            _clearProgressBar = ClearProgressTween;
             _clearBossBar = ClearBossTween;
+            // 旧制作配方仍可能给这个字段赋值。优先停用它实际绑定的控件，再处理早期 AB 的同名节点。
+            if (helperScoreLabel != null)
+            {
+                helperScoreLabel.gameObject.SetActive(false);
+            }
+            foreach (string name in HiddenInfoNodes)
+            {
+                Transform node = transform.Find(name);
+                if (node != null)
+                {
+                    node.gameObject.SetActive(false);
+                }
+            }
+
+            // 使用现有信息牌作为坐标原点，四个控件跟随它等比缩放。沿用原图和填充式血条。
+            var plate = (RectTransform)transform.Find("infoPlate");
+            AnchorInPlate(_countText.rectTransform, plate, .13f, .36f, .87f, .86f);
+            AnchorInPlate(_bossFrame.rectTransform, plate, .13f, .12f, .87f, .20f);
+            AnchorInPlate(_bossBar.rectTransform, plate, .13f, .12f, .87f, .20f);
+            AnchorInPlate(_bossText.rectTransform, plate, .13f, .21f, .87f, .35f);
+            _countText.alignment = TextAnchor.MiddleCenter;
+            _countText.resizeTextForBestFit = true;
+            _countText.resizeTextMinSize = 16;
+            _countText.resizeTextMaxSize = 32;
+            RectTransform round = _roundText.rectTransform;
+            round.anchorMin = new Vector2(.5f, round.anchorMin.y);
+            round.anchorMax = new Vector2(.5f, round.anchorMax.y);
+            round.anchoredPosition = new Vector2(0f, round.anchoredPosition.y);
         }
+
+        /// <summary>将原有控件装入信息牌的归一化范围，保留预制体素材及射线设置。</summary>
+        private static void AnchorInPlate(RectTransform child, RectTransform plate, float left, float bottom, float right, float top)
+        {
+            child.SetParent(plate, false);
+            child.anchorMin = new Vector2(left, bottom);
+            child.anchorMax = new Vector2(right, top);
+            child.offsetMin = child.offsetMax = Vector2.zero;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>测试读取实际控件状态，避免只看服务数值就把 HUD 当成已经正确显示。</summary>
+        public object InfoSnapshot()
+        {
+            bool legacyControlsHidden = true;
+            foreach (string name in HiddenInfoNodes)
+            {
+                Transform node = transform.Find(name);
+                if (node != null && node.gameObject.activeInHierarchy)
+                {
+                    legacyControlsHidden = false;
+                    break;
+                }
+            }
+            bool bossVisible = _bossBar.gameObject.activeInHierarchy && _bossText.gameObject.activeInHierarchy;
+            return new Dictionary<string, object>
+            {
+                ["bonuses"] = _countText.text,
+                ["attackBonusPercent"] = _hudAttack,
+                ["attackSpeedBonusPercent"] = _hudSpeed,
+                ["defenseBonusPercent"] = _hudDefense,
+                ["legacyControlsHidden"] = legacyControlsHidden,
+                ["bossVisible"] = bossVisible,
+                ["bossHpText"] = bossVisible ? _bossText.text : string.Empty,
+                ["bossFill"] = bossVisible ? _bossBar.fillAmount : 0f
+            };
+        }
+#endif
         // 打开后使所有旧UI缓存失效并重建监听/计时。面板重新出现时不能因数值相同沿用关闭前的显示。
         protected override void OnOpen()
         {
             _hudValid = false;
-            _logs.Clear();
             OpenScore();
             ResetBarAnimations();
             _noticeClosed = false;
@@ -157,13 +191,9 @@ namespace RevGame.UI
             RevEvent.AddEventListener<int>(Events.PhaseEnterBattle, OnPhaseChanged, 0, this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnPhaseChanged, 0, this);
             RevEvent.AddEventListener<int>(Events.PieceMerged, OnUpgraded, owner: this);
-            RevEvent.AddEventListener<int>(Events.PiecePlaced, OnPieceChanged, 0, this);
             RevEvent.AddEventListener<int, string>(Events.EnemyDeployed, OnEnemyDeployed, owner: this);
             RevEvent.AddEventListener<BossSkillInfo>(Events.BossSkillTelegraph, OnBossTelegraph, owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, OnSettle, 0, this);
-            RevEvent.AddEventListener<string>(Events.BattleLog, OnBattleLog, 0, this);
-            RevEvent.AddEventListener<int>(Events.PieceHpChanged, OnPieceChanged, 0, this);
-            RevEvent.AddEventListener<int>(Events.PieceDied, OnPieceChanged, 0, this);
             RevEvent.AddEventListener<string>(Events.BattleEventTriggered, OnBattleEvent, owner: this);
         }
         /// <summary>只做"把服务状态画到屏上"，不修改任何游戏数据。</summary>
@@ -175,60 +205,25 @@ namespace RevGame.UI
             {
                 IBattleService _battle = Battle;
                 RefreshScore(_battle);
-                RefreshHelperWallet();
+                RefreshPieceManagement();
 
                 if (_battle == null)
                 {
                     return;
                 }
-                if (_phaseIcon != null && (!_hudValid || _hudPhase != _battle.Phase))
-                {
-                    _phaseIcon.sprite = PickPhaseSprite(_battle.Phase);
-                    // 新版美术提供通用木牌，阶段名称用文字表达，不再依赖旧版的三张阶段图片。
-                    _phaseLabel.text = _battle.Phase == GamePhase.Battle ? "战斗" : _battle.Phase == GamePhase.Settle ? "结算" : "准备";
-                }
                 if (_roundText != null && (!_hudValid || _hudChapter != _battle.Chapter || _hudRound != _battle.Round || _hudBossRound != _battle.IsBossRound))
                 {
                     _roundText.text = "第 " + _battle.Chapter + " / 6 章 · 第 " + _battle.Round + " 回合" + (_battle.IsBossRound ? "（擒王 · 不限时）" : "（不限时）");
                 }
-                if (_progressFill != null)
+                int attack = Mathf.RoundToInt(_battle.TeamAttackBonus * 100f);
+                int speed = Mathf.RoundToInt(_battle.TeamAttackSpeedBonus * 100f);
+                int defense = Mathf.RoundToInt(_battle.TeamDefenseBonus * 100f);
+                if (!_hudValid || attack != _hudAttack || speed != _hudSpeed || defense != _hudDefense)
                 {
-                    float duration = _battle.BattleDuration;
-                    float ratio = duration > 0f ? Mathf.Clamp01(_battle.BattleElapsed / duration) : 0f;
-                    UpdateBar(_progressFill, ratio, ref _progressTween, ref _progressTarget, _battle.Phase != GamePhase.Battle, _readProgressBar, _writeProgressBar, _clearProgressBar);
-                }
-                if (_countText != null)
-                {
-                    // 沿用两行高度：第二行放简短阵型和攻击加成，完整降级原因留给 GM，不挤出第三行遮住日志。
-                    int players = CountAlive(_battle.PlayerPieces), enemies = CountAlive(_battle.EnemyPieces);
-                    int attack = Mathf.RoundToInt(_battle.TeamAttackBonus * 100f);
-                    // 阵型字符串没变就复用已经截好的短文案，避免每100ms重做IndexOf/Substring。
-                    string formation = _battle.EnemyFormation;
-
-                    if (!_hudValid || _hudFormation != formation)
-                    {
-                        int bracket = formation.IndexOf('（');
-                        _hudFormationShort = bracket < 0 ? formation : formation.Substring(0, bracket);
-                    }
-                    if (!_hudValid || players != _hudPlayers || enemies != _hudEnemies || attack != _hudAttack || _hudIntelligence != _battle.EnemyIntelligence || _hudFormation != formation)
-                    {
-                        _countText.text = "我方 " + players + " / 敌方 " + enemies + "\n" + _hudFormationShort + " · AI " + _battle.EnemyIntelligence + "档 · 我方+" + attack + "%";
-                    }
-                    _hudFormation = formation;
-                    _hudPlayers = players;
-                    _hudEnemies = enemies;
+                    _countText.text = $"攻击力 {attack:+0;-0;+0}%\n攻速 {speed:+0;-0;+0}%\n防御力 {defense:+0;-0;+0}%";
                     _hudAttack = attack;
-                    _hudIntelligence = _battle.EnemyIntelligence;
-                }
-                if (_logText != null)
-                {
-                    string latest = _logs.Count == 0 ? "" : _logs[_logs.Count - 1];
-
-                    if (!_hudValid || latest != _hudLog)
-                    {
-                        _logText.text = latest;
-                        _hudLog = latest;
-                    }
+                    _hudSpeed = speed;
+                    _hudDefense = defense;
                 }
 
                 Pieces.Piece king = null;
@@ -250,40 +245,19 @@ namespace RevGame.UI
                 if (king != null)
                 {
                     UpdateBar(_bossBar, king.HpRatio, ref _bossTween, ref _bossTarget, _battle.Phase != GamePhase.Battle, _readBossBar, _writeBossBar, _clearBossBar);
-                    // 决死伤害百分比 = 已满档位 × 每档加成；每档加成取自参数，旧代码这里把 10% 写死成了 *10。
-                    int rage = (int)((int)(_battle.BattleElapsed / Balance.BossAccelerationSeconds) * Balance.BossAccelerationBonus * 100f + 0.5f);
-                    bool capturable = king.HpRatio <= Balance.BossCaptureHpRatio;
-
-                    if (!_hudValid || _hudKingId != king.Id || _hudKingHp != king.Hp || _hudKingMax != king.MaxHp || _hudRage != rage || _hudCapturable != capturable)
+                    if (!_hudValid || _hudKingId != king.Id || _hudKingHp != king.Hp || _hudKingMax != king.MaxHp)
                     {
-                        _bossText.text = "主将  " + king.Hp + " / " + king.MaxHp + (king.HpRatio <= Balance.BossCaptureHpRatio ? " · 可擒王" : " · 降至" + ConfigText.Percent(Balance.BossCaptureHpRatio) + "后可擒王") + (rage > 0 ? "  决死伤害 +" + rage + "%" : "");
+                        _bossText.text = $"主将生命 {king.Hp} / {king.MaxHp}";
                     }
                     // 先完成本次显示，再更新收据；如果先把缓存写成新值，变化条件会误判“不用显示”。
                     _hudKingHp = king.Hp;
                     _hudKingMax = king.MaxHp;
-                    _hudRage = rage;
-                    _hudCapturable = capturable;
                 }
                 _hudKingId = king == null ? 0 : king.Id;
-                _hudPhase = _battle.Phase;
                 _hudChapter = _battle.Chapter;
                 _hudRound = _battle.Round;
                 _hudBossRound = _battle.IsBossRound;
                 _hudValid = true;
-            }
-        }
-        private Sprite PickPhaseSprite(GamePhase phase)
-        {
-            switch (phase)
-            {
-                case GamePhase.Prepare:
-                    return phasePrepareSprite;
-                case GamePhase.Battle:
-                    return phaseBattleSprite;
-                case GamePhase.Settle:
-                    return phaseSettleSprite;
-                default:
-                    return phasePrepareSprite;
             }
         }
         [RevButtonClick("btnHome")]
@@ -330,8 +304,6 @@ namespace RevGame.UI
         {
             ClearNotices();
             ResetBarAnimations();
-            _logs.Clear();
-            _logText.text = string.Empty;
             // 旧版静态提示节点也清空并隐藏，防止它与池化的新提示同时显示。
             _eventText.text = string.Empty;
             _eventIcon.sprite = null;
@@ -562,20 +534,15 @@ namespace RevGame.UI
             tween = DOTween.To(read, write, value, 0.28f)
                 .SetEase(Ease.OutCubic).SetUpdate(true).OnKill(onKilled);
         }
-        private void ClearProgressTween()
-        {
-            _progressTween = null;
-        }
         private void ClearBossTween()
         {
             _bossTween = null;
         }
         private void ResetBarAnimations()
         {
-            _progressTween?.Kill(false);
             _bossTween?.Kill(false);
-            _progressTween = _bossTween = null;
-            _progressTarget = _bossTarget = -1f;
+            _bossTween = null;
+            _bossTarget = -1f;
         }
         private void OnNoticeFinished(BattleEventNoticeView notice)
         {
@@ -584,19 +551,6 @@ namespace RevGame.UI
         private void SetNoticeVisible(bool visible)
         {
             _eventText.transform.parent.gameObject.SetActive(visible);
-        }
-        private static int CountAlive(IReadOnlyList<Pieces.Piece> pieces)
-        {
-            int n = 0;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                if (pieces[i].IsAlive)
-                {
-                    n++;
-                }
-            }
-
-            return n;
         }
         private void OnPhaseChanged(int round)
         {
@@ -615,21 +569,6 @@ namespace RevGame.UI
             ClearRoundPresentation();
             ClearScoreFlights();
             RefreshView();
-        }
-        private void OnPieceChanged(int pieceId)
-        {
-            // 伤害可以同帧触发数十次，统一交给已有10Hz时钟落屏；真实伤害数字仍逐帧显示。
-            // 不在这里反复拼接全部HUD字符串、扫描主将、重建Canvas布局。
-        }
-        private void OnBattleLog(string text)
-        {
-            _logs.Add(text);
-            // 只留最近 5 条，避免无限增长（HUD 只显示最后一条）。
-            while (_logs.Count > 5)
-            {
-                _logs.RemoveAt(0);
-            }
-            // 最新战报由10Hz刷新显示，保留即时事件但合并重复UI工作。
         }
     }
 }

@@ -3,9 +3,12 @@ using System;
 using Revolution;
 namespace RevGame.Data
 {
-    /// <summary>六章和无尽共用的互动配置入口，模式1六章、2无尽；评价档1好、2一般、3不佳。</summary>
+    /// <summary>六章和无尽共用的互动配置入口，模式1六章、2无尽；评价档1好、2一般、3不佳、4六章无操作。</summary>
     public static class YayaReactionConfig
     {
+        /// <summary>台词表为六章无操作单独保留一档，避免用战损嘲讽误报玩家的战绩。</summary>
+        public const int CampaignIdleTauntBand = 4;
+
         /// <summary>按参数键取有限数值，缺配置明确失败，不能给静默默认值掩盖导表遗漏。</summary>
         public static float Value(string key)
         {
@@ -15,7 +18,7 @@ namespace RevGame.Data
             }
             return row.Value;
         }
-        /// <summary>进场前验证时间、阈值、三档台词覆盖，数值变更无需程序重编译。</summary>
+        /// <summary>进场前验证时间、阈值和各档台词覆盖，数值变更无需程序重编译。</summary>
         public static void Validate()
         {
             Validate(RevDataTableManager.Get<YayaReactionRuleTable>(), RevDataTableManager.Get<YayaReactionLineTable>());
@@ -31,7 +34,7 @@ namespace RevGame.Data
                 }
                 return row.Value;
             }
-            foreach (string key in new[] { "WindowSeconds", "GlobalCooldown", "SameBandCooldown", "InitialDelay", "CampaignGoodKills", "EndlessGoodKills", "PoorLosses", "PopupSeconds", "SampleSeconds", "MaximumLines" })
+            foreach (string key in new[] { "WindowSeconds", "GlobalCooldown", "SameBandCooldown", "InitialDelay", "CampaignIdleTauntSeconds", "CampaignGoodKills", "EndlessGoodKills", "PoorLosses", "PopupSeconds", "SampleSeconds", "MaximumLines" })
             {
                 if (V(key) <= 0)
                 {
@@ -42,11 +45,13 @@ namespace RevGame.Data
             {
                 throw new InvalidOperationException("鸦鸦受伤阈值要求0≤好表现阈值<不佳阈值≤1");
             }
-            bool[,] bands = new bool[3, 3];
+            bool[,] bands = new bool[3, CampaignIdleTauntBand];
             int count = 0;
             foreach (YayaReactionLine line in lines.All)
             {
-                if (line.Id <= 0 || line.Band < 1 || line.Band > 3 || line.Mode < 0 || line.Mode > 2 || line.Expression <= 0 || string.IsNullOrWhiteSpace(line.Text) || line.Weight <= 0 || line.Duration < 0)
+                if (line.Id <= 0 || line.Band < 1 || line.Band > CampaignIdleTauntBand || line.Mode < 0 || line.Mode > 2
+                    || (line.Band == CampaignIdleTauntBand && line.Mode != 1) || line.Expression <= 0
+                    || string.IsNullOrWhiteSpace(line.Text) || line.Weight <= 0 || line.Duration < 0)
                 {
                     throw new InvalidOperationException("鸦鸦互动台词非法：" + line.Id);
                 }
@@ -65,7 +70,8 @@ namespace RevGame.Data
             }
             for (int mode = 1; mode <= 2; mode++)
             {
-                for (int band = 0; band < 3; band++)
+                int requiredBands = mode == 1 ? CampaignIdleTauntBand : CampaignIdleTauntBand - 1;
+                for (int band = 0; band < requiredBands; band++)
                 {
                     if (!bands[mode, band])
                     {

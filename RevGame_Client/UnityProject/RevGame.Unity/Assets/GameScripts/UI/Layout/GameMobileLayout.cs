@@ -168,24 +168,14 @@ namespace RevGame.UI
         private void LayoutHud(GameBattleLayout.Regions areas)
         {
             Rect header = areas.Header;
-            Rect phase = new Rect(header.xMin, header.yMin + header.height * 0.4f, header.width * 0.22f, header.height * 0.52f);
-            PlaceAbsolute("phaseIcon", phase);
-            PlaceAbsolute("phaseLabel", phase);
-            PlaceAbsolute("roundText", new Rect(header.xMin + header.width * 0.24f, phase.yMin, header.width * 0.76f, phase.height));
-            InRegion("progressBar", header, 0.18f, 0.96f, 0.12f);
-            InRegion("progressFill", header, 0.18f, 0.96f, 0.12f);
+            InRegion("roundText", header, 0.66f, 0.94f, 0.52f);
             InRegion("btnHome", areas.Right, 0.95f, 0.94f, 0.08f);
+            // 加成文字和主将血条现在以信息牌为父级，重排时随牌整体移动。
             InRegion("infoPlate", areas.Right, 0.78f, 1f, 0.22f);
-            InRegion("countText", areas.Right, 0.84f, 0.92f, 0.075f);
-            InRegion("logText", areas.Right, 0.755f, 0.90f, 0.075f);
             InRegion("assistText", areas.Left, 0.065f, 0.94f, 0.10f);
             InRegion("assistPlate", areas.Left, 0.065f, 1f, 0.125f);
             // 计分板只在战斗/结算显示；准备阶段左栏留给六张手牌。统一坐标避免挤进棋盘。
             Place("scoreFrame", 0f, 0f, areas.Left.center.x, areas.Left.yMin + areas.Left.height * .51f, 330f, 310f);
-            // Boss 信息也留在右栏，不再挤在棋盘上沿和回合标题之间。
-            InRegion("bossFrame", areas.Right, 0.70f, 0.90f, 0.018f);
-            InRegion("bossBar", areas.Right, 0.70f, 0.90f, 0.018f);
-            InRegion("bossText", areas.Right, 0.675f, 0.94f, 0.025f);
         }
         private void InRegion(string path, Rect area, float y, float width, float height)
         {

@@ -772,6 +772,10 @@ namespace RevGame.Data
             {
                 problems.Add("EnemyRosterConfig 的 Core 行数 " + s.CoreRoster.Count + " 超过基础人数 Enemy.CountBase = " + s.Balance.EnemyCountBase);
             }
+            if (s.Balance != null && s.CoreRoster.Count + 1 > LevelCatalogInternals.OpeningEnemyCount(s.Balance, s.Balance.RoundNormalPerChapter + 1))
+            {
+                problems.Add("Boss 回合开局名额不足，必须至少容纳 Core 棋子和一颗 Boss");
+            }
         }
 
         private static void BuildReinforce(GameConfigTables t, ConfigSnapshot s, List<string> problems)

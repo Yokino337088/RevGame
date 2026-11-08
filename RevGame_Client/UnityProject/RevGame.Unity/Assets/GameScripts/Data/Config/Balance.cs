@@ -254,6 +254,8 @@ namespace RevGame.Data
         // ---- 敌方成长
         public float EnemyHpBase;
         public float EnemyHpMultiplier;
+        /// <summary>六章敌人承伤时的无量纲除数，1 为原伤害，Boss 与普通敌棋共用。</summary>
+        public float EnemyDefenseMultiplier;
         public float EnemyHpGrowthPerRound;
         public float EnemyAttackGrowthPerRound;
         public int EnemyAiRoundsPerLevel;
@@ -356,6 +358,7 @@ namespace RevGame.Data
 
             v.EnemyHpBase = r.Float("Enemy.HpBase", 0.01f, 1000f);
             v.EnemyHpMultiplier = r.Float("Enemy.HpMultiplier", 0.01f, 1000f);
+            v.EnemyDefenseMultiplier = r.Float("Enemy.DefenseMultiplier", 1f, 1000f);
             v.EnemyHpGrowthPerRound = r.Float("Enemy.HpGrowthPerRound", 0f, 10f);
             v.EnemyAttackGrowthPerRound = r.Float("Enemy.AttackGrowthPerRound", 0f, 10f);
             v.EnemyAiRoundsPerLevel = r.Int("Enemy.AiRoundsPerLevel", 1, 1000);
@@ -582,6 +585,8 @@ namespace RevGame.Data
         /// <summary>敌方生命基础系数（旧名 EnemyHpScale）。</summary>
         public static float EnemyHpScale => V.EnemyHpBase;
         public static float EnemyHpMultiplier => V.EnemyHpMultiplier;
+        /// <summary>六章敌人防御除数，由战斗统一伤害管线读取。</summary>
+        public static float EnemyDefenseMultiplier => V.EnemyDefenseMultiplier;
         public static float EnemyHpGrowthPerRound => V.EnemyHpGrowthPerRound;
         public static float EnemyAttackGrowthPerRound => V.EnemyAttackGrowthPerRound;
         public static int EnemyAiRoundsPerLevel => V.EnemyAiRoundsPerLevel;

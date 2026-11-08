@@ -190,6 +190,12 @@ namespace RevGame.Services
             {
                 amount = ClampDamage(amount / ((1d + _combatDefenseBonus) * target.EyeDefenseMultiplier * target.EyeGuardDefenseMultiplier), 1);
             }
+            else if (target.Side == GameSide.Enemy && amount > 0)
+            {
+                // 敌方防御与玩家防御同用除法，1.5 表示同等攻击承受原伤害的 2/3。
+                // 只处理正伤害，既保留零伤害，也让普攻、技能、AI 预测与实际扣血遵守同一规则。
+                amount = ClampDamage(amount / (double)Balance.EnemyDefenseMultiplier, 1);
+            }
             return new DamageEvaluation(amount, false);
         }
 

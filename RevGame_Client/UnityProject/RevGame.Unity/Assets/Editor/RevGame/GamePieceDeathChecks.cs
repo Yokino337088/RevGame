@@ -46,11 +46,9 @@ namespace RevGame.Editor
                 var hud = UnityEngine.Object.FindObjectOfType<BattleHudPanel>();
                 // 固定触发旧血条自然完成→复用池→死亡动画→下一次血条更新的顺序。
                 // 旧实现没有OnKill清字段，这一条必失败；不能只检查IsActive，因为句柄可能已改属别的动画。
-                CompleteBar(hud, false);
-                CompleteBar(hud, true);
+                CompleteBossBar(hud);
                 PieceView normal = KillGuard(battle);
-                CompleteBar(hud, false);
-                CompleteBar(hud, true);
+                CompleteBossBar(hud);
                 Require(VisualTween(normal).IsActive() && VisualTween(normal).IsPlaying(), "刷新HUD没有误停死亡动画");
                 ScreenCapture.CaptureScreenshot("Temp/DeathFix-dissolving.png");
                 await RevTask.Delay(1550);
@@ -153,18 +151,20 @@ namespace RevGame.Editor
             Require(view.DeathDissolveProgress > 0f && DissolvingCount() > 0, "原视图只进入短期死亡表现集合");
             return view;
         }
-        private static void CompleteBar(BattleHudPanel hud, bool boss)
+        private static void CompleteBossBar(BattleHudPanel hud)
         {
-            string prefix = boss ? "_boss" : "_progress";
-            var field = typeof(BattleHudPanel).GetField(prefix + "Tween", PrivateInstance);
-            var image = (Image)typeof(BattleHudPanel).GetField(boss ? "_bossBar" : "_progressFill", PrivateInstance).GetValue(hud);
-            var callback = (TweenCallback)Delegate.CreateDelegate(typeof(TweenCallback), hud, boss ? "ClearBossTween" : "ClearProgressTween");
-            object[] arguments = { image, 0.5f, field.GetValue(hud), 1f, false, callback };
+            var field = typeof(BattleHudPanel).GetField("_bossTween", PrivateInstance);
+            var image = (Image)typeof(BattleHudPanel).GetField("_bossBar", PrivateInstance).GetValue(hud);
+            // 使用正式绑定时创建的三个委托，验收的仍是同一条主将血条的复用生命周期。
+            object read = typeof(BattleHudPanel).GetField("_readBossBar", PrivateInstance).GetValue(hud);
+            object write = typeof(BattleHudPanel).GetField("_writeBossBar", PrivateInstance).GetValue(hud);
+            object clear = typeof(BattleHudPanel).GetField("_clearBossBar", PrivateInstance).GetValue(hud);
+            object[] arguments = { image, 0.5f, field.GetValue(hud), 1f, false, read, write, clear };
             typeof(BattleHudPanel).GetMethod("UpdateBar", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, arguments);
             Tween tween = (Tween)arguments[2];
             field.SetValue(hud, tween);
             tween.Complete(true);
-            Require(field.GetValue(hud) == null, (boss ? "Boss血条" : "回合进度条") + "自然结束后清空Tween引用");
+            Require(field.GetValue(hud) == null, "主将血条自然结束后清空Tween引用");
         }
         private static Tween VisualTween(PieceView view)
         {

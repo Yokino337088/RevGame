@@ -11,6 +11,11 @@ namespace RevGame.View
     [RevPoolPrefab("Characters/Yaya/Reaction", "YayaReaction", Group = RevResGroup.Battle)]
     public sealed class YayaReactionView : MonoBehaviour, IRevPoolable
     {
+        /// <summary>移动端对白高度上限与碰撞范围共用比例，单位为立绘布局区域高度。</summary>
+        private const float MobileBubbleHeightFraction = .15f;
+        internal const float MobileUsedHeightFraction = .89f;
+        // 无尽外围敌潮排序为 8，血条为 0。移动立绘放在二者后方，短时对白保留预制体前景排序。
+        private const int BehindEndlessActorsOrder = -1;
         /// <summary>图片节点独立于根缩放；立绘尺寸来自固定区域布局，不随入场、退场或候选位置改变。</summary>
         [SerializeField] private SpriteRenderer portrait;
         /// <summary>世界空间台词板，使用项目已有UI_Tip_imgBK九宫格图，无输入组件。</summary>
@@ -21,6 +26,13 @@ namespace RevGame.View
         private Tween _sequence;
         private Action _finished;
         private float _openedAt;
+        private int _portraitOrder;
+
+        private void Awake()
+        {
+            // 同一个池实例可以被六章或无尽借用，保留原预制体排序以便每次重置。
+            _portraitOrder = portrait.sortingOrder;
+        }
         /// <summary>本次主停留秒数；保留原有前后共0.42秒显示时间，但整个过程都不缩放。</summary>
         public float HoldSeconds
         {
@@ -33,17 +45,18 @@ namespace RevGame.View
         /// <summary>没有缩放过渡，图片首次可画即为最终尺寸，供自动化跨帧核对大小恒定。</summary>
         public bool Settled => Visible;
         /// <summary>只在新的互动发生时换Sprite/台词并排版；不逐帧GetSprite、不访问renderer.material。</summary>
-        public void Play(Sprite sprite, YayaReactionLine line, Camera camera, Rect viewport, Action finished)
+        public void Play(Sprite sprite, YayaReactionLine line, Camera camera, Rect viewport, bool behindBattle, Action finished)
         {
             Stop();
             _finished = finished;
             _openedAt = Time.unscaledTime;
             portrait.sprite = sprite;
+            portrait.sortingOrder = behindBattle ? BehindEndlessActorsOrder : _portraitOrder;
             portrait.enabled = true;
             bubble.gameObject.SetActive(true);
             bubble.worldCamera = camera;
             speech.text = line.Text;
-            Layout(camera, viewport);
+            Layout(camera, viewport, behindBattle);
             float hold = line.Duration > 0 ? line.Duration : YayaReactionConfig.Value("PopupSeconds");
             HoldSeconds = hold;
             // 立绘从出现到收回始终使用固定尺寸；不再弹性放大、缩小，计时只控制本次显示寿命。
@@ -58,7 +71,7 @@ namespace RevGame.View
                 });
         }
         /// <summary>区域为相机Viewport 0～1。人物尺寸固定，对话框从立绘顶部向上排，保留小间距，避免悬在远处。</summary>
-        private void Layout(Camera camera, Rect area)
+        private void Layout(Camera camera, Rect area, bool behindBattle)
         {
             Vector3 low = camera.ViewportToWorldPoint(new Vector3(area.xMin, area.yMin, 10));
             Vector3 high = camera.ViewportToWorldPoint(new Vector3(area.xMax, area.yMax, 10));
@@ -72,7 +85,8 @@ namespace RevGame.View
             portrait.transform.localPosition = new Vector3(-bounds.x * scale, bodyHeight * .5f - bounds.y * scale, 0);
             var rect = (RectTransform)bubble.transform;
             rect.sizeDelta = new Vector2(360, Mathf.Max(85, speech.preferredHeight + 28));
-            float bubbleScale = Mathf.Min(width / 360, height * .25f / rect.sizeDelta.y);
+            float bubbleHeightFraction = behindBattle ? MobileBubbleHeightFraction : .25f;
+            float bubbleScale = Mathf.Min(width / 360, height * bubbleHeightFraction / rect.sizeDelta.y);
             rect.localScale = Vector3.one * bubbleScale;
             // 使用实际立绘上沿定位，宽屏或窄侧栏下也贴近头顶；透明画布顶部另有少量原画留白。
             float portraitTop = bodyHeight * .5f + portrait.sprite.bounds.size.y * scale * .5f;

@@ -23,6 +23,18 @@ namespace RevGame.View
         private int _generation, _mode;
         /// <summary>Session从域进入到退出，Loading只在一次互动资源准备期间为true。</summary>
         private bool _session, _loading;
+        /// <summary>Android 目标的无尽把鸦鸦放在外围敌潮后方。PC 和六章保留原构图。</summary>
+        private bool UsesMobileEndlessLayout
+        {
+            get
+            {
+#if UNITY_ANDROID
+                return _mode == 2;
+#else
+                return false;
+#endif
+            }
+        }
         /// <summary>一条互动持有的目录/图集/池实例句柄，结束展示归还；不会卸载剧情仍使用的共享图片。</summary>
         private RevResHandle _catalogHandle;
         private GameSpriteAtlasService.ScopedAtlasLease[] _atlases = Array.Empty<GameSpriteAtlasService.ScopedAtlasLease>();
@@ -156,7 +168,7 @@ namespace RevGame.View
                 _view = loaded;
                 _loading = false;
                 // 场景归属为当前场景；Show回池不挂在UIRoot，场景根生命周期负责清理。
-                _view.Play(catalog.Find(line.Expression), line, _camera, _area, Hide);
+                _view.Play(catalog.Find(line.Expression), line, _camera, _area, UsesMobileEndlessLayout, Hide);
                 ShownCount++;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 _recentStarts[0] = _recentStarts[1];
@@ -204,7 +216,7 @@ namespace RevGame.View
                 Hide();
             }
         }
-        /// <summary>左下候选只平移、不缩小；每次都使用同一尺寸，空间不足时跳过，不盖棋盘或改变立绘大小。</summary>
+        /// <summary>在安全区内寻找立绘与气泡的共同区域，Android 无尽优先尝试两倍尺寸。</summary>
         private bool TryFindArea(out Rect chosen)
         {
             chosen = _mode == 1 ? campaignViewport : endlessViewport;
@@ -212,12 +224,63 @@ namespace RevGame.View
             {
                 return false;
             }
-            // 无尽敌潮出生x=-3，左侧最外条带仍是场景空白；窄而高的区域放大人物但不盖出生横线。
-            Rect preferred = chosen;
+            Rect safe = GameBattleLayout.SafeViewport();
+            Rect board = BoardViewport(safe);
+            // Android 目标下的 Editor Play 也使用同一布局，方便回归；PC 构建保留已有尺寸。
+            if (UsesMobileEndlessLayout)
+            {
+                Rect preferred = chosen;
+                for (int step = 4; step >= 0; step--)
+                {
+                    float scale = 1f + step * .25f;
+                    preferred.size = chosen.size * scale;
+                    preferred.x = chosen.x;
+                    if (TryPlaceSidebar(preferred, safe, board, false, out Rect mobileArea))
+                    {
+                        chosen = mobileArea;
+                        return true;
+                    }
+                    // 左侧有敌潮或 HUD 时，同尺寸先试右侧，尽量保住手机端的可读性。
+                    preferred.x = 1f - chosen.x - preferred.width;
+                    if (TryPlaceSidebar(preferred, safe, board, true, out mobileArea))
+                    {
+                        chosen = mobileArea;
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return TryPlaceSidebar(chosen, safe, board, false, out chosen);
+        }
+
+        /// <summary>在棋盘一侧先确定可用宽高，再按 HUD 和敌潮占用试不同的纵向位置。</summary>
+        private bool TryPlaceSidebar(Rect requested, Rect safe, Rect board, bool rightSide, out Rect chosen)
+        {
+            chosen = default;
+            Rect column = rightSide
+                ? Rect.MinMaxRect(Mathf.Max(safe.xMin, board.xMax), safe.yMin, safe.xMax, safe.yMax)
+                : Rect.MinMaxRect(safe.xMin, safe.yMin, Mathf.Min(safe.xMax, board.xMin), safe.yMax);
+            if (!TryFitArea(requested, column, out Rect preferred))
+            {
+                _blockedBy = "安全区";
+                return false;
+            }
+
+            // 刘海会吃掉左下的空白。保留原候选优先级，再试侧栏内更远的空位。
+            float highest = safe.yMax - preferred.height;
             for (int row = 0; row < 3; row++)
             {
-                var area = new Rect(preferred.x, preferred.y + row * .01f, preferred.width, preferred.height);
-                if (!HasOverlap(area))
+                var area = new Rect(preferred.x, Mathf.Min(highest, preferred.y + row * .01f), preferred.width, preferred.height);
+                if (!HasOverlap(area, safe, board))
+                {
+                    chosen = area;
+                    return true;
+                }
+            }
+            for (int row = 0; row < 5; row++)
+            {
+                var area = new Rect(preferred.x, Mathf.Lerp(safe.yMin, highest, row / 4f), preferred.width, preferred.height);
+                if (!HasOverlap(area, safe, board))
                 {
                     chosen = area;
                     return true;
@@ -225,26 +288,70 @@ namespace RevGame.View
             }
             return false;
         }
-        /// <summary>只在显示/低频监测时读UI矩形，检查固定区域与实际可画的文字；没有缩放动画，不再预留弹性外扩。</summary>
+
+        /// <summary>输入和输出都是相机视口比例。先平移避开刘海，只有原尺寸放不下时才等比缩小。</summary>
+        public static bool TryFitSidebar(Rect preferred, Rect safe, Rect board, out Rect area)
+        {
+            Rect column = Rect.MinMaxRect(safe.xMin, safe.yMin, Mathf.Min(safe.xMax, board.xMin), safe.yMax);
+            return TryFitArea(preferred, column, out area);
+        }
+
+        /// <summary>立绘和气泡同时按侧栏可用尺寸等比放大或收缩，避免文字超出安全区。</summary>
+        private static bool TryFitArea(Rect preferred, Rect column, out Rect area)
+        {
+            const float Margin = .002f;
+            float left = column.xMin + Margin;
+            float right = column.xMax - Margin;
+            float bottom = column.yMin + Margin;
+            float top = column.yMax - Margin;
+            float scale = Mathf.Min(1f, (right - left) / preferred.width, (top - bottom) / preferred.height);
+            if (scale <= 0f)
+            {
+                area = default;
+                return false;
+            }
+
+            float width = preferred.width * scale;
+            float height = preferred.height * scale;
+            area = new Rect(Mathf.Clamp(preferred.x, left, right - width),
+                Mathf.Clamp(preferred.y, bottom, top - height), width, height);
+            return true;
+        }
+
+        /// <summary>六章和无尽的棋盘布局不同，统一换算成与互动区域相同的相机视口比例。</summary>
+        private Rect BoardViewport(Rect safe)
+        {
+            if (_mode == 1)
+            {
+                Rect board = GameBattleLayout.Calculate(new Vector2(_camera.pixelWidth, _camera.pixelHeight), safe).Board;
+                return new Rect(board.x / _camera.pixelWidth, board.y / _camera.pixelHeight, board.width / _camera.pixelWidth, board.height / _camera.pixelHeight);
+            }
+
+            Vector3 low = _camera.WorldToViewportPoint(new Vector3(-.5f, -.5f, 0));
+            Vector3 high = _camera.WorldToViewportPoint(new Vector3(8.5f, 8.5f, 0));
+            return Rect.MinMaxRect(low.x, low.y, high.x, high.y);
+        }
+
+        /// <summary>低频复检使用当前安全区，手机窗口在显示期间变化时也能正确收回。</summary>
         private bool HasOverlap(Rect area)
         {
-            Rect expanded = area;
             Rect safe = GameBattleLayout.SafeViewport();
+            return HasOverlap(area, safe, BoardViewport(safe));
+        }
+
+        /// <summary>只在显示/低频监测时读UI矩形，检查固定区域与实际可画的文字；没有缩放动画，不再预留弹性外扩。</summary>
+        private bool HasOverlap(Rect expanded, Rect safe, Rect board)
+        {
+            bool behindBattle = UsesMobileEndlessLayout;
+            if (behindBattle)
+            {
+                // 布局矩形顶部留有空白，判定时只用立绘和气泡可能实际画到的范围。
+                expanded.height *= YayaReactionView.MobileUsedHeightFraction;
+            }
             if (expanded.xMin < safe.xMin || expanded.yMin < safe.yMin || expanded.xMax > safe.xMax || expanded.yMax > safe.yMax)
             {
                 _blockedBy = "安全区";
                 return true;
-            }
-            Rect board = _mode == 1 ? GameBattleLayout.Calculate(new Vector2(_camera.pixelWidth, _camera.pixelHeight), safe).Board : new Rect();
-            if (_mode == 1)
-            {
-                board = new Rect(board.x / _camera.pixelWidth, board.y / _camera.pixelHeight, board.width / _camera.pixelWidth, board.height / _camera.pixelHeight);
-            }
-            else
-            {
-                Vector3 low = _camera.WorldToViewportPoint(new Vector3(-.5f, -.5f, 0));
-                Vector3 high = _camera.WorldToViewportPoint(new Vector3(8.5f, 8.5f, 0));
-                board = Rect.MinMaxRect(low.x, low.y, high.x, high.y);
             }
             if (expanded.Overlaps(board))
             {
@@ -291,8 +398,8 @@ namespace RevGame.View
                     return true;
                 }
             }
-            // 无尽敌潮由实例化网格绘制，不一定有SpriteRenderer；用真实位置占用检查，避免立绘盖住外侧敌人。
-            if (_mode == 2)
+            // PC 的立绘在前景，必须避开外围敌人。Android 立绘在敌潮后方，短时对白留在侧栏前景以便阅读。
+            if (_mode == 2 && !behindBattle)
             {
                 var service = RevServices.GetRequired<EndlessService>();
                 var horde = service.Horde;

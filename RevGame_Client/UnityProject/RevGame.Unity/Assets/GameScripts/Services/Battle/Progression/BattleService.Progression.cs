@@ -80,9 +80,15 @@ namespace RevGame.Services
         {
             get
             {
-                return _attackBonus + ClassBonus(GameSide.Player);
+                return _attackBonus + ClassBonus(GameSide.Player) + _combatAttackBonus + _prepAttack;
             }
         }
+        /// <summary>持久强化、本轮奖励和战斗成长在普攻计时中相加；HUD读取同一组加成。</summary>
+        public float TeamAttackSpeedBonus => _speedBonus + _roundSpeedBonus + _combatHasteBonus;
+
+        /// <summary>伤害先乘准备期减伤，再除以战斗防御。反推同等的防御倍率，避免把两种百分比直接相加。</summary>
+        public float TeamDefenseBonus => (1f + _combatDefenseBonus) / (1f - _prepDamageReduction) - 1f;
+
         /// <summary>从选关界面开一局；只保留局外解锁，清掉上局战斗增益，避免反复进出刷强化。</summary>
         public bool BeginCampaign(int chapter)
         {

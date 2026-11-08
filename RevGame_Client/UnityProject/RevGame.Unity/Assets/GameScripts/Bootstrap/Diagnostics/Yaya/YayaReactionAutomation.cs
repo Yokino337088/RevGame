@@ -6,6 +6,7 @@ using RevGame.Core;
 using RevGame.Data;
 using RevGame.Endless;
 using RevGame.Flow;
+using RevGame.Services;
 using RevGame.View;
 using Revolution;
 using UnityEngine;
@@ -27,6 +28,13 @@ namespace RevGame.Bootstrap
         public static void Register()
         {
             RevRuntimeAutomation.Register("yaya.reaction-state", "只读实际评价、弹出、气泡和资源租约", Empty, _ => State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("yaya.test-campaign-activity", "仅隔离六章战斗，向正式记录器提交一次模拟点击活动", Empty, _ =>
+            {
+                // 编辑器自动化的 EventSystem 模拟不会进入操作系统输入。这里只验证活动记录和气泡收尾，真实触摸另行验收。
+                var campaign = RevLogic.Get<CampaignYayaReactionLogic>();
+                bool accepted = campaign != null && RevServices.GetRequired<StoryProgress>().IsIsolated && campaign.TryRecordCampaignActivity();
+                return new Dictionary<string, object> { ["accepted"] = accepted, ["reason"] = accepted ? "" : "需要隔离的六章战斗阶段" };
+            }, owner: Owner);
             const string schema = "{\"type\":\"object\",\"properties\":{\"kills\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":100},\"losses\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10},\"taken\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10000},\"dealt\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":10000},\"health\":{\"type\":\"number\",\"minimum\":1,\"maximum\":10000},\"advance\":{\"type\":\"number\",\"minimum\":0,\"maximum\":60}},\"required\":[\"kills\",\"losses\",\"taken\",\"dealt\",\"health\",\"advance\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("yaya.evaluate-window", "隔离局提交表现事实窗口，复用正式分类和控频；不改棋局", schema, json =>
             {

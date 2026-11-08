@@ -13,25 +13,15 @@ namespace RevGame.UI
     {
         [Tooltip("选中己方棋时出现，回调只转发BattleLogic；由新增资源配方绑定。")]
         [SerializeField] private Button removePieceButton;
-        [Tooltip("本章可用能源余额及成长档位，历史累计分数仍由原积分面板显示。")]
+        [Tooltip("旧版帮手能源标签。保留给已有预制体和制作配方，由 HUD 绑定时停用。")]
         [SerializeField] private Text helperScoreLabel;
-        // 上次显示的能源余额；-1表示未初始化，正常余额非负，打开面板必须强制刷新。
-        private long _walletShown = -1;
-        // 上次显示的帮手档位/攻击/攻速百分比，余额不变时升级或增益也可能变，故需要完整比较。
-        private int _walletTier = -1, _walletAttack = -1, _walletSpeed = -1;
-        // 上次画布尺寸，单位为画布坐标；钱包的布局只在尺寸或安全区改变时重算。
-        private Vector2 _walletLayoutSize;
-        // 安全视口的上一值；手机安全区变化要重排，即使画布宽高没变也不能命中旧布局。
-        private Rect _walletSafeArea;
         private int _removePieceId;
         private bool _swallowWaiting;
         private int _swallowShownChapter, _swallowShownRound;
 
-        // 每次打开重置钱包数值和布局哨兵，再绑定当前面板所有者的监听；防止跨场景旧显示。
+        // 每次打开绑定当前面板所有者的监听；离开本轮不会保留选中状态或积分动画。
         private void OpenPieceManagement()
         {
-            _walletShown = -1;
-            _walletLayoutSize = Vector2.zero;
             RevEvent.AddEventListener(Events.SelectionChanged, RefreshPieceManagement, owner: this);
             RevEvent.AddEventListener<string>(Events.BoardRuleNotice, OnBoardRuleNotice, owner: this);
             RevEvent.AddEventListener<HelperShotInfo>(Events.HelperShot, OnHelperScoreSpent, owner: this);
@@ -76,46 +66,6 @@ namespace RevGame.UI
             // 位于棋子上方，尺寸只占一小块棋盘；窗口变化时夹在画布内，不遮右侧准备按钮。
             rect.anchoredPosition = new Vector2(Mathf.Clamp(local.x, parent.rect.xMin + 95, parent.rect.xMax - 95),
                 Mathf.Clamp(local.y + 58, parent.rect.yMin + 40, parent.rect.yMax - 40));
-        }
-        // 布局与文字分开缓存：尺寸变化只重排，余额/档位/加成变化只更新文案，避免重复布局与格式化。
-        private void RefreshHelperWallet()
-        {
-            RefreshPieceManagement();
-
-            if (helperScoreLabel == null)
-            {
-                return;
-            }
-            RectTransform parent = (RectTransform)transform;
-            Rect safe = GameBattleLayout.SafeViewport();
-
-            if (_walletLayoutSize != parent.rect.size || _walletSafeArea != safe)
-            {
-                _walletLayoutSize = parent.rect.size;
-                _walletSafeArea = safe;
-                var areas = GameBattleLayout.Calculate(parent.rect.size, safe);
-                // 右栏信息牌下方留一行能源提示，避免底部棋盘格与存活棋子遮住数字。
-                Rect slot = GameBattleLayout.InRegion(areas.Right, .68f, .92f, .08f);
-                helperScoreLabel.rectTransform.sizeDelta = slot.size;
-                helperScoreLabel.rectTransform.anchorMin = helperScoreLabel.rectTransform.anchorMax = new Vector2(.5f, .5f);
-                helperScoreLabel.rectTransform.anchoredPosition = slot.center - parent.rect.size * .5f;
-                helperScoreLabel.fontSize = 22;
-            }
-            long wallet = Battle.CombatScore;
-            int tier = Battle.Helper.Tier;
-            int attack = Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100), speed = Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100);
-
-            // 四个显示输入都相同才提前返回。真实服务数据没有被缓存替代，变化时照常更新。
-            if (_walletShown == wallet && _walletTier == tier && _walletAttack == attack && _walletSpeed == speed)
-            {
-                return;
-            }
-            _walletShown = wallet;
-            _walletTier = tier;
-            _walletAttack = attack;
-            _walletSpeed = speed;
-            helperScoreLabel.text = "帮手能量 " + Battle.CombatScore.ToString("N0") + " · " + Battle.Helper.Tier + "档"
-                + "\n远程共鸣 攻击+" + Mathf.RoundToInt(Battle.HelperRangedAttackBonus * 100) + "% · 攻速+" + Mathf.RoundToInt(Battle.HelperRangedSpeedBonus * 100) + "%";
         }
         /// <summary>规则事实复用既有木纹弹幕底板、对象池与安全区通道，闪烁只改变透明度，不拦棋盘输入。</summary>
         private void OnBoardRuleNotice(string message)

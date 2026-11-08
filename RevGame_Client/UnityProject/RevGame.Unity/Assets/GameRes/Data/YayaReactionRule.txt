@@ -13,3 +13,4 @@ PoorLosses	1	窗口内实际死亡达到此数则表现不佳；合并/主动移
 PopupSeconds	1.5	完整尺寸停留秒数；不含弹出/缩回；Duration可覆盖
 SampleSeconds	0.25	评价采样间隔秒数，不逐帧遍历棋子
 MaximumLines	48	台词配置最大数量，防止错误配置造成无限增长
+CampaignIdleTauntSeconds	8	六章交战连续未触屏或按鼠标的秒数；暂停、剧情、结算和换轮不累计

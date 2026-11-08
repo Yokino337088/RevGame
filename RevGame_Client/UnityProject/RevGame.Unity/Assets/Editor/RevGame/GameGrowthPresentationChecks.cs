@@ -93,6 +93,7 @@ namespace RevGame.Editor
                 float before = bossBar.fillAmount;
                 king.TakeDamage(king.MaxHp / 3);
                 RevEvent.DispatchEvent<int>(Events.PieceHpChanged, king.Id);
+                hud.RefreshView();
                 Require(Mathf.Abs(bossBar.fillAmount - before) < 0.01f && GetField<Tween>(hud, "_bossTween").IsActive(), "Boss受伤创建缓动，没有瞬间跳条");
                 await RevTask.Delay(380);
                 Require(Mathf.Abs(bossBar.fillAmount - king.HpRatio) < 0.01f, "Boss血条缓动到真实生命比例");
@@ -110,11 +111,11 @@ namespace RevGame.Editor
                 Require(placed && battle.StartBattle(), "普通回合正常开战");
                 battle.Tick(Balance.BattleSimulationStepSeconds);
                 RevEvent.DispatchEvent<int>(Events.PieceHpChanged, battle.PlayerPieces[0].Id);
-                Require(GetField<Tween>(hud, "_progressTween") != null, "顶部时间条实际创建DOTween缓动");
+                Require(!hud.transform.Find("progressBar").gameObject.activeInHierarchy && !hud.transform.Find("progressFill").gameObject.activeInHierarchy, "普通回合没有顶部时间条");
                 Require(battle.StartRound(1, 2), "再进下一轮");
                 await RevTask.Delay(450);
-                Require(GetField<Image>(hud, "_progressFill").fillAmount == 0f && hud.ActiveNoticeCount == 0, "下一轮进度归零，旧提示不迟到");
-                LastResult = "通过 " + _checks + " 条Play断言：真实3秒增益、横幅时序/方向/冲击/清理、Boss换帧、双进度条缓动";
+                Require(!bossBar.gameObject.activeInHierarchy && hud.ActiveNoticeCount == 0, "下一轮隐藏旧主将血条，旧提示不迟到");
+                LastResult = "通过 " + _checks + " 条Play断言：真实3秒增益、横幅时序/方向/冲击/清理、Boss换帧、主将血条缓动";
             }
             catch (Exception error)
             {

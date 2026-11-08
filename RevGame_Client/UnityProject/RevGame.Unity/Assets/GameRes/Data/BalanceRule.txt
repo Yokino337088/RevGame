@@ -22,14 +22,14 @@ Boss.AccelerationSeconds	60	Boss 回合“决死加速”：每满多少秒加�
 Boss.AccelerationBonus	0.1	Boss 加速每档增加的伤害比例；高频小额伤害取整后至少再加 1 点，保证压力可见。
 Boss.HpGrowthPerChapter	0	主将生命已随关卡基础成长；不再额外叠加章节倍率，避免后章厚血重复放大。
 Enemy.HpBase	1.7	敌军生命基础倍率，与额外倍率组合；增加单棋承伤时间，不提高单发攻击。
-Enemy.HpMultiplier	1.4	敌军额外生命倍率；主将另乘Boss独立耐久。
+Enemy.HpMultiplier	2.24	六章敌方生命在原有额外生命倍率1.4基础上提升60%；Boss仍叠加独立耐久。
 Enemy.HpGrowthPerRound	0.004	敌方生命随连续回合进度递增：× (1 + 进度 × 本值)；进度跨章不归零。
 Enemy.AttackGrowthPerRound	0.002	敌方攻击随连续回合进度递增：× (1 + 进度 × 本值)。
 Enemy.AiRoundsPerLevel	5	敌方 AI 档位每隔多少个连续回合提升一档（整数 ≥1）。
 Enemy.AiMaxLevel	4	敌方 AI 最高档位（整数，1~4）。
-Enemy.CountBase	6	敌方每回合基础人数（整数）。
-Enemy.CountRoundsPerExtra	5	每隔多少个连续回合敌方多一个人（整数 ≥1）。
-Enemy.CountMax	12	敌方每回合人数上限（整数）。
+Enemy.CountBase	6	每章第1回合的敌方初始棋子数量，包含已安排的驻眼棋。
+Enemy.CountRoundsPerExtra	1	同一章每隔多少个回合多开局1颗敌棋；当前每回合+1。
+Enemy.CountMax	15	每回合初始敌方棋子数量上限，包含Boss与驻眼棋；战中增援另计。
 Enemy.PressureStarDivisor	6	继承阵容压力 = 存活我方棋星级总和 ÷ 本值（至少为 1）；用于按我方强度动态抬高敌方血攻。
 Enemy.PressureHpMax	10	继承阵容压力对敌方生命倍率的上限（压力平方后的封顶值）。
 Enemy.PressureAttackMax	1.2	继承阵容压力对敌方攻击倍率的上限（压力开方后的封顶值）。
@@ -67,7 +67,7 @@ Boss.RecoverSeconds	0.4	技能最后一段命中后的收招硬直（秒），�
 Boss.EnrageHpRatio	0.5	Boss 生命比例低于该值时触发一次狂暴（仅限已解锁狂暴的章节）
 Boss.EnrageCooldownScale	0.65	狂暴后所有技能冷却乘以该系数（越小越频繁）
 Boss.CooldownPerChapter	0.06	每高一章，技能冷却缩短的比例：冷却 × (1 − (章节−1) × 该值)
-Boss.PowerPerChapter	0.07	每高一章，技能伤害提高的比例：倍率 × (1 + (章节−1) × 该值)
+Boss.PowerPerChapter	0.07000000000000001	每高一章，技能伤害提高的比例：倍率 × (1 + (章节−1) × 该值)
 Boss.CaptureHpRatio	0.2	主将血量不高于此比例且零气才能擒王；直接击杀仍获胜
 Event.EffectMultiplier	1	战斗增益效果倍率；数量类支援也受此倍率影响
 PlayerAI.MoveSeconds	3	玩家战术移动独立冷却秒数，不随攻速加快
@@ -244,3 +244,4 @@ PieceAttack.Assassin.Radius	0	范围或连锁距离，格
 PieceAttack.Assassin.ExecuteThreshold	0.35	收割触发血量比例，0表示关闭
 PieceAttack.Assassin.ExecuteScale	1.5	血量低于收割线时的伤害倍率
 PieceAttack.Assassin.HealScale	0	攻击力转治疗量倍率；不复活、不突破最大生命
+Enemy.DefenseMultiplier	1.5	六章敌方有效防御倍率；正伤害除以本值，Boss与战中增援共用，最低仍为1。

@@ -112,8 +112,14 @@ namespace RevGame.Services
         /// <summary>当前是否处于“点一个金色空格补眼”的选择状态；与手牌、棋子选择互斥。</summary>
         bool EyeStoneSelected { get; }
 
-        /// <summary>本局累计的全队攻击加成（跳过回合、奖励等来源），只读用于 HUD 显示。</summary>
+        /// <summary>全队通用攻击加成比例，0.25 表示攻击力 +25%。只读，不包含随目标、站位或棋种变化的效果。</summary>
         float TeamAttackBonus { get; }
+
+        /// <summary>全队通用攻速加成比例，只读，不包含某颗棋的攻速或眼位加成。</summary>
+        float TeamAttackSpeedBonus { get; }
+
+        /// <summary>把全队通用减伤折算成统一防御加成比例，只读，不包含护盾或眼位。</summary>
+        float TeamDefenseBonus { get; }
 
         /// <summary>已解锁到第几章；选关界面据此决定哪些章节按钮可点。</summary>
         int UnlockedChapter { get; }

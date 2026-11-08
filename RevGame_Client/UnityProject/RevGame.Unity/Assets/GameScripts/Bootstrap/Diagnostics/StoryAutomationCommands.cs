@@ -208,6 +208,7 @@ namespace RevGame.Bootstrap
                 ["renderedPieces"] = boardView == null ? 0 : boardView.PieceCount,
                 ["prepareOpen"] = RevUI.IsOpen<RevGame.UI.PreparePanel>(),
                 ["hudOpen"] = RevUI.IsOpen<RevGame.UI.BattleHudPanel>(),
+                ["battleHud"] = RevUI.Get<RevGame.UI.BattleHudPanel>()?.InfoSnapshot(),
                 ["guideFrame"] = view == null ? -1 : view.GuideFrame,
                 ["guideFrameCount"] = flow.StoryContent == null ? 0 : flow.StoryContent.GuideFrames.Length,
                 ["screen"] = flow.Screen.ToString(),

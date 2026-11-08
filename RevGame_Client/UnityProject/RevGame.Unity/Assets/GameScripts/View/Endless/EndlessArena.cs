@@ -67,6 +67,7 @@ namespace RevGame.Endless
             _heartRatio = -1;
             _active = true;
             Ready = false;
+            _bindingVersion = -1;
             Error = "";
             _camera = Camera.main;
             _frameCount = 0;
@@ -128,19 +129,25 @@ namespace RevGame.Endless
             mesh.bounds = new Bounds(new Vector3(4, 4, 0), new Vector3(40, 40, 10));
             return mesh;
         }
-        private void RefreshAtlas()
+        /// <summary>图集预载完成后，源 Sprite 的纹理还可能等到下一帧才绑定。全部帧可画后才提交绑定版本。</summary>
+        private bool RefreshAtlas()
         {
             if (_bindingVersion == GameSpriteAtlasService.BindingVersion)
             {
-                return;
+                return true;
             }
-            _bindingVersion = GameSpriteAtlasService.BindingVersion;
             for (int i = 0; i < _frames.Length; i++)
             {
+                if (_frames[i] == null || _frames[i].texture == null)
+                {
+                    return false;
+                }
                 _frameUvs[i] = UnityEngine.Sprites.DataUtility.GetOuterUV(_frames[i]);
             }
             _hordeProperties.SetTexture("_MainTex", _frames[0].texture);
             hordeRenderer.SetPropertyBlock(_hordeProperties);
+            _bindingVersion = GameSpriteAtlasService.BindingVersion;
+            return true;
         }
         private void Update()
         {
@@ -153,7 +160,7 @@ namespace RevGame.Endless
             {
                 return;
             }
-            RefreshAtlas();
+            bool atlasReady = RefreshAtlas();
             EndlessRun run = service.Run;
             if (run.phase == EndlessPhase.Fighting && run.seconds > 2.5f && _frameCount < _frameSamples.Length)
             {
@@ -176,7 +183,10 @@ namespace RevGame.Endless
             // 死亡回执和棋盘移除在服务的同一步里发生，本帧没对上的编号（视图还没加载出来）不再保留。
             _dyingIds.Clear();
             UpdateCombatFx(service);
-            UpdateHorde(run);
+            if (atlasReady)
+            {
+                UpdateHorde(run);
+            }
             UpdateHordeBars(run);
             UpdateAuras(service);
             UpdateGuard(service);
@@ -226,7 +236,7 @@ namespace RevGame.Endless
                 Vector3 world = _camera.ScreenToWorldPoint(Input.mousePosition);
                 service.ClickCell(Mathf.RoundToInt(world.x), Mathf.RoundToInt(world.y));
             }
-            Ready = _pieces.Count == service.Units.Count && _pending.Count == 0 && _frames[0].texture != null && HeartReady;
+            Ready = _pieces.Count == service.Units.Count && _pending.Count == 0 && atlasReady && HeartReady;
         }
         private void SyncPieces(EndlessService service)
         {

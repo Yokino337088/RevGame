@@ -279,13 +279,12 @@ namespace RevGame.Services
             ClearEnemies();
             // 2) 我方棋子重新落回棋盘（上一回合结束时它们可能被移出过棋盘）。
             RebuildBoardFromRoster();
-            // 3) 生成敌方阵容（Boss 回合额外加一个"大棋"，由表现层用 Boss 立绘）。
+            // 3) 提交完整开局阵容，Boss 和驻眼棋都已计入本回合人数。
             CommitEnemyFormation(plannedEnemies);
 
             _nextPieceId += plannedEnemies.Count;
             DealHand();
             RefreshGoState();
-            DeployInitialEyeGarrison();
             RevLog.Info("开始 " + def + "，敌方 " + _enemyPieces.Count + " 颗", Tag);
             ResetHelperRound();
             RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
@@ -957,6 +956,24 @@ namespace RevGame.Services
             }
             string report;
 
+            // 只从最后一个填充名额换出驻眼重弩，保留配置中的全部核心棋。
+            // 试盘没有可驻守的眼时恢复原填充棋，再按完整开局人数布阵。
+            if (def.EnemyKinds.Count > GameConfig.Current.CoreRoster.Count)
+            {
+                Piece filler = plan[plan.Count - 1];
+                PieceDef crossbow = PieceCatalog.Get(PieceKind.Crossbow, star);
+                var eyeGarrison = new Piece(filler.Id, crossbow, GameSide.Enemy, hpScale: def.HpScale, attackScale: def.AttackScale)
+                {
+                    NextMoveAt = Balance.PlayerMoveSeconds
+                };
+                plan.RemoveAt(plan.Count - 1);
+                if (EnemyFormationPlanner.TryArrange(plan, retainedPlayers, newBoard, out report, def.Intelligence, def.Progress, eyeGarrison))
+                {
+                    EnemyFormation = report;
+                    return true;
+                }
+                plan.Add(filler);
+            }
             if (!EnemyFormationPlanner.TryArrange(plan, retainedPlayers, newBoard, out report, def.Intelligence, def.Progress))
             {
                 return Reject(report);

@@ -36,7 +36,9 @@ namespace RevGame.Data
         {
             get;
         }
-        /// <summary>敌方普通棋名单；布阵算法优先用前三种远程构建眼阵，Boss 大棋由战斗服务另加。</summary>
+        /// <summary>开局总棋数，Boss 计一颗；驻眼守军从普通名额中安排。</summary>
+        public int OpeningEnemyCount => EnemyKinds.Count + (IsBoss ? 1 : 0);
+        /// <summary>敌方普通棋名单；Boss 大棋占据一个名额，由战斗服务添加。</summary>
         public IReadOnlyList<PieceKind> EnemyKinds
         {
             get;
@@ -79,6 +81,12 @@ namespace RevGame.Data
     /// <summary>补兵规则命中的计算放在这里，装配校验与战斗运行共用同一份逻辑。</summary>
     internal static class LevelCatalogInternals
     {
+        /// <summary>每章从基础人数重新开始，逐回合增加开局棋数，并受棋盘配置上限约束。</summary>
+        public static int OpeningEnemyCount(BalanceValues balance, int round)
+        {
+            return System.Math.Min(balance.EnemyCountMax, balance.EnemyCountBase + (round - 1) / balance.EnemyCountRoundsPerExtra);
+        }
+
         /// <summary>
         /// 在“已补兵 count 次、AI 档位 intelligence”时挑规则：取 (count % Every == Offset 且 档位够) 里 Priority 最大者，
         /// 同优先级取靠前一行。没有命中返回 null。
@@ -103,8 +111,8 @@ namespace RevGame.Data
     /// <summary>
     /// 关卡表：章数 × 每章（普通回合数 + 1 个 Boss）。
     /// 敌方阵容生成规则（有意做得简单、可预期，参数都在 Excel）：
-    /// - 普通回合：先排 Core 核心棋，人数不足时循环 Filler 填充，人数随进度增长并封顶；
-    /// - Boss 回合：额外标记 <see cref = "RoundDef.IsBoss"/>，大棋阵容见 <see cref="BossOf"/>。
+    /// - 每章先排 Core 核心棋，人数不足时循环 Filler 填充，人数按本章回合增长并封顶；
+    /// - Boss 回合给主将预留一个名额，大棋阵容见 <see cref="BossOf"/>。
     /// </summary>
     public static class LevelCatalog
     {
@@ -139,7 +147,7 @@ namespace RevGame.Data
             // 后面的近战（Filler）连接成守眼骨架。数量与眼阵规模对应，不能只多生成一排散兵。
             enemies.AddRange(snapshot.CoreRoster);
             int progress = (chapter - 1) * Balance.RoundsPerChapter + round - 1;
-            int count = System.Math.Min(Balance.EnemyCountMax, Balance.EnemyCountBase + progress / Balance.EnemyCountRoundsPerExtra);
+            int count = LevelCatalogInternals.OpeningEnemyCount(snapshot.Balance, round) - (isBoss ? 1 : 0);
             for (int i = enemies.Count; i < count; i++)
             {
                 enemies.Add(snapshot.FillerRoster[(i + progress) % snapshot.FillerRoster.Count]);

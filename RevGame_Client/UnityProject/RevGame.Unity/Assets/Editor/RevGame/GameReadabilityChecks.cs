@@ -389,11 +389,11 @@ namespace RevGame.Editor
             var hud = UnityEngine.Object.FindObjectOfType<RevGame.UI.BattleHudPanel>();
             Require(hud != null, "真实HUD已打开");
             hud.RefreshView();
-            string phase = battle.Phase == GamePhase.Battle ? "战斗" : battle.Phase == GamePhase.Settle ? "结算" : "准备";
-            Require(GetField<Text>(hud, "_phaseLabel").text == phase, "HUD阶段缓存随真实阶段更新");
+            Require(!hud.transform.Find("phaseLabel").gameObject.activeInHierarchy, "HUD不再显示旧阶段标签");
             string round = GetField<Text>(hud, "_roundText").text;
             Require(round.Contains("第 " + battle.Chapter + " / 6 章") && round.Contains("第 " + battle.Round + " 回合"), "HUD章节回合缓存实时一致");
             string counts = GetField<Text>(hud, "_countText").text;
+            Require(counts.StartsWith("攻击力 ") && counts.Contains("\n攻速 ") && counts.Contains("\n防御力 "), "右侧信息牌只展示玩家三项全队加成");
             hud.RefreshView();
             Require(GetField<Text>(hud, "_countText").text == counts, "相同输入重复刷新保持文字");
             foreach (var enemy in battle.EnemyPieces)

@@ -24,6 +24,20 @@ namespace RevGame.Editor
             try{return new Result{text=(string)Type.GetType("RevGame.Editor.GameBalanceRulesChecks, Assembly-CSharp-Editor",true).GetMethod("Run").Invoke(null,null)};}
             catch(System.Reflection.TargetInvocationException error){throw error.InnerException??error;}
         }
+        /// <summary>固定入口仅执行六章开局阵容、出生生命和防御验收，不需要玩家存档。</summary>
+        [RevAutomationAction("game.campaign.opening-check", Environment = "edit", Keys = new string[0], Description = "核对六章每轮开局阵容、生命和敌方防御")]
+        public static object CampaignOpening(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameTacticsChecks, Assembly-CSharp-Editor", true);
+            try
+            {
+                return new Result { text = (string)type.GetMethod("RunCampaignOpening").Invoke(null, null) };
+            }
+            catch (System.Reflection.TargetInvocationException error)
+            {
+                throw error.InnerException ?? error;
+            }
+        }
         [Serializable]private sealed class Result{public string text;}
     }
 }
