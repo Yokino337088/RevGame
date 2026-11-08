@@ -168,7 +168,7 @@ namespace RevGame.View
                 _view = loaded;
                 _loading = false;
                 // 场景归属为当前场景；Show回池不挂在UIRoot，场景根生命周期负责清理。
-                _view.Play(catalog.Find(line.Expression), line, _camera, _area, UsesMobileEndlessLayout, Hide);
+                _view.Play(catalog.Find(line.Expression), line, _camera, _area, behindBattle: UsesMobileEndlessLayout, endless: _mode == 2, finished: Hide);
                 ShownCount++;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 _recentStarts[0] = _recentStarts[1];
@@ -346,7 +346,7 @@ namespace RevGame.View
             if (behindBattle)
             {
                 // 布局矩形顶部留有空白，判定时只用立绘和气泡可能实际画到的范围。
-                expanded.height *= YayaReactionView.MobileUsedHeightFraction;
+                expanded.height = YayaReactionView.MobileUsedViewportHeight(expanded.height);
             }
             if (expanded.xMin < safe.xMin || expanded.yMin < safe.yMin || expanded.xMax > safe.xMax || expanded.yMax > safe.yMax)
             {
@@ -478,9 +478,12 @@ namespace RevGame.View
         public object Snapshot()
         {
             SpriteRenderer body = _view != null ? _view.GetComponentInChildren<SpriteRenderer>() : null;
+            Canvas speechCanvas = _view != null ? _view.GetComponentInChildren<Canvas>() : null;
             float portraitHeight = body != null && _camera != null ? _camera.WorldToViewportPoint(body.bounds.max).y - _camera.WorldToViewportPoint(body.bounds.min).y : 0;
             return new Dictionary<string, object> { ["mode"] = _mode, ["visible"] = _view != null && _view.Visible, ["settled"] = _view != null && _view.Settled, ["busy"] = Busy, ["lineId"] = _line.Id, ["band"] = _line.Band, ["expression"] = _line.Expression, ["text"] = _line.Text, ["shown"] = ShownCount, ["error"] = LastError, ["speechFits"] = _view != null && _view.SpeechFits, ["overlap"] = _view != null && HasOverlap(_area), ["areaX"] = _area.x, ["areaY"] = _area.y, ["areaWidth"] = _area.width, ["areaHeight"] = _area.height, ["catalogHeld"] = _catalogHandle != null, ["atlasHeld"] = _atlases.Length > 0,
                 ["blockedBy"] = _blockedBy, ["portraitHeight"] = portraitHeight,
+                ["dialogueSortingOrder"] = speechCanvas != null ? speechCanvas.sortingOrder : 0,
+                ["dialogueRootCanvas"] = speechCanvas != null && speechCanvas.isRootCanvas,
                 ["recentStarts"] = _recentStarts, ["cadenceReady"] = ShownCount >= 3 && _recentStarts[2] - _recentStarts[0] <= 6,
                 ["holdSeconds"] = _lastHoldSeconds, ["lastVisibleSeconds"] = _lastVisibleSeconds, ["visibleSeconds"] = _view != null ? _view.VisibleSeconds : 0 };
         }

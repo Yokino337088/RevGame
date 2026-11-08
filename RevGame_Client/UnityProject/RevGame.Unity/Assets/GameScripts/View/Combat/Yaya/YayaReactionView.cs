@@ -11,11 +11,14 @@ namespace RevGame.View
     [RevPoolPrefab("Characters/Yaya/Reaction", "YayaReaction", Group = RevResGroup.Battle)]
     public sealed class YayaReactionView : MonoBehaviour, IRevPoolable
     {
-        /// <summary>移动端对白高度上限与碰撞范围共用比例，单位为立绘布局区域高度。</summary>
+        /// <summary>移动端立绘高度以整个相机视口为基准，目标占屏一半。</summary>
+        private const float MobilePortraitViewportHeight = .5f;
+        private const float PortraitHeightFraction = .72f;
+        private const float DialogueGapFraction = .015f;
         private const float MobileBubbleHeightFraction = .15f;
-        internal const float MobileUsedHeightFraction = .89f;
-        // 无尽外围敌潮排序为 8，血条为 0。移动立绘放在二者后方，短时对白保留预制体前景排序。
+        // 无尽外围敌潮排序为 8，血条为 0。对白使用独立排序，不随立绘落到棋子后面。
         private const int BehindEndlessActorsOrder = -1;
+        private const int EndlessDialogueOrder = 200;
         /// <summary>图片节点独立于根缩放；立绘尺寸来自固定区域布局，不随入场、退场或候选位置改变。</summary>
         [SerializeField] private SpriteRenderer portrait;
         /// <summary>世界空间台词板，使用项目已有UI_Tip_imgBK九宫格图，无输入组件。</summary>
@@ -27,11 +30,13 @@ namespace RevGame.View
         private Action _finished;
         private float _openedAt;
         private int _portraitOrder;
+        private int _bubbleOrder;
 
         private void Awake()
         {
             // 同一个池实例可以被六章或无尽借用，保留原预制体排序以便每次重置。
             _portraitOrder = portrait.sortingOrder;
+            _bubbleOrder = bubble.sortingOrder;
         }
         /// <summary>本次主停留秒数；保留原有前后共0.42秒显示时间，但整个过程都不缩放。</summary>
         public float HoldSeconds
@@ -44,8 +49,19 @@ namespace RevGame.View
         public bool Visible => portrait != null && portrait.enabled && portrait.sprite != null;
         /// <summary>没有缩放过渡，图片首次可画即为最终尺寸，供自动化跨帧核对大小恒定。</summary>
         public bool Settled => Visible;
+
+        /// <summary>按实际绘制上限计算避让范围，单位为整个相机视口的高度比例。</summary>
+        internal static float MobileUsedViewportHeight(float areaHeight)
+        {
+            return MobilePortraitHeight(areaHeight) + areaHeight * (DialogueGapFraction + MobileBubbleHeightFraction);
+        }
+
+        private static float MobilePortraitHeight(float areaHeight)
+        {
+            return Mathf.Min(MobilePortraitViewportHeight, areaHeight * PortraitHeightFraction);
+        }
         /// <summary>只在新的互动发生时换Sprite/台词并排版；不逐帧GetSprite、不访问renderer.material。</summary>
-        public void Play(Sprite sprite, YayaReactionLine line, Camera camera, Rect viewport, bool behindBattle, Action finished)
+        public void Play(Sprite sprite, YayaReactionLine line, Camera camera, Rect viewport, bool behindBattle, bool endless, Action finished)
         {
             Stop();
             _finished = finished;
@@ -54,6 +70,8 @@ namespace RevGame.View
             portrait.sortingOrder = behindBattle ? BehindEndlessActorsOrder : _portraitOrder;
             portrait.enabled = true;
             bubble.gameObject.SetActive(true);
+            // 对白自己就是根 Canvas。根 Canvas 直接用自己的排序，Unity 不会保留嵌套 Canvas 的覆盖开关。
+            bubble.sortingOrder = endless ? EndlessDialogueOrder : _bubbleOrder;
             bubble.worldCamera = camera;
             speech.text = line.Text;
             Layout(camera, viewport, behindBattle);
@@ -78,7 +96,7 @@ namespace RevGame.View
             float width = high.x - low.x, height = high.y - low.y;
             transform.position = new Vector3((low.x + high.x) * .5f, low.y, 0);
             transform.localScale = Vector3.one;
-            float bodyHeight = height * .72f;
+            float bodyHeight = behindBattle ? height * (MobilePortraitHeight(area.height) / area.height) : height * PortraitHeightFraction;
             float scale = Mathf.Min(bodyHeight / portrait.sprite.bounds.size.y, width * .90f / portrait.sprite.bounds.size.x);
             portrait.transform.localScale = Vector3.one * scale;
             Vector3 bounds = portrait.sprite.bounds.center;
@@ -90,7 +108,7 @@ namespace RevGame.View
             rect.localScale = Vector3.one * bubbleScale;
             // 使用实际立绘上沿定位，宽屏或窄侧栏下也贴近头顶；透明画布顶部另有少量原画留白。
             float portraitTop = bodyHeight * .5f + portrait.sprite.bounds.size.y * scale * .5f;
-            rect.localPosition = new Vector3(0, portraitTop + height * .015f + rect.sizeDelta.y * bubbleScale * .5f, 0);
+            rect.localPosition = new Vector3(0, portraitTop + height * DialogueGapFraction + rect.sizeDelta.y * bubbleScale * .5f, 0);
         }
         /// <summary>真实字体排版所需高度不超文字矩形，长台词仍能完整阅读。</summary>
         public bool SpeechFits => speech != null && speech.preferredHeight <= speech.rectTransform.rect.height + 1;
