@@ -1109,6 +1109,36 @@
       "environment": "edit"
     },
     {
+      "id": "atlas.inspect",
+      "keys": [
+        "path"
+      ],
+      "description": "读取 Sprite Atlas V2 的 GUID、成员和 Include In Build",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
+      "id": "atlas.create",
+      "keys": [
+        "path",
+        "assets"
+      ],
+      "description": "用已导入为 Sprite 的纹理创建 Sprite Atlas V2，不覆盖已有资产",
+      "environment": "edit",
+      "readOnly": false
+    },
+    {
+      "id": "atlas.set-packables",
+      "keys": [
+        "path",
+        "assets"
+      ],
+      "description": "以指定 Sprite 纹理完整替换主图集成员，保留 GUID 和 Importer 设置，需要 confirm",
+      "environment": "edit",
+      "readOnly": false,
+      "requires": "confirm"
+    },
+    {
       "id": "prefab.instantiate",
       "keys": [
         "path",

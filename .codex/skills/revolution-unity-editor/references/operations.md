@@ -11,6 +11,7 @@
 | 三维变换 | transform.get/set | space=local/world；position/eulerAngles 三项数字；localScale 始终局部，不伪造“世界缩放” |
 | 组件 | component.types/list/get/add/set/remove | types 发现真实类型，get 返回可写属性；set 保留序列化/Undo/Prefab override；引用字段自动换算组件与子资产，类型不符明确报错 |
 | 资产与导入 | asset.find/inspect/create/set/copy/move/delete/import/importer/importer-set | Assets/Packages 只读，写入限定 Assets；GUID 保留，禁止越界与目标覆盖 |
+| Sprite Atlas V2 | atlas.inspect/create/set-packables | 读取或写入纹理成员，分组、AB 标记和平台策略由项目配方决定 |
 | 材质 / Shader | shader.list、material.inspect/create/clone/set | 先查 Shader/属性/关键字真实声明；材质所有参数预检后提交，不接受任意属性猜测 |
 | UI 面板 | ui.create、rect.get/set | kind=Canvas/Panel/Image/Text/Button；非 Canvas 必须在 Canvas 下；rect.set 的偏移与 anchoredPosition/sizeDelta 二选一，单独改锚点会移动矩形 |
 | Prefab | prefab.create/instantiate/inspect/modify/apply/revert/unpack/variant | 加载内容操作后卸载；创建不覆盖；apply 只限 Assets 下 Prefab，apply/revert/unpack 均不可 Undo，需用户授权；unpackMode=root/completely |
@@ -71,6 +72,27 @@
 ```
 
 `_Color` 仅为具有该声明的 Shader 示例；实际名字从 inspect 读取，不保证任何渲染管线都有此属性。
+
+## Sprite Atlas V2 配方
+
+- 用 `atlas.inspect` 的 `path` 读取现有图集的 GUID、源成员、Variant 和 Include In Build。返回的是成员列表与导入设置，可另用 `asset.importer` 查看更多设置。
+- 用 `atlas.create` 创建新主图集。参数为 `path` 和 `assets`，其中 `assets` 是已按 Sprite 导入的纹理资产路径数组。写入目标的父目录须已存在，已有资产会被拒绝。
+- 用 `atlas.set-packables` 替换现有主图集的完整成员列表。按需传空数组清空成员。全局选项 `--confirm` 写在 `call` 前。先校验全部路径，列表相同直接返回，成员修改保留原 GUID 和 Importer 设置。动作写盘，不能用场景 Undo 撤销。
+- 写动作要求项目已启用 V2 模式。读回可以显示文件夹、单独 Sprite 和 Variant，写入接受纹理资产路径，暂不提供 V1 转换、Variant 编辑、切片级成员或按项目规则自动分组。
+
+```json
+{
+  "path": "Assets/UI/Inventory.spriteatlasv2",
+  "assets": ["Assets/UI/Bag.png", "Assets/UI/Slot.png"]
+}
+```
+
+将参数保存为 `atlas.json` 后执行：
+
+```powershell
+python Revolution.RevCLI/rev.py --project $project --mode live call atlas.create --json atlas.json
+python Revolution.RevCLI/rev.py --project $project --mode live --confirm call atlas.set-packables --json atlas.json
+```
 
 ## 覆盖边界
 

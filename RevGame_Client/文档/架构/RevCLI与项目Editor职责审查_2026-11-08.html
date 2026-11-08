@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RevCLI 与项目 Editor 的职责审查</title>
+<style>
+  :root { color-scheme: light; --ink: #182637; --muted: #506477; --line: #dbe4eb; --accent: #096256; --wash: #edf8f5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f4f7fa; color: var(--ink); font: 16px/1.75 system-ui, "Microsoft YaHei", sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 34px 24px 52px; }
+  header, section { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 24px 28px; margin-bottom: 18px; }
+  h1, h2, h3 { margin: 0 0 .55em; line-height: 1.3; }
+  h1 { font-size: clamp(28px, 5vw, 42px); }
+  h2 { font-size: 23px; }
+  h3 { font-size: 17px; }
+  p { margin: .6em 0; }
+  nav, .meta { color: var(--muted); font-size: .92rem; }
+  nav { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin-top: 1rem; }
+  .lead { background: var(--wash); border-left: 4px solid var(--accent); padding: 12px 16px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 1em 0; }
+  .stats div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .stats b { display: block; color: var(--accent); font-size: 1.65rem; }
+  .scroll { overflow-x: auto; margin-top: 1em; }
+  table { width: 100%; min-width: 630px; border-collapse: collapse; }
+  th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: #eaf1f6; }
+  li { margin: .38em 0; }
+  a { color: #075b93; text-underline-offset: .18em; }
+  code { font: .9em Consolas, ui-monospace, monospace; color: #174f4b; overflow-wrap: anywhere; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f1f5f7; padding: 12px 15px; border-radius: 8px; }
+  @media (max-width: 620px) { main { padding: 12px; } header, section { padding: 18px; } }
+  @media print { body { background: white; } main { max-width: none; padding: 0; } section, header { border: 0; padding: 12px 0; } tr { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="meta">RevGame · 架构审查 · 2026-11-08 · Unity 2022.3.15f1c1</p>
+    <h1>RevCLI 已经能创建 Prefab，为什么还要写项目 Editor 代码？</h1>
+    <p class="lead"><strong>RevCLI 可以完成通用的 Unity 编辑操作。</strong> RevGame 的 Editor 脚本把资源选择、节点绑定、构建顺序和验收规则固化成可重复的项目配方。此次确实发现了通用的 Sprite Atlas V2 成员操作缺口，已在 Revolution 补齐并同步到 RevGame。</p>
+    <nav aria-label="目录"><a href="#inventory">目录现状</a><a href="#examples">代码有什么用</a><a href="#coverage">RevCLI 覆盖表</a><a href="#atlas">本次增强</a><a href="#verification">验收</a></nav>
+  </header>
+
+  <section id="inventory">
+    <h2>目录现状</h2>
+    <div class="stats">
+      <div><b>139</b>Git 跟踪的 Editor C# 文件</div>
+      <div><b>310</b>增强前实时注册的 Editor 动作</div>
+      <div><b>136</b>其中 RevGame 的 <code>game.*</code> 动作</div>
+      <div><b>313</b>同步并重载后的 Editor 动作</div>
+    </div>
+    <p>139 个文件均在 <code>Assets/Editor/RevGame</code> 下。按文件名做粗分，含 <code>Build/Builder</code> 的有 42 个，<code>Automation</code> 29 个，<code>Check/Benchmark</code> 47 个，<code>Preview</code> 7 个，其余 14 个。这个统计包含局部类的分文件，只用于说明目录结构。框架自己的 Unity 桥位于 <code>Assets/Revolution/Editor/RevAutomation</code>。</p>
+    <p>命令从 Python 客户端发到 Unity 桥，由编辑器调用 <code>AssetDatabase</code>、<code>PrefabUtility</code> 等接口。项目也能用 <code>RevAutomationAction</code> 把一套固定配方注册进同一份目录。这样同一个 RevCLI 既能执行通用编辑，也能运行项目配方。</p>
+  </section>
+
+  <section id="examples">
+    <h2>这些项目 Editor 脚本具体做什么</h2>
+    <div class="scroll" role="region" aria-label="Editor 代码职责" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">实际代码</th><th scope="col">存下来的项目规则</th><th scope="col">保留它的收益</th></tr></thead>
+        <tbody>
+          <tr><td><code>GameEndlessBuild</code><br><code>game.endless.build</code></td><td>制作无尽场景、棋盘、HUD、入口和共享材质，并维护大厅入口。主题局部类定义素材映射、Sprite 导入与底板检查。</td><td>整套主题重建时，多个资源和入口按同一规则装配。单改一个按钮时，用局部 Prefab 动作影响更小。</td></tr>
+          <tr><td><code>GameSpriteAtlasBuild</code><br><code>GameResourceBuild.Configure</code></td><td>从真实资源引用收集图片，按大厅、章节、无尽等使用范围分组。配置压缩和包标记，迁移旧图保留 GUID，生成运行时使用的图集名单并执行打包门禁。</td><td>新增一类资源后，同一条构建链重复执行仍使用相同策略。通用图集动作可以处理给定图集的成员，项目配方负责计算成员与包归属。</td></tr>
+          <tr><td><code>GameEndlessAutomation</code><br><code>GameResourceUsageAutomation</code></td><td>把固定生成、审计、验证和发布入口注册成有明确参数的 <code>game.*</code> 动作。</td><td>命令行、测试脚本和自动化可以复用同一套代码。比如资源审计和资源配置分成两个动作，调用前就能区分查询与写入。</td></tr>
+          <tr><td><code>GameSceneTransitionChecks</code><br><code>GameEditorAtlasPreview</code></td><td>核对场景切换、首次资源装配、图集绑定和白图风险。另有 Inspector、迁移与诊断工具。</td><td>可以把生成成功与实际显示、业务完成分开验收。Editor 文件数量也包含这些检查工具。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>如果目标是一处样式、布局或属性，先用 CLI 读取，再局部修改和读回。若资源由现有生成器管理，长期改动也要进入对应配方，否则下次重建可能把局部调整覆盖掉。固定树和固定字段适合把 JSON 配方入库。跨资源计算、引用闭包和项目验收适合保留在项目 Editor 工具内。</p>
+    <p class="meta">源码入口 <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Endless/GameEndlessBuild.cs">无尽生成</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Endless/GameEndlessBuild.Theme.cs">无尽主题</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameEndlessAutomation.cs">无尽动作注册</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameSpriteAtlasBuild.cs">图集分组</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameResourceBuild.cs">构建配方</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Scenes/GameSceneTransitionChecks.cs">切场景回归</a></p>
+  </section>
+
+  <section id="coverage">
+    <h2>RevCLI 已覆盖的操作和本次确认的边界</h2>
+    <div class="scroll" role="region" aria-label="RevCLI 能力矩阵" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">工作</th><th scope="col">实际入口</th><th scope="col">当前边界</th></tr></thead>
+        <tbody>
+          <tr><td>Prefab 创建与局部改动</td><td><code>scene.compose</code>、<code>prefab.create/inspect/modify/instantiate/variant</code></td><td>可把 JSON 生成的场景对象树保存为 Prefab。现有 RevGame 桥未注册直接从 JSON 写 Prefab 的 <code>prefab.compose</code>。框架工作区已有该方向的独立本地改动，本次提交范围为图集增强。</td></tr>
+          <tr><td>对象、UI、材质、动画</td><td><code>gameobject.*</code>、<code>component.*</code>、<code>ui.create</code>、<code>rect.*</code>、<code>material.*</code>、<code>clip.*</code>、<code>animator.*</code></td><td>能处理常用对象树、字段和部分动画操作。高级 Unity 工具仍需专门接线，例如 BlendTree 编辑、Terrain/Tilemap 绘制。</td></tr>
+          <tr><td>导入、Excel、AB</td><td><code>asset.importer/importer-set</code>、<code>excel.*</code>、<code>ab.*</code></td><td>提供基础读写、导出、依赖检查和构建。源图怎么归组、字体何时更新、某个包由哪个模式加载，由项目定义。</td></tr>
+          <tr><td>Sprite Atlas V2</td><td>本次新增 <code>atlas.inspect/create/set-packables</code></td><td>增强前只找到项目专用预览/重打等入口。通用 Importer 字段编辑可以改设置，成员列表由 V2 源资产接口负责。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>connect</code> 初检提示离线清单中有 7 个 Demo 或热更动作在当前工程未注册。这个提示反映客户端目录与工程安装的差异。判断制作功能是否可用，以 <code>commands --live</code> 的实际动作和本次读写为准。</p>
+    <p class="meta">接口参考 <a href="../../UnityProject/Revolution.RevCLI/commands.json">项目 CLI 清单</a> · <a href="../../../.codex/skills/revolution-unity-editor/references/operations.md">操作配方与覆盖范围</a> · <a href="https://docs.unity3d.com/cn/2022.3/Manual/SpriteAtlasV2.html">Unity 2022.3 Sprite Atlas V2 手册</a></p>
+  </section>
+
+  <section id="atlas">
+    <h2>本次增强 Sprite Atlas V2</h2>
+    <ul>
+      <li><code>atlas.inspect</code> 读取图集 GUID、成员、Variant 和 Include In Build。</li>
+      <li><code>atlas.create</code> 使用已导入为 Sprite 的纹理资产创建新 V2 图集，已有目标会被拒绝。</li>
+      <li><code>atlas.set-packables</code> 使用完整纹理列表替换现有主图集成员，需全局 <code>--confirm</code>。保存前检查所有成员，列表相同直接返回，保留 GUID 与 Importer 设置。空列表表示清空。</li>
+    </ul>
+    <p>这三个动作随 Unity 桥和 CLI 清单一起同步。写入只针对已启用 V2 的工程，成员参数为整张纹理的资产路径。本次范围是 V2 主图集成员，V1 迁移、Variant 和切片级编辑仍由 Unity 或各自工具负责。生产分组、压缩、AB 标记和运行时加载继续由原项目链负责。</p>
+    <h3>从 RevGame 仓库根目录读回已有图集</h3>
+    <pre><code>$cli = "RevGame_Client/UnityProject/Revolution.RevCLI/rev.py"
+$project = "RevGame_Client/UnityProject/RevGame.Unity"
+python $cli --project $project --mode live commands --live
+python $cli --project $project --mode live atlas inspect --path Assets/GameRes/Atlases/UIMenus.spriteatlasv2</code></pre>
+    <p>批量制作可将 <code>path</code> 和 <code>assets</code> 保存到 JSON 后用 <code>call atlas.create --json atlas.json</code>。改现有图集时先读出完整列表，再以 <code>--confirm call atlas.set-packables --json atlas.json</code> 写回目标列表。</p>
+    <p class="meta">实现入口 <a href="https://github.com/Yokino337088/Revolution/commit/946f2eed925ce028799fc21fa7349c54202de05d">Revolution 源提交</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Revolution/Editor/RevAutomation/RevAutomationSpriteAtlas.cs">RevGame 快照</a> · <a href="../../../.codex/skills/revolution-unity-editor/references/operations.md">命令示例与参数</a></p>
+  </section>
+
+  <section id="verification">
+    <h2>验收结果</h2>
+    <ol>
+      <li><strong>实时注册与编译。</strong> 连接现有 Unity 实例，记录增强前 310 个动作。同步、刷新与域重载后重新查询，实时注册 313 个动作，新增三项与清单一致，编译结果 <code>failed=false</code>。</li>
+      <li><strong>Prefab 路径。</strong> 在临时场景中用 JSON 创建父子对象，保存为 Prefab 并读回子节点坐标 <code>(2, 3, 4)</code>。关闭临时场景并删除测试资产，<code>StartScene</code> 仍为原活动场景。</li>
+      <li><strong>图集读写。</strong> 读取正式 <code>UIMenus</code> 图集。用两份临时 Sprite 纹理验证创建、成员替换、空列表清空和独立读回。修改过的 Importer 配置与图集 GUID 在替换前后相同，图集 <code>.meta</code> 字节哈希一致，重复相同替换时源文件也未重写。</li>
+      <li><strong>拒绝与收尾。</strong> 重复成员、已有目标、缺少确认和不存在的纹理都被拒绝。校验目标文件哈希和无副作用，删除临时资产，核对正式图集、原场景和选择，图集回归无新增 Console 错误。</li>
+      <li><strong>CLI 测试。</strong> 从框架提交导出干净的 CLI 运行 165 项测试，最终复测全部通过。前两次全量运行的超大请求用例出现 Windows 连接中止 <code>10053</code>。同一用例在变更前的提交重复执行 8 次，3 次复现相同错误。</li>
+    </ol>
+    <p>证据覆盖 Unity Editor 的资源操作。本次验证使用 RevCLI，没有进入 Play、构建 AB、验证冷启动画面或调用 RevMCP。正式资源没有重新生成。原始回执在本机忽略目录 <code>.codex/work/revcli-atlas-audit/</code>。</p>
+  </section>
+</main>
+</body>
+</html>
