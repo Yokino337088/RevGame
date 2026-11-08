@@ -26,6 +26,9 @@ namespace RevGame.Bootstrap
                 return board == null ? null : board.MagicSnapshot();
             }, readOnly: true, owner: Owner);
 #if UNITY_EDITOR
+            // 回归章间交接时只缩短击杀过程。伤害、胜负、收尾剧情和领奖仍走正式链路。
+            RevRuntimeAutomation.Register("story.boss-last-hit-fixture", "仅隔离Play：在Boss战中提交真实最后一击", Empty, _ =>
+                Accepted(((BattleService)RevServices.GetRequired<IBattleService>()).DefeatBossForVictoryCheck()), owner: Owner);
             RevRuntimeAutomation.Register("board.magic.eye-fixture", "仅隔离Play：装配双方真实眼位，供眨眼表现验收", Empty, _ =>
             {
                 var flow = RevServices.GetRequired<GameFlow>();
@@ -194,6 +197,9 @@ namespace RevGame.Bootstrap
                 ["boardControlFrame"] = BoardControlFrame(),
                 ["unlockedChapter"] = battle.UnlockedChapter,
                 ["chapter"] = battle.Chapter,
+                ["round"] = battle.Round,
+                ["settleOpen"] = RevUI.IsOpen<RevGame.UI.SettlePanel>(),
+                ["rewardOpen"] = RevUI.IsOpen<RevGame.UI.RewardPanel>(),
                 ["tutorialActive"] = flow.IsTutorialActive,
                 ["tutorialOpen"] = RevUI.IsOpen<RevGame.UI.TutorialPanel>(),
                 ["scoreIsolated"] = _scoreIsolation != null,

@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "44d3aeecd5d6f6db5fdde3459d25623ff0423dab793c12d558c93f7573f8abdb",
-  "inputDigest": "a8e54a84048bf542ac08a35135639b126740bcfcad4c00d007a2b9d47e713069",
+  "inputDigest": "8fcb6f320500f4fd62709a5ed29e5a48f430f829616b7bd69b725361452a7202",
   "originalBytes": 17002248,
   "outputBytes": 797220,
   "characterCount": 1787,
@@ -2283,7 +2283,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
-      "sha256": "998d28b96bdbb293370efc08a08a92b5f4b904d00fcccf1ca12ebd964dafb21d"
+      "sha256": "77ee41e34034cd1884aa5b6a6ff9264ac56dd0634387d92cfdd28c95c1ec2279"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryPresentationPreview.cs",
@@ -2495,7 +2495,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Story.cs",
-      "sha256": "ba4b97133a5ab1c64494c74281bd7779c26ba8c5230d975959167e3a08009996"
+      "sha256": "c69bc262ab50f0f90c302f286357cf706986be5ccc55fd2d0509fab1f9d3dffd"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pieces/Model/Piece.cs",

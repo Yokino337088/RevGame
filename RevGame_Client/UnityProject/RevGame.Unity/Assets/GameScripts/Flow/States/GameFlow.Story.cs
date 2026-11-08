@@ -212,14 +212,31 @@ namespace RevGame.Flow
             try
             {
                 _episode = _storyBook.Find(id);
+                int backgroundChapter = _episode.BackgroundChapter;
+                if (backgroundChapter > 0 && _activePresentation != null && _activePresentation.BackgroundChapter != backgroundChapter)
+                {
+                    // 领奖会在同一次准备事件里启动剧情和换背景。先交回本次事件，让场景监听器把旧章的就绪标志清掉；
+                    // 否则命中缓存的剧情面板可能同步打开，把上一章的背景误当成新章已经交付。
+                    await RevTask.Yield();
+                }
                 while (!_disposed && version == _storyVersion && (IsTransitioning || _loading != null ||
                     (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady)))
                 {
+                    if (backgroundChapter > 0 && !string.IsNullOrEmpty(_activePresentation?.BackgroundLoadError))
+                    {
+                        // 背景失败由场景交接流程显示返回入口。结束本次等待，避免剧情继续锁输入或另开一份错误面板。
+                        CancelStory();
+                        return;
+                    }
                     await RevTask.Yield();
                 }
                 if (_disposed || version != _storyVersion)
                 {
                     return;
+                }
+                if (backgroundChapter > 0 && (Screen != GameScreen.Battle || _activePresentation == null || _activePresentation.BackgroundChapter != backgroundChapter))
+                {
+                    throw new InvalidOperationException("剧情背景与当前章节未交付：" + backgroundChapter);
                 }
                 // 新立绘可能属于不同用途图集，按构建生成的本篇列表取得租约，不能继续写死鸦鸦六表情图集。
                 string[] atlasNames = _episode.PortraitAtlasNames;
