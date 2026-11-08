@@ -67,13 +67,13 @@ namespace RevGame.Pvp.Duel
         // 提交本席对下一逻辑帧的意图。
         public const int Input = 3;
         // 单个回复最多 64 帧，落后端按连续游标分批补。
-        private const int MaxBatch = 64;
+        internal const int MaxBatch = 64;
         // 已执行的整帧历史，数组下标 0 对应逻辑帧 1。
         private readonly List<int> _frames = new List<int>(DuelConfig.FrameLimit);
         // 下一待封帧的黑白输入槽，必须齐备才执行。
         private readonly int[] _input = new int[2];
         // 权威原生实例，和客户端副本执行同一整帧协议。
-        private readonly DuelCorePipe _judge = new DuelCorePipe();
+        private readonly DuelCorePipe _judge;
         // 场景加载屏障，双席就绪前不接战斗意图。
         private int _readyMask;
         // 当前帧已经占用的输入槽位，独立于场景就绪。
@@ -85,6 +85,7 @@ namespace RevGame.Pvp.Duel
         public DuelAuthority(string id)
         {
             Id = id;
+            _judge = new DuelCorePipe(id);
         }
 
         // 决斗标识，创建后固定。

@@ -1,4 +1,5 @@
 {
+  "coreProtocol": 3,
   "eligibility": { "minimumMove": 24, "minimumLeadHalfPoints": 24 },
   "arena": { "health": 100, "extent": 4500, "movePerFrame": 140, "frameLimit": 1200, "spawnOffset": 1700, "energy": 100, "energyPerFrame": 1, "energyPerHit": 12, "frameMilliseconds": 50 },
   "jump": { "speed": 270, "gravity": 34, "hitHeight": 480 },

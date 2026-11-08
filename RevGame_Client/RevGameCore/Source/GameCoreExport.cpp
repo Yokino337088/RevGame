@@ -1,14 +1,13 @@
 // 双向 FIFO 是宿主与确定性世界的唯一数据通道。读写函数不触碰 Unity、网络或墙钟。
 #include "GameCoreExport.h"
 #include "DuelWorld.h"
+#include "DuelProtocol.Generated.h"
 #include <array>
 #include <cstddef>
 #include <new>
 
 namespace
 {
-    // 当前小端消息版本；与托管端协议常量一致。
-    constexpr int WireVersion = 2;
     // 每个 FIFO 的固定容量。队列满时保留内容，等待宿主消费后重试。
     constexpr int Capacity = 128;
     // 单条输出消息的字节数，每个整数占 4 字节。
@@ -101,12 +100,12 @@ void GameCore_Destroy(void* handle)
 int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
 {
     auto* pipe = static_cast<Pipe*>(handle);
-    if (!pipe || !data || size < 8 || pipe->Fault || ReadWord(data) != WireVersion)
+    if (!pipe || !data || size < 8 || pipe->Fault || ReadWord(data) != RevGameCore::WireVersion)
     {
         return -1;
     }
     const auto operation = ReadWord(data + 4);
-    if (operation == 1 && size == (2 + RevGameCore::ConfigWords) * 4)
+    if (operation == 1 && size == (4 + RevGameCore::ConfigWords) * 4)
     {
         RevGameCore::Settings settings{};
         for (std::size_t i = 0; i < settings.size(); ++i)
@@ -118,7 +117,10 @@ int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
             }
             settings[i] = static_cast<int32_t>(word);
         }
-        if (!pipe->World.Start(settings))
+        // 末尾两个字分别是种子的低位和高位。按无符号位拼接，允许完整 64 位取值。
+        const auto* seedBytes = data + (2 + RevGameCore::ConfigWords) * 4;
+        const uint64_t seed = ReadWord(seedBytes) | (static_cast<uint64_t>(ReadWord(seedBytes + 4)) << 32);
+        if (!pipe->World.Start(settings, seed))
         {
             return -1;
         }

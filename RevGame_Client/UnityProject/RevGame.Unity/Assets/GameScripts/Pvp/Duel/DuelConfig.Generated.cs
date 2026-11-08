@@ -4,6 +4,8 @@ namespace RevGame.Pvp.Duel
     // 两端共用的生成配置。策划改 JSON 后重新生成，并让客户端和服务端一起使用新指纹。
     public static class DuelConfig
     {
+        // 原生 FIFO 协议版本，同时纳入联机决斗指纹。
+        internal const int CoreProtocol = 3;
         // 从第几手开始允许判定中局劣势。
         public const int MinimumMove = 24;
         // 入场最小估算分差，单位为半目。
@@ -36,7 +38,7 @@ namespace RevGame.Pvp.Duel
             };
         }
         // 两席握手比较的 31 位规则指纹。
-        public const int Fingerprint = 182341838;
+        public const int Fingerprint = 1761161911;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
         public static int[] CreateCoreWords()
         {

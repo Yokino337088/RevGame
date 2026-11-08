@@ -23,8 +23,6 @@ namespace RevGame.Pvp.Duel
     {
         // P/Invoke 库名，由 Unity 或服务进程的原生搜索路径解析。
         private const string Library = "RevGameCore";
-        // 小端消息布局版本，不同版本的 DLL 与宿主不能混用。
-        private const int Protocol = 2;
         // 每席占五位：两位方向、两位招式、一位跳跃。
         public const int InputBits = 5;
         // 截取打包字的低五位，防止把另一席的输入读进来。
@@ -71,17 +69,24 @@ namespace RevGame.Pvp.Duel
         public DuelSnapshot Snapshot { get; private set; }
 
         // 创建句柄、提交版本化开局配置并准备初始显示值；配置失败时释放句柄。
-        public DuelCorePipe()
+        public DuelCorePipe(string duelId)
         {
+            if (string.IsNullOrEmpty(duelId))
+            {
+                throw new ArgumentException("决斗需要统一的对局标识。", nameof(duelId));
+            }
+            ulong seed = SeedFor(duelId);
             _handle = GameCore_Create();
             int[] settings = DuelConfig.CreateCoreWords();
-            byte[] start = new byte[(settings.Length + 2) * 4];
-            Write(start, 0, Protocol);
+            byte[] start = new byte[(settings.Length + 4) * 4];
+            Write(start, 0, DuelConfig.CoreProtocol);
             Write(start, 1, 1);
             for (int i = 0; i < settings.Length; i++)
             {
                 Write(start, i + 2, settings[i]);
             }
+            Write(start, settings.Length + 2, unchecked((int)seed));
+            Write(start, settings.Length + 3, unchecked((int)(seed >> 32)));
             if (_handle.IsInvalid || GameCore_Write(_handle, start, start.Length) != 1)
             {
                 _handle.Dispose();
@@ -89,6 +94,19 @@ namespace RevGame.Pvp.Duel
             }
             Snapshot = new DuelSnapshot { FirstX = -DuelConfig.SpawnOffset, SecondX = DuelConfig.SpawnOffset,
                 FirstHealth = DuelConfig.Health, SecondHealth = DuelConfig.Health, FirstFacing = 1, SecondFacing = -1 };
+        }
+
+        // 权威和回放副本从同一个对局 ID 派生种子。明确按 UTF-16 小端字节处理，避免本机哈希和编码差异。
+        private static ulong SeedFor(string duelId)
+        {
+            const ulong prime = 1099511628211UL;
+            ulong hash = 14695981039346656037UL;
+            foreach (char codeUnit in duelId)
+            {
+                hash = unchecked((hash ^ (uint)(codeUnit & 0xff)) * prime);
+                hash = unchecked((hash ^ (uint)(codeUnit >> 8)) * prime);
+            }
+            return hash;
         }
 
         // 验证单席五位输入；两个方向同时置位属于无效输入。
@@ -104,7 +122,7 @@ namespace RevGame.Pvp.Duel
             {
                 throw new InvalidOperationException("封帧包含未知标记。");
             }
-            Write(_frame, 0, Protocol);
+            Write(_frame, 0, DuelConfig.CoreProtocol);
             Write(_frame, 1, 2);
             Write(_frame, 2, frame);
             // 原生 FIFO 用黑方字的第 5 位承载双席免伤标记，白方字仍只承载输入。

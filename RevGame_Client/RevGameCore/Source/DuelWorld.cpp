@@ -1,18 +1,19 @@
 // 与 MiniGameCore 的逻辑分段一致：先接纳两席意图，再结算命中，最后输出只读帧。
 #include "DuelWorld.h"
+#include "DuelDamage.h"
+#include "DuelProtocol.Generated.h"
 #include <algorithm>
-#include <cstdlib>
 
 namespace RevGameCore
 {
     // 先校验配置范围，再初始化角色，保证后续定点整数运算有界。
-    bool DuelWorld::Start(const Settings& settings)
+    bool DuelWorld::Start(const Settings& settings, uint64_t seed)
     {
         if (Valid || settings[0] < 1 || settings[0] > 10000 || settings[1] < 1000 || settings[1] > 100000 ||
             settings[2] < 1 || settings[2] > 1000 || settings[3] < 10 || settings[3] > 10000 ||
             settings[4] < 1 || settings[4] >= settings[1] || settings[5] < 1 || settings[5] > 1000 ||
             settings[6] < 0 || settings[6] > settings[5] || settings[7] < 0 || settings[7] > settings[5] ||
-            settings[8] < 10 || settings[8] > 200)
+            settings[8] != FrameMilliseconds)
         {
             return false;
         }
@@ -33,8 +34,14 @@ namespace RevGameCore
             }
         }
         Config = settings;
-        Fighters[0] = Fighter{-Config[4], Config[0], 0, 0, 0, 1};
-        Fighters[1] = Fighter{Config[4], Config[0], 0, 0, 0, -1};
+        Random = DeterministicRandom(seed);
+        for (const Seat seat : SeatOrder)
+        {
+            Fighter& fighter = Fighters[seat];
+            fighter.Facing = seat == Black ? 1 : -1;
+            fighter.X = FixedPoint::FromRaw(-fighter.Facing * Config[4]);
+            fighter.Hp = Config[0];
+        }
         Valid = true;
         return true;
     }
@@ -43,14 +50,15 @@ namespace RevGameCore
     void DuelWorld::MoveAndStart(Fighter& fighter, int32_t input)
     {
         // 跳跃用定步长整数积分。空中也推进重力，攻击硬直不会让角色悬停。
-        if (fighter.Y == 0 && fighter.Action == 0 && (input & 16) != 0)
+        const FixedPoint ground;
+        if (fighter.Y == ground && fighter.Action == 0 && (input & 16) != 0)
         {
-            fighter.VerticalSpeed = Config[24];
+            fighter.VerticalSpeed = FixedPoint::FromRaw(Config[24]);
         }
-        if (fighter.Y != 0 || fighter.VerticalSpeed > 0)
+        if (ground < fighter.Y || ground < fighter.VerticalSpeed)
         {
-            fighter.Y = std::max(0, fighter.Y + fighter.VerticalSpeed);
-            fighter.VerticalSpeed = fighter.Y == 0 ? 0 : fighter.VerticalSpeed - Config[25];
+            fighter.Y = std::max(ground, fighter.Y + fighter.VerticalSpeed);
+            fighter.VerticalSpeed = fighter.Y == ground ? ground : fighter.VerticalSpeed - FixedPoint::FromRaw(Config[25]);
         }
         if (fighter.Action != 0)
         {
@@ -64,7 +72,8 @@ namespace RevGameCore
         }
         // 位 0/1 是左右，位 2～3 是单一技能槽。无效方向组合在桥接处拒绝。
         const int direction = (input & 1) != 0 ? -1 : (input & 2) != 0 ? 1 : 0;
-        fighter.X = std::clamp(fighter.X + direction * Config[2], -Config[1], Config[1]);
+        const auto delta = FixedPoint::FromInt(direction) * FixedPoint::FromRaw(Config[2]);
+        fighter.X = std::clamp(fighter.X + delta, FixedPoint::FromRaw(-Config[1]), FixedPoint::FromRaw(Config[1]));
         const int action = (input >> 2) & 3;
         if (action != 0)
         {
@@ -78,23 +87,6 @@ namespace RevGameCore
         }
     }
 
-    // 命中同时依赖生效帧、正面水平距离和高度差；这里只读当前状态。
-    int32_t DuelWorld::ResolveHit(const Fighter& attacker, const Fighter& defender) const
-    {
-        if (attacker.Action == 0)
-        {
-            return 0;
-        }
-        const int offset = 9 + (attacker.Action - 1) * 5;
-        const int distance = (defender.X - attacker.X) * attacker.Facing;
-        if (attacker.Age == Config[offset + 2] && distance >= 0 && distance <= Config[offset + 1] &&
-            std::abs(attacker.Y - defender.Y) <= Config[26])
-        {
-            return Config[offset];
-        }
-        return 0;
-    }
-
     // 先验整帧再推进世界。胜负确定后，继续接收连续帧但冻结战斗状态。
     bool DuelWorld::Advance(int32_t frame, int32_t first, int32_t second, Snapshot& snapshot)
     {
@@ -104,36 +96,35 @@ namespace RevGameCore
             return false;
         }
         Frame = frame;
-        int firstHit = 0;
-        int secondHit = 0;
+        DuelHits hits{};
         if (Result == 0)
         {
-            MoveAndStart(Fighters[0], first);
-            MoveAndStart(Fighters[1], second);
-            if (Fighters[0].X != Fighters[1].X)
+            const std::array<int32_t, SeatOrder.size()> inputs{first, second};
+            for (const Seat seat : SeatOrder)
             {
-                Fighters[0].Facing = Fighters[0].X < Fighters[1].X ? 1 : -1;
-                Fighters[1].Facing = -Fighters[0].Facing;
+                MoveAndStart(Fighters[seat], inputs[seat]);
             }
-            // 先取两个命中再修改血量，避免同帧互击由座位顺序决定胜负。
-            firstHit = ResolveHit(Fighters[0], Fighters[1]);
-            secondHit = ResolveHit(Fighters[1], Fighters[0]);
-            // 测试帧仍产生正常命中、回能和受击表现，只跳过扣血。每帧独立携带开关，回放能得到同一结果。
-            if ((first & NoDamageFrameBit) == 0)
+            Fighter& black = Fighters[Black];
+            Fighter& white = Fighters[White];
+            if (!(black.X == white.X))
             {
-                Fighters[0].Hp = std::max(0, Fighters[0].Hp - secondHit);
-                Fighters[1].Hp = std::max(0, Fighters[1].Hp - firstHit);
+                black.Facing = black.X < white.X ? 1 : -1;
+                white.Facing = -black.Facing;
             }
-            Fighters[0].Energy = std::min(Config[5], Fighters[0].Energy + Config[6] + (firstHit ? Config[7] : 0));
-            Fighters[1].Energy = std::min(Config[5], Fighters[1].Energy + Config[6] + (secondHit ? Config[7] : 0));
-            if (Fighters[0].Hp == 0 || Fighters[1].Hp == 0 || Frame >= Config[3])
+            hits = ResolveDuelDamage(Fighters, Config, (first & NoDamageFrameBit) != 0);
+            for (const Seat seat : SeatOrder)
             {
-                Result = Fighters[0].Hp == Fighters[1].Hp ? 3 : Fighters[0].Hp > Fighters[1].Hp ? 1 : 2;
+                Fighter& fighter = Fighters[seat];
+                fighter.Energy = std::min(Config[5], fighter.Energy + Config[6] + (hits[seat] ? Config[7] : 0));
+            }
+            if (black.Hp == 0 || white.Hp == 0 || Frame >= Config[3])
+            {
+                Result = black.Hp == white.Hp ? 3 : black.Hp > white.Hp ? 1 : 2;
             }
         }
         Produce(snapshot);
-        snapshot[14] = firstHit;
-        snapshot[15] = secondHit;
+        snapshot[14] = hits[Black];
+        snapshot[15] = hits[White];
         return true;
     }
 
@@ -142,11 +133,11 @@ namespace RevGameCore
     {
         snapshot[0] = Frame;
         snapshot[1] = Result;
-        for (int i = 0; i < 2; ++i)
+        for (const Seat seat : SeatOrder)
         {
-            const auto& fighter = Fighters[i];
-            int offset = 2 + i * 6;
-            snapshot[offset] = fighter.X;
+            const auto& fighter = Fighters[seat];
+            const auto offset = 2 + seat * 6;
+            snapshot[offset] = fighter.X.RawValue();
             snapshot[offset + 1] = fighter.Hp;
             snapshot[offset + 2] = fighter.Energy;
             snapshot[offset + 3] = fighter.Action;
@@ -165,12 +156,19 @@ namespace RevGameCore
             hash = (hash ^ static_cast<uint32_t>(word)) * 16777619u;
         }
         // 高度会被 HUD 读取，速度虽不展示，但会改变未来落点，因此同样参与指纹。
-        snapshot[17] = Fighters[0].Y;
-        snapshot[18] = Fighters[1].Y;
-        for (const auto& fighter : Fighters)
+        snapshot[17] = Fighters[Black].Y.RawValue();
+        snapshot[18] = Fighters[White].Y.RawValue();
+        for (const Seat seat : SeatOrder)
         {
-            hash = (hash ^ static_cast<uint32_t>(fighter.Y)) * 16777619u;
-            hash = (hash ^ static_cast<uint32_t>(fighter.VerticalSpeed)) * 16777619u;
+            const Fighter& fighter = Fighters[seat];
+            hash = (hash ^ static_cast<uint32_t>(fighter.Y.RawValue())) * 16777619u;
+            hash = (hash ^ static_cast<uint32_t>(fighter.VerticalSpeed.RawValue())) * 16777619u;
+        }
+        // 随机状态的高低字按固定顺序混入。读取状态不抽样，避免对账改变战斗结果。
+        for (const uint64_t word : Random.StateWords())
+        {
+            hash = (hash ^ static_cast<uint32_t>(word)) * 16777619u;
+            hash = (hash ^ static_cast<uint32_t>(word >> 32)) * 16777619u;
         }
         snapshot[16] = static_cast<int32_t>(hash & 0x7fffffffu);
     }

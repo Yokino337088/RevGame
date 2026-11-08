@@ -131,7 +131,7 @@ namespace RevGame.Pvp
             }
             try
             {
-                _duelPipe = new DuelCorePipe();
+                _duelPipe = new DuelCorePipe(id);
                 DuelId = id;
                 CancelAgent();
                 CancelHint();
@@ -296,9 +296,12 @@ namespace RevGame.Pvp
                     _duelPipe.Append(reply.afterFrame + i + 1, reply.frames[i]);
                     DuelPreviousSnapshot = before;
                 }
-                if (DuelSnapshot.Result != 0 && (DuelSnapshot.Result != reply.result || DuelSnapshot.Hash != reply.finalHash))
+                // 满包还可能有历史，等补齐后对账。终局会停止轮询，所以最后一包恰好满包也必须检查。
+                if (DuelSnapshot.Frame > 0 && (reply.frames.Length < DuelAuthority.MaxBatch || DuelSnapshot.Result != 0) &&
+                    DuelSnapshot.Frame == reply.afterFrame + reply.frames.Length &&
+                    (DuelSnapshot.Result != reply.result || DuelSnapshot.Hash != reply.finalHash))
                 {
-                    DuelError = "决斗终局指纹不一致。";
+                    DuelError = "决斗同帧指纹不一致。";
                 }
             }
             catch (Exception error)

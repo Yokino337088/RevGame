@@ -6,6 +6,9 @@ import json
 folder = Path(__file__).resolve().parent
 data = json.loads((folder / "Duel.v1.json").read_text(encoding="utf-8"))
 arena = data["arena"]
+protocol = data["coreProtocol"]
+if arena["frameMilliseconds"] != 50:
+    raise ValueError("决斗逻辑帧固定为 50 毫秒（20 Hz）")
 # 顺序是小端配置包的契约。新增字段需要同时核对托管端协议与 C++ 消费位置。
 words = [arena[k] for k in ("health", "extent", "movePerFrame", "frameLimit", "spawnOffset",
                              "energy", "energyPerFrame", "energyPerHit", "frameMilliseconds")]
@@ -16,7 +19,7 @@ words += [data["jump"][k] for k in ("speed", "gravity", "hitHeight")]
 assert all(type(x) is int and 0 <= x <= 100000 for x in words)
 # 同时把入场资格和战斗数值纳入指纹，防止两端只更新了一半。
 fingerprint = 2166136261
-for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"]]:
+for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"], protocol]:
     fingerprint = ((fingerprint ^ word) * 16777619) & 0xffffffff
 target = folder.parents[1] / "UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs"
 target.parent.mkdir(parents=True, exist_ok=True)
@@ -26,6 +29,8 @@ namespace RevGame.Pvp.Duel
     // 两端共用的生成配置。策划改 JSON 后重新生成，并让客户端和服务端一起使用新指纹。
     public static class DuelConfig
     {{
+        // 原生 FIFO 协议版本，同时纳入联机决斗指纹。
+        internal const int CoreProtocol = {protocol};
         // 从第几手开始允许判定中局劣势。
         public const int MinimumMove = {data["eligibility"]["minimumMove"]};
         // 入场最小估算分差，单位为半目。
@@ -65,5 +70,16 @@ namespace RevGame.Pvp.Duel
             return new[] {{ {", ".join(map(str, words))} }};
         }}
     }}
+}}
+""", encoding="utf-8")
+native_target = folder.parent / "Include/DuelProtocol.Generated.h"
+native_target.write_text(f"""// 由 Config/GenerateDuelConfig.py 生成。
+#pragma once
+
+namespace RevGameCore
+{{
+    // FIFO 协议版本和固定逻辑步长，共用 Duel.v1.json。
+    constexpr int WireVersion = {protocol};
+    constexpr int FrameMilliseconds = {arena["frameMilliseconds"]};
 }}
 """, encoding="utf-8")
