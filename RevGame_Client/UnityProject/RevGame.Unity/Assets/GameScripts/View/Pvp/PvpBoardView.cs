@@ -71,6 +71,14 @@ namespace RevGame.Pvp
         }
 #endif
         private MaterialPropertyBlock _boardBlock, _backgroundBlock;
+        private static readonly int AnalysisPointId = Shader.PropertyToID("_AnalysisPoint");
+        private static readonly int AnalysisStartedId = Shader.PropertyToID("_AnalysisStarted");
+        private int _analysisPoint = -1;
+        private float _analysisStarted;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        internal int VisibleAnalysisPoint => isActiveAndEnabled ? _analysisPoint : -1;
+        internal bool AnalysisShaderReady => ShaderReady && boardRenderer.sharedMaterial.HasProperty(AnalysisPointId);
+#endif
         private int _revision = -1, _hover = -1, _width, _height;
 #if UNITY_ANDROID
         private Rect _layoutViewport;
@@ -86,6 +94,8 @@ namespace RevGame.Pvp
             _width = 0;
             _eyeAtlasVersion = -1;
             _eyeFrame = -1;
+            _analysisPoint = -1;
+            _analysisStarted = 0;
             EyeVersion = 0;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             EyeFramesSeen = 0;
@@ -115,6 +125,15 @@ namespace RevGame.Pvp
             _boardBlock.SetFloat("_ShowTerritory", core != null && (service.HintsVisible || core.Phase == GoPhase.Scoring) ? 1 : 0);
             _boardBlock.SetFloat("_ScoreProgress", counting ? _scoreProgress : -1);
             _boardBlock.SetFloat("_Clock", Time.unscaledTime);
+            // 状态只上传一个格子和动画起点。高亮不会写入棋盘数组，也不需要另建格子对象。
+            int analysisPoint = service.HintsVisible ? service.AnalysisPoint : -1;
+            if (_analysisPoint != analysisPoint)
+            {
+                _analysisPoint = analysisPoint;
+                _analysisStarted = Time.unscaledTime;
+            }
+            _boardBlock.SetFloat(AnalysisPointId, _analysisPoint);
+            _boardBlock.SetFloat(AnalysisStartedId, _analysisStarted);
             bool live = service.ReplayStep < 0;
             _boardBlock.SetFloat("_ComputerPreview", live ? service.ComputerPreviewPoint : -1);
             _boardBlock.SetFloat("_ComputerLand", live ? service.ComputerLandingPoint : -1);
@@ -378,6 +397,7 @@ namespace RevGame.Pvp
         private void OnDisable()
         {
             _revision = -1;
+            _analysisPoint = -1;
             _hover = -1;
             _analyzedCore = null;
             ResetScoreCount();

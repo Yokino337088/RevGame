@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>九路围棋胜率条与落点光效验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head><body>
+<header class="topbar"><div class="brand"><i>围</i>RevGame · 围棋史莱姆</div><div class="tag">2026-11-09 · PVP</div></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">Unity 2022.3.15f1c1 · PC AssetBundle</div><h1>九路围棋胜率条与落点光效验收</h1><p>专用胜率条使用 Kenney 进度条 Sprite。鸦鸦建议与棋盘高亮使用同一条当前棋谱分析。</p></div></div>
+<main>
+<section class="chapter"><h2>实测结果</h2>
+<div class="table-scroll"><table><thead><tr><th>入口</th><th>业务断言</th></tr></thead><tbody>
+<tr><td>真实 PC 资源</td><td>正式大厅进入 PVP 后，新进度条从 PvpAgent 图集取图并验证 Sprite 已打包，棋盘实际材质包含且支持新增 Shader 参数。再次从大厅入场，两项检查仍通过。</td></tr>
+<tr><td>本地人机</td><td>固定 HTTP 回复先显示黑 35%、白 65%，对白与 Shader 都指向 A1。通过实际 EventSystem 关闭和恢复辅助，棋盘高亮随开关切换，胜率继续显示。落下 A1 后旧高亮清除，下一次回复移至 B1，胜率过渡到黑 76%、白 24%。无效分析不产生高亮。</td></tr>
+<tr><td>局域网 UTP</td><td>真实双端邀请、换手与分析通过 22 项断言。两端终局指纹一致，测试服务已清理。</td></tr>
+</tbody></table></div>
+<p>面板经 RevUI 和已有图集租约获取素材，RevPool 棋盘通过原有 MaterialPropertyBlock 绘制，实盘规则与落子请求保持独立。新素材来自 Kenney 的 CC0 1.0 发行包。<a href="https://kenney.nl/assets/ui-pack-adventure">Kenney 原始发布页</a></p>
+</section>
+<section class="chapter"><h2>Unity 实拍</h2>
+<p>原图 1920 × 1080，报告图为 1600 像素宽 JPEG。动图由本轮实拍帧合成，含两段高亮与关闭辅助的画面。</p>
+<div class="gallery"><figure><a href="画面/未分析.jpg"><img src="画面/未分析.jpg" alt="未分析"></a><figcaption>新进度条未收到估计时显示破折号</figcaption></figure><figure><a href="画面/A1高亮.jpg"><img src="画面/A1高亮.jpg" alt="A1高亮"></a><figcaption>鸦鸦建议 A1，同一格显示蓝紫光晕、扩散环和角标</figcaption></figure><figure><a href="画面/关闭辅助.jpg"><img src="画面/关闭辅助.jpg" alt="关闭辅助"></a><figcaption>关闭辅助后收起棋盘格光效，胜率继续显示</figcaption></figure><figure><a href="画面/B1高亮.jpg"><img src="画面/B1高亮.jpg" alt="B1高亮"></a><figcaption>落子后旧格清除，新一轮建议 B1，胜率条更新至黑 76%、白 24%</figcaption></figure></div>
+<figure style="margin-top:14px"><img src="画面/落点光效.gif" alt="A1 与 B1 的蓝紫棋盘高亮"><figcaption>格子描边、扩散环和换手后的新落点</figcaption></figure>
+</section>
+<section class="chapter"><h2>环境与复现</h2>
+<p>RevCLI 刷新导入后以 <code>game.background.build</code> 构建 PC 和 Android AB。首次 PC 构建遇到第五章图集元文件写入错误，核对文件可写后串行重建，两平台成功。</p>
+<p><code>rev_discover</code> 发现 Editor 与 Play 能力，<code>rev_call</code> 进入 Play 并执行 <code>pvp.enter</code>。随后 <code>rev_run</code> 执行 55 个步骤，使用 <code>pvp.analysis-fixture</code>、<code>pvp.presentation</code>、<code>ui.click</code>、<code>pvp.action</code> 和 <code>pvp.lan-analysis-begin</code> 验证。回到大厅后错误数为 0，finally 恢复编辑态。</p>
+<p>画面使用本地人机验证，联机本轮覆盖 UTP 规则和分析回归。云端回复使用固定 HTTP 替身。Android 已构建资源，真机和独立 Player 本轮未运行。</p>
+</section></main>
+<footer><span>RevMCP 运行 20261109-171914-aab663e8</span><span>原始证据保存在本机 .codex/work/pvp-board-advice-2026-11-09</span></footer></body></html>

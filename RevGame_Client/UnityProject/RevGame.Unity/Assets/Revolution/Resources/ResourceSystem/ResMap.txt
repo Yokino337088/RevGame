@@ -305,6 +305,7 @@ Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_001|atlas_pieceframes|Player_S
 Art/Pieces/Player/Swordman/Player_Swordman_3_Idle_002|atlas_pieceframes|Player_Swordman_3_Idle_002
 Atlases/PieceFrames|atlas_pieceframes|PieceFrames
 Art/UI/Pvp/DeepSeekLogo|atlas_pvpagent|DeepSeekLogo
+Art/UI/Pvp/PvpWinRateTrack|atlas_pvpagent|PvpWinRateTrack
 Atlases/PvpAgent|atlas_pvpagent|PvpAgent
 Art/UI/PvpDefeat/PvpDefeatArt|atlas_pvpdefeat|PvpDefeatArt
 Atlases/PvpDefeat|atlas_pvpdefeat|PvpDefeat

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3939485017
+CRC: 61698560
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 74ddc5df24cd9ea57543f8bc00fd3b1a
+    Hash: 94b1c88cce4a14bc2e13188cc01db50b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 74ddc5df24cd9ea57543f8bc00fd3b1a
+    Hash: 94b1c88cce4a14bc2e13188cc01db50b
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -21,5 +21,6 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Atlases/PvpAgent.spriteatlasv2
+- Assets/GameRes/Art/UI/Pvp/PvpWinRateTrack.png
 - Assets/GameRes/Art/UI/Pvp/DeepSeekLogo.png
 Dependencies: []

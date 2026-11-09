@@ -7,6 +7,7 @@ Shader "RevGame/Pvp/IvoryGoBoard"
         _Ivory("象牙白棋盘",Color)=(.95,.91,.81,1)
         _Gold("神殿金线",Color)=(.70,.51,.24,1)
         _EyeTex("双眼图集",2D)="white" {}
+        [HideInInspector] _AnalysisPoint("鸦鸦建议点",Float)=-1
     }
     SubShader
     {
@@ -38,6 +39,7 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 return 1-smoothstep(r,r+max(min(fwidth(d),.02),.003),d);
             }
             float _ComputerPreview, _ComputerLand, _ComputerDrop;
+            float _AnalysisPoint, _AnalysisStarted;
 
             // 流光铺在整格内，距离方形边缘决定亮边。数值只控制画面，不参与落子规则。
             float3 MagicTile(float3 baseColor, float2 p, float edge, float clock, bool incoming)
@@ -49,6 +51,21 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                 float3 tint = incoming ? float3(.85,.39,.075) : float3(.64,.025,.05);
                 float inside = 1 - smoothstep(.45,.50,edge);
                 return lerp(baseColor, lerp(tint, glow, saturate(veins*.8+rim)), inside*(.56+.36*rim));
+            }
+
+            // 蓝紫的整格光晕、扩散环与角标只为当前建议着手计算，棋子和气口仍在其上绘制。
+            float3 AnalysisTile(float3 baseColor, float2 p, float edge, float r, float age)
+            {
+                float reveal = smoothstep(0,.22,age);
+                float breath = .65+.35*sin(age*5);
+                float sweep = frac(age*.85);
+                float ring = Line(r-lerp(.10,.46,sweep),.022)*(1-sweep);
+                float corner = Line(edge-.42,.021)*smoothstep(.22,.35,min(abs(p.x),abs(p.y)));
+                float diamond = Line(abs(p.x)+abs(p.y)-.23,.018);
+                float fill = (1-smoothstep(.32,.49,edge))*(.46+.16*breath);
+                float3 violet = lerp(baseColor,float3(.26,.19,.69),fill*reveal);
+                float3 border = lerp(violet,float3(.36,.26,.85),corner*reveal);
+                return lerp(border,float3(.65,.93,1),saturate(ring*.95+diamond*breath)*reveal);
             }
 
             fixed4 frag(V input):SV_Target
@@ -100,6 +117,10 @@ Shader "RevGame/Pvp/IvoryGoBoard"
                     {
                         // 流光先铺底，再画气口与眼位。共用格上的黑白标记保持自己的颜色。
                         col=MagicTile(col,p,edge,t,false);
+                    }
+                    if(!scoring&&abs(index-_AnalysisPoint)<.1)
+                    {
+                        col=AnalysisTile(col,p,edge,r,max(0,t-_AnalysisStarted));
                     }
                     if(mark.x>.5)
                     {

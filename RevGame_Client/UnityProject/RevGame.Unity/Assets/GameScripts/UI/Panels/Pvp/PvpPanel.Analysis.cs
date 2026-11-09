@@ -1,5 +1,6 @@
 using DG.Tweening;
 using RevGame.Pvp.Agent;
+using RevGame.View;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,7 @@ namespace RevGame.Pvp
         private const float AnalysisTweenSeconds = .65f;
         private RectTransform _analysisHud, _analysisBlackMask, _analysisBlack;
         private CanvasGroup _analysisHudGroup;
+        private Image _analysisLight, _analysisDark;
         private Text _analysisBlackLabel, _analysisWhiteLabel;
         private Tween _analysisTween;
         private GoPositionAnalysis _paintedAnalysis, _spokenAnalysis;
@@ -20,9 +22,10 @@ namespace RevGame.Pvp
         internal float AnalysisBlackRatio => _shownBlackRatio;
         internal string AnalysisBlackLabel => _analysisBlackLabel.text;
         internal string AnalysisWhiteLabel => _analysisWhiteLabel.text;
+        internal bool AnalysisSkinPacked => _analysisLight.sprite != null && _analysisLight.sprite.packed;
 #endif
 
-        /// <summary>占用棋盘和按钮之间的留白，沿用 PVP 按钮 Sprite 与顶部字体，不引入新的图集依赖。</summary>
+        /// <summary>占用棋盘和按钮之间的留白，两色共用同一个九宫格进度条素材。</summary>
         private void BindAnalysisHud()
         {
             _analysisHud = AnalysisRect("winRate", transform, .21f, .101f, .79f, .146f);
@@ -30,10 +33,11 @@ namespace RevGame.Pvp
             _analysisHudGroup = _analysisHud.gameObject.AddComponent<CanvasGroup>();
             _analysisHudGroup.blocksRaycasts = false;
             RectTransform track = AnalysisRect("bar", _analysisHud, .20f, .22f, .80f, .78f);
-            AnalysisSegment("whiteFill", track, new Color(1f, .97f, .86f));
+            _analysisLight = AnalysisSegment("whiteFill", track, new Color(1f, .98f, .88f));
             _analysisBlackMask = AnalysisRect("blackMask", track, 0, 0, .5f, 1);
             _analysisBlackMask.gameObject.AddComponent<RectMask2D>();
-            _analysisBlack = AnalysisSegment("blackFill", _analysisBlackMask, new Color(.23f, .24f, .28f));
+            _analysisDark = AnalysisSegment("blackFill", _analysisBlackMask, new Color(.25f, .27f, .34f));
+            _analysisBlack = _analysisDark.rectTransform;
             _analysisBlackLabel = AnalysisLabel("blackPercent", 0f, .19f);
             _analysisWhiteLabel = AnalysisLabel("whitePercent", .81f, 1f);
             ResetAnalysisHud();
@@ -49,15 +53,33 @@ namespace RevGame.Pvp
             return rect;
         }
 
-        private RectTransform AnalysisSegment(string name, Transform parent, Color color)
+        private static Image AnalysisSegment(string name, Transform parent, Color color)
         {
             RectTransform rect = AnalysisRect(name, parent, 0, 0, 1, 1);
             Image segment = rect.gameObject.AddComponent<Image>();
-            segment.sprite = _pass.image.sprite;
             segment.type = Image.Type.Sliced;
             segment.color = color;
             segment.raycastTarget = false;
-            return rect;
+            return segment;
+        }
+
+        /// <summary>入场只取一次打包 Sprite，双色条共享副本。离场先解绑再归还图集。</summary>
+        private void BindAnalysisSkin(GameSpriteAtlasService.ScopedAtlasLease atlas)
+        {
+            ReleaseAnalysisSkin();
+            Sprite skin = atlas.GetPackedSprite("PvpWinRateTrack");
+            _analysisLight.sprite = skin;
+            _analysisDark.sprite = skin;
+        }
+
+        private void ReleaseAnalysisSkin()
+        {
+            Sprite skin = _analysisLight.sprite;
+            _analysisLight.sprite = _analysisDark.sprite = null;
+            if (skin != null)
+            {
+                Destroy(skin);
+            }
         }
 
         private Text AnalysisLabel(string name, float xMin, float xMax)
@@ -79,7 +101,7 @@ namespace RevGame.Pvp
 
         private void RefreshAnalysisHud(PvpService service, bool playing)
         {
-            bool visible = playing && service.AnalysisMode;
+            bool visible = playing && service.AnalysisMode && _analysisLight.sprite != null;
             Show(_analysisHud.gameObject, visible);
             if (!visible)
             {

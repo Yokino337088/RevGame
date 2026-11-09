@@ -17,6 +17,15 @@ namespace RevGame.Pvp
         internal Func<PvpAgentSettings, GoAgentPosition, IGoAgentRequest> AnalysisRequestFactory = DeepSeekGoRequest.StartAnalysis;
         internal GoPositionAnalysis PositionAnalysis { get; private set; }
         internal bool AnalysisFresh => PositionAnalysis != null && ReferenceEquals(Core, _analysisBoard) && CanShowAnalysis && !_awaiting;
+        /// <summary>只公开当前棋谱的落点索引。停一手、断线、终局和过期回复均没有格子可画。</summary>
+        internal int AnalysisPoint
+        {
+            get
+            {
+                GoAgentAction suggestion = AnalysisFresh ? PositionAnalysis.Suggestion : null;
+                return suggestion?.Kind == GoAction.Play ? suggestion.Y * GoCore.BoardSize + suggestion.X : -1;
+            }
+        }
         internal bool AnalysisPending => _analysisRequest != null;
         internal string AnalysisFailure { get; private set; } = "";
         internal bool AnalysisMode => Mode != PvpConnectionMode.Local || IsComputerGame;

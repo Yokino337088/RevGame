@@ -220,13 +220,15 @@ namespace RevGame.Pvp
         {
             int version = _leaseVersion;
             var atlases = RevServices.GetRequired<GameSpriteAtlasService>();
-            // 面板持有两张实际用到的图集。先等像素就绪，再让GameFlow撤掉转场遮挡。
+            // 面板持有本局实际用到的图集。先等像素就绪，再让 GameFlow 撤掉转场遮挡。
             if (portraitCatalog == null)
             {
                 throw new InvalidOperationException("九路围棋缺少鸦鸦表情目录");
             }
             var eyeAtlas = atlases.AcquireScopedAtlas("BoardStatus");
             _matchAtlases.Add(eyeAtlas);
+            var agentAtlas = atlases.AcquireScopedAtlas("PvpAgent");
+            _matchAtlases.Add(agentAtlas);
             _matchAtlases.Add(atlases.AcquireScopedAtlas("PvpDefeat"));
             foreach (string name in portraitCatalog.AtlasNames)
             {
@@ -270,6 +272,7 @@ namespace RevGame.Pvp
                 throw new InvalidOperationException("九路围棋棋盘未就绪或本次进入已取消。");
             }
             _board.BindEyeFrames(eyeAtlas);
+            BindAnalysisSkin(agentAtlas);
             _board.gameObject.SetActive(false);
             _yayaLines = new PvpYayaLines(portraitCatalog);
             PrepareMatchSound();
@@ -476,6 +479,7 @@ namespace RevGame.Pvp
             RevTimer.CancelAllOf(this);
             RevUIAnim.StopAllOf(this);
             ResetMatchFeedback();
+            ReleaseAnalysisSkin();
             ReleaseMatchSound();
             _yayaLines = null;
             if (_board != null)

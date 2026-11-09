@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "Android",
-  "buildTime": "2026-11-09 16:50:23",
+  "buildTime": "2026-11-09 17:18:23",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 299214 },
     { "name": "atlas_bosschapter01frames", "size": 445657 },
@@ -16,7 +16,7 @@
     { "name": "atlas_helperframes", "size": 113387 },
     { "name": "atlas_helperstormframes", "size": 535173 },
     { "name": "atlas_pieceframes", "size": 1154706 },
-    { "name": "atlas_pvpagent", "size": 13545 },
+    { "name": "atlas_pvpagent", "size": 14909 },
     { "name": "atlas_pvpdefeat", "size": 288580 },
     { "name": "atlas_ui_tavern_imgbkatlas", "size": 451370 },
     { "name": "atlas_uibattle", "size": 290519 },
@@ -73,7 +73,7 @@
     { "name": "material_pieces", "size": 2497 },
     { "name": "material_ui", "size": 2829 },
     { "name": "pvp_arena", "size": 5277 },
-    { "name": "shared_shaders", "size": 294552 },
+    { "name": "shared_shaders", "size": 296040 },
     { "name": "ui_chapters_shared", "size": 30018 },
     { "name": "ui_diagnostics", "size": 6672 },
     { "name": "ui_endless", "size": 16502 },
