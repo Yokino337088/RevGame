@@ -39,6 +39,22 @@ RevResManager.Load / LoadAsync(根目录, 资源名, 类型, 分组)
 
 RevGame 的实测环境是 Windows Editor、Android 构建目标与 Direct3D 11。旧桥选了 Android 包，序章 Shader 名称可读而背景粉屏。切回正确的 PC 包来源后，纹理绑定和画面恢复。项目名、素材名与预览动作只用于这个样例。 [框架修复](https://github.com/Yokino337088/Revolution/commit/58e5af27e4821c9ba14421564bc1cd81716d5b22) · [RevGame 验收证据](https://github.com/Yokino337088/RevGame/commit/0e04caf13aee2b3f0765a4c3740fd93fc611bd6f)
 
+### 2.2 旧版 Revolution 的判断与最小升级
+
+**先查 Unity 实际编译的副本。** 在目标工程查 `rg -n -A 25 'static string MainName' Assets Packages -g RevABLoader.cs`。Git 或 Registry UPM 依赖先在 Package Manager 核对安装来源与解析版本，再打开实际包源码查看。若 `UNITY_ANDROID` 在 `UNITY_EDITOR` 下仍能命中并返回 `Android`，该版本有误选风险。若 Editor 已优先返回 `PC`，或移动平台分支均排除 `UNITY_EDITOR`，再用 `ResolveBundlePath` 核对热更和自定义重定向后的最终路径。
+
+| 安装方式 | 最小更新 |
+|---|---|
+| `Assets/Revolution` 源码快照 | 修复只涉及 `Assets/Revolution/Runtime/RevResourceSystem/Implementation/Loaders/RevABLoader.cs`。先对比上游补丁。文件兼容时可同步修复后的 C#，有定制或其它差异时只把 `UNITY_EDITOR` 优先返回 `"PC"` 的分支移植到 `MainName`，保留原 Player 分支和 `.meta`。 |
+| Git UPM 或 Registry UPM | 在 Package Manager 或 `Packages/manifest.json` 更新到含修复且兼容的包版本。Git UPM 固定到含修复的包导出提交，注意框架源码 `main` 提交和 `package` 导出提交不同。等 Unity 重新解析，检查实际源码与生成的 `Packages/packages-lock.json`。需维持旧版时，在该依赖的维护分支或受版本管理的嵌入包回移单文件补丁，禁止修改 `Library/PackageCache` 作为交付。 |
+| 本地或嵌入 UPM、Git 子模块 | 在实际包源或子模块分支回移同一处补丁，或将引用升级到含修复的提交。检查同名嵌入包是否优先于 manifest 中的依赖。 |
+
+[上游单文件补丁](https://github.com/Yokino337088/Revolution/commit/58e5af27e4821c9ba14421564bc1cd81716d5b22) · [包含修复的 package 导出示例](https://github.com/Yokino337088/Revolution/commit/a6f8e1e6f4263e5c37cf49a0a11907e352fdbfa8) · [Unity UPM 更新说明](https://docs.unity3d.com/cn/2022.3/Manual/upm-ui-update.html)
+
+**按结果补齐产物。** 同一项目已有与当前宿主、Unity 和资源版本兼容的一整套 PC AB 时直接复用。缺包、包版本不匹配或缺少适用图形 API 时，通过项目既有构建链重建 PC AB，配套同步主包、依赖、清单与映射。PC 包使用目标项目自己的产物。
+
+**最小验证。** 等待脚本编译和依赖解析完成，保留 Android Build Target，开启真实 AB 并从正式场景冷启动。核对主包和相关依赖的最终路径，桌面应读取同套 PC 构建的包。打开使用自定义 Shader 的实际界面，读回 Shader 支持、纹理绑定并截图，再退出重进一次。涉及 Android 发布时另验 Android Player 的主包、依赖和相同场景。直读只用于区分资源模式。
+
 ## 3. ResMap.txt（逻辑名 → 包名 + 资源名）
 
 - 位置：`Assets/Revolution/Resources/ResourceSystem/ResMap.txt`（**随包体进 Resources**，运行时 `Resources.Load<TextAsset>("ResourceSystem/ResMap")` 读）。

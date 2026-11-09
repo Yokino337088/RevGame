@@ -17,6 +17,11 @@ table{width:100%;border-collapse:collapse}th,td{border:1px solid #dfdbc8;padding
 <section><h2>为什么容易误判</h2>
 <p>当时 Unity 2022.3.15f1c1 的活动构建目标是 Android，编辑器渲染实际使用 Direct3D 11，<code>UseABInEditor</code> 已开启。Android 构建目标会让编辑器编译出 <code>UNITY_ANDROID</code>，这个宏同时存在于桌面编辑器进程里。只看构建目标或材质上显示的 Shader 名称，会漏掉实际使用的图形 API 和 AB 来源。</p>
 <p>旧版 <code>RevABLoader.MainName</code> 先按平台宏选包，因而选择 <code>StreamingAssets/Android</code>。序章仍能取得名为 <code>RevGame/Background/LobbyMagicCottage</code> 的 Shader 对象，但其 Android 编译变体无法为当前 D3D11 渲染提供兼容程序，背景纹理绑定断言为 <code>false</code>，画面落到亮粉错误表现。<code>Shader.name</code>、资源加载成功以及 Console 安静都不足以证明材质画对了。<a href="https://docs.unity3d.com/cn/2022.3/Manual/shader-loading.html">Unity Shader 加载说明</a></p></section>
+<section><h2>为什么这次拉取后才出现</h2>
+<p><strong>根因早就存在。</strong> 本机 Git reflog 显示 2026-11-09 19:51 从 <code>a1e1194</code> 快进到 <code>7e5ac7ed</code>。拉取前后的 <code>RevABLoader.cs</code> 是同一个 Git blob（<code>7b1f054</code>），旧选包分支在 2026-10-17 的仓库初始提交就已存在。小屋背景 Shader 源文件和受版本控制的 Unity <code>ProjectSettings</code> 在这次更新区间内也相同。<a href="https://github.com/Yokino337088/RevGame/compare/a1e1194b...7e5ac7ed">拉取前后提交对比</a></p>
+<p><strong>这次拉取确实换了包。</strong> <code>7e5ac7ed</code> 更新围棋胜率条时，同时发布了 PC 和 Android 的 <code>shared_shaders</code> 及对应清单。Android 的共享 Shader 包从 <code>b2795842</code> 变为 <code>88adaca1</code>，两端的 <code>lobby_cottage</code> 包字节保持一致。这解释了为什么即使小屋素材没变，拉取后实际被读取的共享 Shader 数据仍可能变化。Git 能证明包发生了变化，尚无旧包与新包在同一 Editor 设置下的对照，无法单独认定这次重打包首次触发了粉屏。<a href="https://github.com/Yokino337088/RevGame/commit/7e5ac7ed">共享 Shader 包更新</a></p>
+<p><strong>此前是否走过相同条件，现有记录无法回溯。</strong> 故障现场确认同时满足 Android Build Target、Windows D3D11 和开启真实 AB。<code>UseABInEditor</code> 存在本机 <code>EditorPrefs</code>，Git 对比看不到它何时被打开，也不能还原每次 Play 的活动构建目标和打开的场景。此前如果用 AssetDatabase 直读、在 PC 目标下 Play，或没有进入使用该 Shader 的画面，旧缺陷就可能一直看不出来。</p>
+<p>因此，这次拉取是用户首次观察到故障的时间点。已验证的因果关系是旧选包逻辑在当时的环境中导向 Android 包，修复选包后，同一项目版本、同一构建目标和同一 AB 模式下恢复了画面。具体是哪项本机条件或哪份旧包让问题此前未显现，仍是待证的触发因素。</p></section>
 <section><h2>修复与实测</h2>
 <p>在 Revolution 源仓库让 <code>UNITY_EDITOR</code> 优先选 PC 主包，重新导出并同步到 RevGame。正式 Player 继续走各平台的主包分支。这次在同一台机器、同一 Android 构建目标、同一真实 AB 模式下，用仓库已有的 PC AB 复测。</p>
 <table><thead><tr><th>检查</th><th>修复前</th><th>修复后</th></tr></thead><tbody>
