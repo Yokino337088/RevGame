@@ -33,21 +33,17 @@ namespace RevGame.View
         // 章节与图像的对应是美术绑定，不是策划关卡规则；参数在场景中序列化，修改无需重编代码。
         [Header("第 1 章 · 原始教学背景（独立图集与专用材质）")]
         [SerializeField]
-        private ChapterBackgroundStyle tutorialBackground = new ChapterBackgroundStyle("SceneBackdrop_0fc7e394")
-        {
-            materialName = "ArcaneScene",
-            shaderName = "RevGame/Background/Chapter01_Tutorial"
-        };
+        private ChapterBackgroundStyle tutorialBackground = DefaultBackgroundStyle(1);
         [Header("第 2 章 · 魔法村落（明朗阳光 / 绿金流光 / 萤火）")]
-        [SerializeField] private ChapterBackgroundStyle villageBackground = new ChapterBackgroundStyle("Chapter02_Village");
+        [SerializeField] private ChapterBackgroundStyle villageBackground = DefaultBackgroundStyle(2);
         [Header("第 3 章 · 魔法湖泊（波动 / 银蓝反光 / 焦散）")]
-        [SerializeField] private ChapterBackgroundStyle lakeBackground = new ChapterBackgroundStyle("Chapter03_Lake");
+        [SerializeField] private ChapterBackgroundStyle lakeBackground = DefaultBackgroundStyle(3);
         [Header("第 4 章 · 死亡沼泽（使用湖面 v1 / 黏稠暗流 / 泥泡）")]
-        [SerializeField] private ChapterBackgroundStyle swampBackground = new ChapterBackgroundStyle("Chapter04_Swamp");
+        [SerializeField] private ChapterBackgroundStyle swampBackground = DefaultBackgroundStyle(4);
         [Header("第 5 章 · 冰雪极地（冰封扫光 / 寒雾 / 双层飘雪）")]
-        [SerializeField] private ChapterBackgroundStyle iceBackground = new ChapterBackgroundStyle("Chapter05_Ice");
+        [SerializeField] private ChapterBackgroundStyle iceBackground = DefaultBackgroundStyle(5);
         [Header("第 6 章 · 象牙金神殿（迷幻螺纹 / 慢旋符文 / 呼吸法阵）")]
-        [SerializeField] private ChapterBackgroundStyle templeBackground = new ChapterBackgroundStyle("Chapter06_Temple");
+        [SerializeField] private ChapterBackgroundStyle templeBackground = DefaultBackgroundStyle(6);
         [Header("背景可读性与换章演出")]
         [Tooltip("棋盘内减弱光束、雪花及扭曲，外围保留完整效果；不会给棋盘盖黑色遮罩。")]
         [Range(0f, 1f)][SerializeField] private float backgroundBoardProtection = 0.82f;
@@ -93,23 +89,8 @@ namespace RevGame.View
                 return backgroundRenderer;
             }
         }
-        private sealed class BackgroundLease
-        {
-            public string Name;
-            public string MaterialName;
-            public Texture2D Texture;
-            public Sprite Sprite;
-            public Material Material;
-            public bool Finished;
-            public bool MaterialFinished;
-            public bool TextureRequested;
-            public bool MaterialRequested;
-            public GameSpriteAtlasService.TutorialSpriteLease Atlas;
-            public bool Released;
-            public string Error;
-        }
-        private BackgroundLease _pendingBackground;
-        private BackgroundLease _currentBackground;
+        private ChapterBackgroundLease _pendingBackground;
+        private ChapterBackgroundLease _currentBackground;
         private bool _chapterReady = true;
         private int _requestedBackgroundChapter;
         private int _activeBackgroundChapter;
@@ -145,7 +126,33 @@ namespace RevGame.View
             }
         }
 
-        private ChapterBackgroundStyle BackgroundStyle(int chapter)
+        /// <summary>没有战斗场景时使用项目默认分包绑定。战斗场景保留 Inspector 配置，同场景预览也可读取。</summary>
+        internal static ChapterBackgroundStyle DefaultBackgroundStyle(int chapter)
+        {
+            switch (chapter)
+            {
+                case 1:
+                    return new ChapterBackgroundStyle("SceneBackdrop_0fc7e394")
+                    {
+                        materialName = "ArcaneScene",
+                        shaderName = "RevGame/Background/Chapter01_Tutorial"
+                    };
+                case 2:
+                    return new ChapterBackgroundStyle("Chapter02_Village");
+                case 3:
+                    return new ChapterBackgroundStyle("Chapter03_Lake");
+                case 4:
+                    return new ChapterBackgroundStyle("Chapter04_Swamp");
+                case 5:
+                    return new ChapterBackgroundStyle("Chapter05_Ice");
+                case 6:
+                    return new ChapterBackgroundStyle("Chapter06_Temple");
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(chapter), "背景章节只允许 1~6");
+            }
+        }
+
+        internal ChapterBackgroundStyle BackgroundStyle(int chapter)
         {
             switch (chapter)
             {
@@ -175,100 +182,33 @@ namespace RevGame.View
             _requestedBackgroundChapter = chapter;
             _backgroundError = null;
             _chapterReady = false;
-            ReleaseBackground(_pendingBackground);
+            _pendingBackground?.Dispose();
             _pendingBackground = null;
             LoadChapterBackgroundAsync(chapter, version);
         }
         private async void LoadChapterBackgroundAsync(int chapter, int version)
         {
-            BackgroundLease lease = null;
+            ChapterBackgroundLease lease = null;
             try
             {
-                ChapterBackgroundStyle style = BackgroundStyle(chapter);
-
-                if (style == null || string.IsNullOrWhiteSpace(style.textureName) || string.IsNullOrWhiteSpace(style.materialName) || string.IsNullOrWhiteSpace(style.shaderName))
-                {
-                    throw new InvalidOperationException("章节背景的图片与材质逻辑名不能为空：" + chapter);
-                }
-                lease = new BackgroundLease { Name = style.textureName, MaterialName = style.materialName };
+                lease = new ChapterBackgroundLease(chapter, BackgroundStyle(chapter));
                 _pendingBackground = lease;
-
-                // 标记“已请求”后再调用：编辑器缓存命中可能同步回调，退出只释放实际发起的请求。
-                if (chapter == 1)
-                {
-                    lease.Atlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireTutorialSprite();
-                    LoadTutorialSpriteAsync(lease);
-                }
-                else
-                {
-                    lease.TextureRequested = true;
-                    RevResManager.LoadAsync(ChapterBackgroundRoot, lease.Name, typeof(Texture2D), handle =>
-                    {
-                        if (lease.Released || _released)
-                        {
-                            return;
-                        }
-                        lease.Finished = true;
-                        lease.Texture = handle.Content as Texture2D;
-
-                        if (!handle.IsLoaded || lease.Texture == null)
-                        {
-                            lease.Error = "背景图片加载失败：" + lease.Name + " / " + handle.ErrorReason;
-                        }
-                    }, RevResGroup.Scene);
-                }
-                lease.MaterialRequested = true;
-                RevResManager.LoadAsync(RevResPath.Material_Background, lease.MaterialName, typeof(Material), handle =>
-                {
-                    if (lease.Released || _released)
-                    {
-                        return;
-                    }
-                    lease.MaterialFinished = true;
-                    lease.Material = handle.Content as Material;
-
-                    if (!handle.IsLoaded || lease.Material == null)
-                    {
-                        lease.Error = "章节独立材质加载失败：" + lease.MaterialName + " / " + handle.ErrorReason;
-                    }
-                }, RevResGroup.Scene);
-                float deadline = Time.realtimeSinceStartup + 30f;
-                while (!_released && version == _backgroundVersion && (!lease.Finished || !lease.MaterialFinished))
-                {
-                    if (Time.realtimeSinceStartup > deadline)
-                    {
-                        throw new TimeoutException("章节背景加载超时：" + chapter);
-                    }
-                    await RevTask.Yield();
-                }
+                await lease.LoadAsync(chapter);
                 if (_released || version != _backgroundVersion)
                 {
                     return;
-                }
-                if (!string.IsNullOrEmpty(lease.Error))
-                {
-                    throw new InvalidOperationException(lease.Error);
                 }
                 if (!string.IsNullOrEmpty(_backgroundError))
                 {
                     throw new InvalidOperationException(_backgroundError);
                 }
-                if (lease.Material == null || lease.Material.shader == null || !lease.Material.shader.isSupported
-                    || lease.Material.shader.name != style.shaderName)
-                {
-                    throw new InvalidOperationException("章节独立 Shader 未就绪、与材质不匹配或不支持当前平台：" + lease.MaterialName);
-                }
-                if (chapter != 1)
-                {
-                    lease.Sprite = Sprite.Create(lease.Texture, new Rect(0, 0, lease.Texture.width, lease.Texture.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
-                    lease.Sprite.name = lease.Name;
-                }
+                Sprite sprite = lease.GetRendererSprite();
                 // 先让 Renderer 与参数块指向新图，再销毁旧 Sprite、Release 旧图；不能在渲染器还持有它时卸包。
-                BackgroundLease oldLease = _currentBackground;
+                ChapterBackgroundLease oldLease = _currentBackground;
                 _currentBackground = lease;
                 _pendingBackground = null;
                 _activeBackgroundChapter = chapter;
-                backgroundRenderer.sprite = lease.Sprite;
+                backgroundRenderer.sprite = sprite;
                 backgroundRenderer.sharedMaterial = lease.Material;
 
                 if (chapter == 1)
@@ -279,7 +219,7 @@ namespace RevGame.View
                 _backgroundArrivalTime = Time.unscaledTime;
                 UploadChapterStyle();
                 FitCamera();
-                ReleaseBackground(oldLease);
+                oldLease?.Dispose();
 
                 // 新Renderer已接管，等旧Sprite的Destroy落地后再清理零引用包。
                 // 章节交接时做一次，不把昂贵的闲置资源扫描放进战斗Update；有其他使用者的包由引用计数保留。
@@ -313,34 +253,9 @@ namespace RevGame.View
             {
                 if (lease != null && !ReferenceEquals(lease, _currentBackground))
                 {
-                    ReleaseBackground(lease);
+                    lease.Dispose();
                 }
             }
-        }
-        /// <summary>第一章只在被选中时向项目图集服务租一张 Sprite，不再由大厅提前预热。</summary>
-        private async void LoadTutorialSpriteAsync(BackgroundLease lease)
-        {
-            try
-            {
-                Sprite sprite = await lease.Atlas.LoadAsync(lease.Name);
-
-                if (lease.Released || _released)
-                {
-                    if (sprite != null)
-                    {
-                        Destroy(sprite);
-                    }
-                    return;
-                }
-                lease.Sprite = sprite;
-
-                if (sprite == null)
-                {
-                    lease.Error = "第一章图集租约已取消";
-                }
-            }
-            catch (Exception error) { lease.Error = "第一章图集加载失败：" + error.Message; }
-            finally { lease.Finished = true; }
         }
         private void UploadChapterStyle()
         {
@@ -394,45 +309,17 @@ namespace RevGame.View
                 backgroundRenderer.transform.position = _originalBackgroundPosition;
                 backgroundRenderer.SetPropertyBlock(null);
             }
-            ReleaseBackground(_currentBackground);
+            _currentBackground?.Dispose();
             _currentBackground = null;
             _activeBackgroundChapter = 0;
             _lastBackgroundUv = Vector4.zero;
             _backgroundProperties = null;
         }
-        private static void ReleaseBackground(BackgroundLease lease)
-        {
-            if (lease == null || lease.Released)
-            {
-                return;
-            }
-            lease.Released = true;
-
-            // 两种 Sprite 都由本租约拥有：第一章是 GetSprite 的副本，其余章是动态完整矩形。
-            if (lease.Sprite != null)
-            {
-                Destroy(lease.Sprite);
-            }
-            lease.Sprite = null;
-            lease.Texture = null;
-            lease.Material = null;
-
-            if (lease.TextureRequested)
-            {
-                RevResManager.Release(ChapterBackgroundRoot, lease.Name);
-            }
-            if (lease.MaterialRequested)
-            {
-                RevResManager.Release(RevResPath.Material_Background, lease.MaterialName);
-            }
-            lease.Atlas?.Dispose();
-            lease.Atlas = null;
-        }
         private void DisposeChapterBackground()
         {
             ++_backgroundVersion;
             RestoreOriginalBackground();
-            ReleaseBackground(_pendingBackground);
+            _pendingBackground?.Dispose();
             _pendingBackground = null;
         }
         private void OnValidate()

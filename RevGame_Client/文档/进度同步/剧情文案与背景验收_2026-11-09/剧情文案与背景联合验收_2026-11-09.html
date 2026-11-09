@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>剧情文案与背景联合验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head>
+<body><header class="topbar"><div class="brand"><i>R</i>REV GAME</div><span class="tag">剧情 / 背景</span></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">UNITY EDITOR PLAY · 2026-11-09</div><h1>剧情文案与背景联合验收</h1>
+<p>从 StartScene 冷启动 · 普通存档 · 真实 PC AssetBundle · 1920 × 1080</p>
+<div class="stamp">16 篇 · 64 句 · 7 种背景 · 新增运行错误 0</div></div></div>
+<main>
+<section class="chapter"><h2>在大厅验收</h2>
+<p>执行 <code>剧情/篇章清单</code> 查看 ID。输入 <code>剧情/播放篇章 chapter6</code> 可在大厅看第六章对白与神殿。输入 <code>剧情/播放篇章 boss_after_6</code> 可看第六章胜后对白与同一神殿。<code>ending</code> 按配置显示小屋，省略 ID 播放序章。</p>
+<p>使用点击翻页或 <code>剧情/下一句</code>，末句后关闭。跳过可提前结束。播放期间留在原场景，预览结束后恢复输入。玩家的剧情、教学、解锁进度和原战役保留。</p>
+</section>
+<section class="chapter"><h2>实际画面</h2><p>截图复核记录了两处排版现象。第四章第 1 句的句号单独折行，第六章浅色标题在神殿高光处对比较低。下方保留对应原画面。</p><div class="gallery"><figure><a href="media/chapter1.jpg"><img src="media/chapter1.jpg" alt="第一章 · 图集原画" loading="lazy"></a><figcaption>第一章 · 图集原画</figcaption></figure><figure><a href="media/chapter2.jpg"><img src="media/chapter2.jpg" alt="第二章 · 村落" loading="lazy"></a><figcaption>第二章 · 村落</figcaption></figure><figure><a href="media/chapter3.jpg"><img src="media/chapter3.jpg" alt="第三章 · 湖泊" loading="lazy"></a><figcaption>第三章 · 湖泊</figcaption></figure><figure><a href="media/chapter4.jpg"><img src="media/chapter4.jpg" alt="第四章 · 沼泽" loading="lazy"></a><figcaption>第四章 · 沼泽</figcaption></figure><figure><a href="media/chapter5.jpg"><img src="media/chapter5.jpg" alt="第五章 · 冰雪" loading="lazy"></a><figcaption>第五章 · 冰雪</figcaption></figure><figure><a href="media/chapter6.jpg"><img src="media/chapter6.jpg" alt="第六章 · 神殿" loading="lazy"></a><figcaption>第六章 · 神殿</figcaption></figure><figure><a href="media/ending.jpg"><img src="media/ending.jpg" alt="尾声 · 小屋" loading="lazy"></a><figcaption>尾声 · 小屋</figcaption></figure><figure><img src="media/temple.gif" alt="第六章神殿动态连拍" loading="lazy"><figcaption>第六章 · 8 张连续实拍，按 150 ms/帧回放</figcaption></figure></div></section>
+<section class="chapter"><h2>逐篇结果</h2><div class="table-scroll"><table>
+<thead><tr><th>篇章</th><th>标题</th><th>实际背景</th><th>实际 Shader</th><th>通过句数</th></tr></thead><tbody>
+<tr><td><code>opening</code></td><td>序章 · 被鸦鸦捡走的冒险家</td><td>小屋</td><td><code>LobbyMagicCottage</code></td><td>12/12</td></tr><tr><td><code>tutorial</code></td><td>第一课 · 别让我白救你</td><td>小屋</td><td><code>LobbyMagicCottage</code></td><td>5/5</td></tr><tr><td><code>lesson</code></td><td>鸦鸦的实战提醒</td><td>第一章 · 图集原画</td><td><code>Chapter01_Tutorial</code></td><td>5/5</td></tr><tr><td><code>chapter1</code></td><td>第一章 · 她的小考验</td><td>第一章 · 图集原画</td><td><code>Chapter01_Tutorial</code></td><td>4/4</td></tr><tr><td><code>chapter2</code></td><td>第二章 · 不许乱收邀请</td><td>第二章 · 村落</td><td><code>Chapter02_Village</code></td><td>4/4</td></tr><tr><td><code>chapter3</code></td><td>第三章 · 水面里的真心话</td><td>第三章 · 湖泊</td><td><code>Chapter03_Lake</code></td><td>4/4</td></tr><tr><td><code>chapter4</code></td><td>第四章 · 雾里只跟着我</td><td>第四章 · 沼泽</td><td><code>Chapter04_Swamp</code></td><td>4/4</td></tr><tr><td><code>chapter5</code></td><td>第五章 · 冰雪与借口</td><td>第五章 · 冰雪</td><td><code>Chapter05_Ice</code></td><td>4/4</td></tr><tr><td><code>chapter6</code></td><td>第六章 · 归途之前</td><td>第六章 · 神殿</td><td><code>Chapter06_Temple</code></td><td>4/4</td></tr><tr><td><code>boss_after_1</code></td><td>胜后 · 一点利息</td><td>第一章 · 图集原画</td><td><code>Chapter01_Tutorial</code></td><td>2/2</td></tr><tr><td><code>boss_after_2</code></td><td>胜后 · 她在等你</td><td>第二章 · 村落</td><td><code>Chapter02_Village</code></td><td>2/2</td></tr><tr><td><code>boss_after_3</code></td><td>胜后 · 湖没有回答</td><td>第三章 · 湖泊</td><td><code>Chapter03_Lake</code></td><td>2/2</td></tr><tr><td><code>boss_after_4</code></td><td>胜后 · 被拉住的手</td><td>第四章 · 沼泽</td><td><code>Chapter04_Swamp</code></td><td>2/2</td></tr><tr><td><code>boss_after_5</code></td><td>胜后 · 融雪时分</td><td>第五章 · 冰雪</td><td><code>Chapter05_Ice</code></td><td>2/2</td></tr><tr><td><code>boss_after_6</code></td><td>胜后 · 魔女的条件</td><td>第六章 · 神殿</td><td><code>Chapter06_Temple</code></td><td>2/2</td></tr><tr><td><code>ending</code></td><td>尾声 · 约定</td><td>小屋</td><td><code>LobbyMagicCottage</code></td><td>6/6</td></tr>
+</tbody></table></div></section>
+<section class="chapter"><h2>RevMCP 调用与结果</h2>
+<div class="table-scroll"><table><thead><tr><th>调用</th><th>参数与结果</th></tr></thead><tbody>
+<tr><td><code>rev_discover</code></td><td>连接指定 RevGame.Unity 工程。编译后重进 Play，发现剧情 GM、<code>story.state</code>、<code>story.yaya-state</code>、<code>story.background-refs</code>。</td></tr>
+<tr><td><code>rev_call</code></td><td><code>剧情/篇章清单</code> 核对 16 篇。<code>剧情/播放篇章</code> 参数 <code>arg0=chapter6</code>，大厅绑定 <code>Chapter06_Temple</code> 原画和专用 Shader。<code>剧情/跳过</code> 后，<code>story.background-refs</code> 参数 <code>chapter=6</code> 读到两项均为 0。另验证了第一章图集。</td></tr>
+<tr><td><code>rev_run</code> 大厅全量</td><td>242 步通过。冷启动时六章背景引用均为 0。逐句确认完整对白、标题、说话人、布局、背景纹理和 Shader 实际绑定，背景覆盖视口。13 个使用章节背景的篇章播放中各持有 1 份材质及原画引用，退出后均归零。每篇结束仍在 StartScene，面板关闭且输入解锁。</td></tr>
+<tr><td><code>rev_run</code> 战斗回归</td><td>29 步通过。第一章正式剧情和同章 GM 预览借用场景资源，引用数均保持 1。第一章战斗中预览第六章仅额外借用第六章，退出预览后第六章归零、第一章仍为 1，回大厅后第一章也归零。</td></tr>
+</tbody></table></div>
+<p>两份计划的 finally 均成功结束测试 Play。测试前后运行 Error / Exception 计数均为 0。覆盖 Unity 2022.3.15f1c1 Editor Play 和现有 PC AB。未执行 Android、独立 Player 或其余章节的正式战役。</p>
+<p>剧情面板和战斗共用项目背景租约，通过 <code>RevResManager</code> 取得材质与纹理，第一章经 <code>GameSpriteAtlasService</code> 取图集。<code>RevUI</code> 面板关闭后归还独立租约。大厅使用当前工程的默认资源绑定，战斗场景仍支持 Inspector 覆盖。现有 AB 和框架无需改动。</p>
+</section></main><footer><span>RevGame · 剧情背景验收</span><span>2026-11-09</span></footer></body></html>

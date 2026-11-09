@@ -20,17 +20,17 @@ namespace RevGame.UI
             public int Index;
             /// <summary>播放代次，缓存面板据此区分同一篇章的两次重播。</summary>
             public int Version;
-            /// <summary>本帧实际使用的背景编号。正式播放与篇章配置一致，开发预览可以借用大厅背景。</summary>
-            public int BackgroundChapter;
+            /// <summary>开发态预览可在大厅单独加载章背景。背景编号始终来自篇章配置。</summary>
+            public bool Preview;
         }
         /// <summary>绑定预制体storyView节点，负责立绘、文字与按钮事件。</summary>
         [RevBind] private StoryView _storyView;
         /// <summary>全屏背景的单面板租约；打开后等待可画才允许玩家翻页，关闭时释放。</summary>
         [RevBind] private RevGame.View.StoryBackdrop _storyBackdrop;
-        /// <summary>宿主等待本篇背景可画后才允许翻页；章节背景仍由场景拥有。</summary>
+        /// <summary>宿主等待本篇背景可画后才允许翻页；面板只负责归还自己取得的租约。</summary>
         public RevTask PrepareBackdropAsync()
         {
-            return _storyBackdrop.PrepareAsync(Data.BackgroundChapter);
+            return _storyBackdrop.PrepareAsync(Data.Episode.BackgroundChapter, Data.Preview);
         }
         /// <summary>旧预制体的根是固定设计尺寸。把背景和翻页区一起铺满 UI 层，内容由 StoryView 适配安全区。</summary>
         protected override void OnBindView()
@@ -82,6 +82,9 @@ namespace RevGame.UI
             // 检查整句的排版高度，不能因打字刚开始只有几个字就误判长对白能放下。
             var settings = dialogue.GetGenerationSettings(dialogue.rectTransform.rect.size);
             float required = dialogue.cachedTextGeneratorForLayout.GetPreferredHeight(line.Text, settings) / dialogue.pixelsPerUnit;
+            var background = panel._storyBackdrop.GetComponent<UnityEngine.UI.RawImage>();
+            Material material = background.material;
+            string textureProperty = panel._storyBackdrop.Chapter == 1 ? "_MainTex" : "_ChapterTex";
             return new System.Collections.Generic.Dictionary<string, object>
             {
                 ["open"] = true,
@@ -99,6 +102,9 @@ namespace RevGame.UI
                 ["mobilePreview"] = UnityEngine.Device.Application.isMobilePlatform,
                 ["deviceModel"] = UnityEngine.Device.SystemInfo.deviceModel,
                 ["backgroundChapter"] = panel._storyBackdrop.Chapter,
+                ["backgroundShader"] = material.shader.name,
+                ["backgroundTexture"] = background.texture == null ? "" : background.texture.name,
+                ["backgroundTextureBound"] = background.texture != null && material.HasProperty(textureProperty) && material.GetTexture(textureProperty) == background.texture,
                 ["title"] = card.Find("title").GetComponent<UnityEngine.UI.Text>().text,
                 ["speaker"] = card.Find("speaker").GetComponent<UnityEngine.UI.Text>().text,
                 ["text"] = line.Text,

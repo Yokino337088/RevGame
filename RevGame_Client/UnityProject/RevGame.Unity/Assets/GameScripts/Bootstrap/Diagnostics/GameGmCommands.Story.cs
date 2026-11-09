@@ -32,7 +32,7 @@ namespace RevGame.Bootstrap
             {
                 return RequireStoryResult(RevServices.GetRequired<GameFlow>().ReplayOpeningStory());
             });
-            RegisterCommand("剧情/播放篇章", "文案预览，留在当前界面且不写进度；无对应章节背景时用大厅背景。ID见剧情/篇章清单", args =>
+            RegisterCommand("剧情/播放篇章", "按篇章配置原地预览对白与背景，不写进度。ID见剧情/篇章清单", args =>
             {
                 return RequireStoryResult(RevServices.GetRequired<GameFlow>().PreviewStoryForTest(args.Str(0, "opening")));
             }, RevGMArg.Str("篇章ID", "opening"));

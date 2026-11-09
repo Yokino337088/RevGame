@@ -1,7 +1,6 @@
-// 全屏剧情背景租约：大厅使用独立小屋材质，章节直接借当前GamePresentation已加载的原画与Shader。
-// 只负责展示与等比铺满，不切场景/加载全部章节；关闭先解除UI引用，再释放自己加载的大厅材质。
+// 全屏剧情背景：大厅使用小屋材质，正式篇章借用场景原画，开发预览也可单独租用配置对应的章节资源。
+// 只负责展示与等比铺满；关闭先解除UI引用，再归还本面板的资源。
 using System;
-using RevGame.Flow;
 using Revolution;
 using UnityEngine;
 using UnityEngine.Sprites;
@@ -9,13 +8,14 @@ using UnityEngine.UI;
 
 namespace RevGame.View
 {
-    /// <summary>剧情面板拥有的单张RawImage背景；章节资源仍由场景持有，本组件只借用。</summary>
+    /// <summary>剧情面板的全屏 RawImage，最多持有一章独立背景；同章战斗中优先借用已经交付的原画。</summary>
     [RequireComponent(typeof(RawImage))]
     public sealed class StoryBackdrop : MonoBehaviour
     {
         /// <summary>背景UI和大厅资源句柄，0=大厅，正数=当前章；取消代次阻止迟到结果写到新故事。</summary>
         private RawImage _image;
         private RevResHandle _lobby;
+        private ChapterBackgroundLease _chapterLease;
         private int _generation;
         /// <summary>章节背景单面板材质副本，只复制一次以承接SpriteRenderer参数；关闭销毁，不逐帧或逐棋子克隆。</summary>
         private Material _chapterMaterial;
@@ -34,7 +34,7 @@ namespace RevGame.View
             private set;
         }
         /// <summary>等待当前面板需要的背景，不打开其它章节；参数来自篇章配置。</summary>
-        public async RevTask PrepareAsync(int chapter)
+        public async RevTask PrepareAsync(int chapter, bool preview)
         {
             Release();
             int generation = _generation;
@@ -56,39 +56,40 @@ namespace RevGame.View
                 {
                     throw new InvalidOperationException("大厅剧情背景加载失败：" + _lobby?.ErrorReason);
                 }
+                Texture texture = material.GetTexture("_ChapterTex");
+                if (texture == null)
+                {
+                    throw new InvalidOperationException("大厅剧情背景缺少实际纹理");
+                }
                 _image.material = material;
-                _image.texture = material.GetTexture("_ChapterTex");
+                _image.texture = texture;
                 _image.uvRect = new Rect(0, 0, 1, 1);
-                _sourceAspect = (float)_image.texture.width / _image.texture.height;
+                _sourceAspect = (float)texture.width / texture.height;
             }
             else
             {
-                // 流程在打开剧情前已等本章背景就绪，直接借用能保持和战斗相同的原画/Shader，而非复制六份材质。
                 GamePresentation presentation = FindObjectOfType<GamePresentation>();
                 SpriteRenderer renderer = presentation?.BackgroundRenderer;
-                if (renderer == null || renderer.sprite == null || renderer.sharedMaterial == null || presentation.BackgroundChapter != chapter)
+                if (renderer != null && renderer.sprite != null && renderer.sharedMaterial != null && presentation.BackgroundChapter == chapter)
+                {
+                    BindChapter(renderer.sharedMaterial, renderer.sprite, renderer.sprite.texture, chapter);
+                }
+                else if (preview)
+                {
+                    var style = presentation == null ? GamePresentation.DefaultBackgroundStyle(chapter) : presentation.BackgroundStyle(chapter);
+                    var lease = new ChapterBackgroundLease(chapter, style);
+                    _chapterLease = lease;
+                    await lease.LoadAsync(chapter);
+                    if (generation != _generation)
+                    {
+                        return;
+                    }
+                    Texture texture = lease.Sprite == null ? lease.Texture : lease.Sprite.texture;
+                    BindChapter(lease.Material, lease.Sprite, texture, chapter);
+                }
+                else
                 {
                     throw new InvalidOperationException("剧情背景与当前章节未交付：" + chapter);
-                }
-                _image.texture = renderer.sprite.texture;
-                _chapterMaterial = new Material(renderer.sharedMaterial);
-                // SpriteRenderer会通过绘制数据绑定主纹理，RawImage改为显式绑定，防止材质副本仍采样默认白图。
-                _chapterMaterial.SetTexture("_MainTex", _image.texture);
-                _image.material = _chapterMaterial;
-                Vector4 uv = DataUtility.GetOuterUV(renderer.sprite);
-                _image.uvRect = new Rect(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y);
-                _sourceAspect = renderer.sprite.rect.width / renderer.sprite.rect.height;
-                if (_chapterMaterial.HasProperty("_ArtUvRect"))
-                {
-                    _chapterMaterial.SetVector("_ArtUvRect", new Vector4(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y));
-                }
-                if (_chapterMaterial.HasProperty("_BoardProtection"))
-                {
-                    _chapterMaterial.SetFloat("_BoardProtection", 0);
-                }
-                if (_chapterMaterial.HasProperty("_EffectTime"))
-                {
-                    _chapterMaterial.SetFloat("_EffectTime", -1);
                 }
             }
             if (_image.texture == null)
@@ -99,6 +100,38 @@ namespace RevGame.View
             _sourceUv = _image.uvRect;
             Ready = true;
             FitCrop();
+        }
+
+        /// <summary>把战斗 Shader 需要的采样数据交给 RawImage。图集需局部 UV，其余原画使用完整纹理。</summary>
+        private void BindChapter(Material source, Sprite sprite, Texture texture, int chapter)
+        {
+            Vector4 uv = sprite == null ? new Vector4(0, 0, 1, 1) : DataUtility.GetOuterUV(sprite);
+            _sourceAspect = sprite == null ? (float)texture.width / texture.height : sprite.rect.width / sprite.rect.height;
+            _image.texture = texture;
+            _image.uvRect = new Rect(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y);
+            _chapterMaterial = new Material(source);
+            // SpriteRenderer 的属性块不会带到 UI。第二章起 Shader 从 _ChapterTex 采样，第一章从 _MainTex 采样图集。
+            _chapterMaterial.SetTexture("_MainTex", texture);
+            if (chapter == 1)
+            {
+                _chapterMaterial.SetVector("_ArtUvRect", new Vector4(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y));
+            }
+            else
+            {
+                _chapterMaterial.SetTexture("_ChapterTex", texture);
+                _chapterMaterial.SetFloat("_Aspect", _sourceAspect);
+                _chapterMaterial.SetFloat("_Transition", 1);
+                _chapterMaterial.SetFloat("_PreviewTime", -1);
+            }
+            if (_chapterMaterial.HasProperty("_BoardProtection"))
+            {
+                _chapterMaterial.SetFloat("_BoardProtection", 0);
+            }
+            if (_chapterMaterial.HasProperty("_EffectTime"))
+            {
+                _chapterMaterial.SetFloat("_EffectTime", -1);
+            }
+            _image.material = _chapterMaterial;
         }
         /// <summary>等比cover裁切，背景铺满屏幕；不改变人物或对话框布局，不让小屋随屏幕比例变形。</summary>
         private void FitCrop()
@@ -117,7 +150,7 @@ namespace RevGame.View
         {
             FitCrop();
         }
-        /// <summary>面板回池解除借用引用；只有自己加载过的大厅材质才释放，不能替场景卸章节背景。</summary>
+        /// <summary>面板回池先解除 RawImage 的借用，再归还独立租约。场景本身的引用仍由场景归还。</summary>
         public void Release()
         {
             _generation++;
@@ -137,6 +170,8 @@ namespace RevGame.View
                 Destroy(_chapterMaterial);
                 _chapterMaterial = null;
             }
+            _chapterLease?.Dispose();
+            _chapterLease = null;
         }
         /// <summary>面板真正销毁时兜底释放，Release可重复调用不会多还引用。</summary>
         private void OnDestroy()

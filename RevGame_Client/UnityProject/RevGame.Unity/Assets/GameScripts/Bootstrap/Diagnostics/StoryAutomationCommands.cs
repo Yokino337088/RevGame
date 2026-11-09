@@ -44,6 +44,20 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("story.next", "点击剧情下一句", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().AdvanceStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.skip", "与右上角跳过按钮共用正式剧情收尾", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().SkipStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.yaya-state", "只读鸦鸦立绘/表情、全屏背景、层级与文本布局", Empty, _ => RevGame.UI.StoryPanel.YayaSnapshot(), readOnly: true, owner: Owner);
+            const string backgroundSchema = "{\"type\":\"object\",\"properties\":{\"chapter\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":6}},\"required\":[\"chapter\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("story.background-refs", "只读指定章节原画与材质的引用数，核对独立预览关闭后归还", backgroundSchema, json =>
+            {
+                int chapter = JsonUtility.FromJson<BackgroundArgs>(json).chapter;
+                var style = RevGame.View.GamePresentation.DefaultBackgroundStyle(chapter);
+                int textureRefs = chapter == 1
+                    ? RevResManager.GetRefCount(RevResPath.Atlases, RevGame.View.GameSpriteAtlasService.TutorialAtlasName)
+                    : RevResManager.GetRefCount(RevGame.View.GamePresentation.ChapterBackgroundRoot, style.textureName);
+                return new Dictionary<string, object>
+                {
+                    ["textureRefs"] = textureRefs,
+                    ["materialRefs"] = RevResManager.GetRefCount(RevResPath.Material_Background, style.materialName)
+                };
+            }, readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("ui.mobile-panels", "只读当前面板的安全设计框和全屏遮罩覆盖", Empty, _ => RevGame.UI.GameMobileLayout.InspectMobilePanels(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("lobby.yaya-state", "只读StartScene实际场景对象、背景遮罩、待机与HomePanel无旧背景", Empty, _ => LobbySnapshot(), readOnly: true, owner: Owner);
 #if UNITY_EDITOR
@@ -64,7 +78,7 @@ namespace RevGame.Bootstrap
                 return Accepted(RevLogic.Get<TutorialLogic>()?.ClickCell(cell.x, cell.y) == true);
             }, owner: Owner);
             RevRuntimeAutomation.Register("tutorial.finish", "完成实操后进入第一章", Empty, _ => Accepted(RevServices.GetRequired<GameFlow>().CompleteTutorial()), owner: Owner);
-            RevRuntimeAutomation.Register("story.preview", "原地预览文案，不更改战役或存档", "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false}", json =>
+            RevRuntimeAutomation.Register("story.preview", "原地预览对白与篇章背景，不更改战役或存档", "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false}", json =>
                 Accepted(RevServices.GetRequired<GameFlow>().PreviewStoryForTest(JsonUtility.FromJson<PreviewArgs>(json).id)), owner: Owner);
         }
         public static void Unregister()
@@ -89,6 +103,13 @@ namespace RevGame.Bootstrap
         private static object Accepted(bool value)
         {
             return new Dictionary<string, object> { ["accepted"] = value };
+        }
+
+        /// <summary>只允许查询 1～6 章的固定资源，参数范围由自动化 schema 校验。</summary>
+        [System.Serializable]
+        private sealed class BackgroundArgs
+        {
+            public int chapter;
         }
         [System.Serializable]
         private sealed class CellArgs

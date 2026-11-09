@@ -18,8 +18,8 @@ namespace RevGame.Flow
         /// <summary>当前播放篇章及从0开始的行号；未播放时篇章为空。</summary>
         private StoryBook.Episode _episode;
         private int _storyLine;
-        /// <summary>本次实际展示的背景，0为大厅。开发预览可回退，配置里的章节保持原样。</summary>
-        private int _storyBackgroundChapter;
+        /// <summary>开发预览可以在当前场景独立加载章节背景；正式流程等待场景交付。</summary>
+        private bool _storyPreview;
         /// <summary>每次播放/取消递增。异步加载回调带旧版本时不得再显示旧故事。</summary>
         private int _storyVersion;
         /// <summary>Busy从等待加载起就阻塞底层；Visible只在UI实际打开后允许翻页。</summary>
@@ -146,22 +146,17 @@ namespace RevGame.Flow
                 return false;
             }
             // 先查篇章，输入错误只拒绝GM，不启动异步资源加载。
-            StoryBook.Episode episode;
             try
             {
-                episode = _storyBook.Find(id);
+                _storyBook.Find(id);
             }
             catch (InvalidOperationException error)
             {
                 LastError = error.Message;
                 return false;
             }
-            // 只有已交付的对应章节背景可以借用。其它场景统一使用大厅背景，避免为了看文案创建战役或改存档。
-            bool chapterReady = Screen == GameScreen.Battle && _activePresentation != null
-                && _activePresentation.IsChapterBackgroundReady && _activePresentation.BackgroundChapter == episode.BackgroundChapter;
-            int previewBackgroundChapter = chapterReady ? episode.BackgroundChapter : 0;
             LastError = string.Empty;
-            PlayStory(id, null, previewBackgroundChapter);
+            PlayStory(id, null, preview: true);
             return true;
         }
 #endif
@@ -227,20 +222,20 @@ namespace RevGame.Flow
             _presentedChapter = battle.Chapter;
             PlayStory("chapter" + battle.Chapter, null);
         }
-        /// <summary>预览传入实际背景编号；正式播放直接取配置并继续等待章节交付。</summary>
-        private async void PlayStory(string id, Action completed, int? previewBackgroundChapter = null)
+        /// <summary>正式播放与预览都使用配置中的背景章节。只有开发预览可以在场景外独立加载。</summary>
+        private async void PlayStory(string id, Action completed, bool preview = false)
         {
             int version = ++_storyVersion;
             _storyBusy = true;
             _storyVisible = false;
             _storyLine = 0;
             _storyCompleted = completed;
+            _storyPreview = preview;
             try
             {
                 _episode = _storyBook.Find(id);
-                int backgroundChapter = previewBackgroundChapter ?? _episode.BackgroundChapter;
-                _storyBackgroundChapter = backgroundChapter;
-                if (backgroundChapter > 0 && _activePresentation != null && _activePresentation.BackgroundChapter != backgroundChapter)
+                int backgroundChapter = _episode.BackgroundChapter;
+                if (!preview && backgroundChapter > 0 && _activePresentation != null && _activePresentation.BackgroundChapter != backgroundChapter)
                 {
                     // 领奖会在同一次准备事件里启动剧情和换背景。先交回本次事件，让场景监听器把旧章的就绪标志清掉；
                     // 否则命中缓存的剧情面板可能同步打开，把上一章的背景误当成新章已经交付。
@@ -261,7 +256,7 @@ namespace RevGame.Flow
                 {
                     return;
                 }
-                if (backgroundChapter > 0 && (Screen != GameScreen.Battle || _activePresentation == null || _activePresentation.BackgroundChapter != backgroundChapter))
+                if (!preview && backgroundChapter > 0 && (Screen != GameScreen.Battle || _activePresentation == null || _activePresentation.BackgroundChapter != backgroundChapter))
                 {
                     throw new InvalidOperationException("剧情背景与当前章节未交付：" + backgroundChapter);
                 }
@@ -315,9 +310,9 @@ namespace RevGame.Flow
                 }
                 CancelStory();
                 LastError = error.Message;
-                if (previewBackgroundChapter.HasValue)
+                if (preview)
                 {
-                    RevLog.Exception(error, "文案预览加载失败，已解除预览门禁", "RevGame");
+                    RevLog.Exception(error, "剧情预览加载失败，已解除预览门禁", "RevGame");
                     return;
                 }
                 RevLog.Exception(error, "剧情未完成，保留首次进度以便下次重试", "RevGame");
@@ -345,7 +340,7 @@ namespace RevGame.Flow
         }
         private StoryPanel.Frame StoryFrame()
         {
-            return new StoryPanel.Frame { Book = _storyBook, Episode = _episode, Index = _storyLine, Version = _storyVersion, BackgroundChapter = _storyBackgroundChapter };
+            return new StoryPanel.Frame { Book = _storyBook, Episode = _episode, Index = _storyLine, Version = _storyVersion, Preview = _storyPreview };
         }
         /// <summary>UI和自动化共用入口。一次点击直接下一句，末句之后关闭并执行一次完成回调。</summary>
         public bool AdvanceStory()
