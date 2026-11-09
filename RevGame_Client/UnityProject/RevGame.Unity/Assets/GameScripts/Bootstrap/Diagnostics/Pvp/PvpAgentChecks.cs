@@ -158,8 +158,30 @@ internal static class PvpAgentChecks
         service.Poll();
     }
 
+    /// <summary>一气和两气棋块同时出现，确认发给模型的气口与可选提子一致，并且不移动实盘。</summary>
+    private static void CheckDecisionPrompt(PvpConfig config)
+    {
+        var core = new GoCore(config.komiHalfPoints);
+        Assert(core.TryPlay(GoSide.Black, 0, 0, out _), "建立左下角黑棋");
+        Assert(core.TryPlay(GoSide.White, 1, 0, out _), "白棋叫吃黑棋");
+        Assert(core.TryPlay(GoSide.Black, 4, 4, out _), "黑棋脱先");
+        ulong hash = core.StateHash;
+        var position = GoAgentPosition.Create(core, GoSide.White);
+        string wire = DeepSeekGoRequest.InspectWireBody(position);
+        Assert(wire.Contains("Ke Jie") && wire.Contains("对手最强应手") && wire.Contains("领先时"), "实际系统消息包含读棋和攻守取舍");
+        Assert(wire.Contains("1块(0,0)的气=(0,1)") && wire.Contains("2块(1,0)的气=(2,0)(1,1)"), "实际棋面消息包含双方可核对的气口");
+        Assert(wire.Contains("\"strict\":true") && wire.Contains("\"tool_choice\":{\"type\":\"function\"") && wire.Contains("\"thinking\":{\"type\":\"disabled\"}"), "保留严格工具和强制调用协议");
+        string[] candidates = position.CopyActionIds();
+        int capture = Array.IndexOf(candidates, "play_0_1");
+        Assert(capture >= 0 && position.TryReadAction("{\"actionIndex\":" + capture + "}", out GoAgentAction move)
+            && move.X == 0 && move.Y == 1 && core.TryPreview(GoSide.White, move.X, move.Y, out GoPlayResult result)
+            && result.CapturedCount == 1, "候选索引能通过正式规则提一子");
+        Assert(core.StateHash == hash && position.Matches(core), "提示词和预演不修改棋局");
+    }
+
     public static string Run(PvpConfig config)
     {
+        CheckDecisionPrompt(config);
         var s = new PvpService();
         Assert(!s.Submit(GoAction.Play, 4, 4), "未开局提交返回拒绝，不访问空棋局");
         s.Begin(config);

@@ -57,7 +57,8 @@ namespace RevGame.Pvp.Agent
             var result = new GoAgentPosition { _sequence = core.Sequence, _hash = core.StateHash };
             GoCore snapshot = core.Clone();
             var text = new StringBuilder("九路围棋。坐标x向右、y按下列行号递增，范围0..8。0空1黑2白。你执" + (int)side + "。\n");
-            text.Append("阶段=").Append(core.Phase).Append("；贴目半目单位=").Append(core.KomiHalfPoints).Append('\n');
+            text.Append("阶段=").Append(snapshot.Phase).Append("；已下手数=").Append(snapshot.MoveNumber)
+                .Append("；白方贴目（半目单位）=").Append(snapshot.KomiHalfPoints).Append('\n');
             for (int y = 0; y < 9; y++)
             {
                 text.Append("y=").Append(y).Append(':');
@@ -68,6 +69,10 @@ namespace RevGame.Pvp.Agent
                 text.Append('\n');
             }
             text.Append("连续停一手次数=").Append(core.ConsecutivePasses).Append("；当前死子标记=").Append(core.DeadStones.Low).Append(',').Append(core.DeadStones.High).Append('\n');
+            if (snapshot.Phase == GoPhase.Playing)
+            {
+                AppendTacticalGroups(text, snapshot);
+            }
             if (core.Phase == GoPhase.Playing && shortlist != null)
             {
                 for (int i = 0; i < shortlistCount; i++)
@@ -102,13 +107,45 @@ namespace RevGame.Pvp.Agent
             {
                 text.Append(i).Append('=').Append(result._actions[i].Id).Append(' ');
             }
-            text.Append("\n调用choose_go_action工具，actionIndex选本次候选的索引。避免填己方眼位，无有益着手可pass。");
+            text.Append("\n调用choose_go_action工具，actionIndex选本次候选的索引。");
             if (advice)
             {
                 text.Append("\n这是给玩家的落子建议。优先指出当下最值得考虑的一手；有意义的着手尚存时不要停一手。");
             }
             result.Prompt = text.ToString();
             return result;
+        }
+
+        /// <summary>用独立棋面快照列出双方一气、两气棋块的气口。这里给的是可核对的几何事实，读棋仍需考虑应手。</summary>
+        private static void AppendTacticalGroups(StringBuilder text, GoCore snapshot)
+        {
+            var analysis = new GoBoardAnalysis();
+            snapshot.Analyze(analysis);
+            var liberties = new int[GoCore.PointCount];
+            text.Append("一气或两气的棋块（颜色、代表子坐标、气口坐标）：");
+            bool found = false;
+            for (int index = 0; index < GoCore.PointCount; index++)
+            {
+                if (analysis.Group[index] != index || analysis.Liberties[index] > 2)
+                {
+                    continue;
+                }
+                found = true;
+                int x = index % GoCore.BoardSize;
+                int y = index / GoCore.BoardSize;
+                text.Append('\n').Append((int)snapshot.GetStone(x, y)).Append("块(").Append(x).Append(',').Append(y).Append(")的气=");
+                int count = snapshot.CopyLiberties(index, liberties);
+                for (int i = 0; i < count; i++)
+                {
+                    int point = liberties[i];
+                    text.Append('(').Append(point % GoCore.BoardSize).Append(',').Append(point / GoCore.BoardSize).Append(')');
+                }
+            }
+            if (!found)
+            {
+                text.Append("无");
+            }
+            text.Append('\n');
         }
 
         /// <summary>为本手严格工具Schema复制全部合法ID，不把候选缩成启发式前三手。</summary>

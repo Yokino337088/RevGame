@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>九路围棋DeepSeek决策提示复测</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head>
+<body><header class="topbar"><div class="brand"><i>R</i>REV GAME</div><span class="tag">九路围棋 / Agent</span></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">UNITY EDITOR PLAY · 2026-11-09</div><h1>九路围棋DeepSeek决策提示复测</h1>
+<p>Unity 2022.3.15f1c1 · StartScene 正式进入九路围棋 · 隔离固定棋局</p>
+<div class="stamp">9 步通过 · 新增运行错误 0 · 云端请求 0</div></div></div>
+<main>
+<section class="chapter"><h2>选点策略</h2>
+<p>提示词将公开对局所展示的局部计算和攻守取舍转成九路选点步骤。先查紧气棋块与最强反击，再比较全盘实地、厚薄和先手。领先时少增加无收益的复杂变化，落后时寻找有后续的侵消、切断和劫争。官子按面积规则和贴目判断停一手。</p>
+<p>引用的公开资料包括 DeepMind 对柯洁进退取舍的介绍，以及他在乌镇对局中根据对手改变开局的记录。九路提示词采用这些方法，不预设固定点位。<a href="https://deepmind.google/blog/exploring-the-mysteries-of-go-with-alphago-and-chinas-top-players/">公开棋风介绍</a> · <a href="https://deepmind.google/blog/alphagos-next-move/">乌镇公开对局记录</a></p>
+<p>实际棋面数据新增已下手数、明确的白方贴目，以及规则引擎从快照计算的一气、两气棋块与气口。仍使用单次严格工具调用。DeepSeek 的 Chat Completions 文档说明，指定工具调用与显式思考模式不可同时启用。<a href="https://api-docs.deepseek.com/api/create-chat-completion/">DeepSeek API 契约</a></p>
+</section>
+<section class="chapter"><h2>RevMCP 验收</h2><div class="table-scroll"><table>
+<thead><tr><th>步骤</th><th>结果</th></tr></thead><tbody>
+<tr><td><code>rev_discover</code> 与 <code>rev_call</code></td><td>确认 <code>pvp.enter</code>、<code>pvp.agent-schema-check</code>、<code>pvp.agent-check</code> 等真实入口。正式进入九路围棋，等待场景与配置就绪。</td></tr>
+<tr><td><code>rev_run</code> · 工具请求</td><td>两手样例局的 80 个候选对应整数索引 0～79，唯一工具 <code>choose_go_action</code> 维持 strict。固定紧气棋局校验实际序列化消息包含读棋顺序、双方气口和强制工具设置。</td></tr>
+<tr><td><code>rev_run</code> · 规则与回退</td><td>执白选择 (0,1) 的索引，经真实规则预演提黑一子，原盘指纹未变。现有人机与数子闭环、权限、取消、单次请求、非法响应和本地回退检查通过。</td></tr>
+<tr><td><code>rev_run</code> · 收尾</td><td>正式返回大厅，finally 成功退出测试 Play。运行 Error / Exception 新增 0 条。实时云端授权未就绪，未调用 DeepSeek。</td></tr>
+</tbody></table></div>
+<p>Revolution 的 <code>RevRuntimeAutomation</code> 可复用正式流程和 PVP 配置验证请求及候选边界，棋局继续由现有规则裁决。此次检查不衡量云端棋力、胜率或延迟。固定棋局验证无图形验收项。</p></section>
+</main><footer><span>RevGame · 九路围棋</span><span>2026-11-09</span></footer></body></html>
