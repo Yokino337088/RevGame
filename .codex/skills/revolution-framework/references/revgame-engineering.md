@@ -12,8 +12,8 @@ RevGame 是实践样本，框架 API 仍以目标项目安装版本为准。它�
 
 - [当前项目说明](https://github.com/Yokino337088/RevGame/blob/main/README.md)：先了解现状，再选择下面的源码。
 - [协作约定](https://github.com/Yokino337088/RevGame/blob/main/AGENTS.md)：RevGame自己的目录、性能与自动化约束。
-- 本参考核对的业务基线：`ed8e3627963d3eabc21b9ef21806e9445cb1f8fb`（2026-10-28）。固定提交便于复现；参考main的新改动时重新核对路径与契约。
-- 下面目录均相对 `RevGame_Client/UnityProject/RevGame.Unity/Assets/`。GitHub代码入口：[固定提交 Assets](https://github.com/Yokino337088/RevGame/tree/ed8e3627963d3eabc21b9ef21806e9445cb1f8fb/RevGame_Client/UnityProject/RevGame.Unity/Assets)。
+- 本参考核对的业务基线为 `6f5bcb95`（2026-11-09）。需要了解原型到联机、原生和移动端的阶段变化，先查 [开发复盘和完整提交索引](https://github.com/Yokino337088/RevGame/blob/6f5bcb95/RevGame_Client/文档/项目开发日志/RevGame项目开发复盘_2026-11-09.html)。随后定位改动时的提交与证据。
+- 下面表格中的 Unity 路径相对 `RevGame_Client/UnityProject/RevGame.Unity/Assets/`。GitHub 代码入口见 [固定提交 Assets](https://github.com/Yokino337088/RevGame/tree/6f5bcb95/RevGame_Client/UnityProject/RevGame.Unity/Assets)。
 
 ## 按职责阅读真实代码
 
@@ -23,14 +23,18 @@ RevGame 是实践样本，框架 API 仍以目标项目安装版本为准。它�
 | 大厅/战斗/场景切换 | `GameScripts/Flow/States/GameFlow.cs`、`GameFlow.Scenes.cs`、`GameScripts/Flow/Logic/BattleLogic.cs` | FSM决定业务阶段，RevScope管理域，RevScene异步交割；accepted不是完成 |
 | 原子业务与失败边界 | `GameScripts/Services/Battle/Simulation/BattleService.cs`、`Preparation/BattleService.PieceManagement.cs` | 先完整预检再提交；失败不消费、不部分移除、不改当前流程 |
 | 战斗伤害/预判 | `GameScripts/Services/Battle/Support/BattleService.Damage.cs` | 查询与提交共用公式，预判不扣盾/血/积分；实际伤害只结算一次 |
-| 重量级AI | `GameScripts/Battle/AI/EnemyAI.cs`、`EnemyStates.cs`、`EnemyTactics.cs` | 宿主提供动作，FSM管理时序，纯算法选目标；深快照不污染实战棋子 |
-| 独立支援演员 | `GameScripts/Battle/AI/HelperAI.cs`、`GameScripts/Services/Battle/Support/BattleService.Helper.cs` | 数据身份、胜负资格与表现身份分开；钱包/历史成绩分开；生命周期清理 |
-| UI转发与观察 | `GameScripts/UI/Panels/Battle/BattleHudPanel.cs`、`BattleHudPanel.PieceManagement.cs` | 钩子分工、实际按钮到Logic/Service、定频观察、状态门禁与复用清理 |
+| 重量级AI | `GameScripts/Battle/AI/Enemy/{EnemyAI,EnemyStates,EnemyTactics}.cs` | 宿主提供动作，FSM 管理时序，算法从深快照选择目标；不能在实盘上试算 |
+| 独立支援演员 | `GameScripts/Battle/AI/Helper/HelperAI.cs`、`GameScripts/Services/Battle/Support/Helper/BattleService.Helper.cs` | 数据身份、胜负资格与表现身份分开；钱包/历史成绩分开；生命周期清理 |
+| UI转发与观察 | `GameScripts/UI/Panels/Battle/Hud/{BattleHudPanel,BattleHudPanel.PieceManagement}.cs` | 钩子分工、实际按钮到 Logic/Service、定频观察、状态门禁与复用清理 |
 | 剧情/真实场景教学 | `GameScripts/Flow/Logic/TutorialLogic.cs`、`GameScripts/UI/Panels/Story/StoryView.cs`、`GameScripts/Data/Story/StoryBook.cs` | UI只引导真实业务，打字/音效句柄归属；SO文案是项目需求选择 |
-| 顺序演出 | `GameScripts/Flow/States/GameFlow.BossIntro.cs`、`GameFlow.BossVictory.cs` | RevSequence缓存蓝图，等待资源，finally还原时间/镜头/UI，不二次判胜负 |
+| 顺序演出 | `GameScripts/Flow/States/Boss/{GameFlow.BossIntro,GameFlow.BossVictory}.cs` | RevSequence 缓存蓝图，等待资源，finally 还原时间/镜头/UI，不二次判胜负 |
 | 共享图集/资源池 | `GameScripts/View/Resources/GameSpriteAtlasService.cs`、`GamePoolRequests.cs` | 一次租约、Release配对、晚绑定、在途请求、池持有与临时加载引用分开 |
 | 动态Shader/序列帧 | `GameScripts/View/Combat/Helper/HelperView.cs`、`HelperAttackView.cs`、`GameShader/Helper/HelperGoldReflect_Shader.shader` | 共享材质、每实例参数块显式当前帧纹理/局部UV、对象池停止旧动画 |
 | 配置/资源制作 | `GameScripts/Data/Config/Balance.cs`、`Editor/RevGame/ResourceBuild/GameResourceBuild.cs`、`GameSpriteAtlasBuild.cs` | Excel→工具生成→启动校验；项目入口串联框架工具，不手改生成代码 |
+| 独立模式与局内节拍 | `GameScripts/Flow/States/GameFlow.Endless.cs`、`GameScripts/Flow/Logic/Endless/EndlessLogic.cs`、`GameScripts/Services/Endless/EndlessService.cs` | 复用通用资产和门面；阶段、固定步、增长状态和存档由该模式管理。局部 ECS 是项目内方案，按性能证据决定适用范围。 |
+| 棋规、联机与外部 Agent | `GameScripts/Pvp/Core/GoCore.cs`、`GameScripts/Services/Pvp/PvpService.cs`、`GameScripts/Pvp/Agent/GoAgentPosition.cs` | 玩家入口 `Submit` 与电脑、Agent 都汇入 `SubmitActor`。远端输出先映射到当前合法动作并检查局代次，再走提交；UI 展示分析与回执。 |
+| 传输与双端一致性 | `GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs`、`GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.cs`、仓库根 `RevGame_Server` | 传输负责接入、收发和重连。状态验证要按实际 LAN/CS 分开，检查已接受的序号、指纹与终局。 |
+| 原生模拟与回放 | `GameScripts/Services/Pvp/PvpService.Duel.cs`、`GameScripts/Pvp/Duel/DuelCorePipe.cs`、仓库根 `RevGame_Client/RevGameCore` | Unity 宿主交付完整双席连续帧，C++ 推进确定性模拟。表现读取快照。按契约验帧顺序、快照/哈希、检查点或回放及目标 ABI。 |
 
 可直接打开的典型实现：
 
@@ -48,7 +52,8 @@ RevGame 是实践样本，框架 API 仍以目标项目安装版本为准。它�
 6. **资源就绪是业务交付条件**：Sprite引用存在不等于图集像素已绑定；加载遮挡必须等实际纹理、帧、材质与交互控件可用。重进战斗与冷AB都需验证。
 7. **美术生命周期也是分包边界**：按章节/用途加载材质、Shader、音频与图集，先解决隐式重复/循环。非Sprite采样纹理、引擎字形和UI内置图不能误当Sprite打包。
 8. **清晰度先看源图和平台结果**：放大不创造细节；核对源像素、NPOT、mipmap、过滤、平台尺寸与图集压缩。RevGame四帧小助手使用无损独立图集是局部权衡，不要求全项目无损。
-9. **中文新手注释说明契约**：类/接口说明职责，字段写所有者和单位/范围，关键方法写失败路径；算法解释为什么预检/快照/去重，异步解释何时回收，避免只逐句翻译。
+9. **逐项解释契约和内部实现**：新增或修改的每个类型、字段、方法和回调均写中文新手注释。重要算法分段解释预检、快照、缓存、提交与清理。审核口径见 [代码与注释规范](code-style.md)。
+10. **跨系统输入先归一到项目业务命令**：网络包、外部模型输出与原生输入分别在边界验证类型、范围、代次与序号。超时、重放或非法输入通过统一业务拒绝路径，保持状态一致。Fantasy、DeepSeek 和 C++ Core 是样例项目接入，框架负责通用流程、资源与可验证入口。
 
 ## 不把样本当未经审查的标准答案
 

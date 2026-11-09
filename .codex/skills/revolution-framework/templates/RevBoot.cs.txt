@@ -14,8 +14,10 @@ using UnityEngine;
 
 namespace <你的命名空间>
 {
+    /// <summary>首场景的组合根，由 Unity 启动和销毁，集中装配全局框架与应用服务。</summary>
     public sealed class RevBoot : MonoBehaviour
     {
+        /// <summary>Unity 首帧调用，按依赖顺序初始化。异步装配失败会记录到 Boot 日志。</summary>
         private async void Start()
         {
             // 异步入口必须整体 try/catch，否则异常静默（async void 不会抛给任何人）。
@@ -32,7 +34,7 @@ namespace <你的命名空间>
                 // RevServices.Register<IConfigService>(Config.Load());           // 已有实例：注销时容器不会 Dispose 它
                 // 跟着某个模块 / 场景走的服务，不要放这里：在那个模块的 Awake 注册、OnDestroy 注销（owner: this）。
 
-                // ③ 生命周期：切后台 / 回前台（owner: this 让对象销毁时自动摘除）。
+                // ③ 生命周期：以本宿主为 owner 订阅，OnDestroy 用同一引用解除。
                 RevEvent.AddEventListener(RevAppLifecycle.Resumed, OnResumed, owner: this);
 
                 // ④ UI 方向默认 Auto；项目需要固定方向时，在首次 Open / Preload 前选择（不锁设备方向）。
@@ -51,15 +53,17 @@ namespace <你的命名空间>
         /// <summary>回到前台：长时间后台后连接多半已断、时间被跳过，按需重连 / 重算。</summary>
         private void OnResumed()
         {
+            // 后台时长以秒计。示例只报告长时间离开，实际重连与校时交给连接所有者。
             if (RevAppLifecycle.LastBackgroundSeconds > 60f)
             {
                 RevLog.Info($"后台 {RevAppLifecycle.LastBackgroundSeconds:F0} 秒后回来，需要时在这里重连 / 校准服务器时间", "Boot");
             }
         }
 
+        /// <summary>销毁时解除本宿主的订阅，阻止下一次恢复事件命中已离场对象。</summary>
         private void OnDestroy()
         {
-            RevEvent.RemoveAllByOwner(this);        // 一行防泄漏
+            RevEvent.RemoveAllByOwner(this);
             // 全局服务一般随进程结束；需要"回登录就清空"时：RevServices.UnregisterAll();
         }
     }

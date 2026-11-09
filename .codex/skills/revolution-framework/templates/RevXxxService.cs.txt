@@ -17,7 +17,11 @@ namespace <你的命名空间>
     /// <summary>能力接口（界面只依赖它，不依赖实现 —— 这样能换实现、也能在测试里塞假实现）。</summary>
     public interface IRevXxxService
     {
-        int Gold { get; }
+        /// <summary>当前余额，单位为枚，只由服务提交路径更新。</summary>
+        int Gold
+        {
+            get;
+        }
 
         /// <summary>加金币；返回"现在有多少"（失败必须有出口：结果值 / 抛带人话的异常）。</summary>
         int AddGold(int amount, string reason);
@@ -26,20 +30,36 @@ namespace <你的命名空间>
     /// <summary>实现：纯 C#、可单测、依赖用构造传参（由注册时的工厂递进来；不要在方法里 new 别的服务）。</summary>
     public sealed class RevXxxService : IRevXxxService, IDisposable
     {
+        /// <summary>组合根注入的配置契约。模板保留依赖入口，实际初始余额规则由项目决定。</summary>
         private readonly IRevXxxConfigProvider _config;
+        /// <summary>示例钱包余额，单位为枚，实例创建时为 0。</summary>
         private int _gold;
 
+        /// <summary>接收组合根提供的配置来源，缺少配置依赖时立即拒绝构造。</summary>
         public RevXxxService(IRevXxxConfigProvider config)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public int Gold => _gold;
+        /// <summary>读取当前余额供 UI 显示，读取期间不修改钱包。</summary>
+        public int Gold
+        {
+            get
+            {
+                return _gold;
+            }
+        }
 
+        /// <summary>提交非零的金币变动并返回新余额。示例拒绝无变化输入，真实项目需按业务限制数值范围。</summary>
         public int AddGold(int amount, string reason)
         {
-            if (amount == 0) { throw new RevXxxUsageException("加金币数量不能为 0（业务拒绝要带人话）"); }
+            // 在写入之前拒绝无效变动，调用者可以据此区分失败与成功。
+            if (amount == 0)
+            {
+                throw new RevXxxUsageException("加金币数量不能为 0（业务拒绝要带人话）");
+            }
 
+            // 先提交事实，日志与返回值随后从同一份余额读取。
             _gold += amount;
             RevLog.Info($"加金币 {amount}（{reason}）→ 现有 {_gold}", "Economy");
             return _gold;
@@ -48,6 +68,7 @@ namespace <你的命名空间>
         /// <summary>释放：取消订阅、停计时器、归还资源 —— 容器会逆序调用它。</summary>
         public void Dispose()
         {
+            // 只回收本实例注册的回调，避免误停其它服务。
             RevEvent.RemoveAllByOwner(this);
             RevTimer.CancelAllOf(this);
         }
@@ -56,13 +77,20 @@ namespace <你的命名空间>
     /// <summary>业务在"业务拒绝"时的异常（照 RevGMUsageException 的风格：消息是给使用者看的人话）。</summary>
     public sealed class RevXxxUsageException : Exception
     {
-        public RevXxxUsageException(string message) : base(message) { }
+        /// <summary>携带可展示给操作人的业务拒绝原因。</summary>
+        public RevXxxUsageException(string message) : base(message)
+        {
+        }
     }
 
     /// <summary>配置来源（示例）：真实项目里从配置表 / 服务端拉，这里只留契约。</summary>
     public interface IRevXxxConfigProvider
     {
-        int InitialGold { get; }
+        /// <summary>业务配置中的起始余额，单位为枚。</summary>
+        int InitialGold
+        {
+            get;
+        }
     }
 
     /// <summary>
@@ -83,6 +111,7 @@ namespace <你的命名空间>
         /// <summary>在启动入口注册全局服务；域内使用时显式传该域 owner，并保证退出时收尾。</summary>
         public static void Install(object owner = null)
         {
+            // 先注册配置来源，懒构建业务服务时从同一容器解析该依赖。
             RevServices.Register<IRevXxxConfigProvider, RevXxxConfigProvider>(owner: owner);
             RevServices.Register<IRevXxxService>(s => new RevXxxService(s.GetRequired<IRevXxxConfigProvider>()), owner: owner);
         }
@@ -90,20 +119,42 @@ namespace <你的命名空间>
 
     // ---------- 下面两个是占位：真实项目里换成你的实现 ----------
 
+    /// <summary>模板的最小配置提供者，项目接入时替换为实际配置源。</summary>
     internal sealed class RevXxxConfigProvider : IRevXxxConfigProvider
     {
-        public int InitialGold => 0;
+        /// <summary>模板占位的起始余额，单位为枚。</summary>
+        public int InitialGold
+        {
+            get
+            {
+                return 0;
+            }
+        }
     }
 
+    /// <summary>单个战斗作用域对外提供的房间上下文契约。</summary>
     public interface IRevCombatContext : IDisposable
     {
-        int RoomId { get; }
+        /// <summary>当前实例关联的房间编号，使用者只读。</summary>
+        int RoomId
+        {
+            get;
+        }
     }
 
+    /// <summary>作用域持有的最小房间上下文，离场由持有者释放。</summary>
     internal sealed class RevCombatContext : IRevCombatContext
     {
-        public int RoomId { get; set; }
+        /// <summary>当前房间编号，由战斗装配入口写入。</summary>
+        public int RoomId
+        {
+            get;
+            set;
+        }
 
-        public void Dispose() { }
+        /// <summary>模板没有外部租约。接入战斗资源后，在这里归还该上下文持有的资源。</summary>
+        public void Dispose()
+        {
+        }
     }
 }

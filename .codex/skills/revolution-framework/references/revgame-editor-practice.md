@@ -5,7 +5,7 @@
 先读 [工程实践索引](revgame-engineering.md) 中命中的Editor文件，再查目标工程是否已有同类入口。RevGame的真实工具示例：`Assets/Editor/RevGame/ResourceBuild/GameHelperAutomation.cs`、`GameResourceBuild.cs`，以及 `Assets/Editor/RevGame/GameHelperBuild.cs`。
 
 - 先记录工程绝对路径、Unity版本、活动场景、dirty、playing/paused/compiling、资源加载模式和已运行作业。
-- 已有RevMCP连接且要连续操作时复用会话并 `rev_discover`；一两条临时Editor命令用 `rev.py --project <实际工程> --mode live call <发现到的动作>`。
+- 资产和构建使用 `rev.py --project <实际工程> --mode live call <发现到的动作>`；已有常驻连接按目标项目约定复用。RevGame 的真实 Play 测试使用常驻 RevMCP，先 `rev_discover`。
 - 同一Unity实例的资产修改、导表、构建、Play/Stop、场景交割串行。不能为已有工程再启batch Unity，不把切换通道的耗时改善当成AB构建本体加速。
 - `commands.json`、Editor代码和旧报告是线索，当前实例注册表才决定能调用什么；编译/域重载后重新发现。
 
@@ -76,6 +76,8 @@ schema未变才使用dataOnly；新增字段/表类型需完整导出代码。�
 5. **生成后编译再发现**：图集清单/资源常量写到磁盘不代表Editor或Player程序集已更新。刷新并等编译稳定；若清单仍旧，只读查询实际程序集，必要时显式请求编译，不能跳过白名单。
 6. **先构建再冷启动真实AB**：Editor按PC包加载；核对实际manifest、资源映射、平台贴图与依赖，不从“构建50包”推断手机可运行。实际画面验证白图、背景UV、帧动画、透明排序、遮挡与重复进出。
 7. **收尾**：退出本次Play、恢复原场景与资源模式，停止本次运行时服务；保留用户编辑器及其它工程，不因重启/构建清理无关项目。
+
+域重载期间 HTTP 回执缺失时，先核对工单、实时状态与产物。重新发现能力后，再判断是否需要安全重试。安装后缺少动作时，比对框架桥、工具清单和实时注册表。图集操作可参考 RevGame 同步的 `atlas.inspect/create/set-packables`，其中创建与成员替换是通用能力，按业务分组和构建门禁仍由项目负责。 [回执恢复样本](https://github.com/Yokino337088/RevGame/commit/56c236d8) · [图集动作样本](https://github.com/Yokino337088/RevGame/commit/ba684251)
 
 ## 实际故障的处理方式
 

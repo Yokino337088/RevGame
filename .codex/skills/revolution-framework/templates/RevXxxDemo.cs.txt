@@ -18,15 +18,19 @@ namespace Revolution.Demo.Xxx
     /// <summary><模块名>演示面板（左侧按钮 + 右侧步骤日志）。</summary>
     public sealed class RevXxxDemo : MonoBehaviour
     {
+        /// <summary>当前演示会话的可见日志，追加时最多保留最近 300 条。</summary>
         private readonly List<string> _ui = new List<string>();
+        /// <summary>日志区域的滚动位置，单位为 GUI 像素，追加时跳到末尾。</summary>
         private Vector2 _scroll;
 
+        /// <summary>首次启动时写入操作提示和基线状态，方便与后续按钮结果对照。</summary>
         private void Start()
         {
             Ui("准备：<这个演示需要先做什么，比如先点①配置、先跑一次菜单XX>");
             Ui($"当前状态：<能被观察到的数字/状态，最好每步都能对比>");
         }
 
+        /// <summary>禁用时回收演示宿主持有的框架注册，避免跨场景残留。</summary>
         private void OnDisable()
         {
             // ★ 订阅过的东西必须在这里退订 / 取消：场景销毁后回调还在是最典型的泄漏
@@ -35,8 +39,10 @@ namespace Revolution.Demo.Xxx
             RevMono.RemoveAllOf(this);
         }
 
+        /// <summary>绘制左侧操作入口和右侧日志。状态变更只发生在按钮动作内。</summary>
         private void OnGUI()
         {
+            // 每个绘制区域成对结束，后面的日志窗使用独立布局。
             GUILayout.BeginArea(new Rect(10, 10, 460, Screen.height - 20));
             GUILayout.Label("<b>RevXxx <模块名>演示</b>", TitleStyle());
 
@@ -59,7 +65,11 @@ namespace Revolution.Demo.Xxx
             }
 
             GUILayout.Space(6);
-            if (GUILayout.Button("清空演示日志")) { _ui.Clear(); }
+            if (GUILayout.Button("清空演示日志"))
+            {
+                // 只清空可见日志，保留本次演示的实际业务状态。
+                _ui.Clear();
+            }
             GUILayout.Label("原则：<这个模块的一条铁律，用一句话写在这>", HintStyle());
             GUILayout.EndArea();
 
@@ -67,23 +77,43 @@ namespace Revolution.Demo.Xxx
             GUILayout.BeginArea(new Rect(Screen.width - 520, 10, 510, Screen.height - 20));
             GUILayout.Label("<b>演示步骤日志</b>", TitleStyle());
             _scroll = GUILayout.BeginScrollView(_scroll);
-            foreach (string line in _ui) { GUILayout.Label(line); }
+            foreach (string line in _ui)
+            {
+                GUILayout.Label(line);
+            }
             GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
 
+        /// <summary>追加一行可读证据，保留最近记录并显示最新结果。</summary>
         private void Ui(string line)
         {
             _ui.Add(line);
-            if (_ui.Count > 300) { _ui.RemoveAt(0); }
-            _scroll.y = float.MaxValue;          // 自动滚到最新
+            // 限制 OnGUI 每次重画的日志数量，长时间演示也只保留最近条目。
+            if (_ui.Count > 300)
+            {
+                _ui.RemoveAt(0);
+            }
+            // BeginScrollView 会把偏移限制到实际末尾。
+            _scroll.y = float.MaxValue;
         }
 
         // ---------- 简单样式 ----------
+        /// <summary>标题样式缓存，首次绘制后供后续 OnGUI 复用。</summary>
         private static GUIStyle _title;
+        /// <summary>提示样式缓存，启用换行以适配长说明。</summary>
         private static GUIStyle _hint;
 
-        private static GUIStyle TitleStyle() => _title ??= new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15 };
-        private static GUIStyle HintStyle() => _hint ??= new GUIStyle(GUI.skin.label) { richText = true, fontSize = 12, wordWrap = true };
+        /// <summary>在 OnGUI 使用当前 GUI 皮肤构建标题样式，之后避免重复分配。</summary>
+        private static GUIStyle TitleStyle()
+        {
+            return _title ??= new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15 };
+        }
+
+        /// <summary>从当前皮肤取得可换行的提示样式，首次调用后保留供重绘使用。</summary>
+        private static GUIStyle HintStyle()
+        {
+            return _hint ??= new GUIStyle(GUI.skin.label) { richText = true, fontSize = 12, wordWrap = true };
+        }
     }
 }

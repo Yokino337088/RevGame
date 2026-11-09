@@ -14,14 +14,20 @@ using Revolution;
 
 namespace RevHarness
 {
+    /// <summary>一次进程内运行所有纯 C# 契约检查，汇总结果后返回可供自动化判断的退出码。</summary>
     public static class Program
     {
+        /// <summary>本次执行实际通过的断言条数。</summary>
         private static int _pass;
+        /// <summary>尚未实现的检查条数，独立计数以避免模板误报全通过。</summary>
         private static int _skip;
+        /// <summary>按执行顺序保留失败描述，便于结束后集中定位。</summary>
         private static readonly List<string> Failures = new List<string>();
 
+        /// <summary>运行各组检查。失败返回 1，仅含未实现项返回 2，全部通过返回 0。</summary>
         public static int Main()
         {
+            // 各组独立运行，先收集完整差异，再给调用方一个明确的失败码。
             TimerTable();
             PathKey();
             PoolDoubleReturn();
@@ -29,7 +35,10 @@ namespace RevHarness
 
             Console.WriteLine();
             Console.WriteLine($"通过 {_pass} 项，失败 {_failCount} 项，未实现 {_skip} 项");
-            for (int i = 0; i < Failures.Count; i++) { Console.WriteLine("  FAIL " + Failures[i]); }
+            for (int i = 0; i < Failures.Count; i++)
+            {
+                Console.WriteLine("  FAIL " + Failures[i]);
+            }
             return _failCount > 0 ? 1 : (_skip > 0 ? 2 : 0);
         }
 
@@ -37,6 +46,7 @@ namespace RevHarness
         // ① 槽位表：代际号 / 延迟复用 / 句柄校验（不变量类断言）
         // ============================================================
 
+        /// <summary>待接入的槽位代次检查。当前报告未实现，后续用真实租还接口补断言。</summary>
         private static void TimerTable()
         {
             // 形状示意：真实 API 见 Runtime/RevTimer/Core/RevTimerTable.cs
@@ -52,11 +62,14 @@ namespace RevHarness
         // ② 路径与缓存键：两段键 == 完整路径键（框架承诺过的等价关系）
         // ============================================================
 
+        /// <summary>验证完整路径和分段路径得到相同的缓存键，覆盖可选根目录的边界输入。</summary>
         private static void PathKey()
         {
+            // 固定常见路径，先定位拼接结果，再比对同一资源身份的缓存键。
             string joined = RevResPathUtil.Join("UI/Icon", "Hero_1001");
             That(joined == "UI/Icon/Hero_1001", "Join：两段拼成完整逻辑路径（根可带可不带结尾 /）");
             That(RevResPathUtil.ComputeKey("UI/Icon", "Hero_1001"), RevResPathUtil.ComputeKey(joined), "两段键 == 完整路径键");
+            // 空根、单分隔符与尾分隔符应与显式拼接保持一致。
             string[] roots = { null, "", "/", "Data", "Data/" };
             for (int i = 0; i < roots.Length; i++)
             {
@@ -70,6 +83,7 @@ namespace RevHarness
         // ③ 池内核：重复归还必须被拦（防"同一个对象被发两次"）
         // ============================================================
 
+        /// <summary>待接入的重复归还检查。断言目标是同一对象不能被再次发给两个调用方。</summary>
         private static void PoolDoubleReturn()
         {
             // 形状示意：真实 API 见 Runtime/RevObjectPool/Core/RevPoolCore.cs
@@ -84,6 +98,7 @@ namespace RevHarness
         // ④ 零分配契约：框架对外承诺过的地方必须实测（不是估算）
         // ============================================================
 
+        /// <summary>待接入的稳定期分配测量。实测前先热身并确认计数器可用。</summary>
         private static void ZeroAllocation()
         {
             // 形状示意：先热身，再取前后分配差
@@ -100,26 +115,40 @@ namespace RevHarness
         // 断言基础设施（照抄即可）
         // ============================================================
 
+        /// <summary>本次失败的断言条数，与未实现的检查分开统计。</summary>
         private static int _failCount;
 
+        /// <summary>记录一项尚未实现的检查，最终退出码会暴露这个缺口。</summary>
         private static void Skip(string description)
         {
             _skip++;
             Console.WriteLine("  TODO " + description);
         }
 
+        /// <summary>累计一次布尔断言，失败保留人话原因并继续后续检查。</summary>
         private static void That(bool ok, string description)
         {
-            if (ok) { _pass++; return; }
+            // 成功只累计通过，失败统一进入错误清单。
+            if (ok)
+            {
+                _pass++;
+                return;
+            }
 
             _failCount++;
             Failures.Add(description);
             Console.WriteLine("  FAIL " + description);
         }
 
+        /// <summary>用类型默认比较器判断是否一致，失败时同时输出期望值和实际值。</summary>
         private static void That<T>(T actual, T expected, string description)
         {
-            if (EqualityComparer<T>.Default.Equals(actual, expected)) { _pass++; return; }
+            // 只在失败时格式化差异，保留帮助定位边界输入的信息。
+            if (EqualityComparer<T>.Default.Equals(actual, expected))
+            {
+                _pass++;
+                return;
+            }
 
             _failCount++;
             string line = $"{description}（期望 {expected}，实际 {actual}）";

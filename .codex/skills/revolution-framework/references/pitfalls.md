@@ -112,8 +112,8 @@
 
 ## 19. 编辑器里平台/目录对不上（热更 404、AB 读不到）
 
-- **原因**：编辑器里 `RevHotPlatform.Name` **恒为 `PC`**（带 `!UNITY_EDITOR`），而打包产物目录按 `BuildTarget` 命名（Android / iOS / WebGL）。
-- **做法**：编辑器调试时把 Build Target 切回 Standalone；或在配置里用 `PlatformOverride` 对齐；demo 工具会打印警告。
+- **原因**：活动 Build Target、实际运行宿主与构建 AB 的目标可能不同。旧 `RevABLoader` 可在桌面 Editor 命中 `UNITY_ANDROID`。热更的路径重定向也可能与默认加载路径不同。
+- **做法**：按 [AB 平台排查与旧版最小升级](resource-and-ab.md) §2.1–2.2 验证实际主包和依赖路径。现行桌面 Editor 真实 AB 使用匹配宿主的 PC 包。保留原 Build Target 做冷启动对照。正式 Player 的平台与图形 API 独立验收。
 
 ## 20. 改完代码"文档没跟上"
 
@@ -189,6 +189,18 @@
 - 迁完后在 `Consts` 里**删掉**旧副本，让编译器替你找出遗漏的引用；顺带检查 HUD/日志里手写的 `×2`、`* 10`、`每三秒` 这类“文案里的数字”。
 
 ---
+
+## RevGame 实践中的症状分流
+
+先保存第一个失败的输入、状态、已执行的副作用和平台证据，再选判别检查。以下为项目案例，框架或项目归属以当前代码为准。
+
+| 症状 | 区分层级的检查 | 修复后最小证据 |
+|---|---|---|
+| 首开白图，重进正常 | 确认 `atlasRequested` 监听先于首个 Sprite 消费者，区分对象引用和实际图集像素绑定 | 真 AB 冷启动首开、再次进入与引用释放。 [案例](https://github.com/Yokino337088/RevGame/commit/e9a38ac5) |
+| 伤害成立但白色剪影、动画残留 | 检查当前帧纹理、局部 UV、参数块与池代次，区分规则提交和表现消费 | 核对正确帧画面、重复利用与退场回收。 [案例](https://github.com/Yokino337088/RevGame/commit/aa15ce77) |
+| 过场已打开但读到旧章背景 | 记录同一帧的领奖/换场/背景就绪/剧情事件顺序，核对过期就绪标记 | 从真实领奖入口等待异步交割，确认实际章节、可画状态和退出清理。 [案例](https://github.com/Yokino337088/RevGame/commit/9eed179b) |
+| 拉取后才出现材质粉屏 | 比较拉取前后的代码 blob、AB 与清单，再核对 EditorPrefs、实际图形 API 和最终包路径 | 保留故障条件只改确定的根因，复测真 AB。历史本机偏好缺少记录时，区分已证实根因和候选触发因素。 [案例](https://github.com/Yokino337088/RevGame/blob/6f5bcb95/RevGame_Client/文档/Bug踩坑记录/2026-11-09-EditorPlay误加载AndroidAB导致剧情粉屏.html) |
+| 外部服务成功响应，棋局未接受 | 区分传输、响应解析、合法动作映射与局代次。超时和迟到结果不进入新局 | 逐手对照已接受序号与棋谱，检查终局指纹、回退与清理。 [案例](https://github.com/Yokino337088/RevGame/commit/987e3773) |
 
 # 已修复缺陷的"现行契约速查"
 

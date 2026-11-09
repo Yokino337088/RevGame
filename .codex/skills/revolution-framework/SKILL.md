@@ -23,7 +23,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 
 ## 真实工程实践：写业务前必须参考RevGame
 
-游戏架构、玩法/UI/流程、资源与测试接线以 [RevGame GitHub工程](https://github.com/Yokino337088/RevGame) 为真实实践参考。编码前按 [工程实践索引](references/revgame-engineering.md) 找到并阅读同类源码，记录版本、参考文件与复用契约；仅查API或读Demo不替代工程实践。目标项目的安装版本与用户约束优先，不照搬游戏数值或项目专用夹具。
+游戏架构、玩法/UI/流程、资源与测试接线以 [RevGame GitHub 工程](https://github.com/Yokino337088/RevGame) 为真实实践参考。编码前按 [工程实践索引](references/revgame-engineering.md) 找到并阅读同类源码，记录版本、参考文件与复用契约。目标项目的安装版本与用户约束优先。样例涵盖六章远征、独立无尽、九路围棋联机与外部 Agent、原生决斗、移动端资源和编辑器操作。先按任务选一条链路，再看同类提交与验收。
 
 - 架构/编程/资源：[revgame-engineering.md](references/revgame-engineering.md)。
 - Unity 资产、Prefab、导表、构建、Play 和项目 Editor 代码选型：[revgame-editor-practice.md](references/revgame-editor-practice.md)。
@@ -127,7 +127,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 
 1. **方法签名的 `(` 与参数不换行**：默认写一行；**只有太长（显示宽度 > 约 160 列）才换行**。长消息/长参数先提成局部变量，让"调用/抛出"本身保持单行。
 2. **条件分支必须带大括号并强制换行**：所有 `if` / `else if` / `else`（包括Lambda、回调、宏分支与生成代码）条件、左大括号、代码体、右大括号分别换行，代码体缩进。禁止 `if (x) return;` 和 `if (x) { return; }`。类、方法、属性、访问器的大括号也必须独占一行；格式化配置使用 `csharp_new_line_before_open_brace = all`，不能只设 `control_blocks` 而把其它大括号合到行尾。
-3. **核心 / 关键 / 容易踩坑或被忽略的地方要写详细注释，面向小白**：解释"为什么这么做 / 不这么做会怎样"，而不是复述代码。
+3. **逐类、逐字段、逐方法写面向新手的中文注释**：每个新增或修改的类型、成员、方法、构造函数、重载和回调都要说明契约。方法内部各职责段和重要算法步骤也必须解释原因、顺序、边界与失败处理。覆盖私有和内部成员，详情见 [代码与注释规范](references/code-style.md)。
 4. 新框架类型用 `Rev` 前缀、FSM 缩写用大写；既有 FSM 物理文件名仍保留 `Fsm` / `StateMachine`，不要顺手改资产路径。框架命名空间 `Revolution`，扩展包 `Revolution.HotUpdate`，Demo 用 `Revolution.Demo.<模块>`；业务状态、业务域常量名按项目约定。
 5. 中文注释、术语与文档保持一致（"门面 / 句柄 / 分组 / 逻辑路径 / 大版本锚定"…）。
 6. 详细正反例与自检脚本思路见 `references/code-style.md`。
@@ -167,12 +167,12 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 
 ## 自动化优先的开发交付（新增约定）
 
-开发功能时先确定可验证的真实业务入口与预期：动作、无副作用查询、结果断言、每轮复位、整场收尾。完成实现后，环境允许时立即执行 Revolution.RevCLI 回归，不只提供教程或命令等待用户手动运行。
+开发功能时先确定可验证的真实业务入口、无副作用查询、结果断言、每轮复位和整场收尾。完成实现后，按目标项目选择真实执行通道。RevCLI 用于编辑器操作和已约定的轻量场景，RevMCP 用于按需发现、真实业务与跨帧计划。旧 GM scenario 继续使用原有测试工具。细节见 [真实工程闭环](references/revgame-ai-workflow.md)。
 
-- 读取 `references/automation-integration.md`。已有 `revolution-automation-tester` 时加载或直接遵循已加载协议；开发规范由本Skill负责，发现/执行/证据由测试Skill负责，避免重复造客户端脚本。
+- 读取 `references/automation-integration.md`。真实跨接口回归联动 `revolution-ai-automation`，维护旧 GM scenario 联动 `revolution-automation-tester`。发现、执行与证据使用目标工程已安装的通道。
 - 识别 `RevGM`（后端）、Automation（CLI/Editor文件桥）、Unity MCP（可选观察/交互）三层。已有桥直接复用；不存在时明确缺项，不虚构工具、不假定所有项目都已连接。
 - 测试前记录原始编辑器状态；资产变更与Play串行，保护未保存场景；业务回归只能在未暂停图形Play，不用batch代替。
-- 刚修改GM/脚本后等编译，运行期 `gm list` 确认注册。使用真实动作与数据断言，不能把回Idle、命令成功当全部业务成立。
+- 修改脚本后等编译和域重载结束，再从运行期确认注册。RevMCP 使用 `rev_discover`，旧 CLI scenario 查当次 GM 列表。动作已接受后还要等待状态和业务后置条件成立。
 - 场景 `setup` 全场一次、`cleanup` 每轮、`teardown` 全场收尾；改参数后导表、校验与回归一起维护。异常与拒绝场景也应验证状态未改变。
 - 最终依据完整response和scenario-result判定轮次、错误、取消与清理；输出可复现报告路径，分别标记编译/离线/Play/AB/MCP视觉/真机证据。
 - 若缺测试接线且用户允许编辑，补最小项目侧开发态GM或Check并实际继续测试；不能重写玩法、改生产存档或降低断言来制造通过。没有执行权限/桥接时报告阻塞，不宣称已完成运行验证。
@@ -187,7 +187,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
    **要动框架本身（修 bug / 加功能）时，先查 `Assets/Revolution/CHANGELOG.md` 与 `Revolution.Document/bug修复日志/`**：这个模块以前修过什么、现行契约是什么——避免重复踩坑，也避免给"已修复的缺陷"写绕过代码（见 `references/pitfalls.md` 末尾"现行契约速查"）。
 4. 写代码，守住上文的铁律与规范。
 5. **自我审查**：过一遍 `REFERENCE_GUIDELINES.md` 的清单。
-6. **验证**：框架内核跑对应离线断言；游戏业务要走官方规范的登录→大厅→战斗→结算→退出正反场景，用受控 GM 查询/动作/拒绝接口采集前后 FSM/域/回收证据。MCP 适配若未实现或未连通标记“未执行”，不把命令存在当自动回归已通过。
+6. **验证**：框架内核跑对应离线断言。业务按目标工程的正式入口覆盖受影响流程、合法提交、拒绝与退出收尾，采集前后 FSM、域和资源证据。针对 AB、网络、独立 Player 或原生核心补相应层级的验证。执行范围见 [真实工程闭环](references/revgame-ai-workflow.md)。
 7. **同步文档**：改了行为 → 改该模块《使用说明》；改了设计 → 改《架构解析》；同时更新 md 与 html（`Revolution.Document`，在线站会自动发布）。
 
 ### B. 审查代码
@@ -218,7 +218,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 - **查 API 与专题**：`references/modules-core.md` · `references/modules-content.md` · `references/startup-and-platform.md` · `references/resource-and-ab.md` · `references/ui-and-layering.md` · `references/hot-update.md`
 - **规范与交付**：`references/code-style.md` · `references/editor-tools.md` · `references/verify-and-test.md` · `references/docs-map.md` · `references/pitfalls.md`（坑位 + 已修复缺陷的现行契约）
 - **真实工程参考**：`references/revgame-engineering.md` · `references/revgame-editor-practice.md` · `references/revgame-ai-workflow.md`。编码前必须按职责读取RevGame同类实现。
-- **自动化开发闭环**：`references/automation-integration.md`；执行任务联合 `revolution-automation-tester`，先确认真实工具/GM，再运行与验收。
+- **自动化开发闭环**：`references/automation-integration.md`；执行跨接口计划联合 `revolution-ai-automation`，维护旧 scenario 联合 `revolution-automation-tester`。
 - **审查**：`REFERENCE_GUIDELINES.md`
 - **骨架模板**（`templates/`）：`RevBoot.cs.txt`（启动入口）· `RevXxxPanel.cs.txt`（UI 面板）· `RevXxxService.cs.txt`（业务服务）· `RevXxxDemo.cs.txt`（Demo 场景脚本）· `offline-harness/`（工程外断言工程）
 

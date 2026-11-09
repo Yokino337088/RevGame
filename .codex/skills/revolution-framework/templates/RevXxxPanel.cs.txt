@@ -24,27 +24,32 @@ namespace <你的命名空间>
     /// <summary>面板数据（只放"画界面需要的字段"，不要塞整个业务模型）。</summary>
     public sealed class RevXxxData
     {
+        /// <summary>业务侧给出的提示显示标记，默认隐藏。</summary>
         public bool ShowTips;
+        /// <summary>本次面板展示的标题，默认用空字符串避免显示旧内容。</summary>
         public string Title = string.Empty;
     }
 
+    /// <summary>消费业务提供的显示快照，由 RevUI 管理打开、关闭及复用。</summary>
     // ★ root 必填：预制体在资源根目录下的两段路径（分组 + 名字 → 用 RevResPath 常量拼，别手写字符串）
     // ★ ExclusiveGroup：同组互斥（页签类界面用）；InBackStack：是否参与 RevUI.Back()
     [RevUIPanel(RevResPath.Data, RevUILayer.Normal, ExclusiveGroup = "XxxTab")]
     public sealed class RevXxxPanel : RevUIPanel<RevXxxData>
     {
-        // ★ 普通控件事件优先用反射标注特性；这里只绑定需要直接读写的展示字段。
+        /// <summary>由 RevBind 装配的标题节点，由刷新与回池复位写入。</summary>
         [RevBind] private Text _title;
 
         /// <summary>只装配：找节点、配置视图。普通按钮事件由方法特性自动接线。</summary>
         protected override void OnBindView()
         {
+            // 示例的字段与关闭按钮由特性装配，此处预留一次性视图设置。
         }
 
         /// <summary>控件名必须与预制体节点名一致；普通点击优先用这个特性而非手写 AddListener。</summary>
         [RevButtonClick("btnClose")]
         private void OnCloseClick()
         {
+            // 交给 RevUI 完成关闭动画、返回栈与实例回收。
             CloseSelf();
         }
 
@@ -54,7 +59,12 @@ namespace <你的命名空间>
         /// </summary>
         protected override void OnRefreshView()
         {
-            if (Data == null) { return; }           // ★ SetData(null) / 回池复用后 Data 是 null，必须判空
+            // SetData(null) 或回池时没有可画的数据，先拦截空快照。
+            if (Data == null)
+            {
+                return;
+            }
+            // 只写展示字段，业务仍持有状态和提交权。
             _title.text = Data.Title;
         }
 
@@ -71,18 +81,21 @@ namespace <你的命名空间>
         /// <summary>可选：按钮统一走这里（按钮节点用 [RevBind] 登记过才会进来），避免回调散落各处。</summary>
         protected override void OnClick(string nodeName)
         {
+            // 示例只记录路由。接入业务时在此转发意图，保留相同的玩家入口。
             RevLog.Info($"点击 {nodeName}（这里只转发给业务服务，不写业务逻辑）", "UI");
         }
 
         /// <summary>可选：从面板池取出复用时调用 —— 清掉自己缓存的字段，否则会带着上一次的状态。</summary>
         protected override void OnReuse()
         {
+            // 在新数据到达之前清掉上一位使用者的标题。
             _title.text = string.Empty;
         }
 
         /// <summary>可选：关闭时清理（框架会清 Data，但你自己缓存的字段 / 计时器要清）。</summary>
         protected override void OnClose()
         {
+            // 按面板 owner 回收计时器，避免回调在下次复用时写入旧内容。
             RevTimer.CancelAllOf(this);
         }
     }
