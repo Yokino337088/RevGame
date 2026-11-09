@@ -24,6 +24,7 @@ description: 用于 RevGame（围棋史莱姆）项目的功能开发、快速�
 - 六章玩法意图查 [玩法拓展策划案](../../../RevGame_Client/策划案/玩法拓展策划案.html)；无尽查 [无尽模式策划案](../../../RevGame_Client/策划案/无尽模式策划案_棋阵幸存者_2026-11-01.html)。无尽专属规则只覆盖无尽。
 - 当前源码、Excel 和实时注册表分别证明已实现行为、实际配置与可调用能力。设计文档的“建议值”“尚未实现”及旧报告路径不能覆盖新实现；实现与目标有差异时说明差异，按本次需求处理。
 - 历史报告只证明对应版本、输入与平台的结果。不要复制旧帧率、图集数量、表数量或文件行号作为本次结论。
+- 遇到已有回归先按 [历史故障与验收对照](references/incident-playbook.md) 找对应的判别证据。项目来路、架构转折和完整提交索引见 [项目开发复盘](../../../RevGame_Client/文档/项目开发日志/RevGame项目开发复盘_2026-11-09.html)。
 
 ## 按任务联动技能
 
@@ -63,7 +64,8 @@ Editor Play 出现材质粉屏、Shader 名称存在但画面错误，或切换�
 - **规则与表现分工：** 六章操作经过 `BattleLogic` 的阶段/教学门禁再到 `IBattleService`；无尽沿用 `GameFlow`、`EndlessLogic` 和 `EndlessService` 的现有分工。伤害、胜负、库存与奖励只在服务/模型提交；视图消费事实，不在弹道落地或 Tween 完成时二次结算。
 - **门面与异步：** 使用 `RevUI/RevTimer/RevEvent/RevResManager/RevPool/RevScope/RevTask` 等公开入口，禁止访问框架 `Core/Implementation`。异步业务方法用 `RevTask`；Unity 必须为 `void` 的生命周期回调可作薄适配并捕获异常，不扩散 `async void`。不引 `System.Threading.Tasks`、UniTask 或另一套异步基建。
 - **项目已有动画：** 本项目已接入 DOTween，现有纯表现代码可按同类文件复用并维护停止/回池契约；面板过渡优先 `RevUIAnim`，流程演出用 `RevSequence`。不把框架“零第三方”旧例套成删除现有 DOTween 的任务，也不新增其它库或用动画承载业务时钟。
-- **代码规范：** 中文新手注释解释用途、单位/范围、所有者、生命周期、失败路径与关键步骤的原因。所有方法体有大括号，方法签名的 `(` 与参数不换行；所有 `if/else if/else` 的条件、左右大括号和代码体分别展开，类/方法/属性的大括号同样独占一行。
+- **代码规范：** 编写或修改代码时，每个类、字段、方法都写面向新手的中文注释，方法内部各职责段和重要算法步骤也要解释原因、顺序、边界和失败处理。覆盖私有成员、构造函数和回调。格式与交付前检查见 [代码与新手注释守则](references/code-and-comments.md)。
+- **九路围棋与决斗：** 玩家和 GM 走 `PvpService.Submit`，与本地 AI、外部 Agent 汇入 `SubmitActor`，`GoCore` 负责棋规。网络收发与对局显示各自维护生命周期。原生决斗通过 `DuelCorePipe` 执行完整连续帧，按真实双端帧号、快照、哈希和回放验收。实现位置查项目地图。
 - **UI 契约：** `OnBindView` 装配，`OnRefreshView` 落屏，交互只转发真实业务；关闭自身用 `CloseSelf()`。节点路径、绑定字段、按钮路由和 Prefab 必须一致；新增或重制 UI 使用已有 Sprite、正确裁切与九宫格，适用底板为 `Image.Type.Sliced`。
 - **资源与生命周期：** 运行期只用生成逻辑路径或两段式加载，不拼 `StreamingAssets/Application.dataPath`。`GameSpriteAtlasService` 与 `GamePoolRequests` 组合框架门面，引用与池租约成对；回池/退出先令旧回调过期，再取消动画/计时器、归池与清队列。棋子使用共享材质，不每帧访问 `renderer.material`。
 - **规则一致性：** 占格只由 `BoardModel.Place/Move/Remove/Reset` 改；气眼按占格、加气、围困免疫等真实输入失效。AI 复用调用方缓冲与独立深快照，不移动实战棋子试算；死亡、补子、换位、复活后的更新不能漏。

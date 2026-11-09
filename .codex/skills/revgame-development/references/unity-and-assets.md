@@ -30,6 +30,8 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 
 本技能制作时只读发现确认过 `prefab.modify`（path/objectPath/type/index/changes）与 `game.endless.build`（edit、无 keys）。这是编写依据，每次使用仍重新查询；下面其它 ID 是查找线索，不是当次已注册的声明。
 
+编辑器动作跨域重载或断线时先读状态、编译诊断和已写入产物，再决定是否重试。Play 域重载可能丢 HTTP 回执，动作已生效时以实际状态与工单为准。同步框架能力时同时核对 Unity 桥、CLI 清单和实时注册表，先区分安装快照落后与真正缺少能力。历史样本见 [HTTP 域重载修复](https://github.com/Yokino337088/RevGame/commit/56c236d8) 与 [图集 V2 动作同步](https://github.com/Yokino337088/RevGame/commit/ba684251)。
+
 ## 从代码到可保存的 Prefab
 
 | 任务 | 优先入口与读回 | 项目接线 |

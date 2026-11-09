@@ -1,10 +1,10 @@
 # 项目地图：状态所有者与功能目录
 
-用于选实现位置、追踪调用和核对同类写法。下面路径按 2026-11-02 本地代码核对；每次开发仍用 `rg --files` 确认，特别是新增 partial 与目录整理。表格中的 `GameScripts/`、`GameRes/` 等相对 Unity `Assets/`。
+用于选实现位置、追踪调用和核对同类写法。远征与无尽条目沿用 2026-11-02 的地图，九路围棋和决斗入口按 2026-11-09 主线补充。每次开发仍用 `rg --files` 确认。表格中的 `GameScripts/`、`GameRes/` 等相对 Unity `Assets/`。
 
 ## 最小阅读路线
 
-先确定远征还是无尽，再读对应契约与本次命中的实现。不要每个任务都读完整启动链。
+先确定远征、无尽、九路围棋还是原生决斗，再读对应契约与本次命中的实现。按任务选择必要的启动和业务链路。
 
 | 要修改的内容 | 当前最小源码入口 | 提取的契约与选址 |
 |---|---|---|
@@ -23,6 +23,9 @@
 | 无尽入口、域和节拍 | [GameFlow.Endless.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Endless.cs)、[EndlessLogic.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/Logic/Endless/EndlessLogic.cs) | 大厅进入专属场景；域驱动固定步；过场门禁；暂停/切后台/保存沿现有入口 |
 | 无尽规则、成长、战斗与保存 | [EndlessService.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.cs)、[EndlessState.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessState.cs)、[EndlessConfig.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Endless/EndlessConfig.cs) | 独立状态、随机状态、计时、配置与存档；按 Combat/Growth/Director/Save 等已有 partial 职责放置，不挂到六章服务 |
 | 无尽 HUD、棋盘与 BGM | [EndlessHudPanel.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessHudPanel.cs)、[EndlessArena.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessArena.cs)、[EndlessMusicPlaylist.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessMusicPlaylist.cs) | HUD 沿当前玩家 Service 入口；盘内复用 PieceView、外围网格表现；伤害回执消费不重算；长曲独立资源寿命 |
+| 九路围棋与 Agent | [GameFlow.Pvp.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Pvp.cs)、[PvpService.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs)、[GoCore.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/GoCore.cs) | GameFlow 负责 PvpScene 交割。PvpService 管对局时钟、动作提交和回执。GoCore 管棋规。分析、胜率、建议及表现分别读取有效局面，Agent 响应映射到当前合法动作后走真实提交入口。 |
+| 围棋网络与服务端 | [FantasyGoTransport.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs)、[GoRequestHandlers.cs](../../../../RevGame_Server/RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs) | 局域网传输在 `Services/Pvp/Networking/Lan`，Fantasy CS 走现有 KCP 适配。修改协议先定位源协议和两端生成流程，验真实服务端、连接和同步状态。 |
+| 原生帧同步决斗 | [PvpService.Duel.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Duel.cs)、[DuelCorePipe.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelCorePipe.cs)、[DuelWorld.h](../../../../RevGame_Client/RevGameCore/Include/DuelWorld.h) | PvpDuelScene 由 GameFlow 交割。C# 接收、校验和提交完整帧，C++ 执行确定性模拟，显示使用快照。更改需覆盖协议、帧顺序、回放或检查点与双端指纹。 |
 | 受控 GM 与自动化 | [GameGmCommands.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs)、[EndlessAutomation.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Endless/EndlessAutomation.cs) | 注册仅开发环境，owner 对称注销；完整 GM 名来自实时注册；无尽测试沿 isolated 局与专用保存 |
 | 制作资产和构建门禁 | [GameResourceBuild.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameResourceBuild.cs)、[GameSpriteAtlasBuild.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameSpriteAtlasBuild.cs)、[GameEndlessBuild.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/Endless/GameEndlessBuild.cs) | 项目固定配方串联框架工具；Editor 资产处理不进入运行期规则 |
 
@@ -64,4 +67,4 @@
 - 六章查 `玩法拓展策划案.html`，无尽查 `无尽模式策划案_棋阵幸存者_2026-11-01.html`；设计建议与已提交/未提交实现逐项区分。
 - 当前配置源在 `RevGame_Client/配置表`，包含棋子数值、关卡与奖励、增益与事件、战斗弹幕、战斗数值参数、无尽模式等工作簿。按字段查实际源表，不把这份枚举当封闭清单。
 
-本地图核对时的仓库 HEAD 为 `39b02433fd36052e755835ed7f1373bcb6ad888a`，工作区另有无尽迭代改动。用表内稳定职责定位；本地文件可读不代表已提交，更不代表已运行验收。
+九路围棋、Fantasy 和决斗补充核对基线为 `c303f004`。旧条目与报告的数值仍按各自版本解释。需要核对具体实现或验收时，继续查当前提交、配置与实测记录。
