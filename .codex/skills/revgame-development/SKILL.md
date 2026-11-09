@@ -45,6 +45,8 @@ description: 用于 RevGame（围棋史莱姆）项目的功能开发、快速�
 
 ## Android 出包与手机 UI
 
+Editor Play 出现材质粉屏、Shader 名称存在但画面错误，或切换构建目标后 AB 加载异常时，按 [编辑器与资源流程](references/unity-and-assets.md) 的“Editor Play 材质粉屏与 AB 平台”核对实际图形 API、主包来源和纹理绑定。
+
 遇到 Android 工具链、APK 体积、宽屏黑边、安全区、剧情/鸦鸦表现或凭据问题，按 [RevGame Android 出包、宽屏 UI 与真机回归](references/android-build-and-mobile-ui.md) 对照项目做法和证据。
 
 ## 快速迭代闭环

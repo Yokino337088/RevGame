@@ -9,7 +9,7 @@
 - 复用缓存前核对后端、ABI、工具链与构建输入。Mono 与 IL2CPP 的产物不能互换，涉及运行时代码修复需重编 Player。仅有本机验包证据时，标明真机范围。检查所有 ELF 和 APK ZIP 对齐，自研库的 16 KB 结果不能代表其它 .so。
 - 联机开发包的内网默认地址随测试主机/网段变动。确认端口和设备可达性，把按钮触达、Android P/Invoke 与两设备帧哈希分别验收。
 - 贴图走 GameSpriteAtlasBuild 与 GameSpriteAtlasService。决斗帧按名字和顺序切片及唯一 V2 图集，验 Android 实际帧切换和 HUD 命中。鸦鸦剧情/战斗表情分包，源图保留较高分辨率，最终图集压缩一次，PC BC7、Android ASTC 6×6。清晰度按实际像素和分包字节报告。文案与 Excel 更新走真实导表和字体清单校验；输入变化时两端按同一版重建。
-- 构建或域重载后等待 editor.wait，核对目标后重新发现。若 build.target 在 HTTP 模式尝试写旧工单标记，沿用受控 HTTP 动作切平台并读回，清理临时脚本与恢复原目标。崩溃先存日志再重连，Windows Editor 拒绝 Android AB 的棋盘 Shader 时保留失败证据，分开跑 PC 真 AB 与 Android 直读，真机结论单列。
+- 构建或域重载后等待 editor.wait，核对目标后重新发现。若 build.target 在 HTTP 模式尝试写旧工单标记，沿用受控 HTTP 动作切平台并读回，清理临时脚本与恢复原目标。崩溃先存日志再重连。Windows Editor 的真实 AB 验收使用 PC 包，Android 真机使用 Android 包并单列结论。若保留 Android 构建目标后 Editor 粉屏，按 [Editor 资源排查](unity-and-assets.md) 检查实际图形 API 和主包来源。
 
 ## 布局、场景和本地配置
 

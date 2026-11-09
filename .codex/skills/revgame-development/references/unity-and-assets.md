@@ -51,6 +51,13 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 - 检查 Sprite 引用与**实际图集像素绑定**。懒创建 `GameSpriteAtlasService` 可能错过首次 `atlasRequested`；继续由 Bootstrap 早装配服务，不能通过预载所有图集制造首次不白的假象。
 - 技能默认保留无尽古希腊神殿原画与不透明象牙金棋盘。用户明确重制主题时按新需求替换相应资源与配方，不把历史素材选择当永久禁止修改。
 
+## Editor Play 材质粉屏与 AB 平台
+
+- 先记录活动构建目标、Editor 实际图形 API、AB 开关和主包来源。Windows Editor 的真实 AB 验收使用 PC 包，即使 Build Target 留在 Android。正式 Player 验收使用目标平台包。Device Simulator 的设备型号用于布局，不能决定包来源。
+- 粉屏时查实际材质的 Shader 名称、`Shader.isSupported`、纹理绑定和画面。直读正常而 AB 异常时优先核对主包、共享 Shader 包、依赖和目标平台变体。直读作为定位对照，结论以原故障条件下的冷启动真 AB 为准。
+- 2026-11-09 旧版 `RevABLoader.MainName` 在 Android 构建目标下把 Windows Editor 导向 Android AB。框架已改为 `UNITY_EDITOR` 优先选 PC。遇到类似回归先核对安装快照。框架选包问题回 Revolution 源仓库修复、导出并同步。
+- 复测序章要显式开启隔离首启 `game.story.test-arm`（`flags=0`）或在大厅调用 `story.preview`。用 RevMCP 等 `story.state` 就绪并核对 `story.yaya-state` 的 Shader 支持、纹理绑定与截图。结束退出 Play、解除隔离并检查 Console。详见 [误加载 Android AB 粉屏复盘](../../../../RevGame_Client/文档/Bug踩坑记录/2026-11-09-EditorPlay误加载AndroidAB导致剧情粉屏.html)。
+
 ## 资源与 AB 完整链
 
 1. **定义源与消费者。** 图片先明确是 Sprite/UI/序列帧还是 Shader 独立采样 Texture。使用中 Sprite 恰好属于一个 Sprite Atlas V2；字形纹理、内置 UISprite、RenderTexture、法线/LUT、章节 Default 采样纹理不能错误纳入图集。

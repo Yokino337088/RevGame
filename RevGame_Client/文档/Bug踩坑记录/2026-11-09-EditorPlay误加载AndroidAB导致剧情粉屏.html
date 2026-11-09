@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor Play 误加载 Android AB 导致剧情粉屏</title>
+<style>
+body{margin:0;background:#f5f2e9;color:#20302a;font:16px/1.7 system-ui,sans-serif}
+main{max-width:1050px;margin:auto;padding:24px}
+header,section{background:white;border:1px solid #dfdbc8;border-radius:12px;padding:16px 24px;margin-bottom:14px}
+h1,h2{color:#254e41} code{overflow-wrap:anywhere} a{color:#205e72}
+.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}figure{margin:0}img{width:100%;border-radius:8px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #dfdbc8;padding:8px;text-align:left;vertical-align:top}
+</style>
+<main>
+<header><small>RevGame · Bug 踩坑记录 · 2026-11-09</small><h1>Editor Play 误加载 Android AB 导致剧情粉屏</h1>
+<p>Windows 上点 Play，序章背景几乎全是亮粉色，立绘、对白和按钮仍能显示。出错链路在背景材质的 Shader 与资源包平台选择。</p></header>
+<section><h2>为什么容易误判</h2>
+<p>当时 Unity 2022.3.15f1c1 的活动构建目标是 Android，编辑器渲染实际使用 Direct3D 11，<code>UseABInEditor</code> 已开启。Android 构建目标会让编辑器编译出 <code>UNITY_ANDROID</code>，这个宏同时存在于桌面编辑器进程里。只看构建目标或材质上显示的 Shader 名称，会漏掉实际使用的图形 API 和 AB 来源。</p>
+<p>旧版 <code>RevABLoader.MainName</code> 先按平台宏选包，因而选择 <code>StreamingAssets/Android</code>。序章仍能取得名为 <code>RevGame/Background/LobbyMagicCottage</code> 的 Shader 对象，但其 Android 编译变体无法为当前 D3D11 渲染提供兼容程序，背景纹理绑定断言为 <code>false</code>，画面落到亮粉错误表现。<code>Shader.name</code>、资源加载成功以及 Console 安静都不足以证明材质画对了。<a href="https://docs.unity3d.com/cn/2022.3/Manual/shader-loading.html">Unity Shader 加载说明</a></p></section>
+<section><h2>修复与实测</h2>
+<p>在 Revolution 源仓库让 <code>UNITY_EDITOR</code> 优先选 PC 主包，重新导出并同步到 RevGame。正式 Player 继续走各平台的主包分支。这次在同一台机器、同一 Android 构建目标、同一真实 AB 模式下，用仓库已有的 PC AB 复测。</p>
+<table><thead><tr><th>检查</th><th>修复前</th><th>修复后</th></tr></thead><tbody>
+<tr><td>序章背景</td><td>亮粉覆盖大部分画面</td><td>小屋背景恢复</td></tr>
+<tr><td>截图亮粉像素占比</td><td>72.42%</td><td>0.00%</td></tr>
+<tr><td>背景纹理绑定</td><td>false</td><td>true</td></tr>
+<tr><td>Shader 支持</td><td>当时未单独采集</td><td><code>backgroundShaderSupported=true</code></td></tr>
+</tbody></table>
+<p>亮粉占比只用于对照这两张截图。验收覆盖 Windows Editor 序章的冷加载，Android 真机的 Shader 和贴图兼容性需要单独验收。</p>
+<div class="frames">
+<figure><img src="../进度同步/Editor真实AB剧情粉屏修复_修复前.png" alt="修复前的粉色序章背景"><figcaption>修复前 · 粉色背景</figcaption></figure>
+<figure><img src="../进度同步/Editor真实AB剧情粉屏修复_修复后.png" alt="修复后恢复的小屋背景"><figcaption>修复后 · 小屋背景恢复</figcaption></figure>
+</div>
+<p><a href="../进度同步/Editor真实AB剧情粉屏修复_2026-11-09.html">原始验收记录</a> · <a href="https://github.com/Yokino337088/Revolution/commit/58e5af27e4821c9ba14421564bc1cd81716d5b22">框架修复</a> · <a href="https://github.com/Yokino337088/RevGame/commit/0e04caf13aee2b3f0765a4c3740fd93fc611bd6f">RevGame 同步</a></p></section>
+<section><h2>下次排查顺序</h2><ol>
+<li>先记录活动 Build Target、Editor 实际图形 API、直读或 AB 模式，以及主包来源。Windows Editor 使用真实 AB 时，检查 PC 主包、共享 Shader 包和依赖是否来自同一套构建。</li>
+<li>定位受影响的实际材质、<code>Shader.isSupported</code>、采样纹理、UV 与画面。若直读正常而 AB 粉屏，优先检查包的平台、版本、依赖和 Shader 变体。若两种模式都异常，再看源 Shader 编译与渲染配置。</li>
+<li>若框架误选平台，修框架源码并同步快照。资源链继续通过项目既有分包和加载入口验证。切回直读只能作为定位对照。</li>
+<li>保持原出错条件，从 <code>StartScene</code> 冷启动。普通 Editor Play 现在直进大厅。复测序章时，用 RevMCP 发现并显式调用 <code>game.story.test-arm</code>（<code>flags=0</code>），或在大厅用 <code>story.preview</code>。等待 <code>story.state</code> 就绪，再用 <code>story.yaya-state</code> 核对 Shader、纹理绑定和截图。结束后退出 Play，解除隔离并检查新增 Console 错误。</li>
+</ol></section>
+</main>
+</html>
