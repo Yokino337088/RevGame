@@ -49,7 +49,7 @@ public sealed class G2B_GoBatchRequestHandler : AddressRPC<Scene, G2B_GoBatchReq
             return;
         }
         // 先在副本验证结果哈希；无效的操作不能污染已确认棋局。
-        var next = room?.Board.Clone() ?? new GoCore(request.Komi);
+        var next = room?.Board.Clone() ?? GoCore.CreateMatch(request.Komi);
         // 依次检查旧指纹、棋规和执行后指纹，任一失败都不会替换权威棋盘。
         if (next.StateHash.ToString(CultureInfo.InvariantCulture) != step.PreviousHash ||
             !next.TryApply((GoAction)step.Kind, (GoSide)step.Side, step.X, step.Y, out _) ||

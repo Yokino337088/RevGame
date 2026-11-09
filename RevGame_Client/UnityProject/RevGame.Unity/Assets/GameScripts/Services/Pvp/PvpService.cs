@@ -39,7 +39,7 @@ namespace RevGame.Pvp
     /// </summary>
     public sealed partial class PvpService : IDisposable
     {
-        public const string ProtocolVersion = "revgo-1";
+        public const string ProtocolVersion = GoCore.MatchProtocolVersion;
         private const string LocalRatingKey = "RevGame.Pvp.OnlineRating.v1";
         private const int InitialRating = 1500;
         private const int MinRating = 100;
@@ -107,6 +107,17 @@ namespace RevGame.Pvp
 
         public void StartLocal()
         {
+            StartLocalGame(false);
+        }
+
+        public void StartComputer()
+        {
+            StartLocalGame(true);
+        }
+
+        /// <summary>先确定座位和终局规则，再创建新棋盘，重开不会沿用上一局的规则。</summary>
+        private void StartLocalGame(bool computer)
+        {
             if (_leaving)
             {
                 return;
@@ -114,21 +125,12 @@ namespace RevGame.Pvp
             CloseConnection();
             RoomId = string.Empty;
             Mode = PvpConnectionMode.Local;
-            MySide = GoSide.Empty;
-            BlackName = "本地黑方";
-            WhiteName = "本地白方";
+            IsComputerGame = computer;
+            MySide = computer ? GoSide.Black : GoSide.Empty;
+            BlackName = computer ? "你 · 黑方" : "本地黑方";
+            WhiteName = computer ? "棋盘助手 · 白方" : "本地白方";
             NewGame();
-            Status = "本地双人练习 · 双方轮流落子";
-        }
-
-        public void StartComputer()
-        {
-            StartLocal();
-            IsComputerGame = true;
-            MySide = GoSide.Black;
-            BlackName = "你 · 黑方";
-            WhiteName = "棋盘助手 · 白方";
-            Status = "本地人机 · 你执黑先行";
+            Status = computer ? "本地人机 · 你执黑先行" : "本地双人练习 · 双方轮流落子";
         }
 
         public void StartServer(string endpoint, string nickname)
@@ -540,7 +542,7 @@ namespace RevGame.Pvp
             {
                 return;
             }
-            var next = new GoCore(Config.komiHalfPoints);
+            var next = GoCore.CreateMatch(Config.komiHalfPoints);
             var nextClock = new GoClock(Config.mainTimeSeconds, Config.byoyomiSeconds, Config.byoyomiCount);
             double nextTurnStart = _turnStarted;
             int previousCount = _moves.Count;
@@ -573,7 +575,9 @@ namespace RevGame.Pvp
 
         private void NewGame()
         {
-            Core = new GoCore(Config.komiHalfPoints, Mode == PvpConnectionMode.Local ? Config.localPlacementLimit : 0);
+            Core = Mode == PvpConnectionMode.Local && !IsComputerGame
+                ? new GoCore(Config.komiHalfPoints, Config.localPlacementLimit)
+                : GoCore.CreateMatch(Config.komiHalfPoints);
             _goClock = new GoClock(Config.mainTimeSeconds, Config.byoyomiSeconds, Config.byoyomiCount);
             _moves.Clear();
             _turnStarted = _clock.Elapsed.TotalSeconds;

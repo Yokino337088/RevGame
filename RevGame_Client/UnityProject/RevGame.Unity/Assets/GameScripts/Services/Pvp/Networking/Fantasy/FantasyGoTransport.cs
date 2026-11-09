@@ -15,7 +15,7 @@ namespace RevGame.Pvp.Networking
     /// </summary>
     public sealed class FantasyGoTransport : IDisposable
     {
-        public const string ProtocolVersion = "revgo-1";
+        public const string ProtocolVersion = GoCore.MatchProtocolVersion;
         private const float RequestTimeoutSeconds = 6f;
         private const float HeartbeatIntervalSeconds = 2f;
         internal static FantasyGoTransport Active;

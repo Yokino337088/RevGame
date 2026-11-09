@@ -89,9 +89,9 @@ internal static class PvpAgentChecks
             {
                 action = "confirm";
             }
-            else if (service.Core.MoveNumber < 60)
+            else if (!service.Core.PlacementLimitReached)
             {
-                // 只选生产代码列出的合法候选，不直接操作实盘；60手后双停以覆盖后半局与终局。
+                // 只选生产代码列出的合法候选，落满共享预算后由规则直接结算。
                 int first = position.Prompt.IndexOf("play_", StringComparison.Ordinal);
                 if (first >= 0)
                 {
@@ -194,11 +194,8 @@ internal static class PvpAgentChecks
         s.AgentRequestFactory = (_, position) => { requests++; return response; };
         Assert(s.Submit(GoAction.Pass), "玩家停一手");
         s.Poll();
-        Assert(s.Core.Phase == GoPhase.Scoring && response.Disposed, "白方Agent停一手进入数子并释放请求");
-        response = new Response { Content = "{\"actionId\":\"confirm\"}" };
-        s.Poll();
-        Assert(s.Core.HasConfirmed(GoSide.White), "Agent只确认白方");
-        Assert(s.Submit(GoAction.ConfirmScore) && s.Core.Phase == GoPhase.Finished, "完整人机数子闭环");
+        Assert(s.Core.Phase == GoPhase.Finished && s.Core.EndReason == GoEndReason.Scored && response.Disposed, "人机双停直接结算并释放请求");
+        Assert(!s.Submit(GoAction.ConfirmScore) && s.Core.Sequence == 2, "自动计分不再接受确认");
         s.StartComputer();
         s.Submit(GoAction.Play, 4, 4);
         response = new Response { Done = false };

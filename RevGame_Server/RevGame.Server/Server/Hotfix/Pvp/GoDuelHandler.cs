@@ -113,7 +113,7 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
             return false;
         }
         // 重放用独立棋盘，操作失败即拒绝挑战，避免用不完整的局面判断。
-        var board = new GoCore(player.Komi);
+        var board = GoCore.CreateMatch(player.Komi);
         foreach (var command in room.Commands)
         {
             if (!board.TryApply((GoAction)command.Kind, (GoSide)command.Side, command.X, command.Y, out _))

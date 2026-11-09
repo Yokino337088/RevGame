@@ -12,6 +12,7 @@ namespace RevGame.Pvp
         private string _seenStatus = "";
         public string Menu { get; private set; } = "Entry";
         public bool BattleVisible { get { return _battleVisible; } }
+        internal bool BattleReady => _battleVisible && !_battleTransition;
 
         /// <summary>邀请沿用HUD已绑定的真实回调；发现页位于Popup层，临时挂到该页上，避免被不透明背景遮挡。</summary>
         public void MountInvitation(Transform parent)

@@ -11,6 +11,8 @@ namespace RevGame.Pvp
         {
             RevRuntimeAutomation.Register("pvp.presentation", "读取围棋实际可见弹幕、立绘、气泡、Shader、计分面板与已播完音效", Empty,
                 _ => PresentationState(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("pvp.force-score-local", "只在空白本地人机局提交固定68手合法棋谱，验证终局演出", Empty,
+                _ => Result(Service.FillComputerMatchForCheck(), Service.Status), owner: Owner);
             RevRuntimeAutomation.Register("pvp.presentation-fixture", "人机测试的固定白方和云端建议替身，走正式提交且不读写玩家凭据",
                 "{\"type\":\"object\",\"properties\":{\"rejectHint\":{\"type\":\"boolean\"}},\"required\":[\"rejectHint\"],\"additionalProperties\":false}",
                 json =>
@@ -45,6 +47,7 @@ namespace RevGame.Pvp
             var service = Service;
             GoScore score = board?.CountedScore ?? default;
             bool hasHint = service.SuggestionCount > 0;
+            string outcome = panel?.VisibleOutcome ?? "";
             return new Dictionary<string, object>
             {
                 ["portrait"] = panel?.PortraitVisible ?? false,
@@ -78,6 +81,13 @@ namespace RevGame.Pvp
                 ["hintX"] = hasHint ? service.Suggestions[0].X : -1,
                 ["hintY"] = hasHint ? service.Suggestions[0].Y : -1,
                 ["counting"] = panel?.Counting ?? false,
+                ["settling"] = panel?.Settling ?? false,
+                ["battleReady"] = panel?.BattleReady ?? false,
+                ["outcome"] = outcome,
+                ["outcomeVisible"] = outcome.Length > 0,
+                ["scoreConfirmation"] = panel?.ScoreConfirmationVisible ?? false,
+                ["replayVisible"] = panel?.ReplayVisible ?? false,
+                ["notice"] = RevUI.Get<PvpNoticePanel>()?.VisibleMessage ?? "",
                 ["blackStones"] = score.BlackStones,
                 ["whiteStones"] = score.WhiteStones,
                 ["blackTerritory"] = score.BlackTerritory,

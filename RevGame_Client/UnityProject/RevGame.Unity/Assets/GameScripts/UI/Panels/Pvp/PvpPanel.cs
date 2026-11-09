@@ -48,6 +48,7 @@ namespace RevGame.Pvp
         {
             // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
             _idlePortrait = _portrait.sprite;
+            BindOutcomeTitle();
             // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
             _duelButton = Instantiate(_resign, _resign.transform.parent);
             _duelButton.name = "DuelChallenge";
@@ -139,6 +140,7 @@ namespace RevGame.Pvp
         [RevBind("result/replayPrevious")] private Button _previous;
         [RevBind("result/replayNext")] private Button _next;
         [RevBind("result/replayExit")] private Button _replayExit;
+        [RevBind("result/newGame")] private Button _newGame;
         [RevBind("confirm")] private GameObject _confirm;
         [RevBind("confirm/text")] private Text _confirmText;
 
@@ -295,9 +297,9 @@ namespace RevGame.Pvp
             Set(_black, hasGame ? "● " + service.BlackName + "\n" + service.ClockText(GoSide.Black) + "   提子 " + core.BlackCaptures : "黑先白后");
             Set(_white, hasGame ? "○ " + service.WhiteName + "\n" + service.ClockText(GoSide.White) + "   提子 " + core.WhiteCaptures : "同样规则 · 公平落子");
             RefreshMatchFeedback(service, playing);
-            Set(_turn, _counting ? "终局 · 正在清点" : hasGame ? service.ResultText().Split('\n')[0] : "选择一种对战方式");
-            Show(_scoring, scoring);
-            Show(_result, finished);
+            Set(_turn, _counting ? "终局 · 正在清点" : _settling ? "终局" : hasGame ? service.ResultText().Split('\n')[0] : "选择一种对战方式");
+            Show(_scoring, _battleVisible && scoring);
+            Show(_result, _battleVisible && finished && (_counting || !_settling));
             Show(_pass.gameObject, playing);
             Show(_resign.gameObject, hasGame && !finished);
             Show(_hint.gameObject, playing);
@@ -311,9 +313,13 @@ namespace RevGame.Pvp
             Set(_scoringText, service.ResultText());
             _confirmScore.interactable = canAct && scoring && (service.Mode == PvpConnectionMode.Local || !core.HasConfirmed(service.MySide));
             _resume.interactable = canAct && scoring && !core.PlacementLimitReached;
-            _previous.interactable = finished && !_counting && service.Moves.Count > 0 && service.ReplayStep != 0;
-            _next.interactable = finished && !_counting && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
-            _replayExit.interactable = service.ReplayStep >= 0;
+            Show(_previous.gameObject, !_settling);
+            Show(_next.gameObject, !_settling);
+            Show(_replayExit.gameObject, !_settling);
+            Show(_newGame.gameObject, !_settling);
+            _previous.interactable = finished && !_settling && service.Moves.Count > 0 && service.ReplayStep != 0;
+            _next.interactable = finished && !_settling && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
+            _replayExit.interactable = !_settling && service.ReplayStep >= 0;
         }
 
         /// <summary>按钮只有意图转发；失败文案留在本屏，不抛到大厅，不改变单机流程。</summary>
@@ -461,6 +467,7 @@ namespace RevGame.Pvp
         protected override void OnClose()
         {
             CloseMenus();
+            RevUI.Close<PvpNoticePanel>();
             _opening = false;
             _leaseVersion++;
             _confirmedAction = null;

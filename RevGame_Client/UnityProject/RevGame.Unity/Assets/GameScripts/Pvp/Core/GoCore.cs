@@ -10,7 +10,10 @@ namespace RevGame.Pvp
         // 9 和 81 属于本模式棋盘/协议的固定结构，不是策划平衡数值；变更尺寸须升级协议及界面。
         public const int BoardSize = 9;
         public const int PointCount = BoardSize * BoardSize;
-        public const int RulesVersion = 1;
+        public const int RulesVersion = 2;
+        public const string MatchProtocolVersion = "revgo-2";
+        /// <summary>联机与本地人机的共同预算，仅实际落子计入，避免双端从各自配置推算出不同上限。</summary>
+        public const int MatchPlacementLimit = 68;
 
         private readonly byte[] _board = new byte[PointCount];
         private readonly byte[] _working = new byte[PointCount];
@@ -59,6 +62,11 @@ namespace RevGame.Pvp
             get;
         }
         public bool PlacementLimitReached => PlacementLimit > 0 && PlacementCount >= PlacementLimit;
+        /// <summary>匹配对局由终局那条合法命令直接计分，人工练习可保留协商死子。</summary>
+        public bool AutomaticScoring
+        {
+            get;
+        }
 
         public int Sequence
         {
@@ -114,7 +122,7 @@ namespace RevGame.Pvp
             get
             {
                 ulong hash = Mix(PositionHash ^ _historyHash);
-                hash = Mix(hash ^ (ulong)KomiHalfPoints ^ ((ulong)RulesVersion << 32));
+                hash = Mix(hash ^ (ulong)KomiHalfPoints ^ ((ulong)RulesVersion << 32) ^ (AutomaticScoring ? 1UL << 40 : 0));
                 hash = Mix(hash ^ (ulong)Sequence ^ ((ulong)MoveNumber << 32));
                 hash = Mix(hash ^ (ulong)Turn ^ ((ulong)Phase << 8) ^ ((ulong)_confirmed << 16) ^ ((ulong)_passes << 24));
                 hash = Mix(hash ^ (ulong)Winner ^ ((ulong)EndReason << 8));
@@ -128,16 +136,33 @@ namespace RevGame.Pvp
         }
 
         /// <summary>贴目由导表配置传入，单位半目；构造参数非法属于接线错误，不偷偷改成默认数值。</summary>
-        public GoCore(int komiHalfPoints, int placementLimit = 0)
+        public GoCore(int komiHalfPoints, int placementLimit = 0) : this(komiHalfPoints, placementLimit, false)
+        {
+        }
+
+        private GoCore(int komiHalfPoints, int placementLimit, bool automaticScoring)
         {
             if (komiHalfPoints < 0 || komiHalfPoints > PointCount * 2)
             {
                 throw new ArgumentOutOfRangeException(nameof(komiHalfPoints), "贴目须在 0 至棋盘总面积之间，单位为半目。");
             }
             PlacementLimit = placementLimit;
+            AutomaticScoring = automaticScoring;
             KomiHalfPoints = komiHalfPoints;
             Turn = GoSide.Black;
             _positions.Add(new PositionKey(_board));
+        }
+
+        /// <summary>客户端、局域网双方和服务器都用同一套终局规则创建实盘或空白回放。</summary>
+        public static GoCore CreateMatch(int komiHalfPoints)
+        {
+            return new GoCore(komiHalfPoints, MatchPlacementLimit, true);
+        }
+
+        /// <summary>复盘从空盘开始，复用本局贴目、上限和终局方式。</summary>
+        public GoCore CreateEmptyReplay()
+        {
+            return new GoCore(KomiHalfPoints, PlacementLimit, AutomaticScoring);
         }
 
         public static GoSide Opponent(GoSide side)
@@ -296,10 +321,18 @@ namespace RevGame.Pvp
 
         private void BeginScoring()
         {
-            Phase = GoPhase.Scoring;
             _dead = default;
             _confirmed = 0;
             Score = CalculateScore(false, null);
+            if (AutomaticScoring)
+            {
+                // 强制计分只结算当前盘面，不猜测死子。结果随本手一起进入指纹，无需额外确认命令。
+                FinishScoring();
+            }
+            else
+            {
+                Phase = GoPhase.Scoring;
+            }
         }
 
         public bool TryResign(GoSide side, out GoPlayResult result)
@@ -369,11 +402,16 @@ namespace RevGame.Pvp
             if (HasConfirmed(GoSide.Black) && HasConfirmed(GoSide.White))
             {
                 Score = CalculateScore(true, null);
-                Winner = Score.Winner;
-                EndReason = GoEndReason.Scored;
-                Phase = GoPhase.Finished;
+                FinishScoring();
             }
             return Accept(new GoPointSet(), 0, out result);
+        }
+
+        private void FinishScoring()
+        {
+            Winner = Score.Winner;
+            EndReason = GoEndReason.Scored;
+            Phase = GoPhase.Finished;
         }
 
         /// <summary>死活有争议时继续下，保留全部超级劫历史，不能借数子流程绕过全局同形禁令。</summary>
@@ -398,7 +436,7 @@ namespace RevGame.Pvp
         /// <summary>深复制只用于显式悬停预览、建议和测试；复制全部劫历史，绝不在实盘上试着落下再撤销。</summary>
         public GoCore Clone()
         {
-            var clone = new GoCore(KomiHalfPoints, PlacementLimit);
+            var clone = CreateEmptyReplay();
             clone.CopyPositionFrom(this);
             return clone;
         }

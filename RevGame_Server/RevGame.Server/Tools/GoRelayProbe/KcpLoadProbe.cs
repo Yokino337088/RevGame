@@ -155,7 +155,7 @@ internal static class GoKcpLoadProbe
         int players = ReadCount("REVGO_LOAD_PLAYERS", 1000);
         int buckets = ReadCount("REVGO_LOAD_BUCKETS", 100);
         int turns = ReadCount("REVGO_LOAD_TURNS", 30);
-        Check(players <= 1024 && players % (2 * buckets) == 0 && turns <= 64, "人数须能给每个测试桶分配偶数席位，手数最多64");
+        Check(players <= 1024 && players % (2 * buckets) == 0 && turns <= GoCore.MatchPlacementLimit, "人数须能给每个测试桶分配偶数席位，手数最多68");
         await scene.TimerComponent.Net.WaitAsync(250);
         var peers = new GoLoadPeer[players];
         var timer = Stopwatch.StartNew();
@@ -214,15 +214,16 @@ internal static class GoKcpLoadProbe
         // 测试棋谱所有桶使用同一份贴目，逐波提交同一手合法着法。每局只有当前执棋的一侧发请求。
         var black = peers.Where(peer => peer.Side == 1).ToArray();
         var white = peers.Where(peer => peer.Side == 2).ToArray();
-        var board = new GoCore(15);
-        int totalRounds = turns + 4;
+        var board = GoCore.CreateMatch(15);
+        int passes = turns == GoCore.MatchPlacementLimit ? 0 : 2;
+        int totalRounds = turns + passes;
         var samples = new List<double>(totalRounds * rooms.Length);
         string tracePath = Environment.GetEnvironmentVariable("REVGO_LOAD_TRACE");
         var trace = tracePath == null ? null : new List<string>(totalRounds * rooms.Length);
         long responseRows = 0;
         for (int i = 1; i <= totalRounds; i++)
         {
-            var command = i <= turns ? NextLegalMove(board) : NextScoringCommand(board, i - turns);
+            var command = i <= turns ? NextLegalMove(board) : NextPass(board);
             await Phase(command.Side == 1 ? black : white, async peer =>
             {
                 long started = Stopwatch.GetTimestamp();
@@ -248,8 +249,8 @@ internal static class GoKcpLoadProbe
             await scene.TimerComponent.Net.WaitAsync(90);
         }
         await scene.TimerComponent.Net.WaitAsync(300);
-        Check(board.Phase == GoPhase.Finished && peers.All(peer => peer.LastPushSequence >= (peer.Side == 1 ? totalRounds : totalRounds - 1)),
-            "所有对局完成双停和计分，对手推送全部到齐");
+        Check(board.Phase == GoPhase.Finished && peers.All(peer => peer.LastPushSequence >= (peer.Side == (int)board.Turn ? totalRounds : totalRounds - 1)),
+            "所有对局完成自动计分，对手推送全部到齐");
         Check(peers.All(peer => !peer.InvalidHistory && peer.SeenSequence == totalRounds && peer.SeenHash == board.StateHash.ToString()),
             "所有座位拼接出的棋谱连续且与终局指纹一致");
         long pushRows = peers.Sum(peer => peer.PushedCommandRows);
@@ -285,7 +286,7 @@ internal static class GoKcpLoadProbe
         }
         Console.WriteLine(JsonSerializer.Serialize(new
         {
-            players, buckets, rooms = rooms.Length, turns, scoringCommandsPerRoom = 4, commands = samples.Count, connectMs, matchMs,
+            players, buckets, rooms = rooms.Length, turns, scoringCommandsPerRoom = passes, commands = samples.Count, connectMs, matchMs,
             p50Ms = Percentile(samples, .50), p95Ms = Percentile(samples, .95), p99Ms = Percentile(samples, .99),
             responseRows, pushRows, reconnect = true, cleanup = true
         }));
@@ -320,7 +321,7 @@ internal static class GoKcpLoadProbe
             {
                 Check(denied.ErrorCode != 0, "开局时禁止挑战");
             }
-            var go = new GoCore(15);
+            var go = GoCore.CreateMatch(15);
             string testSeat = Environment.GetEnvironmentVariable("REVGO_DUEL_TEST_PROBE");
             bool force = testSeat == "black" || testSeat == "white";
             if (!force)
@@ -501,7 +502,7 @@ internal static class GoKcpLoadProbe
     {
         using var result = (G2C_GoHelloResponse)await peer.Session.Call(new C2G_GoHelloRequest
         {
-            CoreVersion = "revgo-1",
+            CoreVersion = GoCore.MatchProtocolVersion,
             Nickname = "并发探针",
             MatchKind = peer.Kind,
             RulesJson = peer.Rules,
@@ -582,14 +583,13 @@ internal static class GoKcpLoadProbe
         throw new InvalidOperationException("测试棋谱已无合法点");
     }
 
-    private static GoRelayCommand NextScoringCommand(GoCore board, int index)
+    private static GoRelayCommand NextPass(GoCore board)
     {
         string before = board.StateHash.ToString();
-        var action = index < 3 ? GoAction.Pass : GoAction.ConfirmScore;
-        var side = index < 3 ? board.Turn : index == 3 ? GoSide.Black : GoSide.White;
-        Check(board.TryApply(action, side, -1, -1, out _), "测试棋谱可以正常数子");
-        return new GoRelayCommand { Sequence = board.Sequence, Side = (int)side, Kind = (int)action, X = -1, Y = -1,
-            ElapsedMs = index < 3 ? 100 : 0, Payload = "", PreviousHash = before, ResultHash = board.StateHash.ToString() };
+        var side = board.Turn;
+        Check(board.TryPass(side, out _), "测试棋谱可以正常数子");
+        return new GoRelayCommand { Sequence = board.Sequence, Side = (int)side, Kind = (int)GoAction.Pass, X = -1, Y = -1,
+            ElapsedMs = 100, Payload = "", PreviousHash = before, ResultHash = board.StateHash.ToString() };
     }
 
     private static int ReadCount(string name, int fallback)

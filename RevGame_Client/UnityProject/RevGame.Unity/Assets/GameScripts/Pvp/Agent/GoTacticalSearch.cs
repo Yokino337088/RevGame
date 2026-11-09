@@ -105,7 +105,7 @@ namespace RevGame.Pvp
 
         private int Evaluate(GoCore position, GoSide side)
         {
-            if (position.Phase == GoPhase.Scoring)
+            if (position.Phase == GoPhase.Scoring || position.EndReason == GoEndReason.Scored)
             {
                 int points = position.Score.DifferenceHalfPoints;
                 return (side == GoSide.Black ? points : -points) * 16;

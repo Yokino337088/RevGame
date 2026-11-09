@@ -64,7 +64,7 @@ static GoCore Replay(GoRelayState state)
 {
     using var json = JsonDocument.Parse(state.RulesJson);
     int komi = json.RootElement.TryGetProperty("komiHalfPoints", out var field) ? field.GetInt32() : 15;
-    var core = new GoCore(komi);
+    var core = GoCore.CreateMatch(komi);
     foreach (var command in state.Commands)
     {
         Check(core.StateHash.ToString() == command.PreviousHash, "重放前哈希一致");
@@ -92,7 +92,7 @@ static void Smoke(string host, int port, string rules)
     Check(matched.ErrorCode == 0 && stateA.RoomId == stateB.RoomId && stateA.MySide + stateB.MySide == 3, "真实匹配房间与黑白分配");
     RelayClient black = stateA.MySide == 1 ? a : b;
     RelayClient white = stateA.MySide == 2 ? a : b;
-    var core = new GoCore(15);
+    var core = GoCore.CreateMatch(15);
     var move = Apply(core, GoAction.Play, GoSide.Black, 2, 2);
     var rejected = white.Send(stateA.RoomId, move);
     Check(rejected.ErrorCode != 0 && rejected.State.Commands.Count == 0, "不能冒用另一方身份");
@@ -148,7 +148,7 @@ static void Ranking(string host, int port, string rules)
         Check(winner.Match().State.Phase == "queued", "固定赢家先进入队列");
         var room = loser.Match().State;
         Check(room.Phase == "playing", "尚在初始棋力窗时立即配对");
-        var core = new GoCore(komi);
+        var core = GoCore.CreateMatch(komi);
         var black = room.MySide == 1 ? loser : winner;
         var white = room.MySide == 2 ? loser : winner;
         void Step(RelayClient player, GoAction action, GoSide side)
@@ -168,9 +168,7 @@ static void Ranking(string host, int port, string rules)
         }
         Step(core.Turn == GoSide.Black ? black : white, GoAction.Pass, core.Turn);
         Step(core.Turn == GoSide.Black ? black : white, GoAction.Pass, core.Turn);
-        Step(black, GoAction.ConfirmScore, GoSide.Black);
-        Step(white, GoAction.ConfirmScore, GoSide.White);
-        Check(core.Winner == (room.MySide == 1 ? GoSide.White : GoSide.Black), "指定玩家赢得经双方确认的正常计分");
+        Check(core.Winner == (room.MySide == 1 ? GoSide.White : GoSide.Black), "指定玩家赢得双停自动计分");
         StoreResult(winner, loser);
         winner.Leave();
         loser.Leave();
@@ -182,7 +180,7 @@ static void Ranking(string host, int port, string rules)
     }
     Check(a.Match().State.Phase == "queued", "第四局进入匹配");
     var resignation = b.Match().State;
-    var resigningBoard = new GoCore(komi);
+    var resigningBoard = GoCore.CreateMatch(komi);
     var resign = Apply(resigningBoard, GoAction.Resign, (GoSide)resignation.MySide);
     Check(b.Send(resignation.RoomId, resign).ErrorCode == 0, "本人认输有效");
     Check(b.Send(resignation.RoomId, resign).ErrorCode == 0, "同一条认输指令允许幂等重发");
@@ -307,10 +305,6 @@ static void Opponent(string host, int port, string rules)
             {
                 Console.WriteLine("OPPONENT_FINISHED " + core.StateHash);
             }
-            else if (core.Phase == GoPhase.Scoring && !core.HasConfirmed(side))
-            {
-                client.Send(state.RoomId, Apply(core, GoAction.ConfirmScore, side));
-            }
             else if (core.Phase == GoPhase.Playing && core.Turn == side)
             {
                 client.Send(state.RoomId, Apply(core, GoAction.Pass, side));
@@ -388,7 +382,7 @@ sealed class RelayClient : IDisposable
         _stream = _tcp.GetStream();
     }
 
-    public G2C_GoHelloResponse Hello(string nickname, string rules, string token = "", string version = "revgo-1")
+    public G2C_GoHelloResponse Hello(string nickname, string rules, string token = "", string version = GoCore.MatchProtocolVersion)
     {
         return Call<C2G_GoHelloRequest, G2C_GoHelloResponse>(new C2G_GoHelloRequest { Nickname = nickname, RulesJson = rules, ResumeToken = token, CoreVersion = version, MatchKind = "rookie" });
     }

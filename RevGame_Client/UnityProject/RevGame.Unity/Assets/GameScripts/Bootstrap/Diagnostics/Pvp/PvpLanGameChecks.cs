@@ -324,46 +324,21 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
-                    Next("等待黑方真实停一手并进入协商计分");
-                    break;
-                case 7:
-                    if (!Synced(5))
-                    {
-                        return;
-                    }
-                    if (!Check(_host.Core.Phase == GoPhase.Scoring && _guest.Core.Phase == GoPhase.Scoring, "双方连续停一手后没有进入计分阶段")
-                        || !Submit(_guest, GoAction.ConfirmScore))
-                    {
-                        return;
-                    }
-                    Next("等待白方单独确认计分");
-                    break;
-                case 8:
-                    if (!Synced(6))
-                    {
-                        return;
-                    }
-                    bool onlyWhite = _host.Core.HasConfirmed(GoSide.White) && _guest.Core.HasConfirmed(GoSide.White)
-                        && !_host.Core.HasConfirmed(GoSide.Black) && !_guest.Core.HasConfirmed(GoSide.Black);
-                    if (!Check(onlyWhite, "一方确认不应代替另一方确认") || !Submit(_host, GoAction.ConfirmScore))
-                    {
-                        return;
-                    }
-                    Next("等待双方完成同一终局");
+                    _step = 9;
                     break;
                 case 20:
                     if (_host.Core.Phase != GoPhase.Finished || _guest.Core.Phase != GoPhase.Finished)
                     {
                         return;
                     }
-                    if (_longGame && !Check(_host.Core.MoveNumber >= 60 && _host.Core.StateHash == _guest.Core.StateHash, "长局未达到60手或指纹分歧"))
+                    if (_longGame && !Check(_host.Core.PlacementLimitReached && _host.Core.StateHash == _guest.Core.StateHash, "长局未落满68手或指纹分歧"))
                     {
                         return;
                     }
                     _step = 9;
                     break;
                 case 9:
-                    if (!Synced(_longGame ? _host.Core.Sequence : 7))
+                    if (!Synced(_longGame ? _host.Core.Sequence : 5))
                     {
                         return;
                     }
@@ -383,7 +358,7 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
-                    if (!Check(_guest.Core != null && (_longGame ? _guest.Core.MoveNumber >= 60 : _guest.Core.Sequence == 7) && _guest.Core.Phase == GoPhase.Finished, "对方退出不应删掉本端已完成棋谱"))
+                    if (!Check(_guest.Core != null && (_longGame ? _guest.Core.PlacementLimitReached : _guest.Core.Sequence == 5) && _guest.Core.Phase == GoPhase.Finished, "对方退出不应删掉本端已完成棋谱"))
                     {
                         return;
                     }
@@ -394,7 +369,7 @@ namespace RevGame.Pvp
                     }
                     Complete = true;
                     Passed = true;
-                    Detail = "双端真实业务联机、版本规则握手、三手提子、每手指纹一致、双停一手、双方计分确认及退出清理通过";
+                    Detail = "双端真实业务联机、规则握手、提子、每手指纹一致、" + (_longGame ? "落满68手" : "双停一手") + "自动计分及退出清理通过";
                     break;
             }
         }

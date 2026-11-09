@@ -15,7 +15,7 @@ namespace Fantasy;
 public static class GoLobbyComponentSystem
 {
     /// <summary>握手使用的围棋规则版本。版本不同的客户端不能进入同一套棋规。</summary>
-    public const string CoreVersion = "revgo-1";
+    public const string CoreVersion = GoCore.MatchProtocolVersion;
     // 以下是服务运维边界，不是棋力/棋规数值。限制无身份连接造成的内存和广播放大。
     /// <summary>大厅最多保留的匿名身份数，包含重连等待期内的离线身份。</summary>
     public const int MaxPlayers = 1024;

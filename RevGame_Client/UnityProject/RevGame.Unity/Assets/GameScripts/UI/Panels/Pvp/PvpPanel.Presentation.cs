@@ -39,7 +39,11 @@ namespace RevGame.Pvp
         }
         private int _feedbackVersion, _speechVersion, _hintVersion, _moveCursor, _captures, _eyeVersion;
         private float _nextTaunt;
-        private bool _counting;
+        private bool _counting, _settling;
+        private Text _outcomeTitle;
+        private CanvasGroup _outcomeGroup;
+        private const float OutcomeHoldSeconds = 1.5f;
+        private const float ScoreNoticeSeconds = 1.2f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         private readonly RevSoundHandle[] _soundEvidence = new RevSoundHandle[MatchSounds.Length];
         internal int CompletedSoundMask
@@ -61,6 +65,10 @@ namespace RevGame.Pvp
         internal string VisibleSpeech => BubbleVisible ? _speech.text : "";
         internal string VisibleToast => ToastVisible ? _toastText.text : "";
         internal bool Counting => _counting;
+        internal bool Settling => _settling;
+        internal string VisibleOutcome => _outcomeGroup != null && _outcomeGroup.gameObject.activeInHierarchy && _outcomeGroup.alpha > .01f ? _outcomeTitle.text : "";
+        internal bool ScoreConfirmationVisible => _scoring.activeInHierarchy;
+        internal bool ReplayVisible => !DefeatVisible && _result.activeInHierarchy && _previous.gameObject.activeInHierarchy;
         internal string VisibleResult => _result.activeInHierarchy ? _resultText.text : "";
         internal PvpBoardView BoardForCheck => _board;
         internal string PortraitSpriteForCheck => PortraitVisible ? _portrait.sprite.name : "";
@@ -78,6 +86,30 @@ namespace RevGame.Pvp
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             RevSound.VoiceFinished += ObserveSoundFinished;
 #endif
+        }
+
+        /// <summary>从已有结果文字复用字体和材质。大字独立居中且不挡点击，随主面板回池。</summary>
+        private void BindOutcomeTitle()
+        {
+            _outcomeTitle = Instantiate(_resultText, transform, false);
+            _outcomeTitle.name = "outcomeTitle";
+            _outcomeTitle.raycastTarget = false;
+            _outcomeTitle.alignment = TextAnchor.MiddleCenter;
+            _outcomeTitle.resizeTextForBestFit = false;
+            _outcomeTitle.fontSize = 112;
+            var rect = _outcomeTitle.rectTransform;
+            rect.anchorMin = new Vector2(.2f, .36f);
+            rect.anchorMax = new Vector2(.8f, .64f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            if (!_outcomeTitle.TryGetComponent(out Outline outline))
+            {
+                outline = _outcomeTitle.gameObject.AddComponent<Outline>();
+            }
+            outline.effectColor = new Color(.07f, .05f, .08f, 1f);
+            outline.effectDistance = new Vector2(4f, -4f);
+            _outcomeGroup = _outcomeTitle.gameObject.AddComponent<CanvasGroup>();
+            _outcomeGroup.blocksRaycasts = false;
+            Show(_outcomeTitle.gameObject, false);
         }
 
         private void ReleaseMatchSound()
@@ -105,7 +137,8 @@ namespace RevGame.Pvp
             _moveCursor = _captures = _eyeVersion = 0;
             _feedbackVersion = _speechVersion = _hintVersion = 0;
             _nextTaunt = 0;
-            _counting = false;
+            _counting = _settling = false;
+            Show(_outcomeTitle.gameObject, false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             CompletedSoundMask = 0;
             LastCue = "";
@@ -169,9 +202,9 @@ namespace RevGame.Pvp
             {
                 BeginResult(service, core);
             }
-            // 面积结算先播完数字，认输或超时可立刻展示。关闭后同一局不会再次弹出。
-            if (!_counting && core.Phase == GoPhase.Finished && service.IsComputerGame &&
-                core.Winner == GoSide.White && !ReferenceEquals(_shownDefeat, core))
+            // 大字退场后才展示败北面板。关闭后同一局不会再次弹出。
+            if (!_settling && core.Phase == GoPhase.Finished && service.MySide != GoSide.Empty &&
+                core.Winner == GoCore.Opponent(service.MySide) && !ReferenceEquals(_shownDefeat, core))
             {
                 _shownDefeat = core;
                 Show(_defeat, true);
@@ -301,27 +334,40 @@ namespace RevGame.Pvp
         private void BeginResult(PvpService service, GoCore core)
         {
             _countCore = core;
-            var rect = (RectTransform)_resultGroup.transform;
-            rect.anchoredPosition = new Vector2(140, 0);
-            _resultGroup.alpha = 0;
-            Show(_result, true);
-            PlayMatchSound(ResultSound, .52f);
             _countTween?.Kill(false);
-            var sequence = DOTween.Sequence().SetUpdate(true)
-                .Append(rect.DOAnchorPosX(0, .48f).SetEase(Ease.OutBack))
-                .Join(_resultGroup.DOFade(1, .25f));
+            _settling = true;
+            Sequence sequence = DOTween.Sequence().SetUpdate(true);
             _countTween = sequence;
-            if (core.EndReason != GoEndReason.Scored)
+            if (core.EndReason == GoEndReason.Scored)
+            {
+                if (core.AutomaticScoring)
+                {
+                    string notice = core.PlacementLimitReached ? "落子已满 · 强制结算" : "双方停一手 · 自动计分";
+                    PvpNoticePanel.ShowMessage(notice, ScoreNoticeSeconds);
+                    // 顶部弹幕先进入并退场，再开始逐棋子表现。规则在本手已经完成结算。
+                    sequence.AppendInterval(ScoreNoticeSeconds + .25f);
+                }
+                AppendScoreCount(sequence, core);
+            }
+            else
             {
                 Set(_resultText, service.ResultText());
-                return;
             }
+            AppendOutcome(sequence, service, core);
+        }
 
-            _counting = true;
-            _board.BeginScoreCount(core);
+        private void AppendScoreCount(Sequence sequence, GoCore core)
+        {
+            sequence.AppendCallback(() =>
+            {
+                _counting = true;
+                _board.BeginScoreCount(core);
+                RenderCount(0);
+                PlayMatchSound(ResultSound, .52f);
+                RefreshView();
+            });
             // 同一进度先逐子、再逐空、最后滚入贴目。盘面闪光与面板小计由同一份进度驱动。
             float progress = 0;
-            RenderCount(0);
             sequence.Append(DOTween.To(() => progress, value =>
             {
                 progress = value;
@@ -333,7 +379,7 @@ namespace RevGame.Pvp
                 komi = value;
                 RenderCount(GoCore.PointCount, value);
             }, core.Score.KomiHalfPoints / 2f, .72f).SetEase(Ease.OutCubic));
-            sequence.OnComplete(() =>
+            sequence.AppendCallback(() =>
             {
                 _counting = false;
                 RenderCount(GoCore.PointCount, komi);
@@ -341,6 +387,40 @@ namespace RevGame.Pvp
                 _board.SetScoreProgress(GoCore.PointCount + 4);
                 RefreshView();
             });
+        }
+
+        /// <summary>所有结果先弹入、静止 1.5 秒，再弹回消失。Tween只管理可见性，绝不提交第二次计分。</summary>
+        private void AppendOutcome(Sequence sequence, PvpService service, GoCore core)
+        {
+            bool draw = core.Winner == GoSide.Empty;
+            bool won = !draw && core.Winner == service.MySide;
+            _outcomeTitle.text = draw ? "和棋" : service.MySide == GoSide.Empty
+                ? core.Winner == GoSide.Black ? "黑方胜" : "白方胜"
+                : won ? "胜利" : "败北";
+            _outcomeTitle.color = draw || won || service.MySide == GoSide.Empty ? new Color(1f, .83f, .45f) : new Color(1f, .64f, .70f);
+            RectTransform rect = _outcomeTitle.rectTransform;
+            rect.localScale = Vector3.one * .25f;
+            _outcomeGroup.alpha = 0;
+            sequence.AppendCallback(() =>
+            {
+                rect.SetAsLastSibling();
+                Show(_outcomeTitle.gameObject, true);
+                if (core.EndReason != GoEndReason.Scored)
+                {
+                    PlayMatchSound(ResultSound, .52f);
+                }
+            });
+            sequence.Append(rect.DOScale(1f, .34f).SetEase(Ease.OutBack))
+                .Join(_outcomeGroup.DOFade(1f, .18f))
+                .AppendInterval(OutcomeHoldSeconds)
+                .Append(rect.DOScale(.25f, .25f).SetEase(Ease.InBack))
+                .Join(_outcomeGroup.DOFade(0f, .23f))
+                .OnComplete(() =>
+                {
+                    Show(_outcomeTitle.gameObject, false);
+                    _settling = false;
+                    RefreshView();
+                });
         }
 
         private void RenderCount(float progress, float komi = 0)

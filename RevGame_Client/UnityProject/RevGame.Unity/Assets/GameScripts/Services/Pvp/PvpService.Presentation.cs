@@ -58,6 +58,39 @@ namespace RevGame.Pvp
             private set;
         } = -1;
         public GoCore DisplayCore { get { return _replay ?? Core; } }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>隔离人机演出验收用的固定棋谱。双方都走正式提交，既不改棋盘字段，也不访问云端。</summary>
+        internal bool FillComputerMatchForCheck()
+        {
+            if (Mode != PvpConnectionMode.Local || !IsComputerGame || Core == null || Core.Sequence != 0)
+            {
+                return false;
+            }
+            while (Core.Phase == GoPhase.Playing)
+            {
+                GoSide side = Core.Turn;
+                int point = 0;
+                for (; point < GoCore.PointCount; point++)
+                {
+                    int x = point % GoCore.BoardSize;
+                    int y = point / GoCore.BoardSize;
+                    if (Core.GetStone(point) == GoSide.Empty && Core.TryPreview(side, x, y, out _))
+                    {
+                        if (!SubmitActor(GoAction.Play, side, x, y))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+                }
+                if (point == GoCore.PointCount)
+                {
+                    return false;
+                }
+            }
+            return Core.PlacementLimitReached && Core.EndReason == GoEndReason.Scored;
+        }
+#endif
         public GoHint[] Suggestions { get { return _suggestions; } }
         public int SuggestionCount { get { return _suggestionCount; } }
         // 只允许当前围棋场景消费棋盘交互；决斗接管后，围棋入口即使仍有连接也会冻结。
@@ -233,7 +266,7 @@ namespace RevGame.Pvp
                 return;
             }
             int requestedStep = Math.Max(0, Math.Min(_moves.Count, step));
-            var replay = new GoCore(Config.komiHalfPoints, Core.PlacementLimit);
+            var replay = Core.CreateEmptyReplay();
             for (int i = 0; i < requestedStep; i++)
             {
                 PvpMove move = _moves[i];

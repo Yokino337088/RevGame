@@ -94,14 +94,14 @@ namespace RevGame.Pvp
                 PvpNoticePanel.ShowMessage("正在寻找棋友…");
                 return Result(true, "已播放真实顶部提示");
             }, owner: Owner);
-            RevRuntimeAutomation.Register("pvp.kcp-long-opponent", "真实KCP独立对手至少60手后停一手/数子，仅开发态", Empty, _ =>
+            RevRuntimeAutomation.Register("pvp.kcp-long-opponent", "真实KCP独立对手落满68手自动结算，仅开发态", Empty, _ =>
             {
                 _kcpOpponent?.Dispose();
                 _kcpOpponent = new PvpKcpOpponentCheck(Service.Config.RulesJson, Service.Config.komiHalfPoints, true);
                 _kcpOpponent.Start();
                 return Result(true, "已启动KCP长局对手");
             }, owner: Owner);
-            RevRuntimeAutomation.Register("pvp.kcp-opponent", "独立Fantasy Scene/KCP连接本机UDP20000并自动停一手和确认计分，仅开发态", Empty, _ =>
+            RevRuntimeAutomation.Register("pvp.kcp-opponent", "独立Fantasy Scene/KCP连接本机UDP20000并自动停一手，仅开发态", Empty, _ =>
             {
                 _kcpOpponent?.Dispose();
                 _kcpOpponent = new PvpKcpOpponentCheck(Service.Config.RulesJson, Service.Config.komiHalfPoints);
@@ -208,11 +208,11 @@ namespace RevGame.Pvp
 
             RevRuntimeAutomation.Register("pvp.lan-check-begin", "创建独立双端真实UDP/UTP夹具，验证发现、拒绝重试、握手、有序分片与清理；不修改玩家棋局", Empty, _ => BeginLanCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-check-state", "只读真实局域网传输夹具的完成、断言与清理结果", Empty, _ => LanCheckState(), readOnly: true, owner: Owner);
-            RevRuntimeAutomation.Register("pvp.lan-agent-long", "真实UTP双端Agent至少60手后自动数子，验证后半局仍推进，不访问付费API", Empty, _ => BeginLanGameCheck(true, true), owner: Owner);
-            RevRuntimeAutomation.Register("pvp.agent-long-fixture", "为本机KCP测试安装60手合法候选策略，仅替换HTTP", Empty,
+            RevRuntimeAutomation.Register("pvp.lan-agent-long", "真实UTP双端Agent落满68手自动结算，验证后半局仍推进，不访问付费API", Empty, _ => BeginLanGameCheck(true, true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.agent-long-fixture", "为本机KCP测试安装68手合法候选策略，仅替换HTTP", Empty,
                 _ => { PvpAgentChecks.InstallLongGame(Service); return Result(true, "已安装长局策略"); }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-agent-begin", "真实UTP双端提子后交给Agent自动停一手与数子，HTTP固定响应，不消费Key", Empty, _ => BeginLanGameCheck(true), owner: Owner);
-            RevRuntimeAutomation.Register("pvp.lan-game-begin", "两份隔离PvpService真实局域网对弈：发现邀请、版本握手、提子、双停与计分确认，20秒护栏", Empty, _ => BeginLanGameCheck(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.lan-game-begin", "两份隔离PvpService真实局域网对弈：发现邀请、版本握手、提子、双停与自动计分，20秒护栏", Empty, _ => BeginLanGameCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-game-state", "只读真实局域网业务对局的双端序号、指纹、提子、终局与清理结果", Empty, _ => LanGameCheckState(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.test-cleanup", "幂等停止测试夹具，并沿正式入口离开当前PvP房间；保留当前场景供后续返回", Empty, _ => Cleanup(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.return", "通过GameFlow返回大厅；成功仅代表接受，必须等待screen=Home且transitioning=false", Empty, _ =>

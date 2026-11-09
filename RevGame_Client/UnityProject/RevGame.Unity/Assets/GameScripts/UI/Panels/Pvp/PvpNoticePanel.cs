@@ -19,6 +19,7 @@ namespace RevGame.Pvp
         [RevBind("banner/text")] private Text _text;
         private Tween _motion;
         private bool _queueMode;
+        internal string VisibleMessage => isActiveAndEnabled && _banner.anchoredPosition.y < 145f ? _text.text : "";
         public static void ShowQueue(int seconds)
         {
             string text = "正在匹配棋友  ·  已等待 " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00");
@@ -35,11 +36,11 @@ namespace RevGame.Pvp
                 RevTimer.CancelAllOf(panel);
             });
         }
-        public static void ShowMessage(string message)
+        public static void ShowMessage(string message, float seconds = 3f)
         {
-            RevUI.Open<PvpNoticePanel>(panel => panel.ShowMessageNow(message));
+            RevUI.Open<PvpNoticePanel>(panel => panel.ShowMessageNow(message, seconds));
         }
-        private void ShowMessageNow(string message)
+        private void ShowMessageNow(string message, float seconds = 3f)
         {
             _queueMode = false;
             SetData(message);
@@ -47,7 +48,7 @@ namespace RevGame.Pvp
             RevTimer.CancelAllOf(this);
             _banner.anchoredPosition = new Vector2(0, 150);
             _motion = _banner.DOAnchorPosY(-26, .38f).SetEase(Ease.OutCubic).SetUpdate(true);
-            RevTimer.After(3, Hide, domain: RevTimeDomain.Unscaled, owner: this);
+            RevTimer.After(seconds, Hide, domain: RevTimeDomain.Unscaled, owner: this);
         }
         private void Hide()
         {

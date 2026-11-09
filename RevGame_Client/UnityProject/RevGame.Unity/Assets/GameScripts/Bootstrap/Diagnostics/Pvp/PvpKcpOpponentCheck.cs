@@ -68,7 +68,7 @@ namespace RevGame.Pvp
                     return;
                 }
                 // 围棋兼容探针刻意声明不支持决斗；真实决斗的 KCP 验证走单独的探针。
-                using (var hello = await _session.C2G_GoHelloRequest("revgo-1", "KCP验收对手", "", _rules, "rookie", supportsDelta: false, duelFingerprint: 0))
+                using (var hello = await _session.C2G_GoHelloRequest(GoCore.MatchProtocolVersion, "KCP验收对手", "", _rules, "rookie", supportsDelta: false, duelFingerprint: 0))
                 {
                     Require(hello.ErrorCode == 0, hello.Reason);
                 }
@@ -83,7 +83,7 @@ namespace RevGame.Pvp
                     var state = sync.State;
                     if (state != null && state.RoomId.Length > 0)
                     {
-                        var core = new GoCore(_komi);
+                        var core = GoCore.CreateMatch(_komi);
                         foreach (var move in state.Commands)
                         {
                             Require(core.StateHash.ToString() == move.PreviousHash, "重放前指纹不一致");
@@ -95,14 +95,12 @@ namespace RevGame.Pvp
                         _room = state.RoomId;
                         GoSide side = (GoSide)state.MySide;
                         bool pass = state.Phase == "playing" && core.Phase == GoPhase.Playing && core.Turn == side;
-                        bool confirm = state.Phase == "playing" && core.Phase == GoPhase.Scoring && !core.HasConfirmed(side)
-                            && (side == GoSide.Black || core.HasConfirmed(GoSide.Black));
-                        if (pass || confirm)
+                        if (pass)
                         {
                             string before = core.StateHash.ToString();
-                            GoAction action = pass ? GoAction.Pass : GoAction.ConfirmScore;
+                            GoAction action = GoAction.Pass;
                             int x = -1, y = -1;
-                            if (pass && _longGame && core.MoveNumber < 60)
+                            if (_longGame)
                             {
                                 for (int point = 0; point < GoCore.PointCount; point++)
                                 {
