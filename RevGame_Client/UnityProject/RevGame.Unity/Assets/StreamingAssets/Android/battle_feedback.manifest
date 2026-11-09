@@ -3,13 +3,13 @@ CRC: 3323916909
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9f9f7fdd88a5b92015601a039ed3f968
+    Hash: 8b389c1927338b3bdbb8e66e559ae489
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3f134faaf703d31edf00eb185e07cb0a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9f9f7fdd88a5b92015601a039ed3f968
+    Hash: 8b389c1927338b3bdbb8e66e559ae489
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -56,6 +56,6 @@ Assets:
 - Assets/GameRes/Effects/Combat/BossSkillFx.prefab
 - Assets/GameRes/Effects/Combat/ScoreSpark.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat

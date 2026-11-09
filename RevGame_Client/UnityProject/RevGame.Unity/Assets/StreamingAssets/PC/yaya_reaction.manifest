@@ -3,13 +3,13 @@ CRC: 2181733572
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0c473383ebe9cb3bbbac3b6a107a1168
+    Hash: cfe72654af83a5e46126de87039bd2b8
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3262e38dfbf45c15213d718222040cfc
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0c473383ebe9cb3bbbac3b6a107a1168
+    Hash: cfe72654af83a5e46126de87039bd2b8
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -50,5 +50,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Characters/Yaya/Reaction/YayaReaction.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk

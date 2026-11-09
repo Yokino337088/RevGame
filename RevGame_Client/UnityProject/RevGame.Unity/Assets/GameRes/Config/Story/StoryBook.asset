@@ -96,7 +96,7 @@ MonoBehaviour:
     - Speaker: "\u9E26\u9E26"
       Portrait: {fileID: 0}
       Expression: 13
-      Text: "\u6253\u8D62\u4E86\u597D\u6CA1\u5956\u52B1\uFF0C\u6253\u8F93\u4E86\u6709\u60E9\u7F5A"
+      Text: "\u6253\u8D62\u4E86\u6CA1\u5956\u52B1\uFF0C\u6253\u8F93\u4E86\u6709\u60E9\u7F5A"
     - Speaker: "\u5192\u9669\u5BB6"
       Portrait: {fileID: 0}
       Expression: 13
@@ -211,7 +211,7 @@ MonoBehaviour:
     - Speaker: "\u9E26\u9E26"
       Portrait: {fileID: 0}
       Expression: 23
-      Text: "\u6CBC\u6CFD\u91CC\u4F1A\u6709\u58F0\u97F3\u5B66\u6211\u8BF4\u8BDD\u3002\u5B83\u53EB\u4F60\u9760\u8FD1\uFF0C\u4F60\u5C31\u504F\u8981\u8FDC\u4E00\u70B9\u3002"
+      Text: "\u6CBC\u6CFD\u91CC\u4F1A\u6709\u58F0\u97F3\u5B66\u6211\u8BF4\u8BDD\u3002\n\u5B83\u53EB\u4F60\u9760\u8FD1\uFF0C\u4F60\u5C31\u504F\u8981\u8FDC\u4E00\u70B9\u3002"
     - Speaker: "\u5192\u9669\u5BB6"
       Portrait: {fileID: 0}
       Expression: 1

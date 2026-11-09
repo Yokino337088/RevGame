@@ -58,6 +58,13 @@ namespace RevGame.UI
         protected override void OnBindView()
         {
             _dialogue.supportRichText = false;
+            // 标题靠近卡片上缘，神殿高光会压低浅金字的对比。只在绑定时配置一次深色描边，翻页不重复创建。
+            if (!_title.TryGetComponent(out Outline titleOutline))
+            {
+                titleOutline = _title.gameObject.AddComponent<Outline>();
+            }
+            titleOutline.effectColor = new Color(0.04f, 0.07f, 0.12f, 1f);
+            titleOutline.effectDistance = new Vector2(2f, -2f);
             _guideAnchors = ReadAnchors(_guide.rectTransform);
             _cardAnchors = ReadAnchors(_card);
             _skipAnchors = ReadAnchors(_skip);
