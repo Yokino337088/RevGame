@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor Play 直接进入大厅</title>
+<style>body{margin:0;background:#f5f2e9;color:#20302a;font:16px/1.7 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:24px}section{background:white;border:1px solid #dfdbc8;border-radius:12px;padding:16px 24px;margin-bottom:14px}h1,h2{color:#254e41}img{width:100%;border-radius:8px}.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}figure{margin:0}</style>
+<main><section><small>RevGame · 2026-11-09 · Unity 2022.3.15f1c1</small><h1>Editor Play 直接进入大厅</h1><p>普通 Editor Play 完成 StartScene 交割后停在大厅。启动分支跳过自动序章和教学，不写入完成标记。隔离测试可以显式进入首启剧情，Player 继续使用原有进度分支。</p></section>
+<section><h2>实机编辑器回归</h2><ol><li>rev_discover 确认编辑态测试开关与运行态剧情接口。</li><li>rev_call 解除隔离后进入 Play。rev_run 等待 Home，断言过场结束、剧情未播放、教学未启动且输入未锁。显式预览 opening，等待序章就绪后执行清理。</li><li>rev_call 使用 flags=0 启动独立的首次体验。rev_run 确认自动播放 opening 并断言序章和教学尚未标记完成。</li><li>两轮均退出 Play 并解除隔离。验证范围为 Windows Unity Editor。</li></ol></section>
+<section><h2>两种启动方式</h2><div class="frames"><figure><img src="EditorPlay直进大厅验收_普通启动.png" alt="普通 Play 的大厅"><figcaption>普通 Play 直接进入大厅</figcaption></figure><figure><img src="EditorPlay直进大厅验收_隔离首启.png" alt="隔离 Play 的序章"><figcaption>隔离首启测试自动播放序章</figcaption></figure></div></section></main>
+</html>

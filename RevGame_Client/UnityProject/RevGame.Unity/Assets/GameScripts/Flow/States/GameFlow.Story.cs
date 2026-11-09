@@ -190,6 +190,15 @@ namespace RevGame.Flow
         {
             var progress = RevServices.GetRequired<StoryProgress>();
 
+#if UNITY_EDITOR
+            // 普通编辑器 Play 直接留在大厅，避免调试时反复经过序章和教学，也不写入剧情完成进度。
+            // 显式开启隔离剧情测试时，仍按测试进度走首次启动流程。
+            if (!progress.IsIsolated)
+            {
+                return;
+            }
+#endif
+
             if (!progress.OpeningComplete)
             {
                 PlayStory("opening", () => { progress.CompleteOpening(); BeginTutorialIntroduction(); });
