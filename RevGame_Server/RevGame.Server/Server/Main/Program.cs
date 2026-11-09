@@ -9,6 +9,7 @@
 //   3. 启动 Fantasy.Net 框架
 // ================================================================================
 
+using System.Net.Sockets;
 using Fantasy;
 
 try
@@ -20,6 +21,12 @@ try
     AssemblyHelper.Initialize();
     // 使用项目彩色ILog启动；业务仍走Fantasy.Log统一出口
     await Fantasy.Platform.Net.Entry.Start(new GameConsoleLog());
+}
+catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+{
+    // 预检与正式绑定之间仍可能有别的进程抢占端口，保留失败退出码供脚本判断。
+    Console.Error.WriteLine($"Fantasy 绑定端口时发现地址已占用（{ex.NativeErrorCode}）。请检查上方监听地址，或用启动脚本指定空闲端口。");
+    Environment.ExitCode = 1;
 }
 catch (Exception ex)
 {
