@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "7a5540419a8fb65f80d3ff48cf55432545e3254da7cc6411d8d27806db29383b",
-  "inputDigest": "e7f99a985b6429ef3bc7d251a6cfbd2eb191ae49aba1620a8cba6ff219838215",
+  "inputDigest": "02d8b8b066a932f898300f124284f57013b7f4809768429055b3fb6fd8ef1a5d",
   "originalBytes": 17002248,
   "outputBytes": 797672,
   "characterCount": 1788,
@@ -2260,11 +2260,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAgentChecks.cs",
-      "sha256": "2f6a4b32d350e87148301578faa7ae10144eaa58543bc55129a58d392cf164c3"
+      "sha256": "6bbc19406f87efa67b948ae54fbb2f335554653fdce88f15712ac2ca7a435f9a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.cs",
-      "sha256": "cd22508fa882c1b1989692131cffe30611d1fa923f6a1e01e87e6bc402a980a8"
+      "sha256": "9d98c9dce1531e28202337dffc26808db591ad0fd583fe1e0f9169a02e5d86d0"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.Duel.cs",
@@ -2272,7 +2272,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.Presentation.cs",
-      "sha256": "d49ecbc7721f933bf6b7b523f30d7711478f01e4f62984fb695e82afcad116c4"
+      "sha256": "70427b9c0de56da2276f0d2aacf3f557ed0d1ace9bbf0d7f465acba8c619ac9b"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpKcpOpponentCheck.cs",
@@ -2280,7 +2280,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpLanGameChecks.cs",
-      "sha256": "de26b5db8e67f711585471d9ab2e9485bb5f021af265fe8e6cf80c31abd2f308"
+      "sha256": "08febfc2314a6b59c5c297cbcbb9404c960414e0b545a6c30c3bf9d9b84bccd1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
@@ -2504,11 +2504,15 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/DeepSeekGoRequest.cs",
-      "sha256": "3f56f52095ffb4ff095408ffb375d9d45c5f6fa19f043a4f257c231bab6877da"
+      "sha256": "e8eb2c25403e1795f7749371b8d904a3d559dc62bf96a80d51bd6b4e87e74aed"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoAgentPosition.cs",
-      "sha256": "88a7b87e72416221d4b7929ac5cf10be349738dfc670a74385155764dacab8b6"
+      "sha256": "1e5df567ae1d5a20a2866fb010ce1fc6319acf51e792bea71e572ffb3437c0b0"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoPositionAnalysis.cs",
+      "sha256": "1b58fe9e51bb1b7f635b854cd0f7feded73e35d8aeeeec8cd4e47c8320106c8f"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoTacticalSearch.cs",
@@ -2944,7 +2948,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Agent.cs",
-      "sha256": "979681be8a6e9b13f99cfe056a8a9693c8e9d931e966790dd3c64f646864b64e"
+      "sha256": "4e17e39372689e6ce9fc08f642a92f7b151f0883d0c0307fd1ad2b835a712cec"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Analysis.cs",
+      "sha256": "3d4016c05befedcd11a2c071ef1337e57afe2ed26d157a4c5f30f59c9e8ad781"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Computer.cs",
@@ -2952,7 +2960,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs",
-      "sha256": "0cfb14b4e7431fed808549be43bdc7c8bf5e6a390383aab3fb05d814f4dd5a35"
+      "sha256": "71ee816f43ed24a7e1f774e0476b5239bc0b8bfacc6067c76a518b72d5c1db3d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Duel.cs",
@@ -3060,7 +3068,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpAgentSettingsPanel.cs",
-      "sha256": "1c90a75a6768db864516218e833b39f63eae32beaf84037f52d73f902611b09f"
+      "sha256": "76db32de702660c7e0a4662c9657e19fc8e2f220c0c3b16249138bb32856b366"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpEntryPanel.cs",
@@ -3075,16 +3083,20 @@
       "sha256": "6c6d729039b54f24888ada6f636e227a4595a6ee99f20f1f73b33e706294e153"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.Analysis.cs",
+      "sha256": "397d42102c483906d809a7d2cdea38502eae08da7dd7031b7e7d2cc5bab709a3"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.cs",
-      "sha256": "1fb83ff6d4f54b129d92f562c46d3ca3029649f9ada67d4e5d7b8907e0404ba3"
+      "sha256": "b6401ceca88dcdad3b8208e36a32b71c653f5e7c44bca3ec3374caf40582d304"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.Navigation.cs",
-      "sha256": "de9817357610e71dca087ef7e437e623f87d143b43febf9e4948ed830977db9d"
+      "sha256": "ca945471b0296d04da6cddfb641f8b52390524659b535c6b1602140f520ffffa"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.Presentation.cs",
-      "sha256": "44b1614cd376676dca424205ad0bff12fc78cbff5fd01e8a1c613f6d0fa4df78"
+      "sha256": "d2cbcea83f8b4c960ba53c6921e6237cf4a46f23bfacb7db39108e9bdab3eae3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs",

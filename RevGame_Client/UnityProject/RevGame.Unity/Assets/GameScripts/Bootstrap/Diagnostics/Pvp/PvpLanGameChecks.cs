@@ -17,6 +17,7 @@ namespace RevGame.Pvp
         private readonly PvpConfig _config;
         private readonly bool _agents;
         private readonly bool _longGame;
+        private readonly bool _analysis;
         // 是否运行本次决斗分支；旧围棋回归仍使用原路径。
         private readonly bool _duel;
         // 通过白方真实 UTP 连接验证空棋盘测试入口，不伪造局面或权威回包。
@@ -54,11 +55,12 @@ namespace RevGame.Pvp
         public int BlackCaptures { get; private set; }
 
         // 创建隔离 UTP 夹具，duel 模式验证从棋局到原生封帧。
-        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false)
         {
             _config = config;
             _agents = agents;
             _longGame = longGame;
+            _analysis = analysis;
             _duel = duel;
             _duelTestEntry = duelTestEntry;
             _duelHashAudit = duelHashAudit;
@@ -100,6 +102,11 @@ namespace RevGame.Pvp
                 _guest.Begin(_config);
                 _host.StartLan("业务验收黑方");
                 _guest.StartLan("业务验收白方");
+                if (_analysis)
+                {
+                    PvpAgentChecks.InstallAnalysis(_host, false);
+                    PvpAgentChecks.InstallAnalysis(_guest, false);
+                }
                 if (_host.Lan == null || !_host.Lan.IsDiscovering || _guest.Lan == null || !_guest.Lan.IsDiscovering)
                 {
                     reason = "局域网业务发现未启动：" + _host.Status + "；" + _guest.Status;
@@ -172,6 +179,14 @@ namespace RevGame.Pvp
                     break;
                 case 2:
                     if (!_host.Connected || !_guest.Connected || _host.Core == null || _guest.Core == null)
+                    {
+                        return;
+                    }
+                    if (_analysis && !_host.AnalysisFresh)
+                    {
+                        return;
+                    }
+                    if (_analysis && !Check(_host.PositionAnalysis.BlackPercent == 35 && _guest.PositionAnalysis == null, "开局只有执黑的一方收到分析，棋盘未被修改"))
                     {
                         return;
                     }
@@ -271,6 +286,16 @@ namespace RevGame.Pvp
                     }
                     break;
                 case 3:
+                    if (_analysis && !_guest.AnalysisFresh)
+                    {
+                        return;
+                    }
+                    if (_analysis && !Check(!_host.AnalysisFresh && _guest.PositionAnalysis.BlackPercent == 76 &&
+                        _guest.Core.TryPreview(GoSide.White, _guest.PositionAnalysis.Suggestion.X, _guest.PositionAnalysis.Suggestion.Y, out _),
+                        "换手后旧建议过期，白方新建议在真实规则下合法"))
+                    {
+                        return;
+                    }
                     if (!Synced(1) || !Submit(_guest, GoAction.Play, 0, 0))
                     {
                         return;

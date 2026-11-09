@@ -72,8 +72,15 @@ namespace RevGame.Pvp
             if (Service.Core == null && _battleVisible)
             {
                 _battleVisible = false;
-                _board.gameObject.SetActive(false);
-                ShowDestination("Entry");
+                // 切回大厅时资源组可能已经回收棋盘，不能再操作已失效的租约或重开菜单。
+                if (_board != null)
+                {
+                    _board.gameObject.SetActive(false);
+                }
+                if (!RevServices.GetRequired<GameFlow>().IsTransitioning)
+                {
+                    ShowDestination("Entry");
+                }
             }
             if (Service.Queued)
             {

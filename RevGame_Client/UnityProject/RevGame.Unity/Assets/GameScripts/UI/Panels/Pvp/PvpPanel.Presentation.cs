@@ -128,6 +128,7 @@ namespace RevGame.Pvp
         /// <summary>面板和池租约均可复用。取消各自的Tween后恢复透明度与位移，旧完成回调不能隐藏新气泡。</summary>
         private void ResetMatchFeedback()
         {
+            ResetAnalysisHud();
             _toastTween?.Kill(false);
             _speechTween?.Kill(false);
             _countTween?.Kill(false);
@@ -150,7 +151,10 @@ namespace RevGame.Pvp
             Show(_bubble.gameObject, false);
             _portrait.sprite = _idlePortrait;
             Show(_portrait.gameObject, false);
-            _board?.ResetScoreCount();
+            if (_board != null)
+            {
+                _board.ResetScoreCount();
+            }
         }
 
         private void RefreshMatchFeedback(PvpService service, bool playing)
@@ -213,6 +217,12 @@ namespace RevGame.Pvp
 
         private void RefreshSpeech(PvpService service, bool starting)
         {
+            if (RefreshAnalysisSpeech(service))
+            {
+                _hintVersion = service.HintRevision;
+                _speechVersion = service.SpeechVersion;
+                return;
+            }
             string cue = "";
             string point = "";
             if (starting && service.IsComputerGame)
@@ -241,6 +251,7 @@ namespace RevGame.Pvp
             _speechVersion = service.SpeechVersion;
             if (!string.IsNullOrEmpty(cue))
             {
+                _analysisSpeech = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 LastCue = cue;
 #endif

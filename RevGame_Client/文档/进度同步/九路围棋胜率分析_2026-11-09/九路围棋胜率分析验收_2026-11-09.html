@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>九路围棋胜率分析验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head><body>
+<header class="topbar"><div class="brand"><i>围</i>RevGame · 围棋史莱姆</div><div class="tag">2026-11-09 · PVP</div></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">Unity 2022.3.15f1c1 · PC AssetBundle</div><h1>九路围棋胜率分析验收</h1><p>九路围棋三个对局入口使用同一份 HUD。轮到玩家时，云端读取棋盘，胜率条和鸦鸦对话显示结果。</p></div></div>
+<main>
+<section class="chapter"><h2>实测结果</h2>
+<div class="table-scroll"><table><thead><tr><th>覆盖范围</th><th>业务断言</th></tr></thead><tbody>
+<tr><td>DeepSeek 实际调用</td><td>使用已启用的本机配置请求一次，返回黑 47%、白 53%。接收后棋谱仍为 0 手，未改动授权设置。</td></tr>
+<tr><td>本地人机与 HUD</td><td>未授权显示破折号。固定 HTTP 回复下，黑白胜率从 35% / 65% 更新至 76% / 24%。鸦鸦对话通过可见和文本尺寸断言，比例动画达到目标。换手后旧分析失去当前标记，分析前后棋谱序号为 2 且指纹相同。越界回复回到破折号。</td></tr>
+<tr><td>局域网 UTP</td><td>真实双端邀请与规则握手。执黑端先得到估计，换手后执白端得到新估计且建议通过落子规则预检。共 22 项断言通过，两端终局指纹相同，完成清理。</td></tr>
+<tr><td>服务器 KCP</td><td>独立 KCP 对手经本机服务端匹配，正式 HUD 出现胜率与鸦鸦建议。对手和玩家的棋谱指纹相同，分析独立于联机协议。</td></tr>
+</tbody></table></div>
+<p>黑方估计范围为 0 至 100，白方取补数。两次请求至少间隔 5 秒，失败有冷却。换手后的上一版胜率淡显，落点建议只对应当前棋盘。正式结果是语言模型估计，本次只验证请求与显示链路。</p>
+</section>
+<section class="chapter"><h2>Unity 实拍</h2>
+<p>原始分辨率 1920 × 1080，截图压缩为 1600 像素宽 JPEG。动图使用连续实拍帧合成。</p>
+<div class="gallery"><figure><a href="画面/无授权.jpg"><img src="画面/无授权.jpg" alt="无授权"></a><figcaption>未启用云端时显示黑白破折号</figcaption></figure><figure><a href="画面/人机胜率与建议.jpg"><img src="画面/人机胜率与建议.jpg" alt="人机胜率与建议"></a><figcaption>人机落子和白方应手后，更新至黑 76%、白 24%，鸦鸦说明建议</figcaption></figure><figure><a href="画面/服务器匹配.jpg"><img src="画面/服务器匹配.jpg" alt="服务器匹配"></a><figcaption>真实 KCP 对局显示胜率条与鸦鸦建议</figcaption></figure><figure><a href="画面/无效回复.jpg"><img src="画面/无效回复.jpg" alt="无效回复"></a><figcaption>越界胜率与非法候选被拒绝，HUD 恢复破折号</figcaption></figure></div>
+<figure style="margin-top:14px"><img src="画面/胜率条过渡.gif" alt="胜率条从旧估计过渡到新估计"><figcaption>DOTween 推进黑白分界，鸦鸦对话同时滑入</figcaption></figure>
+</section>
+<section class="chapter"><h2>环境与复现</h2>
+<p>RevCLI 使用 <code>editor.refresh</code> 和 <code>editor wait</code> 完成导入与编译。随后使用 <code>rev_discover</code> 发现 Editor、Play 动作，<code>rev_call</code> 依次执行 <code>editor.play</code>、<code>pvp.enter</code>。<code>rev_run</code> 执行 50 步，包含 <code>pvp.computer</code>、<code>pvp.analysis-fixture</code>、<code>pvp.lan-analysis-begin</code>、<code>pvp.connect</code>（<code>127.0.0.1:20000</code>）及 <code>pvp.match</code>。返回大厅后的错误数为 0，finally 清理夹具并恢复编辑态。</p>
+<p>首轮将棋局转场就绪当作 HUD 已刷新，早了一帧。第二轮发现回大厅时定时刷新可遇到已释放的棋盘，最终修复并复测。网络对局用固定 HTTP 回复保证可重复，真实接口单次单独验证。未执行移动设备和独立 Player 验收。</p>
+</section></main>
+<footer><span>最终运行 20261109-171130-b73bfcaf · 实际 HTTP 运行 20261109-170719-8a98e26c</span><span>机器证据保存在本机 .codex/work/pvp-win-rate-2026-11-09</span></footer>
+</body></html>

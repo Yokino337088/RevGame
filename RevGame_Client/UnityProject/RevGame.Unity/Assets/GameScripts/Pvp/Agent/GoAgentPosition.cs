@@ -52,7 +52,7 @@ namespace RevGame.Pvp.Agent
             return core != null && core.Sequence == _sequence && core.StateHash == _hash;
         }
 
-        public static GoAgentPosition Create(GoCore core, GoSide side, bool advice = false, GoHint[] shortlist = null, int shortlistCount = 0)
+        public static GoAgentPosition Create(GoCore core, GoSide side, bool advice = false, GoHint[] shortlist = null, int shortlistCount = 0, bool analysis = false)
         {
             var result = new GoAgentPosition { _sequence = core.Sequence, _hash = core.StateHash };
             GoCore snapshot = core.Clone();
@@ -69,6 +69,10 @@ namespace RevGame.Pvp.Agent
                 text.Append('\n');
             }
             text.Append("连续停一手次数=").Append(core.ConsecutivePasses).Append("；当前死子标记=").Append(core.DeadStones.Low).Append(',').Append(core.DeadStones.High).Append('\n');
+            if (analysis)
+            {
+                text.Append("剩余落子预算=").Append(snapshot.PlacementLimit - snapshot.PlacementCount).Append('\n');
+            }
             if (snapshot.Phase == GoPhase.Playing)
             {
                 AppendTacticalGroups(text, snapshot);
@@ -83,11 +87,13 @@ namespace RevGame.Pvp.Agent
             }
             else if (core.Phase == GoPhase.Playing)
             {
+                GoCore trial = snapshot.CreateEmptyReplay();
                 for (int y = 0; y < 9; y++)
                 {
                     for (int x = 0; x < 9; x++)
                     {
-                        if (snapshot.Clone().TryApply(GoAction.Play, side, x, y, out _))
+                        trial.CopyPositionFrom(snapshot);
+                        if (trial.TryApply(GoAction.Play, side, x, y, out _))
                         {
                             result._actions.Add(new GoAgentAction { Id = "play_" + x + "_" + y, Kind = GoAction.Play, X = x, Y = y });
                         }
@@ -107,7 +113,7 @@ namespace RevGame.Pvp.Agent
             {
                 text.Append(i).Append('=').Append(result._actions[i].Id).Append(' ');
             }
-            text.Append("\n调用choose_go_action工具，actionIndex选本次候选的索引。");
+            text.Append(analysis ? "\n请按要求返回胜率估计和本次候选索引。" : "\n调用choose_go_action工具，actionIndex选本次候选的索引。");
             if (advice)
             {
                 text.Append("\n这是给玩家的落子建议。优先指出当下最值得考虑的一手；有意义的着手尚存时不要停一手。");
@@ -200,12 +206,7 @@ namespace RevGame.Pvp.Agent
             var match = System.Text.RegularExpressions.Regex.Match(content, "^\\s*\\{\\s*\"actionIndex\"\\s*:\\s*(\\d+)\\s*\\}\\s*$");
             if (match.Success)
             {
-                if (!int.TryParse(match.Groups[1].Value, out int index) || index < 0 || index >= _actions.Count)
-                {
-                    return false;
-                }
-                action = _actions[index];
-                return true;
+                return int.TryParse(match.Groups[1].Value, out int index) && TryGetAction(index, out action);
             }
             Selection selected;
             try
@@ -225,6 +226,13 @@ namespace RevGame.Pvp.Agent
                 }
             }
             return false;
+        }
+
+        /// <summary>只解析当前快照的索引。调用方还要确认此快照仍与实盘一致。</summary>
+        internal bool TryGetAction(int index, out GoAgentAction action)
+        {
+            action = index >= 0 && index < _actions.Count ? _actions[index] : null;
+            return action != null;
         }
     }
 }

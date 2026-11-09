@@ -72,6 +72,7 @@ internal static class PvpAgentChecks
     /// <summary>开发态固定策略，只有测试能力可安装；正式包通过预编译排除整个类型。</summary>
     public static void Install(PvpService service)
     {
+        service.AnalysisRequestFactory = null;
         service.ConfigureAgent("development-fixture-not-a-real-key", "fixture", true);
         service.AgentRequestFactory = (_, position) => new Response
         {
@@ -81,6 +82,7 @@ internal static class PvpAgentChecks
 
     public static void InstallLongGame(PvpService service)
     {
+        service.AnalysisRequestFactory = null;
         service.ConfigureAgent("development-fixture-not-a-real-key", "fixture", true);
         service.AgentRequestFactory = (_, position) =>
         {
@@ -107,11 +109,13 @@ internal static class PvpAgentChecks
     {
         service.ConfigureAgent("", "deepseek-flash", false);
         service.AgentRequestFactory = DeepSeekGoRequest.Start;
+        service.AnalysisRequestFactory = DeepSeekGoRequest.StartAnalysis;
     }
 
     /// <summary>固定白方与建议响应，真实候选、提交、回合和计分仍由正式代码处理。</summary>
     public static void InstallPresentation(PvpService service, bool rejectHint)
     {
+        service.AnalysisRequestFactory = null;
         service.ConfigureAgent("presentation-fixture-not-a-real-key", "fixture", true);
         string[] white = { "play_0_0", "play_7_7", "play_8_7", "play_7_8", "play_7_6", "play_8_6", "play_8_5" };
         service.AgentRequestFactory = (_, position) =>
@@ -130,11 +134,24 @@ internal static class PvpAgentChecks
         };
     }
 
+    /// <summary>测试仅替换 HTTP 回复，快照、解析、生命周期和 HUD 均走正式路径。</summary>
+    internal static void InstallAnalysis(PvpService service, bool malformed)
+    {
+        Install(service);
+        service.AnalysisRequestFactory = (_, position) => new Response
+        {
+            ReadyAt = UnityEngine.Time.realtimeSinceStartup + .55f,
+            Content = malformed ? "{\"blackPercent\":120,\"actionIndex\":900,\"focus\":\"defend\"}"
+                : "{\"blackPercent\":" + (service.Core.Sequence == 0 ? 35 : 76) + ",\"actionIndex\":0,\"focus\":\"territory\"}"
+        };
+    }
+
     private sealed class Response : IGoAgentRequest
     {
         public bool Done = true, Disposed;
+        public float ReadyAt;
         public string Content = "{\"actionId\":\"pass\"}";
-        public bool IsDone => Done;
+        public bool IsDone => Done && (ReadyAt == 0 || UnityEngine.Time.realtimeSinceStartup >= ReadyAt);
         public string ReadContent()
         {
             return Content;
@@ -183,6 +200,7 @@ internal static class PvpAgentChecks
     {
         CheckDecisionPrompt(config);
         var s = new PvpService();
+        s.AnalysisRequestFactory = null;
         Assert(!s.Submit(GoAction.Play, 4, 4), "未开局提交返回拒绝，不访问空棋局");
         s.Begin(config);
         s.StartComputer();
@@ -228,6 +246,7 @@ internal static class PvpAgentChecks
         Assert(s.Core.StateHash == hash && position.Matches(s.Core), "候选生成与解析不改变实盘");
         s.Dispose();
         s = new PvpService();
+        s.AnalysisRequestFactory = null;
         s.Begin(config);
         s.StartComputer();
         s.ConfigureAgent("test-key-not-real", "fixture", true);

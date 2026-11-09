@@ -213,6 +213,7 @@ namespace RevGame.Pvp
                 _ => { PvpAgentChecks.InstallLongGame(Service); return Result(true, "已安装长局策略"); }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-agent-begin", "真实UTP双端提子后交给Agent自动停一手与数子，HTTP固定响应，不消费Key", Empty, _ => BeginLanGameCheck(true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-game-begin", "两份隔离PvpService真实局域网对弈：发现邀请、版本握手、提子、双停与自动计分，20秒护栏", Empty, _ => BeginLanGameCheck(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.lan-analysis-begin", "真实 UTP 两端验证换手刷新胜率和合法建议，使用固定 HTTP 回复", Empty, _ => BeginLanGameCheck(analysis: true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.lan-game-state", "只读真实局域网业务对局的双端序号、指纹、提子、终局与清理结果", Empty, _ => LanGameCheckState(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.test-cleanup", "幂等停止测试夹具，并沿正式入口离开当前PvP房间；保留当前场景供后续返回", Empty, _ => Cleanup(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.return", "通过GameFlow返回大厅；成功仅代表接受，必须等待screen=Home且transitioning=false", Empty, _ =>
@@ -456,7 +457,7 @@ namespace RevGame.Pvp
         }
 
         // 开启真实 UTP 隔离夹具，按参数选择围棋或决斗分支。
-        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false)
+        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false)
         {
             if (_gameCheckRunning)
             {
@@ -469,7 +470,7 @@ namespace RevGame.Pvp
             StopLanGameCheck();
             _gameCheckCancelled = false;
             _gameCheckError = string.Empty;
-            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel, duelHashAudit, duelHashMismatch, duelTestEntry);
+            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel, duelHashAudit, duelHashMismatch, duelTestEntry, analysis);
             if (!_lanGameCheck.Start(out reason))
             {
                 return Result(false, reason);

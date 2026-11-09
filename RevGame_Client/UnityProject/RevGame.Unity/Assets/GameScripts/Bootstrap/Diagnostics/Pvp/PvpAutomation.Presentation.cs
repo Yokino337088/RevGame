@@ -13,6 +13,12 @@ namespace RevGame.Pvp
                 _ => PresentationState(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.force-score-local", "只在空白本地人机局提交固定68手合法棋谱，验证终局演出", Empty,
                 _ => Result(Service.FillComputerMatchForCheck(), Service.Status), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.analysis-fixture", "安装胜率分析 HTTP 替身，保留实盘、解析和 HUD，不修改本地凭据",
+                "{\"type\":\"object\",\"properties\":{\"rejectHint\":{\"type\":\"boolean\"}},\"required\":[\"rejectHint\"],\"additionalProperties\":false}", json =>
+                {
+                    PvpAgentChecks.InstallAnalysis(Service, JsonUtility.FromJson<FixtureArgs>(json).rejectHint);
+                    return Result(true, "已安装胜率分析测试响应");
+                }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.presentation-fixture", "人机测试的固定白方和云端建议替身，走正式提交且不读写玩家凭据",
                 "{\"type\":\"object\",\"properties\":{\"rejectHint\":{\"type\":\"boolean\"}},\"required\":[\"rejectHint\"],\"additionalProperties\":false}",
                 json =>
@@ -60,6 +66,15 @@ namespace RevGame.Pvp
                 ["bubbleHasTitle"] = panel?.BubbleHasTitle ?? false,
                 ["speechMaxFontSize"] = panel?.SpeechMaxFontSize ?? 0,
                 ["speechFits"] = panel?.SpeechFits ?? false,
+                ["analysisReady"] = service.AgentSettings.Ready,
+                ["analysisPending"] = service.AnalysisPending,
+                ["analysisFailure"] = service.AnalysisFailure,
+                ["analysisFresh"] = service.AnalysisFresh,
+                ["analysisPercent"] = service.PositionAnalysis?.BlackPercent ?? -1,
+                ["analysisVisible"] = panel?.AnalysisHudVisible ?? false,
+                ["analysisRatio"] = System.Math.Round(panel?.AnalysisBlackRatio ?? 0, 2),
+                ["analysisBlack"] = panel?.AnalysisBlackLabel ?? "",
+                ["analysisWhite"] = panel?.AnalysisWhiteLabel ?? "",
                 ["cue"] = panel?.LastCue ?? "",
                 ["toast"] = panel?.VisibleToast ?? "",
                 ["boardTextRemoved"] = panel != null && panel.transform.Find("preview") == null && panel.transform.Find("agentState") == null,

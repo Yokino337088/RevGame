@@ -121,6 +121,18 @@ namespace RevGame.Pvp.Agent
             public int max_tokens = 128;
             public bool stream;
         }
+        [Serializable] private sealed class JsonFormat
+        {
+            public string type = "json_object";
+        }
+        [Serializable] private sealed class AnalysisBody
+        {
+            public string model;
+            public Message[] messages;
+            public JsonFormat response_format = new JsonFormat();
+            public Thinking thinking = new Thinking();
+            public int max_tokens = 160;
+        }
         [Serializable] private sealed class Choice
         {
             public ReplyMessage message;
@@ -134,19 +146,41 @@ namespace RevGame.Pvp.Agent
 
         public static IGoAgentRequest Start(PvpAgentSettings settings, GoAgentPosition position)
         {
+            string serialized = BuildBody(settings.Model, position);
+            return Send(settings, serialized, ExtractSchema(serialized), false);
+        }
+
+        /// <summary>分析复用已授权的 HTTP 边界。结果是 JSON 数据，不提供落子工具。</summary>
+        internal static IGoAgentRequest StartAnalysis(PvpAgentSettings settings, GoAgentPosition position)
+        {
+            string serialized = JsonUtility.ToJson(new AnalysisBody
+            {
+                model = settings.Model,
+                messages = new[]
+                {
+                    new Message { role = "system", content = GoPositionAnalysis.Prompt },
+                    new Message { role = "user", content = position.Prompt }
+                }
+            });
+            return Send(settings, serialized, null, true);
+        }
+
+        private bool _analysis;
+
+        private static IGoAgentRequest Send(PvpAgentSettings settings, string serialized, string schema, bool analysis)
+        {
             if (!settings.Ready)
             {
                 throw new InvalidOperationException("尚未授权云端调用");
             }
-            string serialized = BuildBody(settings.Model, position);
-            var result = new DeepSeekGoRequest();
-            result._schemaJson = ExtractSchema(serialized);
+            var result = new DeepSeekGoRequest { _schemaJson = schema, _analysis = analysis };
             try
             {
-                result._request = new UnityWebRequest("https://api.deepseek.com/beta/chat/completions", "POST");
+                string url = analysis ? "https://api.deepseek.com/chat/completions" : "https://api.deepseek.com/beta/chat/completions";
+                result._request = new UnityWebRequest(url, "POST");
                 result._request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(serialized));
                 result._request.downloadHandler = new DownloadHandlerBuffer();
-                result._request.timeout = RequestTimeoutSeconds;
+                result._request.timeout = analysis ? 12 : RequestTimeoutSeconds;
                 result._request.redirectLimit = 0;
                 result._request.SetRequestHeader("Content-Type", "application/json");
                 result._request.SetRequestHeader("Authorization", "Bearer " + settings.Key);
@@ -204,9 +238,14 @@ namespace RevGame.Pvp.Agent
                 throw new GoAgentRequestException(kind);
             }
             Reply reply = JsonUtility.FromJson<Reply>(_request.downloadHandler.text);
-            if (reply?.choices == null || reply.choices.Length != 1 || reply.choices[0].finish_reason != "tool_calls")
+            string finish = _analysis ? "stop" : "tool_calls";
+            if (reply?.choices == null || reply.choices.Length != 1 || reply.choices[0]?.finish_reason != finish)
             {
                 throw new GoAgentRequestException("响应截断或格式不完整");
+            }
+            if (_analysis)
+            {
+                return reply.choices[0].message?.content;
             }
             ToolCall[] calls = reply.choices[0].message?.tool_calls;
             if (calls == null || calls.Length != 1 || calls[0].type != "function" || calls[0].function?.name != "choose_go_action")

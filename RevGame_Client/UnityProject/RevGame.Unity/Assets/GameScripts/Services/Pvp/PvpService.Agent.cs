@@ -113,6 +113,7 @@ namespace RevGame.Pvp
                 return false;
             }
             CancelAgent();
+            ClearAnalysis();
             _consecutiveFailures = 0;
             _cooldownUntil = 0;
             if (!enabled)

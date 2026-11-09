@@ -813,6 +813,7 @@ namespace RevGame.Pvp
             }
             _server?.Poll();
             Lan?.Poll();
+            PollAnalysis();
             if (_leaving)
             {
                 if (!_leaveSent && _server != null && _server.Connected && !_server.Busy)
@@ -903,6 +904,7 @@ namespace RevGame.Pvp
                 return;
             }
             CancelAgent();
+            ClearAnalysis();
             _leaving = true;
             _leaveSent = false;
             _leaveDeadline = _clock.Elapsed.TotalSeconds + Config.connectTimeoutSeconds;
@@ -942,6 +944,7 @@ namespace RevGame.Pvp
             // 断开旧连接时连同决斗副本一起释放，防止迟到消息污染下一局。
             ResetDuel();
             CancelAgent();
+            ClearAnalysis();
             AgentControlsHumanSeat = false;
             IsComputerGame = false;
             _server?.Dispose();

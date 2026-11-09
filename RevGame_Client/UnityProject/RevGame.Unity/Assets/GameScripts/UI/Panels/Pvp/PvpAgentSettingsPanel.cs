@@ -44,7 +44,11 @@ namespace RevGame.Pvp
             if (PvpAgentSettingsStore.UsesTextStorage)
             {
                 _keyLabel.text = "API Key（本机明文TXT）";
-                _disclosure.text = "启用后人机对手和落子建议可调用DeepSeek并消耗API额度。\nKey保存在本机明文TXT；本地人机你只手动落子。";
+                _disclosure.text = "启用后人机对手、落子建议和自动胜率分析可调用 DeepSeek 并消耗 API 额度。\nKey 保存在本机明文 TXT。";
+            }
+            else
+            {
+                _disclosure.text = "启用后人机对手、落子建议和自动胜率分析可调用 DeepSeek 并消耗 API 额度。\nKey 在本机加密保存。";
             }
         }
         protected override void OnOpen()

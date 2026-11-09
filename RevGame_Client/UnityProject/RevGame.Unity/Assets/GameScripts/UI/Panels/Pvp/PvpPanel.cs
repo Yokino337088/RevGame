@@ -35,7 +35,7 @@ namespace RevGame.Pvp
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         private static readonly string[] MatchLayoutPaths = LeftSidebarPaths.Concat(RightSidebarPaths)
-            .Concat(new[] { "top", "controls/pass", "controls/resign", "controls/hint" }).ToArray();
+            .Concat(new[] { "top", "winRate", "controls/pass", "controls/resign", "controls/hint" }).ToArray();
 
         /// <summary>只读对局的实际控制区。菜单或切场时没有可测棋盘，直接返回空。</summary>
         internal object BoardLayoutSnapshot()
@@ -49,6 +49,7 @@ namespace RevGame.Pvp
             // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
             _idlePortrait = _portrait.sprite;
             BindOutcomeTitle();
+            BindAnalysisHud();
             // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
             _duelButton = Instantiate(_resign, _resign.transform.parent);
             _duelButton.name = "DuelChallenge";
@@ -297,6 +298,7 @@ namespace RevGame.Pvp
             Set(_black, hasGame ? "● " + service.BlackName + "\n" + service.ClockText(GoSide.Black) + "   提子 " + core.BlackCaptures : "黑先白后");
             Set(_white, hasGame ? "○ " + service.WhiteName + "\n" + service.ClockText(GoSide.White) + "   提子 " + core.WhiteCaptures : "同样规则 · 公平落子");
             RefreshMatchFeedback(service, playing);
+            RefreshAnalysisHud(service, _battleVisible && playing);
             Set(_turn, _counting ? "终局 · 正在清点" : _settling ? "终局" : hasGame ? service.ResultText().Split('\n')[0] : "选择一种对战方式");
             Show(_scoring, _battleVisible && scoring);
             Show(_result, _battleVisible && finished && (_counting || !_settling));
