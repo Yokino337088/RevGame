@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "7a5540419a8fb65f80d3ff48cf55432545e3254da7cc6411d8d27806db29383b",
-  "inputDigest": "6cffc53bb850cb9a74fb4adecdfa5795d3e6bbe38d58503dd57f8ab981178a6d",
+  "inputDigest": "135e9a901be6082a15cc83470ce20020b1c8a44f41ea06bdfdf51404ea02e42f",
   "originalBytes": 17002248,
   "outputBytes": 797672,
   "characterCount": 1788,
@@ -2060,15 +2060,15 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab",
-      "sha256": "ba4e736aa222bef997d52ff021a4fa826ea9adc265738e08e0fc7de1ea6c471c"
+      "sha256": "00be40263d166d96907b724e4199504931d022e48fe69a1a828a7132fa604701"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpEntryPanel.prefab",
-      "sha256": "043ae3bcd58e229f1cf169243f2d438c42af0b53709b967df72d961c7a7a7213"
+      "sha256": "7a87dcfe52e6de7d8d77d80986ba472ad381587adf8ca85bb746a5c8ebd10dcc"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpLanPanel.prefab",
-      "sha256": "fa41f46f97c87c5b183e2819193d3e87596b7517a015d7d0656c9d483d043191"
+      "sha256": "1151998cb5bc065b094496015a0e61e003e83ba0e8438c20762df2b10e2c5f56"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpNoticePanel.prefab",
@@ -2076,7 +2076,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpServerPanel.prefab",
-      "sha256": "99a3907ac78ba279823a9d1761c3af25f58abcac56a9b64bf0364e189e23832f"
+      "sha256": "99b67f0f9422b062871676b2883efbeff88d574ca62c48755c5ebd47c4294f47"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab",

@@ -1,7 +1,7 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-11-09 22:26:32",
+  "buildTime": "2026-11-09 22:36:37",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 278106 },
     { "name": "atlas_bosschapter01frames", "size": 380310 },
@@ -80,7 +80,7 @@
     { "name": "ui_items", "size": 8240 },
     { "name": "ui_loading", "size": 8017 },
     { "name": "ui_lobby", "size": 11891 },
-    { "name": "ui_pvp", "size": 27252 },
+    { "name": "ui_pvp", "size": 27262 },
     { "name": "ui_settings", "size": 9338 },
     { "name": "ui_story", "size": 8699 },
     { "name": "ui_victory", "size": 5972 },

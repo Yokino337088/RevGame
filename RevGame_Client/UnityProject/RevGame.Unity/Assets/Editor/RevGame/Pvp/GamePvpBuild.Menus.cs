@@ -9,8 +9,8 @@ namespace RevGame.Editor
 {
     public static partial class GamePvpBuild
     {
-        /// <summary>底板宽高占安全设计框的比例，原先为 0.96，本次保留原尺寸的 70%。</summary>
-        private const float MenuPlateRatio = .96f * .70f;
+        /// <summary>底板宽高占安全设计框的比例。由上一版的 67.2% 放大约 40%，边缘仍留出漩涡背景。</summary>
+        private const float MenuPlateRatio = .94f;
 
         /// <summary>仅重新制作四张对战菜单，保留 Prefab GUID 和控件绑定路径。可在编辑态单独运行。</summary>
         public static string BuildMenus()
