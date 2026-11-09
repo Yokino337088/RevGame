@@ -27,6 +27,18 @@ RevResManager.Load / LoadAsync(根目录, 资源名, 类型, 分组)
 - 这个开关**切换后会立即重建策略**，不用重启编辑器。
 - 兜底是"能用"也是"陷阱"：AB 里漏标的资源，在编辑器直读下**照样正常**，直到出真机才报 `FileNotExist` —— 所以打包前必须跑漏标检查（见 `editor-tools.md`）。
 
+### 2.1 切换构建目标后 Editor Play 粉屏或加载失败
+
+先分清活动 Build Target、实际运行宿主与 AB 构建目标。桌面 Editor 切到 Android 会带上 `UNITY_ANDROID`，但 Play 仍由桌面图形 API 渲染。Revolution 从源提交 `58e5af2` 起让 `RevABLoader.MainName` 优先匹配 `UNITY_EDITOR` 并返回 `PC`。实际 Player 再按目标选择 `Android`、`iOS`、`WebGL` 或 `PC`。不同宿主的桌面 AB 可能共用 `PC` 目录名，仍须核对实际构建目标与图形 API。
+
+1. **记录现场。** 从当前 Unity 实例确认活动构建目标与实际图形 API，读取 `UseABInEditor`，检查项目安装的框架版本。必要时检查热更扩展或项目注册的路径重定向是否改变了实际加载来源。Device Simulator 的设备型号只用于预览设备布局。
+2. **核对整条包链。** 真实 AB 模式下确认主包、依赖包和材质所在包的实际来源，并核对 `BuildManifest.json`、ResMap 与包依赖同属对应平台构建。目录名称和资源句柄加载成功只能证明一部分。对可疑材质核对 `Shader.isSupported`、错误 Shader、实际采样纹理、绑定和屏幕输出。
+3. **对照资源模式。** 直读正常、AB 粉屏时优先查平台误选、混包、过期依赖和图形 API 变体。两种模式都异常时继续查源 Shader 编译、渲染管线和材质配置。切换模式后从干净的 Play 会话复测。
+4. **按故障所在层修复。** 若安装的旧框架把 Android 构建目标误当成 Editor 宿主，更新框架并同步快照。若已选正确平台但内容不匹配，用正常构建链重建对应平台的 AB、依赖和映射。项目业务继续通过资源门面加载逻辑路径。
+5. **保持原条件验收。** 保留出错时的活动 Build Target，从正式启动场景开启真实 AB 冷加载，核对实际包来源、材质采样和画面。若涉及 Android 发布，再在 Android Player 独立验收 Android 包。
+
+RevGame 的实测环境是 Windows Editor、Android 构建目标与 Direct3D 11。旧桥选了 Android 包，序章 Shader 名称可读而背景粉屏。切回正确的 PC 包来源后，纹理绑定和画面恢复。项目名、素材名与预览动作只用于这个样例。 [框架修复](https://github.com/Yokino337088/Revolution/commit/58e5af27e4821c9ba14421564bc1cd81716d5b22) · [RevGame 验收证据](https://github.com/Yokino337088/RevGame/commit/0e04caf13aee2b3f0765a4c3740fd93fc611bd6f)
+
 ## 3. ResMap.txt（逻辑名 → 包名 + 资源名）
 
 - 位置：`Assets/Revolution/Resources/ResourceSystem/ResMap.txt`（**随包体进 Resources**，运行时 `Resources.Load<TextAsset>("ResourceSystem/ResMap")` 读）。

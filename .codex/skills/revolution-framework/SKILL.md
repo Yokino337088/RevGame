@@ -78,7 +78,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 | "帮我审查这段代码 / review" | **审查** | `REFERENCE_GUIDELINES.md`（四段式输出） |
 | 要完整签名 / 全部重载 / 精确参数 | **查 API** | `references/modules-core.md` 或 `references/modules-content.md`（门面签名 + 铁律） |
 | 启动入口 / 切后台 / 出包 / 小游戏 / 代码裁剪 | **平台与真机** | `references/startup-and-platform.md` + `templates/RevBoot.cs.txt` |
-| 加载资源 / 打包 AB / ResMap / 编辑器直读差异 | **资源专题** | `references/resource-and-ab.md` |
+| 加载资源 / 打包 AB / ResMap / Editor 切 Android 后粉屏或选错平台包 | **资源专题** | [资源加载与 AB](references/resource-and-ab.md)，平台误选看 §2.1 |
 | 面板传数据 / 刷新时机 / 动画 / Part / Back / 横竖屏选择及预览 | **UI 专题** | `references/ui-and-layering.md` |
 | 接热更 / 排查热更 | **热更专题** | `references/hot-update.md` |
 | 编辑器菜单（打包 / 导表 / GM 面板 / UI 生成器 / 平台工具） | **工具** | `references/editor-tools.md` |
@@ -110,7 +110,7 @@ Revolution 是一套**从零手写、可读可测、无魔法**的 Unity 游戏�
 7. **事件**：`string` 事件名（常量集中在一个类里）+ **同一事件名只能有一种签名**；只在主线程注册/派发；派发过程中可以安全增删（框架做了标记删除），但回调里别做重活。
 8. **时间**：`RevTimer.After/Every` 必须能停（owner、计时器 scope 或活动游戏域）；UI 倒计时/超时用 `RevTimeDomain.Unscaled`；`At(...)` 前先 `SyncServerTime`。域 `SetTickEnabled(false)` 不会暂停计时器。
 9. **服务**：**默认用 `RevServices`**——一行 `RevServices.Register<IX, X>()`、一行 `RevServices.GetRequired<IX>()`、不用了 `RevServices.Unregister<IX>()`（**不要**为此写静态类 + `static readonly` 缓存 + 链式 `Build()`）。纪律：**全局服务集中在启动入口注册；跟着模块 / 场景走的服务，谁注册谁注销**（`owner: this` + `OnDestroy` 里 `UnregisterAllOf(this)`）；重复注册当场报错（要换先 `Unregister`）；`Register<I>(已有实例)` 注销时**不** `Dispose`，`Register<I, T>()` / 工厂注销时 `Dispose`；**不要把取到的服务长期存成字段**（注销后它是已 `Dispose` 的对象）。必需依赖用 `GetRequired<T>()`（没注册当场炸），可选能力用 `Get<T>()` / `TryGet<T>()`。**只有**要"同一个服务类型每局 / 每个场景各一份"或"单测另建隔离容器"时，才用 `RevServiceLocator.Create()…Build()` + `CreateScope()`（`AddScoped` 的服务必须在作用域的 `using` 里取）。
-10. **编辑器 vs 真机**：编辑器默认**只**注册 `RevEditorResPolicy`（AssetDatabase 直读，AB/Resources 完全不参与）；要看 AB / 热更效果，必须开 `RevResBootstrap.UseABInEditor = true`（菜单 `Revolution.Tools/资源/AB 加载模式（编辑器）`）。另外**编辑器里平台名恒为 `PC`**（`RevHotPlatform` 带 `!UNITY_EDITOR`）。
+10. **编辑器 vs 真机**：编辑器默认**只**注册 `RevEditorResPolicy`（AssetDatabase 直读，AB/Resources 完全不参与）。真实 AB 验收开启 `RevResBootstrap.UseABInEditor`。桌面 Editor Play 应使用为当前宿主构建的 `PC` 包，即使活动构建目标是 Android。旧快照误选平台时按 [资源加载与 AB](references/resource-and-ab.md) §2.1 核对。
 11. **不新增分层、不新增门面**：不要给框架加 `System` / `BusinessLogic` 这样的层，也不要给某个模块加"第二套加载 API"（会立刻长成第二套系统）。真需要扩展时，优先**服务 + 约定**，其次才是框架改动。
 12. **改框架要照既有形状**：目录分层 `Core`（数据与契约）/ `Facade`（对外入口）/ `Implementation`（实现）/ `Interfaces`（接口）/ `Support`（宿主适配）；每个文件**开头写清"为什么这么写"**；新增资产要带 `.meta`（文件夹 meta 一律是**同级** `<文件夹名>.meta`）。
 13. **启动只调一次 `RevInitialize.Initialize()`**：它只装配资源系统策略；**不要**再直接调 `RevResBootstrap.Instance.Init()`，也不要去"手动初始化"其它模块（`RevEvent` / `RevInput` / `RevTimer` / `RevUI` / `RevPool` / `RevAppLifecycle` 都已自动就位，重复启动反而会清监听）。骨架见 `templates/RevBoot.cs.txt`。
