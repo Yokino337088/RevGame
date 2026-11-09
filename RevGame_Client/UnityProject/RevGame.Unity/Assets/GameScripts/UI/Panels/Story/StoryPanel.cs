@@ -20,6 +20,8 @@ namespace RevGame.UI
             public int Index;
             /// <summary>播放代次，缓存面板据此区分同一篇章的两次重播。</summary>
             public int Version;
+            /// <summary>本帧实际使用的背景编号。正式播放与篇章配置一致，开发预览可以借用大厅背景。</summary>
+            public int BackgroundChapter;
         }
         /// <summary>绑定预制体storyView节点，负责立绘、文字与按钮事件。</summary>
         [RevBind] private StoryView _storyView;
@@ -28,7 +30,7 @@ namespace RevGame.UI
         /// <summary>宿主等待本篇背景可画后才允许翻页；章节背景仍由场景拥有。</summary>
         public RevTask PrepareBackdropAsync()
         {
-            return _storyBackdrop.PrepareAsync(Data.Episode.BackgroundChapter);
+            return _storyBackdrop.PrepareAsync(Data.BackgroundChapter);
         }
         /// <summary>旧预制体的根是固定设计尺寸。把背景和翻页区一起铺满 UI 层，内容由 StoryView 适配安全区。</summary>
         protected override void OnBindView()
@@ -97,8 +99,10 @@ namespace RevGame.UI
                 ["mobilePreview"] = UnityEngine.Device.Application.isMobilePlatform,
                 ["deviceModel"] = UnityEngine.Device.SystemInfo.deviceModel,
                 ["backgroundChapter"] = panel._storyBackdrop.Chapter,
-                ["speaker"] = line.Speaker,
+                ["title"] = card.Find("title").GetComponent<UnityEngine.UI.Text>().text,
+                ["speaker"] = card.Find("speaker").GetComponent<UnityEngine.UI.Text>().text,
                 ["text"] = line.Text,
+                ["displayedText"] = dialogue.text,
                 ["textFits"] = required <= dialogue.rectTransform.rect.height + 1,
                 ["skipActive"] = skip.gameObject.activeInHierarchy
             };

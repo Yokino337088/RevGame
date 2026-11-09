@@ -64,7 +64,7 @@ namespace RevGame.Bootstrap
                 return Accepted(RevLogic.Get<TutorialLogic>()?.ClickCell(cell.x, cell.y) == true);
             }, owner: Owner);
             RevRuntimeAutomation.Register("tutorial.finish", "完成实操后进入第一章", Empty, _ => Accepted(RevServices.GetRequired<GameFlow>().CompleteTutorial()), owner: Owner);
-            RevRuntimeAutomation.Register("story.preview", "仅隔离会话预览文案，不更改战役", "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false}", json =>
+            RevRuntimeAutomation.Register("story.preview", "原地预览文案，不更改战役或存档", "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false}", json =>
                 Accepted(RevServices.GetRequired<GameFlow>().PreviewStoryForTest(JsonUtility.FromJson<PreviewArgs>(json).id)), owner: Owner);
         }
         public static void Unregister()
@@ -223,6 +223,7 @@ namespace RevGame.Bootstrap
                 ["transitioning"] = flow.IsTransitioning,
                 ["blocked"] = flow.IsGameplayBlocked,
                 ["playing"] = flow.IsStoryPlaying,
+                ["storyReady"] = flow.IsStoryReady,
                 ["episode"] = flow.StoryId,
                 ["line"] = flow.StoryLine,
                 ["error"] = flow.LastError,

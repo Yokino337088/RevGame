@@ -18,6 +18,8 @@ namespace RevGame.Flow
         /// <summary>当前播放篇章及从0开始的行号；未播放时篇章为空。</summary>
         private StoryBook.Episode _episode;
         private int _storyLine;
+        /// <summary>本次实际展示的背景，0为大厅。开发预览可回退，配置里的章节保持原样。</summary>
+        private int _storyBackgroundChapter;
         /// <summary>每次播放/取消递增。异步加载回调带旧版本时不得再显示旧故事。</summary>
         private int _storyVersion;
         /// <summary>Busy从等待加载起就阻塞底层；Visible只在UI实际打开后允许翻页。</summary>
@@ -63,6 +65,15 @@ namespace RevGame.Flow
             }
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>立绘、面板与背景全部交付后才允许翻页。</summary>
+        public bool IsStoryReady
+        {
+            get
+            {
+                return _storyVisible;
+            }
+        }
+
         /// <summary>开发态重播开场：复用正式剧情锁输入/翻页流程，不写首次进度，也不串联教学。true只表示接受播放请求。</summary>
         public bool ReplayOpeningStory()
         {
@@ -111,15 +122,30 @@ namespace RevGame.Flow
             }
             BeginTutorialIntroduction();
         }
-        /// <summary>只允许隔离测试存档预览文案；普通玩家不能借此改章节或标记完成。</summary>
+        /// <summary>开发态从当前界面预览任意对白。只展示内容，不交割场景、不执行首次剧情或章节完成回调。</summary>
         public bool PreviewStoryForTest(string id)
         {
-            if (_disposed || IsTransitioning || _storyBusy || IsTutorialActive || _storyBook == null || !RevServices.GetRequired<StoryProgress>().IsIsolated)
+            if (_disposed || _storyBook == null || Screen == GameScreen.Exit)
             {
-                LastError = "篇章预览需要隔离存档、剧情资源就绪且没有过场、剧情或实操教学";
+                LastError = "剧情资源尚未就绪，请等待游戏启动完成";
                 return false;
             }
-            // 先检查配置和场景，再进入异步播放。输入错误是GM拒绝，不应把玩家送进资源故障面板。
+            if (Screen != GameScreen.Home && Screen != GameScreen.LevelSelect && Screen != GameScreen.Battle)
+            {
+                LastError = "请在大厅、选关或远征中预览剧情";
+                return false;
+            }
+            if (_storyBusy)
+            {
+                LastError = "已有剧情在播放，请读完或跳过后再预览";
+                return false;
+            }
+            if (IsTutorialActive || IsGameplayBlocked)
+            {
+                LastError = "请先结束当前教学、过场或演出，或关闭设置后再预览";
+                return false;
+            }
+            // 先查篇章，输入错误只拒绝GM，不启动异步资源加载。
             StoryBook.Episode episode;
             try
             {
@@ -130,13 +156,12 @@ namespace RevGame.Flow
                 LastError = error.Message;
                 return false;
             }
-            if (episode.BackgroundChapter > 0 && (Screen != GameScreen.Battle || _activePresentation == null || !_activePresentation.IsChapterBackgroundReady || _activePresentation.BackgroundChapter != episode.BackgroundChapter))
-            {
-                LastError = "篇章背景需要先进入对应章节：" + episode.BackgroundChapter;
-                return false;
-            }
+            // 只有已交付的对应章节背景可以借用。其它场景统一使用大厅背景，避免为了看文案创建战役或改存档。
+            bool chapterReady = Screen == GameScreen.Battle && _activePresentation != null
+                && _activePresentation.IsChapterBackgroundReady && _activePresentation.BackgroundChapter == episode.BackgroundChapter;
+            int previewBackgroundChapter = chapterReady ? episode.BackgroundChapter : 0;
             LastError = string.Empty;
-            PlayStory(id, null);
+            PlayStory(id, null, previewBackgroundChapter);
             return true;
         }
 #endif
@@ -202,7 +227,8 @@ namespace RevGame.Flow
             _presentedChapter = battle.Chapter;
             PlayStory("chapter" + battle.Chapter, null);
         }
-        private async void PlayStory(string id, Action completed)
+        /// <summary>预览传入实际背景编号；正式播放直接取配置并继续等待章节交付。</summary>
+        private async void PlayStory(string id, Action completed, int? previewBackgroundChapter = null)
         {
             int version = ++_storyVersion;
             _storyBusy = true;
@@ -212,7 +238,8 @@ namespace RevGame.Flow
             try
             {
                 _episode = _storyBook.Find(id);
-                int backgroundChapter = _episode.BackgroundChapter;
+                int backgroundChapter = previewBackgroundChapter ?? _episode.BackgroundChapter;
+                _storyBackgroundChapter = backgroundChapter;
                 if (backgroundChapter > 0 && _activePresentation != null && _activePresentation.BackgroundChapter != backgroundChapter)
                 {
                     // 领奖会在同一次准备事件里启动剧情和换背景。先交回本次事件，让场景监听器把旧章的就绪标志清掉；
@@ -288,6 +315,11 @@ namespace RevGame.Flow
                 }
                 CancelStory();
                 LastError = error.Message;
+                if (previewBackgroundChapter.HasValue)
+                {
+                    RevLog.Exception(error, "文案预览加载失败，已解除预览门禁", "RevGame");
+                    return;
+                }
                 RevLog.Exception(error, "剧情未完成，保留首次进度以便下次重试", "RevGame");
                 ShowStoryFailureAsync(error.Message);
             }
@@ -313,7 +345,7 @@ namespace RevGame.Flow
         }
         private StoryPanel.Frame StoryFrame()
         {
-            return new StoryPanel.Frame { Book = _storyBook, Episode = _episode, Index = _storyLine, Version = _storyVersion };
+            return new StoryPanel.Frame { Book = _storyBook, Episode = _episode, Index = _storyLine, Version = _storyVersion, BackgroundChapter = _storyBackgroundChapter };
         }
         /// <summary>UI和自动化共用入口。一次点击直接下一句，末句之后关闭并执行一次完成回调。</summary>
         public bool AdvanceStory()

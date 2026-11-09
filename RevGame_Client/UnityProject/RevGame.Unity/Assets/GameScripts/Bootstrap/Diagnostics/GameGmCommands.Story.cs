@@ -16,8 +16,13 @@ namespace RevGame.Bootstrap
         {
             RegisterCommand("剧情/篇章清单", "只读当前StoryBook所有篇章ID、标题和背景章节", args =>
             {
+                var book = RevServices.GetRequired<GameFlow>().StoryContent;
+                if (book == null)
+                {
+                    throw new RevGMUsageException("剧情资源尚未就绪，请等待游戏启动完成");
+                }
                 var list = new System.Text.StringBuilder();
-                foreach (RevGame.Data.StoryBook.Episode episode in RevServices.GetRequired<GameFlow>().StoryContent.Episodes)
+                foreach (RevGame.Data.StoryBook.Episode episode in book.Episodes)
                 {
                     list.Append(episode.Id).Append(" | ").Append(episode.Title).Append(" | 背景=").Append(episode.BackgroundChapter).Append(" | 句数=").Append(episode.Lines.Length).AppendLine();
                 }
@@ -27,7 +32,7 @@ namespace RevGame.Bootstrap
             {
                 return RequireStoryResult(RevServices.GetRequired<GameFlow>().ReplayOpeningStory());
             });
-            RegisterCommand("剧情/播放篇章", "隔离测试会话播放指定StoryBook篇章，复用正式流程；背景必须与当前场景对应", args =>
+            RegisterCommand("剧情/播放篇章", "文案预览，留在当前界面且不写进度；无对应章节背景时用大厅背景。ID见剧情/篇章清单", args =>
             {
                 return RequireStoryResult(RevServices.GetRequired<GameFlow>().PreviewStoryForTest(args.Str(0, "opening")));
             }, RevGMArg.Str("篇章ID", "opening"));
