@@ -11,9 +11,10 @@ namespace RevGame.Pvp
     [RevUIPanel("UI/Panel/Pvp/Menu", RevUILayer.Popup, ExclusiveGroup = "PvpMenu", Mask = RevUIMaskMode.None)]
     public sealed class PvpEntryPanel : RevUIPanel
     {
+        /// <summary>首次装配时让漩涡铺满屏幕，菜单底板和控件仍使用设备安全框。</summary>
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "opaqueBacking");
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
         }
 

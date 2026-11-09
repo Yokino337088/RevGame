@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RevGame · PVP 菜单漩涡背景验收</title>
+<style>
+body{margin:0;background:#f5f2e9;color:#20302a;font:16px/1.7 system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:24px}header,section{background:white;border:1px solid #dfdbc8;border-radius:12px;padding:16px 24px;margin-bottom:14px}h1,h2{color:#254e41}.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}figure{margin:0}img{width:100%;border-radius:8px}figcaption{color:#52645b}
+</style>
+<main><header><small>RevGame · 2026-11-09 · Unity 2022.3.15f1c1</small><h1>PVP 菜单漩涡背景验收</h1><p>四张菜单共用加载面板的 ArcaneBackdrop 材质与 UV1 坐标组件。一张九宫格木纹底板居中，宽高各保留原尺寸的 70%。控件按安全设计框重排，Prefab GUID 和控件绑定保留。</p></header>
+<section><h2>实际 PC AB 画面</h2><div class="frames"><figure><img src="对战入口.png" alt="对战入口菜单"><figcaption>对战入口</figcaption></figure><figure><img src="Agent设置.png" alt="Agent设置菜单"><figcaption>Agent设置</figcaption></figure><figure><img src="服务器匹配.png" alt="服务器匹配菜单"><figcaption>服务器匹配</figcaption></figure><figure><img src="局域网联机.png" alt="局域网联机菜单"><figcaption>局域网联机</figcaption></figure></div><figure><img src="入口漩涡.gif" alt="真实游戏连续截图组成的漩涡动画"><figcaption>入口漩涡连续截图，逐帧有画面差异</figcaption></figure></section>
+<section><h2>制作、依赖与测试</h2><ul>
+<li>RevCLI 发现并执行 <code>game.pvp.menus</code>。四张 Prefab 读回同一材质引用和 0.672 × 0.672 的底板锚点跨度，根控件锚点都在板内。</li>
+<li>字库校验 1,788 个字符通过，原字体与输出字体哈希匹配。PC 构建初次切平台时报告 Unity 资源重载错误，复建通过。PC 和 Android 各 82 包，发布内容逐文件核对 SHA256。依赖图唯一新增关系是 <code>ui_pvp → material_background</code>。</li>
+<li>RevMCP 发现真实 Play 与 UI 能力，从大厅 <code>btnPvP</code> 真实点击打开菜单。入口六个按钮均通过命中检查。测试进入 Agent、服务器和局域网页，检查返回按钮与截图，再回大厅并执行清理。</li>
+<li>运行验证覆盖 Windows Editor 的 PC 真实 AB。服务器连接、局域网搜索、外部 Agent 请求与 Android 真机属于其它验收场景。</li>
+</ul></section></main></html>

@@ -8,9 +8,10 @@ namespace RevGame.Pvp
     {
         // 本次联机测试使用开发机的局域网入口，仍允许在面板中输入其他地址。
         public const string DefaultEndpoint = "192.168.10.3:20000";
+        /// <summary>首次装配时让漩涡铺满屏幕，菜单底板和控件仍使用设备安全框。</summary>
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "opaqueBacking");
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
         }
 

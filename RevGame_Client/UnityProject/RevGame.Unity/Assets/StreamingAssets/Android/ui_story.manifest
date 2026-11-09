@@ -3,13 +3,13 @@ CRC: 2189926264
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cbcdb8d4d92efb7dee85158d436001b2
+    Hash: d703f91fd115b00287fa0871e0d4638a
   TypeTreeHash:
     serializedVersion: 2
-    Hash: d4f8d9d527ff808d4b02e5c08ef98c5e
+    Hash: f30f734e63ca77d76a2f4fc081af5d24
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cbcdb8d4d92efb7dee85158d436001b2
+    Hash: d703f91fd115b00287fa0871e0d4638a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -21,17 +21,17 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: b795a3946d049284d98daf7c81aeb4f7, type: 3}
+  Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: cb48f4b48a144d54883ab06b9b3a8537, type: 3}
+  Script: {fileID: 11500000, guid: b795a3946d049284d98daf7c81aeb4f7, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 1486929e0348668459a52e23613edfdb, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 95e0c33babbc69f45a084e9ab2d84c0e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: cb48f4b48a144d54883ab06b9b3a8537, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -65,6 +65,6 @@ Assets:
 - Assets/GameRes/UI/Panel/Story/TutorialPanel.prefab
 - Assets/GameRes/UI/Panel/Story/StoryPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui"

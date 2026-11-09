@@ -35,7 +35,8 @@ namespace RevGame.Editor
             _font = GameAssetBuilder.Font();
             BuildBoard();
             BuildPanel();
-            BuildMenus();
+            BuildStandardMenus();
+            BuildNotice();
             BuildAgentAssets();
             SceneSetup[] setup = EditorSceneManager.GetSceneManagerSetup();
             try

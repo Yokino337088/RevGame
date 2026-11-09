@@ -37,9 +37,10 @@ namespace RevGame.Pvp
         [RevBind("disclosure")] private Text _disclosure;
         [RevBind("model")] private InputField _model;
         [RevBind("state")] private Text _state;
+        /// <summary>首次装配时让漩涡铺满屏幕，菜单底板和控件仍使用设备安全框。</summary>
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "opaqueBacking");
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             _key.contentType = InputField.ContentType.Password;
             if (PvpAgentSettingsStore.UsesTextStorage)
             {

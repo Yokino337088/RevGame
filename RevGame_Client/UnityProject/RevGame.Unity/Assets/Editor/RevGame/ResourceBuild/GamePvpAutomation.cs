@@ -96,6 +96,13 @@ namespace RevGame.Editor
                 throw new InvalidOperationException(error.InnerException?.ToString() ?? error.ToString());
             }
         }
+        /// <summary>从 RevCLI 调用四张菜单的固定制作配方，避免连带重建场景或对局 HUD。</summary>
+        [RevAutomationAction("game.pvp.menus", Environment = "edit", Keys = new string[0], Description = "重制四张对战菜单的漩涡背景与布局")]
+        public static object Menus(RevAutomationRequest request)
+        {
+            return new Result { text = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildMenus").Invoke(null, null) };
+        }
+
         [RevAutomationAction("game.pvp.agent-assets", Environment = "edit", Keys = new string[0], Description = "制作Agent设置与对局开关，保留现有Prefab GUID")]
         public static object AgentAssets(RevAutomationRequest request)
         {

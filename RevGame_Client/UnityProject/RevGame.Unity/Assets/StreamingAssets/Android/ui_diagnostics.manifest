@@ -3,13 +3,13 @@ CRC: 4131849308
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 98d0bbcafc15b3c2c1f5286438f3a694
+    Hash: a46f3da26746fd4c8c841d35bbeb2173
   TypeTreeHash:
     serializedVersion: 2
     Hash: 8b60e398fc7a09ada7e59966a267a216
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 98d0bbcafc15b3c2c1f5286438f3a694
+    Hash: a46f3da26746fd4c8c841d35bbeb2173
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -52,4 +52,4 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Diagnostics/PerformanceMonitorPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
