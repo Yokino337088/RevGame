@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor真实AB剧情粉屏修复</title>
+<style>
+body{margin:0;background:#f5f2e9;color:#20302a;font:16px/1.7 system-ui,sans-serif}main{max-width:1080px;margin:auto;padding:24px}section,header{background:#fff;border:1px solid #dfdbc8;border-radius:12px;padding:16px 24px;margin-bottom:14px}h1,h2{color:#254e41}.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}figure{margin:0}img{width:100%;border-radius:8px}figcaption{color:#52645b}
+</style>
+<main>
+<header><small>RevGame · 2026-11-09 · Unity 2022.3.15f1c1</small><h1>Editor Play 真实 AB 剧情粉屏修复</h1><p>相同编辑器、Android 构建目标、Direct3D 11，开启 AB 模式，从 StartScene 冷启动并自动播放序章。修复后原背景恢复。</p></header>
+<section><h2>原因与修复</h2><p>资源加载器用构建目标宏决定首包路径。Windows 编辑器切到 Android 构建目标时，误选 Android AB，而编辑器仍使用桌面图形 API。Shader 名称存在，实际材质采样与渲染异常。框架优先按 UNITY_EDITOR 选择 PC 包，正式 Player 按目标平台选包。</p><p><a href="https://github.com/Yokino337088/Revolution/commit/58e5af27e4821c9ba14421564bc1cd81716d5b22">Revolution 源修复</a> · <a href="https://docs.unity3d.com/cn/2022.3/Manual/shader-loading.html">Unity Shader 加载说明</a></p></section>
+<section><h2>同条件前后截图</h2><div class="frames">
+<figure><img src="Editor真实AB剧情粉屏修复_修复前.png" alt="修复前序章背景为粉色"><figcaption>修复前 · 亮粉像素 72.42%，背景纹理绑定为 false</figcaption></figure>
+<figure><img src="Editor真实AB剧情粉屏修复_修复后.png" alt="修复后序章小屋背景正常"><figcaption>修复后 · 亮粉像素 0.00%，Shader 支持和纹理绑定均为 true</figcaption></figure>
+</div></section>
+<section><h2>验收与收尾</h2><p>RevMCP 先用 rev_discover 发现编辑态和剧情动作，再用 rev_call 设置隔离首启进度并进入 Play。rev_run 等待 story.state 进入 opening，断言 AB 模式开启，再用 story.yaya-state 核对面板和材质，最后截图。收尾跳过隔离剧情、退出 Play，并解除隔离标记。测试范围为 Windows Editor 使用现有 PC AB 的序章背景。</p></section>
+</main></html>

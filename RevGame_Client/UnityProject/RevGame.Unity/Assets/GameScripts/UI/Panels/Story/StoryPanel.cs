@@ -103,6 +103,7 @@ namespace RevGame.UI
                 ["deviceModel"] = UnityEngine.Device.SystemInfo.deviceModel,
                 ["backgroundChapter"] = panel._storyBackdrop.Chapter,
                 ["backgroundShader"] = material.shader.name,
+                ["backgroundShaderSupported"] = material.shader.isSupported,
                 ["backgroundTexture"] = background.texture == null ? "" : background.texture.name,
                 ["backgroundTextureBound"] = background.texture != null && material.HasProperty(textureProperty) && material.GetTexture(textureProperty) == background.texture,
                 ["title"] = card.Find("title").GetComponent<UnityEngine.UI.Text>().text,

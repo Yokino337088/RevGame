@@ -83,7 +83,10 @@ namespace Revolution
         {
             get
             {
-#if UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME || UNITY_WEBGL
+#if UNITY_EDITOR
+                // 编辑器使用桌面图形 API。Build Target 切到 Android 等平台时，Play 仍需读取 PC 包。
+                return "PC";
+#elif UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME || UNITY_WEBGL
                 return "WebGL";
 #elif UNITY_IOS
                 return "iOS";
