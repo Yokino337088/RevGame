@@ -20,6 +20,7 @@ try
     // 注意：Native AOT 不存在延迟加载问题，所有程序集在编译时打包
     AssemblyHelper.Initialize();
     // 使用项目彩色ILog启动；业务仍走Fantasy.Log统一出口
+    // Entry 读取可执行产物旁的 Fantasy.config、创建 Scene 和监听端口，并运行服务端主循环。
     await Fantasy.Platform.Net.Entry.Start(new GameConsoleLog());
 }
 catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
@@ -30,6 +31,8 @@ catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlread
 }
 catch (Exception ex)
 {
+    // 保留完整异常链，部署日志可以定位配置、依赖或初始化失败的实际位置。
     Console.Error.WriteLine($"服务器初始化过程中发生致命错误：{ex}");
+    // 启动失败时返回非零状态，供启动脚本和自动化判定失败。
     Environment.Exit(1);
 }
