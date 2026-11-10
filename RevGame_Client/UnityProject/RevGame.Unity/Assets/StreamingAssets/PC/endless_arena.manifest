@@ -3,13 +3,13 @@ CRC: 4021555115
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 89e4fe971297ce8e8c3346b8bd37e329
+    Hash: 3373002bd80d2c223764048e161f8c4a
   TypeTreeHash:
     serializedVersion: 2
     Hash: ccd41d3e4b647b71e9b3a9b13a447b7f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 89e4fe971297ce8e8c3346b8bd37e329
+    Hash: 3373002bd80d2c223764048e161f8c4a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -56,9 +56,9 @@ Assets:
 - Assets/GameRes/Endless/Textures/EndlessThrustBlade.png
 - Assets/GameRes/Endless/EndlessCardUpgrade.mat
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesshearteye
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_board
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

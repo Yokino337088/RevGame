@@ -14,9 +14,10 @@ namespace RevGame.Pvp
             RevRuntimeAutomation.Register("pvp.force-score-local", "只在空白本地人机局提交固定68手合法棋谱，验证终局演出", Empty,
                 _ => Result(Service.FillComputerMatchForCheck(), Service.Status), owner: Owner);
             RevRuntimeAutomation.Register("pvp.analysis-fixture", "安装胜率分析 HTTP 替身，保留实盘、解析和 HUD，不修改本地凭据",
-                "{\"type\":\"object\",\"properties\":{\"rejectHint\":{\"type\":\"boolean\"}},\"required\":[\"rejectHint\"],\"additionalProperties\":false}", json =>
+                "{\"type\":\"object\",\"properties\":{\"rejectHint\":{\"type\":\"boolean\"},\"baitBoard\":{\"type\":\"boolean\"}},\"required\":[\"rejectHint\"],\"additionalProperties\":false}", json =>
                 {
-                    PvpAgentChecks.InstallAnalysis(Service, JsonUtility.FromJson<FixtureArgs>(json).rejectHint);
+                    var args = JsonUtility.FromJson<FixtureArgs>(json);
+                    PvpAgentChecks.InstallAnalysis(Service, args.rejectHint, args.baitBoard);
                     return Result(true, "已安装胜率分析测试响应");
                 }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.presentation-fixture", "人机测试的固定白方和云端建议替身，走正式提交且不读写玩家凭据",
@@ -44,6 +45,8 @@ namespace RevGame.Pvp
         private sealed class FixtureArgs
         {
             public bool rejectHint;
+            /// <summary>固定白方应手，给第三个黑方回合提供可复现的诱导局面。</summary>
+            public bool baitBoard;
         }
 
         private static object PresentationState()
@@ -71,6 +74,7 @@ namespace RevGame.Pvp
                 ["analysisFailure"] = service.AnalysisFailure,
                 ["analysisFresh"] = service.AnalysisFresh,
                 ["analysisPercent"] = service.PositionAnalysis?.BlackPercent ?? -1,
+                ["analysisCue"] = service.PositionAnalysis?.Cue ?? "",
                 ["analysisVisible"] = panel?.AnalysisHudVisible ?? false,
                 ["analysisRatio"] = System.Math.Round(panel?.AnalysisBlackRatio ?? 0, 2),
                 ["analysisBlack"] = panel?.AnalysisBlackLabel ?? "",
@@ -113,7 +117,8 @@ namespace RevGame.Pvp
                 ["neutral"] = score.Neutral,
                 ["result"] = panel?.VisibleResult ?? "",
                 ["soundMask"] = panel?.CompletedSoundMask ?? 0,
-                ["tableLoaded"] = RevDataTableManager.IsLoaded<PvpYayaLineTable>()
+                ["tableLoaded"] = RevDataTableManager.IsLoaded<PvpYayaLineTable>(),
+                ["yayaTableRows"] = PvpYayaLineTable.Instance?.All.Count ?? 0
             };
         }
     }

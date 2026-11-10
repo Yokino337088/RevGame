@@ -1,67 +1,58 @@
 ManifestFileVersion: 0
-CRC: 12586518
+CRC: 777106570
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
-      Name: ui_items
-      Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: config_piece_art
-        Dependency_2: material_cards
-        Dependency_3: material_ui
-        Dependency_4: atlas_uibattle
-        Dependency_5: atlas_uimenus
+      Name: atlas_boardstatus
+      Dependencies: {}
     Info_1:
-      Name: font_cjk
+      Name: atlas_pieceframes
       Dependencies: {}
     Info_2:
-      Name: battle_board
-      Dependencies:
-        Dependency_0: atlas_boardstatus
-        Dependency_1: atlas_combatframes
-        Dependency_2: material_combat
-        Dependency_3: material_board
+      Name: atlas_uimenus
+      Dependencies: {}
     Info_3:
-      Name: battle_units
-      Dependencies:
-        Dependency_0: config_piece_art
-        Dependency_1: material_pieces
-        Dependency_2: atlas_boardstatus
-        Dependency_3: atlas_pieceframes
+      Name: shared_shaders
+      Dependencies: {}
     Info_4:
+      Name: atlas_uibattle
+      Dependencies: {}
+    Info_5:
+      Name: atlas_combatframes
+      Dependencies: {}
+    Info_6:
       Name: battle_boss
       Dependencies:
-        Dependency_0: material_pieces
-        Dependency_1: atlas_boardstatus
-    Info_5:
-      Name: config_piece_art
-      Dependencies:
         Dependency_0: atlas_boardstatus
-        Dependency_1: atlas_pieceframes
-    Info_6:
-      Name: battle_feedback
-      Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: atlas_combatframes
-        Dependency_2: material_combat
+        Dependency_1: material_pieces
     Info_7:
-      Name: data_tables
+      Name: audio_bgm
       Dependencies: {}
     Info_8:
       Name: material_cards
       Dependencies:
         Dependency_0: shared_shaders
     Info_9:
-      Name: material_ui
+      Name: ui_items
       Dependencies:
-        Dependency_0: shared_shaders
+        Dependency_0: atlas_uimenus
+        Dependency_1: atlas_uibattle
+        Dependency_2: material_cards
+        Dependency_3: config_piece_art
+        Dependency_4: font_cjk
+        Dependency_5: material_ui
     Info_10:
-      Name: material_background
+      Name: config_piece_art
       Dependencies:
-        Dependency_0: shared_shaders
+        Dependency_0: atlas_boardstatus
+        Dependency_1: atlas_pieceframes
     Info_11:
-      Name: audio_bgm
-      Dependencies: {}
+      Name: battle_units
+      Dependencies:
+        Dependency_0: atlas_boardstatus
+        Dependency_1: atlas_pieceframes
+        Dependency_2: config_piece_art
+        Dependency_3: material_pieces
     Info_12:
       Name: audio_sfx
       Dependencies: {}
@@ -70,112 +61,121 @@ AssetBundleManifest:
       Dependencies:
         Dependency_0: shared_shaders
     Info_14:
-      Name: shared_shaders
-      Dependencies: {}
+      Name: battle_feedback
+      Dependencies:
+        Dependency_0: atlas_combatframes
+        Dependency_1: font_cjk
+        Dependency_2: material_combat
     Info_15:
-      Name: atlas_boardstatus
-      Dependencies: {}
-    Info_16:
-      Name: atlas_combatframes
-      Dependencies: {}
-    Info_17:
-      Name: atlas_pieceframes
-      Dependencies: {}
-    Info_18:
-      Name: atlas_uibattle
-      Dependencies: {}
-    Info_19:
-      Name: atlas_uimenus
-      Dependencies: {}
-    Info_20:
       Name: ui_loading
       Dependencies:
         Dependency_0: font_cjk
         Dependency_1: material_background
+    Info_16:
+      Name: battle_board
+      Dependencies:
+        Dependency_0: atlas_boardstatus
+        Dependency_1: atlas_combatframes
+        Dependency_2: material_combat
+        Dependency_3: material_board
+    Info_17:
+      Name: font_cjk
+      Dependencies: {}
+    Info_18:
+      Name: data_tables
+      Dependencies: {}
+    Info_19:
+      Name: material_ui
+      Dependencies:
+        Dependency_0: shared_shaders
+    Info_20:
+      Name: material_background
+      Dependencies:
+        Dependency_0: shared_shaders
     Info_21:
-      Name: background_chapter06_temple
-      Dependencies: {}
-    Info_22:
-      Name: background_chapter01_tutorial
-      Dependencies: {}
-    Info_23:
-      Name: background_chapter02_village
-      Dependencies: {}
-    Info_24:
-      Name: background_chapter05_ice
-      Dependencies: {}
-    Info_25:
-      Name: background_chapter04_swamp
-      Dependencies: {}
-    Info_26:
-      Name: background_chapter03_lake
-      Dependencies: {}
-    Info_27:
       Name: material_combat
       Dependencies:
         Dependency_0: shared_shaders
+    Info_22:
+      Name: background_chapter02_village
+      Dependencies: {}
+    Info_23:
+      Name: background_chapter03_lake
+      Dependencies: {}
+    Info_24:
+      Name: background_chapter04_swamp
+      Dependencies: {}
+    Info_25:
+      Name: background_chapter05_ice
+      Dependencies: {}
+    Info_26:
+      Name: background_chapter06_temple
+      Dependencies: {}
+    Info_27:
+      Name: background_chapter01_tutorial
+      Dependencies: {}
     Info_28:
-      Name: material_board
-      Dependencies:
-        Dependency_0: shared_shaders
-    Info_29:
-      Name: ui_story
-      Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: material_ui
-        Dependency_2: atlas_uimenus
-    Info_30:
       Name: config_story
       Dependencies:
         Dependency_0: atlas_yayaexpressions
+    Info_29:
+      Name: ui_story
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk
+        Dependency_2: material_ui
+    Info_30:
+      Name: material_board
+      Dependencies:
+        Dependency_0: shared_shaders
     Info_31:
-      Name: atlas_bosschapter02frames
-      Dependencies: {}
-    Info_32:
-      Name: atlas_bosschapter04frames
-      Dependencies: {}
-    Info_33:
-      Name: atlas_bosschapter06frames
-      Dependencies: {}
-    Info_34:
-      Name: atlas_bosschapter03frames
-      Dependencies: {}
-    Info_35:
-      Name: atlas_bosschapter01frames
-      Dependencies: {}
-    Info_36:
-      Name: atlas_bosschapter05frames
-      Dependencies: {}
-    Info_37:
-      Name: audio_bgm_chapter04
-      Dependencies: {}
-    Info_38:
-      Name: audio_bgm_chapter02
-      Dependencies: {}
-    Info_39:
-      Name: audio_bgm_chapter06
-      Dependencies: {}
-    Info_40:
-      Name: audio_bgm_chapter03
-      Dependencies: {}
-    Info_41:
       Name: audio_bgm_chapter01
       Dependencies: {}
-    Info_42:
+    Info_32:
+      Name: audio_bgm_chapter02
+      Dependencies: {}
+    Info_33:
+      Name: audio_bgm_chapter03
+      Dependencies: {}
+    Info_34:
+      Name: audio_bgm_chapter04
+      Dependencies: {}
+    Info_35:
       Name: audio_bgm_chapter05
       Dependencies: {}
-    Info_43:
-      Name: ui_victory
-      Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: material_ui
-        Dependency_2: atlas_uimenus
-    Info_44:
+    Info_36:
+      Name: audio_bgm_chapter06
+      Dependencies: {}
+    Info_37:
       Name: ui_settings
       Dependencies:
-        Dependency_0: font_cjk
+        Dependency_0: atlas_uimenus
         Dependency_1: atlas_uibattle
-        Dependency_2: atlas_uimenus
+        Dependency_2: font_cjk
+    Info_38:
+      Name: atlas_bosschapter01frames
+      Dependencies: {}
+    Info_39:
+      Name: atlas_bosschapter02frames
+      Dependencies: {}
+    Info_40:
+      Name: atlas_bosschapter03frames
+      Dependencies: {}
+    Info_41:
+      Name: atlas_bosschapter04frames
+      Dependencies: {}
+    Info_42:
+      Name: atlas_bosschapter05frames
+      Dependencies: {}
+    Info_43:
+      Name: atlas_bosschapter06frames
+      Dependencies: {}
+    Info_44:
+      Name: ui_victory
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk
+        Dependency_2: material_ui
     Info_45:
       Name: battle_helper_fx
       Dependencies:
@@ -183,8 +183,8 @@ AssetBundleManifest:
     Info_46:
       Name: battle_helper
       Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: atlas_uimenus
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk
         Dependency_2: atlas_helperframes
     Info_47:
       Name: atlas_helperframes
@@ -193,84 +193,84 @@ AssetBundleManifest:
       Name: atlas_helperstormframes
       Dependencies: {}
     Info_49:
-      Name: audio_boss_common
-      Dependencies: {}
-    Info_50:
-      Name: audio_boss_chapter05
-      Dependencies: {}
-    Info_51:
-      Name: audio_helper
-      Dependencies: {}
-    Info_52:
-      Name: audio_boss_chapter02
-      Dependencies: {}
-    Info_53:
-      Name: audio_boss_chapter03
-      Dependencies: {}
-    Info_54:
-      Name: audio_boss_chapter04
-      Dependencies: {}
-    Info_55:
       Name: audio_boss_chapter01
       Dependencies: {}
-    Info_56:
+    Info_50:
+      Name: audio_boss_chapter02
+      Dependencies: {}
+    Info_51:
+      Name: audio_boss_chapter03
+      Dependencies: {}
+    Info_52:
+      Name: audio_boss_chapter04
+      Dependencies: {}
+    Info_53:
+      Name: audio_boss_chapter05
+      Dependencies: {}
+    Info_54:
       Name: audio_boss_chapter06
       Dependencies: {}
+    Info_55:
+      Name: audio_boss_common
+      Dependencies: {}
+    Info_56:
+      Name: audio_helper
+      Dependencies: {}
     Info_57:
-      Name: ui_diagnostics
+      Name: ui_lobby
       Dependencies:
-        Dependency_0: font_cjk
+        Dependency_0: atlas_uimenus
+        Dependency_1: atlas_uibattle
+        Dependency_2: font_cjk
+        Dependency_3: material_ui
+        Dependency_4: material_background
     Info_58:
-      Name: endless_arena
-      Dependencies:
-        Dependency_0: config_piece_art
-        Dependency_1: shared_shaders
-        Dependency_2: atlas_boardstatus
-        Dependency_3: material_board
-        Dependency_4: atlas_endlesshearteye
-        Dependency_5: background_temple_shared
-    Info_59:
       Name: ui_endless
       Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: material_cards
-        Dependency_2: material_ui
-        Dependency_3: atlas_uibattle
-        Dependency_4: atlas_uimenus
+        Dependency_0: atlas_uimenus
+        Dependency_1: atlas_uibattle
+        Dependency_2: material_cards
+        Dependency_3: font_cjk
+        Dependency_4: material_ui
         Dependency_5: atlas_ui_tavern_imgbkatlas
         Dependency_6: atlas_endlesscardarrow
         Dependency_7: background_temple_shared
+    Info_59:
+      Name: endless_arena
+      Dependencies:
+        Dependency_0: atlas_boardstatus
+        Dependency_1: shared_shaders
+        Dependency_2: config_piece_art
+        Dependency_3: material_board
+        Dependency_4: atlas_endlesshearteye
+        Dependency_5: background_temple_shared
     Info_60:
       Name: ui_chapters_shared
       Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: config_piece_art
+        Dependency_0: atlas_uimenus
+        Dependency_1: atlas_uibattle
         Dependency_2: material_cards
-        Dependency_3: material_ui
-        Dependency_4: atlas_uibattle
-        Dependency_5: atlas_uimenus
+        Dependency_3: config_piece_art
+        Dependency_4: font_cjk
+        Dependency_5: material_ui
     Info_61:
-      Name: ui_lobby
+      Name: ui_diagnostics
       Dependencies:
         Dependency_0: font_cjk
-        Dependency_1: material_ui
-        Dependency_2: material_background
-        Dependency_3: atlas_uibattle
-        Dependency_4: atlas_uimenus
     Info_62:
       Name: audio_bgm_endless_endless01_checkpoint
       Dependencies: {}
     Info_63:
-      Name: atlas_ui_tavern_imgbkatlas
+      Name: audio_bgm_endless_endless02_surf
       Dependencies: {}
     Info_64:
       Name: audio_bgm_endless_endless03_unbreakable
       Dependencies: {}
     Info_65:
-      Name: audio_bgm_endless_endless02_surf
+      Name: audio_endless
       Dependencies: {}
     Info_66:
-      Name: audio_endless
+      Name: atlas_ui_tavern_imgbkatlas
       Dependencies: {}
     Info_67:
       Name: atlas_endlesshearteye
@@ -279,57 +279,57 @@ AssetBundleManifest:
       Name: atlas_endlesscardarrow
       Dependencies: {}
     Info_69:
+      Name: atlas_yayaidle24
+      Dependencies: {}
+    Info_70:
       Name: character_yaya
       Dependencies:
         Dependency_0: atlas_yayaidle24
-    Info_70:
-      Name: atlas_yayaidle24
-      Dependencies: {}
     Info_71:
-      Name: atlas_yayaexpressions
-      Dependencies: {}
-    Info_72:
       Name: lobby_cottage
       Dependencies:
         Dependency_0: shared_shaders
-    Info_73:
-      Name: atlas_yayacombatexpressions
+    Info_72:
+      Name: atlas_yayaexpressions
       Dependencies: {}
+    Info_73:
+      Name: yaya_reaction
+      Dependencies:
+        Dependency_0: atlas_uimenus
+        Dependency_1: font_cjk
     Info_74:
       Name: config_yaya
       Dependencies:
         Dependency_0: atlas_yayaexpressions
         Dependency_1: atlas_yayacombatexpressions
     Info_75:
-      Name: pvp_arena
-      Dependencies:
-        Dependency_0: shared_shaders
-        Dependency_1: atlas_boardstatus
-        Dependency_2: background_temple_shared
+      Name: atlas_yayacombatexpressions
+      Dependencies: {}
     Info_76:
       Name: background_temple_shared
       Dependencies: {}
     Info_77:
-      Name: yaya_reaction
+      Name: pvp_arena
       Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: atlas_uimenus
+        Dependency_0: atlas_boardstatus
+        Dependency_1: shared_shaders
+        Dependency_2: background_temple_shared
     Info_78:
       Name: ui_pvp
       Dependencies:
-        Dependency_0: font_cjk
-        Dependency_1: material_background
-        Dependency_2: atlas_uibattle
-        Dependency_3: atlas_uimenus
-        Dependency_4: atlas_yayacombatexpressions
-        Dependency_5: config_yaya
+        Dependency_0: atlas_uimenus
+        Dependency_1: atlas_uibattle
+        Dependency_2: font_cjk
+        Dependency_3: material_background
+        Dependency_4: config_yaya
+        Dependency_5: atlas_yayacombatexpressions
         Dependency_6: atlas_pvpagent
         Dependency_7: atlas_pvpdefeat
     Info_79:
-      Name: atlas_pvpagent
+      Name: audio_pvp
       Dependencies: {}
     Info_80:
-      Name: audio_pvp
+      Name: atlas_pvpagent
       Dependencies: {}
     Info_81:
       Name: atlas_pvpdefeat

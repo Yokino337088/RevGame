@@ -105,12 +105,12 @@ namespace RevGame.Pvp
             _computerAt = _clock.Elapsed.TotalSeconds + .35;
         }
 
+        /// <summary>释放上一局的预告、落子表现和战术搜索快照。</summary>
         private void ResetComputerPresentation()
         {
             _previewPosition = _landingPosition = null;
             _previewPoint = _landingPoint = -1;
             _tacticalSearch = null;
-            _hintRequests = 0;
         }
     }
 }

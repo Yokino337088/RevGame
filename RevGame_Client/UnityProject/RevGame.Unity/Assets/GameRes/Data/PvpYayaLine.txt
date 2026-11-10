@@ -1,19 +1,55 @@
 #PvpYayaLine
 #Id	Cue	Line	Seconds	Expression
 #唯一编号	触发事件	鸦鸦台词，{point}由真实棋盘坐标替换	气泡停留秒数	鸦鸦正式表情编号
-1	Opening	获得了蓝色大肥鱼的力量，对弈简简单单！	3.8	8
-2	Taunt	还在想？蓝色大肥鱼都绕神殿游了两圈啦！	3.6	23
-3	Taunt	棋盘那么大，你怎么偏要跟我的鱼抢地盘？	3.6	26
-4	Taunt	别只盯着大肥鱼！你那一串棋子还剩几口气呀？	3.8	14
-5	Taunt	鸦鸦可以等你，可大肥鱼已经饿得在拍尾巴啦！	3.8	13
-6	HintThinking	等一下，让鸦鸦和大肥鱼一起瞧瞧这盘棋！	3.6	2
-7	HintCloud	大肥鱼用尾巴一拍，指的就是 {point}！这手可以试试。	4.2	3
+1	Opening	DeepSeek？鸦鸦叫它蓝色大肥鱼。来，下棋。	3.8	8
+2	Taunt	还在想？蓝色大肥鱼算完一手，鸦鸦都够挑三回了。	3.6	23
+3	Taunt	棋盘那么大，你怎么偏要跟鸦鸦抢地盘？	3.6	26
+4	Taunt	别光盯着大肥鱼的分析。你那串棋还有几口气？	3.8	14
+5	Taunt	蓝色大肥鱼会算胜率。哼，你的表情还得鸦鸦来猜。	3.8	13
+6	HintThinking	鸦鸦把棋谱发给蓝色大肥鱼了。等它给个落点。	3.6	2
+7	HintCloud	蓝色大肥鱼推荐 {point}。它只算到这儿，接招你自己想。	4.2	3
 8	HintCloud	鸦鸦给你圈了 {point}，先想想对面会怎么接招！	4.2	8
 9	HintLocal	鸦鸦先给你一个盘面参考，瞧瞧 {point} 那边！	4	1
-10	HintPass	大肥鱼拍水说，先停一手也可以考虑！	3.8	14
-11	OpponentThinking	嘘，让大肥鱼闻闻，哪一格藏着好棋！	3.8	2
-12	OpponentPlay	{point}，啪嗒！这是大肥鱼给鸦鸦挑的好位置！	3.7	26
+10	HintPass	可以停一手。鸦鸦想看看你敢不敢把先手让出去。	3.8	14
+11	OpponentThinking	嘘，蓝色大肥鱼在算鸦鸦这一手。答案可不给你看。	3.8	2
+12	OpponentPlay	{point}，啪嗒！你刚才是不是也看中了这格？	3.7	26
 13	OpponentPlay	鸦鸦先抢下 {point} 啦，你追得上吗？	3.7	23
 14	OpponentPlay	看好了，鸦鸦的棋子落在 {point}！轮到你伤脑筋啦。	3.8	13
 15	OpponentPass	鸦鸦先停一手，等你看清这盘棋！	3.6	14
-16	OpponentFallback	大肥鱼溜去吐泡泡了，这一手鸦鸦自己来！	3.8	2
+16	OpponentFallback	蓝色大肥鱼这手指望不上。哼，鸦鸦自己来。	3.8	2
+17	HintThinking	蓝色大肥鱼还在算呢。你越催，鸦鸦越想多等会儿。	4	2
+18	HintThinking	哼，鸦鸦正在数气。你在旁边安静地佩服就好。	4.3	23
+19	HintCloud	蓝色大肥鱼选了 {point}。先别急着谢它，鸦鸦也看过了。	4.8	13
+20	HintCloud	{point}。鸦鸦只指这一次，记住是谁救的场。	4.4	26
+21	HintLocal	鸦鸦看的是 {point}。借你一只眼，别连脑子也借。	4.6	23
+22	HintLocal	这手鸦鸦自己算的。{point}，你要是不信就再读一遍。	4.8	14
+23	HintLocal	往 {point} 瞧。猜到鸦鸦留了什么后手，再落子。	4.5	13
+24	HintPass	停一手。你要是非想添子，鸦鸦就等着看你填自己的眼。	4.7	14
+25	HintPass	先停一手。看你舍不舍得把最后一句话留给对面。	4.6	23
+26	HintPass	水面都静了，别为了响一声再丢颗石子。停一手。	4.7	8
+27	AnalysisAttack	对面那串棋快喘不过气了。{point}，替鸦鸦敲敲门。	4.7	23
+28	AnalysisAttack	大肥鱼算出对面有弱棋。{point}，替鸦鸦催它走两步。	4.9	13
+29	AnalysisAttack	{point} 把弱棋赶出家门。让对面忙着找路吧。	4.6	26
+30	AnalysisDefend	先下 {point} 护住弱棋。鸦鸦可懒得去捞你。	4.5	23
+31	AnalysisDefend	蓝色大肥鱼看出你这串棋危险。补 {point}，别等它白算。	4.9	14
+32	AnalysisDefend	还惦记对面的棋？自己的弱棋要跑啦。补 {point}。	4.7	8
+33	AnalysisConnect	两串棋吵什么分家。下 {point}，让它们挨在一起。	4.6	23
+34	AnalysisConnect	大肥鱼说断点在 {point}。哼，鸦鸦就看你接不接。	4.8	14
+35	AnalysisConnect	{point} 把两边接住。要是断了，鸦鸦可只救一边。	4.7	13
+36	AnalysisTerritory	蓝色大肥鱼算了算实地，先收 {point}。鸦鸦也这么看。	4.6	23
+37	AnalysisTerritory	大肥鱼要你下 {point} 把地围实。别急，没人跟你抢功。	4.7	14
+38	AnalysisTerritory	看好 {point}。自己的地先锁门，再惦记别家的。	4.6	13
+39	AnalysisReduce	对面的地还没关门。从 {point} 挤进去，脚步轻点。	4.7	13
+40	AnalysisReduce	大肥鱼说对面的地还没围死。{point}，借条缝挤进去。	4.9	14
+41	AnalysisReduce	{point} 借他们半间屋子。至于还不还，哼。	4.5	23
+42	AnalysisEndgame	最大的官子在 {point}。手慢的话，鸦鸦可替你收了。	4.8	26
+43	AnalysisEndgame	大肥鱼比较了官子，{point} 最值。轮到你去收了。	4.7	14
+44	AnalysisEndgame	先抢 {point}。边上的零头，留给还在算账的人。	4.6	13
+45	AnalysisBalance	{point} 两头都照看得到。鸦鸦可没工夫给你救两处。	4.8	23
+46	AnalysisBalance	大肥鱼给了 {point}，攻守都顾得到。哼，算它细心。	5	14
+47	AnalysisBalance	下 {point}，进退都有路。你那副要拼命的样子先收收。	4.9	26
+48	HintBait	蓝色大肥鱼会怎么选？哼，鸦鸦看 {point}。	4.8	13
+49	HintBait	{point} 这么漂亮，你还要数气？哼，随你。	4.5	23
+50	HintBait	大肥鱼的推荐？你问的是鸦鸦。听好了，{point}。	4.8	14
+51	HintBait	下 {point}。鸦鸦已经替你想过对面会怎么接……大概。	5	26
+52	HintBait	{point} 有个现成的便宜。敢不敢捡，你自己说。	4.7	8

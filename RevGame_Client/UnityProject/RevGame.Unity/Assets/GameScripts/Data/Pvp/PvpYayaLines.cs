@@ -11,6 +11,7 @@ namespace RevGame.Pvp
         private readonly Dictionary<string, List<PvpYayaLine>> _lines = new Dictionary<string, List<PvpYayaLine>>(StringComparer.Ordinal);
         private readonly Dictionary<string, int> _next = new Dictionary<string, int>(StringComparer.Ordinal);
 
+        /// <summary>由对局面板入场装配，加载并校验台词、表情与落点占位符。</summary>
         public PvpYayaLines(YayaExpressionCatalog catalog)
         {
             foreach (var row in RevDataTableManager.Get<PvpYayaLineTable>().All)
@@ -27,11 +28,18 @@ namespace RevGame.Pvp
                 }
                 // 入场校验Excel表情，缺图在转场时就能发现。
                 catalog.Find(row.Expression);
+                bool needsPoint = row.Cue.StartsWith("Analysis", StringComparison.Ordinal) ||
+                    row.Cue == "HintCloud" || row.Cue == "HintLocal" || row.Cue == "HintBait";
+                if (needsPoint && !row.Line.Contains("{point}"))
+                {
+                    throw new InvalidOperationException("九路围棋落点台词缺少 {point}，编号 " + row.Id);
+                }
                 entries.Add(row);
             }
 
             foreach (string cue in new[] { "Opening", "Taunt", "HintThinking", "HintCloud", "HintLocal", "HintPass",
-                "OpponentThinking", "OpponentPlay", "OpponentPass", "OpponentFallback" })
+                "OpponentThinking", "OpponentPlay", "OpponentPass", "OpponentFallback", "HintBait",
+                "AnalysisAttack", "AnalysisDefend", "AnalysisConnect", "AnalysisTerritory", "AnalysisReduce", "AnalysisEndgame", "AnalysisBalance" })
             {
                 if (!_lines.ContainsKey(cue))
                 {

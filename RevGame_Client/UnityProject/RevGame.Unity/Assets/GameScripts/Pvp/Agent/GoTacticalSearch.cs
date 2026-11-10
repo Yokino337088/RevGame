@@ -90,6 +90,7 @@ namespace RevGame.Pvp
                 if (best[0].Score - _replyScores[i] >= 12)
                 {
                     bait = _ranked[i];
+                    bait.Score = _replyScores[i];
                     bait.Reason = "有反制";
                     break;
                 }

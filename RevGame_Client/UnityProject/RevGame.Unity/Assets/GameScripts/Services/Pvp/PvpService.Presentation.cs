@@ -110,7 +110,14 @@ namespace RevGame.Pvp
         private GoCore _hintCore;
         private Agent.GoAgentPosition _hintPosition;
         private double _hintDeadline;
-        private int _hintRequests;
+        /// <summary>诱导搜索专用的首选缓冲，避免自动分析覆盖手动建议列表。</summary>
+        private readonly GoHint[] _baitBest = new GoHint[1];
+        /// <summary>本局最近一次计入轮换的棋盘，自动和手动建议共享一次判断。</summary>
+        private GoCore _baitBoard;
+        /// <summary>最近棋盘的诱导候选，Reason 为空表示没有明显破绽的候选。</summary>
+        private GoHint _baitMove;
+        /// <summary>本局已分析或主动问过的不同玩家回合数。</summary>
+        private int _advisedTurns;
         public bool HintPending => _hintRequest != null;
         public string HintSource
         {
@@ -126,22 +133,18 @@ namespace RevGame.Pvp
         public bool CanRequestHint => CanAct && !AgentControlsHumanSeat && Core.Phase == GoPhase.Playing &&
             (Mode == PvpConnectionMode.Local && !IsComputerGame || Core.Turn == MySide);
 
+        /// <summary>玩家请求当前回合的建议。返回后可能仍在等云端，点位由同一合法棋盘决定。</summary>
         public void RequestHint()
         {
             if (!CanRequestHint || HintPending)
             {
                 return;
             }
-            // 本地挑战里鸦鸦偶尔选一个确有反制的合法着法。每局独立计次，正常建议仍走原入口。
-            if (IsComputerGame && Config.localBaitEvery > 0 && ++_hintRequests % Config.localBaitEvery == 0)
+            if (TryGetYayaBait(out GoHint bait))
             {
-                int count = RankComputerMoves(_suggestions, out GoHint bait);
-                if (count > 0 && bait.Reason != null)
-                {
-                    _suggestions[0] = bait;
-                    PublishHint("HintBait", 1);
-                    return;
-                }
+                _suggestions[0] = bait;
+                PublishHint("HintBait", 1);
+                return;
             }
             if (AgentSettings.Ready && _clock.Elapsed.TotalSeconds >= _cooldownUntil)
             {
@@ -161,6 +164,28 @@ namespace RevGame.Pvp
                 }
             }
             PublishLocalHint();
+        }
+
+        /// <summary>仅在人机玩家回合按 Excel 周期寻找诱饵。找不到明显可反制的合法点就保留原建议。</summary>
+        private bool TryGetYayaBait(out GoHint bait)
+        {
+            bait = default;
+            if (!IsComputerGame || Config.localBaitEvery <= 0)
+            {
+                return false;
+            }
+            if (!ReferenceEquals(_baitBoard, Core))
+            {
+                _baitBoard = Core;
+                _baitMove = default;
+                // 连点按钮与自动分析同一手只算一次，避免在两套建议间反复切换。
+                if (++_advisedTurns % Config.localBaitEvery == 0)
+                {
+                    RankComputerMoves(_baitBest, out _baitMove);
+                }
+            }
+            bait = _baitMove;
+            return bait.Reason != null;
         }
 
         private void PollHint()
@@ -313,11 +338,15 @@ namespace RevGame.Pvp
             }
             return winner + (Core.EndReason == GoEndReason.Resigned ? " · 对方认输" : Core.EndReason == GoEndReason.Timeout ? " · 对方超时" : " · 对方离开");
         }
+        /// <summary>新局或离场清空棋盘表现与建议轮换，旧盘面的诱饵不能留到新局。</summary>
         private void ResetPresentation()
         {
             _replay = null;
             ReplayStep = -1;
             _suggestionCount = 0;
+            _baitBoard = null;
+            _baitMove = default;
+            _advisedTurns = 0;
             Feedback = "";
             SpeechCue = "";
             CancelHint();

@@ -20,17 +20,28 @@ namespace RevGame.Pvp.Agent
             public string focus;
         }
 
+        /// <summary>同一盘面的黑方估计值，范围 0 至 100。</summary>
         internal readonly int BlackPercent;
+        /// <summary>最终向玩家展示的合法建议，气泡和棋盘读取同一个动作。</summary>
         internal readonly GoAgentAction Suggestion;
-        internal readonly string Situation;
+        /// <summary>Excel 台词事件，云端只能从白名单局势分类中选择。</summary>
+        internal readonly string Cue;
 
-        private GoPositionAnalysis(int blackPercent, GoAgentAction suggestion, string situation)
+        /// <summary>创建当前盘面的只读报告，局势台词由显示层从 Excel 轮换。</summary>
+        private GoPositionAnalysis(int blackPercent, GoAgentAction suggestion, string cue)
         {
             BlackPercent = blackPercent;
             Suggestion = suggestion;
-            Situation = situation;
+            Cue = cue;
         }
 
+        /// <summary>保留胜率估计，给本地人机的台词和高亮同时换成可被反制的着手。</summary>
+        internal GoPositionAnalysis WithBait(GoHint bait)
+        {
+            return new GoPositionAnalysis(BlackPercent, new GoAgentAction { Kind = GoAction.Play, X = bait.X, Y = bait.Y }, "HintBait");
+        }
+
+        /// <summary>接受合法候选索引和白名单事件。非法回复不会生成报告或建议。</summary>
         internal static bool TryRead(string json, GoAgentPosition position, out GoPositionAnalysis result)
         {
             result = null;
@@ -53,23 +64,23 @@ namespace RevGame.Pvp.Agent
                 return false;
             }
 
-            // 白名单短句确保精简字库能绘制，也避免把模型任意文字直接送入对话框。
-            string situation = reply.focus switch
+            // 供应商回复只选择表格事件，实际台词由项目持有。
+            string cue = reply.focus switch
             {
-                "attack" => "对方有弱棋",
-                "defend" => "先护住弱棋",
-                "connect" => "先把棋子连起来",
-                "territory" => "先稳住实地",
-                "reduce" => "还有压缩对方地盘的机会",
-                "endgame" => "先抢大的官子",
-                "balance" => "留意全盘攻守",
+                "attack" => "AnalysisAttack",
+                "defend" => "AnalysisDefend",
+                "connect" => "AnalysisConnect",
+                "territory" => "AnalysisTerritory",
+                "reduce" => "AnalysisReduce",
+                "endgame" => "AnalysisEndgame",
+                "balance" => "AnalysisBalance",
                 _ => ""
             };
-            if (situation.Length == 0)
+            if (cue.Length == 0)
             {
                 return false;
             }
-            result = new GoPositionAnalysis(reply.blackPercent, action, situation);
+            result = new GoPositionAnalysis(reply.blackPercent, action, action.Kind == GoAction.Pass ? "HintPass" : cue);
             return true;
         }
     }

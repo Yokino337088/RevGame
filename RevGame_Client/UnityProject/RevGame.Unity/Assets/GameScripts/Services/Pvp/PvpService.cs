@@ -501,6 +501,9 @@ namespace RevGame.Pvp
             {
                 throw new InvalidOperationException(reason);
             }
+            // 权威增量提交后旧手动建议不再有效，否则会盖住新一手的自动提示。
+            CancelHint();
+            _suggestionCount = 0;
             Core = next;
             _goClock = nextClock;
             _moves.Add(move);
@@ -564,6 +567,9 @@ namespace RevGame.Pvp
                     }
                 }
             }
+            // 同步整份棋谱也要清掉旧提示。前缀校验或重放失败时仍保留现有状态。
+            CancelHint();
+            _suggestionCount = 0;
             Core = next;
             _goClock = nextClock;
             _moves.Clear();

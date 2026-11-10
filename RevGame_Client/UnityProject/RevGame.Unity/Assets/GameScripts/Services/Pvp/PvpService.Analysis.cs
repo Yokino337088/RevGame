@@ -17,12 +17,14 @@ namespace RevGame.Pvp
         internal Func<PvpAgentSettings, GoAgentPosition, IGoAgentRequest> AnalysisRequestFactory = DeepSeekGoRequest.StartAnalysis;
         internal GoPositionAnalysis PositionAnalysis { get; private set; }
         internal bool AnalysisFresh => PositionAnalysis != null && ReferenceEquals(Core, _analysisBoard) && CanShowAnalysis && !_awaiting;
-        /// <summary>只公开当前棋谱的落点索引。停一手、断线、终局和过期回复均没有格子可画。</summary>
+        /// <summary>同一盘面优先显示玩家主动请求的建议；胜率条仍可使用自动分析。</summary>
+        internal bool ShowAnalysisAdvice => AnalysisFresh && HintSource.Length == 0;
+        /// <summary>只公开当前显示的自动落点。停一手、断线、终局和过期回复均没有格子可画。</summary>
         internal int AnalysisPoint
         {
             get
             {
-                GoAgentAction suggestion = AnalysisFresh ? PositionAnalysis.Suggestion : null;
+                GoAgentAction suggestion = ShowAnalysisAdvice ? PositionAnalysis.Suggestion : null;
                 return suggestion?.Kind == GoAction.Play ? suggestion.Y * GoCore.BoardSize + suggestion.X : -1;
             }
         }
@@ -79,7 +81,8 @@ namespace RevGame.Pvp
                 }
 
                 _analysisBoard = Core;
-                PositionAnalysis = result;
+                // 胜率仍描述当前棋局。仅人机模式可以更换推荐点；不修改云端原报告或实盘。
+                PositionAnalysis = TryGetYayaBait(out GoHint bait) ? result.WithBait(bait) : result;
                 AnalysisFailure = "";
                 ReleaseAnalysisRequest();
             }

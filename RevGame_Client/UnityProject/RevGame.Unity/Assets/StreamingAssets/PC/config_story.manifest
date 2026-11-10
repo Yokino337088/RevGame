@@ -3,13 +3,13 @@ CRC: 1430018866
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b515558deaf32c797fc45d98238863dc
+    Hash: bff9371c840757a432e4b44e910e9814
   TypeTreeHash:
     serializedVersion: 2
     Hash: ea35b64fe4b3066b642f598763a4768d
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b515558deaf32c797fc45d98238863dc
+    Hash: bff9371c840757a432e4b44e910e9814
 HashAppended: 0
 ClassTypes:
 - Class: 114
@@ -26,4 +26,4 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Config/Story/StoryBook.asset
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions

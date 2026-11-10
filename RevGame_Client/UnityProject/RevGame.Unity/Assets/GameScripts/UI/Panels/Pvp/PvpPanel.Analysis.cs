@@ -16,7 +16,8 @@ namespace RevGame.Pvp
         private Tween _analysisTween;
         private GoPositionAnalysis _paintedAnalysis, _spokenAnalysis;
         private float _shownBlackRatio;
-        private bool _analysisSpeech;
+        /// <summary>当前可清除的建议气泡类型。自动建议过期或手动建议被取消时清屏。</summary>
+        private bool _analysisSpeech, _hintSpeech;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         internal bool AnalysisHudVisible => _analysisHud.gameObject.activeInHierarchy;
         internal float AnalysisBlackRatio => _shownBlackRatio;
@@ -144,7 +145,7 @@ namespace RevGame.Pvp
             _analysisTween?.Kill(false);
             _analysisTween = null;
             _paintedAnalysis = _spokenAnalysis = null;
-            _analysisSpeech = false;
+            _analysisSpeech = _hintSpeech = false;
             Set(_analysisBlackLabel, "黑 --");
             Set(_analysisWhiteLabel, "白 --");
             RenderAnalysisRatio(.5f);
@@ -154,27 +155,24 @@ namespace RevGame.Pvp
         /// <summary>新分析复用鸦鸦对话框。换手后旧建议立即隐藏，手动建议仍可覆盖自动对话。</summary>
         private bool RefreshAnalysisSpeech(PvpService service)
         {
-            if (!service.AnalysisFresh && _analysisSpeech)
+            if ((!service.ShowAnalysisAdvice && _analysisSpeech) || (_hintSpeech && service.HintSource.Length == 0))
             {
-                _analysisSpeech = false;
+                _analysisSpeech = _hintSpeech = false;
                 _speechTween?.Kill(false);
                 Show(_bubble.gameObject, false);
                 _portrait.sprite = _idlePortrait;
             }
             GoPositionAnalysis report = service.PositionAnalysis;
-            if (!service.AnalysisFresh || ReferenceEquals(_spokenAnalysis, report))
+            if (!service.ShowAnalysisAdvice || ReferenceEquals(_spokenAnalysis, report))
             {
                 return false;
             }
             _spokenAnalysis = report;
-            _analysisSpeech = true;
             GoAgentAction move = report.Suggestion;
-            string suggestion = move.Kind == GoAction.Pass ? "可以停一手" : "建议下 " + PvpService.FormatPoint(move.X, move.Y);
-            Set(_speech, report.Situation + "，" + suggestion + "。");
-            _speechTween?.Kill(false);
-            _portrait.sprite = portraitCatalog.Find(_yayaLines.Take("HintCloud").Expression);
-            _speechTween = SlideMessage(_bubble, 50, 5f, () => _portrait.sprite = _idlePortrait);
-            _nextTaunt = Time.unscaledTime + TauntGapSeconds;
+            string point = move.Kind == GoAction.Play ? PvpService.FormatPoint(move.X, move.Y) : "";
+            ShowYayaLine(report.Cue, point);
+            _analysisSpeech = true;
+            _hintSpeech = false;
             return true;
         }
     }

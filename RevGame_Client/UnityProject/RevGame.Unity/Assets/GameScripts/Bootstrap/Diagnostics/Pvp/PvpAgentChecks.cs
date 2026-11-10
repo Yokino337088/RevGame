@@ -135,9 +135,20 @@ internal static class PvpAgentChecks
     }
 
     /// <summary>测试仅替换 HTTP 回复，快照、解析、生命周期和 HUD 均走正式路径。</summary>
-    internal static void InstallAnalysis(PvpService service, bool malformed)
+    internal static void InstallAnalysis(PvpService service, bool malformed, bool baitBoard = false)
     {
         Install(service);
+        if (baitBoard)
+        {
+            // 固定两手白棋，玩家照常落黑棋。该棋谱在第三个黑方回合确有较差的合法候选。
+            service.AgentRequestFactory = (_, position) => new Response
+            {
+                Content = position.Prompt.Contains("这是给玩家的落子建议")
+                    ? "{\"actionIndex\":0}"
+                    : service.Core.Sequence == 1 ? "{\"actionId\":\"play_7_2\"}"
+                    : service.Core.Sequence == 3 ? "{\"actionId\":\"play_4_8\"}" : "{\"actionId\":\"pass\"}"
+            };
+        }
         service.AnalysisRequestFactory = (_, position) => new Response
         {
             ReadyAt = UnityEngine.Time.realtimeSinceStartup + .55f,

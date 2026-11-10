@@ -1,0 +1,48 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>九路鸦鸦台词与人机诱导验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head><body>
+<header class="topbar"><div class="brand"><i>围</i>RevGame · 围棋史莱姆</div><div class="tag">2026-11-10 · PVP</div></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">Unity Editor Play · PC AssetBundle</div><h1>九路鸦鸦台词与人机诱导验收</h1>
+<p>Excel 新增 36 句，当前表共 52 行，其中 25 行按 DeepSeek 的身份修订。开局交代「蓝色大肥鱼」是鸦鸦给 DeepSeek 起的外号。</p></div></div>
+<main><section class="chapter"><h2>断言</h2><div class="table-scroll"><table><thead><tr><th>入口</th><th>观察结果</th></tr></thead><tbody>
+<tr><td>Excel 与导表</td><td>保留旧行、列宽和类型，RevCLI 数据导出只写入 PvpYayaLine。Play 从 PC AB 读取 52 行，实际立绘和气泡正常。两次实地分析依次使用不同台词，开局和云端手动建议都正确说明蓝色大肥鱼的角色。</td></tr>
+<tr><td>本地人机</td><td>固定棋谱 F9、H3、D7、E9 后，第三个获建议的回合用同一份两手搜索寻找诱饵。内部评分首选 E8 为 -1，诱饵 C3 为 -23。自动建议和主动询问均指向 C3，胜率仍为固定回复的黑 76%。连续问棋轮换台词，保留同一落点。</td></tr>
+<tr><td>合法性</td><td>询问前后棋谱序号与指纹一致。玩家随后通过正式落子入口提交 C3，旧提示清除。</td></tr>
+<tr><td>局域网</td><td>两轮合并测试及独立复测均在局域网握手时超时，未进入对弈。本轮只确认夹具清理，上一轮同一玩法代码已有 22 项 UTP 断言通过。</td></tr>
+</tbody></table></div>
+<p>诱导只在人机的玩家回合生效。同一棋面只计一次，有明显可反制的合法候选才改推荐。联机继续使用正常建议。气泡和格子共用业务建议，分别经 RevUI 和现有棋盘 Shader 呈现。</p></section>
+<section class="chapter"><h2>Unity 实拍</h2><p>原图 1920 × 1080，JPEG 压缩为 1600 像素宽。动图由实际连拍生成。</p>
+<div class="gallery"><figure><a href="画面/第一条局势建议.jpg"><img src="画面/第一条局势建议.jpg" alt="第一条局势建议"></a><figcaption>首次实地分析使用第一条台词</figcaption></figure><figure><a href="画面/第二条局势建议.jpg"><img src="画面/第二条局势建议.jpg" alt="第二条局势建议"></a><figcaption>同组下一次显示不同台词</figcaption></figure><figure><a href="画面/自动诱导.jpg"><img src="画面/自动诱导.jpg" alt="自动诱导"></a><figcaption>第三个黑方回合由鸦鸦给出诱饵 C3，Shader 点亮同一格</figcaption></figure><figure><a href="画面/手动问棋.jpg"><img src="画面/手动问棋.jpg" alt="手动问棋"></a><figcaption>玩家再问，换一句台词，建议仍是 C3</figcaption></figure></div><figure style="margin-top:14px"><img src="画面/鸦鸦气泡与棋盘高亮.gif" alt="鸦鸦气泡与 C3 光效"><figcaption>自动建议 C3</figcaption></figure></section>
+<section class="chapter"><h2>复现与范围</h2>
+<p>RevCLI 使用 <code>excel.plan</code>、<code>excel.export</code> 导表。沿用当前分包配置以 <code>ab.build</code> 构建 PC、Android 各 82 包，并逐文件核对发布目录。<code>rev_discover</code> 确认动作，<code>rev_call</code> 进入 Play 并从大厅进入 PVP。<code>rev_run</code> 使用 <code>pvp.analysis-fixture</code> 的 <code>baitBoard=true</code>、<code>pvp.action</code> 和真实 <code>ui.click</code> 执行 40 步，退出并停止 Play。Unity 新增错误为 0。</p>
+<p>云端回复使用固定夹具。Android 只构建资源包，本轮未执行真机和公网匹配验收。</p></section></main>
+<footer><span>RevMCP 运行 20261110-143846-18190f4f</span><span>本机证据 .codex/work/pvp-deepseek-lines-2026-11-10</span></footer></body></html>

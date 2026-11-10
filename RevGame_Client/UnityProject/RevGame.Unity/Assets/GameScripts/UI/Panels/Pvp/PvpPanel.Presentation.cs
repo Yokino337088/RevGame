@@ -215,6 +215,7 @@ namespace RevGame.Pvp
             }
         }
 
+        /// <summary>接收本帧的建议或事件，按 Excel 台词组轮换，同一报告只播一次。</summary>
         private void RefreshSpeech(PvpService service, bool starting)
         {
             if (RefreshAnalysisSpeech(service))
@@ -231,7 +232,7 @@ namespace RevGame.Pvp
             }
             else if (_hintVersion != service.HintRevision)
             {
-                cue = service.HintSource == "HintBait" ? "HintLocal" : service.HintSource;
+                cue = service.HintSource;
                 if (service.SuggestionCount > 0)
                 {
                     var hint = service.Suggestions[0];
@@ -252,17 +253,24 @@ namespace RevGame.Pvp
             if (!string.IsNullOrEmpty(cue))
             {
                 _analysisSpeech = false;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-                LastCue = cue;
-#endif
-                var line = _yayaLines.Take(cue);
-                Set(_speech, line.Line.Replace("{point}", point));
-                _speechTween?.Kill(false);
-                // 台词和表情同帧切换。旧Tween取消后不能把新立绘切回默认图。
-                _portrait.sprite = portraitCatalog.Find(line.Expression);
-                _speechTween = SlideMessage(_bubble, 50, line.Seconds, () => _portrait.sprite = _idlePortrait);
-                _nextTaunt = Time.unscaledTime + TauntGapSeconds;
+                _hintSpeech = cue.StartsWith("Hint", StringComparison.Ordinal);
+                ShowYayaLine(cue, point);
             }
+        }
+
+        /// <summary>自动和手动建议使用同一气泡，整行读取停留时间和表情，坐标只填入最终着手。</summary>
+        private void ShowYayaLine(string cue, string point)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            LastCue = cue;
+#endif
+            var line = _yayaLines.Take(cue);
+            Set(_speech, line.Line.Replace("{point}", point));
+            _speechTween?.Kill(false);
+            // 先停旧动画再换表情，避免旧回调把新台词的立绘切回默认图。
+            _portrait.sprite = portraitCatalog.Find(line.Expression);
+            _speechTween = SlideMessage(_bubble, 50, line.Seconds, () => _portrait.sprite = _idlePortrait);
+            _nextTaunt = Time.unscaledTime + TauntGapSeconds;
         }
 
         private void PopToast(string text)
