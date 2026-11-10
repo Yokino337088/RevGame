@@ -9,11 +9,11 @@ namespace RevGame.Pvp.Duel
     {
         // 操作类型，区分只读、发起、就绪和意图提交。
         public int operation;
-        // 规则配置指纹，不同版本拒绝混用。
+        // 网络协议与规则的联合指纹，不同版本拒绝混用。
         public int fingerprint;
         // 请求端已消费的最大连续帧，权威方从下一帧起补发。
         public int afterFrame;
-        // 本席意图对应帧号，只用于 Input。请求的 afterFrame 是本端已消费游标，回复同名字段是历史起点。
+        // 联机时是本席本次连接的单调输入序号，本地人机时是下一逻辑帧号。afterFrame 独立用于补帧。
         public int inputFrame;
         // 单席五位方向、招式和跳跃意图。
         public int input;
@@ -75,6 +75,14 @@ namespace RevGame.Pvp.Duel
         public const int Input = 3;
         // 开发环境从同一围棋房间强制发起决斗；传输入口校验后再转为 Read。
         public const int TestChallenge = 4;
+        // 联机输入序号语义已升级。原生配置和回放格式独立版本化。
+        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x40000000;
+        // 缺少新输入时最多沿用四个逻辑帧的方向，随后权威端主动回中。
+        private const int DirectionHoldFrames = 4;
+        // 恢复期点按最多留四个待封帧，避免网络停顿后突然触发旧招。
+        private const int ActionBufferFrames = 4;
+        // 单次宿主更新最多补三个固定步长，防止暂停恢复后长时间占用主线程或 Gate。
+        private const int MaxCatchUpFrames = 3;
         // 单个回复最多 64 帧，落后端按连续游标分批补。
         internal const int MaxBatch = 64;
         // 已执行的整帧历史，数组下标 0 对应逻辑帧 1。
@@ -83,12 +91,29 @@ namespace RevGame.Pvp.Duel
         private readonly int[] _input = new int[2];
         // 权威原生实例，和客户端副本执行同一整帧协议。
         private readonly DuelCorePipe _judge;
+        // 本机人机仍按两席同一帧输入运行。联网席位与权威时钟解耦。
+        private readonly bool _networked;
+        // 黑白各有一个连接内的输入邮箱，随本局创建，断线时清除未执行意图。
+        private readonly NetworkInput[] _networkInputs = new NetworkInput[2];
         // 场景加载屏障，双席就绪前不接战斗意图。
         private int _readyMask;
         // 当前帧已经占用的输入槽位，独立于场景就绪。
         private int _inputMask;
         // 允许下一次封帧的单调时间（毫秒），只用于限速。
         private long _nextSeal;
+
+        // 持续方向和一次性按钮分开存储，下一条方向包不会覆盖已经收到的点按。
+        private struct NetworkInput
+        {
+            // 当前连接已处理的最大序号，阻止迟到或重复请求再触发按键。
+            public int Sequence;
+            // 最近一次方向及其最后有效的逻辑帧号。
+            public int Direction, DirectionUntil;
+            // 最新一次等待恢复期结束的攻击，及其最后有效帧号。
+            public int Action, ActionUntil;
+            // 是否有待执行的跳跃点按，下一封帧消费一次。
+            public bool Jump;
+        }
         // 每席只顺序接纳固定间隔样本，再接纳终局样本。两者最小值就是共同对账上界。
         private readonly int[] _hashAccepted = new int[2];
         // 已经向各席发送的共同对账上界，避免每次普通回包都重复携带它。
@@ -101,9 +126,10 @@ namespace RevGame.Pvp.Duel
 #endif
 
         // 创建权威封帧器，由所属房间或本地宿主结束时释放。
-        public DuelAuthority(string id)
+        public DuelAuthority(string id, bool networked = true)
         {
             Id = id;
+            _networked = networked;
             _judge = new DuelCorePipe(id);
         }
 
@@ -113,6 +139,8 @@ namespace RevGame.Pvp.Duel
         public int Frame => _frames.Count;
         // 原生权威世界最后一帧的值副本。
         public DuelSnapshot Snapshot => _judge.Snapshot;
+        // 原生终局或指纹分歧后，宿主可以停止定时推进，历史仍供补帧读取。
+        public bool Stopped => Snapshot.Result != 0 || _hashMismatchFrame != 0;
 
         // 调用方必须仍持有本局线程。只导出已执行的世界边界，不包含两席尚未封口的输入。
         public byte[] SaveCheckpoint()
@@ -130,10 +158,11 @@ namespace RevGame.Pvp.Duel
         internal bool DebugNoDamage { get; set; }
 #endif
 
-        // 按已认证座位处理请求，返回游标后的历史。缺一席时保持当前世界。
+        // 按已认证座位收意图和对账样本，返回游标后的连续历史。
         public DuelReply Exchange(int side, DuelRequest request, long now)
         {
-            if (side < 1 || side > 2 || request == null || request.fingerprint != DuelConfig.Fingerprint ||
+            if (side < 1 || side > 2 || request == null ||
+                request.fingerprint != (_networked ? NetworkFingerprint : DuelConfig.Fingerprint) ||
                 request.afterFrame < 0 || request.afterFrame > Frame ||
                 (request.operation != Read && request.operation != Ready && request.operation != Input))
             {
@@ -153,38 +182,38 @@ namespace RevGame.Pvp.Duel
             if (request.operation == Ready)
             {
                 _readyMask |= bit;
+                if (_networked && _readyMask == 3 && _nextSeal == 0)
+                {
+                    _nextSeal = now + DuelConfig.FrameMs;
+                }
             }
             else if (request.operation == Input && _readyMask == 3 && Snapshot.Result == 0)
             {
-                if (!DuelCorePipe.ValidInput(request.input) || request.inputFrame < 1 || request.inputFrame > Frame + 1)
+                if (!DuelCorePipe.ValidInput(request.input) || request.inputFrame < 1 ||
+                    (!_networked && request.inputFrame > Frame + 1))
                 {
                     return new DuelReply { error = "决斗输入帧不在接收窗口。" };
                 }
-                if (request.inputFrame == Frame + 1 && (_inputMask & bit) == 0)
+                if (_networked)
+                {
+                    StageNetworkInput(seat, request);
+                }
+                else if (request.inputFrame == Frame + 1 && (_inputMask & bit) == 0)
                 {
                     // 每个座位每帧第一条有效意图锁定，重发不能改写已确认材料。
                     _input[side - 1] = request.input;
                     _inputMask |= bit;
                 }
             }
-            if (_inputMask == 3 && now >= _nextSeal && Snapshot.Result == 0)
+            if (!_networked && _inputMask == 3 && now >= _nextSeal && Snapshot.Result == 0)
             {
-                // 用低五位放黑方、高五位放白方。必须先成功执行，再把整帧加入可重放历史。
-                int packed = _input[0] | (_input[1] << DuelCorePipe.InputBits);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-                if (DebugNoDamage)
-                {
-                    packed |= DuelCorePipe.NoDamageFrame;
-                }
-#endif
-                _judge.Append(Frame + 1, packed);
-                _frames.Add(new DuelReplayFrame(packed, _judge.Snapshot));
+                Seal(_input[0], _input[1]);
                 _inputMask = 0;
                 _nextSeal = now + DuelConfig.FrameMs;
             }
             // 只返回请求游标之后的已执行帧，避免客户端自行填空或重播已经消费的输入。
             int count = Math.Min(MaxBatch, Frame - request.afterFrame);
-            int[] frames = new int[count];
+            int[] frames = count == 0 ? Array.Empty<int>() : new int[count];
             for (int i = 0; i < count; i++)
             {
                 frames[i] = _frames[request.afterFrame + i].Packed;
@@ -199,6 +228,103 @@ namespace RevGame.Pvp.Duel
             return new DuelReply { id = Id, readyMask = _readyMask, afterFrame = request.afterFrame, frames = frames,
                 result = Snapshot.Result, finalHash = Snapshot.Result != 0 ? Snapshot.Hash : 0,
                 hashAckFrame = request.hashFrame, hashMatchedFrame = announce };
+        }
+
+        // 宿主在自己的线程按单调毫秒推进。即使某席没有输入，也由权威端产生可回放的完整帧。
+        public void AdvanceNetwork(long now)
+        {
+            if (!_networked || _readyMask != 3 || _nextSeal == 0 || Stopped)
+            {
+                return;
+            }
+            for (int i = 0; i < MaxCatchUpFrames && now >= _nextSeal && !Stopped; i++)
+            {
+                Seal(TakeNetworkInput(0), TakeNetworkInput(1));
+                _nextSeal += DuelConfig.FrameMs;
+            }
+            if (now >= _nextSeal)
+            {
+                // 超过本次预算时重定时墙钟，逻辑帧号仍然连续，每步仍是固定的 50 毫秒。
+                _nextSeal = now + DuelConfig.FrameMs;
+            }
+        }
+
+        // 已认证的席位掉线后停在当前整帧，丢弃双方尚未封口的输入。换连接的席位必须重新就绪。
+        public void DisconnectNetworkSeat(int side)
+        {
+            if (!_networked || side < 1 || side > 2)
+            {
+                return;
+            }
+            _readyMask &= ~(1 << (side - 1));
+            _nextSeal = 0;
+            int other = 2 - side;
+            int otherSequence = _networkInputs[other].Sequence;
+            Array.Clear(_networkInputs, 0, _networkInputs.Length);
+            _networkInputs[other].Sequence = otherSequence;
+        }
+
+        // 只处理新序号。每次更新持续方向；招式和跳跃等待封帧，普通方向包不会把它们清掉。
+        private void StageNetworkInput(int seat, DuelRequest request)
+        {
+            ref NetworkInput input = ref _networkInputs[seat];
+            if (request.inputFrame <= input.Sequence)
+            {
+                return;
+            }
+            input.Sequence = request.inputFrame;
+            input.Direction = request.input & 3;
+            input.DirectionUntil = Frame + DirectionHoldFrames;
+            int action = (request.input >> 2) & 3;
+            if (action != 0)
+            {
+                input.Action = action;
+                input.ActionUntil = Frame + ActionBufferFrames;
+            }
+            input.Jump |= (request.input & DuelCorePipe.Jump) != 0;
+        }
+
+        // 将本席当前可执行输入装进下一帧。恢复期只决定何时提交，招式是否生效仍由 C++ 裁定。
+        private int TakeNetworkInput(int seat)
+        {
+            ref NetworkInput input = ref _networkInputs[seat];
+            int next = Frame + 1;
+            int packed = next <= input.DirectionUntil ? input.Direction : 0;
+            if (input.Jump)
+            {
+                packed |= DuelCorePipe.Jump;
+                input.Jump = false;
+            }
+            if (input.Action != 0)
+            {
+                DuelSnapshot view = Snapshot;
+                int action = seat == 0 ? view.FirstAction : view.SecondAction;
+                int age = seat == 0 ? view.FirstAge : view.SecondAge;
+                if (next > input.ActionUntil)
+                {
+                    input.Action = 0;
+                }
+                else if (age >= DuelConfig.ActionDuration(action))
+                {
+                    packed |= input.Action << 2;
+                    input.Action = 0;
+                }
+            }
+            return packed;
+        }
+
+        // 两席输入打包后一次提交原生世界，成功后才开放连续历史给其他端。
+        private void Seal(int black, int white)
+        {
+            int packed = black | (white << DuelCorePipe.InputBits);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (DebugNoDamage)
+            {
+                packed |= DuelCorePipe.NoDamageFrame;
+            }
+#endif
+            _judge.Append(Frame + 1, packed);
+            _frames.Add(new DuelReplayFrame(packed, Snapshot));
         }
 
         // 在收输入之前，用记录的同帧原生指纹核对样本。重复报文可重新确认，但不会增加已核对数量。

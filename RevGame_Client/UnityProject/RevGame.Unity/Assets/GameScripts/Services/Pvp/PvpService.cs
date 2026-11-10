@@ -265,7 +265,7 @@ namespace RevGame.Pvp
                         throw new InvalidOperationException("双方版本或场次规则不一致，请使用同一版本和场次");
                     }
                     _lanHello = true;
-                    _duelPeerCompatible = message.duelRequest?.fingerprint == RevGame.Pvp.Duel.DuelConfig.Fingerprint;
+                    _duelPeerCompatible = message.duelRequest?.fingerprint == RevGame.Pvp.Duel.DuelAuthority.NetworkFingerprint;
                     BlackName = MySide == GoSide.Black ? Nickname : CleanName(message.name);
                     WhiteName = MySide == GoSide.White ? Nickname : CleanName(message.name);
                     NewGame();
@@ -347,13 +347,16 @@ namespace RevGame.Pvp
                 OnNetworkError("局域网消息被拒绝：" + error.Message);
             }
         }
-        private void SendLan(PvpLanMessage message)
+        // 返回消息是否进入可靠队列。失败时通知业务连接已不可用。
+        private bool SendLan(PvpLanMessage message)
         {
             string reason = "局域网连接已关闭";
             if (Lan == null || !Lan.Send(JsonUtility.ToJson(message), out reason))
             {
                 OnNetworkError(Lan == null ? "局域网连接已关闭" : reason);
+                return false;
             }
+            return true;
         }
 
         private void ReceiveServer(GoRelayState state)

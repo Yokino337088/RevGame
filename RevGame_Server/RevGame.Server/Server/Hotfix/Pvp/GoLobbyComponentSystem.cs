@@ -135,6 +135,10 @@ public static class GoLobbyComponentSystem
         string identity = string.IsNullOrEmpty(request.ResumeToken) ? "新建" : "恢复连接";
         Log.Info($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 事件=握手或恢复成功 身份={identity} 房间={player.Room?.RoomId ?? "无"}");
         // 建立玩家和当前连接的双向绑定，并结束断线计时。
+        if (player.Connection != session)
+        {
+            player.Room?.Duel?.DisconnectNetworkSeat(player.Side);
+        }
         player.Connection = session;
         player.DisconnectedAt = 0;
         var binding = session.GetOrAddComponent<GoSessionComponent>();
@@ -611,6 +615,7 @@ public static class GoLobbyComponentSystem
             return;
         }
         Log.Warning($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 房间={player.Room?.RoomId ?? "无"} 事件=连接中断/等待重连");
+        player.Room?.Duel?.DisconnectNetworkSeat(player.Side);
         player.Connection = null;
         // 从现在开始计算重连窗口，排队不跨断线保留。
         player.DisconnectedAt = Now();

@@ -111,6 +111,8 @@ public sealed class GoRoomEntity : Entity
     public int BlackRatingDelta;
     /// <summary>本房间的决斗权威实例，发起前为空，房间销毁时释放原生资源。</summary>
     public DuelAuthority? Duel;
+    /// <summary>由 Gate 场景驱动的决斗计时器句柄，终局、分歧或释放房间时取消。</summary>
+    public long DuelTimer;
 }
 
 /// <summary>挂在 Session 上的身份索引；断开时其 DestroySystem 通知大厅保留重连窗口。</summary>
@@ -120,6 +122,6 @@ public sealed class GoSessionComponent : Entity
     public GoPlayerEntity? Player;
     /// <summary>本连接是否声明支持按棋谱基序号接收增量快照。</summary>
     public bool SupportsDelta;
-    /// <summary>本次握手声明的决斗配置指纹，供两席兼容性检查。旧客户端默认发 0。</summary>
+    /// <summary>本次握手声明的决斗网络协议与配置联合指纹。旧客户端默认发 0。</summary>
     public int DuelFingerprint;
 }

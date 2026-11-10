@@ -155,6 +155,7 @@ public sealed class GoRoomEntityDestroySystem : DestroySystem<GoRoomEntity>
         self.RatingFinalized = false;
         self.BlackRatingDelta = 0;
         // 原生权威实例属于房间，不随单席断线立刻销毁；房间回收时成对释放。
+        FTask.RemoveTimer(self.Scene, ref self.DuelTimer);
         self.Duel?.Dispose();
         self.Duel = null;
         self.StepPending = false;

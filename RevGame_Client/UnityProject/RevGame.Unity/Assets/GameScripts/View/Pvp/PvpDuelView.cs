@@ -36,10 +36,6 @@ namespace RevGame.View
         private const int LegacyPointerId = int.MinValue;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
-        // 黑白角色的当前显示坐标，浮点插值只用于画面。
-        private Vector2 _firstPosition, _secondPosition;
-        // 当前逻辑快照抵达的本地时间，用于在一个逻辑帧内平滑采样招式。
-        private float _snapshotTime;
 
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
@@ -178,66 +174,56 @@ namespace RevGame.View
             }
         }
 
-        // 按最新只读快照更新角色、动画、条形 HUD 和结算。命中特效按逻辑帧去重。
+        // 在独立播放时钟上取样。到包可以批量推进原生世界，画面仍按相邻已确认帧插值。
         private void LateUpdate()
         {
             var service = RevServices.GetRequired<PvpService>();
-            DuelSnapshot view = service.DuelSnapshot;
-            DuelSnapshot previous = service.DuelPreviousSnapshot;
-            int firstMove = view.Result == 0 ? view.FirstX.CompareTo(previous.FirstX) : 0;
-            int secondMove = view.Result == 0 ? view.SecondX.CompareTo(previous.SecondX) : 0;
-            if (view.Frame == 0)
+            if (!service.DuelDisplay.Sample(Time.unscaledDeltaTime, service.Mode != PvpConnectionMode.Local,
+                out DuelSnapshot view, out DuelSnapshot next, out float fraction))
             {
-                firstMove = secondMove = 0;
+                return;
             }
-            // 移动图跟随实际位移，出招仍按权威命中朝向绘制。
+            int firstMove = next.FirstX.CompareTo(view.FirstX);
+            int secondMove = next.SecondX.CompareTo(view.SecondX);
+            if (next.Frame == view.Frame && view.Frame > 0 && view.Result == 0)
+            {
+                // 到达连续上界时位置停在最后一帧，姿态继续沿用已确认的运动，避免每次等包都切回待机。
+                DuelSnapshot previous = service.DuelDisplay.Get(view.Frame - 1);
+                firstMove = view.FirstX.CompareTo(previous.FirstX);
+                secondMove = view.SecondX.CompareTo(previous.SecondX);
+            }
+            // 出招按权威朝向绘制。跑动朝向取自正在播放的位移区间，松手或转向时不会被旧目标拉住。
             int firstFacing = view.FirstAction == 0 && firstMove != 0 ? firstMove : view.FirstFacing;
             int secondFacing = view.SecondAction == 0 && secondMove != 0 ? secondMove : view.SecondFacing;
-            var firstTarget = new Vector2(view.FirstX, view.FirstY) * .138f;
-            var secondTarget = new Vector2(view.SecondX, view.SecondY) * .138f;
-            if (_seenFrame < 0)
-            {
-                _firstPosition = firstTarget;
-                _secondPosition = secondTarget;
-            }
+            Vector2 firstPosition = ActorPosition(view.FirstX, view.FirstY, next.FirstX, next.FirstY, fraction);
+            Vector2 secondPosition = ActorPosition(view.SecondX, view.SecondY, next.SecondX, next.SecondY, fraction);
             if (_seenFrame != view.Frame)
             {
+                // 正常跨帧时依序消费特效；重连或长停顿后只保留最近四帧的短时表现。
+                for (int frame = Mathf.Max(_seenFrame + 1, view.Frame - 3); frame <= view.Frame; frame++)
+                {
+                    PaintDuelEvents(service.DuelDisplay.Get(frame));
+                }
                 _seenFrame = view.Frame;
-                _snapshotTime = Time.unscaledTime;
-                Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, _firstPosition);
-                Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, _secondPosition);
-                if (view.FirstHit != 0)
-                {
-                    Flash(Second);
-                }
-                if (view.SecondHit != 0)
-                {
-                    Flash(First);
-                }
+                FirstHealth.fillAmount = Mathf.Clamp01(view.FirstHealth / (float)DuelConfig.Health);
+                SecondHealth.fillAmount = Mathf.Clamp01(view.SecondHealth / (float)DuelConfig.Health);
+                FirstEnergy.fillAmount = Mathf.Clamp01(view.FirstEnergy / (float)DuelConfig.Energy);
+                SecondEnergy.fillAmount = Mathf.Clamp01(view.SecondEnergy / (float)DuelConfig.Energy);
+                FirstHealthText.text = view.FirstHealth.ToString();
+                SecondHealthText.text = view.SecondHealth.ToString();
+                Names.text = service.BlackName + "                                      " + service.WhiteName;
+                Clock.text = DuelConfig.FrameLimit == 0
+                    ? "∞"
+                    : Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             }
-            // 逻辑坐标是千分格。屏幕宽度换算和插值使用浮点，因为它们只影响绘制。
-            float blend = 1 - Mathf.Exp(-22 * Time.unscaledDeltaTime);
-            _firstPosition = FollowPosition(_firstPosition, firstTarget, firstMove, blend);
-            _secondPosition = FollowPosition(_secondPosition, secondTarget, secondMove, blend);
-            PaintActor(First, _firstPosition, firstFacing);
-            PaintActor(Second, _secondPosition, secondFacing);
-            float fraction = Mathf.Clamp01((Time.unscaledTime - _snapshotTime) * 1000f / DuelConfig.FrameMs);
+            PaintActor(First, firstPosition, firstFacing);
+            PaintActor(Second, secondPosition, secondFacing);
             FirstAnimator.Paint(view.FirstHealth, view.FirstY, view.FirstAction, firstMove != 0, view.Frame, view.FirstAge, fraction);
             SecondAnimator.Paint(view.SecondHealth, view.SecondY, view.SecondAction, secondMove != 0, view.Frame, view.SecondAge, fraction);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
 #endif
-            FirstHealth.fillAmount = Mathf.Clamp01(view.FirstHealth / (float)DuelConfig.Health);
-            SecondHealth.fillAmount = Mathf.Clamp01(view.SecondHealth / (float)DuelConfig.Health);
-            FirstEnergy.fillAmount = Mathf.Clamp01(view.FirstEnergy / (float)DuelConfig.Energy);
-            SecondEnergy.fillAmount = Mathf.Clamp01(view.SecondEnergy / (float)DuelConfig.Energy);
-            FirstHealthText.text = view.FirstHealth.ToString();
-            SecondHealthText.text = view.SecondHealth.ToString();
-            Names.text = service.BlackName + "                                      " + service.WhiteName;
-            Clock.text = DuelConfig.FrameLimit == 0
-                ? "∞"
-                : Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             bool disconnected = service.Mode != PvpConnectionMode.Local && !service.Connected;
             Reconnect.gameObject.SetActive(disconnected && service.Mode == PvpConnectionMode.Server && service.DuelReconnectAvailable);
             Banner.text = service.DuelError.Length != 0 ? service.DuelError :
@@ -252,14 +238,27 @@ namespace RevGame.View
             }
         }
 
-        // 刚转向时，插值可能仍落在旧方向的一侧。先保持显示横坐标，等新目标追过来再跟随。
-        private static Vector2 FollowPosition(Vector2 current, Vector2 target, int direction, float blend)
+        // 命中特效和受击闪光读取同一逻辑帧，且与渲染频率无关。
+        private void PaintDuelEvents(DuelSnapshot view)
         {
-            if ((target.x - current.x) * direction < 0)
+            Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing,
+                new Vector2(view.FirstX, view.FirstY) * .138f);
+            Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing,
+                new Vector2(view.SecondX, view.SecondY) * .138f);
+            if (view.FirstHit != 0)
             {
-                target.x = current.x;
+                Flash(Second);
             }
-            return Vector2.Lerp(current, target, blend);
+            if (view.SecondHit != 0)
+            {
+                Flash(First);
+            }
+        }
+
+        // 逻辑坐标用千分格保存，只有绘制时才换算到屏幕单位。
+        private static Vector2 ActorPosition(int x, int y, int nextX, int nextY, float fraction)
+        {
+            return new Vector2(Mathf.Lerp(x, nextX, fraction), Mathf.Lerp(y, nextY, fraction)) * .138f;
         }
 
         // 更新屏幕位置和镜像方向，只修改 RectTransform。

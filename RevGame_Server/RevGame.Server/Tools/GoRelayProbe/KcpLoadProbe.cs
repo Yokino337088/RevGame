@@ -346,24 +346,37 @@ internal static class GoKcpLoadProbe
             }
             using (var ready = await AskDuel(white, DuelAuthority.Ready))
             {
-                Check(ready.ErrorCode == 0 && ready.DuelId == duelId && ready.ReadyMask == 3 && ready.Frames.Count == 0, "双方就绪后等待完整输入");
+                Check(ready.ErrorCode == 0 && ready.DuelId == duelId && ready.ReadyMask == 3 && ready.Frames.Count == 0, "双方就绪后开启权威时钟");
             }
             // 两席都用权威下发的决斗 ID 初始化种子，不能从本机另造 ID。
             using var replicaA = new DuelCorePipe(duelId);
             using var replicaB = new DuelCorePipe(duelId);
             int matchedFrame = 0;
             int samples = 0;
+            int inputSequence = 1;
+            using (var jump = await AskDuel(black, DuelAuthority.Input, inputSequence: inputSequence, input: 2 | DuelCorePipe.Jump))
+            {
+                Check(jump.ErrorCode == 0, "首席可独立提交一次跳跃点按");
+            }
+            // 白方保持沉默，黑方不继续查询。用真实 KCP 读回证明 Gate 定时器能独立封帧。
+            await scene.TimerComponent.Net.WaitAsync(5 * DuelConfig.FrameMs);
+            using (var silence = await AskDuel(white, DuelAuthority.Read))
+            {
+                Check(silence.ErrorCode == 0 && silence.Frames.Count >= 4 &&
+                    silence.Frames.All(packed => (packed >> DuelCorePipe.InputBits) == 0) &&
+                    silence.Frames.Count(packed => (packed & DuelCorePipe.Jump) != 0) == 1,
+                    "白方没有输入仍按节奏封帧，跳跃只提交一次");
+            }
             while (replicaA.Snapshot.Result == 0 && replicaA.Snapshot.Frame < 300)
             {
                 int previous = replicaA.Snapshot.Frame;
-                int frame = previous + 1;
-                // 首帧显式携带跳跃，后续移动或攻击，用来核对高度也属于原生确定性状态。
-                int blackInput = frame == 1 ? 2 | DuelCorePipe.Jump : frame <= 10 ? 2 : 4;
-                using (var input = await AskDuel(black, DuelAuthority.Input, previous, frame, blackInput))
+                inputSequence++;
+                int blackInput = previous < 14 ? 2 : 4;
+                using (var input = await AskDuel(black, DuelAuthority.Input, previous, inputSequence, blackInput))
                 {
-                    Check(input.ErrorCode == 0 && input.Frames.Count == 0, "单边输入不得封帧");
+                    Check(input.ErrorCode == 0, "黑方输入被接纳");
                 }
-                using (var input = await AskDuel(white, DuelAuthority.Input, previous, frame, frame <= 10 ? 1 : 0))
+                using (var input = await AskDuel(white, DuelAuthority.Input, previous, inputSequence, previous < 14 ? 1 : 0))
                 {
                     Check(input.ErrorCode == 0, "第二席输入被接纳");
                 }
@@ -371,46 +384,48 @@ internal static class GoKcpLoadProbe
                 using var a = await AskDuel(black, DuelAuthority.Read, previous);
                 using var b = await AskDuel(white, DuelAuthority.Read, previous);
                 Check(a.ErrorCode == 0 && b.ErrorCode == 0 && a.DuelId == duelId && b.DuelId == duelId &&
-                    a.Frames.Count == 1 && b.Frames.Count == 1 && a.Frames[0] == b.Frames[0], "封口帧广播一致");
-                replicaA.Append(frame, a.Frames[0]);
-                replicaB.Append(frame, b.Frames[0]);
-                if (frame == 1)
+                    a.AfterFrame == previous && b.AfterFrame == previous, "双席收到请求游标之后的历史");
+                int commonCount = Math.Min(a.Frames.Count, b.Frames.Count);
+                // 不同到达时间可能对应不同的权威上界，只比较共同连续区间。
+                for (int i = 0; i < commonCount; i++)
                 {
-                    Check(replicaA.Snapshot.FirstY > 0 && replicaB.Snapshot.FirstY == replicaA.Snapshot.FirstY,
-                        "跳跃意图经过完整帧，在两端产生相同的原生高度");
-                }
-                Check(replicaA.Snapshot.Hash == replicaB.Snapshot.Hash,
-                    "双 C# 宿主经真实 P/Invoke 逐帧一致");
-                bool finished = replicaA.Snapshot.Result != 0;
-                if (finished)
-                {
-                    Check(a.FinalHash == replicaA.Snapshot.Hash && b.FinalHash == replicaB.Snapshot.Hash,
-                        "终局回包指纹与两席一致");
-                }
-                else
-                {
-                    Check(a.FinalHash == 0 && b.FinalHash == 0 && a.HashAckFrame == 0 && b.HashAckFrame == 0,
-                        "普通历史回包不附带逐帧指纹");
-                }
-                if (finished || frame % DuelConfig.HashSampleFrames == 0)
-                {
-                    // 完整帧已在两端执行，分别通过真实 RPC 上报同一逻辑帧。
-                    using var firstReport = await AskDuel(black, DuelAuthority.Read, frame,
-                        hashFrame: frame, hash: replicaA.Snapshot.Hash);
-                    Check(firstReport.ErrorCode == 0 && firstReport.HashAckFrame == frame &&
-                        firstReport.HashMatchedFrame == matchedFrame && firstReport.HashMismatchFrame == 0,
-                        "仅一席上报时共同确认上界不推进");
-                    using var secondReport = await AskDuel(white, DuelAuthority.Read, frame,
-                        hashFrame: frame, hash: replicaB.Snapshot.Hash);
-                    Check(secondReport.ErrorCode == 0 && secondReport.HashAckFrame == frame &&
-                        secondReport.HashMatchedFrame == frame && secondReport.HashMismatchFrame == 0,
-                        "两席上报后共同确认同一权威帧");
-                    using var firstRead = await AskDuel(black, DuelAuthority.Read, frame);
-                    Check(firstRead.ErrorCode == 0 && firstRead.HashMatchedFrame == frame &&
-                        firstRead.HashAckFrame == 0 && firstRead.HashMismatchFrame == 0,
-                        "首席再次读取可获得共同确认上界");
-                    matchedFrame = frame;
-                    samples++;
+                    int frame = previous + i + 1;
+                    Check(a.Frames[i] == b.Frames[i], "同一已封口帧的输入一致");
+                    replicaA.Append(frame, a.Frames[i]);
+                    replicaB.Append(frame, b.Frames[i]);
+                    if ((a.Frames[i] & DuelCorePipe.Jump) != 0)
+                    {
+                        Check(replicaA.Snapshot.FirstY > 0 && replicaB.Snapshot.FirstY == replicaA.Snapshot.FirstY,
+                            "跳跃经完整帧产生相同的原生高度");
+                    }
+                    Check(replicaA.Snapshot.Hash == replicaB.Snapshot.Hash,
+                        "双 C# 宿主经真实 P/Invoke 逐帧一致");
+                    bool finished = replicaA.Snapshot.Result != 0;
+                    if (finished)
+                    {
+                        Check(a.FinalHash == replicaA.Snapshot.Hash && b.FinalHash == replicaB.Snapshot.Hash,
+                            "终局回包指纹与两席一致");
+                    }
+                    if (finished || frame % DuelConfig.HashSampleFrames == 0)
+                    {
+                        // 完整帧已在两端执行，分别通过真实 RPC 上报同一逻辑帧。
+                        using var firstReport = await AskDuel(black, DuelAuthority.Read, frame,
+                            hashFrame: frame, hash: replicaA.Snapshot.Hash);
+                        Check(firstReport.ErrorCode == 0 && firstReport.HashAckFrame == frame &&
+                            firstReport.HashMatchedFrame == matchedFrame && firstReport.HashMismatchFrame == 0,
+                            "仅一席上报时共同确认上界不推进");
+                        using var secondReport = await AskDuel(white, DuelAuthority.Read, frame,
+                            hashFrame: frame, hash: replicaB.Snapshot.Hash);
+                        Check(secondReport.ErrorCode == 0 && secondReport.HashAckFrame == frame &&
+                            secondReport.HashMatchedFrame == frame && secondReport.HashMismatchFrame == 0,
+                            "两席上报后共同确认同一权威帧");
+                        using var firstRead = await AskDuel(black, DuelAuthority.Read, frame);
+                        Check(firstRead.ErrorCode == 0 && firstRead.HashMatchedFrame == frame &&
+                            firstRead.HashAckFrame == 0 && firstRead.HashMismatchFrame == 0,
+                            "首席再次读取可获得共同确认上界");
+                        matchedFrame = frame;
+                        samples++;
+                    }
                 }
             }
             Check(replicaA.Snapshot.Result == 1 && matchedFrame == replicaA.Snapshot.Frame && samples >= 2,
@@ -446,12 +461,12 @@ internal static class GoKcpLoadProbe
     }
 
     // 向真实 KCP 连接发送一次决斗请求。样本为 0 时只携带游标和意图。
-    private static async FTask<G2C_GoDuelResponse> AskDuel(GoLoadPeer peer, int operation, int afterFrame = 0, int frame = 0, int input = 0, int hashFrame = 0, int hash = 0)
+    private static async FTask<G2C_GoDuelResponse> AskDuel(GoLoadPeer peer, int operation, int afterFrame = 0, int inputSequence = 0, int input = 0, int hashFrame = 0, int hash = 0)
     {
         return (G2C_GoDuelResponse)await peer.Session.Call(new C2G_GoDuelRequest
         {
-            RoomId = peer.Room, Operation = operation, Fingerprint = DuelConfig.Fingerprint,
-            AfterFrame = afterFrame, InputFrame = frame, Input = input, HashFrame = hashFrame, Hash = hash
+            RoomId = peer.Room, Operation = operation, Fingerprint = DuelAuthority.NetworkFingerprint,
+            AfterFrame = afterFrame, InputFrame = inputSequence, Input = input, HashFrame = hashFrame, Hash = hash
         });
     }
 
@@ -508,7 +523,7 @@ internal static class GoKcpLoadProbe
             RulesJson = peer.Rules,
             ResumeToken = token,
             SupportsDelta = true,
-            DuelFingerprint = DuelConfig.Fingerprint
+            DuelFingerprint = DuelAuthority.NetworkFingerprint
         });
         Check(result.ErrorCode == 0 && !string.IsNullOrEmpty(result.Token), "匿名握手或恢复失败 " + result.ErrorCode);
         peer.Token = result.Token;

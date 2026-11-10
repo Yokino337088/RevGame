@@ -30,7 +30,10 @@ namespace RevGame.Pvp.Networking
         private float _heartbeatAt;
         private bool _disposed;
         // 当前连接是否有决斗请求在途，避免每次轮询并发发送同一输入。
-        private bool _duelBusy;
+        // 20Hz 采样允许少量 RPC 在途，消除一次往返才允许下一次采样的限制。
+        private const int DuelExchangeWindow = 8;
+        // 仅统计当前连接的请求，重连时清零，旧回调不能扣新连接的额度。
+        private int _duelInFlight;
         private string _deferredFailure;
 
         /// <summary>快照已脱离 Fantasy 消息池，调用者可以保存并从头重放。</summary>
@@ -119,7 +122,7 @@ namespace RevGame.Pvp.Networking
             {
                 // 同时声明围棋增量能力和决斗指纹。对端必须匹配当前规则才显示新入口。
                 using var response = await _session.C2G_GoHelloRequest(ProtocolVersion, _nickname, ResumeToken, _rulesJson, _matchKind,
-                    supportsDelta: true, duelFingerprint: DuelConfig.Fingerprint);
+                    supportsDelta: true, duelFingerprint: DuelAuthority.NetworkFingerprint);
                 if (!IsCurrent(generation))
                 {
                     return;
@@ -171,11 +174,11 @@ namespace RevGame.Pvp.Networking
         // 提交前确认连接有效且没有决斗 RPC 在途。返回 true 只表示请求已发起，封帧结果由回调读取。
         public bool ExchangeDuel(DuelRequest request, Action<DuelReply> onReply)
         {
-            if (!Connected || _duelBusy || _session == null || _session.IsDisposed)
+            if (!Connected || _duelInFlight >= DuelExchangeWindow || _session == null || _session.IsDisposed)
             {
                 return false;
             }
-            _duelBusy = true;
+            _duelInFlight++;
             ExchangeDuelAsync(request, onReply, _generation).Coroutine();
             return true;
         }
@@ -203,7 +206,7 @@ namespace RevGame.Pvp.Networking
             {
                 if (IsCurrent(generation))
                 {
-                    _duelBusy = false;
+                    _duelInFlight--;
                 }
             }
         }
@@ -368,7 +371,7 @@ namespace RevGame.Pvp.Networking
         private void Disconnect(bool dispose)
         {
             _deferredFailure = null;
-            _duelBusy = false;
+            _duelInFlight = 0;
             ++_generation;
             Connected = false;
             Busy = false;

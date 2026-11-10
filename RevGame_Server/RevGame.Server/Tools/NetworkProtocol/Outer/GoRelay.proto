@@ -115,11 +115,11 @@ message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
     string RoomId = 1;
     // 0 读历史、1 发起、2 就绪、3 提交意图。
     int32 Operation = 2;
-    // 客户端规则指纹，房间在接纳命令前校验。
+    // 决斗网络版本与规则的联合指纹，房间在接纳命令前校验。
     int32 Fingerprint = 3;
     // 调用方最后已消费的连续帧，0 表示从开局起拉取。
     int32 AfterFrame = 4;
-    // Input 操作使用，表示本席意图对应的下一帧。
+    // 保留原字段编号。Input 操作使用，表示本席本次连接内的单调输入序号。
     int32 InputFrame = 5;
     // 单席五位意图，座位由 Session 决定而不是由包声明。
     int32 Input = 6;

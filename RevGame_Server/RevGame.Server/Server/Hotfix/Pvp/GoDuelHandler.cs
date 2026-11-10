@@ -19,7 +19,7 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
         var room = player?.Room;
         // 房间、规则指纹与限流都通过后，才能进入权威决斗处理。
         if (player == null || room == null || room.RoomId != request.RoomId || room.ClosedAt != 0 ||
-            request.Fingerprint != DuelConfig.Fingerprint || !GoLobbyComponentSystem.RateAllowed(player))
+            request.Fingerprint != DuelAuthority.NetworkFingerprint || !GoLobbyComponentSystem.RateAllowed(player))
         {
             response.ErrorCode = 30;
             response.Reason = "决斗房间、会话或规则版本无效。";
@@ -54,6 +54,8 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
                 }
                 // 权威实例跟随房间存活。围棋入口看到此标记后停止接收新的围棋操作。
                 room.Duel = new DuelAuthority(room.RoomId);
+                // 在同一个 Gate 线程固定推进，RPC 仅投递输入和读取已封历史。
+                room.DuelTimer = FTask.RepeatedTimer(room.Scene, 10, () => GoDuelRoomRules.AdvanceDuel(room));
                 // 把决斗状态通知两席，让客户端进入同一房间的决斗界面。
                 lobby.Broadcast(room);
             }
@@ -71,7 +73,7 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
                 operation = opening ? DuelAuthority.Read : request.Operation,
                 fingerprint = request.Fingerprint, afterFrame = request.AfterFrame, inputFrame = request.InputFrame,
                 input = request.Input, hashFrame = request.HashFrame, hash = request.Hash
-            }, Stopwatch.GetTimestamp() / (Stopwatch.Frequency / 1000));
+            }, GoDuelRoomRules.NowMilliseconds());
             if (!string.IsNullOrEmpty(state.error))
             {
                 response.ErrorCode = 32;
@@ -130,10 +132,38 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
 /// <summary>从双方现有的会话握手信息判断决斗功能是否兼容。</summary>
 internal static class GoDuelRoomRules
 {
-    /// <summary>两席都连接且都声明当前规则指纹时返回真。</summary>
+    /// <summary>两席都连接且都声明当前决斗网络版本时返回真。</summary>
     public static bool HasDuelPeers(this GoRoomEntity room)
     {
-        return room.Black?.Connection?.GetComponent<GoSessionComponent>()?.DuelFingerprint == DuelConfig.Fingerprint &&
-            room.White?.Connection?.GetComponent<GoSessionComponent>()?.DuelFingerprint == DuelConfig.Fingerprint;
+        return room.Black?.Connection?.GetComponent<GoSessionComponent>()?.DuelFingerprint == DuelAuthority.NetworkFingerprint &&
+            room.White?.Connection?.GetComponent<GoSessionComponent>()?.DuelFingerprint == DuelAuthority.NetworkFingerprint;
+    }
+
+    /// <summary>把单调时间换算成毫秒，仅供权威调度，与原生步长无关。</summary>
+    public static long NowMilliseconds()
+    {
+        return Stopwatch.GetTimestamp() / (Stopwatch.Frequency / 1000);
+    }
+
+    /// <summary>由 Gate 定时器调用。每次只推进有界数量的完整帧，停止时保留可查询的历史。</summary>
+    public static void AdvanceDuel(GoRoomEntity room)
+    {
+        try
+        {
+            if (room.Duel != null && room.ClosedAt == 0 && room.HasDuelPeers())
+            {
+                room.Duel.AdvanceNetwork(NowMilliseconds());
+                room.Finished = room.Duel.Snapshot.Result != 0;
+            }
+            if (room.Duel == null || room.ClosedAt != 0 || room.Duel.Stopped)
+            {
+                FTask.RemoveTimer(room.Scene, ref room.DuelTimer);
+            }
+        }
+        catch (Exception error)
+        {
+            FTask.RemoveTimer(room.Scene, ref room.DuelTimer);
+            Log.Error($"[PVP/决斗] 房间={room.RoomId} 权威推进失败：{error.Message}");
+        }
     }
 }
