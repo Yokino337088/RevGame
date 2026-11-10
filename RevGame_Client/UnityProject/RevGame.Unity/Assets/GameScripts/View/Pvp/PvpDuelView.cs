@@ -13,14 +13,44 @@ namespace RevGame.View
     /// <summary>独立决斗场景的表现消费者。屏幕刷新只读快照，插值和特效不会写回战斗世界。</summary>
     public sealed class PvpDuelView : MonoBehaviour
     {
-        // First/Second 是角色画面；FirstHealth/SecondHealth 是血条填充；FirstEnergy/SecondEnergy 是能量条填充。
-        public Image First, Second, FirstHealth, SecondHealth, FirstEnergy, SecondEnergy;
-        // Clock 显示剩余秒数，Banner 显示就绪或胜负，Names 显示两席名称，两个 HealthText 显示生命数值。
-        public Text Clock, Banner, Names, FirstHealthText, SecondHealthText;
-        // Exit 返回大厅，Reconnect 重新连接；Jump、Jab、Skill、Ultimate 分别送出跳跃和三类招式意图。
-        public Button Exit, Reconnect, Jump, Jab, Skill, Ultimate;
-        // 黑白两席各自的 Legacy Animation 状态机。
-        public DuelActorAnimator FirstAnimator, SecondAnimator;
+        // 黑方角色图层，位置和镜像每次渲染时更新。
+        public Image First;
+        // 白方角色图层。场景配方在编辑器中绑定，运行时不重建。
+        public Image Second;
+        // 黑方已确认血量的条形填充。
+        public Image FirstHealth;
+        // 白方已确认血量的条形填充。
+        public Image SecondHealth;
+        // 黑方已确认能量的条形填充。
+        public Image FirstEnergy;
+        // 白方已确认能量的条形填充。
+        public Image SecondEnergy;
+        // 逻辑帧换算的剩余秒数。不限时时显示 ∞。
+        public Text Clock;
+        // 双方就绪、连接中断及权威胜负提示。
+        public Text Banner;
+        // 黑白两席的显示名称。
+        public Text Names;
+        // 黑方当前权威血量的整数文本。
+        public Text FirstHealthText;
+        // 白方当前权威血量的整数文本。
+        public Text SecondHealthText;
+        // 返回大厅入口，由 GameFlow 执行退房与切场景。
+        public Button Exit;
+        // 在线连接中断时供玩家手动重新连接。
+        public Button Reconnect;
+        // 跳跃按钮，点击只缓存一次输入边沿。
+        public Button Jump;
+        // 普攻按钮，对应原生招式槽 1。
+        public Button Jab;
+        // 技能按钮，对应原生招式槽 2。
+        public Button Skill;
+        // 大招按钮，对应原生招式槽 3。
+        public Button Ultimate;
+        // 黑方的表现状态机，消费跑动、起跳及权威招式姿态。
+        public DuelActorAnimator FirstAnimator;
+        // 白方的表现状态机，独立保存自己的播放与过渡进度。
+        public DuelActorAnimator SecondAnimator;
         // 当前场景的只读招式表现消费者，由场景序列化注入。
         public DuelStrikeEffects Effects;
         // 最近一次消费命中或招式事件的帧号，避免同一快照重复播放。
@@ -29,13 +59,36 @@ namespace RevGame.View
         private int _presentedResult;
         // HUD 点按后的招式编号，由下一次输入采样取走。
         private int _clickedAction;
-        // 以 EventSystem 的指针 ID 区分同一按钮上的多根手指。
+        // 按住左移的 EventSystem 指针 ID。松开一根手指不能清掉其他触点。
         private readonly HashSet<int> _leftPointers = new HashSet<int>();
+        // 按住右移的指针 ID。与左移同时按住时抵消为回中。
         private readonly HashSet<int> _rightPointers = new HashSet<int>();
         // 兼容已有场景配方里的旧持久监听。运行期绑定会用实际指针替换它。
         private const int LegacyPointerId = int.MinValue;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
+        // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
+        private const float ActorScale = .138f;
+        // 小幅位置差在 85 毫秒内归零；跨越大半个预测窗时直接校正，避免拖着角色穿过场景。
+        private const float CorrectionSeconds = .085f;
+        // 大于 96 个 HUD 单位的纠偏不做缓动，通常来自掉线、跳帧或明显错误的猜测。
+        private const float CorrectionSnapDistance = 96;
+        // 上一个渲染帧是否由预测提供位置，用于检测何时退回权威插值。
+        private bool _wasPredicting;
+        // 上一次画出的本机坐标，用于把预测与权威的差值变成纯显示偏移。
+        private Vector2 _lastLocalDrawn;
+        // 正在衰减的显示偏移，单位为 HUD 局部坐标。
+        private Vector2 _correctionOffset;
+        // 当前纠偏剩余的显示秒数，不进入逻辑时钟。
+        private float _correctionRemaining;
+        // 已应用的校正版本，避免每个渲染帧都重新启动同一次纠偏。
+        private int _seenCorrection;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 只有角色真正被绘制到权威地面之上时才记录预跳，便于自动化区分试算和落屏。
+        internal bool SawPredictedJumpForCheck { get; private set; }
+        // 原生确认本机离地后置位，保留到离场供跨帧断言读取。
+        internal bool SawConfirmedJumpForCheck { get; private set; }
+#endif
 
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
@@ -135,12 +188,13 @@ namespace RevGame.View
             }
         }
 
+        // 场景退出或组件被禁用时，和失焦一样清除未发送按键与预测轨迹。
         private void OnDisable()
         {
             ClearHeldControls();
         }
 
-        // 只清还没封帧的意图。已经发送的帧仍沿原链路等待权威确认。
+        // 清除触控状态及本地预测。已发送的输入仍由权威处理，清理表现不会撤销它们。
         private void ClearHeldControls()
         {
             _leftPointers.Clear();
@@ -197,6 +251,20 @@ namespace RevGame.View
             int secondFacing = view.SecondAction == 0 && secondMove != 0 ? secondMove : view.SecondFacing;
             Vector2 firstPosition = ActorPosition(view.FirstX, view.FirstY, next.FirstX, next.FirstY, fraction);
             Vector2 secondPosition = ActorPosition(view.SecondX, view.SecondY, next.SecondX, next.SecondY, fraction);
+            int firstAltitude = view.FirstY;
+            int secondAltitude = view.SecondY;
+            // 只替换自己这一席的运动表现。下方血量、出招、命中特效和结果继续消费原来的权威播放头。
+            if (service.Mode != PvpConnectionMode.Local)
+            {
+                if (service.MySide == GoSide.Black)
+                {
+                    PaintLocalMotion(service, view.FirstAction, ref firstPosition, ref firstMove, ref firstFacing, ref firstAltitude);
+                }
+                else if (service.MySide == GoSide.White)
+                {
+                    PaintLocalMotion(service, view.SecondAction, ref secondPosition, ref secondMove, ref secondFacing, ref secondAltitude);
+                }
+            }
             if (_seenFrame != view.Frame)
             {
                 // 正常跨帧时依序消费特效；重连或长停顿后只保留最近四帧的短时表现。
@@ -218,8 +286,8 @@ namespace RevGame.View
             }
             PaintActor(First, firstPosition, firstFacing);
             PaintActor(Second, secondPosition, secondFacing);
-            FirstAnimator.Paint(view.FirstHealth, view.FirstY, view.FirstAction, firstMove != 0, view.Frame, view.FirstAge, fraction);
-            SecondAnimator.Paint(view.SecondHealth, view.SecondY, view.SecondAction, secondMove != 0, view.Frame, view.SecondAge, fraction);
+            FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, firstMove != 0, view.Frame, view.FirstAge, fraction);
+            SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, secondMove != 0, view.Frame, view.SecondAge, fraction);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
@@ -238,13 +306,54 @@ namespace RevGame.View
             }
         }
 
+        // 把预测修正限制在本机的绘制坐标。转向立即换姿态，收到不同结果时位置在很短时间内归位。
+        private void PaintLocalMotion(PvpService service, int confirmedAction, ref Vector2 position, ref int move, ref int facing, ref int altitude)
+        {
+            float delta = Time.unscaledDeltaTime;
+            bool predicting = service.TrySampleDuelMotion(delta, out DuelPredictedMotion predicted);
+            if (predicting)
+            {
+                position = new Vector2(predicted.X, predicted.Y) * ActorScale;
+                if (confirmedAction == 0)
+                {
+                    move = predicted.Movement;
+                    altitude = Mathf.RoundToInt(predicted.Y);
+                    if (move != 0)
+                    {
+                        facing = move;
+                    }
+                }
+            }
+
+            if (_wasPredicting && (!predicting || _seenCorrection != predicted.CorrectionVersion))
+            {
+                // 用上一帧已经显示的位置起步，禁止把偏移喂回预测或权威副本。
+                Vector2 difference = _lastLocalDrawn - position;
+                _correctionOffset = difference.sqrMagnitude < CorrectionSnapDistance * CorrectionSnapDistance
+                    ? difference
+                    : Vector2.zero;
+                _correctionRemaining = CorrectionSeconds;
+            }
+            _correctionRemaining = Mathf.Max(0, _correctionRemaining - delta);
+            position += _correctionOffset * (_correctionRemaining / CorrectionSeconds);
+            _lastLocalDrawn = position;
+            _wasPredicting = predicting;
+            _seenCorrection = predicted.CorrectionVersion;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            DuelSnapshot confirmed = service.DuelSnapshot;
+            int confirmedHeight = service.MySide == GoSide.Black ? confirmed.FirstY : confirmed.SecondY;
+            SawPredictedJumpForCheck |= predicting && confirmedHeight == 0 && predicted.Y > 0 && position.y > 0;
+            SawConfirmedJumpForCheck |= confirmedHeight > 0;
+#endif
+        }
+
         // 命中特效和受击闪光读取同一逻辑帧，且与渲染频率无关。
         private void PaintDuelEvents(DuelSnapshot view)
         {
             Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing,
-                new Vector2(view.FirstX, view.FirstY) * .138f);
+                new Vector2(view.FirstX, view.FirstY) * ActorScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing,
-                new Vector2(view.SecondX, view.SecondY) * .138f);
+                new Vector2(view.SecondX, view.SecondY) * ActorScale);
             if (view.FirstHit != 0)
             {
                 Flash(Second);
@@ -258,7 +367,7 @@ namespace RevGame.View
         // 逻辑坐标用千分格保存，只有绘制时才换算到屏幕单位。
         private static Vector2 ActorPosition(int x, int y, int nextX, int nextY, float fraction)
         {
-            return new Vector2(Mathf.Lerp(x, nextX, fraction), Mathf.Lerp(y, nextY, fraction)) * .138f;
+            return new Vector2(Mathf.Lerp(x, nextX, fraction), Mathf.Lerp(y, nextY, fraction)) * ActorScale;
         }
 
         // 更新屏幕位置和镜像方向，只修改 RectTransform。

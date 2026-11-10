@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RevGame.Pvp.Duel;
+using Revolution;
 using UnityEngine;
 
 namespace RevGame.Pvp
@@ -22,6 +23,16 @@ namespace RevGame.Pvp
         private DuelCorePipe _duelPipe;
         // 为场景保留一小段连续只读快照，画面时钟不会改变原生执行与上行补帧游标。
         internal DuelPlayback DuelDisplay { get; } = new DuelPlayback();
+        // 独立原生预测沙盒，仅联机本机座位使用，结束决斗时释放。
+        private DuelPrediction _duelPrediction;
+        // 预测发生不可恢复的原生错误后，本局退回权威插值，避免每帧重复创建句柄。
+        private bool _duelPredictionFailed;
+        // 最近一次收到有效预测锚点的单调秒数，与 Unity TimeScale 无关。
+        private double _duelPredictionAnchorAt;
+        // 超过五个逻辑帧没有新锚点时暂停预测，避免弱网下停留在过期的虚拟位置。
+        private const double DuelPredictionStaleSeconds = 5 * DuelConfig.FrameMs / 1000.0;
+        // 本端已连续执行的最后一个整帧输入字，用于为预测提供双方最近确认的方向。
+        private int _duelLastPacked;
         // 本端独立决斗场景是否真正加载完成。
         private bool _duelSceneReady;
         // 来自权威方的就绪位，不用本端加载状态推测对手就绪。
@@ -52,20 +63,26 @@ namespace RevGame.Pvp
 #endif
         // 下次轮询的本地单调秒数，和原生逻辑帧号独立。
         private double _duelNextSend;
-        // 活跃对局每两秒（40 个逻辑帧）产生一个样本。追帧积压和重试每半秒最多送一个。
+        // 对账重试最短间隔，单位为本地单调秒数。采样频率由逻辑帧配置决定。
         private const double DuelHashRetrySeconds = .5;
         // 允许积压样本先对账，再确认终局。到期后停止终局查询，保留已收到的共同上界。
         private const double DuelTerminalHashTimeoutSeconds = 20;
+        // 按已执行帧顺序保存待确认指纹，收到权威确认才移除队首。
         private readonly Queue<(int Frame, int Hash)> _duelHashPending = new Queue<(int, int)>();
+        // 最早允许送下一份样本的单调秒数，避免每个方向包附上同一个样本。
         private double _duelHashNextSend;
+        // 终局后低频对账的单调秒数截止时间，随本局待发样本积压长度计算。
         private double _duelTerminalHashUntil;
         // 两个客户端都已与同一权威帧指纹核对的最新帧。
         public int DuelHashMatchedFrame { get; private set; }
+        // 权威报告的首次分歧帧，0 表示双方尚未发现分歧。
         public int DuelHashMismatchFrame { get; private set; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 当前客户端收到的不同样本确认总数，测试用来发现重复扣队列或漏报。
         internal int DuelHashSamplesAcknowledgedForCheck { get; private set; }
         // 验收只篡改指定帧的上行样本，原生世界与现场快照仍原样运行。
         internal int DuelHashCorruptFrameForCheck { get; set; }
+        // 仅拥有封帧器的一端有此统计。座位按棋局约定的 1/2 传入。
         internal int DuelHashReportsForCheck(int side) => _duelAuthority?.HashReportsForCheck(side) ?? 0;
 #endif
         // 挑战请求冷却截止的本地秒数，抑制连点。
@@ -231,13 +248,45 @@ namespace RevGame.Pvp
             }
         }
 
-        // 失焦、掉线或退出时丢掉尚未锁定的按键。已编号的意图仍必须原样重发。
+        // 失焦、掉线或退出时丢掉尚未锁定的按键和预测。已经上行的输入仍归权威决定，不会被本端撤销。
         internal void ClearDuelUnsealedInput()
         {
             _duelDirection = 0;
             _duelQueuedAction = 0;
             _duelQueuedJump = false;
             _duelActionLastFrame = 0;
+            _duelPrediction?.Suspend();
+        }
+
+        // 由场景在绘制前读取预测运动。失去有效锚点时返回 false，画面直接退回权威播放。
+        internal bool TrySampleDuelMotion(float deltaSeconds, out DuelPredictedMotion motion)
+        {
+            motion = default;
+            if (_duelPrediction == null || !Connected || !DuelBothReady || DuelSnapshot.Result != 0 ||
+                DuelError.Length != 0 || _duelPrediction.AnchorFrame == 0)
+            {
+                return false;
+            }
+            if (_clock.Elapsed.TotalSeconds - _duelPredictionAnchorAt > DuelPredictionStaleSeconds)
+            {
+                _duelPrediction.Suspend();
+                return false;
+            }
+            try
+            {
+                return _duelPrediction.TrySample(PackDuelInput(_duelQueuedAction), deltaSeconds, out motion);
+            }
+            catch (Exception error)
+            {
+                DisableDuelPrediction(error);
+                return false;
+            }
+        }
+
+        // 把本机方向和仍未送出的点按组成一个输入字。发包和即刻预测使用同一格式。
+        private int PackDuelInput(int action)
+        {
+            return _duelDirection | (action << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
         }
 
         // 下一帧若会结束恢复期，就允许带上缓存的攻击意图。是否成功出招仍由原生内核决定。
@@ -282,7 +331,7 @@ namespace RevGame.Pvp
                 afterFrame = DuelSnapshot.Frame };
         }
 
-        // 按本地单调时钟发送 Ready 或锁定输入，并按对局模式选择传输边界。
+        // 由 PvP 业务宿主每帧轮询。联机走独立权威时钟，本地人机仍锁定两席下一帧的输入。
         private void PollDuel()
         {
             if (Mode != PvpConnectionMode.Local)
@@ -308,7 +357,7 @@ namespace RevGame.Pvp
                 {
                     _duelIntentFrame = next;
                     int action = TakeDuelAction(next);
-                    _duelIntent = _duelDirection | (action << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
+                    _duelIntent = PackDuelInput(action);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                     if (action != 0)
                     {
@@ -356,12 +405,18 @@ namespace RevGame.Pvp
             var request = DuelRequestFor(finished ? DuelAuthority.Read : DuelBothReady ? DuelAuthority.Input : DuelAuthority.Ready);
             if (request.operation == DuelAuthority.Input)
             {
+                // 保留 int.MaxValue 给沙盒内部的未发送预览序号。真实序号不能回绕成负数。
+                if (_duelInputSequence == int.MaxValue - 1)
+                {
+                    SetDuelError("本次连接的决斗输入序号已耗尽。");
+                    return;
+                }
                 if (snapshot.Frame > _duelActionLastFrame)
                 {
                     _duelQueuedAction = 0;
                 }
                 request.inputFrame = _duelInputSequence + 1;
-                request.input = _duelDirection | (_duelQueuedAction << 2) | (_duelQueuedJump ? DuelCorePipe.Jump : 0);
+                request.input = PackDuelInput(_duelQueuedAction);
             }
             AttachDuelHashSample(request, seconds);
             bool sent;
@@ -393,6 +448,7 @@ namespace RevGame.Pvp
             if (request.operation == DuelAuthority.Input)
             {
                 _duelInputSequence = request.inputFrame;
+                _duelPrediction?.RecordSent(request.inputFrame, request.input);
                 _duelQueuedAction = 0;
                 _duelQueuedJump = false;
             }
@@ -471,7 +527,7 @@ namespace RevGame.Pvp
             return view.SecondEnergy >= DuelConfig.UltimateCost ? 12 : view.SecondEnergy >= DuelConfig.SkillCost ? 8 : 4;
         }
 
-        // 核对房间，按连续游标补帧并消费结果。缺口保留到下一次从现有上界重取。
+        // 核对房间，按连续游标补帧并消费结果。每个权威帧只能执行一次，回执必须等相应快照提交。
         private void AcceptDuelReply(DuelReply reply)
         {
             if (reply == null)
@@ -512,6 +568,7 @@ namespace RevGame.Pvp
                     }
                     DuelSnapshot before = _duelPipe.Snapshot;
                     _duelPipe.Append(reply.afterFrame + i + 1, reply.frames[i]);
+                    _duelLastPacked = reply.frames[i];
                     DuelDisplay.Record(_duelPipe.Snapshot);
                     DuelPreviousSnapshot = before;
                     RecordDuelHashSample(before);
@@ -527,6 +584,55 @@ namespace RevGame.Pvp
             {
                 DuelError = error.Message;
             }
+            RebaseDuelPrediction(reply, current);
+        }
+
+        // 权威副本消费整段连续历史后才处理回执。长追帧不沿用旧预测轨迹，直到拿到最新锚点再开始。
+        private void RebaseDuelPrediction(DuelReply reply, int beforeFrame)
+        {
+            if (Mode == PvpConnectionMode.Local || _duelPredictionFailed)
+            {
+                return;
+            }
+            if (!Connected || !DuelBothReady || DuelError.Length != 0 || DuelSnapshot.Result != 0)
+            {
+                _duelPrediction?.Suspend();
+                return;
+            }
+            int advanced = DuelSnapshot.Frame - beforeFrame;
+            if (advanced > DuelPrediction.MaxLead || (advanced > 0 && reply.inputAckFrame == 0))
+            {
+                _duelPrediction?.Suspend();
+            }
+            if (reply.inputAckFrame == 0 || reply.inputAckFrame != DuelSnapshot.Frame)
+            {
+                return;
+            }
+            try
+            {
+                if (reply.inputAckSequence > _duelInputSequence)
+                {
+                    throw new InvalidOperationException("决斗回执超出了本端已发送的输入序号。");
+                }
+                _duelPrediction ??= new DuelPrediction(DuelId, MySide == GoSide.Black);
+                if (_duelPrediction.Rebase(_duelPipe, reply, _duelLastPacked))
+                {
+                    _duelPredictionAnchorAt = _clock.Elapsed.TotalSeconds;
+                }
+            }
+            catch (Exception error)
+            {
+                DisableDuelPrediction(error);
+            }
+        }
+
+        // 只关闭预测实例。权威快照、回放游标和联网输入继续工作，用户仍可完成本局。
+        private void DisableDuelPrediction(Exception error)
+        {
+            _duelPrediction?.Dispose();
+            _duelPrediction = null;
+            _duelPredictionFailed = true;
+            RevLog.Warn("决斗预测已退回权威插值：" + error.Message, "Pvp");
         }
 
         // 识别 P2P 决斗消息，区分宿主授权、客端请求与回执。
@@ -559,6 +665,7 @@ namespace RevGame.Pvp
                     if (_duelAuthority != null && message.name == DuelId)
                     {
                         var reply = _duelAuthority.Exchange(2, message.duelRequest, _clock.ElapsedMilliseconds);
+                        // 这份输入回执属于白方。宿主只观察共同指纹，不能把白方序号用于自己的预测。
                         ObserveDuelHashReceipt(reply, false);
                         SendLan(new PvpLanMessage { type = "duel-frame", duelReply = reply });
                     }
@@ -586,6 +693,11 @@ namespace RevGame.Pvp
 #endif
             DuelPreviousSnapshot = default;
             DuelDisplay.Reset();
+            _duelPrediction?.Dispose();
+            _duelPrediction = null;
+            _duelPredictionFailed = false;
+            _duelPredictionAnchorAt = 0;
+            _duelLastPacked = 0;
             _duelAuthority?.Dispose();
             _duelPipe?.Dispose();
             _duelAuthority = null;

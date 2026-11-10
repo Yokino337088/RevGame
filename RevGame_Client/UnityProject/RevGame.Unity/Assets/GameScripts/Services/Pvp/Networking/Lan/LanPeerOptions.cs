@@ -5,13 +5,22 @@ namespace RevGame.Pvp.Networking
     /// <summary>局域网连接参数由 PvP 配置提供；时间单位全部是现实秒，不受游戏暂停和倍速影响。</summary>
     public sealed class LanPeerOptions
     {
+        // 同一局域网所有端点监听的发现端口。邀请和对局另用各自独占端口。
         public readonly int DiscoveryPort;
+        // 每隔多少现实秒广播一次本机可发现信息。
         public readonly double AnnounceSeconds;
+        // 多少秒未收到更新就从搜索列表移除设备，必须比广播间隔长。
         public readonly double PeerExpirySeconds;
+        // 玩家接受或拒绝邀请的最长等待秒数。
         public readonly double InvitationTimeoutSeconds;
+        // 接受邀请后建立 UTP 连接的最长等待秒数，也用于连接超时。
         public readonly double ConnectTimeoutSeconds;
 
-        public LanPeerOptions(int discoveryPort, double announceSeconds, double peerExpirySeconds, double invitationTimeoutSeconds, double connectTimeoutSeconds)
+        // 同机验收只选回环地址，避免两端发现时各取一张不同网卡。普通玩家仍按所有网卡搜索。
+        internal readonly bool LoopbackOnly;
+
+        // 创建发现与超时配置。参数不合法时在创建 Socket 前失败，避免半初始化的端点。
+        public LanPeerOptions(int discoveryPort, double announceSeconds, double peerExpirySeconds, double invitationTimeoutSeconds, double connectTimeoutSeconds, bool loopbackOnly = false)
         {
             if (discoveryPort < 1024 || discoveryPort > 65535 || announceSeconds <= 0 || peerExpirySeconds <= announceSeconds || invitationTimeoutSeconds <= 0 || connectTimeoutSeconds <= 0)
             {
@@ -22,6 +31,7 @@ namespace RevGame.Pvp.Networking
             PeerExpirySeconds = peerExpirySeconds;
             InvitationTimeoutSeconds = invitationTimeoutSeconds;
             ConnectTimeoutSeconds = connectTimeoutSeconds;
+            LoopbackOnly = loopbackOnly;
         }
     }
 

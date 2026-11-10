@@ -9,6 +9,7 @@ namespace RevGame.Flow
 {
     public sealed partial class GameFlow
     {
+        // 围棋场景。决斗切场前在这里完成房间资格校验。
         public const string PvpSceneName = "PvpScene";
         // 独立决斗表现场景名，与编辑器构建列表保持一致。
         public const string DuelSceneName = "PvpDuelScene";
@@ -36,7 +37,7 @@ namespace RevGame.Flow
             var service = RevServices.GetRequired<PvpService>();
             if (Screen == GameScreen.Pvp && !IsTransitioning && RevScene.CurrentName == DuelSceneName && service.DuelId.Length != 0)
             {
-                // 换连接后完整棋谱仍先恢复；场景没有重载，可重新确认 Ready 并从零补决斗帧。
+                // 复连时场景仍可用。重新声明 Ready，并沿当前已确认游标补帧，预测等新锚点才恢复。
                 service.MarkDuelSceneReady();
                 return;
             }

@@ -8,15 +8,44 @@ namespace RevGame.Pvp.Duel
     // 一帧已执行结果的值副本。HUD 和 AI 读取它，改副本不会改原生世界。
     public struct DuelSnapshot
     {
-        // Frame 为已执行帧号；Result 为 0 进行中、1 黑胜、2 白胜、3 平局；Hash 用于同帧对账。
-        // FirstHit、SecondHit 是黑、白命中的原始伤害值，0 表示没有命中。免伤帧也保留此值供表现读取。
-        public int Frame, Result, Hash, FirstHit, SecondHit;
-        // FirstY 和 SecondY 是黑白两席的离地高度，单位千分格。
-        public int FirstY, SecondY;
-        // 黑方的水平位置（千分格）、生命、能量、招式槽、招式已过帧数、朝向（±1）。
-        public int FirstX, FirstHealth, FirstEnergy, FirstAction, FirstAge, FirstFacing;
-        // 白方对应字段，单位与黑方相同。招式槽 0 表示无招式。
-        public int SecondX, SecondHealth, SecondEnergy, SecondAction, SecondAge, SecondFacing;
+        // 最后执行完的逻辑帧。开局是 0，每帧的运动和伤害都已结算后才发布这个值。
+        public int Frame;
+        // 0 进行中、1 黑胜、2 白胜、3 平局。预测输出不对外提供这个值。
+        public int Result;
+        // 原生完整状态的同帧指纹，不能拿不同帧的指纹比较。
+        public int Hash;
+        // 本帧黑方打出的伤害点数。0 表示没命中，开发态免伤也会保留命中事件。
+        public int FirstHit;
+        // 本帧白方打出的伤害点数。同一个已确认帧的特效只消费一次。
+        public int SecondHit;
+        // 黑方离地高度，单位千分格，0 表示在地面。
+        public int FirstY;
+        // 白方离地高度，单位千分格。恢复时还需要快照未包含的垂直速度。
+        public int SecondY;
+        // 黑方横坐标，单位千分格，负数在场地中心左侧。
+        public int FirstX;
+        // 黑方当前生命点数，由原生规则结算，0 表示倒地。
+        public int FirstHealth;
+        // 黑方当前能量点数，用于招式消耗和 HUD。
+        public int FirstEnergy;
+        // 黑方当前招式槽，0 表示空闲，1 至 3 为普攻、技能、大招。
+        public int FirstAction;
+        // 黑方当前招式已执行的逻辑帧数，出招首帧为 0。
+        public int FirstAge;
+        // 黑方面向，-1 左、1 右，命中特效使用已确认的朝向。
+        public int FirstFacing;
+        // 白方横坐标，单位千分格。
+        public int SecondX;
+        // 白方当前生命点数，由同一份原生规则结算。
+        public int SecondHealth;
+        // 白方当前能量点数。
+        public int SecondEnergy;
+        // 白方当前招式槽，0 空闲，1 至 3 为有效招式。
+        public int SecondAction;
+        // 白方当前招式已执行的逻辑帧数。
+        public int SecondAge;
+        // 白方面向，-1 左、1 右。
+        public int SecondFacing;
     }
 
     /// <summary>托管宿主只写整帧消息、读结果。任何地方都不能通过 P/Invoke 直接改血量或位移。</summary>
@@ -33,7 +62,7 @@ namespace RevGame.Pvp.Duel
         // 完整帧第 10 位由本地测试权威设置，不属于黑白任一席的输入。
         internal const int NoDamageFrame = 1 << (2 * InputBits);
         // 防止错误 DLL 返回超大长度。当前检查点为固定的小端数据包。
-        private const int MaxCheckpointBytes = 4096;
+        internal const int MaxCheckpointBytes = 4096;
         // 当前 C# 实例独占的原生句柄，释放后不能继续写入。
         private readonly Handle _handle;
         // 复用的整帧写缓冲，五项各占四字节。
@@ -91,6 +120,7 @@ namespace RevGame.Pvp.Duel
             _handle = GameCore_Create();
             int[] settings = DuelConfig.CreateCoreWords();
             byte[] start = new byte[(settings.Length + 4) * 4];
+            // 开局消息写协议版本、操作号、完整配置与种子，队列两端不能依赖托管类型的内存排版。
             Write(start, 0, DuelConfig.CoreProtocol);
             Write(start, 1, 1);
             for (int i = 0; i < settings.Length; i++)
@@ -127,7 +157,7 @@ namespace RevGame.Pvp.Duel
             return input >= 0 && input <= InputMask && (input & 3) != 3;
         }
 
-        // 写入完整帧后取回相同帧号的快照。桥接失败时抛错，由上层停止继续播放。
+        // 写入完整帧后取回同号快照。只有权威、确认副本或隔离沙盒能调用，原生失败时停止使用该实例。
         public void Append(int frame, int packed)
         {
             if ((packed & ~(NoDamageFrame | (NoDamageFrame - 1))) != 0)
@@ -158,18 +188,35 @@ namespace RevGame.Pvp.Duel
                 throw new InvalidOperationException("决斗检查点大小无效或仍有待消费帧。");
             }
             var checkpoint = new byte[size];
-            if (GameCore_SaveCheckpoint(_handle, checkpoint, checkpoint.Length) != size)
+            if (SaveCheckpoint(checkpoint) != size)
             {
                 throw new InvalidOperationException("决斗检查点保存失败。");
             }
             return checkpoint;
         }
 
+        // 热路径使用调用方独占的缓冲区。原生返回实际字节数，缓冲尾部没有状态，不能一起送去恢复。
+        internal int SaveCheckpoint(byte[] buffer)
+        {
+            int size = GameCore_SaveCheckpoint(_handle, buffer, buffer.Length);
+            if (size <= 0 || size > buffer.Length || size > MaxCheckpointBytes)
+            {
+                throw new InvalidOperationException("决斗检查点未保存，可能还有待消费的帧。");
+            }
+            return size;
+        }
+
         // 失败时保留原生实例和当前快照。成功后只返回显示基线，恢复帧的旧命中不会再发一次。
         public bool TryRestoreCheckpoint(byte[]? checkpoint)
         {
-            if (checkpoint == null || checkpoint.Length == 0 || checkpoint.Length > MaxCheckpointBytes ||
-                GameCore_RestoreCheckpoint(_handle, checkpoint, checkpoint.Length, _output, _output.Length) != 1)
+            return checkpoint != null && TryRestoreCheckpoint(checkpoint, checkpoint.Length);
+        }
+
+        // 可复用缓冲的恢复入口，只读有效长度。失败时预测者可以放弃该轨迹，权威副本不会被修改。
+        internal bool TryRestoreCheckpoint(byte[] checkpoint, int size)
+        {
+            if (size <= 0 || size > checkpoint.Length || size > MaxCheckpointBytes ||
+                GameCore_RestoreCheckpoint(_handle, checkpoint, size, _output, _output.Length) != 1)
             {
                 return false;
             }

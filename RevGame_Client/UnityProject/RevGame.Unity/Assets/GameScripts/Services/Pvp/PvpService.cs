@@ -23,13 +23,25 @@ namespace RevGame.Pvp
     [Serializable]
     internal sealed class PvpLanMessage
     {
-        public string type, version, rules, name;
+        // 业务分流标记。决斗的 challenge、start、input、frame 走决斗专属分支。
+        public string type;
+        // 围棋握手版本，决斗版本另外放在 duelRequest 的指纹。
+        public string version;
+        // 围棋握手的规则文本。决斗开始通知复用此槽核对开始前的棋盘指纹。
+        public string rules;
+        // 握手昵称或决斗局号，含义由 type 决定。
+        public string name;
+        // 单手围棋动作。决斗开始后不再接纳。
         public PvpMove move;
+        // 围棋补棋谱分片，决斗补帧使用 duelReply。
         public List<PvpMove> moves;
-        public int from, total;
+        // 围棋分片起始下标，从零开始。
+        public int from;
+        // 完整棋谱的总条数，用于确认所有分片已到达。
+        public int total;
         // P2P 信封中用于能力声明、就绪和战斗输入的请求数据。
         public RevGame.Pvp.Duel.DuelRequest duelRequest;
-        // P2P 宿主返回的就绪掩码与已提交完整帧。
+        // P2P 宿主返回的就绪掩码、连续整帧及接收方自己的封帧回执。
         public RevGame.Pvp.Duel.DuelReply duelReply;
     }
 
@@ -183,7 +195,14 @@ namespace RevGame.Pvp
             }
         }
 
+        // 玩家入口使用所有可用网卡发现同网设备。
         public void StartLan(string nickname)
+        {
+            StartLan(nickname, loopbackOnly: false);
+        }
+
+        // 同机验收可以限制发现地址。后续仍走真实 UDP 邀请与 UTP 可靠消息，不替换正式业务协议。
+        internal void StartLan(string nickname, bool loopbackOnly)
         {
             if (_leaving)
             {
@@ -196,7 +215,7 @@ namespace RevGame.Pvp
             Core = null;
             _moves.Clear();
             var options = new LanPeerOptions(Config.discoveryPort, Config.announceSeconds, Config.peerExpirySeconds,
-                Config.invitationTimeoutSeconds, Config.connectTimeoutSeconds);
+                Config.invitationTimeoutSeconds, Config.connectTimeoutSeconds, loopbackOnly);
             Lan = new LanPeerTransport(options);
             Lan.Connected += OnLanConnected;
             Lan.PayloadReceived += ReceiveLan;
@@ -241,6 +260,7 @@ namespace RevGame.Pvp
             }
             return accepted;
         }
+        // UTP 握手成功后声明围棋规则和决斗能力。业务 Connected 仍要等双方校验。
         private void OnLanConnected(bool isHost)
         {
             MySide = isHost ? GoSide.Black : GoSide.White;
@@ -249,6 +269,7 @@ namespace RevGame.Pvp
                 duelRequest = DuelRequestFor(RevGame.Pvp.Duel.DuelAuthority.Read) });
             Status = "正在核对双方规则版本…";
         }
+        // 在 PvP 域轮询时解析业务信封。决斗帧先于围棋分支处理，避免旧棋步越过切场边界。
         private void ReceiveLan(string payload)
         {
             try

@@ -10,7 +10,23 @@ namespace RevGame.View
     public sealed class DuelActorAnimator : MonoBehaviour, RevIHeavyFSMOwner
     {
         // 表现姿态槽：待机、跑动、腾空、三招式与倒地。名称对应场景里的 Legacy Clip。
-        private enum Pose { Idle, Run, Jump, Attack1, Attack2, Attack3, Down }
+        private enum Pose
+        {
+            // 站立循环，没有移动和招式时使用。
+            Idle,
+            // 跑动循环，由当前绘制区间的位移方向驱动。
+            Run,
+            // 离地姿态，本机可以由沙盒预览。
+            Jump,
+            // 权威普攻片段。
+            Attack1,
+            // 权威技能片段。
+            Attack2,
+            // 权威大招片段。
+            Attack3,
+            // 已确认倒地，优先于所有动作。
+            Down
+        }
         // Unity 不能直接序列化交错数组，用一层对象保存每个姿态的帧序列。
         [System.Serializable]
         private sealed class SpriteSequence
@@ -25,9 +41,15 @@ namespace RevGame.View
         private Image _image;
         // 旧姿态的最后一张图只在过渡期间保留。两个图层复用整局，不逐帧创建对象。
         private Image _outgoingImage;
+        // 两层图片交叠时间，单位为表现秒数。
         private const float PoseFadeSeconds = .09f;
+        // 本次过渡开始时的非缩放时间。
         private float _fadeStarted;
-        private int _paintedFacing = 1, _outgoingFacing = 1;
+        // 当前图层的朝向，用于下一次过渡建立基线。
+        private int _paintedFacing = 1;
+        // 旧图层保留的朝向，换向时不能让旧图一起镜像。
+        private int _outgoingFacing = 1;
+        // 首次落屏后才允许采集旧图。
         private bool _hasPainted;
         // 本角色的 Legacy Animation 组件，只执行画面播放。
         private Animation _animation;
@@ -35,8 +57,12 @@ namespace RevGame.View
         private RevHeavyFSM<Pose, DuelActorAnimator> _machine;
         // 当前片段和帧序列。只在切换姿态时查找，普通渲染帧直接复用。
         private Sprite[] _playingFrames;
-        // 片段采样率和长度来自既有 Legacy 资源。普通姿态用独立的表现秒数。
-        private float _sampleRate, _clipLength, _poseSeconds;
+        // Legacy 资源中每秒的采样张数。
+        private float _sampleRate;
+        // Legacy 资源定义的片段长度，单位秒。
+        private float _clipLength;
+        // 当前普通姿态已播放的非缩放秒数，切换时归零。
+        private float _poseSeconds;
         // 同一招式可连续出现。用逻辑起始帧识别每一次，而不是只看招式编号。
         private int _attackStart = -1;
         // 待机与跑动循环，其余片段播到最后一张时保持该姿势。
@@ -45,23 +71,35 @@ namespace RevGame.View
         public bool IsPlaying => _animation != null && _animation.isPlaying;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-        // 上一帧真正交给 Image 绘制的 Sprite 和姿态。状态切换时只建立新基线。
+        // 上一帧实际可见的 Sprite，完全透明时清空。
         private Sprite _observedSprite;
+        // 上一帧的姿态，切姿态时只建立新基线。
         private Pose _observedPose;
         // 攻击以逻辑起始帧区分实例。上一次攻击的结果保留到下一次攻击开始，方便测试异步读取。
         private int _lastObservedAttackStart = -1;
+        // 当前招式同一姿态内真正换了几次图。
         private int _attackSpriteChanges;
+        // 当前招式有多少帧同时看得见新旧两层。
         private int _attackFadeSamples;
         // 每个姿态占一位。同一个姿态至少绘制过两张不同的图片才设置对应位。
         private int _animatedPoses;
+        // 至少有一种姿态真正落屏换过图。
         public bool HasSpriteMotion => _animatedPoses != 0;
+        // 待机片段是否实际换图。
         public bool IdleSpriteMotion => (_animatedPoses & (1 << (int)Pose.Idle)) != 0;
+        // 跳跃片段是否实际换图。
         public bool JumpSpriteMotion => (_animatedPoses & (1 << (int)Pose.Jump)) != 0;
+        // 跑动片段是否实际换图。
         public bool RunSpriteMotion => (_animatedPoses & (1 << (int)Pose.Run)) != 0;
+        // 任一权威招式片段是否实际换图。
         public bool AttackSpriteMotion => (_animatedPoses & (7 << (int)Pose.Attack1)) != 0;
+        // 最近观察到的招式起始逻辑帧。
         internal int LastObservedAttackStart => _lastObservedAttackStart;
+        // 验收读取该招式的实际换帧次数。
         internal int AttackSpriteChanges => _attackSpriteChanges;
+        // 验收读取该招式的新旧图叠加帧数。
         internal int AttackFadeSamples => _attackFadeSamples;
+        // 旧图层启用意味着本次过渡还未结束。
         internal bool IsPoseFadingForCheck => _outgoingImage != null && _outgoingImage.enabled;
 
         // 比较实际落屏图片，排除切换姿态时仅替换第一帧导致的误报。

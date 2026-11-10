@@ -171,7 +171,7 @@ namespace RevGame.Pvp.Networking
         }
 
         /// <summary>决斗使用独立 RPC 窗口；围棋同步与心跳不能覆盖它的输入回执。</summary>
-        // 提交前确认连接有效且没有决斗 RPC 在途。返回 true 只表示请求已发起，封帧结果由回调读取。
+        // 连接有效且独立窗口有空位即可发起。返回 true 只表示上行，真正确认来自封帧回执。
         public bool ExchangeDuel(DuelRequest request, Action<DuelReply> onReply)
         {
             if (!Connected || _duelInFlight >= DuelExchangeWindow || _session == null || _session.IsDisposed)
@@ -195,7 +195,9 @@ namespace RevGame.Pvp.Networking
                     onReply(new DuelReply { id = response.DuelId, error = response.ErrorCode == 0 ? "" : response.Reason,
                         readyMask = response.ReadyMask, afterFrame = response.AfterFrame, frames = response.Frames.ToArray(),
                         result = response.Result, finalHash = response.FinalHash, hashAckFrame = response.HashAckFrame,
-                        hashMatchedFrame = response.HashMatchedFrame, hashMismatchFrame = response.HashMismatchFrame });
+                        hashMatchedFrame = response.HashMatchedFrame, hashMismatchFrame = response.HashMismatchFrame,
+                        inputAckFrame = response.InputAckFrame, inputAckSequence = response.InputAckSequence,
+                        pendingActionSequence = response.PendingActionSequence, pendingActionUntil = response.PendingActionUntil });
                 }
             }
             catch (Exception error)

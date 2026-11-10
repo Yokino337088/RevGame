@@ -5,7 +5,7 @@
 
 namespace RevGameCore
 {
-    // 每局独占的逻辑随机源。只有权威帧阶段可以抽样，表现层和指纹读取不能推进它。
+    // 每个原生世界独占的逻辑随机源。权威和隔离预测可各自执行，表现层与指纹读取不抽样。
     class DeterministicRandom
     {
       public:
@@ -25,8 +25,9 @@ namespace RevGameCore
         bool RestoreState(const std::array<uint64_t, 2>& words);
 
       private:
-        // xorshift128+ 的完整状态。两个字均参加帧指纹。
+        // xorshift128+ 的前一个 64 位状态字，参与帧指纹和检查点。
         uint64_t State0;
+        // xorshift128+ 的后一个 64 位状态字。只存开局种子无法恢复未来抽样顺序。
         uint64_t State1;
     };
 }

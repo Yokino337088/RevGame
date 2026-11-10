@@ -456,8 +456,8 @@ namespace RevGame.Pvp
             };
         }
 
-        // 开启真实 UTP 隔离夹具，按参数选择围棋或决斗分支。
-        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false)
+        // 开启真实 UTP 夹具。画面用例把黑方交给当前场景，其余用例使用两份隔离服务。
+        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, bool visibleDuel = false)
         {
             if (_gameCheckRunning)
             {
@@ -467,10 +467,15 @@ namespace RevGame.Pvp
             {
                 return Result(false, reason);
             }
+            if (visibleDuel && (Service.Core != null || Service.Lan != null || Service.Connected))
+            {
+                return Result(false, "请从未开局的围棋入口运行预测画面验收。");
+            }
             StopLanGameCheck();
             _gameCheckCancelled = false;
             _gameCheckError = string.Empty;
-            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel, duelHashAudit, duelHashMismatch, duelTestEntry, analysis);
+            _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel, duelHashAudit, duelHashMismatch,
+                duelTestEntry, analysis, visibleDuel ? Service : null);
             if (!_lanGameCheck.Start(out reason))
             {
                 return Result(false, reason);

@@ -55,6 +55,10 @@ namespace RevGame.Pvp
                 _ => BeginLanGameCheck(duel: true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-test-lan-check", "空棋盘从白方经实际 UTP 发起开发决斗并检查双端就绪", Empty,
                 _ => BeginLanGameCheck(duel: true, duelTestEntry: true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-prediction-view-check", "用正式场景的黑方和隔离白方建立真实 UTP 决斗，等待 HUD 输入", Empty,
+                _ => BeginLanGameCheck(duel: true, duelTestEntry: true, visibleDuel: true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-prediction-jump", "经 EventSystem 点击联机决斗跳跃按钮", Empty,
+                _ => ClickNetworkDuelJump(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-lan-hash-check", "实际 UTP 双端打到终局，核对周期和终局帧指纹", Empty,
                 _ => BeginLanGameCheck(duel: true, duelHashAudit: true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-lan-hash-mismatch-check", "实际 UTP 发送一份错误的白方对账值，验证两端报告同帧分歧", Empty,
@@ -83,12 +87,27 @@ namespace RevGame.Pvp
                     ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
                         view.First.sprite.packed && view.Second.sprite.packed,
                     ["firstIdleAnimated"] = view != null && view.FirstAnimator.IdleSpriteMotion,
+                    ["sawPredictedJump"] = view != null && view.SawPredictedJumpForCheck,
+                    ["sawConfirmedJump"] = view != null && view.SawConfirmedJumpForCheck,
                     ["firstJumpAnimated"] = view != null && view.FirstAnimator.JumpSpriteMotion,
                     ["secondAttackAnimated"] = view != null && view.SecondAnimator.AttackSpriteMotion,
                     ["strikeVisible"] = view != null && (view.Effects.First.enabled || view.Effects.Second.enabled),
                     ["firstHealth"] = state.FirstHealth, ["secondHealth"] = state.SecondHealth,
                     ["firstHit"] = state.FirstHit, ["secondHit"] = state.SecondHit };
             }, readOnly: true, owner: Owner);
+        }
+
+        // 只在真实联机决斗的 HUD 就绪后注入触点，保持与玩家点按相同的射线、事件和输入路径。
+        private static object ClickNetworkDuelJump()
+        {
+            var view = UnityEngine.Object.FindObjectOfType<PvpDuelView>();
+            if (view == null || Service.Mode != PvpConnectionMode.Lan || !Service.Connected || !Service.DuelBothReady)
+            {
+                return Result(false, "请先通过可见 UTP 夹具进入已就绪的决斗场景。");
+            }
+            var pointer = new PointerEventData(EventSystem.current) { pointerId = 15 };
+            ClickDuelHudButton(view.Jump.gameObject, pointer);
+            return Result(true, "");
         }
 
         // 从正常进入的本地人机决斗开始。测试只读取当前局，两个回放实例由本次检查持有。

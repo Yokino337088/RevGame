@@ -169,7 +169,8 @@ namespace RevGame.Pvp.Networking
     }
     public sealed class LanPeerOptions
     {
-        public LanPeerOptions(int port, float announce, float expiry, float invitation, float connect)
+        // 离线桩保留正式构造签名。它没有真实套接字，回环选项由 Unity 夹具验证。
+        public LanPeerOptions(int port, float announce, float expiry, float invitation, float connect, bool loopbackOnly = false)
         {
         }
     }

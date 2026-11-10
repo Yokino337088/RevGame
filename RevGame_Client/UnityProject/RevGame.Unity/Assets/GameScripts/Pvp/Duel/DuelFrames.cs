@@ -17,8 +17,9 @@ namespace RevGame.Pvp.Duel
         public int inputFrame;
         // 单席五位方向、招式和跳跃意图。
         public int input;
-        // 稀疏对账附在现有请求上。帧号 0 表示本包没有样本，指纹值 0 本身合法。
+        // 附带的已执行样本帧号。0 表示本次不对账。
         public int hashFrame;
+        // 样本帧的完整原生世界指纹。指纹本身可以为 0。
         public int hash;
     }
 
@@ -40,10 +41,20 @@ namespace RevGame.Pvp.Duel
         public int result;
         // 最新权威世界指纹，必须在相同帧号对账。
         public int finalHash;
-        // 本次收到的有效样本、双方共同对上的最新帧，以及停局时首个不一致帧。
+        // 本次收到的有效对账样本帧。客户端收到确认后才从待发队列移除。
         public int hashAckFrame;
+        // 双方共同确认一致的最新帧。0 表示本包没有公告。
         public int hashMatchedFrame;
+        // 首个分歧样本的帧号。大于 0 时本局停止推进。
         public int hashMismatchFrame;
+        // 以下回执属于哪个已封口帧。补帧未追到最新时为 0，防止客户端提前清理输入。
+        public int inputAckFrame;
+        // 回执帧已处理到的本席序号。方向和跳跃可退出预测重演，等待恢复期的招式见下两项。
+        public int inputAckSequence;
+        // 回执帧之后仍在等恢复期结束的招式序号。0 表示没有等待的招式。
+        public int pendingActionSequence;
+        // 上述招式最后可进入的权威帧，包含本帧。由权威确定，回滚重演不能延长它。
+        public int pendingActionUntil;
     }
 
     // 共享的挑战资格，界面用来展示，权威方用来重新校验。
@@ -71,16 +82,12 @@ namespace RevGame.Pvp.Duel
         public const int Challenge = 1;
         // 声明本席已加载决斗场景。
         public const int Ready = 2;
-        // 提交本席对下一逻辑帧的意图。
+        // 提交本席有序意图，由封帧器决定进入哪一逻辑帧。
         public const int Input = 3;
         // 开发环境从同一围棋房间强制发起决斗；传输入口校验后再转为 Read。
         public const int TestChallenge = 4;
-        // 联机输入序号语义已升级。原生配置和回放格式独立版本化。
-        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x40000000;
-        // 缺少新输入时最多沿用四个逻辑帧的方向，随后权威端主动回中。
-        private const int DirectionHoldFrames = 4;
-        // 恢复期点按最多留四个待封帧，避免网络停顿后突然触发旧招。
-        private const int ActionBufferFrames = 4;
+        // 当前联机版本包含随整帧下发的输入回执。原生配置和回放格式独立版本化。
+        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x60000000;
         // 单次宿主更新最多补三个固定步长，防止暂停恢复后长时间占用主线程或 Gate。
         private const int MaxCatchUpFrames = 3;
         // 单个回复最多 64 帧，落后端按连续游标分批补。
@@ -94,7 +101,7 @@ namespace RevGame.Pvp.Duel
         // 本机人机仍按两席同一帧输入运行。联网席位与权威时钟解耦。
         private readonly bool _networked;
         // 黑白各有一个连接内的输入邮箱，随本局创建，断线时清除未执行意图。
-        private readonly NetworkInput[] _networkInputs = new NetworkInput[2];
+        private readonly DuelInputMailbox[] _networkInputs = new DuelInputMailbox[2];
         // 场景加载屏障，双席就绪前不接战斗意图。
         private int _readyMask;
         // 当前帧已经占用的输入槽位，独立于场景就绪。
@@ -102,26 +109,18 @@ namespace RevGame.Pvp.Duel
         // 允许下一次封帧的单调时间（毫秒），只用于限速。
         private long _nextSeal;
 
-        // 持续方向和一次性按钮分开存储，下一条方向包不会覆盖已经收到的点按。
-        private struct NetworkInput
-        {
-            // 当前连接已处理的最大序号，阻止迟到或重复请求再触发按键。
-            public int Sequence;
-            // 最近一次方向及其最后有效的逻辑帧号。
-            public int Direction, DirectionUntil;
-            // 最新一次等待恢复期结束的攻击，及其最后有效帧号。
-            public int Action, ActionUntil;
-            // 是否有待执行的跳跃点按，下一封帧消费一次。
-            public bool Jump;
-        }
         // 每席只顺序接纳固定间隔样本，再接纳终局样本。两者最小值就是共同对账上界。
         private readonly int[] _hashAccepted = new int[2];
         // 已经向各席发送的共同对账上界，避免每次普通回包都重复携带它。
         private readonly int[] _hashAnnounced = new int[2];
         // 首个有效样本分歧后冻结权威执行，保留原历史供诊断。
         private int _hashMismatchFrame;
+        // 每席最后一帧实际封口后的输入回执。到包但尚未封口的意图只在邮箱内，不会出现在回执里。
+        private readonly DuelInputMailbox[] _sealedInputs = new DuelInputMailbox[2];
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 按黑白座位统计通过核对的唯一对账样本，用于验证重试不会重复计数。
         private readonly int[] _hashReportsForCheck = new int[2];
+        // 读取指定座位已接纳样本的数量，side 使用棋局约定的 1/2。
         internal int HashReportsForCheck(int side) => _hashReportsForCheck[side - 1];
 #endif
 
@@ -196,7 +195,7 @@ namespace RevGame.Pvp.Duel
                 }
                 if (_networked)
                 {
-                    StageNetworkInput(seat, request);
+                    _networkInputs[seat].Stage(request.inputFrame, request.input, Frame);
                 }
                 else if (request.inputFrame == Frame + 1 && (_inputMask & bit) == 0)
                 {
@@ -225,9 +224,14 @@ namespace RevGame.Pvp.Duel
             {
                 _hashAnnounced[seat] = announce;
             }
+            // 只有本包能把接收方带到当前权威帧时，才附这个帧的回执，不能用较新的回执清掉旧基线的输入。
+            bool includesReceipt = _networked && Frame > 0 && request.afterFrame + count == Frame;
+            DuelInputMailbox receipt = includesReceipt ? _sealedInputs[seat] : default;
             return new DuelReply { id = Id, readyMask = _readyMask, afterFrame = request.afterFrame, frames = frames,
                 result = Snapshot.Result, finalHash = Snapshot.Result != 0 ? Snapshot.Hash : 0,
-                hashAckFrame = request.hashFrame, hashMatchedFrame = announce };
+                hashAckFrame = request.hashFrame, hashMatchedFrame = announce,
+                inputAckFrame = includesReceipt ? Frame : 0, inputAckSequence = receipt.Sequence,
+                pendingActionSequence = receipt.ActionSequence, pendingActionUntil = receipt.ActionUntil };
         }
 
         // 宿主在自己的线程按单调毫秒推进。即使某席没有输入，也由权威端产生可回放的完整帧。
@@ -239,7 +243,11 @@ namespace RevGame.Pvp.Duel
             }
             for (int i = 0; i < MaxCatchUpFrames && now >= _nextSeal && !Stopped; i++)
             {
-                Seal(TakeNetworkInput(0), TakeNetworkInput(1));
+                DuelSnapshot before = Snapshot;
+                Seal(_networkInputs[0].Take(before, black: true), _networkInputs[1].Take(before, black: false));
+                // Take 先消费按钮，Seal 成功后再发布回执。连续帧与回执由同一宿主线程按这个顺序写入。
+                _sealedInputs[0] = _networkInputs[0];
+                _sealedInputs[1] = _networkInputs[1];
                 _nextSeal += DuelConfig.FrameMs;
             }
             if (now >= _nextSeal)
@@ -262,55 +270,9 @@ namespace RevGame.Pvp.Duel
             int otherSequence = _networkInputs[other].Sequence;
             Array.Clear(_networkInputs, 0, _networkInputs.Length);
             _networkInputs[other].Sequence = otherSequence;
-        }
-
-        // 只处理新序号。每次更新持续方向；招式和跳跃等待封帧，普通方向包不会把它们清掉。
-        private void StageNetworkInput(int seat, DuelRequest request)
-        {
-            ref NetworkInput input = ref _networkInputs[seat];
-            if (request.inputFrame <= input.Sequence)
-            {
-                return;
-            }
-            input.Sequence = request.inputFrame;
-            input.Direction = request.input & 3;
-            input.DirectionUntil = Frame + DirectionHoldFrames;
-            int action = (request.input >> 2) & 3;
-            if (action != 0)
-            {
-                input.Action = action;
-                input.ActionUntil = Frame + ActionBufferFrames;
-            }
-            input.Jump |= (request.input & DuelCorePipe.Jump) != 0;
-        }
-
-        // 将本席当前可执行输入装进下一帧。恢复期只决定何时提交，招式是否生效仍由 C++ 裁定。
-        private int TakeNetworkInput(int seat)
-        {
-            ref NetworkInput input = ref _networkInputs[seat];
-            int next = Frame + 1;
-            int packed = next <= input.DirectionUntil ? input.Direction : 0;
-            if (input.Jump)
-            {
-                packed |= DuelCorePipe.Jump;
-                input.Jump = false;
-            }
-            if (input.Action != 0)
-            {
-                DuelSnapshot view = Snapshot;
-                int action = seat == 0 ? view.FirstAction : view.SecondAction;
-                int age = seat == 0 ? view.FirstAge : view.SecondAge;
-                if (next > input.ActionUntil)
-                {
-                    input.Action = 0;
-                }
-                else if (age >= DuelConfig.ActionDuration(action))
-                {
-                    packed |= input.Action << 2;
-                    input.Action = 0;
-                }
-            }
-            return packed;
+            _sealedInputs[side - 1] = default;
+            // 未断线的席位保留序号水位。两边的旧招式都已取消，不能在重连就绪时从旧回执恢复。
+            _sealedInputs[other].RestoreAction(0, 0, 0);
         }
 
         // 两席输入打包后一次提交原生世界，成功后才开放连续历史给其他端。
@@ -370,6 +332,86 @@ namespace RevGame.Pvp.Duel
         public void Dispose()
         {
             _judge.Dispose();
+        }
+    }
+
+    // 权威与预测使用同一套输入邮箱规则。邮箱只决定送什么给 C++，出招、跳跃和命中是否成立由内核判断。
+    internal struct DuelInputMailbox
+    {
+        // 如果没有更新，方向和等待中的招式各允许留四个待封帧，单位为逻辑帧。
+        private const int HoldFrames = 4;
+        // 已接纳的最大输入序号。严格递增，同序号重试不会重复触发按钮。
+        public int Sequence;
+        // 当前等待恢复期结束的招式所对应的输入序号。0 代表没有。
+        public int ActionSequence { get; private set; }
+        // 允许等待招式进入的最后一帧，包含此帧。
+        public int ActionUntil { get; private set; }
+        // 持续方向，0 回中、1 左、2 右。
+        private int _direction;
+        // 当前方向仍有效的最后一个逻辑帧。
+        private int _directionUntil;
+        // 仍在等待的招式槽，0 表示无招式。
+        private int _action;
+        // 已收到、下一帧消费的跳跃边沿。
+        private bool _jump;
+
+        // 接纳序号更新的一席输入。方向包不会抹掉之前收到、尚未封口的按钮边沿。
+        public void Stage(int sequence, int packed, int frame)
+        {
+            if (sequence <= Sequence)
+            {
+                return;
+            }
+            Sequence = sequence;
+            RestoreDirection(packed & 3, frame);
+            int action = (packed >> 2) & 3;
+            if (action != 0)
+            {
+                RestoreAction(sequence, action, frame + HoldFrames);
+            }
+            _jump |= (packed & DuelCorePipe.Jump) != 0;
+        }
+
+        // 用最近一次确认的方向启动预测。与新输入一样只能保留短窗，等待本机新采样替换。
+        public void RestoreDirection(int direction, int frame)
+        {
+            _direction = direction;
+            _directionUntil = frame + HoldFrames;
+        }
+
+        // 从权威回执恢复唯一还在缓冲的招式，沿用原到期帧，不能在重演时给它续期。
+        public void RestoreAction(int sequence, int action, int untilFrame)
+        {
+            ActionSequence = sequence;
+            _action = action;
+            ActionUntil = untilFrame;
+        }
+
+        // 根据步进前快照选择下一帧输入。跳跃消费一次，攻击只在原生恢复期结束或过期时移出邮箱。
+        public int Take(DuelSnapshot before, bool black)
+        {
+            int next = before.Frame + 1;
+            int packed = next <= _directionUntil ? _direction : 0;
+            if (_jump)
+            {
+                packed |= DuelCorePipe.Jump;
+                _jump = false;
+            }
+            if (_action != 0)
+            {
+                int active = black ? before.FirstAction : before.SecondAction;
+                int age = black ? before.FirstAge : before.SecondAge;
+                if (next > ActionUntil)
+                {
+                    RestoreAction(0, 0, 0);
+                }
+                else if (age >= DuelConfig.ActionDuration(active))
+                {
+                    packed |= _action << 2;
+                    RestoreAction(0, 0, 0);
+                }
+            }
+            return packed;
         }
     }
 }

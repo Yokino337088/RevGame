@@ -21,6 +21,7 @@ namespace RevGameCore
         return static_cast<int32_t>(value);
     }
 
+    // 每次写低八位再右移。调用方提供至少四字节，写入顺序在大小端机器上保持一致。
     inline void WriteWord(uint8_t* data, uint32_t value)
     {
         for (int i = 0; i < 4; ++i)

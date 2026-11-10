@@ -8,13 +8,24 @@ namespace RevGame.Pvp.Duel
     // 单条录像记录来自已执行的权威帧。命中值是该帧的一次性输出。
     internal readonly struct DuelReplayFrame
     {
-        public readonly int Frame, Packed, Hash, FirstHit, SecondHit;
+        // 已执行的连续帧号，第一条记录为 1。
+        public readonly int Frame;
+        // 同帧黑白输入字与本地免伤位，回放将原样送给 C++。
+        public readonly int Packed;
+        // 执行完成后的完整状态指纹。
+        public readonly int Hash;
+        // 黑方在本帧的命中点数，和状态指纹分开核对。
+        public readonly int FirstHit;
+        // 白方在本帧的命中点数。
+        public readonly int SecondHit;
 
+        // 封口时从实际原生输出构造录像条目，不读取预测。
         public DuelReplayFrame(int packed, DuelSnapshot snapshot)
             : this(snapshot.Frame, packed, snapshot.Hash, snapshot.FirstHit, snapshot.SecondHit)
         {
         }
 
+        // 反序列化用显式字段构造值副本，调用方还需核对范围和帧号。
         public DuelReplayFrame(int frame, int packed, int hash, int firstHit, int secondHit)
         {
             Frame = frame;
@@ -28,19 +39,26 @@ namespace RevGame.Pvp.Duel
     /// <summary>只包含已封口的逻辑录像。电脑输入已经在其中，播放时无需再次运行电脑决策。</summary>
     public sealed class DuelReplay
     {
-        // RVDL、小端格式版本和字节限制。每帧固定五个 int32 字段。
+        // 小端文件标记 RVDL。与原生检查点的 RGCP 标记不同。
         private const int Magic = 0x4C445652;
+        // 录像容器版本，规则指纹和原生版本另行存储。
         private const int Version = 1;
+        // 文件头七个 32 位整数，包括局号长度与帧数。
         private const int HeaderBytes = 7 * sizeof(int);
+        // 每条逻辑帧五个 32 位整数，字段顺序与条目一致。
         private const int FrameBytes = 5 * sizeof(int);
+        // 局号按 UTF-8 编码后的字节上限。
         private const int MaxIdBytes = 256;
+        // 文件末尾的 32 位校验和长度。
         private const int FooterBytes = sizeof(uint);
         // 一次录像导入最多一小时的帧记录，限制文件分配。对局本身可继续执行。
         private const int MaxRecordedFrames = 60 * 60 * 1000 / DuelConfig.FrameMs;
+        // 不加 BOM，并拒绝非法 UTF-8，保证同一局号能产生同一开局种子。
         private static readonly Encoding IdEncoding = new UTF8Encoding(false, true);
         // 由创建者转移所有权。类不暴露数组，存档和回放可读同一份数据。
         private readonly DuelReplayFrame[] _frames;
 
+        // 封帧器或校验后的加载器移交数组所有权，构造后不再追加。
         internal DuelReplay(string duelId, DuelReplayFrame[] frames)
         {
             DuelId = duelId;
@@ -49,6 +67,7 @@ namespace RevGame.Pvp.Duel
 
         // 同时决定开局种子与回放所属对局。
         public string DuelId { get; }
+        // 录像记录条数，也等于最后一个连续帧号。
         public int FrameCount => _frames.Length;
 
         // 导出独立的小端录像字节。调用方决定是否落盘，内核不访问文件系统。
@@ -107,6 +126,7 @@ namespace RevGame.Pvp.Duel
                 throw new InvalidDataException("决斗录像内容长度无效。");
             }
             int payloadBytes = data.Length - FooterBytes;
+            // 先验整个文件，再按经过边界校验的帧数分配，避免损坏长度把无效字节送进原生。
             input.Position = payloadBytes;
             if (reader.ReadUInt32() != Checksum(data, payloadBytes))
             {
@@ -153,6 +173,7 @@ namespace RevGame.Pvp.Duel
             }
             for (int i = cursor; i < FrameCount; i++)
             {
+                // 从恢复帧的下一帧开始。重新执行输入才能验证命中，直接复制显示快照不能证明恢复正确。
                 DuelReplayFrame expected = _frames[i];
                 target.Append(expected.Frame, expected.Packed);
                 DuelSnapshot actual = target.Snapshot;

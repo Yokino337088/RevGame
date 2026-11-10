@@ -7,13 +7,15 @@ namespace RevGame.Pvp.Duel
     {
         // 保留最近 32 帧供插值和取表现事件，旧内容可由新快照覆盖。
         private const int Capacity = 32;
-        // 联机通常保留约一帧半抵抗到包抖动。远落后时跳过过期的表现，不积累可见延迟。
+        // 联机在连续上界后约一帧半绘制远端，给下一张快照留到达时间。
         private const double NetworkDelayFrames = 1.5;
+        // 落后超过六帧时跳过过期画面。权威事件和逻辑历史已在服务中逐帧消费。
         private const double MaxDisplayLagFrames = 6;
         // 按逻辑帧号取模访问。有效窗口由最新连续帧决定，退出时只需复位游标。
         private readonly DuelSnapshot[] _snapshots = new DuelSnapshot[Capacity];
-        // 已记录的最后一个逻辑帧及当前播放时刻，播放时刻的小数部分用于画面插值。
+        // 已记录的最后一个逻辑帧。-1 表示未创建决斗。
         private int _latest = -1;
+        // 当前播放时刻，小数部分用于画面插值，与网络补帧游标独立。
         private double _cursor;
         // 第一次采样直接对准最近可显示位置，避免进场或重连重播积压。
         private bool _started;
@@ -33,7 +35,7 @@ namespace RevGame.Pvp.Duel
             _started = false;
         }
 
-        // 取得指定帧的表现事件。被环形缓冲覆盖的旧帧无需重新读取或补播。
+        // 取得仍在环内的表现帧。调用者必须保证帧号在最近 32 帧内，过期槽位已被新帧覆盖。
         public DuelSnapshot Get(int frame)
         {
             return _snapshots[frame % Capacity];
@@ -65,6 +67,7 @@ namespace RevGame.Pvp.Duel
                 _cursor = Math.Min(_latest, _cursor + Math.Max(0, deltaSeconds) * 1000 / DuelConfig.FrameMs * rate);
             }
             int frame = (int)_cursor;
+            // 对手使用两张已执行的快照。到连续上界时 next 等于 current，不用当前方向猜未来位置。
             current = Get(frame);
             next = Get(Math.Min(frame + 1, _latest));
             fraction = (float)(_cursor - frame);

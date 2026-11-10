@@ -1115,6 +1115,9 @@ namespace Fantasy
         [ProtoMember(1)]
         public GoRelayState State { get; set; }
     }
+    /// <summary>
+    /// 原围棋房间内的决斗请求。就绪、输入序号和补帧游标各自独立。
+    /// </summary>
     [Serializable]
     [ProtoContract]
     public partial class C2G_GoDuelRequest : AMessage, IRequest
@@ -1186,23 +1189,50 @@ namespace Fantasy
         public uint OpCode() { return OuterOpcode.C2G_GoDuelRequest; } 
         [ProtoIgnore]
         public G2C_GoDuelResponse ResponseType { get; set; }
+        /// <summary>
+        /// 原围棋房间号，用来避免迟到的请求串进新房间。
+        /// </summary>
         [ProtoMember(1)]
         public string RoomId { get; set; }
+        /// <summary>
+        /// 0 读历史、1 发起、2 就绪、3 提交意图。
+        /// </summary>
         [ProtoMember(2)]
         public int Operation { get; set; }
+        /// <summary>
+        /// 决斗网络版本与规则的联合指纹，房间在接纳命令前校验。
+        /// </summary>
         [ProtoMember(3)]
         public int Fingerprint { get; set; }
+        /// <summary>
+        /// 调用方最后已消费的连续帧，0 表示从开局起拉取。
+        /// </summary>
         [ProtoMember(4)]
         public int AfterFrame { get; set; }
+        /// <summary>
+        /// 保留原字段编号。Input 操作使用，表示本席本次连接内的单调输入序号。
+        /// </summary>
         [ProtoMember(5)]
         public int InputFrame { get; set; }
+        /// <summary>
+        /// 单席五位意图，座位由 Session 决定而不是由包声明。
+        /// </summary>
         [ProtoMember(6)]
         public int Input { get; set; }
+        /// <summary>
+        /// 这次上报的是已执行的抽样帧。0 表示不携带对账样本。
+        /// </summary>
         [ProtoMember(7)]
         public int HashFrame { get; set; }
+        /// <summary>
+        /// 同一逻辑帧的本地指纹。指纹本身允许为 0，以 HashFrame 判断是否上报。
+        /// </summary>
         [ProtoMember(8)]
         public int Hash { get; set; }
     }
+    /// <summary>
+    /// 权威决斗的连续帧响应。封帧回执仅归本次请求的认证席位。
+    /// </summary>
     [Serializable]
     [ProtoContract]
     public partial class G2C_GoDuelResponse : AMessage, IResponse
@@ -1249,6 +1279,10 @@ namespace Fantasy
             HashAckFrame = default;
             HashMatchedFrame = default;
             HashMismatchFrame = default;
+            InputAckFrame = default;
+            InputAckSequence = default;
+            PendingActionSequence = default;
+            PendingActionUntil = default;
             MessageObjectPool<G2C_GoDuelResponse>.Return(this);
         }
 
@@ -1269,6 +1303,10 @@ namespace Fantasy
             other.HashAckFrame = HashAckFrame;
             other.HashMatchedFrame = HashMatchedFrame;
             other.HashMismatchFrame = HashMismatchFrame;
+            other.InputAckFrame = InputAckFrame;
+            other.InputAckSequence = InputAckSequence;
+            other.PendingActionSequence = PendingActionSequence;
+            other.PendingActionUntil = PendingActionUntil;
 
         }
 
@@ -1279,28 +1317,81 @@ namespace Fantasy
             return other;
         }
         public uint OpCode() { return OuterOpcode.G2C_GoDuelResponse; } 
+        /// <summary>
+        /// 权威方发出的决斗标识，用来过滤旧局回复。
+        /// </summary>
         [ProtoMember(1)]
         public string DuelId { get; set; }
+        /// <summary>
+        /// 失败原因；成功时可为空。
+        /// </summary>
         [ProtoMember(2)]
         public string Reason { get; set; }
+        /// <summary>
+        /// 低两位对应黑白就绪，场景完成后才置位。
+        /// </summary>
         [ProtoMember(3)]
         public int ReadyMask { get; set; }
+        /// <summary>
+        /// 本包历史的起算游标，第一条命令属于此值加一的帧。
+        /// </summary>
         [ProtoMember(4)]
         public int AfterFrame { get; set; }
+        /// <summary>
+        /// 从回复 AfterFrame 加一开始的连续帧，每个整数打包两席。
+        /// </summary>
         [ProtoMember(5)]
         public List<int> Frames { get; set; } = new List<int>();
+        /// <summary>
+        /// 权威端最新快照的胜负码。
+        /// </summary>
         [ProtoMember(6)]
         public int Result { get; set; }
+        /// <summary>
+        /// 终局帧的权威指纹，只能与相同帧号比较。
+        /// </summary>
         [ProtoMember(7)]
         public int FinalHash { get; set; }
+        /// <summary>
+        /// 保留 Fantasy 在旧版隐式生成的错误码编号，避免扩展后旧版把确认帧读成错误码。
+        /// </summary>
         [ProtoMember(8)]
         public uint ErrorCode { get; set; }
+        /// <summary>
+        /// 本次成功确认的样本帧号。客户端据此停止重发该样本。
+        /// </summary>
         [ProtoMember(9)]
         public int HashAckFrame { get; set; }
+        /// <summary>
+        /// 两席均确认一致的最新样本帧号。0 表示本包没有公告。
+        /// </summary>
         [ProtoMember(10)]
         public int HashMatchedFrame { get; set; }
+        /// <summary>
+        /// 本房间首次发现分歧时的样本帧号。0 表示尚未发现分歧。
+        /// </summary>
         [ProtoMember(11)]
         public int HashMismatchFrame { get; set; }
+        /// <summary>
+        /// 以下输入回执对应的已封口帧。0 表示本包没有追到权威上界，不能清理输入日志。
+        /// </summary>
+        [ProtoMember(12)]
+        public int InputAckFrame { get; set; }
+        /// <summary>
+        /// 权威封到回执帧时已处理的本席输入序号。未封口请求不会提前确认。
+        /// </summary>
+        [ProtoMember(13)]
+        public int InputAckSequence { get; set; }
+        /// <summary>
+        /// 已接收但仍在等恢复期的招式序号。客户端仅对该序号保留待执行招式。
+        /// </summary>
+        [ProtoMember(14)]
+        public int PendingActionSequence { get; set; }
+        /// <summary>
+        /// 待执行招式的最后有效权威帧。重演必须沿用此到期帧。
+        /// </summary>
+        [ProtoMember(15)]
+        public int PendingActionUntil { get; set; }
     }
     [Serializable]
     [ProtoContract]

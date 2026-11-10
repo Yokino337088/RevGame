@@ -7,13 +7,19 @@ namespace RevGameCore
 {
     namespace
     {
-        // 格式 v1 依次写标记、版本、逻辑帧、胜负、开局种子、配置、黑白完整状态、随机状态和校验和。
-        constexpr uint32_t CheckpointMagic = 0x50434752u; // 小端字节 RGCP
+        // 小端文件标记 RGCP，用于区分检查点、整帧包和录像文件。
+        constexpr uint32_t CheckpointMagic = 0x50434752u;
+        // 检查点布局版本。与 FIFO 操作的 WireVersion 分开校验。
         constexpr uint32_t CheckpointSchema = 1;
+        // 配置从字节 28 开始，之前是格式、帧号、胜负和两字种子。
         constexpr int ConfigOffset = 7 * 4;
+        // 单席状态的字节数，包括普通快照未输出的垂直速度。
         constexpr int FighterBytes = 8 * 4;
+        // 第一席起点，紧跟完整配置包。
         constexpr int FightersOffset = ConfigOffset + ConfigWords * 4;
+        // 随机源起点，紧跟黑白两席，不依赖 C++ 结构体内存排版。
         constexpr int RandomOffset = FightersOffset + static_cast<int>(SeatOrder.size()) * FighterBytes;
+        // 尾部校验字，前面恰好有两个 64 位随机状态字。
         constexpr int ChecksumOffset = RandomOffset + 16;
         static_assert(ChecksumOffset + 4 == DuelWorld::CheckpointBytes);
 
@@ -24,6 +30,7 @@ namespace RevGameCore
             WriteWord(data + 4, static_cast<uint32_t>(value >> 32));
         }
 
+        // 先读低 32 位，再将高字左移拼接，宿主必须保证有足够字节。
         uint64_t ReadDoubleWord(const uint8_t* data)
         {
             return ReadWord(data) | (static_cast<uint64_t>(ReadWord(data + 4)) << 32);
@@ -47,6 +54,7 @@ namespace RevGameCore
             }
         }
 
+        // 从固定下标解码一个临时角色。调用方验证合法性之后才替换当前世界。
         Fighter ReadFighter(const uint8_t* data)
         {
             return Fighter{FixedPoint::FromRaw(ReadSignedWord(data)),
@@ -76,6 +84,7 @@ namespace RevGameCore
             }
             const int32_t difference = launch - velocity;
             const int64_t steps = difference / gravity;
+            // 速度每步减去一次重力，所以差值必须能整除。高度是前 steps 次速度的等差数列和。
             return difference % gravity == 0 && steps <= frame &&
                    height == steps * (2 * launch - (steps - 1) * gravity) / 2;
         }
@@ -119,6 +128,7 @@ namespace RevGameCore
         }
     }
 
+    // 写入执行完的帧及全部未来可变状态，读取随机字不会推进随机序列。
     void DuelWorld::SaveCheckpoint(uint8_t* data) const
     {
         WriteWord(data, CheckpointMagic);
@@ -135,12 +145,14 @@ namespace RevGameCore
         {
             WriteFighter(data + FightersOffset + seat * FighterBytes, Fighters[seat]);
         }
+        // 随机状态、垂直速度等字段不能从显示快照推导。少写任一字段，回滚后都可能同帧分歧。
         const auto random = Random.StateWords();
         WriteDoubleWord(data + RandomOffset, random[0]);
         WriteDoubleWord(data + RandomOffset + 8, random[1]);
         WriteWord(data + ChecksumOffset, Checksum(data));
     }
 
+    // 恢复时使用临时对象完成全部检查，之后一次提交，允许沙盒多次回到相同权威帧。
     bool DuelWorld::RestoreCheckpoint(const uint8_t* data, Snapshot& baseline)
     {
         if (!Valid || ReadWord(data) != CheckpointMagic || ReadWord(data + 4) != CheckpointSchema ||
@@ -149,6 +161,7 @@ namespace RevGameCore
         {
             return false;
         }
+        // 配置属于开局契约，恢复不能换种子、招式数值或时钟步长。
         for (std::size_t i = 0; i < Config.size(); ++i)
         {
             if (ReadSignedWord(data + ConfigOffset + i * 4) != Config[i])
@@ -162,6 +175,7 @@ namespace RevGameCore
         {
             return false;
         }
+        // 先重建临时黑白状态，再核对两席之间的朝向、胜负及随机状态。
         DuelFighters fighters{};
         for (const Seat seat : SeatOrder)
         {

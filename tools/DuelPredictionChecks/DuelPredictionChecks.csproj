@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <GameAssets>../../RevGame_Client/UnityProject/RevGame.Unity/Assets</GameAssets>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(GameAssets)/GameScripts/Pvp/Duel/*.cs" Link="Duel/%(Filename)%(Extension)" />
+    <Compile Include="$(GameAssets)/GameScripts/Pvp/Core/*.cs" Link="GoCore/%(Filename)%(Extension)" />
+    <None Include="$(GameAssets)/Plugins/RevGameCore/x86_64/RevGameCore.dll" Link="RevGameCore.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(OS)' == 'Windows_NT'" />
+  </ItemGroup>
+</Project>

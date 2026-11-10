@@ -6,12 +6,18 @@ namespace RevGame.View
     /// <summary>场景内复用两份 Shader 材质。收到逻辑快照中的动作起点才播放，不从按钮直接播放。</summary>
     public sealed class DuelStrikeEffects : MonoBehaviour
     {
-        // 黑白各自的 UI 特效层，分别放在对应角色附近。
-        public Image First, Second;
+        // 黑方命中特效层，位置取权威出招帧的黑方位置。
+        public Image First;
+        // 白方命中特效层，与黑方独立播放和清理。
+        public Image Second;
         // 两席共同使用的扩散和扭曲着色器资产。
         public Shader StrikeShader;
-        // 普攻、技能和大招各自的序列帧，按进度读取。
-        public Sprite[] Jab, Skill, Ultimate;
+        // 普攻特效的序列帧，由场景配方绑定。
+        public Sprite[] Jab;
+        // 技能特效的序列帧。
+        public Sprite[] Skill;
+        // 大招特效的序列帧。
+        public Sprite[] Ultimate;
         // 每席一份可写表现材质，场景创建时分配、离开时销毁。
         private readonly Material[] _materials = new Material[2];
         // 按座位缓存上一份招式编号，用来识别新的招式开始。
@@ -44,6 +50,7 @@ namespace RevGame.View
         // 从快照识别出招边沿，按座位、朝向和位置初始化特效层。
         public void Observe(int seat, int action, int startFrame, int facing, Vector2 position)
         {
+            // 事件标识为座位、动作和起始帧。连续相同招式仍会各播放一次，回滚不调用此入口。
             if (action != 0 && (action != _lastAction[seat] || startFrame != _lastStart[seat]))
             {
                 _playing[seat] = action;
@@ -81,6 +88,7 @@ namespace RevGame.View
                     continue;
                 }
                 var frames = action == 1 ? Jab : action == 2 ? Skill : Ultimate;
+                // 表现可以跳过过期的图片，命中已经由权威帧在原生执行完成。
                 layer.sprite = frames[Mathf.Min(frames.Length - 1, (int)(progress * frames.Length))];
                 _materials[i].SetFloat(Phase, progress);
             }

@@ -91,6 +91,11 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
             response.HashAckFrame = state.hashAckFrame;
             response.HashMatchedFrame = state.hashMatchedFrame;
             response.HashMismatchFrame = state.hashMismatchFrame;
+            // 回执与已封口历史来自同一次 Gate 读操作，只确认当前认证席位的输入。
+            response.InputAckFrame = state.inputAckFrame;
+            response.InputAckSequence = state.inputAckSequence;
+            response.PendingActionSequence = state.pendingActionSequence;
+            response.PendingActionUntil = state.pendingActionUntil;
             if (state.result != 0)
             {
                 // 权威结果非零代表已有终局，房间继续保留结果供客户端读取。

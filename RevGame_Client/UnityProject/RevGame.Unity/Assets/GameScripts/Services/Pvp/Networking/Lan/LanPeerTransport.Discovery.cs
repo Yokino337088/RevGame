@@ -30,6 +30,12 @@ namespace RevGame.Pvp.Networking
         private void RefreshBroadcasts()
         {
             _broadcasts.Clear();
+            if (_options.LoopbackOnly)
+            {
+                // 两个同进程测试端点必须从同一地址冻结邀请。消息仍通过操作系统回环网络传递。
+                AddBroadcast(IPAddress.Parse("127.255.255.255"));
+                return;
+            }
             AddBroadcast(IPAddress.Broadcast);
             // 每张启用的 IPv4 网卡都发送定向广播，不能只取“第一张网卡”，它可能是 VPN 或虚拟机适配器。
             foreach (NetworkInterface network in NetworkInterface.GetAllNetworkInterfaces())

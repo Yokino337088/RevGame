@@ -15,10 +15,12 @@ namespace RevGameCore
         }
     }
 
+    // 两次调用依次推进同一个局部种子，生成完整的双字初始状态。
     DeterministicRandom::DeterministicRandom(uint64_t seed) : State0(SplitMix64(seed)), State1(SplitMix64(seed))
     {
     }
 
+    // 用旧双字计算新状态与输出。移位和加法都在无符号类型内执行。
     uint64_t DeterministicRandom::NextUInt64()
     {
         uint64_t first = State0;
@@ -29,6 +31,7 @@ namespace RevGameCore
         return State1 + second;
     }
 
+    // 在 [0, bound) 均匀抽样。没有合法范围时直接返回且不消耗随机序列。
     uint32_t DeterministicRandom::NextBelow(uint32_t bound)
     {
         if (bound == 0)
@@ -45,11 +48,13 @@ namespace RevGameCore
         return value % bound;
     }
 
+    // 以固定顺序复制状态，不改变下一次抽样值。
     std::array<uint64_t, 2> DeterministicRandom::StateWords() const
     {
         return {State0, State1};
     }
 
+    // 全零状态会永久卡在零，因此先拒绝再提交两个字，失败时保留旧状态。
     bool DeterministicRandom::RestoreState(const std::array<uint64_t, 2>& words)
     {
         if ((words[0] | words[1]) == 0)

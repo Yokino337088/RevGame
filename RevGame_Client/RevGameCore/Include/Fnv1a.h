@@ -5,7 +5,9 @@
 
 namespace RevGameCore
 {
+    // FNV-1a 的 32 位初始值。帧指纹和检查点校验各自从同一个初值开始。
     constexpr uint32_t Fnv1aOffsetBasis = 0x811c9dc5u;
+    // FNV-1a 的固定乘数，改变它会改变所有帧和检查点的校验结果。
     constexpr uint32_t Fnv1aPrime = 0x01000193u;
 
     // FNV-1a 每次只混入一个字节，乘法按无符号 32 位回绕。

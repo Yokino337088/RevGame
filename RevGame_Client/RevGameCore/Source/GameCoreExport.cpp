@@ -1,4 +1,4 @@
-// 双向 FIFO 是宿主与确定性世界的唯一数据通道。读写函数不触碰 Unity、网络或墙钟。
+// 双向 FIFO 传递完整帧和结果，排空后可用检查点恢复同局实例。桥接不触碰 Unity、网络或墙钟。
 #include "GameCoreExport.h"
 #include "DuelWorld.h"
 #include "DuelProtocol.Generated.h"
@@ -30,7 +30,7 @@ namespace
     // 每局一份，由调用方在同一线程拥有，管理世界与双向 FIFO。
     struct Pipe
     {
-        // 原生权威世界，仅 Drain 消费完整帧时推进。
+        // 该句柄自己的原生世界。权威、副本、预测均通过 Drain 执行，各自拥有独立内存。
         RevGameCore::DuelWorld World;
         // 已接纳但尚未执行的输入环。
         std::array<InputPacket, Capacity> Input{};
@@ -102,6 +102,7 @@ int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
         return -1;
     }
     const auto operation = ReadWord(data + 4);
+    // 开局包一次读完版本、配置、种子后才打开队列。旧局不能用新的开局包覆盖。
     if (operation == 1 && size == (4 + RevGameCore::ConfigWords) * 4)
     {
         RevGameCore::Settings settings{};
@@ -138,6 +139,7 @@ int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size)
     }
     if (pipe->InputCount == Capacity)
     {
+        // 尚未接纳本包。保留旧的 LastSealed，调用者能用相同帧号安全重试。
         return 0;
     }
     // 只有全包校验通过，才能把该帧放入 FIFO 并提升连续上界。
@@ -182,6 +184,7 @@ int32_t GameCore_SaveCheckpoint(void* handle, uint8_t* data, int32_t capacity)
     }
     if (pipe->InputCount != 0 || pipe->OutputCount != 0)
     {
+        // 已接纳上界与已消费上界必须一致，不能保存一半未执行或未读回的阶段。
         return 0;
     }
     if (data)

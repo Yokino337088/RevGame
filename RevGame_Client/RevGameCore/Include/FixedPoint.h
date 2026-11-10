@@ -11,6 +11,7 @@ namespace RevGameCore
         // 1000 个原始单位等于 1 格，与现有决斗配置和显示协议一致。
         static constexpr int32_t Scale = 1000;
 
+        // 默认零，用于地面、空位移和初始速度。
         constexpr FixedPoint() = default;
 
         // 原始值已包含小数刻度，直接载入，不做缩放或浮点转换。
@@ -28,25 +29,29 @@ namespace RevGameCore
             return Raw;
         }
 
-        // 先用 64 位中间量，再饱和至 int32；乘法去掉重复刻度并向零截断。
+        // 两个相同刻度的数相加。中间值扩为 64 位，最后饱和到原始值的范围。
         FixedPoint operator+(FixedPoint other) const;
+        // 两个相同刻度的数相减，负差值保留方向。
         FixedPoint operator-(FixedPoint other) const;
+        // 乘积除回一次刻度，按语言整数除法向零截断。
         FixedPoint operator*(FixedPoint other) const;
 
         // 绝对值也经过饱和，避免对最小有符号整数直接取负。
         FixedPoint Abs() const;
 
-        // 相同刻度可以直接比较原始整数。
+        // 相同刻度可直接比较原始整数的大小。
         constexpr bool operator<(FixedPoint other) const
         {
             return Raw < other.Raw;
         }
 
+        // 用于含边界的距离、场地范围等判定。
         constexpr bool operator<=(FixedPoint other) const
         {
             return Raw <= other.Raw;
         }
 
+        // 定点比较不需要浮点容差，相同原始值就是同一坐标。
         constexpr bool operator==(FixedPoint other) const
         {
             return Raw == other.Raw;
@@ -56,6 +61,7 @@ namespace RevGameCore
         // 唯一存储的数值，负数表示左侧位置或向下速度。
         int32_t Raw = 0;
 
+        // 只由受控的工厂入口构造，明确参数已经是千分格。
         explicit constexpr FixedPoint(int32_t raw) : Raw(raw)
         {
         }

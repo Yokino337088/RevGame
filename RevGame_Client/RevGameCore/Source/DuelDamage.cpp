@@ -13,6 +13,7 @@ namespace RevGameCore
                 return 0;
             }
             const int offset = 9 + (attacker.Action - 1) * 5;
+            // 将横向差值投到攻击者朝向，负数表示对手在背后。高度使用绝对差，恰好在边界也算命中。
             const auto distance = (defender.X - attacker.X) * FixedPoint::FromInt(attacker.Facing);
             if (attacker.Age == config[offset + 2] && FixedPoint{} <= distance &&
                 distance <= FixedPoint::FromRaw(config[offset + 1]) &&
@@ -24,6 +25,7 @@ namespace RevGameCore
         }
     }
 
+    // 接收双方都已完成位移的状态，先计算双方命中，再统一扣血。
     DuelHits ResolveDuelDamage(DuelFighters& fighters, const Settings& config, bool noDamage)
     {
         DuelHits hits{};

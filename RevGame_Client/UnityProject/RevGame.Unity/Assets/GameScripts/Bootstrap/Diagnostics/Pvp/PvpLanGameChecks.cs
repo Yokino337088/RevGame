@@ -25,6 +25,8 @@ namespace RevGame.Pvp
         // 对账验收延长决斗到真实终局。错误样本测试只改白方发出的对账值，原生命令和快照均不变。
         private readonly bool _duelHashAudit;
         private readonly bool _duelHashMismatch;
+        // 画面验收时借用空闲场景的 PvP 服务作为黑方。仅夹具创建的端点由夹具直接 Dispose。
+        private readonly PvpService _visibleHost;
         // Dispose 会清理服务的局内计数，报告保留最后一次观测。
         private int _hostMatchedFrame, _guestMatchedFrame, _hostMismatchFrame, _guestMismatchFrame;
         private int _hostAcknowledged, _guestAcknowledged, _authorityBlackReports, _authorityWhiteReports;
@@ -34,6 +36,10 @@ namespace RevGame.Pvp
         private double _duelMismatchObservedAt;
         private int _hostFrameAtMismatch, _guestFrameAtMismatch;
         private bool _frozenAfterMismatch;
+        // 两席分别观察到本机预测先于该端已确认位置，退出后留作结构化验收证据。
+        private bool _hostPredictedMotion;
+        // 白方也必须通过相同入口采样，避免仅低五位输入的黑方有效。
+        private bool _guestPredictedMotion;
         // 两端已核对的布置棋谱序号；下一手必须等双方同步才提交。
         private int _duelSeedSequence;
         private PvpService _host;
@@ -55,7 +61,7 @@ namespace RevGame.Pvp
         public int BlackCaptures { get; private set; }
 
         // 创建隔离 UTP 夹具，duel 模式验证从棋局到原生封帧。
-        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, PvpService visibleHost = null)
         {
             _config = config;
             _agents = agents;
@@ -65,6 +71,7 @@ namespace RevGame.Pvp
             _duelTestEntry = duelTestEntry;
             _duelHashAudit = duelHashAudit;
             _duelHashMismatch = duelHashMismatch;
+            _visibleHost = visibleHost;
         }
 
         // 把同一 UTP 夹具的两席观测与宿主权威收包计数一起交给验收工具。
@@ -82,7 +89,8 @@ namespace RevGame.Pvp
                 ["hostAcknowledged"] = _hostAcknowledged, ["guestAcknowledged"] = _guestAcknowledged,
                 ["authorityBlackReports"] = _authorityBlackReports, ["authorityWhiteReports"] = _authorityWhiteReports,
                 ["frozenAfterMismatch"] = _frozenAfterMismatch,
-                ["hostError"] = _hostDuelError, ["guestError"] = _guestDuelError
+                ["hostError"] = _hostDuelError, ["guestError"] = _guestDuelError,
+                ["hostPredictedMotion"] = _hostPredictedMotion, ["guestPredictedMotion"] = _guestPredictedMotion
             };
         }
 
@@ -94,14 +102,18 @@ namespace RevGame.Pvp
                 return false;
             }
             _deadline = Now + (_longGame ? 120 : _duel ? 45 : 20);
-            _host = new PvpService();
+            _host = _visibleHost ?? new PvpService();
             _guest = new PvpService();
             try
             {
-                _host.Begin(_config);
+                if (_visibleHost == null)
+                {
+                    _host.Begin(_config);
+                }
                 _guest.Begin(_config);
-                _host.StartLan("业务验收黑方");
-                _guest.StartLan("业务验收白方");
+                // 两端都在本机，固定使用回环地址，避免并行广播改变测试夹具的端点选择。
+                _host.StartLan("业务验收黑方", loopbackOnly: true);
+                _guest.StartLan("业务验收白方", loopbackOnly: true);
                 if (_analysis)
                 {
                     PvpAgentChecks.InstallAnalysis(_host, false);
@@ -133,7 +145,11 @@ namespace RevGame.Pvp
             }
             try
             {
-                _host.Poll();
+                if (_visibleHost == null)
+                {
+                    // 场景使用的宿主已由 PvP 域驱动，夹具只替隔离端点轮询，避免同帧重复运行。
+                    _host.Poll();
+                }
                 _guest.Poll();
                 CaptureState();
                 if (Now >= _deadline)
@@ -245,7 +261,10 @@ namespace RevGame.Pvp
                     }
                     if (Check(_host.DuelId == _guest.DuelId, "P2P 双端决斗标识一致"))
                     {
-                        _host.MarkDuelSceneReady();
+                        if (_visibleHost == null)
+                        {
+                            _host.MarkDuelSceneReady();
+                        }
                         Next("只标记一端就绪");
                     }
                     break;
@@ -265,9 +284,17 @@ namespace RevGame.Pvp
                     break;
                 // 两端通过正式意图入口移动和攻击，在同一帧核对世界指纹与命中。
                 case 33:
+                    if (_visibleHost != null)
+                    {
+                        // 可见局等待真实 HUD 输入。正式 GameFlow 完成场景加载后才为黑方声明就绪。
+                        Detail = "已建立可见双端决斗，等待真实 HUD 跳跃";
+                        return;
+                    }
                     int frame = _host.DuelSnapshot.Frame;
                     _host.SetDuelInput(frame < 12 ? 1 : 0, frame >= 12 ? 1 : 0);
                     _guest.SetDuelInput(frame < 12 ? -1 : 0, 0);
+                    _hostPredictedMotion |= ObservePredictedMovement(_host, black: true);
+                    _guestPredictedMotion |= ObservePredictedMovement(_guest, black: false);
                     if (_duelHashAudit)
                     {
                         CheckDuelHashExchange();
@@ -276,6 +303,7 @@ namespace RevGame.Pvp
                     if (frame >= 25 && frame == _guest.DuelSnapshot.Frame &&
                         Check(_host.DuelSnapshot.Hash == _guest.DuelSnapshot.Hash &&
                               _host.DuelSnapshot.SecondHealth < Duel.DuelConfig.Health &&
+                              _hostPredictedMotion && _guestPredictedMotion &&
                               _host.DuelError.Length == 0 && _guest.DuelError.Length == 0, "P2P 同帧原生指纹和实际命中一致"))
                     {
                         Passed = true;
@@ -397,6 +425,22 @@ namespace RevGame.Pvp
                     Detail = "双端真实业务联机、规则握手、提子、每手指纹一致、" + (_longGame ? "落满68手" : "双停一手") + "自动计分及退出清理通过";
                     break;
             }
+        }
+
+        // 与决斗场景调用同一个服务入口。预测提前移动时，同步帧号和指纹必须仍保持原值。
+        private static bool ObservePredictedMovement(PvpService service, bool black)
+        {
+            DuelSnapshot before = service.DuelSnapshot;
+            if (!service.TrySampleDuelMotion(0, out DuelPredictedMotion motion))
+            {
+                return false;
+            }
+            DuelSnapshot after = service.DuelSnapshot;
+            if (before.Frame != after.Frame || before.Hash != after.Hash)
+            {
+                throw new InvalidOperationException("预测试算修改了已确认副本。");
+            }
+            return black ? motion.X > before.FirstX : motion.X < before.SecondX;
         }
 
         // 健康用例必须等到两席收到终局确认。失败用例必须是同一个已封口样本的分歧。
@@ -566,6 +610,7 @@ namespace RevGame.Pvp
 
         private static double Now => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
 
+        // 结束两个端点。共享的场景服务沿玩家退房入口清理，其所有权仍归 PvP 域。
         public void Dispose()
         {
             if (_disposed)
@@ -575,7 +620,14 @@ namespace RevGame.Pvp
             _disposed = true;
             try
             {
-                _host?.Dispose();
+                if (_visibleHost != null)
+                {
+                    _visibleHost.LeaveRoom();
+                }
+                else
+                {
+                    _host?.Dispose();
+                }
             }
             finally
             {

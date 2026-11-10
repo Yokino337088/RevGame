@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>双人决斗预测回滚验收 · 2026-11-10</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; white-space: nowrap; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+p { margin: .6rem 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 对战验收 · 2026-11-10</header>
+<main>
+<section class="hero">
+<h1>双人决斗预测回滚验收</h1>
+<p>联机玩家的移动和跳跃可先在本地落屏。客户端将已确认完整帧恢复到独立原生实例，重演尚未确认的意图。对手、血量、招式特效和胜负继续读取权威播放流。</p>
+</section>
+<section>
+<h2>从输入到回滚</h2>
+<ol>
+<li><code>PvpDuelView</code> 读取键盘和触点。<code>PvpService</code> 分别记录未发送按键、已发送输入序号和已消费权威帧号。入队成功只代表消息已上行。</li>
+<li>服务器 Gate 或 UTP 黑方宿主按 50 毫秒步长封帧。回执附在追到最新上界的帧批次上，带有本席已处理的序号，以及仍在等待恢复期的招式序号与到期帧。</li>
+<li>客户端先执行连续完整帧，然后用回执移除已处理的方向与跳跃。仍处于恢复期的招式按权威到期帧保留，旧回执不能清掉新的输入，也不能唤醒已暂停的预测。</li>
+<li><code>DuelPrediction</code> 从同号原生检查点恢复沙盒。检查点包含垂直速度与随机状态，按未确认输入的序号重演最多四帧。远端只用最近确认的方向作短时猜测。</li>
+<li>本机显示只取预测的横坐标、离地高度和跑动方向。同帧位置出现差异时，场景将小幅偏移在 85 毫秒内衰减。掉线、长追帧、日志超限或锚点过期时回到权威插值。</li>
+</ol>
+<p>王者 v122 的 <code>BattlePredictSystem.OnSendMove</code> 把带序号的本机意图交给独立预测通道，<code>RefreshDisplayPredictData</code> 消费预测输出，<code>UpdateActive</code> 在追帧或网络不稳时关闭预测。<code>CmdQueueSender</code> 则以下行回显确认技能序号。RevGame 的完整检查点、四帧上限和回执格式是按现有内核设计的。</p>
+</section>
+<section>
+<h2>代码阅读顺序</h2>
+<table>
+<thead><tr><th>链路</th><th>源码入口与注释内容</th></tr></thead>
+<tbody>
+<tr><td>上行和权威封帧</td><td><code>PvpService.Duel.cs</code>、<code>DuelFrames.cs</code>、<code>GoDuelHandler.cs</code>。输入邮箱、帧批次、回执、断线与同帧指纹各自独立。</td></tr>
+<tr><td>传输与兼容</td><td><code>GoRelay.proto</code> 与两端重新生成的协议、<code>FantasyGoTransport.cs</code> 及 LAN 信封。字段说明保留在协议源中。</td></tr>
+<tr><td>预测和原生状态</td><td><code>DuelPrediction.cs</code>、<code>DuelCorePipe.cs</code>、<code>RevGameCore</code>。解释输入重演、检查点字节、隐藏状态、固定点、随机与 FIFO 背压。</td></tr>
+<tr><td>落屏和回放</td><td><code>DuelPlayback.cs</code>、<code>DuelReplay.cs</code>、<code>PvpDuelView.cs</code> 与角色动画、特效类。解释时间域、座位、序列、纠偏和权威事件去重。</td></tr>
+</tbody>
+</table>
+<p>Revolution 的 <code>RevServices</code>、<code>RevLogic</code>、<code>RevScene</code> 和表现状态机继续持有场景和生命周期。帧流、预测、回滚及确定性边界由项目业务实现，自动化通过 <code>RevRuntimeAutomation</code> 驱动真实入口。</p>
+</section>
+<section>
+<h2>运行证据</h2>
+<table>
+<thead><tr><th>环境</th><th>断言</th></tr></thead>
+<tbody>
+<tr><td>C# 与真实原生 DLL</td><td><code>dotnet run --project tools/DuelPredictionChecks/DuelPredictionChecks.csproj</code>。覆盖延迟跳跃、同帧分歧、恢复垂直速度、重复回执、等待招式过期、补帧窗口、断线重连、日志溢出。</td></tr>
+<tr><td>C++ 源码重新编译</td><td>Windows MSVC C++17 <code>PipeChecks</code> 通过 FIFO、缺帧、背压、完整检查点和独立实例确定性测试。</td></tr>
+<tr><td>真实 KCP 双端</td><td>在 Windows 回环环境验证两席各收自己的封帧回执。黑方跳跃只执行一次，双方在第 119 帧对上终局指纹 <code>2027019683</code>，共同确认 3 个样本后退出。</td></tr>
+<tr><td>真实 UTP 双端</td><td>最终版黑白两席均观察到预测位移，已确认帧号和指纹保持原值。注入白方错误样本后，两端同报第 40 帧分歧并停局。正常终局用例在本次迭代前一轮对账至第 116 帧，最终版复测在决斗开始前的局域网邀请阶段超时。</td></tr>
+<tr><td>Unity 正式决斗画面</td><td>经 EventSystem 点击真实跳跃按钮。黑方在权威高度仍为 0 时已经画出离地，后续观察到权威跳跃和实际 Sprite 换帧。两席血量均为 100，结束后退出房间并返回大厅。</td></tr>
+</tbody>
+</table>
+<p>通过同一个显式连接 RevGame.Unity 的 RevMCP stdio 会话先执行 <code>rev_discover</code>，用 <code>rev_call</code> 调用 <code>editor.refresh</code>、<code>editor.compilation</code> 和 <code>editor.play</code>。进入 Play 后重新发现 <code>pvp.duel</code>，通过 <code>rev_run</code> 驱动 <code>pvp.duel-prediction-view-check</code>、<code>pvp.duel-prediction-jump</code> 和双端用例。计划执行 <code>pvp.test-cleanup</code>、<code>pvp.return</code> 并核对已回到大厅，最后停止 Play。</p>
+<figure><img src="联机跳跃.jpg" alt="黑方在真实局域网决斗场景中跳跃"><figcaption>Unity Editor 正式决斗场景。预测先于权威离地的顺序由运行断言记录。</figcaption></figure>
+<figure><img src="联机预测跳跃.gif" alt="从点击联机决斗跳跃按钮到落地的实拍动图"><figcaption>同次联机用例连拍 11 帧，GIF 播放间隔为 120 毫秒。</figcaption></figure>
+</section>
+<section>
+<h2>联机版本与覆盖范围</h2>
+<p>联机新增封帧回执，需配套更新客户端和服务器。原生配置、检查点和已封口回放格式保持兼容。测试覆盖 Windows 同机与 Unity 2022.3.15f1c1 Editor，尚未测量跨设备、公网弱网或移动端手感。本机未找到现有 Mono 测试包用于增量替换。</p>
+</section>
+</main>
+</body>
+</html>

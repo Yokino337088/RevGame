@@ -363,9 +363,16 @@ internal static class GoKcpLoadProbe
             using (var silence = await AskDuel(white, DuelAuthority.Read))
             {
                 Check(silence.ErrorCode == 0 && silence.Frames.Count >= 4 &&
+                    silence.InputAckFrame == silence.AfterFrame + silence.Frames.Count && silence.InputAckSequence == 0 &&
                     silence.Frames.All(packed => (packed >> DuelCorePipe.InputBits) == 0) &&
                     silence.Frames.Count(packed => (packed & DuelCorePipe.Jump) != 0) == 1,
                     "白方没有输入仍按节奏封帧，跳跃只提交一次");
+            }
+            using (var echoed = await AskDuel(black, DuelAuthority.Read))
+            {
+                Check(echoed.InputAckFrame == echoed.AfterFrame + echoed.Frames.Count &&
+                    echoed.InputAckSequence == inputSequence && echoed.PendingActionSequence == 0,
+                    "KCP 下行只回显本席已封口输入序号，跳跃不再待执行");
             }
             while (replicaA.Snapshot.Result == 0 && replicaA.Snapshot.Frame < 300)
             {
