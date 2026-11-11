@@ -327,7 +327,143 @@ footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--mute
   .topbar { padding: 0; }
   body { font-size: 11pt; }
 }
-  </style>
+
+/* 三篇手册使用相同的阅读顺序和当前页提示。 */
+.reading-route {
+  max-width: 1180px;
+  margin: 24px auto 0;
+}
+.reading-route h2 {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 13px;
+}
+.reading-route ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reading-step {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  min-height: 65px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffefa;
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.5;
+}
+a.reading-step:hover { border-color: #8bad98; background: #fbfcf8; }
+.reading-step[aria-current="page"] { border-color: #a8c3ac; background: var(--mint); }
+.reading-step-number {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background: #f1f5ed;
+  color: var(--green);
+  font: 700 13px Consolas, monospace;
+}
+[aria-current="page"] .reading-step-number { background: var(--green); color: white; }
+.reading-step strong { display: block; font-size: 14px; }
+.reading-step small { display: block; color: var(--muted); font-size: 12px; }
+.reading-route + .hero { padding-top: 45px; }
+.reading-handoff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffefa;
+  font-size: 13px;
+}
+.reading-handoff strong { margin-right: 4px; color: var(--green); }
+.reading-handoff .pill { padding: 6px 12px; font-size: 13px; }
+@media (max-width: 1220px) {
+  .reading-route { margin-inline: 25px; }
+}
+@media (max-width: 620px) {
+  .reading-route { margin: 16px 14px 0; }
+  .reading-route ol { grid-template-columns: 1fr; gap: 6px; }
+  .reading-step { min-height: 47px; padding: 6px 11px; }
+  .reading-route + .hero { padding-top: 28px; }
+}
+@media print {
+  .reading-route { margin-inline: 0; }
+  .reading-route + .hero { padding-top: 15px; }
+}
+
+/* 对照图使用手册的纸色、绿金和章节卡片。 */
+.compare-reading, .comparison-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.compare-reading a {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfcf8;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.compare-reading a:hover { border-color: #8bad98; }
+.compare-reading a strong { text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+.compare-reading a span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+.comparison-pair > div { padding: 15px 16px; border: 1px solid var(--line); border-radius: 12px; }
+.comparison-old { background: #fbf5e8; }
+.comparison-new { background: #eff5ed; }
+.comparison-pair h3 { margin: 0 0 8px; font-size: 17px; }
+.comparison-pair p { margin: 0; font-size: 14px; }
+.comparison-list { padding-left: 1.5em; }
+.comparison-list li { margin: 10px 0; }
+.chapter .legacy-sources, .chapter .evidence-note { font-size: 13px; color: var(--muted); }
+.legacy-sources code { font-size: 12px; }
+.evidence-note { padding: 10px 14px; border-left: 3px solid #a8bfa6; background: #f3f7ef; border-radius: 8px; }
+.comparison-figure {
+  margin: 24px 0;
+  padding: 18px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fcfdf9;
+}
+.comparison-figure figcaption { line-height: 1.55; }
+.comparison-figure figcaption strong { display: block; font-size: 16px; }
+.comparison-figure figcaption span { display: block; margin: 3px 0 12px; color: var(--muted); font-size: 13px; }
+.comparison-figure svg { display: block; width: min(100%, 520px); height: auto; margin: 0 auto; overflow: hidden; }
+.cmp-old { fill: #f8eedb; stroke: #d5bf96; }
+.cmp-new { fill: #e8f1e7; stroke: #afc4b1; }
+.cmp-blue { fill: #e7eef6; stroke: #a9bbd1; }
+.cmp-neutral { fill: #f3f5ef; stroke: #c9d7ca; }
+.cmp-line { fill: none; stroke: #4f7a66; stroke-width: 1.55; stroke-linecap: round; }
+.cmp-arrow { fill: #4f7a66; }
+.cmp-label { fill: #254e3d; font-size: 15px; font-weight: 700; }
+.cmp-detail { fill: #42554b; font-size: 12px; }
+.compare-example { margin: 18px 0; padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: #f4f8f0; }
+.compare-example h4 { margin: 0; color: #254e3d; font-size: 16px; }
+.compare-example .steps { margin-bottom: 0; }
+.comparison-faq { margin: 18px 0; }
+.comparison-faq details { margin-bottom: 9px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 10px; background: #fcfdf9; }
+.comparison-faq summary { cursor: pointer; color: #254e3d; font-weight: 700; }
+.comparison-faq summary:focus-visible { outline: 3px solid #b48442; outline-offset: 3px; }
+.comparison-faq details[open] { background: #f4f8ef; }
+.comparison-faq p { margin: 8px 0 2px; }
+@media (max-width: 620px) {
+  .comparison-pair, .compare-reading { grid-template-columns: 1fr; gap: 8px; }
+  .comparison-figure { margin-inline: -12px; padding: 13px 7px 9px; }
+  .comparison-figure figcaption { padding: 0 6px; }
+}
+@media print {
+  .comparison-figure, .comparison-pair, .compare-example { break-inside: avoid; }
+}
+
+</style>
 </head>
 <body>
   <div class="progress" aria-hidden="true"></div>
@@ -336,14 +472,23 @@ footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--mute
     <button class="motion-control" id="motion" type="button" aria-pressed="false" hidden>暂停装饰动画</button>
   </header>
 
+<nav class="reading-route" id="reading-route" aria-labelledby="reading-route-title">
+  <h2 id="reading-route-title">新手阅读路线</h2>
+  <ol>
+    <li><span class="reading-step" aria-current="page"><span class="reading-step-number" aria-hidden="true">1</span><span><strong>核心设计哲学</strong><small>先懂为什么这样设计</small></span></span></li>
+    <li><a class="reading-step" href="RevGame项目架构与Revolution框架讲解.html"><span class="reading-step-number" aria-hidden="true">2</span><span><strong>项目架构</strong><small>看流程、规则和表现怎么接</small></span></a></li>
+    <li><a class="reading-step" href="RevGame代码阅读指南-新手版.html"><span class="reading-step-number" aria-hidden="true">3</span><span><strong>代码阅读指南</strong><small>从真实入口追到源码</small></span></a></li>
+  </ol>
+</nav>
+
   <div class="hero">
     <div>
       <div class="eyebrow">REVGAME / ARCHITECTURE GUIDE</div>
       <h1>为什么 RevGame<br><em>要这样设计。</em></h1>
-      <p class="lead">RevGame 用一个能进场、战斗、结算和退场的游戏检验 Revolution。跟着这些真实操作，理解项目怎样把规则、流程、画面与验收接在一起。</p>
+      <p class="lead">用一个真实游戏检验 Revolution。对照旧《围棋史莱姆》和 RevGame 的同类操作，看清每一层多出来的代码挡住了什么错误，AI 又怎样沿真实入口验收。</p>
       <div class="hero-links">
-        <a class="pill primary" href="#purpose">先看项目目的 ↗</a>
-        <a class="pill" href="#rules">看一次伤害结算</a>
+        <a class="pill primary" href="#compare-projects">对照两代工程 ↗</a>
+        <a class="pill" href="#compare-automation">AI 自动化对照</a>
         <a class="pill" href="#gamecore">读帧同步内核</a>
       </div>
       <div class="stamp">2026.11.11 · REVOLUTION · REVGAME</div>
@@ -370,6 +515,13 @@ footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--mute
       <h2>阅读导航</h2>
       <nav aria-label="章节目录">
         <a href="#purpose"><span>01</span>为什么做真实游戏</a>
+        <a href="#compare-projects"><span>对照 1</span>两代工程总览</a>
+        <a href="#compare-flow"><span>对照 2</span>进场与离场</a>
+        <a href="#compare-rules"><span>对照 3</span>落子与伤害</a>
+        <a href="#compare-content"><span>对照 4</span>配置与资源</a>
+        <a href="#compare-runtime"><span>对照 5</span>性能与联机</a>
+        <a href="#compare-automation"><span>对照 6</span>AI 自动化对照</a>
+        <a href="#compare-faq"><span>对照 7</span>十八个新手问题</a>
         <a href="#boundary"><span>02</span>框架与玩法的边界</a>
         <a href="#rules"><span>03</span>一份结果谁来提交</a>
         <a href="#lifetime"><span>04</span>进场与退场的归属</a>
@@ -381,10 +533,7 @@ footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--mute
       </nav>
     </aside>
     <main id="main">
-      <div class="document-meta">
-        <a href="RevGame项目架构与Revolution框架讲解.html">配套项目架构讲解</a>
-        <a href="RevGame代码阅读指南-新手版.html">配套代码阅读指南</a>
-      </div>
+      <div class="document-meta"><a href="#compare-projects">两代工程对照</a><a href="#compare-automation">AI 自动化</a><a href="#compare-faq">新手问答</a></div>
 <section id="purpose" class="chapter">
   <div class="section-label">GUIDE / 01</div>
   <h2>为什么要做一个真实游戏</h2>
@@ -416,6 +565,508 @@ footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--mute
   </figure>
   <p>这也解释了为什么项目要反复做完整链路。比如剧情粉屏会逼着团队一起看当前宿主、实际加载的资源包和 Shader。碰到通用能力的缺口，就回 Revolution 源仓库修复和验证，再把框架快照同步回 RevGame。作者在 README 里也记录了这个过程如何催生 RevCLI 和 RevMCP，项目里的实际工作决定工具要解决什么问题。</p>
   <p class="sources"><a href="../../../README.md">README · 作者原话</a> · <a href="https://github.com/Yokino337088/RevGame/commit/2964e5f79ba99d34a3f8f0e86e1d8eedfedb5df5">项目立项</a> · <a href="../项目开发日志/RevGame项目开发复盘_2026-11-09.html">项目开发复盘</a></p>
+</section>
+
+<section id="compare-projects" class="chapter">
+  <div class="section-label">对照 / 01</div>
+  <h2>同一个操作，为什么 RevGame 要多走几步</h2>
+  <p>旧《围棋史莱姆》点下选关按钮，就能在一个回调里找到关卡、清音乐和对象池、加载场景、开面板、开局。对一人做原型很直接。<strong>它最难维护的地方，是同一个按钮握着好几种寿命的状态，副作用藏在调用顺序里。</strong> 再加一个入口时，维护者要记住前一个按钮做过哪些事、哪一步失败可能已经改了数据、退出时还欠哪些清理。</p>
+  <p>RevGame 把这些本来就存在的工作显式交给各自的负责人。<strong>流程决定何时能做，服务决定做不做得成，模型提交结果，界面画结果，测试检查结果。</strong> 多走一层的价值，要能说出它挡住了哪种错误。比如先用 <code>BoardModel.Move</code> 判断大棋的整个目标范围，返回失败时完整保留原位。调用方就有一个确切的结果来决定是否更新界面。</p>
+  <figure class="comparison-figure" id="compare-paths-figure" aria-labelledby="compare-paths-figure-caption">
+    <figcaption id="compare-paths-figure-caption"><strong>同一条业务，责任落在哪里</strong><span>两列都从用户操作开始。顺着箭头找失败与退场的负责人。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-paths-figure-title compare-paths-figure-desc" focusable="false">
+      <title id="compare-paths-figure-title">同一条业务，责任落在哪里</title>
+      <desc id="compare-paths-figure-desc">旧工程的按钮和场景回调同时决定关卡、界面和开局，退出清理散落在入口。RevGame 的 GameFlow 管流程，服务管规则，界面读结果。</desc>
+      <defs><marker id="compare-paths-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-paths-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">面板处理点击</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">读关卡和全局状态</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-paths-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">回调接好开局</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">切场、开 UI、启检查</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-paths-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">各入口再清理</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">调用方记住该停什么</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-paths-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">流程受理操作</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">GameFlow 管阶段</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-paths-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">服务提交规则</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">模型与结果各有入口</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-paths-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">按生命周期归还</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">域、面板和资源各收尾</text>
+    </svg>
+  </figure>
+  <div class="compare-reading">
+    <a href="#compare-flow"><strong>进场与离场</strong><span>为什么「场景加载了」还不能马上玩</span></a>
+    <a href="#compare-rules"><strong>落子与伤害</strong><span>一次错误为何会改坏一半状态</span></a>
+    <a href="#compare-content"><strong>配置与资源</strong><span>为什么旧工程有 Excel，仍会有硬编码</span></a>
+    <a href="#compare-runtime"><strong>性能与联机</strong><span>棋盘索引、时间与事实由谁持有</span></a>
+    <a href="#compare-automation"><strong>AI 开发与验收</strong><span>从准备局面到自动判断和收尾</span></a>
+    <a href="#compare-faq"><strong>新手问答</strong><span>什么场合直接写更合适</span></a>
+  </div>
+  <p class="evidence-note">旧工程取 2025 年提交 <code>2529a54</code> 和本机对照快照 <code>a222afc</code>。后者已经包含 <code>de0f95f</code> 的集中调度、网格索引与调试工具。RevGame 以 <a href="https://github.com/Yokino337088/RevGame/tree/d77a957eeccaef35b1bf082dba6b2ab8f1c72bcd"><code>d77a957e</code></a> 为对照基线。下文的失败路径来自源码推演，运行结果另引用对应日期的历史报告。</p>
+</section>
+
+<section id="compare-flow" class="chapter">
+  <div class="section-label">对照 / 02</div>
+  <h2>进场与离场，谁知道现在到了哪一步</h2>
+  <div class="comparison-pair">
+    <div class="comparison-old">
+      <h3>旧工程的开局分布在面板与场景脚本</h3>
+      <p><code>Main.Start</code> 先打开大厅并安排延迟读表或读档，再把 <code>isload</code> 标成真。<code>ChooseLevelPanel.ClickBtn</code> 读全局 <code>nowLevelInfo</code>，清声音和池、藏两个面板，再根据关卡类型切场。回调中还要摆教学棋、开面板、刷新金币和启动关卡检查。<code>SceneMgr</code> 等到 Unity 加载结束就发进度 1 并执行回调。棋盘、关卡与界面什么时候都能用，需要读者自己把几个脚本拼起来。</p>
+    </div>
+    <div class="comparison-new">
+      <h3>RevGame 给异步交割一个负责人</h3>
+      <p><code>GameBootstrap</code> 统一初始化并注册服务。<code>GameFlow.EnterBattle</code> 受理后立刻建立过场门禁，由 <code>RevScene</code> 加载场景，状态机交割到战斗域。<code>WaitUntilReadyAsync</code> 等背景、81 格、HUD 和六张手牌真正装好，遮挡才淡出。出错保留可见原因和恢复入口。返回也由 <code>GameFlow</code> 编排。</p>
+    </div>
+  </div>
+  <figure class="comparison-figure" id="compare-scene-figure" aria-labelledby="compare-scene-figure-caption">
+    <figcaption id="compare-scene-figure-caption"><strong>场景加载结束和业务完成，是两个时刻</strong><span>右列把等待就绪放进同一个过场流程。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-scene-figure-title compare-scene-figure-desc" focusable="false">
+      <title id="compare-scene-figure-title">场景加载结束和业务完成，是两个时刻</title>
+      <desc id="compare-scene-figure-desc">旧 SceneMgr 在场景任务完成后报 1，面板回调继续接业务。RevGame 接受请求后保持门禁，等资源、场景、域与可见界面都就绪再撤遮挡。</desc>
+      <defs><marker id="compare-scene-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-scene-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">点选关按钮</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">清音乐、池和旧面板</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-scene-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">Unity 场景加载完成</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">SceneMgr 发进度 1</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-scene-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">回调继续开局</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">开 HUD，启动检查</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-scene-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">流程先受理</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">建立过场互斥</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-scene-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">切场并交割域</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">资源、场景、首回合</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-scene-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">画面全就绪再放行</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">背景、81 格、手牌</text>
+    </svg>
+  </figure>
+  <h3>把旧工程打开到一半，具体会碰到什么</h3>
+  <ul class="comparison-list">
+    <li><strong>直接打开战斗场景缺少关卡上下文。</strong> 旧游戏场景挂有 <code>GameInit</code>。如果 <code>nowLevelInfo</code> 没由选关建立，<code>Start</code> 仍直接读它的字段。正式入口以外的启动方式容易得到空引用。RevGame 的正式场景入口负责先装配服务和配置，场景检查也经正式入口造局。</li>
+    <li><strong>换资源或重排场景可能顺带改变业务分支。</strong> 旧棋盘按 <code>buildIndex</code> 判断玩法，旧教学按关卡显示名比较来摆棋。Build Settings 顺序和教学标题都参与了规则。RevGame 把 <code>GameScreen</code>、场景加载、章节和教学状态各自明确交给流程与规则。</li>
+    <li><strong>仅销毁时退订，覆盖不了停用后复用。</strong> 旧 <code>ChessBoard.OnEnable</code> 每次注册点击，退订在 <code>OnDestroy</code>。同一对象停用再启用且未销毁时，订阅会重复。RevGame 的 <code>BoardView</code> 在 <code>OnDisable</code> 按 owner 移除监听并停止表现。<code>RevScope</code> 回收已归属该域的工作。</li>
+  </ul>
+  <p><strong>多出来的步骤换来可验证的完成条件。</strong> <code>EnterBattle</code> 返回真只代表受理。等 <code>IsTransitioning == false</code>，再核对目标 <code>Screen</code>、场景和就绪内容。离场则查旧域、池和资源有没有收尾。跨域的过场遮挡需要流程显式持有，资源租约也要由使用者归还。</p>
+  <p class="legacy-sources">旧工程证据 <code>Assets/Scripts/游戏逻辑/测试脚本/Main.cs</code> 10–52 行，<code>Assets/Scripts/游戏逻辑/UI/ChooseLevelPanel.cs</code> 70–130 行，<code>Assets/Scripts/Framework/Scene/SceneMgr.cs</code> 25–44 行，<code>Assets/Scripts/游戏逻辑/测试脚本/GameInit.cs</code> 8–25 行，<code>Assets/Scripts/游戏逻辑/游戏物体/ChessBoard.cs</code> 27–65、140–146 行。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs">RevGame 场景交割</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/GamePresentation.cs">可见性屏障</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/BoardView.cs">棋盘订阅与退出</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Scenes/GameSceneTransitionChecks.cs">反复进入、返回和故障恢复检查</a></p>
+</section>
+
+<section id="compare-rules" class="chapter">
+  <div class="section-label">对照 / 03</div>
+  <h2>落子、换位和伤害，怎样避免只成功一半</h2>
+  <h3>一次落子要先确认整笔规则成立</h3>
+  <p>旧 <code>ChessBoard.HandleBoardClick</code> 同时取坐标、读当前职业与金币、生成棋子、扣行动力、扣金币和刷新 UI。它有空格、余额、行动力等检查。问题在失败边界。<code>SpawnPiece</code> 找不到棋子预制体时会返回空值，调用方仍先减行动力，再读取新棋子的价格。源码表明这条异常路径可能留下已经减少的行动力。换位也有相似的契约缺口，<code>MoveTo</code> 遇到格子不空可以直接返回，外层的行动力逻辑拿不到移动是否成功。</p>
+  <p>RevGame 的 View 先转发点击，<code>BattleLogic</code> 校验过场和教学，<code>BattleService</code> 校验阶段、手牌或选择状态。<code>BoardModel.Move</code> 会先核对整颗棋子能否放下，成功才改占格。失败带原因，原棋子完整留在原位。落牌时 <code>PlaceCard</code> 成功才提交占格和落子额度并发 <code>PiecePlaced</code>，外层 <code>TryPlayCard</code> 再扣该张手牌并发 <code>HandChanged</code>。验完整落牌看入口返回和最终状态，手牌界面按自己的结果通知更新。</p>
+  <figure class="comparison-figure" id="compare-placement-figure" aria-labelledby="compare-placement-figure-caption">
+    <figcaption id="compare-placement-figure-caption"><strong>落子失败时，行动力有没有被改</strong><span>以旧工程缺预制体、RevGame 规则预检失败为例，观察提交之前的状态。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-placement-figure-title compare-placement-figure-desc" focusable="false">
+      <title id="compare-placement-figure-title">落子失败时，行动力有没有被改</title>
+      <desc id="compare-placement-figure-desc">旧工程棋子生成可能返回空值，外层先减行动力，随后读取价格出错。RevGame 的服务先做预检，模型成功后才提交库存和占格事实。</desc>
+      <defs><marker id="compare-placement-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-placement-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">生成棋子</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">SpawnPiece 可能返回空</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-placement-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">先扣行动力</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">外层没检查生成结果</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-placement-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">读价格时遇到空值</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">已经有一项状态被改</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-placement-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">服务先预检</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">阶段、额度与整片占格</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-placement-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">模型返回明确结果</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">成功才提交库存变化</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-placement-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">拒绝保留原状态</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">界面收到原因</text>
+    </svg>
+  </figure>
+  <h3>旧弹道本来就只负责表现，真正需要解开的是引用与结算</h3>
+  <p>2025 版的 <code>ChessPiece.Attack</code> 负责找敌人、建子弹，然后直接调用名字叫 <code>DelayDeductionHp</code> 的方法。方法体会立即扣血并处理死亡。旧项目后来的 <code>ChessPieceMgr.PerformAttack</code> 把攻击集中调度，仍在一次调用里先建弹道，再调用 <code>ApplyDamage</code>。两版的 <code>Bullet.Update</code> 都用目标位置来决定飞行和回池。最新旧版的弹道握着一个可回池的 <code>ChessPiece</code> 引用，引用重用后，旧弹道看到的目标位置可能属于下一次租用，影响的是这段表现。</p>
+  <p>RevGame 把棋子数据与可复用的 <code>PieceView</code> 分开。<code>ResolveDamage</code> 统一核对目标、扣血、处理死亡和占格。<code>BattleHitInfo</code> 记录当时的编号、位置和伤害值。后续弹道消费这份值，迟到的异步特效用代次检查归还。<strong>快照</strong>就是把这一刻的值记下来，之后画面读的是这份记录。</p>
+  <figure class="comparison-figure" id="compare-combat-figure" aria-labelledby="compare-combat-figure-caption">
+    <figcaption id="compare-combat-figure-caption"><strong>命中结果和弹道画面怎样接在一起</strong><span>旧版也在弹道外扣血。变化在于表现引用的身份和规则出口。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-combat-figure-title compare-combat-figure-desc" focusable="false">
+      <title id="compare-combat-figure-title">命中结果和弹道画面怎样接在一起</title>
+      <desc id="compare-combat-figure-desc">旧集中管理器创建弹道、保存活棋子对象引用、立即扣血。RevGame 由规则提交结果并发值快照，弹道以代次防止迟到的表现进入新一局。</desc>
+      <defs><marker id="compare-combat-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-combat-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">集中调度攻击</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">ChessPieceMgr 选目标</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-combat-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">创建弹道并扣血</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">弹道握着棋子组件</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-combat-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">对象回池可能复用</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">目标引用可能已换身份</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-combat-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">规则统一提交</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">ResolveDamage 核对目标</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-combat-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">记录命中时的值</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">编号、位置、实际伤害</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-combat-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">表现按代次消费</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">迟到的旧回调归还</text>
+    </svg>
+  </figure>
+  <p class="legacy-sources">旧工程证据 <code>Assets/Scripts/游戏逻辑/游戏物体/ChessBoard.cs</code> 140–206 行，<code>Assets/Scripts/游戏逻辑/管理器/ChessPieceMgr.cs</code> 250–264、617–633、690–721、731–759 行，<code>Assets/Scripts/游戏逻辑/游戏物体/Bullet.cs</code> 39–56、78–85 行。2025 版 <code>Assets/Scripts/游戏逻辑/游戏物体/ChessPiece.cs</code> 281–292、349–385 行。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Flow/Logic/BattleLogic.cs">过场与教学入口</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Preparation/BattleService.Placement.cs">换位失败回执</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Simulation/BattleService.cs">落牌与扣牌顺序</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Board/Model/BoardModel.cs">占格提交</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Damage.cs">统一伤害出口</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Feedback/BoardView.Feedback.cs">表现代次检查</a></p>
+</section>
+
+<section id="compare-content" class="chapter">
+  <div class="section-label">对照 / 04</div>
+  <h2>配置、存档和资源，为什么要把来源分清</h2>
+  <h3>旧工程已有 Excel，仍有三类改动容易牵连</h3>
+  <dl class="definition-list">
+    <div><dt>调平衡时，表和 C# 都要看</dt><dd>旧版角色攻击间隔、基础攻击和防御来自表。命中计算的 <code>0.3</code>、差值系数 <code>0.007</code>、围困伤害 <code>4</code> 或 <code>1</code> 仍写在 <code>PerformAttack</code>。要改这些策略，仍需改 C#。RevGame 让远征与无尽的策划可调数值走源表，决斗规则走生成 C# 与 C++ 配套配置的 JSON。</dd></div>
+    <div><dt>输入坏了，问题晚到对局中才显露</dt><dd>旧 <code>ExcelTool</code> 把转不成数的整型或浮点型写成零。部分写入异常只记日志，行处理继续。RevGame 导表后在 <code>GameConfig</code> 和各玩法加载点校验需要的编号、重复、取值范围和规则关联。缺失或无效配置可以在进入玩法前报出具体原因。</dd></div>
+    <div><dt>关卡定义与玩家解锁混在同一批对象</dt><dd>旧 <code>GameLevelMgr</code> 对整份 <code>T_Level</code> 列表保存和恢复，解锁修改同一对象的 <code>isShow</code>，通关定位又用列表中的对象身份。旧调试菜单明确避开 Play 时重新读表，以免换一批实例后找不到原对象。RevGame 的规则目录、剧情与成绩进度、无尽存档分别持有，发布配置和玩家数据可以各自验证。</dd></div>
+  </dl>
+  <figure class="comparison-figure" id="compare-data-figure" aria-labelledby="compare-data-figure-caption">
+    <figcaption id="compare-data-figure-caption"><strong>Excel 都有，运行时读到的数据合同不同</strong><span>两边都有导表。看数值出错与玩家解锁分别落到哪里。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-data-figure-title compare-data-figure-desc" focusable="false">
+      <title id="compare-data-figure-title">Excel 都有，运行时读到的数据合同不同</title>
+      <desc id="compare-data-figure-desc">旧表导出二进制，部分坏值写零，关卡列表带配置与进度一起读写。RevGame 加载时集中校验数值，玩家进度用独立数据持有。</desc>
+      <defs><marker id="compare-data-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-data-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">Excel 导出二进制</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">生成类型和数据容器</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-data-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">坏数值可能变成零</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">结果留到运行中发现</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-data-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">整份关卡列表存档</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">规则定义带着解锁标志</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-data-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">源表生成运行数据</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">远征、无尽各自入口</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-data-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">先检查再进入玩法</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">缺项、重复、取值范围</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-data-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">进度单独维护</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">配置变化可以单独验证</text>
+    </svg>
+  </figure>
+  <h3>旧框架已有 AB、编辑器直读和池，差别在谁负责失败和归还</h3>
+  <p>旧 <code>ABResMgr</code> 在编辑器里走开关选择直读或 AB，<code>ABMgr</code> 缓存包并支持卸载。主包失败已有日志。依赖加载循环可能把空的包写进字典并继续返回成功，调用者难以直接定位是哪项依赖没加载。旧 <code>UIMgr</code> 已经为「加载中就隐藏」记了标记。它在显示回调执行后才保存面板实例，回调里若立刻请求隐藏，仍会按「加载中」分支处理。这是发布面板状态与调用回调顺序耦合的具体例子。</p>
+  <p>旧 <code>BasePanel</code> 扫描控件名称，面板用 <code>ClickBtn(string)</code> 集中分发。RevGame 的 <code>RevBind</code> 与 <code>RevButtonClick</code> 把节点和事件落到字段或方法，<code>OnBindView</code> 负责装配，<code>OnRefreshView</code> 负责落屏。改 Prefab 仍须保持节点与代码匹配。开场和结算的决策由面板转发给业务入口，换布局时能先隔离检查绑定与显示。</p>
+  <p>RevGame 用逻辑路径、资源句柄、明确的失败原因与引用释放来接资源。图集按用途持有，棋子和特效回池，过场等待实际能画才放行。真实 AB 仍要专门测，2026 年 11 月 9 日的剧情粉屏就是用「活动构建目标、实际宿主、实际主包」一起定位，再用 PC AB 冷启动复验。</p>
+  <figure class="comparison-figure" id="compare-resources-figure" aria-labelledby="compare-resources-figure-caption">
+    <figcaption id="compare-resources-figure-caption"><strong>加载到释放，要看谁仍在使用资源</strong><span>旧工程已经会加载与缓存 AB，RevGame 进一步给使用者建立引用归属。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-resources-figure-title compare-resources-figure-desc" focusable="false">
+      <title id="compare-resources-figure-title">加载到释放，要看谁仍在使用资源</title>
+      <desc id="compare-resources-figure-desc">旧工程由各调用处传包名和资源名，包缓存与清理独立调用。RevGame 以逻辑路径和句柄跟踪结果，使用者释放引用后再回收。</desc>
+      <defs><marker id="compare-resources-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-resources-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">按包名请求资源</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">编辑器直读或 AB</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-resources-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">加载依赖并缓存</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">部分失败仍可继续</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-resources-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">调用点决定清理</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">谁还在用需要追查</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-resources-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">按逻辑路径请求</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">策略负责宿主和来源</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-resources-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">查句柄与失败原因</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">图集按用途持有</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-resources-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">使用方成对归还</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">过场检查实际可见</text>
+    </svg>
+  </figure>
+  <p class="legacy-sources">旧工程证据 <code>Assets/Editor/Excel/ExcelTool.cs</code> 112–168 行，<code>Assets/Scripts/游戏逻辑/管理器/GameLevelMgr.cs</code> 58–124 行，<code>Assets/Editor/DebugCheatMenu.cs</code> 293–309 行，<code>Assets/Scripts/Framework/AB/ABMgr.cs</code> 60–120、480–504 行，<code>Assets/Scripts/Framework/UI/UIMgr.cs</code> 127–230 行，<code>Assets/Scripts/Framework/UI/BasePanel.cs</code> 34–85 行。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Data/Config/GameConfig.cs">RevGame 配置校验</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.cs">面板字段与按钮绑定</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GameSpriteAtlasService.cs">图集引用</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GamePoolRequests.cs">池与冷加载</a> · <a href="../进度同步/Editor真实AB剧情粉屏修复_2026-11-09.html">真实 AB 粉屏回归记录</a></p>
+</section>
+
+<section id="compare-runtime" class="chapter">
+  <div class="section-label">对照 / 05</div>
+  <h2>性能和联机，哪些变化才真正值得复杂化</h2>
+  <p>2025 版让每颗棋子开攻击、围困检查和血条协程。攻击找目标还会建范围点和候选列表，并按阵营查棋子。旧项目后来的 <code>ChessPieceMgr</code> 用格子索引查询、集中调度、脏血条和复用棋子，已经解决了大量重复工作。它的攻击预算限制一次 Unity 帧里执行的次数，超出的攻击留到后续帧。棋盘索引仍由场景对象的位置和通知维持，还有定期位置纠正。</p>
+  <p>RevGame 把「占了哪几个格」交给 <code>BoardModel</code>，<code>Place / Move / Remove / Reset</code> 是统一写口，气眼按占格版本、加气和免疫判断是否重算。AI 在自己的深快照上试算，视图另做显示预算。这样改动画或压低表现密度时，规则有可对照的状态。仍需用同样输入核对击杀、气眼、换位和胜负，再测实际设备成本。</p>
+  <figure class="comparison-figure" id="compare-runtime-figure" aria-labelledby="compare-runtime-figure-caption">
+    <figcaption id="compare-runtime-figure-caption"><strong>同一条性能经验的三次落地</strong><span>从减少重复查询，走到让规则步进和显示预算各自可测。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 211" role="img" aria-labelledby="compare-runtime-figure-title compare-runtime-figure-desc" focusable="false">
+      <title id="compare-runtime-figure-title">同一条性能经验的三次落地</title>
+      <desc id="compare-runtime-figure-desc">2025 版每颗棋子推进若干协程，旧工程后续集中调度并引入棋盘索引，RevGame 将权威占格、气眼刷新、固定步与显示预算拆开。</desc>
+      <defs><marker id="compare-runtime-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="23" y="5" width="322" height="51" rx="10" class="cmp-old"/>
+      <text x="184.0" y="27" class="cmp-label" text-anchor="middle">2025 原版 · 每颗棋子各自工作</text>
+      <text x="184.0" y="45" class="cmp-detail" text-anchor="middle">攻击、围困、血条各有协程</text>
+      <path d="M184 56V71" class="cmp-line" marker-end="url(#compare-runtime-figure-arrow)"/>
+      <rect x="23" y="72" width="322" height="51" rx="10" class="cmp-neutral"/>
+      <text x="184.0" y="94" class="cmp-label" text-anchor="middle">旧工程优化 · 合并重复工作</text>
+      <text x="184.0" y="112" class="cmp-detail" text-anchor="middle">网格索引、帧预算、血条脏标记</text>
+      <path d="M184 123V138" class="cmp-line" marker-end="url(#compare-runtime-figure-arrow)"/>
+      <rect x="23" y="139" width="322" height="51" rx="10" class="cmp-new"/>
+      <text x="184.0" y="161" class="cmp-label" text-anchor="middle">RevGame · 分开规则与显示的预算</text>
+      <text x="184.0" y="179" class="cmp-detail" text-anchor="middle">固定步推进、占格版本、独立表现队列</text>
+    </svg>
+  </figure>
+  <h3>本机双人玩法与联网决斗需要维护不同的事实</h3>
+  <p>旧项目的 <code>PvpPanel</code> 在本机为两位玩家开倒计时，并写全局 <code>PlayerRound</code>。棋盘按这个回合号决定谁能行动。这足以描述共享同一进程的对局。RevGame 的九路围棋还要校验并接纳一手命令，联机八角笼则由权威端把双方操作封进同一整帧。<code>DuelCorePipe</code> 给裁判和本机确认副本输入相同的连续帧，两端才有材料核对同帧指纹。镜头、插值和本机预测各按表现时间处理。</p>
+  <figure class="comparison-figure" id="compare-network-figure" aria-labelledby="compare-network-figure-caption">
+    <figcaption id="compare-network-figure-caption"><strong>从共享一份棋盘，到多端对齐事实</strong><span>八角笼增加了传输、执行顺序与对账的责任。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-network-figure-title compare-network-figure-desc" focusable="false">
+      <title id="compare-network-figure-title">从共享一份棋盘，到多端对齐事实</title>
+      <desc id="compare-network-figure-desc">旧工程本机双人共享一个棋盘，面板维护轮次。RevGame 联机决斗由权威端给双席输入定帧号，裁判和客户端各自执行，缺帧补齐后按同帧号核对。</desc>
+      <defs><marker id="compare-network-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-network-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">本机两席输入</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">两人共享一个进程</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-network-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">面板更新回合号</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">棋盘读当前行动方</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-network-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">一份棋盘结果</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">这台机器直接显示</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-network-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">权威端收两席意图</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">定序，发布完整帧</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-network-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">各端重算同一帧</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">裁判与本机确认副本</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-network-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">同帧核对指纹</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">缺帧从连续游标补齐</text>
+    </svg>
+  </figure>
+  <p>固定逻辑步、权威输入、同帧对账和回放是新增联机需求的成本。旧工程的本机玩法本来只需要一份结果。RevGame 要处理的还包括丢帧、补帧、断线重连和两个客户端结果一致。晚到的帧从连续游标补齐，确认副本与预测沙盒也各自持有状态。</p>
+  <p class="legacy-sources">旧工程证据 2025 版 <code>Assets/Scripts/游戏逻辑/游戏物体/ChessPiece.cs</code> 70–110、165–195、329–340 行。对照快照 <code>Assets/Scripts/游戏逻辑/管理器/ChessPieceMgr.cs</code> 94–130、348–429、457–502 行，<code>Assets/Scripts/游戏逻辑/UI/PvpPanel.cs</code> 259–281、389–435 行。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Events.cs">气眼缓存条件</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs">封帧与追帧契约</a> · <a href="RevGame项目架构与Revolution框架讲解.html#duel-sequence">决斗完整时序</a> · <a href="../战斗性能优化规则/战斗性能热点与缓存优化_2026-10-30.html">RevGame 历史性能验证</a></p>
+</section>
+
+<section id="compare-automation" class="chapter">
+  <div class="section-label">对照 / 06</div>
+  <h2>AI 自动化从哪里开始，怎么知道它真做对了</h2>
+  <h3>旧项目能快速准备现场，也用过工具采样</h3>
+  <p>旧工程有 Excel 导出菜单、棋子美术配置生成器和 <code>DebugCheatMenu</code>。这些工具把重复编辑变快，但准备场景、点到哪一步、检查扣费或离场，仍由操作者组合。调试菜单准备测试时会写当时使用的存档和首启状态。它适合快速制造测试局面，反复验收还需要额外安排测试数据隔离和归还。2026 年 10 月 11 日的旧报告也记录了通用 Unity MCP 自动读帧时间、Profiler 计数器与截图。该记录的目标是采集性能，工程内检索到的是菜单与生成器，未见可发现的业务测试注册表和 RevGame 这套带断言、等待与清理的计划。</p>
+  <figure class="comparison-figure" id="compare-automation-figure" aria-labelledby="compare-automation-figure-caption">
+    <figcaption id="compare-automation-figure-caption"><strong>从加快准备现场，到业务可以自动复验</strong><span>旧报告也做过自动采样。右列把业务动作、判定和恢复接成一条链。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 258" role="img" aria-labelledby="compare-automation-figure-title compare-automation-figure-desc" focusable="false">
+      <title id="compare-automation-figure-title">从加快准备现场，到业务可以自动复验</title>
+      <desc id="compare-automation-figure-desc">旧工程用编辑器菜单准备和外部 MCP 采集现场。RevGame 可以发现实际注册的业务能力，用固定种子隔离运行并验证状态与清理。</desc>
+      <defs><marker id="compare-automation-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="8" y="5" width="162" height="33" rx="10" class="cmp-old"/>
+      <text x="89.0" y="26.5" class="cmp-label" text-anchor="middle">旧工程</text>
+      <path d="M89 38V52" class="cmp-line" marker-end="url(#compare-automation-figure-arrow)"/>
+      <rect x="8" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="89.0" y="75" class="cmp-label" text-anchor="middle">菜单准备现场</text>
+      <text x="89.0" y="93" class="cmp-detail" text-anchor="middle">导表、开档、生成配置</text>
+      <path d="M89 103V119" class="cmp-line" marker-end="url(#compare-automation-figure-arrow)"/>
+      <rect x="8" y="120" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="142" class="cmp-label" text-anchor="middle">人工串起业务步骤</text>
+      <text x="89.0" y="160" class="cmp-detail" text-anchor="middle">工具可采集性能和截图</text>
+      <path d="M89 170V186" class="cmp-line" marker-end="url(#compare-automation-figure-arrow)"/>
+      <rect x="8" y="187" width="162" height="50" rx="10" class="cmp-old"/>
+      <text x="89.0" y="209" class="cmp-label" text-anchor="middle">人核对结果与恢复</text>
+      <text x="89.0" y="227" class="cmp-detail" text-anchor="middle">重复试验要再安排现场</text>
+      <rect x="198" y="5" width="162" height="33" rx="10" class="cmp-new"/>
+      <text x="279.0" y="26.5" class="cmp-label" text-anchor="middle">RevGame</text>
+      <path d="M279 38V52" class="cmp-line" marker-end="url(#compare-automation-figure-arrow)"/>
+      <rect x="198" y="53" width="162" height="50" rx="10" class="cmp-neutral"/>
+      <text x="279.0" y="75" class="cmp-label" text-anchor="middle">发现真实能力</text>
+      <text x="279.0" y="93" class="cmp-detail" text-anchor="middle">动作、参数、适用环境</text>
+      <path d="M279 103V119" class="cmp-line" marker-end="url(#compare-automation-figure-arrow)"/>
+      <rect x="198" y="120" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="142" class="cmp-label" text-anchor="middle">按计划走正式入口</text>
+      <text x="279.0" y="160" class="cmp-detail" text-anchor="middle">固定输入，等待只读状态</text>
+      <path d="M279 170V186" class="cmp-line" marker-end="url(#compare-automation-figure-arrow)"/>
+      <rect x="198" y="187" width="162" height="50" rx="10" class="cmp-new"/>
+      <text x="279.0" y="209" class="cmp-label" text-anchor="middle">断言并执行清理</text>
+      <text x="279.0" y="227" class="cmp-detail" text-anchor="middle">记录结果、失败和现场</text>
+    </svg>
+  </figure>
+  <h3>RevCLI 负责编辑器动作，项目 Editor 代码规定生成结果</h3>
+  <p>例如核对图集、Prefab 和 AB。RevCLI 显式指定目标 Unity 工程，通过当次能力目录查动作和参数，执行需要的编辑，再读回节点、引用、导入设置或包标记。固定场景树可写成配方。图集如何按章节或无尽分组、哪些图进包，由 <code>GameResourceBuild</code> 和 <code>GameSpriteAtlasBuild</code> 的项目规则决定。现在可在源码找到 <code>game.resources.audit</code> 和 <code>game.resources.validate</code> 这样的只读审计与验证动作，也能找到负责变更的 <code>game.resources.configure</code>。生成完成还需编译、检查产物与按目标宿主验收。单次检查走 CLI 较直接，跨帧验证用测试计划组织等待。</p>
+  <figure class="comparison-figure" id="compare-editor-figure" aria-labelledby="compare-editor-figure-caption">
+    <figcaption id="compare-editor-figure-caption"><strong>编辑器操作与项目制作配方怎样配合</strong><span>以资源为例，查能力、做变更、读回实际结果。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 278" role="img" aria-labelledby="compare-editor-figure-title compare-editor-figure-desc" focusable="false">
+      <title id="compare-editor-figure-title">编辑器操作与项目制作配方怎样配合</title>
+      <desc id="compare-editor-figure-desc">RevCLI 在目标工程执行已登记的编辑动作。项目 Editor 定义资源分组和构建规则。配置后核对引用、包标记与校验结果。</desc>
+      <defs><marker id="compare-editor-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="23" y="5" width="322" height="51" rx="10" class="cmp-blue"/>
+      <text x="184.0" y="27" class="cmp-label" text-anchor="middle">RevCLI · 在目标工程先查动作</text>
+      <text x="184.0" y="45" class="cmp-detail" text-anchor="middle">game.resources.audit 读取引用和包标记</text>
+      <path d="M184 56V71" class="cmp-line" marker-end="url(#compare-editor-figure-arrow)"/>
+      <rect x="23" y="72" width="322" height="51" rx="10" class="cmp-neutral"/>
+      <text x="184.0" y="94" class="cmp-label" text-anchor="middle">项目 Editor · 按规则重算资源去留</text>
+      <text x="184.0" y="112" class="cmp-detail" text-anchor="middle">配置图集、分包与逻辑资源映射</text>
+      <path d="M184 123V138" class="cmp-line" marker-end="url(#compare-editor-figure-arrow)"/>
+      <rect x="23" y="139" width="322" height="51" rx="10" class="cmp-new"/>
+      <text x="184.0" y="161" class="cmp-label" text-anchor="middle">读回 · 核对实际产物</text>
+      <text x="184.0" y="179" class="cmp-detail" text-anchor="middle">game.resources.validate 检查引用和分包</text>
+      <path d="M184 190V205" class="cmp-line" marker-end="url(#compare-editor-figure-arrow)"/>
+      <rect x="23" y="206" width="322" height="51" rx="10" class="cmp-new"/>
+      <text x="184.0" y="228" class="cmp-label" text-anchor="middle">Play 与真实 AB · 验实际画面</text>
+      <text x="184.0" y="246" class="cmp-detail" text-anchor="middle">冷启动、进入、往返和释放各自核对</text>
+    </svg>
+  </figure>
+  <h3>RevMCP 让 Agent 走正常业务，再读事实判断</h3>
+  <p><code>RevGM</code> 和 <code>RevRuntimeAutomation</code> 在开发态注册真实的项目动作和查询。比如远征点击 GM 转到 <code>BattleLogic.ClickBoard</code>，和玩家点击复用规则。输入测试走实际 EventSystem。项目游戏测试优先复用一个明确连接目标工程的 RevMCP stdio 会话。进入 Play 或域重载后，先 <code>rev_discover</code> 确认实际能力与参数，再用 <code>rev_call</code> 查一次状态或执行单步动作，跨帧、多断言和收尾交给 <code>rev_run</code>。读状态与执行动作是两种契约，等待用有期限的只读查询，超时保留失败原因。</p>
+  <figure class="comparison-figure" id="compare-runtime-test-figure" aria-labelledby="compare-runtime-test-figure-caption">
+    <figcaption id="compare-runtime-test-figure-caption"><strong>RevMCP 从发现到断言与收尾</strong><span>每步有真实输入或可读取结果。失败同样进入收尾。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 278" role="img" aria-labelledby="compare-runtime-test-figure-title compare-runtime-test-figure-desc" focusable="false">
+      <title id="compare-runtime-test-figure-title">RevMCP 从发现到断言与收尾</title>
+      <desc id="compare-runtime-test-figure-desc">RevMCP 明确连接目标工程，发现当前注册的能力，调用或运行跨帧计划，使用只读状态等待并核对业务断言，记录失败与清理。</desc>
+      <defs><marker id="compare-runtime-test-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="23" y="5" width="322" height="51" rx="10" class="cmp-blue"/>
+      <text x="184.0" y="27" class="cmp-label" text-anchor="middle">rev_discover · 核对本次实际注册</text>
+      <text x="184.0" y="45" class="cmp-detail" text-anchor="middle">工程、Play 状态、动作名和参数</text>
+      <path d="M184 56V71" class="cmp-line" marker-end="url(#compare-runtime-test-figure-arrow)"/>
+      <rect x="23" y="72" width="322" height="51" rx="10" class="cmp-neutral"/>
+      <text x="184.0" y="94" class="cmp-label" text-anchor="middle">rev_call / rev_run · 走真实业务</text>
+      <text x="184.0" y="112" class="cmp-detail" text-anchor="middle">单步调用或组织完整测试计划</text>
+      <path d="M184 123V138" class="cmp-line" marker-end="url(#compare-runtime-test-figure-arrow)"/>
+      <rect x="23" y="139" width="322" height="51" rx="10" class="cmp-new"/>
+      <text x="184.0" y="161" class="cmp-label" text-anchor="middle">等待并判断 · 读取已提交状态</text>
+      <text x="184.0" y="179" class="cmp-detail" text-anchor="middle">只读查询有期限，受理之后再断言</text>
+      <path d="M184 190V205" class="cmp-line" marker-end="url(#compare-runtime-test-figure-arrow)"/>
+      <rect x="23" y="206" width="322" height="51" rx="10" class="cmp-new"/>
+      <text x="184.0" y="228" class="cmp-label" text-anchor="middle">finally · 收尾并保存证据</text>
+      <text x="184.0" y="246" class="cmp-detail" text-anchor="middle">回到预期现场，保留日志与结果</text>
+    </svg>
+  </figure>
+  <div class="compare-example">
+    <h4>一个可核对的无尽测试例子</h4>
+    <ol class="steps">
+      <li><strong>用真实入口造隔离局。</strong> 发现 <code>endless.enter</code> 后可按注册参数传 <code>{"formation":0}</code>。源码以固定种子 <code>1101</code> 经 <code>GameFlow.EnterEndless</code> 开隔离测试局。返回 <code>accepted</code> 表示请求受理。</li>
+      <li><strong>等真实状态再断言。</strong> 轮询只读 <code>endless.state</code>，等 <code>transitioning</code> 为假，再核对 <code>screen</code> 为 <code>Endless</code>、<code>isolated</code> 为真。要求棋心能画时再核对 <code>heartReady</code>。想验非法占格，比较调用前后的 <code>hand</code> 与 <code>cardPlays</code>。</li>
+      <li><strong>失败也检查收尾。</strong> 计划把恢复动作放进 <code>finally</code>。按当前场景用正常返回入口 <code>endless.home</code>，等交割后核对大厅与旧局清理。已经在大厅时仍核对没有残留测试状态。隔离局把测试存档与玩家存档分开。</li>
+    </ol>
+  </div>
+  <p><strong>会操作和能验收，各有证据。</strong> HTML 报告记录实际执行、关键断言、错误和清理，截图说明看到的画面，连拍 GIF 说明动态过程。2026 年 11 月 10 日决斗验收报告记录了同一会话的 <code>rev_discover → rev_call → rev_run</code>、真实 UTP 同机双端、同帧结果与清理。本节的无尽步骤是根据当前注册代码整理的读码示例。旧版的 <code>PCAI</code>、美术生图与性能采样分别属于玩法、制作和观测，RevGame 这里讲的是开发 Agent 可反复验证的业务过程。</p>
+  <p class="legacy-sources">旧工程证据 <code>Assets/Editor/DebugCheatMenu.cs</code> 6–56、293–320 行，<code>Assets/Editor/Excel/ExcelTool.cs</code> 17–43 行，<code>Assets/Editor/PieceArtConfigGenerator.cs</code>，<code>Assets/性能分析报告/性能分析报告.html</code> 46–49、90–96 行。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/ResourceBuild/GameResourceUsageAutomation.cs">已登记的资源动作</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Endless/EndlessAutomation.cs">无尽参数与状态字段</a> · <a href="../../UnityProject/Revolution.RevCLI/README.md">RevCLI 工作流</a> · <a href="../../UnityProject/Revolution.RevMCP/README.md">RevMCP 能力与计划</a> · <a href="RevCLI与项目Editor职责审查_2026-11-08.html">项目 Editor 职责审查</a> · <a href="../进度同步/双人决斗帧同步验收_2026-11-10/双人决斗帧同步验收_2026-11-10.html">真实双端验收记录</a></p>
+</section>
+
+<section id="compare-faq" class="chapter">
+  <div class="section-label">对照 / 07</div>
+  <h2>新手最容易卡住的十八个问题</h2>
+  <figure class="comparison-figure" id="compare-choice-figure" aria-labelledby="compare-choice-figure-caption">
+    <figcaption id="compare-choice-figure-caption"><strong>什么时候直接写，什么时候加边界</strong><span>每层要解决一个实际问题，落在同一责任里的改动可以保持直接。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 211" role="img" aria-labelledby="compare-choice-figure-title compare-choice-figure-desc" focusable="false">
+      <title id="compare-choice-figure-title">什么时候直接写，什么时候加边界</title>
+      <desc id="compare-choice-figure-desc">面板内只改显示可直接实现。跨入口改变棋盘或库存时需统一提交，跨场景、异步或联机时需明确所有者、完成条件与验证方式。</desc>
+      <defs><marker id="compare-choice-figure-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="cmp-arrow" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <rect x="23" y="5" width="322" height="51" rx="10" class="cmp-neutral"/>
+      <text x="184.0" y="27" class="cmp-label" text-anchor="middle">只动这一屏的表现</text>
+      <text x="184.0" y="45" class="cmp-detail" text-anchor="middle">面板内部直接写，变化由它自己负责</text>
+      <path d="M184 56V71" class="cmp-line" marker-end="url(#compare-choice-figure-arrow)"/>
+      <rect x="23" y="72" width="322" height="51" rx="10" class="cmp-blue"/>
+      <text x="184.0" y="94" class="cmp-label" text-anchor="middle">多入口共同改变游戏事实</text>
+      <text x="184.0" y="112" class="cmp-detail" text-anchor="middle">集中校验和提交，给调用方失败回执</text>
+      <path d="M184 123V138" class="cmp-line" marker-end="url(#compare-choice-figure-arrow)"/>
+      <rect x="23" y="139" width="322" height="51" rx="10" class="cmp-new"/>
+      <text x="184.0" y="161" class="cmp-label" text-anchor="middle">跨场景、等待或多端同步</text>
+      <text x="184.0" y="179" class="cmp-detail" text-anchor="middle">补上所有者、就绪条件、清理与断言</text>
+    </svg>
+  </figure>
+  <div class="comparison-faq">
+    <details open><summary>1. 一个按钮明明能直接写，什么时候才值得拆？</summary><p>只是播放音效或改这个面板的一个字，可以直接写在它自己的方法里。一旦同一操作被玩家、教学和测试调用，或者会改棋盘、库存与回合，就把公共校验和提交放到同一个入口，界面继续直接调用它。</p></details>
+    <details><summary>2. 代码里所有数字都要进 Excel 吗？</summary><p>棋盘边长 <code>Consts.BoardSize</code> 是结构约定。生命、攻击、奖励和关卡节奏属于策划会反复调整的规则。把后一类放在单一数据源，再由生成与加载校验保护两端一致。</p></details>
+    <details><summary>3. 旧项目已经有框架，为什么还要 Revolution？</summary><p>旧框架的事件、池、AB 和面板都节省了时间。RevGame 进一步把公开契约、owner、失败回执和验收入口统一，让业务也能证明这些模块在重入、取消和多模式时配合正确。各模式特有规则仍留在项目。</p></details>
+    <details><summary>4. 为什么还要 RevServices？旧单例不是更好找吗？</summary><p>旧 <code>SingletonAutoMono.Instance</code> 第一次访问就创建并跨场景保存实例，调用处难看出初始化责任。RevGame 可以从 <code>GameBootstrap</code> 的注册找到接口实现和持有者。只活在本面板的对象继续直接持有即可。</p></details>
+    <details><summary>5. FSM、RevScope、RevScene 和 Logic 都管什么？</summary><p>FSM 决定现在是哪一阶段。<code>RevScope</code> 按归属回收这一段的工作。<code>RevScene</code> 负责载入 Unity 场景。Logic 用当前阶段的门禁和节拍推动业务服务。大厅与选关共用一个 Unity 场景，就是阶段和物理场景分开的例子。</p></details>
+    <details><summary>6. EnterBattle 返回真，为什么还要等？</summary><p>真表示受理。过场之后还要读取 <code>IsTransitioning</code>、目标 <code>Screen</code> 和实际画面。旧 <code>SceneMgr</code> 的进度 1 只对应 Unity 加载任务结束，RevGame 把背景、棋盘和手牌就绪也纳入完成条件。</p></details>
+    <details><summary>7. 换位失败，原来的棋子为什么要保持不动？</summary><p>大棋要占多个格，先验证整片再改占格。这样一格放不下时，原位置、选择和扣费都可按业务契约处理。旧 <code>MoveTo</code> 的空返回会让外层难以区分失败与成功。</p></details>
+    <details><summary>8. 调弹道速度，为什么不从弹道代码里改血量？</summary><p>血量由这次命中的规则提交。弹道可以延期、回池或因为画面拥挤而少播。让它读命中快照，调播放速度就只影响观感，规则仍可用固定输入复验。</p></details>
+    <details><summary>9. 直接调用和事件总线，哪种更适合落牌？</summary><p>落牌需要成功、失败与原因，直接调用更容易核对。落牌已经成功后的事实，适合发事件给 UI、音效和统计。订阅按 owner 随局退出，事件参数采用约定的单一签名。</p></details>
+    <details><summary>10. 为什么旧工程和 RevGame 都用对象池，还要讲代次？</summary><p>池里的物体会被再借一次。上一次的异步加载、计时器或弹道可能随后才到。代次标识这次租用，回调只作用在它所属的一次借用。回收时也要停计时与动画。</p></details>
+    <details><summary>11. Editor 里看着正常，真实 AB 为什么还要单独测？</summary><p>Editor 直读用工程资产，AB 走实际包、平台依赖、Shader 与图集绑定。首次白图和错误主包要在对应宿主冷启动复验，不能从直读画面推断出来。</p></details>
+    <details><summary>12. 有了固定步，两个客户端自然就一致了吗？</summary><p>还要同一规则、初始状态和连续完整输入。帧号用来确认双方在比较同一时刻，Hash 用来检查该帧的事实。预测结果只供应本机表现，确定性结果从确认副本取。</p></details>
+    <details><summary>13. 用 ECS 能不能把这套层都省掉？</summary><p>ECS 可以把一批单位的移动、战斗等工作集中处理。谁开启玩法、谁维护业务状态、谁关订阅和谁证明结果，仍需要明确。RevGame 把轻量 ECS 放在无尽自己的热路径里。</p></details>
+    <details><summary>14. RevCLI、RevMCP 和战斗 AI 到底谁做什么？</summary><p>RevCLI 操作或查询编辑器，也能做轻量运行时动作。RevMCP 让开发 Agent 发现真实能力并组织测试计划。战斗 AI 决定游戏角色做什么。旧工程的自动战斗或美术生图与开发验收是不同的任务。</p></details>
+    <details><summary>15. AI 说「成功」或截了一张图，为什么还要断言？</summary><p>命令成功可以是请求已受理，截图可以证明眼前画面。落子扣牌、状态变化、跨端一致和退出收尾，需要在相应时点核对实际字段。能复验的报告同时记录动作、状态、失败和清理。</p></details>
+    <details><summary>16. 要从旧工程学一件事来重构，先动哪里？</summary><p>选一条常走且常出错的链路，比如换位。先固定局面和期待结果，再给占格一个提交口、给失败一个回执、给显示一份结果。已有池、索引和生成器可以继续用。边界的价值用失败前后与二次进入来验证。</p></details>
+    <details><summary>17. 服务数据改了，为什么面板上的数字还没变？</summary><p>模型和屏幕各自更新。<code>SetData</code> 给已打开的面板送数据时会触发刷新。直接修改同一个数据对象的字段时，要由业务侧发事实通知或明确调用刷新。比如棋子落下听 <code>PiecePlaced</code>，手牌减少听 <code>HandChanged</code>。</p></details>
+    <details><summary>18. 清单里有动作，为什么 AI 连上后调用不了？</summary><p>离线清单说明能有哪些接口，目标工程此刻注册了什么要看实时发现。先确认项目、Play 或编辑状态和编译结果，再用 <code>rev_discover</code> 找当次的名称与参数。域重载或切场后，重新读取可操作 UI 的身份与状态。</p></details>
+  </div>
+  <p class="sources"><a href="RevGame项目架构与Revolution框架讲解.html#s2">下一篇看这些职责怎样接起来</a> · <a href="RevGame代码阅读指南-新手版.html#s2">打开代码，从入口追到规则</a></p>
 </section>
 
 <section id="boundary" class="chapter">
@@ -802,7 +1453,8 @@ footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--mute
   </ol>
   <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Scenes/GameSceneTransitionChecks.cs">场景交接验收</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs">真实业务测试入口</a> · <a href="RevGame代码阅读指南-新手版.html#s17">按功能选择验收方式</a></p>
 </section>
-    </main>
+    <nav class="reading-handoff" aria-label="继续阅读"><strong>继续阅读</strong><a class="pill primary" href="RevGame项目架构与Revolution框架讲解.html">下一篇 · 项目架构</a><a class="pill" href="RevGame代码阅读指南-新手版.html">跳到代码阅读指南</a></nav>
+</main>
   </div>
 
   <footer>

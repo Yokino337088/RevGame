@@ -71,6 +71,82 @@ footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);disp
 @media(max-width:650px){.duel-sequence svg.seq-wide{display:none}.duel-sequence svg.seq-compact{display:block}.chapter .duel-sequence{margin-inline:-6px;padding:15px 10px}}
 @media print{.chapter .duel-sequence{break-inside:avoid}.duel-sequence svg.seq-wide{display:block}.duel-sequence svg.seq-compact{display:none}}
 
+
+/* 三篇手册使用相同的阅读顺序和当前页提示。 */
+.reading-route {
+  max-width: 1180px;
+  margin: 24px auto 0;
+}
+.reading-route h2 {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 13px;
+}
+.reading-route ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reading-step {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  min-height: 65px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffefa;
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.5;
+}
+a.reading-step:hover { border-color: #8bad98; background: #fbfcf8; }
+.reading-step[aria-current="page"] { border-color: #a8c3ac; background: var(--mint); }
+.reading-step-number {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background: #f1f5ed;
+  color: var(--green);
+  font: 700 13px Consolas, monospace;
+}
+[aria-current="page"] .reading-step-number { background: var(--green); color: white; }
+.reading-step strong { display: block; font-size: 14px; }
+.reading-step small { display: block; color: var(--muted); font-size: 12px; }
+.reading-route + .hero { padding-top: 45px; }
+.reading-handoff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffefa;
+  font-size: 13px;
+}
+.reading-handoff strong { margin-right: 4px; color: var(--green); }
+.reading-handoff .pill { padding: 6px 12px; font-size: 13px; }
+@media (max-width: 1220px) {
+  .reading-route { margin-inline: 25px; }
+}
+@media (max-width: 620px) {
+  .reading-route { margin: 16px 14px 0; }
+  .reading-route ol { grid-template-columns: 1fr; gap: 6px; }
+  .reading-step { min-height: 47px; padding: 6px 11px; }
+  .reading-route + .hero { padding-top: 28px; }
+}
+@media print {
+  .reading-route { margin-inline: 0; }
+  .reading-route + .hero { padding-top: 15px; }
+}
+
 </style><style>
 /* 只在本文档使用的补充样式：沿用模板变量，不覆盖模板规则 */
 .muted{color:#8a929c;font-weight:400;font-size:.9em}
@@ -85,6 +161,15 @@ td.num{text-align:right;color:#6b7480;font-variant-numeric:tabular-nums;white-sp
 
 <div class="progress" aria-hidden="true"></div>
 <header class="topbar"><div class="brand"><i>R</i>REVGAME <span class="tag">CODE READING GUIDE</span></div><button class="motion-control" id="motion" aria-pressed="false">暂停装饰动画</button></header>
+
+<nav class="reading-route" id="reading-route" aria-labelledby="reading-route-title">
+  <h2 id="reading-route-title">新手阅读路线</h2>
+  <ol>
+    <li><a class="reading-step" href="RevGame核心设计哲学-新手版.html"><span class="reading-step-number" aria-hidden="true">1</span><span><strong>核心设计哲学</strong><small>先懂为什么这样设计</small></span></a></li>
+    <li><a class="reading-step" href="RevGame项目架构与Revolution框架讲解.html"><span class="reading-step-number" aria-hidden="true">2</span><span><strong>项目架构</strong><small>看流程、规则和表现怎么接</small></span></a></li>
+    <li><span class="reading-step" aria-current="page"><span class="reading-step-number" aria-hidden="true">3</span><span><strong>代码阅读指南</strong><small>从真实入口追到源码</small></span></span></li>
+  </ol>
+</nav>
 
 <div class="hero"><div><div class="eyebrow">REVGAME / CODE READING GUIDE 2.0</div>
 <h1>接手 RevGame。<br><em>从哪一行开始读。</em></h1>
@@ -102,7 +187,7 @@ td.num{text-align:right;color:#6b7480;font-variant-numeric:tabular-nums;white-sp
 </div>
 
 <div class="workspace"><aside class="sidebar"><h3>阅读导航</h3><nav aria-label="章节目录"><a href="#s1"><span>01</span>按模式找规则</a><a href="#s2"><span>02</span>半小时读五个文件</a><a href="#s3"><span>03</span>按目标选路线</a><a href="#s4"><span>04</span>启动主链路</a><a href="#s5"><span>05</span>大厅与切场景</a><a href="#s6"><span>06</span>落牌与扣血</a><a href="#s7"><span>07</span>结算与章节演出</a><a href="#s8"><span>08</span>当前工程目录</a><a href="#s9"><span>09</span>关键文件怎么读</a><a href="#s10"><span>10</span>生成代码与工具</a><a href="#s11"><span>11</span>七个迷路点</a><a href="#s12"><span>12</span>远征入门练习</a><a href="#s13"><span>13</span>无尽、剧情与资源</a><a href="#s14"><span>14</span>九路围棋与 Agent</a><a href="#s15"><span>15</span>帧同步逐文件导读</a><a href="#s16"><span>16</span>预测、录像与重连</a><a href="#s17"><span>17</span>验证入口与证据</a></nav><div class="note">先走通一次调用，再横向看同类代码。源码链接指向仓库中的实际文件。</div></aside>
-<main><div class="document-meta"><a href="RevGame项目架构与Revolution框架讲解.html">配套项目架构讲解</a><a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀同款帧同步架构</a></div>
+<main><div class="document-meta"><a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀同款帧同步架构</a><a href="RevGame核心设计哲学-新手版.html#compare-faq">旧工程对照与新手问答</a></div>
 <div class="legend">版本基线为 <a href="https://github.com/Yokino337088/RevGame/tree/747902b99ad57f6714c2f73a380620a5eadf2973"><code>747902b9</code></a>（2026-11-11）。源码链接相对于本仓库，运行证据附在相关章节。</div>
 
 <section id="s1" class="chapter">
@@ -502,8 +587,10 @@ dotnet run --project tools/DuelPredictionChecks/DuelPredictionChecks.csproj</cod
   <p>上面两条命令从仓库根运行。原生重编译与 <code>ctest</code> 的命令见 <a href="../../RevGameCore/README.md">RevGameCore 构建说明</a>。如果改了 <code>Duel.v1.json</code>，先运行生成器并确保夹具、客户端和服务端各用本次编译的兼容产物。</p>
   <p>在 Unity 里按项目约定用同一个 RevMCP stdio 会话显式连接工程。<code>rev_discover</code> 读取当前能力，<code>rev_call</code> 执行已发现的单个动作或查询，<code>rev_run</code> 执行带业务断言与清理的计划。进入 Play 或域重载后重新发现。已接受请求、已达到业务后置条件、已退出并清理是三个可分别核对的结果。</p>
   <p class="note"><a href="../进度同步/双人决斗预测回滚验收_2026-11-10/双人决斗预测回滚验收_2026-11-10.html">双端报告的执行顺序与覆盖边界</a> · <a href="../进度同步/决斗射程与跳跃验收_2026-11-11/决斗射程与跳跃验收_2026-11-11.html">角色规则与表现验收</a></p>
+  <p class="note"><a href="RevGame核心设计哲学-新手版.html#compare-automation">对照旧项目的菜单与采样，理解 RevCLI、RevMCP 和业务断言各自负责什么</a></p>
 </section>
 
+<nav class="reading-handoff" aria-label="继续阅读"><strong>继续阅读</strong><a class="pill primary" href="RevGame项目架构与Revolution框架讲解.html">上一篇 · 项目架构</a><a class="pill" href="RevGame核心设计哲学-新手版.html">回看核心设计哲学</a></nav>
 </main></div>
 <footer>RevGame · 代码阅读指南（新手版）· 2026-11-11</footer>
 
