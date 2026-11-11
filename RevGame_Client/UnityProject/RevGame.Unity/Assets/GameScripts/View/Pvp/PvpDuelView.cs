@@ -1,11 +1,9 @@
-using System.Collections.Generic;
 using DG.Tweening;
 using RevGame.Flow;
 using RevGame.Pvp;
 using RevGame.Pvp.Duel;
 using Revolution;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace RevGame.View
@@ -29,8 +27,14 @@ namespace RevGame.View
         public Text Clock;
         // 双方就绪、连接中断及权威胜负提示。
         public Text Banner;
-        // 黑白两席的显示名称。
-        public Text Names;
+        // HUD 设计框，等比适配屏幕安全区。
+        public RectTransform Hud;
+        // 黑方玩家名，独立排版以限制过长昵称。
+        public Text FirstName;
+        // 白方玩家名。
+        public Text SecondName;
+        // 左手圆形摇杆，移动方向与键盘共用同一输入缓冲。
+        public DuelMoveStick MoveStick;
         // 黑方当前权威血量的整数文本。
         public Text FirstHealthText;
         // 白方当前权威血量的整数文本。
@@ -67,12 +71,6 @@ namespace RevGame.View
         private int _presentedResult;
         // HUD 点按后的招式编号，由下一次输入采样取走。
         private int _clickedAction;
-        // 按住左移的 EventSystem 指针 ID。松开一根手指不能清掉其他触点。
-        private readonly HashSet<int> _leftPointers = new HashSet<int>();
-        // 按住右移的指针 ID。与左移同时按住时抵消为回中。
-        private readonly HashSet<int> _rightPointers = new HashSet<int>();
-        // 兼容已有场景配方里的旧持久监听。运行期绑定会用实际指针替换它。
-        private const int LegacyPointerId = int.MinValue;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
         // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
@@ -101,12 +99,7 @@ namespace RevGame.View
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
         {
-            RevGame.UI.GameMobileLayout.EnableSceneHud(transform,
-                "Left", "Right", "Jump", "Jab", "Skill", "SkillTwo", "Ultimate", "Back", "Reconnect",
-                "BlackHealth", "WhiteHealth", "BlackEnergy", "WhiteEnergy", "BlackHp", "WhiteHp",
-                "FighterNames", "Clock", "TimerPlate", "Banner", "BlackCombo", "WhiteCombo");
-            BindDirectionButton("Left", _leftPointers);
-            BindDirectionButton("Right", _rightPointers);
+            RevGame.UI.GameMobileLayout.EnableDuelHud(Hud);
             Exit.onClick.AddListener(ReturnHome);
             Reconnect.onClick.AddListener(ReconnectServer);
             Jab.onClick.AddListener(() => _clickedAction = 1);
@@ -121,62 +114,6 @@ namespace RevGame.View
         {
             var service = RevServices.GetRequired<PvpService>();
             service.StartServer(service.Endpoint, service.Nickname);
-        }
-
-        // 保留旧场景配方的方向绑定入口。正式运行时由 Start 更换为带指针 ID 的事件。
-        public void MovePointer(int direction)
-        {
-            if (direction != 0)
-            {
-                (direction < 0 ? _leftPointers : _rightPointers).Add(LegacyPointerId);
-            }
-        }
-
-        // 旧序列化回调与按下入口成对保留，便于已有场景继续导入。
-        public void ReleasePointer(int direction)
-        {
-            if (direction == 0)
-            {
-                return;
-            }
-            (direction < 0 ? _leftPointers : _rightPointers).Remove(LegacyPointerId);
-        }
-
-        // 重用场景中已有方向按钮的事件触发器。攻击和跳跃继续走 Button.onClick。
-        private void BindDirectionButton(string path, HashSet<int> pointers)
-        {
-            var button = transform.Find(path)?.GetComponent<Button>();
-            if (button == null)
-            {
-                Debug.LogError("决斗方向按钮缺少绑定：" + path, this);
-                return;
-            }
-            var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
-            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerDown ||
-                entry.eventID == EventTriggerType.PointerUp || entry.eventID == EventTriggerType.PointerExit);
-            AddDirectionEvent(trigger, EventTriggerType.PointerDown, pointer =>
-            {
-                if (pointer.button == PointerEventData.InputButton.Left && button.IsInteractable())
-                {
-                    pointers.Add(pointer.pointerId);
-                }
-            });
-            AddDirectionEvent(trigger, EventTriggerType.PointerUp, pointer => pointers.Remove(pointer.pointerId));
-            AddDirectionEvent(trigger, EventTriggerType.PointerExit, pointer => pointers.Remove(pointer.pointerId));
-        }
-
-        // 保留 Unity 每根手指的原始事件数据，释放时只删除该触点。
-        private static void AddDirectionEvent(EventTrigger trigger, EventTriggerType kind, System.Action<PointerEventData> listener)
-        {
-            var entry = new EventTrigger.Entry { eventID = kind, callback = new EventTrigger.TriggerEvent() };
-            entry.callback.AddListener(data =>
-            {
-                if (data is PointerEventData pointer)
-                {
-                    listener(pointer);
-                }
-            });
-            trigger.triggers.Add(entry);
         }
 
         // 窗口失焦时可能收不到 PointerUp。清除本地按住状态，回到窗口后重新接收输入。
@@ -206,8 +143,7 @@ namespace RevGame.View
         // 清除触控状态及本地预测。已发送的输入仍由权威处理，清理表现不会撤销它们。
         private void ClearHeldControls()
         {
-            _leftPointers.Clear();
-            _rightPointers.Clear();
+            MoveStick?.ResetInput();
             _clickedJump = false;
             _clickedAction = 0;
             RevServices.Get<PvpService>()?.ClearDuelUnsealedInput();
@@ -223,9 +159,11 @@ namespace RevGame.View
         private void Update()
         {
             var service = RevServices.GetRequired<PvpService>();
-            bool left = _leftPointers.Count > 0 || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
-            bool right = _rightPointers.Count > 0 || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
-            int direction = (right ? 1 : 0) - (left ? 1 : 0);
+            bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+            bool right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+            int keyboard = (right ? 1 : 0) - (left ? 1 : 0);
+            // 键盘和触控都输出同一种离散意图。反向同时按住时归中。
+            int direction = Mathf.Clamp(keyboard + MoveStick.Direction, -1, 1);
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
                 Input.GetKeyDown(KeyCode.L) ? 4 : Input.GetKeyDown(KeyCode.I) ? 3 : _clickedAction;
             _clickedAction = 0;
@@ -292,7 +230,8 @@ namespace RevGame.View
                 SecondEnergy.fillAmount = Mathf.Clamp01(view.SecondEnergy / (float)DuelConfig.Energy);
                 FirstHealthText.text = view.FirstHealth.ToString();
                 SecondHealthText.text = view.SecondHealth.ToString();
-                Names.text = "绯焰  ·  " + service.BlackName + "                           " + service.WhiteName + "  ·  绯焰";
+                FirstName.text = "绯焰  /  " + service.BlackName;
+                SecondName.text = service.WhiteName + "  /  绯焰";
                 FirstCombo.text = view.FirstCombo > 1 ? view.FirstCombo + " HIT" : "";
                 SecondCombo.text = view.SecondCombo > 1 ? view.SecondCombo + " HIT" : "";
                 Clock.text = DuelConfig.FrameLimit == 0

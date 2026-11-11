@@ -56,9 +56,10 @@ namespace RevGame.Editor
             ValidateDuelRoleClips("Swordsman", EmberPrefix, shared, groups);
             ValidateDuelSceneAnimationSlices(shared);
 
-            // 同一关键帧可以用于多种姿态。图集只收唯一的角色和特效 Sprite，背景保持原分辨率。
+            // 图集去重收录角色、特效和 HUD Sprite。背景保持原分辨率，便于镜头移动和裁切。
             Sprite[] sprites = shared.SelectMany(frames => frames)
-                .Concat(ArcadeCastArt.Concat(ArcadeImpactArt).Distinct().Select(LoadArcadeEffect)).Distinct().ToArray();
+                .Concat(ArcadeCastArt.Concat(ArcadeImpactArt).Distinct().Select(LoadArcadeEffect))
+                .Concat(DuelHudSprites.Select(LoadHudSprite)).Distinct().ToArray();
             string[] paths = sprites.Select(AssetDatabase.GetAssetPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
             if (paths.Distinct(StringComparer.Ordinal).Count() != sprites.Length)
             {

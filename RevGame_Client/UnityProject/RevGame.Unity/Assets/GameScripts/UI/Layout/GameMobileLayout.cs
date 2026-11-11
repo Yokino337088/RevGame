@@ -95,7 +95,20 @@ namespace RevGame.UI
             layout.ApplyLayout();
         }
 
-        /// <summary>背景或屏幕坐标引导的宿主需要完整画幅，安全区只作用于其中的内容。</summary>
+        /// <summary>在安全区内以等比设计框显示决斗 HUD，背景和角色继续使用完整画幅。</summary>
+        internal static void EnableDuelHud(RectTransform hud)
+        {
+            // 以项目统一设计框等比布局，超宽屏、刘海屏上的触控区域仍是圆形。
+            GameMobileLayout layout = GetLayout(hud);
+            layout._boardFrame = true;
+            // 宽屏多出的安全空间优先留给两手的控制区，顶部状态条保持对称。
+            layout._leftSidebar = ReadSidebar(hud, "MoveStick", "MoveKeys", "Jump");
+            layout._rightSidebar = ReadSidebar(hud, "Jab", "Skill", "SkillTwo", "Ultimate");
+            layout._lastSize = Vector2.zero;
+            layout.ApplyLayout();
+        }
+
+        /// <summary>将指定背景或引导节点还原为覆盖父画布。</summary>
         public static void StretchToParent(RectTransform root)
         {
             root.anchorMin = Vector2.zero;

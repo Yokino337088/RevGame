@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>决斗 HUD 重制验收 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+p { margin: .6rem 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 决斗验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>决斗 HUD 重制</h1>
+<p>雨夜擂台上方用红蓝区分双方头像、昵称和血条，居中显示时钟，金色能量条按五格分段。底部留出两手的操控空间，圆键使用同一套深底描边和招式图标。</p>
+<figure><img src="决斗HUD.jpg" alt="绯焰双人决斗的新血条与圆形控件"><figcaption>正式 UTP 决斗开场画面。</figcaption></figure>
+</section>
+<section>
+<h2>触控设计</h2>
+<p>左下的固定摇杆只采样横向，向左右推即走位，松手归中。中心死区和较小的回中阈值让轻微抖动时的方向更稳定。跳跃放在摇杆上方。右手拇指以最大号普攻为中心，贯枪在左下、坠枪在左上、赤阵在上方。现有键盘 <kbd>A</kbd>/<kbd>D</kbd>、方向键、<kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>、<kbd>I</kbd> 和跳跃均可用。</p>
+<p>参考王者 v122 的 <code>NormalJoystickStrategy</code> 和 <code>CUICircleArea</code>，摇杆由单个触点持有，每个圆键使用真实圆形射线区域。方向码进入原有 <code>PvpService.SetDuelInput</code>，服务按决斗帧收集输入。<code>GameMobileLayout</code> 将 HUD 等比映射到安全区，并将宽屏额外安全空间分给左右手。</p>
+<p>顶部信息分层参考《街头霸王 6》的生命、资源和计时显示，《铁拳 8》的 HUD 前置可读性，以及用户视频的红蓝对照。<a href="https://game.capcom.com/manual/SF6/en/ps4/page/3/2">街头霸王 6 官方 HUD 手册</a> · <a href="https://www.bandainamcoent.com/news/tekken-8-patch-notes-v1-09-01">铁拳 8 官方 HUD 说明</a> · <a href="https://www.bilibili.com/video/BV1hLp363ERj/">用户参考视频</a></p>
+</section>
+<section>
+<h2>验收结果</h2>
+<table>
+<thead><tr><th>检查</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>RevCLI 场景和图集</td><td><code>game.pvp.duel-build</code> 生成正式决斗场景，<code>game.pvp.duel-atlas</code> 在 StandaloneWindows64 实际打包 57 张 Sprite，共两页，含 17 张 HUD 切片。</td></tr>
+<tr><td>Unity 同机 UTP · 1920×1080</td><td>两席昵称可见，六个圆形触控区都在安全区内，彼此不重叠。普攻是右侧最大的圆键，六个触控区使用已打包图集。</td></tr>
+<tr><td>触点和权威输入</td><td>中心死区归中，第二触点无法抢占移动，摇杆拖出圆外可以反向。按住摇杆的同时，独立触点触发了跳跃与贯枪，松手后角色停止横移。</td></tr>
+<tr><td>实战回归</td><td>真实 HUD 完成六连击，坠枪在判伤帧落地，对手剩 3 点血。原生连招与预测回滚回归通过。</td></tr>
+</tbody>
+</table>
+<p>同一 RevMCP 会话中用 <code>rev_discover</code> 发现 Editor 与游戏动作，以 <code>rev_call</code> 调用 <code>editor.play</code>。<code>rev_run</code> 在正式场景执行 <code>pvp.duel-hud-layout</code>、<code>pvp.duel-hud-input-check</code>、<code>pvp.duel-arcade-combo</code>，最后清理房间、回到大厅并停止 Play。</p>
+<p>有一轮密集连拍时第三段连招等待超时。最终复核先完成触点连拍，随后六段连招全部通过。</p>
+<figure><img src="摇杆双触点.gif" alt="摇杆走位、跳跃和圆形技能键联机操作"><figcaption>取自最终复核中真实摇杆和动作触点操作的 10 张画面。</figcaption></figure>
+</section>
+<section>
+<h2>框架与交付范围</h2>
+<p>Revolution 的场景流程、服务入口和自动化支持这次 HUD 改造，帧同步继续由既有决斗输入缓冲和 GameCore 驱动。圆形射线和触点持有逻辑归决斗视图。此次使用 Windows Unity Editor 同机触点模拟，实体手机的握持与刘海适配尚未实测。独立 Player 需随新版内置决斗场景构建。</p>
+</section>
+</main>
+</body>
+</html>

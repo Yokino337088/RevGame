@@ -54,6 +54,7 @@ namespace RevGame.Pvp
         // 注册本机、P2P 与只读快照查询，支持场景、封帧、动画和特效断言。
         private static void RegisterDuelAutomation()
         {
+            RegisterDuelHudAutomation();
             RevGM.Register(ComputerDuelGm, "从大厅或本地人机棋局重开测试局，构造劣势后挑战电脑", _ => BeginComputerDuel());
             RevGM.Register("围棋对战/决斗双方无敌", "本地人机决斗专用。1 双方免伤，0 恢复伤害", SetDuelNoDamage, RevGMArg.Int("开关", 1));
             RevRuntimeAutomation.Register("pvp.duel-enter-computer", "经正式 GameFlow 直接打开围棋人机棋盘",
@@ -148,16 +149,16 @@ namespace RevGame.Pvp
             PvpService service = Service;
             string id = service.DuelId;
             var pointer = new PointerEventData(EventSystem.current) { pointerId = 16 };
-            GameObject right = view.transform.Find("Right").gameObject;
+            GameObject stick = view.MoveStick.gameObject;
             try
             {
                 if (prepare)
                 {
                     _arcadePlungeAirborne = false;
                     _arcadePlungeLanded = false;
-                    PressDuelHudButton(right, pointer);
+                    PressDuelHudButton(stick, pointer, .72f);
                     await WaitForDuelControl(id, () => service.DuelSnapshot.SecondX - service.DuelSnapshot.FirstX <= 910, "接近训练对手");
-                    ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(stick, pointer, ExecuteEvents.pointerUpHandler);
                     await WaitForDuelControl(id, () => service.DuelSnapshot.FirstEnergy >= 92, "连招能量");
                     _arcadePan = Mathf.Abs(view.CameraRig.Fighters.anchoredPosition.x);
                     if (_arcadePan < 20 || !view.First.sprite.packed || !view.Second.sprite.packed)
@@ -204,9 +205,9 @@ namespace RevGame.Pvp
             }
             finally
             {
-                if (right != null)
+                if (stick != null)
                 {
-                    ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(stick, pointer, ExecuteEvents.pointerUpHandler);
                 }
             }
         }
@@ -376,33 +377,30 @@ namespace RevGame.Pvp
         // 以逻辑帧判定两次输入的时机，以实际 Sprite 和镜像判定表现，避免用 isPlaying 冒充换帧。
         private static async RevTask CheckDuelControls(PvpDuelView view, int stallMs)
         {
-            GameObject left = view.transform.Find("Left").gameObject;
-            GameObject right = view.transform.Find("Right").gameObject;
+            GameObject stick = view.MoveStick.gameObject;
             var firstFinger = new PointerEventData(EventSystem.current) { pointerId = 11 };
             var secondFinger = new PointerEventData(EventSystem.current) { pointerId = 12 };
-            var rightFinger = new PointerEventData(EventSystem.current) { pointerId = 13 };
             var jabFinger = new PointerEventData(EventSystem.current) { pointerId = 14 };
             var service = Service;
             string id = service.DuelId;
             try
             {
                 int start = service.DuelSnapshot.FirstX;
-                PressDuelHudButton(left, firstFinger);
-                PressDuelHudButton(left, secondFinger);
+                PressDuelHudButton(stick, firstFinger, -.72f);
+                PressDuelHudButton(stick, secondFinger, .72f);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstX < start &&
                     view.First.rectTransform.localScale.x < 0 && view.FirstAnimator.RunSpriteMotion, "左移与跑动");
                 int oneReleasedAt = service.DuelSnapshot.Frame;
-                ExecuteEvents.Execute(left, firstFinger, ExecuteEvents.pointerUpHandler);
+                ExecuteEvents.Execute(stick, secondFinger, ExecuteEvents.pointerUpHandler);
                 // 多等三个逻辑帧，排除松手前已经提交的一帧左移被当作多指成功。
                 await WaitForDuelControl(id, () => service.DuelSnapshot.Frame >= oneReleasedAt + 3 &&
-                    service.DuelSnapshot.FirstX < service.DuelPreviousSnapshot.FirstX, "同一按钮松开一根手指后仍左移");
+                    service.DuelSnapshot.FirstX < service.DuelPreviousSnapshot.FirstX, "另一根手指松开后仍左移");
                 _controlCheckTrace["multiTouchReleasePreserved"] = true;
                 int turned = service.DuelSnapshot.FirstX;
-                PressDuelHudButton(right, rightFinger);
-                ExecuteEvents.Execute(left, secondFinger, ExecuteEvents.pointerExitHandler);
+                DragDuelStick(stick, firstFinger, 1.25f);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstX > turned &&
-                    view.First.rectTransform.localScale.x > 0, "右移与旧按钮松手");
-                ExecuteEvents.Execute(right, rightFinger, ExecuteEvents.pointerUpHandler);
+                    view.First.rectTransform.localScale.x > 0, "同一触点反向拖拽");
+                ExecuteEvents.Execute(stick, firstFinger, ExecuteEvents.pointerUpHandler);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.Frame > 0 &&
                     service.DuelSnapshot.FirstX == service.DuelPreviousSnapshot.FirstX, "松手停止");
                 ClickDuelHudButton(view.Jab.gameObject, jabFinger);
@@ -413,7 +411,7 @@ namespace RevGame.Pvp
                 _controlCheckTrace["expectedSecondStart"] = expectedSecondStart;
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAge == DuelConfig.ActionDuration(1) - 2, "恢复期输入窗口");
                 ClickDuelHudButton(view.Jab.gameObject, jabFinger);
-                _controlCheckTrace["duelHudRaycasts"] = 5;
+                _controlCheckTrace["duelHudRaycasts"] = 4;
                 // 先确认真实 UI 采样已经把第二次按键交给业务，再暂停 Unity 主线程。
                 await WaitForDuelControl(id, () => service.DuelQueuedAttackForCheck == 1, "第二次普攻入缓冲");
                 _controlCheckTrace["queueFrame"] = service.DuelSnapshot.Frame;
@@ -450,9 +448,8 @@ namespace RevGame.Pvp
                 if (view != null && service.DuelId == id)
                 {
                     CaptureDuelControlTrace(service, view);
-                    ExecuteEvents.Execute(left, firstFinger, ExecuteEvents.pointerUpHandler);
-                    ExecuteEvents.Execute(left, secondFinger, ExecuteEvents.pointerUpHandler);
-                    ExecuteEvents.Execute(right, rightFinger, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(stick, firstFinger, ExecuteEvents.pointerUpHandler);
+                    ExecuteEvents.Execute(stick, secondFinger, ExecuteEvents.pointerUpHandler);
                     service.TrySetDuelNoDamage(false);
                 }
                 _controlCheckRunning = false;
@@ -460,12 +457,12 @@ namespace RevGame.Pvp
         }
 
         // 使用实际 Canvas 的屏幕坐标、EventSystem 和 GraphicRaycaster，保证 HUD 不被遮挡。
-        private static void PressDuelHudButton(GameObject button, PointerEventData pointer)
+        private static void PressDuelHudButton(GameObject button, PointerEventData pointer, float horizontal = 0)
         {
             var rect = (RectTransform)button.transform;
             Canvas canvas = button.GetComponentInParent<Canvas>().rootCanvas;
             Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            pointer.position = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center));
+            pointer.position = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center + Vector2.right * (horizontal * rect.rect.width * .5f)));
             var hits = new List<RaycastResult>();
             EventSystem.current.RaycastAll(pointer, hits);
             GameObject hit = hits.Count == 0 ? null : hits[0].gameObject;

@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using RevGame.View;
 using UnityEditor;
-using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -103,40 +101,7 @@ namespace RevGame.Editor
                 view.Effects.ImpactSounds = new[] { "LightHit", "SkillHit", "UltimateHit" }.Select(LoadArcadeSound).ToArray();
                 view.Effects.Speaker = root.AddComponent<AudioSource>();
                 view.Effects.Speaker.playOnAwake = false;
-                view.FirstHealth = AddMeter("BlackHealth", root.transform, .075f, .876f, .455f, .912f, new Color(.86f,.25f,.25f), false);
-                view.SecondHealth = AddMeter("WhiteHealth", root.transform, .545f, .876f, .925f, .912f, new Color(.23f,.65f,.9f), true);
-                view.FirstEnergy = AddMeter("BlackEnergy", root.transform, .075f, .837f, .455f, .852f, new Color(1,.74f,.21f), false);
-                view.SecondEnergy = AddMeter("WhiteEnergy", root.transform, .545f, .837f, .925f, .852f, new Color(1,.74f,.21f), true);
-                view.FirstHealthText = Label("BlackHp", root.transform, "", .08f, .87f, .20f, .916f, 26);
-                view.SecondHealthText = Label("WhiteHp", root.transform, "", .80f, .87f, .92f, .916f, 26);
-                view.Names = Label("FighterNames", root.transform, "", .08f, .92f, .92f, .98f, 30);
-                view.FirstCombo = Label("BlackCombo", root.transform, "", .09f, .66f, .3f, .76f, 54, true);
-                view.SecondCombo = Label("WhiteCombo", root.transform, "", .70f, .66f, .91f, .76f, 54, true);
-                view.FirstCombo.color = new Color(1, .48f, .32f);
-                view.SecondCombo.color = new Color(.4f, .94f, 1);
-                Plate(Rect("TimerPlate", root.transform, .455f, .854f, .545f, .953f), "UI_achieveItem_imgBK", Color.white);
-                view.Clock = Label("Clock", root.transform, "", .45f, .862f, .55f, .941f, 55, true);
-                view.Banner = Label("Banner", root.transform, "等待双方进入决斗场", .15f, .64f, .85f, .82f, 54);
-                var shadow = view.Banner.gameObject.AddComponent<Shadow>();
-                shadow.effectColor = new Color(.08f, .04f, .12f, .92f);
-                shadow.effectDistance = new Vector2(2,-3);
-                // 右手四键分两行，避免增加技能二后压缩触屏目标。
-                view.Jab = Button("Jab", root.transform, "普攻 · J", .865f, .045f, .972f, .112f);
-                view.Skill = Button("Skill", root.transform, "贯枪 · K", .746f, .045f, .853f, .112f);
-                view.SkillTwo = Button("SkillTwo", root.transform, "坠枪 · L", .746f, .128f, .853f, .195f);
-                view.Ultimate = Button("Ultimate", root.transform, "赤阵 · I", .865f, .128f, .972f, .195f);
-                view.Jump = Button("Jump", root.transform, "↑ · 跳跃", .102f, .128f, .209f, .195f);
-                view.Exit = Button("Back", root.transform, "返回大厅", .02f, .735f, .13f, .792f);
-                view.Reconnect = Button("Reconnect", root.transform, "重连", .14f, .735f, .25f, .792f);
-                view.Reconnect.gameObject.SetActive(false);
-                AddDirection(Button("Left", root.transform, "← · A", .06f, .07f, .17f, .135f), view, -1);
-                AddDirection(Button("Right", root.transform, "→ · D", .18f, .07f, .29f, .135f), view, 1);
-                // 保留项目已有九宫格底板，颜色与雨夜舞台一致。
-                TintArcadeButton(view.Jab, new Color(.88f, .30f, .30f));
-                TintArcadeButton(view.Skill, new Color(.72f, .25f, .34f));
-                TintArcadeButton(view.SkillTwo, new Color(.22f, .53f, .72f));
-                TintArcadeButton(view.Ultimate, new Color(.60f, .30f, .72f));
-                TintArcadeButton(view.Jump, new Color(.22f, .53f, .72f));
+                BuildDuelHud(view);
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
                 if (!EditorSceneManager.SaveScene(scene, DuelScenePath))
                 {
@@ -216,12 +181,6 @@ namespace RevGame.Editor
             return layer;
         }
 
-        // 调整已有 Sprite 底板色彩。鼠标和触摸状态仍由 Unity Button 管理。
-        private static void TintArcadeButton(Button button, Color tint)
-        {
-            button.image.color = tint;
-        }
-
         // 创建可被显示快照定位的角色或特效图层，center 是初始水平布局比例。
         private static Image AddFighter(string name, Transform parent, float center)
         {
@@ -232,18 +191,6 @@ namespace RevGame.Editor
             image.preserveAspect = true;
             image.raycastTarget = false;
             return image;
-        }
-
-        // 生成条框和独立填充层，mirror 决定血量从哪一侧开始变化。
-        private static Image AddMeter(string name, Transform parent, float x0, float y0, float x1, float y1, Color color, bool mirror)
-        {
-            var shell = Rect(name, parent, x0, y0, x1, y1);
-            Plate(shell, "UI_achieveItem_imgBK", new Color(.22f,.17f,.25f));
-            var fill = Plate(Rect("Fill", shell, .008f, .10f, .992f, .90f), "UI_achieveItem_imgBK", color);
-            fill.type = Image.Type.Filled;
-            fill.fillMethod = Image.FillMethod.Horizontal;
-            fill.fillOrigin = mirror ? 1 : 0;
-            return fill;
         }
 
         // 生成一套共享的 Legacy Clip，原来已存在的片段保留 GUID。
@@ -337,8 +284,6 @@ namespace RevGame.Editor
                 Sprite[][] shared = DuelPoses.Select(LoadDuelSequence).ToArray();
                 BindDuelSpriteSequences(view.FirstAnimator, shared);
                 BindDuelSpriteSequences(view.SecondAnimator, shared);
-                AddDirection(view.transform.Find("Left").GetComponent<Button>(), view, -1);
-                AddDirection(view.transform.Find("Right").GetComponent<Button>(), view, 1);
                 if (!EditorSceneManager.SaveScene(duel))
                 {
                     throw new InvalidOperationException("决斗角色序列帧保存失败。");
@@ -355,21 +300,5 @@ namespace RevGame.Editor
             }
         }
 
-        // 把指针按下、松开与移出转发为方向意图，避免按住后移出产生粘键。
-        private static void AddDirection(Button button, PvpDuelView view, int direction)
-        {
-            var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
-            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerDown ||
-                entry.eventID == EventTriggerType.PointerUp || entry.eventID == EventTriggerType.PointerExit);
-            foreach (var kind in new[] { EventTriggerType.PointerDown, EventTriggerType.PointerUp, EventTriggerType.PointerExit })
-            {
-                var entry = new EventTrigger.Entry { eventID = kind };
-                var callback = new EventTrigger.TriggerEvent();
-                UnityAction<int> move = kind == EventTriggerType.PointerDown ? view.MovePointer : view.ReleasePointer;
-                UnityEventTools.AddIntPersistentListener(callback, move, direction);
-                entry.callback = callback;
-                trigger.triggers.Add(entry);
-            }
-        }
     }
 }
