@@ -29,6 +29,10 @@ namespace RevGame.View
         public Text Banner;
         // HUD 设计框，等比适配屏幕安全区。
         public RectTransform Hud;
+        // 桌面键盘图例所在的底板，触屏设备只显示圆形操作键。
+        public GameObject KeyboardGuide;
+        // 短时按键回执，说明当前输入、受击或能量状态。
+        public Text InputFeedback;
         // 黑方玩家名，独立排版以限制过长昵称。
         public Text FirstName;
         // 白方玩家名。
@@ -73,8 +77,16 @@ namespace RevGame.View
         private int _clickedAction;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
+        // 输入提示结束的本地非缩放时间。
+        private float _inputFeedbackUntil;
         // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
         private const float ActorScale = .138f;
+        // 两个站位小于一步的距离时保持已有镜像，防止重叠或相互穿过时连续翻面。
+        private const float FacingHoldDistance = 140 * ActorScale;
+        // 当前真正显示的黑方朝向。
+        private int _firstDrawFacing = 1;
+        // 当前真正显示的白方朝向。
+        private int _secondDrawFacing = -1;
         // 小幅位置差在 85 毫秒内归零；跨越大半个预测窗时直接校正，避免拖着角色穿过场景。
         private const float CorrectionSeconds = .085f;
         // 大于 96 个 HUD 单位的纠偏不做缓动，通常来自掉线、跳帧或明显错误的猜测。
@@ -94,19 +106,41 @@ namespace RevGame.View
         internal bool SawPredictedJumpForCheck { get; private set; }
         // 原生确认本机离地后置位，保留到离场供跨帧断言读取。
         internal bool SawConfirmedJumpForCheck { get; private set; }
+        // 实际 HUD 回调进入次数，用来检查一次鼠标按下与抬起只产生一次意图。
+        internal int HudPressCountForCheck { get; private set; }
+        // 最近一次 HUD 操作的招式槽。0 是跳跃。
+        internal int LastHudActionForCheck { get; private set; }
 #endif
 
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
         {
             RevGame.UI.GameMobileLayout.EnableDuelHud(Hud);
+            KeyboardGuide.SetActive(!UnityEngine.Device.Application.isMobilePlatform);
             Exit.onClick.AddListener(ReturnHome);
             Reconnect.onClick.AddListener(ReconnectServer);
-            Jab.onClick.AddListener(() => _clickedAction = 1);
-            Skill.onClick.AddListener(() => _clickedAction = 2);
-            SkillTwo.onClick.AddListener(() => _clickedAction = 4);
-            Ultimate.onClick.AddListener(() => _clickedAction = 3);
-            Jump.onClick.AddListener(() => _clickedJump = true);
+            Jab.onClick.AddListener(() => QueueHudPress(1));
+            Skill.onClick.AddListener(() => QueueHudPress(2));
+            SkillTwo.onClick.AddListener(() => QueueHudPress(4));
+            Ultimate.onClick.AddListener(() => QueueHudPress(3));
+            Jump.onClick.AddListener(() => QueueHudPress(0));
+        }
+
+        // 只缓存 UGUI 按下事件，Update 仍负责与键盘合并并调用业务入口。
+        private void QueueHudPress(int action)
+        {
+            if (action == 0)
+            {
+                _clickedJump = true;
+            }
+            else
+            {
+                _clickedAction = action;
+            }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            HudPressCountForCheck++;
+            LastHudActionForCheck = action;
+#endif
         }
 
         // 把当前端点和昵称交回 PvP 服务，由连接流程决定能否续局。
@@ -167,12 +201,59 @@ namespace RevGame.View
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
                 Input.GetKeyDown(KeyCode.L) ? 4 : Input.GetKeyDown(KeyCode.I) ? 3 : _clickedAction;
             _clickedAction = 0;
-            service.SetDuelInput(direction, action, _clickedJump || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow));
+            bool jump = _clickedJump || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow);
+            service.SetDuelInput(direction, action, jump);
+            if (action != 0 || jump)
+            {
+                ShowInputFeedback(service, action, jump);
+            }
+            else if (_inputFeedbackUntil != 0 && Time.unscaledTime >= _inputFeedbackUntil)
+            {
+                _inputFeedbackUntil = 0;
+                InputFeedback.text = "";
+            }
             _clickedJump = false;
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 ReturnHome();
             }
+        }
+
+        // 及时说明按键被接收或受什么条件限制。具体出招和命中仍等权威帧。
+        private void ShowInputFeedback(PvpService service, int action, bool jump)
+        {
+            DuelSnapshot state = service.DuelSnapshot;
+            bool black = service.MySide == GoSide.Black;
+            string name = action == 1 ? "普攻" : action == 2 ? "贯枪" : action == 3 ? "赤阵" : action == 4 ? "坠枪" : "跳跃";
+            int energy = black ? state.FirstEnergy : state.SecondEnergy;
+            int cost = action == 2 ? DuelConfig.SkillCost : action == 3 ? DuelConfig.UltimateCost : action == 4 ? DuelConfig.SkillTwoCost : 0;
+            int stun = black ? state.FirstStun : state.SecondStun;
+            bool jumpBlocked = jump && ((black ? state.FirstY : state.SecondY) > 0 ||
+                (black ? state.FirstAction : state.SecondAction) != 0);
+            string message = "已输入";
+            if (state.Result != 0)
+            {
+                message = "对局已结束";
+            }
+            else if (!service.DuelBothReady || service.DuelError.Length != 0 ||
+                (service.Mode != PvpConnectionMode.Local && !service.Connected))
+            {
+                message = "等待对局就绪";
+            }
+            else if (energy < cost)
+            {
+                message = $"能量不足，需 {cost}";
+            }
+            else if (action == 0 && service.Mode != PvpConnectionMode.Local && (stun > 0 || jumpBlocked))
+            {
+                message = "暂不能起跳";
+            }
+            else if (stun > 0 || (action == 0 ? jumpBlocked : !state.CanTakeAction(black, action)))
+            {
+                message = "已缓冲";
+            }
+            InputFeedback.text = name + "  ·  " + message;
+            _inputFeedbackUntil = Time.unscaledTime + .85f;
         }
 
         // 在独立播放时钟上取样。到包可以批量推进原生世界，画面仍按相邻已确认帧插值。
@@ -238,8 +319,13 @@ namespace RevGame.View
                     ? "∞"
                     : Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             }
-            PaintActor(First, firstPosition, firstFacing);
-            PaintActor(Second, secondPosition, secondFacing);
+            if (Mathf.Abs(confirmedFirstX - confirmedSecondX) >= FacingHoldDistance)
+            {
+                _firstDrawFacing = firstFacing;
+                _secondDrawFacing = secondFacing;
+            }
+            PaintActor(First, firstPosition, _firstDrawFacing);
+            PaintActor(Second, secondPosition, _secondDrawFacing);
             CameraRig.Paint(confirmedFirstX, confirmedSecondX, confirmedHeight, Time.unscaledDeltaTime);
             FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction);
             SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction);

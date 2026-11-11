@@ -102,7 +102,7 @@ namespace RevGame.UI
             GameMobileLayout layout = GetLayout(hud);
             layout._boardFrame = true;
             // 宽屏多出的安全空间优先留给两手的控制区，顶部状态条保持对称。
-            layout._leftSidebar = ReadSidebar(hud, "MoveStick", "MoveKeys", "Jump");
+            layout._leftSidebar = ReadSidebar(hud, "MoveStick", "Jump");
             layout._rightSidebar = ReadSidebar(hud, "Jab", "Skill", "SkillTwo", "Ultimate");
             layout._lastSize = Vector2.zero;
             layout.ApplyLayout();

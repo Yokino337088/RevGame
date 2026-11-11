@@ -12,7 +12,37 @@ internal static class Program
         CheckLongCatchUpAndReconnect();
         CheckJournalOverflow();
         CheckComboBranches();
+        CheckLocalCadence();
         Console.WriteLine("DUEL_PREDICTION_PASS lateJump, rollback, anchorHash, bufferedAttack, duplicate, catchUp, staleAnchor, reconnect, journalOverflow, blackAndWhite");
+    }
+
+    // 用非 50 毫秒整数倍的渲染轮询覆盖本地封帧节拍，并模拟一次主线程长停顿。
+    private static void CheckLocalCadence()
+    {
+        using var authority = new DuelAuthority("local-cadence", networked: false);
+        var request = new DuelRequest { fingerprint = DuelConfig.Fingerprint, operation = DuelAuthority.Ready };
+        authority.Exchange(1, request, 0);
+        authority.Exchange(2, request, 0);
+        request.operation = DuelAuthority.Input;
+        for (long now = 0; now < 1000; now += 22)
+        {
+            if (!authority.LocalFrameDue(now))
+            {
+                continue;
+            }
+            request.afterFrame = authority.Frame;
+            request.inputFrame = authority.Frame + 1;
+            authority.Exchange(1, request, now);
+            authority.Exchange(2, request, now);
+        }
+        Check(authority.Frame == 20, "22ms 渲染轮询的一秒内仍封 20 帧");
+        request.afterFrame = authority.Frame;
+        request.inputFrame = authority.Frame + 1;
+        authority.Exchange(1, request, 1300);
+        authority.Exchange(2, request, 1300);
+        Check(authority.Frame == 21 && !authority.LocalFrameDue(1349) && authority.LocalFrameDue(1350),
+            "长停顿后只补一帧并从现在恢复正常节拍");
+        Console.WriteLine("DUEL_LOCAL_CADENCE_PASS 20 frames per second at 22ms polling; no stall burst");
     }
 
     // 跳跃在本机预览时尚未到权威。恢复至实际空帧，再重演仍未确认的同一个点按。

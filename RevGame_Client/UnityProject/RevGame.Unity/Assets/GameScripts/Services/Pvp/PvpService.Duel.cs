@@ -41,8 +41,12 @@ namespace RevGame.Pvp
         private int _duelQueuedAction;
         // 从按键时已确认的快照向后最多保留四个可执行帧。卡顿时逻辑帧不走，缓冲也不老化。
         private const int DuelAttackBufferFrames = 4;
+        // 本机人机遇到硬直或出招恢复时，最多保留一次动作 800 毫秒。
+        private const int LocalMaxInputBufferFrames = 16;
         // 允许带上该招式的最后一个逻辑帧号，包含该帧。
         private int _duelActionLastFrame;
+        // 本机跳跃等待落地或招式结束的最后一个合法逻辑帧。
+        private int _duelJumpLastFrame;
         // 最近一帧表现层采样到的方向，1 左、2 右、0 无。
         private int _duelDirection;
         // 锁存两次网络采样之间的跳跃点按，打包后清除。
@@ -236,16 +240,44 @@ namespace RevGame.Pvp
                 return;
             }
             _duelDirection = direction < 0 ? 1 : direction > 0 ? 2 : 0;
-            // 点按可能发生在两个网络帧之间。锁存跳跃，直到它被打包进下一帧意图。
-            _duelQueuedJump |= jump;
-            if (DuelBothReady && DuelSnapshot.Result == 0 && action >= 1 && action <= DuelCorePipe.MaxActionInput)
+            DuelSnapshot snapshot = DuelSnapshot;
+            if (!DuelBothReady || snapshot.Result != 0)
+            {
+                return;
+            }
+            if (jump)
+            {
+                // 触点可能位于两帧之间。本机可以等到允许起跳，联机由宿主按现有规则消费。
+                _duelQueuedJump = true;
+                _duelJumpLastFrame = snapshot.Frame + DuelBufferFrames(snapshot, true);
+            }
+            if (action >= 1 && action <= DuelCorePipe.MaxActionInput)
             {
                 _duelQueuedAction = action;
-                _duelActionLastFrame = DuelSnapshot.Frame + DuelAttackBufferFrames;
+                _duelActionLastFrame = snapshot.Frame + DuelBufferFrames(snapshot, false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 DuelAttackExpiredAtFrameForCheck = 0;
 #endif
             }
+        }
+
+        // 按键记录由本机服务持有，只为暂时不可用的动作延长单个缓存槽。
+        private int DuelBufferFrames(DuelSnapshot snapshot, bool jump)
+        {
+            if (Mode != PvpConnectionMode.Local)
+            {
+                return DuelAttackBufferFrames;
+            }
+            bool black = MySide == GoSide.Black;
+            if (jump && (black ? snapshot.FirstY : snapshot.SecondY) > 0)
+            {
+                return LocalMaxInputBufferFrames;
+            }
+            int active = black ? snapshot.FirstAction : snapshot.SecondAction;
+            int age = black ? snapshot.FirstAge : snapshot.SecondAge;
+            int stun = black ? snapshot.FirstStun : snapshot.SecondStun;
+            int recovery = active == 0 ? 0 : DuelConfig.ActionDuration(active) - age + 1;
+            return Math.Max(DuelAttackBufferFrames, Math.Min(LocalMaxInputBufferFrames, Math.Max(stun, recovery) + 1));
         }
 
         // 失焦、掉线或退出时丢掉尚未锁定的按键和预测。已经上行的输入仍归权威决定，不会被本端撤销。
@@ -255,6 +287,7 @@ namespace RevGame.Pvp
             _duelQueuedAction = 0;
             _duelQueuedJump = false;
             _duelActionLastFrame = 0;
+            _duelJumpLastFrame = 0;
             _duelPrediction?.Suspend();
         }
 
@@ -315,6 +348,26 @@ namespace RevGame.Pvp
             return queued;
         }
 
+        // 本地跳跃在空中或受击时等待合法窗口，过期和成功消费都会清除。
+        private bool TakeLocalDuelJump(DuelSnapshot snapshot, int nextFrame)
+        {
+            if (!_duelQueuedJump)
+            {
+                return false;
+            }
+            if (nextFrame > _duelJumpLastFrame)
+            {
+                _duelQueuedJump = false;
+                return false;
+            }
+            bool black = MySide == GoSide.Black;
+            bool grounded = black
+                ? snapshot.FirstY == 0 && snapshot.FirstAction == 0 && snapshot.FirstStun == 0
+                : snapshot.SecondY == 0 && snapshot.SecondAction == 0 && snapshot.SecondStun == 0;
+            _duelQueuedJump = !grounded;
+            return grounded;
+        }
+
         // 记录可展示的决斗失败原因，使轮询停止。
         public void SetDuelError(string error)
         {
@@ -337,15 +390,13 @@ namespace RevGame.Pvp
                 PollNetworkDuel();
                 return;
             }
-            double seconds = _clock.Elapsed.TotalSeconds;
             DuelSnapshot snapshot = DuelSnapshot;
-            bool finished = snapshot.Result != 0;
-            if (!_duelSceneReady || DuelError.Length != 0 || seconds < _duelNextSend ||
-                finished)
+            long now = _clock.ElapsedMilliseconds;
+            if (!_duelSceneReady || DuelError.Length != 0 || snapshot.Result != 0 ||
+                _duelAuthority == null || !_duelAuthority.LocalFrameDue(now))
             {
                 return;
             }
-            _duelNextSend = seconds + DuelConfig.FrameMs / 1000.0;
             var request = DuelRequestFor(DuelBothReady ? DuelAuthority.Input : DuelAuthority.Ready);
             if (request.operation == DuelAuthority.Input)
             {
@@ -355,7 +406,7 @@ namespace RevGame.Pvp
                 {
                     _duelIntentFrame = next;
                     int action = TakeDuelAction(next);
-                    _duelIntent = PackDuelInput(action);
+                    _duelIntent = _duelDirection | (action << 2) | (TakeLocalDuelJump(snapshot, next) ? DuelCorePipe.Jump : 0);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                     if (action != 0)
                     {
@@ -363,23 +414,18 @@ namespace RevGame.Pvp
                         DuelLastAttackIntentFrameForCheck = next;
                     }
 #endif
-                    _duelQueuedJump = false;
                 }
                 request.inputFrame = _duelIntentFrame;
                 request.input = _duelIntent;
             }
-            if (_duelAuthority != null)
+            if (IsComputerGame)
             {
-                long now = _clock.ElapsedMilliseconds;
-                if (IsComputerGame)
-                {
-                    var bot = DuelRequestFor(request.operation);
-                    bot.inputFrame = request.inputFrame;
-                    bot.input = ComputerDuelInput();
-                    _duelAuthority.Exchange(2, bot, now);
-                }
-                AcceptDuelReply(_duelAuthority.Exchange((int)MySide, request, now));
+                var bot = DuelRequestFor(request.operation);
+                bot.inputFrame = request.inputFrame;
+                bot.input = ComputerDuelInput();
+                _duelAuthority.Exchange(2, bot, now);
             }
+            AcceptDuelReply(_duelAuthority.Exchange((int)MySide, request, now));
         }
 
         // 先推进本机持有的联机权威，再按独立时钟送方向和点按。补帧游标落后也可以继续送输入。

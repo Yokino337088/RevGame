@@ -141,6 +141,12 @@ namespace RevGame.Pvp.Duel
         // 原生终局或指纹分歧后，宿主可以停止定时推进，历史仍供补帧读取。
         public bool Stopped => Snapshot.Result != 0 || _hashMismatchFrame != 0;
 
+        // 本地宿主读权威时钟再采样两席输入，避免主线程和封帧器各自等待 50 毫秒。
+        internal bool LocalFrameDue(long now)
+        {
+            return !_networked && now >= _nextSeal;
+        }
+
         // 调用方必须仍持有本局线程。只导出已执行的世界边界，不包含两席尚未封口的输入。
         public byte[] SaveCheckpoint()
         {
@@ -208,7 +214,9 @@ namespace RevGame.Pvp.Duel
             {
                 Seal(_input[0], _input[1]);
                 _inputMask = 0;
-                _nextSeal = now + DuelConfig.FrameMs;
+                // 普通渲染帧迟到仍沿原节拍；长停顿后从当前时刻重启，只封一帧。
+                long next = _nextSeal + DuelConfig.FrameMs;
+                _nextSeal = next > now ? next : now + DuelConfig.FrameMs;
             }
             // 只返回请求游标之后的已执行帧，避免客户端自行填空或重播已经消费的输入。
             int count = Math.Min(MaxBatch, Frame - request.afterFrame);

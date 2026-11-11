@@ -34,7 +34,12 @@ namespace RevGame.View
         // 同一权威命中只进入这里一次。大招或技能震动持续时，轻击不会把强效果打断。
         public void Hit(int action, int facing)
         {
-            float power = action == 3 ? 22 : action == 2 || action == 4 ? 12 : 6;
+            // 普攻用命中特效和闪色反馈，技能与大招才叠加一次镜头冲量。
+            float power = action == 3 ? 14 : action == 2 || action == 4 ? 7 : 0;
+            if (power == 0)
+            {
+                return;
+            }
             if (_shakeLeft > 0 && power < _shakePower)
             {
                 return;
@@ -71,7 +76,8 @@ namespace RevGame.View
 
             _shakeLeft = Mathf.Max(0, _shakeLeft - seconds);
             float decay = _shakeDuration > 0 ? _shakeLeft / _shakeDuration : 0;
-            float shake = Mathf.Sin(decay * Mathf.PI * 7) * decay * _shakePower;
+            // 单次偏移后平滑回中，避免短时间反复改变整个角色层的移动方向。
+            float shake = 6.75f * (1 - decay) * decay * decay * _shakePower;
             float vertical = Mathf.Clamp(height * -.12f, -34, 0);
             Fighters.localScale = Vector3.one * _zoom;
             Fighters.anchoredPosition = new Vector2(_pan + shake * _shakeDirection, vertical + shake * .35f);

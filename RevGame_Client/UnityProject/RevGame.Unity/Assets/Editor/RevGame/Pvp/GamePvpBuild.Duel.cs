@@ -235,6 +235,8 @@ namespace RevGame.Editor
         {
             var animation = actor.gameObject.AddComponent<Animation>();
             animation.playAutomatically = false;
+            // 动画资源用于读帧率，实际换帧由决斗表现组件完成。
+            animation.enabled = false;
             animation.clip = clips[0];
             actor.sprite = sequences[0][0];
             AnimationUtility.SetAnimationClips(animation, clips);

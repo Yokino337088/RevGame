@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>决斗抖动与按键修复验收 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+p { margin: .6rem 0; }
+kbd { background: #ede8d6; border-radius: 4px; padding: .08em .35em; font-weight: 700; }
+figure { margin: 1rem 0; }
+img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; margin-top: .4rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 决斗验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>决斗抖动与按键修复</h1>
+<p>桌面 HUD 底部显示 <kbd>A</kbd>/<kbd>D</kbd> 移动、<kbd>SPACE</kbd> 跳跃、<kbd>J</kbd> 普攻、<kbd>K</kbd> 贯枪、<kbd>L</kbd> 坠枪、<kbd>I</kbd> 赤阵。圆形攻击和跳跃键在鼠标或触点按下时提交一次，短提示会显示已输入、已缓冲或能量不足。</p>
+<figure><img src="按键说明.jpg" alt="本地决斗画面，底部显示六种桌面操作和键位"><figcaption>冷启动后进入本地人机决斗时的实际 Game View。</figcaption></figure>
+</section>
+<section>
+<h2>录像复现与修复</h2>
+<p>录像在本地人机决斗中录制。待机的两张图姿势跨度较大，切换过快，Legacy Animation 与决斗视图还会同时写角色 Sprite。改为由决斗视图独占换帧，待机固定一张架势。双方贴身时，短距离内沿用显示朝向。普攻保留命中闪色和特效，技能与大招的镜头改为一次偏移再回正。</p>
+<p>本地封帧之前从每次实际轮询时刻重新计算下一帧，迟到会累积。现在按同一条 50 毫秒时间轴封帧，长停顿后只封一帧并重建节拍。招式恢复或硬直期间，本地可以短时保留下一次攻击或跳跃。键盘和圆键经同一个 PvP 服务提交。</p>
+</section>
+<section>
+<h2>验收</h2>
+<p>Windows Unity Editor 2022.3.15f1c1 通过 RevCLI 的 <code>game.pvp.duel-build</code> 生成正式决斗场景。<code>game.pvp.duel-atlas</code> 打包 57 张 Sprite，共两页。固定 22 毫秒轮询的测试得到每秒 20 个逻辑帧，模拟 300 毫秒停顿后没有成批补跑。原生连招及预测回滚回归通过。</p>
+<p>本地使用同一个 RevMCP 会话，先 <code>rev_discover</code> 查找入口，随后 <code>rev_call editor.play</code>，进入 Play 后再次发现运行期动作。<code>rev_run</code> 经 <code>围棋对战/本地人机决斗</code> 进入正式场景，按录像开启 <code>围棋对战/决斗双方无敌</code>。<code>pvp.duel-control-check</code> 使用 Unity EventSystem 射线、按下和松开事件，并插入 120 毫秒主线程停顿。两次普攻点按正好提交两次，第二次从缓冲成功接出后续普攻，角色的出招动画正常换图。</p>
+<figure><img src="决斗输入复测.gif" alt="本地决斗输入与出招回归的十帧画面"><figcaption>按本地回归的十张画面顺序拼接，用于检查画面状态。</figcaption></figure>
+</section>
+<section>
+<h2>测试范围</h2>
+<p>修复前，实体鼠标路径已在编辑器复现跳跃触发。修复后，Windows 桌面自动化在获取鼠标位置时返回拒绝访问，最终按钮验证通过 Unity EventSystem 完成。使用的是本机编辑器与实际 AB 资源。独立 Player 和手机尚未复测。</p>
+<p>两轮同机 UTP 的 <code>rev_run</code> 都通过 <code>pvp.duel-prediction-view-check</code> 发起测试，均停在围棋房间握手阶段。等待 <code>pvp.duel-state</code> 就绪超时，因此本次未执行联机 HUD 和六连击断言。两轮都通过 <code>pvp.test-cleanup</code> 清理夹具，回到大厅并停止 Play。</p>
+<p>Revolution 继续负责场景切换、资源加载与自动化入口。UGUI 触点进入业务输入缓冲，GameCore 继续执行判定，视图根据快照更新角色和镜头。</p>
+</section>
+</main>
+</body>
+</html>

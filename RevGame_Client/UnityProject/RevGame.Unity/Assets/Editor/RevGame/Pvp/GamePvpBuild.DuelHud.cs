@@ -64,7 +64,6 @@ namespace RevGame.Editor
             view.MoveStick = stick.gameObject.AddComponent<DuelMoveStick>();
             view.MoveStick.Knob = HudBox("Knob", stick, 69, 69, 91, 91, 229, 229);
             HudImage(view.MoveStick.Knob, "StickKnob");
-            HudText("MoveKeys", hud, "A   /   D", 51, 28, 229, 32, 20).color = new Color(.69f, .85f, .91f);
 
             view.Jump = MakeRoundAction(hud, "Jump", "Jump", "跳跃", "↑", 325, 257, 104, WhiteHud);
             view.Jab = MakeRoundAction(hud, "Jab", "Jab", "普攻", "J", 1748, 156, 164, BlackHud);
@@ -74,6 +73,14 @@ namespace RevGame.Editor
             view.Exit = MakeHudLink(hud, "Back", "返回大厅", 51);
             view.Reconnect = MakeHudLink(hud, "Reconnect", "重连", 220);
             view.Reconnect.gameObject.SetActive(false);
+
+            // 单独的桌面键盘图例在缩小的 Game View 中仍有足够字号。
+            RectTransform guide = HudBox("KeyboardGuide", hud, 408, 26, 1040, 52);
+            HudImage(guide, "HealthFrame");
+            Label("Keys", guide, "A/D 移动    SPACE 跳跃    J 普攻    K 贯枪    L 坠枪    I 赤阵",
+                .025f, 0, .975f, 1, 28);
+            view.KeyboardGuide = guide.gameObject;
+            view.InputFeedback = HudText("InputFeedback", hud, "", 460, 82, 960, 58, 30);
         }
 
         // 双席使用同一张绯焰头像，以边框色和座位号区分。
@@ -125,8 +132,8 @@ namespace RevGame.Editor
             HudImage(Rect("Ring", rect, 0, 0, 1, 1), "Ring").color = tint;
             HudImage(Rect("Icon", rect, .29f, .41f, .71f, .83f), glyph);
             Label("Caption", rect, caption, .10f, .20f, .90f, .45f, diameter > 140 ? 27 : 21);
-            Label("Key", rect, key, .25f, .10f, .75f, .23f, 17).color = tint;
-            Button button = rect.gameObject.AddComponent<Button>();
+            Label("Key", rect, key, .25f, .075f, .75f, .25f, 24).color = tint;
+            Button button = rect.gameObject.AddComponent<DuelPressButton>();
             button.targetGraphic = disc;
             return button;
         }

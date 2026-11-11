@@ -61,7 +61,7 @@ namespace RevGame.View
         private int _outgoingFacing = 1;
         // 首次落屏后才允许采集旧图。
         private bool _hasPainted;
-        // 本角色的 Legacy Animation 组件，只执行画面播放。
+        // Legacy 组件只提供片段采样信息，角色图像由本组件独占写入。
         private Animation _animation;
         // 本角色的重量级表现状态机，离场时释放。
         private RevHeavyFSM<Pose, DuelActorAnimator> _machine;
@@ -80,7 +80,7 @@ namespace RevGame.View
         // 待机与跑动循环，其余片段播到最后一张时保持该姿势。
         private bool _loop;
         // 只读播放检查，供验收判断片段确实在运行。
-        public bool IsPlaying => _animation != null && _animation.isPlaying;
+        public bool IsPlaying => isActiveAndEnabled && _playingFrames != null && _playingFrames.Length > 0;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         // 上一帧实际可见的 Sprite，完全透明时清空。
@@ -178,6 +178,7 @@ namespace RevGame.View
         private void Awake()
         {
             _animation = GetComponent<Animation>();
+            _animation.enabled = false;
             _image = GetComponent<Image>();
             CreateTransitionImage();
             _machine = new RevHeavyFSM<Pose, DuelActorAnimator>(this);
@@ -218,12 +219,10 @@ namespace RevGame.View
             _poseSeconds += Time.unscaledDeltaTime;
         }
 
-        // 重启 Legacy 片段并读取资源采样率，UGUI 图片仍由表现层显式换帧。
+        // 读取片段采样率。直接落屏的 UGUI Sprite 只由权威播放头驱动。
         private void PlayPose(Pose pose, string clip)
         {
             BeginPoseFade();
-            _animation.Stop(clip);
-            _animation.Play(clip);
             AnimationClip asset = _animation.GetClip(clip);
             _sampleRate = asset == null ? 0 : asset.frameRate;
             _clipLength = asset == null ? 0 : asset.length;
@@ -232,7 +231,7 @@ namespace RevGame.View
             SpriteSequence sequence = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index] : null;
             _playingFrames = sequence?.frames;
             _contactIndex = sequence?.contactIndex ?? 0;
-            _loop = pose == Pose.Idle || pose == Pose.Run;
+            _loop = pose == Pose.Run;
         }
 
         // 旧图层是当前角色的表现子节点，随场景一起退出；关闭射线检测，避免覆盖 HUD 的触屏输入。
@@ -315,7 +314,8 @@ namespace RevGame.View
             }
 
             float seconds = _loop && _clipLength > 0 ? Mathf.Repeat(_poseSeconds, _clipLength) : _poseSeconds;
-            float sample = seconds * _sampleRate;
+            // 两张待机原画姿势差异较大，交替播放会让静止角色不断跳动。
+            float sample = _machine.CurrentStateType == Pose.Idle ? 0 : seconds * _sampleRate;
             if (action > 0)
             {
                 int hit = DuelConfig.ActionHitFrame(action);

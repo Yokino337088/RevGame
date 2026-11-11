@@ -109,7 +109,14 @@ namespace RevGame.Pvp
                     ["sameFighterArt"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
                         view.First.sprite.name.StartsWith("Ember_", StringComparison.Ordinal) &&
                         view.Second.sprite.name.StartsWith("Ember_", StringComparison.Ordinal),
-                    ["firstAction"] = state.FirstAction, ["firstCombo"] = state.FirstCombo,
+                    ["firstAction"] = state.FirstAction, ["firstCombo"] = state.FirstCombo, ["firstEnergy"] = state.FirstEnergy,
+                    ["hudPressCount"] = view != null ? view.HudPressCountForCheck : 0,
+                    ["lastHudAction"] = view != null ? view.LastHudActionForCheck : -1,
+                    ["lastAttackIntent"] = Service.DuelLastAttackIntentForCheck,
+                    ["keyboardGuideVisible"] = view != null && view.KeyboardGuide.activeInHierarchy,
+                    ["inputFeedback"] = view != null ? view.InputFeedback.text : "",
+                    ["legacyAnimationWriting"] = view != null && (view.FirstAnimator.GetComponent<Animation>().enabled ||
+                        view.SecondAnimator.GetComponent<Animation>().enabled),
                     ["firstOptions"] = state.FirstOptions, ["secondStun"] = state.SecondStun,
                     ["cameraZoom"] = view != null ? view.CameraRig.Fighters.localScale.x : 0,
                     ["cameraPan"] = view != null ? view.CameraRig.Fighters.anchoredPosition.x : 0,
