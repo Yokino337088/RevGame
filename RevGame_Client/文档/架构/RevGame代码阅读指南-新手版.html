@@ -41,6 +41,36 @@ footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);disp
 @media(max-width:420px){.frame-example{padding:12px}.chapter .frame-lanes{gap:4px}.frame-lanes small{font-size:10px}.segmented{flex-wrap:wrap}.segmented button{flex:1 1 40%}}
 @media print{.frame-example-actions:not([hidden]){display:none}}
 
+
+/* 决斗时序图使用同一六步流程，窄屏沿垂直时间轴排版。 */
+.chapter .duel-sequence{margin:24px 0;padding:20px 18px;border:1px solid var(--line);border-radius:14px;background:#fcfdf9}
+.duel-sequence figcaption{margin:0 0 12px;line-height:1.55}
+.duel-sequence figcaption strong{display:block;font-size:19px}
+.duel-sequence figcaption span{display:block;margin-top:5px;font-size:13px;color:var(--muted)}
+.duel-sequence-graphic{container-type:inline-size}
+.duel-sequence svg{display:block;width:100%;height:auto;overflow:hidden}
+.duel-sequence svg.seq-compact{display:none;max-width:390px;margin:0 auto}
+.duel-sequence .seq-actor{fill:#e8f1e7;stroke:#afc4b1}
+.duel-sequence .seq-authority{fill:#e9f0f8;stroke:#a9bbd1}
+.duel-sequence .seq-native{fill:#f7eedb;stroke:#d5bf96}
+.duel-sequence .seq-lifeline{fill:none;stroke:#b1c0b5;stroke-width:1.2;stroke-dasharray:4 5}
+.duel-sequence .seq-axis{fill:none;stroke:#a5b9aa;stroke-width:1.5}
+.duel-sequence .seq-arrow{fill:none;stroke:#326956;stroke-width:2}
+.duel-sequence .seq-arrow-head,.duel-sequence .seq-badges circle{fill:#326956}
+.duel-sequence .seq-preview{fill:none;stroke:#9c692d;stroke-width:1.8;stroke-dasharray:5 4}
+.duel-sequence .seq-preview-head{fill:#9c692d}
+.duel-sequence .seq-preview-card{fill:#fbf5e7;stroke:#bb8e54;stroke-dasharray:4 3}
+.duel-sequence .seq-badges text{fill:white;font-size:14px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+.duel-sequence .seq-actor-name,.duel-sequence .seq-action{fill:#254e3d;font-size:16px;font-weight:700}
+.duel-sequence .seq-role,.duel-sequence .seq-detail{fill:#42554b;font-size:13px}
+.duel-sequence .seq-action,.duel-sequence .seq-detail,.duel-sequence .seq-preview-text{text-anchor:middle;paint-order:stroke;stroke:#fcfdf9;stroke-width:6;stroke-linejoin:round}
+.duel-sequence .seq-mobile-action{fill:#25352f;font-size:16px}
+.duel-sequence .seq-preview-text,.duel-sequence .seq-preview-mobile-text{fill:#80571f;font-size:14px;font-weight:700}
+.chapter .duel-sequence-note{margin:10px 0 0;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@container (max-width:645px){.duel-sequence svg.seq-wide{display:none}.duel-sequence svg.seq-compact{display:block}}
+@media(max-width:650px){.duel-sequence svg.seq-wide{display:none}.duel-sequence svg.seq-compact{display:block}.chapter .duel-sequence{margin-inline:-6px;padding:15px 10px}}
+@media print{.chapter .duel-sequence{break-inside:avoid}.duel-sequence svg.seq-wide{display:block}.duel-sequence svg.seq-compact{display:none}}
+
 </style><style>
 /* 只在本文档使用的补充样式：沿用模板变量，不覆盖模板规则 */
 .muted{color:#8a929c;font-weight:400;font-size:.9em}
@@ -274,6 +304,136 @@ BoardView 点击目标格 → BattleLogic.ClickBoard
   <div class="section-label">GUIDE / 15</div>
   <h2>逐文件读帧同步，从 Ready 跟到原生输出</h2>
   <p>第一次读时只跟一个跳跃。打开 <a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀同款帧同步架构的职责分工</a> 对照三种时间，再按下面顺序找方法。表中的帧号指逻辑帧，序号指本连接的意图序号。</p>
+  <figure class="duel-sequence" id="duel-sequence" aria-labelledby="duel-sequence-caption">
+    <figcaption id="duel-sequence-caption">
+      <strong>一次跳跃的代码执行时序</strong>
+      <span>从上往下读。双方场景已就绪（Ready），本机已执行到第 102 帧。</span>
+    </figcaption>
+    <div class="duel-sequence-graphic">
+      <svg class="seq-wide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 602" role="img" aria-labelledby="seq-wide-title seq-wide-desc" focusable="false">
+        <title id="seq-wide-title">决斗帧同步代码执行时序</title>
+        <desc id="seq-wide-desc">按跳后，客户端 C# 将上行序号 17 的意图送到权威端。权威端每 50 毫秒取黑白两席输入，裁判内核先执行，再保存第 103 帧。客户端后续轮询拉回完整帧和本席封帧回执，按顺序交给本机 C++ GameCore。C++ 回传快照与指纹，客户端记录快照，Unity 用确认快照插值显示。可选的虚线分支表示联机可以先画本机起跳。</desc>
+        <defs>
+          <marker id="seq-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path class="seq-arrow-head" d="M0 0L10 5L0 10Z"/>
+          </marker>
+          <marker id="seq-preview-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path class="seq-preview-head" d="M0 0L10 5L0 10Z"/>
+          </marker>
+        </defs>
+
+        <!-- 每条竖线是一位参与者，时间从上往下。 -->
+        <path class="seq-lifeline" d="M112 63V586M300 63V586M486 63V586M672 63V586"/>
+        <path class="seq-axis" d="M24 119V554"/>
+        <g text-anchor="middle">
+          <rect class="seq-actor" x="44" y="9" width="136" height="54" rx="10"/>
+          <text class="seq-actor-name" x="112" y="32">客户端 C#</text>
+          <text class="seq-role" x="112" y="51">收输入、拉取帧</text>
+          <rect class="seq-authority" x="232" y="9" width="136" height="54" rx="10"/>
+          <text class="seq-actor-name" x="300" y="32">权威端</text>
+          <text class="seq-role" x="300" y="51">给两席输入排帧</text>
+          <rect class="seq-native" x="418" y="9" width="136" height="54" rx="10"/>
+          <text class="seq-actor-name" x="486" y="32">本机 GameCore</text>
+          <text class="seq-role" x="486" y="51">用 C++ 执行规则</text>
+          <rect class="seq-actor" x="604" y="9" width="136" height="54" rx="10"/>
+          <text class="seq-actor-name" x="672" y="32">Unity 画面</text>
+          <text class="seq-role" x="672" y="51">把结果画出来</text>
+        </g>
+
+        <!-- 上行的输入序号用于跟踪意图。逻辑帧号由权威端分配。 -->
+        <path class="seq-arrow" d="M112 119H300" marker-end="url(#seq-arrow)"/>
+        <text class="seq-action" x="206" y="104">发送跳跃意图 · 序号 17</text>
+        <text class="seq-detail" x="206" y="141">SetDuelInput 缓存按键</text>
+        <text class="seq-detail" x="206" y="157">PollNetworkDuel 轮询发送</text>
+        <path class="seq-preview" d="M112 183H672" marker-end="url(#seq-preview-arrow)"/>
+        <text class="seq-preview-text" x="392" y="171">联机可在确认前先画本机起跳</text>
+
+        <!-- 裁判实例执行成功后，权威历史中才有这一整帧。 -->
+        <path class="seq-arrow" d="M300 214H338Q344 214 344 220V241Q344 247 338 247H300" marker-end="url(#seq-arrow)"/>
+        <rect class="seq-authority" x="360" y="211" width="380" height="65" rx="11"/>
+        <text class="seq-actor-name" x="377" y="236">每 50 ms 取黑白两席输入</text>
+        <text class="seq-role" x="377" y="258">DuelAuthority.Seal · 裁判内核执行后保存第 103 帧</text>
+
+        <!-- 后续轮询取得已封口的完整帧，本例回包也到达了最新上界。 -->
+        <path class="seq-arrow" d="M300 315H112" marker-end="url(#seq-arrow)"/>
+        <text class="seq-action" x="206" y="300">轮询拉回第 103 帧</text>
+        <text class="seq-detail" x="206" y="337">两席输入 ＋ 本席封帧回执</text>
+
+        <!-- 本机确认副本与权威裁判是不同实例，两者执行同样的整帧规则。 -->
+        <rect class="seq-native" x="480" y="394" width="12" height="80" rx="4"/>
+        <path class="seq-arrow" d="M112 394H486" marker-end="url(#seq-arrow)"/>
+        <text class="seq-action" x="299" y="379">交给本机 C++ 执行整帧</text>
+        <text class="seq-detail" x="299" y="417">DuelCorePipe.Append · 黑白一起提交</text>
+        <path class="seq-arrow" d="M486 474H112" marker-end="url(#seq-arrow)"/>
+        <text class="seq-action" x="299" y="459">回读第 103 帧快照和指纹</text>
+        <text class="seq-detail" x="299" y="497">DuelWorld::Advance · 算位置、命中和血量</text>
+
+        <path class="seq-arrow" d="M112 554H672" marker-end="url(#seq-arrow)"/>
+        <text class="seq-action" x="392" y="539">用确认快照画出结果</text>
+        <text class="seq-detail" x="392" y="577">DuelPlayback · 角色插值，HUD 更新血量</text>
+
+        <g class="seq-badges">
+          <circle cx="24" cy="119" r="13"/><text x="24" y="119">1</text>
+          <circle cx="24" cy="247" r="13"/><text x="24" y="247">2</text>
+          <circle cx="24" cy="315" r="13"/><text x="24" y="315">3</text>
+          <circle cx="24" cy="394" r="13"/><text x="24" y="394">4</text>
+          <circle cx="24" cy="474" r="13"/><text x="24" y="474">5</text>
+          <circle cx="24" cy="554" r="13"/><text x="24" y="554">6</text>
+        </g>
+      </svg>
+
+      <svg class="seq-compact" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 322 614" role="img" aria-labelledby="seq-compact-title seq-compact-desc" focusable="false">
+        <title id="seq-compact-title">决斗帧同步代码执行时序</title>
+        <desc id="seq-compact-desc">从上往下读六步。客户端发送跳跃意图，权威端按 50 毫秒节拍封帧，客户端拉回第 103 帧并交给 C++，C++ 返回快照和指纹，Unity 用确认快照显示结果。虚线是可先画本机起跳的预测分支。</desc>
+        <path class="seq-axis" d="M18 44V564"/>
+
+        <rect class="seq-actor" x="39" y="4" width="281" height="82" rx="10"/>
+        <text class="seq-actor-name" x="53" y="29">客户端 C# → 权威端</text>
+        <text class="seq-mobile-action" x="53" y="52">按跳，发送序号 17 的意图</text>
+        <text class="seq-role" x="53" y="72">SetDuelInput 缓存按键，再随轮询发送</text>
+
+        <path class="seq-preview" d="M18 117H39"/>
+        <rect class="seq-preview-card" x="39" y="95" width="281" height="51" rx="9"/>
+        <text class="seq-preview-mobile-text" x="53" y="117">可在确认前先画本机起跳</text>
+        <text class="seq-role" x="53" y="136">预测沙盒只提供本机运动</text>
+
+        <rect class="seq-authority" x="39" y="156" width="281" height="82" rx="10"/>
+        <text class="seq-actor-name" x="53" y="181">权威端 · 封口第 103 帧</text>
+        <text class="seq-mobile-action" x="53" y="204">每 50 ms 取黑白两席输入</text>
+        <text class="seq-role" x="53" y="224">DuelAuthority.Seal · 裁判内核执行后保存</text>
+
+        <rect class="seq-authority" x="39" y="248" width="281" height="82" rx="10"/>
+        <text class="seq-actor-name" x="53" y="273">权威端 → 客户端 C#</text>
+        <text class="seq-mobile-action" x="53" y="296">后续轮询拉回第 103 帧</text>
+        <text class="seq-role" x="53" y="316">两席输入 ＋ 本席封帧回执</text>
+
+        <rect class="seq-native" x="39" y="340" width="281" height="82" rx="10"/>
+        <text class="seq-actor-name" x="53" y="365">客户端 C# → 本机 GameCore</text>
+        <text class="seq-mobile-action" x="53" y="388">按顺序交给 C++ 执行整帧</text>
+        <text class="seq-role" x="53" y="408">DuelCorePipe.Append · 黑白一起提交</text>
+
+        <rect class="seq-native" x="39" y="432" width="281" height="82" rx="10"/>
+        <text class="seq-actor-name" x="53" y="457">本机 GameCore → 客户端 C#</text>
+        <text class="seq-mobile-action" x="53" y="480">回读第 103 帧快照和指纹</text>
+        <text class="seq-role" x="53" y="500">DuelWorld::Advance · 算位置、命中和血量</text>
+
+        <rect class="seq-actor" x="39" y="524" width="281" height="82" rx="10"/>
+        <text class="seq-actor-name" x="53" y="549">客户端 C# → Unity 画面</text>
+        <text class="seq-mobile-action" x="53" y="572">用确认快照画出结果</text>
+        <text class="seq-role" x="53" y="592">DuelPlayback · 角色插值，HUD 更新血量</text>
+
+        <g class="seq-badges">
+          <circle cx="18" cy="44" r="12"/><text x="18" y="44">1</text>
+          <circle cx="18" cy="196" r="12"/><text x="18" y="196">2</text>
+          <circle cx="18" cy="288" r="12"/><text x="18" y="288">3</text>
+          <circle cx="18" cy="380" r="12"/><text x="18" y="380">4</text>
+          <circle cx="18" cy="472" r="12"/><text x="18" y="472">5</text>
+          <circle cx="18" cy="564" r="12"/><text x="18" y="564">6</text>
+        </g>
+      </svg>
+    </div>
+    <p class="duel-sequence-note"><strong>序号 17</strong> 跟踪这次上行，<strong>第 103 帧</strong> 由权威端分配。本例追到了最新权威帧，所以回包带封帧回执。虚线表示本机运动预测。命中、血量和胜负来自确认快照。</p>
+  </figure>
   <div class="table-scroll" tabindex="0" aria-label="从场景就绪到原生输出的逐文件阅读路线">
     <table>
       <thead><tr><th scope="col">阶段与源码</th><th scope="col">优先搜索的方法</th><th scope="col">断点或阅读时记录什么</th></tr></thead>
