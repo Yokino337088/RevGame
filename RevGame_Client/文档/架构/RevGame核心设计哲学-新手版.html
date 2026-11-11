@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="给新手的 RevGame 设计哲学。看懂它为什么把规则、流程、画面和验证分开，以及它怎样用真实游戏验证 Revolution。">
+  <title>RevGame · 核心设计哲学（新手版）</title>
+  <style>
+:root {
+  --ink: #25352f;
+  --muted: #65736b;
+  --green: #326956;
+  --line: #dce3da;
+  --paper: #f6f7f2;
+  --mint: #e8f1e7;
+  --sky: #e7eef6;
+  --sand: #f8eedb;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+html.motion-paused { scroll-behavior: auto; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.85 "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+button { font: inherit; }
+button:focus-visible, a:focus-visible { outline: 3px solid #b48442; outline-offset: 4px; }
+
+.topbar {
+  height: 76px;
+  padding: 0 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fbfcf8;
+  border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 800; letter-spacing: 2px; }
+.brand i {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-right: 12px;
+  border-radius: 11px;
+  background: var(--green);
+  color: white;
+  font-style: normal;
+}
+.tag { font: 12px/1.6 Consolas, monospace; letter-spacing: 1px; color: var(--muted); }
+.motion-control {
+  padding: 7px 12px;
+  border: 1px solid #c7d2c3;
+  border-radius: 30px;
+  background: transparent;
+  color: var(--green);
+  font-size: 12px;
+  cursor: pointer;
+}
+.motion-paused * { animation-play-state: paused !important; }
+
+.hero {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 70px 40px 48px;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.eyebrow, .section-label { color: var(--green); font: 12px/1.5 Consolas, monospace; letter-spacing: 2px; }
+.hero h1 { margin: 20px 0; font-size: clamp(35px, 4.3vw, 60px); line-height: 1.25; letter-spacing: -2px; font-weight: 800; }
+.hero h1 em { color: var(--green); font-style: normal; }
+.lead { max-width: 600px; color: var(--muted); font-size: 17px; }
+.hero-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 27px; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  border: 1px solid #b8c9b7;
+  border-radius: 30px;
+  background: white;
+  text-decoration: none;
+  font-size: 14px;
+}
+.pill.primary { color: white; background: var(--green); border-color: var(--green); }
+.stamp { margin-top: 25px; color: #637568; font: 12px/1.5 Consolas, monospace; }
+
+.demo {
+  position: relative;
+  overflow: hidden;
+  padding: 26px;
+  border: 1px solid #d6e2d2;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #fefdf5, #e6efe1);
+  box-shadow: 0 20px 55px #334f3320;
+}
+.demo::before {
+  content: "";
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  right: -80px;
+  top: -90px;
+  border-radius: 50%;
+  background: #e5cc8e55;
+  filter: blur(25px);
+  animation: drift 8s ease-in-out infinite alternate;
+}
+.demo h2 { position: relative; margin: 0; font-size: 16px; }
+.chain { position: relative; list-style: none; margin: 18px 0 0; padding: 0; }
+.chain li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 8px 10px;
+  margin: 4px 0;
+  border-radius: 11px;
+  line-height: 1.55;
+  font-size: 14px;
+}
+.chain li:first-child { background: #fffef8; border: 1px solid #cfdccb; }
+.chain li b {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #bccdb8;
+  border-radius: 50%;
+  background: #fffef8;
+  color: var(--green);
+  font: 700 12px Consolas, monospace;
+}
+.chain li:first-child b { background: var(--green); color: #fff; }
+.chain small { display: block; color: var(--muted); font-size: 12px; }
+@keyframes drift { to { transform: translate(-50px, 40px); } }
+
+.metrics {
+  max-width: 1180px;
+  margin: 0 auto 45px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+  padding: 25px 0;
+}
+.metric { padding: 5px 35px; border-right: 1px solid var(--line); }
+.metric:last-child { border: 0; }
+.metric strong { color: var(--green); font-size: 24px; line-height: 1.35; }
+.metric p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+
+.workspace {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 890px);
+  gap: 55px;
+  max-width: 1180px;
+  margin: auto;
+  padding-bottom: 90px;
+}
+.sidebar { align-self: start; position: sticky; top: 28px; max-height: calc(100vh - 54px); overflow: auto; scrollbar-width: thin; }
+.sidebar h2 { margin: 0 0 18px; color: var(--muted); font-size: 12px; letter-spacing: 3px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 3px; }
+.sidebar nav a {
+  display: flex;
+  gap: 10px;
+  padding: 8px 11px;
+  border-left: 2px solid transparent;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+}
+.sidebar nav a span { color: #657967; font: 12px/1.9 Consolas, monospace; }
+.sidebar nav a[aria-current="location"] { background: #e5eee1; border-left-color: var(--green); font-weight: 700; }
+.document-meta { margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: 13px; }
+
+.chapter {
+  margin-bottom: 25px;
+  padding: 36px 38px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fffefa;
+  box-shadow: 0 5px 15px #315c3110;
+}
+.chapter h2 { margin: 8px 0 22px; font-size: 27px; line-height: 1.45; letter-spacing: -.5px; }
+.chapter h3 { margin: 32px 0 10px; color: #254e3d; font-size: 18px; }
+.chapter p { margin: 17px 0; }
+.chapter strong { color: #254e3d; }
+.chapter code {
+  padding: 1px 4px;
+  border: 1px solid #e1e5dc;
+  border-radius: 4px;
+  background: #eef1e9;
+  font: 13px/1.65 Consolas, "Microsoft YaHei", monospace;
+  overflow-wrap: anywhere;
+}
+.chapter .sources, .chapter .note { color: var(--muted); font-size: 13px; }
+.sources a { overflow-wrap: anywhere; }
+.callout {
+  padding: 14px 18px;
+  border-left: 3px solid #5d86ad;
+  border-radius: 10px;
+  background: var(--sky);
+  color: #2b4b6c;
+  font-size: 14px;
+}
+.callout b { display: block; margin-bottom: 4px; }
+.definition-list { margin: 18px 0; }
+.definition-list div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.definition-list dt { color: #254e3d; font-weight: 700; }
+.definition-list dd { margin: 2px 0 0; }
+
+.diagram {
+  margin: 24px 0;
+  padding: 18px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fcfdf9;
+}
+.diagram figcaption { line-height: 1.55; }
+.diagram figcaption strong { display: block; font-size: 16px; }
+.diagram figcaption span { display: block; margin: 3px 0 12px; color: var(--muted); font-size: 13px; }
+.diagram svg { display: block; width: min(100%, 510px); height: auto; margin: 0 auto; overflow: hidden; }
+.diagram .node-green { fill: var(--mint); stroke: #afc4b1; }
+.diagram .node-blue { fill: var(--sky); stroke: #a9bbd1; }
+.diagram .node-gold { fill: var(--sand); stroke: #d5bf96; }
+.diagram .node-neutral { fill: #f3f5ef; stroke: #c9d7ca; }
+.diagram .diagram-line { fill: none; stroke: #4f7a66; stroke-width: 1.55; stroke-linecap: round; stroke-linejoin: round; }
+.diagram .diagram-head { fill: #4f7a66; }
+.diagram .diagram-soft { fill: none; stroke: #a5b9aa; stroke-width: 1.3; stroke-dasharray: 3 3; }
+.diagram .diagram-label { fill: #254e3d; font-size: 15.5px; font-weight: 700; }
+.diagram .diagram-small { fill: #42554b; font-size: 12px; }
+.diagram .diagram-tag { fill: #496858; font-size: 11.6px; font-weight: 700; }
+.diagram .diagram-dot { fill: var(--green); }
+.diagram .diagram-number { fill: white; font: 700 12px Consolas, monospace; dominant-baseline: central; }
+
+.damage-demo { padding: 16px; margin: 20px 0; background: #f6f8f2; border: 1px solid var(--line); border-radius: 12px; }
+.damage-demo h3 { margin: 0; }
+.damage-demo p.note { margin: 6px 0 12px; }
+.damage-controls:not([hidden]) { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px; border-radius: 10px; background: #dce5d8; }
+.damage-controls button {
+  flex: 1 1 72px;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.damage-controls button[aria-pressed="true"] { background: #fffef8; box-shadow: 0 2px 5px #34502515; }
+.damage-state { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.damage-state > div { display: grid; align-content: start; gap: 7px; padding: 12px 14px; border: 1px solid #d5e0d3; border-radius: 10px; background: white; font-size: 13px; }
+.health-track { position: relative; height: 10px; margin: 8px 0; background: #edf0e9; border-radius: 8px; }
+.health-track span, .health-track i { position: absolute; height: 100%; }
+.health-track span { inset-inline-start: 0; width: 60%; border-radius: 8px 0 0 8px; background: var(--green); }
+.health-track i { inset-inline-start: 60%; width: 20%; background: #d6b37e; }
+.damage-track { display: block; width: 100%; height: 26px; }
+.damage-actor { fill: #6a9c7c; }
+.damage-target { fill: #bd8b54; }
+.damage-route, .damage-tip { fill: none; stroke: #4f7a66; stroke-width: 2; }
+[data-effect-state="delay"] .damage-route { stroke-dasharray: 6 6; }
+[data-effect-state="delay"] .damage-tip { opacity: .55; }
+[data-effect-state="skip"] .damage-route, [data-effect-state="skip"] .damage-tip { opacity: 0; }
+
+.clock-diagram { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.clock-diagram div { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcf8; line-height: 1.5; }
+.clock-diagram strong { display: block; font-size: 14px; }
+.clock-diagram span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.steps { margin: 16px 0; padding-left: 1.7em; }
+.steps li { margin: 9px 0; padding-left: .3em; }
+.steps li::marker { color: var(--green); font-weight: 700; }
+
+footer { padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--muted); display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--green); z-index: 20; }
+
+@media (max-width: 1200px) {
+  .workspace { padding: 0 25px 60px; gap: 25px; grid-template-columns: 200px minmax(0, 1fr); }
+  .metrics { margin-left: 25px; margin-right: 25px; }
+  .hero { gap: 30px; }
+}
+@media (max-width: 900px) {
+  .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 25px; }
+  .sidebar nav { display: grid; grid-template-columns: 1fr 1fr; }
+  .sidebar h2, .tag { display: none; }
+  .workspace { display: block; }
+  .hero { grid-template-columns: 1fr 1fr; padding: 40px 25px; }
+  .chapter { padding: 28px; }
+}
+@media (max-width: 620px) {
+  body { font-size: 15px; }
+  .topbar { height: 66px; }
+  .hero { display: block; padding: 35px 22px; }
+  .hero h1 { font-size: 38px; letter-spacing: -1px; }
+  .demo { margin-top: 30px; max-width: 420px; }
+  .metrics { padding: 18px 0; margin-bottom: 25px; }
+  .metric { padding: 0 10px; }
+  .metric strong { font-size: 17px; }
+  .metric p { font-size: 11px; }
+  .workspace { padding: 0 14px 40px; }
+  .sidebar nav { gap: 2px; }
+  .sidebar nav a { font-size: 12px; padding: 7px 5px; gap: 6px; }
+  .chapter { padding: 25px 20px; border-radius: 14px; }
+  .chapter h2 { font-size: 24px; }
+  .hero-links { gap: 8px; }
+  .pill { padding: 8px 14px; }
+  .diagram { margin-inline: -12px; padding: 13px 7px 9px; }
+  .diagram figcaption { padding: 0 6px; }
+  .damage-state { grid-template-columns: 1fr; }
+  .clock-diagram { grid-template-columns: 1fr; gap: 7px; }
+  footer { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before { animation: none !important; transition: none !important; }
+}
+@media print {
+  .sidebar, .motion-control, .progress, .damage-controls:not([hidden]) { display: none; }
+  .hero, .workspace { display: block; padding: 0; }
+  .chapter { box-shadow: none; border: 0; padding: 15px 0; }
+  .diagram, .damage-demo, .clock-diagram { break-inside: avoid; }
+  .metrics { margin: 0; }
+  .topbar { padding: 0; }
+  body { font-size: 11pt; }
+}
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand"><i aria-hidden="true">R</i>REVGAME <span class="tag">DESIGN PHILOSOPHY</span></div>
+    <button class="motion-control" id="motion" type="button" aria-pressed="false" hidden>暂停装饰动画</button>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">REVGAME / ARCHITECTURE GUIDE</div>
+      <h1>为什么 RevGame<br><em>要这样设计。</em></h1>
+      <p class="lead">RevGame 用一个能进场、战斗、结算和退场的游戏检验 Revolution。跟着这些真实操作，理解项目怎样把规则、流程、画面与验收接在一起。</p>
+      <div class="hero-links">
+        <a class="pill primary" href="#purpose">先看项目目的 ↗</a>
+        <a class="pill" href="#rules">看一次伤害结算</a>
+        <a class="pill" href="#gamecore">读帧同步内核</a>
+      </div>
+      <div class="stamp">2026.11.11 · REVOLUTION · REVGAME</div>
+    </div>
+    <div class="demo">
+      <h2>一次操作经过谁</h2>
+      <ol class="chain">
+        <li><b aria-hidden="true">1</b><span><strong>玩家提出操作</strong><small>点格子、按技能或进入战斗</small></span></li>
+        <li><b aria-hidden="true">2</b><span><strong>流程看现在能不能做</strong><small>判断阶段和就绪状态，接好当前玩法</small></span></li>
+        <li><b aria-hidden="true">3</b><span><strong>规则提交结果</strong><small>由负责这份状态的模型或内核决定结果</small></span></li>
+        <li><b aria-hidden="true">4</b><span><strong>画面展示，测试核对</strong><small>读取同一结果，并检查退出后的收尾</small></span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><strong>谁能改</strong><p>同一个规则结果有明确的写入者。</p></div>
+    <div class="metric"><strong>活多久</strong><p>面板、玩法域和常驻服务各有寿命。</p></div>
+    <div class="metric"><strong>怎么验</strong><p>沿真实入口读结果，查失败和清理。</p></div>
+  </div>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <h2>阅读导航</h2>
+      <nav aria-label="章节目录">
+        <a href="#purpose"><span>01</span>为什么做真实游戏</a>
+        <a href="#boundary"><span>02</span>框架与玩法的边界</a>
+        <a href="#rules"><span>03</span>一份结果谁来提交</a>
+        <a href="#lifetime"><span>04</span>进场与退场的归属</a>
+        <a href="#modes"><span>05</span>四种玩法如何共存</a>
+        <a href="#gamecore"><span>06</span>帧同步的确定性内核</a>
+        <a href="#content"><span>07</span>配置来源与资源寿命</a>
+        <a href="#performance"><span>08</span>性能和规则一致性</a>
+        <a href="#proof"><span>09</span>怎样知道改对了</a>
+      </nav>
+    </aside>
+    <main id="main">
+      <div class="document-meta">
+        <a href="RevGame项目架构与Revolution框架讲解.html">配套项目架构讲解</a>
+        <a href="RevGame代码阅读指南-新手版.html">配套代码阅读指南</a>
+      </div>
+<section id="purpose" class="chapter">
+  <div class="section-label">GUIDE / 01</div>
+  <h2>为什么要做一个真实游戏</h2>
+  <p><strong>RevGame 的首要目标是验证 Revolution 能否支撑真实业务的持续开发。</strong> 一局远征从读表、进场、落牌，到弹道、奖励和返回大厅，每一段都给框架提出不同要求。单独加载成功一张图能证明加载入口可用。第一次进战斗图集能画、第二次进场仍然正常、退出能归还资源，才验证了这些能力组合后的结果。</p>
+  <figure class="diagram" id="diagram-practice" aria-labelledby="practice-caption">
+    <figcaption id="practice-caption"><strong>从游戏问题回到框架改进</strong><span>从左上顺时针读，用同一个业务入口复验。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 201" role="img" aria-labelledby="practice-title practice-description" focusable="false">
+      <title id="practice-title">从游戏问题回到框架改进</title>
+      <desc id="practice-description">跑真实玩法，记录结果与失败，定位是项目接线还是框架能力，再修复、同步与复验。</desc>
+      <defs><marker id="practice-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M154 41H211" marker-end="url(#practice-arrow)"/>
+      <path class="diagram-line" d="M286 69V130" marker-end="url(#practice-arrow)"/>
+      <path class="diagram-line" d="M214 160H157" marker-end="url(#practice-arrow)"/>
+      <path class="diagram-line" d="M82 132V72" marker-end="url(#practice-arrow)"/>
+      <rect class="node-green" x="10" y="12" width="144" height="57" rx="9"/>
+      <text class="diagram-label" x="82.0" y="36" text-anchor="middle">跑一局真实玩法</text>
+      <text class="diagram-small" x="82.0" y="55" text-anchor="middle">进场、战斗、退出</text>
+      <rect class="node-blue" x="214" y="12" width="144" height="57" rx="9"/>
+      <text class="diagram-label" x="286.0" y="36" text-anchor="middle">记录结果</text>
+      <text class="diagram-small" x="286.0" y="55" text-anchor="middle">规则、画面、资源</text>
+      <rect class="node-gold" x="214" y="132" width="144" height="57" rx="9"/>
+      <text class="diagram-label" x="286.0" y="156" text-anchor="middle">定位原因</text>
+      <text class="diagram-small" x="286.0" y="175" text-anchor="middle">查框架或项目接线</text>
+      <rect class="node-green" x="10" y="132" width="144" height="57" rx="9"/>
+      <text class="diagram-label" x="82.0" y="156" text-anchor="middle">修复并复验</text>
+      <text class="diagram-small" x="82.0" y="175" text-anchor="middle">回到真实业务入口</text>
+      <text class="diagram-tag" x="184" y="105" text-anchor="middle">固定输入，再跑一遍</text>
+    </svg>
+  </figure>
+  <p>这也解释了为什么项目要反复做完整链路。比如剧情粉屏会逼着团队一起看当前宿主、实际加载的资源包和 Shader。碰到通用能力的缺口，就回 Revolution 源仓库修复和验证，再把框架快照同步回 RevGame。作者在 README 里也记录了这个过程如何催生 RevCLI 和 RevMCP，项目里的实际工作决定工具要解决什么问题。</p>
+  <p class="sources"><a href="../../../README.md">README · 作者原话</a> · <a href="https://github.com/Yokino337088/RevGame/commit/2964e5f79ba99d34a3f8f0e86e1d8eedfedb5df5">项目立项</a> · <a href="../项目开发日志/RevGame项目开发复盘_2026-11-09.html">项目开发复盘</a></p>
+</section>
+
+<section id="boundary" class="chapter">
+  <div class="section-label">GUIDE / 02</div>
+  <h2>框架提供通用能力，项目决定游戏怎么玩</h2>
+  <p>想打开面板、加载图集、启动计时或借用一颗棋子视图，业务调用 <code>RevUI</code>、<code>RevResManager</code>、<code>RevTimer</code>、<code>RevPool</code> 等<strong>门面</strong>。门面就是框架承诺给业务用的入口。业务交出明确的请求，框架返回结果、句柄或失败原因。业务据此决定接下来怎么走。</p>
+  <figure class="diagram" id="diagram-facade" aria-labelledby="facade-caption">
+    <figcaption id="facade-caption"><strong>项目只需接到公开入口</strong><span>同一个门面可以衔接不同的底层适配。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 228" role="img" aria-labelledby="facade-title facade-description" focusable="false">
+      <title id="facade-title">项目只需接到公开入口</title>
+      <desc id="facade-description">项目定义玩法与时机并调用公开门面。门面对接通用内核和具体 Unity 宿主适配。</desc>
+      <defs><marker id="facade-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M184 62V82" marker-end="url(#facade-arrow)"/>
+      <path class="diagram-line" d="M184 137V151H89V169" marker-end="url(#facade-arrow)"/>
+      <path class="diagram-line" d="M184 151H279V169" marker-end="url(#facade-arrow)"/>
+      <rect class="node-green" x="67" y="8" width="234" height="54" rx="9"/>
+      <text class="diagram-label" x="184.0" y="32" text-anchor="middle">项目业务</text>
+      <text class="diagram-small" x="184.0" y="51" text-anchor="middle">关卡、棋规、对局编排</text>
+      <rect class="node-blue" x="67" y="83" width="234" height="54" rx="9"/>
+      <text class="diagram-label" x="184.0" y="107" text-anchor="middle">Rev* 公开门面</text>
+      <text class="diagram-small" x="184.0" y="126" text-anchor="middle">请求、结果与失败原因</text>
+      <rect class="node-neutral" x="10" y="170" width="158" height="52" rx="9"/>
+      <text class="diagram-label" x="89.0" y="194" text-anchor="middle">通用内核</text>
+      <text class="diagram-small" x="89.0" y="213" text-anchor="middle">路径与计时等基础逻辑</text>
+      <rect class="node-gold" x="200" y="170" width="158" height="52" rx="9"/>
+      <text class="diagram-label" x="279.0" y="194" text-anchor="middle">引擎适配</text>
+      <text class="diagram-small" x="279.0" y="213" text-anchor="middle">Unity、编辑器与资源包</text>
+    </svg>
+  </figure>
+  <p>为什么要守这个边界？以加载图集为例，调用者拿着同一个逻辑路径，编辑器直读和资源包加载可以各自适配。切换底层策略时，调用者继续通过原来的门面取资源。相应的代价是业务要遵守公开契约，记录谁持有引用、什么时候释放，才能获得一致的行为。</p>
+  <p>依赖也要能顺着代码查到。<code>GameBootstrap</code> 用 <code>RevServices</code> 注册 <code>IBattleService</code> 的具体实现，并登记持有者。想查哪个服务管理这局，就从调用处找接口，再回启动入口看注册。面板按框架约定绑定控件、刷新显示、转发点击，替换一个 HUD 时可以继续使用原有的服务与结算逻辑。</p>
+  <h3>先分清三个地方的「内核」</h3>
+  <dl class="definition-list">
+    <div><dt>Revolution 的通用内核</dt><dd>路径处理、句柄或计时器等基础逻辑。框架让这类计算尽量少依赖引擎，由适配层对接 Unity。路径处理可以拿字符串在普通 .NET 里检验，真实图集能否绑定则在 Unity 里看。</dd></div>
+    <div><dt>RevGame 的玩法规则</dt><dd>远征的棋盘、伤害和回合，无尽的敌潮与成长，九路围棋的合法落子。各自的模型或服务拥有状态。</dd></div>
+    <div><dt>八角笼的 C++ GameCore</dt><dd>给它完整帧，它按规则算出下一帧的坐标、命中、血量和指纹。裁判与客户端可以各建一个实例运行同一份规则。</dd></div>
+  </dl>
+  <p class="sources"><a href="https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/Revolution%E5%AE%98%E6%96%B9%E7%BC%96%E7%A8%8B%E6%9E%B6%E6%9E%84%E8%A7%84%E8%8C%83.md">Revolution 官方编程架构规范</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Revolution/Runtime/RevResourceSystem/Facade/RevResManager.cs">资源门面源码</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs">服务注册与归属</a> · <a href="../../../.codex/skills/revolution-framework/references/verify-and-test.md">通用内核的离线验证</a></p>
+</section>
+
+<section id="rules" class="chapter">
+  <div class="section-label">GUIDE / 03</div>
+  <h2>一份事实只由负责它的规则提交</h2>
+  <p>拿远征一次命中来说。普通攻击、技能、战场效果都能造成伤害，护盾与减伤要遵守同一规则。<code>EvaluateDamage</code> 计算结果，AI 也能借它估算。<code>ResolveDamage</code> 核对当前目标，处理护盾与实际扣血，再完成积分、死亡等后续规则。命中事件把这次发生的事传给视图，供血条、弹道和飘字消费。</p>
+  <figure class="diagram" id="diagram-damage" aria-labelledby="damage-caption">
+    <figcaption id="damage-caption"><strong>多种伤害来源，一处规则提交</strong><span>统一结算先调用计算方法，随后提交结果并通知画面。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 286" role="img" aria-labelledby="damage-title damage-description" focusable="false">
+      <title id="damage-title">多种伤害来源，一处规则提交</title>
+      <desc id="damage-description">普攻、技能和战场效果汇入 ResolveDamage。它调用 EvaluateDamage 计算伤害，再提交结果。视图据此更新血条、弹道与飘字。</desc>
+      <defs><marker id="damage-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M62 47V57H184"/>
+      <path class="diagram-line" d="M306 47V57H184"/>
+      <path class="diagram-line" d="M184 47V69" marker-end="url(#damage-arrow)"/>
+      <path class="diagram-line" d="M184 122V142" marker-end="url(#damage-arrow)"/>
+      <path class="diagram-line" d="M184 196V212H90V228" marker-end="url(#damage-arrow)"/>
+      <path class="diagram-line" d="M184 212H278V228" marker-end="url(#damage-arrow)"/>
+      <rect class="node-neutral" x="8" y="8" width="108" height="39" rx="9"/>
+      <text class="diagram-label" x="62.0" y="32.5" text-anchor="middle">普通攻击</text>
+      <rect class="node-neutral" x="130" y="8" width="108" height="39" rx="9"/>
+      <text class="diagram-label" x="184.0" y="32.5" text-anchor="middle">技能伤害</text>
+      <rect class="node-neutral" x="252" y="8" width="108" height="39" rx="9"/>
+      <text class="diagram-label" x="306.0" y="32.5" text-anchor="middle">战场效果</text>
+      <rect class="node-blue" x="75" y="70" width="218" height="52" rx="9"/>
+      <text class="diagram-label" x="184.0" y="94" text-anchor="middle">统一结算入口</text>
+      <text class="diagram-small" x="184.0" y="113" text-anchor="middle">ResolveDamage</text>
+      <rect class="node-green" x="75" y="143" width="218" height="53" rx="9"/>
+      <text class="diagram-label" x="184.0" y="167" text-anchor="middle">先计算，再提交一次</text>
+      <text class="diagram-small" x="184.0" y="186" text-anchor="middle">EvaluateDamage 计算，服务扣血</text>
+      <rect class="node-gold" x="11" y="229" width="158" height="51" rx="9"/>
+      <text class="diagram-label" x="90.0" y="253" text-anchor="middle">更新血条</text>
+      <text class="diagram-small" x="90.0" y="272" text-anchor="middle">读取已提交血量</text>
+      <rect class="node-gold" x="199" y="229" width="158" height="51" rx="9"/>
+      <text class="diagram-label" x="278.0" y="253" text-anchor="middle">弹道与飘字</text>
+      <text class="diagram-small" x="278.0" y="272" text-anchor="middle">消费命中快照</text>
+    </svg>
+  </figure>
+  <div class="damage-demo" data-damage-example>
+    <h3>试一下，换种弹道播法</h3>
+    <p class="note">以下数字用于说明顺序。这次结算造成 20 点实际伤害，目标从 80 变成 60。</p>
+    <div class="segmented damage-controls" role="group" aria-label="选择弹道播法" hidden>
+      <button type="button" data-effect="normal" aria-pressed="true">正常播放</button>
+      <button type="button" data-effect="delay" aria-pressed="false">延后播放</button>
+      <button type="button" data-effect="skip" aria-pressed="false">略过弹道</button>
+    </div>
+    <div class="damage-state">
+      <div class="damage-result">
+        <strong>规则已提交</strong>
+        <div class="health-track" role="img" aria-label="目标血量从 80 降为 60"><span></span><i></i></div>
+        <span>血量 80 → <b>60</b></span>
+      </div>
+      <div class="damage-display" data-effect-state="normal">
+        <strong>画面反馈</strong>
+        <svg class="damage-track" viewBox="0 0 220 32" aria-hidden="true" focusable="false">
+          <circle cx="17" cy="16" r="8" class="damage-actor"/>
+          <path d="M32 16H188" class="damage-route"/>
+          <path d="M177 9L189 16L177 23" class="damage-tip"/>
+          <circle cx="201" cy="16" r="10" class="damage-target"/>
+        </svg>
+        <span data-effect-text role="status">播放弹道与命中反馈</span>
+      </div>
+    </div>
+  </div>
+  <p>这种分工让画面可以延播、合并飘字或在退场时回池，结算在业务内按原时机完成。命中事件携带棋子编号、位置与实际伤害等值，晚到的弹道也能画出当时的结果。落牌、换位用直接调用来返回成功或失败，失败时可读 <code>LastError</code>。结果事件适合把已发生的变化送给多个消费者，订阅则按持有者随局清理。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Damage.cs">统一伤害提交</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Feedback/BoardView.Feedback.cs">显示反馈队列</a> · <a href="https://github.com/Yokino337088/RevGame/commit/ad0c225b2b0320d988d9fa4acfc53150bb277694">伤害与测试入口整合记录</a></p>
+</section>
+
+<section id="lifetime" class="chapter">
+  <div class="section-label">GUIDE / 04</div>
+  <h2>让同一个流程负责人安排进场和收尾</h2>
+  <p>一次切场涉及两个时刻。玩家点下按钮，<code>EnterBattle</code> 可以立即接受请求。玩家真正能玩，要等目标场景、业务域和可见画面全部接好。把这两件事交给常驻的 <code>GameFlow</code>，连点拒绝、异步失败、返回大厅和正常交割都能走同一套规则。</p>
+  <figure class="diagram" id="diagram-transition" aria-labelledby="transition-caption">
+    <figcaption id="transition-caption"><strong>一次进战斗的两个完成时刻</strong><span>第 1 步受理，第 5 步才可以操作。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 314" role="img" aria-labelledby="transition-title transition-description" focusable="false">
+      <title id="transition-title">一次进战斗的两个完成时刻</title>
+      <desc id="transition-description">请求被接受，加载遮挡和资源预热，状态机关闭旧域并开启新域，等待实际画面就绪，最后撤遮挡。</desc>
+      <defs><marker id="transition-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-soft" d="M25 33V281"/>
+      <circle class="diagram-dot" cx="25" cy="33" r="11"/>
+      <text class="diagram-number" x="25" y="33" text-anchor="middle">1</text>
+      <rect class="node-neutral" x="48" y="7" width="310" height="52" rx="9"/>
+      <text class="diagram-label" x="203.0" y="31" text-anchor="middle">请求被接受</text>
+      <text class="diagram-small" x="203.0" y="50" text-anchor="middle">EnterBattle 返回 true</text>
+      <circle class="diagram-dot" cx="25" cy="95" r="11"/>
+      <text class="diagram-number" x="25" y="95" text-anchor="middle">2</text>
+      <rect class="node-gold" x="48" y="69" width="310" height="52" rx="9"/>
+      <text class="diagram-label" x="203.0" y="93" text-anchor="middle">遮住旧画面</text>
+      <text class="diagram-small" x="203.0" y="112" text-anchor="middle">预热资源，加载目标场景</text>
+      <circle class="diagram-dot" cx="25" cy="157" r="11"/>
+      <text class="diagram-number" x="25" y="157" text-anchor="middle">3</text>
+      <rect class="node-blue" x="48" y="131" width="310" height="52" rx="9"/>
+      <text class="diagram-label" x="203.0" y="155" text-anchor="middle">流程交割</text>
+      <text class="diagram-small" x="203.0" y="174" text-anchor="middle">FSM 关旧域、开新域并建首回合</text>
+      <circle class="diagram-dot" cx="25" cy="219" r="11"/>
+      <text class="diagram-number" x="25" y="219" text-anchor="middle">4</text>
+      <rect class="node-blue" x="48" y="193" width="310" height="52" rx="9"/>
+      <text class="diagram-label" x="203.0" y="217" text-anchor="middle">等到新画面可画</text>
+      <text class="diagram-small" x="203.0" y="236" text-anchor="middle">背景、81 格、HUD、六张手牌</text>
+      <circle class="diagram-dot" cx="25" cy="281" r="11"/>
+      <text class="diagram-number" x="25" y="281" text-anchor="middle">5</text>
+      <rect class="node-green" x="48" y="255" width="310" height="52" rx="9"/>
+      <text class="diagram-label" x="203.0" y="279" text-anchor="middle">收起遮挡</text>
+      <text class="diagram-small" x="203.0" y="298" text-anchor="middle">核对 Screen 与 IsTransitioning</text>
+    </svg>
+  </figure>
+  <dl class="definition-list">
+    <div><dt>状态机 FSM 记住当前阶段</dt><dd><code>GameFlow</code> 用 <code>RevLightFSM</code> 决定什么时候从大厅交割到远征。<code>RevScene</code> 加载 Unity 场景。选关与大厅能共用 <code>StartScene</code>，因为业务阶段和物理场景分别推进。</dd></div>
+    <div><dt>RevScope 管这段玩法拥有的对象</dt><dd>域是一起开始、一起结束的那批对象和工作。远征的 Logic 随战斗域启动与停止。过场遮挡要跨过旧域退出，由流程显式持有，并在新画面就绪后关闭。</dd></div>
+    <div><dt>Logic 按所在阶段驱动业务</dt><dd><code>BattleLogic</code> 按固定节拍推进服务，并检查过场、阶段和教学条件。常驻服务在 <code>GameBootstrap</code> 注册，局内对象仍按各自的归属回收。</dd></div>
+  </dl>
+  <p>收益体现在第二次、第三次进局。上一局的计时和监听按归属结束，下一局的棋盘可以重新建立。域回收依赖正确的归属，图集租约、异步预热和跨域遮挡也要由持有者显式交还。切场检查故意制造交割前后的故障，等待业务进入明确结果后核对恢复。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.cs">GameFlow 状态与域</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs">异步交割与失败出口</a> · <a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Scenes/GameSceneTransitionChecks.cs">反复进出与故障检查</a> · <a href="https://github.com/Yokino337088/RevGame/commit/3c3965a2027be0beb952a41bf473d3ce55c9e422">拆分大厅与战斗场景</a></p>
+</section>
+
+<section id="modes" class="chapter">
+  <div class="section-label">GUIDE / 05</div>
+  <h2>玩法共用基础工具，各自决定何时推进</h2>
+  <p>远征、无尽、围棋和决斗真正的差别是<strong>什么事件能让规则往前走</strong>。远征和无尽在局内按固定节拍推进，各自维护回合或敌潮。九路围棋每接纳一手更新棋面。八角笼按黑白两席的完整逻辑帧推进。四种玩法仍可由同一个流程进入和退出，使用相同的场景、资源、UI 和验证入口。</p>
+  <figure class="diagram" id="diagram-modes" aria-labelledby="modes-caption">
+    <figcaption id="modes-caption"><strong>进退场共用一套流程，规则各有负责人</strong><span>四个格子的第二行指出规则由谁执行，第三行说明什么让它往前走。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 272" role="img" aria-labelledby="modes-title modes-description" focusable="false">
+      <title id="modes-title">进退场共用一套流程，规则各有负责人</title>
+      <desc id="modes-description">GameFlow 和 Revolution 能力服务于四种玩法。远征与无尽有固定步，九路围棋接纳一手推进一次，八角笼执行完整逻辑帧。</desc>
+      <defs><marker id="modes-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M184 64V223"/>
+      <path class="diagram-line" d="M184 130H162" marker-end="url(#modes-arrow)"/>
+      <path class="diagram-line" d="M184 130H206" marker-end="url(#modes-arrow)"/>
+      <path class="diagram-line" d="M184 223H162" marker-end="url(#modes-arrow)"/>
+      <path class="diagram-line" d="M184 223H206" marker-end="url(#modes-arrow)"/>
+      <rect class="node-green" x="10" y="8" width="348" height="56" rx="9"/>
+      <text class="diagram-label" x="184.0" y="32" text-anchor="middle">GameFlow 统一交接</text>
+      <text class="diagram-small" x="184.0" y="51" text-anchor="middle">共用场景、资源、UI 和验证入口</text>
+      <rect class="node-blue" x="10" y="93" width="151" height="74" rx="9"/>
+      <text class="diagram-label" x="85.5" y="117" text-anchor="middle">六章远征</text>
+      <text class="diagram-small" x="85.5" y="136" text-anchor="middle">BattleService</text>
+      <text class="diagram-small" x="85.5" y="152" text-anchor="middle">固定步推进回合</text>
+      <rect class="node-blue" x="207" y="93" width="151" height="74" rx="9"/>
+      <text class="diagram-label" x="282.5" y="117" text-anchor="middle">无尽模式</text>
+      <text class="diagram-small" x="282.5" y="136" text-anchor="middle">EndlessService</text>
+      <text class="diagram-small" x="282.5" y="152" text-anchor="middle">固定步推进敌潮</text>
+      <rect class="node-gold" x="10" y="186" width="151" height="74" rx="9"/>
+      <text class="diagram-label" x="85.5" y="210" text-anchor="middle">九路围棋</text>
+      <text class="diagram-small" x="85.5" y="229" text-anchor="middle">GoCore</text>
+      <text class="diagram-small" x="85.5" y="245" text-anchor="middle">每次接纳一手</text>
+      <rect class="node-gold" x="207" y="186" width="151" height="74" rx="9"/>
+      <text class="diagram-label" x="282.5" y="210" text-anchor="middle">八角笼决斗</text>
+      <text class="diagram-small" x="282.5" y="229" text-anchor="middle">C++ GameCore</text>
+      <text class="diagram-small" x="282.5" y="245" text-anchor="middle">每次执行一个整帧</text>
+    </svg>
+  </figure>
+  <p>无尽可以增加波次、棋心、拖牌升级和存档，在自己的服务内部采用轻量 ECS，把敌潮的移动、战斗、死亡分成系统处理。它只为需要成批处理的单位组织数据。围棋走另一条路，玩家、电脑和托管 Agent 的动作汇入 <code>SubmitActor</code>，再交由棋规校验。单独的局面建议供显示读取，玩法状态的写入口仍然清楚。</p>
+  <p>遇到变化时，团队能沿归属找到最小改动范围。修改无尽的成长先测无尽，若涉及双方复用的棋盘模型，再同时测远征。复用带来少写一份公共能力的好处，也带来一条明确的责任，共享契约的变化由所有调用方一起验收。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/Ecs/EndlessEcsSystems.cs">无尽内部系统</a> · <a href="https://github.com/Yokino337088/RevGame/commit/69b6513d113876c02d667b1c227ac5cb1eae6a7c">无尽 ECS 接入</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs">围棋统一提交</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Agent.cs">Agent 回执与提交</a></p>
+</section>
+
+<section id="gamecore" class="chapter">
+  <div class="section-label">GUIDE / 06</div>
+  <h2>帧同步为什么把同一份规则交给各端运行</h2>
+  <p>RevGame 的八角笼采用<strong>王者荣耀同款的帧同步架构</strong>。假设两个人同一帧按下攻击，大家需要先就「第 103 帧包含哪两份输入」达成一致。权威端给黑白两席的操作排定帧号，每 50 毫秒推进一个固定步。裁判实例成功执行后发布完整帧，客户端通过 <code>DuelCorePipe</code> 按顺序把同样的帧交给本机 GameCore。</p>
+  <figure class="diagram" id="diagram-frame" aria-labelledby="frame-caption">
+    <figcaption id="frame-caption"><strong>同样的第 103 帧，在两处重算</strong><span>从同样的初始状态连续推进，才能比较同一帧的结果。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 289" role="img" aria-labelledby="frame-title frame-description" focusable="false">
+      <title id="frame-title">同样的第 103 帧，在两处重算</title>
+      <desc id="frame-description">权威裁判与客户端确认副本从同局初始状态连续算到第 102 帧，再分别执行黑白两席的第 103 帧输入。双方按同一帧号比指纹。</desc>
+      <defs><marker id="frame-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M184 62V84H88V103" marker-end="url(#frame-arrow)"/>
+      <path class="diagram-line" d="M184 84H280V103" marker-end="url(#frame-arrow)"/>
+      <path class="diagram-line" d="M88 174V193H184"/>
+      <path class="diagram-line" d="M280 174V193H184"/>
+      <path class="diagram-line" d="M184 193V212" marker-end="url(#frame-arrow)"/>
+      <rect class="node-green" x="10" y="8" width="348" height="54" rx="9"/>
+      <text class="diagram-label" x="184.0" y="32" text-anchor="middle">同一局连续执行到第 102 帧</text>
+      <text class="diagram-small" x="184.0" y="51" text-anchor="middle">再执行第 103 帧的黑白两席操作</text>
+      <rect class="node-blue" x="9" y="104" width="158" height="70" rx="9"/>
+      <text class="diagram-label" x="88.0" y="128" text-anchor="middle">权威裁判</text>
+      <text class="diagram-small" x="88.0" y="147" text-anchor="middle">C++ 规则</text>
+      <text class="diagram-small" x="88.0" y="163" text-anchor="middle">执行后保存权威历史</text>
+      <rect class="node-blue" x="201" y="104" width="158" height="70" rx="9"/>
+      <text class="diagram-label" x="280.0" y="128" text-anchor="middle">本机确认副本</text>
+      <text class="diagram-small" x="280.0" y="147" text-anchor="middle">同一份 C++ 规则</text>
+      <text class="diagram-small" x="280.0" y="163" text-anchor="middle">按连续帧顺序重算</text>
+      <rect class="node-gold" x="62" y="213" width="244" height="54" rx="9"/>
+      <text class="diagram-label" x="184.0" y="237" text-anchor="middle">按相同帧号对账</text>
+      <text class="diagram-small" x="184.0" y="256" text-anchor="middle">比较世界指纹 Hash</text>
+      <text class="diagram-tag" x="184" y="284" text-anchor="middle">画面用确认快照另外播放</text>
+    </svg>
+  </figure>
+  <p><strong>确定性</strong>就是同一初始状态、同一规则配置、同一输入顺序算出相同结果。C++ 内核用定点数描述位置和距离，按固定的黑白顺序处理输入，保存可复现的随机状态。这样每端都可以从同样的材料重算这一帧。对账先比较同一帧号，再比指纹。指纹不一致时，就有具体帧可以查。回放重新执行录下来的整帧，也能逐帧定位差异。</p>
+  <p>以同一帧互相命中为例。<code>DuelWorld::Advance</code> 先处理两席的移动和起手，收齐双方命中后再统一扣血与判胜。双方都被击倒可以判平局。这个顺序由内核固定下来，两个角色的动画先后和两端的渲染速度只影响看起来怎样。</p>
+  <h3>三种时钟分开以后，延迟影响哪里</h3>
+  <div class="clock-diagram" role="group" aria-label="网络、逻辑和表现的三个时钟">
+    <div><strong>网络到达</strong><span>何时收到权威帧，可能一批到达</span></div>
+    <div><strong>逻辑执行</strong><span>从上一个连续帧继续，每步 50 ms</span></div>
+    <div><strong>Unity 显示</strong><span>在确认快照间插值，本机运动可短时预测</span></div>
+  </div>
+  <p>早期联机逐帧等两席输入，回包慢就会压低逻辑节拍。后来权威端按自己的节拍封帧，客户端用连续游标补帧，画面独立播放。2026 年 11 月 10 日的验收记录里，固定模拟 100 毫秒往返延迟的 5 秒内，权威封帧由 33 帧增到 99 帧。这个例子说明了改造的收益，条件以该次报告为准。</p>
+  <p>本机可以用独立沙盒先算起跳，Unity 只拿这份预测的位置和方向。命中、血量、胜负继续取确认快照。确认快照可以用来画角色，恢复一局还需要含垂直速度和随机状态的完整检查点。要让这套设计成立，需要保持连续帧，让各端用配套配置和原生库，再按实际网络与平台验收。</p>
+  <p class="sources"><a href="../../RevGameCore/Source/DuelWorld.cpp">C++ 世界推进</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs">权威帧与对账</a> · <a href="../进度同步/双人决斗帧同步验收_2026-11-10/双人决斗帧同步验收_2026-11-10.html">时钟改造验收</a> · <a href="RevGame项目架构与Revolution框架讲解.html#duel-sequence">完整执行时序</a></p>
+</section>
+
+<section id="content" class="chapter">
+  <div class="section-label">GUIDE / 07</div>
+  <h2>配置只维护一个来源，资源按实际寿命持有</h2>
+  <h3>改一个攻击数值，规则和显示怎样一起跟上</h3>
+  <p>策划可调的远征与无尽数值从 Excel 导出为数据和强类型代码，在对应玩法加载时读取并校验。决斗由 <code>Duel.v1.json</code> 生成 C# 和 C++ 配套配置。这样更改一处源数据后，双方可以使用同一套规则。缺项、重复、越界或指纹不匹配会在校验点暴露，排查时先回到源表。</p>
+  <figure class="diagram" id="diagram-config" aria-labelledby="config-caption">
+    <figcaption id="config-caption"><strong>规则参数各有唯一的编辑入口</strong><span>沿两列从源文件往下读，生成与校验接在修改后面。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 234" role="img" aria-labelledby="config-title config-description" focusable="false">
+      <title id="config-title">规则参数各有唯一的编辑入口</title>
+      <desc id="config-description">远征和无尽从 Excel 工作簿导出数据与 C# 类型，在玩法加载时校验。决斗从同一 JSON 生成 C# 和 C++ 配置，对局检查规则指纹。</desc>
+      <defs><marker id="config-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M91 63V87" marker-end="url(#config-arrow)"/>
+      <path class="diagram-line" d="M91 143V167" marker-end="url(#config-arrow)"/>
+      <path class="diagram-line" d="M277 63V87" marker-end="url(#config-arrow)"/>
+      <path class="diagram-line" d="M277 143V167" marker-end="url(#config-arrow)"/>
+      <rect class="node-green" x="10" y="8" width="162" height="55" rx="9"/>
+      <text class="diagram-label" x="91.0" y="32" text-anchor="middle">远征与无尽 Excel</text>
+      <text class="diagram-small" x="91.0" y="51" text-anchor="middle">策划改可调参数</text>
+      <rect class="node-gold" x="196" y="8" width="162" height="55" rx="9"/>
+      <text class="diagram-label" x="277.0" y="32" text-anchor="middle">决斗规则 JSON</text>
+      <text class="diagram-small" x="277.0" y="51" text-anchor="middle">修改同一份源配置</text>
+      <rect class="node-green" x="10" y="88" width="162" height="55" rx="9"/>
+      <text class="diagram-label" x="91.0" y="112" text-anchor="middle">导表生成</text>
+      <text class="diagram-small" x="91.0" y="131" text-anchor="middle">数据文件与 C# 类型</text>
+      <rect class="node-gold" x="196" y="88" width="162" height="55" rx="9"/>
+      <text class="diagram-label" x="277.0" y="112" text-anchor="middle">生成配套配置</text>
+      <text class="diagram-small" x="277.0" y="131" text-anchor="middle">C# 和 C++ 同源</text>
+      <rect class="node-blue" x="10" y="168" width="162" height="55" rx="9"/>
+      <text class="diagram-label" x="91.0" y="192" text-anchor="middle">加载时校验</text>
+      <text class="diagram-small" x="91.0" y="211" text-anchor="middle">检查缺项、重复与范围</text>
+      <rect class="node-blue" x="196" y="168" width="162" height="55" rx="9"/>
+      <text class="diagram-label" x="277.0" y="192" text-anchor="middle">开局核对指纹</text>
+      <text class="diagram-small" x="277.0" y="211" text-anchor="middle">确认各端使用同一规则</text>
+    </svg>
+  </figure>
+  <h3>拿一张图，为什么还要记住谁在用</h3>
+  <p>业务用逻辑路径请求素材，<code>RevResManager</code> 按当前策略取图。图集按大厅、章节、无尽等实际用途持有，棋子与特效通过池复用。退场先让旧回调失效并归还对象，再释放图集和预热持有的引用。共享图集仍被下一屏使用时，可以继续留在内存。</p>
+  <figure class="diagram" id="diagram-assets" aria-labelledby="assets-caption">
+    <figcaption id="assets-caption"><strong>同一个逻辑名能走两种加载策略</strong><span>业务说自己需要哪张图，框架按当前宿主选择来源。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 311" role="img" aria-labelledby="assets-title assets-description" focusable="false">
+      <title id="assets-title">同一个逻辑名能走两种加载策略</title>
+      <desc id="assets-description">逻辑资源名经 RevResManager 请求，Editor 可直接读项目资产，也可使用当前宿主匹配的资源包。视图持有引用，完成后交还。</desc>
+      <defs><marker id="assets-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M184 60V77" marker-end="url(#assets-arrow)"/>
+      <path class="diagram-line" d="M184 129V146H90V164" marker-end="url(#assets-arrow)"/>
+      <path class="diagram-line" d="M184 146H278V164" marker-end="url(#assets-arrow)"/>
+      <path class="diagram-line" d="M90 216V231H184"/>
+      <path class="diagram-line" d="M278 216V231H184"/>
+      <path class="diagram-line" d="M184 231V250" marker-end="url(#assets-arrow)"/>
+      <rect class="node-green" x="69" y="8" width="230" height="52" rx="9"/>
+      <text class="diagram-label" x="184.0" y="32" text-anchor="middle">业务请求资源逻辑名</text>
+      <text class="diagram-small" x="184.0" y="51" text-anchor="middle">路径由项目资源映射提供</text>
+      <rect class="node-blue" x="69" y="78" width="230" height="51" rx="9"/>
+      <text class="diagram-label" x="184.0" y="102" text-anchor="middle">RevResManager</text>
+      <text class="diagram-small" x="184.0" y="121" text-anchor="middle">根据运行宿主选择策略</text>
+      <rect class="node-neutral" x="10" y="165" width="160" height="51" rx="9"/>
+      <text class="diagram-label" x="90.0" y="189" text-anchor="middle">编辑器直读</text>
+      <text class="diagram-small" x="90.0" y="208" text-anchor="middle">调试时直接读项目资产</text>
+      <rect class="node-gold" x="198" y="165" width="160" height="51" rx="9"/>
+      <text class="diagram-label" x="278.0" y="189" text-anchor="middle">真实 AB</text>
+      <text class="diagram-small" x="278.0" y="208" text-anchor="middle">从匹配的平台资源包读</text>
+      <rect class="node-green" x="69" y="251" width="230" height="51" rx="9"/>
+      <text class="diagram-label" x="184.0" y="275" text-anchor="middle">使用期间持有引用</text>
+      <text class="diagram-small" x="184.0" y="294" text-anchor="middle">退场交还，零引用才可回收</text>
+    </svg>
+  </figure>
+  <p>策划调攻击数值时回到源表，美术换弹道时沿资源映射和表现层改素材，程序修改命中条件时回到规则服务。各自的修改通过已知的配置、路径和结果数据接在一起，联调时可以先核对这次改动触及的那一环。</p>
+  <p>2026 年 11 月 9 日的粉屏复盘给出了很实际的理由。桌面 Editor 使用真实 AB 时，活动构建目标和实际运行宿主可能不同。Windows Editor 要取配套的 PC 资源包。修复后走相同逻辑路径的业务调用仍然成立，验收则要核对实际包、Shader 和冷启动画面。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Data/Config/GameConfig.cs">配置启动校验</a> · <a href="../../RevGameCore/Config/Duel.v1.json">决斗规则源</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GameSpriteAtlasService.cs">图集归属与释放</a> · <a href="../Bug踩坑记录/2026-11-09-EditorPlay误加载AndroidAB导致剧情粉屏.html">Editor Play 粉屏复盘</a></p>
+</section>
+
+<section id="performance" class="chapter">
+  <div class="section-label">GUIDE / 08</div>
+  <h2>性能优化先找哪些工作可以少做</h2>
+  <p>棋子掉血时，血条要更新。棋盘位置、加气与围困免疫都没变时，气眼结果可以复用。<code>BoardModel</code> 的落子、移动、移除、清盘负责更新占格版本。<code>RefreshGoState</code> 把占格、加气与免疫一起作为判断条件。有任何一项变化，就重新计算并通知视图。</p>
+  <figure class="diagram" id="diagram-cache" aria-labelledby="cache-caption">
+    <figcaption id="cache-caption"><strong>气眼何时需要重新计算</strong><span>血条和气眼分开刷新，输入一变就重算对应规则。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 216" role="img" aria-labelledby="cache-title cache-description" focusable="false">
+      <title id="cache-title">气眼何时需要重新计算</title>
+      <desc id="cache-description">气眼和围困刷新比较占格版本、额外气与围困免疫。与上次一样便复用；变化就重新计算并通知。</desc>
+      <defs><marker id="cache-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M184 58V76" marker-end="url(#cache-arrow)"/>
+      <path class="diagram-line" d="M184 122V139H89V157" marker-end="url(#cache-arrow)"/>
+      <path class="diagram-line" d="M184 139H279V157" marker-end="url(#cache-arrow)"/>
+      <rect class="node-blue" x="48" y="8" width="272" height="50" rx="9"/>
+      <text class="diagram-label" x="184.0" y="32" text-anchor="middle">检查三项输入</text>
+      <text class="diagram-small" x="184.0" y="51" text-anchor="middle">占格版本、加气、围困免疫</text>
+      <rect class="node-neutral" x="86" y="77" width="196" height="45" rx="9"/>
+      <text class="diagram-label" x="184.0" y="104.5" text-anchor="middle">和上次一样吗？</text>
+      <text class="diagram-tag" x="66" y="149" text-anchor="middle">相同</text>
+      <text class="diagram-tag" x="302" y="149" text-anchor="middle">有变</text>
+      <rect class="node-green" x="10" y="158" width="158" height="51" rx="9"/>
+      <text class="diagram-label" x="89.0" y="182" text-anchor="middle">复用气眼</text>
+      <text class="diagram-small" x="89.0" y="201" text-anchor="middle">血条仍可照常更新</text>
+      <rect class="node-gold" x="200" y="158" width="158" height="51" rx="9"/>
+      <text class="diagram-label" x="279.0" y="182" text-anchor="middle">重算并通知</text>
+      <text class="diagram-small" x="279.0" y="201" text-anchor="middle">用当前输入刷新视图</text>
+    </svg>
+  </figure>
+  <p>这条边界也给优化定了验收条件。同一棋盘、同一组动作，优化前后要核对气眼、死亡移除和战斗结果。AI 可以在自己的深快照上试阵，避免移动实战棋子触发占格变化。画面压力则另外看弹道池、飘字预算和共享材质。把规则耗时与显示耗时分别测量，才能判断减少的是哪一份工作。</p>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Board/Model/BoardModel.cs">占格写入口</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Support/BattleService.Events.cs">气眼刷新条件</a> · <a href="https://github.com/Yokino337088/RevGame/commit/7706f7bf9eaa19f9f2d5910d4dbdd8c70b7b8a5b">查询缓存与反馈优化</a> · <a href="../战斗性能优化规则/战斗性能热点与缓存优化_2026-10-30.html">性能验证记录</a></p>
+</section>
+
+<section id="proof" class="chapter">
+  <div class="section-label">GUIDE / 09</div>
+  <h2>把「改对了」变成能检查的结果</h2>
+  <p>玩家与开发测试能走同一个业务入口，规则的失败原因、已提交状态和离场结果都能读取。以进远征为例，测试先发起正常的进入请求，等过场结束，查实际场景、棋盘和手牌。再走正常返回入口，检查旧域的工作、对象和资源是否按归属收尾。</p>
+  <figure class="diagram" id="diagram-verification" aria-labelledby="verification-caption">
+    <figcaption id="verification-caption"><strong>进入战斗的测试要看三份结果</strong><span>人点按钮，测试经受控入口操作，最后都要对照真实状态。</span></figcaption>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 225" role="img" aria-labelledby="verification-title verification-description" focusable="false">
+      <title id="verification-title">进入战斗的测试要看三份结果</title>
+      <desc id="verification-description">玩家操作和开发测试汇入业务入口。分别检查请求是否被接纳，目标画面是否就绪，退出后旧域、池与资源引用是否已收尾。</desc>
+      <defs><marker id="verification-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="diagram-head" d="M0 0L10 5L0 10Z"/></marker></defs>
+      <path class="diagram-line" d="M90 49V66H184"/>
+      <path class="diagram-line" d="M278 49V66H184"/>
+      <path class="diagram-line" d="M184 66V83" marker-end="url(#verification-arrow)"/>
+      <path class="diagram-line" d="M184 135V150H61V168" marker-end="url(#verification-arrow)"/>
+      <path class="diagram-line" d="M184 135V168" marker-end="url(#verification-arrow)"/>
+      <path class="diagram-line" d="M184 150H307V168" marker-end="url(#verification-arrow)"/>
+      <rect class="node-green" x="10" y="8" width="160" height="41" rx="9"/>
+      <text class="diagram-label" x="90.0" y="33.5" text-anchor="middle">玩家点按钮</text>
+      <rect class="node-blue" x="198" y="8" width="160" height="41" rx="9"/>
+      <text class="diagram-label" x="278.0" y="33.5" text-anchor="middle">开发测试动作</text>
+      <rect class="node-green" x="65" y="84" width="238" height="51" rx="9"/>
+      <text class="diagram-label" x="184.0" y="108" text-anchor="middle">走同一条业务流程</text>
+      <text class="diagram-small" x="184.0" y="127" text-anchor="middle">进入战斗，再返回大厅</text>
+      <rect class="node-neutral" x="6" y="169" width="110" height="50" rx="9"/>
+      <text class="diagram-label" x="61.0" y="193" text-anchor="middle">请求受理</text>
+      <text class="diagram-small" x="61.0" y="212" text-anchor="middle">读业务返回值</text>
+      <rect class="node-blue" x="129" y="169" width="110" height="50" rx="9"/>
+      <text class="diagram-label" x="184.0" y="193" text-anchor="middle">真的可画</text>
+      <text class="diagram-small" x="184.0" y="212" text-anchor="middle">查场景和画面</text>
+      <rect class="node-gold" x="252" y="169" width="110" height="50" rx="9"/>
+      <text class="diagram-label" x="307.0" y="193" text-anchor="middle">退出收尾</text>
+      <text class="diagram-small" x="307.0" y="212" text-anchor="middle">查域、池和引用</text>
+    </svg>
+  </figure>
+  <p><code>RevGM</code> 和 <code>RevRuntimeAutomation</code> 把开发态能力注册出来。RevMCP 可以发现真实入口、执行动作、读取结果并跑带清理的计划。它给自动化提供的是可执行的业务契约，所以人和工具可以用同一组条件判断本次改动。</p>
+  <div class="callout tip"><b>RevGame 对 Revolution 的验证结论</b>现有工程和验收记录表明，Revolution 的门面可以组合起来承载多模式的流程交割、资源与对象生命周期、界面和业务自动验证。远征、无尽、九路棋规、原生帧同步各自保有规则和验证入口。编辑器、真实资源包、联网同帧和真机性能分别有自己的证据范围。</div>
+  <h3>下次看一个改动，先回答三个问题</h3>
+  <ol class="steps">
+    <li><strong>谁有权改变这份状态？</strong>扣血和胜负找规则，改动画节奏找表现，切换整段玩法找流程。</li>
+    <li><strong>这个对象应该活多久？</strong>随面板、随局或常驻，决定它在哪登记和在哪归还。</li>
+    <li><strong>怎样知道这次改对了？</strong>固定输入，写清成功、拒绝和退出后的可观察结果。</li>
+  </ol>
+  <p class="sources"><a href="../../UnityProject/RevGame.Unity/Assets/Editor/RevGame/Scenes/GameSceneTransitionChecks.cs">场景交接验收</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.cs">真实业务测试入口</a> · <a href="RevGame代码阅读指南-新手版.html#s17">按功能选择验收方式</a></p>
+</section>
+    </main>
+  </div>
+
+  <footer>
+    <span>RevGame · 核心设计哲学（新手版）</span>
+    <span>源码基线 <a href="https://github.com/Yokino337088/RevGame/tree/ea4aa3a2b8f4e4a41177dad3b5e68dff508f12bc">ea4aa3a2</a> · 图可离线阅读</span>
+  </footer>
+  <script>
+const root = document.documentElement;
+const motionButton = document.querySelector('#motion');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+// 尊重系统设置，读者也可以在页面上暂停装饰动画。
+function syncMotionSetting() {
+  motionButton.hidden = reducedMotion.matches;
+}
+syncMotionSetting();
+reducedMotion.addEventListener('change', syncMotionSetting);
+motionButton.addEventListener('click', () => {
+  const paused = root.classList.toggle('motion-paused');
+  motionButton.setAttribute('aria-pressed', String(paused));
+  motionButton.textContent = paused ? '继续装饰动画' : '暂停装饰动画';
+});
+
+// 模拟三种表现策略，血量来自同一笔已提交的示例结果。
+const damageExample = document.querySelector('[data-damage-example]');
+const controls = damageExample.querySelector('.damage-controls');
+const effects = [...controls.querySelectorAll('button')];
+const display = damageExample.querySelector('[data-effect-state]');
+const effectText = damageExample.querySelector('[data-effect-text]');
+const effectMessages = {
+  normal: '播放弹道与命中反馈',
+  delay: '保留命中快照，稍后播放',
+  skip: '本次略过弹道',
+};
+controls.hidden = false;
+for (const button of effects) {
+  button.addEventListener('click', () => {
+    const effect = button.dataset.effect;
+    display.dataset.effectState = effect;
+    effectText.textContent = effectMessages[effect];
+    for (const item of effects) {
+      item.setAttribute('aria-pressed', String(item === button));
+    }
+  });
+}
+
+// 滚动时更新进度条和当前章节，每帧至多更新一次。
+const chapters = [...document.querySelectorAll('main .chapter')];
+const navigation = [...document.querySelectorAll('.sidebar nav a')];
+const progress = document.querySelector('.progress');
+let readingScheduled = false;
+
+function updateReadingPosition() {
+  const distance = root.scrollHeight - innerHeight;
+  progress.style.width = (distance > 0 ? Math.min(100, 100 * scrollY / distance) : 0) + '%';
+  let current = chapters[0];
+  for (const chapter of chapters) {
+    if (chapter.getBoundingClientRect().top <= innerHeight * .35) {
+      current = chapter;
+    }
+  }
+  for (const link of navigation) {
+    if (link.hash === '#' + current.id) {
+      link.setAttribute('aria-current', 'location');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  }
+  readingScheduled = false;
+}
+
+function scheduleReadingUpdate() {
+  if (!readingScheduled) {
+    readingScheduled = true;
+    requestAnimationFrame(updateReadingPosition);
+  }
+}
+addEventListener('scroll', scheduleReadingUpdate, { passive: true });
+addEventListener('resize', scheduleReadingUpdate);
+updateReadingPosition();
+  </script>
+</body>
+</html>
