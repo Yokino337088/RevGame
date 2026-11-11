@@ -28,7 +28,7 @@ GAME_CORE_API int32_t GameCore_Read(void* handle, uint8_t* data, int32_t capacit
 // data 为空且 capacity 为 0 时查询所需字节数，查询不推进世界。
 GAME_CORE_API int32_t GameCore_SaveCheckpoint(void* handle, uint8_t* data, int32_t capacity);
 
-// 已开局的同配置、同种子实例可恢复。1 成功并写出 76 字节基线，0 忙，-1 非法。
+// 已开局的同配置、同种子实例可恢复。1 成功并写出完整表现基线，0 忙，-1 非法。
 // 恢复后的下一条输入必须是检查点帧号加一。失败时实例、FIFO 和调用方基线均保持原值。
 GAME_CORE_API int32_t GameCore_RestoreCheckpoint(
     void* handle, const uint8_t* data, int32_t size, uint8_t* snapshot, int32_t capacity);

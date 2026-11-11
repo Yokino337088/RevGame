@@ -19,11 +19,22 @@ if arena["frameMilliseconds"] != 50:
 # 顺序是小端配置包的契约。新增字段需要同时核对托管端协议与 C++ 消费位置。
 words = [arena[k] for k in ("health", "extent", "movePerFrame", "frameLimit", "spawnOffset",
                              "energy", "energyPerFrame", "energyPerHit", "frameMilliseconds")]
-assert len(data["attacks"]) == 3
-for attack in data["attacks"]:
+# 顺序为普攻一段、技能一、大招、技能二、普攻二段、普攻三段。前 27 字保留场地和跳跃下标。
+attacks = data["attacks"]
+assert len(attacks) == 6
+for attack in attacks[:3]:
     words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
 words += [data["jump"][k] for k in ("speed", "gravity", "hitHeight")]
+for attack in attacks[3:]:
+    words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
+# 后续窗口的位 0～3 对应玩家四个输入槽。派生普攻段位只由原生世界选择。
+for attack in attacks:
+    words += [attack[k] for k in ("cancelFrame", "stun", "advance", "next")]
 assert all(type(x) is int and 0 <= x <= 100000 for x in words)
+duration_cases = "\n".join(f'                {slot} => {attack["duration"]},'
+                            for slot, attack in enumerate(attacks, 1))
+hit_cases = "\n".join(f'                {slot} => {attack["hitFrame"]},'
+                       for slot, attack in enumerate(attacks, 1))
 # 同时把入场资格和战斗数值纳入指纹，防止两端只更新了一半。
 fingerprint = 2166136261
 for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"], protocol, hash_sample_frames]:
@@ -52,6 +63,8 @@ namespace RevGame.Pvp.Duel
         public const int JabRange = {data["attacks"][0]["range"]};
         // AI 选择技能意图需要的能量；是否真正扣除由原生招式规则决定。
         public const int SkillCost = {data["attacks"][1]["cost"]};
+        // 技能二的能量门槛，HUD 和 AI 共用。
+        public const int SkillTwoCost = {data["attacks"][3]["cost"]};
         // AI 选择大招意图需要的能量。
         public const int UltimateCost = {data["attacks"][2]["cost"]};
         // 0 表示不限时。正数是限时规则的逻辑帧上限。
@@ -65,9 +78,16 @@ namespace RevGame.Pvp.Duel
         {{
             return action switch
             {{
-                1 => {data["attacks"][0]["duration"]},
-                2 => {data["attacks"][1]["duration"]},
-                3 => {data["attacks"][2]["duration"]},
+{duration_cases}
+                _ => 0
+            }};
+        }}
+        // 权威判伤的动作年龄。表现用它对齐枪尖接触与实际命中时刻。
+        public static int ActionHitFrame(int action)
+        {{
+            return action switch
+            {{
+{hit_cases}
                 _ => 0
             }};
         }}
@@ -84,11 +104,15 @@ namespace RevGame.Pvp.Duel
 native_target = folder.parent / "Include/DuelProtocol.Generated.h"
 native_target.write_text(f"""// 由 Config/GenerateDuelConfig.py 生成。
 #pragma once
+#include <array>
+#include <cstdint>
 
 namespace RevGameCore
 {{
     // FIFO 协议版本和固定逻辑步长，共用 Duel.v1.json。
     constexpr int WireVersion = {protocol};
     constexpr int FrameMilliseconds = {arena["frameMilliseconds"]};
+    // 原生回归与托管开局包共用的规则字，防止测试继续使用旧招式布局。
+    inline constexpr std::array<int32_t, {len(words)}> DefaultDuelSettings{{ {", ".join(map(str, words))} }};
 }}
 """, encoding="utf-8")

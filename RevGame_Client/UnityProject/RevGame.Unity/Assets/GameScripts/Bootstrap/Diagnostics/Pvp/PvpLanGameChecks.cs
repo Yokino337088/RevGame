@@ -60,6 +60,12 @@ namespace RevGame.Pvp
         public string Winner { get; private set; } = string.Empty;
         public int BlackCaptures { get; private set; }
 
+        // 仅允许 HUD 验收控制它自己创建的可见测试房间。
+        internal bool OwnsVisibleDuel(PvpService service)
+        {
+            return !_disposed && _visibleHost == service && service.DuelId.Length != 0;
+        }
+
         // 创建隔离 UTP 夹具，duel 模式验证从棋局到原生封帧。
         public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, PvpService visibleHost = null)
         {

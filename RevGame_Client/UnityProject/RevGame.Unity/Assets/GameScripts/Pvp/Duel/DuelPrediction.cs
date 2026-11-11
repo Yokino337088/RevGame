@@ -17,7 +17,7 @@ namespace RevGame.Pvp.Duel
         private readonly byte[] _checkpoint = new byte[DuelCorePipe.MaxCheckpointBytes];
         // 沙盒原生句柄，和服务持有的权威回放句柄互不共享状态。
         private readonly DuelCorePipe _sandbox;
-        // 本端控制的座位，决定从整帧的高五位还是低五位读取本地坐标。
+        // 本端控制的座位，决定从整帧的高六位还是低六位读取意图。
         private readonly bool _black;
         // 当前日志中的元素数量，有效区间为 0 到 _count - 1。
         private int _count;
@@ -49,7 +49,7 @@ namespace RevGame.Pvp.Duel
             public int Sequence;
             // 本地预览时估计它进入的帧，若锚点已超过则顺延到锚点下一帧。
             public int Frame;
-            // 方向、跳跃、招式按 DuelCorePipe 的五位布局组合。
+            // 方向、跳跃、招式按 DuelCorePipe 的六位布局组合。
             public int Packed;
         }
 
@@ -130,7 +130,7 @@ namespace RevGame.Pvp.Duel
                 }
                 else if (input.Sequence == reply.pendingActionSequence)
                 {
-                    _confirmedMailbox.RestoreAction(input.Sequence, (input.Packed >> 2) & 3, reply.pendingActionUntil);
+                    _confirmedMailbox.RestoreAction(input.Sequence, DuelCorePipe.ReadActionInput(input.Packed), reply.pendingActionUntil);
                     // 招式可能跨多次回执等待。保留该输入字供下一次恢复，只从待重演方向和跳跃里排除。
                     _pending[retained++] = input;
                 }
@@ -216,7 +216,7 @@ namespace RevGame.Pvp.Duel
                     // 预览没有真实序号，用只在本次重演有效的最大值。它不会进入日志或网络。
                     local.Stage(int.MaxValue, _preview, frame - 1);
                 }
-                // 对手只猜方向，两席五位字仍按真实封帧顺序进入同一个 C++ 入口。
+                // 对手只猜方向，两席六位字按真实封帧顺序进入同一个 C++ 入口。
                 int own = local.Take(_sandbox.Snapshot, _black);
                 int packed = _black ? own | (_otherDirection << DuelCorePipe.InputBits) : _otherDirection | (own << DuelCorePipe.InputBits);
                 _sandbox.Append(frame, packed);

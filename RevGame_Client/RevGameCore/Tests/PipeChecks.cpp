@@ -4,6 +4,7 @@
 #include "DuelProtocol.Generated.h"
 #include "Fnv1a.h"
 #include "WireWords.h"
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <cstdio>
@@ -71,6 +72,8 @@ void CheckMathAndRandom()
     Check(first.NextUInt64() == separate.NextUInt64());
 }
 
+// 检查点、表现快照和开局包的尺寸来自当前原生协议。
+using StartWords = std::array<int32_t, ConfigWords + 4>;
 using Checkpoint = std::array<uint8_t, DuelWorld::CheckpointBytes>;
 using DisplayBytes = std::array<uint8_t, SnapshotWords * 4>;
 
@@ -86,7 +89,7 @@ void Recheck(Checkpoint& checkpoint)
 }
 
 // 固定输入覆盖空中恢复、互击、命中帧无旧事件、移动、锁帧和双实例长后缀。
-void CheckCheckpoint(const std::array<int32_t, 31>& settings)
+void CheckCheckpoint(const StartWords& settings)
 {
     auto source = GameCore_Create();
     auto target = GameCore_Create();
@@ -106,10 +109,10 @@ void CheckCheckpoint(const std::array<int32_t, 31>& settings)
     Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
     Check(ReadWord(first.data()) == 0);
     // 独立按约定序列打包 204 字节计算出的开局指纹，包含高位非零的种子和负坐标。
-    Check(ReadWord(first.data() + 64) == 0x7ebfb31cu);
+    Check(ReadWord(first.data() + 64) == 0x7da43461u);
 
     auto foreign = settings;
-    ++foreign[30];
+    ++foreign.back();
     auto foreignPacket = Encode(foreign);
     Check(GameCore_Write(alien, foreignPacket.data(), int(foreignPacket.size())) == 1);
     Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
@@ -124,7 +127,7 @@ void CheckCheckpoint(const std::array<int32_t, 31>& settings)
 
     for (int frame = 1; frame <= 310; ++frame)
     {
-        const int firstIntent = frame == 1 ? 18 : frame <= 10 ? 2 : frame == 20 ? 4 : 0;
+        const int firstIntent = frame == 1 ? (JumpInput | 2) : frame <= 10 ? 2 : frame == 20 ? 4 : 0;
         const int secondIntent = frame <= 10 ? 1 : frame == 20 ? 4 : 0;
         const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, firstIntent, secondIntent});
         Check(GameCore_Write(source, packet.data(), int(packet.size())) == 1);
@@ -148,7 +151,7 @@ void CheckCheckpoint(const std::array<int32_t, 31>& settings)
             Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == -1);
             Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()) - 1, second.data(), int(second.size())) == -1);
             Check(GameCore_RestoreCheckpoint(target, air.data(), int(air.size()), second.data(), int(second.size()) - 1) == -1);
-            for (const int offset : {4, 8, 12, 16, 136 + 12, 136 + 28})
+            for (const int offset : {4, 8, 12, 16, (7 + ConfigWords) * 4 + 12, (7 + ConfigWords) * 4 + 28})
             {
                 bad = air;
                 WriteWord(bad.data() + offset, 0x7fffffffu);
@@ -156,7 +159,7 @@ void CheckCheckpoint(const std::array<int32_t, 31>& settings)
                 Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == -1);
             }
             bad = air;
-            for (int offset = 200; offset < 216; offset += 4)
+            for (int offset = DuelWorld::CheckpointBytes - 20; offset < DuelWorld::CheckpointBytes - 4; offset += 4)
             {
                 WriteWord(bad.data() + offset, 0);
             }
@@ -167,7 +170,7 @@ void CheckCheckpoint(const std::array<int32_t, 31>& settings)
 
             // 改写一个有效的隐藏随机状态后，恢复必须原样保存，并生成不同状态指纹。
             bad = air;
-            bad[200] ^= 1;
+            bad[DuelWorld::CheckpointBytes - 20] ^= 1;
             Recheck(bad);
             Check(GameCore_RestoreCheckpoint(target, bad.data(), int(bad.size()), second.data(), int(second.size())) == 1);
             Check(ReadWord(second.data() + 64) != ReadWord(first.data() + 64));
@@ -213,7 +216,7 @@ void CheckCheckpoint(const std::array<int32_t, 31>& settings)
 }
 
 // 超过旧的 60 秒上限时仍可恢复同一局，继续靠实际伤害决出胜负。
-void CheckUnlimitedDuel(const std::array<int32_t, 31>& settings)
+void CheckUnlimitedDuel(const StartWords& settings)
 {
     auto config = settings;
     config[2] = 9; // 用真实普攻击倒对方，便于只测试一次命中。
@@ -264,8 +267,11 @@ int main()
     CheckMathAndRandom();
     auto first = GameCore_Create();
     auto second = GameCore_Create();
-    const std::array<int32_t, 31> settings{WireVersion, 1, 100, 4500, 140, 1200, 1700, 100, 1, 12, FrameMilliseconds,
-        9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78, 270, 34, 480, 42, -123};
+    StartWords settings{WireVersion, 1};
+    std::copy(DefaultDuelSettings.begin(), DefaultDuelSettings.end(), settings.begin() + 2);
+    settings[5] = 1200;
+    settings[ConfigWords + 2] = 42;
+    settings[ConfigWords + 3] = -123;
     CheckCheckpoint(settings);
     CheckUnlimitedDuel(settings);
     const auto config = Encode(settings);
@@ -282,10 +288,10 @@ int main()
     // 在首帧缺失时先投帧 2，拒绝后仍能从帧 1 开始。
     auto gap = Encode(std::array<int32_t, 5>{WireVersion, 2, 2, 0, 0});
     Check(GameCore_Write(first, gap.data(), int(gap.size())) == -1);
-    std::array<uint8_t, 76> left{}, right{};
+    DisplayBytes left{}, right{};
     for (int frame = 1; frame <= 128; ++frame)
     {
-        auto input = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, frame == 1 ? 18 : frame < 11 ? 2 : 4, frame < 11 ? 1 : 12});
+        auto input = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, frame == 1 ? (JumpInput | 2) : frame < 11 ? 2 : 4, frame < 11 ? 1 : 12});
         Check(GameCore_Write(first, input.data(), int(input.size())) == 1);
         Check(GameCore_Write(second, input.data(), int(input.size())) == 1);
     }
@@ -303,7 +309,7 @@ int main()
         {
             Check(left[68] != 0 || left[69] != 0);
             // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
-            Check(ReadWord(left.data() + 64) == 0x20c3c5acu);
+            Check(ReadWord(left.data() + 64) == 0x5a5a88e5u);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);
@@ -314,7 +320,7 @@ int main()
     auto duel = GameCore_Create();
     auto mirror = GameCore_Create();
     auto otherSettings = settings;
-    ++otherSettings[30];
+    ++otherSettings.back();
     const auto otherConfig = Encode(otherSettings);
     Check(GameCore_Write(mirror, otherConfig.data(), int(otherConfig.size())) == 1);
     Check(GameCore_Write(duel, config.data(), int(config.size())) == 1);
@@ -322,7 +328,7 @@ int main()
     {
         const bool approach = frame <= 10;
         const int protectedFrame = frame <= 14 ? RevGameCore::NoDamageFrameBit : 0;
-        auto input = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, (approach ? 2 : 4) | protectedFrame, approach ? 1 : 4});
+        auto input = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, (approach ? 2 : (frame == 11 || frame == 20 ? 4 : 0)) | protectedFrame, approach ? 1 : (frame == 11 || frame == 20 ? 4 : 0)});
         Check(GameCore_Write(duel, input.data(), int(input.size())) == 1);
         Check(GameCore_Read(duel, left.data(), int(left.size())) == int(left.size()));
         Check(GameCore_Write(mirror, input.data(), int(input.size())) == 1);

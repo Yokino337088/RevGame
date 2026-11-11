@@ -13,8 +13,6 @@ namespace RevGame.Editor
     {
         // 从无尽模式材质读取原图，与围棋共用同一份已分包的纹理。
         private const string EndlessBackgroundPath = "Assets/GameRes/Endless/EndlessBackground.mat";
-        // 决斗场景直接持有完整矩形 Sprite，Shader 需要独立的 0~1 原画 UV。
-        private const string BoxingRingPath = DuelArt + "BoxingRing.png";
         // 决斗底图是画布第一层，之后的角色和按钮依照现有层级绘制。
         private const string DuelBackdropName = "BoxingRingBackdrop";
         // 透过材质选择场景样式，两个背景复用同一个 Shader。
@@ -44,7 +42,8 @@ namespace RevGame.Editor
                 Transform canvas = duel.GetRootGameObjects().Single(root => root.name == "Duel").transform;
                 Transform backdrop = canvas.Find(DuelBackdropName) ?? canvas.Find("TempleBackdrop") ??
                     throw new InvalidOperationException("决斗场景缺少背景节点。");
-                ApplyBoxingRing(backdrop.GetComponent<Image>());
+                ImportDuelSprites();
+                ApplyDuelBackdrop(backdrop.GetComponent<Image>());
                 if (!EditorSceneManager.SaveScene(duel))
                 {
                     throw new InvalidOperationException("决斗场景背景保存失败。");
@@ -60,16 +59,15 @@ namespace RevGame.Editor
             }
 
             AssetDatabase.SaveAssets();
-            return "已保存决斗拳击擂台，并为围棋的无尽神殿原画更新了专用光效。";
+            return "已保存决斗雨夜擂台，并更新围棋的神殿背景绑定。";
         }
 
         // 决斗新建场景与现有场景升级共用同一套绑定。背景不可接收点击，避免拦住格斗控件。
-        private static void ApplyBoxingRing(Image image)
+        private static void ApplyDuelBackdrop(Image image)
         {
-            ImportBoxingRing();
             image.gameObject.name = DuelBackdropName;
-            image.sprite = LoadDuelSprite("BoxingRing");
-            image.material = SaveArenaMaterial(DuelArt + "BoxingRingBackdrop.mat", 0, null);
+            image.sprite = LoadArcadeSprite("RainRing");
+            image.material = null;
             image.raycastTarget = false;
         }
 
@@ -84,34 +82,6 @@ namespace RevGame.Editor
             }
 
             return SaveArenaMaterial("Assets/GameRes/Pvp/PvpTemple.mat", 1, art);
-        }
-
-        // 擂台用整张 Sprite 的 UV。保留原分辨率并钳制 UV 边缘，避免边界采样串色。
-        private static void ImportBoxingRing()
-        {
-            var importer = AssetImporter.GetAtPath(BoxingRingPath) as TextureImporter;
-            if (importer == null)
-            {
-                throw new InvalidOperationException("拳击擂台原画未导入：" + BoxingRingPath);
-            }
-
-            var settings = new TextureImporterSettings();
-            importer.ReadTextureSettings(settings);
-            if (importer.textureType == TextureImporterType.Sprite && importer.wrapMode == TextureWrapMode.Clamp && !importer.mipmapEnabled
-                && importer.npotScale == TextureImporterNPOTScale.None
-                && importer.spriteImportMode == SpriteImportMode.Single && settings.spriteMeshType == SpriteMeshType.FullRect)
-            {
-                return;
-            }
-
-            settings.textureType = TextureImporterType.Sprite;
-            settings.wrapMode = TextureWrapMode.Clamp;
-            settings.mipmapEnabled = false;
-            settings.npotScale = TextureImporterNPOTScale.None;
-            settings.spriteMode = (int)SpriteImportMode.Single;
-            settings.spriteMeshType = SpriteMeshType.FullRect;
-            importer.SetTextureSettings(settings);
-            importer.SaveAndReimport();
         }
 
         // style 与 Shader 的 _Style 对应。迁移材质时清理旧 Shader 的属性，只保留新 Shader 使用的采样槽。

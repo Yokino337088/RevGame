@@ -5,7 +5,7 @@ namespace RevGame.Pvp.Duel
     public static class DuelConfig
     {
         // 原生 FIFO 协议版本，同时纳入联机决斗指纹。
-        internal const int CoreProtocol = 5;
+        internal const int CoreProtocol = 6;
         // 从第几手开始允许判定中局劣势。
         public const int MinimumMove = 24;
         // 入场最小估算分差，单位为半目。
@@ -19,9 +19,11 @@ namespace RevGame.Pvp.Duel
         // 本地电脑用于接近目标的普攻距离参考，真实命中仍由 C++ 校验。
         public const int JabRange = 1020;
         // AI 选择技能意图需要的能量；是否真正扣除由原生招式规则决定。
-        public const int SkillCost = 22;
+        public const int SkillCost = 16;
+        // 技能二的能量门槛，HUD 和 AI 共用。
+        public const int SkillTwoCost = 20;
         // AI 选择大招意图需要的能量。
-        public const int UltimateCost = 78;
+        public const int UltimateCost = 55;
         // 0 表示不限时。正数是限时规则的逻辑帧上限。
         public const int FrameLimit = 0;
         // 逻辑帧对应的毫秒数，用于宿主限速和显示时间换算。
@@ -34,17 +36,34 @@ namespace RevGame.Pvp.Duel
             return action switch
             {
                 1 => 8,
-                2 => 13,
-                3 => 21,
+                2 => 12,
+                3 => 20,
+                4 => 14,
+                5 => 8,
+                6 => 11,
+                _ => 0
+            };
+        }
+        // 权威判伤的动作年龄。表现用它对齐枪尖接触与实际命中时刻。
+        public static int ActionHitFrame(int action)
+        {
+            return action switch
+            {
+                1 => 3,
+                2 => 4,
+                3 => 7,
+                4 => 5,
+                5 => 3,
+                6 => 4,
                 _ => 0
             };
         }
         // 两席握手比较的 31 位规则指纹。
-        public const int Fingerprint = 191955659;
+        public const int Fingerprint = 180734360;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
         public static int[] CreateCoreWords()
         {
-            return new[] { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 17, 1630, 5, 13, 22, 38, 2560, 8, 21, 78, 270, 34, 480 };
+            return new[] { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 15, 1550, 4, 12, 16, 32, 2380, 7, 20, 55, 270, 34, 480, 18, 1340, 5, 14, 20, 10, 1120, 3, 8, 0, 13, 1240, 4, 11, 0, 5, 8, 0, 15, 6, 12, 420, 12, 21, 16, 210, 0, 7, 13, 100, 6, 5, 9, 110, 15, 6, 11, 150, 14 };
         }
     }
 }

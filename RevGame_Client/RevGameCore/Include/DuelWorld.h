@@ -5,15 +5,17 @@
 
 namespace RevGameCore
 {
-    // 黑方 FIFO 字的第 5 位保留给完整帧的双席免伤，低五位仍是角色输入。
-    constexpr int32_t NoDamageFrameBit = 1 << 5;
+    // 黑方 FIFO 字的第 6 位保留给整帧免伤，低六位是正常意图。
+    constexpr int32_t NoDamageFrameBit = 1 << 6;
 
     // 持有一局确定性规则和角色状态，生命周期由原生桥接实例管理。
     class DuelWorld
     {
     public:
-        // 独立于 76 字节表现快照的检查点格式。固定字段序列见 DuelCheckpoint.cpp。
-        static constexpr int32_t CheckpointBytes = (7 + ConfigWords + 2 * 8 + 4 + 1) * 4;
+        // 单席检查点包含八项运动和技能字段，以及四项连招状态。
+        static constexpr int32_t FighterWords = 12;
+        // 固定长度的完整原生状态，独立于表现快照。
+        static constexpr int32_t CheckpointBytes = (7 + ConfigWords + 2 * FighterWords + 4 + 1) * 4;
 
         // 初始化两席并复制配置。配置非法或实例已开局时返回 false。
         bool Start(const Settings& settings, uint64_t seed);
@@ -44,6 +46,8 @@ namespace RevGameCore
 
         // 按固定阶段推进跳跃、招式时钟、水平移动及新招式。
         void MoveAndStart(Fighter& fighter, int32_t input);
+        // 根据本帧结算后的状态计算下一帧允许接纳的玩家输入槽。
+        int32_t ActionOptions(const Fighter& fighter) const;
         // 按协议顺序复制世界快照，并计算原生状态指纹。
         void Produce(Snapshot& snapshot) const;
     };

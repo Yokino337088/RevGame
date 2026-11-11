@@ -11,6 +11,7 @@ internal static class Program
         CheckPendingAttackReceipt();
         CheckLongCatchUpAndReconnect();
         CheckJournalOverflow();
+        CheckComboBranches();
         Console.WriteLine("DUEL_PREDICTION_PASS lateJump, rollback, anchorHash, bufferedAttack, duplicate, catchUp, staleAnchor, reconnect, journalOverflow, blackAndWhite");
     }
 
@@ -147,6 +148,87 @@ internal static class Program
         authority.AdvanceNetwork(100);
         Apply(replica, prediction, Exchange(authority, 1, DuelAuthority.Read, 100, after: 1));
         Check(prediction.PendingCount == 0 && prediction.TrySample(2, 0, out _), "权威确认覆盖积压后恢复预测");
+    }
+
+    // 用真实原生句柄执行多段普攻与两种技能路线，验证命中、硬直、能量和恢复后的接续资格。
+    private static void CheckComboBranches()
+    {
+        const string id = "duel-combo-branches";
+        using var core = new DuelCorePipe(id);
+        using var restored = new DuelCorePipe(id);
+        for (int i = 0; i < 64; i++)
+        {
+            int approach = i < 10 ? 2 | (1 << DuelCorePipe.InputBits) : 0;
+            core.Append(core.Snapshot.Frame + 1, approach);
+        }
+        StartComboStep(core, 1, 1);
+        WaitComboLink(core, 1);
+        Check(core.Snapshot.FirstCombo == 1 && core.Snapshot.SecondStun > 0 && core.Snapshot.SecondOptions == 0,
+            "首击确认后开放续招并锁定受击方");
+        StartComboStep(core, 1, 5);
+        WaitComboLink(core, 1);
+        StartComboStep(core, 1, 6);
+        WaitComboLink(core, 2);
+        Check(restored.TryRestoreCheckpoint(core.SaveCheckpoint()) && restored.Snapshot.Hash == core.Snapshot.Hash,
+            "连招资格、命中数和硬直完整进入检查点");
+        StartComboStep(core, 2, 2);
+        WaitComboLink(core, 4);
+        StartComboStep(core, 4, 4);
+        Check(core.Snapshot.FirstY > 0, "技能二从地面起手后进入原生空中状态");
+        using var airborne = new DuelCorePipe(id);
+        Check(airborne.TryRestoreCheckpoint(core.SaveCheckpoint()), "坠枪起手可从空中检查点恢复");
+        WaitComboLink(core, 3);
+        while (airborne.Snapshot.Frame < core.Snapshot.Frame)
+        {
+            airborne.Append(airborne.Snapshot.Frame + 1, 0);
+        }
+        Check(core.Snapshot.FirstY == 0 && airborne.Snapshot.Hash == core.Snapshot.Hash,
+            "同一命中帧落地，恢复分支的高度与伤害保持一致");
+        Check(!core.Snapshot.CanTakeAction(true, 2), "同一个技能在同一连段内不能循环取消");
+        StartComboStep(core, 3, 3);
+        for (int i = 0; i < 7; i++)
+        {
+            core.Append(core.Snapshot.Frame + 1, 0);
+        }
+        Check(core.Snapshot.FirstCombo == 6 && core.Snapshot.SecondHealth == 3,
+            "普攻三段、两个技能和大招全部产生权威伤害");
+
+        StartComboStep(restored, 4, 4);
+        WaitComboLink(restored, 2);
+        StartComboStep(restored, 2, 2);
+        WaitComboLink(restored, 3);
+        StartComboStep(restored, 3, 3);
+        Check(restored.Snapshot.FirstCombo == 5, "恢复同一开招窗口后可选择技能二接技能一");
+
+        using var whiff = new DuelCorePipe("duel-combo-whiff");
+        StartComboStep(whiff, 1, 1);
+        for (int i = 0; i < 5; i++)
+        {
+            whiff.Append(whiff.Snapshot.Frame + 1, 0);
+        }
+        Check(whiff.Snapshot.FirstCombo == 0 && !whiff.Snapshot.CanTakeAction(true, 1),
+            "打空后不能提前取消");
+        Console.WriteLine("DUEL_COMBO_PASS threeNormals, bothSkillOrders, ultimate, hitStun, whiff, checkpoint");
+    }
+
+    // 送一个正式动作槽。普攻二三段由原生解析产生，测试不注入内部动作号。
+    private static void StartComboStep(DuelCorePipe core, int slot, int expected)
+    {
+        core.Append(core.Snapshot.Frame + 1, slot << 2);
+        Check(core.Snapshot.FirstAction == expected && core.Snapshot.FirstAge == 0, "原生接受正确的后继动作");
+    }
+
+    // 只走有界空帧，等原生开放该输入槽，跨过完整恢复仍未连上则失败。
+    private static void WaitComboLink(DuelCorePipe core, int slot)
+    {
+        int action = core.Snapshot.FirstAction;
+        int duration = DuelConfig.ActionDuration(action);
+        for (int waited = 0; waited < duration && !core.Snapshot.CanTakeAction(true, slot); waited++)
+        {
+            core.Append(core.Snapshot.Frame + 1, 0);
+        }
+        Check(core.Snapshot.FirstAction == action && core.Snapshot.FirstAge < duration &&
+            core.Snapshot.CanTakeAction(true, slot), "后继槽在当前动作恢复完之前开放");
     }
 
     // 复用服务的顺序：先执行完整连续历史，再提交与当前快照同号的回执。

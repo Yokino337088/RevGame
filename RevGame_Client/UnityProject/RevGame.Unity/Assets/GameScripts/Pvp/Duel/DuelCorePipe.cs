@@ -28,7 +28,7 @@ namespace RevGame.Pvp.Duel
         public int FirstHealth;
         // 黑方当前能量点数，用于招式消耗和 HUD。
         public int FirstEnergy;
-        // 黑方当前招式槽，0 表示空闲，1 至 3 为普攻、技能、大招。
+        // 黑方当前已执行动作。5/6 是原生选出的普攻二段和三段。
         public int FirstAction;
         // 黑方当前招式已执行的逻辑帧数，出招首帧为 0。
         public int FirstAge;
@@ -40,12 +40,31 @@ namespace RevGame.Pvp.Duel
         public int SecondHealth;
         // 白方当前能量点数。
         public int SecondEnergy;
-        // 白方当前招式槽，0 空闲，1 至 3 为有效招式。
+        // 白方当前已执行动作，编号与黑方相同。
         public int SecondAction;
         // 白方当前招式已执行的逻辑帧数。
         public int SecondAge;
         // 白方面向，-1 左、1 右。
         public int SecondFacing;
+        // 黑方下一逻辑帧允许接纳的四个输入槽掩码。
+        public int FirstOptions;
+        // 白方下一逻辑帧允许接纳的输入槽掩码。
+        public int SecondOptions;
+        // 黑方当前连段的权威命中数。
+        public int FirstCombo;
+        // 白方当前连段的权威命中数。
+        public int SecondCombo;
+        // 黑方剩余受击硬直，单位为逻辑帧。
+        public int FirstStun;
+        // 白方剩余受击硬直，单位为逻辑帧。
+        public int SecondStun;
+
+        // 帧零也允许开招。沙盒和封帧器均读取同一掩码，避免托管层重复实现取消规则。
+        internal bool CanTakeAction(bool black, int action)
+        {
+            return action >= 1 && action <= DuelCorePipe.MaxActionInput &&
+                ((black ? FirstOptions : SecondOptions) & (1 << (action - 1))) != 0;
+        }
     }
 
     /// <summary>托管宿主只写整帧消息、读结果。任何地方都不能通过 P/Invoke 直接改血量或位移。</summary>
@@ -53,13 +72,15 @@ namespace RevGame.Pvp.Duel
     {
         // P/Invoke 库名，由 Unity 或服务进程的原生搜索路径解析。
         private const string Library = "RevGameCore";
-        // 每席占五位：两位方向、两位招式、一位跳跃。
-        public const int InputBits = 5;
-        // 截取打包字的低五位，防止把另一席的输入读进来。
+        // 每席占六位：两位方向、三位招式、一位跳跃。
+        public const int InputBits = 6;
+        // 截取一席的输入，防止把另一席的方向和招式读进来。
         public const int InputMask = (1 << InputBits) - 1;
-        // 跳跃占第 4 位（从 0 数起），可与方向及招式同时存在。
-        public const int Jump = 1 << 4;
-        // 完整帧第 10 位由本地测试权威设置，不属于黑白任一席的输入。
+        // 跳跃占第 5 位（从 0 数起），可与方向及招式同时存在。
+        public const int Jump = 1 << 5;
+        // 玩家只发送四个输入槽，派生段 5/6 由原生世界选出。
+        public const int MaxActionInput = 4;
+        // 完整帧第 12 位由本地测试权威设置。
         internal const int NoDamageFrame = 1 << (2 * InputBits);
         // 防止错误 DLL 返回超大长度。当前检查点为固定的小端数据包。
         internal const int MaxCheckpointBytes = 4096;
@@ -67,8 +88,8 @@ namespace RevGame.Pvp.Duel
         private readonly Handle _handle;
         // 复用的整帧写缓冲，五项各占四字节。
         private readonly byte[] _frame = new byte[20];
-        // 复用的快照读取缓冲，共 19 个小端整数。
-        private readonly byte[] _output = new byte[76];
+        // 复用的快照读取缓冲，共 25 个小端整数。
+        private readonly byte[] _output = new byte[100];
         // SafeHandle 管理原生指针生命周期，避免重复释放。
         private sealed class Handle : SafeHandleZeroOrMinusOneIsInvalid
         {
@@ -135,7 +156,8 @@ namespace RevGame.Pvp.Duel
                 throw new InvalidOperationException("原生决斗配置校验失败。");
             }
             Snapshot = new DuelSnapshot { FirstX = -DuelConfig.SpawnOffset, SecondX = DuelConfig.SpawnOffset,
-                FirstHealth = DuelConfig.Health, SecondHealth = DuelConfig.Health, FirstFacing = 1, SecondFacing = -1 };
+                FirstHealth = DuelConfig.Health, SecondHealth = DuelConfig.Health, FirstFacing = 1, SecondFacing = -1,
+                FirstOptions = 15, SecondOptions = 15 };
         }
 
         // 权威和回放副本从同一个对局 ID 派生种子。明确按 UTF-16 小端字节处理，避免本机哈希和编码差异。
@@ -151,10 +173,16 @@ namespace RevGame.Pvp.Duel
             return hash;
         }
 
-        // 验证单席五位输入；两个方向同时置位属于无效输入。
+        // 提取三位动作槽，回执和输入缓冲都使用同一布局。
+        internal static int ReadActionInput(int packed)
+        {
+            return (packed >> 2) & 7;
+        }
+
+        // 验证单席六位输入。两方向同时置位或发送派生普攻都属于无效输入。
         public static bool ValidInput(int input)
         {
-            return input >= 0 && input <= InputMask && (input & 3) != 3;
+            return input >= 0 && input <= InputMask && (input & 3) != 3 && ReadActionInput(input) <= MaxActionInput;
         }
 
         // 写入完整帧后取回同号快照。只有权威、确认副本或隔离沙盒能调用，原生失败时停止使用该实例。
@@ -167,7 +195,7 @@ namespace RevGame.Pvp.Duel
             Write(_frame, 0, DuelConfig.CoreProtocol);
             Write(_frame, 1, 2);
             Write(_frame, 2, frame);
-            // 原生 FIFO 用黑方字的第 5 位承载双席免伤标记，白方字仍只承载输入。
+            // 原生 FIFO 用黑方字的第 6 位承载双席免伤标记。
             Write(_frame, 3, (packed & InputMask) | ((packed & NoDamageFrame) >> InputBits));
             Write(_frame, 4, (packed >> InputBits) & InputMask);
             // 一次送一整帧并及时消费结果，输入和输出 FIFO 都有固定容量。
@@ -231,7 +259,8 @@ namespace RevGame.Pvp.Duel
                 FirstEnergy = Read(4), FirstAction = Read(5), FirstAge = Read(6), FirstFacing = Read(7),
                 SecondX = Read(8), SecondHealth = Read(9), SecondEnergy = Read(10), SecondAction = Read(11),
                 SecondAge = Read(12), SecondFacing = Read(13), FirstHit = Read(14), SecondHit = Read(15), Hash = Read(16),
-                FirstY = Read(17), SecondY = Read(18) };
+                FirstY = Read(17), SecondY = Read(18), FirstOptions = Read(19), SecondOptions = Read(20),
+                FirstCombo = Read(21), SecondCombo = Read(22), FirstStun = Read(23), SecondStun = Read(24) };
         }
 
         // 把指定整数槽拆为四个低位在前的字节；index 是整数下标。

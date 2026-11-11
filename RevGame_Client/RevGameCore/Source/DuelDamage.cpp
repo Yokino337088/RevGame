@@ -12,7 +12,7 @@ namespace RevGameCore
             {
                 return 0;
             }
-            const int offset = 9 + (attacker.Action - 1) * 5;
+            const int offset = AttackOffset(attacker.Action);
             // 将横向差值投到攻击者朝向，负数表示对手在背后。高度使用绝对差，恰好在边界也算命中。
             const auto distance = (defender.X - attacker.X) * FixedPoint::FromInt(attacker.Facing);
             if (attacker.Age == config[offset + 2] && FixedPoint{} <= distance &&

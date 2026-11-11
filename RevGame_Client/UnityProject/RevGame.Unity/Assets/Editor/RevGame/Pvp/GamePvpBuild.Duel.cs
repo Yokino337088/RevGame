@@ -20,12 +20,36 @@ namespace RevGame.Editor
         private const string DuelScenePath = "Assets/Scenes/PvpDuelScene.unity";
         // 编辑器查找角色帧和背景的资产目录。
         private const string DuelArt = "Assets/GameRes/Art/Pvp/Duel/";
+        // 新街机角色和特效只从此目录装配。旧场景的素材归档仍可由编辑器查阅。
+        private const string ArcadeArt = DuelArt + "Arcade/";
+        // 两席镜像测试共用绯焰序列帧，按同一份图集和动作配置播放。
+        private const string EmberPrefix = "Ember";
+        // 两席共享动作取样表。每个数字指向同角色的一张原画，图集只存一份。
+        private static readonly int[][] ArcadePoseFrames =
+        {
+            new[] { 0, 1 }, new[] { 2, 3 }, new[] { 12, 4, 16, 4 }, new[] { 5, 20, 21, 6, 19 },
+            new[] { 24, 25, 26, 27, 19 }, new[] { 13, 9, 26, 23, 10, 19 }, new[] { 18, 11 },
+            new[] { 28, 29, 30, 31, 19 }, new[] { 13, 14, 22, 7, 19 }, new[] { 12, 8, 15, 23, 9, 19 },
+            new[] { 17, 18, 19 }
+        };
+        // 每个姿态的接触关键帧下标。非攻击姿态填 0，普通移动仍按渲染时间播放。
+        private static readonly int[] ArcadeContactKeys = { 0, 0, 0, 2, 2, 3, 0, 3, 3, 3, 0 };
+        // 由四类出招形状与额外普攻段构成的起手/命中序列，数组下标是原生动作编号减一。
+        private static readonly int[] ArcadeCastArt = { 0, 1, 2, 3, 5, 4 };
+        private static readonly int[] ArcadeImpactArt = { 0, 6, 7, 6, 2, 4 };
+        // 三段普攻、两种技能和大招各用不同的起手音色。
+        private static readonly string[] ArcadeCastSounds = { "Jab", "Rush", "Ultimate", "Sweep", "Hook", "Finisher" };
         // 与 DuelActorAnimator 的 Pose 顺序对应。制作片段和绑定图片都使用同一张表。
-        private static readonly string[] DuelPoses = { "Idle", "Run", "Jump", "Attack1", "Attack2", "Attack3", "Down" };
+        private static readonly string[] DuelPoses = { "Idle", "Run", "Jump", "Attack1", "Attack2", "Attack3", "Down",
+            "Attack4", "Attack5", "Attack6", "Hit" };
 
         // 导入素材、构建场景和 HUD、保存并登记构建列表；最后恢复用户原活动场景。
         public static object BuildDuel()
         {
+            if (SceneManager.GetSceneByPath(DuelScenePath).isLoaded)
+            {
+                throw new InvalidOperationException("请关闭已打开的决斗场景后运行生成配方。");
+            }
             ImportDuelSprites();
             var plugin = (PluginImporter)AssetImporter.GetAtPath("Assets/Plugins/RevGameCore/x86_64/RevGameCore.dll");
             if (plugin.GetCompatibleWithAnyPlatform() || plugin.GetEditorData("OS") != "Windows")
@@ -46,6 +70,7 @@ namespace RevGame.Editor
                 var camera = new GameObject("Camera").AddComponent<Camera>();
                 camera.clearFlags = CameraClearFlags.SolidColor;
                 camera.backgroundColor = new Color(.09f, .08f, .14f);
+                camera.gameObject.AddComponent<AudioListener>();
                 var root = new GameObject("Duel", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
                 var canvas = root.GetComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -55,19 +80,29 @@ namespace RevGame.Editor
                 scaler.matchWidthOrHeight = .5f;
                 var view = root.AddComponent<PvpDuelView>();
                 var backdrop = Rect(DuelBackdropName, root.transform, 0, 0, 1, 1).gameObject.AddComponent<Image>();
-                ApplyBoxingRing(backdrop);
-                view.First = AddFighter("BlackFighter", root.transform, -.25f);
-                view.Second = AddFighter("WhiteFighter", root.transform, .25f);
-                view.FirstAnimator = AddActorAnimation(view.First, "");
-                view.SecondAnimator = AddActorAnimation(view.Second, "Assassin");
+                ApplyDuelBackdrop(backdrop);
+                RectTransform fighters = Rect("ArenaFighters", root.transform, 0, 0, 1, 1);
+                fighters.pivot = new Vector2(.5f, .425f);
+                view.CameraRig = root.AddComponent<DuelCameraRig>();
+                view.CameraRig.Fighters = fighters;
+                view.CameraRig.Backdrop = backdrop;
+                view.First = AddFighter("BlackFighter", fighters, -.25f);
+                view.Second = AddFighter("WhiteFighter", fighters, .25f);
+                Sprite[][] sequences = DuelPoses.Select(LoadDuelSequence).ToArray();
+                AnimationClip[] clips = BuildDuelClips(sequences);
+                view.FirstAnimator = AddActorAnimation(view.First, clips, sequences);
+                view.SecondAnimator = AddActorAnimation(view.Second, clips, sequences);
                 view.Effects = root.AddComponent<DuelStrikeEffects>();
-                view.Effects.First = AddFighter("BlackEffects", root.transform, -.25f);
-                view.Effects.Second = AddFighter("WhiteEffects", root.transform, .25f);
-                view.Effects.StrikeShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/GameShader/Pvp/PvpDuelStrike.shader") ??
-                    throw new InvalidOperationException("决斗招式 Shader 未导入。");
-                view.Effects.Jab = LoadDuelSequence("FxJab");
-                view.Effects.Skill = LoadDuelSequence("FxSkill");
-                view.Effects.Ultimate = LoadDuelSequence("FxUltimate");
+                view.Effects.First = AddEffectLayer("BlackEffects", fighters);
+                view.Effects.Second = AddEffectLayer("WhiteEffects", fighters);
+                view.Effects.FirstImpact = AddEffectLayer("BlackImpact", fighters);
+                view.Effects.SecondImpact = AddEffectLayer("WhiteImpact", fighters);
+                view.Effects.CastSprites = ArcadeCastArt.Select(LoadArcadeEffect).ToArray();
+                view.Effects.ImpactSprites = ArcadeImpactArt.Select(LoadArcadeEffect).ToArray();
+                view.Effects.CastSounds = ArcadeCastSounds.Select(LoadArcadeSound).ToArray();
+                view.Effects.ImpactSounds = new[] { "LightHit", "SkillHit", "UltimateHit" }.Select(LoadArcadeSound).ToArray();
+                view.Effects.Speaker = root.AddComponent<AudioSource>();
+                view.Effects.Speaker.playOnAwake = false;
                 view.FirstHealth = AddMeter("BlackHealth", root.transform, .075f, .876f, .455f, .912f, new Color(.86f,.25f,.25f), false);
                 view.SecondHealth = AddMeter("WhiteHealth", root.transform, .545f, .876f, .925f, .912f, new Color(.23f,.65f,.9f), true);
                 view.FirstEnergy = AddMeter("BlackEnergy", root.transform, .075f, .837f, .455f, .852f, new Color(1,.74f,.21f), false);
@@ -75,22 +110,33 @@ namespace RevGame.Editor
                 view.FirstHealthText = Label("BlackHp", root.transform, "", .08f, .87f, .20f, .916f, 26);
                 view.SecondHealthText = Label("WhiteHp", root.transform, "", .80f, .87f, .92f, .916f, 26);
                 view.Names = Label("FighterNames", root.transform, "", .08f, .92f, .92f, .98f, 30);
+                view.FirstCombo = Label("BlackCombo", root.transform, "", .09f, .66f, .3f, .76f, 54, true);
+                view.SecondCombo = Label("WhiteCombo", root.transform, "", .70f, .66f, .91f, .76f, 54, true);
+                view.FirstCombo.color = new Color(1, .48f, .32f);
+                view.SecondCombo.color = new Color(.4f, .94f, 1);
                 Plate(Rect("TimerPlate", root.transform, .455f, .854f, .545f, .953f), "UI_achieveItem_imgBK", Color.white);
                 view.Clock = Label("Clock", root.transform, "", .45f, .862f, .55f, .941f, 55, true);
                 view.Banner = Label("Banner", root.transform, "等待双方进入决斗场", .15f, .64f, .85f, .82f, 54);
                 var shadow = view.Banner.gameObject.AddComponent<Shadow>();
                 shadow.effectColor = new Color(.08f, .04f, .12f, .92f);
                 shadow.effectDistance = new Vector2(2,-3);
-                // 草图的三角布局：右下普攻，左下技能，正上大招。左手上方是跳跃。
+                // 右手四键分两行，避免增加技能二后压缩触屏目标。
                 view.Jab = Button("Jab", root.transform, "普攻 · J", .865f, .045f, .972f, .112f);
-                view.Skill = Button("Skill", root.transform, "技能 · K", .746f, .045f, .853f, .112f);
-                view.Ultimate = Button("Ultimate", root.transform, "大招 · L", .865f, .128f, .972f, .195f);
+                view.Skill = Button("Skill", root.transform, "贯枪 · K", .746f, .045f, .853f, .112f);
+                view.SkillTwo = Button("SkillTwo", root.transform, "坠枪 · L", .746f, .128f, .853f, .195f);
+                view.Ultimate = Button("Ultimate", root.transform, "赤阵 · I", .865f, .128f, .972f, .195f);
                 view.Jump = Button("Jump", root.transform, "↑ · 跳跃", .102f, .128f, .209f, .195f);
                 view.Exit = Button("Back", root.transform, "返回大厅", .02f, .735f, .13f, .792f);
                 view.Reconnect = Button("Reconnect", root.transform, "重连", .14f, .735f, .25f, .792f);
                 view.Reconnect.gameObject.SetActive(false);
                 AddDirection(Button("Left", root.transform, "← · A", .06f, .07f, .17f, .135f), view, -1);
                 AddDirection(Button("Right", root.transform, "→ · D", .18f, .07f, .29f, .135f), view, 1);
+                // 保留项目已有九宫格底板，颜色与雨夜舞台一致。
+                TintArcadeButton(view.Jab, new Color(.88f, .30f, .30f));
+                TintArcadeButton(view.Skill, new Color(.72f, .25f, .34f));
+                TintArcadeButton(view.SkillTwo, new Color(.22f, .53f, .72f));
+                TintArcadeButton(view.Ultimate, new Color(.60f, .30f, .72f));
+                TintArcadeButton(view.Jump, new Color(.22f, .53f, .72f));
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
                 if (!EditorSceneManager.SaveScene(scene, DuelScenePath))
                 {
@@ -101,7 +147,7 @@ namespace RevGame.Editor
                     scenes.Add(new EditorBuildSettingsScene(DuelScenePath, true));
                     EditorBuildSettings.scenes = scenes.ToArray();
                 }
-                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = 14 };
+                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = clips.Length };
             }
             finally
             {
@@ -116,48 +162,71 @@ namespace RevGame.Editor
         // 确保动画素材按单 Sprite、关闭 Mipmap 的设置导入。
         private static void ImportDuelSprites()
         {
-            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { DuelArt.TrimEnd('/') }))
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { ArcadeArt.TrimEnd('/') }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                if (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled)
+                if (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled ||
+                    importer.npotScale != TextureImporterNPOTScale.None)
                 {
                     importer.textureType = TextureImporterType.Sprite;
                     importer.spriteImportMode = SpriteImportMode.Single;
                     importer.mipmapEnabled = false;
+                    importer.npotScale = TextureImporterNPOTScale.None;
+                    importer.alphaIsTransparency = true;
+                    importer.wrapMode = TextureWrapMode.Clamp;
                     importer.SaveAndReimport();
                 }
             }
         }
 
-        // 按约定名称加载单个场景 Sprite，缺失时让构建明确失败。
-        private static Sprite LoadDuelSprite(string asset)
+        // 以编辑器动作表读取切片。重复关键帧引用同一 Sprite，避免在图集中保存重复原画。
+        private static Sprite[] LoadDuelSequence(string pose)
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(DuelArt + asset + ".png") ??
-                throw new InvalidOperationException("决斗素材缺失：" + asset);
+            return ArcadePoseFrames[Array.IndexOf(DuelPoses, pose)]
+                .Select(index => LoadArcadeSprite($"{EmberPrefix}_{index:D2}")).ToArray();
         }
 
-        // 按文件名前缀和编号排序加载动作序列，保证每次生成顺序相同。
-        private static Sprite[] LoadDuelSequence(string action)
+        // 在构建场景时检查纹理已经导入为 Sprite，运行时从场景引用取用。
+        private static Sprite LoadArcadeSprite(string name)
         {
-            string folder = DuelArt.TrimEnd('/');
-            var frames = AssetDatabase.FindAssets("t:Sprite", new[] { folder })
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => System.IO.Path.GetFileNameWithoutExtension(path).StartsWith(action + "_", StringComparison.Ordinal))
-                .OrderBy(path => path, StringComparer.Ordinal)
-                .Select(AssetDatabase.LoadAssetAtPath<Sprite>).ToArray();
-            if (frames.Length == 0)
-            {
-                throw new InvalidOperationException("缺少角色动作序列：" + action);
-            }
-            return frames;
+            return AssetDatabase.LoadAssetAtPath<Sprite>(ArcadeArt + name + ".png") ??
+                throw new InvalidOperationException("决斗街机素材未导入：" + name);
+        }
+
+        // 特效起手和命中可复用同一贴图。
+        private static Sprite LoadArcadeEffect(int index)
+        {
+            return LoadArcadeSprite($"Fx_{index:D2}");
+        }
+
+        // 查找场景持有的原声音效，缺失时中止生成。
+        private static AudioClip LoadArcadeSound(string name)
+        {
+            return AssetDatabase.LoadAssetAtPath<AudioClip>(ArcadeArt + "Audio/" + name + ".wav") ??
+                throw new InvalidOperationException("决斗音效未导入：" + name);
+        }
+
+        // 复用角色层锚点来对齐舞台坐标，特效初始禁用且不拦截触摸。
+        private static Image AddEffectLayer(string name, Transform parent)
+        {
+            Image layer = AddFighter(name, parent, 0);
+            layer.preserveAspect = false;
+            layer.enabled = false;
+            return layer;
+        }
+
+        // 调整已有 Sprite 底板色彩。鼠标和触摸状态仍由 Unity Button 管理。
+        private static void TintArcadeButton(Button button, Color tint)
+        {
+            button.image.color = tint;
         }
 
         // 创建可被显示快照定位的角色或特效图层，center 是初始水平布局比例。
         private static Image AddFighter(string name, Transform parent, float center)
         {
-            var rect = Rect(name, parent, .5f, .30f, .5f, .30f);
-            rect.sizeDelta = new Vector2(345, 345);
+            var rect = Rect(name, parent, .5f, .425f, .5f, .425f);
+            rect.sizeDelta = new Vector2(480, 480);
             rect.anchoredPosition = new Vector2(center * 1920, 0);
             var image = rect.gameObject.AddComponent<Image>();
             image.preserveAspect = true;
@@ -177,22 +246,20 @@ namespace RevGame.Editor
             return fill;
         }
 
-        // 为一个角色生成七个 Legacy Clip 并绑定到播放组件；已有资产原地更新以保留 GUID。
-        private static DuelActorAnimator AddActorAnimation(Image actor, string prefix)
+        // 生成一套共享的 Legacy Clip，原来已存在的片段保留 GUID。
+        private static AnimationClip[] BuildDuelClips(Sprite[][] sequences)
         {
-            // 两个角色共享状态枚举，各自持有 Clip。生成时就写好 Image.sprite 曲线，运行期只播放。
             string folder = "Assets/Scenes/PvpDuelAnimations";
             if (!AssetDatabase.IsValidFolder(folder))
             {
                 AssetDatabase.CreateFolder("Assets/Scenes", "PvpDuelAnimations");
             }
-            var animation = actor.gameObject.AddComponent<Animation>();
-            animation.playAutomatically = false;
-            var clips = new List<AnimationClip>();
-            foreach (string pose in DuelPoses)
+            var clips = new AnimationClip[DuelPoses.Length];
+            for (int index = 0; index < DuelPoses.Length; index++)
             {
-                Sprite[] frames = LoadDuelSequence(prefix + pose);
-                string path = $"{folder}/{(prefix.Length == 0 ? "Swordsman" : prefix)}_{pose}.anim";
+                string pose = DuelPoses[index];
+                Sprite[] frames = sequences[index];
+                string path = $"{folder}/Swordsman_{pose}.anim";
                 var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
                 if (clip == null)
                 {
@@ -210,30 +277,37 @@ namespace RevGame.Editor
                 }
                 AnimationUtility.SetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite"), keys);
                 EditorUtility.SetDirty(clip);
-                clips.Add(clip);
-                if (pose == "Idle")
-                {
-                    animation.clip = clip;
-                    actor.sprite = frames[0];
-                }
+                clips[index] = clip;
             }
-            AnimationUtility.SetAnimationClips(animation, clips.ToArray());
             AssetDatabase.SaveAssets();
+            return clips;
+        }
+
+        // 每席独立管理播放时间和动作切换，两席引用同一套只读动画资源。
+        private static DuelActorAnimator AddActorAnimation(Image actor, AnimationClip[] clips, Sprite[][] sequences)
+        {
+            var animation = actor.gameObject.AddComponent<Animation>();
+            animation.playAutomatically = false;
+            animation.clip = clips[0];
+            actor.sprite = sequences[0][0];
+            AnimationUtility.SetAnimationClips(animation, clips);
             var presenter = actor.gameObject.AddComponent<DuelActorAnimator>();
-            BindDuelSpriteSequences(presenter, prefix);
+            BindDuelSpriteSequences(presenter, sequences);
             return presenter;
         }
 
         // 把图片按姿态写进场景，运行时无需查找资产或解析编辑器动画曲线。
-        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, string prefix)
+        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared)
         {
             using var data = new SerializedObject(presenter);
             SerializedProperty sequences = data.FindProperty("spriteSequences");
             sequences.arraySize = DuelPoses.Length;
             for (int i = 0; i < DuelPoses.Length; i++)
             {
-                Sprite[] images = LoadDuelSequence(prefix + DuelPoses[i]);
-                SerializedProperty frames = sequences.GetArrayElementAtIndex(i).FindPropertyRelative("frames");
+                Sprite[] images = shared[i];
+                SerializedProperty pose = sequences.GetArrayElementAtIndex(i);
+                pose.FindPropertyRelative("contactIndex").intValue = ArcadeContactKeys[i];
+                SerializedProperty frames = pose.FindPropertyRelative("frames");
                 frames.arraySize = images.Length;
                 for (int frame = 0; frame < images.Length; frame++)
                 {
@@ -260,8 +334,9 @@ namespace RevGame.Editor
             try
             {
                 var view = duel.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
-                BindDuelSpriteSequences(view.FirstAnimator, "");
-                BindDuelSpriteSequences(view.SecondAnimator, "Assassin");
+                Sprite[][] shared = DuelPoses.Select(LoadDuelSequence).ToArray();
+                BindDuelSpriteSequences(view.FirstAnimator, shared);
+                BindDuelSpriteSequences(view.SecondAnimator, shared);
                 AddDirection(view.transform.Find("Left").GetComponent<Button>(), view, -1);
                 AddDirection(view.transform.Find("Right").GetComponent<Button>(), view, 1);
                 if (!EditorSceneManager.SaveScene(duel))

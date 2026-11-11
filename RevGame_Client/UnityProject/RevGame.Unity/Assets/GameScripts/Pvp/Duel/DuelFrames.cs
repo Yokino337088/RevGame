@@ -15,7 +15,7 @@ namespace RevGame.Pvp.Duel
         public int afterFrame;
         // 联机时是本席本次连接的单调输入序号，本地人机时是下一逻辑帧号。afterFrame 独立用于补帧。
         public int inputFrame;
-        // 单席五位方向、招式和跳跃意图。
+        // 单席六位方向、招式和跳跃意图。
         public int input;
         // 附带的已执行样本帧号。0 表示本次不对账。
         public int hashFrame;
@@ -364,7 +364,7 @@ namespace RevGame.Pvp.Duel
             }
             Sequence = sequence;
             RestoreDirection(packed & 3, frame);
-            int action = (packed >> 2) & 3;
+            int action = DuelCorePipe.ReadActionInput(packed);
             if (action != 0)
             {
                 RestoreAction(sequence, action, frame + HoldFrames);
@@ -399,13 +399,11 @@ namespace RevGame.Pvp.Duel
             }
             if (_action != 0)
             {
-                int active = black ? before.FirstAction : before.SecondAction;
-                int age = black ? before.FirstAge : before.SecondAge;
                 if (next > ActionUntil)
                 {
                     RestoreAction(0, 0, 0);
                 }
-                else if (age >= DuelConfig.ActionDuration(active))
+                else if (before.CanTakeAction(black, _action))
                 {
                     packed |= _action << 2;
                     RestoreAction(0, 0, 0);

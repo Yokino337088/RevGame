@@ -10,11 +10,11 @@ namespace RevGameCore
         // 小端文件标记 RGCP，用于区分检查点、整帧包和录像文件。
         constexpr uint32_t CheckpointMagic = 0x50434752u;
         // 检查点布局版本。与 FIFO 操作的 WireVersion 分开校验。
-        constexpr uint32_t CheckpointSchema = 1;
+        constexpr uint32_t CheckpointSchema = 2;
         // 配置从字节 28 开始，之前是格式、帧号、胜负和两字种子。
         constexpr int ConfigOffset = 7 * 4;
         // 单席状态的字节数，包括普通快照未输出的垂直速度。
-        constexpr int FighterBytes = 8 * 4;
+        constexpr int FighterBytes = DuelWorld::FighterWords * 4;
         // 第一席起点，紧跟完整配置包。
         constexpr int FightersOffset = ConfigOffset + ConfigWords * 4;
         // 随机源起点，紧跟黑白两席，不依赖 C++ 结构体内存排版。
@@ -42,12 +42,13 @@ namespace RevGameCore
             return Fnv1aBytes(data, ChecksumOffset);
         }
 
-        // 使用同一顺序读写八个字段。第八个字段是影响未来落点的隐藏垂直速度。
+        // 八项原运动和技能状态后追加四项连招状态。恢复后可在同一帧判断后续取消。
         void WriteFighter(uint8_t* data, const Fighter& fighter)
         {
-            const std::array<int32_t, 8> values{
+            const std::array<int32_t, DuelWorld::FighterWords> values{
                 fighter.X.RawValue(), fighter.Hp,     fighter.Energy,       fighter.Action,
-                fighter.Age,          fighter.Facing, fighter.Y.RawValue(), fighter.VerticalSpeed.RawValue()};
+                fighter.Age,          fighter.Facing, fighter.Y.RawValue(), fighter.VerticalSpeed.RawValue(),
+                fighter.Stun, fighter.Landed ? 1 : 0, fighter.UsedSkills, fighter.ComboHits};
             for (std::size_t i = 0; i < values.size(); ++i)
             {
                 WriteWord(data + i * 4, static_cast<uint32_t>(values[i]));
@@ -64,7 +65,11 @@ namespace RevGameCore
                            ReadSignedWord(data + 16),
                            ReadSignedWord(data + 20),
                            FixedPoint::FromRaw(ReadSignedWord(data + 24)),
-                           FixedPoint::FromRaw(ReadSignedWord(data + 28))};
+                           FixedPoint::FromRaw(ReadSignedWord(data + 28)),
+                           ReadSignedWord(data + 32),
+                           ReadWord(data + 36) == 1,
+                           ReadSignedWord(data + 40),
+                           ReadSignedWord(data + 44)};
         }
 
         // 原生跳跃逐帧先移动再减重力。由速度反求已经走了几步，再核对高度是否可能。
@@ -94,7 +99,9 @@ namespace RevGameCore
         {
             const int32_t x = fighter.X.RawValue();
             if (x < -config[1] || x > config[1] || fighter.Hp < 0 || fighter.Hp > config[0] || fighter.Energy < 0 ||
-                fighter.Energy > config[5] || fighter.Action < 0 || fighter.Action > 3 || fighter.Age < 0 ||
+                fighter.Energy > config[5] || fighter.Action < 0 || fighter.Action > ActionCount || fighter.Age < 0 ||
+                fighter.Stun < 0 || fighter.Stun > 60 || (fighter.UsedSkills & ~10) != 0 ||
+                fighter.ComboHits < 0 || fighter.ComboHits > ActionCount ||
                 (fighter.Facing != 1 && fighter.Facing != -1) || !ValidJump(fighter, config, frame))
             {
                 return false;
@@ -103,13 +110,16 @@ namespace RevGameCore
             {
                 const int32_t facing = seat == Black ? 1 : -1;
                 return x == -facing * config[4] && fighter.Facing == facing && fighter.Hp == config[0] &&
-                       fighter.Energy == 0 && fighter.Action == 0 && fighter.Age == 0;
+                       fighter.Energy == 0 && fighter.Action == 0 && fighter.Age == 0 && fighter.Stun == 0 &&
+                       !fighter.Landed && fighter.UsedSkills == 0 && fighter.ComboHits == 0;
             }
             if (fighter.Action == 0)
             {
-                return fighter.Age == 0;
+                return fighter.Age == 0 && !fighter.Landed && fighter.UsedSkills == 0 && fighter.ComboHits == 0;
             }
-            return fighter.Age < frame && fighter.Age <= config[12 + (fighter.Action - 1) * 5];
+            const int attack = AttackOffset(fighter.Action);
+            return fighter.Stun == 0 && fighter.Age < frame && fighter.Age <= config[attack + 3] &&
+                (!fighter.Landed || (fighter.ComboHits > 0 && fighter.Age >= config[attack + 2]));
         }
 
         // 两席相等时保留前一帧的朝向。胜负必须符合当前血量与逻辑帧上限。
@@ -179,8 +189,9 @@ namespace RevGameCore
         DuelFighters fighters{};
         for (const Seat seat : SeatOrder)
         {
-            fighters[seat] = ReadFighter(data + FightersOffset + seat * FighterBytes);
-            if (!ValidFighter(fighters[seat], Config, seat, frame))
+            const uint8_t* fighterData = data + FightersOffset + seat * FighterBytes;
+            fighters[seat] = ReadFighter(fighterData);
+            if (ReadWord(fighterData + 36) > 1 || !ValidFighter(fighters[seat], Config, seat, frame))
             {
                 return false;
             }

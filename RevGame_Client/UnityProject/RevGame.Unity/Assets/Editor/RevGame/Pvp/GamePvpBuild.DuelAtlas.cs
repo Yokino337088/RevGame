@@ -51,15 +51,14 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("请在编辑模式构建决斗角色图集。");
             }
 
-            Sprite[][] swordsman = DuelPoses.Select(LoadDuelSequence).ToArray();
-            Sprite[][] assassin = DuelPoses.Select(pose => LoadDuelSequence("Assassin" + pose)).ToArray();
-            var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length * 2);
-            ValidateDuelRoleClips("Swordsman", "", swordsman, groups);
-            ValidateDuelRoleClips("Assassin", "Assassin", assassin, groups);
-            ValidateDuelSceneAnimationSlices(swordsman, assassin);
+            Sprite[][] shared = DuelPoses.Select(LoadDuelSequence).ToArray();
+            var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length);
+            ValidateDuelRoleClips("Swordsman", EmberPrefix, shared, groups);
+            ValidateDuelSceneAnimationSlices(shared);
 
-            // 白名单只来自黑白两个角色的七种动作。擂台和招式 Shader 的独立采样纹理不会入图集。
-            Sprite[] sprites = swordsman.Concat(assassin).SelectMany(frames => frames).ToArray();
+            // 同一关键帧可以用于多种姿态。图集只收唯一的角色和特效 Sprite，背景保持原分辨率。
+            Sprite[] sprites = shared.SelectMany(frames => frames)
+                .Concat(ArcadeCastArt.Concat(ArcadeImpactArt).Distinct().Select(LoadArcadeEffect)).Distinct().ToArray();
             string[] paths = sprites.Select(AssetDatabase.GetAssetPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
             if (paths.Distinct(StringComparer.Ordinal).Count() != sprites.Length)
             {
@@ -82,7 +81,7 @@ namespace RevGame.Editor
             };
         }
 
-        // 原始图片是一图一帧，保留原 Sprite 和 GUID。核对连续序号、居中轴心和同角色尺寸。
+        // 原始图片是一图一帧。核对角色归属、居中轴心和同角色画布尺寸。
         private static void ValidateDuelRoleClips(string role, string prefix, Sprite[][] sequences, List<DuelAnimationSequenceResult> groups)
         {
             Vector2 size = sequences[0][0].rect.size;
@@ -96,7 +95,7 @@ namespace RevGame.Editor
                     Sprite sprite = frames[frame];
                     string path = AssetDatabase.GetAssetPath(sprite);
                     var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-                    if (sprite.name != $"{prefix}{pose}_{frame:D2}" ||
+                    if (!sprite.name.StartsWith(prefix + "_", StringComparison.Ordinal) ||
                         sprite.rect.size != size || sprite.pivot != size * .5f || !Mathf.Approximately(sprite.pixelsPerUnit, pixelsPerUnit) ||
                         importer == null || importer.textureType != TextureImporterType.Sprite ||
                         importer.spriteImportMode != SpriteImportMode.Single || importer.mipmapEnabled ||
@@ -137,7 +136,7 @@ namespace RevGame.Editor
         }
 
         // 只读打开目标场景，核对真正上屏的换帧表，不重建场景或覆盖原资产。
-        private static void ValidateDuelSceneAnimationSlices(Sprite[][] swordsman, Sprite[][] assassin)
+        private static void ValidateDuelSceneAnimationSlices(Sprite[][] shared)
         {
             Scene prior = SceneManager.GetActiveScene();
             Scene scene = SceneManager.GetSceneByPath(DuelScenePath);
@@ -153,8 +152,8 @@ namespace RevGame.Editor
             try
             {
                 PvpDuelView view = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
-                ValidateDuelActorAnimationSlices(view.FirstAnimator, swordsman);
-                ValidateDuelActorAnimationSlices(view.SecondAnimator, assassin);
+                ValidateDuelActorAnimationSlices(view.FirstAnimator, shared);
+                ValidateDuelActorAnimationSlices(view.SecondAnimator, shared);
             }
             finally
             {
@@ -179,7 +178,12 @@ namespace RevGame.Editor
             }
             for (int i = 0; i < sequences.Length; i++)
             {
-                SerializedProperty frames = poses.GetArrayElementAtIndex(i).FindPropertyRelative("frames");
+                SerializedProperty pose = poses.GetArrayElementAtIndex(i);
+                if (pose.FindPropertyRelative("contactIndex").intValue != ArcadeContactKeys[i])
+                {
+                    throw new InvalidOperationException("决斗接触关键帧异常：" + actor.name + "/" + DuelPoses[i]);
+                }
+                SerializedProperty frames = pose.FindPropertyRelative("frames");
                 if (frames == null || frames.arraySize != sequences[i].Length)
                 {
                     throw new InvalidOperationException("决斗场景角色切片数量异常：" + actor.name + "/" + DuelPoses[i]);

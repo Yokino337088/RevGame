@@ -121,7 +121,7 @@ message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
     int32 AfterFrame = 4;
     /// 保留原字段编号。Input 操作使用，表示本席本次连接内的单调输入序号。
     int32 InputFrame = 5;
-    /// 单席五位意图，座位由 Session 决定而不是由包声明。
+    /// 单席六位意图，包含方向、四个玩家招式槽及跳跃。座位由 Session 决定。
     int32 Input = 6;
     /// 这次上报的是已执行的抽样帧。0 表示不携带对账样本。
     int32 HashFrame = 7;

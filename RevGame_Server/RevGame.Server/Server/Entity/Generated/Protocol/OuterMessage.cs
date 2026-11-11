@@ -1215,7 +1215,7 @@ namespace Fantasy
         [ProtoMember(5)]
         public int InputFrame { get; set; }
         /// <summary>
-        /// 单席五位意图，座位由 Session 决定而不是由包声明。
+        /// 单席六位意图，包含方向、四个玩家招式槽及跳跃。座位由 Session 决定。
         /// </summary>
         [ProtoMember(6)]
         public int Input { get; set; }

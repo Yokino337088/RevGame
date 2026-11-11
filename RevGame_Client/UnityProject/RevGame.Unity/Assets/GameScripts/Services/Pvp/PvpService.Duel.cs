@@ -238,7 +238,7 @@ namespace RevGame.Pvp
             _duelDirection = direction < 0 ? 1 : direction > 0 ? 2 : 0;
             // 点按可能发生在两个网络帧之间。锁存跳跃，直到它被打包进下一帧意图。
             _duelQueuedJump |= jump;
-            if (DuelBothReady && DuelSnapshot.Result == 0 && action >= 1 && action <= 3)
+            if (DuelBothReady && DuelSnapshot.Result == 0 && action >= 1 && action <= DuelCorePipe.MaxActionInput)
             {
                 _duelQueuedAction = action;
                 _duelActionLastFrame = DuelSnapshot.Frame + DuelAttackBufferFrames;
@@ -306,9 +306,7 @@ namespace RevGame.Pvp
             }
             DuelSnapshot snapshot = DuelSnapshot;
             bool black = MySide == GoSide.Black;
-            int action = black ? snapshot.FirstAction : snapshot.SecondAction;
-            int age = black ? snapshot.FirstAge : snapshot.SecondAge;
-            if (age < DuelConfig.ActionDuration(action))
+            if (!snapshot.CanTakeAction(black, _duelQueuedAction))
             {
                 return 0;
             }
@@ -524,7 +522,16 @@ namespace RevGame.Pvp
             {
                 return distance < 0 ? 1 : 2;
             }
-            return view.SecondEnergy >= DuelConfig.UltimateCost ? 12 : view.SecondEnergy >= DuelConfig.SkillCost ? 8 : 4;
+            // 电脑与玩家共享原生开放的取消窗口，优先接能负担的强招。
+            if (view.SecondEnergy >= DuelConfig.UltimateCost && view.CanTakeAction(false, 3))
+            {
+                return 3 << 2;
+            }
+            if (view.SecondEnergy >= DuelConfig.SkillTwoCost && view.CanTakeAction(false, 4))
+            {
+                return 4 << 2;
+            }
+            return view.SecondEnergy >= DuelConfig.SkillCost && view.CanTakeAction(false, 2) ? 2 << 2 : 1 << 2;
         }
 
         // 核对房间，按连续游标补帧并消费结果。每个权威帧只能执行一次，回执必须等相应快照提交。

@@ -45,6 +45,8 @@ namespace RevGame.View
         public Button Jab;
         // 技能按钮，对应原生招式槽 2。
         public Button Skill;
+        // 技能二按钮，对应原生输入槽 4。
+        public Button SkillTwo;
         // 大招按钮，对应原生招式槽 3。
         public Button Ultimate;
         // 黑方的表现状态机，消费跑动、起跳及权威招式姿态。
@@ -53,6 +55,12 @@ namespace RevGame.View
         public DuelActorAnimator SecondAnimator;
         // 当前场景的只读招式表现消费者，由场景序列化注入。
         public DuelStrikeEffects Effects;
+        // 双人擂台镜头，只消费已确认快照的坐标和招式事件。
+        public DuelCameraRig CameraRig;
+        // 黑方当前命中数标签，连段结束后隐藏文字。
+        public Text FirstCombo;
+        // 白方当前命中数标签。
+        public Text SecondCombo;
         // 最近一次消费命中或招式事件的帧号，避免同一快照重复播放。
         private int _seenFrame = -1;
         // 已播放的终局码，避免结算文字每渲染帧重复弹动。
@@ -94,15 +102,16 @@ namespace RevGame.View
         private void Start()
         {
             RevGame.UI.GameMobileLayout.EnableSceneHud(transform,
-                "Left", "Right", "Jump", "Jab", "Skill", "Ultimate", "Back", "Reconnect",
+                "Left", "Right", "Jump", "Jab", "Skill", "SkillTwo", "Ultimate", "Back", "Reconnect",
                 "BlackHealth", "WhiteHealth", "BlackEnergy", "WhiteEnergy", "BlackHp", "WhiteHp",
-                "FighterNames", "Clock", "TimerPlate", "Banner");
+                "FighterNames", "Clock", "TimerPlate", "Banner", "BlackCombo", "WhiteCombo");
             BindDirectionButton("Left", _leftPointers);
             BindDirectionButton("Right", _rightPointers);
             Exit.onClick.AddListener(ReturnHome);
             Reconnect.onClick.AddListener(ReconnectServer);
             Jab.onClick.AddListener(() => _clickedAction = 1);
             Skill.onClick.AddListener(() => _clickedAction = 2);
+            SkillTwo.onClick.AddListener(() => _clickedAction = 4);
             Ultimate.onClick.AddListener(() => _clickedAction = 3);
             Jump.onClick.AddListener(() => _clickedJump = true);
         }
@@ -218,7 +227,7 @@ namespace RevGame.View
             bool right = _rightPointers.Count > 0 || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
             int direction = (right ? 1 : 0) - (left ? 1 : 0);
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
-                Input.GetKeyDown(KeyCode.L) ? 3 : _clickedAction;
+                Input.GetKeyDown(KeyCode.L) ? 4 : Input.GetKeyDown(KeyCode.I) ? 3 : _clickedAction;
             _clickedAction = 0;
             service.SetDuelInput(direction, action, _clickedJump || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow));
             _clickedJump = false;
@@ -251,6 +260,10 @@ namespace RevGame.View
             int secondFacing = view.SecondAction == 0 && secondMove != 0 ? secondMove : view.SecondFacing;
             Vector2 firstPosition = ActorPosition(view.FirstX, view.FirstY, next.FirstX, next.FirstY, fraction);
             Vector2 secondPosition = ActorPosition(view.SecondX, view.SecondY, next.SecondX, next.SecondY, fraction);
+            // 镜头跟随两张已确认快照；预测只影响当前操作者的角色层坐标。
+            float confirmedFirstX = firstPosition.x;
+            float confirmedSecondX = secondPosition.x;
+            float confirmedHeight = Mathf.Max(firstPosition.y, secondPosition.y);
             int firstAltitude = view.FirstY;
             int secondAltitude = view.SecondY;
             // 只替换自己这一席的运动表现。下方血量、出招、命中特效和结果继续消费原来的权威播放头。
@@ -270,7 +283,7 @@ namespace RevGame.View
                 // 正常跨帧时依序消费特效；重连或长停顿后只保留最近四帧的短时表现。
                 for (int frame = Mathf.Max(_seenFrame + 1, view.Frame - 3); frame <= view.Frame; frame++)
                 {
-                    PaintDuelEvents(service.DuelDisplay.Get(frame));
+                    PaintDuelEvents(service.DuelDisplay.Get(frame), frame > 0 ? service.DuelDisplay.Get(frame - 1) : default);
                 }
                 _seenFrame = view.Frame;
                 FirstHealth.fillAmount = Mathf.Clamp01(view.FirstHealth / (float)DuelConfig.Health);
@@ -279,15 +292,18 @@ namespace RevGame.View
                 SecondEnergy.fillAmount = Mathf.Clamp01(view.SecondEnergy / (float)DuelConfig.Energy);
                 FirstHealthText.text = view.FirstHealth.ToString();
                 SecondHealthText.text = view.SecondHealth.ToString();
-                Names.text = service.BlackName + "                                      " + service.WhiteName;
+                Names.text = "绯焰  ·  " + service.BlackName + "                           " + service.WhiteName + "  ·  绯焰";
+                FirstCombo.text = view.FirstCombo > 1 ? view.FirstCombo + " HIT" : "";
+                SecondCombo.text = view.SecondCombo > 1 ? view.SecondCombo + " HIT" : "";
                 Clock.text = DuelConfig.FrameLimit == 0
                     ? "∞"
                     : Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             }
             PaintActor(First, firstPosition, firstFacing);
             PaintActor(Second, secondPosition, secondFacing);
-            FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, firstMove != 0, view.Frame, view.FirstAge, fraction);
-            SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, secondMove != 0, view.Frame, view.SecondAge, fraction);
+            CameraRig.Paint(confirmedFirstX, confirmedSecondX, confirmedHeight, Time.unscaledDeltaTime);
+            FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction);
+            SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
@@ -348,18 +364,29 @@ namespace RevGame.View
         }
 
         // 命中特效和受击闪光读取同一逻辑帧，且与渲染频率无关。
-        private void PaintDuelEvents(DuelSnapshot view)
+        private void PaintDuelEvents(DuelSnapshot view, DuelSnapshot previous)
         {
             Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing,
                 new Vector2(view.FirstX, view.FirstY) * ActorScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing,
                 new Vector2(view.SecondX, view.SecondY) * ActorScale);
+            if ((view.FirstAction == 3 && view.FirstAge == 0) || (view.SecondAction == 3 && view.SecondAge == 0))
+            {
+                CameraRig.FocusUltimate();
+            }
             if (view.FirstHit != 0)
             {
+                // 同帧对打可能已打断出招者。前一帧仍持有命中的动作编号。
+                int action = view.FirstAction != 0 ? view.FirstAction : Mathf.Max(1, previous.FirstAction);
+                Effects.Hit(0, action, view.FirstFacing, new Vector2(view.SecondX, view.SecondY) * ActorScale);
+                CameraRig.Hit(action, view.FirstFacing);
                 Flash(Second);
             }
             if (view.SecondHit != 0)
             {
+                int action = view.SecondAction != 0 ? view.SecondAction : Mathf.Max(1, previous.SecondAction);
+                Effects.Hit(1, action, view.SecondFacing, new Vector2(view.FirstX, view.FirstY) * ActorScale);
+                CameraRig.Hit(action, view.SecondFacing);
                 Flash(First);
             }
         }

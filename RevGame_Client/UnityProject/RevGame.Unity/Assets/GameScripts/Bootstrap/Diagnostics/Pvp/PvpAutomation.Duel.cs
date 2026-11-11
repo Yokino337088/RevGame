@@ -7,6 +7,7 @@ using RevGame.View;
 using Revolution;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace RevGame.Pvp
 {
@@ -28,6 +29,16 @@ namespace RevGame.Pvp
         private static bool _recoveryCheckRunning, _recoveryCheckPassed;
         private static string _recoveryCheckError = "";
         private static Dictionary<string, object> _recoveryCheckTrace = new Dictionary<string, object>();
+        // 街机连招验收从准备、出招推进到通过或失败，计划只读取阶段，不重复点击。
+        private static string _arcadeStage = "";
+        // 失败时记录哪个原生动作或实际显示断言未完成。
+        private static string _arcadeError = "";
+        // 从开局默认位置到接近后测得的镜头移动量，单位为画布局部像素。
+        private static float _arcadePan;
+        // 坠枪起手是否由原生快照确认离地。
+        private static bool _arcadePlungeAirborne;
+        // 坠枪命中年龄是否由原生快照确认已经落地。
+        private static bool _arcadePlungeLanded;
 
         // 20 Hz 下等至少一秒再取检查点，之后至少执行 16 个真实逻辑帧。
         private const int RecoveryCheckpointMinimumFrame = 20;
@@ -59,6 +70,14 @@ namespace RevGame.Pvp
                 _ => BeginLanGameCheck(duel: true, duelTestEntry: true, visibleDuel: true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-prediction-jump", "经 EventSystem 点击联机决斗跳跃按钮", Empty,
                 _ => ClickNetworkDuelJump(), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-arcade-prepare", "在隔离 UTP 测试局按住右移并等待能量与镜头就绪", Empty,
+                _ => StartArcadeCheck(prepare: true), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-arcade-combo", "经真实 HUD 按钮执行三段普攻、技能一、技能二和大招", Empty,
+                _ => StartArcadeCheck(prepare: false), owner: Owner);
+            RevRuntimeAutomation.Register("pvp.duel-arcade-state", "读取真实 HUD 连招和镜头验收结果", Empty,
+                _ => new Dictionary<string, object> { ["stage"] = _arcadeStage, ["error"] = _arcadeError, ["cameraPan"] = _arcadePan,
+                    ["plungeAirborne"] = _arcadePlungeAirborne, ["plungeLanded"] = _arcadePlungeLanded },
+                readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-lan-hash-check", "实际 UTP 双端打到终局，核对周期和终局帧指纹", Empty,
                 _ => BeginLanGameCheck(duel: true, duelHashAudit: true), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-lan-hash-mismatch-check", "实际 UTP 发送一份错误的白方对账值，验证两端报告同帧分歧", Empty,
@@ -86,6 +105,16 @@ namespace RevGame.Pvp
                     ["bothAnimated"] = view != null && view.FirstAnimator.HasSpriteMotion && view.SecondAnimator.HasSpriteMotion,
                     ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
                         view.First.sprite.packed && view.Second.sprite.packed,
+                    ["sameFighterArt"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
+                        view.First.sprite.name.StartsWith("Ember_", StringComparison.Ordinal) &&
+                        view.Second.sprite.name.StartsWith("Ember_", StringComparison.Ordinal),
+                    ["firstAction"] = state.FirstAction, ["firstCombo"] = state.FirstCombo,
+                    ["firstOptions"] = state.FirstOptions, ["secondStun"] = state.SecondStun,
+                    ["cameraZoom"] = view != null ? view.CameraRig.Fighters.localScale.x : 0,
+                    ["cameraPan"] = view != null ? view.CameraRig.Fighters.anchoredPosition.x : 0,
+                    ["castMask"] = view != null ? view.Effects.CastMaskForCheck : 0,
+                    ["soundMask"] = view != null ? view.Effects.SoundMaskForCheck : 0,
+                    ["impactCount"] = view != null ? view.Effects.ImpactsForCheck : 0,
                     ["firstIdleAnimated"] = view != null && view.FirstAnimator.IdleSpriteMotion,
                     ["sawPredictedJump"] = view != null && view.SawPredictedJumpForCheck,
                     ["sawConfirmedJump"] = view != null && view.SawConfirmedJumpForCheck,
@@ -95,6 +124,91 @@ namespace RevGame.Pvp
                     ["firstHealth"] = state.FirstHealth, ["secondHealth"] = state.SecondHealth,
                     ["firstHit"] = state.FirstHit, ["secondHit"] = state.SecondHit };
             }, readOnly: true, owner: Owner);
+        }
+
+        // 只允许本轮可见测试夹具接收自动指针，普通真人房间不会被诊断命令控制。
+        private static object StartArcadeCheck(bool prepare)
+        {
+            var view = UnityEngine.Object.FindObjectOfType<PvpDuelView>();
+            if (view == null || _lanGameCheck == null || !_lanGameCheck.OwnsVisibleDuel(Service) ||
+                !Service.DuelBothReady || _arcadeStage == "approach" || _arcadeStage == "combo" ||
+                (!prepare && _arcadeStage != "ready"))
+            {
+                return Result(false, "请先进入隔离的可见 UTP 决斗并完成相应准备。");
+            }
+            _arcadeStage = prepare ? "approach" : "combo";
+            _arcadeError = "";
+            RunArcadeCheck(view, prepare).Forget();
+            return Result(true, "");
+        }
+
+        // 通过射线和原生命中计数等待每一段。结束或失败都松开指针，避免下一局继承按住状态。
+        private static async RevTask RunArcadeCheck(PvpDuelView view, bool prepare)
+        {
+            PvpService service = Service;
+            string id = service.DuelId;
+            var pointer = new PointerEventData(EventSystem.current) { pointerId = 16 };
+            GameObject right = view.transform.Find("Right").gameObject;
+            try
+            {
+                if (prepare)
+                {
+                    _arcadePlungeAirborne = false;
+                    _arcadePlungeLanded = false;
+                    PressDuelHudButton(right, pointer);
+                    await WaitForDuelControl(id, () => service.DuelSnapshot.SecondX - service.DuelSnapshot.FirstX <= 910, "接近训练对手");
+                    ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
+                    await WaitForDuelControl(id, () => service.DuelSnapshot.FirstEnergy >= 92, "连招能量");
+                    _arcadePan = Mathf.Abs(view.CameraRig.Fighters.anchoredPosition.x);
+                    if (_arcadePan < 20 || !view.First.sprite.packed || !view.Second.sprite.packed)
+                    {
+                        throw new InvalidOperationException("决斗镜头或角色图集未就绪。");
+                    }
+                    _arcadeStage = "ready";
+                    return;
+                }
+
+                // 先观察真实命中，再点下一个按钮。托管缓冲会等原生公布的取消窗口。
+                Button[] buttons = { view.Jab, view.Jab, view.Jab, view.Skill, view.SkillTwo, view.Ultimate };
+                int[] actions = { 1, 5, 6, 2, 4, 3 };
+                for (int index = 0; index < buttons.Length; index++)
+                {
+                    int action = actions[index];
+                    int combo = index + 1;
+                    ClickDuelHudButton(buttons[index].gameObject, pointer);
+                    if (action == 4)
+                    {
+                        await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 4 &&
+                            service.DuelSnapshot.FirstY > 0, "坠枪离地");
+                        _arcadePlungeAirborne = true;
+                    }
+                    await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == action &&
+                        service.DuelSnapshot.FirstCombo == combo, "权威连招第 " + combo + " 段");
+                    if (action == 4)
+                    {
+                        _arcadePlungeLanded = service.DuelSnapshot.FirstY == 0;
+                    }
+                }
+                await WaitForDuelControl(id, () => view.Effects.ImpactsForCheck >= 6 &&
+                    view.Effects.CastMaskForCheck == 63, "六种起手与命中特效");
+                if (service.DuelSnapshot.SecondHealth != 3)
+                {
+                    throw new InvalidOperationException("实战目标的终段血量与六次封帧命中不一致。");
+                }
+                _arcadeStage = "passed";
+            }
+            catch (Exception error)
+            {
+                _arcadeError = error.Message;
+                _arcadeStage = "failed";
+            }
+            finally
+            {
+                if (right != null)
+                {
+                    ExecuteEvents.Execute(right, pointer, ExecuteEvents.pointerUpHandler);
+                }
+            }
         }
 
         // 只在真实联机决斗的 HUD 就绪后注入触点，保持与玩家点按相同的射线、事件和输入路径。
@@ -310,13 +424,15 @@ namespace RevGame.Pvp
                     System.Threading.Thread.Sleep(stallMs);
                     _controlCheckTrace["actualStallMs"] = stallClock.ElapsedMilliseconds;
                 }
-                await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 1 &&
+                await WaitForDuelControl(id, () => (service.DuelSnapshot.FirstAction == 1 || service.DuelSnapshot.FirstAction == 5) &&
                     service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge > firstStart, "权威第二次普攻");
                 int secondStart = service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge;
                 _controlCheckTrace["secondStart"] = secondStart;
-                if (secondStart != expectedSecondStart)
+                int secondAction = service.DuelSnapshot.FirstAction;
+                _controlCheckTrace["secondAction"] = secondAction;
+                if (secondAction == 5 ? secondStart >= expectedSecondStart : secondStart != expectedSecondStart)
                 {
-                    throw new InvalidOperationException("决斗验收失败：两次普攻之间存在空档。");
+                    throw new InvalidOperationException("决斗验收失败：续招时间与命中取消或正常恢复边界不一致。");
                 }
                 await WaitForDuelControl(id, () => view.FirstAnimator.LastObservedAttackStart == secondStart &&
                     view.FirstAnimator.AttackSpriteChanges > 0 && view.FirstAnimator.AttackFadeSamples > 0 &&

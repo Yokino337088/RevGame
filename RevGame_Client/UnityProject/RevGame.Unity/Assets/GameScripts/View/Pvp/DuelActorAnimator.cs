@@ -25,7 +25,15 @@ namespace RevGame.View
             // 权威大招片段。
             Attack3,
             // 已确认倒地，优先于所有动作。
-            Down
+            Down,
+            // 权威技能二片段。
+            Attack4,
+            // 命中取消后的普攻二段。
+            Attack5,
+            // 命中取消后的普攻三段。
+            Attack6,
+            // 原生受击硬直期间的反应片段。
+            Hit
         }
         // Unity 不能直接序列化交错数组，用一层对象保存每个姿态的帧序列。
         [System.Serializable]
@@ -33,6 +41,8 @@ namespace RevGame.View
         {
             // 编辑器按播放顺序写入，每个元素对应一张实际绘制的图片。
             public Sprite[] frames;
+            // 与原生判伤年龄对应的接触关键帧下标。非攻击姿态忽略。
+            public int contactIndex;
         }
 
         // 与 Pose 枚举一一对应，由决斗场景配方预先绑定。
@@ -57,6 +67,8 @@ namespace RevGame.View
         private RevHeavyFSM<Pose, DuelActorAnimator> _machine;
         // 当前片段和帧序列。只在切换姿态时查找，普通渲染帧直接复用。
         private Sprite[] _playingFrames;
+        // 当前攻击片段的接触关键帧，由场景预先绑定。
+        private int _contactIndex;
         // Legacy 资源中每秒的采样张数。
         private float _sampleRate;
         // Legacy 资源定义的片段长度，单位秒。
@@ -92,7 +104,7 @@ namespace RevGame.View
         // 跑动片段是否实际换图。
         public bool RunSpriteMotion => (_animatedPoses & (1 << (int)Pose.Run)) != 0;
         // 任一权威招式片段是否实际换图。
-        public bool AttackSpriteMotion => (_animatedPoses & (7 << (int)Pose.Attack1)) != 0;
+        public bool AttackSpriteMotion => (_animatedPoses & ((7 << (int)Pose.Attack1) | (7 << (int)Pose.Attack4))) != 0;
         // 最近观察到的招式起始逻辑帧。
         internal int LastObservedAttackStart => _lastObservedAttackStart;
         // 验收读取该招式的实际换帧次数。
@@ -162,7 +174,7 @@ namespace RevGame.View
             }
         }
 
-        // 注册七个姿态及其片段，从待机开始。
+        // 注册场景配方里的姿态片段，从待机开始。
         private void Awake()
         {
             _animation = GetComponent<Animation>();
@@ -177,11 +189,18 @@ namespace RevGame.View
         }
 
         // 按生命、招式、离地和移动确定表现姿态。没有状态变化时继续原片段。
-        public void Paint(int health, int altitude, int action, bool moving, int frame, int age, float frameFraction)
+        public void Paint(int health, int altitude, int action, int stun, bool moving, int frame, int age, float frameFraction)
         {
-            Pose next = health == 0 ? Pose.Down : action == 1 ? Pose.Attack1 :
-                action == 2 ? Pose.Attack2 : action == 3 ? Pose.Attack3 :
-                altitude > 0 ? Pose.Jump : moving ? Pose.Run : Pose.Idle;
+            Pose next = health == 0 ? Pose.Down : stun > 0 ? Pose.Hit : action switch
+            {
+                1 => Pose.Attack1,
+                2 => Pose.Attack2,
+                3 => Pose.Attack3,
+                4 => Pose.Attack4,
+                5 => Pose.Attack5,
+                6 => Pose.Attack6,
+                _ => altitude > 0 ? Pose.Jump : moving ? Pose.Run : Pose.Idle
+            };
             int attackStart = action != 0 && health > 0 ? frame - age : -1;
             if (_machine.CurrentStateType != next)
             {
@@ -194,7 +213,7 @@ namespace RevGame.View
             }
             _attackStart = attackStart;
             _machine.UpdateState(Time.unscaledDeltaTime);
-            PaintSpriteFrame(attackStart >= 0 ? DuelConfig.ActionDuration(action) : 0, age, frameFraction);
+            PaintSpriteFrame(attackStart >= 0 ? action : 0, age, frameFraction);
             PaintPoseFade();
             _poseSeconds += Time.unscaledDeltaTime;
         }
@@ -210,7 +229,9 @@ namespace RevGame.View
             _clipLength = asset == null ? 0 : asset.length;
             _poseSeconds = 0;
             int index = (int)pose;
-            _playingFrames = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index]?.frames : null;
+            SpriteSequence sequence = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index] : null;
+            _playingFrames = sequence?.frames;
+            _contactIndex = sequence?.contactIndex ?? 0;
             _loop = pose == Pose.Idle || pose == Pose.Run;
         }
 
@@ -285,8 +306,8 @@ namespace RevGame.View
             _hasPainted = false;
         }
 
-        // 招式图按逻辑年龄铺满整段动作。渲染只在当前逻辑帧内插值，断流时不会提前播完。
-        private void PaintSpriteFrame(int duration, int age, float frameFraction)
+        // 攻击分为接触前和接触后两段。权威命中帧进入接触姿势，渲染按逻辑年龄插值。
+        private void PaintSpriteFrame(int action, int age, float frameFraction)
         {
             if (_playingFrames == null || _playingFrames.Length == 0)
             {
@@ -294,9 +315,16 @@ namespace RevGame.View
             }
 
             float seconds = _loop && _clipLength > 0 ? Mathf.Repeat(_poseSeconds, _clipLength) : _poseSeconds;
-            float sample = duration > 0
-                ? (age + frameFraction) * _playingFrames.Length / (duration + 1)
-                : seconds * _sampleRate;
+            float sample = seconds * _sampleRate;
+            if (action > 0)
+            {
+                int hit = DuelConfig.ActionHitFrame(action);
+                float elapsed = age + frameFraction;
+                sample = elapsed < hit
+                    ? elapsed * _contactIndex / hit
+                    : _contactIndex + (elapsed - hit) * (_playingFrames.Length - _contactIndex) /
+                        (DuelConfig.ActionDuration(action) + 1 - hit);
+            }
             int index = Mathf.Clamp(Mathf.FloorToInt(sample), 0, _playingFrames.Length - 1);
             Sprite frame = _playingFrames[index];
             if (_image.sprite != frame)

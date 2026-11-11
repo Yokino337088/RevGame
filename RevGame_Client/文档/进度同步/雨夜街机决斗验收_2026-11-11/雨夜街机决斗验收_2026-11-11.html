@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>雨夜街机决斗验收 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; white-space: nowrap; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+p { margin: .6rem 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 对战验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>雨夜街机决斗</h1>
+<p>两席使用同一名红枪角色绯焰，在月下神社的雨夜擂台交战，按住移动时镜头带入对手，贴近时收紧画面，权威命中后出现强度不同的震动和特效。</p>
+<figure><img src="雨夜擂台.jpg" alt="两席绯焰与月下神社擂台"><figcaption>Unity Editor 中正式局域网决斗的实际开局画面。</figcaption></figure>
+</section>
+<section>
+<h2>角色、操作和运镜</h2>
+<p>绯焰参考用户提供的角色近景，保留紫黑短发、黑短夹克和红枪。32 张切片统一使用黑色皮质高跟过膝靴、浅纵向马甲线和自然腿部明暗。两席共享角色切片、动画和技能资源，各自驱动播放状态。</p>
+<p>键盘 <kbd>J</kbd> 普攻，<kbd>K</kbd> 贯枪，<kbd>L</kbd> 坠枪，<kbd>I</kbd> 赤阵，触屏提供相同的四个动作键。普攻命中后可以接二段与三段，两种技能可以相互接续并以大招结束。同一连段内每种技能只允许提前接续一次。</p>
+<p>王者 v122 中的 <code>SkillChangeEvent</code> 和 <code>SkillSlotLinker.NextSkillObj</code> 提供后续招式的组织参考。<code>CameraSystem.SetZoomRateFromAgeLerpTarget</code> 与 <code>ShakeManager.TryShakeStart</code> 提供表现镜头缓动及震动优先级参考。RevGame 由 C++ 根据命中、动作年龄、受击硬直、能量和技能使用掩码计算接续资格。双人镜头读两席已确认位置，预测只用于本机角色显示。</p>
+<p>参考片段约 28–52 秒及 96–120 秒的突刺、横向枪芒、空中下扎、地面圆环和白芯红色冲击。贯枪是水平突进，坠枪由原生状态驱动离地并在判伤帧落地，赤阵使用红色环形起手和爆点。动画接触姿势对齐权威判伤年龄。角色、背景和特效使用生成原画，九段短音效为原声合成。 <a href='https://www.bilibili.com/video/BV1hLp363ERj/'>参考视频</a></p>
+</section>
+<section>
+<h2>实机六连击</h2>
+<figure><img src="实机连招.gif" alt="实际操作普攻三段接两个技能和大招"><figcaption>同一次真实 UTP 用例的 19 张 Unity 画面，GIF 以 120 毫秒为间隔播放。</figcaption></figure>
+<figure><img src="坠枪落地.jpg" alt="坠枪落地的红色圆环"><figcaption>坠枪落地时展开红色圆环，受击方在该权威帧扣血。</figcaption></figure>
+<figure><img src="六连击终式.jpg" alt="第六次命中的赤阵特效与 6 HIT"><figcaption>大招命中时两席镜头、六连击计数和原生伤害同步落屏。</figcaption></figure>
+</section>
+<section>
+<h2>验收结果</h2>
+<table>
+<thead><tr><th>范围</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>原生 FIFO 与 C# 双端</td><td>覆盖协议 6 封帧、检查点、三段普攻、两种技能接续顺序、大招、打空、受击硬直与预测回滚。</td></tr>
+<tr><td>真实 KCP 回环</td><td>双端第 89 帧终局对账一致，指纹 <code>691572454</code>，共同确认三份样本后退出。</td></tr>
+<tr><td>RevCLI 场景和图集</td><td><code>game.pvp.duel-build</code> 生成两席共用的 11 个动画片段。<code>game.pvp.duel-atlas</code> 在 StandaloneWindows64 实际打包 32 张角色切片和 8 张特效切片，共一页。</td></tr>
+<tr><td>RevMCP 正式 UTP 场景</td><td>冷启动 AB 模式进入决斗，两席使用同一名角色的已打包 Sprite。HUD 依次触发三段普攻、技能一、技能二、大招，共六次权威命中。白方剩 3 点血，六种起手特效和音效均提交播放。坠枪离地后在命中帧落地，接近时镜头平移 214.7 个画布单位。房间已清理并返回大厅。</td></tr>
+</tbody>
+</table>
+<p>同一个 RevMCP stdio 会话先用 <code>rev_discover</code> 核对编辑器入口，再以 <code>rev_call</code> 从 StartScene 进入 Play。运行时重新发现 <code>pvp.duel</code> 后，用 <code>rev_run</code> 执行 <code>pvp.duel-prediction-view-check</code>、<code>pvp.duel-arcade-prepare</code>、<code>pvp.duel-arcade-combo</code> 和 <code>runtime.screenshot</code>，最后清理并停止 Play。</p>
+</section>
+<section>
+<h2>框架与版本</h2>
+<p>Revolution 的 <code>RevScene</code>、<code>RevServices</code>、表现状态机和音量门面支撑场景、动图、播放及测试接线。命中取消、检查点和双席帧输入由项目原生 GameCore 管理。角色和特效随内置决斗图集装载，原声音效随场景释放。</p>
+<p>联机双方及服务器需要配套使用协议 6。协议 5 的旧决斗录像与检查点使用旧版本读取。Windows Editor 与同机网络已验证，移动端、公网和独立 Player 尚未实测。内置场景资源和原生 DLL 的 Player 更新需要构建对应版本。</p>
+</section>
+</main>
+</body>
+</html>

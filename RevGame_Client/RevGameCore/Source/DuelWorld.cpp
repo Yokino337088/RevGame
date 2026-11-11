@@ -26,13 +26,21 @@ namespace RevGameCore
         {
             return false;
         }
-        // 三个招式各五个配置字。先验证命中帧、持续时长和耗能关系，避免错误下标进入战斗。
-        for (int offset = 9; offset < 24; offset += 5)
+        // 验证招式与连招窗口。取消必须在命中之后，防止在结算前覆盖待命中的旧动作。
+        for (int action = 1; action <= ActionCount; ++action)
         {
+            const int offset = AttackOffset(action);
+            const int chain = ChainOffset(action);
+            const int next = settings[chain + 3];
             if (settings[offset] < 1 || settings[offset] > 10000 || settings[offset + 1] < 1 ||
                 settings[offset + 1] > settings[1] * 2 || settings[offset + 2] < 1 ||
                 settings[offset + 3] < settings[offset + 2] || settings[offset + 3] > 600 ||
-                settings[offset + 4] < 0 || settings[offset + 4] > settings[5])
+                settings[offset + 4] < 0 || settings[offset + 4] > settings[5] ||
+                settings[chain] <= settings[offset + 2] || settings[chain] > settings[offset + 3] + 1 ||
+                settings[chain + 1] < 0 || settings[chain + 1] > 60 ||
+                settings[chain + 2] < 0 || settings[chain + 2] > settings[1] ||
+                next < 0 || next > 15 || ((action != 1 && action != 5) && (next & 1) != 0) ||
+                (action == 3 && next != 0))
             {
                 return false;
             }
@@ -51,12 +59,31 @@ namespace RevGameCore
         return true;
     }
 
+    // 先检查受击硬直，再按当前动作的确认结果开放后继槽。满恢复后可以重新起手。
+    int32_t DuelWorld::ActionOptions(const Fighter& fighter) const
+    {
+        if (fighter.Stun > 0 || fighter.Hp == 0 || Result != 0)
+        {
+            return 0;
+        }
+        if (fighter.Action == 0 || fighter.Age >= Config[AttackOffset(fighter.Action) + 3])
+        {
+            return 15;
+        }
+        const int chain = ChainOffset(fighter.Action);
+        if (!fighter.Landed || fighter.Age + 1 < Config[chain])
+        {
+            return 0;
+        }
+        return Config[chain + 3] & ~fighter.UsedSkills;
+    }
+
     // 只处理单个座位的意图与时钟。两席使用同一规则，伤害统一延后结算。
     void DuelWorld::MoveAndStart(Fighter& fighter, int32_t input)
     {
         // 跳跃用定步长整数积分。空中也推进重力，攻击硬直不会让角色悬停。
         const FixedPoint ground;
-        if (fighter.Y == ground && fighter.Action == 0 && (input & 16) != 0)
+        if (fighter.Y == ground && fighter.Action == 0 && fighter.Stun == 0 && (input & JumpInput) != 0)
         {
             fighter.VerticalSpeed = FixedPoint::FromRaw(Config[24]);
         }
@@ -65,32 +92,63 @@ namespace RevGameCore
             fighter.Y = std::max(ground, fighter.Y + fighter.VerticalSpeed);
             fighter.VerticalSpeed = fighter.Y == ground ? ground : fighter.VerticalSpeed - FixedPoint::FromRaw(Config[25]);
         }
-        if (fighter.Action != 0)
+        // 受击仍推进重力，剩余硬直帧的移动与技能意图均不执行。
+        if (fighter.Stun > 0)
         {
-            // 年龄先增长，再决定这一帧是否仍在硬直。到恢复边界可以结束旧招并接纳新招。
-            int offset = 9 + (fighter.Action - 1) * 5;
-            if (++fighter.Age <= Config[offset + 3])
-            {
-                return;
-            }
-            fighter.Action = 0;
-            fighter.Age = 0;
+            --fighter.Stun;
+            return;
         }
-        // 位 0/1 是左右，位 2～3 是单一技能槽。无效方向组合在桥接处拒绝。
+
+        // 先用上帧状态判断取消资格，再推进动作年龄。相同输入只在一个封口帧执行一次。
+        const int requested = ActionInput(input);
+        const bool recovering = fighter.Action != 0 && fighter.Age < Config[AttackOffset(fighter.Action) + 3];
+        // 普攻键始终发送同一个槽。接续段由当前动作决定，耗能读取实际要开始的段位。
+        int nextAction = requested;
+        if (recovering && requested == 1 && (fighter.Action == 1 || fighter.Action == 5))
+        {
+            nextAction = fighter.Action == 1 ? 5 : 6;
+        }
+        const bool starts = requested != 0 && (ActionOptions(fighter) & (1 << (requested - 1))) != 0 &&
+            fighter.Energy >= Config[AttackOffset(nextAction) + 4];
+        if (recovering && !starts)
+        {
+            ++fighter.Age;
+            // 坠枪的命中年龄同时落地。下扎发生在伤害阶段前，确保地面目标可被同帧判中。
+            if (fighter.Action == 4 && fighter.Age == Config[AttackOffset(4) + 2])
+            {
+                fighter.Y = ground;
+                fighter.VerticalSpeed = ground;
+            }
+            return;
+        }
+        const int action = starts ? nextAction : 0;
+        if (!recovering)
+        {
+            fighter.UsedSkills = 0;
+            fighter.ComboHits = 0;
+        }
+        fighter.Action = action;
+        fighter.Age = 0;
+        fighter.Landed = false;
+
+        // 普通移动与招式启动位移都使用定点数和同一场地边界。
         const int direction = (input & 1) != 0 ? -1 : (input & 2) != 0 ? 1 : 0;
-        const auto delta = FixedPoint::FromInt(direction) * FixedPoint::FromRaw(Config[2]);
-        // 地图边缘按固定点闭区间截断，沙盒使用同一规则，所以预测不会穿出场地。
+        const int step = recovering ? 0 : direction * Config[2];
+        const int lunge = action == 0 ? 0 : fighter.Facing * Config[ChainOffset(action) + 2];
+        const auto delta = FixedPoint::FromRaw(step + lunge);
         fighter.X = std::clamp(fighter.X + delta, FixedPoint::FromRaw(-Config[1]), FixedPoint::FromRaw(Config[1]));
-        const int action = (input >> 2) & 3;
+        // 坠枪从地面起手时进入与普通跳跃相同的第一步定点状态。检查点可沿用同一高度验证。
+        if (action == 4 && fighter.Y == ground)
+        {
+            fighter.Y = FixedPoint::FromRaw(Config[24]);
+            fighter.VerticalSpeed = FixedPoint::FromRaw(Config[24] - Config[25]);
+        }
         if (action != 0)
         {
-            const int cost = Config[9 + (action - 1) * 5 + 4];
-            if (fighter.Energy >= cost)
+            fighter.Energy -= Config[AttackOffset(action) + 4];
+            if (action == 2 || action == 4)
             {
-                // 年龄从 0 开始，命中帧稍后统一判断。能量不足时维持空闲且不扣资源。
-                fighter.Action = action;
-                fighter.Age = 0;
-                fighter.Energy -= cost;
+                fighter.UsedSkills |= 1 << (action - 1);
             }
         }
     }
@@ -99,8 +157,8 @@ namespace RevGameCore
     bool DuelWorld::Advance(int32_t frame, int32_t first, int32_t second, Snapshot& snapshot)
     {
         if (!Valid || Frame == std::numeric_limits<int32_t>::max() || frame != Frame + 1 ||
-            first < 0 || first > (31 | NoDamageFrameBit) || second < 0 || second > 31 ||
-            (first & 3) == 3 || (second & 3) == 3)
+            first < 0 || first > (InputMask | NoDamageFrameBit) ||
+            !ValidSeatInput(first & InputMask) || !ValidSeatInput(second))
         {
             return false;
         }
@@ -122,11 +180,33 @@ namespace RevGameCore
                 white.Facing = -black.Facing;
             }
             // 命中模块先收集双方伤害再统一扣血，之后统一加能量和判胜。
-            hits = ResolveDuelDamage(Fighters, Config, (first & NoDamageFrameBit) != 0);
+            const bool noDamage = (first & NoDamageFrameBit) != 0;
+            hits = ResolveDuelDamage(Fighters, Config, noDamage);
+            std::array<int32_t, SeatOrder.size()> stun{};
             for (const Seat seat : SeatOrder)
             {
                 Fighter& fighter = Fighters[seat];
+                if (hits[seat] != 0)
+                {
+                    fighter.Landed = true;
+                    ++fighter.ComboHits;
+                    stun[Opponent(seat)] = Config[ChainOffset(fighter.Action) + 1];
+                }
                 fighter.Energy = std::min(Config[5], fighter.Energy + Config[6] + (hits[seat] ? Config[7] : 0));
+            }
+            // 双方命中都已取值后才打断动作，同帧对打不会因遍历顺序丢失一个命中。
+            for (const Seat seat : SeatOrder)
+            {
+                if (!noDamage && stun[seat] > 0)
+                {
+                    Fighter& fighter = Fighters[seat];
+                    fighter.Stun = std::max(fighter.Stun, stun[seat]);
+                    fighter.Action = 0;
+                    fighter.Age = 0;
+                    fighter.Landed = false;
+                    fighter.UsedSkills = 0;
+                    fighter.ComboHits = 0;
+                }
             }
             if (black.Hp == 0 || white.Hp == 0 || ReachedTimeLimit(Config, Frame))
             {
@@ -176,6 +256,14 @@ namespace RevGameCore
             const Fighter& fighter = Fighters[seat];
             hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.Y.RawValue()));
             hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.VerticalSpeed.RawValue()));
+            // 连招资格与硬直会改变下一帧输入结果，因此纳入同帧指纹。
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.Stun));
+            hash = Fnv1aWord(hash, fighter.Landed ? 1u : 0u);
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.UsedSkills));
+            hash = Fnv1aWord(hash, static_cast<uint32_t>(fighter.ComboHits));
+            snapshot[19 + seat] = ActionOptions(fighter);
+            snapshot[21 + seat] = fighter.ComboHits;
+            snapshot[23 + seat] = fighter.Stun;
         }
         // 随机状态的高低字按固定顺序混入。读取状态不抽样，避免对账改变战斗结果。
         for (const uint64_t word : Random.StateWords())
