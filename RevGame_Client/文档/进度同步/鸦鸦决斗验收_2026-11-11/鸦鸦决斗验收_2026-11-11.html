@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鸦鸦决斗验收 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+p { margin: .6rem 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; margin-top: .4rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 决斗验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>白方鸦鸦</h1>
+<p>本地人机决斗由绯焰对阵鸦鸦。鸦鸦的待机沿用用户指定原画。移动的八张角色图和跑动头像使用 02 号半垂眉眼与微笑，腿法使用 23 号的专注表情。动作稿保留膝部靴口、原版金环挂坠和金边粗跟。<a href="../../../美术/AI生成/新版/鸦鸦决斗/素材说明.md">素材目录与生成提示词</a></p>
+<figure><img src="绯焰对鸦鸦.jpg" alt="真实对局里黑方绯焰和白方鸦鸦"><figcaption>Unity Editor 正式场景开局。</figcaption></figure>
+<figure><img src="移动02表情.gif" width="400" height="400" alt="八帧移动中使用 02 号表情的鸦鸦"><figcaption>最终移动切片以 15 帧每秒循环。</figcaption></figure>
+</section>
+<section>
+<h2>腿法和鸦术</h2>
+<p>J 连段依次为压重心低扫、提膝前弹踢、转髋高位回旋踢。动作第三张对齐已确认的命中年龄，收腿后回到格斗架势。白方 K 释放鸦袭、L 释放掠羽、I 释放鸦宴。鸦袭沿弧线前飞，掠羽从高处下扑，鸦宴展开翠羽和金色月阵。</p>
+<figure><img src="三段腿法.gif" width="400" height="400" alt="鸦鸦依次低扫、弹踢、回旋踢"><figcaption>成品切片逐张预览。对局节拍由已确认的动作年龄决定。</figcaption></figure>
+<figure><img src="鸦宴实战.jpg" alt="正式白方 AI 在雨夜擂台释放鸦宴"><figcaption>白方 AI 在正式决斗释放鸦宴。乌鸦与月阵通过图集及共用材质绘制。</figcaption></figure>
+</section>
+<section>
+<h2>实际验收</h2>
+<table>
+<thead><tr><th scope="col">检查</th><th scope="col">结果</th></tr></thead>
+<tbody>
+<tr><td>场景、图集与 Shader</td><td>RevCLI 的 <code>game.pvp.duel-sprites</code> 为既有场景绑定两席角色，<code>game.pvp.duel-atlas</code> 核对 22 个片段的切片及接触下标。Windows 目标的内置 Sprite Atlas V2 有 121 张 Sprite、3 页。白方两层特效使用同一份 Shader 材质。</td></tr>
+<tr><td>原生命中与实际落屏</td><td>用临时本地探针经现有权威封帧提交白方输入。观察到六次命中及各自的第三张图。六种出招和六段起手音效均触发，黑方 100 血降到 3 血。冷启动和退出重进均通过。</td></tr>
+<tr><td>正式人机回归</td><td>移除临时探针后，黑方的摇杆换向、松手及连续普攻通过原有回归。白方正式 AI 出招，捕获掠羽和鸦宴。运行时新增错误计数为 0。</td></tr>
+<tr><td>最终移动表情</td><td>换图后重打图集，从大厅重新进入本地决斗。观察到实际移动切片 <code>Yaya_Run_01</code> 和 02 号头像同时落屏，退出并停止 Play，运行时错误计数为 0。</td></tr>
+</tbody>
+</table>
+<p>Unity 2022.3.15f1c1 Windows Editor 使用真实 AB 模式。从 <code>rev_discover</code> 查找入口，使用 <code>rev_call editor.play</code> 启动，再通过 <code>rev_run</code> 进入本地人机决斗。六式测试用 <code>围棋对战/暂停决斗敌人AI</code> 参数 1 隔离输入，结尾回大厅并停止 Play。</p>
+<figure><img src="决斗腿法实录.gif" width="520" height="292" alt="鸦鸦在真实对局中走位并连续踢击"><figcaption>六式测试前段的现场连拍。六式完整命中由运行时断言验证。</figcaption></figure>
+<p>Revolution 支撑了现有场景流程、音量控制与自动化验收。特效和表情从原生只读快照取动作、位置与命中。联机、独立 Player 和手机尚未进行本轮实测。</p>
+</section>
+</main>
+</body>
+</html>

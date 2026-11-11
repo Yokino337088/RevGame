@@ -47,6 +47,8 @@ namespace RevGame.View
 
         // 与 Pose 枚举一一对应，由决斗场景配方预先绑定。
         [SerializeField] private SpriteSequence[] spriteSequences;
+        // 鸦鸦的待机是专门绘制的完整循环。没有完整待机循环的角色保留第一张站姿。
+        [SerializeField] private bool animateIdle;
         // 屏幕上的角色图片。由本组件按片段时钟显式换帧。
         private Image _image;
         // 旧姿态的最后一张图只在过渡期间保留。两个图层复用整局，不逐帧创建对象。
@@ -71,13 +73,11 @@ namespace RevGame.View
         private int _contactIndex;
         // Legacy 资源中每秒的采样张数。
         private float _sampleRate;
-        // Legacy 资源定义的片段长度，单位秒。
-        private float _clipLength;
         // 当前普通姿态已播放的非缩放秒数，切换时归零。
         private float _poseSeconds;
         // 同一招式可连续出现。用逻辑起始帧识别每一次，而不是只看招式编号。
         private int _attackStart = -1;
-        // 待机与跑动循环，其余片段播到最后一张时保持该姿势。
+        // 跑步和专门配置的待机循环，其余片段播到最后一张时保持该姿势。
         private bool _loop;
         // 只读播放检查，供验收判断片段确实在运行。
         public bool IsPlaying => isActiveAndEnabled && _playingFrames != null && _playingFrames.Length > 0;
@@ -225,13 +225,12 @@ namespace RevGame.View
             BeginPoseFade();
             AnimationClip asset = _animation.GetClip(clip);
             _sampleRate = asset == null ? 0 : asset.frameRate;
-            _clipLength = asset == null ? 0 : asset.length;
             _poseSeconds = 0;
             int index = (int)pose;
             SpriteSequence sequence = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index] : null;
             _playingFrames = sequence?.frames;
             _contactIndex = sequence?.contactIndex ?? 0;
-            _loop = pose == Pose.Run;
+            _loop = pose == Pose.Run || (pose == Pose.Idle && animateIdle);
         }
 
         // 旧图层是当前角色的表现子节点，随场景一起退出；关闭射线检测，避免覆盖 HUD 的触屏输入。
@@ -313,9 +312,13 @@ namespace RevGame.View
                 return;
             }
 
-            float seconds = _loop && _clipLength > 0 ? Mathf.Repeat(_poseSeconds, _clipLength) : _poseSeconds;
-            // 两张待机原画姿势差异较大，交替播放会让静止角色不断跳动。
-            float sample = _machine.CurrentStateType == Pose.Idle ? 0 : seconds * _sampleRate;
+            // 没有连续待机帧的角色保持站姿。配置了循环的角色按片段帧率播放。
+            float sample = _machine.CurrentStateType == Pose.Idle && !animateIdle ? 0 : _poseSeconds * _sampleRate;
+            if (_loop)
+            {
+                // 按实际图片张数循环，编辑器片段的末尾留白不会延长最后一张图。
+                sample = Mathf.Repeat(sample, _playingFrames.Length);
+            }
             if (action > 0)
             {
                 int hit = DuelConfig.ActionHitFrame(action);

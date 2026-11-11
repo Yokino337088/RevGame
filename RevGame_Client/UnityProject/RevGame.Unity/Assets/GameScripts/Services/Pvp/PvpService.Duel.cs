@@ -64,6 +64,10 @@ namespace RevGame.Pvp
         internal int DuelLastAttackIntentFrameForCheck { get; private set; }
         internal int DuelLastAttackIntentForCheck { get; private set; }
         internal int DuelAttackExpiredAtFrameForCheck { get; private set; }
+        // 当前人机决斗的暂停开关，随本局释放。暂停后电脑在新帧提交空输入。
+        internal bool DuelComputerAiPaused { get; private set; }
+        // 最近一帧已确认的白方六位输入，0 表示没有方向、招式或跳跃。
+        internal int DuelComputerInputForCheck => (_duelLastPacked >> DuelCorePipe.InputBits) & DuelCorePipe.InputMask;
 #endif
         // 下次轮询的本地单调秒数，和原生逻辑帧号独立。
         private double _duelNextSend;
@@ -561,6 +565,13 @@ namespace RevGame.Pvp
         // 由权威位从快照生成电脑意图，跟真人一起进入下一完整帧。
         private int ComputerDuelInput()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (DuelComputerAiPaused)
+            {
+                // 白方仍交一个完整帧所需的输入，玩家、已起手的动作和判伤可以继续推进。
+                return 0;
+            }
+#endif
             // AI 只生成一个座位的意图。它与真人一样经过权威帧，伤害和距离判定仍由 C++ 负责。
             var view = _duelAuthority.Snapshot;
             int distance = view.FirstX - view.SecondX;
@@ -743,6 +754,7 @@ namespace RevGame.Pvp
             DuelAttackExpiredAtFrameForCheck = 0;
             DuelHashSamplesAcknowledgedForCheck = 0;
             DuelHashCorruptFrameForCheck = 0;
+            DuelComputerAiPaused = false;
 #endif
             DuelPreviousSnapshot = default;
             DuelDisplay.Reset();
@@ -778,6 +790,17 @@ namespace RevGame.Pvp
         // 恢复验收只读取已就绪的本地人机权威，正式联机房间不开放这个入口。
         internal bool DuelRecoveryAvailableForCheck => Mode == PvpConnectionMode.Local && IsComputerGame &&
             _duelSceneReady && DuelBothReady && _duelAuthority != null;
+
+        // 只接受已就绪的本地人机决斗，下一次封帧按新开关采样白方。
+        internal bool TrySetDuelComputerAiPaused(bool paused)
+        {
+            if (!DuelRecoveryAvailableForCheck || DuelError.Length != 0 || DuelSnapshot.Result != 0)
+            {
+                return false;
+            }
+            DuelComputerAiPaused = paused;
+            return true;
+        }
 
         // 在 Unity 主线程读取同一局的权威快照和检查点。没有暂停、换局或替换当前内核。
         internal byte[] SaveDuelCheckpointForCheck(out DuelSnapshot snapshot)

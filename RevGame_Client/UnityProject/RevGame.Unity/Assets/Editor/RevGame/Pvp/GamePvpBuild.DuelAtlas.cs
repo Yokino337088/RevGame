@@ -51,14 +51,18 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("请在编辑模式构建决斗角色图集。");
             }
 
-            Sprite[][] shared = DuelPoses.Select(LoadDuelSequence).ToArray();
-            var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length);
-            ValidateDuelRoleClips("Swordsman", EmberPrefix, shared, groups);
-            ValidateDuelSceneAnimationSlices(shared);
+            Sprite[][] ember = DuelPoses.Select(LoadDuelSequence).ToArray();
+            Sprite[][] yaya = DuelPoses.Select(LoadYayaDuelSequence).ToArray();
+            var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length * 2);
+            ValidateDuelRoleClips(EmberClipPrefix, EmberPrefix, ember, groups);
+            ValidateDuelRoleClips(YayaPrefix, YayaPrefix, yaya, groups);
+            ValidateDuelSceneAnimationSlices(ember, yaya);
 
             // 图集去重收录角色、特效和 HUD Sprite。背景保持原分辨率，便于镜头移动和裁切。
-            Sprite[] sprites = shared.SelectMany(frames => frames)
+            Sprite[] sprites = ember.Concat(yaya).SelectMany(frames => frames)
                 .Concat(ArcadeCastArt.Concat(ArcadeImpactArt).Distinct().Select(LoadArcadeEffect))
+                .Concat(YayaCastArt.Concat(YayaImpactArt).Distinct().Select(LoadYayaDuelEffect))
+                .Concat(YayaPortraitExpressions.Select(LoadYayaDuelPortrait))
                 .Concat(DuelHudSprites.Select(LoadHudSprite)).Distinct().ToArray();
             string[] paths = sprites.Select(AssetDatabase.GetAssetPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
             if (paths.Distinct(StringComparer.Ordinal).Count() != sprites.Length)
@@ -107,7 +111,7 @@ namespace RevGame.Editor
                 }
                 string clipPath = $"{DuelAnimationFolder}/{role}_{pose}.anim";
                 AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-                ValidateDuelClipFrames(clip, frames, clipPath);
+                ValidateDuelClipFrames(clip, frames, clipPath, role, pose);
                 groups.Add(new DuelAnimationSequenceResult
                 {
                     role = role, pose = pose, clipPath = clipPath, frameCount = frames.Length,
@@ -117,12 +121,13 @@ namespace RevGame.Editor
             }
         }
 
-        // Legacy 动画和显式换帧表都必须使用同一批切片。最后一个关键帧重复末图，保留末图时长。
-        private static void ValidateDuelClipFrames(AnimationClip clip, Sprite[] frames, string clipPath)
+        // 校验资源曲线、循环帧数和落屏表同序。循环末尾只留一个正常采样间隔。
+        private static void ValidateDuelClipFrames(AnimationClip clip, Sprite[] frames, string clipPath, string role, string pose)
         {
             var binding = EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite");
             ObjectReferenceKeyframe[] keys = clip == null ? null : AnimationUtility.GetObjectReferenceCurve(clip, binding);
-            if (keys == null || keys.Length != frames.Length + 1 || !clip.legacy || !Mathf.Approximately(clip.frameRate, 15))
+            int keyCount = frames.Length + (DuelLoopsWithoutPadding(role, pose) ? 0 : 1);
+            if (keys == null || keys.Length != keyCount || !clip.legacy || !Mathf.Approximately(clip.frameRate, DuelClipFrameRate(role, pose)))
             {
                 throw new InvalidOperationException("决斗动画帧表或采样率异常：" + clipPath);
             }
@@ -137,7 +142,7 @@ namespace RevGame.Editor
         }
 
         // 只读打开目标场景，核对真正上屏的换帧表，不重建场景或覆盖原资产。
-        private static void ValidateDuelSceneAnimationSlices(Sprite[][] shared)
+        private static void ValidateDuelSceneAnimationSlices(Sprite[][] ember, Sprite[][] yaya)
         {
             Scene prior = SceneManager.GetActiveScene();
             Scene scene = SceneManager.GetSceneByPath(DuelScenePath);
@@ -153,8 +158,20 @@ namespace RevGame.Editor
             try
             {
                 PvpDuelView view = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
-                ValidateDuelActorAnimationSlices(view.FirstAnimator, shared);
-                ValidateDuelActorAnimationSlices(view.SecondAnimator, shared);
+                ValidateDuelActorAnimationSlices(view.FirstAnimator, ember, ArcadeContactKeys, false);
+                ValidateDuelActorAnimationSlices(view.SecondAnimator, yaya, YayaContactKeys, true);
+                DuelStrikeEffects effects = view.Effects;
+                if (!effects.YayaCastSprites.SequenceEqual(YayaCastArt.Select(LoadYayaDuelEffect)) ||
+                    !effects.YayaImpactSprites.SequenceEqual(YayaImpactArt.Select(LoadYayaDuelEffect)) ||
+                    !effects.YayaCastSounds.SequenceEqual(YayaCastAudio.Select(LoadYayaDuelAudio)) ||
+                    !effects.YayaImpactSounds.SequenceEqual(YayaImpactAudio.Select(LoadYayaDuelAudio)) ||
+                    AssetDatabase.GetAssetPath(effects.Second.material) != YayaDuelMaterial ||
+                    effects.SecondImpact.material != effects.Second.material ||
+                    !view.YayaPortraits.SequenceEqual(YayaPortraitExpressions.Select(LoadYayaDuelPortrait)) ||
+                    view.SecondPortrait.sprite != view.YayaPortraits[0])
+                {
+                    throw new InvalidOperationException("白方决斗特效、音效或头像绑定异常。");
+                }
             }
             finally
             {
@@ -169,18 +186,19 @@ namespace RevGame.Editor
             }
         }
 
-        private static void ValidateDuelActorAnimationSlices(DuelActorAnimator actor, Sprite[][] sequences)
+        // 读回两席序列帧和接触关键帧，避免配置中的角色与场景绑定不一致。
+        private static void ValidateDuelActorAnimationSlices(DuelActorAnimator actor, Sprite[][] sequences, int[] contactKeys, bool animateIdle)
         {
             using var data = new SerializedObject(actor);
             SerializedProperty poses = data.FindProperty("spriteSequences");
-            if (poses == null || poses.arraySize != sequences.Length)
+            if (poses == null || poses.arraySize != sequences.Length || data.FindProperty("animateIdle").boolValue != animateIdle)
             {
                 throw new InvalidOperationException("决斗场景角色缺少切片换帧表：" + actor.name);
             }
             for (int i = 0; i < sequences.Length; i++)
             {
                 SerializedProperty pose = poses.GetArrayElementAtIndex(i);
-                if (pose.FindPropertyRelative("contactIndex").intValue != ArcadeContactKeys[i])
+                if (pose.FindPropertyRelative("contactIndex").intValue != contactKeys[i])
                 {
                     throw new InvalidOperationException("决斗接触关键帧异常：" + actor.name + "/" + DuelPoses[i]);
                 }

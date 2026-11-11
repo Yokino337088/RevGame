@@ -1,3 +1,4 @@
+using RevGame.Pvp.Duel;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,14 @@ namespace RevGame.View
         public AudioClip[] CastSounds;
         // 普攻、技能、大招的三种命中音色。
         public AudioClip[] ImpactSounds;
+        // 白方鸦鸦独占的六个起手图形，按原生动作编号排列。
+        public Sprite[] YayaCastSprites;
+        // 白方鸦鸦的六个命中图形，在受击者位置播放。
+        public Sprite[] YayaImpactSprites;
+        // 白方每一段普攻和每种法术的短音效。
+        public AudioClip[] YayaCastSounds;
+        // 白方普攻、技能和大招命中时的不同音色。
+        public AudioClip[] YayaImpactSounds;
         // 场景唯一的二维声源。退出场景即释放，音量读取 Revolution 门面。
         public AudioSource Speaker;
 
@@ -39,6 +48,10 @@ namespace RevGame.View
         internal int SoundMaskForCheck { get; private set; }
         // 已展示的命中数量。
         internal int ImpactsForCheck { get; private set; }
+        // 白方实际落屏的动作、声音和命中单独计数，黑方同时出招不会污染验收。
+        internal int YayaCastMaskForCheck { get; private set; }
+        internal int YayaSoundMaskForCheck { get; private set; }
+        internal int YayaImpactsForCheck { get; private set; }
 #endif
 
         // 单个表现事件的播放参数，值类型随图层复用。
@@ -54,12 +67,18 @@ namespace RevGame.View
             public Vector2 Origin;
             // 竖向拖尾位移，0 表示固定锚点。
             public float Drop;
+            // 乌鸦从起点到终点的画布偏移，单位像素。只改变渲染轨迹。
+            public Vector2 Travel;
+            // 乌鸦飞到终点所需秒数，以已确认的命中年龄对齐。
+            public float TravelSeconds;
+            // 飞行弧线的最高额外偏移，单位画布像素。
+            public float Arc;
             // 色彩和初始透明度。
             public Color Tint;
         }
 
         // 消费一次权威起手。角色在恢复期切入新动作时，起始帧自然区分前后两次攻击。
-        public void Observe(int seat, int action, int startFrame, int facing, Vector2 position)
+        public void Observe(int seat, int action, int startFrame, int facing, Vector2 position, Vector2 target)
         {
             if (action <= 0 || startFrame <= _lastStart[seat])
             {
@@ -67,36 +86,90 @@ namespace RevGame.View
             }
             _lastStart[seat] = startFrame;
             int tier = Tier(action);
+            bool yaya = seat == 1 && YayaCastSprites != null && YayaCastSprites.Length == 6;
             float size = tier == 2 ? 670 : tier == 1 ? 460 : 270;
             Image layer = seat == 0 ? First : Second;
             Color tint = Color.white;
             tint.a = tier == 0 ? .76f : .96f;
             Vector2 shape = action == 2 ? new Vector2(780, 345) : action == 4 ? new Vector2(350, 630) : Vector2.one * size;
             Vector2 offset = action == 4 ? new Vector2(facing * 48, 108) : new Vector2(facing * 120, 12);
-            Begin(layer, ref _casts[seat], CastSprites[action - 1], position + offset,
-                shape, tier == 2 ? .59f : .30f, tint, facing);
-            _casts[seat].Drop = action == 4 ? 220 : 0;
-            bool audible = Play(CastSounds[action - 1], .78f);
+            if (yaya)
+            {
+                CastYaya(action, facing, position, target);
+            }
+            else
+            {
+                Begin(layer, ref _casts[seat], CastSprites[action - 1], position + offset,
+                    shape, tier == 2 ? .59f : .30f, tint, facing);
+                _casts[seat].Drop = action == 4 ? 220 : 0;
+            }
+            bool audible = Play((yaya ? YayaCastSounds : CastSounds)[action - 1], .78f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-            CastMaskForCheck |= 1 << (action - 1);
+            int bit = 1 << (action - 1);
+            CastMaskForCheck |= bit;
+            if (yaya)
+            {
+                YayaCastMaskForCheck |= bit;
+            }
             if (audible)
             {
-                SoundMaskForCheck |= 1 << (action - 1);
+                SoundMaskForCheck |= bit;
+                if (yaya)
+                {
+                    YayaSoundMaskForCheck |= bit;
+                }
             }
 #endif
+        }
+
+        // 将鸦袭、掠羽和鸦宴绘成不同尺寸和方向。飞行距离只用于画面，受击由权威帧触发。
+        private void CastYaya(int action, int facing, Vector2 position, Vector2 target)
+        {
+            bool bird = action == 2 || action == 4;
+            float hitSeconds = DuelConfig.ActionHitFrame(action) * DuelConfig.FrameMs / 1000f;
+            float height = action switch { 1 => -90, 4 => 170, 5 => 15, 6 => 70, _ => 55 };
+            Vector2 origin = position + new Vector2(facing * (bird ? 65 : 95), height);
+            Vector2 size = action switch
+            {
+                2 => new Vector2(300, 214),
+                3 => new Vector2(575, 480),
+                4 => new Vector2(310, 265),
+                1 => new Vector2(230, 135),
+                6 => new Vector2(310, 230),
+                _ => new Vector2(245, 190)
+            };
+            Begin(Second, ref _casts[1], YayaCastSprites[action - 1], origin, size,
+                hitSeconds + (action == 3 ? .28f : .14f), Color.white, facing);
+            if (bird)
+            {
+                // 以起手帧的对手位置定方向和长度。实际命中点另读该帧受击者坐标。
+                float reach = action == 4 ? 190 : 215;
+                float forward = Mathf.Clamp((target.x - position.x) * facing, 90, reach);
+                float endHeight = Mathf.Clamp(target.y - position.y, -75, 90) + (action == 4 ? -85 : 20);
+                _casts[1].Travel = position + new Vector2(forward * facing, endHeight) - origin;
+                _casts[1].TravelSeconds = hitSeconds;
+                _casts[1].Arc = action == 4 ? 45 : 26;
+            }
         }
 
         // 命中发生在逻辑命中帧，特效落在受击角色身上，伤害已经由原生结算。
         public void Hit(int seat, int action, int facing, Vector2 target)
         {
             int tier = Tier(action);
+            bool yaya = seat == 1 && YayaImpactSprites != null && YayaImpactSprites.Length == 6;
             Vector2 shape = action == 4 ? new Vector2(580, 320) : Vector2.one * (tier == 2 ? 750 : tier == 1 ? 405 : 250);
-            Begin(seat == 0 ? FirstImpact : SecondImpact, ref _impacts[seat], ImpactSprites[action - 1],
-                target + new Vector2(0, action == 4 ? -145 : 18), shape,
+            // 白方低踢的受击闪光贴近小腿，其它命中仍从权威受击者取锚点。
+            float impactHeight = yaya && action == 1 ? -90 : action == 4 ? -145 : 18;
+            Begin(seat == 0 ? FirstImpact : SecondImpact, ref _impacts[seat], (yaya ? YayaImpactSprites : ImpactSprites)[action - 1],
+                target + new Vector2(0, impactHeight), shape,
                 tier == 2 ? .48f : .22f, Color.white, facing);
-            Play(ImpactSounds[tier], tier == 2 ? .92f : .68f);
+            Play((yaya ? YayaImpactSounds : ImpactSounds)[tier], tier == 2 ? .92f : .68f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             ImpactsForCheck++;
+            if (yaya)
+            {
+                YayaImpactsForCheck++;
+            }
 #endif
         }
 
@@ -154,7 +227,13 @@ namespace RevGame.View
             }
             float grow = 1 - Mathf.Pow(1 - progress, 3);
             layer.rectTransform.sizeDelta = effect.Size * (.76f + grow * .47f);
-            layer.rectTransform.anchoredPosition = effect.Origin + Vector2.down * (effect.Drop * progress * progress);
+            Vector2 position = effect.Origin + Vector2.down * (effect.Drop * progress * progress);
+            if (effect.TravelSeconds > 0)
+            {
+                float flight = Mathf.Clamp01((now - effect.Start) / effect.TravelSeconds);
+                position += effect.Travel * flight + Vector2.up * (4 * effect.Arc * flight * (1 - flight));
+            }
+            layer.rectTransform.anchoredPosition = position;
             Color tint = effect.Tint;
             tint.a *= 1 - progress * progress;
             layer.color = tint;

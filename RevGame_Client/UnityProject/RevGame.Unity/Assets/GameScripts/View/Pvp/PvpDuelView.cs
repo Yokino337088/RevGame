@@ -31,12 +31,26 @@ namespace RevGame.View
         public RectTransform Hud;
         // 桌面键盘图例所在的底板，触屏设备只显示圆形操作键。
         public GameObject KeyboardGuide;
+        // 桌面键盘说明里的文字组件。确定本机座位后写入对应角色的技能名。
+        public Text KeyboardLegend;
+        // 依次对应 K、L、I 的三个圆键文字。
+        public Text[] SkillCaptions;
+        // 依次对应 J、K、L、I 的四个圆键图标。
+        public Image[] SkillGlyphs;
+        // 黑方按钮使用绯焰招式图标，顺序与 SkillGlyphs 一致。
+        public Sprite[] EmberSkillGlyphs;
+        // 白方按钮使用鸦鸦招式图标，切换席位只改变显示。
+        public Sprite[] YayaSkillGlyphs;
         // 短时按键回执，说明当前输入、受击或能量状态。
         public Text InputFeedback;
         // 黑方玩家名，独立排版以限制过长昵称。
         public Text FirstName;
         // 白方玩家名。
         public Text SecondName;
+        // 白方血条旁的头像组件。
+        public Image SecondPortrait;
+        // 头像可显示的五张原画差分，顺序为待机、专注、微笑、受击、倒地。
+        public Sprite[] YayaPortraits;
         // 左手圆形摇杆，移动方向与键盘共用同一输入缓冲。
         public DuelMoveStick MoveStick;
         // 黑方当前权威血量的整数文本。
@@ -79,6 +93,10 @@ namespace RevGame.View
         private bool _clickedJump;
         // 输入提示结束的本地非缩放时间。
         private float _inputFeedbackUntil;
+        // 最近一次绘制按钮说明的座位，避免每次刷新 HUD 都重设图标和字形。
+        private GoSide _hudSeat;
+        // 最后使用的表情索引。只有已确认状态发生变化时才更换头像。
+        private int _yayaExpression = -1;
         // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
         private const float ActorScale = .138f;
         // 两个站位小于一步的距离时保持已有镜像，防止重叠或相互穿过时连续翻面。
@@ -224,7 +242,7 @@ namespace RevGame.View
         {
             DuelSnapshot state = service.DuelSnapshot;
             bool black = service.MySide == GoSide.Black;
-            string name = action == 1 ? "普攻" : action == 2 ? "贯枪" : action == 3 ? "赤阵" : action == 4 ? "坠枪" : "跳跃";
+            string name = ActionCaption(action, !black);
             int energy = black ? state.FirstEnergy : state.SecondEnergy;
             int cost = action == 2 ? DuelConfig.SkillCost : action == 3 ? DuelConfig.UltimateCost : action == 4 ? DuelConfig.SkillTwoCost : 0;
             int stun = black ? state.FirstStun : state.SecondStun;
@@ -256,10 +274,46 @@ namespace RevGame.View
             _inputFeedbackUntil = Time.unscaledTime + .85f;
         }
 
+        // 确认席位后更新按键说明，黑白两边的同一按键继续提交相同的原生动作号。
+        private void PaintSeatControls(GoSide side)
+        {
+            if (_hudSeat == side || side == GoSide.Empty || KeyboardLegend == null)
+            {
+                return;
+            }
+            _hudSeat = side;
+            bool yaya = side == GoSide.White;
+            Sprite[] glyphs = yaya ? YayaSkillGlyphs : EmberSkillGlyphs;
+            SkillCaptions[0].text = ActionCaption(2, yaya);
+            SkillCaptions[1].text = ActionCaption(4, yaya);
+            SkillCaptions[2].text = ActionCaption(3, yaya);
+            for (int i = 0; i < SkillGlyphs.Length; i++)
+            {
+                SkillGlyphs[i].sprite = glyphs[i];
+            }
+            KeyboardLegend.text = yaya
+                ? "A/D 移动    SPACE 跳跃    J 普攻    K 鸦袭    L 掠羽    I 鸦宴"
+                : "A/D 移动    SPACE 跳跃    J 普攻    K 贯枪    L 坠枪    I 赤阵";
+        }
+
+        // 动作名只影响本机显示，技能能量与取消窗口由原生动作槽决定。
+        private static string ActionCaption(int action, bool yaya)
+        {
+            return action switch
+            {
+                1 => "普攻",
+                2 => yaya ? "鸦袭" : "贯枪",
+                3 => yaya ? "鸦宴" : "赤阵",
+                4 => yaya ? "掠羽" : "坠枪",
+                _ => "跳跃"
+            };
+        }
+
         // 在独立播放时钟上取样。到包可以批量推进原生世界，画面仍按相邻已确认帧插值。
         private void LateUpdate()
         {
             var service = RevServices.GetRequired<PvpService>();
+            PaintSeatControls(service.MySide);
             if (!service.DuelDisplay.Sample(Time.unscaledDeltaTime, service.Mode != PvpConnectionMode.Local,
                 out DuelSnapshot view, out DuelSnapshot next, out float fraction))
             {
@@ -312,7 +366,8 @@ namespace RevGame.View
                 FirstHealthText.text = view.FirstHealth.ToString();
                 SecondHealthText.text = view.SecondHealth.ToString();
                 FirstName.text = "绯焰  /  " + service.BlackName;
-                SecondName.text = service.WhiteName + "  /  绯焰";
+                SecondName.text = service.WhiteName + "  /  鸦鸦";
+                PaintYayaExpression(view, secondMove != 0);
                 FirstCombo.text = view.FirstCombo > 1 ? view.FirstCombo + " HIT" : "";
                 SecondCombo.text = view.SecondCombo > 1 ? view.SecondCombo + " HIT" : "";
                 Clock.text = DuelConfig.FrameLimit == 0
@@ -344,6 +399,20 @@ namespace RevGame.View
             {
                 _presentedResult = view.Result;
                 Banner.transform.DOPunchScale(Vector3.one * .16f, .4f).SetUpdate(true).SetLink(gameObject);
+            }
+        }
+
+        // 状态来自同一只读快照。移动和施法沿用 02 号的笑意，腿法命中使用 23 号。
+        private void PaintYayaExpression(DuelSnapshot view, bool moving)
+        {
+            bool playful = view.SecondAction == 2 || view.SecondAction == 3 || view.SecondAction == 4 ||
+                (moving && view.SecondAction == 0 && view.SecondY == 0);
+            int expression = view.SecondHealth == 0 ? 4 : view.SecondStun > 0 ? 3 :
+                playful ? 2 : view.SecondAction != 0 || view.SecondY > 0 ? 1 : 0;
+            if (SecondPortrait != null && _yayaExpression != expression)
+            {
+                _yayaExpression = expression;
+                SecondPortrait.sprite = YayaPortraits[expression];
             }
         }
 
@@ -391,10 +460,10 @@ namespace RevGame.View
         // 命中特效和受击闪光读取同一逻辑帧，且与渲染频率无关。
         private void PaintDuelEvents(DuelSnapshot view, DuelSnapshot previous)
         {
-            Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing,
-                new Vector2(view.FirstX, view.FirstY) * ActorScale);
-            Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing,
-                new Vector2(view.SecondX, view.SecondY) * ActorScale);
+            Vector2 first = new Vector2(view.FirstX, view.FirstY) * ActorScale;
+            Vector2 second = new Vector2(view.SecondX, view.SecondY) * ActorScale;
+            Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, first, second);
+            Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first);
             if ((view.FirstAction == 3 && view.FirstAge == 0) || (view.SecondAction == 3 && view.SecondAge == 0))
             {
                 CameraRig.FocusUltimate();

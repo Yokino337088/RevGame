@@ -6,6 +6,9 @@ Ember_Base / Ember_Action
 Ember_Attacks
 沿用绯焰的角色设定，新增短刺、横扫、上挑、贯枪与空中下扎的关键姿态。两席镜像测试都引用这一名角色。
 
+Ember_RunCycle
+由 ImageGen 以现有绯焰和双脚步态示意图生成。参考 BV1hLp363ERj 约 00:37 的低身持枪前冲，红枪沿腰线向后拖。两排各四张，按落脚、压重、蹬地、腾空顺序播放。Unity 使用 Ember_32 至 Ember_39，切片共用 400×400 画布和落地基准，腾空帧保留脚底间距。
+
 RainRing / Effects
 由 ImageGen 生成月下神社雨夜擂台和八种红枪战斗特效。动作轮廓、枪芒和落地圆环参考视频 BV1hLp363ERj 的实战片段，游戏使用重新制作的原画。
 

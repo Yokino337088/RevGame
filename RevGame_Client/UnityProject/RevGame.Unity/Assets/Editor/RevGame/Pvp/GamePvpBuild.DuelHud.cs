@@ -83,7 +83,7 @@ namespace RevGame.Editor
             view.InputFeedback = HudText("InputFeedback", hud, "", 460, 82, 960, 58, 30);
         }
 
-        // 双席使用同一张绯焰头像，以边框色和座位号区分。
+        // 先建立双席的头像框与朝向，角色装配阶段把白方图像绑定到鸦鸦差分。
         private static void MakePortrait(Transform hud, string name, string seat, float x, Color tint, bool mirror)
         {
             HudImage(HudBox(name + "Frame", hud, x, 939, 96, 96), "PortraitFrame").color = tint;

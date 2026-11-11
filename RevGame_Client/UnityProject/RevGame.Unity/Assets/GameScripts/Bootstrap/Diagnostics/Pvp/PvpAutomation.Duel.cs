@@ -57,6 +57,8 @@ namespace RevGame.Pvp
             RegisterDuelHudAutomation();
             RevGM.Register(ComputerDuelGm, "从大厅或本地人机棋局重开测试局，构造劣势后挑战电脑", _ => BeginComputerDuel());
             RevGM.Register("围棋对战/决斗双方无敌", "本地人机决斗专用。1 双方免伤，0 恢复伤害", SetDuelNoDamage, RevGMArg.Int("开关", 1));
+            RevGM.Register("围棋对战/暂停决斗敌人AI", "本地人机决斗专用。1 暂停白方主动操作，0 恢复，离场自动复位",
+                SetDuelComputerAiPaused, RevGMArg.Int("开关", 1));
             RevRuntimeAutomation.Register("pvp.duel-enter-computer", "经正式 GameFlow 直接打开围棋人机棋盘",
                 Empty, _ => Result(Flow.EnterPvp("Computer"), Flow.LastError), owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-fixture", "用合法围棋命令走到黑方明显劣势，随后切换到本地人机",
@@ -106,10 +108,21 @@ namespace RevGame.Pvp
                     ["bothAnimated"] = view != null && view.FirstAnimator.HasSpriteMotion && view.SecondAnimator.HasSpriteMotion,
                     ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
                         view.First.sprite.packed && view.Second.sprite.packed,
-                    ["sameFighterArt"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
+                    ["fightersMatchSeats"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
                         view.First.sprite.name.StartsWith("Ember_", StringComparison.Ordinal) &&
-                        view.Second.sprite.name.StartsWith("Ember_", StringComparison.Ordinal),
+                        view.Second.sprite.name.StartsWith("Yaya_", StringComparison.Ordinal),
+                    ["yayaSprite"] = view?.Second.sprite?.name ?? "",
+                    ["yayaPortrait"] = view?.SecondPortrait?.sprite?.name ?? "",
+                    ["yayaShaderSupported"] = view != null && view.Effects.Second.material.shader.name == "RevGame/UI/Yaya Duel Feather" &&
+                        view.Effects.Second.material.shader.isSupported,
+                    ["yayaIdleAnimated"] = view != null && view.SecondAnimator.IdleSpriteMotion,
+                    ["yayaRunAnimated"] = view != null && view.SecondAnimator.RunSpriteMotion,
+                    ["yayaCastMask"] = view != null ? view.Effects.YayaCastMaskForCheck : 0,
+                    ["yayaSoundMask"] = view != null ? view.Effects.YayaSoundMaskForCheck : 0,
+                    ["yayaImpacts"] = view != null ? view.Effects.YayaImpactsForCheck : 0,
+                    ["yayaCastSprite"] = view != null && view.Effects.Second.enabled ? view.Effects.Second.sprite.name : "",
                     ["firstAction"] = state.FirstAction, ["firstCombo"] = state.FirstCombo, ["firstEnergy"] = state.FirstEnergy,
+                    ["computerAiPaused"] = Service.DuelComputerAiPaused, ["computerInput"] = Service.DuelComputerInputForCheck,
                     ["hudPressCount"] = view != null ? view.HudPressCountForCheck : 0,
                     ["lastHudAction"] = view != null ? view.LastHudActionForCheck : -1,
                     ["lastAttackIntent"] = Service.DuelLastAttackIntentForCheck,
@@ -535,6 +548,21 @@ namespace RevGame.Pvp
                 throw new RevGMUsageException("请在进行中的本地人机决斗输入 1 或 0。");
             }
             return enabled == 1 ? "双方无敌已开启。" : "双方无敌已关闭。";
+        }
+
+        // GM 负责校验参数和回执，暂停状态由本局服务持有。
+        private static string SetDuelComputerAiPaused(RevGMArgs args)
+        {
+            int paused = args.Int(0, 1);
+            if (paused != 0 && paused != 1)
+            {
+                throw new RevGMUsageException("开关只接受 1（暂停）或 0（恢复）。");
+            }
+            if (!Service.TrySetDuelComputerAiPaused(paused == 1))
+            {
+                throw new RevGMUsageException("请在进行中的本地人机决斗使用此指令。");
+            }
+            return paused == 1 ? "敌人 AI 已暂停，已起手的动作会正常收完。" : "敌人 AI 已恢复。";
         }
 
         // GM 回调只接收请求。大厅走正式人机入口，已有棋局仅允许在本地人机模式下重开。

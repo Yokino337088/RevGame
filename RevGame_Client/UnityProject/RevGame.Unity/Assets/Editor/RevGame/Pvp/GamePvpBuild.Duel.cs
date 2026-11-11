@@ -20,12 +20,15 @@ namespace RevGame.Editor
         private const string DuelArt = "Assets/GameRes/Art/Pvp/Duel/";
         // 新街机角色和特效只从此目录装配。旧场景的素材归档仍可由编辑器查阅。
         private const string ArcadeArt = DuelArt + "Arcade/";
-        // 两席镜像测试共用绯焰序列帧，按同一份图集和动作配置播放。
+        // 黑方固定使用绯焰。同一场景的白方资源在鸦鸦配方中设置。
         private const string EmberPrefix = "Ember";
-        // 两席共享动作取样表。每个数字指向同角色的一张原画，图集只存一份。
+        // 绯焰动作取样表。每个数字指向该角色的一张原画，图集只存一份。
         private static readonly int[][] ArcadePoseFrames =
         {
-            new[] { 0, 1 }, new[] { 2, 3 }, new[] { 12, 4, 16, 4 }, new[] { 5, 20, 21, 6, 19 },
+            new[] { 0, 1 },
+            // 跑步按落脚、压重、蹬地、腾空各四张，换另一只脚后重复同一节拍。
+            new[] { 32, 33, 34, 35, 36, 37, 38, 39 },
+            new[] { 12, 4, 16, 4 }, new[] { 5, 20, 21, 6, 19 },
             new[] { 24, 25, 26, 27, 19 }, new[] { 13, 9, 26, 23, 10, 19 }, new[] { 18, 11 },
             new[] { 28, 29, 30, 31, 19 }, new[] { 13, 14, 22, 7, 19 }, new[] { 12, 8, 15, 23, 9, 19 },
             new[] { 17, 18, 19 }
@@ -86,10 +89,9 @@ namespace RevGame.Editor
                 view.CameraRig.Backdrop = backdrop;
                 view.First = AddFighter("BlackFighter", fighters, -.25f);
                 view.Second = AddFighter("WhiteFighter", fighters, .25f);
-                Sprite[][] sequences = DuelPoses.Select(LoadDuelSequence).ToArray();
-                AnimationClip[] clips = BuildDuelClips(sequences);
-                view.FirstAnimator = AddActorAnimation(view.First, clips, sequences);
-                view.SecondAnimator = AddActorAnimation(view.Second, clips, sequences);
+                view.FirstAnimator = view.First.gameObject.AddComponent<DuelActorAnimator>();
+                view.SecondAnimator = view.Second.gameObject.AddComponent<DuelActorAnimator>();
+                BindDuelActorRoster(view);
                 view.Effects = root.AddComponent<DuelStrikeEffects>();
                 view.Effects.First = AddEffectLayer("BlackEffects", fighters);
                 view.Effects.Second = AddEffectLayer("WhiteEffects", fighters);
@@ -102,6 +104,7 @@ namespace RevGame.Editor
                 view.Effects.Speaker = root.AddComponent<AudioSource>();
                 view.Effects.Speaker.playOnAwake = false;
                 BuildDuelHud(view);
+                BindDuelYayaPresentation(view);
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
                 if (!EditorSceneManager.SaveScene(scene, DuelScenePath))
                 {
@@ -112,7 +115,7 @@ namespace RevGame.Editor
                     scenes.Add(new EditorBuildSettingsScene(DuelScenePath, true));
                     EditorBuildSettings.scenes = scenes.ToArray();
                 }
-                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = clips.Length };
+                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = DuelPoses.Length * 2 };
             }
             finally
             {
@@ -155,8 +158,14 @@ namespace RevGame.Editor
         // 在构建场景时检查纹理已经导入为 Sprite，运行时从场景引用取用。
         private static Sprite LoadArcadeSprite(string name)
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(ArcadeArt + name + ".png") ??
-                throw new InvalidOperationException("决斗街机素材未导入：" + name);
+            return LoadDuelSpriteAtPath(ArcadeArt + name + ".png");
+        }
+
+        // 资产没导入或类型不正确时在制作阶段拒绝保存空帧。
+        private static Sprite LoadDuelSpriteAtPath(string path)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path) ??
+                throw new InvalidOperationException("决斗街机素材未导入：" + path);
         }
 
         // 特效起手和命中可复用同一贴图。
@@ -193,8 +202,8 @@ namespace RevGame.Editor
             return image;
         }
 
-        // 生成一套共享的 Legacy Clip，原来已存在的片段保留 GUID。
-        private static AnimationClip[] BuildDuelClips(Sprite[][] sequences)
+        // 每个角色保存自己的 Legacy Clip。已有片段保留 GUID。
+        private static AnimationClip[] BuildDuelClips(Sprite[][] sequences, string role)
         {
             string folder = "Assets/Scenes/PvpDuelAnimations";
             if (!AssetDatabase.IsValidFolder(folder))
@@ -206,7 +215,7 @@ namespace RevGame.Editor
             {
                 string pose = DuelPoses[index];
                 Sprite[] frames = sequences[index];
-                string path = $"{folder}/Swordsman_{pose}.anim";
+                string path = $"{folder}/{role}_{pose}.anim";
                 var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
                 if (clip == null)
                 {
@@ -215,9 +224,10 @@ namespace RevGame.Editor
                 }
                 clip.legacy = true;
                 clip.name = pose;
-                clip.frameRate = 15;
+                clip.frameRate = DuelClipFrameRate(role, pose);
                 clip.wrapMode = pose == "Idle" || pose == "Run" ? WrapMode.Loop : WrapMode.ClampForever;
-                var keys = new ObjectReferenceKeyframe[frames.Length + 1];
+                // Unity 会给最后一张 Sprite 留一个采样间隔。循环片段不能在接缝多停一拍。
+                var keys = new ObjectReferenceKeyframe[frames.Length + (DuelLoopsWithoutPadding(role, pose) ? 0 : 1)];
                 for (int i = 0; i < keys.Length; i++)
                 {
                     keys[i] = new ObjectReferenceKeyframe { time = i / clip.frameRate, value = frames[Math.Min(i, frames.Length - 1)] };
@@ -230,32 +240,31 @@ namespace RevGame.Editor
             return clips;
         }
 
-        // 每席独立管理播放时间和动作切换，两席引用同一套只读动画资源。
-        private static DuelActorAnimator AddActorAnimation(Image actor, AnimationClip[] clips, Sprite[][] sequences)
+        // 现有场景和重建场景都用同一个绑定入口。Legacy 仅提供各动作的采样速率。
+        private static void ConfigureDuelActor(Image actor, DuelActorAnimator presenter, Sprite[][] sequences, string role, int[] contactKeys, bool animateIdle)
         {
-            var animation = actor.gameObject.AddComponent<Animation>();
+            AnimationClip[] clips = BuildDuelClips(sequences, role);
+            var animation = presenter.GetComponent<Animation>();
             animation.playAutomatically = false;
-            // 动画资源用于读帧率，实际换帧由决斗表现组件完成。
             animation.enabled = false;
-            animation.clip = clips[0];
             actor.sprite = sequences[0][0];
             AnimationUtility.SetAnimationClips(animation, clips);
-            var presenter = actor.gameObject.AddComponent<DuelActorAnimator>();
-            BindDuelSpriteSequences(presenter, sequences);
-            return presenter;
+            animation.clip = clips[0];
+            BindDuelSpriteSequences(presenter, sequences, contactKeys, animateIdle);
         }
 
         // 把图片按姿态写进场景，运行时无需查找资产或解析编辑器动画曲线。
-        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared)
+        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared, int[] contactKeys, bool animateIdle)
         {
             using var data = new SerializedObject(presenter);
+            data.FindProperty("animateIdle").boolValue = animateIdle;
             SerializedProperty sequences = data.FindProperty("spriteSequences");
             sequences.arraySize = DuelPoses.Length;
             for (int i = 0; i < DuelPoses.Length; i++)
             {
                 Sprite[] images = shared[i];
                 SerializedProperty pose = sequences.GetArrayElementAtIndex(i);
-                pose.FindPropertyRelative("contactIndex").intValue = ArcadeContactKeys[i];
+                pose.FindPropertyRelative("contactIndex").intValue = contactKeys[i];
                 SerializedProperty frames = pose.FindPropertyRelative("frames");
                 frames.arraySize = images.Length;
                 for (int frame = 0; frame < images.Length; frame++)
@@ -266,7 +275,7 @@ namespace RevGame.Editor
             data.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        /// <summary>给已制作的场景补上角色帧序列，保留场景原有画面与对象引用。</summary>
+        /// <summary>同步现有场景的序列帧与动画片段，保留场景对象和引用。</summary>
         public static object BindExistingDuelSpriteSequences()
         {
             Scene current = SceneManager.GetActiveScene();
@@ -282,10 +291,10 @@ namespace RevGame.Editor
             }
             try
             {
+                ImportDuelSprites();
                 var view = duel.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
-                Sprite[][] shared = DuelPoses.Select(LoadDuelSequence).ToArray();
-                BindDuelSpriteSequences(view.FirstAnimator, shared);
-                BindDuelSpriteSequences(view.SecondAnimator, shared);
+                BindDuelActorRoster(view);
+                BindDuelYayaPresentation(view);
                 if (!EditorSceneManager.SaveScene(duel))
                 {
                     throw new InvalidOperationException("决斗角色序列帧保存失败。");
