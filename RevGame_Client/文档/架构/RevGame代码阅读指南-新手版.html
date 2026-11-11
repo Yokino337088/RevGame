@@ -72,7 +72,7 @@ td.num{text-align:right;color:#6b7480;font-variant-numeric:tabular-nums;white-sp
 </div>
 
 <div class="workspace"><aside class="sidebar"><h3>阅读导航</h3><nav aria-label="章节目录"><a href="#s1"><span>01</span>按模式找规则</a><a href="#s2"><span>02</span>半小时读五个文件</a><a href="#s3"><span>03</span>按目标选路线</a><a href="#s4"><span>04</span>启动主链路</a><a href="#s5"><span>05</span>大厅与切场景</a><a href="#s6"><span>06</span>落牌与扣血</a><a href="#s7"><span>07</span>结算与章节演出</a><a href="#s8"><span>08</span>当前工程目录</a><a href="#s9"><span>09</span>关键文件怎么读</a><a href="#s10"><span>10</span>生成代码与工具</a><a href="#s11"><span>11</span>七个迷路点</a><a href="#s12"><span>12</span>远征入门练习</a><a href="#s13"><span>13</span>无尽、剧情与资源</a><a href="#s14"><span>14</span>九路围棋与 Agent</a><a href="#s15"><span>15</span>帧同步逐文件导读</a><a href="#s16"><span>16</span>预测、录像与重连</a><a href="#s17"><span>17</span>验证入口与证据</a></nav><div class="note">先走通一次调用，再横向看同类代码。源码链接指向仓库中的实际文件。</div></aside>
-<main><div class="document-meta"><a href="RevGame项目架构与Revolution框架讲解.html">配套项目架构讲解</a><a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀式帧同步</a></div>
+<main><div class="document-meta"><a href="RevGame项目架构与Revolution框架讲解.html">配套项目架构讲解</a><a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀同款帧同步架构</a></div>
 <div class="legend">版本基线为 <a href="https://github.com/Yokino337088/RevGame/tree/747902b99ad57f6714c2f73a380620a5eadf2973"><code>747902b9</code></a>（2026-11-11）。源码链接相对于本仓库，运行证据附在相关章节。</div>
 
 <section id="s1" class="chapter">
@@ -273,7 +273,7 @@ BoardView 点击目标格 → BattleLogic.ClickBoard
 <section id="s15" class="chapter">
   <div class="section-label">GUIDE / 15</div>
   <h2>逐文件读帧同步，从 Ready 跟到原生输出</h2>
-  <p>第一次读时只跟一个跳跃。打开 <a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀式帧同步的职责分工</a> 对照三种时间，再按下面顺序找方法。表中的帧号指逻辑帧，序号指本连接的意图序号。</p>
+  <p>第一次读时只跟一个跳跃。打开 <a href="RevGame项目架构与Revolution框架讲解.html#s18">王者荣耀同款帧同步架构的职责分工</a> 对照三种时间，再按下面顺序找方法。表中的帧号指逻辑帧，序号指本连接的意图序号。</p>
   <div class="table-scroll" tabindex="0" aria-label="从场景就绪到原生输出的逐文件阅读路线">
     <table>
       <thead><tr><th scope="col">阶段与源码</th><th scope="col">优先搜索的方法</th><th scope="col">断点或阅读时记录什么</th></tr></thead>

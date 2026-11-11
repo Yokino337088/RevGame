@@ -46,7 +46,7 @@ footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);disp
 
 <div class="hero"><div><div class="eyebrow">REVOLUTION / ARCHITECTURE GUIDE 2.0</div>
 <h1>看懂这个项目。<br><em>业务该写在哪里。</em></h1>
-<p class="lead">从 StartScene、六章远征到无尽和九路围棋。跟一次八角笼决斗，读懂王者荣耀式帧同步怎样在 RevGame 里从操作走到画面。</p>
+<p class="lead">从 StartScene、六章远征到无尽和九路围棋。跟一次八角笼决斗，读懂王者荣耀同款帧同步架构怎样在 RevGame 里从操作走到画面。</p>
 <div class="hero-links"><a class="pill primary" href="#s18">读懂帧同步 ↗</a><a class="pill" href="#s2">整体架构</a><a class="pill" href="#s15">开发历程</a></div>
 <div class="stamp">2026.11.11 · UNITY 2022.3 · REVOLUTION 框架快照</div></div>
 <div class="demo" id="chainDemo" data-mode="card"><div class="demo-head"><strong><span class="live-dot"></span>一次操作怎样走完整条链路</strong><span class="tag">INTERACTIVE</span></div><ol class="chain" id="chainList"></ol><div class="segmented" role="group" aria-label="链路选择"><button data-mode="card" aria-pressed="true">落一张牌</button><button data-mode="tick" aria-pressed="false">战斗一步</button><button data-mode="scene" aria-pressed="false">进入战斗</button><button type="button" data-mode="duel" aria-pressed="false">决斗封帧</button></div><small class="note">可切换操作查看调用顺序。远征链路见第 08 节，决斗封帧见第 19 节。</small></div></div>
@@ -57,7 +57,7 @@ footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);disp
   <div class="metric"><strong>20<small> Hz</small></strong><p>八角笼的逻辑帧率。联网回包与 Unity 渲染各有节奏。</p></div>
 </div>
 
-<div class="workspace"><aside class="sidebar"><h3>阅读导航</h3><nav aria-label="章节目录"><a href="#s1"><span>01</span>先把词弄懂</a><a href="#s2"><span>02</span>整体架构与目录</a><a href="#s3"><span>03</span>从启动到进入战斗</a><a href="#s4"><span>04</span>Revolution 门面</a><a href="#s5"><span>05</span>服务装配</a><a href="#s6"><span>06</span>流程、域与 Logic</a><a href="#s7"><span>07</span>事件与通信</a><a href="#s8"><span>08</span>远征三条链路</a><a href="#s9"><span>09</span>界面与表现</a><a href="#s10"><span>10</span>配置与数值</a><a href="#s11"><span>11</span>远征 AI 与 Boss</a><a href="#s12"><span>12</span>业务逻辑写在哪里</a><a href="#s13"><span>13</span>业务开发约定</a><a href="#s14"><span>14</span>验证与调试入口</a><a href="#s15"><span>15</span>GitHub 里程碑</a><a href="#s16"><span>16</span>远征、无尽与资源</a><a href="#s17"><span>17</span>九路围棋与 DeepSeek</a><a href="#s18"><span>18</span>王者荣耀式帧同步</a><a href="#s19"><span>19</span>封帧、补帧与原生桥</a><a href="#s20"><span>20</span>插值与预测回滚</a><a href="#s21"><span>21</span>对账、回放与重连</a><a href="#s22"><span>22</span>Revolution 验证结论</a></nav><div class="note">第一次接手可从整体架构开始。读到决斗时，先区分网络、逻辑和表现时间。</div></aside>
+<div class="workspace"><aside class="sidebar"><h3>阅读导航</h3><nav aria-label="章节目录"><a href="#s1"><span>01</span>先把词弄懂</a><a href="#s2"><span>02</span>整体架构与目录</a><a href="#s3"><span>03</span>从启动到进入战斗</a><a href="#s4"><span>04</span>Revolution 门面</a><a href="#s5"><span>05</span>服务装配</a><a href="#s6"><span>06</span>流程、域与 Logic</a><a href="#s7"><span>07</span>事件与通信</a><a href="#s8"><span>08</span>远征三条链路</a><a href="#s9"><span>09</span>界面与表现</a><a href="#s10"><span>10</span>配置与数值</a><a href="#s11"><span>11</span>远征 AI 与 Boss</a><a href="#s12"><span>12</span>业务逻辑写在哪里</a><a href="#s13"><span>13</span>业务开发约定</a><a href="#s14"><span>14</span>验证与调试入口</a><a href="#s15"><span>15</span>GitHub 里程碑</a><a href="#s16"><span>16</span>远征、无尽与资源</a><a href="#s17"><span>17</span>九路围棋与 DeepSeek</a><a href="#s18"><span>18</span>王者荣耀同款帧同步架构</a><a href="#s19"><span>19</span>封帧、补帧与原生桥</a><a href="#s20"><span>20</span>插值与预测回滚</a><a href="#s21"><span>21</span>对账、回放与重连</a><a href="#s22"><span>22</span>Revolution 验证结论</a></nav><div class="note">第一次接手可从整体架构开始。读到决斗时，先区分网络、逻辑和表现时间。</div></aside>
 <main><div class="document-meta"><a href="RevGame代码阅读指南-新手版.html">配套代码阅读指南</a><a href="../战斗性能优化规则/战斗性能优化规则.html">战斗性能优化规则</a></div>
 <div class="legend">版本基线为 <a href="https://github.com/Yokino337088/RevGame/tree/747902b99ad57f6714c2f73a380620a5eadf2973"><code>747902b9</code></a>（2026-11-11）。源码链接相对于本仓库，运行证据附在相关章节。</div>
 
@@ -453,9 +453,9 @@ RevEvent.RemoveAllByOwner(this);</code></pre>
 
 <section id="s18" class="chapter">
   <div class="section-label">GUIDE / 18</div>
-  <h2>王者荣耀式帧同步的职责分工</h2>
+  <h2>王者荣耀同款帧同步架构的职责分工</h2>
   <p>在决斗里，<strong>权威端决定哪两份操作归入第几帧，各端用同一套 C++ 规则按顺序算出结果，Unity 把结果画出来。</strong> 同一决斗 ID、同一配置与种子、同一完整输入序列，应该得到同帧的世界状态和指纹。</p>
-  <p>本项目沿用了王者荣耀 v122 研究资料中的 CC 架构分工。这里的 CC 指客户端也运行完整的本地战斗内核。RevGame 在 Gate、LAN 黑方宿主或本机另外运行一个裁判实例，负责执行权威帧、留存历史并对账。角色规则、帧率、传输与恢复协议以 RevGame 自己的代码为准。</p>
+  <p>本项目采用王者荣耀同款的帧同步架构。客户端运行完整的本地战斗内核。RevGame 在 Gate、LAN 黑方宿主或本机另外运行一个裁判实例，负责执行权威帧、留存历史并对账。角色规则、帧率、传输与恢复协议以 RevGame 自己的代码为准。</p>
   <div class="world unity">
     <div class="world-title"><strong>Unity / C# 宿主与传输</strong><span>输入、房间、调度、快照消费</span></div>
     <div class="layer"><h4>玩家输入</h4><p><code>PvpDuelView</code> 读取键盘与触点，<code>PvpService</code> 把方向、招式、跳跃变成意图。上行带连接内序号。</p></div>
@@ -478,19 +478,19 @@ RevEvent.RemoveAllByOwner(this);</code></pre>
       </tbody>
     </table>
   </div>
-  <h3>与王者荣耀 v122 研究资料对照</h3>
-  <div class="table-scroll" tabindex="0" aria-label="王者荣耀式架构与 RevGame 的映射">
+  <h3>与王者荣耀的帧同步模块对应</h3>
+  <div class="table-scroll" tabindex="0" aria-label="王者荣耀与 RevGame 的帧同步模块对应">
     <table>
-      <thead><tr><th scope="col">王者侧研究材料里的职责</th><th scope="col">RevGame 的对应实现</th></tr></thead>
+      <thead><tr><th scope="col">王者荣耀的帧同步职责</th><th scope="col">RevGame 的对应实现</th></tr></thead>
       <tbody>
         <tr><td><code>CmdQueueSender</code> 跟踪输入序号，技能以下行回显确认。</td><td><code>PvpService.Duel</code> 维护已发送序号，<code>DuelAuthority</code> 只在已封口回包里附本席回执。具体字段与邮箱语义由 RevGame 定义。</td></tr>
-        <tr><td><code>FrameWindow</code> 管连续上界，<code>FrameSynchr</code> 先用 <code>OnReceive</code> 投递命令，再经 <code>SGW.SetKeyFrameIndex</code> 允许原生推进。<code>ExecLocal</code> 服务于表现。</td><td>本端用 <code>afterFrame</code> 拉取连续整帧，<code>DuelCorePipe.Append</code> 一次提交黑白两席并同步读取结果。王者资料里的原生自驱和开放上界，在本项目落成 C# 驱动的整帧调用。</td></tr>
+        <tr><td><code>FrameWindow</code> 管连续上界，<code>FrameSynchr</code> 先用 <code>OnReceive</code> 投递命令，再经 <code>SGW.SetKeyFrameIndex</code> 允许原生推进。<code>ExecLocal</code> 服务于表现。</td><td>本端用 <code>afterFrame</code> 拉取连续整帧，<code>DuelCorePipe.Append</code> 一次提交黑白两席并同步读取结果。RevGame 通过 C# 驱动整帧调用，落实先收齐命令、再推进逻辑的职责。</td></tr>
         <tr><td><code>SGameWrapper</code> 经 Pipe 与 GameCore 交换输入和通知，C# 从原生输出驱动表现。</td><td><code>DuelCorePipe</code> 用少量 C ABI 出入口搬运字节，输出给 <code>DuelPlayback</code>。远端、命中与结算消费确认快照。</td></tr>
         <tr><td><code>BattlePredictSystem</code> 把本机输入交给独立预测通道，追帧期间切回确认数据。</td><td><code>DuelPrediction</code> 用同号原生检查点恢复沙盒，重演至多四帧。本机可先画移动与起跳。</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="note">王者侧职责来自项目采用的 v122 研究笔记。RevGame 的 50 ms、双席邮箱、检查点字节与 FNV-1a 指纹见本仓库源码。<a href="../../RevGameCore/README.md">RevGameCore 工程说明</a> · <a href="../进度同步/双人决斗帧同步验收_2026-11-10/双人决斗帧同步验收_2026-11-10.html">帧同步改造记录</a> · <a href="../进度同步/双人决斗预测回滚验收_2026-11-10/双人决斗预测回滚验收_2026-11-10.html">预测回滚改造记录</a></p>
+  <p class="note">RevGame 的 50 ms、双席邮箱、检查点字节与 FNV-1a 指纹见本仓库源码。<a href="../../RevGameCore/README.md">RevGameCore 工程说明</a> · <a href="../进度同步/双人决斗帧同步验收_2026-11-10/双人决斗帧同步验收_2026-11-10.html">帧同步改造记录</a> · <a href="../进度同步/双人决斗预测回滚验收_2026-11-10/双人决斗预测回滚验收_2026-11-10.html">预测回滚改造记录</a></p>
 </section>
 
 <section id="s19" class="chapter">
