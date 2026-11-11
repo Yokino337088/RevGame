@@ -104,6 +104,7 @@ namespace RevGame.Editor
                 view.Effects.Speaker = root.AddComponent<AudioSource>();
                 view.Effects.Speaker.playOnAwake = false;
                 BuildDuelHud(view);
+                BindDuelEmberEffects(view);
                 BindDuelYayaPresentation(view);
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
                 if (!EditorSceneManager.SaveScene(scene, DuelScenePath))
@@ -294,6 +295,7 @@ namespace RevGame.Editor
                 ImportDuelSprites();
                 var view = duel.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
                 BindDuelActorRoster(view);
+                BindDuelEmberEffects(view);
                 BindDuelYayaPresentation(view);
                 if (!EditorSceneManager.SaveScene(duel))
                 {

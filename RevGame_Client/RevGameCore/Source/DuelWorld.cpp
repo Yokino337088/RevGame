@@ -20,7 +20,7 @@ namespace RevGameCore
         {
             return false;
         }
-        // 尾部三项是跳跃初速、每帧重力、可命中的垂直间距。
+        // 校验跳跃初速、每帧重力和可命中的垂直间距。
         if (settings[24] < 1 || settings[24] > 600 || settings[25] < 1 || settings[25] > 200 ||
             settings[26] < 1 || settings[26] > 4000)
         {
@@ -32,8 +32,10 @@ namespace RevGameCore
             const int offset = AttackOffset(action);
             const int chain = ChainOffset(action);
             const int next = settings[chain + 3];
-            if (settings[offset] < 1 || settings[offset] > 10000 || settings[offset + 1] < 1 ||
-                settings[offset + 1] > settings[1] * 2 || settings[offset + 2] < 1 ||
+            const int emberRange = settings[HitRangeOffset(Black, action)];
+            const int yayaRange = settings[HitRangeOffset(White, action)];
+            if (settings[offset] < 1 || settings[offset] > 10000 || emberRange < 1 || emberRange > settings[1] * 2 ||
+                yayaRange < 1 || yayaRange > settings[1] * 2 || settings[offset + 2] < 1 ||
                 settings[offset + 3] < settings[offset + 2] || settings[offset + 3] > 600 ||
                 settings[offset + 4] < 0 || settings[offset + 4] > settings[5] ||
                 settings[chain] <= settings[offset + 2] || settings[chain] > settings[offset + 3] + 1 ||

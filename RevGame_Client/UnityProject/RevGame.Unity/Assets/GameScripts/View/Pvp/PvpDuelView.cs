@@ -367,7 +367,6 @@ namespace RevGame.View
                 SecondHealthText.text = view.SecondHealth.ToString();
                 FirstName.text = "绯焰  /  " + service.BlackName;
                 SecondName.text = service.WhiteName + "  /  鸦鸦";
-                PaintYayaExpression(view, secondMove != 0);
                 FirstCombo.text = view.FirstCombo > 1 ? view.FirstCombo + " HIT" : "";
                 SecondCombo.text = view.SecondCombo > 1 ? view.SecondCombo + " HIT" : "";
                 Clock.text = DuelConfig.FrameLimit == 0
@@ -384,6 +383,7 @@ namespace RevGame.View
             CameraRig.Paint(confirmedFirstX, confirmedSecondX, confirmedHeight, Time.unscaledDeltaTime);
             FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction);
             SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction);
+            PaintYayaExpression(view, secondMove != 0);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
@@ -402,11 +402,13 @@ namespace RevGame.View
             }
         }
 
-        // 状态来自同一只读快照。移动和施法沿用 02 号的笑意，腿法命中使用 23 号。
+        // 腿法的第一张和收势沿用原画 02 号，蓄力和接触使用 23 号。跟随实际换图，受击和倒地优先。
         private void PaintYayaExpression(DuelSnapshot view, bool moving)
         {
+            bool kicking = view.SecondAction is 1 or 5 or 6;
+            bool relaxedKick = kicking && (SecondAnimator.SpriteFrameIndex == 0 || SecondAnimator.SpriteFrameIndex >= 3);
             bool playful = view.SecondAction == 2 || view.SecondAction == 3 || view.SecondAction == 4 ||
-                (moving && view.SecondAction == 0 && view.SecondY == 0);
+                relaxedKick || (moving && view.SecondAction == 0 && view.SecondY == 0);
             int expression = view.SecondHealth == 0 ? 4 : view.SecondStun > 0 ? 3 :
                 playful ? 2 : view.SecondAction != 0 || view.SecondY > 0 ? 1 : 0;
             if (SecondPortrait != null && _yayaExpression != expression)
@@ -462,8 +464,10 @@ namespace RevGame.View
         {
             Vector2 first = new Vector2(view.FirstX, view.FirstY) * ActorScale;
             Vector2 second = new Vector2(view.SecondX, view.SecondY) * ActorScale;
-            Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, first, second);
-            Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first);
+            Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, first, second,
+                DuelConfig.ActionRange(false, view.FirstAction) * ActorScale);
+            Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first,
+                DuelConfig.ActionRange(true, view.SecondAction) * ActorScale);
             if ((view.FirstAction == 3 && view.FirstAge == 0) || (view.SecondAction == 3 && view.SecondAge == 0))
             {
                 CameraRig.FocusUltimate();

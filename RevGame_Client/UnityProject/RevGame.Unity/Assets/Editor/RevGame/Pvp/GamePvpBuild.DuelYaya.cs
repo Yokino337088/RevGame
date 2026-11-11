@@ -21,7 +21,7 @@ namespace RevGame.Editor
             "Idle", "Run", "Jump", "LowKick", "Raven", "Flock", "Down", "Talon", "Kick", "Spin", "Hit"
         };
         // 和目录一一对应。任一帧缺失会中止装配，避免在场景中留下空引用。
-        private static readonly int[] YayaFrameCounts = { 8, 8, 4, 4, 4, 4, 1, 4, 4, 4, 2 };
+        private static readonly int[] YayaFrameCounts = { 8, 12, 4, 4, 4, 4, 1, 4, 4, 4, 2 };
         // 所有腿法和施法都在第 3 张图片展示接触动作，实际开始时刻仍由原生年龄决定。
         private static readonly int[] YayaContactKeys = { 0, 0, 0, 2, 2, 2, 0, 2, 2, 2, 0 };
         // 动作号 1～6 对应的白方特效。两种踢法复用羽刃纹理，动作和音色各自独立。
@@ -45,10 +45,13 @@ namespace RevGame.Editor
                 YayaPrefix, YayaContactKeys, true);
         }
 
-        // 鸦鸦待机一秒一圈，跳跃的四个姿势覆盖原生起落时段。
+        // 鸦鸦的十二张跑步图以 24 帧每秒播放，左右两步合计半秒。
+        // 待机一秒一圈，跳跃的四个姿势覆盖原生起落时段。
         private static int DuelClipFrameRate(string role, string pose)
         {
-            return role == YayaPrefix ? pose == "Idle" ? 8 : pose == "Jump" ? 7 : 15 : 15;
+            return role == YayaPrefix
+                ? pose switch { "Idle" => 8, "Run" => 24, "Jump" => 7, _ => 15 }
+                : 15;
         }
 
         // 真正循环的片段不能重复末图，否则每次换回首帧都会多停一拍。
@@ -94,7 +97,7 @@ namespace RevGame.Editor
             view.Effects.YayaImpactSprites = YayaImpactArt.Select(LoadYayaDuelEffect).ToArray();
             view.Effects.YayaCastSounds = YayaCastAudio.Select(LoadYayaDuelAudio).ToArray();
             view.Effects.YayaImpactSounds = YayaImpactAudio.Select(LoadYayaDuelAudio).ToArray();
-            Material material = GetYayaDuelMaterial();
+            Material material = GetDuelEffectMaterial(YayaDuelShader, YayaDuelMaterial);
             view.Effects.Second.material = material;
             view.Effects.SecondImpact.material = material;
             view.SecondPortrait = view.Hud.Find("WhitePortrait").GetComponent<Image>();
@@ -110,21 +113,5 @@ namespace RevGame.Editor
             view.YayaSkillGlyphs = new[] { "Kick", "Raven", "Talon", "Flock" }.Select(LoadYayaDuelEffect).ToArray();
         }
 
-        // 首次制作创建材质，重复制作保留材质身份和场景引用。
-        private static Material GetYayaDuelMaterial()
-        {
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(YayaDuelShader);
-            if (shader == null || !shader.isSupported)
-            {
-                throw new InvalidOperationException("当前编辑器无法使用鸦鸦决斗 Shader。");
-            }
-            var material = AssetDatabase.LoadAssetAtPath<Material>(YayaDuelMaterial);
-            if (material == null)
-            {
-                material = new Material(shader);
-                AssetDatabase.CreateAsset(material, YayaDuelMaterial);
-            }
-            return material;
-        }
     }
 }

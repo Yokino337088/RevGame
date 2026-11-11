@@ -30,11 +30,19 @@ for attack in attacks[3:]:
 # 后续窗口的位 0～3 对应玩家四个输入槽。派生普攻段位只由原生世界选择。
 for attack in attacks:
     words += [attack[k] for k in ("cancelFrame", "stun", "advance", "next")]
+# 白方鸦鸦只覆盖距离。固定按动作号追加六个字，保留现有招式和跳跃下标。
+yaya_ranges = data["yayaRanges"]
+if len(yaya_ranges) != len(attacks) or any(type(r) is not int or not 1 <= r <= arena["extent"] * 2 for r in yaya_ranges):
+    raise ValueError("鸦鸦的六项距离必须是场地宽度以内的正整数")
+yaya_range_offset = len(words)
+words += yaya_ranges
 assert all(type(x) is int and 0 <= x <= 100000 for x in words)
 duration_cases = "\n".join(f'                {slot} => {attack["duration"]},'
                             for slot, attack in enumerate(attacks, 1))
 hit_cases = "\n".join(f'                {slot} => {attack["hitFrame"]},'
                        for slot, attack in enumerate(attacks, 1))
+range_cases = "\n".join(f'                {slot} => white ? {yaya_range} : {attack["range"]},'
+                         for slot, (attack, yaya_range) in enumerate(zip(attacks, yaya_ranges), 1))
 # 同时把入场资格和战斗数值纳入指纹，防止两端只更新了一半。
 fingerprint = 2166136261
 for word in words + [data["eligibility"]["minimumMove"], data["eligibility"]["minimumLeadHalfPoints"], protocol, hash_sample_frames]:
@@ -59,8 +67,15 @@ namespace RevGame.Pvp.Duel
         public const int Energy = {arena["energy"]};
         // 两席距离场地中心的初始横向距离，单位千分格。
         public const int SpawnOffset = {arena["spawnOffset"]};
-        // 本地电脑用于接近目标的普攻距离参考，真实命中仍由 C++ 校验。
-        public const int JabRange = {data["attacks"][0]["range"]};
+        // 读取指定座位的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
+        public static int ActionRange(bool white, int action)
+        {{
+            return action switch
+            {{
+{range_cases}
+                _ => 0
+            }};
+        }}
         // AI 选择技能意图需要的能量；是否真正扣除由原生招式规则决定。
         public const int SkillCost = {data["attacks"][1]["cost"]};
         // 技能二的能量门槛，HUD 和 AI 共用。
@@ -112,6 +127,8 @@ namespace RevGameCore
     // FIFO 协议版本和固定逻辑步长，共用 Duel.v1.json。
     constexpr int WireVersion = {protocol};
     constexpr int FrameMilliseconds = {arena["frameMilliseconds"]};
+    // 协议尾部从这里开始保存白方的六项命中距离。
+    constexpr int YayaRangeOffset = {yaya_range_offset};
     // 原生回归与托管开局包共用的规则字，防止测试继续使用旧招式布局。
     inline constexpr std::array<int32_t, {len(words)}> DefaultDuelSettings{{ {", ".join(map(str, words))} }};
 }}

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>决斗射程、跳跃与鸦鸦普攻验收 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; margin-top: .4rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 决斗验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>绯焰长枪与双席跳跃</h1>
+<p>视频约 00:33 可见红枪从一个身位外前突，约 00:42 可见下扎落地的红线和冲击。距离按画面中的角色站位与身高换算成 RevGame 场地单位。绯焰的枪芒宽度取自各招的原生判定，坠枪的拖尾按原生命中年龄到达地面。<a href="https://www.bilibili.com/video/BV1hLp363ERj/">原始参考视频</a></p>
+<p>红枪的起手和命中图层共用 <code>EmberSpearGlow</code> 材质。Shader 读取图集中的透明轮廓，沿枪芒推进亮带。贯枪、坠枪和赤阵分别用横向亮带、下扎拖尾和宽幅冲击。镜头在技能命中时只向一个方向偏移再回中。</p>
+</section>
+<section>
+<h2>水平判定距离</h2>
+<p>单位为格，从出招者位置量到目标位置。表中的数值从招式启动位移完成后计算。</p>
+<table>
+<thead><tr><th scope="col">动作</th><th scope="col">旧版共用</th><th scope="col">绯焰</th><th scope="col">鸦鸦</th></tr></thead>
+<tbody>
+<tr><td>普攻一段</td><td>1.02</td><td>1.40</td><td>1.02</td></tr>
+<tr><td>普攻二段</td><td>1.12</td><td>1.50</td><td>1.12</td></tr>
+<tr><td>普攻三段</td><td>1.24</td><td>1.66</td><td>1.24</td></tr>
+<tr><td>贯枪 / 鸦袭</td><td>1.55</td><td>2.25</td><td>1.75</td></tr>
+<tr><td>坠枪 / 掠羽</td><td>1.34</td><td>1.80</td><td>1.52</td></tr>
+<tr><td>赤阵 / 鸦宴</td><td>2.38</td><td>3.00</td><td>2.50</td></tr>
+</tbody>
+</table>
+<p>鸦鸦的脚踢保持近身判定。鸦术稍加射程，鸦袭和掠羽的轨迹读取各自的新距离。双席跳跃的初速和每帧重力同时翻倍，逐帧对照原生轨迹时，最高点从 1.208 格升到 2.416 格，落地帧一致。</p>
+</section>
+<section>
+<h2>原生及托管验证</h2>
+<p>Windows 原生 FIFO 测试覆盖两个座位的四个主动输入槽，在距离上限命中、越界落空。固定输入也核对两席的完整跳跃轨迹、检查点恢复和帧指纹。C# 原生联调通过普攻三段、两种技能接法、回滚和双席预测。服务端 Entity 项目编译通过。Android ARMv7 和 ARM64 原生库重新构建并读回 ABI 信息。</p>
+<p>版本 7 的开局配置追加白方距离，Unity 和服务端共享同一个生成规则与指纹。协议升级后，联机双方需使用同版规则；版本 6 的检查点仍须用版本 6 读取。</p>
+</section>
+<section>
+<h2>Unity 对局验证</h2>
+<p><code>rev_discover</code> 发现 Editor Play、决斗 GM、HUD 指针和对局状态；<code>rev_call editor.play</code> 进入 Play。第一个 <code>rev_run</code> 在真 AB 模式进人机决斗，核对两席和已打包角色图，记录鸦鸦掠羽。通过 <code>ui.dump</code> 取得本局按钮 ID，用 <code>ui.click</code> 按下跳跃、贯枪、坠枪和赤阵，断言起落、对应招式起手、特效层可见、Shader 支持且运行错误为 0。清理回到大厅并结束 Play。</p>
+<figure><img src="坠枪落地.jpg" alt="Unity 对局中绯焰坠枪触地，产生红色的环形冲击"><figcaption>真对局中的坠枪落地。<a href="决斗实战.gif">查看跳跃、贯枪、坠枪与赤阵实测画面</a>。</figcaption></figure>
+<p>另一轮 <code>rev_run</code> 调用 <code>pvp.duel-lan-hash-check</code>：实际 UTP 邀请、就绪、推进至第 84 帧终局。第 40 帧周期对账及第 84 帧终局对账通过；双席终局指纹均为 <code>398586716</code>，各确认 3 条指纹，网络夹具清理通过。本次未在 Android 真机运行。</p>
+</section>
+<section id="yaya">
+<h2>鸦鸦三段腿法</h2>
+<p>三套各四张重新绘制。正面用来对齐脸和服装，侧面用来对齐高腰、修长腿部和膝上靴口。逐帧保留两只黑靴、金色鞋跟和可见的膝口饰件，头颈顺着发力角度轻转。低扫压下重心，弹踢沿侧面快速伸腿，回旋踢打开肩髋走高位弧线。动作体态参考了<a href="https://www.bilibili.com/video/BV1c7sf6AE65/">用户给的格斗片段</a>。</p>
+<p>起手和收势取用户差分 <code>2.png</code> 的笑意，蓄力和接触取 <code>23.png</code> 的专注神情；战斗头像跟随实际使用的动画切片切换。素材目录和 Unity 中的 12 张 PNG 按字节校验一致，保留原有 Sprite GUID、400×400 画布和落地基线。接触仍由原生命中帧驱动。<a href="../../../美术/AI生成/新版/鸦鸦决斗/源图/普攻正侧校准/生成提示词.md">查看最终 ImageGen 提示词</a>。</p>
+<figure><img src="鸦鸦普攻逐帧.jpg" alt="鸦鸦的低扫、弹踢和高位回旋踢，各四张正侧校准的成品图"><figcaption>上、中、下分别为低扫、弹踢、回旋踢。<a href="鸦鸦三段普攻.gif">查看动画预览</a>。</figcaption></figure>
+<p><code>rev_call game.pvp.duel-atlas</code> 校验 Windows 图集实际打包 125 张精灵、3 页。<code>rev_discover</code> 发现验收入口后，<code>rev_call editor.play</code> 启动，<code>rev_run</code> 用本地完整帧执行白方三段普攻和三式鸦术。每段普攻断言起手为 02 号头像、实际接触帧为 23 号头像，并核对图集切片和命中事件。六式都有特效和音效，运行错误为 0。测试返回大厅并退出 Play，临时探针已移除。</p>
+<figure><img src="鸦鸦普攻实战.gif" alt="Unity 对局中白方鸦鸦低扫、弹踢与回旋踢，连击计数达到三段"><figcaption>正式决斗场景的普攻连拍。</figcaption></figure>
+</section>
+</main>
+</body>
+</html>

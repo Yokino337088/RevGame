@@ -5,7 +5,7 @@ namespace RevGame.Pvp.Duel
     public static class DuelConfig
     {
         // 原生 FIFO 协议版本，同时纳入联机决斗指纹。
-        internal const int CoreProtocol = 6;
+        internal const int CoreProtocol = 7;
         // 从第几手开始允许判定中局劣势。
         public const int MinimumMove = 24;
         // 入场最小估算分差，单位为半目。
@@ -16,8 +16,20 @@ namespace RevGame.Pvp.Duel
         public const int Energy = 100;
         // 两席距离场地中心的初始横向距离，单位千分格。
         public const int SpawnOffset = 1700;
-        // 本地电脑用于接近目标的普攻距离参考，真实命中仍由 C++ 校验。
-        public const int JabRange = 1020;
+        // 读取指定座位的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
+        public static int ActionRange(bool white, int action)
+        {
+            return action switch
+            {
+                1 => white ? 1020 : 1400,
+                2 => white ? 1750 : 2250,
+                3 => white ? 2500 : 3000,
+                4 => white ? 1520 : 1800,
+                5 => white ? 1120 : 1500,
+                6 => white ? 1240 : 1660,
+                _ => 0
+            };
+        }
         // AI 选择技能意图需要的能量；是否真正扣除由原生招式规则决定。
         public const int SkillCost = 16;
         // 技能二的能量门槛，HUD 和 AI 共用。
@@ -59,11 +71,11 @@ namespace RevGame.Pvp.Duel
             };
         }
         // 两席握手比较的 31 位规则指纹。
-        public const int Fingerprint = 180734360;
+        public const int Fingerprint = 1230509847;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
         public static int[] CreateCoreWords()
         {
-            return new[] { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1020, 3, 8, 0, 15, 1550, 4, 12, 16, 32, 2380, 7, 20, 55, 270, 34, 480, 18, 1340, 5, 14, 20, 10, 1120, 3, 8, 0, 13, 1240, 4, 11, 0, 5, 8, 0, 15, 6, 12, 420, 12, 21, 16, 210, 0, 7, 13, 100, 6, 5, 9, 110, 15, 6, 11, 150, 14 };
+            return new[] { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1400, 3, 8, 0, 15, 2250, 4, 12, 16, 32, 3000, 7, 20, 55, 540, 68, 480, 18, 1800, 5, 14, 20, 10, 1500, 3, 8, 0, 13, 1660, 4, 11, 0, 5, 8, 0, 15, 6, 12, 420, 12, 21, 16, 210, 0, 7, 13, 100, 6, 5, 9, 110, 15, 6, 11, 150, 14, 1020, 1750, 2500, 1520, 1120, 1240 };
         }
     }
 }

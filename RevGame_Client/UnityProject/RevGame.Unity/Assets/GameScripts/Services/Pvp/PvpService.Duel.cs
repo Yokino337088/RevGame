@@ -575,7 +575,7 @@ namespace RevGame.Pvp
             // AI 只生成一个座位的意图。它与真人一样经过权威帧，伤害和距离判定仍由 C++ 负责。
             var view = _duelAuthority.Snapshot;
             int distance = view.FirstX - view.SecondX;
-            if (Math.Abs(distance) > DuelConfig.JabRange)
+            if (Math.Abs(distance) > DuelConfig.ActionRange(true, 1))
             {
                 return distance < 0 ? 1 : 2;
             }

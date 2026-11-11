@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鸦鸦决斗侧面版 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; margin-top: .4rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 决斗素材验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>鸦鸦决斗侧面版</h1>
+<p>本页的普攻动图保留作初版记录。<a href="../决斗射程与跳跃验收_2026-11-11/决斗射程与跳跃验收_2026-11-11.html#yaya">查看按最新正面、侧面原画修订的普攻</a>。</p>
+<p>内置 ImageGen 以用户提供的侧面图重画角色动画。角色统一采用单眼可见的侧脸，靴口对齐膝盖上沿，膝上露出原图同色的深色丝袜。靴口的金环花饰和金边鞋跟按侧面参考绘制，角色肩部已移除乌鸦。<a href="../../../美术/AI生成/新版/鸦鸦决斗/素材说明.md">素材与提示词</a></p>
+<figure><img src="侧面待机实战.jpg" alt="Unity 实机中，白方鸦鸦以抱臂姿势侧身面向绯焰"><figcaption>本地人机决斗中的新版待机画面。</figcaption></figure>
+</section>
+<section>
+<h2>姿态与表情</h2>
+<p>待机抬起下巴并以 28、02 号差分区分平静和微笑。跑动以 02 号为基准，视线朝向对手。腿法接触帧参考 23 号的专注眉眼，施法结合 28 号起手和 02 号释放。受击参考 19 号睁眼，恢复参考 23 号，倒地使用 22 号闭眼。跳跃从收腿到落地保持自然头颈姿势。</p>
+<figure><img src="侧面待机与移动.gif" alt="左侧待机与眨眼，右侧十二帧跑动"><figcaption>左为待机，右为新版十二帧移动。由成品切片合成。</figcaption></figure>
+<figure><img src="侧面三段腿法.gif" alt="左中右分别为低扫、前弹踢和高位回旋踢"><figcaption>三段腿法的四张原画逐帧预览。</figcaption></figure>
+</section>
+<section>
+<h2>跑步与双靴修订</h2>
+<p>旧八帧中，第 2、3 张的腿部姿势接近，随后脚步突然大幅前伸，左右换脚也不够清楚。旧 GIF 每张实际只保存了 60 毫秒。新版直接以用户的侧面原图为造型参考，按落脚、承重、过渡、蹬地、腾空和前伸两组六帧重新绘制。按原图补绘两腿的膝部靴口、金边鞋底和鞋跟，羽摆经过靴子时保留靴子的可辨轮廓。</p>
+<p>Unity 跑步片段为 12 张、24 帧每秒，完整循环半秒。GIF 按累计时间分配 40 和 50 毫秒的帧间隔，半秒与 Unity 对齐。对比透明轮廓，相邻帧变化占两帧合并轮廓面积的中位数从约 40% 降到约 31%。</p>
+<figure><img src="跑步逐帧核对.jpg" alt="十二张侧面跑步帧中两只靴子的轮廓"><figcaption>按播放顺序排列的十二张成品切片。</figcaption></figure>
+<figure><img src="双靴跑步实战.gif" alt="Unity 本地决斗中鸦鸦移动的实机连拍"><figcaption>新版跑步冷启动复测的实机连拍。</figcaption></figure>
+<p>RevCLI 重新绑定鸦鸦跑步片段并核对 12 张精灵，Windows 图集实际打包 125 张精灵、3 页。以 <code>rev_discover</code> 发现正式入口，<code>rev_call editor.play</code> 启动，<code>rev_run</code> 执行本地人机决斗。两次进场均观察到新版跑步精灵换帧和 02 号头像，运行时错误计数为 0，验收结束后返回大厅并停止 Play。</p>
+</section>
+<section>
+<h2>侧面版首次编辑器验证</h2>
+<table>
+<thead><tr><th scope="col">检查</th><th scope="col">结果</th></tr></thead>
+<tbody>
+<tr><td>素材和图集</td><td>素材目录和 Unity 各有同样的 47 张新版 400×400 透明切片。RevCLI 的 <code>game.pvp.duel-atlas</code> 校验了双席绑定和白方 11 组动作的帧序。Windows 图集打包了 121 张精灵，共 3 页。</td></tr>
+<tr><td>冷启动及重进</td><td>Unity 2022.3.15f1c1 的真实 AB 模式进入本地人机决斗，观察到新版待机、跑动和掠羽。再次进入决斗后确认待机帧和 28 号头像落屏。运行期错误计数为 0。</td></tr>
+<tr><td>验证入口</td><td><code>rev_discover</code> 发现正式入口，<code>rev_call editor.play</code> 从大厅启动。<code>rev_run</code> 调用 <code>围棋对战/本地人机决斗</code>，以 <code>围棋对战/暂停决斗敌人AI</code> 参数 1 查看待机、参数 0 恢复动作。退出后返回大厅并停止 Play。</td></tr>
+</tbody>
+</table>
+<p>Revolution 的场景流程和验收入口支持在既有决斗场景中验证资源更换。本次运行期实测范围为 Windows Editor 的本地人机决斗。</p>
+<figure><img src="侧面版实战.gif" alt="Unity 实机待机、跑动与掠羽动作连拍"><figcaption>正式场景连拍，共八张实机截图。</figcaption></figure>
+</section>
+</main>
+</body>
+</html>

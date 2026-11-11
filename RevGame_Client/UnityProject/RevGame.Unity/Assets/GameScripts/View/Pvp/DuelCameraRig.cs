@@ -35,7 +35,7 @@ namespace RevGame.View
         public void Hit(int action, int facing)
         {
             // 普攻用命中特效和闪色反馈，技能与大招才叠加一次镜头冲量。
-            float power = action == 3 ? 14 : action == 2 || action == 4 ? 7 : 0;
+            float power = action == 3 ? 19 : action == 2 || action == 4 ? 11 : 0;
             if (power == 0)
             {
                 return;

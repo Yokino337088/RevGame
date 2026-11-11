@@ -81,6 +81,8 @@ namespace RevGame.View
         private bool _loop;
         // 只读播放检查，供验收判断片段确实在运行。
         public bool IsPlaying => isActiveAndEnabled && _playingFrames != null && _playingFrames.Length > 0;
+        // 当前实际贴图在片段中的零基序号。HUD 复用它切换表情，避免另外计时。
+        internal int SpriteFrameIndex { get; private set; }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         // 上一帧实际可见的 Sprite，完全透明时清空。
@@ -329,6 +331,7 @@ namespace RevGame.View
                         (DuelConfig.ActionDuration(action) + 1 - hit);
             }
             int index = Mathf.Clamp(Mathf.FloorToInt(sample), 0, _playingFrames.Length - 1);
+            SpriteFrameIndex = index;
             Sprite frame = _playingFrames[index];
             if (_image.sprite != frame)
             {

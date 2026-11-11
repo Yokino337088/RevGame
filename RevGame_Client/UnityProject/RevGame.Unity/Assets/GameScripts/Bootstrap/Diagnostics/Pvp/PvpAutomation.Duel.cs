@@ -104,6 +104,8 @@ namespace RevGame.Pvp
                     ["eligible"] = Service.CanChallengeDuel, ["ready"] = Service.DuelBothReady, ["frame"] = state.Frame,
                     ["fighting"] = state.Frame >= 5, ["result"] = state.Result, ["hash"] = state.Hash, ["error"] = Service.DuelError,
                     ["airborne"] = state.FirstY > 0, ["firstY"] = state.FirstY,
+                    ["emberShaderSupported"] = view != null && view.Effects.First.material.shader.name == "RevGame/UI/Ember Duel Spear" &&
+                        view.Effects.First.material.shader.isSupported && view.Effects.FirstImpact.material == view.Effects.First.material,
                     ["bothPlaying"] = view != null && view.FirstAnimator.IsPlaying && view.SecondAnimator.IsPlaying,
                     ["bothAnimated"] = view != null && view.FirstAnimator.HasSpriteMotion && view.SecondAnimator.HasSpriteMotion,
                     ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&

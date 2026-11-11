@@ -108,8 +108,8 @@ void CheckCheckpoint(const StartWords& settings)
     Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
     Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
     Check(ReadWord(first.data()) == 0);
-    // 独立按约定序列打包 204 字节计算出的开局指纹，包含高位非零的种子和负坐标。
-    Check(ReadWord(first.data() + 64) == 0x7da43461u);
+    // v7 开局指纹锁定双席距离配置、高位非零的种子和负坐标。
+    Check(ReadWord(first.data() + 64) == 0x7fcdb86cu);
 
     auto foreign = settings;
     ++foreign.back();
@@ -262,6 +262,79 @@ void CheckUnlimitedDuel(const StartWords& settings)
 }
 
 // 检查双实例确定性、缺帧拒绝、跳跃输出、FIFO 背压和短缓冲。
+// 在每项主动招式的距离上沿和外侧各打一轮。开招位移计入起始站位，命中仍由真实 FIFO 结算。
+void CheckSeatReach(const StartWords& settings)
+{
+    for (const Seat seat : SeatOrder)
+    {
+        for (int action = 1; action <= MaxActionInput; ++action)
+        {
+            const int attack = AttackOffset(action);
+            const int reach = settings[2 + HitRangeOffset(seat, action)];
+            const int lunge = settings[2 + ChainOffset(action) + 2];
+            const int startFrame = settings[2 + attack + 4] + 1;
+            const int hitFrame = startFrame + settings[2 + attack + 2];
+            for (const int beyond : {0, 1})
+            {
+                // 双方在场地中心对称出生。多放一个单位的出生间隔，双方之间就多两个单位。
+                Check((reach + lunge) % 2 == 0);
+                auto config = settings;
+                config[2 + 4] = (reach + lunge) / 2 + beyond;
+                auto core = GameCore_Create();
+                const auto start = Encode(config);
+                Check(GameCore_Write(core, start.data(), int(start.size())) == 1);
+                DisplayBytes frameOutput{};
+                for (int frame = 1; frame <= hitFrame; ++frame)
+                {
+                    const int intent = frame == startFrame ? action << 2 : 0;
+                    const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame,
+                        seat == Black ? intent : 0, seat == White ? intent : 0});
+                    Check(GameCore_Write(core, packet.data(), int(packet.size())) == 1);
+                    Check(GameCore_Read(core, frameOutput.data(), int(frameOutput.size())) == int(frameOutput.size()));
+                }
+                const auto damage = ReadSignedWord(frameOutput.data() + (14 + seat) * 4);
+                Check(damage == (beyond == 0 ? config[2 + attack] : 0));
+                GameCore_Destroy(core);
+            }
+        }
+    }
+}
+
+// 同帧给两席起跳输入，逐帧对比旧重力和初速。整段轨迹的高度翻倍，落地帧一致。
+void CheckDoubleJumpHeight(const StartWords& settings)
+{
+    auto old = settings;
+    old[2 + 24] = 270;
+    old[2 + 25] = 34;
+    auto baseline = GameCore_Create();
+    auto current = GameCore_Create();
+    const auto baselineStart = Encode(old);
+    const auto currentStart = Encode(settings);
+    Check(GameCore_Write(baseline, baselineStart.data(), int(baselineStart.size())) == 1);
+    Check(GameCore_Write(current, currentStart.data(), int(currentStart.size())) == 1);
+    DisplayBytes before{}, after{};
+    int peak = 0;
+    for (int frame = 1; frame <= 24; ++frame)
+    {
+        const int jump = frame == 1 ? JumpInput : 0;
+        const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, jump, jump});
+        Check(GameCore_Write(baseline, packet.data(), int(packet.size())) == 1);
+        Check(GameCore_Write(current, packet.data(), int(packet.size())) == 1);
+        Check(GameCore_Read(baseline, before.data(), int(before.size())) == int(before.size()));
+        Check(GameCore_Read(current, after.data(), int(after.size())) == int(after.size()));
+        for (const Seat seat : SeatOrder)
+        {
+            const auto offset = (17 + seat) * 4;
+            const int height = ReadSignedWord(after.data() + offset);
+            Check(height == ReadSignedWord(before.data() + offset) * 2);
+            peak = std::max(peak, height);
+        }
+    }
+    Check(peak == 2416 && ReadSignedWord(after.data() + 68) == 0 && ReadSignedWord(after.data() + 72) == 0);
+    GameCore_Destroy(baseline);
+    GameCore_Destroy(current);
+}
+
 int main()
 {
     CheckMathAndRandom();
@@ -272,6 +345,8 @@ int main()
     settings[5] = 1200;
     settings[ConfigWords + 2] = 42;
     settings[ConfigWords + 3] = -123;
+    CheckSeatReach(settings);
+    CheckDoubleJumpHeight(settings);
     CheckCheckpoint(settings);
     CheckUnlimitedDuel(settings);
     const auto config = Encode(settings);
@@ -309,7 +384,7 @@ int main()
         {
             Check(left[68] != 0 || left[69] != 0);
             // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
-            Check(ReadWord(left.data() + 64) == 0x5a5a88e5u);
+            Check(ReadWord(left.data() + 64) == 0x553d3d3cu);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);

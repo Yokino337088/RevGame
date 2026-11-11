@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FixedPoint.h"
+#include "DuelProtocol.Generated.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -19,8 +20,8 @@ namespace RevGameCore
     // 当前决斗仅有两席，用固定数组表达顺序，无需排序或依赖哈希桶顺序。
     constexpr std::array<Seat, 2> SeatOrder{Black, White};
 
-    // 开局配置包括六种动作、跳跃及连招窗口表。
-    constexpr int ConfigWords = 66;
+    // 开局配置的大小随生成的规则字数组确定，FIFO 和检查点共用这一长度。
+    constexpr int ConfigWords = static_cast<int>(DefaultDuelSettings.size());
     // 单条表现输出字数。恢复格式另有隐藏状态，字数和快照不同。
     constexpr int SnapshotWords = 25;
     // 宿主开局包中按固定下标排列的规则整数，运行期间不变。
@@ -53,6 +54,12 @@ namespace RevGameCore
     constexpr int AttackOffset(int action)
     {
         return action <= 3 ? 9 + (action - 1) * 5 : 27 + (action - 4) * 5;
+    }
+
+    // 黑方读取招式表自带的距离，白方读取协议尾部的距离覆盖表。
+    constexpr int HitRangeOffset(Seat seat, int action)
+    {
+        return seat == Black ? AttackOffset(action) + 1 : YayaRangeOffset + action - 1;
     }
 
     // 取消年龄、受击硬直、启动位移和后继槽掩码按四字排列。

@@ -161,6 +161,11 @@ namespace RevGame.Editor
                 ValidateDuelActorAnimationSlices(view.FirstAnimator, ember, ArcadeContactKeys, false);
                 ValidateDuelActorAnimationSlices(view.SecondAnimator, yaya, YayaContactKeys, true);
                 DuelStrikeEffects effects = view.Effects;
+                if (AssetDatabase.GetAssetPath(effects.First.material) != EmberDuelMaterial ||
+                    effects.FirstImpact.material != effects.First.material || !effects.First.material.shader.isSupported)
+                {
+                    throw new InvalidOperationException("黑方红枪 Shader 与共用材质绑定异常。");
+                }
                 if (!effects.YayaCastSprites.SequenceEqual(YayaCastArt.Select(LoadYayaDuelEffect)) ||
                     !effects.YayaImpactSprites.SequenceEqual(YayaImpactArt.Select(LoadYayaDuelEffect)) ||
                     !effects.YayaCastSounds.SequenceEqual(YayaCastAudio.Select(LoadYayaDuelAudio)) ||

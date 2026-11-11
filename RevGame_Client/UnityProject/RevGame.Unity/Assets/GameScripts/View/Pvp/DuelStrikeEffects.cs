@@ -65,9 +65,7 @@ namespace RevGame.View
             public Vector2 Size;
             // 出招锚点。坠枪拖尾从此处开始向地面拉出。
             public Vector2 Origin;
-            // 竖向拖尾位移，0 表示固定锚点。
-            public float Drop;
-            // 乌鸦从起点到终点的画布偏移，单位像素。只改变渲染轨迹。
+            // 乌鸦或坠枪从起点到终点的画布偏移，单位像素。只改变渲染轨迹。
             public Vector2 Travel;
             // 乌鸦飞到终点所需秒数，以已确认的命中年龄对齐。
             public float TravelSeconds;
@@ -78,30 +76,21 @@ namespace RevGame.View
         }
 
         // 消费一次权威起手。角色在恢复期切入新动作时，起始帧自然区分前后两次攻击。
-        public void Observe(int seat, int action, int startFrame, int facing, Vector2 position, Vector2 target)
+        public void Observe(int seat, int action, int startFrame, int facing, Vector2 position, Vector2 target, float reach)
         {
             if (action <= 0 || startFrame <= _lastStart[seat])
             {
                 return;
             }
             _lastStart[seat] = startFrame;
-            int tier = Tier(action);
             bool yaya = seat == 1 && YayaCastSprites != null && YayaCastSprites.Length == 6;
-            float size = tier == 2 ? 670 : tier == 1 ? 460 : 270;
-            Image layer = seat == 0 ? First : Second;
-            Color tint = Color.white;
-            tint.a = tier == 0 ? .76f : .96f;
-            Vector2 shape = action == 2 ? new Vector2(780, 345) : action == 4 ? new Vector2(350, 630) : Vector2.one * size;
-            Vector2 offset = action == 4 ? new Vector2(facing * 48, 108) : new Vector2(facing * 120, 12);
             if (yaya)
             {
-                CastYaya(action, facing, position, target);
+                CastYaya(action, facing, position, target, reach);
             }
             else
             {
-                Begin(layer, ref _casts[seat], CastSprites[action - 1], position + offset,
-                    shape, tier == 2 ? .59f : .30f, tint, facing);
-                _casts[seat].Drop = action == 4 ? 220 : 0;
+                CastEmber(seat, action, facing, position, reach);
             }
             bool audible = Play((yaya ? YayaCastSounds : CastSounds)[action - 1], .78f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
@@ -122,8 +111,30 @@ namespace RevGame.View
 #endif
         }
 
+        // 红枪的横向枪芒按权威距离展开。坠枪用命中年龄作为落地时刻，贴地的冲击由命中层负责。
+        private void CastEmber(int seat, int action, int facing, Vector2 position, float reach)
+        {
+            float hitSeconds = DuelConfig.ActionHitFrame(action) * DuelConfig.FrameMs / 1000f;
+            Vector2 size = action switch
+            {
+                2 => new Vector2(reach * 1.12f, 235),
+                3 => new Vector2(reach * 1.36f, 475),
+                4 => new Vector2(reach * .96f, 510),
+                _ => new Vector2(reach * 1.16f, 232)
+            };
+            Vector2 origin = position + new Vector2(facing * reach * .47f, action == 4 ? 98 : 14);
+            ref Effect effect = ref _casts[seat];
+            Begin(seat == 0 ? First : Second, ref effect, CastSprites[action - 1], origin, size,
+                hitSeconds + (action == 3 ? .27f : .12f), Color.white, facing);
+            if (action == 4)
+            {
+                effect.Travel = new Vector2(facing * reach * .12f, -145 - origin.y);
+                effect.TravelSeconds = hitSeconds;
+            }
+        }
+
         // 将鸦袭、掠羽和鸦宴绘成不同尺寸和方向。飞行距离只用于画面，受击由权威帧触发。
-        private void CastYaya(int action, int facing, Vector2 position, Vector2 target)
+        private void CastYaya(int action, int facing, Vector2 position, Vector2 target, float reach)
         {
             bool bird = action == 2 || action == 4;
             float hitSeconds = DuelConfig.ActionHitFrame(action) * DuelConfig.FrameMs / 1000f;
@@ -143,7 +154,6 @@ namespace RevGame.View
             if (bird)
             {
                 // 以起手帧的对手位置定方向和长度。实际命中点另读该帧受击者坐标。
-                float reach = action == 4 ? 190 : 215;
                 float forward = Mathf.Clamp((target.x - position.x) * facing, 90, reach);
                 float endHeight = Mathf.Clamp(target.y - position.y, -75, 90) + (action == 4 ? -85 : 20);
                 _casts[1].Travel = position + new Vector2(forward * facing, endHeight) - origin;
@@ -227,7 +237,7 @@ namespace RevGame.View
             }
             float grow = 1 - Mathf.Pow(1 - progress, 3);
             layer.rectTransform.sizeDelta = effect.Size * (.76f + grow * .47f);
-            Vector2 position = effect.Origin + Vector2.down * (effect.Drop * progress * progress);
+            Vector2 position = effect.Origin;
             if (effect.TravelSeconds > 0)
             {
                 float flight = Mathf.Clamp01((now - effect.Start) / effect.TravelSeconds);

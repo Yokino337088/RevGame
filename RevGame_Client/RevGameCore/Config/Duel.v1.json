@@ -1,15 +1,16 @@
 {
-  "coreProtocol": 6,
+  "coreProtocol": 7,
   "hashSampleFrames": 40,
   "eligibility": { "minimumMove": 24, "minimumLeadHalfPoints": 24 },
   "arena": { "health": 100, "extent": 4500, "movePerFrame": 140, "frameLimit": 0, "spawnOffset": 1700, "energy": 100, "energyPerFrame": 1, "energyPerHit": 12, "frameMilliseconds": 50 },
-  "jump": { "speed": 270, "gravity": 34, "hitHeight": 480 },
+  "jump": { "speed": 540, "gravity": 68, "hitHeight": 480 },
+  "yayaRanges": [1020, 1750, 2500, 1520, 1120, 1240],
   "attacks": [
-    { "damage": 9, "range": 1020, "hitFrame": 3, "duration": 8, "cost": 0, "cancelFrame": 5, "stun": 8, "advance": 0, "next": 15 },
-    { "damage": 15, "range": 1550, "hitFrame": 4, "duration": 12, "cost": 16, "cancelFrame": 6, "stun": 12, "advance": 420, "next": 12 },
-    { "damage": 32, "range": 2380, "hitFrame": 7, "duration": 20, "cost": 55, "cancelFrame": 21, "stun": 16, "advance": 210, "next": 0 },
-    { "damage": 18, "range": 1340, "hitFrame": 5, "duration": 14, "cost": 20, "cancelFrame": 7, "stun": 13, "advance": 100, "next": 6 },
-    { "damage": 10, "range": 1120, "hitFrame": 3, "duration": 8, "cost": 0, "cancelFrame": 5, "stun": 9, "advance": 110, "next": 15 },
-    { "damage": 13, "range": 1240, "hitFrame": 4, "duration": 11, "cost": 0, "cancelFrame": 6, "stun": 11, "advance": 150, "next": 14 }
+    { "damage": 9, "range": 1400, "hitFrame": 3, "duration": 8, "cost": 0, "cancelFrame": 5, "stun": 8, "advance": 0, "next": 15 },
+    { "damage": 15, "range": 2250, "hitFrame": 4, "duration": 12, "cost": 16, "cancelFrame": 6, "stun": 12, "advance": 420, "next": 12 },
+    { "damage": 32, "range": 3000, "hitFrame": 7, "duration": 20, "cost": 55, "cancelFrame": 21, "stun": 16, "advance": 210, "next": 0 },
+    { "damage": 18, "range": 1800, "hitFrame": 5, "duration": 14, "cost": 20, "cancelFrame": 7, "stun": 13, "advance": 100, "next": 6 },
+    { "damage": 10, "range": 1500, "hitFrame": 3, "duration": 8, "cost": 0, "cancelFrame": 5, "stun": 9, "advance": 110, "next": 15 },
+    { "damage": 13, "range": 1660, "hitFrame": 4, "duration": 11, "cost": 0, "cancelFrame": 6, "stun": 11, "advance": 150, "next": 14 }
   ]
 }
