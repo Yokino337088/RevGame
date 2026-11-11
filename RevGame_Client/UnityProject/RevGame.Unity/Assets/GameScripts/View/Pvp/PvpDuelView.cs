@@ -95,8 +95,12 @@ namespace RevGame.View
         private float _inputFeedbackUntil;
         // 最近一次绘制按钮说明的座位，避免每次刷新 HUD 都重设图标和字形。
         private GoSide _hudSeat;
-        // 最后使用的表情索引。只有已确认状态发生变化时才更换头像。
+        // 最后使用的表情索引。切片播放阶段或受击状态改变时才更换头像。
         private int _yayaExpression = -1;
+        // 白方上一次用于选跳跃姿态的高度，单位为千分格。高度不变时沿用最近一次升降方向。
+        private int _lastYayaAltitude;
+        // 最近一次离地高度变化是否向下，决定使用下落还是上升的两张图。
+        private bool _yayaDescending;
         // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
         private const float ActorScale = .138f;
         // 两个站位小于一步的距离时保持已有镜像，防止重叠或相互穿过时连续翻面。
@@ -338,7 +342,8 @@ namespace RevGame.View
             float confirmedSecondX = secondPosition.x;
             float confirmedHeight = Mathf.Max(firstPosition.y, secondPosition.y);
             int firstAltitude = view.FirstY;
-            int secondAltitude = view.SecondY;
+            // 白方的贴图和屏幕坐标使用同一插值高度，起跳与触地不会错开一帧。
+            int secondAltitude = Mathf.RoundToInt(Mathf.Lerp(view.SecondY, next.SecondY, fraction));
             // 只替换自己这一席的运动表现。下方血量、出招、命中特效和结果继续消费原来的权威播放头。
             if (service.Mode != PvpConnectionMode.Local)
             {
@@ -382,7 +387,8 @@ namespace RevGame.View
             PaintActor(Second, secondPosition, _secondDrawFacing);
             CameraRig.Paint(confirmedFirstX, confirmedSecondX, confirmedHeight, Time.unscaledDeltaTime);
             FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction);
-            SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction);
+            SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction,
+                SampleYayaJumpPose(secondAltitude));
             PaintYayaExpression(view, secondMove != 0);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
@@ -402,11 +408,27 @@ namespace RevGame.View
             }
         }
 
+        // 四张跳跃图依次为起跳、收膝、下落伸腿、落地准备。用同一份实际或预测高度判断阶段。
+        private int SampleYayaJumpPose(int altitude)
+        {
+            if (altitude != _lastYayaAltitude)
+            {
+                _yayaDescending = altitude < _lastYayaAltitude;
+                _lastYayaAltitude = altitude;
+            }
+            int midpoint = DuelConfig.JumpApexHeight / 2;
+            if (_yayaDescending)
+            {
+                return altitude <= midpoint ? 3 : 2;
+            }
+            return altitude < midpoint ? 0 : 1;
+        }
+
         // 腿法的第一张和收势沿用原画 02 号，蓄力和接触使用 23 号。跟随实际换图，受击和倒地优先。
         private void PaintYayaExpression(DuelSnapshot view, bool moving)
         {
             bool kicking = view.SecondAction is 1 or 5 or 6;
-            bool relaxedKick = kicking && (SecondAnimator.SpriteFrameIndex == 0 || SecondAnimator.SpriteFrameIndex >= 3);
+            bool relaxedKick = kicking && !SecondAnimator.IsAttackFocusFrame;
             bool playful = view.SecondAction == 2 || view.SecondAction == 3 || view.SecondAction == 4 ||
                 relaxedKick || (moving && view.SecondAction == 0 && view.SecondY == 0);
             int expression = view.SecondHealth == 0 ? 4 : view.SecondStun > 0 ? 3 :

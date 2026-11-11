@@ -21,9 +21,11 @@ namespace RevGame.Editor
             "Idle", "Run", "Jump", "LowKick", "Raven", "Flock", "Down", "Talon", "Kick", "Spin", "Hit"
         };
         // 和目录一一对应。任一帧缺失会中止装配，避免在场景中留下空引用。
-        private static readonly int[] YayaFrameCounts = { 8, 12, 4, 4, 4, 4, 1, 4, 4, 4, 2 };
-        // 所有腿法和施法都在第 3 张图片展示接触动作，实际开始时刻仍由原生年龄决定。
-        private static readonly int[] YayaContactKeys = { 0, 0, 0, 2, 2, 2, 0, 2, 2, 2, 0 };
+        private static readonly int[] YayaFrameCounts = { 8, 12, 4, 4, 4, 4, 1, 4, 4, 8, 2 };
+        // 04～07 是插在原来的四张图之间的过渡。保持原图名称和资源引用，02 仍是接触姿势。
+        private static readonly int[] YayaHighKickFrameOrder = { 0, 4, 1, 5, 2, 6, 3, 7 };
+        // 高踢的原接触图现在位于第 5 张，依然对齐原生第 4 帧命中。
+        private static readonly int[] YayaContactKeys = { 0, 0, 0, 2, 2, 2, 0, 2, 2, 4, 0 };
         // 动作号 1～6 对应的白方特效。两种踢法复用羽刃纹理，动作和音色各自独立。
         private static readonly string[] YayaCastArt = { "Toe", "Raven", "Flock", "Talon", "Kick", "Kick" };
         private static readonly string[] YayaImpactArt = { "Toe", "Impact", "Flock", "Impact", "Kick", "Impact" };
@@ -65,7 +67,12 @@ namespace RevGame.Editor
         {
             int index = Array.IndexOf(DuelPoses, pose);
             string folder = YayaPoseFolders[index];
-            Sprite[] frames = Enumerable.Range(0, YayaFrameCounts[index])
+            var order = Enumerable.Range(0, YayaFrameCounts[index]);
+            if (pose == "Attack6")
+            {
+                order = YayaHighKickFrameOrder;
+            }
+            Sprite[] frames = order
                 .Select(frame => LoadDuelSpriteAtPath($"{YayaArt}{folder}/Yaya_{folder}_{frame:D2}.png")).ToArray();
             // 腿法在明确收腿后回到格斗架势，连段断开时不会长时间保持伸腿。
             return pose == "Attack1" || pose == "Attack5" || pose == "Attack6" ? frames.Append(frames[0]).ToArray() : frames;

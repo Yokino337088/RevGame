@@ -83,6 +83,8 @@ namespace RevGame.View
         public bool IsPlaying => isActiveAndEnabled && _playingFrames != null && _playingFrames.Length > 0;
         // 当前实际贴图在片段中的零基序号。HUD 复用它切换表情，避免另外计时。
         internal int SpriteFrameIndex { get; private set; }
+        // 从开始蓄力到实际接触都使用专注表情。接触下标由当前序列提供。
+        internal bool IsAttackFocusFrame => SpriteFrameIndex > 0 && SpriteFrameIndex <= _contactIndex;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         // 上一帧实际可见的 Sprite，完全透明时清空。
@@ -192,7 +194,7 @@ namespace RevGame.View
         }
 
         // 按生命、招式、离地和移动确定表现姿态。没有状态变化时继续原片段。
-        public void Paint(int health, int altitude, int action, int stun, bool moving, int frame, int age, float frameFraction)
+        public void Paint(int health, int altitude, int action, int stun, bool moving, int frame, int age, float frameFraction, int jumpSpriteIndex = -1)
         {
             Pose next = health == 0 ? Pose.Down : stun > 0 ? Pose.Hit : action switch
             {
@@ -216,7 +218,7 @@ namespace RevGame.View
             }
             _attackStart = attackStart;
             _machine.UpdateState(Time.unscaledDeltaTime);
-            PaintSpriteFrame(attackStart >= 0 ? action : 0, age, frameFraction);
+            PaintSpriteFrame(attackStart >= 0 ? action : 0, age, frameFraction, jumpSpriteIndex);
             PaintPoseFade();
             _poseSeconds += Time.unscaledDeltaTime;
         }
@@ -307,7 +309,7 @@ namespace RevGame.View
         }
 
         // 攻击分为接触前和接触后两段。权威命中帧进入接触姿势，渲染按逻辑年龄插值。
-        private void PaintSpriteFrame(int action, int age, float frameFraction)
+        private void PaintSpriteFrame(int action, int age, float frameFraction, int jumpSpriteIndex)
         {
             if (_playingFrames == null || _playingFrames.Length == 0)
             {
@@ -329,6 +331,11 @@ namespace RevGame.View
                     ? elapsed * _contactIndex / hit
                     : _contactIndex + (elapsed - hit) * (_playingFrames.Length - _contactIndex) /
                         (DuelConfig.ActionDuration(action) + 1 - hit);
+            }
+            else if (_machine.CurrentStateType == Pose.Jump && jumpSpriteIndex >= 0)
+            {
+                // 白方跳跃按实际高度选阶段。截图、掉帧或等包不会让姿态提前落地。
+                sample = jumpSpriteIndex;
             }
             int index = Mathf.Clamp(Mathf.FloorToInt(sample), 0, _playingFrames.Length - 1);
             SpriteFrameIndex = index;

@@ -575,20 +575,25 @@ namespace RevGame.Pvp
             // AI 只生成一个座位的意图。它与真人一样经过权威帧，伤害和距离判定仍由 C++ 负责。
             var view = _duelAuthority.Snapshot;
             int distance = view.FirstX - view.SecondX;
-            if (Math.Abs(distance) > DuelConfig.ActionRange(true, 1))
-            {
-                return distance < 0 ? 1 : 2;
-            }
-            // 电脑与玩家共享原生开放的取消窗口，优先接能负担的强招。
-            if (view.SecondEnergy >= DuelConfig.UltimateCost && view.CanTakeAction(false, 3))
+            int gap = Math.Abs(distance);
+            // 先按各自的范围试施法，距离超出才走近。普通腿法仍等近身。
+            if (gap <= DuelConfig.ActionRange(true, 3) && view.SecondEnergy >= DuelConfig.UltimateCost && view.CanTakeAction(false, 3))
             {
                 return 3 << 2;
             }
-            if (view.SecondEnergy >= DuelConfig.SkillTwoCost && view.CanTakeAction(false, 4))
+            if (gap <= DuelConfig.ActionRange(true, 4) && view.SecondEnergy >= DuelConfig.SkillTwoCost && view.CanTakeAction(false, 4))
             {
                 return 4 << 2;
             }
-            return view.SecondEnergy >= DuelConfig.SkillCost && view.CanTakeAction(false, 2) ? 2 << 2 : 1 << 2;
+            if (gap <= DuelConfig.ActionRange(true, 2) && view.SecondEnergy >= DuelConfig.SkillCost && view.CanTakeAction(false, 2))
+            {
+                return 2 << 2;
+            }
+            if (gap > DuelConfig.ActionRange(true, 1))
+            {
+                return distance < 0 ? 1 : 2;
+            }
+            return 1 << 2;
         }
 
         // 核对房间，按连续游标补帧并消费结果。每个权威帧只能执行一次，回执必须等相应快照提交。

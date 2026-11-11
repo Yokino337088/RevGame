@@ -16,6 +16,14 @@ if (type(hash_sample_frames) is not int or not 1 <= hash_sample_frames <= 10000
     raise ValueError("决斗对账间隔必须是正整数，限时对局中不得超过对局帧上限")
 if arena["frameMilliseconds"] != 50:
     raise ValueError("决斗逻辑帧固定为 50 毫秒（20 Hz）")
+jump = data["jump"]
+jump_speed, jump_gravity = jump["speed"], jump["gravity"]
+if (type(jump_speed) is not int or not 1 <= jump_speed <= 600
+        or type(jump_gravity) is not int or not 1 <= jump_gravity <= 200):
+    raise ValueError("决斗跳跃初速或重力超出原生配置范围")
+# 原生先加本帧速度再扣重力。累加正速度段得到峰值，只供表现阶段选择。
+ascent_frames = (jump_speed + jump_gravity - 1) // jump_gravity
+jump_apex_height = ascent_frames * jump_speed - jump_gravity * ascent_frames * (ascent_frames - 1) // 2
 # 顺序是小端配置包的契约。新增字段需要同时核对托管端协议与 C++ 消费位置。
 words = [arena[k] for k in ("health", "extent", "movePerFrame", "frameLimit", "spawnOffset",
                              "energy", "energyPerFrame", "energyPerHit", "frameMilliseconds")]
@@ -24,7 +32,7 @@ attacks = data["attacks"]
 assert len(attacks) == 6
 for attack in attacks[:3]:
     words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
-words += [data["jump"][k] for k in ("speed", "gravity", "hitHeight")]
+words += [jump[k] for k in ("speed", "gravity", "hitHeight")]
 for attack in attacks[3:]:
     words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
 # 后续窗口的位 0～3 对应玩家四个输入槽。派生普攻段位只由原生世界选择。
@@ -86,6 +94,8 @@ namespace RevGame.Pvp.Duel
         public const int FrameLimit = {frame_limit};
         // 逻辑帧对应的毫秒数，用于宿主限速和显示时间换算。
         public const int FrameMs = {arena["frameMilliseconds"]};
+        // 普通跳跃的原生峰值，单位为千分格。仅供角色表现按高度分段。
+        internal const int JumpApexHeight = {jump_apex_height};
         // 联机每隔多少个已执行逻辑帧交换一次指纹。终局另外校验。
         public const int HashSampleFrames = {hash_sample_frames};
         // 招式持续的逻辑帧数，用于表现采样和输入缓冲。

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鸦鸦决斗动作统一 · 2026-11-11</title>
+<style>
+:root { color-scheme: light; font: 16px/1.7 "Microsoft YaHei", sans-serif; color: #21372e; background: #f7f4e9; }
+body { margin: 0; }
+header { padding: .8rem max(1.25rem, calc((100% - 64rem) / 2)); background: #24483b; color: #fff3cc; font-weight: 700; }
+main { max-width: 64rem; margin: auto; padding: 1rem 1.25rem 3rem; }
+section { background: #fffdf5; border: 1px solid #e0d6b7; border-radius: 14px; padding: 1rem 1.4rem; margin: 1rem 0; }
+.hero { background: #e9f0e4; border-left: 5px solid #a88948; }
+h1, h2 { line-height: 1.25; margin: .5rem 0 .8rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e5ddc6; vertical-align: top; }
+figure { margin: 1rem 0; }
+img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+figcaption { font-size: .9rem; margin-top: .4rem; }
+</style>
+</head>
+<body>
+<header>REVGAME · 决斗验收 · 2026-11-11</header>
+<main>
+<section class="hero">
+<h1>鸦鸦的动作衔接、高踢和射程</h1>
+<p>按正面、侧面和原始表情差分重新绘制 8 张待机、12 张跑步、4 张跳跃和 12 张施法图。所有站姿按普攻的头身、腰位和靴口统一，透明切片使用 400×400 画布、居中轴心和同一地面线。跳跃和跑步腾空通过腿的屈伸保留姿势差异。</p>
+</section>
+<section>
+<h2>原版高抬腿补帧</h2>
+<p>第三段保留原目录的四张图，插入抬腿准备、伸腿加速、踢中回收和落脚四张。两只靴子按同一侧视鞋型校准鞋底长度、金色粗跟和膝上靴口。原版高踢图 <code>Yaya_Spin_02</code> 仍对齐原生命中时点。</p>
+<figure><img src="原版高踢补帧对比.gif" alt="左侧四张原版高踢，右侧加入四张过渡的高踢，以同一接触时点慢放"><figcaption>两套切片按同一原生命中时点慢放。</figcaption></figure>
+<p>原来的四张 PNG 与上个版本逐字节相同。按 400×400 成品比例测量新增四张的金边，从鞋跟到鞋尖的左右差值约为 0.8、2.2、2.5 和 1.2 像素。<a href="补帧双靴核对.jpg">查看双靴放大测量</a> · <a href="高踢八帧.jpg">查看完整播放顺序</a></p>
+</section>
+<section>
+<h2>体型、表情与落地</h2>
+<p>待机参考 28 号平静、02 号微笑和 07 号眨眼。移动及施法使用 02 号，跳跃用 23 号的专注眼神，第三段头像按实际接触切片换表情。跳跃贴图读取离地高度和升降方向，在下落经过半程后切到落地准备。</p>
+<figure><img src="动作轴心核对.jpg" alt="以同一地面线核对鸦鸦的待机、跑步、跳跃与三项施法"><figcaption>切片位置检查。</figcaption></figure>
+<p><a href="../../../美术/AI生成/新版/鸦鸦决斗/源图/动作正侧统一/生成提示词.md">最终 ImageGen 提示词与源图目录</a></p>
+</section>
+<section>
+<h2>水平射程</h2>
+<p>格斗参考采用近身通常技、远距飞道具和范围大招的分工。RevGame 的数值按己方脚尖、鸦术飞行画面、绯焰站位和场宽重新定标。表格距离从起手位移结束后测量。<a href="https://www.snk-corp.co.jp/webmanual/kofxv/en/howtoplay2.php">《拳皇 XV》战斗系统</a> · <a href="https://www.guiltygear.com/ggst/en/character/">《罪恶装备 奋战》角色类型</a></p>
+<table>
+<thead><tr><th scope="col">动作</th><th scope="col">旧距离</th><th scope="col">新距离</th></tr></thead>
+<tbody>
+<tr><td>低扫</td><td>1.02 格</td><td>1.36 格</td></tr>
+<tr><td>弹踢</td><td>1.12 格</td><td>1.46 格</td></tr>
+<tr><td>高抬腿</td><td>1.24 格</td><td>1.58 格</td></tr>
+<tr><td>鸦袭</td><td>1.75 格</td><td>2.55 格</td></tr>
+<tr><td>掠羽</td><td>1.52 格</td><td>2.05 格</td></tr>
+<tr><td>鸦宴</td><td>2.50 格</td><td>3.15 格</td></tr>
+</tbody>
+</table>
+<p>白方人机可以在对应技能距离内起手。原生 FIFO 测试逐项核对双席六招的边界与越界，其中派生二三段由前一段真实命中打开取消窗口。托管端预测、回滚和连段检查通过，服务端共享规则编译通过。</p>
+<figure><img src="旧范围外命中.jpg" alt="低扫在 1.29 格，鸦袭在 2.55 格，掠羽在 2.03 格，鸦宴在 3.08 格的实际命中画面"><figcaption>同一决斗场景实测。四次命中都超出原判定距离。</figcaption></figure>
+</section>
+<section>
+<h2>Unity 对局验收</h2>
+<p>以 <code>rev_discover</code> 确认实际能力，<code>rev_call game.pvp.duel-sprites</code> 绑定切片，<code>rev_call game.pvp.duel-atlas</code> 核对 129 张 Sprite、3 页图集。<code>rev_call editor.play</code> 启动后，<code>rev_run</code> 经正式人机决斗 GM 进入场景，核对真实 AB 模式、已打包切片和实际命中。</p>
+<p>跑停、起跳、落地接跑、跑动转普攻及三项施法收势都走通。跑步观测到 12 张，跳跃观测到 4 张。按同一套输入，最高点为 2.416 格，起落观测间隔为 17 个逻辑帧。落地准备从旧版记录的触地前 12 帧移到触地前 3 帧。</p>
+<figure><img src="决斗跑跳与施法.gif" alt="实际对局中从待机到跑步、起跳、下落、落地和施放三项技能的关键帧"><figcaption>决斗实测关键帧连拍。</figcaption></figure>
+<p>第三段逐张观测到 <code>00 → 04 → 01 → 05 → 02 → 06 → 03 → 07</code>，<code>02</code> 与命中特效和 23 号头像一同落屏。<a href="高踢命中实战.jpg">查看实际高踢命中</a></p>
+<p>同一计划还运行了 <code>pvp.duel-lan-hash-check</code>。UTP 双席在第 40 帧完成周期对账，在第 83 帧终局共同得到指纹 <code>1560284894</code>。人机运行错误为 0，验收返回大厅并停止 Play，临时探针已移除。联机需要客户端和服务端使用同一套规则配置。</p>
+</section>
+</main>
+</body>
+</html>

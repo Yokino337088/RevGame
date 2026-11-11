@@ -109,7 +109,7 @@ void CheckCheckpoint(const StartWords& settings)
     Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
     Check(ReadWord(first.data()) == 0);
     // v7 开局指纹锁定双席距离配置、高位非零的种子和负坐标。
-    Check(ReadWord(first.data() + 64) == 0x7fcdb86cu);
+    Check(ReadWord(first.data() + 64) == 0x70a0dfb2u);
 
     auto foreign = settings;
     ++foreign.back();
@@ -300,6 +300,53 @@ void CheckSeatReach(const StartWords& settings)
     }
 }
 
+// 先由真实命中打开连招取消窗口，再让免伤的对手后退一步，把二三段放在各自的距离边缘。
+void CheckDerivedSeatReach(const StartWords& settings)
+{
+    const int secondStart = 1 + settings[2 + ChainOffset(1)];
+    const int thirdStart = secondStart + settings[2 + ChainOffset(5)];
+    const int secondAdvance = settings[2 + ChainOffset(5) + 2];
+    for (const Seat seat : SeatOrder)
+    {
+        const int openingDistance = settings[2 + HitRangeOffset(seat, 1)] - 100;
+        for (const int action : {5, 6})
+        {
+            const int attack = AttackOffset(action);
+            const int startFrame = action == 5 ? secondStart : thirdStart;
+            const int hitFrame = startFrame + settings[2 + attack + 2];
+            const int reach = settings[2 + HitRangeOffset(seat, action)];
+            const int advance = settings[2 + ChainOffset(action) + 2];
+            const int previousDistance = openingDistance - (action == 6 ? secondAdvance : 0);
+            for (const int beyond : {0, 2})
+            {
+                auto config = settings;
+                config[2 + 4] = openingDistance / 2;
+                config[2 + 2] = reach + advance + beyond - previousDistance;
+                auto core = GameCore_Create();
+                const auto start = Encode(config);
+                Check(GameCore_Write(core, start.data(), int(start.size())) == 1);
+                DisplayBytes frameOutput{};
+                for (int frame = 1; frame <= hitFrame; ++frame)
+                {
+                    const int jab = frame == 1 || frame == secondStart || frame == startFrame ? 1 << 2 : 0;
+                    const int retreat = frame == startFrame - 1 ? (seat == Black ? 2 : 1) : 0;
+                    const int black = (seat == Black ? jab : retreat) | NoDamageFrameBit;
+                    const int white = seat == White ? jab : retreat;
+                    const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, black, white});
+                    Check(GameCore_Write(core, packet.data(), int(packet.size())) == 1);
+                    Check(GameCore_Read(core, frameOutput.data(), int(frameOutput.size())) == int(frameOutput.size()));
+                }
+                const int actualGap = std::abs(ReadSignedWord(frameOutput.data() + 8) - ReadSignedWord(frameOutput.data() + 32));
+                const int actualAction = ReadSignedWord(frameOutput.data() + (5 + seat * 6) * 4);
+                const int damage = ReadSignedWord(frameOutput.data() + (14 + seat) * 4);
+                Check(actualGap == reach + beyond && actualAction == action &&
+                    damage == (beyond == 0 ? config[2 + attack] : 0));
+                GameCore_Destroy(core);
+            }
+        }
+    }
+}
+
 // 同帧给两席起跳输入，逐帧对比旧重力和初速。整段轨迹的高度翻倍，落地帧一致。
 void CheckDoubleJumpHeight(const StartWords& settings)
 {
@@ -346,6 +393,7 @@ int main()
     settings[ConfigWords + 2] = 42;
     settings[ConfigWords + 3] = -123;
     CheckSeatReach(settings);
+    CheckDerivedSeatReach(settings);
     CheckDoubleJumpHeight(settings);
     CheckCheckpoint(settings);
     CheckUnlimitedDuel(settings);
@@ -384,7 +432,7 @@ int main()
         {
             Check(left[68] != 0 || left[69] != 0);
             // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
-            Check(ReadWord(left.data() + 64) == 0x553d3d3cu);
+            Check(ReadWord(left.data() + 64) == 0x38a47ba2u);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);

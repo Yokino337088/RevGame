@@ -143,10 +143,11 @@ namespace RevGame.View
             Vector2 size = action switch
             {
                 2 => new Vector2(300, 214),
-                3 => new Vector2(575, 480),
+                // 大招的羽环和高踢的羽刃覆盖新的判定范围，受击闪光仍落在对手身上。
+                3 => new Vector2(reach * 1.38f, 480),
                 4 => new Vector2(310, 265),
                 1 => new Vector2(230, 135),
-                6 => new Vector2(310, 230),
+                6 => new Vector2(reach * 1.50f, 230),
                 _ => new Vector2(245, 190)
             };
             Begin(Second, ref _casts[1], YayaCastSprites[action - 1], origin, size,
