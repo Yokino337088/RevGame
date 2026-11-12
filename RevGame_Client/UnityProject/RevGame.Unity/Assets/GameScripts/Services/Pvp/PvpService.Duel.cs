@@ -622,8 +622,8 @@ namespace RevGame.Pvp
                 return;
             }
             ApplyDuelPreparation(reply.preparation);
-            if (DuelPrep?.phase != DuelPrepPhase.Released ||
-                (reply.preparation != null && reply.preparation.phase != DuelPrepPhase.Released))
+            // 只按本局已接纳的权威阶段放行。旧阶段和省略字段在应用时已过滤。
+            if (DuelPrep?.phase != DuelPrepPhase.Released || DuelError.Length != 0)
             {
                 return;
             }
@@ -811,10 +811,12 @@ namespace RevGame.Pvp
         internal bool DuelRecoveryAvailableForCheck => Mode == PvpConnectionMode.Local && IsComputerGame &&
             _duelSceneReady && DuelBothReady && _duelAuthority != null;
 
-        // 只接受已就绪的本地人机决斗，下一次封帧按新开关采样白方。
+        // 本地人机可以在选角时预先停住白方，确保验收从首个逻辑帧取得固定输入。
         internal bool TrySetDuelComputerAiPaused(bool paused)
         {
-            if (!DuelRecoveryAvailableForCheck || DuelError.Length != 0 || DuelSnapshot.Result != 0)
+            bool localComputer = Mode == PvpConnectionMode.Local && IsComputerGame && DuelId.Length != 0;
+            bool preparing = DuelPrep?.phase is DuelPrepPhase.Choosing or DuelPrepPhase.Loading;
+            if (!localComputer || (!preparing && !DuelRecoveryAvailableForCheck) || DuelError.Length != 0 || DuelSnapshot.Result != 0)
             {
                 return false;
             }

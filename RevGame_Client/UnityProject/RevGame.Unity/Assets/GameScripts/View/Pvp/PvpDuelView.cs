@@ -2,6 +2,7 @@ using DG.Tweening;
 using RevGame.Flow;
 using RevGame.Pvp;
 using RevGame.Pvp.Duel;
+using RevGame.UI;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,64 +16,12 @@ namespace RevGame.View
         public Image First;
         // 白方角色图层。场景配方在编辑器中绑定，运行时不重建。
         public Image Second;
-        // 黑方已确认血量的条形填充。
-        public Image FirstHealth;
-        // 白方已确认血量的条形填充。
-        public Image SecondHealth;
-        // 黑方已确认能量的条形填充。
-        public Image FirstEnergy;
-        // 白方已确认能量的条形填充。
-        public Image SecondEnergy;
-        // 逻辑帧换算的剩余秒数。不限时时显示 ∞。
-        public Text Clock;
-        // 双方就绪、连接中断及权威胜负提示。
-        public Text Banner;
-        // HUD 设计框，等比适配屏幕安全区。
-        public RectTransform Hud;
-        // 桌面键盘图例所在的底板，触屏设备只显示圆形操作键。
-        public GameObject KeyboardGuide;
-        // 桌面键盘说明里的文字组件。确定本机座位后写入对应角色的技能名。
-        public Text KeyboardLegend;
-        // 依次对应 K、L、I 的三个圆键文字。
-        public Text[] SkillCaptions;
-        // 依次对应 J、K、L、I 的四个圆键图标。
-        public Image[] SkillGlyphs;
-        // 黑方按钮使用绯焰招式图标，顺序与 SkillGlyphs 一致。
-        public Sprite[] EmberSkillGlyphs;
-        // 白方按钮使用鸦鸦招式图标，切换席位只改变显示。
-        public Sprite[] YayaSkillGlyphs;
-        // 短时按键回执，说明当前输入、受击或能量状态。
-        public Text InputFeedback;
-        // 黑方玩家名，独立排版以限制过长昵称。
-        public Text FirstName;
-        // 白方玩家名。
-        public Text SecondName;
-        // 白方血条旁的头像组件。
-        public Image SecondPortrait;
-        // 黑方头像可切换为鸦鸦，引用由场景配方生成。
-        public Image FirstPortrait;
-        // 头像可显示的五张原画差分，顺序为待机、专注、微笑、受击、倒地。
-        public Sprite[] YayaPortraits;
-        // 左手圆形摇杆，移动方向与键盘共用同一输入缓冲。
-        public DuelMoveStick MoveStick;
-        // 黑方当前权威血量的整数文本。
-        public Text FirstHealthText;
-        // 白方当前权威血量的整数文本。
-        public Text SecondHealthText;
-        // 返回大厅入口，由 GameFlow 执行退房与切场景。
-        public Button Exit;
-        // 在线连接中断时供玩家手动重新连接。
-        public Button Reconnect;
-        // 跳跃按钮，点击只缓存一次输入边沿。
-        public Button Jump;
-        // 普攻按钮，对应原生招式槽 1。
-        public Button Jab;
-        // 技能按钮，对应原生招式槽 2。
-        public Button Skill;
-        // 技能二按钮，对应原生输入槽 4。
-        public Button SkillTwo;
-        // 大招按钮，对应原生招式槽 3。
-        public Button Ultimate;
+        // GameFlow 在专用 RevUI 面板就绪后交给当前场景，离场时自动失效。
+        internal DuelHudPanel HudPanel { get; private set; }
+        // 单局复用数据容器，权威快照或连接、头像发生变化时才提交给面板。
+        private readonly DuelHudData _hudData = new DuelHudData();
+        // 最近一条输入提示，定时清掉后统一在 LateUpdate 落屏。
+        private string _inputFeedback = "";
         // 黑方的表现状态机，消费跑动、起跳及权威招式姿态。
         public DuelActorAnimator FirstAnimator;
         // 白方的表现状态机，独立保存自己的播放与过渡进度。
@@ -81,32 +30,24 @@ namespace RevGame.View
         public DuelStrikeEffects Effects;
         // 双人擂台镜头，只消费已确认快照的坐标和招式事件。
         public DuelCameraRig CameraRig;
-        // 黑方当前命中数标签，连段结束后隐藏文字。
-        public Text FirstCombo;
-        // 白方当前命中数标签。
-        public Text SecondCombo;
         // 最近一次消费命中或招式事件的帧号，避免同一快照重复播放。
         private int _seenFrame = -1;
-        // 已播放的终局码，避免结算文字每渲染帧重复弹动。
-        private int _presentedResult;
         // HUD 点按后的招式编号，由下一次输入采样取走。
         private int _clickedAction;
         // 待下一次 Update 消费的一次跳跃点按。
         private bool _clickedJump;
         // 输入提示结束的本地非缩放时间。
         private float _inputFeedbackUntil;
-        // 最近一次绘制按钮说明的座位，避免每次刷新 HUD 都重设图标和字形。
-        private GoSide _hudSeat;
-        // 最后使用的表情索引。切片播放阶段或受击状态改变时才更换头像。
-        private readonly int[] _yayaExpression = { -1, -1 };
         // 白方上一次用于选跳跃姿态的高度，单位为千分格。高度不变时沿用最近一次升降方向。
         private readonly int[] _lastYayaAltitude = new int[2];
         // 最近一次离地高度变化是否向下，决定使用下落还是上升的两张图。
         private readonly bool[] _yayaDescending = new bool[2];
-        // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
-        private const float ActorScale = .138f;
+        // 原生水平千分格映射到擂台设计像素，预测、镜头、边界和技能都读同一比例。
+        public const float ArenaScale = .195f;
+        // 跳跃高度单独按角色原画画布比例换算，避免放宽场地时人物跳出画面。
+        private const float HeightScale = .138f;
         // 两个站位小于一步的距离时保持已有镜像，防止重叠或相互穿过时连续翻面。
-        private const float FacingHoldDistance = 140 * ActorScale;
+        private const float FacingHoldDistance = 140 * ArenaScale;
         // 当前真正显示的黑方朝向。
         private int _firstDrawFacing = 1;
         // 当前真正显示的白方朝向。
@@ -136,23 +77,23 @@ namespace RevGame.View
         internal int LastHudActionForCheck { get; private set; }
 #endif
 
-        // 绑定场景按钮，只转发输入和流程请求。
-        private void Start()
+        // 场景激活后先绑定角色资源和 RevUI，GameFlow 确认可画后才提交 Ready。
+        internal void AttachHud(DuelHudPanel hud)
         {
+            HudPanel = hud;
+            hud.Attach(this);
             BindDuelRoster();
-            RevGame.UI.GameMobileLayout.EnableDuelHud(Hud);
-            KeyboardGuide.SetActive(!UnityEngine.Device.Application.isMobilePlatform);
-            Exit.onClick.AddListener(ReturnHome);
-            Reconnect.onClick.AddListener(ReconnectServer);
-            Jab.onClick.AddListener(() => QueueHudPress(1));
-            Skill.onClick.AddListener(() => QueueHudPress(2));
-            SkillTwo.onClick.AddListener(() => QueueHudPress(4));
-            Ultimate.onClick.AddListener(() => QueueHudPress(3));
-            Jump.onClick.AddListener(() => QueueHudPress(0));
+            Effects.Prepare();
+        }
+
+        // 失焦和切后台由 Revolution 统一去重，按住的触控和预测在同一处归零。
+        private void OnEnable()
+        {
+            RevEvent.AddEventListener(RevAppLifecycle.Paused, ClearHeldControls, owner: this);
         }
 
         // 只缓存 UGUI 按下事件，Update 仍负责与键盘合并并调用业务入口。
-        private void QueueHudPress(int action)
+        internal void QueueHudPress(int action)
         {
             if (action == 0)
             {
@@ -169,47 +110,33 @@ namespace RevGame.View
         }
 
         // 把当前端点和昵称交回 PvP 服务，由连接流程决定能否续局。
-        private void ReconnectServer()
+        internal void ReconnectServer()
         {
             var service = RevServices.GetRequired<PvpService>();
             service.StartServer(service.Endpoint, service.Nickname);
         }
 
-        // 窗口失焦时可能收不到 PointerUp。清除本地按住状态，回到窗口后重新接收输入。
-        private void OnApplicationFocus(bool focused)
-        {
-            if (!focused)
-            {
-                ClearHeldControls();
-            }
-        }
-
-        // Android 切到后台时不保证先收到失焦或抬起事件。
-        private void OnApplicationPause(bool paused)
-        {
-            if (paused)
-            {
-                ClearHeldControls();
-            }
-        }
-
         // 场景退出或组件被禁用时，和失焦一样清除未发送按键与预测轨迹。
         private void OnDisable()
         {
+            RevEvent.RemoveAllByOwner(this);
             ClearHeldControls();
         }
 
         // 清除触控状态及本地预测。已发送的输入仍由权威处理，清理表现不会撤销它们。
-        private void ClearHeldControls()
+        internal void ClearHeldControls()
         {
-            MoveStick?.ResetInput();
+            if (HudPanel != null)
+            {
+                HudPanel.MoveStick.ResetInput();
+            }
             _clickedJump = false;
             _clickedAction = 0;
             RevServices.Get<PvpService>()?.ClearDuelUnsealedInput();
         }
 
         // 交给统一 GameFlow 退房和换场景。
-        private void ReturnHome()
+        internal void ReturnHome()
         {
             RevServices.GetRequired<GameFlow>().ReturnHome();
         }
@@ -217,12 +144,17 @@ namespace RevGame.View
         // 每个表现帧采样键盘及触摸，交给业务服务缓存到下一逻辑帧。
         private void Update()
         {
+            // 编辑器的 Game 视图和主窗口焦点分离，RevUI 仍可能收到有效触点。
+            if (HudPanel == null || (!Application.isEditor && RevAppLifecycle.IsBackground))
+            {
+                return;
+            }
             var service = RevServices.GetRequired<PvpService>();
             bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
             bool right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
             int keyboard = (right ? 1 : 0) - (left ? 1 : 0);
             // 键盘和触控都输出同一种离散意图。反向同时按住时归中。
-            int direction = Mathf.Clamp(keyboard + MoveStick.Direction, -1, 1);
+            int direction = Mathf.Clamp(keyboard + HudPanel.MoveStick.Direction, -1, 1);
             int action = Input.GetKeyDown(KeyCode.J) ? 1 : Input.GetKeyDown(KeyCode.K) ? 2 :
                 Input.GetKeyDown(KeyCode.L) ? 4 : Input.GetKeyDown(KeyCode.I) ? 3 : _clickedAction;
             _clickedAction = 0;
@@ -235,7 +167,7 @@ namespace RevGame.View
             else if (_inputFeedbackUntil != 0 && Time.unscaledTime >= _inputFeedbackUntil)
             {
                 _inputFeedbackUntil = 0;
-                InputFeedback.text = "";
+                _inputFeedback = "";
             }
             _clickedJump = false;
             if (Input.GetKeyDown(KeyCode.Escape))
@@ -249,7 +181,7 @@ namespace RevGame.View
         {
             DuelSnapshot state = service.DuelSnapshot;
             bool black = service.MySide == GoSide.Black;
-            string name = ActionCaption(action, black ? _blackYaya : _whiteYaya);
+            string name = DuelHudPanel.ActionCaption(action, black ? _blackYaya : _whiteYaya);
             int energy = black ? state.FirstEnergy : state.SecondEnergy;
             int cost = action == 2 ? DuelConfig.SkillCost : action == 3 ? DuelConfig.UltimateCost : action == 4 ? DuelConfig.SkillTwoCost : 0;
             int stun = black ? state.FirstStun : state.SecondStun;
@@ -277,50 +209,18 @@ namespace RevGame.View
             {
                 message = "已缓冲";
             }
-            InputFeedback.text = name + "  ·  " + message;
+            _inputFeedback = name + "  ·  " + message;
             _inputFeedbackUntil = Time.unscaledTime + .85f;
-        }
-
-        // 确认席位后更新按键说明，黑白两边的同一按键继续提交相同的原生动作号。
-        private void PaintSeatControls(GoSide side)
-        {
-            if (_hudSeat == side || side == GoSide.Empty || KeyboardLegend == null)
-            {
-                return;
-            }
-            _hudSeat = side;
-            bool yaya = side == GoSide.White ? _whiteYaya : _blackYaya;
-            Sprite[] glyphs = yaya ? YayaSkillGlyphs : EmberSkillGlyphs;
-            SkillCaptions[0].text = ActionCaption(2, yaya);
-            SkillCaptions[1].text = ActionCaption(4, yaya);
-            SkillCaptions[2].text = ActionCaption(3, yaya);
-            for (int i = 0; i < SkillGlyphs.Length; i++)
-            {
-                SkillGlyphs[i].sprite = glyphs[i];
-            }
-            KeyboardLegend.text = yaya
-                ? "A/D 移动    SPACE 跳跃    J 普攻    K 鸦袭    L 掠羽    I 鸦宴"
-                : "A/D 移动    SPACE 跳跃    J 普攻    K 贯枪    L 坠枪    I 赤阵";
-        }
-
-        // 动作名只影响本机显示，技能能量与取消窗口由原生动作槽决定。
-        private static string ActionCaption(int action, bool yaya)
-        {
-            return action switch
-            {
-                1 => "普攻",
-                2 => yaya ? "鸦袭" : "贯枪",
-                3 => yaya ? "鸦宴" : "赤阵",
-                4 => yaya ? "掠羽" : "坠枪",
-                _ => "跳跃"
-            };
         }
 
         // 在独立播放时钟上取样。到包可以批量推进原生世界，画面仍按相邻已确认帧插值。
         private void LateUpdate()
         {
+            if (HudPanel == null)
+            {
+                return;
+            }
             var service = RevServices.GetRequired<PvpService>();
-            PaintSeatControls(service.MySide);
             if (!service.DuelDisplay.Sample(Time.unscaledDeltaTime, service.Mode != PvpConnectionMode.Local,
                 out DuelSnapshot view, out DuelSnapshot next, out float fraction))
             {
@@ -359,7 +259,8 @@ namespace RevGame.View
                     PaintLocalMotion(service, view.SecondAction, ref secondPosition, ref secondMove, ref secondFacing, ref secondAltitude);
                 }
             }
-            if (_seenFrame != view.Frame)
+            bool newFrame = _seenFrame != view.Frame;
+            if (newFrame)
             {
                 // 正常跨帧时依序消费特效；重连或长停顿后只保留最近四帧的短时表现。
                 for (int frame = Mathf.Max(_seenFrame + 1, view.Frame - 3); frame <= view.Frame; frame++)
@@ -367,19 +268,6 @@ namespace RevGame.View
                     PaintDuelEvents(service.DuelDisplay.Get(frame), frame > 0 ? service.DuelDisplay.Get(frame - 1) : default);
                 }
                 _seenFrame = view.Frame;
-                FirstHealth.fillAmount = Mathf.Clamp01(view.FirstHealth / (float)DuelConfig.Health);
-                SecondHealth.fillAmount = Mathf.Clamp01(view.SecondHealth / (float)DuelConfig.Health);
-                FirstEnergy.fillAmount = Mathf.Clamp01(view.FirstEnergy / (float)DuelConfig.Energy);
-                SecondEnergy.fillAmount = Mathf.Clamp01(view.SecondEnergy / (float)DuelConfig.Energy);
-                FirstHealthText.text = view.FirstHealth.ToString();
-                SecondHealthText.text = view.SecondHealth.ToString();
-                FirstName.text = (_blackYaya ? "鸦鸦" : "绯焰") + "  /  " + service.BlackName;
-                SecondName.text = service.WhiteName + "  /  " + (_whiteYaya ? "鸦鸦" : "绯焰");
-                FirstCombo.text = view.FirstCombo > 1 ? view.FirstCombo + " HIT" : "";
-                SecondCombo.text = view.SecondCombo > 1 ? view.SecondCombo + " HIT" : "";
-                Clock.text = DuelConfig.FrameLimit == 0
-                    ? "∞"
-                    : Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - view.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             }
             if (Mathf.Abs(confirmedFirstX - confirmedSecondX) >= FacingHoldDistance)
             {
@@ -394,30 +282,44 @@ namespace RevGame.View
                 _blackYaya ? SampleYayaJumpPose(0, firstAltitude) : -1);
             SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction,
                 _whiteYaya ? SampleYayaJumpPose(1, secondAltitude) : -1);
-            if (_blackYaya)
-            {
-                PaintYayaExpression(0, view.FirstAction, view.FirstHealth, view.FirstStun, view.FirstY, firstMove != 0, FirstAnimator, FirstPortrait);
-            }
-            if (_whiteYaya)
-            {
-                PaintYayaExpression(1, view.SecondAction, view.SecondHealth, view.SecondStun, view.SecondY, secondMove != 0, SecondAnimator, SecondPortrait);
-            }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
 #endif
+            PaintHud(service, view, newFrame, firstMove, secondMove);
+        }
+
+        // 只在权威播放帧或可见反馈改变时提交，避免渲染频率驱动 HUD 重建。
+        private void PaintHud(PvpService service, DuelSnapshot frame, bool newFrame, int firstMove, int secondMove)
+        {
             bool disconnected = service.Mode != PvpConnectionMode.Local && !service.Connected;
-            Reconnect.gameObject.SetActive(disconnected && service.Mode == PvpConnectionMode.Server && service.DuelReconnectAvailable);
-            Banner.text = service.DuelError.Length != 0 ? service.DuelError :
+            bool reconnect = disconnected && service.Mode == PvpConnectionMode.Server && service.DuelReconnectAvailable;
+            string banner = service.DuelError.Length != 0 ? service.DuelError :
                 disconnected ? "连接中断 · 决斗等待同步" :
                 !service.DuelBothReady ? "等待双方进入决斗场" :
-                view.Result == 0 ? (view.Frame < 18 ? "开打！" : "") :
-                view.Result == 3 ? "平局" : (view.Result == (int)service.MySide ? "决斗胜利" : "决斗落败");
-            if (_presentedResult == 0 && view.Result != 0)
+                frame.Result == 0 ? (frame.Frame < 18 ? "开打！" : "") :
+                frame.Result == 3 ? "平局" : (frame.Result == (int)service.MySide ? "决斗胜利" : "决斗落败");
+            int black = _blackYaya ? YayaExpression(frame.FirstAction, frame.FirstHealth, frame.FirstStun, frame.FirstY, firstMove != 0, FirstAnimator) : 0;
+            int white = _whiteYaya ? YayaExpression(frame.SecondAction, frame.SecondHealth, frame.SecondStun, frame.SecondY, secondMove != 0, SecondAnimator) : 0;
+            if (!newFrame && _hudData.Banner == banner && _hudData.Feedback == _inputFeedback &&
+                _hudData.Seat == service.MySide && _hudData.CanReconnect == reconnect &&
+                _hudData.BlackName == service.BlackName && _hudData.WhiteName == service.WhiteName &&
+                _hudData.BlackExpression == black && _hudData.WhiteExpression == white)
             {
-                _presentedResult = view.Result;
-                Banner.transform.DOPunchScale(Vector3.one * .16f, .4f).SetUpdate(true).SetLink(gameObject);
+                return;
             }
+            _hudData.Frame = frame;
+            _hudData.Seat = service.MySide;
+            _hudData.BlackYaya = _blackYaya;
+            _hudData.WhiteYaya = _whiteYaya;
+            _hudData.BlackName = service.BlackName;
+            _hudData.WhiteName = service.WhiteName;
+            _hudData.BlackExpression = black;
+            _hudData.WhiteExpression = white;
+            _hudData.CanReconnect = reconnect;
+            _hudData.Banner = banner;
+            _hudData.Feedback = _inputFeedback;
+            HudPanel.SetData(_hudData);
         }
 
         // 四张跳跃图依次为起跳、收膝、下落伸腿、落地准备。用同一份实际或预测高度判断阶段。
@@ -437,17 +339,12 @@ namespace RevGame.View
         }
 
         // 腿法的第一张和收势沿用原画 02 号，蓄力和接触使用 23 号。跟随实际换图，受击和倒地优先。
-        private void PaintYayaExpression(int seat, int action, int health, int stun, int altitude, bool moving, DuelActorAnimator animator, Image portrait)
+        private static int YayaExpression(int action, int health, int stun, int altitude, bool moving, DuelActorAnimator animator)
         {
             bool kicking = action is 1 or 5 or 6;
             bool relaxedKick = kicking && !animator.IsAttackFocusFrame;
             bool playful = action is 2 or 3 or 4 || relaxedKick || (moving && action == 0 && altitude == 0);
-            int expression = health == 0 ? 4 : stun > 0 ? 3 : playful ? 2 : action != 0 || altitude > 0 ? 1 : 0;
-            if (portrait != null && _yayaExpression[seat] != expression)
-            {
-                _yayaExpression[seat] = expression;
-                portrait.sprite = YayaPortraits[expression];
-            }
+            return health == 0 ? 4 : stun > 0 ? 3 : playful ? 2 : action != 0 || altitude > 0 ? 1 : 0;
         }
 
         // 把预测修正限制在本机的绘制坐标。转向立即换姿态，收到不同结果时位置在很短时间内归位。
@@ -457,7 +354,7 @@ namespace RevGame.View
             bool predicting = service.TrySampleDuelMotion(delta, out DuelPredictedMotion predicted);
             if (predicting)
             {
-                position = new Vector2(predicted.X, predicted.Y) * ActorScale;
+                position = new Vector2(predicted.X * ArenaScale, predicted.Y * HeightScale);
                 if (confirmedAction == 0)
                 {
                     move = predicted.Movement;
@@ -494,12 +391,13 @@ namespace RevGame.View
         // 命中特效和受击闪光读取同一逻辑帧，且与渲染频率无关。
         private void PaintDuelEvents(DuelSnapshot view, DuelSnapshot previous)
         {
-            Vector2 first = new Vector2(view.FirstX, view.FirstY) * ActorScale;
-            Vector2 second = new Vector2(view.SecondX, view.SecondY) * ActorScale;
+            CameraRig.ObserveBounds(view.FirstX, view.SecondX);
+            Vector2 first = new Vector2(view.FirstX * ArenaScale, view.FirstY * HeightScale);
+            Vector2 second = new Vector2(view.SecondX * ArenaScale, view.SecondY * HeightScale);
             Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, first, second,
-                DuelConfig.ActionRange(_blackYaya, view.FirstAction) * ActorScale);
+                DuelConfig.ActionRange(_blackYaya, view.FirstAction) * ArenaScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first,
-                DuelConfig.ActionRange(_whiteYaya, view.SecondAction) * ActorScale);
+                DuelConfig.ActionRange(_whiteYaya, view.SecondAction) * ArenaScale);
             if ((view.FirstAction == 3 && view.FirstAge == 0) || (view.SecondAction == 3 && view.SecondAge == 0))
             {
                 CameraRig.FocusUltimate();
@@ -508,14 +406,14 @@ namespace RevGame.View
             {
                 // 同帧对打可能已打断出招者。前一帧仍持有命中的动作编号。
                 int action = view.FirstAction != 0 ? view.FirstAction : Mathf.Max(1, previous.FirstAction);
-                Effects.Hit(0, action, view.FirstFacing, new Vector2(view.SecondX, view.SecondY) * ActorScale);
+                Effects.Hit(0, action, view.FirstFacing, second);
                 CameraRig.Hit(action, view.FirstFacing);
                 Flash(Second);
             }
             if (view.SecondHit != 0)
             {
                 int action = view.SecondAction != 0 ? view.SecondAction : Mathf.Max(1, previous.SecondAction);
-                Effects.Hit(1, action, view.SecondFacing, new Vector2(view.FirstX, view.FirstY) * ActorScale);
+                Effects.Hit(1, action, view.SecondFacing, first);
                 CameraRig.Hit(action, view.SecondFacing);
                 Flash(First);
             }
@@ -524,7 +422,7 @@ namespace RevGame.View
         // 逻辑坐标用千分格保存，只有绘制时才换算到屏幕单位。
         private static Vector2 ActorPosition(int x, int y, int nextX, int nextY, float fraction)
         {
-            return new Vector2(Mathf.Lerp(x, nextX, fraction), Mathf.Lerp(y, nextY, fraction)) * ActorScale;
+            return new Vector2(Mathf.Lerp(x, nextX, fraction) * ArenaScale, Mathf.Lerp(y, nextY, fraction) * HeightScale);
         }
 
         // 更新屏幕位置和镜像方向，只修改 RectTransform。

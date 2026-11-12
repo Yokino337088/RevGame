@@ -108,7 +108,7 @@ namespace RevGame.Editor
         {
             return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildAgentAssets").Invoke(null, null);
         }
-        [RevAutomationAction("game.pvp.duel-build", Environment = "edit", Keys = new string[0], Description = "生成雨夜街机决斗场景并加入构建列表")]
+        [RevAutomationAction("game.pvp.duel-build", Environment = "edit", Keys = new string[0], Description = "迁移决斗切片并生成晴天擂台与 RevUI HUD")]
         // 编辑器自动化桥接入口，调用同一场景构建器，避免复制场景配方。
         public static object BuildDuel(RevAutomationRequest request)
         {

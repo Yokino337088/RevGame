@@ -48,7 +48,7 @@ namespace RevGame.Editor
         /// <summary>固定项目配方装配升级共享材质和网格；仅加载既有竞技场内容，不改当前场景，不更换Prefab GUID。</summary>
         private static void InstallUpgradeFeedback(GameObject arena)
         {
-            const string path = "Assets/GameRes/Endless/EndlessCardUpgrade.mat";
+            const string path = "Assets/GameRes/Material/Endless/EndlessCardUpgrade.mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {

@@ -35,14 +35,6 @@ namespace RevGame.View
                 SecondAnimator.UseRoster(ember);
             }
             Effects.SetRoles(_blackYaya, _whiteYaya);
-            // 旧场景或预览也能兼容。正式配方会把 FirstPortrait 直接序列化。
-            if (FirstPortrait == null)
-            {
-                FirstPortrait = Hud.Find("BlackPortrait").GetComponent<Image>();
-            }
-            Sprite emberPortrait = FirstPortrait.sprite;
-            FirstPortrait.sprite = _blackYaya ? YayaPortraits[0] : emberPortrait;
-            SecondPortrait.sprite = _whiteYaya ? YayaPortraits[0] : emberPortrait;
             if (_blackYaya == _whiteYaya)
             {
                 _blackBadge = BuildMirrorBadge(First, "◆ 1P 黑方", new Color(1f, .53f, .36f));
@@ -63,7 +55,7 @@ namespace RevGame.View
             badge.anchorMax = actor.rectTransform.anchorMax;
             badge.sizeDelta = new Vector2(180, 38);
             var text = node.GetComponent<Text>();
-            text.font = FirstName.font;
+            text.font = HudPanel.FirstName.font;
             text.fontSize = 24;
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.MiddleCenter;

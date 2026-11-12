@@ -36,7 +36,6 @@ namespace RevGame.Pvp
         public Image Meter;
         public Text Percent;
         // 这些值仅驱动画面，不参与锁定或进度放行。
-        private DuelRole _painted;
         private bool _locked;
         private int _target = -1;
         private Tween _fill;
@@ -46,9 +45,8 @@ namespace RevGame.Pvp
         {
             Player.text = seat + "  /  " + (own ? "你" : ShortPlayerName(player));
             RoleName.text = DuelPrepPanelBase.RoleName(role);
-            if (_painted != role)
+            if (Portrait.sprite != sprite)
             {
-                _painted = role;
                 Portrait.sprite = sprite;
                 Echo.sprite = sprite;
                 Portrait.rectTransform.DOKill();
@@ -114,43 +112,15 @@ namespace RevGame.Pvp
         // 全屏遮挡与装饰脉冲只活在本次面板期间。
         public RectTransform Accent;
         private CanvasGroup _cover;
-        // 满屏底图位于安全框外，使用原画 16:9 设计比例做居中裁边。
-        private RectTransform _background;
         private Tween _fade;
         private Tween _pulse;
 
-        // 初次绑定安全框，底图仍铺满屏幕，宽屏不切掉锁角或返回按钮。
+        // 运行时与 Prefab Mode 的布局都由序列化组件驱动，这里只装配控件行为。
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             BlackSeat.Player.supportRichText = false;
             WhiteSeat.Player.supportRichText = false;
             _cover = GetComponent<CanvasGroup>();
-            _background = transform.Find("screenBackground") as RectTransform;
-            FitBackground();
-        }
-
-        // 宿主画布和安全区变化时保留原画比例。尚未分配布局尺寸时用预制体的全铺设置。
-        private void OnRectTransformDimensionsChange()
-        {
-            FitBackground();
-        }
-
-        // 增加较短一轴的尺寸以覆盖画布，多出来的部分在屏幕边缘自然裁掉。
-        private void FitBackground()
-        {
-            if (_background == null || !(_background.parent is RectTransform parent))
-            {
-                return;
-            }
-            Vector2 size = parent.rect.size;
-            if (size.x <= 0f || size.y <= 0f)
-            {
-                return;
-            }
-            const float aspect = 16f / 9f;
-            _background.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(size.x, size.y * aspect));
-            _background.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(size.y, size.x / aspect));
         }
 
         // 淡入可见后才通知框架本面板真正打开，选角时间不会被入场动效占用。

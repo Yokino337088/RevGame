@@ -42,6 +42,7 @@
 - 高频查询使用调用方自有缓冲区；AI一轮查询复用一张独立深快照，不共享全局可变草稿，不移动实战棋子来试算。
 - 战斗视图/飘字/弹道走 `RevPool`；动画和异步回调必须有回收/过期检查。棋子用共享材质，禁止在每帧访问 `renderer.material`。
 - 保留现有层级，层内按功能细分（如 `Battle/AI`、`Services/Battle/Preparation`、`View/Combat/Effects`、`UI/Panels/Battle`）；Editor仍统一放 `Assets/Editor/RevGame`。生成目录不擅自搬迁。
+- 项目自有材质资产统一放在 `Assets/GameRes/Material`，按模块建子目录；Shader 放在 `Assets/GameShader`。预制体和场景通过 GUID 引用材质，AB 归属按资源实际使用范围和寿命配置。
 - AB配置通过项目 `GameResourceBuild.Configure` 串联框架工具；共享帧/Shader显式分包，重复依赖与循环依赖必须在构建前解决。
 - 进入AB的项目Sprite图片必须通过 `GameSpriteAtlasBuild` 纳入唯一的Sprite Atlas V2；按实际使用范围/寿命区分常用与备用图集，禁止重新加载散图Texture2D。引擎生成字形纹理、内置UISprite和非Sprite采样纹理需按规范区分，不能错误打包。
 - 图集通过 `GameSpriteAtlasService` + `RevResManager` 绑定；新代码不得逐棋子/逐帧GetSprite、克隆材质或绕开框架引用计数。必须验收真实AB、背景UV、动画与重复进出战斗。

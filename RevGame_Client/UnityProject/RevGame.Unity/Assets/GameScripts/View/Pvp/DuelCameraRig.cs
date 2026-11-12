@@ -1,96 +1,182 @@
+using RevGame.Pvp.Duel;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace RevGame.View
 {
-    // 由决斗场景持有的双人镜头。接收权威播放坐标与命中事件，变换只作用于擂台和角色层。
+    /// <summary>双人镜头使用权威播放坐标平滑构图，舞台、角色和结界一起移动，RevUI 留在屏幕上。</summary>
     public sealed class DuelCameraRig : MonoBehaviour
     {
-        // 包含角色和技能图层的变换。轴心与角色锚点高度一致，缩放时脚下地平线保持稳定。
+        // 决斗舞台的全屏矩形，轴心与角色锚点一致。
         public RectTransform Fighters;
-        // 场景底图随镜头做较小幅度视差。HUD 在此组件控制的图层之外。
+        // 单张小镇全景放在舞台的第一层；横向结界位置对应画中的两根晶柱。
         public Image Backdrop;
-        // 已应用的水平取景中心，单位为画布局部像素。
-        private float _pan;
-        // 已应用的擂台缩放，1 对应编辑器默认构图。
-        private float _zoom = 1;
-        // 本次命中震动总时长，单位为表现秒。
-        private float _shakeDuration;
-        // 当前震动剩余秒数。新事件可覆盖同级或较弱震动。
-        private float _shakeLeft;
-        // 当前震动的峰值位移，单位为画布局部像素。
-        private float _shakePower;
-        // 横向震动的起始方向，来自命中者面向。
-        private int _shakeDirection;
-        // 大招起手的短暂背景压暗和聚焦时间，仅影响画面。
-        private float _ultimateFocus;
+        // 与原生边界对齐的两道结界，常驻舞台，触边才提高亮度。
+        public DuelArenaFxGraphic LeftWard, RightWard;
 
-        // 权威大招开始后收紧镜头，角色分得很开时仍保留足够的画面宽度。
+        // 全景里两根晶柱中心的横向归一化间距，属于美术定位。
+        private const float PillarSpan = .654f;
+        // 结界扫亮、扩散和回落共占用的表现秒数。
+        private const float WardSeconds = .58f;
+        // 相机中心是相对舞台原点的设计像素；速度状态由 SmoothDamp 连续积累。
+        private float _center, _centerSpeed;
+        // 镜头尺寸与其速度，缩远较快，回到近景较慢。
+        private float _zoom = 1f, _zoomSpeed;
+        // 起跳时稍向上看，落地平缓回到同一个地平线。
+        private float _lift, _liftSpeed;
+        // 第一次采样直接取开局位置，避免从编辑器构图突然划过场地。
+        private bool _initialized;
+        // 命中冲量的当前剩余秒数、总秒数和横向峰值。
+        private float _hitLeft, _hitDuration, _hitPower;
+        // 由攻击方向决定的镜头冲量符号。
+        private int _hitDirection;
+        // 大招起手的聚焦播放头，短推进后按曲线平缓还原。
+        private float _focusLeft;
+        // 两席上一次碰到的边界，0 为场内；持续顶住时不会每帧触发。
+        private int _firstEdge, _secondEdge;
+        // 两道结界上次触发的绝对表现秒数。
+        private float _leftAt = float.NegativeInfinity, _rightAt = float.NegativeInfinity;
+        // 结界平时是浅青，触发后用更明亮的白青轮廓压住场地边缘。
+        private static readonly Color WardColor = new Color(.30f, .96f, .84f);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        // 以真实播放帧计数，验收能核对撞边只触发一次。
+        internal int LeftTouchesForCheck { get; private set; }
+        internal int RightTouchesForCheck { get; private set; }
+#endif
+
+        /// <summary>权威大招起手时请求短时聚焦，双方距离仍限制最大推进。</summary>
         public void FocusUltimate()
         {
-            _ultimateFocus = .42f;
+            _focusLeft = .62f;
         }
 
-        // 同一权威命中只进入这里一次。大招或技能震动持续时，轻击不会把强效果打断。
+        /// <summary>实际命中后触发一次定向冲量。用强度覆盖弱效果，快速连击也不会连续硬切镜头。</summary>
         public void Hit(int action, int facing)
         {
-            // 普攻用命中特效和闪色反馈，技能与大招才叠加一次镜头冲量。
-            float power = action == 3 ? 19 : action == 2 || action == 4 ? 11 : 0;
-            if (power == 0)
+            float power = action == 3 ? 18f : action is 2 or 4 ? 10f : 3f;
+            if (_hitLeft > 0 && power < _hitPower)
             {
                 return;
             }
-            if (_shakeLeft > 0 && power < _shakePower)
-            {
-                return;
-            }
-            _shakePower = power;
-            _shakeDirection = facing < 0 ? -1 : 1;
-            _shakeDuration = action == 3 ? .28f : .16f;
-            _shakeLeft = _shakeDuration;
+            _hitPower = power;
+            _hitDirection = facing < 0 ? -1 : 1;
+            _hitDuration = action == 3 ? .27f : .17f;
+            _hitLeft = _hitDuration;
         }
 
-        // 以两席已确认的横坐标共同取景。预测位移预留在安全边距中，避免回滚拉扯全场镜头。
+        /// <summary>按权威横坐标识别从场内碰到左右边界的事件，传入单位为千分格。</summary>
+        internal void ObserveBounds(int firstX, int secondX)
+        {
+            int first = Edge(firstX);
+            int second = Edge(secondX);
+            if ((first == -1 && first != _firstEdge) || (second == -1 && second != _secondEdge))
+            {
+                _leftAt = Time.unscaledTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                LeftTouchesForCheck++;
+#endif
+            }
+            if ((first == 1 && first != _firstEdge) || (second == 1 && second != _secondEdge))
+            {
+                _rightAt = Time.unscaledTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                RightTouchesForCheck++;
+#endif
+            }
+            _firstEdge = first;
+            _secondEdge = second;
+        }
+
+        // 视觉边界使用同一份原生配置，不拿图片边缘判断能否继续移动。
+        private static int Edge(int x)
+        {
+            return x <= -DuelConfig.ArenaExtent ? -1 : x >= DuelConfig.ArenaExtent ? 1 : 0;
+        }
+
+        /// <summary>以同一帧两席横坐标和跳跃高度构图，先确保角色安全边距，再限制背景不露出画布边缘。</summary>
         public void Paint(float blackX, float whiteX, float height, float seconds)
         {
             float width = Fighters.rect.width;
-            if (width <= 0)
+            float canvasHeight = Fighters.rect.height;
+            if (width < 1 || canvasHeight < 1)
             {
                 return;
             }
-            // 两人距离加角色和出招边距决定可用的最大倍率。手机与桌面按实际宽度计算。
-            float span = Mathf.Abs(whiteX - blackX);
-            float fit = width * .87f / (span + 560);
-            _ultimateFocus = Mathf.Max(0, _ultimateFocus - seconds);
-            float focus = Mathf.Clamp01(_ultimateFocus / .32f);
-            float targetZoom = Mathf.Min(fit, Mathf.Lerp(1.17f, 1.25f, focus));
-            float blend = 1 - Mathf.Exp(-9 * seconds);
-            _zoom = Mathf.Min(fit, Mathf.Lerp(_zoom, targetZoom, blend));
+
+            float left = Mathf.Min(blackX, whiteX);
+            float right = Mathf.Max(blackX, whiteX);
+            float span = right - left;
+            float dt = Mathf.Min(seconds, .05f);
+            float focusTime = 1 - _focusLeft / .62f;
+            float focus = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, .23f, focusTime)) *
+                (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.44f, 1, focusTime)));
+            _focusLeft = Mathf.Max(0, _focusLeft - dt);
+
+            // 留出身体宽度和小幅冲量。远距即时退到安全倍率，近距用较慢速度回到中景。
+            const float bodyMargin = 198;
+            float safeZoom = width * .92f / (span + bodyMargin * 2);
+            float desiredZoom = Mathf.Min(safeZoom, 1.04f + .085f * focus);
             float middle = (blackX + whiteX) * .5f;
-            _pan = Mathf.Lerp(_pan, -middle * _zoom, blend);
-            // 中心平滑移动时也要保持双方在框内。大位移会先退到安全取景范围。
-            float half = width * .48f;
-            float low = -half - (Mathf.Min(blackX, whiteX) - 205) * _zoom;
-            float high = half - (Mathf.Max(blackX, whiteX) + 205) * _zoom;
-            _pan = Mathf.Clamp(_pan, low, high);
+            if (!_initialized)
+            {
+                _zoom = desiredZoom;
+                _center = middle;
+                _initialized = true;
+            }
+            _zoom = Mathf.SmoothDamp(_zoom, desiredZoom, ref _zoomSpeed, desiredZoom < _zoom ? .12f : .28f, Mathf.Infinity, dt);
+            if (_zoom > safeZoom)
+            {
+                _zoom = safeZoom;
+                _zoomSpeed = Mathf.Min(0, _zoomSpeed);
+            }
 
-            _shakeLeft = Mathf.Max(0, _shakeLeft - seconds);
-            float decay = _shakeDuration > 0 ? _shakeLeft / _shakeDuration : 0;
-            // 单次偏移后平滑回中，避免短时间反复改变整个角色层的移动方向。
-            float shake = 6.75f * (1 - decay) * decay * decay * _shakePower;
-            float vertical = Mathf.Clamp(height * -.12f, -34, 0);
-            Fighters.localScale = Vector3.one * _zoom;
-            Fighters.anchoredPosition = new Vector2(_pan + shake * _shakeDirection, vertical + shake * .35f);
+            // 小幅步法落在取景死区。贴边时仍把两席和舞台端点留在构图内。
+            float deadZone = Mathf.Lerp(32, 10, focus);
+            float shift = middle - _center;
+            float desiredCenter = middle - Mathf.Clamp(shift, -deadZone, deadZone);
+            _center = Mathf.SmoothDamp(_center, desiredCenter, ref _centerSpeed, .17f, Mathf.Infinity, dt);
+            float halfView = width * .46f / _zoom;
+            _center = Mathf.Clamp(_center, right + bodyMargin - halfView, left - bodyMargin + halfView);
 
-            // 底图保持出血范围，并随取景小幅平移。大招聚焦时压暗背景来衬托特效。
-            RectTransform background = Backdrop.rectTransform;
-            Rect art = Backdrop.sprite.rect;
-            float aspectCover = Mathf.Max(1, background.rect.height * art.width / (width * art.height));
-            float backdropZoom = 1.18f + .09f * focus;
-            background.localScale = new Vector3(aspectCover * backdropZoom, backdropZoom, 1);
-            float maxPan = width * (background.localScale.x - 1) * .48f;
-            background.anchoredPosition = new Vector2(Mathf.Clamp(_pan * .19f + shake * .4f, -maxPan, maxPan), vertical * .44f);
-            Backdrop.color = Color.Lerp(Color.white, new Color(.56f, .48f, .69f), focus * .56f);
+            float stageWidth = DuelConfig.ArenaExtent * PvpDuelView.ArenaScale * 2f / PillarSpan;
+            float artWidth = Mathf.Max(stageWidth, (width + 46) / _zoom);
+            float scrollLimit = Mathf.Max(0, (artWidth - (width + 40) / _zoom) * .5f);
+            _center = Mathf.Clamp(_center, -scrollLimit, scrollLimit);
+
+            // 蓄力推进和命中冲量使用各自的曲线，冲量结束速度也回到零。
+            _hitLeft = Mathf.Max(0, _hitLeft - dt);
+            float decay = _hitDuration > 0 ? _hitLeft / _hitDuration : 0;
+            float kick = 6.75f * (1 - decay) * decay * decay * _hitPower;
+            _lift = Mathf.SmoothDamp(_lift, -Mathf.Clamp(height * .16f, 0, 54), ref _liftSpeed, .18f, Mathf.Infinity, dt);
+            float floor = _lift - Mathf.Max(0, 1 - _zoom) * 220;
+            Fighters.localScale = new Vector3(_zoom, _zoom, 1);
+            Fighters.anchoredPosition = new Vector2(-_center * _zoom - kick * _hitDirection, floor + kick * .24f);
+
+            // 预留屏幕出血，用地面和天空各自所需的高度确定大图尺寸。宽屏缩远时仍铺满。
+            RectTransform art = Backdrop.rectTransform;
+            const float ground = .225f;
+            const float artFloor = -172f;
+            float anchorY = canvasHeight * Fighters.pivot.y + floor;
+            float bottom = (anchorY + 22) / _zoom + artFloor;
+            float top = (canvasHeight - anchorY + 22) / _zoom - artFloor;
+            Rect sprite = Backdrop.sprite.rect;
+            art.sizeDelta = new Vector2(artWidth, Mathf.Max(artWidth * sprite.height / sprite.width, Mathf.Max(bottom / ground, top / (1 - ground))));
+            art.anchoredPosition = new Vector2(0, artFloor);
+            Backdrop.color = Color.Lerp(Color.white, new Color(.75f, .82f, .91f), focus * .65f);
+
+            PaintWard(LeftWard, _leftAt);
+            PaintWard(RightWard, _rightAt);
+        }
+
+        // 触发后立即闪亮，法纹向上扫过，再缓慢回落到常驻的浅色提示。
+        private static void PaintWard(DuelArenaFxGraphic ward, float started)
+        {
+            float phase = Mathf.Clamp01((Time.unscaledTime - started) / WardSeconds);
+            Color tint = WardColor;
+            tint.a = .14f + .86f * (1 - Mathf.SmoothStep(0, 1, phase));
+            ward.color = tint;
+            ward.Paint(DuelArenaFxGraphic.Shape.Ward, phase);
         }
     }
 }

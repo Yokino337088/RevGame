@@ -24,6 +24,8 @@ MonoBehaviour:
   - Raw
   - Art
   - Atlases
+  - Material/Pvp/DuelScene
+  - Effects/Pvp/DuelScene
   excludeExtensions:
   - .cs
   - .meta

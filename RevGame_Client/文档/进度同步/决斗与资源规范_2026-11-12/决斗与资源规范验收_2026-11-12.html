@@ -1,0 +1,26 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>决斗与资源规范验收</title>
+<style>
+:root{font-family:system-ui,"Microsoft Yahei",sans-serif;color:#26382e;background:#f5f1e7}
+body{margin:0} header{background:#183e30;color:#fff;padding:30px max(22px,calc((100% - 1070px)/2))}
+main{max-width:1070px;margin:20px auto;padding:0 18px} section{background:#fffcf5;border:1px solid #e1dac8;border-radius:12px;padding:19px 22px;margin:16px 0}
+h1{font-size:2rem;margin:7px 0 0} h2{font-size:1.15rem;color:#1f593f} p,li{line-height:1.65}
+table{width:100%;border-collapse:collapse} th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #e6decc} th{color:#1f593f}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:15px} figure{margin:0} img{display:block;width:100%;border:1px solid #e3dac7;border-radius:6px}
+figcaption{font-size:.9rem;margin:7px 0 12px} code{word-break:break-word;color:#36583d}
+</style>
+<header><div>REVGAME · UNITY 2022.3.15f1c1 · 2026-11-12</div><h1>决斗与资源规范验收</h1></header>
+<main><section><h2>资产迁移</h2>
+<p>共移动 19 份材质和 1 个粒子预制体，逐项复核了 GUID。扫描 1703 个项目文件、87 份材质、63 个 Shader 资产和 211 个序列化资产。错放目录、缺失 Meta、孤立 Meta、重复 GUID 和无法解析的资源 GUID 都是 0。</p>
+<table><tr><th>用途</th><th>目录</th><th>AB 归属</th></tr>
+<tr><td>决斗选角和加载</td><td><code>GameRes/Material/UI/PvpDuelPrep</code></td><td><code>ui_pvp_duelprep</code></td></tr>
+<tr><td>决斗擂台和粒子</td><td><code>GameRes/Material/Pvp/DuelScene</code> 和 <code>GameRes/Effects/Pvp/DuelScene</code></td><td>随内置场景交付</td></tr>
+<tr><td>无尽</td><td><code>GameRes/Material/Endless</code></td><td><code>endless_arena</code></td></tr>
+<tr><td>九路棋盘</td><td><code>GameRes/Material/Pvp/Board</code></td><td><code>pvp_arena</code></td></tr>
+<tr><td>大厅小屋</td><td><code>GameRes/Material/Lobby</code></td><td><code>lobby_cottage</code></td></tr></table>
+<p>87个项目材质目录合规；保留503/669个Art资源，排除166个，打包24/27张图集；24张图集，351张图片唯一覆盖。338 份手写业务脚本的条件分支通过了独立花括号检查。PC 和 Android 分别按工程既有入口构建并核对资源映射。</p></section>
+<section><h2>执行结果</h2><table><tr><th>测试</th><th>结果</th><th>执行范围</th></tr><tr><td>大厅与无尽材质</td><td>通过</td><td>6 个执行步骤，2 个清理步骤</td></tr><tr><td>绯焰人机决斗</td><td>通过</td><td>26 个执行步骤，4 个清理步骤</td></tr><tr><td>联机选角和加载</td><td>通过</td><td>13 个执行步骤，5 个清理步骤</td></tr><tr><td>鸦鸦镜像重入</td><td>通过</td><td>36 个执行步骤，4 个清理步骤</td></tr><tr><td>联机帧指纹</td><td>通过</td><td>4 个执行步骤，3 个清理步骤</td></tr></table>
+<ul><li>绯焰空挥动作 1,5,6，对手生命 100。左边界 -4500，持续按住共触发 1 次。技能命中后对手生命 85，本轮借用 18 个程序短效。</li><li>鸦鸦空挥动作 1,5,6，对手生命 100。左边界 -4500，持续按住共触发 1 次。技能命中后对手生命 85，本轮借用 17 个程序短效。</li><li>联机回归先复现白方帧号停在 0。客端改用已接纳的准备阶段判断后，重新验证了补帧和对账。</li><li>UTP 双端首次周期对账在第 40 帧，终局在第 84 帧。主客对账帧分别为 84 与 84。</li></ul><p>本地 C++ 与 C# 回归覆盖命中距离边缘、双方空挥、检查点恢复和逐帧一致性。手机端覆盖到 Android 原生库和 AB 构建。真实画面来自 Windows Editor Play 的 PC AB。大厅和无尽回归记录了 0 条 Unity 运行错误。</p></section>
+<section><h2>预制体和运行画面</h2><div class="grid"><figure><img src="prefab-select.jpg" alt="选角预制体"><figcaption>选角预制体 · 1920×1080 离屏预览</figcaption></figure><figure><img src="prefab-loading.jpg" alt="加载预制体"><figcaption>加载预制体 · 1920×1080 离屏预览</figcaption></figure><figure><img src="lobby.jpg" alt="真实 PC AB 冷启动大厅"><figcaption>真实 PC AB 冷启动大厅</figcaption></figure><figure><img src="endless.jpg" alt="隔离无尽局的棋盘与材质"><figcaption>隔离无尽局的棋盘与材质</figcaption></figure><figure><img src="select.jpg" alt="真实 PC AB 选角画面"><figcaption>真实 PC AB 选角画面</figcaption></figure><figure><img src="arena.jpg" alt="绯焰与鸦鸦进入晴天擂台"><figcaption>绯焰与鸦鸦进入晴天擂台</figcaption></figure><figure><img src="loading.jpg" alt="联机加载停在白方 37%"><figcaption>联机加载停在白方 37%</figcaption></figure><figure><img src="mirror.jpg" alt="鸦鸦镜像重入"><figcaption>鸦鸦镜像重入</figcaption></figure><figure><img src="ember-motion.gif" alt="绯焰决斗实录"><figcaption>绯焰的空挥与擂台运动连拍</figcaption></figure><figure><img src="yaya-motion.gif" alt="鸦鸦决斗实录"><figcaption>鸦鸦的空挥与擂台运动连拍</figcaption></figure></div></section>
+<section><h2>框架接入</h2><p>GameFlow 使用 RevScene 交接物理场景，使用 RevUI 打开选角、加载和战斗 HUD，图集通过 GameSpriteAtlasService 和 RevResManager 按需持有。舞台短效使用 RevPool。画面、动画和运镜消费已确认快照，原生内核负责移动边界与伤害。</p>
+<p>新擂台由内置 imagegen 生成。提示词指定晴天下的宽幅中世纪奇幻小镇、横向石台、两侧青色晶柱和供角色移动的连续地面。运镜参考 <a href="https://www.bilibili.com/video/BV1ccpP6BEoz/">用户给出的对打片段</a>、<a href="https://www.snk-corp.co.jp/official/kof-xv/trailers/">拳皇 XV</a> 与 <a href="https://teamninja-studio.com/doa6/us/stages.html">生或死 6 场地</a>。</p></section>
+</main></html>

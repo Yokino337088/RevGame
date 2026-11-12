@@ -22,6 +22,10 @@ namespace RevGame.Editor
         private const string ResourceRoot = "Assets/GameRes";
         private const string ArtRoot = ResourceRoot + "/Art";
         private const string AtlasRoot = ResourceRoot + "/Atlases";
+        /// <summary>内置决斗材质相对于 GameRes 的目录，供场景配方和分包排除共用。</summary>
+        public const string DuelSceneMaterials = "Material/Pvp/DuelScene";
+        /// <summary>内置决斗粒子模板相对于 GameRes 的目录，由场景序列化依赖持有。</summary>
+        public const string DuelSceneEffects = "Effects/Pvp/DuelScene";
 
         /// <summary>一次扫描的独立快照；不静态缓存，避免改完预制体后仍用旧引用结果打包。</summary>
         public sealed class Snapshot
@@ -58,7 +62,7 @@ namespace RevGame.Editor
             snapshot.Roots.AddRange(AssetDatabase.FindAssets("", new[] { ResourceRoot }).Select(AssetDatabase.GUIDToAssetPath)
                 .Where(p => !AssetDatabase.IsValidFolder(p) && !p.StartsWith(ArtRoot + "/", StringComparison.Ordinal)
                     && !p.StartsWith(AtlasRoot + "/", StringComparison.Ordinal) && !(AssetImporter.GetAtPath(p) is TextureImporter)
-                    && !p.EndsWith(".cs", StringComparison.Ordinal)));
+                    && !IsDuelSceneOnly(p) && !p.EndsWith(".cs", StringComparison.Ordinal)));
             foreach (string root in snapshot.Roots.Distinct().OrderBy(p => p, StringComparer.Ordinal))
             {
                 foreach (string dependency in AssetDatabase.GetDependencies(root, true))
@@ -119,7 +123,8 @@ namespace RevGame.Editor
             var rows = new List<AssetRow>();
             string[] art = AssetDatabase.FindAssets("", new[] { ArtRoot }).Select(AssetDatabase.GUIDToAssetPath)
                 .Where(p => !AssetDatabase.IsValidFolder(p)).OrderBy(p => p, StringComparer.Ordinal).ToArray();
-            foreach (string path in art)
+            var sceneOnly = AssetDatabase.GetAllAssetPaths().Where(path => IsDuelSceneOnly(path) && !AssetDatabase.IsValidFolder(path));
+            foreach (string path in art.Concat(sceneOnly))
             {
                 snapshot.Reasons.TryGetValue(path, out List<string> owners);
                 rows.Add(new AssetRow
@@ -171,6 +176,7 @@ namespace RevGame.Editor
         /// </summary>
         public static string Validate()
         {
+            int materials = ValidateAssetLayout();
             AuditResult report = Audit();
             foreach (AssetRow row in report.assets)
             {
@@ -178,11 +184,11 @@ namespace RevGame.Editor
 
                 // 决斗随内置场景直接加载角色序列帧和擂台。禁止把这组图片再分进AB或接到其他入口，
                 // 否则播放器会重复携带资源，擂台的 Shader 也会误把图集坐标当成原画坐标。
-                if (IsDuelSceneArt(row.path))
+                if (IsDuelSceneArt(row.path) || IsDuelSceneOnly(row.path))
                 {
                     if (marked || row.referencedBy.Any(owner => owner != "Assets/Scenes/PvpDuelScene.unity"))
                     {
-                        throw new InvalidOperationException("内置决斗美术只能由决斗场景直接引用：" + row.path);
+                        throw new InvalidOperationException("内置决斗资源只能随决斗场景交付：" + row.path);
                     }
                     continue;
                 }
@@ -201,7 +207,55 @@ namespace RevGame.Editor
                     }
                 }
             }
-            return "保留" + report.artUsed + "/" + report.artTotal + "个Art资源，排除" + report.artExcluded + "个，打包" + report.atlasPacked + "/" + report.atlasTotal + "张图集";
+            return materials + "个项目材质目录合规；保留" + report.artUsed + "/" + report.artTotal +
+                "个Art资源，排除" + report.artExcluded + "个，打包" + report.atlasPacked + "/" + report.atlasTotal + "张图集";
+        }
+
+        /// <summary>在改写分包之前一次列出错放资产。第三方插件与 Revolution 快照沿用各自的目录。</summary>
+        internal static int ValidateAssetLayout()
+        {
+            var invalid = new List<string>();
+            int materialCount = 0;
+            foreach (string path in AssetDatabase.GetAllAssetPaths())
+            {
+                if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.StartsWith("Assets/Plugins/", StringComparison.Ordinal) ||
+                    path.StartsWith("Assets/Revolution/", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+                string extension = Path.GetExtension(path);
+                if (extension.Equals(".mat", StringComparison.OrdinalIgnoreCase))
+                {
+                    materialCount++;
+                    if (!path.StartsWith(ResourceRoot + "/Material/", StringComparison.Ordinal))
+                    {
+                        invalid.Add(path + " → Assets/GameRes/Material");
+                    }
+                }
+                else if (extension.Equals(".shader", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("Assets/GameShader/", StringComparison.Ordinal))
+                {
+                    invalid.Add(path + " → Assets/GameShader");
+                }
+                else if (path.StartsWith("Assets/Scenes/", StringComparison.Ordinal) &&
+                    (extension is ".anim" or ".controller" or ".overrideController" or ".spriteatlasv2"))
+                {
+                    invalid.Add(path + " → Assets/GameRes");
+                }
+            }
+            if (invalid.Count != 0)
+            {
+                invalid.Sort(StringComparer.Ordinal);
+                throw new InvalidOperationException("项目资源目录不合规\n" + string.Join("\n", invalid));
+            }
+            return materialCount;
+        }
+
+        // 场景自带的材质和粒子模板只通过序列化引用到达，不当成动态加载根。
+        private static bool IsDuelSceneOnly(string path)
+        {
+            return path.StartsWith(ResourceRoot + "/" + DuelSceneMaterials + "/", StringComparison.Ordinal) ||
+                path.StartsWith(ResourceRoot + "/" + DuelSceneEffects + "/", StringComparison.Ordinal);
         }
 
         /// <summary>识别只随内置决斗场景交付的美术目录。它们不走 AB，但仍接受真实引用与包标记校验。</summary>

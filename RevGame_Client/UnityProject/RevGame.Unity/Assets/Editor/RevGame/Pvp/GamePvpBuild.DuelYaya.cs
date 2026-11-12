@@ -3,7 +3,6 @@ using System.Linq;
 using RevGame.View;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace RevGame.Editor
 {
@@ -36,7 +35,7 @@ namespace RevGame.Editor
         private static readonly int[] YayaPortraitExpressions = { 28, 23, 2, 19, 22 };
         // 白方特效共用一份场景材质，每帧只修改顶点颜色和位置。
         private const string YayaDuelShader = "Assets/GameShader/UI/YayaDuelFeather.shader";
-        private const string YayaDuelMaterial = "Assets/Scenes/PvpDuelAnimations/YayaFeatherGlow.mat";
+        private const string YayaDuelMaterial = DuelMaterials + "/YayaFeatherGlow.mat";
 
         // 黑白两席分别生成和绑定动画，交叉淡入层仍由原有 DuelActorAnimator 管理。
         private static void BindDuelActorRoster(PvpDuelView view)
@@ -48,7 +47,7 @@ namespace RevGame.Editor
         }
 
         // 鸦鸦的十二张跑步图以 24 帧每秒播放，左右两步合计半秒。
-        // 待机一秒一圈，跳跃的四个姿势覆盖原生起落时段。
+        // 待机每秒五张，八张图一圈 1.6 秒。跳跃的四个姿势覆盖原生起落时段。
         private static int DuelClipFrameRate(string role, string pose)
         {
             if (role == EmberClipPrefix && pose == "Idle")
@@ -56,7 +55,7 @@ namespace RevGame.Editor
                 return EmberIdleClipFrameRate;
             }
             return role == YayaPrefix
-                ? pose switch { "Idle" => 8, "Run" => 24, "Jump" => 7, _ => 15 }
+                ? pose switch { "Idle" => 5, "Run" => 24, "Jump" => 7, _ => 15 }
                 : 15;
         }
 
@@ -88,10 +87,10 @@ namespace RevGame.Editor
             return LoadDuelSpriteAtPath($"{YayaArt}Effects/YayaFx_{name}.png");
         }
 
-        // 白方头像从图二原画取样，和战斗切片一起随决斗场景加载。
+        // 白方头像与触控素材一起由 HUD 图集持有。
         private static Sprite LoadYayaDuelPortrait(int expression)
         {
-            return LoadDuelSpriteAtPath($"{YayaArt}Portrait/Yaya_Portrait_{expression:D2}.png");
+            return LoadDuelSpriteAtPath($"{DuelHudArt}Portrait/Yaya_Portrait_{expression:D2}.png");
         }
 
         // 预先引用短音效。进入游戏时无需按路径临时查找资源。
@@ -101,7 +100,7 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("缺少鸦鸦决斗音效：" + name);
         }
 
-        // 绑定现有 HUD 节点和复用图层，无需重建整张决斗场景。
+        // 绑定鸦鸦的出招和命中图层。头像由独立的 RevUI HUD 预制体持有。
         private static void BindDuelYayaPresentation(PvpDuelView view)
         {
             view.Effects.YayaCastSprites = YayaCastArt.Select(LoadYayaDuelEffect).ToArray();
@@ -111,18 +110,7 @@ namespace RevGame.Editor
             Material material = GetDuelEffectMaterial(YayaDuelShader, YayaDuelMaterial);
             view.Effects.Second.material = material;
             view.Effects.SecondImpact.material = material;
-            view.FirstPortrait = view.Hud.Find("BlackPortrait").GetComponent<Image>();
-            view.SecondPortrait = view.Hud.Find("WhitePortrait").GetComponent<Image>();
-            view.YayaPortraits = YayaPortraitExpressions.Select(LoadYayaDuelPortrait).ToArray();
-            view.SecondPortrait.sprite = view.YayaPortraits[0];
-            view.SecondName.text = "鸦鸦";
-            view.KeyboardLegend = view.KeyboardGuide.transform.Find("Keys").GetComponent<Text>();
-            Button[] skills = { view.Skill, view.SkillTwo, view.Ultimate };
-            Button[] actions = { view.Jab, view.Skill, view.SkillTwo, view.Ultimate };
-            view.SkillCaptions = skills.Select(button => button.transform.Find("Caption").GetComponent<Text>()).ToArray();
-            view.SkillGlyphs = actions.Select(button => button.transform.Find("Icon").GetComponent<Image>()).ToArray();
-            view.EmberSkillGlyphs = new[] { "Jab", "Thrust", "Plunge", "Crimson" }.Select(LoadHudSprite).ToArray();
-            view.YayaSkillGlyphs = new[] { "Kick", "Raven", "Talon", "Flock" }.Select(LoadYayaDuelEffect).ToArray();
+
         }
 
     }

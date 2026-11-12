@@ -160,6 +160,10 @@ namespace RevGame.Editor
             {
                 return "PvpDefeat";
             }
+            if (path.Contains("/Art/UI/PvpDuelHud/"))
+            {
+                return "DuelHud";
+            }
             if (path.Contains("/Art/UI/PvpDuelPrep/"))
             {
                 return "DuelPrep";

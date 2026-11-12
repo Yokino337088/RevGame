@@ -68,7 +68,7 @@ namespace RevGame.Editor
                 fields.FindProperty("yayaAnimator").objectReferenceValue = yaya.GetComponent<Animator>();
                 fields.FindProperty("yayaPlacement").objectReferenceValue = placement;
                 // 编辑态静帧让美术能直接用Scene移动节点查看构图；正式Play仍经Rev资源门面加载动画/材质。
-                fields.FindProperty("editorBackdrop").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Lobby/MagicCottageMaterial.mat");
+                fields.FindProperty("editorBackdrop").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Lobby/MagicCottageMaterial.mat");
                 fields.FindProperty("editorPortrait").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Characters/Yaya/Idle24/frame_000.png");
                 fields.ApplyModifiedPropertiesWithoutUndo();
                 GamePresentation presentation = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<GamePresentation>(true)).Single();

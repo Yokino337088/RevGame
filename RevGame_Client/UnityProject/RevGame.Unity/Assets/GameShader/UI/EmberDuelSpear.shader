@@ -40,6 +40,7 @@ Shader "RevGame/UI/Ember Duel Spear"
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
+            #include "DuelStrikeReveal.cginc"
 
             sampler2D _MainTex;
             fixed4 _Color;
@@ -52,6 +53,7 @@ Shader "RevGame/UI/Ember Duel Spear"
                 float4 position : POSITION;
                 fixed4 color : COLOR;
                 float2 uv : TEXCOORD0;
+                float4 reveal : TEXCOORD1;
             };
 
             struct Varyings
@@ -60,6 +62,7 @@ Shader "RevGame/UI/Ember Duel Spear"
                 fixed4 color : COLOR;
                 float2 uv : TEXCOORD0;
                 float2 local : TEXCOORD1;
+                float4 reveal : TEXCOORD2;
             };
 
             // 顶点颜色携带每次出招和命中独立的淡出，不需要给每个特效复制材质。
@@ -69,6 +72,7 @@ Shader "RevGame/UI/Ember Duel Spear"
                 output.position = UnityObjectToClipPos(input.position);
                 output.local = input.position.xy;
                 output.uv = input.uv;
+                output.reveal = input.reveal;
                 output.color = input.color * _Color;
                 return output;
             }
@@ -78,6 +82,8 @@ Shader "RevGame/UI/Ember Duel Spear"
             {
                 half4 texel = tex2D(_MainTex, input.uv) + _TextureSampleAdd;
                 half4 color = texel * input.color;
+                half2 sweepMask = DuelStrikeReveal(input.reveal);
+                color.a *= sweepMask.x;
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(input.local, _ClipRect);
                 #endif
@@ -89,6 +95,7 @@ Shader "RevGame/UI/Ember Duel Spear"
                 half sweep = 1 - smoothstep(0.02, 0.22, abs(band - 0.48));
                 half heat = hot * (0.30h + sweep * 0.58h) * input.color.a;
                 color.rgb = (color.rgb + half3(0.9h, 0.31h, 0.07h) * heat) * color.a;
+                color.rgb += half3(1.0h, 0.44h, 0.12h) * sweepMask.y * color.a;
                 return color;
             }
             ENDCG

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1692174862
+CRC: 3532888980
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ba8d33dd0fd7902b84464ff555d8fb26
+    Hash: 1d1518a4e74efffd89acc6088e9d21e2
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 51d0c657f2f7a9aa967b553862be4253
+    Hash: 605e84060e142d45c68a72e5e8907540
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ba8d33dd0fd7902b84464ff555d8fb26
+    Hash: 1d1518a4e74efffd89acc6088e9d21e2
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -24,6 +24,8 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e116022c1aba856438f16120b03e4037, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 63e786abc8b0ac0449f3cdc19ef1eb56, type: 3}
 - Class: 114
@@ -60,11 +62,11 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.SpriteState
 Assets:
-- Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelRift.mat
+- Assets/GameRes/Material/UI/PvpDuelPrep/DuelRift.mat
 - Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelSelectPanel.prefab
 - Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelLoadingPanel.prefab
-- Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelSigil.mat
+- Assets/GameRes/Material/UI/PvpDuelPrep/DuelSigil.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_duelprep
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_duelprep"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"

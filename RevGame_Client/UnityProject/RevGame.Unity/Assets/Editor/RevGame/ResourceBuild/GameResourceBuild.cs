@@ -26,7 +26,8 @@ namespace RevGame.Editor
             { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },
             { "UI/Panel/Endless", "ui_endless" }, { "Endless", "endless_arena" },
-            { "UI/Panel/Pvp", "ui_pvp" }, { "UI/Panel/Pvp/DuelPrep", "ui_pvp_duelprep" }, { "Pvp", "pvp_arena" },
+            { "UI/Panel/Pvp", "ui_pvp" }, { "UI/Panel/Pvp/DuelPrep", "ui_pvp_duelprep" },
+            { "UI/Panel/Pvp/DuelHud", "ui_pvp_duelhud" }, { "Pvp", "pvp_arena" },
             { "Characters/Yaya", "character_yaya" },
             { "Characters/Yaya/Reaction", "yaya_reaction" }, { "Config/Yaya", "config_yaya" },
             { "Lobby", "lobby_cottage" },
@@ -35,6 +36,9 @@ namespace RevGame.Editor
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
             { "Effects/Combat", "battle_feedback" }, { "Data", "data_tables" },
             { "Material/Cards", "material_cards" }, { "Material/UI", "material_ui" },
+            // 材质集中在 Material 下。模式专属材质继续跟随原来的包和加载寿命。
+            { "Material/UI/PvpDuelPrep", "ui_pvp_duelprep" }, { "Material/Pvp/Board", "pvp_arena" },
+            { "Material/Endless", "endless_arena" }, { "Material/Lobby", "lobby_cottage" },
             { "Material/Background", "material_background" },
             { "Material/Pieces", "material_pieces" }, { "Material/Combat", "material_combat" },
             { "Audio/Bgm", "audio_bgm" }, { "Audio/Sfx", "audio_sfx" }, { "Audio/Sfx/Pvp", "audio_pvp" },
@@ -53,6 +57,7 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("请退出Play再更改分包");
             }
+            GameResourceUsage.ValidateAssetLayout();
             // 资源制作约定随正式构建执行，防止旧导入菜单或重建预制体再次带回未压缩背景/旧字体。
             GameResourceCompressionBuild.Configure();
             // 今天新增的数据场装配挂在既有构建总入口，确保菜单/自动化/重新构建都得到相同绑定和导入规则。
@@ -66,7 +71,7 @@ namespace RevGame.Editor
             config.checkUnmarkedAssets = true;
             // Art/Atlases是素材库，不再要求每个闲置文件都进包。ScanExisting仍会收集其中明确打标的使用中资产；
             // 此排除只免除素材库的“无标记即报错”，不能代替下面GameResourceUsage的逐张引用/图集闭包校验。
-            foreach (string folder in new[] { "Art", "Atlases" })
+            foreach (string folder in new[] { "Art", "Atlases", GameResourceUsage.DuelSceneMaterials, GameResourceUsage.DuelSceneEffects })
             {
                 if (!config.excludeFolders.Contains(folder))
                 {

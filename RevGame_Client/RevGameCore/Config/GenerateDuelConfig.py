@@ -107,6 +107,8 @@ namespace RevGame.Pvp.Duel
         public const int Energy = {arena["energy"]};
         // 两席距离场地中心的初始横向距离，单位千分格。
         public const int SpawnOffset = {arena["spawnOffset"]};
+        // 原生左右边界的绝对横坐标，单位千分格。场景按此坐标布置结界。
+        public const int ArenaExtent = {arena["extent"]};
         // 读取指定角色的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
         public static int ActionRange(bool yaya, int action)
         {{

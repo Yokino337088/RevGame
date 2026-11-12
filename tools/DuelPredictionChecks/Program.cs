@@ -20,10 +20,8 @@ internal static class Program
     private static void CheckLocalCadence()
     {
         using var authority = new DuelAuthority("local-cadence", networked: false);
-        var request = new DuelRequest { fingerprint = DuelConfig.Fingerprint, operation = DuelAuthority.Ready };
-        authority.Exchange(1, request, 0);
-        authority.Exchange(2, request, 0);
-        request.operation = DuelAuthority.Input;
+        ReadyBoth(authority, networked: false);
+        var request = new DuelRequest { fingerprint = DuelConfig.Fingerprint, operation = DuelAuthority.Input };
         for (long now = 0; now < 1000; now += 22)
         {
             if (!authority.LocalFrameDue(now))
@@ -232,13 +230,18 @@ internal static class Program
 
         using var whiff = new DuelCorePipe("duel-combo-whiff");
         StartComboStep(whiff, 1, 1);
-        for (int i = 0; i < 5; i++)
+        WaitComboLink(whiff, 1);
+        Check(!whiff.Snapshot.CanTakeAction(true, 2), "空挥后只开放普攻接段");
+        StartComboStep(whiff, 1, 5);
+        WaitComboLink(whiff, 1);
+        StartComboStep(whiff, 1, 6);
+        for (int i = 0; i < DuelConfig.ActionHitFrame(6); i++)
         {
             whiff.Append(whiff.Snapshot.Frame + 1, 0);
         }
-        Check(whiff.Snapshot.FirstCombo == 0 && !whiff.Snapshot.CanTakeAction(true, 1),
-            "打空后不能提前取消");
-        Console.WriteLine("DUEL_COMBO_PASS threeNormals, bothSkillOrders, ultimate, hitStun, whiff, checkpoint");
+        Check(whiff.Snapshot.FirstCombo == 0 && whiff.Snapshot.SecondHealth == DuelConfig.Health &&
+            !whiff.Snapshot.CanTakeAction(true, 1), "三段空挥保持零命中且不能提前重新起手");
+        Console.WriteLine("DUEL_COMBO_PASS threeNormals, bothSkillOrders, ultimate, hitStun, threeWhiffs, checkpoint");
     }
 
     // 送一个正式动作槽。普攻二三段由原生解析产生，测试不注入内部动作号。
@@ -271,19 +274,27 @@ internal static class Program
         prediction.Rebase(replica, reply, reply.frames.Length > 0 ? reply.frames[^1] : 0);
     }
 
-    // 权威只有在两个座位都就绪后才从第 1 帧开始定时封口。
-    private static void ReadyBoth(DuelAuthority authority)
+    // 复用选角、加载和就绪协议。两个副本的初始角色与各自测试的默认阵容一致。
+    private static void ReadyBoth(DuelAuthority authority, bool networked = true)
     {
-        Exchange(authority, 1, DuelAuthority.Ready, 0);
-        Exchange(authority, 2, DuelAuthority.Ready, 0);
+        Exchange(authority, 1, DuelAuthority.PrepVisible, 0, networked: networked);
+        Exchange(authority, 2, DuelAuthority.PrepVisible, 0, networked: networked);
+        Exchange(authority, 1, DuelAuthority.PrepLock, 0, packed: (int)DuelRole.Ember, networked: networked);
+        Exchange(authority, 2, DuelAuthority.PrepLock, 0, packed: (int)DuelRole.Yaya, networked: networked);
+        Exchange(authority, 1, DuelAuthority.PrepLoad, 0, packed: 100, networked: networked);
+        Exchange(authority, 2, DuelAuthority.PrepLoad, 0, packed: 100, networked: networked);
+        Exchange(authority, 1, DuelAuthority.Ready, 0, networked: networked);
+        Check(Exchange(authority, 2, DuelAuthority.Ready, 0, networked: networked).readyMask == 3,
+            "两席经选角和加载后均已就绪");
     }
 
     // 用同一套正式协议构造请求，时间为测试指定的单调毫秒，不依赖电脑调度。
-    private static DuelReply Exchange(DuelAuthority authority, int side, int operation, long now, int after = 0, int sequence = 0, int packed = 0)
+    private static DuelReply Exchange(DuelAuthority authority, int side, int operation, long now, int after = 0, int sequence = 0, int packed = 0, bool networked = true)
     {
         DuelReply reply = authority.Exchange(side, new DuelRequest
         {
-            operation = operation, fingerprint = DuelAuthority.NetworkFingerprint, afterFrame = after, inputFrame = sequence, input = packed
+            operation = operation, fingerprint = networked ? DuelAuthority.NetworkFingerprint : DuelConfig.Fingerprint,
+            afterFrame = after, inputFrame = sequence, input = packed
         }, now);
         Check(string.IsNullOrEmpty(reply.error), "权威拒绝了验收请求：" + reply.error);
         return reply;

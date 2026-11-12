@@ -1,4 +1,6 @@
 using System;
+using RevGame.Pvp.Duel;
+using RevGame.UI;
 using RevGame.View;
 using UnityEditor;
 using UnityEngine;
@@ -6,81 +8,116 @@ using UnityEngine.UI;
 
 namespace RevGame.Editor
 {
-    // 决斗场景专用 HUD 配方。设计坐标与 GameBattleLayout 一致，场景内由安全区组件等比缩放。
+    // 决斗 HUD 预制体的唯一制作配方，设计坐标与 GameBattleLayout 一致。
     public static partial class GamePvpBuild
     {
-        // HUD Sprite 只供内置决斗场景使用，和角色共用决斗图集。
-        private const string DuelHudArt = ArcadeArt + "Hud/";
+        // 两种控件素材归到同一个决斗 HUD 图集，场景直接持有的角色切片独立。
+        private const string DuelHudArt = "Assets/GameRes/Art/UI/PvpDuelHud/";
+        // RevUIPanel 的逻辑根和此生成目录对应。
+        private const string DuelHudPrefabPath = "Assets/GameRes/UI/Panel/Pvp/DuelHud/DuelHudPanel.prefab";
         // 黑方标识和血条使用红色。
         private static readonly Color BlackHud = new Color(1f, .34f, .37f);
         // 白方标识和血条使用冰蓝色。
         private static readonly Color WhiteHud = new Color(.32f, .85f, 1f);
         // 双方能量使用同一暖金色，和血量明确区分。
         private static readonly Color EnergyHud = new Color(1f, .75f, .37f);
-        // 场景装配和图集校验共用该白名单，避免遗落某个圆键或图标。
-        private static readonly string[] DuelHudSprites =
+        // 仅长条和斜角底板切九宫格。尺寸以实际源图为上限，圆键保留原有轮廓。
+        private static void PrepareDuelHudBorders()
         {
-            "Disc", "Ring", "StickBase", "StickKnob", "HealthFrame", "MeterFill", "EnergyFrame", "Dividers",
-            "ClockFrame", "PortraitFrame", "EmberPortrait", "SmallFrame", "Jab", "Thrust", "Plunge", "Crimson", "Jump"
-        };
+            foreach (string sprite in new[] { "HealthFrame", "EnergyFrame", "SmallFrame" })
+            {
+                string path = DuelHudArt + "Controls/" + sprite + ".png";
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.GetSourceTextureWidthAndHeight(out int width, out int height);
+                float horizontal = Mathf.Min(24, width / 4);
+                float vertical = Mathf.Min(16, height / 4);
+                var border = new Vector4(horizontal, vertical, horizontal, vertical);
+                if (importer.spriteBorder != border)
+                {
+                    importer.spriteBorder = border;
+                    importer.SaveAndReimport();
+                }
+            }
+        }
 
-        // HUD 作为全屏场景下的单独子树，背景、角色和镜头组件仍占用自己的层。
-        private static void BuildDuelHud(PvpDuelView view)
+        // 保存全屏 RevUI 预制体。节点绑定由面板特性读取，场景不复制这些控件。
+        private static void BuildDuelHud()
         {
-            RectTransform hud = Rect("BattleHud", view.transform, 0, 0, 1, 1);
-            view.Hud = hud;
-            BuildDuelHeader(view, hud);
-            BuildDuelControls(view, hud);
+            PrepareDuelHudBorders();
+            if (!AssetDatabase.IsValidFolder("Assets/GameRes/UI/Panel/Pvp/DuelHud"))
+            {
+                AssetDatabase.CreateFolder("Assets/GameRes/UI/Panel/Pvp", "DuelHud");
+            }
+            RectTransform root = Rect("DuelHudPanel", null, 0, 0, 1, 1);
+            try
+            {
+                var panel = root.gameObject.AddComponent<DuelHudPanel>();
+                using var data = new SerializedObject(panel);
+                data.FindProperty("EmberPortrait").objectReferenceValue = LoadHudSprite("EmberPortrait");
+                SerializedProperty portraits = data.FindProperty("YayaPortraits");
+                portraits.arraySize = YayaPortraitExpressions.Length;
+                for (int index = 0; index < YayaPortraitExpressions.Length; index++)
+                {
+                    portraits.GetArrayElementAtIndex(index).objectReferenceValue = LoadYayaDuelPortrait(YayaPortraitExpressions[index]);
+                }
+                data.ApplyModifiedPropertiesWithoutUndo();
+                BuildDuelHeader(root);
+                BuildDuelControls(root);
+                if (PrefabUtility.SaveAsPrefabAsset(root.gameObject, DuelHudPrefabPath) == null)
+                {
+                    throw new InvalidOperationException("无法保存决斗 HUD 预制体。");
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root.gameObject);
+            }
         }
 
         // 上方从外向内排布头像、玩家名、生命和能量，时钟保持居中。
-        private static void BuildDuelHeader(PvpDuelView view, Transform hud)
+        private static void BuildDuelHeader(Transform hud)
         {
             MakePortrait(hud, "BlackPortrait", "1P", 52, BlackHud, false);
             MakePortrait(hud, "WhitePortrait", "2P", 1772, WhiteHud, true);
-            view.FirstName = MakePlayerName(hud, "BlackName", 168, TextAnchor.MiddleLeft, BlackHud);
-            view.SecondName = MakePlayerName(hud, "WhiteName", 1051, TextAnchor.MiddleRight, WhiteHud);
-            view.FirstHealth = MakeMeter(hud, "BlackHealth", 162, 971, BlackHud, false, false);
-            view.SecondHealth = MakeMeter(hud, "WhiteHealth", 1050, 971, WhiteHud, true, false);
-            view.FirstEnergy = MakeMeter(hud, "BlackEnergy", 162, 943, EnergyHud, false, true);
-            view.SecondEnergy = MakeMeter(hud, "WhiteEnergy", 1050, 943, EnergyHud, true, true);
-            view.FirstHealthText = HudText("BlackHp", hud, "100", 183, 971, 82, 43, 27, TextAnchor.MiddleLeft);
-            view.SecondHealthText = HudText("WhiteHp", hud, "100", 1655, 971, 82, 43, 27, TextAnchor.MiddleRight);
+            MakePlayerName(hud, "BlackName", 168, TextAnchor.MiddleLeft, BlackHud);
+            MakePlayerName(hud, "WhiteName", 1051, TextAnchor.MiddleRight, WhiteHud);
+            MakeMeter(hud, "BlackHealth", 162, 971, BlackHud, false, false);
+            MakeMeter(hud, "WhiteHealth", 1050, 971, WhiteHud, true, false);
+            MakeMeter(hud, "BlackEnergy", 162, 943, EnergyHud, false, true);
+            MakeMeter(hud, "WhiteEnergy", 1050, 943, EnergyHud, true, true);
+            HudText("BlackHp", hud, DuelConfig.Health.ToString(), 183, 971, 82, 43, 27, TextAnchor.MiddleLeft);
+            HudText("WhiteHp", hud, DuelConfig.Health.ToString(), 1655, 971, 82, 43, 27, TextAnchor.MiddleRight);
             HudImage(HudBox("ClockPlate", hud, 899, 948, 122, 105), "ClockFrame");
-            view.Clock = HudText("Clock", hud, "∞", 899, 948, 122, 105, 55);
-            view.FirstCombo = HudText("BlackCombo", hud, "", 174, 804, 290, 79, 52, TextAnchor.MiddleLeft);
-            view.SecondCombo = HudText("WhiteCombo", hud, "", 1456, 804, 290, 79, 52, TextAnchor.MiddleRight);
-            view.FirstCombo.color = BlackHud;
-            view.SecondCombo.color = WhiteHud;
-            view.Banner = HudText("Banner", hud, "等待双方进入决斗场", 410, 767, 1100, 107, 52);
+            HudText("Clock", hud, "∞", 899, 948, 122, 105, 55);
+            HudText("BlackCombo", hud, "", 174, 804, 290, 79, 52, TextAnchor.MiddleLeft).color = BlackHud;
+            HudText("WhiteCombo", hud, "", 1456, 804, 290, 79, 52, TextAnchor.MiddleRight).color = WhiteHud;
+            HudText("Banner", hud, "等待双方进入决斗场", 410, 767, 1100, 107, 52);
         }
 
         // 左手只负责走位与跳跃。右手以最大普攻为中心，上方和左侧分布三种技能。
-        private static void BuildDuelControls(PvpDuelView view, Transform hud)
+        private static void BuildDuelControls(Transform hud)
         {
             RectTransform stick = HudBox("MoveStick", hud, 51, 61, 229, 229);
             HudImage(stick, "StickBase", true);
             stick.gameObject.AddComponent<DuelCircleHitArea>();
-            view.MoveStick = stick.gameObject.AddComponent<DuelMoveStick>();
-            view.MoveStick.Knob = HudBox("Knob", stick, 69, 69, 91, 91, 229, 229);
-            HudImage(view.MoveStick.Knob, "StickKnob");
+            var movement = stick.gameObject.AddComponent<DuelMoveStick>();
+            movement.Knob = HudBox("Knob", stick, 69, 69, 91, 91, 229, 229);
+            HudImage(movement.Knob, "StickKnob");
 
-            view.Jump = MakeRoundAction(hud, "Jump", "Jump", "跳跃", "↑", 325, 257, 104, WhiteHud);
-            view.Jab = MakeRoundAction(hud, "Jab", "Jab", "普攻", "J", 1748, 156, 164, BlackHud);
-            view.Skill = MakeRoundAction(hud, "Skill", "Thrust", "贯枪", "K", 1555, 125, 124, EnergyHud);
-            view.SkillTwo = MakeRoundAction(hud, "SkillTwo", "Plunge", "坠枪", "L", 1573, 280, 124, WhiteHud);
-            view.Ultimate = MakeRoundAction(hud, "Ultimate", "Crimson", "赤阵", "I", 1739, 354, 136, new Color(1f, .44f, .65f));
-            view.Exit = MakeHudLink(hud, "Back", "返回大厅", 51);
-            view.Reconnect = MakeHudLink(hud, "Reconnect", "重连", 220);
-            view.Reconnect.gameObject.SetActive(false);
+            MakeRoundAction(hud, "Jump", "Jump", "跳跃", "↑", 325, 257, 104, WhiteHud);
+            MakeRoundAction(hud, "Jab", "Jab", "普攻", "J", 1748, 156, 164, BlackHud);
+            MakeRoundAction(hud, "Skill", "Thrust", "贯枪", "K", 1555, 125, 124, EnergyHud);
+            MakeRoundAction(hud, "SkillTwo", "Plunge", "坠枪", "L", 1573, 280, 124, WhiteHud);
+            MakeRoundAction(hud, "Ultimate", "Crimson", "赤阵", "I", 1739, 354, 136, new Color(1f, .44f, .65f));
+            MakeHudLink(hud, "Back", "返回大厅", 51);
+            MakeHudLink(hud, "Reconnect", "重连", 220).gameObject.SetActive(false);
 
             // 单独的桌面键盘图例在缩小的 Game View 中仍有足够字号。
             RectTransform guide = HudBox("KeyboardGuide", hud, 408, 26, 1040, 52);
             HudImage(guide, "HealthFrame");
             Label("Keys", guide, "A/D 移动    SPACE 跳跃    J 普攻    K 贯枪    L 坠枪    I 赤阵",
                 .025f, 0, .975f, 1, 28);
-            view.KeyboardGuide = guide.gameObject;
-            view.InputFeedback = HudText("InputFeedback", hud, "", 460, 82, 960, 58, 30);
+            HudText("InputFeedback", hud, "", 460, 82, 960, 58, 30);
         }
 
         // 先建立双席的头像框与朝向，角色装配阶段把白方图像绑定到鸦鸦差分。
@@ -88,6 +125,10 @@ namespace RevGame.Editor
         {
             HudImage(HudBox(name + "Frame", hud, x, 939, 96, 96), "PortraitFrame").color = tint;
             Image art = HudImage(HudBox(name, hud, x + 5, 944, 86, 86), "EmberPortrait");
+            if (mirror)
+            {
+                art.sprite = LoadYayaDuelPortrait(YayaPortraitExpressions[0]);
+            }
             art.rectTransform.localScale = new Vector3(mirror ? -1 : 1, 1, 1);
             RectTransform badge = HudBox(name + "Badge", hud, x + 24, 923, 48, 27);
             HudImage(badge, "SmallFrame").color = tint;
@@ -172,6 +213,10 @@ namespace RevGame.Editor
         {
             Image image = rect.gameObject.AddComponent<Image>();
             image.sprite = LoadHudSprite(sprite);
+            if (image.sprite.border.sqrMagnitude > 0)
+            {
+                image.type = Image.Type.Sliced;
+            }
             image.raycastTarget = raycast;
             return image;
         }
@@ -179,7 +224,7 @@ namespace RevGame.Editor
         // 缺图时中止生成配方，防止正式场景保存无 Sprite 的控件。
         private static Sprite LoadHudSprite(string name)
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(DuelHudArt + name + ".png") ??
+            return AssetDatabase.LoadAssetAtPath<Sprite>(DuelHudArt + "Controls/" + name + ".png") ??
                 throw new InvalidOperationException("决斗 HUD 素材未导入：" + name);
         }
     }

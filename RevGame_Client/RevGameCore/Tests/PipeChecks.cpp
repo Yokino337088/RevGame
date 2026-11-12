@@ -108,8 +108,8 @@ void CheckCheckpoint(const StartWords& settings)
     Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
     Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
     Check(ReadWord(first.data()) == 0);
-    // v7 开局指纹锁定双席距离配置、高位非零的种子和负坐标。
-    Check(ReadWord(first.data() + 64) == 0x70a0dfb2u);
+    // v8 开局指纹锁定双席距离配置、高位非零的种子和负坐标。
+    Check(ReadWord(first.data() + 64) == 0x463ef889u);
 
     auto foreign = settings;
     ++foreign.back();
@@ -347,6 +347,55 @@ void CheckDerivedSeatReach(const StartWords& settings)
     }
 }
 
+// 双方都留在出生点。先尝试空挥取消到技能，再按普攻接到第三段并核对真实伤害与回放状态。
+void CheckWhiffCombo(const StartWords& settings)
+{
+    auto config = settings;
+    config[2 + 6] = config[2 + 5]; // 第一帧即回满能量，确保技能拒绝来自取消规则。
+    const auto start = Encode(config);
+    auto live = GameCore_Create();
+    auto restored = GameCore_Create();
+    Check(GameCore_Write(live, start.data(), int(start.size())) == 1);
+    Check(GameCore_Write(restored, start.data(), int(start.size())) == 1);
+    const int skillFrame = 1 + config[2 + ChainOffset(1)];
+    const int secondStart = skillFrame + 1;
+    const int thirdStart = secondStart + config[2 + ChainOffset(5)];
+    const int end = thirdStart + config[2 + AttackOffset(6) + 2];
+    for (int frame = 1; frame <= end; ++frame)
+    {
+        const int intent = frame == skillFrame ? 2 << 2 :
+            (frame == 1 || frame == secondStart || frame == thirdStart) ? 1 << 2 : 0;
+        const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame, intent, intent});
+        DisplayBytes output{}, resumed{};
+        Check(GameCore_Write(live, packet.data(), int(packet.size())) == 1);
+        Check(GameCore_Read(live, output.data(), int(output.size())) == int(output.size()));
+        // 已空挥的一段恢复到取消窗口时，两个座位都只开放普攻续段。
+        if (frame == skillFrame - 1)
+        {
+            Check(ReadWord(output.data() + 19 * 4) == 1 && ReadWord(output.data() + 20 * 4) == 1);
+            Checkpoint checkpoint{};
+            Check(GameCore_SaveCheckpoint(live, checkpoint.data(), int(checkpoint.size())) == int(checkpoint.size()));
+            Check(GameCore_RestoreCheckpoint(restored, checkpoint.data(), int(checkpoint.size()), resumed.data(), int(resumed.size())) == 1);
+            Check(output == resumed);
+        }
+        else if (frame >= skillFrame)
+        {
+            Check(GameCore_Write(restored, packet.data(), int(packet.size())) == 1);
+            Check(GameCore_Read(restored, resumed.data(), int(resumed.size())) == int(resumed.size()));
+            Check(output == resumed);
+        }
+        const uint32_t expected = frame >= thirdStart ? 6u : frame >= secondStart ? 5u : 1u;
+        for (const Seat seat : SeatOrder)
+        {
+            Check(ReadWord(output.data() + (5 + seat * 6) * 4) == expected);
+            Check(ReadSignedWord(output.data() + (3 + seat * 6) * 4) == config[2]);
+            Check(ReadWord(output.data() + (14 + seat) * 4) == 0 && ReadWord(output.data() + (21 + seat) * 4) == 0);
+        }
+    }
+    GameCore_Destroy(live);
+    GameCore_Destroy(restored);
+}
+
 // 同帧给两席起跳输入，逐帧对比旧重力和初速。整段轨迹的高度翻倍，落地帧一致。
 void CheckDoubleJumpHeight(const StartWords& settings)
 {
@@ -394,6 +443,7 @@ int main()
     settings[ConfigWords + 3] = -123;
     CheckSeatReach(settings);
     CheckDerivedSeatReach(settings);
+    CheckWhiffCombo(settings);
     CheckDoubleJumpHeight(settings);
     CheckCheckpoint(settings);
     CheckUnlimitedDuel(settings);
@@ -432,7 +482,7 @@ int main()
         {
             Check(left[68] != 0 || left[69] != 0);
             // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
-            Check(ReadWord(left.data() + 64) == 0x38a47ba2u);
+            Check(ReadWord(left.data() + 64) == 0x24a7d421u);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);

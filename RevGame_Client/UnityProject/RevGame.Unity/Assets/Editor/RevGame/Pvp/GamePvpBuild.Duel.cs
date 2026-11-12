@@ -5,7 +5,6 @@ using RevGame.View;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -52,6 +51,7 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("请关闭已打开的决斗场景后运行生成配方。");
             }
+            MigrateDuelAssets();
             ImportDuelSprites();
             var plugin = (PluginImporter)AssetImporter.GetAtPath("Assets/Plugins/RevGameCore/x86_64/RevGameCore.dll");
             if (plugin.GetCompatibleWithAnyPlatform() || plugin.GetEditorData("OS") != "Windows")
@@ -64,6 +64,8 @@ namespace RevGame.Editor
                 plugin.SaveAndReimport();
             }
             _font = GameAssetBuilder.Font();
+            BuildDuelHud();
+            DuelArenaFxGraphic particle = BuildDuelParticle();
             var prior = SceneManager.GetActiveScene();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             try
@@ -73,21 +75,22 @@ namespace RevGame.Editor
                 camera.clearFlags = CameraClearFlags.SolidColor;
                 camera.backgroundColor = new Color(.09f, .08f, .14f);
                 camera.gameObject.AddComponent<AudioListener>();
-                var root = new GameObject("Duel", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                var root = new GameObject("Duel", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
                 var canvas = root.GetComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1;
                 var scaler = root.GetComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080);
                 scaler.matchWidthOrHeight = .5f;
                 var view = root.AddComponent<PvpDuelView>();
-                var backdrop = Rect(DuelBackdropName, root.transform, 0, 0, 1, 1).gameObject.AddComponent<Image>();
-                ApplyDuelBackdrop(backdrop);
                 RectTransform fighters = Rect("ArenaFighters", root.transform, 0, 0, 1, 1);
                 fighters.pivot = new Vector2(.5f, .425f);
                 view.CameraRig = root.AddComponent<DuelCameraRig>();
                 view.CameraRig.Fighters = fighters;
-                view.CameraRig.Backdrop = backdrop;
+                view.CameraRig.Backdrop = BuildDuelBackdrop(fighters);
+                view.CameraRig.LeftWard = BuildDuelWard(fighters, -1, particle.material);
+                view.CameraRig.RightWard = BuildDuelWard(fighters, 1, particle.material);
                 view.First = AddFighter("BlackFighter", fighters, -.25f);
                 view.Second = AddFighter("WhiteFighter", fighters, .25f);
                 view.FirstAnimator = view.First.gameObject.AddComponent<DuelActorAnimator>();
@@ -104,7 +107,7 @@ namespace RevGame.Editor
                 view.Effects.ImpactSounds = new[] { "LightHit", "SkillHit", "UltimateHit" }.Select(LoadArcadeSound).ToArray();
                 view.Effects.Speaker = root.AddComponent<AudioSource>();
                 view.Effects.Speaker.playOnAwake = false;
-                BuildDuelHud(view);
+                view.Effects.ParticlePrefab = particle;
                 BindDuelEmberEffects(view);
                 BindDuelYayaPresentation(view);
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
@@ -117,7 +120,11 @@ namespace RevGame.Editor
                     scenes.Add(new EditorBuildSettingsScene(DuelScenePath, true));
                     EditorBuildSettings.scenes = scenes.ToArray();
                 }
-                return new Dictionary<string, object> { ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = DuelPoses.Length * 2 };
+                return new Dictionary<string, object>
+                {
+                    ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = DuelPoses.Length * 2,
+                    ["hudPrefab"] = DuelHudPrefabPath, ["backdrop"] = view.CameraRig.Backdrop.sprite.name
+                };
             }
             finally
             {
@@ -193,6 +200,7 @@ namespace RevGame.Editor
             Image layer = AddFighter(name, parent, 0);
             layer.preserveAspect = false;
             layer.enabled = false;
+            layer.gameObject.AddComponent<DuelCastReveal>();
             return layer;
         }
 
@@ -211,11 +219,7 @@ namespace RevGame.Editor
         // 每个角色保存自己的 Legacy Clip。已有片段保留 GUID。
         private static AnimationClip[] BuildDuelClips(Sprite[][] sequences, string role)
         {
-            string folder = "Assets/Scenes/PvpDuelAnimations";
-            if (!AssetDatabase.IsValidFolder(folder))
-            {
-                AssetDatabase.CreateFolder("Assets/Scenes", "PvpDuelAnimations");
-            }
+            string folder = DuelAnimationFolder;
             var clips = new AnimationClip[DuelPoses.Length];
             for (int index = 0; index < DuelPoses.Length; index++)
             {

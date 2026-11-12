@@ -12,9 +12,9 @@ namespace RevGame.Editor
     public static partial class GamePvpBuild
     {
         // 从无尽模式材质读取原图，与围棋共用同一份已分包的纹理。
-        private const string EndlessBackgroundPath = "Assets/GameRes/Endless/EndlessBackground.mat";
+        private const string EndlessBackgroundPath = "Assets/GameRes/Material/Endless/EndlessBackground.mat";
         // 决斗底图是画布第一层，之后的角色和按钮依照现有层级绘制。
-        private const string DuelBackdropName = "BoxingRingBackdrop";
+        private const string DuelBackdropName = "SunlitTownBackdrop";
         // 透过材质选择场景样式，两个背景复用同一个 Shader。
         private const string ArenaShaderPath = "Assets/GameShader/Pvp/PvpArenaBackdrop.shader";
 
@@ -40,7 +40,7 @@ namespace RevGame.Editor
             try
             {
                 Transform canvas = duel.GetRootGameObjects().Single(root => root.name == "Duel").transform;
-                Transform backdrop = canvas.Find(DuelBackdropName) ?? canvas.Find("TempleBackdrop") ??
+                Transform backdrop = canvas.Find("ArenaFighters/" + DuelBackdropName) ??
                     throw new InvalidOperationException("决斗场景缺少背景节点。");
                 ImportDuelSprites();
                 ApplyDuelBackdrop(backdrop.GetComponent<Image>());
@@ -59,14 +59,14 @@ namespace RevGame.Editor
             }
 
             AssetDatabase.SaveAssets();
-            return "已保存决斗雨夜擂台，并更新围棋的神殿背景绑定。";
+            return "已保存决斗晴天小镇擂台，并更新围棋的神殿背景绑定。";
         }
 
         // 决斗新建场景与现有场景升级共用同一套绑定。背景不可接收点击，避免拦住格斗控件。
         private static void ApplyDuelBackdrop(Image image)
         {
             image.gameObject.name = DuelBackdropName;
-            image.sprite = LoadArcadeSprite("RainRing");
+            image.sprite = LoadArcadeSprite("SunlitTownArena");
             image.material = null;
             image.raycastTarget = false;
         }
@@ -81,7 +81,7 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("无尽背景材质未绑定神殿原画。");
             }
 
-            return SaveArenaMaterial("Assets/GameRes/Pvp/PvpTemple.mat", 1, art);
+            return SaveArenaMaterial("Assets/GameRes/Material/Pvp/Board/PvpTemple.mat", 1, art);
         }
 
         // style 与 Shader 的 _Style 对应。迁移材质时清理旧 Shader 的属性，只保留新 Shader 使用的采样槽。

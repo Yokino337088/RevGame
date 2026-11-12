@@ -61,7 +61,7 @@ namespace RevGameCore
         return true;
     }
 
-    // 先检查受击硬直，再按当前动作的确认结果开放后继槽。满恢复后可以重新起手。
+    // 先检查硬直与取消窗口。普攻续段只需要输入，技能取消仍需要前招命中。
     int32_t DuelWorld::ActionOptions(const Fighter& fighter) const
     {
         if (fighter.Stun > 0 || fighter.Hp == 0 || Result != 0)
@@ -73,11 +73,14 @@ namespace RevGameCore
             return 15;
         }
         const int chain = ChainOffset(fighter.Action);
-        if (!fighter.Landed || fighter.Age + 1 < Config[chain])
+        if (fighter.Age + 1 < Config[chain])
         {
             return 0;
         }
-        return Config[chain + 3] & ~fighter.UsedSkills;
+        const int32_t options = Config[chain + 3] & ~fighter.UsedSkills;
+        // 配置只允许一、二段设普攻槽。空挥时保留这一位，命中计数仍由伤害阶段推进。
+        constexpr int32_t jabSlot = 1 << 0;
+        return fighter.Landed ? options : options & jabSlot;
     }
 
     // 只处理单个座位的意图与时钟。两席使用同一规则，伤害统一延后结算。

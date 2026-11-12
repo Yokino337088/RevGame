@@ -40,6 +40,7 @@ Shader "RevGame/UI/Yaya Duel Feather"
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
+            #include "DuelStrikeReveal.cginc"
 
             sampler2D _MainTex;
             fixed4 _Color;
@@ -52,6 +53,7 @@ Shader "RevGame/UI/Yaya Duel Feather"
                 float4 position : POSITION;
                 fixed4 color : COLOR;
                 float2 uv : TEXCOORD0;
+                float4 reveal : TEXCOORD1;
             };
 
             struct Varyings
@@ -60,6 +62,7 @@ Shader "RevGame/UI/Yaya Duel Feather"
                 fixed4 color : COLOR;
                 float2 uv : TEXCOORD0;
                 float2 local : TEXCOORD1;
+                float4 reveal : TEXCOORD2;
             };
 
             Varyings Vert(Attributes input)
@@ -68,6 +71,7 @@ Shader "RevGame/UI/Yaya Duel Feather"
                 output.position = UnityObjectToClipPos(input.position);
                 output.local = input.position.xy;
                 output.uv = input.uv;
+                output.reveal = input.reveal;
                 output.color = input.color * _Color;
                 return output;
             }
@@ -76,6 +80,8 @@ Shader "RevGame/UI/Yaya Duel Feather"
             half4 Frag(Varyings input) : SV_Target
             {
                 half4 color = (tex2D(_MainTex, input.uv) + _TextureSampleAdd) * input.color;
+                half2 sweepMask = DuelStrikeReveal(input.reveal);
+                color.a *= sweepMask.x;
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(input.local, _ClipRect);
                 #endif
@@ -85,6 +91,7 @@ Shader "RevGame/UI/Yaya Duel Feather"
                 half glow = saturate((color.g - color.b) * 2.5h) * smoothstep(0.16h, 0.7h, color.g);
                 half pulse = 0.30h + 0.20h * sin(_Time.y * 17.0);
                 color.rgb = (color.rgb + half3(0.35h, 0.76h, 0.22h) * glow * pulse) * color.a;
+                color.rgb += half3(0.6h, 0.42h, 1.0h) * sweepMask.y * color.a;
                 return color;
             }
             ENDCG

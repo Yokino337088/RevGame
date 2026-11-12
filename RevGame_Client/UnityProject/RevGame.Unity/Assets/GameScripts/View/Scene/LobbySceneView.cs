@@ -103,7 +103,7 @@ namespace RevGame.View
             _preparing = true;
             try
             {
-                _materialHandle = RevResManager.LoadAsync("Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.Scene);
+                _materialHandle = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.Scene);
                 _controllerHandle = RevResManager.LoadAsync("Characters/Yaya", "YayaIdle24Controller", typeof(RuntimeAnimatorController), null, RevResGroup.Scene);
                 _atlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas("YayaIdle24");
                 await _atlas.WaitReadyAsync();
@@ -286,7 +286,7 @@ namespace RevGame.View
             }
             if (_materialHandle != null)
             {
-                RevResManager.Release("Lobby", "MagicCottageMaterial");
+                RevResManager.Release("Material/Lobby", "MagicCottageMaterial");
                 _materialHandle = null;
             }
             if (_controllerHandle != null)

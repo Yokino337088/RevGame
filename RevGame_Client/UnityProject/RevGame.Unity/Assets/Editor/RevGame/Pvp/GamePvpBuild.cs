@@ -30,6 +30,7 @@ namespace RevGame.Editor
                 }
             }
             Directory.CreateDirectory("Assets/GameRes/Pvp");
+            Directory.CreateDirectory("Assets/GameRes/Material/Pvp/Board");
             Directory.CreateDirectory("Assets/GameRes/UI/Panel/Pvp");
             AssetDatabase.Refresh();
             _font = GameAssetBuilder.Font();
@@ -65,13 +66,14 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return "九路围棋场景、黑白棋盘Shader与简洁联机面板已制作；请更新字库并构建真实AB";
         }
+        // 九路棋盘材质和棋盘预制体共用资源包，源资产归入材质目录。
         private static Material Material(string name, Shader shader)
         {
             if (shader == null)
             {
                 throw new InvalidOperationException("围棋Shader未找到：" + name);
             }
-            string path = "Assets/GameRes/Pvp/" + name + ".mat";
+            string path = "Assets/GameRes/Material/Pvp/Board/" + name + ".mat";
             Material result = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (result == null)
             {
@@ -100,7 +102,7 @@ namespace RevGame.Editor
         {
             Material background = GetTempleArenaMaterial();
             Material board = Material("PvpIvoryBoard", Shader.Find("RevGame/Pvp/IvoryGoBoard"));
-            Material endlessGrid = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Endless/EndlessGrid.mat");
+            Material endlessGrid = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Endless/EndlessGrid.mat");
             if (endlessGrid == null)
             {
                 throw new InvalidOperationException("缺少无尽棋盘配色材质");

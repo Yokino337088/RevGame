@@ -107,6 +107,7 @@ namespace RevGame.Flow
                 await RevTask.Yield(); // 让遮挡层先实际画一帧，再开始资源解码与场景工作。
                 if (Screen == GameScreen.Pvp)
                 {
+                    CloseDuelHud();
                     await RevServices.GetRequired<RevGame.Pvp.PvpService>().LeaveAsync();
                     ThrowIfDisposed();
                 }

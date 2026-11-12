@@ -117,7 +117,7 @@ namespace RevGame.Pvp
                     ["mirrorBadges"] = view != null && view.HasMirrorBadges,
                     ["firstSprite"] = view?.First.sprite?.name ?? "",
                     ["yayaSprite"] = view?.Second.sprite?.name ?? "",
-                    ["yayaPortrait"] = view?.SecondPortrait?.sprite?.name ?? "",
+                    ["yayaPortrait"] = view?.HudPanel?.SecondPortrait?.sprite?.name ?? "",
                     ["yayaShaderSupported"] = view != null && view.Effects.Second.material.shader.name == "RevGame/UI/Yaya Duel Feather" &&
                         view.Effects.Second.material.shader.isSupported,
                     ["yayaIdleAnimated"] = view != null && view.SecondAnimator.IdleSpriteMotion,
@@ -131,8 +131,8 @@ namespace RevGame.Pvp
                     ["hudPressCount"] = view != null ? view.HudPressCountForCheck : 0,
                     ["lastHudAction"] = view != null ? view.LastHudActionForCheck : -1,
                     ["lastAttackIntent"] = Service.DuelLastAttackIntentForCheck,
-                    ["keyboardGuideVisible"] = view != null && view.KeyboardGuide.activeInHierarchy,
-                    ["inputFeedback"] = view != null ? view.InputFeedback.text : "",
+                    ["keyboardGuideVisible"] = view != null && view.HudPanel != null && view.HudPanel.KeyboardGuide.activeInHierarchy,
+                    ["inputFeedback"] = view != null && view.HudPanel != null ? view.HudPanel.InputFeedback.text : "",
                     ["legacyAnimationWriting"] = view != null && (view.FirstAnimator.GetComponent<Animation>().enabled ||
                         view.SecondAnimator.GetComponent<Animation>().enabled),
                     ["firstOptions"] = state.FirstOptions, ["secondStun"] = state.SecondStun,
@@ -174,7 +174,7 @@ namespace RevGame.Pvp
             PvpService service = Service;
             string id = service.DuelId;
             var pointer = new PointerEventData(EventSystem.current) { pointerId = 16 };
-            GameObject stick = view.MoveStick.gameObject;
+            GameObject stick = view.HudPanel.MoveStick.gameObject;
             try
             {
                 if (prepare)
@@ -195,7 +195,7 @@ namespace RevGame.Pvp
                 }
 
                 // 先观察真实命中，再点下一个按钮。托管缓冲会等原生公布的取消窗口。
-                Button[] buttons = { view.Jab, view.Jab, view.Jab, view.Skill, view.SkillTwo, view.Ultimate };
+                Button[] buttons = { view.HudPanel.Jab, view.HudPanel.Jab, view.HudPanel.Jab, view.HudPanel.Skill, view.HudPanel.SkillTwo, view.HudPanel.Ultimate };
                 int[] actions = { 1, 5, 6, 2, 4, 3 };
                 for (int index = 0; index < buttons.Length; index++)
                 {
@@ -246,7 +246,7 @@ namespace RevGame.Pvp
                 return Result(false, "请先通过可见 UTP 夹具进入已就绪的决斗场景。");
             }
             var pointer = new PointerEventData(EventSystem.current) { pointerId = 15 };
-            ClickDuelHudButton(view.Jump.gameObject, pointer);
+            ClickDuelHudButton(view.HudPanel.Jump.gameObject, pointer);
             return Result(true, "");
         }
 
@@ -402,7 +402,7 @@ namespace RevGame.Pvp
         // 以逻辑帧判定两次输入的时机，以实际 Sprite 和镜像判定表现，避免用 isPlaying 冒充换帧。
         private static async RevTask CheckDuelControls(PvpDuelView view, int stallMs)
         {
-            GameObject stick = view.MoveStick.gameObject;
+            GameObject stick = view.HudPanel.MoveStick.gameObject;
             var firstFinger = new PointerEventData(EventSystem.current) { pointerId = 11 };
             var secondFinger = new PointerEventData(EventSystem.current) { pointerId = 12 };
             var jabFinger = new PointerEventData(EventSystem.current) { pointerId = 14 };
@@ -428,14 +428,14 @@ namespace RevGame.Pvp
                 ExecuteEvents.Execute(stick, firstFinger, ExecuteEvents.pointerUpHandler);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.Frame > 0 &&
                     service.DuelSnapshot.FirstX == service.DuelPreviousSnapshot.FirstX, "松手停止");
-                ClickDuelHudButton(view.Jab.gameObject, jabFinger);
+                ClickDuelHudButton(view.HudPanel.Jab.gameObject, jabFinger);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 1, "首次普攻");
                 int firstStart = service.DuelSnapshot.Frame - service.DuelSnapshot.FirstAge;
                 int expectedSecondStart = firstStart + DuelConfig.ActionDuration(1) + 1;
                 _controlCheckTrace["firstStart"] = firstStart;
                 _controlCheckTrace["expectedSecondStart"] = expectedSecondStart;
                 await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAge == DuelConfig.ActionDuration(1) - 2, "恢复期输入窗口");
-                ClickDuelHudButton(view.Jab.gameObject, jabFinger);
+                ClickDuelHudButton(view.HudPanel.Jab.gameObject, jabFinger);
                 _controlCheckTrace["duelHudRaycasts"] = 4;
                 // 先确认真实 UI 采样已经把第二次按键交给业务，再暂停 Unity 主线程。
                 await WaitForDuelControl(id, () => service.DuelQueuedAttackForCheck == 1, "第二次普攻入缓冲");
@@ -525,7 +525,7 @@ namespace RevGame.Pvp
             _controlCheckTrace["observedAttackStart"] = view.FirstAnimator.LastObservedAttackStart;
             _controlCheckTrace["attackSpriteChanges"] = view.FirstAnimator.AttackSpriteChanges;
             _controlCheckTrace["attackFadeSamples"] = view.FirstAnimator.AttackFadeSamples;
-            _controlCheckTrace["clockText"] = view.Clock.text;
+            _controlCheckTrace["clockText"] = view.HudPanel?.Clock.text;
             _controlCheckTrace["duelError"] = service.DuelError;
         }
 
@@ -565,7 +565,7 @@ namespace RevGame.Pvp
             }
             if (!Service.TrySetDuelComputerAiPaused(paused == 1))
             {
-                throw new RevGMUsageException("请在进行中的本地人机决斗使用此指令。");
+                throw new RevGMUsageException("请在本地人机决斗的准备或进行阶段使用此指令。");
             }
             return paused == 1 ? "敌人 AI 已暂停，已起手的动作会正常收完。" : "敌人 AI 已恢复。";
         }

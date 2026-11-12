@@ -145,7 +145,8 @@ namespace RevGame.Pvp
         // 只消费本局单调版本；锁角时重建第 0 帧本端副本，使预测与权威拿到相同的角色数据。
         private void ApplyDuelPreparation(DuelPrepState state)
         {
-            if (state == null || (DuelPrep != null && state.revision < DuelPrep.revision))
+            // 帧回复可以省略准备信息。版本零的默认对象与缺省字段等价，不能覆盖已锁定的阵容。
+            if (state == null || state.revision <= 0 || (DuelPrep != null && state.revision < DuelPrep.revision))
             {
                 return;
             }

@@ -1,4 +1,4 @@
-# RevGameCore · 八角笼决斗内核
+# RevGameCore · 决斗内核
 
 C++17 独立工程。参考 MiniGameCore 的 FrameWindow、CorePipeline 与战斗 PartA / PartB 分段，采用 RevGame 自己的双座位规则与通信契约。
 
@@ -23,13 +23,15 @@ C++17 独立工程。参考 MiniGameCore 的 FrameWindow、CorePipeline 与战�
 
 Unity 2022.3.15f1c1 的 Android Mono 测试包使用 ARMv7。用该 Unity 自带的 NDK 配置 `-DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-22 -DANDROID_STL=c++_static`，将 `libRevGameCore.so` 放入 `Assets/Plugins/Android/libs/armeabi-v7a`，再用 `game.pvp.android-duel-prepare` 装配导入设置。
 
-`game.pvp.duel-atlas` 核对 14 组角色动作和切片引用，并打包随内置场景交付的 Sprite Atlas V2。Android 出包前构建并发布 Android AB，将 `Assets/StreamingAssets/PC` 临时移出工程，再调用 `game.pvp.android-duel-player`。构建动作会检查 PC 资源已隔离。完成后将 PC 目录和原有 `.meta` 归还到原位。
+`game.pvp.duel-atlas` 核对 22 个角色动作片段和切片引用，并打包随内置场景交付的 Sprite Atlas V2。Android 出包前构建并发布 Android AB，将 `Assets/StreamingAssets/PC` 临时移出工程，再调用 `game.pvp.android-duel-player`。构建动作会检查 PC 资源已隔离。完成后将 PC 目录和原有 `.meta` 归还到原位。
 
 工程路径含中文时，可在纯 ASCII 的独立副本里保留 Android AB 并排除 PC AB，再以 Android 目标调用批处理入口 `RevGame.Editor.GamePvpBuild.BuildAndroidDuelTestBatch`。它输出到副本的 `Builds/AndroidDuelTest/Player`，供验包后复制。测试包锁定横屏，启动时请求 1920×1080 全屏渲染。
 
 Unity 自带 AGP 7.1.2 的本地测试包可用 Android API 32 组装。如果自动选择 API 35 后 D8 读取 `android.jar` 失败，可在副本的 `Library/Bee/Android/Prj/Mono2x/Gradle` 中让 launcher 和 unityLibrary 都使用 API 32，再运行 `:launcher:assembleDebug`。验包时检查 Manifest 横屏声明、Mono 和 ARMv7 原生库，以及 APK 只含 Android AB。
 
 开发版客户端在兼容且已连接的服务器或局域网棋局中显示「决斗测试」。服务器测试入口使用 Debug Gate，默认匹配地址为 `192.168.10.3:20000`。点击会请求权威直接切场，双方 Ready 后开始封帧。
+
+内置决斗场景引用 `GameRes/Art/Pvp/Duel/Animations` 的动画和角色图集、`GameRes/Material/Pvp/DuelScene` 的材质及 `GameRes/Effects/Pvp/DuelScene` 的粒子预制体。选角、加载和战斗 HUD 通过 RevUI 打开，选角与加载共用的材质在 `GameRes/Material/UI/PvpDuelPrep`。HUD 与准备页各有资源包。
 
 数值改在 Config/Duel.v1.json，运行生成器后同步更新两端。配置指纹包括棋盘资格阈值、固定步长、两席的命中距离及跳跃参数。黑方绯焰读取六招的距离，白方鸦鸦读取追加的六项距离。Unity 的 game.pvp.duel-build 动作用实际编辑器 API 构建决斗场景。
 
@@ -45,11 +47,11 @@ Unity 自带 AGP 7.1.2 的本地测试包可用 Android API 32 组装。如果�
 
 | 方向 | 字段，均为小端 32 位整数 |
 |---|---|
-| 开局输入 | 协议版本 7，操作 1，72 项配置，64 位种子的低字和高字 |
-| 整帧输入 | 协议版本 7，操作 2，从 1 开始的帧号，黑方意图，白方意图 |
+| 开局输入 | 协议版本 8，操作 1，72 项配置，64 位种子的低字和高字 |
+| 整帧输入 | 协议版本 8，操作 2，从 1 开始的帧号，黑方意图，白方意图 |
 | 帧输出 | 帧号、结果、两席状态、两侧命中伤害、世界指纹、两席跳跃高度 |
 
-协议 7 保留原来的意图编码。低两位是方向，接下来三位是攻击槽，第六位是跳跃。玩家可发普攻、技能一、大招和技能二，0 为空意图。普攻二、三段由内核根据命中和取消窗口派生。受击硬直、已经使用的技能、连击数、跳跃高度和速度都参加指纹与检查点。队列写满返回背压，缓冲不足保留输出。客户端和服务端需要配套更新。旧版检查点与录像须用原协议和规则版本读取。
+协议 8 保留原来的意图编码。低两位是方向，接下来三位是攻击槽，第六位是跳跃。玩家可发普攻、技能一、大招和技能二，0 为空意图。普攻二、三段由内核在取消窗口内派生，空挥也可接续。技能取消和连击数仍读取真实命中。绯焰、鸦鸦六个动作的横向命中距离均为协议 7 的 1.6 倍。受击硬直、已经使用的技能、连击数、跳跃高度和速度都参加指纹与检查点。队列写满返回背压，缓冲不足保留输出。客户端和服务端需要配套更新。旧版检查点与录像须用原协议和规则版本读取。
 
 ## 联机帧指纹对账
 

@@ -42,7 +42,7 @@ namespace RevGame.View
             Chapter = chapter;
             if (chapter == 0)
             {
-                _lobby = RevResManager.LoadAsync("Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.UI);
+                _lobby = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.UI);
                 while (_lobby != null && _lobby.IsLoading)
                 {
                     await RevTask.Yield();
@@ -162,7 +162,7 @@ namespace RevGame.View
             }
             if (_lobby != null)
             {
-                RevResManager.Release("Lobby", "MagicCottageMaterial");
+                RevResManager.Release("Material/Lobby", "MagicCottageMaterial");
                 _lobby = null;
             }
             if (_chapterMaterial != null)

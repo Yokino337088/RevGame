@@ -12,6 +12,8 @@ namespace RevGame.Editor
         // 本地项目美术进入独立图集，两个面板不引用决斗内置场景的散图。
         private const string PrepArt = "Assets/GameRes/Art/UI/PvpDuelPrep/";
         private const string PrepPanels = "Assets/GameRes/UI/Panel/Pvp/DuelPrep";
+        // 准备页的两份专用材质归 Material，分包仍跟随选角和加载页的生命周期。
+        private const string PrepMaterials = "Assets/GameRes/Material/UI/PvpDuelPrep";
         // 黑白席颜色相同贯穿选角、加载和镜像战斗；编号提供第二种识别手段。
         private static readonly Color PrepWarm = new Color(1f, .52f, .39f);
         private static readonly Color PrepCool = new Color(.39f, .89f, .94f);
@@ -35,6 +37,10 @@ namespace RevGame.Editor
             {
                 AssetDatabase.CreateFolder("Assets/GameRes/UI/Panel/Pvp", "DuelPrep");
             }
+            if (!AssetDatabase.IsValidFolder(PrepMaterials))
+            {
+                AssetDatabase.CreateFolder("Assets/GameRes/Material/UI", "PvpDuelPrep");
+            }
             Material sigil = PrepMaterial("DuelSigil", "RevGame/UI/Duel Preparation Sigil");
             Material rift = PrepMaterial("DuelRift", "RevGame/UI/Duel Preparation Rift");
             Font font = GameAssetBuilder.Font();
@@ -52,7 +58,7 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("决斗准备 Shader 未编译成功：" + shaderName);
             }
-            string materialPath = PrepPanels + "/" + name + ".mat";
+            string materialPath = PrepMaterials + "/" + name + ".mat";
             var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
             if (material == null)
             {
@@ -104,9 +110,18 @@ namespace RevGame.Editor
                 var panel = root.AddComponent<T>();
                 panel.Ember = PrepSprite("DuelEmber");
                 panel.Yaya = PrepSprite("DuelYaya");
-                // 底图先铺满；面板装配后再按已就绪的父画布尺寸裁边，避免在空 Prefab 根上计算比例。
-                PrepImage(PrepStretch("screenBackground", rect), "DuelAtrium", Color.white, raycast: true).material = rift;
-                RectTransform layout = PrepStretch("layout", rect);
+                // 保存设计尺寸，Prefab Stage 与 RevUI 都通过同一个组件将整个设计框等比缩放。
+                Image background = PrepImage(PrepAt("screenBackground", rect, .5f, .5f, 1920, 1080),
+                    "DuelAtrium", Color.white, raycast: true);
+                background.material = rift;
+                RectTransform layout = PrepAt("layout", rect, .5f, .5f, 1920, 1080);
+                var fit = root.AddComponent<DuelPreparationLayout>();
+                using (var settings = new SerializedObject(fit))
+                {
+                    settings.FindProperty("design").objectReferenceValue = layout;
+                    settings.FindProperty("backdrop").objectReferenceValue = background;
+                    settings.ApplyModifiedPropertiesWithoutUndo();
+                }
                 PrepImage(PrepAt("titlePlate", layout, .5f, .917f, 666, 112), "DuelPlate", Color.white, true);
                 PrepText(layout, "eyebrow", "R E V G A M E    /    D U E L", .5f, .949f, 640, 36, 22, font, PrepGold);
                 PrepText(layout, "title", loading ? "决 斗 载 入" : "选 择 角 色", .5f, .896f, 660, 64, 56, font, PrepIvory);
@@ -121,7 +136,7 @@ namespace RevGame.Editor
                     sigil.material = material;
                     panel.Accent = sigil.rectTransform;
                     PrepText(layout, "versus", "VS", .5f, .51f, 220, 120, 96, font, PrepGold);
-                    PrepText(layout, "prompt", "", .5f, .127f, 720, 64, 34, font, PrepIvory);
+                    PrepText(layout, "prompt", "正在准备决斗", .5f, .127f, 720, 64, 34, font, PrepIvory);
                     PrepText(layout, "hint", "两席准备完成后，决斗才会开始", .5f, .066f, 700, 42, 22, font, PrepGold);
                 }
                 else
@@ -133,7 +148,9 @@ namespace RevGame.Editor
                     RectTransform roster = PrepStretch("roster", layout);
                     BuildPrepChoice(roster, "ember", "绯焰", "红枪", "DuelEmber", .573f, font);
                     BuildPrepChoice(roster, "yaya", "鸦鸦", "夜羽", "DuelYaya", .423f, font);
-                    PrepText(layout, "prompt", "", .5f, .309f, 510, 44, 27, font, PrepIvory);
+                    roster.Find("ember/seats").GetComponent<Text>().text = "<color=#FFAE94>1P 黑方</color>";
+                    roster.Find("yaya/seats").GetComponent<Text>().text = "<color=#8DEDE3>2P 白方</color>";
+                    PrepText(layout, "prompt", "点选角色 · 确认后锁定", .5f, .309f, 510, 44, 27, font, PrepIvory);
                     RectTransform confirm = PrepAt("confirm", layout, .5f, .203f, 302, 78);
                     PrepButton(confirm);
                     PrepText(confirm, "text", "确认角色", .5f, .5f, 284, 64, 35, font, PrepGold);
@@ -174,12 +191,12 @@ namespace RevGame.Editor
             portrait.preserveAspect = true;
             portrait.raycastTarget = false;
             PrepImage(PrepAt("seatBadge", seat, .5f, .956f, 382, 54), "DuelPlate", Color.white, true);
-            var player = PrepText(seat, "player", white ? "2P · 白方" : "1P · 黑方", .5f, .956f, 358, 48, 25, font, accent);
+            var player = PrepText(seat, "player", white ? "2P · 白方  /  白方棋友" : "1P · 黑方  /  你", .5f, .956f, 358, 48, 25, font, accent);
             player.resizeTextForBestFit = true;
             player.resizeTextMinSize = 16;
             player.resizeTextMaxSize = 25;
-            var name = PrepText(seat, "roleName", "", .5f, .22f, 356, 65, 52, font, PrepIvory);
-            var status = PrepText(seat, "status", "", .5f, loading ? .131f : .126f, 362, 39, 25, font, accent);
+            var name = PrepText(seat, "roleName", white ? "鸦鸦" : "绯焰", .5f, .22f, 356, 65, 52, font, PrepIvory);
+            var status = PrepText(seat, "status", loading ? "正在准备" : "预选中", .5f, loading ? .131f : .126f, 362, 39, 25, font, accent);
             var view = new DuelPrepSeatView { Portrait = portrait, Echo = echo, Portal = halo.rectTransform, RoleName = name, Player = player, Status = status };
             if (loading)
             {

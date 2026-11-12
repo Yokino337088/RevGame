@@ -154,6 +154,7 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
+            CloseDuelHud();
             CancelBossIntro();
             _introRunner?.Dispose();
             _introRunner = null;

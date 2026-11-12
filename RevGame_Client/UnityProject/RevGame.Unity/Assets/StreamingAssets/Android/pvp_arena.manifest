@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3092925655
+CRC: 1128661365
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 5af032395d85907fd5ac20bc777efe50
+    Hash: b5c34ad5ce95e14251ce63b9eade4b56
   TypeTreeHash:
     serializedVersion: 2
     Hash: 94c898241677d00febba607384ab9469
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 5af032395d85907fd5ac20bc777efe50
+    Hash: b5c34ad5ce95e14251ce63b9eade4b56
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -36,10 +36,10 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/GameRes/Pvp/PvpTemple.mat
-- Assets/GameRes/Pvp/PvpIvoryBoard.mat
+- Assets/GameRes/Material/Pvp/Board/PvpTemple.mat
+- Assets/GameRes/Material/Pvp/Board/PvpIvoryBoard.mat
 - Assets/GameRes/Pvp/PvpBoardView.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/background_temple_shared
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/background_temple_shared"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders"

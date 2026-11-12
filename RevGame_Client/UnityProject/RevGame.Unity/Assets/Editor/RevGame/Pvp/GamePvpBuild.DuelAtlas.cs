@@ -15,7 +15,6 @@ namespace RevGame.Editor
     public static partial class GamePvpBuild
     {
         // 角色随内置场景进入 Player。图集不在 GameRes 的 AB 图集根目录下。
-        private const string DuelAnimationFolder = "Assets/Scenes/PvpDuelAnimations";
         private const string DuelFighterAtlasPath = DuelAnimationFolder + "/DuelFighters.spriteatlasv2";
         private const int DuelFighterAtlasPageSize = 2048;
 
@@ -60,12 +59,11 @@ namespace RevGame.Editor
             ValidateDuelRoleClips(YayaPrefix, YayaPrefix, yaya, groups);
             ValidateDuelSceneAnimationSlices(ember, yaya);
 
-            // 图集去重收录角色、特效和 HUD Sprite。背景保持原分辨率，便于镜头移动和裁切。
+            // 内置图集只收角色和出招图片。小镇是独立长图，HUD 另走按局加载的专用图集。
             Sprite[] sprites = ember.Concat(yaya).SelectMany(frames => frames)
                 .Concat(ArcadeCastArt.Concat(ArcadeImpactArt).Distinct().Select(LoadArcadeEffect))
                 .Concat(YayaCastArt.Concat(YayaImpactArt).Distinct().Select(LoadYayaDuelEffect))
-                .Concat(YayaPortraitExpressions.Select(LoadYayaDuelPortrait))
-                .Concat(DuelHudSprites.Select(LoadHudSprite)).Distinct().ToArray();
+                .Distinct().ToArray();
             string[] paths = sprites.Select(AssetDatabase.GetAssetPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
             if (paths.Distinct(StringComparer.Ordinal).Count() != sprites.Length)
             {
@@ -180,10 +178,12 @@ namespace RevGame.Editor
                     !effects.YayaImpactSounds.SequenceEqual(YayaImpactAudio.Select(LoadYayaDuelAudio)) ||
                     AssetDatabase.GetAssetPath(effects.Second.material) != YayaDuelMaterial ||
                     effects.SecondImpact.material != effects.Second.material ||
-                    !view.YayaPortraits.SequenceEqual(YayaPortraitExpressions.Select(LoadYayaDuelPortrait)) ||
-                    view.SecondPortrait.sprite != view.YayaPortraits[0])
+                    !effects.Second.material.shader.isSupported ||
+                    view.CameraRig.Backdrop.sprite != LoadArcadeSprite("SunlitTownArena") ||
+                    !effects.ParticlePrefab.material.shader.isSupported ||
+                    view.GetComponentsInChildren<Button>(true).Length != 0)
                 {
-                    throw new InvalidOperationException("白方决斗特效、音效或头像绑定异常。");
+                    throw new InvalidOperationException("决斗场景中的特效、背景或 HUD 分层绑定异常。");
                 }
             }
             finally

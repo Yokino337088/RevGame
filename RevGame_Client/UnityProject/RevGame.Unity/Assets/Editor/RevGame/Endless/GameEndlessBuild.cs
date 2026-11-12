@@ -35,6 +35,7 @@ namespace RevGame.Editor
                 }
             }
             Directory.CreateDirectory("Assets/GameRes/Endless");
+            Directory.CreateDirectory("Assets/GameRes/Material/Endless");
             Directory.CreateDirectory("Assets/GameRes/UI/Panel/Endless");
             AssetDatabase.Refresh();
             _font = GameAssetBuilder.Font();
@@ -73,9 +74,10 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return "无尽资产制作完成；下一步生成字库，再执行资源门禁、AB构建和发布";
         }
+        // 无尽的共享材质从独立目录读取，资源配置把它们编进竞技场包。
         private static Material Material(string name, string shader)
         {
-            string path = "Assets/GameRes/Endless/" + name + ".mat";
+            string path = "Assets/GameRes/Material/Endless/" + name + ".mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             Shader found = Shader.Find(shader);
             if (found == null)

@@ -17,6 +17,8 @@ namespace RevGame.Flow
         public const string DuelSceneName = "PvpDuelScene";
         // 准备页随当前 PvP 域存活，两个阶段换同一套图集，不在每帧加载资源。
         private DuelPrepPanelBase _duelPreparationPanel;
+        // 决斗 HUD 独立于准备页，直到 HUD 关闭后才归还专用图集。
+        private GameSpriteAtlasService.ScopedAtlasLease _duelHudAtlas;
         // 只在可见状态变化时传新数据，进度补间不会被网络轮询反复重启。
         private (int revision, int seconds, DuelRole black, DuelRole white, bool canPick, int side, string blackName, string whiteName) _duelPainted;
 
@@ -96,6 +98,13 @@ namespace RevGame.Flow
                 _duelPreparationPanel = loading;
                 _duelPainted = default;
                 RevUI.Close<DuelSelectPanel>();
+                _duelHudAtlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas("DuelHud");
+                await _duelHudAtlas.WaitReadyAsync();
+                ThrowIfDisposed();
+                if (!DuelStillPreparing(service, duelId))
+                {
+                    return;
+                }
                 // 先准备真正的 Unity 场景。不到预加载完成的门禁回调，任何帧都不能上报 100%。
                 await RevScene.LoadWhenReadyAsync(DuelSceneName, value => service.ReportDuelSceneProgress(Mathf.FloorToInt(value * 99f)),
                     () => WaitForDuelActivation(service, duelId), minSeconds: .55f);
@@ -104,6 +113,18 @@ namespace RevGame.Flow
                 {
                     return;
                 }
+                var view = UnityEngine.Object.FindObjectOfType<PvpDuelView>();
+                var hud = await RevUI.OpenAsync<DuelHudPanel>();
+                ThrowIfDisposed();
+                if (view == null || hud == null)
+                {
+                    throw new InvalidOperationException("决斗场景或 HUD 尚未就绪。");
+                }
+                if (!DuelStillPreparing(service, duelId))
+                {
+                    return;
+                }
+                view.AttachHud(hud);
                 service.MarkDuelSceneReady();
                 double deadline = Time.realtimeSinceStartupAsDouble + DuelPreparation.StageTimeoutMs / 1000.0;
                 // 激活后仍保留原 Ready 屏障，直到双端场景对象已可用才移开遮挡。
@@ -126,6 +147,10 @@ namespace RevGame.Flow
                 {
                     service.AbortDuelPreparation();
                 }
+                if (!completed)
+                {
+                    CloseDuelHud();
+                }
                 _duelPreparationPanel = null;
                 RevUI.Close<DuelSelectPanel>();
                 RevUI.Close<DuelLoadingPanel>();
@@ -143,6 +168,14 @@ namespace RevGame.Flow
                     ReturnHome();
                 }
             }
+        }
+
+        // 遮挡画面后关闭 HUD，再释放它持有的图集，返回大厅和异常退出共用同一收尾。
+        private void CloseDuelHud()
+        {
+            RevUI.Close<DuelHudPanel>();
+            _duelHudAtlas?.Dispose();
+            _duelHudAtlas = null;
         }
 
         // 门禁只等待网络状态，不请求新的 Unity AsyncOperation；否则挂起的加载队列无法继续。

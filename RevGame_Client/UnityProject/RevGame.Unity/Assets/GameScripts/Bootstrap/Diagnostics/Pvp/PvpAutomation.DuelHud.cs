@@ -34,13 +34,14 @@ namespace RevGame.Pvp
                 readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.duel-hud-layout", "读取正式圆键的屏幕几何与图集状态", Empty,
                 _ => InspectDuelHud(), readOnly: true, owner: Owner);
+            RegisterDuelArenaChecks();
         }
 
         // 仅控制测试夹具创建的可见对局，避免将诊断输入发给正常联机房间。
         private static object StartDuelHudCheck()
         {
             var view = UnityEngine.Object.FindObjectOfType<PvpDuelView>();
-            if (view == null || _lanGameCheck == null || !_lanGameCheck.OwnsVisibleDuel(Service) ||
+            if (view == null || view.HudPanel == null || _lanGameCheck == null || !_lanGameCheck.OwnsVisibleDuel(Service) ||
                 !Service.DuelBothReady || _hudCheckStage == "running")
             {
                 return Result(false, "请先进入隔离的可见决斗。");
@@ -57,25 +58,25 @@ namespace RevGame.Pvp
         private static async RevTask RunDuelHudCheck(PvpDuelView view)
         {
             string duel = Service.DuelId;
-            GameObject stick = view.MoveStick.gameObject;
+            GameObject stick = view.HudPanel.MoveStick.gameObject;
             var move = new PointerEventData(EventSystem.current) { pointerId = 21 };
             var other = new PointerEventData(EventSystem.current) { pointerId = 22 };
             try
             {
                 PressDuelHudButton(stick, move, .08f);
-                if (view.MoveStick.Direction != 0)
+                if (view.HudPanel.MoveStick.Direction != 0)
                 {
                     throw new InvalidOperationException("圆心死区内触点发出了移动意图。");
                 }
                 DragDuelStick(stick, move, .72f);
                 PressDuelHudButton(stick, other, -.72f);
                 ExecuteEvents.Execute(stick, other, ExecuteEvents.pointerUpHandler);
-                if (view.MoveStick.Direction != 1)
+                if (view.HudPanel.MoveStick.Direction != 1)
                 {
                     throw new InvalidOperationException("其他触点抢占或清除了摇杆方向。");
                 }
                 int start = Service.DuelSnapshot.FirstX;
-                ClickDuelHudButton(view.Jump.gameObject, other);
+                ClickDuelHudButton(view.HudPanel.Jump.gameObject, other);
                 await WaitForDuelControl(duel, () => Service.DuelSnapshot.FirstX > start && Service.DuelSnapshot.FirstY > 0, "权威同时走位和跳跃");
                 _hudMovedAndJumped = true;
 
@@ -88,9 +89,9 @@ namespace RevGame.Pvp
                 await WaitForDuelControl(duel, () => Service.DuelSnapshot.FirstY == 0 &&
                     Service.DuelSnapshot.FirstEnergy >= DuelConfig.SkillCost &&
                     Service.DuelSnapshot.SecondX - Service.DuelSnapshot.FirstX > 2500, "双手技能试放前置");
-                ClickDuelHudButton(view.Skill.gameObject, other);
+                ClickDuelHudButton(view.HudPanel.Skill.gameObject, other);
                 await WaitForDuelControl(duel, () => Service.DuelSnapshot.FirstAction == 2 &&
-                    view.MoveStick.Direction == -1, "技能与摇杆由各自触点控制");
+                    view.HudPanel.MoveStick.Direction == -1, "技能与摇杆由各自触点控制");
                 _hudHeldWhileCasting = true;
                 ExecuteEvents.Execute(stick, move, ExecuteEvents.pointerUpHandler);
                 int released = Service.DuelSnapshot.Frame;
@@ -126,11 +127,11 @@ namespace RevGame.Pvp
         private static object InspectDuelHud()
         {
             var view = UnityEngine.Object.FindObjectOfType<PvpDuelView>();
-            if (view == null)
+            if (view == null || view.HudPanel == null)
             {
                 return new Dictionary<string, object> { ["ready"] = false };
             }
-            Component[] controls = { view.MoveStick, view.Jump, view.Jab, view.Skill, view.SkillTwo, view.Ultimate };
+            Component[] controls = { view.HudPanel.MoveStick, view.HudPanel.Jump, view.HudPanel.Jab, view.HudPanel.Skill, view.HudPanel.SkillTwo, view.HudPanel.Ultimate };
             var centers = new Vector2[controls.Length];
             var radii = new float[controls.Length];
             var corners = new Vector3[4];
@@ -160,8 +161,8 @@ namespace RevGame.Pvp
             return new Dictionary<string, object> { ["ready"] = true, ["controlCount"] = controls.Length,
                 ["round"] = roundError <= 1, ["insideSafeArea"] = inside, ["separated"] = separated,
                 ["packed"] = packed, ["primaryLargest"] = radii[2] > Mathf.Max(radii[3], Mathf.Max(radii[4], radii[5])),
-                ["playerNamesVisible"] = view.FirstName.cachedTextGenerator.characterCountVisible > 2 &&
-                    view.SecondName.cachedTextGenerator.characterCountVisible > 2,
+                ["playerNamesVisible"] = view.HudPanel.FirstName.cachedTextGenerator.characterCountVisible > 2 &&
+                    view.HudPanel.SecondName.cachedTextGenerator.characterCountVisible > 2,
                 ["width"] = screen.x, ["height"] = screen.y };
         }
     }

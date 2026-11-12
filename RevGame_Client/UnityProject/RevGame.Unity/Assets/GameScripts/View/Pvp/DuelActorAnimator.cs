@@ -28,9 +28,9 @@ namespace RevGame.View
             Down,
             // 权威技能二片段。
             Attack4,
-            // 命中取消后的普攻二段。
+            // 取消窗口内接续的普攻二段。
             Attack5,
-            // 命中取消后的普攻三段。
+            // 取消窗口内接续的普攻三段。
             Attack6,
             // 原生受击硬直期间的反应片段。
             Hit
@@ -57,8 +57,10 @@ namespace RevGame.View
         private Image _image;
         // 旧姿态的最后一张图只在过渡期间保留。两个图层复用整局，不逐帧创建对象。
         private Image _outgoingImage;
-        // 两层图片交叠时间，单位为表现秒数。
-        private const float PoseFadeSeconds = .09f;
+        // 当前淡入淡出时长。移动/待机缓慢衔接，攻击和受击必须在接触关键帧前切清。
+        private float _fadeSeconds;
+        // 中断时从仍然可见的旧图透明度继续，避免短暂重亮。
+        private float _outgoingStartAlpha;
         // 本次过渡开始时的非缩放时间。
         private float _fadeStarted;
         // 当前图层的朝向，用于下一次过渡建立基线。
@@ -79,6 +81,9 @@ namespace RevGame.View
         private float _sampleRate;
         // 当前普通姿态已播放的非缩放秒数，切换时归零。
         private float _poseSeconds;
+        // 记录正在绘制的姿态及其待机播放头，短暂跑动再站定也能接续呼吸。
+        private Pose _playingPose;
+        private float _idleResumeSeconds;
         // 同一招式可连续出现。用逻辑起始帧识别每一次，而不是只看招式编号。
         private int _attackStart = -1;
         // 跑步和专门配置的待机循环，其余片段播到最后一张时保持该姿势。
@@ -210,7 +215,7 @@ namespace RevGame.View
                 6 => Pose.Attack6,
                 _ => altitude > 0 ? Pose.Jump : moving ? Pose.Run : Pose.Idle
             };
-            int attackStart = action != 0 && health > 0 ? frame - age : -1;
+            int attackStart = action != 0 && health > 0 && stun == 0 ? frame - age : -1;
             if (_machine.CurrentStateType != next)
             {
                 _machine.ChangeState(next, "收到决斗快照");
@@ -224,16 +229,21 @@ namespace RevGame.View
             _machine.UpdateState(Time.unscaledDeltaTime);
             PaintSpriteFrame(attackStart >= 0 ? action : 0, age, frameFraction, jumpSpriteIndex);
             PaintPoseFade();
-            _poseSeconds += Time.unscaledDeltaTime;
+            _poseSeconds += Mathf.Min(Time.unscaledDeltaTime, .05f);
         }
 
         // 读取片段采样率。直接落屏的 UGUI Sprite 只由权威播放头驱动。
         private void PlayPose(Pose pose, string clip)
         {
-            BeginPoseFade();
+            BeginPoseFade(pose);
             AnimationClip asset = _roleClips == null ? _animation.GetClip(clip) : _roleClips[(int)pose];
             _sampleRate = asset == null ? 0 : asset.frameRate;
-            _poseSeconds = 0;
+            if (_playingPose == Pose.Idle)
+            {
+                _idleResumeSeconds = _poseSeconds;
+            }
+            _playingPose = pose;
+            _poseSeconds = pose == Pose.Idle ? _idleResumeSeconds : 0;
             int index = (int)pose;
             SpriteSequence sequence = spriteSequences != null && index < spriteSequences.Length ? spriteSequences[index] : null;
             _playingFrames = sequence?.frames;
@@ -280,18 +290,28 @@ namespace RevGame.View
         }
 
         // 只在权威姿态或动作实例切换时采样旧画面。过渡中再次切换，沿用当时更清楚的图层。
-        private void BeginPoseFade()
+        private void BeginPoseFade(Pose destination)
         {
             if (!_hasPainted || _image.sprite == null)
             {
                 return;
             }
-            if (!_outgoingImage.enabled || _outgoingImage.canvasRenderer.GetAlpha() <= _image.canvasRenderer.GetAlpha())
+            float incoming = _image.canvasRenderer.GetAlpha();
+            float outgoing = _outgoingImage.enabled ? _outgoingImage.canvasRenderer.GetAlpha() : 0;
+            if (!_outgoingImage.enabled || outgoing <= incoming)
             {
                 _outgoingImage.sprite = _image.sprite;
                 _outgoingImage.color = _image.color;
                 _outgoingFacing = _paintedFacing;
             }
+            _outgoingStartAlpha = Mathf.Max(incoming, outgoing);
+            // 动作与受击用短过渡，较长的待机过渡只影响贴图透明度。
+            _fadeSeconds = destination switch
+            {
+                Pose.Idle => .14f,
+                Pose.Run or Pose.Jump => .11f,
+                _ => .065f
+            };
             _outgoingImage.enabled = true;
             _fadeStarted = Time.unscaledTime;
         }
@@ -305,7 +325,7 @@ namespace RevGame.View
             {
                 return;
             }
-            float progress = Mathf.Clamp01((Time.unscaledTime - _fadeStarted) / PoseFadeSeconds);
+            float progress = Mathf.Clamp01((Time.unscaledTime - _fadeStarted) / _fadeSeconds);
             if (progress >= 1)
             {
                 FinishPoseFade();
@@ -313,8 +333,9 @@ namespace RevGame.View
             }
             float blend = progress * progress * (3 - 2 * progress);
             _outgoingImage.rectTransform.localScale = new Vector3(_outgoingFacing * _paintedFacing, 1, 1);
-            _image.canvasRenderer.SetAlpha(blend);
-            _outgoingImage.canvasRenderer.SetAlpha(1 - blend);
+            // 两张半透明图叠加会变暗。平方根曲线让中段仍能保持轮廓，同时平滑收掉上一张。
+            _image.canvasRenderer.SetAlpha(Mathf.Sqrt(blend));
+            _outgoingImage.canvasRenderer.SetAlpha(_outgoingStartAlpha * Mathf.Sqrt(1 - blend));
         }
 
         // 离场、对象停用或过渡结束时清掉临时图层，重新启用不出现上一局的残影。

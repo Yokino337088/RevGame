@@ -29,7 +29,7 @@ namespace RevGame.Editor
                 texture.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, maxTextureSize = 2048, format = TextureImporterFormat.ETC2_RGB4 });
                 texture.SaveAndReimport();
             }
-            const string materialPath = "Assets/GameRes/Lobby/MagicCottageMaterial.mat";
+            const string materialPath = "Assets/GameRes/Material/Lobby/MagicCottageMaterial.mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
             if (material == null)
             {
