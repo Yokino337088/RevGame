@@ -1,0 +1,70 @@
+ManifestFileVersion: 0
+CRC: 164432021
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b1e74176db9fb3c996ade7d10a1ad0df
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 51d0c657f2f7a9aa967b553862be4253
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b1e74176db9fb3c996ade7d10a1ad0df
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 63e786abc8b0ac0449f3cdc19ef1eb56, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 785461a78d706a546bc7a8287ffc32b3, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Assembly-CSharp
+  ClassName: RevGame.Pvp.DuelPrepSeatView
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+Assets:
+- Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelRift.mat
+- Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelSelectPanel.prefab
+- Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelLoadingPanel.prefab
+- Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelSigil.mat
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_duelprep
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders

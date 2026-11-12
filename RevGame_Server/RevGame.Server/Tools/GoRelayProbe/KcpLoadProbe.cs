@@ -340,6 +340,43 @@ internal static class GoKcpLoadProbe
                 Check(open.ErrorCode == 0 && !string.IsNullOrEmpty(open.DuelId), force ? "空棋盘测试决斗" : "中局劣势允许决斗");
                 duelId = open.DuelId;
             }
+            // 真实 KCP 验证双方可以选择相同角色；黑方加载到 100 不能替白方放行。
+            using (var visible = await AskDuel(black, DuelAuthority.PrepVisible))
+            {
+                Check(visible.PrepPhase == (int)DuelPrepPhase.Waiting, "只显示一个选角页不启动计时");
+            }
+            using (var visible = await AskDuel(white, DuelAuthority.PrepVisible))
+            {
+                Check(visible.PrepPhase == (int)DuelPrepPhase.Choosing && visible.PrepRemainingMs == DuelConfig.PickDurationMs, "双端显示后给完整选角时间");
+            }
+            using (var pick = await AskDuel(black, DuelAuthority.PrepPick, input: (int)DuelRole.Yaya))
+            {
+                Check(pick.BlackRole == (int)DuelRole.Yaya, "黑方预选已接纳");
+            }
+            using (var read = await AskDuel(white, DuelAuthority.Read))
+            {
+                Check(read.BlackRole == (int)DuelRole.Yaya && read.PrepLocked == 0, "白方收到黑方预选而非锁定");
+            }
+            using (var locked = await AskDuel(black, DuelAuthority.PrepLock, input: (int)DuelRole.Yaya))
+            {
+                Check(locked.PrepLocked == 1 && locked.PrepPhase == (int)DuelPrepPhase.Choosing, "单席锁定仍留在选角");
+            }
+            using (var locked = await AskDuel(white, DuelAuthority.PrepLock, input: (int)DuelRole.Yaya))
+            {
+                Check(locked.PrepLocked == 3 && locked.BlackRole == locked.WhiteRole && locked.PrepPhase == (int)DuelPrepPhase.Loading, "镜像角色允许提前锁定");
+            }
+            using (var loaded = await AskDuel(black, DuelAuthority.PrepLoad, input: 100))
+            {
+                Check(loaded.BlackLoad == 100 && loaded.WhiteLoad == 0 && loaded.PrepPhase == (int)DuelPrepPhase.Loading, "仅黑方加载不能放行");
+            }
+            using (var premature = await AskDuel(black, DuelAuthority.Ready))
+            {
+                Check(premature.ReadyMask == 0 && premature.Frames.Count == 0, "准备未放行的场景就绪被拒绝");
+            }
+            using (var loaded = await AskDuel(white, DuelAuthority.PrepLoad, input: 100))
+            {
+                Check(loaded.PrepPhase == (int)DuelPrepPhase.Released && loaded.WhiteLoad == 100, "双方加载完成后放行");
+            }
             using (var ready = await AskDuel(black, DuelAuthority.Ready))
             {
                 Check(ready.ErrorCode == 0 && ready.DuelId == duelId && ready.ReadyMask == 1 && ready.Frames.Count == 0, "单边就绪不能出帧");
@@ -349,8 +386,8 @@ internal static class GoKcpLoadProbe
                 Check(ready.ErrorCode == 0 && ready.DuelId == duelId && ready.ReadyMask == 3 && ready.Frames.Count == 0, "双方就绪后开启权威时钟");
             }
             // 两席都用权威下发的决斗 ID 初始化种子，不能从本机另造 ID。
-            using var replicaA = new DuelCorePipe(duelId);
-            using var replicaB = new DuelCorePipe(duelId);
+            using var replicaA = new DuelCorePipe(duelId, DuelRole.Yaya, DuelRole.Yaya);
+            using var replicaB = new DuelCorePipe(duelId, DuelRole.Yaya, DuelRole.Yaya);
             int matchedFrame = 0;
             int samples = 0;
             int inputSequence = 1;

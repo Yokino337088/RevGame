@@ -96,6 +96,13 @@ namespace Revolution
         public static RevTask LoadAsync(string sceneName, Action<float> onProgress = null, float minSeconds = -1f)
             => RevSceneLoader.LoadAsync(sceneName, onProgress, ResolveMinSeconds(minSeconds));
 
+        /// <summary>
+        /// 预加载后等待业务放行。返回 false 会保留旧活动场景；放行后切到新场景并卸载旧活动场景。
+        /// 门禁必须有超时，且不得等待另一个 Unity 场景或资源异步操作，预加载期间引擎会挂起该队列。
+        /// </summary>
+        public static RevTask LoadWhenReadyAsync(string sceneName, Action<float> onProgress, Func<RevTask<bool>> readyToActivate, float minSeconds = -1f)
+            => RevSceneLoader.LoadWhenReadyAsync(sceneName, onProgress, ResolveMinSeconds(minSeconds), readyToActivate);
+
         /// <summary>按 buildIndex 异步切换场景（场景名其实更稳，改名不会失效）。</summary>
         /// <param name="buildIndex">Build Settings 里的序号</param>
         /// <param name="onProgress">进度回调（0~1，可选）</param>

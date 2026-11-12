@@ -25,7 +25,8 @@ namespace RevGame.Editor
         // 绯焰动作取样表。每个数字指向该角色的一张原画，图集只存一份。
         private static readonly int[][] ArcadePoseFrames =
         {
-            new[] { 0, 1 },
+            // 待机单独按文件名和时间表装配，保留此槽以便和其它姿态对齐。
+            Array.Empty<int>(),
             // 跑步按落脚、压重、蹬地、腾空各四张，换另一只脚后重复同一节拍。
             new[] { 32, 33, 34, 35, 36, 37, 38, 39 },
             new[] { 12, 4, 16, 4 }, new[] { 5, 20, 21, 6, 19 },
@@ -152,6 +153,10 @@ namespace RevGame.Editor
         // 以编辑器动作表读取切片。重复关键帧引用同一 Sprite，避免在图集中保存重复原画。
         private static Sprite[] LoadDuelSequence(string pose)
         {
+            if (pose == "Idle")
+            {
+                return EmberIdleFrames.Select(LoadArcadeSprite).ToArray();
+            }
             return ArcadePoseFrames[Array.IndexOf(DuelPoses, pose)]
                 .Select(index => LoadArcadeSprite($"{EmberPrefix}_{index:D2}")).ToArray();
         }
@@ -227,12 +232,7 @@ namespace RevGame.Editor
                 clip.name = pose;
                 clip.frameRate = DuelClipFrameRate(role, pose);
                 clip.wrapMode = pose == "Idle" || pose == "Run" ? WrapMode.Loop : WrapMode.ClampForever;
-                // Unity 会给最后一张 Sprite 留一个采样间隔。循环片段不能在接缝多停一拍。
-                var keys = new ObjectReferenceKeyframe[frames.Length + (DuelLoopsWithoutPadding(role, pose) ? 0 : 1)];
-                for (int i = 0; i < keys.Length; i++)
-                {
-                    keys[i] = new ObjectReferenceKeyframe { time = i / clip.frameRate, value = frames[Math.Min(i, frames.Length - 1)] };
-                }
+                ObjectReferenceKeyframe[] keys = BuildDuelClipKeys(role, pose, frames, clip.frameRate);
                 AnimationUtility.SetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite"), keys);
                 EditorUtility.SetDirty(clip);
                 clips[index] = clip;
@@ -241,7 +241,38 @@ namespace RevGame.Editor
             return clips;
         }
 
-        // 现有场景和重建场景都用同一个绑定入口。Legacy 仅提供各动作的采样速率。
+        // 生成 Legacy Sprite 曲线。绯焰待机用时间表，其余片段保留原有的等间隔采样。
+        private static ObjectReferenceKeyframe[] BuildDuelClipKeys(string role, string pose, Sprite[] frames, float frameRate)
+        {
+            float[] ends = pose == "Idle" ? DuelIdleFrameEnds(role) : Array.Empty<float>();
+            bool timedIdle = ends.Length > 0;
+            if (timedIdle && ends.Length != frames.Length)
+            {
+                throw new InvalidOperationException("待机时间表与图片张数不一致：" + role);
+            }
+            var keys = new ObjectReferenceKeyframe[frames.Length + (timedIdle || !DuelLoopsWithoutPadding(role, pose) ? 1 : 0)];
+            for (int i = 0; i < keys.Length; i++)
+            {
+                float time = i / frameRate;
+                if (timedIdle && i > 0)
+                {
+                    time = ends[i - 1];
+                    // Unity 会在末键之后再补一个采样间隔。末键重复最后一张图，补齐后正好回到循环起点。
+                    if (i == frames.Length)
+                    {
+                        time -= 1f / frameRate;
+                    }
+                    if (time <= keys[i - 1].time)
+                    {
+                        throw new InvalidOperationException("待机关键帧时间必须递增：" + role);
+                    }
+                }
+                keys[i] = new ObjectReferenceKeyframe { time = time, value = frames[Math.Min(i, frames.Length - 1)] };
+            }
+            return keys;
+        }
+
+        // 现有场景和重建场景都用同一个绑定入口。Legacy 提供普通姿态的采样率，待机时间表单独保存。
         private static void ConfigureDuelActor(Image actor, DuelActorAnimator presenter, Sprite[][] sequences, string role, int[] contactKeys, bool animateIdle)
         {
             AnimationClip[] clips = BuildDuelClips(sequences, role);
@@ -251,14 +282,20 @@ namespace RevGame.Editor
             actor.sprite = sequences[0][0];
             AnimationUtility.SetAnimationClips(animation, clips);
             animation.clip = clips[0];
-            BindDuelSpriteSequences(presenter, sequences, contactKeys, animateIdle);
+            BindDuelSpriteSequences(presenter, sequences, contactKeys, animateIdle, DuelIdleFrameEnds(role));
         }
 
         // 把图片按姿态写进场景，运行时无需查找资产或解析编辑器动画曲线。
-        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared, int[] contactKeys, bool animateIdle)
+        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared, int[] contactKeys, bool animateIdle, float[] idleFrameEnds)
         {
             using var data = new SerializedObject(presenter);
             data.FindProperty("animateIdle").boolValue = animateIdle;
+            SerializedProperty ends = data.FindProperty("idleFrameEndSeconds");
+            ends.arraySize = idleFrameEnds.Length;
+            for (int i = 0; i < idleFrameEnds.Length; i++)
+            {
+                ends.GetArrayElementAtIndex(i).floatValue = idleFrameEnds[i];
+            }
             SerializedProperty sequences = data.FindProperty("spriteSequences");
             sequences.arraySize = DuelPoses.Length;
             for (int i = 0; i < DuelPoses.Length; i++)

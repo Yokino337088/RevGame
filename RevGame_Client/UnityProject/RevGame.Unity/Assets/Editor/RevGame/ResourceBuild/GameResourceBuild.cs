@@ -26,7 +26,7 @@ namespace RevGame.Editor
             { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },
             { "UI/Panel/Endless", "ui_endless" }, { "Endless", "endless_arena" },
-            { "UI/Panel/Pvp", "ui_pvp" }, { "Pvp", "pvp_arena" },
+            { "UI/Panel/Pvp", "ui_pvp" }, { "UI/Panel/Pvp/DuelPrep", "ui_pvp_duelprep" }, { "Pvp", "pvp_arena" },
             { "Characters/Yaya", "character_yaya" },
             { "Characters/Yaya/Reaction", "yaya_reaction" }, { "Config/Yaya", "config_yaya" },
             { "Lobby", "lobby_cottage" },

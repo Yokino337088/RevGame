@@ -1,9 +1,38 @@
 """把策划 JSON 编成两端共享的只读配置。路径按仓库相对位置解析，不依赖作者电脑。"""
 from pathlib import Path
 import json
+from xml.etree import ElementTree
+from zipfile import ZipFile
+
+
+def pick_duration(workbook):
+    """读取 PvpRule 的 Excel 数值；仅生成权威准备时钟，不改变原生配置包。"""
+    ns = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+    with ZipFile(workbook) as book:
+        sheet = ElementTree.fromstring(book.read("xl/worksheets/sheet1.xml"))
+        shared = []
+        if "xl/sharedStrings.xml" in book.namelist():
+            strings = ElementTree.fromstring(book.read("xl/sharedStrings.xml"))
+            shared = ["".join(t.text or "" for t in s.iter(ns + "t")) for s in strings]
+
+        def cell_value(cell):
+            if cell.get("t") == "inlineStr":
+                return "".join(t.text or "" for t in cell.iter(ns + "t"))
+            value = cell.findtext(ns + "v")
+            return shared[int(value)] if cell.get("t") == "s" else value
+
+        values = []
+        for row in sheet.iter(ns + "row"):
+            cells = {c.get("r").rstrip("0123456789"): cell_value(c) for c in row}
+            if cells.get("B") == "DuelPickDurationMs":
+                values.append(int(cells["C"]))
+    if len(values) != 1 or not 1000 <= values[0] <= 60000:
+        raise ValueError("九路围棋配置必须包含唯一的 DuelPickDurationMs，范围 1000 到 60000 毫秒")
+    return values[0]
 
 # 以生成器位置为起点，使 CI、服务器开发机和 Unity 工程使用同一个数值来源。
 folder = Path(__file__).resolve().parent
+pick_ms = pick_duration(folder.parents[1] / "配置表/九路围棋配置.xlsx")
 data = json.loads((folder / "Duel.v1.json").read_text(encoding="utf-8"))
 arena = data["arena"]
 protocol = data["coreProtocol"]
@@ -30,10 +59,13 @@ words = [arena[k] for k in ("health", "extent", "movePerFrame", "frameLimit", "s
 # 顺序为普攻一段、技能一、大招、技能二、普攻二段、普攻三段。前 27 字保留场地和跳跃下标。
 attacks = data["attacks"]
 assert len(attacks) == 6
+hit_range_offsets = []
 for attack in attacks[:3]:
+    hit_range_offsets.append(len(words) + 1)
     words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
 words += [jump[k] for k in ("speed", "gravity", "hitHeight")]
 for attack in attacks[3:]:
+    hit_range_offsets.append(len(words) + 1)
     words += [attack[k] for k in ("damage", "range", "hitFrame", "duration", "cost")]
 # 后续窗口的位 0～3 对应玩家四个输入槽。派生普攻段位只由原生世界选择。
 for attack in attacks:
@@ -75,12 +107,12 @@ namespace RevGame.Pvp.Duel
         public const int Energy = {arena["energy"]};
         // 两席距离场地中心的初始横向距离，单位千分格。
         public const int SpawnOffset = {arena["spawnOffset"]};
-        // 读取指定座位的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
-        public static int ActionRange(bool white, int action)
+        // 读取指定角色的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
+        public static int ActionRange(bool yaya, int action)
         {{
             return action switch
             {{
-{range_cases}
+{range_cases.replace("white ?", "yaya ?")}
                 _ => 0
             }};
         }}
@@ -98,6 +130,8 @@ namespace RevGame.Pvp.Duel
         internal const int JumpApexHeight = {jump_apex_height};
         // 联机每隔多少个已执行逻辑帧交换一次指纹。终局另外校验。
         public const int HashSampleFrames = {hash_sample_frames};
+        // 九路围棋配置表导出的完整选角窗口，单位毫秒，由决斗权威计时。
+        public const int PickDurationMs = {pick_ms};
         // 招式持续的逻辑帧数，用于表现采样和输入缓冲。
         public static int ActionDuration(int action)
         {{
@@ -119,9 +153,13 @@ namespace RevGame.Pvp.Duel
         // 两席握手比较的 31 位规则指纹。
         public const int Fingerprint = {fingerprint & 0x7fffffff};
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
-        public static int[] CreateCoreWords()
+        public static int[] CreateCoreWords(bool firstYaya = false, bool secondYaya = true)
         {{
-            return new[] {{ {", ".join(map(str, words))} }};
+            int[] result = {{ {", ".join(map(str, words))} }};
+            // 原生字节布局仍按座位。锁角后把对应角色的距离写进原座位槽，不改变 FIFO 或 DLL。
+{chr(10).join(f"            result[{offset}] = ActionRange(firstYaya, {i});" for i, offset in enumerate(hit_range_offsets, 1))}
+{chr(10).join(f"            result[{yaya_range_offset + i - 1}] = ActionRange(secondYaya, {i});" for i in range(1, 7))}
+            return result;
         }}
     }}
 }}

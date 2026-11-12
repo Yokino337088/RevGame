@@ -27,6 +27,11 @@ namespace RevGame.Pvp
         private readonly bool _duelHashMismatch;
         // 画面验收时借用空闲场景的 PvP 服务作为黑方。仅夹具创建的端点由夹具直接 Dispose。
         private readonly PvpService _visibleHost;
+        // 手动准备验收只给夹具白方接收测试操作，玩家黑方仍用正式 UI。
+        private readonly bool _manualPreparation;
+        private bool _guestLoadReleased;
+        // 只读客端自己的回执，测试不可假设宿主先收到 Choosing 就等于白方可操作。
+        internal bool GuestCanPick => _guest?.DuelCanPick == true;
         // Dispose 会清理服务的局内计数，报告保留最后一次观测。
         private int _hostMatchedFrame, _guestMatchedFrame, _hostMismatchFrame, _guestMismatchFrame;
         private int _hostAcknowledged, _guestAcknowledged, _authorityBlackReports, _authorityWhiteReports;
@@ -67,7 +72,7 @@ namespace RevGame.Pvp
         }
 
         // 创建隔离 UTP 夹具，duel 模式验证从棋局到原生封帧。
-        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, PvpService visibleHost = null)
+        public PvpLanGameChecks(PvpConfig config, bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, PvpService visibleHost = null, bool manualPreparation = false)
         {
             _config = config;
             _agents = agents;
@@ -78,6 +83,42 @@ namespace RevGame.Pvp
             _duelHashAudit = duelHashAudit;
             _duelHashMismatch = duelHashMismatch;
             _visibleHost = visibleHost;
+            _manualPreparation = manualPreparation;
+        }
+
+        // 可见准备夹具的白方通过独立 PvpService 发选角、锁角和真实 UTP 上报。仅该夹具可控制。
+        internal bool ApplyGuestPreparation(PvpService visible, int role, bool confirm, bool releaseLoad)
+        {
+            if (!_manualPreparation || !OwnsVisibleDuel(visible))
+            {
+                return false;
+            }
+            if (releaseLoad && _guest.DuelPrep?.phase == DuelPrepPhase.Loading)
+            {
+                _guestLoadReleased = true;
+                return true;
+            }
+            return !releaseLoad && _guest.SelectDuelRole((DuelRole)role, confirm);
+        }
+
+        // 无界面端没有 Unity 场景；仅在隔离测试里模拟它的加载进度，现场宿主仍需真实预加载。
+        private void DriveFixturePreparation()
+        {
+            _guest.ShowDuelSelection();
+            if (_visibleHost == null)
+            {
+                _host.ShowDuelSelection();
+            }
+            if (!_manualPreparation)
+            {
+                _host.SelectDuelRole(DuelRole.Ember, true);
+                _guest.SelectDuelRole(DuelRole.Yaya, true);
+            }
+            if (_visibleHost == null)
+            {
+                _host.ReportDuelSceneProgress(100);
+            }
+            _guest.ReportDuelSceneProgress(!_manualPreparation || _guestLoadReleased ? 100 : 37);
         }
 
         // 把同一 UTP 夹具的两席观测与宿主权威收包计数一起交给验收工具。
@@ -267,15 +308,16 @@ namespace RevGame.Pvp
                     }
                     if (Check(_host.DuelId == _guest.DuelId, "P2P 双端决斗标识一致"))
                     {
-                        if (_visibleHost == null)
-                        {
-                            _host.MarkDuelSceneReady();
-                        }
-                        Next("只标记一端就绪");
+                        Next("等待双方选角并汇报预加载进度");
                     }
                     break;
                 // 确认单边就绪没有推进后，再让白方就绪。
                 case 32:
+                    DriveFixturePreparation();
+                    if (_host.DuelPrep?.phase != DuelPrepPhase.Released || _guest.DuelPrep?.phase != DuelPrepPhase.Released)
+                    {
+                        return;
+                    }
                     if (!Check(_host.DuelSnapshot.Frame == 0 && _guest.DuelSnapshot.Frame == 0, "单边就绪不能推进帧"))
                     {
                         return;
@@ -284,6 +326,10 @@ namespace RevGame.Pvp
                     {
                         // 配置只属于本测试的客端。它仍走真实白方 UTP 请求，宿主不会收到本地伪造的结果。
                         _guest.DuelHashCorruptFrameForCheck = DuelConfig.HashSampleFrames;
+                    }
+                    if (_visibleHost == null)
+                    {
+                        _host.MarkDuelSceneReady();
                     }
                     _guest.MarkDuelSceneReady();
                     Next("等待双方原生 FIFO 和 UTP 帧流推进");

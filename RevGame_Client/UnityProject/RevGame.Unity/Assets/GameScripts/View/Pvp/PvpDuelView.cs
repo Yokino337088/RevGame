@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace RevGame.View
 {
     /// <summary>独立决斗场景的表现消费者。屏幕刷新只读快照，插值和特效不会写回战斗世界。</summary>
-    public sealed class PvpDuelView : MonoBehaviour
+    public sealed partial class PvpDuelView : MonoBehaviour
     {
         // 黑方角色图层，位置和镜像每次渲染时更新。
         public Image First;
@@ -49,6 +49,8 @@ namespace RevGame.View
         public Text SecondName;
         // 白方血条旁的头像组件。
         public Image SecondPortrait;
+        // 黑方头像可切换为鸦鸦，引用由场景配方生成。
+        public Image FirstPortrait;
         // 头像可显示的五张原画差分，顺序为待机、专注、微笑、受击、倒地。
         public Sprite[] YayaPortraits;
         // 左手圆形摇杆，移动方向与键盘共用同一输入缓冲。
@@ -96,11 +98,11 @@ namespace RevGame.View
         // 最近一次绘制按钮说明的座位，避免每次刷新 HUD 都重设图标和字形。
         private GoSide _hudSeat;
         // 最后使用的表情索引。切片播放阶段或受击状态改变时才更换头像。
-        private int _yayaExpression = -1;
+        private readonly int[] _yayaExpression = { -1, -1 };
         // 白方上一次用于选跳跃姿态的高度，单位为千分格。高度不变时沿用最近一次升降方向。
-        private int _lastYayaAltitude;
+        private readonly int[] _lastYayaAltitude = new int[2];
         // 最近一次离地高度变化是否向下，决定使用下落还是上升的两张图。
-        private bool _yayaDescending;
+        private readonly bool[] _yayaDescending = new bool[2];
         // 千分格到 HUD 局部坐标的换算系数，权威和预测都用同一个比例。
         private const float ActorScale = .138f;
         // 两个站位小于一步的距离时保持已有镜像，防止重叠或相互穿过时连续翻面。
@@ -137,6 +139,7 @@ namespace RevGame.View
         // 绑定场景按钮，只转发输入和流程请求。
         private void Start()
         {
+            BindDuelRoster();
             RevGame.UI.GameMobileLayout.EnableDuelHud(Hud);
             KeyboardGuide.SetActive(!UnityEngine.Device.Application.isMobilePlatform);
             Exit.onClick.AddListener(ReturnHome);
@@ -246,7 +249,7 @@ namespace RevGame.View
         {
             DuelSnapshot state = service.DuelSnapshot;
             bool black = service.MySide == GoSide.Black;
-            string name = ActionCaption(action, !black);
+            string name = ActionCaption(action, black ? _blackYaya : _whiteYaya);
             int energy = black ? state.FirstEnergy : state.SecondEnergy;
             int cost = action == 2 ? DuelConfig.SkillCost : action == 3 ? DuelConfig.UltimateCost : action == 4 ? DuelConfig.SkillTwoCost : 0;
             int stun = black ? state.FirstStun : state.SecondStun;
@@ -286,7 +289,7 @@ namespace RevGame.View
                 return;
             }
             _hudSeat = side;
-            bool yaya = side == GoSide.White;
+            bool yaya = side == GoSide.White ? _whiteYaya : _blackYaya;
             Sprite[] glyphs = yaya ? YayaSkillGlyphs : EmberSkillGlyphs;
             SkillCaptions[0].text = ActionCaption(2, yaya);
             SkillCaptions[1].text = ActionCaption(4, yaya);
@@ -370,8 +373,8 @@ namespace RevGame.View
                 SecondEnergy.fillAmount = Mathf.Clamp01(view.SecondEnergy / (float)DuelConfig.Energy);
                 FirstHealthText.text = view.FirstHealth.ToString();
                 SecondHealthText.text = view.SecondHealth.ToString();
-                FirstName.text = "绯焰  /  " + service.BlackName;
-                SecondName.text = service.WhiteName + "  /  鸦鸦";
+                FirstName.text = (_blackYaya ? "鸦鸦" : "绯焰") + "  /  " + service.BlackName;
+                SecondName.text = service.WhiteName + "  /  " + (_whiteYaya ? "鸦鸦" : "绯焰");
                 FirstCombo.text = view.FirstCombo > 1 ? view.FirstCombo + " HIT" : "";
                 SecondCombo.text = view.SecondCombo > 1 ? view.SecondCombo + " HIT" : "";
                 Clock.text = DuelConfig.FrameLimit == 0
@@ -385,11 +388,20 @@ namespace RevGame.View
             }
             PaintActor(First, firstPosition, _firstDrawFacing);
             PaintActor(Second, secondPosition, _secondDrawFacing);
+            PaintMirrorBadges();
             CameraRig.Paint(confirmedFirstX, confirmedSecondX, confirmedHeight, Time.unscaledDeltaTime);
-            FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction);
+            FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction,
+                _blackYaya ? SampleYayaJumpPose(0, firstAltitude) : -1);
             SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction,
-                SampleYayaJumpPose(secondAltitude));
-            PaintYayaExpression(view, secondMove != 0);
+                _whiteYaya ? SampleYayaJumpPose(1, secondAltitude) : -1);
+            if (_blackYaya)
+            {
+                PaintYayaExpression(0, view.FirstAction, view.FirstHealth, view.FirstStun, view.FirstY, firstMove != 0, FirstAnimator, FirstPortrait);
+            }
+            if (_whiteYaya)
+            {
+                PaintYayaExpression(1, view.SecondAction, view.SecondHealth, view.SecondStun, view.SecondY, secondMove != 0, SecondAnimator, SecondPortrait);
+            }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
@@ -409,15 +421,15 @@ namespace RevGame.View
         }
 
         // 四张跳跃图依次为起跳、收膝、下落伸腿、落地准备。用同一份实际或预测高度判断阶段。
-        private int SampleYayaJumpPose(int altitude)
+        private int SampleYayaJumpPose(int seat, int altitude)
         {
-            if (altitude != _lastYayaAltitude)
+            if (altitude != _lastYayaAltitude[seat])
             {
-                _yayaDescending = altitude < _lastYayaAltitude;
-                _lastYayaAltitude = altitude;
+                _yayaDescending[seat] = altitude < _lastYayaAltitude[seat];
+                _lastYayaAltitude[seat] = altitude;
             }
             int midpoint = DuelConfig.JumpApexHeight / 2;
-            if (_yayaDescending)
+            if (_yayaDescending[seat])
             {
                 return altitude <= midpoint ? 3 : 2;
             }
@@ -425,18 +437,16 @@ namespace RevGame.View
         }
 
         // 腿法的第一张和收势沿用原画 02 号，蓄力和接触使用 23 号。跟随实际换图，受击和倒地优先。
-        private void PaintYayaExpression(DuelSnapshot view, bool moving)
+        private void PaintYayaExpression(int seat, int action, int health, int stun, int altitude, bool moving, DuelActorAnimator animator, Image portrait)
         {
-            bool kicking = view.SecondAction is 1 or 5 or 6;
-            bool relaxedKick = kicking && !SecondAnimator.IsAttackFocusFrame;
-            bool playful = view.SecondAction == 2 || view.SecondAction == 3 || view.SecondAction == 4 ||
-                relaxedKick || (moving && view.SecondAction == 0 && view.SecondY == 0);
-            int expression = view.SecondHealth == 0 ? 4 : view.SecondStun > 0 ? 3 :
-                playful ? 2 : view.SecondAction != 0 || view.SecondY > 0 ? 1 : 0;
-            if (SecondPortrait != null && _yayaExpression != expression)
+            bool kicking = action is 1 or 5 or 6;
+            bool relaxedKick = kicking && !animator.IsAttackFocusFrame;
+            bool playful = action is 2 or 3 or 4 || relaxedKick || (moving && action == 0 && altitude == 0);
+            int expression = health == 0 ? 4 : stun > 0 ? 3 : playful ? 2 : action != 0 || altitude > 0 ? 1 : 0;
+            if (portrait != null && _yayaExpression[seat] != expression)
             {
-                _yayaExpression = expression;
-                SecondPortrait.sprite = YayaPortraits[expression];
+                _yayaExpression[seat] = expression;
+                portrait.sprite = YayaPortraits[expression];
             }
         }
 
@@ -487,9 +497,9 @@ namespace RevGame.View
             Vector2 first = new Vector2(view.FirstX, view.FirstY) * ActorScale;
             Vector2 second = new Vector2(view.SecondX, view.SecondY) * ActorScale;
             Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, first, second,
-                DuelConfig.ActionRange(false, view.FirstAction) * ActorScale);
+                DuelConfig.ActionRange(_blackYaya, view.FirstAction) * ActorScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first,
-                DuelConfig.ActionRange(true, view.SecondAction) * ActorScale);
+                DuelConfig.ActionRange(_whiteYaya, view.SecondAction) * ActorScale);
             if ((view.FirstAction == 3 && view.FirstAge == 0) || (view.SecondAction == 3 && view.SecondAge == 0))
             {
                 CameraRig.FocusUltimate();

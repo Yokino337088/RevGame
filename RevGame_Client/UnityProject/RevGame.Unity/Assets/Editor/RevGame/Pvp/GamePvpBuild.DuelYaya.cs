@@ -42,7 +42,7 @@ namespace RevGame.Editor
         private static void BindDuelActorRoster(PvpDuelView view)
         {
             ConfigureDuelActor(view.First, view.FirstAnimator, DuelPoses.Select(LoadDuelSequence).ToArray(),
-                EmberClipPrefix, ArcadeContactKeys, false);
+                EmberClipPrefix, ArcadeContactKeys, true);
             ConfigureDuelActor(view.Second, view.SecondAnimator, DuelPoses.Select(LoadYayaDuelSequence).ToArray(),
                 YayaPrefix, YayaContactKeys, true);
         }
@@ -51,6 +51,10 @@ namespace RevGame.Editor
         // 待机一秒一圈，跳跃的四个姿势覆盖原生起落时段。
         private static int DuelClipFrameRate(string role, string pose)
         {
+            if (role == EmberClipPrefix && pose == "Idle")
+            {
+                return EmberIdleClipFrameRate;
+            }
             return role == YayaPrefix
                 ? pose switch { "Idle" => 8, "Run" => 24, "Jump" => 7, _ => 15 }
                 : 15;
@@ -107,6 +111,7 @@ namespace RevGame.Editor
             Material material = GetDuelEffectMaterial(YayaDuelShader, YayaDuelMaterial);
             view.Effects.Second.material = material;
             view.Effects.SecondImpact.material = material;
+            view.FirstPortrait = view.Hud.Find("BlackPortrait").GetComponent<Image>();
             view.SecondPortrait = view.Hud.Find("WhitePortrait").GetComponent<Image>();
             view.YayaPortraits = YayaPortraitExpressions.Select(LoadYayaDuelPortrait).ToArray();
             view.SecondPortrait.sprite = view.YayaPortraits[0];

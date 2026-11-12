@@ -126,20 +126,29 @@ namespace RevGame.Pvp.Duel
 
         // 开局身份，录像和恢复必须使用同一个 ID。
         public string DuelId { get; }
+        // 原生开局配置中使用的角色，独立于黑白座位；预测和录像必须沿用。
+        public DuelRole FirstRole { get; }
+        public DuelRole SecondRole { get; }
         // 本端最后一帧的值副本；只在完整结果校验成功后替换。
         public DuelSnapshot Snapshot { get; private set; }
 
         // 创建句柄、提交版本化开局配置并准备初始显示值；配置失败时释放句柄。
-        public DuelCorePipe(string duelId)
+        public DuelCorePipe(string duelId, DuelRole firstRole = DuelRole.Ember, DuelRole secondRole = DuelRole.Yaya)
         {
             if (string.IsNullOrEmpty(duelId))
             {
                 throw new ArgumentException("决斗需要统一的对局标识。", nameof(duelId));
             }
+            if (!DuelPreparation.ValidRole(firstRole) || !DuelPreparation.ValidRole(secondRole))
+            {
+                throw new ArgumentException("决斗角色不存在。");
+            }
             ulong seed = SeedFor(duelId);
             DuelId = duelId;
+            FirstRole = firstRole;
+            SecondRole = secondRole;
             _handle = GameCore_Create();
-            int[] settings = DuelConfig.CreateCoreWords();
+            int[] settings = DuelConfig.CreateCoreWords(firstRole == DuelRole.Yaya, secondRole == DuelRole.Yaya);
             byte[] start = new byte[(settings.Length + 4) * 4];
             // 开局消息写协议版本、操作号、完整配置与种子，队列两端不能依赖托管类型的内存排版。
             Write(start, 0, DuelConfig.CoreProtocol);

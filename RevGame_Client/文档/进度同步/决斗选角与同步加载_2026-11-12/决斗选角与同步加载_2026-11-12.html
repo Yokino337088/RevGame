@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>决斗选角与同步加载</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head>
+<body><header class="topbar"><div class="brand"><i>R</i>REVGAME</div><span class="tag">DUEL · IN GAME VERIFICATION</span></header>
+<section class="hero"><div class="wrap"><div class="eyebrow">REVOLUTION / FANTASY KCP / UTP</div><h1>决斗选角与同步加载</h1><p>通过：红青裂隙选角、双端加载门禁、同角辨认和退出收尾。</p><div class="stamp">2026-11-12 · Unity 2022.3.15f1c1 · Windows Editor DX11</div></div></section>
+<main>
+<section class="chapter"><h2>验收结果</h2><div class="table-scroll"><table><thead><tr><th>检查</th><th>实际结果</th></tr></thead><tbody><tr><td>角色与视觉</td><td>鸦鸦使用指定的 frame_00000.png，源图与 Unity PNG 字节一致。绯焰和无雨的红青裂隙底图使用图片生成；牌框、状态文字、符印和扫光分层。旧 PvP 面板已关闭，底图 Sprite 在真实 PC AB 中已打包且 Rift Shader 受支持。</td></tr><tr><td>15 秒与锁角</td><td>两席选角页可见后才开始计时。UTP 白方改变预选，黑方看到了变化；黑方真实点击按钮选角，两席均可锁定同角。人机回归在 5 秒仍可见未锁定，归零时保留最后预选，进入同角对局。</td></tr><tr><td>实际预加载</td><td>黑方在 Unity 场景激活门前报告 100%，隔离白方经真实 UTP 保持在 37%；活动场景是 PvpScene，原生仍第 0 帧。白方报告 100% 后进入 PvpDuelScene，两席 Ready 后才开始封帧和淡出加载页。</td></tr><tr><td>镜像与录像</td><td>两席角色贴图实际来自战斗内置图集。同角通过暖红/冷青描边和带文字的实心/空心徽记辨认。镜像角色第 20 帧检查点恢复，并重放到第 36 帧一致。</td></tr><tr><td>中途退出</td><td>实际点击加载页的退出准备按钮。两端清理后活动场景为 StartScene，预加载队列已释放，PvP 域已关闭。两份最终计划清理均通过，运行错误为 0。</td></tr><tr><td>Fantasy KCP</td><td>回环上的独立 Gate 与双 Session 通过预选同步、同角锁定、单席加载拒绝放行及双席 Ready；第 84 帧两端指纹 540483974，对账样本 3。</td></tr></tbody></table></div></section>
+<section class="chapter"><h2>Game 画面</h2><div class="gallery"><figure><img src="选角实景.jpg" alt="绯焰专用立绘与鸦鸦原画；红青裂隙和法阵来自实际 Game 画面。"><figcaption>绯焰专用立绘与鸦鸦原画；红青裂隙和法阵来自实际 Game 画面。</figcaption></figure><figure><img src="等待加载实景.jpg" alt="黑方实际场景预加载 100%，测试白方 37%，棋盘场景仍为活动场景。"><figcaption>黑方实际场景预加载 100%，测试白方 37%，棋盘场景仍为活动场景。</figcaption></figure><figure><img src="镜像对局实景.jpg" alt="双方同选鸦鸦，头顶实心/空心徽记和描边分别标识 1P 与 2P。"><figcaption>双方同选鸦鸦，头顶实心/空心徽记和描边分别标识 1P 与 2P。</figcaption></figure><figure><img src="决斗准备实录.gif" alt="选择变化、双方加载和镜像开场实录"><figcaption>真实 Game 截帧串联。动图用于展示切换过程，时间以权威读回为准。</figcaption></figure></div></section>
+<section class="chapter"><h2>框架可行性与范围</h2><p>RevUI 负责两张面板的打开和回收，DOTween 仅做显示；RevResManager 与图集租约保持首次画面和淡出期间的资源可用。原有 RevScene 只能等待本机，源仓新增 <code>LoadWhenReadyAsync</code>（<code>bf4e21f</code>）并导出到本工程，实测在对端 37% 时不会提前激活。</p>
+<p>RevCLI 制作两张 Prefab、导表并构建 PC 与 Android 的 84 个资源包。RevMCP 用 <code>rev_discover</code> 核对运行时能力、<code>rev_call</code> 从 StartScene 冷启动，<code>rev_run</code> 分别执行 31 步及 27 步，均完成 7 项清理。UTP 用一端真实 Unity 场景与一端隔离白方，Fantasy KCP 验证双 Session。Android 只验证资源构建，未做真机或独立 Player 验收。</p>
+<p><a href="../../../美术/AI生成/新版/UI素材/决斗选角/制作说明.md">原始素材与制作说明</a></p></section>
+</main><footer><span>RevGame · 决斗准备</span><span>2026-11-12</span></footer></body></html>

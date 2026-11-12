@@ -55,6 +55,7 @@ namespace RevGame.Pvp
         private static void RegisterDuelAutomation()
         {
             RegisterDuelHudAutomation();
+            RegisterDuelPreparationAutomation();
             RevGM.Register(ComputerDuelGm, "从大厅或本地人机棋局重开测试局，构造劣势后挑战电脑", _ => BeginComputerDuel());
             RevGM.Register("围棋对战/决斗双方无敌", "本地人机决斗专用。1 双方免伤，0 恢复伤害", SetDuelNoDamage, RevGMArg.Int("开关", 1));
             RevGM.Register("围棋对战/暂停决斗敌人AI", "本地人机决斗专用。1 暂停白方主动操作，0 恢复，离场自动复位",
@@ -111,8 +112,10 @@ namespace RevGame.Pvp
                     ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
                         view.First.sprite.packed && view.Second.sprite.packed,
                     ["fightersMatchSeats"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
-                        view.First.sprite.name.StartsWith("Ember_", StringComparison.Ordinal) &&
-                        view.Second.sprite.name.StartsWith("Yaya_", StringComparison.Ordinal),
+                        view.First.sprite.name.StartsWith(Service.DuelRoleFor(1) + "_", StringComparison.Ordinal) &&
+                        view.Second.sprite.name.StartsWith(Service.DuelRoleFor(2) + "_", StringComparison.Ordinal),
+                    ["mirrorBadges"] = view != null && view.HasMirrorBadges,
+                    ["firstSprite"] = view?.First.sprite?.name ?? "",
                     ["yayaSprite"] = view?.Second.sprite?.name ?? "",
                     ["yayaPortrait"] = view?.SecondPortrait?.sprite?.name ?? "",
                     ["yayaShaderSupported"] = view != null && view.Effects.Second.material.shader.name == "RevGame/UI/Yaya Duel Feather" &&
@@ -299,8 +302,8 @@ namespace RevGame.Pvp
                 _recoveryCheckTrace["liveFrame"] = live.Frame;
                 _recoveryCheckTrace["liveHash"] = live.Hash;
 
-                using var full = new DuelCorePipe(id);
-                using var restored = new DuelCorePipe(id);
+                using var full = new DuelCorePipe(id, replay.FirstRole, replay.SecondRole);
+                using var restored = new DuelCorePipe(id, replay.FirstRole, replay.SecondRole);
                 if (!restored.TryRestoreCheckpoint(checkpoint) ||
                     restored.Snapshot.Frame != atCheckpoint.Frame || restored.Snapshot.Hash != atCheckpoint.Hash)
                 {

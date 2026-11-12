@@ -1,0 +1,31 @@
+ManifestFileVersion: 0
+CRC: 1138269957
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 65d0e10ca9306c978298ae2aef012958
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 65d0e10ca9306c978298ae2aef012958
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelEmber.png
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelAtrium.png
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelMeter.png
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelYaya.png
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelPlate.png
+- Assets/GameRes/Atlases/DuelPrep.spriteatlasv2
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelButton.png
+- Assets/GameRes/Art/UI/PvpDuelPrep/DuelSigil.png
+Dependencies: []

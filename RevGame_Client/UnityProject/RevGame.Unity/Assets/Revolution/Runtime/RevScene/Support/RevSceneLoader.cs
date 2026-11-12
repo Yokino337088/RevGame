@@ -56,7 +56,17 @@ namespace Revolution
         internal static RevTask LoadAsync(int buildIndex, Action<float> onProgress, float minSeconds)
             => RunAsync(null, buildIndex, onProgress, minSeconds);
 
-        private static async RevTask RunAsync(string sceneName, int buildIndex, Action<float> onProgress, float minSeconds)
+        /// <summary>使用可撤回的附加预加载；旧活动场景一直保留到业务放行。</summary>
+        internal static RevTask LoadWhenReadyAsync(string sceneName, Action<float> onProgress, float minSeconds, Func<RevTask<bool>> gate)
+        {
+            if (string.IsNullOrEmpty(sceneName) || gate == null)
+            {
+                throw new ArgumentException("预加载需要场景名和激活门禁。");
+            }
+            return RunAsync(sceneName, -1, onProgress, minSeconds, gate);
+        }
+
+        private static async RevTask RunAsync(string sceneName, int buildIndex, Action<float> onProgress, float minSeconds, Func<RevTask<bool>> gate = null)
         {
             bool useIndex = sceneName == null;
             string label = useIndex ? ("buildIndex " + buildIndex) : sceneName;
@@ -70,6 +80,13 @@ namespace Revolution
 
             // ② 切之前清理 + 广播"要开始了"
             Prepare(label, minSeconds);
+            Scene previous = SceneManager.GetActiveScene();
+            string stagedName = gate == null ? null : System.IO.Path.GetFileNameWithoutExtension(sceneName);
+            if (gate != null && SceneManager.GetSceneByName(stagedName).isLoaded)
+            {
+                Fail(label, "待预加载的场景已经打开");
+                return;
+            }
 
             // ★ Bug 修复（2026-09-30）：发起/推进/收尾必须整体兜异常，否则模块会永久死锁。
             //   Prepare 已把 IsLoading 置 true，而"发起加载"是会抛异常的 ——
@@ -83,7 +100,7 @@ namespace Revolution
                 // ③ 发起异步加载（名字不在 Build Settings 时这里就是 null）
                 AsyncOperation op = useIndex
                     ? SceneManager.LoadSceneAsync(buildIndex, LoadSceneMode.Single)
-                    : SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+                    : SceneManager.LoadSceneAsync(sceneName, gate == null ? LoadSceneMode.Single : LoadSceneMode.Additive);
 
                 if (op == null)
                 {
@@ -99,10 +116,58 @@ namespace Revolution
                 {
                     float value = _tracker.Tick(op.progress, Time.unscaledDeltaTime);
                     Report(value, onProgress);
-                    if (_tracker.CanActivate) op.allowSceneActivation = true;
+                    if (_tracker.CanActivate && !op.allowSceneActivation)
+                    {
+                        if (gate != null)
+                        {
+                            bool allowed = false;
+                            string gateError = null;
+                            try
+                            {
+                                allowed = await gate();
+                            }
+                            catch (Exception e)
+                            {
+                                gateError = e.Message;
+                            }
+                            // Unity 不能取消挂起的 AsyncOperation。取消时释放队列并卸载附加场景，不切换活动场景。
+                            op.allowSceneActivation = true;
+                            if (!allowed)
+                            {
+                                while (!op.isDone)
+                                {
+                                    await RevTaskScheduler.NextFrame();
+                                }
+                                await UnloadStagedSceneAsync(SceneManager.GetSceneByName(stagedName));
+                                if (gateError == null)
+                                {
+                                    IsLoading = false;
+                                    State = RevSceneLoadState.Idle;
+                                    RevSceneLog.Info("[RevScene] 激活门禁已取消，保留旧活动场景：" + label);
+                                }
+                                else
+                                {
+                                    Fail(label, "激活门禁失败：" + gateError);
+                                }
+                                return;
+                            }
+                        }
+                        op.allowSceneActivation = true;
+                    }
                     await RevTaskScheduler.NextFrame();
                 }
 
+                if (gate != null)
+                {
+                    Scene staged = SceneManager.GetSceneByName(stagedName);
+                    if (!staged.isLoaded || !SceneManager.SetActiveScene(staged))
+                    {
+                        await UnloadStagedSceneAsync(staged);
+                        Fail(label, "预加载完成但无法切换活动场景");
+                        return;
+                    }
+                    await UnloadStagedSceneAsync(previous);
+                }
                 _tracker.Complete();
                 Report(1f, onProgress);
 
@@ -116,6 +181,20 @@ namespace Revolution
             {
                 // ★ 同上（Bug 修复 2026-09-30）：推进阶段抛的异常也走失败收尾，绝不留 IsLoading=true 的残局
                 Fail(label, "加载过程抛异常：" + e.Message);
+            }
+        }
+
+        // 只卸载明确属于本次交接的场景，保留其它附加场景和常驻对象。
+        private static async RevTask UnloadStagedSceneAsync(Scene scene)
+        {
+            if (!scene.isLoaded)
+            {
+                return;
+            }
+            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
+            while (unload != null && !unload.isDone)
+            {
+                await RevTaskScheduler.NextFrame();
             }
         }
 

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>绯焰新版决斗序列帧验收</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+</style></head>
+<body>
+<header class="topbar"><div class="brand"><i>R</i>REVGAME</div><span class="tag">UNITY PLAY · ART VALIDATION</span></header>
+<section class="hero"><div class="wrap"><div class="eyebrow">REVOLUTION / PVP DUEL</div><h1>绯焰新版决斗序列帧验收</h1><p>通过：新版动作已绑定到黑方绯焰，七帧站立待机可完整循环。</p><div class="stamp">2026-11-12 · Unity 2022.3.15f1c1 · Windows Editor / DX11</div></div></section>
+<main>
+<section class="chapter"><h2>验收结果</h2><div class="table-scroll"><table><thead><tr><th>检查</th><th>观察结果</th></tr></thead><tbody><tr><td>素材与引用</td><td>38 张原图就地替换，新增 5 张待机帧。43 张 PNG 与源图的 SHA-256 一致；原有 38 张 Sprite 的导入设置和 GUID 完全一致。</td></tr><tr><td>内置图集</td><td>按 11 个动作逐项读回 56 个帧位。两席共用的 Sprite Atlas V2 实际打包 134 个 Sprite、3 页，Include In Build 为 true。</td></tr><tr><td>冷启动</td><td>Windows Editor 从 StartScene 进入 Play，实际状态为 abMode=true、Home，背景就绪。通过已注册的人机决斗 GM 进入正式 PvpDuelScene，双方均就绪且 Sprite 来自打包图集。</td></tr><tr><td>待机换帧</td><td>从屏幕上角色当前 Sprite 依次读到 00、01、02、03、04、05、06、00。七帧停留时间分别为 210、160、230、70、80、70、220 毫秒；Unity 读回片段长度为 1.04 秒。</td></tr><tr><td>HUD 操作</td><td>经正式摇杆左右换向并松手停止；普攻输入经过 4 次 HUD 射线检查，第二次普攻按预期在逻辑帧 70 开始，观察到实际换图和新旧姿态淡入淡出。</td></tr><tr><td>重入和收尾</td><td>返回大厅再进一局，仍能读到 Ember_Idle_06。finally 返回 StartScene，决斗就绪、PvP 域和 AI 暂停状态全部清除。退出 Play 后编译和 Console 无错误。</td></tr></tbody></table></div></section>
+<section class="chapter"><h2>游戏实录</h2><div class="gallery">
+<figure><img src="绯焰待机实景.jpg" alt="决斗中黑方绯焰的新版站立待机"><figcaption>从实际 PvpDuelScene 截取；绯焰在左，鸦鸦在右。</figcaption></figure>
+<figure><img src="绯焰待机实录.gif" alt="实际 Game 画面录制的绯焰待机循环"><figcaption>由 RevMCP 实拍的 12 张 Game 画面合成，共 12 帧；GIF 用于看动作，片段时长以 Unity 读回为准。</figcaption></figure>
+</div></section>
+<section class="chapter"><h2>框架可行性与验收范围</h2>
+<p>RevCLI 完成导入、现有场景绑定及图集打包。RevMCP 先 <code>rev_discover</code>，以 <code>rev_call</code> 启动 Play、查询大厅状态，再用 <code>rev_run</code> 执行 35 步及 5 项清理。</p>
+<p>现有 RevHeavyFSM 能继续管理角色姿态，RevScene 能加载和释放决斗场景。大厅沿用 PC AB；角色图集随内置场景交付。本次覆盖本地人机和双方实际画面，未验证独立 Player 或真机。</p>
+</section>
+</main><footer><span>RevGame · 资源接入</span><span>2026-11-12</span></footer></body></html>

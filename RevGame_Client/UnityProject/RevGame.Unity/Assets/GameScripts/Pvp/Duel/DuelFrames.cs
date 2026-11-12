@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.Collections.Generic;
 
@@ -55,6 +56,8 @@ namespace RevGame.Pvp.Duel
         public int pendingActionSequence;
         // 上述招式最后可进入的权威帧，包含本帧。由权威确定，回滚重演不能延长它。
         public int pendingActionUntil;
+        // 权威准备快照；正式封帧后省略，客户端保留最后锁定结果。
+        public DuelPrepState? preparation;
     }
 
     // 共享的挑战资格，界面用来展示，权威方用来重新校验。
@@ -86,8 +89,14 @@ namespace RevGame.Pvp.Duel
         public const int Input = 3;
         // 开发环境从同一围棋房间强制发起决斗；传输入口校验后再转为 Read。
         public const int TestChallenge = 4;
-        // 当前联机版本包含随整帧下发的输入回执。原生配置和回放格式独立版本化。
-        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x60000000;
+        // 选角面板已显示、预选、锁定、上报进度、主动取消。后三个有值操作复用 input 字段。
+        public const int PrepVisible = 5;
+        public const int PrepPick = 6;
+        public const int PrepLock = 7;
+        public const int PrepLoad = 8;
+        public const int PrepAbort = 9;
+        // 旧端没有准备屏障，禁止与新端混进同一决斗。
+        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x70000000 ^ DuelConfig.PickDurationMs;
         // 单次宿主更新最多补三个固定步长，防止暂停恢复后长时间占用主线程或 Gate。
         private const int MaxCatchUpFrames = 3;
         // 单个回复最多 64 帧，落后端按连续游标分批补。
@@ -97,7 +106,9 @@ namespace RevGame.Pvp.Duel
         // 下一待封帧的黑白输入槽，必须齐备才执行。
         private readonly int[] _input = new int[2];
         // 权威原生实例，和客户端副本执行同一整帧协议。
-        private readonly DuelCorePipe _judge;
+        private DuelCorePipe _judge;
+        // 权威选角与加载准备归当前房间，和封帧使用同一个单调时钟。
+        private readonly DuelPreparation _preparation;
         // 本机人机仍按两席同一帧输入运行。联网席位与权威时钟解耦。
         private readonly bool _networked;
         // 黑白各有一个连接内的输入邮箱，随本局创建，断线时清除未执行意图。
@@ -125,10 +136,11 @@ namespace RevGame.Pvp.Duel
 #endif
 
         // 创建权威封帧器，由所属房间或本地宿主结束时释放。
-        public DuelAuthority(string id, bool networked = true)
+        public DuelAuthority(string id, bool networked = true, long now = 0, int computerSide = 0)
         {
             Id = id;
             _networked = networked;
+            _preparation = new DuelPreparation(now, computerSide);
             _judge = new DuelCorePipe(id);
         }
 
@@ -156,7 +168,7 @@ namespace RevGame.Pvp.Duel
         // 复制截至当前的权威帧。后续继续对战不会改动已经交给调用方的录像。
         public DuelReplay CaptureReplay()
         {
-            return new DuelReplay(Id, _frames.ToArray());
+            return new DuelReplay(Id, _frames.ToArray(), _judge.FirstRole, _judge.SecondRole);
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         // 仅本机人机的开发指令可设置，每局实例创建时默认关闭。
@@ -164,14 +176,37 @@ namespace RevGame.Pvp.Duel
 #endif
 
         // 按已认证座位收意图和对账样本，返回游标后的连续历史。
-        public DuelReply Exchange(int side, DuelRequest request, long now)
+        public DuelReply Exchange(int side, DuelRequest? request, long now)
         {
+            bool preparation = request != null && request.operation >= PrepVisible && request.operation <= PrepAbort;
             if (side < 1 || side > 2 || request == null ||
                 request.fingerprint != (_networked ? NetworkFingerprint : DuelConfig.Fingerprint) ||
                 request.afterFrame < 0 || request.afterFrame > Frame ||
-                (request.operation != Read && request.operation != Ready && request.operation != Input))
+                (!preparation && request.operation != Read && request.operation != Ready && request.operation != Input))
             {
                 return new DuelReply { error = "决斗协议或配置版本不一致。" };
+            }
+            DuelPrepState? draft = null;
+            if (Frame == 0 || preparation)
+            {
+                if (preparation)
+                {
+                    _preparation.Apply(side, request.operation, request.input, now);
+                }
+                else
+                {
+                    _preparation.Tick(now);
+                }
+                draft = _preparation.Read(now);
+                if (draft.phase is DuelPrepPhase.Loading or DuelPrepPhase.Released)
+                {
+                    PrepareRoster(draft);
+                }
+                // 双端的真实加载还未完成，早到的 Ready 或输入不能打开封帧器。
+                if (preparation || draft.phase != DuelPrepPhase.Released)
+                {
+                    return new DuelReply { id = Id, readyMask = _readyMask, preparation = draft };
+                }
             }
             int seat = side - 1;
             if (_hashMismatchFrame == 0 && !AcceptHashSample(seat, request))
@@ -239,7 +274,18 @@ namespace RevGame.Pvp.Duel
                 result = Snapshot.Result, finalHash = Snapshot.Result != 0 ? Snapshot.Hash : 0,
                 hashAckFrame = request.hashFrame, hashMatchedFrame = announce,
                 inputAckFrame = includesReceipt ? Frame : 0, inputAckSequence = receipt.Sequence,
-                pendingActionSequence = receipt.ActionSequence, pendingActionUntil = receipt.ActionUntil };
+                pendingActionSequence = receipt.ActionSequence, pendingActionUntil = receipt.ActionUntil, preparation = draft };
+        }
+
+        // 锁角后才确定真实角色规则。替换只发生在第 0 帧，不影响已有帧或录像。
+        private void PrepareRoster(DuelPrepState draft)
+        {
+            if (Frame == 0 && (_judge.FirstRole != draft.black || _judge.SecondRole != draft.white))
+            {
+                var configured = new DuelCorePipe(Id, draft.black, draft.white);
+                _judge.Dispose();
+                _judge = configured;
+            }
         }
 
         // 宿主在自己的线程按单调毫秒推进。即使某席没有输入，也由权威端产生可回放的完整帧。

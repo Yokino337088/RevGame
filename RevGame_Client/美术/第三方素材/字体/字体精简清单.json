@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "bc187d3a5115151e8354979617d4930b96bbf04fb13d7986a178b54177cd3828",
-  "inputDigest": "50e005d57585a11cc210f55e4edb2fb2668449fe6c922af2213366c7b1ec8581",
+  "outputSha256": "7985d8625c9ace48f210a7a988ee638ecd801d97dff5b53658e93b2956e2906f",
+  "inputDigest": "36ceb4ee29204613625652cb88b10f08a695c7b3d715b755d152e238a0ad09e1",
   "originalBytes": 17002248,
-  "outputBytes": 799728,
-  "characterCount": 1794,
-  "glyphCount": 3560,
+  "outputBytes": 806868,
+  "characterCount": 1811,
+  "glyphCount": 3587,
   "codepoints": [
     32,
     33,
@@ -201,6 +201,7 @@
     20040,
     20041,
     20043,
+    20044,
     20048,
     20056,
     20061,
@@ -559,6 +560,7 @@
     22797,
     22806,
     22810,
+    22812,
     22815,
     22823,
     22825,
@@ -608,6 +610,7 @@
     23459,
     23467,
     23475,
+    23476,
     23478,
     23481,
     23485,
@@ -731,6 +734,7 @@
     24481,
     24490,
     24494,
+    24509,
     24515,
     24517,
     24535,
@@ -796,6 +800,7 @@
     25193,
     25195,
     25197,
+    25199,
     25200,
     25206,
     25209,
@@ -864,6 +869,7 @@
     25480,
     25481,
     25490,
+    25504,
     25506,
     25509,
     25511,
@@ -883,6 +889,7 @@
     25658,
     25668,
     25670,
+    25671,
     25674,
     25688,
     25720,
@@ -890,6 +897,7 @@
     25758,
     25764,
     25773,
+    25794,
     25797,
     25805,
     25806,
@@ -1066,6 +1074,7 @@
     27762,
     27773,
     27785,
+    27801,
     27809,
     27819,
     27835,
@@ -1340,6 +1349,7 @@
     32043,
     32047,
     32321,
+    32416,
     32418,
     32422,
     32423,
@@ -1369,6 +1379,7 @@
     32489,
     32490,
     32493,
+    32495,
     32500,
     32509,
     32511,
@@ -1423,6 +1434,7 @@
     33150,
     33151,
     33180,
+    33181,
     33192,
     33258,
     33261,
@@ -1479,9 +1491,11 @@
     34880,
     34892,
     34900,
+    34903,
     34913,
     34917,
     34920,
+    34924,
     34928,
     34987,
     34989,
@@ -1508,6 +1522,7 @@
     35748,
     35752,
     35753,
+    35757,
     35758,
     35760,
     35762,
@@ -1578,6 +1593,7 @@
     36328,
     36335,
     36339,
+    36386,
     36393,
     36394,
     36457,
@@ -1646,6 +1662,7 @@
     36991,
     36992,
     37027,
+    37038,
     37051,
     37096,
     37117,
@@ -1950,7 +1967,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/PvpRule.txt",
-      "sha256": "cf0bd70c332145f8c5ae5b052e6004c34b46615f56b38af643fb53590b95ae2a"
+      "sha256": "22b5cc614567035843f98807bb65ef2676bb6aed197170ee3b9c50b118b91122"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/PvpYayaLine.txt",
@@ -2063,6 +2080,14 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/PreparePanel.prefab",
       "sha256": "c4aa8e6f813da3fc33eff39becc3c1ff50c54838eb399bcf03ee19ca3832441d"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelLoadingPanel.prefab",
+      "sha256": "022d041a6c830f6713107f00102eb4fd9f5e180ae874a9fdc5375403eee11d9b"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelSelectPanel.prefab",
+      "sha256": "ba81ee2f4f9b782db80666814a428859ce7a813504a924f56670409f02ca8baf"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab",
@@ -2270,11 +2295,19 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.cs",
-      "sha256": "9d98c9dce1531e28202337dffc26808db591ad0fd583fe1e0f9169a02e5d86d0"
+      "sha256": "192320aaab1d57aaef4bcc1e5b06211e315bbb95cb073d09c8f127042bca4558"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.Duel.cs",
-      "sha256": "a99d55e2d9ffc85f14c5fc449c3479e2a6ef94b151f5e64f12604ef2fcaf6c60"
+      "sha256": "1559ec35bbf046c22e5c039691611b114b805cbe81c3de71bb902d987096f39c"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.DuelHud.cs",
+      "sha256": "d4193afb0bea65f32bbf5fe3afee7ad98eec805db9b3b1488b794d034e4cae45"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.DuelPreparation.cs",
+      "sha256": "a1974364192a3610dda5f1613b998a3a6a9d23fd94cc6d1ca4a075061d5edd2f"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAutomation.Presentation.cs",
@@ -2286,7 +2319,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpLanGameChecks.cs",
-      "sha256": "08febfc2314a6b59c5c297cbcbb9404c960414e0b545a6c30c3bf9d9b84bccd1"
+      "sha256": "9ac0dd636169325683aedccb6e45c2ac8b1d9ca05260643129dcb8f56c73d4fb"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
@@ -2418,7 +2451,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Pvp/PvpConfig.cs",
-      "sha256": "142f8f5080bc532b48001840df1b6f5f7c34b0a2f3b385ad9962e8bc83f5ed87"
+      "sha256": "53593e26e632d81a42f60e31a2f8575972a41fe6ec1d518efd8474c5ab4240b8"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Pvp/PvpYayaLines.cs",
@@ -2454,7 +2487,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/Logic/Pvp/PvpLogic.cs",
-      "sha256": "e024e15f0f22c6c06c0fcba9a8e62784c909f283d7892328388d398f607ba035"
+      "sha256": "dc83f84ac188f07f3915afeffb159e36bed0d6ea88885da3517cefd131c32ad7"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/Logic/TutorialLogic.cs",
@@ -2494,7 +2527,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Pvp.cs",
-      "sha256": "14dc6df415aaf078ba28c9de8b04fa2ff46da16f1d355580bfc846ad1f5bd486"
+      "sha256": "5fc57f994b6e8ff746c44d6e3cc2b7a73b5368d96520c4b7582b615442c7a196"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs",
@@ -2550,19 +2583,31 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs",
-      "sha256": "f9b6e786ed0b5d6c3b4773fd5bfe1f7222b8d91f4b374a92ea393f30e4a471d7"
+      "sha256": "c367d9143904f9d9a042ecca034c6c394de97ead741157e7f77b6514be29da03"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelCorePipe.cs",
-      "sha256": "f11018ee135fcf777e0e79c7808be0ca048cc98fd7a0b973ea221a97fab70e65"
+      "sha256": "6f68ab4427af8d9718da20179e1face34d686f6deeab1a77d94646f43593134e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs",
-      "sha256": "8a32a1737cf6324253933a3a40b06d1ef32a362bc6b7eb94e2bd888185c0cfeb"
+      "sha256": "66d4cab20adc023dc8de6507a5d7e92f43348ac4bd46131e3afd2d471fa2caec"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelPlayback.cs",
+      "sha256": "1a09ad2c8d885403704eb02980a3af53205109615e5e80782e309c157a4f793d"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelPrediction.cs",
+      "sha256": "7b5e1ae38334df1cd06398b37fb38a3116b6e8234524bedeb9b9eb6505a3e04a"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelPreparation.cs",
+      "sha256": "bf6de90d32a9bae07f9d420c656539c0b351bbd02ff74c864a7a250099cf64c3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelReplay.cs",
-      "sha256": "ac214f83d260ebd264fb6f48aafa12da1cfcc10945b600c66a078556493db47f"
+      "sha256": "3745bb4bc961d3fe665e336406b08263975c330ca00e0c27102a9144e20d682d"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Protocol/NetworkProtocolHelper.cs",
@@ -2570,7 +2615,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Protocol/OuterMessage.cs",
-      "sha256": "bdfef621163b1dee2c224843785e25edd579716eaf6274138c1509c75eae1725"
+      "sha256": "b172055bc438686ab70df197711fec5a75fad21791d0092e7f287a91566b3ef0"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Protocol/OuterOpcode.cs",
@@ -2926,7 +2971,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs",
-      "sha256": "977b9b345aec0848e526f4014d0c282629d71d40693e5e4a8cdb39c021a03ba7"
+      "sha256": "e80b4a8a815a80106a0adfc46d2baaa7c92c56e801d572bfcad9ae95fef4c37c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/G2C_GoStateHandler.cs",
@@ -2934,7 +2979,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Lan/LanPeerOptions.cs",
-      "sha256": "2da006f381a5c2742c57f7a473e931dade63734e731fdabd17c3e09ed749e329"
+      "sha256": "36e3ce073872823e121492eb83448fab22efccf8a3fc2c94fea8c5231bdf9d4b"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Lan/LanPeerTransport.cs",
@@ -2942,7 +2987,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Lan/LanPeerTransport.Discovery.cs",
-      "sha256": "02d79e8015e316925246211330f66f62619ae624d0f8145da193a098c0f05043"
+      "sha256": "c9cb44944a00e819e6df13e28ab787a7d60df93dbf2d07db6182f54a613d16d1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Lan/LanPeerTransport.Driver.cs",
@@ -2966,11 +3011,15 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs",
-      "sha256": "99183231ca28fce72b7ce8b7a12973e860ed998e7848e4eb7b5c6af5d38423f1"
+      "sha256": "354833fa2d16b8a95d4af2976495086609c1dfe8e4f710c4d2216e8a479dfa27"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Duel.cs",
-      "sha256": "865c563a36c9152fb4cec6359a58685d5c2ac97a65c8f0a927f4b50e8c7da840"
+      "sha256": "4d4b6afa6a98aaac263de643e2406b561d11291f81e0f38a1b3ceada792c1feb"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.DuelPreparation.cs",
+      "sha256": "57430e37b277c3fb42c83e098b8f89d8b351933d1554902fc5b91e82e1ef2008"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Presentation.cs",
@@ -2994,7 +3043,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Layout/GameMobileLayout.cs",
-      "sha256": "586dcfb89eab67d029b7b03d86be8a7bbca1b4bc9f49cd1a209835e11403bc8e"
+      "sha256": "1ff8f398643c4ebf550c96f9f5e662f8fde497be15fbcd5042c8144a706ae17a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/Boss/BossIntroPanel.cs",
@@ -3071,6 +3120,18 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/LevelSelectPanel.cs",
       "sha256": "940eb585b8e5dcbb823de43bcd74c5eb2d8379a404044348d8a5c8ffd2b0f472"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/DuelPreparation/DuelLoadingPanel.cs",
+      "sha256": "40a790e8d627535e8c2202aeda3bb175ca4e173a44fb9ce938b2b5c87a170856"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/DuelPreparation/DuelPrepPanelBase.cs",
+      "sha256": "566165b7de1d07ce1d5d2363517068e4eb6f6cde52eaa4a412599c1da6676f63"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/DuelPreparation/DuelSelectPanel.cs",
+      "sha256": "a190b4d60489e54f83893a762336e57d61d7dcca2e3067f22e5041056709817f"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpAgentSettingsPanel.cs",
@@ -3342,11 +3403,27 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/DuelActorAnimator.cs",
-      "sha256": "105779b372092a4ed4675ba5a1efd3d1d065c14b3cecbf838bb0a31dad149ffc"
+      "sha256": "3165d409bb7c455b766d7929244a2d038eaba45a5e02f9103642e6ed5f07b764"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/DuelCameraRig.cs",
+      "sha256": "cccdf7c210fd8e09b12ea6a5fd1eea7bc641d72b4729a80da89d047e0347c1f2"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/DuelCircleHitArea.cs",
+      "sha256": "e9dee0a6d66e556fa4ecbb059aa7f1c4422b97458fc980e307674ab077abf99c"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/DuelMoveStick.cs",
+      "sha256": "9921ac6f9f4742ad04a868adf47a5dfb903afc7ece1d0e6df777ef29b868d540"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/DuelPressButton.cs",
+      "sha256": "ba0323e4bc6b3618166a7eef31b5e41d0844962d9cf08fe6279d47023a433e02"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/DuelStrikeEffects.cs",
-      "sha256": "27740bd6290b9d9096a5a2a6e8aed7bc51d55643caebc728bd078ba1f6910325"
+      "sha256": "141c22a220bf4e9ddcf0a2eb95e99ffdc5cc2e27c6e34c8c21fbc34d168fa2e8"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/PvpBoardView.cs",
@@ -3358,7 +3435,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/PvpDuelView.cs",
-      "sha256": "00d6e989f5194a8d330d572ccdeca2d9a6c232172ef1b9b49fa0b177da912bf4"
+      "sha256": "56fa7682b960bdd19043a7c53cd83d2468a0db7baac9274a0b24c664e0f370f0"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Pvp/PvpDuelView.Roster.cs",
+      "sha256": "51e13626874d021fb0d399ed9cbc7d11d65bf845f313b59021759ef808b907bf"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GamePoolRequests.cs",
@@ -3410,7 +3491,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/PvpDuelScene.unity",
-      "sha256": "f72a4d8ef662ce3047944bdab4b7c72cf530b9120d535b3e867c880b84e5276c"
+      "sha256": "1808fe62e84f4060153dfc8ba7c4e6a928c8c93c42ff9f7afe9a791df022c6fc"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/PvpScene.unity",
@@ -3430,7 +3511,7 @@
     },
     {
       "path": "RevGame_Client/配置表/九路围棋配置.xlsx",
-      "sha256": "8c9424c639a3058c57c690a24c6b54a9d4c637a4a6313e3f4bb613dfce63edec"
+      "sha256": "4f3ef6bcacb1f8cff9862e4b7fa74d4f993371febfd8d6cc9f4b36c3cad80d30"
     },
     {
       "path": "RevGame_Client/配置表/九路围棋鸦鸦台词.xlsx",

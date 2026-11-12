@@ -121,6 +121,14 @@ namespace RevGame.Editor
             return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildMatchHud").Invoke(null, null);
         }
 
+        /// <summary>调用固定的决斗准备面板制作配方，不接收任意脚本或保存路径。</summary>
+        [RevAutomationAction("game.pvp.duel-prep", Environment = "edit", Keys = new string[0], Description = "保存决斗角色选择与双人加载预制体")]
+        public static object BuildDuelPrep(RevAutomationRequest request)
+        {
+            return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("BuildDuelPreparationPanels").Invoke(null, null);
+        }
+
         /// <summary>将现有决斗场景的角色帧序列保存到场景组件。</summary>
         [RevAutomationAction("game.pvp.duel-sprites", Environment = "edit", Keys = new string[0], Description = "为现有决斗场景绑定两席的动画帧")]
         public static object BindDuelSprites(RevAutomationRequest request)

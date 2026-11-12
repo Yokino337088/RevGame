@@ -37,7 +37,7 @@ namespace RevGame.View
         }
         // Unity 不能直接序列化交错数组，用一层对象保存每个姿态的帧序列。
         [System.Serializable]
-        private sealed class SpriteSequence
+        internal sealed class SpriteSequence
         {
             // 编辑器按播放顺序写入，每个元素对应一张实际绘制的图片。
             public Sprite[] frames;
@@ -47,8 +47,12 @@ namespace RevGame.View
 
         // 与 Pose 枚举一一对应，由决斗场景配方预先绑定。
         [SerializeField] private SpriteSequence[] spriteSequences;
-        // 鸦鸦的待机是专门绘制的完整循环。没有完整待机循环的角色保留第一张站姿。
+        // 有完整待机循环的角色才换图，其余角色保留第一张站姿。
         [SerializeField] private bool animateIdle;
+        // 可选的待机帧结束时间，单位为从循环起点累计的秒数。为空时用动画片段的均匀采样率。
+        [SerializeField] private float[] idleFrameEndSeconds;
+        // 角色被重新分配时沿用其原有片段采样率。Legacy Animation 本身仍禁止自动写图。
+        private AnimationClip[] _roleClips;
         // 屏幕上的角色图片。由本组件按片段时钟显式换帧。
         private Image _image;
         // 旧姿态的最后一张图只在过渡期间保留。两个图层复用整局，不逐帧创建对象。
@@ -227,7 +231,7 @@ namespace RevGame.View
         private void PlayPose(Pose pose, string clip)
         {
             BeginPoseFade();
-            AnimationClip asset = _animation.GetClip(clip);
+            AnimationClip asset = _roleClips == null ? _animation.GetClip(clip) : _roleClips[(int)pose];
             _sampleRate = asset == null ? 0 : asset.frameRate;
             _poseSeconds = 0;
             int index = (int)pose;
@@ -235,6 +239,28 @@ namespace RevGame.View
             _playingFrames = sequence?.frames;
             _contactIndex = sequence?.contactIndex ?? 0;
             _loop = pose == Pose.Run || (pose == Pose.Idle && animateIdle);
+        }
+
+        // 一次性抓取场景中预先序列化好的角色资源。先抓两席再换角色，镜像局共用只读帧表。
+        internal (SpriteSequence[] sequences, AnimationClip[] clips, bool idle, float[] ends) CaptureRoster()
+        {
+            var clips = new AnimationClip[spriteSequences.Length];
+            foreach (Pose pose in System.Enum.GetValues(typeof(Pose)))
+            {
+                clips[(int)pose] = _animation.GetClip(pose.ToString());
+            }
+            return (spriteSequences, clips, animateIdle, idleFrameEndSeconds);
+        }
+
+        // 只在场景开始绑定一次。不替换 Animator 实例，也不改整局的 FSM 或资源归属。
+        internal void UseRoster((SpriteSequence[] sequences, AnimationClip[] clips, bool idle, float[] ends) roster)
+        {
+            spriteSequences = roster.sequences;
+            _roleClips = roster.clips;
+            animateIdle = roster.idle;
+            idleFrameEndSeconds = roster.ends;
+            PlayPose(Pose.Idle, "Idle");
+            _image.sprite = spriteSequences[0].frames[0];
         }
 
         // 旧图层是当前角色的表现子节点，随场景一起退出；关闭射线检测，避免覆盖 HUD 的触屏输入。
@@ -316,13 +342,7 @@ namespace RevGame.View
                 return;
             }
 
-            // 没有连续待机帧的角色保持站姿。配置了循环的角色按片段帧率播放。
-            float sample = _machine.CurrentStateType == Pose.Idle && !animateIdle ? 0 : _poseSeconds * _sampleRate;
-            if (_loop)
-            {
-                // 按实际图片张数循环，编辑器片段的末尾留白不会延长最后一张图。
-                sample = Mathf.Repeat(sample, _playingFrames.Length);
-            }
+            float sample = SampleOrdinaryPose();
             if (action > 0)
             {
                 int hit = DuelConfig.ActionHitFrame(action);
@@ -344,6 +364,34 @@ namespace RevGame.View
             {
                 _image.sprite = frame;
             }
+        }
+
+        // 普通姿态使用表现时钟。待机可按每张图的停留时间循环，攻击和跳跃仍由上层按权威状态选帧。
+        private float SampleOrdinaryPose()
+        {
+            if (_machine.CurrentStateType == Pose.Idle)
+            {
+                if (!animateIdle)
+                {
+                    return 0;
+                }
+                int last = _playingFrames.Length - 1;
+                if (idleFrameEndSeconds != null && idleFrameEndSeconds.Length == _playingFrames.Length &&
+                    idleFrameEndSeconds[last] > 0)
+                {
+                    // 先折回这一圈的开始，再找第一张尚未到结束时间的图。
+                    float elapsed = Mathf.Repeat(_poseSeconds, idleFrameEndSeconds[last]);
+                    int index = 0;
+                    while (index < last && elapsed >= idleFrameEndSeconds[index])
+                    {
+                        index++;
+                    }
+                    return index;
+                }
+            }
+            // 未配置单帧时长时按实际图片数循环，末尾不会因 Legacy 曲线的补帧多停一拍。
+            float sample = _poseSeconds * _sampleRate;
+            return _loop ? Mathf.Repeat(sample, _playingFrames.Length) : sample;
         }
 
         // 销毁角色时清理状态机及其状态引用。

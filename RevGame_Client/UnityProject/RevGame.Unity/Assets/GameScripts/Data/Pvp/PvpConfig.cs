@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RevGame.Pvp.Duel;
 using Revolution;
 using UnityEngine;
 
@@ -74,7 +75,12 @@ namespace RevGame.Pvp
             // 两个提示次数均校验，未选中的场次也不能藏着坏配置。
             Integer(values, "HintCountRookie");
             Integer(values, "HintCountAdvanced");
-            if (values.Count != 17)
+            // 同一张策划表同时生成权威时钟。旧 AB 或漏生成的服务器版本不能悄悄使用不同的时间。
+            if (Integer(values, "DuelPickDurationMs") != DuelConfig.PickDurationMs)
+            {
+                throw new InvalidOperationException("决斗选角时限未和权威配置同步，请重新导表和生成决斗配置。");
+            }
+            if (values.Count != 18)
             {
                 throw new InvalidOperationException("九路围棋配置包含未知参数，请核对参数名");
             }

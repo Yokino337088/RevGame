@@ -34,6 +34,20 @@ namespace RevGame.View
         public AudioClip[] YayaImpactSounds;
         // 场景唯一的二维声源。退出场景即释放，音量读取 Revolution 门面。
         public AudioSource Speaker;
+        // 角色配置在第 0 帧决定；默认值仍匹配原场景和编辑器预览。
+        private bool _firstYaya;
+        private bool _secondYaya = true;
+
+        // 收集两种原有共享材质后才覆盖图层，镜像对局仍不需要克隆材质。
+        internal void SetRoles(bool firstYaya, bool secondYaya)
+        {
+            Material ember = First.material;
+            Material yaya = Second.material;
+            _firstYaya = firstYaya;
+            _secondYaya = secondYaya;
+            First.material = FirstImpact.material = firstYaya ? yaya : ember;
+            Second.material = SecondImpact.material = secondYaya ? yaya : ember;
+        }
 
         // 按座位存上一次已播放的动作起始帧。每席每帧最多开始一次动作。
         private readonly int[] _lastStart = { -1, -1 };
@@ -83,10 +97,10 @@ namespace RevGame.View
                 return;
             }
             _lastStart[seat] = startFrame;
-            bool yaya = seat == 1 && YayaCastSprites != null && YayaCastSprites.Length == 6;
+            bool yaya = (seat == 0 ? _firstYaya : _secondYaya) && YayaCastSprites != null && YayaCastSprites.Length == 6;
             if (yaya)
             {
-                CastYaya(action, facing, position, target, reach);
+                CastYaya(seat, action, facing, position, target, reach);
             }
             else
             {
@@ -134,7 +148,7 @@ namespace RevGame.View
         }
 
         // 将鸦袭、掠羽和鸦宴绘成不同尺寸和方向。飞行距离只用于画面，受击由权威帧触发。
-        private void CastYaya(int action, int facing, Vector2 position, Vector2 target, float reach)
+        private void CastYaya(int seat, int action, int facing, Vector2 position, Vector2 target, float reach)
         {
             bool bird = action == 2 || action == 4;
             float hitSeconds = DuelConfig.ActionHitFrame(action) * DuelConfig.FrameMs / 1000f;
@@ -150,16 +164,16 @@ namespace RevGame.View
                 6 => new Vector2(reach * 1.50f, 230),
                 _ => new Vector2(245, 190)
             };
-            Begin(Second, ref _casts[1], YayaCastSprites[action - 1], origin, size,
+            Begin(seat == 0 ? First : Second, ref _casts[seat], YayaCastSprites[action - 1], origin, size,
                 hitSeconds + (action == 3 ? .28f : .14f), Color.white, facing);
             if (bird)
             {
                 // 以起手帧的对手位置定方向和长度。实际命中点另读该帧受击者坐标。
                 float forward = Mathf.Clamp((target.x - position.x) * facing, 90, reach);
                 float endHeight = Mathf.Clamp(target.y - position.y, -75, 90) + (action == 4 ? -85 : 20);
-                _casts[1].Travel = position + new Vector2(forward * facing, endHeight) - origin;
-                _casts[1].TravelSeconds = hitSeconds;
-                _casts[1].Arc = action == 4 ? 45 : 26;
+                _casts[seat].Travel = position + new Vector2(forward * facing, endHeight) - origin;
+                _casts[seat].TravelSeconds = hitSeconds;
+                _casts[seat].Arc = action == 4 ? 45 : 26;
             }
         }
 
@@ -167,7 +181,7 @@ namespace RevGame.View
         public void Hit(int seat, int action, int facing, Vector2 target)
         {
             int tier = Tier(action);
-            bool yaya = seat == 1 && YayaImpactSprites != null && YayaImpactSprites.Length == 6;
+            bool yaya = (seat == 0 ? _firstYaya : _secondYaya) && YayaImpactSprites != null && YayaImpactSprites.Length == 6;
             Vector2 shape = action == 4 ? new Vector2(580, 320) : Vector2.one * (tier == 2 ? 750 : tier == 1 ? 405 : 250);
             // 白方低踢的受击闪光贴近小腿，其它命中仍从权威受击者取锚点。
             float impactHeight = yaya && action == 1 ? -90 : action == 4 ? -145 : 18;

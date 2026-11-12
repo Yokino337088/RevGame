@@ -178,7 +178,8 @@ namespace RevGame.Pvp
             string id = Guid.NewGuid().ToString("N");
             try
             {
-                _duelAuthority = new DuelAuthority(id, networked: notifyPeer);
+                int computerSide = !notifyPeer && IsComputerGame ? 3 - (int)MySide : 0;
+                _duelAuthority = new DuelAuthority(id, networked: notifyPeer, now: _clock.ElapsedMilliseconds, computerSide: computerSide);
                 ActivateDuel(id);
                 if (DuelId != id)
                 {
@@ -214,6 +215,7 @@ namespace RevGame.Pvp
                 _duelPipe = new DuelCorePipe(id);
                 DuelDisplay.Record(_duelPipe.Snapshot);
                 DuelId = id;
+                _prepStageStarted = _clock.ElapsedMilliseconds;
                 CancelAgent();
                 CancelHint();
                 _pendingSequence = 0;
@@ -232,7 +234,7 @@ namespace RevGame.Pvp
         // 场景加载成功后登记本端就绪，后续 Poll 才会发送 Ready。
         public void MarkDuelSceneReady()
         {
-            _duelSceneReady = DuelId.Length != 0;
+            _duelSceneReady = DuelId.Length != 0 && DuelPrep?.phase == DuelPrepPhase.Released;
         }
 
         // 接收键盘或 HUD 采样，只缓存意图，不立即修改原生世界。
@@ -389,6 +391,11 @@ namespace RevGame.Pvp
         // 由 PvP 业务宿主每帧轮询。联机走独立权威时钟，本地人机仍锁定两席下一帧的输入。
         private void PollDuel()
         {
+            if (!_duelSceneReady)
+            {
+                PollDuelPreparation();
+                return;
+            }
             if (Mode != PvpConnectionMode.Local)
             {
                 PollNetworkDuel();
@@ -614,12 +621,19 @@ namespace RevGame.Pvp
             {
                 return;
             }
+            ApplyDuelPreparation(reply.preparation);
+            if (DuelPrep?.phase != DuelPrepPhase.Released ||
+                (reply.preparation != null && reply.preparation.phase != DuelPrepPhase.Released))
+            {
+                return;
+            }
             ObserveDuelHashReceipt(reply, true);
             if (DuelHashMismatchFrame != 0)
             {
                 return;
             }
-            _duelReadyMask = reply.readyMask;
+            // 同局的 Ready 只增加；重连补发时不能被迟到的早期回复清掉。
+            _duelReadyMask |= reply.readyMask;
             int current = DuelSnapshot.Frame;
             if (reply.afterFrame > current || reply.frames == null)
             {
@@ -683,7 +697,7 @@ namespace RevGame.Pvp
                 {
                     throw new InvalidOperationException("决斗回执超出了本端已发送的输入序号。");
                 }
-                _duelPrediction ??= new DuelPrediction(DuelId, MySide == GoSide.Black);
+                _duelPrediction ??= new DuelPrediction(DuelId, MySide == GoSide.Black, DuelRoleFor(1), DuelRoleFor(2));
                 if (_duelPrediction.Rebase(_duelPipe, reply, _duelLastPacked))
                 {
                     _duelPredictionAnchorAt = _clock.Elapsed.TotalSeconds;
@@ -777,6 +791,7 @@ namespace RevGame.Pvp
             DuelId = "";
             DuelError = "";
             _duelSceneReady = false;
+            ResetDuelPreparation();
             _duelReadyMask = 0;
             ClearDuelUnsealedInput();
             _duelIntent = 0;

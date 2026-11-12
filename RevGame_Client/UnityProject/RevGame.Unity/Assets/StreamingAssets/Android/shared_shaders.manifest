@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2479706428
+CRC: 3707047299
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e25d3dc6c8cfc7f81a9099aafd5f2b3c
+    Hash: 303e750ec39c534d8e2c5fd69bea6c44
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e25d3dc6c8cfc7f81a9099aafd5f2b3c
+    Hash: 303e750ec39c534d8e2c5fd69bea6c44
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -19,18 +19,22 @@ Assets:
 - Assets/GameShader/Endless/EndlessGrid.shader
 - Assets/GameShader/Endless/EndlessThrust.shader
 - Assets/GameShader/Endless/EndlessShieldBubble.shader
+- Assets/GameShader/UI/EmberDuelSpear.shader
 - Assets/GameShader/Pvp/PvpGoBoard.shader
 - Assets/GameShader/UI/ArcanePanel.shader
 - Assets/GameShader/Background/LobbyMagicCottage.shader
 - Assets/GameShader/Cards/CardGleam.shader
+- Assets/GameShader/UI/DuelPreparationSigil.shader
 - Assets/GameShader/Pvp/PvpArenaBackdrop.shader
 - Assets/GameShader/Endless/EndlessSwordAura.shader
 - Assets/GameShader/Combat/MeleeImpact.shader
 - Assets/GameShader/Endless/EndlessField.shader
 - Assets/GameShader/Pieces/ArcanePiece.shader
 - Assets/GameShader/Combat/RegionRift.shader
+- Assets/GameShader/UI/DuelPreparationRift.shader
 - Assets/GameShader/Endless/EndlessShieldZone.shader
 - Assets/GameShader/Board/PlacementMagic.shader
+- Assets/GameShader/UI/YayaDuelFeather.shader
 - Assets/GameShader/Combat/BossSkill.shader
 - Assets/GameShader/Endless/EndlessCardUpgrade.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader

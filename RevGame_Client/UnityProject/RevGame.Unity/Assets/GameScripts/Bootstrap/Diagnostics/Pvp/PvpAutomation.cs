@@ -457,7 +457,7 @@ namespace RevGame.Pvp
         }
 
         // 开启真实 UTP 夹具。画面用例把黑方交给当前场景，其余用例使用两份隔离服务。
-        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, bool visibleDuel = false)
+        private static object BeginLanGameCheck(bool agents = false, bool longGame = false, bool duel = false, bool duelHashAudit = false, bool duelHashMismatch = false, bool duelTestEntry = false, bool analysis = false, bool visibleDuel = false, bool manualPreparation = false)
         {
             if (_gameCheckRunning)
             {
@@ -475,7 +475,7 @@ namespace RevGame.Pvp
             _gameCheckCancelled = false;
             _gameCheckError = string.Empty;
             _lanGameCheck = new PvpLanGameChecks(Service.Config, agents, longGame, duel, duelHashAudit, duelHashMismatch,
-                duelTestEntry, analysis, visibleDuel ? Service : null);
+                duelTestEntry, analysis, visibleDuel ? Service : null, manualPreparation);
             if (!_lanGameCheck.Start(out reason))
             {
                 return Result(false, reason);

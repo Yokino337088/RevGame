@@ -126,6 +126,14 @@ Art/Combat/Projectiles/LavaFireball|atlas_combatframes|LavaFireball
 Art/Combat/Projectiles/WaterOrb|atlas_combatframes|WaterOrb
 Art/Combat/RegionHazard|atlas_combatframes|RegionHazard
 Atlases/CombatFrames|atlas_combatframes|CombatFrames
+Art/UI/PvpDuelPrep/DuelAtrium|atlas_duelprep|DuelAtrium
+Art/UI/PvpDuelPrep/DuelButton|atlas_duelprep|DuelButton
+Art/UI/PvpDuelPrep/DuelEmber|atlas_duelprep|DuelEmber
+Art/UI/PvpDuelPrep/DuelMeter|atlas_duelprep|DuelMeter
+Art/UI/PvpDuelPrep/DuelPlate|atlas_duelprep|DuelPlate
+Art/UI/PvpDuelPrep/DuelSigil|atlas_duelprep|DuelSigil
+Art/UI/PvpDuelPrep/DuelYaya|atlas_duelprep|DuelYaya
+Atlases/DuelPrep|atlas_duelprep|DuelPrep
 Art/Endless/CardArrow/CardArrowHead|atlas_endlesscardarrow|CardArrowHead
 Art/Endless/CardArrow/CardArrowRibbon|atlas_endlesscardarrow|CardArrowRibbon
 Atlases/EndlessCardArrow|atlas_endlesscardarrow|EndlessCardArrow
@@ -650,7 +658,11 @@ GameShader/Pvp/PvpArenaBackdrop|shared_shaders|PvpArenaBackdrop
 GameShader/Pvp/PvpDuelStrike|shared_shaders|PvpDuelStrike
 GameShader/Pvp/PvpGoBoard|shared_shaders|PvpGoBoard
 GameShader/UI/ArcanePanel|shared_shaders|ArcanePanel
+GameShader/UI/DuelPreparationRift|shared_shaders|DuelPreparationRift
+GameShader/UI/DuelPreparationSigil|shared_shaders|DuelPreparationSigil
+GameShader/UI/EmberDuelSpear|shared_shaders|EmberDuelSpear
 GameShader/UI/SlimeTutorialHighlight|shared_shaders|SlimeTutorialHighlight
+GameShader/UI/YayaDuelFeather|shared_shaders|YayaDuelFeather
 UI/Panel/BattleHudPanel|ui_chapters_shared|BattleHudPanel
 UI/Panel/PreparePanel|ui_chapters_shared|PreparePanel
 UI/Panel/RewardPanel|ui_chapters_shared|RewardPanel
@@ -669,6 +681,10 @@ UI/Panel/Pvp/Menu/PvpLanPanel|ui_pvp|PvpLanPanel
 UI/Panel/Pvp/Menu/PvpNoticePanel|ui_pvp|PvpNoticePanel
 UI/Panel/Pvp/Menu/PvpServerPanel|ui_pvp|PvpServerPanel
 UI/Panel/Pvp/PvpPanel|ui_pvp|PvpPanel
+UI/Panel/Pvp/DuelPrep/DuelLoadingPanel|ui_pvp_duelprep|DuelLoadingPanel
+UI/Panel/Pvp/DuelPrep/DuelRift|ui_pvp_duelprep|DuelRift
+UI/Panel/Pvp/DuelPrep/DuelSelectPanel|ui_pvp_duelprep|DuelSelectPanel
+UI/Panel/Pvp/DuelPrep/DuelSigil|ui_pvp_duelprep|DuelSigil
 UI/Panel/Settings/AudioSettingsPanel|ui_settings|AudioSettingsPanel
 UI/Panel/Story/StoryPanel|ui_story|StoryPanel
 UI/Panel/Story/TutorialPanel|ui_story|TutorialPanel

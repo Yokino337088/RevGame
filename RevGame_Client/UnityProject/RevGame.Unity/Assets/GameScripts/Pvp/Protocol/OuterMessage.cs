@@ -1195,7 +1195,7 @@ namespace Fantasy
         [ProtoMember(1)]
         public string RoomId { get; set; }
         /// <summary>
-        /// 0 读历史、1 发起、2 就绪、3 提交意图。
+        /// 0 读历史、1 发起、2 场景就绪、3 提交意图、4 开发发起；5 至 9 为选角与加载。
         /// </summary>
         [ProtoMember(2)]
         public int Operation { get; set; }
@@ -1215,7 +1215,7 @@ namespace Fantasy
         [ProtoMember(5)]
         public int InputFrame { get; set; }
         /// <summary>
-        /// 单席六位意图，包含方向、四个玩家招式槽及跳跃。座位由 Session 决定。
+        /// 战斗时是六位意图；准备时 6/7 携带角色编号，8 携带 0 至 100 的加载进度。座位由 Session 决定。
         /// </summary>
         [ProtoMember(6)]
         public int Input { get; set; }
@@ -1283,6 +1283,14 @@ namespace Fantasy
             InputAckSequence = default;
             PendingActionSequence = default;
             PendingActionUntil = default;
+            PrepRevision = default;
+            PrepPhase = default;
+            BlackRole = default;
+            WhiteRole = default;
+            PrepLocked = default;
+            BlackLoad = default;
+            WhiteLoad = default;
+            PrepRemainingMs = default;
             MessageObjectPool<G2C_GoDuelResponse>.Return(this);
         }
 
@@ -1307,6 +1315,14 @@ namespace Fantasy
             other.InputAckSequence = InputAckSequence;
             other.PendingActionSequence = PendingActionSequence;
             other.PendingActionUntil = PendingActionUntil;
+            other.PrepRevision = PrepRevision;
+            other.PrepPhase = PrepPhase;
+            other.BlackRole = BlackRole;
+            other.WhiteRole = WhiteRole;
+            other.PrepLocked = PrepLocked;
+            other.BlackLoad = BlackLoad;
+            other.WhiteLoad = WhiteLoad;
+            other.PrepRemainingMs = PrepRemainingMs;
 
         }
 
@@ -1392,6 +1408,40 @@ namespace Fantasy
         /// </summary>
         [ProtoMember(15)]
         public int PendingActionUntil { get; set; }
+        /// <summary>
+        /// 准备快照版本；0 表示正式战斗回包不再附带准备状态。
+        /// </summary>
+        [ProtoMember(16)]
+        public int PrepRevision { get; set; }
+        /// <summary>
+        /// 准备阶段：等待、选角、加载、放行、取消。
+        /// </summary>
+        [ProtoMember(17)]
+        public int PrepPhase { get; set; }
+        /// <summary>
+        /// 黑方和白方独立选择的角色，1 绯焰、2 鸦鸦。
+        /// </summary>
+        [ProtoMember(18)]
+        public int BlackRole { get; set; }
+        [ProtoMember(19)]
+        public int WhiteRole { get; set; }
+        /// <summary>
+        /// 低两位是双方锁角标志。
+        /// </summary>
+        [ProtoMember(20)]
+        public int PrepLocked { get; set; }
+        /// <summary>
+        /// 各端真实预加载进度，范围 0 到 100。
+        /// </summary>
+        [ProtoMember(21)]
+        public int BlackLoad { get; set; }
+        [ProtoMember(22)]
+        public int WhiteLoad { get; set; }
+        /// <summary>
+        /// 权威选角剩余时间，单位毫秒。
+        /// </summary>
+        [ProtoMember(23)]
+        public int PrepRemainingMs { get; set; }
     }
     [Serializable]
     [ProtoContract]

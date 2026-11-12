@@ -42,9 +42,10 @@ namespace RevGame.Pvp.Duel
         // 小端文件标记 RVDL。与原生检查点的 RGCP 标记不同。
         private const int Magic = 0x4C445652;
         // 录像容器版本，规则指纹和原生版本另行存储。
-        private const int Version = 1;
-        // 文件头七个 32 位整数，包括局号长度与帧数。
-        private const int HeaderBytes = 7 * sizeof(int);
+        private const int Version = 2;
+        // v2 在原头部之后增加两个角色编号；v1 仍可按旧固定角色读取。
+        private const int LegacyHeaderBytes = 7 * sizeof(int);
+        private const int HeaderBytes = 9 * sizeof(int);
         // 每条逻辑帧五个 32 位整数，字段顺序与条目一致。
         private const int FrameBytes = 5 * sizeof(int);
         // 局号按 UTF-8 编码后的字节上限。
@@ -59,14 +60,19 @@ namespace RevGame.Pvp.Duel
         private readonly DuelReplayFrame[] _frames;
 
         // 封帧器或校验后的加载器移交数组所有权，构造后不再追加。
-        internal DuelReplay(string duelId, DuelReplayFrame[] frames)
+        internal DuelReplay(string duelId, DuelReplayFrame[] frames, DuelRole firstRole, DuelRole secondRole)
         {
             DuelId = duelId;
             _frames = frames;
+            FirstRole = firstRole;
+            SecondRole = secondRole;
         }
 
         // 同时决定开局种子与回放所属对局。
         public string DuelId { get; }
+        // 两席锁定的角色，决定重放使用哪一组招式距离。
+        public DuelRole FirstRole { get; }
+        public DuelRole SecondRole { get; }
         // 录像记录条数，也等于最后一个连续帧号。
         public int FrameCount => _frames.Length;
 
@@ -87,6 +93,8 @@ namespace RevGame.Pvp.Duel
             writer.Write(DuelConfig.FrameMs);
             writer.Write(identity.Length);
             writer.Write(FrameCount);
+            writer.Write((int)FirstRole);
+            writer.Write((int)SecondRole);
             writer.Write(identity);
             foreach (DuelReplayFrame frame in _frames)
             {
@@ -105,14 +113,16 @@ namespace RevGame.Pvp.Duel
         // 先验证格式、长度、顺序和输入范围，再构造可播放的录像。错误字节不会进入原生。
         public static DuelReplay Deserialize(byte[]? data)
         {
-            if (data == null || data.Length < HeaderBytes + 1 + FooterBytes ||
+            if (data == null || data.Length < LegacyHeaderBytes + 1 + FooterBytes ||
                 data.Length > HeaderBytes + MaxIdBytes + MaxRecordedFrames * FrameBytes + FooterBytes)
             {
                 throw new InvalidDataException("决斗录像长度无效。");
             }
             using var input = new MemoryStream(data, false);
             using var reader = new BinaryReader(input);
-            if (reader.ReadInt32() != Magic || reader.ReadInt32() != Version ||
+            int magic = reader.ReadInt32();
+            int version = reader.ReadInt32();
+            if (magic != Magic || (version != 1 && version != Version) ||
                 reader.ReadInt32() != DuelConfig.CoreProtocol || reader.ReadInt32() != DuelConfig.Fingerprint ||
                 reader.ReadInt32() != DuelConfig.FrameMs)
             {
@@ -120,10 +130,17 @@ namespace RevGame.Pvp.Duel
             }
             int idBytes = reader.ReadInt32();
             int frames = reader.ReadInt32();
+            int header = version == 1 ? LegacyHeaderBytes : HeaderBytes;
             if (idBytes <= 0 || idBytes > MaxIdBytes || frames < 0 || frames > MaxRecordedFrames ||
-                data.Length != HeaderBytes + idBytes + frames * FrameBytes + FooterBytes)
+                data.Length != header + idBytes + frames * FrameBytes + FooterBytes)
             {
                 throw new InvalidDataException("决斗录像内容长度无效。");
+            }
+            DuelRole first = version == 1 ? DuelRole.Ember : (DuelRole)reader.ReadInt32();
+            DuelRole second = version == 1 ? DuelRole.Yaya : (DuelRole)reader.ReadInt32();
+            if (!DuelPreparation.ValidRole(first) || !DuelPreparation.ValidRole(second))
+            {
+                throw new InvalidDataException("录像的角色编号无效。");
             }
             int payloadBytes = data.Length - FooterBytes;
             // 先验整个文件，再按经过边界校验的帧数分配，避免损坏长度把无效字节送进原生。
@@ -132,7 +149,7 @@ namespace RevGame.Pvp.Duel
             {
                 throw new InvalidDataException("决斗录像校验失败。");
             }
-            input.Position = HeaderBytes;
+            input.Position = header;
             string duelId;
             try
             {
@@ -154,7 +171,7 @@ namespace RevGame.Pvp.Duel
                 }
                 history[i] = entry;
             }
-            return new DuelReplay(duelId, history);
+            return new DuelReplay(duelId, history, first, second);
         }
 
         // 用隔离的原生实例重放。可从开局或已恢复的同局帧开始，回调仅收到新执行的帧。
@@ -166,7 +183,8 @@ namespace RevGame.Pvp.Duel
                 throw new ArgumentNullException(nameof(target));
             }
             int cursor = target.Snapshot.Frame;
-            if (!string.Equals(target.DuelId, DuelId, StringComparison.Ordinal) || cursor < 0 || cursor > FrameCount ||
+            if (!string.Equals(target.DuelId, DuelId, StringComparison.Ordinal) || target.FirstRole != FirstRole ||
+                target.SecondRole != SecondRole || cursor < 0 || cursor > FrameCount ||
                 (cursor > 0 && target.Snapshot.Hash != _frames[cursor - 1].Hash))
             {
                 throw new InvalidDataException("决斗录像与恢复基线不一致。");

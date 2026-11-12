@@ -18,3 +18,4 @@
 15	ConnectTimeoutSeconds	8	联机建立超时秒数
 16	LocalReferenceMoves19	300	本地速战的十九路参考预算，按棋盘面积折为九路，向上取整。
 17	LocalBaitEvery	3	本地人机每几次建议尝试一次可反制的合法着法。
+18	DuelPickDurationMs	15000	双方选角面板就绪后开始的权威选角窗口，单位毫秒

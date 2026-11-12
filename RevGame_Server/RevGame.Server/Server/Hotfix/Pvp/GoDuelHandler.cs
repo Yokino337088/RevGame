@@ -53,7 +53,7 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
                     return;
                 }
                 // 权威实例跟随房间存活。围棋入口看到此标记后停止接收新的围棋操作。
-                room.Duel = new DuelAuthority(room.RoomId);
+                room.Duel = new DuelAuthority(room.RoomId, now: GoDuelRoomRules.NowMilliseconds());
                 // 在同一个 Gate 线程固定推进，RPC 仅投递输入和读取已封历史。
                 room.DuelTimer = FTask.RepeatedTimer(room.Scene, 10, () => GoDuelRoomRules.AdvanceDuel(room));
                 // 把决斗状态通知两席，让客户端进入同一房间的决斗界面。
@@ -96,6 +96,18 @@ public sealed class C2G_GoDuelRequestHandler : MessageRPC<C2G_GoDuelRequest, G2C
             response.InputAckSequence = state.inputAckSequence;
             response.PendingActionSequence = state.pendingActionSequence;
             response.PendingActionUntil = state.pendingActionUntil;
+            // 两席都只读 Gate 的权威选角与进度。已经开打的高频回包不重复发送这些字段。
+            if (state.preparation != null)
+            {
+                response.PrepRevision = state.preparation.revision;
+                response.PrepPhase = (int)state.preparation.phase;
+                response.BlackRole = (int)state.preparation.black;
+                response.WhiteRole = (int)state.preparation.white;
+                response.PrepLocked = state.preparation.locked;
+                response.BlackLoad = state.preparation.blackLoad;
+                response.WhiteLoad = state.preparation.whiteLoad;
+                response.PrepRemainingMs = state.preparation.remainingMs;
+            }
             if (state.result != 0)
             {
                 // 权威结果非零代表已有终局，房间继续保留结果供客户端读取。

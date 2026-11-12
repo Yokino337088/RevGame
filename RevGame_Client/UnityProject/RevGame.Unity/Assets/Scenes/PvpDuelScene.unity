@@ -1041,7 +1041,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 52
     m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -1211,7 +1211,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 52
     m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -1498,7 +1498,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 55
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -1904,6 +1904,7 @@ MonoBehaviour:
   FirstName: {fileID: 476473089}
   SecondName: {fileID: 1558104116}
   SecondPortrait: {fileID: 188501731}
+  FirstPortrait: {fileID: 384334004}
   YayaPortraits:
   - {fileID: 21300000, guid: 99d9f2b7f03f8e64ab58d850794def4f, type: 3}
   - {fileID: 21300000, guid: bf3219b5490563c40a5a343c7082e45c, type: 3}
@@ -2705,6 +2706,11 @@ MonoBehaviour:
   - frames:
     - {fileID: 21300000, guid: d360e50a0934f5b49b9c8d6ffde239ac, type: 3}
     - {fileID: 21300000, guid: 5c7668f939a9b404a8cad1341b77ebac, type: 3}
+    - {fileID: 21300000, guid: f2ff1ed6817487a43aa853aeaadb88c3, type: 3}
+    - {fileID: 21300000, guid: 1696395b27e49bd438a6001ea748e6ae, type: 3}
+    - {fileID: 21300000, guid: da9d73a741e10b246bfe187e5be8b77e, type: 3}
+    - {fileID: 21300000, guid: 860ed537d78dd4047a3fcc3fff47b53e, type: 3}
+    - {fileID: 21300000, guid: f5a05839336a96f45915523122dc8bf2, type: 3}
     contactIndex: 0
   - frames:
     - {fileID: 21300000, guid: 0e36a6f10c188fe46a36a962acf9aade, type: 3}
@@ -2775,7 +2781,15 @@ MonoBehaviour:
     - {fileID: 21300000, guid: bd01eef86ca4f1842a09d13b15afa939, type: 3}
     - {fileID: 21300000, guid: bdfb58e2677cd674ba9f3b9eaec703c7, type: 3}
     contactIndex: 0
-  animateIdle: 0
+  animateIdle: 1
+  idleFrameEndSeconds:
+  - 0.21
+  - 0.37
+  - 0.6
+  - 0.67
+  - 0.75
+  - 0.82
+  - 1.04
 --- !u!111 &782604408
 Animation:
   m_ObjectHideFlags: 0
@@ -5046,6 +5060,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 5c703143d7d29324b9b1ed158ef17960, type: 3}
     contactIndex: 0
   animateIdle: 1
+  idleFrameEndSeconds: []
 --- !u!111 &1579602429
 Animation:
   m_ObjectHideFlags: 0
@@ -5197,7 +5212,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 52
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1

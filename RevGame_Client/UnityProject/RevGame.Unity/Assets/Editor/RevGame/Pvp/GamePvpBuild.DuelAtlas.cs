@@ -37,6 +37,8 @@ namespace RevGame.Editor
             public string pose;
             public string clipPath;
             public int frameCount;
+            // 动画片段的完整时长，单位为秒。非等长待机在打包前核对最后一个采样间隔。
+            public float durationSeconds;
             public string firstSprite;
             public string lastSprite;
             public Vector2 frameSize;
@@ -115,6 +117,7 @@ namespace RevGame.Editor
                 groups.Add(new DuelAnimationSequenceResult
                 {
                     role = role, pose = pose, clipPath = clipPath, frameCount = frames.Length,
+                    durationSeconds = clip.length,
                     firstSprite = frames[0].name, lastSprite = frames[frames.Length - 1].name,
                     frameSize = size, normalizedPivot = new Vector2(.5f, .5f)
                 });
@@ -126,15 +129,20 @@ namespace RevGame.Editor
         {
             var binding = EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite");
             ObjectReferenceKeyframe[] keys = clip == null ? null : AnimationUtility.GetObjectReferenceCurve(clip, binding);
-            int keyCount = frames.Length + (DuelLoopsWithoutPadding(role, pose) ? 0 : 1);
-            if (keys == null || keys.Length != keyCount || !clip.legacy || !Mathf.Approximately(clip.frameRate, DuelClipFrameRate(role, pose)))
+            int frameRate = DuelClipFrameRate(role, pose);
+            ObjectReferenceKeyframe[] expected = BuildDuelClipKeys(role, pose, frames, frameRate);
+            if (keys == null || keys.Length != expected.Length || !clip.legacy || !Mathf.Approximately(clip.frameRate, frameRate))
             {
                 throw new InvalidOperationException("决斗动画帧表或采样率异常：" + clipPath);
             }
+            float[] ends = pose == "Idle" ? DuelIdleFrameEnds(role) : Array.Empty<float>();
+            if (ends.Length > 0 && (clip.wrapMode != WrapMode.Loop || !Mathf.Approximately(clip.length, ends[ends.Length - 1])))
+            {
+                throw new InvalidOperationException("决斗待机循环长度异常：" + clipPath);
+            }
             for (int i = 0; i < keys.Length; i++)
             {
-                if (keys[i].value != frames[Math.Min(i, frames.Length - 1)] ||
-                    !Mathf.Approximately(keys[i].time, i / clip.frameRate))
+                if (keys[i].value != expected[i].value || !Mathf.Approximately(keys[i].time, expected[i].time))
                 {
                     throw new InvalidOperationException("决斗动画关键帧顺序异常：" + clipPath + " 第 " + i + " 帧");
                 }
@@ -158,8 +166,8 @@ namespace RevGame.Editor
             try
             {
                 PvpDuelView view = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
-                ValidateDuelActorAnimationSlices(view.FirstAnimator, ember, ArcadeContactKeys, false);
-                ValidateDuelActorAnimationSlices(view.SecondAnimator, yaya, YayaContactKeys, true);
+                ValidateDuelActorAnimationSlices(view.FirstAnimator, ember, ArcadeContactKeys, EmberClipPrefix);
+                ValidateDuelActorAnimationSlices(view.SecondAnimator, yaya, YayaContactKeys, YayaPrefix);
                 DuelStrikeEffects effects = view.Effects;
                 if (AssetDatabase.GetAssetPath(effects.First.material) != EmberDuelMaterial ||
                     effects.FirstImpact.material != effects.First.material || !effects.First.material.shader.isSupported)
@@ -191,14 +199,27 @@ namespace RevGame.Editor
             }
         }
 
-        // 读回两席序列帧和接触关键帧，避免配置中的角色与场景绑定不一致。
-        private static void ValidateDuelActorAnimationSlices(DuelActorAnimator actor, Sprite[][] sequences, int[] contactKeys, bool animateIdle)
+        // 读回两席的待机节奏、序列帧和接触关键帧，避免编辑器配方与场景绑定不一致。
+        private static void ValidateDuelActorAnimationSlices(DuelActorAnimator actor, Sprite[][] sequences, int[] contactKeys, string role)
         {
             using var data = new SerializedObject(actor);
             SerializedProperty poses = data.FindProperty("spriteSequences");
-            if (poses == null || poses.arraySize != sequences.Length || data.FindProperty("animateIdle").boolValue != animateIdle)
+            if (poses == null || poses.arraySize != sequences.Length || !data.FindProperty("animateIdle").boolValue)
             {
                 throw new InvalidOperationException("决斗场景角色缺少切片换帧表：" + actor.name);
+            }
+            float[] expectedEnds = DuelIdleFrameEnds(role);
+            SerializedProperty idleEnds = data.FindProperty("idleFrameEndSeconds");
+            if (idleEnds == null || idleEnds.arraySize != expectedEnds.Length)
+            {
+                throw new InvalidOperationException("决斗场景待机时间表数量异常：" + actor.name);
+            }
+            for (int i = 0; i < expectedEnds.Length; i++)
+            {
+                if (!Mathf.Approximately(idleEnds.GetArrayElementAtIndex(i).floatValue, expectedEnds[i]))
+                {
+                    throw new InvalidOperationException("决斗场景待机时间异常：" + actor.name + " 第 " + i + " 帧");
+                }
             }
             for (int i = 0; i < sequences.Length; i++)
             {

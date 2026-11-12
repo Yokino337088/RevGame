@@ -85,7 +85,9 @@ namespace RevGame.Editor
                     string logical = texture.Substring(ResourceRoot.Length + 1);
                     logical = logical.Substring(0, logical.Length - Path.GetExtension(logical).Length);
 
-                    if (code.Contains("\"" + name + "\"") || code.Contains("\"" + logical + "\""))
+                    // 内置决斗美术不是 RevResManager 的短名资源。"Jab" 等 HUD 节点名不等于加载同名 PNG。
+                    // 保留完整路径扫描和上面的 GUID 依赖，仍能拦住跨入口的真实引用。
+                    if ((!IsDuelSceneArt(texture) && code.Contains("\"" + name + "\"")) || code.Contains("\"" + logical + "\""))
                     {
                         snapshot.Add(texture, "代码动态加载：" + path);
                     }

@@ -192,12 +192,21 @@ namespace RevGame.Pvp.Networking
                     request.afterFrame, request.inputFrame, request.input, request.hashFrame, request.hash);
                 if (IsCurrent(generation))
                 {
+                    // 响应回池前复制准备快照，普通战斗回复没有准备状态。
+                    DuelPrepState preparation = response.PrepRevision == 0 ? null : new DuelPrepState
+                    {
+                        revision = response.PrepRevision, phase = (DuelPrepPhase)response.PrepPhase,
+                        black = (DuelRole)response.BlackRole, white = (DuelRole)response.WhiteRole,
+                        locked = response.PrepLocked, blackLoad = response.BlackLoad, whiteLoad = response.WhiteLoad,
+                        remainingMs = response.PrepRemainingMs
+                    };
                     onReply(new DuelReply { id = response.DuelId, error = response.ErrorCode == 0 ? "" : response.Reason,
                         readyMask = response.ReadyMask, afterFrame = response.AfterFrame, frames = response.Frames.ToArray(),
                         result = response.Result, finalHash = response.FinalHash, hashAckFrame = response.HashAckFrame,
                         hashMatchedFrame = response.HashMatchedFrame, hashMismatchFrame = response.HashMismatchFrame,
                         inputAckFrame = response.InputAckFrame, inputAckSequence = response.InputAckSequence,
-                        pendingActionSequence = response.PendingActionSequence, pendingActionUntil = response.PendingActionUntil });
+                        pendingActionSequence = response.PendingActionSequence, pendingActionUntil = response.PendingActionUntil,
+                        preparation = preparation });
                 }
             }
             catch (Exception error)

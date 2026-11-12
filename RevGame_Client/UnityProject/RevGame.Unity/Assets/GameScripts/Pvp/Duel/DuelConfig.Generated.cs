@@ -16,17 +16,17 @@ namespace RevGame.Pvp.Duel
         public const int Energy = 100;
         // 两席距离场地中心的初始横向距离，单位千分格。
         public const int SpawnOffset = 1700;
-        // 读取指定座位的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
-        public static int ActionRange(bool white, int action)
+        // 读取指定角色的招式距离，单位为千分格。表现用它对齐枪芒，判伤仍由原生结算。
+        public static int ActionRange(bool yaya, int action)
         {
             return action switch
             {
-                1 => white ? 1360 : 1400,
-                2 => white ? 2550 : 2250,
-                3 => white ? 3150 : 3000,
-                4 => white ? 2050 : 1800,
-                5 => white ? 1460 : 1500,
-                6 => white ? 1580 : 1660,
+                1 => yaya ? 1360 : 1400,
+                2 => yaya ? 2550 : 2250,
+                3 => yaya ? 3150 : 3000,
+                4 => yaya ? 2050 : 1800,
+                5 => yaya ? 1460 : 1500,
+                6 => yaya ? 1580 : 1660,
                 _ => 0
             };
         }
@@ -44,6 +44,8 @@ namespace RevGame.Pvp.Duel
         internal const int JumpApexHeight = 2416;
         // 联机每隔多少个已执行逻辑帧交换一次指纹。终局另外校验。
         public const int HashSampleFrames = 40;
+        // 九路围棋配置表导出的完整选角窗口，单位毫秒，由决斗权威计时。
+        public const int PickDurationMs = 15000;
         // 招式持续的逻辑帧数，用于表现采样和输入缓冲。
         public static int ActionDuration(int action)
         {
@@ -75,9 +77,23 @@ namespace RevGame.Pvp.Duel
         // 两席握手比较的 31 位规则指纹。
         public const int Fingerprint = 1256995031;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
-        public static int[] CreateCoreWords()
+        public static int[] CreateCoreWords(bool firstYaya = false, bool secondYaya = true)
         {
-            return new[] { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1400, 3, 8, 0, 15, 2250, 4, 12, 16, 32, 3000, 7, 20, 55, 540, 68, 480, 18, 1800, 5, 14, 20, 10, 1500, 3, 8, 0, 13, 1660, 4, 11, 0, 5, 8, 0, 15, 6, 12, 420, 12, 21, 16, 210, 0, 7, 13, 100, 6, 5, 9, 110, 15, 6, 11, 150, 14, 1360, 2550, 3150, 2050, 1460, 1580 };
+            int[] result = { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1400, 3, 8, 0, 15, 2250, 4, 12, 16, 32, 3000, 7, 20, 55, 540, 68, 480, 18, 1800, 5, 14, 20, 10, 1500, 3, 8, 0, 13, 1660, 4, 11, 0, 5, 8, 0, 15, 6, 12, 420, 12, 21, 16, 210, 0, 7, 13, 100, 6, 5, 9, 110, 15, 6, 11, 150, 14, 1360, 2550, 3150, 2050, 1460, 1580 };
+            // 原生字节布局仍按座位。锁角后把对应角色的距离写进原座位槽，不改变 FIFO 或 DLL。
+            result[10] = ActionRange(firstYaya, 1);
+            result[15] = ActionRange(firstYaya, 2);
+            result[20] = ActionRange(firstYaya, 3);
+            result[28] = ActionRange(firstYaya, 4);
+            result[33] = ActionRange(firstYaya, 5);
+            result[38] = ActionRange(firstYaya, 6);
+            result[66] = ActionRange(secondYaya, 1);
+            result[67] = ActionRange(secondYaya, 2);
+            result[68] = ActionRange(secondYaya, 3);
+            result[69] = ActionRange(secondYaya, 4);
+            result[70] = ActionRange(secondYaya, 5);
+            result[71] = ActionRange(secondYaya, 6);
+            return result;
         }
     }
 }

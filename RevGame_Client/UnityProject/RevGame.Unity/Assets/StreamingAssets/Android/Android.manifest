@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3672212011
+CRC: 3141253561
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -333,4 +333,13 @@ AssetBundleManifest:
       Dependencies: {}
     Info_81:
       Name: atlas_pvpdefeat
+      Dependencies: {}
+    Info_82:
+      Name: ui_pvp_duelprep
+      Dependencies:
+        Dependency_0: shared_shaders
+        Dependency_1: font_cjk
+        Dependency_2: atlas_duelprep
+    Info_83:
+      Name: atlas_duelprep
       Dependencies: {}

@@ -113,7 +113,7 @@ message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
 {
     /// 原围棋房间号，用来避免迟到的请求串进新房间。
     string RoomId = 1;
-    /// 0 读历史、1 发起、2 就绪、3 提交意图。
+    /// 0 读历史、1 发起、2 场景就绪、3 提交意图、4 开发发起；5 至 9 为选角与加载。
     int32 Operation = 2;
     /// 决斗网络版本与规则的联合指纹，房间在接纳命令前校验。
     int32 Fingerprint = 3;
@@ -121,7 +121,7 @@ message C2G_GoDuelRequest // IRequest,G2C_GoDuelResponse
     int32 AfterFrame = 4;
     /// 保留原字段编号。Input 操作使用，表示本席本次连接内的单调输入序号。
     int32 InputFrame = 5;
-    /// 单席六位意图，包含方向、四个玩家招式槽及跳跃。座位由 Session 决定。
+    /// 战斗时是六位意图；准备时 6/7 携带角色编号，8 携带 0 至 100 的加载进度。座位由 Session 决定。
     int32 Input = 6;
     /// 这次上报的是已执行的抽样帧。0 表示不携带对账样本。
     int32 HashFrame = 7;
@@ -162,4 +162,18 @@ message G2C_GoDuelResponse // IResponse
     int32 PendingActionSequence = 14;
     /// 待执行招式的最后有效权威帧。重演必须沿用此到期帧。
     int32 PendingActionUntil = 15;
+    /// 准备快照版本；0 表示正式战斗回包不再附带准备状态。
+    int32 PrepRevision = 16;
+    /// 准备阶段：等待、选角、加载、放行、取消。
+    int32 PrepPhase = 17;
+    /// 黑方和白方独立选择的角色，1 绯焰、2 鸦鸦。
+    int32 BlackRole = 18;
+    int32 WhiteRole = 19;
+    /// 低两位是双方锁角标志。
+    int32 PrepLocked = 20;
+    /// 各端真实预加载进度，范围 0 到 100。
+    int32 BlackLoad = 21;
+    int32 WhiteLoad = 22;
+    /// 权威选角剩余时间，单位毫秒。
+    int32 PrepRemainingMs = 23;
 }
