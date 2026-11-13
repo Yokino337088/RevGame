@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "https://github.com/Yokino337088/Revolution.git",
         "path": "./Plugin/revolution",
-        "sha": "9a1aaa561c52c891915da964d568e72a9a8dece8"
+        "sha": "d1f25d1c6fdc88780f16b785399b3d05043b0a2f"
       },
       "policy": {
         "installation": "AVAILABLE",
