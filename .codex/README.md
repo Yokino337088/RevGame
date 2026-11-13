@@ -4,7 +4,7 @@
 
 ## 安装
 
-在 Codex 桌面端打开可信的 RevGame 工程。插件目录中选择 **RevGame** 来源，安装 **Revolution** 和 **RevGame**。本机从源码开发插件时可使用 Revolution 仓库的 **Revolution** 来源。安装后打开新会话，在 Codex 的 **Review hooks** 中审核会话钩子。更新钩子后按 Codex 提示重新审核。
+在 Codex 桌面端打开并信任 RevGame 仓库。项目配置会从 **RevGame** 来源自动安装并启用 **Revolution** 和 **RevGame**。本机从源码开发插件时可使用 Revolution 仓库的 **Revolution** 来源。安装后打开新会话，在 Codex 的 **Review hooks** 中审核会话钩子。更新钩子后按 Codex 提示重新审核。
 
 插件的 Unity MCP 需要 PATH 上的 Python 3.10+，例如 Windows 上通过 `python --version` 确认。先用 `rev_bind` 绑定 `RevGame_Client/UnityProject/RevGame.Unity` 的绝对路径，再用 `rev_discover` 查询实时注册。已有同工程的常驻 RevMCP 可直接复用。做场景、Prefab、导表或构建时使用项目 RevCLI。只有实际调用并核对断言与清理，才能记录业务通过。
 

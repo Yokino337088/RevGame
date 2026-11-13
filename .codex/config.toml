@@ -1,0 +1,6 @@
+# RevGame 共享配置。机器路径、凭据和钩子信任状态保存在本机用户配置。
+[plugins."revolution@revgame-project"]
+enabled = true
+
+[plugins."revgame@revgame-project"]
+enabled = true

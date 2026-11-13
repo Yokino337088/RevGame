@@ -84,7 +84,6 @@ __pycache__/
 # ---------------- Codex 项目技能入库，本机执行证据仍忽略 ----------------
 # 2026-10-28：用户要求恢复并提交项目技能；工作缓存和本机连接配置不随技能发布。
 .codex/work/
-.codex/config.toml
 .codex/auth.json
 .codex/session*
 
