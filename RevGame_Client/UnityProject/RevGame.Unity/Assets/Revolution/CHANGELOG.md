@@ -11,6 +11,11 @@
 
 ## [未发布]
 
+### RevScene 业务放行
+
+- 正式发布决斗验证过的附加预加载入口 `LoadWhenReadyAsync`。门禁默认等待 60 秒，可指定有限的实时时限。
+- 用 Build Settings 路径定位场景，避免同名场景互相干扰。门禁拒绝或超时会放开 Unity 队列并卸载临时场景，保留旧活动场景和框架空闲池。
+
 ### RevCLI 直连游戏运行时（2026-11-01）
 
 - 新增 `rev.py game` 命令族：`status`、`gms`、`actions`、`gm`、`call`，直连运行时自动化 HTTP 服务调 RevGM、点 UI、读状态；编辑器 Play（先 `runtime start`）与独立 Player（`--session`）用同一套命令，一套 CLI 不经 MCP 即可完成编辑器与运行时自动化。

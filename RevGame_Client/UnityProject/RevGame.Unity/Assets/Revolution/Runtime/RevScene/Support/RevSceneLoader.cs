@@ -57,16 +57,40 @@ namespace Revolution
             => RunAsync(null, buildIndex, onProgress, minSeconds);
 
         /// <summary>使用可撤回的附加预加载；旧活动场景一直保留到业务放行。</summary>
-        internal static RevTask LoadWhenReadyAsync(string sceneName, Action<float> onProgress, float minSeconds, Func<RevTask<bool>> gate)
+        internal static RevTask LoadWhenReadyAsync(string sceneName, Action<float> onProgress, float minSeconds, Func<RevTask<bool>> gate, float activationTimeoutSeconds)
         {
             if (string.IsNullOrEmpty(sceneName) || gate == null)
             {
                 throw new ArgumentException("预加载需要场景名和激活门禁。");
             }
-            return RunAsync(sceneName, -1, onProgress, minSeconds, gate);
+            if (!(activationTimeoutSeconds > 0f) || float.IsInfinity(activationTimeoutSeconds))
+            {
+                throw new ArgumentOutOfRangeException(nameof(activationTimeoutSeconds), "激活超时必须是有限的正数秒。");
+            }
+            string candidate = sceneName.Replace('\\', '/');
+            if (candidate.IndexOf('/') >= 0 && !candidate.EndsWith(".unity", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate += ".unity";
+            }
+            int index = SceneUtility.GetBuildIndexByScenePath(candidate);
+            if (index < 0)
+            {
+                // 短名称沿用 Build Settings 的首个匹配项。完整路径仍可区分同名场景。
+                for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+                {
+                    string path = SceneUtility.GetScenePathByBuildIndex(i);
+                    if (string.Equals(System.IO.Path.GetFileNameWithoutExtension(path), candidate, StringComparison.OrdinalIgnoreCase))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+            return RunAsync(sceneName, index, onProgress, minSeconds, gate, activationTimeoutSeconds);
         }
 
-        private static async RevTask RunAsync(string sceneName, int buildIndex, Action<float> onProgress, float minSeconds, Func<RevTask<bool>> gate = null)
+        /// <summary>统一执行单场景切换与门禁交接，确保后续请求能观察终态。</summary>
+        private static async RevTask RunAsync(string sceneName, int buildIndex, Action<float> onProgress, float minSeconds, Func<RevTask<bool>> gate = null, float activationTimeoutSeconds = 0f)
         {
             bool useIndex = sceneName == null;
             string label = useIndex ? ("buildIndex " + buildIndex) : sceneName;
@@ -78,16 +102,16 @@ namespace Revolution
                 return;
             }
 
-            // ② 切之前清理 + 广播"要开始了"
-            Prepare(label, minSeconds);
             Scene previous = SceneManager.GetActiveScene();
-            string stagedName = gate == null ? null : System.IO.Path.GetFileNameWithoutExtension(sceneName);
-            if (gate != null && SceneManager.GetSceneByName(stagedName).isLoaded)
+            string stagedPath = gate != null && buildIndex >= 0 ? SceneUtility.GetScenePathByBuildIndex(buildIndex) : null;
+            if (gate != null && (stagedPath == null || SceneManager.GetSceneByPath(stagedPath).IsValid()))
             {
-                Fail(label, "待预加载的场景已经打开");
+                Fail(label, stagedPath == null ? "待预加载的场景未加入 Build Settings" : "待预加载的场景已经打开或正在加载");
                 return;
             }
 
+            AsyncOperation op = null;
+            bool stagedIsActive = false;
             // ★ Bug 修复（2026-09-30）：发起/推进/收尾必须整体兜异常，否则模块会永久死锁。
             //   Prepare 已把 IsLoading 置 true，而"发起加载"是会抛异常的 ——
             //   典型：buildIndex 越界时 LoadSceneAsync 直接抛 ArgumentOutOfRangeException
@@ -97,10 +121,14 @@ namespace Revolution
             //   与"场景不存在"走同一条路；不 rethrow —— 失败可由 State / OnLoadFailed 感知。
             try
             {
+                // 门禁成功前保留旧场景及池。失败或拒绝时旧场景可继续运行。
+                Prepare(label, minSeconds, clearPool: gate == null);
                 // ③ 发起异步加载（名字不在 Build Settings 时这里就是 null）
-                AsyncOperation op = useIndex
+                op = gate != null
+                    ? SceneManager.LoadSceneAsync(buildIndex, LoadSceneMode.Additive)
+                    : useIndex
                     ? SceneManager.LoadSceneAsync(buildIndex, LoadSceneMode.Single)
-                    : SceneManager.LoadSceneAsync(sceneName, gate == null ? LoadSceneMode.Single : LoadSceneMode.Additive);
+                    : SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
 
                 if (op == null)
                 {
@@ -124,7 +152,7 @@ namespace Revolution
                             string gateError = null;
                             try
                             {
-                                allowed = await gate();
+                                allowed = await WaitForGateAsync(gate, activationTimeoutSeconds);
                             }
                             catch (Exception e)
                             {
@@ -138,7 +166,7 @@ namespace Revolution
                                 {
                                     await RevTaskScheduler.NextFrame();
                                 }
-                                await UnloadStagedSceneAsync(SceneManager.GetSceneByName(stagedName));
+                                await UnloadStagedSceneAsync(SceneManager.GetSceneByPath(stagedPath));
                                 if (gateError == null)
                                 {
                                     IsLoading = false;
@@ -151,6 +179,7 @@ namespace Revolution
                                 }
                                 return;
                             }
+                            ClearPoolIfEnabled();
                         }
                         op.allowSceneActivation = true;
                     }
@@ -159,13 +188,14 @@ namespace Revolution
 
                 if (gate != null)
                 {
-                    Scene staged = SceneManager.GetSceneByName(stagedName);
+                    Scene staged = SceneManager.GetSceneByPath(stagedPath);
                     if (!staged.isLoaded || !SceneManager.SetActiveScene(staged))
                     {
                         await UnloadStagedSceneAsync(staged);
                         Fail(label, "预加载完成但无法切换活动场景");
                         return;
                     }
+                    stagedIsActive = true;
                     await UnloadStagedSceneAsync(previous);
                 }
                 _tracker.Complete();
@@ -179,9 +209,45 @@ namespace Revolution
             }
             catch (Exception e)
             {
+                // Unity 不支持取消已提交的操作。先释放队列，再报告失败。
+                if (op != null && !op.isDone)
+                {
+                    op.allowSceneActivation = true;
+                    while (!op.isDone)
+                    {
+                        await RevTaskScheduler.NextFrame();
+                    }
+                }
+                if (gate != null && op != null && !stagedIsActive)
+                {
+                    try
+                    {
+                        await UnloadStagedSceneAsync(SceneManager.GetSceneByPath(stagedPath));
+                    }
+                    catch (Exception cleanupError)
+                    {
+                        RevSceneLog.Error("[RevScene] 清理附加场景失败：" + cleanupError.Message);
+                    }
+                }
                 // ★ 同上（Bug 修复 2026-09-30）：推进阶段抛的异常也走失败收尾，绝不留 IsLoading=true 的残局
                 Fail(label, "加载过程抛异常：" + e.Message);
             }
+        }
+
+        /// <summary>等待门禁时按实时时钟限时，暂停游戏时间也不会无限阻塞 Unity 队列。</summary>
+        private static async RevTask<bool> WaitForGateAsync(Func<RevTask<bool>> gate, float timeoutSeconds)
+        {
+            double deadline = Time.realtimeSinceStartupAsDouble + timeoutSeconds;
+            var pending = gate().GetAwaiter();
+            while (!pending.IsCompleted)
+            {
+                if (Time.realtimeSinceStartupAsDouble >= deadline)
+                {
+                    throw new TimeoutException("等待业务放行超时。");
+                }
+                await RevTaskScheduler.NextFrame();
+            }
+            return pending.GetResult();
         }
 
         // 只卸载明确属于本次交接的场景，保留其它附加场景和常驻对象。
@@ -192,7 +258,11 @@ namespace Revolution
                 return;
             }
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
-            while (unload != null && !unload.isDone)
+            if (unload == null)
+            {
+                throw new InvalidOperationException("Unity 拒绝卸载场景：" + scene.path);
+            }
+            while (!unload.isDone)
             {
                 await RevTaskScheduler.NextFrame();
             }
@@ -261,12 +331,12 @@ namespace Revolution
         /// <summary>切之前：清理 + 状态就位 + 广播开始。</summary>
         /// <param name="label">场景名或 buildIndex 描述（只用于日志 / 事件）</param>
         /// <param name="minSeconds">进度条最短展示时长（秒）；同步切换用不到，默认 0</param>
-        private static void Prepare(string label, float minSeconds = 0f)
+        /// <param name="clearPool">单场景切换立即清理，门禁切换等业务同意后再清理。</param>
+        private static void Prepare(string label, float minSeconds = 0f, bool clearPool = true)
         {
-            if (RevScene.AutoClearPool)
+            if (clearPool)
             {
-                int cleared = RevPool.ClearAll();       // 旧场景的池化实例不该跟着走
-                if (cleared > 0) RevSceneLog.Info("[RevScene] 已清理对象池：" + cleared + " 个实例");
+                ClearPoolIfEnabled();
             }
 
             _tracker = new RevSceneProgressTracker(minSeconds);
@@ -277,6 +347,19 @@ namespace Revolution
             RevSceneLog.Info("[RevScene] 准备切换 → " + label);
             RevScene.RaiseStart(label);
             RevScene.RaiseProgress(0f);
+        }
+
+        /// <summary>按门面配置释放旧场景的空闲池对象。</summary>
+        private static void ClearPoolIfEnabled()
+        {
+            if (RevScene.AutoClearPool)
+            {
+                int cleared = RevPool.ClearAll();
+                if (cleared > 0)
+                {
+                    RevSceneLog.Info("[RevScene] 已清理对象池：" + cleared + " 个实例");
+                }
+            }
         }
 
         /// <summary>进度广播（同时喂给门面事件与本次调用的回调；回调抛异常只报错，不中断加载）。</summary>
