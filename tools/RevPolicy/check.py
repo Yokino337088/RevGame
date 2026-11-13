@@ -6,12 +6,26 @@ import re
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
+from difflib import SequenceMatcher
 from pathlib import Path, PurePosixPath
 
 
 POLICY = ".codex/rev-policy.json"
 GUID = re.compile(rb"(?m)^guid:[ \t]*([0-9a-fA-F]{32})[ \t]*\r?$")
+GUID_FIELD = re.compile(rb"(?m)^guid:")
 SHA = re.compile(rb"(?m)^commit[ \t]*=[ \t]*([0-9a-fA-F]{40})[ \t]*\r?$")
+
+
+@dataclass(frozen=True)
+class Diagnostic:
+    """仓库相对路径和从 1 起算的坐标。目录和缺文件问题可只定位到文件。"""
+
+    path: str
+    code: str
+    message: str
+    line: int | None = None
+    column: int | None = None
 
 
 class Snapshot:
@@ -107,10 +121,24 @@ def identifier(data, pattern):
     return match[1].decode("ascii").lower() if match else None
 
 
+def field_line(data, pattern):
+    """返回实际字段所在行。字段不存在时由调用方保留文件级定位。"""
+    match = pattern.search(data)
+    return data.count(b"\n", 0, match.start()) + 1 if match else None
+
+
+def changed_guid_error(path, source, data):
+    """资产和 meta 分别识别为移动时，共用同一条诊断以便去重。"""
+    return Diagnostic(path, "REV102", f"保留原 .meta 的 GUID，来源为 {source}。", field_line(data, GUID))
+
+
 def check_assets(snapshot, policy, assets, changes):
     """检查本次改动涉及的资源目录、配对、稳定 GUID 和重复 GUID。"""
     errors = set()
-    changed_guids = set()
+    changed_meta = {}
+    meta_changes = {after: before for before, after in changes if after and after.endswith(".meta")}
+    missing_directory_meta = {}
+    affected_directories = set()
     prefixes = tuple(f"{assets}/{path}/" for path in policy.get("assetExcludes", []))
     folders = set()
     for path in snapshot.files:
@@ -126,11 +154,15 @@ def check_assets(snapshot, policy, assets, changes):
             if not owned(path):
                 continue
             asset = path.removesuffix(".meta")
+            meta = asset + ".meta"
             if asset in snapshot.files or asset in folders:
-                if asset + ".meta" not in snapshot.files:
-                    errors.add((asset, "REV101", "缺少对应的 .meta。"))
-            elif asset + ".meta" in snapshot.files:
-                errors.add((asset + ".meta", "REV101", "找不到此 .meta 对应的 Unity 资产或目录。"))
+                if meta not in snapshot.files:
+                    if asset in folders:
+                        affected_directories.add(asset)
+                    else:
+                        errors.add(Diagnostic(asset, "REV101", f"缺少对应的 .meta。请补交 {meta}。"))
+            elif meta in snapshot.files:
+                errors.add(Diagnostic(meta, "REV101", f"找不到对应的 Unity 资产或目录 {asset}。"))
 
         if not owned(after) or after not in snapshot.files:
             continue
@@ -139,13 +171,14 @@ def check_assets(snapshot, policy, assets, changes):
             asset = after.removesuffix(".meta")
             if asset in snapshot.files:
                 errors.update(asset_location_errors(asset, assets, policy))
-            guid = identifier(snapshot.read(after), GUID)
+            data = snapshot.read(after)
+            guid = identifier(data, GUID)
             if not guid:
-                errors.add((after, "REV102", ".meta 缺少有效 GUID。"))
+                errors.add(Diagnostic(after, "REV102", ".meta 缺少有效 GUID。", field_line(data, GUID_FIELD)))
             else:
-                changed_guids.add(guid)
+                changed_meta[after] = guid
                 if before and before.endswith(".meta") and identifier(snapshot.read(before, old=True), GUID) != guid:
-                    errors.add((after, "REV102", f"保留原 .meta 的 GUID，来源为 {before}。"))
+                    errors.add(changed_guid_error(after, before, data))
             continue
 
         # 同时检查新目录的配对，避免提交文件却漏暂存目录自己的 meta。
@@ -154,23 +187,37 @@ def check_assets(snapshot, policy, assets, changes):
             if folder == assets:
                 break
             if folder + ".meta" not in snapshot.files:
-                errors.add((folder, "REV101", "目录缺少对应的 .meta。"))
+                missing_directory_meta[folder] = min(after, missing_directory_meta.get(folder, after))
         errors.update(asset_location_errors(after, assets, policy))
 
         if before and before != after and owned(before):
-            current = identifier(snapshot.read(after + ".meta"), GUID) if after + ".meta" in snapshot.files else None
-            if not current or snapshot.guid_at_base(before + ".meta") != current:
-                errors.add((after, "REV102", f"移动资产时保留原 .meta 的 GUID，来源为 {before}。"))
+            meta = after + ".meta"
+            # meta 自身已比较过同一来源时可跳过。资产与 meta 配对不一致仍以资产来源为准。
+            if meta in snapshot.files and meta_changes.get(meta) != before + ".meta":
+                data = snapshot.read(meta)
+                current = identifier(data, GUID)
+                if current and snapshot.guid_at_base(before + ".meta") != current:
+                    errors.add(changed_guid_error(meta, before + ".meta", data))
 
-    if changed_guids:
+    for folder in affected_directories | missing_directory_meta.keys():
+        # 仅删除目录 meta 时没有新增子资产，保留被删除的 meta 路径。
+        path = missing_directory_meta.get(folder, folder + ".meta")
+        errors.add(Diagnostic(path, "REV101", f"目录 {folder} 缺少对应的 .meta。请补交 {folder}.meta。"))
+
+    if changed_meta:
+        changed_guids = set(changed_meta.values())
         by_guid = {}
         for path in snapshot.guid_paths(assets, changed_guids):
-            guid = identifier(snapshot.read(path), GUID)
+            data = snapshot.read(path)
+            guid = identifier(data, GUID)
             if guid in changed_guids:
-                by_guid.setdefault(guid, []).append(path)
-        for guid, paths in by_guid.items():
-            if len(paths) > 1:
-                errors.add((min(paths), "REV103", f"重复 GUID {guid}：{'、'.join(sorted(paths))}"))
+                by_guid.setdefault(guid, {})[path] = field_line(data, GUID)
+        # 把注解放在本次改动的 meta 上，消息中同时列出所有冲突对象。
+        for path, guid in changed_meta.items():
+            matches = by_guid.get(guid, {})
+            if path in matches and len(matches) > 1:
+                others = "、".join(sorted(other for other in matches if other != path))
+                errors.add(Diagnostic(path, "REV103", f"GUID {guid} 也被以下 .meta 使用：{others}。", matches[path]))
     return errors
 
 
@@ -185,11 +232,11 @@ def asset_location_errors(path, assets, policy):
         if rule.get("moduleSubdirectory"):
             valid = valid and "/" in relative[len(root) + 1:]
         if not valid:
-            yield (path, "REV100", f"资产应位于 {assets}/{root}/"
-                   + ("模块子目录。" if rule.get("moduleSubdirectory") else "。"))
+            yield Diagnostic(path, "REV100", f"资产应位于 {assets}/{root}/"
+                             + ("模块子目录。" if rule.get("moduleSubdirectory") else "。"))
     for rule in policy.get("assetExclusions", []):
         if relative.startswith(rule["directory"] + "/") and extension in rule["extensions"]:
-            yield path, "REV100", rule["message"]
+            yield Diagnostic(path, "REV100", rule["message"])
 
 
 def check_vendor(snapshot, policy, assets, changes):
@@ -209,7 +256,7 @@ def check_vendor(snapshot, policy, assets, changes):
         previous = identifier(snapshot.read(anchor, old=True), SHA) if (anchor, anchor) in changes else None
         if current and current != previous:
             return set()
-    return {(path, "REV110", f"框架快照更新需要在 {anchor} 记录新的上游包提交。")
+    return {Diagnostic(path, "REV110", f"框架快照更新需要在 {anchor} 记录新的上游包提交。")
             for path in protected}
 
 
@@ -230,7 +277,12 @@ def check_code(snapshot, policy, assets, changes):
         new = snapshot.read(after).decode("utf-8-sig")
         if old == new and before == after:
             continue
-        files.append({"Path": after, "RelativePath": relative, "Before": old, "After": new})
+        # 优先匹配保留的旧行，避免同类新增违规抢占旧位置。换行口径与 Roslyn 一致。
+        old_lines = re.split(r"\r\n|[\n\r\x85\u2028\u2029]", old)
+        new_lines = re.split(r"\r\n|[\n\r\x85\u2028\u2029]", new)
+        unchanged = [{"BeforeStart": block.a + 1, "AfterStart": block.b + 1, "Count": block.size}
+                     for block in SequenceMatcher(None, old_lines, new_lines, autojunk=False).get_matching_blocks() if block.size]
+        files.append({"Path": after, "RelativePath": relative, "Before": old, "After": new, "Unchanged": unchanged})
     if not files:
         return []
 
@@ -246,14 +298,47 @@ def check_code(snapshot, policy, assets, changes):
                "PanelDirectories": code.get("panelDirectories", []), "InternalTypes": code.get("internalTypes", [])}
     result = subprocess.run(["dotnet", str(output)], cwd=directory, input=json.dumps(request).encode(),
                             stdout=subprocess.PIPE, check=True, timeout=60)
-    return [(f"{item['Path']}:{item['Line']}", item["Code"], item["Message"])
+    return [Diagnostic(item["Path"], item["Code"], item["Message"], item["Line"], item["Column"])
             for item in json.loads(result.stdout)]
+
+
+def single_line(value):
+    """日志每条诊断占一行，文件名或消息中的换行以可读的转义保留。"""
+    return value.replace("\r", r"\r").replace("\n", r"\n")
+
+
+def github_escape(value):
+    """按 GitHub Actions 命令格式转义百分号和换行。"""
+    return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def print_diagnostic(issue, github):
+    """保留全量日志，另发 GitHub 原生注解。文件级规则省略行列属性。"""
+    location = single_line(issue.path)
+    properties = {"file": issue.path, "title": issue.code}
+    if issue.line is not None:
+        location += f":{issue.line}"
+        properties["line"] = str(issue.line)
+    if issue.column is not None:
+        location += f":{issue.column}"
+        properties["col"] = str(issue.column)
+    if github:
+        # 常规日志带固定前缀，文件名不会被 runner 当成另一条 workflow 命令。
+        print(f"RevPolicy: {location}: {issue.code} {single_line(issue.message)}")
+        # 属性值额外转义逗号和冒号，中文路径保持 UTF-8。
+        fields = ",".join(f"{key}={github_escape(value).replace(',', '%2C').replace(':', '%3A')}"
+                          for key, value in properties.items())
+        print(f"::error {fields}::{github_escape(issue.message)}")
+    else:
+        print(f"{location}: {issue.code} {single_line(issue.message)}")
 
 
 def main():
     """统一给终端、Git hook 与 CI 返回可定位的诊断和退出码。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default=Path.cwd(), type=Path, help="项目仓库或其子目录。")
+    parser.add_argument("--format", choices=("text", "github"), default="text",
+                        help="github 额外输出 GitHub Actions 文件和行注解。")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--staged", action="store_true", help="只验证准备提交的索引。")
     mode.add_argument("--base", help="比较指定引用与 HEAD 的共同祖先至 HEAD。")
@@ -278,8 +363,8 @@ def main():
     except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError) as exc:
         print(f"无法完成规范检查：{exc}", file=sys.stderr)
         return 2
-    for path, code, message in sorted(errors):
-        print(f"{path}: {code} {message}")
+    for issue in sorted(errors, key=lambda item: (item.path, item.line or 0, item.column or 0, item.code, item.message)):
+        print_diagnostic(issue, args.format == "github")
     print(f"Revolution 规范检查：{len(changes)} 个变更，{len(errors)} 个问题。")
     return int(bool(errors))
 

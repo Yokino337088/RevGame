@@ -20,6 +20,8 @@ python tools/RevPolicy/check.py --base origin/main
 
 默认检查工作区，含新建文件。`--staged` 读取 Git 索引。`--base` 比较与指定提交的共同祖先至当前 HEAD。退出码 0 通过，1 发现违规，2 检查无法完成。
 
+GitHub Actions 使用 `--format github` 生成原生注解。PR 的 **Checks → revgame-policy** 可查看违规文件与修复提示，落在 PR 差异内的代码行也会在 **Files changed** 中标记。代码诊断使用提交中从 1 起算的行和列，GUID 问题尽量标到 `.meta` 的 `guid:` 行，目录和缺失文件问题按资产路径显示。重复 GUID 会标在变更的 `.meta` 上，并列出冲突路径。全部诊断同时保留在作业日志中。
+
 启用随仓库分发的 Git hook 前，用 `git config --get core.hooksPath` 查看已有设置。没有现有 hook 时可运行 `git config --local core.hooksPath .githooks`，否则在现有 pre-commit 中接入同一条 `--staged` 命令。GitHub Actions 的 `revgame-policy` 检查推送和 PR。要让失败的检查阻止合并，由仓库管理员将其设为 `main` 的必需状态检查。
 
 | 规则 | 检查范围 |

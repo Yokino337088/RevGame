@@ -59,3 +59,5 @@ python tools/RevPolicy/check.py --staged
 [RevGame Rulesets](https://github.com/Yokino337088/RevGame/settings/rules) · [GitHub 官方设置说明](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository)
 
 `revgame-policy` 检查资源目录、`.meta`、GUID 和部分 C# 约定。若还要让 Unity 编译失败拦住合并，需要另接 Unity 编译作业，并把该作业也设为必需检查。 [RevGame 工作流](../../../.github/workflows/revgame-policy.yml)
+
+检查失败时，在 PR 的 **Checks → revgame-policy** 查看带规则编号的注解。代码显示违规行列，资源显示具体路径、冲突的 `.meta` 或应补交的文件。位于差异内的代码行也可在 **Files changed** 查看，完整结果在作业日志中。 [项目检查器说明](../../../.codex/README.md)

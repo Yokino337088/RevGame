@@ -32,4 +32,4 @@ jobs:
           if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
             BASE_SHA="$(git rev-parse HEAD^)"
           fi
-          python tools/RevPolicy/check.py --base "$BASE_SHA"
+          python tools/RevPolicy/check.py --base "$BASE_SHA" --format github

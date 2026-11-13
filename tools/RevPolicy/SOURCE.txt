@@ -1,3 +1,3 @@
 repository = https://github.com/Yokino337088/Revolution
 path = Plugin/revolution/policy
-commit = 9a1aaa561c52c891915da964d568e72a9a8dece8
+commit = a24e7a548ce902b3129e56faec1a675a1c81afc5

@@ -8,14 +8,17 @@ using Microsoft.CodeAnalysis.Text;
 internal sealed record Request(FileChange[] Files, string[] Bootstraps, string[] RuntimeDirectories,
     string[] PanelDirectories, string[] InternalTypes);
 
-// RelativePath 以 Assets 为基准，用于区分正式启动入口和 UI 面板目录。
-internal sealed record FileChange(string Path, string RelativePath, string Before, string After);
+// RelativePath 以 Assets 为基准。Unchanged 记录 Git 快照间保留的文本行。
+internal sealed record FileChange(string Path, string RelativePath, string Before, string After, LineMatch[] Unchanged);
+
+// 比对旧、新文件时保留对应行号，优先消耗仍在原文中的诊断。
+internal sealed record LineMatch(int BeforeStart, int AfterStart, int Count);
 
 // Key 保存违规语法的结构。同一条旧违规移行后仍可识别，新出现的同类违规会报出。
-internal sealed record Finding(string Code, string Key, int Line, string Message);
+internal sealed record Finding(string Code, string Key, int Line, int Column, string Message);
 
-// 输出只包含文件、行号和修复提示，Python 调用方负责显示和退出码。
-internal sealed record Diagnostic(string Path, int Line, string Code, string Message);
+// 行列为文件中的物理位置，从 1 起算。Python 调用方负责显示和退出码。
+internal sealed record Diagnostic(string Path, int Line, int Column, string Code, string Message);
 
 internal static class Program
 {
@@ -31,7 +34,7 @@ internal static class Program
         new[] { "REVGAME_OFFLINE_TESTS" },
     };
 
-    // 旧问题按语法和出现次数消耗，允许渐进启用，无需一次重排存量脚本。
+    // 从调用方接收 Git 快照，输出其中新增的 C# 违规。
     private static void Main()
     {
         var request = JsonSerializer.Deserialize<Request>(Console.In.ReadToEnd())
@@ -39,27 +42,52 @@ internal static class Program
         var diagnostics = new List<Diagnostic>();
         foreach (FileChange file in request.Files)
         {
-            var old = Inspect(file.Before, file.RelativePath, request)
-                .GroupBy(item => (item.Code, item.Key))
-                .ToDictionary(group => group.Key, group => group.Count());
-            foreach (Finding item in Inspect(file.After, file.RelativePath, request))
+            foreach (Finding item in NewFindings(file, request))
             {
-                var key = (item.Code, item.Key);
-                if (old.TryGetValue(key, out int count) && count > 0)
-                {
-                    old[key] = count - 1;
-                    continue;
-                }
-                diagnostics.Add(new Diagnostic(file.Path, item.Line, item.Code, item.Message));
+                diagnostics.Add(new Diagnostic(file.Path, item.Line, item.Column, item.Code, item.Message));
             }
         }
         Console.Write(JsonSerializer.Serialize(diagnostics));
     }
 
-    // 每套符号读取该配置的真实语法树。相同行只报告一次，注释和字符串不会误报成 C#。
+    // 先匹配未改动的物理行，再用语法和出现次数消耗剩余旧诊断。
+    // 这样插在旧违规前面的同类违规会标在新位置，移动的旧规则仍可按原契约匹配。
+    private static IEnumerable<Finding> NewFindings(FileChange file, Request request)
+    {
+        var old = Inspect(file.Before, file.RelativePath, request).ToHashSet();
+        var current = Inspect(file.After, file.RelativePath, request).ToList();
+        var byPosition = old.ToLookup(item => (item.Line, item.Column, item.Code, item.Key, item.Message));
+        var remaining = new List<Finding>();
+        foreach (Finding item in current)
+        {
+            LineMatch? match = file.Unchanged.FirstOrDefault(range =>
+                item.Line >= range.AfterStart && item.Line - range.AfterStart < range.Count);
+            int oldLine = match == null ? 0 : match.BeforeStart + item.Line - match.AfterStart;
+            Finding? original = byPosition[(oldLine, item.Column, item.Code, item.Key, item.Message)].FirstOrDefault();
+            if (original == null || !old.Remove(original))
+            {
+                remaining.Add(item);
+            }
+        }
+
+        var counts = old.GroupBy(item => (item.Code, item.Key))
+            .ToDictionary(group => group.Key, group => group.Count());
+        foreach (Finding item in remaining)
+        {
+            var key = (item.Code, item.Key);
+            if (counts.TryGetValue(key, out int count) && count > 0)
+            {
+                counts[key] = count - 1;
+                continue;
+            }
+            yield return item;
+        }
+    }
+
+    // 每套符号读取该配置的真实语法树。同一位置跨配置去重，同行不同位置分别报告。
     private static IEnumerable<Finding> Inspect(string source, string path, Request request)
     {
-        var seen = new HashSet<(string Code, int Line, string Key)>();
+        var seen = new HashSet<Finding>();
         bool runtime = request.RuntimeDirectories.Any(directory => path.StartsWith(directory + "/", StringComparison.Ordinal));
         bool panel = request.PanelDirectories.Any(directory => path.StartsWith(directory + "/", StringComparison.Ordinal));
         bool boot = request.Bootstraps.Contains(path, StringComparer.Ordinal);
@@ -73,7 +101,7 @@ internal static class Program
             {
                 foreach (Finding finding in InspectNode(node, text, runtime, panel, boot, internalTypes))
                 {
-                    if (seen.Add((finding.Code, finding.Line, finding.Key)))
+                    if (seen.Add(finding))
                     {
                         yield return finding;
                     }
@@ -85,8 +113,8 @@ internal static class Program
                     .Where(call => IsApi(Spelling(call.Expression), "RevInitialize.Initialize"));
                 foreach (InvocationExpressionSyntax duplicate in initializers.Skip(1))
                 {
-                    Finding finding = At("REV204", duplicate.GetFirstToken(), "duplicate-init", "同一启动入口只初始化一次。", text);
-                    if (seen.Add((finding.Code, finding.Line, finding.Key)))
+                    Finding finding = At("REV204", CallToken(duplicate), "duplicate-init", "同一启动入口只初始化一次。", text);
+                    if (seen.Add(finding))
                     {
                         yield return finding;
                     }
@@ -102,17 +130,21 @@ internal static class Program
         {
             yield return At("REV200", branch.IfKeyword, branch.Condition.ToString(), "if 或 else if 的条件应单独起行。", text);
         }
-        if (node is IfStatementSyntax ifStatement && !Expanded(ifStatement.Statement, text))
+        if (node is IfStatementSyntax ifStatement && BranchBodyIssue(ifStatement.Statement, text) is { } ifToken)
         {
-            yield return At("REV200", ifStatement.IfKeyword, ifStatement.Condition.ToString(),
+            yield return At("REV200", ifToken, ifStatement.Condition.ToString(),
                 "if 或 else if 需要大括号，左右大括号各占一行。", text);
         }
-        if (node is ElseClauseSyntax clause &&
-            (!OwnLine(clause.ElseKeyword, text, allowIf: clause.Statement is IfStatementSyntax) ||
-             (clause.Statement is not IfStatementSyntax && !Expanded(clause.Statement, text))))
+        if (node is ElseClauseSyntax clause)
         {
-            yield return At("REV200", clause.ElseKeyword, clause.Statement.Kind().ToString(),
-                "else 或 else if 需要独立起行，else 的大括号各占一行。", text);
+            bool chained = clause.Statement is IfStatementSyntax;
+            SyntaxToken? issue = !OwnLine(clause.ElseKeyword, text, allowIf: chained) ? clause.ElseKeyword
+                : chained ? null : BranchBodyIssue(clause.Statement, text);
+            if (issue is { } elseToken)
+            {
+                yield return At("REV200", elseToken, clause.Statement.Kind().ToString(),
+                    "else 或 else if 需要独立起行，else 的大括号各占一行。", text);
+            }
         }
         if (!runtime)
         {
@@ -151,26 +183,34 @@ internal static class Program
             string api = Spelling(call.Expression);
             if ((!boot && IsApi(api, "RevInitialize.Initialize")) || IsApi(api, "RevResBootstrap.Instance.Init"))
             {
-                yield return At("REV204", call.GetFirstToken(), api, "框架初始化集中在项目启动入口。", text);
+                yield return At("REV204", CallToken(call), api, "框架初始化集中在项目启动入口。", text);
             }
             if (IsApi(api, "SceneManager.LoadScene") || IsApi(api, "SceneManager.LoadSceneAsync") ||
                 IsApi(api, "SceneManager.UnloadSceneAsync"))
             {
-                yield return At("REV205", call.GetFirstToken(), api, "业务通过 GameFlow 和 RevScene 交接场景。", text);
+                yield return At("REV205", CallToken(call), api, "业务通过 GameFlow 和 RevScene 交接场景。", text);
             }
             if (panel && (IsApi(api, "Destroy") || IsApi(api, "DestroyImmediate")) &&
                 call.ArgumentList.Arguments.FirstOrDefault()?.Expression is { } target &&
                 Spelling(target) is "gameObject" or "this.gameObject")
             {
-                yield return At("REV206", call.GetFirstToken(), api, "面板关闭自身时调用 CloseSelf()。", text);
+                yield return At("REV206", CallToken(call), api, "面板关闭自身时调用 CloseSelf()。", text);
             }
         }
     }
 
-    // 格式检查保留行内注释，并要求括号前后没有其他代码 token。
-    private static bool Expanded(StatementSyntax statement, SourceText text)
+    // 无大括号时指向分支语句，格式错误时指向第一个需要移到独立行的大括号。
+    private static SyntaxToken? BranchBodyIssue(StatementSyntax statement, SourceText text)
     {
-        return statement is BlockSyntax block && OwnLine(block.OpenBraceToken, text) && OwnLine(block.CloseBraceToken, text);
+        if (statement is not BlockSyntax block)
+        {
+            return statement.GetFirstToken(includeZeroWidth: true);
+        }
+        if (!OwnLine(block.OpenBraceToken, text))
+        {
+            return block.OpenBraceToken;
+        }
+        return OwnLine(block.CloseBraceToken, text) ? null : block.CloseBraceToken;
     }
 
     // else if 的两个关键字可以共行。行内注释不参与格式判断。
@@ -213,9 +253,16 @@ internal static class Program
         return name == "System.Threading.Tasks" || name.StartsWith("System.Threading.Tasks.", StringComparison.Ordinal);
     }
 
-    // 每条诊断定位到实际 token，便于终端和 CI 直接跳到对应行。
+    // 带限定名的调用指向方法本身，即使接收者与方法分成了多行。
+    private static SyntaxToken CallToken(InvocationExpressionSyntax call)
+    {
+        return call.Expression is MemberAccessExpressionSyntax member ? member.Name.Identifier : call.Expression.GetFirstToken();
+    }
+
+    // 每条诊断定位到实际 token，便于终端和 CI 跳到对应行列。
     private static Finding At(string code, SyntaxToken token, string key, string message, SourceText text)
     {
-        return new Finding(code, key, text.Lines.GetLineFromPosition(token.SpanStart).LineNumber + 1, message);
+        LinePosition position = text.Lines.GetLinePosition(token.SpanStart);
+        return new Finding(code, key, position.Line + 1, position.Character + 1, message);
     }
 }
