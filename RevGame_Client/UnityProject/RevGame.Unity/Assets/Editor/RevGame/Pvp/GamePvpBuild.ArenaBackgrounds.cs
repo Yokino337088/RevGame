@@ -67,7 +67,7 @@ namespace RevGame.Editor
         {
             image.gameObject.name = DuelBackdropName;
             image.sprite = LoadArcadeSprite("SunlitTownArena");
-            // 原画仍由 Image 传入共享材质。Shader 只叠光，保持擂台边缘和判定坐标一致。
+            // 原画由 Image 传入共享材质。Shader 只扭动天空区，擂台边缘和判定坐标保持一致。
             image.material = AssetDatabase.LoadAssetAtPath<Material>(DuelMaterials + "/BoxingRingBackdrop.mat");
             if (image.material == null)
             {

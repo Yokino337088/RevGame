@@ -397,23 +397,17 @@ namespace RevGame.View
                 DuelConfig.ActionRange(_blackYaya, view.FirstAction) * ArenaScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first,
                 DuelConfig.ActionRange(_whiteYaya, view.SecondAction) * ArenaScale);
-            if ((view.FirstAction == 3 && view.FirstAge == 0) || (view.SecondAction == 3 && view.SecondAge == 0))
-            {
-                CameraRig.FocusUltimate();
-            }
             if (view.FirstHit != 0)
             {
                 // 同帧对打可能已打断出招者。前一帧仍持有命中的动作编号。
                 int action = view.FirstAction != 0 ? view.FirstAction : Mathf.Max(1, previous.FirstAction);
                 Effects.Hit(0, action, view.FirstFacing, second);
-                CameraRig.Hit(action, view.FirstFacing);
                 Flash(Second);
             }
             if (view.SecondHit != 0)
             {
                 int action = view.SecondAction != 0 ? view.SecondAction : Mathf.Max(1, previous.SecondAction);
                 Effects.Hit(1, action, view.SecondFacing, first);
-                CameraRig.Hit(action, view.SecondFacing);
                 Flash(First);
             }
         }

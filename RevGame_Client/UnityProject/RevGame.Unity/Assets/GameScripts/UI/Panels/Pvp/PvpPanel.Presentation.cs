@@ -76,7 +76,7 @@ namespace RevGame.Pvp
         internal float BubbleWidthFraction => ((RectTransform)_bubble.transform).rect.width / ((RectTransform)transform).rect.width;
         internal float BubbleHeightFraction => ((RectTransform)_bubble.transform).rect.height / ((RectTransform)transform).rect.height;
         internal bool BubbleHasTitle => _bubble.transform.Find("name") != null;
-        internal int SpeechMaxFontSize => _speech.resizeTextMaxSize;
+        internal int SpeechMaxFontSize => _speech.resizeTextForBestFit ? _speech.resizeTextMaxSize : _speech.fontSize;
         internal bool SpeechFits => !BubbleVisible || _speech.preferredHeight <= _speech.rectTransform.rect.height + 1;
 
         private void PrepareMatchSound()
@@ -266,6 +266,11 @@ namespace RevGame.Pvp
 #endif
             var line = _yayaLines.Take(cue);
             Set(_speech, line.Line.Replace("{point}", point));
+            // 用当前宽度测量换行后的正文。从底边向上留空间，台词再长也维持固定字号。
+            var bubbleRect = (RectTransform)_bubble.transform;
+            float height = Mathf.Ceil(_speech.preferredHeight + _speech.rectTransform.offsetMin.y - _speech.rectTransform.offsetMax.y);
+            float normalHeight = ((RectTransform)transform).rect.height * (bubbleRect.anchorMax.y - bubbleRect.anchorMin.y);
+            bubbleRect.sizeDelta = new Vector2(bubbleRect.sizeDelta.x, Mathf.Max(0, height - normalHeight));
             _speechTween?.Kill(false);
             // 先停旧动画再换表情，避免旧回调把新台词的立绘切回默认图。
             _portrait.sprite = portraitCatalog.Find(line.Expression);
@@ -287,7 +292,7 @@ namespace RevGame.Pvp
         {
             var rect = (RectTransform)group.transform;
             group.alpha = 0;
-            rect.anchoredPosition = new Vector2(offset, 0);
+            rect.anchoredPosition = new Vector2(offset, rect.anchoredPosition.y);
             Show(group.gameObject, true);
             return DOTween.Sequence().SetUpdate(true)
                 .Append(rect.DOAnchorPosX(0, .34f).SetEase(Ease.OutBack))

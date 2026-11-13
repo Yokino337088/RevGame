@@ -29,7 +29,7 @@ Shader "RevGame/Pvp/ArenaBackdrop"
             sampler2D _MainTex;
             float _Style, _Strength;
 
-            // UI 矩形和世界 Quad 共用采样。Image 的顶点颜色用于大招时平缓压暗原画。
+            // UI 矩形和世界 Quad 共用采样，保留各自的顶点色。
             struct Input
             {
                 float4 vertex : POSITION;
@@ -61,14 +61,30 @@ Shader "RevGame/Pvp/ArenaBackdrop"
                 return 1 - smoothstep(0, radius, length((uv - center) * float2(1.7778, 1)));
             }
 
-            // 金色日光留在天空，青光贴着两侧晶柱。战斗区不做 UV 扭曲，角色与地面保持清楚。
-            float3 BoxingLights(float2 uv, float time)
+            // 擂台用整张长图。只让天空、旗帜和两侧的光纹轻微流动，脚下砖缝与晶柱底座保持稳定。
+            float2 ArenaFlow(float2 uv, float time)
             {
-                float sky = smoothstep(.48, .83, uv.y);
-                float rays = smoothstep(.48, .95, .5 + .5 * sin(uv.x * 29 - uv.y * 9 + time * .55));
-                float pillars = Glow(uv, float2(.173, .37), .20) + Glow(uv, float2(.827, .37), .20);
-                float drift = .65 + .20 * sin(uv.y * 24 - time * 1.6);
-                return sky * rays * float3(.20, .13, .045) + pillars * drift * float3(.045, .25, .22);
+                float flags = smoothstep(.57, .78, uv.y) * (1 - smoothstep(.92, 1, uv.y));
+                float ripples = sin(uv.x * 43 + uv.y * 13 - time * 1.62) + .4 * sin(uv.x * 87 - time * 2.8);
+                return saturate(uv + float2(ripples * .003, sin(uv.x * 49 + time * 1.4) * .005) * flags);
+            }
+
+            // 阳光和晶柱脉冲作用于同一次原画采样。天空穿过薄雾，低处只有少量扬尘。
+            half3 BoxingLights(float2 uv, float time, half3 art)
+            {
+                float sky = smoothstep(.46, .83, uv.y);
+                float mist = smoothstep(.26, .90, .5 + .5 * sin(uv.x * 24 - uv.y * 11 + sin(uv.y * 16 - time * .5) * 1.5 - time * .65));
+                float shafts = pow(.5 + .5 * sin(uv.x * 41 + uv.y * 16 - time * .35), 4);
+                float pillars = Glow(uv, float2(.173, .36), .17) + Glow(uv, float2(.827, .36), .17);
+                float wave = .38 + .62 * pow(.5 + .5 * sin(uv.y * 25 - time * 2.5), 3);
+                float2 grid = uv * float2(92, 28) - time * float2(2.1, 1.4);
+                float seed = frac(sin(dot(floor(grid), float2(27.31, 41.17))) * 13758.545);
+                float mote = (1 - smoothstep(.035, .15, length(frac(grid) - float2(.21 + .57 * seed, .52)))) * step(.82, seed);
+                float dust = mote * smoothstep(.19, .34, uv.y) * (1 - smoothstep(.53, .74, uv.y));
+                half warm = saturate(art.r * 1.15);
+                return sky * (mist * .42 + shafts * .32) * half3(.30h, .22h, .10h)
+                    + pillars * wave * half3(.065h, .42h, .32h)
+                    + dust * warm * half3(.58h, .39h, .13h);
             }
 
             // 拱顶投下金色光束，两侧柱廊映出紫色魔力和上升的星火。棋盘中心由棋盘自身遮盖。
@@ -95,9 +111,19 @@ Shader "RevGame/Pvp/ArenaBackdrop"
             // 只采样一次原画。亮度随原画本身抬升，暗处保留层次，透明度交回原始渲染流程。
             half4 frag(Varyings input) : SV_Target
             {
-                half4 art = tex2D(_MainTex, input.uv);
-                float3 light = _Style < .5 ? BoxingLights(input.uv, _Time.y) : TempleLights(input.uv, _Time.y);
-                art.rgb += light * (.42 + .58 * art.rgb) * _Strength;
+                float2 uv = input.uv;
+                half4 art;
+                if (_Style < .5)
+                {
+                    art = tex2D(_MainTex, lerp(uv, ArenaFlow(uv, _Time.y), _Strength));
+                    half3 light = BoxingLights(uv, _Time.y, art.rgb);
+                    art.rgb = 1 - (1 - art.rgb) * (1 - saturate(light * _Strength));
+                }
+                else
+                {
+                    art = tex2D(_MainTex, uv);
+                    art.rgb += TempleLights(uv, _Time.y) * (.42 + .58 * art.rgb) * _Strength;
+                }
                 return art * input.tint;
             }
             ENDCG

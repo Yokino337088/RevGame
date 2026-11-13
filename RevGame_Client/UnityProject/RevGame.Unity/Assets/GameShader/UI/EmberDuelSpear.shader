@@ -91,11 +91,10 @@ Shader "RevGame/UI/Ember Duel Spear"
                 clip(color.a - 0.001h);
                 #endif
                 half hot = smoothstep(0.24h, 0.85h, texel.r) * saturate((texel.r - texel.b) * 2.4h);
-                float band = frac((input.local.x + input.local.y * 0.14) * 0.008 - _Time.y * 4.2);
-                half sweep = 1 - smoothstep(0.02, 0.22, abs(band - 0.48));
-                half heat = hot * (0.30h + sweep * 0.58h) * input.color.a;
-                color.rgb = (color.rgb + half3(0.9h, 0.31h, 0.07h) * heat) * color.a;
-                color.rgb += half3(1.0h, 0.44h, 0.12h) * sweepMask.y * color.a;
+                half sweep = DuelStrikeCurrent(input.reveal, _Time.y);
+                half heat = hot * (0.36h + sweep * 0.78h);
+                color.rgb = (color.rgb + half3(0.98h, 0.30h, 0.065h) * heat
+                    + half3(1.0h, 0.58h, 0.16h) * sweepMask.y * .90h) * color.a;
                 return color;
             }
             ENDCG

@@ -53,7 +53,7 @@ Shader "RevGame/UI/Duel Preparation Rift"
             fixed4 _Color;
             float4 _ClipRect;
 
-            // 图集 UV 只采样原画。火流使用屏幕坐标，重打图集或宽屏裁切都不会改变汇聚点。
+            // 保留 Image 的图集 UV。片元阶段把屏幕中的热流方向换算成当前图集里的采样偏移。
             Pixels vert(Input input)
             {
                 Pixels output;
@@ -84,47 +84,39 @@ Shader "RevGame/UI/Duel Preparation Rift"
                 return lerp(lower, upper, blend.y);
             }
 
-            // 在同一全屏材质中画出两股镜像火流、细亮边和上升火星。中央仅保留少量交汇余光。
+            // 依据两股相向的流场重新采样背景。原图纹理本身随热流卷动，标题和立绘仍在自己的固定坐标上。
             fixed4 frag(Pixels input) : SV_Target
             {
-                fixed4 baseArt = tex2D(_MainTex, input.uv) * input.color;
                 float2 xy = input.screen.xy / input.screen.w * 2.0 - 1.0;
                 float inward = 1.0 - abs(xy.x);
-                float time = _Time.y;
+                float time = _Time.y + step(0.0, xy.x) * 3.6;
 
-                // 横轴从两侧边缘走向中心。纵轴剪切把火舌倾向斜上方，三层噪声各用不同速度和尺度。
-                float2 flow = float2(inward * 6.0, (xy.y - inward * .68) * 3.8);
-                float warp = FlowNoise(flow * .64 - float2(time * .62, time * .20));
-                float fuel = FlowNoise(flow - float2(time * 1.80, time * .37) + float2(0, warp * 1.65));
-                float detail = FlowNoise(flow * float2(2.1, 2.7) - float2(time * 3.20, time * .66));
-                float strand = 1.0 - abs(sin((flow.y * 1.48 + warp * 1.34 + fuel * .44 + detail * .23) * 3.14159));
-                float body = smoothstep(.35, .93, fuel * .72 + detail * .24 + strand * .28);
-                // 亮边随细噪声断开，形成局部翻卷的火舌，避免整屏出现等亮度的长线。
-                float rim = smoothstep(.75, .99, strand) * smoothstep(.42, .83, fuel * .72 + detail * .38);
+                float2 flow = float2(inward * 7.0, (xy.y - inward * .58) * 4.5);
+                float roll = FlowNoise(flow * .72 - float2(time * 1.48, time * .32));
+                float fuel = FlowNoise(flow * float2(1.7, 2.25) - float2(time * 3.05, time * .72) + float2(0, roll * 2.15));
+                float wing = smoothstep(.10, .42, abs(xy.x));
+                float outer = smoothstep(.04, .28, inward) * smoothstep(.04, .27, 1.0 - abs(xy.y));
+                float warp = wing * outer;
+                float direction = xy.x < 0.0 ? 1.0 : -1.0;
+                float2 displacement = float2(direction * (roll - .48) * .25, (fuel - .50) * .14 - .027) * warp;
+                // 偏移在屏幕边缘与中缝归零。限制偏移留在当前可见的 Sprite 内，避免采样到邻接图集。
+                displacement = clamp(displacement, -.80 * (xy + 1.0), .80 * (1.0 - xy));
+                float2 uvRight = ddx(input.uv) / max(abs(ddx(xy.x)), 1e-5);
+                float2 uvUp = ddy(input.uv) / (ddy(xy.y) < 0.0 ? min(ddy(xy.y), -1e-5) : max(ddy(xy.y), 1e-5));
+                float2 advected = input.uv + uvRight * displacement.x + uvUp * displacement.y;
+                half4 baseArt = tex2D(_MainTex, advected) * input.color;
 
-                // 斜向亮带从两角开始，在中央操作区前逐渐收窄并降低亮度。
-                float lower = 1.0 - smoothstep(.13, .54, abs(xy.y + .66 - inward * .79));
-                float upper = 1.0 - smoothstep(.08, .44, abs(xy.y - .77 + inward * .64));
-                float wing = smoothstep(.13, .54, abs(xy.x));
-                float heat = wing * (.19 + .61 * lower + .37 * upper);
-                float contact = (1.0 - smoothstep(0.0, .20, abs(xy.x))) *
-                    (1.0 - smoothstep(.06, .42, abs(xy.y - .10)));
-
-                // 火星跟随火流斜向上浮。只点亮少量网格，保留立绘与读数的轮廓。
-                float2 grid = float2(inward * 29.0 - time * 5.3, (xy.y - inward * .69) * 18.0 - time * 2.8);
+                // 原图已有的红蓝亮纹决定燃烧位置。暗部只跟着扭动，避免生成盖住原画的大块光带。
+                half chroma = max(baseArt.r, max(baseArt.g, baseArt.b));
+                half heat = wing * smoothstep(.20h, .81h, chroma) * (.24h + .76h * smoothstep(.27, .84, fuel));
+                half rim = heat * smoothstep(.53, .89, fuel + roll * .23);
+                float2 grid = float2(inward * 38.0 - time * 9.0, (xy.y - inward * .68) * 24.0 - time * 4.6);
                 float random = CellValue(floor(grid));
-                float2 particle = (frac(grid) - float2(.30 + random * .37, .5)) * float2(.78, 1.75);
-                float sparks = (1.0 - smoothstep(.025, .17, length(particle))) * step(.90, random) * wing;
-
-                float side = smoothstep(-.12, .12, xy.x);
-                float3 flameColor = lerp(float3(1.0, .095, .018), float3(.025, .55, 1.0), side);
-                float3 coreColor = lerp(float3(1.0, .74, .32), float3(.38, .96, 1.0), side);
-                float3 light = flameColor * (heat * (.23 + .80 * body) + contact * body * .19);
-                light += coreColor * (heat * rim * .55 + sparks * .68);
-                // 屏幕混合让高光保留原画纹理，低火量处稍压暗以拉开明暗节奏。
-                float3 shaded = baseArt.rgb * (1.0 - heat * (1.0 - body) * .23);
-                float3 lit = 1.0 - (1.0 - shaded) * (1.0 - saturate(light));
-                baseArt.rgb = lerp(baseArt.rgb, lit, input.color.a);
+                float2 particle = (frac(grid) - float2(.22 + random * .54, .5)) * float2(.72, 1.6);
+                half sparks = (1.0 - smoothstep(.03, .20, length(particle))) * step(.84, random) * heat;
+                half3 hotColor = lerp(half3(1, .55, .18), half3(.22, .82, 1), step(0.0, xy.x));
+                half3 movingArt = baseArt.rgb * (.83h + .49h * heat);
+                baseArt.rgb = lerp(movingArt, hotColor, saturate(rim * .56h + sparks * .75h));
                 #ifdef UNITY_UI_CLIP_RECT
                 baseArt.a *= UnityGet2DClipping(input.local, _ClipRect);
                 #endif

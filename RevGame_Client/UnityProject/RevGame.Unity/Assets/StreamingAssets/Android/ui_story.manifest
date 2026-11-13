@@ -3,13 +3,13 @@ CRC: 2189926264
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cbcdb8d4d92efb7dee85158d436001b2
+    Hash: d703f91fd115b00287fa0871e0d4638a
   TypeTreeHash:
     serializedVersion: 2
     Hash: c54da1566b53d3b41d4babf6f36356fe
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cbcdb8d4d92efb7dee85158d436001b2
+    Hash: d703f91fd115b00287fa0871e0d4638a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -65,6 +65,6 @@ Assets:
 - Assets/GameRes/UI/Panel/Story/TutorialPanel.prefab
 - Assets/GameRes/UI/Panel/Story/StoryPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui"

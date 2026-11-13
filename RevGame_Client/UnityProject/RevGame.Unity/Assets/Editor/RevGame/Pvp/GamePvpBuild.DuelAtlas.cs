@@ -57,12 +57,11 @@ namespace RevGame.Editor
             var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length * 2);
             ValidateDuelRoleClips(EmberClipPrefix, EmberPrefix, ember, groups);
             ValidateDuelRoleClips(YayaPrefix, YayaPrefix, yaya, groups);
-            ValidateDuelSceneAnimationSlices(ember, yaya);
+            Sprite[] strikes = ValidateDuelSceneAnimationSlices(ember, yaya);
 
             // 内置图集只收角色和出招图片。小镇是独立长图，HUD 另走按局加载的专用图集。
             Sprite[] sprites = ember.Concat(yaya).SelectMany(frames => frames)
-                .Concat(ArcadeCastArt.Concat(ArcadeImpactArt).Distinct().Select(LoadArcadeEffect))
-                .Concat(YayaCastArt.Concat(YayaImpactArt).Distinct().Select(LoadYayaDuelEffect))
+                .Concat(strikes)
                 .Distinct().ToArray();
             string[] paths = sprites.Select(AssetDatabase.GetAssetPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
             if (paths.Distinct(StringComparer.Ordinal).Count() != sprites.Length)
@@ -148,7 +147,7 @@ namespace RevGame.Editor
         }
 
         // 只读打开目标场景，核对真正上屏的换帧表，不重建场景或覆盖原资产。
-        private static void ValidateDuelSceneAnimationSlices(Sprite[][] ember, Sprite[][] yaya)
+        private static Sprite[] ValidateDuelSceneAnimationSlices(Sprite[][] ember, Sprite[][] yaya)
         {
             Scene prior = SceneManager.GetActiveScene();
             Scene scene = SceneManager.GetSceneByPath(DuelScenePath);
@@ -172,9 +171,7 @@ namespace RevGame.Editor
                 {
                     throw new InvalidOperationException("黑方红枪 Shader 与共用材质绑定异常。");
                 }
-                if (!effects.YayaCastSprites.SequenceEqual(YayaCastArt.Select(LoadYayaDuelEffect)) ||
-                    !effects.YayaImpactSprites.SequenceEqual(YayaImpactArt.Select(LoadYayaDuelEffect)) ||
-                    !effects.YayaCastSounds.SequenceEqual(YayaCastAudio.Select(LoadYayaDuelAudio)) ||
+                if (!effects.YayaCastSounds.SequenceEqual(YayaCastAudio.Select(LoadYayaDuelAudio)) ||
                     !effects.YayaImpactSounds.SequenceEqual(YayaImpactAudio.Select(LoadYayaDuelAudio)) ||
                     AssetDatabase.GetAssetPath(effects.Second.material) != YayaDuelMaterial ||
                     effects.SecondImpact.material != effects.Second.material ||
@@ -185,6 +182,10 @@ namespace RevGame.Editor
                 {
                     throw new InvalidOperationException("决斗场景中的特效、背景或 HUD 分层绑定异常。");
                 }
+                return ValidateStrikeTable(effects.CastSequences, EmberPrefix, "Cast", EmberCastArt)
+                    .Concat(ValidateStrikeTable(effects.ImpactSequences, EmberPrefix, "Hit", ImpactArt))
+                    .Concat(ValidateStrikeTable(effects.YayaCastSequences, YayaPrefix, "Cast", YayaCastArt))
+                    .Concat(ValidateStrikeTable(effects.YayaImpactSequences, YayaPrefix, "Hit", ImpactArt)).ToArray();
             }
             finally
             {
@@ -197,6 +198,24 @@ namespace RevGame.Editor
                     EditorSceneManager.CloseScene(scene, true);
                 }
             }
+        }
+
+        // 用场景实绑的序列收集图集成员；数量、顺序或引用不对时在打包前中止。
+        private static Sprite[] ValidateStrikeTable(DuelStrikeEffects.FrameSequence[] table, string role, string stage, string[] shapes)
+        {
+            if (table == null || table.Length != shapes.Length)
+            {
+                throw new InvalidOperationException("决斗特效动作表缺失：" + role + stage);
+            }
+            for (int action = 0; action < table.Length; action++)
+            {
+                Sprite[] frames = table[action].Frames;
+                if (frames == null || !frames.SequenceEqual(LoadDuelEffectSequence(role, stage, shapes[action]).Frames))
+                {
+                    throw new InvalidOperationException("决斗特效帧序异常：" + role + stage + shapes[action]);
+                }
+            }
+            return table.SelectMany(sequence => sequence.Frames).ToArray();
         }
 
         // 读回两席的待机节奏、序列帧和接触关键帧，避免编辑器配方与场景绑定不一致。

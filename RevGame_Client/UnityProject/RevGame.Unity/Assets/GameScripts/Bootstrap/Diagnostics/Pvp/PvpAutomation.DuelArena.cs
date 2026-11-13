@@ -58,6 +58,7 @@ namespace RevGame.Pvp
             {
                 DuelSnapshot initial = service.DuelSnapshot;
                 bool yaya = service.DuelRoleFor(1) == DuelRole.Yaya;
+                UnityEngine.Vector3 stageScale = view.CameraRig.Fighters.localScale;
                 int initialGap = initial.SecondX - initial.FirstX;
                 if (initialGap <= DuelConfig.ActionRange(yaya, 6) + 300)
                 {
@@ -112,8 +113,14 @@ namespace RevGame.Pvp
                 ClickDuelHudButton(hud.Skill.gameObject, press);
                 await WaitForDuelControl(id, () => service.DuelSnapshot.SecondHealth < initial.SecondHealth &&
                     view.Effects.ImpactsForCheck > 0, "技能命中与程序短效");
+                await WaitForDuelControl(id, () => view.Effects.ImpactFrameMaskForCheck >= 7, "命中序列至少播放前三帧");
                 _duelArenaResult["skillHp"] = service.DuelSnapshot.SecondHealth;
                 _duelArenaResult["particles"] = view.Effects.SpawnedParticlesForCheck;
+                _duelArenaResult["impactFrameMask"] = view.Effects.ImpactFrameMaskForCheck;
+                _duelArenaResult["impactSoundMask"] = view.Effects.ImpactSoundMaskForCheck;
+                _duelArenaResult["stableStageDepth"] = view.CameraRig.Fighters.anchoredPosition3D.z == 0 &&
+                    view.CameraRig.Fighters.localScale == stageScale;
+                _duelArenaResult["arenaShader"] = view.CameraRig.Backdrop.material.shader.name;
                 _duelArenaResult["fadeObserved"] = view.FirstAnimator.AttackFadeSamples > 0;
                 _duelArenaResult["stage"] = "passed";
             }

@@ -16,18 +16,14 @@ namespace RevGame.View
         public Image FirstImpact;
         // 白方打出的命中特效，定位到黑方的位置。
         public Image SecondImpact;
-        // 按动作号 1～6 排列的起手特效，由场景配方引用同一图集。
-        public Sprite[] CastSprites;
-        // 按动作号 1～6 排列的命中形状，可与起手形状复用贴图。
-        public Sprite[] ImpactSprites;
+        // 由内置图集直接绑定的起手和命中序列。两张动作表都以原生动作号减一索引。
+        public FrameSequence[] CastSequences, ImpactSequences;
         // 动作 1～6 的不同原声音效。由内置决斗场景持有。
         public AudioClip[] CastSounds;
         // 普攻、技能、大招的三种命中音色。
         public AudioClip[] ImpactSounds;
-        // 白方鸦鸦独占的六个起手图形，按原生动作编号排列。
-        public Sprite[] YayaCastSprites;
-        // 白方鸦鸦的六个命中图形，在受击者位置播放。
-        public Sprite[] YayaImpactSprites;
+        // 鸦鸦对应的两张动作表，镜像对局也按角色选用。
+        public FrameSequence[] YayaCastSequences, YayaImpactSequences;
         // 白方每一段普攻和每种法术的短音效。
         public AudioClip[] YayaCastSounds;
         // 白方普攻、技能和大招命中时的不同音色。
@@ -46,7 +42,16 @@ namespace RevGame.View
         private bool _poolReady;
         // 两套技能粒子沿用红枪和夜羽的原画色系。
         private static readonly Color EmberTint = new Color(1, .38f, .12f);
-        private static readonly Color YayaTint = new Color(.51f, .33f, 1);
+        private static readonly Color YayaTint = new Color(.58f, .89f, .26f);
+        // 每个序列的首尾都留在同一透明画布；角色、技能和受击使用各自的美术节拍。
+        public const int SequenceFrameCount = 5;
+
+        /// <summary>依次引用图集中已导入的透明 PNG，不在命中或出招时临时读取纹理。</summary>
+        [System.Serializable]
+        public struct FrameSequence
+        {
+            public Sprite[] Frames;
+        }
 
         // 角色配置在第 0 帧决定；默认值仍匹配原场景和编辑器预览。
         private bool _firstYaya;
@@ -82,6 +87,9 @@ namespace RevGame.View
         internal int YayaImpactsForCheck { get; private set; }
         // 已借出的拖尾、碎光及冲击环数量，读取此值可确认真实短效产生。
         internal int SpawnedParticlesForCheck { get; private set; }
+        // 在实际落屏时累计帧编号和成功提交给声源的命中级别。
+        internal int ImpactFrameMaskForCheck { get; private set; }
+        internal int ImpactSoundMaskForCheck { get; private set; }
 #endif
 
         // 单个表现事件的播放参数，值类型随图层复用。
@@ -101,8 +109,9 @@ namespace RevGame.View
             public float TravelSeconds;
             // 飞行弧线的最高额外偏移，单位画布像素。
             public float Arc;
-            // 色彩和初始透明度。
-            public Color Tint;
+            // 播放开始后复用这份 Sprite 引用，序列进度与扫光均由同一时钟驱动。
+            public Sprite[] Frames;
+            public bool Impact;
             // 以横向枪芒或扩张羽环展开，中心移动的招式同步生成短拖尾。
             public bool Radial, Trails;
             // 开始飞行前的蓄力时间和下一次拖尾释放时间，单位表现秒。
@@ -155,7 +164,7 @@ namespace RevGame.View
                 return;
             }
             _lastStart[seat] = startFrame;
-            bool yaya = (seat == 0 ? _firstYaya : _secondYaya) && YayaCastSprites != null && YayaCastSprites.Length == 6;
+            bool yaya = seat == 0 ? _firstYaya : _secondYaya;
             if (yaya)
             {
                 CastYaya(seat, action, facing, position, target, reach);
@@ -164,7 +173,7 @@ namespace RevGame.View
             {
                 CastEmber(seat, action, facing, position, reach);
             }
-            bool audible = Play((yaya ? YayaCastSounds : CastSounds)[action - 1], .78f);
+            bool audible = Play((yaya ? YayaCastSounds : CastSounds)[action - 1], .57f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             int bit = 1 << (action - 1);
             CastMaskForCheck |= bit;
@@ -198,7 +207,7 @@ namespace RevGame.View
                 _ => new Vector2(reach * .87f, action == 6 ? 212 : 156)
             };
             ref Effect effect = ref _casts[seat];
-            Begin(seat == 0 ? First : Second, _reveal[seat], ref effect, CastSprites[action - 1],
+            Begin(seat == 0 ? First : Second, _reveal[seat], ref effect, CastSequences[action - 1].Frames,
                 origin, size, contact + (radial ? .34f : .16f), facing, radial, EmberTint);
             effect.Travel = radial ? Vector2.zero : plunge
                 ? new Vector2(facing * reach * .38f, -142 - origin.y)
@@ -228,7 +237,7 @@ namespace RevGame.View
                 _ => new Vector2(reach * .84f, action == 1 ? 135 : 200)
             };
             ref Effect effect = ref _casts[seat];
-            Begin(seat == 0 ? First : Second, _reveal[seat], ref effect, YayaCastSprites[action - 1], origin, size,
+            Begin(seat == 0 ? First : Second, _reveal[seat], ref effect, YayaCastSequences[action - 1].Frames, origin, size,
                 contact + (radial ? .32f : .17f), facing, radial, YayaTint);
             if (bird)
             {
@@ -260,15 +269,15 @@ namespace RevGame.View
         public void Hit(int seat, int action, int facing, Vector2 target)
         {
             int tier = Tier(action);
-            bool yaya = (seat == 0 ? _firstYaya : _secondYaya) && YayaImpactSprites != null && YayaImpactSprites.Length == 6;
-            Vector2 shape = action == 4 ? new Vector2(580, 320) : Vector2.one * (tier == 2 ? 750 : tier == 1 ? 405 : 250);
+            bool yaya = seat == 0 ? _firstYaya : _secondYaya;
+            Vector2 shape = action == 4 ? new Vector2(630, 360) : Vector2.one * (tier == 2 ? 740 : tier == 1 ? 458 : 294);
             // 白方低踢的受击闪光贴近小腿，其它命中仍从权威受击者取锚点。
             float impactHeight = yaya && action == 1 ? -90 : action == 4 ? -145 : 18;
             Vector2 origin = target + new Vector2(0, impactHeight);
             Color tint = yaya ? YayaTint : EmberTint;
             Begin(seat == 0 ? FirstImpact : SecondImpact, _reveal[seat + 2], ref _impacts[seat],
-                (yaya ? YayaImpactSprites : ImpactSprites)[action - 1], origin, shape, tier == 2 ? .48f : .25f, facing, true, tint);
-            SpawnRing(origin, Vector2.one * (tier == 2 ? 470 : 260), tint, tier == 2 ? .39f : .25f);
+                (yaya ? YayaImpactSequences : ImpactSequences)[action - 1].Frames, origin, shape, tier == 2 ? .47f : .25f, facing, true, tint, impact: true);
+            SpawnRing(origin, Vector2.one * (tier == 2 ? 620 : 330), tint, tier == 2 ? .39f : .25f);
             // 碎光沿离开角色的方向散开，不读取随机数或碰撞组件。
             int count = tier == 2 ? 9 : tier == 1 ? 7 : 4;
             for (int index = 0; index < count; index++)
@@ -278,9 +287,13 @@ namespace RevGame.View
                 SpawnParticle(origin, direction * (440 + index * 39), new Vector2(54 + index * 6, 24), tint,
                     .19f + .017f * index, DuelArenaFxGraphic.Shape.Streak);
             }
-            Play((yaya ? YayaImpactSounds : ImpactSounds)[tier], tier == 2 ? .92f : .68f);
+            bool audible = Play((yaya ? YayaImpactSounds : ImpactSounds)[tier], tier == 2 ? .93f : tier == 1 ? .84f : .75f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             ImpactsForCheck++;
+            if (audible)
+            {
+                ImpactSoundMaskForCheck |= 1 << tier;
+            }
             if (yaya)
             {
                 YayaImpactsForCheck++;
@@ -294,21 +307,21 @@ namespace RevGame.View
             return action == 3 ? 2 : action == 2 || action == 4 ? 1 : 0;
         }
 
-        // 起手从小范围和透明状态开始，避免第一帧直接贴出一整张效果图。
-        private static void Begin(Image layer, DuelCastReveal reveal, ref Effect effect, Sprite sprite, Vector2 position, Vector2 size, float seconds, int facing, bool radial, Color energy)
+        // 起手从小范围展开。确认命中先画出亮核，再由序列扩散；每次复用同一个场景图层。
+        private static void Begin(Image layer, DuelCastReveal reveal, ref Effect effect, Sprite[] frames, Vector2 position, Vector2 size, float seconds, int facing, bool radial, Color energy, bool impact = false)
         {
             effect = new Effect
             {
                 Start = Time.unscaledTime, Duration = seconds, Size = size, Origin = position,
-                Tint = Color.white, Radial = radial, Facing = facing, Energy = energy
+                Frames = frames, Impact = impact, Radial = radial, Facing = facing, Energy = energy
             };
-            layer.sprite = sprite;
-            layer.color = new Color(1, 1, 1, 0);
+            layer.sprite = frames[0];
+            layer.color = new Color(1, 1, 1, impact ? 1 : 0);
             layer.rectTransform.anchoredPosition = position;
-            layer.rectTransform.sizeDelta = size * .34f;
+            layer.rectTransform.sizeDelta = size * (impact ? .66f : .40f);
             layer.rectTransform.localScale = new Vector3(facing < 0 ? -1 : 1, 1, 1);
             layer.enabled = true;
-            reveal.Paint(0, radial);
+            reveal.Paint(impact ? .73f : 0, radial);
         }
 
         // 内置场景的短音效直接从已序列化片段播放，统一使用项目音量与静音开关。
@@ -368,18 +381,28 @@ namespace RevGame.View
                 return;
             }
 
-            float appear = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, Mathf.Min(.10f, effect.Duration * .30f), age));
-            float dissipate = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.42f, 1, progress));
-            float size = Mathf.Lerp(.34f, 1.08f, appear);
+            float appear = effect.Impact ? 1 : Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, Mathf.Min(.07f, effect.Duration * .28f), age));
+            float dissipate = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.30f, 1, progress));
+            float size = effect.Impact ? Mathf.Lerp(.66f, 1.17f, 1 - (1 - progress) * (1 - progress)) : Mathf.Lerp(.40f, 1.06f, appear);
             float flight = effect.TravelSeconds > 0 ? Mathf.InverseLerp(effect.LaunchDelay, effect.TravelSeconds, age) : 0;
             float distance = flight * (2 - flight);
             Vector2 position = effect.Origin + effect.Travel * distance + Vector2.up * (4 * effect.Arc * flight * (1 - flight));
             layer.rectTransform.anchoredPosition = position;
             layer.rectTransform.sizeDelta = effect.Size * size;
-            Color tint = effect.Tint;
-            tint.a *= appear * dissipate;
-            layer.color = tint;
-            reveal.Paint(appear, effect.Radial);
+            int frame = Mathf.Min((int)(progress * effect.Frames.Length), effect.Frames.Length - 1);
+            Sprite sprite = effect.Frames[frame];
+            if (layer.sprite != sprite)
+            {
+                layer.sprite = sprite;
+            }
+            layer.color = new Color(1, 1, 1, appear * dissipate);
+            reveal.Paint(effect.Impact ? Mathf.Lerp(.73f, 1, progress) : appear, effect.Radial);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (effect.Impact)
+            {
+                ImpactFrameMaskForCheck |= 1 << frame;
+            }
+#endif
             if (effect.Trails && flight > 0 && flight < 1 && age >= effect.NextTrail)
             {
                 effect.NextTrail = age + .034f;

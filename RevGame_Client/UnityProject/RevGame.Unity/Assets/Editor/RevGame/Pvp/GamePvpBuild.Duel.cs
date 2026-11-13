@@ -35,9 +35,9 @@ namespace RevGame.Editor
         };
         // 每个姿态的接触关键帧下标。非攻击姿态填 0，普通移动仍按渲染时间播放。
         private static readonly int[] ArcadeContactKeys = { 0, 0, 0, 2, 2, 3, 0, 3, 3, 3, 0 };
-        // 由四类出招形状与额外普攻段构成的起手/命中序列，数组下标是原生动作编号减一。
-        private static readonly int[] ArcadeCastArt = { 0, 1, 2, 3, 5, 4 };
-        private static readonly int[] ArcadeImpactArt = { 0, 6, 7, 6, 2, 4 };
+        // 动作按原生顺序装配。起手图形区分六招，命中序列按普攻、技能和大招复用。
+        private static readonly string[] EmberCastArt = { "Jab", "Rush", "Ultimate", "Plunge", "Hook", "Finisher" };
+        private static readonly string[] ImpactArt = { "Light", "Skill", "Ultimate", "Skill", "Light", "Light" };
         // 三段普攻、两种技能和大招各用不同的起手音色。
         private static readonly string[] ArcadeCastSounds = { "Jab", "Rush", "Ultimate", "Sweep", "Hook", "Finisher" };
         // 与 DuelActorAnimator 的 Pose 顺序对应。制作片段和绑定图片都使用同一张表。
@@ -101,15 +101,10 @@ namespace RevGame.Editor
                 view.Effects.Second = AddEffectLayer("WhiteEffects", fighters);
                 view.Effects.FirstImpact = AddEffectLayer("BlackImpact", fighters);
                 view.Effects.SecondImpact = AddEffectLayer("WhiteImpact", fighters);
-                view.Effects.CastSprites = ArcadeCastArt.Select(LoadArcadeEffect).ToArray();
-                view.Effects.ImpactSprites = ArcadeImpactArt.Select(LoadArcadeEffect).ToArray();
-                view.Effects.CastSounds = ArcadeCastSounds.Select(LoadArcadeSound).ToArray();
-                view.Effects.ImpactSounds = new[] { "LightHit", "SkillHit", "UltimateHit" }.Select(LoadArcadeSound).ToArray();
                 view.Effects.Speaker = root.AddComponent<AudioSource>();
                 view.Effects.Speaker.playOnAwake = false;
                 view.Effects.ParticlePrefab = particle;
-                BindDuelEmberEffects(view);
-                BindDuelYayaPresentation(view);
+                BindDuelPresentation(view);
                 var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
                 if (!EditorSceneManager.SaveScene(scene, DuelScenePath))
                 {
@@ -181,10 +176,16 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("决斗街机素材未导入：" + path);
         }
 
-        // 特效起手和命中可复用同一贴图。
-        private static Sprite LoadArcadeEffect(int index)
+        // 文件名顺序就是播放顺序。五个透明帧同尺寸，由原有决斗图集打包。
+        private static DuelStrikeEffects.FrameSequence LoadDuelEffectSequence(string role, string stage, string shape)
         {
-            return LoadArcadeSprite($"Fx_{index:D2}");
+            string name = role + stage + shape;
+            var frames = new Sprite[DuelStrikeEffects.SequenceFrameCount];
+            for (int frame = 0; frame < frames.Length; frame++)
+            {
+                frames[frame] = LoadDuelSpriteAtPath($"{ArcadeArt}StrikeFrames/{name}_{frame:D2}.png");
+            }
+            return new DuelStrikeEffects.FrameSequence { Frames = frames };
         }
 
         // 查找场景持有的原声音效，缺失时中止生成。
@@ -192,6 +193,19 @@ namespace RevGame.Editor
         {
             return AssetDatabase.LoadAssetAtPath<AudioClip>(ArcadeArt + "Audio/" + name + ".wav") ??
                 throw new InvalidOperationException("决斗音效未导入：" + name);
+        }
+
+        // 新建和升级走同一个入口，音效与五帧序列必须都装配后才保存场景。
+        private static void BindDuelPresentation(PvpDuelView view)
+        {
+            var effects = view.Effects;
+            effects.CastSequences = EmberCastArt.Select(name => LoadDuelEffectSequence(EmberPrefix, "Cast", name)).ToArray();
+            effects.ImpactSequences = ImpactArt.Select(name => LoadDuelEffectSequence(EmberPrefix, "Hit", name)).ToArray();
+            effects.CastSounds = ArcadeCastSounds.Select(LoadArcadeSound).ToArray();
+            effects.ImpactSounds = new[] { "LightHit", "SkillHit", "UltimateHit" }.Select(LoadArcadeSound).ToArray();
+            BindDuelEmberEffects(view);
+            BindDuelYayaPresentation(view);
+            ApplyDuelBackdrop(view.CameraRig.Backdrop);
         }
 
         // 复用角色层锚点来对齐舞台坐标，特效初始禁用且不拦截触摸。
@@ -336,8 +350,7 @@ namespace RevGame.Editor
                 ImportDuelSprites();
                 var view = duel.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
                 BindDuelActorRoster(view);
-                BindDuelEmberEffects(view);
-                BindDuelYayaPresentation(view);
+                BindDuelPresentation(view);
                 if (!EditorSceneManager.SaveScene(duel))
                 {
                     throw new InvalidOperationException("决斗角色序列帧保存失败。");

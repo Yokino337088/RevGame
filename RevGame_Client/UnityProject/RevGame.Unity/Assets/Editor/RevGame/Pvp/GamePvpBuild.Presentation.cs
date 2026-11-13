@@ -96,15 +96,20 @@ namespace RevGame.Editor
             image.raycastTarget = false;
             portrait.gameObject.SetActive(false);
 
-            // 恢复原横向跨度22%，原高21%减半。正文用整个对话框居中换行。
-            RectTransform bubble = Rect("yayaBubble", root, .765f, .61f, .985f, .715f);
+            // 右侧气泡向上扩展，保留鸦鸦脸部空间。固定字号让长短句都同样清楚。
+            RectTransform bubble = Rect("yayaBubble", root, .74f, .623f, .985f, .755f);
+            bubble.pivot = new Vector2(.5f, 0);
             Plate(bubble, "UI_Tip_imgBK", Color.white);
-            bubble.gameObject.AddComponent<CanvasGroup>();
-            var line = Label("text", bubble, "", .07f, .09f, .93f, .91f, 30);
-            line.verticalOverflow = VerticalWrapMode.Truncate;
-            line.resizeTextForBestFit = true;
-            line.resizeTextMinSize = 20;
-            line.resizeTextMaxSize = 30;
+            var bubbleGroup = bubble.gameObject.AddComponent<CanvasGroup>();
+            bubbleGroup.blocksRaycasts = false;
+            var line = Label("text", bubble, "", 0, 0, 1, 1, 34);
+            line.rectTransform.offsetMin = new Vector2(22, 16);
+            line.rectTransform.offsetMax = new Vector2(-22, -16);
+            line.color = new Color(1, .98f, .92f);
+            line.lineSpacing = 1.14f;
+            var outline = line.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(.075f, .047f, .035f, .94f);
+            outline.effectDistance = new Vector2(1.6f, -1.6f);
             bubble.gameObject.SetActive(false);
 
             foreach (string name in new[] { "scoring", "result" })

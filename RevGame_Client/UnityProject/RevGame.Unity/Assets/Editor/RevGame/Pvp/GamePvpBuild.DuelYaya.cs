@@ -26,8 +26,7 @@ namespace RevGame.Editor
         // 高踢的原接触图现在位于第 5 张，依然对齐原生第 4 帧命中。
         private static readonly int[] YayaContactKeys = { 0, 0, 0, 2, 2, 2, 0, 2, 2, 4, 0 };
         // 动作号 1～6 对应的白方特效。两种踢法复用羽刃纹理，动作和音色各自独立。
-        private static readonly string[] YayaCastArt = { "Toe", "Raven", "Flock", "Talon", "Kick", "Kick" };
-        private static readonly string[] YayaImpactArt = { "Toe", "Impact", "Flock", "Impact", "Kick", "Impact" };
+        private static readonly string[] YayaCastArt = { "Toe", "Raven", "Flock", "Talon", "Kick", "Spin" };
         // 音效按逻辑动作号或冲击等级排列，由场景唯一的声源播放。
         private static readonly string[] YayaCastAudio = { "LowKick", "Raven", "Flock", "Talon", "SnapKick", "SpinKick" };
         private static readonly string[] YayaImpactAudio = { "KickImpact", "FeatherImpact", "FlockImpact" };
@@ -81,12 +80,6 @@ namespace RevGame.Editor
             return pose == "Attack1" || pose == "Attack5" || pose == "Attack6" ? frames.Append(frames[0]).ToArray() : frames;
         }
 
-        // 读取一张已导入的乌鸦、羽刃或冲击 Sprite。
-        private static Sprite LoadYayaDuelEffect(string name)
-        {
-            return LoadDuelSpriteAtPath($"{YayaArt}Effects/YayaFx_{name}.png");
-        }
-
         // 白方头像与触控素材一起由 HUD 图集持有。
         private static Sprite LoadYayaDuelPortrait(int expression)
         {
@@ -103,8 +96,8 @@ namespace RevGame.Editor
         // 绑定鸦鸦的出招和命中图层。头像由独立的 RevUI HUD 预制体持有。
         private static void BindDuelYayaPresentation(PvpDuelView view)
         {
-            view.Effects.YayaCastSprites = YayaCastArt.Select(LoadYayaDuelEffect).ToArray();
-            view.Effects.YayaImpactSprites = YayaImpactArt.Select(LoadYayaDuelEffect).ToArray();
+            view.Effects.YayaCastSequences = YayaCastArt.Select(name => LoadDuelEffectSequence(YayaPrefix, "Cast", name)).ToArray();
+            view.Effects.YayaImpactSequences = ImpactArt.Select(name => LoadDuelEffectSequence(YayaPrefix, "Hit", name)).ToArray();
             view.Effects.YayaCastSounds = YayaCastAudio.Select(LoadYayaDuelAudio).ToArray();
             view.Effects.YayaImpactSounds = YayaImpactAudio.Select(LoadYayaDuelAudio).ToArray();
             Material material = GetDuelEffectMaterial(YayaDuelShader, YayaDuelMaterial);

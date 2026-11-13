@@ -89,9 +89,9 @@ Shader "RevGame/UI/Yaya Duel Feather"
                 clip(color.a - 0.001h);
                 #endif
                 half glow = saturate((color.g - color.b) * 2.5h) * smoothstep(0.16h, 0.7h, color.g);
-                half pulse = 0.30h + 0.20h * sin(_Time.y * 17.0);
-                color.rgb = (color.rgb + half3(0.35h, 0.76h, 0.22h) * glow * pulse) * color.a;
-                color.rgb += half3(0.6h, 0.42h, 1.0h) * sweepMask.y * color.a;
+                half pulse = .28h + .74h * DuelStrikeCurrent(input.reveal, _Time.y);
+                color.rgb = (color.rgb + half3(0.43h, 0.90h, 0.23h) * glow * pulse
+                    + half3(.68h, 1.0h, .36h) * sweepMask.y * .79h) * color.a;
                 return color;
             }
             ENDCG

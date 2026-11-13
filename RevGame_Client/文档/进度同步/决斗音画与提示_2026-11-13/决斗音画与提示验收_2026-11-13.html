@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>决斗音画与提示验收</title>
+  <style>
+    :root { --ink: #25352f; --muted: #65736b; --green: #326956; --line: #dce3da; --paper: #f6f7f2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.8 "Microsoft YaHei", sans-serif; }
+    header { padding: 38px 5vw; border-bottom: 1px solid var(--line); background: linear-gradient(135deg, #fefdf5, #e6efe1); }
+    .wrap { width: min(1120px, 90vw); margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: clamp(27px, 4vw, 42px); line-height: 1.3; }
+    header p { margin: 0; color: var(--muted); }
+    main { padding: 24px 0 44px; }
+    section { margin-bottom: 18px; padding: 20px 24px; border: 1px solid var(--line); border-radius: 16px; background: #fffefa; }
+    h2 { margin: 0 0 10px; font-size: 21px; color: var(--green); }
+    p { margin: 8px 0; }
+    figure { margin: 12px 0; }
+    img { display: block; width: 100%; height: auto; border-radius: 10px; }
+    figcaption { margin-top: 6px; color: var(--muted); font-size: 14px; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0; }
+    dt { font-weight: 700; } dd { margin: 0; }
+    code { font: 13px/1.65 Consolas, monospace; overflow-wrap: anywhere; }
+    @media (max-width: 620px) { section { padding: 16px; } dl { display: block; } dd { margin-bottom: 10px; } }
+
+    .gallery { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); gap:16px; }
+  </style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>决斗音画与提示验收</h1>
+  <p>2026-11-13 · Unity 2022.3.15f1c1 · Windows Editor / DX11 · 真实 PC AB</p>
+</div></header>
+<main class="wrap">
+  <section>
+    <h2>鸦鸦长提示</h2>
+    <figure><img src="鸦鸦长提示.jpg" alt="围棋右上方三行鸦鸦提示与棋盘建议点">
+      <figcaption>点击落子建议后实际显示「蓝色大肥鱼推荐 G7。它只算到这儿，接招你自己想。」。字体固定 34 号，气泡随正文增高，测得正文完整放入。</figcaption>
+    </figure>
+  </section>
+  <section>
+    <h2>选角原图与擂台背景</h2>
+    <div class="gallery">
+      <figure><img src="选角红蓝原图流动.gif" alt="选角原画红蓝两侧纹理流动">
+        <figcaption>同一背景 Image 的 Shader 偏移原图采样。实录来自真实 PC AB，切换到双鸦鸦，再切回绯焰后成功确认。</figcaption></figure>
+      <figure><img src="擂台背景流光.gif" alt="擂台晶柱、上部旗帜和背景光随时间变化">
+        <figcaption>天空与旗帜轻微卷动，晶柱波纹和尘光由原背景材质驱动。地平线和舞台深度固定。</figcaption></figure>
+    </div>
+  </section>
+  <section>
+    <h2>贯枪命中</h2>
+    <div class="gallery">
+      <figure><img src="贯枪命中.jpg" alt="绯焰贯枪击中鸦鸦，受击者胸口出现橙金冲击亮核">
+        <figcaption>真实命中瞬间。白方血量由 100 降至 85。</figcaption></figure>
+      <figure><img src="贯枪命中取样.gif" alt="贯枪命中、受击恢复和固定构图的连续取样">
+        <figcaption>以 RevMCP 运行时端点快速取样，动图取样间隔与实际序列的播放间隔不同。</figcaption></figure>
+    </div>
+    <dl>
+      <dt>规则与边界</dt><dd>三段普攻空挥无扣血。持续压住左边界时结界只触发一次，权威坐标为 -4500。</dd>
+      <dt>序列与声音</dt><dd>渲染断言核对命中序列至少前三帧进入播放，技能级音效已提交给声源。两名角色共 90 张透明帧，图集实包 188 张切片、3 页。<a href="决斗音效来源.md">音效来源</a></dd>
+      <dt>运镜与收尾</dt><dd>从开战到贯枪命中，缩放不变，舞台 Z 为 0。两个验收流程均回到 StartScene，准备面板关闭，运行时 Error 数为 0。</dd>
+    </dl>
+  </section>
+  <section>
+    <h2>资源与验证范围</h2>
+    <p>PC 与 Android 各 86 个 AB。平台主清单、逐包及各自清单的发布文件与实际构建产物逐字节一致。PC 构建工单曾记录 Unity 编辑器内部资源重载错误，产物仍完成发布，随后由 Windows Editor 冷启动实测。Android 通过构建与产物校验。</p>
+    <p>编辑态完整重编译工单 <code>6cc2c036600b463e8f98b29d3b082566</code> 已完成，零编译错误。音效断言覆盖播放调用与文件峰值，真人听感、Android 真机画面及帧率仍待验证。</p>
+    <p>RevUI 装配气泡、选角和战斗 HUD，RevScene 按正式门禁交接，RevPool 复用有限的轨迹和冲击环。序列节奏、混音与背景流场由项目资产控制。</p>
+  </section>
+</main>
+</body>
+</html>

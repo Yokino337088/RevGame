@@ -3,13 +3,13 @@ CRC: 3040268621
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a68dc69cfb4ef481720d280eca66b0cc
+    Hash: 0516754dbd7406da7d8febf21aea6d2b
   TypeTreeHash:
     serializedVersion: 2
     Hash: a826259da4f5a5227648bf5b592d28d8
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a68dc69cfb4ef481720d280eca66b0cc
+    Hash: 0516754dbd7406da7d8febf21aea6d2b
 HashAppended: 0
 ClassTypes:
 - Class: 114
@@ -24,5 +24,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayacombatexpressions
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayacombatexpressions"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions"

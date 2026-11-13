@@ -13,4 +13,13 @@ half2 DuelStrikeReveal(float4 local)
     return half2(visible, edge);
 }
 
+// 亮边随局部 UV 流动。可见度取自每张序列帧的透明度，流光不会染亮透明边框。
+half DuelStrikeCurrent(float4 local, float time)
+{
+    float2 axis = local.xy - .5;
+    float travel = lerp(local.x + axis.y * .18, length(axis) * 1.45, local.w);
+    float wave = sin(travel * 34 - time * 31 + sin(local.y * 16 - time * 7) * 1.1);
+    return smoothstep(.24, .96, wave) * (.38h + .62h * local.z);
+}
+
 #endif

@@ -75,11 +75,15 @@ Shader "RevGame/Pvp/Duel Arena Energy"
                 }
                 else
                 {
-                    // 环形冲击由里向外传播，到达图形边缘之前自然消隐。
+                    // 主环先炸开，较淡的内环随后扩散。周向波瓣让边缘像被冲击撕开。
                     float radius = lerp(0.12, 0.91, phase);
-                    float distance = abs(length(xy) - radius);
-                    core = (1.0 - smoothstep(0.015, 0.077, distance)) * (1.0 - phase);
-                    glow = exp2(-15.0 * distance) * (1.0 - phase) * 0.55;
+                    float radial = length(xy);
+                    float angle = atan2(xy.y, xy.x);
+                    float ripple = sin(angle * 10.0 + phase * 8.0) * .025;
+                    float distance = abs(radial - radius + ripple);
+                    float echo = exp2(-31.0 * abs(radial - radius * .73));
+                    core = (1.0 - smoothstep(0.014, 0.064, distance)) * (1.0 - phase);
+                    glow = (exp2(-14.0 * distance) * .68 + echo * .39) * (1.0 - phase);
                 }
                 half opacity = saturate(core + glow * 0.66) * input.color.a;
                 half3 light = input.color.rgb * (0.75 + 0.42 * glow) + 0.48 * core;
