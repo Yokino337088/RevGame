@@ -79,6 +79,8 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 
 ## 闭环交付
 
+**编译是交付门槛。** 改动 Unity C#、程序集定义、编译配置、脚本包或生成代码前先确认目标编辑器已退出 Play。遇到用户原有 Play 先交接。最后一次写入后，在同一在线工程串行调用 `editor.refresh` → 等导入稳定 → `editor.recompile` → `editor wait` → `editor.compilation`。记录重编回执的 `id`，确认诊断 `requestId` 相同、`finished=true`、`compiling=false`、`failed=false` 且无 Error；缺少这些证据时继续检查，禁止按接单或旧结果报通过。成功后重新发现能力，再进入 Play 验收。验收后若又改了脚本，重复此流程。
+
 1. 用目标相同的查询读回结果，断言值、数量、对象身份和资源/场景保存状态。支持 Undo 不等于可以撤销用户原本的操作，只撤销本次有清晰账本的变更。
 2. 编译/测试查看 `editor.compilation`、Console 新增错误和 Test Runner 最终结果；零测试、取消、失败清理都不能写“通过”。
 3. 临时预览/测试对象执行对应清理并恢复本次改过的选择或窗口。用户要求永久保存的编辑不撤销。

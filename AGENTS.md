@@ -4,6 +4,8 @@
 
 ## 交付前的自动检查
 
+- 完成功能后，最后一次影响 Unity 编译的改动必须在目标在线编辑器主动完整重编译并验收，再进入 Play 或交付。先确认编辑态；用户正在运行的对局先交接。依次刷新导入、调用 `editor.recompile`、等待 `editor wait`，再读 `editor.compilation`。诊断必须与重编回执的 `id` 对应，且 `finished=true`、无 Error。验收后再改脚本须重跑。
+
 - 改代码或 Unity 资产后，在仓库根运行 `python tools/RevPolicy/check.py`，修正本次新增的违规。准备提交时用 `--staged` 检查实际暂存内容。Git hook 和 CI 使用同一个检查器。
 - 材质、Shader、资产与 `.meta`、GUID、框架快照更新和部分 C# 规则可以自动检查。面板职责、中文注释质量、资源寿命与实际画面仍按本文件及当前专题验收。安装和诊断见 [Codex 插件与规范检查](.codex/README.md)。
 

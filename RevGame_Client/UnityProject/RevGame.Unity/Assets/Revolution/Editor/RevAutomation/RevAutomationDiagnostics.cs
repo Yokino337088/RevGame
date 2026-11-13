@@ -21,13 +21,32 @@ namespace Revolution.Editor
         [Serializable] private sealed class LogRow { public string message, file; public int line, mode; }
         [Serializable] private sealed class ConsoleResult { public int total, offset; public bool truncated; public LogRow[] entries; }
         [Serializable] private sealed class Diagnostic { public string assembly, message, file, type; public int line, column; }
-        [Serializable] private sealed class CompilationResult { public bool compiling, failed; public Diagnostic[] messages; }
+        [Serializable]
+        private sealed class CompilationResult
+        {
+            // 工单 ID 只关联本次主动编译。自动编译留空，调用方可据此排除旧结果。
+            public string requestId;
+            // finished 由 Unity 编译结束事件写入，不能用编辑器暂时空闲代替。
+            public bool finished, compiling, failed;
+            // 每个程序集的诊断含源码行列，可直接定位错误。
+            public Diagnostic[] messages;
+        }
+        // 只在本次 Unity 进程内保留尚未开始的请求，域重载不会丢失它。
+        private const string PendingCompilationKey = "RevAutomation.PendingCompilation";
+        // 当前编译从开始到结束使用同一 ID；自然触发的编译没有请求 ID。
+        private static string _activeCompilation;
         private static readonly List<Diagnostic> Diagnostics = new List<Diagnostic>();
         private static string CompilePath => Path.Combine(RevAutomationBridge.Root, "compilation.json");
 
         static RevAutomationDiagnostics()
         {
-            CompilationPipeline.compilationStarted += _ => { Diagnostics.Clear(); SaveCompilation(true); };
+            CompilationPipeline.compilationStarted += _ =>
+            {
+                _activeCompilation = SessionState.GetString(PendingCompilationKey, "");
+                SessionState.EraseString(PendingCompilationKey);
+                Diagnostics.Clear();
+                SaveCompilation(true);
+            };
             CompilationPipeline.assemblyCompilationFinished += (assembly, messages) =>
             {
                 Diagnostics.AddRange(messages.Select(m => new Diagnostic { assembly = assembly, message = m.message,
@@ -37,15 +56,37 @@ namespace Revolution.Editor
             CompilationPipeline.compilationFinished += _ => SaveCompilation(false);
         }
 
+        /// <summary>在编辑态主动重编所有脚本，并让诊断记录发起请求的工单 ID。</summary>
+        internal static void RequestCompilation(string requestId)
+        {
+            RevAutomationActions.RequireEditMode();
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                throw new InvalidOperationException("请等 Unity 当前导入或编译结束后再请求重编译。");
+            }
+            SessionState.SetString(PendingCompilationKey, requestId);
+            try
+            {
+                CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
+            }
+            catch
+            {
+                SessionState.EraseString(PendingCompilationKey);
+                throw;
+            }
+        }
+
+        /// <summary>把真实的编译事件结果写到 Library，供域重载后的桥接读取。</summary>
         private static void SaveCompilation(bool compiling) => RevAutomationBridge.WriteJson(CompilePath,
-            new CompilationResult { compiling = compiling, failed = Diagnostics.Any(d => d.type == "Error"), messages = Diagnostics.ToArray() });
+            new CompilationResult { requestId = _activeCompilation, finished = !compiling, compiling = compiling,
+                failed = Diagnostics.Any(d => d.type == "Error"), messages = Diagnostics.ToArray() });
 
         [RevAutomationAction("editor.compilation", Environment = "either", Keys = new string[0], Description = "上次编译诊断及当前编译失败状态")]
         public static object Compilation(RevAutomationRequest request)
         {
             var result = File.Exists(CompilePath) ? JsonUtility.FromJson<CompilationResult>(File.ReadAllText(CompilePath)) : new CompilationResult();
-            result.compiling = EditorApplication.isCompiling;
-            result.failed = EditorUtility.scriptCompilationFailed;
+            result.compiling = result.compiling || EditorApplication.isCompiling;
+            result.failed = result.failed || EditorUtility.scriptCompilationFailed;
             return result;
         }
 

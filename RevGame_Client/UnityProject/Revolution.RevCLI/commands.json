@@ -1462,7 +1462,7 @@
     {
       "id": "editor.recompile",
       "keys": [],
-      "description": "请求重新编译全部脚本；随后用 editor.wait 等待，用 editor.compilation 读错误",
+      "description": "编辑态清理脚本编译缓存并重编全部脚本；用 editor.wait 和 editor.compilation 核对本次工单",
       "environment": "edit",
       "readOnly": false
     },

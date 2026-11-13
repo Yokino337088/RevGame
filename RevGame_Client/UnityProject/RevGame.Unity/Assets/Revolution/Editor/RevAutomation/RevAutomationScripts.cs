@@ -14,7 +14,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
@@ -130,11 +129,12 @@ namespace Revolution.Editor
             return RevAutomationEditorModel.Describe(component);
         }
 
-        [RevAutomationAction("editor.recompile", Keys = new string[0], Description = "请求重新编译全部脚本；随后用 editor.wait 等待，用 editor.compilation 读错误")]
+        /// <summary>请求完整重编译。回执表示接单，完成后用相同工单 ID 核对诊断。</summary>
+        [RevAutomationAction("editor.recompile", Environment = "edit", Keys = new string[0], Description = "编辑态清理脚本编译缓存并重编全部脚本；用 editor.wait 和 editor.compilation 核对本次工单")]
         public static object Recompile(RevAutomationRequest request)
         {
-            CompilationPipeline.RequestScriptCompilation();
-            return new RevAutomationActions.RevAutomationText("已请求编译；用 editor.wait 等待完成");
+            RevAutomationDiagnostics.RequestCompilation(request.id);
+            return new RevAutomationActions.RevAutomationText("已请求完整重编译；等 editor.wait，再核对 editor.compilation 的 requestId、finished 和错误。");
         }
 
         [RevAutomationAction("asset.read-text", Environment = "either", Keys = new[] { "path" }, Description = "读取 Assets 或 Packages 下的 UTF-8 文本文件，最大 1 MiB，二进制文件拒绝")]

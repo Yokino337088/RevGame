@@ -32,6 +32,8 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 
 ## 验收
 
+- 完成功能后，凡改动会影响 Unity 脚本编译，最后一次写入后必须在目标编辑器主动完整重编译并验证通过，再进入 Play 或交付。已有 Play 先结束本次测试并退出；用户正在进行的对局需先交接。按 [编辑器技能](../revolution-unity-editor/SKILL.md) 核对本次编译工单。
+
 - 项目有 `.codex/rev-policy.json` 时，通过项目入口检查本次 diff，按文件行号和规则 ID 修复。长任务恢复时重读项目 `AGENTS.md` 与当前专题。插件与规范检查见 [项目规范检查](references/project-policy.md)。
 - 玩法、跨帧场景、资源和设备各按实际目标验收。关键业务在开发态留受控 GM 或 `RevRuntimeAutomation` 入口，复用玩家路径，核对成功、拒绝和退出。真实自动化先发现，按断言和清理判结果。见 [RevGame 交付实践](references/revgame-ai-workflow.md)。
 - 修改框架公开行为时同步模块使用说明和架构文档的 Markdown/HTML。按现有源仓库工作流导出 `package`、`demo`、`hotupdate`、`skill` 或自动化工具分支。只在用户要求时提交或发布。
