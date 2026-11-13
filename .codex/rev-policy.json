@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "unityProject": "RevGame_Client/UnityProject/RevGame.Unity",
+  "assetExcludes": ["Plugins", "Revolution", "StreamingAssets"],
+  "assetLocations": {
+    ".mat": { "directory": "GameRes/Material", "moduleSubdirectory": true },
+    ".shader": { "directory": "GameShader" }
+  },
+  "assetExclusions": [
+    {
+      "directory": "Scenes",
+      "extensions": [".anim", ".controller", ".overridecontroller", ".spriteatlasv2"],
+      "message": "场景的动画、控制器和图集资产按用途放入 Assets/GameRes。"
+    }
+  ],
+  "frameworkSnapshot": {
+    "directory": "Revolution",
+    "anchor": "PACKAGE_VERSION.txt",
+    "generated": [
+      "Generation/RevResPath.cs",
+      "Runtime/RevSoundSystem/Generated/RevSoundPath.cs",
+      "Resources/ResourceSystem/ResMap.txt"
+    ]
+  },
+  "code": {
+    "directories": ["GameScripts", "Editor/RevGame"],
+    "runtimeDirectories": ["GameScripts"],
+    "panelDirectories": ["GameScripts/UI/Panels"],
+    "bootstraps": [
+      "GameScripts/Bootstrap/Startup/GameBootstrap.cs",
+      "GameScripts/Diagnostics/CharacterPreview/YayaIdleTestBootstrap.cs"
+    ],
+    "internalTypes": [
+      "RevABLoader",
+      "RevEditorLoader",
+      "RevResourcesLoader",
+      "RevABResPolicy",
+      "RevEditorResPolicy",
+      "RevResourcesResPolicy",
+      "RevSceneLoader",
+      "RevUIBinder"
+    ]
+  }
+}

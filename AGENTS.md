@@ -2,6 +2,11 @@
 
 本仓库是 **RevGame** —— 一款 2D 小游戏，**第一目的是验证 [Revolution](https://github.com/Yokino337088/Revolution) 框架在真实业务中的可行性**，不是商业项目。游戏好玩是加分项，**框架可行性结论才是第一交付物**。
 
+## 交付前的自动检查
+
+- 改代码或 Unity 资产后，在仓库根运行 `python tools/RevPolicy/check.py`，修正本次新增的违规。准备提交时用 `--staged` 检查实际暂存内容。Git hook 和 CI 使用同一个检查器。
+- 材质、Shader、资产与 `.meta`、GUID、框架快照更新和部分 C# 规则可以自动检查。面板职责、中文注释质量、资源寿命与实际画面仍按本文件及当前专题验收。安装和诊断见 [Codex 插件与规范检查](.codex/README.md)。
+
 ## 开工前先读
 
 | 要做什么 | 先读什么 |

@@ -14,11 +14,11 @@ description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使�
 ## 找到并连接真实入口
 
 - 定位 Unity 工程、`Revolution.RevMCP/rev_mcp.py` 和相邻 `Revolution.RevCLI/rev.py`。始终显式传目标工程，不能默认运行框架 Demo。
-- MCP 已连接时先 `rev_discover`；新版支持 `target/query/offset/limit` 按需筛选，旧版退回空参数完整发现。需要减少握手工具体积时可配置 `--compact-tools`，三稳定入口仍能调用全部真实能力。否则执行 `python <rev_mcp.py> --project <工程> discover`。独立 Player 使用 `--runtime-endpoint <runtime.json>`。需要配置时读 [连接和注册](references/connection.md)。
+- Codex 插件首次连接用 `rev_bind` 指定工程绝对路径，独立 Player 加该实例的 `runtimeEndpoint`。已有目标明确的 RevMCP 连接直接复用。先 `rev_discover`，用 `target/query/offset/limit` 缩小结果；独立启动 RevMCP 可以用 `--compact-tools`，Player 通过 `--runtime-endpoint` 连接。配置见 [连接和注册](references/connection.md)。
 - **按测试轻重选通道（先判定，再动手）**：轻量操作用 RevCLI，重量级测试（长流程、多步断言、必须清理、要带截图/GIF 的 HTML 报告）用 RevMCP 的 `rev_run`。判定信号：要 HTML 报告/截图/GIF、步骤约超过 5 步或要跨帧等待、每步要业务断言、失败也必须清理、要反复跑回归，命中任一条即重量级。拿不准时：要报告就 MCP，不要报告就 CLI。编辑器操作一律 CLI，见相邻 `revolution-unity-editor`。用户明确指定时听用户的。完整规则与 MCP 不可用时的降级做法见 [按测试轻重选通道](references/channel-choice.md)。
 - 通用场景/对象/资产编辑与工具延迟诊断按相邻 `revolution-unity-editor` 的操作配方执行；常驻连接少往返，同步检查可 batch，业务跨帧测试保持计划等待与 finally，不并发修改 Unity。
 - **选定通道后再按 token 压调用**：CLI 零固定开销，单次结果也最便宜，适合轻量操作。MCP 全量模式的工具 schema 每轮约 1.7 万 token，紧凑模式仅约 325；重量级测试用 `rev_run` 一份计划把调用次数压到 1；编辑器多步用 `scene.compose`、`batch.call` 或 `pipeline`。查能力用 `commands --query <词>` 或带 `query` 的 `rev_discover`（不带词要 12,007，带词只用 340），不要读 `commands.json` 全文。实测数字与判据见 [token 成本](references/token-cost.md)。
-- **连接**：会话开始、电脑重启后或连接报错时，先按相邻 `revolution-unity-editor` 的 reconnect 配方跑 `rev.py connect`，再继续测试；不要在 Unity 未就绪时反复重试 MCP。
+- **连接**：已在线时先查目标和实际注册表。需要启动或恢复连接时按 `revolution-unity-editor` 的 reconnect 配方运行 `rev.py connect`，等 Unity 就绪再发现。
 - `unavailable` 会说明缺 Play、桥接、编译或凭据等原因。编辑模式下没有游戏能力是正常边界，不能从离线 commands 清单推断已注册业务。
 - 在进行场景切换、Play、构建之前记录原场景、dirty/playing/paused 与当前工单。普通测试已授权的启动/停止可自行执行；未保存内容必须保留，不能为了测试丢弃。编译后用 `editor.wait` 等到新心跳稳定，再重新发现能力。
 - Editor 请求使用 live；已有工程绝不另开 batch 争用。开发版 Player 可通过启动参数 `-revAutomation` 或项目显式 `RevRuntimeAutomation.Start()` 开启本机 HTTP。正式构建默认无运行时测试接口。
@@ -44,7 +44,7 @@ description: 用一句话驱动 Revolution Unity 编辑器或游戏测试时使�
 - 图形/视觉测试必须带**当时的截图**；只有编译/纯规则/只读检查时明确视觉未执行，不能伪造画面：初始态、关键操作后、失败现场（没失败就放最终态）。截图是画面证据，不能替代数值断言。
 - **动态效果必须给 GIF**：技能、位移、粒子、UI 过渡、节奏类表现，单帧看不出来，要连拍成动图（默认 10–20 帧、100–150ms 间隔）。
 - 报告里要写清：结论、每步断言、失败首个原因、环境（工程/平台/模式）、截图与动图、未验证项。结论只由断言决定，图片只证画面。
-- **证据收纳服从目标项目规则**：先读用户/AGENTS的归档与提交约定。RevGame文档只留HTML及必要截图/GIF，原始JSON/CSV/Profiler在忽略的 `.codex/work/`，不生成ZIP、`.codex/`不提交。其它项目在允许时可归档压缩，不强制ZIP，不散落大量机器日志。
+- **证据收纳服从目标项目规则**：RevGame 文档保留 HTML 和必要截图/GIF，原始机器证据放 `.codex/work/`。该项目技能随仓库版本维护，测试证据按根 `AGENTS.md` 归档。
 - 图片按网页可用的体积交付：截图转 1600 宽 JPEG（1920×1080 的 PNG 约 3MB → 约 300KB），动图宽 ≤ 720。只压体积，不裁剪、不拼接、不美化。
 
 具体规范、目录结构和反例见 [报告规范](references/report.md)。

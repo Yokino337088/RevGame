@@ -1,6 +1,6 @@
 ---
 name: revolution-unity-editor
-description: 用 Revolution RevCLI 完成 Unity 全链路自动化开发：写脚本并挂载、一份 JSON 搭场景摆物体、UI 面板、预制体、材质、动画、烘焙、Excel 导表、打 AB、一键打整包，以及电脑重启后自动连接与配置环境。用户提到 Unity 编辑器操作、搭场景、挂脚本、做预制体或 UI、导表、打包、连不上 Unity、重启后继续开发时使用。编辑器操作和游戏运行时 GM 都可以只用 RevCLI（`game gm`/`game call`）；需要一份计划带断言并自动出证据报告时再选 RevMCP 的 rev_run。玩法架构用 revolution-framework，业务测试用 revolution-ai-automation；不提供 eval，脚本只作为普通工程文件写入。
+description: 用 Revolution RevCLI 操作 Unity 编辑器、场景、脚本挂载、UI、Prefab、材质、动画、导表和构建，或恢复编辑器连接。实际业务回归见 revolution-ai-automation。
 ---
 
 # Revolution Unity 编辑器操作
@@ -19,9 +19,11 @@ description: 用 Revolution RevCLI 完成 Unity 全链路自动化开发：写�
 
 用户明确指定 MCP 时听用户的。两者怎么选见 [RevCLI 与 RevMCP 怎么选](https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/自动化工具/RevCLI与RevMCP怎么选.md)。
 
+在 Codex 中使用 Revolution 插件时，优先用工程相邻的 RevCLI 做短命令和制作。工程没有本地工具副本时，用 `rev_bind` 返回的 `bundledRevCli` 路径，仍显式传 `--project`。常驻 MCP 先用 `rev_bind` 指定工程绝对路径，再用 `rev_discover` 查实际动作。直接启动的 RevMCP 仍通过启动参数绑定工程。
+
 ## 开工第一步：连接
 
-**任何会话开始、电脑重启后、或遇到连接类报错，都先跑 `connect`。** 它幂等，会体检环境、打开 Unity、等编译、起常驻服务并比对能力。
+需要启动 Unity 或恢复连接时使用 `connect`。它会体检环境、打开 Unity、等编译、起常驻服务并比对能力。已有在线连接先读 `editor.status`；仅查询仓库或编辑文档无需启动 Unity。
 
 ```text
 py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不要直接用 python

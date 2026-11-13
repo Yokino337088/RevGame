@@ -1,0 +1,36 @@
+{
+  "name": "revgame-project",
+  "interface": {
+    "displayName": "RevGame"
+  },
+  "plugins": [
+    {
+      "name": "revolution",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Yokino337088/Revolution.git",
+        "path": "./Plugin/revolution",
+        "sha": "9a1aaa561c52c891915da964d568e72a9a8dece8"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "revgame",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Yokino337088/Revolution.git",
+        "path": "./Plugin/revgame",
+        "sha": "9a1aaa561c52c891915da964d568e72a9a8dece8"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    }
+  ]
+}

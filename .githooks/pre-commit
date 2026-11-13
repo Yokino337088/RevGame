@@ -1,0 +1,13 @@
+#!/bin/sh
+# 从 Git 工作树根调用与 CI 相同的检查器，只验证已暂存内容。
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+    exec python3 -B tools/RevPolicy/check.py --staged
+fi
+if command -v python >/dev/null 2>&1 && python -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+    exec python -B tools/RevPolicy/check.py --staged
+fi
+if command -v py >/dev/null 2>&1 && py -3 -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+    exec py -3 -B tools/RevPolicy/check.py --staged
+fi
+printf '%s\n' 'RevGame 规范检查需要 Python 3.10 或更新版本。' >&2
+exit 2

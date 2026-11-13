@@ -1,6 +1,6 @@
 ---
 name: revgame-development
-description: 用于 RevGame（围棋史莱姆）项目的功能开发、快速迭代、排错与审查。按当前代码和项目规范选择业务层与功能目录，联动本项目 Revolution 技能，优先用 RevCLI 完成 Unity 编辑器操作、UI/Prefab 制作、导表与资源构建，再验证业务与框架可行性。适用于六章远征、独立无尽模式、剧情、表现、资源和开发态测试接线；不把项目规则扩展为其它游戏的通用规范。
+description: 在 RevGame（围棋史莱姆）中实现、排查或审查玩法、UI、资源和流程。按项目约定选择同类实现、RevCLI 或 RevMCP，并执行项目规范检查与业务验收。
 ---
 
 # RevGame 项目开发
@@ -15,6 +15,8 @@ description: 用于 RevGame（围棋史莱姆）项目的功能开发、快速�
 2. 读取当前 [AGENTS.md](../../../AGENTS.md)，检查 `git status --short` 与暂存区，记录本次目标。保留用户已有改动和暂存状态，不把其它工单混进本次修改。
 3. 只用 `rg --files` / `rg -n` 找任务命中的文档与同类代码。目录与源码入口见 [项目地图](references/project-map.md)；不用全仓扫描或通读框架内核替代定位。
 4. 实施前明确四件事：**哪种模式 → 谁拥有状态 → 改到哪个功能目录 → 怎样证明改对**。普通可推断的实现选择自行推进，需求冲突只澄清影响验收的部分。
+
+任务跨多轮或上下文压缩后，先按当前路径重读根 `AGENTS.md` 和涉及的专题，再从实际 diff 继续。改代码或资产后从仓库根运行 `python tools/RevPolicy/check.py`；准备提交时使用 `--staged`。规则 ID、Git hook、CI 与插件安装见 [项目 Codex 说明](../../README.md)。
 
 当前布局：Unity 工程为 `RevGame_Client/UnityProject/RevGame.Unity`，版本以 `ProjectSettings/ProjectVersion.txt` 为准（本技能核对为 2022.3.15f1c1）；业务在 `Assets/GameScripts`，项目 Editor 在 `Assets/Editor/RevGame`，资源在 `Assets/GameRes`，Shader 在 `Assets/GameShader`。`Assets/Revolution` 是导出快照；需要改框架时回 Revolution 源仓库 `main` 修改、验证、重新导出。这里没有 `Assets/Revolution.Demo`。
 
@@ -68,6 +70,7 @@ Editor Play 出现材质粉屏、Shader 名称存在但画面错误，或切换�
 - **九路围棋与决斗：** 玩家和 GM 走 `PvpService.Submit`，与本地 AI、外部 Agent 汇入 `SubmitActor`，`GoCore` 负责棋规。网络收发与对局显示各自维护生命周期。原生决斗通过 `DuelCorePipe` 执行完整连续帧，按真实双端帧号、快照、哈希和回放验收。实现位置查项目地图。
 - **UI 契约：** `OnBindView` 装配，`OnRefreshView` 落屏，交互只转发真实业务；关闭自身用 `CloseSelf()`。节点路径、绑定字段、按钮路由和 Prefab 必须一致；新增或重制 UI 使用已有 Sprite、正确裁切与九宫格，适用底板为 `Image.Type.Sliced`。
 - **资源与生命周期：** 运行期只用生成逻辑路径或两段式加载，不拼 `StreamingAssets/Application.dataPath`。`GameSpriteAtlasService` 与 `GamePoolRequests` 组合框架门面，引用与池租约成对；回池/退出先令旧回调过期，再取消动画/计时器、归池与清队列。棋子使用共享材质，不每帧访问 `renderer.material`。
+- **资产位置：** 项目材质归 `Assets/GameRes/Material/<模块>`，Shader 归 `Assets/GameShader`。移动时用 Unity AssetDatabase/已注册 RevCLI 动作并保留原 `.meta`，核对 GUID、引用、图集与 AB。项目资源打包前仍运行现有 `GameResourceUsage.Validate`。
 - **规则一致性：** 占格只由 `BoardModel.Place/Move/Remove/Reset` 改；气眼按占格、加气、围困免疫等真实输入失效。AI 复用调用方缓冲与独立深快照，不移动实战棋子试算；死亡、补子、换位、复活后的更新不能漏。
 - **配置与生成目录：** 策划可调数值进入现有 Excel → RevCLI 导表 → 强类型校验链；不改生成文件作为源头，不顺手移动 `Generated`。无尽使用独立表与配置入口，改变共享规则须验远征回归。
 - **报告与 Git：** `.codex/skills` 入库；原始证据/依赖/本机配置留 `.codex/work` 或相应忽略目录。报告保留 HTML 与必要截图/GIF，不生成 ZIP，不导出 Profiler 录制或内存快照，不自动 `SaveProfile`。Unity 缓存、生成 csproj/sln、外部 AB 和安装包不提交；用户指定的 `Assets/StreamingAssets` 可入库。

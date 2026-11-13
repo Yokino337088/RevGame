@@ -2,6 +2,8 @@
 
 搭场景、制作/修改 Prefab、UI、导入图片、材质、动画、编译、导表、AB 和出包时读本篇，并联动 [revolution-unity-editor](../../revolution-unity-editor/SKILL.md)。优先项目相邻的 `Revolution.RevCLI/rev.py`，真实游戏测试再切本项目要求的 RevMCP。
 
+新建或迁移材质先在 `Assets/GameRes/Material/<模块>` 选目录，Shader 用 `Assets/GameShader`。保存、移动和删除后运行 `python tools/RevPolicy/check.py` 检查路径与 GUID，再按工程现有构建流程验证 AB 标记和引用。
+
 ## 连接、发现、保护现场
 
 在仓库根执行；解释器按机器发现，不把本机路径保存成技能配置：
