@@ -8,6 +8,17 @@
 
 namespace RevGameCore
 {
+    namespace
+    {
+        // 位移用累计缓入缓出曲线。相邻采样作差，整数舍入也能在命中帧恰好走完全程。
+        int32_t AdvanceAt(int32_t distance, int32_t age, int32_t duration)
+        {
+            const int64_t t = std::clamp(age, 0, duration);
+            const int64_t d = duration;
+            return static_cast<int32_t>(distance * t * t * (3 * d - 2 * t) / (d * d * d));
+        }
+    }
+
     // 先校验配置范围，再初始化角色，保证后续定点整数运算有界。
     bool DuelWorld::Start(const Settings& settings, uint64_t seed)
     {
@@ -118,6 +129,12 @@ namespace RevGameCore
         if (recovering && !starts)
         {
             ++fighter.Age;
+            // 命中前才移动。受击取消后动作清零，检查点也能从动作年龄继续计算同一段轨迹。
+            const int duration = Config[AttackOffset(fighter.Action) + 2];
+            const int distance = Config[ChainOffset(fighter.Action) + 2];
+            const int step = AdvanceAt(distance, fighter.Age, duration) - AdvanceAt(distance, fighter.Age - 1, duration);
+            fighter.X = std::clamp(fighter.X + FixedPoint::FromRaw(fighter.Facing * step),
+                FixedPoint::FromRaw(-Config[1]), FixedPoint::FromRaw(Config[1]));
             // 坠枪的命中年龄同时落地。下扎发生在伤害阶段前，确保地面目标可被同帧判中。
             if (fighter.Action == 4 && fighter.Age == Config[AttackOffset(4) + 2])
             {
@@ -136,11 +153,10 @@ namespace RevGameCore
         fighter.Age = 0;
         fighter.Landed = false;
 
-        // 普通移动与招式启动位移都使用定点数和同一场地边界。
+        // 普通移动和招式位移共用场地边界。起手这一帧只提交动作，前冲从下一帧平滑推进。
         const int direction = (input & 1) != 0 ? -1 : (input & 2) != 0 ? 1 : 0;
         const int step = recovering ? 0 : direction * Config[2];
-        const int lunge = action == 0 ? 0 : fighter.Facing * Config[ChainOffset(action) + 2];
-        const auto delta = FixedPoint::FromRaw(step + lunge);
+        const auto delta = FixedPoint::FromRaw(step);
         fighter.X = std::clamp(fighter.X + delta, FixedPoint::FromRaw(-Config[1]), FixedPoint::FromRaw(Config[1]));
         // 坠枪从地面起手时进入与普通跳跃相同的第一步定点状态。检查点可沿用同一高度验证。
         if (action == 4 && fighter.Y == ground)

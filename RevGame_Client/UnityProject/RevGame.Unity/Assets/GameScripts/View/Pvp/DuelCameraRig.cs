@@ -22,8 +22,6 @@ namespace RevGame.View
         private float _center, _centerSpeed;
         // 镜头尺寸与其速度，缩远较快，回到近景较慢。
         private float _zoom = 1f, _zoomSpeed;
-        // 起跳时稍向上看，落地平缓回到同一个地平线。
-        private float _lift, _liftSpeed;
         // 第一次采样直接取开局位置，避免从编辑器构图突然划过场地。
         private bool _initialized;
         // 命中冲量的当前剩余秒数、总秒数和横向峰值。
@@ -54,7 +52,7 @@ namespace RevGame.View
         /// <summary>实际命中后触发一次定向冲量。用强度覆盖弱效果，快速连击也不会连续硬切镜头。</summary>
         public void Hit(int action, int facing)
         {
-            float power = action == 3 ? 18f : action is 2 or 4 ? 10f : 3f;
+            float power = action == 3 ? 9f : action is 2 or 4 ? 5f : 2f;
             if (_hitLeft > 0 && power < _hitPower)
             {
                 return;
@@ -94,8 +92,8 @@ namespace RevGame.View
             return x <= -DuelConfig.ArenaExtent ? -1 : x >= DuelConfig.ArenaExtent ? 1 : 0;
         }
 
-        /// <summary>以同一帧两席横坐标和跳跃高度构图，先确保角色安全边距，再限制背景不露出画布边缘。</summary>
-        public void Paint(float blackX, float whiteX, float height, float seconds)
+        /// <summary>以两席横坐标构图。角色跳跃由舞台内坐标表现，镜头高度保持贴地。</summary>
+        public void Paint(float blackX, float whiteX, float seconds)
         {
             float width = Fighters.rect.width;
             float canvasHeight = Fighters.rect.height;
@@ -116,7 +114,7 @@ namespace RevGame.View
             // 留出身体宽度和小幅冲量。远距即时退到安全倍率，近距用较慢速度回到中景。
             const float bodyMargin = 198;
             float safeZoom = width * .92f / (span + bodyMargin * 2);
-            float desiredZoom = Mathf.Min(safeZoom, 1.04f + .085f * focus);
+            float desiredZoom = Mathf.Min(safeZoom, 1.04f + .045f * focus);
             float middle = (blackX + whiteX) * .5f;
             if (!_initialized)
             {
@@ -148,10 +146,10 @@ namespace RevGame.View
             _hitLeft = Mathf.Max(0, _hitLeft - dt);
             float decay = _hitDuration > 0 ? _hitLeft / _hitDuration : 0;
             float kick = 6.75f * (1 - decay) * decay * decay * _hitPower;
-            _lift = Mathf.SmoothDamp(_lift, -Mathf.Clamp(height * .16f, 0, 54), ref _liftSpeed, .18f, Mathf.Infinity, dt);
-            float floor = _lift - Mathf.Max(0, 1 - _zoom) * 220;
+            // 以角色地面锚点缩放。命中冲量只在水平方向作用，地平线不随大招起伏。
+            const float floor = 0f;
             Fighters.localScale = new Vector3(_zoom, _zoom, 1);
-            Fighters.anchoredPosition = new Vector2(-_center * _zoom - kick * _hitDirection, floor + kick * .24f);
+            Fighters.anchoredPosition = new Vector2(-_center * _zoom - kick * _hitDirection, floor);
 
             // 预留屏幕出血，用地面和天空各自所需的高度确定大图尺寸。宽屏缩远时仍铺满。
             RectTransform art = Backdrop.rectTransform;

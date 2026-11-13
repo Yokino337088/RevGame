@@ -52,13 +52,18 @@ Shader "RevGame/Pvp/Duel Arena Energy"
                 if (shape < 0.5)
                 {
                     // 结界两侧是缓慢流动的法纹。触边后法纹从脚边向上扫过。
-                    float band = exp2(-30.0 * abs(uv.y - phase));
+                    // 触边时先亮起脚底冲击环，接着沿晶柱扫出几层六边法纹。
+                    float life = 1.0 - phase;
+                    float band = exp2(-20.0 * abs(uv.y - phase)) * life;
                     float fade = smoothstep(0.0, 0.13, uv.y) * (1.0 - smoothstep(0.68, 1.0, uv.y));
                     float drift = abs(frac(uv.y * 12.0 - _Time.y * 1.3) - 0.5);
                     float diamond = abs(xy.x) + drift * 2.0;
                     core = (1.0 - smoothstep(0.035, 0.16, abs(xy.x))) * fade;
                     core += (1.0 - smoothstep(0.02, 0.12, abs(diamond - 0.55))) * band * fade;
-                    glow = exp2(-5.0 * abs(xy.x)) * fade * (0.28 + band);
+                    float2 baseUv = float2(xy.x, (uv.y - .16) * 4.6);
+                    float ring = 1.0 - smoothstep(.015, .10, abs(length(baseUv) - lerp(.12, .88, phase)));
+                    core += ring * life * .85;
+                    glow = exp2(-5.0 * abs(xy.x)) * fade * (0.28 + band) + ring * life * .3;
                 }
                 else if (shape < 1.5)
                 {

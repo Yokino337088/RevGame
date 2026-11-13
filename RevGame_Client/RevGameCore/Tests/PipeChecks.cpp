@@ -13,13 +13,16 @@
 using namespace RevGameCore;
 
 // Release 也执行的断言；失败用非零退出码通知 CTest。
-void Check(bool result)
+void CheckAt(bool result, int line)
 {
     if (!result)
     {
+        std::fprintf(stderr, "PipeChecks.cpp:%d failed\n", line);
         std::abort();
     }
 }
+
+#define Check(result) CheckAt((result), __LINE__)
 
 // 以生产端的固定小端布局编测试包，模板参数表示整数项数。
 template <std::size_t Size>
@@ -109,7 +112,7 @@ void CheckCheckpoint(const StartWords& settings)
     Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
     Check(ReadWord(first.data()) == 0);
     // v8 开局指纹锁定双席距离配置、高位非零的种子和负坐标。
-    Check(ReadWord(first.data() + 64) == 0x463ef889u);
+    Check(ReadWord(first.data() + 64) == 0x3d994828u);
 
     auto foreign = settings;
     ++foreign.back();
@@ -277,21 +280,39 @@ void CheckSeatReach(const StartWords& settings)
             for (const int beyond : {0, 1})
             {
                 // 双方在场地中心对称出生。多放一个单位的出生间隔，双方之间就多两个单位。
-                Check((reach + lunge) % 2 == 0);
                 auto config = settings;
                 config[2 + 4] = (reach + lunge) / 2 + beyond;
+                // 奇数距离不能由对称出生点单独构造，起手用一单位步进校正奇偶。
+                const int parity = (reach + lunge) % 2;
+                config[2 + 2] = 1;
                 auto core = GameCore_Create();
                 const auto start = Encode(config);
                 Check(GameCore_Write(core, start.data(), int(start.size())) == 1);
                 DisplayBytes frameOutput{};
+                int previousX = 0;
+                int launchX = 0;
                 for (int frame = 1; frame <= hitFrame; ++frame)
                 {
-                    const int intent = frame == startFrame ? action << 2 : 0;
+                    const int intent = frame == startFrame ? (action << 2) | (parity == 0 ? 0 : seat == Black ? 1 : 2) : 0;
                     const auto packet = Encode(std::array<int32_t, 5>{WireVersion, 2, frame,
                         seat == Black ? intent : 0, seat == White ? intent : 0});
                     Check(GameCore_Write(core, packet.data(), int(packet.size())) == 1);
                     Check(GameCore_Read(core, frameOutput.data(), int(frameOutput.size())) == int(frameOutput.size()));
+                    const int x = ReadSignedWord(frameOutput.data() + (2 + seat * 6) * 4);
+                    if (frame == startFrame)
+                    {
+                        launchX = x;
+                        Check(std::abs(x) == config[2 + 4] + parity);
+                    }
+                    if (frame > startFrame && lunge > 0)
+                    {
+                        // 前冲持续至命中，每帧只走全程的一部分；双方分别用同一边界用例验证。
+                        const int step = (x - previousX) * (seat == Black ? 1 : -1);
+                        Check(step > 0 && step < lunge);
+                    }
+                    previousX = x;
                 }
+                Check(std::abs(previousX - launchX) == lunge);
                 const auto damage = ReadSignedWord(frameOutput.data() + (14 + seat) * 4);
                 Check(damage == (beyond == 0 ? config[2 + attack] : 0));
                 GameCore_Destroy(core);
@@ -308,7 +329,7 @@ void CheckDerivedSeatReach(const StartWords& settings)
     const int secondAdvance = settings[2 + ChainOffset(5) + 2];
     for (const Seat seat : SeatOrder)
     {
-        const int openingDistance = settings[2 + HitRangeOffset(seat, 1)] - 100;
+        const int openingDistance = (settings[2 + HitRangeOffset(seat, 1)] - 100) & ~1;
         for (const int action : {5, 6})
         {
             const int attack = AttackOffset(action);
@@ -482,7 +503,7 @@ int main()
         {
             Check(left[68] != 0 || left[69] != 0);
             // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
-            Check(ReadWord(left.data() + 64) == 0x24a7d421u);
+            Check(ReadWord(left.data() + 64) == 0x08867bb0u);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);

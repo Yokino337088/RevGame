@@ -29,11 +29,12 @@ Shader "RevGame/Pvp/ArenaBackdrop"
             sampler2D _MainTex;
             float _Style, _Strength;
 
-            // UI 矩形与世界 Quad 都提供位置和 UV。颜色由原画及材质控制。
+            // UI 矩形和世界 Quad 共用采样。Image 的顶点颜色用于大招时平缓压暗原画。
             struct Input
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                half4 tint : COLOR;
             };
 
             // 投影后仍保留 0~1 的原画坐标，方便灯光对齐构图。
@@ -41,6 +42,7 @@ Shader "RevGame/Pvp/ArenaBackdrop"
             {
                 float4 position : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                half4 tint : COLOR;
             };
 
             // 把物体坐标变成 GPU 的裁剪空间。屏幕尺寸改变时，特效与画面仍使用同一套 UV。
@@ -49,6 +51,7 @@ Shader "RevGame/Pvp/ArenaBackdrop"
                 Varyings output;
                 output.position = UnityObjectToClipPos(input.vertex);
                 output.uv = input.uv;
+                output.tint = input.tint;
                 return output;
             }
 
@@ -58,20 +61,14 @@ Shader "RevGame/Pvp/ArenaBackdrop"
                 return 1 - smoothstep(0, radius, length((uv - center) * float2(1.7778, 1)));
             }
 
-            // 擂台顶部两盏灯缓慢扫向中央，绳索附近扫过金光。保留角色交手区域的原画对比度。
+            // 金色日光留在天空，青光贴着两侧晶柱。战斗区不做 UV 扭曲，角色与地面保持清楚。
             float3 BoxingLights(float2 uv, float time)
             {
-                float height = saturate(1 - uv.y);
-                float leftAxis = .22 + height * (.25 + .13 * sin(time * 1.5));
-                float rightAxis = .78 - height * (.25 + .13 * sin(time * 1.5 + 1.8));
-                float beamWidth = .025 + height * .11;
-                float left = 1 - smoothstep(.01, beamWidth, abs(uv.x - leftAxis));
-                float right = 1 - smoothstep(.01, beamWidth, abs(uv.x - rightAxis));
-                float upper = smoothstep(.30, .78, uv.y);
-                float ropes = 1 - smoothstep(.01, .11, abs(uv.y - .40));
-                float glint = pow(.5 + .5 * sin(uv.x * 18 - time * 3), 9) * ropes;
-                return (left * float3(.28, .10, .51) + right * float3(.45, .19, .09)) * upper
-                    + glint * float3(.32, .18, .045);
+                float sky = smoothstep(.48, .83, uv.y);
+                float rays = smoothstep(.48, .95, .5 + .5 * sin(uv.x * 29 - uv.y * 9 + time * .55));
+                float pillars = Glow(uv, float2(.173, .37), .20) + Glow(uv, float2(.827, .37), .20);
+                float drift = .65 + .20 * sin(uv.y * 24 - time * 1.6);
+                return sky * rays * float3(.20, .13, .045) + pillars * drift * float3(.045, .25, .22);
             }
 
             // 拱顶投下金色光束，两侧柱廊映出紫色魔力和上升的星火。棋盘中心由棋盘自身遮盖。
@@ -101,7 +98,7 @@ Shader "RevGame/Pvp/ArenaBackdrop"
                 half4 art = tex2D(_MainTex, input.uv);
                 float3 light = _Style < .5 ? BoxingLights(input.uv, _Time.y) : TempleLights(input.uv, _Time.y);
                 art.rgb += light * (.42 + .58 * art.rgb) * _Strength;
-                return art;
+                return art * input.tint;
             }
             ENDCG
         }

@@ -104,9 +104,9 @@ namespace RevGame.Pvp
                 _duelArenaResult["boundaryX"] = service.DuelSnapshot.FirstX;
                 _duelArenaResult["backdrop"] = view.CameraRig.Backdrop.sprite.name;
 
-                // 用同一触点走进扩大后的技能一射程，正式 HUD 点击产生权威命中。
+                // 按当前角色的配置进入技能一射程，避免距离调优后测试仍按旧常量站位。
                 DragDuelStick(stick, move, .76f);
-                await WaitForDuelControl(id, () => service.DuelSnapshot.SecondX - service.DuelSnapshot.FirstX <= 3100 &&
+                await WaitForDuelControl(id, () => service.DuelSnapshot.SecondX - service.DuelSnapshot.FirstX <= DuelConfig.ActionRange(yaya, 2) &&
                     service.DuelSnapshot.FirstEnergy >= DuelConfig.SkillCost, "进入新版技能射程");
                 ExecuteEvents.Execute(stick, move, ExecuteEvents.pointerUpHandler);
                 ClickDuelHudButton(hud.Skill.gameObject, press);

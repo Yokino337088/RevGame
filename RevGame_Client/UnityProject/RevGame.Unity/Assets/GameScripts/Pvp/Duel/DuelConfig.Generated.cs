@@ -5,7 +5,7 @@ namespace RevGame.Pvp.Duel
     public static class DuelConfig
     {
         // 原生 FIFO 协议版本，同时纳入联机决斗指纹。
-        internal const int CoreProtocol = 8;
+        internal const int CoreProtocol = 9;
         // 从第几手开始允许判定中局劣势。
         public const int MinimumMove = 24;
         // 入场最小估算分差，单位为半目。
@@ -23,12 +23,12 @@ namespace RevGame.Pvp.Duel
         {
             return action switch
             {
-                1 => yaya ? 2176 : 2240,
-                2 => yaya ? 4080 : 3600,
-                3 => yaya ? 5040 : 4800,
-                4 => yaya ? 3280 : 2880,
-                5 => yaya ? 2336 : 2400,
-                6 => yaya ? 2528 : 2656,
+                1 => yaya ? 1523 : 1568,
+                2 => yaya ? 2856 : 2520,
+                3 => yaya ? 3528 : 3360,
+                4 => yaya ? 2296 : 2016,
+                5 => yaya ? 1635 : 1680,
+                6 => yaya ? 1770 : 1859,
                 _ => 0
             };
         }
@@ -77,11 +77,11 @@ namespace RevGame.Pvp.Duel
             };
         }
         // 两席握手比较的 31 位规则指纹。
-        public const int Fingerprint = 1560293796;
+        public const int Fingerprint = 715698469;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
         public static int[] CreateCoreWords(bool firstYaya = false, bool secondYaya = true)
         {
-            int[] result = { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 2240, 3, 8, 0, 15, 3600, 4, 12, 16, 32, 4800, 7, 20, 55, 540, 68, 480, 18, 2880, 5, 14, 20, 10, 2400, 3, 8, 0, 13, 2656, 4, 11, 0, 5, 8, 0, 15, 6, 12, 420, 12, 21, 16, 210, 0, 7, 13, 100, 6, 5, 9, 110, 15, 6, 11, 150, 14, 2176, 4080, 5040, 3280, 2336, 2528 };
+            int[] result = { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1568, 3, 8, 0, 15, 2520, 4, 12, 16, 32, 3360, 7, 20, 55, 540, 68, 480, 18, 2016, 5, 14, 20, 10, 1680, 3, 8, 0, 13, 1859, 4, 11, 0, 4, 8, 0, 15, 5, 12, 420, 12, 21, 16, 210, 0, 6, 13, 100, 6, 4, 9, 110, 15, 5, 11, 150, 14, 1523, 2856, 3528, 2296, 1635, 1770 };
             // 原生字节布局仍按座位。锁角后把对应角色的距离写进原座位槽，不改变 FIFO 或 DLL。
             result[10] = ActionRange(firstYaya, 1);
             result[15] = ActionRange(firstYaya, 2);

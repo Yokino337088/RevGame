@@ -243,7 +243,6 @@ namespace RevGame.View
             // 镜头跟随两张已确认快照；预测只影响当前操作者的角色层坐标。
             float confirmedFirstX = firstPosition.x;
             float confirmedSecondX = secondPosition.x;
-            float confirmedHeight = Mathf.Max(firstPosition.y, secondPosition.y);
             int firstAltitude = view.FirstY;
             // 白方的贴图和屏幕坐标使用同一插值高度，起跳与触地不会错开一帧。
             int secondAltitude = Mathf.RoundToInt(Mathf.Lerp(view.SecondY, next.SecondY, fraction));
@@ -277,7 +276,7 @@ namespace RevGame.View
             PaintActor(First, firstPosition, _firstDrawFacing);
             PaintActor(Second, secondPosition, _secondDrawFacing);
             PaintMirrorBadges();
-            CameraRig.Paint(confirmedFirstX, confirmedSecondX, confirmedHeight, Time.unscaledDeltaTime);
+            CameraRig.Paint(confirmedFirstX, confirmedSecondX, Time.unscaledDeltaTime);
             FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction,
                 _blackYaya ? SampleYayaJumpPose(0, firstAltitude) : -1);
             SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction,
