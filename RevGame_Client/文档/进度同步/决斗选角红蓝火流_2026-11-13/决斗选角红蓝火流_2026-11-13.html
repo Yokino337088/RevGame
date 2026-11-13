@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>决斗选角红蓝火流验收</title>
+  <style>
+    :root { --ink: #25352f; --muted: #65736b; --green: #326956; --line: #dce3da; --paper: #f6f7f2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.8 "Microsoft YaHei", sans-serif; }
+    header { padding: 38px 5vw; border-bottom: 1px solid var(--line); background: linear-gradient(135deg, #fefdf5, #e6efe1); }
+    .wrap { width: min(1120px, 90vw); margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: clamp(27px, 4vw, 42px); line-height: 1.3; }
+    header p { margin: 0; color: var(--muted); }
+    main { padding: 24px 0 44px; }
+    section { margin-bottom: 18px; padding: 20px 24px; border: 1px solid var(--line); border-radius: 16px; background: #fffefa; }
+    h2 { margin: 0 0 10px; font-size: 21px; color: var(--green); }
+    p { margin: 8px 0; }
+    figure { margin: 12px 0; }
+    img { display: block; width: 100%; height: auto; border-radius: 10px; }
+    figcaption { margin-top: 6px; color: var(--muted); font-size: 14px; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0; }
+    dt { font-weight: 700; } dd { margin: 0; }
+    code { font: 13px/1.65 Consolas, monospace; overflow-wrap: anywhere; }
+    @media (max-width: 620px) { section { padding: 16px; } dl { display: block; } dd { margin-bottom: 10px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>决斗选角红蓝火流验收</h1>
+      <p>2026-11-13 · Unity 2022.3.15f1c1 · Windows Editor / DX11 · PC 资源包</p>
+    </div>
+  </header>
+  <main class="wrap">
+    <section>
+      <h2>选角实景</h2>
+      <figure>
+        <img src="选角实景.jpg" width="1600" height="900" alt="左侧绯焰与右侧鸦鸦的全身立绘，各自脚下有独立的角色姓名和状态铭牌">
+        <figcaption>画布按 1920×1080 设计。立绘尺寸从 510 调至绯焰 816、鸦鸦 765。按原图的可见像素估算，立绘与铭牌上沿的间距约为 21 和 33 个设计单位。</figcaption>
+      </figure>
+      <figure>
+        <img src="红蓝火流实录.gif" width="720" height="405" alt="从实际选角画面连拍的两侧火流和火星">
+        <figcaption>从同一次选角连续截取 14 帧。红蓝两侧的火舌与火星随时间变化，中间的倒计时与角色卡保持清晰。</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>流程和资源</h2>
+      <dl>
+        <dt>首次加载</dt>
+        <dd>从 StartScene 冷启动。<code>rev_discover</code> 确认实际注册表，<code>rev_call pvp.state</code> 确认在大厅且已启用真实 AB。<code>rev_run</code> 通过本地人机决斗进入选角，确认背景 Sprite 已打进图集，裂隙 Shader 可用。</dd>
+        <dt>换角与重入</dt>
+        <dd>通过 EventSystem 点选鸦鸦，权威状态为双鸦鸦。切回绯焰，取消后回到大厅。重进选角并确认，双方锁定后进入 PvpDuelScene。</dd>
+        <dt>编译与收尾</dt>
+        <dd>进 Play 前的完整重编工单 <code>f1cadb2703d545cd84f2ce76349a77fc</code> 已完成，零错误。运行与清理均通过，Unity Console 错误数为零，编辑器退出 Play 后回到 StartScene。</dd>
+        <dt>双平台资源</dt>
+        <dd>PC 和 Android 各构建并校验 86 个包。图集唯一覆盖、包依赖和复制后的文件哈希已核对。Android 真机画面与帧率待设备验证。</dd>
+        <dt>换机字库</dt>
+        <dd>文本统一换行为 LF 后校验，438 份字库输入已核对。Unity 验证 1811 个字形可用，最后一次完整重编工单 <code>79eeb7859fcc4184aaf7304399fc60fc</code> 零错误。</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>框架使用</h2>
+      <p>RevUI 装配并关闭选角与加载面板，现有资源门面加载共享图集和材质。角色布局和火焰着色都由项目资产承载，双方选角仍走已有权威流程。</p>
+    </section>
+  </main>
+</body>
+</html>

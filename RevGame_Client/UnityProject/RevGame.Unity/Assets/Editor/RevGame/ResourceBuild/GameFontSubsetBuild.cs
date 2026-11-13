@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using Revolution.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -74,8 +75,10 @@ namespace RevGame.Editor
             foreach (Input input in manifest.inputs)
             {
                 expected.Add(input.path);
+                // C#、Prefab 等文本允许 Git 转换换行。Excel 是二进制，继续校验原始字节。
+                bool normalizeText = Path.GetExtension(input.path) != ".xlsx";
 
-                if (Hash(Path.Combine(repository, input.path)) != input.sha256)
+                if (Hash(Path.Combine(repository, input.path), normalizeText) != input.sha256)
                 {
                     throw new InvalidOperationException("字库输入变更，请重新生成：" + input.path);
                 }
@@ -100,13 +103,26 @@ namespace RevGame.Editor
             }
             return manifest.characterCount + "个字符全部可用，原件/字库SHA256及输入清单一致";
         }
-        /// <summary>文件流哈希用于构建期，不在游戏每帧检查；文件缺失即明确失败。</summary>
-        private static string Hash(string path)
+        /// <summary>构建期校验。仅文案输入统一 CRLF 到 LF，字体及 Excel 仍按原始字节校验。</summary>
+        private static string Hash(string path, bool normalizeText = false)
         {
             using (SHA256 sha = SHA256.Create())
-            using (FileStream stream = File.OpenRead(path))
             {
-                return BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", string.Empty).ToLowerInvariant();
+                byte[] digest;
+                if (normalizeText)
+                {
+                    // 保留 BOM 和其它字节，与 font-subset.py 只转换换行的行为一致。
+                    string text = Encoding.UTF8.GetString(File.ReadAllBytes(path)).Replace("\r\n", "\n");
+                    digest = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
+                }
+                else
+                {
+                    using (FileStream stream = File.OpenRead(path))
+                    {
+                        digest = sha.ComputeHash(stream);
+                    }
+                }
+                return BitConverter.ToString(digest).Replace("-", string.Empty).ToLowerInvariant();
             }
         }
         [RevAutomationAction("game.font-subset.check", Environment = "edit", Keys = new string[0], Description = "检查精简字库输入和全部字符，缺字拒绝构建")]

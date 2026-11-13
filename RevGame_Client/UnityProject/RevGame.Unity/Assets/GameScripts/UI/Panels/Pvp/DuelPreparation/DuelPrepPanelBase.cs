@@ -35,6 +35,9 @@ namespace RevGame.Pvp
         public Text Status;
         public Image Meter;
         public Text Percent;
+        // 选角立绘的正方形设计尺寸。加载页留为 0，沿用各自的固定构图。
+        public float EmberPortraitSize;
+        public float YayaPortraitSize;
         // 这些值仅驱动画面，不参与锁定或进度放行。
         private bool _locked;
         private int _target = -1;
@@ -49,9 +52,16 @@ namespace RevGame.Pvp
             {
                 Portrait.sprite = sprite;
                 Echo.sprite = sprite;
-                Portrait.rectTransform.DOKill();
-                Portrait.rectTransform.localScale = Vector3.one * .94f;
-                Portrait.rectTransform.DOScale(1f, .32f).SetEase(Ease.OutBack).SetUpdate(true);
+                RectTransform portraitRect = Portrait.rectTransform;
+                float size = role == DuelRole.Yaya ? YayaPortraitSize : EmberPortraitSize;
+                if (size > 0)
+                {
+                    // 先匹配新角色的透明留白，再从脚下播放缩放。倒计时刷新时不会重复装配。
+                    portraitRect.sizeDelta = new Vector2(size, size);
+                }
+                portraitRect.DOKill();
+                portraitRect.localScale = Vector3.one * .94f;
+                portraitRect.DOScale(1f, .32f).SetEase(Ease.OutBack).SetUpdate(true);
                 Portal.DOKill();
                 Portal.localScale = Vector3.one;
                 Portal.DOPunchScale(Vector3.one * .20f, .45f, 1, .6f).SetUpdate(true);

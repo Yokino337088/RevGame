@@ -60,6 +60,9 @@ def collect():
     tokens = re.compile(r'//[^\n]*|/\*.*?\*/|(?:\$@|@\$|@)"(?:[^"]|"")*"|\$?"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', re.S)
     for path in inputs():
         raw = path.read_bytes()
+        # Windows 检出可能把文本转为 CRLF。与 Unity 的构建门禁统一按 LF 计算文本哈希，Excel 原样校验。
+        if path.suffix != ".xlsx":
+            raw = raw.replace(b"\r\n", b"\n")
         records.append({"path": path.relative_to(ROOT).as_posix(), "sha256": sha(raw)})
         if path.suffix == ".xlsx":
             with zipfile.ZipFile(path) as archive:

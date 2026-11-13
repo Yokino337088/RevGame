@@ -1,351 +1,93 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-11-12 23:19:08",
+  "buildTime": "2026-11-13 17:08:58",
   "bundles": [
-    {
-      "name": "atlas_boardstatus",
-      "size": 278106
-    },
-    {
-      "name": "atlas_bosschapter01frames",
-      "size": 380310
-    },
-    {
-      "name": "atlas_bosschapter02frames",
-      "size": 425418
-    },
-    {
-      "name": "atlas_bosschapter03frames",
-      "size": 423215
-    },
-    {
-      "name": "atlas_bosschapter04frames",
-      "size": 395819
-    },
-    {
-      "name": "atlas_bosschapter05frames",
-      "size": 419601
-    },
-    {
-      "name": "atlas_bosschapter06frames",
-      "size": 445284
-    },
-    {
-      "name": "atlas_combatframes",
-      "size": 1307241
-    },
-    {
-      "name": "atlas_duelhud",
-      "size": 163196
-    },
-    {
-      "name": "atlas_duelprep",
-      "size": 1000381
-    },
-    {
-      "name": "atlas_endlesscardarrow",
-      "size": 28356
-    },
-    {
-      "name": "atlas_endlesshearteye",
-      "size": 13509
-    },
-    {
-      "name": "atlas_helperframes",
-      "size": 113387
-    },
-    {
-      "name": "atlas_helperstormframes",
-      "size": 535172
-    },
-    {
-      "name": "atlas_pieceframes",
-      "size": 942810
-    },
-    {
-      "name": "atlas_pvpagent",
-      "size": 14146
-    },
-    {
-      "name": "atlas_pvpdefeat",
-      "size": 267781
-    },
-    {
-      "name": "atlas_ui_tavern_imgbkatlas",
-      "size": 491211
-    },
-    {
-      "name": "atlas_uibattle",
-      "size": 283694
-    },
-    {
-      "name": "atlas_uimenus",
-      "size": 407409
-    },
-    {
-      "name": "atlas_yayacombatexpressions",
-      "size": 5373184
-    },
-    {
-      "name": "atlas_yayaexpressions",
-      "size": 8069546
-    },
-    {
-      "name": "atlas_yayaidle24",
-      "size": 5670530
-    },
-    {
-      "name": "audio_bgm",
-      "size": 703889
-    },
-    {
-      "name": "audio_bgm_chapter01",
-      "size": 1480154
-    },
-    {
-      "name": "audio_bgm_chapter02",
-      "size": 1348960
-    },
-    {
-      "name": "audio_bgm_chapter03",
-      "size": 1608428
-    },
-    {
-      "name": "audio_bgm_chapter04",
-      "size": 1826495
-    },
-    {
-      "name": "audio_bgm_chapter05",
-      "size": 2288922
-    },
-    {
-      "name": "audio_bgm_chapter06",
-      "size": 1419599
-    },
-    {
-      "name": "audio_bgm_endless_endless01_checkpoint",
-      "size": 1842690
-    },
-    {
-      "name": "audio_bgm_endless_endless02_surf",
-      "size": 2069812
-    },
-    {
-      "name": "audio_bgm_endless_endless03_unbreakable",
-      "size": 2201998
-    },
-    {
-      "name": "audio_boss_chapter01",
-      "size": 72975
-    },
-    {
-      "name": "audio_boss_chapter02",
-      "size": 114613
-    },
-    {
-      "name": "audio_boss_chapter03",
-      "size": 214114
-    },
-    {
-      "name": "audio_boss_chapter04",
-      "size": 67474
-    },
-    {
-      "name": "audio_boss_chapter05",
-      "size": 13438
-    },
-    {
-      "name": "audio_boss_chapter06",
-      "size": 23868
-    },
-    {
-      "name": "audio_boss_common",
-      "size": 4119
-    },
-    {
-      "name": "audio_endless",
-      "size": 8763
-    },
-    {
-      "name": "audio_helper",
-      "size": 17744
-    },
-    {
-      "name": "audio_pvp",
-      "size": 7406
-    },
-    {
-      "name": "audio_sfx",
-      "size": 10256
-    },
-    {
-      "name": "background_chapter01_tutorial",
-      "size": 820411
-    },
-    {
-      "name": "background_chapter02_village",
-      "size": 463818
-    },
-    {
-      "name": "background_chapter03_lake",
-      "size": 519621
-    },
-    {
-      "name": "background_chapter04_swamp",
-      "size": 607518
-    },
-    {
-      "name": "background_chapter05_ice",
-      "size": 1586149
-    },
-    {
-      "name": "background_chapter06_temple",
-      "size": 492312
-    },
-    {
-      "name": "background_temple_shared",
-      "size": 1017160
-    },
-    {
-      "name": "battle_board",
-      "size": 6858
-    },
-    {
-      "name": "battle_boss",
-      "size": 3008
-    },
-    {
-      "name": "battle_feedback",
-      "size": 9946
-    },
-    {
-      "name": "battle_helper",
-      "size": 26433
-    },
-    {
-      "name": "battle_helper_fx",
-      "size": 73736
-    },
-    {
-      "name": "battle_units",
-      "size": 9867
-    },
-    {
-      "name": "character_yaya",
-      "size": 13255
-    },
-    {
-      "name": "config_piece_art",
-      "size": 4335
-    },
-    {
-      "name": "config_story",
-      "size": 6883
-    },
-    {
-      "name": "config_yaya",
-      "size": 2203
-    },
-    {
-      "name": "data_tables",
-      "size": 35163
-    },
-    {
-      "name": "endless_arena",
-      "size": 66962
-    },
-    {
-      "name": "font_cjk",
-      "size": 743539
-    },
-    {
-      "name": "lobby_cottage",
-      "size": 584621
-    },
-    {
-      "name": "material_background",
-      "size": 2722
-    },
-    {
-      "name": "material_board",
-      "size": 2399
-    },
-    {
-      "name": "material_cards",
-      "size": 2462
-    },
-    {
-      "name": "material_combat",
-      "size": 4150
-    },
-    {
-      "name": "material_pieces",
-      "size": 2497
-    },
-    {
-      "name": "material_ui",
-      "size": 2829
-    },
-    {
-      "name": "pvp_arena",
-      "size": 5314
-    },
-    {
-      "name": "shared_shaders",
-      "size": 104225
-    },
-    {
-      "name": "ui_chapters_shared",
-      "size": 30018
-    },
-    {
-      "name": "ui_diagnostics",
-      "size": 6672
-    },
-    {
-      "name": "ui_endless",
-      "size": 16502
-    },
-    {
-      "name": "ui_items",
-      "size": 8240
-    },
-    {
-      "name": "ui_loading",
-      "size": 8017
-    },
-    {
-      "name": "ui_lobby",
-      "size": 11891
-    },
-    {
-      "name": "ui_pvp",
-      "size": 27262
-    },
-    {
-      "name": "ui_pvp_duelhud",
-      "size": 14707
-    },
-    {
-      "name": "ui_pvp_duelprep",
-      "size": 17164
-    },
-    {
-      "name": "ui_settings",
-      "size": 9338
-    },
-    {
-      "name": "ui_story",
-      "size": 8699
-    },
-    {
-      "name": "ui_victory",
-      "size": 5972
-    },
-    {
-      "name": "yaya_reaction",
-      "size": 7358
-    }
+    { "name": "atlas_boardstatus", "size": 278106 },
+    { "name": "atlas_bosschapter01frames", "size": 380310 },
+    { "name": "atlas_bosschapter02frames", "size": 425418 },
+    { "name": "atlas_bosschapter03frames", "size": 423215 },
+    { "name": "atlas_bosschapter04frames", "size": 395819 },
+    { "name": "atlas_bosschapter05frames", "size": 419601 },
+    { "name": "atlas_bosschapter06frames", "size": 445284 },
+    { "name": "atlas_combatframes", "size": 1307241 },
+    { "name": "atlas_duelhud", "size": 163196 },
+    { "name": "atlas_duelprep", "size": 1000381 },
+    { "name": "atlas_endlesscardarrow", "size": 28356 },
+    { "name": "atlas_endlesshearteye", "size": 13509 },
+    { "name": "atlas_helperframes", "size": 113387 },
+    { "name": "atlas_helperstormframes", "size": 535172 },
+    { "name": "atlas_pieceframes", "size": 942810 },
+    { "name": "atlas_pvpagent", "size": 14146 },
+    { "name": "atlas_pvpdefeat", "size": 267781 },
+    { "name": "atlas_ui_tavern_imgbkatlas", "size": 491211 },
+    { "name": "atlas_uibattle", "size": 283694 },
+    { "name": "atlas_uimenus", "size": 407409 },
+    { "name": "atlas_yayacombatexpressions", "size": 5373184 },
+    { "name": "atlas_yayaexpressions", "size": 8069546 },
+    { "name": "atlas_yayaidle24", "size": 5670530 },
+    { "name": "audio_bgm", "size": 703889 },
+    { "name": "audio_bgm_chapter01", "size": 1480154 },
+    { "name": "audio_bgm_chapter02", "size": 1348960 },
+    { "name": "audio_bgm_chapter03", "size": 1608428 },
+    { "name": "audio_bgm_chapter04", "size": 1826495 },
+    { "name": "audio_bgm_chapter05", "size": 2288922 },
+    { "name": "audio_bgm_chapter06", "size": 1419599 },
+    { "name": "audio_bgm_endless_endless01_checkpoint", "size": 1842690 },
+    { "name": "audio_bgm_endless_endless02_surf", "size": 2069812 },
+    { "name": "audio_bgm_endless_endless03_unbreakable", "size": 2201998 },
+    { "name": "audio_boss_chapter01", "size": 72975 },
+    { "name": "audio_boss_chapter02", "size": 114613 },
+    { "name": "audio_boss_chapter03", "size": 214114 },
+    { "name": "audio_boss_chapter04", "size": 67474 },
+    { "name": "audio_boss_chapter05", "size": 13438 },
+    { "name": "audio_boss_chapter06", "size": 23868 },
+    { "name": "audio_boss_common", "size": 4119 },
+    { "name": "audio_endless", "size": 8763 },
+    { "name": "audio_helper", "size": 17744 },
+    { "name": "audio_pvp", "size": 7406 },
+    { "name": "audio_sfx", "size": 10256 },
+    { "name": "background_chapter01_tutorial", "size": 820411 },
+    { "name": "background_chapter02_village", "size": 463818 },
+    { "name": "background_chapter03_lake", "size": 519621 },
+    { "name": "background_chapter04_swamp", "size": 607518 },
+    { "name": "background_chapter05_ice", "size": 1586149 },
+    { "name": "background_chapter06_temple", "size": 492312 },
+    { "name": "background_temple_shared", "size": 1017160 },
+    { "name": "battle_board", "size": 6858 },
+    { "name": "battle_boss", "size": 3008 },
+    { "name": "battle_feedback", "size": 9946 },
+    { "name": "battle_helper", "size": 26433 },
+    { "name": "battle_helper_fx", "size": 73736 },
+    { "name": "battle_units", "size": 9867 },
+    { "name": "character_yaya", "size": 13255 },
+    { "name": "config_piece_art", "size": 4335 },
+    { "name": "config_story", "size": 6883 },
+    { "name": "config_yaya", "size": 2203 },
+    { "name": "data_tables", "size": 35163 },
+    { "name": "endless_arena", "size": 66962 },
+    { "name": "font_cjk", "size": 743539 },
+    { "name": "lobby_cottage", "size": 584621 },
+    { "name": "material_background", "size": 2722 },
+    { "name": "material_board", "size": 2399 },
+    { "name": "material_cards", "size": 2462 },
+    { "name": "material_combat", "size": 4150 },
+    { "name": "material_pieces", "size": 2497 },
+    { "name": "material_ui", "size": 2829 },
+    { "name": "pvp_arena", "size": 5314 },
+    { "name": "shared_shaders", "size": 107886 },
+    { "name": "ui_chapters_shared", "size": 30018 },
+    { "name": "ui_diagnostics", "size": 6672 },
+    { "name": "ui_endless", "size": 16502 },
+    { "name": "ui_items", "size": 8240 },
+    { "name": "ui_loading", "size": 8017 },
+    { "name": "ui_lobby", "size": 11891 },
+    { "name": "ui_pvp", "size": 27262 },
+    { "name": "ui_pvp_duelhud", "size": 14707 },
+    { "name": "ui_pvp_duelprep", "size": 17520 },
+    { "name": "ui_settings", "size": 9338 },
+    { "name": "ui_story", "size": 8699 },
+    { "name": "ui_victory", "size": 5972 },
+    { "name": "yaya_reaction", "size": 7358 }
   ]
 }

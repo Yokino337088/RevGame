@@ -12,6 +12,9 @@ namespace RevGame.Editor
         // 本地项目美术进入独立图集，两个面板不引用决斗内置场景的散图。
         private const string PrepArt = "Assets/GameRes/Art/UI/PvpDuelPrep/";
         private const string PrepPanels = "Assets/GameRes/UI/Panel/Pvp/DuelPrep";
+        // 1920×1080 设计单位。绯焰原图的头顶留白更大，补足后两人的可见身高接近。
+        private const float SelectEmberPortraitSize = 816f;
+        private const float SelectYayaPortraitSize = 765f;
         // 准备页的两份专用材质归 Material，分包仍跟随选角和加载页的生命周期。
         private const string PrepMaterials = "Assets/GameRes/Material/UI/PvpDuelPrep";
         // 黑白席颜色相同贯穿选角、加载和镜像战斗；编号提供第二种识别手段。
@@ -78,7 +81,7 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("缺少决斗准备素材：" + path);
             }
             Vector4 border = name is "DuelPlate" or "DuelButton" ? Vector4.one * 24 : Vector4.zero;
-            // 立绘保留原始 PNG；面板画布不超过 510 高，导入尺寸 1024 足够并可与底图同图集。
+            // 立绘保留原始 PNG。最大展示高度 816，导入尺寸 1024 可满足设计分辨率并与底图同图集。
             int maxSize = name is "DuelEmber" or "DuelYaya" ? 1024 : 2048;
             if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single ||
                 importer.mipmapEnabled || importer.npotScale != TextureImporterNPOTScale.None || importer.spriteBorder != border ||
@@ -96,7 +99,7 @@ namespace RevGame.Editor
             }
         }
 
-        // 两个面板用同一席位网格，保留完整的 1920x1080 设计安全区。
+        // 两个面板都使用 1920×1080 设计安全区，按各自内容布置席位。
         private static void SavePrepPanel<T>(bool loading, Font font, Material material, Material rift) where T : DuelPrepPanelBase
         {
             string name = typeof(T).Name;
@@ -168,12 +171,13 @@ namespace RevGame.Editor
             }
         }
 
-        // 双席独立进度和立绘。圆形符印位于脚下，卡牌和读数不会压住脸。
+        // 选角席从上往下放徽记、立绘和铭牌。加载席另留进度条的空间。
         private static DuelPrepSeatView BuildPrepSeat(RectTransform layout, bool white, bool loading, Font font, Material material, Sprite sprite)
         {
             Color accent = white ? PrepCool : PrepWarm;
             float x = loading ? (white ? .737f : .263f) : (white ? .804f : .196f);
-            RectTransform seat = PrepAt(white ? "whiteSeat" : "blackSeat", layout, x, .485f, loading ? 430 : 506, 710);
+            RectTransform seat = PrepAt(white ? "whiteSeat" : "blackSeat", layout, x, loading ? .485f : .5f,
+                loading ? 430 : 540, loading ? 710 : 1000);
             if (loading)
             {
                 PrepImage(PrepStretch("card", seat), "DuelPlate", Color.white, true);
@@ -182,22 +186,46 @@ namespace RevGame.Editor
             var echo = PrepAt("portraitEcho", seat, white ? .64f : .36f, .54f, 690, 705).gameObject.AddComponent<Image>();
             echo.sprite = sprite;
             echo.preserveAspect = true;
-            echo.color = new Color(accent.r * .6f, accent.g * .6f, accent.b * .6f, loading ? .15f : .23f);
+            echo.color = new Color(accent.r * .6f, accent.g * .6f, accent.b * .6f, loading ? .15f : .10f);
             echo.raycastTarget = false;
-            var halo = PrepImage(PrepAt("sigil", seat, .5f, .289f, 410, 160), "DuelSigil", accent);
+            var halo = PrepImage(PrepAt("sigil", seat, .5f, loading ? .289f : .145f,
+                loading ? 410 : 450, loading ? 160 : 86), "DuelSigil", accent);
             halo.material = material;
-            var portrait = PrepAt("portrait", seat, .5f, .548f, 510, 510).gameObject.AddComponent<Image>();
+            float portraitSize = loading ? 510f : white ? SelectYayaPortraitSize : SelectEmberPortraitSize;
+            RectTransform portraitRect = PrepAt("portrait", seat, .5f, loading ? .548f : .110f, portraitSize, portraitSize);
+            if (!loading)
+            {
+                // 底部是两人的公共站位。换角时以脚下为轴缩放，姓名区上方的空隙始终保留。
+                portraitRect.pivot = new Vector2(.5f, 0);
+            }
+            var portrait = portraitRect.gameObject.AddComponent<Image>();
             portrait.sprite = sprite;
             portrait.preserveAspect = true;
             portrait.raycastTarget = false;
-            PrepImage(PrepAt("seatBadge", seat, .5f, .956f, 382, 54), "DuelPlate", Color.white, true);
-            var player = PrepText(seat, "player", white ? "2P · 白方  /  白方棋友" : "1P · 黑方  /  你", .5f, .956f, 358, 48, 25, font, accent);
+            float badgeY = loading ? .956f : .903f;
+            PrepImage(PrepAt("seatBadge", seat, .5f, badgeY, loading ? 382 : 418, 54), "DuelPlate", Color.white, true);
+            var player = PrepText(seat, "player", white ? "2P · 白方  /  白方棋友" : "1P · 黑方  /  你",
+                .5f, badgeY, loading ? 358 : 394, 48, 25, font, accent);
             player.resizeTextForBestFit = true;
             player.resizeTextMinSize = 16;
             player.resizeTextMaxSize = 25;
-            var name = PrepText(seat, "roleName", white ? "鸦鸦" : "绯焰", .5f, .22f, 356, 65, 52, font, PrepIvory);
-            var status = PrepText(seat, "status", loading ? "正在准备" : "预选中", .5f, loading ? .131f : .126f, 362, 39, 25, font, accent);
-            var view = new DuelPrepSeatView { Portrait = portrait, Echo = echo, Portal = halo.rectTransform, RoleName = name, Player = player, Status = status };
+            RectTransform caption = seat;
+            if (!loading)
+            {
+                // 铭牌复用九宫格底板。它的上沿低于立绘的底锚点，换角时不会压住角色。
+                caption = PrepAt("namePlate", seat, .5f, .054f, 352, 90);
+                PrepImage(caption, "DuelPlate", Color.white, true);
+            }
+            var name = PrepText(caption, "roleName", white ? "鸦鸦" : "绯焰", .5f, loading ? .22f : .70f,
+                loading ? 356 : 320, loading ? 65 : 49, loading ? 52 : 46, font, PrepIvory);
+            var status = PrepText(caption, "status", loading ? "正在准备" : "预选中", .5f, loading ? .131f : .23f,
+                loading ? 362 : 320, loading ? 39 : 28, loading ? 25 : 23, font, accent);
+            var view = new DuelPrepSeatView
+            {
+                Portrait = portrait, Echo = echo, Portal = halo.rectTransform, RoleName = name, Player = player, Status = status,
+                EmberPortraitSize = loading ? 0 : SelectEmberPortraitSize,
+                YayaPortraitSize = loading ? 0 : SelectYayaPortraitSize
+            };
             if (loading)
             {
                 PrepImage(PrepAt("track", seat, .5f, .074f, 331, 34), "DuelPlate", Color.white, true);
