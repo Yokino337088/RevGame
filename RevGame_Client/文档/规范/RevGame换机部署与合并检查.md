@@ -1,6 +1,6 @@
 # RevGame 换机部署与合并检查
 
-拉取 RevGame 后，仓库里的规范、插件来源、Git 钩子脚本和 CI 工作流都已到位。在新电脑用 Codex 打开并信任仓库后，项目配置会自动安装两个插件。仍需审核并信任会话钩子，以及启用当前克隆的 Git 提交钩子。GitHub 的必需状态检查由管理员对同一个远端仓库配置一次，所有电脑共用。
+拉取 RevGame 后，仓库里的规范、插件来源、Git 钩子脚本和 CI 工作流都已到位。在新电脑用 Codex 打开并信任仓库后，先确认两个插件均已安装并启用，再审核会话钩子和启用当前克隆的 Git 提交钩子。GitHub 的必需状态检查由管理员对同一个远端仓库配置一次，所有电脑共用。
 
 | 组件 | 配置位置 | 作用 |
 |---|---|---|
@@ -23,15 +23,18 @@ python --version
 
 ### 安装和信任会话钩子
 
-在 Codex 桌面端打开 RevGame 仓库根目录，信任项目后，Codex 会从 **RevGame** 来源自动安装并启用 **Revolution** 和 **RevGame**。两款插件由仓库的 [marketplace.json](../../../.agents/plugins/marketplace.json) 固定版本，安装时从 Revolution 的远端获取。新电脑可以只克隆 RevGame。
+在 Codex 桌面端打开并信任 RevGame 仓库根目录。在插件目录的 **RevGame** 来源查看 **Revolution** 和 **RevGame**，对显示未安装的插件点击安装。项目配置默认启用两款插件。新电脑可以只克隆 RevGame，Codex 会按清单固定的提交从 Revolution 发布仓库下载插件。 [插件市场清单](../../../.agents/plugins/marketplace.json)
 
-若客户端未自动安装，可在仓库根目录用 Codex CLI 注册并安装：
+也可以在仓库根目录用 Codex CLI 注册、安装并核对：
 
 ```powershell
 codex plugin marketplace add .
 codex plugin add revolution@revgame-project
 codex plugin add revgame@revgame-project
+codex plugin list --marketplace revgame-project --json
 ```
+
+确认两款插件的 `installed` 和 `enabled` 都为 `true`。
 
 打开新的本地 Codex 会话，在 **Review hooks** 或 **Settings → Hooks** 中审核并信任两款插件各自的 `SessionStart`。CLI 可通过 `/hooks` 查看和审核。插件更新后如显示钩子已更改，复核后重新信任。 [Codex 插件安装](https://developers.openai.com/plugins/build/plugins) · [Codex 钩子信任](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks)
 
