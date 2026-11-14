@@ -107,8 +107,9 @@ namespace RevGame.Services
                     // 连击加成：棋子连得越多攻击越高，设上限防止无限叠加。
                     float linked = Math.Min(Balance.MaxLinkAttackBonus, (attacker.ConnectedCells - 1) * Balance.LinkAttackPerCell);
                     // 把连击、职业加成，以及玩家侧的通用/战斗/准备三项加成一次性乘进倍率。
+                    // 预测与结算读取同一份 Boss 战计时加成，新入场棋子也直接使用当前比例。
                     multiplier *= 1f + Math.Max(0f, linked) + ClassBonus(attacker.Side)
-                        + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) : 0f);
+                        + (attacker.Side == GameSide.Player ? _attackBonus + _combatAttackBonus + PreparationAttackBonus(attacker, target) + BossPlayerAttackBonus : 0f);
                     // 玩家火力随存活棋子数递减，防止几十颗远程同时输出直接秒杀；敌方不参与人数递减。
                     // 敌方远程的专属倍率在取整前合入；预测与提交共用此处，技能分支不受影响。
                     float teamScale = attacker.Side == GameSide.Player ? PlayerFirepowerScale() : attacker.EnemyRangedAttackMultiplier;

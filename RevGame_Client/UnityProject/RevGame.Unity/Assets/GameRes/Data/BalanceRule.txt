@@ -245,3 +245,4 @@ PieceAttack.Assassin.ExecuteThreshold	0.35	收割触发血量比例，0表示关
 PieceAttack.Assassin.ExecuteScale	1.5	血量低于收割线时的伤害倍率
 PieceAttack.Assassin.HealScale	0	攻击力转治疗量倍率；不复活、不突破最大生命
 Enemy.DefenseMultiplier	1.5	六章敌方有效防御倍率；正伤害除以本值，Boss与战中增援共用，最低仍为1。
+Boss.PlayerAttackRampSeconds	120	远征Boss开战后玩家棋子攻击加成从0线性升至100%所需的战斗秒数。

@@ -76,11 +76,24 @@ namespace RevGame.Services
         }
 #endif
 
+        /// <summary>HUD 展示的全队通用攻击加成，包含本场 Boss 战随时间获得的攻击比例。</summary>
         public float TeamAttackBonus
         {
             get
             {
-                return _attackBonus + ClassBonus(GameSide.Player) + _combatAttackBonus + _prepAttack;
+                return _attackBonus + ClassBonus(GameSide.Player) + _combatAttackBonus + _prepAttack + BossPlayerAttackBonus;
+            }
+        }
+        /// <summary>本场 Boss 战的玩家棋子攻击加成，范围 0 到 1。复用每回合重置的战斗时钟。</summary>
+        private float BossPlayerAttackBonus
+        {
+            get
+            {
+                if (!IsBossRound || Phase != GamePhase.Battle)
+                {
+                    return 0f;
+                }
+                return System.Math.Min(1f, _battleElapsed / Balance.BossPlayerAttackRampSeconds);
             }
         }
         /// <summary>持久强化、本轮奖励和战斗成长在普攻计时中相加；HUD读取同一组加成。</summary>

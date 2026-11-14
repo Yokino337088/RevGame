@@ -236,6 +236,8 @@ namespace RevGame.Data
         // ---- Boss
         public float BossAccelerationSeconds;
         public float BossAccelerationBonus;
+        /// <summary>远征 Boss 开战后，玩家棋子攻击加成从 0 升至 100% 所需的战斗秒数。</summary>
+        public float BossPlayerAttackRampSeconds;
         public float BossHpGrowthPerChapter;
         /// <summary>仅主将的额外最大生命倍率；护卫沿用普通敌军成长，不通过增加Boss数量堆耐久。</summary>
         public float BossHpMultiplier;
@@ -341,6 +343,7 @@ namespace RevGame.Data
 
             v.BossAccelerationSeconds = r.Float("Boss.AccelerationSeconds", 1f, 3600f);
             v.BossAccelerationBonus = r.Float("Boss.AccelerationBonus", 0f, 100f);
+            v.BossPlayerAttackRampSeconds = r.Float("Boss.PlayerAttackRampSeconds", 1f, 3600f);
             v.BossHpGrowthPerChapter = r.Float("Boss.HpGrowthPerChapter", 0f, 100f);
             // 用户要求从100提高到125；范围门禁允许后续调试，但仍拒绝非有限值与负生命倍率。
             v.BossHpMultiplier = r.Float("Boss.HpMultiplier", 1f, 200f);
@@ -562,6 +565,8 @@ namespace RevGame.Data
         // ---- Boss
         public static float BossAccelerationSeconds => V.BossAccelerationSeconds;
         public static float BossAccelerationBonus => V.BossAccelerationBonus;
+        /// <summary>读取本次装配的 Boss 战玩家攻击成长时长，单位为秒。</summary>
+        public static float BossPlayerAttackRampSeconds => V.BossPlayerAttackRampSeconds;
         public static float BossHpGrowthPerChapter => V.BossHpGrowthPerChapter;
         public static float BossHpMultiplier => V.BossHpMultiplier;
         public static int BossCommonSkillsPerExclusive => V.BossCommonSkillsPerExclusive;
