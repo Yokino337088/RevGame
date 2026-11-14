@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="面向新手的 RevGame Fantasy 服务端手册。理解 Main、Entity、Hotfix，追踪围棋和决斗消息，并在腾讯云上完成双端联调。">
+  <meta name="description" content="从两位玩家下一盘棋认识 RevGame 的 Fantasy 服务端。用实际代码解释 Scene、会话和消息，再跟着部署到腾讯云。">
   <title>RevGame · Fantasy 服务端架构与腾讯云部署（新手版）</title>
   <style>
 :root {
@@ -599,634 +599,611 @@ summary { color: var(--green); font-weight: 700; cursor: pointer; }
   .reading-route { margin-inline: 0; }
   .reading-route + .hero { padding-top: 15px; }
 }
+
+/* 保留新手手册样式，正文图解用真实文字，手机上不随整张图缩小。 */
+.skip-link { position: absolute; left: 16px; top: 8px; z-index: 25; transform: translateY(-160%); }
+.skip-link:focus { transform: none; }
+.chapter { font-size: 17px; line-height: 1.82; }
+.chapter .sources { line-height: 1.6; }
+.chapter h2 { margin-bottom: 15px; }
+.chapter h3 { margin-top: 24px; }
+.chapter h2::before { content: counter(section, decimal-leading-zero); }
+.chapter details > summary { padding-block: 3px; }
+.chapter .cards { align-items: stretch; }
+.chapter .card h3 { margin: 0 0 5px; font-size: 17px; }
+.chapter .card p { font-size: 15px; line-height: 1.65; }
+.lesson { color: #324d40; font-size: 18px; }
+.chapter .flow {
+  display: grid;
+  grid-template-columns: repeat(var(--flow-count, 3), minmax(0, 1fr));
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chapter .flow > li {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #bacdbd;
+  background: var(--mint);
+  line-height: 1.52;
+  overflow-wrap: anywhere;
+}
+.chapter .flow > li:nth-child(3n + 2) { background: var(--sky); border-color: #b6c7dc; }
+.chapter .flow > li:nth-child(3n) { background: var(--sand); border-color: #dacbab; }
+.chapter .flow > li:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--green);
+}
+.flow strong, .flow span, .diagram-box strong, .diagram-box span { display: block; }
+.flow strong, .diagram-box strong { font-size: 16px; }
+.flow span, .diagram-box span { margin-top: 4px; font-size: 15px; }
+.topology { margin: 0; line-height: 1.55; }
+.diagram-box { padding: 10px 13px; border: 1px solid #b5cbbb; border-radius: 10px; background: var(--mint); overflow-wrap: anywhere; }
+.topology .diagram-box { text-align: center; }
+.topology .gate-box { background: var(--sky); border-color: #b6c7dc; }
+.topology .machine-box { border: 1px dashed #9aaf9e; border-radius: 13px; padding: 11px 12px; background: #f4f7ef; }
+.machine-box > strong { display: block; margin-bottom: 8px; font-size: 15px; }
+.flow-arrow { padding: 4px 0; text-align: center; color: var(--green); font-size: 14px; }
+.flow-arrow b { padding-right: 7px; font-size: 18px; }
+.scene-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.scene-grid .diagram-box { background: var(--sand); border-color: #dacbab; }
+.scene-grid .diagram-box span { font-size: 13px; }
+.two-processes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.two-processes .diagram-box:last-child { background: var(--sand); border-color: #dacbab; }
+.chapter .check-question { margin-top: 18px; background: #f7f8ef; }
+.chapter .check-question p { margin-block: 8px 4px; }
+.chapter .compact { margin-block: 10px; }
+.inline-links { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.chapter .flow.sequence-mobile { display: none; }
+.chapter .four-steps { --flow-count: 4; }
+@media (max-width: 900px) {
+  .chapter .flow.four-steps { grid-template-columns: 1fr; gap: 16px; }
+  .chapter .flow.four-steps > li:not(:last-child)::after {
+    content: "↓";
+    right: auto;
+    left: calc(50% - 4px);
+    top: auto;
+    bottom: -18px;
+    transform: none;
+  }
+}
+@media (max-width: 620px) {
+  .chapter { font-size: 16px; }
+  .lesson { font-size: 17px; }
+  .chapter .flow.sequence-mobile { display: grid; }
+  .chapter .flow { grid-template-columns: 1fr; gap: 16px; }
+  .chapter .flow > li:not(:last-child)::after {
+    content: "↓";
+    right: auto;
+    left: calc(50% - 4px);
+    top: auto;
+    bottom: -18px;
+    transform: none;
+  }
+  .scene-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .two-processes { grid-template-columns: 1fr; }
+}
+@media print {
+  .chapter .flow.sequence-mobile { display: none; }
+}
   </style>
 </head>
 <body id="top">
+<a class="pill skip-link" href="#business">跳到正文</a>
 <div class="progress" aria-hidden="true"></div>
 <header class="topbar">
   <div class="brand"><i aria-hidden="true">R</i>REVGAME <span class="tag">FANTASY SERVER GUIDE</span></div>
   <button id="motion" class="motion-control" type="button" aria-pressed="false" hidden>暂停装饰动画</button>
 </header>
-
 <nav class="reading-route" aria-labelledby="route-title">
   <h2 id="route-title">新手阅读路线</h2>
   <ol>
     <li><a class="reading-step" href="../../../RevGame_Client/文档/架构/RevGame核心设计哲学-新手版.html"><span class="reading-step-number" aria-hidden="true">1</span><span><strong>核心设计哲学</strong><small>理解项目为什么这样设计</small></span></a></li>
     <li><a class="reading-step" href="../../../RevGame_Client/文档/架构/RevGame项目架构与Revolution框架讲解.html"><span class="reading-step-number" aria-hidden="true">2</span><span><strong>项目架构</strong><small>看流程、规则与表现怎么接</small></span></a></li>
     <li><a class="reading-step" href="../../../RevGame_Client/文档/架构/RevGame代码阅读指南-新手版.html"><span class="reading-step-number" aria-hidden="true">3</span><span><strong>代码阅读指南</strong><small>从客户端入口追到规则</small></span></a></li>
-    <li><span class="reading-step" aria-current="page"><span class="reading-step-number" aria-hidden="true">4</span><span><strong>Fantasy 服务端</strong><small>跟一条消息，再把服务跑起来</small></span></span></li>
+    <li><span class="reading-step" aria-current="page"><span class="reading-step-number" aria-hidden="true">4</span><span><strong>Fantasy 服务端</strong><small>从一盘联机棋开始</small></span></span></li>
   </ol>
 </nav>
 
 <div class="hero">
   <div>
     <div class="eyebrow">REVGAME / FANTASY SERVER</div>
-    <h1>读懂联机服务端。<br><em>让两端下同一盘棋。</em></h1>
-    <p class="lead">从 Main 启动进程，经 Gate 接收玩家请求，到 GoBattle 校验棋步。读完可以在本机跟完一次收包与回包，再把完整的 Windows x64 服务端放上腾讯云。</p>
+    <h1>你下一手棋。<br><em>对手怎样看见？</em></h1>
+    <p class="lead">黑方在电脑上点了一个格子。服务器怎样认出他、检查这手棋，再让白方手机显示同一颗棋子？先跟着这一手走一遍。看到代码时，再记它的名字。</p>
     <div class="hero-links">
-      <a class="pill primary" href="#cloud-choice">先看买什么配置</a>
-      <a class="pill" href="#cloud-steps">跟着部署</a>
-      <a class="pill" href="#go-flow">追一次落子</a>
+      <a class="pill primary" href="#business">从第一盘联机棋读起</a>
+      <a class="pill" href="#cloud-choice">我只想买机器</a>
+      <a class="pill" href="#cloud-steps">我已经有云服务器</a>
     </div>
-    <div class="stamp">2026.11.14 · FANTASY.NET 2026.1.2003 · .NET 10 LTS / C++17</div>
+    <div class="stamp">适用版本 · FANTASY.NET 2026.1.2003 · .NET 10 LTS</div>
   </div>
   <div class="demo" id="demo">
-    <h2 class="hero-title" id="demo-title">从一个问题读起</h2>
+    <h2 class="hero-title" id="demo-title">一次联机，发生了什么</h2>
     <div aria-live="polite" aria-labelledby="demo-title">
       <div class="demo-mode" data-mode="go">
         <ol class="chain">
-          <li data-current="true"><b>1</b><span>Unity 发出落子请求<small>C2G_GoCommandRequest</small></span></li>
-          <li><b>2</b><span>Gate 核对 Session 与座位<small>从房间取固定的 Battle Address</small></span></li>
-          <li><b>3</b><span>Battle 校验并提交<small>棋规和结果指纹都通过才确认</small></span></li>
-          <li><b>4</b><span>两席收到同一手<small>提交者收回包，对手收状态推送</small></span></li>
+          <li data-current="true"><b>1</b><span>黑方想在左下角下一手<small>他的游戏把落子位置发给服务器</small></span></li>
+          <li><b>2</b><span>服务器认出黑方<small>确认他坐在这盘棋的黑方席位</small></span></li>
+          <li><b>3</b><span>负责这局的代码检查能不能下<small>合法才把棋子记进服务器棋盘</small></span></li>
+          <li><b>4</b><span>两个人看到同一手<small>黑方收到答复，白方收到新棋步</small></span></li>
         </ol>
       </div>
       <div class="demo-mode" data-mode="duel" hidden>
         <ol class="chain">
-          <li data-current="true"><b>1</b><span>围棋房间发起决斗<small>核对席位、规则版本和劣势条件</small></span></li>
-          <li><b>2</b><span>两人锁角并完成加载<small>场景激活后，两席分别 Ready</small></span></li>
-          <li><b>3</b><span>权威每 50 ms 提交逻辑帧<small>原生 RevGameCore 执行整帧</small></span></li>
-          <li><b>4</b><span>两台客户端按连续帧重放<small>用游标补历史，用同帧指纹对账</small></span></li>
+          <li data-current="true"><b>1</b><span>棋局中有人发起决斗<small>负责这局的服务器代码检查挑战条件</small></span></li>
+          <li><b>2</b><span>两边各自选角、加载<small>两台设备都报告准备好才开始</small></span></li>
+          <li><b>3</b><span>服务器每 50 毫秒算一步<small>把两人的按键合在这一步处理</small></span></li>
+          <li><b>4</b><span>两个游戏按同一顺序演算<small>接着上次收到的进度继续</small></span></li>
         </ol>
       </div>
       <div class="demo-mode" data-mode="cloud" hidden>
         <ol class="chain">
-          <li data-current="true"><b>1</b><span>从完整仓库发布 win-x64<small>保留 Hotfix.pdb、Fantasy.config 和原生 DLL</small></span></li>
-          <li><b>2</b><span>复制到 Windows CVM<small>以 Release 模式运行 Process 1</small></span></li>
-          <li><b>3</b><span>为测试者放通 UDP 20000<small>腾讯云安全组和 Windows 防火墙都要配置</small></span></li>
-          <li><b>4</b><span>用异网客户端真实下棋<small>检查匹配、落子、断网重连与决斗</small></span></li>
+          <li data-current="true"><b>1</b><span>自己电脑生成服务端文件<small>执行发布命令，找到输出目录</small></span></li>
+          <li><b>2</b><span>复制整个目录到腾讯云 Windows<small>装好 .NET 运行时，再启动服务</small></span></li>
+          <li><b>3</b><span>在两处允许朋友连进来<small>腾讯云安全组和 Windows 防火墙都填 UDP 20000</small></span></li>
+          <li><b>4</b><span>两个人在游戏里填公网 IP<small>真的配对下棋，再试掉线返回</small></span></li>
         </ol>
       </div>
     </div>
-    <div class="segmented" role="group" aria-label="快速查看三条流程" hidden>
+    <div class="segmented" role="group" aria-label="选择想看的流程" hidden>
       <button type="button" data-mode="go" aria-pressed="true">一手棋</button>
-      <button type="button" data-mode="duel" aria-pressed="false">一帧决斗</button>
+      <button type="button" data-mode="duel" aria-pressed="false">一次决斗</button>
       <button type="button" data-mode="cloud" aria-pressed="false">一次部署</button>
     </div>
   </div>
-</div>
-
-<div class="metrics">
-  <div class="metric"><strong>3 个 C# 项目</strong><p>入口 Main、数据 Entity、逻辑 Hotfix</p></div>
-  <div class="metric"><strong>1 Gate + 4 GoBattle</strong><p>默认五个 Root Scene 由 Process 1 启动</p></div>
-  <div class="metric"><strong>UDP 20000</strong><p>游戏连接进入 Gate，内网 TCP 留给 Scene 通信</p></div>
 </div>
 
 <div class="workspace">
   <aside class="sidebar">
     <h2>阅读导航</h2>
     <nav aria-label="章节目录">
-      <a href="#business"><span>01</span>这台服务端管哪些事</a>
-      <a href="#projects"><span>02</span>为什么分 Main、Entity、Hotfix</a>
-      <a href="#layout"><span>03</span>从工程目录找到真实入口</a>
-      <a href="#scene-model"><span>04</span>一台机器里为什么有五个 Scene</a>
-      <a href="#boot"><span>05</span>从 dotnet 命令走到端口监听</a>
-      <a href="#protocol"><span>06</span>从 .proto 定义到两端能读的消息</a>
-      <a href="#packets"><span>07</span>收包、发包和回包是三件什么事</a>
-      <a href="#match-flow"><span>08</span>两个人怎样走进同一个房间</a>
-      <a href="#go-flow"><span>09</span>跟着一手棋读完整条链路</a>
-      <a href="#duel-flow"><span>10</span>决斗为什么要封帧</a>
-      <a href="#lifecycle"><span>11</span>断网、超时和退出后谁来收尾</a>
-      <a href="#business-code"><span>12</span>新手怎样写一项服务端业务</a>
-      <a href="#cloud-choice"><span>13</span>第一台腾讯云服务器怎么选</a>
-      <a href="#cloud-steps"><span>14</span>从购买开始，把服务放到 CVM</a>
-      <a href="#operations"><span>15</span>服务要一直开，平常怎样排查</a>
-      <a href="#scale"><span>16</span>从单台 CVM 走到跨进程 Battle</a>
-      <a href="#probe"><span>17</span>动手练习与下一次读代码的顺序</a>
+      <a href="#business"><span aria-hidden="true">01</span>为什么两台设备之间要有一台服务器</a>
+      <a href="#match-flow"><span aria-hidden="true">02</span>两个人怎样进同一盘棋</a>
+      <a href="#go-flow"><span aria-hidden="true">03</span>一手棋怎样发出去，又怎样回来</a>
+      <a href="#lifecycle"><span aria-hidden="true">04</span>断网换了一条连接，怎么还能坐回原位</a>
+      <a href="#scene-model"><span aria-hidden="true">05</span>一台机器为什么能有五个 Scene</a>
+      <a href="#projects"><span aria-hidden="true">06</span>为什么代码分 Main、Entity 和 Hotfix</a>
+      <a href="#layout"><span aria-hidden="true">07</span>打开代码时，先分清谁记数据、谁做事</a>
+      <a href="#boot"><span aria-hidden="true">08</span>输入启动命令后，程序怎样开始接人</a>
+      <a href="#protocol"><span aria-hidden="true">09</span>客户端和服务器约好了要传什么</a>
+      <a href="#packets"><span aria-hidden="true">10</span>发送、回复、主动通知，各是什么</a>
+      <a href="#duel-flow"><span aria-hidden="true">11</span>两个人同时按键，决斗按谁的顺序算</a>
+      <a href="#business-code"><span aria-hidden="true">12</span>想动手写服务端，先读一次心跳</a>
+      <a href="#cloud-choice"><span aria-hidden="true">13</span>第一台腾讯云服务器怎么选</a>
+      <a href="#cloud-steps"><span aria-hidden="true">14</span>从自己电脑发布，然后让朋友连进来</a>
+      <a href="#operations"><span aria-hidden="true">15</span>玩家说连不上，先查哪一步</a>
+      <a href="#scale"><span aria-hidden="true">16</span>什么时候才需要把 Gate 和 Battle 分开跑</a>
+      <a href="#probe"><span aria-hidden="true">17</span>自己试一次，怎样知道读懂了</a>
     </nav>
-    <p class="note">要先买机器可以跳到选型。第一次接手代码，按目录从启动读到一次落子。</p>
+    <p class="note">第一次读可以跟到「一手棋怎样发出去」。实际部署从「第一台腾讯云怎么选」开始。</p>
   </aside>
   <main>
-    <div class="legend"><strong>当前部署版本</strong> 服务端面向 <code>net10.0</code>。房间所属的 GoBattle 同时持有围棋棋盘和决斗权威。默认在一个进程内启动，扩展时可按同一份拓扑拆成两个进程。<a href="#scale">查看跨进程配置与压测</a></div>
-
 <section class="chapter" id="business">
-  <h2>这台服务端管哪些事</h2>
-  <p>想象两台手机各放了一颗棋，包到达的时间不同。两边要知道「这手属于谁、是否轮到他、落下以后对方应该看到什么」。服务端负责给这盘棋一个共同的房间、一份确认顺序和同一个规则结果。棋手掉线回来时，它还要认出原来的席位，并补上缺失的历史。</p>
-  <div class="cards">
-    <article class="card"><h3>把人配成一局</h3><p>Gate 接连接和匿名握手，按场次与规则匹配，分配黑白和一个 Battle。</p></article>
-    <article class="card"><h3>把棋走成同一盘</h3><p>Battle 用共享 GoCore 复核棋规。Gate 保存已确认棋谱并发给两席。</p></article>
-    <article class="card"><h3>按同一个钟决斗</h3><p>权威端确定资格、角色和帧顺序。两台设备用同一套原生规则重放。</p></article>
-  </div>
-  <p>服务器联机是九路围棋的一条入口。远征、无尽、本机人机、局域网对战分别有自己的流程。Unity 中的 Revolution 负责界面、场景和玩法生命周期，跨公网的会话与消息由 Fantasy 接管。服务端项目可以用 .NET 编译和运行，云主机只接收服务端产物。</p>
-  <div class="callout tip"><b>玩家身份目前是匿名的</b>恢复令牌和房间状态在内存中，同进程重连可以恢复。重启后要重新匹配。本机棋力参与匹配和计算本局增减分，当前用途是休闲分流。</div>
-  <p class="sources"><a href="../../RevGame.Server/Server/Entity/Pvp/GoLobbyComponent.cs">大厅数据</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs">客户端模式与状态接收</a> · <a href="../../../RevGame_Client/文档/架构/RevGame项目架构与Revolution框架讲解.html">客户端架构</a></p>
-</section>
-
-<section class="chapter" id="projects">
-  <h2>为什么分 Main、Entity、Hotfix</h2>
-  <p>截图里的三个目录各有一个 <code>.csproj</code>。编译后形成三个程序集，也就是三个 DLL。下面的箭头表示<strong>项目引用</strong>。例如 Hotfix 能读写 Entity 里的房间数据，Entity 只需定义数据及框架契约，Hotfix 的具体 Handler 由启动时加载。</p>
+  <h2>为什么两台设备之间要有一台服务器</h2>
+  <p class="lesson">黑方在电脑上下了一手棋。白方手机要得到同一个结果。万一白方以为轮到自己、也同时点了一格，就由服务器查轮次，决定哪一手能记进棋谱。</p>
   <figure class="diagram">
-    <figcaption><strong>三个程序集怎样依赖</strong><span>从上往下读编译引用。由 Main.dll 启动服务进程。</span></figcaption>
-    <svg viewBox="0 0 368 252" role="img" aria-label="Main 引用 Entity 和 Hotfix，Hotfix 引用 Entity，Entity 依赖 Fantasy-Net" focusable="false">
-      <title>三层程序集依赖</title>
-      <rect class="node-green" x="114" y="10" width="140" height="56" rx="11"/>
-      <rect class="node-blue" x="26" y="107" width="140" height="56" rx="11"/>
-      <rect class="node-gold" x="202" y="107" width="140" height="56" rx="11"/>
-      <rect class="node-neutral" x="202" y="194" width="140" height="46" rx="11"/>
-      <path class="diagram-line" d="M148 66v18H96v21m-4-4 4 4 4-4 M220 66v18h52v21m-4-4 4 4 4-4 M166 134h34m-4-4 4 4-4 4 M272 163v29m-4-4 4 4 4-4"/>
-      <text class="diagram-label" x="184" y="34" text-anchor="middle">Main.dll</text>
-      <text class="diagram-small" x="184" y="53" text-anchor="middle">启动入口</text>
-      <text class="diagram-label" x="96" y="131" text-anchor="middle">Hotfix.dll</text>
-      <text class="diagram-small" x="96" y="149" text-anchor="middle">Handler / System</text>
-      <text class="diagram-label" x="272" y="131" text-anchor="middle">Entity.dll</text>
-      <text class="diagram-small" x="272" y="149" text-anchor="middle">数据与协议类型</text>
-      <text class="diagram-label" x="272" y="222" text-anchor="middle">Fantasy-Net</text>
-    </svg>
+    <figcaption><strong>两个游戏客户端，一份共同确认的棋谱</strong><span>客户端指玩家面前正在运行的游戏。</span></figcaption>
+    <ol class="flow">
+      <li><strong>黑方电脑</strong><span>把这次操作发给服务器。</span></li>
+      <li><strong>服务器</strong><span>认出是谁、检查走法，合法就把这手记下来。</span></li>
+      <li><strong>白方手机</strong><span>收到这手棋，跟着更新棋盘。</span></li>
+    </ol>
   </figure>
-  <div class="table-scroll" tabindex="0" aria-label="三个程序集的职责">
-    <table>
-      <thead><tr><th scope="col">目录</th><th scope="col">这里负责什么</th><th scope="col">改需求先去哪</th></tr></thead>
-      <tbody>
-        <tr><th scope="row"><code>Server/Main</code></th><td>可执行入口。加载程序集，给 Fantasy 提供日志实现，启动进程。</td><td>启动参数、启动异常和日志接线，读 <code>Program.cs</code>。</td></tr>
-        <tr><th scope="row"><code>Server/Entity</code></th><td>底层类型。房间、玩家、会话绑定、生成协议，以及从客户端工程链接进来的共享规则。这里直接引用 Fantasy-Net。</td><td>给玩家增加会话字段或房间字段，读 <code>Pvp/GoLobbyComponent.cs</code>。启服拓扑看 <code>Fantasy.config</code>。</td></tr>
-        <tr><th scope="row"><code>Server/Hotfix</code></th><td>业务规则和消息入口。Handler 接请求，System 执行匹配、校验、状态推进和回收。</td><td>修改匹配、落子和离场规则，先找 <code>Hotfix/Pvp</code> 的对应入口。</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <h3>官方这样拆，是为了让数据与可换的逻辑有明确边界</h3>
-  <p>例如调整匹配的分差策略，只要房间和玩家字段兼容，理论上可以只替换逻辑程序集。若数据类型和逻辑都在同一个待卸载程序集中，旧房间还持有旧类型，切换程序集就可能留下新旧类型以及生命周期问题。Fantasy 推荐拆层来支持热重载，也允许无需热重载的项目合并数据和逻辑。三层通常仍由同一个 <code>Main</code> 进程加载。真正启动几个进程、每个进程跑哪些 Scene，由配置和启动参数决定。</p>
-  <p>RevGame 的 <code>AssemblyHelper</code> 会把 Hotfix 的 DLL 和 PDB 从发布目录读入可卸载的 <code>AssemblyLoadContext</code>，触发编译生成的注册信息。仓库的运行入口在启动时调用它。本文采用「停旧版、启动对应版本、回归」的发布方式。在线热更需要另行验证定时器、在途请求、类型兼容和旧上下文引用的清理。</p>
-  <p class="sources"><a href="https://raw.githubusercontent.com/qq362946/Fantasy/2026.1.2003/Skills/fantasy-net/references/server/setup-server.md">Fantasy 官方三层集成说明</a> · <a href="../../RevGame.Server/Server/Main/Main.csproj">Main.csproj</a> · <a href="../../RevGame.Server/Server/Entity/AssemblyHelper.cs">AssemblyHelper.cs</a></p>
+  <p>如果两台设备上的局面不一样，就以服务器按规则确认的结果为准。代码里把这叫作<strong>服务端权威</strong>。决斗也一样。玩家告诉服务器「我按了跳跃」，负责这局的服务端代码会决定把这次按键放在哪一步执行，并算出结果。</p>
+  <p><strong>Fantasy</strong> 是项目选用的 C# 服务端框架。它负责把消息送到正确的代码、管理连接和定时器。<strong>RevGame</strong> 自己写谁能排进同一局、哪里能落子、什么时候能挑战决斗。Unity 里的 Revolution 则支撑玩家看见的界面与游戏流程。</p>
+  <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs">客户端对局服务</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">服务端消息入口</a></p>
 </section>
 
-<section class="chapter" id="layout">
-  <h2>从工程目录找到真实入口</h2>
-  <div class="code-card">
-    <div class="code-head"><span>RevGame_Server/RevGame.Server 主要目录 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="RevGame_Server/RevGame.Server 主要目录"><code>RevGame.Server/
-├─ Server/
-│  ├─ Main/Program.cs                    进程入口
-│  ├─ Entity/Fantasy.config              启服拓扑
-│  ├─ Entity/Pvp/                        大厅、会话、房间、棋盘数据
-│  ├─ Entity/Generated/Protocol/         服务端生成协议
-│  └─ Hotfix/Pvp/                        Handler、System 和生命周期
-├─ Tools/
-│  ├─ NetworkProtocol/Outer/GoRelay.proto 客户端与 Gate 的协议
-│  ├─ NetworkProtocol/Inner/              Gate 与 Battle 的协议
-│  ├─ NetworkProtocol/OpCode.Cache        稳定消息编号
-│  ├─ ProtocolExportTool/                协议导出器
-│  ├─ GoRelayProbe/                       TCP / KCP 联机探针
-│  └─ Fantasy.Net/                        锁定版本的源码镜像，供阅读
-├─ Config/                                环境配置说明与压测记录
-├─ Client/Unity/                          接入备忘
-├─ build-server.cmd / start-server.cmd    Windows 本机开发入口
-└─ export-protocol.ps1                    同一次导出更新两端</code></pre>
-  </div>
-  <p><code>Entity.csproj</code> 把 Unity 工程中 <code>Pvp/Core</code>、<code>Pvp/Duel</code> 的纯规则 C# 编译进同一个后端程序集。服务器与客户端各运行自己的实例，因此同源代码可以逐步对账。Windows 构建还会把 <code>RevGameCore.dll</code> 复制到服务端输出目录。开发机要获取<strong>整个 RevGame 仓库</strong>才能按这些相对路径编译，云主机只需要发布目录。</p>
-  <p><code>Tools/Fantasy.Net</code> 是方便查阅的源码镜像，实际构建使用锁定的 NuGet 包 <code>Fantasy-Net 2026.1.2003</code>。Unity 通过 UPM 使用同版本 Fantasy.Unity。真正的 Unity 协议生成目录是 <code>Assets/GameScripts/Pvp/Protocol</code>，可以从导出器配置直接核对。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Entity/Entity.csproj">项目引用与共享代码</a> · <a href="../../RevGame.Server/Tools/ProtocolExportTool/ExporterSettings.json">协议导出路径</a></p>
+<section class="chapter" id="match-flow">
+  <h2>两个人怎样进同一盘棋</h2>
+  <p>两位玩家都在游戏里填服务器地址。游戏连到服务端的入口。项目把这个入口叫 <strong>Gate</strong>。Gate 用一条记录代表此刻的网络连接，这条记录叫 <strong>Session</strong>。</p>
+  <figure class="diagram">
+    <figcaption><strong>从输入地址到确认黑白座位</strong></figcaption>
+    <ol class="flow four-steps">
+      <li><strong>连上 Gate</strong><span>服务器有了这条连接的 Session。</span></li>
+      <li><strong>先打招呼</strong><span>客户端发 Hello，告诉 Gate 名字、规则和版本。Gate 给它一个匿名身份。</span></li>
+      <li><strong>再找对手</strong><span>玩家点匹配。Gate 在相同场次、相同规则的队列里找对手。</span></li>
+      <li><strong>开一盘棋</strong><span>Gate 分好黑白，给这盘棋一个 RoomId，并指定一个负责计算的 GoBattle。</span></li>
+    </ol>
+  </figure>
+  <p><strong>GoBattle</strong> 就是代码里负责给棋局和决斗算结果的单元。Gate 会选当前分到的活跃棋局较少的一个。开好房间之后，Gate 负责告诉两位玩家对方是谁、自己执哪一色，并把后面的操作都交给这一个 GoBattle。</p>
+  <p>如果两个人都显示「正在匹配」，先确认他们都按了匹配，而且选的是同一个场次与规则。项目把<strong>场次和规则文本都相同</strong>的人放进同一组，再比较棋力差。</p>
+  <details>
+    <summary>为什么有人等一会儿才配上</summary>
+    <p>刚入队时要求同段，最多差 100 分。两人中等得较短的那位也满 8 秒后，允许差 1 段和 200 分。都满 16 秒后，允许差 2 段和 300 分。匹配会定时重新检查。这里的棋力用来安排休闲对手，客户端在本地保存积分。</p>
+    <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoMatchPolicy.cs">实际匹配规则</a></p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLobbyComponentSystem.cs">握手、配房与座位</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs">游戏里填写地址的面板</a></p>
+</section>
+
+<section class="chapter" id="go-flow">
+  <h2>一手棋怎样发出去，又怎样回来</h2>
+  <p class="lesson">假设这盘棋的房号是 <code>R208</code>，服务器已经收下前 16 手。现在轮到黑方。黑方点了坐标 <code>(2, 3)</code>，这次是第 17 手。</p>
+  <figure class="diagram">
+    <figcaption><strong>第 17 手的来回路线</strong><span>箭头表示谁把消息交给谁，按从上到下的顺序读。</span></figcaption>
+    <svg class="seq-wide" viewBox="0 0 704 336" role="img" aria-label="黑方向 Gate 申请第 17 手，Gate 交给本局 GoBattle；验棋成功后，Gate 通知白方，再答复黑方。" focusable="false">
+      <title>黑方第 17 手的消息顺序</title>
+      <path class="diagram-rule" d="M75 55v270 M255 55v270 M447 55v270 M627 55v270"/>
+      <rect class="node-green" x="14" y="10" width="122" height="43" rx="10"/>
+      <rect class="node-blue" x="194" y="10" width="122" height="43" rx="10"/>
+      <rect class="node-gold" x="379" y="10" width="136" height="43" rx="10"/>
+      <rect class="node-green" x="566" y="10" width="122" height="43" rx="10"/>
+      <text class="diagram-label" x="75" y="37" text-anchor="middle">黑方</text>
+      <text class="diagram-label" x="255" y="37" text-anchor="middle">Gate 入口</text>
+      <text class="diagram-label" x="447" y="37" text-anchor="middle">GoBattle 验棋</text>
+      <text class="diagram-label" x="627" y="37" text-anchor="middle">白方</text>
+      <path class="diagram-line" d="M75 103H253m-5-4 5 4-5 4 M255 154H445m-5-4 5 4-5 4 M447 205H257m5-4-5 4 5 4 M255 257H625m-5-4 5 4-5 4 M255 308H77m5-4-5 4 5 4"/>
+      <text class="diagram-action" x="165" y="91" text-anchor="middle">申请第 17 手</text>
+      <text class="diagram-action" x="352" y="142" text-anchor="middle">把棋步交给本局负责人</text>
+      <text class="diagram-action" x="352" y="193" text-anchor="middle">棋步合法，已记入棋盘</text>
+      <text class="diagram-action" x="442" y="245" text-anchor="middle">通知白方收到第 17 手</text>
+      <text class="diagram-action" x="165" y="296" text-anchor="middle">答复黑方这手已确认</text>
+    </svg>
+    <ol class="flow sequence-mobile">
+      <li><strong>黑方 → Gate</strong><span>提出第 17 手。</span></li>
+      <li><strong>Gate → GoBattle</strong><span>检查黑方身份和轮次，请负责本局的 GoBattle 验这手棋。</span></li>
+      <li><strong>GoBattle → Gate</strong><span>棋步合法，已记入棋盘。</span></li>
+      <li><strong>Gate → 黑白双方</strong><span>通知白方收到第 17 手，再答复黑方。</span></li>
+    </ol>
+  </figure>
+  <ol class="steps">
+    <li><strong>黑方先试算。</strong> 客户端用自己的棋盘试走这个格子，把房号、手数、坐标和落子前后的局面校验值发出去。校验值也叫 <strong>Hash（指纹）</strong>，用来帮助两边确认此刻算的是同一个局面。</li>
+    <li><strong>Gate 查这是谁的请求。</strong> 它顺着 Session 找到黑方的座位，核对房号，确认轮到黑方，再交给这盘棋指定的 GoBattle。</li>
+    <li><strong>GoBattle 按自己的棋盘算一遍。</strong> 它用双方共用的 C# 棋规 <code>GoCore</code> 在草稿棋盘上试走。走法和算出的局面都对得上，才把草稿变成已确认棋盘。遇到非法落子或结果对不上，棋盘仍停在第 16 手。</li>
+    <li><strong>Gate 告诉双方结果。</strong> Gate 记下这条棋谱，向白方发更新，再回复黑方。两条连接的速度可能不同，哪一端先看到取决于实际网络。</li>
+  </ol>
+  <details class="check-question">
+    <summary>第 17 手已经下成，黑方没收到答复又发了一次，会下两颗吗？</summary>
+    <p>Gate 会拿重发的第 17 手和棋谱对照。完全相同就按已确认的结果答复，棋谱还只有 17 手。如果把同一编号改成另一个坐标，Gate 会拒绝。缺了一手的客户端可以向 Gate 要完整棋谱补齐。</p>
+  </details>
+  <details>
+    <summary>打开源码时先找哪几处</summary>
+    <p>客户端在 <code>FantasyGoTransport</code> 调用 <code>C2G_GoCommandRequest</code>。Gate 从 <code>C2G_GoCommandRequestHandler.Run</code> 进入 <code>lobby.Relay</code>。Battle 在 <code>G2B_GoBatchRequestHandler.ApplyStep</code> 调用 <code>GoCore</code>。其它房间发给同一个 Battle 的棋步可合成一批，最多 32 手。每个房间同时只有一手在等确认。</p>
+    <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs">客户端怎么发</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">Gate 从哪接</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleHandlers.cs">Battle 在哪验棋</a></p>
+  </details>
+</section>
+
+<section class="chapter" id="lifecycle">
+  <h2>断网换了一条连接，怎么还能坐回原位</h2>
+  <p>第一次打招呼时，Gate 会回一段随机字符串，叫<strong>恢复令牌（ResumeToken）</strong>。游戏留着它。切换 Wi-Fi 时，原来的 Session 可能断开，但 Gate 还能在一段时间里记住「这个身份坐在这盘棋白方」。</p>
+  <figure class="diagram">
+    <figcaption><strong>换连接时，三样东西分别发生什么</strong></figcaption>
+    <ol class="flow">
+      <li><strong>连接 Session</strong><span>原来的断开，手机再连一次就有新的 Session。</span></li>
+      <li><strong>恢复令牌</strong><span>客户端把原来的令牌随新 Hello 交给 Gate。</span></li>
+      <li><strong>房间 RoomId</strong><span>令牌和规则都核对通过后，回到原座位，Gate 发回完整棋谱。</span></li>
+    </ol>
+  </figure>
+  <p>默认给掉线的玩家 90 秒回到棋局。这段时间内暂停接收新棋步。测试时保留当前游戏和对局，短暂断开网络再恢复。过期或玩家主动离席时，大厅关房，并通知负责这局的 GoBattle 清理数据。Gate 进程重启会丢掉内存里的房间和令牌，玩家需要重新匹配。</p>
+  <details>
+    <summary>为什么断网后有时过几秒才提示</summary>
+    <p>平常客户端约每 2 秒发一次小消息，叫<strong>心跳</strong>。服务端按照配置检查空闲连接，每 5 秒检查一次，空闲超过 8 秒就会关闭。连接检查用来发现掉线，90 秒则是棋局发现断线后等人回来用的。</p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLobbyComponentSystem.cs">恢复原身份与离席</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">连接销毁时的处理</a> · <a href="../../RevGame.Server/Server/Entity/Fantasy.config">空闲连接检查设置</a></p>
 </section>
 
 <section class="chapter" id="scene-model">
-  <h2>一台机器里为什么有五个 Scene</h2>
-  <p>服务端的 Scene 是一个管理业务状态、调度任务和消息的容器。Gate 有大厅和玩家，GoBattle 有分配给自己的棋局。<strong>同一个棋盘由同一个 Battle 负责写入</strong>，其他 Scene 通过消息提交命令。不同棋局才有机会并行。</p>
+  <h2>一台机器为什么能有五个 Scene</h2>
+  <p class="lesson"><strong>Scene</strong> 是 Fantasy 服务端里负责一部分工作的运行单元。每个 Scene 收自己的消息、按需启动计时器，并保管自己负责的数据。Gate 是一个负责接待玩家的 Scene，GoBattle 是负责算棋的 Scene。它们都在服务器上运行，游戏里的棋盘画面由 Unity 加载。</p>
   <figure class="diagram">
-    <figcaption><strong>仓库默认拓扑</strong><span>Machine 1 上运行 Process 1。五个 Root Scene 都属于 World 1。</span></figcaption>
-    <svg viewBox="0 0 368 295" role="img" aria-label="两台 Unity 设备经 UDP 20000 到 Gate，Gate 按 Address 分配至四个 GoBattle Scene" focusable="false">
-      <title>默认服务器拓扑</title>
-      <rect class="node-neutral" x="9" y="76" width="350" height="207" rx="14"/>
-      <rect class="node-green" x="88" y="8" width="192" height="45" rx="11"/>
-      <text class="diagram-label" x="184" y="35" text-anchor="middle">Unity 棋手 A / 棋手 B</text>
-      <path class="diagram-line" d="M184 53v52m-4-4 4 4 4-4"/>
-      <rect class="diagram-light" x="191" y="61" width="104" height="19" rx="4"/>
-      <text class="diagram-small" x="197" y="74">KCP / UDP 20000</text>
-      <text class="diagram-tag" x="23" y="97">Process 1</text>
-      <rect class="node-blue" x="62" y="105" width="244" height="58" rx="11"/>
-      <text class="diagram-label" x="184" y="129" text-anchor="middle">Gate · 1001</text>
-      <text class="diagram-small" x="184" y="149" text-anchor="middle">会话、匹配、座位、棋谱同步</text>
-      <path class="diagram-line" d="M184 163v29H58v12m-4-4 4 4 4-4 M184 192h126v12m-4-4 4 4 4-4 M142 192v12m-4-4 4 4 4-4 M226 192v12m-4-4 4 4 4-4"/>
-      <text class="diagram-small" x="191" y="184">按房间 Address</text>
-      <rect class="node-gold" x="21" y="205" width="325" height="61" rx="10"/>
-      <text class="diagram-label" x="184" y="229" text-anchor="middle">4 个 GoBattle</text>
-      <text class="diagram-small" x="58" y="250" text-anchor="middle">1002</text>
-      <text class="diagram-small" x="142" y="250" text-anchor="middle">1003</text>
-      <text class="diagram-small" x="226" y="250" text-anchor="middle">1004</text>
-      <text class="diagram-small" x="310" y="250" text-anchor="middle">1005</text>
-    </svg>
+    <figcaption><strong>打开一份程序，就有一个 Gate 和四个 GoBattle</strong></figcaption>
+    <div class="topology">
+      <div class="diagram-box"><strong>黑方电脑和白方手机</strong><span>都用同一个服务器地址</span></div>
+      <div class="flow-arrow"><b aria-hidden="true">↓</b>游戏消息都进入 Gate</div>
+      <div class="machine-box">
+        <strong>一台机器（Machine 1）内的一份程序（Process 1）</strong>
+        <div class="diagram-box gate-box"><strong>Gate · Scene 1001</strong><span>连进来的是谁，跟谁下，坐哪一方</span></div>
+        <div class="flow-arrow"><b aria-hidden="true">↓</b>开房时在下面四个 GoBattle 中选一个</div>
+        <div class="scene-grid">
+          <div class="diagram-box"><strong>1002</strong><span>GoBattle</span></div>
+          <div class="diagram-box"><strong>1003</strong><span>GoBattle</span></div>
+          <div class="diagram-box"><strong>1004</strong><span>GoBattle</span></div>
+          <div class="diagram-box"><strong>1005</strong><span>GoBattle</span></div>
+        </div>
+      </div>
+    </div>
   </figure>
   <dl class="definition-list">
-    <div><dt>Machine / Process / World</dt><dd>Machine 描述一台机器和网络地址。Process 对应一组启动配置。World 是业务归属范围，可以挂同一组数据库配置。一个 Scene 同时归某个 Process 承载、归某个 World 管理。</dd></div>
-    <div><dt>Scene / Entity / Component / System</dt><dd>Gate 的玩家是 Entity，<code>GoSessionComponent</code> 挂到 Session 上保存当前玩家绑定，<code>GoLobbyComponent</code> 挂到根 Scene 上保存大厅索引。System 描述初始化、匹配和销毁行为，Scene 回收时会清理归属对象。</dd></div>
-    <div><dt>Session / RoomId / Address</dt><dd>Session 标识本次网络连接。RoomId 是业务房号，同一局两席共享。Address 是 Fantasy 的运行时路由地址，Gate 用它把命令送到那盘棋所属的 Battle。客户端只填 Gate 的 IP 和端口。</dd></div>
-    <div><dt>Root Scene / SubScene</dt><dd>当前五个都是配置创建的根场景，每个 GoBattle 下存多个房间对象。Fantasy 也支持按需创建 SubScene，用于需要独立生命周期的副本或地图，它共享父 Scene 的基础调度设施。RevGame 这版以房间数据表示一局棋。</dd></div>
+    <div><dt>Machine 是在哪台电脑上跑</dt><dd>可以是你自己的电脑，也可以是一台腾讯云服务器。默认配置只写了 1 台。</dd></div>
+    <div><dt>Process 是这台电脑上跑着哪一份程序</dt><dd>敲一次启动命令就运行一份。默认只运行 Process 1，这一份程序内就有图里的五个 Scene。</dd></div>
+    <div><dt>World 是哪些 Scene 服务同一组玩家</dt><dd>可以把它理解成游戏的一个区。默认五个 Scene 都属于 World 1。Gate 只从同一个 World 里挑 GoBattle。即使把 Battle 移到另一个进程，它仍能属于这个 World。</dd></div>
+    <div><dt>Root Scene 是随服务启动的 Scene</dt><dd>配置里写了五条，所以启动时有五个。一个 GoBattle 能负责多盘棋。Fantasy 也支持运行时创建子 Scene，本项目的普通棋局直接存成房间数据。</dd></div>
   </dl>
-  <p>五个 Scene 的 <code>sceneRuntimeMode</code> 都是 <code>MultiThread</code>，因此可以把围棋计算分给四个 Battle 线程。Gate 等待内网 RPC 时用 <code>FTask</code>，这是 Fantasy 的异步任务类型。这时 Gate 可以处理其它房间。等回包以后，要再核对房间和 Session 是否还是原来那一个。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Entity/Fantasy.config">项目拓扑配置</a> · <a href="../../../.codex/skills/fantasy-net/references/ecs/scene.md">Fantasy Scene 生命周期</a> · <a href="../../../.codex/skills/fantasy-net/references/server/address.md">Fantasy Address 路由</a></p>
+  <p>可以把处理线程理解成程序里一条按顺序干活的队列。四个 GoBattle 各用一条，可以同时验不同房间的棋。<strong>同一盘棋始终只有一个 GoBattle 负责修改</strong>。比如这局分给 1003，下一手也交给 1003，因为这盘棋下到哪一步，只有它保存着完整的棋盘。</p>
+  <div class="callout tip"><b>玩家的地址、内部地址和房号</b>
+    <p><strong>IP:端口</strong> 给玩家找 Gate。<strong>RoomId</strong> 给游戏找一盘棋，例如示意房号 <code>R208</code>。<strong>Address</strong> 给框架找负责算棋的 Scene。Gate 从 <code>R208</code> 的房间记录中取出 <code>WorkerAddress</code>，把房号一并发过去。GoBattle 收到后按 <code>R208</code> 找到对应的棋盘。图里的 <code>1003</code> 是配置编号，发消息用的是框架提供的 Address。</p>
+  </div>
+  <details class="check-question">
+    <summary>同一个 GoBattle 能管十盘棋吗？</summary>
+    <p>能。GoBattle 按 RoomId 保存多份棋盘。十盘棋分别有自己的记录，都可以由同一个 Scene 按顺序处理。Fantasy 的 Scene 关闭时会清理挂在它下面的对象，项目也会在单个房间结束后把那盘棋的资源清掉。</p>
+  </details>
+  <details>
+    <summary>在 Fantasy.config 里怎样找到图中的 1003</summary>
+    <p>搜 <code>id="1003"</code>。这一行的 <code>sceneTypeString="GoBattle"</code> 写明它负责算棋。<code>processConfigId="1"</code> 表示由第 1 份程序启动，<code>worldConfigId="1"</code> 表示给第 1 个游戏区服务。想把它搬到第二份程序，就改进程编号。给哪个区服务由 World 编号决定。</p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Entity/Fantasy.config">项目的五个 Scene</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">启动时怎样分配工作</a> · <a href="../../../.codex/skills/fantasy-net/references/ecs/scene.md">Fantasy 的 Scene</a> · <a href="../../../.codex/skills/fantasy-net/references/server/address.md">Fantasy 的 Address</a></p>
+</section>
+
+<section class="chapter" id="projects">
+  <h2>为什么代码分 Main、Entity 和 Hotfix</h2>
+  <p>拿「玩家正在排队」这件事举例。<strong>Main</strong> 拉起服务器。<strong>Entity</strong> 定义服务器要记什么，例如玩家是谁、已经等了多久。<strong>Hotfix</strong> 写怎样找对手，例如根据双方等了多久决定允许多大的棋力差。</p>
+  <figure class="diagram">
+    <figcaption><strong>同一项匹配功能，在三个目录里分别做什么</strong></figcaption>
+    <ol class="flow">
+      <li><strong>Server/Main</strong><span><code>Program.cs</code> 加载项目代码、启动 Fantasy。</span></li>
+      <li><strong>Server/Entity</strong><span><code>GoLobbyComponent.cs</code> 里有大厅、等待队列、玩家和座位记录。</span></li>
+      <li><strong>Server/Hotfix</strong><span><code>GoRequestHandlers.cs</code> 接到匹配请求，大厅逻辑决定怎么配对。</span></li>
+    </ol>
+  </figure>
+  <p>三个目录各有一个 <code>.csproj</code>，它告诉编译工具这个项目用哪些文件和依赖。编译以后会得到三个项目各自的 <code>.dll</code>，也就是装着编译后代码的文件。你只启动 <code>Main.dll</code>，它会把另两份代码一起加载。上节的一台机器和五个 Scene 是<strong>运行时怎么布置</strong>，三份 DLL 是<strong>源码怎么分工</strong>。</p>
+  <details>
+    <summary>Fantasy 官方为什么推荐把数据和做法拆开</summary>
+    <p>假如你只想改「等几秒才放宽匹配」，理想情况下可以保留原来的玩家和队列数据，换掉判断规则。这就是<strong>热重载</strong>，即让运行中的程序加载新版逻辑。Fantasy 建议把可替换的逻辑放进 Hotfix，把需要继续使用的数据类型放在 Entity。</p>
+    <p>在本项目，<code>AssemblyHelper</code> 在启动时加载 <code>Hotfix.dll</code> 和 <code>Hotfix.pdb</code>，让 Fantasy 找到处理消息的代码。实际上云换版时先停止旧进程，再从新目录启动整套文件。若要在不停服的情况下换代码，还得解决正在处理的请求和定时器怎么交接。</p>
+    <p class="sources"><a href="https://raw.githubusercontent.com/qq362946/Fantasy/2026.1.2003/Skills/fantasy-net/references/server/setup-server.md">Fantasy 官方三层项目结构</a> · <a href="../../RevGame.Server/Server/Entity/AssemblyHelper.cs">RevGame 启动时加载逻辑的代码</a></p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Main/Program.cs">Main 带你找到启动入口</a> · <a href="../../RevGame.Server/Server/Entity/Pvp/GoLobbyComponent.cs">Entity 带你找到大厅数据</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoMatchPolicy.cs">Hotfix 带你找到匹配规则</a></p>
+</section>
+
+<section class="chapter" id="layout">
+  <h2>打开代码时，先分清谁记数据、谁做事</h2>
+  <p>你会在 Fantasy 文档里看到 <strong>ECS</strong>，就是 Entity、Component、System 三个词的缩写。拿项目里的连接举例。握手成功后，Gate 要把「这条连接属于哪个玩家」记下来。</p>
+  <figure class="diagram">
+    <figcaption><strong>同一条连接上的记录和动作</strong></figcaption>
+    <ol class="flow">
+      <li><strong>Entity · 框架管理的对象</strong><span>一条 <code>Session</code> 是一个对象，Fantasy 负责它的创建与销毁。</span></li>
+      <li><strong>Component · 挂上去的数据</strong><span>给 Session 挂 <code>GoSessionComponent</code>，里面记着它绑定的玩家。</span></li>
+      <li><strong>System · 对数据做事的代码</strong><span>断开连接时，<code>GoSessionComponentDestroySystem</code> 处理解绑，并通知大厅。</span></li>
+    </ol>
+  </figure>
+  <p><strong>Handler</strong> 是消息刚到时先进入的那段代码。比如收到匹配请求，Handler 从 Session 找到玩家，再调用大厅的匹配方法。<strong>System</strong> 里写业务动作，也可以写创建、销毁时该做什么。<code>Server/Entity</code> 是存放数据类的目录名，代码里的 <code>Entity</code> 也是框架管理对象的类型。挂到 Session 的 Component 在 Fantasy 中也由框架当作 Entity 管理。Handler 和 System 通常放在 <code>Server/Hotfix</code>。</p>
+  <div class="table-scroll" tabindex="0" aria-label="按问题找第一处源码">
+    <table>
+      <thead><tr><th scope="col">我想知道</th><th scope="col">先打开这个文件</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">一共起了几个 Scene，哪个端口给玩家</th><td><a href="../../RevGame.Server/Server/Entity/Fantasy.config">Server/Entity/Fantasy.config</a></td></tr>
+        <tr><th scope="row">玩家信息和棋谱存在哪</th><td><a href="../../RevGame.Server/Server/Entity/Pvp/GoLobbyComponent.cs">Server/Entity/Pvp/GoLobbyComponent.cs</a></td></tr>
+        <tr><th scope="row">客户端落子时带了哪些数据</th><td><a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">Tools/NetworkProtocol/Outer/GoRelay.proto</a></td></tr>
+        <tr><th scope="row">收到动作后怎样进房、下棋、结束</th><td><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">Server/Hotfix/Pvp/GoRequestHandlers.cs</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>服务器怎么能用到 Unity 目录里的棋规？</summary>
+    <p><code>Entity.csproj</code> 把客户端工程 <code>Pvp/Core</code> 和 <code>Pvp/Duel</code> 里的共享 C# 源文件也编进服务端。这样两边用同一份棋规。Windows 构建还会复制决斗需要的 <code>RevGameCore.dll</code>。因此在开发机编译时要取完整仓库，云服务器收到的是已经生成好的整个发布目录。</p>
+    <p class="sources"><a href="../../RevGame.Server/Server/Entity/Entity.csproj">共享源码和原生 DLL 的引用</a></p>
+  </details>
+  <p class="sources"><a href="../../../.codex/skills/fantasy-net/references/ecs/entity-definition.md">Fantasy 对 Entity、Component 和 System 的约定</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">本项目的创建和销毁代码</a></p>
 </section>
 
 <section class="chapter" id="boot">
-  <h2>从 dotnet 命令走到端口监听</h2>
-  <p>从仓库根进入服务端目录。Windows 开发机装 .NET 10 SDK，首次构建会还原 NuGet 包。在 20000 和 11002–11006 空闲时，可以用下面的默认配置启动。本地测试也可运行仓库的 <code>start-server.cmd</code>，它会检查端口、构建 Debug 产物并在自己的运行目录启动。</p>
+  <h2>输入启动命令后，程序怎样开始接人</h2>
+  <p>先在开发机上试。装好 <strong>.NET 10 SDK</strong>，也就是用来编译 C# 项目的工具。从仓库根目录打开 PowerShell，运行下面两行。默认端口要处于空闲状态。</p>
   <div class="code-card">
-    <div class="code-head"><span>开发机 PowerShell · 首次本地启动 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="开发机 PowerShell · 首次本地启动"><code>Set-Location .\RevGame_Server\RevGame.Server
-dotnet build .\Server\Main\Main.csproj -c Debug
-# 构建成功后再运行
-dotnet .\Server\Main\bin\Debug\net10.0\Main.dll --m Develop</code></pre>
+    <div class="code-head"><span>开发机 PowerShell · 从仓库根目录启动 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="开发机 PowerShell · 从仓库根目录启动"><code>Set-Location .\RevGame_Server\RevGame.Server
+dotnet run --project .\Server\Main\Main.csproj</code></pre>
   </div>
   <figure class="diagram">
-    <figcaption><strong>从 Program.cs 走到消息循环</strong><span>先加载代码和配置，再在 Scene 上装配业务。</span></figcaption>
-    <svg viewBox="0 0 368 530" role="img" aria-label="从 Program.cs 走到消息循环" focusable="false">
-      <title>从 Program.cs 走到消息循环</title>
-      <desc>先加载代码和配置，再在 Scene 上装配业务。</desc>
-      <rect class="node-green" x="39" y="8" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="28" r="10"/>
-      <text class="diagram-number" x="57" y="28" text-anchor="middle">1</text>
-      <text class="diagram-label" x="76" y="33">Main.dll</text>
-      <text class="diagram-small" x="76" y="52">Program.cs 调 AssemblyHelper.Initialize</text>
-      <path class="diagram-line" d="M184 76v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="97" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="117" r="10"/>
-      <text class="diagram-number" x="57" y="117" text-anchor="middle">2</text>
-      <text class="diagram-label" x="76" y="122">加载 Entity 和 Hotfix</text>
-      <text class="diagram-small" x="76" y="141">读取编译生成的注册信息</text>
-      <path class="diagram-line" d="M184 165v16m-4-4 4 4 4-4"/>
-      <rect class="node-gold" x="39" y="186" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="206" r="10"/>
-      <text class="diagram-number" x="57" y="206" text-anchor="middle">3</text>
-      <text class="diagram-label" x="76" y="211">Fantasy Entry.Start</text>
-      <text class="diagram-small" x="76" y="230">解析 --m / --pid、日志、配置与序列化</text>
-      <path class="diagram-line" d="M184 254v16m-4-4 4 4 4-4"/>
-      <rect class="node-neutral" x="39" y="275" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="295" r="10"/>
-      <text class="diagram-number" x="57" y="295" text-anchor="middle">4</text>
-      <text class="diagram-label" x="76" y="300">创建 Process 与 Root Scene</text>
-      <text class="diagram-small" x="76" y="319">按场景配置建立监听、选择调度模式</text>
-      <path class="diagram-line" d="M184 343v16m-4-4 4 4 4-4"/>
-      <rect class="node-green" x="39" y="364" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="384" r="10"/>
-      <text class="diagram-number" x="57" y="384" text-anchor="middle">5</text>
-      <text class="diagram-label" x="76" y="389">OnCreateScene</text>
-      <text class="diagram-small" x="76" y="408">Gate 挂大厅组件，GoBattle 挂棋盘组件</text>
-      <path class="diagram-line" d="M184 432v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="453" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="473" r="10"/>
-      <text class="diagram-number" x="57" y="473" text-anchor="middle">6</text>
-      <text class="diagram-label" x="76" y="478">持续处理网络与计时器</text>
-      <text class="diagram-small" x="76" y="497">探针或 Unity 连接 Gate，开始握手</text>
-    </svg>
+    <figcaption><strong>开程序、读配置、开始等玩家</strong></figcaption>
+    <ol class="flow">
+      <li><strong>从 Program.cs 开始</strong><span>加载数据和业务逻辑，再交给 Fantasy 的启动入口。</span></li>
+      <li><strong>读取 Fantasy.config</strong><span>从运行目录找到配置，知道要创建一个 Gate 和四个 GoBattle。</span></li>
+      <li><strong>Gate 开始接连接</strong><span>程序等客户端把消息发来。它的入口编号是 20000，传输方式是 UDP。等待接收叫监听。</span></li>
+    </ol>
   </figure>
-  <p><code>Fantasy.config</code> 有两个位置。平常编辑的是 <code>Server/Entity/Fantasy.config</code>，构建或发布后运行时读取 <strong>Main.dll 所在目录的那一份</strong>。只保存源码配置而沿用旧发布目录，运行的仍是旧配置。<code>--m Develop</code> 启动配置中的全部 Process，<code>--m Release --pid 1</code> 只启动编号为 1 的 Process。这个 <code>1</code> 来自 XML，与 Windows 任务管理器显示的 PID 无关。编译的 <code>-c Release</code> 则决定构建配置。</p>
-  <p>看到 <code>Process:1 Startup Complete SceneCount:5</code> 与 KCP 监听日志后，同机客户端填写 <code>127.0.0.1:20000</code>。这证明进程和监听已起来，接下来还要用两台客户端完成一次对局才能证明业务已跑通。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Main/Program.cs">Program.cs</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">OnCreateScene 装配</a> · <a href="../../RevGame.Server/start-server.ps1">本机启动脚本</a></p>
+  <p>看到 <code>Startup Complete SceneCount:5</code> 表示五个 Scene 都已经起来。在同一台电脑上打开游戏，填 <code>127.0.0.1:20000</code>。<code>127.0.0.1</code> 是「这台电脑自己」，朋友在另一台电脑上需要填你的实际局域网 IP 或服务器公网 IP。</p>
+  <details>
+    <summary>为什么我改了配置，服务器还是读旧的</summary>
+    <p>平时编辑 <code>Server/Entity/Fantasy.config</code>，编译时会复制到输出目录。运行中的服务读 <strong>Main.dll 同一目录下的 Fantasy.config</strong>。若你重新起的是旧目录，就仍会看到旧端口。在云上部署，修改的是复制过去的那份配置。</p>
+    <p>直接运行 <code>Main.dll</code> 时，开发模式 <code>--m Develop</code> 会启动配置里的全部 Process。发布模式 <code>--m Release --pid 1</code> 只启动配置里编号 1 的一组 Scene。这里的 1 是配置编号，Windows 任务管理器显示的进程号由系统另外分配。</p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Main/Program.cs">实际启动入口</a> · <a href="../../RevGame.Server/Server/Main/Properties/launchSettings.json">本地启动参数</a> · <a href="../../RevGame.Server/start-server.ps1">本地端口检查脚本</a></p>
 </section>
 
 <section class="chapter" id="protocol">
-  <h2>从 .proto 定义到两端能读的消息</h2>
-  <p>协议是一张双方约定的表。比如客户端希望在某个房间下一手棋，就提交 <code>RoomId</code> 和 <code>Command</code>。字段编号告诉解码器哪段字节对应哪一个字段。<code>OpCode</code> 用于识别是哪一种消息，和字段编号处于不同层。</p>
+  <h2>客户端和服务器约好了要传什么</h2>
+  <p>黑方要告诉 Gate「我想在这盘棋的这个位置下一手」。两边事先约好要传哪些字段、每个字段是哪种数据，这份约定叫<strong>协议</strong>。本项目把约定写在扩展名为 <code>.proto</code> 的文本文件里。</p>
   <div class="code-card">
-    <div class="code-head"><span>GoRelay.proto · 项目现有落子请求 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="GoRelay.proto · 项目现有落子请求"><code>message C2G_GoCommandRequest // IRequest,G2C_GoCommandResponse
+    <div class="code-head"><span>GoRelay.proto · 实际的落子请求 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="GoRelay.proto · 实际的落子请求"><code>message C2G_GoCommandRequest // IRequest,G2C_GoCommandResponse
 {
     string RoomId = 1;
     GoRelayCommand Command = 2;
 }</code></pre>
   </div>
+  <ul>
+    <li><code>C2G</code> 表示客户端发给 Gate。这条消息的答复叫 <code>G2C_GoCommandResponse</code>。</li>
+    <li><code>RoomId</code> 是房号，类型是字符串。<code>Command</code> 是这手棋的内容，里面还有手数、执棋方和坐标。</li>
+    <li><code>= 1</code> 和 <code>= 2</code> 给两项数据编号。接收端读到编号 1 就按房号解释，已有的字段编号要保留。</li>
+  </ul>
   <figure class="diagram">
-    <figcaption><strong>一张协议表用于两端</strong><span>协议导出生成类型和消息编号。C# 编译时，再由 Fantasy 源生成器处理 Handler 等注册。</span></figcaption>
-    <div class="diagram-row">
-      <div><strong>.proto 与 OpCode.Cache</strong><small>定义消息字段，固定已有消息号。</small></div>
-      <div><strong>Fantasy 协议导出器</strong><small>执行 export-protocol.ps1。</small></div>
-      <div><strong>服务端 / Unity 生成代码</strong><small>服务端拿 Outer 和 Inner，Unity 拿 Outer。</small></div>
-    </div>
+    <figcaption><strong>同一份约定，生成两边能直接使用的 C# 代码</strong></figcaption>
+    <ol class="flow">
+      <li><strong>改 .proto</strong><span>写清消息叫什么、带哪些字段。</span></li>
+      <li><strong>运行导出脚本</strong><span><code>export-protocol.ps1</code> 生成代码，并保留已有消息编号。</span></li>
+      <li><strong>编译两边</strong><span>Unity 用玩家协议，服务端还要用内网协议。</span></li>
+    </ol>
   </figure>
-  <div class="table-scroll" tabindex="0" aria-label="协议类型与调用方式">
-    <table>
-      <thead><tr><th scope="col">想做什么</th><th scope="col">协议与 Handler</th><th scope="col">本项目例子</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">向 Gate 问一件事</th><td><code>Outer</code> 的 <code>IRequest</code> / <code>IResponse</code>，接收端用 <code>MessageRPC&lt;请求, 响应&gt;</code>。</td><td>登录式握手、匹配、落子和决斗交换。响应通过 RPC 对应到调用方。</td></tr>
-        <tr><th scope="row">Gate 主动通知玩家</th><td><code>Outer</code> 的 <code>IMessage</code>，发送端 <code>session.Send(...)</code>。</td><td><code>G2C_GoState</code> 是状态推送。当前 Unity 的接收类型是 <code>Message&lt;G2C_GoState&gt;</code>。</td></tr>
-        <tr><th scope="row">向已知 Battle 地址查询</th><td><code>Inner</code> 的 <code>IAddressRequest</code> / <code>IAddressResponse</code>，接收端用 <code>AddressRPC&lt;Scene, 请求, 响应&gt;</code>。</td><td><code>Scene.Call(address, request)</code> 批量校验同一 Battle 上的棋步。</td></tr>
-        <tr><th scope="row">通知 Battle 关房</th><td><code>Inner</code> 的 <code>IAddressMessage</code>，接收端用 <code>Address&lt;Scene, 消息&gt;</code>。</td><td><code>G2B_CloseGoRoom</code> 清理房间。发送方使用 <code>Scene.Send(...)</code>，无业务回包。</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p>新增可选字段用新编号，保留现有字段的编号、含义和类型。改完源协议后运行 <code>export-protocol.ps1</code>，审查两处生成目录和 <code>OpCode.Cache</code> 的差异。生成的文件用导出器维护，项目代码实现 Handler 即可由 Fantasy 源生成器注册。外网契约不兼容时要协调客户端和 Gate，内网协议变化则需要 Gate 和 Battle 同版。</p>
-  <p class="sources"><a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">外网协议</a> · <a href="../../RevGame.Server/Tools/NetworkProtocol/Inner/InnerMessage.proto">内网协议</a> · <a href="../../../.codex/skills/fantasy-net/references/protocol/index.md">Fantasy 协议定义与导出</a></p>
+  <p><strong>Outer</strong> 是玩家与 Gate 之间的约定，例如「黑方请求落子」。<strong>Inner</strong> 是服务端内部的约定，例如「Gate 请 GoBattle 验棋」。玩家程序只需要 Outer。默认都在一个进程里时，Gate 和 GoBattle 仍按 Inner 的约定交换消息。</p>
+  <details>
+    <summary>要加一个字段，应该改哪个文件</summary>
+    <p>先改 <code>Tools/NetworkProtocol/Outer/GoRelay.proto</code> 或 <code>Inner/InnerMessage.proto</code>，再重新导出，由工具更新生成目录。新字段用未占用的编号。<code>OpCode.Cache</code> 保存整条消息的编号，避免重新导出时给已有消息换号。</p>
+    <p>生成消息代码与注册处理方法是两步。导出脚本给消息生成 C# 类。编译时，Fantasy 的源码生成器再把「收到这类消息时找哪个 Handler」准备好，启服会加载这份信息。</p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">玩家协议</a> · <a href="../../RevGame.Server/Tools/NetworkProtocol/Inner/InnerMessage.proto">内部协议</a> · <a href="../../RevGame.Server/Tools/ProtocolExportTool/ExporterSettings.json">生成结果放在哪</a> · <a href="../../../.codex/skills/fantasy-net/references/protocol/index.md">Fantasy 协议说明</a></p>
 </section>
 
 <section class="chapter" id="packets">
-  <h2>收包、发包和回包是三件什么事</h2>
-  <p>Unity 侧拿到 <code>Session</code> 后，可以调用生成的 RPC 方法。RPC 指远程调用，调用方发送请求并等与它对应的回复。Fantasy 把对象编码成字节，填入数据长度、<code>OpCode</code>、本次 <code>RpcId</code> 等包头信息，交给传输层。UDP 负责传输数据报，KCP 在 UDP 之上做重传和排序。跨进程的内网这里用 TCP，框架负责从字节流中拼出一条完整消息。</p>
+  <h2>发送、回复、主动通知，各是什么</h2>
   <figure class="diagram">
-    <figcaption><strong>一条消息怎样变成一个 Handler 调用</strong><span>包头负责分发。消息体里的房号、序号和坐标由业务使用。</span></figcaption>
-    <svg viewBox="0 0 368 530" role="img" aria-label="一条消息怎样变成一个 Handler 调用" focusable="false">
-      <title>一条消息怎样变成一个 Handler 调用</title>
-      <desc>包头负责分发。消息体里的房号、序号和坐标由业务使用。</desc>
-      <rect class="node-green" x="39" y="8" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="28" r="10"/>
-      <text class="diagram-number" x="57" y="28" text-anchor="middle">1</text>
-      <text class="diagram-label" x="76" y="33">发送端 C# 对象</text>
-      <text class="diagram-small" x="76" y="52">GoRelayCommand 作为请求中的字段</text>
-      <path class="diagram-line" d="M184 76v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="97" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="117" r="10"/>
-      <text class="diagram-number" x="57" y="117" text-anchor="middle">2</text>
-      <text class="diagram-label" x="76" y="122">序列化 + 包头</text>
-      <text class="diagram-small" x="76" y="141">长度识别边界，OpCode 找到消息类型</text>
-      <path class="diagram-line" d="M184 165v16m-4-4 4 4 4-4"/>
-      <rect class="node-gold" x="39" y="186" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="206" r="10"/>
-      <text class="diagram-number" x="57" y="206" text-anchor="middle">3</text>
-      <text class="diagram-label" x="76" y="211">KCP 或内网 TCP</text>
-      <text class="diagram-small" x="76" y="230">接收端在相应的 Scene 调度消息</text>
-      <path class="diagram-line" d="M184 254v16m-4-4 4 4 4-4"/>
-      <rect class="node-neutral" x="39" y="275" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="295" r="10"/>
-      <text class="diagram-number" x="57" y="295" text-anchor="middle">4</text>
-      <text class="diagram-label" x="76" y="300">解包和反序列化</text>
-      <text class="diagram-small" x="76" y="319">由框架按编号还原成强类型请求</text>
-      <path class="diagram-line" d="M184 343v16m-4-4 4 4 4-4"/>
-      <rect class="node-green" x="39" y="364" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="384" r="10"/>
-      <text class="diagram-number" x="57" y="384" text-anchor="middle">5</text>
-      <text class="diagram-label" x="76" y="389">Handler.Run</text>
-      <text class="diagram-small" x="76" y="408">校验身份与内容，填写结果或错误码</text>
-      <path class="diagram-line" d="M184 432v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="453" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="473" r="10"/>
-      <text class="diagram-number" x="57" y="473" text-anchor="middle">6</text>
-      <text class="diagram-label" x="76" y="478">回复调用方</text>
-      <text class="diagram-small" x="76" y="497">RpcId 把回包交还给等待它的调用</text>
-    </svg>
+    <figcaption><strong>用落子的三句消息分清方向</strong></figcaption>
+    <ol class="flow">
+      <li><strong>黑方问 Gate</strong><span>「这手能下吗？」请求会等回复，这种用法叫 RPC。</span></li>
+      <li><strong>Gate 答黑方</strong><span>「可以。现在是第 17 手。」这是一开始那次请求的回复。</span></li>
+      <li><strong>Gate 通知白方</strong><span>「对手下了第 17 手。」白方先前没问，这叫主动推送。</span></li>
+    </ol>
   </figure>
-  <p><code>RpcId</code>、<code>Sequence</code> 和决斗 <code>Frame</code> 经常被误认为同一个数字。<strong>RpcId</strong> 用于找到这一次网络等待者，重试通常会有新的请求。<strong>Sequence</strong> 是围棋历史里第几条确认命令，重试时相同一手仍用同一序号。<strong>Frame</strong> 是决斗世界执行到的第几个逻辑步，和玩家本机的画面帧率分开。</p>
-  <p>普通 <code>MessageRPC</code> 在 <code>Run</code> 结束时由框架回包。正常写法是设置 <code>response.ErrorCode</code> 和相应字段后退出。需要明确提前发送时可以使用 <code>reply()</code>，发送后把响应视为已经交给框架。请求、响应和池化消息的引用只在当前处理期间使用。想长期保存完整棋谱或快照，可以把值复制到自己拥有的容器，或者按现成代码复制消息并在房间销毁时归还。</p>
-  <p>调试时可以顺着 <strong>连接 → 解码 → 当前 Scene 的 Handler → 业务状态 → 回包</strong> 看日志。两个客户端能建立连接，只说明传输层通了。RPC 收到响应还要看 <code>ErrorCode</code>。业务响应成功之后，再核对这些状态是否按序应用到玩家界面上。</p>
-  <div class="callout"><b>为什么客户端还有一个接收 Handler</b>落子 RPC 的回复给提交者，对手的状态通过 <code>G2C_GoState</code> 单向推送。Unity 的 <code>G2C_GoStateHandler</code> 把快照交给 <code>FantasyGoTransport</code>，玩法服务按序重放后，Revolution 的界面才看到新棋面。</div>
-  <p class="sources"><a href="../../../.codex/skills/fantasy-net/references/server/server-message-handler.md">Fantasy 消息与 RPC Handler</a> · <a href="../../RevGame.Server/Tools/Fantasy.Net/Runtime/Core/Network/Message/PacketParser/Packet.cs">包头定义</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/G2C_GoStateHandler.cs">Unity 推送入口</a></p>
-</section>
-
-<section class="chapter" id="match-flow">
-  <h2>两个人怎样走进同一个房间</h2>
-  <figure class="diagram">
-    <figcaption><strong>从连接到开局</strong><span>棋手要完成网络连接、业务握手和房间匹配三个阶段。</span></figcaption>
-    <svg viewBox="0 0 368 530" role="img" aria-label="从连接到开局" focusable="false">
-      <title>从连接到开局</title>
-      <desc>棋手要完成网络连接、业务握手和房间匹配三个阶段。</desc>
-      <rect class="node-green" x="39" y="8" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="28" r="10"/>
-      <text class="diagram-number" x="57" y="28" text-anchor="middle">1</text>
-      <text class="diagram-label" x="76" y="33">输入公网 IP 和端口</text>
-      <text class="diagram-small" x="76" y="52">PvpServerPanel → PvpService</text>
-      <text class="diagram-small" x="76" y="67">→ FantasyGoTransport</text>
-      <path class="diagram-line" d="M184 76v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="97" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="117" r="10"/>
-      <text class="diagram-number" x="57" y="117" text-anchor="middle">2</text>
-      <text class="diagram-label" x="76" y="122">建立 KCP 后发 Hello</text>
-      <text class="diagram-small" x="76" y="141">传规则版本、昵称、场次与规则文本</text>
-      <path class="diagram-line" d="M184 165v16m-4-4 4 4 4-4"/>
-      <rect class="node-gold" x="39" y="186" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="206" r="10"/>
-      <text class="diagram-number" x="57" y="206" text-anchor="middle">3</text>
-      <text class="diagram-label" x="76" y="211">Gate 建立匿名身份</text>
-      <text class="diagram-small" x="76" y="230">把玩家和当前 Session 绑定，返回恢复令牌</text>
-      <path class="diagram-line" d="M184 254v16m-4-4 4 4 4-4"/>
-      <rect class="node-neutral" x="39" y="275" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="295" r="10"/>
-      <text class="diagram-number" x="57" y="295" text-anchor="middle">4</text>
-      <text class="diagram-label" x="76" y="300">点击开始匹配</text>
-      <text class="diagram-small" x="76" y="319">同场次与同规则进入同一个等待队列</text>
-      <path class="diagram-line" d="M184 343v16m-4-4 4 4 4-4"/>
-      <rect class="node-green" x="39" y="364" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="384" r="10"/>
-      <text class="diagram-number" x="57" y="384" text-anchor="middle">5</text>
-      <text class="diagram-label" x="76" y="389">开房并绑定 Battle</text>
-      <text class="diagram-small" x="76" y="408">按节点在局数分配，确定黑白席与 RoomId</text>
-      <path class="diagram-line" d="M184 432v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="453" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="473" r="10"/>
-      <text class="diagram-number" x="57" y="473" text-anchor="middle">6</text>
-      <text class="diagram-label" x="76" y="478">让两席知道开局</text>
-      <text class="diagram-small" x="76" y="497">一边拿匹配回复，另一边可收状态推送</text>
-    </svg>
-  </figure>
-  <p>收到握手时，Gate 会核对 <code>revgo-2</code>、必需规则字段和格式，并给匿名身份返回一枚随机恢复令牌。<code>GoSessionComponent</code> 记录本条 Session 绑定了哪个玩家。下一次收到命令，服务端从这个组件找玩家和座位，再核对请求与当前房号。</p>
-  <p>匹配先用 <code>MatchKind + RulesJson</code> 分桶。同一组内，<code>GoMatchPolicy</code> 选择棋力距离最近的合格对手，距离相同优先队列里更早的人。按两人等待时间中较短的一方计算放宽窗口。等待未满 8 秒只接受同段至多 100 分差，8 至不足 16 秒允许差 1 段、200 分，16 秒起允许差 2 段、300 分。Gate 每秒重试和回收过期队列。开房时把当前负载较少的 Battle Address 写入房间，后面每手都沿这个地址走。</p>
-  <details><summary>连上了，为什么一直匹配不到</summary><p>先确保两个测试客户端都点了开始匹配，使用同一构建、同一个服务器地址、相同场次和相同规则。规则文本不同，等更久也只在各自队列里等。已有房间先离场。查服务端匹配日志，确认节点还有容量。</p></details>
-  <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs">服务器对战面板</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLobbyComponentSystem.cs">握手、匹配与房间</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoMatchPolicy.cs">棋力距离算法</a></p>
-</section>
-
-<section class="chapter" id="go-flow">
-  <h2>跟着一手棋读完整条链路</h2>
-  <p>假设第 16 手已经确认，现在轮到黑方。黑方客户端先用同源棋规试算坐标，构造第 17 条操作。请求带着房号、行动方、操作类型、坐标、时间和前后局面指纹。前指纹告诉服务端黑方基于哪一个局面提交，后指纹告诉服务端黑方试算得到了什么。</p>
-  <figure class="diagram">
-    <figcaption><strong>第 17 条操作的时序</strong><span>从上往下看时间。箭头连接发消息的一方和接收的一方。</span></figcaption>
-    <svg class="seq-wide" viewBox="0 0 704 365" role="img" aria-label="黑方请求 Gate，Gate 转到 Battle；Battle 校验后回 Gate，Gate 回复黑方并推送白方" focusable="false">
-      <title>围棋一次落子的收发时序</title>
-      <path class="diagram-rule" d="M75 54v296 M260 54v296 M451 54v296 M629 54v296"/>
-      <rect class="node-green" x="14" y="10" width="122" height="43" rx="10"/>
-      <rect class="node-blue" x="199" y="10" width="122" height="43" rx="10"/>
-      <rect class="node-gold" x="390" y="10" width="122" height="43" rx="10"/>
-      <rect class="node-green" x="568" y="10" width="122" height="43" rx="10"/>
-      <text class="diagram-label" x="75" y="36" text-anchor="middle">黑方 Unity</text>
-      <text class="diagram-label" x="260" y="36" text-anchor="middle">Gate</text>
-      <text class="diagram-label" x="451" y="36" text-anchor="middle">GoBattle</text>
-      <text class="diagram-label" x="629" y="36" text-anchor="middle">白方 Unity</text>
-      <path class="diagram-line" d="M75 91H258m-5-4 5 4-5 4 M260 146H449m-5-4 5 4-5 4 M451 233H262m5-4-5 4 5 4 M260 282H627m-5-4 5 4-5 4 M260 334H77m5-4-5 4 5 4"/>
-      <text class="diagram-action" x="164" y="81" text-anchor="middle">落子请求 · Sequence 17</text>
-      <text class="diagram-small" x="270" y="116">校验 Session、房号与座位</text>
-      <text class="diagram-action" x="354" y="136" text-anchor="middle">按固定 Address 提交棋步</text>
-      <rect class="node-gold" x="466" y="163" width="207" height="50" rx="9"/>
-      <text class="diagram-action" x="477" y="183">Battle 校验</text>
-      <text class="diagram-small" x="477" y="203">旧指纹、合法性、新指纹</text>
-      <text class="diagram-action" x="354" y="222" text-anchor="middle">校验成功，返回结果</text>
-      <text class="diagram-small" x="272" y="260">Gate 追加确认棋谱</text>
-      <text class="diagram-action" x="438" y="271" text-anchor="middle">G2C_GoState · 推送对手</text>
-      <text class="diagram-action" x="165" y="323" text-anchor="middle">落子 RPC 回包</text>
-    </svg>
-    <svg class="seq-narrow" viewBox="0 0 368 358" role="img" aria-label="黑方提交第 17 条操作，Gate 核对席位，Battle 校验并回包，Gate 同步两席" focusable="false">
-      <title>围棋落子时序</title>
-      <path class="diagram-line" d="M184 77v19m-4-4 4 4 4-4 M184 165v19m-4-4 4 4 4-4 M184 253v19m-4-4 4 4 4-4"/>
-      <rect class="node-green" x="38" y="9" width="292" height="68" rx="10"/>
-      <rect class="node-blue" x="38" y="97" width="292" height="68" rx="10"/>
-      <rect class="node-gold" x="38" y="185" width="292" height="68" rx="10"/>
-      <rect class="node-green" x="38" y="273" width="292" height="68" rx="10"/>
-      <text class="diagram-label" x="55" y="34">黑方 → Gate</text><text class="diagram-small" x="55" y="55">发出第 17 条操作与前后指纹</text>
-      <text class="diagram-label" x="55" y="122">Gate → GoBattle</text><text class="diagram-small" x="55" y="143">核对席位，按固定 Address 送入批次</text>
-      <text class="diagram-label" x="55" y="210">GoBattle → Gate</text><text class="diagram-small" x="55" y="231">在副本校验，通过后提交权威棋盘</text>
-      <text class="diagram-label" x="55" y="298">Gate → 黑白两席</text><text class="diagram-small" x="55" y="319">黑方拿 RPC 回复，白方收推送</text>
-    </svg>
-  </figure>
-  <ol class="steps">
-    <li><strong>Gate 先挡住不属于这局的操作。</strong> <code>C2G_GoCommandRequestHandler</code> 找到当前 Session 的玩家并限流，<code>Relay</code> 再查房间、座位、坐标、指纹和序号。每房最多一手等待 Battle，避免同一房的第 17 手没确认就提交第 18 手。</li>
-    <li><strong>Battle 独占棋盘。</strong> Gate 按目标地址把多房间棋步合成最多 32 条的内网 RPC。凑满可立即发送，未满用 1 毫秒定时器给合批机会。Battle 把权威棋盘和完整劫历史填进本房间独占的草稿，使用 <code>GoCore</code> 校验。结果指纹也匹配才交换两块棋盘。校验失败时保留原权威棋盘，下一次仍能使用同一块草稿。</li>
-    <li><strong>双方得到同一个已确认结果。</strong> Gate 追加棋谱，向对手推送，再给下棋人回包。实际到达先后取决于两条连接。协商过增量同步时，在能衔接的情况下只带新的一手和基序号。首手的基序号为 0，握手、重连和主动同步使用完整棋谱。</li>
-    <li><strong>客户端复核再落屏。</strong> <code>PvpService</code> 检查序号和指纹，按顺序更新自己的棋盘。缺手时请求同步。收到网络回包与棋面通过本地回放是两步，排查时分别看。</li>
-  </ol>
-  <div class="callout tip"><b>同一手重发为什么不会多落一颗</b>完全相同的旧序号重发可以返回已确认结果。同一序号携带不同棋步时会被拒绝。这样即使服务端上次已提交、客户端却没收到回包，双方仍能收敛到同一份棋谱。</div>
-  <p>当前联机围棋累计 68 手实际落子或连续双方停一手后，由共享规则直接计分。Gate 用 Battle 返回的终局裁决算两席本局增减分，客户端按房间号防止重复应用。这里的局面指纹用于一致性对账，联机身份、输入合法性、可信计时和持久化排名是各自独立的设计问题。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">Gate 落子入口</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleBatch.cs">合批</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleHandlers.cs">Battle 校验</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/GoCore.cs">同源围棋规则</a></p>
+  <p>把 C# 里的房号、坐标等内容转成网络能传的字节，叫<strong>序列化</strong>。接收时转回程序里的数据，叫反序列化。Fantasy 完成这两步，再把消息交给对应的 Handler。开发者在 Handler 里从 <code>request</code> 取数据，在 <code>response</code> 填结果。典型请求在 <code>Run</code> 结束时由框架发回回复。</p>
+  <p>Gate 等 GoBattle 验棋时会遇到 <code>await</code>。它的意思是「这一手等答复再继续」。<code>FTask</code> 是 Fantasy 用来表示这种异步任务的类型。这个请求暂时等着，Gate 仍可以处理另一盘棋的消息。</p>
+  <details>
+    <summary>看代码时，怎么认出一条消息属于哪类</summary>
+    <dl class="definition-list compact">
+      <div><dt>玩家问，Gate 答</dt><dd>请求写 <code>IRequest</code>，应答写 <code>IResponse</code>，接收方法用 <code>MessageRPC&lt;请求, 应答&gt;</code>。</dd></div>
+      <div><dt>Gate 主动发给玩家</dt><dd>用 <code>IMessage</code>。例如 <code>session.Send(...)</code> 发送 <code>G2C_GoState</code>，Unity 的 <code>G2C_GoStateHandler</code> 接收。</dd></div>
+      <div><dt>Gate 问指定的 GoBattle</dt><dd>用 <code>Scene.Call(address, request)</code> 等答复，类型叫 <code>IAddressRequest</code> 和 <code>IAddressResponse</code>。只通知关房时用 <code>Scene.Send(...)</code>，无需等业务答复。</dd></div>
+    </dl>
+  </details>
+  <details>
+    <summary>包头里的 RpcId 和棋谱里的 Sequence 是什么</summary>
+    <p>包头是跟在消息内容前的一小段信息。<code>OpCode</code> 告诉 Fantasy 这是哪类消息，<code>RpcId</code> 告诉它回复应该交给哪个正在等待的调用。<code>Sequence</code> 放在棋谱里，表示这是这盘棋的第几条操作。黑方重发第 17 手时，网络调用可以换编号，<code>Sequence</code> 仍是 17。</p>
+    <p>网络传输也有约定。当前玩家消息用 UDP 传输，KCP 在上面处理重传和排序。Gate 与 GoBattle 分成两个进程后，内网消息走 TCP。同一个程序里的两个 Scene 由框架在进程内转交。</p>
+  </details>
+  <p class="sources"><a href="../../../.codex/skills/fantasy-net/references/server/server-message-handler.md">Fantasy 怎样接玩家消息</a> · <a href="../../../.codex/skills/fantasy-net/references/server/address.md">Fantasy 怎样向指定目标发内部消息</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/G2C_GoStateHandler.cs">白方客户端的推送入口</a></p>
 </section>
 
 <section class="chapter" id="duel-flow">
-  <h2>决斗为什么要封帧</h2>
-  <p>围棋一手确认后才换人。决斗里，两个人在相近时刻可以同时按键。服务器给双方安排同一条逻辑时间线。玩家发的是方向和招式意图，权威端决定这些意图进入哪个完整帧，原生 <code>RevGameCore</code> 执行该帧，双方就能按相同顺序重放。</p>
+  <h2>两个人同时按键，决斗按谁的顺序算</h2>
+  <p class="lesson">黑方按跳跃，白方按攻击，两条消息到达的时间可能不同。负责这局的 GoBattle 统一按每 50 毫秒一步推进。每一步叫<strong>逻辑帧</strong>。它描述游戏规则前进了一步，电脑或手机自己决定每秒把画面画多少次。</p>
   <figure class="diagram">
-    <figcaption><strong>从劣势挑战到同一帧确认</strong><span>Gate 从 Session 识别席位，按房间 Address 将请求交给该局 GoBattle。</span></figcaption>
-    <svg viewBox="0 0 368 530" role="img" aria-label="从劣势挑战到同一帧确认" focusable="false">
-      <title>从劣势挑战到同一帧确认</title>
-      <desc>Gate 认证席位后转给房间所属的 GoBattle，由 Battle 校验挑战、保存原生状态并推进帧。</desc>
-      <rect class="node-green" x="39" y="8" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="28" r="10"/>
-      <text class="diagram-number" x="57" y="28" text-anchor="middle">1</text>
-      <text class="diagram-label" x="76" y="33">同一围棋房间发起挑战</text>
-      <text class="diagram-small" x="76" y="52">核对版本、座位、已确认局面与劣势</text>
-      <path class="diagram-line" d="M184 76v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="97" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="117" r="10"/>
-      <text class="diagram-number" x="57" y="117" text-anchor="middle">2</text>
-      <text class="diagram-label" x="76" y="122">等双方选角页可见</text>
-      <text class="diagram-small" x="76" y="141">两席预选、锁定，或到期确认角色</text>
-      <path class="diagram-line" d="M184 165v16m-4-4 4 4 4-4"/>
-      <rect class="node-gold" x="39" y="186" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="206" r="10"/>
-      <text class="diagram-number" x="57" y="206" text-anchor="middle">3</text>
-      <text class="diagram-label" x="76" y="211">双端加载达到 100%</text>
-      <text class="diagram-small" x="76" y="230">允许激活决斗场景，激活后分别 Ready</text>
-      <path class="diagram-line" d="M184 254v16m-4-4 4 4 4-4"/>
-      <rect class="node-neutral" x="39" y="275" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="295" r="10"/>
-      <text class="diagram-number" x="57" y="295" text-anchor="middle">4</text>
-      <text class="diagram-label" x="76" y="300">权威端按 50 ms 封帧</text>
-      <text class="diagram-small" x="76" y="319">先收输入意图，再确定黑白双方的完整帧</text>
-      <path class="diagram-line" d="M184 343v16m-4-4 4 4 4-4"/>
-      <rect class="node-green" x="39" y="364" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="384" r="10"/>
-      <text class="diagram-number" x="57" y="384" text-anchor="middle">5</text>
-      <text class="diagram-label" x="76" y="389">C# 调用原生 RevGameCore</text>
-      <text class="diagram-small" x="76" y="408">运行确定性逻辑，保存已执行历史</text>
-      <path class="diagram-line" d="M184 432v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="453" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="473" r="10"/>
-      <text class="diagram-number" x="57" y="473" text-anchor="middle">6</text>
-      <text class="diagram-label" x="76" y="478">双席读历史并报指纹</text>
-      <text class="diagram-small" x="76" y="497">从 AfterFrame 拉取，按同帧核对</text>
-    </svg>
+    <figcaption><strong>只看第 40 帧</strong><span>按钮只是发出的意图，服务器决定这一步用哪些输入。</span></figcaption>
+    <ol class="flow">
+      <li><strong>两边交来按键</strong><span>例如黑方的跳跃和白方的攻击。</span></li>
+      <li><strong>GoBattle 确定这一帧</strong><span>确定该帧用的黑白输入并执行。以后都按同一份记录读，这叫封帧。</span></li>
+      <li><strong>两台设备按记录演算</strong><span>用同一个决斗核心推进，再比对第 40 帧的指纹。</span></li>
+    </ol>
   </figure>
-  <p>例如第 40 帧是双方都要对账的周期采样点。客户端收到连续的完整帧后用 <code>DuelCorePipe</code> 执行，再把自己的第 40 帧指纹报给服务器。权威侧用同一帧独立计算的指纹核对。确认同帧一致后，才向两席公布共同确认上界。缺历史的一端从自己的连续游标继续拉取，单包上限 64 帧。客户端的画面插值和即时预测是显示层的响应，命中与胜负以权威帧为准。</p>
-  <p>正常挑战最早从第 24 手开始，发起方的估算劣势至少 12 目。GoBattle 直接用已经确认的权威棋盘计算资格。它维护选角、加载和每席输入，同一 Battle 用一个计时器推进已双席 Ready 的房间。每次逻辑推进仍按 50 ms 固定步长。Release 联调从合法棋谱进入真实决斗，验收覆盖选角、双方加载、Ready、封帧与离场。</p>
-  <p>服务端部署时，原生 DLL 是决斗运行的一部分。围棋可以先连上，直到发起决斗才加载原生库。因此发布验证要点到真实决斗，才能发现缺 DLL、位数不符或规则版本不一致的问题。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoDuelHandler.cs">Gate 的决斗 RPC 入口</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleComponentSystem.cs">Battle 权威与封帧调度</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs">资格、封帧和对账</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs">共用的时间与门槛配置</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelCorePipe.cs">原生桥接</a> · <a href="../../../RevGame_Client/RevGameCore/README.md">C++ 决斗内核</a></p>
-</section>
-
-<section class="chapter" id="lifecycle">
-  <h2>断网、超时和退出后谁来收尾</h2>
-  <p>Session 是这一次连接，玩家身份是 Gate 暂时保留的业务对象。手机切换网络导致旧 Session 断开时，匹配队列会移除该玩家。已有房间在配置的重连窗口内等他回来，并把断线状态通知对手。</p>
-  <figure class="diagram">
-    <figcaption><strong>连接断开后的两条路</strong><span>换 Socket 后仍坐原位，需要在保留窗口内通过令牌与规则校验。</span></figcaption>
-    <svg viewBox="0 0 368 240" role="img" aria-label="旧 Session 断开，Gate 保留玩家身份。窗口内重连恢复原房间，过期或离席则清理" focusable="false">
-      <title>重连窗口与房间回收</title>
-      <rect class="node-neutral" x="75" y="10" width="218" height="42" rx="10"/>
-      <text class="diagram-label" x="184" y="36" text-anchor="middle">旧 Session 断开</text>
-      <path class="diagram-line" d="M184 52v22m-4-4 4 4 4-4 M184 126v25H94v17m-4-4 4 4 4-4 M184 151h90v17m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="47" y="75" width="274" height="51" rx="10"/>
-      <text class="diagram-label" x="184" y="97" text-anchor="middle">Gate 暂留原身份与席位</text>
-      <text class="diagram-small" x="184" y="116" text-anchor="middle">暂停收围棋新步，决斗清待封输入</text>
-      <rect class="node-green" x="13" y="169" width="162" height="58" rx="10"/>
-      <rect class="node-gold" x="193" y="169" width="162" height="58" rx="10"/>
-      <text class="diagram-label" x="94" y="193" text-anchor="middle">窗口内恢复</text>
-      <text class="diagram-small" x="94" y="213" text-anchor="middle">新 Session 带令牌重绑</text>
-      <text class="diagram-label" x="274" y="193" text-anchor="middle">过期或主动离席</text>
-      <text class="diagram-small" x="274" y="213" text-anchor="middle">释放席位及房间资源</text>
-    </svg>
-  </figure>
-  <p>新连接发带原令牌的 Hello。Gate 检查身份、规则和场次，解绑旧连接，把新 Session 接到原座位，再回完整棋谱。每次决斗席位换连接，Gate 通知 Battle 将该席的代际编号加一。Battle 清掉上条连接待封的意图，拒绝迟到的旧代际请求。新连接重新 Ready 后续原有历史。等待 Battle 回包期间若有人离席，Gate 会核对房间仍是原对象，再决定如何处理回包。</p>
-  <p>默认客户端约每 2 秒发业务心跳。配置的 Session 空闲阈值是 8 秒，检查间隔 5 秒，因此实际关闭取决于下次检查。棋局的重连窗口是另一项规则，项目配置一般为 90 秒。主动离席会关房通知对手、释放计算席位，两席都不再引用时回收房间。定时器和原生实例分别随负责它们的 Scene 与房间销毁。</p>
-  <p>当前房间和令牌的存活范围是原进程。即便预留 MongoDB、Redis 或 Control Center，也需要业务代码明确把哪些数据持久化、由谁恢复，否则重启后还是新对局。<code>Fantasy.config</code> 的 MongoDB 连接串在默认配置为空，当前联机路径依赖内存状态。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">Session 与房间销毁</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLobbyComponentSystem.cs">重连与回收</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs">客户端心跳与回调</a></p>
+  <p>开始之前，挑战者必须符合围棋局面的条件。双方都选完角色、加载完，并分别发送 <strong>Ready（我这边已经准备好）</strong>，服务器才开始推进。玩家从服务器知道这一帧该怎样演算，再用自己的游戏画面展示结果。</p>
+  <details class="check-question">
+    <summary>黑方已经看到第 39 帧，掉线回来要从第 1 帧开始吗？</summary>
+    <p>客户端如果还有自己的第 39 帧状态，可以报 <code>AfterFrame=39</code>，意思是「从第 40 帧起发给我」。GoBattle 留着已经确定的帧历史。换连接会清除旧连接未执行的输入，新连接重新 Ready 后继续。第 40 帧等检查点，两端会把各自的指纹送回服务器比对。</p>
+  </details>
+  <details>
+    <summary>挑战门槛和决斗核心在哪里</summary>
+    <p>普通联机挑战至少到第 24 手，并且挑战方的估算分数至少落后 12 目。GoBattle 直接用这局已确认的棋盘检查。决斗的移动、判伤等规则由用 C++ 写的 <code>RevGameCore</code> 计算，C# 通过 <code>DuelCorePipe</code> 调它。因此发布目录需要 Windows x64 的 <code>RevGameCore.dll</code>，联调要真的进入决斗才能验证它。</p>
+    <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs">挑战门槛与每步时长</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelCorePipe.cs">C# 调用决斗核心的位置</a></p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoDuelHandler.cs">Gate 的决斗请求入口</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleComponentSystem.cs">Battle 如何推进决斗</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs">帧历史和指纹核对</a></p>
 </section>
 
 <section class="chapter" id="business-code">
-  <h2>新手怎样写一项服务端业务</h2>
-  <p>先从「谁拥有这份数据」下手。比如增加大厅可读的等待人数，状态就在 Gate。读取可以用现有会话和大厅索引，因此只需要外网读请求与对应 Hotfix Handler。若要查某局权威棋盘，Gate 要用房间 Address 调用 Battle。把代码放在数据的所有者那边，避免两个地方同时维护一份实盘。</p>
-  <div class="code-card">
-    <div class="code-head"><span>已有的最小例子 · 心跳处理入口节选 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="已有的最小例子 · 心跳处理入口节选"><code>var lobby = session.Scene.GetComponent&lt;GoLobbyComponent&gt;();
-var player = lobby.Player(session);
-if (player == null || !GoLobbyComponentSystem.RateAllowed(player))
-{
-    response.ErrorCode = 20;
-    response.Reason = &quot;会话已经过期，请重新连接。&quot;;
-    return;
-}
-response.ServerUtcMs = GoLobbyComponentSystem.Now();
-await FTask.CompletedTask;</code></pre>
+  <h2>想动手写服务端，先读一次心跳</h2>
+  <p>心跳是客户端隔一小会儿发来的消息，表示「我还在线」。这消息没有要填写的业务数据。服务器查当前连接是否还能使用，然后回一个服务器时间。它比落子短，适合用来找一遍消息从哪里进、从哪里回。</p>
+  <div class="table-scroll" tabindex="0" aria-label="心跳请求在三个文件里的位置">
+    <table>
+      <thead><tr><th scope="col">先做什么</th><th scope="col">在文件里搜索</th><th scope="col">看什么</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">看消息怎么约定</th><td><code>C2G_GoHeartbeatRequest</code></td><td>请求里面为空，响应里有 <code>ServerUtcMs</code>。</td></tr>
+        <tr><th scope="row">看 Gate 怎么接</th><td><code>C2G_GoHeartbeatRequestHandler</code></td><td>从 Session 找玩家。连接有问题或请求太频繁就设置错误码和原因，否则填服务器时间。</td></tr>
+        <tr><th scope="row">看客户端怎么用</th><td><code>_session.C2G_GoHeartbeatRequest()</code></td><td>游戏等回复，取出错误码与原因。</td></tr>
+      </tbody>
+    </table>
   </div>
-  <ol class="steps">
-    <li><strong>写清消息要什么。</strong> 有新字段或新入口先改 <code>.proto</code>，再导出。明确由哪端发给哪端、成功回什么、失败有哪些原因。</li>
-    <li><strong>把状态放到合适的 Entity 或 Component。</strong> 合理复用现有大厅或房间。新增字段补上初始化、离场和销毁时的处理。池化 Entity 在复用前把上一次会话的引用与计数清零。</li>
-    <li><strong>在 Hotfix 接 Handler，把职责交到 System。</strong> 先从 Session 或可信内网消息读身份，再查所有权。业务分支填 <code>ErrorCode</code> 或原因，跨 Scene 用 <code>FTask</code> 等待。返回后重查对象是否仍有效。</li>
-    <li><strong>测试一次成功、一次拒绝、一次重试和一次清理。</strong> 对围棋断言序号、局面指纹和双方快照，对决斗断言 Ready、连续帧及同帧指纹。同步更新协议两端，再用真实联机验证。</li>
-  </ol>
-  <div class="code-card">
-    <div class="code-head"><span>开发机 PowerShell · 改过协议以后 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="开发机 PowerShell · 改过协议以后"><code>Set-Location .\RevGame_Server\RevGame.Server
+  <p>修改自己的功能时，先问<strong>哪边手上有这份数据</strong>。想知道有几个人排队，在 Gate 查等待队列。想知道第 17 手是否合法，让 Gate 把问题交给有权威棋盘的 GoBattle。写完后试一次成功、一次拒绝和一次重试，退出时检查房间能否清理。</p>
+  <details>
+    <summary>只读三行代码，看看 Handler 怎么填回包</summary>
+    <div class="code-card">
+    <div class="code-head"><span>GoRequestHandlers.cs · 心跳处理的关键行，省略中间检查 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="GoRequestHandlers.cs · 心跳处理的关键行，省略中间检查"><code>var lobby = session.Scene.GetComponent&lt;GoLobbyComponent&gt;();
+var player = lobby.Player(session);
+// 检查玩家是否存在、请求是否太频繁
+response.ServerUtcMs = GoLobbyComponentSystem.Now();</code></pre>
+  </div>
+    <p>第一行从当前连接所在的 Scene 取大厅记录。第二行问大厅「这条连接绑的是谁」。检查通过，才把当前时间写入已经准备好的回复。<code>Run</code> 结束后，Fantasy 把这个回复发给刚才发心跳的人。把同样三步用到落子，就是先找玩家，再决定是否交给 GoBattle，最后填这手的结果。</p>
+  </details>
+  <details>
+    <summary>动手练习 · 让心跳额外回一个测试服名字</summary>
+    <ol class="steps">
+      <li>在自己的练习副本里找到 <code>G2C_GoHeartbeatResponse</code>，加 <code>string ServerLabel = 3;</code>。现有两个字段继续用原编号。</li>
+      <li>运行 <code>.\export-protocol.ps1</code>。在心跳 Handler 成功分支加 <code>response.ServerLabel = "本机测试服";</code>。</li>
+      <li>重新编译并启动服务端。同一份工程打开 Unity，在客户端等待心跳结果的位置设断点，确认 <code>ErrorCode</code> 为 0 时能读到这段文字。练习完成后可以撤回这组练习改动。</li>
+    </ol>
+    <div class="code-card">
+    <div class="code-head"><span>修改协议后 · 从仓库根目录导出并编译 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="修改协议后 · 从仓库根目录导出并编译"><code>Set-Location .\RevGame_Server\RevGame.Server
 .\export-protocol.ps1
-if ($LASTEXITCODE -ne 0) { throw &#x27;导出失败，请看上一条错误。&#x27; }
 dotnet build .\Server\Main\Main.csproj -c Release</code></pre>
   </div>
-  <details>
-    <summary>本机练习 · 给心跳添加一条可显示的信息</summary>
-    <p>在本地练习副本的 <code>Outer/GoRelay.proto</code> 中，给现有 <code>G2C_GoHeartbeatResponse</code> 添加一个字段 <code>string ServerLabel = 3;</code>。既有的时间和原因字段保持各自编号。运行上面的导出与构建，再在心跳 Handler 的成功分支写入 <code>response.ServerLabel = "本机测试服";</code>。</p>
-    <p>在 Unity 的 <code>FantasyGoTransport</code> 搜索 <code>_session.C2G_GoHeartbeatRequest()</code>，在 <code>using</code> 内观察返回字段，只在 <code>ErrorCode == 0</code> 时读它。编译服务端和客户端后连同一个 Gate，先做 Hello，再等心跳。断点可以设在 Handler 填值处和客户端读取处。练习结束后只撤回这一组练习改动，保留原有工作。</p>
-    <p class="sources"><a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">现有心跳响应定义</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs">客户端心跳调用</a></p>
   </details>
-  <p>Fantasy 的生命周期系统适合初始化和释放 Scene 资源，普通业务事件适合通知同一边界中的多个模块。本项目的 Gate 与 Battle 有明确的请求目标和返回值，所以用 Address 调用。若需求变成让客户端 Session 通过 Gate 维持跨场景角色路由，可再看 Roaming。跨多个节点的业务通知看 SphereEvent。每种机制解决的对象不同。</p>
-  <p class="sources"><a href="../../../.codex/skills/fantasy-net/references/ecs/entity-definition.md">Fantasy 实体与系统</a> · <a href="../../../.codex/skills/fantasy-net/references/server/roaming/index.md">Roaming 的使用边界</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">真实心跳与其它 Handler</a></p>
+  <p class="sources"><a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">心跳协议</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">心跳处理器</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs">游戏如何发心跳</a></p>
 </section>
 
 <section class="chapter" id="cloud-choice">
   <h2>第一台腾讯云服务器怎么选</h2>
-  <div class="callout tip"><b>建议先租这一档</b>腾讯云云服务器 CVM，<strong>4 vCPU / 8 GB、Windows Server 2022 x64、80 GB SSD 云硬盘、5 Mbps 公网出带宽</strong>，选临近主要测试玩家的地域，配一个可从公网访问的 IPv4。有库存可以选标准型 <code>S6.LARGE8</code>。第一次按量试租，用两端联调和混合负载的数据决定是否续租。</div>
-  <p>选择 Windows 是因为项目已随源码提供 x64 的决斗原生 DLL，当前发布、加载和两端对局都已在本机 Windows 验过。服务器负责规则和通信，Unity 客户端负责画面，因此规格优先看 CPU、内存和出网。地域从测试玩家的位置出发，华东可比较上海，华南可比较广州。看实际运营商链路下 KCP 的延迟和抖动。随后需要拆 Gate 和 Battle 时，可以留在同地域同 VPC。VPC 是你的云上私有网络，两台机器可通过私网地址相连。</p>
-  <div class="table-scroll" tabindex="0" aria-label="腾讯云规格选择参考">
+  <p class="lesson">把服务端放到云上，就是租一台朋友能从别处访问的电脑，让它一直运行 RevGame 的服务端程序。腾讯云把这种电脑叫<strong>云服务器 CVM</strong>。</p>
+  <div class="callout tip"><b>第一次小范围测试，先选这一档</b>腾讯云 CVM 标准型 x86_64，<strong>4 vCPU、8 GB 内存、Windows Server 2022 64 位、80 GB SSD 云硬盘、5 Mbps 公网出带宽</strong>。有货可选 <code>S6.LARGE8</code>。选靠近多数测试玩家的地域，先按量试租。购买时确认实例会有公网 IPv4。</div>
+  <p>选 Windows 是因为仓库已经有对应的 Windows x64 决斗库，这条发布路径也做过本机验证。<strong>公网出带宽</strong>是服务器每秒能向玩家发多少数据。围棋下完一手才发更新，决斗会频繁发送新帧。5 Mbps 是小范围测试的起点，玩家多了要观察带宽和实际卡顿。</p>
+  <div class="table-scroll" tabindex="0" aria-label="刚开始租哪种配置">
     <table>
-      <thead><tr><th scope="col">用途</th><th scope="col">计算与磁盘</th><th scope="col">先试的出带宽</th><th scope="col">怎样决定下一步</th></tr></thead>
+      <thead><tr><th scope="col">打算做什么</th><th scope="col">起步配置</th><th scope="col">看什么决定是否升级</th></tr></thead>
       <tbody>
-        <tr><th scope="row">两端连通</th><td>2 核 4 GB、50–80 GB，例 <code>S6.MEDIUM4</code></td><td>3–5 Mbps</td><td>几位受邀玩家验证连接和流程。留意 Windows 本身占用的内存。</td></tr>
-        <tr><th scope="row">首台小规模测试服</th><td><strong>4 核 8 GB、80 GB</strong>，例 <code>S6.LARGE8</code></td><td><strong>5 Mbps 起</strong>。场次和决斗增多后重估。</td><td>围棋和决斗同时运行，记录峰值出网、一分钟 CPU 和 P99。</td></tr>
-        <tr><th scope="row">混合负载扩一档</th><td>8 核 16 GB、80–100 GB，例 <code>S6.2XLARGE16</code></td><td>可对照试 10–20 Mbps，并用实测决定</td><td>先辨别单个 Gate 线程、Battle 计算和公网出网的瓶颈。只有相应资源不足才升级那一项。</td></tr>
+        <tr><th scope="row">两三个人验连接</th><td>2 vCPU / 4 GB，50–80 GB 磁盘，3–5 Mbps</td><td>先确认游戏可以配对、下棋和进入决斗。</td></tr>
+        <tr><th scope="row">首台测试服</th><td><strong>4 vCPU / 8 GB，80 GB 磁盘，5 Mbps 起</strong></td><td>让围棋和决斗同时跑一段，记录高峰使用量。</td></tr>
+        <tr><th scope="row">测试发现资源吃紧</th><td>可试 8 vCPU / 16 GB，80–100 GB 磁盘，出带宽可测试 10–20 Mbps</td><td>带宽常到上限就加带宽。某个线程持续吃满就再看是 Gate 还是 Battle 在忙。</td></tr>
       </tbody>
     </table>
   </div>
-  <p>表里是验证用的起点。业务连接数还取决于每个房间的活跃程度、决斗占比、客户端网络和机器 CPU。租用时看控制台的地域库存与价格，分别核对实例、Windows 镜像、磁盘、公网 IP 与带宽或流量、快照费用。邀测时间短且流量起伏大，可以计算按流量的账单。长时间稳定使用时，再比较固定带宽和包年包月。停机、释放和磁盘保留是不同的操作，结束测试时在账单与资源清单核对。</p>
-  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/11518">腾讯云 CVM 实例规格</a> · <a href="https://cloud.tencent.com/document/product/213/6091">地域和可用区</a> · <a href="https://cloud.tencent.com/document/product/213/2180">CVM 计费方式</a> · <a href="https://cloud.tencent.com/document/product/213/10578">公网计费与带宽上限</a> · <a href="https://buy.cloud.tencent.com/price/bandwidth/overview">公网价格查询</a></p>
-  <form class="bandwidth" id="bandwidth" aria-labelledby="bandwidth-title">
-    <h3 id="bandwidth-title">用一组数字理解怎么估带宽</h3>
-    <p>示例假设 64 个活跃决斗席位各每秒收到 20 个回复，平均每个回复在网络上占 256 字节，其余出网共 0.50 Mbps。输入值示范算法，实际用同一时间窗口观测的发包次数和出网字节。</p>
-    <fieldset aria-label="出网计算参数">
-      <label>活跃决斗席位<input name="seats" type="number" min="0" max="1000000" step="1" value="64" required></label>
-      <label>每席每秒回复数<input name="rate" type="number" min="0" max="1000" step="0.1" value="20" required></label>
-      <label>每回复平均字节数<input name="bytes" type="number" min="0" max="1000000" step="1" value="256" required></label>
-      <label>其余出网（Mbps）<input name="other" type="number" min="0" max="100000" step="0.01" value="0.50" required></label>
-    </fieldset>
-    <output aria-live="polite">估算出网 3.12 Mbps，按 1.5 倍留余后为 4.68 Mbps。</output>
-    <p><strong>算式</strong>为席位数 × 每席每秒回复数 × 单次平均字节数 × 8 ÷ 1,000,000 + 其它出网。ACK、KCP 重传、重连补历史和围棋推送会占用带宽，统计时每项只计一次。1.5 倍仅用于这个算例。部署后用腾讯云公网出带宽的峰值和 P99 验证余量。</p>
-  </form>
+  <p>价格以当时控制台为准。下单前看清主机、Windows 镜像、磁盘和公网网络各自怎么计费。短期、流量少的测试可以比较按流量计费，长期稳定流量再和固定带宽比价。</p>
+  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/11518">腾讯云实例规格</a> · <a href="https://cloud.tencent.com/document/product/213/6091">地域和可用区</a> · <a href="https://cloud.tencent.com/document/product/213/2180">CVM 计费方式</a> · <a href="https://cloud.tencent.com/document/product/213/10578">公网计费</a></p>
   <details>
-    <summary>已经有轻量应用服务器，或者打算买 Linux</summary>
-    <p>已有 Windows x64 轻量服务器时，可以先按同样的方式复制产物，在它的实例防火墙放通受邀测试来源的 UDP，做双端验收。新租建议选 CVM，后续内网多节点、独立安全组和带宽选择更接近这一部署路径。</p>
-    <p>若计划把运行环境改成 Linux x64，需要用对应平台的 .NET 运行时、以 <code>-r linux-x64</code> 发布托管程序，再用仓库 <code>RevGameCore</code> 的 CMake 工程在兼容的 Linux x64 环境编译 <code>libRevGameCore.so</code>。运行 <code>ctest</code>，把原生库放到发布目录，用 <code>ldd</code> 检查依赖，再验真实决斗。仓库的 Windows DLL 和 Android 原生库各自绑定目标平台。本文的实跑验收覆盖 Windows x64。</p>
-    <p class="sources"><a href="https://intl.cloud.tencent.com/zh/document/product/1103/41521">腾讯云轻量应用服务器与 CVM 对比</a> · <a href="../../../RevGame_Client/RevGameCore/CMakeLists.txt">决斗原生库构建定义</a></p>
+    <summary>想估一下带宽，试着改决斗人数</summary>
+    <form class="bandwidth" id="bandwidth" aria-labelledby="bandwidth-title">
+      <h3 id="bandwidth-title">每秒向这些玩家发多少数据</h3>
+      <p>下面先假设 64 位玩家在决斗，每位每秒收到 20 次回复，每次 256 字节。其它围棋、心跳等流量合计 0.50 Mbps。把人数加倍，可以直接看到估算怎样变化。这些输入是教学用的数字，上云后用自己的监控数据替换。</p>
+      <fieldset aria-label="出网计算参数">
+        <label>正在决斗的人数<input name="seats" type="number" min="0" max="1000000" step="1" value="64" required></label>
+        <label>每人每秒收到几次<input name="rate" type="number" min="0" max="1000" step="0.1" value="20" required></label>
+        <label>每次平均多少字节<input name="bytes" type="number" min="0" max="1000000" step="1" value="256" required></label>
+        <label>其它出网（Mbps）<input name="other" type="number" min="0" max="100000" step="0.01" value="0.50" required></label>
+      </fieldset>
+      <output aria-live="polite">估算出网 3.12 Mbps，按 1.5 倍留余后为 4.68 Mbps。</output>
+      <p>人数 × 每秒次数 × 字节数 × 8 ÷ 1,000,000，再加其它出网。乘 8 是把字节换成比特。最后乘 1.5 是这个例子留出的余量。监控时把补历史、重传和其它回复的流量也算进去。</p>
+    </form>
+  </details>
+  <details>
+    <summary>手上已有轻量服务器，或者想用 Linux</summary>
+    <p>已有 Windows x64 轻量应用服务器，可先把产物放上去，在实例防火墙开放受邀来源的 UDP 20000，再照下一节试两端。新租 CVM 时可以继续沿用本文的安全组和私网部署方法。</p>
+    <p>用 Linux x64 时，需要对应的 .NET 10 运行时，用 <code>-r linux-x64</code> 发布，还要从 C++ 源码给 Linux x64 编译 <code>libRevGameCore.so</code>。确认 <code>ctest</code> 和原生库依赖后，再测实际决斗。当前实跑验证使用 Windows x64。</p>
+    <p class="sources"><a href="https://intl.cloud.tencent.com/zh/document/product/1103/41521">轻量应用服务器和 CVM</a> · <a href="../../../RevGame_Client/RevGameCore/CMakeLists.txt">原生库编译定义</a></p>
   </details>
 </section>
 
 <section class="chapter" id="cloud-steps">
-  <h2>从购买开始，把服务放到 CVM</h2>
-  <div class="callout tip"><b>安装 .NET 10 运行时，重新发布服务端</b>服务端已升级到 <code>net10.0</code>。建议给云主机安装最新的 .NET 10 LTS 补丁，从仓库重新生成一份完整发布目录。微软列出的支持截止日期是 2028 年 11 月 14 日。客户端可以继续使用兼容的外网协议。使用双进程时 Gate 和 Battle 要一起换到同版产物。</div>
-  <p>初次邀测可在安全组和 Windows 防火墙里限制接入来源。游戏 KCP 连接目前没有传输层加密，恢复令牌按凭据管理，日志中避免记录它。</p>
-  <p class="sources"><a href="https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core">微软 .NET 支持周期</a> · <a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">.NET 10 SDK 与运行时</a> · <a href="../../RevGame.Server/Server/Main/Main.csproj">当前目标框架</a></p>
-  <h3>第一步 · 买实例并进入 Windows</h3>
+  <h2>从自己电脑发布，然后让朋友连进来</h2>
+  <figure class="diagram">
+    <figcaption><strong>从写代码的电脑，到两位玩家手上的游戏</strong></figcaption>
+    <ol class="flow">
+      <li><strong>自己的开发电脑</strong><span>用 .NET 10 SDK 把仓库变成可运行的文件。</span></li>
+      <li><strong>腾讯云 Windows</strong><span>装 .NET 运行时，接收并运行整个发布目录。</span></li>
+      <li><strong>两位玩家的设备</strong><span>在游戏里填腾讯云公网 IP 和游戏端口。</span></li>
+    </ol>
+  </figure>
+  <h3>第一步 · 在腾讯云买机器、进入 Windows</h3>
   <ol class="steps">
-    <li>腾讯云控制台选 <strong>云服务器 CVM → 新建实例 → 自定义配置</strong>。按上一节选地域与规格，镜像选公共镜像里的 Windows Server 2022 数据中心版 64 位，创建或选同地域的 VPC 与子网，配置公网 IPv4。</li>
-    <li>建专用安全组。游戏加一条入站 <code>UDP:20000</code>，源填每位测试者当前公网 IP 加 <code>/32</code>。需要远程桌面时，另加 <code>TCP:3389</code>，源填管理者公网 IP 加 <code>/32</code>，也可先用腾讯云控制台登录。检查实例绑定的各安全组，核对是否有更宽泛的允许规则。</li>
-    <li>用管理员会话安装 Windows x64 的 <strong>.NET Runtime 10</strong> 和 <strong>ASP.NET Core Runtime 10</strong>，也可安装包含两者的 SDK。用 <code>dotnet --list-runtimes</code> 确认出现 <code>Microsoft.NETCore.App 10.0.x</code> 和 <code>Microsoft.AspNetCore.App 10.0.x</code>。<code>Main.runtimeconfig.json</code> 声明了这两个共享框架。服务器进程由 <code>dotnet</code> 启动，无需开启 IIS。</li>
+    <li>在腾讯云控制台进入「云服务器 CVM → 新建实例 → 自定义配置」。选 Windows Server 2022 64 位、磁盘与公网 IPv4。购买界面的 <strong>VPC</strong> 表示你的云上私有网络，初次测试用同地域的一个网络和子网即可。</li>
+    <li>在实例列表点「登录」。用远程桌面时，控制台安全组为管理者的公网 IP 允许 <code>TCP 3389</code>。可先用腾讯云控制台登录完成配置。</li>
+    <li>在云服务器上装 Windows x64 的 <strong>.NET Runtime 10</strong> 和 <strong>ASP.NET Core Runtime 10</strong>。下载时选 10 系列当前补丁。两项运行时为服务端提供启动需要的库，装 .NET 10 SDK 也会带齐它们。</li>
   </ol>
-  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/4855">腾讯云通过购买页创建实例</a> · <a href="https://cloud.tencent.com/document/product/213/93093">Windows 公共镜像</a> · <a href="https://cloud.tencent.com/document/product/213/2764/">登录 Windows 实例</a> · <a href="https://cloud.tencent.com/document/product/213/112614">添加安全组规则</a></p>
-  <h3>第二步 · 在开发机发布完整产物</h3>
-  <p>开发机安装 .NET 10 SDK，从完整仓库开始。<code>Entity.csproj</code> 会编译 <code>RevGame_Client</code> 内的共享棋规、决斗桥接，并从客户端插件目录复制 Windows x64 原生 DLL。给这次发布一个独立的空目录，避免上一次 DLL 混入。</p>
+  <div class="code-card">
+    <div class="code-head"><span>腾讯云 Windows · 检查是否装齐两个运行时 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="腾讯云 Windows · 检查是否装齐两个运行时"><code>dotnet --list-runtimes</code></pre>
+  </div>
+  <p>输出同时出现 <code>Microsoft.NETCore.App 10.0.x</code> 和 <code>Microsoft.AspNetCore.App 10.0.x</code> 就装齐了，<code>x</code> 代表当前补丁数字。服务端用 <code>dotnet</code> 启动。</p>
+  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/4855">从购买页创建实例</a> · <a href="https://cloud.tencent.com/document/product/213/2764/">登录腾讯云 Windows</a> · <a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">下载 .NET 10</a> · <a href="https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core">微软支持周期</a></p>
+  <h3>第二步 · 回到自己电脑，生成要上传的文件</h3>
+  <p>进入<strong>完整仓库</strong>的根目录，打开 PowerShell。下面的 <code>dotnet publish</code> 会把服务端的三份 DLL、依赖、配置和决斗库放在同一个输出文件夹。参数 <code>win-x64</code> 表示给 Windows 64 位使用，<code>--self-contained false</code> 表示使用云服务器已安装的 .NET 运行时。</p>
   <div class="code-card">
     <div class="code-head"><span>从仓库根执行 · Windows x64 框架依赖发布 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="从仓库根执行 · Windows x64 框架依赖发布"><code>Set-Location .\RevGame_Server\RevGame.Server
@@ -1245,15 +1222,30 @@ foreach ($revFile in $revRequired)
 }
 Get-ChildItem -LiteralPath $revPublish</code></pre>
   </div>
-  <p>将输出目录的<strong>全部文件</strong>经远程桌面的驱动器重定向等受控途径复制到服务器，例如 <code>C:\RevGame\releases\first-test</code>。记录 Git 提交号。<code>Hotfix.pdb</code> 由当前 <code>AssemblyHelper</code> 读取，缺少它会影响启动。默认本地配置足够运行唯一的 Gate 和四个 Battle。</p>
-  <p class="sources"><a href="https://learn.microsoft.com/en-us/dotnet/core/deploying/">微软发布选项</a> · <a href="../../RevGame.Server/Server/Entity/Entity.csproj">打包输入</a> · <a href="../../RevGame.Server/Server/Entity/AssemblyHelper.cs">Hotfix 加载条件</a></p>
-  <h3>第三步 · 发布地址、监听地址和两道入站规则</h3>
-  <p>修改服务器<strong>发布目录</strong>里的 <code>Fantasy.config</code>。在已有 <code>&lt;machines&gt;</code> 下改原有 <code>machine</code> 节点。示例的 <code>203.0.113.10</code> 是文档占位，换成 CVM 控制台的真实公网 IPv4。云上公网 IP 一般由网络侧映射，Windows 网卡上看到的是私网 IP，<code>outerBindIP</code> 保持 <code>0.0.0.0</code>。单机的 <code>innerBindIP</code> 保持 <code>127.0.0.1</code>。</p>
+  <p>复制刚生成的<strong>整个目录</strong>到远程 Windows，例如 <code>C:\RevGame\releases\first-test</code>。其中的 <code>Fantasy.config</code> 是端口和进程配置。<code>Hotfix.pdb</code> 也要一起带上，项目启动会读取它。<code>RevGameCore.dll</code> 是运行决斗要用的库。</p>
+  <p class="sources"><a href="../../RevGame.Server/Server/Entity/Entity.csproj">项目发布内容的来源</a> · <a href="../../RevGame.Server/Server/Entity/AssemblyHelper.cs">加载 Hotfix 的代码</a> · <a href="https://learn.microsoft.com/en-us/dotnet/core/deploying/">微软的发布说明</a></p>
+  <h3>第三步 · 填地址，把游戏端口放通</h3>
+  <p><strong>IP</strong> 告诉玩家要连哪台机器，<strong>端口</strong>告诉它找这台机器的哪个程序。比如 <code>203.0.113.10:20000</code> 的前半段是 IP，后半段是端口。文档用的是示例 IP，实际换成腾讯云控制台显示的公网 IPv4。</p>
+  <p>在腾讯云 Windows 打开发布目录里的 <code>Fantasy.config</code>，在 <code>&lt;machines&gt;</code> 下修改现有的 <code>machine</code>。三个地址按下面的表填。玩家入口仍用 <code>networkProtocol="KCP"</code> 和 <code>outerPort="20000"</code>。</p>
   <div class="code-card">
-    <div class="code-head"><span>Fantasy.config · 替换原有的 machine 节点 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="Fantasy.config · 替换原有的 machine 节点"><code>&lt;machine id=&quot;1&quot; outerIP=&quot;203.0.113.10&quot; outerBindIP=&quot;0.0.0.0&quot; innerBindIP=&quot;127.0.0.1&quot; /&gt;</code></pre>
+    <div class="code-head"><span>腾讯云 Windows · 修改发布目录的 machine 节点 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="腾讯云 Windows · 修改发布目录的 machine 节点"><code>&lt;machine id=&quot;1&quot; outerIP=&quot;203.0.113.10&quot; outerBindIP=&quot;0.0.0.0&quot; innerBindIP=&quot;127.0.0.1&quot; /&gt;</code></pre>
   </div>
-  <p>保留 Gate 的 <code>networkProtocol="KCP"</code> 和 <code>outerPort="20000"</code>，GoBattle 的 <code>outerPort="0"</code> 保持关闭。在管理员 PowerShell 为 Windows 防火墙加一条对应的入站规则。示例的 <code>198.51.100.25/32</code> 同样是占位，请填受邀测试者的真实公网来源。更多来源可用逗号列举，每一个都和安全组规则核对。</p>
+  <dl class="definition-list">
+    <div><dt><code>outerIP</code> · 告诉别人用哪个地址</dt><dd>填腾讯云的公网 IPv4。玩家也在游戏里手动填这个 IP 和端口。</dd></div>
+    <div><dt><code>outerBindIP</code> · 本机在哪些网卡上接玩家的包</dt><dd>初次部署保持 <code>0.0.0.0</code>，表示接收本机各 IPv4 网卡上的消息。公网 IP 由腾讯云映射到网卡的私网地址。</dd></div>
+    <div><dt><code>innerBindIP</code> · 在哪个本机地址等内部消息</dt><dd>Gate 与 Battle 都在这台电脑时填 <code>127.0.0.1</code>，内网监听只允许这台机器自己访问。</dd></div>
+  </dl>
+  <figure class="diagram">
+    <figcaption><strong>玩家的消息要通过两处放行</strong><span>两处都填 UDP 20000，测试者来源都用朋友自己的公网 IP。</span></figcaption>
+    <ol class="flow four-steps">
+      <li><strong>玩家</strong><span>游戏填公网 IP:20000。</span></li>
+      <li><strong>腾讯云安全组</strong><span>云平台先检查这位玩家能不能进。</span></li>
+      <li><strong>Windows 防火墙</strong><span>消息到机器后，再检查一次。</span></li>
+      <li><strong>Gate 接收</strong><span>程序必须已经在 UDP 20000 等待消息。</span></li>
+    </ol>
+  </figure>
+  <p>先到腾讯云实例绑定的安全组，在<strong>入站规则</strong>中加 <code>UDP:20000</code>，来源填测试者公网 IPv4 加 <code>/32</code>。<code>/32</code> 表示只放行这一个 IPv4。再在云服务器以管理员身份打开 PowerShell，运行下面命令。把 <code>198.51.100.25/32</code> 换成真实来源。两处都核对是否有覆盖范围更宽的允许规则。</p>
   <div class="code-card">
     <div class="code-head"><span>服务器管理员 PowerShell · 放通测试者的游戏 UDP <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="服务器管理员 PowerShell · 放通测试者的游戏 UDP"><code>$revTestSources = &#x27;198.51.100.25/32&#x27;
@@ -1268,72 +1260,48 @@ $revFirewall = @{
 }
 New-NetFirewallRule @revFirewall</code></pre>
   </div>
-  <figure class="diagram">
-    <figcaption><strong>从玩家电脑到 Gate 要经过哪几层</strong><span>游戏对外走 UDP。每层放通同一个端口，内网通信继续在本机回环。</span></figcaption>
-    <svg viewBox="0 0 368 441" role="img" aria-label="从玩家电脑到 Gate 要经过哪几层" focusable="false">
-      <title>从玩家电脑到 Gate 要经过哪几层</title>
-      <desc>游戏对外走 UDP。每层放通同一个端口，内网通信继续在本机回环。</desc>
-      <rect class="node-green" x="39" y="8" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="28" r="10"/>
-      <text class="diagram-number" x="57" y="28" text-anchor="middle">1</text>
-      <text class="diagram-label" x="76" y="33">玩家在 Unity 输入地址</text>
-      <text class="diagram-small" x="76" y="52">实际公网 IPv4:20000，协议为 KCP</text>
-      <path class="diagram-line" d="M184 76v16m-4-4 4 4 4-4"/>
-      <rect class="node-blue" x="39" y="97" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="117" r="10"/>
-      <text class="diagram-number" x="57" y="117" text-anchor="middle">2</text>
-      <text class="diagram-label" x="76" y="122">腾讯云安全组</text>
-      <text class="diagram-small" x="76" y="141">准许测试者来源访问 UDP 20000</text>
-      <path class="diagram-line" d="M184 165v16m-4-4 4 4 4-4"/>
-      <rect class="node-gold" x="39" y="186" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="206" r="10"/>
-      <text class="diagram-number" x="57" y="206" text-anchor="middle">3</text>
-      <text class="diagram-label" x="76" y="211">公网地址映射到 CVM</text>
-      <text class="diagram-small" x="76" y="230">实际由 Windows 网卡上的私网地址收包</text>
-      <path class="diagram-line" d="M184 254v16m-4-4 4 4 4-4"/>
-      <rect class="node-neutral" x="39" y="275" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="295" r="10"/>
-      <text class="diagram-number" x="57" y="295" text-anchor="middle">4</text>
-      <text class="diagram-label" x="76" y="300">Windows 防火墙</text>
-      <text class="diagram-small" x="76" y="319">此处也准许测试者来源访问 UDP 20000</text>
-      <path class="diagram-line" d="M184 343v16m-4-4 4 4 4-4"/>
-      <rect class="node-green" x="39" y="364" width="290" height="68" rx="11"/>
-      <circle class="diagram-dot" cx="57" cy="384" r="10"/>
-      <text class="diagram-number" x="57" y="384" text-anchor="middle">5</text>
-      <text class="diagram-label" x="76" y="389">Gate 监听 0.0.0.0:20000</text>
-      <text class="diagram-small" x="76" y="408">四个 Battle 没有对外监听</text>
-    </svg>
-  </figure>
-  <p>端口可以这样记。<code>UDP 20000</code> 给玩家。<code>TCP 3389</code> 给受限的管理员远程桌面。<code>TCP 11002–11006</code> 只在本机回环监听，不为它们建公网入站规则。该拓扑没有要对玩家开放的 HTTP 或数据库端口。测试者换网络后，公网来源可能变化，安全组和 Windows 两处要一起更新。</p>
-  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/5224">腾讯云公网地址与网卡映射</a> · <a href="https://learn.microsoft.com/en-us/powershell/module/netsecurity/new-netfirewallrule?view=windowsserver2025-ps">Windows 防火墙 PowerShell 用法</a> · <a href="../../RevGame.Server/Server/Entity/Fantasy.config">默认监听配置</a></p>
-  <h3>第四步 · 前台启动后，用两台设备过一遍</h3>
+  <p><code>UDP 20000</code> 给玩家。<code>TCP 3389</code> 给用远程桌面的管理员。<code>TCP 11002–11006</code> 给同机 Gate 和 Battle，保持回环监听。游戏的 KCP 会重传丢失的数据，目前没有传输加密。测试范围可以先限定受邀来源，恢复令牌按凭据保管。</p>
+  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/5224">公网 IP 怎样到达本机网卡</a> · <a href="https://cloud.tencent.com/document/product/213/112614">添加腾讯云入站规则</a> · <a href="https://learn.microsoft.com/en-us/powershell/module/netsecurity/new-netfirewallrule?view=windowsserver2025-ps">Windows 防火墙命令</a></p>
+  <h3>第四步 · 启动，并用两台设备验证</h3>
   <div class="code-card">
-    <div class="code-head"><span>服务器 PowerShell · 首次启动，先看前台日志 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-    <pre tabindex="0" aria-label="服务器 PowerShell · 首次启动，先看前台日志"><code>Set-Location &#x27;C:\RevGame\releases\first-test&#x27;
+    <div class="code-head"><span>腾讯云 Windows · 从发布目录启动默认单进程 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="腾讯云 Windows · 从发布目录启动默认单进程"><code>Set-Location &#x27;C:\RevGame\releases\first-test&#x27;
 dotnet .\Main.dll --m Release --pid 1</code></pre>
   </div>
-  <p>启动窗口中确认 <code>Process:1 Startup Complete SceneCount:5</code>。新开另一个 PowerShell 查本地监听。用 <code>OwningProcess</code> 查到对应的进程，核对 UDP 端口为本次启动，五个 TCP 监听只在回环。</p>
+  <ol class="steps">
+    <li>看日志出现 <code>Process:1 Startup Complete SceneCount:5</code>。打开另一个 PowerShell，可用下方命令检查游戏端口和五个内网端口。</li>
+    <li>让两个测试玩家在设备上打开「九路围棋 → 服务器对战」，把原有的局域网地址换成实际的<code>公网 IP:20000</code>。两边同一场次、同一规则，点开始匹配。</li>
+    <li>双方各走几手，看同一盘棋是否更新。然后试一位玩家短暂掉线再重连，确认回到原位。最后试选角、进入决斗和退出。</li>
+  </ol>
   <div class="code-card">
     <div class="code-head"><span>服务器第二个 PowerShell 窗口 · 查看监听 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="服务器第二个 PowerShell 窗口 · 查看监听"><code>Get-NetUDPEndpoint -LocalPort 20000 | Select-Object LocalAddress, LocalPort, OwningProcess
 Get-NetTCPConnection -State Listen -LocalPort (11002..11006) |
     Select-Object LocalAddress, LocalPort, OwningProcess</code></pre>
   </div>
-  <ol class="steps">
-    <li>从服务器外的两个测试客户端进入九路围棋服务器对战。把面板里的旧局域网默认值换成真实公网 <code>IP:20000</code>，两端选择相同场次和规则。</li>
-    <li>确认双方匹配到同一房间，黑白各走几手，对照序号和棋面。客户端断网后在重连窗口内恢复，核对原席位和棋谱。</li>
-    <li>用有资格的棋局发起决斗，双方选角并加载，验证两端的帧推进和结局一致，再验证退出。自动验证可用仓库的两席 <code>GoRelayProbe</code>，按<a href="#probe">探针练习</a>准备后接到已授权的云测试服。</li>
-  </ol>
-  <p>本次发布验收使用 Windows x64 上的 .NET 10.0.15。单进程与同机 Gate/Battle 双进程均通过真实 KCP 两席探针。探针检查 24 手棋、挑战门槛、选角和加载屏障、换 Socket 重连、权威封帧、周期及终局指纹和离场。CVM 的公网连通、实际延迟与可容纳人数需要在购买的实例上测。</p>
-  <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs">Unity 地址输入面板</a> · <a href="../../RevGame.Server/Tools/GoRelayProbe/Program.cs">服务器探针入口</a> · <a href="../../RevGame.Server/Tools/GoRelayProbe/KcpLoadProbe.cs">两席 KCP 与决斗验收</a></p>
+  <p>启动日志说明程序起来了。两位玩家成功配对、能下同一盘棋，才说明这次上云连通正常。本机已有 Windows x64 单进程与双进程的真实 KCP 验收。腾讯云的公网连通与可容纳人数要在你买到的实例上试。</p>
+  <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs">游戏里的地址输入</a> · <a href="../../RevGame.Server/Config/决斗权威分流与混合压测_2026-11-14.html#regression">此前的联机回归记录</a></p>
 </section>
 
 <section class="chapter" id="operations">
-  <h2>服务要一直开，平常怎样排查</h2>
-  <p>第一次以前台进程启动，方便看到错误。确认联调成功后，在 Windows「任务计划程序」里创建开机任务，用能读取发布目录和写日志的专用账号运行。发布路径和配置都有版本，可重启，也能回退。重启会使当前内存里的房间和恢复令牌失效，提前约定维护窗口。</p>
+  <h2>玩家说连不上，先查哪一步</h2>
+  <p>先确认云服务器上的程序还在跑，再从外部设备试连接。能连上就试匹配，匹配成功再试落子。每一步能把问题范围缩小一点。</p>
+  <div class="table-scroll" tabindex="0" aria-label="按卡住的步骤找问题">
+    <table>
+      <thead><tr><th scope="col">你看到的现象</th><th scope="col">先检查什么</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">一启动就退出</th><td>看 PowerShell 打印的最后一个错误。核对两个 .NET 10 运行时、完整发布目录、<code>Fantasy.config</code>，以及 <code>--m Release --pid 1</code>。如果提示端口被占用，先确认是哪个程序在用。</td></tr>
+        <tr><th scope="row">云服务器上能连，朋友连不上</th><td>核对朋友填的是公网 IP 和 20000，Gate 接收来自本机网卡的连接，腾讯云和 Windows 两处都允许朋友的公网 IP 访问 <code>UDP 20000</code>。用真实游戏客户端测。浏览器和常用的 <code>Test-NetConnection -Port</code> 无法代替这次 UDP 联机。</td></tr>
+        <tr><th scope="row">连得上，一直在匹配</th><td>核对双方都点了开始匹配，使用同版本、同场次、同规则。再看有没有能分配房间的 GoBattle。</td></tr>
+        <tr><th scope="row">能下棋，决斗进不去</th><td>先看当前棋局能否挑战。两边都要选完角色、加载完并进入决斗。服务器日志若报加载库失败，核对发布目录的 <code>RevGameCore.dll</code> 是否为 x64。</td></tr>
+        <tr><th scope="row">能玩，偶尔一手等很久</th><td>记下时间，区分是在匹配时等、服务器刚开时第一手慢，还是每盘都会慢。再对照同一时段的出带宽、CPU 和服务器日志。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>更新时把新版放到新目录，保留上一版完整文件和配置。约好时间停旧版，再启动新版并用两台设备验证。若要回退，停掉新版，重新用整套旧目录启动。重启会清掉当前在内存里的棋局，玩家要重新匹配。</p>
   <details>
-    <summary>用任务计划程序后台运行并保留启动日志</summary>
-    <p>在服务器保存下面的脚本为 <code>C:\RevGame\run-server.ps1</code>。脚本把每次启动的日志写入独立文件，并把 <code>dotnet</code> 的退出码交还给任务计划程序。使用脚本前先确认服务器组织的 PowerShell 执行策略允许该脚本。通过 <code>(Get-Command dotnet).Source</code> 核对实际路径。</p>
+    <summary>想关远程桌面后仍能运行，怎样设成开机任务</summary>
+    <p>先把下面脚本保存成 <code>C:\RevGame\run-server.ps1</code>。核对 .NET 可执行文件的实际位置，以及任务账号能读取发布目录并写日志。脚本每次启动单独生成一份日志。</p>
     <div class="code-card">
     <div class="code-head"><span>C:\RevGame\run-server.ps1 · 根据机器上的路径调整 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="C:\RevGame\run-server.ps1 · 根据机器上的路径调整"><code>$revRelease = &#x27;C:\RevGame\releases\first-test&#x27;
@@ -1351,94 +1319,92 @@ $revLog = Join-Path $revLogDir (&#x27;server-&#x27; + (Get-Date -Format &#x27;yy
 exit $LASTEXITCODE</code></pre>
   </div>
     <ol class="steps">
-      <li>选择「创建任务」，设置开机触发和「不管用户是否登录都要运行」。操作选择 <code>powershell.exe</code>，参数 <code>-NoProfile -File "C:\RevGame\run-server.ps1"</code>，起始位置 <code>C:\RevGame</code>。</li>
-      <li>禁用「运行时间超过指定时间则停止」。设置失败后每隔 1 分钟重试并给出有限次数的上限。已有任务运行时不启动新实例。先关掉自己的前台服务器再手动运行任务。</li>
-      <li>查任务状态、日志和监听。做一次断开远程桌面再连、一次约定时间重启、再做一次真实双端联调。定期轮转日志，给磁盘留余量。</li>
+      <li>打开「任务计划程序 → 创建任务」，选择开机触发和「不管用户是否登录都要运行」。操作用 <code>powershell.exe</code>，参数填 <code>-NoProfile -File "C:\RevGame\run-server.ps1"</code>，起始位置填 <code>C:\RevGame</code>。</li>
+      <li>关闭「运行时间超过指定时间则停止」。设为失败再重试，已有任务在跑时不再启动第二份。测试前先停自己前台运行的那份。</li>
+      <li>手动运行任务，查看日志，再断开远程桌面，用游戏确认连接还在。安排一次测试重启，再试配对。</li>
     </ol>
-    <p class="sources"><a href="https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-restartonfailure-settingstype-element">Windows 任务失败重启设置</a></p>
+    <p class="sources"><a href="https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-restartonfailure-settingstype-element">Windows 任务失败重启说明</a></p>
   </details>
-  <div class="table-scroll" tabindex="0" aria-label="部署与联机排错速查">
-    <table>
-      <thead><tr><th scope="col">看到的情况</th><th scope="col">从哪里查</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">进程启动就退出</th><td>先看完整日志。查 x64 运行时的两个框架、<code>Hotfix.pdb</code>、<code>Fantasy.config</code> 和 <code>--m Release --pid 1</code>。如果端口被占用，先核对占用者是谁，再决定停哪个实例。</td></tr>
-        <tr><th scope="row">本机能连，外面的 Unity 连不上</th><td>确认 Gate 绑定 <code>0.0.0.0</code>，客户端用了公网 IPv4 和 20000，两道入站规则都写 UDP 且放行真实来源。这个端口用真实 KCP 测试。浏览器和 <code>Test-NetConnection -Port</code> 检查的是其它协议。</td></tr>
-        <tr><th scope="row">能握手但匹配不上</th><td>查协议版本、客户端场次、序列化后的规则键和棋力区间。再查有没有可分配的 Battle。用同一版本的两个测试客户端复现一次。</td></tr>
-        <tr><th scope="row">能下棋，进入决斗报错</th><td>查原生 DLL 是否随包、架构是否为 x64。两席都要锁角、加载、Ready。核对挑战资格与对局版本，再用两席探针将协议和原生加载问题单独验证。</td></tr>
-        <tr><th scope="row">平时顺，偶尔特别慢</th><td>区分匹配等待、冷启动后的首手和已有房间的稳态。比较 RPC P50/P95/P99、单核 CPU、Scene 排队时间、内存与 GC、出网速率、客户端重传。把服务器日志与同时间段的 KCP 延迟放在一起。</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <h3>升级、回退和观察容量</h3>
-  <p>给新版本建独立发布目录，保留上一版本的完整产物和对应拓扑配置。安排停服，退出这次的旧进程，切换到新目录启动，复核启动日志、监听和两席业务。如果失败，停掉该新实例，再用旧目录及其配套客户端复测。以后若加持久化，需要单独设计数据库迁移和回滚。</p>
-  <p>云监控可看 CPU、内存、磁盘和公网出网。P99 表示 99% 的样本不超过该延迟，适合看最慢一批玩家的体验。给应用端单独记录围棋落子和决斗交换的 P99，记下房间数、决斗比例、错包或超时率。用相同负载对比修改前后，短时间的平均 CPU 会掩盖单线程饱和与尾延迟。</p>
-  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/16536">腾讯云 CVM 监控指标</a> · <a href="../../RevGame.Server/Config/README.md">项目诊断入口与围棋压测</a></p>
+  <p class="sources"><a href="https://cloud.tencent.com/document/product/213/16536">腾讯云控制台查看监控</a> · <a href="../../RevGame.Server/Config/README.md">项目的诊断与压测入口</a></p>
 </section>
 
 <section class="chapter" id="scale">
-  <h2>从单台 CVM 走到跨进程 Battle</h2>
-  <p>Fantasy 的拆分单位是可寻址、拥有状态的 Scene。一台机器可以有多个进程，一个进程可以承载多个 Scene。给围棋增加 Battle 时，Gate 只在创建房间时挑一个较空闲的节点，把它的 Address 记在房间。以后保持同一所有者。把活跃房直接切到另一台机器，还需要搬运状态、路由并处理在途请求。</p>
+  <h2>什么时候才需要把 Gate 和 Battle 分开跑</h2>
+  <p class="lesson">第一次部署用默认配置，启动一份程序就能配对、下棋、决斗。以后要给 Battle 单独分配计算资源，可以把这四个 Scene 移到第二份程序。两个程序可以先在同一台电脑上跑。</p>
   <figure class="diagram">
-    <figcaption><strong>同一套房间归属，两个运行布局</strong><span>上图是默认单进程，下图把 Battle 放进第二个进程。两种模式的决斗权威都归房间所在的 Battle。</span></figcaption>
-    <svg viewBox="0 0 368 283" role="img" aria-label="单进程与同机双进程模式下，Gate 持有连接与座位，四个 Battle 持有权威棋盘、决斗原生实例及连续历史。" focusable="false">
-      <title>单进程与同机双进程拓扑</title>
-      <text class="diagram-tag" x="13" y="18">默认配置 · PROCESS 1</text>
-      <rect class="node-rim" x="8" y="27" width="352" height="95" rx="12"/>
-      <rect class="node-blue" x="17" y="39" width="146" height="70" rx="10"/>
-      <text class="diagram-label" x="90" y="63" text-anchor="middle">Gate</text>
-      <text class="diagram-small" x="90" y="86" text-anchor="middle">连接、匹配、座位</text>
-      <path class="diagram-line" d="M163 74h38m-4-4 4 4-4 4"/>
-      <rect class="node-gold" x="202" y="39" width="146" height="70" rx="10"/>
-      <text class="diagram-label" x="275" y="63" text-anchor="middle">GoBattle ×4</text>
-      <text class="diagram-small" x="275" y="86" text-anchor="middle">围棋与决斗权威</text>
-      <text class="diagram-tag" x="13" y="153">可选配置 · 同机双进程</text>
-      <rect class="node-blue" x="17" y="166" width="146" height="92" rx="10"/>
-      <text class="diagram-label" x="90" y="191" text-anchor="middle">Process 1 · Gate</text>
-      <text class="diagram-small" x="90" y="214" text-anchor="middle">场次、座位、转发</text>
-      <text class="diagram-small" x="90" y="233" text-anchor="middle">客户端继续连这里</text>
-      <path class="diagram-line" d="M163 215h38m-4-4 4 4-4 4"/>
-      <text class="diagram-small" x="182" y="202" text-anchor="middle">TCP</text>
-      <rect class="node-green" x="202" y="166" width="146" height="92" rx="10"/>
-      <text class="diagram-label" x="275" y="191" text-anchor="middle">Process 2 · Battle</text>
-      <text class="diagram-small" x="275" y="214" text-anchor="middle">围棋实盘 + 决斗状态</text>
-      <text class="diagram-small" x="275" y="233" text-anchor="middle">选角、封帧、补历史</text>
-    </svg>
+    <figcaption><strong>变的是启动几份程序，玩家照样连 Gate</strong></figcaption>
+    <div class="topology">
+      <div class="diagram-box gate-box"><strong>默认 · 一个 Process</strong><span>同一份程序里同时运行 Gate 和四个 GoBattle。消息在进程内传递。</span></div>
+      <div class="flow-arrow"><b aria-hidden="true">↓</b>当需要把这两部分拆开运行</div>
+      <div class="two-processes">
+        <div class="diagram-box gate-box"><strong>Process 1 · Gate</strong><span>继续接玩家、配对、认座位。</span></div>
+        <div class="diagram-box"><strong>Process 2 · 四个 GoBattle</strong><span>接收 Gate 发来的内部消息，验棋和算决斗。</span></div>
+      </div>
+      <div class="flow-arrow">两个进程通过内网 TCP 互相发消息</div>
+    </div>
   </figure>
-  <p>原先跨进程压测时，第一批棋局会触发四条内网连接逐一创建。Fantasy 在 Windows 上为 TCP Socket 以 1 KiB 步长探测缓冲区。本机分段计时里，单条连接的初始化约 132–202 ms，回环握手低于 2 ms。当前 Gate 启动后先对四个远端 Battle 发就绪 RPC。RPC 确认组件已启动并建立缓存连接后，Gate 才将对应节点加入房间分配表。默认的同进程拓扑使用进程内路由。</p>
-  <p>上一轮 320 个真实 KCP 客户端压测中，预连接把首手 P99 从 845.16 ms 降到 62.24 ms。本轮在同一业务代码和同一探针下对比两个运行时。每个 320 人轮次包含 96 局围棋和 64 局决斗，所有对局均完成指纹核对与离场。</p>
-  <div class="table-scroll" tabindex="0" aria-label="320 人混合负载，两个运行时各两轮的 P99 范围">
-    <table>
-      <thead><tr><th scope="col">服务端运行时</th><th scope="col">首手 P99</th><th scope="col">稳态围棋 P99</th><th scope="col">决斗输入 P99</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">.NET 8.0.32 对照</th><td>86.96–88.56 ms</td><td>31.96–41.98 ms</td><td>31.39–42.65 ms</td></tr>
-        <tr><th scope="row">.NET 10.0.15</th><td>60.80–116.04 ms</td><td>37.50–41.48 ms</td><td>34.46–35.78 ms</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p>这些是同机两进程、两轮各自 P99 的范围。新版的首手仍随调度和请求批次波动，两种运行时的稳态结果接近。部署后的公网性能需在自己的 CVM 上另测。报告还保留了 80 人档与每轮的原始摘要。</p>
-  <p class="sources"><a href="../../RevGame.Server/Config/决斗权威分流与混合压测_2026-11-14.html#net10">本次 .NET 10 逐轮复测</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">Battle 内网就绪检查</a></p>
+  <p>分开跑之后，Gate 得先确认负责算棋的那份程序能接消息。现在 Gate 在分配房间前就会问每个 GoBattle「准备好了吗」。收到答复后，再让房间使用这条已建立的连接。以前等到玩家第一手才连，前几手就会一起卡在建连接上。</p>
   <details>
-    <summary>用现版产物部署同机双进程</summary>
+    <summary>我需要同机双进程，具体怎样改</summary>
     <ol class="steps">
-      <li>在同一个发布目录准备两条启动命令。Gate 和 Battle 共用同一版产物与同一份拓扑。</li>
-      <li>在现有 <code>&lt;processes&gt;</code> 中新增编号 2，仍用 Machine 1。把 1002–1005 的 <code>processConfigId</code> 改为 2。保留 World 1、各 Scene ID 和端口。Gate 保留 Process 1，单机内网继续用回环。</li>
-      <li>先用 <code>dotnet Main.dll --m Release --pid 2</code> 启动 Battle，看到 <code>Startup Complete SceneCount:4</code>。再在另一个窗口用 <code>dotnet Main.dll --m Release --pid 1</code> 启动 Gate，看到 <code>Startup Complete SceneCount:1</code> 和四条 <code>Battle 内网就绪</code> 日志，最后做双席实际配房。只有 Gate 对玩家开放 UDP 20000。</li>
-      <li>移到两台机器时，给每一台配置独立的 Machine 条目，进程引用对应 Machine，内网地址用同 VPC 的实际私网 IP。按互通方向配置私网 TCP 安全规则。分别测单进程、同机双进程和跨机同负载的尾延迟。</li>
+      <li>从同一版服务端的发布目录开始，两份程序使用同一份 <code>Fantasy.config</code>。</li>
+      <li>在原有 <code>&lt;processes&gt;</code> 内加一条 Process 2。Gate 1001 的 <code>processConfigId</code> 仍为 1，把 1002–1005 的 <code>processConfigId</code> 都改为 2。保留 World 1 和各端口。</li>
+      <li>第一个窗口运行 <code>dotnet Main.dll --m Release --pid 2</code>，看到 <code>SceneCount:4</code>。第二个窗口运行 <code>dotnet Main.dll --m Release --pid 1</code>，看到 <code>SceneCount:1</code> 和四条「Battle 内网就绪」。最后用两个客户端实际配房。</li>
     </ol>
     <div class="code-card">
-      <div class="code-head"><span>Fantasy.config · 放在现有 processes 节点内 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
-      <pre tabindex="0" aria-label="Fantasy.config · 新增 Battle 专用进程"><code>&lt;process id="2" namespaceId="1" machineId="1" startupGroup="0" /&gt;</code></pre>
-    </div>
-    <p>后台运行时为两个进程分别建任务和日志。停服更新时先停 Gate，让客户端不再进入旧版，再停 Battle。新版仍先启动 Battle，然后启动 Gate。要回退就同时切回同一套旧产物和拓扑，对应的运行时也要仍可用。</p>
+    <div class="code-head"><span>Fantasy.config · 放进原有的 processes 节点 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+    <pre tabindex="0" aria-label="Fantasy.config · 放进原有的 processes 节点"><code>&lt;process id=&quot;2&quot; namespaceId=&quot;1&quot; machineId=&quot;1&quot; startupGroup=&quot;0&quot; /&gt;</code></pre>
+  </div>
+    <p>同一台服务器上，内网地址继续用 <code>127.0.0.1</code>。移到两台机器时才需要各写一条 Machine，让对应 Process 指向那台机器。内网填写同 VPC 的私网 IP，只向必要的内网来源放行 TCP。更新双进程时先停 Gate，再停 Battle。启动新版仍先 Battle 再 Gate。</p>
   </details>
-  <p>多台 Battle 仍可共用一个 Gate。以后若要多 Gate、自动故障接管，需要额外设计跨 Gate 匹配和重连路由、容量预留、房间恢复和重复请求处理。Fantasy Control Center 能做发现、注册和拓扑配置，Namespace / WorldGroup / World 用来组织服务与区服。注册到中心以后，房间、令牌与棋谱仍由业务保存和恢复。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Entity/Fantasy.config">当前静态拓扑</a> · <a href="https://raw.githubusercontent.com/qq362946/Fantasy/2026.1.2003/Skills/fantasy-net/references/service-discovery/implement.md">Fantasy 服务发现实现指南</a> · <a href="../../../.codex/skills/fantasy-net/references/server/address.md">Fantasy Address 路由</a></p>
+  <details>
+    <summary>Fantasy 文档里还会看到哪些词</summary>
+    <dl class="definition-list compact">
+      <div><dt>Control Center / ServiceDiscovery</dt><dd>Control Center 记录各服务器和 Scene 怎样布置。ServiceDiscovery 是程序用来查询在线实例的功能。比如有一批战斗节点会随时开关，Gate 可以问「现在有哪些在线」。当前 RevGame 的节点在配置文件里列好，Control Center 默认关闭。</dd></div>
+      <div><dt>Namespace / WorldGroup</dt><dd>用 Namespace 可以把测试服和正式服的服务清单分开。WorldGroup 可以把几个游戏区归在一组，例如把「华东一区、华东二区」都放到华东组。RevGame 分配 Battle 时看的是 Gate 所在的 World。</dd></div>
+      <div><dt>Address</dt><dd>已经知道找哪一个 GoBattle，就用 Address 把消息点对点送过去。RevGame 的落子和决斗都使用它。</dd></div>
+      <div><dt>Roaming</dt><dd>假设一款游戏允许玩家换地图，每张地图由不同 Scene 管。Roaming 可以维护玩家当前绑在哪个地图服务，框架就能把从 Gate 收到的漫游消息自动送到那里。</dd></div>
+      <div><dt>SphereEvent</dt><dd>假设棋赛结束后，统计和通知服务都关心结果。它们可以各自订阅同一事件，发布结果的一方只发一次事件，由框架通知订阅者。</dd></div>
+      <div><dt>SubScene</dt><dd>有些游戏会为临时副本创建一个子 Scene，副本结束就销毁。RevGame 的围棋房间用一份房间记录和棋盘表示，多个房间都可以由同一个 GoBattle 管。</dd></div>
+    </dl>
+    <p>以后如果增加多个 Gate，仍要决定房间和重连信息谁保存、节点故障时怎么恢复。Control Center 提供查询在线节点的能力，保存对局进度仍是游戏业务的工作。</p>
+    <p class="sources"><a href="../../../.codex/skills/fantasy-net/references/service-discovery/index.md">Fantasy 服务发现</a> · <a href="../../../.codex/skills/fantasy-net/references/server/roaming/index.md">Roaming</a> · <a href="../../../.codex/skills/fantasy-net/references/server/sphere-event/index.md">SphereEvent</a></p>
+  </details>
+  <details>
+    <summary>压测数字怎么读，能拿来当云服务器容量吗？</summary>
+    <p><strong>P99</strong> 可以这样看。在 100 次落子中，把响应时间由快到慢排好，第 99 次所用的时间就是这个例子里的 P99。越大代表靠近最慢的那批操作等得越久。「首手」从每个房间取第一条操作，「稳态」看已经开始后的操作。</p>
+    <p>上一轮同机双进程的 320 人测试中，开局前连好 Battle 后，首手 P99 从 845.16 ms 降到 62.24 ms。分开计时以后发现，慢在系统创建连接时准备发送和接收数据的空间，每条连接约花 132–202 ms。真正让两边连上的时间低于 2 ms。</p>
+    <div class="table-scroll" tabindex="0" aria-label="320 人同机混合压测的两轮 P99 范围">
+      <table>
+        <thead><tr><th scope="col">运行时</th><th scope="col">首手 P99</th><th scope="col">稳态围棋 P99</th><th scope="col">决斗输入 P99</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">.NET 8.0.32 对照</th><td>86.96–88.56 ms</td><td>31.96–41.98 ms</td><td>31.39–42.65 ms</td></tr>
+          <tr><th scope="row">.NET 10.0.15</th><td>60.80–116.04 ms</td><td>37.50–41.48 ms</td><td>34.46–35.78 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>上表是后来只换运行时的复测，每个版本两轮，每轮 96 局围棋、64 局决斗。对局已经开始后的延迟接近，首手在不同轮次仍有波动。云服务器的 CPU、带宽和玩家距离都不同，容纳人数要在目标机器上实测。</p>
+    <p class="sources"><a href="../../RevGame.Server/Config/决斗权威分流与混合压测_2026-11-14.html#net10">已完成的逐轮压测</a></p>
+  </details>
+  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">Gate 怎样先确认 Battle 就绪</a> · <a href="../../RevGame.Server/Server/Entity/Fantasy.config">默认的启动配置</a></p>
 </section>
 
 <section class="chapter" id="probe">
-  <h2>动手练习与下一次读代码的顺序</h2>
-  <p>先运行一个本地服务器，用两席探针过一遍。它是一个独立的 Fantasy 客户端测试进程，会向真实 Gate 发 KCP 请求，走完两席匹配、挑战与帧同步。源码带 <code>GoRelayProbe</code>。给探针自己的输出目录，避免写到服务进程运行目录。</p>
-  <div class="code-card">
+  <h2>自己试一次，怎样知道读懂了</h2>
+  <p>先在本机启动服务端，用两个游戏客户端下两手。只有一台电脑时，可以展开下面的探针步骤。让其中一位短暂掉线，继续用原来的客户端回来，看看是否仍是原座位和棋谱。如果要动手读代码，就按下面顺序追自己刚下的那一手。</p>
+  <figure class="diagram">
+    <figcaption><strong>从三个文件找到下棋的来回</strong></figcaption>
+    <ol class="flow">
+      <li><strong>先看发的是什么</strong><span>打开 <code>GoRelay.proto</code>，搜索 <code>C2G_GoCommandRequest</code>。</span></li>
+      <li><strong>再看谁接这条消息</strong><span>打开 <code>GoRequestHandlers.cs</code>，找落子 Handler，跟到 <code>lobby.Relay</code>。</span></li>
+      <li><strong>最后看谁检查棋规</strong><span>打开 <code>GoBattleHandlers.cs</code>，找到写入新棋盘以前的校验。</span></li>
+    </ol>
+  </figure>
+  <p class="sources"><a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">第一处 · 协议</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">第二处 · Gate</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleHandlers.cs">第三处 · GoBattle</a></p>
+  <details>
+    <summary>手上只有一台电脑，怎样用工具模拟两位玩家</summary>
+    <p><code>GoRelayProbe</code> 是仓库自带的联机测试工具，它会创建两条真实的 KCP 连接，匹配、下棋并挑战决斗。先在一个窗口起本地服务端，确认 KCP 20000 在监听。接着在另一个窗口从仓库根目录运行下面两个代码块。第一个为探针编译独立目录，并把探针自己的内网端口设成 11102。端口被占用就换一个空闲端口。</p>
+    <div class="code-card">
     <div class="code-head"><span>从仓库根执行 · 为 KCP 探针准备独立配置 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="从仓库根执行 · 为 KCP 探针准备独立配置"><code>Set-Location .\RevGame_Server\RevGame.Server
 $revProbeDir = Join-Path $env:TEMP (&#x27;RevGame-Probe-&#x27; + (Get-Date -Format &#x27;yyyyMMdd-HHmmss&#x27;))
@@ -1461,8 +1427,7 @@ $revMachine = $revTopology.SelectSingleNode(&#x27;//f:machine&#x27;, $revXml)
 $revMachine.SetAttribute(&#x27;innerBindIP&#x27;, &#x27;127.0.0.1&#x27;)
 $revTopology.Save($revProbeConfig)</code></pre>
   </div>
-  <p>先在另一个终端确认启动了本地服务端，KCP 20000 在监听。确保探针内网端口 11102 空闲，或改用另一个空闲端口。下面和上个代码块用同一个 PowerShell 窗口。对自己的云测试服运行时，将 <code>REVGO_LOAD_ENDPOINT</code> 换成相应公网地址，并将探针机器的公网 IP 加到两道入站允许规则里。</p>
-  <div class="code-card">
+    <div class="code-card">
     <div class="code-head"><span>在探针准备的同一 PowerShell 窗口 · 两席围棋和决斗 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="在探针准备的同一 PowerShell 窗口 · 两席围棋和决斗"><code>Set-Location -LiteralPath $revProbeDir
 $env:REVGO_LOAD_ENDPOINT = &#x27;127.0.0.1:20000&#x27;
@@ -1477,15 +1442,11 @@ finally
     Remove-Item Env:REVGO_DUEL_PROBE, Env:REVGO_LOAD_ENDPOINT
 }</code></pre>
   </div>
-  <p>找到 <code>GO_KCP_DUEL_PASS</code>，看输出的同帧指纹、帧号与围棋手数。结束时对自己的本地服务器按 Ctrl+C。准备容量测试时，再读 <code>Config/README.md</code> 的压测参数，优先在独立测试环境逐档加负载，留存版本、拓扑、房间数和分位数。</p>
-  <div class="cards">
-    <article class="card"><h3>第一次 · 找到一条完整链</h3><p>从 <a href="../../RevGame.Server/Tools/NetworkProtocol/Outer/GoRelay.proto">外网协议</a> 找落子请求。在 <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoRequestHandlers.cs">Gate Handler</a> 找收包入口，再跟到 <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleHandlers.cs">Battle 校验</a>。</p></article>
-    <article class="card"><h3>第二次 · 看生命周期</h3><p>从 <a href="../../RevGame.Server/Server/Main/Program.cs">Program.cs</a> 到 <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">Scene 装配</a>，标出 Session、房间和原生实例各由谁释放。</p></article>
-    <article class="card"><h3>第三次 · 跟规则回到客户端</h3><p>打开 <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/GoCore.cs">共享棋规 GoCore</a> 与 <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs">Unity 传输层</a>。用一次落子的序号和指纹对照两端数据。</p></article>
-  </div>
-  <p>想系统查框架机制时，先读 Fantasy 技能的分诊与对应主题。项目本身的 PlayerPrefs、原生桥接与 Revolution 界面入口，沿客户端两份手册继续读。</p>
-  <p class="sources"><a href="../../../.codex/skills/fantasy-net/SKILL.md">仓库内 Fantasy 技能入口</a> · <a href="../../RevGame.Server/Config/README.md">服务端部署配置与压测</a> · <a href="../../../RevGame_Client/文档/架构/RevGame核心设计哲学-新手版.html">RevGame 核心设计哲学</a> · <a href="../../../RevGame_Client/文档/架构/RevGame代码阅读指南-新手版.html">RevGame 代码阅读指南</a></p>
-  <div class="reading-handoff"><a class="pill" href="#top">回到页首</a></div>
+    <p>见到 <code>GO_KCP_DUEL_PASS</code> 时，看报告的棋步数、帧号和双方指纹。结束后用 Ctrl+C 停止你为本次测试启动的服务端。</p>
+    <p class="sources"><a href="../../RevGame.Server/Tools/GoRelayProbe/KcpLoadProbe.cs">探针实际验证的内容</a></p>
+  </details>
+  <p class="sources"><a href="../../../.codex/skills/fantasy-net/SKILL.md">Fantasy 技能和各主题索引</a> · <a href="../../../RevGame_Client/文档/架构/RevGame代码阅读指南-新手版.html">继续读 Unity 客户端代码</a></p>
+  <div class="reading-handoff inline-links"><a class="pill" href="#top">回到页首</a><a class="pill" href="#cloud-steps">去部署</a></div>
 </section>
   </main>
 </div>
