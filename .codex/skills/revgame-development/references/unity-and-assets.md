@@ -69,7 +69,7 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 3. **按寿命分包。** 大厅、章节共享、章节专属、无尽面板/图/材质分生命周期；不用一个大 UI 包拖入全部模式。序列帧、共享 Shader 与字体显式归属；章节 Shader 采样图独立按章加载。新增图片不是“所有美术库都进 AB”。
 4. **导表和文案联动。** `RevGame_Client/配置表/*.xlsx` → 实际 `excel.*` → `GameScripts/Generated` 与 `GameRes/Data` → `GameConfig` / `EndlessConfig` 校验；不得手改生成表顶替源 Excel。涉及文本/字库范围按 `GameFontSubsetBuild` 更新并验证，避免缺字。
 5. **构建前门禁。** 当前动作候选为 `game.resources.audit/configure/validate`，先查契约；检查漏标、重复/循环依赖、图集唯一覆盖与源图同包、缺 Shader、字体校验。门禁失败先修源头，不跳过检查发布。
-6. **构建与复制。** 用当前 `ab.*` 与项目 `GameResourceBuild.BuildAndCopy` 等固定入口。复制/清旧包由当前 Manifest 与经过绝对路径校验的指定平台目录决定，不自行递归清理配置路径。常规资源迭代不自动升级成整包 `ship`。
+6. **增量构建与发布。** 先发现实际动作，再用 RevCLI 依次执行 `ab build-incremental --target StandaloneWindows64`、`ab check-map --target StandaloneWindows64`、`ab publish-incremental --target StandaloneWindows64`。完成每步并核对成功后再执行下一步。构建保留同平台缓存，发布回执返回实际变化包数量。发布失败且源构建已完成时可单独重试。Android 用 `--target Android` 单独走一遍。项目全套构建按需继续用 `GameResourceBuild.BuildAndCopy`。详见 [增量 AB 配方](../../revolution-unity-editor/references/incremental-ab.md)。
 7. **真实资源验收。** 冷启动相应平台 AB，不用 Editor 直读代替；检查新增 Prefab、图集页面、背景 UV、透明边、九宫格、动画、字体、第一次打开和重复进出。引用/图集/队列回到相应基线。入口查 `GameSceneTransitionChecks` 与当前 `game.resources.play-check`；具体测试走 [验收指引](validation-and-delivery.md)。
 
 运行期资源只用 `RevResPath.*` 或两段式门面。图集经 `GameSpriteAtlasService` 绑定；对象经 `GamePoolRequests`/`RevPool` 租用，晚到对象只能归还。按加载者契约成对 Release，不把 Release 等同立即清空进程内存。

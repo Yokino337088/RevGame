@@ -38,6 +38,8 @@ namespace Revolution.Editor
             new RevAutomationCapability { id = "ab.validate", description = "资源与平台 Shader 校验", environment = "edit", keys = new string[] { "target" } },
             new RevAutomationCapability { id = "batch.call", description = "一次请求顺序执行多个动作（最多 64 步），省掉每步一次的往返等待", environment = "either", keys = new string[] { "steps", "stopOnError" } },
             new RevAutomationCapability { id = "ab.build", description = "收集、校验、构建、映射与首包拷贝", environment = "edit", keys = new string[] { "target" } },
+            new RevAutomationCapability { id = "ab.build-incremental", description = "显式 target；复用 Unity 缓存并生成完整主清单及映射，不发布、不修改团队配置", environment = "edit", keys = new string[] { "target" } },
+            new RevAutomationCapability { id = "ab.publish-incremental", description = "显式 target；从已完成的构建增量替换 StreamingAssets，返回更新和移除计数", environment = "edit", keys = new string[] { "target" } },
             new RevAutomationCapability { id = "ab.map", description = "仅生成映射和路径常量", environment = "edit", keys = new string[] {  } },
             new RevAutomationCapability { id = "ab.res-paths", description = "生成资源路径常量", environment = "edit", keys = new string[] {  } },
             new RevAutomationCapability { id = "ab.sound-paths", description = "生成音效路径常量", environment = "edit", keys = new string[] {  } },

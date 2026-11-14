@@ -277,6 +277,11 @@ def validate_action(action, payload, allow_refs=False):
             raise RevError(f"{action} 未知参数：{sorted(unknown)}")
     if action == "scenario.run":
         validate_scenario(payload)
+    if action in ("ab.build-incremental", "ab.publish-incremental"):
+        target = payload.get("target")
+        is_reference = allow_refs and isinstance(target, dict) and "$ref" in target
+        if not is_reference and (not isinstance(target, str) or not target.strip()):
+            raise RevError(f"{action} 需要显式 target，例如 StandaloneWindows64 或 Android。")
     types = manifest.get("parameterTypes", {})
     for key, value in payload.items():
         if allow_refs and isinstance(value, dict) and "$ref" in value:

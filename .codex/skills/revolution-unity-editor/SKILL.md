@@ -44,6 +44,7 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 | 写脚本、挂脚本 | `script.create` → `editor wait` → `script.attach`，或写进 compose 的 `components` |
 | UI 面板、Prefab、材质、动画 | `ui.create` / `prefab.*` / `material.*` / `clip.*` `animator.*` |
 | 导表、打 AB、出包 | `excel.*` / `ab.*`，整包用 `ship` |
+| 增量构建与替换 AB | 按 [增量 AB 配方](references/incremental-ab.md) 依次构建、检查映射和发布，并显式传同一平台 |
 | Play 中调 GM、点 UI、看状态 | `editor play` → `runtime start` → `game gms` 查 → `game gm <名称> 参数...` → `editor stop` |
 | 不知道有没有某能力 | `commands --query <关键词>`，不要读 `commands.json` 全文 |
 

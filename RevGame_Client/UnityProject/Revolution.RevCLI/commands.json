@@ -136,6 +136,18 @@
       "environment": "edit"
     },
     {
+      "id": "ab.build-incremental",
+      "keys": ["target"],
+      "description": "显式 target；复用 Unity 缓存并生成完整主清单及映射，不发布、不修改团队配置",
+      "environment": "edit"
+    },
+    {
+      "id": "ab.publish-incremental",
+      "keys": ["target"],
+      "description": "显式 target；从已完成的构建增量替换 StreamingAssets，返回更新和移除计数",
+      "environment": "edit"
+    },
+    {
       "id": "ab.map",
       "keys": [],
       "description": "仅生成映射和路径常量",

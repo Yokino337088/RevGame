@@ -455,6 +455,12 @@ namespace Revolution.Editor
         private static object AssetBundles(string action, RevAutomationOptions p, bool confirm)
         {
             ABBuildConfig config = ABBuildConfig.Instance;
+            bool incremental = action == "ab.build-incremental";
+            bool buildAction = incremental || action == "ab.build";
+            if ((incremental || action == "ab.publish-incremental") && string.IsNullOrWhiteSpace(p.target))
+            {
+                throw new ArgumentException("增量 AB 动作需要显式 target，例如 StandaloneWindows64 或 Android");
+            }
             BuildTarget target = Target(p.target);
             switch (action)
             {
@@ -506,6 +512,9 @@ namespace Revolution.Editor
                     else { ABBundleEditor.AddAssets(bundle, p.assets, out _, out _); }
                     ABMarkerWatcher.RefreshNow("CLI 标记资源");
                     return new RevAutomationRows(p.assets);
+                case "ab.publish-incremental":
+                    ValidateCopyDestination(target, "StreamingAssets");
+                    return new RevABIncrementalReceipt(target, null, ABBuilderCore.PublishToAssets(target));
                 case "ab.copy":
                     if (!config.copyToStreamingAssets) { throw new InvalidOperationException("请先 ab.configure 开启 copyToStreamingAssets"); }
                     ValidateCopyDestination(target);
@@ -543,7 +552,7 @@ namespace Revolution.Editor
                         .Concat(diff.moved.Select(x => "move " + x.asset + ": " + x.from + " -> " + x.to))
                         .Concat(diff.changed.Select(x => "change " + x.name + ": +" + string.Join(",", x.added) + " -" + string.Join(",", x.removed))));
             }
-            ABCollectResult collect = action == "ab.build" ? ABCollector.Collect() : ABCollector.CollectReadOnly();
+            ABCollectResult collect = buildAction ? ABCollector.Collect() : ABCollector.CollectReadOnly();
             if (action == "ab.scan") { return ABLayoutSnapshotStore.From(collect, "CLI scan"); }
             if (action == "ab.sizes")
             {
@@ -566,22 +575,52 @@ namespace Revolution.Editor
                     .Concat(dep.sharedAssets.Select(x => "shared: " + x.Key + " -> " + string.Join(", ", x.Value)))
                     .Concat(dep.circularBundles.Select(x => "cycle: " + x)));
             }
-            if (action != "ab.build" && action != "ab.validate") { throw new ArgumentException("未知 AB 动作：" + action); }
+            if (!buildAction && action != "ab.validate") { throw new ArgumentException("未知 AB 动作：" + action); }
             if (action == "ab.build") { ValidateCopyDestination(target); }
             ABValidateResult validation = ABValidator.Validate(collect);
             ABValidator.ValidateAndroidShaders(collect, validation, target);
             if (!validation.CanBuild) { throw new InvalidOperationException(string.Join("\n", validation.errors)); }
             if (action == "ab.validate") { return new RevAutomationRows(validation.warnings); }
-            ABBuildResult build = ABBuilderCore.Build(target);
+            ABBuildResult build = ABBuilderCore.Build(target, incremental);
             if (build == null || !build.success) { throw new InvalidOperationException("AB 打包失败，详见 Unity 日志"); }
             ABDependencyReport dependency = ABDependencyAnalyzer.Analyze(build.manifest.raw);
             if (dependency.circularBundles.Count > 0) { throw new InvalidOperationException("AB 存在循环依赖：" + string.Join(",", dependency.circularBundles)); }
-            ABManifestWriter.WriteBuildManifest(build);
             ABMapGenerator.WriteOutputs(collect, "CLI build");
+            ABManifestWriter.WriteBuildManifest(build);
+            if (incremental)
+            {
+                return new RevABIncrementalReceipt(target, build.manifest.allBundles.Length, null);
+            }
             string published = config.copyToStreamingAssets
                 ? "；" + ABBuilderCore.PublishToAssets(build.outputDir, config.copyTarget)
                 : string.Empty;
             return new RevAutomationText("构建产物共 " + build.manifest.allBundles.Length + " 包 -> " + build.outputDir + published);
+        }
+
+        /// <summary>供 RevCLI/MCP 判定平台、构建完成和实际发布计数。-1 表示没有运行对应步骤。</summary>
+        [Serializable]
+        private sealed class RevABIncrementalReceipt
+        {
+            public string target;
+            public string outputDir;
+            public string destination;
+            public int totalBundles;
+            public bool published;
+            public int updatedBundles;
+            public int removedBundles;
+            public int updatedMetadata;
+
+            public RevABIncrementalReceipt(BuildTarget buildTarget, int? built, ABPublishResult publish)
+            {
+                target = buildTarget.ToString();
+                outputDir = ABBuildSetting.GetOutputDir(buildTarget).Replace('\\', '/');
+                totalBundles = built ?? -1;
+                published = publish != null;
+                destination = published ? "Assets/StreamingAssets/" + ABBuildSetting.GetPlatformName(buildTarget) : string.Empty;
+                updatedBundles = publish?.UpdatedBundles ?? -1;
+                removedBundles = publish?.RemovedBundles ?? -1;
+                updatedMetadata = publish?.UpdatedMetadata ?? -1;
+            }
         }
 
         /// <summary>
@@ -622,13 +661,19 @@ namespace Revolution.Editor
         {
             ABBuildConfig config = ABBuildConfig.Instance;
             if (!config.copyToStreamingAssets) { return; }
+            ValidateCopyDestination(target, config.copyTarget);
+        }
+
+        /// <summary>核对本次发布路径，拒绝从 Assets 内通过目录链接写入工程外。</summary>
+        private static void ValidateCopyDestination(BuildTarget target, string copyTarget)
+        {
             string assets = Path.GetFullPath("Assets") + Path.DirectorySeparatorChar;
-            string folder = Path.Combine("Assets", config.copyTarget ?? "", ABBuildSetting.GetPlatformName(target));
+            string folder = Path.Combine("Assets", copyTarget ?? "", ABBuildSetting.GetPlatformName(target));
             string destination = Path.GetFullPath(folder);
-            if (string.IsNullOrWhiteSpace(config.copyTarget) || Path.IsPathRooted(config.copyTarget)
+            if (string.IsNullOrWhiteSpace(copyTarget) || Path.IsPathRooted(copyTarget)
                 || !destination.StartsWith(assets, StringComparison.OrdinalIgnoreCase))
             { throw new InvalidOperationException("首包拷贝目标必须在当前工程 Assets 子目录内：" + destination); }
-            // 原工具会先递归删除目标再拷贝，不能让 junction 把清理导向工程外目录。
+            // 平台目录即使在 Assets 内，父目录的 junction 仍可能把写入导到工程外。
             for (var directory = new DirectoryInfo(destination); directory != null; directory = directory.Parent)
             {
                 if (directory.Exists && (directory.Attributes & FileAttributes.ReparsePoint) != 0)

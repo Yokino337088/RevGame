@@ -49,18 +49,28 @@ namespace Revolution.Editor
         /// </summary>
         public static ABBuildResult Build(BuildTarget target)
         {
+            return Build(target, incremental: false);
+        }
+
+        /// <summary>显式增量调用保留输出和缓存，单次覆盖强制全打选项，无需改团队配置。</summary>
+        public static ABBuildResult Build(BuildTarget target, bool incremental)
+        {
             ABBuildConfig cfg = ABBuildConfig.Instance;
 
             // ② 产物目录：AssetBundles/Android、AssetBundles/PC ...
             string outDir = ABBuildSetting.GetOutputDir(target);
 
-            if (Directory.Exists(outDir) && cfg.cleanOutputBeforeBuild)
+            if (Directory.Exists(outDir) && cfg.cleanOutputBeforeBuild && !incremental)
                 Directory.Delete(outDir, true);
             Directory.CreateDirectory(outDir);
             string pending = Path.Combine(outDir, ABIncrementalPublisher.PendingBuild);
             string targetFile = Path.Combine(outDir, ".revab-build-target");
             // 多种桌面目标共用 PC 目录。切换实际目标或恢复中断构建时，不能复用旧产物。
             BuildAssetBundleOptions options = cfg.GetBuildOptions();
+            if (incremental)
+            {
+                options &= ~BuildAssetBundleOptions.ForceRebuildAssetBundle;
+            }
             if (File.Exists(pending) || (File.Exists(targetFile) && File.ReadAllText(targetFile) != target.ToString()))
             {
                 options |= BuildAssetBundleOptions.ForceRebuildAssetBundle;
@@ -107,6 +117,17 @@ namespace Revolution.Editor
         /// <summary>按完成的构建清单发布到 Assets 下的子目录，返回实际文件变更数。</summary>
         public static ABPublishResult PublishToAssets(string outDir, string copyTarget = "StreamingAssets")
         {
+            return PublishToAssets(outDir, copyTarget, null);
+        }
+
+        /// <summary>显式发布时核对清单目标，避免把共用 PC 目录的其它平台产物当作 Windows 包。</summary>
+        public static ABPublishResult PublishToAssets(BuildTarget target)
+        {
+            return PublishToAssets(ABBuildSetting.GetOutputDir(target), "StreamingAssets", target);
+        }
+
+        private static ABPublishResult PublishToAssets(string outDir, string copyTarget, BuildTarget? expectedTarget)
+        {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 throw new InvalidOperationException("请退出 Play 后再发布 AssetBundle");
@@ -129,7 +150,7 @@ namespace Revolution.Editor
             AssetDatabase.StartAssetEditing();
             try
             {
-                return ABIncrementalPublisher.Publish(source, destination, platform);
+                return ABIncrementalPublisher.Publish(source, destination, platform, expectedTarget?.ToString());
             }
             finally
             {

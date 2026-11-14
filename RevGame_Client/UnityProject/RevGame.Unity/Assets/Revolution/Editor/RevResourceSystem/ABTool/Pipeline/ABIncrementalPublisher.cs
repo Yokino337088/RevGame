@@ -29,6 +29,7 @@ namespace Revolution.Editor
         private sealed class Listing
         {
             public BundleEntry[] bundles;
+            public string platform;
         }
 
         [Serializable]
@@ -47,15 +48,15 @@ namespace Revolution.Editor
         }
 
         /// <summary>源目录与目标目录必须由调用方验证；平台名同时是 Unity 二进制主包名。</summary>
-        internal static ABPublishResult Publish(string source, string destination, string platform)
+        internal static ABPublishResult Publish(string source, string destination, string platform, string expectedTarget)
         {
             if (File.Exists(Path.Combine(source, PendingBuild)))
             {
                 throw new InvalidOperationException("AB 构建尚未完成，请先重新构建：" + source);
             }
 
-            HashSet<string> current = ReadBundles(source, platform, true);
-            HashSet<string> previous = ReadBundles(destination, platform, false);
+            HashSet<string> current = ReadBundles(source, platform, true, expectedTarget);
+            HashSet<string> previous = ReadBundles(destination, platform, false, null);
             var result = new ABPublishResult();
             // 放在 Assets 外，避免 Unity 把暂存文件当成资源导入。完整暂存成功前不碰目标文件。
             string staging = Path.GetFullPath(Path.Combine("Temp", "RevABPublish-" + Guid.NewGuid().ToString("N")));
@@ -161,7 +162,7 @@ namespace Revolution.Editor
         }
 
         /// <summary>只接受正常相对包名，包括带子目录和变体的名称。禁止目录穿越与生成文件重名。</summary>
-        private static HashSet<string> ReadBundles(string directory, string platform, bool required)
+        private static HashSet<string> ReadBundles(string directory, string platform, bool required, string expectedTarget)
         {
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             string manifest = Path.Combine(directory, ManifestName);
@@ -173,6 +174,10 @@ namespace Revolution.Editor
             if (listing?.bundles == null)
             {
                 throw new InvalidDataException("AB 构建清单缺少包列表：" + manifest);
+            }
+            if (expectedTarget != null && listing.platform != expectedTarget)
+            {
+                throw new InvalidDataException($"AB 清单平台为 {listing.platform}，请求平台为 {expectedTarget}：{manifest}");
             }
             foreach (BundleEntry item in listing.bundles)
             {
