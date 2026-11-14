@@ -510,8 +510,8 @@ namespace Revolution.Editor
                     if (!config.copyToStreamingAssets) { throw new InvalidOperationException("请先 ab.configure 开启 copyToStreamingAssets"); }
                     ValidateCopyDestination(target);
                     if (!Directory.Exists(ABBuildSetting.GetOutputDir(target))) { throw new DirectoryNotFoundException("未找到对应平台产物，请先 ab.build"); }
-                    ABBuilderCore.CopyToStreamingAssets(ABBuildSetting.GetOutputDir(target));
-                    return new RevAutomationText("已按配置拷贝首包");
+                    ABPublishResult publish = ABBuilderCore.PublishToAssets(ABBuildSetting.GetOutputDir(target), config.copyTarget);
+                    return new RevAutomationText(publish.ToString());
                 case "ab.artifacts":
                     string output = ABBuildSetting.GetOutputDir(target);
                     if (!Directory.Exists(output)) { throw new DirectoryNotFoundException(output); }
@@ -578,8 +578,10 @@ namespace Revolution.Editor
             if (dependency.circularBundles.Count > 0) { throw new InvalidOperationException("AB 存在循环依赖：" + string.Join(",", dependency.circularBundles)); }
             ABManifestWriter.WriteBuildManifest(build);
             ABMapGenerator.WriteOutputs(collect, "CLI build");
-            ABBuilderCore.CopyToStreamingAssets(build.outputDir);
-            return new RevAutomationText("已构建 " + build.manifest.allBundles.Length + " 包 -> " + build.outputDir);
+            string published = config.copyToStreamingAssets
+                ? "；" + ABBuilderCore.PublishToAssets(build.outputDir, config.copyTarget)
+                : string.Empty;
+            return new RevAutomationText("构建产物共 " + build.manifest.allBundles.Length + " 包 -> " + build.outputDir + published);
         }
 
         /// <summary>

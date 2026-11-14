@@ -13,6 +13,7 @@
 //   BuildPipeline 内部会为每个包算内容 Hash，与上次产物对比，
 //   内容没变就不重打 —— 只要不勾 ForceRebuildAssetBundle 就是增量。
 // ============================================================
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -56,16 +57,27 @@ namespace Revolution.Editor
             if (Directory.Exists(outDir) && cfg.cleanOutputBeforeBuild)
                 Directory.Delete(outDir, true);
             Directory.CreateDirectory(outDir);
+            string pending = Path.Combine(outDir, ABIncrementalPublisher.PendingBuild);
+            string targetFile = Path.Combine(outDir, ".revab-build-target");
+            // 多种桌面目标共用 PC 目录。切换实际目标或恢复中断构建时，不能复用旧产物。
+            BuildAssetBundleOptions options = cfg.GetBuildOptions();
+            if (File.Exists(pending) || (File.Exists(targetFile) && File.ReadAllText(targetFile) != target.ToString()))
+            {
+                options |= BuildAssetBundleOptions.ForceRebuildAssetBundle;
+            }
+            // 防止 ab.copy 在构建未完成时把上一份清单和本次的半成品一起发布。
+            File.WriteAllText(pending, target.ToString());
 
             // ③ 真正打包（按资源身上的 assetBundleName 分包）
             AssetBundleManifest raw = BuildPipeline.BuildAssetBundles(
                 outDir,
-                cfg.GetBuildOptions(),
+                options,
                 target);
 
             if (raw == null)
                 return new ABBuildResult { success = false, outputDir = outDir, target = target };
 
+            File.WriteAllText(targetFile, target.ToString());
             return new ABBuildResult
             {
                 success = true,
@@ -86,25 +98,45 @@ namespace Revolution.Editor
         public static void CopyToStreamingAssets(string outDir)
         {
             ABBuildConfig cfg = ABBuildConfig.Instance;
-            if (!cfg.copyToStreamingAssets) return;
-
-            string dest = Path.Combine("Assets", cfg.copyTarget, Path.GetFileName(outDir));
-            if (Directory.Exists(dest)) Directory.Delete(dest, true);
-
-            CopyDir(outDir, dest);
-            AssetDatabase.Refresh();
+            if (cfg.copyToStreamingAssets)
+            {
+                RevABLog.Info("[RevAB] " + PublishToAssets(outDir, cfg.copyTarget));
+            }
         }
 
-        /// <summary>递归拷贝目录（含子目录）</summary>
-        private static void CopyDir(string src, string dst)
+        /// <summary>按完成的构建清单发布到 Assets 下的子目录，返回实际文件变更数。</summary>
+        public static ABPublishResult PublishToAssets(string outDir, string copyTarget = "StreamingAssets")
         {
-            Directory.CreateDirectory(dst);
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException("请退出 Play 后再发布 AssetBundle");
+            }
+            string source = Path.GetFullPath(outDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string platform = Path.GetFileName(source);
+            string assets = Path.GetFullPath("Assets") + Path.DirectorySeparatorChar;
+            if (string.IsNullOrWhiteSpace(copyTarget) || Path.IsPathRooted(copyTarget))
+            {
+                throw new ArgumentException("AB 发布目标必须为 Assets 下的相对路径", nameof(copyTarget));
+            }
+            string destination = Path.GetFullPath(Path.Combine("Assets", copyTarget, platform));
+            if (!destination.StartsWith(assets, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(source, destination, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("AB 发布目录不合法：" + destination);
+            }
 
-            foreach (string file in Directory.GetFiles(src))
-                File.Copy(file, Path.Combine(dst, Path.GetFileName(file)), true);
-
-            foreach (string dir in Directory.GetDirectories(src))
-                CopyDir(dir, Path.Combine(dst, Path.GetFileName(dir)));
+            AssetDatabase.DisallowAutoRefresh();
+            AssetDatabase.StartAssetEditing();
+            try
+            {
+                return ABIncrementalPublisher.Publish(source, destination, platform);
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+                AssetDatabase.AllowAutoRefresh();
+                AssetDatabase.Refresh();
+            }
         }
     }
 }

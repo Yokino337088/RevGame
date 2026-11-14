@@ -10,8 +10,11 @@
 //   AssetBundleManifest 是二进制资产，运行时读它要先把主包加载起来；
 //   而纯文本 ResMap 可以直接 Resources.Load 读，速度快且不依赖 AB。
 // ============================================================
+using System;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEditor;
 
 namespace Revolution.Editor
@@ -59,7 +62,7 @@ namespace Revolution.Editor
             sb.AppendLine($"  \"buildTime\": \"{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}\",");
             sb.AppendLine("  \"bundles\": [");
 
-            string[] bundles = result.manifest.allBundles;
+            string[] bundles = result.manifest.allBundles.OrderBy(bundle => bundle, StringComparer.Ordinal).ToArray();
             for (int i = 0; i < bundles.Length; i++)
             {
                 // 每个包在磁盘上的实际大小（排查"哪个包突然变大"很有用）
@@ -67,13 +70,23 @@ namespace Revolution.Editor
                 long size = File.Exists(path) ? new FileInfo(path).Length : 0;
                 string comma = (i == bundles.Length - 1) ? "" : ",";
 
-                sb.AppendLine($"    {{ \"name\": \"{bundles[i]}\", \"size\": {size} }}{comma}");
+                string hash = result.manifest.raw.GetAssetBundleHash(bundles[i]).ToString();
+                sb.AppendLine($"    {{ \"name\": \"{bundles[i]}\", \"size\": {size}, \"hash\": \"{hash}\" }}{comma}");
             }
 
             sb.AppendLine("  ]");
             sb.AppendLine("}");
 
-            File.WriteAllText(Path.Combine(result.outputDir, "BuildManifest.json"), sb.ToString(), Encoding.UTF8);
+            string manifestPath = Path.Combine(result.outputDir, ABIncrementalPublisher.ManifestName);
+            string content = sb.ToString();
+            // 保留内容相同的清单及其原始时间，避免无变化时反复覆盖。
+            const string timestamp = "(?m)^(  \"buildTime\": )\"[^\"]*\"";
+            if (!File.Exists(manifestPath) || Regex.Replace(File.ReadAllText(manifestPath), timestamp, "$1")
+                != Regex.Replace(content, timestamp, "$1"))
+            {
+                File.WriteAllText(manifestPath, content, Encoding.UTF8);
+            }
+            File.Delete(Path.Combine(result.outputDir, ABIncrementalPublisher.PendingBuild));
         }
     }
 }

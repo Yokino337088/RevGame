@@ -494,7 +494,7 @@ namespace Revolution.Editor
             compress.enumValueIndex = EditorGUILayout.Popup(new GUIContent("压缩方式"), compress.enumValueIndex, CompressNames);
 
             EditorGUILayout.PropertyField(so.FindProperty("forceRebuild"),
-                new GUIContent("强制全部重打", "关闭 = 增量打包：只重打内容变化了的包（推荐）"));
+                new GUIContent("强制全部重打", "日常迭代关闭。Unity 检查完整依赖并复用未变化的包。"));
             EditorGUILayout.PropertyField(so.FindProperty("deterministic"),
                 new GUIContent("确定性打包", "相同输入产出相同字节：CI 可缓存、团队 diff 干净、热更差异比对更准（推荐开）"));
             EditorGUILayout.PropertyField(so.FindProperty("stripUnityVersion"),
@@ -781,7 +781,9 @@ namespace Revolution.Editor
 
             // 6. 生成 RevResPath 常量类 + 可选拷贝到 StreamingAssets
             ABResPathGenerator.Generate();
-            ABBuilderCore.CopyToStreamingAssets(_build.outputDir);
+            string publishSummary = cfg.copyToStreamingAssets
+                ? "；" + ABBuilderCore.PublishToAssets(_build.outputDir, cfg.copyTarget)
+                : string.Empty;
             AssetDatabase.Refresh();
 
             _buildBytes = 0;
@@ -792,8 +794,8 @@ namespace Revolution.Editor
             }
 
             RevABLog.Info($"[RevAB] 打包完成：{_build.manifest.allBundles.Length} 个包，映射 {mapCount} 条，" +
-                          $"用时 {_buildSeconds:F1}s → {_build.outputDir}");
-            ShowNotification(new GUIContent($"打包完成：{_build.manifest.allBundles.Length} 个包"));
+                          $"用时 {_buildSeconds:F1}s → {_build.outputDir}{publishSummary}");
+            ShowNotification(new GUIContent($"打包完成：{_build.manifest.allBundles.Length} 个包{publishSummary}"));
             Repaint();
         }
 
