@@ -10,6 +10,8 @@
 
 小范围 AB 更新走 `ab build-incremental` → `ab check-map` → `ab publish-incremental`。三步都显式指定同一平台并核对回执。项目分包、图集检查和命令示例见 [Unity 与资源迭代](skills/revgame-development/references/unity-and-assets.md)。
 
+RevCLI 默认返回摘要。长结果的 `detailsPath` 指向完整 JSON，可用全局 `--output <文件>` 指定证据路径，或用 `--full` 查看完整终端输出。RevMCP 从 `structuredContent` 取回执，详细证据在 `reportPath`。需要完整回执时传 `full: true`。验收计划的断言、跨步骤引用和清理使用完整数据。
+
 游戏功能验收、找 Bug 与修复交给现有 Coding Agent。例如“验证远征过场的首进、连点、返回和重入，找到缺陷后定位源码、修复并复测”。项目技能按需求列用例，保留失败时的预期、实测和 `code_refs`，在任务授权内修复并复跑原用例及受影响的回归。原始记录放 `.codex/work/`。 [项目验收与交付](skills/revgame-development/references/validation-and-delivery.md)
 
 ## 检查

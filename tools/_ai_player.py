@@ -25,7 +25,7 @@ TMP = tempfile.mkdtemp(prefix='aiplayer_')
 
 
 def call(action, args=None):
-    cmd = [sys.executable, REV_MCP, '--project', PROJECT, 'call', 'gm', action]
+    cmd = [sys.executable, REV_MCP, '--project', PROJECT, '--full', 'call', 'gm', action]
     if args:
         path = os.path.join(TMP, 'a.json')
         with open(path, 'w', encoding='utf-8') as f:

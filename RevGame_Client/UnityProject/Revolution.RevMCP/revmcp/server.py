@@ -15,15 +15,17 @@ import threading
 
 from .schema import object_schema, validate
 from . import workflow
+from revautomation.summary import summarize
 
 VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 STRING = {"type": "string"}
 DISCOVER_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "game", "gm", "cli"]},
     "query": {"type": "string", "maxLength": 128}, "offset": {"type": "integer", "minimum": 0},
-    "limit": {"type": "integer", "minimum": 1, "maximum": 500}})
+    "limit": {"type": "integer", "minimum": 1, "maximum": 500}, "full": {"type": "boolean"}})
 CALL_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "game", "gm", "cli"]},
-    "action": STRING, "arguments": {"type": "object"}, "confirm": {"type": "boolean"},
+    "action": STRING, "arguments": {"type": "object"}, "confirm": {"type": "boolean"}, "full": {"type": "boolean"},
     "intent": {"type": "string", "maxLength": 512, "description": "给用户的一句话目的：为什么调用这个动作；不参与业务参数校验"}}, ("target", "action"))
+RUN_SCHEMA = object_schema({"plan": {"type": "object"}, "full": {"type": "boolean"}}, ("plan",))
 
 
 def action_schema(spec, manifest):
@@ -71,7 +73,7 @@ class Server:
         self.dynamic = {}
         tools = [dict(name="rev_discover", description="发现真实 Editor/GM/业务/CLI 能力；支持 target/query/offset/limit 筛选。不可用项包含原因，先发现再调用。", inputSchema=DISCOVER_SCHEMA),
             dict(name="rev_call", description="统一调用真实注册能力。GM使用完整名；confirm仅用于已授权动作。业务成功应另做状态断言。", inputSchema=CALL_SCHEMA),
-            dict(name="rev_run", description="执行带业务断言、有界轮询和 finally 清理的跨接口测试计划。失败不重放变更，保存完整证据。", inputSchema=object_schema({"plan": {"type": "object"}}, ("plan",)))]
+            dict(name="rev_run", description="执行带业务断言、有界轮询和 finally 清理的跨接口测试计划。默认返回摘要，完整证据见 reportPath。", inputSchema=RUN_SCHEMA)]
         if self.compact_tools:
             return dict(tools=tools)
         catalog = self.hub.discover(cancel)
@@ -85,7 +87,7 @@ class Server:
             suffix = hashlib.sha256((target + "/" + action).encode("utf-8")).hexdigest()[:16]
             prefix = "".join(c if c.isascii() and c.isalnum() else "_" for c in action)[:32]
             name = f"{target}_{prefix}_{suffix}"
-            schema = object_schema({"arguments": action_schema(spec, self.hub.manifest), "confirm": {"type": "boolean"},
+            schema = object_schema({"arguments": action_schema(spec, self.hub.manifest), "confirm": {"type": "boolean"}, "full": {"type": "boolean"},
                                     "intent": {"type": "string", "maxLength": 512}}, ("arguments",))
             self.dynamic[name] = (target, action, schema)
             tools.append(dict(name=name, description=description.strip(), inputSchema=schema,
@@ -120,20 +122,21 @@ class Server:
         if name == "rev_discover":
             validate(arguments, DISCOVER_SCHEMA)
             result = self.hub.discover(token)
-            if arguments:
+            if not arguments.get("full") or any(key != "full" for key in arguments):
                 target, query = arguments.get("target"), arguments.get("query", "").casefold()
                 def matches(spec, kind):
                     return (not target or target == kind) and query in (spec.get("id", spec.get("name", "")) + " " + spec.get("description", "")).casefold()
                 actions = [s for s in result["actions"] if matches(s, s["target"])]
                 commands = [s for s in result["commands"] if matches(s, "gm")]
-                offset, limit = arguments.get("offset", 0), arguments.get("limit", 100)
+                offset = arguments.get("offset", 0)
+                limit = arguments.get("limit", 20)
                 result = dict(result, actions=actions[offset:offset + limit], commands=commands[offset:offset + limit],
                               actionTotal=len(actions), commandTotal=len(commands), offset=offset, limit=limit)
         elif name == "rev_call":
             validate(arguments, CALL_SCHEMA)
             result = self.hub.call(arguments["target"], arguments["action"], arguments.get("arguments", {}), arguments.get("confirm", False), token)
         elif name == "rev_run":
-            validate(arguments, object_schema({"plan": {"type": "object"}}, ("plan",)))
+            validate(arguments, RUN_SCHEMA)
             result = workflow.run(self.hub, arguments["plan"], token)
         else:
             if name not in self.dynamic:
@@ -166,9 +169,24 @@ class Server:
             if isinstance(value, list):
                 return [visual_evidence(v) for v in value]
             return value
-        result = visual_evidence(result)
+        # 发现结果已经分页。显式截图动作仍直接返回画面，计划截图默认从报告读取。
+        full = arguments.get("full", False)
+        if full or arguments.get("action") == "runtime.screenshot" or (
+                name in self.dynamic and self.dynamic[name][1] == "runtime.screenshot"):
+            result = visual_evidence(result)
+        else:
+            def strip_images(value):
+                if isinstance(value, dict):
+                    return {key: strip_images(item) for key, item in value.items() if key != "base64"}
+                if isinstance(value, list):
+                    return [strip_images(item) for item in value]
+                return value
+            result = strip_images(result)
+            if name != "rev_discover":
+                result = summarize(result)
         result = dict(result, reportPath=report_path)
-        content.insert(0, dict(type="text", text=json.dumps(result, ensure_ascii=False, allow_nan=False)))
+        status = "失败" if result.get("success") is False else "完成"
+        content.insert(0, dict(type="text", text=f"{status}，完整回执见 {report_path}"))
         return dict(content=content, structuredContent=result, isError=result.get("success") is False)
 
     def write_evidence(self, result, report_path):

@@ -8,10 +8,14 @@ import os
 from pathlib import Path
 import sys
 import time
+import datetime as dt
+import tempfile
+import uuid
 
 from .client import RevClient, RevError, atomic_json, read_json
 from .media import write_gif
 from .report import export_evidence, export_report
+from .summary import compact_json, summarize
 from . import daemon
 from . import pipeline as pipelines
 
@@ -43,6 +47,7 @@ def _build_parser():
     p.add_argument("--timeout", type=float, default=120)
     p.add_argument("--no-graphics", action="store_true", help="batch 禁用图形；不适合渲染性能测量")
     p.add_argument("--output", type=Path, help="同时保存完整 JSON 响应")
+    p.add_argument("--full", action="store_true", help="在终端输出完整响应与进度")
     p.add_argument("--confirm", action="store_true", help="显式允许已标记高危 GM、移除旧表或覆盖已生成骨架")
     p.add_argument("--no-daemon", action="store_true", help="不转发给常驻服务，强制在本进程执行")
     sub = p.add_subparsers(dest="family", required=True)
@@ -516,6 +521,7 @@ def invoke_action(client, action, payload, confirm, report_dir=None, progress=pr
 def main(argv=None):
     raw = list(sys.argv[1:] if argv is None else argv)
     args = parser().parse_args(raw)
+    progress = print_progress if args.full else None
     try:
         if args.timeout <= 0 or not args.timeout < 604800:
             raise RevError("--timeout 必须大于 0 且小于 604800 秒。")
@@ -537,7 +543,7 @@ def main(argv=None):
         elif args.family == "ship":
             from . import ship
             client = RevClient(args.project, "live", args.unity, max(args.timeout, 14400))
-            quiet = lambda c, action, payload, confirm: invoke_action(c, action, payload, confirm)
+            quiet = lambda c, action, payload, confirm: invoke_action(c, action, payload, confirm, progress=progress)
             result = ship.run(client, args.target, args.excel, not args.no_ab, args.player, args.backend, args.development,
                               args.automation, args.frame_timing, args.confirm, args.force, args.skip_invalid, quiet)
         elif args.family == "game":
@@ -606,17 +612,38 @@ def main(argv=None):
                         "连续 %d 帧 · 间隔 %d ms" % (len(frames), args.interval),
                         {"帧数": len(frames), "帧间隔毫秒": args.interval, "GIF": args.out.name})
             elif args.family == "pipeline":
-                result = pipelines.run(client, args.file, args.confirm, invoke_action, validate_action, read_json(ROOT / "commands.json"), output=args.output)
+                def execute(c, action, payload, confirm):
+                    return invoke_action(c, action, payload, confirm, progress=progress)
+                result = pipelines.run(client, args.file, args.confirm, execute, validate_action, read_json(ROOT / "commands.json"), output=args.output)
             else:
                 action = args.action if args.family == "call" else args.family + "." + args.operation
                 payload = payload_of(args)
                 if action == "scenario.run" and args.mode == "batch":
                     raise RevError("scenario.run 需要 Play 中的在线编辑器。先 editor launch，再 editor play。")
                 validate_action(action, payload)
-                result = invoke_action(client, action, payload, args.confirm, getattr(args, "report_dir", None))
+                result = invoke_action(client, action, payload, args.confirm, getattr(args, "report_dir", None), progress)
         if args.output:
             atomic_json(args.output, result)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        visible = result if args.full else summarize(result)
+        if visible is not result:
+            if args.output:
+                path = args.output.resolve()
+            else:
+                project = args.project.resolve()
+                directory = (project / "Library/RevolutionAutomation/cli-reports" if (project / "Assets").is_dir()
+                             else Path(tempfile.gettempdir()) / "Revolution.RevCLI/cli-reports")
+                directory.mkdir(parents=True, exist_ok=True)
+                path = directory / (dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8] + ".json")
+                atomic_json(path, result)
+                from .storage import policy, prune_reports
+                try:
+                    settings = policy(directory.parent)
+                    if settings["automatic"]:
+                        prune_reports(directory, settings, dry_run=False)
+                except (OSError, ValueError):
+                    pass
+            visible["detailsPath"] = str(path)
+        print(json.dumps(visible, ensure_ascii=False, indent=2) if args.full else compact_json(visible))
         return 0 if result.get("success", True) else 1
     except KeyboardInterrupt:
         print(json.dumps(dict(success=False, error="Cancelled", message="已请求取消；Unity 清理进度请看 jobDirectory。"), ensure_ascii=False), file=sys.stderr)

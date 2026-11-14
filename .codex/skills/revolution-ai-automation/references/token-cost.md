@@ -1,5 +1,7 @@
 # MCP 与 CLI 的 token 成本
 
+新版 RevCLI 默认输出紧凑 JSON。长结果的 `detailsPath` 指向完整证据，`--output <文件>` 可指定完整证据路径，`--full` 恢复完整终端输出。RevMCP 的机器结果在 `structuredContent`，长报告留在 `reportPath`，需要原始回执时传 `full: true`。发现默认每页最多 20 项，使用 `query` 缩小范围。流水线和测试计划仍基于完整结果执行断言、引用和清理。
+
 **默认一套 CLI**：编辑器操作和运行时 GM（`game gm`）都能走 CLI；MCP 是可选项。本页回答的是“同一件事两边都能做时怎么省”，以及为什么这样分工划算。
 
 数字是 2026-10-31 在 `RevolutionFrameWork_Unity` 本体工程实测（139 个 Editor 工具已注册，`tiktoken` `o200k_base` 计数，同一 `editor.status` 只读调用）。

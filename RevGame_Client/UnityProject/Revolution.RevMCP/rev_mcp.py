@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--reports", type=Path, default=root / "results")
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--compact-tools", action="store_true", help="仅暴露三个稳定 MCP 工具；通过 rev_discover 按需查真实能力")
+    parser.add_argument("--full", action="store_true", help="discover/call/run 在终端输出完整 JSON")
     sub = parser.add_subparsers(dest="operation", required=True)
     sub.add_parser("serve", help="MCP stdio 服务；stdout 仅输出 JSON-RPC")
     sub.add_parser("discover", help="读取实际注册能力")
@@ -39,6 +40,7 @@ def main():
         parser.error("Revolution.RevCLI not found; set --cli-root")
     sys.path.insert(0, str(args.cli_root.resolve()))
     from revautomation.client import read_json
+    from revautomation.summary import compact_json, summarize
     from revmcp.backends import Hub
     from revmcp.server import Server
     from revmcp.workflow import run as run_plan
@@ -63,7 +65,8 @@ def main():
     # Reconfigure only CLI output; MCP writes explicit UTF-8 bytes itself.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
+    visible = result if args.full else summarize(result)
+    print(json.dumps(visible, ensure_ascii=False, indent=2, allow_nan=False) if args.full else compact_json(visible))
     return 0 if result.get("success") else 1
 
 
