@@ -17,4 +17,8 @@ py -3 Revolution.RevCLI/rev.py --project "<工程>" --mode live --timeout 180 ab
 
 ## Codex 插件调用
 
+构建回执的 `data.rebuildReason` 非空表示框架启用了强制全量。首次使用新版、编辑器或构建平台变化、包归属变化、材质与 Shader 等非文本依赖变化、脚本或项目设置变化、上次构建中断，以及缓存文件损坏都会触发此路径。只改已分包的 TextAsset 配置内容时允许 Unity 复用缓存。发布前校验平台和所有输出文件的 SHA-256，旧版构建目录先重新构建再发布。
+
+正式发版、修改依赖外部环境的自定义构建回调，或出现异常画面时，设置 `forceRebuild=true` 并走 `ab.build`，再检查映射、发布及在目标平台验收。
+
 用 `rev_bind` 绑定工程绝对路径，再用 `rev_discover(target="editor", query="incremental")` 查注册情况。依次使用 `rev_call`，`target` 为 `editor`，`action` 依次为 `ab.build-incremental`、`ab.check-map`、`ab.publish-incremental`，三步的 `arguments` 都传 `{"target":"StandaloneWindows64"}`。也可用 `rev_run` 顺序执行，对发布结果的 `/data/published` 和 `/data/target` 写断言。旧 Unity 桥缺少注册时先同步框架再发现。

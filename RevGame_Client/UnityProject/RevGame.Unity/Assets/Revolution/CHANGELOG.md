@@ -11,6 +11,8 @@
 
 ## [未发布]
 
+- RevAB 按构建环境、包归属和非文本依赖判定增量基线是否可复用。基线过期、构建中断或产物校验不一致时自动全量重打。发布前用 SHA-256 校验主包、业务包与清单。
+
 - RevCLI 和 RevMCP 暴露 `ab.build-incremental` 与 `ab.publish-incremental`，显式指定平台后分别执行增量构建与 StreamingAssets 增量替换，返回结构化结果。
 
 - RevAB 复用 Unity 的增量构建，发布时按清单只替换变化的包和清单，保留未变化的文件及 Unity GUID，支持移除上次发布后已废弃的包。

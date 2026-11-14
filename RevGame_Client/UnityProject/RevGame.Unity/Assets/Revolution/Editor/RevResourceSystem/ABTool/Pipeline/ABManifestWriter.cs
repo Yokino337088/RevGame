@@ -60,6 +60,10 @@ namespace Revolution.Editor
             sb.AppendLine($"  \"version\": \"{cfg.version}\",");
             sb.AppendLine($"  \"platform\": \"{result.target}\",");        // 实际打的平台（不一定是编辑器当前平台）
             sb.AppendLine($"  \"buildTime\": \"{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}\",");
+            string main = Path.Combine(result.outputDir, Path.GetFileName(result.outputDir.TrimEnd('/', '\\')));
+            sb.AppendLine("  \"integrityVersion\": 1,");
+            sb.AppendLine($"  \"mainSha256\": \"{ABBuildFingerprint.DigestFile(main)}\",");
+            sb.AppendLine($"  \"mainManifestSha256\": \"{ABBuildFingerprint.DigestFile(main + ".manifest")}\",");
             sb.AppendLine("  \"bundles\": [");
 
             string[] bundles = result.manifest.allBundles.OrderBy(bundle => bundle, StringComparer.Ordinal).ToArray();
@@ -67,11 +71,13 @@ namespace Revolution.Editor
             {
                 // 每个包在磁盘上的实际大小（排查"哪个包突然变大"很有用）
                 string path = Path.Combine(result.outputDir, bundles[i]);
-                long size = File.Exists(path) ? new FileInfo(path).Length : 0;
+                long size = new FileInfo(path).Length;
                 string comma = (i == bundles.Length - 1) ? "" : ",";
 
                 string hash = result.manifest.raw.GetAssetBundleHash(bundles[i]).ToString();
-                sb.AppendLine($"    {{ \"name\": \"{bundles[i]}\", \"size\": {size}, \"hash\": \"{hash}\" }}{comma}");
+                string sha = ABBuildFingerprint.DigestFile(path);
+                string manifestSha = ABBuildFingerprint.DigestFile(path + ".manifest");
+                sb.AppendLine($"    {{ \"name\": \"{bundles[i]}\", \"size\": {size}, \"hash\": \"{hash}\", \"sha256\": \"{sha}\", \"manifestSha256\": \"{manifestSha}\" }}{comma}");
             }
 
             sb.AppendLine("  ]");
@@ -85,6 +91,10 @@ namespace Revolution.Editor
                 != Regex.Replace(content, timestamp, "$1"))
             {
                 File.WriteAllText(manifestPath, content, Encoding.UTF8);
+            }
+            if (result.inputFingerprint != null)
+            {
+                File.WriteAllText(Path.Combine(result.outputDir, ABBuildFingerprint.FileName), result.inputFingerprint);
             }
             File.Delete(Path.Combine(result.outputDir, ABIncrementalPublisher.PendingBuild));
         }

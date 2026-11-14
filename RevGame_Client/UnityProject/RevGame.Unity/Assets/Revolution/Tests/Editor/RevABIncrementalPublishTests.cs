@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using NUnit.Framework;
 using Revolution.Editor;
 using UnityEditor;
@@ -104,6 +106,24 @@ namespace Revolution.Tests
         }
 
         [Test]
+        public void SameLengthTamperAndMixedMainManifestAreRejectedBeforeReplacement()
+        {
+            Bundle("a", "old");
+            Manifest("a");
+            Publish();
+            Bundle("a", "new");
+            Manifest("a");
+            Write(_source, "a", "bad");
+            Assert.Throws<InvalidDataException>(() => Publish());
+            Assert.That(Read("a"), Is.EqualTo("old"));
+
+            Bundle("a", "new");
+            Write(_source, "PC", "mixd");
+            Assert.Throws<InvalidDataException>(() => Publish());
+            Assert.That(Read("a"), Is.EqualTo("old"));
+        }
+
+        [Test]
         public void RealBuildReusesUnchangedBundleAndPublishesCompleteManifest()
         {
             string assets = "Assets/" + _copyTarget + "-inputs";
@@ -184,8 +204,20 @@ namespace Revolution.Tests
 
         private void Manifest(params string[] names)
         {
-            Write(_source, "BuildManifest.json", "{\"bundles\":[{\"name\":\"" +
-                string.Join("\"},{\"name\":\"", names) + "\"}]}");
+            var entries = names.Select(name => $"{{\"name\":\"{name}\",\"sha256\":\"{Digest(name)}\"," +
+                $"\"manifestSha256\":\"{Digest(name + ".manifest")}\"}}");
+            Write(_source, "BuildManifest.json", $"{{\"integrityVersion\":1,\"mainSha256\":\"{Digest("PC")}\"," +
+                $"\"mainManifestSha256\":\"{Digest("PC.manifest")}\",\"bundles\":[{string.Join(",", entries)}]}}");
+        }
+
+        private string Digest(string name)
+        {
+            string path = Path.Combine(_source, name);
+            using (var sha = SHA256.Create())
+            {
+                byte[] bytes = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
+                return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
+            }
         }
 
         private static void Write(string directory, string name, string contents)

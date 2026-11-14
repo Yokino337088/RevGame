@@ -589,7 +589,10 @@ namespace Revolution.Editor
             ABManifestWriter.WriteBuildManifest(build);
             if (incremental)
             {
-                return new RevABIncrementalReceipt(target, build.manifest.allBundles.Length, null);
+                return new RevABIncrementalReceipt(target, build.manifest.allBundles.Length, null)
+                {
+                    rebuildReason = build.rebuildReason
+                };
             }
             string published = config.copyToStreamingAssets
                 ? "；" + ABBuilderCore.PublishToAssets(build.outputDir, config.copyTarget)
@@ -609,6 +612,7 @@ namespace Revolution.Editor
             public int updatedBundles;
             public int removedBundles;
             public int updatedMetadata;
+            public string rebuildReason;
 
             public RevABIncrementalReceipt(BuildTarget buildTarget, int? built, ABPublishResult publish)
             {
@@ -635,10 +639,20 @@ namespace Revolution.Editor
                 JsonUtility.FromJsonOverwrite(json, preview);
                 if (preview.markMode == ABMarkMode.AutoByFolder && config.markMode != ABMarkMode.AutoByFolder && !confirm)
                 { throw new InvalidOperationException("切换到按目录自动分包会重写全部 AB 标记，需要 --confirm"); }
-                foreach (string folder in new[] { preview.resRoot, preview.sfxRoot, preview.bgmRoot })
+                string assets = Path.GetFullPath("Assets") + Path.DirectorySeparatorChar;
+                string root = Path.GetFullPath(preview.GetResRoot()).TrimEnd(Path.DirectorySeparatorChar);
+                if (!string.Equals(root + Path.DirectorySeparatorChar, assets, StringComparison.OrdinalIgnoreCase)
+                    && !root.StartsWith(assets, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(folder)) { continue; }
-                    if (folder != "Assets" && !folder.StartsWith("Assets/", StringComparison.Ordinal)) { throw new ArgumentException("资源目录必须在 Assets 内：" + folder); }
+                    throw new ArgumentException("资源目录必须在 Assets 内：" + root);
+                }
+                foreach (string segment in new[] { preview.GetSfxRoot(), preview.GetBgmRoot() })
+                {
+                    string folder = Path.GetFullPath(Path.Combine(root, segment));
+                    if (!folder.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new ArgumentException("音频目录必须在资源根目录内：" + folder);
+                    }
                 }
             }
             finally { UnityEngine.Object.DestroyImmediate(preview); }

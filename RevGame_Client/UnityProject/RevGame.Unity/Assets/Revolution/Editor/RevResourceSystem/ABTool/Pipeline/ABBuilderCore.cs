@@ -29,6 +29,9 @@ namespace Revolution.Editor
 
         /// <summary>这次打的是哪个平台（产物清单、窗口结果面板用）</summary>
         public BuildTarget target;
+        /// <summary>本次强制全量的原因。空字符串表示允许 Unity 复用缓存。</summary>
+        public string rebuildReason;
+        internal string inputFingerprint;
     }
 
     /// <summary>对 Unity 原生 AssetBundleManifest 的轻量包装（便于将来加自定义字段）</summary>
@@ -64,16 +67,17 @@ namespace Revolution.Editor
                 Directory.Delete(outDir, true);
             Directory.CreateDirectory(outDir);
             string pending = Path.Combine(outDir, ABIncrementalPublisher.PendingBuild);
-            string targetFile = Path.Combine(outDir, ".revab-build-target");
-            // 多种桌面目标共用 PC 目录。切换实际目标或恢复中断构建时，不能复用旧产物。
             BuildAssetBundleOptions options = cfg.GetBuildOptions();
             if (incremental)
             {
                 options &= ~BuildAssetBundleOptions.ForceRebuildAssetBundle;
             }
-            if (File.Exists(pending) || (File.Exists(targetFile) && File.ReadAllText(targetFile) != target.ToString()))
+            string fingerprint = ABBuildFingerprint.Capture(target, options);
+            string reason = GetRebuildReason(outDir, target, options, fingerprint);
+            if (reason.Length > 0)
             {
                 options |= BuildAssetBundleOptions.ForceRebuildAssetBundle;
+                RevABLog.Info("[RevAB] 强制全量：" + reason);
             }
             // 防止 ab.copy 在构建未完成时把上一份清单和本次的半成品一起发布。
             File.WriteAllText(pending, target.ToString());
@@ -87,18 +91,51 @@ namespace Revolution.Editor
             if (raw == null)
                 return new ABBuildResult { success = false, outputDir = outDir, target = target };
 
-            File.WriteAllText(targetFile, target.ToString());
             return new ABBuildResult
             {
                 success = true,
                 outputDir = outDir,
                 target = target,
+                rebuildReason = reason,
+                inputFingerprint = fingerprint,
                 manifest = new ABManifestWrap
                 {
                     raw = raw,
                     allBundles = raw.GetAllAssetBundles()
                 }
             };
+        }
+
+        /// <summary>只复用完整且与当前构建上下文一致的产物。旧包无需删除，由 Unity 重新生成当前清单。</summary>
+        private static string GetRebuildReason(string directory, BuildTarget target, BuildAssetBundleOptions options, string fingerprint)
+        {
+            if ((options & BuildAssetBundleOptions.ForceRebuildAssetBundle) != 0)
+            {
+                return "启用了强制全部重打";
+            }
+            if (File.Exists(Path.Combine(directory, ABIncrementalPublisher.PendingBuild)))
+            {
+                return "上一次构建未完成";
+            }
+            string path = Path.Combine(directory, ABBuildFingerprint.FileName);
+            if (!File.Exists(path))
+            {
+                return "缺少当前版本的已验证构建基线";
+            }
+            if (File.ReadAllText(path) != fingerprint)
+            {
+                return "构建环境、包归属或非文本资源依赖有变化";
+            }
+            try
+            {
+                ABIncrementalPublisher.VerifyBuild(directory, Path.GetFileName(directory), target.ToString());
+            }
+            catch (Exception error) when (error is IOException || error is InvalidDataException
+                || error is ArgumentException || error is UnauthorizedAccessException)
+            {
+                return "缓存产物校验失败：" + error.Message;
+            }
+            return string.Empty;
         }
 
         /// <summary>

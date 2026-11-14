@@ -30,12 +30,17 @@ namespace Revolution.Editor
         {
             public BundleEntry[] bundles;
             public string platform;
+            public int integrityVersion;
+            public string mainSha256;
+            public string mainManifestSha256;
         }
 
         [Serializable]
         private sealed class BundleEntry
         {
             public string name;
+            public string sha256;
+            public string manifestSha256;
         }
 
         /// <summary>暂存一项替换或移除。备份只在提交时生成，供失败后逆序还原。</summary>
@@ -55,7 +60,7 @@ namespace Revolution.Editor
                 throw new InvalidOperationException("AB 构建尚未完成，请先重新构建：" + source);
             }
 
-            HashSet<string> current = ReadBundles(source, platform, true, expectedTarget);
+            HashSet<string> current = VerifyBuild(source, platform, expectedTarget);
             HashSet<string> previous = ReadBundles(destination, platform, false, null);
             var result = new ABPublishResult();
             // 放在 Assets 外，避免 Unity 把暂存文件当成资源导入。完整暂存成功前不碰目标文件。
@@ -85,9 +90,10 @@ namespace Revolution.Editor
                     StageRemoval(destination, name + ".meta", staging, changes);
                     StageRemoval(destination, name + ".manifest.meta", staging, changes);
                 }
-                StageManifest(source, destination, ManifestName, staging, changes, result);
                 StageManifest(source, destination, platform + ".manifest", staging, changes, result);
                 StageManifest(source, destination, platform, staging, changes, result);
+                // 最后提交包列表，中断后再次发布仍能按旧清单计算废弃包。
+                StageManifest(source, destination, ManifestName, staging, changes, result);
 
                 foreach (Change change in changes)
                 {
@@ -161,6 +167,12 @@ namespace Revolution.Editor
             }
         }
 
+        /// <summary>复用缓存或发布前核对完整产物及其字节签名。旧发布目录的清单仍可用于识别旧包。</summary>
+        internal static HashSet<string> VerifyBuild(string directory, string platform, string expectedTarget)
+        {
+            return ReadBundles(directory, platform, true, expectedTarget);
+        }
+
         /// <summary>只接受正常相对包名，包括带子目录和变体的名称。禁止目录穿越与生成文件重名。</summary>
         private static HashSet<string> ReadBundles(string directory, string platform, bool required, string expectedTarget)
         {
@@ -179,6 +191,10 @@ namespace Revolution.Editor
             {
                 throw new InvalidDataException($"AB 清单平台为 {listing.platform}，请求平台为 {expectedTarget}：{manifest}");
             }
+            if (required && listing.integrityVersion != 1)
+            {
+                throw new InvalidDataException("构建产物缺少当前版本的完整性信息，请重新构建：" + manifest);
+            }
             foreach (BundleEntry item in listing.bundles)
             {
                 string name = item?.name;
@@ -193,8 +209,27 @@ namespace Revolution.Editor
                 {
                     throw new InvalidDataException("AB 构建清单含无效或重复包名：" + name);
                 }
+                if (required)
+                {
+                    VerifyFile(directory, name, item.sha256);
+                    VerifyFile(directory, name + ".manifest", item.manifestSha256);
+                }
+            }
+            if (required)
+            {
+                VerifyFile(directory, platform, listing.mainSha256);
+                VerifyFile(directory, platform + ".manifest", listing.mainManifestSha256);
             }
             return names;
+        }
+
+        private static void VerifyFile(string directory, string name, string digest)
+        {
+            string path = Path.Combine(directory, name);
+            if (string.IsNullOrEmpty(digest) || ABBuildFingerprint.DigestFile(path) != digest)
+            {
+                throw new InvalidDataException("AB 产物与构建清单不一致：" + path);
+            }
         }
 
         private static void StageManifest(string source, string destination, string name, string staging, List<Change> changes, ABPublishResult result)
