@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Entity</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -12,6 +12,7 @@
     <!-- 锁定版本：实体工程引用的 NuGet 包必须与 Tools/Fantasy.Net 源码镜像同一版本，
          否则读到的源码与实际编译进服务的 dll 对不上（Version="*" 会随发布漂移） -->
     <PackageReference Include="Fantasy-Net" Version="2026.1.2003" />
+    <InternalsVisibleTo Include="Hotfix" />
     <!-- Battle 与 Unity 使用同一份纯围棋规则。 -->
     <Compile Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/*.cs" Link="GoCore/%(Filename)%(Extension)" />
     <Compile Include="../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/*.cs" Link="Duel/%(Filename)%(Extension)" />

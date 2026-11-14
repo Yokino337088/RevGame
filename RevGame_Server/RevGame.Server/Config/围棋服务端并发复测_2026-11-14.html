@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>围棋服务端并发复测</title>
+<style>
+  :root { color-scheme: light; color: #25352f; background: #f6f7f2; font: 16px/1.75 "Microsoft YaHei", sans-serif; }
+  body { margin: 0; }
+  header { border-bottom: 1px solid #dce3da; background: linear-gradient(130deg, #fefdf5, #e6efe1); padding: 32px 5vw; }
+  h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); }
+  h2 { color: #326956; font-size: 21px; margin-top: 0; }
+  main { padding: 24px 0 36px; }
+  .wrap { width: min(1090px, 90vw); margin: 0 auto; }
+  section { background: #fffefa; border: 1px solid #dce3da; border-radius: 14px; padding: 18px 24px; margin-bottom: 16px; }
+  p { margin: 8px 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid #dce3da; }
+  a { color: #265a49; }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>围棋服务端并发复测</h1>
+  <p>2026-11-14 · Fantasy.Net 2026.1.2003 · .NET 8 Release · Windows x64 · i7-12700H · 本机回环</p>
+</div></header>
+<main class="wrap">
+<section>
+  <h2>棋盘校验</h2>
+  <p>Battle 每房按需保有一块草稿，复制已确认的棋面、轮次和完整劫历史。只有合法操作与结果指纹均通过时才交换棋盘。房间结束后两块棋盘一并释放。代价是活跃房间保留额外一块棋盘。</p>
+  <div class="scroll"><table>
+    <thead><tr><th>16,000 条固定操作</th><th>耗时中位数</th><th>当前线程累计托管分配</th></tr></thead>
+    <tbody><tr><td>基线 af0e83dc</td><td>24.49 ms</td><td>47,580,016 字节</td></tr>
+    <tr><td>复用房间草稿</td><td>18.04 ms</td><td>6,552,016 字节</td></tr></tbody>
+  </table></div>
+  <p>直接调用实际 Battle 校验入口，每次运行创建 500 个房间，每局 30 手落子及双停。基线与优化按 ABBA 顺序运行，每个进程首轮用于预热，其余八轮计入中位数，共各 16 个样本。关闭分层 JIT 以稳定微基准。计时覆盖校验入口与建房开销。TCP 回归验证错误结果指纹能被拒绝，之后正确重试成功。补充验证覆盖同序号重发和不同贴目房间。</p>
+</section>
+<section>
+  <h2>KCP 围棋负载</h2>
+  <p>逐批完成建连后，同时匹配，再逐手同时提交 500 局合法棋谱。四个 Battle 各 125 局，双方接收增量棋谱并对账到同一终局。优化版换 Socket 重连、逐席离场和清理均通过，服务端未记录 Error。</p>
+  <div class="scroll"><table>
+    <thead><tr><th>轮次</th><th>连接数</th><th>操作数</th><th>P50</th><th>P95</th><th>P99</th></tr></thead>
+    <tbody>
+      <tr><td>基线，8 秒空闲窗口</td><td>1,000</td><td>16,000</td><td>94.87 ms</td><td>128.70 ms</td><td>161.65 ms</td></tr>
+      <tr><td>基线复跑，验证用 30 秒空闲窗口</td><td>1,000</td><td>16,000</td><td>27.15 ms</td><td>48.08 ms</td><td>113.99 ms</td></tr>
+      <tr><td>优化版，验证用 30 秒空闲窗口</td><td>1,000</td><td>16,000</td><td>76.06 ms</td><td>153.25 ms</td><td>163.08 ms</td></tr>
+      <tr><td>基线 A，分段计时</td><td>160</td><td>2,560</td><td>88.94 ms</td><td>317.03 ms</td><td>453.73 ms</td></tr>
+      <tr><td>优化 B，分段计时</td><td>160</td><td>2,560</td><td>18.53 ms</td><td>47.25 ms</td><td>95.77 ms</td></tr>
+      <tr><td>优化 B，复跑</td><td>160</td><td>2,560</td><td>17.16 ms</td><td>29.92 ms</td><td>70.57 ms</td></tr>
+      <tr><td>基线 A，复跑</td><td>160</td><td>2,560</td><td>19.10 ms</td><td>34.67 ms</td><td>94.44 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p>第二轮原版千人建连期间，探针心跳遇到 Session 已关闭。后续隔离压测的服务和探针使用 30 秒空闲窗口，仓库默认值仍为 8 秒。在 30 秒同参数下，优化版的端到端 P95 和 P99 均高于同条件基线，本轮证据支持棋盘校验的局部收益。160 人轮次最慢 1% 的跨 Scene 路由段均值为 43.02 至 238.57 ms，同批逐手控制台日志均值为 0.02 至 0.11 ms。</p>
+</section>
+<section>
+  <h2>跨进程和决斗</h2>
+  <p>固定配置下，Gate 和 Battle 分别由 Fantasy Release 模式的两个 OS 进程承载。40 个 KCP 客户端命中四个内网 Battle Scene，共 20 局、640 条操作，房间分配为 5 / 5 / 5 / 5，换 Socket 恢复与离席通过。该轮端到端 P99 为 1137.26 ms。公网服务的尾延迟和节点故障恢复仍待验证。</p>
+  <p>TCP 探针通过兼容快照、棋力匹配和单节点 128 活跃房间上限。真实 KCP 的双席决斗在第 79 帧正常终局并完成同帧指纹核对。千人测试的工作量是围棋，决斗并发容量仍待单独测量。探针和本轮服务实例均通过脚本的清理路径退出。</p>
+</section>
+<section>
+  <h2>后续分布式容量</h2>
+  <p>单 Gate 当前上限为 1024 个身份，其中包含重连期间保留的离线身份。最先拆开的是连接与业务所有权。Gate 持有 Session，独立匹配 Scene 按场次和规则归属队列，Battle 持有房间与决斗权威。新房由 Battle 原子确认容量后绑定 Address，现有房间的消息沿固定路由发送。多 Gate 还需要持久化重连归属并定义实例下线后的排空和故障行为。<a href="https://github.com/qq362946/Fantasy">Fantasy 服务发现与 Address</a></p>
+  <p>Nakama 的单房状态、有界消息队列与按局 tick 可参考到决斗；Orleans 的放置策略适用于理解新房分配和路由稳定性的取舍。两个项目的实现作为设计参考，性能数字以 RevGame 的负载为准。<a href="https://github.com/heroiclabs/nakama/blob/master/server/match_handler.go">Nakama MatchHandler</a> · <a href="https://learn.microsoft.com/en-us/dotnet/orleans/grains/grain-placement">Orleans 放置策略</a></p>
+  <p>原始 JSON、日志和计时记录位于仓库忽略目录 <code>.codex/work/server-scale-20261114</code>。本轮验证使用服务端协议探针，不涉及 Unity 客户端运行时画面。</p>
+</section>
+</main>
+</body>
+</html>

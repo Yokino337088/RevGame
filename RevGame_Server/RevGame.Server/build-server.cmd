@@ -18,7 +18,7 @@ dotnet build "Server\Main\Main.csproj" --configuration Debug --nologo
 set "revgame_exit_code=%errorlevel%"
 if not "%revgame_exit_code%"=="0" goto build_error
 
-echo [RevGame] Build succeeded. Output: "%CD%\Server\Main\bin\Debug\net8.0"
+echo [RevGame] Build succeeded. Output: "%CD%\Server\Main\bin\Debug\net10.0"
 goto finish
 
 :build_error
@@ -26,7 +26,7 @@ echo [RevGame] Build failed with exit code %revgame_exit_code%. 1>&2
 goto finish
 
 :sdk_error
-echo [RevGame] dotnet was not found. Install the .NET 8 SDK and reopen the terminal. 1>&2
+echo [RevGame] dotnet was not found. Install the .NET 10 SDK and reopen the terminal. 1>&2
 set "revgame_exit_code=1"
 goto finish
 

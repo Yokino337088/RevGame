@@ -628,7 +628,7 @@ summary { color: var(--green); font-weight: 700; cursor: pointer; }
       <a class="pill" href="#cloud-steps">跟着部署</a>
       <a class="pill" href="#go-flow">追一次落子</a>
     </div>
-    <div class="stamp">2026.11.14 · FANTASY.NET 2026.1.2003 · NET8.0 / C++17</div>
+    <div class="stamp">2026.11.14 · FANTASY.NET 2026.1.2003 · .NET 10 LTS / C++17</div>
   </div>
   <div class="demo" id="demo">
     <h2 class="hero-title" id="demo-title">从一个问题读起</h2>
@@ -697,7 +697,7 @@ summary { color: var(--green); font-weight: 700; cursor: pointer; }
     <p class="note">要先买机器可以跳到选型。第一次接手代码，按目录从启动读到一次落子。</p>
   </aside>
   <main>
-    <div class="legend"><strong>源码基线</strong> GitHub <code>main</code> 业务代码 <a href="https://github.com/Yokino337088/RevGame/tree/af0e83dc007a21b914a27169d7f0f9947e6d6500"><code>af0e83dc</code></a>。上云操作以这版单进程拓扑为准。上一轮本地验证的 Battle 决斗迁移与跨进程预连接见<a href="#scale">跨进程与扩容</a>。</div>
+    <div class="legend"><strong>当前部署版本</strong> 服务端面向 <code>net10.0</code>。房间所属的 GoBattle 同时持有围棋棋盘和决斗权威。默认在一个进程内启动，扩展时可按同一份拓扑拆成两个进程。<a href="#scale">查看跨进程配置与压测</a></div>
 
 <section class="chapter" id="business">
   <h2>这台服务端管哪些事</h2>
@@ -816,13 +816,13 @@ summary { color: var(--green); font-weight: 700; cursor: pointer; }
 
 <section class="chapter" id="boot">
   <h2>从 dotnet 命令走到端口监听</h2>
-  <p>从仓库根进入服务端目录。Windows 开发机装能编译 <code>net8.0</code> 的 .NET SDK，首次构建会还原 NuGet 包。在 20000 和 11002–11006 空闲时，可以用下面的默认配置启动。本地测试也可运行仓库的 <code>start-server.cmd</code>，它会检查端口、构建 Debug 产物并在自己的运行目录启动。</p>
+  <p>从仓库根进入服务端目录。Windows 开发机装 .NET 10 SDK，首次构建会还原 NuGet 包。在 20000 和 11002–11006 空闲时，可以用下面的默认配置启动。本地测试也可运行仓库的 <code>start-server.cmd</code>，它会检查端口、构建 Debug 产物并在自己的运行目录启动。</p>
   <div class="code-card">
     <div class="code-head"><span>开发机 PowerShell · 首次本地启动 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="开发机 PowerShell · 首次本地启动"><code>Set-Location .\RevGame_Server\RevGame.Server
 dotnet build .\Server\Main\Main.csproj -c Debug
 # 构建成功后再运行
-dotnet .\Server\Main\bin\Debug\net8.0\Main.dll --m Develop</code></pre>
+dotnet .\Server\Main\bin\Debug\net10.0\Main.dll --m Develop</code></pre>
   </div>
   <figure class="diagram">
     <figcaption><strong>从 Program.cs 走到消息循环</strong><span>先加载代码和配置，再在 Scene 上装配业务。</span></figcaption>
@@ -1051,7 +1051,7 @@ dotnet .\Server\Main\bin\Debug\net8.0\Main.dll --m Develop</code></pre>
   </figure>
   <ol class="steps">
     <li><strong>Gate 先挡住不属于这局的操作。</strong> <code>C2G_GoCommandRequestHandler</code> 找到当前 Session 的玩家并限流，<code>Relay</code> 再查房间、座位、坐标、指纹和序号。每房最多一手等待 Battle，避免同一房的第 17 手没确认就提交第 18 手。</li>
-    <li><strong>Battle 独占棋盘。</strong> Gate 按目标地址把多房间棋步合成最多 32 条的内网 RPC。凑满可立即发送，未满用 1 毫秒定时器给合批机会。Battle 用 <code>GoCore</code> 检查棋规并比对执行结果，失败时保留已确认棋盘。<code>main</code> 这版对已有棋盘用深复制校验。</li>
+    <li><strong>Battle 独占棋盘。</strong> Gate 按目标地址把多房间棋步合成最多 32 条的内网 RPC。凑满可立即发送，未满用 1 毫秒定时器给合批机会。Battle 把权威棋盘和完整劫历史填进本房间独占的草稿，使用 <code>GoCore</code> 校验。结果指纹也匹配才交换两块棋盘。校验失败时保留原权威棋盘，下一次仍能使用同一块草稿。</li>
     <li><strong>双方得到同一个已确认结果。</strong> Gate 追加棋谱，向对手推送，再给下棋人回包。实际到达先后取决于两条连接。协商过增量同步时，在能衔接的情况下只带新的一手和基序号。首手的基序号为 0，握手、重连和主动同步使用完整棋谱。</li>
     <li><strong>客户端复核再落屏。</strong> <code>PvpService</code> 检查序号和指纹，按顺序更新自己的棋盘。缺手时请求同步。收到网络回包与棋面通过本地回放是两步，排查时分别看。</li>
   </ol>
@@ -1064,10 +1064,10 @@ dotnet .\Server\Main\bin\Debug\net8.0\Main.dll --m Develop</code></pre>
   <h2>决斗为什么要封帧</h2>
   <p>围棋一手确认后才换人。决斗里，两个人在相近时刻可以同时按键。服务器给双方安排同一条逻辑时间线。玩家发的是方向和招式意图，权威端决定这些意图进入哪个完整帧，原生 <code>RevGameCore</code> 执行该帧，双方就能按相同顺序重放。</p>
   <figure class="diagram">
-    <figcaption><strong>从劣势挑战到同一帧确认</strong><span>图中的「权威端」在 GitHub main 基线中归 Gate，本地迁移版归房间所属 GoBattle。</span></figcaption>
+    <figcaption><strong>从劣势挑战到同一帧确认</strong><span>Gate 从 Session 识别席位，按房间 Address 将请求交给该局 GoBattle。</span></figcaption>
     <svg viewBox="0 0 368 530" role="img" aria-label="从劣势挑战到同一帧确认" focusable="false">
       <title>从劣势挑战到同一帧确认</title>
-      <desc>图中的「权威端」在 GitHub main 基线中归 Gate，本地迁移版归房间所属 GoBattle。</desc>
+      <desc>Gate 认证席位后转给房间所属的 GoBattle，由 Battle 校验挑战、保存原生状态并推进帧。</desc>
       <rect class="node-green" x="39" y="8" width="290" height="68" rx="11"/>
       <circle class="diagram-dot" cx="57" cy="28" r="10"/>
       <text class="diagram-number" x="57" y="28" text-anchor="middle">1</text>
@@ -1106,9 +1106,9 @@ dotnet .\Server\Main\bin\Debug\net8.0\Main.dll --m Develop</code></pre>
     </svg>
   </figure>
   <p>例如第 40 帧是双方都要对账的周期采样点。客户端收到连续的完整帧后用 <code>DuelCorePipe</code> 执行，再把自己的第 40 帧指纹报给服务器。权威侧用同一帧独立计算的指纹核对。确认同帧一致后，才向两席公布共同确认上界。缺历史的一端从自己的连续游标继续拉取，单包上限 64 帧。客户端的画面插值和即时预测是显示层的响应，命中与胜负以权威帧为准。</p>
-  <p>正常挑战最早从第 24 手开始，发起方的估算劣势至少 12 目。服务端用共享规则复算资格。Release 构建的联调靠实际合法棋谱达成门槛。验收时走到选角、双方加载、Ready、封帧与离场。</p>
+  <p>正常挑战最早从第 24 手开始，发起方的估算劣势至少 12 目。GoBattle 直接用已经确认的权威棋盘计算资格。它维护选角、加载和每席输入，同一 Battle 用一个计时器推进已双席 Ready 的房间。每次逻辑推进仍按 50 ms 固定步长。Release 联调从合法棋谱进入真实决斗，验收覆盖选角、双方加载、Ready、封帧与离场。</p>
   <p>服务端部署时，原生 DLL 是决斗运行的一部分。围棋可以先连上，直到发起决斗才加载原生库。因此发布验证要点到真实决斗，才能发现缺 DLL、位数不符或规则版本不一致的问题。</p>
-  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoDuelHandler.cs">决斗 RPC 入口</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs">资格、封帧和对账</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs">共用的时间与门槛配置</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelCorePipe.cs">原生桥接</a> · <a href="../../../RevGame_Client/RevGameCore/README.md">C++ 决斗内核</a></p>
+  <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoDuelHandler.cs">Gate 的决斗 RPC 入口</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoBattleComponentSystem.cs">Battle 权威与封帧调度</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelFrames.cs">资格、封帧和对账</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelConfig.Generated.cs">共用的时间与门槛配置</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelCorePipe.cs">原生桥接</a> · <a href="../../../RevGame_Client/RevGameCore/README.md">C++ 决斗内核</a></p>
 </section>
 
 <section class="chapter" id="lifecycle">
@@ -1132,7 +1132,7 @@ dotnet .\Server\Main\bin\Debug\net8.0\Main.dll --m Develop</code></pre>
       <text class="diagram-small" x="274" y="213" text-anchor="middle">释放席位及房间资源</text>
     </svg>
   </figure>
-  <p>新连接发带原令牌的 Hello。Gate 检查身份、规则和场次，解绑旧连接，把新 Session 接到原座位，再回完整棋谱。决斗重连还会清理旧会话待封的意图，重新 Ready 才续接原有历史。假如等 Battle 回包时玩家刚退房，Gate 必须核对房间的运行时身份，避免把迟到结果写回已关闭或被复用的对象。</p>
+  <p>新连接发带原令牌的 Hello。Gate 检查身份、规则和场次，解绑旧连接，把新 Session 接到原座位，再回完整棋谱。每次决斗席位换连接，Gate 通知 Battle 将该席的代际编号加一。Battle 清掉上条连接待封的意图，拒绝迟到的旧代际请求。新连接重新 Ready 后续原有历史。等待 Battle 回包期间若有人离席，Gate 会核对房间仍是原对象，再决定如何处理回包。</p>
   <p>默认客户端约每 2 秒发业务心跳。配置的 Session 空闲阈值是 8 秒，检查间隔 5 秒，因此实际关闭取决于下次检查。棋局的重连窗口是另一项规则，项目配置一般为 90 秒。主动离席会关房通知对手、释放计算席位，两席都不再引用时回收房间。定时器和原生实例分别随负责它们的 Scene 与房间销毁。</p>
   <p>当前房间和令牌的存活范围是原进程。即便预留 MongoDB、Redis 或 Control Center，也需要业务代码明确把哪些数据持久化、由谁恢复，否则重启后还是新对局。<code>Fantasy.config</code> 的 MongoDB 连接串在默认配置为空，当前联机路径依赖内存状态。</p>
   <p class="sources"><a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">Session 与房间销毁</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLobbyComponentSystem.cs">重连与回收</a> · <a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs">客户端心跳与回调</a></p>
@@ -1215,17 +1215,18 @@ dotnet build .\Server\Main\Main.csproj -c Release</code></pre>
 
 <section class="chapter" id="cloud-steps">
   <h2>从购买开始，把服务放到 CVM</h2>
-  <div class="callout warn"><b>按限源邀测来部署当前版本</b>此项目仍面向 <code>net8.0</code>，微软已于 2026 年 11 月 10 日结束 .NET 8 支持。本文的 Windows 步骤用于限源验证。长期面向不受信来源前，需要迁移到受支持的运行时，例如 .NET 10 LTS，复验 Fantasy、协议、原生库与客户端。直接安装 .NET 10 不会自动把现有的 <code>net8.0</code> 产物升级过去。当前游戏的 KCP 连接也没有传输层加密，部署时应把恢复令牌当凭据，管理来源范围和日志。</div>
-  <p class="sources"><a href="https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core">微软 .NET 支持周期</a> · <a href="https://dotnet.microsoft.com/en-us/download/dotnet/8.0">.NET 8 最后发布的运行时</a> · <a href="../../RevGame.Server/Server/Main/Main.csproj">当前目标框架</a></p>
+  <div class="callout tip"><b>安装 .NET 10 运行时，重新发布服务端</b>服务端已升级到 <code>net10.0</code>。建议给云主机安装最新的 .NET 10 LTS 补丁，从仓库重新生成一份完整发布目录。微软列出的支持截止日期是 2028 年 11 月 14 日。客户端可以继续使用兼容的外网协议。使用双进程时 Gate 和 Battle 要一起换到同版产物。</div>
+  <p>初次邀测可在安全组和 Windows 防火墙里限制接入来源。游戏 KCP 连接目前没有传输层加密，恢复令牌按凭据管理，日志中避免记录它。</p>
+  <p class="sources"><a href="https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core">微软 .NET 支持周期</a> · <a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">.NET 10 SDK 与运行时</a> · <a href="../../RevGame.Server/Server/Main/Main.csproj">当前目标框架</a></p>
   <h3>第一步 · 买实例并进入 Windows</h3>
   <ol class="steps">
     <li>腾讯云控制台选 <strong>云服务器 CVM → 新建实例 → 自定义配置</strong>。按上一节选地域与规格，镜像选公共镜像里的 Windows Server 2022 数据中心版 64 位，创建或选同地域的 VPC 与子网，配置公网 IPv4。</li>
     <li>建专用安全组。游戏加一条入站 <code>UDP:20000</code>，源填每位测试者当前公网 IP 加 <code>/32</code>。需要远程桌面时，另加 <code>TCP:3389</code>，源填管理者公网 IP 加 <code>/32</code>，也可先用腾讯云控制台登录。检查实例绑定的各安全组，核对是否有更宽泛的允许规则。</li>
-    <li>用管理员会话安装 Windows x64 的 <strong>.NET Runtime 8</strong> 和 <strong>ASP.NET Core Runtime 8</strong>，或安装包含两者的 SDK 用于这次验证。<code>Main.runtimeconfig.json</code> 声明了两个运行时框架。用 <code>dotnet --list-runtimes</code> 确认出现 <code>Microsoft.NETCore.App 8.0.x</code> 和 <code>Microsoft.AspNetCore.App 8.0.x</code>。服务器进程由 <code>dotnet</code> 启动，无需开启 IIS。</li>
+    <li>用管理员会话安装 Windows x64 的 <strong>.NET Runtime 10</strong> 和 <strong>ASP.NET Core Runtime 10</strong>，也可安装包含两者的 SDK。用 <code>dotnet --list-runtimes</code> 确认出现 <code>Microsoft.NETCore.App 10.0.x</code> 和 <code>Microsoft.AspNetCore.App 10.0.x</code>。<code>Main.runtimeconfig.json</code> 声明了这两个共享框架。服务器进程由 <code>dotnet</code> 启动，无需开启 IIS。</li>
   </ol>
   <p class="sources"><a href="https://cloud.tencent.com/document/product/213/4855">腾讯云通过购买页创建实例</a> · <a href="https://cloud.tencent.com/document/product/213/93093">Windows 公共镜像</a> · <a href="https://cloud.tencent.com/document/product/213/2764/">登录 Windows 实例</a> · <a href="https://cloud.tencent.com/document/product/213/112614">添加安全组规则</a></p>
   <h3>第二步 · 在开发机发布完整产物</h3>
-  <p>从完整仓库开始。<code>Entity.csproj</code> 会编译 <code>RevGame_Client</code> 内的共享棋规、决斗桥接，并从客户端插件目录复制 Windows x64 原生 DLL。只拷贝 <code>RevGame.Server</code> 子目录会丢掉这些构建输入。给这次发布一个独立的空目录，避免上一次 DLL 混入。</p>
+  <p>开发机安装 .NET 10 SDK，从完整仓库开始。<code>Entity.csproj</code> 会编译 <code>RevGame_Client</code> 内的共享棋规、决斗桥接，并从客户端插件目录复制 Windows x64 原生 DLL。给这次发布一个独立的空目录，避免上一次 DLL 混入。</p>
   <div class="code-card">
     <div class="code-head"><span>从仓库根执行 · Windows x64 框架依赖发布 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
     <pre tabindex="0" aria-label="从仓库根执行 · Windows x64 框架依赖发布"><code>Set-Location .\RevGame_Server\RevGame.Server
@@ -1323,7 +1324,7 @@ Get-NetTCPConnection -State Listen -LocalPort (11002..11006) |
     <li>确认双方匹配到同一房间，黑白各走几手，对照序号和棋面。客户端断网后在重连窗口内恢复，核对原席位和棋谱。</li>
     <li>用有资格的棋局发起决斗，双方选角并加载，验证两端的帧推进和结局一致，再验证退出。自动验证可用仓库的两席 <code>GoRelayProbe</code>，按<a href="#probe">探针练习</a>准备后接到已授权的云测试服。</li>
   </ol>
-  <p>本文验证使用 GitHub 已有业务源码的干净副本，发布 <code>win-x64</code> 后在 Windows 回环启动五个 Scene。两个真实 KCP 探针走完 24 手、进入决斗并在第 80 帧取得相同指纹，输出 <code>GO_KCP_DUEL_PASS</code>。CVM 的公网连通、实际延迟与可容纳人数需要在购买的实例上测。</p>
+  <p>本次发布验收使用 Windows x64 上的 .NET 10.0.15。单进程与同机 Gate/Battle 双进程均通过真实 KCP 两席探针。探针检查 24 手棋、挑战门槛、选角和加载屏障、换 Socket 重连、权威封帧、周期及终局指纹和离场。CVM 的公网连通、实际延迟与可容纳人数需要在购买的实例上测。</p>
   <p class="sources"><a href="../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs">Unity 地址输入面板</a> · <a href="../../RevGame.Server/Tools/GoRelayProbe/Program.cs">服务器探针入口</a> · <a href="../../RevGame.Server/Tools/GoRelayProbe/KcpLoadProbe.cs">两席 KCP 与决斗验收</a></p>
 </section>
 
@@ -1378,19 +1379,19 @@ exit $LASTEXITCODE</code></pre>
   <h2>从单台 CVM 走到跨进程 Battle</h2>
   <p>Fantasy 的拆分单位是可寻址、拥有状态的 Scene。一台机器可以有多个进程，一个进程可以承载多个 Scene。给围棋增加 Battle 时，Gate 只在创建房间时挑一个较空闲的节点，把它的 Address 记在房间。以后保持同一所有者。把活跃房直接切到另一台机器，还需要搬运状态、路由并处理在途请求。</p>
   <figure class="diagram">
-    <figcaption><strong>同一套房间归属，两个运行布局</strong><span>上图是 GitHub 业务基线。下图是本地验证过的决斗迁移。两侧玩家始终连 Gate。</span></figcaption>
-    <svg viewBox="0 0 368 283" role="img" aria-label="GitHub main 基线的 Gate 持有决斗权威，四个 Battle 持有棋盘。同机双进程的本地实现由 Battle 同时持有棋盘和决斗原生实例。" focusable="false">
-      <title>发布基线和本地双进程方案</title>
-      <text class="diagram-tag" x="13" y="18">GITHUB MAIN · PROCESS 1</text>
+    <figcaption><strong>同一套房间归属，两个运行布局</strong><span>上图是默认单进程，下图把 Battle 放进第二个进程。两种模式的决斗权威都归房间所在的 Battle。</span></figcaption>
+    <svg viewBox="0 0 368 283" role="img" aria-label="单进程与同机双进程模式下，Gate 持有连接与座位，四个 Battle 持有权威棋盘、决斗原生实例及连续历史。" focusable="false">
+      <title>单进程与同机双进程拓扑</title>
+      <text class="diagram-tag" x="13" y="18">默认配置 · PROCESS 1</text>
       <rect class="node-rim" x="8" y="27" width="352" height="95" rx="12"/>
       <rect class="node-blue" x="17" y="39" width="146" height="70" rx="10"/>
       <text class="diagram-label" x="90" y="63" text-anchor="middle">Gate</text>
-      <text class="diagram-small" x="90" y="86" text-anchor="middle">连接 + 决斗权威</text>
+      <text class="diagram-small" x="90" y="86" text-anchor="middle">连接、匹配、座位</text>
       <path class="diagram-line" d="M163 74h38m-4-4 4 4-4 4"/>
       <rect class="node-gold" x="202" y="39" width="146" height="70" rx="10"/>
       <text class="diagram-label" x="275" y="63" text-anchor="middle">GoBattle ×4</text>
-      <text class="diagram-small" x="275" y="86" text-anchor="middle">围棋规则与实盘</text>
-      <text class="diagram-tag" x="13" y="153">本地实测 · 同机双进程</text>
+      <text class="diagram-small" x="275" y="86" text-anchor="middle">围棋与决斗权威</text>
+      <text class="diagram-tag" x="13" y="153">可选配置 · 同机双进程</text>
       <rect class="node-blue" x="17" y="166" width="146" height="92" rx="10"/>
       <text class="diagram-label" x="90" y="191" text-anchor="middle">Process 1 · Gate</text>
       <text class="diagram-small" x="90" y="214" text-anchor="middle">场次、座位、转发</text>
@@ -1403,25 +1404,32 @@ exit $LASTEXITCODE</code></pre>
       <text class="diagram-small" x="275" y="233" text-anchor="middle">选角、封帧、补历史</text>
     </svg>
   </figure>
-  <p>原先跨进程压测时，首次内网请求会惰性建立四条连接。框架为 Windows TCP Socket 探测可用缓冲区，每次以 1 KiB 增大请求值。本机分段计时里，单条连接的这项初始化约 132–202 ms，握手低于 2 ms，几条连接依次初始化会把第一批落子一起拖慢。迁移版让 Gate 先探测 Battle 的业务就绪并建立缓存连接，节点就绪后才分配房间给它。迁移还把决斗的选角、Ready、封帧和补历史放进房间所属的 Battle。</p>
-  <div class="table-scroll" tabindex="0" aria-label="上轮本地混合并发对照">
+  <p>原先跨进程压测时，第一批棋局会触发四条内网连接逐一创建。Fantasy 在 Windows 上为 TCP Socket 以 1 KiB 步长探测缓冲区。本机分段计时里，单条连接的初始化约 132–202 ms，回环握手低于 2 ms。当前 Gate 启动后先对四个远端 Battle 发就绪 RPC。RPC 确认组件已启动并建立缓存连接后，Gate 才将对应节点加入房间分配表。默认的同进程拓扑使用进程内路由。</p>
+  <p>上一轮 320 个真实 KCP 客户端压测中，预连接把首手 P99 从 845.16 ms 降到 62.24 ms。本轮在同一业务代码和同一探针下对比两个运行时。每个 320 人轮次包含 96 局围棋和 64 局决斗，所有对局均完成指纹核对与离场。</p>
+  <div class="table-scroll" tabindex="0" aria-label="320 人混合负载，两个运行时各两轮的 P99 范围">
     <table>
-      <thead><tr><th scope="col">双进程同负载</th><th scope="col">首手 P99</th><th scope="col">混合围棋 P99</th><th scope="col">决斗输入 P99</th></tr></thead>
+      <thead><tr><th scope="col">服务端运行时</th><th scope="col">首手 P99</th><th scope="col">稳态围棋 P99</th><th scope="col">决斗输入 P99</th></tr></thead>
       <tbody>
-        <tr><th scope="row">原版</th><td>845.16 ms</td><td>39.08 ms</td><td>46.20 ms</td></tr>
-        <tr><th scope="row">本地迁移与预连接</th><td><strong>62.24 ms</strong></td><td>44.63 ms</td><td>58.07 ms</td></tr>
+        <tr><th scope="row">.NET 8.0.32 对照</th><td>86.96–88.56 ms</td><td>31.96–41.98 ms</td><td>31.39–42.65 ms</td></tr>
+        <tr><th scope="row">.NET 10.0.15</th><td>60.80–116.04 ms</td><td>37.50–41.48 ms</td><td>34.46–35.78 ms</td></tr>
       </tbody>
     </table>
   </div>
-  <p>样本来自此前的本地报告《决斗权威分流与混合压测》。Gate 和 Battle 两个进程运行在同一台 Windows 主机上，负载为 320 个真实 KCP 客户端、96 局围棋和 64 局决斗。首手 P99 下降约 92.6%，稳态两个指标仍升高。这里量的是本机实测的冷建链和跨进程代价，腾讯云规格要依据各自实例和公网链路另测。</p>
+  <p>这些是同机两进程、两轮各自 P99 的范围。新版的首手仍随调度和请求批次波动，两种运行时的稳态结果接近。部署后的公网性能需在自己的 CVM 上另测。报告还保留了 80 人档与每轮的原始摘要。</p>
+  <p class="sources"><a href="../../RevGame.Server/Config/决斗权威分流与混合压测_2026-11-14.html#net10">本次 .NET 10 逐轮复测</a> · <a href="../../RevGame.Server/Server/Hotfix/Pvp/GoLifecycle.cs">Battle 内网就绪检查</a></p>
   <details>
-    <summary>等迁移进入待发布版本后，怎样试同机双进程</summary>
+    <summary>用现版产物部署同机双进程</summary>
     <ol class="steps">
-      <li>先核对发版提交包含 Battle 决斗逻辑、内网协议、就绪探测和跨进程节点选择。Gate 和 Battle 用同一版产物和同一份拓扑。</li>
+      <li>在同一个发布目录准备两条启动命令。Gate 和 Battle 共用同一版产物与同一份拓扑。</li>
       <li>在现有 <code>&lt;processes&gt;</code> 中新增编号 2，仍用 Machine 1。把 1002–1005 的 <code>processConfigId</code> 改为 2。保留 World 1、各 Scene ID 和端口。Gate 保留 Process 1，单机内网继续用回环。</li>
-      <li>先用 <code>dotnet Main.dll --m Release --pid 2</code> 启动 Battle，等到四个场景就绪。再用 <code>dotnet Main.dll --m Release --pid 1</code> 启动 Gate，检查它的 Battle 就绪日志和实际配房。只有 Gate 对玩家开放 UDP 20000。</li>
+      <li>先用 <code>dotnet Main.dll --m Release --pid 2</code> 启动 Battle，看到 <code>Startup Complete SceneCount:4</code>。再在另一个窗口用 <code>dotnet Main.dll --m Release --pid 1</code> 启动 Gate，看到 <code>Startup Complete SceneCount:1</code> 和四条 <code>Battle 内网就绪</code> 日志，最后做双席实际配房。只有 Gate 对玩家开放 UDP 20000。</li>
       <li>移到两台机器时，给每一台配置独立的 Machine 条目，进程引用对应 Machine，内网地址用同 VPC 的实际私网 IP。按互通方向配置私网 TCP 安全规则。分别测单进程、同机双进程和跨机同负载的尾延迟。</li>
     </ol>
+    <div class="code-card">
+      <div class="code-head"><span>Fantasy.config · 放在现有 processes 节点内 <span class="copy-status" aria-live="polite"></span></span><button class="copy-button" type="button" hidden>复制</button></div>
+      <pre tabindex="0" aria-label="Fantasy.config · 新增 Battle 专用进程"><code>&lt;process id="2" namespaceId="1" machineId="1" startupGroup="0" /&gt;</code></pre>
+    </div>
+    <p>后台运行时为两个进程分别建任务和日志。停服更新时先停 Gate，让客户端不再进入旧版，再停 Battle。新版仍先启动 Battle，然后启动 Gate。要回退就同时切回同一套旧产物和拓扑，对应的运行时也要仍可用。</p>
   </details>
   <p>多台 Battle 仍可共用一个 Gate。以后若要多 Gate、自动故障接管，需要额外设计跨 Gate 匹配和重连路由、容量预留、房间恢复和重复请求处理。Fantasy Control Center 能做发现、注册和拓扑配置，Namespace / WorldGroup / World 用来组织服务与区服。注册到中心以后，房间、令牌与棋谱仍由业务保存和恢复。</p>
   <p class="sources"><a href="../../RevGame.Server/Server/Entity/Fantasy.config">当前静态拓扑</a> · <a href="https://raw.githubusercontent.com/qq362946/Fantasy/2026.1.2003/Skills/fantasy-net/references/service-discovery/implement.md">Fantasy 服务发现实现指南</a> · <a href="../../../.codex/skills/fantasy-net/references/server/address.md">Fantasy Address 路由</a></p>

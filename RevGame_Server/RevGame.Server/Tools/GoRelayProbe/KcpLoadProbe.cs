@@ -155,7 +155,9 @@ internal static class GoKcpLoadProbe
         int players = ReadCount("REVGO_LOAD_PLAYERS", 1000);
         int buckets = ReadCount("REVGO_LOAD_BUCKETS", 100);
         int turns = ReadCount("REVGO_LOAD_TURNS", 30);
+        int duelRooms = int.TryParse(Environment.GetEnvironmentVariable("REVGO_LOAD_DUEL_ROOMS"), out int selected) ? selected : 0;
         Check(players <= 1024 && players % (2 * buckets) == 0 && turns <= GoCore.MatchPlacementLimit, "人数须能给每个测试桶分配偶数席位，手数最多68");
+        Check(duelRooms >= 0 && duelRooms < players / 2, "混合压测至少保留一个围棋房间");
         await scene.TimerComponent.Net.WaitAsync(250);
         var peers = new GoLoadPeer[players];
         var timer = Stopwatch.StartNew();
@@ -210,6 +212,11 @@ internal static class GoKcpLoadProbe
         Check(rooms.Length == players / 2 && rooms.All(room => room.Key.Length > 0 && room.Count() == 2
               && room.Sum(peer => peer.Side) == 3 && room.All(peer => peer.Kind == room.First().Kind && peer.Rules == room.First().Rules)),
               "所有匹配均形成唯一的同场次同规则双人房");
+        if (duelRooms > 0)
+        {
+            await RunMixed(scene, peers, rooms.Select(room => room.ToArray()).ToArray(), duelRooms, turns, matchMs);
+            return;
+        }
 
         // 测试棋谱所有桶使用同一份贴目，逐波提交同一手合法着法。每局只有当前执棋的一侧发请求。
         var black = peers.Where(peer => peer.Side == 1).ToArray();
@@ -292,12 +299,184 @@ internal static class GoKcpLoadProbe
         }));
     }
 
+    // 混合负载先建立同一局面，再在固定波次同时提交围棋与两席决斗请求。
+    private static async FTask RunMixed(Scene scene, GoLoadPeer[] peers, GoLoadPeer[][] rooms, int duelCount, int turns, double matchMs)
+    {
+        Check(turns * 2 >= DuelConfig.HashSampleFrames, "混合测试的固定输入至少覆盖一个周期指纹");
+        var duel = rooms.Take(duelCount).SelectMany(room => room).ToArray();
+        var duelBlack = duel.Where(peer => peer.Side == 1).ToArray();
+        var duelWhite = duel.Where(peer => peer.Side == 2).ToArray();
+        var chess = rooms.Skip(duelCount).SelectMany(room => room).ToArray();
+        var chessBlack = chess.Where(peer => peer.Side == 1).ToArray();
+        var chessWhite = chess.Where(peer => peer.Side == 2).ToArray();
+        var go = GoCore.CreateMatch(15);
+        var goLatency = new List<double>();
+        var duelLatency = new List<double>();
+        var duelGap = new List<double>();
+        var trace = new List<string>();
+        var lastReplyAt = new Dictionary<GoLoadPeer, long>();
+        var replay = new Dictionary<GoLoadPeer, DuelCorePipe>();
+        var hashes = new Dictionary<GoLoadPeer, SortedDictionary<int, int>>();
+        try
+        {
+            for (int move = 0; move < (DuelConfig.MinimumMove + 1) / 2; move++)
+            {
+                await PlayWave(duelBlack, NextPass(go), false);
+                string before = go.StateHash.ToString();
+                Check(go.TryPlay(move % 9, move / 9, out _), "固定劣势棋谱合法");
+                await PlayWave(duelWhite, new GoRelayCommand { Kind = 1, Side = 2, X = move % 9,
+                    Y = move / 9, Sequence = go.Sequence, PreviousHash = before, ResultHash = go.StateHash.ToString(), Payload = "" }, false);
+                await scene.TimerComponent.Net.WaitAsync(120);
+            }
+            await DuelWave(duelBlack, DuelAuthority.Challenge);
+            await DuelWave(duel, DuelAuthority.PrepVisible);
+            await DuelWave(duel, DuelAuthority.PrepLock, input: (int)DuelRole.Yaya);
+            await DuelWave(duel, DuelAuthority.PrepLoad, input: 100);
+            await DuelWave(duel, DuelAuthority.Ready);
+            go = GoCore.CreateMatch(15);
+            int chessTurns = turns + (turns == GoCore.MatchPlacementLimit ? 0 : 2);
+            for (int tick = 1; tick <= chessTurns * 2; tick++)
+            {
+                long start = Stopwatch.GetTimestamp();
+                var inputs = DuelWave(duel, DuelAuthority.Input, inputSequence: tick, input: 0);
+                if ((tick & 1) != 0)
+                {
+                    var command = go.PlacementCount < turns ? NextLegalMove(go) : NextPass(go);
+                    await PlayWave(command.Side == 1 ? chessBlack : chessWhite, command, true);
+                }
+                await inputs;
+                int remain = DuelConfig.FrameMs - (int)Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                if (remain > 0)
+                {
+                    await scene.TimerComponent.Net.WaitAsync(remain);
+                }
+            }
+            // 拉齐连续历史，验证所有房间双方至少有一个可与权威核对的周期样本。
+            await DuelWave(duel, DuelAuthority.Read);
+            var hashesByRoom = duel.GroupBy(peer => peer.Room);
+            foreach (var room in hashesByRoom)
+            {
+                var seats = room.OrderBy(peer => peer.Side).ToArray();
+                Check(hashes[seats[0]].TryGetValue(DuelConfig.HashSampleFrames, out int hash) &&
+                    hashes[seats[1]].TryGetValue(DuelConfig.HashSampleFrames, out int other) && hash == other, "混合每房双席首个周期帧一致");
+            }
+            await Phase(duel, async peer =>
+            {
+                using var ack = await AskDuel(peer, DuelAuthority.Read, replay[peer].Snapshot.Frame,
+                    hashFrame: DuelConfig.HashSampleFrames, hash: hashes[peer][DuelConfig.HashSampleFrames]);
+                Check(ack.ErrorCode == 0 && ack.HashAckFrame == DuelConfig.HashSampleFrames && ack.HashMismatchFrame == 0, "Battle 接纳真实周期样本");
+            });
+            await Phase(duel, async peer =>
+            {
+                using var ack = await AskDuel(peer, DuelAuthority.Read, replay[peer].Snapshot.Frame);
+                Check(ack.HashMatchedFrame == DuelConfig.HashSampleFrames, "双方取得共同确认帧");
+            });
+            Check(go.Phase == GoPhase.Finished && chess.All(peer => !peer.InvalidHistory && peer.SeenSequence == chessTurns &&
+                peer.SeenHash == go.StateHash.ToString()), "所有围棋席收到同一终局");
+            await Phase(peers, async peer =>
+            {
+                using var leave = (G2C_GoLeaveResponse)await peer.Session.Call(new C2G_GoLeaveRequest());
+                Check(leave.ErrorCode == 0 && leave.State.RoomId == "", "混合房间逐席离场");
+                peer.Network.Dispose();
+            });
+            string tracePath = Environment.GetEnvironmentVariable("REVGO_LOAD_TRACE");
+            if (!string.IsNullOrEmpty(tracePath))
+            {
+                File.WriteAllLines(tracePath, trace);
+            }
+            Console.WriteLine(JsonSerializer.Serialize(new { players = peers.Length, goRooms = rooms.Length - duelCount, duelRooms = duelCount,
+                matchMs, goOps = goLatency.Count, duelOps = duelLatency.Count, go = Quantiles(goLatency),
+                duel = Quantiles(duelLatency), duelPollGap = Quantiles(duelGap), minDuelFrames = replay.Values.Min(pipe => pipe.Snapshot.Frame),
+                hashCheckedRooms = duelCount, cleanup = true }));
+        }
+        finally
+        {
+            foreach (var pipe in replay.Values)
+            {
+                pipe.Dispose();
+            }
+            foreach (var peer in peers)
+            {
+                if (!peer.IsDisposed)
+                {
+                    peer.Network.Dispose();
+                }
+            }
+        }
+
+        async FTask PlayWave(GoLoadPeer[] seats, GoRelayCommand move, bool measured)
+        {
+            await Phase(seats, async peer =>
+            {
+                long sent = Stopwatch.GetTimestamp();
+                using var result = (G2C_GoCommandResponse)await peer.Session.Call(new C2G_GoCommandRequest { RoomId = peer.Room, Command = move.DeepCopy() });
+                long received = Stopwatch.GetTimestamp();
+                Check(result.ErrorCode == 0 && result.State.Commands.Count == 1 && result.State.Commands[0].ResultHash == move.ResultHash,
+                    "混合围棋确认 " + move.Sequence + " " + result.Reason);
+                peer.Observe(result.State);
+                if (measured)
+                {
+                    goLatency.Add(Stopwatch.GetElapsedTime(sent, received).TotalMilliseconds);
+                }
+                trace.Add($"{peer.Room},{move.Sequence},{sent},{received}");
+            });
+        }
+
+        async FTask<double> DuelWave(GoLoadPeer[] seats, int operation, int inputSequence = 0, int input = 0)
+        {
+            return await Phase(seats, async peer =>
+            {
+                replay.TryGetValue(peer, out var pipe);
+                int after = pipe?.Snapshot.Frame ?? 0;
+                long sent = Stopwatch.GetTimestamp();
+                using var response = await AskDuel(peer, operation, after, inputSequence, input);
+                long received = Stopwatch.GetTimestamp();
+                Check(response.ErrorCode == 0 && !string.IsNullOrEmpty(response.DuelId), "混合决斗操作 " + operation + " " + response.Reason);
+                if (operation == DuelAuthority.Input)
+                {
+                    duelLatency.Add(Stopwatch.GetElapsedTime(sent, received).TotalMilliseconds);
+                    if (lastReplyAt.TryGetValue(peer, out long last))
+                    {
+                        duelGap.Add(Stopwatch.GetElapsedTime(last, received).TotalMilliseconds);
+                    }
+                    lastReplyAt[peer] = received;
+                }
+                if (operation == DuelAuthority.Ready)
+                {
+                    pipe = new DuelCorePipe(response.DuelId, DuelRole.Yaya, DuelRole.Yaya);
+                    replay.Add(peer, pipe);
+                    hashes.Add(peer, new SortedDictionary<int, int>());
+                }
+                if (pipe != null)
+                {
+                    Check(response.AfterFrame == after && response.Frames.Count <= 64 && response.Result == 0, "混合决斗保持连续且未终局");
+                    foreach (int packed in response.Frames)
+                    {
+                        int next = pipe.Snapshot.Frame + 1;
+                        pipe.Append(next, packed);
+                        if (next % DuelConfig.HashSampleFrames == 0)
+                        {
+                            hashes[peer].Add(next, pipe.Snapshot.Hash);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private static object Quantiles(List<double> samples)
+    {
+        samples.Sort();
+        return new { p50 = Percentile(samples, .50), p95 = Percentile(samples, .95), p99 = Percentile(samples, .99), max = samples[^1] };
+    }
+
     // 经两条实际 KCP 连接走到中局，再检查资格、就绪屏障、整帧双端对账与离场。
     private static async FTask RunDuel(Scene scene, string endpoint)
     {
         const string rules = "{\"komiHalfPoints\":15,\"reconnectWindowSeconds\":90,\"matchTimeoutSeconds\":60}";
         var first = Connect(scene, endpoint, rules, "rookie");
         var second = Connect(scene, endpoint, rules, "rookie");
+        GoLoadPeer restored = null;
         try
         {
             await WaitConnected(scene, first);
@@ -339,6 +518,10 @@ internal static class GoKcpLoadProbe
             {
                 Check(open.ErrorCode == 0 && !string.IsNullOrEmpty(open.DuelId), force ? "空棋盘测试决斗" : "中局劣势允许决斗");
                 duelId = open.DuelId;
+            }
+            using (var retry = await AskDuel(requester, force ? DuelAuthority.TestChallenge : DuelAuthority.Challenge))
+            {
+                Check(retry.ErrorCode == 0 && retry.DuelId == duelId, "重复挑战沿用同一个权威决斗");
             }
             // 真实 KCP 验证双方可以选择相同角色；黑方加载到 100 不能替白方放行。
             using (var visible = await AskDuel(black, DuelAuthority.PrepVisible))
@@ -395,7 +578,7 @@ internal static class GoKcpLoadProbe
             {
                 Check(jump.ErrorCode == 0, "首席可独立提交一次跳跃点按");
             }
-            // 白方保持沉默，黑方不继续查询。用真实 KCP 读回证明 Gate 定时器能独立封帧。
+            // 白方保持沉默，黑方不继续查询。用真实 KCP 读回证明 Battle 定时器能独立封帧。
             await scene.TimerComponent.Net.WaitAsync(5 * DuelConfig.FrameMs);
             using (var silence = await AskDuel(white, DuelAuthority.Read))
             {
@@ -410,6 +593,30 @@ internal static class GoKcpLoadProbe
                 Check(echoed.InputAckFrame == echoed.AfterFrame + echoed.Frames.Count &&
                     echoed.InputAckSequence == inputSequence && echoed.PendingActionSequence == 0,
                     "KCP 下行只回显本席已封口输入序号，跳跃不再待执行");
+            }
+            // 真正换 Socket。另一席的历史必须停住，重连席重新 Ready 后仍从原有帧继续。
+            string token = black.Token;
+            restored = Connect(scene, endpoint, rules, "rookie");
+            try
+            {
+                await WaitConnected(scene, restored);
+                await Hello(restored, token);
+                await ReadRoom(restored, go.Sequence, go.StateHash.ToString());
+                Check(restored.Room == black.Room && restored.Side == 1, "新会话恢复原决斗所属的房间和席位");
+                using var paused = await AskDuel(white, DuelAuthority.Read);
+                Check(paused.ReadyMask == 2 && paused.DuelId == duelId, "换连接使权威黑方重新等待 Ready");
+                await scene.TimerComponent.Net.WaitAsync(3 * DuelConfig.FrameMs);
+                using var stillPaused = await AskDuel(white, DuelAuthority.Read);
+                Check(stillPaused.Frames.SequenceEqual(paused.Frames), "断开席位时 Battle 没有继续封帧");
+                using var reopened = await AskDuel(restored, DuelAuthority.Ready);
+                Check(reopened.ReadyMask == 3 && reopened.Frames.SequenceEqual(paused.Frames), "重连接续原来的完整历史");
+                black = restored;
+                inputSequence = 0;
+            }
+            catch
+            {
+                restored.Network.Dispose();
+                throw;
             }
             while (replicaA.Snapshot.Result == 0 && replicaA.Snapshot.Frame < 300)
             {
@@ -499,8 +706,18 @@ internal static class GoKcpLoadProbe
         }
         finally
         {
-            first.Network.Dispose();
-            second.Network.Dispose();
+            if (restored is { IsDisposed: false })
+            {
+                restored.Network.Dispose();
+            }
+            if (!first.IsDisposed)
+            {
+                first.Network.Dispose();
+            }
+            if (!second.IsDisposed)
+            {
+                second.Network.Dispose();
+            }
         }
     }
 

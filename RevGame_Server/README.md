@@ -1,7 +1,8 @@
 # RevGame_Server · Fantasy 服务端
 
-本目录是 RevGame 的服务端，基于 [Fantasy](https://github.com/qq362946/Fantasy)（零反射、源生成注册、支持 Native AOT 的 C# 分布式服务器框架）。
-当前服务端提供九路围棋匿名握手、棋力匹配、对局节点分流、服务端棋规校验和断线恢复。匹配窗口、房间归属及 KCP 并发压测见 [部署配置说明](RevGame.Server/Config/README.md)。
+本目录是 RevGame 的服务端，运行在 .NET 10 LTS 上，使用 [Fantasy](https://github.com/qq362946/Fantasy) 2026.1.2003。Gate 处理九路围棋的连接、棋力匹配和断线恢复。房间所属的 GoBattle 校验棋规，并执行决斗选角、加载屏障和权威封帧。
+
+腾讯云选型、Windows x64 发布与单进程或双进程部署见 [Fantasy 服务端架构与腾讯云部署 · 新手版](文档/Fantasy服务端架构/Fantasy服务端架构与腾讯云部署-新手版.html)。匹配参数和 KCP 复测入口见 [部署配置说明](RevGame.Server/Config/README.md)。
 
 - 客户端在 [`../RevGame_Client`](../RevGame_Client)；
 - 玩法见 [`../RevGame_Client/策划案/玩法拓展策划案.html`](../RevGame_Client/策划案/玩法拓展策划案.html)；
@@ -22,18 +23,18 @@ powershell -ExecutionPolicy Bypass -File setup-fantasy-env.ps1 -CheckOnly # 只�
 
 | 检查项 | 缺失时的动作 |
 |---|---|
-| .NET SDK **8.0+** | 优先 `winget install Microsoft.DotNet.SDK.8`；无 winget 则用官方 `dotnet-install.ps1` 装到用户目录 |
+| .NET 10 SDK（含两个 10.0.x 共享框架） | 优先 `winget install --id Microsoft.DotNet.SDK.10 --exact`，也可使用官方 `dotnet-install.ps1 -Channel 10.0` 安装到用户目录 |
 | git | 只报告并给下载地址（UPM 拉包、克隆示例都依赖它） |
 | **Fantasy.Cli** | `dotnet tool install -g Fantasy.Cli`；`-Force` 则 `dotnet tool update -g` |
 | Unity 编辑器 | 只报告；校验是否等于 `ProjectVersion.txt` 里的 `2022.3.15f1c1`（版本不符会污染工程） |
-| MongoDB（可选） | 只报告；`Fantasy.config` 默认模板用 MongoDB 作 World 数据库 |
-| 工程与工具目录 | 缺 `Tools/*` 用 `fantasy add -t ...` 重新提取；最后跑一次 `dotnet build` 验证 |
+| MongoDB（可选） | 只报告。默认配置的连接串留空，围棋与决斗状态保存在内存 |
+| 工程与工具目录 | 缺少工具时尝试用 `fantasy add` 补齐，最后通过 `Main.csproj` 构建三个服务端项目 |
 
 | 参数 | 作用 |
 |---|---|
 | `-CheckOnly` | 只体检不安装，适合 CI 与"先看看缺什么" |
 | `-Force` | 已装 Fantasy.Cli 也升级到最新 |
-| `-SkipRestore` | 跳过 `dotnet build` 验证（离线/只想看工具链） |
+| `-SkipRestore` | 跳过服务端入口项目的 NuGet 还原和构建 |
 
 退出码：`0` = 无阻塞项（可能有 WARN），`1` = 存在 FAIL。
 输出一律三态（`OK` / `WARN` / `FAIL`），不会静默跳过失败项。
@@ -53,7 +54,6 @@ RevGame_Server/
 │  │  └─ Unity/                        客户端侧产物：导出的协议代码、客户端接入说明落在这里
 │  ├─ Config/                          部署 / 环境配置：Control Center 地址、多机多进程拓扑、本地化覆盖
 │  ├─ Server/                          服务端程序集（解决方案本体）
-│  │  ├─ Server.sln
 │  │  ├─ Main/                           进程入口：AssemblyHelper → Fantasy Entry.Start()
 │  │  ├─ Entity/                         业务实体与组件（含 Fantasy.config / Fantasy.xsd）
 │  │  └─ Hotfix/                         热更逻辑层，引用 Entity
@@ -74,13 +74,13 @@ RevGame_Server/
 | 项 | 结果 |
 |---|---|
 | CLI 工具 | `dotnet tool install -g Fantasy.Cli` → `fantasy` 命令可用，版本 `2026.1.2003` |
-| 服务端工程 | `fantasy init -n RevGame.Server` 生成，目标框架 **net8.0**，三程序集 Main / Entity / Hotfix |
+| 服务端工程 | `fantasy init -n RevGame.Server` 生成，当前目标为 **net10.0**，三程序集 Main / Entity / Hotfix |
 | 官方组件 | `fantasy add` 提取 NetworkProtocol、ProtocolExportTool、NLog、Fantasy.Net、Fantasy.Unity |
 | 启服配置 | `Server/Entity/Fantasy.config` + `Fantasy.xsd` 自动生成（单机单进程单 World 模板，注释完整） |
 | Unity 客户端包 | `Packages/manifest.json` 增加 `com.fantasy.unity`，UPM git 依赖方式引入，锁定 tag `2026.1.2003` |
 | Unity 解析结果 | Unity 2022.3.15f1c1 已解析成功并写入 `packages-lock.json`，编译无报错 |
 | AI 技能包 | 官方 `Skills/fantasy-net` 复制到仓库 `.codex/skills/fantasy-net`（89 个文件） |
-| 编译验证 | `dotnet build Server/Server.sln` → 0 警告 0 错误 |
+| 编译入口 | `dotnet build Server/Main/Main.csproj` |
 
 > Unity 侧安装方式（已写进 `manifest.json`，无需手动操作）：
 > ```
@@ -94,15 +94,15 @@ RevGame_Server/
 cd RevGame_Server/RevGame.Server
 
 # 编译
-dotnet build Server/Server.sln
+dotnet build Server/Main/Main.csproj
 
 # 启动服务器（读 Server/Entity/Fantasy.config）
 # launchSettings 已带 --m Develop；直接跑 dll 时必须自己补参数，否则报 "Command line format error!"
 dotnet run --project Server/Main/Main.csproj
-dotnet Server/Main/bin/Debug/net8.0/Main.dll --m Develop
+dotnet Server/Main/bin/Debug/net10.0/Main.dll --m Develop
 
 # 导出协议（改完 Tools/NetworkProtocol 下的 .proto 后执行）
-Tools/ProtocolExportTool/Run.bat
+.\export-protocol.ps1
 ```
 
 CLI 的两个坑（脚本化时必看）：
@@ -115,17 +115,9 @@ $env:FANTASY_CLI_LANG="Chinese"
 fantasy init -n RevGame.Server -p . --interactive false
 ```
 
-## 四、已知限制（接入阶段，未做业务）
+## 四、启动与版本边界
 
-1. **启动必须带 `-m` 参数**：`dotnet Main.dll` 不给参数会直接抛 `Command line format error!`（`--m/--RuntimeMode` 是必填项）。
-   开发期用 `--m Develop`（启动配置表里的全部 Process），发布期用 `--m Release --pid <进程号>` 只启动指定进程。
-   本机已装 **.NET 8 SDK 8.0.426 / 运行时 8.0.32 + ASP.NET Core 8.0.32**，`--m Develop` 实测启动成功：
-   `Process:1 Startup Complete SceneCount:1`，Scene 1001 监听 Inner TCP `127.0.0.1:11002`、Outer KCP `127.0.0.1:20000`。
-2. **Unity 版本低于官方声明**：Fantasy 文档写 Unity 2022.3.62+，本工程是 2022.3.15f1c1。本次只验证"包能解析"，
-   编译与连接实测待确认；若后续出现 API 缺失，优先怀疑这里。
-3. **`Fantasy-Net` 版本是浮动的**：`Entity.csproj` 里是 `Version="*"`，每次还原可能拿到不同版本。
-   接入业务前建议锁定为具体版本号并提交。
-4. **`Tools/Fantasy.Net` 是框架源码镜像**：包含 `bin/obj/.idea` 等开发产物，仅作离线查阅；
-   实际依赖来自 NuGet，不参与编译。
-5. **协议与客户端尚未打通**：协议导出后要把生成代码放进 Unity 工程（`Client/Unity` 为落点备忘），
-   还没做客户端连接、会话与登录流程。
+- 从 DLL 启服时使用 `--m Develop` 或 `--m Release --pid <配置里的进程号>`。默认 Process 1 同时启动一个 Gate 和四个 GoBattle。客户端连 `UDP 20000`，五个内网 TCP 端口留在回环。
+- .NET 10 变更覆盖服务端和联机探针。`Fantasy-Net` 及 Unity 的 UPM 包继续锁定 2026.1.2003，外网协议沿用当前客户端。Gate 和 Battle 的内网协议要整组发版。
+- `Tools/Fantasy.Net` 是用于查阅的源码镜像。实际编译依赖来自 NuGet。
+- Windows 发布目录保留 `Hotfix.pdb` 和 `RevGameCore.dll`。前者用于启动时加载逻辑程序集，后者在决斗中执行原生逻辑。

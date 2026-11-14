@@ -6,7 +6,7 @@
 $ErrorActionPreference = 'Stop'
 $serverProject = Join-Path $PSScriptRoot 'Server/Main/Main.csproj'
 $sourceConfig = Join-Path $PSScriptRoot 'Server/Entity/Fantasy.config'
-$builtDirectory = Join-Path $PSScriptRoot 'Server/Main/bin/Debug/net8.0'
+$builtDirectory = Join-Path $PSScriptRoot 'Server/Main/bin/Debug/net10.0'
 
 function Get-PortOwner($endpoint)
 {
@@ -87,28 +87,28 @@ try
 {
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue))
     {
-        throw '未检测到 dotnet。源码启动请安装 .NET 8 SDK，运行已构建版本请安装 .NET 8 ASP.NET Core Runtime。'
+        throw '未检测到 dotnet。源码启动请安装 .NET 10 SDK，运行已构建版本请安装 .NET Runtime 10 和 ASP.NET Core Runtime 10。'
     }
     $runtimes = @(dotnet --list-runtimes)
     foreach ($framework in @('Microsoft.NETCore.App', 'Microsoft.AspNetCore.App'))
     {
-        if (-not ($runtimes -match ('^' + [regex]::Escape($framework) + ' 8\.')))
+        if (-not ($runtimes -match ('^' + [regex]::Escape($framework) + ' 10\.')))
         {
-            throw "缺少 $framework 8.x。请安装 .NET 8 ASP.NET Core Runtime 或 .NET 8 SDK。"
+            throw "缺少 $framework 10.0.x。请安装 .NET Runtime 10 和 ASP.NET Core Runtime 10，或安装 .NET 10 SDK。"
         }
     }
-    $sdks = @(dotnet --list-sdks | Where-Object { $_ -match '^\d+\.' -and [int]($_ -split '\.')[0] -ge 8 })
+    $sdks = @(dotnet --list-sdks | Where-Object { $_ -match '^\d+\.' -and [int]($_ -split '\.')[0] -ge 10 })
     $build = $sdks.Count -gt 0 -and (Test-Path -LiteralPath $serverProject -PathType Leaf)
     $builtConfig = Join-Path $builtDirectory 'Fantasy.config'
     $configPath = if ($build) { $sourceConfig } else { $builtConfig }
     if (-not (Test-Path -LiteralPath $configPath -PathType Leaf))
     {
-        throw '缺少 Fantasy.config。请安装 .NET 8 SDK 构建源码，或复制完整且同版本的 Debug/net8.0 产物。'
+        throw '缺少 Fantasy.config。请安装 .NET 10 SDK 构建源码，或复制完整且同版本的 Debug/net10.0 产物。'
     }
     if (-not $build -and (Test-Path -LiteralPath $sourceConfig -PathType Leaf) -and
         (Get-FileHash -LiteralPath $builtConfig).Hash -ne (Get-FileHash -LiteralPath $sourceConfig).Hash)
     {
-        throw '编译产物中的 Fantasy.config 与当前源码不同。请安装 .NET 8 SDK 重新构建，或复制同版本的完整产物。'
+        throw '编译产物中的 Fantasy.config 与当前源码不同。请安装 .NET 10 SDK 重新构建，或复制同版本的完整产物。'
     }
 
     $config = [xml]::new()
@@ -175,7 +175,7 @@ try
         Write-Host '使用已有编译产物。源码更新后需要在装有 SDK 的机器上重新构建。'
         Get-ChildItem -LiteralPath $builtDirectory | Copy-Item -Destination $runDirectory -Recurse
     }
-    foreach ($file in @('Main.dll', 'Main.deps.json', 'Main.runtimeconfig.json', 'Entity.dll', 'Hotfix.dll', 'Fantasy-Net.dll'))
+    foreach ($file in @('Main.dll', 'Main.deps.json', 'Main.runtimeconfig.json', 'Entity.dll', 'Hotfix.dll', 'Hotfix.pdb', 'Fantasy-Net.dll', 'RevGameCore.dll'))
     {
         if (-not (Test-Path -LiteralPath (Join-Path $runDirectory $file) -PathType Leaf))
         {

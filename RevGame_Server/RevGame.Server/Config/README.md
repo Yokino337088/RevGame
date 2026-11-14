@@ -28,13 +28,17 @@ Machine / Process / World / Scene / Database 的拓扑由 Control Center 下发�
 
 新客户端握手声明 `SupportsDelta` 后，普通操作的回包和推送只带当前一手。序号出现缺口时客户端主动请求完整同步。握手、重连、主动同步和未协商增量的客户端仍接收完整棋谱。
 
-当前拓扑在单机单进程内把棋局计算分散到多线程，Gate 仍集中处理客户端连接、排队和棋谱推送。跨机器的扩容及故障接管需要共享房间归属、身份和恢复状态。Fantasy Control Center 提供服务发现，当前静态配置不启用它。
+默认拓扑在单机单进程内把棋局计算分散到多线程。需要独立运行 Battle 时，在部署副本中为同一 World 新增 Process，把四个 `GoBattle` 的 `processConfigId` 指向该 Process，保留各 Scene 唯一的 ID 和内网端口。两个进程各使用同一份拓扑配置，先启动 Battle 所属进程，再启动 Gate。若新增的是 Process 2，分别使用 `dotnet Main.dll --m Release --pid 2` 和 `dotnet Main.dll --m Release --pid 1`。Gate 在配置的同一 World 内选择 Battle，房间创建后一直使用分配到的 Address。
+
+远端 Battle 通过 Address RPC 完成首次内网建链和业务就绪确认后才进入分配表。此后围棋和决斗共享 Fantasy 缓存的连接。Battle 从本场景的围棋实盘校验挑战资格，持有决斗原生实例、选角、封帧和补帧历史。每个 Battle 用一个计时器推进已双席就绪的决斗，断线、终局、帧分歧或离场后停止推进。
+
+同一 World 目前部署一个 Gate。容量计数、身份、恢复令牌和匹配队列由 Gate 管理。多 Gate 共享 Battle 前，需要把容量预留放到 Battle 权威侧，并建立跨 Gate 的匹配与重连路由。Fantasy Control Center 提供动态实例发现，当前部署采用固定配置。新增内网协议要求 Gate 和 Battle 一起更新。
 
 ### 本机 KCP 压测
 
 编译 `Server/Main/Main.csproj` 和 `Tools/GoRelayProbe/GoRelayProbe.csproj` 到两个独立输出目录。测试服务器的五个 Scene 都绑定回环地址，分别使用不同的内网端口，Gate 使用空闲外网 KCP 端口。探针的 `Fantasy.config` 只保留一个无外网监听的 Scene（`outerPort="0"`），内网端口也与服务器不同。
 
-从测试服务器输出目录启动 `dotnet Main.dll --m Develop`。等待日志中出现 `Startup Complete SceneCount:5`，在另一个终端进入探针输出目录并执行下列命令。端口要对应刚启动的回环测试实例。
+从测试服务器输出目录启动 `dotnet Main.dll --m Develop`。单进程默认看到 `Startup Complete SceneCount:5`。双进程按上述顺序分别启动并核对四条 `Battle 内网就绪` 日志。在另一个终端进入探针输出目录并执行下列命令，端口填测试实例的回环监听。
 
 ```powershell
 $env:REVGO_LOAD_ENDPOINT = "127.0.0.1:22000"
@@ -46,6 +50,10 @@ dotnet GoRelayProbe.dll --m Develop
 
 将桶数设为 `1` 可跑单池突发，设为 `100` 可验证规则和场次交错时不会串房。人数须为桶数两倍的整数倍。探针发真实 KCP 握手、匹配、逐波落子、计分和心跳，验证满载重连及离席，输出 JSON 延迟分位数和实收棋谱条目数。旧 TCP 探针命令保持原样。测试完停止本次启动的服务器。
 
-需要分段计时时，只在隔离压测进程中设置环境变量。服务端设置 `REVGO_MOVE_TRACE` 为 Gate CSV 的绝对路径，并设置 `REVGO_MOVE_TRACE_COUNT` 为预计样本数（500 局每局 30 手加 4 条数子操作即 17000）。探针设置 `REVGO_LOAD_TRACE` 为客户端 CSV 的绝对路径。两份证据按房间和序号关联，跨进程时间差只在同机同一单调时钟下计算。
+设置 `REVGO_LOAD_DUEL_ROOMS` 可启用混合压测。例如 80 人、1 桶、32 手、16 个决斗房，其余 24 局围棋。探针先以 24 手合法棋谱使选定房间进入决斗，真实完成选角与加载，再按 50 毫秒目标节拍提交两席输入，每隔一波同步提交围棋操作。输出分别包含围棋和决斗 RPC、决斗轮询间隔和周期指纹验收结果。混合模式采样数为「决斗房数 × 24 + 围棋房数 × 34」，包括冷连接首手。
 
-最新压测见 [围棋落子延迟优化测试](围棋落子延迟优化测试_2026-11-07.html)。早期记录见 [围棋棋力匹配与房间分流测试](围棋棋力匹配与房间分流测试_2026-11-07.html) 和 [单 Gate 围棋千人匹配与并发压测](围棋服务端千人匹配与并发压测_2026-11-07.html)。
+本轮 .NET 10 复测沿用 80 人和 320 人两档。320 人档设置 `REVGO_LOAD_PLAYERS=320`、`REVGO_LOAD_BUCKETS=1`、`REVGO_LOAD_TURNS=32` 和 `REVGO_LOAD_DUEL_ROOMS=64`，得到 96 局围棋和 64 局决斗。只在隔离压测副本中把 `session idleTimeout` 调为 30000 毫秒，默认部署仍用 8000。完整对照见 [决斗权威分流与混合压测](决斗权威分流与混合压测_2026-11-14.html#net10)。
+
+需要分段计时时，只在隔离压测进程中设置环境变量。服务端设置 `REVGO_MOVE_TRACE` 为 Gate CSV 的绝对路径，并设置 `REVGO_MOVE_TRACE_COUNT` 为预计样本数。当前探针每局 30 手后提交两次停一手，由规则自动计分，500 局共 16000 条。探针设置 `REVGO_LOAD_TRACE` 为客户端 CSV 的绝对路径。两份证据按房间和序号关联，跨进程时间差只在同机同一单调时钟下计算。
+
+上一轮围棋专项结果见 [围棋服务端并发复测](围棋服务端并发复测_2026-11-14.html)。历史记录见 [围棋落子延迟优化测试](围棋落子延迟优化测试_2026-11-07.html)、[围棋棋力匹配与房间分流测试](围棋棋力匹配与房间分流测试_2026-11-07.html) 和 [单 Gate 围棋千人匹配与并发压测](围棋服务端千人匹配与并发压测_2026-11-07.html)。

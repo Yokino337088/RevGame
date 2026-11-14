@@ -1,5 +1,7 @@
 // Fantasy OpCode cache. Generated automatically; do not edit manually.
 B2G_GoBatchResponse = 1207969554
+B2G_GoBattleReadyResponse = 1207969555
+B2G_GoDuelResponse = 1207969556
 B2G_GoStepResponse = 1207969553
 C2G_GoCommandRequest = 268445457
 C2G_GoDuelRequest = 268445464
@@ -12,6 +14,9 @@ C2G_TestMessage = 134227729
 C2G_TestRequest = 268445463
 G2B_CloseGoRoom = 939534097
 G2B_GoBatchRequest = 1073751826
+G2B_GoBattleReadyRequest = 1073751827
+G2B_GoDuelRequest = 1073751828
+G2B_GoDuelSeatChanged = 939534098
 G2B_GoStepRequest = 1073751825
 G2C_GoCommandResponse = 402663185
 G2C_GoDuelResponse = 402663192

@@ -137,7 +137,7 @@ public static class GoLobbyComponentSystem
         // 建立玩家和当前连接的双向绑定，并结束断线计时。
         if (player.Connection != session)
         {
-            player.Room?.Duel?.DisconnectNetworkSeat(player.Side);
+            player.InvalidateDuelSeat();
         }
         player.Connection = session;
         player.DisconnectedAt = 0;
@@ -315,7 +315,7 @@ public static class GoLobbyComponentSystem
         var room = player.Room;
         var command = request.Command;
         // 只接收当前房间的围棋指令。关房或转入决斗后，这条入口停止收棋。
-        if (room == null || room.RoomId != request.RoomId || room.ClosedAt != 0 || room.Duel != null)
+        if (room == null || room.RoomId != request.RoomId || room.ClosedAt != 0 || room.DuelId.Length != 0 || room.DuelOpening)
         {
             return (8, "该对局不存在或已经结束。");
         }
@@ -493,7 +493,7 @@ public static class GoLobbyComponentSystem
         }
         // 一秒二十条足够支持落子/心跳/重试，避免完整历史广播被高频请求放大。
         // 决斗输入频率高于围棋，继续使用同一个会话限流计数器但提高上限。
-        return ++player.RequestCount <= (player.Room?.Duel == null ? 20 : 60);
+        return ++player.RequestCount <= (player.Room is { } room && (room.DuelId.Length != 0 || room.DuelOpening) ? 60 : 20);
     }
 
     /// <summary>组装当前玩家的状态。默认附完整棋谱，仅在可安全衔接时使用增量。</summary>
@@ -522,7 +522,7 @@ public static class GoLobbyComponentSystem
         // 双方收到同一场对局的结果，分数增减按各自的座位方向返回。
         state.RatingFinalized = room.RatingFinalized;
         // 把权威决斗标识和两席兼容性附在围棋状态上，供入场和重连恢复。
-        state.DuelId = room.Duel?.Id ?? "";
+        state.DuelId = room.DuelId;
         state.DuelAvailable = room.HasDuelPeers();
         state.RatingDelta = player.Side == (int)GoSide.Black ? room.BlackRatingDelta : -room.BlackRatingDelta;
         // 只对显式协商的新客户端发送当前一手。握手、重连、主动同步与旧客户端仍用完整棋谱。
@@ -615,7 +615,7 @@ public static class GoLobbyComponentSystem
             return;
         }
         Log.Warning($"[PVP/连接] 玩家={GoEventLog.PlayerLabel(player)} 房间={player.Room?.RoomId ?? "无"} 事件=连接中断/等待重连");
-        player.Room?.Duel?.DisconnectNetworkSeat(player.Side);
+        player.InvalidateDuelSeat();
         player.Connection = null;
         // 从现在开始计算重连窗口，排队不跨断线保留。
         player.DisconnectedAt = Now();

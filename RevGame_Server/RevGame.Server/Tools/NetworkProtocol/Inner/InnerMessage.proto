@@ -54,3 +54,40 @@ message G2B_CloseGoRoom // IAddressMessage
     string RoomId = 1;
 }
 
+// 只由认证过的 Gate 填入席位和连接代际。围棋序号用于确认挑战评估的是已提交局面。
+message G2B_GoDuelRequest // IAddressRequest,B2G_GoDuelResponse
+{
+    string RoomId = 1;
+    int32 Side = 2;
+    int64 SeatEpoch = 3;
+    int32 BoardSequence = 4;
+    int32 Operation = 5;
+    int32 AfterFrame = 6;
+    int32 InputFrame = 7;
+    int32 Input = 8;
+    int32 HashFrame = 9;
+    int32 Hash = 10;
+}
+
+message B2G_GoDuelResponse // IAddressResponse
+{
+    G2C_GoDuelResponse State = 1;
+}
+
+// 断线或顶号会立即使旧连接的待执行输入失效。
+message G2B_GoDuelSeatChanged // IAddressMessage
+{
+    string RoomId = 1;
+    int32 Side = 2;
+    int64 SeatEpoch = 3;
+}
+
+// 进程就绪时建立同 World 的内网连接，供棋局和决斗复用。
+message G2B_GoBattleReadyRequest // IAddressRequest,B2G_GoBattleReadyResponse
+{
+}
+
+message B2G_GoBattleReadyResponse // IAddressResponse
+{
+}
+

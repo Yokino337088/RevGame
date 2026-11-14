@@ -18,13 +18,19 @@ public sealed class OnCreateScene_InitializeGoLobby : AsyncEventSystem<OnCreateS
             if (scene.SceneType == SceneType.Gate)
             {
                 var lobby = scene.AddComponent<GoLobbyComponent>(false);
-                // 取配置中的 GoBattle 节点，仅把同一 World 和进程的节点加入当前大厅。
+                // 固定拓扑按 World 隔离。配置中的 Address 可路由到其它进程，使 Battle 可与 Gate 分开部署。
                 var workers = SceneConfigData.Instance.GetSceneBySceneType(SceneType.GoBattle);
-                foreach (var worker in workers.Where(worker => worker.WorldConfigId == scene.SceneConfig.WorldConfigId
-                    && worker.ProcessConfigId == scene.SceneConfig.ProcessConfigId).OrderBy(worker => worker.Id))
+                foreach (var worker in workers.Where(worker => worker.WorldConfigId == scene.SceneConfig.WorldConfigId).OrderBy(worker => worker.Id))
                 {
-                    // 以场景地址作为路由键，初始化已分配的房间数为 0。
-                    lobby.WorkerLoads.Add(worker.Address, 0);
+                    if (worker.ProcessConfigId == scene.SceneConfig.ProcessConfigId)
+                    {
+                        lobby.WorkerLoads.Add(worker.Address, 0);
+                    }
+                    else
+                    {
+                        // 根场景启动回调不能等待另一 Scene。下一轮再建链，成功后才允许分配房间。
+                        FTask.OnceTimer(scene, 1, () => WarmWorker(lobby, worker.Address).Coroutine());
+                    }
                 }
                 Log.Info($"[PVP/大厅] 围棋大厅已就绪 Battle节点={lobby.WorkerLoads.Count}");
             }
@@ -36,6 +42,38 @@ public sealed class OnCreateScene_InitializeGoLobby : AsyncEventSystem<OnCreateS
             }
         }
         await FTask.CompletedTask;
+    }
+
+    /// <summary>把首次 TCP 建链放在房间分配前，成功后由 Fantasy 缓存该 Address 的会话。</summary>
+    private static async FTask WarmWorker(GoLobbyComponent lobby, long address)
+    {
+        if (lobby.IsDisposed || lobby.Closing)
+        {
+            return;
+        }
+        long runtimeId = lobby.RuntimeId;
+        try
+        {
+            using var reply = await lobby.Scene.Call(address, G2B_GoBattleReadyRequest.Create());
+            if (lobby.RuntimeId != runtimeId || lobby.Closing)
+            {
+                return;
+            }
+            if (reply is B2G_GoBattleReadyResponse { ErrorCode: 0 })
+            {
+                lobby.WorkerLoads.Add(address, 0);
+                Log.Info($"[PVP/节点] Battle 内网就绪 节点={address} 可分配节点数={lobby.WorkerLoads.Count}");
+                return;
+            }
+        }
+        catch (Exception error)
+        {
+            Log.Warning($"[PVP/节点] 内网预连接失败 节点={address} 类型={error.GetType().Name}");
+        }
+        if (lobby.RuntimeId == runtimeId && !lobby.Closing)
+        {
+            FTask.OnceTimer(lobby.Scene, 1000, () => WarmWorker(lobby, address).Coroutine());
+        }
     }
 }
 
@@ -154,10 +192,11 @@ public sealed class GoRoomEntityDestroySystem : DestroySystem<GoRoomEntity>
         self.BlackExpectedResult = 0;
         self.RatingFinalized = false;
         self.BlackRatingDelta = 0;
-        // 原生权威实例属于房间，不随单席断线立刻销毁；房间回收时成对释放。
-        FTask.RemoveTimer(self.Scene, ref self.DuelTimer);
-        self.Duel?.Dispose();
-        self.Duel = null;
+        self.DuelId = "";
+        self.DuelOpening = false;
+        self.DuelOpeningInFlight = false;
+        Array.Clear(self.DuelSeatEpochs);
+        Array.Clear(self.DuelRequestsInFlight);
         self.StepPending = false;
         self.StartedAt = 0;
         self.ClosedAt = 0;

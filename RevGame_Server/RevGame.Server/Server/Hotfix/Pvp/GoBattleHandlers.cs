@@ -43,23 +43,42 @@ public sealed class G2B_GoBatchRequestHandler : AddressRPC<Scene, G2B_GoBatchReq
             return;
         }
         // 新房第一手从 1 开始。已有棋盘只接受紧接已确认序号的操作。
-        if (request.Sequence != (room?.Board.Sequence ?? 0) + 1)
+        if (battle.Duels.ContainsKey(request.RoomId) || request.Sequence != (room?.Board.Sequence ?? 0) + 1)
         {
             response.Reason = "对局节点上的棋谱序号不一致，请重新同步。";
             return;
         }
-        // 先在副本验证结果哈希；无效的操作不能污染已确认棋局。
-        var next = room?.Board.Clone() ?? GoCore.CreateMatch(request.Komi);
-        // 依次检查旧指纹、棋规和执行后指纹，任一失败都不会替换权威棋盘。
-        if (next.StateHash.ToString(CultureInfo.InvariantCulture) != step.PreviousHash ||
-            !next.TryApply((GoAction)step.Kind, (GoSide)step.Side, step.X, step.Y, out _) ||
+        // 先核对已确认的局面。只有指纹一致才需要把棋面及完整劫历史写入本局草稿。
+        var board = room?.Board ?? GoCore.CreateMatch(request.Komi);
+        if (board.StateHash.ToString(CultureInfo.InvariantCulture) != step.PreviousHash)
+        {
+            response.Reason = "落子不符合棋规或局面指纹不一致，请重新同步。";
+            return;
+        }
+        var next = board;
+        if (room != null)
+        {
+            next = room.Scratch ??= board.CreateEmptyReplay();
+            next.CopyPositionFrom(board);
+        }
+        // 草稿可被本次写入。规则或结果指纹无法通过时，仍从上次确认的棋盘继续。
+        if (!next.TryApply((GoAction)step.Kind, (GoSide)step.Side, step.X, step.Y, out _) ||
             next.StateHash.ToString(CultureInfo.InvariantCulture) != step.ResultHash)
         {
             response.Reason = "落子不符合棋规或局面指纹不一致，请重新同步。";
             return;
         }
-        // 所有校验成功后才替换保存的棋盘，并记录这一手以支持幂等重试。
-        battle.Rooms[request.RoomId] = new GoBattleRoom(next, step);
+        // 提交时交换两块棋盘。后续每手都能复用草稿和劫历史集合的容量。
+        if (room == null)
+        {
+            battle.Rooms.Add(request.RoomId, new GoBattleRoom { Board = next, LastStep = step });
+        }
+        else
+        {
+            room.Board = next;
+            room.Scratch = board;
+            room.LastStep = step;
+        }
         WriteResult(next, response);
     }
 
@@ -80,7 +99,16 @@ public sealed class G2B_CloseGoRoomHandler : Address<Scene, G2B_CloseGoRoom>
     /// <summary>在房间所属的 Battle 线程删除棋盘，重复关房时字典找不到条目即可结束。</summary>
     protected override async FTask Run(Scene scene, G2B_CloseGoRoom message)
     {
-        scene.GetComponent<GoBattleComponent>()?.Rooms.Remove(message.RoomId);
+        var battle = scene.GetComponent<GoBattleComponent>();
+        if (battle != null)
+        {
+            battle.Rooms.Remove(message.RoomId);
+            if (battle.Duels.Remove(message.RoomId, out var duel))
+            {
+                battle.RemoveActiveDuel(duel);
+                duel.Dispose();
+            }
+        }
         await FTask.CompletedTask;
     }
 }
@@ -92,5 +120,12 @@ public sealed class GoBattleComponentDestroySystem : DestroySystem<GoBattleCompo
     protected override void Destroy(GoBattleComponent self)
     {
         self.Rooms.Clear();
+        FTask.RemoveTimer(self.Scene, ref self.DuelTimer);
+        self.ActiveDuels.Clear();
+        foreach (var duel in self.Duels.Values)
+        {
+            duel.Dispose();
+        }
+        self.Duels.Clear();
     }
 }

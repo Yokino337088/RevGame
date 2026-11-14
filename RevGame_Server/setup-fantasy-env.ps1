@@ -4,10 +4,10 @@
 
 .DESCRIPTION
     按 Fantasy 官方要求（https://github.com/qq362946/Fantasy）检查本机是否具备开发环境：
-      .NET 8 SDK、git、Fantasy.Cli 全局工具、Unity 编辑器、MongoDB（可选）、协议与工具目录。
+      .NET 10 SDK、git、Fantasy.Cli 全局工具、Unity 编辑器、MongoDB（可选）、协议与工具目录。
 
     默认行为 = 「检查 + 缺什么补什么」：
-      · 缺 .NET 8 SDK   → 优先 winget 安装，没有 winget 则用官方 dotnet-install.ps1 装到用户目录
+      · 缺 .NET 10 SDK  → 优先 winget 安装，否则用官方 dotnet-install.ps1 装到用户目录
       · 缺 Fantasy.Cli  → dotnet tool install -g Fantasy.Cli
       · 缺 Tools 目录    → fantasy add -t fantasynet / -t fantasyunity 重新提取
       · 缺 Unity / Mongo → 只报告并给出下载地址（体积大、需要 Unity Hub / 安装器，不自动装）
@@ -24,7 +24,7 @@
     即使已装 Fantasy.Cli 也强制升级到最新版（dotnet tool update -g）。
 
 .PARAMETER SkipRestore
-    跳过服务端解决方案的 NuGet 还原验证（离线环境或只想看工具链时用）。
+    跳过服务端入口项目的 NuGet 还原与构建验证（离线环境或只想看工具链时用）。
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File setup-fantasy-env.ps1
@@ -46,7 +46,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 $script:Root = $PSScriptRoot
 $script:FantasyProjectDir = Join-Path $script:Root 'RevGame.Server'
-$script:SolutionFile = Join-Path $script:FantasyProjectDir 'Server\Server.sln'
+$script:ServerProject = Join-Path $script:FantasyProjectDir 'Server\Main\Main.csproj'
 $script:ToolsDir = Join-Path $script:FantasyProjectDir 'Tools'
 $script:DotnetToolsPath = Join-Path $env:USERPROFILE '.dotnet\tools'
 $script:Results = New-Object 'System.Collections.Generic.List[object]'
@@ -112,28 +112,29 @@ function Add-ToSessionPath {
     }
 }
 
-# ================================================================ 检查项：.NET 8 SDK
-function Get-DotnetSdkVersions {
-    $exe = Get-Command dotnet -ErrorAction SilentlyContinue
-    if ($null -eq $exe) {
-        return @()
+# ================================================================ 检查项：.NET 10 SDK
+function Test-Dotnet10 {
+    if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+        return $false
     }
-    # 输出形如 "8.0.426 [C:\Program Files\dotnet\sdk]"，取版本号部分
-    return @(& dotnet --list-sdks 2>$null | ForEach-Object {
-        if ($_ -match '^\s*(\d+)\.(\d+)\.') { "$($Matches[1]).$($Matches[2])" }
-    })
+    # 同时检查两个共享框架，避免只能编译、无法启动。
+    $sdk = & dotnet --list-sdks | Where-Object { $_ -match '^(\d+)\.' -and [int]$Matches[1] -ge 10 } | Select-Object -First 1
+    $runtimes = @(& dotnet --list-runtimes)
+    return [bool]($sdk -and
+        $runtimes -match '^Microsoft\.NETCore\.App 10\.0\.' -and
+        $runtimes -match '^Microsoft\.AspNetCore\.App 10\.0\.')
 }
 
-function Install-DotnetSdk8 {
+function Install-DotnetSdk10 {
     # 首选 winget：系统级安装，PATH 自动就绪，最省事
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if ($null -ne $winget) {
-        Write-Info "使用 winget 安装 Microsoft.DotNet.SDK.8 ..."
-        & winget install --id Microsoft.DotNet.SDK.8 --accept-source-agreements --accept-package-agreements --silent 2>&1 | ForEach-Object { Write-Info $_ }
-        if ($LASTEXITCODE -eq 0) {
+        Write-Info '使用 winget 安装 Microsoft.DotNet.SDK.10 ...'
+        & winget install --id Microsoft.DotNet.SDK.10 --exact --accept-source-agreements --accept-package-agreements --silent 2>&1 | ForEach-Object { Write-Info $_ }
+        if ($LASTEXITCODE -eq 0 -and (Test-Dotnet10)) {
             return $true
         }
-        Write-Warn "winget 安装失败（退出码 $LASTEXITCODE），改用官方 dotnet-install 脚本"
+        Write-Warn '当前会话仍未检测到 SDK 与两个运行时，转用官方 dotnet-install 脚本。'
     }
 
     # 兜底：官方脚本装到用户目录。不需要管理员权限，但 PATH 要自己加
@@ -141,9 +142,12 @@ function Install-DotnetSdk8 {
     $scriptFile = Join-Path $env:TEMP 'dotnet-install.ps1'
     try {
         Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $scriptFile -UseBasicParsing
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptFile -Channel 8.0 -InstallDir $installDir
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptFile -Channel 10.0 -InstallDir $installDir | ForEach-Object { Write-Info $_ }
+        if ($LASTEXITCODE -ne 0) {
+            return $false
+        }
         Add-ToSessionPath $installDir
-        return (Test-Path (Join-Path $installDir 'dotnet.exe'))
+        return (Test-Dotnet10)
     }
     catch {
         Write-Warn "下载 dotnet-install 脚本失败：$($_.Exception.Message)"
@@ -152,43 +156,17 @@ function Install-DotnetSdk8 {
 }
 
 function Test-DotnetSdk {
-    Write-Step '1/6 检查 .NET SDK（Fantasy 要求 8.0+）'
-    $sdks = Get-DotnetSdkVersions
-    if ($sdks.Count -eq 0) {
-        Write-Fail '未找到 dotnet 命令'
-        if ($CheckOnly) {
-            Add-Result '.NET SDK' 'FAIL' '未安装，请安装 .NET 8 SDK'
-            return
-        }
-        if (Install-DotnetSdk8) {
-            $sdks = Get-DotnetSdkVersions
-            Write-Ok "已安装 .NET SDK：$($sdks -join ', ')"
-            Add-Result '.NET SDK' 'OK' "本次安装，版本 $($sdks -join ', ')"
-        }
-        else {
-            Write-Fail '自动安装 .NET 8 SDK 失败，请手动安装：https://dotnet.microsoft.com/download/dotnet/8.0'
-            Add-Result '.NET SDK' 'FAIL' '自动安装失败'
-        }
+    Write-Step '1/6 检查 .NET 10 SDK 与运行时'
+    Add-ToSessionPath (Join-Path $env:LOCALAPPDATA 'Microsoft\dotnet')
+
+    if ((Test-Dotnet10) -or (-not $CheckOnly -and (Install-DotnetSdk10))) {
+        Write-Ok '.NET SDK 与两个 .NET 10 共享框架已就绪'
+        Add-Result '.NET SDK' 'OK' '可构建并启动 net10.0'
         return
     }
 
-    Write-Ok "已安装 SDK 主版本：$($sdks -join ', ')"
-    if ($sdks -contains '8.0') {
-        Add-Result '.NET SDK' 'OK' ($sdks -join ', ')
-        return
-    }
-
-    # 只有 9/10 也能编译（SDK 会自动还原 net8.0 targeting pack），但跑服务端需要 8 运行时
-    Write-Warn '未发现 8.x SDK；服务端目标是 net8.0，建议补装 8.0 SDK（含 8.0 运行时）'
-    if (-not $CheckOnly) {
-        if (Install-DotnetSdk8) {
-            $sdks = Get-DotnetSdkVersions
-            Write-Ok "已补装 .NET 8 SDK，当前：$($sdks -join ', ')"
-            Add-Result '.NET SDK' 'OK' "本次补装 8.0，当前 $($sdks -join ', ')"
-            return
-        }
-    }
-    Add-Result '.NET SDK' 'WARN' '缺少 8.x SDK，运行服务端会失败'
+    Write-Fail '缺少可用的 .NET 10 SDK 或运行时。下载：https://dotnet.microsoft.com/download/dotnet/10.0'
+    Add-Result '.NET SDK' 'FAIL' '无法构建或启动 net10.0'
 }
 
 # ================================================================ 检查项：git
@@ -287,8 +265,8 @@ function Test-Unity {
     # Unity Hub 的两处默认安装位置都扫；按版本号精确匹配工程要求
     $candidates = @()
     foreach ($base in @("$env:ProgramFiles\Unity\Hub\Editor", "$env:UNITY_EDITOR_ROOT")) {
-        if (Test-Path $base) {
-            $candidates += Get-ChildItem $base -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+        if ($base -and (Test-Path -LiteralPath $base)) {
+            $candidates += Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
         }
     }
 
@@ -333,12 +311,12 @@ function Test-Mongo {
 function Test-Project {
     Write-Step '6/6 检查服务端工程与工具目录'
 
-    if (-not (Test-Path $script:SolutionFile)) {
-        Write-Fail "找不到解决方案：$script:SolutionFile"
-        Add-Result '服务端工程' 'FAIL' 'Server.sln 缺失'
+    if (-not (Test-Path -LiteralPath $script:ServerProject -PathType Leaf)) {
+        Write-Fail "找不到服务端入口项目：$script:ServerProject"
+        Add-Result '服务端工程' 'FAIL' 'Main.csproj 缺失'
         return
     }
-    Write-Ok 'Server.sln 存在'
+    Write-Ok 'Main.csproj 存在，构建时会拉起 Entity 和 Hotfix'
 
     $requiredTools = @('NetworkProtocol', 'ProtocolExportTool', 'NLog')
     $missing = @($requiredTools | Where-Object { -not (Test-Path (Join-Path $script:ToolsDir $_)) })
@@ -379,7 +357,12 @@ function Test-Project {
     }
 
     Write-Info '验证 NuGet 还原与编译（dotnet build）...'
-    $buildOutput = & dotnet build $script:SolutionFile --nologo 2>&1
+    if (-not (Test-Dotnet10)) {
+        Write-Info '.NET 检查未通过，跳过构建。'
+        Add-Result '服务端工程' 'FAIL' '缺少 SDK 或运行时'
+        return
+    }
+    $buildOutput = & dotnet build $script:ServerProject --nologo 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Ok '编译通过（0 错误）'
         Add-Result '服务端工程' 'OK' 'build 通过'
@@ -434,9 +417,9 @@ else {
 Write-Host ''
 Write-Host '常用命令：' -ForegroundColor White
 Write-Host '  cd RevGame_Server/RevGame.Server' -ForegroundColor DarkGray
-Write-Host '  dotnet build Server/Server.sln                        # 编译' -ForegroundColor DarkGray
+Write-Host '  dotnet build Server/Main/Main.csproj                  # 编译' -ForegroundColor DarkGray
 Write-Host '  dotnet run --project Server/Main/Main.csproj          # 启动（launchSettings 带 --m Develop）' -ForegroundColor DarkGray
-Write-Host '  Tools/ProtocolExportTool/Run.bat                      # 改完 .proto 后导出协议' -ForegroundColor DarkGray
+Write-Host '  .\export-protocol.ps1                                 # 改完 .proto 后导出协议' -ForegroundColor DarkGray
 Write-Host ''
 
 if ($failed -gt 0) {

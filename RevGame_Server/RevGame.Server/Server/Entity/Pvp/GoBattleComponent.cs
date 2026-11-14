@@ -1,6 +1,7 @@
 using Fantasy.Entitas;
 using Fantasy.Async;
 using RevGame.Pvp;
+using RevGame.Pvp.Duel;
 
 namespace Fantasy;
 
@@ -9,12 +10,39 @@ public sealed class GoBattleComponent : Entity
 {
     /// <summary>按大厅分配的房间编号保存权威棋局，收到关房通知或场景销毁时删除。</summary>
     public readonly Dictionary<string, GoBattleRoom> Rooms = new(StringComparer.Ordinal);
+    /// <summary>按房间保存决斗权威和席位代际，只在所属 Battle 线程读写。</summary>
+    public readonly Dictionary<string, GoBattleDuel> Duels = new(StringComparer.Ordinal);
+    /// <summary>本场景正在封帧的房间，单席断线或终局时摘除。</summary>
+    public readonly List<GoBattleDuel> ActiveDuels = new();
+    /// <summary>每个 Battle 至多一个封帧调度器，无活跃决斗时休眠。</summary>
+    public long DuelTimer;
 }
 
-/// <summary>房间最近一次通过校验的棋盘和操作，用于在 RPC 超时后安全重试。</summary>
-/// <param name="Board">当前确认的棋盘，下一手会在它的副本上验证。</param>
-/// <param name="LastStep">刚刚提交成功的操作，用于识别超时后的同一手重发。</param>
-public sealed record GoBattleRoom(GoCore Board, GoBattleStep LastStep);
+/// <summary>Battle 拥有的单局决斗。终局保留权威历史，关房时随原生实例一并释放。</summary>
+public sealed class GoBattleDuel : Entity
+{
+    /// <summary>本房唯一原生实例及封帧历史，由销毁系统统一释放。</summary>
+    public DuelAuthority Authority = null!;
+    /// <summary>各席最近收到的 Gate 连接代际，用于拒绝迟到的旧连接输入。</summary>
+    public readonly long[] SeatEpochs = new long[2];
+    /// <summary>原生执行失败后停止推进，关房时仍需清理本局资源。</summary>
+    public bool Failed;
+}
+
+/// <summary>由所属 Battle 场景维护的单房状态。关房后两块棋盘跟随同一条索引释放。</summary>
+public sealed class GoBattleRoom
+{
+    /// <summary>当前确认的棋盘。只有结果指纹也通过后才交换为新棋盘。</summary>
+    public required GoCore Board
+    {
+        get;
+        set;
+    }
+    /// <summary>本局独占的验证草稿，第二手按需创建。失败后下一次从权威棋盘填入完整状态。</summary>
+    public GoCore? Scratch;
+    /// <summary>最近一次提交成功的操作，供 RPC 超时重发时返回同一结果。</summary>
+    public GoBattleStep LastStep;
+}
 
 /// <summary>网络对象可能回池，工作场景只保留操作值，不能持有 RPC 请求。</summary>
 /// <param name="Sequence">从 1 开始递增的棋谱序号。</param>

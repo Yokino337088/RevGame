@@ -1,6 +1,5 @@
 using Fantasy.Entitas;
 using Fantasy.Network;
-using RevGame.Pvp.Duel;
 
 namespace Fantasy;
 
@@ -109,10 +108,16 @@ public sealed class GoRoomEntity : Entity
     public bool RatingFinalized;
     /// <summary>黑方本局棋力增减分，白方取其相反值。</summary>
     public int BlackRatingDelta;
-    /// <summary>本房间的决斗权威实例，发起前为空，房间销毁时释放原生资源。</summary>
-    public DuelAuthority? Duel;
-    /// <summary>由 Gate 场景驱动的决斗计时器句柄，终局、分歧或释放房间时取消。</summary>
-    public long DuelTimer;
+    /// <summary>Battle 已接受挑战后的决斗标识。Gate 只保存路由和客户端快照所需字段。</summary>
+    public string DuelId = "";
+    /// <summary>创建请求发出但尚未获得明确结果，保持围棋冻结直至重试确认。</summary>
+    public bool DuelOpening;
+    /// <summary>创建决斗 RPC 进行中，阻止同房间同时发起两次创建。</summary>
+    public bool DuelOpeningInFlight;
+    /// <summary>每席连接代际。断线、顶号推进代际，旧请求归属即刻失效。</summary>
+    public readonly long[] DuelSeatEpochs = new long[2];
+    /// <summary>每席最多允许八条决斗 RPC 在途，容量与正式客户端窗口一致。</summary>
+    public readonly int[] DuelRequestsInFlight = new int[2];
 }
 
 /// <summary>挂在 Session 上的身份索引；断开时其 DestroySystem 通知大厅保留重连窗口。</summary>

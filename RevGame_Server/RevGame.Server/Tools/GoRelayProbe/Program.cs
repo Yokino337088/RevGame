@@ -107,6 +107,10 @@ static void Smoke(string host, int port, string rules)
     Check(black.Send(stateA.RoomId, altered).ErrorCode != 0, "重复序号改内容拒绝");
     Check(white.Sync().State.Commands.Single().ResultHash == core.StateHash.ToString(), "对手收到同一哈希");
     var whiteMove = Apply(core, GoAction.Play, GoSide.White, 6, 6);
+    var wrongResult = whiteMove.DeepCopy();
+    wrongResult.ResultHash = "0";
+    Check(white.Send(stateA.RoomId, wrongResult).ErrorCode == 17 &&
+        black.Sync().State.Commands.Single().ResultHash == move.ResultHash, "结果指纹错误后保留上一次确认的棋盘");
     var legacy = white.Send(stateA.RoomId, whiteMove);
     Check(legacy.ErrorCode == 0 && legacy.State.BaseSequence == 0 && legacy.State.Commands.Count == 2,
         "未协商增量的旧客户端仍收到完整棋谱");

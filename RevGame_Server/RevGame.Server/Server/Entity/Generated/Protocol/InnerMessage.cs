@@ -379,4 +379,342 @@ namespace Fantasy
         [ProtoMember(1)]
         public string RoomId { get; set; }
     }
+    [Serializable]
+    [ProtoContract]
+    public partial class G2B_GoDuelRequest : AMessage, IAddressRequest
+    {
+        public static G2B_GoDuelRequest Create(bool autoReturn = true)
+        {
+            var g2B_GoDuelRequest = MessageObjectPool<G2B_GoDuelRequest>.Rent();
+            g2B_GoDuelRequest.AutoReturn = autoReturn;
+
+            if (!autoReturn)
+            {
+                g2B_GoDuelRequest.SetIsPool(false);
+            }
+
+            return g2B_GoDuelRequest;
+        }
+
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return;
+            RoomId = default;
+            Side = default;
+            SeatEpoch = default;
+            BoardSequence = default;
+            Operation = default;
+            AfterFrame = default;
+            InputFrame = default;
+            Input = default;
+            HashFrame = default;
+            Hash = default;
+            MessageObjectPool<G2B_GoDuelRequest>.Return(this);
+        }
+
+        public void CopyTo(ref G2B_GoDuelRequest other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+            other.RoomId = RoomId;
+            other.Side = Side;
+            other.SeatEpoch = SeatEpoch;
+            other.BoardSequence = BoardSequence;
+            other.Operation = Operation;
+            other.AfterFrame = AfterFrame;
+            other.InputFrame = InputFrame;
+            other.Input = Input;
+            other.HashFrame = HashFrame;
+            other.Hash = Hash;
+
+        }
+
+        public G2B_GoDuelRequest DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return InnerOpcode.G2B_GoDuelRequest; }
+        [ProtoIgnore]
+        public B2G_GoDuelResponse ResponseType { get; set; }
+        [ProtoMember(1)]
+        public string RoomId { get; set; }
+        [ProtoMember(2)]
+        public int Side { get; set; }
+        [ProtoMember(3)]
+        public long SeatEpoch { get; set; }
+        [ProtoMember(4)]
+        public int BoardSequence { get; set; }
+        [ProtoMember(5)]
+        public int Operation { get; set; }
+        [ProtoMember(6)]
+        public int AfterFrame { get; set; }
+        [ProtoMember(7)]
+        public int InputFrame { get; set; }
+        [ProtoMember(8)]
+        public int Input { get; set; }
+        [ProtoMember(9)]
+        public int HashFrame { get; set; }
+        [ProtoMember(10)]
+        public int Hash { get; set; }
+    }
+    [Serializable]
+    [ProtoContract]
+    public partial class B2G_GoDuelResponse : AMessage, IAddressResponse
+    {
+        public static B2G_GoDuelResponse Create(bool autoReturn = true)
+        {
+            var b2G_GoDuelResponse = MessageObjectPool<B2G_GoDuelResponse>.Rent();
+            b2G_GoDuelResponse.AutoReturn = autoReturn;
+
+            if (!autoReturn)
+            {
+                b2G_GoDuelResponse.SetIsPool(false);
+            }
+
+            return b2G_GoDuelResponse;
+        }
+
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return;
+            ErrorCode = 0;
+            State = default;
+            MessageObjectPool<B2G_GoDuelResponse>.Return(this);
+        }
+
+        public void CopyTo(ref B2G_GoDuelResponse other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+            other.ErrorCode = ErrorCode;
+            other.State = State;
+
+        }
+
+        public B2G_GoDuelResponse DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return InnerOpcode.B2G_GoDuelResponse; }
+        [ProtoMember(2)]
+        public uint ErrorCode { get; set; }
+        [ProtoMember(1)]
+        public G2C_GoDuelResponse State { get; set; }
+    }
+    [Serializable]
+    [ProtoContract]
+    public partial class G2B_GoDuelSeatChanged : AMessage, IAddressMessage
+    {
+        public static G2B_GoDuelSeatChanged Create(bool autoReturn = true)
+        {
+            var g2B_GoDuelSeatChanged = MessageObjectPool<G2B_GoDuelSeatChanged>.Rent();
+            g2B_GoDuelSeatChanged.AutoReturn = autoReturn;
+
+            if (!autoReturn)
+            {
+                g2B_GoDuelSeatChanged.SetIsPool(false);
+            }
+
+            return g2B_GoDuelSeatChanged;
+        }
+
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return;
+            RoomId = default;
+            Side = default;
+            SeatEpoch = default;
+            MessageObjectPool<G2B_GoDuelSeatChanged>.Return(this);
+        }
+
+        public void CopyTo(ref G2B_GoDuelSeatChanged other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+            other.RoomId = RoomId;
+            other.Side = Side;
+            other.SeatEpoch = SeatEpoch;
+
+        }
+
+        public G2B_GoDuelSeatChanged DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return InnerOpcode.G2B_GoDuelSeatChanged; }
+        [ProtoMember(1)]
+        public string RoomId { get; set; }
+        [ProtoMember(2)]
+        public int Side { get; set; }
+        [ProtoMember(3)]
+        public long SeatEpoch { get; set; }
+    }
+    [Serializable]
+    [ProtoContract]
+    public partial class G2B_GoBattleReadyRequest : AMessage, IAddressRequest
+    {
+        public static G2B_GoBattleReadyRequest Create(bool autoReturn = true)
+        {
+            var g2B_GoBattleReadyRequest = MessageObjectPool<G2B_GoBattleReadyRequest>.Rent();
+            g2B_GoBattleReadyRequest.AutoReturn = autoReturn;
+
+            if (!autoReturn)
+            {
+                g2B_GoBattleReadyRequest.SetIsPool(false);
+            }
+
+            return g2B_GoBattleReadyRequest;
+        }
+
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return;
+            MessageObjectPool<G2B_GoBattleReadyRequest>.Return(this);
+        }
+
+        public void CopyTo(ref G2B_GoBattleReadyRequest other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+
+        }
+
+        public G2B_GoBattleReadyRequest DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return InnerOpcode.G2B_GoBattleReadyRequest; }
+        [ProtoIgnore]
+        public B2G_GoBattleReadyResponse ResponseType { get; set; }
+    }
+    [Serializable]
+    [ProtoContract]
+    public partial class B2G_GoBattleReadyResponse : AMessage, IAddressResponse
+    {
+        public static B2G_GoBattleReadyResponse Create(bool autoReturn = true)
+        {
+            var b2G_GoBattleReadyResponse = MessageObjectPool<B2G_GoBattleReadyResponse>.Rent();
+            b2G_GoBattleReadyResponse.AutoReturn = autoReturn;
+
+            if (!autoReturn)
+            {
+                b2G_GoBattleReadyResponse.SetIsPool(false);
+            }
+
+            return b2G_GoBattleReadyResponse;
+        }
+
+        public void Return()
+        {
+            if (!AutoReturn)
+            {
+                SetIsPool(true);
+                AutoReturn = true;
+            }
+            else if (!IsPool())
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!IsPool()) return;
+            ErrorCode = 0;
+            MessageObjectPool<B2G_GoBattleReadyResponse>.Return(this);
+        }
+
+        public void CopyTo(ref B2G_GoBattleReadyResponse other)
+        {
+            if (other == null)
+            {
+                other = Create(false);
+            }
+            other.ErrorCode = ErrorCode;
+
+        }
+
+        public B2G_GoBattleReadyResponse DeepCopy()
+        {
+            var other = Create(false);
+            CopyTo(ref other);
+            return other;
+        }
+        public uint OpCode() { return InnerOpcode.B2G_GoBattleReadyResponse; }
+        [ProtoMember(1)]
+        public uint ErrorCode { get; set; }
+    }
 }
