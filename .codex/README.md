@@ -8,6 +8,8 @@
 
 插件的 Unity MCP 需要 PATH 上的 Python 3.10+，例如 Windows 上通过 `python --version` 确认。先用 `rev_bind` 绑定 `RevGame_Client/UnityProject/RevGame.Unity` 的绝对路径，再用 `rev_discover` 查询实时注册。已有同工程的常驻 RevMCP 可直接复用。做场景、Prefab、导表或构建时使用项目 RevCLI。只有实际调用并核对断言与清理，才能记录业务通过。
 
+在 RevGame 会话中，两个插件只由 RevGame Hook 注入一条规则入口提示。完整重编译、规范检查和验收流程由根 `AGENTS.md` 与 [项目验收细则](skills/revgame-development/references/project-acceptance.md) 维护。
+
 小范围 AB 更新走 `ab build-incremental` → `ab check-map` → `ab publish-incremental`。三步都显式指定同一平台并核对回执。项目分包、图集检查和命令示例见 [Unity 与资源迭代](skills/revgame-development/references/unity-and-assets.md)。
 
 RevCLI 默认返回摘要。长结果的 `detailsPath` 指向完整 JSON，可用全局 `--output <文件>` 指定证据路径，或用 `--full` 查看完整终端输出。RevMCP 从 `structuredContent` 取回执，详细证据在 `reportPath`。需要完整回执时传 `full: true`。验收计划的断言、跨步骤引用和清理使用完整数据。
