@@ -17,7 +17,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 | 资源、分包与 Editor Play 粉屏 | [资源和 AB](references/resource-and-ab.md)，平台误选看 §2.1 |
 | 策划数值与 Excel | [实现配方](references/playbooks.md) 的 R22，含生成和装配校验 |
 | 编辑器与项目制作配方 | [Revolution 编辑器技能](../revolution-unity-editor/SKILL.md) 和 [Editor 职责](references/revgame-editor-practice.md) |
-| GM、RevMCP 与业务断言 | [自动化接入](references/automation-integration.md) 和 [实际测试技能](../revolution-ai-automation/SKILL.md) |
+| GM、RevMCP、功能完整性与缺陷回归 | [自动化接入](references/automation-integration.md) 和 [实际测试技能](../revolution-ai-automation/SKILL.md) |
 | 真机、Player 与性能 | [Player 测试](references/player-testing.md)、[移动端](references/android-runtime-and-layout.md) 或 [性能技能](../revolution-performance/SKILL.md) |
 | 热更 | [热更](references/hot-update.md) |
 | 排错、审查与交付 | [症状索引](references/troubleshooting.md)、[审查指南](REFERENCE_GUIDELINES.md)、[验证与交付](references/verify-and-test.md) |
@@ -36,6 +36,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 
 - 项目有 `.codex/rev-policy.json` 时，通过项目入口检查本次 diff，按文件行号和规则 ID 修复。长任务恢复时重读项目 `AGENTS.md` 与当前专题。插件与规范检查见 [项目规范检查](references/project-policy.md)。
 - 玩法、跨帧场景、资源和设备各按实际目标验收。关键业务在开发态留受控 GM 或 `RevRuntimeAutomation` 入口，复用玩家路径，核对成功、拒绝和退出。真实自动化先发现，按断言和清理判结果。见 [RevGame 交付实践](references/revgame-ai-workflow.md)。
+- 功能验收和修 Bug 使用 [缺陷闭环](../revolution-ai-automation/references/defect-closure.md)。按需求明确覆盖，失败用实测和当前源码定位。任务包含修复时落实最小改动，并用原失败断言与受影响的回归确认结果。
 - 修改框架公开行为时同步模块使用说明和架构文档的 Markdown/HTML。按现有源仓库工作流导出 `package`、`demo`、`hotupdate`、`skill` 或自动化工具分支。只在用户要求时提交或发布。
 
 ## 基础模块总览（新增开发态 RevAutomation 见自动化接入参考）

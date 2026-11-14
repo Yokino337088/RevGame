@@ -71,6 +71,44 @@ class RevMCPTests(unittest.TestCase):
         hub = FakeHub()
         report = run(hub, {"steps": [dict(target="game", action="add", expect=[dict(path="/data/count", equals=9)])], "finally": [dict(target="game", action="reset")]})
         self.assertFalse(report["success"])
+        failure = report["steps"][0]["response"]
+        self.assertEqual(failure["error"], "AssertionFailed")
+        self.assertEqual(failure["assertion"], {"path": "/data/count", "equals": 9})
+        self.assertEqual(failure["data"]["count"], 1)
+        self.assertEqual(hub.count, 0)
+
+    def test_backend_failure_keeps_original_error_and_runs_cleanup(self):
+        class FailingHub(FakeHub):
+            def call(self, target, action, arguments, confirm=False, cancel=None, catalog=None):
+                response = super().call(target, action, arguments, confirm, cancel, catalog)
+                if action == "add":
+                    response.update(success=False, error="BackendRejected", message="Fixture unavailable")
+                return response
+
+        hub = FailingHub()
+        report = run(hub, {
+            "steps": [dict(target="game", action="add", expect=[dict(path="/data/count", equals=2)])],
+            "finally": [dict(target="game", action="reset")],
+        })
+        self.assertFalse(report["success"])
+        self.assertEqual(report["steps"][0]["response"]["error"], "BackendRejected")
+        self.assertEqual(report["steps"][0]["response"]["message"], "Fixture unavailable")
+        self.assertTrue(report["cleanup"][0]["response"]["success"])
+        self.assertEqual(hub.calls, ["add", "reset"])
+
+    def test_until_timeout_keeps_last_observation_and_runs_cleanup(self):
+        hub = FakeHub()
+        condition = {"path": "/data/count", "equals": 2}
+        report = run(hub, {
+            "steps": [dict(target="game", action="add"),
+                      dict(target="game", action="state", until=dict(condition, timeoutSeconds=.01), expect=[condition])],
+            "finally": [dict(target="game", action="reset")],
+        })
+        self.assertFalse(report["success"])
+        failure = report["steps"][1]["response"]
+        self.assertEqual(failure["error"], "ConditionTimeout")
+        self.assertEqual(failure["data"]["count"], 1)
+        self.assertTrue(report["cleanup"][0]["response"]["success"])
         self.assertEqual(hub.count, 0)
 
     def test_mutation_cannot_be_retried_by_until(self):

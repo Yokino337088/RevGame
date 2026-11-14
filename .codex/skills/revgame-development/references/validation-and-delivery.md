@@ -30,6 +30,14 @@
 
 自动化入口参考 `Bootstrap/Diagnostics/GameGmCommands`、`Bootstrap/Diagnostics/Endless/EndlessAutomation` 与项目 `Editor/RevGame/ResourceBuild/Game*Automation`。使用 `UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION` 的项目边界，owner 注册/注销对称。测试新局/存档/成绩必须隔离，不直接改 UI/FSM 私有字段、存档或预期数据造通过。缺能力时补最小受控项目接线，正常编译、重新发现后执行。
 
+## 用缺陷闭环验证完整性
+
+按 [框架缺陷闭环](../../revolution-ai-automation/references/defect-closure.md) 把本次策划条目映射到用例。按模式用现有规则检查和真实玩家入口，验证相关正常、拒绝与生命周期路径。跨模式共用代码修改后，在每个受影响模式挑可证伪的回归。复现记录必须带测试使用的配置、资源模式和隔离条件。
+
+例如远征过场需要核对请求是否接受、实际就绪、场景/棋盘/手牌状态和返回清理。改到交接时，复跑原失效路径并检查连点拒绝、故障返回和重入。现有 `Assets/Editor/RevGame/Scenes/GameSceneTransitionChecks.cs` 可作为状态断言和源码定位入口。验证玩家点击与遮挡时使用真实指针链。冷 AB 首开按实际资源路径验证。
+
+缺陷记录存 `.codex/work/<任务>/defect-closure.json` 或项目等价记录。HTML 写清关联用例、根因、修法和修前修后结果，保留未走到的步骤及收尾状态。功能开发或修复任务在证据支持时继续完成修复和回归。只委托测试或诊断时交付可复现的缺陷和修改建议。
+
 ## 场景与时间的关键断言
 
 - 启动只保留一个 Bootstrap，一次框架初始化；StartScene 负责大厅/选关，GameScene 远征，EndlessScene 无尽。测试从正式入口与实际业务过渡，不从打开目标场景跳过首次资源链。

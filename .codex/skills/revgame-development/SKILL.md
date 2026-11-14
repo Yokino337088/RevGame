@@ -1,6 +1,6 @@
 ---
 name: revgame-development
-description: 在 RevGame（围棋史莱姆）中实现、排查或审查玩法、UI、资源和流程。按项目约定选择同类实现、RevCLI 或 RevMCP，并执行项目规范检查与业务验收。
+description: 在 RevGame（围棋史莱姆）中实现、排查或审查玩法、UI、资源和流程。按项目约定选择同类实现、RevCLI 或 RevMCP，验证功能完整性，并在授权内定位、修复和回归缺陷。
 ---
 
 # RevGame 项目开发
@@ -36,7 +36,7 @@ description: 在 RevGame（围棋史莱姆）中实现、排查或审查玩法�
 |---|---|---|
 | 玩法、UI、流程、资源接线、排错或代码审查 | [revolution-framework](../revolution-framework/SKILL.md) | 找本地同类代码；门面/API 以安装快照为准；用项目现有层次承载业务 |
 | Unity 编辑器、Prefab/场景/材质/动画、导表、AB、出包或连接问题 | [revolution-unity-editor](../revolution-unity-editor/SKILL.md) | **优先 RevCLI**；显式目标工程；按 [编辑器与资源流程](references/unity-and-assets.md) 保护现场与资产 GUID |
-| 实际游玩测试、GM/UI/跨帧回归、截图或 GIF 报告 | [revolution-ai-automation](../revolution-ai-automation/SKILL.md) | 游戏测试按本项目 AGENTS 优先常驻 RevMCP：真实 `rev_discover` → `rev_call` / `rev_run`；展示真实调用与断言 |
+| 实际游玩、功能完整性、缺陷定位与回归 | [revolution-ai-automation](../revolution-ai-automation/SKILL.md) | 游戏测试优先常驻 RevMCP，展示真实 `rev_discover` → `rev_call` / `rev_run` 与业务结果。缺陷从需求覆盖推进到源码、修复和复测 |
 | CPU/GPU、缓存、内存、图集加载或目标设备性能验收 | [revolution-performance](../revolution-performance/SKILL.md) | 先读项目 [战斗性能规则](../../../RevGame_Client/文档/战斗性能优化规则/战斗性能优化规则.html)，固定输入先测再改 |
 | 维护已有 GM scenario 循环、预热或性能采样 | [revolution-automation-tester](../revolution-automation-tester/SKILL.md) | 仅用于既有 scenario 契约；不把普通快速开发自动变成大规模回归 |
 
@@ -60,7 +60,8 @@ Editor Play 出现材质粉屏、Shader 名称存在但画面错误，或切换�
 2. **选择所有者与目录。** 在 [项目地图](references/project-map.md) 找同职责目录；新文件放相应功能子目录。已有 partial 按职责扩展，不为小功能重排全项目或增加万能 Manager/System。
 3. **实现一个完整切片。** 同步必要的契约、规则、配置、显示、拒绝原因与退出清理。需要 Prefab、节点绑定或导表才能运行的功能，把这些配套一起完成。自动化缺入口时补受控查询/动作/清理，复用玩家真实入口。
 4. **执行相关验证。** 按 [验收与交付](references/validation-and-delivery.md) 选择最小有效检查。跨帧等真实完成；资源变更需真实 AB 冷启动与重入；性能修改保留基线并同输入复测。只有新改动、失败或未解风险才扩大测试。
-5. **闭环交付。** 恢复本次测试现场，说明改动、证据、未验证项与框架边界。只有用户要求时提交/推送；“只推某目录”必须核对实际提交和待推送提交集合，不使用 `git add .`。
+5. **跟进失败。** 用 [缺陷闭环](../revolution-ai-automation/references/defect-closure.md) 记录首轮预期、实测、源码位置和修改建议。任务包含修复时落实最小修改，重编、复跑原失败用例和相关回归，核对清理。
+6. **闭环交付。** 恢复本次测试现场，说明改动、证据、未验证项与框架边界。只有用户要求时提交/推送。“只推某目录”必须核对实际提交和待推送提交集合，使用明确的文件列表。
 
 ## 每次实现都守住的边界
 

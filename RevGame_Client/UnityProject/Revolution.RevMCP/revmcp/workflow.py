@@ -94,10 +94,12 @@ def run(hub, plan, cancel=None):
                 raise RevCancelled("Plan cancelled")
             if token is None:
                 time.sleep(min(until.get("intervalSeconds", .2), max(0, deadline - time.monotonic())))
-        for condition in step.get("expect", []):
-            if not matches(response, condition):
-                response = dict(response, success=False, error="AssertionFailed", assertion=condition)
-                break
+        # 调用失败或等待超时时保留首个错误和现场。只有完成的动作才检查后置断言。
+        if response.get("success"):
+            for condition in step.get("expect", []):
+                if not matches(response, condition):
+                    response = dict(response, success=False, error="AssertionFailed", assertion=condition)
+                    break
         if step.get("id"):
             responses[step["id"]] = response
         return dict(id=step.get("id"), target=step["target"], action=step["action"], response=response, polls=count, seconds=time.monotonic() - started)

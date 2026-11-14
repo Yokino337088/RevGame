@@ -8,6 +8,8 @@
 
 插件的 Unity MCP 需要 PATH 上的 Python 3.10+，例如 Windows 上通过 `python --version` 确认。先用 `rev_bind` 绑定 `RevGame_Client/UnityProject/RevGame.Unity` 的绝对路径，再用 `rev_discover` 查询实时注册。已有同工程的常驻 RevMCP 可直接复用。做场景、Prefab、导表或构建时使用项目 RevCLI。只有实际调用并核对断言与清理，才能记录业务通过。
 
+游戏功能验收、找 Bug 与修复交给现有 Coding Agent。例如“验证远征过场的首进、连点、返回和重入，找到缺陷后定位源码、修复并复测”。项目技能按需求列用例，保留失败时的预期、实测和 `code_refs`，在任务授权内修复并复跑原用例及受影响的回归。原始记录放 `.codex/work/`。 [项目验收与交付](skills/revgame-development/references/validation-and-delivery.md)
+
 ## 检查
 
 从仓库根运行以下命令。检查器依赖 Python 3.10+、Git。涉及手写 C# 变更时还需要 .NET 8 SDK。

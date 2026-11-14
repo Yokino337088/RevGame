@@ -72,6 +72,6 @@
 
 ## 证据策略
 
-RevGame约定：文档目录只保留HTML/摘要与必要截图、GIF；原始工单/JSON/CSV/Profiler放忽略的 `.codex/work/`，不生成ZIP，`.codex/`不提交。对其它项目，用户和AGENTS证据/提交规则优先；不因Skill默认归档要求而违背它。
+RevGame 按根 `AGENTS.md` 归档。文档保留 HTML 和必要截图/GIF，原始工单、JSON、CSV 和 [缺陷闭环记录](defect-closure.md) 放忽略的 `.codex/work/`。项目技能随仓库维护。性能只留必要摘要与证据，生成 ZIP 和 Profiler 原始录制均关闭。其它项目沿用各自的证据和提交约定。
 
 截图来自真实运行，不补画、不拼接。只有控制台或只读工具检查时不伪造截图/GIF，明确未执行视觉。重跑保留首次失败，最新HTML只对最终版本作结论，图片/链接检查后再交付。

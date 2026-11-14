@@ -26,6 +26,8 @@ CLI 目录默认取同级 `Revolution.RevCLI`；若放在别处用 `--cli-root` 
 
 安装 `Skills/revolution-ai-automation` 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。
 
+`rev_run` 以第一个失败步骤结束本轮业务流程，并继续执行 `finally`。调用失败或 `until` 超时会保留首个错误，成功响应才进入 `expect`。Agent 可用 `reportPath`、实际响应和当前源码记录缺陷，随后在授权内修复并复跑同一用例。 [功能完整性与缺陷闭环](https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-ai-automation/references/defect-closure.md)
+
 完整的新手教程、接口注册、Player、CLI/Python、计划格式、限制和验证记录：
 
 - [RevMCP 使用说明 HTML](../Revolution.Document/自动化工具/RevMCP使用说明.html)

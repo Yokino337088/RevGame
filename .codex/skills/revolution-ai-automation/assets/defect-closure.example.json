@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "verdict": "pass",
+  "target": {
+    "feature": "奖励领取（格式示例）",
+    "environment": "Editor Play，隔离存档",
+    "inputs": { "rewardId": "daily-01", "startingBalance": 0 }
+  },
+  "cases": [
+    {
+      "id": "CLAIM-01",
+      "requirement": "策划案《每日奖励》：首次领取加 10，重复领取被拒绝且余额保持 10",
+      "steps": ["建立隔离存档", "点击真实领取按钮两次", "分别读取回执及余额", "关闭界面并清理存档"],
+      "expected": { "firstBalance": 10, "secondAccepted": false, "secondBalance": 10 },
+      "observations": [
+        {
+          "revision": "修复前的 Git 提交及工作区标识",
+          "status": "fail",
+          "actual": { "firstBalance": 10, "secondAccepted": true, "secondBalance": 20 },
+          "evidence": ["before/rev-run.json#/steps/3"]
+        },
+        {
+          "revision": "修复后的 Git 提交及工作区标识",
+          "status": "pass",
+          "actual": { "firstBalance": 10, "secondAccepted": false, "secondBalance": 10 },
+          "evidence": ["after/rev-run.json#/steps/3"]
+        }
+      ]
+    }
+  ],
+  "bugs": [
+    {
+      "id": "BUG-01",
+      "case_ids": ["CLAIM-01"],
+      "title": "重复点击发放两次每日奖励",
+      "impact": "同一奖励可在一个存档中重复到账",
+      "cause": "RewardService.Claim 在确认领奖记录之前给账户加值，重复调用再次经过写入。",
+      "cause_status": "confirmed",
+      "code_refs": ["Assets/GameScripts/Rewards/RewardService.cs:42"],
+      "suggestion": "在业务服务的领取提交内验证领奖记录，重复请求直接返回拒绝和原余额。",
+      "changes": ["在 RewardService.Claim 提交内增加重复领取检查"],
+      "status": "fixed"
+    }
+  ],
+  "checks": [
+    { "name": "本次重编译工单零错误", "status": "pass", "evidence": ["after/compilation.json"] },
+    { "name": "其它奖励首次领取和返回重入", "status": "pass", "evidence": ["after/reward-regression.json"] },
+    { "name": "复位与新增 Unity 错误检查", "status": "pass", "evidence": ["after/rev-run.json#/cleanup", "after/console.json"] }
+  ],
+  "unverified": ["真机视觉未列入本次 Editor 规则验证范围"]
+}

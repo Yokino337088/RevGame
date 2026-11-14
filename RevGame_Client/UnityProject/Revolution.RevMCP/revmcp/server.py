@@ -223,8 +223,8 @@ class Server:
                 "截图": len(copied),
                 "清理步骤": len(result.get("cleanup") or []),
             }
-            info = export_evidence(directory, title, "由 RevMCP 计划执行自动生成", summary,
-                                   ["结论只由断言决定；图片是当时画面的直接证据。"])
+            info = export_evidence(directory, title, "RevMCP 本轮执行证据", summary,
+                                   ["结果覆盖已执行步骤、等待、断言和清理。功能覆盖与缺陷定位见 Agent 交付。"])
             (directory / ".complete").write_text("completed", encoding="utf-8")
             return info.get("html")
         except Exception:

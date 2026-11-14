@@ -24,4 +24,6 @@ JSON Pointer `/data/count` 按完整响应取字段；断言支持 equals 或 ex
 
 `until` 是单步只读轮询，超时失败；不会重试 mutation。用于登录/加载时，应查询实际就绪状态，不用固定 sleep 猜时机。整个流程仍要检查业务状态和错误计数。每次调用的单独工单期限由 --timeout 控制，条件期限可能在一个已提交工单到期后才能观察到。
 
+计划按第一个失败步骤结束本轮 `steps`，然后逐条尝试 `finally`，结果放在 `cleanup`。调用失败保留原响应，`until` 未满足时保留 `ConditionTimeout` 和最后一次实测。只有成功响应才检查 `expect`，失败的 `AssertionFailed` 带 `assertion` 和原响应数据。定位时用 `assertion.path` 或计划中的 `until.path` 找实测，再按 [缺陷闭环](defect-closure.md) 区分业务错误和测试受阻。
+
 GM 的结果文本在 `/data/message`；结构化能力在 `/data/<字段>`。截图返回本机路径及 MCP image；保存的报告省略重复 base64，不丢截图文件路径。报告路径来自 reportPath，原 Editor 工单在 jobDirectory。

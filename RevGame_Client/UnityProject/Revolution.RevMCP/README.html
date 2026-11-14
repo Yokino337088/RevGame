@@ -157,6 +157,7 @@ python Revolution.RevCLI/rev.py --project $project --mode live editor stop
 <p>关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，测试计划与本次截图才生成独立 HTML。可选 <code>--compact-tools</code> 只暴露三个稳定工具，配合 <code>rev_discover</code> 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 <a href="../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html">提速教程</a>。</p>
 <p>独立 Player 显式 <code>-revAutomation</code> 开启服务，MCP 使用 <code>--runtime-endpoint &lt;runtime.json&gt;</code>。正式包默认无运行时测试接口。game 业务能力通过 <code>RevRuntimeAutomation.Register</code> 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。</p>
 <p>安装 <code>Skills/revolution-ai-automation</code> 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。</p>
+<p><code>rev_run</code> 以第一个失败步骤结束本轮业务流程，并继续执行 <code>finally</code>。调用失败或 <code>until</code> 超时会保留首个错误，成功响应才进入 <code>expect</code>。Agent 可用 <code>reportPath</code>、实际响应和当前源码记录缺陷，随后在授权内修复并复跑同一用例。 <a href="https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-ai-automation/references/defect-closure.md">功能完整性与缺陷闭环</a></p>
 <p>完整的新手教程、接口注册、Player、CLI/Python、计划格式、限制和验证记录：</p>
 <ul>
 <li><a href="../Revolution.Document/%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E5%85%B7/RevMCP%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.html">RevMCP 使用说明 HTML</a></li>
