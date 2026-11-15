@@ -1,0 +1,11 @@
+{
+    "name": "RevGame.Content",
+    "rootNamespace": "RevGame",
+    "references": [
+        "RevGame.Core",
+        "RevGame.Generated",
+        "Revolution.Generation",
+        "Revolution.Runtime"
+    ],
+    "autoReferenced": true
+}

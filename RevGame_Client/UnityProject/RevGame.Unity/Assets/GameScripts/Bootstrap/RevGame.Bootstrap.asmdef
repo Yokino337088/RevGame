@@ -1,0 +1,21 @@
+{
+    "name": "RevGame.Bootstrap",
+    "rootNamespace": "RevGame",
+    "references": [
+        "Fantasy.Unity",
+        "RevGame.Audio",
+        "RevGame.Campaign",
+        "RevGame.Content",
+        "RevGame.Core",
+        "RevGame.Endless",
+        "RevGame.Generated",
+        "RevGame.Progression",
+        "RevGame.Pvp",
+        "RevGame.Rules",
+        "RevGame.Runtime",
+        "Revolution.Generation",
+        "Revolution.Runtime",
+        "UnityEngine.UI"
+    ],
+    "autoReferenced": true
+}

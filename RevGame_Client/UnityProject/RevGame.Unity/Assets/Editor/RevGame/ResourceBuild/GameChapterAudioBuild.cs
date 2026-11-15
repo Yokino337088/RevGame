@@ -9,7 +9,7 @@ namespace RevGame.Editor
     /// <summary>章节BGM制作与验证。压缩只发生在Unity导入阶段；播放仍通过RevSound和框架资源映射。</summary>
     public static class GameChapterAudioBuild
     {
-        // 资源构建asmdef不能引用默认Assembly-CSharp；此处的固定名字属于资源制作清单。
+        // 固定名称属于资源制作清单，编辑器校验会和运行时章节映射逐一比对。
         private static readonly string[] Names = { "Chapter01_CafeByTheSea", "Chapter02_AzureBlue", "Chapter03_ToTheSouth", "Chapter04_Adventure", "Chapter05_IceWalls", "Chapter06_Swing" };
         /// <summary>章节保持独立分包，导入质量由项目统一压缩配方拥有，避免重建时恢复旧高质量。</summary>
         internal static void Configure(Dictionary<string, string> desired)
@@ -35,9 +35,8 @@ namespace RevGame.Editor
             for (int chapter = 1; chapter <= 6; chapter++)
             {
                 string name = Names[chapter - 1];
-                // 与真实业务映射对照，防止制作清单和运行时各自改名后错播。反射目标固定，不接受外部输入。
-                Type audioType = Type.GetType("RevGame.View.GameAudio, Assembly-CSharp", true);
-                string runtimeName = (string)audioType.GetMethod("GetChapterMusicName").Invoke(null, new object[] { chapter });
+                // 与真实业务映射对照，防止制作清单和运行时各自改名后错播。
+                string runtimeName = RevGame.View.GameAudio.GetChapterMusicName(chapter);
 
                 if (runtimeName != name)
                 {

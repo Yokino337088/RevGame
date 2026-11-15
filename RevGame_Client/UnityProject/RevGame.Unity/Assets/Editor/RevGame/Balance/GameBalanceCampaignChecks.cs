@@ -182,7 +182,7 @@ namespace RevGame.Editor
                             flow.ReturnHome();
                             await Until(() => flow.Screen == GameScreen.Home && !flow.IsTransitioning, 25, "返回首页失败");
                         }
-                        battle.SetBalanceTestSeed(seed + chapter * 101);
+                        flow.SetBalanceTestSeed(seed + chapter * 101);
 
                         if (!flow.OpenLevels() || !flow.EnterBattle(chapter))
                         {

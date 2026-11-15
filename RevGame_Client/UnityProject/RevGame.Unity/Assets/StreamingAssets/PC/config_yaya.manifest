@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 3040268621
+CRC: 1321116398
 Hashes:
   AssetFileHash:
     serializedVersion: 2
     Hash: 0516754dbd7406da7d8febf21aea6d2b
   TypeTreeHash:
     serializedVersion: 2
-    Hash: a826259da4f5a5227648bf5b592d28d8
+    Hash: f933a132f56fe36245267a5b808ef276
   IncrementalBuildHash:
     serializedVersion: 2
     Hash: 0516754dbd7406da7d8febf21aea6d2b
@@ -19,7 +19,7 @@ ClassTypes:
 - Class: 213
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Assembly-CSharp
+- AssemblyName: RevGame.Content
   ClassName: RevGame.Data.YayaExpressionCatalog/Entry
 Assets:
 - Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset

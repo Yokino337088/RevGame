@@ -1,0 +1,20 @@
+{
+    "name": "RevGame.Runtime",
+    "rootNamespace": "RevGame",
+    "references": [
+        "DOTween.Modules",
+        "RevGame.Audio",
+        "RevGame.Campaign",
+        "RevGame.Content",
+        "RevGame.Core",
+        "RevGame.Endless",
+        "RevGame.Generated",
+        "RevGame.Progression",
+        "RevGame.Pvp",
+        "RevGame.Rules",
+        "Revolution.Generation",
+        "Revolution.Runtime",
+        "UnityEngine.UI"
+    ],
+    "autoReferenced": true
+}

@@ -3,6 +3,7 @@ using RevGame.Core;
 using RevGame.Services;
 using RevGame.UI;
 using Revolution;
+using static RevGame.Core.TutorialBoardLayout;
 
 namespace RevGame.Flow
 {
@@ -44,11 +45,6 @@ namespace RevGame.Flow
                 return RevServices.GetRequired<GameFlow>().IsTutorialActive;
             }
         }
-        // 以下坐标是引导布局，不是伤害等可调战斗数值；四颗棋子构成只留一个气口的教学形状。
-        public static readonly BoardPos EnemyPosition = new BoardPos(4, 4);
-        public static readonly BoardPos SealPosition = new BoardPos(4, 3);
-        public static readonly BoardPos AllyPosition = new BoardPos(3, 4);
-        public static readonly BoardPos MovePosition = new BoardPos(2, 4);
         public int EnemyLiberties
         {
             get

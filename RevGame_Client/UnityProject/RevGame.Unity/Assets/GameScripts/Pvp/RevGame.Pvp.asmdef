@@ -1,0 +1,13 @@
+{
+    "name": "RevGame.Pvp",
+    "rootNamespace": "RevGame",
+    "references": [
+        "Fantasy.Unity",
+        "RevGame.Content",
+        "RevGame.Generated",
+        "Revolution.Runtime",
+        "Unity.Collections",
+        "Unity.Networking.Transport"
+    ],
+    "autoReferenced": true
+}

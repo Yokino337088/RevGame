@@ -1,21 +1,14 @@
 #if UNITY_EDITOR
 using System;
-using RevGame.Flow;
 using Revolution;
 
 namespace RevGame.Services
 {
     public sealed partial class BattleService
     {
-        /// <summary>测试只在隔离首页替换随机源；不修改伤害或棋子，也不把固定种子写进正式存档。</summary>
-        public void SetBalanceTestSeed(int seed)
+        /// <summary>由 GameFlow 核对隔离首页后调用，只替换本局随机源并清空旧测试增益。</summary>
+        internal void SetBalanceTestSeed(int seed)
         {
-            var flow = RevServices.GetRequired<GameFlow>();
-
-            if (!RevServices.GetRequired<StoryProgress>().IsIsolated || flow.Screen != RevGame.Core.GameScreen.Home || flow.IsGameplayBlocked)
-            {
-                throw new InvalidOperationException("固定种子需要隔离测试首页");
-            }
             _random = new Random(seed);
             ClearAutomationBoost(this);
         }

@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 290043997
+CRC: 402434124
 Hashes:
   AssetFileHash:
     serializedVersion: 2
     Hash: c289e45fa55e46122d79f23d236a05fe
   TypeTreeHash:
     serializedVersion: 2
-    Hash: ea35b64fe4b3066b642f598763a4768d
+    Hash: 344124e7fc238065a42d44e222851242
   IncrementalBuildHash:
     serializedVersion: 2
     Hash: c289e45fa55e46122d79f23d236a05fe
@@ -19,9 +19,9 @@ ClassTypes:
 - Class: 213
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Assembly-CSharp
+- AssemblyName: RevGame.Content
   ClassName: RevGame.Data.StoryBook/Episode
-- AssemblyName: Assembly-CSharp
+- AssemblyName: RevGame.Content
   ClassName: RevGame.Data.StoryBook/Line
 Assets:
 - Assets/GameRes/Config/Story/StoryBook.asset

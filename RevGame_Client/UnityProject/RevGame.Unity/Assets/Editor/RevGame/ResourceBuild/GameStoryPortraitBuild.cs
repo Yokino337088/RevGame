@@ -1,4 +1,4 @@
-// ResourceBuild拥有独立Editor程序集，业务SO在Assembly-CSharp；跨程序集只调用固定立绘派生配置入口。
+// ResourceBuild拥有独立Editor程序集；跨程序集只调用固定的编辑器立绘派生配置入口。
 using System;
 using System.Reflection;
 

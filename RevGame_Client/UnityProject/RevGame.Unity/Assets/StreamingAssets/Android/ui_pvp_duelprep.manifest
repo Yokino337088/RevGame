@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 2822177212
+CRC: 2060429933
 Hashes:
   AssetFileHash:
     serializedVersion: 2
     Hash: d3f3ab4292e619a597fdbf7db7753c1d
   TypeTreeHash:
     serializedVersion: 2
-    Hash: f0ed5f1b9041cd2b03b88e55d85f1919
+    Hash: c73281d2f419c1f5f07158689906bd0c
   IncrementalBuildHash:
     serializedVersion: 2
     Hash: d3f3ab4292e619a597fdbf7db7753c1d
@@ -43,7 +43,7 @@ ClassTypes:
 - Class: 225
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Assembly-CSharp
+- AssemblyName: RevGame.Runtime
   ClassName: RevGame.Pvp.DuelPrepSeatView
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup

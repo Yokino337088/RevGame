@@ -1,0 +1,11 @@
+{
+    "name": "RevGame.Endless",
+    "rootNamespace": "RevGame",
+    "references": [
+        "RevGame.Core",
+        "RevGame.Generated",
+        "RevGame.Rules",
+        "Revolution.Runtime"
+    ],
+    "autoReferenced": true
+}

@@ -252,7 +252,7 @@ namespace RevGame.Editor
             try
             {
                 Time.timeScale = 1f;
-                battle.SetBalanceTestSeed(102900 + chapter);
+                flow.SetBalanceTestSeed(102900 + chapter);
                 battle.UnlockAllChaptersForDevelopment();
                 flow.OpenLevels();
                 Check(flow.EnterBattle(chapter), "正式GameFlow接受进入章节" + chapter);

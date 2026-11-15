@@ -20,6 +20,16 @@ namespace RevGame.Flow
         private readonly Dictionary<GameScreen, FlowState> _states = new Dictionary<GameScreen, FlowState>();
         /// <summary>已通过解锁检查的目标章节，从1开始；直到战斗域交割时才用于BeginCampaign。</summary>
         private int _chapter = 1;
+        /// <summary>统一应用退出入口；停止 Play 或退出 Player 后复用 OnDestroy 的服务/域清理链。</summary>
+        public static void RequestQuit()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            UnityEngine.Application.Quit();
+#endif
+        }
+
         /// <summary>已交割的业务屏幕。加载中仍可保持旧值；查询完整结果时还需看IsTransitioning。</summary>
         public GameScreen Screen { get; private set; } = GameScreen.Exit;
         /// <summary>上次拒绝/失败的人话原因；按钮与GM均读取它，成功交割后清空。</summary>

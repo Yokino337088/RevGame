@@ -38,7 +38,7 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("逐次决策测试需要隔离首页，且没有其它运行中的会话");
             }
             EnsureFair();
-            Battle.SetBalanceTestSeed(seed);
+            RevServices.GetRequired<GameFlow>().SetBalanceTestSeed(seed);
             _oldScale = Time.timeScale;
             _report = new Evidence { seed = seed, status = "running" };
             _round = null;

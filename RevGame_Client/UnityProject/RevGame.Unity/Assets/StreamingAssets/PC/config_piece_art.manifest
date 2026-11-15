@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 1552690934
+CRC: 1741355973
 Hashes:
   AssetFileHash:
     serializedVersion: 2
     Hash: 6d09043c74de931a272a9cb13590b267
   TypeTreeHash:
     serializedVersion: 2
-    Hash: fcd779b9dd2527855ce9bc6ca6867542
+    Hash: a8c457481b61cf5016aa4a58c9d17a73
   IncrementalBuildHash:
     serializedVersion: 2
     Hash: 6d09043c74de931a272a9cb13590b267
@@ -19,7 +19,7 @@ ClassTypes:
 - Class: 213
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Assembly-CSharp
+- AssemblyName: RevGame.Runtime
   ClassName: RevGame.View.PieceArtConfig/Entry
 Assets:
 - Assets/GameRes/Config/Art/PieceArt.asset

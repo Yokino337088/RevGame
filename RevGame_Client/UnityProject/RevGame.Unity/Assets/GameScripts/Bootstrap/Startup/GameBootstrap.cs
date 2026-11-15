@@ -123,6 +123,8 @@ namespace RevGame.Bootstrap
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
+            RevServices.GetRequired<GameFlow>().IsAutomationRunningForDevelopment =
+                () => RevServices.Get<RevGame.Automation.GameAutomationRunner>()?.State == "running";
             GameGmCommands.RegisterAll();
             StoryAutomationCommands.Register();
             YayaReactionAutomation.Register();
@@ -158,15 +160,6 @@ namespace RevGame.Bootstrap
             {
                 RevLog.Exception(error, "游戏启动失败：请检查过场面板与资源配置", "RevGame");
             }
-        }
-        /// <summary>统一应用退出入口；停止 Play 或退出 Player 后复用 OnDestroy 的服务/域清理链。</summary>
-        public static void RequestQuit()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
         }
         private void OnDestroy()
         {

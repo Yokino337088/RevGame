@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 3323916909
+CRC: 667524876
 Hashes:
   AssetFileHash:
     serializedVersion: 2
     Hash: 9f9f7fdd88a5b92015601a039ed3f968
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 3f134faaf703d31edf00eb185e07cb0a
+    Hash: 25f64134424e9ae8f881d0042e69ef3b
   IncrementalBuildHash:
     serializedVersion: 2
     Hash: 9f9f7fdd88a5b92015601a039ed3f968
@@ -45,7 +45,7 @@ ClassTypes:
 - Class: 224
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Assembly-CSharp
+- AssemblyName: RevGame.Runtime
   ClassName: RevGame.View.BattleEffectView/ProjectileAppearance
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup

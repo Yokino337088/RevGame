@@ -17,5 +17,5 @@ MonoBehaviour:
   hotUpdateAssemblyDefinitions: []
   linkAssemblyDefinitions: []
   includeAssembly:
-  - Assembly-CSharp
+  - RevGame.Pvp
   - Fantasy.Unity

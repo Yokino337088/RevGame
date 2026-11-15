@@ -40,8 +40,7 @@ namespace RevGame.Editor
         {
             Type support = Type.GetType("RevGame.Editor.GameConfigTestSupport, Assembly-CSharp-Editor", true);
             support.GetMethod("Ensure").Invoke(null, null);
-            Type service = Type.GetType("RevGame.Services.BattleService, Assembly-CSharp", true);
-            string csv = (string)service.GetMethod("MeasureScoreCacheThreshold").Invoke(null, new object[] { 100000, 7 });
+            string csv = RevGame.Services.BattleService.MeasureScoreCacheThreshold(100000, 7);
             string folder = System.IO.Path.GetFullPath("../../../.codex/work/render-opt-2026-10-30");
             System.IO.Directory.CreateDirectory(folder);
             string path = System.IO.Path.Combine(folder, "threshold-unity-" + DateTime.Now.ToString("HHmmss") + ".csv");

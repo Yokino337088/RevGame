@@ -1,6 +1,5 @@
 // 六章Boss直达属于开发流程入口，不直接改场景或手牌；复用GameFlow的场景交割与BattleService真实配置。
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-using RevGame.Automation;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Services;
@@ -10,6 +9,21 @@ namespace RevGame.Flow
 {
     public sealed partial class GameFlow
     {
+#if UNITY_EDITOR
+        /// <summary>只允许在隔离测试首页设置固定种子，避免测试配置影响正式存档或已开始的关卡。</summary>
+        public void SetBalanceTestSeed(int seed)
+        {
+            if (!RevServices.GetRequired<StoryProgress>().IsIsolated || Screen != GameScreen.Home || IsGameplayBlocked)
+            {
+                throw new System.InvalidOperationException("固定种子需要隔离测试首页");
+            }
+            ((BattleService)RevServices.GetRequired<IBattleService>()).SetBalanceTestSeed(seed);
+        }
+#endif
+
+        /// <summary>开发启动装配提供自动化运行状态，流程只读取状态以避免两类测试入口争用。</summary>
+        internal System.Func<bool> IsAutomationRunningForDevelopment { get; set; }
+
         /// <summary>跨“旧战斗→首页→目标Boss”的整次请求互斥；两个内部过场之间也不能被另一条GM抢入。</summary>
         private bool _bossDevelopmentEntering;
         /// <summary>只在下一次Battle域交割消费；普通开局、失败和退出都清掉，不能污染后续正式战役。</summary>
@@ -40,9 +54,7 @@ namespace RevGame.Flow
                 LastError = "Boss章节只允许1～" + Consts.ChapterCount;
                 return false;
             }
-            var runner = RevServices.Get<GameAutomationRunner>();
-
-            if (runner != null && runner.State == "running")
+            if (IsAutomationRunningForDevelopment?.Invoke() == true)
             {
                 LastError = "自动化流程仍在运行，请先停止它";
                 return false;

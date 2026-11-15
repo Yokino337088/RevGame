@@ -1,0 +1,12 @@
+{
+    "name": "RevGame.Audio",
+    "rootNamespace": "RevGame",
+    "references": [
+        "RevGame.Campaign",
+        "RevGame.Core",
+        "RevGame.Progression",
+        "RevGame.Rules",
+        "Revolution.Runtime"
+    ],
+    "autoReferenced": true
+}

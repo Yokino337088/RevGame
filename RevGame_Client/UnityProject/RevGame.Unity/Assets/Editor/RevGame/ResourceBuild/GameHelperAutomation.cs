@@ -30,8 +30,7 @@ namespace RevGame.Editor
         [RevAutomationAction("game.helper.atlas-list", Environment="edit", Keys=new string[0], Description="只读当前实际程序集中的图集生成清单")]
         public static object AtlasList(RevAutomationRequest request)
         {
-            Type type = Type.GetType("RevGame.Generated.GameSpriteAtlases, Assembly-CSharp", true);
-            return new Result { text = string.Join(",", (string[])type.GetField("Names").GetValue(null)) };
+            return new Result { text = string.Join(",", RevGame.Generated.GameSpriteAtlases.Names) };
         }
         [RevAutomationAction("game.helper.recompile", Environment="edit", Keys=new string[0], Description="图集生成脚本修改后显式请求脚本编译，不修改场景")]
         public static object Recompile(RevAutomationRequest request)

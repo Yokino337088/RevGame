@@ -1,0 +1,10 @@
+{
+    "name": "RevGame.Rules",
+    "rootNamespace": "RevGame",
+    "references": [
+        "RevGame.Core",
+        "RevGame.Generated",
+        "Revolution.Runtime"
+    ],
+    "autoReferenced": true
+}

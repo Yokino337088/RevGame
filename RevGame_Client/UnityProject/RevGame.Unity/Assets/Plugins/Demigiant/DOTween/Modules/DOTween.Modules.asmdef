@@ -1,0 +1,8 @@
+{
+    "name": "DOTween.Modules",
+    "rootNamespace": "DG.Tweening",
+    "references": [
+        "UnityEngine.UI"
+    ],
+    "autoReferenced": true
+}

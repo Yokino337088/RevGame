@@ -1,6 +1,5 @@
 using RevGame.Core;
 using RevGame.Data;
-using RevGame.Flow;
 using RevGame.Pieces;
 using Revolution;
 
@@ -23,8 +22,8 @@ namespace RevGame.Services
             _board.Reset();
             _playerPieces.Clear();
             _enemyPieces.Clear();
-            AddTutorialPiece(GameSide.Enemy, TutorialLogic.EnemyPosition);
-            AddTutorialPiece(GameSide.Player, TutorialLogic.AllyPosition);
+            AddTutorialPiece(GameSide.Enemy, TutorialBoardLayout.EnemyPosition);
+            AddTutorialPiece(GameSide.Player, TutorialBoardLayout.AllyPosition);
             AddTutorialPiece(GameSide.Player, new BoardPos(5, 4));
             AddTutorialPiece(GameSide.Player, new BoardPos(4, 5));
             _hand.Clear();
