@@ -1,7 +1,6 @@
 // ============================================================
-// GameMobileLayout.cs —— 旧版横屏布局兼容组件，默认不再改写预制体。
-// RectTransform 锚点与框架 CanvasScaler 是正式界面的布局来源，编辑结果即运行时基准。
-// 旧算法需在 Inspector 明确开启；保留它不代表正常界面会自动重排。
+// GameMobileLayout.cs —— 以预制体的 1920×1080 锚点为基准，将整张面板等比放入设备安全区。
+// 同一份布局适用于 PC 窗口、全屏和手机。旧版逐控件重排仍由 Inspector 单独控制。
 // ============================================================
 using UnityEngine;
 using UnityEngine.UI;
@@ -46,38 +45,22 @@ namespace RevGame.UI
             public RectTransform Transform;
             public RawImage Artwork;
             public Rect SourceUv;
+            public Texture LastTexture;
         }
 
         /// <summary>菜单、弹窗和全屏过场共用同一个设计框。指定的背景或遮罩穿过设计框，覆盖整个 UI 层。</summary>
         public static void EnableSafePanel(Transform panel, params string[] fullBleedPaths)
         {
-            if (!UsesMobilePreview())
-            {
-                return;
-            }
             GameMobileLayout layout = GetLayout(panel);
             layout._boardFrame = true;
             layout._lastSize = Vector2.zero;
-            layout._fullBleed = new FullBleedNode[fullBleedPaths.Length];
-            for (int i = 0; i < fullBleedPaths.Length; i++)
-            {
-                var node = panel.Find(fullBleedPaths[i]) as RectTransform;
-                RawImage artwork = node == null ? null : node.GetComponent<RawImage>();
-                layout._fullBleed[i] = new FullBleedNode
-                {
-                    Transform = node, Artwork = artwork, SourceUv = artwork == null ? default : artwork.uvRect
-                };
-            }
+            layout._fullBleed = ReadFullBleed(panel, fullBleedPaths);
             layout.ApplyLayout();
         }
 
         /// <summary>场景 Canvas 保留全屏，决斗的按钮和状态条分别使用原始锚点映射到安全设计框。</summary>
         public static void EnableSceneHud(Transform canvas, params string[] paths)
         {
-            if (!UsesMobilePreview())
-            {
-                return;
-            }
             GameMobileLayout layout = GetLayout(canvas);
             layout._lastSize = Vector2.zero;
             layout._sceneHud = new SafeHudNode[paths.Length];
@@ -104,6 +87,8 @@ namespace RevGame.UI
             // 宽屏多出的安全空间优先留给两手的控制区，顶部状态条保持对称。
             layout._leftSidebar = ReadSidebar(hud, "MoveStick", "Jump");
             layout._rightSidebar = ReadSidebar(hud, "Jab", "Skill", "SkillTwo", "Ultimate");
+            // 结算立绘与按钮随设计框缩放，只把遮住场景的底图扩到整个窗口。
+            layout._fullBleed = ReadFullBleed(hud, "Result/Backdrop");
             layout._lastSize = Vector2.zero;
             layout.ApplyLayout();
         }
@@ -116,27 +101,18 @@ namespace RevGame.UI
             root.offsetMin = root.offsetMax = Vector2.zero;
         }
 
-        private static bool UsesMobilePreview()
-        {
-#if UNITY_ANDROID || UNITY_IOS
-            return true;
-#else
-            return UnityEngine.Device.Application.isMobilePlatform;
-#endif
-        }
-
         private static GameMobileLayout GetLayout(Transform panel)
         {
             return panel.TryGetComponent(out GameMobileLayout layout) ? layout : panel.gameObject.AddComponent<GameMobileLayout>();
         }
 
-        /// <summary>只给战斗控制面板装上 Android 设计框，背景和相机仍使用完整屏幕。</summary>
-        public static void EnableBoardFrame(Transform panel, string[] leftNodes = null, string[] rightNodes = null)
+        /// <summary>棋盘与控制面板使用相同安全设计框；可指定需扩展到整个画幅的底图。</summary>
+        public static void EnableBoardFrame(Transform panel, string[] leftNodes = null, string[] rightNodes = null, params string[] fullBleedPaths)
         {
-#if UNITY_ANDROID
             GameMobileLayout layout = GetLayout(panel);
             layout._boardFrame = true;
             layout._lastSize = Vector2.zero;
+            layout._fullBleed = ReadFullBleed(panel, fullBleedPaths);
             // 装配时只读取一次预制体坐标，后续换设备都从设计原点重算，不累加偏移。
             if (leftNodes != null || rightNodes != null)
             {
@@ -154,7 +130,26 @@ namespace RevGame.UI
                 layout._rightSidebar = ReadSidebar(panel, "infoPlate", "btnHome", "btnSettings");
             }
             layout.ApplyLayout();
-#endif
+        }
+
+        // 记录全屏底图的原始 UV，窗口反复切换时由该值重算裁切。
+        private static FullBleedNode[] ReadFullBleed(Transform panel, params string[] paths)
+        {
+            if (paths.Length == 0)
+            {
+                return null;
+            }
+            var nodes = new FullBleedNode[paths.Length];
+            for (int i = 0; i < paths.Length; i++)
+            {
+                var node = panel.Find(paths[i]) as RectTransform;
+                RawImage artwork = node == null ? null : node.GetComponent<RawImage>();
+                nodes[i] = new FullBleedNode
+                {
+                    Transform = node, Artwork = artwork, SourceUv = artwork == null ? default : artwork.uvRect
+                };
+            }
+            return nodes;
         }
 
         private static SidebarNode[] ReadSidebar(Transform panel, params string[] names)
@@ -199,9 +194,13 @@ namespace RevGame.UI
                         coversScreen &= backdrop.Transform != null && Contains(ScreenBounds(backdrop.Transform, corners), screen);
                     }
                 }
+                var rect = (RectTransform)panel.transform;
+                Rect frame = ScreenBounds(rect, corners);
                 panels[panel.GetType().Name] = new Dictionary<string, object>
                 {
-                    ["frameInSafeArea"] = Contains(safePixels, ScreenBounds((RectTransform)panel.transform, corners)),
+                    ["frameInSafeArea"] = Contains(safePixels, frame),
+                    ["frameWidth"] = frame.width,
+                    ["frameHeight"] = frame.height,
                     ["fullBleedCount"] = covers,
                     ["fullBleedCoversScreen"] = coversScreen
                 };
@@ -434,9 +433,14 @@ namespace RevGame.UI
             }
             Vector2 size = parent.rect.size;
             Rect safe = GameBattleLayout.SafeViewport();
-            if (size.x <= 0f || size.y <= 0f ||
-                (size == _lastSize && safe == _lastSafe && Mathf.Approximately(root.localScale.x, _frameScale)))
+            if (size.x <= 0f || size.y <= 0f)
             {
+                return;
+            }
+            if (size == _lastSize && safe == _lastSafe && Mathf.Approximately(root.localScale.x, _frameScale))
+            {
+                // 背景可能在面板打开后异步交付，只重算换图节点的 UV。
+                CropFullBleedArtwork(size.x / size.y, force: false);
                 return;
             }
 
@@ -466,18 +470,36 @@ namespace RevGame.UI
                         backdrop.Transform.anchorMax = max;
                         backdrop.Transform.offsetMin = backdrop.Transform.offsetMax = Vector2.zero;
                     }
-                    CropArtwork(backdrop, size.x / size.y);
                 }
+                CropFullBleedArtwork(size.x / size.y, force: true);
             }
             _applying = false;
         }
 
-        /// <summary>图片使用原始 UV 等比裁切，重复旋转时不会在已经裁过的范围上继续裁。</summary>
-        private static void CropArtwork(FullBleedNode backdrop, float viewportAspect)
+        // 图集或异步图片换纹理时才重算；尺寸与纹理稳定时不会写回 UI。
+        private void CropFullBleedArtwork(float viewportAspect, bool force)
         {
-            Texture texture = backdrop.Artwork == null ? null : backdrop.Artwork.texture;
+            if (_fullBleed == null)
+            {
+                return;
+            }
+            for (int i = 0; i < _fullBleed.Length; i++)
+            {
+                ref FullBleedNode backdrop = ref _fullBleed[i];
+                Texture texture = backdrop.Artwork == null ? null : backdrop.Artwork.texture;
+                if (texture != null && (force || texture != backdrop.LastTexture))
+                {
+                    CropArtwork(backdrop, texture, viewportAspect);
+                }
+                backdrop.LastTexture = texture;
+            }
+        }
+
+        /// <summary>图片使用原始 UV 等比裁切，重复旋转时不会在已经裁过的范围上继续裁。</summary>
+        private static void CropArtwork(FullBleedNode backdrop, Texture texture, float viewportAspect)
+        {
             Rect uv = backdrop.SourceUv;
-            if (texture == null || uv.width <= 0f || uv.height <= 0f)
+            if (uv.width <= 0f || uv.height <= 0f)
             {
                 return;
             }

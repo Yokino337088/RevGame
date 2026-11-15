@@ -23,17 +23,6 @@ namespace RevGame.Bootstrap
         //作者原话：这个状态变量代表是否已经被释放掉了
         private bool _released;
 
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-        private void LateUpdate()
-        {
-            // 防止系统快捷键或旧窗口首选项重新切换模式；尺寸不变时不重复调用SetResolution。
-            if (Screen.fullScreenMode != FullScreenMode.Windowed || Screen.width != 1920 || Screen.height != 1080)
-            {
-                Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
-            }
-        }
-#endif
-
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -44,19 +33,13 @@ namespace RevGame.Bootstrap
             _instance = this;
             _ownsServices = true;
             DontDestroyOnLoad(gameObject);
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            // PC测试与交付固定为1080p窗口；覆盖旧PlayerPrefs或启动器保存的全屏选择。
-            // 这是 Windows 独立包的窗口规格。
-            Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
-#endif
 #if UNITY_EDITOR
             // 配置资产负责持久化；此赋值防止域重载后编辑器延迟同步晚于场景 Awake。
             RevEditorResPolicy.ResRoot = "Assets/GameRes/";
             Application.runInBackground = true;
 #endif
             RevUISetting.CanvasOrientation = RevUICanvasOrientation.Landscape;
-            // 用户指定后续统一按 1920×1080 布局。框架自带 Canvas 也是这个基准；这里显式约束兜底 Canvas。
-            // 这是 UI 的“设计尺子”，不强制修改手机硬件；Windows独立包在上方单独固定为1920×1080窗口。
+            // 画布使用项目设计坐标；窗口和设备像素由系统与显示设置服务管理。
             RevUISetting.ReferenceResolution = UI.GameBattleLayout.DesignResolution;
             // 结算与奖励是必经步骤，点遮罩不能把唯一的继续入口关掉。
             RevUISetting.ClickMaskClosesTop = false;
@@ -68,17 +51,18 @@ namespace RevGame.Bootstrap
             //   Unity 会在更早的帧发出请求；那一刻没人监听，Unity 只请求一次、不会重发，图集永远不会交还给 Unity，
             //   结果就是 Image 的 texture 为空（“UI图集像素未绑定”）。取到的对象仍由容器持有并在注销时 Dispose，这里不保存引用。
             RevServices.GetRequired<View.GameSpriteAtlasService>();
-#if UNITY_ANDROID || UNITY_EDITOR
-            // ★ 手机画面必须全屏。SetResolution(..., false) 中的 false 表示“窗口模式”，不是“不旋转”。
-            // Android / Simulator 会因此预留系统导航栏；横屏时它会变成右侧深灰条，放大背景也填不到那里。
-            // Device.Screen 在模拟器里控制模拟手机，真机上等同普通 Screen；安全区仍只用于避让刘海的交互布局。
-            UnityEngine.Device.Screen.fullScreen = true;
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+            // 移动端沉浸显示，交互仍跟随设备安全区。Device.Screen 在 Simulator 中作用于模拟手机。
+            if (UnityEngine.Device.Application.isMobilePlatform)
+            {
+                UnityEngine.Device.Screen.fullScreen = true;
+            }
 #endif
             // DOTween 仅负责表现；预留容量避免密集弹幕时扩容，Tween 本身也允许复用。
             // 每个池对象自己 Kill 自己的动画，不能用全局 KillAll 误伤其他面板。
             DOTween.Init(recycleAllByDefault: true, useSafeMode: true, logBehaviour: LogBehaviour.ErrorsOnly);
             DOTween.SetTweensCapacity(512, 128);
-#if !UNITY_EDITOR
+#if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
             // 用户明确要求手机横屏；设备方向和根 Canvas 都固定横屏。
             Screen.orientation = ScreenOrientation.LandscapeLeft;
 #endif
@@ -107,6 +91,9 @@ namespace RevGame.Bootstrap
             // 在任何BGM请求之前应用玩家已保存音量；此服务是全局寿命，不随战斗退场丢失。
             // 注意 Register<TService, TImpl>() 是“懒创建”：不在这里取一次，构造函数就不会执行，音量也就不会应用。
             RevServices.GetRequired<GameAudioSettings>();
+            // 恢复 PC 显示偏好并观察系统窗口变化，场景切换不重复设置分辨率。
+            RevServices.Register<GameDisplaySettings>(_ => new GameDisplaySettings(Vector2Int.RoundToInt(UI.GameBattleLayout.DesignResolution)), owner: this);
+            RevServices.GetRequired<GameDisplaySettings>();
             // 积分要跨局累计、要落盘、还要能在测试里替换，因此抽了接口：调用方只认 IScoreProgress，不认存储实现。
             RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
             // 战斗服务是全项目最核心的契约：UI、流程、AI 都只认 IBattleService，实现可以整体替换（含固定种子的测试实例）。

@@ -9,7 +9,7 @@ namespace RevGame.UI
 {
     public static class GameBattleLayout
     {
-        /// <summary>项目唯一 UI 设计基准；手机像素不必相同，由 CanvasScaler 按此基准等比适配。</summary>
+        /// <summary>项目唯一 UI 设计基准；屏幕与窗口尺寸变化时，画布和棋盘都保持这套比例。</summary>
         public static readonly Vector2 DesignResolution = new Vector2(1920f, 1080f);
 
         /// <summary>各区互不重叠；左右区再按高度比例分配控件，屏幕缩放时不会积累位移。</summary>
@@ -29,15 +29,10 @@ namespace RevGame.UI
             Vector2 deviceSize = new Vector2(UnityEngine.Device.Screen.width, UnityEngine.Device.Screen.height);
             return NormalizeSafeArea(UnityEngine.Device.Screen.safeArea, deviceSize);
         }
-        /// <summary>Android 的相机保留完整屏幕；只有棋盘和控制区使用同一块居中的 16:9 设计视口。</summary>
+        /// <summary>棋盘相机、手牌和侧栏在所有屏幕上使用同一个安全设计框，背景仍覆盖完整画幅。</summary>
         public static Rect BoardViewport(Vector2 size)
         {
-            Rect safe = SafeViewport();
-#if UNITY_ANDROID
-            return FitBoardViewport(size, safe);
-#else
-            return safe;
-#endif
+            return FitBoardViewport(size, SafeViewport());
         }
 
         /// <summary>在真实安全区内等比内接设计矩形。单边刘海只扣除一次，中心随安全区平移。</summary>

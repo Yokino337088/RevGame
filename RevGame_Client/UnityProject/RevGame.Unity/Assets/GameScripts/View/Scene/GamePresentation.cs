@@ -140,11 +140,8 @@ namespace RevGame.View
                 {
                     UpdateBackgroundAtlasUv();
                 }
-                // 安卓全屏时第一章也必须覆盖实际窗口，PC 的第一章仍按原有场景美术配置。
-                bool coverViewport = fitBackgroundToCamera || _activeBackgroundChapter > 1;
-#if UNITY_ANDROID
-                coverViewport |= _activeBackgroundChapter == 1;
-#endif
+                // 窗口形状或安全区变化时，章节背景始终填满相机画幅。
+                bool coverViewport = fitBackgroundToCamera || _activeBackgroundChapter > 0;
                 if (coverViewport)
                 {
                     // ★ 旧场景曾把背景设成Sliced；它实际绘制size，而旧代码却按sprite.bounds计算，导致留白。

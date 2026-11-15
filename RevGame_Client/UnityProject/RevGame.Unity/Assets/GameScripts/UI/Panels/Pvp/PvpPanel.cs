@@ -64,7 +64,7 @@ namespace RevGame.Pvp
             BindDuelTestButton();
 #endif
             // 动态按钮先创建，再读取原始锚点；设备变化只从这一份设计坐标重算。
-            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform, LeftSidebarPaths, RightSidebarPaths);
+            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform, LeftSidebarPaths, RightSidebarPaths, "defeat/backdrop");
         }
 
         // 按当前面板生命周期持有的挑战按钮，位置避开棋盘。

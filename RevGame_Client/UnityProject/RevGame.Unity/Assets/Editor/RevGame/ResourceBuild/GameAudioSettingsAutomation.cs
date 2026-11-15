@@ -14,6 +14,12 @@ namespace RevGame.Editor
         public static object Preview(RevAutomationRequest request) { return Call("Preview"); }
         [RevAutomationAction("game.audio-settings.slider-layout", Environment = "edit", Keys = new string[0], Description = "只调整已有声音滑杆尺寸，保留用户图片和其它控件布局")]
         public static object SliderLayout(RevAutomationRequest request) { return Call("AdjustSlider"); }
+        /// <summary>为现有设置预制体追加桌面显示控制，保留音量控件。</summary>
+        [RevAutomationAction("game.audio-settings.display-modes", Environment = "edit", Keys = new string[0], Description = "追加窗口和全屏设置按钮")]
+        public static object DisplayModes(RevAutomationRequest request)
+        {
+            return Call("AddDisplayModes");
+        }
         private static object Call(string method)
         {
             Type type = Type.GetType("RevGame.Editor.GameAudioSettingsBuild, Assembly-CSharp-Editor", true);

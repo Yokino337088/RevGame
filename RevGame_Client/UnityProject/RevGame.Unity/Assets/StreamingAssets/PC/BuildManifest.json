@@ -1,10 +1,10 @@
 ﻿{
   "version": "0.1.0",
   "platform": "StandaloneWindows64",
-  "buildTime": "2026-11-15 15:10:51",
+  "buildTime": "2026-11-15 17:58:25",
   "integrityVersion": 1,
-  "mainSha256": "4c7b36959af3387f4de15a986c94a01ed995970293f91ab055ec9d40ccbd894b",
-  "mainManifestSha256": "2833a4854d47d32a771b77c2771ff32f3ec8a1b9f76e40ef914328489bf8503a",
+  "mainSha256": "a36423ed36a9d6066f9b89a46e3333a674d70cde9d509c713ede3f8c4e06cfa6",
+  "mainManifestSha256": "2e9c6ad025fb86bf9a86e279a244763ae37f55b6420cf304d631eaaffe2bd0a7",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 277850, "hash": "8fff080015d02bb71395f9e86b1c8918", "sha256": "8d692cf62d4f354c384d0f56f3465db9187f08f8b5d5fabf7bcbebe2fd4e15fc", "manifestSha256": "4ce9452981e5a0de85cc66bba84ecf0c92b8976b3e28bce3a7c19a559c9656f4" },
     { "name": "atlas_bosschapter01frames", "size": 380807, "hash": "9945022bb7c1fa375c8256118105e033", "sha256": "c700c7be21a90153019fab5792cd6324769ec9ed8febde28a8acd6dfb3e0898d", "manifestSha256": "e44ddd8999f57850dc232a3630fed865ba18d90e3dd54d54e1b6a4ba654cfc89" },
@@ -88,7 +88,7 @@
     { "name": "ui_pvp", "size": 27523, "hash": "55b7156fb3b0fa50183842fc8c63e709", "sha256": "25a34ddb6b9c287ae1b23bce3ab9587bccd4759b69a72f2724a94d5f6f98e290", "manifestSha256": "061510cedef510b634eac8353143a4ad71be59aaab3daa04d56ef0067d948a89" },
     { "name": "ui_pvp_duelhud", "size": 16845, "hash": "c4a54b0a4184b6da8e3550c4558a5dcf", "sha256": "6a6a799f09903a61a60de613bb2918c1a251f466df46754e956d019056d0cdfe", "manifestSha256": "0feb8ab36fe904a264cec1a913a53f730196cf6ca8abce7bfeea985b65fbd331" },
     { "name": "ui_pvp_duelprep", "size": 17515, "hash": "ce5866f366bdef45292ed388012a09f1", "sha256": "2d3b6616e7bf2ce9e4efc76440b17414acb8141a4210f4dc1521a2fc3c128ec9", "manifestSha256": "607e96afb9671e8f8f9be45632ae6c9604ddaa358ca646d30046990d1a84589c" },
-    { "name": "ui_settings", "size": 9332, "hash": "3c668a0d02efd5a20acd26d166945c38", "sha256": "aabb26e24a24c78979dfa4ded40bf67efd750208c9b33db876c37d02bff4d946", "manifestSha256": "c2a529477a63f7aabea5e6994f0edcc61c4006caa1b108f08dbf01a5649541e5" },
+    { "name": "ui_settings", "size": 10195, "hash": "7046a3bd096e2aeeba6a101d5e15d77e", "sha256": "cc851647c7c2df58ca69f55e95c3ad34fe887f83875e73d5a1851ed88ec3615a", "manifestSha256": "2c080295b89d1af200ea40a24f69e08766b1b721d9d39d4d71128970b61862d3" },
     { "name": "ui_story", "size": 8695, "hash": "a025ffaef9d7ed92ebdf826e892c08a4", "sha256": "3758bd7aedb4b0628043ff8745c1ea3177e4997650f97acad30cc034ebc0d81f", "manifestSha256": "f5cef2fcaa7bf2a67bdb59f0028884e80ee22677c611e66779ad4a13ad5cc672" },
     { "name": "ui_victory", "size": 5966, "hash": "002b6ac7b9a55fc7eea4c347b8afeb6e", "sha256": "8b33452abd7568fa367b56ab0cd6264c05eea45e556732fed57caf13c56eb73d", "manifestSha256": "8f26d0f7955b2c86cc2fca49f15b8b1afdde8fb23809f256584520778275b026" },
     { "name": "yaya_reaction", "size": 7353, "hash": "0c473383ebe9cb3bbbac3b6a107a1168", "sha256": "8cb5f505b4573a5a190102b7a46fd21becbda3ed5c3985af94939a04f943afb1", "manifestSha256": "a2b0c8f42a0ca9a6a62f78273d7daa59defd35ac2fc4779fa88d6ab6c87da8b5" }

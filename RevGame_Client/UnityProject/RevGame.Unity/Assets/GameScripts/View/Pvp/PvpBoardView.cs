@@ -80,9 +80,7 @@ namespace RevGame.Pvp
         internal bool AnalysisShaderReady => ShaderReady && boardRenderer.sharedMaterial.HasProperty(AnalysisPointId);
 #endif
         private int _revision = -1, _hover = -1, _width, _height;
-#if UNITY_ANDROID
         private Rect _layoutViewport;
-#endif
         private Camera _camera;
         public bool Ready { get { return boardRenderer != null && backgroundRenderer != null && boardRenderer.sharedMaterial != null && backgroundRenderer.sharedMaterial != null && eyeBlinkFrames != null && eyeBlinkFrames.Length == 4 && eyeBlinkFrames[0] != null; } }
 
@@ -143,8 +141,12 @@ namespace RevGame.Pvp
         }
         private void FitCamera()
         {
-#if UNITY_ANDROID
             Vector2 pixels = new Vector2(_camera.pixelWidth, _camera.pixelHeight);
+            if (pixels.x <= 0 || pixels.y <= 0)
+            {
+                return;
+            }
+            // 棋盘占比按 HUD 的安全设计框计算，窄窗口也保留两侧操作按钮。
             Rect viewport = RevGame.UI.GameBattleLayout.BoardViewport(pixels);
             if (_width == pixels.x && _height == pixels.y && _layoutViewport == viewport)
             {
@@ -162,17 +164,6 @@ namespace RevGame.Pvp
             backgroundPosition.x = _camera.transform.position.x;
             backgroundPosition.y = _camera.transform.position.y;
             backgroundRenderer.transform.position = backgroundPosition;
-#else
-            if (_width == Screen.width && _height == Screen.height)
-            {
-                return;
-            }
-            _width = Screen.width;
-            _height = Screen.height;
-            float aspect = _width / (float)Mathf.Max(1, _height);
-            _camera.orthographicSize = Mathf.Max(6.4f, 8.6f / aspect);
-            _camera.transform.position = new Vector3(4, 4, -10);
-#endif
             float height = _camera.orthographicSize * 2;
             float backgroundWidth = Mathf.Max(height * aspect, height * (16f / 9f));
             backgroundRenderer.transform.localScale = new Vector3(backgroundWidth, backgroundWidth * 9f / 16f, 1);

@@ -81,6 +81,7 @@ namespace RevGame.Editor
                 Label("muteLabel", toggleRoot, "音乐静音", new Vector2(180, 50), new Vector2(40, 0), 26);
                 Button("btnDefault", card.transform, "恢复默认", new Vector2(245, 68), new Vector2(170, -82));
                 Button("btnClose", card.transform, "关闭", new Vector2(105, 58), new Vector2(328, 164));
+                BuildDisplayModes(root.transform, card);
 
                 if (PrefabUtility.SaveAsPrefabAsset(root, Folder + "/AudioSettingsPanel.prefab") == null)
                 {
@@ -92,6 +93,58 @@ namespace RevGame.Editor
             AddEntry("LevelSelectPanel", false);
             AddEntry("BattleHudPanel", true);
             return "声音设置预制体、滑杆/静音/默认按钮、首页/选关/战斗入口已保存";
+        }
+
+        /// <summary>保留已调过的音量控件和预制体 GUID，只追加桌面显示模式栏。</summary>
+        public static string AddDisplayModes()
+        {
+            string path = Folder + "/AudioSettingsPanel.prefab";
+            if (EditorApplication.isPlayingOrWillChangePlaymode || PrefabStageUtility.GetCurrentPrefabStage()?.assetPath == path)
+            {
+                throw new InvalidOperationException("请在编辑态且未打开声音设置 Prefab Stage 时追加显示模式栏。");
+            }
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                if (root.transform.Find("displayModes") == null)
+                {
+                    var card = root.transform.Find("card")?.GetComponent<UnityEngine.UI.Image>();
+                    if (card == null || card.sprite == null)
+                    {
+                        throw new InvalidOperationException("声音设置面板缺少现有底板。");
+                    }
+                    BuildDisplayModes(root.transform, card);
+                    if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
+                    {
+                        throw new InvalidOperationException("显示模式栏保存失败。");
+                    }
+                }
+                return "设置面板已包含窗口模式和无边框全屏按钮";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        // 额外一栏复用当前设置底板和按钮样式，留在原音量卡片下方。
+        private static void BuildDisplayModes(Transform root, UnityEngine.UI.Image audioCard)
+        {
+            const float Height = 104f;
+            RectTransform card = audioCard.rectTransform;
+            float y = card.anchoredPosition.y - card.sizeDelta.y * .5f - Height * .5f - 20f;
+            UnityEngine.UI.Image row = Image("displayModes", root, new Vector2(card.sizeDelta.x, Height), new Vector2(card.anchoredPosition.x, y), audioCard.sprite);
+            row.type = UnityEngine.UI.Image.Type.Sliced;
+            row.color = audioCard.color;
+            row.raycastTarget = true;
+            Label("displayModeLabel", row.transform, "显示模式", new Vector2(190, 64), new Vector2(-279, 0), 28);
+            UnityEngine.UI.Button window = Button("btnWindowed", row.transform, "窗口模式", new Vector2(212, 68), new Vector2(-24, 0));
+            UnityEngine.UI.Button fullscreen = Button("btnFullscreen", row.transform, "无边框全屏", new Vector2(242, 68), new Vector2(220, 0));
+            // 当前模式由面板置为不可重复点击，用暖金色标示已选项。
+            ColorBlock colors = window.colors;
+            colors.disabledColor = new Color(1f, .86f, .57f);
+            window.colors = fullscreen.colors = colors;
+            row.gameObject.SetActive(false);
         }
         /// <summary>只调整滑杆，优先修改用户正在编辑的同一Prefab Stage，避免额外加载旧副本覆盖未保存的图片选择。</summary>
         public static string AdjustSlider()
