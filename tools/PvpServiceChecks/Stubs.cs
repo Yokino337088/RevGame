@@ -43,6 +43,19 @@ namespace Revolution
 
 namespace UnityEngine
 {
+    // 运行于离线 Windows 夹具。Android 文本存档从不落到玩家目录。
+    internal enum RuntimePlatform
+    {
+        WindowsPlayer,
+        Android
+    }
+
+    internal static class Application
+    {
+        public static RuntimePlatform platform => RuntimePlatform.WindowsPlayer;
+        public static string persistentDataPath => throw new PlatformNotSupportedException("仅验证 Windows 本地设置");
+    }
+
     // 测试内存槽仅替代Unity的注册表读写；加密仍调用Windows真实DPAPI。
     internal static class PlayerPrefs
     {
@@ -63,6 +76,11 @@ namespace UnityEngine
     }
     internal static class JsonUtility
     {
+        internal static void FromJsonOverwrite(string value, object destination)
+        {
+            throw new NotSupportedException("云端局势分析响应由 Unity 运行期回归验证");
+        }
+
         internal static T FromJson<T>(string value)
         {
             return System.Text.Json.JsonSerializer.Deserialize<T>(value, new System.Text.Json.JsonSerializerOptions { IncludeFields = true });

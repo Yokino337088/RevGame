@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 2392101058
+CRC: 3617975197
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -347,7 +347,10 @@ AssetBundleManifest:
       Name: ui_pvp_duelhud
       Dependencies:
         Dependency_0: font_cjk
-        Dependency_1: atlas_duelhud
+        Dependency_1: atlas_uibattle
+        Dependency_2: atlas_uimenus
+        Dependency_3: atlas_pvpdefeat
+        Dependency_4: atlas_duelhud
     Info_85:
       Name: atlas_duelhud
       Dependencies: {}

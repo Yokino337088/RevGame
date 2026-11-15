@@ -291,6 +291,7 @@ namespace RevGame.UI
             _preparationQueue.Clear();
             _preparationNotice = null;
             _preparationLoading = false;
+            _roundOutcomeNotice = null;
             foreach (BattleEventNoticeView notice in _notices)
             {
                 if (notice != null)
@@ -299,6 +300,38 @@ namespace RevGame.UI
                 }
             }
             _notices.Clear();
+        }
+
+        // 结算弹幕优先于准备和增益消息，继续复用战斗域的提示池。
+        private BattleEventNoticeView _roundOutcomeNotice;
+        public bool IsRoundOutcomeVisible => _roundOutcomeNotice != null;
+
+        internal void ShowRoundOutcome(GameSide winner, System.Action completed)
+        {
+            ClearNotices();
+            int generation = _noticeGeneration;
+            GamePoolRequests.GetAsync<BattleEventNoticeView>(notice =>
+            {
+                if (notice == null)
+                {
+                    RevLog.Error("回合结算弹幕加载失败", "RevGame");
+                    return;
+                }
+                if (_noticeClosed || this == null || generation != _noticeGeneration ||
+                    RevServices.Get<IBattleService>()?.Phase != GamePhase.Settle)
+                {
+                    RevPool.Return(notice, 0);
+                    return;
+                }
+                _roundOutcomeNotice = notice;
+                _notices.Add(notice);
+                notice.ShowRoundOutcome(winner == GameSide.Player, finished =>
+                {
+                    _roundOutcomeNotice = null;
+                    OnNoticeFinished(finished);
+                    completed();
+                });
+            }, _noticeRoot);
         }
         /// <summary>清除“上轮发生过什么”，服务负责重置数值，HUD 负责重置表现，两者缺一不可。</summary>
         private void ClearRoundPresentation()

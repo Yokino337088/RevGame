@@ -90,7 +90,7 @@ namespace RevGame.Editor
                     }
                     // 演出/过场不在中途冻住；故事仍由Agent的下一句GM决定，不替玩家跳过内容。
                     if (!Flow.IsGameplayBlocked && (Time.time >= target
-                        || (Battle.Phase == GamePhase.Settle && RevUI.IsOpen<SettlePanel>())))
+                        || (Battle.Phase == GamePhase.Settle && RevUI.Get<BattleHudPanel>()?.IsRoundOutcomeVisible == true)))
                     {
                         break;
                     }

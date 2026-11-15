@@ -11,6 +11,8 @@
     <Compile Include="*.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettingsStore.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Agent.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Analysis.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoPositionAnalysis.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/PvpAgentSettings.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoAgentPosition.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoTacticalSearch.cs" />
@@ -19,6 +21,7 @@
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Presentation.cs" Link="PvpService.Presentation.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Computer.cs" Link="PvpService.Computer.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Duel.cs" Link="PvpService.Duel.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.DuelPreparation.cs" Link="PvpService.DuelPreparation.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/*.cs" Link="Duel/%(Filename)%(Extension)" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Revolution/Runtime/RevTask/RevTask.cs" Link="Revolution/RevTask.cs" />
   </ItemGroup>

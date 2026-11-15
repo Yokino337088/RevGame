@@ -42,6 +42,27 @@ namespace RevGame.Services
         {
             RefreshGoState();
         }
+
+        /// <summary>离线走真实开战、死亡和结算。覆盖第一轮、普通轮与 Boss 轮败退。</summary>
+        public static void VerifyRoundRetreat(System.Action<bool, string> check)
+        {
+            for (int chapter = 1; chapter <= Consts.ChapterCount; chapter++)
+            {
+                foreach (int round in new[] { 1, 3, Balance.BossRoundIndex })
+                {
+                    var service = new BattleService(false, seed: 73);
+                    check(service.StartRound(chapter, round), $"建立失败夹具 {chapter}/{round}");
+                    var player = service.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, new BoardPos(0, 0));
+                    check(service.StartBattle(), $"真实开战 {chapter}/{round}");
+                    service.DamagePiece(player, player.Hp);
+                    service.Tick(Balance.BattleSimulationStepSeconds);
+                    check(service.Phase == GamePhase.Settle && service.LastWinner == GameSide.Enemy, $"真实判负 {chapter}/{round}");
+                    check(service.ContinueRound() && service.Chapter == chapter &&
+                        service.Round == System.Math.Max(1, round - 1) && service.Phase == GamePhase.Prepare &&
+                        !service.LastWinner.HasValue && service.Rewards.Count == 0, $"仅回退一轮并清理胜负 {chapter}/{round}");
+                }
+            }
+        }
         /// <summary>处理真实行动进度、目标查询、Attack、DamagePiece 及事件；不能直接调 TakeDamage 伪造结果。</summary>
         public void RunRegressionPlayerStep(float fraction = 1f)
         {

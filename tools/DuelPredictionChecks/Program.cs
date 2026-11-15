@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RevGame.Pvp.Duel;
 
 // Windows 离线回归。使用真实权威、回放副本和预测沙盒，显式调度延迟输入与补帧，便于复现每一步。
@@ -12,8 +13,10 @@ internal static class Program
         CheckLongCatchUpAndReconnect();
         CheckJournalOverflow();
         CheckComboBranches();
+        CheckComputerCombo();
         CheckLocalCadence();
-        Console.WriteLine("DUEL_PREDICTION_PASS lateJump, rollback, anchorHash, bufferedAttack, duplicate, catchUp, staleAnchor, reconnect, journalOverflow, blackAndWhite");
+        CheckLocalFrameAllocations();
+        Console.WriteLine("DUEL_PREDICTION_PASS lateJump, rollback, anchorHash, bufferedAttack, duplicate, catchUp, staleAnchor, reconnect, journalOverflow, blackAndWhite, computerCombo");
     }
 
     // 用非 50 毫秒整数倍的渲染轮询覆盖本地封帧节拍，并模拟一次主线程长停顿。
@@ -218,7 +221,7 @@ internal static class Program
         {
             core.Append(core.Snapshot.Frame + 1, 0);
         }
-        Check(core.Snapshot.FirstCombo == 6 && core.Snapshot.SecondHealth == 3,
+        Check(core.Snapshot.FirstCombo == 6 && core.Snapshot.SecondHealth == DuelConfig.Health - 97,
             "普攻三段、两个技能和大招全部产生权威伤害");
 
         StartComboStep(restored, 4, 4);
@@ -242,6 +245,77 @@ internal static class Program
         Check(whiff.Snapshot.FirstCombo == 0 && whiff.Snapshot.SecondHealth == DuelConfig.Health &&
             !whiff.Snapshot.CanTakeAction(true, 1), "三段空挥保持零命中且不能提前重新起手");
         Console.WriteLine("DUEL_COMBO_PASS threeNormals, bothSkillOrders, ultimate, hitStun, threeWhiffs, checkpoint");
+    }
+
+    // 以实战的原生权威和完整输入路径跑到终局，验证机器人出招、终局一致和回放材料。
+    private static void CheckComputerCombo()
+    {
+        const string id = "computer-combo";
+        using var authority = new DuelAuthority(id, networked: false);
+        using var replica = new DuelCorePipe(id);
+        var computer = new DuelComputerBrain();
+        Check(!authority.TrySealLocalFrame(0, 0, 0, out _), "本地双输入仍需双 Ready");
+        ReadyBoth(authority, networked: false);
+        Check(authority.Snapshot.FirstHealth == 300 && authority.Snapshot.SecondHealth == 300, "原生和 HUD 双方初始生命均为 300");
+        var actions = new List<int>();
+        for (int frame = 1; frame <= 700 && authority.Snapshot.Result == 0; frame++)
+        {
+            int input = computer.Choose(authority.Snapshot, yaya: true);
+            Check(input == computer.Choose(authority.Snapshot, yaya: true), "同帧读取不会重复推进电脑连招");
+            Check(authority.TrySealLocalFrame(0, input, frame * DuelConfig.FrameMs, out int packed), "双方输入一次封口");
+            replica.Append(frame, packed);
+            DuelSnapshot result = authority.Snapshot;
+            Check(result.Hash == replica.Snapshot.Hash, "相同完整帧得到相同权威指纹");
+            if (result.SecondAction != 0 && result.SecondAge == 0)
+            {
+                actions.Add(result.SecondAction);
+            }
+        }
+        Check(actions.Count > 7 && actions[0] == 1 && actions[1] == 5 && actions[2] == 2 && actions[3] == 3 &&
+            actions.Contains(4), "电脑确认普攻两段、技能一、大招，并在后续连招用到技能二");
+        Check(authority.Snapshot.Result == 2 && authority.Snapshot.FirstHealth == 0, "300 生命的人机局仍能正常终局");
+        Check(!authority.TrySealLocalFrame(0, 0, (authority.Frame + 1) * DuelConfig.FrameMs, out _), "终局之后停止封帧");
+        Console.WriteLine("COMPUTER_DUEL " + authority.Frame + " frames, actions " + string.Join(",", actions));
+    }
+
+    // 同样的空输入、帧数和原生线程，比较本机整帧与逐席交换的托管分配，不涉及渲染。
+    private static void CheckLocalFrameAllocations()
+    {
+        const int frames = 400;
+        MeasureLocalFrames(8, direct: false);
+        MeasureLocalFrames(8, direct: true);
+        var legacy = MeasureLocalFrames(frames, direct: false);
+        var direct = MeasureLocalFrames(frames, direct: true);
+        Check(direct.hash == legacy.hash && direct.bytes < legacy.bytes, "本机整帧减少分配且原生结果一致");
+        Console.WriteLine($"DUEL_ALLOC {frames} frames, seat exchanges {legacy.bytes} B, full frames {direct.bytes} B");
+    }
+
+    private static (int hash, long bytes) MeasureLocalFrames(int frames, bool direct)
+    {
+        using var authority = new DuelAuthority("local-allocation", networked: false);
+        ReadyBoth(authority, networked: false);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int frame = 1; frame <= frames; frame++)
+        {
+            long now = frame * DuelConfig.FrameMs;
+            if (direct)
+            {
+                Check(authority.TrySealLocalFrame(0, 0, now, out _), "本机直交按固定节拍封帧");
+            }
+            else
+            {
+                authority.Exchange(2, new DuelRequest
+                {
+                    operation = DuelAuthority.Input, fingerprint = DuelConfig.Fingerprint, afterFrame = frame - 1, inputFrame = frame
+                }, now);
+                authority.Exchange(1, new DuelRequest
+                {
+                    operation = DuelAuthority.Input, fingerprint = DuelConfig.Fingerprint, afterFrame = frame - 1, inputFrame = frame
+                }, now);
+                Check(authority.Frame == frame, "逐席交换按同一节拍封帧");
+            }
+        }
+        return (authority.Snapshot.Hash, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
     // 送一个正式动作槽。普攻二三段由原生解析产生，测试不注入内部动作号。

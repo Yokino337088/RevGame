@@ -67,12 +67,17 @@ namespace RevGame.UI
         [RevBind("SkillTwo")] internal Button SkillTwo;
         [RevBind("Ultimate")] internal Button Ultimate;
         [RevBind("Reconnect")] private Button _reconnect;
+        // 结算是同一 HUD 中最上层的全屏页，胜负共用回大厅按钮。
+        [RevBind("Result")] private CanvasGroup _result;
+        [RevBind("Result/Victory")] private GameObject _victory;
+        [RevBind("Result/Defeat")] private GameObject _defeat;
+        [RevBind("Result/Draw")] private GameObject _draw;
         // 只接受当前场景的视图。关闭后脱离，防止迟到的输入落到旧局。
         private PvpDuelView _owner;
-        // 最近一次落屏的数值帧，头像或连接变化不会重刷仪表。
-        private int _paintedFrame = -1;
-        // 首次出现胜负时只播一次文字反馈。
-        private int _shownResult;
+        // 仪表只看上一份已落屏数值，帧号变化不会重建相同的血条、能量和文字网格。
+        private DuelSnapshot _painted;
+        private bool _hasPainted;
+        internal bool ResultVisible => _result != null && _result.gameObject.activeSelf;
         // 本席控制说明在选角或座位变化时更新。
         private (GoSide seat, bool yaya) _legend;
         // 首次确认名称或名称改变时更新对应标签。
@@ -99,20 +104,39 @@ namespace RevGame.UI
                 return;
             }
             DuelSnapshot frame = Data.Frame;
-            if (_paintedFrame != frame.Frame)
+            if (!_hasPainted || frame.FirstHealth != _painted.FirstHealth)
             {
-                _paintedFrame = frame.Frame;
                 _firstHealth.fillAmount = Mathf.Clamp01(frame.FirstHealth / (float)DuelConfig.Health);
+                _firstHp.text = frame.FirstHealth.ToString();
+            }
+            if (!_hasPainted || frame.SecondHealth != _painted.SecondHealth)
+            {
                 _secondHealth.fillAmount = Mathf.Clamp01(frame.SecondHealth / (float)DuelConfig.Health);
+                _secondHp.text = frame.SecondHealth.ToString();
+            }
+            if (!_hasPainted || frame.FirstEnergy != _painted.FirstEnergy)
+            {
                 _firstEnergy.fillAmount = Mathf.Clamp01(frame.FirstEnergy / (float)DuelConfig.Energy);
+            }
+            if (!_hasPainted || frame.SecondEnergy != _painted.SecondEnergy)
+            {
                 _secondEnergy.fillAmount = Mathf.Clamp01(frame.SecondEnergy / (float)DuelConfig.Energy);
-                PaintNumber(_firstHp, frame.FirstHealth);
-                PaintNumber(_secondHp, frame.SecondHealth);
+            }
+            if (!_hasPainted || frame.FirstCombo != _painted.FirstCombo)
+            {
                 PaintCombo(_firstCombo, frame.FirstCombo);
+            }
+            if (!_hasPainted || frame.SecondCombo != _painted.SecondCombo)
+            {
                 PaintCombo(_secondCombo, frame.SecondCombo);
+            }
+            if (!_hasPainted || (DuelConfig.FrameLimit != 0 && frame.Frame != _painted.Frame))
+            {
                 Clock.text = DuelConfig.FrameLimit == 0 ? "∞" :
                     Mathf.CeilToInt(Mathf.Max(0, DuelConfig.FrameLimit - frame.Frame) * DuelConfig.FrameMs / 1000f).ToString("00");
             }
+            _painted = frame;
+            _hasPainted = true;
             var names = (Data.BlackName, Data.WhiteName, Data.BlackYaya, Data.WhiteYaya);
             if (_names != names)
             {
@@ -132,11 +156,30 @@ namespace RevGame.UI
             {
                 InputFeedback.text = Data.Feedback;
             }
-            if (_shownResult == 0 && frame.Result != 0)
+        }
+
+        /// <summary>权威终局播完击倒后交付结算。遮挡战斗控件，返回操作继续走 GameFlow。</summary>
+        internal void ShowResult(int result, GoSide seat)
+        {
+            if (ResultVisible)
             {
-                _shownResult = frame.Result;
-                _banner.rectTransform.DOPunchScale(Vector3.one * .16f, .4f).SetUpdate(true).SetLink(gameObject);
+                return;
             }
+            bool draw = result == 3;
+            _draw.SetActive(draw);
+            _victory.SetActive(!draw && result == (int)seat);
+            _defeat.SetActive(!draw && result != (int)seat);
+            for (int index = 0; index < transform.childCount; index++)
+            {
+                Transform child = transform.GetChild(index);
+                if (child != _result.transform)
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+            _result.alpha = 0;
+            _result.gameObject.SetActive(true);
+            _result.DOFade(1, .22f).SetUpdate(true).SetLink(gameObject);
         }
 
         // 只有差分变化才替换图片，角色落屏帧率不会反复触发 HUD 的图形重建。
@@ -146,15 +189,6 @@ namespace RevGame.UI
             if (image.sprite != sprite)
             {
                 image.sprite = sprite;
-            }
-        }
-
-        // 血量文本在实际扣血时才更新，避免每个逻辑帧都生成字符串。
-        private static void PaintNumber(Text label, int value)
-        {
-            if (!int.TryParse(label.text, out int painted) || painted != value)
-            {
-                label.text = value.ToString();
             }
         }
 
@@ -234,6 +268,7 @@ namespace RevGame.UI
         }
 
         // 返回由 GameFlow 处理，并在过场遮住 HUD 后关闭面板。
+        // 结算按钮同样走正常退房和场景切换。两处节点共用 Back，一个事件只调用一次。
         [RevButtonClick("Back")]
         private void OnBack()
         {
@@ -252,7 +287,7 @@ namespace RevGame.UI
         {
             _owner?.ClearHeldControls();
             _owner = null;
-            _banner.rectTransform.DOKill();
+            _result.DOKill();
         }
     }
 }

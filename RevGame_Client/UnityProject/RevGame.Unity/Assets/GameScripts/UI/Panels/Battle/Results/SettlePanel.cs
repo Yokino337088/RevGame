@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace RevGame.UI
 {
     /// <summary>
-    /// 结算面板（策划案 §04：赢了进下一回合，输了重开本章；第 6 章 Boss 打完就是通关）。
+    /// 自动推进遇到关卡装配错误时保留的恢复入口。普通回合结算由战斗 HUD 播报。
     ///
     /// 这是典型的"一次性数据"界面，所以走框架推荐的数据流：
     /// 业务层 `RevUI.Open&lt;SettlePanel, SettleData&gt;(data)` → 面板 `OnRefreshView` 只负责画。
@@ -53,8 +53,8 @@ namespace RevGame.UI
             }
             if (_detailText != null)
             {
-                string tail = Data.LastRoundOfChapter ? (win ? "本章通过！" : "本章重来") : (win ? "进入下一回合" : "本章重来");
-                _detailText.text = "第 " + Data.Chapter + " 章 · 第 " + Data.Round + " 回合 — " + tail;
+                string error = RevServices.GetRequired<IBattleService>().LastError;
+                _detailText.text = string.IsNullOrEmpty(error) ? (win ? "重试进入下一阶段" : "重试返回上一回合") : error;
             }
         }
 

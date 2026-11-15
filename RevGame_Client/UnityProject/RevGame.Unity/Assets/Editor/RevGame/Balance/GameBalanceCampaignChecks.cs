@@ -345,22 +345,14 @@ namespace RevGame.Editor
                             }
                             break;
                         }
-                        await Until(() => !flow.IsBossVictoryPlaying && !flow.IsStoryPlaying && RevUI.IsOpen<SettlePanel>(), 35, "结算演出未交付");
                         _round = null;
-
-                        if (number == lastRound && number < Balance.RoundsPerChapter)
+                        if (number < Balance.RoundsPerChapter)
                         {
-                            break;
-                        }
-                        var next = RevGM.Execute("RevGame/下一回合");
-
-                        if (!next.Success)
-                        {
-                            throw new InvalidOperationException(next.Message);
+                            await Until(() => battle.Phase == GamePhase.Prepare && battle.Round == number + 1, 15, "胜利弹幕未自动推进回合");
                         }
                         if (number == Balance.RoundsPerChapter && chapter < 6)
                         {
-                            await Until(() => battle.Phase == GamePhase.Reward && RevUI.IsOpen<RewardPanel>(), 10, "奖励未交付");
+                            await Until(() => battle.Phase == GamePhase.Reward && RevUI.IsOpen<RewardPanel>(), 45, "Boss演出后未自动交付奖励");
                             int choice = GameBalanceTactics.ChooseReward(battle);
                             var reward = RevGM.Execute("RevGame/选奖励 " + choice);
 
@@ -369,8 +361,12 @@ namespace RevGame.Editor
                                 throw new InvalidOperationException(reward.Message);
                             }
                         }
+                        if (number == Balance.RoundsPerChapter && chapter == 6)
+                        {
+                            await Until(() => flow.Screen == GameScreen.Home && !flow.IsTransitioning, 45, "最终回合通关后没有回大厅");
+                        }
 
-                        if (number == Balance.RoundsPerChapter)
+                        if (number == Balance.RoundsPerChapter || number == lastRound)
                         {
                             break;
                         }

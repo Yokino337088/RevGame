@@ -122,6 +122,7 @@ internal static class Program
             VerifyFrequentEnemyDeployment();
             VerifyGuaranteedArrowVolley();
             VerifyHeavyEnemyAI();
+            BattleService.VerifyRoundRetreat(Assert);
             int bossScenarios;
             _assertions += BossRegression.Run(out bossScenarios);
             _scenarios += bossScenarios;

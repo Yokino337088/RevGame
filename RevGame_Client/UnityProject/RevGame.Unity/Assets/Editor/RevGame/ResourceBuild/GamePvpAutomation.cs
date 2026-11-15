@@ -115,6 +115,15 @@ namespace RevGame.Editor
             return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true).GetMethod("BuildDuel").Invoke(null, null);
         }
 
+        /// <summary>编辑态更新胜负结算和现有 HUD 图集，不切场景。</summary>
+        [RevAutomationAction("game.pvp.duel-result-assets", Environment = "edit", Keys = new string[0],
+            Description = "保存决斗结算、返回按钮和 HUD 图集")]
+        public static object DuelResultAssets(RevAutomationRequest request)
+        {
+            return Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)
+                .GetMethod("UpdateDuelResultAssets").Invoke(null, null);
+        }
+
         [RevAutomationAction("game.pvp.match-hud", Environment = "edit", Keys = new string[0], Description = "更新围棋对局HUD与双眼图集绑定，不修改场景")]
         public static object MatchHud(RevAutomationRequest request)
         {

@@ -11,7 +11,7 @@ namespace RevGame.Pvp.Duel
         // 入场最小估算分差，单位为半目。
         public const int MinimumLead = 24;
         // 每席的初始生命值，也是 HUD 血条的满值。
-        public const int Health = 100;
+        public const int Health = 300;
         // 能量上限，用于 HUD 比例换算。
         public const int Energy = 100;
         // 两席距离场地中心的初始横向距离，单位千分格。
@@ -77,11 +77,11 @@ namespace RevGame.Pvp.Duel
             };
         }
         // 两席握手比较的 31 位规则指纹。
-        public const int Fingerprint = 715698469;
+        public const int Fingerprint = 1213366621;
         // 每局构造一份配置包内容，调用方可按小端协议写入本端实例。
         public static int[] CreateCoreWords(bool firstYaya = false, bool secondYaya = true)
         {
-            int[] result = { 100, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1568, 3, 8, 0, 15, 2520, 4, 12, 16, 32, 3360, 7, 20, 55, 540, 68, 480, 18, 2016, 5, 14, 20, 10, 1680, 3, 8, 0, 13, 1859, 4, 11, 0, 4, 8, 0, 15, 5, 12, 420, 12, 21, 16, 210, 0, 6, 13, 100, 6, 4, 9, 110, 15, 5, 11, 150, 14, 1523, 2856, 3528, 2296, 1635, 1770 };
+            int[] result = { 300, 4500, 140, 0, 1700, 100, 1, 12, 50, 9, 1568, 3, 8, 0, 15, 2520, 4, 12, 16, 32, 3360, 7, 20, 55, 540, 68, 480, 18, 2016, 5, 14, 20, 10, 1680, 3, 8, 0, 13, 1859, 4, 11, 0, 4, 8, 0, 15, 5, 12, 420, 12, 21, 16, 210, 0, 6, 13, 100, 6, 4, 9, 110, 15, 5, 11, 150, 14, 1523, 2856, 3528, 2296, 1635, 1770 };
             // 原生字节布局仍按座位。锁角后把对应角色的距离写进原座位槽，不改变 FIFO 或 DLL。
             result[10] = ActionRange(firstYaya, 1);
             result[15] = ActionRange(firstYaya, 2);

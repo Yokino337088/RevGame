@@ -35,6 +35,8 @@ namespace RevGame.Pvp
         private int _duelLastPacked;
         // 本端独立决斗场景是否真正加载完成。
         private bool _duelSceneReady;
+        // 只有本地人机调用。状态跟随本局的权威快照，退出时复位。
+        private readonly DuelComputerBrain _duelComputer = new DuelComputerBrain();
         // 来自权威方的就绪位，不用本端加载状态推测对手就绪。
         private int _duelReadyMask;
         // 尚未装入下一帧的按键招式编号，0 表示未排队。
@@ -403,40 +405,48 @@ namespace RevGame.Pvp
             }
             DuelSnapshot snapshot = DuelSnapshot;
             long now = _clock.ElapsedMilliseconds;
-            if (!_duelSceneReady || DuelError.Length != 0 || snapshot.Result != 0 ||
+            if (!IsComputerGame || DuelError.Length != 0 || snapshot.Result != 0 ||
                 _duelAuthority == null || !_duelAuthority.LocalFrameDue(now))
             {
                 return;
             }
-            var request = DuelRequestFor(DuelBothReady ? DuelAuthority.Input : DuelAuthority.Ready);
-            if (request.operation == DuelAuthority.Input)
+            if (!DuelBothReady)
             {
-                // 按本端连续执行的上界生成下一帧。没收到封口结果前重复请求仍使用旧意图。
-                int next = DuelSnapshot.Frame + 1;
-                if (_duelIntentFrame != next)
-                {
-                    _duelIntentFrame = next;
-                    int action = TakeDuelAction(next);
-                    _duelIntent = _duelDirection | (action << 2) | (TakeLocalDuelJump(snapshot, next) ? DuelCorePipe.Jump : 0);
+                var ready = DuelRequestFor(DuelAuthority.Ready);
+                _duelAuthority.Exchange(2, ready, now);
+                AcceptDuelReply(_duelAuthority.Exchange((int)MySide, ready, now));
+                return;
+            }
+            // 本机已同时拥有两个座位的输入，直接交完整帧，免去每帧创建网络请求、回执和补帧数组。
+            int next = snapshot.Frame + 1;
+            if (_duelIntentFrame != next)
+            {
+                _duelIntentFrame = next;
+                int action = TakeDuelAction(next);
+                _duelIntent = _duelDirection | (action << 2) | (TakeLocalDuelJump(snapshot, next) ? DuelCorePipe.Jump : 0);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-                    if (action != 0)
-                    {
-                        DuelLastAttackIntentForCheck = action;
-                        DuelLastAttackIntentFrameForCheck = next;
-                    }
-#endif
+                if (action != 0)
+                {
+                    DuelLastAttackIntentForCheck = action;
+                    DuelLastAttackIntentFrameForCheck = next;
                 }
-                request.inputFrame = _duelIntentFrame;
-                request.input = _duelIntent;
+#endif
             }
-            if (IsComputerGame)
+            try
             {
-                var bot = DuelRequestFor(request.operation);
-                bot.inputFrame = request.inputFrame;
-                bot.input = ComputerDuelInput();
-                _duelAuthority.Exchange(2, bot, now);
+                if (_duelAuthority.TrySealLocalFrame(_duelIntent, ComputerDuelInput(), now, out int packed))
+                {
+                    AcceptDuelFrame(next, packed);
+                    if (DuelSnapshot.Result != 0 && DuelSnapshot.Hash != _duelAuthority.Snapshot.Hash)
+                    {
+                        SetDuelError("决斗同帧指纹不一致。");
+                    }
+                }
             }
-            AcceptDuelReply(_duelAuthority.Exchange((int)MySide, request, now));
+            catch (Exception error)
+            {
+                SetDuelError(error.Message);
+            }
         }
 
         // 先推进本机持有的联机权威，再按独立时钟送方向和点按。补帧游标落后也可以继续送输入。
@@ -579,28 +589,7 @@ namespace RevGame.Pvp
                 return 0;
             }
 #endif
-            // AI 只生成一个座位的意图。它与真人一样经过权威帧，伤害和距离判定仍由 C++ 负责。
-            var view = _duelAuthority.Snapshot;
-            int distance = view.FirstX - view.SecondX;
-            int gap = Math.Abs(distance);
-            // 先按各自的范围试施法，距离超出才走近。普通腿法仍等近身。
-            if (gap <= DuelConfig.ActionRange(true, 3) && view.SecondEnergy >= DuelConfig.UltimateCost && view.CanTakeAction(false, 3))
-            {
-                return 3 << 2;
-            }
-            if (gap <= DuelConfig.ActionRange(true, 4) && view.SecondEnergy >= DuelConfig.SkillTwoCost && view.CanTakeAction(false, 4))
-            {
-                return 4 << 2;
-            }
-            if (gap <= DuelConfig.ActionRange(true, 2) && view.SecondEnergy >= DuelConfig.SkillCost && view.CanTakeAction(false, 2))
-            {
-                return 2 << 2;
-            }
-            if (gap > DuelConfig.ActionRange(true, 1))
-            {
-                return distance < 0 ? 1 : 2;
-            }
-            return 1 << 2;
+            return _duelComputer.Choose(_duelAuthority.Snapshot, DuelRoleFor(2) == DuelRole.Yaya);
         }
 
         // 核对房间，按连续游标补帧并消费结果。每个权威帧只能执行一次，回执必须等相应快照提交。
@@ -645,16 +634,7 @@ namespace RevGame.Pvp
                 // 回复可能和本端历史重叠。从第一条未消费的位置继续，不重复调用 C++。
                 for (int i = current - reply.afterFrame; i < reply.frames.Length; i++)
                 {
-                    if ((reply.frames[i] & DuelCorePipe.NoDamageFrame) != 0 && (Mode != PvpConnectionMode.Local || !IsComputerGame))
-                    {
-                        throw new InvalidOperationException("联机决斗收到本地测试帧。");
-                    }
-                    DuelSnapshot before = _duelPipe.Snapshot;
-                    _duelPipe.Append(reply.afterFrame + i + 1, reply.frames[i]);
-                    _duelLastPacked = reply.frames[i];
-                    DuelDisplay.Record(_duelPipe.Snapshot);
-                    DuelPreviousSnapshot = before;
-                    RecordDuelHashSample(before);
+                    AcceptDuelFrame(reply.afterFrame + i + 1, reply.frames[i]);
                 }
                 // 平时只交换稀疏样本。终局输出另核对一次，确认结果与权威一致。
                 if (DuelSnapshot.Result != 0 && DuelSnapshot.Frame == reply.afterFrame + reply.frames.Length &&
@@ -668,6 +648,21 @@ namespace RevGame.Pvp
                 DuelError = error.Message;
             }
             RebaseDuelPrediction(reply, current);
+        }
+
+        // 本地完整帧与联机补帧使用相同的执行和表现入口，确保 HUD 和录像消费同一条命令流。
+        private void AcceptDuelFrame(int frame, int packed)
+        {
+            if ((packed & DuelCorePipe.NoDamageFrame) != 0 && (Mode != PvpConnectionMode.Local || !IsComputerGame))
+            {
+                throw new InvalidOperationException("联机决斗收到本地测试帧。");
+            }
+            DuelSnapshot before = _duelPipe.Snapshot;
+            _duelPipe.Append(frame, packed);
+            _duelLastPacked = packed;
+            DuelDisplay.Record(_duelPipe.Snapshot);
+            DuelPreviousSnapshot = before;
+            RecordDuelHashSample(before);
         }
 
         // 权威副本消费整段连续历史后才处理回执。长追帧不沿用旧预测轨迹，直到拿到最新锚点再开始。
@@ -777,6 +772,7 @@ namespace RevGame.Pvp
 #endif
             DuelPreviousSnapshot = default;
             DuelDisplay.Reset();
+            _duelComputer.Reset();
             _duelPrediction?.Dispose();
             _duelPrediction = null;
             _duelPredictionFailed = false;

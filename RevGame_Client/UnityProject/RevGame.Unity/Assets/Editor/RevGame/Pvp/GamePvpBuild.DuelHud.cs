@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RevGame.Pvp.Duel;
 using RevGame.UI;
 using RevGame.View;
@@ -15,6 +16,7 @@ namespace RevGame.Editor
         private const string DuelHudArt = "Assets/GameRes/Art/UI/PvpDuelHud/";
         // RevUIPanel 的逻辑根和此生成目录对应。
         private const string DuelHudPrefabPath = "Assets/GameRes/UI/Panel/Pvp/DuelHud/DuelHudPanel.prefab";
+        private const string DuelVictoryArtPath = DuelHudArt + "DuelVictoryArt.png";
         // 黑方标识和血条使用红色。
         private static readonly Color BlackHud = new Color(1f, .34f, .37f);
         // 白方标识和血条使用冰蓝色。
@@ -63,6 +65,7 @@ namespace RevGame.Editor
                 data.ApplyModifiedPropertiesWithoutUndo();
                 BuildDuelHeader(root);
                 BuildDuelControls(root);
+                BuildDuelResult(root);
                 if (PrefabUtility.SaveAsPrefabAsset(root.gameObject, DuelHudPrefabPath) == null)
                 {
                     throw new InvalidOperationException("无法保存决斗 HUD 预制体。");
@@ -72,6 +75,86 @@ namespace RevGame.Editor
             {
                 UnityEngine.Object.DestroyImmediate(root.gameObject);
             }
+        }
+
+        /// <summary>仅更新现有 HUD 的结算页和默认生命，场景及已有控件的 GUID 和布局保持原样。</summary>
+        public static object UpdateDuelResultAssets()
+        {
+            _font = GameAssetBuilder.Font();
+            GameObject root = PrefabUtility.LoadPrefabContents(DuelHudPrefabPath);
+            try
+            {
+                Transform old = root.transform.Find("Result");
+                if (old != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(old.gameObject);
+                }
+                BuildDuelResult(root.transform);
+                root.transform.Find("BlackHp").GetComponent<Text>().text = DuelConfig.Health.ToString();
+                root.transform.Find("WhiteHp").GetComponent<Text>().text = DuelConfig.Health.ToString();
+                if (PrefabUtility.SaveAsPrefabAsset(root, DuelHudPrefabPath) == null)
+                {
+                    throw new InvalidOperationException("无法保存决斗结算界面。");
+                }
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+            GameSpriteAtlasBuild.ConfigureDuelHudAtlas();
+            return new Dictionary<string, object>
+            {
+                ["prefab"] = DuelHudPrefabPath, ["victoryArt"] = DuelVictoryArtPath, ["health"] = DuelConfig.Health
+            };
+        }
+
+        // 结算覆盖普通对局图层。败北沿用九路围棋的同一张原画和台词。
+        private static void BuildDuelResult(Transform hud)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(DuelVictoryArtPath);
+            if (importer == null)
+            {
+                throw new InvalidOperationException("缺少鸦鸦胜利原画。");
+            }
+            if (importer.textureType != TextureImporterType.Sprite || !importer.alphaIsTransparency || importer.mipmapEnabled)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
+            RectTransform result = Rect("Result", hud, 0, 0, 1, 1);
+            result.gameObject.AddComponent<CanvasGroup>();
+            Plate(Rect("Backdrop", result, -.2f, -.2f, 1.2f, 1.2f), "UI_Pvp_imgBK", new Color(.15f, .12f, .20f), true);
+
+            RectTransform victory = Rect("Victory", result, 0, 0, 1, 1);
+            MakeResultArt(victory, DuelVictoryArtPath, .13f, .055f, .53f, .945f);
+            HudText("Title", victory, "决斗胜利", 1010, 571, 805, 128, 82).color = EnergyHud;
+            Text line = HudText("Line", victory, "强者会得到本鸦的奖励", 1010, 473, 805, 80, 50);
+            line.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            RectTransform defeat = Rect("Defeat", result, 0, 0, 1, 1);
+            MakeResultArt(defeat, "Assets/GameRes/Art/UI/PvpDefeat/PvpDefeatArt.png", 0, 0, 1, 1);
+            HudText("Title", defeat, "决斗败北", 1240, 725, 585, 105, 64);
+            Text defeatLine = HudText("Line", defeat, "弱者就应该被本鸦踩在脚下狠狠地羞辱一番", 1240, 497, 585, 198, 44);
+            defeatLine.resizeTextForBestFit = true;
+            defeatLine.resizeTextMinSize = 25;
+            defeatLine.resizeTextMaxSize = 44;
+
+            HudText("Draw", result, "决斗平局", 560, 456, 800, 175, 82);
+            Button("Back", result, "返回大厅", .032f, .895f, .158f, .966f, 32);
+            result.gameObject.SetActive(false);
+        }
+
+        // 宽屏与安全区只改变画框，立绘始终按原图比例显示。
+        private static void MakeResultArt(Transform parent, string path, float left, float bottom, float right, float top)
+        {
+            var image = Rect("Art", parent, left, bottom, right, top).gameObject.AddComponent<Image>();
+            image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path) ??
+                throw new InvalidOperationException("缺少决斗结算立绘：" + path);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
         }
 
         // 上方从外向内排布头像、玩家名、生命和能量，时钟保持居中。

@@ -159,7 +159,7 @@ namespace RevGame.Services
         }
 #endif
 
-        /// <summary>由结算按钮或 GM 调用；完成最终 Boss 后只派发一次通关，不重新开最终回合。</summary>
+        /// <summary>结算播报后推进回合。失败回退一轮，首轮留在首轮；最终 Boss 通关只派发一次。</summary>
         public bool ContinueRound()
         {
             if (Phase != GamePhase.Settle)
@@ -172,7 +172,7 @@ namespace RevGame.Services
             }
             if (_lastWinner != GameSide.Player)
             {
-                return StartRound(Chapter, 1);
+                return StartRound(Chapter, System.Math.Max(1, Round - 1));
             }
             if (!IsBossRound)
             {

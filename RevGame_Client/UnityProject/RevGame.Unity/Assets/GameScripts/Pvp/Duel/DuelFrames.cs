@@ -159,6 +159,20 @@ namespace RevGame.Pvp.Duel
             return !_networked && now >= _nextSeal;
         }
 
+        /// <summary>仅本地人机已经双 Ready 后使用。两个输入一起提交并加入同一份权威帧历史。</summary>
+        internal bool TrySealLocalFrame(int black, int white, long now, out int packed)
+        {
+            packed = 0;
+            if (!LocalFrameDue(now) || _readyMask != 3 || _inputMask != 0 || Stopped ||
+                !DuelCorePipe.ValidInput(black) || !DuelCorePipe.ValidInput(white))
+            {
+                return false;
+            }
+            packed = Seal(black, white);
+            ScheduleNextLocalFrame(now);
+            return true;
+        }
+
         // 调用方必须仍持有本局线程。只导出已执行的世界边界，不包含两席尚未封口的输入。
         public byte[] SaveCheckpoint()
         {
@@ -249,9 +263,7 @@ namespace RevGame.Pvp.Duel
             {
                 Seal(_input[0], _input[1]);
                 _inputMask = 0;
-                // 普通渲染帧迟到仍沿原节拍；长停顿后从当前时刻重启，只封一帧。
-                long next = _nextSeal + DuelConfig.FrameMs;
-                _nextSeal = next > now ? next : now + DuelConfig.FrameMs;
+                ScheduleNextLocalFrame(now);
             }
             // 只返回请求游标之后的已执行帧，避免客户端自行填空或重播已经消费的输入。
             int count = Math.Min(MaxBatch, Frame - request.afterFrame);
@@ -330,7 +342,14 @@ namespace RevGame.Pvp.Duel
         }
 
         // 两席输入打包后一次提交原生世界，成功后才开放连续历史给其他端。
-        private void Seal(int black, int white)
+        // 普通渲染帧迟到仍沿原节拍；长停顿后从当前时刻重启，只封一帧。
+        private void ScheduleNextLocalFrame(long now)
+        {
+            long next = _nextSeal + DuelConfig.FrameMs;
+            _nextSeal = next > now ? next : now + DuelConfig.FrameMs;
+        }
+
+        private int Seal(int black, int white)
         {
             int packed = black | (white << DuelCorePipe.InputBits);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
@@ -341,6 +360,7 @@ namespace RevGame.Pvp.Duel
 #endif
             _judge.Append(Frame + 1, packed);
             _frames.Add(new DuelReplayFrame(packed, Snapshot));
+            return packed;
         }
 
         // 在收输入之前，用记录的同帧原生指纹核对样本。重复报文可重新确认，但不会增加已核对数量。

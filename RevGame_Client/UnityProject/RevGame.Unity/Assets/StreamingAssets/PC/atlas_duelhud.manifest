@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1147469971
+CRC: 1450112436
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d46dbe44cddc95d959c8343f783c1d45
+    Hash: 6298a77ec4dedf8e078f8a0055ae662f
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d46dbe44cddc95d959c8343f783c1d45
+    Hash: 6298a77ec4dedf8e078f8a0055ae662f
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -35,6 +35,7 @@ Assets:
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_19.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/EmberPortrait.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_23.png
+- Assets/GameRes/Art/UI/PvpDuelHud/DuelVictoryArt.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/SmallFrame.png
 - Assets/GameRes/Atlases/DuelHud.spriteatlasv2
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/Ring.png

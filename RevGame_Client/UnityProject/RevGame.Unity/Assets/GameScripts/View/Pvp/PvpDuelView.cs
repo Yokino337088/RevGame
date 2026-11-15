@@ -32,6 +32,8 @@ namespace RevGame.View
         public DuelCameraRig CameraRig;
         // 最近一次消费命中或招式事件的帧号，避免同一快照重复播放。
         private int _seenFrame = -1;
+        // 终局保留最后一次命中和倒地的表现时间。时钟只驱动结算遮挡，不影响逻辑结果。
+        private double _resultAt;
         // HUD 点按后的招式编号，由下一次输入采样取走。
         private int _clickedAction;
         // 待下一次 Update 消费的一次跳跃点按。
@@ -149,7 +151,15 @@ namespace RevGame.View
             {
                 return;
             }
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                ReturnHome();
+            }
             var service = RevServices.GetRequired<PvpService>();
+            if (service.DuelSnapshot.Result != 0)
+            {
+                return;
+            }
             bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
             bool right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
             int keyboard = (right ? 1 : 0) - (left ? 1 : 0);
@@ -170,10 +180,6 @@ namespace RevGame.View
                 _inputFeedback = "";
             }
             _clickedJump = false;
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                ReturnHome();
-            }
         }
 
         // 及时说明按键被接收或受什么条件限制。具体出招和命中仍等权威帧。
@@ -216,7 +222,7 @@ namespace RevGame.View
         // 在独立播放时钟上取样。到包可以批量推进原生世界，画面仍按相邻已确认帧插值。
         private void LateUpdate()
         {
-            if (HudPanel == null)
+            if (HudPanel == null || HudPanel.ResultVisible)
             {
                 return;
             }
@@ -286,6 +292,19 @@ namespace RevGame.View
             SecondAnimator.ObserveSprite(Second.sprite);
 #endif
             PaintHud(service, view, newFrame, firstMove, secondMove);
+            if (view.Result != 0 && service.DuelError.Length == 0)
+            {
+                double now = Time.unscaledTimeAsDouble;
+                if (_resultAt == 0)
+                {
+                    ClearHeldControls();
+                    _resultAt = now + .55;
+                }
+                if (now >= _resultAt)
+                {
+                    HudPanel.ShowResult(view.Result, service.MySide);
+                }
+            }
         }
 
         // 只在权威播放帧或可见反馈改变时提交，避免渲染频率驱动 HUD 重建。
@@ -397,18 +416,25 @@ namespace RevGame.View
                 DuelConfig.ActionRange(_blackYaya, view.FirstAction) * ArenaScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first,
                 DuelConfig.ActionRange(_whiteYaya, view.SecondAction) * ArenaScale);
+            float impact = 0;
             if (view.FirstHit != 0)
             {
                 // 同帧对打可能已打断出招者。前一帧仍持有命中的动作编号。
                 int action = view.FirstAction != 0 ? view.FirstAction : Mathf.Max(1, previous.FirstAction);
                 Effects.Hit(0, action, view.FirstFacing, second);
-                Flash(Second);
+                Flash(Second, action);
+                impact = ImpactStrength(action);
             }
             if (view.SecondHit != 0)
             {
                 int action = view.SecondAction != 0 ? view.SecondAction : Mathf.Max(1, previous.SecondAction);
                 Effects.Hit(1, action, view.SecondFacing, first);
-                Flash(First);
+                Flash(First, action);
+                impact = Mathf.Max(impact, ImpactStrength(action));
+            }
+            if (impact > 0)
+            {
+                CameraRig.Kick(impact);
             }
         }
 
@@ -422,16 +448,30 @@ namespace RevGame.View
         private static void PaintActor(Image actor, Vector2 position, int facing)
         {
             var rect = actor.rectTransform;
-            rect.anchoredPosition = position;
-            rect.localScale = new Vector3(facing < 0 ? -1 : 1, 1, 1);
+            if (rect.anchoredPosition != position)
+            {
+                rect.anchoredPosition = position;
+            }
+            float x = facing < 0 ? -1 : 1;
+            if (rect.localScale.x != x)
+            {
+                rect.localScale = new Vector3(x, 1, 1);
+            }
+        }
+
+        // 同帧互击只取更重的一次震动。距离单位是擂台设计像素。
+        private static float ImpactStrength(int action)
+        {
+            return action == 3 ? 13f : action is 2 or 4 ? 7f : 3f;
         }
 
         // 命中时做一次受击着色，旧 Tween 先取消，避免重复叠加。
-        private void Flash(Image image)
+        private void Flash(Image image, int action)
         {
             image.DOKill();
-            image.color = new Color(1, .54f, .46f);
-            image.DOColor(Color.white, .16f).SetUpdate(true).SetLink(gameObject);
+            float strength = ImpactStrength(action) / 13f;
+            image.color = Color.Lerp(new Color(1, .77f, .68f), new Color(1, .41f, .37f), strength);
+            image.DOColor(Color.white, Mathf.Lerp(.11f, .23f, strength)).SetEase(Ease.OutCubic).SetUpdate(true).SetLink(gameObject);
         }
     }
 }

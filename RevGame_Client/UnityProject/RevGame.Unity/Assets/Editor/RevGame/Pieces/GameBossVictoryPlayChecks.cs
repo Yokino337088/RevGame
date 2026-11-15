@@ -208,7 +208,7 @@ namespace RevGame.Editor
                             VerifyBanner(RevUI.Get<BossVictoryPanel>().transform);
                         }
                         Require(flow.IsGameplayBlocked && battle.Phase == GamePhase.Settle, "演出时真实结算且输入受锁");
-                        Require(!RevUI.IsOpen<SettlePanel>(), "演出时结算面板没有提前弹出");
+                        Require(RevUI.Get<BattleHudPanel>()?.IsRoundOutcomeVisible != true, "演出时回合结算弹幕没有提前出现");
 
                         if (flow.BossVictoryStage == "death")
                         {
@@ -243,7 +243,7 @@ namespace RevGame.Editor
                         await Until(() => flow.AdvanceStory(), 3, "剧情下一句未接受");
                         await RevTask.Yield();
                     }
-                    await Until(() => !flow.IsBossVictoryPlaying && RevUI.IsOpen<SettlePanel>(), 4, "剧情结束后结算未开放");
+                    await Until(() => !flow.IsBossVictoryPlaying && RevUI.Get<BattleHudPanel>()?.IsRoundOutcomeVisible == true, 4, "剧情结束后未播回合结算弹幕");
                     Require(flow.BossVictoryStage == "completed" && !flow.IsStoryPlaying && Time.timeScale == originalTime, "序列收尾与UI交割完整");
                     Require(board.VictoryBossView == null && battle.LastWinner == GameSide.Player, "真实胜负保留且死亡主将无残留");
                     Require(flow.ReturnHome(), "正常回大厅");

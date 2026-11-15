@@ -20,12 +20,20 @@ namespace RevGame.View
         private const float WardSeconds = .58f;
         // 相机中心是相对舞台原点的设计像素；速度状态由 SmoothDamp 连续积累。
         private float _center, _centerSpeed;
+        // 不随角色位置变动的裁切参数。只有窗口或底图变更才重算并触发布局。
+        private Vector2 _viewport;
+        private Sprite _backdropSprite;
+        private float _scale, _halfView, _scrollLimit;
+        // 单次权威命中的表现冲击。普通攻击和大招的振幅不同，HUD 不跟随摇动。
+        private const float ImpactSeconds = .19f;
+        private float _impactAge = ImpactSeconds, _impactForce;
         // 第一次采样直接取开局位置，避免从编辑器构图突然划过场地。
         private bool _initialized;
         // 两席上一次碰到的边界，0 为场内；持续顶住时不会每帧触发。
         private int _firstEdge, _secondEdge;
         // 两道结界上次触发的绝对表现秒数。
         private float _leftAt = float.NegativeInfinity, _rightAt = float.NegativeInfinity;
+        private float _leftPhase = -1, _rightPhase = -1;
         // 结界平时是浅青，触发后用更明亮的白青轮廓压住场地边缘。
         private static readonly Color WardColor = new Color(.30f, .96f, .84f);
 
@@ -64,23 +72,30 @@ namespace RevGame.View
             return x <= -DuelConfig.ArenaExtent ? -1 : x >= DuelConfig.ArenaExtent ? 1 : 0;
         }
 
+        /// <summary>一次命中重启短促衰减，同帧互击由调用方先取较大振幅。</summary>
+        internal void Kick(float pixels)
+        {
+            _impactForce = pixels;
+            _impactAge = 0;
+        }
+
         /// <summary>以两席横坐标构图。角色跳跃由舞台内坐标表现，镜头高度保持贴地。</summary>
         public void Paint(float blackX, float whiteX, float seconds)
         {
-            float width = Fighters.rect.width;
-            float canvasHeight = Fighters.rect.height;
-            if (width < 1 || canvasHeight < 1)
+            Vector2 viewport = Fighters.rect.size;
+            if (viewport.x < 1 || viewport.y < 1)
             {
                 return;
+            }
+            if (_backdropSprite != Backdrop.sprite || _viewport != viewport)
+            {
+                FitBackdrop(viewport, Backdrop.sprite);
             }
 
             float left = Mathf.Min(blackX, whiteX);
             float right = Mathf.Max(blackX, whiteX);
             float dt = Mathf.Min(seconds, .05f);
             const float bodyMargin = 170;
-            float arenaWidth = DuelConfig.ArenaExtent * PvpDuelView.ArenaScale * 2f;
-            // 按双方同时站在最远边界计算比例。跳跃、出招或对手靠近都不会改变它。
-            float scale = Mathf.Min(1, width * .96f / (arenaWidth + bodyMargin * 2));
             float middle = (blackX + whiteX) * .5f;
             if (!_initialized)
             {
@@ -92,35 +107,60 @@ namespace RevGame.View
             const float deadZone = 96;
             float shift = middle - _center;
             float desiredCenter = middle - Mathf.Clamp(shift, -deadZone, deadZone);
-            float halfView = width * .48f / scale;
-            float artWidth = Mathf.Max(arenaWidth / PillarSpan, (width + 46) / scale);
-            float scrollLimit = Mathf.Max(0, (artWidth - (width + 40) / scale) * .5f);
-            float minCenter = Mathf.Max(-scrollLimit, right + bodyMargin - halfView);
-            float maxCenter = Mathf.Min(scrollLimit, left - bodyMargin + halfView);
+            float minCenter = Mathf.Max(-_scrollLimit, right + bodyMargin - _halfView);
+            float maxCenter = Mathf.Min(_scrollLimit, left - bodyMargin + _halfView);
             desiredCenter = Mathf.Clamp(desiredCenter, minCenter, maxCenter);
             _center = Mathf.Clamp(Mathf.SmoothDamp(_center, desiredCenter, ref _centerSpeed, .35f, 580, dt), minCenter, maxCenter);
-            Fighters.localScale = new Vector3(scale, scale, 1);
-            Fighters.anchoredPosition3D = new Vector3(-_center * scale, 0, 0);
+            float shake = 0;
+            if (_impactAge < ImpactSeconds)
+            {
+                float phase = _impactAge / ImpactSeconds;
+                float decay = 1 - phase;
+                shake = Mathf.Cos(phase * Mathf.PI * 4) * decay * decay * _impactForce;
+                _impactAge += seconds;
+            }
+            var position = new Vector2(-_center * _scale + shake, -shake * .24f);
+            if (Fighters.anchoredPosition != position)
+            {
+                Fighters.anchoredPosition = position;
+            }
+            PaintWard(LeftWard, _leftAt, ref _leftPhase);
+            PaintWard(RightWard, _rightAt, ref _rightPhase);
+        }
 
-            // 背景跟随同一舞台水平移动。按上下留边确定大图尺寸，地平线高度固定。
+        // 固定边距能同时容纳两席。角色变化只移动舞台，不触碰底图尺寸或缩放。
+        private void FitBackdrop(Vector2 viewport, Sprite sprite)
+        {
+            _viewport = viewport;
+            _backdropSprite = sprite;
+            const float bodyMargin = 170;
+            float arenaWidth = DuelConfig.ArenaExtent * PvpDuelView.ArenaScale * 2f;
+            _scale = Mathf.Min(1, viewport.x * .96f / (arenaWidth + bodyMargin * 2));
+            _halfView = viewport.x * .48f / _scale;
+            float artWidth = Mathf.Max(arenaWidth / PillarSpan, (viewport.x + 46) / _scale);
+            _scrollLimit = Mathf.Max(0, (artWidth - (viewport.x + 40) / _scale) * .5f);
+            Fighters.localScale = new Vector3(_scale, _scale, 1);
             RectTransform art = Backdrop.rectTransform;
             const float ground = .225f;
             const float artFloor = -172f;
-            float anchorY = canvasHeight * Fighters.pivot.y;
-            float bottom = (anchorY + 22) / scale + artFloor;
-            float top = (canvasHeight - anchorY + 22) / scale - artFloor;
-            Rect sprite = Backdrop.sprite.rect;
-            art.sizeDelta = new Vector2(artWidth, Mathf.Max(artWidth * sprite.height / sprite.width, Mathf.Max(bottom / ground, top / (1 - ground))));
+            float anchorY = viewport.y * Fighters.pivot.y;
+            float bottom = (anchorY + 22) / _scale + artFloor;
+            float top = (viewport.y - anchorY + 22) / _scale - artFloor;
+            Rect source = sprite.rect;
+            art.sizeDelta = new Vector2(artWidth, Mathf.Max(artWidth * source.height / source.width,
+                Mathf.Max(bottom / ground, top / (1 - ground))));
             art.anchoredPosition = new Vector2(0, artFloor);
-
-            PaintWard(LeftWard, _leftAt);
-            PaintWard(RightWard, _rightAt);
         }
 
         // 触发后立即闪亮，法纹向上扫过，再缓慢回落到常驻的浅色提示。
-        private static void PaintWard(DuelArenaFxGraphic ward, float started)
+        private static void PaintWard(DuelArenaFxGraphic ward, float started, ref float previous)
         {
             float phase = Mathf.Clamp01((Time.unscaledTime - started) / WardSeconds);
+            if (previous == phase)
+            {
+                return;
+            }
+            previous = phase;
             Color tint = WardColor;
             tint.a = .14f + .86f * (1 - Mathf.SmoothStep(0, 1, phase));
             ward.color = tint;

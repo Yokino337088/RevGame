@@ -92,20 +92,27 @@ internal static class Program
         Check(service.IsComputerGame && service.MySide == GoSide.Black, "computer game owns white seat");
         Check(service.Submit(GoAction.Play, 4, 4), "human black move accepted");
         Check(!service.Submit(GoAction.Play, 3, 3) && service.Core.Sequence == 1, "human cannot move for computer");
+        typeof(PvpService).GetField("_computerAt", Private).SetValue(service, 0d);
         service.Poll();
+        Check(service.ComputerPreviewPoint >= 0 && service.Core.Sequence == 1, "preview announces a move without recording it early");
+        FinishComputerPreview(service);
         Check(service.Core.Sequence == 2 && service.Core.Turn == GoSide.Black, "computer uses real rule entry for legal reply");
         service.StartComputer();
         Check(service.Submit(GoAction.Pass), "human can propose scoring");
         typeof(PvpService).GetField("_computerAt", Private).SetValue(service, 0d);
         service.Poll();
-        Check(service.Core.Phase == GoPhase.Scoring, "computer accepts double pass");
-        typeof(PvpService).GetField("_computerAt", Private).SetValue(service, 0d);
-        service.Poll();
-        Check(service.Core.HasConfirmed(GoSide.White), "computer confirms only its own score seat");
-        Check(service.Submit(GoAction.ConfirmScore) && service.Core.Phase == GoPhase.Finished, "human and computer finish scoring");
+        Check(service.Core.Phase == GoPhase.Finished && service.Core.Winner == GoSide.White, "computer match automatically finishes on double pass");
+        Check(!service.Submit(GoAction.ConfirmScore), "automatic scoring does not accept a redundant confirmation");
         service.StartLocal();
         Check(!service.IsComputerGame, "switching local mode clears computer lifetime");
         Console.WriteLine("PASS: " + _checks + " service timing/state assertions. Unity, JSON and sockets are not covered by this harness.");
+    }
+
+    // 离线夹具仅推进预告截止时间，真实 Poll 仍必须走合法落子和计时入口。
+    internal static void FinishComputerPreview(PvpService service)
+    {
+        typeof(PvpService).GetField("_previewDue", Private).SetValue(service, 0d);
+        service.Poll();
     }
 
     private static void CheckLocalRating()
@@ -125,7 +132,7 @@ internal static class Program
             RulesJson = config.RulesJson, MySide = 1, RatingFinalized = true, RatingDelta = -16 };
         transport.Push(state);
         Check(!UnityEngine.PlayerPrefs.HasKey(key), "未完成棋局不能提前记分");
-        var core = new GoCore(config.komiHalfPoints);
+        var core = GoCore.CreateMatch(config.komiHalfPoints);
         string previous = core.StateHash.ToString();
         Check(core.TryApply(GoAction.Resign, GoSide.Black, -1, -1, out _), "生成可重放认输");
         state.Commands.Add(new GoRelayCommand { Sequence = 1, Side = 1, Kind = (int)GoAction.Resign,
@@ -151,7 +158,7 @@ internal static class Program
         service.Begin(config);
         service.StartServer("127.0.0.1:20000", "增量验收");
         var transport = FantasyGoTransport.Latest;
-        var expected = new GoCore(config.komiHalfPoints);
+        var expected = GoCore.CreateMatch(config.komiHalfPoints);
         GoRelayCommand Move(int x)
         {
             var side = expected.Turn;

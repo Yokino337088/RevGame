@@ -152,6 +152,14 @@ namespace RevGame.Editor
                     && (!p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) || importer.textureType == TextureImporterType.Sprite))
                 .Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
         }
+
+        /// <summary>单独制作决斗 HUD 时只重装它使用的图集，其他进行中的资源组仍由各自配方负责。</summary>
+        public static void ConfigureDuelHudAtlas()
+        {
+            const string name = "DuelHud";
+            ConfigureAtlas(name, CollectTextures().Where(path => GroupFor(path) == name).ToList());
+            AssetDatabase.SaveAssets();
+        }
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path)
         {

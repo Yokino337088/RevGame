@@ -19,6 +19,8 @@ namespace RevGame.Flow
         private DuelPrepPanelBase _duelPreparationPanel;
         // 决斗 HUD 独立于准备页，直到 HUD 关闭后才归还专用图集。
         private GameSpriteAtlasService.ScopedAtlasLease _duelHudAtlas;
+        // 围棋面板关掉后提前持有同一张败北立绘，终局无需现取素材。
+        private GameSpriteAtlasService.ScopedAtlasLease _duelDefeatAtlas;
         // 只在可见状态变化时传新数据，进度补间不会被网络轮询反复重启。
         private (int revision, int seconds, DuelRole black, DuelRole white, bool canPick, int side, string blackName, string whiteName) _duelPainted;
 
@@ -98,8 +100,11 @@ namespace RevGame.Flow
                 _duelPreparationPanel = loading;
                 _duelPainted = default;
                 RevUI.Close<DuelSelectPanel>();
-                _duelHudAtlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas("DuelHud");
+                var atlases = RevServices.GetRequired<GameSpriteAtlasService>();
+                _duelHudAtlas = atlases.AcquireScopedAtlas("DuelHud");
+                _duelDefeatAtlas = atlases.AcquireScopedAtlas("PvpDefeat");
                 await _duelHudAtlas.WaitReadyAsync();
+                await _duelDefeatAtlas.WaitReadyAsync();
                 ThrowIfDisposed();
                 if (!DuelStillPreparing(service, duelId))
                 {
@@ -163,7 +168,8 @@ namespace RevGame.Flow
                 }
                 atlas?.Dispose();
                 IsTransitioning = false;
-                if (!completed && Screen == GameScreen.Pvp && service.DuelId == duelId)
+                if (!completed && Screen == GameScreen.Pvp &&
+                    (service.DuelId.Length == 0 || service.DuelId == duelId))
                 {
                     ReturnHome();
                 }
@@ -176,6 +182,8 @@ namespace RevGame.Flow
             RevUI.Close<DuelHudPanel>();
             _duelHudAtlas?.Dispose();
             _duelHudAtlas = null;
+            _duelDefeatAtlas?.Dispose();
+            _duelDefeatAtlas = null;
         }
 
         // 门禁只等待网络状态，不请求新的 Unity AsyncOperation；否则挂起的加载队列无法继续。

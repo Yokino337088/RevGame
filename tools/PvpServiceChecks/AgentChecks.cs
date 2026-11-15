@@ -19,6 +19,11 @@ namespace RevGame.Pvp.Agent
         {
             throw new InvalidOperationException("离线测试禁止访问真实云端");
         }
+
+        internal static IGoAgentRequest StartAnalysis(PvpAgentSettings settings, GoAgentPosition position)
+        {
+            return Start(settings, position);
+        }
     }
 }
 
@@ -69,11 +74,8 @@ internal static class AgentChecks
         s.AgentRequestFactory = (_, position) => { requests++; return response; };
         Assert(s.Submit(GoAction.Pass), "玩家停一手");
         s.Poll();
-        Assert(s.Core.Phase == GoPhase.Scoring && response.Disposed, "白方Agent停一手进入数子并释放请求");
-        response = new Response { Content = "{\"actionId\":\"confirm\"}" };
-        s.Poll();
-        Assert(s.Core.HasConfirmed(GoSide.White), "Agent只确认白方");
-        Assert(s.Submit(GoAction.ConfirmScore) && s.Core.Phase == GoPhase.Finished, "完整人机数子闭环");
+        Assert(s.Core.Phase == GoPhase.Finished && response.Disposed, "白方 Agent 停一手后自动终局并释放请求");
+        Assert(s.Core.Winner == GoSide.White && !s.Submit(GoAction.ConfirmScore), "完整人机自动数子闭环，终局拒绝多余确认");
         s.StartComputer();
         s.Submit(GoAction.Play, 4, 4);
         response = new Response { Done = false };
@@ -96,6 +98,8 @@ internal static class AgentChecks
         Assert(s.Core.Sequence == 1, "非法云端动作不提交");
         count = requests;
         s.Poll();
+        Assert(s.ComputerPreviewPoint >= 0 && s.Core.Sequence == 1, "失败后的合法落点先预告");
+        Program.FinishComputerPreview(s);
         Assert(s.Core.Sequence == 2 && requests == count, "本手本地回退且不重复付费请求");
         var position = GoAgentPosition.Create(s.Core, GoSide.Black);
         ulong hash = s.Core.StateHash;
@@ -131,6 +135,7 @@ internal static class AgentChecks
         s.Poll();
         typeof(PvpService).GetField("_requestStarted", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(s, -120d);
         s.Poll();
+        Program.FinishComputerPreview(s);
         Assert(response.Disposed && s.Core.Sequence == 2, "HTTP永不结束也须绝对超时并完成本地合法回退");
         s.Dispose();
         s = new PvpService();
@@ -161,6 +166,7 @@ internal static class AgentChecks
             Assert(moved, "黑方须有合法输入");
             s.Poll();
             s.Poll();
+            Program.FinishComputerPreview(s);
         }
         Assert(attempts == 3 && s.Core.Sequence == 8, "连续限流后冷却，第4手无需再次等待云端");
         s.Dispose();

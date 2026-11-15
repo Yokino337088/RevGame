@@ -14,6 +14,8 @@ namespace RevGame.View
     [RevPoolPrefab(RevResPath.UI_Item_Notice, "BattleEventNotice", Group = RevResGroup.Battle)]
     public sealed class BattleEventNoticeView : MonoBehaviour, IRevPoolable
     {
+        // 弹入、震动、停留和淡出的总时长。推进回合的流程以此为节拍。
+        internal const float RoundOutcomeSeconds = 1.24f;
         [Tooltip("整体透明度；不阻挡玩家点击棋盘。")]
         [SerializeField] private CanvasGroup group;
         [Tooltip("大字标题：内容、字号与颜色由 BattleText 表决定。")]
@@ -34,6 +36,8 @@ namespace RevGame.View
         private bool _enemyDeploymentMode;
         // 长规则文案使用横幅留足阅读宽度，仍复用底板和池，不挤在右侧小栏内缩成14号字。
         private bool _boardRuleMode;
+        // 回合结算独占棋盘中央，使用只显示标题的布局。
+        private bool _roundOutcomeMode;
         public bool HasActiveAnimation
         {
             get
@@ -150,6 +154,42 @@ namespace RevGame.View
             outline.effectColor = new Color(0.04f, 0.07f, 0.12f, 1f);
             outline.effectDistance = new Vector2(2f, -2f);
         }
+
+        /// <summary>播放一条不抢输入的回合结果。使用非缩放时间，与战斗逻辑时间独立。</summary>
+        internal void ShowRoundOutcome(bool won, Action<BattleEventNoticeView> onFinished)
+        {
+            StopAnimation();
+            _roundOutcomeMode = true;
+            _onFinished = onFinished;
+            titleText.text = won ? "回合胜利" : "回合失败";
+            titleText.fontStyle = FontStyle.Bold;
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.fontSize = 96;
+            titleText.resizeTextForBestFit = true;
+            titleText.resizeTextMinSize = 42;
+            titleText.resizeTextMaxSize = 96;
+            titleText.color = won ? new Color(1f, .86f, .45f) : new Color(1f, .53f, .53f);
+            ConfigureOutline(titleText);
+            SetChildRect(titleText.rectTransform, Vector2.zero, new Vector2(680, 132));
+            detailText.text = string.Empty;
+            icon.enabled = false;
+            var rect = (RectTransform)transform;
+            rect.anchorMin = rect.anchorMax = Vector2.one * .5f;
+            rect.localRotation = Quaternion.identity;
+            rect.localPosition = Vector3.zero;
+            rect.localScale = Vector3.one * .55f;
+            group.alpha = 0;
+            group.blocksRaycasts = group.interactable = false;
+            ApplySafeLayout();
+
+            _animation = DOTween.Sequence().SetUpdate(true)
+                .Append(rect.DOScale(1f, .24f).SetEase(Ease.OutBack))
+                .Join(group.DOFade(1, .13f))
+                .Append(titleText.rectTransform.DOShakeAnchorPos(.24f, new Vector2(13, 7), 11, 75, false, true))
+                .AppendInterval(.54f)
+                .Append(group.DOFade(0, RoundOutcomeSeconds - 1.02f))
+                .OnComplete(Finish);
+        }
         private void LateUpdate()
         {
             ApplySafeLayout();
@@ -169,6 +209,16 @@ namespace RevGame.View
                 ? new Rect(0f, 0f, 1f, 1f)
                 : GameBattleLayout.BoardViewport(parent.rect.size);
             GameBattleLayout.Regions areas = GameBattleLayout.Calculate(parent.rect.size, viewport);
+
+            if (_roundOutcomeMode)
+            {
+                float bannerWidth = Mathf.Min(720f, parent.rect.width * .65f);
+                rect.sizeDelta = new Vector2(bannerWidth, 148f);
+                rect.anchoredPosition = new Vector2(0, parent.rect.height * .10f);
+                // 震动只写标题的锚点偏移，布局更新仅需同步宽度，不能每帧把振幅清零。
+                titleText.rectTransform.sizeDelta = new Vector2(bannerWidth * .94f, 132f);
+                return;
+            }
 
             if (_boardRuleMode)
             {
@@ -245,6 +295,7 @@ namespace RevGame.View
             _onFinished = null;
             _preparationMode = false;
             _enemyDeploymentMode = false;
+            _roundOutcomeMode = false;
             titleText.text = detailText.text = string.Empty;
             group.alpha = 0f;
         }

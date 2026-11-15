@@ -111,8 +111,8 @@ void CheckCheckpoint(const StartWords& settings)
     Check(GameCore_RestoreCheckpoint(alien, initial.data(), int(initial.size()), first.data(), int(first.size())) == -1);
     Check(GameCore_RestoreCheckpoint(target, initial.data(), int(initial.size()), first.data(), int(first.size())) == 1);
     Check(ReadWord(first.data()) == 0);
-    // v8 开局指纹锁定双席距离配置、高位非零的种子和负坐标。
-    Check(ReadWord(first.data() + 64) == 0x3d994828u);
+    // 开局指纹锁定 300 生命、双席距离配置、高位非零的种子和负坐标。
+    Check(ReadWord(first.data() + 64) == 0x06985823u);
 
     auto foreign = settings;
     ++foreign.back();
@@ -503,7 +503,7 @@ int main()
         {
             Check(left[68] != 0 || left[69] != 0);
             // 额外覆盖第一帧黑方起跳后的高度和隐藏垂直速度。
-            Check(ReadWord(left.data() + 64) == 0x08867bb0u);
+            Check(ReadWord(left.data() + 64) == 0x63ada13fu);
         }
     }
     Check(GameCore_Write(first, excess.data(), int(excess.size())) == 1);
@@ -539,7 +539,8 @@ int main()
         if (frame == 14 || frame == 23)
         {
             Check(left[56] == 9 && left[60] == 9);
-            Check(left[12] == (frame == 14 ? 100 : 91) && left[36] == left[12]);
+            const int health = settings[2] - (frame == 14 ? 0 : 9);
+            Check(ReadSignedWord(left.data() + 12) == health && ReadSignedWord(left.data() + 36) == health);
         }
     }
     GameCore_Destroy(duel);

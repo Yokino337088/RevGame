@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3692924081
+CRC: 1498707321
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7fd094f45d39cdf5dbee92c2c50efa34
+    Hash: 95f0f46e71d6bb208d46b016a2daff75
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2d326f75631b7141e382b48d60e79033
+    Hash: 30458392a1f1e6025558a5ec8957da87
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7fd094f45d39cdf5dbee92c2c50efa34
+    Hash: 95f0f46e71d6bb208d46b016a2daff75
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,6 +40,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 224
   Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
@@ -61,4 +63,7 @@ Assets:
 - Assets/GameRes/UI/Panel/Pvp/DuelHud/DuelHudPanel.prefab
 Dependencies:
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_duelhud"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpdefeat"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
