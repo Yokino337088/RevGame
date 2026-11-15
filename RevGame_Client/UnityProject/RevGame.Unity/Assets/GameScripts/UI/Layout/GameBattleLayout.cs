@@ -3,6 +3,7 @@
 // 相机、手牌、HUD 和增益提示必须使用同一份区域，否则各自适配后仍可能互相遮挡。
 // 返回的坐标以画布左下角为原点；它不是另一套 UI 管理器，只计算几个矩形。
 // ============================================================
+using Revolution;
 using UnityEngine;
 
 namespace RevGame.UI
@@ -21,13 +22,10 @@ namespace RevGame.UI
             public Rect Board;
             public Rect Header;
         }
-        /// <summary>先用设备自己的宽高归一化安全区，不能拿模拟手机的像素直接套到 Game 窗口。</summary>
+        /// <summary>读取 Revolution 的屏幕安全区，设备模拟器和真机使用同一归一化坐标口径。</summary>
         public static Rect SafeViewport()
         {
-            // UnityEngine.Device.Screen 在 Simulator 中代表模拟手机，真机上与 Screen 相同。
-            // 普通 Screen.width 在编辑器可能仍代表另一个 Game 窗口，混用会把侧栏推到屏幕外。
-            Vector2 deviceSize = new Vector2(UnityEngine.Device.Screen.width, UnityEngine.Device.Screen.height);
-            return NormalizeSafeArea(UnityEngine.Device.Screen.safeArea, deviceSize);
+            return RevUIViewport.GetScreenSafeArea();
         }
         /// <summary>棋盘相机、手牌和侧栏在所有屏幕上使用同一个安全设计框，背景仍覆盖完整画幅。</summary>
         public static Rect BoardViewport(Vector2 size)
@@ -38,14 +36,7 @@ namespace RevGame.UI
         /// <summary>在真实安全区内等比内接设计矩形。单边刘海只扣除一次，中心随安全区平移。</summary>
         public static Rect FitBoardViewport(Vector2 size, Rect safe)
         {
-            if (size.x <= 0f || size.y <= 0f)
-            {
-                return new Rect(0f, 0f, 1f, 1f);
-            }
-
-            float scale = Mathf.Min(safe.width * size.x / DesignResolution.x, safe.height * size.y / DesignResolution.y);
-            Vector2 fit = new Vector2(DesignResolution.x * scale / size.x, DesignResolution.y * scale / size.y);
-            return new Rect(safe.center - fit * .5f, fit);
+            return RevUIViewport.FitDesignFrame(size, safe, DesignResolution);
         }
 
         /// <summary>将棋盘设计框之外的安全空间分给两侧控件。返回设计坐标中的偏移，按钮和字体仍等比缩放。</summary>
@@ -61,20 +52,7 @@ namespace RevGame.UI
         /// <summary>独立纯计算入口，方便验证刘海、左右旋转和非法的零尺寸输入。</summary>
         public static Rect NormalizeSafeArea(Rect safe, Vector2 size)
         {
-            if (size.x <= 0f || size.y <= 0f || safe.width <= 0f || safe.height <= 0f)
-            {
-                return new Rect(0f, 0f, 1f, 1f);
-            }
-            float left = Mathf.Clamp01(safe.xMin / size.x);
-            float right = Mathf.Clamp01(safe.xMax / size.x);
-            float bottom = Mathf.Clamp01(safe.yMin / size.y);
-            float top = Mathf.Clamp01(safe.yMax / size.y);
-
-            if (right <= left || top <= bottom)
-            {
-                return new Rect(0f, 0f, 1f, 1f);
-            }
-            return Rect.MinMaxRect(left, bottom, right, top);
+            return RevUIViewport.NormalizeSafeArea(safe, new Rect(Vector2.zero, size));
         }
         /// <summary>先预留左右操作区和顶栏，再给棋盘尽可能大的正方形；窄横屏也不会挤进手牌。</summary>
         public static Regions Calculate(Vector2 size, Rect viewport)

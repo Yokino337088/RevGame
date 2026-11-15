@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "3c1202c3d4b0e195f633a6ce7141fceb8b85a1706c34f0b865ff06fb87121207",
-  "inputDigest": "b993482632b542a8e9e0748dc2ba738c07f342f82687884844a30b05a7aade0f",
+  "inputDigest": "1488c87536aca80779ab64c5093dfd7c78c0fe9117f7cafd8ec87ab8fa1b6a3c",
   "originalBytes": 17002248,
   "outputBytes": 807412,
   "characterCount": 1812,
@@ -3080,11 +3080,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Layout/GameBattleLayout.cs",
-      "sha256": "590cf4df4882400fd71bb7441537062e38b33b383280304d14c3bc351f24a054"
+      "sha256": "990940cda868986fddbe96a6aa068e6bb7e5066561c6d1cc524d307ef731d8a3"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Layout/GameMobileLayout.cs",
-      "sha256": "03284863a009fe35db4f9256ab8ce77d6a4793bd3b25248fea13b9013a9262f5"
+      "sha256": "4a5df15a296d9946f8d3fea4c8b2975e90225f7eca939cfd58852b90e1355435"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Battle/Boss/BossIntroPanel.cs",
@@ -3172,7 +3172,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/DuelPreparation/DuelPreparationLayout.cs",
-      "sha256": "429487edafbadb500240c67561c5dc2a1725f97b47eedb4707d3ed218f47f32a"
+      "sha256": "35254a0eb666f2c1e802826e0ac0d1bd2435479ff5c462c5eb3003027fb45740"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/DuelPreparation/DuelPrepPanelBase.cs",

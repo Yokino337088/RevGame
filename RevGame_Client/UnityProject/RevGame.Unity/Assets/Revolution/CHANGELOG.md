@@ -11,6 +11,8 @@
 
 ## [未发布]
 
+- RevUI 新增可选的 `RevUIAdaptiveLayout` 内容组件，支持安全区布局与固定设计尺寸等比内接。场景相机可通过 `RevUIViewport` 和复用它的 HUD 共用视口计算。
+
 - RevAB 按构建环境、包归属和非文本依赖判定增量基线是否可复用。基线过期、构建中断或产物校验不一致时自动全量重打。发布前用 SHA-256 校验主包、业务包与清单。
 
 - RevCLI 和 RevMCP 暴露 `ab.build-incremental` 与 `ab.publish-incremental`，显式指定平台后分别执行增量构建与 StreamingAssets 增量替换，返回结构化结果。

@@ -448,12 +448,8 @@ namespace RevGame.UI
             _applying = true;
             _lastSize = size;
             _lastSafe = safe;
-            root.anchorMin = root.anchorMax = frame.center;
             root.pivot = Vector2.one * .5f;
-            root.anchoredPosition = Vector2.zero;
-            root.sizeDelta = GameBattleLayout.DesignResolution;
-            _frameScale = frame.height * size.y / GameBattleLayout.DesignResolution.y;
-            root.localScale = Vector3.one * _frameScale;
+            _frameScale = Revolution.RevUIViewport.ApplyDesignFrame(root, frame, GameBattleLayout.DesignResolution);
             Vector2 sidebar = GameBattleLayout.SidebarOffsets(safe, frame);
             MoveSidebar(_leftSidebar, sidebar.x);
             MoveSidebar(_rightSidebar, sidebar.y);
