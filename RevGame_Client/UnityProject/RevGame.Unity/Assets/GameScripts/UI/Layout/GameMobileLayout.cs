@@ -87,8 +87,8 @@ namespace RevGame.UI
             // 宽屏多出的安全空间优先留给两手的控制区，顶部状态条保持对称。
             layout._leftSidebar = ReadSidebar(hud, "MoveStick", "Jump");
             layout._rightSidebar = ReadSidebar(hud, "Jab", "Skill", "SkillTwo", "Ultimate");
-            // 结算立绘与按钮随设计框缩放，只把遮住场景的底图扩到整个窗口。
-            layout._fullBleed = ReadFullBleed(hud, "Result/Backdrop");
+            // 结算立绘与按钮随设计框缩放，透明边框及其下层暗幕覆盖整个窗口。
+            layout._fullBleed = ReadFullBleed(hud, "Result/Backdrop", "Result/BackdropVeil");
             layout._lastSize = Vector2.zero;
             layout.ApplyLayout();
         }

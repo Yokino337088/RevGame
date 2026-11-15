@@ -54,11 +54,13 @@
     },
     {
       "resource": "HelperJellyImpact",
-      "source": "Audio/slime_001.ogg",
-      "seconds": 0.32,
-      "bytes": 6198,
-      "sha256": "8be8c82450011c420f4b4b2a1027c3f2809fdda43d897a98dfcd986df589879a",
-      "modifications": "起音裁剪，尾部75ms淡出，单声道22050Hz Vorbis q4，水母低电平原声提高12dB并限幅0.7防止瞬态削波"
+      "source": "Audio/impactPunch_heavy_001.ogg",
+      "seconds": 0.442,
+      "bytes": 7377,
+      "sha256": "5f21d3ec0524339430ef5950a96dd4eef7befd39d61bf0fc7147b5b301f0a339",
+      "modifications": "沿用镜像中已裁切和归一化的 Vorbis 版本，Unity 导入为单声道 22050 Hz",
+      "sourcePack": "https://kenney.nl/assets/impact-sounds",
+      "download": "https://github.com/Barty-Bart/motion-graphics/blob/main/skills/sound-effects/sfx/impact/kenney-impact-impactpunch-heavy-001.ogg"
     }
   ]
 }

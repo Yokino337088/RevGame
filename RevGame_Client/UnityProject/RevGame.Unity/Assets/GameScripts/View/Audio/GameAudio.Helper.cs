@@ -12,7 +12,7 @@ namespace RevGame.View
     public sealed partial class GameAudio
     {
         /// <summary>帮手的固定资源别名，随场景注册/卸载；不是玩法数值，不维护额外音频加载系统。</summary>
-        private static readonly string[] HelperClipNames = { "HelperBarrage", "HelperBeam", "HelperExplosion", "HelperHeal", "HelperJellyfish", "HelperJellyImpact", "HelperMissile" };
+        private static readonly string[] HelperClipNames = { "HelperBarrage", "HelperBeam", "HelperExplosion", "HelperHeal", "HelperJellyImpact", "HelperMissile" };
         /// <summary>帮手监听与延迟声音独占所有者，重入/退场成对取消，避免误清其它声部。</summary>
         private readonly object _helperAudioOwner = new object();
         /// <summary>按武器保存现实秒到期时刻，长度对应四种HelperWeapon；只限制听感。</summary>
@@ -23,6 +23,9 @@ namespace RevGame.View
         private float _helperHealingDue;
         /// <summary>所有帮手弹体共享的命中声期限，跨弹体也只能按固定间隔播放。</summary>
         private static float _helperImpactDue;
+        // 同一阵水母弹幕共用实际命中声，每次响完保留一段间隔。
+        private const float JellyImpactSeconds = .9f;
+        private static float _helperJellyImpactDue;
         /// <summary>跨武器的全局开火间隔，现实秒；切换武器也不能绕过，延迟回调还要遵守播放时的控频。</summary>
         private readonly GameAudioRateLimit _helperShotRate = new GameAudioRateLimit();
         /// <summary>延迟回调的声音播放门禁，与申请门禁分开，防止延迟弹幕和即时光束在同帧叠播。</summary>
@@ -32,6 +35,7 @@ namespace RevGame.View
         private void OpenHelperAudio()
         {
             _helperImpactDue = 0;
+            _helperJellyImpactDue = 0;
             foreach (string name in HelperClipNames)
             {
                 RevSound.Register(name, "Helper/" + name);
@@ -44,6 +48,11 @@ namespace RevGame.View
         /// <summary>先武器/全场预检，再预约延迟；回调核对代次与实际播放门禁，拒绝不影响已结算的发射。</summary>
         private void OnHelperShotAudio(HelperShotInfo info)
         {
+            // 水母只在接触目标时出声，多只同时飞出不预占其他武器的开火声部。
+            if (info.Weapon == HelperWeapon.Jellyfish)
+            {
+                return;
+            }
             int index = (int)info.Weapon;
 
             if (index < 0 || index >= _helperSoundDue.Length || Time.unscaledTime < _helperSoundDue[index] || !_helperShotRate.Try(Time.unscaledTime, GameAudioRateLimit.HelperSeconds))
@@ -55,8 +64,7 @@ namespace RevGame.View
             float spacing = info.Beam ? 1.5f : info.Weapon == HelperWeapon.Missile ? .65f : .5f;
             _helperSoundDue[index] = Time.unscaledTime + spacing;
             int generation = _helperAudioGeneration;
-            string sound = info.Weapon == HelperWeapon.Beam ? "HelperBeam" : info.Weapon == HelperWeapon.Missile ? "HelperMissile"
-                : info.Weapon == HelperWeapon.Jellyfish ? "HelperJellyfish" : "HelperBarrage";
+            string sound = info.Weapon == HelperWeapon.Beam ? "HelperBeam" : info.Weapon == HelperWeapon.Missile ? "HelperMissile" : "HelperBarrage";
             float volume = info.Beam ? .24f : info.Weapon == HelperWeapon.Missile ? .3f : .17f;
             // 普通积分弹在飞星从HUD到帮手之后才出现，声音同步这个表现延迟；换回合时旧代次拒绝播放。
             RevTimer.After(delay, () =>
@@ -94,12 +102,18 @@ namespace RevGame.View
             {
                 return;
             }
-            if (Time.unscaledTime < _helperImpactDue)
+            bool jelly = weapon == HelperWeapon.Jellyfish;
+            float now = Time.unscaledTime;
+            if (now < _helperImpactDue || (jelly && now < _helperJellyImpactDue))
             {
                 return;
             }
-            _helperImpactDue = Time.unscaledTime + .4f;
-            RevSound.Play(weapon == HelperWeapon.Missile ? "HelperExplosion" : "HelperJellyImpact", volume: weapon == HelperWeapon.Missile ? .32f : .2f);
+            _helperImpactDue = now + .4f;
+            if (jelly)
+            {
+                _helperJellyImpactDue = now + JellyImpactSeconds;
+            }
+            RevSound.Play(jelly ? "HelperJellyImpact" : "HelperExplosion", volume: jelly ? .28f : .32f);
         }
         private void OnHelperAudioPrepare(int round)
         {
@@ -118,6 +132,7 @@ namespace RevGame.View
             _helperShotRate.Reset();
             _helperPlaybackRate.Reset();
             _helperImpactDue = 0;
+            _helperJellyImpactDue = 0;
             for (int i = 0; i < _helperSoundDue.Length; i++)
             {
                 _helperSoundDue[i] = 0;

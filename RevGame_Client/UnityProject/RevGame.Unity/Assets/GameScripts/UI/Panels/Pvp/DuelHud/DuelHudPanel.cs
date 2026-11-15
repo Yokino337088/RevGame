@@ -86,6 +86,11 @@ namespace RevGame.UI
         /// <summary>绑定横屏安全框和本平台的键盘图例，控件布局来自预制体。</summary>
         protected override void OnBindView()
         {
+            // 现有边框有透明描边。结算淡入时用同组暗幕挡住外侧擂台，保留原有立绘、文案和按钮。
+            var veil = new GameObject("BackdropVeil", typeof(RectTransform), typeof(Image));
+            veil.transform.SetParent(_result.transform, false);
+            veil.transform.SetAsFirstSibling();
+            veil.GetComponent<Image>().color = new Color(.055f, .032f, .046f);
             GameMobileLayout.EnableDuelHud((RectTransform)transform);
             KeyboardGuide.SetActive(!UnityEngine.Device.Application.isMobilePlatform);
         }

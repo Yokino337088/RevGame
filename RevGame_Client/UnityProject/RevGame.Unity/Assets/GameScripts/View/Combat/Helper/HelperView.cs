@@ -1,5 +1,6 @@
 using DG.Tweening;
 using RevGame.Core;
+using RevGame.UI;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,7 +25,7 @@ namespace RevGame.View
         private float _animationTime;
         private int _lastFrame = -1;
         private MaterialPropertyBlock _goldProperties;
-        /// <summary>唯一帮手拥有的台词布局缓存。只在换台词时排字，LateUpdate仅约束屏幕边缘。</summary>
+        /// <summary>唯一帮手拥有的台词布局缓存。换台词时排字，跟随移动时约束落屏位置。</summary>
         private readonly Vector3[] _bubbleCorners = new Vector3[4];
         private Vector3 _bubbleAnchor;
         private Camera _bubbleCamera;
@@ -150,9 +151,19 @@ namespace RevGame.View
             rect.GetWorldCorners(_bubbleCorners);
             Vector3 low = _bubbleCamera.WorldToViewportPoint(_bubbleCorners[0]);
             Vector3 high = _bubbleCamera.WorldToViewportPoint(_bubbleCorners[2]);
-            float dx = low.x < .02f ? .02f - low.x : high.x > .98f ? .98f - high.x : 0f;
-            float dy = low.y < .02f ? .02f - low.y : high.y > .98f ? .98f - high.y : 0f;
-            // 帮手会爬到棋盘外；将气泡移回镜头安全区，不移动棋子也不改变台词内容。
+            Rect safe = GameBattleLayout.SafeViewport();
+            const float Margin = .02f;
+            float edge = Consts.BoardSize * Consts.CellSize * .5f;
+            Vector3 boardLow = _bubbleCamera.WorldToViewportPoint(new Vector3(-edge, -edge, 0f));
+            Vector3 boardHigh = _bubbleCamera.WorldToViewportPoint(new Vector3(edge, edge, 0f));
+            // 台词框沿用棋盘中央列的宽度，两侧留给积分和增益。棋盘上沿还为回合与首领状态留出空间。
+            float left = Mathf.Max(safe.xMin, boardLow.x) + Margin;
+            float right = Mathf.Min(safe.xMax, boardHigh.x) - Margin;
+            float bottom = safe.yMin + Margin;
+            float top = Mathf.Min(safe.yMax, boardHigh.y) - Margin;
+            float dx = Mathf.Clamp(low.x, left, Mathf.Max(left, right - (high.x - low.x))) - low.x;
+            float dy = Mathf.Clamp(low.y, bottom, Mathf.Max(bottom, top - (high.y - low.y))) - low.y;
+            // 只平移气泡，保留帮手世界坐标和台词字号。
             rect.position += _bubbleCamera.transform.right * (dx * _bubbleCamera.orthographicSize * 2f * _bubbleCamera.aspect)
                 + _bubbleCamera.transform.up * (dy * _bubbleCamera.orthographicSize * 2f);
         }
