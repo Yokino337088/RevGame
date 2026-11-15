@@ -22,6 +22,8 @@
 
 **Unity 制作/导表/构建优先 RevCLI；实际游戏 GM/UI/跨帧回归按当前 AGENTS 优先 RevMCP。** 这项项目约束覆盖通用技能“轻量游戏测试默认 CLI”的示例。用户本次明确指定其它通道时按用户要求，同时保留断言、等待和清理。
 
+验收默认在 Unity Editor Play 完成。明确需要交付测试包或验证独立 Player 行为时，将新包输出到仓库根的 `打包测试(不入库)/<任务名>/`。选择构建或增量更新方式时查阅[项目验收细则](project-acceptance.md#unity-play-与测试包交付)。
+
 1. 目标为 `RevGame_Client/UnityProject/RevGame.Unity`，MCP 入口为相邻 `Revolution.RevMCP/rev_mcp.py`。有现存连接时复用；否则按联动技能连接一份常驻 stdio，不逐条重启短命服务。若先需恢复编辑器连接，使用 RevCLI connect。
 2. 执行真实 `rev_discover`。使用本次工具 schema 支持的 query/target 筛选，不凭离线清单或源码属性推定运行期注册。编辑态缺 GM 如实报告；启动 Play 后及编译/重载后重新发现。
 3. 用 `rev_call` 调用实时注册的完整 GM 名、能力 ID 与参数；跨接口、多断言/等待/报告计划用 `rev_run`。查询直到完成时只轮询实时声明 readOnly 的能力，并设截止时间；不轮询/自动重放变更动作。
