@@ -26,21 +26,33 @@ namespace RevGame.Endless
     }
     public sealed partial class EndlessService
     {
-        private static string RecordPath
-        {
-            get
-            {
-                return Path.Combine(Application.persistentDataPath, "endless-records-v1.json");
-            }
-        }
+        private const string RecordFileName = "endless-records-v1.json";
+
         public static EndlessRecordBook ReadRecords()
         {
-            if (!File.Exists(RecordPath))
+            return ReadRecords(Path.Combine(Application.persistentDataPath, RecordFileName), out _);
+        }
+
+        private static EndlessRecordBook ReadRecords(string path, out bool fromBackup)
+        {
+            if (!SaveFileExists(path))
             {
+                fromBackup = false;
                 return new EndlessRecordBook();
             }
-            return JsonUtility.FromJson<EndlessRecordBook>(File.ReadAllText(RecordPath, Encoding.UTF8)) ?? new EndlessRecordBook();
+            return ReadSaveFile(path, DecodeRecords, out fromBackup);
         }
+
+        private static EndlessRecordBook DecodeRecords(string json)
+        {
+            var book = JsonUtility.FromJson<EndlessRecordBook>(json);
+            if (book == null || book.records == null || book.records.Exists(record => record == null || string.IsNullOrEmpty(record.runId)))
+            {
+                throw new InvalidDataException("无尽战绩结构不兼容");
+            }
+            return book;
+        }
+
         private void RecordProgress()
         {
             if (Isolated)
@@ -49,7 +61,8 @@ namespace RevGame.Endless
             }
             try
             {
-                EndlessRecordBook book = ReadRecords();
+                string path = Path.Combine(_saveDirectory, RecordFileName);
+                EndlessRecordBook book = ReadRecords(path, out bool fromBackup);
                 EndlessRecord record = book.records.Find(item => item.runId == Run.runId);
                 if (record == null)
                 {
@@ -93,20 +106,13 @@ namespace RevGame.Endless
                     book.records.RemoveAt(book.records.Count - 1);
                 }
                 string json = JsonUtility.ToJson(book);
-                string temporary = RecordPath + ".tmp";
+                string temporary = path + ".tmp";
                 File.WriteAllText(temporary, json, Encoding.UTF8);
-                if (JsonUtility.FromJson<EndlessRecordBook>(File.ReadAllText(temporary, Encoding.UTF8)).records.Count != book.records.Count)
+                if (DecodeRecords(File.ReadAllText(temporary, Encoding.UTF8)).records.Count != book.records.Count)
                 {
                     throw new InvalidDataException("本地纪录写入校验失败");
                 }
-                if (File.Exists(RecordPath))
-                {
-                    File.Replace(temporary, RecordPath, RecordPath + ".bak");
-                }
-                else
-                {
-                    File.Move(temporary, RecordPath);
-                }
+                ReplaceSaveFile(temporary, path, fromBackup);
             }
             catch (Exception error)
             {

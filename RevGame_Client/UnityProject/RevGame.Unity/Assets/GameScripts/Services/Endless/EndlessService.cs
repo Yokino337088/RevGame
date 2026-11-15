@@ -486,6 +486,7 @@ namespace RevGame.Endless
             TickCount = 0;
             TickMilliseconds = MaxTickMilliseconds = 0;
             _saveAtStepEnd = false;
+            _preserveRunBackup = false;
             _targets.Clear();
             _consumed.Clear();
             Run = null;

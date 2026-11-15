@@ -15,8 +15,8 @@
     <Compile Include="$(GameAssets)/GameScripts/Board/**/*.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Pieces/**/*.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Battle/**/*.cs" />
-    <!-- 纯规则宿主不编译剧情SO和教学场景桥；这些必须在真实Unity中验收。 -->
-    <Compile Include="$(GameAssets)/GameScripts/Data/**/*.cs" Exclude="$(GameAssets)/GameScripts/Data/Story/**/*.cs" />
+    <!-- 只链接远征规则所用的配置目录；其它玩法与 Unity 资源由各自的回归入口覆盖。 -->
+    <Compile Include="$(GameAssets)/GameScripts/Data/Buffs/**/*.cs;$(GameAssets)/GameScripts/Data/Config/**/*.cs;$(GameAssets)/GameScripts/Data/Pieces/**/*.cs;$(GameAssets)/GameScripts/Data/Progression/**/*.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Services/Battle/**/*.cs" Exclude="$(GameAssets)/GameScripts/Services/Battle/Preparation/BattleService.Tutorial.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Services/Progression/IScoreProgress.cs" />
     <Compile Include="$(GameAssets)/GameScripts/Automation/Balance/GameBalanceTactics.cs" />

@@ -48,20 +48,21 @@ internal static class CombatPacingRegression
         Piece player = battle.AddRegressionPiece(PieceKind.Swordman, StarTier.One, GameSide.Player, new BoardPos(1, 1));
         Piece enemy = battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Enemy, new BoardPos(2, 1), 1000f);
         battle.RefreshRegressionGoState();
+        float bonus = Balance.CombatBuffCap;
         Check(!battle.AddCombatBuff(BattleEventKind.Attack, float.NaN), "拒绝NaN");
         Check(!battle.AddCombatBuff(BattleEventKind.Attack, float.PositiveInfinity), "拒绝无穷");
         Check(!battle.AddCombatBuff(BattleEventKind.Heal, .1f) && !battle.AddCombatBuff(BattleEventKind.Defense, -1), "拒绝错误属性与负数");
         int hp = enemy.Hp;
         battle.RegressionAttack(player, enemy);
         int before = hp - enemy.Hp;
-        Check(battle.AddCombatBuff(BattleEventKind.Attack, 1), "攻击GM接受");
+        Check(battle.AddCombatBuff(BattleEventKind.Attack, bonus), "攻击GM接受表内上限");
         hp = enemy.Hp;
         battle.RegressionAttack(player, enemy);
         Check(hp - enemy.Hp > before, "真实攻击伤害提高");
         int damage = battle.RegressionDamage(player, 20);
-        Check(battle.AddCombatBuff(BattleEventKind.Defense, 1), "防御GM接受");
+        Check(battle.AddCombatBuff(BattleEventKind.Defense, bonus), "防御GM接受表内上限");
         Check(battle.RegressionDamage(player, 20) < damage, "相同来袭真实伤害减少");
-        Check(battle.AddCombatBuff(BattleEventKind.Haste, 1), "攻速GM接受");
+        Check(battle.AddCombatBuff(BattleEventKind.Haste, bonus), "攻速GM接受表内上限");
         player.ActionProgress = 0;
         battle.RunRegressionPlayerStep(.125f);
         float progress = player.ActionProgress;
@@ -71,14 +72,14 @@ internal static class CombatPacingRegression
         Check(progress > player.ActionProgress, "相同步长攻速提升真实出手进度");
         int max = player.MaxHp;
         float ratio = player.HpRatio;
-        Check(battle.AddCombatBuff(BattleEventKind.Vitality, 1) && player.MaxHp == max * 2, "生命加成改变真实上限");
+        Check(battle.AddCombatBuff(BattleEventKind.Vitality, bonus) && player.MaxHp == (int)(max * (1f + bonus)), "生命加成改变真实上限");
         Check(Math.Abs(player.HpRatio - ratio) <= 2f / max, "生命增益保留伤势比例");
         Check(battle.AddCombatBuff(BattleEventKind.Attack, Balance.CombatBuffCap), "大额加成接受");
         Check(battle.AddCombatBuff(BattleEventKind.Attack, Balance.CombatBuffCap), "继续叠加接受且封顶");
         Check(battle.RegressionBuff(BattleEventKind.Attack) == Balance.CombatBuffCap, "叠加不突破表上限");
         Check(battle.StartRound(1, 2), "带生命增益进入下一轮");
         Check(player.MaxHp == max && battle.RegressionBuff(BattleEventKind.Vitality) == 0, "换轮生命与攻击增益清零");
-        Check(!battle.AddCombatBuff(BattleEventKind.Attack, 1), "准备阶段拒绝战斗GM");
+        Check(!battle.AddCombatBuff(BattleEventKind.Attack, bonus), "准备阶段拒绝合法幅度的战斗GM");
         battle.StopEnemyAI();
         _cases++;
     }
@@ -139,8 +140,8 @@ internal static class CombatPacingRegression
                 battle.RegressionPacingAt(region.WarningSeconds - .01f);
                 Check(player.Hp == pHp && enemy.Hp == eHp, "预警阶段双方都不掉血");
                 battle.RegressionPacingAt(region.WarningSeconds + region.Size * region.Size * region.CellDelaySeconds + .01f);
-                Check(eHp - enemy.Hp == Math.Max(1, (int)(enemy.MaxHp * Balance.RegionDamageHpRatio)), "大棋跨多格也只伤一次");
-                Check(pHp - player.Hp == Math.Max(1, (int)(player.MaxHp * Balance.RegionDamageHpRatio)), "区域中友军也受到一次伤害");
+                Check(eHp - enemy.Hp == ExpectedEnemyPulse(enemy, Balance.RegionDamageHpRatio), "大棋跨多格也只伤一次");
+                Check(pHp == player.Hp, "区域中的友军免伤");
                 Check(battle.RegionPulseCount == 1, "真实施放只计一次");
             }
             finally { RevEvent.RemoveAllByOwner(owner); battle.StopEnemyAI(); }
@@ -168,7 +169,7 @@ internal static class CombatPacingRegression
             Check(impacts == 1 && battle.EnergyBombCount == 1, "只结算一次全场爆炸");
             foreach (Piece enemy in enemies)
             {
-                Check(eHp - enemy.Hp == Math.Max(1, (int)(enemy.MaxHp * Balance.BombDamageHpRatio)), "远角敌军均受到配置小额伤害");
+                Check(eHp - enemy.Hp == ExpectedEnemyPulse(enemy, Balance.BombDamageHpRatio), "远角敌军均受到配置小额伤害");
             }
             Check(player.Hp == pHp, "炸弹不伤玩家");
             Check(battle.TriggerEnergyBomb(), "下一发可再次施放");
@@ -180,6 +181,11 @@ internal static class CombatPacingRegression
         }
         finally { RevEvent.RemoveAllByOwner(owner); battle.StopEnemyAI(); }
         _cases++;
+    }
+    private static int ExpectedEnemyPulse(Piece enemy, float ratio)
+    {
+        // 非主将按最大生命取整，再应用敌方统一防御。
+        return Math.Max(1, (int)((int)(enemy.MaxHp * (double)ratio) / (double)Balance.EnemyDefenseMultiplier));
     }
     private static void PlayerMovement()
     {
@@ -218,7 +224,7 @@ internal static class CombatPacingRegression
     }
     private static void Capture()
     {
-        foreach (int hpPercent in new[] { 100, 21, 20, 19, 0 })
+        foreach (int offset in new[] { int.MaxValue, 1, 0, -1, int.MinValue })
         {
             var battle = BattleService.CreateBossRegressionFixture(6);
             Piece boss = battle.AddRegressionBoss(new BoardPos(3, 3), 2);
@@ -226,14 +232,18 @@ internal static class CombatPacingRegression
             {
                 battle.AddRegressionPiece(PieceKind.Shield, StarTier.One, GameSide.Player, pos);
             }
-            if (hpPercent < 100)
+            int threshold = (int)(boss.MaxHp * Balance.BossCaptureHpRatio);
+            int targetHp = (int)Math.Max(0, Math.Min(boss.MaxHp, (long)threshold + offset));
+            if (targetHp < boss.MaxHp)
             {
-                battle.RegressionDamage(boss, boss.MaxHp - boss.MaxHp * hpPercent / 100);
+                // 经过正式伤害入口造到精确血线，先补偿敌方统一防御。
+                int rawDamage = (int)Math.Ceiling((boss.MaxHp - targetHp) * (double)Balance.EnemyDefenseMultiplier);
+                battle.RegressionDamage(boss, rawDamage);
             }
             battle.RefreshRegressionGoState();
-            Check(battle.RegressionCaptured() == (hpPercent <= 20), "擒王血量边界 " + hpPercent + "%");
+            Check(boss.Hp == targetHp && battle.RegressionCaptured() == (targetHp <= threshold), "擒王精确血量边界 " + targetHp);
 
-            if (hpPercent == 20)
+            if (offset == 0)
             {
                 // 留出一口气，即使血量已达门槛也不能擒王。
                 battle.RemoveRegressionPiece(battle.PlayerPieces[0]);

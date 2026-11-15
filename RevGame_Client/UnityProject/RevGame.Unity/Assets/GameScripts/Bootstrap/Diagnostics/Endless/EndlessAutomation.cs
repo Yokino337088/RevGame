@@ -100,6 +100,7 @@ namespace RevGame.Endless
                 return EndlessDragInput.State();
             }, owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-rules", "隔离验证80格部署、一格升星、盘外Boss总预算与存档", Empty, _ => EndlessService.CheckEcsRules(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.save-recovery-check", "使用临时目录验证无尽棋局和战绩的备份恢复", Empty, _ => EndlessService.CheckSaveRecovery(), owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
             RevRuntimeAutomation.Register("endless.rules", "隔离实例验证占格、暂停、存档随机源、上限和重复结算", Empty, _ => EndlessChecks.Run(), owner: Owner);
             RevRuntimeAutomation.Register("endless.boss-rules", "隔离实例跑完六章领主：招式归属、专属技周期、献祭潮掉血与预警一致性", Empty, _ => EndlessService.CheckBossSkills(), owner: Owner);

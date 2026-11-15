@@ -46,3 +46,23 @@ jobs:
             BASE_SHA="$(git rev-parse HEAD^)"
           fi
           python tools/RevPolicy/check.py --base "$BASE_SHA" --format github
+  offline-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: 远征规则全量回归
+        run: dotnet run --project RevGame_Client/Tests/CombatAttackRegression/CombatAttackRegression.csproj -c Release
+      - name: 围棋规则回归
+        run: dotnet run --project tools/PvpRulesChecks/PvpRulesChecks.csproj -c Release
+  duel-prediction:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: 原生决斗预测回归
+        run: dotnet run --project tools/DuelPredictionChecks/DuelPredictionChecks.csproj -c Release

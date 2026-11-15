@@ -636,17 +636,22 @@ internal static class Program
             Assert(battle.EnemyDeploymentCount == 0, "首手时刻未到不落子");
             battle.RunRegressionDeploymentAt(Balance.DeployStartSeconds);
             int first = battle.EnemyDeploymentCount;
-            Assert(first == 1, "首手时刻到期真实提交一手");
+            int budget = Balance.DeployBaseCount + battle.EnemyIntelligence;
+            Assert(first == Math.Min(Balance.DeployBatchCount, budget), "首个增援窗口到期按配置和剩余预算落子");
             float due = battle.NextEnemyDeploymentAt;
             battle.RunRegressionDeploymentAt(due - 0.01f);
             Assert(battle.EnemyDeploymentCount == first, "冷却未到不能重复落子");
-            for (int i = 0; i < 7; i++)
+            float interval = Math.Max(Balance.DeployIntervalMinSeconds,
+                Balance.DeployIntervalBaseSeconds - battle.EnemyIntelligence * Balance.DeployIntervalPerLevelSeconds);
+            int expected = first;
+            for (float window = Balance.DeployStartSeconds + interval; window < Balance.DeployStopSeconds && expected < budget; window += interval)
             {
-                battle.RunRegressionDeploymentAt(battle.NextEnemyDeploymentAt);
+                Assert(Math.Abs(battle.NextEnemyDeploymentAt - window) < 0.001f, "下一次补兵使用当前 AI 档位的冷却");
+                battle.RunRegressionDeploymentAt(window);
+                expected += Math.Min(Balance.DeployBatchCount, budget - expected);
+                Assert(battle.EnemyDeploymentCount == expected, "后续窗口补足当前批次，且不穿透总预算");
             }
-            Assert(battle.EnemyDeploymentCount >= 5, "多个连续战术窗口真实提交至少五手，不再仅补两三手");
             Assert(events == battle.EnemyDeploymentCount, "每手真实落子仅发布一次弹幕事件");
-            Assert(battle.NextEnemyDeploymentAt < 40f, "多手落子在前段完成，而不是等待十几秒一手");
             int finished = battle.EnemyDeploymentCount;
             battle.RunRegressionDeploymentAt(Balance.DeployStopSeconds);
             Assert(battle.EnemyDeploymentCount == finished && events == finished, "停手时刻后不再生成敌棋或虚构落子通知");
@@ -731,12 +736,12 @@ internal static class Program
         EnemyAI movingAI = movement.RegressionEnemyAI(walker);
         movingAI.Tick(0.25f);
         Assert(movingAI.State == EnemyAIState.Hold && walker.Pos == new BoardPos(7, 7), "无射界且冷却未到，由Hold状态保持原位");
-        movement.SetRegressionElapsed(Balance.BattleTickSeconds * Balance.EnemyMoveEveryTicks);
+        movement.SetRegressionElapsed(Balance.EnemyJumpSeconds);
         movingAI.Tick(0.25f);
         Assert(movingAI.State == EnemyAIState.Advance && walker.Pos != new BoardPos(7, 7), "Advance状态真实选择并提交合法移动");
         BoardPos movedPosition = walker.Pos;
         movingAI.Tick(0.25f);
-        Assert(movingAI.State == EnemyAIState.Hold && walker.Pos == movedPosition, "移动后下一步自主回到等待，不重复移动");
+        Assert(movingAI.State == EnemyAIState.Attack && walker.Pos == movedPosition, "近战跳入射界后转为攻击，冷却期间不重复移动");
         movement.StopEnemyAI();
         BattleService battle = new BattleService(false, 1);
         Assert(battle.StartRound(1, 1), "真实回合布阵成功");

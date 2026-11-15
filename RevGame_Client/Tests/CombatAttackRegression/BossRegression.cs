@@ -51,10 +51,14 @@ internal static class BossRegression
             int hp = boss.Hp;
             int predicted = battle.RegressionPercentDamage(boss, .1f, 25, true);
             Assert(boss.Hp == hp, "主将百分比伤害预判不扣血");
-            Assert(predicted == Math.Max(25, (int)(boss.MaxHp * (double)Balance.BossPercentDamageScale * .1f)), "主将按独立百分比系数承伤");
+            int bossBeforeDefense = Math.Max(25, (int)(boss.MaxHp * (double)Balance.BossPercentDamageScale * .1f));
+            int guardBeforeDefense = Math.Max(25, (int)(guard.MaxHp * (double).1f));
+            double enemyDefense = Balance.EnemyDefenseMultiplier;
+            Assert(predicted == Math.Max(1, (int)(bossBeforeDefense / enemyDefense)), "主将独立百分比系数与敌方统一防御都生效");
             Assert(battle.RegressionPercentDamage(boss, .1f, 25, false) == predicted && hp - boss.Hp == predicted, "主将预测与实际扣血一致");
-            Assert(battle.RegressionPercentDamage(guard, .1f, 25, true) == Math.Max(25, (int)(guard.MaxHp * (double).1f)), "护卫不套用主将百分比减伤");
-            Assert(battle.RegressionPercentDamage(boss, .000001f, 25, true) == 25, "炮火固定伤害下限不被削减");
+            Assert(battle.RegressionPercentDamage(guard, .1f, 25, true) == Math.Max(1, (int)(guardBeforeDefense / enemyDefense)), "护卫只吃统一防御，不套用主将百分比减伤");
+            Assert(battle.RegressionPercentDamage(boss, .000001f, 25, true) == Math.Max(1, (int)(25 / enemyDefense)),
+                "炮火固定下限不乘主将百分比系数，仍经过统一防御");
         }
         finally { battle.StopEnemyAI(); }
 

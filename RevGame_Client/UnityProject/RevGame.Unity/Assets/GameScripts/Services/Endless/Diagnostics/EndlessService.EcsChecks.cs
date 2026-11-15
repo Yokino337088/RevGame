@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using RevGame.Core;
 using UnityEngine;
 
@@ -9,6 +10,84 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
+        /// <summary>使用独立临时目录验证正式落盘、试盘恢复与战绩读取，不触碰玩家文件。</summary>
+        public static object CheckSaveRecovery()
+        {
+            string directory = Path.Combine(Path.GetTempPath(), "RevGame-Endless-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            var checks = new List<string>();
+            try
+            {
+                using var source = new EndlessService(directory);
+                using var restored = new EndlessService(directory);
+                source.Begin(0, 0, 1101, false);
+                string path = Path.Combine(directory, RunFileName);
+                string backup = path + ".bak";
+                source.Run.score = 80;
+                Check(source.Save(), "真实写出第一份无尽快照", checks);
+                source.Run.score = 120;
+                Check(source.Save(), "第二次保存生成上一份备份", checks);
+                string savedBackup = File.ReadAllText(backup);
+                Check(restored.Restore(false) && restored.Run.score == 120, "主档有效时恢复最新棋局", checks);
+
+                File.WriteAllText(path, "{}");
+                Check(restored.Restore(false) && restored.Run.score == 80 && restored.Run.seed == 1101
+                    && restored.Run.runId == source.Run.runId && restored.PlayerCount() == source.PlayerCount()
+                    && restored.Run.random == source.Run.random && restored.Run.hand.Count == source.Run.hand.Count,
+                    "主档校验失败时从备份恢复同一局的比分、棋子、随机源和手牌", checks);
+                Check(File.ReadAllText(path) == "{}" && File.ReadAllText(backup) == savedBackup, "恢复读取保留原始文件", checks);
+                Check(restored.Save() && File.ReadAllText(backup) == savedBackup, "恢复后的首笔保存保留有效备份", checks);
+                File.Delete(path);
+                Check(SaveFileExists(path) && restored.Restore(false) && restored.Run.score == 80, "只有备份时仍有可继续的棋局", checks);
+
+                // 让主档通过校验和，却因棋盘冲突无法提交。备份必须通过完整的模型预检。
+                var invalid = Decode(savedBackup);
+                invalid.units[1].x = invalid.units[0].x;
+                invalid.units[1].y = invalid.units[0].y;
+                string payload = JsonUtility.ToJson(invalid);
+                File.WriteAllText(path, JsonUtility.ToJson(new Envelope { payload = payload, checksum = Digest(payload) }));
+                Check(restored.Restore(false) && restored.Run.score == 80, "主档模型非法时仍可使用备份", checks);
+                File.WriteAllText(backup, "{}");
+                EndlessRun current = restored.Run;
+                Check(!restored.Restore(false) && ReferenceEquals(restored.Run, current) && File.ReadAllText(backup) == "{}",
+                    "双档损坏时拒绝继续，并保留现有模型和备份文件", checks);
+
+                string records = Path.Combine(directory, RecordFileName);
+                source.Run.bankedScore = 42;
+                source.RecordProgress();
+                source.Run.bankedScore = 64;
+                source.RecordProgress();
+                Check(ReadRecords(records, out _).records[0].score == 64, "战绩优先读取有效主档", checks);
+                string recordBackup = File.ReadAllText(records + ".bak");
+                File.WriteAllText(records, "{\"records\":[null]}");
+                Check(ReadRecords(records, out bool fromBackup).records[0].score == 42 && fromBackup, "战绩结构损坏时读取备份", checks);
+                source.RecordProgress();
+                Check(ReadRecords(records, out _).records[0].score == 64 && File.ReadAllText(records + ".bak") == recordBackup,
+                    "战绩恢复后重新保存仍保留有效备份", checks);
+                File.Delete(records);
+                Check(ReadRecords(records, out fromBackup).records[0].score == 42 && fromBackup, "主战绩缺失时仍展示备份", checks);
+
+                EndlessRun legacy = Decode(savedBackup);
+                legacy.version = 0;
+                legacy.bankedScore = 90;
+                payload = JsonUtility.ToJson(legacy);
+                string legacyBackup = JsonUtility.ToJson(new Envelope { payload = payload, checksum = Digest(payload) });
+                File.WriteAllText(backup, legacyBackup);
+                Check(restored.Restore(false) && restored.Run.phase == EndlessPhase.Result
+                    && restored.Run.bankedScore == 90 && File.ReadAllText(backup) == legacyBackup,
+                    "旧版备份安全结算可识别收益并保留原档", checks);
+                return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
+            }
+            finally
+            {
+                foreach (string file in Directory.GetFiles(directory))
+                {
+                    File.Delete(file);
+                }
+                Directory.Delete(directory);
+            }
+        }
+
         /// <summary>独立规则夹具：实体寿命、空间查询顺序、无限额布阵、固定一格升星、盘外Boss与总承伤预算。</summary>
         public static object CheckEcsRules()
         {
