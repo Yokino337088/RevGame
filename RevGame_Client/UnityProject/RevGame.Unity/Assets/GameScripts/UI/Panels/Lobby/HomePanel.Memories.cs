@@ -20,7 +20,7 @@ namespace RevGame.UI
         private Tween _memorySpeechTween;
         private LobbySceneView _memoryLobby;
         private int _spokenUnread;
-        private bool _openingMemoryBook;
+        private bool _openingBook;
 
         protected override void OnOpen()
         {
@@ -51,30 +51,42 @@ namespace RevGame.UI
         }
 
         [RevButtonClick("btnMemories")]
-        private async void OpenMemoryBook()
+        private void OpenMemoryBook()
+        {
+            OpenLobbyBook<YayaMemoryBookPanel>(YayaMemoryBookPanel.ThemeAtlases).Forget();
+        }
+
+        [RevButtonClick("btnProjectOpenSource")]
+        private void OpenProjectBook()
+        {
+            OpenLobbyBook<ProjectOpenSourcePanel>(ProjectOpenSourcePanel.ThemeAtlases).Forget();
+        }
+
+        /// <summary>两个书本入口共用加载锁，避免首次加载图集时连续点击打开双层书本。</summary>
+        private async RevTask OpenLobbyBook<TBook>(string[] atlases) where TBook : RevUIPanel
         {
             var flow = RevServices.GetRequired<GameFlow>();
-            if (_openingMemoryBook || flow.IsGameplayBlocked || flow.Screen != GameScreen.Home)
+            if (_openingBook || flow.IsGameplayBlocked || flow.Screen != GameScreen.Home)
             {
                 return;
             }
-            _openingMemoryBook = true;
+            _openingBook = true;
             HideMemorySpeech();
             try
             {
-                await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(YayaMemoryBookPanel.ThemeAtlases);
+                await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(atlases);
                 if (this != null && State == RevUIPanelState.Opened && !IsCovered && !flow.IsGameplayBlocked && flow.Screen == GameScreen.Home)
                 {
-                    await RevUI.OpenAsync<YayaMemoryBookPanel>();
+                    await RevUI.OpenAsync<TBook>();
                 }
             }
             catch (Exception error)
             {
-                RevLog.Exception(error, "收藏书打开失败", "RevGame");
+                RevLog.Exception(error, typeof(TBook).Name + " 打开失败", "RevGame");
             }
             finally
             {
-                _openingMemoryBook = false;
+                _openingBook = false;
             }
         }
 

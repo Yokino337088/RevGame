@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "2b5f76f0291f6037df9aa75776df46a1cb2a1a45d0f7c643765d273248b4086c",
-  "inputDigest": "173d22c328d719f3c5190c5cb56837d97e8291f429ef89392bed0ae9dd98f9d6",
+  "outputSha256": "700796533c26c348ee4a169ae49ed5ede02e206135cf61d418596ec75688c29e",
+  "inputDigest": "8e82d9561cce775077a59a0ed51f118575803c7b3e815baa77cfa7d941b4ef32",
   "originalBytes": 17002248,
-  "outputBytes": 810660,
-  "characterCount": 1817,
-  "glyphCount": 3602,
+  "outputBytes": 812752,
+  "characterCount": 1823,
+  "glyphCount": 3612,
   "codepoints": [
     32,
     33,
@@ -234,6 +234,7 @@
     20170,
     20173,
     20174,
+    20179,
     20182,
     20184,
     20190,
@@ -451,6 +452,7 @@
     21507,
     21508,
     21512,
+    21513,
     21516,
     21517,
     21518,
@@ -584,6 +586,7 @@
     22905,
     22909,
     22914,
+    22925,
     22982,
     22987,
     22996,
@@ -634,6 +637,7 @@
     23569,
     23572,
     23574,
+    23576,
     23578,
     23581,
     23588,
@@ -986,6 +990,7 @@
     26411,
     26412,
     26415,
+    26420,
     26426,
     26432,
     26434,
@@ -1730,6 +1735,7 @@
     38504,
     38505,
     38506,
+    38518,
     38519,
     38534,
     38543,
@@ -2077,7 +2083,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/HomePanel.prefab",
-      "sha256": "d5e1f86e96a5f31e804b406bf6584c3882e55b115b259af1da0b0e5094ea88a5"
+      "sha256": "258ed9d389db62e272ae03405306d72a2151ea692c59bd8a0c710c8856cc5adf"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
@@ -2090,6 +2096,14 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/PreparePanel.prefab",
       "sha256": "6ebca08fe459183ceac942d067da3cd60e8434db836f6722c6d56c1b95531f35"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/ProjectOpenSource/ProjectOpenSourceConfig.asset",
+      "sha256": "7d42fba353def3d4b7f9f07fe87f2194295811a3daf1d48f62d2976498474a87"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/ProjectOpenSource/ProjectOpenSourcePanel.prefab",
+      "sha256": "89ced0597395b20737900e738b142b287dcd54692c76775f648d15fe3d64e99a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/DuelHud/DuelHudPanel.prefab",
@@ -2397,11 +2411,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/YayaMemoryAutomation.cs",
-      "sha256": "c449f6ab05ed058c776e320cc7af148294b5999ae5b7147b1510de2463375ddb"
+      "sha256": "92033b835b57648f39da731d6f791956b9bdeeae084958e4cd3eee4a1d1128e2"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
-      "sha256": "e1aba1ea0a1888e280fcefa0c3dae255203ca61b9a9ce20e66038c63b5446338"
+      "sha256": "62f81da7dacb1052415f10d48cca60427cbdffe95295768c069a3265f4357df7"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Board/BoardPos.cs",
@@ -2518,6 +2532,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Progression/RewardDef.cs",
       "sha256": "c17c672f4bb58ed1d52df6cb9ddacb8152081449eec3bfd0681685802dd9403f"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/ProjectOpenSource/ProjectOpenSourceConfig.cs",
+      "sha256": "8a8af927b09b84b13684f95479aca9912a5005e29289857c8936aaba1c1bbf7e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Pvp/PvpConfig.cs",
@@ -3204,6 +3222,10 @@
       "sha256": "92f40ea357f9615082b248a08bbfc3cf6a0f180ece05707b50be70d54f80a821"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/GameBookDragInput.cs",
+      "sha256": "60a53e6ef4896a368ae934de4a0177f1d5cf998dc018c88a48e6053dae17f3ef"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Loading/LoadingPanel.cs",
       "sha256": "df0a5d7248d0d830d3fba53c2bc917c82d271136f36106c10b5243d5ef57d8cd"
     },
@@ -3217,11 +3239,19 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.Memories.cs",
-      "sha256": "7ee559bec5bdb90fad638557638eea74b74986221c0fb32611a9ef2f522ec892"
+      "sha256": "341f27ceefa1bbd08a14630f8ff6accd0a0b7a5510d348d96c9e39cbf1fa4524"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/LevelSelectPanel.cs",
       "sha256": "555cb53faa9d1c2cce98f0bcd9a210f510661bd1c9a549becee840335d0fc7d9"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/ProjectOpenSource/ProjectOpenSourceAutomation.cs",
+      "sha256": "661a5de4d783e932785244c867964c23c24d9fc526fb5a2f7b7bb23f31e92e68"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/ProjectOpenSource/ProjectOpenSourcePanel.cs",
+      "sha256": "4c5d4474438afbd34743dd98231f911116e24a1ea866e23770767db4d783f549"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/DuelHud/DuelHudPanel.cs",

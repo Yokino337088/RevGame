@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3894095133
+CRC: 3571082661
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -380,4 +380,14 @@ AssetBundleManifest:
         Dependency_2: atlas_uiyayamemories
     Info_93:
       Name: yaya_memories_chapter01
+      Dependencies: {}
+    Info_94:
+      Name: ui_project_open_source
+      Dependencies:
+        Dependency_0: font_cjk
+        Dependency_1: atlas_uiyayamemories
+        Dependency_2: ui_yaya_memories
+        Dependency_3: atlas_uiprojectopensource
+    Info_95:
+      Name: atlas_uiprojectopensource
       Dependencies: {}

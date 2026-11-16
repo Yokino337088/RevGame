@@ -87,6 +87,7 @@ namespace Revolution
         public const string Art_Status_EyeBlink = "Art/Status/EyeBlink/";
         public const string Art_Story = "Art/Story/";
         public const string Art_UI = "Art/UI/";
+        public const string Art_UI_ProjectOpenSource = "Art/UI/ProjectOpenSource/";
         public const string Art_UI_Pvp = "Art/UI/Pvp/";
         public const string Art_UI_PvpDefeat = "Art/UI/PvpDefeat/";
         public const string Art_UI_PvpDuelHud = "Art/UI/PvpDuelHud/";
@@ -164,6 +165,7 @@ namespace Revolution
         public const string UI_Panel_Diagnostics = "UI/Panel/Diagnostics/";
         public const string UI_Panel_Endless = "UI/Panel/Endless/";
         public const string UI_Panel_Loading = "UI/Panel/Loading/";
+        public const string UI_Panel_ProjectOpenSource = "UI/Panel/ProjectOpenSource/";
         public const string UI_Panel_Pvp = "UI/Panel/Pvp/";
         public const string UI_Panel_Pvp_DuelHud = "UI/Panel/Pvp/DuelHud/";
         public const string UI_Panel_Pvp_DuelPrep = "UI/Panel/Pvp/DuelPrep/";

@@ -55,8 +55,8 @@ namespace RevGame.Editor
             }
 
             var font = Require<Font>(Root + "Fonts/CJK/NotoSansCJKsc-Bold.otf");
-            var button = ImportPlate("MemoryBookButton", .14f);
-            var title = ImportPlate("MemoryBookTitle", .105f);
+            var button = ImportPlate(ThemeArt + "MemoryBookButton.png", .14f);
+            var title = ImportPlate(ThemeArt + "MemoryBookTitle.png", .105f);
             PatchHome(font);
             BuildPanel(font, button, book, openBook, cover, paperMaterial, coverMaterial, sceneMaterial);
             ApplyBookSkin(button, title);
@@ -65,9 +65,9 @@ namespace RevGame.Editor
         }
 
         /// <summary>从生成稿保留真实透明轮廓。切去透明留边仅改变 Sprite 的 UV，原始 PNG 与九宫格边饰完整保留。</summary>
-        private static Sprite ImportPlate(string name, float horizontalBorder)
+        internal static Sprite ImportPlate(string path, float horizontalBorder)
         {
-            string path = ThemeArt + name + ".png";
+            string name = Path.GetFileNameWithoutExtension(path);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             if (importer == null)
             {

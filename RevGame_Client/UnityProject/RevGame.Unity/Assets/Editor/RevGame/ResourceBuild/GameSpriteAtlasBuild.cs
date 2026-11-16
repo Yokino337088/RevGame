@@ -245,6 +245,10 @@ namespace RevGame.Editor
                 {
                     return "UIYayaMemories";
                 }
+                if (path.StartsWith("Assets/GameRes/Art/UI/ProjectOpenSource/", StringComparison.Ordinal))
+                {
+                    return "UIProjectOpenSource";
+                }
                 string name = Path.GetFileNameWithoutExtension(path);
 
                 // 未在战斗使用的长竖棋盘图与酒馆大底板不能拖大六张手牌的常驻贴图。

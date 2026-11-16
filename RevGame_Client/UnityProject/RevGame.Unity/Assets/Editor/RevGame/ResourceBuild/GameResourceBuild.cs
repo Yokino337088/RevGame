@@ -23,6 +23,7 @@ namespace RevGame.Editor
             { "UI/Panel/Loading", "ui_loading" },
             { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
             { "UI/Panel/YayaMemories", "ui_yaya_memories" },
+            { "UI/Panel/ProjectOpenSource", "ui_project_open_source" },
             { "UI/Panel/Settings", "ui_settings" },
             { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },

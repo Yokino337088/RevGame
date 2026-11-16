@@ -116,6 +116,7 @@ namespace RevGame.Bootstrap
             GameGmCommands.RegisterAll();
             StoryAutomationCommands.Register();
             YayaMemoryAutomation.Register();
+            RevGame.UI.ProjectOpenSourceAutomation.Register();
             YayaReactionAutomation.Register();
             RevGame.Endless.EndlessAutomation.Register();
             RevGame.Pvp.PvpAutomation.Register();
@@ -166,6 +167,7 @@ namespace RevGame.Bootstrap
             GameGmCommands.UnregisterAll();
             StoryAutomationCommands.Unregister();
             YayaMemoryAutomation.Unregister();
+            RevGame.UI.ProjectOpenSourceAutomation.Unregister();
             YayaReactionAutomation.Unregister();
             RevGame.Endless.EndlessAutomation.Unregister();
             RevGame.Pvp.PvpAutomation.Unregister();
