@@ -1,0 +1,79 @@
+ManifestFileVersion: 0
+CRC: 3645234480
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: e4fadbeea39052a79ceeb57bba712c8c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 8c339e6da216956266080649534cff73
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: e4fadbeea39052a79ceeb57bba712c8c
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 02862eb3ef945fb459c13da190d571fd, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: adac2d560ab6710438c9247f2ab5495a, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.YayaMemoryBook/Chapter
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+Assets:
+- Assets/GameRes/UI/Panel/YayaMemories/YayaMemoryBookPanel.prefab
+- Assets/GameRes/Material/UI/YayaMemories/BookPaper.mat
+- Assets/GameRes/UI/Panel/YayaMemories/YayaMemoryBook.asset
+- Assets/GameRes/UI/Panel/YayaMemories/Book/BookCover.png
+- Assets/GameRes/Material/UI/YayaMemories/BookCoverFace.mat
+- Assets/GameRes/UI/Panel/YayaMemories/Book/OpenBook.png
+- Assets/GameRes/Material/UI/YayaMemories/MemorySceneComposite.mat
+Dependencies:
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiyayamemories
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

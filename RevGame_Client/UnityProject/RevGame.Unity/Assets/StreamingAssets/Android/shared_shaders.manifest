@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2578182075
+CRC: 1990775038
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a179bb86d4d92d5152a5c1febcfdd8e7
+    Hash: f948a8334c0003fea47fed70c716fede
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a179bb86d4d92d5152a5c1febcfdd8e7
+    Hash: f948a8334c0003fea47fed70c716fede
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -27,6 +27,7 @@ Assets:
 - Assets/GameShader/Cards/CardGleam.shader
 - Assets/GameShader/UI/DuelPreparationSigil.shader
 - Assets/GameShader/Pvp/PvpArenaBackdrop.shader
+- Assets/GameShader/YayaMemories/YayaBookPaper.shader
 - Assets/GameShader/Endless/EndlessSwordAura.shader
 - Assets/GameShader/Combat/MeleeImpact.shader
 - Assets/GameShader/Endless/EndlessField.shader
@@ -39,9 +40,10 @@ Assets:
 - Assets/GameShader/Combat/BossSkill.shader
 - Assets/GameShader/Endless/EndlessCardUpgrade.shader
 - Assets/GameShader/Background/ArcaneBackdrop.shader
-- Assets/GameShader/Endless/EndlessBatch.shader
+- Assets/GameShader/YayaMemories/YayaMemoryScene.shader
 - Assets/GameShader/UI/SlimeTutorialHighlight.shader
 - Assets/GameShader/Pvp/PvpDuelStrike.shader
+- Assets/GameShader/Endless/EndlessBatch.shader
 - Assets/GameShader/Combat/RangedProjectile.shader
 - Assets/GameShader/Combat/ElementalImpact.shader
 - Assets/GameShader/Endless/EndlessHpBar.shader

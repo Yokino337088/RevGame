@@ -1,0 +1,27 @@
+ManifestFileVersion: 0
+CRC: 2495715119
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: aea13bbfbd773a615ca26ecb758b899b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b90958d1a31341565924dc4ebcf5d60b
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: aea13bbfbd773a615ca26ecb758b899b
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 72ebe0b144048fb4aab4a81f66e48b5c, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/YayaMemories/Chapter06/Cast.png
+- Assets/GameRes/YayaMemories/Chapter06/Foreground.png
+- Assets/GameRes/YayaMemories/Chapter06/Backdrop.png
+- Assets/GameRes/YayaMemories/Chapter06/Illustration.asset
+Dependencies: []

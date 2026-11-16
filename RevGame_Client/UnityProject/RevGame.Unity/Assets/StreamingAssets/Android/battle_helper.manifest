@@ -3,13 +3,13 @@ CRC: 3458123854
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e683fcd9d980b888ddd86dbebfa2aba8
+    Hash: 0f9aa7f8baef79a49bd7f5461a07db17
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 9f2cec0b1efe573359100563a1f24f2e
+    Hash: 41386de18b0dcfc0bcc5e26e03ca379c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e683fcd9d980b888ddd86dbebfa2aba8
+    Hash: 0f9aa7f8baef79a49bd7f5461a07db17
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -25,9 +25,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 15ae06e7400e5db46a8c92425017de42, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -54,6 +54,6 @@ Assets:
 - Assets/GameRes/Pieces/Helper/BattleHelper.prefab
 - Assets/GameShader/Helper/HelperGoldReflect_Shader.shader
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_helperframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_helperframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk

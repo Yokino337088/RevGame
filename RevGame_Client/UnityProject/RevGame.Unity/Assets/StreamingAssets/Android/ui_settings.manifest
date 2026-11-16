@@ -3,13 +3,13 @@ CRC: 2651434192
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b16d53d2eca27861dde7265835931aa2
+    Hash: a88b7e2b88db598537cf9776572a430e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3703a36e2ed06bb24fb62614c53c7ed5
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b16d53d2eca27861dde7265835931aa2
+    Hash: a88b7e2b88db598537cf9776572a430e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -62,6 +62,6 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Settings/AudioSettingsPanel.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
