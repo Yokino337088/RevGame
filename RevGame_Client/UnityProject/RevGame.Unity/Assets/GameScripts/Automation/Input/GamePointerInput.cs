@@ -75,6 +75,8 @@ namespace RevGame.Automation
             {
                 case "HomePanel":
                     return RevUI.Get<HomePanel>();
+                case "YayaMemoryBookPanel":
+                    return RevUI.Get<YayaMemoryBookPanel>();
                 case "LevelSelectPanel":
                     return RevUI.Get<LevelSelectPanel>();
                 case "PreparePanel":

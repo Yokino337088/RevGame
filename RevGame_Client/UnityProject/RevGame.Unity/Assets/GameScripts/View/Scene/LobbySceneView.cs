@@ -168,6 +168,20 @@ namespace RevGame.View
             yayaRenderer.enabled = Ready && _screen == GameScreen.Home;
             yayaAnimator.enabled = Ready && _screen == GameScreen.Home;
         }
+
+        /// <summary>取立绘旁的实际投影坐标，兼容大厅镜头与角色站位调整。</summary>
+        public bool TryGetYayaSpeechPoint(out Vector2 point)
+        {
+            point = default;
+            if (!Ready || lobbyCamera == null || yayaRenderer == null || !yayaRenderer.enabled)
+            {
+                return false;
+            }
+            Bounds bounds = yayaRenderer.bounds;
+            point = lobbyCamera.WorldToScreenPoint(new Vector3(bounds.center.x + bounds.size.x * .39f,
+                bounds.max.y - bounds.size.y * .19f, bounds.center.z));
+            return true;
+        }
         /// <summary>原画等比cover相机，角色全身站左侧圆台。结构比例为原画构图约定，不是游戏数值。</summary>
         public void FitCamera()
         {

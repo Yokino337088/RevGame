@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace RevGame.UI
 {
     [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal)]
-    public sealed class HomePanel : RevUIPanel
+    public sealed partial class HomePanel : RevUIPanel
     {
         [RevBind("btnPvP/label")]
         private Text _pvpLabel;

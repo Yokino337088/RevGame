@@ -34,6 +34,7 @@ namespace RevGame.Bootstrap
                 RevGame.Automation.GameAutomationCommands.RegisterGroup();
                 RegisterPlayerActions();
                 RegisterStoryCommands();
+                RegisterYayaMemoryCommands();
                 RegisterYayaReactionCommands();
 #if UNITY_EDITOR
                 RegisterCommand("RevGame/元素攻击视觉开始", "隔离Play验证火焰、水浪、圣光专用Shader及分帧上限，连续截图并正式回大厅", args =>

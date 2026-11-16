@@ -93,6 +93,7 @@ namespace Revolution
         public const string Art_UI_PvpDuelHud_Controls = "Art/UI/PvpDuelHud/Controls/";
         public const string Art_UI_PvpDuelHud_Portrait = "Art/UI/PvpDuelHud/Portrait/";
         public const string Art_UI_PvpDuelPrep = "Art/UI/PvpDuelPrep/";
+        public const string Art_UI_YayaMemories = "Art/UI/YayaMemories/";
         public const string Atlases = "Atlases/";
         public const string Audio = "Audio/";
         public const string Audio_Bgm = "Audio/Bgm/";
@@ -149,6 +150,7 @@ namespace Revolution
         public const string Material_Pvp_DuelScene = "Material/Pvp/DuelScene/";
         public const string Material_UI = "Material/UI/";
         public const string Material_UI_PvpDuelPrep = "Material/UI/PvpDuelPrep/";
+        public const string Material_UI_YayaMemories = "Material/UI/YayaMemories/";
         public const string Pieces = "Pieces/";
         public const string Pieces_Boss = "Pieces/Boss/";
         public const string Pieces_Helper = "Pieces/Helper/";
@@ -169,5 +171,14 @@ namespace Revolution
         public const string UI_Panel_Settings = "UI/Panel/Settings/";
         public const string UI_Panel_Story = "UI/Panel/Story/";
         public const string UI_Panel_Victory = "UI/Panel/Victory/";
+        public const string UI_Panel_YayaMemories = "UI/Panel/YayaMemories/";
+        public const string UI_Panel_YayaMemories_Book = "UI/Panel/YayaMemories/Book/";
+        public const string YayaMemories = "YayaMemories/";
+        public const string YayaMemories_Chapter01 = "YayaMemories/Chapter01/";
+        public const string YayaMemories_Chapter02 = "YayaMemories/Chapter02/";
+        public const string YayaMemories_Chapter03 = "YayaMemories/Chapter03/";
+        public const string YayaMemories_Chapter04 = "YayaMemories/Chapter04/";
+        public const string YayaMemories_Chapter05 = "YayaMemories/Chapter05/";
+        public const string YayaMemories_Chapter06 = "YayaMemories/Chapter06/";
     }
 }

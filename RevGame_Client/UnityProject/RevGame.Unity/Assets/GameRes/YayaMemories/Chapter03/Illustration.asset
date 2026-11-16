@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72ebe0b144048fb4aab4a81f66e48b5c, type: 3}
+  m_Name: Illustration
+  m_EditorClassIdentifier: 
+  Backdrop: {fileID: 2800000, guid: 29d2b5510ea83944387a48521da5ab4f, type: 3}
+  Atmosphere: {fileID: 2800000, guid: 886b0fe2d33f8ed46896adda7db221ff, type: 3}
+  ContactShadow: {fileID: 0}
+  Cast: {fileID: 2800000, guid: de5d80940750489459e538484e09f48d, type: 3}
+  Foreground: {fileID: 0}

@@ -22,6 +22,7 @@ namespace RevGame.Editor
             // 过场只依赖字体/程序星雾；单独分包，不能为显示加载条先拉入所有战斗界面的依赖。
             { "UI/Panel/Loading", "ui_loading" },
             { "UI/Panel/Story", "ui_story" }, { "Config/Story", "config_story" },
+            { "UI/Panel/YayaMemories", "ui_yaya_memories" },
             { "UI/Panel/Settings", "ui_settings" },
             { "UI/Panel/Diagnostics", "ui_diagnostics" },
             { "UI/Panel/Victory", "ui_victory" },
@@ -36,6 +37,7 @@ namespace RevGame.Editor
             { "Pieces/Boss", "battle_boss" }, { "Config/Art", "config_piece_art" },
             { "Effects/Combat", "battle_feedback" }, { "Data", "data_tables" },
             { "Material/Cards", "material_cards" }, { "Material/UI", "material_ui" },
+            { "Material/UI/YayaMemories", "ui_yaya_memories" },
             // 材质集中在 Material 下。模式专属材质继续跟随原来的包和加载寿命。
             { "Material/UI/PvpDuelPrep", "ui_pvp_duelprep" }, { "Material/Pvp/Board", "pvp_arena" },
             { "Material/Endless", "endless_arena" }, { "Material/Lobby", "lobby_cottage" },
@@ -103,6 +105,14 @@ namespace RevGame.Editor
                     throw new InvalidOperationException("分包目录不存在：" + path);
                 }
                 desired[path] = Groups[i, 1];
+            }
+            // 收藏书和翻页材质共用小包。每章原画与纹理形成独立包，不由大厅或封面隐式加载。
+            desired["Assets/GameShader/YayaMemories/YayaBookPaper.shader"] = "ui_yaya_memories";
+            desired["Assets/GameShader/YayaMemories/YayaMemoryScene.shader"] = "ui_yaya_memories";
+            for (int chapter = 1; chapter <= 6; chapter++)
+            {
+                string suffix = chapter.ToString("D2");
+                desired["Assets/GameRes/YayaMemories/Chapter" + suffix] = "yaya_memories_chapter" + suffix;
             }
             // 章节大图由背景 Shader 独立采样、逐章加载，不进常驻 SpriteAtlas，也不共包拖入其它章节。
             const string chapterRoot = "Assets/GameRes/ChapterBackground";

@@ -147,6 +147,9 @@ namespace RevGame.Editor
                     && !p.StartsWith("Assets/GameRes/HelperTextures/", StringComparison.Ordinal)
                     // 大厅小屋原画和RGB遮罩由专用Shader采样完整UV，非Sprite，随lobby_cottage独立包交付。
                     && !p.StartsWith("Assets/GameRes/Lobby/", StringComparison.Ordinal)
+                    // 收藏的各层与书本纸面以全画幅UV采样，由独立包加载。
+                    && !p.StartsWith("Assets/GameRes/YayaMemories/", StringComparison.Ordinal)
+                    && !p.StartsWith("Assets/GameRes/UI/Panel/YayaMemories/Book/", StringComparison.Ordinal)
                     // 无尽剑气刃贴图由SwordAura Shader旋转采样，同样需要完整0～1UV；随endless_arena目录包加载，不进图集。
                     && !p.StartsWith("Assets/GameRes/Endless/Textures/", StringComparison.Ordinal)
                     && (!p.StartsWith("Assets/GameRes/ChapterBackground/", StringComparison.Ordinal) || importer.textureType == TextureImporterType.Sprite))
@@ -238,6 +241,10 @@ namespace RevGame.Editor
             }
             if (path.Contains("/Art/UI/"))
             {
+                if (path.StartsWith("Assets/GameRes/Art/UI/YayaMemories/", StringComparison.Ordinal))
+                {
+                    return "UIYayaMemories";
+                }
                 string name = Path.GetFileNameWithoutExtension(path);
 
                 // 未在战斗使用的长竖棋盘图与酒馆大底板不能拖大六张手牌的常驻贴图。

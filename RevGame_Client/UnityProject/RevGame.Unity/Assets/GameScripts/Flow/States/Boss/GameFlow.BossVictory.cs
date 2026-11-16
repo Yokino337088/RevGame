@@ -54,6 +54,8 @@ namespace RevGame.Flow
             {
                 return;
             }
+            // 真正的章节终局在演出之前记账，避免离开结算或退出时丢掉已获得的收藏。
+            RevServices.GetRequired<YayaMemoryProgress>().RecordClear(info.Chapter);
             _victoryPreview = false;
             StartVictorySequence(info);
         }

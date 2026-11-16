@@ -86,6 +86,7 @@ namespace RevGame.Bootstrap
             // ================================================================
             // 纯本地进度存档（按位标记开场/教学是否看完），没有替换需求，用类做键即可；无参构造供容器创建。
             RevServices.Register<StoryProgress, StoryProgress>(owner: this);
+            RevServices.Register<YayaMemoryProgress, YayaMemoryProgress>(owner: this);
             // 玩家音量偏好：全项目一份、要跨战斗常驻；它实现 IDisposable，注销时由容器负责释放。
             RevServices.Register<GameAudioSettings, GameAudioSettings>(owner: this);
             // 在任何BGM请求之前应用玩家已保存音量；此服务是全局寿命，不随战斗退场丢失。
@@ -114,6 +115,7 @@ namespace RevGame.Bootstrap
                 () => RevServices.Get<RevGame.Automation.GameAutomationRunner>()?.State == "running";
             GameGmCommands.RegisterAll();
             StoryAutomationCommands.Register();
+            YayaMemoryAutomation.Register();
             YayaReactionAutomation.Register();
             RevGame.Endless.EndlessAutomation.Register();
             RevGame.Pvp.PvpAutomation.Register();
@@ -163,6 +165,7 @@ namespace RevGame.Bootstrap
             RevServices.Unregister<RevGame.Automation.GamePerformanceMonitor>();
             GameGmCommands.UnregisterAll();
             StoryAutomationCommands.Unregister();
+            YayaMemoryAutomation.Unregister();
             YayaReactionAutomation.Unregister();
             RevGame.Endless.EndlessAutomation.Unregister();
             RevGame.Pvp.PvpAutomation.Unregister();
