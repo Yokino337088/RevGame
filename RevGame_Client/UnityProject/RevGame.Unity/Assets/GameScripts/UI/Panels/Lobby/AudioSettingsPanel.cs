@@ -1,4 +1,5 @@
 // 设置面板展示 BGM 与桌面显示偏好，两个服务分别持有实际状态与存档。
+using DG.Tweening;
 using RevGame.Services;
 using Revolution;
 using UnityEngine;
@@ -9,6 +10,7 @@ namespace RevGame.UI
     [RevUIPanel("UI/Panel/Settings", RevUILayer.Popup, CacheMode = RevUICacheMode.DestroyOnClose, Mask = RevUIMaskMode.ClickBlock)]
     public sealed class AudioSettingsPanel : RevUIPanel<AudioSettingsFrame>
     {
+        private const float VolumeTransitionSeconds = .16f;
         /// <summary>实际UGUI滑杆范围0～1，刷新用无通知赋值；输入通过RevSliderChanged转交服务。</summary>
         [RevBind] private Slider _sldBgm;
         /// <summary>静音仅影响BGM分类，保持滑杆的原偏好值。</summary>
@@ -19,6 +21,7 @@ namespace RevGame.UI
         [RevBind("displayModes")] private GameObject _displayModes;
         [RevBind("displayModes/btnWindowed")] private UnityEngine.UI.Button _btnWindowed;
         [RevBind("displayModes/btnFullscreen")] private UnityEngine.UI.Button _btnFullscreen;
+        private Tween _volumeTween;
 
         protected override void OnBindView()
         {
@@ -42,14 +45,30 @@ namespace RevGame.UI
             {
                 return;
             }
-            // 无通知赋值防止刷新滑杆反过来触发业务，形成循环或把持久化值覆盖掉。
-            _sldBgm.SetValueWithoutNotify(Data.Volume);
+            // 滑杆输入已由 UGUI 同步到手柄和填充。外部改值才缓动，且每帧只更新显示。
+            _volumeTween?.Kill();
+            _volumeTween = null;
+            if (!Mathf.Approximately(_sldBgm.value, Data.Volume))
+            {
+                if (State == RevUIPanelState.Opened)
+                {
+                    _volumeTween = DOTween.To(() => _sldBgm.value, _sldBgm.SetValueWithoutNotify, Data.Volume, VolumeTransitionSeconds)
+                        .SetEase(Ease.OutCubic).SetUpdate(true).SetRecyclable(false);
+                }
+                else
+                {
+                    _sldBgm.SetValueWithoutNotify(Data.Volume);
+                }
+            }
             _tglMute.SetIsOnWithoutNotify(Data.Muted);
             _volumeText.text = Mathf.RoundToInt(Data.Volume * 100f) + "%";
         }
         [RevSliderChanged("sldBgm")]
         private void OnBgm(float value)
         {
+            // 玩家开始移动滑杆时接管显示，音量和百分比继续即时更新。
+            _volumeTween?.Kill();
+            _volumeTween = null;
             RevServices.GetRequired<GameAudioSettings>().SetVolume(value);
         }
         [RevToggleChanged("tglMute")]
@@ -89,6 +108,8 @@ namespace RevGame.UI
         }
         protected override void OnClose()
         {
+            _volumeTween?.Kill();
+            _volumeTween = null;
             RevEvent.RemoveAllByOwner(this);
             GameAudioSettings settings = RevServices.Get<GameAudioSettings>();
 

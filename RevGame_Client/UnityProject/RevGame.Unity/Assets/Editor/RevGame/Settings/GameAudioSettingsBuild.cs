@@ -9,6 +9,7 @@ using Revolution;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.U2D;
@@ -50,27 +51,22 @@ namespace RevGame.Editor
                 Label("bgmLabel", card.transform, "背景音乐", new Vector2(190, 55), new Vector2(-270, 62), 30);
                 Label("volumeText", card.transform, "60%", new Vector2(110, 55), new Vector2(282, 62), 32);
                 Label("help", card.transform, "拖动立即生效，关闭后保存", new Vector2(650, 45), new Vector2(0, -160), 22);
-                Image track = Image("sldBgm", card.transform, new Vector2(545, 56), new Vector2(0, 2), Sprite("UI_Tavern_Background"));
-                track.type = UnityEngine.UI.Image.Type.Sliced;
+                Image track = Image("sldBgm", card.transform, new Vector2(545, 46), new Vector2(0, 2), Sprite("UI_Game_imgMobilityBK"));
                 track.color = new Color(.38f, .48f, .40f);
                 track.raycastTarget = true;
                 Slider slider = track.gameObject.AddComponent<Slider>();
-                RectTransform fillArea = Rect("fillArea", track.transform, new Vector2(511, 24), Vector2.zero);
-                Image fill = Image("fill", fillArea, new Vector2(511, 24), Vector2.zero, Sprite("UI_Setting_Background"));
-                // Slider只改fillRect锚点，保留sizeDelta会把绿色填充额外撑宽；必须先清掉固定尺寸。
-                GameAssetBuilder.Stretch(fill.rectTransform);
-                fill.type = UnityEngine.UI.Image.Type.Sliced;
-                fill.color = new Color(.5f, .77f, .45f);
-                RectTransform handleArea = Rect("handleArea", track.transform, new Vector2(511, 56), Vector2.zero);
-                Image handle = Image("handle", handleArea, new Vector2(42, 60), Vector2.zero, Sprite("UI_Tavern_Handle"));
+                RectTransform fillArea = Rect("fillArea", track.transform, new Vector2(509, 46), Vector2.zero);
+                Image("fill", fillArea, new Vector2(545, 46), Vector2.zero, Sprite("UI_Game_imgEnemyMobility"));
+                RectTransform handleArea = Rect("handleArea", track.transform, new Vector2(509, 46), Vector2.zero);
+                Image handle = Image("handle", handleArea, new Vector2(22, 60), Vector2.zero, Sprite("UI_Tavern_Handle"));
                 handle.raycastTarget = true;
-                slider.fillRect = fill.rectTransform;
                 slider.handleRect = handle.rectTransform;
                 slider.targetGraphic = handle;
                 slider.direction = Slider.Direction.LeftToRight;
                 slider.minValue = 0;
                 slider.maxValue = 1;
                 slider.value = GameAudioSettings.DefaultVolume;
+                ConfigureVolumeSlider(slider, false);
                 RectTransform toggleRoot = Rect("tglMute", card.transform, new Vector2(255, 60), new Vector2(-172, -82));
                 Toggle toggle = toggleRoot.gameObject.AddComponent<Toggle>();
                 Image box = Image("box", toggleRoot, new Vector2(46, 46), new Vector2(-90, 0), Sprite("UI_Setting_Background"));
@@ -159,33 +155,12 @@ namespace RevGame.Editor
             GameObject root = current ? stage.prefabContentsRoot : PrefabUtility.LoadPrefabContents(path);
             try
             {
-                RectTransform track = (RectTransform)root.transform.Find("card/sldBgm");
-                RectTransform fillArea = (RectTransform)track.Find("fillArea");
-                RectTransform fill = (RectTransform)fillArea.Find("fill");
-                RectTransform handleArea = (RectTransform)track.Find("handleArea");
-                RectTransform handle = (RectTransform)handleArea.Find("handle");
-                Slider slider = track.GetComponent<Slider>();
-
-                if (slider == null || fill == null || handle == null)
+                Slider slider = root.transform.Find("card/sldBgm").GetComponent<Slider>();
+                if (slider == null)
                 {
                     throw new InvalidOperationException("声音滑杆接线不完整");
                 }
-                Undo.RecordObjects(new UnityEngine.Object[] { track, fillArea, fill, handleArea, handle }, "调整声音设置滑杆尺寸");
-                track.sizeDelta = new Vector2(545, 46);
-                fillArea.sizeDelta = new Vector2(545, 46);
-                fillArea.anchoredPosition = Vector2.zero;
-                handleArea.sizeDelta = new Vector2(509, 46);
-                handleArea.anchoredPosition = Vector2.zero;
-                // Slider会把fill纵向锚点设为0～1；sizeDelta.y必须为0，实际高度等于fillArea的46。
-                fill.sizeDelta = Vector2.zero;
-                fill.anchoredPosition = Vector2.zero;
-                // Slider会把handle纵向锚点设为0～1；实际高度=46+14=60，宽22接近原31:84图片比例。
-                // 清零位置让手柄中心对准轨道，509宽的行程留出端部边框，0/100%不会滑出轨道。
-                handle.sizeDelta = new Vector2(22, 14);
-                handle.anchoredPosition = Vector2.zero;
-                float value = slider.value;
-                slider.SetValueWithoutNotify(value < .5f ? 1 : 0);
-                slider.SetValueWithoutNotify(value);
+                ConfigureVolumeSlider(slider, current);
                 EditorUtility.SetDirty(root);
 
                 if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
@@ -197,7 +172,7 @@ namespace RevGame.Editor
                 {
                     EditorSceneManager.MarkSceneDirty(stage.scene);
                 }
-                return "轨道545×46，填充跟随轨道，手柄实际22×60；已保留图片、音量值和其它控件位置";
+                return "填充保留原图比例，裁切右边与手柄中心对齐";
             }
             finally
             {
@@ -206,6 +181,59 @@ namespace RevGame.Editor
                     PrefabUtility.UnloadPrefabContents(root);
                 }
             }
+        }
+
+        /// <summary>手柄和裁切右边共用行程，黄色原图固定在轨道左端。</summary>
+        private static void ConfigureVolumeSlider(Slider slider, bool recordUndo)
+        {
+            var track = (RectTransform)slider.transform;
+            var fillArea = (RectTransform)track.Find("fillArea");
+            RectTransform handle = slider.handleRect;
+            var handleArea = (RectTransform)handle.parent;
+            var clip = (RectTransform)fillArea.Find("clip");
+            var fill = (RectTransform)(clip == null ? fillArea.Find("fill") : clip.Find("fill"));
+
+            if (clip == null)
+            {
+                clip = new GameObject("clip", typeof(RectTransform), typeof(RectMask2D)).GetComponent<RectTransform>();
+                clip.SetParent(fillArea, false);
+                if (recordUndo)
+                {
+                    Undo.RegisterCreatedObjectUndo(clip.gameObject, "添加声音滑杆裁切");
+                    Undo.SetTransformParent(fill, clip, "绑定声音滑杆填充");
+                }
+                else
+                {
+                    fill.SetParent(clip, false);
+                }
+            }
+            if (recordUndo)
+            {
+                Undo.RecordObjects(new UnityEngine.Object[] { slider, track, fillArea, handleArea, handle, clip, fill }, "调整声音设置滑杆");
+            }
+
+            const float width = 545f;
+            const float height = 46f;
+            const float inset = 18f;
+            track.sizeDelta = new Vector2(width, height);
+            fillArea.sizeDelta = handleArea.sizeDelta = new Vector2(width - 2f * inset, height);
+            fillArea.anchoredPosition = handleArea.anchoredPosition = Vector2.zero;
+            handle.sizeDelta = new Vector2(22f, 14f);
+            handle.anchoredPosition = Vector2.zero;
+
+            // Slider 驱动裁切锚点，额外的左端宽度只用来对齐整张图片的原始位置。
+            clip.pivot = new Vector2(0f, .5f);
+            clip.sizeDelta = new Vector2(inset, 0f);
+            clip.anchoredPosition = new Vector2(-inset, 0f);
+            fill.anchorMin = Vector2.zero;
+            fill.anchorMax = Vector2.up;
+            fill.pivot = new Vector2(0f, .5f);
+            fill.sizeDelta = new Vector2(width, 0f);
+            fill.anchoredPosition = Vector2.zero;
+            slider.fillRect = clip;
+            float value = slider.value;
+            slider.SetValueWithoutNotify(value < .5f ? 1f : 0f);
+            slider.SetValueWithoutNotify(value);
         }
         /// <summary>战斗顶栏原返回按钮拆出右侧设置位，保证两个按钮不互相覆盖；大厅入口放右上角。</summary>
         private static void AddEntry(string name, bool battle)
@@ -395,7 +423,7 @@ namespace RevGame.Editor
                 target.Create();
                 camera.targetTexture = target;
                 readback = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
-                var canvasObject = new GameObject("设置验收画布", typeof(RectTransform), typeof(Canvas));
+                var canvasObject = new GameObject("设置验收画布", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
                 SceneManager.MoveGameObjectToScene(canvasObject, scene);
                 Canvas canvas = canvasObject.GetComponent<Canvas>();
                 canvas.renderMode = RenderMode.WorldSpace;
@@ -450,14 +478,7 @@ namespace RevGame.Editor
                 // 编辑态不启动RevUI管理器；夹具将真实控件事件转入同一组属性回调，验证业务处理与总线结果。
                 slider.onValueChanged.AddListener(v => RevUIWidgetEvents.Invoke(panel, "sldBgm", RevUIWidgetEventKind.SliderChanged, v));
                 toggle.onValueChanged.AddListener(v => RevUIWidgetEvents.Invoke(panel, "tglMute", RevUIWidgetEventKind.ToggleChanged, v));
-                slider.value = .42f;
-
-                if (Mathf.Abs(settings.Volume - .42f) > .0001f || Mathf.Abs(RevSound.GetVolume(RevSoundKind.Bgm) - .42f) > .0001f)
-                {
-                    throw new InvalidOperationException("滑杆属性回调未即时更新BGM");
-                }
-                volume.text = "42%";
-                Capture(camera, target, readback, output + "/Volume42.png");
+                CheckSliderDrag(slider, settings, volume, camera, target, readback, output, canvasObject.GetComponent<GraphicRaycaster>());
                 toggle.isOn = true;
 
                 if (!settings.Muted || RevSound.GetVolume(RevSoundKind.Bgm) != 0 || RevSound.GetVolume(RevSoundKind.Sfx) != oldSfx)
@@ -522,6 +543,44 @@ namespace RevGame.Editor
                 PlayerPrefs.DeleteKey(key);
                 PlayerPrefs.DeleteKey(key + ".Muted");
                 PlayerPrefs.Save();
+            }
+        }
+
+        /// <summary>用真实 UGUI 拖动事件扫过两端和中间，验证共用行程、固定原画与即时声音。</summary>
+        private static void CheckSliderDrag(Slider slider, GameAudioSettings settings, Text volume, Camera camera,
+            RenderTexture target, Texture2D readback, string output, GraphicRaycaster raycaster)
+        {
+            RectTransform clip = slider.fillRect;
+            var track = (RectTransform)slider.transform;
+            var travel = (RectTransform)slider.handleRect.parent;
+            var picture = (RectTransform)clip.Find("fill");
+            if (clip.GetComponent<RectMask2D>() == null || picture == null)
+            {
+                throw new InvalidOperationException("滑杆填充缺少固定原画或裁切组件");
+            }
+            var pointer = new PointerEventData(EventSystem.current)
+            {
+                button = PointerEventData.InputButton.Left,
+                pointerPressRaycast = new RaycastResult { module = raycaster }
+            };
+            slider.OnInitializePotentialDrag(pointer);
+            foreach (float progress in new[] { 0f, .01f, .12f, .42f, .83f, 1f, .42f })
+            {
+                Vector3 world = travel.TransformPoint(new Vector3(Mathf.Lerp(travel.rect.xMin, travel.rect.xMax, progress), 0f));
+                pointer.position = camera.WorldToScreenPoint(world);
+                slider.OnDrag(pointer);
+                Canvas.ForceUpdateCanvases();
+                float edge = track.InverseTransformPoint(clip.TransformPoint(new Vector3(clip.rect.xMax, 0f))).x;
+                float imageLeft = track.InverseTransformPoint(picture.TransformPoint(new Vector3(picture.rect.xMin, 0f))).x;
+                float handle = track.InverseTransformPoint(slider.handleRect.position).x;
+                if (Mathf.Abs(settings.Volume - progress) > .001f || Mathf.Abs(RevSound.GetVolume(RevSoundKind.Bgm) - progress) > .001f
+                    || Mathf.Abs(edge - handle) > .01f || Mathf.Abs(imageLeft - track.rect.xMin) > .01f || picture.rect.width != track.rect.width)
+                {
+                    throw new InvalidOperationException("滑杆拖动、填充裁切或即时音量错误：" + progress);
+                }
+                int percent = Mathf.RoundToInt(progress * 100f);
+                volume.text = percent + "%";
+                Capture(camera, target, readback, output + "/Volume" + percent.ToString("D2") + ".png");
             }
         }
         private static AssetBundle LoadBundle(string name, List<AssetBundle> owned)
