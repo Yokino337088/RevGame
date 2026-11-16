@@ -1,5 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System.Collections.Generic;
+using RevGame.Services;
 using Revolution;
 
 namespace RevGame.Bootstrap
@@ -9,6 +10,15 @@ namespace RevGame.Bootstrap
         /// <summary>收藏书测试使用同一套玩家按钮、拖页事件与业务存档。状态查询不会修改解锁。</summary>
         private static void RegisterYayaMemoryCommands()
         {
+#if UNITY_EDITOR
+            RegisterCommand("RevGame/鸦鸦点滴/解锁六章", "在当前 Editor Play 会话预览全部六章插画，不写入通关存档",
+                _ =>
+                {
+                    var progress = RevServices.GetRequired<YayaMemoryProgress>();
+                    progress.UnlockAllForPreview();
+                    return "六章插画已解锁，unlocked=" + progress.Unlocked;
+                });
+#endif
             RegisterCommand("RevGame/鸦鸦点滴/打开", "从大厅左上角的真实按钮打开收藏书",
                 _ => ClickPlayerButton("HomePanel/btnMemories"));
             RegisterCommand("RevGame/鸦鸦点滴/翻页", "点击实际翻页按钮，方向1下一页、-1上一页；锁页保留提示",
@@ -35,7 +45,7 @@ namespace RevGame.Bootstrap
                     var state = YayaMemoryAutomation.State();
                     var page = state["book"] as Dictionary<string, object>;
                     return "cleared=" + state["cleared"] + ",read=" + state["read"] + ",unread=" + state["unread"]
-                        + ",badge=" + state["badge"] + ",speech=" + state["speech"]
+                        + ",unlocked=" + state["unlocked"] + ",badge=" + state["badge"] + ",speech=" + state["speech"]
                         + (page == null ? ",book=closed" : ",page=" + page["chapter"] + ",phase=" + page["phase"] + ",artReady=" + page["artReady"]);
                 });
         }

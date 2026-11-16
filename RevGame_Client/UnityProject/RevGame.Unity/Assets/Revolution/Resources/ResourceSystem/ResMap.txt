@@ -354,6 +354,7 @@ Art/UI/UI_Setting_Checkmark|atlas_uibattle|UI_Setting_Checkmark
 Atlases/UIBattle|atlas_uibattle|UIBattle
 Art/UI/UI_achieveItem_imgBK|atlas_uimenus|UI_achieveItem_imgBK
 Art/UI/UI_Buy_btnClose|atlas_uimenus|UI_Buy_btnClose
+Art/UI/UI_ChooseLevel_btnSetting|atlas_uimenus|UI_ChooseLevel_btnSetting
 Art/UI/UI_ChooseLevel_imgTip2|atlas_uimenus|UI_ChooseLevel_imgTip2
 Art/UI/UI_Settlement_imgBK|atlas_uimenus|UI_Settlement_imgBK
 Art/UI/UI_Tavern_Background|atlas_uimenus|UI_Tavern_Background

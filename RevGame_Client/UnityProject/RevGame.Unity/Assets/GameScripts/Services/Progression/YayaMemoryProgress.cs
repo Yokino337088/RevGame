@@ -14,6 +14,7 @@ namespace RevGame.Services
 #if UNITY_EDITOR
         public const string RestartTestSession = "RevGame.YayaMemories.EditorRestartKey";
         public const string RestartTestPrefix = "RevGame.YayaMemories.IsolatedRestart.";
+        private bool _previewAll;
 #endif
         private readonly StoryProgress _story;
         private readonly string _key;
@@ -33,6 +34,8 @@ namespace RevGame.Services
             _key = key;
 #if UNITY_EDITOR
             // 重启验收时仅挂接由编辑工具创建的临时键，普通隔离 Play 继续使用内存。
+            // 普通 Editor Play 默认可翻看六章，隔离验收仍从真实的锁页规则开始。
+            _previewAll = key == SaveKey && !story.IsIsolated;
             string restart = UnityEditor.SessionState.GetString(RestartTestSession, "");
             if (key == SaveKey && story.IsIsolated && restart.StartsWith(RestartTestPrefix, StringComparison.Ordinal))
             {
@@ -47,14 +50,38 @@ namespace RevGame.Services
         public int Read => (Flags >> ChapterCount) & Cleared;
         public int Unread => Cleared & ~Read;
 
-        public bool HasCleared(int chapter)
+        /// <summary>可看插画的章节位图。编辑器预览只影响展示，真实通关与已阅仍按存档记账。</summary>
+        public int Unlocked
         {
-            return (Cleared & ChapterBit(chapter)) != 0;
+            get
+            {
+#if UNITY_EDITOR
+                if (_previewAll)
+                {
+                    return ChapterMask;
+                }
+#endif
+                return Cleared;
+            }
         }
+
+        public bool IsUnlocked(int chapter)
+        {
+            return (Unlocked & ChapterBit(chapter)) != 0;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>为当前 Play 会话开放六章插画，不写入 PlayerPrefs。</summary>
+        public void UnlockAllForPreview()
+        {
+            _previewAll = true;
+        }
+#endif
 
         public int OpeningChapter()
         {
-            int preferred = Unread | (Unread == 0 ? Cleared : 0);
+            int unread = Unread;
+            int preferred = unread != 0 ? unread : Unlocked;
             for (int chapter = 1; chapter <= ChapterCount; chapter++)
             {
                 if ((preferred & ChapterBit(chapter)) != 0)

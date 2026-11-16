@@ -234,10 +234,30 @@ namespace RevGame.Editor
                     home.anchoredPosition = new Vector2(-317, -72);
                     home.sizeDelta = new Vector2(270, 78);
                 }
+                else
+                {
+                    ApplyHomeEntrySkin(existing);
+                }
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
+        /// <summary>大厅设置使用原版齿轮，以正方形保留图标比例，原按钮点击路径不变。</summary>
+        internal static void ApplyHomeEntrySkin(Transform entry)
+        {
+            var image = entry.GetComponent<Image>();
+            image.sprite = Sprite("UI_ChooseLevel_btnSetting");
+            image.type = UnityEngine.UI.Image.Type.Simple;
+            image.preserveAspect = true;
+            image.color = Color.white;
+            image.rectTransform.sizeDelta = new Vector2(76, 76);
+            Transform label = entry.Find("label");
+            if (label != null)
+            {
+                label.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>临时PlayerPrefs键验证保存/重建/静音/恢复默认，不改玩家设置或当前声音总线。</summary>
         public static string CheckPersistence()
         {

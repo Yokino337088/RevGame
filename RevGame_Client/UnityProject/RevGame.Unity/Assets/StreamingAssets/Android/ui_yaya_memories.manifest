@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1890456032
+CRC: 1263317318
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a9b20258ef794077804d62ff294dc3ba
+    Hash: 0cba004b9c1470525a5b085438021900
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 8c339e6da216956266080649534cff73
+    Hash: dd5c5e6e03cc037f32bc89ff235d1724
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a9b20258ef794077804d62ff294dc3ba
+    Hash: 0cba004b9c1470525a5b085438021900
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -31,9 +31,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 02862eb3ef945fb459c13da190d571fd, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: adac2d560ab6710438c9247f2ab5495a, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 02862eb3ef945fb459c13da190d571fd, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -74,6 +74,6 @@ Assets:
 - Assets/GameRes/UI/Panel/YayaMemories/Book/OpenBook.png
 - Assets/GameRes/Material/UI/YayaMemories/MemorySceneComposite.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uiyayamemories
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uiyayamemories"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders"

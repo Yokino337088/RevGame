@@ -3,13 +3,13 @@ CRC: 2595598251
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d38c0c98f6d692a9228d894204cfef5f
+    Hash: 7046a3bd096e2aeeba6a101d5e15d77e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3703a36e2ed06bb24fb62614c53c7ed5
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d38c0c98f6d692a9228d894204cfef5f
+    Hash: 7046a3bd096e2aeeba6a101d5e15d77e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -62,6 +62,6 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Settings/AudioSettingsPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"

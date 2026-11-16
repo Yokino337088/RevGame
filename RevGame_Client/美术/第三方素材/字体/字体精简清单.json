@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "2b5f76f0291f6037df9aa75776df46a1cb2a1a45d0f7c643765d273248b4086c",
-  "inputDigest": "47f35ffb116f747862e51844b9334b98fa3edc864cc63f9383351b38d8f563d1",
+  "inputDigest": "12eec162b2c94d1296b3226d543af0f428261f31a5a71ef8f58cb873a5b015fd",
   "originalBytes": 17002248,
   "outputBytes": 810660,
   "characterCount": 1817,
@@ -2077,7 +2077,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/HomePanel.prefab",
-      "sha256": "3c2e06c8bf1a510fdadbe8ca37317888e1d8afbe065e637fbb68e69332e2917c"
+      "sha256": "d5e1f86e96a5f31e804b406bf6584c3882e55b115b259af1da0b0e5094ea88a5"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
@@ -2161,7 +2161,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/YayaMemories/YayaMemoryBookPanel.prefab",
-      "sha256": "bd1338ea867c40b1422556b7b201dd1f1956278c9aa8b405da19b40f5e895b05"
+      "sha256": "d3243d22c2904e5d2125d5016b3937effa283d929968e38419c1312a035ab5c0"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/YayaMemories/Chapter01/Illustration.asset",
@@ -2345,7 +2345,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/GameGmCommands.YayaMemories.cs",
-      "sha256": "98d04b0980803df2fa873fa86c76c5cad7df2ba6a4151b0ef2ad399680a2f793"
+      "sha256": "ad249b3ceb2184d2276b0f93817c045979b3c338f3b23102f350f33528f66118"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Pvp/PvpAgentChecks.cs",
@@ -2397,7 +2397,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/YayaMemoryAutomation.cs",
-      "sha256": "18ef2b2caf28dd11da6039c0f582bf0a31ba2e4a09f179f20933e42840bcb0e7"
+      "sha256": "c449f6ab05ed058c776e320cc7af148294b5999ae5b7147b1510de2463375ddb"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
@@ -3065,7 +3065,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Progression/YayaMemoryProgress.cs",
-      "sha256": "149c3d44a179882e950585e6562905b37af2ad015f7e66b624d3c23dc67a3e71"
+      "sha256": "0be26d9053028d645edb11496cd0a198e801dee91160946aa9a38eba1e9fef65"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs",
@@ -3293,7 +3293,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/YayaMemories/YayaMemoryBookPanel.cs",
-      "sha256": "b7d96fdd2228d61a91d857507cb0aa5005e05c4f748926b922dbbe4d97ff1559"
+      "sha256": "aad541a8a80e161266cfb9d47c5c76af890896e9c59abd88efc3dd39b5f0371e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/YayaMemories/YayaMemoryIllustration.cs",

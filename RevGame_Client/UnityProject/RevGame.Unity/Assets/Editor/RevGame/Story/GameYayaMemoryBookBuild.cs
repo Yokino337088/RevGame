@@ -233,10 +233,10 @@ namespace RevGame.Editor
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             try
             {
-                var wood = root.transform.Find("btnSettings").GetComponent<UnityEngine.UI.Image>().sprite;
+                var parchment = Require<Sprite>(Root + "Art/UI/UI_achieveItem_imgBK.png");
                 if (root.transform.Find("btnMemories") == null)
                 {
-                    var entry = Button(root.transform, "btnMemories", "与鸦鸦的点滴", font, wood, new Vector2(.122f, .924f), new Vector2(292, 72), 36);
+                    var entry = Button(root.transform, "btnMemories", "与鸦鸦的点滴", font, parchment, new Vector2(.122f, .924f), new Vector2(292, 72), 36);
                     Sprite circle = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
                     var badge = ColorBlock(entry.transform, "Unread", new Vector2(.94f, .83f), new Vector2(27, 27), new Color(.91f, .13f, .10f));
                     badge.sprite = circle;
@@ -249,6 +249,12 @@ namespace RevGame.Editor
                     badge.gameObject.SetActive(false);
                     halo.gameObject.SetActive(false);
                 }
+                // 大厅使用原版成就底板，书内翻页按钮沿用收藏书自己的素材。
+                var memoryEntry = root.transform.Find("btnMemories").GetComponent<UnityEngine.UI.Image>();
+                memoryEntry.sprite = parchment;
+                memoryEntry.type = UnityEngine.UI.Image.Type.Sliced;
+                GameAudioSettingsBuild.ApplyHomeEntrySkin(root.transform.Find("btnSettings"));
+
                 if (root.transform.Find("MemorySpeech") == null)
                 {
                     var speech = Node(root.transform, "MemorySpeech", new Vector2(.36f, .77f), new Vector2(440, 135));
@@ -368,12 +374,16 @@ namespace RevGame.Editor
             {
                 var words = (RectTransform)root.transform.Find("Words");
                 var titleText = words.Find("Chapter").GetComponent<UnityEngine.UI.Text>();
-                Vector2 center = new Vector2(.5f, .951f);
+                Vector2 center = new Vector2(.5f, .945f);
                 var plate = words.Find("ChapterPlate")?.GetComponent<UnityEngine.UI.Image>()
-                    ?? ColorBlock(words, "ChapterPlate", center, new Vector2(674, 81), Color.white);
+                    ?? ColorBlock(words, "ChapterPlate", center, new Vector2(674, 104), Color.white);
                 plate.sprite = title;
-                plate.type = UnityEngine.UI.Image.Type.Sliced;
-                plate.pixelsPerUnitMultiplier = 2f;
+                // 原画中央已留白，用完整贴图显示，避免九宫格压缩标题牌的上下饰边。
+                plate.type = UnityEngine.UI.Image.Type.Simple;
+                plate.preserveAspect = true;
+                plate.pixelsPerUnitMultiplier = 1f;
+                plate.rectTransform.anchorMin = plate.rectTransform.anchorMax = center;
+                plate.rectTransform.sizeDelta = new Vector2(674, 104);
                 plate.transform.SetAsFirstSibling();
                 titleText.rectTransform.anchorMin = titleText.rectTransform.anchorMax = center;
                 titleText.rectTransform.sizeDelta = new Vector2(600, 64);

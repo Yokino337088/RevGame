@@ -147,6 +147,13 @@ namespace RevGame.UI
             if (_progress != null)
             {
                 UpdatePaper();
+                // 已经打开的锁页可以在 GM 解锁并绘制成功后原地显示，不必重新开书。
+                if (_phase == Phase.Idle && _unavailable.gameObject.activeSelf && Page(_chapter).Image != null)
+                {
+                    StopBarrage();
+                    ShowWords();
+                    _progress.MarkRead(_chapter);
+                }
             }
         }
 
@@ -163,10 +170,12 @@ namespace RevGame.UI
 
         private YayaMemoryIllustration Page(int chapter)
         {
-            if (!_chapters.TryGetValue(chapter, out var page))
+            bool unlocked = _progress.IsUnlocked(chapter);
+            if (!_chapters.TryGetValue(chapter, out var page) || page.Unlocked != unlocked)
             {
-                page = new YayaMemoryIllustration(chapter, _progress.HasCleared(chapter));
-                _chapters.Add(chapter, page);
+                page?.Dispose();
+                page = new YayaMemoryIllustration(chapter, unlocked);
+                _chapters[chapter] = page;
             }
             return page;
         }

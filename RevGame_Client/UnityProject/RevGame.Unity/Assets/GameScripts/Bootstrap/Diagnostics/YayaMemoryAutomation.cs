@@ -64,7 +64,7 @@ namespace RevGame.Bootstrap
             }
             return new Dictionary<string, object>
             {
-                ["cleared"] = progress.Cleared, ["read"] = progress.Read, ["unread"] = progress.Unread,
+                ["cleared"] = progress.Cleared, ["unlocked"] = progress.Unlocked, ["read"] = progress.Read, ["unread"] = progress.Unread,
                 ["abMode"] = bundleMode, ["book"] = book == null ? null : book.Inspect(),
                 ["badge"] = home != null && home.transform.Find("btnMemories/Unread").gameObject.activeInHierarchy,
                 ["speech"] = speech != null && speech.gameObject.activeInHierarchy,
