@@ -85,6 +85,7 @@ namespace Revolution.Gal.Editor
             ToolbarAction(toolbar, "导入 JSON", Import);
             ToolbarAction(toolbar, "导出 JSON", Export);
             ToolbarAction(toolbar, "从起点试读", () => Preview(null));
+            ToolbarAction(toolbar, "接入检查", OpenHostContract);
             ToolbarAction(toolbar, "定位全图", () => _graph.FrameAll());
             ToolbarAction(toolbar, "自动排版", Arrange);
             ToolbarAction(toolbar, "生成游戏面板", CreatePanel);
@@ -597,6 +598,13 @@ namespace Revolution.Gal.Editor
         {
             RequireStory();
             RevGalPreviewWindow.Open(_story, entry);
+        }
+
+        /// <summary>用当前剧情数据生成自定义界面的接入清单。</summary>
+        private void OpenHostContract()
+        {
+            RequireStory();
+            RevGalHostWindow.Open(_story);
         }
 
         private void CreatePanel()

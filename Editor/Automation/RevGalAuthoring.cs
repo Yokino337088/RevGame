@@ -44,6 +44,13 @@ namespace Revolution.Gal.Editor
             return Describe(args.path, RevGalAssets.Read(args.path).Definition);
         }
 
+        [RevAutomationAction("gal.story.contract", Environment = "edit", Keys = new[] { "path" },
+            Description = "读取自定义界面接入清单，包括路径、变量、宿主信号和媒体资源")]
+        public static object HostContract(RevAutomationRequest request)
+        {
+            return RevGalHostContract.Describe(RevGalAssets.Read(Read(request).path));
+        }
+
         [RevAutomationAction("gal.story.import", Environment = "edit",
             Keys = new[] { "path", "document", "checkOnly", "overwrite", "bundle" },
             Description = "检查或导入内联剧情 JSON；允许覆盖时保留 SO 的 GUID")]
@@ -128,7 +135,7 @@ namespace Revolution.Gal.Editor
             {
                 throw new ArgumentException("一次试读最多 512 步");
             }
-            using var session = RevGal.Preview(RevGalAssets.Read(args.path), args.entry);
+            using var session = RevGalPlayback.Preview(RevGalAssets.Read(args.path), args.entry);
             var trace = new List<Dictionary<string, object>> { Trace(session, "start") };
             RevGalSave bookmark = null;
             foreach (string step in steps)

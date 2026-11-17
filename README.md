@@ -12,6 +12,14 @@ Revolution.Gal 是 Unity 2022.3 的可选视觉小说模块。把 [Revolution �
 
 舞台支持一个背景、左中右三位立绘、持续背景音乐、单节点语音和音效。舞台路径留空会沿用，填单个 `-` 会清除该槽。语音与单节点音效留空表示这一节点无该声音。给节点填收藏 ID 和明确背景，可在经过节点后解锁插画。项目的 AB 规则负责把剧情 SO、面板、图集和音频纳入目标平台的 ResMap。编辑器的资源选择器只写逻辑路径。
 
+## 只制作剧情或接入自己的界面
+
+剧情工作台的 **接入检查** 显示当前 SO 的逻辑路径、变量、信号、媒体类型及本地资源解析结果。可复制 JSON，也可用 `gal story.contract --path Assets/…/Story.asset` 从 RevCLI 获取。工作台的试读和 `gal story.export` 都可以用于只有剧情配置的项目。
+
+自有界面从 `RevGalPlayback.LoadAsync` 加载逻辑路径，或把已持有的 Story SO 交给 `RevGalPlayback.Create`。宿主自己装配类型化字段时用 `CreateFromDefinition`。这些入口都返回 `RevGalSession`，由宿主持有。`Observe` 立即交付首帧并订阅后续帧；用回调捕获的帧 Token 调用 `Advance(token)` 和 `Choose(id, token)`。宿主可使用 RevUI、UI Toolkit 或自己的显示系统。配置了 `HandleSignal` 后，用 `DispatchSignalAsync(token)` 执行并等待完成，或由宿主自行处理再调用 `CompleteSignal(token)`。
+
+关闭或换故事时由宿主取消打开任务，释放帧订阅和会话。已有 `RevGal.LoadAsync/Preview/OpenAsync` API 保持兼容。示例、RevGame 生命周期和媒体引用约定见 [自定义宿主 Skill](https://github.com/Yokino337088/Revolution/blob/skill/revolution-gal/references/custom-host.md)。
+
 ## 共用面板主题
 
 工作台的 **编辑面板主题** 会选中默认面板引用的主题。在 Inspector 为整个主题指定图集和字体，再按部位选择图集切片或独立 Sprite。独立 Sprite 优先。按钮、对白框、选项、设置面板和回看可各自选图并设置颜色。带边距的 Sprite 可启用九宫格。背景和立绘的画面取自剧情节点，主题可以调整它们的布局。
@@ -40,7 +48,7 @@ var panel = await RevGal.OpenAsync("Gal/Stories/FirstMeeting", new RevGalOptions
 // 使用现成会话或 RevGal.Close() 收口。默认 Panel 关闭时归还媒体并保存进度。
 ```
 
-自定义界面可先 `await RevGal.LoadAsync(逻辑路径, options)`，再用自己的 `RevUIPanel<RevGalSession>` 和 View。由该宿主释放 Session。背景、立绘和音频由 `RevResManager.LoadAsync` 获取，通过 `RevResScope` 归还。句柄迟到时只归还本次引用。默认音源随 Panel 生灭，音量乘 RevSound 分类音量。游戏可以按自己的转场暂停或恢复原场景音乐。
+自定义界面可先 `await RevGalPlayback.LoadAsync(逻辑路径, options)`，再用自己的 `RevUIPanel<RevGalSession>` 和 View。由该宿主释放 Session。背景、立绘和音频由 `RevResManager.LoadAsync` 获取，通过 `RevResScope` 归还。句柄迟到时只归还本次引用。默认音源随 Panel 生灭，音量乘 RevSound 分类音量。游戏可以按自己的转场暂停或恢复原场景音乐。
 
 播放支持打字机、快显、自动、跳过已读、选项、回看、回退和快速存读档。自动和已读跳过在选项、信号与结局停下。已读跳过到达新对白时恢复手动。档案记录图的剧情 ID、修订、节点 ID、变量、舞台和历史。可通过 `SaveSlot/LoadSlot` 使用多个槽，并用 `IRevGalStorage` 接入业务档案。项目修改旧节点或变量的兼容契约时升级 Revision。回退恢复会话检查点，已读和解锁作为独立的玩家进度保留。
 
@@ -80,5 +88,5 @@ JSON 支持符号枚举和 Unity 数值枚举。模板导出可直接往返，�
 
 - 端口连线、节点定位与图面操作参考 [xNode](https://github.com/Siccity/xNode) 与 [NodeGraphProcessor](https://github.com/alelievr/NodeGraphProcessor)。
 - 写作时可试读、校验问题可定位参考 [Inky](https://github.com/inkle/inky)。
-- 正文、选项和宿主动作的表现分离参考 [Yarn Spinner Unity](https://github.com/YarnSpinnerTool/YarnSpinner-Unity)。
+- 自定义呈现参考 [Yarn Spinner 的 DialoguePresenter](https://docs.yarnspinner.dev/api/csharp/yarn.unity/yarn.unity.dialoguepresenterbase)，宿主驱动的会话参考 [Ink Runtime API](https://github.com/inkle/ink/blob/master/Documentation/RunningYourInk.md)，剧情数据与示例界面的分工参考 [Godot Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager)。
 - 存读档、回退和画廊的玩法边界参考 [Ren’Py 存档与回退](https://www.renpy.org/doc/html/save_load_rollback.html) 与 [Ren’Py 图鉴](https://www.renpy.org/doc/html/rooms.html)。
