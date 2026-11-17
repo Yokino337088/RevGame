@@ -14,6 +14,25 @@ namespace RevGame.Editor
         /// <summary>逐篇解析实际显示图片并查唯一活动图集；只更新派生列表，不覆盖用户立绘、编号或对白。</summary>
         public static void Configure()
         {
+            var atlasNames = ReadAtlasNames();
+            foreach (string guid in AssetDatabase.FindAssets("t:StoryBook", new[] { "Assets/GameRes/Config/Story" }))
+            {
+                StoryBook book = AssetDatabase.LoadAssetAtPath<StoryBook>(AssetDatabase.GUIDToAssetPath(guid));
+                if (UpdateBook(book, atlasNames))
+                {
+                    EditorUtility.SetDirty(book);
+                }
+            }
+        }
+
+        /// <summary>导入先在临时对象上推导图集，校验完整后才写入现有资产。</summary>
+        internal static bool UpdateBook(StoryBook book)
+        {
+            return UpdateBook(book, ReadAtlasNames());
+        }
+
+        private static Dictionary<string, string> ReadAtlasNames()
+        {
             var atlasNames = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (string guid in AssetDatabase.FindAssets("t:SpriteAtlas", new[] { "Assets/GameRes/Atlases" }))
             {
@@ -24,37 +43,35 @@ namespace RevGame.Editor
                     atlasNames.Add(bundle, System.IO.Path.GetFileNameWithoutExtension(path));
                 }
             }
-            foreach (string guid in AssetDatabase.FindAssets("t:StoryBook", new[] { "Assets/GameRes/Config/Story" }))
+            return atlasNames;
+        }
+
+        private static bool UpdateBook(StoryBook book, Dictionary<string, string> atlasNames)
+        {
+            book.Validate();
+            bool changed = false;
+            foreach (StoryBook.Episode episode in book.Episodes)
             {
-                StoryBook book = AssetDatabase.LoadAssetAtPath<StoryBook>(AssetDatabase.GUIDToAssetPath(guid));
-                book.Validate();
-                bool changed = false;
-                foreach (StoryBook.Episode episode in book.Episodes)
+                var names = new SortedSet<string>(StringComparer.Ordinal);
+                foreach (StoryBook.Line line in episode.Lines)
                 {
-                    var names = new SortedSet<string>(StringComparer.Ordinal);
-                    foreach (StoryBook.Line line in episode.Lines)
+                    Sprite portrait = book.ResolvePortrait(episode, line, out _);
+                    string path = AssetDatabase.GetAssetPath(portrait);
+                    string bundle = AssetDatabase.GetImplicitAssetBundleName(path);
+                    if (!atlasNames.TryGetValue(bundle, out string name))
                     {
-                        Sprite portrait = book.ResolvePortrait(episode, line, out _);
-                        string path = AssetDatabase.GetAssetPath(portrait);
-                        string bundle = AssetDatabase.GetImplicitAssetBundleName(path);
-                        if (!atlasNames.TryGetValue(bundle, out string name))
-                        {
-                            throw new InvalidOperationException("立绘没有唯一活动Sprite图集，请放入GameRes/Art规范目录：" + episode.Id + " → " + path);
-                        }
-                        names.Add(name);
+                        throw new InvalidOperationException("立绘没有活动Sprite图集，请先配置图集：" + episode.Id + " → " + path);
                     }
-                    string[] generated = names.ToArray();
-                    if (episode.PortraitAtlasNames == null || !episode.PortraitAtlasNames.SequenceEqual(generated))
-                    {
-                        episode.PortraitAtlasNames = generated;
-                        changed = true;
-                    }
+                    names.Add(name);
                 }
-                if (changed)
+                string[] generated = names.ToArray();
+                if (episode.PortraitAtlasNames == null || !episode.PortraitAtlasNames.SequenceEqual(generated))
                 {
-                    EditorUtility.SetDirty(book);
+                    episode.PortraitAtlasNames = generated;
+                    changed = true;
                 }
             }
+            return changed;
         }
     }
 }

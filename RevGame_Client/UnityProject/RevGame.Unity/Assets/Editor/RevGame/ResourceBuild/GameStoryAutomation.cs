@@ -7,6 +7,31 @@ namespace RevGame.Editor
     /// <summary>显式MCP装配入口。程序集只能固定调用项目故事工具，不提供任意反射执行。</summary>
     public static class GameStoryAutomation
     {
+        [RevAutomationAction("game.story.markdown-export", Environment = "edit", Keys = new string[0], Description = "从现有 StoryBook 首次导出剧情配置.md")]
+        public static object ExportMarkdown(RevAutomationRequest request)
+        {
+            return InvokeMarkdown("Export", Array.Empty<object>());
+        }
+
+        [RevAutomationAction("game.story.markdown-sync", Environment = "edit", Keys = new[] { "checkOnly", "book" }, Description = "校验后把剧情配置.md写回现有 StoryBook")]
+        public static object SyncMarkdown(RevAutomationRequest request)
+        {
+            return InvokeMarkdown("Sync", new object[] { request.payloadJson });
+        }
+
+        private static object InvokeMarkdown(string method, object[] arguments)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameStoryMarkdown, Assembly-CSharp-Editor", true);
+            try
+            {
+                return type.GetMethod(method, BindingFlags.Public | BindingFlags.Static).Invoke(null, arguments);
+            }
+            catch (TargetInvocationException error)
+            {
+                throw new InvalidOperationException(error.InnerException?.Message ?? error.Message, error.InnerException ?? error);
+            }
+        }
+
         [RevAutomationAction("game.story.progress-check", Environment = "edit", Keys = new string[0], Description = "临时存档键验证首次开场/教学持久化及测试隔离")]
         public static object CheckProgress(RevAutomationRequest request)
         {
