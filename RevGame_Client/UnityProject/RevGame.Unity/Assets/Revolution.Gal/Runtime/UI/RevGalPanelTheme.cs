@@ -154,10 +154,18 @@ namespace Revolution.Gal
     {
         [SerializeField] private SpriteAtlas atlas;
         [SerializeField] private Font font;
+        /// <summary>默认背景使用的共享材质。Unity 从该资产读取 Shader 和参数。</summary>
+        [SerializeField] private Material backgroundMaterial;
+        /// <summary>适合程序化 Shader。勾选后，背景没有图片时也会以共享材质绘制。</summary>
+        [SerializeField] private bool renderBackgroundMaterialWithoutSprite;
         [SerializeField] private RevGalPartStyle[] parts = CreateParts();
 
         public SpriteAtlas Atlas => atlas;
         public Font Font => font;
+        /// <summary>默认背景材质，可由当前剧情节点覆盖。</summary>
+        public Material BackgroundMaterial => backgroundMaterial;
+        /// <summary>是否允许共享材质在没有 Sprite 时独立绘制。</summary>
+        public bool RenderBackgroundMaterialWithoutSprite => renderBackgroundMaterialWithoutSprite;
         public IReadOnlyList<RevGalPartStyle> Parts => parts;
 
         private static RevGalPartStyle[] CreateParts()

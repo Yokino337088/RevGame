@@ -16,6 +16,8 @@ Revolution.Gal 是 Unity 2022.3 的可选视觉小说模块。把 [Revolution �
 
 剧情工作台的 **接入检查** 显示当前 SO 的逻辑路径、变量、信号、媒体类型及本地资源解析结果。可复制 JSON，也可用 `gal story.contract --path Assets/…/Story.asset` 从 RevCLI 获取。工作台的试读和 `gal story.export` 都可以用于只有剧情配置的项目。
 
+新工程可以从空工作台点 **快速创建并试读示例**，或用 `gal story.quickstart` 生成一份能跑通两条路线的剧情。配置了 RevAB 时会返回可打包的逻辑路径。维护分支时在 **剧情设置 / 变量** 里运行路线用例，或用 `gal story.test` 执行同一份 JSON。可参考 [快速开始和路线测试](https://github.com/Yokino337088/Revolution/blob/skill/revolution-gal/references/quickstart-and-tests.md)。
+
 自有界面从 `RevGalPlayback.LoadAsync` 加载逻辑路径，或把已持有的 Story SO 交给 `RevGalPlayback.Create`。宿主自己装配类型化字段时用 `CreateFromDefinition`。这些入口都返回 `RevGalSession`，由宿主持有。`Observe` 立即交付首帧并订阅后续帧；用回调捕获的帧 Token 调用 `Advance(token)` 和 `Choose(id, token)`。宿主可使用 RevUI、UI Toolkit 或自己的显示系统。配置了 `HandleSignal` 后，用 `DispatchSignalAsync(token)` 执行并等待完成，或由宿主自行处理再调用 `CompleteSignal(token)`。
 
 关闭或换故事时由宿主取消打开任务，释放帧订阅和会话。已有 `RevGal.LoadAsync/Preview/OpenAsync` API 保持兼容。示例、RevGame 生命周期和媒体引用约定见 [自定义宿主 Skill](https://github.com/Yokino337088/Revolution/blob/skill/revolution-gal/references/custom-host.md)。
@@ -23,6 +25,8 @@ Revolution.Gal 是 Unity 2022.3 的可选视觉小说模块。把 [Revolution �
 ## 共用面板主题
 
 工作台的 **编辑面板主题** 会选中默认面板引用的主题。在 Inspector 为整个主题指定图集和字体，再按部位选择图集切片或独立 Sprite。独立 Sprite 优先。按钮、对白框、选项、设置面板和回看可各自选图并设置颜色。带边距的 Sprite 可启用九宫格。背景和立绘的画面取自剧情节点，主题可以调整它们的布局。
+
+共享主题可挂载背景 Material，或在剧情节点填 `Stage.BackgroundMaterial` 覆盖。材质携带 Shader 与参数。空路径沿用，短横线恢复主题或 Prefab 的默认材质。显式节点材质可以在没有 Sprite 时单独绘制，适用于程序化背景。用项目管线兼容的 UGUI Shader 并随目标平台的 AB 一起验收。
 
 展开部位的 **布局**，勾选覆盖后修改相对父节点的锚点、轴心和边距。自动生成的主题以默认 Prefab 的位置为初值。选项行由滚动列表排版，主题可设置行高。设置和回看遮罩始终覆盖整个剧情面板。主题随 Prefab 引用加载，在下次打开面板时生效。更换主题图集后按宿主资源规则构建目标平台 AB，确保主题、字体和图集随面板交付。
 

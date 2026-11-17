@@ -61,7 +61,10 @@ namespace Revolution.Gal
     public sealed class RevGalStage
     {
         public const string Clear = "-";
+        /// <summary>背景图片的 Sprite 逻辑路径。留空沿用，短横线清掉当前图片。</summary>
         public string Background;
+        /// <summary>节点使用的背景 Material 逻辑路径。材质携带 Shader 和参数，短横线恢复界面的默认材质。</summary>
+        public string BackgroundMaterial;
         public string Left;
         public string Center;
         public string Right;
@@ -79,6 +82,7 @@ namespace Revolution.Gal
                 return;
             }
             Background = Merge(Background, change.Background);
+            BackgroundMaterial = Merge(BackgroundMaterial, change.BackgroundMaterial);
             Left = Merge(Left, change.Left);
             Center = Merge(Center, change.Center);
             Right = Merge(Right, change.Right);

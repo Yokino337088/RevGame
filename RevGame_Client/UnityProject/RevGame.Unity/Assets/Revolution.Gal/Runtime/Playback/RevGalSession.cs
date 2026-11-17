@@ -92,6 +92,11 @@ namespace Revolution.Gal
     /// <summary>保存事务式推进、回退与存档状态。由宿主驱动，纯剧情会话不依赖面板或输入系统。</summary>
     public sealed class RevGalSession : IDisposable
     {
+        /// <summary>从一个可交互节点向前允许连续自动经过的节点数，避免有问题的图锁死主线程。</summary>
+        private const int MaximumAutomaticHops = 4096;
+        /// <summary>只在接近安全上限时开始记录尾部节点，普通对白和短分支无需分配这个诊断缓冲。</summary>
+        private const int DiagnosticTailLength = 8;
+
         /// <summary>保存这一份帧订阅的所有权，释放时解除对宿主视图的引用。</summary>
         private sealed class FrameObservation : IDisposable
         {
@@ -116,13 +121,19 @@ namespace Revolution.Gal
             }
         }
 
+        /// <summary>一次已提交的剧情位置。推进入口通过独立副本试算，回退栈持有旧状态。</summary>
         private sealed class State
         {
+            /// <summary>当前节点来自本会话独占的图，状态复制时可以安全共享只读节点定义。</summary>
             public RevGalNode Node;
+            /// <summary>当前舞台已合并之前各节点的覆盖，与原始节点配置分开保存。</summary>
             public RevGalStage Stage = new RevGalStage();
+            /// <summary>当前变量值由分支选择和节点效果更新，检查失败时原字典不变。</summary>
             public Dictionary<string, int> Values;
+            /// <summary>只记录实际经过的对白和选择，供回看以及存档恢复使用。</summary>
             public List<RevGalHistoryEntry> History = new List<RevGalHistoryEntry>();
 
+            /// <summary>准备试算用副本，已记录的历史条目后续只会追加或移除。</summary>
             public State Copy()
             {
                 return new State
@@ -448,12 +459,14 @@ namespace Revolution.Gal
             FlushProgress();
         }
 
+        /// <summary>计算下一次转移。所有图查找、条件和效果先在副本完成，成功后才更新会话。</summary>
         private bool Move(string next, RevGalEdge edge, bool signalBoundary)
         {
             if (IsDisposed || _changing)
             {
                 return false;
             }
+            // 先保存原检查点。坏链接或自动分支失败会上抛，玩家仍停在原来的选择或对白。
             var original = _state;
             var candidate = original.Copy();
             ApplyEffects(edge?.Effects, candidate.Values);
@@ -489,15 +502,23 @@ namespace Revolution.Gal
             return true;
         }
 
+        /// <summary>执行进入节点时的效果和舞台覆盖，并穿过无需玩家输入的自动节点。</summary>
         private List<string> Enter(State candidate, string target)
         {
             var unlocked = new List<string>();
-            for (int steps = 0; steps < 4096; steps++)
+            List<string> diagnostic = null;
+            for (int steps = 0; steps < MaximumAutomaticHops; steps++)
             {
                 if (string.IsNullOrEmpty(target) || !_nodes.TryGetValue(target, out var node))
                 {
                     throw new InvalidOperationException("没有可进入的剧情节点：" + target);
                 }
+                if (steps >= MaximumAutomaticHops - DiagnosticTailLength)
+                {
+                    diagnostic ??= new List<string>(DiagnosticTailLength);
+                    diagnostic.Add(node.Id);
+                }
+                // 先应用当前节点效果，后续分支从这个更新后的变量值中选出第一条条件成立的出口。
                 ApplyEffects(node.Effects, candidate.Values);
                 candidate.Stage.Apply(node.Stage);
                 if (!string.IsNullOrEmpty(node.GalleryId))
@@ -524,7 +545,7 @@ namespace Revolution.Gal
                 TrimHistory(candidate);
                 return unlocked;
             }
-            throw new InvalidOperationException("自动分支没有到达可交互节点，请检查循环");
+            throw new InvalidOperationException("自动分支没有到达可交互节点，请检查循环。最近经过：" + string.Join(" → ", diagnostic));
         }
 
         private void Commit(State state, List<string> unlocked)
@@ -546,6 +567,7 @@ namespace Revolution.Gal
             }
         }
 
+        /// <summary>先提交状态、帧与代号，随后同步通知显示层。提交期间拒绝监听器重入推进。</summary>
         private void Publish(State state, RevGalFrame frame)
         {
             _state = state;
@@ -627,10 +649,11 @@ namespace Revolution.Gal
             }
         }
 
+        /// <summary>存档保存的是已经合并的舞台。旧档缺少背景材质时按空路径处理。</summary>
         private static bool ValidStage(RevGalStage stage)
         {
-            return stage != null && new[] { stage.Background, stage.Left, stage.Center, stage.Right, stage.Music }
-                .All(path => string.IsNullOrEmpty(path) || RevGalValidation.IsLogicalPath(path));
+            return stage != null && new[] { stage.Background, stage.BackgroundMaterial, stage.Left, stage.Center, stage.Right, stage.Music }
+                .All(path => string.IsNullOrEmpty(path) || path != RevGalStage.Clear && RevGalValidation.IsLogicalPath(path));
         }
 
         private static HashSet<string> Set(List<string> items)

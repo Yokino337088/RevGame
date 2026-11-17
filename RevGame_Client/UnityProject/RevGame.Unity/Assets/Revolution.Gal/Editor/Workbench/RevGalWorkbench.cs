@@ -242,6 +242,7 @@ namespace Revolution.Gal.Editor
             if (_story == null)
             {
                 _inspector.Add(new HelpBox("先新建或选择一个剧情 SO，再写对白和连接节点。", HelpBoxMessageType.Info));
+                _inspector.Add(new Button(() => Guard(Quickstart)) { text = "快速创建并试读示例" });
                 return;
             }
 
@@ -256,6 +257,7 @@ namespace Revolution.Gal.Editor
                 Property(_inspector, definition.FindPropertyRelative("Revision"), "存档兼容修订");
                 TargetPicker(_inspector, "起点", _story.Definition.Start, value => Change("设置剧情起点", () => _story.Definition.Start = value));
                 Property(_inspector, definition.FindPropertyRelative("Variables"), "变量 / 旗标");
+                _inspector.Add(new Button(() => Guard(TestRoutes)) { text = "运行路线用例…" });
                 return;
             }
 
@@ -301,6 +303,7 @@ namespace Revolution.Gal.Editor
             {
                 Resource(stage, stageFields.FindPropertyRelative(track.name), track.label, typeof(Sprite));
             }
+            Resource(stage, stageFields.FindPropertyRelative("BackgroundMaterial"), "背景材质 · 短横线恢复默认", typeof(Material));
             Resource(stage, stageFields.FindPropertyRelative("Music"), "背景音乐", typeof(AudioClip));
             Resource(stage, fields.FindPropertyRelative("Voice"), "本句语音", typeof(AudioClip));
             Resource(stage, fields.FindPropertyRelative("Sound"), "本节点音效", typeof(AudioClip));
@@ -553,6 +556,28 @@ namespace Revolution.Gal.Editor
             {
                 string title = Path.GetFileNameWithoutExtension(path);
                 SetStory(RevGalAssets.Write(path, RevGalAssets.Template(RevGalValidation.IsId(title) ? title : NewId("story"), title), false));
+            }
+        }
+
+        /// <summary>打开第一份示例并进入试读。再次点击会复用同一份示例，作者可以继续编辑。</summary>
+        private void Quickstart()
+        {
+            var result = RevGalAuthoring.Quickstart(null, null, null, null, false);
+            SetStory(RevGalAssets.Read((string)result["path"]));
+            if ((bool)result["valid"])
+            {
+                Preview(null);
+            }
+        }
+
+        /// <summary>选一份团队保存的路线测试 JSON，对当前剧情运行离屏回归。</summary>
+        private void TestRoutes()
+        {
+            RequireStory();
+            string path = EditorUtility.OpenFilePanel("选择 Gal 路线用例", "", "json");
+            if (!string.IsNullOrEmpty(path))
+            {
+                RevGalRouteWindow.Open(RevGalRouteSuite.Run(_story, File.ReadAllText(path)));
             }
         }
 

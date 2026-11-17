@@ -28,6 +28,9 @@ namespace Revolution.Gal
         public bool HistoryOpen => _view != null && _view.HistoryOpen;
         public bool SettingsOpen => _view != null && _view.SettingsOpen;
         internal bool BackgroundVisible => _view != null && _view.BackgroundVisible;
+        internal bool BackgroundHasSprite => _view != null && _view.BackgroundHasSprite;
+        internal string BackgroundMaterialName => _view?.BackgroundMaterialName;
+        internal string BackgroundShaderName => _view?.BackgroundShaderName;
         internal string PlaybackMode => _mode.ToString();
         internal string ThemeName => _view == null || _view.Theme == null ? null : _view.Theme.name;
 

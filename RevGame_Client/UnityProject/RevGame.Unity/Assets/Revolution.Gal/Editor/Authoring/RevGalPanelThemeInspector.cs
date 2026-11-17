@@ -18,6 +18,8 @@ namespace Revolution.Gal.Editor
             var root = new VisualElement();
             root.Add(new PropertyField(serializedObject.FindProperty("atlas"), "共用 Sprite Atlas"));
             root.Add(new PropertyField(serializedObject.FindProperty("font"), "共用字体"));
+            root.Add(new PropertyField(serializedObject.FindProperty("backgroundMaterial"), "共用背景材质"));
+            root.Add(new PropertyField(serializedObject.FindProperty("renderBackgroundMaterialWithoutSprite"), "没有图片时绘制共用材质"));
             root.Add(new HelpBox("布局相对父节点。关闭覆盖时使用 Prefab 布局。主题改动在下次打开剧情面板时生效。",
                 HelpBoxMessageType.Info));
             var parts = serializedObject.FindProperty("parts");

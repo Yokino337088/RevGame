@@ -103,6 +103,24 @@ namespace Revolution.Gal.Editor
             return AssetPath(root, null);
         }
 
+        /// <summary>查询当前工程已有的 RevAB 资源根。只写剧情也能使用 Gal，因此这里不会新建配置资产。</summary>
+        public static string ConfiguredResourceRoot()
+        {
+            var config = AssetDatabase.LoadAssetAtPath<ABBuildConfig>(ABBuildSetting.ConfigAssetPath);
+            string root = config?.GetResRoot();
+            return !string.IsNullOrEmpty(root) && AssetDatabase.IsValidFolder(root) ? root : null;
+        }
+
+        /// <summary>资源根里的资产返回逻辑路径。根之外的编辑态 SO 可直接试读，调用者会收到空路径。</summary>
+        public static string LogicalPathInRoot(string path, string root)
+        {
+            if (root == null || !path.StartsWith(root + "/", StringComparison.Ordinal))
+            {
+                return null;
+            }
+            return path.Substring(root.Length + 1, path.Length - root.Length - 1 - Path.GetExtension(path).Length);
+        }
+
         public static string LogicalPath(UnityEngine.Object asset)
         {
             return LogicalPath(AssetDatabase.GetAssetPath(asset));
