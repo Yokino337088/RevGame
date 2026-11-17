@@ -45,6 +45,18 @@ namespace Revolution.Gal.Editor
             window.Focus();
         }
 
+        /// <summary>自动化写回当前剧情后，刷新已打开工作台的连线与详情。</summary>
+        internal static void RefreshSavedStory(RevGalStory story)
+        {
+            foreach (var window in Resources.FindObjectsOfTypeAll<RevGalWorkbench>())
+            {
+                if (window._story == story)
+                {
+                    window.QueueRefresh(true);
+                }
+            }
+        }
+
         private void OnEnable()
         {
             Undo.undoRedoPerformed += UndoChanged;

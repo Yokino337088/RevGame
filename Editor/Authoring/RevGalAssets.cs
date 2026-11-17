@@ -39,6 +39,7 @@ namespace Revolution.Gal.Editor
                 story.SetDefinition(definition);
                 EditorUtility.SetDirty(story);
                 AssetDatabase.SaveAssetIfDirty(story);
+                RevGalWorkbench.RefreshSavedStory(story);
                 return story;
             }
 
