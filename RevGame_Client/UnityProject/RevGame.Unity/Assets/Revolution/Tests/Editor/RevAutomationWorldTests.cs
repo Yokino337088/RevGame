@@ -509,6 +509,51 @@ namespace Revolution.Tests
 
         // ---------------------------------------------------------------- 批量边界
 
+        private const string ComposeUiBatch = "{\"steps\":[" +
+            "{\"id\":\"canvas\",\"action\":\"ui.create\",\"payload\":{\"kind\":\"Canvas\",\"name\":\"BatchCanvas\"}}," +
+            "{\"id\":\"icon\",\"action\":\"ui.create\",\"payload\":{\"kind\":\"Image\",\"name\":\"BatchIcon\",\"parent\":{\"$ref\":\"canvas#/data/id\"}}}," +
+            "{\"id\":\"layout\",\"action\":\"ui.layout\",\"payload\":{\"id\":{\"$ref\":\"icon#/data/id\"}},\"expect\":[" +
+            "{\"path\":\"/data/objectPath\",\"equals\":\"BatchCanvas/BatchIcon\"}," +
+            "{\"path\":\"/data/graphic/defaultWhiteTexture\",\"equals\":true}]}]}";
+
+        [Test]
+        public void BatchCreatesAndInspectsUiUsingTypedResults()
+        {
+            string json = RevAutomationJson.Write(RevAutomationActions.Execute(Request("batch.call", ComposeUiBatch)));
+            Assert.That(json, Does.Contain("\"failed\":0"), json);
+            Assert.That(json, Does.Contain("\"elapsedMs\":"), json);
+            Assert.That(_scene.GetRootGameObjects().Single(node => node.name == "BatchCanvas").transform.Find("BatchIcon"), Is.Not.Null);
+        }
+
+        [Test]
+        public void BatchValidateOnlyLeavesSceneUntouched()
+        {
+            int before = RootCount;
+            string json = RevAutomationJson.Write(RevAutomationActions.Execute(Request("batch.call", "{\"validateOnly\":true," + ComposeUiBatch.Substring(1))));
+            Assert.That(json, Does.Contain("\"validateOnly\":true"));
+            Assert.That(RootCount, Is.EqualTo(before));
+        }
+
+        [Test]
+        public void BatchRejectsForwardReferencesBeforeCreatingObjects()
+        {
+            int before = RootCount;
+            string invalid = ComposeUiBatch.Replace("canvas#/data/id", "layout#/data/id");
+            var error = Assert.Throws<ArgumentException>(() => RevAutomationActions.Execute(Request("batch.call", invalid)));
+            Assert.That(error.Message, Does.Contain("只能引用前序步骤"));
+            Assert.That(RootCount, Is.EqualTo(before));
+        }
+
+        [Test]
+        public void BatchRejectsBadFieldsBeforeCreatingObjects()
+        {
+            int before = RootCount;
+            string invalid = ComposeUiBatch.Replace("\"parent\":", "\"pranet\":");
+            var error = Assert.Throws<ArgumentException>(() => RevAutomationActions.Execute(Request("batch.call", invalid)));
+            Assert.That(error.Message, Does.Contain("未知参数"));
+            Assert.That(RootCount, Is.EqualTo(before));
+        }
+
         [Test] public void BatchKeepsDictionaryResultsInsteadOfWritingEmptyObject()
         {
             string json = JsonUtility.ToJson(RevAutomationActions.Execute(Request("batch.call", "{\"steps\":[{\"action\":\"excel.check\",\"payloadJson\":\"{}\"}]}")));

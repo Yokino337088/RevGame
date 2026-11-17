@@ -27,17 +27,17 @@ python Revolution.RevCLI/rev.py --project $project --mode live scene list
 python Revolution.RevCLI/rev.py --project $project --mode live gameobject find --query Canvas
 ```
 
-多步操作走 `batch.call`，一次往返执行多个动作（真实编辑器实测 10 步约 111ms，分 10 次调用约 994ms）：
+多步同步操作走 `batch.call`，一次往返顺序执行最多 64 步。支持 `payload` 对象，并兼容已有的 `payloadJson`。用 `id` 命名步骤，通过 `{"$ref":"前序ID#/data/字段"}` 传入结果值，数组、对象和布尔值保留原类型。`expect` 支持 JSON Pointer 的 `equals` 与 `exists`。返回每步 `elapsedMs` 和 `dataJson`。
 
-```python
-from revautomation.client import RevClient
-client = RevClient(project, mode="live")
-client.batch([{"action": "editor.status"}, {"action": "ab.config"}])
+```powershell
+python Revolution.RevCLI/rev.py --project $project --mode live batch call --json Revolution.RevCLI/examples/ui-compose.batch.json --validate-only
+python Revolution.RevCLI/rev.py --project $project --mode live --full batch call --json Revolution.RevCLI/examples/ui-compose.batch.json
+python Revolution.RevCLI/rev.py --project $project --mode live ui layout --object-path RevBatchCanvas/Icon
 ```
 
-默认遇错即停（后续步骤常依赖前一步状态），需要全部执行时传 `stop_on_error=False`；单步可自带 `payloadJson` 与 `confirm`，批量不会绕过高危确认。
+`--validate-only` 检查结构、前序引用、动作参数名和同帧限制，不创建对象。真正执行时再解析引用值、验证目标与确认权限。默认遇错即停，`stopOnError: false` 可继续独立步骤。RevCLI 有步骤失败时返回非零；已经完成的步骤由调用方按需清理。跨帧等待、Play、编译及构建仍走 `pipeline` 或 RevMCP。
 
-批量是**同一帧内同步跑完**，因此只接受能同步完成、不依赖帧推进的动作。`editor.play/stop/refresh/menu` 与各类构建会被明确拒绝，`gm.*`、`ui.*`、`runtime.*`、`scenario.*`、`test.*` 这类需要 Play 或运行时状态的动作同样拒绝。**游戏运行时测试（战斗、UI、业务流程）仍用 pipeline 或计划 JSON**——那里才有等待、断言和 finally 清理。
+`ui.layout` 读取 RectTransform 到根的父级链、CanvasGroup、最近/根 Canvas 的排序、实际采样纹理及可投影时的四角与屏幕范围。遇到 Prefab Mode 中的对象，使用当前选择的实例 `--id`。该动作只读取状态，不刷新布局。屏幕范围用于定位，真实命中仍查 `ui.dump` / `ui.click`。
 
 commands.json 是离线说明，commands --live 才是实际安装能力。2026-10-22 示例工程有 122 个 Editor 动作，另 3 个 Python 动作为 editor.launch/editor.wait/scenario.validate；20 个 Revolution.Tools 菜单都有映射。覆盖表用于发现漏接线，不意味着所有第三方控件或未来新增功能自动可用。
 

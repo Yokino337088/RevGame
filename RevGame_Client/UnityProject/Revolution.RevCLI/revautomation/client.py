@@ -212,10 +212,11 @@ class RevClient:
             raise RevError("没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。")
         if endpoint and endpoint.get("batchMode"):
             raise RevError("当前桥接属于正在运行的 batch Unity，请等待其退出。")
-        specs = command_specs(Path(__file__).resolve().parents[1] / "commands.json")
-        spec = next((item for item in specs if item["id"] == action), {})
-        if mode == "batch" and (spec.get("environment") in ("live", "play") or action.startswith("gm.")):
-            raise RevError("此操作需要图形编辑器。先执行 editor launch，再执行 editor play。")
+        if mode == "batch":
+            specs = command_specs(Path(__file__).resolve().parents[1] / "commands.json")
+            spec = next((item for item in specs if item["id"] == action), {})
+            if spec.get("environment") in ("live", "play") or action.startswith("gm."):
+                raise RevError("此操作需要图形编辑器。先执行 editor launch，再执行 editor play。")
         if mode == "batch" and (endpoint or self._editor_open()):
             raise RevError("工程已被 Unity 占用：请使用 --mode live，或先关闭该工程。")
         request = dict(protocol=1, id=request_id, action=action, payloadJson=json.dumps(payload or {}, ensure_ascii=False, allow_nan=False),

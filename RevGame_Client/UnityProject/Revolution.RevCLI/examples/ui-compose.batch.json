@@ -1,0 +1,42 @@
+{
+  "steps": [
+    {
+      "id": "canvas",
+      "action": "ui.create",
+      "payload": {
+        "kind": "Canvas",
+        "name": "RevBatchCanvas"
+      }
+    },
+    {
+      "id": "image",
+      "action": "ui.create",
+      "payload": {
+        "kind": "Image",
+        "name": "Icon",
+        "parent": {
+          "$ref": "canvas#/data/id"
+        }
+      }
+    },
+    {
+      "id": "layout",
+      "action": "ui.layout",
+      "payload": {
+        "id": {
+          "$ref": "image#/data/id"
+        }
+      },
+      "expect": [
+        {
+          "path": "/data/objectPath",
+          "equals": "RevBatchCanvas/Icon"
+        },
+        {
+          "path": "/data/graphic/defaultWhiteTexture",
+          "equals": true
+        }
+      ]
+    }
+  ]
+}

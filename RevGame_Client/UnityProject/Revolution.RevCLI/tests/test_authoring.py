@@ -34,6 +34,25 @@ class AuthoringManifestTests(unittest.TestCase):
         ids = [entry["id"] for entry in MANIFEST["actions"]]
         self.assertEqual(len(ids), len(set(ids)))
 
+    def test_layout_cli_accepts_scene_object_path(self):
+        args = cli.parser().parse_args(["ui", "layout", "--object-path", "Canvas/Icon", "--scene", "Assets/UI.unity"])
+        data = payload_of(args)
+        self.assertEqual(data, {"objectPath": "Canvas/Icon", "scene": "Assets/UI.unity"})
+        self.assertTrue(SPECS["ui.layout"]["readOnly"])
+        validate_action("ui.layout", data)
+
+    def test_batch_validate_flag_and_step_failure(self):
+        args = cli.parser().parse_args(["batch", "call", "--validate-only"])
+        self.assertEqual(payload_of(args), {"validateOnly": True})
+
+        class Stub:
+            def call(self, action, payload, confirm, progress):
+                return {"success": True, "data": {"success": False, "failed": 1, "results": []}}
+
+        failed = cli.invoke_action(Stub(), "batch.call", {}, False)
+        self.assertFalse(failed["success"])
+        self.assertEqual(failed["error"], "BatchStepFailed")
+
 
 class RectContractTests(unittest.TestCase):
     def test_rect_set_accepts_both_layout_styles_separately(self):

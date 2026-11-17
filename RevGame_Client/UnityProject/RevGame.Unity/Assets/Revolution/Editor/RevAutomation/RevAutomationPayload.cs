@@ -5,18 +5,27 @@
 // ============================================================
 // JsonUtility 会静默忽略未知字段；先严格解析，再检查当前动作的字段和 C# 类型。
 using System;
+using System.Collections.Generic;
 using System.Linq;
 namespace Revolution.Editor
 {
     internal static class RevAutomationPayload
     {
-        internal static void Validate(RevAutomationRequest request, string[] allowed)
+        internal static void Validate(RevAutomationRequest request, string[] allowed, bool allowReferences = false)
         {
             var values = RevAutomationJson.Object(RevAutomationJson.Parse(request.payloadJson ?? "{}"));
+            if (allowReferences && values.ContainsKey("$ref"))
+            {
+                return;
+            }
             if (allowed != null && values.Keys.Except(allowed, StringComparer.Ordinal).Any())
             { throw new ArgumentException(request.action + " 未知参数：" + string.Join(", ", values.Keys.Except(allowed, StringComparer.Ordinal))); }
             foreach (var pair in values)
             {
+                if (allowReferences && pair.Value is Dictionary<string, object> reference && reference.ContainsKey("$ref"))
+                {
+                    continue; // 此处只预检，执行时解析后继续校验真实参数。
+                }
                 var field = typeof(RevAutomationEditorOptions).GetField(pair.Key) ?? typeof(RevAutomationOptions).GetField(pair.Key)
                     ?? typeof(RevAutomationScenarioSpec).GetField(pair.Key);
                 if (field == null) { continue; } // 项目扩展负责自己的参数契约。

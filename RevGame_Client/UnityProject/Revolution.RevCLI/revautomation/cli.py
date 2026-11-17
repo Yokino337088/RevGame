@@ -145,6 +145,11 @@ def _build_parser():
             action = ops.add_parser(operation)
             action.add_argument("--json", type=Path, help="完整动作参数，见 commands.json")
             action.add_argument("--set", action="append", default=[], metavar="KEY=JSON")
+            if family == "batch" and operation == "call":
+                action.add_argument("--validate-only", action="store_true", help="只做同帧批处理预检")
+            if family == "ui" and operation == "layout":
+                action.add_argument("--object-path", help="精确层级路径，或用 --id 指定对象")
+                action.add_argument("--scene", help="重名场景对象的场景路径")
             if family == "gm" and operation == "exec":
                 action.add_argument("command", help='完整 GM 文本，例如 "背包/添加道具 1001 2"')
             if family == "scenario":
@@ -202,12 +207,12 @@ def payload_of(args):
             raise RevError(f"--set 的值必须是合法 JSON；字符串需要双引号：{key}") from exc
     for attr, key in (("backend", "backend"), ("development", "development"), ("automation", "automation"), ("frame_timing", "frameTiming"), ("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
                       ("source", "sources"), ("prefab", "prefab"), ("class_name", "className"),
-                      ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"), ("script", "script"), ("base_class", "baseClass"),
+                      ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"), ("script", "script"), ("base_class", "baseClass"), ("object_path", "objectPath"),
                       *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind", "offset", "limit", "index"))):
         value = getattr(args, attr, None)
         if value is not None:
             data[key] = value
-    for key, attr in (("dataOnly", "data_only"), ("force", "force")):
+    for key, attr in (("dataOnly", "data_only"), ("force", "force"), ("validateOnly", "validate_only")):
         if getattr(args, attr, False):
             data[key] = True
     if args.family == "scenario":
@@ -512,6 +517,8 @@ def invoke_action(client, action, payload, confirm, report_dir=None, progress=pr
         response = client.wait_ready()
     else:
         response = client.call(action, payload, confirm, progress)
+    if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
+        response = dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
     if action == "scenario.run" and (response.get("data") or {}).get("resultPath"):
         directory = report_dir or ROOT / "results" / Path(response["jobDirectory"]).name
         response["reports"] = export_report(Path(response["data"]["resultPath"]), directory)

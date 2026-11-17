@@ -55,9 +55,10 @@
       "id": "batch.call",
       "keys": [
         "steps",
-        "stopOnError"
+        "stopOnError",
+        "validateOnly"
       ],
-      "description": "一次请求顺序执行多个动作（最多 64 步），省掉每步一次的往返等待",
+      "description": "同帧顺序执行最多 64 步，支持结构化参数、结果引用、断言及只校验",
       "environment": "either",
       "readOnly": false
     },
@@ -1529,6 +1530,17 @@
       "readOnly": false
     },
     {
+      "id": "ui.layout",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene"
+      ],
+      "description": "读排版父链、锚点和Canvas排序、纹理绑定及可投影时的屏幕范围；支持Prefab Mode的实例id",
+      "environment": "either",
+      "readOnly": true
+    },
+    {
       "id": "ui.snapshot",
       "keys": [
         "id",
@@ -1770,6 +1782,7 @@
     }
   ],
   "parameterTypes": {
+    "validateOnly": "boolean",
     "dryRun":"bool",
     "floating": "bool",
     "page": "int",

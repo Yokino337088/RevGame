@@ -163,7 +163,6 @@ namespace Revolution.Editor
             SessionState.SetString(ActiveKey, JsonUtility.ToJson(request));
             try
             {
-                RevAutomationCatalog.ValidatePayload(request);
                 if (batch && (request.action == "editor.play" || request.action == "editor.stop" || request.action == "editor.menu"
                     || request.action.StartsWith("gm.", StringComparison.Ordinal) || request.action == "scenario.run"))
                 {
@@ -171,6 +170,7 @@ namespace Revolution.Editor
                 }
                 if (request.action == "editor.play" || request.action == "editor.stop")
                 {
+                    RevAutomationCatalog.ValidatePayload(request);
                     var options = JsonUtility.FromJson<RevAutomationOptions>(request.payloadJson);
                     bool play = request.action == "editor.play";
                     if (play && EditorApplication.isPaused) { throw new InvalidOperationException("请先解除编辑器暂停，再进入自动化流程"); }
@@ -200,6 +200,7 @@ namespace Revolution.Editor
                 }
                 if (request.action == "scenario.run")
                 {
+                    RevAutomationCatalog.ValidatePayload(request);
                     _scenario = new RevAutomationScenario(request);
                     return;
                 }

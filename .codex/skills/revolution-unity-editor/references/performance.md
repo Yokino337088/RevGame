@@ -19,7 +19,8 @@ python Revolution.RevMCP/rev_mcp.py --project RevolutionFrameWork_Unity --compac
 - `rev_discover` 空参数完整发现；新版支持 `target/query/offset/limit`。显式发现不缓存结果，返回 unavailable 必须保留，不把离线清单当真实注册。
 - 普通 Editor 调用只查 Editor 目录，复用最多两秒的能力说明；session、domainId 域代际、Play、暂停、编译、导入变化失效，变更或失败后失效。Session 保留工单跨重载恢复，domainId 单独随域变化；旧桥缺此字段仍受两秒TTL约束。业务 get/state 每次真实执行，不缓存业务结果。
 - CLI/Player 会话操作不需要先查询 Unity 编辑器；GM/game 仍按真实本局注册表校验。
-- `batch.call` 最多 64 步，默认遇错停止。只用于允许的同步动作。每步仍过参数和确认校验；禁止嵌套、构建、编译重载、Play、测试和运行时跨帧动作。
+- `batch.call` 最多 64 步，默认遇错停止。用 `payload` 写结构化参数，通过 `{"$ref":"前序ID#/data/字段"}` 串接同帧结果。步骤可加 `expect`，回执提供各步 `elapsedMs`。用 `batch call --validate-only` 只检查结构。每步仍过参数和确认校验，跨帧、Play、编译及构建保持独立。
+- 排查单个 UI 控件用 `ui.layout` 一次读取锚点、父链、CanvasGroup、Canvas 排序及实际纹理，Prefab Mode 使用当前实例 ID。投影只描述几何，业务点击用实际射线和运行时入口验证。
 - `rev_run` 保留跨帧等待、状态断言和 finally；不可为了省往返改成 batch 或并发变更。
 
 ## 证据与活动日志

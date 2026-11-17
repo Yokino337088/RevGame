@@ -175,6 +175,10 @@ python -m unittest discover -s Revolution.RevCLI/tests -v
 <p>Unity 接线位于 Assets/Revolution/Editor/RevAutomation，运行时共用模块位于 Assets/Revolution/Runtime/RevAutomation。仅复制 Python 不会自动安装 Unity 代码。已有工程使用 live，关闭工程后才可 batch 执行允许的资产动作；游戏 scenario 必须未暂停的图形 Play。</p>
 <p>结果位于 Unity工程/Library/RevolutionAutomation/jobs/id，scenario 报告默认导出 Revolution.RevCLI/results/。CLI 退出码非零、response.success=false、业务断言或清理失败都属于失败；超时不代表动作未执行，不自动重放变更。</p>
 <p>截至 2026-10-22：Python 19 项与 Unity EditMode 24 项通过；真实 MCP 到 Editor 的按钮、GM、断言、PNG、清理链路已运行。详见文档中的脱敏验证记录。</p>
+</section><section class="card"><h2>同帧批处理与 UI 排版检查</h2>
+<p><code>batch call --json &lt;文件&gt; --validate-only</code> 预检命名步骤、结构化参数、前序结果引用和断言。去掉预检选项即可执行，回执包含每步耗时与结果。CLI 有失败步骤时返回非零。</p>
+<p><code>ui layout --object-path Canvas/Icon</code> 一次读取锚点、父链、CanvasGroup、Canvas 排序、实际纹理和投影边界。Prefab Mode 可以传入当前实例 ID。</p>
+<p>示例见 <a href="examples/ui-compose.batch.json">同帧 UI 配方</a> 与 <a href="README.md">完整参数说明</a>。</p>
 </section></main>
 <footer>Revolution · 2026-10-22<br><a href="../Revolution.Document/index.html">文档总入口</a> · <a href="README.md">Markdown 源文档</a></footer>
 </body></html>

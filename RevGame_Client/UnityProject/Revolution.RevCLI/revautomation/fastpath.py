@@ -15,7 +15,7 @@ from .errors import RevError
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEFAULT_PROJECT = os.path.join(os.path.dirname(_ROOT), "RevolutionFrameWork_Unity")
 _VALUE_OPTIONS = frozenset({"--project", "--mode", "--unity", "--timeout", "--output"})
-_FLAG_OPTIONS = frozenset({"--no-graphics", "--confirm"})
+_FLAG_OPTIONS = frozenset({"--no-graphics", "--confirm", "--full"})
 
 
 def decide(argv):

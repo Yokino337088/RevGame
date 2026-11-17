@@ -1,5 +1,6 @@
 // 编辑器实际安装的能力目录。可选包只在真正注册后出现。
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -36,7 +37,7 @@ namespace Revolution.Editor
             new RevAutomationCapability { id = "ab.configure", description = "局部修改 AB 配置字段", environment = "edit", keys = new string[] { "configJson" } },
             new RevAutomationCapability { id = "ab.scan", description = "读取分包布局", environment = "edit", keys = new string[] {  } },
             new RevAutomationCapability { id = "ab.validate", description = "资源与平台 Shader 校验", environment = "edit", keys = new string[] { "target" } },
-            new RevAutomationCapability { id = "batch.call", description = "一次请求顺序执行多个动作（最多 64 步），省掉每步一次的往返等待", environment = "either", keys = new string[] { "steps", "stopOnError" } },
+            new RevAutomationCapability { id = "batch.call", description = "同帧顺序执行最多 64 步，支持结构化参数、结果引用、断言及只校验", environment = "either", keys = new string[] { "steps", "stopOnError", "validateOnly" } },
             new RevAutomationCapability { id = "ab.build", description = "收集、校验、构建、映射与首包拷贝", environment = "edit", keys = new string[] { "target" } },
             new RevAutomationCapability { id = "ab.build-incremental", description = "显式 target；复用 Unity 缓存并生成完整主清单及映射，不发布、不修改团队配置", environment = "edit", keys = new string[] { "target" } },
             new RevAutomationCapability { id = "ab.publish-incremental", description = "显式 target；从已完成的构建增量替换 StreamingAssets，返回更新和移除计数", environment = "edit", keys = new string[] { "target" } },
@@ -85,29 +86,61 @@ namespace Revolution.Editor
             public string[] errors;
         }
 
-        private static MethodInfo[] Methods => TypeCache.GetMethodsWithAttribute<RevAutomationActionAttribute>().ToArray();
+        private sealed class Entry
+        {
+            public MethodInfo Method;
+            public RevAutomationCapability Capability;
+            public bool Invalid;
+        }
+
+        // 动作特性在当前脚本域内固定。索引只存元数据，域重载后重建，不缓存业务结果。
+        private static readonly Dictionary<string, RevAutomationCapability> BuiltinIndex =
+            Builtins.ToDictionary(item => item.id, StringComparer.Ordinal);
+        private static readonly Lazy<Dictionary<string, Entry>> Extensions =
+            new Lazy<Dictionary<string, Entry>>(BuildExtensionIndex);
+
+        private static Dictionary<string, Entry> BuildExtensionIndex()
+        {
+            var result = new Dictionary<string, Entry>(StringComparer.Ordinal);
+            foreach (MethodInfo method in TypeCache.GetMethodsWithAttribute<RevAutomationActionAttribute>())
+            {
+                var attr = method.GetCustomAttribute<RevAutomationActionAttribute>();
+                string name = attr.Name ?? "";
+                if (result.TryGetValue(name, out var existing))
+                {
+                    existing.Invalid = true;
+                    continue;
+                }
+                result.Add(name, new Entry
+                {
+                    Method = method,
+                    Capability = Describe(attr),
+                    Invalid = string.IsNullOrWhiteSpace(name) || !Valid(method) || BuiltinIndex.ContainsKey(name)
+                });
+            }
+            return result;
+        }
 
         [RevAutomationAction("editor.capabilities", Environment = "either", Keys = new string[0], Description = "当前工程真正安装的动作、参数和运行条件")]
         public static object Discover(RevAutomationRequest request)
         {
-            var groups = Methods.GroupBy(m => m.GetCustomAttribute<RevAutomationActionAttribute>().Name).ToArray();
+            var entries = Extensions.Value;
             return new CatalogResult
             {
                 actions = Builtins.Where(b => b.id != "demo.ui-prefabs" || TypeCache.GetMethodsWithAttribute<MenuItem>()
                     .Any(m => m.GetCustomAttributes<MenuItem>().Any(a => a.menuItem == "Revolution.Tools/Demo/生成 UI 演示预制体（全部）")))
-                    .Concat(groups.Where(g => g.Count() == 1 && Valid(g.First())).Select(g => Describe(g.First())))
+                    .Concat(entries.Values.Where(entry => !entry.Invalid).Select(entry => entry.Capability))
                     .OrderBy(c => c.id, StringComparer.Ordinal).ToArray(),
-                errors = groups.Where(g => g.Count() != 1 || !Valid(g.First()) || Builtins.Any(b => b.id == g.Key))
-                    .Select(g => "重复或签名无效的自动化动作：" + g.Key).ToArray()
+                errors = entries.Where(pair => pair.Value.Invalid)
+                    .Select(pair => "重复或签名无效的自动化动作：" + pair.Key).ToArray()
             };
         }
 
         private static bool Valid(MethodInfo method) => method.IsStatic && method.ReturnType != typeof(void)
             && method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType == typeof(RevAutomationRequest);
 
-        private static RevAutomationCapability Describe(MethodInfo method)
+        private static RevAutomationCapability Describe(RevAutomationActionAttribute attr)
         {
-            var attr = method.GetCustomAttribute<RevAutomationActionAttribute>();
             return new RevAutomationCapability { id = attr.Name, description = attr.Description, environment = attr.Environment,
                 keys = attr.Keys, confirm = attr.Confirm, resumesAfterReload = attr.ResumeAfterReload };
         }
@@ -118,47 +151,55 @@ namespace Revolution.Editor
         /// </summary>
         public static string EnvironmentOf(string action)
         {
-            var builtin = Builtins.FirstOrDefault(b => b.id == action);
-            if (builtin != null) { return builtin.environment; }
-            try
-            {
-                var method = Extension(action);
-                return method == null ? null : method.GetCustomAttribute<RevAutomationActionAttribute>().Environment;
-            }
-            catch (InvalidOperationException)
-            {
-                // 重复或签名无效的扩展：交给 Execute 报原来的错，这里不掩盖。
-                return null;
-            }
+            return CapabilityOf(action)?.environment;
         }
 
         /// <summary>只读接口说明，供活动日志解释命令用途；未注册返回 null，不凭名字编造功能。</summary>
         public static string DescriptionOf(string action)
         {
-            var builtin = Builtins.FirstOrDefault(b => b.id == action);
-            if (builtin != null) { return builtin.description; }
-            try
+            return CapabilityOf(action)?.description;
+        }
+
+        private static RevAutomationCapability CapabilityOf(string action)
+        {
+            if (string.IsNullOrEmpty(action))
             {
-                var method = Extension(action);
-                return method?.GetCustomAttribute<RevAutomationActionAttribute>().Description;
+                return null;
             }
-            catch (InvalidOperationException) { return null; }
+            if (BuiltinIndex.TryGetValue(action, out var builtin))
+            {
+                return builtin;
+            }
+            return Extensions.Value.TryGetValue(action, out var entry) && !entry.Invalid ? entry.Capability : null;
+        }
+
+        private static Entry FindExtension(string action)
+        {
+            if (string.IsNullOrEmpty(action) || !Extensions.Value.TryGetValue(action, out var entry))
+            {
+                return null;
+            }
+            if (entry.Invalid)
+            {
+                throw new InvalidOperationException("重复或签名无效的自动化动作：" + action);
+            }
+            return entry;
         }
 
         public static MethodInfo Extension(string action)
         {
-            var methods = Methods.Where(m => m.GetCustomAttribute<RevAutomationActionAttribute>().Name == action).ToArray();
-            if (methods.Length == 0) { return null; }
-            if (methods.Length != 1 || !Valid(methods[0]) || Builtins.Any(b => b.id == action))
-            { throw new InvalidOperationException("重复或签名无效的自动化动作：" + action); }
-            return methods[0];
+            return FindExtension(action)?.Method;
         }
 
         public static void ValidatePayload(RevAutomationRequest request)
         {
-            var method = Extension(request.action);
-            string[] keys = method != null ? method.GetCustomAttribute<RevAutomationActionAttribute>().Keys : Builtins.FirstOrDefault(b => b.id == request.action)?.keys;
-            RevAutomationPayload.Validate(request, keys);
+            ValidatePayload(request, false);
+        }
+
+        internal static void ValidatePayload(RevAutomationRequest request, bool allowReferences)
+        {
+            var entry = FindExtension(request.action);
+            RevAutomationPayload.Validate(request, entry?.Capability.keys ?? CapabilityOf(request.action)?.keys, allowReferences);
         }
 
         public static object Invoke(MethodInfo method, RevAutomationRequest request)

@@ -82,8 +82,10 @@ namespace Revolution.Editor.Testing
                 var p = RevAutomationEditorOptions.Read(request);
                 var filter = new Filter { testMode = Mode(p.mode == "Single" ? "EditMode" : p.mode), testNames = p.testNames,
                     categoryNames = p.categories, assemblyNames = p.assemblies };
-                SessionState.SetString(RevAutomationBridge.TestJobKey, request.id);
+                // 内存传输没有请求目录；测试仍需要实际文件来恢复重载后的结果。
+                Directory.CreateDirectory(work);
                 File.WriteAllText(marker, request.id);
+                SessionState.SetString(RevAutomationBridge.TestJobKey, request.id);
                 try { Api.Execute(new ExecutionSettings(filter)); }
                 catch { SessionState.EraseString(RevAutomationBridge.TestJobKey); throw; }
             }
