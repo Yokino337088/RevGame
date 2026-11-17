@@ -64,6 +64,22 @@ class GalCliTests(unittest.TestCase):
         spec = next(s for s in json.loads(manifest.read_text(encoding="utf-8"))["actions"] if s["id"] == "gal.story.contract")
         self.assertTrue(spec["readOnly"])
 
+    def test_quickstart_default_input_and_read_only_preview(self):
+        args = parser().parse_args(["gal", "story.quickstart", "--check-only"])
+        payload = payload_of(args)
+        self.assertEqual(payload, {"checkOnly": True})
+        validate_action("gal.story.quickstart", payload)
+
+    def test_route_suite_document_is_forwarded_to_editor(self):
+        with tempfile.TemporaryDirectory() as work:
+            file = Path(work) / "routes.json"
+            document = {"cases": [{"name": "下一句", "operations": ["advance"], "expect": {"node": "route"}}]}
+            file.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8-sig")
+            args = parser().parse_args(["gal", "story.test", "--path", "Assets/Gal.asset", "--document", str(file)])
+            payload = payload_of(args)
+            self.assertEqual(json.loads(payload["document"]), document)
+            validate_action("gal.story.test", payload)
+
     def test_ordered_simulation(self):
         args = parser().parse_args(["gal", "story.simulate", "--path", "Assets/Gal.asset",
                                     "--entry", "intro", "--step", "advance", "--step", "choose:lamp"])

@@ -153,11 +153,11 @@ def _build_parser():
             if family == "batch" and operation == "call":
                 action.add_argument("--validate-only", action="store_true", help="只做同帧批处理预检")
             if family == "gal":
-                if operation == "story.create":
+                if operation in ("story.create", "story.quickstart"):
                     action.add_argument("--title", help="游戏内显示的剧情名称")
-                if operation in ("story.import", "story.generate", "node.add", "node.update", "node.patch"):
+                if operation in ("story.import", "story.generate", "story.test", "node.add", "node.update", "node.patch"):
                     action.add_argument("--document", type=Path, help="本机剧情或节点 JSON 文件")
-                if operation in ("story.import", "story.generate", "node.add", "node.update", "node.remove", "node.patch"):
+                if operation in ("story.import", "story.generate", "story.quickstart", "node.add", "node.update", "node.remove", "node.patch"):
                     action.add_argument("--check-only", action="store_true", help="校验预期结果，不写 SO")
                 if operation in ("node.add", "node.update", "node.remove", "node.patch"):
                     action.add_argument("--expected-hash", help="node.find 回传的内容摘要，用于拒绝基于旧版本提交")
@@ -171,7 +171,7 @@ def _build_parser():
                 if operation == "ui.create":
                     action.add_argument("--font", help="Assets 下的项目字体；留空使用 Unity 默认字体")
                     action.add_argument("--theme", help="Assets 下已有的共用面板主题 SO")
-                if operation in ("story.create", "story.import", "story.generate", "ui.create"):
+                if operation in ("story.create", "story.import", "story.generate", "story.quickstart", "ui.create"):
                     action.add_argument("--bundle", help="给 SO 或 Prefab 设置目标 AB 名")
                 if operation in ("story.import", "story.generate", "ui.create"):
                     action.add_argument("--overwrite", action="store_true", help="允许覆盖指定的 Gal 资产")
@@ -566,7 +566,7 @@ def print_progress(update):
 def editor_outcome(action, response):
     if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
         return dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
-    if action in ("gal.story.validate", "gal.story.contract", "gal.story.import", "gal.story.generate") and response.get("success") and (response.get("data") or {}).get("valid") is False:
+    if action in ("gal.story.validate", "gal.story.contract", "gal.story.import", "gal.story.generate", "gal.story.quickstart") and response.get("success") and (response.get("data") or {}).get("valid") is False:
         return dict(response, success=False, error="GalValidationFailed", message="剧情校验失败，请查 data.issues。")
     return response
 

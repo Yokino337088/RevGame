@@ -39,7 +39,7 @@
 - `Branch` 自动采用第一条条件满足的出口，再应用该出口的 Effects。无匹配走 `Next`。无条件出口会覆盖其后规则。
 - `Signal` 用 `Signal` 和 `Argument` 把业务意图交给宿主，完成后走 `Next`。检查回调成功、失败和过期。信号等待不接受玩家的普通推进。
 - `Conditions` 每项形如 `{"Variable":"trust","Comparison":"AtLeast","Value":1}`，同一出口的条件都需满足。比较名为 `Equal/NotEqual/Greater/AtLeast/Less/AtMost`。`Effects` 每项形如 `{"Variable":"trust","Operation":"Add","Value":1}`，支持 `Set/Add`。先应用出口 Effect，再应用进入节点的 Effect。变量须已在顶层声明。
-- `Stage` 可填 `Background/Left/Center/Right/Music`。省略、`null` 或空串沿用上一幕，单个 `"-"` 清空槽位。`Voice/Sound` 是当前节点音频，空表示无对应音频。图和音频使用 RevRes 逻辑路径。解锁 `GalleryId` 时需显式填该节点的 `Stage.Background`。
+- `Stage` 可填 `Background/BackgroundMaterial/Left/Center/Right/Music`。省略、`null` 或空串沿用上一幕，单个 `"-"` 清空槽位。清除节点的 `BackgroundMaterial` 后，默认界面恢复主题或 Prefab 材质。`Voice/Sound` 是当前节点音频，空表示无对应音频。图、材质和音频使用 RevRes 逻辑路径。解锁 `GalleryId` 时需显式填该节点的 `Stage.Background`。
 - `SpeakerKey/TextKey` 以及出口 `TextKey` 交给 `RevGalOptions.ResolveText`。无本地化结果时用 SO 的字面文本。修改多语言可见文案时先找实际翻译来源。
 
 整图检查引用、变量、条件、字段和可达性。不可达节点和没有可达结局会产生警告。引用合法的图也可能出现自动循环，运行时超过自动跳转上限会报错。改图后试读匹配、保底、锁定和结局路径。

@@ -1,0 +1,25 @@
+{
+  "cases": [
+    {
+      "name": "灯光路线完成宿主信号",
+      "operations": ["advance", "choose:lamp", "advance", "complete"],
+      "expect": {
+        "node": "lamp_end",
+        "kind": "End",
+        "variables": { "trust": 1 },
+        "visited": ["intro", "route", "lamp_line", "signal", "lamp_end"]
+      }
+    },
+    {
+      "name": "近路到星空结局",
+      "operations": ["advance", "choose:shortcut", "advance"],
+      "expect": { "node": "star_end", "variables": { "trust": 0 } }
+    },
+    {
+      "name": "信任不足时笔记选项拒绝",
+      "operations": ["advance", "choose:locked"],
+      "expectRejectedStep": "choose:locked",
+      "expect": { "node": "route", "choiceEnabled": { "locked": false } }
+    }
+  ]
+}

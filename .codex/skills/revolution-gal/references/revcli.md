@@ -81,11 +81,13 @@ py -3 $cli --project $project --mode live --full gal node.find --path $story --i
 | --- | --- |
 | `story.generate` | `--document` 校验整篇 JSON 并按 ID 生成 SO。可用 `--path --bundle --check-only --overwrite`。返回 `logicalPath`，默认包名前缀为 `gal_story_` |
 | `story.create` | `--path --id --title` 生成带两条路线的模板。可用 `--bundle` |
+| `story.quickstart` | 省略路径即可创建或打开示例。可用 `--path --id --title --bundle --check-only` |
 | `story.validate` | `--path` 整图检查，问题见 `data.issues` |
 | `story.contract` | `--path` 读取自定义接入清单，含逻辑路径、变量、信号、媒体和本地解析状态。见[自定义宿主接入](custom-host.md) |
 | `story.import` | `--document`。预检用 `--check-only`，保存用 `--path`，更新用 `--overwrite`，可用 `--bundle` |
 | `story.export` | `--path --out <本机 JSON>` 输出可导入的文档。省略 `--out` 时读 `data.document` |
 | `story.simulate` | `--path`。可选 `--entry <节点 ID>`，重复 `--step <操作>` 指定试读步骤 |
+| `story.test` | `--path --document <路线 JSON>`。运行带断言的批量路线回归，见[快速开始和路线测试](quickstart-and-tests.md) |
 | `ui.create` | 在资源根生成默认 UI 和共用主题。可用 `--font --theme --bundle --overwrite`，回执给出 `path/themePath/logicalPath` |
 | `editor.open` | 打开剧情工作台。可用 `--path <剧情 SO>` 定位 |
 

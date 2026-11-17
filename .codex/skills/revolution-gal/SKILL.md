@@ -1,6 +1,6 @@
 ---
 name: revolution-gal
-description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验收 Revolution.Gal 视觉小说。适用于节点增删改查、只制作或导出剧情、接入自定义剧情界面、默认面板主题及舞台资源。项目原有 StoryBook 和普通游戏过场沿其现有入口。
+description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验收 Revolution.Gal 视觉小说。适用于快速创建和回归剧情、节点增删改查、录入或导出数据、自定义界面及背景材质。项目原有 StoryBook 和普通游戏过场沿其现有入口。
 ---
 
 # Revolution.Gal
@@ -12,6 +12,7 @@ description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验�
 | 要做的事 | 先读 |
 | --- | --- |
 | 把口述要求落实为节点改动，编写 CLI 批处理或读工具回执 | [自然语言与 RevCLI](references/revcli.md) |
+| 第一次创建剧情或为分支保留可复跑的断言 | [快速开始和路线测试](references/quickstart-and-tests.md) |
 | 写新故事或调整图、分支、变量、台词、稳定 ID 和兼容修订 | [剧情数据与控制流](references/story-model.md) |
 | 只制作剧情配置、离屏试读、接入自有 UI 或游戏内叙事系统 | [自定义宿主接入](references/custom-host.md) |
 | 将 Gal 接入游戏、独立会话、RevUI、宿主信号、存档、热更新 | [宿主与 Revolution 核心](references/integration.md) |
@@ -28,4 +29,4 @@ description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验�
 - 通过工作台或 Gal 导入、节点编辑动作写 SO。Unity 的未保存编辑由资产所有者处理，查询回执的 `dirty` 可辅助定位。
 - 制作验收使用目标项目的真实加载模式。`story.simulate` 验证图与会话。面板、输入、资源和真实宿主信号通过 Editor Play 或任务要求的目标 Player 验证。
 
-用户只做剧情或沿用自己的面板时，走工作台 **接入检查** 或 `gal story.contract`，并按需用 `story.export` 交付数据。自定义播放用 `RevGalPlayback` 建会话，界面负责显示、输入和关闭。只有宿主选用默认界面时才进入 `gal ui.create` 和 `RevGal.OpenAsync`。
+用户只做剧情或沿用自己的面板时，走工作台 **接入检查** 或 `gal story.contract`，并按需用 `story.export` 交付数据。自定义播放用 `RevGalPlayback` 建会话，界面负责显示、输入和关闭。只有宿主选用默认界面时才进入 `gal ui.create` 和 `RevGal.OpenAsync`。剧情背景可按节点设置 `Stage.BackgroundMaterial`，由材质资产携带 Shader 与参数。
