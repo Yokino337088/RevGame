@@ -59,3 +59,36 @@ class GalCliTests(unittest.TestCase):
         args = parser().parse_args(["gal", "story.simulate", "--path", "Assets/Gal.asset",
                                     "--entry", "intro", "--step", "advance", "--step", "choose:lamp"])
         self.assertEqual(payload_of(args)["operations"], ["advance", "choose:lamp"])
+
+    def test_find_node_with_filters(self):
+        args = parser().parse_args(["gal", "node.find", "--path", "Assets/Gal.asset", "--query", "旅人", "--kind", "Line",
+                                    "--limit", "5"])
+        payload = payload_of(args)
+        self.assertEqual(payload, {"path": "Assets/Gal.asset", "query": "旅人", "kind": "Line", "limit": 5})
+        validate_action("gal.node.find", payload)
+
+    def test_node_documents_use_same_transport_with_hash_and_dry_run(self):
+        documents = (
+            ("node.add", {"Id": "inserted", "Kind": "Line", "Text": "加一句", "Next": "closing"}, []),
+            ("node.update", {"Text": "只修改正文", "Stage": {"Left": "-"}}, ["--id", "intro"]),
+            ("node.patch", {"operations": [{"op": "remove", "id": "old", "redirect": "after"}]}, []),
+        )
+        with tempfile.TemporaryDirectory() as work:
+            document = Path(work) / "node.json"
+            for operation, contents, extra in documents:
+                with self.subTest(operation=operation):
+                    document.write_text(json.dumps(contents, ensure_ascii=False), encoding="utf-8-sig")
+                    args = parser().parse_args(["gal", operation, "--path", "Assets/Gal.asset", "--document", str(document),
+                                                "--expected-hash", "observed", "--check-only", *extra])
+                    payload = payload_of(args)
+                    self.assertEqual(json.loads(payload["document"]), contents)
+                    self.assertEqual(payload["expectedHash"], "observed")
+                    self.assertTrue(payload["checkOnly"])
+                    validate_action("gal." + operation, payload)
+
+    def test_remove_redirects_by_node_id(self):
+        args = parser().parse_args(["gal", "node.remove", "--path", "Assets/Gal.asset", "--id", "old",
+                                    "--redirect", "after", "--expected-hash", "observed"])
+        payload = payload_of(args)
+        self.assertEqual(payload, {"path": "Assets/Gal.asset", "id": "old", "redirect": "after", "expectedHash": "observed"})
+        validate_action("gal.node.remove", payload)

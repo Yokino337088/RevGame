@@ -1,22 +1,28 @@
 ---
 name: revolution-gal
-description: 为安装 Revolution.Gal 的 Unity 项目创建、改写和验收视觉小说剧情。适用于对白、旁白、分支、选项条件、立绘、语音、图鉴、存读档、RevGal Panel 与 View 适配，以及用 RevCLI 生成剧情 SO。普通过场或项目原有 StoryBook 仍按该项目的现有入口维护。
+description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验收 Revolution.Gal 视觉小说。适用于节点增删改查、分支和存档、宿主接入、面板主题及舞台资源。项目原有 StoryBook 和普通游戏过场沿其现有入口。
 ---
 
 # Revolution.Gal
 
-先定位宿主工程的 `Assets/Revolution.Gal` 或 UPM 安装，以及真正的 RevAB 资源根。Gal 是单独的扩展，核心和现有项目剧情可独立运行。查 [扩展使用文档](https://github.com/Yokino337088/Revolution/tree/gal) 和目标工程的实际能力。
+1. 定位目标 Unity 工程、项目规则、已安装的 Revolution 核心和 Gal 扩展。读取目标工程的 RevAB 资源根及实际版本。RevGame 使用工程相邻的 RevCLI 和 RevMCP，项目本身的剧情由其业务入口管理。
+2. 对在线编辑器显式指定 `--project <Unity 工程> --mode live`。先发现 `commands --live --query gal.` 或 RevMCP 的 `rev_discover(target="editor", query="gal.")`。用实际注册动作区分客户端过旧、Gal 未安装、编译失败和编辑器处于 Play。
+3. 按请求选择参考。需要改生成器、公开契约或框架实现时，回到 Revolution 源仓库，使用该项目的编译和发布流程。
 
-## 创作与导表
+| 要做的事 | 先读 |
+| --- | --- |
+| 把口述要求落实为节点改动，编写 CLI 批处理或读工具回执 | [自然语言与 RevCLI](references/revcli.md) |
+| 写新故事或调整图、分支、变量、台词、稳定 ID 和兼容修订 | [剧情数据与控制流](references/story-model.md) |
+| 将 Gal 接入游戏、独立会话、RevUI、宿主信号、存档、热更新 | [宿主与 Revolution 核心](references/integration.md) |
+| 生成和定制面板，配置主题、字体、图集、媒体、AB | [UI 与资源](references/ui-resources.md) |
+| 验证编辑写回、真实 Play、资源冷启动，定位失败 | [验收与排错](references/verification.md) |
 
-- 先明确入口、稳定节点 ID、玩家可见选项与结局。需要按已有内容生成时，先导出当前 SO 作模板并保留 ID。
-- 编辑器走 **Revolution.Tools → Gal → 剧情工作台**。右侧写正文、舞台和条件，中间连接出口。出版前检查底部问题列表，从目标节点试读至少一条正路和拒绝或保底路。
-- 自动化先发现 `gal.story.generate/create/validate/import/export/simulate` 和 `gal.ui.create`。用 `gal story.generate --document <文件>` 校验并在资源根下按 ID 创建 SO，读回逻辑路径与包名。`--check-only` 预检，`--path` 和 `--bundle` 可以覆盖默认值。已有资产只有实际需要更新时才传 `--overwrite`，它保留 GUID。不要用 YAML 文本拼 SO。
-- 舞台和音频填 Revolution 逻辑路径。舞台空值沿用，单减号清除。实际 AB 模式需要真实图集、ResMap 和对应平台资源包；验证阶段从正常入口加载。
+## 自然语言编辑
 
-## 接运行时
+用户指明剧情时，先定位对应 `RevGalStory` 资产路径，用 `gal node.find` 通过关键词或精确 ID 读取节点和入边。标题可重复。以实际关系辨认所指节点，例如“开场后一句”要读取开场的 `Next`。当查询和上下文仍不足以区分多个候选时，列出候选和差异，让用户选定。
 
-- 默认走 `RevGal.OpenAsync(逻辑路径, options)`。`gal ui.create` 生成默认 Prefab 和共享主题，`--theme` 绑定已有主题。工作台的 **编辑面板主题** 可以设置锚点、偏移、字体、图集切片与独立 Sprite。另做界面时用 `RevGal.LoadAsync` 获取会话，交给自己的 `RevUIPanel<RevGalSession>` 并负责释放。
-- **Session** 推进、验条件、写变量、维护档案。**Panel** 接 RevUI 生命周期、持有会话与媒体租约、协调信号和输入。**View** 消费帧和发出玩家意图，保持 UGUI / 表现逻辑可替换。编辑器和 CLI 共用同一 SO 模型。
-- 信号用稳定名和参数绑定宿主，异步完成前后检查会话与 Token。信号结束会建立回退边界。需要改存档兼容合同时调整剧情 Revision。
-- 真实验收先 `rev_discover`。Editor 的 simulate 是规则预览。Play 使用 `gal.open/state/close` 和实际 UGUI 控件核对主题、分支、存读档、设置弹层的暂停及退出。调试档案只在本次 Play 内。功能与修复回归按 `revolution-ai-automation` 工作流取证。
+把用户要改的字段写入局部 JSON。单节点用 `node.add/update/remove`，插入对白并改线、调整多条出口等相互依赖改动用一次 `node.patch`。同一份文档可先 `--check-only`，再以查询得到的 `--expected-hash` 保存。摘要不同就重新查询并按当前资产重算目标。保存后按 ID 读回，结构改动从受影响入口试读。
+
+- 剧情 ID、节点 ID、选项 ID、变量 ID 和收藏 ID 可能被档案、宿主代码或翻译使用。普通文案改动保留这些 ID 和其他字段。删除节点先看入边并确定用户想要的后续走向。
+- 通过工作台或 Gal 导入、节点编辑动作写 SO。Unity 的未保存编辑由资产所有者处理，查询回执的 `dirty` 可辅助定位。
+- 制作验收使用目标项目的真实加载模式。`story.simulate` 验证图与会话。面板、输入、资源和真实宿主信号通过 Editor Play 或任务要求的目标 Player 验证。

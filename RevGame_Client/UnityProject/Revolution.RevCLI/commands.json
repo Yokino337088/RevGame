@@ -15,6 +15,11 @@
     {"id":"gal.story.import","keys":["path","document","checkOnly","overwrite","bundle"],"description":"导入或只校验 Gal 剧情 JSON","environment":"edit","readOnly":false},
     {"id":"gal.story.export","keys":["path"],"description":"导出 Gal 剧情 SO 的 JSON","environment":"edit","readOnly":true},
     {"id":"gal.story.simulate","keys":["path","entry","operations"],"description":"离屏试读 Gal 分支、存档与变量","environment":"edit","readOnly":true},
+    {"id":"gal.node.find","keys":["path","id","query","kind","offset","limit"],"description":"按精确 ID、类型或文本查剧情节点，返回节点数据、入边、剧情版本摘要","environment":"edit","readOnly":true},
+    {"id":"gal.node.add","keys":["path","document","checkOnly","expectedHash"],"description":"向现有剧情添加一个节点 JSON，整图校验后保存","environment":"edit","readOnly":false},
+    {"id":"gal.node.update","keys":["path","id","document","checkOnly","expectedHash"],"description":"按 ID 局部更新剧情节点，保留未指定字段","environment":"edit","readOnly":false},
+    {"id":"gal.node.remove","keys":["path","id","redirect","checkOnly","expectedHash"],"description":"删除指定节点，可显式改接起点、下一节点与选项入边","environment":"edit","readOnly":false},
+    {"id":"gal.node.patch","keys":["path","document","checkOnly","expectedHash"],"description":"按顺序执行多项节点修改，可指定起点或存档修订，全部验证后一次保存","environment":"edit","readOnly":false},
     {"id":"gal.ui.create","keys":["font","theme","overwrite","bundle"],"description":"生成默认 Gal 面板、设置弹层及共用主题","environment":"edit","readOnly":false},
     {"id":"gal.editor.open","keys":["path"],"description":"打开 Gal 剧情工作台","environment":"edit","readOnly":false},
     {"id":"storage.status","keys":[],"description":"预览自动化缓存容量与保留策略","environment":"either","readOnly":true},
@@ -1927,6 +1932,8 @@
     "overwrite": "bool",
     "entry": "string",
     "operations": "string[]",
+    "redirect": "string",
+    "expectedHash": "string",
     "font": "string"
   },
   "configFields": {

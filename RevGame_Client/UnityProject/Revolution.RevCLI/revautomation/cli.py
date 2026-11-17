@@ -155,9 +155,14 @@ def _build_parser():
             if family == "gal":
                 if operation == "story.create":
                     action.add_argument("--title", help="游戏内显示的剧情名称")
-                if operation in ("story.import", "story.generate"):
-                    action.add_argument("--document", type=Path, help="本机剧情 JSON 文件")
-                    action.add_argument("--check-only", action="store_true", help="校验文档，不写 SO")
+                if operation in ("story.import", "story.generate", "node.add", "node.update", "node.patch"):
+                    action.add_argument("--document", type=Path, help="本机剧情或节点 JSON 文件")
+                if operation in ("story.import", "story.generate", "node.add", "node.update", "node.remove", "node.patch"):
+                    action.add_argument("--check-only", action="store_true", help="校验预期结果，不写 SO")
+                if operation in ("node.add", "node.update", "node.remove", "node.patch"):
+                    action.add_argument("--expected-hash", help="node.find 回传的内容摘要，用于拒绝基于旧版本提交")
+                if operation == "node.remove":
+                    action.add_argument("--redirect", help="删除时改接现有入边的节点 ID")
                 if operation == "story.export":
                     action.add_argument("--out", type=Path, help="在本机保存可再次导入的文档")
                 if operation == "story.simulate":
@@ -261,7 +266,8 @@ def payload_of(args):
         validate_scenario(data)
     if args.family == "gal":
         for attr, key in (("title", "title"), ("bundle", "bundle"), ("font", "font"),
-                          ("theme", "theme"), ("entry", "entry"), ("gal_steps", "operations")):
+                          ("theme", "theme"), ("entry", "entry"), ("gal_steps", "operations"),
+                          ("redirect", "redirect"), ("expected_hash", "expectedHash")):
             value = getattr(args, attr, None)
             if value is not None:
                 data[key] = value
