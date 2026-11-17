@@ -1,9 +1,9 @@
 {
   "name": "com.revolution.gal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Revolution.Gal",
   "unity": "2022.3",
-  "description": "可选视觉小说扩展。提供 SO 剧情图、Unity 工作台、RevUI 播放、分支变量、存读档及 RevCLI。",
+  "description": "可选视觉小说扩展。提供 SO 剧情图、共用 UI 主题与设置、Unity 工作台、分支存档及 RevCLI。",
   "dependencies": {"com.unity.ugui": "1.0.0"},
   "license": "MIT",
   "documentationUrl": "https://github.com/Yokino337088/Revolution/tree/gal"

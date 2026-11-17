@@ -9,12 +9,22 @@ namespace Revolution.Gal
 {
     public enum RevGalInput
     {
-        Advance, Auto, Skip, Rollback, History, Save, Load, Close
+        Advance, Auto, Skip, Rollback, History, Save, Load, Close, OpenSettings, CloseSettings
     }
 
     /// <summary>挂在 Panel 的 View 子节点。它只渲染帧、控制打字机和报告 UGUI 输入。</summary>
     public sealed class RevGalView : MonoBehaviour
     {
+        /// <summary>Prefab 保存部位和组件的关联，运行时直接访问引用。</summary>
+        [Serializable]
+        private struct ThemeTarget
+        {
+            public RevGalThemePart part;
+            public RectTransform rect;
+        }
+
+        [SerializeField] private RevGalPanelTheme theme;
+        [SerializeField] private ThemeTarget[] themeTargets;
         [SerializeField] private Image background;
         [SerializeField] private Image left;
         [SerializeField] private Image center;
@@ -33,6 +43,12 @@ namespace Revolution.Gal
         [SerializeField] private Button save;
         [SerializeField] private Button load;
         [SerializeField] private Button close;
+        [SerializeField] private CanvasGroup storyInput;
+        [SerializeField] private GameObject settingsOverlay;
+        [SerializeField] private Button openSettings;
+        [SerializeField] private Button closeSettings;
+        [SerializeField] private Text settingsMode;
+        [SerializeField] private Text settingsNotice;
         [SerializeField] private RectTransform choiceRoot;
         [SerializeField] private GameObject choiceOverlay;
         [SerializeField] private Button choiceTemplate;
@@ -45,6 +61,7 @@ namespace Revolution.Gal
         [SerializeField] private Button closeHistory;
 
         private readonly List<Button> _choiceButtons = new List<Button>();
+        private readonly Dictionary<string, Sprite> _atlasSprites = new Dictionary<string, Sprite>(StringComparer.Ordinal);
         private RevGalFrame _frame;
         private string _text = "";
         private int[] _offsets = Array.Empty<int>();
@@ -54,6 +71,7 @@ namespace Revolution.Gal
         private const int HistoryPageSize = 24;
         private IReadOnlyList<string> _history = Array.Empty<string>();
         private int _historyIndex;
+        private bool _returnToSettings;
 
         public event Action<RevGalInput> InputRequested;
         public event Action<string> ChoiceRequested;
@@ -61,11 +79,15 @@ namespace Revolution.Gal
 
         public bool TextComplete => _written >= _offsets.Length;
         public bool HistoryOpen => historyOverlay.activeSelf;
+        public bool SettingsOpen => settingsOverlay != null && settingsOverlay.activeSelf;
+        public RevGalPanelTheme Theme => theme;
         public string VisibleDialogue => dialogue.text;
+        internal bool ModalOpen => SettingsOpen || HistoryOpen;
         internal bool BackgroundVisible => background.enabled && background.sprite != null;
 
         private void Awake()
         {
+            ApplyTheme();
             Bind(advance, RevGalInput.Advance);
             Bind(auto, RevGalInput.Auto);
             Bind(skip, RevGalInput.Skip);
@@ -74,14 +96,76 @@ namespace Revolution.Gal
             Bind(save, RevGalInput.Save);
             Bind(load, RevGalInput.Load);
             Bind(close, RevGalInput.Close);
+            Bind(openSettings, RevGalInput.OpenSettings);
+            Bind(closeSettings, RevGalInput.CloseSettings);
             closeHistory.onClick.AddListener(CloseHistory);
             olderHistory.onClick.AddListener(() => PresentHistory(_historyIndex - 1));
             newerHistory.onClick.AddListener(() => PresentHistory(_historyIndex + 1));
         }
 
+        /// <summary>主题在面板打开前应用一次，克隆的图集 Sprite 随该 View 回收。</summary>
+        private void ApplyTheme()
+        {
+            if (theme == null)
+            {
+                return;
+            }
+            if (theme.Font != null)
+            {
+                foreach (var label in GetComponentsInChildren<Text>(true))
+                {
+                    label.font = theme.Font;
+                }
+            }
+            foreach (var target in themeTargets ?? Array.Empty<ThemeTarget>())
+            {
+                var style = theme.Parts.FirstOrDefault(part => part != null && part.Part == target.part);
+                if (style == null || target.rect == null)
+                {
+                    continue;
+                }
+                Sprite sprite = RevGalPartStyle.UsesThemeSprite(target.part) ? ResolveSprite(style) : null;
+                style.ApplyTo(target.rect, sprite);
+            }
+        }
+
+        private Sprite ResolveSprite(RevGalPartStyle style)
+        {
+            if (style.Sprite != null || string.IsNullOrWhiteSpace(style.AtlasSprite))
+            {
+                return style.Sprite;
+            }
+            if (!_atlasSprites.TryGetValue(style.AtlasSprite, out var sprite))
+            {
+                sprite = theme.Atlas == null ? null : theme.Atlas.GetSprite(style.AtlasSprite);
+                _atlasSprites.Add(style.AtlasSprite, sprite);
+                if (sprite == null)
+                {
+                    RevLog.Warn($"Gal 主题「{theme.name}」找不到图集切片「{style.AtlasSprite}」", "RevGal");
+                }
+            }
+            return sprite;
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var sprite in _atlasSprites.Values)
+            {
+                if (sprite != null)
+                {
+                    Destroy(sprite);
+                }
+            }
+            _atlasSprites.Clear();
+        }
+
         private void Bind(Button button, RevGalInput action)
         {
-            button.onClick.AddListener(() => InputRequested?.Invoke(action));
+            // 旧版生成的 Prefab 保留原有按钮和绑定，设置弹层由新版生成器装配。
+            if (button != null)
+            {
+                button.onClick.AddListener(() => InputRequested?.Invoke(action));
+            }
         }
 
         internal void Present(string storyTitle, RevGalFrame frame, float speed, bool canRollback, bool canStore, bool canLoad)
@@ -144,7 +228,7 @@ namespace Revolution.Gal
 
         private void Update()
         {
-            if (_frame == null || TextComplete || HistoryOpen)
+            if (_frame == null || TextComplete || ModalOpen)
             {
                 return;
             }
@@ -167,16 +251,28 @@ namespace Revolution.Gal
 
         internal void ToggleHistory(IReadOnlyList<string> lines)
         {
-            bool show = !HistoryOpen;
-            historyOverlay.SetActive(show);
-            if (show)
+            if (HistoryOpen)
             {
-                _history = lines;
-                PresentHistory((lines.Count - 1) / HistoryPageSize);
+                CloseHistory();
+                return;
             }
-            else
+            _returnToSettings = SettingsOpen;
+            historyOverlay.SetActive(true);
+            SetSettingsOpen(false);
+            _history = lines;
+            PresentHistory((lines.Count - 1) / HistoryPageSize);
+        }
+
+        /// <summary>弹层独占剧情区输入，包含鼠标、触摸和 uGUI 的按钮提交。</summary>
+        internal void SetSettingsOpen(bool open)
+        {
+            if (settingsOverlay != null)
             {
-                _history = Array.Empty<string>();
+                settingsOverlay.SetActive(open);
+            }
+            if (storyInput != null)
+            {
+                storyInput.interactable = storyInput.blocksRaycasts = !ModalOpen;
             }
         }
 
@@ -198,16 +294,26 @@ namespace Revolution.Gal
         {
             historyOverlay.SetActive(false);
             _history = Array.Empty<string>();
+            SetSettingsOpen(_returnToSettings);
+            _returnToSettings = false;
         }
 
         internal void ShowNotice(string message)
         {
             notice.text = message ?? "";
+            if (settingsNotice != null)
+            {
+                settingsNotice.text = notice.text;
+            }
         }
 
         internal void ShowMode(string label)
         {
             mode.text = label ?? "";
+            if (settingsMode != null)
+            {
+                settingsMode.text = string.IsNullOrEmpty(label) ? "手动播放" : label;
+            }
         }
 
         internal void ShowBackground(Sprite value) => SetImage(background, value);
@@ -230,6 +336,7 @@ namespace Revolution.Gal
         {
             _frame = null;
             dialogue.text = "";
+            _returnToSettings = false;
             CloseHistory();
             ShowMode(null);
             ShowNotice(null);

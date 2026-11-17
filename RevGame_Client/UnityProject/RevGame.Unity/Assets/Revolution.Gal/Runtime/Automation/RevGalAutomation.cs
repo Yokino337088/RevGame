@@ -91,6 +91,9 @@ namespace Revolution.Gal
                 ["text"] = panel?.VisibleDialogue, ["revealed"] = panel?.TextComplete ?? false,
                 ["backgroundVisible"] = panel?.BackgroundVisible ?? false,
                 ["historyOpen"] = panel?.HistoryOpen ?? false,
+                ["settingsOpen"] = panel?.SettingsOpen ?? false,
+                ["mode"] = panel?.PlaybackMode,
+                ["theme"] = panel?.ThemeName,
                 ["choices"] = frame?.Choices.Select(choice => new Dictionary<string, object>
                 { ["id"] = choice.Id, ["text"] = choice.Text, ["enabled"] = choice.Enabled }).ToArray(),
                 ["variables"] = story?.Variables().ToDictionary(x => x.Id, x => (object)x.Value),
