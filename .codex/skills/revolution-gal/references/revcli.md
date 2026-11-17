@@ -89,6 +89,9 @@ py -3 $cli --project $project --mode live --full gal node.find --path $story --i
 | `story.simulate` | `--path`。可选 `--entry <节点 ID>`，重复 `--step <操作>` 指定试读步骤 |
 | `story.test` | `--path --document <路线 JSON>`。运行带断言的批量路线回归，见[快速开始和路线测试](quickstart-and-tests.md) |
 | `ui.create` | 在资源根生成默认 UI 和共用主题。可用 `--font --theme --bundle --overwrite`，回执给出 `path/themePath/logicalPath` |
+| `ui.layout` | `--path <主题 SO> --query <控件名>`，读取大小、位置及 hash |
+| `ui.layout-set` | `--path --document <布局 JSON>`，支持 `--check-only --expected-hash` |
+| `ui.designer` | `--path <主题 SO>` 打开可视布局设计器 |
 | `editor.open` | 打开剧情工作台。可用 `--path <剧情 SO>` 定位 |
 
 试读操作为 `advance/choose:<出口 ID>/read/rollback/capture/restore/complete`。`capture/restore` 在同一次试读内共用内存书签。被拒绝会带节点 ID 和操作名。`--entry` 从指定节点用初始变量进入，需要前序旗标时从实际起点走整个路线。

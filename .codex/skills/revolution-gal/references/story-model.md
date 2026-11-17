@@ -13,6 +13,7 @@
 | `Start` | 默认入口的节点 ID |
 | `Variables` | `[{ "Id":"trust","Initial":0 }]`，Int32 数值，旗标可用 0/1 |
 | `Nodes` | 节点数组，播放跳转以连线为准 |
+| `StagePresets` | 章节和小节舞台方案，由节点的 `StagePreset` 引用，见[章节方案与面板设计](stages-and-layout.md) |
 
 剧情、变量、节点、选项和信号 ID 使用 ASCII 字母、数字、点、下划线和短横线，最长 96 字符。引用按精确 ID 匹配。节点和变量分别在剧情内唯一，选项 ID 在各自节点内唯一。JSON 键区分大小写。枚举可用符号或已有 Unity 枚举数值，创作优先符号。
 

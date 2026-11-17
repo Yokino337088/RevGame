@@ -155,11 +155,11 @@ def _build_parser():
             if family == "gal":
                 if operation in ("story.create", "story.quickstart"):
                     action.add_argument("--title", help="游戏内显示的剧情名称")
-                if operation in ("story.import", "story.generate", "story.test", "node.add", "node.update", "node.patch"):
+                if operation in ("story.import", "story.generate", "story.test", "node.add", "node.update", "node.patch", "ui.layout-set"):
                     action.add_argument("--document", type=Path, help="本机剧情或节点 JSON 文件")
-                if operation in ("story.import", "story.generate", "story.quickstart", "node.add", "node.update", "node.remove", "node.patch"):
+                if operation in ("story.import", "story.generate", "story.quickstart", "node.add", "node.update", "node.remove", "node.patch", "ui.layout-set"):
                     action.add_argument("--check-only", action="store_true", help="校验预期结果，不写 SO")
-                if operation in ("node.add", "node.update", "node.remove", "node.patch"):
+                if operation in ("node.add", "node.update", "node.remove", "node.patch", "ui.layout-set"):
                     action.add_argument("--expected-hash", help="node.find 回传的内容摘要，用于拒绝基于旧版本提交")
                 if operation == "node.remove":
                     action.add_argument("--redirect", help="删除时改接现有入边的节点 ID")

@@ -37,6 +37,8 @@
 
 通用的 RevCLI `asset.inspect` 可读取主题的实际序列化属性。写入使用 `asset.set` 的 `changes:[{property,value}]`，`value` 是字符串，Vector2/Color 值用内联 JSON 字符串。编辑数组项前先读该项 `Part`，取得实际索引和字段路径，例如 `parts.Array.data[9].Layout.AnchorMin`。图集和 Sprite 对象引用用目标工程可解析的资产路径或已发现对象 ID。修改前核对类型，保存后重新读取，布局最终以真机或 Editor Play 画面为准。
 
+按控件名称修改尺寸和位置时，使用 `gal ui.layout/layout-set` 与可视面板设计器。章节和小节的 Shader 继承也可在工作台直接配置。具体字段与 AI 编辑步骤见[章节方案与面板设计](stages-and-layout.md)。
+
 ## 媒体、图集与 AB
 
 - 用 `ab.config` 或打包窗口确定资源根。SO 写入路径为 `Assets/.../*.asset`，节点及游戏打开用去掉资源根和扩展名的逻辑路径，如 `Gal/Media/ForestLake`。检查路径大小写、单个文件名冲突及类型。舞台图片用 `Sprite`，背景效果用 `Material`，音频用 `AudioClip`。旧 StoryBook 数据遵循其自己的资源链。

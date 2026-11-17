@@ -70,6 +70,25 @@ class GalCliTests(unittest.TestCase):
         self.assertEqual(payload, {"checkOnly": True})
         validate_action("gal.story.quickstart", payload)
 
+    def test_theme_layout_query_uses_control_name(self):
+        args = parser().parse_args(["gal", "ui.layout", "--path", "Assets/Theme.asset", "--query", "对白框"])
+        payload = payload_of(args)
+        self.assertEqual(payload, {"path":"Assets/Theme.asset", "query":"对白框"})
+        validate_action("gal.ui.layout", payload)
+
+    def test_theme_layout_edit_sends_semantic_rectangle(self):
+        with tempfile.TemporaryDirectory() as work:
+            file = Path(work) / "layout.json"
+            edit = {"parts":[{"part":"DialogueBox","rect":{"x":80,"y":760,"width":1760,"height":250}}]}
+            file.write_text(json.dumps(edit), encoding="utf-8")
+            args = parser().parse_args(["gal", "ui.layout-set", "--path", "Assets/Theme.asset", "--document", str(file),
+                                        "--expected-hash", "observed", "--check-only"])
+            payload = payload_of(args)
+            self.assertEqual(json.loads(payload["document"]), edit)
+            self.assertEqual(payload["expectedHash"], "observed")
+            self.assertTrue(payload["checkOnly"])
+            validate_action("gal.ui.layout-set", payload)
+
     def test_route_suite_document_is_forwarded_to_editor(self):
         with tempfile.TemporaryDirectory() as work:
             file = Path(work) / "routes.json"

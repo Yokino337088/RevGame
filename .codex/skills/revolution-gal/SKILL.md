@@ -17,6 +17,7 @@ description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验�
 | 只制作剧情配置、离屏试读、接入自有 UI 或游戏内叙事系统 | [自定义宿主接入](references/custom-host.md) |
 | 将 Gal 接入游戏、独立会话、RevUI、宿主信号、存档、热更新 | [宿主与 Revolution 核心](references/integration.md) |
 | 生成和定制面板，配置主题、字体、图集、媒体、AB | [UI 与资源](references/ui-resources.md) |
+| 章节、小节切背景，或用自然语言修改控件尺寸和位置 | [章节方案与面板设计](references/stages-and-layout.md) |
 | 验证编辑写回、真实 Play、资源冷启动，定位失败 | [验收与排错](references/verification.md) |
 
 ## 自然语言编辑
