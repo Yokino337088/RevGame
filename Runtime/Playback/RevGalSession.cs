@@ -148,6 +148,8 @@ namespace Revolution.Gal
 
         private readonly RevGalDefinition _definition;
         private readonly Dictionary<string, RevGalNode> _nodes;
+        /// <summary>会话自己的章节 / 小节方案链，父方案先应用，节点覆盖最后应用。</summary>
+        private readonly Dictionary<string, RevGalStage[]> _stagePlans;
         private readonly Dictionary<string, int> _initial;
         private readonly List<State> _rollback = new List<State>();
         private readonly HashSet<string> _read;
@@ -181,6 +183,7 @@ namespace Revolution.Gal
             _definition = JsonUtility.FromJson<RevGalDefinition>(JsonUtility.ToJson(definition));
             Options = options ?? new RevGalOptions();
             _nodes = _definition.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
+            _stagePlans = RevGalStagePlans.Compile(_definition);
             _initial = RevGalValidation.Items(_definition.Variables).ToDictionary(variable => variable.Id, variable => variable.Initial, StringComparer.Ordinal);
             var progress = Options.Storage?.ReadProgress(StoryId);
             if (progress != null && progress.Schema != 1)
@@ -348,7 +351,17 @@ namespace Revolution.Gal
         /// <summary>收藏项按可读状态和逻辑背景路径提供给宿主画廊。</summary>
         public bool TryGetGalleryImage(string id, out string path)
         {
-            path = _definition.Nodes.FirstOrDefault(n => n.GalleryId == id)?.Stage?.Background;
+            var node = _definition.Nodes.FirstOrDefault(item => item.GalleryId == id);
+            var stage = new RevGalStage();
+            if (!string.IsNullOrEmpty(node?.StagePreset))
+            {
+                foreach (var item in _stagePlans[node.StagePreset])
+                {
+                    stage.Apply(item);
+                }
+            }
+            stage.Apply(node?.Stage);
+            path = stage.Background;
             return _gallery.Contains(id) && !string.IsNullOrEmpty(path) && path != RevGalStage.Clear;
         }
 
@@ -520,6 +533,13 @@ namespace Revolution.Gal
                 }
                 // 先应用当前节点效果，后续分支从这个更新后的变量值中选出第一条条件成立的出口。
                 ApplyEffects(node.Effects, candidate.Values);
+                if (!string.IsNullOrEmpty(node.StagePreset))
+                {
+                    foreach (var stage in _stagePlans[node.StagePreset])
+                    {
+                        candidate.Stage.Apply(stage);
+                    }
+                }
                 candidate.Stage.Apply(node.Stage);
                 if (!string.IsNullOrEmpty(node.GalleryId))
                 {

@@ -1,6 +1,6 @@
 {
   "name": "com.revolution.gal",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "displayName": "Revolution.Gal",
   "unity": "2022.3",
   "description": "可选视觉小说扩展。提供 SO 剧情图、共用 UI 主题与设置、Unity 工作台、分支存档及 RevCLI。",

@@ -72,33 +72,50 @@ namespace Revolution.Gal.Editor
         public void CreateGUI()
         {
             rootVisualElement.Clear();
+            RevGalEditorStyles.Apply(rootVisualElement);
             rootVisualElement.style.flexDirection = FlexDirection.Column;
+            var header = new VisualElement();
+            header.AddToClassList("gal-header");
+            var brand = new Label("Revolution.Gal");
+            brand.AddToClassList("gal-brand");
+            header.Add(brand);
+            _status = new Label();
+            _status.AddToClassList("gal-status");
+            header.Add(_status);
+            rootVisualElement.Add(header);
             var toolbar = new Toolbar();
+            toolbar.AddToClassList("gal-toolbar");
             rootVisualElement.Add(toolbar);
             _asset = new ObjectField { objectType = typeof(RevGalStory), allowSceneObjects = false };
             _asset.style.width = 235;
             _asset.SetValueWithoutNotify(_story);
             _asset.RegisterValueChangedCallback(change => SetStory(change.newValue as RevGalStory));
             toolbar.Add(_asset);
-            ToolbarAction(toolbar, "新建剧情", NewStory);
+            var files = new ToolbarMenu { text = "文件" };
+            files.menu.AppendAction("新建剧情", _ => Guard(NewStory));
+            files.menu.AppendAction("快速创建示例", _ => Guard(Quickstart));
+            files.menu.AppendAction("导入 JSON", _ => Guard(Import));
+            files.menu.AppendAction("导出 JSON", _ => Guard(Export));
+            toolbar.Add(files);
             ToolbarAction(toolbar, "保存", Save);
-            ToolbarAction(toolbar, "导入 JSON", Import);
-            ToolbarAction(toolbar, "导出 JSON", Export);
-            ToolbarAction(toolbar, "从起点试读", () => Preview(null));
-            ToolbarAction(toolbar, "接入检查", OpenHostContract);
-            ToolbarAction(toolbar, "定位全图", () => _graph.FrameAll());
-            ToolbarAction(toolbar, "自动排版", Arrange);
-            ToolbarAction(toolbar, "生成游戏面板", CreatePanel);
-            ToolbarAction(toolbar, "编辑面板主题", EditPanelTheme);
-            _status = new Label();
-            _status.style.marginLeft = 12;
-            _status.style.unityTextAlign = TextAnchor.MiddleLeft;
-            toolbar.Add(_status);
+            ToolbarAction(toolbar, "试读", () => Preview(null));
+            var view = new ToolbarMenu { text = "视图" };
+            view.menu.AppendAction("定位全图", _ => Guard(() => _graph.FrameAll()));
+            view.menu.AppendAction("自动排版", _ => Guard(Arrange));
+            view.menu.AppendAction("运行路线用例…", _ => Guard(TestRoutes));
+            toolbar.Add(view);
+            var integration = new ToolbarMenu { text = "界面与接入" };
+            integration.menu.AppendAction("面板设计器", _ => Guard(() => RevGalThemeWindow.Open(RevGalPanelBuilder.FindTheme())));
+            integration.menu.AppendAction("生成默认面板", _ => Guard(CreatePanel));
+            integration.menu.AppendAction("选择主题资产", _ => Guard(EditPanelTheme));
+            integration.menu.AppendAction("接入检查", _ => Guard(OpenHostContract));
+            toolbar.Add(integration);
 
             var body = new TwoPaneSplitView(0, 208, TwoPaneSplitViewOrientation.Horizontal);
             body.style.flexGrow = 1;
             rootVisualElement.Add(body);
             var left = new VisualElement();
+            left.AddToClassList("gal-sidebar");
             left.style.minWidth = 165;
             left.style.paddingLeft = 7;
             left.style.paddingRight = 7;
@@ -112,6 +129,7 @@ namespace Revolution.Gal.Editor
             left.Add(_kind);
             left.Add(new Button(() => AddNode(NodeKinds[_kind.index], null)) { text = "添加节点" });
             _outline = new ScrollView(ScrollViewMode.Vertical);
+            _outline.AddToClassList("gal-outline");
             _outline.style.flexGrow = 1;
             left.Add(_outline);
             body.Add(left);
@@ -123,12 +141,14 @@ namespace Revolution.Gal.Editor
                 (kind, position) => AddNode(kind, position));
             details.Add(_graph);
             _inspector = new ScrollView(ScrollViewMode.Vertical);
+            _inspector.AddToClassList("gal-inspector");
             _inspector.style.minWidth = 245;
             _inspector.style.paddingLeft = 11;
             _inspector.style.paddingRight = 11;
             details.Add(_inspector);
 
             var footer = new VisualElement();
+            footer.AddToClassList("gal-footer");
             footer.style.flexShrink = 0;
             footer.style.maxHeight = 118;
             footer.style.paddingLeft = 10;
@@ -218,6 +238,7 @@ namespace Revolution.Gal.Editor
                 button.style.minHeight = 25;
                 if (node.Id == _selected)
                 {
+                    button.AddToClassList("gal-selected");
                     button.style.unityFontStyleAndWeight = FontStyle.Bold;
                 }
                 _outline.Add(button);
@@ -257,6 +278,7 @@ namespace Revolution.Gal.Editor
                 Property(_inspector, definition.FindPropertyRelative("Revision"), "存档兼容修订");
                 TargetPicker(_inspector, "起点", _story.Definition.Start, value => Change("设置剧情起点", () => _story.Definition.Start = value));
                 Property(_inspector, definition.FindPropertyRelative("Variables"), "变量 / 旗标");
+                BuildStagePresets(_inspector);
                 _inspector.Add(new Button(() => Guard(TestRoutes)) { text = "运行路线用例…" });
                 return;
             }
@@ -268,6 +290,7 @@ namespace Revolution.Gal.Editor
             _inspector.Add(new Button(() => Preview(node.Id)) { text = "从此节点试读" });
             _inspector.Add(new Button(DuplicateSelected) { text = "复制节点" });
             Property(_inspector, fields.FindPropertyRelative("Title"), "节点名称");
+            PresetPicker(_inspector, "章节 / 小节", node.StagePreset, value => Change("选择舞台方案", () => node.StagePreset = value));
 
             if (node.Kind == RevGalNodeKind.Line || node.Kind == RevGalNodeKind.Choice || node.Kind == RevGalNodeKind.End)
             {
@@ -356,6 +379,59 @@ namespace Revolution.Gal.Editor
                 node.Exits ??= new List<RevGalEdge>();
                 node.Exits.Add(new RevGalEdge { Id = NewId("exit"), Label = node.Kind == RevGalNodeKind.Choice ? "新选项" : "" });
             })) { text = "添加出口" });
+        }
+
+        /// <summary>章节与小节用同一份可继承配置，资源选择器负责生成逻辑路径。</summary>
+        private void BuildStagePresets(VisualElement parent)
+        {
+            var group = new Foldout { text = "章节 / 小节背景", value = true };
+            group.Add(new HelpBox("先建章节方案，再为小节选择父方案。节点选用方案后，还可单独覆盖舞台。", HelpBoxMessageType.Info));
+            _story.Definition.StagePresets ??= new List<RevGalStagePreset>();
+            foreach (var preset in _story.Definition.StagePresets.Where(item => item != null))
+            {
+                var fold = new Foldout { text = string.IsNullOrWhiteSpace(preset.Title) ? preset.Id : preset.Title };
+                fold.Add(new Label(preset.Id));
+                var serialized = new SerializedObject(_story);
+                int index = _story.Definition.StagePresets.IndexOf(preset);
+                var fields = serialized.FindProperty("definition.StagePresets").GetArrayElementAtIndex(index);
+                Property(fold, fields.FindPropertyRelative("Title"), "名称");
+                PresetPicker(fold, "继承方案", preset.Parent, value => Change("设置方案继承", () => preset.Parent = value), preset.Id);
+                var stage = fields.FindPropertyRelative("Stage");
+                Resource(fold, stage.FindPropertyRelative("Background"), "背景图片", typeof(Sprite));
+                Resource(fold, stage.FindPropertyRelative("BackgroundMaterial"), "Shader 材质", typeof(Material));
+                Resource(fold, stage.FindPropertyRelative("Music"), "背景音乐", typeof(AudioClip));
+                fold.Add(new Button(() => Change("新增小节方案", () =>
+                    _story.Definition.StagePresets.Add(new RevGalStagePreset { Id = NewPresetId(), Title = "新小节", Parent = preset.Id }))) { text = "添加继承此方案的小节" });
+                group.Add(fold);
+            }
+            group.Add(new Button(() => Change("新增章节方案", () =>
+                _story.Definition.StagePresets.Add(new RevGalStagePreset { Id = NewPresetId(), Title = "新章节" }))) { text = "添加章节方案" });
+            parent.Add(group);
+        }
+
+        private string NewPresetId()
+        {
+            string id;
+            do { id = "stage_" + Guid.NewGuid().ToString("N").Substring(0, 8); }
+            while (_story.Definition.StagePresets.Any(preset => preset?.Id == id));
+            return id;
+        }
+
+        /// <summary>名称供人阅读，写入节点和父配置的值仍是稳定方案 ID。</summary>
+        private void PresetPicker(VisualElement parent, string label, string current, Action<string> change, string exclude = null)
+        {
+            var presets = (_story.Definition.StagePresets ?? new List<RevGalStagePreset>())
+                .Where(preset => preset != null && preset.Id != exclude).ToArray();
+            var ids = new[] { "" }.Concat(presets.Select(preset => preset.Id)).ToList();
+            var names = new[] { "沿用 / 无" }.Concat(presets.Select(preset => (preset.Title ?? preset.Id) + " · " + preset.Id)).ToList();
+            if (!string.IsNullOrEmpty(current) && !ids.Contains(current))
+            {
+                ids.Add(current);
+                names.Add("未找到 · " + current);
+            }
+            var field = new DropdownField(label, names, Math.Max(0, ids.IndexOf(current ?? "")));
+            field.RegisterValueChangedCallback(_ => change(ids[field.index]));
+            parent.Add(field);
         }
 
         private void TargetPicker(VisualElement parent, string label, string value, Action<string> change)
@@ -680,6 +756,7 @@ namespace Revolution.Gal.Editor
         private static Label Header(string name)
         {
             var title = new Label(name);
+            title.AddToClassList("gal-section-title");
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             title.style.marginTop = 5;
             title.style.marginBottom = 5;

@@ -16,6 +16,8 @@ namespace Revolution.Gal.Editor
         public override VisualElement CreateInspectorGUI()
         {
             var root = new VisualElement();
+            RevGalEditorStyles.Apply(root);
+            root.Add(new Button(() => RevGalThemeWindow.Open((RevGalPanelTheme)target)) { text = "打开面板设计器" });
             root.Add(new PropertyField(serializedObject.FindProperty("atlas"), "共用 Sprite Atlas"));
             root.Add(new PropertyField(serializedObject.FindProperty("font"), "共用字体"));
             root.Add(new PropertyField(serializedObject.FindProperty("backgroundMaterial"), "共用背景材质"));

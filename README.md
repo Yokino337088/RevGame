@@ -24,6 +24,10 @@ Revolution.Gal 是 Unity 2022.3 的可选视觉小说模块。把 [Revolution �
 
 ## 共用面板主题
 
+工作台的 **章节 / 小节背景** 可保存带父级的舞台方案。章节定义共用背景和材质，小节继承后覆盖自己的 Shader。入口节点选择对应方案，节点自身的 Stage 继续支持更细的覆盖。继承循环、缺失方案与错误路径会在校验时定位。
+
+工作台的 **界面与接入 → 面板设计器** 可点选并调整控件尺寸、位置及图片。RevCLI 的 `gal ui.layout` 查询控件，`gal ui.layout-set` 根据控件名批量保存，支持预检和 hash 冲突检查。完整示例见[章节方案与面板设计](https://github.com/Yokino337088/Revolution/blob/skill/revolution-gal/references/stages-and-layout.md)。
+
 工作台的 **编辑面板主题** 会选中默认面板引用的主题。在 Inspector 为整个主题指定图集和字体，再按部位选择图集切片或独立 Sprite。独立 Sprite 优先。按钮、对白框、选项、设置面板和回看可各自选图并设置颜色。带边距的 Sprite 可启用九宫格。背景和立绘的画面取自剧情节点，主题可以调整它们的布局。
 
 共享主题可挂载背景 Material，或在剧情节点填 `Stage.BackgroundMaterial` 覆盖。材质携带 Shader 与参数。空路径沿用，短横线恢复主题或 Prefab 的默认材质。显式节点材质可以在没有 Sprite 时单独绘制，适用于程序化背景。用项目管线兼容的 UGUI Shader 并随目标平台的 AB 一起验收。
