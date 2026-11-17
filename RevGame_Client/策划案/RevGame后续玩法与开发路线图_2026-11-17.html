@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="围棋史莱姆下一轮玩法规划，含棋阵试炼原型、成功游戏案例、现有功能改进和六周开发安排。">
+  <title>RevGame · 后续玩法与开发路线图</title>
+  <style>
+    :root {
+      --ink: #25352f;
+      --muted: #65736b;
+      --green: #326956;
+      --line: #dce3da;
+      --paper: #f6f7f2;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.85 "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+    a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+    button { font: inherit; }
+    :focus-visible { outline: 3px solid #b48442; outline-offset: 4px; }
+    .topbar {
+      height: 76px;
+      border-bottom: 1px solid var(--line);
+      padding: 0 5vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fbfcf8;
+    }
+    .brand { font-weight: 800; letter-spacing: 2px; }
+    .brand i {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-right: 12px;
+      border-radius: 11px;
+      background: var(--green);
+      color: white;
+      font-style: normal;
+    }
+    .tag { color: var(--muted); font: 12px/1.6 Consolas, monospace; letter-spacing: 1px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 60px;
+      align-items: center;
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 70px 40px 48px;
+    }
+    .eyebrow, .section-label {
+      color: var(--green);
+      font: 12px/1.5 Consolas, monospace;
+      letter-spacing: 2px;
+    }
+    .hero h1 {
+      margin: 20px 0;
+      font-size: clamp(35px, 4.3vw, 62px);
+      line-height: 1.25;
+      letter-spacing: -2px;
+      font-weight: 800;
+    }
+    .hero h1 em { color: var(--green); font-style: normal; }
+    .lead { max-width: 570px; color: var(--muted); font-size: 17px; }
+    .hero-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 27px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 18px;
+      border: 1px solid #b8c9b7;
+      border-radius: 30px;
+      background: white;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .pill.primary { border-color: var(--green); background: var(--green); color: white; }
+    .stamp { margin-top: 25px; color: var(--muted); font: 12px/1.6 Consolas, "Microsoft YaHei", monospace; }
+    .demo {
+      position: relative;
+      overflow: hidden;
+      padding: 26px;
+      border: 1px solid #d6e2d2;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #fefdf5, #e6efe1);
+      box-shadow: 0 20px 55px #334f3320;
+    }
+    .demo::before {
+      content: "";
+      position: absolute;
+      top: -90px;
+      right: -80px;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background: #e5cc8e55;
+      filter: blur(25px);
+      animation: drift 8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    .demo-head { position: relative; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .live-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: #688c62;
+      box-shadow: 0 0 0 5px #5c86621c;
+      animation: pulse 2.5s infinite;
+    }
+    .tile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin: 25px 0; }
+    .tile {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border: 1px solid #d7c7ac;
+      border-radius: 12px;
+      background: #fff9ef;
+      box-shadow: 0 4px 7px #99866d12;
+      transition: background .35s, border-color .35s;
+    }
+    .tile::after {
+      content: attr(data-cell);
+      position: absolute;
+      left: 7px;
+      bottom: 5px;
+      color: #52645a;
+      font: 11px/1 Consolas, monospace;
+    }
+    .tile.ally { border-color: #adc4a3; background: #e3efdd; }
+    .tile.enemy { border-color: #dcbfb1; background: #f6e7df; }
+    .tile span {
+      position: relative;
+      width: 45%;
+      height: 43%;
+      border-radius: 47% 47% 38% 38%;
+      background: #728b68;
+      box-shadow: inset -4px -5px 0 #52764f40;
+      animation: bob 3s ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    .tile span::before, .tile span::after {
+      content: "";
+      position: absolute;
+      top: 43%;
+      left: 29%;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #223d2d;
+    }
+    .tile span::after { left: auto; right: 29%; }
+    .tile.enemy span { background: #b37b68; box-shadow: inset -4px -5px 0 #814b3a30; }
+    .tile.choice span { visibility: hidden; }
+    .demo[data-mode="guard"] [data-cell="G9"],
+    .demo[data-mode="flank"] [data-cell="I8"] { border: 2px solid var(--green); background: #e3efdd; }
+    .demo[data-mode="guard"] [data-cell="G9"] span,
+    .demo[data-mode="flank"] [data-cell="I8"] span { visibility: visible; }
+    .demo[data-mode="guard"] [data-cell="F9"],
+    .demo[data-mode="guard"] [data-cell="H9"],
+    .demo[data-mode="flank"] [data-cell="G9"] { border-color: #b08b4e; background: #f8eedb; }
+    .demo-result { display: flex; align-items: baseline; gap: 12px; border-top: 1px solid #cfdacb; padding-top: 14px; }
+    .demo-result b { color: var(--green); font: 700 34px/1 Consolas, monospace; white-space: nowrap; }
+    .demo-result span { color: var(--muted); font-size: 13px; }
+    .segmented { display: flex; gap: 5px; margin-top: 15px; padding: 4px; border-radius: 12px; background: #dce5d8; }
+    .segmented button {
+      flex: 1;
+      min-height: 40px;
+      padding: 7px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--ink);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .segmented button[aria-pressed="true"] { background: #fffef8; box-shadow: 0 2px 5px #34502515; }
+    .demo small { display: block; margin-top: 13px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 1180px;
+      margin: 0 auto 45px;
+      padding: 25px 0;
+      border-block: 1px solid var(--line);
+    }
+    .metric { padding: 5px 35px; border-right: 1px solid var(--line); }
+    .metric:last-child { border: 0; }
+    .metric strong { color: var(--green); font: 700 39px/1.4 Consolas, monospace; }
+    .metric strong small { font: 700 18px/1.4 "Microsoft YaHei", sans-serif; }
+    .metric p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .workspace {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 890px);
+      gap: 55px;
+      max-width: 1180px;
+      margin: auto;
+      padding-bottom: 90px;
+    }
+    .sidebar { align-self: start; position: sticky; top: 28px; }
+    .sidebar h2 { margin: 0 0 18px; color: var(--muted); font-size: 12px; letter-spacing: 3px; }
+    .sidebar nav { display: flex; flex-direction: column; gap: 3px; }
+    .sidebar nav a {
+      display: flex;
+      gap: 10px;
+      padding: 8px 11px;
+      border-left: 2px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .sidebar nav a span { color: #61765f; font: 12px/1.9 Consolas, monospace; }
+    .sidebar nav a[aria-current] { border-left-color: var(--green); background: #e5eee1; font-weight: 700; }
+    .sidebar .note { margin-top: 22px; padding: 20px 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .chapter {
+      margin-bottom: 25px;
+      padding: 36px 38px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fffefa;
+      box-shadow: 0 5px 15px #315c3110;
+    }
+    .chapter h2 { margin: 8px 0 22px; font-size: 27px; line-height: 1.45; letter-spacing: -.5px; }
+    .chapter h3 { margin: 27px 0 10px; color: #254e3d; font-size: 18px; }
+    .chapter p { margin: 17px 0; }
+    .chapter strong { color: #254e3d; }
+    .chapter ul, .chapter ol { padding-left: 24px; }
+    .chapter li { margin: 10px 0; }
+    .chapter code {
+      padding: 1px 4px;
+      border: 1px solid #e1e5dc;
+      border-radius: 4px;
+      background: #eef1e9;
+      font: 13px/1.65 Consolas, "Microsoft YaHei", monospace;
+      overflow-wrap: anywhere;
+    }
+    .table-scroll { overflow: auto; margin: 24px -5px; border: 1px solid var(--line); border-radius: 11px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+    th { background: #edf2e9; color: #375441; text-align: left; }
+    td, th { padding: 13px 14px; border-bottom: 1px solid #e4e9e0; vertical-align: top; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td:first-child { min-width: 105px; font-weight: 600; }
+    tr:nth-child(even) td { background: #fafbf6; }
+    footer { display: flex; justify-content: space-between; gap: 15px; padding: 35px 5vw; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .progress { position: fixed; z-index: 20; top: 0; left: 0; width: 0; height: 3px; background: var(--green); transition: width .1s; }
+    .chapter.arrive { animation: arrive .55s ease both; }
+    .motion-control { padding: 7px 12px; border: 1px solid #c7d2c3; border-radius: 30px; background: transparent; color: var(--green); font-size: 12px; cursor: pointer; }
+    .paused *, .paused *::before, .paused *::after { animation-play-state: paused !important; }
+    .paused .chapter.arrive { animation: none; }
+    .legend { padding: 14px 18px; border-left: 3px solid #b08b4e; border-radius: 8px; background: #f8eedb; color: #705936; font-size: 13px; }
+    main > .legend { margin-bottom: 25px; }
+    .document-meta { display: flex; flex-wrap: wrap; gap: 5px 20px; margin-bottom: 25px; color: var(--muted); font-size: 13px; }
+    .sources { display: flex; flex-wrap: wrap; gap: 3px 12px; color: var(--muted); font-size: 12px; }
+    .case + .case { margin-top: 23px; padding-top: 4px; border-top: 1px solid var(--line); }
+    .case p { margin: 8px 0; }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-3px) scale(1.04, .98); }
+    }
+    @keyframes drift { to { transform: translate(-50px, 40px); } }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 8px #5c866200; } }
+    @keyframes arrive {
+      from { opacity: .5; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (max-width: 1200px) {
+      .workspace { grid-template-columns: 200px minmax(0, 1fr); gap: 25px; padding: 0 25px 60px; }
+      .metrics { margin-inline: 25px; }
+      .hero { gap: 30px; }
+    }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr 1fr; padding: 40px 25px; }
+      .hero h1 { letter-spacing: -1px; }
+      .tag, .sidebar .note, .sidebar h2 { display: none; }
+      .sidebar { position: static; margin-bottom: 25px; }
+      .sidebar nav { display: grid; grid-template-columns: 1fr 1fr; }
+      .workspace { display: block; }
+      .chapter { padding: 28px; }
+    }
+    @media (max-width: 620px) {
+      body { font-size: 15px; }
+      .topbar { height: 66px; }
+      .hero { display: block; padding: 35px 22px; }
+      .hero h1 { font-size: clamp(31px, 10vw, 40px); }
+      .demo { max-width: 390px; margin-top: 30px; padding: 22px; }
+      .tile-grid { gap: 8px; }
+      .metrics { margin-bottom: 25px; padding: 18px 0; }
+      .metric { padding: 0 10px; }
+      .metric strong { font-size: 28px; }
+      .metric strong small { font-size: 13px; }
+      .metric p { font-size: 11px; }
+      .workspace { padding: 0 14px 40px; }
+      .sidebar nav { gap: 2px; }
+      .sidebar nav a { gap: 6px; padding: 7px 5px; font-size: 11px; }
+      .chapter { padding: 25px 20px; border-radius: 14px; }
+      .chapter h2 { font-size: 24px; text-wrap: balance; }
+      .table-scroll { margin: 20px 0; }
+      table { min-width: 560px; }
+      footer { display: block; }
+      .hero-links { gap: 8px; }
+      .pill { padding: 8px 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @media print {
+      .sidebar, .demo, .motion-control, .progress, .hero-links { display: none; }
+      .hero, .workspace { display: block; padding: 0; }
+      .chapter { padding: 15px 0; border: 0; box-shadow: none; break-inside: auto; }
+      .chapter h2, .chapter h3 { break-after: avoid; }
+      .metrics { margin: 0 0 20px; }
+      .topbar { padding: 0; }
+      .table-scroll { overflow: visible; margin-inline: 0; }
+      table { min-width: 0; }
+      tr { break-inside: avoid; }
+      a { color: inherit; }
+      body { font-size: 11pt; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="topbar" id="top">
+    <div class="brand"><i aria-hidden="true">R</i>REVGAME <span class="tag">GAME DESIGN ROADMAP</span></div>
+    <button class="motion-control" id="motion" type="button" aria-pressed="false" hidden>暂停装饰动画</button>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">REVOLUTION / DESIGN ROADMAP</div>
+      <h1>围棋史莱姆<br><em>后续玩法规划</em></h1>
+      <p class="lead">从六章远征里抽出一手能改战果的布阵。让第一次玩的人看懂气和眼，也让打完六章的人有理由回来试一种新打法。</p>
+      <div class="hero-links">
+        <a class="pill primary" href="#trial">阅读首期玩法 ↗</a>
+        <a class="pill" href="#roadmap">查看六周安排</a>
+      </div>
+      <div class="stamp">2026.11.17 · 策划提案 · 源码基线 3e2aaf39</div>
+    </div>
+    <div class="demo" id="boardDemo" data-mode="guard">
+      <div class="demo-head">
+        <strong><span class="live-dot" aria-hidden="true"></span>一手棋能多几口气</strong>
+        <span class="tag">INTERACTIVE</span>
+      </div>
+      <div class="tile-grid" aria-hidden="true">
+        <div class="tile" data-cell="F7"></div>
+        <div class="tile enemy" data-cell="G7"><span style="--delay: -.2s"></span></div>
+        <div class="tile" data-cell="H7"></div>
+        <div class="tile" data-cell="I7"></div>
+        <div class="tile enemy" data-cell="F8"><span style="--delay: -.8s"></span></div>
+        <div class="tile ally" data-cell="G8"><span style="--delay: -1s"></span></div>
+        <div class="tile enemy" data-cell="H8"><span style="--delay: -1.2s"></span></div>
+        <div class="tile choice" data-cell="I8"><span style="--delay: -1.4s"></span></div>
+        <div class="tile" data-cell="F9"></div>
+        <div class="tile choice" data-cell="G9"><span style="--delay: -1.8s"></span></div>
+        <div class="tile" data-cell="H9"></div>
+        <div class="tile" data-cell="I9"></div>
+      </div>
+      <div class="demo-result" role="status" aria-live="polite" aria-atomic="true">
+        <b id="libertyCount">1 → 2</b><span id="demoText">口气 · G8 与 G9 连成一组，空格在 F9、H9。</span>
+      </div>
+      <div class="segmented" role="group" aria-label="比较两个候选落点">
+        <button type="button" data-mode="guard" aria-pressed="true" disabled>补气 · G9</button>
+        <button type="button" data-mode="flank" aria-pressed="false" disabled>抢侧翼 · I8</button>
+      </div>
+      <small>九路棋盘右下角的远征落子示意。绿棋是己方，红棋是敌方，浅金格是 G8 棋群此时的气。战斗结果由游戏实测决定。</small>
+    </div>
+  </div>
+
+  <div class="metrics" aria-label="首期范围与目标">
+    <div class="metric"><strong>3 <small>关</small></strong><p>首批手工棋阵试炼</p></div>
+    <div class="metric"><strong>90 <small>秒</small></strong><p>首关试玩目标</p></div>
+    <div class="metric"><strong>6 <small>周</small></strong><p>一轮建议开发周期</p></div>
+  </div>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <h2>阅读导航</h2>
+      <nav aria-label="章节">
+        <a href="#baseline" aria-current="location"><span>01</span>现状与优先方向</a>
+        <a href="#cases"><span>02</span>五款成功游戏</a>
+        <a href="#trial"><span>03</span>首期 · 棋阵试炼</a>
+        <a href="#improvements"><span>04</span>先优化哪些体验</a>
+        <a href="#endless"><span>05</span>无尽的重玩目标</a>
+        <a href="#backlog"><span>06</span>后续玩法候选</a>
+        <a href="#roadmap"><span>07</span>六周开发安排</a>
+        <a href="#playtest"><span>08</span>试玩与验收</a>
+        <a href="#references"><span>09</span>项目依据与资料</a>
+      </nav>
+      <div class="note">下一次试玩先观察一个选择。<br>玩家看看棋盘，再决定把这手落在哪。</div>
+    </aside>
+
+    <main>
+      <div class="document-meta">
+        <a href="玩法拓展策划案.html">六章远征策划</a>
+        <a href="无尽模式策划案_棋阵幸存者_2026-11-01.html">无尽模式策划</a>
+        <a href="九路围棋PvP策划案_2026-10-26.html">九路围棋策划</a>
+        <a href="#references">当前实现与验收记录</a>
+      </div>
+      <div class="legend">首期立项建议为三道棋阵试炼。第一周先做通「补一口气」，测试玩家能否自己发现落点差异，再决定是否扩到其余两关。</div>
+
+      <section class="chapter" id="baseline">
+        <div class="section-label">ROADMAP / 01</div>
+        <h2>RevGame 已有的玩法与下一步</h2>
+        <p>六章远征最有辨识度的瞬间，是一张手牌落下后，史莱姆连成一组、气口变多，随后在自动战斗里真的撑住。下一步值得验证的是，玩家在开战前能不能看出这种变化，战后愿不愿意换一格再试。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="项目现状和机会">
+          <table>
+            <thead><tr><th scope="col">现有玩法</th><th scope="col">当前实现</th><th scope="col">下一步机会</th></tr></thead>
+            <tbody>
+              <tr><td>六章远征</td><td>有真实棋盘教学、准备落牌、自动出手、章末 Boss 和结算。失败会按现有流程回退回合。</td><td>开战前看懂落子改变的气和眼，战后能从一条事实决定下轮怎么布阵。</td></tr>
+              <tr><td>棋阵幸存者</td><td>玩家可选三个起手棋阵。已有补牌、同名手牌升级、自动获取祝福与进化、本地战绩和续局。</td><td>让玩家为一个能说出来的进化重开，再用固定起手挑战自己的记录。</td></tr>
+              <tr><td>九路围棋</td><td>已有本地、人机、局域网和服务器入口。结束后可逐手复盘，部分对局支持 Agent 分析。</td><td>从复盘中抽出一分钟能完成的离线练习。</td></tr>
+              <tr><td>帧同步决斗</td><td>现有围棋流程可发起决斗，已有选角、原生战斗和回放数据基础。</td><td>先让玩家在本地练清出招、跳跃和冷却，再评估精彩片段分享。</td></tr>
+              <tr><td>剧情与鸦鸦</td><td>现有序章、棋盘实操教学和六章收藏书。正式收藏页由真实通关解锁。</td><td>让鸦鸦记住一次围住敌棋或险胜，下次回到大厅时接一句与本局有关的话。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>第一次游玩的玩家先体验远征和短试炼。喜欢搭配的老玩家沿无尽追配方与同条件战绩。围棋和决斗保留各自的练习入口，首轮排期把完整交付留给远征及无尽。</p>
+      </section>
+
+      <section class="chapter" id="cases">
+        <div class="section-label">ROADMAP / 02</div>
+        <h2>五款成功游戏，各借一个机制</h2>
+        <div class="case">
+          <h3>Into the Breach · 敌方意图先可见</h3>
+          <p>2019 年 Game Developers Choice Awards 最佳设计。游戏把敌人即将发起的攻击明示出来，让一回合的决策集中在怎样化解威胁。</p>
+          <p>远征可在玩家选中落点时提示会改变的气口、眼位和已经锁定的技能范围。玩家根据棋盘信息做决定，随后观战。</p>
+          <div class="sources"><a href="https://store.steampowered.com/app/590380/Into_the_Breach/">Subset Games 玩法说明</a><a href="https://gamechoiceawards.com/archive-gdca-2019/">GDCA 获奖档案</a></div>
+        </div>
+        <div class="case">
+          <h3>Vampire Survivors · 配方变成一局目标</h3>
+          <p>获 2023 年 BAFTA 最佳游戏和游戏设计奖。基础武器可以进化，选什么升级会影响玩家能不能做出想要的成品。</p>
+          <p>无尽可让玩家追踪一种已有进化。比如配方只缺核心时，提醒玩家关注领主波，提前调整手牌和防线。</p>
+          <div class="sources"><a href="https://poncle.games/operation-guns">poncle 进化说明</a><a href="https://www.bafta.org/media-centre/press-releases/bafta-announces-the-winners-of-the-2023-bafta-games-awards/">BAFTA 获奖公告</a></div>
+        </div>
+        <div class="case">
+          <h3>Slay the Spire · 共用种子的挑战</h3>
+          <p>Mega Crit 在 2019 年 GDC 分享时披露销量已超过 150 万份。Daily Climb 让玩家共享同一种子和一组规则变体，因此可以比较同一起点上的决策。</p>
+          <p>无尽原案已有同种子挑战的构想。先做一期固定起手的题，用相同规则对比自己的两次走法，再根据复现结果决定是否轮换。</p>
+          <div class="sources"><a href="https://media.gdcvault.com/gdc2019/presentations/Yano_Casey_SlayTheSpire.pdf">Casey Yano 的 GDC 机制分享</a><a href="https://media.gdcvault.com/gdc2019/presentations/Giovannetti_Anthony_SlayTheSpire.pdf">Anthony Giovannetti 的 GDC 销量资料</a></div>
+        </div>
+        <div class="case">
+          <h3>Balatro · 用一条规则改变取舍</h3>
+          <p>Playstack 在 2025 年 1 月公布销量超过 500 万份。小丑牌能和现有牌型组合，让玩家为了某个触发条件改用一套打法。</p>
+          <p>无尽可试做一枚规则饰品。连出双眼后，本波接下来的两次远程攻击各分出一发。此时补眼和继续升级输出棋就成了两种选择。</p>
+          <div class="sources"><a href="https://store.steampowered.com/app/2379780/Balatro/">LocalThunk 玩法说明</a><a href="https://www.playstack.com/news/balatro-5-million-copies-sold/">Playstack 销量公告</a></div>
+        </div>
+        <div class="case">
+          <h3>Hades · 角色记得上一次发生了什么</h3>
+          <p>2021 年 BAFTA 最佳游戏。主角重试时能遇到新的故事事件，返回后可以和记得过去经历的角色继续交谈。</p>
+          <p>鸦鸦可以记住首次补气救下队友、第一次做眼、战败后重开成功，各写一句回大厅时触发的短台词。台词和未阅状态沿用已有展示方式。</p>
+          <div class="sources"><a href="https://www.supergiantgames.com/blog/hades-faq/">Supergiant 的叙事说明</a><a href="https://www.bafta.org/awards/games/?award-year=2021">BAFTA 2021 获奖档案</a></div>
+        </div>
+      </section>
+
+      <section class="chapter" id="trial">
+        <div class="section-label">ROADMAP / 03</div>
+        <h2>棋阵试炼，每关只落一手</h2>
+        <p>从远征选关页进试炼。每关有<strong>固定棋盘、一张牌、两个候选落点和一个可观察目标</strong>。先点候选格读预览，确认落子后看一段短自动战斗。结算定位目标棋子，直接提供「再试一手」和「下一关」。教程结束时可推荐第一关，常驻入口放在远征选关页。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="三个原型关卡">
+          <table>
+            <thead><tr><th scope="col">关卡</th><th scope="col">给玩家的选择</th><th scope="col">真实判定与战报</th></tr></thead>
+            <tbody>
+              <tr><td>01 · 补一口气</td><td>己方 G8 盾战只剩一口气。落 G9 连上盾战，把空格扩成 F9 和 H9，或落 I8 从侧面攻敌。</td><td>观察开战后 12 秒，提前结算则取终局。目标盾战按身份仍在场即通过。用实际棋局调到补气线和抢攻线的结果可区分。</td></tr>
+              <tr><td>02 · 封最后一格</td><td>敌方前排棋群只有一处空格相邻。占那个气口可以锁住这组棋，也可以去开另一条进攻线。</td><td>准备期确认一次真实 <code>Locked</code> 状态转换，开战后要求目标前排在限定时段倒下。战报标出封住的气口和倒下时刻。</td></tr>
+              <tr><td>03 · 合出两只眼</td><td>D5、F5 两个待成的眼共缺一颗 E5。补 E5 可以同时成眼，也可从旁路接应。</td><td>落子后记录目标棋群的眼数。在既有范围技落地后再取一次快照，目标棋群仍有两眼即过。技能和棋阵先用真实回执做出可稳定复现的差异。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>第一关交给程序与策划的最小规格</h3>
+        <ol>
+          <li><strong>进场。</strong>以 9×9 盘面的完整配置载入，截取 F–I 列及第 7–9 行供读图。G8 是己方单格盾战，F8、G7、H8 是敌棋，G9 和 I8 可落。同一张单格手牌用于两条路线，首题关闭会改变气数的随机准备增益。</li>
+          <li><strong>选位与确认。</strong>只读预览高亮目标棋群的实际气格。确认使用远征已有的选牌和棋盘点击路径，落子成功后锁定本关操作。其他格子给出可见原因，保留手牌。</li>
+          <li><strong>结算与重来。</strong>单行战报给出落子前后实际气数和盾战是否存活。重试重建同一初始条件。首次通过可解锁下一题，纪录只写试炼进度。</li>
+        </ol>
+        <div class="legend">玩家停顿时，鸦鸦先说「看看盾战边上还剩哪里能喘气」。玩家主动请求下一层提示时才点亮 G9。三关可沿用现有棋子、棋盘和技能表现。</div>
+      </section>
+
+      <section class="chapter" id="improvements">
+        <div class="section-label">ROADMAP / 04</div>
+        <h2>先改三处现有体验</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="现有体验优化">
+          <table>
+            <thead><tr><th scope="col">优先项</th><th scope="col">建议改动</th><th scope="col">验法</th></tr></thead>
+            <tbody>
+              <tr><td>远征落点预览</td><td>选牌后聚焦一个候选格，画出相连棋群和变化的气口。只在候选或盘面变化时重算。先覆盖首章前三轮。</td><td>对同一份棋盘逐项比对预览与落子后气数、眼数。拒绝操作前后核对手牌与占格，触屏和鼠标走同一业务路径。</td></tr>
+              <tr><td>战斗可读性</td><td>首章战后保留一条可回看的棋局事实，如「左翼盾战被锁住后首先倒下」。紧急范围警示使用轮廓与图标，层级高于常规飘字。</td><td>取已有伤害与死亡回执、棋盘状态做证据。录同一场 Boss 的密集弹幕，确认警示、目标棋和开战前提示看得见。一手救棋的因果另外用固定夹具验证。</td></tr>
+              <tr><td>无尽的成长反馈</td><td>在已有拖曳目标箭头旁显示棋子的本次升星结果。手牌附近展示追踪配方的缺项，实际自动进化后说明攻击方式的变化。</td><td>两种起手各走到第一次真实进化。比对提示、等级、材料消耗和命中行为，退出续局后检查进度对应存档。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>移动端先取一台 Android 参考设备，记录首屏可交互时间、Boss 峰值的 P95 帧时间以及退场重入。先用同输入找新提示产生的成本，针对可重复的热点再动渲染和资源。<a href="../文档/战斗性能优化规则/战斗性能优化规则.html">战斗性能优化规则</a></p>
+      </section>
+
+      <section class="chapter" id="endless">
+        <div class="section-label">ROADMAP / 05</div>
+        <h2>无尽下一局，先选一个想做成的东西</h2>
+        <h3>把进化路线放到玩家眼前</h3>
+        <p>先从「弩雨」和「守眼」各选一个已有配方。开局任选一个来追踪，随着主祝福满级、拿到对应辅印和核心逐项打勾。配方显示从自动成长和进化的回执更新。试玩观察玩家会不会为了打出这个构筑，改变出牌、升星和布阵的顺序。</p>
+        <h3>做一期固定起手的「守眼十波」</h3>
+        <p>同一挑战 ID 固定种子、起手、难度和配置版本。击破第 10 波出现的领主，结算其奖励及随之触发的自动进化，再检查是否已完成一次进化。合格的试点种子要能用真实玩家操作跑通。达成后按剩余棋心血量、用时评定个人最佳，未达成时给出进度与原因。挑战拥有独立续局槽和结算键，退出后可继续普通无尽。</p>
+        <p>续局需恢复随机状态与已选配方。试点先比较同平台、同规则版本与同起手的个人成绩。若相同输入无法稳定复现波次、奖励顺序和结果，保留配方追踪，待问题解决后再开放轮换与跨设备成绩比较。</p>
+      </section>
+
+      <section class="chapter" id="backlog">
+        <div class="section-label">ROADMAP / 06</div>
+        <h2>接下来值得做的五个原型</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="后续玩法候选和成本">
+          <table>
+            <thead><tr><th scope="col">原型</th><th scope="col">第一版玩法</th><th scope="col">预计投入与开工条件</th></tr></thead>
+            <tbody>
+              <tr><td>鸦鸦的复盘手记</td><td>选三种已验证的事件，结算后给短句，回大厅可以翻回那张棋盘小卡。连续触发同一事件时只记一次。</td><td>低。等试炼事件稳定后接入。策划写短句，美术先复用表达清楚的现有表情。</td></tr>
+              <tr><td>九路一分钟练习</td><td>从现有复盘取三份固定棋谱，从指定手数进入「救被打吃的棋」或「找能提子的点」。提示按现有合法动作生成。</td><td>中。先做离线三题。沿用 <code>GoCore</code> 重放到指定局面，退出后核对原棋谱和指纹。</td></tr>
+              <tr><td>无尽规则饰品</td><td>首枚饰品试双眼触发分裂弹。描述写明触发条件和次数，用同种子验证玩家是否会为了它改布阵。</td><td>中。配方追踪和同条件回合走通后再试制，沿用真实弹道与伤害回执采样。</td></tr>
+              <tr><td>好友留一手</td><td>试炼通关后把固定题分享给朋友。对方先看到原局，结算才揭晓两人的落点和结果，便于讨论为什么选那一格。</td><td>中。至少两道棋阵试炼能稳定复现后，先做仅含关卡版本和落点的离线挑战码，沿用棋盘和结算。</td></tr>
+              <tr><td>决斗练习场</td><td>一名固定对手和三项目标，练一次命中、一次跳跃规避、一次连招。每项达成后可立刻重置。</td><td>中。先用本地原生 Core、固定输入和真实 HUD。练习入口与回放恢复先验，再排精彩片段分享。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>第七章等已有六章的回访动机得到验证后再立项。联机双人守眼、全服榜和赛季排位在看到持续的同题重玩需求后单独估算，分别需要额外的同步、成绩校验或匹配投入。</p>
+      </section>
+
+      <section class="chapter" id="roadmap">
+        <div class="section-label">ROADMAP / 07</div>
+        <h2>六周安排与每周交付</h2>
+        <p>以下从实际开工日算起，按<strong>一名主程、策划与美术兼职配合</strong>估算。每周结尾用可玩的入口评审，根据实际完成时间调整下一周范围。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="六周排期">
+          <table>
+            <thead><tr><th scope="col">时间</th><th scope="col">要交出的东西</th><th scope="col">负责人和转入条件</th></tr></thead>
+            <tbody>
+              <tr><td>第 1 周</td><td>首关从真实入口走到「再试一手」。记录原版首章三个回合的操作耗时和中途问题。</td><td>策划定棋谱和胜负检查点，程序接真实落点，美术提供三种格子状态。两条落点各可重复完成，再约六人短测。</td></tr>
+              <tr><td>第 2 周</td><td>完成三关、一次渐进提示和试炼菜单。本周末能从选关页完整游玩、返回和重进。</td><td>首关达到试玩门槛才扩关。未达标就迭代提示和战报，推迟第二、三关。</td></tr>
+              <tr><td>第 3 周</td><td>把验证过的落点提示和战报接回首章前三回合，并检查一场 Boss 密集战。</td><td>程序统一只读预览，策划核对文案，美术核对轮廓。退出、重开、存档和手机可读性过关后冻结首期内容。</td></tr>
+              <tr><td>第 4 周</td><td>无尽两条配方追踪，从开局选择到第一次真实进化和续局。</td><td>策划提供已有配方示例，程序接入 HUD 和存档。实际成品与预告一致才能开始固定题。</td></tr>
+              <tr><td>第 5 周</td><td>一期「守眼十波」，带单独的本地战绩和续局。</td><td>程序锁定挑战配置与复现口径，策划调过关条件。通过完整恢复和同输入复现，才安排重复试玩。</td></tr>
+              <tr><td>第 6 周</td><td>一轮完整试玩回归，整理能找到、能看懂、愿意重开的数据。</td><td>优先收尾已开的功能。若有余量，试做一条鸦鸦结语，用实际事件去重结果决定是否扩写。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="legend">容量不足时先交付首关与首章可读性。第 5 周固定题和第 6 周鸦鸦原型可顺延，三关和无尽按各自评审结果推进。</div>
+      </section>
+
+      <section class="chapter" id="playtest">
+        <div class="section-label">ROADMAP / 08</div>
+        <h2>用玩家的选择和游戏事实验收</h2>
+        <h3>六人试玩怎么判</h3>
+        <p>约六名第一次玩 RevGame 的玩家，尽量各半来自会围棋与不会围棋的人。首轮旁观，计时从第一关可操作开始，到首次通关为止。<strong>至少 4 人在 90 秒内通关、至少 4 人能指出落子后新增的空格、至少 3 人主动点重试或下一关。</strong>这是首轮继续投入的建议门槛。若玩家看懂气却没赢，先查两种落点对应的真实战果。若玩家赢了仍说不清楚，先改读图和战报。</p>
+        <p>无尽用同一题观察第二次开局。记录是否主动再开、是否调整布阵或升星，以及第一次进化所在波次。至少三名试玩者能说出第二局改了哪个选择及原因，再增加第二道题。</p>
+        <h3>用现有链路核对玩法与性能</h3>
+        <ul>
+          <li>试炼状态由战斗域管理。玩家动作沿用 <code>BattleLogic</code>，占格由 <code>BoardModel</code> 管理，<code>GoRules</code> 判定气和眼。配方由无尽自己的服务和配置提供，九路练习由 <code>GoCore</code> 判定。</li>
+          <li>未来实现后用真实 Editor Play 入口核对可完成、非法落点、连点、放弃、重试和返回。对比试炼前后主线章节、积分、奖励和鸦鸦六章收藏的存档值。自动化在当次 Play 重新发现能力，使用隔离存档并验证清理。</li>
+          <li>移动端观察 16:9 和常见长屏横屏的触点与遮挡。涉及资源的改动按项目流程做冷 AB。性能对比用同设备、场景、种子、分辨率和固定输入，热身后重复三次，记录战斗 P95 帧时间、首屏就绪和退场重入。</li>
+        </ul>
+      </section>
+
+      <section class="chapter" id="references">
+        <div class="section-label">ROADMAP / 09</div>
+        <h2>项目依据与延伸阅读</h2>
+        <p>功能现状按 2026 年 11 月 17 日仓库源码及已有报告核对。立项排期、试炼时长和试玩门槛均为建议值。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="项目实现与验收资料">
+          <table>
+            <thead><tr><th scope="col">方向</th><th scope="col">实现与已有文档</th></tr></thead>
+            <tbody>
+              <tr><td>远征</td><td><a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Flow/Logic/BattleLogic.cs">落子与战斗入口</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Board/Rules/GoRules.cs">气与眼的实际规则</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Battle/Progression/BattleService.Progression.cs">回合与成长</a></td></tr>
+              <tr><td>无尽</td><td><a href="../UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Endless/EndlessEntryPanel.cs">普通开局与续局</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Growth.cs">局内配方</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Save.cs">存档</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessRecords.cs">本地纪录</a></td></tr>
+              <tr><td>九路与决斗</td><td><a href="../UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpEntryPanel.cs">九路入口</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.cs">终局逐手复盘</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/DuelReplay.cs">原生决斗回放数据</a> · <a href="../文档/AI自动化测试报告/帧同步战斗测试/帧同步战斗测试_2026-11-07.html">帧同步既有验收</a></td></tr>
+              <tr><td>剧情与鸦鸦</td><td><a href="../文档/架构/剧情与新手教学系统.html">剧情与教学</a> · <a href="../UnityProject/RevGame.Unity/Assets/GameScripts/Services/Progression/YayaMemoryProgress.cs">六章已阅与解锁</a> · <a href="../文档/AI自动化测试报告/鸦鸦点滴测试/鸦鸦点滴自动化测试_2026-11-16.html">鸦鸦收藏既有验收</a></td></tr>
+              <tr><td>框架与性能</td><td><a href="../文档/项目开发日志/RevGame项目开发复盘_2026-11-09.html">项目开发复盘</a> · <a href="../../.codex/skills/revgame-development/references/project-acceptance.md">项目验收细则</a> · <a href="../文档/战斗性能优化规则/战斗性能优化规则.html">战斗性能优化规则（版式参考）</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>外部案例查阅日期为 2026 年 11 月 17 日。奖项由主办方档案核对，销量取开发者或发行商在对应日期披露的数字。<a href="#cases">查看五个案例的原始出处</a></p>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <span>RevGame · 围棋史莱姆</span>
+    <a href="#top">返回页首 ↑</a>
+  </footer>
+  <script>
+    const demo = document.querySelector('#boardDemo');
+    const libertyCount = document.querySelector('#libertyCount');
+    const demoText = document.querySelector('#demoText');
+    const demoButtons = [...demo.querySelectorAll('button[data-mode]')];
+    const alternatives = {
+      guard: { count: '1 → 2', text: '口气 · G8 与 G9 连成一组，空格在 F9、H9。' },
+      flank: { count: '1 → 1', text: '口气 · I8 与 G8 分开，G8 的气仍只有 G9。' }
+    };
+
+    for (const button of demoButtons) {
+      button.disabled = false;
+      button.addEventListener('click', () => {
+        const mode = button.dataset.mode;
+        demo.dataset.mode = mode;
+        libertyCount.textContent = alternatives[mode].count;
+        demoText.textContent = alternatives[mode].text;
+        for (const choice of demoButtons) {
+          choice.setAttribute('aria-pressed', String(choice === button));
+        }
+      });
+    }
+
+    const motion = document.querySelector('#motion');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    motion.hidden = reducedMotion.matches;
+    reducedMotion.addEventListener('change', () => {
+      motion.hidden = reducedMotion.matches;
+    });
+    motion.addEventListener('click', () => {
+      const paused = document.body.classList.toggle('paused');
+      motion.setAttribute('aria-pressed', String(paused));
+      motion.textContent = paused ? '继续装饰动画' : '暂停装饰动画';
+    });
+
+    const chapters = [...document.querySelectorAll('.chapter')];
+    const links = [...document.querySelectorAll('.sidebar nav a')];
+    const progress = document.querySelector('.progress');
+    let scheduled = false;
+
+    function updatePosition() {
+      const maxScroll = document.documentElement.scrollHeight - innerHeight;
+      progress.style.width = (maxScroll > 0 ? Math.min(100, scrollY / maxScroll * 100) : 0) + '%';
+      let current = chapters[0];
+      for (const chapter of chapters) {
+        if (chapter.getBoundingClientRect().top > innerHeight * .35) {
+          break;
+        }
+        current = chapter;
+      }
+      if (maxScroll > 0 && scrollY >= maxScroll - 2) {
+        current = chapters[chapters.length - 1];
+      }
+      for (const link of links) {
+        if (link.hash === '#' + current.id) {
+          link.setAttribute('aria-current', 'location');
+        } else {
+          link.removeAttribute('aria-current');
+        }
+      }
+      scheduled = false;
+    }
+
+    function schedulePosition() {
+      if (!scheduled) {
+        scheduled = true;
+        requestAnimationFrame(updatePosition);
+      }
+    }
+
+    addEventListener('scroll', schedulePosition, { passive: true });
+    addEventListener('resize', schedulePosition);
+    addEventListener('hashchange', schedulePosition);
+    updatePosition();
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('arrive');
+            observer.unobserve(entry.target);
+          }
+        }
+      }, { threshold: .04 });
+      for (const chapter of chapters) {
+        observer.observe(chapter);
+      }
+    }
+  </script>
+</body>
+</html>
