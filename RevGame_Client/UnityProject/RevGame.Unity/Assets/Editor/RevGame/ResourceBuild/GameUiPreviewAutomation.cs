@@ -22,6 +22,7 @@ namespace RevGame.Editor
         {
             public string prefab;
             public string output;
+            public bool plain;
         }
         [Serializable] private sealed class Result
         {
@@ -29,7 +30,21 @@ namespace RevGame.Editor
             public int width, height;
         }
 
-        [RevAutomationAction("game.ui.preview-capture", Environment = "edit", Keys = new[] { "prefab", "output" }, Description = "预览场景里离屏渲染一个UI预制体并存PNG，不改用户场景与资产")]
+        private static Type PreviewType => Type.GetType("RevGame.Editor.GameUiPrefabPreview, Assembly-CSharp-Editor", true);
+
+        [RevAutomationAction("game.ui.prefab-preview-state", Environment = "edit", Keys = new string[0], Description = "查询 Prefab Mode 的临时 UI 预览和场景脏标记")]
+        public static object InspectPrefabPreview(RevAutomationRequest request)
+        {
+            return PreviewType.GetMethod("InspectStage").Invoke(null, null);
+        }
+
+        [RevAutomationAction("game.ui.prefab-audit", Environment = "edit", Keys = new string[0], Description = "扫描 Assets 下全部 UI 预制体的空白占位和实际贴图绑定")]
+        public static object AuditPrefabs(RevAutomationRequest request)
+        {
+            return PreviewType.GetMethod("Audit").Invoke(null, null);
+        }
+
+        [RevAutomationAction("game.ui.preview-capture", Environment = "edit", Keys = new[] { "prefab", "output", "plain" }, Description = "离屏渲染 UI 预制体；plain=true 查看未经编辑态补图的原始画面")]
         public static object Capture(RevAutomationRequest request)
         {
             Args args = JsonUtility.FromJson<Args>(request.payloadJson);
@@ -59,6 +74,7 @@ namespace RevGame.Editor
                 canvas.planeDistance = 10;
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
                 instance.transform.SetParent(canvasObject.transform, false);
+                using IDisposable preview = args.plain ? null : (IDisposable)PreviewType.GetMethod("Attach").Invoke(null, new object[] { args.prefab, instance });
                 var rect = instance.transform as RectTransform;
                 if (rect != null)
                 {

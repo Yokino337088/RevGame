@@ -55,6 +55,8 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 - 检查 Sprite 引用与**实际图集像素绑定**。懒创建 `GameSpriteAtlasService` 可能错过首次 `atlasRequested`；继续由 Bootstrap 早装配服务，不能通过预载所有图集制造首次不白的假象。
 - 技能默认保留无尽古希腊神殿原画与不透明象牙金棋盘。用户明确重制主题时按新需求替换相应资源与配方，不把历史素材选择当永久禁止修改。
 
+遇到预制体变白或批量排查时，按 [UI 预制体白块排查](ui-prefab-white-preview.md) 核对空图槽、编辑器图集缓存和运行时 AB。
+
 ## Editor Play 材质粉屏与 AB 平台
 
 - 先记录活动构建目标、Editor 实际图形 API、AB 开关和主包来源。Windows Editor 的真实 AB 验收使用 PC 包，即使 Build Target 留在 Android。正式 Player 验收使用目标平台包。Device Simulator 的设备型号用于布局，不能决定包来源。

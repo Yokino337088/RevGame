@@ -172,3 +172,11 @@ SetData(new DetailData { Id = Data.Id, Count = Data.Count + 1 });   // 写法 B�
 - [ ] `ExclusiveGroup` / `InBackStack` / `RevUICacheMode` 按语义设置（弹窗不该进返回栈；常驻 HUD 不该来回销毁）。
 - [ ] 打开一律 `Open<T>(onOpened)` 或 `OpenAsync`；需要秒开就先 `Preload`。
 - [ ] 单屏逻辑留面板；无界面、只活一段玩法域的业务归 `RevLogicBase`；跨域能力归服务，不因跨屏复用就一律搬服务，也不新增 System / BusinessLogic。
+
+## 预制体白块与图像就绪
+
+- uGUI 的 `Image` 缺少有效 Sprite，或 `RawImage` 缺少纹理时，默认 UI 材质可能采样内置白纹理。只要控件可见、尺寸非零且颜色不透明，空图槽也会被绘制。Prefab Mode 不执行 `RevUI.Open`、`SetData`、`OnRefreshView` 或运行时异步资源绑定，因此可单独复现白块。
+- 新增或改动图片控件时检查空数据、首次绑定、失败和回池重入。静态图在制作配方中绑定真实素材。动态图槽在资源可采样前隐藏图形或使用明确设计的占位，关闭和回池时同步解除引用并恢复空态。透明点击层、纯色底板和程序 Shader 按各自用途验收。
+- 需要在 Prefab Mode 编辑动态布局时，从实际配置提供仅编辑态预览。临时纹理、Sprite 覆盖和示例内容应在保存、离开预制体、重载和进 Play 时清理，避免改写序列化资源、扩展 AB 依赖或掩盖冷启动缺图。
+- 引用存在但画面白时，检查实际 `mainTexture`、材质采样属性及目标平台图集。编辑态缓存未打包与 Play 中图集回调、资源就绪屏障是不同问题，按首次出现白块的环境验证。
+- UI 交付前核对 Prefab Mode 或等效离屏画面。影响正式加载的变更还需从真实 UI 入口冷启动目标 AssetBundle，检查首帧、返回重入和资源清理。批量读取预制体资产时沿父级检查 `activeSelf`、组件 `enabled` 和透明度，直接用 `activeInHierarchy` 会误把资产对象全算作未激活。
