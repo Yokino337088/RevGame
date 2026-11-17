@@ -152,6 +152,23 @@ def _build_parser():
                 action.add_argument("--detach", action="store_true", help="提交后立即返回工单 ID")
             if family == "batch" and operation == "call":
                 action.add_argument("--validate-only", action="store_true", help="只做同帧批处理预检")
+            if family == "gal":
+                if operation == "story.create":
+                    action.add_argument("--title", help="游戏内显示的剧情名称")
+                if operation == "story.import":
+                    action.add_argument("--document", type=Path, help="本机剧情 JSON 文件")
+                    action.add_argument("--check-only", action="store_true", help="校验文档，不写 SO")
+                if operation == "story.export":
+                    action.add_argument("--out", type=Path, help="在本机保存可再次导入的文档")
+                if operation == "story.simulate":
+                    action.add_argument("--entry", help="可选：从指定节点开始试读")
+                    action.add_argument("--step", action="append", dest="gal_steps", help="如 advance、choose:lamp 或 rollback；可重复")
+                if operation == "ui.create":
+                    action.add_argument("--font", help="Assets 下的项目字体；留空使用 Unity 默认字体")
+                if operation in ("story.create", "story.import", "ui.create"):
+                    action.add_argument("--bundle", help="给 SO 或 Prefab 设置目标 AB 名")
+                if operation in ("story.import", "ui.create"):
+                    action.add_argument("--overwrite", action="store_true", help="允许覆盖指定的 Gal 资产")
             if family == "ui" and operation in ("layout", "raycast"):
                 action.add_argument("--object-path", help="精确层级路径，或用 --id 指定对象")
                 action.add_argument("--scene", help="重名场景对象的场景路径")
@@ -241,6 +258,17 @@ def payload_of(args):
         if args.warmup is not None:
             data["warmup"] = args.warmup
         validate_scenario(data)
+    if args.family == "gal":
+        for attr, key in (("title", "title"), ("bundle", "bundle"), ("font", "font"), ("entry", "entry"), ("gal_steps", "operations")):
+            value = getattr(args, attr, None)
+            if value is not None:
+                data[key] = value
+        if getattr(args, "document", None):
+            data["document"] = args.document.read_text(encoding="utf-8-sig")
+        if getattr(args, "check_only", False):
+            data["checkOnly"] = True
+        if getattr(args, "overwrite", False):
+            data["overwrite"] = True
     return data
 
 
@@ -530,6 +558,8 @@ def print_progress(update):
 def editor_outcome(action, response):
     if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
         return dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
+    if action in ("gal.story.validate", "gal.story.import") and response.get("success") and (response.get("data") or {}).get("valid") is False:
+        return dict(response, success=False, error="GalValidationFailed", message="剧情校验失败，请查 data.issues。")
     return response
 
 
@@ -657,6 +687,11 @@ def main(argv=None):
                 validate_action(action, payload)
                 result = invoke_action(client, action, payload, args.confirm, getattr(args, "report_dir", None), progress,
                                        detach=getattr(args, "detach", False))
+                if action == "gal.story.export" and getattr(args, "out", None) and result.get("success"):
+                    document = (result.get("data") or {}).get("document")
+                    if not document:
+                        raise RevError("未收到剧情文档；导出到文件需要等待工单完成。")
+                    atomic_json(args.out, json.loads(document))
         if args.output:
             atomic_json(args.output, result)
         visible = result if args.full else summarize(result)

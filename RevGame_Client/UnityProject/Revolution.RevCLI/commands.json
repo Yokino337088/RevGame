@@ -9,6 +9,13 @@
     "play": "图形编辑器中未暂停的 Play"
   },
   "actions": [
+    {"id":"gal.story.create","keys":["path","id","title","bundle"],"description":"创建 Revolution.Gal 剧情 SO 模板","environment":"edit","readOnly":false},
+    {"id":"gal.story.validate","keys":["path"],"description":"校验 Gal 剧情图与条件","environment":"edit","readOnly":true},
+    {"id":"gal.story.import","keys":["path","document","checkOnly","overwrite","bundle"],"description":"导入或只校验 Gal 剧情 JSON","environment":"edit","readOnly":false},
+    {"id":"gal.story.export","keys":["path"],"description":"导出 Gal 剧情 SO 的 JSON","environment":"edit","readOnly":true},
+    {"id":"gal.story.simulate","keys":["path","entry","operations"],"description":"离屏试读 Gal 分支、存档与变量","environment":"edit","readOnly":true},
+    {"id":"gal.ui.create","keys":["font","overwrite","bundle"],"description":"生成默认 RevUI Gal 面板与 View","environment":"edit","readOnly":false},
+    {"id":"gal.editor.open","keys":["path"],"description":"打开 Gal 剧情工作台","environment":"edit","readOnly":false},
     {"id":"storage.status","keys":[],"description":"预览自动化缓存容量与保留策略","environment":"either","readOnly":true},
     {"id":"storage.configure","keys":["configJson"],"description":"设置自动化工单、截图和报告保留期限与容量","environment":"either","readOnly":false},
     {"id":"storage.prune","keys":["dryRun"],"description":"回收已完成的自动化缓存；默认只预览","environment":"either","readOnly":false},
@@ -1912,7 +1919,14 @@
     "conditions": "array",
     "skipInvalid": "bool",
     "refresh": "bool",
-    "table": "string"
+    "table": "string",
+    "title": "string",
+    "document": "string",
+    "checkOnly": "bool",
+    "overwrite": "bool",
+    "entry": "string",
+    "operations": "string[]",
+    "font": "string"
   },
   "configFields": {
     "ab": [

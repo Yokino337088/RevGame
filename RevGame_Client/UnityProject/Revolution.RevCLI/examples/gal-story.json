@@ -1,0 +1,158 @@
+{
+  "Schema": 1,
+  "Id": "lantern_route",
+  "Title": "借一盏灯",
+  "Revision": 1,
+  "Start": "intro",
+  "Variables": [
+    {
+      "Id": "trust",
+      "Initial": 0
+    }
+  ],
+  "Nodes": [
+    {
+      "Id": "intro",
+      "Kind": "Line",
+      "Title": "林间旅店",
+      "Speaker": "旅人",
+      "Text": "天快黑了。你想沿灯光走，还是试试近路？",
+      "Next": "route",
+      "Position": {
+        "x": 30,
+        "y": 175
+      }
+    },
+    {
+      "Id": "route",
+      "Kind": "Choice",
+      "Title": "分路",
+      "Text": "选一条路。",
+      "Position": {
+        "x": 335,
+        "y": 175
+      },
+      "Exits": [
+        {
+          "Id": "lamp",
+          "Label": "沿灯光走",
+          "Target": "lamp_line",
+          "Effects": [
+            {
+              "Variable": "trust",
+              "Operation": "Add",
+              "Value": 1
+            }
+          ]
+        },
+        {
+          "Id": "shortcut",
+          "Label": "试试近路",
+          "Target": "shortcut_line"
+        },
+        {
+          "Id": "locked",
+          "Label": "读取旅人的笔记",
+          "Target": "secret_end",
+          "ShowWhenLocked": true,
+          "Conditions": [
+            {
+              "Variable": "trust",
+              "Comparison": "AtLeast",
+              "Value": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "lamp_line",
+      "Kind": "Line",
+      "Title": "灯下",
+      "Speaker": "旅人",
+      "Text": "灯还亮着。我等到你回来了。",
+      "Next": "branch",
+      "Position": {
+        "x": 635,
+        "y": 40
+      }
+    },
+    {
+      "Id": "shortcut_line",
+      "Kind": "Line",
+      "Title": "星空小路",
+      "Text": "你越过湿润的青苔，听见树梢上的风。",
+      "Next": "star_end",
+      "Position": {
+        "x": 635,
+        "y": 350
+      }
+    },
+    {
+      "Id": "branch",
+      "Kind": "Branch",
+      "Title": "旅人记得这条路吗",
+      "Next": "star_end",
+      "Position": {
+        "x": 925,
+        "y": 40
+      },
+      "Exits": [
+        {
+          "Id": "warm",
+          "Label": "已取得信任",
+          "Target": "signal",
+          "Conditions": [
+            {
+              "Variable": "trust",
+              "Comparison": "AtLeast",
+              "Value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "signal",
+      "Kind": "Signal",
+      "Title": "点亮旅店",
+      "Signal": "lantern_lit",
+      "Argument": "forest_inn",
+      "Next": "lamp_end",
+      "Position": {
+        "x": 1230,
+        "y": 40
+      }
+    },
+    {
+      "Id": "lamp_end",
+      "Kind": "End",
+      "Title": "灯下归途",
+      "Text": "结局 · 灯下归途",
+      "Position": {
+        "x": 1535,
+        "y": 40
+      }
+    },
+    {
+      "Id": "star_end",
+      "Kind": "End",
+      "Title": "借一夜星光",
+      "Text": "结局 · 借一夜星光",
+      "Position": {
+        "x": 930,
+        "y": 350
+      }
+    },
+    {
+      "Id": "secret_end",
+      "Kind": "End",
+      "Title": "笔记",
+      "Text": "结局 · 旅人的笔记",
+      "Position": {
+        "x": 635,
+        "y": 590
+      }
+    }
+  ]
+}
