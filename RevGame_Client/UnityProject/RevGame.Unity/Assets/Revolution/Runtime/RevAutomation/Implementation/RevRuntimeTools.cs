@@ -17,6 +17,7 @@ namespace Revolution
         [Serializable] private sealed class Options
         {
             public string id, objectPath, scene, text, query;
+            public float[] screenPoint;
             public bool includeInactive, submit;
             public int offset, limit = 200;
             public void CheckPage() { if (offset < 0 || limit < 1 || limit > 1000) { throw new ArgumentException("offset >= 0，limit 为 1..1000"); } }
@@ -42,6 +43,8 @@ namespace Revolution
             RevRuntimeAutomation.Register("runtime.state", "场景、帧、域、服务、计时器及框架 UI 状态", Empty, State, true);
             RevRuntimeAutomation.Register("ui.dump", "UGUI/TMP 控件、文本、可交互与遮挡状态", Schema("\"query\":{\"type\":\"string\"},\"offset\":{\"type\":\"integer\",\"minimum\":0},\"limit\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1000},\"includeInactive\":{\"type\":\"boolean\"}"), Dump, true);
             RevRuntimeAutomation.Register("ui.click", "通过 EventSystem 注入指针事件，拒绝遮挡/禁用目标", Schema(TargetProperties), Click);
+            RevRuntimeAutomation.Register("ui.raycast", "只读查询实际 EventSystem 射线命中顺序及点击接收者",
+                Schema(TargetProperties + ",\"screenPoint\":{\"type\":\"array\",\"items\":{\"type\":\"number\"},\"minItems\":2,\"maxItems\":2},\"offset\":{\"type\":\"integer\",\"minimum\":0},\"limit\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1000}"), InspectRaycast, true);
             RevRuntimeAutomation.Register("ui.input", "填写 UGUI/TMP 输入框；submit 触发 onEndEdit", Schema(TargetProperties + ",\"text\":{\"type\":\"string\"},\"submit\":{\"type\":\"boolean\"}"), Input);
             RevRuntimeAutomation.Register("ui.back", "RevUI.Back 返回上一界面", Empty, Back);
             RevRuntimeAutomation.Register("ui.close", "RevUI.Close 关闭指定面板", Schema(TargetProperties), Close);
@@ -66,6 +69,22 @@ namespace Revolution
         }
         [Serializable] private sealed class UIPage { public int total, offset; public bool truncated; public UIElement[] items; }
         [Serializable] private sealed class ClickResult { public string id, hitPath; public bool dispatched; }
+        [Serializable]
+        private sealed class UIHit
+        {
+            public string id, path, raycaster, clickHandlerId, clickHandlerPath;
+            public int sortingLayer, sortingOrder, depth;
+            public float distance;
+            public bool hasSelectable, interactable;
+        }
+        [Serializable]
+        private sealed class RaycastPage
+        {
+            public Vector2 screenPoint;
+            public int width, height, total, offset;
+            public bool truncated;
+            public UIHit[] hits;
+        }
         [Serializable] private sealed class CaptureResult { public string path; public long bytes; public string source = "GameView"; }
 
         public static object State(string json)
@@ -100,10 +119,71 @@ namespace Revolution
 
         private static RaycastResult Raycast(Vector2 point)
         {
-            if (EventSystem.current == null) { return default; }
+            return RaycastHits(point).FirstOrDefault();
+        }
+
+        private static List<RaycastResult> RaycastHits(Vector2 point)
+        {
             var hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = point }, hits);
-            return hits.FirstOrDefault();
+            EventSystem system = EventSystem.current;
+            if (system != null)
+            {
+                system.RaycastAll(new PointerEventData(system) { position = point }, hits);
+            }
+            return hits;
+        }
+
+        /// <summary>使用与点击相同的射线查询，不改变选择、布局和输入状态。</summary>
+        private static object InspectRaycast(string json)
+        {
+            var options = JsonUtility.FromJson<Options>(json);
+            options.CheckPage();
+            if (EventSystem.current == null)
+            {
+                throw new InvalidOperationException("当前场景没有活动 EventSystem");
+            }
+
+            Vector2 point;
+            if (options.screenPoint == null)
+            {
+                point = ScreenPoint(Find(options));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(options.id) || !string.IsNullOrEmpty(options.objectPath) || !string.IsNullOrEmpty(options.scene))
+                {
+                    throw new ArgumentException("screenPoint 与目标定位参数只能选一种");
+                }
+                point = new Vector2(options.screenPoint[0], options.screenPoint[1]);
+            }
+            if (float.IsNaN(point.x) || float.IsNaN(point.y) || float.IsInfinity(point.x) || float.IsInfinity(point.y))
+            {
+                throw new ArgumentException("屏幕坐标必须为有限值");
+            }
+            List<RaycastResult> hits = RaycastHits(point);
+            var page = hits.Skip(options.offset).Take(options.limit).Select(DescribeHit).ToArray();
+            return new RaycastPage
+            {
+                screenPoint = point, width = Screen.width, height = Screen.height,
+                total = hits.Count, offset = options.offset, hits = page,
+                truncated = (long)options.offset + page.Length < hits.Count
+            };
+        }
+
+        private static UIHit DescribeHit(RaycastResult hit)
+        {
+            GameObject target = hit.gameObject;
+            GameObject handler = target == null ? null : ExecuteEvents.GetEventHandler<IPointerClickHandler>(target);
+            var selectable = handler == null ? null : handler.GetComponent<Selectable>();
+            return new UIHit
+            {
+                id = target == null ? null : Identity(target), path = target == null ? null : HierarchyPath(target.transform),
+                raycaster = hit.module == null ? null : hit.module.GetType().FullName,
+                clickHandlerId = handler == null ? null : Identity(handler),
+                clickHandlerPath = handler == null ? null : HierarchyPath(handler.transform),
+                sortingLayer = hit.sortingLayer, sortingOrder = hit.sortingOrder, depth = hit.depth, distance = hit.distance,
+                hasSelectable = selectable != null, interactable = selectable != null && selectable.IsActive() && selectable.IsInteractable()
+            };
         }
 
         private static bool Reaches(GameObject target, RaycastResult hit)

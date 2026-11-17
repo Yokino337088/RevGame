@@ -21,6 +21,8 @@ python Revolution.RevMCP/rev_mcp.py --project RevolutionFrameWork_Unity --compac
 - CLI/Player 会话操作不需要先查询 Unity 编辑器；GM/game 仍按真实本局注册表校验。
 - `batch.call` 最多 64 步，默认遇错停止。用 `payload` 写结构化参数，通过 `{"$ref":"前序ID#/data/字段"}` 串接同帧结果。步骤可加 `expect`，回执提供各步 `elapsedMs`。用 `batch call --validate-only` 只检查结构。每步仍过参数和确认校验，跨帧、Play、编译及构建保持独立。
 - 排查单个 UI 控件用 `ui.layout` 一次读取锚点、父链、CanvasGroup、Canvas 排序及实际纹理，Prefab Mode 使用当前实例 ID。投影只描述几何，业务点击用实际射线和运行时入口验证。
+- Play 中查遮挡用 `ui.raycast` 返回 EventSystem 命中顺序和点击接收者。可以指定控件中心或屏幕点。先观察命中，再决定是否执行点击。
+- 长任务可用 `call <动作> --detach` 提交，保存工单 ID，再用 `job <ID> --wait` 等待，或显式加 `--cancel` 请求取消。客户端等待超时后继续查询原工单。若 Editor 会话变化或回执过期，先核对业务状态再决定下一步。
 - `rev_run` 保留跨帧等待、状态断言和 finally；不可为了省往返改成 batch 或并发变更。
 
 ## 证据与活动日志

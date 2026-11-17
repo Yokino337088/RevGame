@@ -2,7 +2,7 @@
 import time
 from contextlib import nullcontext
 from revautomation.client import RevError, RevCancelled
-from revautomation.pipeline import references, resolve, matches, validate_condition
+from revautomation.pipeline import argument_references, map_arguments, resolve, matches, validate_condition
 
 
 def run(hub, plan, cancel=None):
@@ -32,7 +32,8 @@ def run(hub, plan, cancel=None):
                 raise RevError("Plan references an unavailable capability: " + str(step.get("action")))
             if not isinstance(step.get("arguments", {}), dict) or type(step.get("confirm", False)) is not bool or not isinstance(step.get("expect", []), list):
                 raise RevError("Invalid arguments/confirm/expect")
-            for source, _ in references(step.get("arguments", {})):
+            refs = argument_references(step["action"] if step["target"] == "editor" else None, step.get("arguments", {}))
+            for source, _ in refs:
                 if source not in ids:
                     raise RevError("Plan reference must point to an earlier step: " + source)
             for condition in step.get("expect", []):
@@ -55,7 +56,7 @@ def run(hub, plan, cancel=None):
                 ids.add(name)
             # Resolve-dependent values are checked just before invocation; other
             # parameters are validated for the entire plan before its first mutation.
-            if not list(references(step.get("arguments", {}))):
+            if not refs:
                 hub.validate_call(step["target"], step["action"], step.get("arguments", {}), step.get("confirm", False), catalog)
     report = dict(success=True, name=plan.get("name", "agent-test"), steps=[], cleanup=[])
     responses = {}
@@ -83,7 +84,9 @@ def run(hub, plan, cancel=None):
         deadline = started + (until.get("timeoutSeconds", 30) if until else hub.timeout)
         count = 0
         while True:
-            response = hub.call(step["target"], step["action"], resolve(step.get("arguments", {}), responses), step.get("confirm", False), token, catalog)
+            action = step["action"] if step["target"] == "editor" else None
+            arguments = map_arguments(action, step.get("arguments", {}), lambda value: resolve(value, responses))
+            response = hub.call(step["target"], step["action"], arguments, step.get("confirm", False), token, catalog)
             count += 1
             if not response.get("success") or not until or matches(response, until):
                 break

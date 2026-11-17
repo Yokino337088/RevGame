@@ -49,7 +49,7 @@ namespace Revolution.Editor
         public static object Scenes(RevAutomationRequest request) => new SceneList
         { scenes = Enumerable.Range(0, SceneManager.sceneCount).Select(i => DescribeScene(SceneManager.GetSceneAt(i))).ToArray() };
 
-        [RevAutomationAction("scene.hierarchy", Environment = "either", Keys = new[] { "scene", "query", "offset", "limit", "includeInactive" }, Description = "包含未激活对象的分页场景层级")]
+        [RevAutomationAction("scene.hierarchy", Environment = "either", Keys = new[] { "scene", "query", "offset", "limit", "includeInactive", "tag", "layer" }, Description = "分页场景层级，可筛路径、Tag、Layer 与激活状态")]
         public static object Hierarchy(RevAutomationRequest request) => Find(request);
 
         [RevAutomationAction("scene.open", Keys = new[] { "path", "additive" }, Description = "打开现有场景，替换前检查未保存内容")]
@@ -100,13 +100,23 @@ namespace Revolution.Editor
             return DescribeScene(scene);
         }
 
-        [RevAutomationAction("gameobject.find", Environment = "either", Keys = new[] { "scene", "query", "type", "offset", "limit", "includeInactive" }, Description = "分页查找场景对象；返回当前会话的 id")]
+        [RevAutomationAction("gameobject.find", Environment = "either", Keys = new[] { "scene", "query", "type", "offset", "limit", "includeInactive", "tag", "layer" }, Description = "按场景、路径、组件、Tag 和 Layer 分页查找对象；返回当前会话的 id")]
         public static object Find(RevAutomationRequest request)
         {
             var p = RevAutomationEditorOptions.Read(request);
             Type type = string.IsNullOrEmpty(p.type) ? null : RevAutomationEditorModel.FindType(p.type, typeof(Component));
+            int layer = string.IsNullOrEmpty(p.layer) ? -1 : LayerMask.NameToLayer(p.layer);
+            if (!string.IsNullOrEmpty(p.layer) && layer < 0)
+            {
+                throw new ArgumentException("未注册的 Layer：" + p.layer);
+            }
+            if (!string.IsNullOrEmpty(p.tag) && !UnityEditorInternal.InternalEditorUtility.tags.Contains(p.tag, StringComparer.Ordinal))
+            {
+                throw new ArgumentException("未注册的 Tag：" + p.tag);
+            }
             return RevAutomationEditorModel.Page(RevAutomationEditorModel.Objects().Where(o =>
                 (p.includeInactive || o.activeInHierarchy) && (string.IsNullOrEmpty(p.scene) || o.scene.path == p.scene)
+                && (layer < 0 || o.layer == layer) && (string.IsNullOrEmpty(p.tag) || o.CompareTag(p.tag))
                 && (string.IsNullOrEmpty(p.query) || RevAutomationEditorModel.HierarchyPath(o.transform).IndexOf(p.query, StringComparison.OrdinalIgnoreCase) >= 0)
                 && (type == null || o.GetComponent(type) != null)).OrderBy(o => o.scene.path).ThenBy(o => RevAutomationEditorModel.HierarchyPath(o.transform)), p);
         }

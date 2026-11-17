@@ -62,6 +62,37 @@ def resolve(value, responses):
     return value
 
 
+def map_arguments(action, arguments, visit):
+    """外层计划只处理自己的引用；同帧步骤的原生 payload 由 Unity 批处理解析。"""
+    if action != "batch.call" or not isinstance(arguments, dict) or "$ref" in arguments:
+        return visit(arguments)
+    mapped = {}
+    for key, value in arguments.items():
+        if key != "steps" or not isinstance(value, list):
+            mapped[key] = visit(value)
+            continue
+        steps = []
+        for step in value:
+            if isinstance(step, dict) and "payload" in step and "$ref" not in step:
+                fields = visit({name: data for name, data in step.items() if name != "payload"})
+                steps.append(dict(fields, payload=step["payload"]))
+            else:
+                steps.append(visit(step))
+        mapped[key] = steps
+    return mapped
+
+
+def argument_references(action, arguments):
+    result = []
+
+    def collect(value):
+        result.extend(references(value))
+        return value
+
+    map_arguments(action, arguments, collect)
+    return result
+
+
 def validate_condition(condition):
     if not isinstance(condition, dict) or set(condition) - {"path", "equals", "exists"}:
         raise RevError("断言仅支持 path 与 equals 或 exists。")
@@ -122,7 +153,7 @@ def prepare(path, validate_action, manifest):
                         raise RevError(f"until.{key} 需要 0..86400 的有限正数。")
                 if not known.get(action, {}).get("readOnly"):
                     raise RevError("until 只能轮询 commands.json 中声明 readOnly 的查询动作；GM 条件请使用 scenario。")
-            for source, _ in references([payload, conditions, until]):
+            for source, _ in (*argument_references(action, payload), *references([conditions, until])):
                 if source not in ids:
                     raise RevError(f"步骤引用必须指向之前的步骤：{source}")
             validate_action(action, payload, allow_refs=True)
@@ -147,7 +178,7 @@ def run(client, path, confirm, invoke, validate_action, manifest, output=None, v
             atomic_json(output, result)
 
     def execute(step):
-        payload = resolve(step["payload"], responses)
+        payload = map_arguments(step["action"], step["payload"], lambda value: resolve(value, responses))
         validate_action(step["action"], payload)
         until = resolve(step["until"], responses)
         start = time.monotonic()

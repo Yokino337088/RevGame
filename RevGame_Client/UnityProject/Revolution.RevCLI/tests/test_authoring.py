@@ -53,6 +53,20 @@ class AuthoringManifestTests(unittest.TestCase):
         self.assertFalse(failed["success"])
         self.assertEqual(failed["error"], "BatchStepFailed")
 
+    def test_editor_raycast_point_and_typed_find_filters(self):
+        ray = cli.parser().parse_args(["ui", "raycast", "--screen-x", "23", "--screen-y", "42"])
+        self.assertEqual(payload_of(ray), {"screenPoint": [23.0, 42.0]})
+        self.assertTrue(SPECS["ui.raycast"]["readOnly"])
+        validate_action("ui.raycast", payload_of(ray))
+        find = cli.parser().parse_args(["gameobject", "find", "--tag", "Player", "--layer", "UI", "--type", "Canvas"])
+        self.assertEqual(payload_of(find), {"type": "Canvas", "tag": "Player", "layer": "UI"})
+        validate_action("gameobject.find", payload_of(find))
+
+    def test_detach_and_job_flags(self):
+        args = cli.parser().parse_args(["test", "run", "--detach"])
+        self.assertTrue(args.detach)
+        self.assertTrue(cli.parser().parse_args(["job", "a" * 32, "--wait"]).wait)
+
 
 class RectContractTests(unittest.TestCase):
     def test_rect_set_accepts_both_layout_styles_separately(self):

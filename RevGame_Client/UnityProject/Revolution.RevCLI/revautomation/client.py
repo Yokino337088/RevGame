@@ -198,10 +198,12 @@ class RevClient:
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
-    def call(self, action, payload=None, confirm=False, progress=None, cancel=None):
+    def call(self, action, payload=None, confirm=False, progress=None, cancel=None, *, detach=False):
         if cancel is not None and cancel.is_set():
             raise RevCancelled("请求在提交前已取消，未执行任何动作")
         if action == "editor.wait":
+            if detach:
+                raise RevError("editor.wait 是 CLI 本地等待，不能提交后台工单。")
             return self.wait_ready()
         request_id = uuid.uuid4().hex
         mode = self.mode
@@ -212,6 +214,8 @@ class RevClient:
             raise RevError("没有在线 Unity 桥接。先打开工程等待编译；长时间打包时请等待当前操作完成。")
         if endpoint and endpoint.get("batchMode"):
             raise RevError("当前桥接属于正在运行的 batch Unity，请等待其退出。")
+        if detach and (mode != "live" or not (endpoint.get("memoryRequired") or endpoint.get("memoryUrl"))):
+            raise RevError("--detach 需要带本机内存桥的在线 Editor。")
         if mode == "batch":
             specs = command_specs(Path(__file__).resolve().parents[1] / "commands.json")
             spec = next((item for item in specs if item["id"] == action), {})
@@ -224,7 +228,7 @@ class RevClient:
                        deadlineUtc=(dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=self.timeout)).isoformat())
         if mode == "live" and (endpoint.get("memoryRequired") or endpoint.get("memoryUrl")):
             from .memory_transport import call as memory_call
-            return memory_call(self, request, cancel)
+            return memory_call(self, request, cancel, detach=detach)
         work = self.root / "jobs" / request_id
         work.mkdir(parents=True, exist_ok=False)
         request_path, response_path = work / "request.json", work / "response.json"
@@ -365,14 +369,24 @@ class RevClient:
             time.sleep(.1)
         raise TimeoutError(f"等待 Unity 就绪超时；请检查 {self.root / 'endpoint.json'} 与 editor.console")
 
-    def job(self, request_id, cancel=False):
+    def job(self, request_id, cancel=False, wait=False):
         if len(request_id) != 32 or any(c not in "0123456789abcdefABCDEF" for c in request_id):
             raise RevError("请求 ID 必须是 32 位十六进制。")
+        from .memory_transport import detached_job, receipt_path
+        if receipt_path(self, request_id).is_file():
+            return detached_job(self, request_id, cancel, wait)
         work = self.root / "jobs" / request_id
         if not (work / "request.json").is_file():
             raise RevError(f"请求不存在：{request_id}")
         if cancel and not (work / "response.json").exists():
             (work / "cancel").touch()
+        if wait:
+            deadline = time.monotonic() + self.timeout
+            while not (work / "response.json").is_file():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return dict(success=False, error="WaitTimeout", id=request_id, pending=True, jobDirectory=str(work))
+                time.sleep(min(.2, remaining))
         result = dict(success=True, jobDirectory=str(work), cancelRequested=(work / "cancel").exists())
         for name in ("response", "progress", "scenario-result"):
             if (work / (name + ".json")).exists():

@@ -39,7 +39,7 @@ class Handler(BaseHTTPRequestHandler):
         if Handler.mode == "drop" and Handler.gets == 1:
             self.connection.close(); return
         if Handler.mode == "pending":
-            self.send({"pending": True}); return
+            self.send({"success": True, "pending": True, "id": Handler.ident}); return
         self.send({"protocol": 1, "id": Handler.ident, "success": True, "dataJson": '{"count":3}'})
     def do_DELETE(self):
         Handler.deletes += 1; self.send({"success": True})
@@ -102,6 +102,47 @@ class MemoryTransportTests(unittest.TestCase):
     def test_post_unknown_result_does_not_fall_back_to_file_transport(self):
         with patch.object(memory_transport, "request", side_effect=[{"success": True}, ConnectionError("lost")]):
             with self.assertRaises(RevError): memory_transport.call(self.client, self.payload())
+        self.assertFalse((self.client.root / "jobs").exists())
+
+    def test_detach_submits_once_and_repeat_reads_keep_result(self):
+        with patch.object(self.client, "ready_endpoint", return_value=dict(memoryRequired=True, sessionId="session")):
+            accepted = self.client.call("editor.status", detach=True)
+        self.assertTrue(accepted["pending"])
+        self.assertTrue(accepted["accepted"])
+        ident = accepted["id"]
+        self.assertEqual((Handler.posts, Handler.gets), (1, 0))
+        receipt = Path(accepted["receipt"]).read_text(encoding="utf-8")
+        self.assertNotIn("token", receipt)
+        self.assertNotIn("payloadJson", receipt)
+        for wait in (True, False):
+            result = self.client.job(ident, wait=wait)
+            self.assertEqual(result["data"], {"count": 3})
+        self.assertEqual((Handler.posts, Handler.acknowledgements), (1, 0))
+
+    def test_detached_wait_timeout_keeps_job_then_explicit_cancel(self):
+        Handler.mode = "pending"
+        accepted = memory_transport.call(self.client, self.payload(), detach=True)
+        self.client.timeout = .05
+        result = self.client.job(accepted["id"], wait=True)
+        self.assertEqual(result["error"], "WaitTimeout")
+        self.assertTrue(result["pending"])
+        self.assertEqual(Handler.deletes, 0)
+        result = self.client.job(accepted["id"], cancel=True)
+        self.assertTrue(result["cancelRequested"])
+        self.assertEqual((Handler.posts, Handler.deletes), (1, 1))
+
+    def test_detached_job_rejects_other_editor_session_before_query(self):
+        accepted = memory_transport.call(self.client, self.payload(), detach=True)
+        atomic_json(self.client.root / "editor-http.json", dict(self.info, sessionId="another"))
+        with self.assertRaisesRegex(RevError, "会话已更换"):
+            self.client.job(accepted["id"])
+        self.assertEqual((Handler.posts, Handler.gets), (1, 0))
+
+    def test_detach_retains_original_id_when_submission_disconnects(self):
+        with patch.object(memory_transport, "request", side_effect=[{"success": True}, ConnectionError("lost")]):
+            with self.assertRaisesRegex(RevError, self.payload()["id"]):
+                memory_transport.call(self.client, self.payload(), detach=True)
+        self.assertTrue(memory_transport.receipt_path(self.client, self.payload()["id"]).is_file())
         self.assertFalse((self.client.root / "jobs").exists())
     def test_reports_keep_active_manual_and_marked_files(self):
         reports = self.project / "reports"; reports.mkdir()

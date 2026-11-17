@@ -509,6 +509,22 @@ namespace Revolution.Tests
 
         // ---------------------------------------------------------------- 批量边界
 
+        [Test]
+        public void FindCombinesTagLayerTypeAndNameFilters()
+        {
+            string prefix = "FilterFixture_" + Guid.NewGuid().ToString("N");
+            var expected = new GameObject(prefix + "_expected", typeof(RectTransform));
+            expected.tag = "Player";
+            expected.layer = LayerMask.NameToLayer("UI");
+            var excluded = new GameObject(prefix + "_default", typeof(RectTransform));
+            excluded.layer = LayerMask.NameToLayer("UI");
+            string args = "{\"query\":\"" + prefix + "\",\"tag\":\"Player\",\"layer\":\"UI\",\"type\":\"RectTransform\"}";
+            var result = Run<RevAutomationEditorModel.ObjectPage>("gameobject.find", args);
+            Assert.That(result.total, Is.EqualTo(1));
+            Assert.That(result.items[0].id, Is.EqualTo(Id(expected)));
+            Assert.Throws<ArgumentException>(() => RevAutomationActions.Execute(Request("gameobject.find", "{\"layer\":\"missing___layer\"}")));
+        }
+
         private const string ComposeUiBatch = "{\"steps\":[" +
             "{\"id\":\"canvas\",\"action\":\"ui.create\",\"payload\":{\"kind\":\"Canvas\",\"name\":\"BatchCanvas\"}}," +
             "{\"id\":\"icon\",\"action\":\"ui.create\",\"payload\":{\"kind\":\"Image\",\"name\":\"BatchIcon\",\"parent\":{\"$ref\":\"canvas#/data/id\"}}}," +

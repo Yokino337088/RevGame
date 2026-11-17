@@ -61,7 +61,15 @@ namespace Revolution
         public Job Find(string id) { lock (_gate) { return _jobs.TryGetValue(id, out Job job) ? job : null; } }
         public bool Cancel(string id)
         {
-            lock (_gate) { if (!_jobs.TryGetValue(id, out Job job)) { return false; } job.cancelled = true; return true; }
+            lock (_gate)
+            {
+                if (!_jobs.TryGetValue(id, out Job job) || job.finishedTicks != 0)
+                {
+                    return false;
+                }
+                job.cancelled = true;
+                return true;
+            }
         }
         public void Complete(string id, string response)
         {
@@ -87,7 +95,14 @@ namespace Revolution
                 Prune(DateTime.UtcNow);
                 if (!_jobs.TryGetValue(id, out Job job)) { return null; }
                 if (job.response != null) { return job.response; }
-                if (job.finishedTicks == 0) { return RevAutomationJson.Write(new Dictionary<string, object> { ["success"] = true, ["pending"] = true, ["id"] = id }); }
+                if (job.finishedTicks == 0)
+                {
+                    return RevAutomationJson.Write(new Dictionary<string, object>
+                    {
+                        ["success"] = true, ["pending"] = true, ["id"] = id,
+                        ["state"] = job.cancelled ? "CancellationRequested" : job.started ? "Running" : "Queued"
+                    });
+                }
                 return RevAutomationJson.Write(new Dictionary<string, object> { ["success"] = false, ["id"] = id, ["sessionId"] = session,
                     ["error"] = "ResultExpired", ["message"] = "结果已确认或超过保留上限；请求身份仍保留，业务没有重新执行。" });
             }

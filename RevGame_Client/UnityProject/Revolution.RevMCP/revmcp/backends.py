@@ -20,7 +20,7 @@ import urllib.request
 import uuid
 
 from revautomation.client import RevClient, RevError, RevCancelled, atomic_json, read_json
-from revautomation.cli import validate_action
+from revautomation.cli import editor_outcome, validate_action
 from .schema import validate, check_schema, object_schema
 from .activity import Activity
 from revautomation import player
@@ -334,7 +334,7 @@ class Hub:
             if spec.get("keys") is not None and set(arguments) - set(spec["keys"]):
                 raise RevError("Unknown editor arguments")
             validate_action(action, arguments)
-            return self.editor.call(action, arguments, confirm, cancel=cancel)
+            return editor_outcome(action, self.editor.call(action, arguments, confirm, cancel=cancel))
         validate(arguments, spec["inputSchema"])
         if target == "game":
             return self.game_call(action, arguments, confirm, cancel)

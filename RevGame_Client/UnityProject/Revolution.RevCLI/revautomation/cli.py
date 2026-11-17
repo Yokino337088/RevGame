@@ -78,9 +78,11 @@ def _build_parser():
     commands.add_argument("--live", action="store_true", help="从 Unity 获取当前实际注册的能力")
     commands.add_argument("--action", help="只显示指定动作的参数契约")
     commands.add_argument("--query", help="按关键词筛选动作 ID 与说明；不要读 commands.json 全文")
-    job = sub.add_parser("job", help="离线查看作业进度或请求取消")
+    job = sub.add_parser("job", help="查询后台工单、等待结果或请求取消")
     job.add_argument("id")
-    job.add_argument("--cancel", action="store_true")
+    job_mode = job.add_mutually_exclusive_group()
+    job_mode.add_argument("--cancel", action="store_true", help="请求取消原工单")
+    job_mode.add_argument("--wait", action="store_true", help="等待原工单；超时保留它继续运行")
     pipeline = sub.add_parser("pipeline", help="顺序执行多个编辑器/GM/场景动作；失败停止，最后执行 finally")
     pipeline.add_argument("file", type=Path)
     pipeline.add_argument("--validate", action="store_true", help="只校验流程，不执行 Unity 操作")
@@ -88,6 +90,7 @@ def _build_parser():
     call.add_argument("action")
     call.add_argument("--json", type=Path, help="动作参数 JSON 文件")
     call.add_argument("--set", action="append", default=[], metavar="KEY=JSON")
+    call.add_argument("--detach", action="store_true", help="提交到在线 Editor 后立即返回工单 ID")
     report = sub.add_parser("report", help="从 scenario 结果生成 JSON/CSV/HTML")
     report.add_argument("result", type=Path)
     report.add_argument("--directory", type=Path, required=True)
@@ -145,11 +148,20 @@ def _build_parser():
             action = ops.add_parser(operation)
             action.add_argument("--json", type=Path, help="完整动作参数，见 commands.json")
             action.add_argument("--set", action="append", default=[], metavar="KEY=JSON")
+            if family != "scenario":
+                action.add_argument("--detach", action="store_true", help="提交后立即返回工单 ID")
             if family == "batch" and operation == "call":
                 action.add_argument("--validate-only", action="store_true", help="只做同帧批处理预检")
-            if family == "ui" and operation == "layout":
+            if family == "ui" and operation in ("layout", "raycast"):
                 action.add_argument("--object-path", help="精确层级路径，或用 --id 指定对象")
                 action.add_argument("--scene", help="重名场景对象的场景路径")
+            if family == "ui" and operation == "raycast":
+                action.add_argument("--screen-x", type=float)
+                action.add_argument("--screen-y", type=float)
+            if (family, operation) in (("gameobject", "find"), ("scene", "hierarchy")):
+                action.add_argument("--scene")
+                action.add_argument("--tag", help="已注册 Tag 名称")
+                action.add_argument("--layer", help="已注册 Layer 名称")
             if family == "gm" and operation == "exec":
                 action.add_argument("command", help='完整 GM 文本，例如 "背包/添加道具 1001 2"')
             if family == "scenario":
@@ -208,13 +220,18 @@ def payload_of(args):
     for attr, key in (("backend", "backend"), ("development", "development"), ("automation", "automation"), ("frame_timing", "frameTiming"), ("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
                       ("source", "sources"), ("prefab", "prefab"), ("class_name", "className"),
                       ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"), ("script", "script"), ("base_class", "baseClass"), ("object_path", "objectPath"),
-                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind", "offset", "limit", "index"))):
+                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind", "offset", "limit", "index", "tag", "layer"))):
         value = getattr(args, attr, None)
         if value is not None:
             data[key] = value
     for key, attr in (("dataOnly", "data_only"), ("force", "force"), ("validateOnly", "validate_only")):
         if getattr(args, attr, False):
             data[key] = True
+    x, y = getattr(args, "screen_x", None), getattr(args, "screen_y", None)
+    if x is not None or y is not None:
+        if x is None or y is None or not math.isfinite(x) or not math.isfinite(y):
+            raise RevError("--screen-x 与 --screen-y 需要成对提供有限坐标。")
+        data["screenPoint"] = [x, y]
     if args.family == "scenario":
         data = read_json(args.file)
         if not isinstance(data, dict):
@@ -510,15 +527,24 @@ def print_progress(update):
     print(json.dumps(update, ensure_ascii=False), file=sys.stderr)
 
 
-def invoke_action(client, action, payload, confirm, report_dir=None, progress=print_progress):
+def editor_outcome(action, response):
+    if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
+        return dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
+    return response
+
+
+def invoke_action(client, action, payload, confirm, report_dir=None, progress=print_progress, *, detach=False):
+    if detach:
+        if action in ("editor.launch", "editor.wait", "scenario.validate"):
+            raise RevError(action + " 是 CLI 本地动作，不能提交后台工单。")
+        return client.call(action, payload, confirm, progress, detach=True)
     if action == "editor.launch":
         response = client.launch()
     elif action == "editor.wait":
         response = client.wait_ready()
     else:
         response = client.call(action, payload, confirm, progress)
-    if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
-        response = dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
+    response = editor_outcome(action, response)
     if action == "scenario.run" and (response.get("data") or {}).get("resultPath"):
         directory = report_dir or ROOT / "results" / Path(response["jobDirectory"]).name
         response["reports"] = export_report(Path(response["data"]["resultPath"]), directory)
@@ -608,7 +634,8 @@ def main(argv=None):
         else:
             client = RevClient(args.project, args.mode, args.unity, args.timeout, not args.no_graphics)
             if args.family == "job":
-                result = client.job(args.id, args.cancel)
+                result = client.job(args.id, args.cancel, args.wait)
+                result = editor_outcome(result.get("action"), result)
             elif args.family == "capture":
                 frames = capture_frames(client, args)
                 info = write_gif(frames, args.out, args.interval, args.max_width)
@@ -628,7 +655,8 @@ def main(argv=None):
                 if action == "scenario.run" and args.mode == "batch":
                     raise RevError("scenario.run 需要 Play 中的在线编辑器。先 editor launch，再 editor play。")
                 validate_action(action, payload)
-                result = invoke_action(client, action, payload, args.confirm, getattr(args, "report_dir", None), progress)
+                result = invoke_action(client, action, payload, args.confirm, getattr(args, "report_dir", None), progress,
+                                       detach=getattr(args, "detach", False))
         if args.output:
             atomic_json(args.output, result)
         visible = result if args.full else summarize(result)

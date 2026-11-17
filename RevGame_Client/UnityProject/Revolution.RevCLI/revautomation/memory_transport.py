@@ -14,6 +14,12 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise RevError("Editor HTTP 不接受重定向")
 
 
+class EditorHttpError(RevError):
+    def __init__(self, status, detail):
+        super().__init__("Editor HTTP %s: %s" % (status, detail))
+        self.status = status
+
+
 def credentials(client):
     from .client import read_json_settled
     info = read_json_settled(client.root / "editor-http.json", attempts=3)
@@ -24,19 +30,19 @@ def credentials(client):
     return info
 
 
-def request(info, method, path, data=None):
+def request(info, method, path, data=None, timeout=5):
     raw = json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8") if data is not None else None
     call = urllib.request.Request(info["url"] + path, raw, method=method, headers={
         "Authorization": "Bearer " + info["token"], "X-Rev-Session": info["sessionId"], "Content-Type": "application/json"})
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     try:
-        with opener.open(call, timeout=5) as response:
+        with opener.open(call, timeout=timeout) as response:
             body = response.read(24 * 1024 * 1024 + 1)
         if len(body) > 24 * 1024 * 1024:
             raise RevError("Editor HTTP 响应超过 24 MiB")
         return json.loads(body)
     except urllib.error.HTTPError as exc:
-        raise RevError("Editor HTTP %s: %s" % (exc.code, exc.read(2048).decode("utf-8", errors="replace"))) from None
+        raise EditorHttpError(exc.code, exc.read(2048).decode("utf-8", errors="replace")) from None
 
 
 def ready(client, session, deadline, cancel):
@@ -55,17 +61,45 @@ def ready(client, session, deadline, cancel):
     raise TimeoutError("等待 Editor HTTP 就绪超时，动作未提交")
 
 
-def call(client, payload, cancel=None):
+def receipt_path(client, ident):
+    return client.root / "detached-jobs" / (ident + ".json")
+
+
+def decode_result(client, ident, response):
+    if response.get("id") != ident:
+        raise RevError("Editor HTTP 响应身份不匹配")
+    # 过期回执只有工单身份，没有完整的业务协议字段。
+    if not response.get("pending") and response.get("error") != "ResultExpired" and response.get("protocol") != 1:
+        raise RevError("Editor HTTP 响应协议不匹配")
+    if response.get("dataJson"):
+        response["data"] = json.loads(response.pop("dataJson"))
+    response["transport"] = "http-memory"
+    work = client.root / "jobs" / ident
+    response["jobDirectory"] = str(work) if work.is_dir() else None
+    return response
+
+
+def call(client, payload, cancel=None, *, detach=False):
     ident = payload["id"]
     deadline = time.monotonic() + client.timeout
     info = ready(client, payload["sessionId"], deadline, cancel)
     if cancel is not None and cancel.is_set():
         raise RevCancelled("请求提交前已取消")
+    receipt = None
+    if detach:
+        from .client import atomic_json
+        # 先保存身份，哪怕 POST 回执断线也能查询原工单；不保存凭据、正文和动作结果。
+        receipt = receipt_path(client, ident)
+        atomic_json(receipt, {key: payload[key] for key in ("id", "sessionId", "action", "deadlineUtc")})
     # POST 出错时业务状态可能未知；不转文件桥、不再次 POST，以免动作执行两遍。
     try:
-        request(info, "POST", "/call", payload)
+        accepted = request(info, "POST", "/call", payload)
     except OSError as exc:
         raise RevError(f"内存请求提交结果未知：{ident}；未切换通道或重发，请先检查日志。{exc}") from None
+    if not accepted.get("success") or accepted.get("id") != ident:
+        raise RevError(f"Editor HTTP 提交回执不匹配：{ident}；请查询原工单。")
+    if detach:
+        return dict(success=True, accepted=True, pending=True, id=ident, transport="http-memory", receipt=str(receipt))
     try:
         while True:
             if cancel is not None and cancel.is_set():
@@ -79,16 +113,9 @@ def call(client, payload, cancel=None):
                 info = current
                 response = request(info, "GET", "/jobs/" + ident)
                 if not response.get("pending"):
-                    if response.get("id") != ident:
-                        raise RevError("Editor HTTP 响应身份不匹配")
                     if response.get("error") == "ResultExpired":
                         raise RevError(response.get("message"))
-                    if response.get("protocol") != 1:
-                        raise RevError("Editor HTTP 响应协议不匹配")
-                    if response.get("dataJson"):
-                        response["data"] = json.loads(response.pop("dataJson"))
-                    response["transport"] = "http-memory"
-                    response["jobDirectory"] = str(client.root / "jobs" / ident) if (client.root / "jobs" / ident).is_dir() else None
+                    response = decode_result(client, ident, response)
                     try:
                         request(info, "POST", "/jobs/" + ident + "/ack", {})
                     except (OSError, RevError):
@@ -104,3 +131,42 @@ def call(client, payload, cancel=None):
         except (OSError, RevError):
             pass
         raise
+
+
+def detached_job(client, ident, cancel=False, wait=False):
+    from .client import read_json
+    receipt = read_json(receipt_path(client, ident))
+    if receipt.get("id") != ident or not isinstance(receipt.get("sessionId"), str):
+        raise RevError("后台工单回执身份无效：" + ident)
+    deadline = time.monotonic() + client.timeout
+    path = "/jobs/" + ident
+    while True:
+        try:
+            info = credentials(client)
+            if info["sessionId"] != receipt["sessionId"]:
+                raise RevError("Editor 会话已更换，无法在新会话查询旧工单：" + ident)
+            remaining = max(.05, min(5, deadline - time.monotonic()))
+            result = decode_result(client, ident, request(info, "GET", path, timeout=remaining))
+            result["action"] = receipt.get("action")
+            if cancel and result.get("pending"):
+                cancelled = request(info, "DELETE", path, timeout=remaining)
+                return dict(success=bool(cancelled.get("success")), id=ident, cancelRequested=bool(cancelled.get("success")),
+                            pending=True, transport="http-memory")
+            if not wait or not result.get("pending"):
+                return result
+        except EditorHttpError as exc:
+            if exc.status == 404:
+                return dict(success=False, error="JobNotFound", id=ident, transport="http-memory",
+                            message="编辑器没有保留该工单。请核对原回执或业务状态。")
+            raise
+        except OSError as exc:
+            if cancel:
+                raise RevError(f"取消回执未知：{ident}；请先查询原工单。{exc}") from None
+            if not wait:
+                raise
+            # 临时断线只重读当前会话；等待超时让任务继续运行。
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return dict(success=False, error="WaitTimeout", id=ident, pending=True, transport="http-memory",
+                        message="等待期限已到。可继续查询原工单。")
+        time.sleep(min(.2, remaining))

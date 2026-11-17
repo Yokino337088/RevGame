@@ -8,7 +8,20 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from revautomation.cli import ROOT, parser, payload_of, run_pipeline, validate_action
 from revautomation.client import RevError, read_json
-from revautomation.pipeline import matches, pointer, prepare, resolve
+from revautomation.pipeline import argument_references, map_arguments, matches, pointer, prepare, resolve
+
+
+class BatchReferenceScopeTests(unittest.TestCase):
+    def test_native_references_keep_scope_and_legacy_outer_refs_still_resolve(self):
+        args = {"steps": [
+            {"id": "inner", "action": "gameobject.find", "payload": {"query": "Canvas"}},
+            {"action": "ui.layout", "payload": {"id": {"$ref": "inner#/data/items/0/id"}}},
+            {"action": "editor.status", "payloadJson": {"$ref": "outer#/data/json"}},
+        ]}
+        self.assertEqual(argument_references("batch.call", args), [("outer", "/data/json")])
+        output = map_arguments("batch.call", args, lambda value: resolve(value, {"outer": {"data": {"json": "{}"}}}))
+        self.assertEqual(output["steps"][1], args["steps"][1])
+        self.assertEqual(output["steps"][2]["payloadJson"], "{}")
 
 
 class FakeClient:

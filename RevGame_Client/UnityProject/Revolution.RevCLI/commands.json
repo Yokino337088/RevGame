@@ -617,6 +617,20 @@
       "readOnly": true
     },
     {
+      "id": "ui.raycast",
+      "keys": [
+        "id",
+        "objectPath",
+        "scene",
+        "screenPoint",
+        "offset",
+        "limit"
+      ],
+      "description": "只读查询实际 EventSystem 射线命中顺序及点击接收者",
+      "environment": "play",
+      "readOnly": true
+    },
+    {
       "id": "ui.click",
       "keys": [
         "id",
@@ -674,9 +688,11 @@
         "query",
         "offset",
         "limit",
-        "includeInactive"
+        "includeInactive",
+        "tag",
+        "layer"
       ],
-      "description": "包含未激活对象的分页场景层级",
+      "description": "分页场景层级，可筛路径、Tag、Layer 与激活状态",
       "environment": "either",
       "readOnly": true
     },
@@ -730,9 +746,11 @@
         "type",
         "offset",
         "limit",
-        "includeInactive"
+        "includeInactive",
+        "tag",
+        "layer"
       ],
-      "description": "分页查找场景对象；返回当前会话的 id",
+      "description": "按场景、路径、组件、Tag 和 Layer 分页查找对象；返回当前会话的 id",
       "environment": "either",
       "readOnly": true
     },
@@ -1782,6 +1800,7 @@
     }
   ],
   "parameterTypes": {
+    "screenPoint": "array",
     "validateOnly": "boolean",
     "dryRun":"bool",
     "floating": "bool",

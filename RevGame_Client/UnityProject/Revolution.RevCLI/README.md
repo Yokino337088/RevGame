@@ -39,6 +39,31 @@ python Revolution.RevCLI/rev.py --project $project --mode live ui layout --objec
 
 `ui.layout` 读取 RectTransform 到根的父级链、CanvasGroup、最近/根 Canvas 的排序、实际采样纹理及可投影时的四角与屏幕范围。遇到 Prefab Mode 中的对象，使用当前选择的实例 `--id`。该动作只读取状态，不刷新布局。屏幕范围用于定位，真实命中仍查 `ui.dump` / `ui.click`。
 
+## 后台工单与 UI 命中
+
+长任务可提交到在线 Editor，拿到工单 ID 后再等待或查询。提交时的 `--timeout` 是任务期限，查询时的 `--timeout` 是本次等待期限。
+
+```powershell
+python Revolution.RevCLI/rev.py --project $project --mode live --timeout 300 test run --test-mode EditMode --detach
+python Revolution.RevCLI/rev.py --project $project --mode live job <工单ID>
+python Revolution.RevCLI/rev.py --project $project --mode live --timeout 60 job <工单ID> --wait
+python Revolution.RevCLI/rev.py --project $project --mode live job <工单ID> --cancel
+```
+
+提交回执只确认 Editor 接受请求。等待超时可以继续查询同一个 ID。取消是请求状态，最终以工单结果为准。工单回执保留在工程的 Library 内；完成结果受 Editor 会话和内存保留窗口限制，需要留档时用 `--output`。
+
+Play 中可查询屏幕点或指定控件中心的命中顺序。返回每个 Raycaster、命中对象、点击接收对象和可交互状态。坐标以左下为原点。此查询不会发送输入事件。场景查找可以组合组件、Tag 和 Layer。
+
+```powershell
+python Revolution.RevCLI/rev.py --project $project --mode live ui raycast --screen-x 780 --screen-y 480
+python Revolution.RevCLI/rev.py --project $project --mode live ui raycast --id instance:12345
+python Revolution.RevCLI/rev.py --project $project --mode live gameobject find --type Canvas --tag Untagged --layer UI
+```
+
+在 `pipeline` 和 `rev_run` 内嵌 `batch.call` 时，批处理步骤 `payload` 中的 `$ref` 由 Unity 解析，作用域为当前批次。外层引用用于批次配置、整个步骤表或旧式 `payloadJson` 字段。
+
+设计参考了 Unity 官方 CLI 的后台工单生命周期、Coplay 的组合式场景查找，以及本地 Unity True CLI 的 EventSystem 命中诊断。 [Unity CLI 工单](https://github.com/Unity-Technologies/skills/blob/main/skills/unity-cli/references/integration-advanced.md) · [Coplay 工具参考](https://github.com/CoplayDev/unity-mcp/blob/beta/website/docs/reference/tools/core/index.md)
+
 commands.json 是离线说明，commands --live 才是实际安装能力。2026-10-22 示例工程有 122 个 Editor 动作，另 3 个 Python 动作为 editor.launch/editor.wait/scenario.validate；20 个 Revolution.Tools 菜单都有映射。覆盖表用于发现漏接线，不意味着所有第三方控件或未来新增功能自动可用。
 
 需要一句话 Agent 测试、GM 动态工具、独立开发版 Player、外部 CLI/Python，使用相邻的 [Revolution.RevMCP](../Revolution.RevMCP/README.md) 与 Skills/revolution-ai-automation。

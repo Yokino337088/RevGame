@@ -179,6 +179,10 @@ python -m unittest discover -s Revolution.RevCLI/tests -v
 <p><code>batch call --json &lt;文件&gt; --validate-only</code> 预检命名步骤、结构化参数、前序结果引用和断言。去掉预检选项即可执行，回执包含每步耗时与结果。CLI 有失败步骤时返回非零。</p>
 <p><code>ui layout --object-path Canvas/Icon</code> 一次读取锚点、父链、CanvasGroup、Canvas 排序、实际纹理和投影边界。Prefab Mode 可以传入当前实例 ID。</p>
 <p>示例见 <a href="examples/ui-compose.batch.json">同帧 UI 配方</a> 与 <a href="README.md">完整参数说明</a>。</p>
+</section><section class="card"><h2>后台工单与命中诊断</h2>
+<p>在线 Editor 用 <code>call &lt;动作&gt; --detach</code> 返回工单，随后用 <code>job &lt;ID&gt;</code> 查询，<code>--wait</code> 等待结果，<code>--cancel</code> 请求取消。等待期限和任务期限独立。</p>
+<p><code>ui raycast --screen-x 780 --screen-y 480</code> 在 Play 中读取实际射线命中顺序与点击接收者。<code>gameobject find</code> 支持按组件、Tag 和 Layer 组合筛选。</p>
+<p>内嵌批处理时，步骤 <code>payload</code> 的引用由 Unity 在本批次内解析。<a href="README.md">详细说明与示例</a></p>
 </section></main>
 <footer>Revolution · 2026-10-22<br><a href="../Revolution.Document/index.html">文档总入口</a> · <a href="README.md">Markdown 源文档</a></footer>
 </body></html>

@@ -42,6 +42,9 @@ namespace Revolution.Editor
         public static object Dump(RevAutomationRequest request) => Invoke(request);
         [RevAutomationAction("ui.click", Environment = "play", Keys = new[] { "id", "objectPath", "scene" }, Description = "校验遮挡与 interactable 后经 EventSystem 注入真实指针事件")]
         public static object Click(RevAutomationRequest request) => Invoke(request);
+        [RevAutomationAction("ui.raycast", Environment = "play", Keys = new[] { "id", "objectPath", "scene", "screenPoint", "offset", "limit" },
+            Description = "只读查询实际 EventSystem 射线命中顺序及点击接收者")]
+        public static object Raycast(RevAutomationRequest request) => Invoke(request);
         [RevAutomationAction("ui.input", Environment = "play", Keys = new[] { "id", "objectPath", "scene", "text", "submit" }, Description = "填写 UGUI/TMP 输入框，触发公开文本变更事件")]
         public static object Input(RevAutomationRequest request) => Invoke(request);
         [RevAutomationAction("ui.back", Environment = "play", Keys = new string[0], Description = "调用框架 RevUI.Back 返回上一层界面")]

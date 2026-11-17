@@ -67,6 +67,33 @@ class RevMCPTests(unittest.TestCase):
         self.assertTrue(report["success"])
         self.assertEqual(hub.count, 0)
 
+    def test_plan_passes_native_batch_payload_reference_to_editor(self):
+        hub = FakeHub()
+        hub.discover = lambda *args: {"commands": [], "actions": [
+            dict(target="editor", id="batch.call", readOnly=False, keys=["steps"])]}
+        args = {"steps": [
+            {"id": "mesh", "action": "gameobject.find", "payload": {"query": "Canvas"}},
+            {"action": "ui.layout", "payload": {"id": {"$ref": "mesh#/data/items/0/id"}}}]}
+        seen = []
+        hub.validate_call = lambda target, action, data, *_: self.assertEqual(data, args)
+        hub.call = lambda target, action, data, *_: seen.append(data) or {"success": True}
+        report = run(hub, {"steps": [dict(target="editor", action="batch.call", arguments=args)]})
+        self.assertTrue(report["success"])
+        self.assertEqual(seen, [args])
+
+    def test_editor_batch_action_propagates_inner_failure(self):
+        class Editor:
+            def call(self, action, arguments, confirm, cancel=None):
+                return {"success": True, "data": {"success": False, "failed": 1}}
+
+        hub = Hub.__new__(Hub)
+        hub.editor = Editor()
+        spec = dict(target="editor", id="batch.call", keys=["steps"])
+        result = hub._call("editor", "batch.call", {"steps": [{"action": "editor.status"}]}, catalog={"actions": [spec]})
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"], "BatchStepFailed")
+        self.assertEqual(result["data"]["failed"], 1)
+
     def test_failed_assertion_still_cleans_up(self):
         hub = FakeHub()
         report = run(hub, {"steps": [dict(target="game", action="add", expect=[dict(path="/data/count", equals=9)])], "finally": [dict(target="game", action="reset")]})

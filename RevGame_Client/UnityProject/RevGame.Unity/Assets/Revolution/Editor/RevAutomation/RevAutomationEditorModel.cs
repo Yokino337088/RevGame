@@ -17,7 +17,7 @@ namespace Revolution.Editor
     [Serializable]
     public sealed class RevAutomationEditorOptions
     {
-        public string id, objectPath, path, destination, query, type, name, parent, scene, property, value, severity;
+        public string id, objectPath, path, destination, query, type, name, parent, scene, property, value, severity, tag, layer;
         public string target, mode = "Single", text;
         public int offset, limit = 200, index, port = 18766;
         public string runtimeAction, argumentsJson;

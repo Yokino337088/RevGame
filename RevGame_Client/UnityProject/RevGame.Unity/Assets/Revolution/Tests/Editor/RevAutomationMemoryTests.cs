@@ -11,6 +11,21 @@ namespace Revolution.Tests
         private RevAutomationMemoryJobs.Job Job(string id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             => new RevAutomationMemoryJobs.Job { id = id, action = "test", payload = "{}", fingerprint = "hash", expirable = true,
                 deadlineTicks = DateTime.UtcNow.AddMinutes(5).Ticks };
+
+        [Test]
+        public void PendingStatusChangesAndCompletedJobCannotBeCancelled()
+        {
+            var jobs = new RevAutomationMemoryJobs();
+            var item = Job();
+            jobs.Add(item, DateTime.UtcNow);
+            Assert.That(jobs.Response(item.id, "session"), Does.Contain("\"state\":\"Queued\""));
+            jobs.Take();
+            Assert.That(jobs.Response(item.id, "session"), Does.Contain("\"state\":\"Running\""));
+            Assert.That(jobs.Cancel(item.id), Is.True);
+            Assert.That(jobs.Response(item.id, "session"), Does.Contain("\"state\":\"CancellationRequested\""));
+            jobs.Complete(item.id, "{\"success\":false}");
+            Assert.That(jobs.Cancel(item.id), Is.False);
+        }
         [Test]
         public void AckReleasesResultWithoutReplayingSameIdentity()
         {
