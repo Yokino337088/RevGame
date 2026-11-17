@@ -109,19 +109,9 @@ namespace Revolution.Gal
 
         private async RevTask RunSignal(RevGalSession session, RevGalSignal signal)
         {
-            // 会话事件在提交内部发出。下一帧处理，兼容立即完成的宿主实现。
-            await RevTask.Yield();
-            if (!StillWaiting(session, signal.Token))
-            {
-                return;
-            }
             try
             {
-                await session.Options.HandleSignal(session, signal);
-                if (StillWaiting(session, signal.Token))
-                {
-                    session.CompleteSignal(signal.Token);
-                }
+                await session.DispatchSignalAsync(signal.Token);
             }
             catch (Exception error)
             {

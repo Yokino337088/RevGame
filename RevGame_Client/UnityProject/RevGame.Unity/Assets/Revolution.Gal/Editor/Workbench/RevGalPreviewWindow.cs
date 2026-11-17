@@ -39,7 +39,7 @@ namespace Revolution.Gal.Editor
                 _session?.Dispose();
                 _session = null;
                 _bookmark = null;
-                _session = RevGal.Preview(_story, _entry);
+                _session = RevGalPlayback.Preview(_story, _entry);
                 _scroll = Vector2.zero;
             });
         }

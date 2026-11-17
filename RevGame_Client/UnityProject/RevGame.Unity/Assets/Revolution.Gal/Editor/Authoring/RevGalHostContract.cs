@@ -1,0 +1,125 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Revolution.Editor;
+using UnityEditor;
+using UnityEngine;
+
+namespace Revolution.Gal.Editor
+{
+    /// <summary>为使用自有界面的宿主读取剧情字段和资源需求。报告只查看当前工程的本地素材。</summary>
+    internal static class RevGalHostContract
+    {
+        private sealed class Media
+        {
+            public string Path;
+            public Type Type;
+            public readonly List<Dictionary<string, object>> Uses = new List<Dictionary<string, object>>();
+        }
+
+        public static Dictionary<string, object> Describe(RevGalStory story)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(story);
+            var definition = story.Definition;
+            var result = RevGalAuthoring.Describe(assetPath, definition);
+            // ABBuildConfig.Instance 在首次读取会创建设置。编辑模式可能只制作 SO，报告以现存设置为准。
+            var config = AssetDatabase.LoadAssetAtPath<ABBuildConfig>(ABBuildSetting.ConfigAssetPath);
+            string root = config?.GetResRoot();
+            if (string.IsNullOrEmpty(root) || !AssetDatabase.IsValidFolder(root))
+            {
+                root = null;
+            }
+            result["logicalPath"] = LogicalPath(assetPath, root);
+            result["resourceRoot"] = root;
+            result["revision"] = definition?.Revision;
+            result["variables"] = (definition?.Variables ?? new List<RevGalVariable>())
+                .Where(variable => variable != null).Select(variable => new Dictionary<string, object>
+                {
+                    ["id"] = variable.Id, ["initial"] = variable.Initial
+                }).ToArray();
+
+            var nodes = (definition?.Nodes ?? new List<RevGalNode>()).Where(node => node != null).ToArray();
+            result["signals"] = nodes.Where(node => node.Kind == RevGalNodeKind.Signal)
+                .Select(node => new Dictionary<string, object>
+                {
+                    ["node"] = node.Id, ["name"] = node.Signal, ["argument"] = node.Argument
+                }).ToArray();
+            result["media"] = CollectMedia(nodes).Select(item => DescribeMedia(item, root)).ToArray();
+            return result;
+        }
+
+        private static string LogicalPath(string path, string root)
+        {
+            if (root == null || !path.StartsWith(root + "/", StringComparison.Ordinal))
+            {
+                return null;
+            }
+            return path.Substring(root.Length + 1, path.Length - root.Length - 1 - Path.GetExtension(path).Length);
+        }
+
+        private static IEnumerable<Media> CollectMedia(RevGalNode[] nodes)
+        {
+            var media = new Dictionary<(string Path, Type Type), Media>();
+            foreach (var node in nodes)
+            {
+                Register(node, "Background", node.Stage?.Background, typeof(Sprite));
+                Register(node, "Left", node.Stage?.Left, typeof(Sprite));
+                Register(node, "Center", node.Stage?.Center, typeof(Sprite));
+                Register(node, "Right", node.Stage?.Right, typeof(Sprite));
+                Register(node, "Music", node.Stage?.Music, typeof(AudioClip));
+                Register(node, "Voice", node.Voice, typeof(AudioClip));
+                Register(node, "Sound", node.Sound, typeof(AudioClip));
+            }
+            return media.Values.OrderBy(entry => entry.Path, StringComparer.Ordinal).ThenBy(entry => entry.Type.Name, StringComparer.Ordinal);
+
+            void Register(RevGalNode node, string slot, string path, Type type)
+            {
+                if (string.IsNullOrEmpty(path) || path == RevGalStage.Clear)
+                {
+                    return;
+                }
+                if (!media.TryGetValue((path, type), out var entry))
+                {
+                    entry = new Media { Path = path, Type = type };
+                    media.Add((path, type), entry);
+                }
+                entry.Uses.Add(new Dictionary<string, object> { ["node"] = node.Id, ["slot"] = slot });
+            }
+        }
+
+        private static Dictionary<string, object> DescribeMedia(Media media, string root)
+        {
+            var result = new Dictionary<string, object>
+            {
+                ["path"] = media.Path, ["type"] = media.Type.Name, ["uses"] = media.Uses,
+                ["status"] = "resource-root-unconfigured", ["assetPath"] = null, ["bundle"] = null
+            };
+            if (!RevGalValidation.IsLogicalPath(media.Path) || media.Path.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+            {
+                result["status"] = "invalid-path";
+                return result;
+            }
+            if (root == null)
+            {
+                return result;
+            }
+            string logicalFile = root + "/" + media.Path;
+            string directory = Path.GetDirectoryName(logicalFile);
+            string name = Path.GetFileName(logicalFile);
+            var matches = Directory.Exists(directory)
+                ? Directory.EnumerateFiles(directory).Where(path => !path.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)
+                    && Path.GetFileNameWithoutExtension(path) == name).Select(path => path.Replace('\\', '/')).Take(2).ToArray()
+                : Array.Empty<string>();
+            if (matches.Length != 1)
+            {
+                result["status"] = matches.Length == 0 ? "not-found" : "ambiguous";
+                return result;
+            }
+            result["assetPath"] = matches[0];
+            result["bundle"] = AssetDatabase.GetImplicitAssetBundleName(matches[0]);
+            result["status"] = AssetDatabase.LoadAssetAtPath(matches[0], media.Type) != null ? "found" : "type-mismatch";
+            return result;
+        }
+    }
+}

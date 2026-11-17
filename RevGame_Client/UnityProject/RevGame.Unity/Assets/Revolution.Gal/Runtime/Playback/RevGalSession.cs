@@ -9,6 +9,8 @@ namespace Revolution.Gal
     public sealed class RevGalOptions
     {
         public IRevGalStorage Storage;
+        /// <summary>没有传入 Storage 时是否安装默认 PlayerPrefs 实现。试读和无需持久化的宿主可关闭。</summary>
+        public bool UseDefaultStorage = true;
         public Func<string, string, string> ResolveText;
         public Func<RevGalSession, RevGalSignal, RevTask> HandleSignal;
         public float CharactersPerSecond = 42f;
@@ -90,6 +92,30 @@ namespace Revolution.Gal
     /// <summary>保存事务式推进、回退与存档状态。由宿主驱动，纯剧情会话不依赖面板或输入系统。</summary>
     public sealed class RevGalSession : IDisposable
     {
+        /// <summary>保存这一份帧订阅的所有权，释放时解除对宿主视图的引用。</summary>
+        private sealed class FrameObservation : IDisposable
+        {
+            private RevGalSession _session;
+            private Action<RevGalFrame> _observer;
+
+            public FrameObservation(RevGalSession session, Action<RevGalFrame> observer)
+            {
+                _session = session;
+                _observer = observer;
+                session.Changed += observer;
+            }
+
+            public void Dispose()
+            {
+                if (_session != null)
+                {
+                    _session.Changed -= _observer;
+                    _session = null;
+                    _observer = null;
+                }
+            }
+        }
+
         private sealed class State
         {
             public RevGalNode Node;
@@ -118,6 +144,8 @@ namespace Revolution.Gal
         private readonly HashSet<string> _gallery;
         private State _state;
         private int _token;
+        // 只占用当前帧的信号。旧回调结束时不能覆盖新的占用记录。
+        private int _dispatchingSignal;
         private bool _progressDirty;
         private bool _changing;
 
@@ -164,9 +192,39 @@ namespace Revolution.Gal
             Commit(start, unlocked);
         }
 
+        /// <summary>登记宿主的帧呈现函数并立即交付当前帧。宿主关闭时释放订阅。</summary>
+        public IDisposable Observe(Action<RevGalFrame> observer)
+        {
+            if (IsDisposed)
+            {
+                throw new ObjectDisposedException(nameof(RevGalSession));
+            }
+            if (observer == null)
+            {
+                throw new ArgumentNullException(nameof(observer));
+            }
+            var observation = new FrameObservation(this, observer);
+            try
+            {
+                observer(Frame);
+                return observation;
+            }
+            catch
+            {
+                observation.Dispose();
+                throw;
+            }
+        }
+
         public bool Advance()
         {
             return Frame.Kind == RevGalNodeKind.Line && Move(_state.Node.Next, null, false);
+        }
+
+        /// <summary>用于异步界面输入。旧页的继续按钮不会推进新页。</summary>
+        public bool Advance(int frameToken)
+        {
+            return Frame.Token == frameToken && Advance();
         }
 
         public bool Choose(string choiceId)
@@ -179,10 +237,46 @@ namespace Revolution.Gal
             return edge != null && Matches(edge, _state.Values) && Move(edge.Target, edge, false);
         }
 
+        /// <summary>用当前帧与选项 ID 处理选择，防止旧页的同名按钮误选新页。</summary>
+        public bool Choose(string choiceId, int frameToken)
+        {
+            return Frame.Token == frameToken && Choose(choiceId);
+        }
+
         /// <summary>宿主完成信号后再推进。Token 防止旧异步回调推进了新节点。</summary>
         public bool CompleteSignal(int token)
         {
             return Frame.Kind == RevGalNodeKind.Signal && Frame.Token == token && Move(_state.Node.Next, null, true);
+        }
+
+        /// <summary>运行宿主配置的信号处理，成功后推进发送时的那一帧。重复、过期或已释放时返回 false。</summary>
+        public async RevTask<bool> DispatchSignalAsync(int frameToken)
+        {
+            var handler = Options.HandleSignal;
+            var signal = Frame.Signal;
+            if (IsDisposed || signal == null || signal.Token != frameToken || handler == null || _dispatchingSignal == frameToken)
+            {
+                return false;
+            }
+            _dispatchingSignal = frameToken;
+            try
+            {
+                // Observe 或 Changed 可以同步触发请求。等待会话退出提交段后再向宿主交付。
+                await RevTask.Yield();
+                if (IsDisposed || Frame.Token != frameToken)
+                {
+                    return false;
+                }
+                await handler(this, signal);
+                return CompleteSignal(frameToken);
+            }
+            finally
+            {
+                if (_dispatchingSignal == frameToken)
+                {
+                    _dispatchingSignal = 0;
+                }
+            }
         }
 
         public bool Rollback()
