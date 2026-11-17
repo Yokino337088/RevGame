@@ -23,14 +23,9 @@ namespace Revolution.Gal.Editor
             string assetPath = AssetDatabase.GetAssetPath(story);
             var definition = story.Definition;
             var result = RevGalAuthoring.Describe(assetPath, definition);
-            // ABBuildConfig.Instance 在首次读取会创建设置。编辑模式可能只制作 SO，报告以现存设置为准。
-            var config = AssetDatabase.LoadAssetAtPath<ABBuildConfig>(ABBuildSetting.ConfigAssetPath);
-            string root = config?.GetResRoot();
-            if (string.IsNullOrEmpty(root) || !AssetDatabase.IsValidFolder(root))
-            {
-                root = null;
-            }
-            result["logicalPath"] = LogicalPath(assetPath, root);
+            // 接入清单沿用工程现存设置，也可检查位于资源根之外的草稿。
+            string root = RevGalAssets.ConfiguredResourceRoot();
+            result["logicalPath"] = RevGalAssets.LogicalPathInRoot(assetPath, root);
             result["resourceRoot"] = root;
             result["revision"] = definition?.Revision;
             result["variables"] = (definition?.Variables ?? new List<RevGalVariable>())
@@ -49,21 +44,13 @@ namespace Revolution.Gal.Editor
             return result;
         }
 
-        private static string LogicalPath(string path, string root)
-        {
-            if (root == null || !path.StartsWith(root + "/", StringComparison.Ordinal))
-            {
-                return null;
-            }
-            return path.Substring(root.Length + 1, path.Length - root.Length - 1 - Path.GetExtension(path).Length);
-        }
-
         private static IEnumerable<Media> CollectMedia(RevGalNode[] nodes)
         {
             var media = new Dictionary<(string Path, Type Type), Media>();
             foreach (var node in nodes)
             {
                 Register(node, "Background", node.Stage?.Background, typeof(Sprite));
+                Register(node, "BackgroundMaterial", node.Stage?.BackgroundMaterial, typeof(Material));
                 Register(node, "Left", node.Stage?.Left, typeof(Sprite));
                 Register(node, "Center", node.Stage?.Center, typeof(Sprite));
                 Register(node, "Right", node.Stage?.Right, typeof(Sprite));

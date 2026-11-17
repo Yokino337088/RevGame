@@ -121,7 +121,7 @@ namespace Revolution.Gal
                 Error("解锁插画收藏时，请显式指定该节点的背景逻辑路径");
             }
             var stage = node.Stage;
-            foreach (string path in new[] { stage?.Background, stage?.Left, stage?.Center, stage?.Right, stage?.Music })
+            foreach (string path in new[] { stage?.Background, stage?.BackgroundMaterial, stage?.Left, stage?.Center, stage?.Right, stage?.Music })
             {
                 if (!string.IsNullOrEmpty(path) && path != RevGalStage.Clear && !IsLogicalPath(path))
                 {

@@ -37,6 +37,67 @@ namespace Revolution.Gal.Editor
             return Describe(args.path, story.Definition);
         }
 
+        /// <summary>从工作台模板一键建立可试读剧情，参数可覆盖默认路径、名称和资源包。</summary>
+        [RevAutomationAction("gal.story.quickstart", Environment = "edit", Keys = new[] { "path", "id", "title", "bundle", "checkOnly" },
+            Description = "根据现存资源根创建或重新打开两条路线的入门剧情 SO")]
+        public static object Quickstart(RevAutomationRequest request)
+        {
+            var args = Read(request);
+            return Quickstart(args.path, args.id, args.title, args.bundle, args.checkOnly);
+        }
+
+        /// <summary>工具栏和 CLI 共用的入门路径。重复执行只返回同 ID 的资产，已经写过的剧情保持由作者管理。</summary>
+        internal static Dictionary<string, object> Quickstart(string path, string id, string title, string bundle, bool checkOnly)
+        {
+            id = string.IsNullOrEmpty(id) ? "first_story" : id;
+            if (!RevGalValidation.IsId(id) || id == "." || id == "..")
+            {
+                throw new ArgumentException("入门剧情需要合法的故事 ID：" + id);
+            }
+            string root = RevGalAssets.ConfiguredResourceRoot();
+            path = RevGalAssets.AssetPath(string.IsNullOrEmpty(path) ? $"{root ?? "Assets"}/Gal/Stories/{id}.asset" : path, ".asset");
+            string logicalPath = RevGalAssets.LogicalPathInRoot(path, root);
+            if (logicalPath != null && !RevGalValidation.IsLogicalPath(logicalPath))
+            {
+                throw new ArgumentException("剧情的资源逻辑路径无效：" + path);
+            }
+            var existing = AssetDatabase.LoadMainAssetAtPath(path);
+            var story = existing as RevGalStory;
+            if ((existing != null || System.IO.File.Exists(path)) && story?.Definition?.Id != id)
+            {
+                throw new InvalidOperationException("目标位置已有其他资产或不同 ID 的剧情：" + path);
+            }
+            var definition = story == null ? RevGalAssets.Template(id, string.IsNullOrWhiteSpace(title) ? "初次见面" : title) : story.Definition;
+            var result = Describe(path, definition);
+            string mark = story != null ? AssetImporter.GetAtPath(path)?.assetBundleName
+                : string.IsNullOrEmpty(bundle) && logicalPath != null ? DefaultStoryBundle(id) : bundle;
+            if (story == null)
+            {
+                ValidateBundle(mark);
+            }
+
+            // 路径、ID、标签都已检查。标签写入失败时撤销本次新建的 SO。
+            bool written = !checkOnly && story == null && (bool)result["valid"];
+            if (written)
+            {
+                RevGalAssets.Write(path, definition, false);
+                try
+                {
+                    MarkBundle(path, mark);
+                }
+                catch
+                {
+                    AssetDatabase.DeleteAsset(path);
+                    throw;
+                }
+            }
+            result["logicalPath"] = logicalPath;
+            result["bundle"] = mark;
+            result["reused"] = story != null;
+            result["written"] = written;
+            return result;
+        }
+
         [RevAutomationAction("gal.story.validate", Environment = "edit", Keys = new[] { "path" }, Description = "检查剧情节点与引用")]
         public static object Validate(RevAutomationRequest request)
         {
@@ -93,7 +154,7 @@ namespace Revolution.Gal.Editor
             string bundle = !string.IsNullOrEmpty(args.bundle) ? args.bundle : oldBundle;
             if (string.IsNullOrEmpty(bundle))
             {
-                bundle = "gal_story_" + definition.Id.ToLowerInvariant().Replace('.', '_').Replace('-', '_');
+                bundle = DefaultStoryBundle(definition.Id);
                 ValidateBundle(bundle);
             }
             else if (!string.IsNullOrEmpty(args.bundle))
@@ -130,69 +191,40 @@ namespace Revolution.Gal.Editor
         public static object Simulate(RevAutomationRequest request)
         {
             var args = Read(request);
-            var steps = args.operations ?? Array.Empty<string>();
-            if (steps.Length > 512)
+            var result = RevGalTrial.Run(RevGalAssets.Read(args.path), args.entry, args.operations ?? Array.Empty<string>());
+            if (result.RejectedStep != null)
             {
-                throw new ArgumentException("一次试读最多 512 步");
+                throw new InvalidOperationException(result.Rejection);
             }
-            using var session = RevGalPlayback.Preview(RevGalAssets.Read(args.path), args.entry);
-            var trace = new List<Dictionary<string, object>> { Trace(session, "start") };
-            RevGalSave bookmark = null;
-            foreach (string step in steps)
-            {
-                bool accepted;
-                switch (step)
-                {
-                    case "advance":
-                        accepted = session.Advance();
-                        break;
-                    case "rollback":
-                        accepted = session.Rollback();
-                        break;
-                    case "capture":
-                        bookmark = session.Capture();
-                        accepted = true;
-                        break;
-                    case "restore":
-                        accepted = session.Restore(bookmark);
-                        break;
-                    case "complete":
-                        accepted = session.CompleteSignal(session.Frame.Token);
-                        break;
-                    case "read":
-                        accepted = session.MarkRead(session.Frame.Token);
-                        break;
-                    default:
-                        if (step == null || !step.StartsWith("choose:", StringComparison.Ordinal))
-                        {
-                            throw new ArgumentException("不认识的试读操作：" + step);
-                        }
-                        accepted = session.Choose(step.Substring("choose:".Length));
-                        break;
-                }
-                if (!accepted)
-                {
-                    throw new InvalidOperationException("节点 " + session.Frame.Id + " 不接受操作 " + step);
-                }
-                trace.Add(Trace(session, step));
-            }
-            return new Dictionary<string, object>
-            {
-                ["node"] = session.Frame.Id, ["kind"] = session.Frame.Kind.ToString(), ["stage"] = session.Frame.Stage,
-                ["choices"] = session.Frame.Choices.Select(x => new Dictionary<string, object>
-                { ["id"] = x.Id, ["text"] = x.Text, ["enabled"] = x.Enabled }).ToArray(),
-                ["variables"] = session.Variables().ToDictionary(x => x.Id, x => (object)x.Value),
-                ["progress"] = session.Progress(), ["history"] = session.History(),
-                ["trace"] = trace
-            };
+            return result.Snapshot;
         }
 
-        private static Dictionary<string, object> Trace(RevGalSession session, string step)
+        /// <summary>使用 JSON 中的路线与断言对现有剧情做回归。返回全部用例，任一失败会使工单失败。</summary>
+        [RevAutomationAction("gal.story.test", Environment = "edit", Keys = new[] { "path", "document" },
+            Description = "运行命名路线用例集，验证节点、变量、选项与预期拒绝")]
+        public static object TestRoutes(RevAutomationRequest request)
         {
-            return new Dictionary<string, object>
+            var args = Read(request);
+            var result = RevGalRouteSuite.Run(RevGalAssets.Read(args.path), args.document);
+            return (int)result["failed"] == 0 ? (object)result : new FailedRouteSuite(result);
+        }
+
+        /// <summary>用工单失败表达断言失败，同时让 CLI 和 RevMCP 读到每条路线的实际结果。</summary>
+        private sealed class FailedRouteSuite : RevAutomationOperation
+        {
+            /// <summary>把断言报告交给编辑器桥，失败时保留各条路线的结果。</summary>
+            public FailedRouteSuite(Dictionary<string, object> result)
             {
-                ["step"] = step, ["node"] = session.Frame.Id, ["kind"] = session.Frame.Kind.ToString()
-            };
+                Success = false;
+                Message = "Gal 路线用例失败，请查 data.cases";
+                Result = result;
+            }
+
+            /// <summary>断言已执行，下一次自动化轮询直接返回报告。</summary>
+            public override bool Tick()
+            {
+                return true;
+            }
         }
 
         [RevAutomationAction("gal.ui.create", Environment = "edit", Keys = new[] { "font", "theme", "overwrite", "bundle" },
@@ -248,6 +280,12 @@ namespace Revolution.Gal.Editor
             {
                 throw new ArgumentException("包名使用小写字母、数字与下划线");
             }
+        }
+
+        /// <summary>剧情逻辑 ID 保持原样，包名再转换为 RevAB 支持的小写下划线格式。</summary>
+        private static string DefaultStoryBundle(string storyId)
+        {
+            return "gal_story_" + storyId.ToLowerInvariant().Replace('.', '_').Replace('-', '_');
         }
 
         private static Request Read(RevAutomationRequest request)

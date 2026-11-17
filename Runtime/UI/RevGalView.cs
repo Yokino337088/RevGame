@@ -62,6 +62,10 @@ namespace Revolution.Gal
 
         private readonly List<Button> _choiceButtons = new List<Button>();
         private readonly Dictionary<string, Sprite> _atlasSprites = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+        // 记录宿主预制体或主题提供的材质。故事里清除覆盖时，回到这个值。
+        private Material _defaultBackgroundMaterial;
+        // 共享程序化背景是否应该生成无 Sprite 的全屏四边形。
+        private bool _drawSharedMaterialAlone;
         private RevGalFrame _frame;
         private string _text = "";
         private int[] _offsets = Array.Empty<int>();
@@ -83,11 +87,15 @@ namespace Revolution.Gal
         public RevGalPanelTheme Theme => theme;
         public string VisibleDialogue => dialogue.text;
         internal bool ModalOpen => SettingsOpen || HistoryOpen;
-        internal bool BackgroundVisible => background.enabled && background.sprite != null;
+        internal bool BackgroundVisible => background.enabled;
+        internal bool BackgroundHasSprite => background.sprite != null;
+        internal string BackgroundMaterialName => background.enabled ? background.material?.name : null;
+        internal string BackgroundShaderName => background.enabled ? background.material?.shader?.name : null;
 
         private void Awake()
         {
             ApplyTheme();
+            ConfigureBackground();
             Bind(advance, RevGalInput.Advance);
             Bind(auto, RevGalInput.Auto);
             Bind(skip, RevGalInput.Skip);
@@ -316,7 +324,47 @@ namespace Revolution.Gal
             }
         }
 
-        internal void ShowBackground(Sprite value) => SetImage(background, value);
+        /// <summary>记住预制体已有的挂载，再从共享主题选择默认值。当前设备不支持的 Shader 会退回可绘制材质。</summary>
+        private void ConfigureBackground()
+        {
+            var prefabMaterial = background.material == background.defaultMaterial ? null : background.material;
+            var themeMaterial = theme == null ? null : theme.BackgroundMaterial;
+            bool hasThemeMaterial = IsSupportedBackgroundMaterial(themeMaterial);
+            _defaultBackgroundMaterial = hasThemeMaterial ? themeMaterial : IsSupportedBackgroundMaterial(prefabMaterial) ? prefabMaterial : null;
+            _drawSharedMaterialAlone = hasThemeMaterial && theme.RenderBackgroundMaterialWithoutSprite;
+            if (themeMaterial != null && !hasThemeMaterial)
+            {
+                RevLog.Warn("Gal 共用背景材质的 Shader 在当前设备不可用：" + themeMaterial.name, "RevGal");
+            }
+            ShowBackground(background.sprite, null);
+        }
+
+        /// <summary>当前设备可绘制该材质时返回 true。素材是否可用于 uGUI 还取决于 Shader 的实现。</summary>
+        internal static bool IsSupportedBackgroundMaterial(Material material)
+        {
+            var shader = material == null ? null : material.shader;
+            return shader != null && shader.isSupported && shader.name != "Hidden/InternalErrorShader";
+        }
+
+        /// <summary>同一次提交图片和材质。使用项目素材本身，不复制或改写共享材质的参数。</summary>
+        internal void ShowBackground(Sprite sprite, Material material)
+        {
+            bool fadeIn = sprite != null && (!background.enabled || background.sprite != sprite);
+            background.sprite = sprite;
+            background.material = material != null ? material : _defaultBackgroundMaterial;
+            // 空 Sprite 仍能让 Graphic 产生四边形，供明确配置的程序化材质绘制。
+            background.enabled = sprite != null || material != null || _drawSharedMaterialAlone;
+            if (fadeIn)
+            {
+                background.CrossFadeAlpha(0f, 0f, true);
+                background.CrossFadeAlpha(1f, .16f, true);
+            }
+            else if (sprite == null)
+            {
+                background.CrossFadeAlpha(1f, 0f, true);
+            }
+        }
+
         internal void ShowLeft(Sprite value) => SetImage(left, value);
         internal void ShowCenter(Sprite value) => SetImage(center, value);
         internal void ShowRight(Sprite value) => SetImage(right, value);
