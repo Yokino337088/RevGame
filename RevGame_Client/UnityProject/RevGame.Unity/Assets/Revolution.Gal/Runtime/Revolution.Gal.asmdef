@@ -1,0 +1,6 @@
+{
+    "name": "Revolution.Gal",
+    "rootNamespace": "Revolution.Gal",
+    "references": ["Revolution.Runtime", "UnityEngine.UI"],
+    "autoReferenced": true
+}
