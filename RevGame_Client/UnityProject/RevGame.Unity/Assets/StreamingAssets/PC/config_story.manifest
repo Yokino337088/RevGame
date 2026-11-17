@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1401506595
+CRC: 2876123421
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b515558deaf32c797fc45d98238863dc
+    Hash: eb142cebae15c71cc0da138e7ee0190b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 344124e7fc238065a42d44e222851242
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b515558deaf32c797fc45d98238863dc
+    Hash: eb142cebae15c71cc0da138e7ee0190b
 HashAppended: 0
 ClassTypes:
 - Class: 114
@@ -26,4 +26,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Config/Story/StoryBook.asset
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayacombatexpressions
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions

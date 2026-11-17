@@ -3,13 +3,13 @@ CRC: 3622977128
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7f8d0f83ac11858c50ff774fc3d26478
+    Hash: fc6f32b5eeafb77d112427f03dcfd650
   TypeTreeHash:
     serializedVersion: 2
     Hash: 94e7c7c2500b34f6cb594e520402f631
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7f8d0f83ac11858c50ff774fc3d26478
+    Hash: fc6f32b5eeafb77d112427f03dcfd650
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,7 +37,7 @@ Assets:
 - Assets/GameRes/Pieces/Unit/SlimePiece.prefab
 - Assets/GameRes/Pieces/Unit/PieceView.prefab
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pieceframes"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_pieces"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pieceframes
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_pieces

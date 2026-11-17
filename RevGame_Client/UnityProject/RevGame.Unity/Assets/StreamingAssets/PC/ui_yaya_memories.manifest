@@ -3,13 +3,13 @@ CRC: 3802627478
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9b782a86fadea28b29fdb5ceed2a3031
+    Hash: 7a24fabb0c4c0c5b70b847a82cf0f8b6
   TypeTreeHash:
     serializedVersion: 2
     Hash: dd5c5e6e03cc037f32bc89ff235d1724
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9b782a86fadea28b29fdb5ceed2a3031
+    Hash: 7a24fabb0c4c0c5b70b847a82cf0f8b6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -74,6 +74,6 @@ Assets:
 - Assets/GameRes/UI/Panel/YayaMemories/Book/OpenBook.png
 - Assets/GameRes/Material/UI/YayaMemories/MemorySceneComposite.mat
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiyayamemories"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiyayamemories
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/shared_shaders

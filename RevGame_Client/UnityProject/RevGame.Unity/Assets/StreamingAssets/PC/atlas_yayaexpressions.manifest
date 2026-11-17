@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 819607756
+CRC: 2915896885
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e57f598366a705005ff8184ccba1ec1c
+    Hash: 5d106cf5645d3d29579a63ba7bdb7b8b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e57f598366a705005ff8184ccba1ec1c
+    Hash: 5d106cf5645d3d29579a63ba7bdb7b8b
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,11 +20,19 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_10.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_11.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_05.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_01.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_20.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_03.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_13.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_04.png
 - Assets/GameRes/Atlases/YayaExpressions.spriteatlasv2
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_19.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_17.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_24.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_12.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_23.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_18.png
 Dependencies: []
