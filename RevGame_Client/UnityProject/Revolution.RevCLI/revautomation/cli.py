@@ -155,7 +155,7 @@ def _build_parser():
             if family == "gal":
                 if operation == "story.create":
                     action.add_argument("--title", help="游戏内显示的剧情名称")
-                if operation == "story.import":
+                if operation in ("story.import", "story.generate"):
                     action.add_argument("--document", type=Path, help="本机剧情 JSON 文件")
                     action.add_argument("--check-only", action="store_true", help="校验文档，不写 SO")
                 if operation == "story.export":
@@ -165,9 +165,10 @@ def _build_parser():
                     action.add_argument("--step", action="append", dest="gal_steps", help="如 advance、choose:lamp 或 rollback；可重复")
                 if operation == "ui.create":
                     action.add_argument("--font", help="Assets 下的项目字体；留空使用 Unity 默认字体")
-                if operation in ("story.create", "story.import", "ui.create"):
+                    action.add_argument("--theme", help="Assets 下已有的共用面板主题 SO")
+                if operation in ("story.create", "story.import", "story.generate", "ui.create"):
                     action.add_argument("--bundle", help="给 SO 或 Prefab 设置目标 AB 名")
-                if operation in ("story.import", "ui.create"):
+                if operation in ("story.import", "story.generate", "ui.create"):
                     action.add_argument("--overwrite", action="store_true", help="允许覆盖指定的 Gal 资产")
             if family == "ui" and operation in ("layout", "raycast"):
                 action.add_argument("--object-path", help="精确层级路径，或用 --id 指定对象")
@@ -259,7 +260,8 @@ def payload_of(args):
             data["warmup"] = args.warmup
         validate_scenario(data)
     if args.family == "gal":
-        for attr, key in (("title", "title"), ("bundle", "bundle"), ("font", "font"), ("entry", "entry"), ("gal_steps", "operations")):
+        for attr, key in (("title", "title"), ("bundle", "bundle"), ("font", "font"),
+                          ("theme", "theme"), ("entry", "entry"), ("gal_steps", "operations")):
             value = getattr(args, attr, None)
             if value is not None:
                 data[key] = value
@@ -558,7 +560,7 @@ def print_progress(update):
 def editor_outcome(action, response):
     if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
         return dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
-    if action in ("gal.story.validate", "gal.story.import") and response.get("success") and (response.get("data") or {}).get("valid") is False:
+    if action in ("gal.story.validate", "gal.story.import", "gal.story.generate") and response.get("success") and (response.get("data") or {}).get("valid") is False:
         return dict(response, success=False, error="GalValidationFailed", message="剧情校验失败，请查 data.issues。")
     return response
 
