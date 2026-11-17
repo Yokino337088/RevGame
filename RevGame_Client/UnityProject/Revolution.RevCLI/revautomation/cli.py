@@ -566,7 +566,7 @@ def print_progress(update):
 def editor_outcome(action, response):
     if action == "batch.call" and response.get("success") and (response.get("data") or {}).get("success") is False:
         return dict(response, success=False, error="BatchStepFailed", message="批处理有失败步骤，请查 data.results。")
-    if action in ("gal.story.validate", "gal.story.import", "gal.story.generate") and response.get("success") and (response.get("data") or {}).get("valid") is False:
+    if action in ("gal.story.validate", "gal.story.contract", "gal.story.import", "gal.story.generate") and response.get("success") and (response.get("data") or {}).get("valid") is False:
         return dict(response, success=False, error="GalValidationFailed", message="剧情校验失败，请查 data.issues。")
     return response
 

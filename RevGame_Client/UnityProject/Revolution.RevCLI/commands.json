@@ -12,6 +12,7 @@
     {"id":"gal.story.create","keys":["path","id","title","bundle"],"description":"创建 Revolution.Gal 剧情 SO 模板","environment":"edit","readOnly":false},
     {"id":"gal.story.generate","keys":["document","path","bundle","checkOnly","overwrite"],"description":"校验剧情 JSON，按剧情 ID 生成 SO 并回传逻辑路径和 AB 名","environment":"edit","readOnly":false},
     {"id":"gal.story.validate","keys":["path"],"description":"校验 Gal 剧情图与条件","environment":"edit","readOnly":true},
+    {"id":"gal.story.contract","keys":["path"],"description":"读取自定义界面接入清单，包括路径、变量、宿主信号和媒体资源","environment":"edit","readOnly":true},
     {"id":"gal.story.import","keys":["path","document","checkOnly","overwrite","bundle"],"description":"导入或只校验 Gal 剧情 JSON","environment":"edit","readOnly":false},
     {"id":"gal.story.export","keys":["path"],"description":"导出 Gal 剧情 SO 的 JSON","environment":"edit","readOnly":true},
     {"id":"gal.story.simulate","keys":["path","entry","operations"],"description":"离屏试读 Gal 分支、存档与变量","environment":"edit","readOnly":true},

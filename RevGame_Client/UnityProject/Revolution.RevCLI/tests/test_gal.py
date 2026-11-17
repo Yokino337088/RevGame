@@ -48,12 +48,21 @@ class GalCliTests(unittest.TestCase):
         validate_action("gal.ui.create", payload)
 
     def test_invalid_validation_becomes_failure_with_issues(self):
-        for action in ("gal.story.validate", "gal.story.generate"):
+        for action in ("gal.story.validate", "gal.story.contract", "gal.story.generate"):
             with self.subTest(action=action):
                 result = editor_outcome(action, {"success": True, "data": {"valid": False, "issues": ["missing"]}})
                 self.assertFalse(result["success"])
                 self.assertEqual(result["data"]["issues"], ["missing"])
                 self.assertEqual(result["error"], "GalValidationFailed")
+
+    def test_host_contract_is_readonly_and_takes_story_asset(self):
+        args = parser().parse_args(["gal", "story.contract", "--path", "Assets/Gal.asset"])
+        payload = payload_of(args)
+        self.assertEqual(payload, {"path": "Assets/Gal.asset"})
+        validate_action("gal.story.contract", payload)
+        manifest = Path(__file__).resolve().parents[1] / "commands.json"
+        spec = next(s for s in json.loads(manifest.read_text(encoding="utf-8"))["actions"] if s["id"] == "gal.story.contract")
+        self.assertTrue(spec["readOnly"])
 
     def test_ordered_simulation(self):
         args = parser().parse_args(["gal", "story.simulate", "--path", "Assets/Gal.asset",
