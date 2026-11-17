@@ -62,6 +62,18 @@ python rev.py --project $project --mode live gal ui.create --bundle gal_ui
 
 一键生成会校验剧情结构，为 JSON 的 `Id` 创建 `<资源根>/Gal/Stories/<Id>.asset`，并返回 `logicalPath` 和 AB 名。可以用 `--path` 指定资源根内的 SO 位置，用 `--bundle` 指定包名。默认包名以 `gal_story_` 开头。已有包名会在未指定新包名时沿用。用 `--check-only` 预检而不写资产，用 `--overwrite` 更新已有 SO 并保留 GUID。制作好的主题可通过 `gal ui.create --theme Assets/.../主题.asset` 绑定到默认面板。
 
+### 增删改查节点
+
+```powershell
+python rev.py --project $project --mode live --full gal node.find --path $story --query "旅人" --kind Line
+python rev.py --project $project --mode live gal node.add --path $story --document new-node.json
+python rev.py --project $project --mode live gal node.update --path $story --id intro --document fields.json --expected-hash $hash --check-only
+python rev.py --project $project --mode live gal node.remove --path $story --id old_line --redirect next_line
+python rev.py --project $project --mode live gal node.patch --path $story --document edits.json
+```
+
+`node.find` 返回完整节点、入边和当前 `hash`。`node.update` 用局部 JSON，例如 `{"Text":"天色快暗了。"}`。对象逐字段合并，数组整体替换。`node.patch` 接收有序 `operations`，可将新增节点、改线和删除放在一次整图校验里。写入支持 `--check-only` 及 `--expected-hash`，通过后保存同一资产。自然语言编辑、数据字段、宿主、UI 资源与验收流程见 [独立 revolution-gal Skill](https://github.com/Yokino337088/Revolution/tree/skill/revolution-gal)。
+
 JSON 支持符号枚举和 Unity 数值枚举。模板导出可直接往返，未知字段会返回具体字段路径。导入先验证完整定义，再创建或更新 SO。更新保留 GUID，未保存的资产编辑需要先保存。试读支持 `advance`、`choose:ID`、`read`、`rollback`、`capture`、`restore` 和 `complete`。RevMCP 可调用同名 Editor 动作。开发态的 `gal.open`、`gal.state`、`gal.close` 使用真实默认面板，存档放在该 Play 会话的内存中。
 
 ## 设计参考

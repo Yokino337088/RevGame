@@ -25,6 +25,77 @@ namespace Revolution.Gal.Editor
             return RevAutomationJson.Write(ToDocument(story, typeof(RevGalDefinition)));
         }
 
+        /// <summary>节点文档与整篇导入共用同一套字段、枚举和类型规则。</summary>
+        public static RevGalNode ReadNode(object document)
+        {
+            return JsonUtility.FromJson<RevGalNode>(RevAutomationJson.Write(Normalize(document, typeof(RevGalNode), "$.node")));
+        }
+
+        public static object NodeDocument(RevGalNode node)
+        {
+            return ToDocument(node, typeof(RevGalNode));
+        }
+
+        /// <summary>对象逐字段合并，数组按顺序整体替换，为局部修改保留未指定的值。</summary>
+        public static RevGalNode PatchNode(RevGalNode current, Dictionary<string, object> changes)
+        {
+            var edited = ReadNode(changes);
+            PreserveFields(current, edited, typeof(RevGalNode), changes);
+            return edited;
+        }
+
+        private static void PreserveFields(object current, object edited, Type type, Dictionary<string, object> changes)
+        {
+            foreach (var field in Fields(type))
+            {
+                object original = field.GetValue(current);
+                if (!changes.TryGetValue(field.Name, out var value))
+                {
+                    field.SetValue(edited, original);
+                }
+                else if (value == null)
+                {
+                    field.SetValue(edited, null);
+                }
+                else if (value is Dictionary<string, object> nested && original != null)
+                {
+                    object updated = field.GetValue(edited) ?? Activator.CreateInstance(field.FieldType);
+                    PreserveFields(original, updated, field.FieldType, nested);
+                    // Vector2 等值类型通过反射读取后是装箱对象，需要写回字段。
+                    field.SetValue(edited, updated);
+                }
+            }
+        }
+
+        /// <summary>复制剧情模型的数据图，保留空值，避免预检或改线触碰编辑器正在持有的原定义。</summary>
+        public static RevGalDefinition CopyDefinition(RevGalDefinition definition)
+        {
+            return (RevGalDefinition)CopyValue(definition, typeof(RevGalDefinition));
+        }
+
+        private static object CopyValue(object value, Type type)
+        {
+            if (value == null || type.IsValueType || type == typeof(string))
+            {
+                return value;
+            }
+            object copy = Activator.CreateInstance(type);
+            if (value is System.Collections.IList items && copy is System.Collections.IList list)
+            {
+                Type itemType = type.GetGenericArguments()[0];
+                foreach (object item in items)
+                {
+                    list.Add(CopyValue(item, itemType));
+                }
+                return list;
+            }
+            foreach (var field in Fields(type))
+            {
+                field.SetValue(copy, CopyValue(field.GetValue(value), field.FieldType));
+            }
+            return copy;
+        }
+
         private static object Normalize(object value, Type type, string location)
         {
             if (value == null && !type.IsValueType)
