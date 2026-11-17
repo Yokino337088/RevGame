@@ -1,0 +1,7 @@
+{
+    "name": "Revolution.Gal.Editor",
+    "rootNamespace": "Revolution.Gal.Editor",
+    "references": ["Revolution.Gal", "Revolution.Runtime", "Revolution.Editor", "UnityEngine.UI"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}
