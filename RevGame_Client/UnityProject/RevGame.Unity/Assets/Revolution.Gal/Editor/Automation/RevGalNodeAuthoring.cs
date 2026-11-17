@@ -107,10 +107,11 @@ namespace Revolution.Gal.Editor
         {
             var args = Read(request);
             var patch = ParseDocument(args);
-            CheckKeys(patch, "operations", "start", "revision");
-            if (!patch.TryGetValue("operations", out var value) || !(value is List<object> operations) || operations.Count == 0)
+            CheckKeys(patch, "operations", "start", "revision", "stagePresets");
+            if (!patch.TryGetValue("operations", out var value) || !(value is List<object> operations) ||
+                operations.Count == 0 && patch.Count == 1)
             {
-                throw new ArgumentException("节点修改文档需要非空 operations 数组");
+                throw new ArgumentException("节点修改文档需要 operations 数组，并至少包含一项修改");
             }
             return Edit(args, operations.Select(RevAutomationJson.Object), patch);
         }
@@ -129,6 +130,10 @@ namespace Revolution.Gal.Editor
             var draft = RevGalJson.CopyDefinition(story.Definition);
             draft.Nodes ??= new List<RevGalNode>();
             var changes = operations.Select(operation => Apply(draft, operation)).ToArray();
+            if (patch != null && patch.TryGetValue("stagePresets", out var stagePresets))
+            {
+                draft.StagePresets = RevGalJson.ReadStagePresets(stagePresets);
+            }
             if (patch != null && patch.ContainsKey("start"))
             {
                 draft.Start = ReadId(patch, "start");

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -57,6 +58,44 @@ namespace Revolution.Gal.Editor
         };
 
         private static string PanelDirectory => RevGalAssets.ResourceRoot() + "/" + RevGal.PanelRoot;
+
+        /// <summary>仅建立用于测量的默认层级。对象带隐藏标志，调用方结束测量后销毁。</summary>
+        internal static GameObject BuildLayoutPreview(RevGalPanelTheme theme)
+        {
+            var root = new GameObject("GalLayoutPreview", typeof(RectTransform));
+            root.hideFlags = HideFlags.HideAndDontSave;
+            // 设计器也可能在 Play 中刷新，先停用层级再添加 View，避免触发运行时 Awake 和资源逻辑。
+            root.SetActive(false);
+            var rect = (RectTransform)root.transform;
+            rect.sizeDelta = new Vector2(1920, 1080);
+            try
+            {
+                var fields = BuildView(rect, theme.Font != null ? theme.Font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
+                fields.ApplyModifiedPropertiesWithoutUndo();
+                foreach (var part in theme.Parts.Where(style => style != null))
+                {
+                    var target = FindPreviewTarget(root, part.Part);
+                    if (target != null && RevGalPartStyle.UsesRectLayout(part.Part) && part.Layout != null && part.Layout.Override)
+                    {
+                        part.Layout.ApplyTo(target);
+                    }
+                }
+                rect.ForceUpdateRectTransforms();
+                return root;
+            }
+            catch
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+                throw;
+            }
+        }
+
+        /// <summary>从默认配方中找到控件，CLI 和设计器都通过稳定部位名称定位。</summary>
+        internal static RectTransform FindPreviewTarget(GameObject root, RevGalThemePart part)
+        {
+            string path = ThemeTargets.First(target => target.Part == part).Path;
+            return root.transform.Find(path.Length == 0 ? "View" : "View/" + path) as RectTransform;
+        }
 
         /// <summary>从工作台打开当前默认面板实际绑定的主题。</summary>
         public static RevGalPanelTheme FindTheme()

@@ -31,6 +31,13 @@ namespace Revolution.Gal.Editor
             return JsonUtility.FromJson<RevGalNode>(RevAutomationJson.Write(Normalize(document, typeof(RevGalNode), "$.node")));
         }
 
+        /// <summary>批量配置章节 / 小节时，同样检查嵌套字段和资源路径的数据类型。</summary>
+        public static List<RevGalStagePreset> ReadStagePresets(object document)
+        {
+            var normalized = Normalize(document, typeof(List<RevGalStagePreset>), "$.stagePresets");
+            return JsonUtility.FromJson<RevGalDefinition>("{\"StagePresets\":" + RevAutomationJson.Write(normalized) + "}").StagePresets;
+        }
+
         public static object NodeDocument(RevGalNode node)
         {
             return ToDocument(node, typeof(RevGalNode));

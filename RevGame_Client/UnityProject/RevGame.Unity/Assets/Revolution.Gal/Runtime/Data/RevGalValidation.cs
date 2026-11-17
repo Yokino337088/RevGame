@@ -34,6 +34,23 @@ namespace Revolution.Gal
             {
                 issues.Add(new RevGalIssue(null, "请填写合法的剧情 ID 和大于零的修订号"));
             }
+            // 先验证章节和小节的继承图，防止一个错别字只在真正切章时才暴露。
+            Dictionary<string, RevGalStage[]> plans = null;
+            try
+            {
+                plans = RevGalStagePlans.Compile(story);
+            }
+            catch (ArgumentException error)
+            {
+                issues.Add(new RevGalIssue(null, error.Message));
+            }
+            foreach (var preset in Items(story.StagePresets))
+            {
+                if (preset != null)
+                {
+                    ValidateStage(preset.Stage, message => issues.Add(new RevGalIssue(null, preset.Id + "：" + message)));
+                }
+            }
             var variables = new HashSet<string>(StringComparer.Ordinal);
             foreach (var variable in Items(story.Variables))
             {
@@ -60,6 +77,26 @@ namespace Revolution.Gal
             foreach (var node in nodes.Values)
             {
                 ValidateNode(node, nodes, variables, issues);
+                if (!string.IsNullOrEmpty(node.StagePreset) && (plans == null || !plans.ContainsKey(node.StagePreset)))
+                {
+                    issues.Add(new RevGalIssue(node.Id, "章节 / 小节舞台方案不存在：" + node.StagePreset));
+                }
+                if (!string.IsNullOrEmpty(node.GalleryId))
+                {
+                    var stage = new RevGalStage();
+                    if (!string.IsNullOrEmpty(node.StagePreset) && plans != null && plans.TryGetValue(node.StagePreset, out var chain))
+                    {
+                        foreach (var item in chain)
+                        {
+                            stage.Apply(item);
+                        }
+                    }
+                    stage.Apply(node.Stage);
+                    if (!IsLogicalPath(stage.Background))
+                    {
+                        issues.Add(new RevGalIssue(node.Id, "解锁插画时，节点或其舞台方案需要指定有效背景路径"));
+                    }
+                }
             }
             CheckReachability(story.Start, nodes, issues);
             return issues;
@@ -115,19 +152,8 @@ namespace Revolution.Gal
             {
                 Error("收藏 ID 格式错误");
             }
-            if (!string.IsNullOrEmpty(node.GalleryId)
-                && (node.Stage?.Background == RevGalStage.Clear || !IsLogicalPath(node.Stage?.Background)))
-            {
-                Error("解锁插画收藏时，请显式指定该节点的背景逻辑路径");
-            }
             var stage = node.Stage;
-            foreach (string path in new[] { stage?.Background, stage?.BackgroundMaterial, stage?.Left, stage?.Center, stage?.Right, stage?.Music })
-            {
-                if (!string.IsNullOrEmpty(path) && path != RevGalStage.Clear && !IsLogicalPath(path))
-                {
-                    Error("舞台资源需要逻辑路径：" + path);
-                }
-            }
+            ValidateStage(stage, Error);
             foreach (string path in new[] { node.Voice, node.Sound })
             {
                 if (!string.IsNullOrEmpty(path) && (path == RevGalStage.Clear || !IsLogicalPath(path)))
@@ -178,6 +204,18 @@ namespace Revolution.Gal
             if (node.Kind == RevGalNodeKind.Choice && !unconditional && string.IsNullOrEmpty(node.Next))
             {
                 Error("所有选项都可能关闭，请设置保底出口或提供始终可选的选项");
+            }
+        }
+
+        /// <summary>节点和章节方案使用同一条资源路径规则。</summary>
+        private static void ValidateStage(RevGalStage stage, Action<string> error)
+        {
+            foreach (string path in new[] { stage?.Background, stage?.BackgroundMaterial, stage?.Left, stage?.Center, stage?.Right, stage?.Music })
+            {
+                if (!string.IsNullOrEmpty(path) && path != RevGalStage.Clear && !IsLogicalPath(path))
+                {
+                    error("舞台资源需要逻辑路径：" + path);
+                }
             }
         }
 

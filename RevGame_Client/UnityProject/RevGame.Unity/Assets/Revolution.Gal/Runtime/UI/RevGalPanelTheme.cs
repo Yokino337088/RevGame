@@ -68,7 +68,8 @@ namespace Revolution.Gal
             OffsetMax = rect.offsetMax;
         }
 
-        internal void ApplyTo(RectTransform rect)
+        /// <summary>运行面板和编辑器预览使用同一组锚点、轴心与边距。</summary>
+        public void ApplyTo(RectTransform rect)
         {
             rect.anchorMin = AnchorMin;
             rect.anchorMax = AnchorMax;

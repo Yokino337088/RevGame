@@ -95,6 +95,20 @@ namespace Revolution.Gal
         }
     }
 
+    /// <summary>章节或小节共用的舞台方案。小节可通过 Parent 继承章节，再覆盖自己的素材。</summary>
+    [Serializable]
+    public sealed class RevGalStagePreset
+    {
+        /// <summary>方案的稳定 ID，由节点 StagePreset 引用。</summary>
+        public string Id;
+        /// <summary>工作台显示的章节或小节名称。</summary>
+        public string Title;
+        /// <summary>父方案 ID，空表示顶层章节。按父到子的顺序应用舞台覆盖。</summary>
+        public string Parent;
+        /// <summary>背景、Shader 材质、立绘和音乐的逻辑路径。</summary>
+        public RevGalStage Stage = new RevGalStage();
+    }
+
     /// <summary>节点 ID 是存档锚点，标题可自由改名。Next 在分支节点中是无条件保底出口。</summary>
     [Serializable]
     public sealed class RevGalNode
@@ -103,6 +117,8 @@ namespace Revolution.Gal
         public string Title;
         public RevGalNodeKind Kind;
         public Vector2 Position;
+        /// <summary>进入本节点时应用的章节或小节方案。留空沿用当前舞台，节点 Stage 在方案之后覆盖。</summary>
+        public string StagePreset;
         public string Speaker;
         public string SpeakerKey;
         [TextArea(3, 12)] public string Text;
@@ -127,6 +143,8 @@ namespace Revolution.Gal
         public string Title;
         public int Revision = 1;
         public string Start;
+        /// <summary>剧情里的章节和小节舞台配置。旧剧情省略此字段时继续按节点舞台播放。</summary>
+        public List<RevGalStagePreset> StagePresets = new List<RevGalStagePreset>();
         public List<RevGalVariable> Variables = new List<RevGalVariable>();
         public List<RevGalNode> Nodes = new List<RevGalNode>();
     }

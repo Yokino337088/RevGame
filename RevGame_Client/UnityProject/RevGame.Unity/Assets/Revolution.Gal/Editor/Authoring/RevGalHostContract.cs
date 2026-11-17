@@ -40,11 +40,13 @@ namespace Revolution.Gal.Editor
                 {
                     ["node"] = node.Id, ["name"] = node.Signal, ["argument"] = node.Argument
                 }).ToArray();
-            result["media"] = CollectMedia(nodes).Select(item => DescribeMedia(item, root)).ToArray();
+            var presets = (definition?.StagePresets ?? new List<RevGalStagePreset>()).Where(preset => preset != null).ToArray();
+            result["stagePresets"] = presets;
+            result["media"] = CollectMedia(nodes, presets).Select(item => DescribeMedia(item, root)).ToArray();
             return result;
         }
 
-        private static IEnumerable<Media> CollectMedia(RevGalNode[] nodes)
+        private static IEnumerable<Media> CollectMedia(RevGalNode[] nodes, RevGalStagePreset[] presets)
         {
             var media = new Dictionary<(string Path, Type Type), Media>();
             foreach (var node in nodes)
@@ -57,6 +59,17 @@ namespace Revolution.Gal.Editor
                 Register(node, "Music", node.Stage?.Music, typeof(AudioClip));
                 Register(node, "Voice", node.Voice, typeof(AudioClip));
                 Register(node, "Sound", node.Sound, typeof(AudioClip));
+            }
+            foreach (var preset in presets)
+            {
+                // 入边显示为方案 ID，便于作者查到小节继承的素材来源。
+                var holder = new RevGalNode { Id = "方案/" + preset.Id, Stage = preset.Stage };
+                Register(holder, "Background", preset.Stage?.Background, typeof(Sprite));
+                Register(holder, "BackgroundMaterial", preset.Stage?.BackgroundMaterial, typeof(Material));
+                Register(holder, "Music", preset.Stage?.Music, typeof(AudioClip));
+                Register(holder, "Left", preset.Stage?.Left, typeof(Sprite));
+                Register(holder, "Center", preset.Stage?.Center, typeof(Sprite));
+                Register(holder, "Right", preset.Stage?.Right, typeof(Sprite));
             }
             return media.Values.OrderBy(entry => entry.Path, StringComparer.Ordinal).ThenBy(entry => entry.Type.Name, StringComparer.Ordinal);
 

@@ -1,0 +1,124 @@
+.gal-shell {
+    background-color: #20252c;
+    color: #d8dfe8;
+    --gal-accent: #8cbcb2;
+}
+.gal-header {
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #292f38;
+    border-bottom-width: 1px;
+    border-bottom-color: #3a424e;
+}
+.gal-brand {
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: #b6d8ce;
+    margin-right: 18px;
+}
+.gal-status {
+    flex-grow: 1;
+    -unity-text-align: middle-right;
+    color: #aab7c5;
+    font-size: 11px;
+}
+.gal-toolbar {
+    min-height: 36px;
+    padding: 4px 12px;
+    background-color: #242a32;
+    flex-shrink: 0;
+}
+.gal-toolbar .unity-button {
+    min-height: 26px;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-right: 5px;
+}
+.gal-sidebar {
+    background-color: #252b33;
+    padding: 12px 10px;
+    border-right-width: 1px;
+    border-right-color: #3a424e;
+}
+.gal-sidebar > .unity-button {
+    min-height: 29px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+.gal-outline .unity-button {
+    -unity-text-align: middle-left;
+    white-space: normal;
+    min-height: 34px;
+    margin: 2px 0;
+    padding: 5px 9px;
+    background-color: #2b333e;
+    border-width: 0;
+    border-left-width: 2px;
+    border-left-color: transparent;
+}
+.gal-outline .unity-button:hover { background-color: #374351; }
+.gal-outline .gal-selected {
+    background-color: #3c5756;
+    border-left-color: #a3d3c7;
+    color: #edf9f4;
+}
+.gal-inspector {
+    background-color: #292f38;
+    padding: 12px 14px;
+}
+.gal-inspector .unity-base-field { margin-top: 5px; margin-bottom: 5px; }
+.gal-inspector .unity-base-field__label { min-width: 100px; }
+.gal-inspector .unity-foldout {
+    margin-top: 10px;
+    padding: 8px 4px;
+    background-color: #242b33;
+    border-radius: 5px;
+}
+.gal-inspector .unity-button {
+    min-height: 26px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.gal-footer {
+    background-color: #242b33;
+    padding: 8px 14px;
+    max-height: 116px;
+    border-top-width: 1px;
+    border-top-color: #3b4652;
+}
+.gal-section-title {
+    font-size: 12px;
+    color: #c9d9dc;
+    -unity-font-style: bold;
+    margin-top: 8px;
+    margin-bottom: 9px;
+}
+.gal-preview-area {
+    flex-grow: 1;
+    padding: 24px;
+    justify-content: center;
+    background-color: #1c2127;
+}
+.gal-preview-frame {
+    height: 320px;
+    background-color: #34495b;
+    border-width: 1px;
+    border-color: #687d88;
+}
+.gal-preview-part {
+    position: absolute;
+    background-color: rgba(32, 42, 54, 0.87);
+    color: #bac9d7;
+    border-width: 1px;
+    border-color: #53697a;
+    -unity-text-align: middle-center;
+    font-size: 10px;
+    overflow: hidden;
+}
+.gal-preview-part.gal-picked {
+    background-color: rgba(61, 110, 100, 0.95);
+    border-color: #b6e1d2;
+    color: #ffffff;
+}
+.gal-hint { white-space: normal; color: #aab7c5; margin: 10px 0; }
