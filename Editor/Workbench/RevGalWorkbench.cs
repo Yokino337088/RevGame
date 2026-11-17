@@ -76,6 +76,7 @@ namespace Revolution.Gal.Editor
             ToolbarAction(toolbar, "定位全图", () => _graph.FrameAll());
             ToolbarAction(toolbar, "自动排版", Arrange);
             ToolbarAction(toolbar, "生成游戏面板", CreatePanel);
+            ToolbarAction(toolbar, "编辑面板主题", EditPanelTheme);
             _status = new Label();
             _status.style.marginLeft = 12;
             _status.style.unityTextAlign = TextAnchor.MiddleLeft;
@@ -588,8 +589,20 @@ namespace Revolution.Gal.Editor
 
         private void CreatePanel()
         {
-            string path = RevGalPanelBuilder.Create("", false, "");
-            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var created = RevGalPanelBuilder.Create(null, null, false, null);
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<RevGalPanelTheme>(created.ThemePath);
+            EditorGUIUtility.PingObject(Selection.activeObject);
+        }
+
+        /// <summary>选择当前默认面板引用的共享配置，直接在 Inspector 中编辑。</summary>
+        private static void EditPanelTheme()
+        {
+            var theme = RevGalPanelBuilder.FindTheme();
+            if (theme == null)
+            {
+                throw new InvalidOperationException("请先生成绑定了主题的 Gal 游戏面板");
+            }
+            Selection.activeObject = theme;
             EditorGUIUtility.PingObject(Selection.activeObject);
         }
 

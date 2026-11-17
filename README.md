@@ -8,9 +8,17 @@ Revolution.Gal 是 Unity 2022.3 的可选视觉小说模块。把 [Revolution �
 2. 左边按名称、ID、说话人或正文找节点。中间拖端口连线，右边写正文、选背景或立绘、添加出口与变量条件。节点名称可以改。发布后的节点 ID 用于定位已读与存档。
 3. 将主入口设为起点。对白和旁白连接下一节点。玩家选项可以设置显示与启用条件。自动分支按顺序匹配，未命中时走保底。结局收口当前路线。
 4. 下方的问题列表可以跳到节点。从起点或当前节点试读，确认分支与变量，再保存 SO。
-5. 首次接入默认 UGUI 时，在工作台点 **生成游戏面板**。需要项目字体或 AB 标记时，用对应的 RevCLI 参数。默认逻辑路径为 `UI/Gal/RevGalPanel`，文件生成在 RevAB 配置的资源根下。
+5. 首次接入默认 UGUI 时，在工作台点 **生成游戏面板**。生成的 Prefab 位于 RevAB 资源根下的 `UI/Gal/RevGalPanel.prefab`，并默认引用同目录的 `RevGalPanelTheme.asset`。需要指定字体、已有主题或 AB 标记时，使用 RevCLI 参数。
 
 舞台支持一个背景、左中右三位立绘、持续背景音乐、单节点语音和音效。舞台路径留空会沿用，填单个 `-` 会清除该槽。语音与单节点音效留空表示这一节点无该声音。给节点填收藏 ID 和明确背景，可在经过节点后解锁插画。项目的 AB 规则负责把剧情 SO、面板、图集和音频纳入目标平台的 ResMap。编辑器的资源选择器只写逻辑路径。
+
+## 共用面板主题
+
+工作台的 **编辑面板主题** 会选中默认面板引用的主题。在 Inspector 为整个主题指定图集和字体，再按部位选择图集切片或独立 Sprite。独立 Sprite 优先。按钮、对白框、选项、设置面板和回看可各自选图并设置颜色。带边距的 Sprite 可启用九宫格。背景和立绘的画面取自剧情节点，主题可以调整它们的布局。
+
+展开部位的 **布局**，勾选覆盖后修改相对父节点的锚点、轴心和边距。自动生成的主题以默认 Prefab 的位置为初值。选项行由滚动列表排版，主题可设置行高。设置和回看遮罩始终覆盖整个剧情面板。主题随 Prefab 引用加载，在下次打开面板时生效。更换主题图集后按宿主资源规则构建目标平台 AB，确保主题、字体和图集随面板交付。
+
+播放中的 **设置** 位于顶部。自动、跳过已读、回退、回看、快速保存和快速读取归入同一个弹层。弹层打开时暂停打字与自动推进，拦截背后的选项。回看返回设置，成功回退或读档后返回剧情。已生成的旧面板可继续播放。要升级为新的默认布局，使用 `gal ui.create --overwrite` 重建生成树。重建时会沿用已绑定的主题 SO。
 
 ## Runtime 的三个职责
 
@@ -43,6 +51,7 @@ var panel = await RevGal.OpenAsync("Gal/Stories/FirstMeeting", new RevGalOptions
 请使用含 Gal 子命令的 RevCLI，并用 `commands --live --query gal` 核对目标 Editor 注册情况。
 
 ```powershell
+python rev.py --project $project --mode live gal story.generate --document examples/gal-story.json
 python rev.py --project $project --mode live gal story.create --path Assets/GameRes/Gal/Stories/FirstMeeting.asset --id first_meeting --title "初次见面" --bundle gal_first_meeting
 python rev.py --project $project --mode live gal story.export --path Assets/GameRes/Gal/Stories/FirstMeeting.asset --out first-meeting.json
 python rev.py --project $project --mode live gal story.import --document first-meeting.json --check-only
@@ -50,6 +59,8 @@ python rev.py --project $project --mode live gal story.import --document first-m
 python rev.py --project $project --mode live gal story.simulate --path Assets/GameRes/Gal/Stories/FirstMeeting.asset --step advance --step choose:lamp --step advance
 python rev.py --project $project --mode live gal ui.create --bundle gal_ui
 ```
+
+一键生成会校验剧情结构，为 JSON 的 `Id` 创建 `<资源根>/Gal/Stories/<Id>.asset`，并返回 `logicalPath` 和 AB 名。可以用 `--path` 指定资源根内的 SO 位置，用 `--bundle` 指定包名。默认包名以 `gal_story_` 开头。已有包名会在未指定新包名时沿用。用 `--check-only` 预检而不写资产，用 `--overwrite` 更新已有 SO 并保留 GUID。制作好的主题可通过 `gal ui.create --theme Assets/.../主题.asset` 绑定到默认面板。
 
 JSON 支持符号枚举和 Unity 数值枚举。模板导出可直接往返，未知字段会返回具体字段路径。导入先验证完整定义，再创建或更新 SO。更新保留 GUID，未保存的资产编辑需要先保存。试读支持 `advance`、`choose:ID`、`read`、`rollback`、`capture`、`restore` 和 `complete`。RevMCP 可调用同名 Editor 动作。开发态的 `gal.open`、`gal.state`、`gal.close` 使用真实默认面板，存档放在该 Play 会话的内存中。
 

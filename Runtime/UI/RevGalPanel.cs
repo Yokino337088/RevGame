@@ -26,7 +26,10 @@ namespace Revolution.Gal
         public string VisibleDialogue => _view == null ? "" : _view.VisibleDialogue;
         public bool TextComplete => _view != null && _view.TextComplete;
         public bool HistoryOpen => _view != null && _view.HistoryOpen;
+        public bool SettingsOpen => _view != null && _view.SettingsOpen;
         internal bool BackgroundVisible => _view != null && _view.BackgroundVisible;
+        internal string PlaybackMode => _mode.ToString();
+        internal string ThemeName => _view == null || _view.Theme == null ? null : _view.Theme.name;
 
         protected override void OnBindView()
         {
@@ -137,7 +140,8 @@ namespace Revolution.Gal
 
         private void Update()
         {
-            if (_session == null || _mode == PlayMode.Manual || State != RevUIPanelState.Opened || IsCovered || HistoryOpen || !TextComplete)
+            if (_session == null || _mode == PlayMode.Manual || State != RevUIPanelState.Opened
+                || IsCovered || _view.ModalOpen || !TextComplete)
             {
                 return;
             }
@@ -156,7 +160,11 @@ namespace Revolution.Gal
 
         private void OnInput(RevGalInput input)
         {
-            if (_session == null || State != RevUIPanelState.Opened || IsCovered)
+            if (_session == null || State != RevUIPanelState.Opened || IsCovered || HistoryOpen)
+            {
+                return;
+            }
+            if (SettingsOpen && (input == RevGalInput.Advance || input == RevGalInput.Close || input == RevGalInput.OpenSettings))
             {
                 return;
             }
@@ -194,7 +202,10 @@ namespace Revolution.Gal
                         break;
                     case RevGalInput.Rollback:
                         ChangeMode(PlayMode.Manual);
-                        _session.Rollback();
+                        if (_session.Rollback())
+                        {
+                            _view.SetSettingsOpen(false);
+                        }
                         break;
                     case RevGalInput.History:
                         _view.ToggleHistory(_session.History());
@@ -205,7 +216,18 @@ namespace Revolution.Gal
                         break;
                     case RevGalInput.Load:
                         ChangeMode(PlayMode.Manual);
-                        _view.ShowNotice(_session.LoadSlot(QuickSlot) ? "已读取" : "没有可用的快速存档");
+                        bool loaded = _session.LoadSlot(QuickSlot);
+                        if (loaded)
+                        {
+                            _view.SetSettingsOpen(false);
+                        }
+                        _view.ShowNotice(loaded ? "已读取" : "没有可用的快速存档");
+                        break;
+                    case RevGalInput.OpenSettings:
+                        _view.SetSettingsOpen(true);
+                        break;
+                    case RevGalInput.CloseSettings:
+                        _view.SetSettingsOpen(false);
                         break;
                     case RevGalInput.Close:
                         CloseSelf();
@@ -216,7 +238,7 @@ namespace Revolution.Gal
 
         private void OnChoice(string id)
         {
-            if (_session != null && State == RevUIPanelState.Opened && !IsCovered && !HistoryOpen)
+            if (_session != null && State == RevUIPanelState.Opened && !IsCovered && !_view.ModalOpen)
             {
                 Guard(() => _session.Choose(id));
             }

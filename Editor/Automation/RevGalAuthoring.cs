@@ -18,6 +18,7 @@ namespace Revolution.Gal.Editor
             public string title;
             public string document;
             public string font;
+            public string theme;
             public string bundle;
             public string entry;
             public string[] operations;
@@ -57,6 +58,54 @@ namespace Revolution.Gal.Editor
                 MarkBundle(args.path, args.bundle);
             }
             return Describe(args.path, definition);
+        }
+
+        /// <summary>一次生成可打包的剧情 SO，并回传默认路径、包名及运行时逻辑键。</summary>
+        [RevAutomationAction("gal.story.generate", Environment = "edit",
+            Keys = new[] { "document", "path", "bundle", "checkOnly", "overwrite" },
+            Description = "校验剧情 JSON，按剧情 ID 生成 SO 并回传逻辑路径和 AB 名")]
+        public static object Generate(RevAutomationRequest request)
+        {
+            var args = Read(request);
+            var definition = RevGalJson.Import(args.document);
+            var result = Describe(args.path, definition);
+            if (!(bool)result["valid"])
+            {
+                return result;
+            }
+
+            string path = string.IsNullOrEmpty(args.path)
+                ? $"{RevGalAssets.ResourceRoot()}/Gal/Stories/{definition.Id}.asset"
+                : RevGalAssets.AssetPath(args.path, ".asset");
+            string logicalPath = RevGalAssets.LogicalPath(path);
+            if (!RevGalValidation.IsLogicalPath(logicalPath))
+            {
+                throw new ArgumentException("请指定可用作剧情逻辑路径的 SO 文件名：" + path);
+            }
+            string oldBundle = AssetImporter.GetAtPath(path)?.assetBundleName;
+            string bundle = !string.IsNullOrEmpty(args.bundle) ? args.bundle : oldBundle;
+            if (string.IsNullOrEmpty(bundle))
+            {
+                bundle = "gal_story_" + definition.Id.ToLowerInvariant().Replace('.', '_').Replace('-', '_');
+                ValidateBundle(bundle);
+            }
+            else if (!string.IsNullOrEmpty(args.bundle))
+            {
+                ValidateBundle(bundle);
+            }
+            if (!args.checkOnly)
+            {
+                RevGalAssets.Write(path, definition, args.overwrite);
+                if (!string.Equals(oldBundle, bundle, StringComparison.Ordinal))
+                {
+                    MarkBundle(path, bundle);
+                }
+            }
+            result["path"] = path;
+            result["logicalPath"] = logicalPath;
+            result["bundle"] = bundle;
+            result["written"] = !args.checkOnly;
+            return result;
         }
 
         [RevAutomationAction("gal.story.export", Environment = "edit", Keys = new[] { "path" }, Description = "导出剧情 SO 的可往返 JSON")]
@@ -139,14 +188,18 @@ namespace Revolution.Gal.Editor
             };
         }
 
-        [RevAutomationAction("gal.ui.create", Environment = "edit", Keys = new[] { "font", "overwrite", "bundle" },
-            Description = "在配置的资源根创建 UGUI 默认 Gal 面板")]
+        [RevAutomationAction("gal.ui.create", Environment = "edit", Keys = new[] { "font", "theme", "overwrite", "bundle" },
+            Description = "生成默认 Gal 面板、设置弹层及共用主题")]
         public static object CreatePanel(RevAutomationRequest request)
         {
             var args = Read(request);
             ValidateBundle(args.bundle);
-            string path = RevGalPanelBuilder.Create(args.font, args.overwrite, args.bundle);
-            return new Dictionary<string, object> { ["path"] = path, ["logicalPath"] = RevGal.PanelRoot + "/RevGalPanel" };
+            var created = RevGalPanelBuilder.Create(args.font, args.theme, args.overwrite, args.bundle);
+            return new Dictionary<string, object>
+            {
+                ["path"] = created.Path, ["themePath"] = created.ThemePath,
+                ["logicalPath"] = RevGal.PanelRoot + "/RevGalPanel"
+            };
         }
 
         [RevAutomationAction("gal.editor.open", Environment = "edit", Keys = new[] { "path" }, Description = "打开 Gal 剧情工作台")]

@@ -104,8 +104,13 @@ namespace Revolution.Gal.Editor
 
         public static string LogicalPath(UnityEngine.Object asset)
         {
+            return LogicalPath(AssetDatabase.GetAssetPath(asset));
+        }
+
+        /// <summary>把即将写入的 SO 路径也换算为运行时可直接使用的逻辑路径。</summary>
+        public static string LogicalPath(string path)
+        {
             string root = ResourceRoot() + "/";
-            string path = AssetDatabase.GetAssetPath(asset);
             if (!path.StartsWith(root, StringComparison.Ordinal))
             {
                 throw new ArgumentException("请选择资源根目录中的资产：" + root);

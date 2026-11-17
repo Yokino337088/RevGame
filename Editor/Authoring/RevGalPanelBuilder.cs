@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,22 +15,88 @@ namespace Revolution.Gal.Editor
         private static readonly Color Accent = new Color(.55f, .83f, .94f);
         private static readonly Color Ink = new Color(.94f, .96f, 1f);
 
-        public static string Create(string fontPath, bool overwrite, string bundle)
+        // 部位映射属于默认 Prefab 的生成配方。生成时存成组件引用，播放时不走层级搜索。
+        private static readonly (RevGalThemePart Part, string Path)[] ThemeTargets =
         {
-            string path = RevGalAssets.ResourceRoot() + "/" + RevGal.PanelRoot + "/RevGalPanel.prefab";
+            (RevGalThemePart.Backdrop, ""),
+            (RevGalThemePart.Background, "Story/Background"),
+            (RevGalThemePart.LeftPortrait, "Story/Left"),
+            (RevGalThemePart.CenterPortrait, "Story/Center"),
+            (RevGalThemePart.RightPortrait, "Story/Right"),
+            (RevGalThemePart.Header, "Story/Header"),
+            (RevGalThemePart.Title, "Story/Header/Title"),
+            (RevGalThemePart.Mode, "Story/Header/Mode"),
+            (RevGalThemePart.Close, "Story/Header/Close"),
+            (RevGalThemePart.OpenSettings, "Story/Header/OpenSettings"),
+            (RevGalThemePart.DialogueBox, "Story/DialogueDock"),
+            (RevGalThemePart.Speaker, "Story/DialogueDock/Speaker"),
+            (RevGalThemePart.Dialogue, "Story/DialogueDock/Line"),
+            (RevGalThemePart.Advance, "Story/DialogueDock/Advance"),
+            (RevGalThemePart.Notice, "Story/Notice"),
+            (RevGalThemePart.Choices, "Story/Choices"),
+            (RevGalThemePart.ChoiceButton, "Story/Choices/ChoiceTemplate"),
+            (RevGalThemePart.SettingsShade, "SettingsOverlay"),
+            (RevGalThemePart.SettingsPanel, "SettingsOverlay/SettingsPanel"),
+            (RevGalThemePart.SettingsTitle, "SettingsOverlay/SettingsPanel/Title"),
+            (RevGalThemePart.SettingsMode, "SettingsOverlay/SettingsPanel/Mode"),
+            (RevGalThemePart.SettingsNotice, "SettingsOverlay/SettingsPanel/Notice"),
+            (RevGalThemePart.CloseSettings, "SettingsOverlay/SettingsPanel/CloseSettings"),
+            (RevGalThemePart.Auto, "SettingsOverlay/SettingsPanel/Auto"),
+            (RevGalThemePart.ReadSkip, "SettingsOverlay/SettingsPanel/ReadSkip"),
+            (RevGalThemePart.Rollback, "SettingsOverlay/SettingsPanel/Rollback"),
+            (RevGalThemePart.History, "SettingsOverlay/SettingsPanel/History"),
+            (RevGalThemePart.QuickSave, "SettingsOverlay/SettingsPanel/QuickSave"),
+            (RevGalThemePart.QuickLoad, "SettingsOverlay/SettingsPanel/QuickLoad"),
+            (RevGalThemePart.HistoryShade, "Backlog"),
+            (RevGalThemePart.HistoryTitle, "Backlog/BacklogTitle"),
+            (RevGalThemePart.HistoryText, "Backlog/HistoryScroll"),
+            (RevGalThemePart.HistoryPage, "Backlog/HistoryPage"),
+            (RevGalThemePart.HistoryOlder, "Backlog/OlderHistory"),
+            (RevGalThemePart.HistoryNewer, "Backlog/NewerHistory"),
+            (RevGalThemePart.HistoryClose, "Backlog/CloseHistory")
+        };
+
+        private static string PanelDirectory => RevGalAssets.ResourceRoot() + "/" + RevGal.PanelRoot;
+
+        /// <summary>从工作台打开当前默认面板实际绑定的主题。</summary>
+        public static RevGalPanelTheme FindTheme()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelDirectory + "/RevGalPanel.prefab");
+            return prefab == null ? null : prefab.GetComponentInChildren<RevGalView>(true)?.Theme;
+        }
+
+        /// <summary>生成默认面板及主题绑定，已有主题可跨剧情复用，重建时保留该主题 SO。</summary>
+        public static (string Path, string ThemePath) Create(string fontPath, string themePath, bool overwrite, string bundle)
+        {
+            string folder = PanelDirectory;
+            string path = folder + "/RevGalPanel.prefab";
             var existing = AssetDatabase.LoadMainAssetAtPath(path);
-            if (existing != null && (!overwrite || !(existing is GameObject rootPrefab) || rootPrefab.GetComponent<RevGalPanel>() == null))
+            var previousPrefab = existing as GameObject;
+            if ((existing != null || File.Exists(path))
+                && (!overwrite || previousPrefab == null || previousPrefab.GetComponent<RevGalPanel>() == null))
             {
                 throw new InvalidOperationException("默认面板已存在。重建需要允许覆盖 RevGalPanel：" + path);
             }
-            Font font = string.IsNullOrEmpty(fontPath) ? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+            Font previousFont = previousPrefab == null ? null : previousPrefab.GetComponentInChildren<Text>(true)?.font;
+            Font font = string.IsNullOrEmpty(fontPath) ? previousFont ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
                 : AssetDatabase.LoadAssetAtPath<Font>(RevGalAssets.AssetPath(fontPath, null));
             if (font == null)
             {
                 throw new ArgumentException("无法读取字体：" + fontPath);
             }
-            RevGalAssets.EnsureFolder(System.IO.Path.GetDirectoryName(path).Replace('\\', '/'));
+            var previousTheme = previousPrefab == null ? null : previousPrefab.GetComponentInChildren<RevGalView>(true)?.Theme;
+            bool explicitTheme = !string.IsNullOrEmpty(themePath);
+            themePath = explicitTheme ? RevGalAssets.AssetPath(themePath, ".asset") : folder + "/RevGalPanelTheme.asset";
+            var theme = !explicitTheme && previousTheme != null
+                ? previousTheme : AssetDatabase.LoadAssetAtPath<RevGalPanelTheme>(themePath);
+            if (theme == null && (explicitTheme || File.Exists(themePath)))
+            {
+                throw new ArgumentException("无法读取剧情面板主题：" + themePath);
+            }
 
+            RevGalAssets.EnsureFolder(folder);
+            bool createTheme = theme == null;
+            bool saved = false;
             var root = new GameObject("RevGalPanel", typeof(RectTransform), typeof(CanvasGroup), typeof(RevGalPanel));
             try
             {
@@ -38,61 +105,74 @@ namespace Revolution.Gal.Editor
                 Sound(rect, "Music", true);
                 Sound(rect, "Voice", false);
                 Sound(rect, "Sound", false);
-                BuildView(rect, font);
+                var fields = BuildView(rect, font);
+                if (createTheme)
+                {
+                    theme = ScriptableObject.CreateInstance<RevGalPanelTheme>();
+                }
+                BindTheme(fields, theme, createTheme);
+                if (createTheme)
+                {
+                    AssetDatabase.CreateAsset(theme, themePath);
+                    RevGalAuthoring.MarkBundle(themePath, bundle);
+                }
+                Bind(fields, "theme", theme);
+                fields.ApplyModifiedPropertiesWithoutUndo();
 
                 if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
                 {
-                    throw new InvalidOperationException("默认剧情面板保存失败");
+                    throw new InvalidOperationException("默认剧情面板保存失败：" + path);
                 }
+                saved = true;
                 RevGalAuthoring.MarkBundle(path, bundle);
-                return path;
+                return (path, AssetDatabase.GetAssetPath(theme));
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(root);
+                if (!saved && createTheme && theme != null)
+                {
+                    if (AssetDatabase.Contains(theme))
+                    {
+                        AssetDatabase.DeleteAsset(themePath);
+                    }
+                    else
+                    {
+                        UnityEngine.Object.DestroyImmediate(theme);
+                    }
+                }
             }
         }
 
-        private static void BuildView(RectTransform root, Font font)
+        private static SerializedObject BuildView(RectTransform root, Font font)
         {
             var view = Node(root, "View", 0, 0, 1, 1);
             Plate(view, Backdrop, true);
             var fields = new SerializedObject(view.gameObject.AddComponent<RevGalView>());
-            Bind(fields, "background", Art(view, "Background", 0, 0, 1, 1));
-            Bind(fields, "left", Art(view, "Left", .03f, .24f, .37f, .89f));
-            Bind(fields, "center", Art(view, "Center", .33f, .24f, .67f, .89f));
-            Bind(fields, "right", Art(view, "Right", .63f, .24f, .97f, .89f));
+            var story = Node(view, "Story", 0, 0, 1, 1);
+            Bind(fields, "storyInput", story.gameObject.AddComponent<CanvasGroup>());
+            Bind(fields, "background", Art(story, "Background", 0, 0, 1, 1));
+            Bind(fields, "left", Art(story, "Left", .03f, .24f, .37f, .89f));
+            Bind(fields, "center", Art(story, "Center", .33f, .24f, .67f, .89f));
+            Bind(fields, "right", Art(story, "Right", .63f, .24f, .97f, .89f));
 
-            var header = Node(view, "Header", 0, .91f, 1, 1);
+            var header = Node(story, "Header", 0, .91f, 1, 1);
             Plate(header, PanelColor, false);
-            Bind(fields, "title", Label(Node(header, "Title", .04f, 0, .68f, 1), font, "", 40, TextAnchor.MiddleLeft, Ink));
-            Bind(fields, "mode", Label(Node(header, "Mode", .7f, 0, .86f, 1), font, "", 26, TextAnchor.MiddleRight, Accent));
+            Bind(fields, "title", Label(Node(header, "Title", .04f, 0, .53f, 1), font, "", 40, TextAnchor.MiddleLeft, Ink));
+            Bind(fields, "mode", Label(Node(header, "Mode", .55f, 0, .77f, 1), font, "", 26, TextAnchor.MiddleRight, Accent));
+            Bind(fields, "openSettings", Button(Node(header, "OpenSettings", .79f, .17f, .878f, .83f), font, "设置", 28));
             Bind(fields, "close", Button(Node(header, "Close", .89f, .17f, .972f, .83f), font, "关闭", 28));
 
-            var dock = Node(view, "DialogueDock", .036f, .104f, .964f, .375f);
+            var dock = Node(story, "DialogueDock", .036f, .055f, .964f, .344f);
             Plate(dock, PanelColor, true);
             Bind(fields, "speaker", Label(Node(dock, "Speaker", .036f, .71f, .962f, .98f), font, "", 36, TextAnchor.MiddleLeft, Accent));
             Bind(fields, "dialogue", ScrollingText(Node(dock, "Line", .036f, .08f, .86f, .71f), font, 37, out ScrollRect dialogueScroll));
             Bind(fields, "dialogueScroll", dialogueScroll);
             Bind(fields, "advance", Button(Node(dock, "Advance", .879f, .10f, .974f, .36f), font, "继续", 28));
 
-            var controls = Node(view, "Controls", .038f, .031f, .962f, .087f);
-            var row = controls.gameObject.AddComponent<HorizontalLayoutGroup>();
-            row.spacing = 11f;
-            row.childControlWidth = row.childForceExpandWidth = true;
-            row.childControlHeight = row.childForceExpandHeight = true;
-            foreach (var control in new[]
-            {
-                (field: "auto", name: "Auto", label: "自动"), (field: "skip", name: "ReadSkip", label: "跳过已读"),
-                (field: "rollback", name: "Rollback", label: "回退"), (field: "history", name: "History", label: "回看"),
-                (field: "save", name: "QuickSave", label: "快速保存"), (field: "load", name: "QuickLoad", label: "快速读取")
-            })
-            {
-                Bind(fields, control.field, Button(Node(controls, control.name, 0, 0, 1, 1), font, control.label, 26));
-            }
-            Bind(fields, "notice", Label(Node(view, "Notice", .036f, .377f, .964f, .422f), font, "", 25, TextAnchor.MiddleLeft, Accent));
+            Bind(fields, "notice", Label(Node(story, "Notice", .036f, .345f, .964f, .407f), font, "", 25, TextAnchor.MiddleLeft, Accent));
 
-            var choices = Node(view, "Choices", .18f, .436f, .82f, .84f);
+            var choices = Node(story, "Choices", .18f, .436f, .82f, .84f);
             var choiceContent = ScrollContent(choices, out _);
             var column = choiceContent.gameObject.AddComponent<VerticalLayoutGroup>();
             column.spacing = 12f;
@@ -108,6 +188,7 @@ namespace Revolution.Gal.Editor
             Bind(fields, "choiceOverlay", choices.gameObject);
             choices.gameObject.SetActive(false);
 
+            BuildSettings(view, fields, font);
             var backlog = Node(view, "Backlog", 0, 0, 1, 1);
             Plate(backlog, new Color(.035f, .054f, .086f, .98f), true);
             Label(Node(backlog, "BacklogTitle", .109f, .84f, .75f, .93f), font, "对话回看", 43, TextAnchor.MiddleLeft, Ink);
@@ -119,7 +200,50 @@ namespace Revolution.Gal.Editor
             Bind(fields, "newerHistory", Button(Node(backlog, "NewerHistory", .595f, .028f, .7f, .084f), font, "更新", 25));
             Bind(fields, "historyPage", Label(Node(backlog, "HistoryPage", .425f, .028f, .575f, .084f), font, "", 24, TextAnchor.MiddleCenter, Accent));
             backlog.gameObject.SetActive(false);
-            fields.ApplyModifiedPropertiesWithoutUndo();
+            return fields;
+        }
+
+        /// <summary>播放工具共用独立弹层。遮罩置于剧情层上方，按钮位置可各自覆盖。</summary>
+        private static void BuildSettings(RectTransform view, SerializedObject fields, Font font)
+        {
+            var overlay = Node(view, "SettingsOverlay", 0, 0, 1, 1);
+            Plate(overlay, new Color(.025f, .043f, .071f, .77f), true);
+            Bind(fields, "settingsOverlay", overlay.gameObject);
+            var card = Node(overlay, "SettingsPanel", .25f, .22f, .75f, .8f);
+            Plate(card, PanelColor, true);
+            Label(Node(card, "Title", .08f, .82f, .68f, .96f), font, "剧情设置", 42, TextAnchor.MiddleLeft, Ink);
+            Bind(fields, "closeSettings", Button(Node(card, "CloseSettings", .76f, .83f, .92f, .94f), font, "返回", 28));
+            Bind(fields, "settingsMode", Label(Node(card, "Mode", .08f, .705f, .92f, .81f), font, "手动播放", 26,
+                TextAnchor.MiddleLeft, Accent));
+            Bind(fields, "settingsNotice", Label(Node(card, "Notice", .08f, .058f, .92f, .157f), font, "", 25,
+                TextAnchor.MiddleLeft, Accent));
+            Bind(fields, "auto", Button(Node(card, "Auto", .08f, .549f, .475f, .677f), font, "自动", 30));
+            Bind(fields, "skip", Button(Node(card, "ReadSkip", .525f, .549f, .92f, .677f), font, "跳过已读", 30));
+            Bind(fields, "rollback", Button(Node(card, "Rollback", .08f, .371f, .475f, .499f), font, "回退", 30));
+            Bind(fields, "history", Button(Node(card, "History", .525f, .371f, .92f, .499f), font, "回看", 30));
+            Bind(fields, "save", Button(Node(card, "QuickSave", .08f, .193f, .475f, .321f), font, "快速保存", 30));
+            Bind(fields, "load", Button(Node(card, "QuickLoad", .525f, .193f, .92f, .321f), font, "快速读取", 30));
+            overlay.gameObject.SetActive(false);
+        }
+
+        /// <summary>默认主题记录锚点与偏移初值，已有主题只重新绑定。</summary>
+        private static void BindTheme(SerializedObject fields, RevGalPanelTheme theme, bool seed)
+        {
+            var view = (RevGalView)fields.targetObject;
+            var targets = fields.FindProperty("themeTargets");
+            targets.arraySize = ThemeTargets.Length;
+            for (int index = 0; index < ThemeTargets.Length; index++)
+            {
+                var (part, path) = ThemeTargets[index];
+                var rect = (RectTransform)(path.Length == 0 ? view.transform : view.transform.Find(path));
+                var binding = targets.GetArrayElementAtIndex(index);
+                binding.FindPropertyRelative("part").intValue = (int)part;
+                binding.FindPropertyRelative("rect").objectReferenceValue = rect;
+                if (seed)
+                {
+                    theme.Parts[(int)part].Layout.ReadFrom(rect);
+                }
+            }
         }
 
         private static Text ScrollingText(RectTransform frame, Font font, int size, out ScrollRect scroll)
