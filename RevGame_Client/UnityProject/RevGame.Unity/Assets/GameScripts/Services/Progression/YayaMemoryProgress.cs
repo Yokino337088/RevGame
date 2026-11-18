@@ -10,6 +10,7 @@ namespace RevGame.Services
         public const int ChapterCount = 6;
         public const string Changed = "RevGame.YayaMemories.ProgressChanged";
         private const int ChapterMask = (1 << ChapterCount) - 1;
+        private const int CottageStoryVisited = 1 << (ChapterCount * 2);
         private const string SaveKey = "RevGame.YayaMemories.Progress.v1";
 #if UNITY_EDITOR
         public const string RestartTestSession = "RevGame.YayaMemories.EditorRestartKey";
@@ -49,6 +50,21 @@ namespace RevGame.Services
         public int Cleared => Flags & ChapterMask;
         public int Read => (Flags >> ChapterCount) & Cleared;
         public int Unread => Cleared & ~Read;
+
+        /// <summary>续篇只认六章真实通关，不受收藏书的编辑器预览开关影响。</summary>
+        public bool IsCottageStoryUnlocked => Cleared == ChapterMask;
+
+        /// <summary>第一次成功打开续篇后消除红点，通关和收藏书已阅位不受影响。</summary>
+        public bool IsCottageStoryUnread => IsCottageStoryUnlocked && (Flags & CottageStoryVisited) == 0;
+
+        public void MarkCottageStoryVisited()
+        {
+            int flags = Flags;
+            if ((flags & ChapterMask) == ChapterMask)
+            {
+                Save(flags, flags | CottageStoryVisited);
+            }
+        }
 
         /// <summary>可看插画的章节位图。编辑器预览只影响展示，真实通关与已阅仍按存档记账。</summary>
         public int Unlocked

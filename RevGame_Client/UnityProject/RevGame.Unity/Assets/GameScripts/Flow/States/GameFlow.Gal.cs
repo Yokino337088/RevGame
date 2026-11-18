@@ -1,17 +1,20 @@
 using System;
 using RevGame.Core;
+using RevGame.UI;
 using Revolution;
 using Revolution.Gal;
+using UnityEngine;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System.Collections.Generic;
-using UnityEngine;
 #endif
 
 namespace RevGame.Flow
 {
     public sealed partial class GameFlow
     {
-        /// <summary>一个打开请求占用一次取消源。流程离开时取消，晚到的加载不能占用新的游戏域。</summary>
+        /// <summary>独立剧情场景只留相机与监听器；剧情面板在场景交割后由 Gal 域装配。</summary>
+        public const string GalSceneName = "GalScene";
+        /// <summary>请求贯穿切场景与首屏交付。取消后先还清资源，再返回大厅并解开过场锁。</summary>
         private RevCancellationTokenSource _galOpening;
         /// <summary>面板持有会话。流程只记归属，玩家自行关闭后剧情快照可立即回收。</summary>
         private WeakReference<RevGalSession> _galSession;
@@ -19,7 +22,7 @@ namespace RevGame.Flow
         /// <summary>从开始加载起占用同一套玩法门禁。玩家关闭面板后会话释放，门禁自动恢复。</summary>
         public bool IsGalPlaying => _galOpening != null || GetOwnedGalPanel() != null;
 
-        /// <summary>从稳定的大厅或选关页打开独立 Gal 剧情。调用方按需传自己的档案和信号处理。</summary>
+        /// <summary>从大厅或选关页进入独立场景；首屏媒体就绪且遮挡关闭后才返回 true。</summary>
         public async RevTask<bool> OpenGalAsync(string storyPath, RevGalOptions options = null, string slot = null)
         {
             if (_disposed || (Screen != GameScreen.Home && Screen != GameScreen.LevelSelect) || IsTutorialActive
@@ -30,26 +33,95 @@ namespace RevGame.Flow
             }
             var request = new RevCancellationTokenSource();
             _galOpening = request;
+            IsTransitioning = true;
             LastError = string.Empty;
             try
             {
+                _loading = await RevUI.OpenAsync<LoadingPanel>();
+                ThrowIfDisposed();
+                RevScope.Detach(_loading);
+                _loading.ResetCover();
+                Report(0.02f, "正在翻开故事…");
+                await RevTask.Yield();
+                ThrowIfDisposed();
+                request.Token.ThrowIfCancelled();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                CheckDevelopmentFailure("before-scene");
+#endif
+                // 先卸载大厅及它的场景音频，再打开剧情面板，避免两边音乐同时播放。
+                await RevScene.LoadAsync(GalSceneName, p => Report(0.1f + 0.55f * p, "正在前往故事场景…"));
+                ThrowIfDisposed();
+                if (RevScene.CurrentName != GalSceneName || RevScene.State != RevSceneLoadState.Done)
+                {
+                    throw new InvalidOperationException("未能进入剧情场景");
+                }
+                _activePresentation = null;
+                Change(GameScreen.Gal);
+                request.Token.ThrowIfCancelled();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                CheckDevelopmentFailure("after-scene");
+#endif
+                Report(0.72f, "正在准备剧情画面…");
                 var panel = await RevGal.OpenAsync(storyPath, options, slot, request.Token);
                 _galSession = new WeakReference<RevGalSession>(panel.Data);
+                var playback = GalStoryPlayback.Attach(panel, () =>
+                {
+                    if (GetOwnedGalPanel() == panel)
+                    {
+                        ReturnHome();
+                    }
+                });
+                float deadline = Time.realtimeSinceStartup + 20f;
+                while (!playback.StageReady)
+                {
+                    ThrowIfDisposed();
+                    request.Token.ThrowIfCancelled();
+                    if (GetOwnedGalPanel() != panel || Time.realtimeSinceStartup >= deadline)
+                    {
+                        throw new InvalidOperationException("剧情首屏画面没有完成加载");
+                    }
+                    await RevTask.Yield();
+                }
+                Report(1f, "故事已就绪");
+                await _loading.FadeOutAsync();
+                ThrowIfDisposed();
+                request.Token.ThrowIfCancelled();
+                RevUI.Close<LoadingPanel>();
+                _loading = null;
+                playback.BeginVisiblePlayback();
                 LastError = string.Empty;
                 return true;
             }
-            catch (RevOperationCanceledException)
+            catch (Exception error) when ((error is RevOperationCanceledException || error is OperationCanceledException)
+                && (_disposed || request.Token.IsCancelled))
             {
-                return false;
-            }
-            catch (OperationCanceledException)
-            {
+                CloseOwnedGalPanel();
+                if (!_disposed)
+                {
+                    if (RevScene.CurrentName == GalSceneName)
+                    {
+                        await SwitchSceneAsync(GameScreen.Home);
+                    }
+                    else
+                    {
+                        RevUI.Close<LoadingPanel>();
+                        _loading = null;
+                    }
+                }
                 return false;
             }
             catch (Exception error)
             {
-                LastError = "Gal 剧情打开失败：" + error.Message;
-                RevLog.Exception(error, "Gal 剧情打开失败", "RevGame");
+                CloseOwnedGalPanel();
+                if (!_disposed)
+                {
+                    LastError = "剧情打开失败：" + error.Message;
+                    RevLog.Exception(error, "剧情打开失败", "RevGame");
+                    if (_loading != null)
+                    {
+                        _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, LoadStep, LastError));
+                    }
+                }
                 return false;
             }
             finally
@@ -58,20 +130,34 @@ namespace RevGame.Flow
                 {
                     _galOpening = null;
                 }
+                IsTransitioning = false;
             }
         }
 
-        /// <summary>仅关闭本流程持有的会话或加载请求。另一个宿主在同一面板打开的新会话归它管理。</summary>
+        /// <summary>取消未交付的请求；交付后沿用返回大厅流程，卸载 GalScene 并重新装配大厅。</summary>
         public bool CloseGal()
         {
-            var request = _galOpening;
+            if (_disposed)
+            {
+                return false;
+            }
+            if (_galOpening != null)
+            {
+                _galOpening.Cancel();
+                return true;
+            }
+            return Screen == GameScreen.Gal && !IsTransitioning && ReturnHome();
+        }
+
+        /// <summary>只关闭本流程拥有的会话。另一个宿主换开的面板及其资源不归这次请求。</summary>
+        private void CloseOwnedGalPanel()
+        {
             var panel = GetOwnedGalPanel();
-            var session = panel != null ? panel.Data : null;
-            _galOpening = null;
             _galSession = null;
-            request?.Cancel();
-            bool closed = panel != null && session != null && ReferenceEquals(panel.Data, session) && RevUI.Close(panel);
-            return closed || request != null;
+            if (panel != null)
+            {
+                RevUI.Close(panel);
+            }
         }
 
         private RevGalPanel GetOwnedGalPanel()
@@ -106,12 +192,25 @@ namespace RevGame.Flow
 
         private object GalAutomationState()
         {
+            var panel = GetOwnedGalPanel();
+            var playback = panel == null ? null : panel.GetComponentInChildren<GalStoryPlayback>(true);
+            var frame = panel?.Data?.Frame;
             return new Dictionary<string, object>
             {
                 ["screen"] = Screen.ToString(),
+                ["scene"] = RevScene.CurrentName,
+                ["transitioning"] = IsTransitioning,
                 ["pending"] = _galOpening != null,
                 ["playing"] = IsGalPlaying,
                 ["blocked"] = IsGameplayBlocked,
+                ["galDomain"] = RevScope.IsActive(GameDomain.Gal),
+                ["lobbyDomain"] = RevScope.IsActive(GameDomain.Lobby),
+                ["stageReady"] = playback != null && playback.StageReady,
+                ["subtitleSoundStarted"] = playback != null && playback.SubtitleSoundStarted,
+                ["nodeId"] = frame?.Id,
+                ["nodeKind"] = frame?.Kind.ToString(),
+                ["visibleDialogue"] = panel?.VisibleDialogue,
+                ["textComplete"] = panel != null && panel.TextComplete,
                 ["error"] = LastError
             };
         }

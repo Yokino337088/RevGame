@@ -370,7 +370,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wake_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }
@@ -404,7 +404,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wake_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
         "Center": "-",
         "Right": "-"
       }
@@ -438,7 +438,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
         "Center": "-",
         "Right": "-"
       }
@@ -456,7 +456,7 @@
       "StagePreset": "stage_c01_chores",
       "Next": "c01_chores_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
         "Center": "-",
         "Right": "-"
       }
@@ -490,7 +490,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
         "Center": "-",
         "Right": "-"
       }
@@ -558,7 +558,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -626,7 +626,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
         "Center": "-",
         "Right": "-"
       }
@@ -694,7 +694,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
         "Center": "-",
         "Right": "-"
       }
@@ -712,7 +712,7 @@
       "StagePreset": "stage_c01_meal",
       "Next": "c01_meal_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -780,7 +780,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
         "Center": "-",
         "Right": "-"
       }
@@ -983,7 +983,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_018",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
         "Center": "-",
         "Right": "-"
       }
@@ -1035,7 +1035,7 @@
       "StagePreset": "stage_c01_magic",
       "Next": "c01_magic_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
         "Center": "-",
         "Right": "-"
       }
@@ -1069,7 +1069,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
         "Center": "-",
         "Right": "-"
       }
@@ -1103,7 +1103,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
         "Center": "-",
         "Right": "-"
       }
@@ -1154,7 +1154,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
         "Background": "Art/Background/Gal/Chapter01/CottageMagicPOV",
         "Center": "-",
         "Right": "-"
@@ -1189,7 +1189,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
         "Center": "-",
         "Right": "-"
       }
@@ -1223,7 +1223,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_013",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
         "Background": "Art/Background/Gal/Chapter01/CottageGarden",
         "Center": "-",
         "Right": "-"
@@ -1258,7 +1258,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_015",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -1292,7 +1292,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }
@@ -1310,7 +1310,7 @@
       "StagePreset": "stage_c01_wash",
       "Next": "c01_wash_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -1412,7 +1412,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
         "Center": "-",
         "Right": "-"
       }
@@ -1514,7 +1514,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -1582,7 +1582,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_goodnight_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
         "Center": "-",
         "Right": "-"
       }
@@ -1617,7 +1617,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_goodnight_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -1719,7 +1719,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -1737,7 +1737,7 @@
       "StagePreset": "stage_c02_pantry",
       "Next": "c02_pantry_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_10",
         "Center": "-",
         "Right": "-"
       }
@@ -1839,7 +1839,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_15",
         "Center": "-",
         "Right": "-"
       }
@@ -1873,7 +1873,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
         "Center": "-",
         "Right": "-"
       }
@@ -1907,7 +1907,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
         "Center": "-",
         "Right": "-"
       }
@@ -1941,7 +1941,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
         "Center": "-",
         "Right": "-"
       }
@@ -2009,7 +2009,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }
@@ -2027,7 +2027,7 @@
       "StagePreset": "stage_c02_grain",
       "Next": "c02_grain_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -2061,7 +2061,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
         "Center": "-",
         "Right": "-"
       }
@@ -2095,7 +2095,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -2163,7 +2163,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -2197,7 +2197,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
         "Center": "-",
         "Right": "-"
       }
@@ -2231,7 +2231,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
         "Center": "-",
         "Right": "-"
       }
@@ -2265,7 +2265,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -2299,7 +2299,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -2402,7 +2402,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
         "Center": "-",
         "Right": "-"
       }
@@ -2470,7 +2470,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_19",
         "Center": "-",
         "Right": "-"
       }
@@ -2504,7 +2504,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }
@@ -2522,7 +2522,7 @@
       "StagePreset": "stage_c02_eggs",
       "Next": "c02_eggs_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
         "Center": "-",
         "Right": "-"
       }
@@ -2556,7 +2556,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
         "Center": "-",
         "Right": "-"
       }
@@ -2641,7 +2641,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -2675,7 +2675,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -2709,7 +2709,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
         "Center": "-",
         "Right": "-"
       }
@@ -2727,7 +2727,7 @@
       "StagePreset": "stage_c02_return",
       "Next": "c02_return_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_03",
         "Center": "-",
         "Right": "-"
       }
@@ -2761,7 +2761,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_06",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_08",
         "Center": "-",
         "Right": "-"
       }
@@ -2795,7 +2795,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }
@@ -2829,7 +2829,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -2863,7 +2863,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
         "Center": "-",
         "Right": "-"
       }
@@ -2897,7 +2897,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -2932,7 +2932,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
         "Center": "-",
         "Right": "-"
       }
@@ -2982,7 +2982,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
         "Center": "-",
         "Right": "-"
       }
@@ -3016,7 +3016,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }
@@ -3118,7 +3118,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
         "Center": "-",
         "Right": "-"
       }
@@ -3152,7 +3152,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -3204,7 +3204,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
         "Center": "-",
         "Right": "-"
       }
@@ -3288,7 +3288,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -3305,7 +3305,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
         "Center": "-",
         "Right": "-"
       }
@@ -3339,7 +3339,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -3373,7 +3373,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
         "Center": "-",
         "Right": "-"
       }
@@ -3391,7 +3391,7 @@
       "StagePreset": "stage_c03_portrait",
       "Next": "c03_portrait_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -3510,7 +3510,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
         "Center": "-",
         "Right": "-"
       }
@@ -3544,7 +3544,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
         "Center": "-",
         "Right": "-"
       }
@@ -3629,7 +3629,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_01",
         "Center": "-",
         "Right": "-"
       }
@@ -3647,7 +3647,7 @@
       "StagePreset": "stage_c03_together",
       "Next": "c03_together_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
         "Center": "-",
         "Right": "-"
       }
@@ -3681,7 +3681,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -3715,7 +3715,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -3836,7 +3836,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_013",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
         "Center": "-",
         "Right": "-"
       }
@@ -3888,7 +3888,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_confession_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_15",
         "Center": "-",
         "Right": "-"
       }
@@ -3955,7 +3955,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_confession_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -4023,7 +4023,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_confession_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_09",
         "Center": "-",
         "Right": "-"
       }
@@ -4126,7 +4126,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_home_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
         "Center": "-",
         "Right": "-"
       }
@@ -4160,7 +4160,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_home_005",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
         "Center": "-",
         "Right": "-"
       }

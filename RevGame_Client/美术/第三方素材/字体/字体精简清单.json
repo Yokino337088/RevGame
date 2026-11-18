@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "818c35a255ad48eebd6ff110f15ff95d1d8ab9c55f4bed06e9eb4f1a6f470c41",
-  "inputDigest": "9bd0230bbacd718446b9e4aef49adffc630c39bb14e352399b82a35b1b05dc39",
+  "outputSha256": "7ea7e09620d881245486dcabaf92260f1a7f7514f24e8c655b241fa760ecbbc1",
+  "inputDigest": "2403ed2ea2a5090fda6697c5f1c3d6ee69f9e179adadbaf2900e44931bf114bc",
   "originalBytes": 17002248,
-  "outputBytes": 869920,
-  "characterCount": 1937,
-  "glyphCount": 3827,
+  "outputBytes": 871652,
+  "characterCount": 1940,
+  "glyphCount": 3833,
   "codepoints": [
     32,
     33,
@@ -616,6 +616,7 @@
     23041,
     23064,
     23130,
+    23186,
     23244,
     23376,
     23380,
@@ -992,6 +993,8 @@
     26086,
     26087,
     26089,
+    26094,
+    26095,
     26102,
     26114,
     26126,
@@ -2153,7 +2156,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Gal/Stories/yaya_days_together.asset",
-      "sha256": "77bdac9b936544592d536724a393f5581cb8893818c3ad6206c05fa0449dcf9a"
+      "sha256": "80238181d6869e098bf20c40d4064b35362d9764e6f6fb8b0a99cb5de814b277"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Pieces/Boss/BossPieceView.prefab",
@@ -2181,7 +2184,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Gal/RevGalPanelTheme.asset",
-      "sha256": "22a66a690cd21ad11133830da0afd7b457fa00bae5bd879be6b47747ef8cd4e4"
+      "sha256": "7db1414338bbdf04a4f1a40a680d73bc61cbce98a6130ee0c8cc13f09cee354e"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Item/Card/CardItem.prefab",
@@ -2209,7 +2212,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/HomePanel.prefab",
-      "sha256": "43391f6e4e4b67a93be930d3c70d88cd3ae521fee7b891e02371e4f54b91eb35"
+      "sha256": "8d9bc5f7e6d8dd4bcab549eb0a2a71fb906280fead741f813096f554d422c3d1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/LevelSelectPanel.prefab",
@@ -2537,7 +2540,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/YayaMemoryAutomation.cs",
-      "sha256": "92033b835b57648f39da731d6f791956b9bdeeae084958e4cd3eee4a1d1128e2"
+      "sha256": "6e6c42cd550b3ba1649ae710a2884dc81ba7b2d16be375f72b0d3f537ffced12"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Startup/GameBootstrap.cs",
@@ -2557,7 +2560,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Configuration/Enums.cs",
-      "sha256": "4ea58de9c406ffe218074a241a1ad5d078f51fdd6d01e41defc4ab179b76c31c"
+      "sha256": "69752d235ca1526dfb0045590c91c36f724a5c879620afc4050ff8de336374a1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Events/BattleDamageKind.cs",
@@ -2605,7 +2608,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/Flow/GameDomain.cs",
-      "sha256": "cdd16865bb332650a47a7015cdcf689efef9661fab91eb3a25d5a47e9441bf3d"
+      "sha256": "df0de4da41989c19286a0fc7ccbc29d1881a1d5c439829290958b15f049a6754"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Buffs/BattleEventCatalog.cs",
@@ -2741,7 +2744,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.cs",
-      "sha256": "0eea83d2672c8af43e4bbb8659a84d750989e563dc29f6ab428c6de6c995f021"
+      "sha256": "a61ac612815e01d973be972a29ed94e350748ab348ceb45d68ae0d290c8af2ce"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Endless.cs",
@@ -2749,7 +2752,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Gal.cs",
-      "sha256": "7aaa28de31399238f4cf4400b7f6dd7d7a66ee6567e1510b05d3a1e9a9e9dc04"
+      "sha256": "5c2d52f7e9eb3e471c0a2b3853362e85ff165b798ca1b5cfc2856ff981874f2a"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Pvp.cs",
@@ -3213,7 +3216,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Progression/YayaMemoryProgress.cs",
-      "sha256": "0be26d9053028d645edb11496cd0a198e801dee91160946aa9a38eba1e9fef65"
+      "sha256": "5d4908e046429851dcf1a7430df08ecb8a8d20284553467b5fa4f2be69334faa"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/Networking/Fantasy/FantasyGoTransport.cs",
@@ -3365,7 +3368,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.CottageStory.cs",
-      "sha256": "29e7a947b437f782f0414716eeb5a7b343d448203d46151c836a66798a476646"
+      "sha256": "d663beda051cbfdb6d8827c2a5bf589a8595985137ac544ec660555ca7b8b7ac"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.cs",
@@ -3373,7 +3376,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.Memories.cs",
-      "sha256": "ab0a87ec4fd6648d34b5eeae1d0262364d25bdcf1a5535380b0c8724017b6a41"
+      "sha256": "41872581a8196360f355a3825e4de4eaa3dd81138e8be2e0e8e7b9f9492b6df9"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/LevelSelectPanel.cs",
@@ -3444,12 +3447,20 @@
       "sha256": "6eb83202af21036a68b88f466b68f0a1684b84d0b1f549b31e700302be530f76"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/GalStoryPlayback.cs",
+      "sha256": "a0cbf843704e6ff4a57b4ae44cc2a1861b438dbb0020e77cf48d70cc692d0831"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryPanel.cs",
       "sha256": "a0b93233cda2db9e510fadbe4209312c35acd600b0c71383de62a95d232f1d19"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryTypingSound.cs",
+      "sha256": "9111cfa95754e7cf3bff395438de1137f9dcd2f481a357bfec44eb88c4be3bf0"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryView.cs",
-      "sha256": "bbab0cc87445a594f68f462b8cec0fd9aa319175a0325153121b817b5d509689"
+      "sha256": "792e68c07d4af240b5fc3c4647ec18addcc6f2bb25307eea312a618ed98257af"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/TutorialPanel.cs",
@@ -3778,6 +3789,10 @@
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/EndlessScene.unity",
       "sha256": "ca1b080b018165392eafed8e6d53ca0036e680fd6e1a44b93f147c08256284c6"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/GalScene.unity",
+      "sha256": "1c9f9fd155b6bc2ca1bb414ea9df85a3167561ef145f3493fd85bec009d73949"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/Scenes/GameScene.unity",

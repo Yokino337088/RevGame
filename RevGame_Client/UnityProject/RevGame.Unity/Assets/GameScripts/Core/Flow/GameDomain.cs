@@ -23,5 +23,7 @@ namespace RevGame.Core
         public const string Endless = "RevGame.Endless";
         /// <summary>九路围棋连接、面板与棋盘的独立生命周期。</summary>
         public const string Pvp = "RevGame.Pvp";
+        /// <summary>视觉小说面板、剧情会话和媒体归属的独立生命周期。</summary>
+        public const string Gal = "RevGame.Gal";
     }
 }

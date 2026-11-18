@@ -14,7 +14,9 @@ namespace RevGame.Core
         /// <summary>棋阵幸存者独立战斗，不复用六章回合与胜利条件。</summary>
         Endless,
         /// <summary>独立九路围棋：黑白标准规则，不启用单机技能或成长。</summary>
-        Pvp
+        Pvp,
+        /// <summary>独立视觉小说。离开大厅场景后才加载剧情界面与音频。</summary>
+        Gal
     }
 
     /// <summary>

@@ -71,13 +71,25 @@ namespace RevGame.Editor
             EditorSceneManager.SaveScene(start);
             EditorSceneManager.CloseScene(game, true);
             SceneManager.SetActiveScene(start);
-            EditorBuildSettings.scenes = new[]
+            // 重建主线两个场景时，保留无尽、联机和视觉小说各自登记的发布场景。
+            const string startPath = "Assets/Scenes/StartScene.unity";
+            const string gamePath = "Assets/Scenes/GameScene.unity";
+            const string galPath = "Assets/Scenes/GalScene.unity";
+            var buildScenes = EditorBuildSettings.scenes
+                .Where(scene => scene.path != startPath && scene.path != gamePath).ToList();
+            buildScenes.Insert(0, new EditorBuildSettingsScene(startPath, true));
+            buildScenes.Insert(1, new EditorBuildSettingsScene(gamePath, true));
+
+            int galIndex = buildScenes.FindIndex(scene => scene.path == galPath);
+            if (galIndex < 0)
             {
-                new EditorBuildSettingsScene("Assets/Scenes/StartScene.unity", true),
-                new EditorBuildSettingsScene("Assets/Scenes/GameScene.unity", true),
-                // 教学是正式首启流程的一部分，重建场景不能从发布清单移除它。
-                new EditorBuildSettingsScene("Assets/Scenes/TutorialScene.unity", true)
-            };
+                buildScenes.Add(new EditorBuildSettingsScene(galPath, true));
+            }
+            else if (!buildScenes[galIndex].enabled)
+            {
+                buildScenes[galIndex] = new EditorBuildSettingsScene(galPath, true);
+            }
+            EditorBuildSettings.scenes = buildScenes.ToArray();
             AssetDatabase.SaveAssets();
             return "StartScene/GameScene已拆分，启动场景在Build Settings第0位；加载面板已保存；" + imageCount + "个Image已接图集晚绑定刷新";
         }

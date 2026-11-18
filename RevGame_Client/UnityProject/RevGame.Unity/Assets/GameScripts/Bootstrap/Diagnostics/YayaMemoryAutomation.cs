@@ -19,6 +19,18 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("memories.state", "读取收藏书通关、已阅、入口与实际落屏状态",
                 "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}",
                 _ => State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("memories.test-record-clear", "隔离验收中通过正式通关记账入口记录一章",
+                "{\"type\":\"object\",\"properties\":{\"chapter\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":6}},\"required\":[\"chapter\"],\"additionalProperties\":false}",
+                json =>
+                {
+                    if (!RevServices.GetRequired<StoryProgress>().IsIsolated)
+                    {
+                        throw new InvalidOperationException("需要隔离 Play，避免写入玩家进度");
+                    }
+                    var args = UnityEngine.JsonUtility.FromJson<ClearArgs>(json);
+                    RevServices.GetRequired<YayaMemoryProgress>().RecordClear(args.chapter);
+                    return State();
+                }, owner: Owner);
             RevRuntimeAutomation.Register("memories.drag", "在隔离Play中从书页边缘发出并保持真实拖拽事件，release结束",
                 GameBookDragInput.Schema,
                 json =>
@@ -42,6 +54,9 @@ namespace RevGame.Bootstrap
             var book = RevUI.Get<YayaMemoryBookPanel>();
             var speech = home == null ? null : home.transform.Find("MemorySpeech");
             var bubble = speech == null ? null : speech.Find("Background").GetComponent<UnityEngine.UI.Image>().sprite;
+            var cottageEntry = home == null ? null : home.transform.Find("btnCottageStory");
+            var cottageBadge = cottageEntry == null ? null : cottageEntry.Find("Unread");
+            var cottageTip = home == null ? null : home.transform.Find("CottageStoryTip");
             bool bundleMode = true;
 #if UNITY_EDITOR
             bundleMode = RevResBootstrap.UseABInEditor;
@@ -58,8 +73,19 @@ namespace RevGame.Bootstrap
                 ["badge"] = home != null && home.transform.Find("btnMemories/Unread").gameObject.activeInHierarchy,
                 ["speech"] = speech != null && speech.gameObject.activeInHierarchy,
                 ["speechSprite"] = bubble == null ? "" : bubble.name, ["speechPacked"] = bubble != null && bubble.packed,
+                ["cottageUnlocked"] = progress.IsCottageStoryUnlocked,
+                ["cottageUnread"] = progress.IsCottageStoryUnread,
+                ["cottageEntry"] = cottageEntry != null && cottageEntry.gameObject.activeInHierarchy,
+                ["cottageBadge"] = cottageBadge != null && cottageBadge.gameObject.activeInHierarchy,
+                ["cottageTip"] = cottageTip != null && cottageTip.gameObject.activeInHierarchy,
                 ["refs"] = refs
             };
+        }
+
+        [Serializable]
+        private sealed class ClearArgs
+        {
+            public int chapter;
         }
 
         internal static Dictionary<string, object> Drag(int direction, float amount, bool release)

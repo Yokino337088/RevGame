@@ -145,11 +145,14 @@ namespace RevGame.Editor
                         Place(style, .24f, .08f, .86f, .71f);
                         break;
                     case RevGalThemePart.LeftPortrait:
-                        Place(style, .021f, .040f, .247f, .895f);
+                        // 全身差分底部约有 2.5% 留白，补偿后让鞋底贴近对白框底边。
+                        Place(style, .021f, .018f, .247f, .895f);
+                        style.Layout.Pivot = new Vector2(.5f, 0f);
                         break;
                     case RevGalThemePart.CenterPortrait:
-                        // 冒险家半身像使用独立的左栏范围，肩线压在对白框左侧。
-                        Place(style, .042f, .070f, .228f, .425f);
+                        // 半身像留白更小，保留原有显示范围并与鸦鸦共用对白框底边基线。
+                        Place(style, .042f, .033f, .228f, .388f);
+                        style.Layout.Pivot = new Vector2(.5f, 0f);
                         break;
                 }
             }
@@ -203,39 +206,71 @@ namespace RevGame.Editor
             var root = PrefabUtility.LoadPrefabContents(HomePath);
             try
             {
-                if (root.transform.Find("btnCottageStory") != null)
-                {
-                    return;
-                }
                 var memory = root.transform.Find("btnMemories");
-                var memoryImage = memory.GetComponent<UnityEngine.UI.Image>();
-                var button = new GameObject("btnCottageStory", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
-                button.layer = memory.gameObject.layer;
-                var rect = (RectTransform)button.transform;
-                rect.SetParent(root.transform, false);
-                rect.anchorMin = rect.anchorMax = new Vector2(.125f, .836f);
-                rect.sizeDelta = new Vector2(312f, 68f);
-                var image = button.GetComponent<UnityEngine.UI.Image>();
-                image.sprite = memoryImage.sprite;
-                image.type = memoryImage.type;
-                image.color = memoryImage.color;
-                button.GetComponent<UnityEngine.UI.Button>().targetGraphic = image;
-                var label = new GameObject("label", typeof(RectTransform), typeof(UnityEngine.UI.Text));
-                label.layer = button.layer;
-                var labelRect = (RectTransform)label.transform;
-                labelRect.SetParent(rect, false);
-                labelRect.anchorMin = Vector2.zero;
-                labelRect.anchorMax = Vector2.one;
-                labelRect.offsetMin = new Vector2(10f, 0f);
-                labelRect.offsetMax = new Vector2(-10f, 0f);
-                var text = label.GetComponent<UnityEngine.UI.Text>();
+                var button = (RectTransform)root.transform.Find("btnCottageStory");
+                if (button == null)
+                {
+                    var entry = new GameObject("btnCottageStory", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+                    entry.layer = memory.gameObject.layer;
+                    button = (RectTransform)entry.transform;
+                    button.SetParent(root.transform, false);
+                    var memoryImage = memory.GetComponent<UnityEngine.UI.Image>();
+                    var image = entry.GetComponent<UnityEngine.UI.Image>();
+                    image.sprite = memoryImage.sprite;
+                    image.type = memoryImage.type;
+                    image.color = memoryImage.color;
+                    entry.GetComponent<UnityEngine.UI.Button>().targetGraphic = image;
+
+                    var label = new GameObject("label", typeof(RectTransform), typeof(UnityEngine.UI.Text));
+                    label.layer = entry.layer;
+                    var labelRect = (RectTransform)label.transform;
+                    labelRect.SetParent(button, false);
+                    labelRect.anchorMin = Vector2.zero;
+                    labelRect.anchorMax = Vector2.one;
+                    labelRect.offsetMin = new Vector2(10f, 0f);
+                    labelRect.offsetMax = new Vector2(-10f, 0f);
+                }
+                button.anchorMin = button.anchorMax = Vector2.zero;
+                button.pivot = Vector2.zero;
+                button.anchoredPosition = new Vector2(32f, 28f);
+                button.sizeDelta = new Vector2(260f, 68f);
+                var text = button.Find("label").GetComponent<UnityEngine.UI.Text>();
                 text.font = font;
-                text.text = "和鸦鸦一起过日子";
+                text.text = "旮旯给木";
                 text.fontSize = 30;
                 text.alignment = TextAnchor.MiddleCenter;
                 text.color = new Color(.28f, .16f, .09f);
                 text.raycastTarget = false;
-                button.SetActive(false);
+                button.gameObject.SetActive(true);
+
+                var badge = button.Find("Unread");
+                if (badge == null)
+                {
+                    badge = UnityEngine.Object.Instantiate(memory.Find("Unread"), button, false);
+                    badge.name = "Unread";
+                }
+                badge.gameObject.SetActive(false);
+
+                var tip = (RectTransform)root.transform.Find("CottageStoryTip");
+                if (tip == null)
+                {
+                    tip = UnityEngine.Object.Instantiate((RectTransform)root.transform.Find("MemorySpeech"), root.transform, false);
+                    tip.name = "CottageStoryTip";
+                }
+                tip.SetAsLastSibling();
+                tip.anchorMin = tip.anchorMax = Vector2.zero;
+                tip.pivot = Vector2.zero;
+                tip.anchoredPosition = new Vector2(32f, 112f);
+                tip.sizeDelta = new Vector2(468f, 90f);
+                tip.Find("Speaker").gameObject.SetActive(false);
+                var tipText = tip.Find("Line").GetComponent<UnityEngine.UI.Text>();
+                tipText.rectTransform.anchorMin = Vector2.zero;
+                tipText.rectTransform.anchorMax = Vector2.one;
+                tipText.rectTransform.offsetMin = new Vector2(16f, 8f);
+                tipText.rectTransform.offsetMax = new Vector2(-16f, -8f);
+                tipText.text = "通关全部六章后解锁";
+                tipText.alignment = TextAnchor.MiddleCenter;
+                tip.gameObject.SetActive(false);
                 PrefabUtility.SaveAsPrefabAsset(root, HomePath);
             }
             finally

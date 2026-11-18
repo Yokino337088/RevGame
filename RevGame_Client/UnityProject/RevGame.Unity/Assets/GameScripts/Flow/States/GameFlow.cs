@@ -148,9 +148,9 @@ namespace RevGame.Flow
         /// <summary>所有FSM交割的唯一位置；先更新状态/域，再通知视图，因此视图读到的一定是新模型。</summary>
         private void Change(GameScreen screen)
         {
-            if (screen != Screen)
+            if (Screen == GameScreen.Gal && screen != GameScreen.Gal)
             {
-                CloseGal();
+                CloseOwnedGalPanel();
             }
             _fsm.ChangeTo(_states[screen]);
             LastError = string.Empty;
@@ -171,7 +171,8 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
-            CloseGal();
+            _galOpening?.Cancel();
+            CloseOwnedGalPanel();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             RevRuntimeAutomation.UnregisterAllOf(this);
 #endif
@@ -225,8 +226,15 @@ namespace RevGame.Flow
                 {
                     return;
                 }
-                // 战斗屏幕用自己的战斗域，首页和选关共用大厅域。
-                string domain = _screen == GameScreen.Pvp ? GameDomain.Pvp : _screen == GameScreen.Endless ? GameDomain.Endless : _screen == GameScreen.Battle ? GameDomain.Battle : GameDomain.Lobby;
+                // 首页和选关共用大厅域，独立模式的资源只随各自的状态保留。
+                string domain = _screen switch
+                {
+                    GameScreen.Pvp => GameDomain.Pvp,
+                    GameScreen.Endless => GameDomain.Endless,
+                    GameScreen.Battle => GameDomain.Battle,
+                    GameScreen.Gal => GameDomain.Gal,
+                    _ => GameDomain.Lobby
+                };
                 //开启对应的域
                 _scope = RevScope.Enter(domain);
 

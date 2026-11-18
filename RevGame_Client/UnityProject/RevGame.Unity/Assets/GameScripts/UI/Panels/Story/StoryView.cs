@@ -30,9 +30,8 @@ namespace RevGame.UI
         {
             get; private set;
         }
-        /// <summary>单条打字音效句柄与下一次可播放时刻（非缩放秒），防止每字叠音。</summary>
-        private RevSoundHandle _sound;
-        private float _nextSound;
+        /// <summary>换句或离开面板时回收本视图的字幕音效。</summary>
+        private readonly StoryTypingSound _typingSound = new StoryTypingSound();
         /// <summary>缓存当前播放代次与行号，重复落屏不重启动画，新篇章同下标仍能刷新。</summary>
         private int _version = -1;
         private int _index = -1;
@@ -44,7 +43,10 @@ namespace RevGame.UI
         /// <summary>可观察的播放证据：成功获得声音句柄才算发声；用于区分“调用了Play”和“确实开始播放”。</summary>
         public bool SoundStarted
         {
-            get; private set;
+            get
+            {
+                return _typingSound.Started;
+            }
         }
         /// <summary>打字Tween仍存活时为true；只影响表现，不影响翻页许可。</summary>
         public bool IsTyping
@@ -127,8 +129,6 @@ namespace RevGame.UI
             _dialogue.text = string.Empty;
             int[] ends = StringInfo.ParseCombiningCharacters(line.Text);
             VisibleCharacters = 0;
-            SoundStarted = false;
-            _nextSound = 0;
             _typing = DOTween.To(() => VisibleCharacters, count =>
             {
                 if (count == VisibleCharacters)
@@ -139,14 +139,7 @@ namespace RevGame.UI
                 int end = count >= ends.Length ? line.Text.Length : ends[count];
                 _dialogue.text = line.Text.Substring(0, end);
 
-                // 轻落子声作为棋旅打字节拍；限制最短间隔，逐字播放不会堆出几十条重叠音源。
-                if (Time.unscaledTime >= _nextSound)
-                {
-                    _sound.Stop();
-                    _sound = RevSound.Play("Place", volume: 0.12f);
-                    SoundStarted |= !_sound.IsEmpty;
-                    _nextSound = Time.unscaledTime + 0.085f;
-                }
+                _typingSound.OnTextWritten();
             }, ends.Length, ends.Length / frame.Book.CharactersPerSecond).SetEase(Ease.Linear).SetUpdate(true)
                 .OnComplete(() => _typing = null);
         }
@@ -181,7 +174,7 @@ namespace RevGame.UI
         {
             _typing?.Kill(false);
             _typing = null;
-            _sound.Stop();
+            _typingSound.Reset();
         }
     }
 }

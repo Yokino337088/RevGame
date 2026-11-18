@@ -76,7 +76,7 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 
 ### Gal 接入 RevGame
 
-- 默认面板剧情从大厅或选关的稳定状态调用 `GameFlow.OpenGalAsync`。打开请求和面板归当前流程，加载至关闭期间沿用玩法门禁。按故事需要传入 `RevGalOptions` 的宿主信号或档案实现。编辑态制作与自定义界面见 [Gal 技能](../../revolution-gal/SKILL.md)。
+- 默认面板剧情从大厅或选关的稳定状态调用 `GameFlow.OpenGalAsync`。流程先卸载大厅并进入独立 `GalScene`，再于 Gal 域装配面板和首屏媒体。结局的返回按钮使用 `GameFlow.ReturnHome` 恢复大厅并释放剧情资源。按故事需要传入 `RevGalOptions` 的宿主信号或档案实现。编辑态制作与自定义界面见 [Gal 技能](../../revolution-gal/SKILL.md)。
 - 正式剧情 SO 放 `Assets/GameRes`，建议沿用工具默认的 `Gal/Stories`。试读草稿可以放在资源根以外。默认面板与主题放 `UI/Gal`，用项目 CJK 字体。背景 Material 放 `Material/Gal`，专用语音放 `Audio/Voice/Gal`，图和音乐使用项目既有 Art、图集与音频目录。
 - `GameResourceBuild.Configure` 按剧情 ID 分包，并把节点和章节方案中的媒体加入引用审计。图集归属、字体、包依赖和冷启动验证沿用本篇约定。需要重新生成字库时运行 `python tools/font-subset.py`。
 

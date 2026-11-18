@@ -43,10 +43,6 @@ namespace Revolution
         public const string Art_Endless_CardArrow = "Art/Endless/CardArrow/";
         public const string Art_Endless_HeartEye = "Art/Endless/HeartEye/";
         public const string Art_Gal = "Art/Gal/";
-        public const string Art_Gal_Interactions = "Art/Gal/Interactions/";
-        public const string Art_Gal_Interactions_Chapter01 = "Art/Gal/Interactions/Chapter01/";
-        public const string Art_Gal_Interactions_Chapter02 = "Art/Gal/Interactions/Chapter02/";
-        public const string Art_Gal_Interactions_Chapter03 = "Art/Gal/Interactions/Chapter03/";
         public const string Art_Gal_Portraits = "Art/Gal/Portraits/";
         public const string Art_Gal_Portraits_Adventurer = "Art/Gal/Portraits/Adventurer/";
         public const string Art_Gal_Portraits_Yaya = "Art/Gal/Portraits/Yaya/";

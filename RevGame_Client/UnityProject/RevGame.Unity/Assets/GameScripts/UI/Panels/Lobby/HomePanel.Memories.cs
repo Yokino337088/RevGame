@@ -33,6 +33,10 @@ namespace RevGame.UI
 
         protected override void OnCovered(bool covered)
         {
+            if (covered)
+            {
+                HideCottageStoryTip();
+            }
             if (State == RevUIPanelState.Opened)
             {
                 RefreshMemoryEntry(!covered);
@@ -43,6 +47,7 @@ namespace RevGame.UI
         {
             StopMemoryPulse();
             HideMemorySpeech();
+            HideCottageStoryTip();
             _memoryLobby = null;
         }
 

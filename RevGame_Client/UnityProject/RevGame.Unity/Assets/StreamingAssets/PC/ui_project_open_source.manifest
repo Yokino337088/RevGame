@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 384838181
+CRC: 4178537622
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6b55bc276ecf0231c3c48803fac828ba
+    Hash: dde0c1716bca58d056693a16bc3f74db
   TypeTreeHash:
     serializedVersion: 2
     Hash: 50b5cd679a214bd503a749f313828f70
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6b55bc276ecf0231c3c48803fac828ba
+    Hash: dde0c1716bca58d056693a16bc3f74db
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -73,7 +73,7 @@ Assets:
 - Assets/GameRes/UI/Panel/ProjectOpenSource/ProjectOpenSourcePanel.prefab
 - Assets/GameRes/UI/Panel/ProjectOpenSource/ProjectOpenSourceConfig.asset
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiprojectopensource
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiyayamemories
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/ui_yaya_memories
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiprojectopensource"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiyayamemories"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/ui_yaya_memories"

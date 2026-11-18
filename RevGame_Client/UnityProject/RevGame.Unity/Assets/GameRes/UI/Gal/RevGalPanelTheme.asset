@@ -48,9 +48,9 @@ MonoBehaviour:
   - Part: 2
     Layout:
       Override: 1
-      AnchorMin: {x: 0.021, y: 0.04}
+      AnchorMin: {x: 0.021, y: 0.018}
       AnchorMax: {x: 0.247, y: 0.895}
-      Pivot: {x: 0.5, y: 0.5}
+      Pivot: {x: 0.5, y: 0}
       OffsetMin: {x: 0, y: 0}
       OffsetMax: {x: 0, y: 0}
     ChoiceHeight: 0
@@ -62,9 +62,9 @@ MonoBehaviour:
   - Part: 3
     Layout:
       Override: 1
-      AnchorMin: {x: 0.042, y: 0.07}
-      AnchorMax: {x: 0.228, y: 0.425}
-      Pivot: {x: 0.5, y: 0.5}
+      AnchorMin: {x: 0.042, y: 0.033}
+      AnchorMax: {x: 0.228, y: 0.388}
+      Pivot: {x: 0.5, y: 0}
       OffsetMin: {x: 0, y: 0}
       OffsetMax: {x: 0, y: 0}
     ChoiceHeight: 0

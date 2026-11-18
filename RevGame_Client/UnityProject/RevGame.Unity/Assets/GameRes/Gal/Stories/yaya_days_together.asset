@@ -431,7 +431,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
@@ -479,7 +479,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
         Center: '-'
         Right: '-'
         Music: 
@@ -527,7 +527,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
         Center: '-'
         Right: '-'
         Music: 
@@ -551,7 +551,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
         Center: '-'
         Right: '-'
         Music: 
@@ -599,7 +599,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
         Center: '-'
         Right: '-'
         Music: 
@@ -695,7 +695,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -791,7 +791,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
         Center: '-'
         Right: '-'
         Music: 
@@ -887,7 +887,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_13
         Center: '-'
         Right: '-'
         Music: 
@@ -911,7 +911,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -1007,7 +1007,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Gal/Portraits/Yaya/GalYaya_05
         Center: '-'
         Right: '-'
         Music: 
@@ -1295,7 +1295,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
         Center: '-'
         Right: '-'
         Music: 
@@ -1367,7 +1367,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
         Center: '-'
         Right: '-'
         Music: 
@@ -1415,7 +1415,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
         Center: '-'
         Right: '-'
         Music: 
@@ -1463,7 +1463,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
         Center: '-'
         Right: '-'
         Music: 
@@ -1535,7 +1535,7 @@ MonoBehaviour:
       Stage:
         Background: Art/Background/Gal/Chapter01/CottageMagicPOV
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -1583,7 +1583,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Gal/Portraits/Yaya/GalYaya_12
         Center: '-'
         Right: '-'
         Music: 
@@ -1631,7 +1631,7 @@ MonoBehaviour:
       Stage:
         Background: Art/Background/Gal/Chapter01/CottageGarden
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_18
         Center: '-'
         Right: '-'
         Music: 
@@ -1679,7 +1679,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -1727,7 +1727,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
@@ -1751,7 +1751,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -1895,7 +1895,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Gal/Portraits/Yaya/GalYaya_14
         Center: '-'
         Right: '-'
         Music: 
@@ -2039,7 +2039,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -2135,7 +2135,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
         Center: '-'
         Right: '-'
         Music: 
@@ -2183,7 +2183,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -2327,7 +2327,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Left: Art/Gal/Portraits/Yaya/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -2351,7 +2351,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_10
         Center: '-'
         Right: '-'
         Music: 
@@ -2495,7 +2495,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_15
         Center: '-'
         Right: '-'
         Music: 
@@ -2543,7 +2543,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_14
         Center: '-'
         Right: '-'
         Music: 
@@ -2591,7 +2591,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
         Center: '-'
         Right: '-'
         Music: 
@@ -2639,7 +2639,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
         Center: '-'
         Right: '-'
         Music: 
@@ -2735,7 +2735,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
@@ -2759,7 +2759,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -2807,7 +2807,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_18
         Center: '-'
         Right: '-'
         Music: 
@@ -2855,7 +2855,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -2951,7 +2951,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -2999,7 +2999,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
         Center: '-'
         Right: '-'
         Music: 
@@ -3047,7 +3047,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
         Center: '-'
         Right: '-'
         Music: 
@@ -3095,7 +3095,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -3143,7 +3143,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -3287,7 +3287,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_20
         Center: '-'
         Right: '-'
         Music: 
@@ -3383,7 +3383,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_19
         Center: '-'
         Right: '-'
         Music: 
@@ -3431,7 +3431,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
@@ -3456,7 +3456,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
         Center: '-'
         Right: '-'
         Music: 
@@ -3506,7 +3506,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_14
         Center: '-'
         Right: '-'
         Music: 
@@ -3631,7 +3631,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -3681,7 +3681,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -3731,7 +3731,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_20
         Center: '-'
         Right: '-'
         Music: 
@@ -3755,7 +3755,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_03
         Center: '-'
         Right: '-'
         Music: 
@@ -3803,7 +3803,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_06
+        Left: Art/Gal/Portraits/Yaya/GalYaya_08
         Center: '-'
         Right: '-'
         Music: 
@@ -3851,7 +3851,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
@@ -3899,7 +3899,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -3947,7 +3947,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
         Center: '-'
         Right: '-'
         Music: 
@@ -3995,7 +3995,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -4045,7 +4045,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_18
         Center: '-'
         Right: '-'
         Music: 
@@ -4120,7 +4120,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_20
         Center: '-'
         Right: '-'
         Music: 
@@ -4170,7 +4170,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
@@ -4320,7 +4320,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
         Center: '-'
         Right: '-'
         Music: 
@@ -4370,7 +4370,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -4443,7 +4443,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
         Center: '-'
         Right: '-'
         Music: 
@@ -4563,7 +4563,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -4587,7 +4587,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_18
         Center: '-'
         Right: '-'
         Music: 
@@ -4635,7 +4635,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -4683,7 +4683,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
         Center: '-'
         Right: '-'
         Music: 
@@ -4707,7 +4707,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -4875,7 +4875,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_14
         Center: '-'
         Right: '-'
         Music: 
@@ -4923,7 +4923,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_12
         Center: '-'
         Right: '-'
         Music: 
@@ -5043,7 +5043,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_01
         Center: '-'
         Right: '-'
         Music: 
@@ -5067,7 +5067,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_18
         Center: '-'
         Right: '-'
         Music: 
@@ -5115,7 +5115,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -5163,7 +5163,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -5331,7 +5331,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
         Center: '-'
         Right: '-'
         Music: 
@@ -5403,7 +5403,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_15
         Center: '-'
         Right: '-'
         Music: 
@@ -5499,7 +5499,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -5595,7 +5595,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_12
+        Left: Art/Gal/Portraits/Yaya/GalYaya_09
         Center: '-'
         Right: '-'
         Music: 
@@ -5739,7 +5739,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
         Center: '-'
         Right: '-'
         Music: 
@@ -5787,7 +5787,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
         Center: '-'
         Right: '-'
         Music: 
