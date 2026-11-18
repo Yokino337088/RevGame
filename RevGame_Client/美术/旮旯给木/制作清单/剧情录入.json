@@ -234,7 +234,7 @@
       "StagePreset": "stage_c01_wake",
       "Next": "c01_wake_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_18",
         "Center": "-",
         "Right": "-"
       }
@@ -247,7 +247,7 @@
         "x": 300,
         "y": 0
       },
-      "Text": "听见了。你把窗帘拉回去，太阳就当没晒到。",
+      "Text": "听见了。你把窗帘拉回去，就当没晒到。",
       "Speaker": "冒险家",
       "Next": "c01_wake_003",
       "Stage": {
@@ -268,7 +268,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wake_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_01",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_01",
         "Center": "-",
         "Right": "-"
       }
@@ -302,7 +302,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wake_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -336,7 +336,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wake_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_14",
         "Center": "-",
         "Right": "-"
       }
@@ -349,7 +349,7 @@
         "x": 2100,
         "y": 0
       },
-      "Text": "那鸦鸦大人能不能先下来，让我抱一会儿再起？",
+      "Text": "那鸦鸦大人能不能让我再睡一会啊",
       "Speaker": "冒险家",
       "Next": "c01_wake_009",
       "Stage": {
@@ -366,11 +366,11 @@
         "x": 2400,
         "y": 0
       },
-      "Text": "半会儿。你每次说一会儿，最后都是本鸦陪你赖床。",
+      "Text": "赶紧的，每次你说再睡一会就是好几个小时",
       "Speaker": "鸦鸦",
       "Next": "c01_wake_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -383,7 +383,7 @@
         "x": 2700,
         "y": 0
       },
-      "Text": "你也没着急走啊。",
+      "Text": "就一会行不行嘛，求你了鸦鸦大人",
       "Speaker": "冒险家",
       "Next": "c01_wake_011",
       "Stage": {
@@ -404,7 +404,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wake_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_11",
         "Center": "-",
         "Right": "-"
       }
@@ -438,7 +438,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_26",
         "Center": "-",
         "Right": "-"
       }
@@ -456,7 +456,7 @@
       "StagePreset": "stage_c01_chores",
       "Next": "c01_chores_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_23",
         "Center": "-",
         "Right": "-"
       }
@@ -486,11 +486,11 @@
         "x": 600,
         "y": 210
       },
-      "Text": "本来还有劈柴。看你刚才抱人还算老实，柴给你减了。",
+      "Text": "本来还有劈柴。看你刚才起床还算老实，柴给你减了。",
       "Speaker": "鸦鸦",
       "Next": "c01_chores_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -503,7 +503,7 @@
         "x": 900,
         "y": 210
       },
-      "Text": "抱一次减一项？那剩下的你先别动。",
+      "Text": "原来早起还能少干活啊，那下次我可要六点起床了(坏笑)",
       "Speaker": "冒险家",
       "Next": "c01_chores_005",
       "Stage": {
@@ -524,7 +524,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_10",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_10",
         "Center": "-",
         "Right": "-"
       }
@@ -558,7 +558,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -592,7 +592,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_03",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_03",
         "Center": "-",
         "Right": "-"
       }
@@ -626,7 +626,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_24",
         "Center": "-",
         "Right": "-"
       }
@@ -660,7 +660,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_chores_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_19",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_19",
         "Center": "-",
         "Right": "-"
       }
@@ -694,7 +694,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_13",
         "Center": "-",
         "Right": "-"
       }
@@ -712,7 +712,7 @@
       "StagePreset": "stage_c01_meal",
       "Next": "c01_meal_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -742,11 +742,11 @@
         "x": 600,
         "y": 420
       },
-      "Text": "打输了可以再打。你把米倒进水沟，中午咱俩只能看着空碗亲热。",
+      "Text": "打输了可以再打。你把米倒进水沟，中午咱俩只能看着空碗干瞪眼了",
       "Speaker": "鸦鸦",
       "Next": "c01_meal_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -780,7 +780,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_05",
         "Center": "-",
         "Right": "-"
       }
@@ -814,7 +814,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_15",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_15",
         "Center": "-",
         "Right": "-"
       }
@@ -831,7 +831,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -865,7 +865,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -916,7 +916,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -950,7 +950,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -983,7 +983,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_meal_018",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_26",
         "Center": "-",
         "Right": "-"
       }
@@ -1017,7 +1017,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_08",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_08",
         "Center": "-",
         "Right": "-"
       }
@@ -1035,7 +1035,7 @@
       "StagePreset": "stage_c01_magic",
       "Next": "c01_magic_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_26",
         "Center": "-",
         "Right": "-"
       }
@@ -1069,7 +1069,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -1103,7 +1103,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_23",
         "Center": "-",
         "Right": "-"
       }
@@ -1137,7 +1137,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_04",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_04",
         "Center": "-",
         "Right": "-"
       }
@@ -1154,7 +1154,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_07",
         "Background": "Art/Background/Gal/Chapter01/CottageMagicPOV",
         "Center": "-",
         "Right": "-"
@@ -1189,7 +1189,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_12",
         "Center": "-",
         "Right": "-"
       }
@@ -1223,7 +1223,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_013",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_18",
         "Background": "Art/Background/Gal/Chapter01/CottageGarden",
         "Center": "-",
         "Right": "-"
@@ -1258,7 +1258,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_magic_015",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -1292,7 +1292,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -1305,12 +1305,12 @@
         "x": 0,
         "y": 840
       },
-      "Text": "冒险家，水放近一点。今天站了一天，你给本鸦洗。",
+      "Text": "冒险家，水放近一点。我今天站了一天，你给本鸦过来洗脚。",
       "Speaker": "鸦鸦",
       "StagePreset": "stage_c01_wash",
       "Next": "c01_wash_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -1374,11 +1374,11 @@
         "x": 1200,
         "y": 840
       },
-      "Text": "我就穿怎么了，冒险家你不就好这口吗",
+      "Text": "我就穿怎么了，冒险家你不就好这口吗(坏笑)",
       "Speaker": "鸦鸦",
       "Next": "c01_wash_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_21",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_21",
         "Center": "-",
         "Right": "-"
       }
@@ -1391,7 +1391,7 @@
         "x": 1500,
         "y": 840
       },
-      "Text": "我好的是鸦鸦大人。你那双靴子今晚能不能在门外单独睡？",
+      "Text": "好的鸦鸦大人，但是你这脚也太臭了吧，你这都是十里飘臭了(悲)",
       "Speaker": "冒险家",
       "Next": "c01_wash_007",
       "Stage": {
@@ -1412,7 +1412,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_14",
         "Center": "-",
         "Right": "-"
       }
@@ -1446,7 +1446,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_01",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_01",
         "Center": "-",
         "Right": "-"
       }
@@ -1459,7 +1459,7 @@
         "x": 2700,
         "y": 840
       },
-      "Text": "我洗，我洗。鸦鸦大人把椅子坐稳。水温怎么样？",
+      "Text": "我洗还不行吗。鸦鸦大人先坐稳了。水温怎么样？",
       "Speaker": "冒险家",
       "Next": "c01_wash_011",
       "Stage": {
@@ -1480,7 +1480,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_24",
         "Center": "-",
         "Right": "-"
       }
@@ -1514,7 +1514,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -1548,7 +1548,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_wash_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_13",
         "Center": "-",
         "Right": "-"
       }
@@ -1582,7 +1582,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_goodnight_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_11",
         "Center": "-",
         "Right": "-"
       }
@@ -1617,7 +1617,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_goodnight_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -1651,7 +1651,7 @@
       "Speaker": "鸦鸦",
       "Next": "c01_goodnight_005",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_06",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_06",
         "Center": "-",
         "Right": "-"
       }
@@ -1664,7 +1664,7 @@
         "x": 1200,
         "y": 1050
       },
-      "Text": "你这么抱，我明早要是还睡懒觉，你可得负一半的责。",
+      "Text": "鸦鸦大人，你这抱的也太紧了吧，我都有点喘不过气了",
       "Speaker": "冒险家",
       "Stage": {
         "Background": "Art/Background/Gal/Chapter01/CottageGoodnightCG",
@@ -1682,11 +1682,11 @@
         "x": 1500,
         "y": 1050
       },
-      "Text": "那明早本鸦照样叫你。现在先别说话，让我多抱一会儿。",
+      "Text": "哼，本鸦就是要抱着你睡觉怎么了，你要是有意见的话就去睡地板吧",
       "Speaker": "鸦鸦",
       "Next": "c01_goodnight_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_09",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_09",
         "Center": "-",
         "Right": "-"
       }
@@ -1699,7 +1699,7 @@
         "x": 1800,
         "y": 1050
       },
-      "Text": "棋子的光暗下去。她手臂还圈着我，我把她那边的被角也拉好。",
+      "Text": "棋子的光暗下去。她手臂还抱着我，我把她那边的被角也拉好。",
       "Next": "c01_goodnight_008",
       "Stage": {
         "Left": "-",
@@ -1719,7 +1719,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -1737,7 +1737,7 @@
       "StagePreset": "stage_c02_pantry",
       "Next": "c02_pantry_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_10",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_10",
         "Center": "-",
         "Right": "-"
       }
@@ -1771,7 +1771,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_24",
         "Center": "-",
         "Right": "-"
       }
@@ -1805,7 +1805,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_23",
         "Center": "-",
         "Right": "-"
       }
@@ -1835,11 +1835,11 @@
         "x": 1800,
         "y": 1260
       },
-      "Text": "昨天还只会点亮一颗棋子，今天就想变饭？走吧，先去买现成的。",
+      "Text": "昨天还只会点亮一颗棋子，今天就想变出饭来吗？走吧，先去买现成的。",
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_15",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_15",
         "Center": "-",
         "Right": "-"
       }
@@ -1873,7 +1873,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_14",
         "Center": "-",
         "Right": "-"
       }
@@ -1907,7 +1907,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_26",
         "Center": "-",
         "Right": "-"
       }
@@ -1941,7 +1941,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -1975,7 +1975,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_pantry_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_13",
         "Center": "-",
         "Right": "-"
       }
@@ -2009,7 +2009,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -2027,7 +2027,7 @@
       "StagePreset": "stage_c02_grain",
       "Next": "c02_grain_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -2061,7 +2061,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_18",
         "Center": "-",
         "Right": "-"
       }
@@ -2095,7 +2095,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -2129,7 +2129,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -2163,7 +2163,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -2197,7 +2197,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_23",
         "Center": "-",
         "Right": "-"
       }
@@ -2231,7 +2231,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_26",
         "Center": "-",
         "Right": "-"
       }
@@ -2265,7 +2265,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_grain_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -2299,7 +2299,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -2317,7 +2317,7 @@
       "StagePreset": "stage_c02_buns",
       "Next": "c02_buns_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_24",
         "Center": "-",
         "Right": "-"
       }
@@ -2351,7 +2351,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -2402,7 +2402,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_20",
         "Center": "-",
         "Right": "-"
       }
@@ -2436,7 +2436,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -2470,7 +2470,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_buns_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_19",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_19",
         "Center": "-",
         "Right": "-"
       }
@@ -2504,7 +2504,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -2522,7 +2522,7 @@
       "StagePreset": "stage_c02_eggs",
       "Next": "c02_eggs_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_23",
         "Center": "-",
         "Right": "-"
       }
@@ -2556,7 +2556,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_14",
         "Center": "-",
         "Right": "-"
       }
@@ -2607,7 +2607,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_11",
         "Center": "-",
         "Right": "-"
       }
@@ -2641,7 +2641,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -2675,7 +2675,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_eggs_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -2709,7 +2709,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_20",
         "Center": "-",
         "Right": "-"
       }
@@ -2727,7 +2727,7 @@
       "StagePreset": "stage_c02_return",
       "Next": "c02_return_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_03",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_03",
         "Center": "-",
         "Right": "-"
       }
@@ -2761,7 +2761,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_08",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_08",
         "Center": "-",
         "Right": "-"
       }
@@ -2795,7 +2795,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -2829,7 +2829,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -2863,7 +2863,7 @@
       "Speaker": "鸦鸦",
       "Next": "c02_return_010",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -2897,7 +2897,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -2932,7 +2932,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_18",
         "Center": "-",
         "Right": "-"
       }
@@ -2982,7 +2982,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_20",
         "Center": "-",
         "Right": "-"
       }
@@ -3016,7 +3016,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -3049,7 +3049,7 @@
       "Text": "冒险家，谁让你刚到这儿就问这个！本鸦今天想跟你出来玩。",
       "Speaker": "鸦鸦",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_12",
         "Center": "-",
         "Right": "-"
       },
@@ -3084,7 +3084,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_012",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_13",
         "Center": "-",
         "Right": "-"
       }
@@ -3118,7 +3118,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_11",
         "Center": "-",
         "Right": "-"
       }
@@ -3152,7 +3152,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_arrive_016",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_07",
         "Center": "-",
         "Right": "-"
       }
@@ -3204,7 +3204,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -3238,7 +3238,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_005",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_08",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_08",
         "Center": "-",
         "Right": "-"
       }
@@ -3288,7 +3288,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_008",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }
@@ -3305,7 +3305,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_18",
         "Center": "-",
         "Right": "-"
       }
@@ -3339,7 +3339,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_camera_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -3373,7 +3373,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_23",
         "Center": "-",
         "Right": "-"
       }
@@ -3391,7 +3391,7 @@
       "StagePreset": "stage_c03_portrait",
       "Next": "c03_portrait_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -3442,7 +3442,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_005",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_19",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_19",
         "Center": "-",
         "Right": "-"
       }
@@ -3476,7 +3476,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_25",
         "Center": "-",
         "Right": "-"
       }
@@ -3510,7 +3510,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_14",
         "Center": "-",
         "Right": "-"
       }
@@ -3544,7 +3544,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_011",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_12",
         "Center": "-",
         "Right": "-"
       }
@@ -3595,7 +3595,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_portrait_014",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_05",
         "Center": "-",
         "Right": "-"
       }
@@ -3629,7 +3629,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_01",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_01",
         "Center": "-",
         "Right": "-"
       }
@@ -3647,7 +3647,7 @@
       "StagePreset": "stage_c03_together",
       "Next": "c03_together_002",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_18",
         "Center": "-",
         "Right": "-"
       }
@@ -3681,7 +3681,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_004",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -3715,7 +3715,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_006",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_16",
         "Center": "-",
         "Right": "-"
       }
@@ -3766,7 +3766,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_11",
         "Center": "-",
         "Right": "-"
       }
@@ -3800,7 +3800,7 @@
       "Speaker": "鸦鸦",
       "Stage": {
         "Background": "Art/Background/Gal/Chapter03/HeartPeakPhotoCG",
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       },
@@ -3836,7 +3836,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_together_013",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_02",
         "Center": "-",
         "Right": "-"
       }
@@ -3888,7 +3888,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_confession_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_15",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_15",
         "Center": "-",
         "Right": "-"
       }
@@ -3955,7 +3955,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_confession_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_28",
         "Center": "-",
         "Right": "-"
       }
@@ -3985,11 +3985,11 @@
         "x": 2100,
         "y": 3150
       },
-      "Text": "冒险家，其实和你经历了这么多，你也能够看得出我的心意，虽然本鸦平时老是嘲讽你，但那也是因为我真正在意你、关心你，",
+      "Text": "冒险家，其实和你经历了这么多，你也能够看得出我的心意，虽然本鸦平时老是嘲讽你，但那也是因为我真正在意你、关心你",
       "Speaker": "鸦鸦",
       "Next": "c03_confession_008_part2",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_29",
         "Center": "-",
         "Right": "-"
       }
@@ -4002,11 +4002,11 @@
         "x": 2400,
         "y": 3150
       },
-      "Text": "可能我一开始遇见你的时候也觉得你不靠谱，但是陪你一起走过了这一路的历练之后，我也逐渐对你日久生情了，",
+      "Text": "可能我一开始遇见你的时候也觉得你不靠谱，但是陪你一起走过了这一路的历练之后，我也逐渐对你日久生情了",
       "Speaker": "鸦鸦",
       "Next": "c03_confession_008_part3",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_05",
         "Center": "-",
         "Right": "-"
       }
@@ -4023,7 +4023,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_confession_009",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_09",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_09",
         "Center": "-",
         "Right": "-"
       }
@@ -4056,7 +4056,7 @@
       "Text": "冒险家，刚才那些话就给你一个人听。回去不许拿来取笑本鸦。",
       "Speaker": "鸦鸦",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_13",
         "Center": "-",
         "Right": "-"
       },
@@ -4091,7 +4091,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_home_001",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_20",
         "Center": "-",
         "Right": "-"
       }
@@ -4126,7 +4126,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_home_003",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_11",
         "Center": "-",
         "Right": "-"
       }
@@ -4156,11 +4156,11 @@
         "x": 900,
         "y": 3360
       },
-      "Text": "昨天买的土豆还有。冒险家把土豆切好，再拿两颗蛋，本鸦看火。",
+      "Text": "昨天买的土豆还有。冒险家把土豆切好，再煎两颗蛋，本鸦看火。",
       "Speaker": "鸦鸦",
       "Next": "c03_home_005",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Left": "Art/Characters/Yaya/Expressions/YayaExpression_17",
         "Center": "-",
         "Right": "-"
       }
@@ -4194,7 +4194,7 @@
       "Speaker": "鸦鸦",
       "Next": "c03_home_007",
       "Stage": {
-        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Left": "Art/Characters/Yaya/Expressions/GalYaya_22",
         "Center": "-",
         "Right": "-"
       }

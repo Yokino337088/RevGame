@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "7ea7e09620d881245486dcabaf92260f1a7f7514f24e8c655b241fa760ecbbc1",
-  "inputDigest": "36470231596771c27f729f2de92deaa7616e438d1471323025b3ab941d411e13",
+  "outputSha256": "d578aafccd5f10c8178852900dbaa8b7163685c156f8b7348a97a499eea06b59",
+  "inputDigest": "2fcf130676f73be48b2301d9f05e334382d81053a8b4d2992e6e5211203f5d98",
   "originalBytes": 17002248,
-  "outputBytes": 871652,
-  "characterCount": 1940,
-  "glyphCount": 3833,
+  "outputBytes": 872316,
+  "characterCount": 1941,
+  "glyphCount": 3835,
   "codepoints": [
     32,
     33,
@@ -1338,6 +1338,7 @@
     30596,
     30606,
     30631,
+    30634,
     30636,
     30683,
     30690,
@@ -2156,7 +2157,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Gal/Stories/yaya_days_together.asset",
-      "sha256": "80238181d6869e098bf20c40d4064b35362d9764e6f6fb8b0a99cb5de814b277"
+      "sha256": "4e01356739e6b74581ae4dee0f2bd61eba75e7cd733ac5fc32cc6a69f340f2de"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Pieces/Boss/BossPieceView.prefab",

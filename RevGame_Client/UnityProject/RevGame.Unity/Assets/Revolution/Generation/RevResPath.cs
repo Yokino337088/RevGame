@@ -45,7 +45,6 @@ namespace Revolution
         public const string Art_Gal = "Art/Gal/";
         public const string Art_Gal_Portraits = "Art/Gal/Portraits/";
         public const string Art_Gal_Portraits_Adventurer = "Art/Gal/Portraits/Adventurer/";
-        public const string Art_Gal_Portraits_Yaya = "Art/Gal/Portraits/Yaya/";
         public const string Art_Icon = "Art/Icon/";
         public const string Art_Pieces = "Art/Pieces/";
         public const string Art_Pieces_Enemy = "Art/Pieces/Enemy/";

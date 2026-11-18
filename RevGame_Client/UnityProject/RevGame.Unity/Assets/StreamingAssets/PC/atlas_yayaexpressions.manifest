@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 286961956
+CRC: 1974411322
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 5bce88758966460d13820888cfc2d85a
+    Hash: 5b57266585cf17f996bb1875ed8f7852
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 5bce88758966460d13820888cfc2d85a
+    Hash: 5b57266585cf17f996bb1875ed8f7852
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,19 +20,29 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_21.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_10.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_11.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_25.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_05.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_01.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_16.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_20.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_03.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_22.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_13.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_04.png
 - Assets/GameRes/Atlases/YayaExpressions.spriteatlasv2
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_29.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_19.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_09.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_17.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_28.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_24.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_12.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_15.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_23.png
 - Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_18.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_06.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_07.png
 Dependencies: []

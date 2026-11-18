@@ -239,7 +239,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_18
         Center: '-'
         Right: '-'
         Music: 
@@ -252,7 +252,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u542C\u89C1\u4E86\u3002\u4F60\u628A\u7A97\u5E18\u62C9\u56DE\u53BB\uFF0C\u592A\u9633\u5C31\u5F53\u6CA1\u6652\u5230\u3002"
+      Text: "\u542C\u89C1\u4E86\u3002\u4F60\u628A\u7A97\u5E18\u62C9\u56DE\u53BB\uFF0C\u5C31\u5F53\u6CA1\u6652\u5230\u3002"
       TextKey: 
       Next: c01_wake_003
       Voice: 
@@ -287,7 +287,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_01
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_01
         Center: '-'
         Right: '-'
         Music: 
@@ -335,7 +335,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -383,7 +383,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_14
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_14
         Center: '-'
         Right: '-'
         Music: 
@@ -396,7 +396,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u90A3\u9E26\u9E26\u5927\u4EBA\u80FD\u4E0D\u80FD\u5148\u4E0B\u6765\uFF0C\u8BA9\u6211\u62B1\u4E00\u4F1A\u513F\u518D\u8D77\uFF1F"
+      Text: "\u90A3\u9E26\u9E26\u5927\u4EBA\u80FD\u4E0D\u80FD\u8BA9\u6211\u518D\u7761\u4E00\u4F1A\u554A"
       TextKey: 
       Next: c01_wake_009
       Voice: 
@@ -420,7 +420,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u534A\u4F1A\u513F\u3002\u4F60\u6BCF\u6B21\u8BF4\u4E00\u4F1A\u513F\uFF0C\u6700\u540E\u90FD\u662F\u672C\u9E26\u966A\u4F60\u8D56\u5E8A\u3002"
+      Text: "\u8D76\u7D27\u7684\uFF0C\u6BCF\u6B21\u4F60\u8BF4\u518D\u7761\u4E00\u4F1A\u5C31\u662F\u597D\u51E0\u4E2A\u5C0F\u65F6"
       TextKey: 
       Next: c01_wake_010
       Voice: 
@@ -431,7 +431,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -444,7 +444,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u4F60\u4E5F\u6CA1\u7740\u6025\u8D70\u554A\u3002"
+      Text: "\u5C31\u4E00\u4F1A\u884C\u4E0D\u884C\u561B\uFF0C\u6C42\u4F60\u4E86\u9E26\u9E26\u5927\u4EBA"
       TextKey: 
       Next: c01_wake_011
       Voice: 
@@ -479,7 +479,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_11
         Center: '-'
         Right: '-'
         Music: 
@@ -527,7 +527,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_26
         Center: '-'
         Right: '-'
         Music: 
@@ -551,7 +551,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_23
         Center: '-'
         Right: '-'
         Music: 
@@ -588,7 +588,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u672C\u6765\u8FD8\u6709\u5288\u67F4\u3002\u770B\u4F60\u521A\u624D\u62B1\u4EBA\u8FD8\u7B97\u8001\u5B9E\uFF0C\u67F4\u7ED9\u4F60\u51CF\u4E86\u3002"
+      Text: "\u672C\u6765\u8FD8\u6709\u5288\u67F4\u3002\u770B\u4F60\u521A\u624D\u8D77\u5E8A\u8FD8\u7B97\u8001\u5B9E\uFF0C\u67F4\u7ED9\u4F60\u51CF\u4E86\u3002"
       TextKey: 
       Next: c01_chores_004
       Voice: 
@@ -599,7 +599,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -612,7 +612,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u62B1\u4E00\u6B21\u51CF\u4E00\u9879\uFF1F\u90A3\u5269\u4E0B\u7684\u4F60\u5148\u522B\u52A8\u3002"
+      Text: "\u539F\u6765\u65E9\u8D77\u8FD8\u80FD\u5C11\u5E72\u6D3B\u554A\uFF0C\u90A3\u4E0B\u6B21\u6211\u53EF\u8981\u516D\u70B9\u8D77\u5E8A\u4E86(\u574F\u7B11)"
       TextKey: 
       Next: c01_chores_005
       Voice: 
@@ -647,7 +647,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_10
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_10
         Center: '-'
         Right: '-'
         Music: 
@@ -695,7 +695,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -743,7 +743,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_03
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_03
         Center: '-'
         Right: '-'
         Music: 
@@ -791,7 +791,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_24
         Center: '-'
         Right: '-'
         Music: 
@@ -839,7 +839,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_19
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_19
         Center: '-'
         Right: '-'
         Music: 
@@ -887,7 +887,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_13
         Center: '-'
         Right: '-'
         Music: 
@@ -911,7 +911,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Characters/Yaya/Expressions/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -948,7 +948,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u6253\u8F93\u4E86\u53EF\u4EE5\u518D\u6253\u3002\u4F60\u628A\u7C73\u5012\u8FDB\u6C34\u6C9F\uFF0C\u4E2D\u5348\u54B1\u4FE9\u53EA\u80FD\u770B\u7740\u7A7A\u7897\u4EB2\u70ED\u3002"
+      Text: "\u6253\u8F93\u4E86\u53EF\u4EE5\u518D\u6253\u3002\u4F60\u628A\u7C73\u5012\u8FDB\u6C34\u6C9F\uFF0C\u4E2D\u5348\u54B1\u4FE9\u53EA\u80FD\u770B\u7740\u7A7A\u7897\u5E72\u77AA\u773C\u4E86"
       TextKey: 
       Next: c01_meal_004
       Voice: 
@@ -959,7 +959,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_16
+        Left: Art/Characters/Yaya/Expressions/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -1007,7 +1007,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_05
         Center: '-'
         Right: '-'
         Music: 
@@ -1055,7 +1055,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_15
+        Left: Art/Characters/Yaya/Expressions/GalYaya_15
         Center: '-'
         Right: '-'
         Music: 
@@ -1079,7 +1079,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_07
+        Left: Art/Characters/Yaya/Expressions/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -1127,7 +1127,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -1199,7 +1199,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -1247,7 +1247,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Left: Art/Characters/Yaya/Expressions/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -1295,7 +1295,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_26
         Center: '-'
         Right: '-'
         Music: 
@@ -1343,7 +1343,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_08
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_08
         Center: '-'
         Right: '-'
         Music: 
@@ -1367,7 +1367,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_26
         Center: '-'
         Right: '-'
         Music: 
@@ -1415,7 +1415,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -1463,7 +1463,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_23
         Center: '-'
         Right: '-'
         Music: 
@@ -1511,7 +1511,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_04
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_04
         Center: '-'
         Right: '-'
         Music: 
@@ -1535,7 +1535,7 @@ MonoBehaviour:
       Stage:
         Background: Art/Background/Gal/Chapter01/CottageMagicPOV
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_07
+        Left: Art/Characters/Yaya/Expressions/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -1583,7 +1583,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_12
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_12
         Center: '-'
         Right: '-'
         Music: 
@@ -1631,7 +1631,7 @@ MonoBehaviour:
       Stage:
         Background: Art/Background/Gal/Chapter01/CottageGarden
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_18
         Center: '-'
         Right: '-'
         Music: 
@@ -1679,7 +1679,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_16
+        Left: Art/Characters/Yaya/Expressions/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -1727,7 +1727,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -1740,7 +1740,7 @@ MonoBehaviour:
       StagePreset: stage_c01_wash
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u5192\u9669\u5BB6\uFF0C\u6C34\u653E\u8FD1\u4E00\u70B9\u3002\u4ECA\u5929\u7AD9\u4E86\u4E00\u5929\uFF0C\u4F60\u7ED9\u672C\u9E26\u6D17\u3002"
+      Text: "\u5192\u9669\u5BB6\uFF0C\u6C34\u653E\u8FD1\u4E00\u70B9\u3002\u6211\u4ECA\u5929\u7AD9\u4E86\u4E00\u5929\uFF0C\u4F60\u7ED9\u672C\u9E26\u8FC7\u6765\u6D17\u811A\u3002"
       TextKey: 
       Next: c01_wash_002
       Voice: 
@@ -1751,7 +1751,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Left: Art/Characters/Yaya/Expressions/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -1836,7 +1836,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u6211\u5C31\u7A7F\u600E\u4E48\u4E86\uFF0C\u5192\u9669\u5BB6\u4F60\u4E0D\u5C31\u597D\u8FD9\u53E3\u5417"
+      Text: "\u6211\u5C31\u7A7F\u600E\u4E48\u4E86\uFF0C\u5192\u9669\u5BB6\u4F60\u4E0D\u5C31\u597D\u8FD9\u53E3\u5417(\u574F\u7B11)"
       TextKey: 
       Next: c01_wash_006
       Voice: 
@@ -1847,7 +1847,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_21
+        Left: Art/Characters/Yaya/Expressions/GalYaya_21
         Center: '-'
         Right: '-'
         Music: 
@@ -1860,7 +1860,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u6211\u597D\u7684\u662F\u9E26\u9E26\u5927\u4EBA\u3002\u4F60\u90A3\u53CC\u9774\u5B50\u4ECA\u665A\u80FD\u4E0D\u80FD\u5728\u95E8\u5916\u5355\u72EC\u7761\uFF1F"
+      Text: "\u597D\u7684\u9E26\u9E26\u5927\u4EBA\uFF0C\u4F46\u662F\u4F60\u8FD9\u811A\u4E5F\u592A\u81ED\u4E86\u5427\uFF0C\u4F60\u8FD9\u90FD\u662F\u5341\u91CC\u98D8\u81ED\u4E86(\u60B2)"
       TextKey: 
       Next: c01_wash_007
       Voice: 
@@ -1895,7 +1895,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_14
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_14
         Center: '-'
         Right: '-'
         Music: 
@@ -1943,7 +1943,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_01
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_01
         Center: '-'
         Right: '-'
         Music: 
@@ -1956,7 +1956,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u6211\u6D17\uFF0C\u6211\u6D17\u3002\u9E26\u9E26\u5927\u4EBA\u628A\u6905\u5B50\u5750\u7A33\u3002\u6C34\u6E29\u600E\u4E48\u6837\uFF1F"
+      Text: "\u6211\u6D17\u8FD8\u4E0D\u884C\u5417\u3002\u9E26\u9E26\u5927\u4EBA\u5148\u5750\u7A33\u4E86\u3002\u6C34\u6E29\u600E\u4E48\u6837\uFF1F"
       TextKey: 
       Next: c01_wash_011
       Voice: 
@@ -1991,7 +1991,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_24
         Center: '-'
         Right: '-'
         Music: 
@@ -2039,7 +2039,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -2087,7 +2087,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_13
         Center: '-'
         Right: '-'
         Music: 
@@ -2135,7 +2135,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_11
         Center: '-'
         Right: '-'
         Music: 
@@ -2183,7 +2183,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -2231,7 +2231,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_06
+        Left: Art/Characters/Yaya/Expressions/GalYaya_06
         Center: '-'
         Right: '-'
         Music: 
@@ -2244,7 +2244,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u4F60\u8FD9\u4E48\u62B1\uFF0C\u6211\u660E\u65E9\u8981\u662F\u8FD8\u7761\u61D2\u89C9\uFF0C\u4F60\u53EF\u5F97\u8D1F\u4E00\u534A\u7684\u8D23\u3002"
+      Text: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u4F60\u8FD9\u62B1\u7684\u4E5F\u592A\u7D27\u4E86\u5427\uFF0C\u6211\u90FD\u6709\u70B9\u5598\u4E0D\u8FC7\u6C14\u4E86"
       TextKey: 
       Next: c01_goodnight_006
       Voice: 
@@ -2268,7 +2268,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u90A3\u660E\u65E9\u672C\u9E26\u7167\u6837\u53EB\u4F60\u3002\u73B0\u5728\u5148\u522B\u8BF4\u8BDD\uFF0C\u8BA9\u6211\u591A\u62B1\u4E00\u4F1A\u513F\u3002"
+      Text: "\u54FC\uFF0C\u672C\u9E26\u5C31\u662F\u8981\u62B1\u7740\u4F60\u7761\u89C9\u600E\u4E48\u4E86\uFF0C\u4F60\u8981\u662F\u6709\u610F\u89C1\u7684\u8BDD\u5C31\u53BB\u7761\u5730\u677F\u5427"
       TextKey: 
       Next: c01_goodnight_007
       Voice: 
@@ -2279,7 +2279,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_09
+        Left: Art/Characters/Yaya/Expressions/GalYaya_09
         Center: '-'
         Right: '-'
         Music: 
@@ -2292,7 +2292,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: 
       SpeakerKey: 
-      Text: "\u68CB\u5B50\u7684\u5149\u6697\u4E0B\u53BB\u3002\u5979\u624B\u81C2\u8FD8\u5708\u7740\u6211\uFF0C\u6211\u628A\u5979\u90A3\u8FB9\u7684\u88AB\u89D2\u4E5F\u62C9\u597D\u3002"
+      Text: "\u68CB\u5B50\u7684\u5149\u6697\u4E0B\u53BB\u3002\u5979\u624B\u81C2\u8FD8\u62B1\u7740\u6211\uFF0C\u6211\u628A\u5979\u90A3\u8FB9\u7684\u88AB\u89D2\u4E5F\u62C9\u597D\u3002"
       TextKey: 
       Next: c01_goodnight_008
       Voice: 
@@ -2327,7 +2327,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_07
+        Left: Art/Characters/Yaya/Expressions/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -2351,7 +2351,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_10
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_10
         Center: '-'
         Right: '-'
         Music: 
@@ -2399,7 +2399,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_24
         Center: '-'
         Right: '-'
         Music: 
@@ -2447,7 +2447,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_23
         Center: '-'
         Right: '-'
         Music: 
@@ -2484,7 +2484,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u6628\u5929\u8FD8\u53EA\u4F1A\u70B9\u4EAE\u4E00\u9897\u68CB\u5B50\uFF0C\u4ECA\u5929\u5C31\u60F3\u53D8\u996D\uFF1F\u8D70\u5427\uFF0C\u5148\u53BB\u4E70\u73B0\u6210\u7684\u3002"
+      Text: "\u6628\u5929\u8FD8\u53EA\u4F1A\u70B9\u4EAE\u4E00\u9897\u68CB\u5B50\uFF0C\u4ECA\u5929\u5C31\u60F3\u53D8\u51FA\u996D\u6765\u5417\uFF1F\u8D70\u5427\uFF0C\u5148\u53BB\u4E70\u73B0\u6210\u7684\u3002"
       TextKey: 
       Next: c02_pantry_008
       Voice: 
@@ -2495,7 +2495,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_15
+        Left: Art/Characters/Yaya/Expressions/GalYaya_15
         Center: '-'
         Right: '-'
         Music: 
@@ -2543,7 +2543,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_14
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_14
         Center: '-'
         Right: '-'
         Music: 
@@ -2591,7 +2591,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_26
         Center: '-'
         Right: '-'
         Music: 
@@ -2639,7 +2639,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -2687,7 +2687,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_13
         Center: '-'
         Right: '-'
         Music: 
@@ -2735,7 +2735,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -2759,7 +2759,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Characters/Yaya/Expressions/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -2807,7 +2807,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_18
         Center: '-'
         Right: '-'
         Music: 
@@ -2855,7 +2855,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -2903,7 +2903,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Left: Art/Characters/Yaya/Expressions/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -2951,7 +2951,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -2999,7 +2999,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_23
         Center: '-'
         Right: '-'
         Music: 
@@ -3047,7 +3047,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_26
         Center: '-'
         Right: '-'
         Music: 
@@ -3095,7 +3095,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_07
+        Left: Art/Characters/Yaya/Expressions/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -3143,7 +3143,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_16
+        Left: Art/Characters/Yaya/Expressions/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -3167,7 +3167,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_24
         Center: '-'
         Right: '-'
         Music: 
@@ -3215,7 +3215,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -3287,7 +3287,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_20
         Center: '-'
         Right: '-'
         Music: 
@@ -3335,7 +3335,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -3383,7 +3383,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_19
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_19
         Center: '-'
         Right: '-'
         Music: 
@@ -3431,7 +3431,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -3456,7 +3456,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_23
         Center: '-'
         Right: '-'
         Music: 
@@ -3506,7 +3506,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_14
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_14
         Center: '-'
         Right: '-'
         Music: 
@@ -3581,7 +3581,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_11
         Center: '-'
         Right: '-'
         Music: 
@@ -3631,7 +3631,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Left: Art/Characters/Yaya/Expressions/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -3681,7 +3681,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Characters/Yaya/Expressions/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -3731,7 +3731,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_20
         Center: '-'
         Right: '-'
         Music: 
@@ -3755,7 +3755,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_03
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_03
         Center: '-'
         Right: '-'
         Music: 
@@ -3803,7 +3803,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_08
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_08
         Center: '-'
         Right: '-'
         Music: 
@@ -3851,7 +3851,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -3899,7 +3899,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Characters/Yaya/Expressions/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -3947,7 +3947,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -3995,7 +3995,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -4045,7 +4045,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_18
         Center: '-'
         Right: '-'
         Music: 
@@ -4120,7 +4120,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_20
         Center: '-'
         Right: '-'
         Music: 
@@ -4170,7 +4170,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -4220,7 +4220,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_12
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_12
         Center: '-'
         Right: '-'
         Music: 
@@ -4270,7 +4270,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_13
         Center: '-'
         Right: '-'
         Music: 
@@ -4320,7 +4320,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_11
         Center: '-'
         Right: '-'
         Music: 
@@ -4370,7 +4370,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_07
+        Left: Art/Characters/Yaya/Expressions/GalYaya_07
         Center: '-'
         Right: '-'
         Music: 
@@ -4443,7 +4443,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -4491,7 +4491,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_08
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_08
         Center: '-'
         Right: '-'
         Music: 
@@ -4563,7 +4563,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 
@@ -4587,7 +4587,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_18
         Center: '-'
         Right: '-'
         Music: 
@@ -4635,7 +4635,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -4683,7 +4683,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_23
         Center: '-'
         Right: '-'
         Music: 
@@ -4707,7 +4707,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Characters/Yaya/Expressions/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -4779,7 +4779,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_19
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_19
         Center: '-'
         Right: '-'
         Music: 
@@ -4827,7 +4827,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Left: Art/Characters/Yaya/Expressions/GalYaya_25
         Center: '-'
         Right: '-'
         Music: 
@@ -4875,7 +4875,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_14
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_14
         Center: '-'
         Right: '-'
         Music: 
@@ -4923,7 +4923,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_12
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_12
         Center: '-'
         Right: '-'
         Music: 
@@ -4995,7 +4995,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_05
         Center: '-'
         Right: '-'
         Music: 
@@ -5043,7 +5043,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_01
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_01
         Center: '-'
         Right: '-'
         Music: 
@@ -5067,7 +5067,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_18
         Center: '-'
         Right: '-'
         Music: 
@@ -5115,7 +5115,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Left: Art/Characters/Yaya/Expressions/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -5163,7 +5163,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_16
+        Left: Art/Characters/Yaya/Expressions/GalYaya_16
         Center: '-'
         Right: '-'
         Music: 
@@ -5235,7 +5235,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_11
         Center: '-'
         Right: '-'
         Music: 
@@ -5283,7 +5283,7 @@ MonoBehaviour:
       Stage:
         Background: Art/Background/Gal/Chapter03/HeartPeakPhotoCG
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -5331,7 +5331,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_02
         Center: '-'
         Right: '-'
         Music: 
@@ -5403,7 +5403,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_15
+        Left: Art/Characters/Yaya/Expressions/GalYaya_15
         Center: '-'
         Right: '-'
         Music: 
@@ -5499,7 +5499,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Left: Art/Characters/Yaya/Expressions/GalYaya_28
         Center: '-'
         Right: '-'
         Music: 
@@ -5536,7 +5536,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u5192\u9669\u5BB6\uFF0C\u5176\u5B9E\u548C\u4F60\u7ECF\u5386\u4E86\u8FD9\u4E48\u591A\uFF0C\u4F60\u4E5F\u80FD\u591F\u770B\u5F97\u51FA\u6211\u7684\u5FC3\u610F\uFF0C\u867D\u7136\u672C\u9E26\u5E73\u65F6\u8001\u662F\u5632\u8BBD\u4F60\uFF0C\u4F46\u90A3\u4E5F\u662F\u56E0\u4E3A\u6211\u771F\u6B63\u5728\u610F\u4F60\u3001\u5173\u5FC3\u4F60\uFF0C"
+      Text: "\u5192\u9669\u5BB6\uFF0C\u5176\u5B9E\u548C\u4F60\u7ECF\u5386\u4E86\u8FD9\u4E48\u591A\uFF0C\u4F60\u4E5F\u80FD\u591F\u770B\u5F97\u51FA\u6211\u7684\u5FC3\u610F\uFF0C\u867D\u7136\u672C\u9E26\u5E73\u65F6\u8001\u662F\u5632\u8BBD\u4F60\uFF0C\u4F46\u90A3\u4E5F\u662F\u56E0\u4E3A\u6211\u771F\u6B63\u5728\u610F\u4F60\u3001\u5173\u5FC3\u4F60"
       TextKey: 
       Next: c03_confession_008_part2
       Voice: 
@@ -5547,7 +5547,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Left: Art/Characters/Yaya/Expressions/GalYaya_29
         Center: '-'
         Right: '-'
         Music: 
@@ -5560,7 +5560,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u53EF\u80FD\u6211\u4E00\u5F00\u59CB\u9047\u89C1\u4F60\u7684\u65F6\u5019\u4E5F\u89C9\u5F97\u4F60\u4E0D\u9760\u8C31\uFF0C\u4F46\u662F\u966A\u4F60\u4E00\u8D77\u8D70\u8FC7\u4E86\u8FD9\u4E00\u8DEF\u7684\u5386\u7EC3\u4E4B\u540E\uFF0C\u6211\u4E5F\u9010\u6E10\u5BF9\u4F60\u65E5\u4E45\u751F\u60C5\u4E86\uFF0C"
+      Text: "\u53EF\u80FD\u6211\u4E00\u5F00\u59CB\u9047\u89C1\u4F60\u7684\u65F6\u5019\u4E5F\u89C9\u5F97\u4F60\u4E0D\u9760\u8C31\uFF0C\u4F46\u662F\u966A\u4F60\u4E00\u8D77\u8D70\u8FC7\u4E86\u8FD9\u4E00\u8DEF\u7684\u5386\u7EC3\u4E4B\u540E\uFF0C\u6211\u4E5F\u9010\u6E10\u5BF9\u4F60\u65E5\u4E45\u751F\u60C5\u4E86"
       TextKey: 
       Next: c03_confession_008_part3
       Voice: 
@@ -5571,7 +5571,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_05
         Center: '-'
         Right: '-'
         Music: 
@@ -5595,7 +5595,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_09
+        Left: Art/Characters/Yaya/Expressions/GalYaya_09
         Center: '-'
         Right: '-'
         Music: 
@@ -5643,7 +5643,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_13
         Center: '-'
         Right: '-'
         Music: 
@@ -5691,7 +5691,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_20
         Center: '-'
         Right: '-'
         Music: 
@@ -5739,7 +5739,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_11
         Center: '-'
         Right: '-'
         Music: 
@@ -5776,7 +5776,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u6628\u5929\u4E70\u7684\u571F\u8C46\u8FD8\u6709\u3002\u5192\u9669\u5BB6\u628A\u571F\u8C46\u5207\u597D\uFF0C\u518D\u62FF\u4E24\u9897\u86CB\uFF0C\u672C\u9E26\u770B\u706B\u3002"
+      Text: "\u6628\u5929\u4E70\u7684\u571F\u8C46\u8FD8\u6709\u3002\u5192\u9669\u5BB6\u628A\u571F\u8C46\u5207\u597D\uFF0C\u518D\u714E\u4E24\u9897\u86CB\uFF0C\u672C\u9E26\u770B\u706B\u3002"
       TextKey: 
       Next: c03_home_005
       Voice: 
@@ -5787,7 +5787,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Left: Art/Characters/Yaya/Expressions/YayaExpression_17
         Center: '-'
         Right: '-'
         Music: 
@@ -5835,7 +5835,7 @@ MonoBehaviour:
       Stage:
         Background: 
         BackgroundMaterial: 
-        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Left: Art/Characters/Yaya/Expressions/GalYaya_22
         Center: '-'
         Right: '-'
         Music: 

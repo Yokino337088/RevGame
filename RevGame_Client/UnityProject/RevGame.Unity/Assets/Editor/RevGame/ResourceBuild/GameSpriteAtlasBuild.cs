@@ -57,7 +57,9 @@ namespace RevGame.Editor
                     importer.SaveAndReimport();
                 }
                 string group = GroupFor(path);
-                if (IsYayaExpressionAtlas(group))
+                // 补齐的 Gal 差分与鸦鸦表情共用图集，沿用原导入分辨率，避免为共用而放大图页。
+                if (IsYayaExpressionAtlas(group)
+                    && !Path.GetFileNameWithoutExtension(path).StartsWith("GalYaya_", StringComparison.Ordinal))
                 {
                     ConfigureExpressionSource(importer);
                 }
