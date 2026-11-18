@@ -190,7 +190,7 @@ MonoBehaviour:
         Right: '-'
         Music: 
     - Id: stage_c03_together
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA"
       Parent: stage_c03
       Stage:
         Background: Art/Background/Gal/Chapter03/HeartPeakMarker
@@ -4034,7 +4034,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u672C\u9E26\u5728\u770B\u4F60\u6709\u6CA1\u6709\u8E29\u5BF9\u8DEF\u3002\u5192\u9669\u5BB6\uFF0C\u8FC7\u6765\u8FD9\u8FB9\uFF0C\u5148\u8DDF\u6211\u7AD9\u4E00\u8D77\u3002"
+      Text: "\u672C\u9E26\u5728\u627E\u80FD\u770B\u5168\u5FC3\u5CF0\u7684\u8349\u5730\u3002\u5192\u9669\u5BB6\uFF0C\u8FC7\u6765\u8FD9\u8FB9\uFF0C\u8DDF\u6211\u7AD9\u4E00\u8D77\u3002"
       TextKey: 
       Next: c03_arrive_003
       Voice: 
@@ -4059,7 +4059,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: 
       SpeakerKey: 
-      Text: "\u987A\u7740\u5979\u6307\u7684\u65B9\u5411\u770B\u8FC7\u53BB\uFF0C\u4E24\u9053\u5706\u5706\u7684\u5C71\u810A\u5728\u4E2D\u95F4\u51F9\u4E0B\u53BB\uFF0C\u5761\u9762\u4E00\u8DEF\u6536\u6210\u5C16\u89D2\u3002\u8FDC\u5904\u770B\uFF0C\u6574\u5EA7\u5C71\u50CF\u4E00\u9897\u7231\u5FC3\u3002"
+      Text: "\u987A\u7740\u5979\u6307\u7684\u65B9\u5411\u671B\u8FC7\u53BB\uFF0C\u4E24\u9053\u5706\u5706\u7684\u5C71\u810A\u5728\u4E2D\u95F4\u51F9\u4E0B\u53BB\uFF0C\u5761\u811A\u6536\u62E2\uFF0C\u843D\u5728\u540C\u4E00\u7247\u8349\u539F\u4E0A\u3002\u6574\u5EA7\u5C71\u50CF\u4E00\u9897\u7231\u5FC3\u3002"
       TextKey: 
       Next: c03_arrive_004
       Voice: 
@@ -4134,7 +4134,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u8FD9\u4E9B\u90FD\u662F\u522B\u4EBA\u7948\u613F\u7559\u4E0B\u7684\uFF1F"
+      Text: "\u4F60\u600E\u4E48\u77E5\u9053\u8FD9\u7247\u8349\u5730\u6700\u9002\u5408\u770B\u5FC3\u5CF0\uFF1F"
       TextKey: 
       Next: c03_arrive_007
       Voice: 
@@ -4159,7 +4159,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u6709\u6765\u6C42\u5A5A\u7684\uFF0C\u4E5F\u6709\u6765\u529E\u5A5A\u793C\u7684\u3002\u5929\u597D\u4F1A\u5728\u4E0B\u9762\u90A3\u5757\u5E73\u5730\u6446\u6905\u5B50\uFF0C\u8BF7\u8BA4\u8BC6\u7684\u4EBA\u6765\u770B\u3002"
+      Text: "\u9547\u4E0A\u7684\u4EBA\u5E38\u6765\u8FD9\u513F\u3002\u6709\u6765\u6C42\u5A5A\u7684\uFF0C\u4E5F\u6709\u5728\u8349\u5730\u4E0A\u529E\u5A5A\u793C\u7684\u3002\u5929\u597D\u5C31\u94FA\u4E00\u5757\u6BEF\u5B50\uFF0C\u628A\u719F\u4EBA\u90FD\u53EB\u6765\u3002"
       TextKey: 
       Next: c03_arrive_008
       Voice: 
@@ -4209,7 +4209,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u5192\u9669\u5BB6\uFF0C\u8C01\u8BA9\u4F60\u4E0A\u6765\u7B2C\u4E00\u4EF6\u4E8B\u5C31\u95EE\u8FD9\u4E2A\uFF01\u672C\u9E26\u4ECA\u5929\u60F3\u8DDF\u4F60\u51FA\u6765\u73A9\u3002"
+      Text: "\u5192\u9669\u5BB6\uFF0C\u8C01\u8BA9\u4F60\u521A\u5230\u8FD9\u513F\u5C31\u95EE\u8FD9\u4E2A\uFF01\u672C\u9E26\u4ECA\u5929\u60F3\u8DDF\u4F60\u51FA\u6765\u73A9\u3002"
       TextKey: 
       Next: c03_arrive_010
       Voice: 
@@ -4234,7 +4234,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u6211\u770B\u4F60\u5BF9\u6446\u6905\u5B50\u8FD9\u4E8B\u8FD8\u633A\u719F\u3002"
+      Text: "\u6211\u770B\u4F60\u8FDE\u5A5A\u793C\u5728\u54EA\u7247\u8349\u5730\u529E\u90FD\u77E5\u9053\u3002"
       TextKey: 
       Next: c03_arrive_011
       Voice: 
@@ -4384,7 +4384,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u884C\uFF0C\u5403\u996D\u6709\u4EBA\u966A\uFF0C\u53D1\u5446\u4E5F\u6709\u4EBA\u966A\u3002\u8FD9\u8D9F\u722C\u5F97\u503C\u3002"
+      Text: "\u884C\uFF0C\u5403\u996D\u6709\u4EBA\u966A\uFF0C\u53D1\u5446\u4E5F\u6709\u4EBA\u966A\u3002\u8FD9\u8D9F\u6765\u5F97\u503C\u3002"
       TextKey: 
       Next: c03_camera_001
       Voice: 
@@ -4504,7 +4504,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: 
       SpeakerKey: 
-      Text: "\u98CE\u671D\u7740\u5C71\u80CC\u8FC7\u53BB\uFF0C\u5439\u5F00\u4E86\u4F4E\u5904\u7684\u4E00\u70B9\u96FE\u3002\u6E56\u6C34\u548C\u8FDC\u5904\u7684\u5C4B\u9876\u4E00\u8D77\u4EAE\u51FA\u6765\uFF0C\u6CBF\u8DEF\u53EA\u542C\u5F97\u5230\u811A\u6B65\u548C\u6811\u53F6\u54CD\u3002"
+      Text: "\u98CE\u4ECE\u5C71\u811A\u5439\u8FC7\u6765\uFF0C\u8349\u5C16\u987A\u7740\u98CE\u4F0F\u4E0B\u53BB\uFF0C\u6EAA\u6C34\u5728\u8FDC\u5904\u95EA\u4E86\u4E00\u4E0B\u3002\u7AD9\u5728\u8FD9\u91CC\uFF0C\u9664\u4E86\u8349\u53F6\u54CD\uFF0C\u51E0\u4E4E\u542C\u4E0D\u89C1\u522B\u7684\u58F0\u97F3\u3002"
       TextKey: 
       Next: c03_camera_006
       Voice: 
@@ -4528,7 +4528,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u8FD9\u5730\u65B9\u771F\u597D\u770B\u3002\u6211\u539F\u6765\u51FA\u95E8\u722C\u5C71\uFF0C\u62CD\u5B8C\u6700\u5148\u60F3\u627E\u7684\u662F\u4E0B\u5C71\u7684\u8DEF\u3002\u8FD9\u91CC\u6211\u60F3\u591A\u770B\u4E00\u4F1A\u513F\u3002"
+      Text: "\u8FD9\u5730\u65B9\u771F\u597D\u770B\u3002\u7AD9\u5728\u8349\u5730\u4E0A\u5C31\u80FD\u770B\u5168\u4E00\u6574\u5EA7\u5FC3\u5CF0\u3002\u6211\u60F3\u548C\u4F60\u591A\u5F85\u4E00\u4F1A\u513F\u3002"
       TextKey: 
       Next: c03_camera_007
       Voice: 
@@ -4648,7 +4648,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u8FD9\u8D9F\u722C\u5C71\u7684\u98CE\u9669\u73B0\u5728\u624D\u8BF4\u554A\u3002"
+      Text: "\u7ED9\u9E26\u9E26\u5927\u4EBA\u62CD\u7167\u7684\u98CE\u9669\uFF0C\u73B0\u5728\u624D\u8BF4\u554A\u3002"
       TextKey: 
       Next: c03_camera_012
       Voice: 
@@ -5050,8 +5050,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_001
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        01"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 01"
       Kind: 0
       Position: {x: 0, y: 2940}
       StagePreset: stage_c03_together
@@ -5075,8 +5074,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_002
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        02"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 02"
       Kind: 0
       Position: {x: 300, y: 2940}
       StagePreset: 
@@ -5100,14 +5098,13 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_003
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        03"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 03"
       Kind: 0
       Position: {x: 600, y: 2940}
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u76F8\u673A\u80FD\u7B49\u51E0\u4E0B\u518D\u62CD\u3002\u653E\u90A3\u5757\u5E73\u77F3\u4E0A\u3002\u6309\u5B8C\u8FC7\u6765\uFF0C\u522B\u8BA9\u672C\u9E26\u4E00\u4E2A\u4EBA\u5728\u8FD9\u513F\u7B49\u3002"
+      Text: "\u76F8\u673A\u80FD\u7B49\u51E0\u4E0B\u518D\u62CD\u3002\u628A\u5C0F\u67B6\u5B50\u5728\u8349\u5730\u4E0A\u652F\u7A33\u3002\u6309\u5B8C\u5C31\u8FC7\u6765\uFF0C\u522B\u8BA9\u672C\u9E26\u4E00\u4E2A\u4EBA\u5728\u8FD9\u513F\u7B49\u3002"
       TextKey: 
       Next: c03_together_004
       Voice: 
@@ -5125,8 +5122,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_004
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        04"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 04"
       Kind: 0
       Position: {x: 900, y: 2940}
       StagePreset: 
@@ -5150,8 +5146,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_005
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        05"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 05"
       Kind: 0
       Position: {x: 1200, y: 2940}
       StagePreset: 
@@ -5175,8 +5170,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_006
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        06"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 06"
       Kind: 0
       Position: {x: 1500, y: 2940}
       StagePreset: 
@@ -5200,8 +5194,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_007
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        07"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 07"
       Kind: 0
       Position: {x: 1800, y: 2940}
       StagePreset: 
@@ -5225,8 +5218,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_008
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        08"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 08"
       Kind: 0
       Position: {x: 2100, y: 2940}
       StagePreset: 
@@ -5250,8 +5242,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_009
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        09"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 09"
       Kind: 0
       Position: {x: 2400, y: 2940}
       StagePreset: 
@@ -5275,8 +5266,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_010
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        10"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 10"
       Kind: 0
       Position: {x: 2700, y: 2940}
       StagePreset: 
@@ -5300,8 +5290,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_011
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        11"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 11"
       Kind: 0
       Position: {x: 3000, y: 2940}
       StagePreset: 
@@ -5325,8 +5314,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_012
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        12"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 12"
       Kind: 0
       Position: {x: 3300, y: 2940}
       StagePreset: 
@@ -5350,8 +5338,7 @@ MonoBehaviour:
       Effects: []
       Exits: []
     - Id: c03_together_013
-      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
-        13"
+      Title: "\u5728\u8349\u7538\u4E0A\u62CD\u4E24\u4E2A\u4EBA 13"
       Kind: 0
       Position: {x: 3600, y: 2940}
       StagePreset: 
@@ -5717,7 +5704,7 @@ MonoBehaviour:
       StagePreset: stage_c03_home
       Speaker: "\u5192\u9669\u5BB6"
       SpeakerKey: 
-      Text: "\u4E0B\u53BB\u4E86\uFF1F\u6211\u6253\u8D4C\u4ECA\u665A\u9E26\u9E26\u5927\u4EBA\u8FD8\u8981\u62FF\u90A3\u53CC\u62D6\u978B\u9017\u6211\u3002"
+      Text: "\u8FD9\u5C31\u56DE\u53BB\u4E86\uFF1F\u6211\u6253\u8D4C\u4ECA\u665A\u9E26\u9E26\u5927\u4EBA\u8FD8\u8981\u62FF\u90A3\u53CC\u62D6\u978B\u9017\u6211\u3002"
       TextKey: 
       Next: c03_home_002
       Voice: 
@@ -5741,7 +5728,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: "\u9E26\u9E26"
       SpeakerKey: 
-      Text: "\u5192\u9669\u5BB6\uFF0C\u978B\u7684\u4E8B\u56DE\u5BB6\u518D\u8BF4\u3002\u4F60\u73B0\u5728\u597D\u597D\u7275\u7740\u672C\u9E26\uFF0C\u522B\u5728\u5761\u4E0A\u4E71\u8DD1\u3002"
+      Text: "\u5192\u9669\u5BB6\uFF0C\u978B\u7684\u4E8B\u56DE\u5BB6\u518D\u8BF4\u3002\u73B0\u5728\u597D\u597D\u7275\u7740\u672C\u9E26\uFF0C\u966A\u6211\u6162\u6162\u8D70\u3002"
       TextKey: 
       Next: c03_home_003
       Voice: 
@@ -5861,7 +5848,7 @@ MonoBehaviour:
       StagePreset: 
       Speaker: 
       SpeakerKey: 
-      Text: "\u76F8\u673A\u5728\u6211\u4EEC\u4E2D\u95F4\u8F7B\u8F7B\u6643\uFF0C\u4E00\u8DEF\u6643\u5230\u5C71\u8DEF\u6700\u540E\u90A3\u4E2A\u62D0\u5F2F\u3002"
+      Text: "\u76F8\u673A\u5728\u6211\u4EEC\u4E2D\u95F4\u8F7B\u8F7B\u6643\u3002\u5FEB\u8D70\u5230\u8349\u7538\u5C3D\u5934\u65F6\uFF0C\u6211\u56DE\u5934\u770B\u4E86\u4E00\u773C\u3002\u665A\u971E\u8FD8\u7559\u5728\u5FC3\u5CF0\u7684\u4E24\u9053\u5706\u810A\u4E0A\u3002"
       TextKey: 
       Next: 
       Voice: 
