@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Revolution.Gal.Editor
 {
     /// <summary>为使用自有界面的宿主读取剧情字段和资源需求。报告只查看当前工程的本地素材。</summary>
-    internal static class RevGalHostContract
+    public static class RevGalHostContract
     {
         private sealed class Media
         {
@@ -18,7 +18,24 @@ namespace Revolution.Gal.Editor
             public readonly List<Dictionary<string, object>> Uses = new List<Dictionary<string, object>>();
         }
 
-        public static Dictionary<string, object> Describe(RevGalStory story)
+        /// <summary>供宿主构建系统检查节点及舞台方案的动态资源。resourceRoot 传项目自己的 Unity 资源目录。</summary>
+        public static IEnumerable<(string LogicalPath, Type AssetType, string AssetPath, string Status)> InspectMedia(RevGalStory story, string resourceRoot)
+        {
+            if (story == null)
+            {
+                throw new ArgumentNullException(nameof(story));
+            }
+            var definition = story.Definition;
+            var nodes = (definition?.Nodes ?? new List<RevGalNode>()).Where(node => node != null).ToArray();
+            var presets = (definition?.StagePresets ?? new List<RevGalStagePreset>()).Where(preset => preset != null).ToArray();
+            foreach (var media in CollectMedia(nodes, presets))
+            {
+                var (assetPath, status) = ResolveMedia(media, resourceRoot?.TrimEnd('/'));
+                yield return (media.Path, media.Type, assetPath, status);
+            }
+        }
+
+        internal static Dictionary<string, object> Describe(RevGalStory story)
         {
             string assetPath = AssetDatabase.GetAssetPath(story);
             var definition = story.Definition;
@@ -90,19 +107,24 @@ namespace Revolution.Gal.Editor
 
         private static Dictionary<string, object> DescribeMedia(Media media, string root)
         {
-            var result = new Dictionary<string, object>
+            var (assetPath, status) = ResolveMedia(media, root);
+            return new Dictionary<string, object>
             {
                 ["path"] = media.Path, ["type"] = media.Type.Name, ["uses"] = media.Uses,
-                ["status"] = "resource-root-unconfigured", ["assetPath"] = null, ["bundle"] = null
+                ["status"] = status, ["assetPath"] = assetPath,
+                ["bundle"] = assetPath == null ? null : AssetDatabase.GetImplicitAssetBundleName(assetPath)
             };
+        }
+
+        private static (string AssetPath, string Status) ResolveMedia(Media media, string root)
+        {
             if (!RevGalValidation.IsLogicalPath(media.Path) || media.Path.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
             {
-                result["status"] = "invalid-path";
-                return result;
+                return (null, "invalid-path");
             }
-            if (root == null)
+            if (string.IsNullOrEmpty(root))
             {
-                return result;
+                return (null, "resource-root-unconfigured");
             }
             string logicalFile = root + "/" + media.Path;
             string directory = Path.GetDirectoryName(logicalFile);
@@ -113,13 +135,9 @@ namespace Revolution.Gal.Editor
                 : Array.Empty<string>();
             if (matches.Length != 1)
             {
-                result["status"] = matches.Length == 0 ? "not-found" : "ambiguous";
-                return result;
+                return (null, matches.Length == 0 ? "not-found" : "ambiguous");
             }
-            result["assetPath"] = matches[0];
-            result["bundle"] = AssetDatabase.GetImplicitAssetBundleName(matches[0]);
-            result["status"] = AssetDatabase.LoadAssetAtPath(matches[0], media.Type) != null ? "found" : "type-mismatch";
-            return result;
+            return (matches[0], AssetDatabase.LoadAssetAtPath(matches[0], media.Type) != null ? "found" : "type-mismatch");
         }
     }
 }
