@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="RevGame 六章通关后的鸦鸦恋爱续篇。主线衔接、角色口吻、七章分场、对白样段与叙事节奏。">
+  <title>RevGame · 鸦鸦家的第七天 | GalGame 剧情大纲</title>
+  <style>
+    :root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:32px}
+    body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+    a{color:var(--green);text-decoration-thickness:1px;text-underline-offset:4px}
+    button,input{font:inherit}
+    button:focus-visible,a:focus-visible{outline:3px solid #b48442;outline-offset:4px}
+    .topbar{height:76px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+    .brand{font-weight:800;letter-spacing:2px}
+    .brand i{font-style:normal;background:var(--green);color:white;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-right:12px}
+    .tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+    .hero{max-width:1260px;margin:0 auto;padding:70px 40px 48px;display:grid;grid-template-columns:1.45fr 1fr;gap:60px;align-items:center}
+    .eyebrow,.section-label{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+    .hero h1{font-size:clamp(35px,4.3vw,62px);letter-spacing:-2px;line-height:1.25;margin:20px 0;font-weight:800}
+    .hero h1 em{font-style:normal;color:var(--green)}
+    .lead{color:var(--muted);font-size:17px;max-width:570px}
+    .hero-links{display:flex;gap:12px;margin-top:27px;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:9px 18px;border-radius:30px;text-decoration:none;font-size:14px;background:white}
+    .pill.primary{background:var(--green);color:white;border-color:var(--green)}
+    .stamp{font:12px Consolas,monospace;margin-top:25px;color:#7b867b}
+    .demo{position:relative;background:linear-gradient(135deg,#fefdf5,#e6efe1);padding:26px;border:1px solid #d6e2d2;border-radius:28px;box-shadow:0 20px 55px #334f3320;overflow:hidden}
+    .demo::before{content:"";position:absolute;width:210px;height:210px;background:#e5cc8e55;border-radius:50%;filter:blur(25px);right:-80px;top:-90px;animation:drift 8s ease-in-out infinite alternate}
+    .demo-head{position:relative;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#688c62;box-shadow:0 0 0 5px #5c86621c;display:inline-block;margin-right:8px;animation:pulse 2.5s infinite}
+    .demo-result span{font-size:13px;color:var(--muted)}
+    .segmented{display:flex;gap:5px;border-radius:12px;background:#dce5d8;padding:4px;margin-top:15px}
+    .segmented button{flex:1;border:0;background:transparent;border-radius:9px;padding:7px;cursor:pointer;font-size:13px;color:var(--ink)}
+    .segmented button[aria-pressed="true"]{background:#fffef8;box-shadow:0 2px 5px #34502515}
+    .demo small{display:block;font-size:11px;line-height:1.7;color:var(--muted);margin-top:13px}
+    .metrics{max-width:1180px;margin:0 auto 45px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:25px 0}
+    .metric{padding:5px 35px;border-right:1px solid var(--line)}
+    .metric:last-child{border:0}
+    .metric strong{font:700 39px/1.4 Consolas,monospace;color:var(--green)}
+    .metric strong small{font-size:18px}
+    .metric p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+    .workspace{display:grid;grid-template-columns:230px minmax(0,890px);gap:55px;max-width:1180px;margin:auto;padding-bottom:90px}
+    .sidebar{align-self:start;position:sticky;top:28px}
+    .sidebar h3{font-size:12px;letter-spacing:3px;margin:0 0 18px;color:var(--muted)}
+    .sidebar nav{display:flex;flex-direction:column;gap:3px}
+    .sidebar nav a{font-size:13px;text-decoration:none;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;display:flex;gap:10px}
+    .sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}
+    .sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}
+    .sidebar .note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:22px;padding:20px 10px}
+    .chapter{background:#fffefa;border:1px solid var(--line);border-radius:18px;margin-bottom:25px;padding:36px 38px;box-shadow:0 5px 15px #315c3110}
+    .chapter h2{font-size:27px;line-height:1.45;letter-spacing:-.5px;margin:8px 0 22px}
+    .chapter p{margin:17px 0}
+    .chapter strong{color:#254e3d}
+    .chapter ul,.chapter ol{padding-left:24px}
+    .chapter li{margin:10px 0}
+    .chapter code{font:13px/1.65 Consolas,"Microsoft YaHei",monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+    .table-scroll{overflow:auto;margin:24px -5px;border:1px solid var(--line);border-radius:11px}
+    table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+    th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+    td,th{padding:13px 14px;border-bottom:1px solid #e4e9e0;vertical-align:top}
+    tr:last-child td{border-bottom:0}
+    td:first-child{font-weight:600;min-width:105px}
+    tr:nth-child(even) td{background:#fafbf6}
+    footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);display:flex;justify-content:space-between;font-size:13px}
+    .progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--green);z-index:20;transition:width .1s}
+    .motion-control{border:1px solid #c7d2c3;background:transparent;border-radius:30px;font-size:12px;cursor:pointer;padding:7px 12px;color:var(--green)}
+    .paused *{animation-play-state:paused!important}
+    .legend{padding:14px 18px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936}
+    .document-meta{font-size:13px;color:var(--muted);margin-bottom:25px}
+    .document-meta a{margin-right:20px}
+    @keyframes drift{to{transform:translate(-50px,40px)}
+    }
+    @keyframes pulse{50%{box-shadow:0 0 0 8px #5c866200}
+    }
+    @media(max-width:1200px){.workspace{padding:0 25px 60px;gap:25px;grid-template-columns:200px minmax(0,1fr)}
+    .metrics{margin-left:25px;margin-right:25px}
+    .hero{gap:30px}
+    }
+    @media(max-width:900px){.sidebar{position:static}
+    .sidebar nav{display:grid;grid-template-columns:1fr 1fr}
+    .sidebar .note,.sidebar h3{display:none}
+    .workspace{display:block}
+    .sidebar{margin-bottom:25px}
+    .hero{grid-template-columns:1fr 1fr;padding:40px 25px}
+    .chapter{padding:28px}
+    .tag{display:none}
+    }
+    @media(max-width:620px){body{font-size:15px}
+    .topbar{height:66px}
+    .hero{display:block;padding:35px 22px}
+    .hero h1{letter-spacing:-1px;font-size:40px}
+    .demo{margin-top:30px;max-width:390px}
+    .metrics{padding:18px 0;margin-bottom:25px}
+    .metric{padding:0 10px}
+    .metric strong{font-size:28px}
+    .metric p{font-size:11px}
+    .workspace{padding:0 14px 40px}
+    .sidebar nav{gap:2px}
+    .sidebar nav a{font-size:11px;padding:7px 5px;gap:6px}
+    .chapter{padding:25px 20px;border-radius:14px}
+    .chapter h2{font-size:24px}
+    .table-scroll{margin:20px 0}
+    table{min-width:560px}
+    footer{display:block}
+    .hero-links{gap:8px}
+    .pill{padding:8px 14px}
+    }
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}
+    *,*:before{animation:none!important;transition:none!important}
+    }
+    @media print{.sidebar,.demo,.motion-control,.progress{display:none}
+    .hero,.workspace{display:block;padding:0}
+    .chapter{box-shadow:none;break-inside:auto;border:0;padding:15px 0}
+    .metrics{margin:0}
+    .topbar{padding:0}
+    .table-scroll{overflow:visible}
+    a{color:inherit}
+    body{font-size:11pt}
+    }
+
+    .hero h1 { overflow-wrap: anywhere; }
+    .paused *::before, .paused *::after { animation-play-state: paused !important; }
+    .skip-link { position: absolute; left: 14px; top: 12px; z-index: 21; padding: 8px 15px; background: #fffefa; transform: translateY(-160%); }
+    .skip-link:focus { transform: translateY(0); }
+    .scene-preview { position: relative; min-height: 184px; padding: 20px 0 14px; }
+    .scene-preview h2 { margin: 0 0 8px; font-size: 24px; line-height: 1.45; color: #254e3d; }
+    .scene-preview p { margin: 0 0 10px; font-size: 14px; }
+    .scene-preview .preview-line { font-size: 15px; color: #375441; }
+    .demo-result { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px 12px; border-top: 1px solid #cfdacb; padding-top: 14px; }
+    .demo-result a { font-size: 13px; }
+    .sidebar { max-height: calc(100vh - 56px); overflow: auto; }
+    .sidebar nav a { align-items: baseline; }
+    .chapter h3 { margin: 24px 0 8px; font-size: 17px; line-height: 1.55; color: #254e3d; }
+    .chapter .section-label { letter-spacing: 1.5px; }
+    .chapter .chapter-meta { color: var(--muted); font-size: 13px; margin-top: -11px; }
+    .chapter .beat-list { margin: 10px 0 18px; }
+    .chapter .beat-list li { padding-left: 2px; }
+    .scene-sample { margin: 22px 0 0; padding: 18px 21px; background: #f0f4ea; border: 1px solid #dce5d8; border-left: 3px solid #7b987c; border-radius: 11px; }
+    .scene-sample figcaption { color: #375441; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .dialogue { margin: 0; }
+    .dialogue div { display: grid; grid-template-columns: 4em minmax(0, 1fr); gap: 10px; padding: 5px 0; }
+    .dialogue dt { margin: 0; color: var(--green); font-weight: 700; font-size: 14px; }
+    .dialogue dd { margin: 0; font-size: 15px; }
+    .scene-sample .stage-direction { color: var(--muted); font-size: 13px; margin: 8px 0; }
+    .pacing-table td:last-child { width: 6.2em; white-space: nowrap; }
+    .chapter .source-list { margin: 0; padding-left: 22px; }
+    .source-list li + li { margin-top: 19px; }
+    .source-list a { font-size: 13px; }
+    .document-meta a { margin-right: 0; }
+    footer a { margin-left: 14px; }
+    @media (max-width: 900px) { .sidebar { max-height: none; overflow: visible; } }
+    @media (max-width: 620px) {
+      .scene-sample { padding: 13px 11px; }
+      .scene-preview { min-height: 0; }
+      .dialogue div { grid-template-columns: 3.6em minmax(0, 1fr); gap: 6px; }
+      .dialogue dt, .dialogue dd { font-size: 14px; }
+      .topbar .brand { font-size: 14px; }
+      footer a { display: inline-block; margin: 5px 12px 0 0; }
+    }
+    @media print {
+      .scene-sample { break-inside: avoid; }
+      .topbar { height: auto; }
+      .source-list a, .table-scroll { overflow-wrap: anywhere; }
+      table { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#outline">跳到剧情大纲</a>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand"><i aria-hidden="true">R</i>REVGAME <span class="tag">NARRATIVE DESIGN GUIDE</span></div>
+    <button type="button" class="motion-control" id="motion" aria-pressed="false">暂停装饰动画</button>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">REVOLUTION.GAL / 六章通关后续篇</div>
+      <h1>鸦鸦家的<br><em>第七天</em></h1>
+      <p class="lead">六页棋谱已经找齐。说要反悔的魔女和抢先跑回家的冒险家，终于有空为谁洗碗、蜜饼怎么买、明天要不要一起出门拌几句嘴。七天后，鸦鸦要把那句迟迟没说出口的话说完。</p>
+      <div class="hero-links">
+        <a class="pill primary" href="#canon">从主线接续读起 ↗</a>
+        <a class="pill" href="#chapter-01">跳到第一章</a>
+      </div>
+      <div class="stamp">2026.11.18 · REVGAME GALGAME 剧情大纲</div>
+    </div>
+    <aside class="demo" aria-labelledby="scene-preview-label">
+      <div class="demo-head"><strong id="scene-preview-label"><span class="live-dot" aria-hidden="true"></span>三处日常场景</strong><span class="tag">SCENE PREVIEW</span></div>
+      <div class="scene-preview" aria-live="polite">
+        <h2 id="preview-title">鸦鸦的小屋</h2>
+        <p id="preview-beat">赛跑后的清早，冒险家起床把粥煮糊了。鸦鸦把他赶去添柴，自己把两只碗都盛满。</p>
+        <p class="preview-line" id="preview-line">鸦鸦：“本鸦可没说要你做早饭。……左边那碗凉了，喝右边的。”</p>
+      </div>
+      <div class="demo-result">
+        <span id="preview-change">从借住到一起过日子</span>
+        <a id="preview-link" href="#chapter-02">读小屋篇 ↗</a>
+      </div>
+      <div class="segmented" role="group" aria-label="切换剧情场景预览">
+        <button type="button" data-preview="home" aria-pressed="true">小屋</button>
+        <button type="button" data-preview="market" aria-pressed="false">集市</button>
+        <button type="button" data-preview="lake" aria-pressed="false">镜湖</button>
+      </div>
+      <small>可切换场景查看关系推进和对白样句，完整分场见各章。</small>
+    </aside>
+  </div>
+
+  <div class="metrics" aria-label="大纲规模">
+    <div class="metric"><strong>7<small> 章</small></strong><p>七章正篇，另有一段告白后短尾声</p></div>
+    <div class="metric"><strong>3<small> 类场景</small></strong><p>同住小屋 · 青藤村旁的镇集 · 星落小径与镜湖</p></div>
+    <div class="metric"><strong>80–100<small> 分钟</small></strong><p>首轮阅读估计，包含停顿和可选对白</p></div>
+  </div>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <h3>阅读导航</h3>
+      <nav aria-label="剧情大纲目录">
+        <a href="#canon"><span>01</span>主线接续与感情基础</a>
+        <a href="#voice"><span>02</span>角色口吻与亲密写法</a>
+        <a href="#pace"><span>03</span>叙事节奏与回收</a>
+        <a href="#chapter-01"><span>一</span>今晚谁睡地板</a>
+        <a href="#chapter-02"><span>二</span>早饭得做两份</a>
+        <a href="#chapter-03"><span>三</span>集市买两只杯子</a>
+        <a href="#chapter-04"><span>四</span>今天可以走慢一点</a>
+        <a href="#chapter-05"><span>五</span>晚饭在锅里</a>
+        <a href="#chapter-06"><span>六</span>家务账结清了</a>
+        <a href="#chapter-07"><span>七</span>明天也回家</a>
+        <a href="#epilogue"><span>续</span>今天想吃什么</a>
+        <a href="#making"><span>04</span>选项与制作口径</a>
+        <a href="#references"><span>05</span>参考作品与取法</a>
+      </nav>
+      <div class="note">包含六章主线及续篇结局剧透。各章对白均为新写样稿，时长是试读目标。</div>
+    </aside>
+
+    <main id="outline">
+      <section id="canon" class="chapter">
+        <div class="section-label">STORY / 主线接续</div>
+        <h2>他们早就习惯把对方算进明天</h2>
+        <p>主线以六页棋谱和回原世界的约定开始。到第六章，冒险家先试探说有点不想走，鸦鸦在胜后真的说要反悔。原结局里，他承认留在弈陆也好，又要求换掉睡地板的待遇，最后抢跑喊着要“回家”。续篇从这场赛跑落地，保留鸦鸦强势留人的笑点，也接住冒险家已经露过口风的留意。</p>
+        <p class="legend"><strong>主线事实与续篇提案。</strong> 六页齐、鸦鸦反悔、两人赌谁先跑回家来自现有剧情。七天试住、镇集、共同买杯子、雨天约定和小屋钥匙都是本篇新增设计。当晚鸦鸦拽袖子、把家务清单摊开，冒险家提供自己的条件。第六天她先把回去的原约定摆回来，第七天才告白，给他一个清清楚楚留下的机会。</p>
+        <h3>六章关系证据如何变成后续场景</h3>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="六章关系证据对照表">
+          <table>
+            <thead><tr><th scope="col">主线篇章</th><th scope="col">已经发生的关系变化</th><th scope="col">续篇怎样接住</th></tr></thead>
+            <tbody>
+              <tr><td>序章及第一章<br><code>opening</code>、<code>boss_after_1</code></td><td>救人与督战的身份给鸦鸦讲话的主导权。第一张棋谱到手后，她把奖励先记作赊账。</td><td>小屋家务清单接原来的玩笑。结清后两人仍然给对方留饭，共同生活逐渐摆脱“结账”的理由。</td></tr>
+              <tr><td>青藤村<br><code>chapter2</code>、<code>boss_after_2</code></td><td>她表面关心谁做家务，胜后却承认人回来比棋谱重要。</td><td>赶集由她买两个人的份，雨夜则直接说出她等的是一起吃饭的人。</td></tr>
+              <tr><td>镜湖<br><code>chapter3</code>、<code>boss_after_3</code></td><td>她用岸滑解释牵手，又让冒险家猜湖映出的心事。</td><td>重访时路很稳。她先问要不要牵，他愿意等她自己说。</td></tr>
+              <tr><td>迷雾沼泽<br><code>boss_after_4</code></td><td>担心对方走散时，她会生气，也会紧握他的手不放。</td><td>集市里主动让他跟紧。雨夜把那份担心翻译成双方都能做到的一句留言。</td></tr>
+              <tr><td>寒星原<br><code>chapter5</code>、<code>boss_after_5</code></td><td>她先借护能符给他御寒，符用尽以后也愿意开口借他的肩膀。</td><td>野餐时找背风位置，允许他照顾自己。写她接受好意以后的反应。</td></tr>
+              <tr><td>神殿至尾幕<br><code>chapter6</code>、<code>boss_after_6</code>、<code>ending</code></td><td>两人已经把“留下”和“回家”说过一遍，仍绕在反悔与家务的笑话里。</td><td>开场重谈住法，末章重谈关系。结尾再用“回家”时，二人都知道这句话指向同一间屋子。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="document-meta">主线依据见 <a href="../../剧情配置/剧情配置.md">《剧情配置.md》中的原对白与篇章 ID</a>。</p>
+      </section>
+
+      <section id="voice" class="chapter">
+        <div class="section-label">VOICE / 角色口吻</div>
+        <h2>鸦鸦嘴上要赢，冒险家也有自己的主意</h2>
+        <h3>鸦鸦 · 得意、爱设套、临到真心会卡壳</h3>
+        <p>常用“哼”“本鸦”“冒险家”，先下判断，再补一个对自己有利的理由。青藤村说担心家务没人做，镜湖说懒得捞，寒星原则把靠近说成挡风。真正急时会先给具体指令，顾不上铺笑话。续篇让她用腹黑劲安排一点双人便利，例如只拿一个篮子、把想喝的汤写成两人份。观众应同时看见她在得意和她已经照顾到哪一步。</p>
+        <p>她有自己的事要做，会惦记防潮符、讨价还价，也会为晚饭被放鸽子生气。亲密感来自知道他喝汤怕烫、愿意被他帮忙，以及有事能直接开口。调侃落在抢跑、家务、口味和嘴硬上。一旦对方真委屈，先看人，再谈谁占了便宜。告白那句用“我”，说完才让“本鸦”回来。</p>
+        <h3>冒险家 · 会吐槽，也会把话题接住</h3>
+        <p>主线里他会喊“鸦鸦大人”、抱怨上班工资低、用“这波不亏”给自己找台阶，也会追问她是不是其实在意。结局抢跑是他主动改写游戏规则的例子。续篇保留这种有点投降、有点还嘴的现代口语，让他负责提出睡法、选路线、修好小物件、主动关心她。到雨夜和告白，少用俏皮话替代回答。</p>
+        <figure class="scene-sample">
+          <figcaption>同一件事的两种说法 · 小屋里的第二只碗</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>盐在右手边。看什么，我给你的那碗已经放过了。</dd></div>
+            <div><dt>冒险家</dt><dd>那你记得我口重，我记得你不吃葱。谁给谁打工来着？</dd></div>
+            <div><dt>鸦鸦</dt><dd>谁话多谁刷锅。……葱你别挑了，下回我晚点放。</dd></div>
+          </dl>
+        </figure>
+        <p>对白用短句追接，一个回合有一个新的动作或信息。主线的“(悲)”一类停顿可偶尔留作熟人梗。害羞、假生气、伸手又缩回等大部分反应交给立绘、停顿和动作提示。冒险家的内心只写当下的观察，鸦鸦的感情由玩家从她的做法和亲口说的话里听出来。</p>
+      </section>
+
+      <section id="pace" class="chapter">
+        <div class="section-label">PACING / 七天节奏</div>
+        <h2>先写得出两个人的生活，再让他们确认关系</h2>
+        <p>开头用赛跑余势和家务谈判快速落地。中段把小屋、集市和自然场景写足，交替安排有来有回的快聊和可停留的慢镜头。雨天只用一场生活摩擦把“报备”变成可商量的默契。第六章把愿不愿意留与愿不愿意交往分开，第七章给告白和答复完整的安静时间。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="章节节奏与估计时长">
+          <table class="pacing-table">
+            <thead><tr><th scope="col">章节</th><th scope="col">情绪步调</th><th scope="col">章末落点</th><th scope="col">估时</th></tr></thead>
+            <tbody>
+              <tr><td><a href="#chapter-01">一 · 当晚</a></td><td>快，接赛跑和地板赌约</td><td>他自己答应留七天，两人谈好床铺</td><td>7–9 分钟</td></tr>
+              <tr><td><a href="#chapter-02">二 · 第一天</a></td><td>温暖，厨房两场日常夹一次停顿</td><td>家务从单方面使唤转成一起做</td><td>12–16 分钟</td></tr>
+              <tr><td><a href="#chapter-03">三 · 第二天</a></td><td>外场热闹，摊位快聊，回家放慢</td><td>两只杯子都有了一位使用者</td><td>12–16 分钟</td></tr>
+              <tr><td><a href="#chapter-04">四 · 第三天</a></td><td>以步行与湖声拉长安静时间</td><td>第一次在没有危险时牵手</td><td>14–18 分钟</td></tr>
+              <tr><td><a href="#chapter-05">五 · 第四、五天</a></td><td>日常略过一天，集中写一顿晚饭</td><td>闹别扭后共同约定留言</td><td>10–13 分钟</td></tr>
+              <tr><td><a href="#chapter-06">六 · 第六天</a></td><td>轻声收账，留住一点期待</td><td>家务结束后，她仍约他吃明天的饭</td><td>8–11 分钟</td></tr>
+              <tr><td><a href="#chapter-07">七 · 第七天</a></td><td>克制，给问句和答复各留一拍</td><td>鸦鸦表白，冒险家明说也喜欢她</td><td>11–15 分钟</td></tr>
+              <tr><td><a href="#epilogue">尾声 · 次晨</a></td><td>回到锅碗和出门声</td><td>关系体现在第二天真实的生活里</td><td>3–4 分钟</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>三条可以反复用的线索是<strong>家务清单、两只杯子和牵手</strong>。清单从留人的借口变成共同做事，再被亲手划清。杯子从市集挑选到雨夜仍端出两只，最后成为她承认自己每天等他的证据。手从救险时必须握住，到镜湖边想牵就先问，表白后可以安心靠近。每次回收让原来的意思多一点。</p>
+      </section>
+
+      <section id="chapter-01" class="chapter">
+        <div class="section-label">CHAPTER / 01</div>
+        <h2>第一章 · 今晚谁睡地板</h2>
+        <p class="chapter-meta">第六章胜后当晚 · 小屋门前 → 小屋卧区 · 7–9 分钟</p>
+        <ol class="beat-list">
+          <li><strong>接最后一句。</strong> 冒险家跑到门口才发现自己没带钥匙，鸦鸦慢悠悠追上来，还捏住他披风的一角宣布赌约不算。接跑步、开门和喘气，给看完主线的玩家直接落地。</li>
+          <li><strong>鸦鸦把人留住。</strong> 她摊出一页临时写的家务，宣称新来的家政员工至少试用七天。冒险家顺着笑话讨价还价。他愿意住，要求别再睡硬地板，家务俩人轮流做。她抱来第二床被子，主动让开床的里侧。</li>
+          <li><strong>第一晚落地。</strong> 冒险家接过被子时她顺手看了一眼他跑过头磨破的袖口，问手腕还疼不疼。用这个很小的照料结束快口对白，再切到第二天的锅响。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 赛跑之后谈条件</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>跑啊。刚才不是还挺能跑的吗？到了家，连门都不会开。</dd></div>
+            <div><dt>冒险家</dt><dd>你也没说过决赛是开锁。认输行，今晚我要求换个睡法。</dd></div>
+            <div><dt>鸦鸦</dt><dd>先留下来。这张单子上七天的活做完，本鸦才准你提离职。</dd></div>
+            <div><dt>冒险家</dt><dd>七天我留。饭轮流做，床一人一边。地板就留给你那张合同吧。</dd></div>
+            <div><dt>鸦鸦</dt><dd>条件还挺多。……站着干嘛，把里面那床被子拿走。别扯到手腕。</dd></div>
+          </dl>
+        </figure>
+      </section>
+
+      <section id="chapter-02" class="chapter">
+        <div class="section-label">CHAPTER / 02</div>
+        <h2>第二章 · 早饭得做两份</h2>
+        <p class="chapter-meta">第一天 · 小屋厨房与桌边 · 12–16 分钟</p>
+        <ol class="beat-list">
+          <li><strong>早晨先出个小岔子。</strong> 他想抢做早饭证明自己有用，却把粥煮糊。鸦鸦先笑他的火候，又教他把炉子退到小火。她偷偷把给他的粥放凉。留半拍给他发现两只碗，其中一只已经没葱。</li>
+          <li><strong>交换自己擅长的事。</strong> 她试画一张防潮符准备次日带给镇上的摊主。他帮着垫正晃动的桌脚，裁下一小块旧木片。她试着拍了一下桌沿，符纸纹丝不动，嘴里说“总算没白留你”。</li>
+          <li><strong>把清单用起来。</strong> 晚上两人把“冒险家做饭”改成轮值。他备菜她看火，下一顿互换。她问他明天要不要陪她去买盐，他问能不能顺道买点吃的。以具体的明天结束本章。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 她记得哪只碗已经凉了</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>本鸦可没说要你做早饭。左边那碗凉了，喝右边的。</dd></div>
+            <div><dt>冒险家</dt><dd>右边这碗也刚好。你什么时候端出来的？</dd></div>
+            <div><dt>鸦鸦</dt><dd>从你第三次掀锅盖的时候。再晚一点，我怕你连锅一块熬没了。</dd></div>
+            <div><dt>冒险家</dt><dd>行。锅我洗。你那张符拿来，我给桌子垫一下，省得你画歪了又赖它。</dd></div>
+            <div><dt>鸦鸦</dt><dd>……好啊。但你要是垫好了，只准我一个人先夸。</dd></div>
+          </dl>
+        </figure>
+      </section>
+
+      <section id="chapter-03" class="chapter">
+        <div class="section-label">CHAPTER / 03</div>
+        <h2>第三章 · 集市买两只杯子</h2>
+        <p class="chapter-meta">第二天 · 青藤村旁的镇集 → 回家路上 · 12–16 分钟</p>
+        <ol class="beat-list">
+          <li><strong>从买盐出发。</strong> 鸦鸦把防潮符交给熟识的摊主，让冒险家拿篮子。他发现盐早在第一个摊买完了，她还拉着他绕去烤炉边。两人各挑一份最喜欢的蜜饼，给对方掰一块尝。</li>
+          <li><strong>在摊位前留下一个选择。</strong> 冒险家给自己选青釉或红陶杯。她各试了一次手柄，顺手给自己也拿一只。摊主夸他选得好，她抢过话说“我家的这位挑了半天，当然得挑好”。让她自己听见刚才那句话，转身催他付钱。</li>
+          <li><strong>在人群里保持同一个步子。</strong> 鸦鸦起初只拽他袖口，出集市后才松手。冒险家一路让她拿热蜜饼，自己护住篮里杯子。回家时给两只杯子腾出一格板架。用动作兑现“一起回家”的口误。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 买第二只的时候</figcaption>
+          <dl class="dialogue">
+            <div><dt>冒险家</dt><dd>我拿这只。怎么，你也要换杯子？</dd></div>
+            <div><dt>鸦鸦</dt><dd>店家说两只算便宜一点，本鸦向来会过日子。</dd></div>
+            <div><dt>摊主</dt><dd>我还没说折价呢。</dd></div>
+            <div><dt>鸦鸦</dt><dd>那你现在说。……你笑什么？把你的拿稳，路上颠碎了就给你用碗喝水。</dd></div>
+            <div><dt>冒险家</dt><dd>知道了。你那只也给我。走吧，回家试试。</dd></div>
+          </dl>
+        </figure>
+      </section>
+
+      <section id="chapter-04" class="chapter">
+        <div class="section-label">CHAPTER / 04</div>
+        <h2>第四章 · 今天可以走慢一点</h2>
+        <p class="chapter-meta">第三天 · 星落小径的背风草坡 → 镜湖岸边 · 14–18 分钟</p>
+        <ol class="beat-list">
+          <li><strong>把打过仗的路走成散步。</strong> 同一个小径开场，冒险家先习惯性找哪里适合摆棋，鸦鸦已经从包裹里摸出了蜜饼。草坡和镜湖浅滩在同一段短环路上。玩家可先去草坡野餐，也可先到浅滩踩水、打水漂。两条走法都从干石阶返程。</li>
+          <li><strong>野餐给双方照顾对方的机会。</strong> 他把她的位置换到背风一侧。她想起寒星原那枚用尽的护能符，先嘴硬一句，再认真把自己那半块蜜饼递给他。允许安静看水和天色，留一点互相靠着的时间。</li>
+          <li><strong>镜湖这次不用猜。</strong> 两人在干燥的石阶停下，听水拍岸。冒险家主动说今天不问那次倒影。鸦鸦看了一眼平整的路，问他要不要牵手。手部近景留到他把手伸过来。收在两人挑了一条更慢的路回小屋。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 干燥的石阶</figcaption>
+          <dl class="dialogue">
+            <div><dt>冒险家</dt><dd>放心，今天不问你上次在湖里看见什么。</dd></div>
+            <div><dt>鸦鸦</dt><dd>你明明还记着。</dd></div>
+            <div><dt>冒险家</dt><dd>记着啊。你想说的时候再说。</dd></div>
+            <div><dt>鸦鸦</dt><dd>……那你要不要牵一下？路不滑，本鸦知道。</dd></div>
+          </dl>
+          <p class="stage-direction">只留水声。他把空着的手递过去，她扣住他的手指。</p>
+          <dl class="dialogue">
+            <div><dt>冒险家</dt><dd>那走慢点吧。我还没看完。</dd></div>
+            <div><dt>鸦鸦</dt><dd>嗯。反正今天的饭又不会跑。</dd></div>
+          </dl>
+        </figure>
+      </section>
+
+      <section id="chapter-05" class="chapter">
+        <div class="section-label">CHAPTER / 05</div>
+        <h2>第五章 · 晚饭在锅里</h2>
+        <p class="chapter-meta">第四、五天 · 小屋雨夜 · 10–13 分钟</p>
+        <ol class="beat-list">
+          <li><strong>先让幸福成为习惯。</strong> 用两三页跳过第四天的重复日常。他刚把衣架挂好，她已经递来下一件。他出去买东西时随口说晚上一起吃，鸦鸦便算好时间添了第二碗饭。</li>
+          <li><strong>把问题压在一场误会里。</strong> 第五天傍晚他绕路帮摊主收雨棚，没捎口信。回家时他说只是晚了一点，她先递干巾，再告诉他饭热过一次。她担心他的安全，也会因为失约而不高兴。别让她用冷战逼他猜。</li>
+          <li><strong>一起商量出办法。</strong> 他承认失约，两人约定晚归时托熟人传话，出门前知道会晚就留张字条。约定两边都适用。饭仍然一起吃。收在她把毛巾分一半给他擦头发，恢复一点熟悉的拌嘴。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 等人比等饭更久</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>毛巾拿好。今天说好一起吃饭，冒险家，你晚一会儿也行，总得让我知道。</dd></div>
+            <div><dt>冒险家</dt><dd>我看雨棚快塌了，就跟着多忙了一阵。是我忘记说，下次我托人带句话。</dd></div>
+            <div><dt>鸦鸦</dt><dd>我还以为你走错路了。……这地方我比你熟，你也可以等我去接。</dd></div>
+            <div><dt>冒险家</dt><dd>行。你要是回来晚，也记着留句话。别让我把饭热成锅巴。</dd></div>
+            <div><dt>鸦鸦</dt><dd>商量好了？那低头。你这么擦，头顶那一撮明天都干不了。</dd></div>
+          </dl>
+        </figure>
+      </section>
+
+      <section id="chapter-06" class="chapter">
+        <div class="section-label">CHAPTER / 06</div>
+        <h2>第六章 · 家务账结清了</h2>
+        <p class="chapter-meta">第六天 · 小屋白天与傍晚 · 8–11 分钟</p>
+        <ol class="beat-list">
+          <li><strong>让原来的回家约定重新见光。</strong> 鸦鸦把六页棋谱按顺序放好。冒险家认出它们的时候，她主动说哪天他想回原世界，自己会依照当初的约定帮他走那条路。选择权交给他，门如何开启留给主线设定。</li>
+          <li><strong>先结清家务，再约下一顿。</strong> 她把第七天那一栏也划了，说轮值早做完了，叫他不用继续打工。脱口而出的下半句却是明晚要不要回来吃饭。这是她第一次在账结之后继续邀请他。镜头停在冒险家杯子旁边那点桌面水渍，给二人一点说不下去的时间。</li>
+          <li><strong>他用行动回答一半。</strong> 冒险家说明天会去买菜，顺口问她做不做汤。晚些时候，他把给她画符的灯芯剪短，把两只杯子的把手都转到好拿的方向。下一章由鸦鸦自己开口。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 结账之后还想见面</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>六页都在。你哪天要回去，我就按原来说的，陪你走那条路。</dd></div>
+            <div><dt>冒险家</dt><dd>你不怕我听完就请辞？</dd></div>
+            <div><dt>鸦鸦</dt><dd>家务早做完了。请什么辞。</dd></div>
+          </dl>
+          <p class="stage-direction">她把划完的清单折起来，没有去拿他的杯子。</p>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>……你明晚还回来吃饭吗？</dd></div>
+            <div><dt>冒险家</dt><dd>回啊。我先去买菜。你把那张符画完，别又饿着等我收拾桌子。</dd></div>
+          </dl>
+        </figure>
+      </section>
+
+      <section id="chapter-07" class="chapter">
+        <div class="section-label">CHAPTER / 07</div>
+        <h2>第七章 · 明天也回家</h2>
+        <p class="chapter-meta">第七天晚饭后 · 小屋灯下 → 门口 · 11–15 分钟</p>
+        <ol class="beat-list">
+          <li><strong>用熟悉的位置开场。</strong> 饭吃完了，他像往常一样收两只杯子。鸦鸦叫他把杯子放一会儿。这次她没拿家务清单，先问他还记不记得神殿里那句反悔。</li>
+          <li><strong>告白只说这一次完整的。</strong> 她承认自己怕他走，也明说她喜欢与他一起过日子，最后开口问是否愿意交往。收低配乐，先给她一句完整的问话，再给冒险家答话的空间。玩家可选直接回应或先把杯子放下想一拍，两条都明确说喜欢。</li>
+          <li><strong>把明天交到两人手里。</strong> 她递给他一把小屋备用钥匙。钥匙只管这扇门。他不用抢跑等她追上来，也能回来。她用一句俏皮话收住害羞，留一场很短的次晨尾声。</li>
+        </ol>
+        <figure class="scene-sample">
+          <figcaption>关键文案样段 · 鸦鸦亲口说出答案</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>神殿那天，我说我反悔了。其实那会儿我有点怕……你一走，我连明天找谁拌嘴都不知道。</dd></div>
+            <div><dt>冒险家</dt><dd>所以你写了那么长一张家务单？</dd></div>
+            <div><dt>鸦鸦</dt><dd>一开始是。后来你出门，我会想你什么时候回来。你在屋里，我就想，明天也这样过好了。</dd></div>
+            <div><dt>鸦鸦</dt><dd>我喜欢你，冒险家。你愿不愿意和我在一起？</dd></div>
+          </dl>
+          <p class="stage-direction">先停一拍。她手指还搭在杯把上，一直没有松开。</p>
+          <dl class="dialogue">
+            <div><dt>冒险家</dt><dd>愿意。我也喜欢你，鸦鸦。我今天去买菜的时候，都在想回来先跟你说哪件事。</dd></div>
+            <div><dt>鸦鸦</dt><dd>那以后别排顺序。回来就跟我说。</dd></div>
+            <div><dt>冒险家</dt><dd>那我明天以什么身份回来吃饭？</dd></div>
+            <div><dt>鸦鸦</dt><dd>男朋友。……本鸦只说这一次。</dd></div>
+            <div><dt>冒险家</dt><dd>你第一次夸我下棋那天，也说只夸这一次。</dd></div>
+            <div><dt>鸦鸦</dt><dd>这次算你记性好。手伸出来，你那把钥匙自己收着。</dd></div>
+          </dl>
+        </figure>
+        <p>这里适合全篇唯一一次把镜头长留在鸦鸦脸上的演出。先让她眼神躲开，问到“愿不愿意”时再看回来。冒险家给出答复后才出现钥匙和新的配乐句子。她送钥匙的手可以轻轻晃一下，给双方都在紧张的现实感。</p>
+      </section>
+
+      <section id="epilogue" class="chapter">
+        <div class="section-label">EPILOGUE / 次晨</div>
+        <h2>尾声 · 今天想吃什么</h2>
+        <p>第三章选中的杯子摆在窗边，第六天收起的那张家务清单翻到背面，写了两道午饭。冒险家带上备用钥匙出门买菜。鸦鸦照旧朝他喊，喊到一半改成了直说。</p>
+        <figure class="scene-sample">
+          <figcaption>文案样段 · 认识了很久的第一天</figcaption>
+          <dl class="dialogue">
+            <div><dt>鸦鸦</dt><dd>喂，今天出门要……算了。早点回来，我会想你的。</dd></div>
+            <div><dt>冒险家</dt><dd>知道了。万一晚了就留字条。午饭吃什么？</dd></div>
+            <div><dt>鸦鸦</dt><dd>你定。买葱的话记得分开下锅。</dd></div>
+          </dl>
+          <p class="stage-direction">他这次把钥匙在手里晃了一下才出门。等门合上，再切到窗边两个杯子。</p>
+        </figure>
+      </section>
+
+      <section id="making" class="chapter">
+        <div class="section-label">PRODUCTION / 落地约定</div>
+        <h2>选项写生活，结局写人物的选择</h2>
+        <p>一期采用鸦鸦单女主线。小选项改变说法、日常细节和短场景顺序，写在后续可见的位置。主线情绪由事件累积，不用好感数值替玩家解释。最终表白由鸦鸦发起，两种回应都保留冒险家的明确心意。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="选项及其后续反馈">
+          <table>
+            <thead><tr><th scope="col">选择节点</th><th scope="col">选项</th><th scope="col">反馈与回收</th></tr></thead>
+            <tbody>
+              <tr><td>第二章分家务<br><code>gal02_chore_choice</code></td><td>“我洗锅，你去画符”／“你看火，我备菜”</td><td>各给一轮不同对白。晚饭前合流，两人仍会商量轮值。</td></tr>
+              <tr><td>第三章挑杯<br><code>gal03_cup_choice</code></td><td>“青釉这只”／“红陶这只”</td><td>记住杯色，在第五章端饭、第七章手搭杯把和尾声窗台回显。杯子始终对应选它的人。</td></tr>
+              <tr><td>第四章散步<br><code>gal04_walk_choice</code></td><td>“先吃点东西”／“先去镜湖岸边”</td><td>调整野餐与初次看湖的相对顺序，两条都在返程前合流到干石阶牵手。</td></tr>
+              <tr><td>第七章回应<br><code>gal07_answer</code></td><td>“我也喜欢你”／“让我把话好好说完”</td><td>第一项直接回应。第二项增加一次放下杯子和一拍停顿，再明确回应。两条进入交钥匙和次晨尾声。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>交给编剧、演出与实现的材料</h3>
+        <ul>
+          <li><strong>正文。</strong> 先把第一章、第四章牵手和第七章告白写成连续节点，试读确认两人听起来像同一对熟人，再补厨房、镇集、雨夜和过场。分场用“时间、地点、动作、台词、表情、入口和出口”。单段日常要让其后的相处有一点可见变化。</li>
+          <li><strong>背景与声音。</strong> 小屋可做清晨、雨夜和灯下三个舞台变体。外景优先制作镇集摊位、星落小径草坡、镜湖石阶。灶火、集市声、雨打屋檐和拍岸水声区分场所。优先安排镜湖牵手和灯下交钥匙两张关键 CG，两只杯子可多次用特写回收。</li>
+          <li><strong>开发数据。</strong> 正式接入建议从六章全部完成、原主线尾幕播完并返回大厅后的自选入口启动，让剧情回看保有自己的会话档。章节通过 <code>StagePresets</code> 复用背景，选项用稳定节点 ID，杯色只存一个选择变量。入口解锁与资源路径以实现阶段的真实配置为准。</li>
+          <li><strong>试读判据。</strong> 开场能顺接赛跑和床铺，冒险家答应住下来。第一次无危险牵手之前，能读到两人如何互相照顾。两个杯色都有后续回显，两条回应都由鸦鸦先说喜欢。离开、继续和从分支回到主线都能抵达同一个尾声。</li>
+        </ul>
+        <p class="document-meta">节点、舞台与路线回归约定见 <a href="../../../.codex/skills/revolution-gal/SKILL.md">Revolution.Gal 项目指南</a>。</p>
+      </section>
+
+      <section id="references" class="chapter">
+        <div class="section-label">REFERENCES / 参考与转化</div>
+        <h2>从成熟作品借方法</h2>
+        <p>下面把作品公开资料中的做法与本案的应用分开。各章场景、人物和对白来自 RevGame 的前情与本篇提案。</p>
+        <ol class="source-list">
+          <li><strong>《CLANNAD》 · 关系在共同生活里成立。</strong> Key 将家庭之爱列为作品主题。麻枝准在访谈中谈到他对动画改编《AFTER STORY》中出生与旅行段落演出的印象。本案取法是先让一间屋子具备两个人的日常习惯，用盛饭、留灯、开门表现关系的实际变化。<a href="https://key.visualarts.gr.jp/info/2008/01/softbank.html">Key 作品介绍</a> · <a href="https://jmagazine.myjcom.jp/category/anime/post000189/">麻枝准二十周年访谈</a></li>
+          <li><strong>《Summer Pockets》 · 用具体的小事写地方。</strong> 编剧魁的开发日记记录了写作组交流暑假记忆，以及把实地看到的手工玻璃珠教室转化为剧情素材。RevGame 可让赶集发生在有热烤炉、折价与熟摊主的街上，让野餐发生在找背风处、需要放慢步子的路上。一处景只有找到两个人在这里能做的事，才值得停留。<a href="https://key.visualarts.gr.jp/diary/2018/09/">Key 开发日记 · 魁</a></li>
+          <li><strong>《WHITE ALBUM2》 · 给反复出现的元素新的意思。</strong> Aquaplus 的剧情介绍用琴声、歌声和季节组织前情。本案提炼的是意象和关系一起推进的方法。RevGame 用自己已经有的“牵手”，从防滑和救险写到主动询问，再与双人杯、清单这样的新细节相互照应。<a href="https://aquaplus.jp/wa2/story.html">Aquaplus 官方剧情介绍</a></li>
+          <li><strong>《Making＊Lovers》 · 确认关系后还要看得见相处。</strong> SMEE 和发行方把恋爱关系开始后的体验作为作品重点。RevGame 把正式表白留到结尾，额外给出一个只谈午饭和回家时间的早晨，让告白在确认关系后仍能推动生活。<a href="https://www.hook-net.jp/smee/makinglovers/">SMEE 作品官网</a> · <a href="https://store.steampowered.com/app/1200720/MakingLovers/">NekoNyan 官方发行页</a></li>
+        </ol>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <span>RevGame · 围棋史莱姆 / 鸦鸦家的第七天</span>
+    <span><a href="../../剧情配置/剧情配置.md">主线原文</a><a href="../../文档/战斗性能优化规则/战斗性能优化规则.html">排版参考</a><a href="#outline">回到大纲起点</a></span>
+  </footer>
+  <script>
+    const previews = {
+      home: {
+        title: '鸦鸦的小屋',
+        beat: '赛跑后的清早，冒险家起床把粥煮糊了。鸦鸦把他赶去添柴，自己把两只碗都盛满。',
+        line: '鸦鸦：“本鸦可没说要你做早饭。……左边那碗凉了，喝右边的。”',
+        change: '从借住到一起过日子',
+        link: '#chapter-02',
+        label: '读小屋篇 ↗'
+      },
+      market: {
+        title: '青藤村旁的镇集',
+        beat: '买盐是借口，鸦鸦还记得他爱吃边上焦一点的蜜饼。走到最后一摊，两人各挑了一只杯子。',
+        line: '冒险家：“你那只也给我。走吧，回家试试。”',
+        change: '两人把同一处叫作家',
+        link: '#chapter-03',
+        label: '读集市篇 ↗'
+      },
+      lake: {
+        title: '镜湖岸边',
+        beat: '今天没有试炼，连水边的石阶都是干的。冒险家把问过一半的心事放回湖声里。',
+        line: '鸦鸦：“……那你要不要牵一下？路不滑，本鸦知道。”',
+        change: '从有事才牵手到主动想靠近',
+        link: '#chapter-04',
+        label: '读镜湖篇 ↗'
+      }
+    };
+
+    const previewButtons = [...document.querySelectorAll('[data-preview]')];
+    const previewLink = document.querySelector('#preview-link');
+    previewButtons.forEach(button => button.addEventListener('click', () => {
+      const scene = previews[button.dataset.preview];
+      document.querySelector('#preview-title').textContent = scene.title;
+      document.querySelector('#preview-beat').textContent = scene.beat;
+      document.querySelector('#preview-line').textContent = scene.line;
+      document.querySelector('#preview-change').textContent = scene.change;
+      previewLink.href = scene.link;
+      previewLink.textContent = scene.label;
+      previewButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    }));
+
+    const motionControl = document.querySelector('#motion');
+    motionControl.addEventListener('click', () => {
+      const paused = document.body.classList.toggle('paused');
+      motionControl.setAttribute('aria-pressed', String(paused));
+      motionControl.textContent = paused ? '恢复装饰动画' : '暂停装饰动画';
+    });
+
+    const links = [...document.querySelectorAll('.sidebar nav a')];
+    const chapters = [...document.querySelectorAll('main .chapter')];
+    const progress = document.querySelector('.progress');
+    let scheduled = false;
+
+    function updateReadingPosition() {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      progress.style.width = (max > 0 ? Math.min(100, Math.max(0, scrollY / max * 100)) : 0) + '%';
+      let active = chapters[0];
+      for (const chapter of chapters) {
+        if (chapter.getBoundingClientRect().top < innerHeight * 0.35) active = chapter;
+      }
+      if (max > 0 && max - scrollY < 8) active = chapters[chapters.length - 1];
+      for (const link of links) {
+        const current = link.hash === '#' + active.id;
+        link.classList.toggle('active', current);
+        if (current) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      }
+      scheduled = false;
+    }
+
+    function scheduleReadingPosition() {
+      if (!scheduled) {
+        scheduled = true;
+        requestAnimationFrame(updateReadingPosition);
+      }
+    }
+
+    addEventListener('scroll', scheduleReadingPosition, { passive: true });
+    addEventListener('resize', scheduleReadingPosition);
+    updateReadingPosition();
+  </script>
+</body>
+</html>
