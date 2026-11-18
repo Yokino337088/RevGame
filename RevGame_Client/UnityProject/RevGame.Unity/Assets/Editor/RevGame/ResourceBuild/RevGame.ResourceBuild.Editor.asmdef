@@ -1,7 +1,7 @@
 {
     "name": "RevGame.ResourceBuild.Editor",
     "rootNamespace": "RevGame.Editor",
-    "references": ["Revolution.Editor", "Revolution.Runtime", "Revolution.Generation", "RevGame.Audio", "RevGame.Campaign", "RevGame.Generated"],
+    "references": ["Revolution.Editor", "Revolution.Runtime", "Revolution.Generation", "Revolution.Gal", "Revolution.Gal.Editor", "RevGame.Audio", "RevGame.Campaign", "RevGame.Generated"],
     "includePlatforms": ["Editor"],
     "autoReferenced": true
 }

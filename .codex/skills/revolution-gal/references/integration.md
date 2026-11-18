@@ -6,6 +6,7 @@
 - Assets 安装从 Revolution 的 `package` 安装核心，再将 `gal` 分支根内容装到 `Assets/Revolution.Gal`，带原 `.meta`。也可以在已经安装核心的工程里以 Git UPM 地址 `https://github.com/Yokino337088/Revolution.git#gal` 安装扩展。工程保留一种 Gal 安装，以免生成两份同名程序集。
 - 宿主业务 asmdef 仅在调用 Gal API 时引用 `Revolution.Gal`。不要把 Editor 程序集引用到 Player。核心快照按宿主约定同步。维护扩展源码用 Revolution 主仓库的 `RevolutionFrameWork_Unity/Assets/Revolution.Gal`，发布动作产出独立 `gal` 分支。
 - CLI、RevMCP 和 Unity 桥均由实际能力发现。工具客户端较旧时同步 `automation` 或项目相邻 RevCLI。Unity 端缺动作时核对安装和程序集编译。更新工具或技能以匹配项目授权范围为准。
+- 宿主的 Editor 构建代码可引用 `Revolution.Gal.Editor`，用 `RevGalHostContract.InspectMedia(story, resourceRoot)` 读取节点和舞台方案的媒体路径、类型及资产解析状态。分包、图集和资源目录继续由宿主管理。
 
 ## 嵌入业务
 
@@ -28,6 +29,7 @@ var session = RevGal.Current;
 - `RevGalPanel` 接 RevUI 生存期，拥有会话和媒体。`RevGalView` 渲染只读帧、打字机与选项，回报按钮意图。`RevGalSession` 管图、变量、历史、回退、档案和进度。
 - 自有界面使用 `RevGalPlayback`，从逻辑路径、已有 SO 或类型化定义取得独立会话。参见[自定义宿主接入](custom-host.md)的生命周期、帧订阅及按钮示例。原有的 `RevGal.LoadAsync` 和 `RevGal.Preview` 可继续使用。
 - `RevGalPlayback.Preview(asset, entry)` 提供临时离屏试读。使用默认面板时可从 `RevGal.OpenAsync` 的 `slot` 恢复已有有效档。切场景时让会话和媒体随所属流程或面板退出。
+- 用 `RevGal.OpenAsync(path, options, slot, cancellation)` 将默认面板的打开操作绑定到一次宿主请求。每次打开使用独立取消源，切域时取消尚在等待的请求。面板交付后，宿主关闭自己持有的实例，打开令牌到此结束。
 - `RevGalOptions` 同时承载本地化、宿主信号、`Storage`、打字速度、自动等待、是否等语音、BGM/语音/SFX 音量、`RollbackLimit` 和 `HistoryLimit`。打字速度为 0 时一次呈现。默认回退 64、历史 512。媒体音量还乘以 `RevSound` 对应分类音量。宿主决定原场景音乐是否暂停及何时恢复。
 
 ### 宿主信号和退出

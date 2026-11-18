@@ -36,7 +36,7 @@ namespace RevGame.Flow
                     return true;
                 }
 #endif
-                return IsBossIntroPlaying || IsBossVictoryPlaying || IsAudioSettingsVisible || IsStoryPlaying || IsTransitioning || _loading != null
+                return IsBossIntroPlaying || IsBossVictoryPlaying || IsAudioSettingsVisible || IsStoryPlaying || IsGalPlaying || IsTransitioning || _loading != null
                     || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady);
             }
         }

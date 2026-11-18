@@ -107,6 +107,7 @@ namespace RevGame.Editor
                 }
                 desired[path] = Groups[i, 1];
             }
+            GameGalResourceBuild.Configure(desired, config.resRoot);
             // 收藏书和翻页材质共用小包。每章原画与纹理形成独立包，不由大厅或封面隐式加载。
             desired["Assets/GameShader/YayaMemories/YayaBookPaper.shader"] = "ui_yaya_memories";
             desired["Assets/GameShader/YayaMemories/YayaMemoryScene.shader"] = "ui_yaya_memories";

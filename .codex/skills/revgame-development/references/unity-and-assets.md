@@ -74,6 +74,12 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 6. **增量构建与发布。** 先发现实际动作，再用 RevCLI 依次执行 `ab build-incremental --target StandaloneWindows64`、`ab check-map --target StandaloneWindows64`、`ab publish-incremental --target StandaloneWindows64`。完成每步并核对成功后再执行下一步。构建保留同平台缓存，发布回执返回实际变化包数量。发布失败且源构建已完成时可单独重试。Android 用 `--target Android` 单独走一遍。项目全套构建按需继续用 `GameResourceBuild.BuildAndCopy`。详见 [增量 AB 配方](../../revolution-unity-editor/references/incremental-ab.md)。
 7. **真实资源验收。** 冷启动相应平台 AB，不用 Editor 直读代替；检查新增 Prefab、图集页面、背景 UV、透明边、九宫格、动画、字体、第一次打开和重复进出。引用/图集/队列回到相应基线。入口查 `GameSceneTransitionChecks` 与当前 `game.resources.play-check`；具体测试走 [验收指引](validation-and-delivery.md)。
 
+### Gal 接入 RevGame
+
+- 默认面板剧情从大厅或选关的稳定状态调用 `GameFlow.OpenGalAsync`。打开请求和面板归当前流程，加载至关闭期间沿用玩法门禁。按故事需要传入 `RevGalOptions` 的宿主信号或档案实现。编辑态制作与自定义界面见 [Gal 技能](../../revolution-gal/SKILL.md)。
+- 正式剧情 SO 放 `Assets/GameRes`，建议沿用工具默认的 `Gal/Stories`。试读草稿可以放在资源根以外。默认面板与主题放 `UI/Gal`，用项目 CJK 字体。背景 Material 放 `Material/Gal`，专用语音放 `Audio/Voice/Gal`，图和音乐使用项目既有 Art、图集与音频目录。
+- `GameResourceBuild.Configure` 按剧情 ID 分包，并把节点和章节方案中的媒体加入引用审计。图集归属、字体、包依赖和冷启动验证沿用本篇约定。需要重新生成字库时运行 `python tools/font-subset.py`。
+
 运行期资源只用 `RevResPath.*` 或两段式门面。图集经 `GameSpriteAtlasService` 绑定；对象经 `GamePoolRequests`/`RevPool` 租用，晚到对象只能归还。按加载者契约成对 Release，不把 Release 等同立即清空进程内存。
 
 无尽 BGM 参考 `EndlessMusicPlaylist`：长曲逐曲独立 AB，接近结束异步预载下一曲，完成后释放上一曲。不要一次加载/解压全部长音乐或用全局 Stop/Kill 清掉其它模式。外部素材保留项目来源/授权记录，用户未要求时不额外下载资源。

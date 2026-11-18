@@ -12,6 +12,7 @@
         "RevGame.Progression",
         "RevGame.Pvp",
         "RevGame.Rules",
+        "Revolution.Gal",
         "Revolution.Generation",
         "Revolution.Runtime",
         "UnityEngine.UI"

@@ -46,6 +46,9 @@ namespace RevGame.Flow
         /// <summary>由Bootstrap唯一调用；启动本身也经过遮挡/资源/场景/画面四道就绪门禁。</summary>
         public async RevTask StartAsync()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            RegisterGalAutomation();
+#endif
             RevEvent.AddEventListener<bool>(Events.GameFinished, OnFinished, owner: this);
             RevEvent.AddEventListener<BossDefeatedInfo>(Events.BossDefeated, OnBossDefeated, priority: 100, owner: this);
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, OnStoryPrepare, owner: this);
@@ -145,6 +148,10 @@ namespace RevGame.Flow
         /// <summary>所有FSM交割的唯一位置；先更新状态/域，再通知视图，因此视图读到的一定是新模型。</summary>
         private void Change(GameScreen screen)
         {
+            if (screen != Screen)
+            {
+                CloseGal();
+            }
             _fsm.ChangeTo(_states[screen]);
             LastError = string.Empty;
             // ★ FSM 的 OnEnter 内不再切状态；广播放在交割后，按钮回调不能触发嵌套切换。
@@ -164,6 +171,10 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
+            CloseGal();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            RevRuntimeAutomation.UnregisterAllOf(this);
+#endif
             CloseDuelHud();
             CancelBossIntro();
             _introRunner?.Dispose();

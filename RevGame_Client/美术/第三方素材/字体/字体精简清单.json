@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "eadde39679053d0daf8443530b571d0f882ced0179c575a5725b535f2f810cd0",
-  "inputDigest": "b32d64359bb92a95042e4a2354285d8098642de6e983ccb85988d58217ac2b56",
+  "inputDigest": "400b170d0e2c8851b8a34de8c264bb477bd3b52e7218acf9221fa11b9775e204",
   "originalBytes": 17002248,
   "outputBytes": 816048,
   "characterCount": 1834,
@@ -2626,11 +2626,15 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.cs",
-      "sha256": "ed3c19aae557a8b6b7339f0a4913716089fd2b3d69f34a431c22855c0201ce5d"
+      "sha256": "0eea83d2672c8af43e4bbb8659a84d750989e563dc29f6ab428c6de6c995f021"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Endless.cs",
       "sha256": "20d5e4fb00c4ffa46a5b18f6ed9db6cc7c562e2394680f0236c0db9f1339a8ad"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Gal.cs",
+      "sha256": "7aaa28de31399238f4cf4400b7f6dd7d7a66ee6567e1510b05d3a1e9a9e9dc04"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Pvp.cs",
@@ -2638,7 +2642,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs",
-      "sha256": "783e7a01d0736f0b09d1efe3efd453e3253b33583a06dba15c6c6b9537761e2c"
+      "sha256": "781f1350b47b9c1073fbebf7bb686c98e74672901e7a09cd071d580611ff9461"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Story.cs",

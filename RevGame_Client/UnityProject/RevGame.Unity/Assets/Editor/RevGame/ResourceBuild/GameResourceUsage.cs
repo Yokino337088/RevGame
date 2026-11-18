@@ -70,6 +70,7 @@ namespace RevGame.Editor
                     snapshot.Add(dependency, root);
                 }
             }
+            GameGalResourceBuild.AddMediaDependencies(snapshot, ResourceRoot);
             // 当前唯一的GetSprite业务入口是第一章背景：名字写在代码和场景参数中，场景不直接引用Sprite。
             // 同时扫描其余业务源码的图片名/逻辑路径字面量，保护直接按名称动态加载的图片。
             // Generated目录是打包的输出，绝不能把生成的资源清单再当作输入，否则旧条目会永远删不掉。
