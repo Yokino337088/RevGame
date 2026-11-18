@@ -29,6 +29,9 @@ namespace RevGame.UI
         private bool _typing;
         private bool _visible;
         private bool _firstSoundPending;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        private UnityEngine.UI.Text _speakerForTest;
+#endif
 
         /// <summary>供流程判断首幕图片是否已交给可绘制的 Image。</summary>
         public bool StageReady => _stage != null && HasRequiredSprite(_background, _stage.Background)
@@ -60,6 +63,9 @@ namespace RevGame.UI
             playback._left = story.Find("Left").GetComponent<UnityEngine.UI.Image>();
             playback._center = story.Find("Center").GetComponent<UnityEngine.UI.Image>();
             playback._right = story.Find("Right").GetComponent<UnityEngine.UI.Image>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            playback._speakerForTest = story.Find("DialogueDock/Speaker")?.GetComponent<UnityEngine.UI.Text>();
+#endif
             playback._advance = advance;
             playback._close = close;
             playback._advanceLabel = label;
@@ -93,26 +99,35 @@ namespace RevGame.UI
 
         private void OnAdvance()
         {
+            TryAdvance(true);
+        }
+
+        /// <summary>继续按钮、整屏点击和 GM 都消费当前帧。只有玩家的继续按钮可以在结尾发起返回。</summary>
+        private bool TryAdvance(bool allowReturn)
+        {
             if (!CanReceiveInput() || _lastClickFrame == Time.frameCount)
             {
-                return;
+                return false;
+            }
+            var frame = _session.Frame;
+            if (frame.Kind != RevGalNodeKind.Line && (!allowReturn || frame.Kind != RevGalNodeKind.End))
+            {
+                return false;
             }
             _lastClickFrame = Time.frameCount;
-            var frame = _session.Frame;
             if (frame.Kind == RevGalNodeKind.End)
             {
                 _returnHome();
+                return true;
             }
-            else if (frame.Kind == RevGalNodeKind.Line)
+            try
             {
-                try
-                {
-                    _session.Advance(frame.Token);
-                }
-                catch (Exception error)
-                {
-                    RevLog.Exception(error, "Gal 推进失败", "RevGame");
-                }
+                return _session.Advance(frame.Token);
+            }
+            catch (Exception error)
+            {
+                RevLog.Exception(error, "Gal 推进失败", "RevGame");
+                return false;
             }
         }
 
@@ -147,6 +162,50 @@ namespace RevGame.UI
         {
             return string.IsNullOrEmpty(path) || (image != null && image.enabled && image.sprite != null);
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>确认当前句已完整显示，图片与本节点一致，淡入也已完成。截图应等到这个状态。</summary>
+        internal bool FrameReadyForTest => CanReceiveInput() && _panel.TextComplete && _stage != null
+            && SpriteReady(_background, _stage.Background) && SpriteReady(_left, _stage.Left)
+            && SpriteReady(_center, _stage.Center) && SpriteReady(_right, _stage.Right);
+
+        internal string VisibleSpeakerForTest => _speakerForTest != null && _speakerForTest.isActiveAndEnabled ? _speakerForTest.text : "";
+        internal string BackgroundSpriteForTest => VisibleSpriteName(_background);
+        internal string LeftSpriteForTest => VisibleSpriteName(_left);
+        internal string CenterSpriteForTest => VisibleSpriteName(_center);
+        internal string RightSpriteForTest => VisibleSpriteName(_right);
+
+        internal bool AdvanceForTest(string expectedNode)
+        {
+            if (!string.IsNullOrEmpty(expectedNode) && _session?.Frame.Id != expectedNode)
+            {
+                return false;
+            }
+            return TryAdvance(false);
+        }
+
+        private static bool SpriteReady(UnityEngine.UI.Image image, string path)
+        {
+            string name = VisibleSpriteName(image);
+            if (string.IsNullOrEmpty(path))
+            {
+                return name.Length == 0;
+            }
+            string expected = path.Substring(path.LastIndexOf('/') + 1);
+            return name == expected && image.canvasRenderer.GetAlpha() >= .99f;
+        }
+
+        private static string VisibleSpriteName(UnityEngine.UI.Image image)
+        {
+            if (image == null || !image.isActiveAndEnabled || image.sprite == null)
+            {
+                return "";
+            }
+            const string suffix = "(Clone)";
+            string name = image.sprite.name;
+            return name.EndsWith(suffix, StringComparison.Ordinal) ? name.Substring(0, name.Length - suffix.Length) : name;
+        }
+#endif
 
         private void Update()
         {

@@ -34,6 +34,7 @@ namespace RevGame.Bootstrap
                 RevGame.Automation.GameAutomationCommands.RegisterGroup();
                 RegisterPlayerActions();
                 RegisterStoryCommands();
+                RegisterGalCommands();
                 RegisterYayaMemoryCommands();
                 RegisterYayaReactionCommands();
 #if UNITY_EDITOR

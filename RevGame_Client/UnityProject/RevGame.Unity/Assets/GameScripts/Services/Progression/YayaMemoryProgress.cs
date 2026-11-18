@@ -51,11 +51,24 @@ namespace RevGame.Services
         public int Read => (Flags >> ChapterCount) & Cleared;
         public int Unread => Cleared & ~Read;
 
-        /// <summary>续篇只认六章真实通关，不受收藏书的编辑器预览开关影响。</summary>
-        public bool IsCottageStoryUnlocked => Cleared == ChapterMask;
+        /// <summary>普通 Editor Play 默认可预览续篇。隔离验收与正式游戏仍按六章通关解锁。</summary>
+        public bool IsCottageStoryUnlocked => IsCottageStoryPreviewOnly || Cleared == ChapterMask;
+
+        /// <summary>仅靠编辑器预览开放时使用内存档案，保留玩家的实际通关和阅读记录。</summary>
+        public bool IsCottageStoryPreviewOnly
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return _key == SaveKey && !_story.IsIsolated && Cleared != ChapterMask;
+#else
+                return false;
+#endif
+            }
+        }
 
         /// <summary>第一次成功打开续篇后消除红点，通关和收藏书已阅位不受影响。</summary>
-        public bool IsCottageStoryUnread => IsCottageStoryUnlocked && (Flags & CottageStoryVisited) == 0;
+        public bool IsCottageStoryUnread => Cleared == ChapterMask && (Flags & CottageStoryVisited) == 0;
 
         public void MarkCottageStoryVisited()
         {

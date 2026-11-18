@@ -74,6 +74,7 @@ namespace RevGame.Bootstrap
                 ["speech"] = speech != null && speech.gameObject.activeInHierarchy,
                 ["speechSprite"] = bubble == null ? "" : bubble.name, ["speechPacked"] = bubble != null && bubble.packed,
                 ["cottageUnlocked"] = progress.IsCottageStoryUnlocked,
+                ["cottagePreviewOnly"] = progress.IsCottageStoryPreviewOnly,
                 ["cottageUnread"] = progress.IsCottageStoryUnread,
                 ["cottageEntry"] = cottageEntry != null && cottageEntry.gameObject.activeInHierarchy,
                 ["cottageBadge"] = cottageBadge != null && cottageBadge.gameObject.activeInHierarchy,

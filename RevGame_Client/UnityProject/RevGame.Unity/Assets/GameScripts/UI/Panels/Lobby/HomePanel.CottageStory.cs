@@ -10,7 +10,6 @@ namespace RevGame.UI
 {
     public sealed partial class HomePanel
     {
-        private const string CottageStoryPath = "Gal/Stories/yaya_days_together";
         private UnityEngine.UI.Button _cottageStory;
         private Transform _cottageStoryBadge;
         private CanvasGroup _cottageStoryTip;
@@ -58,9 +57,14 @@ namespace RevGame.UI
 
         private static async RevTask EnterCottageStoryAsync(GameFlow flow, YayaMemoryProgress progress)
         {
-            var story = RevServices.GetRequired<StoryProgress>();
-            var options = story.IsIsolated ? new RevGalOptions { UseDefaultStorage = false } : null;
-            if (await flow.OpenGalAsync(CottageStoryPath, options))
+            RevGalOptions options = null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (progress.IsCottageStoryPreviewOnly || RevServices.GetRequired<StoryProgress>().IsIsolated)
+            {
+                options = GameFlow.CreateGalPreviewOptions(true);
+            }
+#endif
+            if (await flow.OpenGalAsync(GameFlow.CottageStoryPath, options))
             {
                 progress.MarkCottageStoryVisited();
             }
