@@ -58,6 +58,8 @@ var panel = await RevGal.OpenAsync("Gal/Stories/FirstMeeting", new RevGalOptions
 
 自定义界面可先 `await RevGalPlayback.LoadAsync(逻辑路径, options)`，再用自己的 `RevUIPanel<RevGalSession>` 和 View。由该宿主释放 Session。背景、立绘和音频由 `RevResManager.LoadAsync` 获取，通过 `RevResScope` 归还。句柄迟到时只归还本次引用。默认音源随 Panel 生灭，音量乘 RevSound 分类音量。游戏可以按自己的转场暂停或恢复原场景音乐。
 
+默认面板也可用 `RevGal.OpenAsync(path, options, slot, cancellation)` 绑定一次宿主打开请求。宿主切换流程时取消该请求。面板交付后由面板自身或持有它的宿主关闭。宿主的 Editor 构建代码可用 `RevGalHostContract.InspectMedia(story, resourceRoot)` 将剧情和舞台方案的动态媒体交给自己的打包规则。
+
 播放支持打字机、快显、自动、跳过已读、选项、回看、回退和快速存读档。自动和已读跳过在选项、信号与结局停下。已读跳过到达新对白时恢复手动。档案记录图的剧情 ID、修订、节点 ID、变量、舞台和历史。可通过 `SaveSlot/LoadSlot` 使用多个槽，并用 `IRevGalStorage` 接入业务档案。项目修改旧节点或变量的兼容契约时升级 Revision。回退恢复会话检查点，已读和解锁作为独立的玩家进度保留。
 
 宿主信号只传稳定名称和参数。默认 Panel 等待 `HandleSignal` 结束后推进。自定义宿主可以观察 `Frame.Signal` 并在业务完成后调用 `CompleteSignal(signal.Token)`。等待信号时暂停存档与回退，完成信号会断开之前的回退链。异步业务应以 `session.IsDisposed` 与当前 Token 检查过期回调。
