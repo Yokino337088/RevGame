@@ -15,4 +15,6 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 | Play 验收、修 Bug、交付测试包 | [验收范围与交付](references/validation-and-delivery.md) 和命中的 [项目验收细则](references/project-acceptance.md)。缺陷闭环走 [自动化 Skill](../revolution-ai-automation/SKILL.md)。 |
 | 性能诊断或对比 | [性能 Skill](../revolution-performance/SKILL.md) 的命中专题。同输入测量，记录覆盖与边界。 |
 
+导入或打包资源前先查已有资产、逻辑路径和包归属，只导入缺少的内容。各模块复用同一份正式资产和已有 AB。按 [Unity 与资源迭代](references/unity-and-assets.md) 核对 Sprite Atlas V2 归属和目标平台的实际产物。
+
 复杂改动按需查 [实现与交付细则](references/implementation-workflow.md)，代码排版查 [代码与新手注释守则](references/code-and-comments.md)。交付说明实际效果、验证证据和框架边界。

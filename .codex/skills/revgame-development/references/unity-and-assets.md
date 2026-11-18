@@ -66,18 +66,20 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 
 ## 资源与 AB 完整链
 
-1. **定义源与消费者。** 图片先明确是 Sprite/UI/序列帧还是 Shader 独立采样 Texture。使用中 Sprite 恰好属于一个 Sprite Atlas V2；字形纹理、内置 UISprite、RenderTexture、法线/LUT、章节 Default 采样纹理不能错误纳入图集。
+导入前在 AssetDatabase 和 `Assets/GameRes` 核对已有资产的路径、GUID、逻辑路径、导入规格和包归属。候选文件改名或重新编码时，按需要比较 SHA-256 或解码后的内容。已有资产能满足用途时，各模块直接引用原资产或其逻辑路径。只补缺少的内容。只有实际需要不同的切片、采样或格式产物时才引入独立变体，并记录消费者和包体影响。清理重复副本前，先迁移 Prefab、SO、剧情配置或生成器的引用，再确认旧 GUID 和逻辑路径已无使用者。
+
+1. **定义源与消费者。** 图片先明确是 Sprite/UI/序列帧还是 Shader 独立采样 Texture。在用 Sprite 恰好属于一个 Sprite Atlas V2，源图和图集归同一个 AB。字形纹理、内置 UISprite、RenderTexture、法线/LUT、章节 Default 采样纹理不纳入 Sprite 图集。
 2. **保留项目配置入口。** 分包与图集通过 `GameResourceBuild.Configure` 串联 `GameSpriteAtlasBuild` / `GameResourceUsage` / 压缩与字段配置，不自写 AB 加载器或直接调用框架内核。默认导入参数和特殊画质由当前配置/性能规则决定。
-3. **按寿命分包。** 大厅、章节共享、章节专属、无尽面板/图/材质分生命周期；不用一个大 UI 包拖入全部模式。序列帧、共享 Shader 与字体显式归属；章节 Shader 采样图独立按章加载。新增图片不是“所有美术库都进 AB”。
+3. **按寿命分包。** 同一资源在同一目标平台只归一个 AB。跨模块沿用原包或按生命周期明确归入一个共享包，消费包通过实际依赖复用。排查未显式归包的纹理、材质等依赖是否被 Unity 分别嵌入多个包。大厅、章节共享、章节专属、无尽面板/图/材质各有生命周期。序列帧、共享 Shader 与字体显式归属，章节 Shader 采样图独立按章加载。只将实际使用并应当交付的图片纳入 AB。
 4. **导表和文案联动。** `RevGame_Client/配置表/*.xlsx` → 实际 `excel.*` → `GameScripts/Generated` 与 `GameRes/Data` → `GameConfig` / `EndlessConfig` 校验；不得手改生成表顶替源 Excel。涉及文本/字库范围按 `GameFontSubsetBuild` 更新并验证，避免缺字。
-5. **构建前门禁。** 当前动作候选为 `game.resources.audit/configure/validate`，先查契约；检查漏标、重复/循环依赖、图集唯一覆盖与源图同包、缺 Shader、字体校验。门禁失败先修源头，不跳过检查发布。
-6. **增量构建与发布。** 先发现实际动作，再用 RevCLI 依次执行 `ab build-incremental --target StandaloneWindows64`、`ab check-map --target StandaloneWindows64`、`ab publish-incremental --target StandaloneWindows64`。完成每步并核对成功后再执行下一步。构建保留同平台缓存，发布回执返回实际变化包数量。发布失败且源构建已完成时可单独重试。Android 用 `--target Android` 单独走一遍。项目全套构建按需继续用 `GameResourceBuild.BuildAndCopy`。详见 [增量 AB 配方](../../revolution-unity-editor/references/incremental-ab.md)。
+5. **构建前门禁。** 先发现 `game.resources.audit`、`game.resources.configure` 和 `game.resources.validate` 的真实注册。分包或图集布局改动后重新配置，构建前验证漏标、隐式重复、循环依赖、图集唯一覆盖与源图同包、Shader 和字体。门禁失败先修源头。
+6. **增量构建与发布。** 先发现实际动作，再用 RevCLI 依次执行 `ab build-incremental --target StandaloneWindows64`、`ab check-map --target StandaloneWindows64`、`ab publish-incremental --target StandaloneWindows64`。每步成功后再继续。发布前核对目标平台的实际包内容、依赖、`ResMap` 和构建清单，确认相同资源只有一份打包内容。对照同平台基线的包名、SHA-256 和字节数，并在发布后读回实际替换数量。构建保留同平台缓存。发布失败且源构建已完成时可单独重试。Android 用 `--target Android` 单独走一遍。项目全套构建按需继续用 `GameResourceBuild.BuildAndCopy`。详见 [增量 AB 配方](../../revolution-unity-editor/references/incremental-ab.md)。
 7. **真实资源验收。** 冷启动相应平台 AB，不用 Editor 直读代替；检查新增 Prefab、图集页面、背景 UV、透明边、九宫格、动画、字体、第一次打开和重复进出。引用/图集/队列回到相应基线。入口查 `GameSceneTransitionChecks` 与当前 `game.resources.play-check`；具体测试走 [验收指引](validation-and-delivery.md)。
 
 ### Gal 接入 RevGame
 
 - 默认面板剧情从大厅或选关的稳定状态调用 `GameFlow.OpenGalAsync`。流程先卸载大厅并进入独立 `GalScene`，再于 Gal 域装配面板和首屏媒体。结局的返回按钮使用 `GameFlow.ReturnHome` 恢复大厅并释放剧情资源。按故事需要传入 `RevGalOptions` 的宿主信号或档案实现。编辑态制作与自定义界面见 [Gal 技能](../../revolution-gal/SKILL.md)。
-- 正式剧情 SO 放 `Assets/GameRes`，建议沿用工具默认的 `Gal/Stories`。试读草稿可以放在资源根以外。默认面板与主题放 `UI/Gal`，用项目 CJK 字体。背景 Material 放 `Material/Gal`，专用语音放 `Audio/Voice/Gal`，图和音乐使用项目既有 Art、图集与音频目录。
+- 正式剧情 SO 放 `Assets/GameRes`，建议沿用工具默认的 `Gal/Stories`。试读草稿可以放在资源根以外。默认面板与主题放 `UI/Gal`，用项目 CJK 字体。背景 Material 放 `Material/Gal`，专用语音放 `Audio/Voice/Gal`。节点和舞台方案通过已有逻辑路径复用角色立绘、背景、音乐及各自的 AB，只补项目缺少的剧情媒体。
 - `GameResourceBuild.Configure` 按剧情 ID 分包，并把节点和章节方案中的媒体加入引用审计。图集归属、字体、包依赖和冷启动验证沿用本篇约定。需要重新生成字库时运行 `python tools/font-subset.py`。
 
 运行期资源只用 `RevResPath.*` 或两段式门面。图集经 `GameSpriteAtlasService` 绑定；对象经 `GamePoolRequests`/`RevPool` 租用，晚到对象只能归还。按加载者契约成对 Release，不把 Release 等同立即清空进程内存。

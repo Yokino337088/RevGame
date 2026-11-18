@@ -106,12 +106,19 @@ if (!h.IsLoaded) { RevLog.Error($"加载失败：{h.ErrorReason}", "Res"); }
 - **AB 运行期健壮性**（`RevABLoader`）：失败重试 `MaxAttempts` / `RetryDelayMs`、超时兜底 `AttemptTimeoutSeconds`（WebGL 上 `UnityWebRequest.timeout` 不生效，框架改按帧轮询 + `Abort`）、引擎缓存标识钩子 `BundleCacheKeyResolver`。
 - 「仅生成映射」的唯一实现是 `ABMapGenerator`（打包窗口与导表工具共用）。
 
+### 6.1 资源复用与单包归属
+
+1. 导入前查目标工程的 AssetDatabase 和现有资源映射，确认候选资产的路径、GUID、运行时类型、所属图集和 AB。改名、换目录或来源不同的文件也要核对内容。有疑问时比较文件哈希、像素或实际导入产物，以及切片、用途和关键导入设置。确定为同一资源后，沿用现有资产及其逻辑路径。确实缺少或确有独立运行产物的资源才导入。
+2. 同一目标平台上，同一生产资源只由一个 AB 持有实体。需要时复用已有包或指定一个共同依赖包，其他场景、Prefab、配置和模块通过引用或逻辑路径复用。使用 Sprite Atlas 的图片只归一个发布图集，源图和图集按项目规则同包。检查未显式归属的贴图、材质、音频等依赖是否被 Unity 分别嵌入多个包。
+3. 清理已有副本时，先迁移 GUID 引用、逻辑路径和源配方，核对消费者后再删副本。确需移动原资产时保留其 `.meta` 和 GUID。通过项目构建流程重生成映射，沿用包名可保留既有加载契约。
+4. 出包核对实际目标的依赖报告、`ResMap` 和构建产物。先发现已注册动作，用 `ab.issues` 的重复依赖结果或 `ab.dependencies` 检查隐式重复，再用 `ab.check-map` 核对包与映射，用 `ab.artifacts` 或构建清单核对实际包名和字节数。内容相同但 GUID 不同的资产须在导入或资产审计时识别。清理任务记录涉及包的大小变化，用真 AB 验证消费者能加载同一资源。
+
 ## 7. 写业务的四条硬规则
 
 1. **只写逻辑路径**：用 `RevResPath.*` 生成常量（`Assets/Revolution/Generation/RevResPath.cs`）或两段式参数；**禁止** `StreamingAssets` / `dataPath` / `Resources.Load` 自己拼路径。
 2. **成对 Release**：`Load`/`LoadAsync` 每次都要有对应释放点（面板 `OnClose` / 状态退出 / 分组卸载）。
 3. **真机首次一律异步**：`LoadAsync` + 回调（或 `await` 包装）；同步 `Load` 只用于"已缓存 / 编辑器直读"。
-4. **新增资源要打 AB 标记并重生成 ResMap**：资源放进 resRoot（默认 `Assets/GameRes`）→ 设 `assetBundleName`（或用分包浏览页签）→ 跑打包 / "仅生成映射" → 提交 `ResMap.txt` 与 `RevResPath.cs`。
+4. **已有资源复用，缺少的资源才导入**。确认归属后，新增资源放进 resRoot（默认 `Assets/GameRes`），通过项目配方设置 AB 标记，生成并按项目约定提交 `ResMap.txt` 与 `RevResPath.cs`。
 
 ## 8. 排查顺序
 

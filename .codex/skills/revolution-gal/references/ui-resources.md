@@ -42,7 +42,7 @@
 ## 媒体、图集与 AB
 
 - 用 `ab.config` 或打包窗口确定资源根。SO 写入路径为 `Assets/.../*.asset`，节点及游戏打开用去掉资源根和扩展名的逻辑路径，如 `Gal/Media/ForestLake`。检查路径大小写、单个文件名冲突及类型。舞台图片用 `Sprite`，背景效果用 `Material`，音频用 `AudioClip`。旧 StoryBook 数据遵循其自己的资源链。
-- 图片先按项目习惯导入为 Sprite，原图、类型和图集成员用 `asset.importer`、`atlas.inspect` 等实际动作读回。项目采用 Sprite Atlas V2 时可使用 `atlas.create`。遵循宿主已有图集和 AB 分组，避免把同一张发布 Sprite 再加进另一个同用途图集。可直接指定已在项目图集中受管的 Sprite。主题 Prefab、主题 SO、显式图集、字体、舞台和音频的依赖都要随对应包交付。
+- 导入剧情媒体前先查宿主已有装配，包括其他章节、界面或战斗正在使用的立绘、音效和背景。同一资源直接使用已有逻辑路径、图集和 AB，只补确实缺少的媒体。用 `asset.importer`、`atlas.inspect` 等已注册动作核对导入设置与成员，确保同一 Sprite 在该平台只进入一个发布图集、同一资源只在一个 AB 内持有实体。主题 Prefab、主题 SO、显式图集、字体、舞台和音频的依赖由所属包提供。见 [资源复用与单包归属](../../revolution-framework/references/resource-and-ab.md#61-资源复用与单包归属)。
 - `story.generate` 会为剧情设置 AB 名。手工 Story 或其它资源按宿主分包规则标记。使用扫描手工标记模式且要求全标记时，核对新增 SO、Prefab、图集、纹理和字体。使用自动目录分组时遵循实际配置。`--bundle` 设置资源标签，实际 PC/Android 产物由构建链产生。
 - 对目标平台用同一个显式 `--target` 顺序运行 `ab build-incremental`、`ab check-map`、`ab publish-incremental`。构建回执标明有无全量回退，确认映射和发布的更新计数。Windows Editor 的真实 AB 用 `StandaloneWindows64` 产物，Player 使用自己的目标平台。RevGame 资源改动另走项目的资源与图集检查。
 - 项目直读适合创作试读。AB 冷启动再确认首次打开时文字、SpriteAtlas 像素、背景、角色与音频实际出现。重开后再次验证选择区域、按钮射线与清理。字体、翻译和控制布局要用实际语言及目标分辨率检查。

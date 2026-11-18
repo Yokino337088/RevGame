@@ -26,6 +26,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 
 - 一次初始化用 `RevInitialize.Initialize()`。业务以公开门面为入口，FSM 管阶段，`RevScope` 管域和回收，域内无界面业务用 `RevLogicBase`。服务、事件、定时器、异步和对象池明确 owner 与清理。失败返回项目可诊断的原因。
 - 资源通过 `RevResPath.*` 或两段式逻辑路径加载，引用成对释放。首次真机加载用异步。普通业务异步用 `RevTask`；过场、冷启动和资源验证采用目标项目的实际加载模式。
+- 导入前先查项目已有资源。相同资源沿用原资产、逻辑路径和 AB，每个目标平台只保留一份包体。确实缺少的资源才导入。按 [资源复用与单包归属](references/resource-and-ab.md#61-资源复用与单包归属) 检查图集及隐式依赖。
 - `RevUIPanel` 的 `OnBindView` 装配，`OnRefreshView` 落屏，点击回调转发业务。关闭自身用 `CloseSelf()`，业务侧用 `SetData` 送数据。原地改数据后需要 `RefreshView()`。
 - 策划数值按项目现有配置链管理。Excel 业务沿用导表、强类型读取和装配校验。代码使用独立大括号，写面向新手的中文契约说明和关键步骤注释。
 - 完整约定见 [技术规则](references/technical-rules.md) 和 [代码与注释](references/code-style.md)。涉及框架源码时，先查安装版与源仓库的差异、CHANGELOG 和 [历史故障](references/pitfalls.md)。从框架源仓库维护，再同步生成分支和项目快照。
