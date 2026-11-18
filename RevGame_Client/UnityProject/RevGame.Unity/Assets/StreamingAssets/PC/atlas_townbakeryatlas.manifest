@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 3306728106
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: c07964445b9a5c2005f3a45db9e7e68d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: c07964445b9a5c2005f3a45db9e7e68d
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Atlases/TownBakeryAtlas.spriteatlasv2
+- Assets/GameRes/Art/Background/Gal/Chapter02/TownBakery.png
+Dependencies: []

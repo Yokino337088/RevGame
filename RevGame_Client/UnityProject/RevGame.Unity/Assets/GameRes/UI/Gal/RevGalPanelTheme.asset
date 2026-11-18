@@ -1,0 +1,523 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0b85dae3c30e4447af9cc37fb3a32f4, type: 3}
+  m_Name: RevGalPanelTheme
+  m_EditorClassIdentifier: 
+  atlas: {fileID: 0}
+  font: {fileID: 12800000, guid: 23f22ed8d3f445648a6f18822468dfab, type: 3}
+  backgroundMaterial: {fileID: 0}
+  renderBackgroundMaterialWithoutSprite: 0
+  parts:
+  - Part: 0
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0, y: 0}
+      AnchorMax: {x: 1, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 1
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0, y: 0}
+      AnchorMax: {x: 1, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 2
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.021, y: 0.04}
+      AnchorMax: {x: 0.247, y: 0.895}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 3
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.042, y: 0.07}
+      AnchorMax: {x: 0.228, y: 0.425}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 4
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.51, y: 0.19}
+      AnchorMax: {x: 0.975, y: 0.895}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 5
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.035, y: 0.915}
+      AnchorMax: {x: 0.965, y: 0.992}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 1
+    Tint: {r: 0, g: 0, b: 0, a: 0}
+  - Part: 6
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.04, y: 0}
+      AnchorMax: {x: 0.53, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 7
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.55, y: 0}
+      AnchorMax: {x: 0.77, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 8
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.89, y: 0.17}
+      AnchorMax: {x: 0.972, y: 0.83}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 9
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.79, y: 0.17}
+      AnchorMax: {x: 0.878, y: 0.83}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 10
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.035, y: 0.035}
+      AnchorMax: {x: 0.965, y: 0.327}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 150921966001597165, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 11
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.24, y: 0.71}
+      AnchorMax: {x: 0.85, y: 0.98}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 1
+    Tint: {r: 1, g: 0.79, b: 0.46, a: 1}
+  - Part: 12
+    Layout:
+      Override: 1
+      AnchorMin: {x: 0.24, y: 0.08}
+      AnchorMax: {x: 0.86, y: 0.71}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 13
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.879, y: 0.1}
+      AnchorMax: {x: 0.974, y: 0.36}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 14
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.036, y: 0.345}
+      AnchorMax: {x: 0.964, y: 0.407}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 15
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.18, y: 0.436}
+      AnchorMax: {x: 0.82, y: 0.84}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 16
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0, y: 0}
+      AnchorMax: {x: 1, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 17
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0, y: 0}
+      AnchorMax: {x: 1, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 18
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.25, y: 0.22}
+      AnchorMax: {x: 0.75, y: 0.8}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 4611905280397605800, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 19
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.08, y: 0.82}
+      AnchorMax: {x: 0.68, y: 0.96}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 20
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.08, y: 0.705}
+      AnchorMax: {x: 0.92, y: 0.81}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 21
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.08, y: 0.058}
+      AnchorMax: {x: 0.92, y: 0.157}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 22
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.76, y: 0.83}
+      AnchorMax: {x: 0.92, y: 0.94}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 23
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.08, y: 0.549}
+      AnchorMax: {x: 0.475, y: 0.677}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 24
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.525, y: 0.549}
+      AnchorMax: {x: 0.92, y: 0.677}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 25
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.08, y: 0.371}
+      AnchorMax: {x: 0.475, y: 0.499}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 26
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.525, y: 0.371}
+      AnchorMax: {x: 0.92, y: 0.499}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 27
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.08, y: 0.193}
+      AnchorMax: {x: 0.475, y: 0.321}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 28
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.525, y: 0.193}
+      AnchorMax: {x: 0.92, y: 0.321}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 29
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0, y: 0}
+      AnchorMax: {x: 1, y: 1}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 30
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.109, y: 0.84}
+      AnchorMax: {x: 0.75, y: 0.93}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 31
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.109, y: 0.105}
+      AnchorMax: {x: 0.9, y: 0.81}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 32
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.425, y: 0.028}
+      AnchorMax: {x: 0.575, y: 0.084}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: 0}
+    AtlasSprite: 
+    Sliced: 0
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 33
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.3, y: 0.028}
+      AnchorMax: {x: 0.405, y: 0.084}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 34
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.595, y: 0.028}
+      AnchorMax: {x: 0.7, y: 0.084}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+  - Part: 35
+    Layout:
+      Override: 0
+      AnchorMin: {x: 0.795, y: 0.846}
+      AnchorMax: {x: 0.905, y: 0.918}
+      Pivot: {x: 0.5, y: 0.5}
+      OffsetMin: {x: 0, y: 0}
+      OffsetMax: {x: 0, y: 0}
+    ChoiceHeight: 0
+    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    AtlasSprite: 
+    Sliced: 1
+    OverrideColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}

@@ -166,6 +166,19 @@ namespace RevGame.Editor
         /// <summary>归组即生命周期边界。大背景独占图集，避免打开一个小按钮却加载整幅背景。</summary>
         private static string GroupFor(string path)
         {
+            // 续篇控件、常驻角色和当章互动各自归包，打开设置或大厅时不拖入整章大图。
+            if (path.Contains("/Art/UI/Gal/"))
+            {
+                return "UIGalCottage";
+            }
+            if (path.Contains("/Art/Gal/Portraits/"))
+            {
+                return "GalCottagePortraits";
+            }
+            if (path.Contains("/Art/Gal/Interactions/"))
+            {
+                return "GalCottage" + Path.GetFileName(Path.GetDirectoryName(path));
+            }
             // PVP供应商标识只随PVP面板使用，不能因为一个小Logo扩大大厅或章节常用图集寿命。
             if (path.Contains("/Art/UI/PvpDefeat/"))
             {

@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 4294817782
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4d08897aa5074b281bace331e3705435
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4d08897aa5074b281bace331e3705435
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Atlases/HeartPeakSunsetAtlas.spriteatlasv2
+- Assets/GameRes/Art/Background/Gal/Chapter03/HeartPeakSunset.png
+Dependencies: []

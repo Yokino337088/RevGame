@@ -28,6 +28,7 @@ namespace RevGame.UI
             _memoryLobby = FindObjectOfType<LobbySceneView>();
             RevEvent.AddEventListener(YayaMemoryProgress.Changed, OnMemoryProgressChanged, owner: this);
             RefreshMemoryEntry(true);
+            RefreshCottageStoryEntry();
         }
 
         protected override void OnCovered(bool covered)
@@ -48,6 +49,10 @@ namespace RevGame.UI
         protected override void OnRelease()
         {
             OnClose();
+            if (_cottageStory != null)
+            {
+                _cottageStory.onClick.RemoveListener(OpenCottageStory);
+            }
         }
 
         [RevButtonClick("btnMemories")]
@@ -93,6 +98,7 @@ namespace RevGame.UI
         private void OnMemoryProgressChanged()
         {
             RefreshMemoryEntry(false);
+            RefreshCottageStoryEntry();
         }
 
         /// <summary>红点只跟随存档未阅位。鸦鸦在回到大厅或启动时提示一次。</summary>

@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3372014637
+CRC: 435524365
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -392,3 +392,59 @@ AssetBundleManifest:
         Dependency_1: ui_yaya_memories
         Dependency_2: atlas_uiyayamemories
         Dependency_3: atlas_uiprojectopensource
+    Info_96:
+      Name: gal_ui
+      Dependencies:
+        Dependency_0: font_cjk
+        Dependency_1: atlas_uigalcottage
+    Info_97:
+      Name: gal_story_yaya_days_together
+      Dependencies: {}
+    Info_98:
+      Name: atlas_cottagebedroommorningatlas
+      Dependencies: {}
+    Info_99:
+      Name: atlas_cottagebedroomnightatlas
+      Dependencies: {}
+    Info_100:
+      Name: atlas_cottagegardenatlas
+      Dependencies: {}
+    Info_101:
+      Name: atlas_cottagegoodnightcgatlas
+      Dependencies: {}
+    Info_102:
+      Name: atlas_cottagekitchenatlas
+      Dependencies: {}
+    Info_103:
+      Name: atlas_cottagelivingatlas
+      Dependencies: {}
+    Info_104:
+      Name: atlas_galcottageportraits
+      Dependencies: {}
+    Info_105:
+      Name: atlas_heartpeakmarkeratlas
+      Dependencies: {}
+    Info_106:
+      Name: atlas_heartpeakphotocgatlas
+      Dependencies: {}
+    Info_107:
+      Name: atlas_heartpeakreturnatlas
+      Dependencies: {}
+    Info_108:
+      Name: atlas_heartpeaksunsetatlas
+      Dependencies: {}
+    Info_109:
+      Name: atlas_heartpeaktrailatlas
+      Dependencies: {}
+    Info_110:
+      Name: atlas_townbakeryatlas
+      Dependencies: {}
+    Info_111:
+      Name: atlas_townmarketatlas
+      Dependencies: {}
+    Info_112:
+      Name: atlas_uigalcottage
+      Dependencies: {}
+    Info_113:
+      Name: atlas_cottagemagicpovatlas
+      Dependencies: {}

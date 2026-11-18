@@ -1,0 +1,4218 @@
+{
+  "Schema": 1,
+  "Id": "yaya_days_together",
+  "Title": "和鸦鸦一起过日子",
+  "Revision": 2,
+  "Start": "c01_wake_001",
+  "StagePresets": [
+    {
+      "Id": "stage_c01",
+      "Title": "第一章 · 小屋",
+      "Stage": {
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c02",
+      "Title": "第二章 · 集市",
+      "Stage": {
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03",
+      "Title": "第三章 · 心峰",
+      "Stage": {
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c01_wake",
+      "Parent": "stage_c01",
+      "Title": "叫起床",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageBedroomMorning",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c01_chores",
+      "Parent": "stage_c01",
+      "Title": "鸦鸦的家务单",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageLiving",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c01_meal",
+      "Parent": "stage_c01",
+      "Title": "一起做饭，一起吃",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageKitchen",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c01_magic",
+      "Parent": "stage_c01",
+      "Title": "让一颗棋子亮起来",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageGarden",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c01_wash",
+      "Parent": "stage_c01",
+      "Title": "长靴和一盆热水",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageBedroomNight",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c01_goodnight",
+      "Parent": "stage_c01",
+      "Title": "洗完脚就抱着睡",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageBedroomNight",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c02_pantry",
+      "Parent": "stage_c02",
+      "Title": "食柜里没东西做饭了",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageKitchen",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c02_grain",
+      "Parent": "stage_c02",
+      "Title": "先买米，重的放底下",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter02/TownMarket",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c02_buns",
+      "Parent": "stage_c02",
+      "Title": "蜜饼一人一半",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter02/TownBakery",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c02_eggs",
+      "Parent": "stage_c02",
+      "Title": "鸡蛋最后买，谁也别逞强",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter02/TownMarket",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c02_return",
+      "Parent": "stage_c02",
+      "Title": "东西都买回来了",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageKitchen",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03_arrive",
+      "Parent": "stage_c03",
+      "Title": "原来这座山长得像一颗心",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakTrail",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03_camera",
+      "Parent": "stage_c03",
+      "Title": "她的包里藏着一台相机",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakTrail",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03_portrait",
+      "Parent": "stage_c03",
+      "Title": "鸦鸦大人，请过目",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakTrail",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03_together",
+      "Parent": "stage_c03",
+      "Title": "在心峰观景台前拍两个人",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakMarker",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03_confession",
+      "Parent": "stage_c03",
+      "Title": "把平常的日子过下去",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakSunset",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    },
+    {
+      "Id": "stage_c03_home",
+      "Parent": "stage_c03",
+      "Title": "照片带回小屋",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakReturn",
+        "Left": "-",
+        "Right": "-",
+        "Center": "-"
+      }
+    }
+  ],
+  "Nodes": [
+    {
+      "Id": "c01_wake_001",
+      "Title": "叫起床 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 0
+      },
+      "Text": "冒险家，太阳都晒屁股了还睡呢",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c01_wake",
+      "Next": "c01_wake_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_18",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_002",
+      "Title": "叫起床 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 0
+      },
+      "Text": "听见了。你把窗帘拉回去，太阳就当没晒到。",
+      "Speaker": "冒险家",
+      "Next": "c01_wake_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_003",
+      "Title": "叫起床 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 0
+      },
+      "Text": "昨晚是谁在小屋门口跑得飞快，非说以后都要第一个回家？",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wake_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_01",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_004",
+      "Title": "叫起床 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 0
+      },
+      "Text": "那是回家比赛。起床比赛我可没报名。",
+      "Speaker": "冒险家",
+      "Next": "c01_wake_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_005",
+      "Title": "叫起床 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 0
+      },
+      "Text": "本鸦替你报了。睁眼、穿衣、下床，慢一项就多扫一间。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wake_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_02",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_006",
+      "Title": "叫起床 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 0
+      },
+      "Text": "咱家就这么几间，你再加就得让我去扫隔壁了。",
+      "Speaker": "冒险家",
+      "Next": "c01_wake_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_007",
+      "Title": "叫起床 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 0
+      },
+      "Text": "你还想给别人扫？本鸦这边的活还没干完呢。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wake_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_14",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_008",
+      "Title": "叫起床 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 0
+      },
+      "Text": "那鸦鸦大人能不能先下来，让我抱一会儿再起？",
+      "Speaker": "冒险家",
+      "Next": "c01_wake_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_009",
+      "Title": "叫起床 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 0
+      },
+      "Text": "半会儿。你每次说一会儿，最后都是本鸦陪你赖床。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wake_010",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_010",
+      "Title": "叫起床 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 0
+      },
+      "Text": "你也没着急走啊。",
+      "Speaker": "冒险家",
+      "Next": "c01_wake_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_011",
+      "Title": "叫起床 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 0
+      },
+      "Text": "本鸦在等你醒透。……醒了就起来，早饭还没吃。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wake_012",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_012",
+      "Title": "叫起床 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 0
+      },
+      "Text": "原来鸦鸦大人也饿着等我呢。",
+      "Speaker": "冒险家",
+      "Next": "c01_wake_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wake_013",
+      "Title": "叫起床 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 0
+      },
+      "Text": "你知道就动作快点。衣服在椅子上，扣子扣好了再出来。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_001",
+      "Title": "鸦鸦的家务单 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 210
+      },
+      "Text": "冒险家，先扫地，再去把被子晒了。桌子等本鸦把符纸收走再擦。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c01_chores",
+      "Next": "c01_chores_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_002",
+      "Title": "鸦鸦的家务单 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 210
+      },
+      "Text": "你在我起床以前排了多少活？",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_003",
+      "Title": "鸦鸦的家务单 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 210
+      },
+      "Text": "本来还有劈柴。看你刚才抱人还算老实，柴给你减了。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_004",
+      "Title": "鸦鸦的家务单 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 210
+      },
+      "Text": "抱一次减一项？那剩下的你先别动。",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_005",
+      "Title": "鸦鸦的家务单 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 210
+      },
+      "Text": "只算头一次。扫帚拿反了，手给我。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_10",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_006",
+      "Title": "鸦鸦的家务单 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 210
+      },
+      "Text": "我还没到连扫帚都得你教的地步。",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_007",
+      "Title": "鸦鸦的家务单 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 210
+      },
+      "Text": "那你给本鸦看看，窗台下面那一撮是怎么躲过你法眼的。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_008",
+      "Title": "鸦鸦的家务单 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 210
+      },
+      "Text": "你眼睛怎么这么尖，战场上是不是也这么盯我？",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_009",
+      "Title": "鸦鸦的家务单 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 210
+      },
+      "Text": "当然。你做什么，本鸦不看着点才不放心。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_010",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_03",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_010",
+      "Title": "鸦鸦的家务单 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 210
+      },
+      "Text": "那看好了，今天我连窗台给你一起擦。",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_011",
+      "Title": "鸦鸦的家务单 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 210
+      },
+      "Text": "冒险家，拿稳那边。掉地上了今晚还是咱俩盖。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_012",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_012",
+      "Title": "鸦鸦的家务单 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 210
+      },
+      "Text": "知道了。你夹左边，我夹右边，省得它跟鸦鸦大人一起卷到我这边来。",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_013",
+      "Title": "鸦鸦的家务单 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 210
+      },
+      "Text": "本鸦什么时候卷过你的被子？",
+      "Speaker": "鸦鸦",
+      "Next": "c01_chores_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_19",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_014",
+      "Title": "鸦鸦的家务单 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 210
+      },
+      "Text": "昨晚。你卷过去以后还说我抱得太松。",
+      "Speaker": "冒险家",
+      "Next": "c01_chores_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_chores_015",
+      "Title": "鸦鸦的家务单 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 210
+      },
+      "Text": "……少翻旧账。等会儿给你留最好吃的那块，行了吧。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_001",
+      "Title": "一起做饭，一起吃 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 420
+      },
+      "Text": "冒险家，米淘两遍。你切菜，本鸦看火。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c01_meal",
+      "Next": "c01_meal_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_002",
+      "Title": "一起做饭，一起吃 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 420
+      },
+      "Text": "你教我打试炼的时候都没说得这么细。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_003",
+      "Title": "一起做饭，一起吃 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 420
+      },
+      "Text": "打输了可以再打。你把米倒进水沟，中午咱俩只能看着空碗亲热。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_16",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_004",
+      "Title": "一起做饭，一起吃 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 420
+      },
+      "Text": "那我先把米保住。你把菜刀递过来。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_005",
+      "Title": "一起做饭，一起吃 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 420
+      },
+      "Text": "切菜就看菜。等你切完，本鸦又不会跑。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_28",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_006",
+      "Title": "一起做饭，一起吃 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 420
+      },
+      "Text": "我看的是你鬓角沾了根葱。别动。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_007",
+      "Title": "一起做饭，一起吃 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 420
+      },
+      "Text": "你还真摘啊。放你那碗，好歹也下过刀了。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_15",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_008",
+      "Title": "一起做饭，一起吃 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 420
+      },
+      "Text": "尝一口。这次咸淡让你说。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_07",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_009",
+      "Title": "一起做饭，一起吃 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 420
+      },
+      "Text": "你吹过没有？上回我烫到舌头，鸦鸦大人笑了我半天。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_010",
+      "Title": "一起做饭，一起吃 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 420
+      },
+      "Text": "吹过了。张嘴。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_011",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_011",
+      "Title": "一起做饭，一起吃 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 420
+      },
+      "Text": "刚好。你也尝尝，我给你挑没有葱的那块。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_012",
+      "Title": "一起做饭，一起吃 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 420
+      },
+      "Text": "原来上午说给我留最好吃的，是真的啊。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_013",
+      "Title": "一起做饭，一起吃 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 420
+      },
+      "Text": "本鸦说过的话，你倒只挑有吃的那几句记。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_014",
+      "Title": "一起做饭，一起吃 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 420
+      },
+      "Text": "别的我也记。比如某人说要等我一起吃饭。",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_015",
+      "Title": "一起做饭，一起吃 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 420
+      },
+      "Text": "那你就吃慢一点。本鸦还没吃完呢。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_016",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_016",
+      "Title": "一起做饭，一起吃 16",
+      "Kind": "Line",
+      "Position": {
+        "x": 4500,
+        "y": 420
+      },
+      "Text": "饭桌下，她拿脚尖碰了一下我的鞋。我们接着吃，谁也没急着去洗碗。",
+      "Next": "c01_meal_017",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_017",
+      "Title": "一起做饭，一起吃 17",
+      "Kind": "Line",
+      "Position": {
+        "x": 4800,
+        "y": 420
+      },
+      "Text": "吃完休息一会儿。下午过来练魔法。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_meal_018",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_018",
+      "Title": "一起做饭，一起吃 18",
+      "Kind": "Line",
+      "Position": {
+        "x": 5100,
+        "y": 420
+      },
+      "Text": "怎么刚喂完饭就开始上课？",
+      "Speaker": "冒险家",
+      "Next": "c01_meal_019",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_meal_019",
+      "Title": "一起做饭，一起吃 19",
+      "Kind": "Line",
+      "Position": {
+        "x": 5400,
+        "y": 420
+      },
+      "Text": "因为冒险家下午也归本鸦。筷子给我，再给你夹一块。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_08",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_001",
+      "Title": "让一颗棋子亮起来 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 630
+      },
+      "Text": "冒险家，今天练最简单的照明。棋子亮起来，在手心稳住三息就算过。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c01_magic",
+      "Next": "c01_magic_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_002",
+      "Title": "让一颗棋子亮起来 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 630
+      },
+      "Text": "打完神殿还有作业啊，真想让里面那家伙替我学。",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_003",
+      "Title": "让一颗棋子亮起来 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 630
+      },
+      "Text": "它不用给本鸦半夜找东西。你要。坐过来，本鸦先做一遍。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_004",
+      "Title": "让一颗棋子亮起来 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 630
+      },
+      "Text": "你刚才念了什么？",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_005",
+      "Title": "让一颗棋子亮起来 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 630
+      },
+      "Text": "没念。你先感觉光往哪里跑，再把它拢住。别把肩绷得那么紧。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_006",
+      "Title": "让一颗棋子亮起来 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 630
+      },
+      "Text": "亮了。虽然它好像对我没什么留恋。",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_007",
+      "Title": "让一颗棋子亮起来 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 630
+      },
+      "Text": "你手一抬它就乱跑。手腕给我，冒险家。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_04",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_008",
+      "Title": "让一颗棋子亮起来 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 630
+      },
+      "Text": "对，就这样。数三下，再松手。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Background": "Art/Background/Gal/Chapter01/CottageMagicPOV",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_009",
+      "Title": "让一颗棋子亮起来 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 630
+      },
+      "Text": "你靠这么近，我现在数得出来的只有你的睫毛。",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_010",
+      "Title": "让一颗棋子亮起来 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 630
+      },
+      "Text": "那就别数睫毛，看棋。……本鸦也没说要松开你。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_011",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_011",
+      "Title": "让一颗棋子亮起来 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 630
+      },
+      "Text": "一，二，三。你看，没灭。",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_012",
+      "Title": "让一颗棋子亮起来 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 630
+      },
+      "Text": "学得还行。哪天本鸦夜里找不着东西，你过来照。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_013",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Background": "Art/Background/Gal/Chapter01/CottageGarden",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_013",
+      "Title": "让一颗棋子亮起来 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 630
+      },
+      "Text": "多照一会儿有没有奖励？",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_014",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_014",
+      "Title": "让一颗棋子亮起来 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 630
+      },
+      "Text": "有。今天晚上给你洗碗放假。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_magic_015",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_015",
+      "Title": "让一颗棋子亮起来 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 630
+      },
+      "Text": "那你呢？",
+      "Speaker": "冒险家",
+      "Next": "c01_magic_016",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_magic_016",
+      "Title": "让一颗棋子亮起来 16",
+      "Kind": "Line",
+      "Position": {
+        "x": 4500,
+        "y": 630
+      },
+      "Text": "本鸦负责看着冒险家把棋子练熟，顺便陪你坐到太阳下去。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_001",
+      "Title": "长靴和一盆热水 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 840
+      },
+      "Text": "冒险家，水放近一点。今天站了一天，你给本鸦洗。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c01_wash",
+      "Next": "c01_wash_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_002",
+      "Title": "长靴和一盆热水 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 840
+      },
+      "Text": "知道了。脚伸过来，先别碰盆沿，小心烫。",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_003",
+      "Title": "长靴和一盆热水 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 840
+      },
+      "Text": "哎呦，你的脚天天闷在长靴里面这也太臭了吧，鸦鸦大人你想熏死我吗",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_004",
+      "Title": "长靴和一盆热水 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 840
+      },
+      "Text": "你平时在家里面就没必要穿靴子了吧",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_005",
+      "Title": "长靴和一盆热水 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 840
+      },
+      "Text": "我就穿怎么了，冒险家你不就好这口吗",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_21",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_006",
+      "Title": "长靴和一盆热水 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 840
+      },
+      "Text": "我好的是鸦鸦大人。你那双靴子今晚能不能在门外单独睡？",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_007",
+      "Title": "长靴和一盆热水 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 840
+      },
+      "Text": "快点给本鸦洗脚，再多嘴信不信本鸦把脚塞你嘴里",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_26",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_008",
+      "Title": "长靴和一盆热水 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 840
+      },
+      "Text": "好好好。我闭嘴，你先把脚放水里。",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_009",
+      "Title": "长靴和一盆热水 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 840
+      },
+      "Text": "你要是不想洗的话就给本鸦舔干净吧",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_010",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_01",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_010",
+      "Title": "长靴和一盆热水 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 840
+      },
+      "Text": "我洗，我洗。鸦鸦大人把椅子坐稳。水温怎么样？",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_011",
+      "Title": "长靴和一盆热水 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 840
+      },
+      "Text": "嗯，刚好。脚跟今天磨得有点疼，那里轻一点。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_012",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_012",
+      "Title": "长靴和一盆热水 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 840
+      },
+      "Text": "疼的地方我看一下。皮还好，明天换双软一点的鞋吧。",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_013",
+      "Title": "长靴和一盆热水 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 840
+      },
+      "Text": "一双拖鞋也值得你跟本鸦斗这么久。拿来吧，放床边。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_014",
+      "Title": "长靴和一盆热水 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 840
+      },
+      "Text": "你要穿啊？",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_015",
+      "Title": "长靴和一盆热水 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 840
+      },
+      "Text": "本鸦在家穿不穿靴子自己决定。……今天这双软底的归我，不许你拿走。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_wash_016",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_016",
+      "Title": "长靴和一盆热水 16",
+      "Kind": "Line",
+      "Position": {
+        "x": 4500,
+        "y": 840
+      },
+      "Text": "给你留的。另一只在脚边，别踩空。",
+      "Speaker": "冒险家",
+      "Next": "c01_wash_017",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_wash_017",
+      "Title": "长靴和一盆热水 17",
+      "Kind": "Line",
+      "Position": {
+        "x": 4800,
+        "y": 840
+      },
+      "Text": "冒险家，水倒完就回来，别磨蹭。床上给你留着地方。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_goodnight_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_001",
+      "Title": "洗完脚就抱着睡 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 1050
+      },
+      "Text": "下午那招还挺实用。你看，没让你摸黑找拖鞋。",
+      "Speaker": "冒险家",
+      "StagePreset": "stage_c01_goodnight",
+      "Next": "c01_goodnight_002",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_002",
+      "Title": "洗完脚就抱着睡 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 1050
+      },
+      "Text": "不错。放床头吧，别亮一晚上。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_goodnight_003",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_003",
+      "Title": "洗完脚就抱着睡 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 1050
+      },
+      "Text": "我的被子呢？",
+      "Speaker": "冒险家",
+      "Next": "c01_goodnight_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_004",
+      "Title": "洗完脚就抱着睡 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 1050
+      },
+      "Text": "在本鸦手里。冒险家，你往这边躺，我就分你。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_goodnight_005",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_06",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_005",
+      "Title": "洗完脚就抱着睡 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 1050
+      },
+      "Text": "你这么抱，我明早要是还睡懒觉，你可得负一半的责。",
+      "Speaker": "冒险家",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter01/CottageGoodnightCG",
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      },
+      "Next": "c01_goodnight_006"
+    },
+    {
+      "Id": "c01_goodnight_006",
+      "Title": "洗完脚就抱着睡 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 1050
+      },
+      "Text": "那明早本鸦照样叫你。现在先别说话，让我多抱一会儿。",
+      "Speaker": "鸦鸦",
+      "Next": "c01_goodnight_007",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_09",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_007",
+      "Title": "洗完脚就抱着睡 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 1050
+      },
+      "Text": "棋子的光暗下去。她手臂还圈着我，我把她那边的被角也拉好。",
+      "Next": "c01_goodnight_008",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c01_goodnight_008",
+      "Title": "洗完脚就抱着睡 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 1050
+      },
+      "Text": "晚安，冒险家。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_001",
+      "Title": "食柜里没东西做饭了 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 1260
+      },
+      "Text": "冒险家，你来一下。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c02_pantry",
+      "Next": "c02_pantry_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_002",
+      "Title": "食柜里没东西做饭了 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 1260
+      },
+      "Text": "先说清楚，我今天真没赖床。",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_003",
+      "Title": "食柜里没东西做饭了 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 1260
+      },
+      "Text": "本鸦知道。你看看米罐，再看看菜筐。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_004",
+      "Title": "食柜里没东西做饭了 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 1260
+      },
+      "Text": "一罐子响声，两根葱。这能做什么？",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_005",
+      "Title": "食柜里没东西做饭了 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 1260
+      },
+      "Text": "做个空锅给你看。找篮子去，今天得去镇上赶集。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_23",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_006",
+      "Title": "食柜里没东西做饭了 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 1260
+      },
+      "Text": "我还以为你要教我用魔法变出早饭。",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_007",
+      "Title": "食柜里没东西做饭了 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 1260
+      },
+      "Text": "昨天还只会点亮一颗棋子，今天就想变饭？走吧，先去买现成的。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_008",
+      "Title": "食柜里没东西做饭了 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 1260
+      },
+      "Text": "蜜饼也算物资？",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_009",
+      "Title": "食柜里没东西做饭了 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 1260
+      },
+      "Text": "冒险家路上会喊饿。本鸦不想买到一半再回头哄你。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_010",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_010",
+      "Title": "食柜里没东西做饭了 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 1260
+      },
+      "Text": "那我负责吃？",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_011",
+      "Title": "食柜里没东西做饭了 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 1260
+      },
+      "Text": "你负责拿。买什么听本鸦的，袋子满了再给你个篮子。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_012",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_012",
+      "Title": "食柜里没东西做饭了 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 1260
+      },
+      "Text": "不负责挑，倒负责扛？鸦鸦大人给自己分的活真好。",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_013",
+      "Title": "食柜里没东西做饭了 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 1260
+      },
+      "Text": "你要是想挑也行。先说说土豆怎么买，答得好本鸦让你做主。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_014",
+      "Title": "食柜里没东西做饭了 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 1260
+      },
+      "Text": "我去拿篮子。",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_015",
+      "Title": "食柜里没东西做饭了 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 1260
+      },
+      "Text": "看什么？出门当然穿靴子。你给本鸦找的那双，留着回来穿。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_pantry_016",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_016",
+      "Title": "食柜里没东西做饭了 16",
+      "Kind": "Line",
+      "Position": {
+        "x": 4500,
+        "y": 1260
+      },
+      "Text": "我什么都没说。等我把空篮子提上。",
+      "Speaker": "冒险家",
+      "Next": "c02_pantry_017",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_pantry_017",
+      "Title": "食柜里没东西做饭了 17",
+      "Kind": "Line",
+      "Position": {
+        "x": 4800,
+        "y": 1260
+      },
+      "Text": "拿上就过来。冒险家走本鸦旁边。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_001",
+      "Title": "先买米，重的放底下 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 1470
+      },
+      "Text": "先买米，挑这边的。冒险家，布袋给我。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c02_grain",
+      "Next": "c02_grain_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_002",
+      "Title": "先买米，重的放底下 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 1470
+      },
+      "Text": "要装到顶吗？",
+      "Speaker": "冒险家",
+      "Next": "c02_grain_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_003",
+      "Title": "先买米，重的放底下 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 1470
+      },
+      "Text": "一小袋就行。买够两个人这一阵吃的，背得动才不会把你落在半路。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_004",
+      "Title": "先买米，重的放底下 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 1470
+      },
+      "Text": "这一袋给你们系紧了，回去先搁高一点，别挨地。",
+      "Speaker": "粮摊主",
+      "Next": "c02_grain_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_005",
+      "Title": "先买米，重的放底下 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 1470
+      },
+      "Text": "好。冒险家，这袋放最下面。鸡蛋得最后拿。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_006",
+      "Title": "先买米，重的放底下 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 1470
+      },
+      "Text": "已经知道谁背了，你看我都自己蹲下来了。",
+      "Speaker": "冒险家",
+      "Next": "c02_grain_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_007",
+      "Title": "先买米，重的放底下 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 1470
+      },
+      "Text": "挨着肩会硌。这样呢？",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_008",
+      "Title": "先买米，重的放底下 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 1470
+      },
+      "Text": "轻多了。鸦鸦大人还负责售后。",
+      "Speaker": "冒险家",
+      "Next": "c02_grain_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_009",
+      "Title": "先买米，重的放底下 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 1470
+      },
+      "Text": "本鸦还指望你把后一条街的东西也拿回去，当然得管。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_010",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_010",
+      "Title": "先买米，重的放底下 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 1470
+      },
+      "Text": "这颗够大，省得挑好几个。",
+      "Speaker": "冒险家",
+      "Next": "c02_grain_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_011",
+      "Title": "先买米，重的放底下 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 1470
+      },
+      "Text": "放回去。上面都青了。拿旁边那两颗硬实的。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_012",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_012",
+      "Title": "先买米，重的放底下 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 1470
+      },
+      "Text": "所以挑土豆的答案是小的？",
+      "Speaker": "冒险家",
+      "Next": "c02_grain_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_013",
+      "Title": "先买米，重的放底下 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 1470
+      },
+      "Text": "挑好的。青菜也要挑叶子挺的。你扶篮子，本鸦拿。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_014",
+      "Title": "先买米，重的放底下 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 1470
+      },
+      "Text": "葱给你们捎两根吧。",
+      "Speaker": "菜摊主",
+      "Next": "c02_grain_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_015",
+      "Title": "先买米，重的放底下 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 1470
+      },
+      "Text": "家里还有。给我加一小把香叶就好，冒险家喜欢汤里有那个味。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_grain_016",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_016",
+      "Title": "先买米，重的放底下 16",
+      "Kind": "Line",
+      "Position": {
+        "x": 4500,
+        "y": 1470
+      },
+      "Text": "这你也记得？",
+      "Speaker": "冒险家",
+      "Next": "c02_grain_017",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_grain_017",
+      "Title": "先买米，重的放底下 17",
+      "Kind": "Line",
+      "Position": {
+        "x": 4800,
+        "y": 1470
+      },
+      "Text": "你上次添了两回汤，还把锅里的香叶捞光了。谁想忘也忘不了。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_buns_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_001",
+      "Title": "蜜饼一人一半 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 1680
+      },
+      "Text": "冒险家，站这儿。你刚才差点跟着别人过拐角了。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c02_buns",
+      "Next": "c02_buns_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_002",
+      "Title": "蜜饼一人一半 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 1680
+      },
+      "Text": "我是在闻这边的饼。",
+      "Speaker": "冒险家",
+      "Next": "c02_buns_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_003",
+      "Title": "蜜饼一人一半 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 1680
+      },
+      "Text": "那就贴着本鸦闻。今天陪谁出门，自己心里有数吧。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_buns_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_004",
+      "Title": "蜜饼一人一半 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 1680
+      },
+      "Text": "有数。你要是再挽紧一点，我胳膊也能记住。",
+      "Speaker": "冒险家",
+      "Next": "c02_buns_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_005",
+      "Title": "蜜饼一人一半 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 1680
+      },
+      "Text": "蜜饼刚出炉，要整块还是切开？",
+      "Speaker": "饼摊主",
+      "Next": "c02_buns_006",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_006",
+      "Title": "蜜饼一人一半 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 1680
+      },
+      "Text": "切一半，焦边给冒险家。另一半给我。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_buns_007",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_007",
+      "Title": "蜜饼一人一半 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 1680
+      },
+      "Text": "好吃。你也咬一口试试焦的。",
+      "Speaker": "冒险家",
+      "Next": "c02_buns_008",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_008",
+      "Title": "蜜饼一人一半 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 1680
+      },
+      "Text": "你主动分给本鸦的，等会儿可别赖我抢。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_buns_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_009",
+      "Title": "蜜饼一人一半 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 1680
+      },
+      "Text": "我就怕你只剩一个角还说分了一半。",
+      "Speaker": "冒险家",
+      "Next": "c02_buns_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_010",
+      "Title": "蜜饼一人一半 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 1680
+      },
+      "Text": "这回呢？",
+      "Speaker": "鸦鸦",
+      "Next": "c02_buns_011",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_011",
+      "Title": "蜜饼一人一半 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 1680
+      },
+      "Text": "这回我还想给你再咬一口。",
+      "Speaker": "冒险家",
+      "Next": "c02_buns_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_buns_012",
+      "Title": "蜜饼一人一半 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 1680
+      },
+      "Text": "留着吧。等你把东西全提到家，本鸦还会分你吃。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_eggs_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_001",
+      "Title": "鸡蛋最后买，谁也别逞强 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 1890
+      },
+      "Text": "冒险家，这个放上面。回去别像打完神殿那天一样抢跑，走慢点。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c02_eggs",
+      "Next": "c02_eggs_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_002",
+      "Title": "鸡蛋最后买，谁也别逞强 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 1890
+      },
+      "Text": "谁还会抱着一篮鸡蛋跟你比赛。",
+      "Speaker": "冒险家",
+      "Next": "c02_eggs_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_003",
+      "Title": "鸡蛋最后买，谁也别逞强 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 1890
+      },
+      "Text": "你啊。别人一激你就忘。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_eggs_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_004",
+      "Title": "鸡蛋最后买，谁也别逞强 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 1890
+      },
+      "Text": "能激我的也就鸦鸦大人。",
+      "Speaker": "冒险家",
+      "Next": "c02_eggs_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_005",
+      "Title": "鸡蛋最后买，谁也别逞强 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 1890
+      },
+      "Text": "怎么，鸦鸦大人亲自拿东西？",
+      "Speaker": "冒险家",
+      "Next": "c02_eggs_006",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_006",
+      "Title": "鸡蛋最后买，谁也别逞强 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 1890
+      },
+      "Text": "本鸦要腾你一只手出来。空着的那只给我。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_eggs_007",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_007",
+      "Title": "鸡蛋最后买，谁也别逞强 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 1890
+      },
+      "Text": "那下一次还这么分工？",
+      "Speaker": "冒险家",
+      "Next": "c02_eggs_008",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_008",
+      "Title": "鸡蛋最后买，谁也别逞强 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 1890
+      },
+      "Text": "嗯。本鸦挑，你拿。你走累了就说，咱俩找地方坐，篮子放脚边。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_eggs_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_009",
+      "Title": "鸡蛋最后买，谁也别逞强 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 1890
+      },
+      "Text": "那我现在就有个要求。过市场那块路牌的时候，等我看一眼。",
+      "Speaker": "冒险家",
+      "Next": "c02_eggs_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_010",
+      "Title": "鸡蛋最后买，谁也别逞强 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 1890
+      },
+      "Text": "冒险家想看哪儿？指给我。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_eggs_011",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_011",
+      "Title": "鸡蛋最后买，谁也别逞强 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 1890
+      },
+      "Text": "上面写着心峰，名字还挺特别的。",
+      "Speaker": "冒险家",
+      "Next": "c02_eggs_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_eggs_012",
+      "Title": "鸡蛋最后买，谁也别逞强 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 1890
+      },
+      "Text": "明天有空，本鸦带你去。今天先回家把鸡蛋放好。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_return_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_001",
+      "Title": "东西都买回来了 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 2100
+      },
+      "Text": "鸡蛋没碎，菜叶也没压烂。冒险家今天干得好。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c02_return",
+      "Next": "c02_return_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_002",
+      "Title": "东西都买回来了 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 2100
+      },
+      "Text": "你前半句夸蛋，后半句才轮到我。",
+      "Speaker": "冒险家",
+      "Next": "c02_return_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_003",
+      "Title": "东西都买回来了 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 2100
+      },
+      "Text": "过来，本鸦补给你。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_return_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_06",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_004",
+      "Title": "东西都买回来了 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 2100
+      },
+      "Text": "这趟集赶得还值。晚上吃什么？",
+      "Speaker": "冒险家",
+      "Next": "c02_return_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_005",
+      "Title": "东西都买回来了 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 2100
+      },
+      "Text": "土豆煮汤，青菜留到最后下。冒险家，把你爱吃的香叶也洗了。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_return_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_006",
+      "Title": "东西都买回来了 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 2100
+      },
+      "Text": "今晚还按昨天分工？我切菜，你看火。",
+      "Speaker": "冒险家",
+      "Next": "c02_return_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_007",
+      "Title": "东西都买回来了 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 2100
+      },
+      "Text": "嗯。锅里先做两个人的份，明天出去玩的时候再带一点，土豆煮熟了装到食盒里。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_return_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_008",
+      "Title": "东西都买回来了 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 2100
+      },
+      "Text": "明天真去心峰？你今天都没跟我说那是什么地方。",
+      "Speaker": "冒险家",
+      "Next": "c02_return_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_009",
+      "Title": "东西都买回来了 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 2100
+      },
+      "Text": "明天到了自己看。冒险家，空篮子挂门后。明天你得给本鸦留出两只手。",
+      "Speaker": "鸦鸦",
+      "Next": "c02_return_010",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_010",
+      "Title": "东西都买回来了 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 2100
+      },
+      "Text": "都让我拿什么？",
+      "Speaker": "冒险家",
+      "Next": "c02_return_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c02_return_011",
+      "Title": "东西都买回来了 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 2100
+      },
+      "Text": "到时候就知道了。现在先吃饭，汤快凉了。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_001",
+      "Title": "原来这座山长得像一颗心 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 2310
+      },
+      "Text": "你从出门就盯着我走路。放心，这次我没想抢跑。",
+      "Speaker": "冒险家",
+      "StagePreset": "stage_c03_arrive",
+      "Next": "c03_arrive_002",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_002",
+      "Title": "原来这座山长得像一颗心 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 2310
+      },
+      "Text": "本鸦在看你有没有踩对路。冒险家，过来这边，先跟我站一起。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_003",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_003",
+      "Title": "原来这座山长得像一颗心 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 2310
+      },
+      "Text": "顺着她指的方向看过去，两道圆圆的山脊在中间凹下去，坡面一路收成尖角。远处看，整座山像一颗爱心。",
+      "Next": "c03_arrive_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_004",
+      "Title": "原来这座山长得像一颗心 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 2310
+      },
+      "Text": "怪不得路牌写心峰。还真是颗心。",
+      "Speaker": "冒险家",
+      "Next": "c03_arrive_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_005",
+      "Title": "原来这座山长得像一颗心 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 2310
+      },
+      "Text": "从镇上那边只能看见半边。在这里看才完整。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_006",
+      "Title": "原来这座山长得像一颗心 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 2310
+      },
+      "Text": "这些都是别人祈愿留下的？",
+      "Speaker": "冒险家",
+      "Next": "c03_arrive_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_007",
+      "Title": "原来这座山长得像一颗心 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 2310
+      },
+      "Text": "有来求婚的，也有来办婚礼的。天好会在下面那块平地摆椅子，请认识的人来看。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_008",
+      "Title": "原来这座山长得像一颗心 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 2310
+      },
+      "Text": "鸦鸦大人也想结婚吗？",
+      "Speaker": "冒险家",
+      "Next": "c03_arrive_009",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_009",
+      "Title": "原来这座山长得像一颗心 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 2310
+      },
+      "Text": "冒险家，谁让你上来第一件事就问这个！本鸦今天想跟你出来玩。",
+      "Speaker": "鸦鸦",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
+        "Center": "-",
+        "Right": "-"
+      },
+      "Next": "c03_arrive_010"
+    },
+    {
+      "Id": "c03_arrive_010",
+      "Title": "原来这座山长得像一颗心 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 2310
+      },
+      "Text": "我看你对摆椅子这事还挺熟。",
+      "Speaker": "冒险家",
+      "Next": "c03_arrive_011",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_011",
+      "Title": "原来这座山长得像一颗心 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 2310
+      },
+      "Text": "镇上那么多人来过，听一回就记住了。……你再笑，等会儿就给本鸦站到最挡风的一边去。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_012",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_012",
+      "Title": "原来这座山长得像一颗心 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 2310
+      },
+      "Text": "行。我本来就打算站你这边。",
+      "Speaker": "冒险家",
+      "Next": "c03_arrive_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_013",
+      "Title": "原来这座山长得像一颗心 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 2310
+      },
+      "Text": "那手给我。先陪本鸦看看风景。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_014",
+      "Title": "原来这座山长得像一颗心 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 2310
+      },
+      "Text": "盐是我刚撒的，你尝尝够不够。",
+      "Speaker": "冒险家",
+      "Next": "c03_arrive_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_015",
+      "Title": "原来这座山长得像一颗心 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 2310
+      },
+      "Text": "够了。最大那块你吃，冒险家。吃完了靠过来，本鸦还想跟你坐会儿。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_arrive_016",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_arrive_016",
+      "Title": "原来这座山长得像一颗心 16",
+      "Kind": "Line",
+      "Position": {
+        "x": 4500,
+        "y": 2310
+      },
+      "Text": "行，吃饭有人陪，发呆也有人陪。这趟爬得值。",
+      "Speaker": "冒险家",
+      "Next": "c03_camera_001",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_001",
+      "Title": "她的包里藏着一台相机 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 2520
+      },
+      "Text": "你们的世界居然也有相机？",
+      "Speaker": "冒险家",
+      "StagePreset": "stage_c03_camera",
+      "Next": "c03_camera_002",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerFlustered",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_002",
+      "Title": "她的包里藏着一台相机 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 2520
+      },
+      "Text": "有啊。本鸦早放进包里了。你昨天帮我搬了那么多东西，一点都没发现。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_camera_003",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_003",
+      "Title": "她的包里藏着一台相机 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 2520
+      },
+      "Text": "所以你说让我空着两只手，是要拿这个？",
+      "Speaker": "冒险家",
+      "Next": "c03_camera_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_004",
+      "Title": "她的包里藏着一台相机 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 2520
+      },
+      "Text": "一只拿相机，另一只归本鸦。先看看景，等会儿还要用你。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_camera_005",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_08",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_005",
+      "Title": "她的包里藏着一台相机 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 2520
+      },
+      "Text": "风朝着山背过去，吹开了低处的一点雾。湖水和远处的屋顶一起亮出来，沿路只听得到脚步和树叶响。",
+      "Next": "c03_camera_006",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_006",
+      "Title": "她的包里藏着一台相机 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 2520
+      },
+      "Text": "这地方真好看。我原来出门爬山，拍完最先想找的是下山的路。这里我想多看一会儿。",
+      "Speaker": "冒险家",
+      "Next": "c03_camera_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_007",
+      "Title": "她的包里藏着一台相机 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 2520
+      },
+      "Text": "那就多看一会儿。本鸦又不赶你。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_camera_008",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_008",
+      "Title": "她的包里藏着一台相机 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 2520
+      },
+      "Text": "冒险家，先给本鸦拍一张。看见侧面那个拨片没有？拍完拨一下，就能回看。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_camera_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_009",
+      "Title": "她的包里藏着一台相机 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 2520
+      },
+      "Text": "怎么突然就到我了。我先试试这个到底怎么按。",
+      "Speaker": "冒险家",
+      "Next": "c03_camera_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_010",
+      "Title": "她的包里藏着一台相机 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 2520
+      },
+      "Text": "慢慢试。本鸦要人和山都在画面里。如果拍的不好的话回去有你好看的",
+      "Speaker": "鸦鸦",
+      "Next": "c03_camera_011",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_011",
+      "Title": "她的包里藏着一台相机 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 2520
+      },
+      "Text": "这趟爬山的风险现在才说啊。",
+      "Speaker": "冒险家",
+      "Next": "c03_camera_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_camera_012",
+      "Title": "她的包里藏着一台相机 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 2520
+      },
+      "Text": "冒险家，手稳住。你昨天练魔法的时候都没这么多话。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_portrait_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_001",
+      "Title": "鸦鸦大人，请过目 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 2730
+      },
+      "Text": "冒险家，这个角度行吗？",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c03_portrait",
+      "Next": "c03_portrait_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_002",
+      "Title": "鸦鸦大人，请过目 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 2730
+      },
+      "Text": "等一下，脸朝我这边一点。对，就这样。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_003",
+      "Title": "鸦鸦大人，请过目 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 2730
+      },
+      "Text": "鸦鸦大人，请过目",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_004",
+      "Title": "鸦鸦大人，请过目 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 2730
+      },
+      "Text": "山拍得倒挺大。本鸦怎么只剩角落里一块斗篷？",
+      "Speaker": "鸦鸦",
+      "Next": "c03_portrait_005",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_19",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_005",
+      "Title": "鸦鸦大人，请过目 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 2730
+      },
+      "Text": "还剩半张脸。你刚好眨眼，另一只眼看着还挺精神。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_006",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_006",
+      "Title": "鸦鸦大人，请过目 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 2730
+      },
+      "Text": "冒险家，你要交的是本鸦的照片。你这么喜欢心峰，回去让它给你做饭。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_portrait_007",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_25",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_007",
+      "Title": "鸦鸦大人，请过目 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 2730
+      },
+      "Text": "行，那还是我重拍。山不会逼我洗脚，怎么想都少了点意思。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_008",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_008",
+      "Title": "鸦鸦大人，请过目 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 2730
+      },
+      "Text": "还敢提。来，你自己看，先把本鸦放到中间。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_portrait_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_009",
+      "Title": "鸦鸦大人，请过目 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 2730
+      },
+      "Text": "这回我知道了。你别看相机，先看我。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_010",
+      "Title": "鸦鸦大人，请过目 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 2730
+      },
+      "Text": "看你做什么？",
+      "Speaker": "鸦鸦",
+      "Next": "c03_portrait_011",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_011",
+      "Title": "鸦鸦大人，请过目 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 2730
+      },
+      "Text": "你刚才在笑我，说我回家就要倒霉。就那个表情。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_012",
+      "Title": "鸦鸦大人，请过目 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 2730
+      },
+      "Text": "这回山还在，人也在。请再过一遍目。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_013",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_013",
+      "Title": "鸦鸦大人，请过目 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 2730
+      },
+      "Text": "……这张留着。前一张也留着。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_portrait_014",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_014",
+      "Title": "鸦鸦大人，请过目 14",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 2730
+      },
+      "Text": "刚才你还说它不好。",
+      "Speaker": "冒险家",
+      "Next": "c03_portrait_015",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_portrait_015",
+      "Title": "鸦鸦大人，请过目 15",
+      "Kind": "Line",
+      "Position": {
+        "x": 4200,
+        "y": 2730
+      },
+      "Text": "留着以后提醒冒险家，给本鸦拍照要先看谁。相机带好，接下来咱俩一起拍。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_together_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_001",
+      "Title": "在心峰观景台前拍两个人 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 2940
+      },
+      "Text": "就在这儿拍。冒险家，你往本鸦这边站，先看看两个人放不放得下。",
+      "Speaker": "鸦鸦",
+      "StagePreset": "stage_c03_together",
+      "Next": "c03_together_002",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_002",
+      "Title": "在心峰观景台前拍两个人 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 2940
+      },
+      "Text": "我去拍的话，谁往你这边站？",
+      "Speaker": "冒险家",
+      "Next": "c03_together_003",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_003",
+      "Title": "在心峰观景台前拍两个人 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 2940
+      },
+      "Text": "相机能等几下再拍。放那块平石上。按完过来，别让本鸦一个人在这儿等。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_together_004",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_004",
+      "Title": "在心峰观景台前拍两个人 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 2940
+      },
+      "Text": "好了，等我跑两步。",
+      "Speaker": "冒险家",
+      "Next": "c03_together_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_005",
+      "Title": "在心峰观景台前拍两个人 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 2940
+      },
+      "Text": "冒险家，你提的食盒还在咱俩中间呢。你跟本鸦来合影，怎么还给午饭留了个位置？",
+      "Speaker": "鸦鸦",
+      "Next": "c03_together_006",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_006",
+      "Title": "在心峰观景台前拍两个人 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 2940
+      },
+      "Text": "一早拎顺手了。重来，我把它搁相机边。",
+      "Speaker": "冒险家",
+      "Next": "c03_together_007",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_007",
+      "Title": "在心峰观景台前拍两个人 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 2940
+      },
+      "Text": "这下你满意了？",
+      "Speaker": "冒险家",
+      "Next": "c03_together_008",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_008",
+      "Title": "在心峰观景台前拍两个人 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 2940
+      },
+      "Text": "再靠本鸦一点。你看镜头就好，别又偏脸过来看我。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_together_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_11",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_009",
+      "Title": "在心峰观景台前拍两个人 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 2940
+      },
+      "Text": "明明是你先看的我。",
+      "Speaker": "冒险家",
+      "Next": "c03_together_010",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_010",
+      "Title": "在心峰观景台前拍两个人 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 2940
+      },
+      "Text": "这张好。等回去，放小屋桌上。谁来了都知道冒险家是跟本鸦一起去的。",
+      "Speaker": "鸦鸦",
+      "Stage": {
+        "Background": "Art/Background/Gal/Chapter03/HeartPeakPhotoCG",
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_17",
+        "Center": "-",
+        "Right": "-"
+      },
+      "GalleryId": "heart_peak_photo",
+      "Next": "c03_together_011"
+    },
+    {
+      "Id": "c03_together_011",
+      "Title": "在心峰观景台前拍两个人 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 2940
+      },
+      "Text": "食盒那张也放吗？",
+      "Speaker": "冒险家",
+      "Next": "c03_together_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_012",
+      "Title": "在心峰观景台前拍两个人 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 2940
+      },
+      "Text": "那张收抽屉。留着本鸦一个人笑你。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_together_013",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_together_013",
+      "Title": "在心峰观景台前拍两个人 13",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 2940
+      },
+      "Text": "那我把两张都带好。等等，咱们再站一会儿吧。",
+      "Speaker": "冒险家",
+      "Next": "c03_confession_001",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_001",
+      "Title": "把平常的日子过下去 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 3150
+      },
+      "Text": "昨天还在家里数米罐里剩几粒米，今天就在这儿看山。想想也挺好玩的。",
+      "Speaker": "冒险家",
+      "StagePreset": "stage_c03_confession",
+      "Next": "c03_confession_002",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_002",
+      "Title": "把平常的日子过下去 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 3150
+      },
+      "Text": "冒险家还漏了你昨天抱着鸡蛋怕摔那一路。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_confession_003",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_003",
+      "Title": "把平常的日子过下去 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 3150
+      },
+      "Text": "那我也记得你一直挽着我。",
+      "Speaker": "冒险家",
+      "Next": "c03_confession_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_004",
+      "Title": "把平常的日子过下去 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 3150
+      },
+      "Text": "她没把手抽走。我看一眼相机，又看一眼她，突然觉得刚才那张照片跟我想过的日子很像。",
+      "Next": "c03_confession_005",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_005",
+      "Title": "把平常的日子过下去 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 3150
+      },
+      "Text": "就这样和鸦鸦大人平淡的在一起生活也挺好的。",
+      "Speaker": "冒险家",
+      "Next": "c03_confession_006",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_006",
+      "Title": "把平常的日子过下去 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 3150
+      },
+      "Text": "冒险家，听我说完。这回先别跟本鸦抬杠。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_confession_007",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_007",
+      "Title": "把平常的日子过下去 07",
+      "Kind": "Line",
+      "Position": {
+        "x": 1800,
+        "y": 3150
+      },
+      "Text": "嗯。我听着。",
+      "Speaker": "冒险家",
+      "Next": "c03_confession_008",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_008",
+      "Title": "把平常的日子过下去 08",
+      "Kind": "Line",
+      "Position": {
+        "x": 2100,
+        "y": 3150
+      },
+      "Text": "冒险家，其实和你经历了这么多，你也能够看得出我的心意，虽然本鸦平时老是嘲讽你，但那也是因为我真正在意你、关心你，",
+      "Speaker": "鸦鸦",
+      "Next": "c03_confession_008_part2",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_29",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_008_part2",
+      "Title": "把平常的日子过下去 08（2/3）",
+      "Kind": "Line",
+      "Position": {
+        "x": 2400,
+        "y": 3150
+      },
+      "Text": "可能我一开始遇见你的时候也觉得你不靠谱，但是陪你一起走过了这一路的历练之后，我也逐渐对你日久生情了，",
+      "Speaker": "鸦鸦",
+      "Next": "c03_confession_008_part3",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_05",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_008_part3",
+      "Title": "把平常的日子过下去 08（3/3）",
+      "Kind": "Line",
+      "Position": {
+        "x": 2700,
+        "y": 3150
+      },
+      "Text": "我想和你一起就像这样每天平淡地生活，一起吃饭、逛街、修炼，陪你度过每一个平凡的瞬间，直到岁月尽头，可能这就是爱吧，我爱你，冒险家，你愿意吗",
+      "Speaker": "鸦鸦",
+      "Next": "c03_confession_009",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_12",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_009",
+      "Title": "把平常的日子过下去 09",
+      "Kind": "Line",
+      "Position": {
+        "x": 3000,
+        "y": 3150
+      },
+      "Text": "我愿意，我一定会陪你走到最后的，就让岁月为我们的爱情作证吧",
+      "Speaker": "冒险家",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      },
+      "Next": "c03_confession_010"
+    },
+    {
+      "Id": "c03_confession_010",
+      "Title": "把平常的日子过下去 10",
+      "Kind": "Line",
+      "Position": {
+        "x": 3300,
+        "y": 3150
+      },
+      "Text": "冒险家，刚才那些话就给你一个人听。回去不许拿来取笑本鸦。",
+      "Speaker": "鸦鸦",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_13",
+        "Center": "-",
+        "Right": "-"
+      },
+      "Next": "c03_confession_011"
+    },
+    {
+      "Id": "c03_confession_011",
+      "Title": "把平常的日子过下去 11",
+      "Kind": "Line",
+      "Position": {
+        "x": 3600,
+        "y": 3150
+      },
+      "Text": "我不笑。你要是以后还想说，我每次都听。",
+      "Speaker": "冒险家",
+      "Next": "c03_confession_012",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTender",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_confession_012",
+      "Title": "把平常的日子过下去 12",
+      "Kind": "Line",
+      "Position": {
+        "x": 3900,
+        "y": 3150
+      },
+      "Text": "……那你抱紧一点。本鸦现在不想动。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_home_001",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_20",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_001",
+      "Title": "照片带回小屋 01",
+      "Kind": "Line",
+      "Position": {
+        "x": 0,
+        "y": 3360
+      },
+      "Text": "下去了？我打赌今晚鸦鸦大人还要拿那双拖鞋逗我。",
+      "Speaker": "冒险家",
+      "StagePreset": "stage_c03_home",
+      "Next": "c03_home_002",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_002",
+      "Title": "照片带回小屋 02",
+      "Kind": "Line",
+      "Position": {
+        "x": 300,
+        "y": 3360
+      },
+      "Text": "冒险家，鞋的事回家再说。你现在好好牵着本鸦，别在坡上乱跑。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_home_003",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_003",
+      "Title": "照片带回小屋 03",
+      "Kind": "Line",
+      "Position": {
+        "x": 600,
+        "y": 3360
+      },
+      "Text": "好。今晚想吃什么？",
+      "Speaker": "冒险家",
+      "Next": "c03_home_004",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerTeasing",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_004",
+      "Title": "照片带回小屋 04",
+      "Kind": "Line",
+      "Position": {
+        "x": 900,
+        "y": 3360
+      },
+      "Text": "昨天买的土豆还有。冒险家把土豆切好，再拿两颗蛋，本鸦看火。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_home_005",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_24",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_005",
+      "Title": "照片带回小屋 05",
+      "Kind": "Line",
+      "Position": {
+        "x": 1200,
+        "y": 3360
+      },
+      "Text": "好。蛋煎脆了，还是跟你分边上那块。",
+      "Speaker": "冒险家",
+      "Next": "c03_home_006",
+      "Stage": {
+        "Left": "-",
+        "Center": "Art/Gal/Portraits/Adventurer/AdventurerCalm",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_006",
+      "Title": "照片带回小屋 06",
+      "Kind": "Line",
+      "Position": {
+        "x": 1500,
+        "y": 3360
+      },
+      "Text": "嗯。咱们回家。",
+      "Speaker": "鸦鸦",
+      "Next": "c03_home_007",
+      "Stage": {
+        "Left": "Art/Gal/Portraits/Yaya/GalYaya_22",
+        "Center": "-",
+        "Right": "-"
+      }
+    },
+    {
+      "Id": "c03_home_007",
+      "Title": "照片带回小屋 07",
+      "Kind": "End",
+      "Position": {
+        "x": 1800,
+        "y": 3360
+      },
+      "Text": "相机在我们中间轻轻晃，一路晃到山路最后那个拐弯。",
+      "Stage": {
+        "Left": "-",
+        "Center": "-",
+        "Right": "-"
+      }
+    }
+  ]
+}

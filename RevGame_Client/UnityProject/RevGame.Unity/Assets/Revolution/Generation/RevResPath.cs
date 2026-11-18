@@ -20,6 +20,10 @@ namespace Revolution
     {
         public const string Art = "Art/";
         public const string Art_Background = "Art/Background/";
+        public const string Art_Background_Gal = "Art/Background/Gal/";
+        public const string Art_Background_Gal_Chapter01 = "Art/Background/Gal/Chapter01/";
+        public const string Art_Background_Gal_Chapter02 = "Art/Background/Gal/Chapter02/";
+        public const string Art_Background_Gal_Chapter03 = "Art/Background/Gal/Chapter03/";
         public const string Art_Board = "Art/Board/";
         public const string Art_Boss = "Art/Boss/";
         public const string Art_Boss_Chapter01_Swordman = "Art/Boss/Chapter01_Swordman/";
@@ -38,6 +42,14 @@ namespace Revolution
         public const string Art_Endless = "Art/Endless/";
         public const string Art_Endless_CardArrow = "Art/Endless/CardArrow/";
         public const string Art_Endless_HeartEye = "Art/Endless/HeartEye/";
+        public const string Art_Gal = "Art/Gal/";
+        public const string Art_Gal_Interactions = "Art/Gal/Interactions/";
+        public const string Art_Gal_Interactions_Chapter01 = "Art/Gal/Interactions/Chapter01/";
+        public const string Art_Gal_Interactions_Chapter02 = "Art/Gal/Interactions/Chapter02/";
+        public const string Art_Gal_Interactions_Chapter03 = "Art/Gal/Interactions/Chapter03/";
+        public const string Art_Gal_Portraits = "Art/Gal/Portraits/";
+        public const string Art_Gal_Portraits_Adventurer = "Art/Gal/Portraits/Adventurer/";
+        public const string Art_Gal_Portraits_Yaya = "Art/Gal/Portraits/Yaya/";
         public const string Art_Icon = "Art/Icon/";
         public const string Art_Pieces = "Art/Pieces/";
         public const string Art_Pieces_Enemy = "Art/Pieces/Enemy/";
@@ -87,6 +99,7 @@ namespace Revolution
         public const string Art_Status_EyeBlink = "Art/Status/EyeBlink/";
         public const string Art_Story = "Art/Story/";
         public const string Art_UI = "Art/UI/";
+        public const string Art_UI_Gal = "Art/UI/Gal/";
         public const string Art_UI_ProjectOpenSource = "Art/UI/ProjectOpenSource/";
         public const string Art_UI_Pvp = "Art/UI/Pvp/";
         public const string Art_UI_PvpDefeat = "Art/UI/PvpDefeat/";
@@ -134,6 +147,8 @@ namespace Revolution
         public const string Endless_Textures = "Endless/Textures/";
         public const string Fonts = "Fonts/";
         public const string Fonts_CJK = "Fonts/CJK/";
+        public const string Gal = "Gal/";
+        public const string Gal_Stories = "Gal/Stories/";
         public const string HelperTextures = "HelperTextures/";
         public const string Lobby = "Lobby/";
         public const string Material = "Material/";
@@ -158,6 +173,7 @@ namespace Revolution
         public const string Pieces_Unit = "Pieces/Unit/";
         public const string Pvp = "Pvp/";
         public const string UI = "UI/";
+        public const string UI_Gal = "UI/Gal/";
         public const string UI_Item = "UI/Item/";
         public const string UI_Item_Card = "UI/Item/Card/";
         public const string UI_Item_Notice = "UI/Item/Notice/";

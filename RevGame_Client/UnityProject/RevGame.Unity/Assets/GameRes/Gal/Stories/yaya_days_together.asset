@@ -1,0 +1,5880 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52df3844db588144aba4bfa0b203d622, type: 3}
+  m_Name: yaya_days_together
+  m_EditorClassIdentifier: 
+  definition:
+    Schema: 1
+    Id: yaya_days_together
+    Title: "\u548C\u9E26\u9E26\u4E00\u8D77\u8FC7\u65E5\u5B50"
+    Revision: 2
+    Start: c01_wake_001
+    StagePresets:
+    - Id: stage_c01
+      Title: "\u7B2C\u4E00\u7AE0 \xB7 \u5C0F\u5C4B"
+      Parent: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c02
+      Title: "\u7B2C\u4E8C\u7AE0 \xB7 \u96C6\u5E02"
+      Parent: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03
+      Title: "\u7B2C\u4E09\u7AE0 \xB7 \u5FC3\u5CF0"
+      Parent: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c01_wake
+      Title: "\u53EB\u8D77\u5E8A"
+      Parent: stage_c01
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageBedroomMorning
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c01_chores
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355"
+      Parent: stage_c01
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageLiving
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c01_meal
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403"
+      Parent: stage_c01
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageKitchen
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c01_magic
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765"
+      Parent: stage_c01
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageGarden
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c01_wash
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34"
+      Parent: stage_c01
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageBedroomNight
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c01_goodnight
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761"
+      Parent: stage_c01
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageBedroomNight
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c02_pantry
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86"
+      Parent: stage_c02
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageKitchen
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c02_grain
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B"
+      Parent: stage_c02
+      Stage:
+        Background: Art/Background/Gal/Chapter02/TownMarket
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c02_buns
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A"
+      Parent: stage_c02
+      Stage:
+        Background: Art/Background/Gal/Chapter02/TownBakery
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c02_eggs
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A"
+      Parent: stage_c02
+      Stage:
+        Background: Art/Background/Gal/Chapter02/TownMarket
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c02_return
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86"
+      Parent: stage_c02
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageKitchen
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03_arrive
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3"
+      Parent: stage_c03
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakTrail
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03_camera
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A"
+      Parent: stage_c03
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakTrail
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03_portrait
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE"
+      Parent: stage_c03
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakTrail
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03_together
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA"
+      Parent: stage_c03
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakMarker
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03_confession
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB"
+      Parent: stage_c03
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakSunset
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    - Id: stage_c03_home
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B"
+      Parent: stage_c03
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakReturn
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+    Variables: []
+    Nodes:
+    - Id: c01_wake_001
+      Title: "\u53EB\u8D77\u5E8A 01"
+      Kind: 0
+      Position: {x: 0, y: 0}
+      StagePreset: stage_c01_wake
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u592A\u9633\u90FD\u6652\u5C41\u80A1\u4E86\u8FD8\u7761\u5462"
+      TextKey: 
+      Next: c01_wake_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_18
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_002
+      Title: "\u53EB\u8D77\u5E8A 02"
+      Kind: 0
+      Position: {x: 300, y: 0}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u542C\u89C1\u4E86\u3002\u4F60\u628A\u7A97\u5E18\u62C9\u56DE\u53BB\uFF0C\u592A\u9633\u5C31\u5F53\u6CA1\u6652\u5230\u3002"
+      TextKey: 
+      Next: c01_wake_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_003
+      Title: "\u53EB\u8D77\u5E8A 03"
+      Kind: 0
+      Position: {x: 600, y: 0}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6628\u665A\u662F\u8C01\u5728\u5C0F\u5C4B\u95E8\u53E3\u8DD1\u5F97\u98DE\u5FEB\uFF0C\u975E\u8BF4\u4EE5\u540E\u90FD\u8981\u7B2C\u4E00\u4E2A\u56DE\u5BB6\uFF1F"
+      TextKey: 
+      Next: c01_wake_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_01
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_004
+      Title: "\u53EB\u8D77\u5E8A 04"
+      Kind: 0
+      Position: {x: 900, y: 0}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u662F\u56DE\u5BB6\u6BD4\u8D5B\u3002\u8D77\u5E8A\u6BD4\u8D5B\u6211\u53EF\u6CA1\u62A5\u540D\u3002"
+      TextKey: 
+      Next: c01_wake_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_005
+      Title: "\u53EB\u8D77\u5E8A 05"
+      Kind: 0
+      Position: {x: 1200, y: 0}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u66FF\u4F60\u62A5\u4E86\u3002\u7741\u773C\u3001\u7A7F\u8863\u3001\u4E0B\u5E8A\uFF0C\u6162\u4E00\u9879\u5C31\u591A\u626B\u4E00\u95F4\u3002"
+      TextKey: 
+      Next: c01_wake_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_02
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_006
+      Title: "\u53EB\u8D77\u5E8A 06"
+      Kind: 0
+      Position: {x: 1500, y: 0}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u54B1\u5BB6\u5C31\u8FD9\u4E48\u51E0\u95F4\uFF0C\u4F60\u518D\u52A0\u5C31\u5F97\u8BA9\u6211\u53BB\u626B\u9694\u58C1\u4E86\u3002"
+      TextKey: 
+      Next: c01_wake_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_007
+      Title: "\u53EB\u8D77\u5E8A 07"
+      Kind: 0
+      Position: {x: 1800, y: 0}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u8FD8\u60F3\u7ED9\u522B\u4EBA\u626B\uFF1F\u672C\u9E26\u8FD9\u8FB9\u7684\u6D3B\u8FD8\u6CA1\u5E72\u5B8C\u5462\u3002"
+      TextKey: 
+      Next: c01_wake_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_14
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_008
+      Title: "\u53EB\u8D77\u5E8A 08"
+      Kind: 0
+      Position: {x: 2100, y: 0}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u9E26\u9E26\u5927\u4EBA\u80FD\u4E0D\u80FD\u5148\u4E0B\u6765\uFF0C\u8BA9\u6211\u62B1\u4E00\u4F1A\u513F\u518D\u8D77\uFF1F"
+      TextKey: 
+      Next: c01_wake_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_009
+      Title: "\u53EB\u8D77\u5E8A 09"
+      Kind: 0
+      Position: {x: 2400, y: 0}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u534A\u4F1A\u513F\u3002\u4F60\u6BCF\u6B21\u8BF4\u4E00\u4F1A\u513F\uFF0C\u6700\u540E\u90FD\u662F\u672C\u9E26\u966A\u4F60\u8D56\u5E8A\u3002"
+      TextKey: 
+      Next: c01_wake_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_010
+      Title: "\u53EB\u8D77\u5E8A 10"
+      Kind: 0
+      Position: {x: 2700, y: 0}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u4E5F\u6CA1\u7740\u6025\u8D70\u554A\u3002"
+      TextKey: 
+      Next: c01_wake_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_011
+      Title: "\u53EB\u8D77\u5E8A 11"
+      Kind: 0
+      Position: {x: 3000, y: 0}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u5728\u7B49\u4F60\u9192\u900F\u3002\u2026\u2026\u9192\u4E86\u5C31\u8D77\u6765\uFF0C\u65E9\u996D\u8FD8\u6CA1\u5403\u3002"
+      TextKey: 
+      Next: c01_wake_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_012
+      Title: "\u53EB\u8D77\u5E8A 12"
+      Kind: 0
+      Position: {x: 3300, y: 0}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u539F\u6765\u9E26\u9E26\u5927\u4EBA\u4E5F\u997F\u7740\u7B49\u6211\u5462\u3002"
+      TextKey: 
+      Next: c01_wake_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wake_013
+      Title: "\u53EB\u8D77\u5E8A 13"
+      Kind: 0
+      Position: {x: 3600, y: 0}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u77E5\u9053\u5C31\u52A8\u4F5C\u5FEB\u70B9\u3002\u8863\u670D\u5728\u6905\u5B50\u4E0A\uFF0C\u6263\u5B50\u6263\u597D\u4E86\u518D\u51FA\u6765\u3002"
+      TextKey: 
+      Next: c01_chores_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_001
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 01"
+      Kind: 0
+      Position: {x: 0, y: 210}
+      StagePreset: stage_c01_chores
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u5148\u626B\u5730\uFF0C\u518D\u53BB\u628A\u88AB\u5B50\u6652\u4E86\u3002\u684C\u5B50\u7B49\u672C\u9E26\u628A\u7B26\u7EB8\u6536\u8D70\u518D\u64E6\u3002"
+      TextKey: 
+      Next: c01_chores_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_002
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 02"
+      Kind: 0
+      Position: {x: 300, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u5728\u6211\u8D77\u5E8A\u4EE5\u524D\u6392\u4E86\u591A\u5C11\u6D3B\uFF1F"
+      TextKey: 
+      Next: c01_chores_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_003
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 03"
+      Kind: 0
+      Position: {x: 600, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u6765\u8FD8\u6709\u5288\u67F4\u3002\u770B\u4F60\u521A\u624D\u62B1\u4EBA\u8FD8\u7B97\u8001\u5B9E\uFF0C\u67F4\u7ED9\u4F60\u51CF\u4E86\u3002"
+      TextKey: 
+      Next: c01_chores_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_004
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 04"
+      Kind: 0
+      Position: {x: 900, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u62B1\u4E00\u6B21\u51CF\u4E00\u9879\uFF1F\u90A3\u5269\u4E0B\u7684\u4F60\u5148\u522B\u52A8\u3002"
+      TextKey: 
+      Next: c01_chores_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_005
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 05"
+      Kind: 0
+      Position: {x: 1200, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u53EA\u7B97\u5934\u4E00\u6B21\u3002\u626B\u5E1A\u62FF\u53CD\u4E86\uFF0C\u624B\u7ED9\u6211\u3002"
+      TextKey: 
+      Next: c01_chores_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_10
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_006
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 06"
+      Kind: 0
+      Position: {x: 1500, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u8FD8\u6CA1\u5230\u8FDE\u626B\u5E1A\u90FD\u5F97\u4F60\u6559\u7684\u5730\u6B65\u3002"
+      TextKey: 
+      Next: c01_chores_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_007
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 07"
+      Kind: 0
+      Position: {x: 1800, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u4F60\u7ED9\u672C\u9E26\u770B\u770B\uFF0C\u7A97\u53F0\u4E0B\u9762\u90A3\u4E00\u64AE\u662F\u600E\u4E48\u8EB2\u8FC7\u4F60\u6CD5\u773C\u7684\u3002"
+      TextKey: 
+      Next: c01_chores_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_008
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 08"
+      Kind: 0
+      Position: {x: 2100, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u773C\u775B\u600E\u4E48\u8FD9\u4E48\u5C16\uFF0C\u6218\u573A\u4E0A\u662F\u4E0D\u662F\u4E5F\u8FD9\u4E48\u76EF\u6211\uFF1F"
+      TextKey: 
+      Next: c01_chores_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_009
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 09"
+      Kind: 0
+      Position: {x: 2400, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5F53\u7136\u3002\u4F60\u505A\u4EC0\u4E48\uFF0C\u672C\u9E26\u4E0D\u770B\u7740\u70B9\u624D\u4E0D\u653E\u5FC3\u3002"
+      TextKey: 
+      Next: c01_chores_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_03
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_010
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 10"
+      Kind: 0
+      Position: {x: 2700, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u770B\u597D\u4E86\uFF0C\u4ECA\u5929\u6211\u8FDE\u7A97\u53F0\u7ED9\u4F60\u4E00\u8D77\u64E6\u3002"
+      TextKey: 
+      Next: c01_chores_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_011
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 11"
+      Kind: 0
+      Position: {x: 3000, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u62FF\u7A33\u90A3\u8FB9\u3002\u6389\u5730\u4E0A\u4E86\u4ECA\u665A\u8FD8\u662F\u54B1\u4FE9\u76D6\u3002"
+      TextKey: 
+      Next: c01_chores_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_012
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 12"
+      Kind: 0
+      Position: {x: 3300, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u77E5\u9053\u4E86\u3002\u4F60\u5939\u5DE6\u8FB9\uFF0C\u6211\u5939\u53F3\u8FB9\uFF0C\u7701\u5F97\u5B83\u8DDF\u9E26\u9E26\u5927\u4EBA\u4E00\u8D77\u5377\u5230\u6211\u8FD9\u8FB9\u6765\u3002"
+      TextKey: 
+      Next: c01_chores_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_013
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 13"
+      Kind: 0
+      Position: {x: 3600, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u4EC0\u4E48\u65F6\u5019\u5377\u8FC7\u4F60\u7684\u88AB\u5B50\uFF1F"
+      TextKey: 
+      Next: c01_chores_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_19
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_014
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 14"
+      Kind: 0
+      Position: {x: 3900, y: 210}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6628\u665A\u3002\u4F60\u5377\u8FC7\u53BB\u4EE5\u540E\u8FD8\u8BF4\u6211\u62B1\u5F97\u592A\u677E\u3002"
+      TextKey: 
+      Next: c01_chores_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_chores_015
+      Title: "\u9E26\u9E26\u7684\u5BB6\u52A1\u5355 15"
+      Kind: 0
+      Position: {x: 4200, y: 210}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u2026\u2026\u5C11\u7FFB\u65E7\u8D26\u3002\u7B49\u4F1A\u513F\u7ED9\u4F60\u7559\u6700\u597D\u5403\u7684\u90A3\u5757\uFF0C\u884C\u4E86\u5427\u3002"
+      TextKey: 
+      Next: c01_meal_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_001
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 01"
+      Kind: 0
+      Position: {x: 0, y: 420}
+      StagePreset: stage_c01_meal
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u7C73\u6DD8\u4E24\u904D\u3002\u4F60\u5207\u83DC\uFF0C\u672C\u9E26\u770B\u706B\u3002"
+      TextKey: 
+      Next: c01_meal_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_002
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 02"
+      Kind: 0
+      Position: {x: 300, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u6559\u6211\u6253\u8BD5\u70BC\u7684\u65F6\u5019\u90FD\u6CA1\u8BF4\u5F97\u8FD9\u4E48\u7EC6\u3002"
+      TextKey: 
+      Next: c01_meal_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_003
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 03"
+      Kind: 0
+      Position: {x: 600, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6253\u8F93\u4E86\u53EF\u4EE5\u518D\u6253\u3002\u4F60\u628A\u7C73\u5012\u8FDB\u6C34\u6C9F\uFF0C\u4E2D\u5348\u54B1\u4FE9\u53EA\u80FD\u770B\u7740\u7A7A\u7897\u4EB2\u70ED\u3002"
+      TextKey: 
+      Next: c01_meal_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_16
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_004
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 04"
+      Kind: 0
+      Position: {x: 900, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u6211\u5148\u628A\u7C73\u4FDD\u4F4F\u3002\u4F60\u628A\u83DC\u5200\u9012\u8FC7\u6765\u3002"
+      TextKey: 
+      Next: c01_meal_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_005
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 05"
+      Kind: 0
+      Position: {x: 1200, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5207\u83DC\u5C31\u770B\u83DC\u3002\u7B49\u4F60\u5207\u5B8C\uFF0C\u672C\u9E26\u53C8\u4E0D\u4F1A\u8DD1\u3002"
+      TextKey: 
+      Next: c01_meal_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_28
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_006
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 06"
+      Kind: 0
+      Position: {x: 1500, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u770B\u7684\u662F\u4F60\u9B13\u89D2\u6CBE\u4E86\u6839\u8471\u3002\u522B\u52A8\u3002"
+      TextKey: 
+      Next: c01_meal_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_007
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 07"
+      Kind: 0
+      Position: {x: 1800, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u8FD8\u771F\u6458\u554A\u3002\u653E\u4F60\u90A3\u7897\uFF0C\u597D\u6B79\u4E5F\u4E0B\u8FC7\u5200\u4E86\u3002"
+      TextKey: 
+      Next: c01_meal_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_15
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_008
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 08"
+      Kind: 0
+      Position: {x: 2100, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5C1D\u4E00\u53E3\u3002\u8FD9\u6B21\u54B8\u6DE1\u8BA9\u4F60\u8BF4\u3002"
+      TextKey: 
+      Next: c01_meal_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_07
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_009
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 09"
+      Kind: 0
+      Position: {x: 2400, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u5439\u8FC7\u6CA1\u6709\uFF1F\u4E0A\u56DE\u6211\u70EB\u5230\u820C\u5934\uFF0C\u9E26\u9E26\u5927\u4EBA\u7B11\u4E86\u6211\u534A\u5929\u3002"
+      TextKey: 
+      Next: c01_meal_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_010
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 10"
+      Kind: 0
+      Position: {x: 2700, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5439\u8FC7\u4E86\u3002\u5F20\u5634\u3002"
+      TextKey: 
+      Next: c01_meal_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_011
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 11"
+      Kind: 0
+      Position: {x: 3000, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u521A\u597D\u3002\u4F60\u4E5F\u5C1D\u5C1D\uFF0C\u6211\u7ED9\u4F60\u6311\u6CA1\u6709\u8471\u7684\u90A3\u5757\u3002"
+      TextKey: 
+      Next: c01_meal_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_012
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 12"
+      Kind: 0
+      Position: {x: 3300, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u539F\u6765\u4E0A\u5348\u8BF4\u7ED9\u6211\u7559\u6700\u597D\u5403\u7684\uFF0C\u662F\u771F\u7684\u554A\u3002"
+      TextKey: 
+      Next: c01_meal_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_013
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 13"
+      Kind: 0
+      Position: {x: 3600, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u8BF4\u8FC7\u7684\u8BDD\uFF0C\u4F60\u5012\u53EA\u6311\u6709\u5403\u7684\u90A3\u51E0\u53E5\u8BB0\u3002"
+      TextKey: 
+      Next: c01_meal_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_014
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 14"
+      Kind: 0
+      Position: {x: 3900, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u522B\u7684\u6211\u4E5F\u8BB0\u3002\u6BD4\u5982\u67D0\u4EBA\u8BF4\u8981\u7B49\u6211\u4E00\u8D77\u5403\u996D\u3002"
+      TextKey: 
+      Next: c01_meal_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_015
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 15"
+      Kind: 0
+      Position: {x: 4200, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u4F60\u5C31\u5403\u6162\u4E00\u70B9\u3002\u672C\u9E26\u8FD8\u6CA1\u5403\u5B8C\u5462\u3002"
+      TextKey: 
+      Next: c01_meal_016
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_016
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 16"
+      Kind: 0
+      Position: {x: 4500, y: 420}
+      StagePreset: 
+      Speaker: 
+      SpeakerKey: 
+      Text: "\u996D\u684C\u4E0B\uFF0C\u5979\u62FF\u811A\u5C16\u78B0\u4E86\u4E00\u4E0B\u6211\u7684\u978B\u3002\u6211\u4EEC\u63A5\u7740\u5403\uFF0C\u8C01\u4E5F\u6CA1\u6025\u7740\u53BB\u6D17\u7897\u3002"
+      TextKey: 
+      Next: c01_meal_017
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_017
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 17"
+      Kind: 0
+      Position: {x: 4800, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5403\u5B8C\u4F11\u606F\u4E00\u4F1A\u513F\u3002\u4E0B\u5348\u8FC7\u6765\u7EC3\u9B54\u6CD5\u3002"
+      TextKey: 
+      Next: c01_meal_018
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_018
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 18"
+      Kind: 0
+      Position: {x: 5100, y: 420}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u600E\u4E48\u521A\u5582\u5B8C\u996D\u5C31\u5F00\u59CB\u4E0A\u8BFE\uFF1F"
+      TextKey: 
+      Next: c01_meal_019
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_meal_019
+      Title: "\u4E00\u8D77\u505A\u996D\uFF0C\u4E00\u8D77\u5403 19"
+      Kind: 0
+      Position: {x: 5400, y: 420}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u56E0\u4E3A\u5192\u9669\u5BB6\u4E0B\u5348\u4E5F\u5F52\u672C\u9E26\u3002\u7B77\u5B50\u7ED9\u6211\uFF0C\u518D\u7ED9\u4F60\u5939\u4E00\u5757\u3002"
+      TextKey: 
+      Next: c01_magic_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_08
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_001
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 01"
+      Kind: 0
+      Position: {x: 0, y: 630}
+      StagePreset: stage_c01_magic
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u4ECA\u5929\u7EC3\u6700\u7B80\u5355\u7684\u7167\u660E\u3002\u68CB\u5B50\u4EAE\u8D77\u6765\uFF0C\u5728\u624B\u5FC3\u7A33\u4F4F\u4E09\u606F\u5C31\u7B97\u8FC7\u3002"
+      TextKey: 
+      Next: c01_magic_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_002
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 02"
+      Kind: 0
+      Position: {x: 300, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6253\u5B8C\u795E\u6BBF\u8FD8\u6709\u4F5C\u4E1A\u554A\uFF0C\u771F\u60F3\u8BA9\u91CC\u9762\u90A3\u5BB6\u4F19\u66FF\u6211\u5B66\u3002"
+      TextKey: 
+      Next: c01_magic_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_003
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 03"
+      Kind: 0
+      Position: {x: 600, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5B83\u4E0D\u7528\u7ED9\u672C\u9E26\u534A\u591C\u627E\u4E1C\u897F\u3002\u4F60\u8981\u3002\u5750\u8FC7\u6765\uFF0C\u672C\u9E26\u5148\u505A\u4E00\u904D\u3002"
+      TextKey: 
+      Next: c01_magic_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_004
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 04"
+      Kind: 0
+      Position: {x: 900, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u521A\u624D\u5FF5\u4E86\u4EC0\u4E48\uFF1F"
+      TextKey: 
+      Next: c01_magic_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_005
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 05"
+      Kind: 0
+      Position: {x: 1200, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6CA1\u5FF5\u3002\u4F60\u5148\u611F\u89C9\u5149\u5F80\u54EA\u91CC\u8DD1\uFF0C\u518D\u628A\u5B83\u62E2\u4F4F\u3002\u522B\u628A\u80A9\u7EF7\u5F97\u90A3\u4E48\u7D27\u3002"
+      TextKey: 
+      Next: c01_magic_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_006
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 06"
+      Kind: 0
+      Position: {x: 1500, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4EAE\u4E86\u3002\u867D\u7136\u5B83\u597D\u50CF\u5BF9\u6211\u6CA1\u4EC0\u4E48\u7559\u604B\u3002"
+      TextKey: 
+      Next: c01_magic_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_007
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 07"
+      Kind: 0
+      Position: {x: 1800, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u624B\u4E00\u62AC\u5B83\u5C31\u4E71\u8DD1\u3002\u624B\u8155\u7ED9\u6211\uFF0C\u5192\u9669\u5BB6\u3002"
+      TextKey: 
+      Next: c01_magic_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_04
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_008
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 08"
+      Kind: 0
+      Position: {x: 2100, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5BF9\uFF0C\u5C31\u8FD9\u6837\u3002\u6570\u4E09\u4E0B\uFF0C\u518D\u677E\u624B\u3002"
+      TextKey: 
+      Next: c01_magic_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageMagicPOV
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_009
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 09"
+      Kind: 0
+      Position: {x: 2400, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u9760\u8FD9\u4E48\u8FD1\uFF0C\u6211\u73B0\u5728\u6570\u5F97\u51FA\u6765\u7684\u53EA\u6709\u4F60\u7684\u776B\u6BDB\u3002"
+      TextKey: 
+      Next: c01_magic_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_010
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 10"
+      Kind: 0
+      Position: {x: 2700, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u5C31\u522B\u6570\u776B\u6BDB\uFF0C\u770B\u68CB\u3002\u2026\u2026\u672C\u9E26\u4E5F\u6CA1\u8BF4\u8981\u677E\u5F00\u4F60\u3002"
+      TextKey: 
+      Next: c01_magic_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_011
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 11"
+      Kind: 0
+      Position: {x: 3000, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E00\uFF0C\u4E8C\uFF0C\u4E09\u3002\u4F60\u770B\uFF0C\u6CA1\u706D\u3002"
+      TextKey: 
+      Next: c01_magic_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_012
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 12"
+      Kind: 0
+      Position: {x: 3300, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5B66\u5F97\u8FD8\u884C\u3002\u54EA\u5929\u672C\u9E26\u591C\u91CC\u627E\u4E0D\u7740\u4E1C\u897F\uFF0C\u4F60\u8FC7\u6765\u7167\u3002"
+      TextKey: 
+      Next: c01_magic_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageGarden
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_013
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 13"
+      Kind: 0
+      Position: {x: 3600, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u591A\u7167\u4E00\u4F1A\u513F\u6709\u6CA1\u6709\u5956\u52B1\uFF1F"
+      TextKey: 
+      Next: c01_magic_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_014
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 14"
+      Kind: 0
+      Position: {x: 3900, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6709\u3002\u4ECA\u5929\u665A\u4E0A\u7ED9\u4F60\u6D17\u7897\u653E\u5047\u3002"
+      TextKey: 
+      Next: c01_magic_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_015
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 15"
+      Kind: 0
+      Position: {x: 4200, y: 630}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u4F60\u5462\uFF1F"
+      TextKey: 
+      Next: c01_magic_016
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_magic_016
+      Title: "\u8BA9\u4E00\u9897\u68CB\u5B50\u4EAE\u8D77\u6765 16"
+      Kind: 0
+      Position: {x: 4500, y: 630}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u8D1F\u8D23\u770B\u7740\u5192\u9669\u5BB6\u628A\u68CB\u5B50\u7EC3\u719F\uFF0C\u987A\u4FBF\u966A\u4F60\u5750\u5230\u592A\u9633\u4E0B\u53BB\u3002"
+      TextKey: 
+      Next: c01_wash_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_001
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 01"
+      Kind: 0
+      Position: {x: 0, y: 840}
+      StagePreset: stage_c01_wash
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u6C34\u653E\u8FD1\u4E00\u70B9\u3002\u4ECA\u5929\u7AD9\u4E86\u4E00\u5929\uFF0C\u4F60\u7ED9\u672C\u9E26\u6D17\u3002"
+      TextKey: 
+      Next: c01_wash_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_002
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 02"
+      Kind: 0
+      Position: {x: 300, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u77E5\u9053\u4E86\u3002\u811A\u4F38\u8FC7\u6765\uFF0C\u5148\u522B\u78B0\u76C6\u6CBF\uFF0C\u5C0F\u5FC3\u70EB\u3002"
+      TextKey: 
+      Next: c01_wash_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_003
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 03"
+      Kind: 0
+      Position: {x: 600, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u54CE\u5466\uFF0C\u4F60\u7684\u811A\u5929\u5929\u95F7\u5728\u957F\u9774\u91CC\u9762\u8FD9\u4E5F\u592A\u81ED\u4E86\u5427\uFF0C\u9E26\u9E26\u5927\u4EBA\u4F60\u60F3\u718F\u6B7B\u6211\u5417"
+      TextKey: 
+      Next: c01_wash_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_004
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 04"
+      Kind: 0
+      Position: {x: 900, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u5E73\u65F6\u5728\u5BB6\u91CC\u9762\u5C31\u6CA1\u5FC5\u8981\u7A7F\u9774\u5B50\u4E86\u5427"
+      TextKey: 
+      Next: c01_wash_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_005
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 05"
+      Kind: 0
+      Position: {x: 1200, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6211\u5C31\u7A7F\u600E\u4E48\u4E86\uFF0C\u5192\u9669\u5BB6\u4F60\u4E0D\u5C31\u597D\u8FD9\u53E3\u5417"
+      TextKey: 
+      Next: c01_wash_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_21
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_006
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 06"
+      Kind: 0
+      Position: {x: 1500, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u597D\u7684\u662F\u9E26\u9E26\u5927\u4EBA\u3002\u4F60\u90A3\u53CC\u9774\u5B50\u4ECA\u665A\u80FD\u4E0D\u80FD\u5728\u95E8\u5916\u5355\u72EC\u7761\uFF1F"
+      TextKey: 
+      Next: c01_wash_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_007
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 07"
+      Kind: 0
+      Position: {x: 1800, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5FEB\u70B9\u7ED9\u672C\u9E26\u6D17\u811A\uFF0C\u518D\u591A\u5634\u4FE1\u4E0D\u4FE1\u672C\u9E26\u628A\u811A\u585E\u4F60\u5634\u91CC"
+      TextKey: 
+      Next: c01_wash_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_26
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_008
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 08"
+      Kind: 0
+      Position: {x: 2100, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u597D\u597D\u597D\u3002\u6211\u95ED\u5634\uFF0C\u4F60\u5148\u628A\u811A\u653E\u6C34\u91CC\u3002"
+      TextKey: 
+      Next: c01_wash_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_009
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 09"
+      Kind: 0
+      Position: {x: 2400, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u8981\u662F\u4E0D\u60F3\u6D17\u7684\u8BDD\u5C31\u7ED9\u672C\u9E26\u8214\u5E72\u51C0\u5427"
+      TextKey: 
+      Next: c01_wash_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_01
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_010
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 10"
+      Kind: 0
+      Position: {x: 2700, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u6D17\uFF0C\u6211\u6D17\u3002\u9E26\u9E26\u5927\u4EBA\u628A\u6905\u5B50\u5750\u7A33\u3002\u6C34\u6E29\u600E\u4E48\u6837\uFF1F"
+      TextKey: 
+      Next: c01_wash_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_011
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 11"
+      Kind: 0
+      Position: {x: 3000, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u55EF\uFF0C\u521A\u597D\u3002\u811A\u8DDF\u4ECA\u5929\u78E8\u5F97\u6709\u70B9\u75BC\uFF0C\u90A3\u91CC\u8F7B\u4E00\u70B9\u3002"
+      TextKey: 
+      Next: c01_wash_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_012
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 12"
+      Kind: 0
+      Position: {x: 3300, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u75BC\u7684\u5730\u65B9\u6211\u770B\u4E00\u4E0B\u3002\u76AE\u8FD8\u597D\uFF0C\u660E\u5929\u6362\u53CC\u8F6F\u4E00\u70B9\u7684\u978B\u5427\u3002"
+      TextKey: 
+      Next: c01_wash_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_013
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 13"
+      Kind: 0
+      Position: {x: 3600, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4E00\u53CC\u62D6\u978B\u4E5F\u503C\u5F97\u4F60\u8DDF\u672C\u9E26\u6597\u8FD9\u4E48\u4E45\u3002\u62FF\u6765\u5427\uFF0C\u653E\u5E8A\u8FB9\u3002"
+      TextKey: 
+      Next: c01_wash_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_014
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 14"
+      Kind: 0
+      Position: {x: 3900, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u8981\u7A7F\u554A\uFF1F"
+      TextKey: 
+      Next: c01_wash_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_015
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 15"
+      Kind: 0
+      Position: {x: 4200, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u5728\u5BB6\u7A7F\u4E0D\u7A7F\u9774\u5B50\u81EA\u5DF1\u51B3\u5B9A\u3002\u2026\u2026\u4ECA\u5929\u8FD9\u53CC\u8F6F\u5E95\u7684\u5F52\u6211\uFF0C\u4E0D\u8BB8\u4F60\u62FF\u8D70\u3002"
+      TextKey: 
+      Next: c01_wash_016
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_016
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 16"
+      Kind: 0
+      Position: {x: 4500, y: 840}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u7ED9\u4F60\u7559\u7684\u3002\u53E6\u4E00\u53EA\u5728\u811A\u8FB9\uFF0C\u522B\u8E29\u7A7A\u3002"
+      TextKey: 
+      Next: c01_wash_017
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_wash_017
+      Title: "\u957F\u9774\u548C\u4E00\u76C6\u70ED\u6C34 17"
+      Kind: 0
+      Position: {x: 4800, y: 840}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u6C34\u5012\u5B8C\u5C31\u56DE\u6765\uFF0C\u522B\u78E8\u8E6D\u3002\u5E8A\u4E0A\u7ED9\u4F60\u7559\u7740\u5730\u65B9\u3002"
+      TextKey: 
+      Next: c01_goodnight_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_001
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 01"
+      Kind: 0
+      Position: {x: 0, y: 1050}
+      StagePreset: stage_c01_goodnight
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E0B\u5348\u90A3\u62DB\u8FD8\u633A\u5B9E\u7528\u3002\u4F60\u770B\uFF0C\u6CA1\u8BA9\u4F60\u6478\u9ED1\u627E\u62D6\u978B\u3002"
+      TextKey: 
+      Next: c01_goodnight_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_002
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 02"
+      Kind: 0
+      Position: {x: 300, y: 1050}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4E0D\u9519\u3002\u653E\u5E8A\u5934\u5427\uFF0C\u522B\u4EAE\u4E00\u665A\u4E0A\u3002"
+      TextKey: 
+      Next: c01_goodnight_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_003
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 03"
+      Kind: 0
+      Position: {x: 600, y: 1050}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u7684\u88AB\u5B50\u5462\uFF1F"
+      TextKey: 
+      Next: c01_goodnight_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_004
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 04"
+      Kind: 0
+      Position: {x: 900, y: 1050}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5728\u672C\u9E26\u624B\u91CC\u3002\u5192\u9669\u5BB6\uFF0C\u4F60\u5F80\u8FD9\u8FB9\u8EBA\uFF0C\u6211\u5C31\u5206\u4F60\u3002"
+      TextKey: 
+      Next: c01_goodnight_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_06
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_005
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 05"
+      Kind: 0
+      Position: {x: 1200, y: 1050}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u8FD9\u4E48\u62B1\uFF0C\u6211\u660E\u65E9\u8981\u662F\u8FD8\u7761\u61D2\u89C9\uFF0C\u4F60\u53EF\u5F97\u8D1F\u4E00\u534A\u7684\u8D23\u3002"
+      TextKey: 
+      Next: c01_goodnight_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: Art/Background/Gal/Chapter01/CottageGoodnightCG
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_006
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 06"
+      Kind: 0
+      Position: {x: 1500, y: 1050}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u660E\u65E9\u672C\u9E26\u7167\u6837\u53EB\u4F60\u3002\u73B0\u5728\u5148\u522B\u8BF4\u8BDD\uFF0C\u8BA9\u6211\u591A\u62B1\u4E00\u4F1A\u513F\u3002"
+      TextKey: 
+      Next: c01_goodnight_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_09
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_007
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 07"
+      Kind: 0
+      Position: {x: 1800, y: 1050}
+      StagePreset: 
+      Speaker: 
+      SpeakerKey: 
+      Text: "\u68CB\u5B50\u7684\u5149\u6697\u4E0B\u53BB\u3002\u5979\u624B\u81C2\u8FD8\u5708\u7740\u6211\uFF0C\u6211\u628A\u5979\u90A3\u8FB9\u7684\u88AB\u89D2\u4E5F\u62C9\u597D\u3002"
+      TextKey: 
+      Next: c01_goodnight_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c01_goodnight_008
+      Title: "\u6D17\u5B8C\u811A\u5C31\u62B1\u7740\u7761 08"
+      Kind: 0
+      Position: {x: 2100, y: 1050}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u665A\u5B89\uFF0C\u5192\u9669\u5BB6\u3002"
+      TextKey: 
+      Next: c02_pantry_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_001
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 01"
+      Kind: 0
+      Position: {x: 0, y: 1260}
+      StagePreset: stage_c02_pantry
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u4F60\u6765\u4E00\u4E0B\u3002"
+      TextKey: 
+      Next: c02_pantry_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_002
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 02"
+      Kind: 0
+      Position: {x: 300, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u5148\u8BF4\u6E05\u695A\uFF0C\u6211\u4ECA\u5929\u771F\u6CA1\u8D56\u5E8A\u3002"
+      TextKey: 
+      Next: c02_pantry_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_003
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 03"
+      Kind: 0
+      Position: {x: 600, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u77E5\u9053\u3002\u4F60\u770B\u770B\u7C73\u7F50\uFF0C\u518D\u770B\u770B\u83DC\u7B50\u3002"
+      TextKey: 
+      Next: c02_pantry_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_004
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 04"
+      Kind: 0
+      Position: {x: 900, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E00\u7F50\u5B50\u54CD\u58F0\uFF0C\u4E24\u6839\u8471\u3002\u8FD9\u80FD\u505A\u4EC0\u4E48\uFF1F"
+      TextKey: 
+      Next: c02_pantry_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_005
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 05"
+      Kind: 0
+      Position: {x: 1200, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u505A\u4E2A\u7A7A\u9505\u7ED9\u4F60\u770B\u3002\u627E\u7BEE\u5B50\u53BB\uFF0C\u4ECA\u5929\u5F97\u53BB\u9547\u4E0A\u8D76\u96C6\u3002"
+      TextKey: 
+      Next: c02_pantry_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_23
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_006
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 06"
+      Kind: 0
+      Position: {x: 1500, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u8FD8\u4EE5\u4E3A\u4F60\u8981\u6559\u6211\u7528\u9B54\u6CD5\u53D8\u51FA\u65E9\u996D\u3002"
+      TextKey: 
+      Next: c02_pantry_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_007
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 07"
+      Kind: 0
+      Position: {x: 1800, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6628\u5929\u8FD8\u53EA\u4F1A\u70B9\u4EAE\u4E00\u9897\u68CB\u5B50\uFF0C\u4ECA\u5929\u5C31\u60F3\u53D8\u996D\uFF1F\u8D70\u5427\uFF0C\u5148\u53BB\u4E70\u73B0\u6210\u7684\u3002"
+      TextKey: 
+      Next: c02_pantry_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_008
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 08"
+      Kind: 0
+      Position: {x: 2100, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u871C\u997C\u4E5F\u7B97\u7269\u8D44\uFF1F"
+      TextKey: 
+      Next: c02_pantry_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_009
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 09"
+      Kind: 0
+      Position: {x: 2400, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\u8DEF\u4E0A\u4F1A\u558A\u997F\u3002\u672C\u9E26\u4E0D\u60F3\u4E70\u5230\u4E00\u534A\u518D\u56DE\u5934\u54C4\u4F60\u3002"
+      TextKey: 
+      Next: c02_pantry_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_010
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 10"
+      Kind: 0
+      Position: {x: 2700, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u6211\u8D1F\u8D23\u5403\uFF1F"
+      TextKey: 
+      Next: c02_pantry_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_011
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 11"
+      Kind: 0
+      Position: {x: 3000, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u8D1F\u8D23\u62FF\u3002\u4E70\u4EC0\u4E48\u542C\u672C\u9E26\u7684\uFF0C\u888B\u5B50\u6EE1\u4E86\u518D\u7ED9\u4F60\u4E2A\u7BEE\u5B50\u3002"
+      TextKey: 
+      Next: c02_pantry_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_012
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 12"
+      Kind: 0
+      Position: {x: 3300, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E0D\u8D1F\u8D23\u6311\uFF0C\u5012\u8D1F\u8D23\u625B\uFF1F\u9E26\u9E26\u5927\u4EBA\u7ED9\u81EA\u5DF1\u5206\u7684\u6D3B\u771F\u597D\u3002"
+      TextKey: 
+      Next: c02_pantry_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_013
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 13"
+      Kind: 0
+      Position: {x: 3600, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u8981\u662F\u60F3\u6311\u4E5F\u884C\u3002\u5148\u8BF4\u8BF4\u571F\u8C46\u600E\u4E48\u4E70\uFF0C\u7B54\u5F97\u597D\u672C\u9E26\u8BA9\u4F60\u505A\u4E3B\u3002"
+      TextKey: 
+      Next: c02_pantry_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_014
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 14"
+      Kind: 0
+      Position: {x: 3900, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u53BB\u62FF\u7BEE\u5B50\u3002"
+      TextKey: 
+      Next: c02_pantry_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_015
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 15"
+      Kind: 0
+      Position: {x: 4200, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u770B\u4EC0\u4E48\uFF1F\u51FA\u95E8\u5F53\u7136\u7A7F\u9774\u5B50\u3002\u4F60\u7ED9\u672C\u9E26\u627E\u7684\u90A3\u53CC\uFF0C\u7559\u7740\u56DE\u6765\u7A7F\u3002"
+      TextKey: 
+      Next: c02_pantry_016
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_016
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 16"
+      Kind: 0
+      Position: {x: 4500, y: 1260}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u4EC0\u4E48\u90FD\u6CA1\u8BF4\u3002\u7B49\u6211\u628A\u7A7A\u7BEE\u5B50\u63D0\u4E0A\u3002"
+      TextKey: 
+      Next: c02_pantry_017
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_pantry_017
+      Title: "\u98DF\u67DC\u91CC\u6CA1\u4E1C\u897F\u505A\u996D\u4E86 17"
+      Kind: 0
+      Position: {x: 4800, y: 1260}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u62FF\u4E0A\u5C31\u8FC7\u6765\u3002\u5192\u9669\u5BB6\u8D70\u672C\u9E26\u65C1\u8FB9\u3002"
+      TextKey: 
+      Next: c02_grain_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_001
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 01"
+      Kind: 0
+      Position: {x: 0, y: 1470}
+      StagePreset: stage_c02_grain
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5148\u4E70\u7C73\uFF0C\u6311\u8FD9\u8FB9\u7684\u3002\u5192\u9669\u5BB6\uFF0C\u5E03\u888B\u7ED9\u6211\u3002"
+      TextKey: 
+      Next: c02_grain_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_002
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 02"
+      Kind: 0
+      Position: {x: 300, y: 1470}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8981\u88C5\u5230\u9876\u5417\uFF1F"
+      TextKey: 
+      Next: c02_grain_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_003
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 03"
+      Kind: 0
+      Position: {x: 600, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4E00\u5C0F\u888B\u5C31\u884C\u3002\u4E70\u591F\u4E24\u4E2A\u4EBA\u8FD9\u4E00\u9635\u5403\u7684\uFF0C\u80CC\u5F97\u52A8\u624D\u4E0D\u4F1A\u628A\u4F60\u843D\u5728\u534A\u8DEF\u3002"
+      TextKey: 
+      Next: c02_grain_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_004
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 04"
+      Kind: 0
+      Position: {x: 900, y: 1470}
+      StagePreset: 
+      Speaker: "\u7CAE\u644A\u4E3B"
+      SpeakerKey: 
+      Text: "\u8FD9\u4E00\u888B\u7ED9\u4F60\u4EEC\u7CFB\u7D27\u4E86\uFF0C\u56DE\u53BB\u5148\u6401\u9AD8\u4E00\u70B9\uFF0C\u522B\u6328\u5730\u3002"
+      TextKey: 
+      Next: c02_grain_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_005
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 05"
+      Kind: 0
+      Position: {x: 1200, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u597D\u3002\u5192\u9669\u5BB6\uFF0C\u8FD9\u888B\u653E\u6700\u4E0B\u9762\u3002\u9E21\u86CB\u5F97\u6700\u540E\u62FF\u3002"
+      TextKey: 
+      Next: c02_grain_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_006
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 06"
+      Kind: 0
+      Position: {x: 1500, y: 1470}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u5DF2\u7ECF\u77E5\u9053\u8C01\u80CC\u4E86\uFF0C\u4F60\u770B\u6211\u90FD\u81EA\u5DF1\u8E72\u4E0B\u6765\u4E86\u3002"
+      TextKey: 
+      Next: c02_grain_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_007
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 07"
+      Kind: 0
+      Position: {x: 1800, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6328\u7740\u80A9\u4F1A\u784C\u3002\u8FD9\u6837\u5462\uFF1F"
+      TextKey: 
+      Next: c02_grain_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_008
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 08"
+      Kind: 0
+      Position: {x: 2100, y: 1470}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8F7B\u591A\u4E86\u3002\u9E26\u9E26\u5927\u4EBA\u8FD8\u8D1F\u8D23\u552E\u540E\u3002"
+      TextKey: 
+      Next: c02_grain_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_009
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 09"
+      Kind: 0
+      Position: {x: 2400, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u8FD8\u6307\u671B\u4F60\u628A\u540E\u4E00\u6761\u8857\u7684\u4E1C\u897F\u4E5F\u62FF\u56DE\u53BB\uFF0C\u5F53\u7136\u5F97\u7BA1\u3002"
+      TextKey: 
+      Next: c02_grain_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_010
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 10"
+      Kind: 0
+      Position: {x: 2700, y: 1470}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u9897\u591F\u5927\uFF0C\u7701\u5F97\u6311\u597D\u51E0\u4E2A\u3002"
+      TextKey: 
+      Next: c02_grain_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_011
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 11"
+      Kind: 0
+      Position: {x: 3000, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u653E\u56DE\u53BB\u3002\u4E0A\u9762\u90FD\u9752\u4E86\u3002\u62FF\u65C1\u8FB9\u90A3\u4E24\u9897\u786C\u5B9E\u7684\u3002"
+      TextKey: 
+      Next: c02_grain_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_012
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 12"
+      Kind: 0
+      Position: {x: 3300, y: 1470}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6240\u4EE5\u6311\u571F\u8C46\u7684\u7B54\u6848\u662F\u5C0F\u7684\uFF1F"
+      TextKey: 
+      Next: c02_grain_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_013
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 13"
+      Kind: 0
+      Position: {x: 3600, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6311\u597D\u7684\u3002\u9752\u83DC\u4E5F\u8981\u6311\u53F6\u5B50\u633A\u7684\u3002\u4F60\u6276\u7BEE\u5B50\uFF0C\u672C\u9E26\u62FF\u3002"
+      TextKey: 
+      Next: c02_grain_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_014
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 14"
+      Kind: 0
+      Position: {x: 3900, y: 1470}
+      StagePreset: 
+      Speaker: "\u83DC\u644A\u4E3B"
+      SpeakerKey: 
+      Text: "\u8471\u7ED9\u4F60\u4EEC\u634E\u4E24\u6839\u5427\u3002"
+      TextKey: 
+      Next: c02_grain_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_015
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 15"
+      Kind: 0
+      Position: {x: 4200, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5BB6\u91CC\u8FD8\u6709\u3002\u7ED9\u6211\u52A0\u4E00\u5C0F\u628A\u9999\u53F6\u5C31\u597D\uFF0C\u5192\u9669\u5BB6\u559C\u6B22\u6C64\u91CC\u6709\u90A3\u4E2A\u5473\u3002"
+      TextKey: 
+      Next: c02_grain_016
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_016
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 16"
+      Kind: 0
+      Position: {x: 4500, y: 1470}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u4F60\u4E5F\u8BB0\u5F97\uFF1F"
+      TextKey: 
+      Next: c02_grain_017
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_grain_017
+      Title: "\u5148\u4E70\u7C73\uFF0C\u91CD\u7684\u653E\u5E95\u4E0B 17"
+      Kind: 0
+      Position: {x: 4800, y: 1470}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u4E0A\u6B21\u6DFB\u4E86\u4E24\u56DE\u6C64\uFF0C\u8FD8\u628A\u9505\u91CC\u7684\u9999\u53F6\u635E\u5149\u4E86\u3002\u8C01\u60F3\u5FD8\u4E5F\u5FD8\u4E0D\u4E86\u3002"
+      TextKey: 
+      Next: c02_buns_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_001
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 01"
+      Kind: 0
+      Position: {x: 0, y: 1680}
+      StagePreset: stage_c02_buns
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u7AD9\u8FD9\u513F\u3002\u4F60\u521A\u624D\u5DEE\u70B9\u8DDF\u7740\u522B\u4EBA\u8FC7\u62D0\u89D2\u4E86\u3002"
+      TextKey: 
+      Next: c02_buns_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_002
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 02"
+      Kind: 0
+      Position: {x: 300, y: 1680}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u662F\u5728\u95FB\u8FD9\u8FB9\u7684\u997C\u3002"
+      TextKey: 
+      Next: c02_buns_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_003
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 03"
+      Kind: 0
+      Position: {x: 600, y: 1680}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u5C31\u8D34\u7740\u672C\u9E26\u95FB\u3002\u4ECA\u5929\u966A\u8C01\u51FA\u95E8\uFF0C\u81EA\u5DF1\u5FC3\u91CC\u6709\u6570\u5427\u3002"
+      TextKey: 
+      Next: c02_buns_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_004
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 04"
+      Kind: 0
+      Position: {x: 900, y: 1680}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6709\u6570\u3002\u4F60\u8981\u662F\u518D\u633D\u7D27\u4E00\u70B9\uFF0C\u6211\u80F3\u818A\u4E5F\u80FD\u8BB0\u4F4F\u3002"
+      TextKey: 
+      Next: c02_buns_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_005
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 05"
+      Kind: 0
+      Position: {x: 1200, y: 1680}
+      StagePreset: 
+      Speaker: "\u997C\u644A\u4E3B"
+      SpeakerKey: 
+      Text: "\u871C\u997C\u521A\u51FA\u7089\uFF0C\u8981\u6574\u5757\u8FD8\u662F\u5207\u5F00\uFF1F"
+      TextKey: 
+      Next: c02_buns_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_006
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 06"
+      Kind: 0
+      Position: {x: 1500, y: 1680}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5207\u4E00\u534A\uFF0C\u7126\u8FB9\u7ED9\u5192\u9669\u5BB6\u3002\u53E6\u4E00\u534A\u7ED9\u6211\u3002"
+      TextKey: 
+      Next: c02_buns_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_007
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 07"
+      Kind: 0
+      Position: {x: 1800, y: 1680}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u597D\u5403\u3002\u4F60\u4E5F\u54AC\u4E00\u53E3\u8BD5\u8BD5\u7126\u7684\u3002"
+      TextKey: 
+      Next: c02_buns_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_008
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 08"
+      Kind: 0
+      Position: {x: 2100, y: 1680}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u4E3B\u52A8\u5206\u7ED9\u672C\u9E26\u7684\uFF0C\u7B49\u4F1A\u513F\u53EF\u522B\u8D56\u6211\u62A2\u3002"
+      TextKey: 
+      Next: c02_buns_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_009
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 09"
+      Kind: 0
+      Position: {x: 2400, y: 1680}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u5C31\u6015\u4F60\u53EA\u5269\u4E00\u4E2A\u89D2\u8FD8\u8BF4\u5206\u4E86\u4E00\u534A\u3002"
+      TextKey: 
+      Next: c02_buns_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_010
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 10"
+      Kind: 0
+      Position: {x: 2700, y: 1680}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u8FD9\u56DE\u5462\uFF1F"
+      TextKey: 
+      Next: c02_buns_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_011
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 11"
+      Kind: 0
+      Position: {x: 3000, y: 1680}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u56DE\u6211\u8FD8\u60F3\u7ED9\u4F60\u518D\u54AC\u4E00\u53E3\u3002"
+      TextKey: 
+      Next: c02_buns_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_buns_012
+      Title: "\u871C\u997C\u4E00\u4EBA\u4E00\u534A 12"
+      Kind: 0
+      Position: {x: 3300, y: 1680}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u7559\u7740\u5427\u3002\u7B49\u4F60\u628A\u4E1C\u897F\u5168\u63D0\u5230\u5BB6\uFF0C\u672C\u9E26\u8FD8\u4F1A\u5206\u4F60\u5403\u3002"
+      TextKey: 
+      Next: c02_eggs_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_001
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        01"
+      Kind: 0
+      Position: {x: 0, y: 1890}
+      StagePreset: stage_c02_eggs
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u8FD9\u4E2A\u653E\u4E0A\u9762\u3002\u56DE\u53BB\u522B\u50CF\u6253\u5B8C\u795E\u6BBF\u90A3\u5929\u4E00\u6837\u62A2\u8DD1\uFF0C\u8D70\u6162\u70B9\u3002"
+      TextKey: 
+      Next: c02_eggs_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_002
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        02"
+      Kind: 0
+      Position: {x: 300, y: 1890}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8C01\u8FD8\u4F1A\u62B1\u7740\u4E00\u7BEE\u9E21\u86CB\u8DDF\u4F60\u6BD4\u8D5B\u3002"
+      TextKey: 
+      Next: c02_eggs_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_003
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        03"
+      Kind: 0
+      Position: {x: 600, y: 1890}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4F60\u554A\u3002\u522B\u4EBA\u4E00\u6FC0\u4F60\u5C31\u5FD8\u3002"
+      TextKey: 
+      Next: c02_eggs_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_004
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        04"
+      Kind: 0
+      Position: {x: 900, y: 1890}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u80FD\u6FC0\u6211\u7684\u4E5F\u5C31\u9E26\u9E26\u5927\u4EBA\u3002"
+      TextKey: 
+      Next: c02_eggs_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_005
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        05"
+      Kind: 0
+      Position: {x: 1200, y: 1890}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u600E\u4E48\uFF0C\u9E26\u9E26\u5927\u4EBA\u4EB2\u81EA\u62FF\u4E1C\u897F\uFF1F"
+      TextKey: 
+      Next: c02_eggs_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_006
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        06"
+      Kind: 0
+      Position: {x: 1500, y: 1890}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u8981\u817E\u4F60\u4E00\u53EA\u624B\u51FA\u6765\u3002\u7A7A\u7740\u7684\u90A3\u53EA\u7ED9\u6211\u3002"
+      TextKey: 
+      Next: c02_eggs_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_007
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        07"
+      Kind: 0
+      Position: {x: 1800, y: 1890}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u4E0B\u4E00\u6B21\u8FD8\u8FD9\u4E48\u5206\u5DE5\uFF1F"
+      TextKey: 
+      Next: c02_eggs_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_008
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        08"
+      Kind: 0
+      Position: {x: 2100, y: 1890}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u55EF\u3002\u672C\u9E26\u6311\uFF0C\u4F60\u62FF\u3002\u4F60\u8D70\u7D2F\u4E86\u5C31\u8BF4\uFF0C\u54B1\u4FE9\u627E\u5730\u65B9\u5750\uFF0C\u7BEE\u5B50\u653E\u811A\u8FB9\u3002"
+      TextKey: 
+      Next: c02_eggs_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_009
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        09"
+      Kind: 0
+      Position: {x: 2400, y: 1890}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u6211\u73B0\u5728\u5C31\u6709\u4E2A\u8981\u6C42\u3002\u8FC7\u5E02\u573A\u90A3\u5757\u8DEF\u724C\u7684\u65F6\u5019\uFF0C\u7B49\u6211\u770B\u4E00\u773C\u3002"
+      TextKey: 
+      Next: c02_eggs_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_010
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        10"
+      Kind: 0
+      Position: {x: 2700, y: 1890}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\u60F3\u770B\u54EA\u513F\uFF1F\u6307\u7ED9\u6211\u3002"
+      TextKey: 
+      Next: c02_eggs_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_011
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        11"
+      Kind: 0
+      Position: {x: 3000, y: 1890}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E0A\u9762\u5199\u7740\u5FC3\u5CF0\uFF0C\u540D\u5B57\u8FD8\u633A\u7279\u522B\u7684\u3002"
+      TextKey: 
+      Next: c02_eggs_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_eggs_012
+      Title: "\u9E21\u86CB\u6700\u540E\u4E70\uFF0C\u8C01\u4E5F\u522B\u901E\u5F3A
+        12"
+      Kind: 0
+      Position: {x: 3300, y: 1890}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u660E\u5929\u6709\u7A7A\uFF0C\u672C\u9E26\u5E26\u4F60\u53BB\u3002\u4ECA\u5929\u5148\u56DE\u5BB6\u628A\u9E21\u86CB\u653E\u597D\u3002"
+      TextKey: 
+      Next: c02_return_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_001
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 01"
+      Kind: 0
+      Position: {x: 0, y: 2100}
+      StagePreset: stage_c02_return
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u9E21\u86CB\u6CA1\u788E\uFF0C\u83DC\u53F6\u4E5F\u6CA1\u538B\u70C2\u3002\u5192\u9669\u5BB6\u4ECA\u5929\u5E72\u5F97\u597D\u3002"
+      TextKey: 
+      Next: c02_return_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_002
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 02"
+      Kind: 0
+      Position: {x: 300, y: 2100}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u524D\u534A\u53E5\u5938\u86CB\uFF0C\u540E\u534A\u53E5\u624D\u8F6E\u5230\u6211\u3002"
+      TextKey: 
+      Next: c02_return_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_003
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 03"
+      Kind: 0
+      Position: {x: 600, y: 2100}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u8FC7\u6765\uFF0C\u672C\u9E26\u8865\u7ED9\u4F60\u3002"
+      TextKey: 
+      Next: c02_return_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_06
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_004
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 04"
+      Kind: 0
+      Position: {x: 900, y: 2100}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u8D9F\u96C6\u8D76\u5F97\u8FD8\u503C\u3002\u665A\u4E0A\u5403\u4EC0\u4E48\uFF1F"
+      TextKey: 
+      Next: c02_return_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_005
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 05"
+      Kind: 0
+      Position: {x: 1200, y: 2100}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u571F\u8C46\u716E\u6C64\uFF0C\u9752\u83DC\u7559\u5230\u6700\u540E\u4E0B\u3002\u5192\u9669\u5BB6\uFF0C\u628A\u4F60\u7231\u5403\u7684\u9999\u53F6\u4E5F\u6D17\u4E86\u3002"
+      TextKey: 
+      Next: c02_return_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_006
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 06"
+      Kind: 0
+      Position: {x: 1500, y: 2100}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4ECA\u665A\u8FD8\u6309\u6628\u5929\u5206\u5DE5\uFF1F\u6211\u5207\u83DC\uFF0C\u4F60\u770B\u706B\u3002"
+      TextKey: 
+      Next: c02_return_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_007
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 07"
+      Kind: 0
+      Position: {x: 1800, y: 2100}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u55EF\u3002\u9505\u91CC\u5148\u505A\u4E24\u4E2A\u4EBA\u7684\u4EFD\uFF0C\u660E\u5929\u51FA\u53BB\u73A9\u7684\u65F6\u5019\u518D\u5E26\u4E00\u70B9\uFF0C\u571F\u8C46\u716E\u719F\u4E86\u88C5\u5230\u98DF\u76D2\u91CC\u3002"
+      TextKey: 
+      Next: c02_return_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_008
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 08"
+      Kind: 0
+      Position: {x: 2100, y: 2100}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u660E\u5929\u771F\u53BB\u5FC3\u5CF0\uFF1F\u4F60\u4ECA\u5929\u90FD\u6CA1\u8DDF\u6211\u8BF4\u90A3\u662F\u4EC0\u4E48\u5730\u65B9\u3002"
+      TextKey: 
+      Next: c02_return_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_009
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 09"
+      Kind: 0
+      Position: {x: 2400, y: 2100}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u660E\u5929\u5230\u4E86\u81EA\u5DF1\u770B\u3002\u5192\u9669\u5BB6\uFF0C\u7A7A\u7BEE\u5B50\u6302\u95E8\u540E\u3002\u660E\u5929\u4F60\u5F97\u7ED9\u672C\u9E26\u7559\u51FA\u4E24\u53EA\u624B\u3002"
+      TextKey: 
+      Next: c02_return_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_010
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 10"
+      Kind: 0
+      Position: {x: 2700, y: 2100}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90FD\u8BA9\u6211\u62FF\u4EC0\u4E48\uFF1F"
+      TextKey: 
+      Next: c02_return_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c02_return_011
+      Title: "\u4E1C\u897F\u90FD\u4E70\u56DE\u6765\u4E86 11"
+      Kind: 0
+      Position: {x: 3000, y: 2100}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5230\u65F6\u5019\u5C31\u77E5\u9053\u4E86\u3002\u73B0\u5728\u5148\u5403\u996D\uFF0C\u6C64\u5FEB\u51C9\u4E86\u3002"
+      TextKey: 
+      Next: c03_arrive_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_001
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        01"
+      Kind: 0
+      Position: {x: 0, y: 2310}
+      StagePreset: stage_c03_arrive
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u4ECE\u51FA\u95E8\u5C31\u76EF\u7740\u6211\u8D70\u8DEF\u3002\u653E\u5FC3\uFF0C\u8FD9\u6B21\u6211\u6CA1\u60F3\u62A2\u8DD1\u3002"
+      TextKey: 
+      Next: c03_arrive_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_002
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        02"
+      Kind: 0
+      Position: {x: 300, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u672C\u9E26\u5728\u770B\u4F60\u6709\u6CA1\u6709\u8E29\u5BF9\u8DEF\u3002\u5192\u9669\u5BB6\uFF0C\u8FC7\u6765\u8FD9\u8FB9\uFF0C\u5148\u8DDF\u6211\u7AD9\u4E00\u8D77\u3002"
+      TextKey: 
+      Next: c03_arrive_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_003
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        03"
+      Kind: 0
+      Position: {x: 600, y: 2310}
+      StagePreset: 
+      Speaker: 
+      SpeakerKey: 
+      Text: "\u987A\u7740\u5979\u6307\u7684\u65B9\u5411\u770B\u8FC7\u53BB\uFF0C\u4E24\u9053\u5706\u5706\u7684\u5C71\u810A\u5728\u4E2D\u95F4\u51F9\u4E0B\u53BB\uFF0C\u5761\u9762\u4E00\u8DEF\u6536\u6210\u5C16\u89D2\u3002\u8FDC\u5904\u770B\uFF0C\u6574\u5EA7\u5C71\u50CF\u4E00\u9897\u7231\u5FC3\u3002"
+      TextKey: 
+      Next: c03_arrive_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_004
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        04"
+      Kind: 0
+      Position: {x: 900, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u602A\u4E0D\u5F97\u8DEF\u724C\u5199\u5FC3\u5CF0\u3002\u8FD8\u771F\u662F\u9897\u5FC3\u3002"
+      TextKey: 
+      Next: c03_arrive_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_005
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        05"
+      Kind: 0
+      Position: {x: 1200, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4ECE\u9547\u4E0A\u90A3\u8FB9\u53EA\u80FD\u770B\u89C1\u534A\u8FB9\u3002\u5728\u8FD9\u91CC\u770B\u624D\u5B8C\u6574\u3002"
+      TextKey: 
+      Next: c03_arrive_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_006
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        06"
+      Kind: 0
+      Position: {x: 1500, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u4E9B\u90FD\u662F\u522B\u4EBA\u7948\u613F\u7559\u4E0B\u7684\uFF1F"
+      TextKey: 
+      Next: c03_arrive_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_007
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        07"
+      Kind: 0
+      Position: {x: 1800, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6709\u6765\u6C42\u5A5A\u7684\uFF0C\u4E5F\u6709\u6765\u529E\u5A5A\u793C\u7684\u3002\u5929\u597D\u4F1A\u5728\u4E0B\u9762\u90A3\u5757\u5E73\u5730\u6446\u6905\u5B50\uFF0C\u8BF7\u8BA4\u8BC6\u7684\u4EBA\u6765\u770B\u3002"
+      TextKey: 
+      Next: c03_arrive_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_008
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        08"
+      Kind: 0
+      Position: {x: 2100, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u9E26\u9E26\u5927\u4EBA\u4E5F\u60F3\u7ED3\u5A5A\u5417\uFF1F"
+      TextKey: 
+      Next: c03_arrive_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_009
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        09"
+      Kind: 0
+      Position: {x: 2400, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u8C01\u8BA9\u4F60\u4E0A\u6765\u7B2C\u4E00\u4EF6\u4E8B\u5C31\u95EE\u8FD9\u4E2A\uFF01\u672C\u9E26\u4ECA\u5929\u60F3\u8DDF\u4F60\u51FA\u6765\u73A9\u3002"
+      TextKey: 
+      Next: c03_arrive_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_12
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_010
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        10"
+      Kind: 0
+      Position: {x: 2700, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u770B\u4F60\u5BF9\u6446\u6905\u5B50\u8FD9\u4E8B\u8FD8\u633A\u719F\u3002"
+      TextKey: 
+      Next: c03_arrive_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_011
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        11"
+      Kind: 0
+      Position: {x: 3000, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u9547\u4E0A\u90A3\u4E48\u591A\u4EBA\u6765\u8FC7\uFF0C\u542C\u4E00\u56DE\u5C31\u8BB0\u4F4F\u4E86\u3002\u2026\u2026\u4F60\u518D\u7B11\uFF0C\u7B49\u4F1A\u513F\u5C31\u7ED9\u672C\u9E26\u7AD9\u5230\u6700\u6321\u98CE\u7684\u4E00\u8FB9\u53BB\u3002"
+      TextKey: 
+      Next: c03_arrive_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_012
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        12"
+      Kind: 0
+      Position: {x: 3300, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u884C\u3002\u6211\u672C\u6765\u5C31\u6253\u7B97\u7AD9\u4F60\u8FD9\u8FB9\u3002"
+      TextKey: 
+      Next: c03_arrive_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_013
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        13"
+      Kind: 0
+      Position: {x: 3600, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u624B\u7ED9\u6211\u3002\u5148\u966A\u672C\u9E26\u770B\u770B\u98CE\u666F\u3002"
+      TextKey: 
+      Next: c03_arrive_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_014
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        14"
+      Kind: 0
+      Position: {x: 3900, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u76D0\u662F\u6211\u521A\u6492\u7684\uFF0C\u4F60\u5C1D\u5C1D\u591F\u4E0D\u591F\u3002"
+      TextKey: 
+      Next: c03_arrive_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_015
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        15"
+      Kind: 0
+      Position: {x: 4200, y: 2310}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u591F\u4E86\u3002\u6700\u5927\u90A3\u5757\u4F60\u5403\uFF0C\u5192\u9669\u5BB6\u3002\u5403\u5B8C\u4E86\u9760\u8FC7\u6765\uFF0C\u672C\u9E26\u8FD8\u60F3\u8DDF\u4F60\u5750\u4F1A\u513F\u3002"
+      TextKey: 
+      Next: c03_arrive_016
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_arrive_016
+      Title: "\u539F\u6765\u8FD9\u5EA7\u5C71\u957F\u5F97\u50CF\u4E00\u9897\u5FC3
+        16"
+      Kind: 0
+      Position: {x: 4500, y: 2310}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u884C\uFF0C\u5403\u996D\u6709\u4EBA\u966A\uFF0C\u53D1\u5446\u4E5F\u6709\u4EBA\u966A\u3002\u8FD9\u8D9F\u722C\u5F97\u503C\u3002"
+      TextKey: 
+      Next: c03_camera_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_001
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 01"
+      Kind: 0
+      Position: {x: 0, y: 2520}
+      StagePreset: stage_c03_camera
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u4EEC\u7684\u4E16\u754C\u5C45\u7136\u4E5F\u6709\u76F8\u673A\uFF1F"
+      TextKey: 
+      Next: c03_camera_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerFlustered
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_002
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 02"
+      Kind: 0
+      Position: {x: 300, y: 2520}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6709\u554A\u3002\u672C\u9E26\u65E9\u653E\u8FDB\u5305\u91CC\u4E86\u3002\u4F60\u6628\u5929\u5E2E\u6211\u642C\u4E86\u90A3\u4E48\u591A\u4E1C\u897F\uFF0C\u4E00\u70B9\u90FD\u6CA1\u53D1\u73B0\u3002"
+      TextKey: 
+      Next: c03_camera_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_003
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 03"
+      Kind: 0
+      Position: {x: 600, y: 2520}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6240\u4EE5\u4F60\u8BF4\u8BA9\u6211\u7A7A\u7740\u4E24\u53EA\u624B\uFF0C\u662F\u8981\u62FF\u8FD9\u4E2A\uFF1F"
+      TextKey: 
+      Next: c03_camera_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_004
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 04"
+      Kind: 0
+      Position: {x: 900, y: 2520}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u4E00\u53EA\u62FF\u76F8\u673A\uFF0C\u53E6\u4E00\u53EA\u5F52\u672C\u9E26\u3002\u5148\u770B\u770B\u666F\uFF0C\u7B49\u4F1A\u513F\u8FD8\u8981\u7528\u4F60\u3002"
+      TextKey: 
+      Next: c03_camera_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_08
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_005
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 05"
+      Kind: 0
+      Position: {x: 1200, y: 2520}
+      StagePreset: 
+      Speaker: 
+      SpeakerKey: 
+      Text: "\u98CE\u671D\u7740\u5C71\u80CC\u8FC7\u53BB\uFF0C\u5439\u5F00\u4E86\u4F4E\u5904\u7684\u4E00\u70B9\u96FE\u3002\u6E56\u6C34\u548C\u8FDC\u5904\u7684\u5C4B\u9876\u4E00\u8D77\u4EAE\u51FA\u6765\uFF0C\u6CBF\u8DEF\u53EA\u542C\u5F97\u5230\u811A\u6B65\u548C\u6811\u53F6\u54CD\u3002"
+      TextKey: 
+      Next: c03_camera_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_006
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 06"
+      Kind: 0
+      Position: {x: 1500, y: 2520}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u5730\u65B9\u771F\u597D\u770B\u3002\u6211\u539F\u6765\u51FA\u95E8\u722C\u5C71\uFF0C\u62CD\u5B8C\u6700\u5148\u60F3\u627E\u7684\u662F\u4E0B\u5C71\u7684\u8DEF\u3002\u8FD9\u91CC\u6211\u60F3\u591A\u770B\u4E00\u4F1A\u513F\u3002"
+      TextKey: 
+      Next: c03_camera_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_007
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 07"
+      Kind: 0
+      Position: {x: 1800, y: 2520}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u5C31\u591A\u770B\u4E00\u4F1A\u513F\u3002\u672C\u9E26\u53C8\u4E0D\u8D76\u4F60\u3002"
+      TextKey: 
+      Next: c03_camera_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_008
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 08"
+      Kind: 0
+      Position: {x: 2100, y: 2520}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u5148\u7ED9\u672C\u9E26\u62CD\u4E00\u5F20\u3002\u770B\u89C1\u4FA7\u9762\u90A3\u4E2A\u62E8\u7247\u6CA1\u6709\uFF1F\u62CD\u5B8C\u62E8\u4E00\u4E0B\uFF0C\u5C31\u80FD\u56DE\u770B\u3002"
+      TextKey: 
+      Next: c03_camera_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_009
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 09"
+      Kind: 0
+      Position: {x: 2400, y: 2520}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u600E\u4E48\u7A81\u7136\u5C31\u5230\u6211\u4E86\u3002\u6211\u5148\u8BD5\u8BD5\u8FD9\u4E2A\u5230\u5E95\u600E\u4E48\u6309\u3002"
+      TextKey: 
+      Next: c03_camera_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_010
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 10"
+      Kind: 0
+      Position: {x: 2700, y: 2520}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6162\u6162\u8BD5\u3002\u672C\u9E26\u8981\u4EBA\u548C\u5C71\u90FD\u5728\u753B\u9762\u91CC\u3002\u5982\u679C\u62CD\u7684\u4E0D\u597D\u7684\u8BDD\u56DE\u53BB\u6709\u4F60\u597D\u770B\u7684"
+      TextKey: 
+      Next: c03_camera_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_011
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 11"
+      Kind: 0
+      Position: {x: 3000, y: 2520}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u8D9F\u722C\u5C71\u7684\u98CE\u9669\u73B0\u5728\u624D\u8BF4\u554A\u3002"
+      TextKey: 
+      Next: c03_camera_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_camera_012
+      Title: "\u5979\u7684\u5305\u91CC\u85CF\u7740\u4E00\u53F0\u76F8\u673A 12"
+      Kind: 0
+      Position: {x: 3300, y: 2520}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u624B\u7A33\u4F4F\u3002\u4F60\u6628\u5929\u7EC3\u9B54\u6CD5\u7684\u65F6\u5019\u90FD\u6CA1\u8FD9\u4E48\u591A\u8BDD\u3002"
+      TextKey: 
+      Next: c03_portrait_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_001
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 01"
+      Kind: 0
+      Position: {x: 0, y: 2730}
+      StagePreset: stage_c03_portrait
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u8FD9\u4E2A\u89D2\u5EA6\u884C\u5417\uFF1F"
+      TextKey: 
+      Next: c03_portrait_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_002
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 02"
+      Kind: 0
+      Position: {x: 300, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u7B49\u4E00\u4E0B\uFF0C\u8138\u671D\u6211\u8FD9\u8FB9\u4E00\u70B9\u3002\u5BF9\uFF0C\u5C31\u8FD9\u6837\u3002"
+      TextKey: 
+      Next: c03_portrait_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_003
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 03"
+      Kind: 0
+      Position: {x: 600, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE"
+      TextKey: 
+      Next: c03_portrait_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_004
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 04"
+      Kind: 0
+      Position: {x: 900, y: 2730}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5C71\u62CD\u5F97\u5012\u633A\u5927\u3002\u672C\u9E26\u600E\u4E48\u53EA\u5269\u89D2\u843D\u91CC\u4E00\u5757\u6597\u7BF7\uFF1F"
+      TextKey: 
+      Next: c03_portrait_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_19
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_005
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 05"
+      Kind: 0
+      Position: {x: 1200, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD8\u5269\u534A\u5F20\u8138\u3002\u4F60\u521A\u597D\u7728\u773C\uFF0C\u53E6\u4E00\u53EA\u773C\u770B\u7740\u8FD8\u633A\u7CBE\u795E\u3002"
+      TextKey: 
+      Next: c03_portrait_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_006
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 06"
+      Kind: 0
+      Position: {x: 1500, y: 2730}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u4F60\u8981\u4EA4\u7684\u662F\u672C\u9E26\u7684\u7167\u7247\u3002\u4F60\u8FD9\u4E48\u559C\u6B22\u5FC3\u5CF0\uFF0C\u56DE\u53BB\u8BA9\u5B83\u7ED9\u4F60\u505A\u996D\u3002"
+      TextKey: 
+      Next: c03_portrait_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_25
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_007
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 07"
+      Kind: 0
+      Position: {x: 1800, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u884C\uFF0C\u90A3\u8FD8\u662F\u6211\u91CD\u62CD\u3002\u5C71\u4E0D\u4F1A\u903C\u6211\u6D17\u811A\uFF0C\u600E\u4E48\u60F3\u90FD\u5C11\u4E86\u70B9\u610F\u601D\u3002"
+      TextKey: 
+      Next: c03_portrait_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_008
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 08"
+      Kind: 0
+      Position: {x: 2100, y: 2730}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u8FD8\u6562\u63D0\u3002\u6765\uFF0C\u4F60\u81EA\u5DF1\u770B\uFF0C\u5148\u628A\u672C\u9E26\u653E\u5230\u4E2D\u95F4\u3002"
+      TextKey: 
+      Next: c03_portrait_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_009
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 09"
+      Kind: 0
+      Position: {x: 2400, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u56DE\u6211\u77E5\u9053\u4E86\u3002\u4F60\u522B\u770B\u76F8\u673A\uFF0C\u5148\u770B\u6211\u3002"
+      TextKey: 
+      Next: c03_portrait_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_010
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 10"
+      Kind: 0
+      Position: {x: 2700, y: 2730}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u770B\u4F60\u505A\u4EC0\u4E48\uFF1F"
+      TextKey: 
+      Next: c03_portrait_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_011
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 11"
+      Kind: 0
+      Position: {x: 3000, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4F60\u521A\u624D\u5728\u7B11\u6211\uFF0C\u8BF4\u6211\u56DE\u5BB6\u5C31\u8981\u5012\u9709\u3002\u5C31\u90A3\u4E2A\u8868\u60C5\u3002"
+      TextKey: 
+      Next: c03_portrait_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_012
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 12"
+      Kind: 0
+      Position: {x: 3300, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u56DE\u5C71\u8FD8\u5728\uFF0C\u4EBA\u4E5F\u5728\u3002\u8BF7\u518D\u8FC7\u4E00\u904D\u76EE\u3002"
+      TextKey: 
+      Next: c03_portrait_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_013
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 13"
+      Kind: 0
+      Position: {x: 3600, y: 2730}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u2026\u2026\u8FD9\u5F20\u7559\u7740\u3002\u524D\u4E00\u5F20\u4E5F\u7559\u7740\u3002"
+      TextKey: 
+      Next: c03_portrait_014
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_014
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 14"
+      Kind: 0
+      Position: {x: 3900, y: 2730}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u521A\u624D\u4F60\u8FD8\u8BF4\u5B83\u4E0D\u597D\u3002"
+      TextKey: 
+      Next: c03_portrait_015
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_portrait_015
+      Title: "\u9E26\u9E26\u5927\u4EBA\uFF0C\u8BF7\u8FC7\u76EE 15"
+      Kind: 0
+      Position: {x: 4200, y: 2730}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u7559\u7740\u4EE5\u540E\u63D0\u9192\u5192\u9669\u5BB6\uFF0C\u7ED9\u672C\u9E26\u62CD\u7167\u8981\u5148\u770B\u8C01\u3002\u76F8\u673A\u5E26\u597D\uFF0C\u63A5\u4E0B\u6765\u54B1\u4FE9\u4E00\u8D77\u62CD\u3002"
+      TextKey: 
+      Next: c03_together_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_001
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        01"
+      Kind: 0
+      Position: {x: 0, y: 2940}
+      StagePreset: stage_c03_together
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5C31\u5728\u8FD9\u513F\u62CD\u3002\u5192\u9669\u5BB6\uFF0C\u4F60\u5F80\u672C\u9E26\u8FD9\u8FB9\u7AD9\uFF0C\u5148\u770B\u770B\u4E24\u4E2A\u4EBA\u653E\u4E0D\u653E\u5F97\u4E0B\u3002"
+      TextKey: 
+      Next: c03_together_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_002
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        02"
+      Kind: 0
+      Position: {x: 300, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u53BB\u62CD\u7684\u8BDD\uFF0C\u8C01\u5F80\u4F60\u8FD9\u8FB9\u7AD9\uFF1F"
+      TextKey: 
+      Next: c03_together_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_003
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        03"
+      Kind: 0
+      Position: {x: 600, y: 2940}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u76F8\u673A\u80FD\u7B49\u51E0\u4E0B\u518D\u62CD\u3002\u653E\u90A3\u5757\u5E73\u77F3\u4E0A\u3002\u6309\u5B8C\u8FC7\u6765\uFF0C\u522B\u8BA9\u672C\u9E26\u4E00\u4E2A\u4EBA\u5728\u8FD9\u513F\u7B49\u3002"
+      TextKey: 
+      Next: c03_together_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_004
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        04"
+      Kind: 0
+      Position: {x: 900, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u597D\u4E86\uFF0C\u7B49\u6211\u8DD1\u4E24\u6B65\u3002"
+      TextKey: 
+      Next: c03_together_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_005
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        05"
+      Kind: 0
+      Position: {x: 1200, y: 2940}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u4F60\u63D0\u7684\u98DF\u76D2\u8FD8\u5728\u54B1\u4FE9\u4E2D\u95F4\u5462\u3002\u4F60\u8DDF\u672C\u9E26\u6765\u5408\u5F71\uFF0C\u600E\u4E48\u8FD8\u7ED9\u5348\u996D\u7559\u4E86\u4E2A\u4F4D\u7F6E\uFF1F"
+      TextKey: 
+      Next: c03_together_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_006
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        06"
+      Kind: 0
+      Position: {x: 1500, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E00\u65E9\u62CE\u987A\u624B\u4E86\u3002\u91CD\u6765\uFF0C\u6211\u628A\u5B83\u6401\u76F8\u673A\u8FB9\u3002"
+      TextKey: 
+      Next: c03_together_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_007
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        07"
+      Kind: 0
+      Position: {x: 1800, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u8FD9\u4E0B\u4F60\u6EE1\u610F\u4E86\uFF1F"
+      TextKey: 
+      Next: c03_together_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_008
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        08"
+      Kind: 0
+      Position: {x: 2100, y: 2940}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u518D\u9760\u672C\u9E26\u4E00\u70B9\u3002\u4F60\u770B\u955C\u5934\u5C31\u597D\uFF0C\u522B\u53C8\u504F\u8138\u8FC7\u6765\u770B\u6211\u3002"
+      TextKey: 
+      Next: c03_together_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_11
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_009
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        09"
+      Kind: 0
+      Position: {x: 2400, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u660E\u660E\u662F\u4F60\u5148\u770B\u7684\u6211\u3002"
+      TextKey: 
+      Next: c03_together_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_010
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        10"
+      Kind: 0
+      Position: {x: 2700, y: 2940}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u8FD9\u5F20\u597D\u3002\u7B49\u56DE\u53BB\uFF0C\u653E\u5C0F\u5C4B\u684C\u4E0A\u3002\u8C01\u6765\u4E86\u90FD\u77E5\u9053\u5192\u9669\u5BB6\u662F\u8DDF\u672C\u9E26\u4E00\u8D77\u53BB\u7684\u3002"
+      TextKey: 
+      Next: c03_together_011
+      Voice: 
+      Sound: 
+      GalleryId: heart_peak_photo
+      Signal: 
+      Argument: 
+      Stage:
+        Background: Art/Background/Gal/Chapter03/HeartPeakPhotoCG
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_17
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_011
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        11"
+      Kind: 0
+      Position: {x: 3000, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u98DF\u76D2\u90A3\u5F20\u4E5F\u653E\u5417\uFF1F"
+      TextKey: 
+      Next: c03_together_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_012
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        12"
+      Kind: 0
+      Position: {x: 3300, y: 2940}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u90A3\u5F20\u6536\u62BD\u5C49\u3002\u7559\u7740\u672C\u9E26\u4E00\u4E2A\u4EBA\u7B11\u4F60\u3002"
+      TextKey: 
+      Next: c03_together_013
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_together_013
+      Title: "\u5728\u5FC3\u5CF0\u89C2\u666F\u53F0\u524D\u62CD\u4E24\u4E2A\u4EBA
+        13"
+      Kind: 0
+      Position: {x: 3600, y: 2940}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u6211\u628A\u4E24\u5F20\u90FD\u5E26\u597D\u3002\u7B49\u7B49\uFF0C\u54B1\u4EEC\u518D\u7AD9\u4E00\u4F1A\u513F\u5427\u3002"
+      TextKey: 
+      Next: c03_confession_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_001
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 01"
+      Kind: 0
+      Position: {x: 0, y: 3150}
+      StagePreset: stage_c03_confession
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6628\u5929\u8FD8\u5728\u5BB6\u91CC\u6570\u7C73\u7F50\u91CC\u5269\u51E0\u7C92\u7C73\uFF0C\u4ECA\u5929\u5C31\u5728\u8FD9\u513F\u770B\u5C71\u3002\u60F3\u60F3\u4E5F\u633A\u597D\u73A9\u7684\u3002"
+      TextKey: 
+      Next: c03_confession_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_002
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 02"
+      Kind: 0
+      Position: {x: 300, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\u8FD8\u6F0F\u4E86\u4F60\u6628\u5929\u62B1\u7740\u9E21\u86CB\u6015\u6454\u90A3\u4E00\u8DEF\u3002"
+      TextKey: 
+      Next: c03_confession_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_003
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 03"
+      Kind: 0
+      Position: {x: 600, y: 3150}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u90A3\u6211\u4E5F\u8BB0\u5F97\u4F60\u4E00\u76F4\u633D\u7740\u6211\u3002"
+      TextKey: 
+      Next: c03_confession_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_004
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 04"
+      Kind: 0
+      Position: {x: 900, y: 3150}
+      StagePreset: 
+      Speaker: 
+      SpeakerKey: 
+      Text: "\u5979\u6CA1\u628A\u624B\u62BD\u8D70\u3002\u6211\u770B\u4E00\u773C\u76F8\u673A\uFF0C\u53C8\u770B\u4E00\u773C\u5979\uFF0C\u7A81\u7136\u89C9\u5F97\u521A\u624D\u90A3\u5F20\u7167\u7247\u8DDF\u6211\u60F3\u8FC7\u7684\u65E5\u5B50\u5F88\u50CF\u3002"
+      TextKey: 
+      Next: c03_confession_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_005
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 05"
+      Kind: 0
+      Position: {x: 1200, y: 3150}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u5C31\u8FD9\u6837\u548C\u9E26\u9E26\u5927\u4EBA\u5E73\u6DE1\u7684\u5728\u4E00\u8D77\u751F\u6D3B\u4E5F\u633A\u597D\u7684\u3002"
+      TextKey: 
+      Next: c03_confession_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_006
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 06"
+      Kind: 0
+      Position: {x: 1500, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u542C\u6211\u8BF4\u5B8C\u3002\u8FD9\u56DE\u5148\u522B\u8DDF\u672C\u9E26\u62AC\u6760\u3002"
+      TextKey: 
+      Next: c03_confession_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_007
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 07"
+      Kind: 0
+      Position: {x: 1800, y: 3150}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u55EF\u3002\u6211\u542C\u7740\u3002"
+      TextKey: 
+      Next: c03_confession_008
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_008
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 08"
+      Kind: 0
+      Position: {x: 2100, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u5176\u5B9E\u548C\u4F60\u7ECF\u5386\u4E86\u8FD9\u4E48\u591A\uFF0C\u4F60\u4E5F\u80FD\u591F\u770B\u5F97\u51FA\u6211\u7684\u5FC3\u610F\uFF0C\u867D\u7136\u672C\u9E26\u5E73\u65F6\u8001\u662F\u5632\u8BBD\u4F60\uFF0C\u4F46\u90A3\u4E5F\u662F\u56E0\u4E3A\u6211\u771F\u6B63\u5728\u610F\u4F60\u3001\u5173\u5FC3\u4F60\uFF0C"
+      TextKey: 
+      Next: c03_confession_008_part2
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_29
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_008_part2
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 08\uFF082/3\uFF09"
+      Kind: 0
+      Position: {x: 2400, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u53EF\u80FD\u6211\u4E00\u5F00\u59CB\u9047\u89C1\u4F60\u7684\u65F6\u5019\u4E5F\u89C9\u5F97\u4F60\u4E0D\u9760\u8C31\uFF0C\u4F46\u662F\u966A\u4F60\u4E00\u8D77\u8D70\u8FC7\u4E86\u8FD9\u4E00\u8DEF\u7684\u5386\u7EC3\u4E4B\u540E\uFF0C\u6211\u4E5F\u9010\u6E10\u5BF9\u4F60\u65E5\u4E45\u751F\u60C5\u4E86\uFF0C"
+      TextKey: 
+      Next: c03_confession_008_part3
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_05
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_008_part3
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 08\uFF083/3\uFF09"
+      Kind: 0
+      Position: {x: 2700, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6211\u60F3\u548C\u4F60\u4E00\u8D77\u5C31\u50CF\u8FD9\u6837\u6BCF\u5929\u5E73\u6DE1\u5730\u751F\u6D3B\uFF0C\u4E00\u8D77\u5403\u996D\u3001\u901B\u8857\u3001\u4FEE\u70BC\uFF0C\u966A\u4F60\u5EA6\u8FC7\u6BCF\u4E00\u4E2A\u5E73\u51E1\u7684\u77AC\u95F4\uFF0C\u76F4\u5230\u5C81\u6708\u5C3D\u5934\uFF0C\u53EF\u80FD\u8FD9\u5C31\u662F\u7231\u5427\uFF0C\u6211\u7231\u4F60\uFF0C\u5192\u9669\u5BB6\uFF0C\u4F60\u613F\u610F\u5417"
+      TextKey: 
+      Next: c03_confession_009
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_12
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_009
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 09"
+      Kind: 0
+      Position: {x: 3000, y: 3150}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u613F\u610F\uFF0C\u6211\u4E00\u5B9A\u4F1A\u966A\u4F60\u8D70\u5230\u6700\u540E\u7684\uFF0C\u5C31\u8BA9\u5C81\u6708\u4E3A\u6211\u4EEC\u7684\u7231\u60C5\u4F5C\u8BC1\u5427"
+      TextKey: 
+      Next: c03_confession_010
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_010
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 10"
+      Kind: 0
+      Position: {x: 3300, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u521A\u624D\u90A3\u4E9B\u8BDD\u5C31\u7ED9\u4F60\u4E00\u4E2A\u4EBA\u542C\u3002\u56DE\u53BB\u4E0D\u8BB8\u62FF\u6765\u53D6\u7B11\u672C\u9E26\u3002"
+      TextKey: 
+      Next: c03_confession_011
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_13
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_011
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 11"
+      Kind: 0
+      Position: {x: 3600, y: 3150}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u6211\u4E0D\u7B11\u3002\u4F60\u8981\u662F\u4EE5\u540E\u8FD8\u60F3\u8BF4\uFF0C\u6211\u6BCF\u6B21\u90FD\u542C\u3002"
+      TextKey: 
+      Next: c03_confession_012
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTender
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_confession_012
+      Title: "\u628A\u5E73\u5E38\u7684\u65E5\u5B50\u8FC7\u4E0B\u53BB 12"
+      Kind: 0
+      Position: {x: 3900, y: 3150}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u2026\u2026\u90A3\u4F60\u62B1\u7D27\u4E00\u70B9\u3002\u672C\u9E26\u73B0\u5728\u4E0D\u60F3\u52A8\u3002"
+      TextKey: 
+      Next: c03_home_001
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_20
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_001
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 01"
+      Kind: 0
+      Position: {x: 0, y: 3360}
+      StagePreset: stage_c03_home
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u4E0B\u53BB\u4E86\uFF1F\u6211\u6253\u8D4C\u4ECA\u665A\u9E26\u9E26\u5927\u4EBA\u8FD8\u8981\u62FF\u90A3\u53CC\u62D6\u978B\u9017\u6211\u3002"
+      TextKey: 
+      Next: c03_home_002
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_002
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 02"
+      Kind: 0
+      Position: {x: 300, y: 3360}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u5192\u9669\u5BB6\uFF0C\u978B\u7684\u4E8B\u56DE\u5BB6\u518D\u8BF4\u3002\u4F60\u73B0\u5728\u597D\u597D\u7275\u7740\u672C\u9E26\uFF0C\u522B\u5728\u5761\u4E0A\u4E71\u8DD1\u3002"
+      TextKey: 
+      Next: c03_home_003
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_003
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 03"
+      Kind: 0
+      Position: {x: 600, y: 3360}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u597D\u3002\u4ECA\u665A\u60F3\u5403\u4EC0\u4E48\uFF1F"
+      TextKey: 
+      Next: c03_home_004
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerTeasing
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_004
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 04"
+      Kind: 0
+      Position: {x: 900, y: 3360}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u6628\u5929\u4E70\u7684\u571F\u8C46\u8FD8\u6709\u3002\u5192\u9669\u5BB6\u628A\u571F\u8C46\u5207\u597D\uFF0C\u518D\u62FF\u4E24\u9897\u86CB\uFF0C\u672C\u9E26\u770B\u706B\u3002"
+      TextKey: 
+      Next: c03_home_005
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_24
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_005
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 05"
+      Kind: 0
+      Position: {x: 1200, y: 3360}
+      StagePreset: 
+      Speaker: "\u5192\u9669\u5BB6"
+      SpeakerKey: 
+      Text: "\u597D\u3002\u86CB\u714E\u8106\u4E86\uFF0C\u8FD8\u662F\u8DDF\u4F60\u5206\u8FB9\u4E0A\u90A3\u5757\u3002"
+      TextKey: 
+      Next: c03_home_006
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: Art/Gal/Portraits/Adventurer/AdventurerCalm
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_006
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 06"
+      Kind: 0
+      Position: {x: 1500, y: 3360}
+      StagePreset: 
+      Speaker: "\u9E26\u9E26"
+      SpeakerKey: 
+      Text: "\u55EF\u3002\u54B1\u4EEC\u56DE\u5BB6\u3002"
+      TextKey: 
+      Next: c03_home_007
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: Art/Gal/Portraits/Yaya/GalYaya_22
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []
+    - Id: c03_home_007
+      Title: "\u7167\u7247\u5E26\u56DE\u5C0F\u5C4B 07"
+      Kind: 4
+      Position: {x: 1800, y: 3360}
+      StagePreset: 
+      Speaker: 
+      SpeakerKey: 
+      Text: "\u76F8\u673A\u5728\u6211\u4EEC\u4E2D\u95F4\u8F7B\u8F7B\u6643\uFF0C\u4E00\u8DEF\u6643\u5230\u5C71\u8DEF\u6700\u540E\u90A3\u4E2A\u62D0\u5F2F\u3002"
+      TextKey: 
+      Next: 
+      Voice: 
+      Sound: 
+      GalleryId: 
+      Signal: 
+      Argument: 
+      Stage:
+        Background: 
+        BackgroundMaterial: 
+        Left: '-'
+        Center: '-'
+        Right: '-'
+        Music: 
+      Effects: []
+      Exits: []

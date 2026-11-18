@@ -1,0 +1,56 @@
+ManifestFileVersion: 0
+CRC: 1523603313
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4e78099725b933528cb1ca1b08c812b4
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4e78099725b933528cb1ca1b08c812b4
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_21.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_07.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerTender.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerTeasing.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_14.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_25.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_26.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_24.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_16.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_01.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_11.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_05.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_22.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_29.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_08.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_18.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_04.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerFlustered.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_09.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_17.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_28.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_10.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_19.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_15.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_13.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_23.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerCalm.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_12.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_20.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_02.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_03.png
+- Assets/GameRes/Art/Gal/Portraits/Yaya/GalYaya_06.png
+- Assets/GameRes/Atlases/GalCottagePortraits.spriteatlasv2
+Dependencies: []

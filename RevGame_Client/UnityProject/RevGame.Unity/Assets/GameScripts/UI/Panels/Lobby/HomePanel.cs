@@ -33,6 +33,7 @@ namespace RevGame.UI
 
         protected override void OnBindView()
         {
+            BindCottageStoryEntry();
             RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
         }
 
