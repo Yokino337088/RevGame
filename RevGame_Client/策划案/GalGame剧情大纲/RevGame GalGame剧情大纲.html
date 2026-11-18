@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="RevGame 六章通关后，鸦鸦和冒险家以恋人身份在小屋同住、赶集约会、出游和谈起之后的生活。">
-  <title>RevGame · 鸦鸦家的第七天 | GalGame 剧情大纲</title>
+  <meta name="description" content="鸦鸦和冒险家在小屋同住、上街赶集和在心峰拍照的三章逐句剧本。">
+  <title>RevGame · 和鸦鸦一起过日子 | GalGame 三章逐句剧本</title>
   <style>
     :root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7}
     *{box-sizing:border-box}
@@ -166,10 +166,20 @@
       .source-list a, .table-scroll { overflow-wrap: anywhere; }
       table { min-width: 0; }
     }
+    .chapter .scene-links { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .chapter .scene-links li { margin: 0; font-size: 13px; }
+    .script-scene + .script-scene { margin-top: 28px; }
+    .script-scene { scroll-margin-top: 8px; }
+    .script-scene h3 { margin-top: 22px; }
+    .chapter .script-meta { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+    .script-body { margin-top: 0; }
+    .script-cue dt, .script-cue dd { color: var(--muted); font-size: 13px; }
+    .script-cue + div { margin-top: 3px; }
+    @media print { .scene-links { display: none !important; } .script-body { break-inside: auto; } }
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#outline">跳到剧情大纲</a>
+  <a class="skip-link" href="#outline">跳到三章剧本</a>
   <div class="progress" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand"><i aria-hidden="true">R</i>REVGAME <span class="tag">NARRATIVE DESIGN GUIDE</span></div>
@@ -179,394 +189,604 @@
   <div class="hero">
     <div>
       <div class="eyebrow">REVOLUTION.GAL / 六章通关后续篇</div>
-      <h1>鸦鸦家的<br><em>第七天</em></h1>
-      <p class="lead">六页棋谱齐了。鸦鸦开门先亲了冒险家一下，然后把排满七天的清单扣在他的冒险包上。接下来不打试炼，陪女朋友做饭、赶集、去镜湖玩。到了第七晚，她还想和他商量七天以后的日子。</p>
+      <h1>和鸦鸦<br><em>一起过日子</em></h1>
+      <p class="lead">冒险家打完了六章，还是没能睡到自然醒。鸦鸦拉他起来做家务，陪他做饭、练魔法。第二天去赶集，第三天去心峰，她带了相机，想和他拍一张两个人的照片。</p>
       <div class="hero-links">
-        <a class="pill primary" href="#canon">从主线接续读起 ↗</a>
-        <a class="pill" href="#chapter-01">跳到第一章</a>
+        <a class="pill primary" href="#chapter-01">从叫起床读起 ↗</a>
+        <a class="pill" href="#pace">查看三章分场</a>
       </div>
-      <div class="stamp">2026.11.18 · REVGAME GALGAME 剧情大纲</div>
+      <div class="stamp">2026.11.18 · REVGAME GALGAME 三章逐句剧本</div>
     </div>
     <aside class="demo" aria-labelledby="scene-preview-label">
-      <div class="demo-head"><strong id="scene-preview-label"><span class="live-dot" aria-hidden="true"></span>三段情侣日常</strong><span class="tag">SCENE PREVIEW</span></div>
+      <div class="demo-head"><strong id="scene-preview-label"><span class="live-dot" aria-hidden="true"></span>三章预览</strong><span class="tag">SCENE PREVIEW</span></div>
       <div class="scene-preview" aria-live="polite">
         <h2 id="preview-title">鸦鸦的小屋</h2>
-        <p id="preview-beat">抢跑的人没带钥匙，等到鸦鸦开门。她揪着衣领亲他一下，说这是那六页棋谱的利息。</p>
-        <p class="preview-line" id="preview-line">鸦鸦：“那是利息。剩下的拿七天来还，归本鸦了。”</p>
+        <p id="preview-beat">六章通关后的早晨，鸦鸦把被子掀开一角。冒险家还想拉她一起赖床。</p>
+        <p class="preview-line" id="preview-line">鸦鸦：“冒险家，太阳都晒屁股了还睡呢”</p>
       </div>
       <div class="demo-result">
-        <span id="preview-change">两个人熟悉的到家招呼</span>
+        <span id="preview-change">从叫醒到抱着睡觉</span>
         <a id="preview-link" href="#chapter-01">读小屋篇 ↗</a>
       </div>
       <div class="segmented" role="group" aria-label="切换剧情场景预览">
         <button type="button" data-preview="home" aria-pressed="true">小屋</button>
         <button type="button" data-preview="market" aria-pressed="false">集市</button>
-        <button type="button" data-preview="lake" aria-pressed="false">镜湖</button>
+        <button type="button" data-preview="peak" aria-pressed="false">心峰</button>
       </div>
-      <small>可切换场景查看关系推进和对白样句，完整分场见各章。</small>
+      <small>选一个地点查看当前章节的样句和入口。</small>
     </aside>
   </div>
 
   <div class="metrics" aria-label="大纲规模">
-    <div class="metric"><strong>7<small> 章</small></strong><p>七章正篇，另有一段告白后短尾声</p></div>
-    <div class="metric"><strong>3<small> 类场景</small></strong><p>小屋同住 · 镇集约会 · 星落小径与镜湖出游</p></div>
-    <div class="metric"><strong>80–100<small> 分钟</small></strong><p>首轮阅读估计，包含停顿和可选对白</p></div>
+    <div class="metric"><strong>3<small> 章</small></strong><p>小屋日常 · 赶集采购 · 心峰合影</p></div>
+    <div class="metric"><strong>17<small> 场</small></strong><p>按播放顺序排列，带时段与演出</p></div>
+    <div class="metric"><strong>226<small> 条对白</small></strong><p>另有旁白、动作和音效标注</p></div>
   </div>
 
   <div class="workspace">
     <aside class="sidebar">
       <h3>阅读导航</h3>
-      <nav aria-label="剧情大纲目录">
-        <a href="#canon"><span>01</span>主线接续与感情基础</a>
-        <a href="#voice"><span>02</span>角色口吻与亲密写法</a>
-        <a href="#pace"><span>03</span>叙事节奏与回收</a>
-        <a href="#chapter-01"><span>一</span>到家的吻还没给</a>
-        <a href="#chapter-02"><span>二</span>本鸦要先尝一口</a>
-        <a href="#chapter-03"><span>三</span>我男朋友，焦边给他</a>
-        <a href="#chapter-04"><span>四</span>镜湖的十分钟归我</a>
-        <a href="#chapter-05"><span>五</span>今天换我照顾你</a>
-        <a href="#chapter-06"><span>六</span>七天以后吃什么</a>
-        <a href="#chapter-07"><span>七</span>很多个明天</a>
-        <a href="#epilogue"><span>续</span>今晚还是一起吃</a>
-        <a href="#making"><span>04</span>选项与制作口径</a>
-        <a href="#references"><span>05</span>参考作品与取法</a>
+      <nav aria-label="三章剧本目录">
+        <a href="#canon"><span>01</span>前情与称呼</a>
+        <a href="#pace"><span>02</span>剧情走向与节奏</a>
+        <a href="#chapter-01"><span>一</span>太阳都晒屁股了</a>
+        <a href="#chapter-02"><span>二</span>集市的篮子归你</a>
+        <a href="#chapter-03"><span>三</span>在心峰合一张影</a>
+        <a href="#making"><span>03</span>演出与录入</a>
       </nav>
-      <div class="note">包含六章主线及续篇结局剧透。各章对白均为新写样稿，时长是试读目标。</div>
+      <div class="note">各章标题下可直达任一场。鸦鸦始终称玩家为「冒险家」。</div>
     </aside>
 
     <main id="outline">
       <section id="canon" class="chapter">
-        <div class="section-label">STORY / 主线接续</div>
-        <h2>开场就是一对感情很好的恋人</h2>
-        <p>六章结束时，鸦鸦和冒险家已经彼此确认恋爱关系。两人都熟悉对方的拥抱、亲吻和同住习惯。故事接在主线最后那场「谁先回到家，输的人睡地板」的赛跑之后。鸦鸦照样用家务耍赖把他留下，再把七天私心都排进同一张清单。冒险家乐意陪她，也会抢笔加上自己想做的事。</p>
-        <p class="legend"><strong>续篇要解决的事。</strong> 打完六章，下一次睁眼已经没有试炼。两人在鸦鸦家、青藤村旁的镇集和野外把放下棋谱后的日子过起来。家务清单划完以后，鸦鸦主动说出她想要的以后。末章的告白是恋人郑重表达喜欢，并邀请对方把小屋也当成家。</p>
-        <h3>把六章的共同记忆写进恋人日常</h3>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="六章关系证据对照表">
-          <table>
-            <thead><tr><th scope="col">主线篇章</th><th scope="col">可以调用的共同记忆</th><th scope="col">续篇怎样接住</th></tr></thead>
-            <tbody>
-              <tr><td>序章及第一章<br><code>opening</code>、<code>boss_after_1</code></td><td>鸦鸦救了他，喜欢拿督战、家务和赊着的奖励逗他。</td><td>两人把欠着的奖励当恋人间的玩笑，见面亲一下叫“收利息”，比完打水漂还能当场讨。</td></tr>
-              <tr><td>青藤村<br><code>chapter2</code>、<code>boss_after_2</code></td><td>她表面关心谁做家务，胜后却承认人回来比棋谱重要。</td><td>去镇集自然说“我男朋友”，记得替他留焦边蜜饼。收尾仍把一起吃饭排进清单。</td></tr>
-              <tr><td>镜湖<br><code>chapter3</code>、<code>boss_after_3</code></td><td>那时她拿岸滑解释牵着不放，也最爱让他猜心思。</td><td>再去的时候肩膀挨着看湖，鸦鸦明知道石阶不滑，还故意往他身边坐一点。</td></tr>
-              <tr><td>迷雾沼泽<br><code>boss_after_4</code></td><td>冒险里怕走散，她越担心越嘴硬，抓住就不放。</td><td>集市里边挽边逛。碰上暴雨两人先配合关窗，忙完再说以后冷了就喊对方。</td></tr>
-              <tr><td>寒星原<br><code>chapter5</code>、<code>boss_after_5</code></td><td>她先拿符御寒，符用尽以后愿意借他的肩膀。</td><td>小屋里早知道对方睡哪边暖和。雨后她把手放进他手里，也会直接说想多抱一会儿。</td></tr>
-              <tr><td>神殿至尾幕<br><code>chapter6</code>、<code>boss_after_6</code>、<code>ending</code></td><td>六页齐，鸦鸦说反悔，冒险家也说不想走得那么快，最后抢跑喊着回家。</td><td>七天假期从抢跑开始。原先回原世界的约定依旧有效。最后由她把小屋的备用钥匙给他，把“回家”变成可以兑现的以后。</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="document-meta">主线篇章、对白和口吻依据见 <a href="../../剧情配置/剧情配置.md">《剧情配置.md》</a>。本篇按已交往的关系前提展开，小屋的七天假期是续篇提案。</p>
-      </section>
-
-      <section id="voice" class="chapter">
-        <div class="section-label">VOICE / 角色口吻</div>
-        <h2>她在自己男朋友面前敢逗，也敢黏</h2>
-        <h3>鸦鸦 · 爱使坏，也早就习惯让他照顾</h3>
-        <p>保留“本鸦”“冒险家”“哼”和假装要算账的主线口气。她爱把吻说成一点利息，把想挽他胳膊写成怕丢人，把要他陪整天说成七天家务。玩笑一落地，身体比话诚实。她顺手靠上他肩膀，出门会等在他右边，累了也会埋在他怀里开口说抱紧一点。她有自己的符纸、熟摊主和喜欢的吃法，也希望冒险家对她的事上心。</p>
-        <h3>冒险家 · 熟悉她的暗号，也会争着给她惊喜</h3>
-        <p>主线里他会喊“鸦鸦大人”、讲条件，也敢用抢跑逗她。续篇允许他接过亲吻立刻回亲，主动约她出去玩，还能猜到她把手留在身侧是要牵。嘴上吃点亏可以自嘲，看到她受凉就让她坐下、主动擦头发。谈以后时，他用一两件自己真想做的事回应她。</p>
-        <figure class="scene-sample">
-          <figcaption>口吻对照 · 已交往的两个人只说半句也懂</figcaption>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>你手往哪放呢？本鸦是说可以再抱紧点。</dd></div>
-            <div><dt>冒险家</dt><dd>我还以为借肩膀要计时。现在续到什么时候？</dd></div>
-            <div><dt>鸦鸦</dt><dd>到我想起来要跟你吵架的时候。……今天估计还早。</dd></div>
-          </dl>
-        </figure>
-        <p><strong>每场亲昵要有自己的意思。</strong> 进门的吻让人知道他们平时怎么相处。厨房逗弄让对方笑，集市挽手带一点在外面的得意，雨后拥抱是忙完才有空互相照顾。告白时两人连怎么靠都熟悉，她这次想说的是想这样过多久。镜头可以从手、肩膀、被角、杯沿上取细节，对话仍留给两个人惯常的回嘴和停顿。</p>
+        <div class="section-label">STORY / 六章之后</div>
+        <h2>两人已经是恋人</h2>
+        <p>故事接在六页棋谱集齐、两人赛跑回到小屋之后。鸦鸦昨晚嘴上强行留人，这一早已经起来给冒险家排好了家务。冒险家愿意留下，也会趁她管这管那的时候跟她讨价还价。拥抱、同床和一起吃饭是他们熟悉的日子。</p>
+        <p class="legend"><strong>称呼与说话方式。</strong> 鸦鸦对玩家的称呼始终是「冒险家」，对话可以用「你」，常把想要他陪着说成吩咐，得意时说「本鸦」。冒险家会喊「鸦鸦大人」，会顶嘴，也会把她喜欢吃什么、鞋哪儿磨脚记下来。到了心峰，她的表白说的是已经相爱的两个人以后怎么生活。</p>
+        <p class="document-meta">前情与角色口吻依据见 <a href="../../剧情配置/剧情配置.md">《剧情配置.md》</a>。</p>
       </section>
 
       <section id="pace" class="chapter">
-        <div class="section-label">PACING / 七天节奏</div>
-        <h2>从七天约会，写到还想一起过的以后</h2>
-        <p>两人的情侣感从门口就立起来，章与章之间变的是这一天碰上什么事，以及他们怎样一起过。用抢跑、抢勺和集市互送礼物做轻快段落。镜湖安排一段真正玩开了的约会，最后一起安静看水。雨夜用小麻烦写默契和互相心疼，隔天才给彼此余地谈七天之后的生活。</p>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="章节节奏与估计时长">
-          <table class="pacing-table">
-            <thead><tr><th scope="col">章节</th><th scope="col">情绪步调</th><th scope="col">情侣互动与本章推进</th><th scope="col">估时</th></tr></thead>
+        <div class="section-label">PACING / 三章结构</div>
+        <h2>屋里忙完，和她一起出门</h2>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="三章分场与情绪节奏">
+          <table>
+            <thead><tr><th scope="col">章节</th><th scope="col">场景推进</th><th scope="col">节奏与章尾</th></tr></thead>
             <tbody>
-              <tr><td><a href="#chapter-01">一 · 当晚</a></td><td>抢跑的快嘴接熄灯后的放松</td><td>到家吻、同床分被。鸦鸦宣布七天都要他陪</td><td>7–9 分钟</td></tr>
-              <tr><td><a href="#chapter-02">二 · 第一天</a></td><td>做饭互相捣乱，画符后慢下来</td><td>互喂、系围裙、靠肩，约好第二天赶集</td><td>12–16 分钟</td></tr>
-              <tr><td><a href="#chapter-03">三 · 第二天</a></td><td>镇集热闹，转进空街留两句私话</td><td>自然叫男朋友，挽手逛街，互送成对的杯子</td><td>12–16 分钟</td></tr>
-              <tr><td><a href="#chapter-04">四 · 第三天</a></td><td>先野餐踩水和比赛，再并肩看湖</td><td>亲吻是老规矩里的奖励。两人盖着半件披风谈共同的回忆</td><td>14–18 分钟</td></tr>
-              <tr><td><a href="#chapter-05">五 · 第四、五天</a></td><td>雨夜抢修用短句，忙完抱久一点</td><td>互相擦干雨水，冷了就开口，两个人都能照顾对方</td><td>10–13 分钟</td></tr>
-              <tr><td><a href="#chapter-06">六 · 第六天</a></td><td>日常亲昵里留出安静的两三页</td><td>从七天清单谈到下次约会和回家的约定</td><td>8–11 分钟</td></tr>
-              <tr><td><a href="#chapter-07">七 · 第七天</a></td><td>熟悉地挨着坐，等鸦鸦把真话说完</td><td>她郑重说喜欢，请他把这里也当成家。亲吻和钥匙回收开场</td><td>11–15 分钟</td></tr>
-              <tr><td><a href="#epilogue">尾声 · 次晨</a></td><td>回到两三轮自在的情侣对白</td><td>照常出门亲一下，回来有一顿已经约好的饭</td><td>3–4 分钟</td></tr>
+              <tr><td><a href="#chapter-01">一 · 小屋</a></td><td>叫醒 → 做家务 → 做饭吃饭 → 练照明 → 洗脚 → 抱着睡觉</td><td>早晨起得快，厨房和练习有来有回。洗脚把斗嘴推到最响，熄灯后收在鸦鸦那句晚安。</td></tr>
+              <tr><td><a href="#chapter-02">二 · 集市</a></td><td>发现缺粮 → 买米和菜 → 分蜜饼 → 买最后的鸡蛋 → 回家收好做饭</td><td>走摊位时对白短。中间让两人停下来分吃一块热饼，回家做出新买食材的晚饭。路牌留下心峰的去处。</td></tr>
+              <tr><td><a href="#chapter-03">三 · 心峰</a></td><td>看心形山脊 → 问结婚 → 发现相机 → 拍鸦鸦 → 地标合影 → 表白和下山</td><td>山景和结婚玩笑先松后紧，拍照的两次返工恢复拌嘴。合影完成后放慢，让两段告白连续落下，再用下山和回家收尾。</td></tr>
             </tbody>
           </table>
         </div>
-        <p><strong>三处前后照应。</strong> 钥匙从抢先回家也打不开门，变成小屋有一把属于他。两只杯子从连买礼物都想得一样，变成桌上天天有两个人的位置。七天清单由鸦鸦一个人写满，后来两个人一起加上想去的地方，到第六天特地留一行给明天。告白走到这里，玩家已经看过这份日常是什么样。</p>
       </section>
 
       <section id="chapter-01" class="chapter">
         <div class="section-label">CHAPTER / 01</div>
-        <h2>第一章 · 到家的吻还没给</h2>
-        <p class="chapter-meta">第六章胜后当晚 · 小屋门前 → 熄灯后的卧区 · 7–9 分钟</p>
-        <ol class="beat-list">
-          <li><strong>跑赢了也进不了门。</strong> 紧接主线末句。冒险家抢先到小屋才想起自己没带钥匙。鸦鸦落后几步，还能慢悠悠把门打开。她叫他转过来，顺手亲他一下。他接得自然，接着问赌输的人今晚到底铺不铺床。开场用一句对白和一个动作让玩家认出他们是早已亲密的恋人。</li>
-          <li><strong>魔女强行安排七天休假。</strong> 鸦鸦从椅背取下他的冒险包，把七天清单扣在包上。第一项是陪她吃饭，下面还有逛集、出去玩和给她捶肩。冒险家故意问家政员工有没有休息日，伸手添一句『我也有权挑要去的地方』。她说成交，再把包还给他。</li>
-          <li><strong>把那场地板赌约收掉。</strong> 输的人去铺床，晚上照样睡在一起。鸦鸦很会卷被子，他熟练地拽出自己那一角。她朝后伸手，他就圈住她。灯关了以后，让他们说两句今天终于不用守夜的闲话，听一会儿炉子里剩下的柴响。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 跑第一名的人没带钥匙</figcaption>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>到了！这次真是我先回家。</dd></div>
-            <div><dt>鸦鸦</dt><dd>真厉害。你打算在门口睡到明天吗？</dd></div>
-          </dl>
-          <p class="stage-direction">鸦鸦开了门，扯一下他的衣领。他低头同她碰了碰嘴唇。亲完两个人站在门边，谁也没急着松手。</p>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>这算到家的吻。六页都找齐了，奖励还欠着呢。</dd></div>
-            <div><dt>鸦鸦</dt><dd>那是利息。剩下的拿七天来还，归本鸦了。</dd></div>
-            <div><dt>冒险家</dt><dd>你还挺会算。行，七天我陪你。晚上别又把被子全卷走。</dd></div>
-            <div><dt>鸦鸦</dt><dd>你抱紧点啊。本鸦睡着了怎么知道。</dd></div>
-          </dl>
-        </figure>
+        <h2>第一章 · 太阳都晒屁股了</h2>
+        <p class="chapter-meta">第六章通关后的清晨到夜里 · 鸦鸦的小屋</p>
+        <p>冒险家以为通关以后终于可以睡懒觉。鸦鸦已经替他安排好了今天。把家务、做饭、练魔法、洗脚和熄灯写成同一天，白天有来有回地斗嘴，夜里留出两人抱着睡觉的安静。</p>
+        <ul class="scene-links" aria-label="本章分场">
+          <li><a href="#c01_wake">叫起床</a></li>
+          <li><a href="#c01_chores">鸦鸦的家务单</a></li>
+          <li><a href="#c01_meal">一起做饭，一起吃</a></li>
+          <li><a href="#c01_magic">让一颗棋子亮起来</a></li>
+          <li><a href="#c01_wash">长靴和一盆热水</a></li>
+          <li><a href="#c01_goodnight">洗完脚就抱着睡</a></li>
+        </ul>
+        <article class="script-scene" id="c01_wake">
+          <h3>场景 01 · 叫起床</h3>
+          <p class="script-meta">卧室 · 清晨</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>窗帘拉开半扇，日光从地板爬上被子。冒险家把被角往头上一盖，鸦鸦站到他睡的那一侧。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，太阳都晒屁股了还睡呢</dd></div>
+              <div><dt>冒险家</dt><dd>听见了。你把窗帘拉回去，太阳就当没晒到。</dd></div>
+              <div><dt>鸦鸦</dt><dd>昨晚是谁在小屋门口跑得飞快，非说以后都要第一个回家？</dd></div>
+              <div><dt>冒险家</dt><dd>那是回家比赛。起床比赛我可没报名。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦替你报了。睁眼、穿衣、下床，慢一项就多扫一间。</dd></div>
+              <div><dt>冒险家</dt><dd>咱家就这么几间，你再加就得让我去扫隔壁了。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你还想给别人扫？本鸦这边的活还没干完呢。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>冒险家从被子里探出一只手，顺手勾住她的手指。</dd></div>
+              <div><dt>冒险家</dt><dd>那鸦鸦大人能不能先下来，让我抱一会儿再起？</dd></div>
+              <div><dt>鸦鸦</dt><dd>半会儿。你每次说一会儿，最后都是本鸦陪你赖床。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她往床沿坐了一下。冒险家把脸搁在她肩头，她抬手摸了摸他的头发。</dd></div>
+              <div><dt>冒险家</dt><dd>你也没着急走啊。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦在等你醒透。……醒了就起来，早饭还没吃。</dd></div>
+              <div><dt>冒险家</dt><dd>原来鸦鸦大人也饿着等我呢。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你知道就动作快点。衣服在椅子上，扣子扣好了再出来。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c01_chores">
+          <h3>场景 02 · 鸦鸦的家务单</h3>
+          <p class="script-meta">起居间 · 上午</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>吃过早饭，门后早就靠着扫帚，窗边有待晒的被子。桌上压着几张还没干透的符纸。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，先扫地，再去把被子晒了。桌子等本鸦把符纸收走再擦。</dd></div>
+              <div><dt>冒险家</dt><dd>你在我起床以前排了多少活？</dd></div>
+              <div><dt>鸦鸦</dt><dd>本来还有劈柴。看你刚才抱人还算老实，柴给你减了。</dd></div>
+              <div><dt>冒险家</dt><dd>抱一次减一项？那剩下的你先别动。</dd></div>
+              <div><dt>鸦鸦</dt><dd>只算头一次。扫帚拿反了，手给我。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她把扫帚柄转回去，拍掉他袖口蹭上的灰，顺手把挽得太松的袖子折紧。</dd></div>
+              <div><dt>冒险家</dt><dd>我还没到连扫帚都得你教的地步。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那你给本鸦看看，窗台下面那一撮是怎么躲过你法眼的。</dd></div>
+              <div><dt>冒险家</dt><dd>你眼睛怎么这么尖，战场上是不是也这么盯我？</dd></div>
+              <div><dt>鸦鸦</dt><dd>当然。你做什么，本鸦不看着点才不放心。</dd></div>
+              <div><dt>冒险家</dt><dd>那看好了，今天我连窗台给你一起擦。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>冒险家抬起被子往院子走。鸦鸦抱起符纸给他让门，外头的风掀起被角。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，拿稳那边。掉地上了今晚还是咱俩盖。</dd></div>
+              <div><dt>冒险家</dt><dd>知道了。你夹左边，我夹右边，省得它跟鸦鸦大人一起卷到我这边来。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦什么时候卷过你的被子？</dd></div>
+              <div><dt>冒险家</dt><dd>昨晚。你卷过去以后还说我抱得太松。</dd></div>
+              <div><dt>鸦鸦</dt><dd>……少翻旧账。等会儿给你留最好吃的那块，行了吧。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c01_meal">
+          <h3>场景 03 · 一起做饭，一起吃</h3>
+          <p class="script-meta">厨房和饭桌 · 中午</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>太阳升到窗顶，鸦鸦把一把米和两颗鸡蛋摆上灶台。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，米淘两遍。你切菜，本鸦看火。</dd></div>
+              <div><dt>冒险家</dt><dd>你教我打试炼的时候都没说得这么细。</dd></div>
+              <div><dt>鸦鸦</dt><dd>打输了可以再打。你把米倒进水沟，中午咱俩只能看着空碗亲热。</dd></div>
+              <div><dt>冒险家</dt><dd>那我先把米保住。你把菜刀递过来。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦从他身后绕过，把刀柄朝他放在案板边。他偏过脸碰了碰她的额头。</dd></div>
+              <div><dt>鸦鸦</dt><dd>切菜就看菜。等你切完，本鸦又不会跑。</dd></div>
+              <div><dt>冒险家</dt><dd>我看的是你鬓角沾了根葱。别动。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你还真摘啊。放你那碗，好歹也下过刀了。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>米香起来。鸦鸦把蛋铺进锅里，冒险家站在一旁接她递来的盘子。</dd></div>
+              <div><dt>鸦鸦</dt><dd>尝一口。这次咸淡让你说。</dd></div>
+              <div><dt>冒险家</dt><dd>你吹过没有？上回我烫到舌头，鸦鸦大人笑了我半天。</dd></div>
+              <div><dt>鸦鸦</dt><dd>吹过了。张嘴。</dd></div>
+              <div><dt>冒险家</dt><dd>刚好。你也尝尝，我给你挑没有葱的那块。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦接过那一口，拿筷子把盘里煎得最脆的蛋边拨到他碗里。</dd></div>
+              <div><dt>冒险家</dt><dd>原来上午说给我留最好吃的，是真的啊。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦说过的话，你倒只挑有吃的那几句记。</dd></div>
+              <div><dt>冒险家</dt><dd>别的我也记。比如某人说要等我一起吃饭。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那你就吃慢一点。本鸦还没吃完呢。</dd></div>
+              <div><dt>旁白</dt><dd>饭桌下，她拿脚尖碰了一下我的鞋。我们接着吃，谁也没急着去洗碗。</dd></div>
+              <div><dt>鸦鸦</dt><dd>吃完休息一会儿。下午过来练魔法。</dd></div>
+              <div><dt>冒险家</dt><dd>怎么刚喂完饭就开始上课？</dd></div>
+              <div><dt>鸦鸦</dt><dd>因为冒险家下午也归本鸦。筷子给我，再给你夹一块。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c01_magic">
+          <h3>场景 04 · 让一颗棋子亮起来</h3>
+          <p class="script-meta">小屋后院 · 下午</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>桌上放一颗普通棋子。鸦鸦坐到他旁边，先让他把手摊开。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，今天练最简单的照明。棋子亮起来，在手心稳住三息就算过。</dd></div>
+              <div><dt>冒险家</dt><dd>打完神殿还有作业啊，真想让里面那家伙替我学。</dd></div>
+              <div><dt>鸦鸦</dt><dd>它不用给本鸦半夜找东西。你要。坐过来，本鸦先做一遍。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她指尖一收，棋子亮起一圈很小的光。光稳稳停在她掌上。</dd></div>
+              <div><dt>冒险家</dt><dd>你刚才念了什么？</dd></div>
+              <div><dt>鸦鸦</dt><dd>没念。你先感觉光往哪里跑，再把它拢住。别把肩绷得那么紧。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>他的棋子冒出一个小亮点，随即一抖，把光跑丢了。</dd></div>
+              <div><dt>冒险家</dt><dd>亮了。虽然它好像对我没什么留恋。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你手一抬它就乱跑。手腕给我，冒险家。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦扶着他的腕子，带他把手放稳。棋子又亮起来，这回没晃。</dd></div>
+              <div><dt>鸦鸦</dt><dd>对，就这样。数三下，再松手。</dd></div>
+              <div><dt>冒险家</dt><dd>你靠这么近，我现在数得出来的只有你的睫毛。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那就别数睫毛，看棋。……本鸦也没说要松开你。</dd></div>
+              <div><dt>冒险家</dt><dd>一，二，三。你看，没灭。</dd></div>
+              <div><dt>鸦鸦</dt><dd>学得还行。哪天本鸦夜里找不着东西，你过来照。</dd></div>
+              <div><dt>冒险家</dt><dd>多照一会儿有没有奖励？</dd></div>
+              <div><dt>鸦鸦</dt><dd>有。今天晚上给你洗碗放假。</dd></div>
+              <div><dt>冒险家</dt><dd>那你呢？</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦负责看着冒险家把棋子练熟，顺便陪你坐到太阳下去。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她才放开他的腕子，又把肩贴回来。冒险家让光在两个人掌心之间慢慢暗下去。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c01_wash">
+          <h3>场景 05 · 长靴和一盆热水</h3>
+          <p class="script-meta">卧区床边 · 入夜</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>吃过晚饭，鸦鸦坐在矮凳上，长靴还没脱。冒险家端来兑好的热水，拿自己的手指试过温度。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，水放近一点。今天站了一天，你给本鸦洗。</dd></div>
+              <div><dt>冒险家</dt><dd>知道了。脚伸过来，先别碰盆沿，小心烫。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>他帮她把靴子脱下来，放在门边。鸦鸦正等着，他皱了一下鼻子。</dd></div>
+              <div><dt>冒险家</dt><dd>哎呦，你的脚天天闷在长靴里面这也太臭了吧，鸦鸦大人你想熏死我吗</dd></div>
+              <div><dt>冒险家</dt><dd>你平时在家里面就没必要穿靴子了吧</dd></div>
+              <div><dt>鸦鸦</dt><dd>我就穿怎么了，冒险家你不就好这口吗</dd></div>
+              <div><dt>冒险家</dt><dd>我好的是鸦鸦大人。你那双靴子今晚能不能在门外单独睡？</dd></div>
+              <div><dt>鸦鸦</dt><dd>快点给本鸦洗脚，再多嘴信不信本鸦把脚塞你嘴里</dd></div>
+              <div><dt>冒险家</dt><dd>好好好。我闭嘴，你先把脚放水里。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你要是不想洗的话就给本鸦舔干净吧</dd></div>
+              <div><dt>冒险家</dt><dd>我洗，我洗。鸦鸦大人把椅子坐稳。水温怎么样？</dd></div>
+              <div><dt>鸦鸦</dt><dd>嗯，刚好。脚跟今天磨得有点疼，那里轻一点。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>他把动作放慢，替她洗干净，再用干巾擦掉水珠。她扶着他的肩，安静了片刻。</dd></div>
+              <div><dt>冒险家</dt><dd>疼的地方我看一下。皮还好，明天换双软一点的鞋吧。</dd></div>
+              <div><dt>鸦鸦</dt><dd>一双拖鞋也值得你跟本鸦斗这么久。拿来吧，放床边。</dd></div>
+              <div><dt>冒险家</dt><dd>你要穿啊？</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦在家穿不穿靴子自己决定。……今天这双软底的归我，不许你拿走。</dd></div>
+              <div><dt>冒险家</dt><dd>给你留的。另一只在脚边，别踩空。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，水倒完就回来，别磨蹭。床上给你留着地方。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c01_goodnight">
+          <h3>场景 06 · 洗完脚就抱着睡</h3>
+          <p class="script-meta">卧室 · 熄灯前后</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>盆收到了门外。冒险家把亮着的棋子捧到床边，鸦鸦已经躺在里面，只把外侧的被子掀起来一点。</dd></div>
+              <div><dt>冒险家</dt><dd>下午那招还挺实用。你看，没让你摸黑找拖鞋。</dd></div>
+              <div><dt>鸦鸦</dt><dd>不错。放床头吧，别亮一晚上。</dd></div>
+              <div><dt>冒险家</dt><dd>我的被子呢？</dd></div>
+              <div><dt>鸦鸦</dt><dd>在本鸦手里。冒险家，你往这边躺，我就分你。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>他刚躺进去，鸦鸦就抱住他，把下巴搁在他肩上。</dd></div>
+              <div><dt>冒险家</dt><dd>你这么抱，我明早要是还睡懒觉，你可得负一半的责。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那明早本鸦照样叫你。现在先别说话，让我多抱一会儿。</dd></div>
+              <div><dt>旁白</dt><dd>棋子的光暗下去。她手臂还圈着我，我把她那边的被角也拉好。</dd></div>
+              <div><dt>鸦鸦</dt><dd>晚安，冒险家。</dd></div>
+            </dl>
+          </div>
+        </article>
       </section>
 
       <section id="chapter-02" class="chapter">
         <div class="section-label">CHAPTER / 02</div>
-        <h2>第二章 · 本鸦要先尝一口</h2>
-        <p class="chapter-meta">第一天 · 厨房 → 桌边画符 → 午后歇息 · 12–16 分钟</p>
-        <ol class="beat-list">
-          <li><strong>起床就有两个人的动静。</strong> 鸦鸦从背后靠到正在切菜的冒险家肩上，伸手偷摘一块蜜饼。他很熟练地把手里那块焦边递给她，又抱怨她说只尝一口从来算不准。用两人早就知道对方口味的动作带出默契。</li>
-          <li><strong>互喂一口还能斗嘴。</strong> 冒险家替她系好围裙带，顺手擦掉她嘴角的蜜。她却把同一把勺伸给他，笑他尝味还盯着人看。他还她一口，鸦鸦趁他转身搅锅时在脸颊亲了一下，理直气壮说自己是在结本日饭钱。</li>
-          <li><strong>玩闹完还能一起各忙各的。</strong> 她给镇上的摊主画防潮符，他给摇晃的桌脚垫木片。忙完后共用一条薄毯，她靠到他肩上，把脚往毯子里缩。冒险家说次日约会想去镇上的烤炉摊，她拿清单一看，已经留出整下午。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 两个人用同一把勺</figcaption>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>本鸦要先尝一口。</dd></div>
-            <div><dt>冒险家</dt><dd>你这句话我听过。上次你给我留了个空盘子。</dd></div>
-            <div><dt>鸦鸦</dt><dd>那你来喂。我这次吃多少，你看着。</dd></div>
-          </dl>
-          <p class="stage-direction">他把勺往下放凉了些。她尝完没有走，伸手把他嘴角那点蜜抹掉。</p>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>你刚才尝的是锅里的，这个怎么算？</dd></div>
-            <div><dt>鸦鸦</dt><dd>男朋友那份另算。你转过来，本鸦结个账。</dd></div>
-          </dl>
-          <p class="stage-direction">她在他脸颊亲了一下，趁他回头笑的时候接过了锅铲。</p>
-        </figure>
+        <h2>第二章 · 集市的篮子归你</h2>
+        <p class="chapter-meta">第二天清晨到傍晚 · 小屋 ↔ 青藤村旁的小镇集市</p>
+        <p>米缸和菜筐同时见底。鸦鸦决定怎么买，冒险家负责搬运、装篮和拿回家。出门是补粮，逛起来就是约会。最后把食材带回小屋，用新买来的东西做上晚饭。</p>
+        <ul class="scene-links" aria-label="本章分场">
+          <li><a href="#c02_pantry">食柜里没东西做饭了</a></li>
+          <li><a href="#c02_grain">先买米，重的放底下</a></li>
+          <li><a href="#c02_buns">蜜饼一人一半</a></li>
+          <li><a href="#c02_eggs">鸡蛋最后买，谁也别逞强</a></li>
+          <li><a href="#c02_return">东西都买回来了</a></li>
+        </ul>
+        <article class="script-scene" id="c02_pantry">
+          <h3>场景 01 · 食柜里没东西做饭了</h3>
+          <p class="script-meta">小屋厨房 · 清晨</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦脚上穿着昨晚摆在床边的软底拖鞋。她掀开米罐，抓了一下没抓到东西。菜筐里只剩两根葱。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，你来一下。</dd></div>
+              <div><dt>冒险家</dt><dd>先说清楚，我今天真没赖床。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦知道。你看看米罐，再看看菜筐。</dd></div>
+              <div><dt>冒险家</dt><dd>一罐子响声，两根葱。这能做什么？</dd></div>
+              <div><dt>鸦鸦</dt><dd>做个空锅给你看。找篮子去，今天得去镇上赶集。</dd></div>
+              <div><dt>冒险家</dt><dd>我还以为你要教我用魔法变出早饭。</dd></div>
+              <div><dt>鸦鸦</dt><dd>昨天还只会点亮一颗棋子，今天就想变饭？走吧，先去买现成的。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她写下米、鸡蛋、土豆、青菜和蜜饼。冒险家凑到旁边看了一眼。</dd></div>
+              <div><dt>冒险家</dt><dd>蜜饼也算物资？</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家路上会喊饿。本鸦不想买到一半再回头哄你。</dd></div>
+              <div><dt>冒险家</dt><dd>那我负责吃？</dd></div>
+              <div><dt>鸦鸦</dt><dd>你负责拿。买什么听本鸦的，袋子满了再给你个篮子。</dd></div>
+              <div><dt>冒险家</dt><dd>不负责挑，倒负责扛？鸦鸦大人给自己分的活真好。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你要是想挑也行。先说说土豆怎么买，答得好本鸦让你做主。</dd></div>
+              <div><dt>冒险家</dt><dd>我去拿篮子。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦把单子塞进自己口袋，走到门口换上长靴，回头发现他正瞄那双拖鞋。</dd></div>
+              <div><dt>鸦鸦</dt><dd>看什么？出门当然穿靴子。你给本鸦找的那双，留着回来穿。</dd></div>
+              <div><dt>冒险家</dt><dd>我什么都没说。等我把空篮子提上。</dd></div>
+              <div><dt>鸦鸦</dt><dd>拿上就过来。冒险家走本鸦旁边。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c02_grain">
+          <h3>场景 02 · 先买米，重的放底下</h3>
+          <p class="script-meta">小镇集市 · 粮摊与菜摊</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>摊棚刚支好，粮袋一字排在路边。鸦鸦挽着他到第一家，冒险家把空篮放在脚边。</dd></div>
+              <div><dt>鸦鸦</dt><dd>先买米，挑这边的。冒险家，布袋给我。</dd></div>
+              <div><dt>冒险家</dt><dd>要装到顶吗？</dd></div>
+              <div><dt>鸦鸦</dt><dd>一小袋就行。买够两个人这一阵吃的，背得动才不会把你落在半路。</dd></div>
+              <div><dt>粮摊主</dt><dd>这一袋给你们系紧了，回去先搁高一点，别挨地。</dd></div>
+              <div><dt>鸦鸦</dt><dd>好。冒险家，这袋放最下面。鸡蛋得最后拿。</dd></div>
+              <div><dt>冒险家</dt><dd>已经知道谁背了，你看我都自己蹲下来了。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦替他把粮袋往肩内侧挪了挪，又把背带抻平。</dd></div>
+              <div><dt>鸦鸦</dt><dd>挨着肩会硌。这样呢？</dd></div>
+              <div><dt>冒险家</dt><dd>轻多了。鸦鸦大人还负责售后。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦还指望你把后一条街的东西也拿回去，当然得管。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>下一摊摆着土豆和青菜。冒险家拿起一颗特别大的土豆。</dd></div>
+              <div><dt>冒险家</dt><dd>这颗够大，省得挑好几个。</dd></div>
+              <div><dt>鸦鸦</dt><dd>放回去。上面都青了。拿旁边那两颗硬实的。</dd></div>
+              <div><dt>冒险家</dt><dd>所以挑土豆的答案是小的？</dd></div>
+              <div><dt>鸦鸦</dt><dd>挑好的。青菜也要挑叶子挺的。你扶篮子，本鸦拿。</dd></div>
+              <div><dt>菜摊主</dt><dd>葱给你们捎两根吧。</dd></div>
+              <div><dt>鸦鸦</dt><dd>家里还有。给我加一小把香叶就好，冒险家喜欢汤里有那个味。</dd></div>
+              <div><dt>冒险家</dt><dd>这你也记得？</dd></div>
+              <div><dt>鸦鸦</dt><dd>你上次添了两回汤，还把锅里的香叶捞光了。谁想忘也忘不了。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c02_buns">
+          <h3>场景 03 · 蜜饼一人一半</h3>
+          <p class="script-meta">集市烤炉摊 · 上午</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>烤炉旁烟气暖融融的，炉门一开就闻得见糖香。鸦鸦停下来，用胳膊把冒险家也带停。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，站这儿。你刚才差点跟着别人过拐角了。</dd></div>
+              <div><dt>冒险家</dt><dd>我是在闻这边的饼。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那就贴着本鸦闻。今天陪谁出门，自己心里有数吧。</dd></div>
+              <div><dt>冒险家</dt><dd>有数。你要是再挽紧一点，我胳膊也能记住。</dd></div>
+              <div><dt>饼摊主</dt><dd>蜜饼刚出炉，要整块还是切开？</dd></div>
+              <div><dt>鸦鸦</dt><dd>切一半，焦边给冒险家。另一半给我。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她捏着油纸，把一半饼送到他嘴边。他手上还抱着两袋东西，顺势咬了一口。</dd></div>
+              <div><dt>冒险家</dt><dd>好吃。你也咬一口试试焦的。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你主动分给本鸦的，等会儿可别赖我抢。</dd></div>
+              <div><dt>冒险家</dt><dd>我就怕你只剩一个角还说分了一半。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她真的只咬了一小口，接着用拇指拭掉他嘴边的碎屑。</dd></div>
+              <div><dt>鸦鸦</dt><dd>这回呢？</dd></div>
+              <div><dt>冒险家</dt><dd>这回我还想给你再咬一口。</dd></div>
+              <div><dt>鸦鸦</dt><dd>留着吧。等你把东西全提到家，本鸦还会分你吃。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c02_eggs">
+          <h3>场景 04 · 鸡蛋最后买，谁也别逞强</h3>
+          <p class="script-meta">集市尾口 · 午前</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>米和菜都装好了。鸦鸦逐个检查鸡蛋的壳，挑出一篮用草垫过的，双手递给冒险家。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，这个放上面。回去别像打完神殿那天一样抢跑，走慢点。</dd></div>
+              <div><dt>冒险家</dt><dd>谁还会抱着一篮鸡蛋跟你比赛。</dd></div>
+              <div><dt>鸦鸦</dt><dd>你啊。别人一激你就忘。</dd></div>
+              <div><dt>冒险家</dt><dd>能激我的也就鸦鸦大人。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她抬脸看了他一眼，抿住笑，把他搭在胳膊上的一小包香叶拿过来。</dd></div>
+              <div><dt>冒险家</dt><dd>怎么，鸦鸦大人亲自拿东西？</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦要腾你一只手出来。空着的那只给我。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>冒险家把篮子抱稳，空出右手。两个人牵着往集市出口走。</dd></div>
+              <div><dt>冒险家</dt><dd>那下一次还这么分工？</dd></div>
+              <div><dt>鸦鸦</dt><dd>嗯。本鸦挑，你拿。你走累了就说，咱俩找地方坐，篮子放脚边。</dd></div>
+              <div><dt>冒险家</dt><dd>那我现在就有个要求。过市场那块路牌的时候，等我看一眼。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家想看哪儿？指给我。</dd></div>
+              <div><dt>冒险家</dt><dd>上面写着心峰，名字还挺特别的。</dd></div>
+              <div><dt>鸦鸦</dt><dd>明天有空，本鸦带你去。今天先回家把鸡蛋放好。</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="script-scene" id="c02_return">
+          <h3>场景 05 · 东西都买回来了</h3>
+          <p class="script-meta">小屋厨房和饭桌 · 午后至傍晚</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>冒险家把东西一件件从篮子里拿出来。米归进罐子，鸡蛋搁稳，青菜在凉处放好。</dd></div>
+              <div><dt>鸦鸦</dt><dd>鸡蛋没碎，菜叶也没压烂。冒险家今天干得好。</dd></div>
+              <div><dt>冒险家</dt><dd>你前半句夸蛋，后半句才轮到我。</dd></div>
+              <div><dt>鸦鸦</dt><dd>过来，本鸦补给你。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>她仰脸亲他一下，把自己咬过一角的半块蜜饼也递过去。</dd></div>
+              <div><dt>冒险家</dt><dd>这趟集赶得还值。晚上吃什么？</dd></div>
+              <div><dt>鸦鸦</dt><dd>土豆煮汤，青菜留到最后下。冒险家，把你爱吃的香叶也洗了。</dd></div>
+              <div><dt>冒险家</dt><dd>今晚还按昨天分工？我切菜，你看火。</dd></div>
+              <div><dt>鸦鸦</dt><dd>嗯。锅里先做两个人的份，明天出去玩的时候再带一点，土豆煮熟了装到食盒里。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>饭盛上桌。空了的食柜重新有了东西，冒险家朝她那边推了推刚盛好的碗。</dd></div>
+              <div><dt>冒险家</dt><dd>明天真去心峰？你今天都没跟我说那是什么地方。</dd></div>
+              <div><dt>鸦鸦</dt><dd>明天到了自己看。冒险家，空篮子挂门后。明天你得给本鸦留出两只手。</dd></div>
+              <div><dt>冒险家</dt><dd>都让我拿什么？</dd></div>
+              <div><dt>鸦鸦</dt><dd>到时候就知道了。现在先吃饭，汤快凉了。</dd></div>
+            </dl>
+          </div>
+        </article>
       </section>
 
       <section id="chapter-03" class="chapter">
         <div class="section-label">CHAPTER / 03</div>
-        <h2>第三章 · 我男朋友，焦边给他</h2>
-        <p class="chapter-meta">第二天 · 青藤村旁的镇集 → 傍晚返程 · 12–16 分钟</p>
-        <ol class="beat-list">
-          <li><strong>公开场合也自然牵着。</strong> 鸦鸦牵着他进镇，把防潮符交给熟摊主。对方问右边那位要吃什么，她说「我男朋友要那块焦边」，随即转头问他今天想不想换口味。冒险家再替她点平时舍不得多买的那份。亲昵和熟悉都能被旁人听见。</li>
-          <li><strong>用小约会做一场反将。</strong> 清单只写买盐，她其实绕了路要给他挑杯子。他早发现她总试着看哪个把手不硌手，也悄悄给她挑一只。两人同时伸手结账，发现选的是一对。玩家可给鸦鸦挑青釉或红陶杯，她给他挑同一套的另一只。</li>
-          <li><strong>热闹散了，给人留一点耳语。</strong> 她挽着他的胳膊穿出空下来的街角，抢了他最后一小口饼。他贴近耳边，说回家要收一点利息。她不撒手，还特地带他绕到人少的一侧，先在他脸颊亲一下再走。杯子回家以后放在同一格。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 摊主在包那对杯子</figcaption>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>你说就买个盐，从街那头挽到这头，还不准备撒手。</dd></div>
-            <div><dt>鸦鸦</dt><dd>我在跟我男朋友约会。买盐顺手，挽你得专门一点。</dd></div>
-            <div><dt>冒险家</dt><dd>那我也专门挑了东西。你看，握这边不会硌手。</dd></div>
-          </dl>
-          <p class="stage-direction">他把杯子递过去。鸦鸦把她手里那只也放到台面上，发现刚好是一对。</p>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>……这回不怪我学你。本鸦还没偷看呢。</dd></div>
-            <div><dt>冒险家</dt><dd>那咱俩很配啊。杯子也配。</dd></div>
-            <div><dt>鸦鸦</dt><dd>第一句再说一遍。等老板去拿纸，凑近点说。</dd></div>
-          </dl>
-        </figure>
-      </section>
+        <h2>第三章 · 在心峰合一张影</h2>
+        <p class="chapter-meta">第三天 · 心峰步道、观景台和心峰石标</p>
+        <p>两人到野外游玩。心峰像一颗爱心，也是镇上情侣求婚、举办婚礼的地方。鸦鸦带来相机，从她的单人照拍到两人的合影。最后由冒险家先说起一起过平常日子的愿望，鸦鸦认真把心意讲完。</p>
+        <ul class="scene-links" aria-label="本章分场">
+          <li><a href="#c03_arrive">原来这座山长得像一颗心</a></li>
+          <li><a href="#c03_camera">她的包里藏着一台相机</a></li>
+          <li><a href="#c03_portrait">鸦鸦大人，请过目</a></li>
+          <li><a href="#c03_together">在心峰石标前拍两个人</a></li>
+          <li><a href="#c03_confession">把平常的日子过下去</a></li>
+          <li><a href="#c03_home">照片带回小屋</a></li>
+        </ul>
+        <article class="script-scene" id="c03_arrive">
+          <h3>场景 01 · 原来这座山长得像一颗心</h3>
+          <p class="script-meta">心峰步道和观景台 · 上午</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦挎着自己的小包，冒险家提着从家里带来的食盒。两人沿着林边走上观景台。</dd></div>
+              <div><dt>冒险家</dt><dd>你从出门就盯着我走路。放心，这次我没想抢跑。</dd></div>
+              <div><dt>鸦鸦</dt><dd>本鸦在看你有没有踩对路。冒险家，过来这边，先跟我站一起。</dd></div>
+              <div><dt>旁白</dt><dd>顺着她指的方向看过去，两道圆圆的山脊在中间凹下去，坡面一路收成尖角。远处看，整座山像一颗爱心。</dd></div>
+              <div><dt>冒险家</dt><dd>怪不得路牌写心峰。还真是颗心。</dd></div>
+              <div><dt>鸦鸦</dt><dd>从镇上那边只能看见半边。在这里看才完整。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>观景台旁的木栏扎着褪色的丝带。两人停下来看了一会儿，也给上坡的人让了路。</dd></div>
+              <div><dt>冒险家</dt><dd>这些都是别人祈愿留下的？</dd></div>
+              <div><dt>鸦鸦</dt><dd>有来求婚的，也有来办婚礼的。天好会在下面那块平地摆椅子，请认识的人来看。</dd></div>
+              <div><dt>冒险家</dt><dd>鸦鸦大人也想结婚吗？</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦转回来，耳尖一下红了。她伸手一把攥住他的袖口。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，谁让你上来第一件事就问这个！本鸦今天想跟你出来玩。</dd></div>
+              <div><dt>冒险家</dt><dd>我看你对摆椅子这事还挺熟。</dd></div>
+              <div><dt>鸦鸦</dt><dd>镇上那么多人来过，听一回就记住了。……你再笑，等会儿就给本鸦站到最挡风的一边去。</dd></div>
+              <div><dt>冒险家</dt><dd>行。我本来就打算站你这边。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那手给我。先陪本鸦看看风景。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>两人在观景台长凳坐下，打开昨天备好的食盒。冒险家把土豆往她这边拨了两块。</dd></div>
+              <div><dt>冒险家</dt><dd>盐是我刚撒的，你尝尝够不够。</dd></div>
+              <div><dt>鸦鸦</dt><dd>够了。最大那块你吃，冒险家。吃完了靠过来，本鸦还想跟你坐会儿。</dd></div>
+              <div><dt>冒险家</dt><dd>行，吃饭有人陪，发呆也有人陪。这趟爬得值。</dd></div>
+            </dl>
+          </div>
+        </article>
 
-      <section id="chapter-04" class="chapter">
-        <div class="section-label">CHAPTER / 04</div>
-        <h2>第四章 · 镜湖的十分钟归我</h2>
-        <p class="chapter-meta">第三天 · 星落小径草坡 → 镜湖浅滩和干石阶 · 14–18 分钟</p>
-        <ol class="beat-list">
-          <li><strong>熟悉的场景换一种玩法。</strong> 沿星落小径找背风草坡野餐，绕去镜湖浅滩踩水、打水漂。鸦鸦比谁溅得更远，冒险家故意把最平的石头塞进她手里，再要求重开一局。先野餐或先踩水都能走到干石阶，两路的玩笑和动作不同。</li>
-          <li><strong>奖励就是再亲一口。</strong> 两人你来我往，越玩越起劲。冒险家打水漂赢了，提议照老规矩讨利息。鸦鸦把湿手往他的手心一塞，亲一下就想跑，他笑着拉她坐回石阶。用响亮的水声、打赌和笑声托住这一段，像两个人真的出来玩了一整天。</li>
-          <li><strong>在甜戏之后给足安静。</strong> 石阶上摊开披风，两人肩膀挨着等头发干。她想起走试炼时沿岸牵着他不肯松手。如今路平坦，她把头靠到他肩上说，接下来十分钟你归本鸦。冒险家替她遮住一点风，说两个人可以在这儿坐到天暗。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 赢一局就要收利息</figcaption>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>五下。刚才说好的，赢的人可以收一点利息。</dd></div>
-            <div><dt>鸦鸦</dt><dd>行，你靠近点。别当着镜湖的面讲价。</dd></div>
-          </dl>
-          <p class="stage-direction">鸦鸦偏过脸亲他一下，笑着往石阶上退。他拉住她还湿着的手，跟她坐到一起。</p>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>那你现在还牵着我干嘛？这边又不滑。</dd></div>
-            <div><dt>鸦鸦</dt><dd>本鸦现在更舍不得放了。……说的就是你，别看湖。</dd></div>
-            <div><dt>冒险家</dt><dd>那把披风分我一半。我也想在这儿多坐一会儿。</dd></div>
-            <div><dt>鸦鸦</dt><dd>十分钟归我。十分钟以后，你还想靠就接着靠。</dd></div>
-          </dl>
-        </figure>
-      </section>
+        <article class="script-scene" id="c03_camera">
+          <h3>场景 02 · 她的包里藏着一台相机</h3>
+          <p class="script-meta">观景台 · 晴间有风</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>等风小了一些，鸦鸦从包底拿出一个布包，把裹在里面的相机露出来。</dd></div>
+              <div><dt>冒险家</dt><dd>你们的世界居然也有相机？</dd></div>
+              <div><dt>鸦鸦</dt><dd>有啊。本鸦早放进包里了。你昨天帮我搬了那么多东西，一点都没发现。</dd></div>
+              <div><dt>冒险家</dt><dd>所以你说让我空着两只手，是要拿这个？</dd></div>
+              <div><dt>鸦鸦</dt><dd>一只拿相机，另一只归本鸦。先看看景，等会儿还要用你。</dd></div>
+              <div><dt>旁白</dt><dd>风朝着山背过去，吹开了低处的一点雾。湖水和远处的屋顶一起亮出来，沿路只听得到脚步和树叶响。</dd></div>
+              <div><dt>冒险家</dt><dd>这地方真好看。我原来出门爬山，拍完最先想找的是下山的路。这里我想多看一会儿。</dd></div>
+              <div><dt>鸦鸦</dt><dd>那就多看一会儿。本鸦又不赶你。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>两个人挨着栏杆站了一会儿。鸦鸦低头把相机的带子理顺，交到冒险家手里。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，先给本鸦拍一张。看见侧面那个拨片没有？拍完拨一下，就能回看。</dd></div>
+              <div><dt>冒险家</dt><dd>怎么突然就到我了。我先试试这个到底怎么按。</dd></div>
+              <div><dt>鸦鸦</dt><dd>慢慢试。本鸦要人和山都在画面里。如果拍的不好的话回去有你好看的</dd></div>
+              <div><dt>冒险家</dt><dd>这趟爬山的风险现在才说啊。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，手稳住。你昨天练魔法的时候都没这么多话。</dd></div>
+            </dl>
+          </div>
+        </article>
 
-      <section id="chapter-05" class="chapter">
-        <div class="section-label">CHAPTER / 05</div>
-        <h2>第五章 · 今天换我照顾你</h2>
-        <p class="chapter-meta">第四、五天 · 雨夜小屋 · 10–13 分钟</p>
-        <ol class="beat-list">
-          <li><strong>挑一场两个人都能上手的麻烦。</strong> 短转场留第四天的午睡和靠肩。第五天雨把小屋窗闩打松，窗台上的符纸快湿掉。鸦鸦一只手扶窗一只手护符，他从镇上回来，看见她在雨里冻得发抖还说能处理。两人先互相递工具、护住彼此，利索地把窗关好。</li>
-          <li><strong>情侣熟悉，照顾方式也要商量。</strong> 他抱怨她每次都抢着说没事，她回一句你哪次不是。两人都习惯在冒险时撑住，现在可以说冷、可以喊对方帮忙。鸦鸦先给他擦掉额头上的雨水，再把毛巾递过去，自己坐好让他擦头发。冒险家也说让她明天留一段空，陪他吃顿热乎的饭。</li>
-          <li><strong>忙完了就好好抱一会儿。</strong> 湿发擦干，他把薄毯摊开，她倒回他怀里，两人身上带着雨水、木头和暖炉的气味。给拥抱比抢修更长的停顿。鸦鸦让他多抱一会儿，他伸手把她好好裹住。饭热在锅里，待会儿一起吃。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 窗关上以后</figcaption>
-          <dl class="dialogue">
-            <div><dt>冒险家</dt><dd>你冷成这样，还跟我说一个人能行。坐下，今天换我给你擦头发。</dd></div>
-            <div><dt>鸦鸦</dt><dd>那你下次衣服湿透的时候，也别站在门口跟本鸦说只是小雨。</dd></div>
-            <div><dt>冒险家</dt><dd>有道理。以后谁冷了先说一声，谁难受了就先来占热乎的那一边。</dd></div>
-          </dl>
-          <p class="stage-direction">他在她耳后擦了两下。她把手插进毯子底下，往他手心里钻。</p>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>那我现在冷。你先抱紧一点。</dd></div>
-            <div><dt>冒险家</dt><dd>这样行不行？</dd></div>
-            <div><dt>鸦鸦</dt><dd>行。……我还没说放开呢。饭在锅里，又不会跑。</dd></div>
-          </dl>
-        </figure>
-      </section>
+        <article class="script-scene" id="c03_portrait">
+          <h3>场景 03 · 鸦鸦大人，请过目</h3>
+          <p class="script-meta">观景台侧面 · 拍鸦鸦的单人照</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦往边上让出心峰的位置，抬手压住被风吹乱的头发。冒险家举起相机。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，这个角度行吗？</dd></div>
+              <div><dt>冒险家</dt><dd>等一下，脸朝我这边一点。对，就这样。</dd></div>
+              <div class="script-cue"><dt>音效</dt><dd>短促的快门声。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>他拨了一下相机侧面，把相机递回鸦鸦手里。</dd></div>
+              <div><dt>冒险家</dt><dd>鸦鸦大人，请过目</dd></div>
+              <div><dt>鸦鸦</dt><dd>山拍得倒挺大。本鸦怎么只剩角落里一块斗篷？</dd></div>
+              <div><dt>冒险家</dt><dd>还剩半张脸。你刚好眨眼，另一只眼看着还挺精神。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，你要交的是本鸦的照片。你这么喜欢心峰，回去让它给你做饭。</dd></div>
+              <div><dt>冒险家</dt><dd>行，那还是我重拍。山不会逼我洗脚，怎么想都少了点意思。</dd></div>
+              <div><dt>鸦鸦</dt><dd>还敢提。来，你自己看，先把本鸦放到中间。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦从他旁边探头看相机，用手指给他比了一下画面的位置。</dd></div>
+              <div><dt>冒险家</dt><dd>这回我知道了。你别看相机，先看我。</dd></div>
+              <div><dt>鸦鸦</dt><dd>看你做什么？</dd></div>
+              <div><dt>冒险家</dt><dd>你刚才在笑我，说我回家就要倒霉。就那个表情。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦忍不住笑了，手也从头发上放下来。冒险家这才按下快门。</dd></div>
+              <div><dt>冒险家</dt><dd>这回山还在，人也在。请再过一遍目。</dd></div>
+              <div><dt>鸦鸦</dt><dd>……这张留着。前一张也留着。</dd></div>
+              <div><dt>冒险家</dt><dd>刚才你还说它不好。</dd></div>
+              <div><dt>鸦鸦</dt><dd>留着以后提醒冒险家，给本鸦拍照要先看谁。相机带好，接下来咱俩一起拍。</dd></div>
+            </dl>
+          </div>
+        </article>
 
-      <section id="chapter-06" class="chapter">
-        <div class="section-label">CHAPTER / 06</div>
-        <h2>第六章 · 七天以后吃什么</h2>
-        <p class="chapter-meta">第六天 · 小屋白天 → 傍晚的饭桌 · 8–11 分钟</p>
-        <ol class="beat-list">
-          <li><strong>七天快到，顺手给以后留个位置。</strong> 冒险家把菜切成两份，一边问清单划完以后还打算干什么。鸦鸦本想笑说再签一张，最后只添上两个人都想吃的一顿饭和一趟下次再去的路。她发现自己真在想，过了这七天也还想把晚饭做成两份。</li>
-          <li><strong>原来的约定继续有效。</strong> 她把六页棋谱理好，把回原世界的事重新摆到桌面，答应将来仍照最初说的帮他。冒险家告诉她，自己真想去哪会跟她商量，回来也会先找她。此处谈两个人怎样把彼此算进自己的决定，给第七章的表白留出回答。</li>
-          <li><strong>日常动作替对方安一下心。</strong> 他收走桌上只剩一角的灯芯，换新的时候鸦鸦从后面抱他。他回身亲她额头，说下次赶集想陪她去两趟。她说两趟太少，明晚有一件更长远的事想认真跟他说，先把他那只杯子推到他的老位置。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 清单后面还有空白</figcaption>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>六页都在。以后你想回去，本鸦还是陪你找那条路。</dd></div>
-            <div><dt>冒险家</dt><dd>好啊。我真要去哪，肯定会先跟你商量。你那张清单还有空吗？</dd></div>
-            <div><dt>鸦鸦</dt><dd>你还没做够家务？</dd></div>
-            <div><dt>冒险家</dt><dd>我想写下次的约会。还有下下次。</dd></div>
-          </dl>
-          <p class="stage-direction">鸦鸦从后面抱住他，没再跟他抢笔。</p>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>那先空一行给我。明晚吃完饭，本鸦有话想跟你说。</dd></div>
-            <div><dt>冒险家</dt><dd>好。你的杯子给我，我给你添满。</dd></div>
-          </dl>
-        </figure>
-      </section>
+        <article class="script-scene" id="c03_together">
+          <h3>场景 04 · 在心峰石标前拍两个人</h3>
+          <p class="script-meta">心峰石标 · 午后</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>往上走是一段平坦的石台，写着「心峰」的石标立在道路内侧，后面正好能看全爱心形的山。</dd></div>
+              <div><dt>鸦鸦</dt><dd>就在这儿拍。冒险家，你往本鸦这边站，先看看两个人放不放得下。</dd></div>
+              <div><dt>冒险家</dt><dd>我去拍的话，谁往你这边站？</dd></div>
+              <div><dt>鸦鸦</dt><dd>相机能等几下再拍。放那块平石上。按完过来，别让本鸦一个人在这儿等。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>冒险家把相机搁稳，调出延时。鸦鸦一边替他看角度，一边朝自己身侧拍了一下。</dd></div>
+              <div><dt>冒险家</dt><dd>好了，等我跑两步。</dd></div>
+              <div class="script-cue"><dt>音效</dt><dd>延时的轻响，接一声快门。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，你提的食盒还在咱俩中间呢。你跟本鸦来合影，怎么还给午饭留了个位置？</dd></div>
+              <div><dt>冒险家</dt><dd>一早拎顺手了。重来，我把它搁相机边。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>第二次他把食盒放好，回来站到鸦鸦身边。她直接挽住他的胳膊，肩膀跟他挨紧。</dd></div>
+              <div><dt>冒险家</dt><dd>这下你满意了？</dd></div>
+              <div><dt>鸦鸦</dt><dd>再靠本鸦一点。你看镜头就好，别又偏脸过来看我。</dd></div>
+              <div><dt>冒险家</dt><dd>明明是你先看的我。</dd></div>
+              <div class="script-cue"><dt>音效</dt><dd>笑声撞上快门。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>照片里石标、心形山脊和两个人都拍全了。鸦鸦仍挽着他的手，冒险家已经笑得有点眯眼。</dd></div>
+              <div><dt>鸦鸦</dt><dd>这张好。等回去，放小屋桌上。谁来了都知道冒险家是跟本鸦一起去的。</dd></div>
+              <div><dt>冒险家</dt><dd>食盒那张也放吗？</dd></div>
+              <div><dt>鸦鸦</dt><dd>那张收抽屉。留着本鸦一个人笑你。</dd></div>
+              <div><dt>冒险家</dt><dd>那我把两张都带好。等等，咱们再站一会儿吧。</dd></div>
+            </dl>
+          </div>
+        </article>
 
-      <section id="chapter-07" class="chapter">
-        <div class="section-label">CHAPTER / 07</div>
-        <h2>第七章 · 我还想和你过很多个明天</h2>
-        <p class="chapter-meta">第七天晚饭后 · 小屋灯下 → 门边 · 11–15 分钟</p>
-        <ol class="beat-list">
-          <li><strong>用熟练的亲密拉住开场。</strong> 饭后他照例要去洗两个杯子。鸦鸦拉一下他的袖子，他就把杯子放好，坐到她平时靠惯的那边。她仍能先抱一下，开口说正经话前才难得卡壳。冒险家有一点意外地看她，把时间给她。</li>
-          <li><strong>让鸦鸦在已经相爱的时候再认真告白。</strong> 她说通关时闹着抢七天，过完才发现还想和他做很多寻常的小事。落在一句她亲自说出口的『我喜欢你，冒险家』和对以后生活的邀请。冒险家回应愿意把这里也当成家，下一次去哪都愿意把她算进去。</li>
-          <li><strong>把小屋的钥匙交到他手上。</strong> 她给他的备用钥匙回收第一晚没钥匙进不去的笑话。两人抱久一点，再笑着亲一下。配乐等她说完、他给出回答后才起。吻是告白之后自然想靠近的动作，把这一段的分量留给两人对未来的承诺。</li>
-        </ol>
-        <figure class="scene-sample">
-          <figcaption>关键文案样段 · 她想留住的以后</figcaption>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>杯子晚点洗。你往这边坐点，本鸦靠得到。</dd></div>
-            <div><dt>冒险家</dt><dd>好。昨天你说有话要讲，今天还只给我留了半条长凳。</dd></div>
-            <div><dt>鸦鸦</dt><dd>半条够了。本来想让你陪我七天。到了第七天，看那张清单又嫌它短。</dd></div>
-          </dl>
-          <p class="stage-direction">她把额头抵在他肩上，停了一小会儿才抬脸看他。</p>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>我喜欢你，冒险家。以后下雨还想让你抱，想逛集还是叫你，饭吃腻了就跟你一起换一道。</dd></div>
-            <div><dt>鸦鸦</dt><dd>你愿不愿意把这儿也当成你随时能回来的家？</dd></div>
-            <div><dt>冒险家</dt><dd>愿意啊，鸦鸦。我也喜欢你。以后我要出门，也会先问你想不想同行。我要回家，第一个就喊你。</dd></div>
-          </dl>
-          <p class="stage-direction">鸦鸦抱紧他。两个人安静待了一会儿，才转过来笑着亲一下。</p>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>给。门钥匙你自己收好。下回再比谁先到家，本鸦可不等你。</dd></div>
-            <div><dt>冒险家</dt><dd>好。赢的人到家先亲你一下。</dd></div>
-            <div><dt>鸦鸦</dt><dd>你要这样赌的话，输赢倒也随你。</dd></div>
-          </dl>
-        </figure>
-        <p>告白的高点放在『随时能回来的家』。鸦鸦平时直来直去，偶尔在认真时不知道手放哪儿，让拥抱和说话顺序都稍慢一些。钥匙交到手心以后再笑出来，回到两人熟悉的口吻。</p>
-      </section>
+        <article class="script-scene" id="c03_confession">
+          <h3>场景 05 · 把平常的日子过下去</h3>
+          <p class="script-meta">心峰石标旁 · 斜阳</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>相机放下来，风换了个方向。两人靠着石标旁的木栏站着，来往的人慢慢少了。</dd></div>
+              <div><dt>冒险家</dt><dd>昨天还在家里数米罐里剩几粒米，今天就在这儿看山。想想也挺好玩的。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家还漏了你昨天抱着鸡蛋怕摔那一路。</dd></div>
+              <div><dt>冒险家</dt><dd>那我也记得你一直挽着我。</dd></div>
+              <div><dt>旁白</dt><dd>她没把手抽走。我看一眼相机，又看一眼她，突然觉得刚才那张照片跟我想过的日子很像。</dd></div>
+              <div><dt>冒险家</dt><dd>就这样和鸦鸦大人平淡的在一起生活也挺好的。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦安静了一会儿。她把相机的带子理好，转过来面对冒险家。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，听我说完。这回先别跟本鸦抬杠。</dd></div>
+              <div><dt>冒险家</dt><dd>嗯。我听着。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，其实和你经历了这么多，你也能够看得出我的心意，虽然本鸦平时老是嘲讽你，但那也是因为我真正在意你、关心你，可能我一开始遇见你的时候也觉得你不靠谱，但是陪你一起走过了这一路的历练之后，我也逐渐对你日久生情了，我想和你一起就像这样每天平淡地生活，一起吃饭、逛街、修炼，陪你度过每一个平凡的瞬间，直到岁月尽头，可能这就是爱吧，我爱你，冒险家，你愿意吗</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>话音刚落，鸦鸦的脸就红了。她还看着他，攥住相机带子的手指收紧了一点。冒险家马上回答。</dd></div>
+              <div><dt>冒险家</dt><dd>我愿意，我一定会陪你走到最后的，就让岁月为我们的爱情作证吧</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>等他说完，她先把相机往身侧一挂，腾出手抱住他，把红着的脸埋在他肩头。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，刚才那些话就给你一个人听。回去不许拿来取笑本鸦。</dd></div>
+              <div><dt>冒险家</dt><dd>我不笑。你要是以后还想说，我每次都听。</dd></div>
+              <div><dt>鸦鸦</dt><dd>……那你抱紧一点。本鸦现在不想动。</dd></div>
+            </dl>
+          </div>
+        </article>
 
-      <section id="epilogue" class="chapter">
-        <div class="section-label">EPILOGUE / 次晨</div>
-        <h2>尾声 · 今晚还是一起吃</h2>
-        <p>第八天一早，两个杯子在窗台上。清单已经翻面，只有一行“今晚还是一起吃”。冒险家去镇上买东西，鸦鸦叫他回来，替他捋好领口，像往常出门一样亲一下。两人说定下一次出游换他选路。最后用小屋里照常准备两份午饭收束。</p>
-        <figure class="scene-sample">
-          <figcaption>文案样段 · 用自己的钥匙回家</figcaption>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>你过来，领口歪了。</dd></div>
-            <div><dt>冒险家</dt><dd>昨天收了钥匙，今天出门还得交利息啊？</dd></div>
-          </dl>
-          <p class="stage-direction">她把领口理好，抬脸亲了他一下。冒险家跟着回亲，又多抱了半会儿。</p>
-          <dl class="dialogue">
-            <div><dt>鸦鸦</dt><dd>这个本来就有。晚上吃什么？</dd></div>
-            <div><dt>冒险家</dt><dd>我买菜，你定。下次去哪可归我选。</dd></div>
-            <div><dt>鸦鸦</dt><dd>好。你自己开门回来，进去之前还是叫我一声。</dd></div>
-          </dl>
-        </figure>
+        <article class="script-scene" id="c03_home">
+          <h3>场景 06 · 照片带回小屋</h3>
+          <p class="script-meta">心峰下山路 · 日落前</p>
+          <div class="scene-sample script-body">
+            <dl class="dialogue">
+              <div class="script-cue"><dt>演出</dt><dd>他们在原处站了一会儿才去收食盒。鸦鸦把相机交给冒险家，自己伸手挽他。</dd></div>
+              <div><dt>冒险家</dt><dd>下去了？我打赌今晚鸦鸦大人还要拿那双拖鞋逗我。</dd></div>
+              <div><dt>鸦鸦</dt><dd>冒险家，鞋的事回家再说。你现在好好牵着本鸦，别在坡上乱跑。</dd></div>
+              <div><dt>冒险家</dt><dd>好。今晚想吃什么？</dd></div>
+              <div><dt>鸦鸦</dt><dd>昨天买的土豆还有。冒险家把土豆切好，再拿两颗蛋，本鸦看火。</dd></div>
+              <div><dt>冒险家</dt><dd>好。蛋煎脆了，还是跟你分边上那块。</dd></div>
+              <div class="script-cue"><dt>演出</dt><dd>鸦鸦用额头轻轻碰他一下，把手重新扣住。</dd></div>
+              <div><dt>鸦鸦</dt><dd>嗯。咱们回家。</dd></div>
+              <div><dt>旁白</dt><dd>相机在我们中间轻轻晃，一路晃到山路最后那个拐弯。</dd></div>
+            </dl>
+          </div>
+        </article>
       </section>
 
       <section id="making" class="chapter">
-        <div class="section-label">PRODUCTION / 落地约定</div>
-        <h2>玩家决定今天怎么陪她</h2>
-        <p>采用鸦鸦单女主线。选项用来参与情侣的日常和回嘴，偏向互动和叙事细节，每条都从开篇共用已经交往的关系前提。</p>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="选项及其后续反馈">
-          <table>
-            <thead><tr><th scope="col">选择节点</th><th scope="col">选项</th><th scope="col">反馈与回收</th></tr></thead>
-            <tbody>
-              <tr><td>第二章试味<br><code>gal02_taste</code></td><td>“你先尝，我来喂”／“给我一口，我也要尝”</td><td>调换谁先递勺。鸦鸦一条先得意，一条先使坏，最后都一起收拾灶台。</td></tr>
-              <tr><td>第三章互挑杯子<br><code>gal03_cup_choice</code></td><td>“送她青釉杯”／“送她红陶杯”</td><td>鸦鸦替他挑同一套的另一只。在雨夜、告白和尾声用杯色认回各自的位置。</td></tr>
-              <tr><td>第四章游玩顺序<br><code>gal04_walk_choice</code></td><td>“先铺毯子野餐”／“先去浅滩踩水”</td><td>调换两个游玩小段，前者先让她赖着靠一会儿，后者先从水花里开始斗嘴。最后汇合到干石阶。</td></tr>
-              <tr><td>第四章讨奖励<br><code>gal04_wager</code></td><td>“叫她现在亲一下”／“把利息留到石阶上收”</td><td>改变吻在活泼的比赛段还是安静的坐肩段。两人沿用早就有的玩笑。</td></tr>
-              <tr><td>第七章回答<br><code>gal07_answer</code></td><td>“牵住她，说我愿意”／“先抱住她，再告诉她谢谢”</td><td>一条先用话回答，一条先给拥抱。两条都回应小屋和以后，一起走到递钥匙和次晨尾声。</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <h3>分场和演出重点</h3>
+        <div class="section-label">PRODUCTION / 演出与录入</div>
+        <h2>逐句录入时的处理</h2>
         <ul>
-          <li><strong>正文。</strong> 先写开场的到家吻、赶集互送杯子、镜湖边的吻与靠肩、雨后擦头发和末章告白。每个场景至少给两人一轮相互主动的来回。小屋里可以有晾衣、烧饭、画符这样的生活细节，让它们接出情侣自己的习惯和笑点。</li>
-          <li><strong>画面与声音。</strong> 小屋门口的熟练相拥用短近景交代。镜湖用披风下靠在一起的两人做外景 CG，末章用抱紧之后递钥匙做室内 CG。厨房灶火、镇集人声、浅滩水声和屋里的雨声都能留给亲昵时的小停顿。</li>
-          <li><strong>开发数据。</strong> 主线六章和原结尾完成后从大厅自选进入。用 <code>StagePresets</code> 复用小屋、镇集和镜湖的舞台与时间变体，分支节点用稳定 ID，杯色用一个变量。入口与资源路径以实现阶段的真实配置为准。</li>
-          <li><strong>试读判据。</strong> 第一章读完已经能看出两人一直在交往。镇集的称呼、湖边的亲吻和雨夜的拥抱各有场景缘由。第七章能听出鸦鸦在邀请他加入自己未来的日子，而冒险家给出了自己的答案。各分支核对双方发起的动作、杯色回显和最终答复。</li>
+          <li>按三章和各场的顺序线性播放。「鸦鸦」「冒险家」和摊主的每一行是独立对白节点，「旁白」使用空说话人。场景 ID 可用作节点 ID 的前缀。「演出」「音效」用于舞台和声音处理。</li>
+          <li>小屋用清晨、中午、夜晚三种光线。脚盆那段把原话留在对白里，镜头用长靴、盆边水声和两人的表情接住斗嘴，最后切到手边软底拖鞋和床头棋子的光。</li>
+          <li>心峰需要观景台和地标两个角度。回看分别表现第一张失手、满意的单人照和靠在一起的终稿。斜阳表白时压低音乐，鸦鸦长段原话可以在逗号处留表演停顿。她说完给一个脸红近景，紧接冒险家的答复。</li>
         </ul>
-        <p class="document-meta">节点、舞台与路线回归约定见 <a href="../../../.codex/skills/revolution-gal/SKILL.md">Revolution.Gal 项目指南</a>。</p>
-      </section>
-
-      <section id="references" class="chapter">
-        <div class="section-label">REFERENCES / 参考与转化</div>
-        <h2>从成熟作品借方法</h2>
-        <p>下面把作品公开资料中的做法与本案的应用分开。各章场景、人物和对白来自 RevGame 的前情与本篇提案。</p>
-        <ol class="source-list">
-          <li><strong>《CLANNAD》 · 关系在共同生活里成立。</strong> Key 将家庭之爱列为作品主题。麻枝准在访谈中谈到他对动画改编《AFTER STORY》中出生与旅行段落演出的印象。本案把已交往的两人写进同一间屋子，用各自熟悉的睡法、口味和到家招呼写出具体的共同生活。<a href="https://key.visualarts.gr.jp/info/2008/01/softbank.html">Key 作品介绍</a> · <a href="https://jmagazine.myjcom.jp/category/anime/post000189/">麻枝准二十周年访谈</a></li>
-          <li><strong>《Summer Pockets》 · 用具体的小事写地方。</strong> 编剧魁的开发日记记录了写作组交流暑假记忆，以及把实地看到的手工玻璃珠教室转化为剧情素材。RevGame 可让赶集发生在有热烤炉、折价与熟摊主的街上，让野餐发生在找背风处、需要放慢步子的路上。一处景只有找到两个人在这里能做的事，才值得停留。<a href="https://key.visualarts.gr.jp/diary/2018/09/">Key 开发日记 · 魁</a></li>
-          <li><strong>《WHITE ALBUM2》 · 给反复出现的元素新的意思。</strong> Aquaplus 的剧情介绍用琴声、歌声和季节组织前情。本案提炼的是意象和关系一起推进的方法。RevGame 用自己已经有的“牵手”，让昔日护他走过危险的牵手，在同一个湖边变成有空了也想牵着。<a href="https://aquaplus.jp/wa2/story.html">Aquaplus 官方剧情介绍</a></li>
-          <li><strong>《Making＊Lovers》 · 确认关系后还要看得见相处。</strong> SMEE 和发行方把恋爱关系开始后的体验作为作品重点。RevGame 把整个续篇放在交往之后，用彼此了解的口味、近身时的默契和有事会相互照顾来组织场面。末章的表白把两个人习惯一起过的今天延伸到以后。<a href="https://www.hook-net.jp/smee/makinglovers/">SMEE 作品官网</a> · <a href="https://store.steampowered.com/app/1200720/MakingLovers/">NekoNyan 官方发行页</a></li>
-        </ol>
+        <p class="document-meta">配置方式见 <a href="../../../.codex/skills/revolution-gal/SKILL.md">Revolution.Gal 项目指南</a>。</p>
       </section>
     </main>
   </div>
 
   <footer>
-    <span>RevGame · 围棋史莱姆 / 鸦鸦家的第七天</span>
+    <span>RevGame · 围棋史莱姆 / 和鸦鸦一起过日子</span>
     <span><a href="../../剧情配置/剧情配置.md">主线原文</a><a href="../../文档/战斗性能优化规则/战斗性能优化规则.html">排版参考</a><a href="#outline">回到大纲起点</a></span>
   </footer>
   <script>
     const previews = {
-      home: {
-        title: '鸦鸦的小屋',
-        beat: '抢跑的人没带钥匙，等到鸦鸦开门。她揪着衣领亲他一下，说这是那六页棋谱的利息。',
-        line: '鸦鸦：“那是利息。剩下的拿七天来还，归本鸦了。”',
-        change: '两个人熟悉的到家招呼',
-        link: '#chapter-01',
-        label: '读小屋篇 ↗'
+      "home": {
+        "title": "鸦鸦的小屋",
+        "beat": "六章通关后的早晨，鸦鸦把被子掀开一角。冒险家还想拉她一起赖床。",
+        "line": "鸦鸦：“冒险家，太阳都晒屁股了还睡呢”",
+        "change": "从叫醒到抱着睡觉",
+        "link": "#chapter-01",
+        "label": "读小屋篇 ↗"
       },
-      market: {
-        title: '青藤村旁的镇集',
-        beat: '鸦鸦挽着冒险家逛摊，记得替他留焦边蜜饼。到卖杯子的地方，两人挑给对方的杯子刚好成对。',
-        line: '鸦鸦：“我在跟我男朋友约会。买盐顺手，挽你得专门一点。”',
-        change: '热闹里也想牵着他',
-        link: '#chapter-03',
-        label: '读集市篇 ↗'
+      "market": {
+        "title": "青藤村旁的镇集",
+        "beat": "米罐和菜筐见底。鸦鸦拿着清单挑米、菜和鸡蛋，冒险家提着篮子跟在她身边。",
+        "line": "鸦鸦：“买什么听本鸦的，袋子满了再给你个篮子。”",
+        "change": "补完粮，再一起吃一块蜜饼",
+        "link": "#chapter-02",
+        "label": "读集市篇 ↗"
       },
-      lake: {
-        title: '镜湖岸边',
-        beat: '打水漂赢的人按老规矩讨一个吻。玩够了，两人分着一件披风，在干石阶上挨着看湖。',
-        line: '鸦鸦：“十分钟归我。十分钟以后，你还想靠就接着靠。”',
-        change: '白天一起玩，傍晚还能一起发会儿呆',
-        link: '#chapter-04',
-        label: '读镜湖篇 ↗'
+      "peak": {
+        "title": "心峰",
+        "beat": "心形山脊就在眼前。鸦鸦从包里掏出相机，先要一张能让她满意的单人照。",
+        "line": "冒险家：“鸦鸦大人，请过目”",
+        "change": "从嫌弃照片到在地标前合影",
+        "link": "#chapter-03",
+        "label": "读心峰篇 ↗"
       }
     };
 
