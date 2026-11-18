@@ -12,6 +12,7 @@ namespace Revolution.Gal.Editor
     /// <summary>同一 SO 的写作、剧情图、问题列表和试读入口。</summary>
     public sealed class RevGalWorkbench : EditorWindow
     {
+        private const int EditIdleMilliseconds = 250;
         [SerializeField] private RevGalStory _story;
         [SerializeField] private string _selected;
         private RevGalGraphView _graph;
@@ -22,9 +23,14 @@ namespace Revolution.Gal.Editor
         private TextField _search;
         private DropdownField _kind;
         private static readonly RevGalNodeKind[] NodeKinds = (RevGalNodeKind[])Enum.GetValues(typeof(RevGalNodeKind));
+        private readonly Dictionary<string, Button> _outlineRows = new Dictionary<string, Button>(StringComparer.Ordinal);
+        private readonly HashSet<string> _editedNodes = new HashSet<string>(StringComparer.Ordinal);
         private Label _status;
+        private string _issueSummary;
+        private List<string> _targetIds;
+        private List<string> _targetLabels;
         private IVisualElementScheduledItem _scheduled;
-        private bool _redrawInspector;
+        private bool _fullRefreshPending;
 
         [MenuItem("Revolution.Tools/Gal/剧情工作台")]
         private static void OpenMenu()
@@ -52,7 +58,7 @@ namespace Revolution.Gal.Editor
             {
                 if (window._story == story)
                 {
-                    window.QueueRefresh(true);
+                    window.QueueFullRefresh();
                 }
             }
         }
@@ -65,8 +71,7 @@ namespace Revolution.Gal.Editor
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= UndoChanged;
-            _scheduled?.Pause();
-            _scheduled = null;
+            CancelRefresh();
         }
 
         public void CreateGUI()
@@ -137,7 +142,7 @@ namespace Revolution.Gal.Editor
             var details = new TwoPaneSplitView(1, 360, TwoPaneSplitViewOrientation.Horizontal);
             details.style.flexGrow = 1;
             body.Add(details);
-            _graph = new RevGalGraphView(id => Select(id, false), structural => QueueRefresh(structural),
+            _graph = new RevGalGraphView(id => Select(id, false), GraphEdited,
                 (kind, position) => AddNode(kind, position));
             details.Add(_graph);
             _inspector = new ScrollView(ScrollViewMode.Vertical);
@@ -158,7 +163,7 @@ namespace Revolution.Gal.Editor
             _issues.style.maxHeight = 85;
             footer.Add(_issues);
             rootVisualElement.Add(footer);
-            Refresh(true);
+            Refresh();
         }
 
         private void SetStory(RevGalStory story)
@@ -169,32 +174,113 @@ namespace Revolution.Gal.Editor
                 _selected = story?.Definition?.Start;
             }
             _asset?.SetValueWithoutNotify(_story);
-            Refresh(true);
+            Refresh();
         }
 
         private void UndoChanged()
         {
-            QueueRefresh(true);
+            QueueFullRefresh();
         }
 
-        private void QueueRefresh(bool inspector)
+        private void GraphEdited(bool structural)
         {
-            _redrawInspector |= inspector;
-            if (_scheduled != null || _graph == null)
+            if (structural)
+            {
+                QueueFullRefresh();
+            }
+            else
+            {
+                UpdateStatus();
+            }
+        }
+
+        private void QueueFullRefresh()
+        {
+            if (_graph == null)
             {
                 return;
             }
-            _scheduled = rootVisualElement.schedule.Execute(() =>
-            {
-                bool redraw = _redrawInspector;
-                _redrawInspector = false;
-                _scheduled = null;
-                Refresh(redraw);
-            }).StartingIn(120);
+            _fullRefreshPending = true;
+            ScheduleRefresh(0);
         }
 
-        private void Refresh(bool inspector)
+        /// <summary>绑定控件立即写回 SO。输入暂停后再更新预览、搜索和问题列表。</summary>
+        private void QueuePropertyRefresh(string nodeId)
         {
+            if (nodeId != null)
+            {
+                _editedNodes.Add(nodeId);
+            }
+            if (!_fullRefreshPending)
+            {
+                ScheduleRefresh(EditIdleMilliseconds);
+            }
+        }
+
+        private void ScheduleRefresh(int delay)
+        {
+            if (_scheduled == null)
+            {
+                _scheduled = rootVisualElement.schedule.Execute(ApplyPendingRefresh).StartingIn(delay);
+            }
+            else
+            {
+                _scheduled.ExecuteLater(delay);
+            }
+        }
+
+        private void CancelRefresh()
+        {
+            _scheduled?.Pause();
+            _scheduled = null;
+            _fullRefreshPending = false;
+            _editedNodes.Clear();
+        }
+
+        private void ApplyPendingRefresh()
+        {
+            _scheduled?.Pause();
+            _scheduled = null;
+            if (_fullRefreshPending)
+            {
+                Refresh();
+                return;
+            }
+            var definition = _story?.Definition;
+            if (_editedNodes.Count > 0 && definition?.Nodes != null)
+            {
+                string query = _search.value?.Trim() ?? "";
+                bool rebuildOutline = false;
+                foreach (var nodeId in _editedNodes)
+                {
+                    var node = definition.Nodes.Find(item => item?.Id == nodeId);
+                    if (node == null)
+                    {
+                        continue;
+                    }
+                    bool isStart = node.Id == definition.Start;
+                    _graph.UpdateNode(node, isStart);
+                    bool hasRow = _outlineRows.TryGetValue(node.Id, out var row);
+                    if (hasRow)
+                    {
+                        row.text = OutlineTitle(node, isStart);
+                    }
+                    rebuildOutline |= MatchesSearch(node, query) != hasRow;
+                }
+                if (rebuildOutline)
+                {
+                    BuildOutline();
+                }
+            }
+            _editedNodes.Clear();
+            BuildIssues();
+        }
+
+        private void Refresh()
+        {
+            CancelRefresh();
+            _targetIds = null;
+            _targetLabels = null;
             if (_graph == null)
             {
                 return;
@@ -202,57 +288,85 @@ namespace Revolution.Gal.Editor
             if (_selected != null && Selected() == null)
             {
                 _selected = null;
-                inspector = true;
             }
             _graph.Draw(_story, _selected);
             BuildOutline();
             BuildIssues();
-            if (inspector)
-            {
-                BuildInspector();
-            }
+            BuildInspector();
         }
 
         private void BuildOutline()
         {
             _outline.Clear();
+            _outlineRows.Clear();
             if (_story?.Definition?.Nodes == null)
             {
                 return;
             }
             string query = _search.value?.Trim() ?? "";
-            foreach (var node in _story.Definition.Nodes.Where(item => item != null))
+            foreach (var node in _story.Definition.Nodes)
             {
-                if (query.Length > 0 && !new[] { node.Id, node.Title, node.Speaker, node.Text }.Any(part =>
-                    part != null && part.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0))
+                if (node == null || !MatchesSearch(node, query))
                 {
                     continue;
                 }
-                string name = string.IsNullOrWhiteSpace(node.Title) ? node.Id : node.Title;
                 var button = new Button(() => Select(node.Id, true))
                 {
-                    text = (node.Id == _story.Definition.Start ? "● " : "") + name,
+                    text = OutlineTitle(node, node.Id == _story.Definition.Start),
                     tooltip = RevGalEditorLabels.Kind(node.Kind) + " · " + node.Id
                 };
                 button.style.unityTextAlign = TextAnchor.MiddleLeft;
                 button.style.minHeight = 25;
-                if (node.Id == _selected)
+                SetOutlineSelection(button, node.Id == _selected);
+                if (node.Id != null)
                 {
-                    button.AddToClassList("gal-selected");
-                    button.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    _outlineRows.TryAdd(node.Id, button);
                 }
                 _outline.Add(button);
             }
         }
 
+        private static bool MatchesSearch(RevGalNode node, string query)
+        {
+            return query.Length == 0 || MatchesSearch(node.Id, query) || MatchesSearch(node.Title, query)
+                || MatchesSearch(node.Speaker, query) || MatchesSearch(node.Text, query);
+        }
+
+        private static bool MatchesSearch(string value, string query)
+        {
+            return value != null && value.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static string OutlineTitle(RevGalNode node, bool isStart)
+        {
+            return (isStart ? "● " : "") + (string.IsNullOrWhiteSpace(node.Title) ? node.Id : node.Title);
+        }
+
+        private static void SetOutlineSelection(Button row, bool selected)
+        {
+            row.EnableInClassList("gal-selected", selected);
+            row.style.unityFontStyleAndWeight = selected ? FontStyle.Bold : new StyleEnum<FontStyle>(StyleKeyword.Null);
+        }
+
         private void Select(string id, bool highlight)
         {
-            _selected = id;
             if (highlight)
             {
                 _graph.Highlight(id);
             }
-            BuildOutline();
+            if (_selected == id)
+            {
+                return;
+            }
+            if (_selected != null && _outlineRows.TryGetValue(_selected, out var previous))
+            {
+                SetOutlineSelection(previous, false);
+            }
+            _selected = id;
+            if (id != null && _outlineRows.TryGetValue(id, out var current))
+            {
+                SetOutlineSelection(current, true);
+            }
             BuildInspector();
         }
 
@@ -289,17 +403,18 @@ namespace Revolution.Gal.Editor
             _inspector.Add(new Button(() => Change("设为起点", () => _story.Definition.Start = node.Id)) { text = "设为剧情起点" });
             _inspector.Add(new Button(() => Preview(node.Id)) { text = "从此节点试读" });
             _inspector.Add(new Button(DuplicateSelected) { text = "复制节点" });
-            Property(_inspector, fields.FindPropertyRelative("Title"), "节点名称");
+            Property(_inspector, fields.FindPropertyRelative("Title"), "节点名称", nodeTitle: true);
             PresetPicker(_inspector, "章节 / 小节", node.StagePreset, value => Change("选择舞台方案", () => node.StagePreset = value));
 
             if (node.Kind == RevGalNodeKind.Line || node.Kind == RevGalNodeKind.Choice || node.Kind == RevGalNodeKind.End)
             {
                 Property(_inspector, fields.FindPropertyRelative("Speaker"), "说话人 · 留空为旁白");
                 Property(_inspector, fields.FindPropertyRelative("Text"), "正文");
-                var localized = new Foldout { text = "本地化键", value = false };
-                Property(localized, fields.FindPropertyRelative("SpeakerKey"), "说话人键");
-                Property(localized, fields.FindPropertyRelative("TextKey"), "正文键");
-                _inspector.Add(localized);
+                AddFoldout(_inspector, "本地化键", localized =>
+                {
+                    Property(localized, fields.FindPropertyRelative("SpeakerKey"), "说话人键");
+                    Property(localized, fields.FindPropertyRelative("TextKey"), "正文键");
+                });
             }
             if (node.Kind == RevGalNodeKind.Signal)
             {
@@ -315,7 +430,58 @@ namespace Revolution.Gal.Editor
             {
                 BuildExits(node, fields.FindPropertyRelative("Exits"));
             }
-            var stage = new Foldout { text = "舞台、音频与收藏", value = false };
+            AddFoldout(_inspector, "舞台、音频与收藏", stage => BuildNodeStage(stage, fields));
+            AddFoldout(_inspector, "进入节点时修改变量",
+                effects => Property(effects, fields.FindPropertyRelative("Effects"), "变量修改"));
+        }
+
+        /// <summary>首次展开时才创建并绑定控件，收起后保留已创建的内容。</summary>
+        private static void AddFoldout(VisualElement parent, string label, Action<Foldout> build)
+        {
+            var foldout = new Foldout { text = label, value = false };
+            bool built = false;
+            void BuildIfExpanded()
+            {
+                if (built || !foldout.value)
+                {
+                    return;
+                }
+                built = true;
+                foldout.UnregisterValueChangedCallback(Expand);
+                foldout.UnregisterCallback<KeyDownEvent>(ExpandWithKeyboard, TrickleDown.TrickleDown);
+                foldout.UnregisterCallback<NavigationMoveEvent>(ExpandWithNavigation, TrickleDown.TrickleDown);
+                build(foldout);
+            }
+            void Expand(ChangeEvent<bool> evt)
+            {
+                if (evt.target == foldout)
+                {
+                    BuildIfExpanded();
+                }
+            }
+            void ExpandWithKeyboard(KeyDownEvent evt)
+            {
+                if (evt.keyCode == KeyCode.RightArrow)
+                {
+                    foldout.schedule.Execute(BuildIfExpanded);
+                }
+            }
+            void ExpandWithNavigation(NavigationMoveEvent evt)
+            {
+                // 向右导航走 Unity 的静默展开，等默认处理完成再读取状态。
+                if (evt.direction == NavigationMoveEvent.Direction.Right)
+                {
+                    foldout.schedule.Execute(BuildIfExpanded);
+                }
+            }
+            foldout.RegisterValueChangedCallback(Expand);
+            foldout.RegisterCallback<KeyDownEvent>(ExpandWithKeyboard, TrickleDown.TrickleDown);
+            foldout.RegisterCallback<NavigationMoveEvent>(ExpandWithNavigation, TrickleDown.TrickleDown);
+            parent.Add(foldout);
+        }
+
+        private void BuildNodeStage(Foldout stage, SerializedProperty fields)
+        {
             stage.Add(new HelpBox("舞台留空时沿用上次内容，填单个减号时清空。选资源会自动填逻辑路径。", HelpBoxMessageType.Info));
             var stageFields = fields.FindPropertyRelative("Stage");
             foreach (var track in new[]
@@ -331,10 +497,6 @@ namespace Revolution.Gal.Editor
             Resource(stage, fields.FindPropertyRelative("Voice"), "本句语音", typeof(AudioClip));
             Resource(stage, fields.FindPropertyRelative("Sound"), "本节点音效", typeof(AudioClip));
             Property(stage, fields.FindPropertyRelative("GalleryId"), "插画收藏 ID");
-            _inspector.Add(stage);
-            var effects = new Foldout { text = "进入节点时修改变量", value = false };
-            Property(effects, fields.FindPropertyRelative("Effects"), "变量修改");
-            _inspector.Add(effects);
         }
 
         private void BuildExits(RevGalNode node, SerializedProperty fields)
@@ -352,15 +514,16 @@ namespace Revolution.Gal.Editor
                 var field = fields.GetArrayElementAtIndex(index);
                 Property(group, field.FindPropertyRelative("Label"), node.Kind == RevGalNodeKind.Choice ? "按钮文字" : "出口说明");
                 TargetPicker(group, "目标", exit.Target, value => Change("设置出口目标", () => exit.Target = value));
-                var advanced = new Foldout { text = "条件、效果与文案键", value = false };
-                Property(advanced, field.FindPropertyRelative("Conditions"), "同时满足的条件");
-                Property(advanced, field.FindPropertyRelative("Effects"), "选择后修改变量");
-                if (node.Kind == RevGalNodeKind.Choice)
+                AddFoldout(group, "条件、效果与文案键", advanced =>
                 {
-                    Property(advanced, field.FindPropertyRelative("TextKey"), "选项文案键");
-                    Property(advanced, field.FindPropertyRelative("ShowWhenLocked"), "未满足时仍显示");
-                }
-                group.Add(advanced);
+                    Property(advanced, field.FindPropertyRelative("Conditions"), "同时满足的条件");
+                    Property(advanced, field.FindPropertyRelative("Effects"), "选择后修改变量");
+                    if (node.Kind == RevGalNodeKind.Choice)
+                    {
+                        Property(advanced, field.FindPropertyRelative("TextKey"), "选项文案键");
+                        Property(advanced, field.FindPropertyRelative("ShowWhenLocked"), "未满足时仍显示");
+                    }
+                });
                 var actions = new VisualElement();
                 actions.style.flexDirection = FlexDirection.Row;
                 var up = new Button(() => Change("调整出口顺序", () =>
@@ -436,13 +599,23 @@ namespace Revolution.Gal.Editor
 
         private void TargetPicker(VisualElement parent, string label, string value, Action<string> change)
         {
-            var ids = new List<string> { "" };
-            var labels = new List<string> { "未连接" };
-            foreach (var node in _story.Definition.Nodes.Where(item => item != null && !string.IsNullOrEmpty(item.Id)))
+            if (_targetIds == null)
             {
-                ids.Add(node.Id);
-                labels.Add(string.IsNullOrWhiteSpace(node.Title) ? node.Id : node.Title + " [" + node.Id + "]");
+                _targetIds = new List<string> { "" };
+                _targetLabels = new List<string> { "未连接" };
+                foreach (var node in _story.Definition.Nodes)
+                {
+                    if (node == null || string.IsNullOrEmpty(node.Id))
+                    {
+                        continue;
+                    }
+                    _targetIds.Add(node.Id);
+                    _targetLabels.Add(string.IsNullOrWhiteSpace(node.Title) ? node.Id : node.Title + " [" + node.Id + "]");
+                }
             }
+            // 已显示的下拉框使用同一份快照，标题变化后由下一次选择按需重建。
+            var ids = _targetIds;
+            var labels = _targetLabels;
             int selected = Math.Max(0, ids.IndexOf(value ?? ""));
             var field = new DropdownField(label, labels, selected);
             field.RegisterValueChangedCallback(e =>
@@ -456,15 +629,24 @@ namespace Revolution.Gal.Editor
             parent.Add(field);
         }
 
-        private void Property(VisualElement parent, SerializedProperty property, string label)
+        private void Property(VisualElement parent, SerializedProperty property, string label, bool nodeTitle = false)
         {
             if (property == null)
             {
                 return;
             }
+            string nodeId = _selected;
             var field = new PropertyField(property, label);
             field.BindProperty(property);
-            field.RegisterValueChangeCallback(_ => QueueRefresh(false));
+            field.RegisterValueChangeCallback(_ =>
+            {
+                if (nodeTitle)
+                {
+                    _targetIds = null;
+                    _targetLabels = null;
+                }
+                QueuePropertyRefresh(nodeId);
+            });
             parent.Add(field);
         }
 
@@ -474,6 +656,7 @@ namespace Revolution.Gal.Editor
             {
                 return;
             }
+            string nodeId = _selected;
             Property(parent, property, label);
             var picker = new ObjectField("选资源") { objectType = type, allowSceneObjects = false };
             picker.RegisterValueChangedCallback(change =>
@@ -487,7 +670,7 @@ namespace Revolution.Gal.Editor
                     property.serializedObject.Update();
                     property.stringValue = RevGalAssets.LogicalPath(change.newValue);
                     property.serializedObject.ApplyModifiedProperties();
-                    QueueRefresh(false);
+                    QueuePropertyRefresh(nodeId);
                 });
                 picker.SetValueWithoutNotify(null);
             });
@@ -499,12 +682,13 @@ namespace Revolution.Gal.Editor
             _issues.Clear();
             if (_story == null)
             {
-                _status.text = "请选择剧情";
+                _issueSummary = null;
+                UpdateStatus();
                 return;
             }
             var issues = RevGalValidation.Validate(_story.Definition);
-            _status.text = (EditorUtility.IsDirty(_story) ? "未保存 · " : "已保存 · ") +
-                issues.Count(i => !i.Warning) + " 错误 / " + issues.Count(i => i.Warning) + " 提示";
+            _issueSummary = issues.Count(i => !i.Warning) + " 错误 / " + issues.Count(i => i.Warning) + " 提示";
+            UpdateStatus();
             foreach (var issue in issues)
             {
                 var button = new Button(() => Select(issue.Node, true)) { text = (issue.Warning ? "提示 · " : "错误 · ") + issue.Message };
@@ -512,6 +696,12 @@ namespace Revolution.Gal.Editor
                 button.tooltip = issue.Node;
                 _issues.Add(button);
             }
+        }
+
+        private void UpdateStatus()
+        {
+            _status.text = _story == null ? "请选择剧情" :
+                (EditorUtility.IsDirty(_story) ? "未保存 · " : "已保存 · ") + _issueSummary;
         }
 
         private void AddNode(RevGalNodeKind kind, Vector2? position)
@@ -622,7 +812,7 @@ namespace Revolution.Gal.Editor
             Undo.RecordObject(_story, undo);
             mutation();
             EditorUtility.SetDirty(_story);
-            Refresh(true);
+            Refresh();
         }
 
         private void NewStory()
@@ -661,7 +851,7 @@ namespace Revolution.Gal.Editor
         {
             RequireStory();
             AssetDatabase.SaveAssetIfDirty(_story);
-            BuildIssues();
+            ApplyPendingRefresh();
         }
 
         private void Export()

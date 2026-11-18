@@ -23,26 +23,18 @@ namespace Revolution.Gal.Editor
             public Port Input { get; }
             public List<Port> Outputs { get; } = new List<Port>();
             private readonly Action<string> _select;
+            private Label _summary;
 
             public StoryNode(RevGalNode data, bool isStart, Action<string> select)
             {
                 Id = data.Id;
                 _select = select;
-                title = (isStart ? "起点 · " : "") + (string.IsNullOrWhiteSpace(data.Title) ? data.Id : data.Title);
                 titleContainer.style.backgroundColor = ColorFor(data.Kind);
                 style.width = 230;
                 var type = new Label(RevGalEditorLabels.Kind(data.Kind));
                 type.style.color = new Color(.7f, .82f, .89f);
                 mainContainer.Add(type);
-
-                if (!string.IsNullOrWhiteSpace(data.Text))
-                {
-                    var summary = new Label(data.Text.Length > 60 ? data.Text.Substring(0, 60) + "…" : data.Text);
-                    summary.style.whiteSpace = WhiteSpace.Normal;
-                    summary.style.marginLeft = 7;
-                    summary.style.marginRight = 7;
-                    mainContainer.Add(summary);
-                }
+                UpdatePreview(data, isStart);
                 Input = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(RevGalNode));
                 Input.portName = "进入";
                 inputContainer.Add(Input);
@@ -55,8 +47,7 @@ namespace Revolution.Gal.Editor
                             RevGalEdge exit = data.Exits[index];
                             if (exit != null)
                             {
-                                string label = string.IsNullOrEmpty(exit.Label) ? "条件 " + (index + 1) : exit.Label;
-                                AddOutlet(label, exit.Id);
+                                AddOutlet(OutletLabel(exit, index), exit.Id);
                             }
                         }
                         AddOutlet("保底", null);
@@ -69,6 +60,66 @@ namespace Revolution.Gal.Editor
                 RefreshExpandedState();
                 RefreshPorts();
                 SetPosition(new Rect(data.Position, new Vector2(230, 100)));
+            }
+
+            /// <summary>刷新已有节点的文案，不替换端口或连线。端口结构变化后由工作台重画。</summary>
+            public void UpdatePresentation(RevGalNode data, bool isStart)
+            {
+                UpdatePreview(data, isStart);
+                if (data.Kind != RevGalNodeKind.Choice && data.Kind != RevGalNodeKind.Branch)
+                {
+                    return;
+                }
+
+                int outletIndex = 0;
+                for (int index = 0; index < (data.Exits?.Count ?? 0) && outletIndex < Outputs.Count - 1; index++)
+                {
+                    var exit = data.Exits[index];
+                    if (exit == null)
+                    {
+                        continue;
+                    }
+                    var output = Outputs[outletIndex++];
+                    string label = OutletLabel(exit, index);
+                    if (output.portName != label)
+                    {
+                        output.portName = label;
+                    }
+                }
+            }
+
+            private void UpdatePreview(RevGalNode data, bool isStart)
+            {
+                string name = string.IsNullOrWhiteSpace(data.Title) ? data.Id : data.Title;
+                string heading = isStart ? "起点 · " + name : name;
+                if (title != heading)
+                {
+                    title = heading;
+                }
+                if (string.IsNullOrWhiteSpace(data.Text))
+                {
+                    _summary?.RemoveFromHierarchy();
+                    _summary = null;
+                    return;
+                }
+                if (_summary == null)
+                {
+                    _summary = new Label();
+                    _summary.style.whiteSpace = WhiteSpace.Normal;
+                    _summary.style.marginLeft = 7;
+                    _summary.style.marginRight = 7;
+                    mainContainer.Add(_summary);
+                }
+                string text = data.Text.Length > 60 ? data.Text.Substring(0, 60) + "…" : data.Text;
+                if (_summary.text != text)
+                {
+                    _summary.text = text;
+                }
+            }
+
+            private static string OutletLabel(RevGalEdge exit, int index)
+            {
+                return string.IsNullOrEmpty(exit.Label) ? "条件 " + (index + 1) : exit.Label;
             }
 
             public override void OnSelected()
@@ -162,6 +213,7 @@ namespace Revolution.Gal.Editor
                 {
                     return;
                 }
+                var drawn = new List<(RevGalNode Data, StoryNode Visual)>(story.Definition.Nodes.Count);
                 foreach (var data in story.Definition.Nodes)
                 {
                     if (data == null || string.IsNullOrEmpty(data.Id) || _nodes.ContainsKey(data.Id))
@@ -176,24 +228,57 @@ namespace Revolution.Gal.Editor
                         }
                     });
                     _nodes.Add(data.Id, visual);
+                    drawn.Add((data, visual));
                     AddElement(visual);
                 }
-                foreach (var node in _nodes.Values)
+                foreach (var (data, visual) in drawn)
                 {
-                    foreach (Port output in node.Outputs)
-                    {
-                        string destination = Destination((Outlet)output.userData);
-                        if (!string.IsNullOrEmpty(destination) && _nodes.TryGetValue(destination, out var target))
-                        {
-                            AddElement(output.ConnectTo(target.Input));
-                        }
-                    }
+                    ConnectOutputs(data, visual);
                 }
                 Highlight(selection);
             }
             finally
             {
                 _drawing = false;
+            }
+        }
+
+        /// <summary>节点文案原地更新，保留图上的位置、选中状态和连线。</summary>
+        public void UpdateNode(RevGalNode data, bool isStart)
+        {
+            if (!string.IsNullOrEmpty(data?.Id) && _nodes.TryGetValue(data.Id, out var visual))
+            {
+                visual.UpdatePresentation(data, isStart);
+            }
+        }
+
+        /// <summary>复用建图时的源节点数据，通过索引连接出口，重复出口 ID 沿用首个目标。</summary>
+        private void ConnectOutputs(RevGalNode data, StoryNode visual)
+        {
+            Dictionary<string, string> exitTargets = null;
+            foreach (var output in visual.Outputs)
+            {
+                var outlet = (Outlet)output.userData;
+                string destination = data.Next;
+                if (outlet.Exit != null)
+                {
+                    if (exitTargets == null)
+                    {
+                        exitTargets = new Dictionary<string, string>(StringComparer.Ordinal);
+                        foreach (var exit in data.Exits)
+                        {
+                            if (exit?.Id != null && !exitTargets.ContainsKey(exit.Id))
+                            {
+                                exitTargets.Add(exit.Id, exit.Target);
+                            }
+                        }
+                    }
+                    exitTargets.TryGetValue(outlet.Exit, out destination);
+                }
+                if (!string.IsNullOrEmpty(destination) && _nodes.TryGetValue(destination, out var target))
+                {
+                    AddElement(output.ConnectTo(target.Input));
+                }
             }
         }
 
@@ -279,12 +364,6 @@ namespace Revolution.Gal.Editor
                     }
                 }
             }
-        }
-
-        private string Destination(Outlet outlet)
-        {
-            var node = Find(outlet.Node);
-            return outlet.Exit == null ? node?.Next : node?.Exits?.Find(x => x?.Id == outlet.Exit)?.Target;
         }
 
         private void SetDestination(Outlet outlet, string target)

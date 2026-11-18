@@ -16,6 +16,8 @@ Revolution.Gal 是 Unity 2022.3 的可选视觉小说模块。把 [Revolution �
 
 剧情工作台的 **接入检查** 显示当前 SO 的逻辑路径、变量、信号、媒体类型及本地资源解析结果。可复制 JSON，也可用 `gal story.contract --path Assets/…/Story.asset` 从 RevCLI 获取。工作台的试读和 `gal story.export` 都可以用于只有剧情配置的项目。
 
+节点文案输入即时写入当前 SO 的编辑状态，点击 **保存** 写入磁盘。短暂停笔后，工作台更新该节点的图上摘要、大纲搜索结果和校验提示。舞台、变量修改及本地化等折叠区在首次展开时加载。
+
 新工程可以从空工作台点 **快速创建并试读示例**，或用 `gal story.quickstart` 生成一份能跑通两条路线的剧情。配置了 RevAB 时会返回可打包的逻辑路径。维护分支时在 **剧情设置 / 变量** 里运行路线用例，或用 `gal story.test` 执行同一份 JSON。可参考 [快速开始和路线测试](https://github.com/Yokino337088/Revolution/blob/skill/revolution-gal/references/quickstart-and-tests.md)。
 
 自有界面从 `RevGalPlayback.LoadAsync` 加载逻辑路径，或把已持有的 Story SO 交给 `RevGalPlayback.Create`。宿主自己装配类型化字段时用 `CreateFromDefinition`。这些入口都返回 `RevGalSession`，由宿主持有。`Observe` 立即交付首帧并订阅后续帧；用回调捕获的帧 Token 调用 `Advance(token)` 和 `Choose(id, token)`。宿主可使用 RevUI、UI Toolkit 或自己的显示系统。配置了 `HandleSignal` 后，用 `DispatchSignalAsync(token)` 执行并等待完成，或由宿主自行处理再调用 `CompleteSignal(token)`。
