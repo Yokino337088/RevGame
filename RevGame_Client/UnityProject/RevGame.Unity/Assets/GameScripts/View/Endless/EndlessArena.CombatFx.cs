@@ -126,9 +126,12 @@ namespace RevGame.Endless
         private float[] _hordeBirthAt = new float[0];
         /// <summary>出生视图“由大渐小”的缩放补间，下标同上；视图回池前 Kill(false)，不留悬空回调。</summary>
         private Tweener[] _hordeBirthTween = new Tweener[0];
-        /// <summary>批量网格里普通杂兵方块的半宽（格），必须和 UpdateHorde 里的 .38 一致（纯表现尺寸）。</summary>
+        /// <summary>普通杂兵方块的半宽（格）。出生视图缩到这一尺寸后交回网格绘制。</summary>
         private const float HordeQuadHalf = .38f;
-        private int _hordeBirthCount, _pendingHordeBirths;
+        /// <summary>当前持有出生租约的槽号。最多 MaxHordeBirths 项，死亡匹配和帧间跟随只遍历这些槽。</summary>
+        private readonly List<int> _liveHordeBirthSlots = new List<int>(MaxHordeBirths);
+        /// <summary>已预留名额但资源尚未到手的出生视图数，连同在播数一起受预算限制。</summary>
+        private int _pendingHordeBirths;
         /// <summary>第一帧只记录现有敌人、不补播出生（读档或开局时它们早就在场上了）。</summary>
         private bool _hordeSynced;
         /// <summary>盘内棋子上次的星级，星级变高就播六章同款升星雷暴。</summary>
@@ -191,11 +194,11 @@ namespace RevGame.Endless
             _deathRead = latest;
         }
 
-        /// <summary>每帧入口第二段：读攻击与伤害回执，推进杂兵出生，然后按预算放出特效。</summary>
-        private void UpdateCombatFx(EndlessService service)
+        /// <summary>推进出生视图与战斗反馈。出生坐标共用已采样姿态，攻击和飘字仍逐帧消费真实回执。</summary>
+        private void UpdateCombatFx(EndlessService service, bool hordeChanged, float hordeBlend)
         {
             EndlessRun run = service.Run;
-            UpdateHordeBirths(run);
+            UpdateHordeBirths(service.Horde.Length, hordeChanged, hordeBlend);
             ReadImpacts(service);
             ReadDamage(service);
             FlushDamageTexts(run);
@@ -652,18 +655,20 @@ namespace RevGame.Endless
             RevPool.Return(view);
         }
 
-        /// <summary>外围杂兵死亡：正在播出生燃烧的直接就地溶解，否则临时借一枚棋子视图播溶解。</summary>
+        /// <summary>外围杂兵死亡。出生视图转入溶解时使紧凑网格失效，其余敌人沿用死亡回执位置。</summary>
         private void HordeDied(EndlessDeathReceipt death)
         {
             // 每只杂兵倒下都有一声清脆的“啵”（有最短间隔，成片倒下时变成连续的碎裂声），这是割草爽感的关键。
             PlayFeelSound(SoundKill);
-            for (int i = 0; i < _hordeBirth.Length; i++)
+            for (int index = 0; index < _liveHordeBirthSlots.Count; index++)
             {
-                if (_hordeBirth[i] != null && _hordeSeen[i] == death.id)
+                int slot = _liveHordeBirthSlots[index];
+                if (_hordeBirth[slot] != null && _hordeSeen[slot] == death.id)
                 {
-                    PieceView view = _hordeBirth[i];
-                    _hordeBirth[i] = null;
-                    _hordeBirthCount--;
+                    PieceView view = _hordeBirth[slot];
+                    _hordeBirth[slot] = null;
+                    _liveHordeBirthSlots.RemoveAt(index);
+                    _hordeLayoutDirty = true;
                     if (_dissolving.Count + _pendingCorpses < MaxCorpses && view.BeginDeathDissolve(_corpseFinished))
                     {
                         TrackDissolve(view);
@@ -745,13 +750,11 @@ namespace RevGame.Endless
         }
 
         /// <summary>
-        /// 外围杂兵出生：槽位里的敌人编号变了，就借一枚棋子视图跟着它播 1.4 秒出生燃烧，
-        /// 这段时间批量网格里的方块隐藏（见 UpdateHorde），烧完再换回网格。领主（kind ≥ 6）有自己的登场演出，不在这里播。
+        /// 新快照出现不同身份时借一枚视图播出生燃烧。既有出生视图每帧采样同一插值姿态，交还后再切回网格。
+        /// 领主有独立登场演出，原有顺序和出生预算由这个入口继续管理。
         /// </summary>
-        private void UpdateHordeBirths(EndlessRun run)
+        private void UpdateHordeBirths(int length, bool sampleChanged, float blend)
         {
-            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
-            int length = horde.Length;
             if (_hordeSeen.Length != length)
             {
                 _hordeSeen = new int[length];
@@ -760,9 +763,20 @@ namespace RevGame.Endless
                 _hordeBirthTween = new Tweener[length];
             }
             float now = Time.time;
+            if (!sampleChanged)
+            {
+                // 普通表现帧只推进仍在播放的租约。倒序允许到期时移除刚采样的槽。
+                for (int index = _liveHordeBirthSlots.Count - 1; index >= 0; index--)
+                {
+                    AdvanceHordeBirth(_liveHordeBirthSlots[index], now, blend);
+                }
+                return;
+            }
+
+            // 新样本仍按原槽序检查身份和出生名额，避免批次紧凑化改变表现优先级。
             for (int i = 0; i < length; i++)
             {
-                EndlessHorde h = horde[i];
+                ref readonly EndlessHorde h = ref _hordePresentation.Read(i);
                 if (!h.active)
                 {
                     ReturnHordeBirth(i);
@@ -772,27 +786,32 @@ namespace RevGame.Endless
                 {
                     ReturnHordeBirth(i);
                     _hordeSeen[i] = h.id;
-                    if (_hordeSynced && h.kind < 6 && _hordeBirthCount + _pendingHordeBirths < MaxHordeBirths)
+                    if (_hordeSynced && h.kind < 6 && _liveHordeBirthSlots.Count + _pendingHordeBirths < MaxHordeBirths)
                     {
                         RequestHordeBirth(i, h.id);
                     }
                     continue;
                 }
-                PieceView view = _hordeBirth[i];
-                if (view == null)
-                {
-                    continue;
-                }
-                if (now - _hordeBirthAt[i] >= HordeBirthSeconds)
-                {
-                    ReturnHordeBirth(i);
-                }
-                else
-                {
-                    view.SnapTo(new Vector3(h.x, h.y, -0.5f));
-                }
+                AdvanceHordeBirth(i, now, blend);
             }
             _hordeSynced = true;
+        }
+
+        /// <summary>将仍在播放的出生视图对齐到本帧显示位置，到期时将绘制归还批次。</summary>
+        private void AdvanceHordeBirth(int slot, float now, float blend)
+        {
+            PieceView view = _hordeBirth[slot];
+            if (view == null)
+            {
+                return;
+            }
+            if (now - _hordeBirthAt[slot] >= HordeBirthSeconds)
+            {
+                ReturnHordeBirth(slot);
+                return;
+            }
+            Vector2 position = _hordePresentation.Position(slot, blend);
+            view.SnapTo(new Vector3(position.x, position.y, -.5f));
         }
         private void RequestHordeBirth(int slot, int id)
         {
@@ -809,7 +828,7 @@ namespace RevGame.Endless
         {
             GamePoolRequests.GetAsync<PieceView>(view => PresentHordeBirth(view, slot, id, generation), transform);
         }
-        /// <summary>异步到手时这只杂兵可能已经死了或进盘了：核对槽位编号，对不上就还池。</summary>
+        /// <summary>异步到手时核对槽位身份。在兼容样本上对齐出生坐标，并使网格在下次绘制时跳过该槽。</summary>
         private void PresentHordeBirth(PieceView view, int slot, int id, int generation)
         {
             if (!_active || generation != _fxGeneration)
@@ -832,8 +851,14 @@ namespace RevGame.Endless
                 return;
             }
             EndlessHorde h = service.Horde[slot];
+            ref readonly EndlessHorde shown = ref _hordePresentation.Read(slot);
+            // 从网格切到出生视图时使用同一显示位置。尚未采样的新身份直接用已确认坐标。
+            double now = Time.timeAsDouble;
+            Vector2 position = shown.active && shown.id == id
+                ? _hordePresentation.Position(slot, _hordePresentation.Blend(now))
+                : new Vector2(h.x, h.y);
             BindHordeLook(view);
-            view.SnapTo(new Vector3(h.x, h.y, -0.5f));
+            view.SnapTo(new Vector3(position.x, position.y, -.5f));
             view.PlayBirthFire();
             // 出生时是六章同款的大身体，烧完要换回较小的网格方块。以前到点直接换，看起来“啪”地一下缩小；
             // 现在用 DOTween 在整段出生时间里平滑缩到网格方块大小（先慢后快再慢），到点换回网格时尺寸正好一致。
@@ -841,8 +866,10 @@ namespace RevGame.Endless
             _hordeBirthsShown++;
             _hordeBirth[slot] = view;
             _hordeBirthAt[slot] = Time.time;
-            _hordeBirthCount++;
+            _liveHordeBirthSlots.Add(slot);
+            _hordeLayoutDirty = true;
         }
+        /// <summary>结束出生租约并恢复原大小。同一槽的网格与血条将在下次提交时恢复。</summary>
         private void ReturnHordeBirth(int slot)
         {
             if (_hordeBirth[slot] == null)
@@ -858,7 +885,8 @@ namespace RevGame.Endless
             _hordeBirth[slot].SetBodySize(1, false, false);
             RevPool.Return(_hordeBirth[slot]);
             _hordeBirth[slot] = null;
-            _hordeBirthCount--;
+            _liveHordeBirthSlots.Remove(slot);
+            _hordeLayoutDirty = true;
         }
         /// <summary>批量网格是否要隐藏这个槽位的方块（它正由出生视图代画）。</summary>
         private bool HordeDrawnByView(int slot)
@@ -910,7 +938,7 @@ namespace RevGame.Endless
                 ["hordeBarQuadsSubmitted"] = (_barBatch?.Mesh.GetIndexCount(0) ?? 0u) / 6u,
                 ["births"] = _birthsShown, ["hordeBirths"] = _hordeBirthsShown, ["upgrades"] = _upgradesShown, ["dissolves"] = _dissolvesShown,
                 ["withinBudget"] = _activeFx[(int)FxKind.Projectile].Count <= MaxProjectiles && _activeFx[(int)FxKind.Melee].Count <= MaxMeleeEffects
-                    && TextCount() <= MaxFloatingTexts && _dissolving.Count <= MaxCorpses && _hordeBirthCount <= MaxHordeBirths
+                    && TextCount() <= MaxFloatingTexts && _dissolving.Count <= MaxCorpses && _liveHordeBirthSlots.Count <= MaxHordeBirths
             };
         }
 
@@ -944,12 +972,13 @@ namespace RevGame.Endless
             }
             _dissolving.Clear();
             _pendingCorpses = 0;
-            for (int i = 0; i < _hordeBirth.Length; i++)
+            for (int index = _liveHordeBirthSlots.Count - 1; index >= 0; index--)
             {
-                ReturnHordeBirth(i);
+                ReturnHordeBirth(_liveHordeBirthSlots[index]);
             }
+            _liveHordeBirthSlots.Clear();
             System.Array.Clear(_hordeSeen, 0, _hordeSeen.Length);
-            _hordeBirthCount = _pendingHordeBirths = 0;
+            _pendingHordeBirths = 0;
             _dyingIds.Clear();
             _stars.Clear();
             System.Array.Clear(_fxShown, 0, _fxShown.Length);

@@ -19,6 +19,7 @@ namespace RevGame.Endless
                 return RevServices.GetRequired<EndlessService>();
             }
         }
+        /// <summary>启动时登记正式无尽入口及隔离规则检查，注销时统一按所有者移除。</summary>
         public static void Register()
         {
             RevGM.Register("无尽/进入测试局", "从大厅经正式流程进入固定种子隔离无尽局", args =>
@@ -100,6 +101,9 @@ namespace RevGame.Endless
                 return EndlessDragInput.State();
             }, owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-rules", "隔离验证80格部署、一格升星、盘外Boss总预算与存档", Empty, _ => EndlessService.CheckEcsRules(), owner: Owner);
+#if UNITY_EDITOR
+            RevRuntimeAutomation.Register("endless.horde-presentation-check", "隔离验证敌潮插值、生命周期及顶点外观流复用", Empty, _ => EndlessHordePresentationChecks.Run(), owner: Owner);
+#endif
             RevRuntimeAutomation.Register("endless.save-recovery-check", "使用临时目录验证无尽棋局和战绩的备份恢复", Empty, _ => EndlessService.CheckSaveRecovery(), owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
             RevRuntimeAutomation.Register("endless.rules", "隔离实例验证占格、暂停、存档随机源、上限和重复结算", Empty, _ => EndlessChecks.Run(), owner: Owner);

@@ -240,29 +240,16 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>按当前活动槽构建血条，保留受伤条件、颜色和比例，只提交本帧连续的有效方块。</summary>
-        private void UpdateHordeBars(EndlessHordeComponents horde)
+        /// <summary>把血条排进本次显示批次。两端都沿用敌人位置与原有竖向偏移。</summary>
+        private void WriteHordeBar(int bar, Vector2 from, Vector2 to, in EndlessHorde horde, bool boss)
         {
-            int bars = 0;
-            int active = horde.ActiveCount;
-            for (int cursor = 0; cursor < active; cursor++)
-            {
-                int i = horde.ActiveSlot(cursor);
-                EndlessHorde h = horde[i];
-                if (!h.active || h.hp >= h.maxHp || h.maxHp <= 0 || HordeDrawnByView(i))
-                {
-                    continue;
-                }
-                float ratio = Mathf.Clamp01(h.hp / h.maxHp);
-                float scale = h.kind >= 6 ? 2.2f : 1f;
-                float x = h.x, y = h.y + BarOffset * scale, w = BarHalfWidth * scale, hh = BarHalfHeight * Mathf.Sqrt(scale);
-                // 绿 → 黄 → 红；alpha 存剩余比例给 Shader 决定填充长度。
-                Color color = ratio > .5f ? Color.Lerp(new Color(1f, .82f, .2f), new Color(.35f, .95f, .35f), (ratio - .5f) * 2) : Color.Lerp(new Color(1f, .22f, .18f), new Color(1f, .82f, .2f), ratio * 2);
-                color.a = ratio;
-                _barBatch.Write(bars++, x, y, w, hh, -.6f, BarUv, color);
-            }
-            _barBatch.Submit(bars);
-            HordeBarCount = bars;
+            float scale = boss ? 2.2f : 1f;
+            Vector2 offset = new Vector2(0, BarOffset * scale);
+            float ratio = Mathf.Clamp01(horde.hp / horde.maxHp);
+            // 绿 → 黄 → 红；alpha 存剩余比例给 Shader 决定填充长度。
+            Color color = ratio > .5f ? Color.Lerp(new Color(1f, .82f, .2f), new Color(.35f, .95f, .35f), (ratio - .5f) * 2) : Color.Lerp(new Color(1f, .22f, .18f), new Color(1f, .82f, .2f), ratio * 2);
+            color.a = ratio;
+            _barBatch.Write(bar, from + offset, to + offset, BarHalfWidth * scale, BarHalfHeight * Mathf.Sqrt(scale), -.6f, BarUv, color);
         }
         /// <summary>验收用：当前画着几条外围血条。</summary>
         public int HordeBarCount

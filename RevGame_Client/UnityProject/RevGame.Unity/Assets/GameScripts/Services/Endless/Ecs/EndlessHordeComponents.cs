@@ -18,6 +18,8 @@ namespace RevGame.Endless
         private readonly EndlessHorde[] _state;
         /// <summary>实体槽代次；同一槽死后再出生时递增，旧引用不能命中新实体。</summary>
         private readonly int[] _generation;
+        /// <summary>同一个敌人的显示跳位序号。演出跳位时递增，普通移动不改变它。</summary>
+        private readonly int[] _positionCuts;
         /// <summary>本步活跃实体槽号，按槽号稳定排序；查询顺序保持旧算法的并列选择约定。</summary>
         private readonly int[] _active;
         /// <summary>当前活跃槽快照长度，仅结构变化后更新；访问前由RefreshActive保证有效。</summary>
@@ -26,6 +28,12 @@ namespace RevGame.Endless
         private bool _activeDirty = true;
         /// <summary>所有会改变空间候选的写入版本；直接测试造局也通过同一提交点失效索引。</summary>
         public int SpatialVersion
+        {
+            get;
+            private set;
+        }
+        /// <summary>组件写回的版本。显示层只在版本或逻辑时间变化后复制新样本。</summary>
+        public uint PresentationVersion
         {
             get;
             private set;
@@ -53,9 +61,10 @@ namespace RevGame.Endless
             _health = new Vector2[capacity];
             _state = new EndlessHorde[capacity];
             _generation = new int[capacity];
+            _positionCuts = new int[capacity];
             _active = new int[capacity];
         }
-        /// <summary>兼容现有业务提交契约；读回值快照，写回一次拆到组件，避免两个可变真源。</summary>
+        /// <summary>读回值快照，写回一次拆到组件并使显示样本失效。真实状态仍由本组件持有。</summary>
         public EndlessHorde this[int slot]
         {
             get
@@ -84,6 +93,7 @@ namespace RevGame.Endless
                 Positions[slot] = new Vector2(value.x, value.y);
                 _health[slot] = new Vector2(value.hp, value.maxHp);
                 _state[slot] = value;
+                PresentationVersion++;
             }
         }
         public bool IsAlive(int slot)
@@ -112,6 +122,17 @@ namespace RevGame.Endless
         {
             return _generation[slot];
         }
+        /// <summary>供表现程序集只读查询最近一次跳位的序号，用来判定能否跨两张样本插值。</summary>
+        public int PositionCut(int slot)
+        {
+            return _positionCuts[slot];
+        }
+        /// <summary>规则方写回真实坐标后标记跳位。测试可在独立组件上调用。槽位身份及空间版本仍由原有写回维护。</summary>
+        public void MarkPositionCut(int slot)
+        {
+            _positionCuts[slot]++;
+            PresentationVersion++;
+        }
         /// <summary>只在结构变化后扫描一次；纯移动和掉血不会反复重建活跃名单。</summary>
         private void RefreshActive()
         {
@@ -135,6 +156,7 @@ namespace RevGame.Endless
             Array.Clear(_state, 0, Length);
             Array.Clear(Positions, 0, Length);
             Array.Clear(_health, 0, Length);
+            Array.Clear(_positionCuts, 0, Length);
             for (int i = 0; i < Length; i++)
             {
                 _generation[i]++;
@@ -142,6 +164,7 @@ namespace RevGame.Endless
             _activeCount = 0;
             _activeDirty = true;
             SpatialVersion++;
+            PresentationVersion++;
         }
         /// <summary>保存边界创建独立序列化数组，后续组件修改不会改动已交给存档的快照。</summary>
         public EndlessHorde[] Export()

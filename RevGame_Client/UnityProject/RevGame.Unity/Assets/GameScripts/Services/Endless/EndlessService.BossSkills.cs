@@ -192,6 +192,7 @@ namespace RevGame.Endless
         /// <summary>
         /// 领主技能打到自己的杂兵：外围杂兵不在棋盘里，先把坐标压回最近的棋盘格，再用同一个几何判定。
         /// openingEffect 只在第一段生效（灼烧、冻结这类“全场一次”）；stageEffect 每段都生效（冲退、圣裁）。
+        /// 冲退仍当步改坐标，并通知显示采样器不要跨这次跳位插值。
         /// </summary>
         private void StrikeHorde(BossSkillInfo info, int openingEffect, int stageEffect)
         {
@@ -224,6 +225,11 @@ namespace RevGame.Endless
                 Horde[i] = h;
                 if (struck)
                 {
+                    if (stageEffect == 2)
+                    {
+                        // 怒潮回卷原本在当步跳位，通知显示层从推回后的坐标重新起算。
+                        Horde.MarkPositionCut(i);
+                    }
                     // 圣裁直接打掉全部生命，其余招式按比例。HitHorde 只扣血，死亡统一在 ResolveDeaths 结算，奖励不会重复。
                     HitHorde(i, stageEffect == 5 ? h.hp : h.maxHp * hitRatio, Run.formation);
                 }
