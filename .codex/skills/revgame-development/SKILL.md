@@ -17,4 +17,6 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 
 导入或打包资源前先查已有资产、逻辑路径和包归属，只导入缺少的内容。各模块复用同一份正式资产和已有 AB。按 [Unity 与资源迭代](references/unity-and-assets.md) 核对 Sprite Atlas V2 归属和目标平台的实际产物。
 
-复杂改动按需查 [实现与交付细则](references/implementation-workflow.md)，代码排版查 [代码与新手注释守则](references/code-and-comments.md)。交付说明实际效果、验证证据和框架边界。
+写、改或审查代码先读 [代码与新手注释守则](references/code-and-comments.md)。类型与接口、字段、属性、方法和回调逐项写中文契约，关键实现解释原因、先后、边界和清理。交付前检查实际 diff 和完整的新文件，补齐缺失或过期的注释。
+
+复杂改动按需查 [实现与交付细则](references/implementation-workflow.md)。交付说明实际效果、验证证据和框架边界。

@@ -28,11 +28,13 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 - 资源通过 `RevResPath.*` 或两段式逻辑路径加载，引用成对释放。首次真机加载用异步。普通业务异步用 `RevTask`；过场、冷启动和资源验证采用目标项目的实际加载模式。
 - 导入前先查项目已有资源。相同资源沿用原资产、逻辑路径和 AB，每个目标平台只保留一份包体。确实缺少的资源才导入。按 [资源复用与单包归属](references/resource-and-ab.md#61-资源复用与单包归属) 检查图集及隐式依赖。
 - `RevUIPanel` 的 `OnBindView` 装配，`OnRefreshView` 落屏，点击回调转发业务。关闭自身用 `CloseSelf()`，业务侧用 `SetData` 送数据。原地改数据后需要 `RefreshView()`。
-- 策划数值按项目现有配置链管理。Excel 业务沿用导表、强类型读取和装配校验。代码使用独立大括号，写面向新手的中文契约说明和关键步骤注释。
+- 策划数值按项目现有配置链管理。Excel 业务沿用导表、强类型读取和装配校验。代码使用独立大括号。
+- 写代码前读 [新手注释规范](references/code-style.md#3-面向新手的中文注释是交付门禁)。新增或修改的类、接口、字段、属性及方法逐项写中文契约，私有成员、构造函数及回调也覆盖。方法内关键步骤解释原因、顺序、边界与清理。简单行为一句话，复杂契约分段说明。
 - 完整约定见 [技术规则](references/technical-rules.md) 和 [代码与注释](references/code-style.md)。涉及框架源码时，先查安装版与源仓库的差异、CHANGELOG 和 [历史故障](references/pitfalls.md)。从框架源仓库维护，再同步生成分支和项目快照。
 
 ## 验收
 
+- 交付代码前逐文件读实际 diff 和新文件，核对受改动影响的声明及关键实现。注释缺失、过期或漏掉失败契约时直接补齐，再按 [审查清单](REFERENCE_GUIDELINES.md#新手注释检查) 复查。
 - 完成功能后，凡改动会影响 Unity 脚本编译，最后一次写入后必须在目标编辑器主动完整重编译并验证通过，再进入 Play 或交付。已有 Play 先结束本次测试并退出；用户正在进行的对局需先交接。按 [编辑器技能](../revolution-unity-editor/SKILL.md) 核对本次编译工单。
 
 - 项目有 `.codex/rev-policy.json` 时，通过项目入口检查本次 diff，按文件行号和规则 ID 修复。长任务恢复时重读项目 `AGENTS.md` 与当前专题。插件与规范检查见 [项目规范检查](references/project-policy.md)。

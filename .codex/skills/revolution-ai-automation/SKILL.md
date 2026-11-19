@@ -33,6 +33,7 @@ description: 在 Revolution Unity 项目中执行真实测试、检查功能完�
 
 - 业务动作优先调用实际 Service/Logic 入口的 GM 或注册能力；UI 测试走 EventSystem。禁止直接改期望状态、改存档、绕过业务来制造通过。
 - 缺接口时，在用户开发/测试授权内补最小项目接线：查询、受控动作、复位，限定开发环境，owner 注册/注销对称。复用现有入口，编译后从运行期确认并继续测试，不停在代码生成。
+- 编写或修改自动化、测试接线或业务修复代码时，按 [新手注释规范](../revolution-framework/references/code-style.md#3-面向新手的中文注释是交付门禁) 逐项注释并核对 diff。重点说明测试前置、接单与完成的区别、失败结果和清理。
 - 用 `rev_run` 或 `rev_mcp.py run <plan.json>` 执行跨接口测试。计划格式、断言和引用见 [测试编排](references/plans.md)。已有 GM 循环/性能 scenario 可继续使用 Automation 的 scenario；需要该格式时读取 `revolution-automation-tester`。
 - 默认 1 轮、0 预热、无性能达标阈值。用户指定次数则每轮重新造局和复位，不能复用已消耗的测试数据。
 - `until` 仅轮询实时声明 readOnly 的查询，必须有期限；变更不能因为超时就自动重复。普通成功响应不等于业务正确，必须断言数量、状态差、命中、目标或资源回收。

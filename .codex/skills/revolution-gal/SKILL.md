@@ -9,6 +9,8 @@ description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验�
 2. 对在线编辑器显式指定 `--project <Unity 工程> --mode live`。先发现 `commands --live --query gal.` 或 RevMCP 的 `rev_discover(target="editor", query="gal.")`。用实际注册动作区分客户端过旧、Gal 未安装、编译失败和编辑器处于 Play。
 3. 按请求选择参考。需要改生成器、公开契约或框架实现时，回到 Revolution 源仓库，使用该项目的编译和发布流程。
 
+编写或修改宿主、面板、制作工具或运行时代码时，按 [新手注释规范](../revolution-framework/references/code-style.md#3-面向新手的中文注释是交付门禁) 逐项注释并在交付前核对 diff。讲清会话、舞台资源或回调由谁持有，以及取消和关闭时的清理。
+
 | 要做的事 | 先读 |
 | --- | --- |
 | 把口述要求落实为节点改动，编写 CLI 批处理或读工具回执 | [自然语言与 RevCLI](references/revcli.md) |

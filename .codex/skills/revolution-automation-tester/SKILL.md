@@ -13,6 +13,8 @@ description: 执行或维护 Revolution.RevCLI 的 GM scenario 循环回归、�
 
 ## 一句话执行协议（优先于后文的通用说明）
 
+编写或修改 scenario 辅助代码、GM 或测试接线时，按 [新手注释规范](../revolution-framework/references/code-style.md#3-面向新手的中文注释是交付门禁) 逐项注释并核对 diff。说明输入约束、执行边界和清理职责。
+
 收到“测试 X”后立即执行，不只输出计划、教程或待用户运行的命令。把缺少的非关键参数从工作区推断并说明，默认一次功能回归、零预热、不设性能达标阈值；用户明确次数与目标则采用用户值。
 
 1. 先运行 `scripts/discover_tests.py --root <用户工程或工作区> --query <测试目标>`。用结构化结果定位真实工程、CLI、Build Settings 场景和既有 scenario；多工程时结合用户路径/当前文件选择，无法唯一选择才询问。
