@@ -1,0 +1,30 @@
+ManifestFileVersion: 0
+CRC: 1932426986
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a2147ca64892c9d149a3ae40c8f89f8e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: ef29164286ae37bd13945e89189d2a54
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a2147ca64892c9d149a3ae40c8f89f8e
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: 52df3844db588144aba4bfa0b203d622, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Revolution.Gal
+  ClassName: Revolution.Gal.RevGalDefinition
+- AssemblyName: Revolution.Gal
+  ClassName: Revolution.Gal.RevGalNode
+- AssemblyName: Revolution.Gal
+  ClassName: Revolution.Gal.RevGalStage
+- AssemblyName: Revolution.Gal
+  ClassName: Revolution.Gal.RevGalStagePreset
+Assets:
+- Assets/GameRes/Gal/Stories/yaya_days_together.asset
+Dependencies: []

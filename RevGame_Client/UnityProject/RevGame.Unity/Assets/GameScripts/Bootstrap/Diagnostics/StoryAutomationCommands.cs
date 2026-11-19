@@ -41,6 +41,8 @@ namespace RevGame.Bootstrap
             }, owner: Owner);
 #endif
             RevRuntimeAutomation.Register("story.state", "查询剧情、教学与隔离进度", Empty, _ => State(), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("yaya.portrait-bundles", "只读鸦鸦差分的图集租约与实际已加载 AB", Empty, _ =>
+                RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PortraitSnapshot(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("story.next", "点击剧情下一句", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().AdvanceStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.skip", "与右上角跳过按钮共用正式剧情收尾", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().SkipStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.yaya-state", "只读鸦鸦立绘/表情、全屏背景、层级与文本布局", Empty, _ => RevGame.UI.StoryPanel.YayaSnapshot(), readOnly: true, owner: Owner);
@@ -239,7 +241,7 @@ namespace RevGame.Bootstrap
                 ["hudOpen"] = RevUI.IsOpen<RevGame.UI.BattleHudPanel>(),
                 ["battleHud"] = RevUI.Get<RevGame.UI.BattleHudPanel>()?.InfoSnapshot(),
                 ["guideFrame"] = view == null ? -1 : view.GuideFrame,
-                ["guideFrameCount"] = flow.StoryContent == null ? 0 : flow.StoryContent.GuideFrames.Length,
+                ["guideFrameCount"] = flow.StoryContent?.ExpressionIds.Length ?? 0,
                 ["screen"] = flow.Screen.ToString(),
                 ["transitioning"] = flow.IsTransitioning,
                 ["blocked"] = flow.IsGameplayBlocked,
@@ -258,7 +260,7 @@ namespace RevGame.Bootstrap
                 ["typing"] = view != null && view.IsTyping,
                 ["soundStarted"] = view != null && view.SoundStarted,
                 ["visibleCharacters"] = view == null ? 0 : view.VisibleCharacters,
-                ["guidePacked"] = flow.StoryContent != null && flow.StoryContent.Guide != null && flow.StoryContent.Guide.packed,
+                ["guidePacked"] = view != null && view.GuidePacked,
                 ["abMode"] = abMode
             };
         }

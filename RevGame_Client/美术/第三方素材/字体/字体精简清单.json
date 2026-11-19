@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "d578aafccd5f10c8178852900dbaa8b7163685c156f8b7348a97a499eea06b59",
-  "inputDigest": "2fcf130676f73be48b2301d9f05e334382d81053a8b4d2992e6e5211203f5d98",
+  "inputDigest": "035ad4b11e65365a77c8e0ae2ee65c09d67e707f7e49700966e7ce822b0abc88",
   "originalBytes": 17002248,
   "outputBytes": 872316,
   "characterCount": 1941,
@@ -2013,11 +2013,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Config/Story/StoryBook.asset",
-      "sha256": "a56863b6743b237d19cf7d9e81ed7e462884eb94c40eefa22629890799ca300b"
+      "sha256": "8f356a2f378acb121227c675ab4c0a4a980f45df2c01d634ce369f3dbb9bea71"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset",
-      "sha256": "abea7826d33a81afeeb8dea573f648cec28a6f67909f899195a9655a6615519a"
+      "sha256": "5dce4ab43538858df10501b248ec7cc3fdcd318633330f417df02b12b729d210"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/Data/BalanceRule.txt",
@@ -2269,7 +2269,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab",
-      "sha256": "764abd7fababce0ef618d6be57e1d0c09d447cd5bc4f4e6a3d633c4fe2ca18e2"
+      "sha256": "1628157c7c414925b541861cd16bed56298f8d5fa5716ecf954b140d627a3263"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/RewardPanel.prefab",
@@ -2533,11 +2533,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryAutomationCommands.cs",
-      "sha256": "10820c70908efc3db6559d0dd48468e49f073c6ef733d797b2c54fd56fcbaa7c"
+      "sha256": "83f8f9f409dcda2e8a34b9df000792c58d9dbe56bd457a272caef8156763ca10"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/StoryPresentationPreview.cs",
-      "sha256": "4f83bd1fc329d88d02f2a22cb0c97134f47f8035cd53820507ea3c55034c4c3d"
+      "sha256": "8851d7040eb68e9ed84d8a3dcd8534db6f2599390aeb237fac60bc2835f38f19"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Bootstrap/Diagnostics/Yaya/YayaReactionAutomation.cs",
@@ -2616,6 +2616,10 @@
       "sha256": "df0de4da41989c19286a0fc7ccbc29d1881a1d5c439829290958b15f049a6754"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Core/YayaPortraitGroups.cs",
+      "sha256": "4d3d270aa93acb514ad0a659bf5f0c06e6469bd20c9c3dd7dc267905c79fbb8b"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Buffs/BattleEventCatalog.cs",
       "sha256": "74f07f398e5578f0937d2fde8510b5ff0d02cba9268c84940135ebb1ce114478"
     },
@@ -2681,11 +2685,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Story/StoryBook.cs",
-      "sha256": "f44e0166fb9d9630de97af8f3c3c21e4fdf4539f2cd7d49275dac8fe205463f6"
+      "sha256": "adad8e3c4cb39e89b938a4c388236500a3090d0985336fe3ea89aeefa878ba32"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Yaya/YayaExpressionCatalog.cs",
-      "sha256": "384fdbd2b52e0b0355baadf8a693571622894ac55d6ddcef1cd4fae189f2c8e8"
+      "sha256": "9a1499f18c4623e3dbcf9d2ddcecb07deee357cbb11ca5695871b1f6999fbd47"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Data/Yaya/YayaMemoryBook.cs",
@@ -2757,7 +2761,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Gal.cs",
-      "sha256": "27cc456790d86af69cd3c49e292f14eb8672d75cfc1732b16a608425213a2ab5"
+      "sha256": "1bbf0113337e968a4f287accbb7469cee19b294984868306f0c437ba9389642c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Pvp.cs",
@@ -2765,11 +2769,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Scenes.cs",
-      "sha256": "781f1350b47b9c1073fbebf7bb686c98e74672901e7a09cd071d580611ff9461"
+      "sha256": "c9114a89be4a05be4eb29b85e7e72cd43ad9449339f987fe0ee2c7d819adef4c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Flow/States/GameFlow.Story.cs",
-      "sha256": "bf5ca0301bdabd796203ff0298ee155842c67930d2b8edc9c528cf0e12600cec"
+      "sha256": "e503e0a114b2f03efdbc25d2dacfb4fb555634f4bc3640d29c988b1214cfa513"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pieces/Model/Piece.cs",
@@ -3437,7 +3441,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.cs",
-      "sha256": "bc620cc7d26ef055faee53c290a7fb2f213661867b1c54b7e06e930a0a66b498"
+      "sha256": "0d66eb38145946f41392775a569f51db36db5040ca149e11bb2e5f694faea4fc"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.Navigation.cs",
@@ -3445,7 +3449,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpPanel.Presentation.cs",
-      "sha256": "068eb0277f8a29024cb605f2e6f3b31eeee1a65455e551abfe047cfeecfef2a2"
+      "sha256": "35d8a392a925f57c4fc5f68618f3e14300903d21ae0d094c483719a77cf5bdfa"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Pvp/PvpServerPanel.cs",
@@ -3453,11 +3457,11 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/GalStoryPlayback.cs",
-      "sha256": "c0e205a0f2191ebe34072a1650aa0859492a21640c35332771405db1bb1be9c4"
+      "sha256": "fe64f0a5bbc5dece38d6aed49924cc904751e7964152c4f5f354be34dc4868de"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryPanel.cs",
-      "sha256": "a0b93233cda2db9e510fadbe4209312c35acd600b0c71383de62a95d232f1d19"
+      "sha256": "d7e1e21aed78632bba2ed3ceaa9bbd4a204f5ea1d6a8db99efb753c67b3aa641"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryTypingSound.cs",
@@ -3465,7 +3469,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/StoryView.cs",
-      "sha256": "792e68c07d4af240b5fc3c4647ec18addcc6f2bb25307eea312a618ed98257af"
+      "sha256": "3fcd13211aa028739ca0019d31f993a5a70afdf222ecf7eafd5e951c01a63281"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Story/TutorialPanel.cs",
@@ -3625,7 +3629,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Yaya/YayaReactionPresenter.cs",
-      "sha256": "1a54698a51a9788d0370f6907cdf021c8f41ddddf90febd49821d1de59823923"
+      "sha256": "7468b577e71f74bccbe61d5266ada42c870dbc413c2e4ce982d62311c1990e2c"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Combat/Yaya/YayaReactionView.cs",
@@ -3756,8 +3760,16 @@
       "sha256": "c2794c7ddeb5dda8eb7f319e0ed3749f5ddaf0324f69ca6b63f2a6e5a523b54f"
     },
     {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GamePortraitReference.cs",
+      "sha256": "493128a29d0533b08bc3ae1f195dee0374deb18d5a54139a525d9d7ef561309e"
+    },
+    {
+      "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GamePortraitScope.cs",
+      "sha256": "1109b4ba645a985efd07517bc30ac01c74d26da0d5c186795b80c18480bf04f8"
+    },
+    {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GameSpriteAtlasService.cs",
-      "sha256": "2d5b1c492c7e615723ea1cf19bb9725069ea876b88d40d0ae772b4f93b26c90c"
+      "sha256": "bed32e46ef331aceeaca8068ba24709602699e65000988fc52ab0125c499fdcf"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/View/Scene/ChapterBackgroundLease.cs",

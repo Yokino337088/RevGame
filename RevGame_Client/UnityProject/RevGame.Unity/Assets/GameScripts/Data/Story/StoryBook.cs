@@ -7,11 +7,12 @@ namespace RevGame.Data
     [CreateAssetMenu(menuName = "RevGame/剧情/剧情配置", fileName = "StoryBook")]
     public sealed class StoryBook : ScriptableObject
     {
-        /// <summary>默认鸦鸦立绘，兼容已有资产字段；六种表情归YayaExpressions，不加载全角色库。</summary>
-        [InspectorName("默认立绘")] public Sprite Guide;
-        /// <summary>本版本为按编号索引的表情集合，和ExpressionIds一一对应；不同情绪不再作为动画循环。</summary>
+        /// <summary>旧配置保留原字段供导入迁移。正式资源由下方的无对象引用表记录。</summary>
+        [HideInInspector] public Sprite Guide;
         [HideInInspector] public Sprite[] GuideFrames = Array.Empty<Sprite>();
-        /// <summary>鸦鸦表情的素材编号，与GuideFrames一一对应；只加载选用表情，不把全部差分/待机塞进剧情包。</summary>
+        [InspectorName("默认立绘")] public GamePortraitReference GuideReference;
+        [HideInInspector] public GamePortraitReference[] GuideFrameReferences = Array.Empty<GamePortraitReference>();
+        /// <summary>鸦鸦表情素材编号，与映射表一一对应。默认立绘使用编号 0。</summary>
         [HideInInspector] public int[] ExpressionIds = Array.Empty<int>();
         /// <summary>本次原创剧情迁移版本，仅编辑器使用，重跑制作配方不覆盖后续手工编辑。</summary>
         [HideInInspector] public int YayaRevision;
@@ -25,11 +26,12 @@ namespace RevGame.Data
         /// <summary>加载后先检查必需篇章与空白台词，错误直接交给流程失败界面，不默默跳过剧情。</summary>
         public void Validate()
         {
-            if (Guide == null || GuideFrames == null || Array.Exists(GuideFrames, f => f == null) || CharactersPerSecond <= 0)
+            if ((!GuideReference.IsSet && Guide == null) || CharactersPerSecond <= 0)
             {
                 throw new InvalidOperationException("剧情缺少向导或打字速度无效");
             }
-            if (ExpressionIds == null || ExpressionIds.Length != GuideFrames.Length || Episodes == null)
+            if (ExpressionIds == null || Episodes == null ||
+                (ExpressionIds.Length != GuideFrames?.Length && ExpressionIds.Length != GuideFrameReferences?.Length))
             {
                 throw new InvalidOperationException("剧情表情编号与图片必须一一对应，篇章数组不能为null");
             }
@@ -41,8 +43,8 @@ namespace RevGame.Data
                 {
                     throw new InvalidOperationException("剧情表情编号必须为正数且不能重复");
                 }
+                ExpressionReference(expression, out _);
             }
-            ExpressionSprite(0, out _);
             var ids = new System.Collections.Generic.HashSet<string>();
             foreach (Episode episode in Episodes)
             {
@@ -60,7 +62,7 @@ namespace RevGame.Data
                     {
                         throw new InvalidOperationException("剧情存在空台词：" + episode.Id);
                     }
-                    ResolvePortrait(episode, line, out _);
+                    ResolvePortraitReference(episode, line, out _);
                 }
             }
             foreach (string id in new[] { "opening", "tutorial", "chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "ending" })
@@ -98,9 +100,10 @@ namespace RevGame.Data
             /// <summary>本篇在对话卡顶部显示的标题。</summary>
             [InspectorName("篇章标题")] public string Title;
             /// <summary>可选的篇章立绘。指定后本篇默认使用此图；每句仍可覆盖，留空继续按表情列表选择。</summary>
+            [HideInInspector] public Sprite Portrait;
             [InspectorName("篇章立绘覆盖")]
             [Tooltip("拖入项目Sprite；留空按每句表情选择。每句指定立绘时优先使用每句的图片。")]
-            public Sprite Portrait;
+            public GamePortraitReference PortraitReference;
             /// <summary>0使用大厅小屋，1～6复用对应关卡原画与Shader；只保存选择，不硬引用六章材质。</summary>
             [InspectorName("背景章节（0为大厅）")] public int BackgroundChapter;
             /// <summary>按播放顺序排列的对白，一次点击推进一项。</summary>
@@ -115,42 +118,83 @@ namespace RevGame.Data
             /// <summary>对白署名，可为鸦鸦或冒险家；画像始终使用本句鸦鸦的反应表情。</summary>
             [InspectorName("说话人")] public string Speaker;
             /// <summary>本句直接指定的立绘，最高优先级；可让同一表情编号在不同剧情里使用不同图片。</summary>
+            [HideInInspector] public Sprite Portrait;
             [InspectorName("本句立绘覆盖")]
             [Tooltip("本句立绘 > 篇章立绘 > 表情映射；留空就使用下一级配置。图片必须导入为Sprite。")]
-            public Sprite Portrait;
+            public GamePortraitReference PortraitReference;
             /// <summary>本句表情映射编号；0使用默认立绘，不由UI按字符串关键词猜测。</summary>
             [InspectorName("表情编号（0为默认立绘）")] public int Expression;
             /// <summary>原始中文对白，不解析富文本，打字按Unicode文字元素显示。</summary>
             [InspectorName("对白文字")][TextArea(2, 5)] public string Text;
         }
-        /// <summary>只在换句时解析立绘，不加载散图；Sprite来自剧情SO的序列化依赖，由现有图集链绑定。</summary>
-        public Sprite ResolvePortrait(Episode episode, Line line, out int index)
+        /// <summary>本句覆盖优先于篇章和默认表情。旧资产仍可在转换前按原 Sprite 映射预览。</summary>
+        public (GamePortraitReference Reference, Sprite Legacy) ResolvePortraitReference(Episode episode, Line line, out int index)
         {
             index = -1;
-            if (line.Portrait != null)
+            if (line.PortraitReference.IsSet || line.Portrait != null)
             {
-                return line.Portrait;
+                return (line.PortraitReference, line.Portrait);
             }
-            if (episode.Portrait != null)
+            if (episode.PortraitReference.IsSet || episode.Portrait != null)
             {
-                return episode.Portrait;
+                return (episode.PortraitReference, episode.Portrait);
             }
-            return ExpressionSprite(line.Expression, out index);
+            return ExpressionReference(line.Expression, out index);
         }
-        /// <summary>按素材编号取表情，缺编号明确失败，避免对白与角色表情不一致。</summary>
-        public Sprite ExpressionSprite(int id, out int index)
+        /// <summary>按素材编号定位图集切片，校验映射存在，实际加载由当前篇章持有。</summary>
+        public (GamePortraitReference Reference, Sprite Legacy) ExpressionReference(int id, out int index)
         {
             if (id == 0)
             {
                 index = -1;
-                return Guide;
+                return (GuideReference, Guide);
             }
             index = Array.IndexOf(ExpressionIds, id);
-            if (index < 0 || index >= GuideFrames.Length)
+            if (index >= 0 && index < (GuideFrameReferences?.Length ?? 0) && GuideFrameReferences[index].IsSet)
             {
-                throw new InvalidOperationException("剧情表情未装配：" + id);
+                return (GuideFrameReferences[index], null);
             }
-            return GuideFrames[index];
+            if (index >= 0 && index < (GuideFrames?.Length ?? 0) && GuideFrames[index] != null)
+            {
+                return (default, GuideFrames[index]);
+            }
+            throw new InvalidOperationException("剧情表情未装配：" + id);
         }
+#if UNITY_EDITOR
+        /// <summary>制作工具读取真实切片；游戏内由播放作用域提供 Sprite。</summary>
+        public Sprite ResolvePortrait(Episode episode, Line line, out int index)
+        {
+            var portrait = ResolvePortraitReference(episode, line, out index);
+            return EditorSprite(portrait.Reference, portrait.Legacy);
+        }
+
+        public Sprite ExpressionSprite(int id, out int index)
+        {
+            var portrait = ExpressionReference(id, out index);
+            return EditorSprite(portrait.Reference, portrait.Legacy);
+        }
+
+        public static Sprite EditorSprite(GamePortraitReference reference, Sprite legacy = null)
+        {
+            if (!reference.IsSet)
+            {
+                return legacy;
+            }
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(reference.AssetGuid);
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+            foreach (UnityEngine.Object asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path))
+            {
+                if (asset is Sprite sprite && UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(sprite, out string guid, out long id)
+                    && guid == reference.AssetGuid && id == reference.LocalId)
+                {
+                    return sprite;
+                }
+            }
+            return null;
+        }
+#endif
     }
 }

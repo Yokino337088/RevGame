@@ -30,6 +30,7 @@ namespace RevGame.UI
         {
             get; private set;
         }
+        public bool GuidePacked => _guide != null && _guide.sprite != null && _guide.sprite.packed;
         /// <summary>换句或离开面板时回收本视图的字幕音效。</summary>
         private readonly StoryTypingSound _typingSound = new StoryTypingSound();
         /// <summary>缓存当前播放代次与行号，重复落屏不重启动画，新篇章同下标仍能刷新。</summary>
@@ -122,8 +123,8 @@ namespace RevGame.UI
             _speaker.text = line.Speaker;
             _counter.text = (frame.Index + 1) + " / " + frame.Episode.Lines.Length + "    点击任意处 · 下一句";
             // 每句配置明确指定表情，不把六张不同情绪当序列帧循环；立绘缩放保留原图比例。
-            _guide.sprite = frame.Book.ResolvePortrait(frame.Episode, line, out int expressionIndex);
-            GuideFrame = expressionIndex;
+            _guide.sprite = frame.Portrait;
+            GuideFrame = frame.ExpressionIndex;
             _guide.preserveAspect = true;
             _guide.transform.SetAsLastSibling();
             _dialogue.text = string.Empty;

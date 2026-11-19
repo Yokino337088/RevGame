@@ -1,30 +1,28 @@
 ManifestFileVersion: 0
-CRC: 1494978481
+CRC: 1157071541
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6519735134c8ad9a9239a05229ca74d7
+    Hash: 946caa9d08b2953996819e5420ca5b71
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 344124e7fc238065a42d44e222851242
+    Hash: bed89cc13ca515064239079f9857a806
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6519735134c8ad9a9239a05229ca74d7
+    Hash: 946caa9d08b2953996819e5420ca5b71
 HashAppended: 0
 ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 0c8e6cbfa60038942b93ad0c61a06a43, type: 3}
 - Class: 115
   Script: {instanceID: 0}
-- Class: 213
-  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.GamePortraitReference
 - AssemblyName: RevGame.Content
   ClassName: RevGame.Data.StoryBook/Episode
 - AssemblyName: RevGame.Content
   ClassName: RevGame.Data.StoryBook/Line
 Assets:
 - Assets/GameRes/Config/Story/StoryBook.asset
-Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_yayacombatexpressions
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_yayaexpressions
+Dependencies: []

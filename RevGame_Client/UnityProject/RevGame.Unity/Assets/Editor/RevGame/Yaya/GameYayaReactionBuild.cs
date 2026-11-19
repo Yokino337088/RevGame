@@ -63,7 +63,6 @@ namespace RevGame.Editor
                 catalog.Entries = UsedExpressions.Select(id => new YayaExpressionCatalog.Entry { Id = id, Sprite = AssetDatabase.LoadAssetAtPath<Sprite>(folder + "/YayaExpression_" + id.ToString("D2") + ".png") }).ToArray();
                 EditorUtility.SetDirty(catalog);
             }
-            catalog.AtlasNames = new[] { "YayaExpressions", "YayaCombatExpressions" };
             EditorUtility.SetDirty(catalog);
             // Excel可增换表情，但必须先在图片目录配好对应编号；构建阶段失败比真机临时白图更容易排查。
             var lines = new YayaReactionLineTable();

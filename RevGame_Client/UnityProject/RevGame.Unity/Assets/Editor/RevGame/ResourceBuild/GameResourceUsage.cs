@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using RevGame.Data;
 using Revolution.Editor;
 using UnityEditor;
 using UnityEditor.U2D;
@@ -71,6 +72,7 @@ namespace RevGame.Editor
                 }
             }
             GameGalResourceBuild.AddMediaDependencies(snapshot, ResourceRoot);
+            AddPortraitDependencies(snapshot);
             // 当前唯一的GetSprite业务入口是第一章背景：名字写在代码和场景参数中，场景不直接引用Sprite。
             // 同时扫描其余业务源码的图片名/逻辑路径字面量，保护直接按名称动态加载的图片。
             // Generated目录是打包的输出，绝不能把生成的资源清单再当作输入，否则旧条目会永远删不掉。
@@ -99,6 +101,51 @@ namespace RevGame.Editor
                 }
             }
             return snapshot;
+        }
+
+        /// <summary>剧情与互动的选图只储存位置。扫描时显式纳入这些 Sprite，配置资产本身无需依赖纹理包。</summary>
+        private static void AddPortraitDependencies(Snapshot snapshot)
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:StoryBook", new[] { ResourceRoot + "/Config/Story" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var book = AssetDatabase.LoadAssetAtPath<StoryBook>(path);
+                Add(book.GuideReference, path);
+                foreach (var reference in book.GuideFrameReferences)
+                {
+                    Add(reference, path);
+                }
+                foreach (var episode in book.Episodes)
+                {
+                    Add(episode.PortraitReference, path);
+                    foreach (var line in episode.Lines)
+                    {
+                        Add(line.PortraitReference, path);
+                    }
+                }
+            }
+            foreach (string guid in AssetDatabase.FindAssets("t:YayaExpressionCatalog", new[] { ResourceRoot + "/Config/Yaya" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var catalog = AssetDatabase.LoadAssetAtPath<YayaExpressionCatalog>(path);
+                foreach (var entry in catalog.Entries)
+                {
+                    Add(entry.Reference, path);
+                }
+            }
+
+            void Add(GamePortraitReference reference, string owner)
+            {
+                if (!reference.IsSet)
+                {
+                    return;
+                }
+                if (StoryBook.EditorSprite(reference) == null)
+                {
+                    throw new InvalidOperationException("立绘配置引用失效：" + owner + " → " + reference.AssetGuid + " / " + reference.SpriteName);
+                }
+                snapshot.Add(AssetDatabase.GUIDToAssetPath(reference.AssetGuid), owner);
+            }
         }
         /// <summary>只读审计结果，可经RevMCP取得。sourceBytes是PNG等源文件大小，不冒充压缩AB的实际节省。</summary>
         [Serializable]

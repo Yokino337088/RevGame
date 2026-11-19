@@ -72,9 +72,13 @@ namespace RevGame.Editor
             AssetDatabase.SaveAssets();
             return "鸦鸦大厅原画/RGB遮罩、24帧待机、6表情和全屏剧情已装配；请生成图集/字库后构建真实AB";
         }
-        /// <summary>更新正式图片内容但保留.meta与GUID；Unity控制运行期尺寸，源美术库完整保留。</summary>
+        /// <summary>已有差分直接复用，缺失时从美术库初次导入。大厅贴图继续随源文件更新。</summary>
         private static void Import(string source, string path, bool sprite)
         {
+            if (sprite && AssetDatabase.LoadAssetAtPath<Sprite>(path) != null)
+            {
+                return;
+            }
             File.Copy(source, path, true);
             AssetDatabase.ImportAsset(path);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);

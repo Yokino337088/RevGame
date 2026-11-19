@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using RevGame.Core;
 using UnityEditor;
 using UnityEditor.U2D;
 using UnityEngine;
@@ -57,12 +58,6 @@ namespace RevGame.Editor
                     importer.SaveAndReimport();
                 }
                 string group = GroupFor(path);
-                // 补齐的 Gal 差分与鸦鸦表情共用图集，沿用原导入分辨率，避免为共用而放大图页。
-                if (IsYayaExpressionAtlas(group)
-                    && !Path.GetFileNameWithoutExtension(path).StartsWith("GalYaya_", StringComparison.Ordinal))
-                {
-                    ConfigureExpressionSource(importer);
-                }
                 List<string> paths;
 
                 if (!groups.TryGetValue(group, out paths))
@@ -71,6 +66,22 @@ namespace RevGame.Editor
                     groups.Add(group, paths);
                 }
                 paths.Add(path);
+            }
+            // 先批量调整源图导入规格，再烘焙图集。逐张重导会反复压缩同一图集页。
+            AssetDatabase.StartAssetEditing();
+            try
+            {
+                foreach (var pair in groups.Where(pair => YayaPortraitGroups.IsPortraitAtlas(pair.Key)))
+                {
+                    foreach (string path in pair.Value)
+                    {
+                        ConfigureExpressionSource((TextureImporter)AssetImporter.GetAtPath(path));
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
             }
             foreach (var pair in groups)
             {
@@ -226,13 +237,9 @@ namespace RevGame.Editor
             }
             if (path.Contains("/Art/Characters/Yaya/Expressions/"))
             {
-                // 仅局内新增差分不跟开场SO常驻；已用于剧情的六张仍复用原图集，图片永远只有一份。
-                string expression = Path.GetFileNameWithoutExtension(path);
-                if (expression == "YayaExpression_02" || expression == "YayaExpression_08" || expression == "YayaExpression_14" || expression == "YayaExpression_26")
-                {
-                    return "YayaCombatExpressions";
-                }
-                return "YayaExpressions";
+                string logical = path.Substring("Assets/GameRes/".Length);
+                logical = logical.Substring(0, logical.Length - Path.GetExtension(logical).Length);
+                return YayaPortraitGroups.AtlasFor(logical) ?? "YayaStoryJourney";
             }
             if (path.Contains("/Art/Characters/Yaya/"))
             {
@@ -303,7 +310,7 @@ namespace RevGame.Editor
         }
         /// <summary>
         /// 图集源图与图集同包。禁旋转/紧密裁切保证九宫格Image、矩形弹道和背景UV保持正确。
-        /// 鸦鸦表情使用较高分辨率的源图，PC 用 BC7，Android 用保留透明的 ASTC。
+        /// 鸦鸦表情在图集阶段压缩，PC 用 BC7，Android 用保留透明的 ASTC。
         /// </summary>
         private static void ConfigureAtlas(string name, List<string> paths)
         {
@@ -346,7 +353,7 @@ namespace RevGame.Editor
             atlasImporter.packingSettings = new SpriteAtlasPackingSettings { enableRotation = false, enableTightPacking = false, padding = 4 };
             atlasImporter.textureSettings = new SpriteAtlasTextureSettings { readable = false, generateMipMaps = false, sRGB = true, filterMode = FilterMode.Bilinear };
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings { name = "DefaultTexturePlatform", maxTextureSize = maxSize, textureCompression = TextureImporterCompression.Compressed });
-            bool expression = IsYayaExpressionAtlas(name);
+            bool expression = YayaPortraitGroups.IsPortraitAtlas(name);
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings
             {
                 name = "Standalone", overridden = true, maxTextureSize = maxSize,
@@ -354,7 +361,7 @@ namespace RevGame.Editor
                 compressionQuality = expression ? 100 : 50
             });
             // 大幅角色序列帧占用的像素最多。只改块压缩格式，保留原尺寸、切片、帧序和透明通道。
-            TextureImporterFormat androidFormat = name == "YayaIdle24" || name == "YayaExpressions" || name == "YayaCombatExpressions"
+            TextureImporterFormat androidFormat = name == "YayaIdle24" || expression
                 ? TextureImporterFormat.ASTC_6x6
                 : TextureImporterFormat.ETC2_RGBA8;
             atlasImporter.SetPlatformSettings(new TextureImporterPlatformSettings
@@ -383,15 +390,10 @@ namespace RevGame.Editor
             }
         }
 
-        private static bool IsYayaExpressionAtlas(string name)
-        {
-            return name == "YayaExpressions" || name == "YayaCombatExpressions";
-        }
-
-        /// <summary>原画长边 2400，旧导入上限 1024 会先丢掉细节。保留更高采样，只在最终图集压缩一次。</summary>
+        /// <summary>共享表情与 Gal 补充差分统一按 1024 长边导入。保留完整透明画幅，颜色与透明度只在最终图集做块压缩。</summary>
         private static void ConfigureExpressionSource(TextureImporter importer)
         {
-            const int ExpressionMaxSize = 2048;
+            const int ExpressionMaxSize = 1024;
             bool changed = false;
             foreach (string platform in new[] { "DefaultTexturePlatform", "Standalone", "Android" })
             {

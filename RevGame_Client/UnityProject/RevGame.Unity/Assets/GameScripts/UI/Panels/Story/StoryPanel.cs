@@ -22,6 +22,9 @@ namespace RevGame.UI
             public int Version;
             /// <summary>开发态预览可在大厅单独加载章背景。背景编号始终来自篇章配置。</summary>
             public bool Preview;
+            /// <summary>当前篇章已经预载的切片及其表情编号下标。</summary>
+            public Sprite Portrait;
+            public int ExpressionIndex;
         }
         /// <summary>绑定预制体storyView节点，负责立绘、文字与按钮事件。</summary>
         [RevBind] private StoryView _storyView;
@@ -90,7 +93,8 @@ namespace RevGame.UI
                 ["open"] = true,
                 ["expression"] = line.Expression,
                 ["portrait"] = portrait.sprite == null ? "" : portrait.sprite.name,
-                ["portraitSource"] = line.Portrait != null ? "line" : panel.Data.Episode.Portrait != null ? "episode" : line.Expression == 0 ? "default" : "expression",
+                ["portraitSource"] = line.PortraitReference.IsSet || line.Portrait != null ? "line"
+                    : panel.Data.Episode.PortraitReference.IsSet || panel.Data.Episode.Portrait != null ? "episode" : line.Expression == 0 ? "default" : "expression",
                 ["portraitPacked"] = portrait.sprite != null && portrait.sprite.packed,
                 ["portraitTop"] = portrait.transform.GetSiblingIndex() == view.childCount - 1,
                 ["separate"] = rect.anchorMax.x <= card.anchorMin.x,

@@ -14,21 +14,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Entries:
   - Id: 1
-    Sprite: {fileID: 21300000, guid: 1d50d4a123883f74d8b44dc1d21c7f74, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: 1d50d4a123883f74d8b44dc1d21c7f74
+      LocalId: 21300000
+      SpriteName: YayaExpression_01
+      Atlas: YayaExpressions
   - Id: 8
-    Sprite: {fileID: 21300000, guid: 95fba00c9eb38a740a7d0f157d50e7fb, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: 95fba00c9eb38a740a7d0f157d50e7fb
+      LocalId: 21300000
+      SpriteName: YayaExpression_08
+      Atlas: YayaCombatExpressions
   - Id: 3
-    Sprite: {fileID: 21300000, guid: 7816f51d67145b8449685be1a0427861, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: 7816f51d67145b8449685be1a0427861
+      LocalId: 21300000
+      SpriteName: YayaExpression_03
+      Atlas: YayaExpressions
   - Id: 2
-    Sprite: {fileID: 21300000, guid: 573846bb5bdaa2143b08295984afb519, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: 573846bb5bdaa2143b08295984afb519
+      LocalId: 21300000
+      SpriteName: YayaExpression_02
+      Atlas: YayaCombatExpressions
   - Id: 14
-    Sprite: {fileID: 21300000, guid: 2efb7b4ef8d072745b9f19f8851e0ab3, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: 2efb7b4ef8d072745b9f19f8851e0ab3
+      LocalId: 21300000
+      SpriteName: YayaExpression_14
+      Atlas: YayaCombatExpressions
   - Id: 23
-    Sprite: {fileID: 21300000, guid: d3dffa351e3b27742bd1d404f0433d1f, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: d3dffa351e3b27742bd1d404f0433d1f
+      LocalId: 21300000
+      SpriteName: YayaExpression_23
+      Atlas: YayaExpressions
   - Id: 26
-    Sprite: {fileID: 21300000, guid: 232ef48988dd4c14db92971b5f74cd0e, type: 3}
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: 232ef48988dd4c14db92971b5f74cd0e
+      LocalId: 21300000
+      SpriteName: YayaExpression_26
+      Atlas: YayaCombatExpressions
   - Id: 13
-    Sprite: {fileID: 21300000, guid: a86abd92c8e399244b7fb41143ac7c11, type: 3}
-  AtlasNames:
-  - YayaExpressions
-  - YayaCombatExpressions
+    Sprite: {fileID: 0}
+    Reference:
+      AssetGuid: a86abd92c8e399244b7fb41143ac7c11
+      LocalId: 21300000
+      SpriteName: YayaExpression_13
+      Atlas: YayaExpressions
+  AtlasNames: []

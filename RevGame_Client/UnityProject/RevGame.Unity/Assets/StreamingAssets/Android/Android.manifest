@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 3609182656
+CRC: 3613752605
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -116,9 +116,7 @@ AssetBundleManifest:
       Dependencies: {}
     Info_28:
       Name: config_story
-      Dependencies:
-        Dependency_0: atlas_yayaexpressions
-        Dependency_1: atlas_yayacombatexpressions
+      Dependencies: {}
     Info_29:
       Name: ui_story
       Dependencies:
@@ -300,9 +298,7 @@ AssetBundleManifest:
         Dependency_1: font_cjk
     Info_74:
       Name: config_yaya
-      Dependencies:
-        Dependency_0: atlas_yayaexpressions
-        Dependency_1: atlas_yayacombatexpressions
+      Dependencies: {}
     Info_75:
       Name: atlas_yayacombatexpressions
       Dependencies: {}
@@ -323,9 +319,8 @@ AssetBundleManifest:
         Dependency_2: font_cjk
         Dependency_3: material_background
         Dependency_4: config_yaya
-        Dependency_5: atlas_yayacombatexpressions
-        Dependency_6: atlas_pvpagent
-        Dependency_7: atlas_pvpdefeat
+        Dependency_5: atlas_pvpagent
+        Dependency_6: atlas_pvpdefeat
     Info_79:
       Name: audio_pvp
       Dependencies: {}
@@ -392,3 +387,71 @@ AssetBundleManifest:
         Dependency_1: ui_yaya_memories
         Dependency_2: atlas_uiyayamemories
         Dependency_3: atlas_uiprojectopensource
+    Info_96:
+      Name: gal_ui
+      Dependencies:
+        Dependency_0: font_cjk
+        Dependency_1: atlas_uigalcottage
+    Info_97:
+      Name: gal_story_yaya_days_together
+      Dependencies: {}
+    Info_98:
+      Name: atlas_cottagebedroommorningatlas
+      Dependencies: {}
+    Info_99:
+      Name: atlas_cottagebedroomnightatlas
+      Dependencies: {}
+    Info_100:
+      Name: atlas_cottagegardenatlas
+      Dependencies: {}
+    Info_101:
+      Name: atlas_cottagegoodnightcgatlas
+      Dependencies: {}
+    Info_102:
+      Name: atlas_cottagekitchenatlas
+      Dependencies: {}
+    Info_103:
+      Name: atlas_cottagelivingatlas
+      Dependencies: {}
+    Info_104:
+      Name: atlas_galcottageportraits
+      Dependencies: {}
+    Info_105:
+      Name: atlas_heartpeakmarkeratlas
+      Dependencies: {}
+    Info_106:
+      Name: atlas_heartpeakphotocgatlas
+      Dependencies: {}
+    Info_107:
+      Name: atlas_heartpeakreturnatlas
+      Dependencies: {}
+    Info_108:
+      Name: atlas_heartpeaksunsetatlas
+      Dependencies: {}
+    Info_109:
+      Name: atlas_heartpeaktrailatlas
+      Dependencies: {}
+    Info_110:
+      Name: atlas_townbakeryatlas
+      Dependencies: {}
+    Info_111:
+      Name: atlas_townmarketatlas
+      Dependencies: {}
+    Info_112:
+      Name: atlas_uigalcottage
+      Dependencies: {}
+    Info_113:
+      Name: atlas_cottagemagicpovatlas
+      Dependencies: {}
+    Info_114:
+      Name: atlas_yayagalcottage
+      Dependencies: {}
+    Info_115:
+      Name: atlas_yayagalshared
+      Dependencies: {}
+    Info_116:
+      Name: atlas_yayastoryjourney
+      Dependencies: {}
+    Info_117:
+      Name: atlas_yayastoryopening
+      Dependencies: {}

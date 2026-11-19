@@ -1,28 +1,26 @@
 ManifestFileVersion: 0
-CRC: 1321116398
+CRC: 4192397540
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0516754dbd7406da7d8febf21aea6d2b
+    Hash: 3da351a0b5ad5c59bf3e98b28f31c7f3
   TypeTreeHash:
     serializedVersion: 2
-    Hash: f933a132f56fe36245267a5b808ef276
+    Hash: dce68ab276d3e5450cd0c6cd36716302
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0516754dbd7406da7d8febf21aea6d2b
+    Hash: 3da351a0b5ad5c59bf3e98b28f31c7f3
 HashAppended: 0
 ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: ea4a85cf03af4224fb6e6a1d6ca5d34e, type: 3}
 - Class: 115
   Script: {instanceID: 0}
-- Class: 213
-  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.GamePortraitReference
 - AssemblyName: RevGame.Content
   ClassName: RevGame.Data.YayaExpressionCatalog/Entry
 Assets:
 - Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset
-Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayacombatexpressions"
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_yayaexpressions"
+Dependencies: []

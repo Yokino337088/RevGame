@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System.Linq;
-#endif
 using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Pvp.Networking;
@@ -46,8 +44,6 @@ namespace RevGame.Pvp
 
         protected override void OnBindView()
         {
-            // 闲置时恢复Prefab配置的默认立绘。每句台词的表情由共享目录提供。
-            _idlePortrait = _portrait.sprite;
             BindOutcomeTitle();
             BindAnalysisHud();
             // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
@@ -168,6 +164,7 @@ namespace RevGame.Pvp
         [SerializeField] private YayaExpressionCatalog portraitCatalog;
         // 持有双眼和正式表情图集的租约，关闭面板时成对释放。
         private readonly List<GameSpriteAtlasService.ScopedAtlasLease> _matchAtlases = new List<GameSpriteAtlasService.ScopedAtlasLease>();
+        private GamePortraitScope _matchPortraits;
         private Action _confirmedAction;
         private bool _opening;
         private int _leaseVersion;
@@ -230,10 +227,6 @@ namespace RevGame.Pvp
             var agentAtlas = atlases.AcquireScopedAtlas("PvpAgent");
             _matchAtlases.Add(agentAtlas);
             _matchAtlases.Add(atlases.AcquireScopedAtlas("PvpDefeat"));
-            foreach (string name in portraitCatalog.AtlasNames)
-            {
-                _matchAtlases.Add(atlases.AcquireScopedAtlas(name));
-            }
             for (int i = 0; i < _matchAtlases.Count; i++)
             {
                 await _matchAtlases[i].WaitReadyAsync();
@@ -242,6 +235,39 @@ namespace RevGame.Pvp
                     throw new OperationCanceledException("九路围棋资源加载已取消");
                 }
             }
+            var portraits = new GamePortraitScope();
+            _matchPortraits = portraits;
+            // PvP 只预载台词表和默认站姿用到的表情；策划新增表情仍由同一个目录校验编号。
+            bool legacy = false;
+            foreach (int id in RevDataTableManager.Get<PvpYayaLineTable>().All.Select(row => row.Expression).Append(26).Distinct())
+            {
+                var entry = portraitCatalog.Find(id);
+                if (entry.Reference.IsSet)
+                {
+                    await portraits.WarmAsync(entry.Reference);
+                }
+                else
+                {
+                    legacy = true;
+                }
+                if (!_opening || version != _leaseVersion)
+                {
+                    throw new OperationCanceledException("九路围棋立绘加载已取消");
+                }
+            }
+            if (legacy)
+            {
+                foreach (string name in portraitCatalog.AtlasNames)
+                {
+                    await portraits.WarmAtlasAsync(name);
+                }
+            }
+            if (!_opening || version != _leaseVersion)
+            {
+                throw new OperationCanceledException("九路围棋立绘加载已取消");
+            }
+            _idlePortrait = GetMatchPortrait(26);
+            _portrait.sprite = _idlePortrait;
             bool returned = false;
             GamePoolRequests.GetAsync<PvpBoardView>(board =>
             {
@@ -277,6 +303,25 @@ namespace RevGame.Pvp
             _yayaLines = new PvpYayaLines(portraitCatalog);
             PrepareMatchSound();
             RefreshView();
+        }
+
+        private Sprite GetMatchPortrait(int id)
+        {
+            var entry = portraitCatalog.Find(id);
+            return entry.Reference.IsSet ? _matchPortraits.Get(entry.Reference) : entry.Sprite;
+        }
+
+        /// <summary>过场遮挡已盖住对局时归还立绘，赶在场景整理零引用 AB 之前完成。</summary>
+        internal void ReleaseMatchPortraits()
+        {
+            if (_matchPortraits == null)
+            {
+                return;
+            }
+            _portrait.sprite = null;
+            _idlePortrait = null;
+            _matchPortraits.Dispose();
+            _matchPortraits = null;
         }
 
         protected override void OnRefreshView()
@@ -479,6 +524,7 @@ namespace RevGame.Pvp
             RevTimer.CancelAllOf(this);
             RevUIAnim.StopAllOf(this);
             ResetMatchFeedback();
+            ReleaseMatchPortraits();
             ReleaseAnalysisSkin();
             ReleaseMatchSound();
             _yayaLines = null;

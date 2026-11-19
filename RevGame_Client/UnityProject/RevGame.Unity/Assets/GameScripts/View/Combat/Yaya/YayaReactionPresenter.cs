@@ -37,7 +37,7 @@ namespace RevGame.View
         }
         /// <summary>一条互动持有的目录/图集/池实例句柄，结束展示归还；不会卸载剧情仍使用的共享图片。</summary>
         private RevResHandle _catalogHandle;
-        private GameSpriteAtlasService.ScopedAtlasLease[] _atlases = Array.Empty<GameSpriteAtlasService.ScopedAtlasLease>();
+        private GamePortraitScope _portraits;
         private YayaReactionView _view;
         /// <summary>正在显示的Excel台词值快照；摄像机和安全区域仅属于本场景。</summary>
         private YayaReactionLine _line;
@@ -106,14 +106,19 @@ namespace RevGame.View
                 {
                     throw new InvalidOperationException("鸦鸦互动图片目录加载失败：" + _catalogHandle.ErrorReason);
                 }
-                _atlases = new GameSpriteAtlasService.ScopedAtlasLease[catalog.AtlasNames.Length];
-                for (int i = 0; i < catalog.AtlasNames.Length; i++)
+                var entry = catalog.Find(line.Expression);
+                var portraits = new GamePortraitScope();
+                _portraits = portraits;
+                Sprite sprite = entry.Sprite;
+                if (entry.Reference.IsSet)
                 {
-                    _atlases[i] = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas(catalog.AtlasNames[i]);
-                    await _atlases[i].WaitReadyAsync();
-                    if (!IsCurrent(version))
+                    sprite = await portraits.WarmAsync(entry.Reference);
+                }
+                else
+                {
+                    foreach (string name in catalog.AtlasNames)
                     {
-                        return;
+                        await portraits.WarmAtlasAsync(name);
                     }
                 }
                 if (!IsCurrent(version))
@@ -168,7 +173,7 @@ namespace RevGame.View
                 _view = loaded;
                 _loading = false;
                 // 场景归属为当前场景；Show回池不挂在UIRoot，场景根生命周期负责清理。
-                _view.Play(catalog.Find(line.Expression), line, _camera, _area, behindBattle: UsesMobileEndlessLayout, endless: _mode == 2, finished: Hide);
+                _view.Play(sprite, line, _camera, _area, behindBattle: UsesMobileEndlessLayout, endless: _mode == 2, finished: Hide);
                 ShownCount++;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 _recentStarts[0] = _recentStarts[1];
@@ -455,11 +460,8 @@ namespace RevGame.View
                 RevResManager.Release("Config/Yaya", "YayaExpressionCatalog");
                 _catalogHandle = null;
             }
-            foreach (var atlas in _atlases)
-            {
-                atlas?.Dispose();
-            }
-            _atlases = Array.Empty<GameSpriteAtlasService.ScopedAtlasLease>();
+            _portraits?.Dispose();
+            _portraits = null;
         }
         /// <summary>域关闭/场景销毁时释放空闲Prefab池，材质与字体租约不留到大厅。</summary>
         public void EndSession()
@@ -481,7 +483,7 @@ namespace RevGame.View
             SpriteRenderer body = _view != null ? _view.GetComponentInChildren<SpriteRenderer>() : null;
             Canvas speechCanvas = _view != null ? _view.GetComponentInChildren<Canvas>() : null;
             float portraitHeight = body != null && _camera != null ? _camera.WorldToViewportPoint(body.bounds.max).y - _camera.WorldToViewportPoint(body.bounds.min).y : 0;
-            return new Dictionary<string, object> { ["mode"] = _mode, ["visible"] = _view != null && _view.Visible, ["settled"] = _view != null && _view.Settled, ["busy"] = Busy, ["lineId"] = _line.Id, ["band"] = _line.Band, ["expression"] = _line.Expression, ["text"] = _line.Text, ["shown"] = ShownCount, ["error"] = LastError, ["speechFits"] = _view != null && _view.SpeechFits, ["overlap"] = _view != null && HasOverlap(_area), ["areaX"] = _area.x, ["areaY"] = _area.y, ["areaWidth"] = _area.width, ["areaHeight"] = _area.height, ["catalogHeld"] = _catalogHandle != null, ["atlasHeld"] = _atlases.Length > 0,
+            return new Dictionary<string, object> { ["mode"] = _mode, ["visible"] = _view != null && _view.Visible, ["settled"] = _view != null && _view.Settled, ["busy"] = Busy, ["lineId"] = _line.Id, ["band"] = _line.Band, ["expression"] = _line.Expression, ["text"] = _line.Text, ["shown"] = ShownCount, ["error"] = LastError, ["speechFits"] = _view != null && _view.SpeechFits, ["overlap"] = _view != null && HasOverlap(_area), ["areaX"] = _area.x, ["areaY"] = _area.y, ["areaWidth"] = _area.width, ["areaHeight"] = _area.height, ["catalogHeld"] = _catalogHandle != null, ["atlasHeld"] = _portraits != null,
                 ["blockedBy"] = _blockedBy, ["portraitHeight"] = portraitHeight,
                 ["dialogueSortingOrder"] = speechCanvas != null ? speechCanvas.sortingOrder : 0,
                 ["dialogueRootCanvas"] = speechCanvas != null && speechCanvas.isRootCanvas,

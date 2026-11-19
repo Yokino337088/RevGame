@@ -273,7 +273,7 @@ namespace RevGame.Pvp
             bubbleRect.sizeDelta = new Vector2(bubbleRect.sizeDelta.x, Mathf.Max(0, height - normalHeight));
             _speechTween?.Kill(false);
             // 先停旧动画再换表情，避免旧回调把新台词的立绘切回默认图。
-            _portrait.sprite = portraitCatalog.Find(line.Expression);
+            _portrait.sprite = GetMatchPortrait(line.Expression);
             _speechTween = SlideMessage(_bubble, 50, line.Seconds, () => _portrait.sprite = _idlePortrait);
             _nextTaunt = Time.unscaledTime + TauntGapSeconds;
         }

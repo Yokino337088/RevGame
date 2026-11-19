@@ -23,6 +23,54 @@ namespace RevGame.Editor
                     EditorUtility.SetDirty(book);
                 }
             }
+            foreach (string guid in AssetDatabase.FindAssets("t:YayaExpressionCatalog", new[] { "Assets/GameRes/Config/Yaya" }))
+            {
+                var catalog = AssetDatabase.LoadAssetAtPath<YayaExpressionCatalog>(AssetDatabase.GUIDToAssetPath(guid));
+                bool changed = false;
+                foreach (var entry in catalog.Entries)
+                {
+                    var reference = ReadyReference(entry.Reference, entry.Sprite, atlasNames);
+                    if (!reference.IsSet)
+                    {
+                        throw new InvalidOperationException("互动目录缺少表情：" + entry.Id);
+                    }
+                    changed |= !entry.Reference.Equals(reference) || entry.Sprite != null;
+                    entry.Reference = reference;
+                    entry.Sprite = null;
+                }
+                if (catalog.AtlasNames.Length > 0)
+                {
+                    catalog.AtlasNames = Array.Empty<string>();
+                    changed = true;
+                }
+                if (changed)
+                {
+                    EditorUtility.SetDirty(catalog);
+                }
+            }
+            MigratePvpStandingPortrait();
+        }
+
+        /// <summary>删除由旧配方装配的默认引用。新 PvP 面板加载时由台词目录交付同一个切片。</summary>
+        private static void MigratePvpStandingPortrait()
+        {
+            const string path = "Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab";
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var sprite = prefab?.transform.Find("yayaPortrait")?.GetComponent<UnityEngine.UI.Image>()?.sprite;
+            if (sprite == null || sprite.name != "YayaExpression_26")
+            {
+                return;
+            }
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                root.transform.Find("yayaPortrait").GetComponent<UnityEngine.UI.Image>().sprite = null;
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
         }
 
         /// <summary>导入先在临时对象上推导图集，校验完整后才写入现有资产。</summary>
@@ -49,20 +97,33 @@ namespace RevGame.Editor
         private static bool UpdateBook(StoryBook book, Dictionary<string, string> atlasNames)
         {
             book.Validate();
-            bool changed = false;
+            var guide = ReadyReference(book.GuideReference, book.Guide, atlasNames);
+            var timeline = new GamePortraitReference[book.ExpressionIds.Length];
+            for (int i = 0; i < book.ExpressionIds.Length; i++)
+            {
+                var mapped = book.ExpressionReference(book.ExpressionIds[i], out _);
+                timeline[i] = ReadyReference(mapped.Reference, mapped.Legacy, atlasNames);
+            }
+            bool changed = !guide.Equals(book.GuideReference) || book.Guide != null || (book.GuideFrames?.Length ?? 0) > 0
+                || !timeline.SequenceEqual(book.GuideFrameReferences ?? Array.Empty<GamePortraitReference>());
+            book.GuideReference = guide;
+            book.GuideFrameReferences = timeline;
+            book.Guide = null;
+            book.GuideFrames = Array.Empty<Sprite>();
             foreach (StoryBook.Episode episode in book.Episodes)
             {
+                var episodePortrait = ReadyReference(episode.PortraitReference, episode.Portrait, atlasNames);
+                changed |= !episodePortrait.Equals(episode.PortraitReference) || episode.Portrait != null;
+                episode.PortraitReference = episodePortrait;
+                episode.Portrait = null;
                 var names = new SortedSet<string>(StringComparer.Ordinal);
                 foreach (StoryBook.Line line in episode.Lines)
                 {
-                    Sprite portrait = book.ResolvePortrait(episode, line, out _);
-                    string path = AssetDatabase.GetAssetPath(portrait);
-                    string bundle = AssetDatabase.GetImplicitAssetBundleName(path);
-                    if (!atlasNames.TryGetValue(bundle, out string name))
-                    {
-                        throw new InvalidOperationException("立绘没有活动Sprite图集，请先配置图集：" + episode.Id + " → " + path);
-                    }
-                    names.Add(name);
+                    var linePortrait = ReadyReference(line.PortraitReference, line.Portrait, atlasNames);
+                    changed |= !linePortrait.Equals(line.PortraitReference) || line.Portrait != null;
+                    line.PortraitReference = linePortrait;
+                    line.Portrait = null;
+                    names.Add(book.ResolvePortraitReference(episode, line, out _).Reference.Atlas);
                 }
                 string[] generated = names.ToArray();
                 if (episode.PortraitAtlasNames == null || !episode.PortraitAtlasNames.SequenceEqual(generated))
@@ -72,6 +133,47 @@ namespace RevGame.Editor
                 }
             }
             return changed;
+        }
+
+        /// <summary>保留选中的具体切片。新选图片的包归属在资源配置时派生。</summary>
+        internal static GamePortraitReference ReferenceFor(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return default;
+            }
+            string path = AssetDatabase.GetAssetPath(sprite);
+            if (!path.StartsWith("Assets/GameRes/", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("请选用 GameRes 中的正式立绘：" + path);
+            }
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(sprite, out string guid, out long id))
+            {
+                throw new InvalidOperationException("立绘切片无法定位：" + path);
+            }
+            return new GamePortraitReference { AssetGuid = guid, LocalId = id, SpriteName = sprite.name };
+        }
+
+        private static GamePortraitReference ReadyReference(GamePortraitReference reference, Sprite legacy, Dictionary<string, string> atlasNames)
+        {
+            if (!reference.IsSet)
+            {
+                reference = ReferenceFor(legacy);
+            }
+            if (!reference.IsSet)
+            {
+                return reference;
+            }
+            string path = AssetDatabase.GUIDToAssetPath(reference.AssetGuid);
+            var sprite = StoryBook.EditorSprite(reference);
+            string bundle = AssetDatabase.GetImplicitAssetBundleName(path);
+            if (sprite == null || !atlasNames.TryGetValue(bundle, out string atlas))
+            {
+                throw new InvalidOperationException("立绘切片或活动图集缺失：" + path + " / " + reference.SpriteName);
+            }
+            reference.SpriteName = sprite.name;
+            reference.Atlas = atlas;
+            return reference;
         }
     }
 }

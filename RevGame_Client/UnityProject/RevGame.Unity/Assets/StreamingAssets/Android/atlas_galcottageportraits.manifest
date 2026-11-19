@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 3865252257
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f29a2b5a4990f770a76fb169b3fd685e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f29a2b5a4990f770a76fb169b3fd685e
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerTender.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerTeasing.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerFlustered.png
+- Assets/GameRes/Art/Gal/Portraits/Adventurer/AdventurerCalm.png
+- Assets/GameRes/Atlases/GalCottagePortraits.spriteatlasv2
+Dependencies: []

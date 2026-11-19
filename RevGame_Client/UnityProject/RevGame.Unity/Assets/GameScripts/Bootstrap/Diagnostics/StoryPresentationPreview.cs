@@ -18,6 +18,7 @@ namespace RevGame.Bootstrap
         /// <summary>当前夹具持有原始输入，退出时逐项还原；不修改对白、表情文件或材质资产。</summary>
         private static StoryBook.Episode _episode;
         private static Sprite _episodePortrait, _linePortrait;
+        private static GamePortraitReference _episodeReference, _lineReference;
         private static int _expression;
         private static LobbySceneView _lobby;
         private static Vector3 _offset;
@@ -35,16 +36,24 @@ namespace RevGame.Bootstrap
             _episode = flow.StoryContent.Find("opening");
             _episodePortrait = _episode.Portrait;
             _linePortrait = _episode.Lines[0].Portrait;
+            _episodeReference = _episode.PortraitReference;
+            _lineReference = _episode.Lines[0].PortraitReference;
             _expression = _episode.Lines[0].Expression;
             _episode.Portrait = null;
             _episode.Lines[0].Portrait = null;
+            _episode.PortraitReference = default;
+            _episode.Lines[0].PortraitReference = default;
             if (fixture == "episode" || fixture == "line")
             {
-                _episode.Portrait = flow.StoryContent.ExpressionSprite(23, out _);
+                var portrait = flow.StoryContent.ExpressionReference(23, out _);
+                _episode.PortraitReference = portrait.Reference;
+                _episode.Portrait = portrait.Legacy;
             }
             if (fixture == "line")
             {
-                _episode.Lines[0].Portrait = flow.StoryContent.ExpressionSprite(11, out _);
+                var portrait = flow.StoryContent.ExpressionReference(11, out _);
+                _episode.Lines[0].PortraitReference = portrait.Reference;
+                _episode.Lines[0].Portrait = portrait.Legacy;
             }
             if (fixture == "default")
             {
@@ -96,6 +105,8 @@ namespace RevGame.Bootstrap
             }
             _episode.Portrait = _episodePortrait;
             _episode.Lines[0].Portrait = _linePortrait;
+            _episode.PortraitReference = _episodeReference;
+            _episode.Lines[0].PortraitReference = _lineReference;
             _episode.Lines[0].Expression = _expression;
             _episode = null;
         }

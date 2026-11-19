@@ -87,11 +87,8 @@ namespace RevGame.Editor
 
             RectTransform portrait = Rect("yayaPortrait", root, .765f, .12f, .985f, .64f);
             var image = portrait.gameObject.AddComponent<Image>();
-            image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/Characters/Yaya/Expressions/YayaExpression_26.png");
-            if (image.sprite == null)
-            {
-                throw new InvalidOperationException("缺少鸦鸦正式立绘");
-            }
+            // 默认站姿随对局租约交付，预制体加载时无需提前带入表情包。
+            catalog.Find(26);
             image.preserveAspect = true;
             image.raycastTarget = false;
             portrait.gameObject.SetActive(false);

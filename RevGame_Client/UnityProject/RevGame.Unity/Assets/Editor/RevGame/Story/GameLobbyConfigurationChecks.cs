@@ -18,8 +18,12 @@ namespace RevGame.Editor
             {
                 StoryBook.Episode episode = copy.Episodes[0];
                 StoryBook.Line line = episode.Lines[0];
+                episode.PortraitReference = default;
+                line.PortraitReference = default;
+                episode.Portrait = null;
+                line.Portrait = null;
                 line.Expression = 0;
-                Require(copy.ResolvePortrait(episode, line, out _) == copy.Guide, "默认立绘");
+                Require(copy.ResolvePortrait(episode, line, out _) == copy.ExpressionSprite(0, out _), "默认立绘");
                 line.Expression = 1;
                 Require(copy.ResolvePortrait(episode, line, out _) == copy.ExpressionSprite(1, out _), "表情映射");
                 episode.Portrait = copy.ExpressionSprite(23, out _);
@@ -52,10 +56,10 @@ namespace RevGame.Editor
         public static string CheckPreservation()
         {
             StoryBook book = AssetDatabase.LoadAssetAtPath<StoryBook>("Assets/GameRes/Config/Story/StoryBook.asset");
-            Sprite guide = book.Guide;
-            Sprite mapped = book.GuideFrames[0];
-            Sprite episodePortrait = book.Episodes[0].Portrait;
-            Sprite linePortrait = book.Episodes[0].Lines[0].Portrait;
+            var guide = book.GuideReference;
+            var mapped = book.GuideFrameReferences[0];
+            var episodePortrait = book.Episodes[0].PortraitReference;
+            var linePortrait = book.Episodes[0].Lines[0].PortraitReference;
             GameObject placement = GameObject.Find("LobbyScene/YayaPlacement");
             if (placement == null)
             {
@@ -65,10 +69,10 @@ namespace RevGame.Editor
             try
             {
                 // 模拟美术选择新立绘、篇章/逐句覆盖与场景位移，保存后重跑真实配方，不修改对白内容。
-                book.Guide = book.ExpressionSprite(12, out _);
-                book.GuideFrames[0] = book.ExpressionSprite(13, out _);
-                book.Episodes[0].Portrait = book.ExpressionSprite(23, out _);
-                book.Episodes[0].Lines[0].Portrait = book.ExpressionSprite(11, out _);
+                book.GuideReference = book.ExpressionReference(12, out _).Reference;
+                book.GuideFrameReferences[0] = book.ExpressionReference(13, out _).Reference;
+                book.Episodes[0].PortraitReference = book.ExpressionReference(23, out _).Reference;
+                book.Episodes[0].Lines[0].PortraitReference = book.ExpressionReference(11, out _).Reference;
                 placement.transform.localPosition = new Vector3(.12f, -.52f, 0);
                 EditorUtility.SetDirty(book);
                 UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(placement.scene);
@@ -76,19 +80,19 @@ namespace RevGame.Editor
                 AssetDatabase.SaveAssets();
                 GameYayaStoryBuild.Configure();
                 book = AssetDatabase.LoadAssetAtPath<StoryBook>("Assets/GameRes/Config/Story/StoryBook.asset");
-                Require(book.Guide == book.ExpressionSprite(12, out _), "制作保留默认立绘");
-                Require(book.GuideFrames[0] == book.ExpressionSprite(13, out _), "制作保留表情映射");
-                Require(book.Episodes[0].Portrait == book.ExpressionSprite(23, out _), "制作保留篇章覆盖");
-                Require(book.Episodes[0].Lines[0].Portrait == book.ExpressionSprite(11, out _), "制作保留逐句覆盖");
+                Require(book.GuideReference.Equals(book.ExpressionReference(12, out _).Reference), "制作保留默认立绘");
+                Require(book.GuideFrameReferences[0].Equals(book.ExpressionReference(13, out _).Reference), "制作保留表情映射");
+                Require(book.Episodes[0].PortraitReference.Equals(book.ExpressionReference(23, out _).Reference), "制作保留篇章覆盖");
+                Require(book.Episodes[0].Lines[0].PortraitReference.Equals(book.ExpressionReference(11, out _).Reference), "制作保留逐句覆盖");
                 Require(GameObject.Find("LobbyScene/YayaPlacement").transform.localPosition == new Vector3(.12f, -.52f, 0), "制作保留场景位移");
                 return "5项真实保存/重制作保持检查通过；原立绘和场景位移已恢复";
             }
             finally
             {
-                book.Guide = guide;
-                book.GuideFrames[0] = mapped;
-                book.Episodes[0].Portrait = episodePortrait;
-                book.Episodes[0].Lines[0].Portrait = linePortrait;
+                book.GuideReference = guide;
+                book.GuideFrameReferences[0] = mapped;
+                book.Episodes[0].PortraitReference = episodePortrait;
+                book.Episodes[0].Lines[0].PortraitReference = linePortrait;
                 GameObject restored = GameObject.Find("LobbyScene/YayaPlacement");
                 restored.transform.localPosition = offset;
                 EditorUtility.SetDirty(book);

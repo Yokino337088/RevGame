@@ -3,6 +3,7 @@ using RevGame.Core;
 using RevGame.Data;
 using RevGame.Services;
 using RevGame.UI;
+using RevGame.View;
 using Revolution;
 
 namespace RevGame.Flow
@@ -13,8 +14,8 @@ namespace RevGame.Flow
         /// <summary>全局流程自己的资源引用；只在重试或Dispose释放，不随章节重复加载。</summary>
         private RevResHandle _storyHandle;
         private StoryBook _storyBook;
-        /// <summary>当前面板的表情图集绑定租约，进入时借、关闭时还；StoryBook直接图片依赖仍由全局配置句柄持有。</summary>
-        private View.GameSpriteAtlasService.ScopedAtlasLease[] _storyAtlases = Array.Empty<View.GameSpriteAtlasService.ScopedAtlasLease>();
+        /// <summary>仅当前篇章使用的立绘随面板存活。</summary>
+        private GamePortraitScope _storyPortraits;
         /// <summary>当前播放篇章及从0开始的行号；未播放时篇章为空。</summary>
         private StoryBook.Episode _episode;
         private int _storyLine;
@@ -269,20 +270,30 @@ namespace RevGame.Flow
                 {
                     throw new InvalidOperationException("剧情背景与当前章节未交付：" + backgroundChapter);
                 }
-                // 新立绘可能属于不同用途图集，按构建生成的本篇列表取得租约，不能继续写死鸦鸦六表情图集。
-                string[] atlasNames = _episode.PortraitAtlasNames;
-                if (atlasNames == null || atlasNames.Length == 0)
+                var portraits = new GamePortraitScope();
+                _storyPortraits = portraits;
+                bool hasLegacy = false;
+                foreach (var line in _episode.Lines)
                 {
-                    throw new InvalidOperationException("篇章立绘图集列表未生成，请重新配置资源：" + id);
-                }
-                _storyAtlases = new View.GameSpriteAtlasService.ScopedAtlasLease[atlasNames.Length];
-                for (int i = 0; i < atlasNames.Length; i++)
-                {
-                    _storyAtlases[i] = RevServices.GetRequired<View.GameSpriteAtlasService>().AcquireScopedAtlas(atlasNames[i]);
-                    await _storyAtlases[i].WaitReadyAsync();
+                    var portrait = _storyBook.ResolvePortraitReference(_episode, line, out _);
+                    if (portrait.Reference.IsSet)
+                    {
+                        await portraits.WarmAsync(portrait.Reference);
+                    }
+                    else
+                    {
+                        hasLegacy = true;
+                    }
                     if (_disposed || version != _storyVersion)
                     {
                         return;
+                    }
+                }
+                if (hasLegacy)
+                {
+                    foreach (string atlas in _episode.PortraitAtlasNames ?? Array.Empty<string>())
+                    {
+                        await portraits.WarmAtlasAsync(atlas);
                     }
                 }
                 if (_disposed || version != _storyVersion)
@@ -349,7 +360,13 @@ namespace RevGame.Flow
         }
         private StoryPanel.Frame StoryFrame()
         {
-            return new StoryPanel.Frame { Book = _storyBook, Episode = _episode, Index = _storyLine, Version = _storyVersion, Preview = _storyPreview };
+            var portrait = _storyBook.ResolvePortraitReference(_episode, _episode.Lines[_storyLine], out int index);
+            return new StoryPanel.Frame
+            {
+                Book = _storyBook, Episode = _episode, Index = _storyLine, Version = _storyVersion, Preview = _storyPreview,
+                Portrait = portrait.Reference.IsSet ? _storyPortraits.Get(portrait.Reference) : portrait.Legacy,
+                ExpressionIndex = index
+            };
         }
         /// <summary>UI和自动化共用入口。一次点击直接下一句，末句之后关闭并执行一次完成回调。</summary>
         public bool AdvanceStory()
@@ -391,11 +408,8 @@ namespace RevGame.Flow
             _storyCompleted = null;
             _episode = null;
             RevUI.Close<StoryPanel>();
-            foreach (var atlas in _storyAtlases)
-            {
-                atlas?.Dispose();
-            }
-            _storyAtlases = Array.Empty<View.GameSpriteAtlasService.ScopedAtlasLease>();
+            _storyPortraits?.Dispose();
+            _storyPortraits = null;
         }
         /// <summary>只有教程Logic实操完成才可写进度；不让普通按钮/GM直接跳过教学并伪造完成。</summary>
         public bool CompleteTutorial()

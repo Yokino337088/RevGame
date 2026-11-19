@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3630546388
+CRC: 1468935278
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e20ed63444756208ee33a437a103d9ea
+    Hash: e04e2f79d21eba29f3fc3e11e32e753c
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 9f239477d9f23c34977be6c656c38423
+    Hash: 2edc0c5f5fbdf74be00309111553c000
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e20ed63444756208ee33a437a103d9ea
+    Hash: e04e2f79d21eba29f3fc3e11e32e753c
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -95,7 +95,6 @@ Dependencies:
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpdefeat
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_yayacombatexpressions
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_yaya
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
 - G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background

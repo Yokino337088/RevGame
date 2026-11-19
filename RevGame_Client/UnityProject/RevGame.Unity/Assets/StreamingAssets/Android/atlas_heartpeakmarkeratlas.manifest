@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 2245546761
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: d4578c94736cf85326ba12ff480cf82a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: d4578c94736cf85326ba12ff480cf82a
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Atlases/HeartPeakMarkerAtlas.spriteatlasv2
+- Assets/GameRes/Art/Background/Gal/Chapter03/HeartPeakMarker.png
+Dependencies: []

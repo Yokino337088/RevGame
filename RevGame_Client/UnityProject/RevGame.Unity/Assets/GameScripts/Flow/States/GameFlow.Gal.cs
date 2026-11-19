@@ -65,6 +65,21 @@ namespace RevGame.Flow
                 CheckDevelopmentFailure("after-scene");
 #endif
                 Report(0.72f, "正在准备剧情画面…");
+                using var planScope = RevResManager.OpenScope();
+                RevGalDefinition portraitPlan = null;
+                if (string.Equals(storyPath, CottageStoryPath, StringComparison.Ordinal))
+                {
+                    // 预读与框架会话共用同一份 SO 请求。计划只看相邻对白，存档和实际推进仍由 Gal 会话决定。
+                    var storyHandle = RevResManager.LoadAsync("Gal/Stories", "yaya_days_together", typeof(RevGalStory), null, RevResGroup.UI);
+                    planScope.Track(storyHandle);
+                    while (storyHandle.IsLoading)
+                    {
+                        await RevTask.Yield();
+                        ThrowIfDisposed();
+                        request.Token.ThrowIfCancelled();
+                    }
+                    portraitPlan = storyHandle.Get<RevGalStory>()?.Definition;
+                }
                 var panel = await RevGal.OpenAsync(storyPath, options, slot, request.Token);
                 _galSession = new WeakReference<RevGalSession>(panel.Data);
                 var playback = GalStoryPlayback.Attach(panel, () =>
@@ -73,7 +88,7 @@ namespace RevGame.Flow
                     {
                         ReturnHome();
                     }
-                });
+                }, portraitPlan);
                 float deadline = Time.realtimeSinceStartup + 20f;
                 while (!playback.StageReady)
                 {

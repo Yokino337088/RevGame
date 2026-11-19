@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+using System.Linq;
+#endif
 using RevGame.Core;
 using RevGame.Generated;
 using Revolution;
@@ -73,6 +76,21 @@ namespace RevGame.View
                 return _entries.Count;
             }
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>读取角色图集租约与 Unity 已加载包，供验证场景只借用所需的图集。</summary>
+        public object PortraitSnapshot()
+        {
+            var names = new HashSet<string>(GameSpriteAtlases.Names.Where(YayaPortraitGroups.IsPortraitAtlas)
+                .Select(name => "atlas_" + name.ToLowerInvariant()), StringComparer.Ordinal);
+            return new Dictionary<string, object>
+            {
+                ["held"] = _entries.Keys.Where(YayaPortraitGroups.IsPortraitAtlas).OrderBy(name => name, StringComparer.Ordinal).ToArray(),
+                ["loadedBundles"] = AssetBundle.GetAllLoadedAssetBundles().Select(bundle => bundle.name)
+                    .Where(names.Contains).OrderBy(name => name, StringComparer.Ordinal).ToArray()
+            };
+        }
+#endif
         /// <summary>第一章的一份明确租约；持有原Entry，旧请求失败后也绝不会扣减后来新请求的计数。</summary>
         public sealed class TutorialSpriteLease : IDisposable
         {

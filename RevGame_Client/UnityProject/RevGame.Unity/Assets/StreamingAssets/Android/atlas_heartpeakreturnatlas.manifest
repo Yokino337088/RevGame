@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 3482514756
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 22e409ca708afe51f0c27d0023b945db
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 22e409ca708afe51f0c27d0023b945db
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Background/Gal/Chapter03/HeartPeakReturn.png
+- Assets/GameRes/Atlases/HeartPeakReturnAtlas.spriteatlasv2
+Dependencies: []

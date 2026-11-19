@@ -28,7 +28,11 @@ namespace RevGame.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("表情编号与立绘", EditorStyles.boldLabel);
             SerializedProperty ids = serializedObject.FindProperty("ExpressionIds");
-            SerializedProperty sprites = serializedObject.FindProperty("GuideFrames");
+            SerializedProperty sprites = serializedObject.FindProperty("GuideFrameReferences");
+            if (sprites.arraySize == 0 && ids.arraySize > 0)
+            {
+                sprites = serializedObject.FindProperty("GuideFrames");
+            }
             if (ids.arraySize != sprites.arraySize)
             {
                 EditorGUILayout.HelpBox("旧配置的编号与图片数量不同，请校验配置后修正，避免编号指向错误图片。", MessageType.Error);
@@ -38,11 +42,14 @@ namespace RevGame.Editor
                 EditorGUILayout.BeginHorizontal();
                 ids.GetArrayElementAtIndex(i).intValue = EditorGUILayout.IntField(ids.GetArrayElementAtIndex(i).intValue, GUILayout.Width(64));
                 SerializedProperty sprite = sprites.GetArrayElementAtIndex(i);
-                sprite.objectReferenceValue = EditorGUILayout.ObjectField(sprite.objectReferenceValue, typeof(Sprite), false);
+                EditorGUILayout.PropertyField(sprite, GUIContent.none);
                 if (GUILayout.Button("删除", GUILayout.Width(45)))
                 {
                     // 清空Object引用后删一次，避免Unity第一次Delete只清引用而保留数组长度。
-                    sprite.objectReferenceValue = null;
+                    if (sprite.propertyType == SerializedPropertyType.ObjectReference)
+                    {
+                        sprite.objectReferenceValue = null;
+                    }
                     sprites.DeleteArrayElementAtIndex(i);
                     ids.DeleteArrayElementAtIndex(i);
                     EditorGUILayout.EndHorizontal();
@@ -56,7 +63,15 @@ namespace RevGame.Editor
                 ids.arraySize++;
                 sprites.arraySize++;
                 ids.GetArrayElementAtIndex(index).intValue = 1;
-                sprites.GetArrayElementAtIndex(index).objectReferenceValue = null;
+                var sprite = sprites.GetArrayElementAtIndex(index);
+                if (sprite.propertyType == SerializedPropertyType.ObjectReference)
+                {
+                    sprite.objectReferenceValue = null;
+                }
+                else
+                {
+                    GamePortraitReferenceDrawer.Write(sprite, default);
+                }
             }
             serializedObject.ApplyModifiedProperties();
             if (GUILayout.Button("校验剧情配置"))
@@ -71,6 +86,43 @@ namespace RevGame.Editor
                     EditorUtility.DisplayDialog("剧情配置错误", error.Message, "确定");
                 }
             }
+        }
+    }
+
+    /// <summary>用 Sprite 对象选择器编辑引用位置，SO 只序列化文本。</summary>
+    [CustomPropertyDrawer(typeof(GamePortraitReference))]
+    public sealed class GamePortraitReferenceDrawer : PropertyDrawer
+    {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+            try
+            {
+                var reference = new GamePortraitReference
+                {
+                    AssetGuid = property.FindPropertyRelative(nameof(GamePortraitReference.AssetGuid)).stringValue,
+                    LocalId = property.FindPropertyRelative(nameof(GamePortraitReference.LocalId)).longValue
+                };
+                var sprite = StoryBook.EditorSprite(reference);
+                EditorGUI.BeginChangeCheck();
+                var selected = (Sprite)EditorGUI.ObjectField(position, label, sprite, typeof(Sprite), false);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Write(property, GameStoryPortraitAssets.ReferenceFor(selected));
+                }
+            }
+            finally
+            {
+                EditorGUI.EndProperty();
+            }
+        }
+
+        internal static void Write(SerializedProperty property, GamePortraitReference reference)
+        {
+            property.FindPropertyRelative(nameof(GamePortraitReference.AssetGuid)).stringValue = reference.AssetGuid ?? "";
+            property.FindPropertyRelative(nameof(GamePortraitReference.LocalId)).longValue = reference.LocalId;
+            property.FindPropertyRelative(nameof(GamePortraitReference.SpriteName)).stringValue = reference.SpriteName ?? "";
+            property.FindPropertyRelative(nameof(GamePortraitReference.Atlas)).stringValue = reference.Atlas ?? "";
         }
     }
 }

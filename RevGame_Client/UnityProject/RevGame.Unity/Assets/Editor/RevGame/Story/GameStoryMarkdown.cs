@@ -127,7 +127,7 @@ namespace RevGame.Editor
             {
                 text.Append("\n## ").Append(episode.Id).Append(" · ").Append(episode.Title).Append("\n\n")
                     .Append("- 背景章节：").Append(episode.BackgroundChapter.ToString(Invariant)).Append('\n')
-                    .Append("- 篇章立绘：").Append(SpriteKey(episode.Portrait)).Append('\n');
+                    .Append("- 篇章立绘：").Append(SpriteKey(StoryBook.EditorSprite(episode.PortraitReference, episode.Portrait))).Append('\n');
                 foreach (StoryBook.Line line in episode.Lines)
                 {
                     string spoken = Normalize(line.Text);
@@ -136,7 +136,7 @@ namespace RevGame.Editor
                     string fence = new string('~', Math.Max(3, fenceLength));
                     text.Append("\n### ").Append(line.Speaker).Append("\n\n")
                         .Append("- 表情：").Append(line.Expression.ToString(Invariant)).Append('\n')
-                        .Append("- 本句立绘：").Append(SpriteKey(line.Portrait)).Append("\n\n")
+                        .Append("- 本句立绘：").Append(SpriteKey(StoryBook.EditorSprite(line.PortraitReference, line.Portrait))).Append("\n\n")
                         .Append(fence).Append("text\n").Append(spoken).Append('\n').Append(fence).Append('\n');
                 }
             }

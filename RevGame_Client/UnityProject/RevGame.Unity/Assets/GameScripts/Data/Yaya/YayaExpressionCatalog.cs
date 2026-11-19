@@ -13,21 +13,22 @@ namespace RevGame.Data
         {
             /// <summary>正式美术编号，如1、8、23，与Excel Expression一致。</summary>
             public int Id;
-            /// <summary>唯一正式Sprite引用，压缩与图集设置由项目资源配方维护。</summary>
-            public Sprite Sprite;
+            /// <summary>旧目录的迁移输入。新目录只存实际图集和切片位置。</summary>
+            [HideInInspector] public Sprite Sprite;
+            public GamePortraitReference Reference;
         }
         /// <summary>只包含当前台词使用的图片，不把全部表情素材库带入AB。</summary>
         public Entry[] Entries = Array.Empty<Entry>();
-        /// <summary>活动图集名称，制作时按正式差分目录的唯一归属设置。</summary>
+        /// <summary>旧目录的兼容图集清单，新目录按单项选择图集。</summary>
         public string[] AtlasNames = { "YayaExpressions", "YayaCombatExpressions" };
-        /// <summary>触发时取一次Sprite，不逐帧GetSprite；缺图片明确失败。</summary>
-        public Sprite Find(int id)
+        /// <summary>按台词编号查表情。触发时只取得这项记录对应的图集。</summary>
+        public Entry Find(int id)
         {
             foreach (Entry entry in Entries)
             {
-                if (entry.Id == id && entry.Sprite != null)
+                if (entry != null && entry.Id == id && (entry.Reference.IsSet || entry.Sprite != null))
                 {
-                    return entry.Sprite;
+                    return entry;
                 }
             }
             throw new InvalidOperationException("鸦鸦互动缺立绘：" + id);

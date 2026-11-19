@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using RevGame.Core;
+using RevGame.View;
 using Revolution;
 using Revolution.Gal;
 using UnityEngine;
@@ -29,6 +32,9 @@ namespace RevGame.UI
         private bool _typing;
         private bool _visible;
         private bool _firstSoundPending;
+        private Dictionary<string, string> _portraitLookahead;
+        // 前台和下一处已知差分最多各持一张图集。翻页后归还不再需要的租约。
+        private readonly Dictionary<string, GameSpriteAtlasService.ScopedAtlasLease> _portraitAtlases = new Dictionary<string, GameSpriteAtlasService.ScopedAtlasLease>(StringComparer.Ordinal);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         private UnityEngine.UI.Text _speakerForTest;
 #endif
@@ -42,7 +48,7 @@ namespace RevGame.UI
         public bool SubtitleSoundStarted => _typingSound.Started;
 
         /// <summary>默认面板打开并注册自身监听后接管两个业务按钮。View 原有整屏 Graphic 提供背景点击区域。</summary>
-        public static GalStoryPlayback Attach(RevGalPanel panel, Action returnHome)
+        public static GalStoryPlayback Attach(RevGalPanel panel, Action returnHome, RevGalDefinition portraitPlan)
         {
             Transform view = panel.transform.Find("View");
             Transform story = view?.Find("Story");
@@ -59,6 +65,7 @@ namespace RevGame.UI
             playback._view = view.GetComponent<RevGalView>();
             playback._session = panel.Data;
             playback._returnHome = returnHome;
+            playback._portraitLookahead = BuildPortraitLookahead(portraitPlan);
             playback._background = story.Find("Background").GetComponent<UnityEngine.UI.Image>();
             playback._left = story.Find("Left").GetComponent<UnityEngine.UI.Image>();
             playback._center = story.Find("Center").GetComponent<UnityEngine.UI.Image>();
@@ -152,10 +159,78 @@ namespace RevGame.UI
             _visibleLength = 0;
             _firstSoundPending = false;
             _stage = frame.Stage;
+            UpdatePortraitAtlases(frame);
             bool ended = frame.Kind == RevGalNodeKind.End;
             _typing = frame.Kind == RevGalNodeKind.Line && !_panel.TextComplete;
             _advanceLabel.text = ended ? "返回大厅" : _advanceText;
             _advance.interactable = ended || frame.Kind == RevGalNodeKind.Line;
+        }
+
+        /// <summary>只看两句以内已确定的后继。遇到选择或信号让 Gal 按实际分支加载。</summary>
+        private static Dictionary<string, string> BuildPortraitLookahead(RevGalDefinition definition)
+        {
+            if (definition == null)
+            {
+                return null;
+            }
+            var nodes = new Dictionary<string, RevGalNode>(StringComparer.Ordinal);
+            foreach (var node in definition.Nodes)
+            {
+                nodes.Add(node.Id, node);
+            }
+            var result = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var node in nodes.Values)
+            {
+                var current = node;
+                for (int depth = 0; depth < 2 && current.Kind == RevGalNodeKind.Line && !string.IsNullOrEmpty(current.Next); depth++)
+                {
+                    if (!nodes.TryGetValue(current.Next, out current) || current.Kind != RevGalNodeKind.Line)
+                    {
+                        break;
+                    }
+                    string next = YayaPortraitGroups.AtlasFor(current.Stage?.Left);
+                    if (next != null)
+                    {
+                        result.Add(node.Id, next);
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+
+        private void UpdatePortraitAtlases(RevGalFrame frame)
+        {
+            if (_portraitLookahead == null)
+            {
+                return;
+            }
+            string current = YayaPortraitGroups.AtlasFor(frame.Stage.Left);
+            _portraitLookahead.TryGetValue(frame.Id, out string next);
+            Hold(current);
+            Hold(next);
+            while (_portraitAtlases.Count > (current == null ? 0 : 1) + (next == null || next == current ? 0 : 1))
+            {
+                string stale = null;
+                foreach (string name in _portraitAtlases.Keys)
+                {
+                    if (name != current && name != next)
+                    {
+                        stale = name;
+                        break;
+                    }
+                }
+                _portraitAtlases[stale].Dispose();
+                _portraitAtlases.Remove(stale);
+            }
+
+            void Hold(string name)
+            {
+                if (name != null && !_portraitAtlases.ContainsKey(name))
+                {
+                    _portraitAtlases.Add(name, RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas(name));
+                }
+            }
         }
 
         private static bool HasRequiredSprite(UnityEngine.UI.Image image, string path)
@@ -238,6 +313,11 @@ namespace RevGame.UI
         {
             _observation?.Dispose();
             _typingSound.Reset();
+            foreach (var atlas in _portraitAtlases.Values)
+            {
+                atlas.Dispose();
+            }
+            _portraitAtlases.Clear();
             if (_advance != null)
             {
                 _advance.onClick.RemoveListener(OnAdvance);
