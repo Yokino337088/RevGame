@@ -24,7 +24,11 @@ DISCOVER_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor",
 CALL_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "game", "gm", "cli"]},
     "action": STRING, "arguments": {"type": "object"}, "confirm": {"type": "boolean"}, "full": {"type": "boolean"},
     "intent": {"type": "string", "maxLength": 512, "description": "给用户的一句话目的：为什么调用这个动作；不参与业务参数校验"}}, ("target", "action"))
-RUN_SCHEMA = object_schema({"plan": {"type": "object"}, "full": {"type": "boolean"}}, ("plan",))
+# 计划仍由 workflow 校验步骤，这里让客户端直接发现可选的报告字段。
+RUN_SCHEMA = object_schema({"plan": {"type": "object", "properties": {
+    "report": {"type": "boolean", "description": "用户明确要求报告时才设为 true"},
+    "reportDirectory": {"type": "string", "minLength": 1, "description": "用户指定的项目内报告目录，可单独启用导出"},
+}}, "full": {"type": "boolean"}}, ("plan",))
 
 
 def action_schema(spec, manifest):
@@ -67,12 +71,13 @@ class Server:
         self.write(dict(jsonrpc="2.0", id=ident, **({"error": error} if error else {"result": result})))
 
     def tools(self, cancel=None):
+        """列出固定入口和实际注册的动作，报告请求方式可由客户端直接查看。"""
         # 三个稳定工具负责发现/调用/计划；动态工具由当前真实注册表生成。
         # 中文 GM 名称保留在 description 中，MCP 工具名使用稳定 hash 避免重名。
         self.dynamic = {}
         tools = [dict(name="rev_discover", description="发现真实 Editor/GM/业务/CLI 能力；支持 target/query/offset/limit 筛选。不可用项包含原因，先发现再调用。", inputSchema=DISCOVER_SCHEMA),
             dict(name="rev_call", description="统一调用真实注册能力。GM使用完整名；confirm仅用于已授权动作。业务成功应另做状态断言。", inputSchema=CALL_SCHEMA),
-            dict(name="rev_run", description="执行带断言和 finally 清理的计划。reportPath 是原始工单，evidencePath 是项目文档中的 HTML。可用 plan.reportDirectory 指定项目内的文档目录。", inputSchema=RUN_SCHEMA)]
+            dict(name="rev_run", description="执行带断言和 finally 清理的计划，默认只返回结果。用户明确要求报告时使用 plan.report=true，指定项目内路径时使用 plan.reportDirectory。HTML 路径见 evidencePath。", inputSchema=RUN_SCHEMA)]
         if self.compact_tools:
             return dict(tools=tools)
         catalog = self.hub.discover(cancel)
@@ -115,7 +120,7 @@ class Server:
         return response
 
     def _call(self, params, token):
-        """单次调用只保留机器回执。正式计划经统一的项目文档路由交付 HTML。"""
+        """就地返回已执行结果，按需附上画面或已请求的 HTML 路径。"""
         name, arguments = params.get("name"), params.get("arguments", {})
         if not isinstance(arguments, dict):
             raise ValueError("Tool arguments must be an object")
@@ -146,9 +151,9 @@ class Server:
             target, action, schema = self.dynamic[name]
             validate(arguments, schema)
             result = self.hub.call(target, action, arguments["arguments"], arguments.get("confirm", False), token)
-        report_path = result["reportPath"] if name == "rev_run" else self.hub.save(result)
         content = []
         def visual_evidence(value):
+            """从响应中提取少量实际画面，其余结构化数据保留在原位置。"""
             # A plan can contain screenshots below steps[].response.data. Surface
             # those as actual MCP images, and keep JSON small and inspectable.
             if isinstance(value, dict):
@@ -166,13 +171,14 @@ class Server:
             if isinstance(value, list):
                 return [visual_evidence(v) for v in value]
             return value
-        # 发现结果已经分页。显式截图动作仍直接返回画面，计划截图默认从报告读取。
+        # 发现结果已经分页。显式截图动作直接返回画面，完整计划画面可随 full 返回。
         full = arguments.get("full", False)
         if full or arguments.get("action") == "runtime.screenshot" or (
                 name in self.dynamic and self.dynamic[name][1] == "runtime.screenshot"):
             result = visual_evidence(result)
         else:
             def strip_images(value):
+                """摘要省略 base64，避免同一画面占用返回预算。"""
                 if isinstance(value, dict):
                     return {key: strip_images(item) for key, item in value.items() if key != "base64"}
                 if isinstance(value, list):
@@ -181,12 +187,13 @@ class Server:
             result = strip_images(result)
             if name != "rev_discover":
                 result = summarize(result)
-        result = dict(result, reportPath=report_path)
         status = "失败" if result.get("success") is False else "完成"
-        content.insert(0, dict(type="text", text=f"{status}，完整回执见 {report_path}"))
+        message = result.get("evidencePath") or result.get("evidenceError") or result.get("message")
+        content.insert(0, dict(type="text", text=f"{status}。{message}" if message else status))
         return dict(content=content, structuredContent=result, isError=result.get("success") is False)
 
     def worker(self):
+        """串行执行业务调用，异常随本次响应返回，最后释放取消令牌。"""
         while True:
             request = self.work.get()
             if request is None:
@@ -205,10 +212,6 @@ class Server:
             except Exception as exc:
                 failure = dict(success=False, error=type(exc).__name__, message=str(exc))
                 if method == "tools/call":
-                    try:
-                        failure["reportPath"] = self.hub.save(failure)
-                    except OSError:
-                        pass
                     self.reply(ident, dict(content=[dict(type="text", text=json.dumps(failure, ensure_ascii=False))], structuredContent=failure, isError=True))
                 else:
                     self.reply(ident, error=dict(code=-32603, message=str(exc)))

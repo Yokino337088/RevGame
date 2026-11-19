@@ -24,7 +24,7 @@ description: 执行或维护 Revolution.RevCLI 的 GM scenario 循环回归、�
 5. 用运行期 `gm list` 验证命令注册。没有匹配入口时先通过 MCP 调用已存在的受控 Editor Check；仍无法覆盖时，**测试请求允许补最小的项目侧测试接线**（仅开发构建 GM/Check/查询/夹具），不允许重写玩法、改框架内核或随意修改生产数据。按现有 API 编写、复用真实服务动作；实现后编译、重新确认注册，并实际继续运行，不停在“入口已补好”。不允许编辑时，列出无法验证项。
 6. 场景正确不等于覆盖完整：等待回到 idle 只能证明状态结束，不能证明造成伤害、段数正确、实际目标命中或资源回收。每项关键需求要有相应数据断言；缺失时补查询或标为未验证。重复测试必须每轮复位，首次 setup 不会逐轮执行。
 7. 跑 Automation 场景，再用 MCP 获取 Console/画面证据（用户关心特效时）。同一编辑器的变更动作串行，不与测试并发 stop/play/改场景；只读观察在兼容时进行。视觉无工具则明确未测，不能编造截图。
-8. 执行结束后收尾、核对原始 Play 状态和业务回收，报告结果与报告路径。发现失败先诊断根因；只修本次测试接线/编码错误后有界重跑，玩法缺陷另行报告或在用户要求修复时处理。
+8. 执行结束后收尾、核对原始 Play 状态和业务回收，在对话汇报结果。用户明确要求文件版报告时才导出并提供路径。发现失败先诊断根因。只修本次测试接线或编码错误后有界重跑，玩法缺陷按原任务授权处理。
 
 ### 一句话示例与应有动作
 
@@ -71,7 +71,7 @@ description: 执行或维护 Revolution.RevCLI 的 GM scenario 循环回归、�
 
 ### 4. 生成并验证 scenario
 
-- 优先临时写到 `Revolution.RevCLI/results/<test-name>/scenario.json` 或本次报告目录，不覆盖用户现有场景文件。
+- 优先使用已有 scenario 或 Python 的 `RevClient.call` 传内联参数。命令确需临时 JSON 时放系统临时目录或项目忽略目录，执行完立即永久删除本次创建的文件。
 - 场景 schema 仅允许 `name/repeat/warmup/setup/steps/cleanup/teardown/stopOnFailure/failOnUnityError/thresholds`；step `kind` 仅 `gm/wait/until/assert`。
 - `until` 必须给准确 GM、精确 `expected`、正数 `timeoutSeconds`；使用合理 `intervalSeconds`，不要用长时间盲等代替状态轮询。
 - 设置 `failOnUnityError: true`、`stopOnFailure: true`；无性能诉求时将阈值设为 0（关闭采样门禁），不要为了“测性能”临时编阈值。
@@ -82,8 +82,8 @@ description: 执行或维护 Revolution.RevCLI 的 GM scenario 循环回归、�
 
 1. 场景与 GM 测试要求未暂停的图形 Play：用 `--mode live`，不可退化到 batch。Batch 仅用于资产/导表，不能运行 GM/scenario。
 2. 使用 Python subprocess 参数数组或 `python rev.py`，避免 PowerShell 中文 GM 参数乱码；不要并行派多个 Automation job（同一编辑器一次只接一个请求）。
-3. `scenario run` 完成后检查结构化结果：`success`、`completed == requested`、`failedIterations`、`errors`、`unityErrors`、报告路径；不能只看“进程退出码 0”。
-4. 若提示 `InterruptedByReload`、`Busy`、`Expired`、锁文件竞争或 `response.json` 写入 `IOException`，读取该 job 的 `response.json`、`scenario-result.json` 和 `unity-errors.jsonl` 后再决定是否安全重试。避免并发轮询导致文件占用。
+3. `scenario run` 完成后从结构化响应检查 `success`、`completed == requested`、`failedIterations`、`errors` 和 `unityErrors`。明确要求报告时传 `--report-dir <项目文档目录>` 并核对导出结果。
+4. 遇到 `InterruptedByReload`、`Busy`、`Expired` 或文件竞争，先核对实际响应、Console 和业务状态再决定是否重试。仍在执行的请求用原 ID 查询，完成数据领取后中间文件会被回收。
 5. 默认保留用户打开的编辑器与 Play 状态；若本次由测试启动 Play，成功/失败都通过 `teardown` 返回业务安全画面，并按需求停止 Play。不要擅自关闭用户原本打开的编辑器。
 
 ### 6. MCP 配合和视觉验证
@@ -98,7 +98,7 @@ description: 执行或维护 Revolution.RevCLI 的 GM scenario 循环回归、�
 
 1. 测试了哪些功能/用例；
 2. Automation 完整结果（通过轮数、错误数、必要性能指标）；
-3. HTML/JSON 报告及 job id/路径；
+3. 已明确请求并导出的报告路径；
 4. MCP/视觉验收是否做过；
 5. 每个失败的第一根因和日志位置；
 6. 是否改了代码、测试文件、资源或场景，以及是否提交/推送。

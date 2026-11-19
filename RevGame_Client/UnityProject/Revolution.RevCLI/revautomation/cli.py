@@ -8,13 +8,11 @@ import os
 from pathlib import Path
 import sys
 import time
-import datetime as dt
-import tempfile
-import uuid
 
 from .client import RevClient, RevError, atomic_json, read_json
 from .media import write_gif
 from .report import export_evidence, export_report
+from .storage import check_revmcp_output_path
 from .summary import compact_json, summarize
 from . import daemon
 from . import pipeline as pipelines
@@ -191,7 +189,7 @@ def _build_parser():
                 action.add_argument("file", type=Path)
                 action.add_argument("--repeat", type=int)
                 action.add_argument("--warmup", type=int)
-                action.add_argument("--report-dir", type=Path)
+                action.add_argument("--report-dir", type=Path, help="明确要求报告时，写入指定的文档目录")
             if family == "editor" and operation == "play":
                 action.add_argument("--scene")
             if family == "editor" and operation == "menu":
@@ -572,26 +570,34 @@ def editor_outcome(action, response):
 
 
 def invoke_action(client, action, payload, confirm, report_dir=None, progress=print_progress, *, detach=False):
+    """执行一个动作。把显式报告目录交给调用端，以便在清理逐轮数据前完成导出。"""
     if detach:
         if action in ("editor.launch", "editor.wait", "scenario.validate"):
             raise RevError(action + " 是 CLI 本地动作，不能提交后台工单。")
+        if report_dir is not None:
+            raise RevError("生成 scenario 报告需要等待本次执行，请去掉 --detach。")
         return client.call(action, payload, confirm, progress, detach=True)
     if action == "editor.launch":
         response = client.launch()
     elif action == "editor.wait":
         response = client.wait_ready()
+    elif report_dir is not None:
+        response = client.call(action, payload, confirm, progress, report_dir=report_dir)
     else:
         response = client.call(action, payload, confirm, progress)
-    response = editor_outcome(action, response)
-    if action == "scenario.run" and (response.get("data") or {}).get("resultPath"):
-        directory = report_dir or ROOT / "results" / Path(response["jobDirectory"]).name
-        response["reports"] = export_report(Path(response["data"]["resultPath"]), directory)
-    return response
+    return editor_outcome(action, response)
 
 
 def main(argv=None):
+    """分发 CLI 动作并输出 JSON。只有命令行明确指定的导出路径才会落盘。"""
     raw = list(sys.argv[1:] if argv is None else argv)
-    args = parser().parse_args(raw)
+    cli_parser = parser()
+    args = cli_parser.parse_args(raw)
+    if args.output:
+        try:
+            args.output = check_revmcp_output_path(args.output)
+        except (OSError, ValueError) as error:
+            cli_parser.error(str(error))
     progress = print_progress if args.full else None
     try:
         if args.timeout <= 0 or not args.timeout < 604800:
@@ -703,26 +709,11 @@ def main(argv=None):
         if args.output:
             atomic_json(args.output, result)
         visible = result if args.full else summarize(result)
-        if visible is not result:
-            if args.output:
-                path = args.output.resolve()
-            else:
-                project = args.project.resolve()
-                directory = (project / "Library/RevolutionAutomation/cli-reports" if (project / "Assets").is_dir()
-                             else Path(tempfile.gettempdir()) / "Revolution.RevCLI/cli-reports")
-                directory.mkdir(parents=True, exist_ok=True)
-                path = directory / (dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8] + ".json")
-                atomic_json(path, result)
-                from .storage import policy, prune_reports
-                try:
-                    settings = policy(directory.parent)
-                    if settings["automatic"]:
-                        prune_reports(directory, settings, dry_run=False)
-                except (OSError, ValueError):
-                    pass
-            visible["detailsPath"] = str(path)
+        # 默认摘要只从当前响应提取。只有显式 --output 才提供可再次打开的路径。
+        if visible is not result and args.output:
+            visible["detailsPath"] = str(args.output)
         print(json.dumps(visible, ensure_ascii=False, indent=2) if args.full else compact_json(visible))
-        return 0 if result.get("success", True) else 1
+        return 0 if result.get("success", True) and not result.get("reportError") else 1
     except KeyboardInterrupt:
         print(json.dumps(dict(success=False, error="Cancelled", message="已请求取消；Unity 清理进度请看 jobDirectory。"), ensure_ascii=False), file=sys.stderr)
         return 130

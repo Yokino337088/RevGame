@@ -1,7 +1,9 @@
-"""RevMCP 原始工单与正式报告的落盘入口。所有调用共用同一项目边界。"""
+"""只在调用者要求导出时生成 RevMCP 报告，日常计划直接返回执行结果。"""
 
+import datetime as dt
 from pathlib import Path
 import struct
+import uuid
 import zlib
 
 from revautomation.storage import check_revmcp_output_path
@@ -21,17 +23,18 @@ def workspace_for(directory):
                 next((item for item in parents if (item / "AGENTS.md").is_file()), directory))
 
 
-def machine_directory(workspace, explicit=None):
-    """默认只在工作区忽略目录留工单。即使显式配置也拒绝工具原 results 路径。"""
-    requested = Path(explicit if explicit is not None else workspace / ".codex/work/revmcp").absolute()
-    # 保护当前工具副本的旧位置，包括外部部署时被重命名的目录。
-    if requested.is_relative_to(Path(__file__).resolve().parents[1] / "results"):
+def check_output_path(path):
+    """拦截历史 results 目录，兼顾工具副本改名及目录别名。"""
+    requested = Path(path).absolute()
+    resolved = check_revmcp_output_path(requested)
+    former_results = Path(__file__).resolve().parents[1] / "results"
+    if requested.is_relative_to(former_results) or resolved.is_relative_to(former_results.resolve()):
         raise ValueError("RevMCP 工具目录的 results 已停用")
-    return check_revmcp_output_path(requested)
+    return resolved
 
 
 def document_directory(hub, requested=None):
-    """先处理用户指定的项目内路径，再找现有文档。无法确定时仅留原始工单。"""
+    """优先采用用户指定的项目内路径，省略时查找项目已有文档目录。"""
     if not hub.editor:
         if requested is not None:
             raise ValueError("写正式报告前须绑定目标 Unity 工程")
@@ -39,9 +42,9 @@ def document_directory(hub, requested=None):
     project = hub.editor.project
 
     def checked(directory):
-        """在执行计划前预检目标，解析别名后仍须在工作区，且避开工单和缓存。"""
-        path = check_revmcp_output_path(directory)
-        reserved = (hub.reports, hub.workspace / ".codex/work", hub.workspace / ".git",
+        """解析别名后核对项目边界，并避开机器缓存。"""
+        path = check_output_path(directory)
+        reserved = (hub.workspace / ".codex/work", hub.workspace / ".git",
                     project / "Library", project / "Temp")
         if not path.is_relative_to(hub.workspace) or any(path.is_relative_to(root.resolve()) for root in reserved):
             raise ValueError("reportDirectory 须位于绑定项目的文档目录，且与工单和缓存分开")
@@ -96,12 +99,13 @@ def representative(items, limit):
     return [items[index * (len(items) - 1) // (limit - 1)] for index in range(limit)]
 
 
-def write_evidence(result, destination, report_path):
-    """同一运行只写一份 HTML，最多三张缩放截图和一份动图。原始回执独立保留。"""
+def write_evidence(result, destination):
+    """为本次导出分配独立目录，写一份 HTML 和必要的缩放画面。"""
     from revautomation.media import write_gif, write_png_preview
     from revautomation.report import export_evidence
 
-    directory = check_revmcp_output_path(destination / Path(report_path).stem)
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8]
+    directory = check_output_path(destination / stamp)
     directory.mkdir(parents=True, exist_ok=False)
     media = directory / "画面"
     shots = list(dict.fromkeys(screenshot_paths(result)))
@@ -112,7 +116,7 @@ def write_evidence(result, destination, report_path):
             try:
                 write_png_preview(source, media / f"{index:02d}.png")
             except (OSError, ValueError, struct.error, zlib.error, IndexError):
-                notes.append(f"第 {index} 张截图无法生成预览，原图位置见工单。")
+                notes.append(f"第 {index} 张截图无法生成预览，可用调用响应中的路径核对原图。")
         if len(shots) > 1:
             try:
                 write_gif(representative(shots, 12), media / "实际连拍.gif", delay_ms=120, max_width=520)
@@ -127,21 +131,30 @@ def write_evidence(result, destination, report_path):
 
 
 def run_with_reports(hub, plan, cancel=None):
-    """共用 CLI 与 MCP 的交付路径。业务结果和文件写入错误分别返回。"""
+    """只消费计划中的交付选项，断言和清理始终使用原本的业务计划。"""
     if not isinstance(plan, dict):
         raise ValueError("计划必须是对象")
     plan = dict(plan)
-    destination = document_directory(hub, plan.pop("reportDirectory", None))
+    has_directory = "reportDirectory" in plan
+    requested = plan.pop("reportDirectory", None)
+    export = plan.pop("report", has_directory)
+    if type(export) is not bool:
+        raise ValueError("report 须为布尔值")
+    if has_directory and (not export or not isinstance(requested, str) or not requested.strip()):
+        raise ValueError("reportDirectory 须为非空目录路径，且与 report: true 配合或单独使用")
+    # 未要求交付报告时，直接走业务计划，连文档目录也无需查找。
+    if not export:
+        return workflow.run(hub, plan, cancel)
+
+    destination = document_directory(hub, requested)
     result = workflow.run(hub, plan, cancel)
-    report_path = hub.save(result)
-    result["reportPath"] = report_path
     if destination is None:
-        result["evidenceError"] = "未找到项目文档目录，已保存原始工单。可用 plan.reportDirectory 指定项目内的目录。"
+        result["evidenceError"] = "未找到项目文档目录。可用 plan.reportDirectory 指定项目内的目录。"
     else:
         try:
             # 再次校验已选路径，避免计划运行期间变更目录链接后写到工作区外。
             destination = document_directory(hub, str(destination))
-            result["evidencePath"] = write_evidence(result, destination, report_path)
+            result["evidencePath"] = write_evidence(result, destination)
         except (OSError, ValueError) as error:
-            result["evidenceError"] = f"业务作业已保存，HTML 写入失败：{error}"
+            result["evidenceError"] = f"HTML 写入失败：{error}"
     return result

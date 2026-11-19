@@ -104,7 +104,8 @@ class MemoryTransportTests(unittest.TestCase):
             with self.assertRaises(RevError): memory_transport.call(self.client, self.payload())
         self.assertFalse((self.client.root / "jobs").exists())
 
-    def test_detach_submits_once_and_repeat_reads_keep_result(self):
+    def test_detach_submits_once_and_consumes_terminal_receipt(self):
+        """后台等待终态后确认内存结果，并立即删除用来跨进程查询的文件。"""
         with patch.object(self.client, "ready_endpoint", return_value=dict(memoryRequired=True, sessionId="session")):
             accepted = self.client.call("editor.status", detach=True)
         self.assertTrue(accepted["pending"])
@@ -114,12 +115,15 @@ class MemoryTransportTests(unittest.TestCase):
         receipt = Path(accepted["receipt"]).read_text(encoding="utf-8")
         self.assertNotIn("token", receipt)
         self.assertNotIn("payloadJson", receipt)
-        for wait in (True, False):
-            result = self.client.job(ident, wait=wait)
-            self.assertEqual(result["data"], {"count": 3})
-        self.assertEqual((Handler.posts, Handler.acknowledgements), (1, 0))
+        result = self.client.job(ident, wait=True)
+        self.assertEqual(result["data"], {"count": 3})
+        self.assertFalse(Path(accepted["receipt"]).exists())
+        with self.assertRaisesRegex(RevError, "请求不存在"):
+            self.client.job(ident)
+        self.assertEqual((Handler.posts, Handler.acknowledgements), (1, 1))
 
     def test_detached_wait_timeout_keeps_job_then_explicit_cancel(self):
+        """等待超时和发出取消请求都未消费终态，保留原查询身份。"""
         Handler.mode = "pending"
         accepted = memory_transport.call(self.client, self.payload(), detach=True)
         self.client.timeout = .05
@@ -129,14 +133,17 @@ class MemoryTransportTests(unittest.TestCase):
         self.assertEqual(Handler.deletes, 0)
         result = self.client.job(accepted["id"], cancel=True)
         self.assertTrue(result["cancelRequested"])
+        self.assertTrue(Path(accepted["receipt"]).is_file())
         self.assertEqual((Handler.posts, Handler.deletes), (1, 1))
 
     def test_detached_job_rejects_other_editor_session_before_query(self):
+        """确认 Editor 已换会话后，立即回收失效身份文件。"""
         accepted = memory_transport.call(self.client, self.payload(), detach=True)
         atomic_json(self.client.root / "editor-http.json", dict(self.info, sessionId="another"))
         with self.assertRaisesRegex(RevError, "会话已更换"):
             self.client.job(accepted["id"])
         self.assertEqual((Handler.posts, Handler.gets), (1, 0))
+        self.assertFalse(Path(accepted["receipt"]).exists())
 
     def test_detach_retains_original_id_when_submission_disconnects(self):
         with patch.object(memory_transport, "request", side_effect=[{"success": True}, ConnectionError("lost")]):

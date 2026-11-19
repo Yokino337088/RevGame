@@ -17,7 +17,7 @@ def check_revmcp_output_path(path):
     for candidate in (requested, resolved):
         parts = tuple(part.casefold().rstrip(" .") for part in candidate.parts)
         if ("revolution.revmcp", "results") in zip(parts, parts[1:]):
-            raise ValueError("Revolution.RevMCP/results 已停用。机器证据用项目 .codex/work，HTML 用项目文档目录。")
+            raise ValueError("Revolution.RevMCP/results 已停用。需要导出报告时请选择项目文档目录。")
     return resolved
 
 

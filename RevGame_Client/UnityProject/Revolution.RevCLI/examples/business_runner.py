@@ -5,15 +5,16 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from revautomation.client import RevClient, read_json
 from revautomation.cli import validate_scenario
-from revautomation.report import export_report
 
 
 def main():
+    """启动示例场景执行循环用例，仅在显式传入报告目录时保留报告。"""
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scene", required=True, help="Assets/.../*.unity")
     parser.add_argument("--unity", help="Unity.exe；已开编辑器时可不填")
     parser.add_argument("--repeat", type=int, default=10000)
+    parser.add_argument("--report-dir", type=Path, help="需要报告时指定项目文档目录")
     args = parser.parse_args()
     automation = Path(__file__).resolve().parents[1]
     spec = read_json(automation / "examples/business.scenario.json")
@@ -25,12 +26,10 @@ def main():
     if not start["success"]:
         raise RuntimeError(start)
     try:
-        response = client.call("scenario.run", spec, progress=lambda value: print(value, file=sys.stderr))
+        response = client.call("scenario.run", spec, progress=lambda value: print(value, file=sys.stderr),
+                               report_dir=args.report_dir)
         print(response)
-        result_path = (response.get("data") or {}).get("resultPath")
-        if result_path:
-            print(export_report(Path(result_path), automation / "results" / Path(response["jobDirectory"]).name))
-        return 0 if response["success"] else 1
+        return 0 if response["success"] and not response.get("reportError") else 1
     finally:
         # 收尾也有明确期限，不能沿用压测的一整天超时。
         client.timeout = 120

@@ -67,10 +67,10 @@ python <AutomationRoot>/rev.py --project <UnityProject> --mode live gm list
 
 ```text
 python <AutomationRoot>/rev.py --project <UnityProject> scenario validate <Scenario.json>
-python <AutomationRoot>/rev.py --project <UnityProject> --mode live --timeout 600 scenario run <Scenario.json> --report-dir <ReportDir>
+python <AutomationRoot>/rev.py --project <UnityProject> --mode live --timeout 600 scenario run <Scenario.json>
 ```
 
-将原始 `response.json`、`scenario-result.json`、`iterations.jsonl`、`unity-errors.jsonl` 和自动生成的 HTML/CSV/JSON 报告关联同一 job。优先通过 Python 参数列表调用，避免 Windows PowerShell 中文 GM 命令乱码。
+终态从本次响应读取，逐轮中间文件用毕清理。用户明确要求报告时在同一命令传 `--report-dir <项目文档目录>`，工具在清理前完成导出。优先通过 Python 参数列表调用，避免 Windows PowerShell 中文 GM 命令乱码。
 
 ## E. 结果判定
 
@@ -85,7 +85,7 @@ python <AutomationRoot>/rev.py --project <UnityProject> --mode live --timeout 60
 
 ## F. MCP 辅助验证
 
-优先使用可用 MCP 获取 Unity readiness、编辑器是否 Play、Game/Hierarchy 画面、Console 编译错误与运行错误；调用具体 MCP 工具前先查询其 schema。MCP 工具不可用时不要假设存在，明确记录“视觉/编辑器检查未执行”。MCP 不能替代 `scenario-result.json` 的自动断言，也不能自己生成虚假的 GM 通过结果。
+优先使用可用 MCP 获取 Unity 就绪状态、Play、Game/Hierarchy 画面及 Console 错误。调用前查询当前 schema。无法执行视觉或编辑器检查时说明实际范围。业务结论以 scenario 响应中的真实断言为准。
 
 ## G. 常见故障分诊
 

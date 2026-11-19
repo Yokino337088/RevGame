@@ -129,31 +129,43 @@ class EvidenceRoutingTests(unittest.TestCase):
         path.write_bytes(data)
         return dict(mimeType="image/png", path=str(path))
 
-    def test_standalone_screenshot_keeps_image_and_raw_json_only(self):
-        """单次截图仍返回真实 MCP 画面，现有文档目录中无额外 HTML。"""
+    def test_standalone_screenshot_returns_image_without_receipt(self):
+        """单次显式截图仍可在 MCP 看图，执行本身不落盘一份额外工单。"""
         self.docs.mkdir(parents=True)
         self.hub.call = Mock(return_value=dict(success=True, data=self.shot(1)))
         response = Server(self.hub)._call(dict(name="rev_call",
             arguments=dict(target="game", action="runtime.screenshot")), None)
         result = response["structuredContent"]
-        self.assertEqual(Path(result["reportPath"]).parent, self.root / ".codex/work/revmcp")
+        self.assertNotIn("reportPath", result)
         self.assertTrue(any(item["type"] == "image" for item in response["content"]))
         self.assertFalse(list(self.docs.rglob("*")))
         self.assertFalse(self.legacy.exists())
 
-    def test_formal_plan_discovers_document_directory_and_bounds_attachments(self):
-        """在现有测试文档生成一份报告，原始 JSON 与大批截图来源不复制到文档树。"""
+    def test_plan_without_report_does_not_create_documents_or_receipts(self):
+        """即使已有项目文档以及实际画面，默认计划也只返回结果。"""
+        self.docs.mkdir(parents=True)
+        original = dict(success=True, steps=[self.shot(1)], cleanup=[])
+        with patch("revmcp.reporting.workflow.run", return_value=original), patch("revmcp.reporting.document_directory") as lookup:
+            response = Server(self.hub)._call(dict(name="rev_run", arguments={"plan": {}}), None)
+            lookup.assert_not_called()
+        self.assertEqual(response["structuredContent"], original)
+        self.assertFalse(list(self.docs.rglob("*")))
+        self.assertFalse((self.root / ".codex/work/revmcp").exists())
+
+    def test_explicit_report_discovers_document_directory_and_bounds_attachments(self):
+        """明确要求生成报告时才向项目文档写一份 HTML 及必要画面。"""
         self.docs.mkdir(parents=True)
         result = dict(success=True, name="界面回归", steps=[self.shot(i) for i in range(6)], cleanup=[])
         with patch("revmcp.reporting.workflow.run", return_value=result):
-            saved = run_with_reports(self.hub, {})
+            saved = run_with_reports(self.hub, {"report": True})
         report = Path(saved["evidencePath"])
         self.assertEqual(report.parent.parent, self.docs)
         self.assertIn("画面/01.png", report.read_text(encoding="utf-8"))
         self.assertEqual(len(list(report.parent.rglob("*.png"))), 3)
         self.assertEqual(len(list(report.parent.rglob("*.gif"))), 1)
         self.assertFalse(list(self.docs.rglob("*.json")))
-        self.assertEqual(list(self.hub.reports.iterdir()), [Path(saved["reportPath"])])
+        self.assertNotIn("reportPath", saved)
+        self.assertFalse((self.root / ".codex/work/revmcp").exists())
         self.assertFalse(self.legacy.exists())
 
     def test_explicit_document_path_wins_without_becoming_a_game_argument(self):
@@ -170,19 +182,20 @@ class EvidenceRoutingTests(unittest.TestCase):
         """旧 results 和越界文档路径在写文件或执行计划前即被拒绝。"""
         with self.assertRaises(ValueError):
             Hub(project=self.project, cli_root=ROOT.parent / "Revolution.RevCLI", reports=self.legacy / "nested")
-        for path in (self.legacy, self.hub.reports, self.root.parent / "escape"):
+        for path in (self.legacy, self.root / ".codex/work/revmcp", self.root.parent / "escape"):
             with self.subTest(path=path), patch("revmcp.reporting.workflow.run") as run:
                 with self.assertRaises(ValueError):
                     run_with_reports(self.hub, {"reportDirectory": str(path)})
                 run.assert_not_called()
         self.assertFalse(self.legacy.exists())
-        self.assertFalse(self.hub.reports.exists())
+        self.assertFalse((self.root / ".codex/work/revmcp").exists())
 
     def test_missing_document_directory_does_not_guess_or_recreate_legacy(self):
-        """工作区无现有文档时保留真实工单，并说明 HTML 的路径需求。"""
+        """明确要求报告但无文档目录时，保留内存结果并提示选择路径。"""
         with patch("revmcp.reporting.workflow.run", return_value=dict(success=True, steps=[], cleanup=[])):
-            result = run_with_reports(self.hub, {})
-        self.assertTrue(Path(result["reportPath"]).is_file())
+            result = run_with_reports(self.hub, {"report": True})
+        self.assertTrue(result["success"])
+        self.assertNotIn("reportPath", result)
         self.assertIn("reportDirectory", result["evidenceError"])
         self.assertFalse(list(self.root.rglob("*.html")))
         self.assertFalse(self.legacy.exists())

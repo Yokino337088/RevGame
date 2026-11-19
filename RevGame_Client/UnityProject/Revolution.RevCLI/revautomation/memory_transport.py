@@ -62,7 +62,26 @@ def ready(client, session, deadline, cancel):
 
 
 def receipt_path(client, ident):
+    """为显式后台调用定位短期身份回执，内容只供另一进程查同一个 Editor 会话。"""
     return client.root / "detached-jobs" / (ident + ".json")
+
+
+def acknowledge(info, ident):
+    """通知 Editor 已读终态。若断线，仍返回已收到的结果，由服务回收内存。"""
+    try:
+        request(info, "POST", "/jobs/" + ident + "/ack", {})
+    except (OSError, RevError):
+        pass
+
+
+def consume_receipt(path, result):
+    """永久删除已消费的后台身份文件，删除受阻时把原因放进响应。"""
+    from .client import unlink_job_file
+    try:
+        unlink_job_file(path)
+    except OSError as error:
+        result["jobCleanupError"] = str(error)
+    return result
 
 
 def decode_result(client, ident, response):
@@ -80,6 +99,7 @@ def decode_result(client, ident, response):
 
 
 def call(client, payload, cancel=None, *, detach=False):
+    """普通请求通过内存领取结果，后台请求仅在跨进程查询必要时创建身份回执。"""
     ident = payload["id"]
     deadline = time.monotonic() + client.timeout
     info = ready(client, payload["sessionId"], deadline, cancel)
@@ -94,6 +114,12 @@ def call(client, payload, cancel=None, *, detach=False):
     # POST 出错时业务状态可能未知；不转文件桥、不再次 POST，以免动作执行两遍。
     try:
         accepted = request(info, "POST", "/call", payload)
+    except EditorHttpError as exc:
+        # 服务明确拒绝这次提交时，没有待查询的请求，可以清理提前写入的身份。
+        failure = consume_receipt(receipt, {}) if receipt is not None else {}
+        if failure:
+            raise RevError(f"{exc}，临时回执清理失败：{failure['jobCleanupError']}") from exc
+        raise
     except OSError as exc:
         raise RevError(f"内存请求提交结果未知：{ident}；未切换通道或重发，请先检查日志。{exc}") from None
     if not accepted.get("success") or accepted.get("id") != ident:
@@ -116,10 +142,7 @@ def call(client, payload, cancel=None, *, detach=False):
                     if response.get("error") == "ResultExpired":
                         raise RevError(response.get("message"))
                     response = decode_result(client, ident, response)
-                    try:
-                        request(info, "POST", "/jobs/" + ident + "/ack", {})
-                    except (OSError, RevError):
-                        pass  # 已收到结果；确认失败由服务保留上限回收，不改变业务成功结果。
+                    acknowledge(info, ident)
                     return response
             except OSError:
                 # Unity 重载短暂关闭 listener：只等待同一个请求的 GET，不能重新提交。
@@ -134,8 +157,10 @@ def call(client, payload, cancel=None, *, detach=False):
 
 
 def detached_job(client, ident, cancel=False, wait=False):
+    """等待读取或取消同一后台请求，首次领取终态后立即移除身份回执。"""
     from .client import read_json
-    receipt = read_json(receipt_path(client, ident))
+    receipt_file = receipt_path(client, ident)
+    receipt = read_json(receipt_file)
     if receipt.get("id") != ident or not isinstance(receipt.get("sessionId"), str):
         raise RevError("后台工单回执身份无效：" + ident)
     deadline = time.monotonic() + client.timeout
@@ -144,6 +169,9 @@ def detached_job(client, ident, cancel=False, wait=False):
         try:
             info = credentials(client)
             if info["sessionId"] != receipt["sessionId"]:
+                failure = consume_receipt(receipt_file, {})
+                if failure:
+                    raise RevError(f"Editor 会话已更换，临时回执清理失败：{failure['jobCleanupError']}")
                 raise RevError("Editor 会话已更换，无法在新会话查询旧工单：" + ident)
             remaining = max(.05, min(5, deadline - time.monotonic()))
             result = decode_result(client, ident, request(info, "GET", path, timeout=remaining))
@@ -152,12 +180,15 @@ def detached_job(client, ident, cancel=False, wait=False):
                 cancelled = request(info, "DELETE", path, timeout=remaining)
                 return dict(success=bool(cancelled.get("success")), id=ident, cancelRequested=bool(cancelled.get("success")),
                             pending=True, transport="http-memory")
-            if not wait or not result.get("pending"):
+            if not result.get("pending"):
+                acknowledge(info, ident)
+                return consume_receipt(receipt_file, result)
+            if not wait:
                 return result
         except EditorHttpError as exc:
             if exc.status == 404:
-                return dict(success=False, error="JobNotFound", id=ident, transport="http-memory",
-                            message="编辑器没有保留该工单。请核对原回执或业务状态。")
+                return consume_receipt(receipt_file, dict(success=False, error="JobNotFound", id=ident,
+                    action=receipt.get("action"), transport="http-memory", message="编辑器没有保留该请求。请核对业务状态。"))
             raise
         except OSError as exc:
             if cancel:

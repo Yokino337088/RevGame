@@ -7,18 +7,17 @@ python <AutomationRoot>/rev.py --project <UnityProject> doctor
 python <AutomationRoot>/rev.py --project <UnityProject> --mode live editor status
 python <AutomationRoot>/rev.py --project <UnityProject> --mode live gm list
 python <AutomationRoot>/rev.py --project <UnityProject> scenario validate <scenario.json>
-python <AutomationRoot>/rev.py --project <UnityProject> --mode live --timeout 600 scenario run <scenario.json> --report-dir <directory>
+python <AutomationRoot>/rev.py --project <UnityProject> --mode live --timeout 600 scenario run <scenario.json>
+python <AutomationRoot>/rev.py --project <UnityProject> --mode live --timeout 600 scenario run <scenario.json> --report-dir <用户指定的项目文档目录>
 python <AutomationRoot>/rev.py --project <UnityProject> job <32-char-job-id>
 python <AutomationRoot>/rev.py --project <UnityProject> report <scenario-result.json> --directory <report-directory>
 ```
 
 ## Automation 通信与产物
 
-CLI 写请求到 Unity 工程 `Library/RevolutionAutomation/inbox/`，Editor Bridge 主线程执行后在 `jobs/<id>/response.json` 返回。完成信号看 response，不看 progress。job 通常含 `request.json`、`response.json`、`progress.json`、`scenario-result.json`、`iterations.jsonl`、`unity-errors.jsonl`；报告导出 HTML/CSV/JSON。
+当前 Editor 优先通过本机内存通道执行。旧文件桥在 Unity 的 `Library/RevolutionAutomation/` 使用短期请求与响应。领取终态后立即回收临时控制与采样文件。只有显式 `--report-dir` 才在清理前导出 HTML/CSV/JSON。完整响应可用 `--full` 查看。
 
-此文件通信桥是 Revolution.RevCLI 自己的 CLI/Editor Bridge，不等于 Unity MCP，也不表示框架内置 GM↔MCP 服务。
-
-## `scenario-result.json` 常看字段
+## Scenario 响应的 `data` 字段
 
 | 字段 | 含义 |
 |---|---|

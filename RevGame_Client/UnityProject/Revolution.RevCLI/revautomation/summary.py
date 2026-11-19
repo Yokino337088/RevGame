@@ -1,14 +1,15 @@
-"""Limit agent-facing receipts after execution. Keep the original for evidence."""
+"""从当前执行响应提取精简视图，压缩输出不需要生成文件。"""
 import json
 
 
 _MAX_INLINE = 3200
+# 摘要优先保留业务结果、错误及用户显式请求的输出路径。
 _KEY = (
     "success", "id", "action", "target", "error", "message", "assertion",
     "finished", "requestId", "compiling", "failed", "cancelled", "published",
     "rebuildReason", "totalBundles", "updatedBundles", "removedBundles",
     "updatedMetadata", "destination", "outputDir", "resultPath", "reportPath",
-    "evidencePath", "evidenceError", "jobDirectory", "path", "codeChanged", "dataOnly", "written",
+    "evidencePath", "evidenceError", "reportError", "jobCleanupError", "jobDirectory", "path", "codeChanged", "dataOnly", "written",
     "data", "steps", "cleanup", "response", "name", "passed", "skipped", "inconclusive",
 )
 

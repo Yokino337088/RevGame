@@ -22,12 +22,12 @@ python Revolution.RevMCP/rev_mcp.py --project RevolutionFrameWork_Unity --compac
 - `batch.call` 最多 64 步，默认遇错停止。用 `payload` 写结构化参数，通过 `{"$ref":"前序ID#/data/字段"}` 串接同帧结果。步骤可加 `expect`，回执提供各步 `elapsedMs`。用 `batch call --validate-only` 只检查结构。每步仍过参数和确认校验，跨帧、Play、编译及构建保持独立。
 - 排查单个 UI 控件用 `ui.layout` 一次读取锚点、父链、CanvasGroup、Canvas 排序及实际纹理，Prefab Mode 使用当前实例 ID。投影只描述几何，业务点击用实际射线和运行时入口验证。
 - Play 中查遮挡用 `ui.raycast` 返回 EventSystem 命中顺序和点击接收者。可以指定控件中心或屏幕点。先观察命中，再决定是否执行点击。
-- 长任务可用 `call <动作> --detach` 提交，保存工单 ID，再用 `job <ID> --wait` 等待，或显式加 `--cancel` 请求取消。客户端等待超时后继续查询原工单。若 Editor 会话变化或回执过期，先核对业务状态再决定下一步。
+- 长任务可用 `call <动作> --detach` 提交，使用返回的 ID 执行 `job <ID> --wait`，或加 `--cancel` 请求取消。客户端等待超时后可继续查原 ID，首次领取终态后立即删除临时回执。若 Editor 会话变化或回执过期，先核对业务状态。
 - `rev_run` 保留跨帧等待、状态断言和 finally；不可为了省往返改成 batch 或并发变更。
 
 ## 证据与活动日志
 
-普通查询保留 JSON 与活动日志，不为每次 status 重做图像扫描/HTML；测试计划和本次截图独立生成报告目录，不扫描历史报告图墙。
+普通查询和计划直接返回结果。活动日志在现有有界账本查看。用户明确要求报告时，按指定文档路径使用本次必要画面生成 HTML。
 
 活动窗口读取账本而非向 MCP 自查。最近 500 项、最多 64 个日志流、每次 Poll 共享 256 KiB / 128 行预算，积压跨刷新消化；缓存行说明和筛选结果，只绘制视口内控件，不在 OnGUI 读盘。无变化不主动持续 Repaint。半行 UTF-8 等下次完整后解析，坏行不阻塞后续事件。
 

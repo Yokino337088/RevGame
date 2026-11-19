@@ -1,6 +1,6 @@
 """把 Agent 的统一调用接到三个真实执行入口。
 
-Editor 走 Revolution.RevCLI 的文件工单；游戏走相同注册表（Editor 转发或
+Editor 走 Revolution.RevCLI 的本机桥；游戏走相同注册表（Editor 转发或
 Player 本机 HTTP）；外部工具走人工登记的可执行文件。这里只适配传输，不实现
 背包、战斗等玩法。网络成功/进程退出不等于业务正确，后置断言交给 workflow。
 """
@@ -19,11 +19,11 @@ import urllib.parse
 import urllib.request
 import uuid
 
-from revautomation.client import RevClient, RevError, RevCancelled, atomic_json, read_json
+from revautomation.client import RevClient, RevError, RevCancelled, read_json
 from revautomation.cli import editor_outcome, validate_action
 from .schema import validate, check_schema, object_schema
 from .activity import Activity
-from .reporting import machine_directory, workspace_for
+from .reporting import check_output_path, workspace_for
 from revautomation import player
 
 
@@ -206,23 +206,23 @@ def gm_line(command, arguments):
 class Hub:
     """统一目录与调度器。先 discover 查实际接口，再按 target/action 精确调用。"""
     def __init__(self, project=None, runtime_endpoint=None, cli_root=None, external_manifest=None, reports=None, timeout=120):
-        """从绑定项目确定工作区和原始工单位置，构造时只校验，首次调用才写文件。"""
+        """绑定实际项目和活动日志。旧 reports 参数仅校验兼容路径。"""
         self.timeout = timeout
         self.editor = RevClient(project, mode="live", timeout=timeout) if project else None
         self.runtime_endpoint = Path(runtime_endpoint) if runtime_endpoint else None
         self.external_manifest = external_manifest
         self.workspace = workspace_for(self.editor.project if self.editor else Path.cwd())
-        self.reports = machine_directory(self.workspace, reports)
+        if reports is not None:
+            check_output_path(reports)
         self.manifest = read_json(Path(cli_root) / "commands.json")
         self.known = {s["id"]: s for s in self.manifest["actions"]}
-        # --project 时写到 Unity 忽略目录；纯 Player 写到本机 endpoint 旁边，纯 CLI 写到报告旁边。
-        # Unity 执行日志由桥自身记录，Agent 流补足外部 CLI、调用拒绝和计划断言等 Unity 看不到的工作。
-        activity_root = self.editor.root if self.editor else self.runtime_endpoint.parent if self.runtime_endpoint else self.reports.parent
+        # Unity 执行日志由桥自身记录。Agent 活动流记录外部 CLI、参数拒绝和计划断言。
+        activity_root = self.editor.root if self.editor else (
+            self.runtime_endpoint.parent if self.runtime_endpoint else self.workspace / ".codex/work")
         self.activity = Activity(activity_root / "activity")
         self._editor_catalog = None
         self._editor_catalog_key = None
         self._editor_catalog_until = 0.0
-        self._storage_next = 0.0
 
     def _editor_key(self):
         endpoint = self.editor.endpoint() if self.editor else None
@@ -365,26 +365,3 @@ class Hub:
             validate_action(action, arguments)
         else:
             validate(arguments, spec["inputSchema"])
-
-    def save(self, result):
-        """保存原始回执。每次写前重核目录，保留规则只应用于机器工单目录。"""
-        directory = machine_directory(self.workspace, self.reports)
-        directory.mkdir(parents=True, exist_ok=True)
-        path = directory / (dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8] + ".json")
-        # Screenshots already have a file path. Avoid duplicating base64 in evidence JSON.
-        def trim(value):
-            if isinstance(value, dict):
-                return {k: trim(v) for k, v in value.items() if k != "base64"}
-            if isinstance(value, list):
-                return [trim(v) for v in value]
-            return value
-        atomic_json(path, trim(result))
-        from revautomation.storage import policy, prune_reports
-        try:
-            settings = policy(self.editor.root if self.editor else self.reports.parent)
-            if settings["automatic"] and time.monotonic() >= self._storage_next:
-                self._storage_next = time.monotonic() + 600
-                prune_reports(directory, settings, dry_run=False)
-        except (OSError, ValueError):
-            pass
-        return str(path)

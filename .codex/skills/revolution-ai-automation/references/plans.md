@@ -1,6 +1,6 @@
 # 跨接口测试计划
 
-RevMCP 计划字段为 name/steps/finally。正式报告可用 `reportDirectory` 指定绑定工程所属工作区内的文档路径。相对路径从仓库根计算。每步 target/action/arguments，可选 id/confirm/expect/until。与 Automation 的 steps/action/payload 格式不同，不混用。
+RevMCP 计划字段为 name/steps/finally。每步 target/action/arguments，可选 id/confirm/expect/until。与 RevCLI 的 scenario 格式不同。优先使用 `rev_run` 的内联计划，终端可将 JSON 传给 `rev_mcp.py run -`。用户要求出报告时才设置 `report: true` 或 `reportDirectory`，相对路径从绑定工程的仓库根计算。
 
 2026-10-29 起，计划和步骤支持可选 `intent`（最多 512 字符）。用人话说明本计划/本步要验证什么，例如“模拟玩家点击后核对计数增加”。它只写活动日志，不能改变业务参数/权限；步骤 intent 优先于计划。finally 没提供 intent 时按清理契约解释，不冒充 Agent 自述。
 
@@ -26,4 +26,4 @@ JSON Pointer `/data/count` 按完整响应取字段；断言支持 equals 或 ex
 
 计划按第一个失败步骤结束本轮 `steps`，然后逐条尝试 `finally`，结果放在 `cleanup`。调用失败保留原响应，`until` 未满足时保留 `ConditionTimeout` 和最后一次实测。只有成功响应才检查 `expect`，失败的 `AssertionFailed` 带 `assertion` 和原响应数据。定位时用 `assertion.path` 或计划中的 `until.path` 找实测，再按 [缺陷闭环](defect-closure.md) 区分业务错误和测试受阻。
 
-GM 的结果文本在 `/data/message`；结构化能力在 `/data/<字段>`。截图返回本机路径及 MCP image；保存的报告省略重复 base64，不丢截图文件路径。报告路径来自 reportPath，原 Editor 工单在 jobDirectory。
+GM 的结果文本在 `/data/message`，结构化能力在 `/data/<字段>`。截图返回本机路径，单次截图或完整计划可在 MCP 查看画面。完整计划响应用 `full: true`，显式导出的 HTML 路径见 `evidencePath`。

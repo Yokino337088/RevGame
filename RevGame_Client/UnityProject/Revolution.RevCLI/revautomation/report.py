@@ -116,9 +116,11 @@ def export_evidence(directory, title="自动化测试报告", subtitle="证据�
 
 
 def export_report(result: Path, directory: Path):
-    """输出逐轮报告，先排除已停用的 RevMCP 结果目录再创建任何文件。"""
+    """输出用户要求的逐轮报告，省略即将清理的中间结果路径。"""
     directory = check_revmcp_output_path(directory)
     data = read_json(result)
+    data.pop("resultPath", None)
+    data.pop("unityLogPath", None)
     directory.mkdir(parents=True, exist_ok=True)
     atomic_json(directory / "summary.json", data)
     rows_path = result.parent / "iterations.jsonl"

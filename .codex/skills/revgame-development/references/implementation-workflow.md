@@ -67,4 +67,4 @@ Editor Play 出现材质粉屏、Shader 名称存在但画面错误，或切换�
 - **资产位置：** 项目材质归 `Assets/GameRes/Material/<模块>`，Shader 归 `Assets/GameShader`。移动时用 Unity AssetDatabase/已注册 RevCLI 动作并保留原 `.meta`，核对 GUID、引用、图集与 AB。项目资源打包前仍运行现有 `GameResourceUsage.Validate`。
 - **规则一致性：** 占格只由 `BoardModel.Place/Move/Remove/Reset` 改；气眼按占格、加气、围困免疫等真实输入失效。AI 复用调用方缓冲与独立深快照，不移动实战棋子试算；死亡、补子、换位、复活后的更新不能漏。
 - **配置与生成目录：** 策划可调数值进入现有 Excel → RevCLI 导表 → 强类型校验链；不改生成文件作为源头，不顺手移动 `Generated`。无尽使用独立表与配置入口，改变共享规则须验远征回归。
-- **报告与 Git：** `.codex/skills` 入库；原始证据/依赖/本机配置留 `.codex/work` 或相应忽略目录。报告保留 HTML 与必要截图/GIF，不生成 ZIP，不导出 Profiler 录制或内存快照，不自动 `SaveProfile`。Unity 缓存、生成 csproj/sln、外部 AB 和安装包不提交；用户指定的 `Assets/StreamingAssets` 可入库。
+- **报告与 Git。** `.codex/skills` 入库，必要采样明细和本机配置在忽略目录。默认在对话汇报，用户明确要求时才按指定路径或项目已有文档目录导出 HTML 与必要画面。临时工单消费后立即永久删除。禁止生成 ZIP、导出 Profiler 原始录制或自动 `SaveProfile`。Unity 缓存、生成 csproj/sln、外部 AB 和安装包不提交。用户指定的 `Assets/StreamingAssets` 可入库。

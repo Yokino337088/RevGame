@@ -100,11 +100,11 @@ rev_discover → 返回当前工程真实注册的动作、参数 schema、运�
 
 ### 📸 2.5 过程可取证，AI 能自证
 
-- 截图与 GIF 直接进报告
+- 视觉验收按需检查本次的实际画面
 - 每步操作、耗时、失败原因进**活动日志**（`editor.activity`）
-- 产出 HTML 报告，文件名带中文标题和日期
+- 用户明确要求时，才在指定目录或项目现有文档目录导出 HTML 与必要截图/GIF
 
-AI 交付的不是一句"我做完了"，而是一份能直接发给别人看的证据。📄
+日常测试直接在对话汇报实际断言与清理结果。临时工单用完立即永久删除。 [项目验收规范](.codex/skills/revgame-development/references/project-acceptance.md#自动化工单与报告)
 
 ### ⚡ 2.6 迭代成本够低
 
@@ -116,7 +116,7 @@ AI 交付的不是一句"我做完了"，而是一份能直接发给别人看的
 ① 发现能力      rev_discover / editor.capabilities
 ② 调用真实工程   rev_call / ui.click / gm.exec / pipeline
 ③ 断言业务结果   assert（不是看返回值，是查真实状态）
-④ 留存证据       截图 / GIF / 活动日志 / HTML 报告
+④ 汇报证据       对话中给出实测与断言，明确要求时导出报告
 ⑤ 清理现场       finally 复位输入、计时器、临时存档、场景
 ```
 

@@ -1,4 +1,4 @@
-"""Atomic file RPC. Never start a second Unity process on an open project."""
+"""Unity Editor 本机调用，优先走内存，兼容旧 Editor 和批处理的临时文件桥。"""
 from __future__ import annotations
 
 import datetime as dt
@@ -12,6 +12,13 @@ import uuid
 from .errors import RevCancelled, RevError  # noqa: F401  保持 `from revautomation.client import RevError` 可用
 
 _COMMANDS_CACHE = {}
+# 文件桥的控制文件由调用方消费后回收。截图、构建清单和 Test Runner 结果有独立的调用契约。
+_FILE_JOB_FILES = ("request.json", "response.json", "response.json.tmp",
+                   "progress.json", "progress.json.tmp", "cancel", "target-started")
+# 旧 scenario 逐轮落盘来限制内存占用。完成后先做显式导出，再清理这些中间文件。
+_SCENARIO_FILES = ("scenario-result.json", "scenario-result.json.tmp", "iterations.jsonl", "unity-errors.jsonl")
+# 文件桥只检查 cancel 是否存在。此内容让终态查询知道原调用已经交出清理权。
+_RELEASED_JOB = "client-released"
 
 
 def command_specs(path: Path):
@@ -53,10 +60,11 @@ def read_json_settled(path: Path, attempts: int = 60, delay: float = .005):
 
 
 def atomic_json(path: Path, value):
+    """原子发布 JSON，临时写入或替换失败时回收本次创建的临时文件。"""
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
-    temp.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
     try:
+        temp.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
         for attempt in range(8):
             try:
                 os.replace(temp, path)
@@ -68,6 +76,80 @@ def atomic_json(path: Path, value):
                 time.sleep(.01 * (attempt + 1))
     finally:
         temp.unlink(missing_ok=True)
+
+
+def unlink_job_file(path):
+    """直接删除已消费的临时文件，短暂遇到 Windows 占用时重试删除。"""
+    for attempt in range(8):
+        try:
+            path.unlink(missing_ok=True)
+            return
+        except PermissionError:
+            if attempt == 7:
+                raise
+            time.sleep(.01 * (attempt + 1))
+
+
+def read_job_release(path):
+    """只有原调用主动交出清理权后，旁路查询才能回收终态文件。"""
+    try:
+        return path.read_bytes() == _RELEASED_JOB.encode("ascii")
+    except OSError:
+        return False
+
+
+def clean_job_files(work, names):
+    """只清理本任务已知的文件。保留仍有其他输出的目录，并回报清理失败。"""
+    try:
+        if work.resolve() != work.parent.resolve() / work.name:
+            raise ValueError("临时工单目录指向其他位置")
+        for name in names:
+            unlink_job_file(work / name)
+        if not any(work.iterdir()):
+            work.rmdir()
+    except FileNotFoundError:
+        return None  # 重复收尾时目录已清理，也属于成功。
+    except (OSError, ValueError) as error:
+        return str(error)
+    return None
+
+
+def consume_scenario(response, work, report_dir=None):
+    """在删除 scenario 中间文件前同步导出用户要求的报告，结果字段继续随响应返回。"""
+    source = work / "scenario-result.json"
+    data = response.get("data")
+    try:
+        if report_dir is not None:
+            from .report import export_report
+            if not source.is_file() or source.resolve() != work.parent.resolve() / work.name / source.name:
+                raise ValueError("scenario 没有产出完整结果，可查看本次业务响应")
+            response["reports"] = export_report(source, report_dir)
+    except (OSError, ValueError) as error:
+        response["reportError"] = str(error)
+    finally:
+        # 场景已结束，Unity 不会再追加逐轮数据。避免返回已删除文件的路径。
+        cleanup_error = clean_job_files(work, _SCENARIO_FILES)
+        if cleanup_error:
+            response["jobCleanupError"] = cleanup_error
+        elif isinstance(data, dict):
+            data.pop("resultPath", None)
+            data.pop("unityLogPath", None)
+        if not work.is_dir():
+            response.pop("jobDirectory", None)
+    return response
+
+
+def consume_editor_result(response, work, action, report_dir=None):
+    """领取终态后清理动作专用的临时文件，跨域重载期间由 Unity 继续使用。"""
+    if action == "scenario.run":
+        return consume_scenario(response, work, report_dir)
+    if action == "build.target":
+        cleanup_error = clean_job_files(work, ("target-started",))
+        if cleanup_error:
+            response["jobCleanupError"] = cleanup_error
+        if not work.is_dir():
+            response.pop("jobDirectory", None)
+    return response
 
 
 def find_unity(project: Path, explicit=None):
@@ -175,6 +257,7 @@ def stale_lock(project: Path):
 
 
 class RevClient:
+    """把单次动作提交到指定工程，承担文件桥临时文件和后台回执的消费边界。"""
     def __init__(self, project: Path, mode="auto", unity=None, timeout=120.0, graphics=True):
         self.project = Path(project).resolve()
         if mode not in ("auto", "live", "batch") or not 0 < timeout < 604800:
@@ -198,7 +281,13 @@ class RevClient:
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
-    def call(self, action, payload=None, confirm=False, progress=None, cancel=None, *, detach=False):
+    def call(self, action, payload=None, confirm=False, progress=None, cancel=None, *, detach=False, report_dir=None):
+        """返回终态，或在显式 detach 时返回接受回执。scenario 可在清理前同步导出。"""
+        if report_dir is not None:
+            from .storage import check_revmcp_output_path
+            report_dir = check_revmcp_output_path(report_dir)
+            if action != "scenario.run" or detach or report_dir.is_relative_to((self.root / "jobs").resolve()):
+                raise RevError("报告目录仅供同步 scenario.run 使用，且必须在临时工单目录之外。")
         if cancel is not None and cancel.is_set():
             raise RevCancelled("请求在提交前已取消，未执行任何动作")
         if action == "editor.wait":
@@ -228,13 +317,15 @@ class RevClient:
                        deadlineUtc=(dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=self.timeout)).isoformat())
         if mode == "live" and (endpoint.get("memoryRequired") or endpoint.get("memoryUrl")):
             from .memory_transport import call as memory_call
-            return memory_call(self, request, cancel, detach=detach)
+            response = memory_call(self, request, cancel, detach=detach)
+            return response if detach else consume_editor_result(response, self.root / "jobs" / request_id, action, report_dir)
         work = self.root / "jobs" / request_id
         work.mkdir(parents=True, exist_ok=False)
         request_path, response_path = work / "request.json", work / "response.json"
-        process = None
-        atomic_json(request_path, request)
+        process, response = None, None
+        submitted, completed = False, False
         try:
+            atomic_json(request_path, request)
             if cancel is not None and cancel.is_set():
                 raise RevCancelled("请求发布前已取消，未提交到编辑器")
             if mode == "live":
@@ -247,6 +338,7 @@ class RevClient:
                 if not self.graphics:
                     args.append("-nographics")
                 process = subprocess.Popen(args, cwd=self.project, shell=False)
+            submitted = True
             end, last_progress = time.monotonic() + self.timeout, None
             # 起步 5ms、稳定后 20ms、长操作退到 50ms：本地文件桥通常几十毫秒就出结果，
             # 固定 80ms 轮询会让每个短操作都白等一轮。
@@ -281,14 +373,20 @@ class RevClient:
                     process.wait(timeout=30)
                 except subprocess.TimeoutExpired:
                     raise RevError(f"操作已返回，但 batch Unity 未退出。PID={process.pid}，请看 {work / 'unity.log'}")
+                completed = True
                 if process.returncode != (0 if response.get("success") else 1):
                     raise RevError(f"Unity 退出码与响应不一致：{process.returncode}，{work}")
+            completed = True
             response["jobDirectory"] = str(work)
             if response.get("dataJson"):
                 response["data"] = json.loads(response.pop("dataJson"))
+            if action == "scenario.run":
+                consume_scenario(response, work, report_dir)
             return response
         except (TimeoutError, KeyboardInterrupt, RevCancelled):
-            (work / "cancel").touch()
+            # 已发布且尚未完成的请求仍可能由 Unity 使用，写取消信号后留给终态查询收尾。
+            if submitted and not completed:
+                (work / "cancel").write_text(_RELEASED_JOB, encoding="ascii")
             # Only a child editor started by this command may be terminated. Never kill
             # the user's already-open Unity. In live mode a blocked GM needs manual diagnosis.
             if process is not None and process.poll() is None:
@@ -297,6 +395,16 @@ class RevClient:
                 except subprocess.TimeoutExpired:
                     process.terminate()
             raise
+        finally:
+            # 无消费者或已确认结束时才能删除控制文件，避免等到一半破坏正在运行的动作。
+            if not submitted or completed or (process is not None and process.poll() is not None):
+                names = _FILE_JOB_FILES + ("unity.log",) if completed and process and process.returncode == 0 else _FILE_JOB_FILES
+                cleanup_error = clean_job_files(work, names)
+                if response is not None and completed:
+                    if not work.is_dir():
+                        response.pop("jobDirectory", None)
+                    if cleanup_error:
+                        response["jobCleanupError"] = cleanup_error
 
     def batch(self, steps, stop_on_error=True, confirm=False):
         """一次请求执行多个动作，省掉"每步一次往返"。
@@ -370,11 +478,15 @@ class RevClient:
         raise TimeoutError(f"等待 Unity 就绪超时；请检查 {self.root / 'endpoint.json'} 与 editor.console")
 
     def job(self, request_id, cancel=False, wait=False):
+        """查询或取消后台请求。领取终态时回收自己负责的临时文件。"""
         if len(request_id) != 32 or any(c not in "0123456789abcdefABCDEF" for c in request_id):
             raise RevError("请求 ID 必须是 32 位十六进制。")
         from .memory_transport import detached_job, receipt_path
         if receipt_path(self, request_id).is_file():
-            return detached_job(self, request_id, cancel, wait)
+            result = detached_job(self, request_id, cancel, wait)
+            if result.get("pending"):
+                return result
+            return consume_editor_result(result, self.root / "jobs" / request_id, result.get("action"))
         work = self.root / "jobs" / request_id
         if not (work / "request.json").is_file():
             raise RevError(f"请求不存在：{request_id}")
@@ -390,7 +502,23 @@ class RevClient:
         result = dict(success=True, jobDirectory=str(work), cancelRequested=(work / "cancel").exists())
         for name in ("response", "progress", "scenario-result"):
             if (work / (name + ".json")).exists():
-                result[name] = read_json(work / (name + ".json"))
+                result[name] = read_json_settled(work / (name + ".json"))
+        # 正常同步调用负责清理自己的文件。仅在调用方已放弃等待时由查询方接手，
+        # 避免观察同一个请求的客户端抢先删掉同步调用还未读到的响应。
+        response = result.get("response")
+        cancel_file = work / "cancel"
+        if (response and response.get("id") == request_id and response.get("protocol") == 1
+                and result["cancelRequested"] and read_job_release(cancel_file)):
+            names = _FILE_JOB_FILES + _SCENARIO_FILES if "scenario-result" in result else _FILE_JOB_FILES
+            cleanup_error = clean_job_files(work, names)
+            if cleanup_error:
+                result["jobCleanupError"] = cleanup_error
+            else:
+                if not work.is_dir():
+                    result.pop("jobDirectory", None)
+                if "scenario-result" in result:
+                    result["scenario-result"].pop("resultPath", None)
+                    result["scenario-result"].pop("unityLogPath", None)
         return result
 
     def ready_endpoint(self, cancel=None):

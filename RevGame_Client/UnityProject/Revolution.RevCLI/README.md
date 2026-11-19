@@ -50,7 +50,7 @@ python Revolution.RevCLI/rev.py --project $project --mode live --timeout 60 job 
 python Revolution.RevCLI/rev.py --project $project --mode live job <工单ID> --cancel
 ```
 
-提交回执只确认 Editor 接受请求。等待超时可以继续查询同一个 ID。取消是请求状态，最终以工单结果为准。工单回执保留在工程的 Library 内；完成结果受 Editor 会话和内存保留窗口限制，需要留档时用 `--output`。
+提交回执只确认 Editor 接受请求。等待超时或请求取消后可以继续查同一个 ID。首次读取终态会释放内存结果并永久删除 Library 内的临时身份文件。需要保留完整结果时，在领取终态的同一次命令使用 `--output <文件>`。普通同步调用优先走内存。
 
 Play 中可查询屏幕点或指定控件中心的命中顺序。返回每个 Raycaster、命中对象、点击接收对象和可交互状态。坐标以左下为原点。此查询不会发送输入事件。场景查找可以组合组件、Tag 和 Layer。
 
@@ -84,6 +84,6 @@ python -m unittest discover -s Revolution.RevCLI/tests -v
 
 Unity 接线位于 Assets/Revolution/Editor/RevAutomation，运行时共用模块位于 Assets/Revolution/Runtime/RevAutomation。仅复制 Python 不会自动安装 Unity 代码。已有工程使用 live，关闭工程后才可 batch 执行允许的资产动作；游戏 scenario 必须未暂停的图形 Play。
 
-结果位于 Unity工程/Library/RevolutionAutomation/jobs/id，scenario 报告默认导出 Revolution.RevCLI/results/。CLI 退出码非零、response.success=false、业务断言或清理失败都属于失败；超时不代表动作未执行，不自动重放变更。
+执行结果默认通过终端返回，`--full` 可展开完整 JSON。旧文件桥的临时工单在领取终态后立即永久删除。只有明确传 `scenario run <文件> --report-dir <项目文档目录>` 时才导出报告，导出完成后回收逐轮中间文件。超时后通过原 ID 和实际状态核对，工具不会自动重放变更。
 
 截至 2026-10-22：Python 19 项与 Unity EditMode 24 项通过；真实 MCP 到 Editor 的按钮、GM、断言、PNG、清理链路已运行。详见文档中的脱敏验证记录。

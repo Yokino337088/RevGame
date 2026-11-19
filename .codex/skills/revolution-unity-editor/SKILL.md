@@ -15,7 +15,7 @@ description: 用 Revolution RevCLI 操作 Unity 编辑器、场景、脚本挂�
 | 轻量运行时操作：调一两条 GM、点一下 UI、读一次状态、截一张图确认 | **RevCLI** `runtime start` → `game gm` / `game call` |
 | 重量级测试：长流程、多步断言、必须清理、要带截图和 GIF 的 HTML 报告 | **RevMCP** `rev_run`，按 `revolution-ai-automation` 执行 |
 
-判定规则：要报告、步骤约超过 5 步、要跨帧等待、每步要断言、失败也必须清理，命中任一条就是重量级。拿不准时：要报告就 MCP，不要报告就 CLI。详见 `revolution-ai-automation` 的 references/channel-choice.md。
+长流程、跨帧等待、多步断言或失败清理适合用 RevMCP 计划。日常验收直接返回结果。用户明确要求时，才按用户指定路径或项目已有文档目录导出报告。默认通过内存传计划和回执，必需的临时工单消费后立即永久删除。详见 [通道和交付选择](../revolution-ai-automation/references/channel-choice.md)。
 
 用户明确指定 MCP 时听用户的。两者怎么选见 [RevCLI 与 RevMCP 怎么选](https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/自动化工具/RevCLI与RevMCP怎么选.md)。
 

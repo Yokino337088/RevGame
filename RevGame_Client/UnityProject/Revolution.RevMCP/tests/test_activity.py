@@ -80,29 +80,32 @@ class ActivityTests(unittest.TestCase):
             self.assertEqual(completed[-1]["state"], "Succeeded")
 
     def test_hub_records_rejection_and_cancellation_without_starting_business(self):
-        with tempfile.TemporaryDirectory() as folder:
-            hub = Hub(cli_root=ROOT.parent / "Revolution.RevCLI", reports=Path(folder) / "reports")
+        """即使没有工单文件，拒绝和取消仍可在活动流查询。"""
+        with tempfile.TemporaryDirectory() as folder, patch("revmcp.backends.workspace_for", return_value=Path(folder)):
+            hub = Hub(cli_root=ROOT.parent / "Revolution.RevCLI")
             with self.assertRaises(RevError):
                 hub.call("gm", "不存在", {}, catalog=dict(commands=[], actions=[]))
             with patch.object(hub, "_call", side_effect=RevCancelled("cancelled")):
                 with self.assertRaises(RevCancelled): hub.call("game", "wait")
-            completed = [r for r in rows(Path(folder) / "activity") if r["state"] != "Running"]
+            completed = [r for r in rows(Path(folder) / ".codex/work/activity") if r["state"] != "Running"]
             self.assertEqual([r["state"] for r in completed], ["Failed", "Cancelled"])
 
     def test_real_external_python_call_records_exact_arguments_and_result(self):
-        with tempfile.TemporaryDirectory() as folder:
-            hub = Hub(cli_root=ROOT.parent / "Revolution.RevCLI", reports=Path(folder) / "reports")
+        """外部脚本在隔离目录实际执行，活动流里能定位本次结果。"""
+        with tempfile.TemporaryDirectory() as folder, patch("revmcp.backends.workspace_for", return_value=Path(folder)):
+            hub = Hub(cli_root=ROOT.parent / "Revolution.RevCLI")
             spec = dict(target="cli", id="echo", command=[sys.executable, "-c", "import json,sys; print(json.dumps(json.load(sys.stdin)))"], cwd=folder,
                         inputSchema=object_schema({"text": {"type": "string"}}))
             result = hub.call("cli", "echo", {"text": "中文调用"}, catalog=dict(commands=[], actions=[spec]))
             self.assertEqual(result["data"]["text"], "中文调用")
-            final = rows(Path(folder) / "activity")[-1]
+            final = rows(Path(folder) / ".codex/work/activity")[-1]
             self.assertEqual(final["state"], "Succeeded")
             self.assertIn("中文调用", final["argumentsJson"])
 
     def test_mcp_intent_is_logged_separately_from_external_business_arguments(self):
-        with tempfile.TemporaryDirectory() as folder:
-            hub = Hub(cli_root=ROOT.parent / "Revolution.RevCLI", reports=Path(folder) / "reports")
+        """客户端意图仍作为活动元数据记录，外部工具只接收业务参数。"""
+        with tempfile.TemporaryDirectory() as folder, patch("revmcp.backends.workspace_for", return_value=Path(folder)):
+            hub = Hub(cli_root=ROOT.parent / "Revolution.RevCLI")
             spec = dict(target="cli", id="echo", description="回传调用者文本", command=[sys.executable, "-c", "import json,sys; print(json.dumps(json.load(sys.stdin)))"], cwd=folder,
                         inputSchema=object_schema({"text": {"type": "string"}}))
             server = Server(hub)
@@ -110,7 +113,7 @@ class ActivityTests(unittest.TestCase):
                 result = server.call({"name": "rev_call", "arguments": {"target": "cli", "action": "echo", "arguments": {"text": "中文"}, "intent": "确认中文输入不会乱码"}}, None)
             self.assertFalse(result["isError"])
             self.assertEqual(result["structuredContent"]["data"], {"text": "中文"})
-            command = next(r for r in rows(Path(folder) / "activity") if r["target"] == "cli" and r["state"] == "Succeeded")
+            command = next(r for r in rows(Path(folder) / ".codex/work/activity") if r["target"] == "cli" and r["state"] == "Succeeded")
             self.assertEqual(command["intent"], "确认中文输入不会乱码")
             self.assertEqual(command["description"], "回传调用者文本")
 

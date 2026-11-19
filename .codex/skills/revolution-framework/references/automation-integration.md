@@ -57,7 +57,7 @@
 - `failOnUnityError=true`；无明确性能需求则阈值为0（关闭），不能把关闭阈值说成性能达标。
 - Python参数数组或UTF-8 JSON传中文，避开PowerShell编码和引号问题。
 - 最终检查CLI response.success、场景data.success、completed=requested、failedIterations=0、unityErrors=0、errors为空、未取消。
-- 查看job的response.json、scenario-result.json、iterations.jsonl及unity-errors.jsonl。progress不是完成信号。
+- 从本次结构化响应核对终态、轮次和首个错误。需要逐轮文件时在同一次执行显式请求导出，工具随后删除临时工单和采样文件。
 - Busy/重载/超时先检查当前作业与已发生的副作用，再决定是否重跑；测试自己的故障与玩法故障分别归因。
 
 ## 5. 交付与证据分级

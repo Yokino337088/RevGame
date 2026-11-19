@@ -38,6 +38,26 @@ class FakeHub:
 
 
 class RevMCPTests(unittest.TestCase):
+    def test_mcp_summary_and_full_override_use_same_response_without_file(self):
+        """摘要和 full 都就地返回，长响应也无需写工单。"""
+        from revmcp.server import Server
+        hub = FakeHub()
+        original = {"success": True, "data": {"requestId": "build", "log": "x" * 9000}}
+        hub.call = lambda *args: original
+        saved = []
+        hub.save = saved.append
+        server = Server(hub, compact_tools=True)
+        args = {"target": "game", "action": "state"}
+        result = server._call({"name": "rev_call", "arguments": args}, None)
+        summary = result["structuredContent"]
+        self.assertTrue(summary["detailsTruncated"])
+        self.assertEqual(summary["data"]["requestId"], "build")
+        self.assertNotIn("reportPath", summary)
+        self.assertEqual(saved, [])
+        self.assertNotIn("xxxx", result["content"][0]["text"])
+        full = server._call({"name": "rev_call", "arguments": dict(args, full=True)}, None)
+        self.assertEqual(full["structuredContent"]["data"]["log"], original["data"]["log"])
+
     def test_schema_distinguishes_bool_and_number(self):
         with self.assertRaises(ValueError):
             validate(True, {"type": "integer"})
@@ -187,12 +207,13 @@ class RevMCPTests(unittest.TestCase):
             call_external(spec, {}, False, None)
 
     def test_mcp_stdio_real_initialize_discovery_call_and_cancellation(self):
+        """实际 stdio 调用及取消都不创建旧配置指定的工单目录。"""
         with tempfile.TemporaryDirectory() as folder:
             script = Path(folder) / "tool.py"
             script.write_text("import sys,json,time\na=json.load(sys.stdin)\ntime.sleep(a.get('seconds',0))\nprint(json.dumps(a))", encoding="utf-8")
             manifest = Path(folder) / "tools.json"
             manifest.write_text(json.dumps(dict(version=1, tools=[dict(name="echo", description="Echo test fixture", command=[sys.executable, str(script)], cwd=folder, inputSchema=object_schema({"seconds": {"type": "number"}}))])), encoding="utf-8")
-            process = subprocess.Popen([sys.executable, str(ROOT / "rev_mcp.py"), "--external-manifest", str(manifest), "--reports", str(Path(folder) / "reports"), "serve"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen([sys.executable, str(ROOT / "rev_mcp.py"), "--external-manifest", str(manifest), "--reports", str(Path(folder) / "reports"), "serve"], cwd=folder, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = queue.Queue()
             reader = threading.Thread(target=lambda: [output.put(line) for line in iter(process.stdout.readline, b"")], daemon=True); reader.start()
             def send(value):
@@ -215,6 +236,7 @@ class RevMCPTests(unittest.TestCase):
                 send(dict(jsonrpc="2.0", id=4, method="tools/call", params=dict(name=tool["name"], arguments=dict(arguments={"seconds": 30}))))
                 send(dict(jsonrpc="2.0", method="notifications/cancelled", params=dict(requestId=4, reason="test")))
                 self.assertTrue(receive()["result"]["isError"])
+                self.assertFalse((Path(folder) / "reports").exists())
             finally:
                 process.stdin.close(); process.wait(timeout=15)
                 errors = process.stderr.read().decode(errors="replace")

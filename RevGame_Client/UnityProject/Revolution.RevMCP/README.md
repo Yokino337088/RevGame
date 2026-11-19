@@ -22,17 +22,17 @@ CLI 目录默认取同级 `Revolution.RevCLI`；若放在别处用 `--cli-root` 
 
 ## 产物路径规则
 
-- **工单。** `reportPath` 默认落在绑定项目工作区的 `.codex/work/revmcp/`。显式 `--reports` 只设置机器工单目录。`Revolution.RevMCP/results/` 停用，向这棵树或其别名写入会被拒绝。
-- **正式报告。** CLI `run` 和 MCP `rev_run` 使用同一规则。先用计划的 `reportDirectory`，相对路径从绑定项目的仓库根计算，也可用项目内绝对路径。省略时沿 Unity 工程向项目根查找现有 `文档`、`Docs`、`Documentation` 等目录，优先现有测试报告子目录。无明确文档目录时，只写工单并返回 `evidenceError`。
-- **图片。** 单次查询和截图保留原始回执与 MCP 画面。正式计划在 `evidencePath` 对应的文档目录放一份 HTML 和 `画面/`，最多三张缩放截图和一份动图。原始 PNG、机器 JSON 和保留清理均独立于文档交付。
+- **默认返回本次响应。** 在 MCP 用 `structuredContent` 查看结果，需更多细节时传 `full: true`。CLI 可用 `--full`。用 `run -` 将计划从标准输入传入，必要临时工单在领取结果后立即永久删除。旧 `--reports` 仅保留启动兼容。`Revolution.RevMCP/results/` 及其别名禁止写入。
+- **用户明确要求时生成报告。** CLI `run` 和 MCP `rev_run` 都识别计划的 `report: true` 或 `reportDirectory`。后者优先用项目内绝对路径或相对仓库根的路径。只设 `report: true` 时从 Unity 工程向上查现有文档，优先已有测试报告子目录。找不到会在 `evidenceError` 说明，同时返回测试结果。
+- **交付画面。** 单次显式截图直接返回 MCP 画面。要求导出时，`evidencePath` 指向一份 HTML，最多附三张缩放截图和一份 GIF。
 
-关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，正式计划按产物路径规则交付 HTML。可选 `--compact-tools` 只暴露三个稳定工具，配合 `rev_discover` 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 [提速教程](../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html)。
+关于速度（2026-10-31），普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话与状态约束、变更和失败失效）。可选 `--compact-tools` 只暴露三个稳定工具，配合 `rev_discover` 的 target/query/offset/limit 按需发现。默认动态工具保留。真实同层 12 次 editor.status 平均耗时从 1465ms 降到 354ms。同步多动作继续优先 batch，跨帧业务用计划。 [提速教程](../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html)
 
 独立 Player 显式 `-revAutomation` 开启服务，MCP 使用 `--runtime-endpoint <runtime.json>`。正式包默认无运行时测试接口。game 业务能力通过 `RevRuntimeAutomation.Register` 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。
 
 安装 `Skills/revolution-ai-automation` 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。
 
-`rev_run` 以第一个失败步骤结束本轮业务流程，并继续执行 `finally`。调用失败或 `until` 超时会保留首个错误，成功响应才进入 `expect`。Agent 可用 `reportPath`、实际响应和当前源码记录缺陷，随后在授权内修复并复跑同一用例。 [功能完整性与缺陷闭环](https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-ai-automation/references/defect-closure.md)
+`rev_run` 以第一个失败步骤结束本轮业务流程，并继续执行 `finally`。调用失败或 `until` 超时会保留首个错误，成功响应才进入 `expect`。Agent 可用实际响应、活动日志和当前源码记录缺陷，随后在授权内修复并复跑同一用例。 [功能完整性与缺陷闭环](https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-ai-automation/references/defect-closure.md)
 
 完整的新手教程、接口注册、Player、CLI/Python、计划格式、限制和验证记录：
 
