@@ -20,7 +20,13 @@ Unity 控制台的“活动日志”实时显示 Agent 请求、编辑器执行�
 
 CLI 目录默认取同级 `Revolution.RevCLI`；若放在别处用 `--cli-root` 指定（改名前的 `--automation-root` 仍可用）。
 
-关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，测试计划与本次截图才生成独立 HTML。可选 `--compact-tools` 只暴露三个稳定工具，配合 `rev_discover` 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 [提速教程](../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html)。
+## 产物路径规则
+
+- **工单。** `reportPath` 默认落在绑定项目工作区的 `.codex/work/revmcp/`。显式 `--reports` 只设置机器工单目录。`Revolution.RevMCP/results/` 停用，向这棵树或其别名写入会被拒绝。
+- **正式报告。** CLI `run` 和 MCP `rev_run` 使用同一规则。先用计划的 `reportDirectory`，相对路径从绑定项目的仓库根计算，也可用项目内绝对路径。省略时沿 Unity 工程向项目根查找现有 `文档`、`Docs`、`Documentation` 等目录，优先现有测试报告子目录。无明确文档目录时，只写工单并返回 `evidenceError`。
+- **图片。** 单次查询和截图保留原始回执与 MCP 画面。正式计划在 `evidencePath` 对应的文档目录放一份 HTML 和 `画面/`，最多三张缩放截图和一份动图。原始 PNG、机器 JSON 和保留清理均独立于文档交付。
+
+关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，正式计划按产物路径规则交付 HTML。可选 `--compact-tools` 只暴露三个稳定工具，配合 `rev_discover` 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 [提速教程](../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html)。
 
 独立 Player 显式 `-revAutomation` 开启服务，MCP 使用 `--runtime-endpoint <runtime.json>`。正式包默认无运行时测试接口。game 业务能力通过 `RevRuntimeAutomation.Register` 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。
 
@@ -44,7 +50,7 @@ python -m unittest discover -s Revolution.RevMCP/tests -v
 实际 Unity/MCP 验证（先启动教学场景 Play）：
 
 ```powershell
-python Revolution.RevMCP/tests/verify_unity.py --project $project --output Revolution.RevMCP/results/verification.json
+python Revolution.RevMCP/tests/verify_unity.py --project $project --output .codex/work/revmcp/verification.json
 ```
 
 截至 2026-10-22：Python 13 项通过；实际 MCP → Editor 与 Windows 开发版 Player 的 UI/GM/断言/截图/清理已通过。设备与其他平台没有以此冒充已验收。

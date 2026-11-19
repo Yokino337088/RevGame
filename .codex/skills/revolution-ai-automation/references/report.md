@@ -20,10 +20,12 @@
 
 先读取目标项目用户/AGENTS约定。RevGame要求不生成ZIP，原始机器证据放忽略的 `.codex/work/`，文档只留HTML与必要图片/GIF；该约定覆盖下面允许压缩归档的通用示例。独立纯规则/编译检查不伪造截图，正文标注视觉未执行。
 
+**RevMCP 工具的 `Revolution.RevMCP/results/` 已停用。** 默认工单写到项目仓库的 `.codex/work/revmcp/`。正式 HTML 和必要附件优先用用户指定的项目文档目录。`plan.reportDirectory` 可填项目内绝对路径，或相对仓库根的路径。省略时沿绑定工程向上查现有文档目录，并优先已经建立的测试报告子目录。无法识别时返回 `evidenceError`，保留 `reportPath` 供补写报告。
+
 RevGame目录示例：
 
 ```text
-文档/进度同步/<本次主题>/
+RevGame_Client/文档/AI自动化测试报告/<本次主题>/
   <中文标题>_<日期>.html
   实现与验收说明.md
   画面/真实截图.jpg
@@ -71,7 +73,7 @@ RevGame目录示例：
 
 ## 4. 内容清单（缺一条就不算完成）
 
-RevMCP 的 `reportPath` 和 `evidencePath` 是原始执行证据。进行功能完整性审查或缺陷闭环时，Agent 按 [缺陷闭环](defect-closure.md) 保存可交接记录，并在最终 HTML 中补齐用例覆盖、缺陷位置、修改建议、修前修后证据及遗漏或受阻项。
+RevMCP 的 `reportPath` 指原始 JSON 工单，`evidencePath` 指项目文档中的 HTML。进行功能完整性审查或缺陷闭环时，Agent 按 [缺陷闭环](defect-closure.md) 保存可交接记录，并在最终 HTML 中补齐用例覆盖、缺陷位置、修改建议、修前修后证据及遗漏或受阻项。
 
 - **结论一句话**：能验收的和不能验收的分开写。`{success: true}` 不是结论。
 - **断言明细**：每项需求 → 前置状态 → 玩家入口 → 后置断言 → 失败边界。数量要写实际跑的条数。

@@ -154,7 +154,7 @@ python Revolution.RevMCP/rev_mcp.py --project $project run Revolution.RevMCP/exa
 python Revolution.RevCLI/rev.py --project $project --mode live editor stop
 </code></pre>
 <p>Agent 启动命令：<code>python &lt;rev_mcp.py绝对路径&gt; --project &lt;Unity工程绝对路径&gt; serve</code>。配置示例见 examples/mcp-config.example.json，也可直接从 Unity 控制台复制。稳定工具为 rev_discover、rev_call、rev_run；真实注册表还会生成动态工具。</p>
-<p>关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，测试计划与本次截图才生成独立 HTML。可选 <code>--compact-tools</code> 只暴露三个稳定工具，配合 <code>rev_discover</code> 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 <a href="../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html">提速教程</a>。</p>
+<h2>产物路径规则</h2><p><code>Revolution.RevMCP/results/</code> 已停用，指向该路径的配置会被拒绝。<code>reportPath</code> 指原始 JSON 工单，默认写入绑定项目的 <code>.codex/work/revmcp/</code>。</p><p>正式计划先用 <code>reportDirectory</code> 指定的项目内文档路径，相对路径从仓库根计算。省略时沿工程向上查找现有文档并优先已有测试报告目录。找不到时只保留工单并返回 <code>evidenceError</code>。</p><p><code>evidencePath</code> 是正式 HTML。CLI <code>run</code> 与 MCP <code>rev_run</code>各执行计划一次，按需交付最多三张缩放截图及一份动图。单次截图继续返回画面与回执。</p><p>关于速度（2026-10-31）：普通 Editor 调用按目标发现并短缓存能力说明（2 秒、会话/状态约束、变更和失败失效），不再每次发现运行时；普通查询保留 JSON/日志，正式计划按产物路径规则交付 HTML。可选 <code>--compact-tools</code> 只暴露三个稳定工具，配合 <code>rev_discover</code> 的 target/query/offset/limit 按需发现；默认动态工具保留。窗口共享读取预算、缓存说明、虚拟化可见控件、无变化不主动持续刷新。真实同层 12 次 editor.status mean 1465ms→354ms；这不是设备 FPS 或固定延迟保证。同步多动作继续优先 batch，跨帧业务保持计划。详见 <a href="../Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html">提速教程</a>。</p>
 <p>独立 Player 显式 <code>-revAutomation</code> 开启服务，MCP 使用 <code>--runtime-endpoint &lt;runtime.json&gt;</code>。正式包默认无运行时测试接口。game 业务能力通过 <code>RevRuntimeAutomation.Register</code> 登记，GM 从真实 RevGM.Commands 读取；外部脚本必须用 manifest 显式登记，不执行任意模型生成的 shell。</p>
 <p>安装 <code>Skills/revolution-ai-automation</code> 后可以说：“点击 Demo 增加按钮，再 GM 增加 2，断言 3，截图并清理归零。”Skill 负责发现与组织计划；业务仍需真实可调用的契约。</p>
 <p><code>rev_run</code> 以第一个失败步骤结束本轮业务流程，并继续执行 <code>finally</code>。调用失败或 <code>until</code> 超时会保留首个错误，成功响应才进入 <code>expect</code>。Agent 可用 <code>reportPath</code>、实际响应和当前源码记录缺陷，随后在授权内修复并复跑同一用例。 <a href="https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-ai-automation/references/defect-closure.md">功能完整性与缺陷闭环</a></p>
@@ -169,7 +169,7 @@ python Revolution.RevCLI/rev.py --project $project --mode live editor stop
 <pre><code class="language-powershell">python -m unittest discover -s Revolution.RevMCP/tests -v
 </code></pre>
 <p>实际 Unity/MCP 验证（先启动教学场景 Play）：</p>
-<pre><code class="language-powershell">python Revolution.RevMCP/tests/verify_unity.py --project $project --output Revolution.RevMCP/results/verification.json
+<pre><code class="language-powershell">python Revolution.RevMCP/tests/verify_unity.py --project $project --output .codex/work/revmcp/verification.json
 </code></pre>
 <p>截至 2026-10-22：Python 13 项通过；实际 MCP → Editor 与 Windows 开发版 Player 的 UI/GM/断言/截图/清理已通过。设备与其他平台没有以此冒充已验收。</p>
 </section></main>

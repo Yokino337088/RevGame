@@ -10,6 +10,17 @@ DEFAULT = dict(automatic=True, jobDays=7, failureDays=14, jobMaxMiB=256,
                screenshotDays=7, screenshotMaxMiB=512, reportDays=30, reportMaxMiB=256)
 
 
+def check_revmcp_output_path(path):
+    """拒绝工具旧 results 树的写入。校验请求路径和解析后的目标，目录别名也不能绕过。"""
+    requested = Path(path).absolute()
+    resolved = requested.resolve()
+    for candidate in (requested, resolved):
+        parts = tuple(part.casefold().rstrip(" .") for part in candidate.parts)
+        if ("revolution.revmcp", "results") in zip(parts, parts[1:]):
+            raise ValueError("Revolution.RevMCP/results 已停用。机器证据用项目 .codex/work，HTML 用项目文档目录。")
+    return resolved
+
+
 def policy(root):
     path = Path(root) / "storage-policy.json"
     value = dict(DEFAULT)

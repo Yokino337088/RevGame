@@ -11,6 +11,7 @@ import sys
 
 
 def main():
+    """命令行与 MCP 共用工单与报告规则，保证从不同入口执行时落在同一类目录。"""
     root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description="Revolution 统一 MCP：Editor、游戏运行时、GM、显式注册 CLI/Python")
     parser.add_argument("--project", type=Path, help="Unity 工程目录；Editor 后端只连接已打开的工程")
@@ -18,7 +19,7 @@ def main():
     parser.add_argument("--cli-root", "--automation-root", dest="cli_root", type=Path, default=root.parent / "Revolution.RevCLI",
                         help="RevCLI 目录（含 commands.json）；--automation-root 为改名前的旧名，仍可用")
     parser.add_argument("--external-manifest", type=Path, help="显式注册的外部工具清单")
-    parser.add_argument("--reports", type=Path, default=root / "results")
+    parser.add_argument("--reports", type=Path, help="原始 JSON 工单目录，默认项目 .codex/work/revmcp。工具旧 results 已停用")
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--compact-tools", action="store_true", help="仅暴露三个稳定 MCP 工具；通过 rev_discover 按需查真实能力")
     parser.add_argument("--full", action="store_true", help="discover/call/run 在终端输出完整 JSON")
@@ -43,8 +44,11 @@ def main():
     from revautomation.summary import compact_json, summarize
     from revmcp.backends import Hub
     from revmcp.server import Server
-    from revmcp.workflow import run as run_plan
-    hub = Hub(args.project, args.runtime_endpoint, args.cli_root, args.external_manifest, args.reports, args.timeout)
+    from revmcp.reporting import run_with_reports
+    try:
+        hub = Hub(args.project, args.runtime_endpoint, args.cli_root, args.external_manifest, args.reports, args.timeout)
+    except (OSError, ValueError) as exc:
+        parser.error(str(exc))
     if args.operation == "serve":
         Server(hub, compact_tools=args.compact_tools).serve()
         return 0
@@ -57,8 +61,9 @@ def main():
             with hub.activity.scope(intent=args.intent):
                 result = hub.call(args.target, args.action, read_json(args.json) if args.json else {}, args.confirm)
         else:
-            result = run_plan(hub, read_json(args.plan))
-        result["reportPath"] = hub.save(result)
+            result = run_with_reports(hub, read_json(args.plan))
+        if args.operation != "run":
+            result["reportPath"] = hub.save(result)
     except (OSError, ValueError, RuntimeError, TimeoutError, KeyboardInterrupt) as exc:
         result = dict(success=False, error=type(exc).__name__, message=str(exc))
         result["reportPath"] = hub.save(result)

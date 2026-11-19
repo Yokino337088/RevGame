@@ -9,12 +9,11 @@ import hashlib
 import json
 from pathlib import Path
 import queue
-import shutil
 import sys
 import threading
 
 from .schema import object_schema, validate
-from . import workflow
+from .reporting import run_with_reports
 from revautomation.summary import summarize
 
 VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
@@ -73,7 +72,7 @@ class Server:
         self.dynamic = {}
         tools = [dict(name="rev_discover", description="发现真实 Editor/GM/业务/CLI 能力；支持 target/query/offset/limit 筛选。不可用项包含原因，先发现再调用。", inputSchema=DISCOVER_SCHEMA),
             dict(name="rev_call", description="统一调用真实注册能力。GM使用完整名；confirm仅用于已授权动作。业务成功应另做状态断言。", inputSchema=CALL_SCHEMA),
-            dict(name="rev_run", description="执行带业务断言、有界轮询和 finally 清理的跨接口测试计划。默认返回摘要，完整证据见 reportPath。", inputSchema=RUN_SCHEMA)]
+            dict(name="rev_run", description="执行带断言和 finally 清理的计划。reportPath 是原始工单，evidencePath 是项目文档中的 HTML。可用 plan.reportDirectory 指定项目内的文档目录。", inputSchema=RUN_SCHEMA)]
         if self.compact_tools:
             return dict(tools=tools)
         catalog = self.hub.discover(cancel)
@@ -116,6 +115,7 @@ class Server:
         return response
 
     def _call(self, params, token):
+        """单次调用只保留机器回执。正式计划经统一的项目文档路由交付 HTML。"""
         name, arguments = params.get("name"), params.get("arguments", {})
         if not isinstance(arguments, dict):
             raise ValueError("Tool arguments must be an object")
@@ -137,7 +137,7 @@ class Server:
             result = self.hub.call(arguments["target"], arguments["action"], arguments.get("arguments", {}), arguments.get("confirm", False), token)
         elif name == "rev_run":
             validate(arguments, RUN_SCHEMA)
-            result = workflow.run(self.hub, arguments["plan"], token)
+            result = run_with_reports(self.hub, arguments["plan"], token)
         else:
             if name not in self.dynamic:
                 self.tools(token)
@@ -146,10 +146,7 @@ class Server:
             target, action, schema = self.dynamic[name]
             validate(arguments, schema)
             result = self.hub.call(target, action, arguments["arguments"], arguments.get("confirm", False), token)
-        report_path = self.hub.save(result)
-        evidence_path = self.write_evidence(result, report_path)
-        if evidence_path:
-            result = dict(result, evidencePath=evidence_path)
+        report_path = result["reportPath"] if name == "rev_run" else self.hub.save(result)
         content = []
         def visual_evidence(value):
             # A plan can contain screenshots below steps[].response.data. Surface
@@ -188,65 +185,6 @@ class Server:
         status = "失败" if result.get("success") is False else "完成"
         content.insert(0, dict(type="text", text=f"{status}，完整回执见 {report_path}"))
         return dict(content=content, structuredContent=result, isError=result.get("success") is False)
-
-    def write_evidence(self, result, report_path):
-        """测试必须留证据：把本次截图收进报告目录，生成带图/动图的 HTML 报告。
-
-        项目规矩：一次自动化测试的产出必须包含一份「中文标题_日期.html」报告，里面有当时的画面；
-        涉及动态效果（技能、位移、粒子、UI 过渡）时还要有 GIF。
-        只有 {"success": true} 而没有图的报告，视为未完成。
-        """
-        try:
-            from revautomation.media import write_gif
-            from revautomation.report import export_evidence
-        except Exception:
-            return None
-
-        directory = Path(report_path).parent / Path(report_path).stem
-        shots = []
-
-        def collect(value):
-            if isinstance(value, dict):
-                if value.get("mimeType") == "image/png" and value.get("path"):
-                    shots.append(value["path"])
-                for item in value.values():
-                    collect(item)
-            elif isinstance(value, list):
-                for item in value:
-                    collect(item)
-
-        collect(result)
-        if "steps" not in result and "cleanup" not in result and not shots:
-            return None
-        directory.mkdir(parents=True, exist_ok=True)
-
-        copied = []
-        for index, shot in enumerate(shots, 1):
-            source = Path(shot)
-            try:
-                if source.is_file():
-                    target = directory / ("%02d-%s" % (index, source.name))
-                    shutil.copyfile(source, target)
-                    copied.append(target)
-            except OSError:
-                continue
-
-        try:
-            if len(copied) >= 2:
-                write_gif(copied, directory / "anim.gif", delay_ms=120, max_width=520)
-            title = "%s 自动化测试" % (result.get("name") or "计划")
-            summary = {
-                "结论": "通过" if result.get("success") else "失败",
-                "步骤数": len(result.get("steps") or []),
-                "截图": len(copied),
-                "清理步骤": len(result.get("cleanup") or []),
-            }
-            info = export_evidence(directory, title, "RevMCP 本轮执行证据", summary,
-                                   ["结果覆盖已执行步骤、等待、断言和清理。功能覆盖与缺陷定位见 Agent 交付。"])
-            (directory / ".complete").write_text("completed", encoding="utf-8")
-            return info.get("html")
-        except Exception:
-            return None
 
     def worker(self):
         while True:

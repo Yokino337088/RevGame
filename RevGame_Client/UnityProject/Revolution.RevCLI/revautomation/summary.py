@@ -8,7 +8,7 @@ _KEY = (
     "finished", "requestId", "compiling", "failed", "cancelled", "published",
     "rebuildReason", "totalBundles", "updatedBundles", "removedBundles",
     "updatedMetadata", "destination", "outputDir", "resultPath", "reportPath",
-    "evidencePath", "jobDirectory", "path", "codeChanged", "dataOnly", "written",
+    "evidencePath", "evidenceError", "jobDirectory", "path", "codeChanged", "dataOnly", "written",
     "data", "steps", "cleanup", "response", "name", "passed", "skipped", "inconclusive",
 )
 

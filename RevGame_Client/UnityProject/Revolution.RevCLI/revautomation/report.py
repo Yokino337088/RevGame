@@ -9,6 +9,7 @@ import shutil
 
 from .client import read_json, atomic_json
 from .media import collect_media
+from .storage import check_revmcp_output_path
 
 # 视觉沿用项目《战斗性能优化规则》那套工程手册风（绿金 / 纸色 / 章节卡片 / 表格 / 图墙），
 # 不另发明一套。刻意内联，不引用外部 CSS：报告要能单文件发给别人看。
@@ -57,16 +58,19 @@ def report_file_name(title, day=None):
 
 
 def export_evidence(directory, title="自动化测试报告", subtitle="证据与截图",
-                    summary=None, notes=None, limit=None):
+                    summary=None, notes=None, limit=None, media_directory=None):
     """把某个结果目录里的图片/动图整理成一份可单独发送的 HTML 报告。
 
     为什么必须带图：测试结论只写“通过”没有说服力——读者要看得到当时的画面。
     动图（GIF）用来表达"随时间变化"的效果，单帧截图看不出来。
     """
-    directory = Path(directory)
+    directory = check_revmcp_output_path(directory)
+    media = directory if media_directory is None else Path(media_directory).resolve()
+    if not media.is_relative_to(directory):
+        raise ValueError("报告附件须位于本次报告目录内")
     # CLI 第一次跑时目录往往还不存在；不建就会在写报告那一步抛 FileNotFoundError。
     directory.mkdir(parents=True, exist_ok=True)
-    images, animations = collect_media(directory, limit)
+    images, animations = collect_media(media, limit)
     rows = []
     for key, value in (summary or {}).items():
         rows.append("<tr><th>%s</th><td>%s</td></tr>" % (html.escape(str(key)), html.escape(str(value))))
@@ -78,8 +82,9 @@ def export_evidence(directory, title="自动化测试报告", subtitle="证据�
     overview_rows = "".join("<tr><th>%s</th><td>%s</td></tr>" % (html.escape(k), html.escape(v)) for k, v in overview)
 
     def figure(path):
+        """附件采用相对路径，整组文档可直接移动或分享。"""
         return ('<figure><img src="%s" alt="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
-                % (html.escape(path.name), html.escape(path.name), html.escape(path.name)))
+                % (html.escape(path.relative_to(directory).as_posix()), html.escape(path.name), html.escape(path.name)))
 
     gallery = "".join(figure(p) for p in images) or "<p>本次没有截图。若测试涉及画面，应补截关键状态。</p>"
     anims = "".join(figure(p) for p in animations) or "<p>本次没有动图。动态效果（技能、位移、粒子、UI 过渡）应补抓 GIF。</p>"
@@ -111,6 +116,8 @@ def export_evidence(directory, title="自动化测试报告", subtitle="证据�
 
 
 def export_report(result: Path, directory: Path):
+    """输出逐轮报告，先排除已停用的 RevMCP 结果目录再创建任何文件。"""
+    directory = check_revmcp_output_path(directory)
     data = read_json(result)
     directory.mkdir(parents=True, exist_ok=True)
     atomic_json(directory / "summary.json", data)

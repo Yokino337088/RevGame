@@ -12,6 +12,7 @@
 import struct
 import zlib
 from pathlib import Path
+from .storage import check_revmcp_output_path
 
 # ---------------------------------------------------------------- PNG 解码
 
@@ -107,6 +108,21 @@ def fit_rows(width, height, rows, max_width):
     return new_w, new_h, out
 
 
+def write_png_preview(source, target, max_width=1280):
+    """复用截图解码，只缩小完整画面并重新压缩 PNG。原图仍留在原始证据路径。"""
+    target = check_revmcp_output_path(target)
+    width, height, rows = fit_rows(*read_png(source), max_width)
+    # 相邻像素之差更易压缩。PNG 的 Sub 过滤无损，图像颜色仍与缩放后的 RGB 一致。
+    filtered = bytearray()
+    for row in rows:
+        filtered += b"\x01" + row[:3] + bytes((row[i] - row[i - 3]) & 255 for i in range(3, len(row)))
+    data = bytearray(b"\x89PNG\r\n\x1a\n")
+    for kind, content in ((b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)),
+                          (b"IDAT", zlib.compress(filtered)), (b"IEND", b"")):
+        data += struct.pack(">I", len(content)) + kind + content + struct.pack(">I", zlib.crc32(kind + content))
+    target.write_bytes(data)
+
+
 def quantize_rows(width, height, rows):
     """3-3-2 量化，返回索引行；调色板由 _palette() 固定给出。"""
     out = []
@@ -193,6 +209,7 @@ def write_gif(frame_paths, gif_path, delay_ms=120, max_width=640, loop=0):
 
     delay_ms 是每帧停留毫秒；GIF 用 1/100 秒为单位，所以按 10ms 取整，最小 20ms。
     """
+    target = check_revmcp_output_path(gif_path)
     paths = [Path(p) for p in frame_paths]
     if not paths:
         raise ValueError("至少需要一帧才能生成 GIF")
@@ -224,7 +241,6 @@ def write_gif(frame_paths, gif_path, delay_ms=120, max_width=640, loop=0):
     parts.append(b"\x3B")
 
     data = b"".join(parts)
-    target = Path(gif_path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
     return dict(path=str(target), frames=len(paths), width=width, height=height,

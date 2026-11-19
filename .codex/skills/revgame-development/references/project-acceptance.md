@@ -31,6 +31,7 @@
 ## 自动化报告约定（2026-10-26）
 
 - 用户明确要求：测试报告不生成 ZIP 压缩包。文档目录保留 HTML 与必要截图/GIF，详细机器证据放忽略目录 `.codex/work/`；此要求优先于技能中的 ZIP 归档默认规则。
+- 2026-11-19 用户更新。停用 `RevGame_Client/UnityProject/Revolution.RevMCP/results/`。`reportPath` 为 `.codex/work/revmcp/` 中的原始回执。正式 HTML、截图与 GIF 按用户指定的项目内文档目录写入，可在计划里传 `reportDirectory`。未指定时查项目现有目录，RevGame 自动使用 `RevGame_Client/文档/AI自动化测试报告/`。单次查询和截图仅保留回执与画面。
 - 2026-10-28用户更新：`.codex/skills/` 与项目协作说明需要入库；`.codex/work/` 原始测试证据、依赖缓存以及本机配置/凭据继续忽略，不提交。
 - 2026-10-29用户更新：后续性能测试不导出 Profiler 录制数据（如 `.raw` / `.data` / 内存快照），不自动调用 `SaveProfile`；报告仅保留必要的性能摘要、结论与截图/GIF。
 

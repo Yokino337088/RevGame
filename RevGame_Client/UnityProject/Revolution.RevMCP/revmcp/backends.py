@@ -23,6 +23,7 @@ from revautomation.client import RevClient, RevError, RevCancelled, atomic_json,
 from revautomation.cli import editor_outcome, validate_action
 from .schema import validate, check_schema, object_schema
 from .activity import Activity
+from .reporting import machine_directory, workspace_for
 from revautomation import player
 
 
@@ -205,11 +206,13 @@ def gm_line(command, arguments):
 class Hub:
     """统一目录与调度器。先 discover 查实际接口，再按 target/action 精确调用。"""
     def __init__(self, project=None, runtime_endpoint=None, cli_root=None, external_manifest=None, reports=None, timeout=120):
+        """从绑定项目确定工作区和原始工单位置，构造时只校验，首次调用才写文件。"""
         self.timeout = timeout
         self.editor = RevClient(project, mode="live", timeout=timeout) if project else None
         self.runtime_endpoint = Path(runtime_endpoint) if runtime_endpoint else None
         self.external_manifest = external_manifest
-        self.reports = Path(reports or (Path.cwd() / ".rev-mcp/results")).resolve()
+        self.workspace = workspace_for(self.editor.project if self.editor else Path.cwd())
+        self.reports = machine_directory(self.workspace, reports)
         self.manifest = read_json(Path(cli_root) / "commands.json")
         self.known = {s["id"]: s for s in self.manifest["actions"]}
         # --project 时写到 Unity 忽略目录；纯 Player 写到本机 endpoint 旁边，纯 CLI 写到报告旁边。
@@ -364,8 +367,10 @@ class Hub:
             validate(arguments, spec["inputSchema"])
 
     def save(self, result):
-        self.reports.mkdir(parents=True, exist_ok=True)
-        path = self.reports / (dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8] + ".json")
+        """保存原始回执。每次写前重核目录，保留规则只应用于机器工单目录。"""
+        directory = machine_directory(self.workspace, self.reports)
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / (dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8] + ".json")
         # Screenshots already have a file path. Avoid duplicating base64 in evidence JSON.
         def trim(value):
             if isinstance(value, dict):
@@ -379,7 +384,7 @@ class Hub:
             settings = policy(self.editor.root if self.editor else self.reports.parent)
             if settings["automatic"] and time.monotonic() >= self._storage_next:
                 self._storage_next = time.monotonic() + 600
-                prune_reports(self.reports, settings, dry_run=False)
+                prune_reports(directory, settings, dry_run=False)
         except (OSError, ValueError):
             pass
         return str(path)

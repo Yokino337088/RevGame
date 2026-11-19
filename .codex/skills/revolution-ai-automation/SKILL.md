@@ -50,6 +50,7 @@ description: 在 Revolution Unity 项目中执行真实测试、检查功能完�
 - **动态效果必须给 GIF**：技能、位移、粒子、UI 过渡、节奏类表现，单帧看不出来，要连拍成动图（默认 10–20 帧、100–150ms 间隔）。
 - 报告写清环境、覆盖范围、每步断言、首个失败、清理和未验证项。业务以真实状态和后置断言判定，视觉以实际画面判定。修复后保留失败基线和同条件的回归结果。
 - **证据收纳服从目标项目规则**：RevGame 文档保留 HTML 和必要截图/GIF，原始机器证据放 `.codex/work/`。该项目技能随仓库版本维护，测试证据按根 `AGENTS.md` 归档。
+- **输出路径必须核对。** `Revolution.RevMCP/results/` 禁止运行产物。工单默认进项目 `.codex/work/revmcp/`。正式 HTML 先用用户指定的项目文档目录，可通过 `plan.reportDirectory` 传入。未指定时，查项目的现有文档和测试报告目录。没有明确文档目录时只保存机器证据。
 - 图片按网页可用的体积交付：截图转 1600 宽 JPEG（1920×1080 的 PNG 约 3MB → 约 300KB），动图宽 ≤ 720。只压体积，不裁剪、不拼接、不美化。
 
 具体规范、目录结构和反例见 [报告规范](references/report.md)。
@@ -58,16 +59,16 @@ description: 在 Revolution Unity 项目中执行真实测试、检查功能完�
 
 ```powershell
 # 1) 一遍连拍 + 合成 + 出报告（需要 Unity 在 Play）
-python Revolution.RevCLI/rev.py --project <工程> --mode live capture --out results\anim.gif --frames 12 --interval 120 --report
+python Revolution.RevCLI/rev.py --project <工程> --mode live capture --out "<项目文档目录>/anim.gif" --frames 12 --interval 120 --report
 
 # 2) 已经有图，只补报告
-python Revolution.RevCLI/rev.py evidence --directory results\<本次目录> --title "第一章流程自动化测试" --subtitle "截图与动图"
+python Revolution.RevCLI/rev.py evidence --directory "<本次项目文档目录>" --title "第一章流程自动化测试" --subtitle "截图与动图"
 
 # 3) 只有零散截图，先合成动图（离线，不需要 Unity）
-python Revolution.RevCLI/rev.py gif a.png b.png c.png --out results\anim.gif --delay 120
+python Revolution.RevCLI/rev.py gif a.png b.png c.png --out "<本次项目文档目录>/anim.gif" --delay 120
 ```
 
-用 `rev_run` 跑计划时，RevMCP 会收集本次采集的截图、合成 GIF 并写出带日期的执行报告（`evidencePath`）。根据用例补齐缺少的报告或画面证据，再给出本次范围的结论。
+只有正式计划生成独立的日期报告（`evidencePath`），最多带三张缩放截图和一份 GIF。单次截图仍可在 MCP 查看。`reportPath` 是原始工单。出现 `evidenceError` 时先核对项目文档位置，再补齐必要证据。
 
 ## 收尾与报告
 

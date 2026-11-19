@@ -1,15 +1,18 @@
 """Bounded discovery and evidence isolation; speed must not weaken dispatch safety."""
 import json
 from pathlib import Path
+import struct
 import sys
 import tempfile
 import threading
 import unittest
+import zlib
 from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT.parent / "Revolution.RevCLI")]
 from revmcp.backends import Hub, RuntimeClient
+from revmcp.reporting import run_with_reports
 from revmcp.server import Server
 from revautomation.client import RevCancelled, RevError
 
@@ -100,26 +103,89 @@ class DiscoveryPerformanceTests(unittest.TestCase):
         self.assertEqual(self.count("asset.delete"), 0)
 
 
-class EvidencePerformanceTests(unittest.TestCase):
-    def test_query_keeps_json_without_exporting_html(self):
-        server = Server(Mock())
-        with patch("revautomation.report.export_evidence") as export:
-            self.assertIsNone(server.write_evidence(dict(success=True, data={}), "unused.json"))
-            export.assert_not_called()
+class EvidenceRoutingTests(unittest.TestCase):
+    """覆盖旧输出禁门、被嵌套 Unity 工程的文档选择及各调用入口的产物数量。"""
 
-    def test_plan_evidence_isolated_and_standalone_screenshot_collected(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            shot = root / "shot.png"
-            shot.write_bytes(b"test-fixture")
-            server = Server(Mock())
-            with patch("revautomation.report.export_evidence", return_value={"html": "report"}) as export:
-                server.write_evidence(dict(success=True, steps=[]), root / "first.json")
-                self.assertEqual(export.call_args.args[0], root / "first")
-                server.write_evidence(dict(success=True, data=dict(mimeType="image/png", path=str(shot))), root / "second.json")
-                self.assertEqual(export.call_args.args[0], root / "second")
-                self.assertTrue((root / "second" / "01-shot.png").is_file())
-                self.assertFalse((root / "first" / "01-shot.png").exists())
+    def setUp(self):
+        """用临时目录模拟 Unity 进程所属仓库，所有真实写出仅发生在本测试内。"""
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        (self.root / ".git").mkdir()
+        self.project = self.root / "Client/Unity/Project"
+        (self.project / "Assets").mkdir(parents=True)
+        (self.project / "ProjectSettings").mkdir()
+        self.hub = Hub(project=self.project, cli_root=ROOT.parent / "Revolution.RevCLI")
+        self.docs = self.root / "Client/文档/AI自动化测试报告"
+        self.legacy = self.project.parent / "Revolution.RevMCP/results"
+
+    def shot(self, index):
+        """构造一张有效的 1×1 PNG，实际走预览缩放和 GIF 生成。"""
+        path = self.root / f"source-{index}.png"
+        data = b"\x89PNG\r\n\x1a\n"
+        for kind, content in ((b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)),
+                              (b"IDAT", zlib.compress(bytes((0, 0, index, 32)))), (b"IEND", b"")):
+            data += struct.pack(">I", len(content)) + kind + content + struct.pack(">I", zlib.crc32(kind + content))
+        path.write_bytes(data)
+        return dict(mimeType="image/png", path=str(path))
+
+    def test_standalone_screenshot_keeps_image_and_raw_json_only(self):
+        """单次截图仍返回真实 MCP 画面，现有文档目录中无额外 HTML。"""
+        self.docs.mkdir(parents=True)
+        self.hub.call = Mock(return_value=dict(success=True, data=self.shot(1)))
+        response = Server(self.hub)._call(dict(name="rev_call",
+            arguments=dict(target="game", action="runtime.screenshot")), None)
+        result = response["structuredContent"]
+        self.assertEqual(Path(result["reportPath"]).parent, self.root / ".codex/work/revmcp")
+        self.assertTrue(any(item["type"] == "image" for item in response["content"]))
+        self.assertFalse(list(self.docs.rglob("*")))
+        self.assertFalse(self.legacy.exists())
+
+    def test_formal_plan_discovers_document_directory_and_bounds_attachments(self):
+        """在现有测试文档生成一份报告，原始 JSON 与大批截图来源不复制到文档树。"""
+        self.docs.mkdir(parents=True)
+        result = dict(success=True, name="界面回归", steps=[self.shot(i) for i in range(6)], cleanup=[])
+        with patch("revmcp.reporting.workflow.run", return_value=result):
+            saved = run_with_reports(self.hub, {})
+        report = Path(saved["evidencePath"])
+        self.assertEqual(report.parent.parent, self.docs)
+        self.assertIn("画面/01.png", report.read_text(encoding="utf-8"))
+        self.assertEqual(len(list(report.parent.rglob("*.png"))), 3)
+        self.assertEqual(len(list(report.parent.rglob("*.gif"))), 1)
+        self.assertFalse(list(self.docs.rglob("*.json")))
+        self.assertEqual(list(self.hub.reports.iterdir()), [Path(saved["reportPath"])])
+        self.assertFalse(self.legacy.exists())
+
+    def test_explicit_document_path_wins_without_becoming_a_game_argument(self):
+        """报告落到项目内点名的主题路径，业务步骤不会收到目录字段。"""
+        self.docs.mkdir(parents=True)
+        alternate = self.root / "Client/文档/本轮验收"
+        with patch("revmcp.reporting.workflow.run", return_value=dict(success=True, steps=[], cleanup=[])) as run:
+            result = run_with_reports(self.hub, {"name": "确认", "reportDirectory": alternate.relative_to(self.root).as_posix()})
+        self.assertEqual(run.call_args.args[1], {"name": "确认"})
+        self.assertEqual(Path(result["evidencePath"]).parent.parent, alternate)
+        self.assertFalse(list(self.docs.rglob("*")))
+
+    def test_forbidden_output_has_no_side_effects(self):
+        """旧 results 和越界文档路径在写文件或执行计划前即被拒绝。"""
+        with self.assertRaises(ValueError):
+            Hub(project=self.project, cli_root=ROOT.parent / "Revolution.RevCLI", reports=self.legacy / "nested")
+        for path in (self.legacy, self.hub.reports, self.root.parent / "escape"):
+            with self.subTest(path=path), patch("revmcp.reporting.workflow.run") as run:
+                with self.assertRaises(ValueError):
+                    run_with_reports(self.hub, {"reportDirectory": str(path)})
+                run.assert_not_called()
+        self.assertFalse(self.legacy.exists())
+        self.assertFalse(self.hub.reports.exists())
+
+    def test_missing_document_directory_does_not_guess_or_recreate_legacy(self):
+        """工作区无现有文档时保留真实工单，并说明 HTML 的路径需求。"""
+        with patch("revmcp.reporting.workflow.run", return_value=dict(success=True, steps=[], cleanup=[])):
+            result = run_with_reports(self.hub, {})
+        self.assertTrue(Path(result["reportPath"]).is_file())
+        self.assertIn("reportDirectory", result["evidenceError"])
+        self.assertFalse(list(self.root.rglob("*.html")))
+        self.assertFalse(self.legacy.exists())
 
 
 class CompactToolsTests(unittest.TestCase):

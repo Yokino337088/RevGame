@@ -12,3 +12,4 @@ RevGame 用真实业务验证 Revolution 框架。Unity 工程为 `RevGame_Clien
 - 开发验收默认在 Unity Editor Play 完成。仅在用户明确要求交付测试包，或验收项确实需要独立 Player 时打包。新测试包统一输出到仓库根目录 `打包测试(不入库)/` 下的任务子目录。
 - 游戏测试优先常驻项目 RevMCP。首次连接和域重载后执行 `rev_discover`，用真实 `rev_call` 或带断言和清理的 `rev_run`，报告实际动作及结果。Editor 已在线时用 live。详见 [验收与证据细则](.codex/skills/revgame-development/references/project-acceptance.md)。
 - `.codex/skills` 和项目协作说明入库。机器证据留 `.codex/work`，测试报告保留 HTML 和必要截图/GIF，禁止 ZIP 与 Profiler 原始录制。Unity 缓存、生成工程文件、外部 AB 和安装包按 `.gitignore` 排除。
+- `RevGame_Client/UnityProject/Revolution.RevMCP/results/` 禁止运行输出。RevMCP 工单默认存 `.codex/work/revmcp/`。HTML 与必要附件优先放用户指定的项目文档目录。未指定时查项目既有文档，本项目使用 `RevGame_Client/文档/AI自动化测试报告/`。计划可用 `reportDirectory` 指定本轮目录。
