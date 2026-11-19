@@ -14,15 +14,16 @@ namespace RevGame.View
             _bossFocusBlend = Mathf.Clamp01(blend);
             FitCamera();
         }
-        private void ApplyBossFocus()
+        /// <summary>从已叠加震动的基础姿态计算本帧特写。调用者统一提交结果，避免同一帧先写基础姿态再覆盖。</summary>
+        private void ApplyBossFocus(ref Vector3 position, ref float size)
         {
-            if (_bossFocusBlend <= 0 || boardCamera == null)
+            if (_bossFocusBlend <= 0)
             {
                 return;
             }
-            Vector3 focus = new Vector3(_bossFocusPosition.x, _bossFocusPosition.y, boardCamera.transform.position.z);
-            boardCamera.transform.position = Vector3.Lerp(boardCamera.transform.position, focus, _bossFocusBlend);
-            boardCamera.orthographicSize = Mathf.Lerp(boardCamera.orthographicSize, _bossFocusSize, _bossFocusBlend);
+            Vector3 focus = new Vector3(_bossFocusPosition.x, _bossFocusPosition.y, position.z);
+            position = Vector3.Lerp(position, focus, _bossFocusBlend);
+            size = Mathf.Lerp(size, _bossFocusSize, _bossFocusBlend);
         }
         /// <summary>只读镜头门禁，供实际Play验证弹幕不会在特写中提前弹出。</summary>
         public bool IsBossCameraRestored

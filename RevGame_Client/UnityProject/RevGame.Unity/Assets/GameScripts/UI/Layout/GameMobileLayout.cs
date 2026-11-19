@@ -426,8 +426,7 @@ namespace RevGame.UI
         /// <summary>固定预制体设计坐标，只移动及等比缩放面板根。父级仍是覆盖全屏的 Revolution UI 层。</summary>
         private void ApplyBoardFrame(RectTransform root)
         {
-            // 弹窗转场会临时改缩放；等原有动画结束后才应用新的设计框，避免互相覆盖。
-            if (_applying || root == null || !(root.parent is RectTransform parent) || Revolution.RevUIAnim.IsPlaying(this))
+            if (_applying || root == null || !(root.parent is RectTransform parent))
             {
                 return;
             }
@@ -439,8 +438,17 @@ namespace RevGame.UI
             }
             if (size == _lastSize && safe == _lastSafe && Mathf.Approximately(root.localScale.x, _frameScale))
             {
-                // 背景可能在面板打开后异步交付，只重算换图节点的 UV。
-                CropFullBleedArtwork(size.x / size.y, force: false);
+                // 普通面板没有全屏蒙层或异步图，布局完全稳定时无需再查动画状态。
+                // 有底图的面板继续等待转场结束，并在地址换图后更新 UV。
+                if (_fullBleed != null && !Revolution.RevUIAnim.IsPlaying(this))
+                {
+                    CropFullBleedArtwork(size.x / size.y, force: false);
+                }
+                return;
+            }
+            // 弹窗转场会暂时改缩放。只在确实要写布局时查询并等待转场，保持动画对根节点的所有权。
+            if (Revolution.RevUIAnim.IsPlaying(this))
+            {
                 return;
             }
 

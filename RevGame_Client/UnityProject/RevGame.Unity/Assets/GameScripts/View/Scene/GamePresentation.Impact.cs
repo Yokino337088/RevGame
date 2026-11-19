@@ -62,8 +62,13 @@ namespace RevGame.View
             }
 #endif
         }
+        /// <summary>返回本帧的世界坐标震动偏移。空闲时直接返回零，命中特效仍沿用原时钟和幅度曲线。</summary>
         private Vector3 EnergyShakeOffset()
         {
+            if (_impactAmplitude == 0f)
+            {
+                return Vector3.zero;
+            }
             float t = (Time.unscaledTime - _impactStarted) * 100f;
             return new Vector3(Mathf.Sin(t), Mathf.Sin(t * 1.37f)) * _impactAmplitude;
         }

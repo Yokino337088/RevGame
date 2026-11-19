@@ -51,11 +51,20 @@ namespace RevGame.Endless
         /// <summary>本局实际播放和控频舍弃的计数，诊断读取；退出清零，不记录到玩家存档。</summary>
         private int _feelSoundsPlayed, _feelSoundsSuppressed;
 
-        private Mesh _auraMesh, _barMesh;
-        private int _barDrawCount;
-        private Vector3[] _auraVertices, _barVertices;
-        private Vector2[] _auraUv, _auraData, _barUv;
-        private Color[] _auraColors, _barColors;
+        /// <summary>由竞技场持有的剑气网格，回池可复用，销毁时释放。</summary>
+        private Mesh _auraMesh;
+        /// <summary>外围敌人血条网格。最大容量与外围并发一致，通常只提交少量受伤敌人的血条。</summary>
+        private EndlessQuadBatch _barBatch;
+        /// <summary>血条 Shader 读完整的 0～1 UV，用顶点 Alpha 表示填充比例。</summary>
+        private static readonly Vector4 BarUv = new Vector4(0, 0, 1, 1);
+        /// <summary>剑气网格的局部顶点位置，随近战棋的位置刷新。</summary>
+        private Vector3[] _auraVertices;
+        /// <summary>每个剑气方块共有的 0～1 UV，首次创建时填充。</summary>
+        private Vector2[] _auraUv;
+        /// <summary>剑气第二纹理坐标保存每颗棋的相位和刃数。</summary>
+        private Vector2[] _auraData;
+        /// <summary>剑气顶点颜色与本次命中闪光强度，按当前棋种重写。</summary>
+        private Color[] _auraColors;
         /// <summary>每枚近战棋上次被剑气闪光点亮的时间（unscaled 秒）。</summary>
         private readonly Dictionary<int, float> _auraFlash = new Dictionary<int, float>(16);
         /// <summary>组合技飘字配置缓存，按组合技编号；首次用到时由表行拼出 BattleText，避免每次喊招分配字符串。</summary>
@@ -72,18 +81,6 @@ namespace RevGame.Endless
                 _auraMesh.uv2 = _auraData;
                 _auraMesh.name = "无尽剑气批量网格";
                 auraRenderer.GetComponent<MeshFilter>().sharedMesh = _auraMesh;
-                _barMesh = CreateMesh(EndlessConfig.Count("HordeLimit"), out _barVertices, out _barUv, out _barColors);
-                _barMesh.name = "无尽外围血条批量网格";
-                hpBarRenderer.GetComponent<MeshFilter>().sharedMesh = _barMesh;
-                // 血条方块的 uv 固定为 0~1，只写一次；之后每帧只改顶点位置和颜色。
-                for (int i = 0; i < _barUv.Length; i += 4)
-                {
-                    _barUv[i] = new Vector2(0, 0);
-                    _barUv[i + 1] = new Vector2(1, 0);
-                    _barUv[i + 2] = new Vector2(1, 1);
-                    _barUv[i + 3] = new Vector2(0, 1);
-                }
-                _barMesh.uv = _barUv;
                 for (int i = 0; i < _auraUv.Length; i += 4)
                 {
                     _auraUv[i] = new Vector2(0, 0);
@@ -92,6 +89,12 @@ namespace RevGame.Endless
                     _auraUv[i + 3] = new Vector2(0, 1);
                 }
                 _auraMesh.uv = _auraUv;
+            }
+            // 两张网格各自判断就绪。若血条网格初始化中断，再进入时仍可单独重试。
+            if (_barBatch == null)
+            {
+                _barBatch = new EndlessQuadBatch(EndlessConfig.Count("HordeLimit"), "无尽外围血条批量网格");
+                hpBarRenderer.GetComponent<MeshFilter>().sharedMesh = _barBatch.Mesh;
             }
             for (int i = 0; i < FeelSounds.Length; i++)
             {
@@ -237,17 +240,15 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>每帧重写外围血条：只画活着、受过伤、且没有被出生视图代画的敌人。</summary>
-        private void UpdateHordeBars(EndlessRun run)
+        /// <summary>按当前活动槽构建血条，保留受伤条件、颜色和比例，只提交本帧连续的有效方块。</summary>
+        private void UpdateHordeBars(EndlessHordeComponents horde)
         {
-            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
             int bars = 0;
             int active = horde.ActiveCount;
             for (int cursor = 0; cursor < active; cursor++)
             {
                 int i = horde.ActiveSlot(cursor);
                 EndlessHorde h = horde[i];
-                int v = bars * 4;
                 if (!h.active || h.hp >= h.maxHp || h.maxHp <= 0 || HordeDrawnByView(i))
                 {
                     continue;
@@ -255,26 +256,12 @@ namespace RevGame.Endless
                 float ratio = Mathf.Clamp01(h.hp / h.maxHp);
                 float scale = h.kind >= 6 ? 2.2f : 1f;
                 float x = h.x, y = h.y + BarOffset * scale, w = BarHalfWidth * scale, hh = BarHalfHeight * Mathf.Sqrt(scale);
-                _barVertices[v] = new Vector3(x - w, y - hh, -.6f);
-                _barVertices[v + 1] = new Vector3(x + w, y - hh, -.6f);
-                _barVertices[v + 2] = new Vector3(x + w, y + hh, -.6f);
-                _barVertices[v + 3] = new Vector3(x - w, y + hh, -.6f);
                 // 绿 → 黄 → 红；alpha 存剩余比例给 Shader 决定填充长度。
                 Color color = ratio > .5f ? Color.Lerp(new Color(1f, .82f, .2f), new Color(.35f, .95f, .35f), (ratio - .5f) * 2) : Color.Lerp(new Color(1f, .22f, .18f), new Color(1f, .82f, .2f), ratio * 2);
                 color.a = ratio;
-                for (int n = 0; n < 4; n++)
-                {
-                    _barColors[v + n] = color;
-                }
-                bars++;
+                _barBatch.Write(bars++, x, y, w, hh, -.6f, BarUv, color);
             }
-            for (int i = bars * 4; i < _barDrawCount * 4; i++)
-            {
-                _barVertices[i] = Vector3.zero;
-            }
-            _barDrawCount = bars;
-            _barMesh.vertices = _barVertices;
-            _barMesh.colors = _barColors;
+            _barBatch.Submit(bars);
             HordeBarCount = bars;
         }
         /// <summary>验收用：当前画着几条外围血条。</summary>
@@ -284,7 +271,7 @@ namespace RevGame.Endless
             private set;
         }
 
-        /// <summary>退出无尽：卸载本模式音效，清掉闪光记录；网格随竞技场复用。</summary>
+        /// <summary>退出无尽时卸载本模式音效，清掉闪光记录和血条提交范围；网格缓冲随竞技场复用。</summary>
         private void ReleaseFeel()
         {
             for (int i = 0; i < FeelSounds.Length; i++)
@@ -293,6 +280,8 @@ namespace RevGame.Endless
             }
             _auraFlash.Clear();
             _auraLastCount = AuraCapacity;
+            // 回池保留已分配的容量，立刻把本局血条的索引范围清零。
+            _barBatch?.Submit(0);
             AuraCount = HordeBarCount = 0;
         }
 
@@ -300,12 +289,16 @@ namespace RevGame.Endless
         public int ComboShoutCount => _comboShouts;
         public int AuraFlashCount => _auraFlashes;
 
+        /// <summary>竞技场销毁时释放剑气和血条各自的运行时网格。</summary>
         private void DestroyFeelMeshes()
         {
             if (_auraMesh != null)
             {
                 Destroy(_auraMesh);
-                Destroy(_barMesh);
+            }
+            if (_barBatch != null)
+            {
+                Destroy(_barBatch.Mesh);
             }
         }
     }

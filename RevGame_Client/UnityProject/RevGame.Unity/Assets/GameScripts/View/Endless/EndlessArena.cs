@@ -23,14 +23,20 @@ namespace RevGame.Endless
         private readonly Dictionary<int, PieceView> _pieces = new Dictionary<int, PieceView>(81);
         private readonly HashSet<int> _pending = new HashSet<int>();
         private readonly List<int> _remove = new List<int>(81);
-        private Mesh _hordeMesh;
-        private int _hordeDrawCount;
-        private Vector3[] _vertices;
-        private Vector2[] _uv;
-        private Color[] _colors;
+        /// <summary>外围敌人的连续绘制缓冲。保留最大容量，但只向 GPU 提交需要该网格画出的敌人。</summary>
+        private EndlessQuadBatch _hordeBatch;
+        /// <summary>图集当前绑定的纹理页。使用同一页的帧只更新顶点 UV，不重复提交材质参数块。</summary>
+        private Texture _hordeTexture;
+        /// <summary>外围敌人 Shader 的主图集采样属性。</summary>
+        private static readonly int HordeTextureId = Shader.PropertyToID("_MainTex");
         private Sprite[] _frames;
         private Vector4[] _frameUvs;
-        private MaterialPropertyBlock _hordeProperties, _gridProperties, _backgroundProperties;
+        /// <summary>外围网格的共享材质参数。只记录实际绑定的图集页，回池清空。</summary>
+        private MaterialPropertyBlock _hordeProperties;
+        /// <summary>棋盘上的局内时钟、棋心生命和门口预警，每帧从当前无尽局更新。</summary>
+        private MaterialPropertyBlock _gridProperties;
+        /// <summary>本竞技场背景的材质参数，在表现更新中写入，不修改共享材质资产。</summary>
+        private MaterialPropertyBlock _backgroundProperties;
         private int _generation, _bindingVersion = -1;
         private bool _active;
         private Camera _camera;
@@ -60,6 +66,7 @@ namespace RevGame.Endless
             new Color(0.2f, 1, 1), new Color(1, 0.22f, 0.03f), new Color(1, 0.85f, 0.25f),
             new Color(0.75f, 0.3f, 1), new Color(0.3f, 0.7f, 1), new Color(0.2f, 1, 0.45f), new Color(1, 0.08f, 0.15f)
         };
+        /// <summary>出池初始化本局观测和资源。网格只在首次出池构建，后续沿用已空的绘制范围。</summary>
         public void OnPoolGet()
         {
             _generation++;
@@ -78,11 +85,11 @@ namespace RevGame.Endless
             _music = new EndlessMusicPlaylist(gameObject);
             _frames = art.Find(PieceKind.Swordman, StarTier.One, GameSide.Enemy).idleFrames;
             _frameUvs = new Vector4[_frames.Length];
-            if (_hordeMesh == null)
+            if (_hordeBatch == null)
             {
                 int count = EndlessConfig.Count("HordeLimit");
-                _hordeMesh = CreateMesh(count, out _vertices, out _uv, out _colors);
-                hordeRenderer.GetComponent<MeshFilter>().sharedMesh = _hordeMesh;
+                _hordeBatch = new EndlessQuadBatch(count, "无尽外围敌人批量网格");
+                hordeRenderer.GetComponent<MeshFilter>().sharedMesh = _hordeBatch.Mesh;
                 _hordeProperties = new MaterialPropertyBlock();
                 _gridProperties = new MaterialPropertyBlock();
                 _backgroundProperties = new MaterialPropertyBlock();
@@ -144,11 +151,11 @@ namespace RevGame.Endless
                 }
                 _frameUvs[i] = UnityEngine.Sprites.DataUtility.GetOuterUV(_frames[i]);
             }
-            _hordeProperties.SetTexture("_MainTex", _frames[0].texture);
-            hordeRenderer.SetPropertyBlock(_hordeProperties);
+            BindHordeTexture(_frames[0].texture);
             _bindingVersion = GameSpriteAtlasService.BindingVersion;
             return true;
         }
+        /// <summary>在表现帧消费正式无尽快照。先处理出生和死亡，再更新网格，避免与实体视图重复绘制。</summary>
         private void Update()
         {
             if (!_active)
@@ -185,9 +192,9 @@ namespace RevGame.Endless
             UpdateCombatFx(service);
             if (atlasReady)
             {
-                UpdateHorde(run);
+                UpdateHorde(service.Horde, run);
             }
-            UpdateHordeBars(run);
+            UpdateHordeBars(service.Horde);
             UpdateAuras(service);
             UpdateGuard(service);
             UpdatePlacement(service);
@@ -323,20 +330,24 @@ namespace RevGame.Endless
             }
             , transform);
         }
-        private void UpdateHorde(EndlessRun run)
+        /// <summary>按活动槽的原顺序写外围敌人。出生期间由单独视图绘制，跳过这些槽不会影响相邻可见敌人的排序。</summary>
+        private void UpdateHorde(EndlessHordeComponents horde, EndlessRun run)
         {
-            EndlessHordeComponents horde = RevServices.GetRequired<EndlessService>().Horde;
             int frame = (int)(run.seconds * 5) % _frames.Length;
-            // 图集分页可能让帧换页；每批只使用当前统一帧的真实纹理，UV与纹理总是配对。
-            _hordeProperties.SetTexture("_MainTex", _frames[frame].texture);
-            hordeRenderer.SetPropertyBlock(_hordeProperties);
+            // 取当前动画帧的真实纹理和 UV。只有跨页时才重新提交材质参数。
+            BindHordeTexture(_frames[frame].texture);
             int active = horde.ActiveCount;
+            int visible = 0;
             for (int cursor = 0; cursor < active; cursor++)
             {
                 int i = horde.ActiveSlot(cursor);
                 EndlessHorde h = horde[i];
                 // 正在播出生燃烧的杂兵由 PieceView 代画，网格里先隐藏，避免同一只怪画两遍。
-                float half = h.active && !HordeDrawnByView(i) ? (h.kind >= 6 ? .8f : HordeQuadHalf) : 0;
+                if (!h.active || HordeDrawnByView(i))
+                {
+                    continue;
+                }
+                float half = h.kind >= 6 ? .8f : HordeQuadHalf;
                 // 颜色就是信息：金色=献祭潮（杀了伤领主），绿色=毒囊（杀了会爆炸）。
                 Color color = h.frozenUntil > run.seconds ? Palette[4] : h.burnUntil > run.seconds ? new Color(1, 0.55f, 0.25f)
                     : h.pustule ? new Color(.45f, 1, .35f) : h.surge ? new Color(1, .84f, .3f) : Color.white;
@@ -344,34 +355,23 @@ namespace RevGame.Endless
                 {
                     color = h.kind >= 5 ? new Color(1, .35f, .4f) : h.kind == 3 ? Palette[3] : h.kind == 4 ? Palette[2] : Color.white;
                 }
-                Quad(_vertices, _uv, _colors, cursor, new Vector2(h.x, h.y), half, half, _frameUvs[frame], color, -0.3f);
+                _hordeBatch.Write(visible++, h.x, h.y, half, half, -.3f, _frameUvs[frame], color);
             }
-            // 顶点区只写当前实体，清掉上一帧尾部；渲染不再为1024个空槽重复写颜色和UV。
-            for (int i = active * 4; i < _hordeDrawCount * 4; i++)
-            {
-                _vertices[i] = Vector3.zero;
-            }
-            _hordeDrawCount = active;
-            _hordeMesh.vertices = _vertices;
-            _hordeMesh.uv = _uv;
-            _hordeMesh.colors = _colors;
+            _hordeBatch.Submit(visible);
         }
-        private static void Quad(Vector3[] vertices, Vector2[] uv, Color[] colors, int index, Vector2 center, float x, float y, Vector4 rect, Color color, float z)
+
+        /// <summary>动画换到不同图集页或本局首次绑定时提交属性。Uv 会由 UpdateHorde 按同一帧同步。</summary>
+        private void BindHordeTexture(Texture texture)
         {
-            int v = index * 4;
-            vertices[v] = new Vector3(center.x - x, center.y - y, z);
-            vertices[v + 1] = new Vector3(center.x + x, center.y - y, z);
-            vertices[v + 2] = new Vector3(center.x + x, center.y + y, z);
-            vertices[v + 3] = new Vector3(center.x - x, center.y + y, z);
-            uv[v] = new Vector2(rect.x, rect.y);
-            uv[v + 1] = new Vector2(rect.z, rect.y);
-            uv[v + 2] = new Vector2(rect.z, rect.w);
-            uv[v + 3] = new Vector2(rect.x, rect.w);
-            for (int n = 0; n < 4; n++)
+            if (_hordeTexture == texture)
             {
-                colors[v + n] = color;
+                return;
             }
+            _hordeTexture = texture;
+            _hordeProperties.SetTexture(HordeTextureId, texture);
+            hordeRenderer.SetPropertyBlock(_hordeProperties);
         }
+        /// <summary>结束本局竞技场寿命。先停止表现并收起批次，再归还棋子和音效，保证重进时看不到上一局的敌人。</summary>
         public void OnPoolReturn()
         {
             if (!_active)
@@ -379,6 +379,13 @@ namespace RevGame.Endless
                 return;
             }
             _active = false;
+            _hordeBatch?.Submit(0);
+            _hordeProperties?.Clear();
+            _hordeTexture = null;
+            if (hordeRenderer != null)
+            {
+                hordeRenderer.SetPropertyBlock(null);
+            }
             if (_gcRecorder.Valid)
             {
                 _gcRecorder.Dispose();
@@ -398,12 +405,13 @@ namespace RevGame.Endless
             _pending.Clear();
             Ready = false;
         }
+        /// <summary>竞技场真正销毁时释放自建 Mesh。正常回池只清可绘制范围以复用容量。</summary>
         private void OnDestroy()
         {
             OnPoolReturn();
-            if (_hordeMesh != null)
+            if (_hordeBatch != null)
             {
-                Destroy(_hordeMesh);
+                Destroy(_hordeBatch.Mesh);
             }
             DestroyFeelMeshes();
             DestroyGuardMeshes();

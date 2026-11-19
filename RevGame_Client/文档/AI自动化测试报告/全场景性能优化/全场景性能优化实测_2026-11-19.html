@@ -1,0 +1,74 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RevGame 全场景性能优化</title><style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}
+.topbar{height:70px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}
+.brand{font-weight:800;letter-spacing:2px}
+.brand i{font-style:normal;background:var(--green);color:#fff;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;margin-right:10px}
+.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#fefdf5,#e6efe1);border-bottom:1px solid var(--line);padding:44px 5vw 34px}
+.wrap{max-width:1120px;margin:0 auto}
+.eyebrow{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}
+.hero h1{font-size:clamp(26px,3vw,40px);line-height:1.3;margin:14px 0 10px;letter-spacing:-1px}
+.hero p{margin:0;color:var(--muted)}
+.stamp{font:12px Consolas,monospace;margin-top:16px;color:#7b867b}
+main{max-width:1120px;margin:0 auto;padding:26px 5vw 60px}
+.chapter{background:#fffefa;border:1px solid var(--line);border-radius:16px;margin-bottom:20px;padding:26px 28px}
+.chapter h2{font-size:21px;margin:0 0 16px;letter-spacing:-.3px}
+.table-scroll{overflow:auto;margin:16px -4px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}
+th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}
+td,th{padding:10px 12px;border-bottom:1px solid #e4e9e0;vertical-align:top;overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:96px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{padding:8px 11px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);overflow-wrap:anywhere}
+.legend{padding:12px 16px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936;margin-bottom:18px}
+code{font:13px/1.65 Consolas,monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);padding:22px 5vw;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:640px){.hero{padding:30px 20px}main{padding:18px 16px 40px}.chapter{padding:20px}}
+
+nav a{display:inline-block;color:var(--green);margin-right:16px}summary{cursor:pointer}
+a{color:var(--green)}.small{color:var(--muted);font-size:14px}
+.table-scroll td,.table-scroll th{white-space:nowrap}
+.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:640px){.topbar{height:auto;gap:12px;padding:12px 16px}.gallery{grid-template-columns:1fr}}
+</style></head><body><header class="topbar"><span class="brand">RevGame · 自动化性能测试</span><span class="tag">2026-11-19</span></header>
+<div class="hero"><div class="wrap"><h1>RevGame 全场景性能优化</h1>
+<p>无尽压力段整帧 P95 从 6.451 ms 降到 5.551 ms，整帧三角形均值减少 61.1%。</p>
+<div class="stamp">Unity 2022.3.15f1c1 · NVIDIA GeForce RTX 4060 · D3D11 · 1920 × 1080 · PC AB</div></div></div>
+<main><section class="chapter"><h2>源码参考与实施</h2>
+<nav aria-label="报告目录"><a href="#campaign">六章战斗</a><a href="#scenes">独立场景</a><a href="#quality">画面</a><a href="#check">验收</a></nav>
+<ul>
+<li>V122 的 <code>LightProfilerSystem.cs:210</code> 按业务阶段采样。这次用六章压力段和实际大厅、无尽、围棋、决斗、Gal 分段取样，记录真实工作量和回收。</li>
+<li><code>CameraCullingOptimized.cs:41</code> 复用稳定相机输入的计算结果。六章以安全区、像素尺寸和比例缓存基础棋盘布局，先合成真实震动与 Boss 特写，再写入当前变化的镜头和背景姿态。</li>
+<li><code>InstancingGroup.cs:813</code> 以当前可绘制实例数提交。无尽沿用已有透明材质、图集和排序，把敌人和受伤血条排入固定容量的网格前缀，提交真实用到的顶点与索引。没有待画方块时索引范围为空。<a href="https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Mesh.SetVertexBufferData.html">Unity 顶点缓冲接口</a></li>
+<li>共用安全区布局在没有全屏底图且尺寸稳定时，跳过动画组件查找。面板转场、异步换图和布局变更仍走原入口。</li>
+</ul></section><section class="chapter" id="campaign"><h2>六章战斗</h2>
+<p>每章两轮，81 枚棋子，2.5 秒预热，12 秒采样，开启能量炸弹与区域波动夹具。采样段关闭垂直同步及帧率上限，结束后恢复。每格给出两轮的中位数。</p>
+<p>十二段攻击、命中、有效棋子、模型步数、累计伤害及受控技能事件逐段一致。 整帧差值包含 Editor 和排程波动，各章实际结果如下。</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">章节</th><th scope="col">每段攻击</th><th scope="col">整帧 P95（ms）</th><th scope="col">GPU P95（ms）</th><th scope="col">模型步均值（ms）</th></tr></thead><tbody><tr><td>1</td><td>693</td><td>7.950 → 7.993</td><td>2.124 → 2.121</td><td>1.077 → 1.119</td></tr><tr><td>2</td><td>765</td><td>9.815 → 9.140</td><td>2.479 → 2.356</td><td>1.125 → 1.082</td></tr><tr><td>3</td><td>972</td><td>9.427 → 8.744</td><td>2.303 → 2.451</td><td>1.547 → 1.278</td></tr><tr><td>4</td><td>891</td><td>9.728 → 9.691</td><td>2.286 → 2.282</td><td>1.273 → 1.251</td></tr><tr><td>5</td><td>919</td><td>8.630 → 10.261</td><td>2.260 → 2.538</td><td>1.217 → 1.280</td></tr><tr><td>6</td><td>936</td><td>9.550 → 8.041</td><td>2.343 → 2.297</td><td>1.287 → 1.236</td></tr></tbody></table></div><details><summary>展开十二段实测</summary><div class="table-scroll"><table><thead><tr><th scope="col">章 / 轮</th><th scope="col">GPU 样本 前→后</th><th scope="col">整帧 P95 前→后</th><th scope="col">整帧 P99 前→后</th><th scope="col">命中 前→后</th><th scope="col">总伤害 前→后</th></tr></thead><tbody><tr><td>1 / 1</td><td>2472 → 2285</td><td>7.392 → 7.845</td><td>13.075 → 13.922</td><td>2149 → 2149</td><td>257,071 → 257,071</td></tr><tr><td>2 / 1</td><td>2401 → 1918</td><td>7.419 → 10.378</td><td>12.607 → 14.814</td><td>2373 → 2373</td><td>247,485 → 247,485</td></tr><tr><td>3 / 1</td><td>2039 → 1926</td><td>8.592 → 8.928</td><td>14.021 → 14.677</td><td>3000 → 3000</td><td>238,623 → 238,623</td></tr><tr><td>4 / 1</td><td>1826 → 1979</td><td>10.006 → 10.221</td><td>16.067 → 14.902</td><td>2766 → 2766</td><td>257,955 → 257,955</td></tr><tr><td>5 / 1</td><td>2063 → 1980</td><td>8.524 → 9.108</td><td>13.574 → 14.526</td><td>2858 → 2858</td><td>248,702 → 248,702</td></tr><tr><td>6 / 1</td><td>1948 → 2165</td><td>9.297 → 8.059</td><td>14.525 → 13.481</td><td>2911 → 2911</td><td>237,746 → 237,746</td></tr><tr><td>1 / 2</td><td>2173 → 2239</td><td>8.509 → 8.140</td><td>13.915 → 13.421</td><td>2149 → 2149</td><td>257,071 → 257,071</td></tr><tr><td>2 / 2</td><td>1519 → 2179</td><td>12.212 → 7.901</td><td>18.367 → 13.152</td><td>2373 → 2373</td><td>247,485 → 247,485</td></tr><tr><td>3 / 2</td><td>1768 → 2004</td><td>10.261 → 8.561</td><td>15.247 → 13.561</td><td>3000 → 3000</td><td>238,623 → 238,623</td></tr><tr><td>4 / 2</td><td>1878 → 1981</td><td>9.450 → 9.160</td><td>14.101 → 14.260</td><td>2766 → 2766</td><td>257,955 → 257,955</td></tr><tr><td>5 / 2</td><td>1999 → 1833</td><td>8.735 → 11.413</td><td>13.830 → 15.784</td><td>2858 → 2858</td><td>248,702 → 248,702</td></tr><tr><td>6 / 2</td><td>1915 → 2114</td><td>9.803 → 8.023</td><td>14.554 → 13.906</td><td>2911 → 2911</td><td>237,746 → 237,746</td></tr></tbody></table></div></details>
+<h3>第五章相机配对复核</h3>
+<p>第五章前两轮对比的整帧 P95 都升高。复核在同一进程交替使用开工版和优化版相机，复用同一关卡、AB、棋子和技能，单独读取相机布置的 CPU 标记。相机帧均耗时的三段中位数为 17.55 → 13.33 µs，作业 <code>20261119-063022-9d069d74</code>。局部 CPU 与 GPU、整帧指标分别解读。</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">配对</th><th scope="col">实测顺序</th><th scope="col">相机帧均 CPU（µs）</th><th scope="col">整帧 P95（ms）</th><th scope="col">GPU P95（ms）</th></tr></thead><tbody><tr><td>1</td><td>原版→优化</td><td>18.17 → 13.18</td><td>12.058 → 8.543</td><td>2.525 → 2.297</td></tr><tr><td>2</td><td>优化→原版</td><td>16.46 → 13.33</td><td>8.976 → 8.743</td><td>2.338 → 2.253</td></tr><tr><td>3</td><td>原版→优化</td><td>17.55 → 14.38</td><td>9.462 → 9.115</td><td>2.394 → 2.402</td></tr></tbody></table></div></section>
+<section class="chapter" id="scenes"><h2>无尽与其它场景</h2>
+<p>这些阶段使用同版本真实 AB 和 Editor 的原有同步设置。相同用例各测一次。工作量不同的场景独立解释帧时。</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">场景或阶段</th><th scope="col">每段采样（s）</th><th scope="col">整帧 P95（ms）</th><th scope="col">GPU P95（ms）</th><th scope="col">整帧三角形均值</th></tr></thead><tbody><tr><td>大厅</td><td>8.00</td><td>2.994 → 2.672</td><td>0.955 → 0.878</td><td>440 → 440</td></tr><tr><td>普通设置</td><td>8.00</td><td>3.003 → 3.097</td><td>0.972 → 0.901</td><td>538 → 538</td></tr><tr><td>无尽 · 整备</td><td>6.00</td><td>6.118 → 3.616</td><td>1.200 → 0.976</td><td>5,083 → 987</td></tr><tr><td>无尽 · 240 敌压力</td><td>10.00</td><td>6.451 → 5.551</td><td>1.388 → 1.274</td><td>6,410 → 2,493</td></tr><tr><td>本地围棋</td><td>8.00</td><td>2.866 → 2.897</td><td>0.962 → 0.913</td><td>316 → 316</td></tr><tr><td>本地决斗</td><td>8.00</td><td>3.909 → 3.759</td><td>1.075 → 1.010</td><td>496 → 486</td></tr><tr><td>鸦鸦 Gal</td><td>8.00</td><td>2.959 → 2.520</td><td>0.951 → 0.877</td><td>124 → 124</td></tr></tbody></table></div>
+<p>无尽整备的三角形均值从 5,083 降到 987。压力入口两次均生成 240 只外围敌人，实际计数前后分别是 242 → 46 与 240 → 46。优化后结束附近捕获到 31 个外围方块、5 个受伤血条方块，血条索引数与显示计数一致。</p>
+<p>围棋用相同的四手合法棋谱。决斗进入正运行的人机局并核对双方就绪及图集绑定。Gal 由真实入口装载当前剧情，场景、域和画面就绪后才计时。这些数据用于回归判断，单对样本的差值不外推为其它硬件的收益。</p></section>
+<section class="chapter" id="quality"><h2>实际画面</h2>
+<p>无尽两张图分别取自压力段结束时的实景，弹幕、飘字和棋子位置会随当时的战斗帧变化。</p>
+<div class="gallery"><figure><a href="截图_2026-11-19/endless-before.jpg"><img src="截图_2026-11-19/endless-before.jpg" alt="无尽 · 优化前" loading="lazy"></a><figcaption>无尽 · 优化前</figcaption></figure><figure><a href="截图_2026-11-19/endless-after.jpg"><img src="截图_2026-11-19/endless-after.jpg" alt="无尽 · 优化后" loading="lazy"></a><figcaption>无尽 · 优化后</figcaption></figure></div>
+<details><summary>展开六章画面和第四章战斗动图</summary><div class="gallery"><figure><a href="截图_2026-11-19/chapter-1.jpg"><img src="截图_2026-11-19/chapter-1.jpg" alt="第 1 章 · 81 棋复测" loading="lazy"></a><figcaption>第 1 章 · 81 棋复测</figcaption></figure><figure><a href="截图_2026-11-19/chapter-2.jpg"><img src="截图_2026-11-19/chapter-2.jpg" alt="第 2 章 · 81 棋复测" loading="lazy"></a><figcaption>第 2 章 · 81 棋复测</figcaption></figure><figure><a href="截图_2026-11-19/chapter-3.jpg"><img src="截图_2026-11-19/chapter-3.jpg" alt="第 3 章 · 81 棋复测" loading="lazy"></a><figcaption>第 3 章 · 81 棋复测</figcaption></figure><figure><a href="截图_2026-11-19/chapter-4.jpg"><img src="截图_2026-11-19/chapter-4.jpg" alt="第 4 章 · 81 棋复测" loading="lazy"></a><figcaption>第 4 章 · 81 棋复测</figcaption></figure><figure><a href="截图_2026-11-19/chapter-5.jpg"><img src="截图_2026-11-19/chapter-5.jpg" alt="第 5 章 · 81 棋复测" loading="lazy"></a><figcaption>第 5 章 · 81 棋复测</figcaption></figure><figure><a href="截图_2026-11-19/chapter-6.jpg"><img src="截图_2026-11-19/chapter-6.jpg" alt="第 6 章 · 81 棋复测" loading="lazy"></a><figcaption>第 6 章 · 81 棋复测</figcaption></figure></div>
+<figure><img src="截图_2026-11-19/chapter-4.gif" alt="复测时真实捕获的第四章 12 帧" loading="lazy"><figcaption>第四章实战连拍 · 12 帧</figcaption></figure></details>
+<details><summary>展开大厅、围棋、决斗与 Gal</summary><div class="gallery"><figure><a href="截图_2026-11-19/home-after.jpg"><img src="截图_2026-11-19/home-after.jpg" alt="大厅与设置" loading="lazy"></a><figcaption>大厅与设置</figcaption></figure><figure><a href="截图_2026-11-19/pvp-after.jpg"><img src="截图_2026-11-19/pvp-after.jpg" alt="本地围棋" loading="lazy"></a><figcaption>本地围棋</figcaption></figure><figure><a href="截图_2026-11-19/duel-after.jpg"><img src="截图_2026-11-19/duel-after.jpg" alt="本地决斗" loading="lazy"></a><figcaption>本地决斗</figcaption></figure><figure><a href="截图_2026-11-19/gal-after.jpg"><img src="截图_2026-11-19/gal-after.jpg" alt="Gal 舞台" loading="lazy"></a><figcaption>Gal 舞台</figcaption></figure></div></details></section>
+<section class="chapter" id="check"><h2>验收记录</h2>
+<ul><li>真实 RevMCP 发现后，用 <code>game.perf.begin</code> 启动六章采样。其它场景走带业务断言和收尾的 <code>rev_run</code>。</li>
+<li>五组画幅及安全区规则通过。Boss 演出回归 <code>passed，60 项断言，0 个新增 Unity 错误</code>。重编译回执 <code>3a004093fe0b4c99a0d019d590b45e92</code> 已完成且消息为空。</li>
+<li>六章两个作业均正常回大厅，战斗逻辑与棋子资源引用归零，新增错误为零。其它场景均完成对应返回和采样器释放。</li>
+<li>移除相机对照夹具并重编译后，最终代码冷启动跑完第五章。无尽额外核对 1024 容量的出生、提交及返回重入，下一局从空渲染范围开始。</li>
+<li>六章基线 <code>20261119-055505-2dbb62c4</code>，复测 <code>20261119-061411-b133be54</code>。实际 PC 资源清单 SHA-256 为 <code>025a0f892a36456f9e470f011532fb6b7727e5200786defa011ab66b1b236d50</code>。</li>
+<li>实测覆盖当前 Windows Editor 环境。Android/iOS 实体设备、长期温控与在线多人压力须有对应设备数据。全部工单位于 <code>.codex/work/wzry-perf-2026-11-19/</code>。</li></ul></section></main></body></html>

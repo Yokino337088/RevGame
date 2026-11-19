@@ -880,7 +880,7 @@ namespace RevGame.Endless
         private bool _fireParametersCorrect = true;
         private int _birthsShown, _hordeBirthsShown, _upgradesShown, _dissolvesShown;
 
-        /// <summary>只读快照：当前在播数量 + 本局累计次数 + 落子提示格数。不改任何状态。</summary>
+        /// <summary>读取本局反馈、落子提示和外围网格的实际提交数量。查询不重绘也不改变业务状态。</summary>
         public object FeedbackSnapshot()
         {
             bool fireCorrect = true;
@@ -905,6 +905,9 @@ namespace RevGame.Endless
                 ["upgrade"] = UpgradeVisualSnapshot(),
                 ["soundsPlayed"] = _feelSoundsPlayed, ["soundsSuppressed"] = _feelSoundsSuppressed,
                 ["auras"] = AuraCount, ["auraFlashes"] = AuraFlashCount, ["comboShouts"] = ComboShoutCount, ["hordeBars"] = HordeBarCount,
+                // 读取实际子网格索引，独立核对上传范围和逻辑个数。每个方块固定使用六个索引。
+                ["hordeQuadsSubmitted"] = (_hordeBatch?.Mesh.GetIndexCount(0) ?? 0u) / 6u,
+                ["hordeBarQuadsSubmitted"] = (_barBatch?.Mesh.GetIndexCount(0) ?? 0u) / 6u,
                 ["births"] = _birthsShown, ["hordeBirths"] = _hordeBirthsShown, ["upgrades"] = _upgradesShown, ["dissolves"] = _dissolvesShown,
                 ["withinBudget"] = _activeFx[(int)FxKind.Projectile].Count <= MaxProjectiles && _activeFx[(int)FxKind.Melee].Count <= MaxMeleeEffects
                     && TextCount() <= MaxFloatingTexts && _dissolving.Count <= MaxCorpses && _hordeBirthCount <= MaxHordeBirths

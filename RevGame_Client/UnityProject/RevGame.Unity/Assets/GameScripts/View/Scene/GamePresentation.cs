@@ -37,7 +37,7 @@ namespace RevGame.View
         // 安全区布局只依赖屏幕/比例。相机震动和Boss特写仍每帧叠加，不能缓存最终相机位置。
         // 上一渲染相机像素宽高，不是桌面分辨率；Game窗口尺寸变化后重算棋盘安全布局。
         private Vector2 _layoutPixels;
-        // 上一安全视口；安全区变化可能与像素尺寸变化独立，必须单独比较。
+        /// <summary>上次从设备取得的归一化安全区。尺寸、画幅或安全区有变化时才重新内接棋盘设计框。</summary>
         private Rect _layoutSafe;
         // 上次宽高比和计算得到的正交相机半高（世界单位）；几何输入未变时复用计算结果。
         private float _layoutAspect, _layoutCameraSize;
@@ -86,8 +86,7 @@ namespace RevGame.View
             // GameBootstrap 在配置表就绪后发出首次 ScreenChanged，此前不提前开放操作。
             FitCamera();
         }
-        // 每次渲染前仍核对输入，尺寸/安全区/比例变了才重算布局。
-        // 基础几何可缓存，EnergyShakeOffset和ApplyBossFocus必须继续逐帧计算，保持原动态画面。
+        /// <summary>在渲染前对齐棋盘与背景。基础布局按屏幕变化计算，震动和特写只合成一次，再提交实际变化的姿态。</summary>
         private void FitCamera()
         {
             if (lobbyScene != null)
@@ -108,7 +107,7 @@ namespace RevGame.View
             {
                 return;
             }
-            Rect safe = GameBattleLayout.BoardViewport(screenSize);
+            Rect safe = GameBattleLayout.SafeViewport();
 
             // 完整几何输入没变就沿用_cameraSize/center/regions，省掉同一帧多次布局计算。
             // 退出场景这些字段随组件释放；新场景重新计算，不设全局静态布局草稿。
@@ -117,7 +116,8 @@ namespace RevGame.View
                 _layoutPixels = screenSize;
                 _layoutSafe = safe;
                 _layoutAspect = aspect;
-                _layoutRegions = GameBattleLayout.Calculate(screenSize, safe);
+                Rect boardViewport = GameBattleLayout.FitBoardViewport(screenSize, safe);
+                _layoutRegions = GameBattleLayout.Calculate(screenSize, boardViewport);
                 float boardFraction = _layoutRegions.Board.height / screenSize.y;
                 _layoutCameraSize = Consts.BoardSize * Consts.CellSize / (2f * boardFraction);
                 Vector2 center = _layoutRegions.Board.center;
@@ -125,14 +125,23 @@ namespace RevGame.View
                     (0.5f - center.y / screenSize.y) * _layoutCameraSize * 2f);
             }
             GameBattleLayout.Regions areas = _layoutRegions;
-            boardCamera.orthographicSize = _layoutCameraSize;
-            Vector3 cameraPosition = boardCamera.transform.position;
-            cameraPosition.x = _layoutCameraCenter.x;
-            cameraPosition.y = _layoutCameraCenter.y;
-            boardCamera.transform.position = cameraPosition + EnergyShakeOffset();
-            ApplyBossFocus();
+            Transform cameraTransform = boardCamera.transform;
+            Vector3 previousPosition = cameraTransform.position;
+            Vector3 cameraPosition = new Vector3(_layoutCameraCenter.x, _layoutCameraCenter.y, previousPosition.z) + EnergyShakeOffset();
+            float cameraSize = _layoutCameraSize;
+            // 在 C# 值上先叠震动再做特写。减少原生 Transform 写入，同时保留演出顺序。
+            ApplyBossFocus(ref cameraPosition, ref cameraSize);
+            if (!cameraPosition.Equals(previousPosition))
+            {
+                cameraTransform.position = cameraPosition;
+            }
+            if (!cameraSize.Equals(boardCamera.orthographicSize))
+            {
+                boardCamera.orthographicSize = cameraSize;
+            }
 
-            if (backgroundRenderer != null && backgroundRenderer.sprite != null)
+            Sprite background = backgroundRenderer == null ? null : backgroundRenderer.sprite;
+            if (background != null)
             {
                 UpdateChapterFrame(areas, screenSize);
 
@@ -152,14 +161,22 @@ namespace RevGame.View
                     }
                     // ★ 用同一个比例同时缩放宽和高，背景中的房屋才不会被拉扁。
                     // 取宽、高需要的缩放中较大的一个，保证填满窗口；多出来的部分由相机自然裁掉。
-                    Vector2 sourceSize = backgroundRenderer.sprite.bounds.size;
-                    float height = boardCamera.orthographicSize * 2f;
-                    float scale = Mathf.Max(height * aspect / sourceSize.x, height / sourceSize.y) * 1.02f;
-                    backgroundRenderer.transform.localScale = Vector3.one * scale;
-                    cameraPosition = boardCamera.transform.position;
+                    Bounds spriteBounds = background.bounds;
+                    float height = cameraSize * 2f;
+                    float scale = Mathf.Max(height * aspect / spriteBounds.size.x, height / spriteBounds.size.y) * 1.02f;
+                    Transform backdrop = backgroundRenderer.transform;
+                    Vector3 targetScale = Vector3.one * scale;
+                    if (!targetScale.Equals(backdrop.localScale))
+                    {
+                        backdrop.localScale = targetScale;
+                    }
                     // 背景Pivot不一定在中心，扣掉缩放后的bounds.center，确保四边总围绕相机而非图片锚点。
-                    Vector3 pivotOffset = backgroundRenderer.sprite.bounds.center * scale;
-                    backgroundRenderer.transform.position = new Vector3(cameraPosition.x - pivotOffset.x, cameraPosition.y - pivotOffset.y, 5f);
+                    Vector3 pivotOffset = spriteBounds.center * scale;
+                    Vector3 targetPosition = new Vector3(cameraPosition.x - pivotOffset.x, cameraPosition.y - pivotOffset.y, 5f);
+                    if (!targetPosition.Equals(backdrop.position))
+                    {
+                        backdrop.position = targetPosition;
+                    }
                 }
             }
         }
