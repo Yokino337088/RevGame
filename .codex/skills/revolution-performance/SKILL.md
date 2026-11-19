@@ -26,6 +26,7 @@ description: 用于 Revolution Unity 项目的性能诊断、热点优化、缓�
 | 射界/路径/棋群/AI试算、缓存与数据布局、ECS选型 | [CPU与缓存](references/cpu-cache.md) |
 | HUD/Layout/TextMesh、飘字/弹道队列、Tween/闭包/回池 | [UI与反馈](references/ui-feedback.md) |
 | GPU/透明过绘/合批、局部Shader、静态数据场 | [GPU与绘制](references/gpu-rendering.md) |
+| 制作或修改 Shader、材质、纹理与视觉表现 | [Revolution-TA](../revolution-ta/SKILL.md) |
 | 图集V2/AB/音频/状态按需、首屏白图/加载/内存增长 | [资源与生命周期](references/resources-lifecycle.md) |
 | 回归/报告/百分比/失败/取消/安装与交付 | [验证](references/verification.md) |
 | 找生产代码与历史来源、正负实验 | [RevGame实践](references/revgame-practice.md) |

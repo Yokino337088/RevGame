@@ -11,6 +11,7 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 | --- | --- |
 | Revolution.Gal 章节背景、面板布局、剧情编辑、路线回归和自定义界面 | [Gal Skill](../revolution-gal/SKILL.md)。用户自有界面走 Gal 会话和宿主现有流程。项目既有 StoryBook 沿原入口。 |
 | 玩法、UI、流程或战斗 | [框架 Skill](../revolution-framework/SKILL.md) 的命中专题及 [项目契约](references/project-contracts.md)。玩法意图查 [六章策划案](../../../RevGame_Client/策划案/玩法拓展策划案.html) 或 [无尽策划案](../../../RevGame_Client/策划案/无尽模式策划案_棋阵幸存者_2026-11-01.html)。 |
+| Shader、材质、纹理、特效或渲染排错 | [Revolution-TA](../revolution-ta/SKILL.md)。按场景选 [Shader 索引](../revolution-ta/references/revgame-catalog.md)、现有制作配方及目标画面验收。 |
 | 配置表、场景、Prefab、资源或 AB | [Unity 与资源迭代](references/unity-and-assets.md)。按需查 [编辑器 Skill](../revolution-unity-editor/SKILL.md) 和 [增量 AB 配方](../revolution-unity-editor/references/incremental-ab.md)。 |
 | Play 验收、修 Bug、交付测试包 | [验收范围与交付](references/validation-and-delivery.md) 和命中的 [项目验收细则](references/project-acceptance.md)。缺陷闭环走 [自动化 Skill](../revolution-ai-automation/SKILL.md)。 |
 | 性能诊断或对比 | [性能 Skill](../revolution-performance/SKILL.md) 的命中专题。同输入测量，记录覆盖与边界。 |

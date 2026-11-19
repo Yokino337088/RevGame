@@ -63,6 +63,8 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 
 ## 选入口，不造旁路
 
+制作或调整 Shader、材质和纹理时，沿 [Revolution-TA](../revolution-ta/SKILL.md) 选择制作、包依赖检查和实际画面验收。
+
 按 [操作配方](references/operations.md) 选择动作。场景对象用对象/组件动作，资产用 AssetDatabase 动作，Prefab 用加载内容→修改→保存→卸载入口，项目设置用序列化设置动作。
 
 涉及项目 Editor 代码时，按 [命令、JSON 配方与项目 Editor 代码](references/operations.md#用命令json-配方还是项目-editor-代码) 选择。一次性编辑复用现有动作。项目专属的跨资产规则、制作门禁和验证留在项目配方，通用操作缺口回框架源码。

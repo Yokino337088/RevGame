@@ -14,6 +14,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 | 框架选型、API 存不存在 | [决策与不存在清单](references/decision-guide.md)。签名不明确就定位公开定义和同类调用 |
 | 启动、场景与生命周期 | [启动与平台](references/startup-and-platform.md)、[核心门面](references/modules-core.md) 的 RevScene 和 RevScope |
 | UI 面板与动画 | [UI 与分层](references/ui-and-layering.md) |
+| Shader、材质、纹理与着色问题 | [Revolution-TA](../revolution-ta/SKILL.md)，按管线、采样方式和目标平台选制作或排错流程 |
 | 资源、分包与 Editor Play 粉屏 | [资源和 AB](references/resource-and-ab.md)，平台误选看 §2.1 |
 | 策划数值与 Excel | [实现配方](references/playbooks.md) 的 R22，含生成和装配校验 |
 | 编辑器与项目制作配方 | [Revolution 编辑器技能](../revolution-unity-editor/SKILL.md) 和 [Editor 职责](references/revgame-editor-practice.md) |
