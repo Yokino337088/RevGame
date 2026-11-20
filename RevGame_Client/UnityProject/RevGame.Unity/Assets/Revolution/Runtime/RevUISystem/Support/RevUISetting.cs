@@ -67,6 +67,13 @@ namespace Revolution
         /// </summary>
         public static int MaxCachedPanels = 1;
 
+        /// <summary>每帧最多从装配队列处理的请求数，最低为一。</summary>
+        public static int MaxAssembliesPerFrame = 2;
+        /// <summary>主线程单帧装配预算，单位毫秒；一个 Unity 实例化任务执行中无法中断。</summary>
+        public static double AssemblyBudgetMs = 3;
+        /// <summary>一次互斥页交接的实时时限，超过时取消候选或结束已交割的入场表现。</summary>
+        public static float HandoffTimeoutSeconds = 20f;
+
         /// <summary>点击弹窗遮罩时，是否自动关掉最上面的弹窗（默认 true）</summary>
         public static bool ClickMaskClosesTop = true;
 

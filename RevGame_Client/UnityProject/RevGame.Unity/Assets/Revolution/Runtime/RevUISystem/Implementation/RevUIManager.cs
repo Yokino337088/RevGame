@@ -6,12 +6,12 @@
 // 【业务不要直接用这个类】用 Facade 里的 RevUI（同目录上一级）——
 //   那是唯一入口，门面只做转发，将来换实现不用改业务代码。
 //
-// 【找实例的顺序：从快到慢（采纳王者的三层查找）】
+// 【找实例的顺序：从快到慢】
 //     ① 已在打开中  → 把请求并进在途那次（**同一面板并发打开只会加载/创建一次**）
 //     ② 已打开      → 直接复用（置顶 + 按最新数据重画）
 //     ③ 实例池里有  → 取出复用（不加载、不实例化、不重新绑定 —— 最快的一条路）
 //     ④ 都没有      → 异步加载预制体 → 实例化 → 装配 → 打开
-//   注意 ① 是"真正合并"，不像王者那样只是"靠 Singleton 近似"：两个业务同时 Open<BagPanel>()，
+//   两次同时打开 BagPanel 共用同一个在途请求，
 //   只会产生一个实例，两份回调都会在打开完成时收到同一个面板。
 //
 // 【关闭只做三件事】立刻从索引摘掉（后续查询/返回栈不再看到它）→ 播放关闭转场 →
@@ -47,14 +47,37 @@ namespace Revolution
         private readonly Dictionary<string, OpenRequest> _loading =
             new Dictionary<string, OpenRequest>(StringComparer.Ordinal);
 
-        // 请求对象身份覆盖"加载 + 打开动画"整个阶段，旧回调不能消费同键的新请求。
+        /// <summary>请求身份覆盖资源等待、首屏准备和入场转场。旧回调只操作这次租约。</summary>
         private sealed class OpenRequest
         {
+            /// <summary>目标类型、资源键和互斥组。</summary>
             internal RevUIPanelMeta Meta;
+            /// <summary>同键合并请求最近一次有效数据。</summary>
             internal object Data;
+            /// <summary>等待本次打开结果的普通 API 调用方。</summary>
             internal readonly List<Action<RevUIPanel>> Callbacks = new List<Action<RevUIPanel>>();
+            /// <summary>由调用时的域持有，异步完成时不改挂到当时顶层。</summary>
+            internal RevScopeHandle Scope;
+            /// <summary>公开的开窗时间线和终态。</summary>
+            internal RevUIOpenTicket Ticket;
+            /// <summary>预备中或已交割但仍在播放入场的实例。</summary>
             internal RevUIPanel Panel;
+            /// <summary>尚未交给面板的预制体引用。</summary>
+            internal RevResLease Resource;
+            /// <summary>首屏预备期间的透明、不响应输入的容器。</summary>
+            internal RectTransform Staging;
+            /// <summary>候选页或实时打开的面板是否已加入公开索引。</summary>
+            internal bool Published;
+            /// <summary>首屏等待和 Part 加载用来识别过期请求。</summary>
+            internal readonly RevCancellationTokenSource Cancellation = new RevCancellationTokenSource();
         }
+
+        /// <summary>主线程待装配的请求；每帧按数量和时间预算消费。</summary>
+        private readonly Queue<OpenRequest> _assemblies = new Queue<OpenRequest>();
+        /// <summary>按 ID 读到正在打开及最近完成的值类型证据。</summary>
+        private readonly Dictionary<Guid, RevUIOpenTicket> _openTickets = new Dictionary<Guid, RevUIOpenTicket>();
+        /// <summary>仅保留最近完成的 32 个请求，未完成请求不参与淘汰。</summary>
+        private readonly Queue<Guid> _finishedTickets = new Queue<Guid>();
 
         // 面板实例各持有一份 prefab 资源引用；只保存路径与 instance ID，
         // 即使 Unity 对象在新会话已变成假 null，也能准确归还旧引用。
@@ -71,13 +94,21 @@ namespace Revolution
             internal readonly RevUIPanel Panel;
             /// <summary>转场或 Shutdown 是否已归还这份引用。</summary>
             internal bool Released;
+            /// <summary>等待该面板回池、销毁或归还资源的替换记录。</summary>
+            internal RevUIOpenTicket Replacement;
+            /// <summary>交割时冻结旧页输入用的组件。</summary>
+            internal CanvasGroup InputGate;
+            /// <summary>关闭前的交互设置，回池前还原。</summary>
+            internal bool WasInteractable;
+            /// <summary>关闭前的射线设置，回池前还原。</summary>
+            internal bool WasBlocking;
 
             /// <summary>实例创建后接管原加载引用，无需额外增加计数。</summary>
-            internal ClosingResourceLease(RevUIPanel panel, RevResHandle handle)
+            internal ClosingResourceLease(RevUIPanel panel, RevResLease resource)
             {
                 Panel = panel;
                 InstanceId = panel != null ? panel.GetInstanceID() : 0;
-                Resource = RevResManager.OwnReference(handle, "RevUI/" + panel.GetType().Name);
+                Resource = resource;
             }
         }
 
@@ -124,224 +155,447 @@ namespace Revolution
         // 打开
         // ============================================================
 
-        /// <summary>打开面板（回调式；<paramref name="callbacks"/> 里的每个回调都会在"完全打开"后收到面板）</summary>
+        /// <summary>打开面板并通知等待者。普通 API 与可追踪入口共用同一条交接链。</summary>
         internal RevUIPanel OpenCore(Type panelType, object data, List<Action<RevUIPanel>> callbacks)
-            => OpenInternal(panelType, data, callbacks, allowLoad: true);
+        {
+            return OpenInternal(panelType, data, callbacks, true, false, out _);
+        }
 
-        /// <summary>只走"内存里已有"的路子（已打开 / 池里命中）；需要加载时返回 null，不去加载</summary>
+        /// <summary>尝试立即使用已有资源；需要读资源时保留当前页并返回空。</summary>
         internal RevUIPanel OpenImmediate(Type panelType)
-            => OpenInternal(panelType, null, null, allowLoad: false);
+        {
+            return OpenInternal(panelType, null, null, false, false, out _);
+        }
 
-        private RevUIPanel OpenInternal(Type panelType, object data, List<Action<RevUIPanel>> callbacks, bool allowLoad)
+        /// <summary>接收可追踪打开请求。调用方可要求已缓存预制体也走分帧装配。</summary>
+        internal RevUIOpenTicket OpenTracked(Type panelType, object data, bool deferAssembly)
+        {
+            OpenInternal(panelType, data, null, true, deferAssembly, out RevUIOpenTicket ticket);
+            return ticket;
+        }
+
+        /// <summary>同键合并；互斥组只取消未交付的旧候选。已显示页保留到新页通过首屏。</summary>
+        private RevUIPanel OpenInternal(Type panelType, object data, List<Action<RevUIPanel>> callbacks,
+            bool allowLoad, bool deferAssembly, out RevUIOpenTicket ticket)
         {
             if (!RevUIPanelMeta.TryResolve(panelType, out RevUIPanelMeta meta, out string error))
             {
+                ticket = NewTicket(panelType.Name);
+                FinishTicket(ticket, RevUIOpenStatus.Failed, "invalid-panel");
                 RevUILog.Error(error);
                 InvokeAll(callbacks, null);
                 return null;
             }
-
-            if (!typeof(RevUIPanel).IsAssignableFrom(panelType))
+            if (_shuttingDown)
             {
-                RevUILog.Error($"{panelType.Name} 不是面板：面板必须继承 RevUIPanel（带数据的继承 RevUIPanel<TData>）。");
+                ticket = NewTicket(meta.Key);
+                FinishTicket(ticket, RevUIOpenStatus.Cancelled, "ui-shutdown");
                 InvokeAll(callbacks, null);
                 return null;
             }
-
-            if (_shuttingDown) { InvokeAll(callbacks, null); return null; }
             EnsureReady();
-
             string key = meta.Key;
-
-            // 合并到完全打开为止；最后一次非空数据优先，与已打开面板更新数据的规则一致。
             if (_loading.TryGetValue(key, out OpenRequest waiting))
             {
-                if (callbacks != null) waiting.Callbacks.AddRange(callbacks);
+                ticket = waiting.Ticket;
+                if (callbacks != null)
+                {
+                    waiting.Callbacks.AddRange(callbacks);
+                }
                 if (data != null)
                 {
                     waiting.Data = data;
-                    if (waiting.Panel != null) waiting.Panel.SetData(data);
+                    waiting.Panel?.SetData(data);
                 }
-                RevUILog.Info($"{key} 正在加载中，本次请求并入在途的那一次");
+                if (waiting.Published)
+                {
+                    CancelCandidates(meta.ExclusiveGroup, waiting);
+                }
                 return null;
             }
 
-            // ② 已经打开 → 置顶 + 按最新数据重画
             if (_opened.TryGetValue(key, out RevUIPanel opened))
             {
+                ticket = NewTicket(meta.Key);
+                CancelCandidates(meta.ExclusiveGroup);
+                if (opened == null || !_opened.TryGetValue(key, out RevUIPanel current) || current != opened)
+                {
+                    FinishTicket(ticket, RevUIOpenStatus.Cancelled, "panel-closed");
+                    InvokeAll(callbacks, null);
+                    return null;
+                }
                 BringToTop(opened);
-                if (data != null) opened.SetData(data);
-                else opened.RefreshView();
-
+                if (data != null)
+                {
+                    opened.SetData(data);
+                }
+                else
+                {
+                    opened.RefreshView();
+                }
+                ticket.FirstScreenReady = true;
+                ticket.ResourceDisposition = "Panel";
+                FinishTicket(ticket, RevUIOpenStatus.Succeeded, "already-open");
                 InvokeAll(callbacks, opened);
                 return opened;
             }
 
-            // ③ 互斥组：开新的之前，先把同组里那个关掉
-            CloseExclusive(meta);
+            OpenRequest request = BeginOpen(meta, data, callbacks);
+            ticket = request.Ticket;
+            // 先登记新请求，再撤销旧候选。旧候选的完成回调可同步发起更新的请求。
+            CancelCandidates(meta.ExclusiveGroup, request);
+            if (!IsCurrent(key, request))
+            {
+                return null;
+            }
 
-            // ④ 池里有 → 取出复用（最快路径）
             RevUIPanel pooled = _pool.Take(key);
             if (pooled != null)
             {
-                RevUILog.Info($"{key} 命中实例池，直接复用");
-                OpenRequest request = BeginOpen(meta, data, callbacks);
                 request.Panel = pooled;
-                pooled.InternalReuse();
-                if (!IsCurrent(meta.Key, request) || _root == null) return null;
-                Register(pooled);
-                if (request.Data != null) pooled.SetData(request.Data);
-                if (!IsCurrent(meta.Key, request)) return null;
-                bool failed = false;
-                pooled.InternalOpen(() => CompleteOpen(meta.Key, request, pooled), error => { failed = true; FailOpen(meta.Key, request, pooled); });
-                return failed ? null : pooled;
+                ticket.ResourceDisposition = "Panel";
+                ticket.Advance(RevUIOpenStage.Instance);
+                return BuildPanel(request);
             }
 
-            // ⑤ 预制体已经在**资源缓存**里且加载成功（Preload 过 / 编辑器直读 / 之前加载过被留着）
-            //    → 同步实例化。失败句柄也会留在资源缓存里；它不能当作"有可用预制体"，
-            //    否则 Load 会再加一份引用、返回 null，且错误会被误报为"不是 GameObject"。
-            RevResHandle cachedHandle = RevResManager.Get(meta.Root, meta.Name);
-            if (cachedHandle.IsLoaded)
+            RevResHandle cached = RevResManager.Get(meta.Root, meta.Name);
+            if (cached.IsLoaded)
             {
-                // LoadHandle 会为本次面板持有增加一份引用；之后无论校验成功与否都必须归还或交给面板。
-                RevResHandle acquired = RevResManager.LoadHandle<GameObject>(meta.Root, meta.Name, RevResGroup.UI);
-                GameObject cached = acquired.Get<GameObject>();
-                if (!acquired.IsLoaded || cached == null)
-                {
-                    RevUILog.Error(
-                        $"{meta.Key} 的缓存资源不是可用的 GameObject 预制体（原因：{acquired.ErrorReason}）。" +
-                        $"检查面板特性里的 root / name 是否指向了正确的预制体。");
-                    RevResManager.DecRef(acquired);
-                    InvokeAll(callbacks, null);
-                    return null;
-                }
-
-                return InstantiatePanel(meta, data, cached, acquired, callbacks);
+                RevResHandle handle = RevResManager.LoadHandle<GameObject>(meta.Root, meta.Name, RevResGroup.UI);
+                request.Resource = RevResManager.OwnReference(handle, "RevUI/" + meta.PanelType.Name);
+                ticket.ResourceDisposition = "Pending";
+                return ResourceReady(request, deferAssembly);
             }
-
-            // ⑥ 同步调用不能等待；异步调用继续往下走。
-            //    LoadAsync 遇到已完成且无人持有的失败句柄时会移除旧失败项并重新尝试，
-            //    因此修正资源路径后可以直接再次打开，无须等 FlushUnused。
             if (!allowLoad)
             {
-                if (cachedHandle.Key != 0)
-                {
-                    RevUILog.Warning(cachedHandle.IsLoading
-                        ? $"{meta.Key} 的预制体仍在异步加载中；本次同步 Open 不会等待，请使用 OpenAsync。"
-                        : $"{meta.Key} 的缓存资源加载失败（原因：{cachedHandle.ErrorReason}）；请改用 OpenAsync 重试，或先确认资源路径与资源系统已初始化。");
-                    InvokeAll(callbacks, null);
-                }
+                AbortOpen(request, RevUIOpenStatus.Failed, "requires-async");
                 return null;
             }
 
-            OpenRequest pending = BeginOpen(meta, data, callbacks);
-            RevUILog.Info($"开始加载面板 {key}");
-
-            RevResManager.LoadAsync(meta.Root, meta.Name, typeof(GameObject), handle =>
+            // LoadOwnedAsync 在缓存命中时可能同步回调。先认领回调给出的租约，再转交给装配或释放。
+            RevResLease started = RevResManager.LoadOwnedAsync(meta.Root, meta.Name, typeof(GameObject),
+                "RevUI/" + meta.PanelType.Name, resource =>
+                {
+                    if (!IsCurrent(key, request))
+                    {
+                        resource.Dispose();
+                        return;
+                    }
+                    request.Resource = resource;
+                    request.Ticket.ResourceDisposition = "Pending";
+                    ResourceReady(request, deferAssembly || meta.ExclusiveGroup != null);
+                }, RevResGroup.UI);
+            if (IsCurrent(key, request) && ticket.Stage == RevUIOpenStage.Resource)
             {
-                // 用原始句柄释放，资源系统重置后不会误扣同路径新句柄的引用。
-                if (!IsCurrent(key, pending) || _root == null)
-                {
-                    RevResManager.DecRef(handle);
-                    CompleteOpen(key, pending, null);
-                    return;
-                }
-                GameObject prefab = handle.Content as GameObject;
-                if (prefab == null)
-                {
-                    RevUILog.Error(
-                        $"打开 {meta.Key} 失败：预制体加载不到。\n" +
-                        $"  逐条查：① 资源是否在「资源根目录」下、并设了 AB 名；" +
-                        $"② 打包工具「检查」页签有没有报漏标；③ 路径 \"{meta.Root}\" + \"{meta.Name}\" 是否写对。" +
-                        $"（默认资源名就是类名，不一致时用 [RevUIPanel(root, layer, \"名字\")] 写清楚）");
-                    RevResManager.DecRef(handle);
-                    CompleteOpen(key, pending, null);
-                    return;
-                }
-                InstantiatePanel(meta, pending.Data, prefab, handle, pending.Callbacks, pending);
-            }, RevResGroup.UI);
-
+                request.Resource = started;
+                ticket.ResourceDisposition = "Pending";
+            }
             return null;
         }
 
-        /// <summary>
-        /// 实例化 → 装配 → 登记 → 打开。
-        /// ★ 同步路径（预制体已在缓存里）和异步路径（加载回来）共用这一份，避免两条路各写一遍走偏。
-        /// </summary>
-        private RevUIPanel InstantiatePanel(RevUIPanelMeta meta, object data, GameObject prefab, RevResHandle acquired,
-            List<Action<RevUIPanel>> callbacks, OpenRequest request = null)
+        /// <summary>校验已取得的引用；冷互斥页由队列在 UI 根节点的帧预算内装配。</summary>
+        private RevUIPanel ResourceReady(OpenRequest request, bool deferAssembly)
         {
-            request = request ?? BeginOpen(meta, data, callbacks);
-            GameObject go = null;
-            RevUIPanel panel = null;
-            bool tracked = false;
+            if (!IsCurrent(request.Meta.Key, request))
+            {
+                return null;
+            }
+            if (!(request.Resource?.Handle.Content is GameObject))
+            {
+                RevUILog.Warning($"打开 {request.Meta.Key} 失败：预制体未就绪（{request.Resource?.Handle.ErrorReason}）。");
+                AbortOpen(request, RevUIOpenStatus.Failed, "prefab-unavailable");
+                return null;
+            }
+            if (deferAssembly)
+            {
+                request.Ticket.Advance(RevUIOpenStage.Queued);
+                _assemblies.Enqueue(request);
+                return null;
+            }
+            return BuildPanel(request);
+        }
+
+        /// <summary>逐帧装配候选，单次实例化不可拆分，超时则把其余任务留给下一帧。</summary>
+        private void PumpAssemblies()
+        {
+            double started = Time.realtimeSinceStartupAsDouble;
+            int left = _assemblies.Count;
+            int assembled = 0;
+            int limit = Math.Max(1, RevUISetting.MaxAssembliesPerFrame);
+            while (left-- > 0 && assembled < limit && _assemblies.Count != 0)
+            {
+                OpenRequest request = _assemblies.Dequeue();
+                if (IsCurrent(request.Meta.Key, request))
+                {
+                    assembled++;
+                    BuildPanel(request);
+                }
+                if ((Time.realtimeSinceStartupAsDouble - started) * 1000d >= RevUISetting.AssemblyBudgetMs)
+                {
+                    break;
+                }
+            }
+        }
+
+        /// <summary>实例化或复用，再按请求策略进入首屏预备或普通开窗。</summary>
+        private RevUIPanel BuildPanel(OpenRequest request)
+        {
+            RevUIPanelMeta meta = request.Meta;
+            RevUIOpenTicket ticket = request.Ticket;
+            bool handoff = meta.ExclusiveGroup != null;
+            RevUIPanel panel = request.Panel;
+            GameObject instance = null;
             try
             {
-                // ★ 挂到哪：单 Canvas → 对应层挂点；三 Canvas → 静态 / 动态画布（仅 Scene 层）或常用画布的层挂点
-                RevUICanvasType canvasType = ResolveCanvasType(meta);
-                go = UnityEngine.Object.Instantiate(prefab, _root.GetPanelParent(meta.Layer, canvasType), false);
-                go.name = meta.Name;
-
-                // ★ 统一 UI 图层：Camera 模式下相机的 Culling Mask 只认这个图层，漏了就是"面板开了但看不见"
-                RevUIRoot.ApplyUILayer(go);
-
-                panel = go.GetComponent(meta.PanelType) as RevUIPanel;
+                ticket.Advance(RevUIOpenStage.Instance);
+                RevUICanvasType canvas = ResolveCanvasType(meta);
+                Transform parent = _root.GetPanelParent(meta.Layer, canvas);
+                if (handoff)
+                {
+                    // 独立预备容器不占公开层级、遮罩或返回栈。激活和布局可在这里准备，旧页仍接受输入。
+                    request.Staging = CreateStaging(parent);
+                    parent = request.Staging;
+                }
                 if (panel == null)
                 {
-                    RevUILog.Error(
-                        $"面板预制体 {meta.Key} 的根节点上没有 {meta.PanelType.Name} 组件 —— 预制体与脚本对不上。\n" +
-                        $"  默认约定：预制体名 = 面板类名；不一致就在特性里写第三个参数指定资源名。");
-                    RevResManager.DecRef(acquired);      // 只归还本次取得的原始句柄
-                    RevUIRoot.DestroyObject(go);
-                    CompleteOpen(meta.Key, request, null);
+                    if (!(request.Resource?.Handle.Content is GameObject prefab) || prefab == null)
+                    {
+                        AbortOpen(request, RevUIOpenStatus.Failed, "prefab-expired");
+                        return null;
+                    }
+                    instance = UnityEngine.Object.Instantiate(prefab, parent, false);
+                    if (!IsCurrent(meta.Key, request))
+                    {
+                        RevUIRoot.DestroyObject(instance);
+                        return null;
+                    }
+                    instance.name = meta.Name;
+                    RevUIRoot.ApplyUILayer(instance);
+                    panel = instance.GetComponent(meta.PanelType) as RevUIPanel;
+                    if (panel == null)
+                    {
+                        RevUIRoot.DestroyObject(instance);
+                        AbortOpen(request, RevUIOpenStatus.Failed, "missing-panel-component");
+                        return null;
+                    }
+                    request.Panel = panel;
+                    TrackPanelResource(panel, request.Resource);
+                    request.Resource = null;
+                    ticket.ResourceDisposition = "Panel";
+                    panel.CanvasType = canvas;
+                    ticket.Advance(RevUIOpenStage.Binding);
+                    panel.InternalSetup(meta, handoff);
+                }
+                else
+                {
+                    panel.transform.SetParent(parent, false);
+                    panel.CanvasType = canvas;
+                    ticket.Advance(RevUIOpenStage.Binding);
+                    panel.InternalReuse();
+                }
+                if (!IsCurrent(meta.Key, request))
+                {
+                    return null;
+                }
+                RevScope.Detach(panel);
+                request.Scope?.Attach(panel);
+                if (!handoff)
+                {
+                    Register(panel);
+                    request.Published = true;
+                }
+                if (request.Data != null)
+                {
+                    panel.SetData(request.Data);
+                }
+                if (!IsCurrent(meta.Key, request))
+                {
                     return null;
                 }
 
-                request.Panel = panel;
-                TrackPanelResource(panel, acquired);
-                tracked = true;
-                panel.CanvasType = canvasType;
-                panel.InternalSetup(meta);
-                if (!IsCurrent(meta.Key, request) || _root == null) return null;
-                Register(panel);
-                if (request.Data != null) panel.SetData(request.Data);
-                if (!IsCurrent(meta.Key, request)) return null;
-
-                bool failed = false;
-                panel.InternalOpen(() => CompleteOpen(meta.Key, request, panel), error => { failed = true; FailOpen(meta.Key, request, panel); });
-                return failed ? null : panel;
-            }
-            catch (Exception e)
-            {
-                // 实例化、装配也可能失败。请求必须结束，且未交给面板的引用由这里归还。
-                RevLog.Exception(e, $"面板 {meta.Key} 实例化或装配失败", "UI");
-                if (tracked) { FailOpen(meta.Key, request, panel); }
+                ticket.Advance(RevUIOpenStage.FirstScreen);
+                if (handoff)
+                {
+                    PrepareAndCommitAsync(request).Forget();
+                }
                 else
                 {
-                    RevResManager.DecRef(acquired);
-                    if (go != null) { RevUIRoot.DestroyObject(go); }
-                    CompleteOpen(meta.Key, request, null);
+                    panel.InternalOpen(() => OnPanelOpened(request), error => AbortOpen(request, RevUIOpenStatus.Failed, "open-transition-failed"));
                 }
+                return ticket.Status == RevUIOpenStatus.Pending || ticket.Status == RevUIOpenStatus.Succeeded ? panel : null;
+            }
+            catch (Exception error)
+            {
+                if (instance != null && request.Panel == null)
+                {
+                    RevUIRoot.DestroyObject(instance);
+                }
+                RevLog.Exception(error, $"面板 {meta.Key} 装配失败", "UI");
+                AbortOpen(request, RevUIOpenStatus.Failed, "assembly-failed");
                 return null;
             }
         }
 
-        private void FailOpen(string key, OpenRequest request, RevUIPanel panel)
+        /// <summary>新窗的所有内容在隐藏容器中准备；失败只回收这一候选。</summary>
+        private async RevTask PrepareAndCommitAsync(OpenRequest request)
         {
-            if (!IsCurrent(key, request)) { return; }
-            Unregister(panel);
-            try { panel.InternalRelease(); }
-            catch (Exception e) { RevLog.Exception(e, "打开失败后的面板清理异常", "UI"); }
-            finally
+            RevUIPanel panel = request.Panel;
+            try
             {
-                ReleasePanelResource(panel);
-                if (panel != null)
+                bool ready = await panel.InternalPrepareFirstScreenAsync(request.Cancellation.Token);
+                if (!IsCurrent(request.Meta.Key, request))
                 {
-                    if (_root != null) { _root.AddPendingRelease(panel); }
-                    else { RevUIRoot.DestroyObject(panel.gameObject); }
+                    return;
                 }
-                CompleteOpen(key, request, null);
+                if (!ready || panel == null)
+                {
+                    AbortOpen(request, RevUIOpenStatus.Failed, "first-screen-rejected");
+                    return;
+                }
+
+                RevUIOpenTicket ticket = request.Ticket;
+                ticket.FirstScreenReady = true;
+                ticket.Advance(RevUIOpenStage.Commit);
+                _exclusive.TryGetValue(request.Meta.ExclusiveGroup, out RevUIPanel previous);
+                panel.transform.SetParent(request.Staging.parent, false);
+                // 变更父节点可能同步触发业务关闭，不能再发布一个已经失效的候选。
+                if (panel == null || !IsCurrent(request.Meta.Key, request))
+                {
+                    return;
+                }
+                panel.transform.SetAsLastSibling();
+                ReleaseStaging(request);
+                Register(panel);
+                request.Published = true;
+
+                if (previous != null)
+                {
+                    RetirePrevious(previous, ticket);
+                }
+                if (!IsCurrent(request.Meta.Key, request))
+                {
+                    return;
+                }
+
+                // 首屏已交割，入场动效是表现增强。启动失败时保留已就绪的新窗，并记录回退原因。
+                ticket.Advance(RevUIOpenStage.Reveal);
+                panel.InternalRevealPrepared(() => OnPanelOpened(request), error =>
+                {
+                    if (IsCurrent(request.Meta.Key, request))
+                    {
+                        RevUIAnim.StopAllOf(panel);
+                        RevUIAnim.RestoreAllBasesIn(panel);
+                        CompleteOpen(request, panel, RevUIOpenStatus.Succeeded, "reveal-fallback");
+                    }
+                });
             }
+            catch (Exception error)
+            {
+                if (IsCurrent(request.Meta.Key, request))
+                {
+                    RevLog.Exception(error, $"面板 {request.Meta.Key} 首屏准备失败", "UI");
+                    AbortOpen(request, RevUIOpenStatus.Failed, "first-screen-failed");
+                }
+            }
+        }
+
+        /// <summary>在原层创建等尺寸预备容器；内容可布局，透明且禁止指针命中。</summary>
+        private static RectTransform CreateStaging(Transform parent)
+        {
+            var go = new GameObject("[RevUIPreparing]", typeof(RectTransform), typeof(CanvasGroup));
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            CanvasGroup group = go.GetComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.interactable = false;
+            group.blocksRaycasts = false;
+            return rect;
+        }
+
+        /// <summary>从请求撤销容器；失败时也立即停止树上的输入和更新，再延迟销毁。</summary>
+        private static void ReleaseStaging(OpenRequest request)
+        {
+            if (request.Staging != null)
+            {
+                request.Staging.gameObject.SetActive(false);
+                RevUIRoot.DestroyObject(request.Staging.gameObject);
+                request.Staging = null;
+            }
+        }
+
+        /// <summary>安装旧页的退场跟踪并关闭交互；旧页回池或释放时完成原票据的退场部分。</summary>
+        private void RetirePrevious(RevUIPanel previous, RevUIOpenTicket ticket)
+        {
+            ClosingResourceLease lease = GetPanelResourceLease(previous) ?? TrackPanelResource(previous, null);
+            lease.Replacement = ticket;
+            ticket.PreviousPanelKey = previous.PanelKey;
+            ticket.PreviousDisposition = "Closing";
+
+            CanvasGroup gate = previous.GetComponent<CanvasGroup>();
+            if (gate == null)
+            {
+                gate = previous.gameObject.AddComponent<CanvasGroup>();
+            }
+            lease.InputGate = gate;
+            lease.WasInteractable = gate.interactable;
+            lease.WasBlocking = gate.blocksRaycasts;
+            gate.interactable = false;
+            gate.blocksRaycasts = false;
+            Close(previous);
+        }
+
+        /// <summary>打开动画正常完成后发布一次结果。</summary>
+        private void OnPanelOpened(OpenRequest request)
+        {
+            if (IsCurrent(request.Meta.Key, request))
+            {
+                request.Ticket.FirstScreenReady = true;
+                CompleteOpen(request, request.Panel, RevUIOpenStatus.Succeeded, "opened");
+            }
+        }
+
+        /// <summary>使候选失效后释放资源，再通知所有等待者。正在显示的旧页不在候选清单内。</summary>
+        private void AbortOpen(OpenRequest request, RevUIOpenStatus status, string reason)
+        {
+            if (!IsCurrent(request.Meta.Key, request))
+            {
+                return;
+            }
+            _loading.Remove(request.Meta.Key);
+            RevTimer.CancelAllOf(request);
+            request.Cancellation.Cancel();
+
+            RevUIPanel panel = request.Panel;
+            if (panel != null)
+            {
+                if (request.Published)
+                {
+                    Unregister(panel);
+                }
+                panel.InternalAbortHandoff();
+                RevScope.Detach(panel);
+                ReleasePanelResource(panel);
+                panel.gameObject.SetActive(false);
+                if (request.Staging == null || !panel.transform.IsChildOf(request.Staging))
+                {
+                    RevUIRoot.DestroyObject(panel.gameObject);
+                }
+            }
+            request.Resource?.Dispose();
+            request.Resource = null;
+            ReleaseStaging(request);
+            request.Panel = null;
+            request.Data = null;
+            if (request.Ticket.ResourceDisposition != "None")
+            {
+                request.Ticket.ResourceDisposition = "Released";
+            }
+            FinishTicket(request.Ticket, status, reason);
+            InvokeAll(request.Callbacks, null);
         }
 
         /// <summary>
@@ -362,12 +616,9 @@ namespace Revolution
             return RevUILayerUtil.ResolveCanvasType(architecture, meta.CanvasType, meta.Layer);
         }
 
+        /// <summary>把已准备的面板放进公开索引，作用域在装配时已绑定。</summary>
         private void Register(RevUIPanel panel)
         {
-            // ★ 作用域：有域开着，就把面板登记到域上 —— 域关闭时框架会替你把它关掉（RevScope 第 2 步）。
-            //   没有域时什么也不做（行为与没有作用域系统时一致）。池里复用的实例每次打开都会重新登记（"最近一次的域说了算"）。
-            RevScope.AttachSilently(panel);
-
             _opened[panel.PanelKey] = panel;
             _openOrder.Add(panel);
 
@@ -377,46 +628,24 @@ namespace Revolution
             _layoutDirty = true;
         }
 
-        private void CloseExclusive(RevUIPanelMeta meta)
+        /// <summary>撤销同组未发布候选，当前显示的面板等到新页首屏通过才退场。</summary>
+        private void CancelCandidates(string group, OpenRequest except = null)
         {
-            if (meta.ExclusiveGroup == null) return;
-
-            if (_exclusive.TryGetValue(meta.ExclusiveGroup, out RevUIPanel current) &&
-                current != null && current.State != RevUIPanelState.Closed)
-                Close(current);
-
-            // _exclusive 只记录已经打开的面板；正在异步加载的面板还没登记在那里，所以单纯关闭当前面板找不到它。
-            // 若此时又打开同组面板，旧加载完成后也会打开，结果同一互斥组同时出现两个界面。先取消旧请求并用 null 通知等待者，
-            // 让最新打开请求成为该组唯一有效的面板；旧资源加载即使晚到也不能再显示旧面板。
-            var pending = new List<KeyValuePair<string, OpenRequest>>();
-            foreach (KeyValuePair<string, OpenRequest> pair in _loading)
+            if (group == null)
             {
-                if (pair.Key == meta.Key || pair.Value.Meta == null ||
-                    pair.Value.Meta.ExclusiveGroup != meta.ExclusiveGroup) continue;
-                pending.Add(pair);
+                return;
             }
-
-            for (int i = 0; i < pending.Count; i++)
+            var pending = new List<OpenRequest>();
+            foreach (OpenRequest request in _loading.Values)
             {
-                KeyValuePair<string, OpenRequest> pair = pending[i];
-                OpenRequest request = pair.Value;
-                if (!IsCurrent(pair.Key, request)) continue;
-
-                _loading.Remove(pair.Key);
-                InvokeAll(request.Callbacks, null);
-                request.Callbacks.Clear();
-
-                // OnBindView 可能在 Register（登记到打开表）之前调用 ShutdownAll 或打开同组新面板。
-                // 这时实例还不在普通打开列表里，常规清理找不到它；但创建时已经增加了 prefab 资源引用，必须单独归还并销毁。
-                if (request.Panel != null && !_openOrder.Contains(request.Panel))
+                if (request != except && !request.Published && request.Meta.ExclusiveGroup == group)
                 {
-                    if (_root != null) _root.AddPendingRelease(request.Panel);
-                    else
-                    {
-                        ReleasePanelResource(request.Panel);
-                        RevUIRoot.DestroyObject(request.Panel.gameObject);
-                    }
+                    pending.Add(request);
                 }
+            }
+            foreach (OpenRequest request in pending)
+            {
+                AbortOpen(request, RevUIOpenStatus.Superseded, "superseded");
             }
         }
 
@@ -432,10 +661,20 @@ namespace Revolution
         // 关闭
         // ============================================================
 
-        /// <summary>关闭一个面板（回池还是销毁由它的 CacheMode 决定）</summary>
+        /// <summary>取消候选或关闭已发布面板，正式退场依缓存策略回池或销毁。</summary>
         public bool Close(RevUIPanel panel)
         {
-            if (panel == null) return false;
+            if (panel == null || panel.PanelKey == null)
+            {
+                return false;
+            }
+
+            if (panel.PanelKey != null && _loading.TryGetValue(panel.PanelKey, out OpenRequest candidate)
+                && candidate.Panel == panel && !candidate.Published)
+            {
+                AbortOpen(candidate, RevUIOpenStatus.Cancelled, "closed");
+                return true;
+            }
 
             // 防重入：正在关 / 已经关的，再来一次直接忽略（业务不必自己防抖）
             if (panel.State == RevUIPanelState.Closing || panel.State == RevUIPanelState.Closed) return false;
@@ -466,11 +705,24 @@ namespace Revolution
                     return;
                 }
 
-                if (canPool)
+                if (canPool && !_pool.IsFull(panel.PanelKey))
                 {
-                    _pool.Put(panel);
-                    RevUILog.Info($"{panel.PanelKey} 已回实例池（下次打开不再加载）");
-                    return;
+                    if (lease.InputGate != null)
+                    {
+                        lease.InputGate.interactable = lease.WasInteractable;
+                        lease.InputGate.blocksRaycasts = lease.WasBlocking;
+                        lease.InputGate = null;
+                    }
+                    if (_pool.Put(panel))
+                    {
+                        if (lease.Replacement != null)
+                        {
+                            lease.Replacement.PreviousDisposition = "Pooled";
+                            lease.Replacement = null;
+                        }
+                        RevUILog.Info($"{panel.PanelKey} 已回实例池（下次打开不再加载）");
+                        return;
+                    }
                 }
 
                 _root.AddPendingRelease(panel);        // 延迟一帧销毁：避免在事件/遍历里删对象
@@ -478,26 +730,34 @@ namespace Revolution
 
             if (opening != null)
             {
-                InvokeAll(opening.Callbacks, null);
-                opening.Callbacks.Clear();
+                CompleteOpen(opening, null, RevUIOpenStatus.Cancelled, "closed");
             }
             return true;
         }
 
-        /// <summary>按类型关闭（没开着返回 false）</summary>
+        /// <summary>按类型关闭；尚无可见实例时也能取消在途开窗。</summary>
         public bool Close(Type panelType)
         {
             RevUIPanel panel = Get(panelType);
-            return panel != null && Close(panel);
+            if (panel != null)
+            {
+                return Close(panel);
+            }
+            if (RevUIPanelMeta.TryResolve(panelType, out RevUIPanelMeta meta, out _) && _loading.TryGetValue(meta.Key, out OpenRequest request))
+            {
+                AbortOpen(request, RevUIOpenStatus.Cancelled, "closed");
+                return true;
+            }
+            return false;
         }
 
-        /// <summary>关闭所有（可按层级）；返回关掉的数量</summary>
+        /// <summary>关闭指定层并取消该层候选，返回处理的请求和面板数。</summary>
         public int CloseAll(RevUILayer? layer = null)
         {
-            // ★ 先快照再遍历：Close 会改 _openOrder（"遍历中删除"是王者文档点名的坑）
+            // 先保存面板快照，关闭会修改打开索引。
             RevUIPanel[] snapshot = _openOrder.ToArray();
 
-            int closed = 0;
+            int closed = CancelUnpublished(request => !layer.HasValue || request.Meta.Layer == layer.Value, "layer-closed");
             for (int i = 0; i < snapshot.Length; i++)
             {
                 if (layer.HasValue && snapshot[i].Layer != layer.Value) continue;
@@ -507,13 +767,13 @@ namespace Revolution
             return closed;
         }
 
-        /// <summary>关闭某个互斥组当前占用的面板</summary>
+        /// <summary>关闭互斥组当前页及在途候选，防止离开后回调重新开页。</summary>
         public int CloseGroup(string group)
         {
             if (string.IsNullOrEmpty(group)) return 0;
-            if (!_exclusive.TryGetValue(group, out RevUIPanel panel) || panel == null) return 0;
-
-            return Close(panel) ? 1 : 0;
+            _exclusive.TryGetValue(group, out RevUIPanel panel);
+            int cancelled = CancelUnpublished(request => request.Meta.ExclusiveGroup == group, "group-closed");
+            return panel != null && Close(panel) ? cancelled + 1 : cancelled;
         }
 
         /// <summary>返回：关掉"最晚打开、且参与返回栈"的那个面板</summary>
@@ -645,9 +905,13 @@ namespace Revolution
         // 每帧维护（由 RevUIRoot 驱动）
         // ============================================================
 
-        /// <summary>根节点每帧调一次：只在"打开/关闭/置顶"之后才真的重排一次（脏标记）</summary>
+        /// <summary>先按帧预算装配，然后在渲染前更新脏层级。</summary>
         internal void OnRootTick()
         {
+            if (_root != null && _assemblies.Count != 0)
+            {
+                PumpAssemblies();
+            }
             if (!_layoutDirty || _root == null) return;
 
             _layoutDirty = false;
@@ -721,26 +985,28 @@ namespace Revolution
         // 会话维护（进 Play / 退出）
         // ============================================================
 
-        /// <summary>
-        /// 新一轮运行开始（进 Play 前）时清空索引。
-        /// ★ 关掉"域重载"反复进 Play 时，静态实例还在，但场景里的面板早就没了 —— 必须清干净。
-        /// </summary>
+        /// <summary>新会话归还上一次的请求和面板租约，同时清空开窗历史。</summary>
         internal void ResetForNewSession()
         {
             // Domain Reload 关闭时面板已经随上一轮场景销毁，但这些 prefab 引用计数仍是静态状态。
             ReleaseAllPanelResourceLeases();
             _panelResourceLeases.Clear();
             _closingResources.Clear();
-            foreach (OpenRequest request in _loading.Values) request.Callbacks.Clear();
+            _shuttingDown = true;
+            CancelPendingOpens();
+            _shuttingDown = false;
             _opened.Clear();
             _loading.Clear();
             _openOrder.Clear();
             _exclusive.Clear();
             _pool.Clear();
+            _openTickets.Clear();
+            _finishedTickets.Clear();
             _root = null;
             _layoutDirty = false;
         }
 
+        /// <summary>创建当前 UI 根节点；旧根丢失时先撤销那一代请求。</summary>
         private void EnsureReady()
         {
             if (_root != null) return;                     // Unity 的假 null：根节点被销毁后这里会走重建
@@ -752,7 +1018,9 @@ namespace Revolution
 
             // 根节点没了 = 换了一轮运行（或第一次用）：索引里那些实例已经不存在了，清掉
             _opened.Clear();
-            _loading.Clear();
+            _shuttingDown = true;
+            CancelPendingOpens();
+            _shuttingDown = false;
             _openOrder.Clear();
             _exclusive.Clear();
             _pool.Clear();
@@ -808,14 +1076,15 @@ namespace Revolution
             return count;
         }
 
-        private ClosingResourceLease TrackPanelResource(RevUIPanel panel, RevResHandle handle)
+        /// <summary>登记面板接管的资源租约；池中复用继续持有原引用。</summary>
+        private ClosingResourceLease TrackPanelResource(RevUIPanel panel, RevResLease resource)
         {
             if (ReferenceEquals(panel, null)) return null;
 
             int instanceId = panel.GetInstanceID();
             if (_panelResourceLeases.TryGetValue(instanceId, out ClosingResourceLease existing)) return existing;
 
-            var lease = new ClosingResourceLease(panel, handle);
+            var lease = new ClosingResourceLease(panel, resource);
             _panelResourceLeases.Add(instanceId, lease);
             return lease;
         }
@@ -833,7 +1102,7 @@ namespace Revolution
             if (lease != null) ReleasePanelResource(lease);
         }
 
-        /// <summary>归还面板接管的具名引用，阻止晚到回调重复释放。</summary>
+        /// <summary>归还面板接管的租约，并更新等待这次退场的开窗历史。</summary>
         private void ReleasePanelResource(ClosingResourceLease lease)
         {
             if (lease == null || lease.Released)
@@ -841,7 +1110,12 @@ namespace Revolution
                 return;
             }
             lease.Released = true;
-            lease.Resource.Dispose();
+            lease.Resource?.Dispose();
+            if (lease.Replacement != null)
+            {
+                lease.Replacement.PreviousDisposition = "Released";
+                lease.Replacement = null;
+            }
         }
 
         private void ReleaseAllPanelResourceLeases()
@@ -857,11 +1131,10 @@ namespace Revolution
             panel.InternalRelease();
 
             string key = panel.PanelKey;
-            if (key != null && _loading.TryGetValue(key, out OpenRequest request) && request.Panel == panel)
+            if (key != null && _loading.TryGetValue(key, out OpenRequest request) && ReferenceEquals(request.Panel, panel))
             {
-                _loading.Remove(key);
-                InvokeAll(request.Callbacks, null);
-                request.Callbacks.Clear();
+                ReleasePanelResource(panel);
+                AbortOpen(request, RevUIOpenStatus.Cancelled, "panel-destroyed");
             }
 
             Unregister(panel);
@@ -934,35 +1207,143 @@ namespace Revolution
         // 小工具
         // ============================================================
 
+        /// <summary>登记请求与所属域，互斥页有界等待首屏和转场结束。</summary>
         private OpenRequest BeginOpen(RevUIPanelMeta meta, object data, List<Action<RevUIPanel>> callbacks)
         {
-            var request = new OpenRequest { Meta = meta, Data = data };
-            if (callbacks != null) request.Callbacks.AddRange(callbacks);
+            var request = new OpenRequest { Meta = meta, Data = data, Scope = RevScope.Current, Ticket = NewTicket(meta.Key) };
+            if (callbacks != null)
+            {
+                request.Callbacks.AddRange(callbacks);
+            }
             _loading[meta.Key] = request;
+            if (meta.ExclusiveGroup != null)
+            {
+                RevTimer.After(RevUISetting.HandoffTimeoutSeconds, () => OnHandoffTimeout(request),
+                    RevTimeDomain.Unscaled, owner: request);
+            }
             return request;
         }
 
+        /// <summary>仅在这一代请求仍登记时接受异步完成。</summary>
         private bool IsCurrent(string key, OpenRequest request)
             => _loading.TryGetValue(key, out OpenRequest current) && ReferenceEquals(current, request);
 
-        private void CompleteOpen(string key, OpenRequest request, RevUIPanel panel)
+        /// <summary>首屏超时撤销候选；交割后超时则结束表现并保留新页。</summary>
+        private void OnHandoffTimeout(OpenRequest request)
         {
-            if (IsCurrent(key, request)) _loading.Remove(key);
-            InvokeAll(request.Callbacks, panel);
-            request.Callbacks.Clear();
-        }
-
-        private void CancelPendingOpens()
-        {
-            var requests = new List<OpenRequest>(_loading.Values);
-            _loading.Clear();
-            foreach (OpenRequest request in requests)
+            if (!IsCurrent(request.Meta.Key, request))
             {
-                InvokeAll(request.Callbacks, null);
-                request.Callbacks.Clear();
+                return;
+            }
+            if (request.Published && request.Panel != null)
+            {
+                RevUIAnim.StopAllOf(request.Panel);
+                RevUIAnim.RestoreAllBasesIn(request.Panel);
+                CompleteOpen(request, request.Panel, RevUIOpenStatus.Succeeded, "reveal-timeout");
+            }
+            else
+            {
+                AbortOpen(request, RevUIOpenStatus.Cancelled, "handoff-timeout");
             }
         }
 
+        /// <summary>从在途索引摘除，清掉定时器，再通知票据及普通等待者。</summary>
+        private void CompleteOpen(OpenRequest request, RevUIPanel panel, RevUIOpenStatus status, string reason)
+        {
+            if (IsCurrent(request.Meta.Key, request))
+            {
+                _loading.Remove(request.Meta.Key);
+            }
+            RevTimer.CancelAllOf(request);
+            FinishTicket(request.Ticket, status, reason);
+            InvokeAll(request.Callbacks, panel);
+        }
+
+        /// <summary>退出、根节点更换等全局清理，释放在途候选的引用和回调。</summary>
+        private void CancelPendingOpens()
+        {
+            var requests = new List<OpenRequest>(_loading.Values);
+            foreach (OpenRequest request in requests)
+            {
+                AbortOpen(request, RevUIOpenStatus.Cancelled, "ui-shutdown");
+            }
+            _assemblies.Clear();
+        }
+
+        /// <summary>取消匹配的候选，迭代快照以容许取消回调同步提交新请求。</summary>
+        private int CancelUnpublished(Predicate<OpenRequest> matches, string reason)
+        {
+            var requests = new List<OpenRequest>();
+            foreach (OpenRequest request in _loading.Values)
+            {
+                if (!request.Published && matches(request))
+                {
+                    requests.Add(request);
+                }
+            }
+            foreach (OpenRequest request in requests)
+            {
+                AbortOpen(request, RevUIOpenStatus.Cancelled, reason);
+            }
+            return requests.Count;
+        }
+
+        /// <summary>作用域退场时，清掉尚未出现在可见面板索引中的候选。</summary>
+        internal int CancelScopeOpens(RevScopeHandle scope)
+        {
+            return CancelUnpublished(request => request.Scope == scope, "scope-closed");
+        }
+
+        /// <summary>按 ID 查询当前和最近的请求，结果不持有面板实例。</summary>
+        internal bool TryGetOpen(Guid id, out RevUIOpenTicket ticket)
+        {
+            return _openTickets.TryGetValue(id, out ticket);
+        }
+
+        /// <summary>取消指定的未交付请求。完成交割后的关闭继续使用面板生命周期入口。</summary>
+        internal bool CancelOpen(Guid id)
+        {
+            OpenRequest found = null;
+            foreach (OpenRequest request in _loading.Values)
+            {
+                if (request.Ticket.Id == id && !request.Published)
+                {
+                    found = request;
+                    break;
+                }
+            }
+            if (found == null)
+            {
+                return false;
+            }
+            AbortOpen(found, RevUIOpenStatus.Cancelled, "caller-cancelled");
+            return true;
+        }
+
+        /// <summary>在可能同步完成时，也先为新票据登记唯一标识。</summary>
+        private RevUIOpenTicket NewTicket(string panelKey)
+        {
+            var ticket = new RevUIOpenTicket(panelKey);
+            _openTickets.Add(ticket.Id, ticket);
+            return ticket;
+        }
+
+        /// <summary>只淘汰已经归档的请求，最后唤醒票据等待者。</summary>
+        private void FinishTicket(RevUIOpenTicket ticket, RevUIOpenStatus status, string reason)
+        {
+            if (ticket.Status != RevUIOpenStatus.Pending)
+            {
+                return;
+            }
+            _finishedTickets.Enqueue(ticket.Id);
+            if (_finishedTickets.Count > 32)
+            {
+                _openTickets.Remove(_finishedTickets.Dequeue());
+            }
+            ticket.Finish(status, reason);
+        }
+
+        /// <summary>隔离每个旧 API 等待者的回调错误，并清掉引用。</summary>
         private static void InvokeAll(List<Action<RevUIPanel>> callbacks, RevUIPanel panel)
         {
             if (callbacks == null) return;

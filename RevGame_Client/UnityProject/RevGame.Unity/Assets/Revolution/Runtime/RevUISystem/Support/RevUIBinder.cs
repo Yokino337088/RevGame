@@ -6,7 +6,7 @@
 // 【它做两件事，正好对应"两代框架"的优点】
 //   ① 强类型字段绑定：面板上写 [RevBind] private Button _btnClose; 框架按"字段名 ↔ 节点名"自动找到并赋值。
 //      好处是"能不能拿到控件"在**第一次运行就明确报错**，不会像手写 Find("Panel/Panel/Button") 那样
-//      在美术改了层级之后变成一个运行时空引用（王者文档里把硬编码 Find 列为反面教材 ★☆☆☆☆）。
+//      在美术改了层级之后留下难定位的运行时空引用。
 //   ② 按节点名自动事件分发：不想写绑定字段时，重写 OnClick(节点名) 就行 —— 这是原框架（唐老师框架）
 //      最方便的地方，保留。两种方式可以混用。
 //
@@ -75,13 +75,13 @@ namespace Revolution
         // 绑定入口
         // ============================================================
 
-        /// <summary>按绑定计划装配一个面板 / Part：先绑字段，再装事件分发</summary>
-        public static void Bind(MonoBehaviour target, Transform root, RevUIBindPlan plan, IRevUIPartHost partHost)
+        /// <summary>按计划绑定字段并安装事件。预备页对必需字段采用严格失败，保留仍有效的旧页。</summary>
+        public static void Bind(MonoBehaviour target, Transform root, RevUIBindPlan plan, IRevUIPartHost partHost, bool strict = false)
         {
             if (target == null || root == null || plan == null) return;
 
             for (int i = 0; i < plan.Fields.Length; i++)
-                BindField(target, root, plan.Fields[i], partHost);
+                BindField(target, root, plan.Fields[i], partHost, strict);
 
             // 自定义控件扩展（RegisterAutoEvent）不依赖面板是否重写了回调，注册了就必须扫描。
             if (plan.WantsAnyEvent || Extensions.Count > 0) InstallEvents(target, root, plan);
@@ -91,12 +91,13 @@ namespace Revolution
         // ① 字段绑定
         // ============================================================
 
-        private static void BindField(MonoBehaviour target, Transform root, RevUIBindEntry entry, IRevUIPartHost partHost)
+        /// <summary>绑定一个必需字段；交接期间的失败传播到当前开窗请求。</summary>
+        private static void BindField(MonoBehaviour target, Transform root, RevUIBindEntry entry, IRevUIPartHost partHost, bool strict)
         {
             // 只允许 Component / GameObject：别的类型绑不了（也是开发期该立刻发现的问题）
             if (entry.FieldType != typeof(GameObject) && !typeof(Component).IsAssignableFrom(entry.FieldType))
             {
-                RevUILog.Error(
+                ReportFieldFailure(strict,
                     $"{target.GetType().Name}.{entry.FieldName} 标了 [RevBind]，但类型是 {entry.FieldType.Name} —— " +
                     $"只能绑定 Component（Button/Text/Image/…）或 GameObject。");
                 return;
@@ -105,7 +106,7 @@ namespace Revolution
             Transform node = FindNode(root, entry, out int sameNameCount);
             if (node == null)
             {
-                RevUILog.Error(
+                ReportFieldFailure(strict,
                     $"{target.GetType().Name}.{entry.FieldName}（想要 {entry.FieldType.Name}）找不到节点：\n" +
                     $"  找的是：{(string.IsNullOrEmpty(entry.Path) ? $"名字 = \"{entry.NodeName}\"（按字段名推出来的）" : $"显式路径 = \"{entry.Path}\"")}\n" +
                     $"  根节点 {root.name} 下现有节点：{ChildNames(root)}\n" +
@@ -121,7 +122,7 @@ namespace Revolution
             object value = FindComponent(node, entry.FieldType, out string why);
             if (value == null)
             {
-                RevUILog.Error($"{target.GetType().Name}.{entry.FieldName}：{why}");
+                ReportFieldFailure(strict, $"{target.GetType().Name}.{entry.FieldName}：{why}");
                 return;
             }
 
@@ -132,7 +133,7 @@ namespace Revolution
             }
             catch (Exception e)
             {
-                RevUILog.Error($"{target.GetType().Name}.{entry.FieldName} 赋值失败：{e.Message}");
+                ReportFieldFailure(strict, $"{target.GetType().Name}.{entry.FieldName} 赋值失败：{e.Message}");
                 return;
             }
 
@@ -146,6 +147,16 @@ namespace Revolution
         }
 
         /// <summary>按"显式路径"或"节点名"找节点；同名多个时返回第一个并回传个数</summary>
+        /// <summary>准备期间回滚本次打开，普通面板仍按配置记录字段错误。</summary>
+        private static void ReportFieldFailure(bool strict, string message)
+        {
+            if (strict)
+            {
+                throw new InvalidOperationException(message);
+            }
+            RevUILog.Error(message);
+        }
+
         private static Transform FindNode(Transform root, RevUIBindEntry entry, out int sameNameCount)
         {
             sameNameCount = 0;

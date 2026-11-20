@@ -63,13 +63,13 @@ namespace Revolution
         // 回收步骤（第 2 / 3 / 6 / 7 步）
         // ============================================================
 
-        /// <summary>第 2 步：关闭挂在这个域上的面板（界面系统在登记面板时已经把它们记到域上）。</summary>
+        /// <summary>第 2 步：先取消域的未交付请求，再关闭已登记的面板。</summary>
         private static int CloseUi(RevScopeHandle node)
         {
-            if (node.Owners.Count == 0) { return 0; }
+            int closed = RevUIManager.Instance.CancelScopeOpens(node);
+            if (node.Owners.Count == 0) { return closed; }
 
             object[] owners = node.SnapshotOwners();
-            int closed = 0;
             for (int i = 0; i < owners.Length; i++)
             {
                 // 注意用 is 判类型：Unity 对象销毁后 == null，但类型判断仍然成立；Close 内部会自己处理"已销毁 / 已关闭"

@@ -253,6 +253,7 @@ namespace RevGame.Flow
                 IsTransitioning = false;
             }
         }
+        /// <summary>装配围棋域、棋盘与首屏菜单，交割通过之后才撤掉场景遮挡。</summary>
         private async RevTask EnterPvpAsync()
         {
             _loading = await RevUI.OpenAsync<LoadingPanel>();
@@ -276,7 +277,10 @@ namespace RevGame.Flow
             Change(GameScreen.Pvp);
             PvpPanel panel = await RevUI.OpenAsync<PvpPanel>();
             await panel.PrepareAsync();
-            panel.ShowDestination(PvpDestination);
+            if (!await panel.ShowDestinationAsync(PvpDestination))
+            {
+                throw new InvalidOperationException("九路围棋首屏菜单未完成交割");
+            }
             ThrowIfDisposed();
             Report(1, "九路围棋已就绪");
             await _loading.FadeOutAsync();

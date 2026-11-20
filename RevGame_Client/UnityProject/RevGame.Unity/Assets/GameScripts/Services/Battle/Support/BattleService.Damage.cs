@@ -226,7 +226,7 @@ namespace RevGame.Services
         /// 多段伤害逐次结算，不复用过期计算。
         ///
         /// 把"计算"（EvaluateDamage）和"结算"（本方法）拆开、所有扣血都收敛到这一个出口，
-        /// 正是王者荣耀等成熟项目的做法：护盾、减伤、复活、吸血这些规则只写这一处，
+        /// 护盾、减伤、复活和吸血的处理集中在这一处，
         /// 任何伤害来源都不会漏掉其中某一环，也不存在绕过扣血直接改血量的旁路。
         /// </summary>
         private int ResolveDamage(DamageRequest request)

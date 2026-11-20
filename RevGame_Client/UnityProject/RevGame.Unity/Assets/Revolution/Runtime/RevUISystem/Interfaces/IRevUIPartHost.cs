@@ -4,15 +4,15 @@
 // 位置：Runtime\RevUISystem\Interfaces\
 //
 // 【为什么 Part 只认这个接口，而不是直接认 RevUIPanel】
-//   Part 要能被**多个面板复用**（王者的 From/Part 就是靠这个解耦：同一个商店页签单元
-//   给背包、商城、活动三个面板用）。如果 Part 里写 `BagPanel host`，它就再也不能给
+//   Part 可以被多个面板复用，例如同一个商品单元放进背包、商城和活动。
+//   如果 Part 里写 `BagPanel host`，它就再也不能给
 //   别的面板用了 —— 所以 Part 只持有这个接口，只能做"任何宿主都支持"的三件事。
 //
 // 【Part 与宿主 / Part 与 Part 的通信纪律】
 //   · Part → 宿主：调 RequestClose() / NotifyPartChanged() / 通过宿主暴露的方法；
 //   · Part → Part：**不直接耦合**，经宿主中转（NotifyPartChanged() → 宿主的 OnPartChanged）；
 //   · 宿主 → Part：宿主直接调 Part 的公开方法（宿主当然知道自己有哪些 Part）。
-//   这条纪律来自王者的《05-完整链路与事件系统》：界面之间不直接通信，否则依赖会织成一张网。
+//   子组件通过宿主交换意图，宿主负责协调当前可见界面。
 // ============================================================
 using UnityEngine;
 

@@ -98,6 +98,30 @@ namespace Revolution
             return source.Task;
         }
 
+        /// <summary>返回可等待的开窗票据；重量级面板可请求在帧预算内装配已缓存的预制体。</summary>
+        public static RevUIOpenTicket OpenTracked<T>(bool deferAssembly = false) where T : RevUIPanel
+        {
+            return RevUIManager.Instance.OpenTracked(typeof(T), null, deferAssembly);
+        }
+
+        /// <summary>提交带初始数据的开窗请求。同键在途请求共享票据，采用最近一次非空数据。</summary>
+        public static RevUIOpenTicket OpenTracked<T, TData>(TData data, bool deferAssembly = false) where T : RevUIPanel<TData>
+        {
+            return RevUIManager.Instance.OpenTracked(typeof(T), data, deferAssembly);
+        }
+
+        /// <summary>按开窗 ID 查询在途及最近的阶段耗时与资源收尾。</summary>
+        public static bool TryGetOpen(System.Guid id, out RevUIOpenTicket ticket)
+        {
+            return RevUIManager.Instance.TryGetOpen(id, out ticket);
+        }
+
+        /// <summary>撤销尚未交付的开窗，包括同键合并进去的等待者。</summary>
+        public static bool CancelOpen(System.Guid id)
+        {
+            return RevUIManager.Instance.CancelOpen(id);
+        }
+
         private static void Complete<T>(RevTaskCompletionSource<T> source, RevUIPanel panel) where T : RevUIPanel
         {
             if (panel is T typed)

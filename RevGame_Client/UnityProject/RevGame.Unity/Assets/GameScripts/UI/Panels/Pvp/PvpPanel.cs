@@ -167,7 +167,10 @@ namespace RevGame.Pvp
         // 持有双眼和正式表情图集的租约，关闭面板时成对释放。
         private readonly List<GameSpriteAtlasService.ScopedAtlasLease> _matchAtlases = new List<GameSpriteAtlasService.ScopedAtlasLease>();
         private GamePortraitScope _matchPortraits;
-        private Action _confirmedAction;
+        /// <summary>棋局确认窗口由当前 PvP 域持有，串行处理不同来源的确认。</summary>
+        private RevPopupQueue _confirmationQueue;
+        /// <summary>当前确认窗口的唯一请求，过期按钮不能完成下一项。</summary>
+        private RevPopupRequest _visibleConfirmation;
         private bool _opening;
         private int _leaseVersion;
         private string _feedback = string.Empty;
@@ -189,6 +192,7 @@ namespace RevGame.Pvp
             }
         }
 
+        /// <summary>初始化这一轮 PvP 视图以及随域结束的确认队列。</summary>
         protected override void OnOpen()
         {
             _opening = true;
@@ -197,7 +201,8 @@ namespace RevGame.Pvp
             _seenStatus = "";
             _leaseVersion++;
             _feedback = string.Empty;
-            _confirmedAction = null;
+            _confirmationQueue = new RevPopupQueue();
+            _visibleConfirmation = null;
             Show(_confirm, false);
             ResetMatchFeedback();
             // 文字每秒五次足够读秒显示；网络收包由独立的 PvP Logic 轮询，不能依赖面板是否显示。
@@ -430,11 +435,36 @@ namespace RevGame.Pvp
             RefreshView();
         }
 
-        private void Ask(string text, Action action)
+        /// <summary>对局确认排队，仅玩家确认且面板仍属同一次打开时执行业务。</summary>
+        private void Ask(string key, string text, Action action, int priority = 0)
         {
-            _confirmedAction = action;
-            Set(_confirmText, text);
-            Show(_confirm, true);
+            EnqueueConfirmation(key, text, action, priority, "Battle", 10).Forget();
+        }
+
+        /// <summary>显示和隐藏沿用现有确认控件。返回调度结果供运行期和验收检查。</summary>
+        private async RevTask<RevPopupStatus> EnqueueConfirmation(string key, string text, Action action,
+            int priority, string phase, double waitSeconds)
+        {
+            int version = _leaseVersion;
+            RevPopupRequest request = _confirmationQueue.Enqueue(key, phase, priority, waitSeconds, shown =>
+            {
+                _visibleConfirmation = shown;
+                Set(_confirmText, text);
+                Show(_confirm, true);
+            }, hidden =>
+            {
+                if (_visibleConfirmation == hidden)
+                {
+                    _visibleConfirmation = null;
+                    Show(_confirm, false);
+                }
+            });
+            RevPopupStatus status = await request.WaitAsync();
+            if (status == RevPopupStatus.Confirmed && action != null && _opening && _leaseVersion == version)
+            {
+                Run(action);
+            }
+            return status;
         }
 
         [RevButtonClick("pass")]
@@ -443,10 +473,11 @@ namespace RevGame.Pvp
             Run(() => Service.Submit(GoAction.Pass));
         }
 
+        /// <summary>提交认输确认，玩家确定后重新走业务提交。</summary>
         [RevButtonClick("resign")]
         private void Resign()
         {
-            Ask("确认认输并结束这局围棋？", () => Service.Submit(GoAction.Resign));
+            Ask("resign", "确认认输并结束这局围棋？", () => Service.Submit(GoAction.Resign));
         }
 
         [RevButtonClick("hint")]
@@ -497,12 +528,13 @@ namespace RevGame.Pvp
             Run(() => { Service.LeaveRoom(); ShowDestination("Entry"); });
         }
 
+        /// <summary>对局期间排队确认离场；无进行中的棋局则直接返回。</summary>
         [RevButtonClick("back")]
         private void Back()
         {
             if (Service.Core != null && Service.Core.Phase != GoPhase.Finished)
             {
-                Ask("确认离开当前对局并返回大厅？\n对手将收到离开提示。", ReturnHome);
+                Ask("leave", "确认离开当前对局并返回大厅？\n对手将收到离开提示。", ReturnHome, priority: 1);
             }
             else
             {
@@ -520,23 +552,18 @@ namespace RevGame.Pvp
             }
         }
 
+        /// <summary>完成当前票据；队列先隐藏确认窗口，再通知业务。</summary>
         [RevButtonClick("yes")]
         private void ConfirmYes()
         {
-            Action action = _confirmedAction;
-            _confirmedAction = null;
-            Show(_confirm, false);
-            if (action != null)
-            {
-                Run(action);
-            }
+            _confirmationQueue?.TryComplete(_visibleConfirmation, true);
         }
 
+        /// <summary>为当前票据提交拒绝，允许队列处理下一项。</summary>
         [RevButtonClick("no")]
         private void ConfirmNo()
         {
-            _confirmedAction = null;
-            Show(_confirm, false);
+            _confirmationQueue?.TryComplete(_visibleConfirmation, false);
         }
 
         private static void Set(Text target, string value)
@@ -555,13 +582,15 @@ namespace RevGame.Pvp
             }
         }
 
+        /// <summary>关闭已显示界面时先撤销确认与挂载，再归还棋盘和图集。</summary>
         protected override void OnClose()
         {
             CloseMenus();
             RevUI.Close<PvpNoticePanel>();
             _opening = false;
             _leaseVersion++;
-            _confirmedAction = null;
+            _confirmationQueue?.Dispose();
+            _confirmationQueue = null;
             RevTimer.CancelAllOf(this);
             RevUIAnim.StopAllOf(this);
             ResetMatchFeedback();
@@ -580,6 +609,15 @@ namespace RevGame.Pvp
                 atlas.Dispose();
             }
             _matchAtlases.Clear();
+        }
+
+        /// <summary>直接销毁界面时也撤销确认；等待方根据版本停止执行业务。</summary>
+        protected override void OnRelease()
+        {
+            _opening = false;
+            _leaseVersion++;
+            _confirmationQueue?.Dispose();
+            _confirmationQueue = null;
         }
     }
 }

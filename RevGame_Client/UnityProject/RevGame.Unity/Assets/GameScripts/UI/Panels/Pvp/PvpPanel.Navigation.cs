@@ -10,7 +10,11 @@ namespace RevGame.Pvp
     {
         private bool _battleVisible, _battleTransition;
         private string _seenStatus = "";
+        /// <summary>切菜单或开始对局都会更新版本，旧开窗票据不能重写当前菜单。</summary>
+        private int _menuVersion;
         public string Menu { get; private set; } = "Entry";
+        /// <summary>这一轮菜单请求的时间线，供程序判断是否已经交付。</summary>
+        internal RevUIOpenTicket MenuTicket { get; private set; }
         public bool BattleVisible { get { return _battleVisible; } }
         internal bool BattleReady => _battleVisible && !_battleTransition;
 
@@ -21,11 +25,28 @@ namespace RevGame.Pvp
             _invite.transform.SetAsLastSibling();
         }
 
+        /// <summary>只撤下仍挂在关闭页的邀请控件，避免延迟关闭移走新页已接管的控件。</summary>
+        internal void UnmountInvitation(Transform previousParent)
+        {
+            if (_invite.transform.parent == previousParent)
+            {
+                MountInvitation(null);
+            }
+        }
+
+        /// <summary>按钮意图转发。当前菜单在目标页实际交割后更新。</summary>
         public void ShowDestination(string destination)
         {
-            Menu = destination;
+            ShowDestinationAsync(destination).Forget();
+        }
+
+        /// <summary>走记录式开窗并等待页面交割。用于大厅切场首屏和后续菜单切换。</summary>
+        internal async RevTask<bool> ShowDestinationAsync(string destination)
+        {
+            int version = ++_menuVersion;
             if (destination == "Computer" || destination == "Local")
             {
+                Menu = destination;
                 if (destination == "Computer")
                 {
                     Service.StartComputer();
@@ -42,29 +63,47 @@ namespace RevGame.Pvp
                     _battleVisible = true;
                     Menu = "Battle";
                 }
-                return;
+                return true;
             }
-            CloseMenus();
-            if (destination == "Server")
+
+            RevUIOpenTicket ticket = destination switch
             {
-                RevUI.Open<PvpServerPanel>(panel => panel.RefreshView());
-            }
-            else if (destination == "Lan")
+                "Server" => RevUI.OpenTracked<PvpServerPanel>(),
+                "Lan" => RevUI.OpenTracked<PvpLanPanel>(deferAssembly: true),
+                _ => RevUI.OpenTracked<PvpEntryPanel>()
+            };
+            MenuTicket = ticket;
+            RevUIOpenStatus result = await ticket.WaitAsync();
+            if (!_opening || version != _menuVersion)
             {
-                RevUI.Open<PvpLanPanel>(panel => panel.RefreshView());
+                return false;
             }
-            else
+            if (result != RevUIOpenStatus.Succeeded)
             {
-                RevUI.Open<PvpEntryPanel>(panel => panel.RefreshView());
+                if (result == RevUIOpenStatus.Failed)
+                {
+                    PvpNoticePanel.ShowMessage("页面打开失败，可继续使用当前菜单");
+                }
+                return false;
             }
+            RevUI.Close<PvpAgentSettingsPanel>();
+            Menu = destination == "Server" || destination == "Lan" ? destination : "Entry";
+            PvpLanPanel lan = RevUI.Get<PvpLanPanel>();
+            if (lan != null && Menu == "Lan")
+            {
+                MountInvitation(lan.transform);
+            }
+            return true;
         }
 
+        /// <summary>把业务状态转换为可见页面和弹窗准入，再刷新当前对局视图。</summary>
         private void TickPresentation()
         {
             if (!_opening)
             {
                 return;
             }
+            _confirmationQueue?.SetPhase(_battleVisible && !_battleTransition ? "Battle" : "Menu");
             if (_board != null && Service.Core != null && !_battleVisible && !_battleTransition && !RevServices.GetRequired<GameFlow>().IsTransitioning)
             {
                 BeginBattlePresentation();
@@ -149,12 +188,13 @@ namespace RevGame.Pvp
             }
         }
 
-        private static void CloseMenus()
+        /// <summary>退出菜单时同步撤销候选，已关闭页面的回包不能覆盖棋局。</summary>
+        private void CloseMenus()
         {
+            ++_menuVersion;
+            MenuTicket = null;
             RevUI.Close<PvpAgentSettingsPanel>();
-            RevUI.Close<PvpEntryPanel>();
-            RevUI.Close<PvpServerPanel>();
-            RevUI.Close<PvpLanPanel>();
+            RevUI.CloseGroup("PvpMenu");
         }
 
         [RevButtonClick("accept")]

@@ -54,7 +54,7 @@ namespace Revolution
         public RevUICanvasType CanvasType = RevUICanvasType.Common;
 
         /// <summary>
-        /// 互斥组名：同组面板"打开新的就自动关掉旧的"（如所有背包页签共用一个组）。
+        /// 互斥组名：候选页准备首屏后交接，再关闭旧页（如所有背包页签共用一个组）。
         /// 留空 = 不互斥。
         /// </summary>
         public string ExclusiveGroup;
@@ -102,10 +102,9 @@ namespace Revolution
     ///     [RevBind]                private Text   _title;         // 同上，类型自动适配（TMP 也一样，只要写对类型）
     ///     [RevBind("Top/Title")]   private Text   _title2;        // 节点重名 / 层次深时，用显式路径
     ///
-    /// 【为什么不学王者做"代码生成"】
-    ///   王者的绑定代码是生成的（字段名 = 节点名，UI_BINDING 占位）。生成物的好处是编译期就报错，
-    ///   代价是多一道生成流程、美术改节点要重新生成。这里用**特性 + 反射（每类型只做一次，结果缓存）**
-    ///   换掉生成流程：写法一样短，且改节点名后第一次运行就会明确报"找不到节点 xxx"（不会静默变 null）。
+    /// 【绑定计划】
+    ///   字段和路径由特性声明。框架按类型构建并缓存绑定计划，
+    ///   实例装配时再次检查节点及组件是否存在。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class RevBindAttribute : Attribute

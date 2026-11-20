@@ -38,10 +38,13 @@ namespace Revolution
         private const string Empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
         private const string TargetProperties = "\"id\":{\"type\":\"string\"},\"objectPath\":{\"type\":\"string\"},\"scene\":{\"type\":\"string\"}";
         private static string Schema(string fields) => "{\"type\":\"object\",\"properties\":{" + fields + "},\"additionalProperties\":false}";
+        /// <summary>注册开发态框架观测及 UI 交互，包括由开窗票据提供的只读时间线。</summary>
         internal static void Register()
         {
             RevRuntimeAutomation.Register("runtime.state", "场景、帧、域、服务、计时器及框架 UI 状态", Empty, State, true);
             RevRuntimeAutomation.Register("ui.dump", "UGUI/TMP 控件、文本、可交互与遮挡状态", Schema("\"query\":{\"type\":\"string\"},\"offset\":{\"type\":\"integer\",\"minimum\":0},\"limit\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1000},\"includeInactive\":{\"type\":\"boolean\"}"), Dump, true);
+            RevRuntimeAutomation.Register("ui.open-state", "按开窗 ID 查询装配、首屏、终态和退场资源",
+                Schema("\"id\":{\"type\":\"string\"}"), OpenState, true);
             RevRuntimeAutomation.Register("ui.click", "通过 EventSystem 注入指针事件，拒绝遮挡/禁用目标", Schema(TargetProperties), Click);
             RevRuntimeAutomation.Register("ui.raycast", "只读查询实际 EventSystem 射线命中顺序及点击接收者",
                 Schema(TargetProperties + ",\"screenPoint\":{\"type\":\"array\",\"items\":{\"type\":\"number\"},\"minItems\":2,\"maxItems\":2},\"offset\":{\"type\":\"integer\",\"minimum\":0},\"limit\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1000}"), InspectRaycast, true);
@@ -193,6 +196,30 @@ namespace Revolution
             return handler != null && handler == ExecuteEvents.GetEventHandler<IPointerClickHandler>(target);
         }
 
+        /// <summary>只读取得最近开窗的阶段计时和释放状态，无效或淘汰的 ID 返回 found=false。</summary>
+        private static object OpenState(string json)
+        {
+            var options = JsonUtility.FromJson<Options>(json);
+            if (!Guid.TryParse(options.id, out Guid id) || !RevUI.TryGetOpen(id, out RevUIOpenTicket ticket))
+            {
+                return new Dictionary<string, object> { ["found"] = false };
+            }
+            var durations = new Dictionary<string, object>();
+            foreach (RevUIOpenStage stage in Enum.GetValues(typeof(RevUIOpenStage)))
+            {
+                durations[stage.ToString()] = ticket.DurationMs(stage);
+            }
+            return new Dictionary<string, object>
+            {
+                ["found"] = true, ["id"] = ticket.Id.ToString(), ["panel"] = ticket.PanelKey,
+                ["stage"] = ticket.Stage.ToString(), ["status"] = ticket.Status.ToString(), ["reason"] = ticket.Reason,
+                ["firstScreen"] = ticket.FirstScreenReady, ["resource"] = ticket.ResourceDisposition,
+                ["previousPanel"] = ticket.PreviousPanelKey, ["previousDisposition"] = ticket.PreviousDisposition,
+                ["durationMs"] = durations
+            };
+        }
+
+        /// <summary>列出实际存在的可选控件及其射线命中情况。</summary>
         public static object Dump(string json)
         {
             var p = JsonUtility.FromJson<Options>(json); p.CheckPage();

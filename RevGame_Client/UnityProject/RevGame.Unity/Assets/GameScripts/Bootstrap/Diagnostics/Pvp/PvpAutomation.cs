@@ -50,6 +50,7 @@ namespace RevGame.Pvp
         {
             RegisterPresentation();
             RegisterRoomSnapshots();
+            RegisterUiScale();
             RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "用独立测试槽保存假Key，覆盖平台存储和安卓TXT；跨Play后调用verify", Empty,
                 _ => PvpAgentChecks.PrepareStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-storage-verify", "验证独立测试槽跨Play恢复、损坏拒绝与清除，不返回凭据", Empty,
@@ -236,6 +237,7 @@ namespace RevGame.Pvp
         /// <summary>Bootstrap销毁时对称注销；先清理夹具，再撤掉能力，避免异常退出后静态检查继续占端口。</summary>
         public static void Unregister()
         {
+            ClearUiScaleChecks();
             StopRoomSnapshotFixture();
             _kcpOpponent?.Dispose();
             _kcpOpponent = null;

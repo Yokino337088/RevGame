@@ -4,10 +4,7 @@
 // 位置：Runtime\RevUISystem\Core\
 //
 // 【设计目标：既要"分层清楚"，又不让人为一个界面写一堆脚本】
-//   王者的 UI 是 View / Logic / System / BusinessLogic 四层 + TS 热更桥接：
-//   分层很干净，但一个界面要写好几个文件、还要跨语言通信。本框架的取舍是——
-//
-//     ★ 分层靠【钩子职责】约束，而不是靠【拆类】：
+//     界面表现与业务通过声明好的钩子与数据契约协作：
 //       所有东西都在这一个面板类里，但每个钩子只许干一件事 ——
 //
 //          OnBindView()     只做"表现装配"：拿控件、挂交互（不许写业务规则、不许发请求）
@@ -15,7 +12,6 @@
 //          OnClick / OnOpen / OnClose / OnDataChanged…  业务规则：改数据、请求数据、刷新
 //
 //       于是"表现 / 数据 / 逻辑"在同一份代码里物理分开，却没有多出来的类与文件。
-//       这正是王者《06-架构抽离与复用》给的结论：**用结构约束行为，而不是靠注释约定**。
 //
 // 【一个面板的完整寿命】
 //     创建  Instantiate → InternalSetup（绑定控件 → OnBindView → OnInit）
@@ -25,8 +21,7 @@
 //     销毁  OnRelease → Destroy
 //
 // 【★ 一行防泄漏】关闭时框架自动执行 RevEvent.RemoveAllByOwner(this)。
-//   只要你在 OnBindView 里用 `owner: this` 注册过事件，就不必再手写"解绑清单"——
-//   这正是王者靠纪律在维持、而这里靠机制保证的那件事。
+//   业务事件用面板作为 owner 注册，关闭时统一回收。
 //
 // 【怎么声明我自己的预制体在哪】写在类上，业务侧调用时一行路径都不用填：
 //     [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal)]     // 资源名默认 = 类名 BagPanel
@@ -72,6 +67,8 @@ namespace Revolution
         // 宿主关闭/复用时失效，异步 Part 创建不能跨越一次打开生命周期。
         internal int LifetimeVersion { get; private set; }
         private bool _released;
+        /// <summary>预备面板是否已经执行 OnOpen；取消时用它判断是否需补做 OnClose。</summary>
+        private bool _handoffOpened;
 
         /// <summary>是否正被上层的遮罩盖住（被盖住时通常要暂停动画/定时器/音效）</summary>
         public bool IsCovered { get; private set; }
@@ -103,6 +100,9 @@ namespace Revolution
 
         /// <summary>每次打开时调用（包含"从池里复用后再打开"），适合放"这次要展示什么"的准备动作</summary>
         protected virtual void OnOpen() { }
+
+        /// <summary>互斥页在隐藏时等待首屏必需的内容。返回 false 保留旧页，跨帧操作应检查取消令牌。</summary>
+        protected virtual RevTask<bool> PrepareFirstScreenAsync(RevCancellationToken token) => RevTask<bool>.FromResult(true);
 
         /// <summary>
         /// 从实例池里被取出、即将再次打开时调用。
@@ -258,7 +258,7 @@ namespace Revolution
         /// <summary>
         /// 刷新身上所有 Part。
         /// ★ 需要显式调用：框架不会"每次刷新面板就顺带刷新所有 Part"——
-        ///   那会让一个页签的数据变化带出整屏重绘（王者文档里点过这条性能坑）。
+        ///   由宿主决定是否需要重画整个子树。
         /// </summary>
         public void RefreshParts()
         {
@@ -273,23 +273,97 @@ namespace Revolution
         // 框架内部（业务不要调用）
         // ============================================================
 
-        /// <summary>装配：绑定控件 → OnBindView → OnInit。由管理器在实例创建后立即调用。</summary>
-        internal void InternalSetup(RevUIPanelMeta meta)
+        /// <summary>绑定控件并初始化。交接候选页让错误回到管理器，确保未就绪的页无法替换旧页。</summary>
+        internal void InternalSetup(RevUIPanelMeta meta, bool strict = false)
         {
             Meta = meta;
             ViewRect = transform as RectTransform;
             State = RevUIPanelState.None;
 
             RevUIBindPlan plan = RevUIBindPlan.Get(GetType(), typeof(RevUIPanel));
-            RevUILog.Guard($"{GetType().Name}.绑定控件", () => RevUIBinder.Bind(this, transform, plan, this));
+            RunSetupHook("绑定控件", () => RevUIBinder.Bind(this, transform, plan, this, strict), strict);
             if (_released) return;
 
             // ★ 到这里，[RevBind] 字段已经有值了 —— 所以 OnBindView 里可以放心用
-            RevUILog.Guard($"{GetType().Name}.OnBindView", OnBindView);
+            RunSetupHook(nameof(OnBindView), OnBindView, strict);
             // OnBindView 是业务回调，可能在里面调用 ShutdownAll。清理后这个面板已经标记为释放；
             // 若此处继续调用 OnInit，业务会初始化一个已经退出管理流程、即将销毁的界面，因此检查后立即结束装配。
             if (_released) return;
-            RevUILog.Guard($"{GetType().Name}.OnInit", OnInit);
+            RunSetupHook(nameof(OnInit), OnInit, strict);
+        }
+
+        /// <summary>交接校验要求装配错误可传播；普通打开继续沿用面板日志隔离。</summary>
+        private void RunSetupHook(string name, Action hook, bool strict)
+        {
+            if (strict)
+            {
+                hook();
+            }
+            else
+            {
+                RevUILog.Guard($"{GetType().Name}.{name}", hook);
+            }
+        }
+
+        /// <summary>在预备容器内准备首屏。同步激活期间也可能重入关闭，因此每个回调之后复核令牌。</summary>
+        internal async RevTask<bool> InternalPrepareFirstScreenAsync(RevCancellationToken token)
+        {
+            State = RevUIPanelState.Opened;
+            ++LifetimeVersion;
+            gameObject.SetActive(true);
+            if (_released || token.IsCancelled)
+            {
+                return false;
+            }
+            _handoffOpened = true;
+            OnOpen();
+            if (_released || token.IsCancelled)
+            {
+                return false;
+            }
+            OnRefreshView();
+            if (_released || token.IsCancelled)
+            {
+                return false;
+            }
+            OpenParts();
+            return !_released && !token.IsCancelled && await PrepareFirstScreenAsync(token);
+        }
+
+        /// <summary>新页已交付首屏，显示原有入场动画，收尾回调仍校验该次打开的生命周期。</summary>
+        internal void InternalRevealPrepared(Action onOpened, Action<Exception> onFailed)
+        {
+            _handoffOpened = false;
+            int version = LifetimeVersion;
+            RunTransition(PlayOpenTransition, () =>
+            {
+                if (this != null && version == LifetimeVersion && IsOpened)
+                {
+                    PlayPanelAnimation(ShowAnimation, () =>
+                    {
+                        if (this != null && version == LifetimeVersion && IsOpened)
+                        {
+                            onOpened?.Invoke();
+                        }
+                    });
+                }
+            }, onFailed, "交接入场转场");
+        }
+
+        /// <summary>候选页未交割时，对称关闭已开始的生命周期，再回收定时器和异步 Part。</summary>
+        internal void InternalAbortHandoff()
+        {
+            if (_handoffOpened)
+            {
+                _handoffOpened = false;
+                State = RevUIPanelState.Closing;
+                ++LifetimeVersion;
+                RevUIPart.CancelCreates(this);
+                CloseParts();
+                RevUILog.Guard($"{GetType().Name}.OnClose", OnClose);
+            }
+            RevTimer.CancelAllOf(this);
+            InternalRelease();
         }
 
         /// <summary>打开：转场结束 → OnOpen → 重画 → 打开所有 Part → 显示动画 → 回调</summary>
