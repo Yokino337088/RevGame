@@ -13,9 +13,9 @@
 #     · PACKAGE_VERSION.txt（本文件）
 # ============================================================
 
-commit      = 83cdd0397115f32949b1995c3dbb42d1d2a5378b
-short       = 83cdd03
-date        = 2026-11-20 12:19
-source      = codex/scene-resource-trace-package（Revolution 仓库 package 分支）
-previous    = 7988dad089a9e21bf4c3ebdc88402ac71cbcf405
+commit      = 32c4d8a7c20adb8b995153258af5c17a57641ffa
+short       = 32c4d8a
+date        = 2026-11-20 12:26
+source      = upstream/package（Revolution 仓库 package 分支）
+previous    = 83cdd0397115f32949b1995c3dbb42d1d2a5378b
 updated_by  = tools/sync-framework.ps1
