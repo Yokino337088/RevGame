@@ -51,6 +51,8 @@ namespace Revolution
         public string TargetState { get; }
         /// <summary>本次请求的资源来源和生命周期快照，随交接 ID 查询。</summary>
         public RevSceneHandoffResources Resources { get; } = new RevSceneHandoffResources();
+        /// <summary>本次交接的阶段耗时及可选帧与内存采样，和终态一起冻结。</summary>
+        public RevSceneHandoffPerformance Performance { get; }
         /// <summary>最近进入的工作阶段。交接结束后固定在最后执行到的阶段。</summary>
         public RevSceneHandoffStage Stage { get; internal set; }
         /// <summary>当前是否已有终态。终态发布后立即可读。</summary>
@@ -58,13 +60,14 @@ namespace Revolution
         /// <summary>不可变的终态。交接进行中为空。</summary>
         public RevSceneHandoffResult Result { get; private set; }
 
-        /// <summary>由追踪器接单时创建，保存来源和目标，避免依赖之后会变化的全局状态。</summary>
-        internal RevSceneHandoff(string sourceScene, string targetScene, string sourceState, string targetState)
+        /// <summary>由追踪器接单时创建，保存来源和目标并开启阶段计时。</summary>
+        internal RevSceneHandoff(string sourceScene, string targetScene, string sourceState, string targetState, bool samplePerformance)
         {
             SourceScene = sourceScene;
             TargetScene = targetScene;
             SourceState = sourceState;
             TargetState = targetState;
+            Performance = new RevSceneHandoffPerformance(samplePerformance);
         }
 
         /// <summary>在 Unity 主线程等待终态。业务失败或取消也以结果返回，完成后可重复等待。</summary>
@@ -125,11 +128,24 @@ namespace Revolution
         private readonly Queue<RevSceneHandoff> _recent = new Queue<RevSceneHandoff>(HistoryCapacity);
         /// <summary>唯一在途请求，终态发布前清除，以便等待方可以立即申请下一次交接。</summary>
         private RevSceneHandoff _active;
+        /// <summary>本追踪器是否为新请求采集阶段帧间隔和内存，创建时决定。</summary>
+        private readonly bool _samplePerformance;
+
+        /// <summary>创建只记录阶段时长的追踪器。</summary>
+        public RevSceneHandoffTracker() : this(false)
+        {
+        }
+
+        /// <summary>创建追踪器。调用方可按运行环境选择是否启用帧与内存诊断。</summary>
+        public RevSceneHandoffTracker(bool samplePerformance)
+        {
+            _samplePerformance = samplePerformance;
+        }
 
         /// <summary>最近一次接单的请求。拒绝重入时保持原值，尚未接单时为空。</summary>
         public RevSceneHandoff Latest { get; private set; }
 
-        /// <summary>接收一个交接请求。已有在途请求时返回空，不创建新 ID，也不占历史名额。</summary>
+        /// <summary>接收一个交接请求并开始计时。已有在途请求时返回空，保留原 ID 和采样。</summary>
         public RevSceneHandoff TryBegin(string targetScene, string sourceState, string targetState)
         {
             if (_active != null)
@@ -142,7 +158,7 @@ namespace Revolution
             {
                 _recent.Dequeue();
             }
-            _active = new RevSceneHandoff(RevScene.CurrentName, targetScene, sourceState, targetState);
+            _active = new RevSceneHandoff(RevScene.CurrentName, targetScene, sourceState, targetState, _samplePerformance);
             Latest = _active;
             _recent.Enqueue(_active);
             return _active;
@@ -163,18 +179,19 @@ namespace Revolution
             return false;
         }
 
-        /// <summary>更新当前请求的阶段。已结案、其它请求或倒退的阶段会被拒绝。</summary>
+        /// <summary>更新当前请求的阶段和计时边界。已结案、其它请求或非法阶段会被拒绝。</summary>
         public bool TryAdvance(RevSceneHandoff handoff, RevSceneHandoffStage stage)
         {
-            if (handoff == null || _active != handoff || stage < handoff.Stage)
+            if (handoff == null || _active != handoff || stage < handoff.Stage || stage > RevSceneHandoffStage.Revealing)
             {
                 return false;
             }
             handoff.Stage = stage;
+            handoff.Performance.Advance(stage);
             return true;
         }
 
-        /// <summary>业务清理并解除自己的互斥后调用。只有当前请求可发布一次终态，旧回调无法覆盖结果。</summary>
+        /// <summary>业务清理并解除自己的互斥后调用。结束采样后发布唯一终态，旧回调无法覆盖结果。</summary>
         public bool TryComplete(RevSceneHandoff handoff, RevSceneHandoffStatus status, string actualState,
             bool cleanupSucceeded, string reasonCode = null, string detail = null)
         {
@@ -183,6 +200,7 @@ namespace Revolution
                 return false;
             }
 
+            handoff.Performance.Finish();
             var result = new RevSceneHandoffResult(handoff, status, actualState, cleanupSucceeded, reasonCode, detail);
             _active = null;
             handoff.Publish(result);

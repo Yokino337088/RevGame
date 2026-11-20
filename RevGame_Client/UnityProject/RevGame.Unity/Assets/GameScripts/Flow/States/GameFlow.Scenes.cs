@@ -26,7 +26,11 @@ namespace RevGame.Flow
         public const string BattleSceneName = "GameScene";
 
         /// <summary>当前流程的交接历史。由 GameFlow 写入，观察方使用句柄查询和等待。</summary>
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        private readonly RevSceneHandoffTracker _sceneHandoffs = RevScene.CreateHandoffTracker(samplePerformance: true);
+#else
         private readonly RevSceneHandoffTracker _sceneHandoffs = RevScene.CreateHandoffTracker();
+#endif
         /// <summary>尚未完成退场清理的六章交接。返回大厅后冻结其资源快照并清空。</summary>
         private RevSceneHandoff _battleHandoff;
 
@@ -46,7 +50,7 @@ namespace RevGame.Flow
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>开发态查询的可选条件。空请求 ID 使用最近一次场景交接。</summary>
         [Serializable]
-        private sealed class SceneResourceQuery
+        private sealed class SceneHandoffQuery
         {
             /// <summary>要查询的场景交接 ID。</summary>
             public string requestId;
@@ -54,28 +58,36 @@ namespace RevGame.Flow
             public string snapshot;
         }
 
-        /// <summary>注册仅查询资源引用的开发态入口，随 GameFlow 释放注销。</summary>
-        private void RegisterSceneResourceAutomation()
+        /// <summary>注册按交接 ID 查询资源和性能的只读开发态入口，随 GameFlow 注销。</summary>
+        private void RegisterSceneHandoffAutomation()
         {
             const string schema = "{\"type\":\"object\",\"properties\":{\"requestId\":{\"type\":\"string\"},"
                 + "\"snapshot\":{\"type\":\"string\",\"enum\":[\"current\",\"ready\",\"exit\"]}},\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("game.scene-handoff.resources", "按交接 ID 查询预加载来源、首屏等待、当前或历史持有者",
                 schema, QuerySceneHandoffResources, readOnly: true, owner: this);
+            const string performanceQuery = "{\"type\":\"object\",\"properties\":{\"requestId\":{\"type\":\"string\"}},\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("game.scene-handoff.performance", "按交接 ID 查询阶段耗时、帧间隔和 Unity 已分配内存峰值",
+                performanceQuery, QuerySceneHandoffPerformance, readOnly: true, owner: this);
+        }
+
+        /// <summary>解析可选的交接 ID，缺省取最近一次，显式无效的 ID 不回落查询。</summary>
+        private bool TryResolveSceneHandoff(string requestId, out RevSceneHandoff handoff)
+        {
+            handoff = LatestSceneHandoff;
+            if (string.IsNullOrEmpty(requestId))
+            {
+                return handoff != null;
+            }
+            return Guid.TryParse(requestId, out Guid id) && TryGetSceneHandoff(id, out handoff);
         }
 
         /// <summary>返回实时或历史资源快照。已淘汰的 ID 或尚未采集的边界会标记 available=false。</summary>
         private object QuerySceneHandoffResources(string json)
         {
-            var query = JsonUtility.FromJson<SceneResourceQuery>(json);
-            RevSceneHandoff handoff = LatestSceneHandoff;
-            if (!string.IsNullOrEmpty(query.requestId)
-                && (!Guid.TryParse(query.requestId, out Guid id) || !TryGetSceneHandoff(id, out handoff)))
+            var query = JsonUtility.FromJson<SceneHandoffQuery>(json);
+            if (!TryResolveSceneHandoff(query.requestId, out RevSceneHandoff handoff))
             {
                 return new Dictionary<string, object> { ["available"] = false, ["requestId"] = query.requestId };
-            }
-            if (handoff == null)
-            {
-                return new Dictionary<string, object> { ["available"] = false };
             }
 
             RevSceneHandoffResources trace = handoff.Resources;
@@ -103,6 +115,42 @@ namespace RevGame.Flow
                     ["holdsBundleReference"] = row.HoldsBundleReference,
                     ["releasedAfterExit"] = query.snapshot == "exit"
                         ? (bool?)(row.ReferenceCount == 0 && !row.HoldsBundleReference) : null
+                }).ToArray()
+            };
+        }
+
+        /// <summary>读取终态时冻结的性能摘要；在途时仅返回请求、当前阶段和未就绪标志。</summary>
+        private object QuerySceneHandoffPerformance(string json)
+        {
+            var query = JsonUtility.FromJson<SceneHandoffQuery>(json);
+            if (!TryResolveSceneHandoff(query.requestId, out RevSceneHandoff handoff))
+            {
+                return new Dictionary<string, object> { ["available"] = false, ["requestId"] = query.requestId };
+            }
+
+            RevSceneHandoffPerformance performance = handoff.Performance;
+            return new Dictionary<string, object>
+            {
+                ["available"] = handoff.IsCompleted,
+                ["requestId"] = handoff.RequestId.ToString(),
+                ["sourceScene"] = handoff.SourceScene,
+                ["targetScene"] = handoff.TargetScene,
+                ["status"] = handoff.Result?.Status.ToString(),
+                ["stage"] = handoff.Stage.ToString(),
+                ["samplesEnabled"] = performance.SamplesEnabled,
+                ["totalDurationMs"] = performance.TotalDurationMs,
+                ["stages"] = performance.Stages?.Select(row => new Dictionary<string, object>
+                {
+                    ["stage"] = row.Stage.ToString(),
+                    ["durationMs"] = row.DurationMs,
+                    ["frameSamples"] = row.FrameSamples,
+                    ["droppedFrameSamples"] = row.DroppedFrameSamples,
+                    ["frameP50Ms"] = row.FrameP50Ms,
+                    ["frameP95Ms"] = row.FrameP95Ms,
+                    ["frameP99Ms"] = row.FrameP99Ms,
+                    ["frameMaxMs"] = row.FrameMaxMs,
+                    ["memorySamples"] = row.MemorySamples,
+                    ["peakAllocatedBytes"] = row.PeakAllocatedBytes
                 }).ToArray()
             };
         }
@@ -300,6 +348,7 @@ namespace RevGame.Flow
                 }
                 await RevTask.Yield();
                 ThrowIfDisposed();
+                // 清理段截至租约归还、专用池销毁与同步 AB 整理。FlushUnused 发出的 Unity 异步资源清扫沿用原行为。
                 RevResManager.FlushUnused();
                 cleanupSucceeded = true;
                 _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.Revealing);

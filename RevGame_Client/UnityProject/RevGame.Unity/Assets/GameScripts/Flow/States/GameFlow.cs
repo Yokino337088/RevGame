@@ -43,12 +43,12 @@ namespace RevGame.Flow
                 _states.Add(screen, new FlowState(this, screen));
             }
         }
-        /// <summary>由Bootstrap唯一调用；启动本身也经过遮挡/资源/场景/画面四道就绪门禁。</summary>
+        /// <summary>由 Bootstrap 唯一调用，注册开发态交接查询并走大厅的完整就绪流程。</summary>
         public async RevTask StartAsync()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             RegisterGalAutomation();
-            RegisterSceneResourceAutomation();
+            RegisterSceneHandoffAutomation();
 #endif
             RevEvent.AddEventListener<bool>(Events.GameFinished, OnFinished, owner: this);
             RevEvent.AddEventListener<BossDefeatedInfo>(Events.BossDefeated, OnBossDefeated, priority: 100, owner: this);

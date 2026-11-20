@@ -31,6 +31,10 @@ namespace RevGame.Editor
 
         /// <summary>本轮记录的第一章进场 ID，供自动化工单完成后继续查询资源。</summary>
         public static string LastBattleHandoffId { get; private set; }
+        /// <summary>当前性能夹具的交接 ID，按每轮入场、退场顺序保存。</summary>
+        private static readonly List<string> PerformanceRequestIds = new List<string>(6);
+        /// <summary>工单结束时返回所有采样 ID，调用方可逐个复查原始摘要。</summary>
+        public static string[] LastPerformanceRequestIds => PerformanceRequestIds.ToArray();
 
         /// <summary>旧资源夹具的接单入口，继续保存它原来使用的 Temp 证据。</summary>
         public static void Begin(bool testFailures = true)
@@ -58,8 +62,19 @@ namespace RevGame.Editor
             RunAsync(testFailures: false, captureEvidence: false, cycles: 1, checkResources: true).Forget();
         }
 
-        /// <summary>从冷启动大厅跑指定次数往返，可选检查交接资源或故障恢复，最后恢复大厅和积分隔离。</summary>
-        private static async RevTask RunAsync(bool testFailures, bool captureEvidence, int cycles = 3, bool checkResources = false)
+        /// <summary>在同一次真实 AB Play 中按相同操作进入第一章三次，分别保留首次和两次重复往返的指标。</summary>
+        public static void BeginHandoffPerformanceCheck()
+        {
+            if (!RevResBootstrap.UseABInEditor || LastResult != "未运行")
+            {
+                throw new InvalidOperationException("性能对比需要从新的真实 AB Play 会话开始");
+            }
+            RunAsync(testFailures: false, captureEvidence: false, cycles: 3, checkResources: true, checkPerformance: true).Forget();
+        }
+
+        /// <summary>从冷启动大厅跑指定次数往返，可选检查资源、性能或失败恢复，最后恢复大厅和积分隔离。</summary>
+        private static async RevTask RunAsync(bool testFailures, bool captureEvidence, int cycles = 3, bool checkResources = false,
+            bool checkPerformance = false)
         {
             if (!Application.isPlaying || LastResult == "运行中")
             {
@@ -67,6 +82,7 @@ namespace RevGame.Editor
             }
             LastResult = "运行中";
             LastBattleHandoffId = null;
+            PerformanceRequestIds.Clear();
             _assertions = 0;
             Report.Clear();
             string mode = RevResBootstrap.UseABInEditor ? "AB" : "Direct";
@@ -82,6 +98,11 @@ namespace RevGame.Editor
                 Require(flow.Screen == GameScreen.Home && RevScene.CurrentName == GameFlow.StartSceneName, "启动交付StartScene首页");
                 CheckImages("冷启动首页");
                 Require(UnityEngine.Object.FindObjectOfType<BoardView>() == null, "大厅没有战斗棋盘实例");
+                if (checkPerformance)
+                {
+                    // 首次入场前验证战斗资源确实没有由夹具加载，重复轮次沿用相同清理约束。
+                    RequireLobbyCleanup(flow);
+                }
                 if (captureEvidence)
                 {
                     ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Home.png");
@@ -118,7 +139,7 @@ namespace RevGame.Editor
                     Require(battle.PreparationElapsed < 0.3f && !battle.PreparationGranted, "淡出结束后才启动准备三秒");
                     CheckImages("战斗" + cycle);
 
-                    if (cycle == 0)
+                    if (cycle == 0 || checkPerformance)
                     {
                         if (captureEvidence)
                         {
@@ -151,6 +172,12 @@ namespace RevGame.Editor
                     if (checkResources)
                     {
                         RequireResourceTrace(flow, enter, exit);
+                    }
+                    if (checkPerformance)
+                    {
+                        // 两个请求使用各自的真实阶段；回执在离开采样窗后生成。
+                        RequirePerformance(flow, enter, cycle, "进入");
+                        RequirePerformance(flow, exit, cycle, "返回");
                     }
                     Report.Add("往返" + (cycle + 1) + "：" + enter.RequestId + " → " + exit.RequestId);
                     CheckImages("返回首页" + cycle);
@@ -191,7 +218,7 @@ namespace RevGame.Editor
                 }
 
                 outcome = "通过：" + mode + "，" + _assertions + "条断言；冷启动UI、" + cycles + "次场景往返、遮挡/分帧/准备计时"
-                    + (testFailures ? "、2次失败回退" : "") + "\n" + string.Join("\n", Report);
+                    + (testFailures ? "、2次失败回退" : "") + (checkPerformance ? "、冷进与两次重入的分段采样" : "") + "\n" + string.Join("\n", Report);
             }
             catch (Exception error)
             {
@@ -224,6 +251,39 @@ namespace RevGame.Editor
             {
                 File.WriteAllText("Temp/SceneTransitionChecks-" + mode + ".txt", LastResult);
             }
+        }
+
+        /// <summary>核对按 ID 取得的是已冻结的阶段结果，验证时长闭合、样本完整和单位有效。</summary>
+        private static void RequirePerformance(GameFlow flow, RevSceneHandoff handoff, int cycle, string direction)
+        {
+            Require(flow.TryGetSceneHandoff(handoff.RequestId, out RevSceneHandoff found) && ReferenceEquals(found, handoff),
+                "性能查询定位真实交接 ID");
+            RevSceneHandoffPerformance profile = found.Performance;
+            Require(profile.SamplesEnabled && profile.Stages != null && profile.TotalDurationMs > 0,
+                "交接终态前已冻结性能摘要");
+            var stages = profile.Stages.ToDictionary(segment => segment.Stage);
+            Require(stages.Count == 6 && Math.Abs(stages.Values.Sum(segment => segment.DurationMs) - profile.TotalDurationMs.Value) < 0.01,
+                "各阶段无重叠且耗时与整次交接一致");
+            foreach (RevSceneHandoffStage stage in new[]
+            {
+                RevSceneHandoffStage.PreparingResources,
+                RevSceneHandoffStage.LoadingScene,
+                RevSceneHandoffStage.PreparingGameplay,
+                RevSceneHandoffStage.CleaningUp
+            })
+            {
+                Require(stages.TryGetValue(stage, out RevSceneHandoffStagePerformance segment) && segment.DurationMs > 0
+                    && segment.MemorySamples > 0 && segment.PeakAllocatedBytes > 0 && segment.DroppedFrameSamples == 0,
+                    stage + "记录时长和有效内存峰值，帧缓冲无丢样");
+                Require(segment.FrameSamples == 0
+                    ? !segment.FrameP95Ms.HasValue
+                    : segment.FrameP50Ms > 0 && segment.FrameP50Ms <= segment.FrameP95Ms && segment.FrameP95Ms <= segment.FrameP99Ms
+                        && segment.FrameP99Ms <= segment.FrameMaxMs,
+                    stage + "帧间隔分位数与样本相符");
+            }
+            PerformanceRequestIds.Add(handoff.RequestId.ToString());
+            Report.Add((cycle == 0 ? "冷进轮次" : "重入" + cycle) + direction + "总时长="
+                + profile.TotalDurationMs.Value.ToString("F1") + "ms，交接ID=" + handoff.RequestId);
         }
 
         /// <summary>验证入场 ID 在退场后仍能定位来源、实际持有者、释放情况及大厅保留的共享资源。</summary>

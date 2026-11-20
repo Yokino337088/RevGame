@@ -153,6 +153,16 @@ namespace RevGame.Editor
             return new PlayCheckOperation(type.GetProperty("LastResult"), type.GetProperty("LastBattleHandoffId"));
         }
 
+        /// <summary>复用正式场景夹具对比冷进与两次重入，返回全部入场和退场交接 ID。</summary>
+        [RevAutomationAction("game.scene-handoff.performance-check", Environment = "play", Keys = new string[0],
+            Description = "真实 AB 下对比第一章冷进与两次重入的分段耗时、帧间隔和内存峰值")]
+        public static object ScenePerformanceCheck(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameSceneTransitionChecks, Assembly-CSharp-Editor", true);
+            type.GetMethod("BeginHandoffPerformanceCheck", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+            return new PlayCheckOperation(type.GetProperty("LastResult"), requestIds: type.GetProperty("LastPerformanceRequestIds"));
+        }
+
         /// <summary>桥每帧等待现有夹具结束；只有实际业务断言通过才成功，失败时保留原始原因。</summary>
         private sealed class PlayCheckOperation : RevAutomationOperation
         {
@@ -160,12 +170,15 @@ namespace RevGame.Editor
             private readonly PropertyInfo _result;
             /// <summary>资源夹具额外公布的入场 ID，旧夹具可省略。</summary>
             private readonly PropertyInfo _requestId;
+            /// <summary>性能夹具公布的多轮请求 ID，其他夹具可省略。</summary>
+            private readonly PropertyInfo _requestIds;
 
-            /// <summary>保存固定静态属性，在工单结束时读取，不提前返回接单状态。</summary>
-            public PlayCheckOperation(PropertyInfo result, PropertyInfo requestId = null)
+            /// <summary>保存固定静态属性，夹具结案后才读取结果和可选的交接 ID。</summary>
+            public PlayCheckOperation(PropertyInfo result, PropertyInfo requestId = null, PropertyInfo requestIds = null)
             {
                 _result = result;
                 _requestId = requestId;
+                _requestIds = requestIds;
             }
             /// <summary>等待夹具完成业务与清理，再发布结果以及可选的交接 ID。</summary>
             public override bool Tick()
@@ -178,14 +191,19 @@ namespace RevGame.Editor
                 }
                 Success = text.StartsWith("通过", StringComparison.Ordinal);
                 Message = text;
-                Result = _requestId == null
+                Result = _requestId == null && _requestIds == null
                     ? (object)new Result { text = text }
-                    : new SceneResourceResult { text = text, requestId = (string)_requestId.GetValue(null) };
+                    : new SceneResourceResult
+                    {
+                        text = text,
+                        requestId = (string)_requestId?.GetValue(null),
+                        requestIds = (string[])_requestIds?.GetValue(null)
+                    };
                 return true;
             }
         }
 
-        /// <summary>资源回归的内存回执，允许下一步 RevMCP 使用其中的真实入场 ID。</summary>
+        /// <summary>交接回归的内存回执，允许下一步 RevMCP 读取单轮资源或多轮性能快照。</summary>
         [Serializable]
         private sealed class SceneResourceResult
         {
@@ -193,6 +211,8 @@ namespace RevGame.Editor
             public string text;
             /// <summary>用于查询前后资源快照的第一章交接 ID。</summary>
             public string requestId;
+            /// <summary>用于查询多轮性能的交接 ID，每轮依次是进场、退场。</summary>
+            public string[] requestIds;
         }
         /// <summary>固定入口只驱动已有密集反馈夹具；异步完成后由真实断言决定成功。</summary>
         [RevAutomationAction("game.feedback.check", Environment = "play", Keys = new string[0], Description = "密集弹道、即时伤害、图集与跨回合清理验收")]

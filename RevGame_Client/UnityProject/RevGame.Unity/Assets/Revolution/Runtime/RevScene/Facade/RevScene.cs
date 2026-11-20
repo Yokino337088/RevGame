@@ -91,6 +91,12 @@ namespace Revolution
             return new RevSceneHandoffTracker();
         }
 
+        /// <summary>创建交接追踪器，并可在 Play 中为每次交接采集阶段帧间隔和 Unity 分配内存峰值。</summary>
+        public static RevSceneHandoffTracker CreateHandoffTracker(bool samplePerformance)
+        {
+            return new RevSceneHandoffTracker(samplePerformance);
+        }
+
         // ==================== 用（三行就够）====================
 
         /// <summary>
