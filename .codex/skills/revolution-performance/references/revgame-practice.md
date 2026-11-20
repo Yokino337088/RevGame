@@ -1,8 +1,21 @@
 # RevGame技术积累与来源
 
-资料目录 `RevGame_Client/文档/战斗性能优化规则/`，截至 **2026-10-30**。实现锚点 `7706f7bf9eaa19f9f2d5910d4dbdd8c70b7b8a5b`，新手注释与导读 `0e41fcefc866d28e53dde961f1c9a5a246fe080f`。[原仓库固定资料版本](https://github.com/Yokino337088/RevGame/tree/0e41fcefc866d28e53dde961f1c9a5a246fe080f/RevGame_Client/文档/战斗性能优化规则)。本地优先，引用变更重新定位，历史断言数不当当前CI。
+规则资料位于 `RevGame_Client/文档/战斗性能优化规则/`，2026-10-30 批次的实现锚点为 `7706f7bf9eaa19f9f2d5910d4dbdd8c70b7b8a5b`。2026-11-19 的分场景、敌潮和慢帧实践见下节。本地优先核对当前代码及数据，历史断言只说明对应版本的结果。 [10 月固定资料版本](https://github.com/Yokino337088/RevGame/tree/0e41fcefc866d28e53dde961f1c9a5a246fe080f/RevGame_Client/文档/战斗性能优化规则)
 
-## 覆盖来源
+## 2026-11-19 战斗与场景实践
+
+| 实践 | 可复用的决策与证据 |
+| --- | --- |
+| 无尽网格提交 `50c67cfd` | 用有界缓冲提交实际活动方块的连续顶点和索引，无对象时收起索引。RTX 4060 Editor 的 240 敌压力段整帧三角形均值下降 61.1%，整帧 P95 6.451 → 5.551 ms。该测量对应 10 秒压力窗口，关注实际绘制数量与工作量。 |
+| 敌潮采样与插值 `30551529` | 读取局次、版本和槽代次采样，位置与颜色/UV 分流。Iris Xe Editor 的 240 敌三轮对照中，用实际 Mesh API 载荷算得 144.00 → 84.14 字节/绘制方块，12.880 → 8.869 KiB/帧。帧数增加后是 0.243 → 0.258 MiB/秒。单敌独立连拍的位移 P95 0.06300 → 0.01050 格。 |
+| 六章与第五章 `50c67cfd` | 81 棋六章 P95 有升有降。第五章同进程配对测得相机布置每帧 CPU 17.55 → 13.33 µs。用同帧 CPU 规则、反馈、提交、GPU 与 Present 等待定位慢帧，保留各章负结果。 |
+| 鸦鸦图集 `af7b4e8b` | 按 Gal、对战、运行时反应等使用范围拆分表情图集与预载范围。显式检查生产 Sprite 归属与 AB 依赖，用实际目标平台的包体、图集引用、画质和首屏验收。 |
+
+敌潮报告的每版三轮使用种子 1101、0 号阵型、同 PC AB、1920×1080 Ultra，统一从逻辑 2.6 秒采到 12.5 秒。业务终点和三类战斗回执一致，12 项边界断言覆盖插值、掉血、跳位、槽复用、暂停和清空网格。[全场景实测](https://github.com/Yokino337088/RevGame/blob/50c67cfd/RevGame_Client/文档/AI自动化测试报告/全场景性能优化/全场景性能优化实测_2026-11-19.html) · [敌潮性能与连拍](https://github.com/Yokino337088/RevGame/blob/88018164/RevGame_Client/文档/AI自动化测试报告/无尽模式性能提升测试/无尽敌潮插值_性能提升报告_2026-11-19.html) · [敌潮回归](https://github.com/Yokino337088/RevGame/blob/88018164/RevGame_Client/文档/AI自动化测试报告/无尽模式性能提升测试/无尽敌潮插值_自动化测试报告_2026-11-19.html) · [表情资源提交](https://github.com/Yokino337088/RevGame/commit/af7b4e8b)
+
+源文件按 `Assets/GameScripts` 定位。逻辑读 `Flow/Logic/BattleLogic.cs`、`Flow/Logic/Endless/EndlessLogic.cs` 与 `Services/Endless/Ecs/EndlessHordeComponents.cs`。显示读 `View/Endless/EndlessHordePresentation.cs`、`EndlessArena*.cs`、`EndlessQuadBatch.cs` 和 `View/Pvp/PvpDuelView.cs`。只挑和任务同职责的代码，使用目标项目真实的步长、场景和性能门槛。 [当前敌潮实现锚点](https://github.com/Yokino337088/RevGame/commit/305515292faf515728746e7dbc868a967abfc24a)
+
+## 2026-10-30 覆盖来源
 
 盘点51文件：22份文本（md/html/txt/json）、27媒体、2历史ZIP。md/html配对叙述，图/GIF辅助证明画面，ZIP仅历史采样索引，未解包Profiler录制。技能不复制原始大数据/图或凭据。
 

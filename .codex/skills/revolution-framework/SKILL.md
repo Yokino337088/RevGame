@@ -19,7 +19,8 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 | 策划数值与 Excel | [实现配方](references/playbooks.md) 的 R22，含生成和装配校验 |
 | 编辑器与项目制作配方 | [Revolution 编辑器技能](../revolution-unity-editor/SKILL.md) 和 [Editor 职责](references/revgame-editor-practice.md) |
 | GM、RevMCP、功能完整性与缺陷回归 | [自动化接入](references/automation-integration.md) 和 [实际测试技能](../revolution-ai-automation/SKILL.md) |
-| 真机、Player 与性能 | [Player 测试](references/player-testing.md)、[移动端](references/android-runtime-and-layout.md) 或 [性能技能](../revolution-performance/SKILL.md) |
+| 战斗、逐帧更新、密集 UI/特效与性能敏感代码 | [性能技能](../revolution-performance/SKILL.md)，从设计起核对 CPU、GPU、内存与缓存 |
+| 真机与 Player | [Player 测试](references/player-testing.md) 与 [移动端](references/android-runtime-and-layout.md) |
 | 热更 | [热更](references/hot-update.md) |
 | 排错、审查与交付 | [症状索引](references/troubleshooting.md)、[审查指南](REFERENCE_GUIDELINES.md)、[验证与交付](references/verify-and-test.md) |
 

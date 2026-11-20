@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>RevGame · 性能优化实践新手指南</title>
+  <style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}a{color:var(--green);text-decoration-thickness:1px;text-underline-offset:4px}button,input{font:inherit}button:focus-visible,a:focus-visible{outline:3px solid #b48442;outline-offset:4px}.topbar{height:76px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}.brand{font-weight:800;letter-spacing:2px}.brand i{font-style:normal;background:var(--green);color:white;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-right:12px}.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}.hero{max-width:1260px;margin:0 auto;padding:70px 40px 48px;display:grid;grid-template-columns:1.45fr 1fr;gap:60px;align-items:center}.eyebrow,.section-label{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}.hero h1{font-size:clamp(35px,4.3vw,62px);letter-spacing:-2px;line-height:1.25;margin:20px 0;font-weight:800}.hero h1 em{font-style:normal;color:var(--green)}.lead{color:var(--muted);font-size:17px;max-width:570px}.hero-links{display:flex;gap:12px;margin-top:27px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:9px 18px;border-radius:30px;text-decoration:none;font-size:14px;background:white}.pill.primary{background:var(--green);color:white;border-color:var(--green)}.stamp{font:12px Consolas,monospace;margin-top:25px;color:#7b867b}.demo{position:relative;background:linear-gradient(135deg,#fefdf5,#e6efe1);padding:26px;border:1px solid #d6e2d2;border-radius:28px;box-shadow:0 20px 55px #334f3320;overflow:hidden}.demo::before{content:"";position:absolute;width:210px;height:210px;background:#e5cc8e55;border-radius:50%;filter:blur(25px);right:-80px;top:-90px;animation:drift 8s ease-in-out infinite alternate}.demo-head{position:relative;display:flex;justify-content:space-between;align-items:center;font-size:13px}.live-dot{width:7px;height:7px;border-radius:50%;background:#688c62;box-shadow:0 0 0 5px #5c86621c;display:inline-block;margin-right:8px;animation:pulse 2.5s infinite}.tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:25px 0}.tile{aspect-ratio:1;background:#fff9ef;border:1px solid #d7c7ac;display:grid;place-items:center;border-radius:12px;transition:background .5s,border-color .5s,transform .5s;box-shadow:0 4px 7px #99866d12}.tile:nth-child(3n){background:#e9eef7}.tile:nth-child(3n + 1){background:#f6e7df}.tile span{width:45%;height:43%;border-radius:47% 47% 38% 38%;background:#728b68;position:relative;box-shadow:inset -4px -5px 0 #52764f40;animation:bob 3s ease-in-out infinite;animation-delay:var(--delay)}.tile span:before,.tile span:after{content:"";position:absolute;width:4px;height:4px;background:#223d2d;border-radius:50%;top:43%;left:29%}.tile span:after{left:auto;right:29%}.demo[data-mode="atlas"] .tile{background:#e3efdd;border-color:#adc4a3}.demo[data-mode="atlas"] .tile:nth-child(4n){transform:translateY(-3px)}.demo-result{display:flex;align-items:baseline;gap:12px;border-top:1px solid #cfdacb;padding-top:14px}.demo-result b{font:700 34px/1 Consolas,monospace;color:var(--green)}.demo-result span{font-size:13px;color:var(--muted)}.segmented{display:flex;gap:5px;border-radius:12px;background:#dce5d8;padding:4px;margin-top:15px}.segmented button{flex:1;border:0;background:transparent;border-radius:9px;padding:7px;cursor:pointer;font-size:13px;color:var(--ink)}.segmented button[aria-pressed="true"]{background:#fffef8;box-shadow:0 2px 5px #34502515}.demo small{display:block;font-size:11px;line-height:1.7;color:var(--muted);margin-top:13px}.metrics{max-width:1180px;margin:0 auto 45px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:25px 0}.metric{padding:5px 35px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric strong{font:700 39px/1.4 Consolas,monospace;color:var(--green)}.metric strong small{font-size:18px}.metric p{margin:4px 0 0;font-size:13px;color:var(--muted)}.workspace{display:grid;grid-template-columns:230px minmax(0,890px);gap:55px;max-width:1180px;margin:auto;padding-bottom:90px}.sidebar{align-self:start;position:sticky;top:28px}.sidebar h3{font-size:12px;letter-spacing:3px;margin:0 0 18px;color:var(--muted)}.sidebar nav{display:flex;flex-direction:column;gap:3px}.sidebar nav a{font-size:13px;text-decoration:none;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;display:flex;gap:10px}.sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}.sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}.sidebar .note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:22px;padding:20px 10px}.chapter{background:#fffefa;border:1px solid var(--line);border-radius:18px;margin-bottom:25px;padding:36px 38px;box-shadow:0 5px 15px #315c3110}.chapter h2{font-size:27px;line-height:1.45;letter-spacing:-.5px;margin:8px 0 22px}.chapter p{margin:17px 0}.chapter strong{color:#254e3d}.chapter ul,.chapter ol{padding-left:24px}.chapter li{margin:10px 0}.chapter code{font:13px/1.65 Consolas,"Microsoft YaHei",monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}.chapter pre{padding:20px;background:#edf2ea;border-radius:12px;overflow:auto}.chapter pre code{background:none;border:0;padding:0;white-space:pre}.table-scroll{overflow:auto;margin:24px -5px;border:1px solid var(--line);border-radius:11px}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}td,th{padding:13px 14px;border-bottom:1px solid #e4e9e0;vertical-align:top}tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:105px}tr:nth-child(even) td{background:#fafbf6}footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);display:flex;justify-content:space-between;font-size:13px}.progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--green);z-index:20;transition:width .1s}.chapter.arrive{animation:arrive .55s ease both}.motion-control{border:1px solid #c7d2c3;background:transparent;border-radius:30px;font-size:12px;cursor:pointer;padding:7px 12px;color:var(--green)}.paused *{animation-play-state:paused!important}.legend{padding:14px 18px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936}.document-meta{font-size:13px;color:var(--muted);margin-bottom:25px}.document-meta a{margin-right:20px}@keyframes bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.04,.98)}}@keyframes drift{to{transform:translate(-50px,40px)}}@keyframes pulse{50%{box-shadow:0 0 0 8px #5c866200}}@keyframes arrive{from{opacity:.5;transform:translateY(12px)}to{opacity:1;transform:none}}@media(max-width:1200px){.workspace{padding:0 25px 60px;gap:25px;grid-template-columns:200px minmax(0,1fr)}.metrics{margin-left:25px;margin-right:25px}.hero{gap:30px}}@media(max-width:900px){.sidebar{position:static}.sidebar nav{display:grid;grid-template-columns:1fr 1fr}.sidebar .note,.sidebar h3{display:none}.workspace{display:block}.sidebar{margin-bottom:25px}.hero{grid-template-columns:1fr 1fr;padding:40px 25px}.chapter{padding:28px}.tag{display:none}}@media(max-width:620px){body{font-size:15px}.topbar{height:66px}.hero{display:block;padding:35px 22px}.hero h1{letter-spacing:-1px;font-size:40px}.demo{margin-top:30px;max-width:390px}.tile-grid{gap:8px}.metrics{padding:18px 0;margin-bottom:25px}.metric{padding:0 10px}.metric strong{font-size:28px}.metric p{font-size:11px}.workspace{padding:0 14px 40px}.sidebar nav{gap:2px}.sidebar nav a{font-size:11px;padding:7px 5px;gap:6px}.chapter{padding:25px 20px;border-radius:14px}.chapter h2{font-size:24px}.table-scroll{margin:20px 0}table{min-width:560px}footer{display:block}.hero-links{gap:8px}.pill{padding:8px 14px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before{animation:none!important;transition:none!important}}@media print{.sidebar,.demo,.motion-control,.progress{display:none}.hero,.workspace{display:block;padding:0}.chapter{box-shadow:none;break-inside:auto;border:0;padding:15px 0}.metrics{margin:0}.topbar{padding:0}.table-scroll{overflow:visible}a{color:inherit}body{font-size:11pt}}
+    .frame-demo::before{pointer-events:none}
+    .frame-demo .demo-head{gap:12px}
+    .frame-rows{position:relative;margin:22px 0 18px}
+    .frame-row{margin:0 0 12px}
+    .frame-reading,.frame-time{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px}
+    .frame-reading output,.frame-time output{font:700 13px/1.6 Consolas,"Microsoft YaHei",monospace;color:var(--green)}
+    .frame-lane{position:relative;height:25px;margin:4px 10px 0;border:1px solid #c8d4bf;border-radius:7px;background:linear-gradient(90deg,#fffdf4 49.7%,#cbd6c2 49.7%,#cbd6c2 50.3%,#fffdf4 50.3%)}
+    .frame-point{position:absolute;top:50%;left:var(--position);width:15px;height:15px;transform:translate(-50%,-50%);border:2px solid #fffdf5;border-radius:50%;background:var(--green);box-shadow:0 1px 4px #32584455}
+    .frame-point.confirmed{background:var(--gold)}
+    .frame-axis{display:flex;justify-content:space-between;margin:0 8px;font:11px/1.6 Consolas,"Microsoft YaHei",monospace;color:var(--muted)}
+    .frame-slider{position:relative}
+    .frame-slider input{width:100%;margin:7px 0 0;accent-color:var(--green);cursor:pointer}
+    .frame-slider input:focus-visible,.table-scroll:focus-visible,summary:focus-visible{outline:3px solid #b48442;outline-offset:3px}
+    .frame-demo .segmented{position:relative}
+    .caption,.sources{font-size:13px;color:var(--muted)}
+    .table-scroll th[scope="row"]{min-width:105px}
+    .reading-list{padding-left:22px}
+    .chapter .practice-prompt{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.8 "Microsoft YaHei","PingFang SC",sans-serif}
+    .paused .chapter.arrive{animation:none!important}
+    .paused .demo::before{animation-play-state:paused!important}
+    @media(max-width:620px){.frame-demo{padding:21px}.frame-demo .segmented button{padding:7px 4px}}
+    @media(max-width:420px){.hero-name{display:block}}
+    @media print{.table-scroll table{min-width:0}}
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand"><i aria-hidden="true">R</i>REVGAME <span class="tag">ENGINEERING FIELD GUIDE</span></div>
+    <button class="motion-control" id="motion" type="button" aria-pressed="false">暂停装饰动画</button>
+  </header>
+  <div class="hero">
+    <div>
+      <div class="eyebrow">REVOLUTION / PERFORMANCE PRACTICE</div>
+      <h1><span class="hero-name">RevGame</span> 性能优化实践<br><em>新手指南</em></h1>
+      <p class="lead">写战斗、UI、特效或资源加载时，先弄清一帧做了哪些工作。跟着 RevGame 的实际代码和测量，理解 CPU、GPU、内存与缓存各该怎么查。</p>
+      <div class="hero-links">
+        <a class="pill primary" href="#measure">从一帧开始</a>
+        <a class="pill" href="战斗性能优化规则.html">战斗性能优化规则</a>
+      </div>
+      <div class="stamp">2026.11.20 · UNITY 2022.3 · 围棋史莱姆</div>
+    </div>
+    <div class="demo frame-demo" id="frame-demo" data-playback="smooth">
+      <div class="demo-head">
+        <strong><span class="live-dot" aria-hidden="true"></span>试试逻辑步和表现帧</strong>
+        <span class="tag">INTERACTIVE</span>
+      </div>
+      <div class="frame-rows">
+        <div class="frame-row">
+          <div class="frame-reading"><span>逻辑确认位置</span><output id="confirmed-value">1.00 格</output></div>
+          <div class="frame-lane" aria-hidden="true"><span class="frame-point confirmed" id="confirmed-point" style="--position:50%"></span></div>
+        </div>
+        <div class="frame-row">
+          <div class="frame-reading"><span>画面显示位置</span><output id="rendered-value">0.50 格</output></div>
+          <div class="frame-lane" aria-hidden="true"><span class="frame-point" id="rendered-point" style="--position:25%"></span></div>
+        </div>
+        <div class="frame-axis" aria-hidden="true"><span>0 格</span><span>1 格</span><span>2 格</span></div>
+      </div>
+      <div class="frame-slider">
+        <label class="frame-time" for="frame-time"><span>播放时间</span><output id="time-value" for="frame-time">150 ms</output></label>
+        <input id="frame-time" type="range" min="0" max="200" step="1" value="150" aria-valuetext="150 毫秒">
+      </div>
+      <div class="segmented" role="group" aria-label="选择位置显示方式">
+        <button type="button" data-playback="step" aria-pressed="false">按逻辑步显示</button>
+        <button type="button" data-playback="smooth" aria-pressed="true">表现帧插值</button>
+      </div>
+      <small>示意每 100 ms 确认向前一格。拖动滑杆看两次确认之间的画面位置。黄色位置供碰撞和伤害判定，绿色位置供绘制。</small>
+    </div>
+  </div>
+  <div class="metrics" aria-label="三个案例的实测指标">
+    <div class="metric"><strong>97.7<small>% ↓</small></strong><p>固定 4800 次射界查询耗时</p></div>
+    <div class="metric"><strong>41.6<small>% ↓</small></strong><p>无尽每绘制方块提交字节</p></div>
+    <div class="metric"><strong>19.9<small>% ↓</small></strong><p>相同根集纹理原生内存</p></div>
+  </div>
+  <div class="workspace">
+    <aside class="sidebar">
+      <h3>阅读导航</h3>
+      <nav aria-label="章节导航">
+        <a href="#measure"><span>01</span>读懂一帧</a>
+        <a href="#cpu-cache"><span>02</span>CPU 与缓存</a>
+        <a href="#frame-presentation"><span>03</span>逻辑步与表现帧</a>
+        <a href="#gpu"><span>04</span>渲染提交与 GPU</a>
+        <a href="#memory"><span>05</span>内存、GC 与回收</a>
+        <a href="#assets"><span>06</span>图集、分包与预载</a>
+        <a href="#feedback"><span>07</span>UI 与战斗反馈</a>
+        <a href="#verify"><span>08</span>怎么验证改动</a>
+      </nav>
+      <div class="note">写代码时先找调用频率和工作量上限。复测时保持输入、画面与资源模式一致。</div>
+    </aside>
+    <main>
+      <section id="measure" class="chapter">
+        <div class="section-label">PRACTICE / 01</div>
+        <h2>先读懂一帧花在哪儿</h2>
+        <p>60 FPS 约给每帧 <strong>16.67 ms</strong>。平均 FPS 反映一段时间画出了多少帧，整帧 P95 表示约 95% 的采样帧在这个耗时以内。想找偶发卡顿，要同时看 P99、最长帧与超预算次数。先固定设备、资源、分辨率和战斗输入，再选要优化的一段。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="性能现象和排查指标">
+          <table>
+            <thead><tr><th scope="col">看到什么</th><th scope="col">先量什么</th><th scope="col">从哪里查</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">满盘时逻辑步突然变贵</th><td>每步 CPU、候选数、预测次数</td><td>重复扫棋盘、生成列表和深试盘。</td></tr>
+              <tr><th scope="row">弹幕或面板集中更新时卡</th><td>主线程、渲染线程、Canvas 重建与提交量</td><td>每帧重复改文字、材质、网格或布局。</td></tr>
+              <tr><th scope="row">全屏透明层出现时变慢</th><td>有效 GPU 帧时、覆盖面积和采样次数</td><td>背景 Shader、过绘、尾迹和叠层。</td></tr>
+              <tr><th scope="row">打久了偶发长帧</th><td>GC 分配、收集帧与驻留曲线</td><td>临时列表、字符串、闭包和池中引用。</td></tr>
+              <tr><th scope="row">换章慢或反复重入变重</th><td>冷启动峰值、同根资源驻留及退出引用</td><td>重复 AB、图集提前加载或资源没退出作用域。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>第五章的教训。</strong>同一份 81 棋压力用例里，六章整帧 P95 有升有降。第五章单独把相机布置做同进程配对后，每帧相机 CPU 从 17.55 降到 13.33 µs。整帧慢了时，先找到那一帧真正运行了什么，再分别看逻辑、特效、提交、GPU 与 Present 后等待。线程和 GPU 有重叠，计时显示在不同列。 <a href="../AI自动化测试报告/全场景性能优化/全场景性能优化实测_2026-11-19.html#campaign">六章逐段数据与第五章复核</a></p>
+        <p class="caption">2026-11-19 的另一次本机 81 棋诊断里，第五章最慢的 111 帧只有 11 帧执行了固定步。普通组到慢帧组，GPU 中位数为 1.076 → 1.186 ms，调用 Present 到下帧开始的间隔为 0.221 → 3.510 ms。最长的变化出现在提交画面之后，窗口、驱动和编辑器各占多少仍待测。</p>
+      </section>
+      <section id="cpu-cache" class="chapter">
+        <div class="section-label">PRACTICE / 02</div>
+        <h2>用缓存省掉 CPU 的重复计算</h2>
+        <p>棋盘里有很多相近的问题。阵容评价、攻击预测和敌方 AI 可能在同一逻辑步多次询问一枚棋能打到哪些格子。<strong>可以复用的是几何结果</strong>。棋子的坐标、走法、障碍或棋盘版本变化时，再算受影响的射界。当前 HP、护盾和威胁值留到实际评分时读取。</p>
+        <div class="legend">实现前写清缓存的所有者、键的输入、失效入口、容量和清理时机。缓存命中时还要保证候选顺序一致，因为平分时的取舍会改变战斗。</div>
+        <p><strong>私有试盘。</strong>AI 预测把必要状态复制到调用者独占的草稿，用完还回本轮租约。复制要覆盖 HP、气眼、Buff 和其他会影响结果的字段。这样可安全复用容器容量，正式棋盘不会被预测过程改动，真实伤害仍只提交一次。</p>
+        <p>RevGame 在固定 4800 次射界查询中测到 <strong>13.302 → 0.309 ms</strong>，100 次深试盘含气眼刷新耗时 4.643 → 3.575 ms。这些是局部操作数据。移动会触发重算，所以固定盘的高命中率要和真实变盘的命中率、顺序和回放结果一起看。 <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/Board/Model/BoardModel.Queries.cs">棋盘查询源码</a> · <a href="战斗性能热点与缓存优化_2026-10-30.html">计时与回归证据</a></p>
+      </section>
+      <section id="frame-presentation" class="chapter">
+        <div class="section-label">PRACTICE / 03</div>
+        <h2>逻辑步管结算，表现帧管运动</h2>
+        <p>远征原本按固定步结算，落格后由棋子视图补间。决斗从确认帧快照采样。无尽每 <strong>100 ms</strong> 提交一次逻辑状态，更新前的外围网格直接画确认位置，两次更新之间会停在原处。现在竞技场采样已提交的状态，画面按自己的帧率补出中间位置。模拟仍按原步长更新移动、索敌、伤害与胜负。</p>
+        <ol class="reading-list">
+          <li><strong>收到新样本再整理对象。</strong>以局次、逻辑时间、显示变更版本和槽代次判断采样是否失效。敌人身体、血条和出生效果共享插值坐标，减少重影。</li>
+          <li><strong>每帧只提交变化的数据。</strong>同一队列内把位置与颜色/UV 分成两个顶点流。普通补间帧只送位置，换帧、掉血或显示归属变化时更新外观。出生特效只跟踪实际在播的视图。</li>
+          <li><strong>遇到断点就重新对齐。</strong>击退跳位按招式语义当步生效，复用槽位时按新身份初始化。暂停、退局、重入各按原入口复位。必须交付的受击与死亡回执独立消费。</li>
+        </ol>
+        <p>插值在已经画出的画面之间补齐运动，常规位移会用约一个逻辑步追到确认位置。GPU、UI 或大特效导致整帧没按时出图时，继续测对应阶段的耗时。 <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessHordePresentation.cs">敌潮采样源码</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Endless/EndlessQuadBatch.cs">双顶点流实现</a> · <a href="https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Mesh.SetVertexBufferData.html">Unity 顶点缓冲接口</a></p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="无尽敌潮插值实际数据">
+          <table>
+            <thead><tr><th scope="col">Iris Xe · 240 敌压力对照</th><th scope="col">上一版</th><th scope="col">插值版</th><th scope="col">怎么读</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">顶点提交（字节/绘制方块）</th><td>144.00</td><td>84.14</td><td>按实际绘制方块归一化，少约 41.6%。</td></tr>
+              <tr><th scope="row">顶点提交（KiB/帧）</th><td>12.880</td><td>8.869</td><td>每张画面的载荷更少。</td></tr>
+              <tr><th scope="row">顶点提交（MiB/秒）</th><td>0.243</td><td>0.258</td><td>画出的帧更多，单位时间提交量略升。</td></tr>
+              <tr><th scope="row">单敌位移 P95（格/帧）</th><td>0.06300</td><td>0.01050</td><td>独立连拍表明移动分布在更多帧里。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="caption">表中的计时轮为同 PC AB、1920×1080、Ultra、种子 1101，每版三轮，逻辑 2.6 至 12.5 秒。业务一致性检查了击杀、存活数、棋心、随机状态和回执。 <a href="../AI自动化测试报告/无尽模式性能提升测试/无尽敌潮插值_性能提升报告_2026-11-19.html">实际提交、逐轮数据和同步连拍</a> · <a href="../AI自动化测试报告/无尽模式性能提升测试/无尽敌潮插值_自动化测试报告_2026-11-19.html">12 项边界断言与实际退局</a></p>
+        <p class="caption">此前的开发机短窗口每组也测了三轮，各采约 5.2 秒。240 初始敌数档平均 FPS 约 274 → 293，整帧 P95 5.10 → 5.11 ms。1024 初始敌数档约 261 → 277 FPS，P95 5.82 → 5.72 ms。这一轮与上面的 Iris Xe 测试有不同的采样窗口，读数各自用于前后对照。</p>
+      </section>
+      <section id="gpu" class="chapter">
+        <div class="section-label">PRACTICE / 04</div>
+        <h2>让渲染提交和 GPU 聚焦可见内容</h2>
+        <p><strong>CPU 准备并提交绘制指令，GPU 处理顶点和屏幕像素。</strong>共享材质和图集能帮助相邻对象合批。透明对象还要保持遮挡顺序。同一像素被多层透明对象反复绘制叫过绘。GPU 忙在大面积叠加或噪声采样时，先量覆盖范围与有效 GPU 帧时，再决定用哪种做法。</p>
+        <p>无尽先把活跃敌人与受伤血条排成连续范围，按实际数量写网格索引。缓冲可容纳 1024 敌，不在网格里留 1024 个可绘制方块。RTX 4060 Editor 的 240 敌压力段，整帧三角形均值减少 61.1%，P95 从 6.451 降到 5.551 ms。这个案例对应旧的网格范围改造，与后续双顶点流是不同交付。 <a href="../AI自动化测试报告/全场景性能优化/全场景性能优化实测_2026-11-19.html#scenes">分场景实测与实际方块数</a></p>
+        <h3>换成 Compute 前，先把完整成本算进去</h3>
+        <p>第四章沼泽本机试验保持原画和最终合成，两种预计算都以 30 Hz 更新 960×540 的 RGBAHalf 流场。一个场约占 3.96 MiB 像素存储。先写中间纹理，再采样来合成，会增加写入、带宽和调度成本。只有当原本重复的运算省得更多时，预计算才划算。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="第四章沼泽 GPU 对照">
+          <table>
+            <thead><tr><th scope="col">第四章路径</th><th scope="col">GPU P50</th><th scope="col">GPU P95</th><th scope="col">整帧 P95</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">现版片元</th><td>0.401 ms</td><td>0.900 ms</td><td>7.386 ms</td></tr>
+              <tr><th scope="row">低分辨率片元预计算</th><td>0.444 ms</td><td>0.937 ms</td><td>6.736 ms</td></tr>
+              <tr><th scope="row">Compute 预计算</th><td>0.451 ms</td><td>0.959 ms</td><td>6.588 ms</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="caption">2026-11-19 本机三路轮换，RTX 4060、D3D11、真实 PC AB、双方各 24 棋。每段 314 次攻击、605 次命中。表内 GPU 为整场有效 GPU 计时，分位数取三段中位数。</p>
+        <p>这次目标是降低 GPU 耗时，两个预计算方案的 GPU 分位数更高，因此正式内容沿用片元路径。以后试 Compute 时用同画质和同负载复测，并在需要兼容的设备验证回退路线。 <a href="https://docs.unity3d.com/2022.3/Documentation/ScriptReference/FrameTimingManager.html">Unity 帧计时接口</a></p>
+      </section>
+      <section id="memory" class="chapter">
+        <div class="section-label">PRACTICE / 05</div>
+        <h2>复用内存容量，及时归还引用</h2>
+        <p><strong>分配和驻留是两条指标。</strong>每帧建列表或拼字符串，会持续产生托管分配。对象池能减少反复创建，但池里的对象、Mesh、图集和材质仍占内存。一个场景反复进出后，看峰值和释放后的基线，才能知道有没有留住上一局的东西。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="内存成本与对照方法">
+          <table>
+            <thead><tr><th scope="col">成本</th><th scope="col">看什么</th><th scope="col">RevGame 的做法</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">托管分配</th><td>有效 GC.Alloc、收集所在帧</td><td>复用候选容器、反馈队列、空闲对象和稳定委托，文字在数值变更后更新。</td></tr>
+              <tr><th scope="row">原生驻留</th><td>纹理、Mesh、字体和音频常驻字节</td><td>预分配有上限的网格。回池清绘制范围，真正销毁时销毁独占的 Mesh。</td></tr>
+              <tr><th scope="row">加载峰值</th><td>冷启动耗时、切场前后峰值及引用</td><td>在对应流程预热必要资源。迟到回调核对代次，归还临时租约与旧场景引用。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>一次租用由 <code>RevScope</code> 管局次，<code>RevPool</code> 管对象，<code>RevResManager</code> 管资源引用。归还前先使旧回调失效，再清 Tween、事件、材质参数和本局数据。下一位租用者拿到干净对象。用一笔已知分配校验计数器，再报告稳定期分配。 <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GamePoolRequests.cs">池与加载租约</a> · <a href="本机战斗CPU_GPU与内存瓶颈诊断_2026-10-29.html">分配、驻留与慢帧样本</a></p>
+      </section>
+      <section id="assets" class="chapter">
+        <div class="section-label">PRACTICE / 06</div>
+        <h2>按实际使用范围组织资源包</h2>
+        <p>图集把小图放进较少纹理页，常能减少纹理切换。AB 是资源的发布与加载单元。项目按使用场景和寿命归属 Sprite Atlas V2 和包，其他模块通过依赖共享同一份资源。这样玩家打开一个页面时，只需要预载当前用途的图集和依赖。</p>
+        <p><strong>备用 UI 的实测。</strong>把备用图混进常用图集时，同根纹理原生内存从 9,009,968 B 增到 9,840,612 B。把备用图拆到独立图集后降到 7,219,172 B，较原来少约 19.9%。因此容量、加载时机和释放引用要一起看。鸦鸦表情后来也按 Gal、对战和其他业务使用范围分包预载。 <a href="战斗性能优化规则.html">固定资源根的图集对比</a> · <a href="https://github.com/Yokino337088/RevGame/commit/af7b4e8b">表情图集拆分实现</a></p>
+        <div class="legend">源图压缩先影响文件大小和下载。加载到 Unity 后，纹理的原生占用主要看导入后的平台格式、尺寸、Mip 和实际页数。PC 与 Android 分开查。自定义 Shader 采样也要在真实 AB 验收 UV、透明边缘和图集延迟绑定。 <a href="https://docs.unity3d.com/2022.3/Documentation/Manual/class-TextureImporterOverride.html">Unity 纹理平台导入设置</a></div>
+        <p>同平台下按真实入口查图集唯一归属、依赖包和源图重复打包。清空场景后再按资源引用核对释放。读图集的效果着色器要区分原图局部 UV 与图集页 UV，以免扭曲采到邻图。 <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Resources/GameSpriteAtlasService.cs">图集绑定与生命周期</a></p>
+      </section>
+      <section id="feedback" class="chapter">
+        <div class="section-label">PRACTICE / 07</div>
+        <h2>让 UI 与战斗反馈按变化刷新</h2>
+        <p>血条位置需要跟随运动，比例只在 HP 变化时更新。文本刷新可能重建字形或引发布局计算。相机的基础棋盘布局可由安全区、尺寸和宽高比缓存，再叠加当帧震屏和 Boss 特写。输入命中、字幕和真实伤害回执仍走原入口。</p>
+        <p>弹道、飘字和短效先读已经发生的战斗回执，再按项目预算呈现。设定上限时明确超量的合并或优先级。复用池对象仍要恢复颜色、位置、时钟和监听器。调合批或拆 Canvas 时，检查实际重建、提交和透明顺序。RevGame 曾试过额外的子 Canvas，实测净收益不稳定后恢复原布局。 <a href="六章战斗性能压测报告_2026-10-25.html">密集反馈与子 Canvas 对照</a> · <a href="../../UnityProject/RevGame.Unity/Assets/GameScripts/UI/Layout/GameMobileLayout.cs">布局计算源码</a></p>
+      </section>
+      <section id="verify" class="chapter">
+        <div class="section-label">PRACTICE / 08</div>
+        <h2>给自己的改动做一次对照</h2>
+        <ol class="reading-list">
+          <li><strong>写清基线。</strong>记版本、平台、画质、分辨率、VSync、目标 FPS、场景、种子、人数、技能触发和实际攻击数。预热和采样分开。</li>
+          <li><strong>只改能归因的一段。</strong>选择真实入口标记 CPU 规则、提交或其他热点。看 GPU 有效样本、内存和缓存失效成本。优先在同进程交替跑几轮，保存升降和异常。</li>
+          <li><strong>验证游戏照常运行。</strong>核对同一逻辑时刻的实体、命中、随机序列和结果。看同一画面的动画、排序、字体、资源冷启动，并验证暂停、恢复、回池或退出。</li>
+          <li><strong>按指标交付。</strong>CPU、GPU、整帧、上传量和内存逐项汇报，区分局部与整场。先用测试回执给出实际结果。用户明确要求时再按指定路径输出文件报告，临时工单在消费后删除。</li>
+        </ol>
+        <h3>可以直接交给 AI 的任务描述</h3>
+        <pre class="practice-prompt">用 $revolution-performance 审查这次改动。先说明每帧、每逻辑步和数据变化时各做哪些工作，核对 CPU、GPU、内存和缓存。固定输入和画质做前后对照，检查规则结果、视觉、暂停和退局回收。对话给出实测、代价和未覆盖设备。</pre>
+        <p class="sources">框架执行规则见 <a href="../../../.codex/skills/revolution-performance/SKILL.md">项目内性能 Skill</a>，步长与表现细节见 <a href="../../../.codex/skills/revolution-performance/references/frame-presentation.md">逻辑帧与表现帧</a>。上面的历史数字都对应各自版本和设备，目标机的结论来自目标机复测。</p>
+      </section>
+    </main>
+  </div>
+  <footer><span>RevGame · 围棋史莱姆 / 性能优化实践新手指南</span><span>可离线阅读 · 支持减少动画设置</span></footer>
+  <script>
+    // 滑杆只演示两次确认之间的位置。模拟时间和画面坐标因此可以独立核对。
+    const demo = document.querySelector('#frame-demo');
+    const slider = document.querySelector('#frame-time');
+    const controls = [...demo.querySelectorAll('button[data-playback]')];
+    const timeValue = document.querySelector('#time-value');
+    const confirmedValue = document.querySelector('#confirmed-value');
+    const renderedValue = document.querySelector('#rendered-value');
+    const confirmedPoint = document.querySelector('#confirmed-point');
+    const renderedPoint = document.querySelector('#rendered-point');
+
+    // 用同一个时间值计算两条轨迹。第一个样本出现前，画面留在起点。
+    function updateFrame() {
+      const time = Number(slider.value);
+      const confirmed = Math.floor(time / 100);
+      const visible = demo.dataset.playback === 'smooth' ? Math.max(0, time / 100 - 1) : confirmed;
+      timeValue.textContent = time + ' ms';
+      confirmedValue.textContent = confirmed.toFixed(2) + ' 格';
+      renderedValue.textContent = visible.toFixed(2) + ' 格';
+      confirmedPoint.style.setProperty('--position', confirmed * 50 + '%');
+      renderedPoint.style.setProperty('--position', visible * 50 + '%');
+      slider.setAttribute('aria-valuetext', time + ' 毫秒');
+    }
+    slider.addEventListener('input', updateFrame);
+    controls.forEach(button => button.addEventListener('click', () => {
+      demo.dataset.playback = button.dataset.playback;
+      controls.forEach(control => control.setAttribute('aria-pressed', String(control === button)));
+      updateFrame();
+    }));
+    updateFrame();
+
+    // 暂停开关只控制页面装饰。演示控件继续响应键盘和指针。
+    const motion = document.querySelector('#motion');
+    motion.addEventListener('click', () => {
+      const paused = document.body.classList.toggle('paused');
+      motion.setAttribute('aria-pressed', String(paused));
+      motion.textContent = paused ? '继续装饰动画' : '暂停装饰动画';
+    });
+
+    // 滚动进度与当前目录项共享一次布局读取，滚动时每帧最多更新一次。
+    const links = [...document.querySelectorAll('.sidebar nav a')];
+    const chapters = [...document.querySelectorAll('.chapter')];
+    const progress = document.querySelector('.progress');
+    let scheduled = false;
+    function updateNavigation() {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      progress.style.width = (max > 0 ? Math.min(100, scrollY / max * 100) : 0) + '%';
+      let active = chapters[0];
+      for (const section of chapters) {
+        if (section.getBoundingClientRect().top < innerHeight * .35 || scrollY >= max - 1) active = section;
+      }
+      for (const link of links) {
+        const current = link.hash === '#' + active.id;
+        link.classList.toggle('active', current);
+        if (current) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      }
+      scheduled = false;
+    }
+    addEventListener('scroll', () => {
+      if (!scheduled) {
+        scheduled = true;
+        requestAnimationFrame(updateNavigation);
+      }
+    }, {passive: true});
+    addEventListener('resize', updateNavigation);
+    updateNavigation();
+    if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('arrive');
+            observer.unobserve(entry.target);
+          }
+        }
+      }, {threshold: .04});
+      chapters.forEach(section => observer.observe(section));
+    }
+  </script>
+</body>
+</html>
