@@ -78,6 +78,7 @@ namespace RevGame.Pvp
         public int SelectedPoint { get; private set; } = -1;
         public int Revision { get; private set; }
         public string PreviewText { get; private set; } = "点击格子落子";
+        /// <summary>当前会话已接纳的房间身份，离场后清空。</summary>
         public string RoomId { get; private set; } = "";
         public LanPeerTransport Lan { get; private set; }
         public IReadOnlyList<PvpMove> Moves { get { return _moves; } }
@@ -94,6 +95,10 @@ namespace RevGame.Pvp
         private bool _recoveringServer;
         // 增量先到或本地缺少前序时，在当前 RPC 完成后请求一份完整棋谱。
         private bool _needsServerSync;
+        /// <summary>权威字段缺失时禁止操作，直到合法完整快照恢复。</summary>
+        private bool _roomStateIncomplete;
+        /// <summary>尚未校验完整的新房身份，用于拒绝其它房间的迟到数据。</summary>
+        private string _pendingRoomId = string.Empty;
         private double _serverSyncRetryAt;
         private GoClock _goClock;
         private bool _leaving, _leaveSent;
@@ -145,11 +150,20 @@ namespace RevGame.Pvp
             Status = computer ? "本地人机 · 你执黑先行" : "本地双人练习 · 双方轮流落子";
         }
 
+        /// <summary>建立新会话或恢复同地址的旧房，回调只交给当前连接。</summary>
         public void StartServer(string endpoint, string nickname)
+        {
+            FantasyGoTransport connection = PrepareServerConnection(endpoint, nickname);
+            connection?.Connect(Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced",
+                _resumeToken, allowNewIdentity: !_recoveringServer);
+        }
+
+        /// <summary>切换连接所有权并绑定回调。新会话先清旧房身份，再等待权威回包。</summary>
+        private FantasyGoTransport PrepareServerConnection(string endpoint, string nickname)
         {
             if (_leaving)
             {
-                return;
+                return null;
             }
             string requestedEndpoint = (endpoint ?? string.Empty).Trim();
             bool resume = Mode == PvpConnectionMode.Server && Core != null && !string.IsNullOrEmpty(_resumeToken) && requestedEndpoint == Endpoint;
@@ -161,6 +175,10 @@ namespace RevGame.Pvp
             _recoveringServer = resume;
             if (!resume)
             {
+                RoomId = string.Empty;
+                MySide = GoSide.Empty;
+                BlackName = "黑方";
+                WhiteName = "白方";
                 Core = null;
                 _moves.Clear();
                 _resumeToken = (_matchIdentity.Endpoint, _matchIdentity.Nickname, _matchIdentity.Rules, _matchIdentity.Kind) ==
@@ -168,24 +186,34 @@ namespace RevGame.Pvp
                 ResetPresentation();
             }
             Status = resume ? "正在恢复服务器对局，原有棋谱与思考时间已保留…" : "正在连接匹配服务器…";
-            _server = new FantasyGoTransport();
-            _server.StateReceived += ReceiveServer;
-            _server.Error += OnNetworkError;
-            _server.RequestRejected += OnRequestRejected;
-            _server.Connect(Endpoint, Nickname, Config.RulesJson, kind, _resumeToken, allowNewIdentity: !resume);
+            var connection = new FantasyGoTransport();
+            _server = connection;
+            connection.StateReceived += (state, confirmsMembership) => ReceiveServer(connection, state, confirmsMembership);
+            connection.Error += reason =>
+            {
+                if (ReferenceEquals(connection, _server))
+                {
+                    OnNetworkError(reason);
+                }
+            };
+            connection.RequestRejected += reason =>
+            {
+                if (ReferenceEquals(connection, _server))
+                {
+                    OnRequestRejected(reason);
+                }
+            };
             Revision++;
+            return connection;
         }
 
+        /// <summary>沿同一入口开始或取消匹配，并复核房间快照使用的门禁。</summary>
         public void Match()
         {
-            if (_server == null || !_server.Connected)
+            string blocked = MatchBlockReason();
+            if (blocked.Length != 0)
             {
-                Status = "服务器尚未连接，可重试连接或使用局域网对战";
-                return;
-            }
-            if (_server.Busy)
-            {
-                Status = "正在等待服务器回应，请稍后操作";
+                Status = MatchReasonText(blocked);
                 return;
             }
             _server.Match(Queued, Queued ? 0 : ReadLocalRating(out _));
@@ -380,58 +408,79 @@ namespace RevGame.Pvp
             return true;
         }
 
-        private void ReceiveServer(GoRelayState state)
+        /// <summary>校验会话、房间和棋谱后再提交。缺关键字段时保留已确认棋局并等完整同步。</summary>
+        private void ReceiveServer(FantasyGoTransport connection, GoRelayState state, bool confirmsMembership)
         {
-            if (_disposed || state == null)
+            if (_disposed || _leaving || !ReferenceEquals(connection, _server) || state == null)
             {
                 return;
             }
+
+            string roomId = state.RoomId ?? string.Empty;
+            string expectedRoom = string.IsNullOrEmpty(RoomId) ? _pendingRoomId : RoomId;
+            bool lobbyPhase = state.Phase == "idle" || state.Phase == "queued";
+            if (expectedRoom.Length != 0 && roomId != expectedRoom && (roomId.Length != 0 || lobbyPhase))
+            {
+                // 握手/完整同步能证明原房已经消失。普通推送的旧大厅快照则不能改变现房的身份。
+                if (confirmsMembership && roomId.Length == 0 && lobbyPhase)
+                {
+                    if (RoomId.Length != 0)
+                    {
+                        _roomStateIncomplete = _needsServerSync = false;
+                        OnNetworkError("服务器已关闭原房间，请返回后重新匹配");
+                        return;
+                    }
+                    _pendingRoomId = string.Empty;
+                    _roomStateIncomplete = _needsServerSync = false;
+                }
+                else
+                {
+                    return;
+                }
+            }
             try
             {
+                if (roomId.Length == 0 && lobbyPhase)
+                {
+                    AdoptServerConnection(connection);
+                    Queued = state.Phase == "queued";
+                    Status = !string.IsNullOrEmpty(state.Reason) ? state.Reason : Queued ? "正在匹配，可随时取消" : "服务器已连接";
+                    Revision++;
+                    return;
+                }
+
+                if (roomId.Length == 0 || lobbyPhase || string.IsNullOrEmpty(state.Phase) || string.IsNullOrEmpty(state.CoreVersion)
+                    || string.IsNullOrEmpty(state.RulesJson) || state.MySide == (int)GoSide.Empty || state.Commands == null)
+                {
+                    _pendingRoomId = expectedRoom.Length == 0 ? roomId : expectedRoom;
+                    _roomStateIncomplete = _needsServerSync = true;
+                    AdoptServerConnection(connection);
+                    Queued = false;
+                    SelectedPoint = -1;
+                    CancelHint();
+                    Status = "房间状态不完整，正在请求完整同步";
+                    Revision++;
+                    return;
+                }
                 bool delta = state.BaseSequence > 0;
-                if (delta && (RoomId != state.RoomId || Core == null || state.BaseSequence > Core.Sequence))
+                if (delta && (RoomId != roomId || Core == null || state.BaseSequence > Core.Sequence || _roomStateIncomplete))
                 {
                     _needsServerSync = true;
                     return;
                 }
-                Connected = _server.Connected;
-                _resumeToken = _server.ResumeToken;
-                _matchIdentity = (Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced", _resumeToken);
-                Queued = state.Phase == "queued";
-                RoomId = state.RoomId ?? "";
-                if (!delta)
+                if (!delta && state.Commands.Count < _moves.Count)
                 {
-                    _needsServerSync = false;
-                }
-                // 快照是事实同步，不是连接事件。不能每手把状态重置为“已连接”，再被UI当作新通知。
-                if (!string.IsNullOrEmpty(state.Reason))
-                {
-                    Status = state.Reason;
-                }
-                else if (Queued)
-                {
-                    Status = "正在匹配，可随时取消";
-                }
-                else if (string.IsNullOrEmpty(RoomId))
-                {
-                    Status = "服务器已连接";
-                }
-                if (string.IsNullOrEmpty(RoomId))
-                {
-                    Revision++;
-                    return;
+                    return; // 同一房间的完整旧前缀也不能回退棋局或状态。
                 }
                 if (state.CoreVersion != ProtocolVersion || state.RulesJson != Config.RulesJson)
                 {
                     throw new InvalidOperationException("服务器房间的规则版本不匹配");
                 }
-                MySide = (GoSide)state.MySide;
-                if (MySide != GoSide.Black && MySide != GoSide.White)
+                var side = (GoSide)state.MySide;
+                if ((side != GoSide.Black && side != GoSide.White) || (RoomId == roomId && Core != null && MySide != side))
                 {
                     throw new InvalidOperationException("服务器房间的棋子身份无效");
                 }
-                BlackName = state.BlackName;
-                WhiteName = state.WhiteName;
                 if (delta)
                 {
                     ApplyServerDelta(state);
@@ -445,6 +494,29 @@ namespace RevGame.Pvp
                     }
                     ValidatePrefix(history);
                     ReplaceHistory(history);
+                }
+                // 身份与路由要晚于棋谱校验。昵称是可选字段，展示层按座位兜底。
+                bool restored = _roomStateIncomplete;
+                bool joined = RoomId.Length == 0;
+                AdoptServerConnection(connection);
+                Queued = false;
+                RoomId = roomId;
+                connection.ConfirmRoom(roomId);
+                MySide = side;
+                BlackName = state.BlackName;
+                WhiteName = state.WhiteName;
+                _pendingRoomId = string.Empty;
+                if (!delta)
+                {
+                    _roomStateIncomplete = _needsServerSync = false;
+                }
+                if (!string.IsNullOrEmpty(state.Reason))
+                {
+                    Status = state.Reason;
+                }
+                else if (restored || joined)
+                {
+                    Status = restored ? "房间状态已同步" : "已进入房间";
                 }
                 _awaiting = _pendingSequence > Core.Sequence;
                 if (!_awaiting)
@@ -464,11 +536,20 @@ namespace RevGame.Pvp
                 {
                     Connected = false;
                 }
+                Revision++;
             }
             catch (Exception error)
             {
                 OnNetworkError("收到的棋谱校验失败：" + error.Message);
             }
+        }
+
+        /// <summary>仅在接受当前会话的回包时保存连接状态及恢复信息。</summary>
+        private void AdoptServerConnection(FantasyGoTransport connection)
+        {
+            Connected = connection.Connected;
+            _resumeToken = connection.ResumeToken;
+            _matchIdentity = (Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced", _resumeToken);
         }
 
         /// <summary>按当前设备读取棋力。旧版本没有本机档案，首次从初始分起算。</summary>
@@ -639,9 +720,10 @@ namespace RevGame.Pvp
         /// </summary>
         private bool SubmitActor(GoAction action, GoSide side, int x = -1, int y = -1)
         {
-            if (!CanAct || _goClock == null || (side != GoSide.Black && side != GoSide.White))
+            string blocked = RoomBlockReason();
+            if (blocked.Length != 0 || (side != GoSide.Black && side != GoSide.White))
             {
-                Status = "对局尚未就绪或正在同步，请稍候";
+                Status = blocked == "missing_room_state" ? MatchReasonText(blocked) : "对局尚未就绪或正在同步，请稍候";
                 return false;
             }
             if ((Mode != PvpConnectionMode.Local && side != MySide) ||
@@ -782,6 +864,7 @@ namespace RevGame.Pvp
             nextClock = clockCopy;
             return true;
         }
+        /// <summary>响应真实棋盘点选。房间未同步或轮到对方时保持棋盘展示并拒绝选点。</summary>
         public void SelectPoint(int x, int y)
         {
             if (AgentControlsHumanSeat || !CanAct || Core.Phase == GoPhase.Finished || x < 0 || x >= 9 || y < 0 || y >= 9)
@@ -791,6 +874,10 @@ namespace RevGame.Pvp
             if (Core.Phase == GoPhase.Scoring)
             {
                 Submit(GoAction.ToggleDead, x, y);
+                return;
+            }
+            if (!IsHumanTurn())
+            {
                 return;
             }
             int point = y * 9 + x;
@@ -868,7 +955,7 @@ namespace RevGame.Pvp
             PollAgent();
             PollComputer();
             PollHint();
-            if (_needsServerSync && _server != null && _server.Connected && !_server.Busy &&
+            if (_needsServerSync && _server != null && _server.CanRequestSync && !_server.Busy &&
                 _clock.Elapsed.TotalSeconds >= _serverSyncRetryAt)
             {
                 // 保留缺口锁直到完整快照抵达。限流或断线期间，重试最多一秒一次。
@@ -959,9 +1046,11 @@ namespace RevGame.Pvp
                 await RevTask.Yield();
             }
         }
+        /// <summary>收回连接、房间身份和棋谱，完成退房。</summary>
         private void FinishLeave()
         {
             CloseConnection();
+            RoomId = string.Empty;
             Core = null;
             _moves.Clear();
             _resumeToken = "";
@@ -969,6 +1058,7 @@ namespace RevGame.Pvp
             Status = "已离开对局，请选择联机方式";
             Revision++;
         }
+        /// <summary>先使连接回调过期，再回收会话和同步状态。</summary>
         private void CloseConnection()
         {
             // 断开旧连接时连同决斗副本一起释放，防止迟到消息污染下一局。
@@ -977,8 +1067,9 @@ namespace RevGame.Pvp
             ClearAnalysis();
             AgentControlsHumanSeat = false;
             IsComputerGame = false;
-            _server?.Dispose();
+            FantasyGoTransport previousServer = _server;
             _server = null;
+            previousServer?.Dispose();
             Lan?.Dispose();
             Lan = null;
             Connected = false;
@@ -986,6 +1077,8 @@ namespace RevGame.Pvp
             _awaiting = false;
             _pendingSequence = 0;
             _needsServerSync = false;
+            _roomStateIncomplete = false;
+            _pendingRoomId = string.Empty;
             _serverSyncRetryAt = 0;
             _syncMoves = null;
             _syncTotal = 0;
@@ -994,10 +1087,12 @@ namespace RevGame.Pvp
             _leaveSent = false;
             _syncOutgoing.Clear();
         }
+        /// <summary>结束 PvP 服务寿命，清空当前房身份并阻止迟到回调。</summary>
         public void Dispose()
         {
             _disposed = true;
             CloseConnection();
+            RoomId = string.Empty;
         }
     }
 }

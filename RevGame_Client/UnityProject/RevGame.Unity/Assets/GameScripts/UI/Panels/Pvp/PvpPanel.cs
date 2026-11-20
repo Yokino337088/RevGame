@@ -120,6 +120,8 @@ namespace RevGame.Pvp
         [RevBind("top/white")] private Text _white;
         [RevBind("top/turn")] private Text _turn;
         [RevBind("controls/pass")] private Button _pass;
+        /// <summary>返回按钮在退房进行期间按房间快照禁用。</summary>
+        [RevBind("controls/back")] private Button _back;
         [RevBind("controls/resign")] private Button _resign;
         [RevBind("controls/hint")] private Button _hint;
         [RevBind("controls/hint/label")] private Text _hintLabel;
@@ -324,45 +326,46 @@ namespace RevGame.Pvp
             _matchPortraits = null;
         }
 
+        /// <summary>应用房间快照的显示与按钮门禁，动画和复盘继续使用各自的表现状态。</summary>
         protected override void OnRefreshView()
         {
             RefreshDuelChallenge();
             PvpService service = Service;
+            PvpService.PvpRoomSnapshot room = service.RoomSnapshot;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            _presentedRoom = room;
             Show(_duelTestButton.gameObject, !IsModalOpen && service.CanTestDuel);
 #endif
-            GoCore core = service.Core;
-            bool hasGame = core != null;
+            bool hasGame = room.HasGame;
             transform.Find("top").gameObject.SetActive(hasGame);
-            bool playing = hasGame && core.Phase == GoPhase.Playing;
-            bool scoring = hasGame && core.Phase == GoPhase.Scoring;
-            bool finished = hasGame && core.Phase == GoPhase.Finished;
-            bool canAct = service.CanAct && !service.AgentControlsHumanSeat;
-            _agent.interactable = hasGame && !finished && service.Mode != PvpConnectionMode.Local;
-            Set(_agentLabel, service.AgentControlsHumanSeat ? "停止托管" : "Agent托管");
-            bool myTurn = playing && ((service.Mode == PvpConnectionMode.Local && !service.IsComputerGame) || core.Turn == service.MySide);
-            string connection = service.Mode == PvpConnectionMode.Server ? "服务器匹配" : service.Mode == PvpConnectionMode.Lan ? "局域网直连" : service.IsComputerGame ? "本地人机" : "本地双人";
-            Set(_title, hasGame ? "九路围棋 · " + connection : "九路围棋");
-            Set(_black, hasGame ? "● " + service.BlackName + "\n" + service.ClockText(GoSide.Black) + "   提子 " + core.BlackCaptures : "黑先白后");
-            Set(_white, hasGame ? "○ " + service.WhiteName + "\n" + service.ClockText(GoSide.White) + "   提子 " + core.WhiteCaptures : "同样规则 · 公平落子");
+            bool playing = room.Phase == GoPhase.Playing;
+            bool scoring = room.Phase == GoPhase.Scoring;
+            bool finished = room.Phase == GoPhase.Finished;
+            _agent.interactable = room.Allows(PvpRoomAction.Agent);
+            Set(_agentLabel, room.AgentLabel);
+            Set(_title, room.Title);
+            Set(_black, room.BlackText);
+            Set(_white, room.WhiteText);
             RefreshMatchFeedback(service, playing);
             RefreshAnalysisHud(service, _battleVisible && playing);
-            Set(_turn, _counting ? "终局 · 正在清点" : _settling ? "终局" : hasGame ? service.ResultText().Split('\n')[0] : "选择一种对战方式");
+            Set(_turn, room.MissingCriticalState ? room.TurnText : _counting ? "终局 · 正在清点" : _settling ? "终局" : room.TurnText);
             Show(_scoring, _battleVisible && scoring);
             Show(_result, _battleVisible && finished && (_counting || !_settling));
             Show(_pass.gameObject, playing);
             Show(_resign.gameObject, hasGame && !finished);
             Show(_hint.gameObject, playing);
             Show(_toggleHints.gameObject, hasGame);
-            Show(_reconnect.gameObject, hasGame && service.Mode == PvpConnectionMode.Server && !service.Connected);
-            _pass.interactable = canAct && myTurn;
-            _resign.interactable = canAct;
-            _hint.interactable = service.CanRequestHint && !service.HintPending;
-            Set(_hintLabel, service.HintPending ? "鸦鸦思考中" : "落子建议");
+            Show(_reconnect.gameObject, room.ShowReconnect);
+            _reconnect.interactable = room.Allows(PvpRoomAction.Reconnect);
+            _back.interactable = room.Allows(PvpRoomAction.Leave);
+            _pass.interactable = room.Allows(PvpRoomAction.Pass);
+            _resign.interactable = room.Allows(PvpRoomAction.Resign);
+            _hint.interactable = room.Allows(PvpRoomAction.Hint);
+            Set(_hintLabel, room.HintLabel);
             Set(_toggleLabel, service.HintsVisible ? "隐藏辅助" : "显示辅助");
-            Set(_scoringText, service.ResultText());
-            _confirmScore.interactable = canAct && scoring && (service.Mode == PvpConnectionMode.Local || !core.HasConfirmed(service.MySide));
-            _resume.interactable = canAct && scoring && !core.PlacementLimitReached;
+            Set(_scoringText, room.ResultText);
+            _confirmScore.interactable = room.Allows(PvpRoomAction.ConfirmScore);
+            _resume.interactable = room.Allows(PvpRoomAction.Resume);
             Show(_previous.gameObject, !_settling);
             Show(_next.gameObject, !_settling);
             Show(_replayExit.gameObject, !_settling);
@@ -370,6 +373,44 @@ namespace RevGame.Pvp
             _previous.interactable = finished && !_settling && service.Moves.Count > 0 && service.ReplayStep != 0;
             _next.interactable = finished && !_settling && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
             _replayExit.interactable = !_settling && service.ReplayStep >= 0;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>最后应用到 HUD 的只读房间快照，供 Play 验收用来对齐显示版本。</summary>
+        private PvpService.PvpRoomSnapshot _presentedRoom;
+
+        /// <summary>与同源模型对齐房间与版本，再读取实际控件文本和禁用状态。</summary>
+        internal object RoomDisplayEvidence(PvpService.PvpRoomSnapshot current)
+        {
+            return new Dictionary<string, object>
+            {
+                ["ready"] = BattleReady && _presentedRoom != null,
+                ["applied"] = BattleReady && _presentedRoom?.RoomId == current.RoomId && _presentedRoom.Revision == current.Revision,
+                ["roomId"] = _presentedRoom?.RoomId ?? string.Empty,
+                ["revision"] = _presentedRoom?.Revision ?? 0,
+                ["title"] = _title.text,
+                ["black"] = _black.text,
+                ["white"] = _white.text,
+                ["blackTitle"] = _black.text.Split('\n')[0],
+                ["whiteTitle"] = _white.text.Split('\n')[0],
+                ["turn"] = _turn.text,
+                ["pass"] = BattleReady && _pass.gameObject.activeInHierarchy && _pass.IsInteractable(),
+                ["resign"] = BattleReady && _resign.gameObject.activeInHierarchy && _resign.IsInteractable(),
+                ["reconnect"] = BattleReady && _reconnect.gameObject.activeInHierarchy && _reconnect.IsInteractable(),
+                ["leave"] = BattleReady && _back.gameObject.activeInHierarchy && _back.IsInteractable()
+            };
+        }
+#endif
+
+        /// <summary>使用当前房间的端点与昵称重连，交给服务恢复已确认棋谱。</summary>
+        [RevButtonClick("reconnect")]
+        private void Reconnect()
+        {
+            PvpService service = Service;
+            if (service.RoomSnapshot.Allows(PvpRoomAction.Reconnect))
+            {
+                Run(() => service.StartServer(service.Endpoint, service.Nickname));
+            }
         }
 
         /// <summary>按钮只有意图转发；失败文案留在本屏，不抛到大厅，不改变单机流程。</summary>

@@ -21,6 +21,10 @@ namespace RevGame.Pvp
         [RevBind("duration")] private Text _duration;
         [RevBind("connect")] private Button _connect;
         [RevBind("match")] private Button _match;
+        /// <summary>已连线或已入房时按快照锁定场次切换。</summary>
+        [RevBind("mode")] private Button _mode;
+        /// <summary>退房进行中禁用重复返回。</summary>
+        [RevBind("back")] private Button _back;
         [RevBind("match/label")] private Text _matchLabel;
         [RevBind("mode/label")] private Text _modeLabel;
         private PvpService Service { get { return RevServices.GetRequired<PvpService>(); } }
@@ -30,15 +34,18 @@ namespace RevGame.Pvp
             _endpoint.text = string.IsNullOrEmpty(Service.Endpoint) ? DefaultEndpoint : Service.Endpoint;
             RevTimer.Every(.2f, RefreshView, domain: RevTimeDomain.Unscaled, owner: this);
         }
+        /// <summary>按共享房间快照设置提示、队列文字和联机入口门禁。</summary>
         protected override void OnRefreshView()
         {
-            int seconds = (int)Service.QueueElapsedSeconds;
-            _state.text = Service.Queued ? "正在寻找棋友…" : Service.Connected ? "连接成功 · 可以开始匹配" : Service.Mode == PvpConnectionMode.Local ? "连接服务器，与在线棋友相遇" : Service.Status;
-            _duration.text = Service.Queued ? "已匹配  " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00") : "准备好后开始匹配";
-            _match.interactable = Service.Connected;
-            _connect.interactable = !Service.Queued;
-            _matchLabel.text = Service.Queued ? "取消匹配" : "开始匹配";
-            _modeLabel.text = Service.Config.rookie ? "新手场 · 二次确认落子" : "进阶场 · 直接落子";
+            PvpService.PvpRoomSnapshot room = Service.RoomSnapshot;
+            _state.text = room.ServerStatusText;
+            _duration.text = room.QueueText;
+            _match.interactable = room.Allows(PvpRoomAction.Match);
+            _connect.interactable = room.Allows(PvpRoomAction.Connect);
+            _mode.interactable = room.Allows(PvpRoomAction.ChangeMode);
+            _back.interactable = room.Allows(PvpRoomAction.Leave);
+            _matchLabel.text = room.MatchLabel;
+            _modeLabel.text = room.ModeLabel;
         }
         [RevButtonClick("connect")]
         private void Connect()

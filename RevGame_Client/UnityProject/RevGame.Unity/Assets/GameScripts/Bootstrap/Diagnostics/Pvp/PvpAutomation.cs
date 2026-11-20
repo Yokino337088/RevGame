@@ -49,6 +49,7 @@ namespace RevGame.Pvp
         public static void Register()
         {
             RegisterPresentation();
+            RegisterRoomSnapshots();
             RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "用独立测试槽保存假Key，覆盖平台存储和安卓TXT；跨Play后调用verify", Empty,
                 _ => PvpAgentChecks.PrepareStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-storage-verify", "验证独立测试槽跨Play恢复、损坏拒绝与清除，不返回凭据", Empty,
@@ -156,9 +157,14 @@ namespace RevGame.Pvp
             }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.match", "与玩家按钮一致：开始匹配，已排队时取消匹配", Empty, _ =>
             {
-                if (!Ready(out string reason) || Service.Mode != PvpConnectionMode.Server || !Service.Connected)
+                if (!Ready(out string reason))
                 {
-                    return Result(false, string.IsNullOrEmpty(reason) ? "服务器尚未连接" : reason);
+                    return Result(false, reason);
+                }
+                PvpService.PvpRoomSnapshot room = Service.RoomSnapshot;
+                if (!room.Allows(PvpRoomAction.Match))
+                {
+                    return Result(false, room.DisabledReason(PvpRoomAction.Match));
                 }
                 Service.Match();
                 return Result(true, "已提交匹配请求，请查询queued/roomId确认结果");
@@ -230,6 +236,7 @@ namespace RevGame.Pvp
         /// <summary>Bootstrap销毁时对称注销；先清理夹具，再撤掉能力，避免异常退出后静态检查继续占端口。</summary>
         public static void Unregister()
         {
+            StopRoomSnapshotFixture();
             _kcpOpponent?.Dispose();
             _kcpOpponent = null;
             StopLanCheck();
@@ -270,10 +277,11 @@ namespace RevGame.Pvp
             };
         }
 
-        /// <summary>纯查询只复制当前已提交事实；不触发加载、连接、时钟推进、重放或规则计算。</summary>
+        /// <summary>只读棋盘、连接和房间显示，房间名称使用和 HUD 相同的快照兜底值。</summary>
         public static object State()
         {
             PvpService service = Service;
+            PvpService.PvpRoomSnapshot room = service.RoomSnapshot;
             GoCore core = service.Core;
             var peers = new List<object>();
             if (service.Lan != null)
@@ -339,7 +347,7 @@ namespace RevGame.Pvp
                 ["sequence"] = core?.Sequence ?? 0, ["moveNumber"] = core?.MoveNumber ?? 0, ["stateHash"] = core?.StateHash.ToString() ?? string.Empty,
                 ["positionHash"] = core?.PositionHash.ToString() ?? string.Empty, ["connected"] = service.Connected, ["queued"] = service.Queued,
                 ["status"] = service.Status, ["lastNetworkError"] = service.LastNetworkError, ["transport"] = "Fantasy.KCP", ["mySide"] = service.MySide.ToString(), ["roomId"] = service.RoomId,
-                ["blackName"] = service.BlackName, ["whiteName"] = service.WhiteName, ["blackStones"] = black, ["whiteStones"] = white,
+                ["blackName"] = room.BlackName, ["whiteName"] = room.WhiteName, ["blackStones"] = black, ["whiteStones"] = white,
                 ["blackCaptures"] = core?.BlackCaptures ?? 0, ["whiteCaptures"] = core?.WhiteCaptures ?? 0,
                 ["blackConfirmed"] = core != null && core.HasConfirmed(GoSide.Black), ["whiteConfirmed"] = core != null && core.HasConfirmed(GoSide.White),
                 ["winner"] = core?.Winner.ToString() ?? "None", ["endReason"] = core?.EndReason.ToString() ?? "None",
@@ -431,8 +439,10 @@ namespace RevGame.Pvp
             _lanCheck?.Dispose();
         }
 
+        /// <summary>释放开发态夹具并提交正式退房；后续场景返回由自动化计划等待。</summary>
         private static object Cleanup()
         {
+            StopRoomSnapshotFixture();
             _kcpOpponent?.Dispose();
             _kcpOpponent = null;
             if (_checkRunning)

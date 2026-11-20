@@ -93,8 +93,8 @@ namespace RevGame.Pvp
 #endif
         public GoHint[] Suggestions { get { return _suggestions; } }
         public int SuggestionCount { get { return _suggestionCount; } }
-        // 只允许当前围棋场景消费棋盘交互；决斗接管后，围棋入口即使仍有连接也会冻结。
-        public bool CanAct { get { return Core != null && DuelId.Length == 0 && !_awaiting && !_leaving && ReplayStep < 0 && (Mode == PvpConnectionMode.Local || Connected) && (Mode != PvpConnectionMode.Server || (_server != null && !_server.Busy && !_needsServerSync)); } }
+        /// <summary>棋局提交与房间快照共用门禁，关键状态不完整时保留画面并停止提交。</summary>
+        public bool CanAct => RoomBlockReason().Length == 0;
 
         /// <summary>对局普通状态留在HUD，横幅只接收菜单提示和需要玩家处理的异常。</summary>
         public bool ShouldShowStatusNotice
@@ -130,8 +130,8 @@ namespace RevGame.Pvp
             private set;
         }
 
-        public bool CanRequestHint => CanAct && !AgentControlsHumanSeat && Core.Phase == GoPhase.Playing &&
-            (Mode == PvpConnectionMode.Local && !IsComputerGame || Core.Turn == MySide);
+        /// <summary>建议遵循与快照一致的阶段、托管和玩家回合条件。</summary>
+        public bool CanRequestHint => CanAct && !AgentControlsHumanSeat && Core.Phase == GoPhase.Playing && IsHumanTurn();
 
         /// <summary>玩家请求当前回合的建议。返回后可能仍在等云端，点位由同一合法棋盘决定。</summary>
         public void RequestHint()
@@ -259,9 +259,10 @@ namespace RevGame.Pvp
             HintSource = "";
         }
 
+        /// <summary>仅在没有有效匹配会话时读取并切换场次配置。</summary>
         public void SetRookie(bool rookie)
         {
-            if (Core != null || Queued || Connected)
+            if (ModeBlockReason().Length != 0)
             {
                 Status = "请先离开房间再切换场次";
                 return;

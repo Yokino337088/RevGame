@@ -36,14 +36,16 @@ namespace RevGame.Pvp.Networking
         private int _duelInFlight;
         private string _deferredFailure;
 
-        /// <summary>快照已脱离 Fantasy 消息池，调用者可以保存并从头重放。</summary>
-        public event Action<GoRelayState> StateReceived;
+        /// <summary>快照已脱离消息池。第二参数为真时，握手或完整同步确认了当前会话的房间归属。</summary>
+        public event Action<GoRelayState, bool> StateReceived;
         public event Action<string> Error;
         /// <summary>连接仍然有效的操作拒绝；不能把“正忙/序列冲突”误报成整条连接断开。</summary>
         public event Action<string> RequestRejected;
         public bool Connected { get; private set; }
         public bool Busy { get; private set; }
         public string ResumeToken { get; private set; } = "";
+        /// <summary>完整同步需要可发包的真实会话；断线和验收替身无 Socket。</summary>
+        internal bool CanRequestSync => Connected && _session != null && !_session.IsDisposed;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>开发态断网夹具：释放真实Session及Socket，保留Service持有的棋谱与恢复令牌。</summary>
@@ -116,6 +118,7 @@ namespace RevGame.Pvp.Networking
             HelloAsync(generation).Coroutine();
         }
 
+        /// <summary>仅在本次会话仍有效时提交握手快照，空房结果可确认本次没有恢复到房间。</summary>
         private async FTask HelloAsync(int generation)
         {
             try
@@ -147,7 +150,7 @@ namespace RevGame.Pvp.Networking
                 Busy = false;
                 Connected = true;
                 _heartbeatAt = Time.realtimeSinceStartup + HeartbeatIntervalSeconds;
-                Receive(response.State);
+                Receive(response.State, confirmsMembership: true);
             }
             catch (Exception exception)
             {
@@ -271,6 +274,7 @@ namespace RevGame.Pvp.Networking
             }
         }
 
+        /// <summary>接收当前会话的 RPC 结果。只有成功的完整同步可以确认玩家已无原房。</summary>
         private async FTask RequestAsync(int operation, GoRelayCommand command, int generation, int localRating)
         {
             uint code = 0;
@@ -329,7 +333,7 @@ namespace RevGame.Pvp.Networking
                 Busy = false;
                 if (state != null)
                 {
-                    Receive(state);
+                    Receive(state, confirmsMembership: operation == 4 && code == 0);
                 }
                 if (code != 0)
                 {
@@ -350,15 +354,59 @@ namespace RevGame.Pvp.Networking
             }
         }
 
-        private void Receive(GoRelayState state)
+        /// <summary>复制并转交快照，房间路由由服务校验后提交。</summary>
+        private void Receive(GoRelayState state, bool confirmsMembership = false)
         {
             if (state == null)
             {
                 return;
             }
-            _roomId = state.RoomId ?? "";
-            StateReceived?.Invoke(state.DeepCopy());
+            StateReceived?.Invoke(state.DeepCopy(), confirmsMembership);
         }
+
+        /// <summary>保存服务已确认的房间，供后续命令和决斗 RPC 发送。</summary>
+        internal void ConfirmRoom(string roomId)
+        {
+            _roomId = roomId;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>启用隔离的已连状态，保留真实入站路径并停用 Socket 心跳。</summary>
+        internal void ConnectRoomFixture()
+        {
+            Connected = true;
+            _heartbeatAt = float.PositiveInfinity;
+        }
+
+        /// <summary>模拟当前入站及已排队的旧会话回调，验证生产接收门禁。</summary>
+        internal Action<GoRelayState> RoomFixtureReceiver()
+        {
+            Action<GoRelayState, bool> queued = StateReceived;
+            return state =>
+            {
+                if (_disposed)
+                {
+                    queued?.Invoke(state.DeepCopy(), false);
+                }
+                else
+                {
+                    Receive(state);
+                }
+            };
+        }
+
+        /// <summary>只读验证已确认的 RPC 路由没有被旧包改写。</summary>
+        internal string RoomFixtureRoute => _roomId;
+
+        /// <summary>让验收会话走正常退房等待，无需尝试对不存在的 Socket 发包。</summary>
+        internal void DisconnectRoomFixture()
+        {
+            if (_session == null)
+            {
+                Connected = false;
+            }
+        }
+#endif
 
         private bool IsCurrent(int generation)
         {

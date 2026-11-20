@@ -355,6 +355,7 @@ namespace RevGame.Pvp
         }
 #endif
 
+        /// <summary>使用房间快照中的计分文案开始本局结算演出，棋盘计分仍读取权威模型。</summary>
         private void BeginResult(PvpService service, GoCore core)
         {
             _countCore = core;
@@ -375,7 +376,7 @@ namespace RevGame.Pvp
             }
             else
             {
-                Set(_resultText, service.ResultText());
+                Set(_resultText, service.RoomSnapshot.ResultText);
             }
             AppendOutcome(sequence, service, core);
         }
