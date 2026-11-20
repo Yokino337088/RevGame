@@ -24,6 +24,8 @@
     {"id":"gal.node.remove","keys":["path","id","redirect","checkOnly","expectedHash"],"description":"删除指定节点，可显式改接起点、下一节点与选项入边","environment":"edit","readOnly":false},
     {"id":"gal.node.patch","keys":["path","document","checkOnly","expectedHash"],"description":"按顺序执行多项节点修改，可指定起点或存档修订，全部验证后一次保存","environment":"edit","readOnly":false},
     {"id":"gal.ui.create","keys":["font","theme","overwrite","bundle"],"description":"生成默认 Gal 面板、设置弹层及共用主题","environment":"edit","readOnly":false},
+    {"id":"asset.import-plan","keys":["path","searchFolder","target"],"description":"比较源内容、导入配置、分包归属并生成资产复用方案","environment":"edit","readOnly":true},
+    {"id":"ui.binding-check","keys":["prefab"],"description":"检查预制体的必需控件与节点接线","environment":"edit","readOnly":true},
     {"id":"gal.ui.layout","keys":["path","query"],"description":"按控件名称查询主题布局与设计像素尺寸","environment":"edit","readOnly":true},
     {"id":"gal.ui.layout-set","keys":["path","document","expectedHash","checkOnly"],"description":"按控件名调整大小位置，支持预检和内容摘要保护","environment":"edit","readOnly":false},
     {"id":"gal.ui.designer","keys":["path"],"description":"打开主题的可视化面板布局设计器","environment":"edit","readOnly":false},
@@ -1818,7 +1820,10 @@
       "readOnly": true
     }
   ],
+  "contractVersion": 1,
   "parameterTypes": {
+    "theme": "string",
+    "searchFolder": "string",
     "screenPoint": "array",
     "validateOnly": "boolean",
     "dryRun":"bool",

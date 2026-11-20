@@ -1,0 +1,20 @@
+{
+    "name": "Revolution.HotUpdate.Editor",
+    "rootNamespace": "Revolution.HotUpdate.Editor",
+    "references": [
+        "Revolution.Runtime",
+        "Revolution.HotUpdate",
+        "Revolution.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

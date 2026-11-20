@@ -17,6 +17,12 @@ namespace Revolution.Editor
         public string[] keys;
         public bool confirm;
         public bool resumesAfterReload;
+        /// <summary>由 DTO 生成的输入 Schema，空值表示使用旧清单。</summary>
+        public string inputSchemaJson;
+        /// <summary>由 DTO 生成的输出 Schema，空值表示没有输出描述。</summary>
+        public string outputSchemaJson;
+        /// <summary>真实注册声明只读的扩展动作，旧动作仍可从清单补充。</summary>
+        public bool readOnly;
     }
 
     public static class RevAutomationCatalog
@@ -91,6 +97,8 @@ namespace Revolution.Editor
             public MethodInfo Method;
             public RevAutomationCapability Capability;
             public bool Invalid;
+            /// <summary>类型化注册失败的原因，供目录检查给出可定位的诊断。</summary>
+            public string ContractError;
         }
 
         // 动作特性在当前脚本域内固定。索引只存元数据，域重载后重建，不缓存业务结果。
@@ -99,6 +107,7 @@ namespace Revolution.Editor
         private static readonly Lazy<Dictionary<string, Entry>> Extensions =
             new Lazy<Dictionary<string, Entry>>(BuildExtensionIndex);
 
+        /// <summary>发现当前域的显式注册，隔离重复、签名错误或 DTO 结构不受支持的动作。</summary>
         private static Dictionary<string, Entry> BuildExtensionIndex()
         {
             var result = new Dictionary<string, Entry>(StringComparer.Ordinal);
@@ -111,12 +120,24 @@ namespace Revolution.Editor
                     existing.Invalid = true;
                     continue;
                 }
-                result.Add(name, new Entry
+                var entry = new Entry
                 {
                     Method = method,
-                    Capability = Describe(attr),
                     Invalid = string.IsNullOrWhiteSpace(name) || !Valid(method) || BuiltinIndex.ContainsKey(name)
-                });
+                };
+                if (!entry.Invalid)
+                {
+                    try
+                    {
+                        entry.Capability = Describe(attr);
+                    }
+                    catch (ArgumentException error)
+                    {
+                        entry.Invalid = true;
+                        entry.ContractError = error.Message;
+                    }
+                }
+                result.Add(name, entry);
             }
             return result;
         }
@@ -132,17 +153,32 @@ namespace Revolution.Editor
                     .Concat(entries.Values.Where(entry => !entry.Invalid).Select(entry => entry.Capability))
                     .OrderBy(c => c.id, StringComparer.Ordinal).ToArray(),
                 errors = entries.Where(pair => pair.Value.Invalid)
-                    .Select(pair => "重复或签名无效的自动化动作：" + pair.Key).ToArray()
+                    .Select(pair => string.IsNullOrEmpty(pair.Value.ContractError)
+                        ? "重复或签名无效的自动化动作：" + pair.Key
+                        : "动作契约无效：" + pair.Key + "，" + pair.Value.ContractError).ToArray()
             };
         }
 
         private static bool Valid(MethodInfo method) => method.IsStatic && method.ReturnType != typeof(void)
             && method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType == typeof(RevAutomationRequest);
 
+        /// <summary>类型化动作直接从 DTO 导出参数键和 Schema，老动作继续读取原有 Keys。</summary>
         private static RevAutomationCapability Describe(RevAutomationActionAttribute attr)
         {
-            return new RevAutomationCapability { id = attr.Name, description = attr.Description, environment = attr.Environment,
-                keys = attr.Keys, confirm = attr.Confirm, resumesAfterReload = attr.ResumeAfterReload };
+            var input = attr.InputType == null ? null : RevAutomationContract.Describe(attr.InputType);
+            var output = attr.OutputType == null ? null : RevAutomationContract.Describe(attr.OutputType);
+            return new RevAutomationCapability
+            {
+                id = attr.Name,
+                description = attr.Description,
+                environment = attr.Environment,
+                keys = input == null ? attr.Keys : RevAutomationJson.Object(input["properties"]).Keys.ToArray(),
+                inputSchemaJson = input == null ? null : RevAutomationJson.Write(input),
+                outputSchemaJson = output == null ? null : RevAutomationJson.Write(output),
+                confirm = attr.Confirm,
+                resumesAfterReload = attr.ResumeAfterReload,
+                readOnly = attr.ReadOnly
+            };
         }
 
         /// <summary>
@@ -202,6 +238,7 @@ namespace Revolution.Editor
             RevAutomationPayload.Validate(request, entry?.Capability.keys ?? CapabilityOf(request.action)?.keys, allowReferences);
         }
 
+        /// <summary>验证实际编辑器环境、显式许可和解析后的类型契约，然后调用业务动作。</summary>
         public static object Invoke(MethodInfo method, RevAutomationRequest request)
         {
             var attr = method.GetCustomAttribute<RevAutomationActionAttribute>();
@@ -211,6 +248,12 @@ namespace Revolution.Editor
             if (attr.Environment == "play" && (!EditorApplication.isPlaying || EditorApplication.isPaused))
             { throw new InvalidOperationException("此动作需要未暂停的 Play：" + request.action); }
             if (attr.Confirm && !request.confirm) { throw new InvalidOperationException("此动作需要 --confirm：" + request.action); }
+            string schema = CapabilityOf(request.action)?.inputSchemaJson;
+            if (!string.IsNullOrEmpty(schema))
+            {
+                var input = RevAutomationJson.Object(RevAutomationJson.Parse(schema));
+                RevAutomationJson.Validate(RevAutomationJson.Parse(request.payloadJson), input);
+            }
             try { return method.Invoke(null, new object[] { request }); }
             catch (TargetInvocationException e) { throw e.InnerException ?? e; }
         }

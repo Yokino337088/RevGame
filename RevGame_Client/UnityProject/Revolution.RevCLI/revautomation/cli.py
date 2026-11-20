@@ -49,6 +49,8 @@ def _build_parser():
     p.add_argument("--confirm", action="store_true", help="显式允许已标记高危 GM、移除旧表或覆盖已生成骨架")
     p.add_argument("--no-daemon", action="store_true", help="不转发给常驻服务，强制在本进程执行")
     sub = p.add_subparsers(dest="family", required=True)
+    contract = sub.add_parser("contract", help="校验命令清单；联网时从真实 Unity 注册表导出共享契约")
+    contract.add_argument("--live", action="store_true", help="核对实际项目、桥接协议及当前脚本域动作")
     sub.add_parser("doctor", help="只读体检：Python、工程、桥接代码、Unity 位置、编辑器、常驻服务、IL2CPP 工具链")
     connecting = sub.add_parser("connect", help="开机后的一键连接：体检、打开 Unity、等编译、起常驻服务、核对能力；可重复执行")
     connecting.add_argument("--no-launch", action="store_true", help="Unity 没开时不自动打开")
@@ -65,6 +67,8 @@ def _build_parser():
     shipping.add_argument("--frame-timing", action="store_true")
     shipping.add_argument("--force", action="store_true", help="导表时忽略未改动判断")
     shipping.add_argument("--skip-invalid", action="store_true", help="导表时跳过有错的表")
+    shipping.add_argument("--verified", action="store_true", help="校验本次完整编译及指定平台的 AB 发布回执")
+    shipping.add_argument("--verify-plan", type=Path, help="构建 Player 前运行指定的 RevMCP 真实业务验收计划")
     service = sub.add_parser("daemon", help="常驻服务：启动一次，之后的调用不再付 Python 启动代价")
     service_ops = service.add_subparsers(dest="operation", required=True)
     for operation in ("start", "stop", "status", "serve"):
@@ -617,12 +621,36 @@ def main(argv=None):
         elif args.family == "doctor":
             from . import connect as linking
             result = linking.inspect(args.project, args.unity, args.timeout)
+        elif args.family == "contract":
+            from .contracts import audit
+            manifest = read_json(ROOT / "commands.json")
+            if args.live:
+                client = RevClient(args.project, "live", args.unity, args.timeout)
+                before = client.endpoint()
+                capabilities = client.call("editor.capabilities")
+                view = client.call("editor.status")
+                if not capabilities.get("success") or not view.get("success"):
+                    raise RevError(str(capabilities if not capabilities.get("success") else view))
+                after = client.endpoint()
+                keys = ("sessionId", "domainId")
+                if not before or not after or any(before.get(key) != after.get(key) for key in keys):
+                    raise RevError("目录查询期间编辑器会话或脚本域变化，请等待编译后重新发现。")
+                if Path(view["data"].get("project", "")).resolve() != client.project:
+                    raise RevError("在线桥接返回了不同的 Unity 工程。")
+                result = audit(manifest, capabilities["data"], view["data"])
+                result["editorSession"] = {key: after.get(key) for key in keys}
+            else:
+                result = audit(manifest)
         elif args.family == "ship":
             from . import ship
             client = RevClient(args.project, "live", args.unity, max(args.timeout, 14400))
             quiet = lambda c, action, payload, confirm: invoke_action(c, action, payload, confirm, progress=progress)
+            smoke = None
+            if args.verify_plan:
+                smoke = ship.smoke_runner(ROOT.parent / "Revolution.RevMCP/rev_mcp.py", client.project, read_json(args.verify_plan), client.timeout)
             result = ship.run(client, args.target, args.excel, not args.no_ab, args.player, args.backend, args.development,
-                              args.automation, args.frame_timing, args.confirm, args.force, args.skip_invalid, quiet)
+                              args.automation, args.frame_timing, args.confirm, args.force, args.skip_invalid, quiet,
+                              verified=args.verified or smoke is not None, smoke=smoke)
         elif args.family == "game":
             from . import game
             payload = None

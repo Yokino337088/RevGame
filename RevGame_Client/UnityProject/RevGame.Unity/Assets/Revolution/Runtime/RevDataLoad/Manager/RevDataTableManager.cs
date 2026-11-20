@@ -149,6 +149,12 @@ namespace Revolution
         public static bool IsLoaded<T>() where T : class, RevIDataTable
             => _tablesByType.TryGetValue(typeof(T), out RevIDataTable table) && table.IsLoaded;
 
+        /// <summary>启动计划用它避开其它调用方已发出的表请求。</summary>
+        internal static bool HasPendingLoad<T>() where T : class, RevIDataTable
+        {
+            return _loading.ContainsKey(typeof(T));
+        }
+
         /// <summary>是否已装载（按表名）</summary>
         public static bool IsLoaded(string tableName)
             => tableName != null && _tables.TryGetValue(tableName, out RevIDataTable table) && table.IsLoaded;

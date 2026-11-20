@@ -3,6 +3,7 @@
 RevGame 用真实业务验证 Revolution 框架。Unity 工程为 `RevGame_Client/UnityProject/RevGame.Unity`。业务使用框架公开门面，异步用 `RevTask`，资源用逻辑路径。`Assets/Revolution` 是导出快照，框架修改回 Revolution 源仓库。
 
 - 开工查相关源码和实际注册能力。按 [项目 Skill](.codex/skills/revgame-development/SKILL.md) 选当前专题，保留已有工作区及暂存改动。
+- 新增场景、页面命令和启动依赖优先沿用 [业务自动交付契约](.codex/skills/revolution-framework/references/automatic-delivery.md)。项目提供实际玩法许可、首屏、提交点、快照和恢复策略。第一章交接与存档回归可复用 [真实 AB 交付计划](tools/automation/first-chapter-delivery.json)。
 - 新增或修改手写代码时，按 [新手注释守则](.codex/skills/revgame-development/references/code-and-comments.md) 在类型和接口、字段和属性、方法和回调旁逐项写中文注释。关键实现写清原因、顺序、边界和收尾。简单行为一句话，复杂契约分段说明。交付前核对实际 diff 和新文件，方法体有改动时也检查声明注释。
 - 类、方法、属性和 `if` / `else if` / `else` 的大括号各占一行，方法参数与左括号同一行。移动 Unity 资产保留原 `.meta` 和 GUID。
 - 修改 Shader、材质、纹理和渲染特效时读 [Revolution-TA](.codex/skills/revolution-ta/SKILL.md)。Shader 位于 `Assets/GameShader`，材质位于 `Assets/GameRes/Material/<模块>`。按实际管线、纹理用途与目标 AB 验证画面和资源归属。

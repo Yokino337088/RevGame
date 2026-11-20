@@ -154,7 +154,7 @@
 | **状态机** | 公开类型为 `RevLightFSM` / `RevLightStackFSM` / `RevHeavyFSM`；宿主显式驱动，栈机不做异步切换；没有 `RevHeavyFSMGroup` / `RevHeavyFSM.TimeScale`；不内置 Scope 调度，业务状态负责联动；既有文件路径仍含旧名 |
 | **RevScope / RevLogic** | 游戏域是字符串，用户定义常量即可；不是服务实例隔离容器。同名重入默认失败，关闭 `ReenterIsError` 只复用；`TakeOverOwner` 默认开但可关，显式 owner 优先，服务须显式归属；`Reclaim` 默认 Unknown 不按组收资源。Tick 暂停不等于停 Timer；缺域的 Logic Start 返回 null，不能调用任意不存在的自动启动 API |
 | **RevResManager** | 资源组仍是 `RevResGroup` 枚举，不等于可自定义的字符串游戏域；加载传 Unknown 仅在活动域开启兜底且配置非 Unknown 回收组时补组。引用仍按契约配对，跨域共享不得被域整组误卸载；资源根需配置，Resources 只是随包基线/兜底 |
-| **RevUI** | **不做代码热更、不做自动数据绑定**（改了 `Data` 内容手动 `RefreshView()`）；不使用 `RevPool`；**不让面板自设 `sortingOrder`**，预留参数 `RevUISetting.LayerStep` **改了没有任何效果** [已核实：字段存在但未接入]；不要手动 `Instantiate`；Part 的关闭是同步的，不自动刷新所有 Part；**本期没做**：MessageBox、常用 Part、面板清单窗口、打开优先级（面板代码生成器已有，见 `editor-tools.md`） |
+| **RevUI** | `CreateStateBinding` 接入声明式快照与命令。既有自由数据仍使用 `RefreshView()`。排序和释放通过已注册面板的管理入口。见 [业务自动交付契约](automatic-delivery.md#作用域请求和-ui)。 |
 | **RevSequence** | 不做条件分支 / 跳转 / 状态网络；不内置业务动作库；不做可视化编排；不内置区域检测（只给 `RevITriggerSource` 契约）；不提供状态 / 进度查询；`.Finally` 里不能放 `Wait` / `Tween`（`Build()` 报错）；`Build()` 之后再改会抛异常；全局时间缩放 / 暂停开关未做 |
 | **RevGM** | **不做客户端权限**（`HighRisk` 只是提醒二次确认，真权限归服务端）；不支持拼音缩写联想（中文要打中文子串）；编辑模式（没点 Play）不执行命令；命令名不能含空白 / 不能只有分隔符；重名注册直接抛异常；不用编译宏裁剪 |
 | **配置表** | 数据文件要有 AB 标记、扩展名不能被 `excludeExtensions` 排除（否则 `PathNotMapped`）；导表工具：只支持 `.xlsx`；字段只支持 `int / float / string / bool`（无数组 / 嵌套 / 枚举）；单主键且是第一个字段；不处理图表 / 批注 / 合并单元格，公式只取缓存值；坏表**被跳过而不是中止**；表名只做首字母大写；没有 schema 版本号（代码和数据要一起覆盖） |
@@ -172,6 +172,6 @@
 
 - **RevTimer**：`RevStopwatch` 同帧读数为 0，且 Fixed / Server 域被静默降级为 Scaled；`Fixed` 域在 `timeScale = 0` 时随 `FixedUpdate` 停止（与"照走"不符）；`At` 计时器的 `Pause / Restart / Progress` 语义不成立；同帧内被 `Pause / Restart` 的计时器仍可能触发；临近 1024 上限时"回调里先 Stop 再创建"可能误报 `Overflow`；**值类型作 `owner` 因装箱 `CancelAllOf` 永远匹配不上**；宿主 `HideAndDontSave`，退出 Play 后可能残留。
 - **RevUI / RevInput**：修复多为**静态审计结论**（Unity 最终编译与 PlayMode 回归当时未完成；RevInput 的 EditMode 测试运行器 0 个用例，"Passed"是空套件；没有真机键鼠 / 手柄 / 多点触屏验证）。
-- **RevHotUpdate**：候选门禁、完整快照真 SHA、跨启动分片身份复用和发布 `SelfCheck` 真 SHA 已落地；不要沿用“SelfCheck 不重算”的旧结论。当前没有 `ProbeBundles` / 经资源系统加载代表业务资源的探针链路，`RevHotResBridge.Reset()` 也未解除四委托；端到端验证范围见 `hot-update.md` §5.1。
+- **RevHotUpdate**：候选门禁、完整快照真 SHA、跨启动分片身份复用和发布 `SelfCheck` 真 SHA 已落地。`RequiredAssets` 在切指针前读取候选代表资源并释放临时包，业务通过 `CanActivate` 复核激活。端到端验证范围见 `hot-update.md` §5.1。
 - **状态机 / 动作序列**：没有行为断言工程（取代 / 取消 / 栈配对 / 历史裁剪只靠设计保证和代码审查）；动作序列"工程外无引擎编译未跑"。
 - **投产评估 P2 未做**：Debug / Release 构建区分、出包链路、首包体积门禁、热更下载类 4 条内部加固。

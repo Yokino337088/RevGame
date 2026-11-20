@@ -90,7 +90,7 @@ if (result.Success == false)
 | 跨启动续传 P1 | `Runtime/Download/RevHotDownloader.cs`：`PreparePart(partPath, item, resVersion, url)` 用 `.part.meta` 保存 `RevHotPart1` + 资源版本/包名/大小/SHA-256/完整 URL；身份完全一致才复用长度。切源清零；200/416 从零 GET；完整分片先校验，坏 hash 清分片与元数据；取消保留，过期清理见 Store `ClearStaleParts()` |
 | 发布自检 P1 | `Editor/RevHotManifestBuilder.cs`：`string SelfCheck(RevHotManifest manifest, string outputDir)` 重读发布清单，对全部包与 ResMap 比尺寸/真 SHA-256，检查文件名大小写/引用/首包基线一致；平台主包仅验可读 Unity AB 文件头，不能说自检已在编辑器跨平台真加载所有包 |
 
-**不要补写不存在的能力**：当前 Config 无 `ProbeBundles`；没有独立候选上下文/在发布 `current` 前通过资源系统加载代表资源的探针链路。文件平台“SHA + 内置主包可加载”不等于所有候选 AB 及业务资源可用，`Init()` 只装策略；需另外做 Unity/真机验收。技术方案中的 `CoreBundles`、按标签下载、清单签名/公钥信任、代码热更等不属于已落地 API；hash/CRC 不是清单来源可信的签名。
+候选完成文件校验后，`RequiredAssets` 可按目标 ResMap 读取代表业务资源。探针从候选包及其依赖独立读取，释放本次打开的句柄后再切 `current`。业务通过 `CanActivate` 复核激活时机，框架同时复查当前资源持有与在途加载。覆盖范围以实际声明的代表键和测试平台为准。详见 [业务自动交付契约](automatic-delivery.md#可选热更新)。
 
 ## 6. 本地假 CDN demo（不改真云就能跑通全链路）
 

@@ -1,5 +1,5 @@
 // 玩家声音偏好由常驻服务持有：只调Revolution的BGM分类音量，不碰战斗音效/系统主音量。
-// 拖动时立即落音量、关闭面板再写磁盘，避免滑杆每次变化都触发PlayerPrefs.Save。
+// 拖动时立即落音量。检查点合并磁盘写入，关面板与切后台立即保存最新值。
 using System;
 using Revolution;
 using UnityEngine;
@@ -27,7 +27,8 @@ namespace RevGame.Services
         private const string ProductionKey = "RevGame.Settings.Bgm.v1";
         private readonly string _key;
         private readonly bool _applySound;
-        private bool _dirty;
+        /// <summary>常驻设置服务持有的保存检查点。负责合并写入和后台事件。</summary>
+        private readonly RevSaveCheckpoint _save;
         /// <summary>玩家偏好0～1；静音只暂停声音输出，不丢失此前设置的滑杆值。</summary>
         public float Volume
         {
@@ -51,12 +52,7 @@ namespace RevGame.Services
             Muted = PlayerPrefs.GetInt(key + ".Muted", 0) != 0;
             Apply();
 
-            if (_applySound)
-            {
-                // 手机切后台可能随后被系统杀进程；在框架生命周期事件到达时先保存滑杆最新值。
-                RevEvent.AddEventListener(RevAppLifecycle.Paused, Save, owner: this);
-                RevEvent.AddEventListener(RevAppLifecycle.Quitting, Save, owner: this);
-            }
+            _save = new RevSaveCheckpoint(WritePreferences, delaySeconds: 2f, flushOnPause: applySound);
         }
 
         public AudioSettingsFrame Snapshot()
@@ -86,7 +82,7 @@ namespace RevGame.Services
         }
         private void Changed()
         {
-            _dirty = true;
+            _save.MarkDirty();
             Apply();
 
             if (_applySound)
@@ -101,25 +97,30 @@ namespace RevGame.Services
                 RevSound.SetVolume(RevSoundKind.Bgm, Muted ? 0f : Volume);
             }
         }
-        /// <summary>关闭设置或退出游戏时提交，没修改时不写磁盘。</summary>
+        /// <summary>关闭设置时提交已变动的音量。应用事件交给框架检查点。</summary>
         public void Save()
         {
-            if (!_dirty)
-            {
-                return;
-            }
+            _save.Flush();
+        }
+
+        /// <summary>将业务的原有键和值提交到 PlayerPrefs。失败交给检查点保留脏状态。</summary>
+        private void WritePreferences()
+        {
             PlayerPrefs.SetFloat(_key, Volume);
             PlayerPrefs.SetInt(_key + ".Muted", Muted ? 1 : 0);
             PlayerPrefs.Save();
-            _dirty = false;
         }
+
+        /// <summary>退出常驻宿主时先保存待提交设置，再关闭框架事件与合并计时器。</summary>
         public void Dispose()
         {
-            Save();
-
-            if (_applySound)
+            try
             {
-                RevEvent.RemoveAllByOwner(this);
+                Save();
+            }
+            finally
+            {
+                _save.Dispose();
             }
         }
     }

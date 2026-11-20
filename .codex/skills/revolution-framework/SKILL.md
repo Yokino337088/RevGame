@@ -5,6 +5,8 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 
 # Revolution 框架开发
 
+先读 [RevGame 工程实践索引](references/revgame-practice-map.md) 中与当前任务相近的真实路径。用项目自己的目标版本、规则、平台和资源归属决定适配。涉及切场、UI 命令、初始化、保存和跨帧所有权时，优先用 [业务自动交付契约](references/automatic-delivery.md) 接现有框架能力。
+
 实现或审查项目功能时，先看项目 `AGENTS.md`、已安装的框架版本和同类代码。使用实际存在的公开 API。项目可用 [RevGame 实现索引](references/revgame-engineering.md) 找到同职责例子；项目版本决定签名与生命周期契约。编写业务时按任务读 [官方编程架构规范](https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/编程范式/Revolution官方编程架构规范.md) 的对应部分。
 
 ## 先选相关专题
@@ -13,6 +15,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 |---|---|
 | 框架选型、API 存不存在 | [决策与不存在清单](references/decision-guide.md)。签名不明确就定位公开定义和同类调用 |
 | 启动、场景与生命周期 | [启动与平台](references/startup-and-platform.md)、[核心门面](references/modules-core.md) 的 RevScene 和 RevScope |
+| 业务只声明条件，框架执行切场、异步、UI、启动、存档与交付 | [业务自动交付契约](references/automatic-delivery.md) |
 | 域内自动归属、预加载保留、退场诊断 | [域所有权和自动回收](references/domain-lifetime.md) |
 | UI 面板与动画 | [UI 与分层](references/ui-and-layering.md) |
 | 页面交割、域内面板缓存、虚拟列表、弹窗调度 | [大型 UI 实现与验收](references/large-ui.md) |

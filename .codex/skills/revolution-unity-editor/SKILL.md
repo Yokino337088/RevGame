@@ -5,6 +5,8 @@ description: 用 Revolution RevCLI 操作 Unity 编辑器、场景、脚本挂�
 
 # Revolution Unity 编辑器操作
 
+编辑器制作与排错先参考 [RevGame 真实作者流程](../revolution-framework/references/revgame-content.md) 和 [交付证据](../revolution-framework/references/revgame-delivery.md)。从正式加载入口反查 Prefab、产物、依赖、GUID、构建目标和复位手续，按当前工程授权和实际注册动作执行。
+
 把“调整对象、检查资源、制作场景和 UI、定位编辑器问题、打包”落实为可验证的 Unity 操作。**默认一套 RevCLI 全搞定**，包括 Play 中调 GM、点 UI、读运行时状态；RevMCP 是可选项，用户可以自己选。不要让用户先背命令，也不要把操作成功当作业务验收通过。
 
 ## 通道规则（CLI 优先，MCP 可选）

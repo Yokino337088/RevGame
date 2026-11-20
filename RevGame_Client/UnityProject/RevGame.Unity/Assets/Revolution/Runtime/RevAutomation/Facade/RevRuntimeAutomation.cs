@@ -36,6 +36,8 @@ namespace Revolution
         {
             public string Name, Description;
             public Dictionary<string, object> Schema;
+            /// <summary>类型化登记生成的输出描述。旧登记没有此项。</summary>
+            public Dictionary<string, object> OutputSchema;
             public bool ReadOnly, Confirm;
             public object Owner;
             public Func<string, object> Handler;
@@ -108,6 +110,20 @@ namespace Revolution
             Entries.Add(name, new Entry { Name = name, Description = description ?? name, Schema = schema,
                 Handler = handler, ReadOnly = readOnly, Confirm = confirm, Owner = owner });
         }
+        /// <summary>用业务 DTO 同时定义输入、输出与处理函数。调用前沿用严格校验和权限检查。</summary>
+        public static void Register<TInput, TOutput>(string name, string description, Func<TInput, TOutput> handler,
+            bool readOnly = false, bool confirm = false, object owner = null)
+        {
+            if (handler == null)
+            {
+                throw new ArgumentNullException(nameof(handler));
+            }
+            var output = RevAutomationContract.Describe(typeof(TOutput));
+            string input = RevAutomationJson.Write(RevAutomationContract.Describe(typeof(TInput)));
+            Register(name, description, input, json => handler(JsonUtility.FromJson<TInput>(json)), readOnly, confirm, owner);
+            Entries[name].OutputSchema = output;
+        }
+
         /// <summary>按完整名称移除；返回 false 表示本来就没有登记。</summary>
         public static bool Unregister(string name) { MainThread(); return Entries.Remove(name); }
         /// <summary>清除同一个 owner 注册的全部能力；比较对象身份，不调用业务 Dispose。</summary>
@@ -117,13 +133,14 @@ namespace Revolution
             foreach (string name in Entries.Where(p => ReferenceEquals(p.Value.Owner, owner)).Select(p => p.Key).ToArray()) { Entries.Remove(name); }
         }
         private static void EnsureBuiltins() { if (!_builtins) { _builtins = true; RevRuntimeTools.Register(); } }
-        /// <summary>返回此刻真实注册表与 GM 参数；场景切换后应重新发现，不复用旧对象 id。</summary>
+        /// <summary>返回此刻真实注册表、类型化输出契约与 GM 参数；切换后重新发现。</summary>
         public static object Capabilities()
         {
             MainThread(); EnsureBuiltins();
             return new Dictionary<string, object> { ["playing"] = Application.isPlaying, ["gmEnabled"] = RevGM.Enabled,
                 ["actions"] = Entries.Values.OrderBy(e => e.Name).Select(e => new Dictionary<string, object> {
-                    ["id"] = e.Name, ["description"] = e.Description, ["inputSchema"] = e.Schema, ["readOnly"] = e.ReadOnly, ["confirm"] = e.Confirm }).ToArray(),
+                    ["id"] = e.Name, ["description"] = e.Description, ["inputSchema"] = e.Schema, ["outputSchema"] = e.OutputSchema,
+                    ["readOnly"] = e.ReadOnly, ["confirm"] = e.Confirm }).ToArray(),
                 ["commands"] = RevGM.Commands.Select(GMInfo).ToArray() };
         }
         public static object GMInfo(RevGMCommand command)

@@ -382,13 +382,25 @@ namespace RevGame.Editor
             int maximumCellDelta = 0;
             int previousCells = 0;
             bool captured = false;
+            bool observedCover = false;
+            RevSceneHandoff handoff = flow.LatestSceneHandoff;
             while (flow.IsTransitioning)
             {
                 Require(Time.realtimeSinceStartup < deadline, "过场在超时前完成");
                 Require(flow.LoadProgress + 0.0001f >= previous, "真实进度不倒退");
                 previous = flow.LoadProgress;
                 LoadingPanel cover = RevUI.Get<LoadingPanel>();
-                Require(cover != null, "全过程保留加载面板");
+                if (cover == null)
+                {
+                    // Covering 可以在原页锁定输入后异步装配遮罩。此时场景和业务都必须保持来源。
+                    Require(!observedCover && handoff.Stage == RevSceneHandoffStage.Covering
+                        && RevScene.CurrentName == handoff.SourceScene && flow.Screen.ToString() == handoff.SourceState
+                        && flow.IsGameplayBlocked, "只允许在原场景已锁输入的遮罩装配阶段等待面板");
+                }
+                else
+                {
+                    observedCover = true;
+                }
 
                 if (entering && flow.Screen == GameScreen.Battle)
                 {
@@ -406,7 +418,7 @@ namespace RevGame.Editor
 
                         if (board.CellCount < 81)
                         {
-                            Require(cover.GetComponent<CanvasGroup>().alpha >= 0.99f, "半成品棋盘绝不透出");
+                            Require(cover != null && cover.GetComponent<CanvasGroup>().alpha >= 0.99f, "半成品棋盘绝不透出");
                         }
                     }
                 }
@@ -418,7 +430,7 @@ namespace RevGame.Editor
                 frames++;
                 await RevTask.Yield();
             }
-            Require(!RevUI.IsOpen<LoadingPanel>(), "成功后过场面板已关闭");
+            Require(observedCover && !RevUI.IsOpen<LoadingPanel>(), "实际显示过遮罩，成功后过场面板已关闭");
 
             if (entering)
             {

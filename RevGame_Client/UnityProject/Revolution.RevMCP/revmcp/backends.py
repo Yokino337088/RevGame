@@ -276,8 +276,9 @@ class Hub:
                 if response["data"].get("errors"):
                     raise RevError("Editor registry errors: " + str(response["data"]["errors"]))
                 for action in response["data"]["actions"]:
-                    spec = self.known.get(action["id"], {})
-                    result["actions"].append(dict(spec, **action, target="editor", readOnly=spec.get("readOnly", False)))
+                    from revautomation.contracts import merge_editor_action
+                    spec = merge_editor_action(action, self.known.get(action["id"], {}))
+                    result["actions"].append(dict(spec, target="editor"))
             except (OSError, RevError, TimeoutError) as exc:
                 if isinstance(exc, RevCancelled):
                     raise
@@ -361,7 +362,7 @@ class Hub:
             raise RevError("Capability unavailable: " + action)
         if spec.get("confirm") and not confirm:
             raise RevError("Capability requires confirm=true: " + action)
-        if target == "editor":
+        if target == "editor" and "inputSchema" not in spec:
             validate_action(action, arguments)
         else:
             validate(arguments, spec["inputSchema"])

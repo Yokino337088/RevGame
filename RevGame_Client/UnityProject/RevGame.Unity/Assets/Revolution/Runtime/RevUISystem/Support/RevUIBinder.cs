@@ -71,6 +71,41 @@ namespace Revolution
     /// <summary>控件绑定器（框架内部；业务通过 RevUI.RegisterAutoEvent 扩展自定义控件）</summary>
     internal static class RevUIBinder
     {
+#if UNITY_EDITOR
+        /// <summary>在编辑器中读取预制体，不赋值、不安装事件，用运行时相同的查找规则定位接线缺失。</summary>
+        internal static string[] Check(GameObject prefab)
+        {
+            var errors = new List<string>();
+            foreach (MonoBehaviour host in prefab.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                Type baseType = host is RevUIPanel ? typeof(RevUIPanel) : host is RevUIPart ? typeof(RevUIPart) : null;
+                if (baseType == null)
+                {
+                    continue;
+                }
+                foreach (RevUIBindEntry entry in RevUIBindPlan.Get(host.GetType(), baseType).Fields)
+                {
+                    string name = host.GetType().Name + "." + entry.FieldName;
+                    if (entry.FieldType != typeof(GameObject) && !typeof(Component).IsAssignableFrom(entry.FieldType))
+                    {
+                        errors.Add(name + "：只支持 Component 或 GameObject。");
+                        continue;
+                    }
+                    Transform node = FindNode(host.transform, entry, out int count);
+                    if (node == null || count > 1)
+                    {
+                        errors.Add(name + "：节点缺失或匹配多个节点。");
+                    }
+                    else if (FindComponent(node, entry.FieldType, out string reason) == null)
+                    {
+                        errors.Add(name + "：" + reason);
+                    }
+                }
+            }
+            return errors.ToArray();
+        }
+#endif
+
         // ============================================================
         // 绑定入口
         // ============================================================

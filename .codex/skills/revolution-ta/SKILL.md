@@ -5,6 +5,8 @@ description: 在 Unity 与 Revolution 项目中设计、实现、调试和验收
 
 # Revolution-TA · Unity 技术美术
 
+先读 [RevGame 资源与画面实践](../revolution-framework/references/revgame-content.md#资源与包怎么交付) 和命中的 [RevGame 具体案例](references/revgame-cases.md)。用目标工程真实 Shader、管线、导入设置、图集和实际输出选择方案。核对材质、帧、输入与池回收的边界。
+
 从玩家看到的画面出发，把美术目标落实到 Shader、材质、纹理、调用者和目标平台。先做出可验证的最小改动，再用正式入口确认画面、资源加载与退出收尾。
 
 1. 读目标项目的 `AGENTS.md` 和相关代码。确认 Unity 版本、实际渲染管线、活动质量档和目标设备图形 API。涉及 AB 时记录 Editor/Player、资源模式及实际主包来源。

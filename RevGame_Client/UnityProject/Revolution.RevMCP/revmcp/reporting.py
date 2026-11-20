@@ -7,7 +7,7 @@ import uuid
 import zlib
 
 from revautomation.storage import check_revmcp_output_path
-from . import workflow
+from . import benchmark, workflow
 
 
 # 从绑定工程沿父目录查找现有文档。命中已有测试报告目录时优先使用它。
@@ -135,6 +135,7 @@ def run_with_reports(hub, plan, cancel=None):
     if not isinstance(plan, dict):
         raise ValueError("计划必须是对象")
     plan = dict(plan)
+    benchmark_spec = plan.pop("benchmark", None)
     has_directory = "reportDirectory" in plan
     requested = plan.pop("reportDirectory", None)
     export = plan.pop("report", has_directory)
@@ -144,10 +145,10 @@ def run_with_reports(hub, plan, cancel=None):
         raise ValueError("reportDirectory 须为非空目录路径，且与 report: true 配合或单独使用")
     # 未要求交付报告时，直接走业务计划，连文档目录也无需查找。
     if not export:
-        return workflow.run(hub, plan, cancel)
+        return workflow.run(hub, plan, cancel) if benchmark_spec is None else benchmark.run(hub, plan, benchmark_spec, cancel)
 
     destination = document_directory(hub, requested)
-    result = workflow.run(hub, plan, cancel)
+    result = workflow.run(hub, plan, cancel) if benchmark_spec is None else benchmark.run(hub, plan, benchmark_spec, cancel)
     if destination is None:
         result["evidenceError"] = "未找到项目文档目录。可用 plan.reportDirectory 指定项目内的目录。"
     else:

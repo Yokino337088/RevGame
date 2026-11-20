@@ -162,6 +162,12 @@ namespace Revolution.Editor
         public string Environment { get; set; } = "edit";
         public string[] Keys { get; set; }
         public bool Confirm { get; set; }
+        /// <summary>可选的输入 DTO。填写后导出键、类型与必填项，并校验调用。</summary>
+        public Type InputType { get; set; }
+        /// <summary>可选的同步返回 DTO，作为工具可发现的输出契约。</summary>
+        public Type OutputType { get; set; }
+        /// <summary>仅查询动作才能声明为只读，供工具等待阶段使用。</summary>
+        public bool ReadOnly { get; set; }
         // 仅用于能从已持久化状态继续等待的动作，不能用于重放工作。
         public bool ResumeAfterReload { get; set; }
         public RevAutomationActionAttribute(string name) { Name = name; }

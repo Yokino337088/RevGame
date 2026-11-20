@@ -14,6 +14,7 @@ import threading
 
 from .schema import object_schema, validate
 from .reporting import run_with_reports
+from revautomation.contracts import COMPAT_TYPES
 from revautomation.summary import summarize
 
 VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
@@ -28,17 +29,18 @@ CALL_SCHEMA = object_schema({"target": {"type": "string", "enum": ["editor", "ga
 RUN_SCHEMA = object_schema({"plan": {"type": "object", "properties": {
     "report": {"type": "boolean", "description": "用户明确要求报告时才设为 true"},
     "reportDirectory": {"type": "string", "minLength": 1, "description": "用户指定的项目内报告目录，可单独启用导出"},
+    "benchmark": {"type": "object", "description": "同负载重复预热和采样，使用实际断言及 finally 完成比较"},
 }}, "full": {"type": "boolean"}}, ("plan",))
 
 
 def action_schema(spec, manifest):
+    """真实注册的类型契约优先，旧动作共用清单类型。"""
     if "inputSchema" in spec:
         return spec["inputSchema"]
     mapping = {"string": "string", "int": "integer", "float": "number", "bool": "boolean", "long": "integer", "array": "array", "object": "object"}
     props = {}
     for key in spec.get("keys") or []:
-        scenario_types = {"repeat": "int", "warmup": "int", "setup": "array", "steps": "array", "cleanup": "array", "teardown": "array", "stopOnFailure": "bool", "failOnUnityError": "bool", "thresholds": "object"}
-        raw = manifest.get("parameterTypes", {}).get(key, scenario_types.get(key, ""))
+        raw = manifest.get("parameterTypes", {}).get(key, COMPAT_TYPES.get(key, ""))
         if raw.endswith("[]"):
             props[key] = dict(type="array", items={"type": mapping.get(raw[:-2], "object")})
         else:
@@ -193,7 +195,7 @@ class Server:
         return dict(content=content, structuredContent=result, isError=result.get("success") is False)
 
     def worker(self):
-        """串行执行业务调用，异常随本次响应返回，最后释放取消令牌。"""
+        """串行执行业务调用。先释放请求 ID 再发终态，使下一条已完成 ID 的复用可预测。"""
         while True:
             request = self.work.get()
             if request is None:
@@ -201,6 +203,7 @@ class Server:
             ident, method = request["id"], request["method"]
             with self.pending_lock:
                 token = self.tokens[ident]
+            rpc_error, result = None, None
             try:
                 if method == "tools/list":
                     if request.get("params", {}).get("cursor"):
@@ -208,16 +211,16 @@ class Server:
                     result = self.tools(token)
                 else:
                     result = self.call(request.get("params", {}), token)
-                self.reply(ident, result)
             except Exception as exc:
                 failure = dict(success=False, error=type(exc).__name__, message=str(exc))
                 if method == "tools/call":
-                    self.reply(ident, dict(content=[dict(type="text", text=json.dumps(failure, ensure_ascii=False))], structuredContent=failure, isError=True))
+                    result = dict(content=[dict(type="text", text=json.dumps(failure, ensure_ascii=False))], structuredContent=failure, isError=True)
                 else:
-                    self.reply(ident, error=dict(code=-32603, message=str(exc)))
+                    rpc_error = dict(code=-32603, message=str(exc))
             finally:
                 with self.pending_lock:
                     self.tokens.pop(ident, None)
+            self.reply(ident, result, error=rpc_error)
 
     def serve(self):
         worker = threading.Thread(target=self.worker, name="RevMCP.Worker", daemon=True); worker.start()

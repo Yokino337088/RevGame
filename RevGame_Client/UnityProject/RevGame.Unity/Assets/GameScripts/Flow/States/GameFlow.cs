@@ -180,6 +180,7 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
+            _flowCancellation.Cancel();
             _galOpening?.Cancel();
             CloseOwnedGalPanel();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION

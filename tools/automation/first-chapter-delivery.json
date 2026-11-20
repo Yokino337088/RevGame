@@ -1,0 +1,77 @@
+{
+  "name": "第一章业务自动交付与域退出",
+  "intent": "真实 AB 空闲大厅造局，核对第一章交接、销毁旧域的异步结案以及隔离存档备份，最后验证回到大厅。",
+  "steps": [
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {"path": "/data/transitioning", "equals": false, "timeoutSeconds": 60},
+      "expect": [{"path": "/data/screen", "equals": "Home"}]
+    },
+    {
+      "target": "game",
+      "action": "game.scoped-request-check",
+      "expect": [
+        {"path": "/data/started", "equals": 1},
+        {"path": "/data/bothCancelled", "equals": true},
+        {"path": "/data/released", "equals": 1},
+        {"path": "/data/pending", "equals": 0}
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.enter",
+      "arguments": {"formation": 0},
+      "expect": [{"path": "/data/accepted", "equals": true}]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {"path": "/data/transitioning", "equals": false, "timeoutSeconds": 60},
+      "expect": [
+        {"path": "/data/screen", "equals": "Endless"},
+        {"path": "/data/isolated", "equals": true}
+      ]
+    },
+    {
+      "target": "game",
+      "action": "endless.home",
+      "expect": [{"path": "/data/accepted", "equals": true}]
+    },
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {"path": "/data/transitioning", "equals": false, "timeoutSeconds": 60},
+      "expect": [{"path": "/data/screen", "equals": "Home"}]
+    },
+    {
+      "target": "game",
+      "action": "endless.save-recovery-check",
+      "expect": [{"path": "/data/success", "equals": true}]
+    },
+    {
+      "target": "game",
+      "action": "game.scope-check",
+      "expect": [
+        {"path": "/data/pendingCallbackSuppressed", "equals": true},
+        {"path": "/data/sharedPreloadSurvived", "equals": true},
+        {"path": "/data/scopePoolsIsolated", "equals": true},
+        {"path": "/data/failedHandoffReleased", "equals": true}
+      ]
+    },
+    {
+      "target": "editor",
+      "action": "game.scene-handoff.resource-check",
+      "expect": [{"path": "/data/requestId", "exists": true}]
+    }
+  ],
+  "finally": [
+    {"target": "game", "action": "endless.home"},
+    {
+      "target": "game",
+      "action": "endless.state",
+      "until": {"path": "/data/transitioning", "equals": false, "timeoutSeconds": 60},
+      "expect": [{"path": "/data/screen", "equals": "Home"}]
+    }
+  ]
+}

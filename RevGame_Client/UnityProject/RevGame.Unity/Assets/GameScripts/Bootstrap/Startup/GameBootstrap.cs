@@ -95,17 +95,19 @@ namespace RevGame.Bootstrap
             // 恢复 PC 显示偏好并观察系统窗口变化，场景切换不重复设置分辨率。
             RevServices.Register<GameDisplaySettings>(_ => new GameDisplaySettings(Vector2Int.RoundToInt(UI.GameBattleLayout.DesignResolution)), owner: this);
             RevServices.GetRequired<GameDisplaySettings>();
-            // 积分要跨局累计、要落盘、还要能在测试里替换，因此抽了接口：调用方只认 IScoreProgress，不认存储实现。
-            RevServices.Register<IScoreProgress, ScoreProgressStore>(owner: this);
-            // 战斗服务是全项目最核心的契约：UI、流程、AI 都只认 IBattleService，实现可以整体替换（含固定种子的测试实例）。
-            RevServices.Register<IBattleService, BattleService>(owner: this);
-            // PvP构造不联网；只有玩家进入此模式才创建连接，因此停服不会卡住大厅和单机。
-            RevServices.Register<RevGame.Pvp.PvpService, RevGame.Pvp.PvpService>(owner: this);
-            RevServices.GetRequired<RevGame.Pvp.PvpService>().RestoreSavedAgent();
-            // 跨暂停/存档页面共享无尽状态；棋局停止由EndlessLogic负责，宿主退出最终注销。
-            RevServices.Register<RevGame.Endless.EndlessService, RevGame.Endless.EndlessService>(owner: this);
-            // 流程控制者目前只有一份实现、还没有接口，调用方会直接用到它的具体方法（切场景、Boss 演出、回大厅）。
-            RevServices.Register<GameFlow, GameFlow>(owner: this);
+            // 全局服务只声明实现和依赖。此处各项均同步登记，在 Awake 返回前完成一致的发布。
+            var services = new RevStartupPlan()
+                .AddService<IScoreProgress, ScoreProgressStore>(this, eager: false)
+                .AddService<IBattleService, BattleService>(this, eager: false)
+                .AddService<RevGame.Pvp.PvpService, RevGame.Pvp.PvpService>(this, eager: false)
+                .Add("恢复围棋托管设置", () =>
+                {
+                    RevServices.GetRequired<RevGame.Pvp.PvpService>().RestoreSavedAgent();
+                    return RevTask.Completed;
+                }, requires: new[] { nameof(RevGame.Pvp.PvpService) })
+                .AddService<RevGame.Endless.EndlessService, RevGame.Endless.EndlessService>(this, eager: false)
+                .AddService<GameFlow, GameFlow>(this, false, nameof(IBattleService), nameof(RevGame.Endless.EndlessService));
+            services.RunAsync().GetAwaiter().GetResult();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。

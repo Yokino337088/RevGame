@@ -158,6 +158,28 @@ namespace RevGame.Pvp
                 _resumeToken, allowNewIdentity: !_recoveringServer);
         }
 
+        /// <summary>
+        /// 通过现有的连接协议恢复房间。调用方取消只结束观察，连接归服务并由真实域退场收尾。
+        /// 连接被替代时原请求不能向新房间反馈成功。
+        /// </summary>
+        public async RevTask<bool> ReconnectAsync(RevCancellationToken token)
+        {
+            token.ThrowIfCancelled();
+            if (!RoomSnapshot.Allows(PvpRoomAction.Reconnect))
+            {
+                return false;
+            }
+            StartServer(Endpoint, Nickname);
+            FantasyGoTransport current = _server;
+            while (current != null && ReferenceEquals(current, _server) && current.Busy)
+            {
+                token.ThrowIfCancelled();
+                await RevTaskScheduler.NextFrame();
+            }
+            token.ThrowIfCancelled();
+            return current != null && ReferenceEquals(current, _server) && Connected && !_needsServerSync;
+        }
+
         /// <summary>切换连接所有权并绑定回调。新会话先清旧房身份，再等待权威回包。</summary>
         private FantasyGoTransport PrepareServerConnection(string endpoint, string nickname)
         {

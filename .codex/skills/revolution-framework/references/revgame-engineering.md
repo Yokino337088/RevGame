@@ -1,5 +1,7 @@
 # RevGame：真实工程架构与编程参考
 
+当前默认入口是 [RevGame 工程实践索引](revgame-practice-map.md)，优先查当前业务源和自动交付。本文保留此前版本的实现与历史演进对照。
+
 ## 先查真实示例，再设计业务
 
 使用 Revolution 编写玩法、UI、流程、资源或开发态测试接口时，**必须先在 [RevGame 工程](https://github.com/Yokino337088/RevGame) 中找到并阅读职责相近的实际实现**，再结合目标工程的版本、目录和约束设计。不能只根据框架 Demo 或 API 名称猜实现。

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System;
+using Revolution;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -38,7 +39,7 @@ namespace RevGame.Endless
                 Check(File.ReadAllText(path) == "{}" && File.ReadAllText(backup) == savedBackup, "恢复读取保留原始文件", checks);
                 Check(restored.Save() && File.ReadAllText(backup) == savedBackup, "恢复后的首笔保存保留有效备份", checks);
                 File.Delete(path);
-                Check(SaveFileExists(path) && restored.Restore(false) && restored.Run.score == 80, "只有备份时仍有可继续的棋局", checks);
+                Check(RevFileSave.Exists(path) && restored.Restore(false) && restored.Run.score == 80, "只有备份时仍有可继续的棋局", checks);
 
                 // 让主档通过校验和，却因棋盘冲突无法提交。备份必须通过完整的模型预检。
                 var invalid = Decode(savedBackup);

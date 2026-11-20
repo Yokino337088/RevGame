@@ -105,6 +105,16 @@ namespace Revolution
             _lifetime?.Cancel();
         }
 
+        /// <summary>在开始同步接线时继承本句柄的归属。跨帧工作继续使用自己的取消契约。</summary>
+        internal void StartOwned(Action start)
+        {
+            if (!IsOpen)
+            {
+                throw new RevOperationCanceledException();
+            }
+            _core.RunOwnedCallback(this, action => action(), start);
+        }
+
         /// <summary>释放扩展对象，单个对象收尾失败不阻断其它引用归还。</summary>
         internal int DisposeOwned()
         {

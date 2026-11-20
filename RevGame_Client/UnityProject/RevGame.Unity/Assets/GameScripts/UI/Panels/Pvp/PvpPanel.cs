@@ -192,6 +192,9 @@ namespace RevGame.Pvp
             }
         }
 
+        /// <summary>本轮面板持有的房间显示与命令，框架关窗时自动解绑。</summary>
+        private RevUIStateBinding<PvpService.PvpRoomSnapshot> _roomBinding;
+
         /// <summary>初始化这一轮 PvP 视图以及随域结束的确认队列。</summary>
         protected override void OnOpen()
         {
@@ -205,6 +208,7 @@ namespace RevGame.Pvp
             _visibleConfirmation = null;
             Show(_confirm, false);
             ResetMatchFeedback();
+            BindRoomCommands();
             // 文字每秒五次足够读秒显示；网络收包由独立的 PvP Logic 轮询，不能依赖面板是否显示。
             RevTimer.Every(.2f, TickPresentation, domain: RevTimeDomain.Unscaled, owner: this);
         }
@@ -341,6 +345,7 @@ namespace RevGame.Pvp
             _presentedRoom = room;
             Show(_duelTestButton.gameObject, !IsModalOpen && service.CanTestDuel);
 #endif
+            _roomBinding?.Refresh();
             bool hasGame = room.HasGame;
             transform.Find("top").gameObject.SetActive(hasGame);
             bool playing = room.Phase == GoPhase.Playing;
@@ -348,9 +353,6 @@ namespace RevGame.Pvp
             bool finished = room.Phase == GoPhase.Finished;
             _agent.interactable = room.Allows(PvpRoomAction.Agent);
             Set(_agentLabel, room.AgentLabel);
-            Set(_title, room.Title);
-            Set(_black, room.BlackText);
-            Set(_white, room.WhiteText);
             RefreshMatchFeedback(service, playing);
             RefreshAnalysisHud(service, _battleVisible && playing);
             Set(_turn, room.MissingCriticalState ? room.TurnText : _counting ? "终局 · 正在清点" : _settling ? "终局" : room.TurnText);
@@ -361,15 +363,12 @@ namespace RevGame.Pvp
             Show(_hint.gameObject, playing);
             Show(_toggleHints.gameObject, hasGame);
             Show(_reconnect.gameObject, room.ShowReconnect);
-            _reconnect.interactable = room.Allows(PvpRoomAction.Reconnect);
             _back.interactable = room.Allows(PvpRoomAction.Leave);
-            _pass.interactable = room.Allows(PvpRoomAction.Pass);
             _resign.interactable = room.Allows(PvpRoomAction.Resign);
             _hint.interactable = room.Allows(PvpRoomAction.Hint);
             Set(_hintLabel, room.HintLabel);
             Set(_toggleLabel, service.HintsVisible ? "隐藏辅助" : "显示辅助");
             Set(_scoringText, room.ResultText);
-            _confirmScore.interactable = room.Allows(PvpRoomAction.ConfirmScore);
             _resume.interactable = room.Allows(PvpRoomAction.Resume);
             Show(_previous.gameObject, !_settling);
             Show(_next.gameObject, !_settling);
@@ -407,15 +406,36 @@ namespace RevGame.Pvp
         }
 #endif
 
-        /// <summary>使用当前房间的端点与昵称重连，交给服务恢复已确认棋谱。</summary>
-        [RevButtonClick("reconnect")]
-        private void Reconnect()
+        /// <summary>声明房间快照字段与三个共用命令。View 负责展示，服务提交前仍复核规则。</summary>
+        private void BindRoomCommands()
         {
-            PvpService service = Service;
-            if (service.RoomSnapshot.Allows(PvpRoomAction.Reconnect))
-            {
-                Run(() => service.StartServer(service.Endpoint, service.Nickname));
-            }
+            _roomBinding = CreateStateBinding(() => Service.RoomSnapshot);
+            _roomBinding.Bind(room => room.Title, value => Set(_title, value));
+            _roomBinding.Bind(room => room.BlackText, value => Set(_black, value));
+            _roomBinding.Bind(room => room.WhiteText, value => Set(_white, value));
+            _roomBinding.BindCommand("pass", _pass, room => room.Allows(PvpRoomAction.Pass),
+                (_, token) => SubmitBoundCommand(GoAction.Pass, token), PresentBoundCommandError);
+            _roomBinding.BindCommand("confirmScore", _confirmScore, room => room.Allows(PvpRoomAction.ConfirmScore),
+                (_, token) => SubmitBoundCommand(GoAction.ConfirmScore, token), PresentBoundCommandError);
+            _roomBinding.BindCommand("reconnect", _reconnect, room => room.Allows(PvpRoomAction.Reconnect),
+                (_, token) => Service.ReconnectAsync(token), PresentBoundCommandError, timeoutSeconds: 30);
+        }
+
+        /// <summary>业务提交沿原有棋局入口，状态与界面根据同一房间快照刷新。</summary>
+        private RevTask<bool> SubmitBoundCommand(GoAction action, RevCancellationToken token)
+        {
+            token.ThrowIfCancelled();
+            bool accepted = Service.Submit(action);
+            RefreshView();
+            return RevTask<bool>.FromResult(accepted);
+        }
+
+        /// <summary>把异步工具与服务错误归到 PvP 当前界面提示。</summary>
+        private void PresentBoundCommandError(Exception error)
+        {
+            _feedback = "操作未完成：" + error.Message;
+            RevLog.Warn(_feedback, "Pvp");
+            PopToast(_feedback);
         }
 
         /// <summary>按钮只有意图转发；失败文案留在本屏，不抛到大厅，不改变单机流程。</summary>
@@ -467,12 +487,6 @@ namespace RevGame.Pvp
             return status;
         }
 
-        [RevButtonClick("pass")]
-        private void Pass()
-        {
-            Run(() => Service.Submit(GoAction.Pass));
-        }
-
         /// <summary>提交认输确认，玩家确定后重新走业务提交。</summary>
         [RevButtonClick("resign")]
         private void Resign()
@@ -490,12 +504,6 @@ namespace RevGame.Pvp
         private void ToggleHints()
         {
             Run(() => Service.ToggleHints());
-        }
-
-        [RevButtonClick("confirmScore")]
-        private void ConfirmScore()
-        {
-            Run(() => Service.Submit(GoAction.ConfirmScore));
         }
 
         [RevButtonClick("resume")]
@@ -585,6 +593,7 @@ namespace RevGame.Pvp
         /// <summary>关闭已显示界面时先撤销确认与挂载，再归还棋盘和图集。</summary>
         protected override void OnClose()
         {
+            _roomBinding = null;
             CloseMenus();
             RevUI.Close<PvpNoticePanel>();
             _opening = false;

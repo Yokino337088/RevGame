@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using Revolution;
 using UnityEngine;
 namespace RevGame.Endless
 {
@@ -35,12 +35,12 @@ namespace RevGame.Endless
 
         private static EndlessRecordBook ReadRecords(string path, out bool fromBackup)
         {
-            if (!SaveFileExists(path))
+            if (!RevFileSave.Exists(path))
             {
                 fromBackup = false;
                 return new EndlessRecordBook();
             }
-            return ReadSaveFile(path, DecodeRecords, out fromBackup);
+            return RevFileSave.Read(path, DecodeRecords, out fromBackup);
         }
 
         private static EndlessRecordBook DecodeRecords(string json)
@@ -106,13 +106,13 @@ namespace RevGame.Endless
                     book.records.RemoveAt(book.records.Count - 1);
                 }
                 string json = JsonUtility.ToJson(book);
-                string temporary = path + ".tmp";
-                File.WriteAllText(temporary, json, Encoding.UTF8);
-                if (DecodeRecords(File.ReadAllText(temporary, Encoding.UTF8)).records.Count != book.records.Count)
+                RevFileSave.Write(path, json, value =>
                 {
-                    throw new InvalidDataException("本地纪录写入校验失败");
-                }
-                ReplaceSaveFile(temporary, path, fromBackup);
+                    if (DecodeRecords(value).records.Count != book.records.Count)
+                    {
+                        throw new InvalidDataException("本地纪录写入校验失败");
+                    }
+                }, fromBackup);
             }
             catch (Exception error)
             {

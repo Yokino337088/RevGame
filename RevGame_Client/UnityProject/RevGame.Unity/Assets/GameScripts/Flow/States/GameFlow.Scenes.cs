@@ -187,6 +187,8 @@ namespace RevGame.Flow
         public string LoadStep { get; private set; } = "尚未开始";
         /// <summary>仅GameBootstrap注销服务时置true，禁止退出Play后的异步续体重新打开面板。</summary>
         private bool _disposed;
+        /// <summary>与 GameFlow 同寿命的交接令牌，覆盖旧域、候选与新域。</summary>
+        private readonly RevCancellationTokenSource _flowCancellation = new RevCancellationTokenSource();
         /// <summary>启动表只初始化一次；加载失败不置true，用户点返回时可以重新尝试真实资源加载。</summary>
         private bool _startupComplete;
         /// <summary>当前任务的资源账本，退出Play时主动释放，不能让晚到续体继续往编辑场景里生成对象。</summary>
@@ -228,188 +230,162 @@ namespace RevGame.Flow
             await SwitchSceneAsync(target);
         }
         /// <summary>
-        /// 执行一次完整交接。调用者须先置 IsTransitioning，接单后立即可查询句柄。
-        /// 旧域在业务交割时退出。成功时在解除互斥前采样本次资源与已离场战斗的引用。
+        /// 按框架交接步骤连接 RevGame 过场、场景与状态机。接单拒绝时让原交接保留门禁。
         /// </summary>
         private async RevTask SwitchSceneAsync(GameScreen target)
         {
             string sceneName = target == GameScreen.Battle ? BattleSceneName : StartSceneName;
-            RevSceneHandoff handoff = _sceneHandoffs.TryBegin(sceneName, Screen.ToString(), target.ToString());
-
-            if (handoff == null)
-            {
-                return; // 在途请求仍拥有互斥和收尾。
-            }
-            if (target == GameScreen.Battle)
-            {
-                _battleHandoff = handoff;
-            }
-
-            RevSceneHandoffResources resources = handoff.Resources;
             var warmup = new SceneResourceWarmup();
-            _activeWarmup = warmup;
-            var status = RevSceneHandoffStatus.Succeeded;
-            bool cleanupSucceeded = false;
-            string reasonCode = null;
-            string detail = null;
-            try
+            GamePresentation presentation = null;
+            var plan = new RevSceneHandoffPlan
             {
-                resources.Require(RevResPath.UI_Panel_Loading, nameof(LoadingPanel), "GameFlow.LoadingCover", blocksFirstFrame: true);
-                _loading = await RevUI.OpenAsync<LoadingPanel>();
-                ThrowIfDisposed();
-                // 面板默认归打开时的当前域；过场属于全局流程，必须显式脱离旧域，仍由RevUI管理。
-                RevScope.Detach(_loading);
-                _loading.ResetCover();
-                Report(0.02f, target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…");
-                await RevTask.Yield(); // 让遮挡层先实际画一帧，再开始资源解码与场景工作。
-                ThrowIfDisposed();
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.PreparingResources);
-                if (Screen == GameScreen.Pvp)
+                TargetScene = sceneName,
+                SourceState = Screen.ToString(),
+                TargetState = target.ToString(),
+                Cancellation = _flowCancellation.Token,
+                Cover = async handoff =>
                 {
-                    CloseDuelHud();
-                    await RevServices.GetRequired<RevGame.Pvp.PvpService>().LeaveAsync();
+                    // 接单就重置本次诊断进度。面板需要异步创建，等待期间不能暴露上一趟的 100%。
+                    string covering = target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…";
+                    Report(0f, covering);
+                    if (target == GameScreen.Battle)
+                    {
+                        _battleHandoff = handoff;
+                    }
+                    _activeWarmup = warmup;
+                    handoff.Resources.Require(RevResPath.UI_Panel_Loading, nameof(LoadingPanel), "GameFlow.LoadingCover", blocksFirstFrame: true);
+                    _loading = await RevUI.OpenAsync<LoadingPanel>();
                     ThrowIfDisposed();
-                    // 面板资源交给退域步骤回收。旧域在切场失败时可保留完整的 UI 资源。
-                }
-
-                if (!_startupComplete)
+                    // 过场由流程持有，目标业务域提交时旧域不能收走遮挡。
+                    RevScope.Detach(_loading);
+                    _loading.ResetCover();
+                    Report(0.02f, covering);
+                    await RevTask.Yield();
+                },
+                Preload = async handoff =>
                 {
-                    await LoadStartupDataAsync();
-                }
-                await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(
-                    target == GameScreen.Battle ? BattleAtlases : MenuAtlases, resources);
-                ThrowIfDisposed();
-                Report(0.18f, "正在整理行囊…");
-                await warmup.LoadAsync(target == GameScreen.Battle, resources, p => Report(0.18f + p * 0.24f, "正在集结冒险队伍…"));
-                ThrowIfDisposed();
-
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.LoadingScene);
+                    if (Screen == GameScreen.Pvp)
+                    {
+                        CloseDuelHud();
+                        await RevServices.GetRequired<RevGame.Pvp.PvpService>().LeaveAsync();
+                        ThrowIfDisposed();
+                    }
+                    if (!_startupComplete)
+                    {
+                        await LoadStartupDataAsync();
+                    }
+                    await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(
+                        target == GameScreen.Battle ? BattleAtlases : MenuAtlases, handoff.Resources);
+                    ThrowIfDisposed();
+                    Report(0.18f, "正在整理行囊…");
+                    await warmup.LoadAsync(target == GameScreen.Battle, handoff.Resources, value => Report(0.18f + value * 0.24f, "正在集结冒险队伍…"));
+                },
+                Load = async handoff =>
+                {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-                CheckDevelopmentFailure("before-scene");
+                    CheckDevelopmentFailure("before-scene");
 #endif
-
-                if (RevScene.CurrentName != sceneName)
+                    if (RevScene.CurrentName != handoff.TargetScene)
+                    {
+                        // 先归还旧战斗视图，域仍由业务提交后退出。失败期间保持过场遮挡。
+                        UnityEngine.Object.FindObjectOfType<GamePresentation>()?.SuspendBattle();
+                        await RevScene.LoadAsync(handoff.TargetScene, value => Report(0.42f + value * 0.23f, "正在穿越迷雾…"));
+                        if (RevScene.CurrentName != handoff.TargetScene)
+                        {
+                            throw new InvalidOperationException("场景未完成交接：" + handoff.TargetScene + "，RevScene 状态=" + RevScene.State);
+                        }
+                    }
+                },
+                Prepare = async handoff =>
                 {
-                    // 离开战斗时先停用视图：它们回池之后RevScene才可以安全清池。
-                    // 此时旧域仍在，加载失败可重新激活旧画面；计时已由IsTransitioning暂停。
-                    GamePresentation old = UnityEngine.Object.FindObjectOfType<GamePresentation>();
-
-                    if (old != null)
-                    {
-                        old.SuspendBattle();
-                    }
-                    await RevScene.LoadAsync(sceneName, p => Report(0.42f + p * 0.23f, "正在穿越迷雾…"));
+                    // 等目标场景先执行 Start，再核对实际活动场景里的表现宿主。
+                    await RevTask.Yield();
                     ThrowIfDisposed();
-
-                    if (RevScene.CurrentName != sceneName)
-                    {
-                        throw new InvalidOperationException("场景未完成交接：" + sceneName + "，RevScene状态=" + RevScene.State);
-                    }
-                }
-
-                // 活动场景已就位，业务仍未交付。等新场景 Start 完成订阅后才广播 ScreenChanged。
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.PreparingGameplay);
-                await RevTask.Yield();
-                ThrowIfDisposed();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-                CheckDevelopmentFailure("after-scene");
+                    CheckDevelopmentFailure("after-scene");
 #endif
-                GamePresentation presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
-
-                if (presentation == null)
-                {
-                    throw new InvalidOperationException("场景缺少GamePresentation接线：" + sceneName);
-                }
-                Report(0.66f, "正在点亮前路…");
-
-                // 先换业务域，再把预建实例归到新域。战斗视图等预建结束后才借实例，避免装配时同时创建两批。
-                _activePresentation = presentation;
-                Change(target, publish: target != GameScreen.Battle);
-                if (target == GameScreen.Battle)
-                {
-                    await warmup.WarmBattlePoolsAsync(p => Report(0.66f + p * 0.12f, "正在集结棋子与魔法…"));
-                    ThrowIfDisposed();
-                    PublishScreenChanged();
-                }
-                ThrowIfDisposed();
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.WaitingForGameplay);
-                string finalStep = target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…";
-                await presentation.WaitUntilReadyAsync(target, p => Report(0.78f + p * 0.20f, finalStep));
-                ThrowIfDisposed();
-                // 框架自动归还交接预热并调度零引用 AB。旧域的池随域退出，遮挡继续覆盖分帧清理。
-                warmup.Dispose();
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.CleaningUp);
-                await RevTask.Yield();
-                ThrowIfDisposed();
-                cleanupSucceeded = true;
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.Revealing);
-                Report(1f, target == GameScreen.Battle ? "战场已就绪" : "营地已就绪");
-                await _loading.FadeOutAsync();
-                ThrowIfDisposed();
-                RevUI.Close<LoadingPanel>();
-                _loading = null;
-                LastError = string.Empty;
-            }
-            catch (Exception error)
-            {
-                status = _disposed ? RevSceneHandoffStatus.Cancelled : RevSceneHandoffStatus.Failed;
-                reasonCode = _disposed ? "flow-disposed" : handoff.Stage switch
-                {
-                    RevSceneHandoffStage.LoadingScene => "scene-load-failed",
-                    RevSceneHandoffStage.PreparingGameplay => "gameplay-prepare-failed",
-                    RevSceneHandoffStage.WaitingForGameplay => "gameplay-readiness-failed",
-                    RevSceneHandoffStage.CleaningUp => "cleanup-failed",
-                    _ => "handoff-failed"
-                };
-                detail = error.Message;
-                if (!_disposed)
-                {
-                    LastError = "加载失败：" + error.Message;
-                    RevLog.Exception(error, "场景交接失败，保留遮挡并提供返回入口", "RevGame");
-
-                    // 失败时绝不以100%掩盖缺失画面；按钮执行真实回退流程，不让玩家对着残缺棋盘操作。
-                    if (_loading != null)
+                    var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+                    foreach (GameObject root in scene.GetRootGameObjects())
                     {
-                        _loading.SetData(new LoadingPanel.ProgressData(LoadProgress, LoadStep, LastError));
+                        presentation = root.GetComponentInChildren<GamePresentation>();
+                        if (presentation != null)
+                        {
+                            break;
+                        }
                     }
-                }
-            }
-            finally
-            {
-                try
+                    if (presentation == null)
+                    {
+                        throw new InvalidOperationException("场景缺少 GamePresentation 接线：" + handoff.TargetScene);
+                    }
+                    Report(0.66f, "正在点亮前路…");
+                },
+                Commit = async _ =>
                 {
-                    // 失败时归还暂借实例。交接结案后框架释放预热引用，遮挡由独立回退流程接管。
+                    // 预建对象归新域。先准备池，再发布进入战斗事件，避免首屏争建实例。
+                    _activePresentation = presentation;
+                    Change(target, publish: target != GameScreen.Battle);
+                    if (target == GameScreen.Battle)
+                    {
+                        await warmup.WarmBattlePoolsAsync(value => Report(0.66f + value * 0.12f, "正在集结棋子与魔法…"));
+                        ThrowIfDisposed();
+                        PublishScreenChanged();
+                    }
+                },
+                WaitReady = _ => presentation.WaitUntilReadyAsync(target,
+                    value => Report(0.78f + value * 0.20f, target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…")),
+                Cleanup = async _ =>
+                {
                     warmup.Dispose();
-                    cleanupSucceeded |= handoff.Stage < RevSceneHandoffStage.CleaningUp;
-                }
-                catch (Exception error)
+                    // 原生回收已调度，给遮挡下的编辑器一个实际更新帧。
+                    await RevTask.Yield();
+                },
+                Reveal = async _ =>
                 {
-                    status = _disposed ? RevSceneHandoffStatus.Cancelled : RevSceneHandoffStatus.Failed;
-                    reasonCode = "cleanup-failed";
-                    detail = string.IsNullOrEmpty(detail) ? error.Message : detail + "；预热清理失败：" + error.Message;
-                    cleanupSucceeded = false;
-                    RevLog.Exception(error, "场景交接预热清理失败", "RevGame");
-                }
-                finally
+                    Report(1f, target == GameScreen.Battle ? "战场已就绪" : "营地已就绪");
+                    await _loading.FadeOutAsync();
+                    ThrowIfDisposed();
+                },
+                Recover = failure =>
+                {
+                    if (failure.Status != RevSceneHandoffStatus.Cancelled)
+                    {
+                        // 保留遮挡，玩家按返回按钮再提交独立的回退请求，原失败 ID 保持可查。
+                        LastError = "加载失败：" + failure.Error.Message;
+                        RevLog.Exception(failure.Error, "场景交接失败，保留遮挡并提供返回入口", "RevGame");
+                        _loading?.SetData(new LoadingPanel.ProgressData(LoadProgress, LoadStep, LastError));
+                    }
+                    return RevTask.Completed;
+                },
+                BeforePublish = (handoff, status) =>
                 {
                     if (ReferenceEquals(_activeWarmup, warmup))
                     {
                         _activeWarmup = null;
                     }
+                    // 淡出跨帧完成后，到结案仍保留遮挡的面板实例。解除门禁和关窗放在同一同步段。
+                    IsTransitioning = false;
                     if (status == RevSceneHandoffStatus.Succeeded)
                     {
-                        resources.CaptureReady();
+                        RevUI.Close<LoadingPanel>();
+                        _loading = null;
+                        LastError = string.Empty;
                         if (target == GameScreen.Home && _battleHandoff != null)
                         {
-                            // 快照必须晚于场景清理和资源整理。共享图集若仍由大厅持有，会保留其实际引用。
                             _battleHandoff.Resources.CaptureExit(handoff.RequestId);
                             _battleHandoff = null;
                         }
                     }
-                    // RevTask 可同步唤醒等待方，必须先解除业务互斥，再冻结并发布实际 Unity 场景与业务状态。
-                    IsTransitioning = false;
-                    _sceneHandoffs.TryComplete(handoff, status, Screen.ToString(), cleanupSucceeded, reasonCode, detail);
-                }
+                },
+                ReadActualState = () => Screen.ToString()
+            };
+            RevSceneHandoff accepted = RevSceneHandoffExecution.Start(_sceneHandoffs, plan);
+            if (accepted != null)
+            {
+                await accepted.WaitAsync();
+            }
+            else
+            {
+                warmup.Dispose();
             }
         }
         /// <summary>
@@ -441,75 +417,64 @@ namespace RevGame.Flow
             ThrowIfDisposed();
             _startupComplete = true;
         }
-        /// <summary>
-        /// 通过框架 RevDataTableManager 逐张异步加载游戏配置表（走资源系统：AB、热更、缓存与编辑器直读一致），
-        /// 全部就绪后交给 GameConfig.Initialize 统一校验装配。每次 await 后检查流程寿命。
-        /// 表的卸载由 GameBootstrap 在最终退出时统一完成，这里不重复卸载。
-        /// </summary>
+        /// <summary>声明冷启动配置依赖，框架处理跨帧等待、缺项和失败回收。</summary>
         private async RevTask LoadGameConfigAsync()
         {
-            await RevDataTableManager.LoadAsync<YayaReactionRuleTable>();
-            ThrowIfDisposed();
-            await RevDataTableManager.LoadAsync<YayaReactionLineTable>();
-            ThrowIfDisposed();
-            YayaReactionConfig.Validate();
-            // ==================== 配置表加载（新手必读） ====================
-            // 【谁负责什么】流程层（GameFlow）只决定“什么时候加载”，GameConfig 只负责“怎么校验装配”。
-            //   所以这个方法里只有 LoadAsync，没有任何数值计算或默认值——数值一律来自导表。
-            // 【为什么逐张 await，不并行】表之间有依赖：增益文案、Boss 技能、奖励数值都会引用 Balance 参数表。
-            //   而且每张之后都会 ThrowIfDisposed()，流程中途被销毁时立刻停手，不会把数据写进已死对象。
-            // 【为什么最后才 Initialize】12 张表全部到位后一次性校验，
-            //   任何一张缺失或填错都会汇总成中文清单抛给上层过场展示，而不是“先玩着，玩到一半才炸”。
-            // 【顺序为什么是这样】棋子/星级 → 增益/事件 → 章节/敌人 → 奖励/Boss → 参数表（Balance）最后统一读取。
-            // ==============================================================
-            // 棋子基础数值（PieceConfig）：血量、攻击、走法、体型。
-            await RevDataTableManager.LoadAsync<PieceConfigTable>();
-            ThrowIfDisposed();
-            // 星级成长倍率（StarConfig）：1★→3★ 的血量与攻击缩放。
-            await RevDataTableManager.LoadAsync<StarConfigTable>();
-            ThrowIfDisposed();
-            // 准备期增益（PrepBuffConfig）与八种战斗事件（BattleEventConfig）、以及事件轮转顺序。
-            await RevDataTableManager.LoadAsync<PrepBuffConfigTable>();
-            ThrowIfDisposed();
-            await RevDataTableManager.LoadAsync<BattleEventConfigTable>();
-            ThrowIfDisposed();
-            await RevDataTableManager.LoadAsync<EventRotationConfigTable>();
-            ThrowIfDisposed();
-            // 章节结构、敌方出场名单、援军规则：决定每章“敌人是谁、几时补兵”。
-            await RevDataTableManager.LoadAsync<ChapterConfigTable>();
-            ThrowIfDisposed();
-            await RevDataTableManager.LoadAsync<EnemyRosterConfigTable>();
-            ThrowIfDisposed();
-            await RevDataTableManager.LoadAsync<EnemyReinforceConfigTable>();
-            ThrowIfDisposed();
-            // 三选一奖励池与强化项（RewardConfig / RewardBoostConfig）。
-            await RevDataTableManager.LoadAsync<RewardConfigTable>();
-            ThrowIfDisposed();
-            await RevDataTableManager.LoadAsync<RewardBoostConfigTable>();
-            ThrowIfDisposed();
-            // Boss 技能表（BossSkillConfig）：18 个技能的威力、蓄力、冷却与章节解锁。
-            await RevDataTableManager.LoadAsync<BossSkillConfigTable>();
-            ThrowIfDisposed();
-            // 全局参数表（BalanceRule）：攻速、暴击、各类倍率。放最后读，因为它被上面多张表的文案引用。
-            await RevDataTableManager.LoadAsync<BalanceRuleTable>();
-            ThrowIfDisposed();
-            // 12 张表全部到位：交给 GameConfig 统一校验并生成一份不可变快照。
-            // 这里传的是“表引用”，不是拷贝；真正的校验与数值计算都在 Initialize 内部完成。
-            GameConfig.Initialize(new GameConfigTables
+            var plan = new RevStartupPlan();
+            plan.AddTable<YayaReactionRuleTable>();
+            plan.AddTable<YayaReactionLineTable>();
+            plan.AddTable<PieceConfigTable>();
+            plan.AddTable<StarConfigTable>();
+            plan.AddTable<PrepBuffConfigTable>();
+            plan.AddTable<BattleEventConfigTable>();
+            plan.AddTable<EventRotationConfigTable>();
+            plan.AddTable<ChapterConfigTable>();
+            plan.AddTable<EnemyRosterConfigTable>();
+            plan.AddTable<EnemyReinforceConfigTable>();
+            plan.AddTable<RewardConfigTable>();
+            plan.AddTable<RewardBoostConfigTable>();
+            plan.AddTable<BossSkillConfigTable>();
+            plan.AddTable<BalanceRuleTable>();
+            plan.Add("鸦鸦表现配置校验", () =>
             {
-                Pieces = RevDataTableManager.Get<PieceConfigTable>(),
-                Stars = RevDataTableManager.Get<StarConfigTable>(),
-                PrepBuffs = RevDataTableManager.Get<PrepBuffConfigTable>(),
-                BattleEvents = RevDataTableManager.Get<BattleEventConfigTable>(),
-                EventRotation = RevDataTableManager.Get<EventRotationConfigTable>(),
-                Chapters = RevDataTableManager.Get<ChapterConfigTable>(),
-                EnemyRoster = RevDataTableManager.Get<EnemyRosterConfigTable>(),
-                EnemyReinforce = RevDataTableManager.Get<EnemyReinforceConfigTable>(),
-                Rewards = RevDataTableManager.Get<RewardConfigTable>(),
-                RewardBoosts = RevDataTableManager.Get<RewardBoostConfigTable>(),
-                BossSkills = RevDataTableManager.Get<BossSkillConfigTable>(),
-                Balance = RevDataTableManager.Get<BalanceRuleTable>(),
+                YayaReactionConfig.Validate();
+                return RevTask.Completed;
+            }, requires: new[] { nameof(YayaReactionRuleTable), nameof(YayaReactionLineTable) });
+            plan.Add("战斗配置校验与提交", () =>
+            {
+                // 项目保有数值、引用和文案兼容规则。全部类型化表已就绪才交付配置快照。
+                GameConfig.Initialize(new GameConfigTables
+                {
+                    Pieces = RevDataTableManager.Get<PieceConfigTable>(),
+                    Stars = RevDataTableManager.Get<StarConfigTable>(),
+                    PrepBuffs = RevDataTableManager.Get<PrepBuffConfigTable>(),
+                    BattleEvents = RevDataTableManager.Get<BattleEventConfigTable>(),
+                    EventRotation = RevDataTableManager.Get<EventRotationConfigTable>(),
+                    Chapters = RevDataTableManager.Get<ChapterConfigTable>(),
+                    EnemyRoster = RevDataTableManager.Get<EnemyRosterConfigTable>(),
+                    EnemyReinforce = RevDataTableManager.Get<EnemyReinforceConfigTable>(),
+                    Rewards = RevDataTableManager.Get<RewardConfigTable>(),
+                    RewardBoosts = RevDataTableManager.Get<RewardBoostConfigTable>(),
+                    BossSkills = RevDataTableManager.Get<BossSkillConfigTable>(),
+                    Balance = RevDataTableManager.Get<BalanceRuleTable>(),
+                });
+                return RevTask.Completed;
+            }, requires: new[]
+            {
+                nameof(PieceConfigTable),
+                nameof(StarConfigTable),
+                nameof(PrepBuffConfigTable),
+                nameof(BattleEventConfigTable),
+                nameof(EventRotationConfigTable),
+                nameof(ChapterConfigTable),
+                nameof(EnemyRosterConfigTable),
+                nameof(EnemyReinforceConfigTable),
+                nameof(RewardConfigTable),
+                nameof(RewardBoostConfigTable),
+                nameof(BossSkillConfigTable),
+                nameof(BalanceRuleTable)
             });
+            await plan.RunAsync(_flowCancellation.Token);
         }
         /// <summary>连续通章不重载场景；背景失败仍走既有错误面板和返回流程，而非留在冻结的棋盘上。</summary>
         public async void ShowChapterBackgroundFailure(string reason)

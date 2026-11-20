@@ -103,8 +103,10 @@ class DaemonTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
 
     def test_oversized_body_is_rejected(self):
-        status, body = self.raw("POST", "/call", b"{" + b" " * (daemon.MAX_BODY + 1) + b"}")
+        """只发送超限长度声明，验证读取前即拒绝并保持执行器未调用。"""
+        status, _ = self.raw("POST", "/call", headers={"Content-Length": str(daemon.MAX_BODY + 1)})
         self.assertEqual(status, 400)
+        self.assertEqual(self.calls, [])
 
     def test_executor_failures_map_to_status_and_service_survives(self):
         self.assertEqual(self.raw("POST", "/call", {"action": "bad"})[0], 400)

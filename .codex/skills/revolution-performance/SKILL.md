@@ -5,9 +5,13 @@ description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、�
 
 # Revolution 性能优化
 
+先按 [RevGame 全链路索引](../revolution-framework/references/revgame-practice-map.md) 找对应阶段，再按 [性能与设备证据](../revolution-framework/references/revgame-delivery.md#性能与目标设备) 区分逻辑、呈现、加载/清理、Editor 与 Player。按目标项目的实际工作量、设备、采样与质量形成结论。
+
 将需求落实为**定位瓶颈 → 减少重复工作 → 保持规则与画面 → 同输入复测 → 明确收益与剩余问题**。目标是当前项目与设备约束下可验证的最优实现；技能不提供未经测量的“极致”、零GC、固定加速倍数或帧率保证。
 
 以 [RevGame 实践与来源](references/revgame-practice.md) 为例，包含 2026-11-19 的无尽敌潮插值、网格提交与六章测量。实际步长、容量、入口和通过标准读取目标项目。
+
+固定负载可以通过 [RevMCP 性能批次](../revolution-framework/references/automatic-delivery.md#自动验收与性能对比) 预热、重复并比较回执。指标从每轮真实结果提取，按路径、工作量与设备口径核对。
 
 ## 写性能敏感代码时
 

@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Collections.Generic;
+using Revolution;
 using RevGame.Board;
 using RevGame.Core;
 using RevGame.Data;
@@ -34,51 +35,6 @@ namespace RevGame.Endless
             _saveDirectory = saveDirectory;
         }
 
-        private static bool SaveFileExists(string path)
-        {
-            return File.Exists(path) || File.Exists(path + ".bak");
-        }
-
-        /// <summary>按顺序读取并验证主档和备份。读取失败保留两份原文件。</summary>
-        private static T ReadSaveFile<T>(string path, Func<string, T> validate, out bool fromBackup)
-        {
-            fromBackup = false;
-            try
-            {
-                return validate(File.ReadAllText(path, Encoding.UTF8));
-            }
-            catch (Exception mainError) when (IsSaveReadFailure(mainError))
-            {
-                try
-                {
-                    T data = validate(File.ReadAllText(path + ".bak", Encoding.UTF8));
-                    fromBackup = true;
-                    return data;
-                }
-                catch (Exception backupError) when (IsSaveReadFailure(backupError))
-                {
-                    throw new InvalidDataException("主档与备份均不可用", new AggregateException(mainError, backupError));
-                }
-            }
-        }
-
-        private static bool IsSaveReadFailure(Exception error)
-        {
-            return error is IOException || error is UnauthorizedAccessException || error is InvalidDataException || error is ArgumentException;
-        }
-
-        private static void ReplaceSaveFile(string temporary, string path, bool preserveBackup)
-        {
-            if (File.Exists(path))
-            {
-                File.Replace(temporary, path, preserveBackup ? null : path + ".bak");
-            }
-            else
-            {
-                File.Move(temporary, path);
-            }
-        }
-
         private static string Digest(string value)
         {
             using (SHA256 hash = SHA256.Create())
@@ -88,7 +44,7 @@ namespace RevGame.Endless
         }
         public static bool HasSavedRun(bool isolated = false)
         {
-            return isolated ? !string.IsNullOrEmpty(_isolatedSave) : SaveFileExists(Path.Combine(Application.persistentDataPath, RunFileName));
+            return isolated ? !string.IsNullOrEmpty(_isolatedSave) : RevFileSave.Exists(Path.Combine(Application.persistentDataPath, RunFileName));
         }
         /// <summary>先保存完整一致性状态到临时文件并校验，再原子替换；写失败冻结计分并保留旧档。</summary>
         public bool Save()
@@ -135,10 +91,8 @@ namespace RevGame.Endless
                     _isolatedSave = encoded;
                     return true;
                 }
-                string temporary = SavePath + ".tmp";
-                File.WriteAllText(temporary, encoded, Encoding.UTF8);
-                Decode(File.ReadAllText(temporary, Encoding.UTF8));
-                ReplaceSaveFile(temporary, SavePath, _preserveRunBackup);
+                // 编码与棋局规则不变，临时写入、读回校验、备份替换由框架提交。
+                RevFileSave.Write(SavePath, encoded, value => Decode(value), _preserveRunBackup);
                 _preserveRunBackup = false;
                 return true;
             }
@@ -241,7 +195,7 @@ namespace RevGame.Endless
             try
             {
                 bool fromBackup = false;
-                var snapshot = isolated ? PrepareRestore(_isolatedSave) : ReadSaveFile(SavePath, PrepareRestore, out fromBackup);
+                var snapshot = isolated ? PrepareRestore(_isolatedSave) : RevFileSave.Read(SavePath, PrepareRestore, out fromBackup);
                 EndlessRun loaded = snapshot.run;
                 List<EndlessUnit> units = snapshot.units;
                 if (loaded.version != 1)

@@ -30,6 +30,7 @@
 // 【线程约定】只在主线程使用（Unity 的 UI 与 GameObject 都只允许主线程访问）。
 // ============================================================
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Revolution
@@ -92,6 +93,36 @@ namespace Revolution
 
         /// <summary>实例首次装配完成时调用一次（做和"这一次打开"无关的初始化：注册全局事件、建索引…）</summary>
         protected virtual void OnInit() { }
+
+        /// <summary>当前打开代次负责的接线，关闭开始时一并归还。</summary>
+        private List<IDisposable> _openBindings;
+
+        /// <summary>在 OnOpen 中建立业务快照接线。关窗、交割取消和销毁均由面板自动解绑。</summary>
+        protected RevUIStateBinding<T> CreateStateBinding<T>(Func<T> snapshot)
+        {
+            if (_released || !IsOpened)
+            {
+                throw new InvalidOperationException("快照接线必须在当前打开周期建立。");
+            }
+            var binding = new RevUIStateBinding<T>(snapshot);
+            (_openBindings ??= new List<IDisposable>()).Add(binding);
+            return binding;
+        }
+
+        /// <summary>切断本代监听和异步命令。回调可能重入，先交出列表再逐项处置。</summary>
+        private void ReleaseOpenBindings()
+        {
+            List<IDisposable> bindings = _openBindings;
+            _openBindings = null;
+            if (bindings == null)
+            {
+                return;
+            }
+            for (int i = bindings.Count - 1; i >= 0; i--)
+            {
+                RevUILog.Guard("释放面板本轮接线", bindings[i].Dispose);
+            }
+        }
 
         /// <summary>
         /// ★ 表现装配：在这里拿控件（[RevBind] 字段此时已经有值）并挂交互。
@@ -461,6 +492,7 @@ namespace Revolution
             _closeNotified = false;
             State = RevUIPanelState.Closing;
             ++LifetimeVersion;
+            ReleaseOpenBindings();
             RevUIPart.CancelCreates(this);
             CloseParts();
         }
@@ -473,6 +505,7 @@ namespace Revolution
                 return;
             }
             _closeNotified = true;
+            ReleaseOpenBindings();
             RevUILog.Guard($"{GetType().Name}.OnClose", OnClose);
             RevEvent.RemoveAllByOwner(this);
         }
@@ -572,6 +605,7 @@ namespace Revolution
             _released = true;
             State = RevUIPanelState.Closed;
             ++LifetimeVersion;
+            ReleaseOpenBindings();
             RevUIPart.CancelCreates(this);
 
             RevUIPart[] parts = GetComponentsInChildren<RevUIPart>(true);
@@ -672,6 +706,7 @@ namespace Revolution
         /// </summary>
         protected virtual void OnDestroy()
         {
+            ReleaseOpenBindings();
             RevUIManager.Instance.NotifyPanelDestroyed(this);
             RevUIAnim.StopAllOf(this);
             RevEvent.RemoveAllByOwner(this);

@@ -35,6 +35,18 @@ namespace Revolution
     /// <summary>UI 系统门面：打开 / 关闭 / 查询 / 预热 / 诊断</summary>
     public static class RevUI
     {
+#if UNITY_EDITOR
+        /// <summary>检查已导入预制体的必需控件接线，使用运行时的字段和节点规则且不修改资产。</summary>
+        public static string[] CheckPrefabBindings(GameObject prefab)
+        {
+            if (prefab == null)
+            {
+                throw new ArgumentNullException(nameof(prefab));
+            }
+            return RevUIBinder.Check(prefab);
+        }
+#endif
+
         // ============================================================
         // 打开
         // ============================================================

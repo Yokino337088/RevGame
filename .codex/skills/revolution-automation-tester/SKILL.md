@@ -5,6 +5,8 @@ description: 执行或维护 Revolution.RevCLI 的 GM scenario 循环回归、�
 
 # Revolution Automation Tester
 
+GM 回归或循环采样先查 [RevGame 业务和负载例子](../revolution-framework/references/revgame-delivery.md#覆盖真实业务和故障)。项目处理真实输入与复位，用已登记能力验证每轮声称的效果。当任务跨场景、UI、业务和设备时，使用 RevMCP 真实计划与 `benchmark`。
+
 把“一句话测试需求”转成**真实业务入口 + 精确预期 + 可回收清理**的自动化测试，并实际执行、核对结果。本 Skill 专注 Revolution.RevCLI 的 GM scenario 循环/性能采样；跨 Editor/业务/UI/截图/Player/CLI 的一句话任务优先使用 `revolution-ai-automation` 与 RevMCP。已有 scenario 可继续复用，无需改格式。
 
 ## 真实工程示例

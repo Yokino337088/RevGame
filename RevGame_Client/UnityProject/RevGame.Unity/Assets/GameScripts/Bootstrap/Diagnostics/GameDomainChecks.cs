@@ -86,10 +86,86 @@ namespace RevGame.Bootstrap
             }
         }
 
+        /// <summary>没有业务参数的隔离请求验收。</summary>
+        [Serializable]
+        private sealed class ScopedRequestInput
+        {
+        }
+
+        /// <summary>证明两个观察者、真实域关闭和迟到结果分别经过框架入口。</summary>
+        [Serializable]
+        private sealed class ScopedRequestEvidence
+        {
+            /// <summary>同键共享实际发起次数。</summary>
+            public int started;
+            /// <summary>两个等待者均收到关闭域的取消结果。</summary>
+            public bool bothCancelled;
+            /// <summary>迟到结果归还次数。</summary>
+            public int released;
+            /// <summary>旧域在结案后剩余的请求数。</summary>
+            public int pending;
+        }
+
+        /// <summary>在独立域内发起两个同键读取，退出后投递旧回包，断言只回收一次。</summary>
+        private static ScopedRequestEvidence CheckScopedRequests()
+        {
+            var owner = RevScope.Enter("RevGame.Automation.ScopedRequests");
+            var group = new RevScopedOperations<string>(owner);
+            var source = RevTask<string>.CreateSource();
+            var result = new ScopedRequestEvidence();
+            try
+            {
+                var first = group.Run("read", _ =>
+                {
+                    result.started++;
+                    return source.Task;
+                }, share: true, discard: _ => result.released++);
+                var second = group.Run("read", _ =>
+                {
+                    result.started++;
+                    return source.Task;
+                }, share: true);
+                RevScope.Exit(owner);
+                result.bothCancelled = IsCancelled(first) && IsCancelled(second);
+                source.SetResult("old-room");
+                result.pending = group.PendingCount;
+                return result;
+            }
+            finally
+            {
+                group.Dispose();
+                if (owner.IsOpen)
+                {
+                    RevScope.Exit(owner);
+                }
+            }
+        }
+
+        /// <summary>已关域的任务应已结案并抛出框架取消异常。</summary>
+        private static bool IsCancelled(RevTask<string> task)
+        {
+            var awaiter = task.GetAwaiter();
+            if (!awaiter.IsCompleted)
+            {
+                return false;
+            }
+            try
+            {
+                awaiter.GetResult();
+                return false;
+            }
+            catch (RevOperationCanceledException)
+            {
+                return true;
+            }
+        }
+
         /// <summary>挂载开发能力，生命周期跟随注册者。</summary>
         internal static void Register(object owner)
         {
             const string empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register<ScopedRequestInput, ScopedRequestEvidence>("game.scoped-request-check",
+                "验证同键共享、真实关域与迟到资源归还", _ => CheckScopedRequests(), owner: owner);
             RevRuntimeAutomation.Register("game.scope-check", "用真实 AB 验证跨域共享、退域清理和交接预加载",
                 empty, _ => new Operation(), owner: owner);
         }

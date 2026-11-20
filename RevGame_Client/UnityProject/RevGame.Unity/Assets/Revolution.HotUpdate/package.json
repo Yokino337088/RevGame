@@ -1,0 +1,8 @@
+{
+  "name": "com.revolution.hotupdate",
+  "displayName": "Revolution HotUpdate (RevHotUpdate)",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "RevHotUpdate —— 基于 Revolution 资源系统的轻量资源热更新：清单 → 版本比对（大版本锚定）→ 差量下载 → 校验落地 → 加载路径重定向。独立包：不导入零影响，导入即有。",
+  "dependencies": {}
+}

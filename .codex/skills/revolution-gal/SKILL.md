@@ -5,6 +5,8 @@ description: 用自然语言、RevCLI 和 Unity 工作台制作、编辑与验�
 
 # Revolution.Gal
 
+宿主接入与回归先参考 [RevGame 的故事、Gal 和素材实践](../revolution-framework/references/revgame-content.md#剧情与教学)。对照项目实际场景入口、宿主动线、资产与会话所有者。以目标故事节点、分支、保存策略和素材路径适配。
+
 1. 定位目标 Unity 工程、项目规则、已安装的 Revolution 核心和 Gal 扩展。读取目标工程的 RevAB 资源根及实际版本。RevGame 使用工程相邻的 RevCLI 和 RevMCP，项目本身的剧情由其业务入口管理。
 2. 对在线编辑器显式指定 `--project <Unity 工程> --mode live`。先发现 `commands --live --query gal.` 或 RevMCP 的 `rev_discover(target="editor", query="gal.")`。用实际注册动作区分客户端过旧、Gal 未安装、编译失败和编辑器处于 Play。
 3. 按请求选择参考。需要改生成器、公开契约或框架实现时，回到 Revolution 源仓库，使用该项目的编译和发布流程。
