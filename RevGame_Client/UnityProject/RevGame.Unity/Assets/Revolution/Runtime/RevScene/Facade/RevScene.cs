@@ -85,6 +85,12 @@ namespace Revolution
         /// <summary>当前状态（Idle / Loading / Done / Failed，业务用它驱动加载界面）。</summary>
         public static RevSceneLoadState State => RevSceneLoader.State;
 
+        /// <summary>为一个业务流程创建交接追踪器，由流程持有并在首屏就绪与清理结束后发布结果。</summary>
+        public static RevSceneHandoffTracker CreateHandoffTracker()
+        {
+            return new RevSceneHandoffTracker();
+        }
+
         // ==================== 用（三行就够）====================
 
         /// <summary>

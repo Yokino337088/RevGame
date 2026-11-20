@@ -44,6 +44,8 @@ namespace RevGame.View
             public readonly List<Action<SpriteAtlas>> Waiters = new List<Action<SpriteAtlas>>(2);
             /// <summary>加载完成后的共享图集；释放时清null，不把已撤销的租约当成可用缓存。</summary>
             public SpriteAtlas Atlas;
+            /// <summary>图集服务为所有使用者共享的一份实际 AB 资源引用。</summary>
+            public RevResLease Resource;
             /// <summary>防重复Release标记；它与Finished分开，因为资源可能还没加载完就退出。</summary>
             public bool Released;
             /// <summary>成功或失败都为true，供启动预热结束等待；失败原因已由回调记录。</summary>
@@ -246,9 +248,9 @@ namespace RevGame.View
         /// <summary>
         /// 面板打开前的图集屏障。必须先等本屏所需的图集完成，再实例化UI；否则原Sprite已经被AB剥离像素，
         /// Image会暂时使用白纹理。不能把“预制体句柄已成功”当成“依赖的图集已经可渲染”。
-        /// 加载仍只走RevResManager，本服务持有唯一租约，调用方不重复Release它。
+        /// 已驻留的图集也记入本次首屏依赖；服务持有实际资源租约，预热调用者只等待它。
         /// </summary>
-        public async RevTask PreloadAsync(string[] names)
+        public async RevTask PreloadAsync(string[] names, RevSceneHandoffResources trace = null)
         {
             foreach (string name in names)
             {
@@ -256,6 +258,7 @@ namespace RevGame.View
                 {
                     throw new InvalidOperationException("未配置的图集：" + name);
                 }
+                trace?.Require(RevResPath.Atlases, name, "GameSpriteAtlasService.PreloadAsync", blocksFirstFrame: true);
                 Entry entry = Request(name, null);
                 while (!_disposed && !entry.Finished)
                 {
@@ -287,7 +290,7 @@ namespace RevGame.View
             }
             Request(tag, register);
         }
-        /// <summary>每个Entry成对Load/Release；失败也记录完成状态，让预热可报错，不会一直等待。</summary>
+        /// <summary>为每个图集登记唯一具名租约；失败也记录完成状态，让预热报错并释放实际引用。</summary>
         private Entry Request(string name, Action<SpriteAtlas> register)
         {
             Entry entry;
@@ -313,8 +316,11 @@ namespace RevGame.View
                 entry.Waiters.Add(register);
             }
             _entries.Add(name, entry);
-            RevResManager.LoadAsync(RevResPath.Atlases, name, typeof(SpriteAtlas), handle =>
+            entry.Resource = RevResManager.LoadOwnedAsync(RevResPath.Atlases, name, typeof(SpriteAtlas), nameof(GameSpriteAtlasService), lease =>
             {
+                // 同步缓存命中时，失败或绑定回调可能直接触发退出，所以先交付本次租约。
+                entry.Resource = lease;
+                RevResHandle handle = lease.Handle;
                 entry.Finished = true;
 
                 // 退出时已Release的租约不能再减一次，也不能把旧atlas重新交给Unity。
@@ -386,7 +392,7 @@ namespace RevGame.View
             entry.Released = true;
             entry.Waiters.Clear();
             entry.Atlas = null;
-            RevResManager.Release(RevResPath.Atlases, entry.Name);
+            entry.Resource?.Dispose();
         }
         /// <summary>先退订事件再释放资源，防止卸载过程中又收到新请求；由Bootstrap反向注销服务调用。</summary>
         public void Dispose()

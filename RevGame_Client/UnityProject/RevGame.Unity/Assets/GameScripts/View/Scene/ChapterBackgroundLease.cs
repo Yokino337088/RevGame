@@ -9,8 +9,10 @@ namespace RevGame.View
     {
         private readonly string _materialName;
         private readonly string _shaderName;
-        private RevResHandle _textureHandle;
-        private RevResHandle _materialHandle;
+        /// <summary>背景原画纹理的具名引用。第一章用图集时为空。</summary>
+        private RevResLease _textureLease;
+        /// <summary>背景材质的具名引用，在实际渲染者退出后归还。</summary>
+        private RevResLease _materialLease;
         private GameSpriteAtlasService.TutorialSpriteLease _atlas;
         private bool _tutorialPending;
         private Exception _tutorialError;
@@ -48,24 +50,31 @@ namespace RevGame.View
             _shaderName = style.shaderName;
         }
 
-        /// <summary>同一租约只加载一次。调用方先登记租约再等待，这样中途退场也能归还已发出的请求。</summary>
-        public async RevTask LoadAsync(int chapter)
+        /// <summary>登记本次等待的首屏资源并取得引用。调用方先保存此对象，再等待以支持中途退出。</summary>
+        public async RevTask LoadAsync(int chapter, string holder = nameof(ChapterBackgroundLease), RevSceneHandoffResources trace = null)
         {
-            _materialHandle = RevResManager.LoadAsync(RevResPath.Material_Background, _materialName, typeof(Material), null, RevResGroup.Scene);
+            trace?.Require(RevResPath.Material_Background, _materialName, holder, blocksFirstFrame: true);
+            _materialLease = RevResManager.LoadOwnedAsync(RevResPath.Material_Background, _materialName, typeof(Material), holder,
+                group: RevResGroup.Scene);
             if (chapter == 1)
             {
+                trace?.Require(RevResPath.Atlases, GameSpriteAtlasService.TutorialAtlasName, holder, blocksFirstFrame: true);
                 _atlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireTutorialSprite();
                 _tutorialPending = true;
                 LoadTutorialSpriteAsync().Forget();
             }
             else
             {
-                _textureHandle = RevResManager.LoadAsync(GamePresentation.ChapterBackgroundRoot, Name, typeof(Texture2D), null, RevResGroup.Scene);
+                trace?.Require(GamePresentation.ChapterBackgroundRoot, Name, holder, blocksFirstFrame: true);
+                _textureLease = RevResManager.LoadOwnedAsync(GamePresentation.ChapterBackgroundRoot, Name, typeof(Texture2D), holder,
+                    group: RevResGroup.Scene);
             }
 
             // 加载预算使用现实时间。暂停战斗也要能报告超时，退出后的旧续体则直接返回。
+            RevResHandle materialHandle = _materialLease.Handle;
+            RevResHandle textureHandle = _textureLease?.Handle;
             float deadline = Time.realtimeSinceStartup + 30f;
-            while (!_released && (_materialHandle.IsLoading || _textureHandle?.IsLoading == true || _tutorialPending))
+            while (!_released && (materialHandle.IsLoading || textureHandle?.IsLoading == true || _tutorialPending))
             {
                 if (Time.realtimeSinceStartup > deadline)
                 {
@@ -82,18 +91,18 @@ namespace RevGame.View
                 throw new InvalidOperationException("第一章图集加载失败：" + Name, _tutorialError);
             }
 
-            if (_textureHandle != null)
+            if (textureHandle != null)
             {
-                Texture = _textureHandle.Content as Texture2D;
-                if (!_textureHandle.IsLoaded || Texture == null)
+                Texture = textureHandle.Content as Texture2D;
+                if (!textureHandle.IsLoaded || Texture == null)
                 {
-                    throw new InvalidOperationException("背景图片加载失败：" + Name + " / " + _textureHandle.ErrorReason);
+                    throw new InvalidOperationException("背景图片加载失败：" + Name + " / " + textureHandle.ErrorReason);
                 }
             }
-            Material = _materialHandle.Content as Material;
-            if (!_materialHandle.IsLoaded || Material == null)
+            Material = materialHandle.Content as Material;
+            if (!materialHandle.IsLoaded || Material == null)
             {
-                throw new InvalidOperationException("章节独立材质加载失败：" + _materialName + " / " + _materialHandle.ErrorReason);
+                throw new InvalidOperationException("章节独立材质加载失败：" + _materialName + " / " + materialHandle.ErrorReason);
             }
             if (Material.shader == null || !Material.shader.isSupported || Material.shader.name != _shaderName)
             {
@@ -152,16 +161,10 @@ namespace RevGame.View
             Sprite = null;
             Texture = null;
             Material = null;
-            if (_textureHandle != null)
-            {
-                RevResManager.Release(GamePresentation.ChapterBackgroundRoot, Name);
-                _textureHandle = null;
-            }
-            if (_materialHandle != null)
-            {
-                RevResManager.Release(RevResPath.Material_Background, _materialName);
-                _materialHandle = null;
-            }
+            _textureLease?.Dispose();
+            _textureLease = null;
+            _materialLease?.Dispose();
+            _materialLease = null;
             _atlas?.Dispose();
             _atlas = null;
         }

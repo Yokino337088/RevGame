@@ -1,4 +1,8 @@
 using System;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+using System.Collections.Generic;
+using System.Linq;
+#endif
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Services;
@@ -18,7 +22,91 @@ namespace RevGame.Flow
     {
         /// <summary>正式场景名；StartScene位于Build Settings第0位，教学和战斗都由同一流程切换。</summary>
         public const string StartSceneName = "StartScene";
+        /// <summary>六章战斗使用的 Unity 场景名。</summary>
         public const string BattleSceneName = "GameScene";
+
+        /// <summary>当前流程的交接历史。由 GameFlow 写入，观察方使用句柄查询和等待。</summary>
+        private readonly RevSceneHandoffTracker _sceneHandoffs = RevScene.CreateHandoffTracker();
+        /// <summary>尚未完成退场清理的六章交接。返回大厅后冻结其资源快照并清空。</summary>
+        private RevSceneHandoff _battleHandoff;
+
+        /// <summary>最近一次接单的大厅或六章场景交接。未接单时为空，拒绝连点不会替换它。</summary>
+        public RevSceneHandoff LatestSceneHandoff => _sceneHandoffs.Latest;
+
+        /// <summary>仅在六章入场时向表现层开放首屏依赖记录，章间换背景仍使用自己的租约。</summary>
+        internal RevSceneHandoffResources EnteringBattleResources => _battleHandoff != null && !_battleHandoff.IsCompleted
+            ? _battleHandoff.Resources : null;
+
+        /// <summary>按请求 ID 查询当前或最近完成的交接。不存在或已淘汰时返回 false。</summary>
+        public bool TryGetSceneHandoff(Guid requestId, out RevSceneHandoff handoff)
+        {
+            return _sceneHandoffs.TryGet(requestId, out handoff);
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>开发态查询的可选条件。空请求 ID 使用最近一次场景交接。</summary>
+        [Serializable]
+        private sealed class SceneResourceQuery
+        {
+            /// <summary>要查询的场景交接 ID。</summary>
+            public string requestId;
+            /// <summary>选择 current、ready 或 exit。省略时实时采样。</summary>
+            public string snapshot;
+        }
+
+        /// <summary>注册仅查询资源引用的开发态入口，随 GameFlow 释放注销。</summary>
+        private void RegisterSceneResourceAutomation()
+        {
+            const string schema = "{\"type\":\"object\",\"properties\":{\"requestId\":{\"type\":\"string\"},"
+                + "\"snapshot\":{\"type\":\"string\",\"enum\":[\"current\",\"ready\",\"exit\"]}},\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("game.scene-handoff.resources", "按交接 ID 查询预加载来源、首屏等待、当前或历史持有者",
+                schema, QuerySceneHandoffResources, readOnly: true, owner: this);
+        }
+
+        /// <summary>返回实时或历史资源快照。已淘汰的 ID 或尚未采集的边界会标记 available=false。</summary>
+        private object QuerySceneHandoffResources(string json)
+        {
+            var query = JsonUtility.FromJson<SceneResourceQuery>(json);
+            RevSceneHandoff handoff = LatestSceneHandoff;
+            if (!string.IsNullOrEmpty(query.requestId)
+                && (!Guid.TryParse(query.requestId, out Guid id) || !TryGetSceneHandoff(id, out handoff)))
+            {
+                return new Dictionary<string, object> { ["available"] = false, ["requestId"] = query.requestId };
+            }
+            if (handoff == null)
+            {
+                return new Dictionary<string, object> { ["available"] = false };
+            }
+
+            RevSceneHandoffResources trace = handoff.Resources;
+            IReadOnlyList<RevSceneResourceSnapshot> rows = query.snapshot switch
+            {
+                "ready" => trace.AtReady,
+                "exit" => trace.AfterExit,
+                _ => trace.CaptureCurrent()
+            };
+            return new Dictionary<string, object>
+            {
+                ["available"] = rows != null,
+                ["requestId"] = handoff.RequestId.ToString(),
+                ["exitRequestId"] = trace.ExitRequestId?.ToString(),
+                ["snapshot"] = query.snapshot ?? "current",
+                ["resources"] = rows?.Select(row => new Dictionary<string, object>
+                {
+                    ["root"] = row.Root,
+                    ["name"] = row.Name,
+                    ["introducedBy"] = row.Introducer,
+                    ["blocksFirstFrame"] = row.BlocksFirstFrame,
+                    ["refCount"] = row.ReferenceCount,
+                    ["holders"] = row.Holders,
+                    ["unattributedCount"] = row.UnattributedCount,
+                    ["holdsBundleReference"] = row.HoldsBundleReference,
+                    ["releasedAfterExit"] = query.snapshot == "exit"
+                        ? (bool?)(row.ReferenceCount == 0 && !row.HoldsBundleReference) : null
+                }).ToArray()
+            };
+        }
+#endif
 
         /// <summary>跨整个加载及淡出期间的互斥锁。战斗Logic据此暂停Tick，防止准备增益被遮罩吃掉。</summary>
         public bool IsTransitioning
@@ -40,6 +128,7 @@ namespace RevGame.Flow
                     || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady);
             }
         }
+        /// <summary>当前接管业务画面的场景表现对象；场景交接前按旧状态使用。</summary>
         private GamePresentation _activePresentation;
         /// <summary>诊断用真实阶段进度，不是DOTween插值后的视觉值；范围0~1。</summary>
         public float LoadProgress
@@ -63,6 +152,7 @@ namespace RevGame.Flow
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>验收专用的一次性故障；正式包不存在此入口，不修改真实AB文件来制造失败。</summary>
         private string _developmentFault;
+        /// <summary>仅在当前无交接时预约一个真实切场边界上的故障，注入一次后消耗。</summary>
         public bool ArmDevelopmentFailure(string stage)
         {
             if (IsTransitioning || (stage != "before-scene" && stage != "after-scene"))
@@ -72,6 +162,7 @@ namespace RevGame.Flow
             _developmentFault = stage;
             return true;
         }
+        /// <summary>到达预约边界时先消耗标记，再进正式错误处理逻辑，让回退请求正常运行。</summary>
         private void CheckDevelopmentFailure(string stage)
         {
             if (_developmentFault != stage)
@@ -89,15 +180,33 @@ namespace RevGame.Flow
             await SwitchSceneAsync(target);
         }
         /// <summary>
-        /// 执行一次完整交接。调用者须先置IsTransitioning=true，且只有本方法的finally能解除互斥。
-        /// 异常保留遮挡和原因，不冒充成功；资源账本无论成功/失败都会释放，旧域到真实交割时才退出。
+        /// 执行一次完整交接。调用者须先置 IsTransitioning，接单后立即可查询句柄。
+        /// 旧域在业务交割时退出。成功时在解除互斥前采样本次资源与已离场战斗的引用。
         /// </summary>
         private async RevTask SwitchSceneAsync(GameScreen target)
         {
+            string sceneName = target == GameScreen.Battle ? BattleSceneName : StartSceneName;
+            RevSceneHandoff handoff = _sceneHandoffs.TryBegin(sceneName, Screen.ToString(), target.ToString());
+
+            if (handoff == null)
+            {
+                return; // 在途请求仍拥有互斥和收尾。
+            }
+            if (target == GameScreen.Battle)
+            {
+                _battleHandoff = handoff;
+            }
+
+            RevSceneHandoffResources resources = handoff.Resources;
             var warmup = new SceneResourceWarmup();
             _activeWarmup = warmup;
+            var status = RevSceneHandoffStatus.Succeeded;
+            bool cleanupSucceeded = false;
+            string reasonCode = null;
+            string detail = null;
             try
             {
+                resources.Require(RevResPath.UI_Panel_Loading, nameof(LoadingPanel), "GameFlow.LoadingCover", blocksFirstFrame: true);
                 _loading = await RevUI.OpenAsync<LoadingPanel>();
                 ThrowIfDisposed();
                 // 面板默认归打开时的当前域；过场属于全局流程，必须显式脱离旧域，仍由RevUI管理。
@@ -105,6 +214,8 @@ namespace RevGame.Flow
                 _loading.ResetCover();
                 Report(0.02f, target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…");
                 await RevTask.Yield(); // 让遮挡层先实际画一帧，再开始资源解码与场景工作。
+                ThrowIfDisposed();
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.PreparingResources);
                 if (Screen == GameScreen.Pvp)
                 {
                     CloseDuelHud();
@@ -118,16 +229,17 @@ namespace RevGame.Flow
                 {
                     await LoadStartupDataAsync();
                 }
-                await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(target == GameScreen.Battle ? BattleAtlases : MenuAtlases);
+                await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(
+                    target == GameScreen.Battle ? BattleAtlases : MenuAtlases, resources);
                 ThrowIfDisposed();
                 Report(0.18f, "正在整理行囊…");
-                await warmup.LoadAsync(target == GameScreen.Battle, p => Report(0.18f + p * 0.24f, "正在集结冒险队伍…"));
+                await warmup.LoadAsync(target == GameScreen.Battle, resources, p => Report(0.18f + p * 0.24f, "正在集结冒险队伍…"));
                 ThrowIfDisposed();
 
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.LoadingScene);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 CheckDevelopmentFailure("before-scene");
 #endif
-                string sceneName = target == GameScreen.Battle ? BattleSceneName : StartSceneName;
 
                 if (RevScene.CurrentName != sceneName)
                 {
@@ -148,7 +260,8 @@ namespace RevGame.Flow
                     }
                 }
 
-                // 新场景的Start完成订阅后才能广播ScreenChanged，否则会漏掉打开棋盘/菜单的通知。
+                // 活动场景已就位，业务仍未交付。等新场景 Start 完成订阅后才广播 ScreenChanged。
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.PreparingGameplay);
                 await RevTask.Yield();
                 ThrowIfDisposed();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
@@ -170,9 +283,11 @@ namespace RevGame.Flow
                 // 交割前资源/场景已确认；现在由FSM关闭旧域、打开新域，再让表现层按新模型绘制。
                 _activePresentation = presentation;
                 Change(target);
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.WaitingForGameplay);
                 string finalStep = target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…";
                 await presentation.WaitUntilReadyAsync(target, p => Report(0.78f + p * 0.20f, finalStep));
                 ThrowIfDisposed();
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.CleaningUp);
                 // 旧视图/池与战斗图集退出通知已完成，新视图持有自己的引用；预热账本也必须先放手。
                 // Release只把资源放进闲置表，这里在遮挡内调用门面真正卸载零引用AB，绝不force卸共享资源。
                 warmup.Dispose();
@@ -186,6 +301,8 @@ namespace RevGame.Flow
                 await RevTask.Yield();
                 ThrowIfDisposed();
                 RevResManager.FlushUnused();
+                cleanupSucceeded = true;
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.Revealing);
                 Report(1f, target == GameScreen.Battle ? "战场已就绪" : "营地已就绪");
                 await _loading.FadeOutAsync();
                 ThrowIfDisposed();
@@ -195,6 +312,16 @@ namespace RevGame.Flow
             }
             catch (Exception error)
             {
+                status = _disposed ? RevSceneHandoffStatus.Cancelled : RevSceneHandoffStatus.Failed;
+                reasonCode = _disposed ? "flow-disposed" : handoff.Stage switch
+                {
+                    RevSceneHandoffStage.LoadingScene => "scene-load-failed",
+                    RevSceneHandoffStage.PreparingGameplay => "gameplay-prepare-failed",
+                    RevSceneHandoffStage.WaitingForGameplay => "gameplay-readiness-failed",
+                    RevSceneHandoffStage.CleaningUp => "cleanup-failed",
+                    _ => "handoff-failed"
+                };
+                detail = error.Message;
                 if (!_disposed)
                 {
                     LastError = "加载失败：" + error.Message;
@@ -209,13 +336,40 @@ namespace RevGame.Flow
             }
             finally
             {
-                warmup.Dispose();
-
-                if (ReferenceEquals(_activeWarmup, warmup))
+                try
                 {
-                    _activeWarmup = null;
+                    // 早期失败也释放本次预热租约。错误遮挡和仍存活的业务域由独立的返回请求收尾。
+                    warmup.Dispose();
+                    cleanupSucceeded |= handoff.Stage < RevSceneHandoffStage.CleaningUp;
                 }
-                IsTransitioning = false;
+                catch (Exception error)
+                {
+                    status = _disposed ? RevSceneHandoffStatus.Cancelled : RevSceneHandoffStatus.Failed;
+                    reasonCode = "cleanup-failed";
+                    detail = string.IsNullOrEmpty(detail) ? error.Message : detail + "；预热清理失败：" + error.Message;
+                    cleanupSucceeded = false;
+                    RevLog.Exception(error, "场景交接预热清理失败", "RevGame");
+                }
+                finally
+                {
+                    if (ReferenceEquals(_activeWarmup, warmup))
+                    {
+                        _activeWarmup = null;
+                    }
+                    if (status == RevSceneHandoffStatus.Succeeded)
+                    {
+                        resources.CaptureReady();
+                        if (target == GameScreen.Home && _battleHandoff != null)
+                        {
+                            // 快照必须晚于场景清理和资源整理。共享图集若仍由大厅持有，会保留其实际引用。
+                            _battleHandoff.Resources.CaptureExit(handoff.RequestId);
+                            _battleHandoff = null;
+                        }
+                    }
+                    // RevTask 可同步唤醒等待方，必须先解除业务互斥，再冻结并发布实际 Unity 场景与业务状态。
+                    IsTransitioning = false;
+                    _sceneHandoffs.TryComplete(handoff, status, Screen.ToString(), cleanupSucceeded, reasonCode, detail);
+                }
             }
         }
         /// <summary>
@@ -371,6 +525,7 @@ namespace RevGame.Flow
             }
         }
 
+        /// <summary>每次跨帧返回后拒绝继续修改已退出的流程。</summary>
         private void ThrowIfDisposed()
         {
             if (_disposed)

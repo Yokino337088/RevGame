@@ -60,18 +60,24 @@ namespace Revolution
         // 即使 Unity 对象在新会话已变成假 null，也能准确归还旧引用。
         // 关闭转场另用同一租约跟踪所有权转移，避免 Shutdown 与晚到回调重复释放。
 
+        /// <summary>跟随面板实例的具名 prefab 租约，关闭转场与 Shutdown 共用同一次归还。</summary>
         private sealed class ClosingResourceLease
         {
+            /// <summary>面板实例标识，用来关联关闭回调与原租约。</summary>
             internal readonly int InstanceId;
-            internal readonly RevResHandle Handle;
+            /// <summary>面板成功接管的 prefab 引用，由面板资源收尾归还。</summary>
+            internal readonly RevResLease Resource;
+            /// <summary>持有该引用的实际面板实例。</summary>
             internal readonly RevUIPanel Panel;
+            /// <summary>转场或 Shutdown 是否已归还这份引用。</summary>
             internal bool Released;
 
+            /// <summary>实例创建后接管原加载引用，无需额外增加计数。</summary>
             internal ClosingResourceLease(RevUIPanel panel, RevResHandle handle)
             {
                 Panel = panel;
                 InstanceId = panel != null ? panel.GetInstanceID() : 0;
-                Handle = handle;
+                Resource = RevResManager.OwnReference(handle, "RevUI/" + panel.GetType().Name);
             }
         }
 
@@ -827,11 +833,15 @@ namespace Revolution
             if (lease != null) ReleasePanelResource(lease);
         }
 
+        /// <summary>归还面板接管的具名引用，阻止晚到回调重复释放。</summary>
         private void ReleasePanelResource(ClosingResourceLease lease)
         {
-            if (lease == null || lease.Released) return;
+            if (lease == null || lease.Released)
+            {
+                return;
+            }
             lease.Released = true;
-            RevResManager.DecRef(lease.Handle);
+            lease.Resource.Dispose();
         }
 
         private void ReleaseAllPanelResourceLeases()

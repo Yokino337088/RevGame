@@ -14,7 +14,7 @@ namespace RevGame.Flow
     internal sealed class SceneResourceWarmup : IDisposable
     {
         /// <summary>本次Load调用的账本。先登记再请求，缓存命中同步回调、失败或中途退出也不会漏Release。</summary>
-        private readonly List<Resource> _leases = new List<Resource>(12);
+        private readonly List<RevResLease> _leases = new List<RevResLease>(12);
         /// <summary>预热时先同时持有实例，避免“取一个立刻还一个”实际上只生成了同一个对象。</summary>
         private readonly List<Component> _instances = new List<Component>(24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles + BoardView.MaxMeleeEffects + 2);
         private bool _disposed;
@@ -38,8 +38,8 @@ namespace RevGame.Flow
                 Name = name;
             }
         }
-        /// <summary>按屏幕寿命选择资源；每次异步完成后Yield，即使全部命中缓存也不会一次集中处理所有对象。</summary>
-        public async RevTask LoadAsync(bool battle, Action<float> progress)
+        /// <summary>按屏幕预热资源，并将每个真实等待点登记到本次交接。即使命中缓存也逐项让帧。</summary>
+        public async RevTask LoadAsync(bool battle, RevSceneHandoffResources trace, Action<float> progress)
         {
             Resource[] resources = battle ? new[]
             {
@@ -63,10 +63,13 @@ namespace RevGame.Flow
                     throw new OperationCanceledException("预热已取消");
                 }
                 Resource resource = resources[i];
-                _leases.Add(resource);
-                var completion = new RevTaskCompletionSource<RevResHandle>();
-                RevResManager.LoadAsync(resource.Root, resource.Name, typeof(GameObject), h => completion.SetResult(h), resource.Group);
-                RevResHandle handle = await completion.Task;
+                // 当前流程逐项等待完整清单，包含为后续反馈提前加载的 prefab，这些等待都会推迟首屏。
+                trace.Require(resource.Root, resource.Name, nameof(SceneResourceWarmup), blocksFirstFrame: true);
+                var completion = new RevTaskCompletionSource<RevResLease>();
+                RevResLease lease = RevResManager.LoadOwnedAsync(resource.Root, resource.Name, typeof(GameObject),
+                    nameof(SceneResourceWarmup), completion.SetResult, resource.Group);
+                _leases.Add(lease);
+                RevResHandle handle = (await completion.Task).Handle;
 
                 if (!handle.IsLoaded)
                 {
@@ -168,6 +171,7 @@ namespace RevGame.Flow
             }
             _instances.Clear();
         }
+        /// <summary>先归还预热的池实例，再释放自己持有的 prefab 引用，池和面板保留各自租约。</summary>
         public void Dispose()
         {
             if (_disposed)
@@ -176,9 +180,9 @@ namespace RevGame.Flow
             }
             _disposed = true;
             ReturnInstances();
-            foreach (Resource resource in _leases)
+            foreach (RevResLease lease in _leases)
             {
-                RevResManager.Release(resource.Root, resource.Name);
+                lease.Dispose();
             }
             _leases.Clear();
         }

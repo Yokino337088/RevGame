@@ -29,7 +29,7 @@ using UnityEngine;
 
 namespace Revolution
 {
-    public static class RevResManager
+    public static partial class RevResManager
     {
         // ===== 策略族（注册顺序 = 优先级）=====
         private static readonly List<IRevResPolicy> _policies = new List<IRevResPolicy>();

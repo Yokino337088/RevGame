@@ -18,26 +18,61 @@ namespace RevGame.Editor
     /// <summary>
     /// 从真正首页开始的Play集成验收。不会先把全部图集读一遍再测UI，避免预热掩盖首次白图问题。
     /// 使用玩家同一个按钮/流程入口；检查冷启动、三次往返、分帧装配、遮挡、准备计时与两种失败回退。
-    /// 只写Temp验收记录，正式运行时不包含本类。
+    /// CLI/MCP 在内存返回结果，旧调用方可继续保存 Temp 证据。正式运行时不包含本类。
     /// </summary>
     public static class GameSceneTransitionChecks
     {
+        /// <summary>最近一轮状态或最终断言文本。清理完成前始终为“运行中”。</summary>
         public static string LastResult { get; private set; } = "未运行";
+        /// <summary>本轮已执行的业务断言数，接单时清零。</summary>
         private static int _assertions;
+        /// <summary>本轮正常与故障路径的观察记录，供收尾后生成内存回执。</summary>
         private static readonly List<string> Report = new List<string>();
 
-        public static async void Begin(bool testFailures = true)
+        /// <summary>本轮记录的第一章进场 ID，供自动化工单完成后继续查询资源。</summary>
+        public static string LastBattleHandoffId { get; private set; }
+
+        /// <summary>旧资源夹具的接单入口，继续保存它原来使用的 Temp 证据。</summary>
+        public static void Begin(bool testFailures = true)
+        {
+            RunAsync(testFailures, captureEvidence: true).Forget();
+        }
+
+        /// <summary>自动化桥固定调用的 Play 入口，执行两种故障并将最终观察留在 LastResult。</summary>
+        public static void BeginHandoffCheck()
+        {
+            if (LastResult == "运行中")
+            {
+                throw new InvalidOperationException("场景验收正在运行");
+            }
+            RunAsync(testFailures: true, captureEvidence: false).Forget();
+        }
+
+        /// <summary>在真实 AB 模式跑一次第一章往返，输出进场 ID，并校验同一交接的前后资源快照。</summary>
+        public static void BeginResourceTraceCheck()
+        {
+            if (!RevResBootstrap.UseABInEditor || LastResult == "运行中")
+            {
+                throw new InvalidOperationException("需要从大厅冷启动真实 AB，且没有其它场景验收在运行");
+            }
+            RunAsync(testFailures: false, captureEvidence: false, cycles: 1, checkResources: true).Forget();
+        }
+
+        /// <summary>从冷启动大厅跑指定次数往返，可选检查交接资源或故障恢复，最后恢复大厅和积分隔离。</summary>
+        private static async RevTask RunAsync(bool testFailures, bool captureEvidence, int cycles = 3, bool checkResources = false)
         {
             if (!Application.isPlaying || LastResult == "运行中")
             {
                 return;
             }
             LastResult = "运行中";
+            LastBattleHandoffId = null;
             _assertions = 0;
             Report.Clear();
             string mode = RevResBootstrap.UseABInEditor ? "AB" : "Direct";
             GameFlow flow = null;
             IDisposable score = null;
+            string outcome = string.Empty;
             try
             {
                 flow = RevServices.GetRequired<GameFlow>();
@@ -47,23 +82,35 @@ namespace RevGame.Editor
                 Require(flow.Screen == GameScreen.Home && RevScene.CurrentName == GameFlow.StartSceneName, "启动交付StartScene首页");
                 CheckImages("冷启动首页");
                 Require(UnityEngine.Object.FindObjectOfType<BoardView>() == null, "大厅没有战斗棋盘实例");
-                ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Home.png");
+                if (captureEvidence)
+                {
+                    ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Home.png");
+                }
                 await RevTask.Yield();
 
-                for (int cycle = 0; cycle < 3; cycle++)
+                for (int cycle = 0; cycle < cycles; cycle++)
                 {
                     // 模拟真正按钮点击，而不是绕开UI直接改模型。
                     RevUI.Get<HomePanel>().transform.Find("btnPlay").GetComponent<Button>().onClick.Invoke();
                     await WaitUntilAsync(() => RevUI.IsOpen<LevelSelectPanel>(), "选关面板打开");
                     CheckImages("选关" + cycle);
+                    RevSceneHandoff previous = flow.LatestSceneHandoff;
                     RevUI.Get<LevelSelectPanel>().transform.Find("chapter1").GetComponent<Button>().onClick.Invoke();
                     Require(flow.IsTransitioning, "点击章节立即建立互斥锁");
+                    RevSceneHandoff enter = RequireNewHandoff(flow, previous, GameFlow.BattleSceneName);
+                    LastBattleHandoffId = enter.RequestId.ToString();
+                    RevTask<RevSceneHandoffResult> enterResult = ObserveHandoffCompletionAsync(flow, enter);
+                    RevTask<RevSceneHandoffResult> secondWaiter = ObserveHandoffCompletionAsync(flow, enter);
                     Require(!flow.EnterBattle(1) && !flow.ReturnHome(), "连点/过场期间返回不能并发启动另一条场景链");
-                    await ObserveTransitionAsync(flow, true, mode, cycle);
+                    Require(ReferenceEquals(flow.LatestSceneHandoff, enter) && !enter.IsCompleted, "拒绝连点保留原 ID 与等待者");
+                    await ObserveTransitionAsync(flow, true, mode, cycle, captureEvidence);
+                    RevSceneHandoffResult result = await enterResult;
+                    Require(ReferenceEquals(result, await secondWaiter) && ReferenceEquals(result, await enter.WaitAsync()), "两个在途等待者与结案后查询得到同一终态");
+                    RequireSuccess(result, GameFlow.BattleSceneName, GameScreen.Battle);
                     Require(flow.Screen == GameScreen.Battle && RevScene.CurrentName == GameFlow.BattleSceneName, "FSM与实际GameScene一致");
                     Require(string.IsNullOrEmpty(flow.LastError), "成功过场清除历史错误");
                     Require(UnityEngine.Object.FindObjectsOfType<GameBootstrap>().Length == 1, "常驻启动宿主只有一个");
-                    Require(RevLogic.Count == 1 && RevScope.IsActive(GameDomain.Battle), "恰好一个战斗域Logic");
+                    Require(RevLogic.Get<BattleLogic>() != null && RevScope.IsActive(GameDomain.Battle), "战斗域与实际战斗逻辑已启动");
                     BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
                     Require(board != null && board.IsReady && board.CellCount == 81, "战场交付时81格与棋子全部就绪");
                     Require(RevUI.Get<PreparePanel>().GetComponentsInChildren<CardItem>().Length == 6, "六张可见手牌完整");
@@ -73,8 +120,17 @@ namespace RevGame.Editor
 
                     if (cycle == 0)
                     {
-                        ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Battle.png");
-                        // 准备由Scaled固定步推进；Editor长帧/截图会让墙钟与模拟时钟不同，不能用3250ms猜完成。
+                        if (captureEvidence)
+                        {
+                            ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Battle.png");
+                        }
+                        // 第一章在遮挡交付后播放对白，业务刻意暂停计时。通过正式跳过按钮结束对白，再开始观察模拟时钟。
+                        await WaitUntilAsync(() => flow.IsStoryReady && RevUI.IsOpen<StoryPanel>(), "等待第一章开场对白可操作");
+                        Require(flow.StoryId == "chapter1" && flow.IsGameplayBlocked && !battle.PreparationGranted,
+                            "开场对白期间保持准备计时门禁");
+                        RevUI.Get<StoryPanel>().transform.Find("storyView/btnSkip").GetComponent<Button>().onClick.Invoke();
+                        await WaitUntilAsync(() => !flow.IsGameplayBlocked, "等待对白退出与准备计时门禁解除");
+                        // 准备由 Scaled 固定步推进，使用实际模拟阈值断言，墙钟只负责设定验收期限。
                         double started = Time.realtimeSinceStartupAsDouble;
                         while (!battle.PreparationGranted)
                         {
@@ -87,49 +143,59 @@ namespace RevGame.Editor
                         Report.Add("准备实际墙钟=" + (Time.realtimeSinceStartupAsDouble - started).ToString("F3") + "秒，模拟=" + battle.PreparationElapsed);
                     }
                     Require(flow.ReturnHome(), "接受返回大厅");
-                    await ObserveTransitionAsync(flow, false, mode, cycle);
-                    Require(RevScene.CurrentName == GameFlow.StartSceneName && flow.Screen == GameScreen.Home, "返回StartScene与Home");
-                    Require(RevLogic.Count == 0 && !RevScope.IsActive(GameDomain.Battle), "退出无战斗Logic/域残留");
-                    Require(UnityEngine.Object.FindObjectOfType<BoardView>() == null, "旧战斗场景已经卸载");
-                    Require(!RevUI.IsOpen<PreparePanel>() && !RevUI.IsOpen<BattleHudPanel>(), "返回不残留战斗面板");
-                    Require(UnityEngine.Object.FindObjectsOfType<BattleEffectView>().Length == 0, "返回不残留活动弹道飘字");
-                    Require(RevResManager.GetRefCount(RevResPath.Atlases, "PieceFrames") == 0, "战斗图集服务租约释放");
-                    Require(RevResManager.GetRefCount(RevResPath.Board_Tile, "BoardCell") == 0
-                        && RevResManager.GetRefCount(RevResPath.Pieces_Unit, "SlimePiece") == 0
-                        && RevResManager.GetRefCount(RevResPath.Effects_Combat, "BattleEffect") == 0,
-                        "退出无棋盘/棋子/反馈冷加载请求引用残留");
-                    string[] bundles = AssetBundle.GetAllLoadedAssetBundles().Select(b => b.name).ToArray();
-
-                    if (RevResBootstrap.UseABInEditor)
+                    RevSceneHandoff exit = RequireNewHandoff(flow, enter, GameFlow.StartSceneName);
+                    RevTask<RevSceneHandoffResult> exitResult = ObserveHandoffCompletionAsync(flow, exit);
+                    await ObserveTransitionAsync(flow, false, mode, cycle, captureEvidence);
+                    RequireSuccess(await exitResult, GameFlow.StartSceneName, GameScreen.Home);
+                    RequireLobbyCleanup(flow);
+                    if (checkResources)
                     {
-                        Require(!bundles.Contains("battle_units") && !bundles.Contains("battle_feedback") && !bundles.Contains("battle_board"), "战斗专用AB已实际卸载");
+                        RequireResourceTrace(flow, enter, exit);
                     }
-                    Report.Add("返回" + cycle + "已加载包" + bundles.Length + "：" + string.Join(",", bundles));
+                    Report.Add("往返" + (cycle + 1) + "：" + enter.RequestId + " → " + exit.RequestId);
                     CheckImages("返回首页" + cycle);
                 }
                 if (testFailures)
                 {
                     foreach (string stage in new[] { "before-scene", "after-scene" })
                     {
+                        RevSceneHandoff previous = flow.LatestSceneHandoff;
                         Require(flow.OpenLevels() && flow.ArmDevelopmentFailure(stage) && flow.EnterBattle(1), "发起一次性故障" + stage);
-                        await WaitUntilAsync(() => !flow.IsTransitioning, "等待故障结果");
+                        RevSceneHandoff failed = RequireNewHandoff(flow, previous, GameFlow.BattleSceneName);
+                        RevTask<RevSceneHandoffResult> failureWait = ObserveHandoffCompletionAsync(flow, failed);
+                        await WaitUntilAsync(() => failed.IsCompleted, "等待故障终态");
+                        RevSceneHandoffResult failure = await failureWait;
+                        bool beforeScene = stage == "before-scene";
+                        Require(failure.Status == RevSceneHandoffStatus.Failed && failure.CleanupSucceeded, "失败终态及本次预热清理已记录");
+                        Require(failure.Stage == (beforeScene ? RevSceneHandoffStage.LoadingScene : RevSceneHandoffStage.PreparingGameplay)
+                            && failure.ReasonCode == (beforeScene ? "scene-load-failed" : "gameplay-prepare-failed")
+                            && failure.Detail.Contains(stage), "失败阶段和稳定原因码与注入位置相符");
+                        Require(failure.ActiveScene == (beforeScene ? GameFlow.StartSceneName : GameFlow.BattleSceneName)
+                            && failure.ActualState == GameScreen.LevelSelect.ToString(), "记录切场前后的实际场景，业务尚未切到 Battle");
                         Require(flow.LastError.Contains(stage) && flow.IsGameplayBlocked, "失败原因可见且玩法保持遮挡");
                         LoadingPanel cover = RevUI.Get<LoadingPanel>();
                         Require(cover != null && cover.transform.Find("btnReturn").gameObject.activeSelf, "错误面板提供返回入口");
                         cover.transform.Find("btnReturn").GetComponent<Button>().onClick.Invoke();
-                        await WaitForFlowAsync(flow);
-                        Require(flow.Screen == GameScreen.Home && RevScene.CurrentName == GameFlow.StartSceneName, "失败返回完整大厅");
+                        RevSceneHandoff recovery = RequireNewHandoff(flow, failed, GameFlow.StartSceneName);
+                        RevTask<RevSceneHandoffResult> recoveryWait = ObserveHandoffCompletionAsync(flow, recovery);
+                        await WaitUntilAsync(() => recovery.IsCompleted, "等待恢复终态");
+                        RequireSuccess(await recoveryWait, GameFlow.StartSceneName, GameScreen.Home);
+                        RequireLobbyCleanup(flow);
+                        Require(flow.TryGetSceneHandoff(failed.RequestId, out RevSceneHandoff original)
+                            && ReferenceEquals(original.Result, failure), "回退有独立 ID 且不会覆盖故障终态");
                         Require(!flow.IsGameplayBlocked && string.IsNullOrEmpty(flow.LastError), "恢复后解除遮挡与错误");
+                        Report.Add(stage + "：" + failure.ActiveScene + "/" + failure.ActualState + "，" + failure.ReasonCode
+                            + "，故障 " + failed.RequestId + " → 恢复 " + recovery.RequestId);
                         CheckImages("故障恢复" + stage);
                     }
                 }
 
-                LastResult = "通过：" + mode + "，" + _assertions + "条断言；冷启动UI、3次场景往返、遮挡/分帧/准备计时"
+                outcome = "通过：" + mode + "，" + _assertions + "条断言；冷启动UI、" + cycles + "次场景往返、遮挡/分帧/准备计时"
                     + (testFailures ? "、2次失败回退" : "") + "\n" + string.Join("\n", Report);
             }
             catch (Exception error)
             {
-                LastResult = "失败：" + error;
+                outcome = "失败：" + error;
                 RevLog.Exception(error, "场景集成验收失败", "RevGame");
             }
             finally
@@ -138,16 +204,116 @@ namespace RevGame.Editor
                 {
                     try
                     {
+                        // 断言若在故障遮挡打开时失败，仍走错误面板相同的返回逻辑收尾。
+                        await WaitUntilAsync(() => !flow.IsTransitioning, "等待夹具收尾");
+                        if (RevUI.IsOpen<LoadingPanel>() && !string.IsNullOrEmpty(flow.LastError))
+                        {
+                            flow.DismissLoadingFailure();
+                        }
                         await ReturnHomeAsync(flow);
                     }
-                    catch (Exception error) { LastResult += "\n收尾失败：" + error.Message; }
+                    catch (Exception error)
+                    {
+                        outcome = "收尾失败：" + error.Message + "\n" + outcome;
+                    }
                 }
                 score?.Dispose();
             }
-            File.WriteAllText("Temp/SceneTransitionChecks-" + mode + ".txt", LastResult);
+            LastResult = outcome;
+            if (captureEvidence)
+            {
+                File.WriteAllText("Temp/SceneTransitionChecks-" + mode + ".txt", LastResult);
+            }
         }
+
+        /// <summary>验证入场 ID 在退场后仍能定位来源、实际持有者、释放情况及大厅保留的共享资源。</summary>
+        private static void RequireResourceTrace(GameFlow flow, RevSceneHandoff enter, RevSceneHandoff exit)
+        {
+            Require(flow.TryGetSceneHandoff(enter.RequestId, out RevSceneHandoff queried) && ReferenceEquals(enter, queried),
+                "退场后仍可用入场 ID 查询");
+            RevSceneHandoffResources trace = queried.Resources;
+            var ready = trace.AtReady.ToDictionary(row => row.Name, StringComparer.Ordinal);
+            var left = trace.AfterExit.ToDictionary(row => row.Name, StringComparer.Ordinal);
+            Require(trace.ExitRequestId == exit.RequestId && ready.Count == 17 && left.Keys.ToHashSet().SetEquals(ready.Keys),
+                "入场的17份显式依赖均可在同一次退场快照定位");
+            Require(ready.Values.All(row => row.BlocksFirstFrame && row.Introducer.Length > 0),
+                "当前逐项等待的预热资源均有来源和实际首屏门禁");
+            Require(ready.Values.Concat(left.Values).All(row => row.Holders.Values.Sum() + row.UnattributedCount == row.ReferenceCount),
+                "具名引用与未具名引用合计等于资源系统实际计数");
+            Require(ready["BoardCell"].Introducer == "SceneResourceWarmup" && ready["BoardCell"].Holders.Keys.Any(name => name.StartsWith("RevPool/", StringComparison.Ordinal)),
+                "棋盘格由热身引入，入场后由棋盘对象池持有");
+            Require(ready["PreparePanel"].Holders.ContainsKey("RevUI/PreparePanel"), "准备面板持有自己的预制体引用");
+            Require(ready["PieceFrames"].Holders.ContainsKey(nameof(GameSpriteAtlasService)), "战斗图集由图集服务持有");
+            RevSceneResourceSnapshot background = ready.Values.Single(row => row.Root == RevResPath.Material_Background);
+            Require(background.Introducer == "GamePresentation.ChapterBackground" && background.Holders.ContainsKey(background.Introducer),
+                "第一章背景材质由实际场景表现引入并持有");
+            Require(ready.Values.All(row => !row.Holders.ContainsKey("SceneResourceWarmup")), "首屏交付后已归还全部临时预热引用");
+
+            foreach (string name in new[] { "BoardCell", "PreparePanel", "PieceFrames", GameSpriteAtlasService.TutorialAtlasName, background.Name })
+            {
+                Require(ready[name].ReferenceCount > 0 && ready[name].HoldsBundleReference
+                    && left[name].ReferenceCount == 0 && !left[name].HoldsBundleReference && left[name].Holders.Count == 0,
+                    name + "入场持有真实AB引用，退场完成后已归还");
+            }
+            Require(left["UIBattle"].ReferenceCount > 0 && left["UIBattle"].HoldsBundleReference
+                && left["UIBattle"].Holders.ContainsKey(nameof(GameSpriteAtlasService)), "大厅继续持有共享图集，不将其记为已释放");
+            Report.Add("资源追溯：" + ready.Count + "份，退场后" + left.Values.Count(row => row.ReferenceCount == 0 && !row.HoldsBundleReference)
+                + "份已释放，共享 UIBattle 仍由 GameSpriteAtlasService 持有");
+        }
+
+        /// <summary>接单时立即取句柄，确认仍在进行且按 ID 查到的是同一次请求。</summary>
+        private static RevSceneHandoff RequireNewHandoff(GameFlow flow, RevSceneHandoff previous, string targetScene)
+        {
+            RevSceneHandoff handoff = flow.LatestSceneHandoff;
+            Require(handoff != null && handoff.RequestId != Guid.Empty && !ReferenceEquals(previous, handoff)
+                && !handoff.IsCompleted && handoff.SourceScene == RevScene.CurrentName && handoff.TargetScene == targetScene,
+                "接受新请求时记录唯一 ID、来源和目标");
+            Require(flow.TryGetSceneHandoff(handoff.RequestId, out RevSceneHandoff queried) && ReferenceEquals(handoff, queried),
+                "在途请求可按 ID 查询");
+            return handoff;
+        }
+
+        /// <summary>在请求仍进行时登记真实等待方，验证恢复执行的同一刻已解除互斥且终态可查询。</summary>
+        private static async RevTask<RevSceneHandoffResult> ObserveHandoffCompletionAsync(GameFlow flow, RevSceneHandoff handoff)
+        {
+            RevSceneHandoffResult result = await handoff.WaitAsync();
+            Require(!flow.IsTransitioning && handoff.IsCompleted && result.RequestId == handoff.RequestId
+                && flow.TryGetSceneHandoff(handoff.RequestId, out RevSceneHandoff queried) && ReferenceEquals(result, queried.Result),
+                "等待方恢复时结果已发布且互斥已释放");
+            return result;
+        }
+
+        /// <summary>同时核对玩法交付、实际场景、业务状态和交接清理。</summary>
+        private static void RequireSuccess(RevSceneHandoffResult result, string sceneName, GameScreen screen)
+        {
+            Require(result.Status == RevSceneHandoffStatus.Succeeded && result.Stage == RevSceneHandoffStage.Revealing
+                && result.ActiveScene == sceneName && result.ActualState == screen.ToString()
+                && result.CleanupSucceeded && string.IsNullOrEmpty(result.ReasonCode), "成功终态与场景、业务和清理一致");
+        }
+
+        /// <summary>正常返回和故障返回共用后置断言，核对战斗域、视图、资源引用和实际 AB。</summary>
+        private static void RequireLobbyCleanup(GameFlow flow)
+        {
+            Require(RevScene.CurrentName == GameFlow.StartSceneName && flow.Screen == GameScreen.Home, "返回StartScene与Home");
+            Require(RevLogic.Get<BattleLogic>() == null && RevLogic.Get<CampaignYayaReactionLogic>() == null
+                && !RevScope.IsActive(GameDomain.Battle), "退出无战斗Logic/域残留");
+            Require(UnityEngine.Object.FindObjectOfType<BoardView>() == null, "旧战斗场景已经卸载");
+            Require(!RevUI.IsOpen<PreparePanel>() && !RevUI.IsOpen<BattleHudPanel>() && !RevUI.IsOpen<LoadingPanel>(), "返回不残留战斗或过场面板");
+            Require(UnityEngine.Object.FindObjectsOfType<BattleEffectView>().Length == 0, "返回不残留活动弹道飘字");
+            Require(RevResManager.GetRefCount(RevResPath.Atlases, "PieceFrames") == 0, "战斗图集服务租约释放");
+            Require(RevResManager.GetRefCount(RevResPath.Board_Tile, "BoardCell") == 0
+                && RevResManager.GetRefCount(RevResPath.Pieces_Unit, "SlimePiece") == 0
+                && RevResManager.GetRefCount(RevResPath.Effects_Combat, "BattleEffect") == 0, "退出无棋盘/棋子/反馈加载引用残留");
+
+            if (RevResBootstrap.UseABInEditor)
+            {
+                string[] bundles = AssetBundle.GetAllLoadedAssetBundles().Select(b => b.name).ToArray();
+                Require(!bundles.Contains("battle_units") && !bundles.Contains("battle_feedback") && !bundles.Contains("battle_board"), "战斗专用AB已实际卸载");
+            }
+        }
+
         /// <summary>按帧观察遮挡完整性；MCP/Editor本身会影响帧耗时，这里只证明跨帧装配，不冒充手机性能数据。</summary>
-        private static async RevTask ObserveTransitionAsync(GameFlow flow, bool entering, string mode, int cycle)
+        private static async RevTask ObserveTransitionAsync(GameFlow flow, bool entering, string mode, int cycle, bool captureEvidence)
         {
             float deadline = Time.realtimeSinceStartup + 60f;
             float previous = 0f;
@@ -184,7 +350,7 @@ namespace RevGame.Editor
                         }
                     }
                 }
-                if (!captured && entering && flow.LoadProgress > 0.66f && cycle == 0)
+                if (captureEvidence && !captured && entering && flow.LoadProgress > 0.66f && cycle == 0)
                 {
                     captured = true;
                     ScreenCapture.CaptureScreenshot("Temp/Scene-" + mode + "-Loading.png");
@@ -216,7 +382,7 @@ namespace RevGame.Editor
             }
             Report.Add(step + "：" + images.Length + "个可见Image材质/纹理通过");
         }
-        /// <summary>注册/注销用同一实际账本，验证幂等与无遗漏；保留其它模块命令，不能Clear全局注册表。</summary>
+        /// <summary>通过实际账本验证幂等与注销，恢复本轮开始时已经注册的运行期与编辑器 GM。</summary>
         private static void VerifyGmRegistry()
         {
             string[] before = RevGM.Commands.Where(c => c.Name.StartsWith("RevGame/")).Select(c => c.Name).OrderBy(n => n).ToArray();
@@ -228,7 +394,15 @@ namespace RevGame.Editor
                 GameGmCommands.UnregisterAll();
                 Require(!RevGM.Commands.Any(c => c.Name.StartsWith("RevGame/")), "注销无Boss/输入/自动化命令残留");
             }
-            finally { GameGmCommands.RegisterAll(); }
+            finally
+            {
+                GameGmCommands.RegisterAll();
+                // 编辑器数值 GM 在 Play 初始化时单独装配，回滚测试也要按原来的两个入口恢复。
+                if (before.Contains("RevGame/数值测试开始"))
+                {
+                    GameGmCommands.RegisterEditorBalanceCommands();
+                }
+            }
             Require(before.SequenceEqual(RevGM.Commands.Where(c => c.Name.StartsWith("RevGame/")).Select(c => c.Name).OrderBy(n => n)), "重新注册恢复相同完整清单");
             foreach (string name in new[] { "选择眼石", "故障返回", "玩家对战", "退出游戏", "玩家操作目录", "流程状态", "选牌", "落子", "点格子", "攻击范围", "选奖励" })
             {

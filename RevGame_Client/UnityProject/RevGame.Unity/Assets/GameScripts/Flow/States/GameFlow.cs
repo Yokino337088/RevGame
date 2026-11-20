@@ -30,7 +30,7 @@ namespace RevGame.Flow
 #endif
         }
 
-        /// <summary>已交割的业务屏幕。加载中仍可保持旧值；查询完整结果时还需看IsTransitioning。</summary>
+        /// <summary>当前 FSM 业务屏幕，可能早于首屏就绪。完整交付可等待 LatestSceneHandoff。</summary>
         public GameScreen Screen { get; private set; } = GameScreen.Exit;
         /// <summary>上次拒绝/失败的人话原因；按钮与GM均读取它，成功交割后清空。</summary>
         public string LastError { get; private set; } = string.Empty;
@@ -48,6 +48,7 @@ namespace RevGame.Flow
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             RegisterGalAutomation();
+            RegisterSceneResourceAutomation();
 #endif
             RevEvent.AddEventListener<bool>(Events.GameFinished, OnFinished, owner: this);
             RevEvent.AddEventListener<BossDefeatedInfo>(Events.BossDefeated, OnBossDefeated, priority: 100, owner: this);
@@ -73,7 +74,7 @@ namespace RevGame.Flow
             Change(GameScreen.LevelSelect);
             return true;
         }
-        /// <summary>提交进入指定章节的异步请求。true=已接受，完成请观察IsTransitioning和Screen。</summary>
+        /// <summary>提交指定章节的异步请求。true 表示已接单，可通过 LatestSceneHandoff 查询和等待结果。</summary>
         public bool EnterBattle(int chapter)
         {
             if (IsGameplayBlocked || Screen != GameScreen.LevelSelect)
@@ -92,13 +93,12 @@ namespace RevGame.Flow
             _bossDevelopmentStartPending = false;
 #endif
             _chapter = chapter;
-            // true只表示请求被接受；IsTransitioning变回false且Screen=Battle才表示完整交付。
-            // 按钮和GM走同一入口，连点不会创建两条加载链或重复开启战斗域。
+            // 在启动异步流程前占用互斥，按钮与 GM 连点只能产生同一个交接句柄。
             IsTransitioning = true;
             SwitchFromButtonAsync(GameScreen.Battle);
             return true;
         }
-        /// <summary>选关返回只切页，战斗返回真实卸载GameScene。过场期间拒绝重入，避免两条异步链争抢场景。</summary>
+        /// <summary>选关返回只切页，战斗返回会接单并卸载 GameScene。过场期间返回 false，保留在途句柄。</summary>
         public bool ReturnHome()
         {
             if (IsTransitioning || Screen == GameScreen.Home || Screen == GameScreen.Exit)
@@ -195,6 +195,10 @@ namespace RevGame.Flow
             _activeWarmup = null;
             RevEvent.RemoveAllByOwner(this);
             Change(GameScreen.Exit);
+            // 退出 Play 时异步加载可能不会再有一帧可续跑，在所有者清理后主动结束等待。
+            IsTransitioning = false;
+            _sceneHandoffs.TryComplete(LatestSceneHandoff, RevSceneHandoffStatus.Cancelled, Screen.ToString(), true,
+                "flow-disposed", "游戏流程已退出");
         }
         /// <summary>一个屏幕对应一个域句柄。只关闭自己Enter拿到的域，不能ExitAll误清别人的服务。</summary>
         private sealed class FlowState : RevLightStateBase

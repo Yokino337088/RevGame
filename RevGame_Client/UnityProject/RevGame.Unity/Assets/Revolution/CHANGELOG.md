@@ -23,6 +23,8 @@
 
 ### RevScene 业务放行
 
+- 新增 `RevScene.CreateHandoffTracker()`。业务可为完整场景交接接单、报告阶段并发布终态。观察方可按请求 ID 查询或等待同一结果。
+- 场景交接可记录预加载来源、首屏等待及首屏和退场时的引用快照。面板、对象池与 `RevResManager.LoadOwnedAsync` 的调用方在实际资源引用上保留持有者。
 - 正式发布决斗验证过的附加预加载入口 `LoadWhenReadyAsync`。门禁默认等待 60 秒，可指定有限的实时时限。
 - 用 Build Settings 路径定位场景，避免同名场景互相干扰。门禁拒绝或超时会放开 Unity 队列并卸载临时场景，保留旧活动场景和框架空闲池。
 

@@ -186,6 +186,7 @@ namespace RevGame.View
             _pendingBackground = null;
             LoadChapterBackgroundAsync(chapter, version);
         }
+        /// <summary>加载并提交当前代章节背景。场景首屏等待时记录依赖，换章与退场仍按租约所有权回收。</summary>
         private async void LoadChapterBackgroundAsync(int chapter, int version)
         {
             ChapterBackgroundLease lease = null;
@@ -193,7 +194,8 @@ namespace RevGame.View
             {
                 lease = new ChapterBackgroundLease(chapter, BackgroundStyle(chapter));
                 _pendingBackground = lease;
-                await lease.LoadAsync(chapter);
+                RevSceneHandoffResources trace = RevServices.Get<GameFlow>()?.EnteringBattleResources;
+                await lease.LoadAsync(chapter, "GamePresentation.ChapterBackground", trace);
                 if (_released || version != _backgroundVersion)
                 {
                     return;

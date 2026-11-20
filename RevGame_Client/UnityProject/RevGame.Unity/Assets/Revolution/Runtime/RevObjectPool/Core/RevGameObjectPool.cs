@@ -38,6 +38,10 @@ namespace Revolution
         private Transform _takeParent;     // 本次取出的目标父节点（OnTake 里用；Get 返回后清空）
         private bool _disposed;
 
+        /// <summary>对象池自己持有的 prefab 引用，用于归还资源并报告持有归属。</summary>
+        private RevResLease _prefabLease;
+
+        /// <summary>创建一条池，接管创建方为池取得的 prefab 引用；外部 prefab 建池时无资源租约。</summary>
         internal RevGameObjectPool(int poolId, string rootPath, string resName, RevResGroup group,
             GameObject prefab, RevResHandle handle)
         {
@@ -46,7 +50,7 @@ namespace Revolution
             Path = RevResPathUtil.IsValidResName(resName) ? RevResPathUtil.Join(rootPath, resName) : null;
             Group = ResolveGroup(group, handle);
             Prefab = prefab;
-            PrefabHandle = handle;
+            TakePrefabHandle(handle);
             PrefabInstanceId = prefab != null ? prefab.GetInstanceID() : 0;
 
             string tag = prefab != null ? prefab.name : (Path ?? "Unknown");
@@ -84,7 +88,8 @@ namespace Revolution
         internal int PrefabInstanceId { get; private set; }
 
         /// <summary>池端着的独立 prefab 租约（销毁池时还回去）。</summary>
-        internal RevResHandle PrefabHandle { get; private set; }
+        /// <summary>池当前持有的 prefab 句柄。调用方直接提供 prefab 时为空。</summary>
+        internal RevResHandle PrefabHandle => _prefabLease?.Handle;
 
         internal bool HasPrefab => Prefab != null;
 
@@ -159,7 +164,7 @@ namespace Revolution
             ReleasePrefabHandle();                 // 旧句柄若还在资源缓存里，先还掉这份引用再换新
 
             Prefab = prefab;
-            PrefabHandle = handle;
+            TakePrefabHandle(handle);
             PrefabInstanceId = prefab != null ? prefab.GetInstanceID() : 0;
             Group = ResolveGroup(Group, handle);
             if (RevResPathUtil.IsValidResName(resName)) Path = RevResPathUtil.Join(rootPath, resName);
@@ -277,13 +282,17 @@ namespace Revolution
         /// </summary>
         private void ReleasePrefabHandle()
         {
-            RevResHandle handle = PrefabHandle;
-            PrefabHandle = null;
+            _prefabLease?.Dispose();
+            _prefabLease = null;
+        }
 
-            if (handle == null || handle.Key == 0) return;
-            if (!ReferenceEquals(RevResManager.GetByPath(handle.StandardPath), handle)) return;
-
-            RevResManager.DecRef(handle.Key);
+        /// <summary>沿用创建或换代时已经为池取得的引用；复用池实例时不会经过这里。</summary>
+        private void TakePrefabHandle(RevResHandle handle)
+        {
+            if (handle != null)
+            {
+                _prefabLease = RevResManager.OwnReference(handle, "RevPool/" + handle.StandardPath);
+            }
         }
     }
 }
