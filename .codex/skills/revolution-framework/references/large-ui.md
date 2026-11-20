@@ -11,6 +11,16 @@
 
 验收覆盖真实 AB 冷开、同键合并、同组快切、加载或首屏失败、关闭后回包、退域。检查旧页的真实射线、新页首次可操作、晚到的请求结果和资源归还。用开窗 ID 对齐各阶段，区分等待时间和实例化峰值。
 
+## 域内面板缓存
+
+- `KeepAlive` 仅适用于仍绑定有效域的面板。普通关窗走关闭转场，回池后再次打开需要同一个域句柄。异域请求命中同键的空闲旧实例时，框架销毁它并归还原租约。同名域重新进入也会取得新句柄。
+- `RevScope.Exit` 撤销该域在途开窗，直接收尾活动、退场中及空闲面板。在资源步骤前执行 `OnClose`（每次关闭最多一次）、`OnRelease` 和租约归还。实际 GameObject 在 Unity 帧末销毁。跨场景遮挡可显式 `Detach` 并由流程负责关窗，关窗后会销毁。
+- `RevUISetting.MaxCachedPanels` 默认每种一份，`MaxIdlePanels` 默认全局 32 份。超额时从最久未使用的空闲实例开始裁剪，降低全局额度立即生效，设为 0 可禁用空闲缓存。两项配置都在主线程调整。
+- Unity `lowMemory` 和 `RevResAutoUnloader.RunOnce(force: true)` 走同一路径，先释放空闲 UI 的租约，再由资源门卫处理已归零的资源。活动页继续持有原租约，共享图集在有效引用期间保留。
+- `RevUI.GetCacheSnapshot()` 与开发态 `ui.cache-state` 显示命中次数、实例 ID、域名及其进入时刻 `scopeEnteredTicks`、开窗 ID、缓存理由、最近 32 条处置和预制体剩余引用数。空闲理由为 `keep-alive`。处置原因含 `capacity`、`per-panel-limit`、`scope-exit`、`scope-mismatch`、`unscoped`、`low-memory`。`leaseReleased` 表示该实例已归还引用，同一预制体仍可有其他持有者。
+
+在真实 AB 下重复进入、换页和返回。用实例 ID 区分命中与重新装配，比较同一个菜单的冷开和域内热开。压低额度验证 LRU，核对异域请求、关闭动画中退域、解绑面板关闭及低内存。返回后检查域内专用 Prefab 与 AB，确认共享图集仍可渲染。帧末销毁用下一帧断言。
+
 ## 固定行高虚拟列表
 
 用 `RevUIVirtualList<T>` 接管已有竖向 ScrollRect 和顶部锚定的行模板。内容根用顶部拉伸布局，行距包含间隔。业务提交不可原地更改的只读快照，键在一次列表中稳定且唯一。布局或视口变化后调用 `RefreshViewport()`，离开界面调用 `Dispose()`。

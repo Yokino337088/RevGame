@@ -217,6 +217,19 @@ namespace Revolution
             if (node != null) { AttachTo(node, owner); }
         }
 
+        /// <summary>查询对象实际登记的域，包含正在收尾的域。未登记时返回空。</summary>
+        internal RevScopeHandle FindOwnerOf(object owner)
+        {
+            for (int i = _stack.Count - 1; i >= 0; i--)
+            {
+                if (_stack[i].Owners.Contains(owner))
+                {
+                    return _stack[i];
+                }
+            }
+            return null;
+        }
+
         internal int Detach(object owner)
         {
             if (owner == null) { return 0; }

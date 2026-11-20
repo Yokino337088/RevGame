@@ -90,8 +90,16 @@ namespace Revolution
         }
 
         /// <summary>手动触发一次自动卸载（调试 / 读条结束时想主动瘦身）</summary>
-        /// <param name="force">true = 跳过冷却期与空闲判定（内存告急用）</param>
-        public static void RunOnce(bool force = false) => Trim(force);
+        /// <param name="force">true 走低内存路径，先回收空闲 UI，再跳过资源冷却期与空闲判定。</param>
+        public static void RunOnce(bool force = false)
+        {
+            if (force)
+            {
+                // 先归还空闲实例的租约，才能在本轮资源整理中回收真正归零的资源。
+                RevUIManager.Instance.TrimIdleForLowMemory();
+            }
+            Trim(force);
+        }
 
         // ==================== 驱动 ====================
 
@@ -112,8 +120,8 @@ namespace Revolution
 
         private void OnDestroy() => Application.lowMemory -= OnLowMemory;
 
-        /// <summary>内存告急：跳过一切保护期，立刻清理</summary>
-        private void OnLowMemory() => Trim(true);
+        /// <summary>Unity 发出内存告急事件时，回收空闲 UI 和已无引用的可卸载资源。</summary>
+        private void OnLowMemory() => RunOnce(force: true);
 
         // ==================== 核心：淘汰 ====================
 

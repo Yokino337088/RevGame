@@ -31,7 +31,7 @@ using UnityEngine;
 namespace Revolution
 {
     /// <summary>UI 管理器：面板的打开 / 关闭 / 层级 / 池化 / 返回栈 / 诊断</summary>
-    public sealed class RevUIManager : RevSingleton<RevUIManager>
+    public sealed partial class RevUIManager : RevSingleton<RevUIManager>
     {
         // 单例由 RevSingleton 负责创建（不需要外部 new）
         private RevUIManager() { }
@@ -94,6 +94,10 @@ namespace Revolution
             internal readonly RevUIPanel Panel;
             /// <summary>转场或 Shutdown 是否已归还这份引用。</summary>
             internal bool Released;
+            /// <summary>直接回收已开始，转场或禁用回调不得重新将本实例归池。</summary>
+            internal bool Reclaiming;
+            /// <summary>取得本实例的最近一次开窗 ID，关联空闲记录和开窗时间线。</summary>
+            internal Guid OpenId;
             /// <summary>等待该面板回池、销毁或归还资源的替换记录。</summary>
             internal RevUIOpenTicket Replacement;
             /// <summary>交割时冻结旧页输入用的组件。</summary>
@@ -249,11 +253,13 @@ namespace Revolution
                 return null;
             }
 
-            RevUIPanel pooled = _pool.Take(key);
+            RevUIPanel pooled = TakeCachedPanel(request);
+            if (!IsCurrent(key, request))
+            {
+                return null;
+            }
             if (pooled != null)
             {
-                request.Panel = pooled;
-                ticket.ResourceDisposition = "Panel";
                 ticket.Advance(RevUIOpenStage.Instance);
                 return BuildPanel(request);
             }
@@ -379,7 +385,7 @@ namespace Revolution
                         return null;
                     }
                     request.Panel = panel;
-                    TrackPanelResource(panel, request.Resource);
+                    TrackPanelResource(panel, request.Resource).OpenId = ticket.Id;
                     request.Resource = null;
                     ticket.ResourceDisposition = "Panel";
                     panel.CanvasType = canvas;
@@ -661,7 +667,7 @@ namespace Revolution
         // 关闭
         // ============================================================
 
-        /// <summary>取消候选或关闭已发布面板，正式退场依缓存策略回池或销毁。</summary>
+        /// <summary>取消候选或关闭已发布面板，关闭完成后按归属和缓存策略处置。</summary>
         public bool Close(RevUIPanel panel)
         {
             if (panel == null || panel.PanelKey == null)
@@ -679,60 +685,31 @@ namespace Revolution
             // 防重入：正在关 / 已经关的，再来一次直接忽略（业务不必自己防抖）
             if (panel.State == RevUIPanelState.Closing || panel.State == RevUIPanelState.Closed) return false;
 
-            Unregister(panel);
-
-            _loading.TryGetValue(panel.PanelKey, out OpenRequest opening);
-            if (opening != null && opening.Panel == panel) _loading.Remove(panel.PanelKey);
-            else opening = null;
+            OpenRequest opening = UnpublishPanel(panel);
             RevUIRoot closingRoot = _root;
             ClosingResourceLease lease = GetPanelResourceLease(panel) ?? TrackPanelResource(panel, null);
+            RevScopeHandle scope = RevScope.Core.FindOwnerOf(panel);
             _closingResources.Add(lease);
 
-            bool keepAlive = ResolveCacheMode(panel) == RevUICacheMode.KeepAlive;
-            bool canPool = keepAlive && !_pool.IsFull(panel.PanelKey);
-
-            panel.InternalClose(() =>
-            {
-                // ShutdownAll / 场景重建已经归还了这份引用。异步转场晚到的回调只能退出，
-                // 不能再读取已销毁面板的假 null 属性或重复 Release 同一路径。
-                if (lease.Released) return;
-                _closingResources.Remove(lease);
-
-                // 根节点已被销毁：用关闭时快照的句柄归还，panel 此时可能已经是 Unity 假 null。
-                if (closingRoot == null || _root != closingRoot)
-                {
-                    ReleasePanelResource(lease);
-                    return;
-                }
-
-                if (canPool && !_pool.IsFull(panel.PanelKey))
-                {
-                    if (lease.InputGate != null)
-                    {
-                        lease.InputGate.interactable = lease.WasInteractable;
-                        lease.InputGate.blocksRaycasts = lease.WasBlocking;
-                        lease.InputGate = null;
-                    }
-                    if (_pool.Put(panel))
-                    {
-                        if (lease.Replacement != null)
-                        {
-                            lease.Replacement.PreviousDisposition = "Pooled";
-                            lease.Replacement = null;
-                        }
-                        RevUILog.Info($"{panel.PanelKey} 已回实例池（下次打开不再加载）");
-                        return;
-                    }
-                }
-
-                _root.AddPendingRelease(panel);        // 延迟一帧销毁：避免在事件/遍历里删对象
-            });
+            panel.InternalClose(() => CompletePanelClose(lease, scope, closingRoot));
 
             if (opening != null)
             {
                 CompleteOpen(opening, null, RevUIOpenStatus.Cancelled, "closed");
             }
             return true;
+        }
+
+        /// <summary>立即从公开索引摘除面板，返回仍在等待打开完成的同一实例请求。</summary>
+        private OpenRequest UnpublishPanel(RevUIPanel panel)
+        {
+            Unregister(panel);
+            if (_loading.TryGetValue(panel.PanelKey, out OpenRequest opening) && ReferenceEquals(opening.Panel, panel))
+            {
+                _loading.Remove(panel.PanelKey);
+                return opening;
+            }
+            return null;
         }
 
         /// <summary>按类型关闭；尚无可见实例时也能取消在途开窗。</summary>
@@ -1000,6 +977,7 @@ namespace Revolution
             _openOrder.Clear();
             _exclusive.Clear();
             _pool.Clear();
+            ResetCacheDiagnostics();
             _openTickets.Clear();
             _finishedTickets.Clear();
             _root = null;
@@ -1044,7 +1022,7 @@ namespace Revolution
                 if (closing != null && !destroying.Contains(closing)) destroying.Add(closing);
             }
             RevUIPanel[] snapshot = destroying.ToArray();
-            List<RevUIPanel> idle = _pool.Drain();
+            List<RevUIPanelPool.IdlePanel> idle = _pool.RemoveOldestUntil(0);
 
             _opened.Clear();
             _shuttingDown = true;                          // 取消回调中不能立即重开，避免清理过程重入
@@ -1052,15 +1030,16 @@ namespace Revolution
             _exclusive.Clear();
             _layoutDirty = true;
 
-            int count = snapshot.Length + idle.Count;
-            RevUILog.Info($"ShutdownAll：销毁 {snapshot.Length} 个打开中的 + {idle.Count} 个池中实例");
+            int idleCount = idle?.Count ?? 0;
+            int count = snapshot.Length + idleCount;
+            RevUILog.Info($"ShutdownAll：销毁 {snapshot.Length} 个打开中的 + {idleCount} 个池中实例");
             ReleaseClosingResources();
             CancelPendingOpens();
 
             if (_root != null)
             {
                 for (int i = 0; i < snapshot.Length; i++) _root.AddPendingRelease(snapshot[i]);
-                for (int i = 0; i < idle.Count; i++) _root.AddPendingRelease(idle[i]);
+                for (int i = 0; i < idleCount; i++) _root.AddPendingRelease(idle[i].Panel);
 
                 _root.DestroySelf();                       // 内部会立刻处理完待销毁队列 + 销毁根节点
                 _root = null;

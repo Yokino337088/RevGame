@@ -140,7 +140,7 @@ namespace Revolution
         // 关闭
         // ============================================================
 
-        /// <summary>关闭指定面板（回池还是销毁由面板的 CacheMode 决定）</summary>
+        /// <summary>关闭指定面板；仅仍归属于开放域的 KeepAlive 面板可在额度内回池。</summary>
         public static bool Close(RevUIPanel panel) => RevUIManager.Instance.Close(panel);
 
         /// <summary>按类型关闭</summary>
@@ -194,5 +194,8 @@ namespace Revolution
 
         /// <summary>一句话快照 + 明细（打开的界面、在途加载、实例池）</summary>
         public static string DumpStats() => RevUIManager.Instance.DumpStats();
+
+        /// <summary>在主线程取得只读面板缓存快照，包含空闲实例、命中和最近资源处置。</summary>
+        public static RevUICacheSnapshot GetCacheSnapshot() => RevUIManager.Instance.GetCacheSnapshot();
     }
 }

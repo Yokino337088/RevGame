@@ -63,7 +63,7 @@ namespace Revolution
         public string ResourceDisposition { get; internal set; } = "None";
         /// <summary>成功交割时取代的旧页键，首次打开时为空。</summary>
         public string PreviousPanelKey { get; internal set; } = string.Empty;
-        /// <summary>旧页回收进度。结束于 Pooled 或 Released，关闭动画期间为 Closing。</summary>
+        /// <summary>旧页退场进度。回池为 Pooled，销毁为 Released；被取回前淘汰会从 Pooled 更新为 Released。</summary>
         public string PreviousDisposition { get; internal set; } = "None";
 
         /// <summary>由管理器在接单时创建，立即开始记录资源阶段。</summary>

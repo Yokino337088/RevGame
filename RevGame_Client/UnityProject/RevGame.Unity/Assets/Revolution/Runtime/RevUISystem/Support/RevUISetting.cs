@@ -67,6 +67,20 @@ namespace Revolution
         /// </summary>
         public static int MaxCachedPanels = 1;
 
+        /// <summary>全局空闲面板额度的当前值，默认 32 个。</summary>
+        private static int _maxIdlePanels = 32;
+
+        /// <summary>所有域合计的空闲面板上限。主线程修改后立即裁剪，0 禁用缓存。</summary>
+        public static int MaxIdlePanels
+        {
+            get => _maxIdlePanels;
+            set
+            {
+                _maxIdlePanels = System.Math.Max(0, value);
+                RevUIManager.Instance.TrimCacheToBudget();
+            }
+        }
+
         /// <summary>每帧最多从装配队列处理的请求数，最低为一。</summary>
         public static int MaxAssembliesPerFrame = 2;
         /// <summary>主线程单帧装配预算，单位毫秒；一个 Unity 实例化任务执行中无法中断。</summary>

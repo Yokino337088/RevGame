@@ -269,8 +269,7 @@ namespace RevGame.Flow
                     CloseDuelHud();
                     await RevServices.GetRequired<RevGame.Pvp.PvpService>().LeaveAsync();
                     ThrowIfDisposed();
-                    // PvP 面板会淡出，再执行 OnClose。这里先归还立绘供本次切场的 FlushUnused 回收。
-                    RevUI.Get<RevGame.Pvp.PvpPanel>()?.ReleaseMatchPortraits();
+                    // 面板资源交给退域步骤回收。旧域在切场失败时可保留完整的 UI 资源。
                 }
 
                 if (!_startupComplete)

@@ -111,7 +111,7 @@ SetData(new DetailData { Id = Data.Id, Count = Data.Count + 1 });   // 写法 B�
 
 ## 3. 面板池 / Back 语义
 
-- **面板池是 UI 专用池**（不套通用对象池）：关闭优先回池（`KeepAlive`），池满或 `DestroyOnClose` 才真销毁；上限 `RevUISetting.MaxCachedPanels`。取出时必须走 `OnReuse` 钩子（重置界面状态）。
+- `KeepAlive` 在同一有效域内复用，取出时走 `OnReuse` 重置状态。每种面板受 `MaxCachedPanels` 限制，整池受 `MaxIdlePanels` 限制。退域、低内存和额度验证见 [域内面板缓存](large-ui.md#域内面板缓存)。
 - `RevUICacheMode`：`Unspecified / DestroyOnClose / KeepAlive`…
 - **`RevUI.Back()` 只关"最晚打开、且 `InBackStack = true`"的面板**；飘字 / 常驻 HUD 一律 `InBackStack = false`。
 - `ExclusiveGroup`（特性参数）= 同组交割（背包页签这类）。候选通过首屏准备后接管输入，旧页才关闭。开窗追踪、虚拟列表和弹窗使用见 [大型 UI 实现与验收](large-ui.md)。

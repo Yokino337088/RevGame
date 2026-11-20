@@ -7,7 +7,7 @@ namespace RevGame.UI
 {
     /// <summary>
     /// 跨场景的全屏过场面板：只显示进度和播放动画，场景与资源的加载由GameFlow负责。
-    /// 它由RevUI创建、缓存和关闭；流程会把它从旧业务域Detach，防止退出大厅时遮挡层也被关掉。
+    /// 它由 RevUI 创建和关闭。流程从旧域解绑使遮挡持续到交接完成，关闭时由框架销毁并归还资源。
     /// 背景复用绿色星雾共享材质，没有Sprite依赖，因此不会等UI图集时自己先变成白块。
     /// </summary>
     [RevUIPanel(RevResPath.UI_Panel_Loading, RevUILayer.Top, InBackStack = false, Mask = RevUIMaskMode.None)]
@@ -45,7 +45,7 @@ namespace RevGame.UI
             RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             _cover = GetComponent<CanvasGroup>();
         }
-        /// <summary>缓存面板再次使用时必须归零；不能把上次100%和透明状态带进下一次加载。</summary>
+        /// <summary>开始一次过场时归零，恢复遮挡、输入规则与默认按钮状态。</summary>
         public void ResetCover()
         {
             KillAnimations();

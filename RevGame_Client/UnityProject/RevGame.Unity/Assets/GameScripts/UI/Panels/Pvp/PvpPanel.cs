@@ -318,8 +318,8 @@ namespace RevGame.Pvp
             return entry.Reference.IsSet ? _matchPortraits.Get(entry.Reference) : entry.Sprite;
         }
 
-        /// <summary>过场遮挡已盖住对局时归还立绘，赶在场景整理零引用 AB 之前完成。</summary>
-        internal void ReleaseMatchPortraits()
+        /// <summary>关闭时先解除立绘显示，再归还本次对局持有的图集租约。</summary>
+        private void ReleaseMatchPortraits()
         {
             if (_matchPortraits == null)
             {

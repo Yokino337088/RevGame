@@ -212,7 +212,7 @@ RevUI.Open<BagPanel, BagData>(new BagData { UseCellLayout = true });
 - 铁律 / 坑（详见 `ui-and-layering.md`）：
   1. **同步 `Open<T>()` 不加载任何资源**，只在"已打开过或池里有"时拿得到实例；真机首次必须 `OpenAsync` / `Open<T>(onOpened)`。
   2. 数据流**单向**：`SetData → OnDataChanged → RefreshView`；带数据面板 `OnRefreshView` 是 abstract（不许糊过去）；复用要连数据一起清。
-  3. **面板池是 UI 专用池**：关闭优先进池（`KeepAlive`），池满 / `DestroyOnClose` 才销毁（上限 `RevUISetting.MaxCachedPanels`）；取出必须走 `OnReuse` 钩子。
+  3. **面板池按域复用**。`KeepAlive` 保存同一有效域内的空闲实例，使用单类型和全局额度。退域先收回面板租约，再清理资源。取出继续走 `OnReuse`。详见 [域内面板缓存](large-ui.md#域内面板缓存)。
   4. **Back 只关"参与返回栈（`InBackStack = true`）的最晚打开面板"**；飘字 / 常驻 HUD 要设 false。
   5. 框架**没有** `System` / `BusinessLogic` 层：跨界面逻辑放服务，单屏逻辑放面板 + `TData`。
   6. **刷新时机**：`OnRefreshView` 只在"打开 / 面板开着时 `SetData` / 手动 `RefreshView()`"被调，**框架不监听数据对象内容**——原地改字段（`Data.Count++`）必须手动 `RefreshView()`；`SetData` 写在业务侧"数据产生的地方"，不写在面板里；`OnDataChanged` 里别再手动 `RefreshView()`（会画两遍）；`SetData(null)` 与回池复用都会把 `Data` 清成 null，`OnRefreshView` 里先判空。详见 `ui-and-layering.md` §1.1。

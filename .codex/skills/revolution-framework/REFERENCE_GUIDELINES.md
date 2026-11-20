@@ -68,7 +68,7 @@
 - [ ] 控件事件：普通控件事件优先用 `[RevButtonClick]` 等方法特性；控件名与节点名一致（写错装配时就报错）；只有集中分发或 Profiling 确认的高频性能热点才改用重写回调；手动 `AddListener` 仅用于特性不覆盖的控件能力；同一件事不重复处理。
 - [ ] 面板开关动画：自定义生命周期动画优先成对重写 `PlayOpenTransition` / `PlayCloseTransition`，传 `owner: this` 且两边结束时都调 `onDone`；不要与 `ShowAnimation` / `HideAnimation` 重复播放同一动画。
 - [ ] 打开用 `Open<T>(onOpened)` / `OpenAsync<T>`；没有在真机路径上用"同步 `Open<T>()` 并假设它会加载"。
-- [ ] 弹窗/常驻 HUD 正确设置 `InBackStack`；`ExclusiveGroup` 按语义设置；`RevUICacheMode` 与 `KeepAlive` 一致。
+- [ ] 弹窗与 HUD 正确设置 `InBackStack`，互斥页设置 `ExclusiveGroup`。`KeepAlive` 面板在有效域内复用。跨域遮挡显式脱离业务域并安排关闭，退域核对实例的实际资源归还。
 - [ ] 面板里没有跨界面复用的重逻辑（交给服务）；域内无界面业务用 `RevLogicBase`。面板没有未在 `OnReuse` 重置的缓存状态。
 - [ ] 在首次打开或预加载前选择 `CanvasOrientation`；`Auto` / `Portrait` / `Landscape` / `UseDesign` 与项目需求一致。方向配置只影响运行时根画布缩放，不冒称自动转设备方向、重排页面或适配安全区。
 - [ ] Prefab 静态预览没有被当成运行时方向验证；竖屏 Game 分辨率和根 `CanvasScaler` 设置已核对。

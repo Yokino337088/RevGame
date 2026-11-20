@@ -67,6 +67,8 @@ namespace Revolution
         // 宿主关闭/复用时失效，异步 Part 创建不能跨越一次打开生命周期。
         internal int LifetimeVersion { get; private set; }
         private bool _released;
+        /// <summary>本次关闭是否已通知业务。退域可抢在动画完成前收尾，OnClose 只执行一次。</summary>
+        private bool _closeNotified;
         /// <summary>预备面板是否已经执行 OnOpen；取消时用它判断是否需补做 OnClose。</summary>
         private bool _handoffOpened;
 
@@ -413,10 +415,11 @@ namespace Revolution
                 return;
             }
 
-            State = RevUIPanelState.Closing;
-            ++LifetimeVersion;
-            RevUIPart.CancelCreates(this);
-            CloseParts();
+            BeginClose();
+            if (State != RevUIPanelState.Closing)
+            {
+                return;
+            }
 
             RunTransition(PlayCloseTransition, () =>
             {
@@ -425,34 +428,71 @@ namespace Revolution
                 // 再将它放回对象池，造成界面消失或新一轮打开状态被破坏。只有面板仍是 Closing 才能完成旧关闭流程。
                 if (State != RevUIPanelState.Closing) return;
 
-                RevUILog.Guard($"{GetType().Name}.OnClose", OnClose);
-
-                // ★ 一行防泄漏：本人（含老代码里手写的解绑清单）注册的事件全摘掉
-                RevEvent.RemoveAllByOwner(this);
-
-                // ★ 隐藏动画：播完才真正关闭 / 回池 —— 否则"一关就隐藏"会让动画看不到
-                PlayPanelAnimation(HideAnimation, () =>
+                NotifyClose();
+                // OnClose 可以同步触发退域。此时关闭流程已经被接管，不再启动隐藏动画。
+                if (State == RevUIPanelState.Closing)
                 {
-                    // 隐藏动画期间状态若又变了（防御：正常流程不会有路径重开本实例），
-                    // 不再置 Closed / 回池，避免把一个正被使用的实例还进池里
-                    if (State != RevUIPanelState.Closing) return;
-
-                    RevUIAnim.StopAllOf(this);           // 兜底：万一同帧还挂着别的动画（如按钮反馈）
-                    State = RevUIPanelState.Closed;
-                    IsCovered = false;
-
-                    onClosed?.Invoke();
-                });
+                    PlayPanelAnimation(HideAnimation, () => FinishClose(onClosed));
+                }
             }, error =>
             {
-                // 关闭动画启动失败时直接完成清理，不能永久留在 Closing。
-                if (this == null || State != RevUIPanelState.Closing) { return; }
-                State = RevUIPanelState.Closed;
-                IsCovered = false;
-                RevEvent.RemoveAllByOwner(this);
-                RevUIAnim.StopAllOf(this);
-                onClosed?.Invoke();
+                // 动画失败也要向业务交付关闭通知，随后归还资源或回池。
+                FinishClose(onClosed);
             }, "关闭转场");
+        }
+
+        /// <summary>退域必须在资源步骤前完成收尾，立即关 Part、通知业务并停止退场动画。</summary>
+        internal void InternalCloseForScope()
+        {
+            if (_released || State == RevUIPanelState.Closed)
+            {
+                return;
+            }
+            if (State != RevUIPanelState.Closing)
+            {
+                BeginClose();
+            }
+            FinishClose(null);
+        }
+
+        /// <summary>切断本次界面生命周期，取消在途 Part 并关闭已有 Part。</summary>
+        private void BeginClose()
+        {
+            _closeNotified = false;
+            State = RevUIPanelState.Closing;
+            ++LifetimeVersion;
+            RevUIPart.CancelCreates(this);
+            CloseParts();
+        }
+
+        /// <summary>最多一次通知业务执行 OnClose，随后解绑本轮事件。</summary>
+        private void NotifyClose()
+        {
+            if (_closeNotified)
+            {
+                return;
+            }
+            _closeNotified = true;
+            RevUILog.Guard($"{GetType().Name}.OnClose", OnClose);
+            RevEvent.RemoveAllByOwner(this);
+        }
+
+        /// <summary>结束本轮关闭。先标记关闭以挡住迟到动画，再把处置交给管理器。</summary>
+        private void FinishClose(Action onClosed)
+        {
+            if (this == null || State != RevUIPanelState.Closing)
+            {
+                return;
+            }
+            NotifyClose();
+            if (State != RevUIPanelState.Closing)
+            {
+                return;
+            }
+            State = RevUIPanelState.Closed;
+            IsCovered = false;
+            RevUIAnim.StopAllOf(this);
+            onClosed?.Invoke();
         }
 
         private void RunTransition(Action<Action> transition, Action done, Action<Exception> failed, string context)

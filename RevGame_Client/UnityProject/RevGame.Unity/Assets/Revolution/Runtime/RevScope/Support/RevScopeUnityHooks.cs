@@ -63,20 +63,10 @@ namespace Revolution
         // 回收步骤（第 2 / 3 / 6 / 7 步）
         // ============================================================
 
-        /// <summary>第 2 步：先取消域的未交付请求，再关闭已登记的面板。</summary>
+        /// <summary>第 2 步：在资源步骤前撤销域的开窗请求，收回面板及其资源租约。</summary>
         private static int CloseUi(RevScopeHandle node)
         {
-            int closed = RevUIManager.Instance.CancelScopeOpens(node);
-            if (node.Owners.Count == 0) { return closed; }
-
-            object[] owners = node.SnapshotOwners();
-            for (int i = 0; i < owners.Length; i++)
-            {
-                // 注意用 is 判类型：Unity 对象销毁后 == null，但类型判断仍然成立；Close 内部会自己处理"已销毁 / 已关闭"
-                if (owners[i] is RevUIPanel panel && RevUIManager.Instance.Close(panel)) { closed++; }
-            }
-
-            return closed;
+            return RevUIManager.Instance.RetireScopePanels(node);
         }
 
         /// <summary>第 3 步：摘掉这个域名下的每帧回调（域自己 + 它登记过的每个对象）。</summary>
