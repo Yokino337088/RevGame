@@ -198,7 +198,7 @@
 <p><strong>说明文案与数值同源</strong>：<code>PrepBuffConfig.Detail</code> 写成 <code>本轮全体攻击加成+{Amount%}</code>，数字取同一行的 <code>Amount</code>；<code>{名字%}</code> 按百分数显示，<code>{名字}</code> 显示数字。改数值后玩家看到的文字自动同步，战报里的 <code>（锁死×N）</code>、僵持支援的 <code>每N秒</code>、HUD 的决死伤害百分比也都读同一批参数。</p>
 <p><strong>刻意留在代码里的（并说明原因）</strong>：棋盘 9×9 与格子大小（与 81 格预制体、数组尺寸绑定）、章节数 6（选关界面 6 个按钮）、手牌上限 6（6 个常驻槽位）、层级排序、棋子移动/弹道动画时长（纯表现）、<code>Piece</code> 初始气数 4（棋盘重算前的占位）、飘字节流与池容量（表现节流）、<code>EnemyTactics</code> / <code>EnemyFormationPlanner</code> 里的目标评分权重和固定眼阵模板坐标（算法内部的相对优先级，不是可调“数值”）、<code>MoveRules</code> 的马步偏移（走法几何）、<code>HandRefresh</code> 里远程攻频的合法区间 1~4（校验边界）。若要把 AI 评分权重也开放给策划，需要先决定哪些是策划意义上的“难度旋钮”，再单独设计，不建议整体搬进表。</p>
 <h2 id="_4">资源约定</h2>
-<p>美术在 <code>Assets/ArtRes/棋盘、棋子、状态标记、界面、图标、特效、字体、音频</code>，保留中文命名。运行时资源在 <code>Assets/GameRes/Board、Pieces、UI、Effects、Audio、Data</code>。配置工作簿位于仓库的 <code>RevGame_Client/配置表/</code>（见上一节），导表生成 C# 位于 <code>GameScripts/Generated</code>；不要手改生成物来替代原框架导表。</p>
+<p>原始美术素材位于仓库的 <code>RevGame_Client/美术/</code>。Unity 正式资源在 <code>Assets/GameRes/</code>。鸦鸦 24 帧待机动画使用正式资源，编辑器抽帧对比可以从原始帧重新生成预览。配置工作簿位于仓库的 <code>RevGame_Client/配置表/</code>（见上一节），导表生成 C# 位于 <code>GameScripts/Generated</code>；不要手改生成物来替代原框架导表。</p>
 <p>面板预制体名与类名相同，例如 <code>GameRes/UI/Panels/Battle/PreparePanel.prefab</code>；RevBind 字段 <code>_hintText</code> 对应节点 <code>hintText</code>。资源根配置在 <code>Assets/Editor/ABBuildConfig.asset</code>，逻辑路径只写 <code>UI/</code>、<code>Pieces/</code> 等，不拼 StreamingAssets 或 Application.dataPath。</p>
 <h2 id="_5">代码规范</h2>
 <p>使用 Revolution 公开门面，不顺手修改当前工程的框架内核；异步只用 RevTask。方法签名的括号与参数保持同一行；方法体及 if/for/foreach/while 均带大括号。文件头说明分工理由，关键事务、时序、回收用中文解释，不只复述代码。</p>

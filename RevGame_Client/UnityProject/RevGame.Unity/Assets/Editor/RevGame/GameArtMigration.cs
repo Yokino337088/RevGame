@@ -18,13 +18,13 @@ using Object = UnityEngine.Object;
 
 namespace RevGame.Editor
 {
+    /// <summary>在编辑态导入正式界面美术并更新现有面板、棋盘和场景接线。</summary>
     public static class GameArtMigration
     {
         public const string NewUi = "Assets/GameRes/Art/UI/";
-        public const string BackgroundPath = "Assets/ArtRes/背景/棋盘_开始场景_背景.png";
         private const string UiRoot = "Assets/GameRes/UI/Panel/";
 
-        /// <summary>由 MCP 传入原版美术根目录；导入完成后才修改引用，避免先把界面替成空图。</summary>
+        /// <summary>由 MCP 传入原版美术根目录。新版界面 Sprite 导入完成后再更新 Prefab 引用。</summary>
         public static string ImportAndApply(string sourceRoot)
         {
             if (EditorApplication.isPlaying)
@@ -32,14 +32,12 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("请先退出 Play，再保存美术替换，避免修改只留在运行时实例里。");
             }
             string sourceUi = Path.Combine(sourceRoot, "03_UI图片");
-            string sourceBackground = Path.Combine(sourceRoot, "02_精灵图片/棋盘地图/棋盘_开始场景_背景.png");
 
-            if (!Directory.Exists(sourceUi) || !File.Exists(sourceBackground))
+            if (!Directory.Exists(sourceUi))
             {
-                throw new DirectoryNotFoundException("原版美术目录不完整：" + sourceRoot);
+                throw new DirectoryNotFoundException("缺少原版界面美术目录：" + sourceUi);
             }
             Folder(NewUi.TrimEnd('/'));
-            Folder("Assets/ArtRes/背景");
             int imported = 0;
             foreach (string file in Directory.GetFiles(sourceUi, "*.png", SearchOption.AllDirectories))
             {
@@ -62,9 +60,8 @@ namespace RevGame.Editor
                 ImportSprite(file, NewUi + name);
                 imported++;
             }
-            ImportSprite(sourceBackground, BackgroundPath);
             ApplyAll();
-            return "已通过 Unity MCP 导入 " + imported + " 张英文新版 UI 和指定背景。\n" + Audit();
+            return "已通过 Unity MCP 导入 " + imported + " 张英文新版 UI。\n" + Audit();
         }
         /// <summary>供原有生成器在最后调用：重新生成面板也必须继续使用新版皮肤。</summary>
         public static void ApplyAll(bool rebuildLayout = false)
@@ -198,17 +195,16 @@ namespace RevGame.Editor
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
         }
+        /// <summary>将旧界面 Sprite 的路径映射到正式 UI 皮肤，未知名称保留原引用。</summary>
         private static string ReplacementPath(string path)
         {
-            if (path.StartsWith(NewUi, StringComparison.Ordinal) || path == BackgroundPath)
+            if (path.StartsWith(NewUi, StringComparison.Ordinal))
             {
                 return path;
             }
             string name = Path.GetFileNameWithoutExtension(path);
             switch (name)
             {
-                case "选关_背景":
-                    return BackgroundPath;
                 case "结算_背景":
                 case "UI_三选一_弹窗底":
                     return NewUi + "UI_Pvp_imgBK.png";
@@ -402,9 +398,10 @@ namespace RevGame.Editor
             GameAssetBuilder.Anchor(info.rectTransform, new Vector2(0, 0.5f));
             info.transform.SetAsFirstSibling();
         }
-        private static void AddScreenBackground(GameObject root)
+        /// <summary>在面板底层安装程序背景，供新建面板和旧布局迁移复用。已有背景子节点时沿用该节点。</summary>
+        internal static void AddScreenBackground(GameObject root)
         {
-            // ★ 背景缩放器只挂到图片子节点，不能挂在面板根上，否则按钮和文字会跟着背景一起变形。
+            // 清理旧根节点图片，独立子节点的材质和布局都由程序背景配方装配。
             Image oldRootImage = root.GetComponent<Image>();
 
             if (oldRootImage != null)
@@ -412,10 +409,8 @@ namespace RevGame.Editor
                 Object.DestroyImmediate(oldRootImage);
             }
             Transform existing = root.transform.Find("screenBackground");
-            Image image = existing == null ? GameAssetBuilder.Picture("screenBackground", root.transform, Load(BackgroundPath), Vector2.zero, Vector2.zero) : existing.GetComponent<Image>();
+            Image image = existing == null ? GameAssetBuilder.Picture("screenBackground", root.transform, null, Vector2.zero, Vector2.zero) : existing.GetComponent<Image>();
             image.transform.SetAsFirstSibling();
-            // 大地图只适合场景，铺在所有UI后面会抢走按钮和文字的视觉重心。
-            // 改为低速程序星雾，并移除原来的纵向地图比例适配器，始终铺满横屏画布。
             GameArcaneArtBuilder.StyleBackdrop(image);
         }
         private static Image EnsurePicture(GameObject root, string name, string sprite, Vector2 size, Vector2 position)
@@ -436,6 +431,7 @@ namespace RevGame.Editor
             image.preserveAspect = preserveAspect;
             image.type = filled ? Image.Type.Filled : image.sprite.border == Vector4.zero ? Image.Type.Simple : Image.Type.Sliced;
         }
+        /// <summary>重接场景背景渲染器供章节加载。已有手工预览图时才按摄像机尺寸调整它的变换。</summary>
         private static void ApplySceneBackground()
         {
             GameObject host = GameObject.Find("GamePresentation");
@@ -456,19 +452,19 @@ namespace RevGame.Editor
             {
                 renderer = background.AddComponent<SpriteRenderer>();
             }
-            // 用户可以在场景里挑选另一张背景；重建UI不能顺带把其选择覆盖回开始场景图。
-            if (renderer.sprite == null)
-            {
-                renderer.sprite = Load(BackgroundPath);
-            }
             renderer.sortingOrder = -1000;
             renderer.color = Color.white;
             Camera camera = Camera.main;
-            Vector2 sourceSize = renderer.sprite.bounds.size;
-            float height = camera.orthographicSize * 2f;
-            float scale = Mathf.Max(height * camera.aspect / sourceSize.x, height / sourceSize.y);
-            background.transform.localScale = Vector3.one * scale;
-            background.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, 5f);
+
+            // 正式场景的 Sprite 由章节资源租约加载。只有手工指定预览图时才重算编辑态尺寸。
+            if (renderer.sprite != null && camera != null)
+            {
+                Vector2 sourceSize = renderer.sprite.bounds.size;
+                float height = camera.orthographicSize * 2f;
+                float scale = Mathf.Max(height * camera.aspect / sourceSize.x, height / sourceSize.y);
+                background.transform.localScale = Vector3.one * scale;
+                background.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, 5f);
+            }
             GameAssetBuilder.SetReference(host.GetComponent<GamePresentation>(), "backgroundRenderer", renderer);
             EditorSceneManager.MarkSceneDirty(host.scene);
             EditorSceneManager.SaveScene(host.scene);

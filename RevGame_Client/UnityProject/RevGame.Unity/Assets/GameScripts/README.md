@@ -123,7 +123,7 @@ Shader文件位于`GameShader/Background/*_Shader.shader`，声明名为`RevGame
 
 ## 资源约定
 
-美术在 `Assets/ArtRes/棋盘、棋子、状态标记、界面、图标、特效、字体、音频`，保留中文命名。运行时资源在 `Assets/GameRes/Board、Pieces、UI、Effects、Audio、Data`。配置工作簿位于仓库的 `RevGame_Client/配置表/`（见上一节），导表生成 C# 位于 `GameScripts/Generated`；不要手改生成物来替代原框架导表。
+原始美术素材位于仓库的 `RevGame_Client/美术/`。Unity 正式资源在 `Assets/GameRes/`。鸦鸦 24 帧待机动画使用正式资源，编辑器抽帧对比可以从原始帧重新生成预览。配置工作簿位于仓库的 `RevGame_Client/配置表/`（见上一节），导表生成 C# 位于 `GameScripts/Generated`；不要手改生成物来替代原框架导表。
 
 面板预制体名与类名相同，例如 `GameRes/UI/Panels/Battle/PreparePanel.prefab`；RevBind 字段 `_hintText` 对应节点 `hintText`。资源根配置在 `Assets/Editor/ABBuildConfig.asset`，逻辑路径只写 `UI/`、`Pieces/` 等，不拼 StreamingAssets 或 Application.dataPath。
 

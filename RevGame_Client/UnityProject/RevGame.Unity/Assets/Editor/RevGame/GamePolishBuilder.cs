@@ -1,6 +1,6 @@
 // ============================================================
 // GamePolishBuilder.cs —— 通过 MCP 执行的音频导入和表现预制体装配。
-// 外部原音频是完整歌曲，保留在 ArtRes；运行时选一首放入逻辑资源根。短音效由正弦波生成。
+// 外部原音频由调用者提供。仅将用到的 BGM 放入逻辑资源根，短音效由正弦波生成。
 // 这些文件操作只在编辑器制作资产时执行，游戏运行时一律用 RevSound / RevPool。
 // ============================================================
 using System.IO;
@@ -13,23 +13,15 @@ using UnityEngine.UI;
 
 namespace RevGame.Editor
 {
+    /// <summary>在编辑态装配正式音效、战斗表现 Prefab 和场景中的音频组件。</summary>
     public static class GamePolishBuilder
     {
+        /// <summary>生成正式音效和表现预制体。仅在缺少主曲时从指定目录读取外部原音频。</summary>
         public static string Build(string sourceAudioDirectory)
         {
-            Folder("Assets/ArtRes/音频");
             Folder("Assets/GameRes/Audio/Bgm");
             Folder("Assets/GameRes/Audio/Sfx");
-            foreach (string source in Directory.GetFiles(sourceAudioDirectory, "*.mp3"))
-            {
-                string target = "Assets/ArtRes/音频/" + Path.GetFileName(source);
-
-                if (!File.Exists(target))
-                {
-                    File.Copy(source, target);
-                }
-                AssetDatabase.ImportAsset(target);
-            }
+            // 只补游戏会加载的主曲。已有文件及其导入设置继续复用。
             string bgm = "Assets/GameRes/Audio/Bgm/MainTheme.mp3";
 
             if (!File.Exists(bgm))
@@ -54,7 +46,7 @@ namespace RevGame.Editor
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             UnityEditor.SceneManagement.EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
-            return "8首音乐已导入；1首运行时BGM、5个短音效、破碎/升星/飘字、Boss血条和事件提示已保存";
+            return "1首运行时BGM、5个短音效、破碎/升星/飘字、Boss血条和事件提示已保存";
         }
         private static void Folder(string path)
         {

@@ -13,18 +13,17 @@ using UnityEngine.UI;
 
 namespace RevGame.Editor
 {
+    /// <summary>编辑态装配游戏面板及节点，保存 Prefab 供运行期按逻辑路径加载。</summary>
     public static class GameAssetBuilder
     {
         private const string Art = "Assets/ArtRes/";
         private const string Ui = "Assets/GameRes/UI/Panel/";
         private static readonly Color Ink = new Color(0.055f, 0.04f, 0.025f);
+        /// <summary>保存选关和返回大厅接线。首次创建大厅时使用正式程序背景，已存在的大厅保留手工布局。</summary>
         public static string BuildP2()
         {
             GameObject root = Rect("HomePanel", null, Vector2.zero, Vector2.zero);
             Stretch(root.GetComponent<RectTransform>());
-            Image background = root.AddComponent<Image>();
-            background.sprite = Sprite("背景/棋盘_开始场景_背景.png");
-            background.color = new Color(0.92f, 0.9f, 0.82f);
             root.AddComponent<HomePanel>();
             Label("title", root.transform, "围棋史莱姆", new Vector2(1100, 130), new Vector2(0, 260), 82);
             Label("subtitle", root.transform, "落子布阵 · 连成一片 · 围住主将", new Vector2(1100, 60), new Vector2(0, 135), 32);
@@ -34,6 +33,7 @@ namespace RevGame.Editor
             // 首页已转为手工维护，不能让旧装配器覆盖三个按钮及其布局。
             if (AssetDatabase.LoadAssetAtPath<GameObject>(Ui + "HomePanel.prefab") == null)
             {
+                GameArtMigration.AddScreenBackground(root);
                 MakeButton("btnPvP", root.transform, "玩家对战", new Vector2(370, 110), new Vector2(0, -200));
                 MakeButton("btnQuit", root.transform, "我不玩了", new Vector2(370, 110), new Vector2(0, -330));
                 Save(root, "HomePanel");
@@ -44,8 +44,7 @@ namespace RevGame.Editor
             }
             root = Rect("LevelSelectPanel", null, Vector2.zero, Vector2.zero);
             Stretch(root.GetComponent<RectTransform>());
-            background = root.AddComponent<Image>();
-            background.sprite = Sprite("背景/棋盘_开始场景_背景.png");
+            GameArtMigration.AddScreenBackground(root);
             root.AddComponent<LevelSelectPanel>();
             Label("title", root.transform, "选择章节", new Vector2(1000, 100), new Vector2(0, 345), 58);
             for (int i = 0; i < 6; i++)
