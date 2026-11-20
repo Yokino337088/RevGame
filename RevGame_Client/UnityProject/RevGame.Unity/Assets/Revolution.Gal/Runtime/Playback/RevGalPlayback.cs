@@ -64,6 +64,7 @@ namespace Revolution.Gal
             Value = handle.Get<T>();
         }
 
+        /// <summary>读取一份由本次剧情会话持有的资源。离开时也会收到明确回执，由调用方检查取消并归还。</summary>
         public static async RevTask<RevGalAsset<T>> Load(string path)
         {
             if (!RevGalValidation.IsLogicalPath(path) || path == RevGalStage.Clear)
@@ -74,7 +75,8 @@ namespace Revolution.Gal
             string root = slash < 0 ? "" : path.Substring(0, slash + 1);
             string name = path.Substring(slash + 1);
             var completed = RevTask<RevResHandle>.CreateSource();
-            RevResManager.LoadAsync(root, name, typeof(T), completed.SetResult, RevResGroup.UI);
+            // 这份引用由 RevGalAsset 持有。保留请求回执以便取消和媒体替换路径释放它。
+            RevResManager.LoadAsync(root, name, typeof(T), completed.SetResult, RevResGroup.UI, lifetime: RevResLifetime.Manual);
             RevResHandle handle = await completed.Task;
             if (handle == null)
             {

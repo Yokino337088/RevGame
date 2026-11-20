@@ -205,7 +205,7 @@ namespace Revolution
                     {
                         if (task.Finished >= task.Total) { task.Complete(); }
                     }
-                }, group, priority);
+                }, group, priority, RevResLifetime.Manual);
             }
 
             return task;

@@ -52,10 +52,10 @@ namespace Revolution
         /// <summary>5 事件监听（RevEvent）：兜底摘监听；放在业务 / 界面之后，保证它们收尾期间派发仍然可达。</summary>
         Event = 5,
 
-        /// <summary>6 对象池（RevPool.DestroyGroup）：★ 必须先还实例 —— 池手里端着 prefab 的资源引用。</summary>
+        /// <summary>6 对象池：销毁指定域的实例和池租约，再执行资源步骤。</summary>
         Pool = 6,
 
-        /// <summary>7 资源（RevResBootstrap.Shutdown）：★ 再卸资源 —— 此时已没有池端着引用（这就是"顺序不能反"的原因）。</summary>
+        /// <summary>7 资源：归还本域引用并排队回收已归零的 AB。</summary>
         Res = 7,
 
         /// <summary>8 服务（RevServices.UnregisterAllOf）：服务最后收，因为上面每一步都可能用到它。</summary>
@@ -69,8 +69,7 @@ namespace Revolution
     public sealed class RevScopeOptions
     {
         /// <summary>
-        /// 关闭这个域时，要整组回收的资源分组（对象池 + 资源）。默认 Unknown = 不按组回收。
-        /// ★ 别设成"全程共用"的组（UI / Config / Sound 这类）—— 它是整组清，会把别人还在用的也清掉。
+        /// 兼容字段。指定本域资源的默认分类，退出时按各请求的实际引用和域收尾。
         /// </summary>
         public RevResGroup Reclaim = RevResGroup.Unknown;
 
@@ -100,7 +99,7 @@ namespace Revolution
 
         public readonly float ElapsedMs;
 
-        /// <summary>是否被跳过（模块没装 / 这个域没配置回收分组 / 域门这类不回收东西的步骤）。</summary>
+        /// <summary>模块未安装或本环境不适用时，这一步标记跳过。</summary>
         public readonly bool Skipped;
 
         /// <summary>跳过原因 / 补充说明（人话）。</summary>
@@ -127,7 +126,11 @@ namespace Revolution
     /// <summary>域关闭的"体检报告"。<see cref="RevScope.LastCloseReport"/> 随时能取到最近一次。</summary>
     public sealed class RevScopeCloseReport
     {
+        /// <summary>本报告所对应的域名。</summary>
         public string Domain;
+        /// <summary>本域的进入刻度，用于区分同名重入。</summary>
+        public long EnteredTicks;
+        /// <summary>本次同步退域的实时时长，单位毫秒。</summary>
         public float ElapsedMs;
 
         /// <summary>下标 = <see cref="RevScopeStep"/> 的数值（0~9）。</summary>

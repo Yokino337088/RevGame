@@ -145,8 +145,8 @@ namespace RevGame.Flow
                     ReturnHome();
                 }
         }
-        /// <summary>所有FSM交割的唯一位置；先更新状态/域，再通知视图，因此视图读到的一定是新模型。</summary>
-        private void Change(GameScreen screen)
+        /// <summary>提交 FSM 和域。需要分帧预建的战斗先提交域，等预建完成后再发布视图事件。</summary>
+        private void Change(GameScreen screen, bool publish = true)
         {
             if (Screen == GameScreen.Gal && screen != GameScreen.Gal)
             {
@@ -154,7 +154,16 @@ namespace RevGame.Flow
             }
             _fsm.ChangeTo(_states[screen]);
             LastError = string.Empty;
-            // ★ FSM 的 OnEnter 内不再切状态；广播放在交割后，按钮回调不能触发嵌套切换。
+            if (publish)
+            {
+                PublishScreenChanged();
+            }
+        }
+
+        /// <summary>把当前已提交的屏幕交给视图。战斗预建结束后才启动棋盘与材质装配。</summary>
+        private void PublishScreenChanged()
+        {
+            GameScreen screen = Screen;
             RevEvent.DispatchEvent<GameScreen>(Events.ScreenChanged, screen);
         }
         /// <summary>流程状态文本，给 GM 只读查询与自动化断言用：屏幕、场景、过场、加载进度，再附框架域与 Logic 数量。</summary>
@@ -187,7 +196,7 @@ namespace RevGame.Flow
 
             if (_storyHandle != null)
             {
-                RevResManager.Release("Config/Story", "StoryBook");
+                RevResManager.Release("Config/Story", "StoryBook", RevResLifetime.Manual);
                 _storyHandle = null;
             }
             _storyBook = null;

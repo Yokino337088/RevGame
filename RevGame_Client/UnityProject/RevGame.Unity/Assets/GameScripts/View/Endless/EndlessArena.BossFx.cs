@@ -239,14 +239,15 @@ namespace RevGame.Endless
                 lease.Dispose();
                 return;
             }
-            RevResHandle handle = RevResManager.LoadAsync(BossArtRoot, name, typeof(BossChapterArtConfig), null, RevResGroup.Scene);
+            // 领主美术配置由当前 arena 的章节代次持有，换领主时允许提前归还。
+            RevResHandle handle = RevResManager.LoadAsync(BossArtRoot, name, typeof(BossChapterArtConfig), null, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
             while (handle.IsLoading && _active && version == _bossArtVersion)
             {
                 await RevTask.Yield();
             }
             if (!_active || version != _bossArtVersion || !handle.IsLoaded)
             {
-                RevResManager.Release(BossArtRoot, name);
+                RevResManager.Release(BossArtRoot, name, RevResLifetime.Manual);
                 lease.Dispose();
                 return;
             }
@@ -283,7 +284,7 @@ namespace RevGame.Endless
         {
             if (_bossArt != null)
             {
-                RevResManager.Release(BossArtRoot, BossChapterArtConfig.ResourceName(_bossArtChapter));
+                RevResManager.Release(BossArtRoot, BossChapterArtConfig.ResourceName(_bossArtChapter), RevResLifetime.Manual);
                 _bossArt = null;
             }
             _bossAtlas?.Dispose();

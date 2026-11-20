@@ -375,7 +375,7 @@ await RevScene.LoadAsync("Battle", p => bar.value = p);           // 推荐：�
 - 铁律 / 坑：
   1. 场景必须已加进 **Build Settings → Scenes In Build**，否则报错。
   2. `RevScene.Load` 同步切**会卡帧**；大场景一律 `LoadAsync` 且不要忘 `await`。
-  3. `AutoClearPool = true` 已自动清对象池；你自己的 **UI / 音效 / 资源分组** 要在 `OnLoadStart` 里按约定收（`RevUI.CloseAll(...)` / `RevSound.StopAll()` / `RevResManager.UnloadGroup(...)`）。
+  3. `AutoClearPool` 自动清理全局池的空闲实例。域内 UI、音效、池和资源随拥有它们的域退出。用 [域所有权和自动回收](domain-lifetime.md) 保留跨场景预加载。
   4. 发起 / 推进 / 收尾整体兜异常，否则模块会永久死锁（框架已修过这个 bug，业务侧别在回调里再抛）。
 - 文档：`Revolution.Document/场景系统/场景系统使用说明.md`、`场景系统架构解析.md`
 
@@ -496,9 +496,9 @@ int RevLogic.Count      string RevLogic.Variant / Dump()
 最小接法：先 `RevScope.Enter(GameDomain.Dungeon, RevResGroup.Battle)`，检查返回值不是 `RevScopeHandle.Empty`；业务类加 `[RevLogic(GameDomain.Dungeon)]` 并继承 `RevLogicBase`，再 `RevLogic.Start<T>()`。离开时 `RevScope.Exit(保存的句柄)`，或句柄 `Dispose()`。启动被拒绝/`OnStart` 抛错时返回 null 并记原因；同类型重复 Start 返回正在运行的实例。
 
 - `OnStart()` / `OnStart(object)` 装配，`OnTick(float)` 可选且由框架驱动，`OnStop()` 只做业务收尾。使用基类 `After/Every/Listen/Listen<T>` 自动携带 `owner: this`；Stop 先解绑该 Logic 的事件、Timer、Mono、服务，再调 `OnStop`。资源与自持有对象仍需按契约收尾，不把基类解绑当作全部资源自动释放。
-- 默认 `TakeOverOwner = true`：未显式传 owner 的 Timer/Event/Mono 归当前域，**显式 owner 优先**；显式归属对象需随域结束时用 `Attach(owner)`。全局连接/心跳显式 owner，避免误归业务域。
-- `Reclaim` 默认 `Unknown`，不按组清资源/池；配置非 `Unknown` 才让资源加载漏斗的 `EffectiveGroup` 补上域回收组。关闭 `TakeOverOwner` 后不再兜底；不要把共用 UI/Config/Sound 组作为战斗整组回收目标。
-- 服务注册**不自动归域**：域服务明确 `owner: RevScope.Current` 或给其 owner 调 `Attach`；多个相同接口并行实例仍用 `RevServiceLocator.CreateScope()`。
+- 默认 `TakeOverOwner = true`。资源引用、GameObject 池以及省略 owner 的计时器、事件、输入和服务归当前域。显式宿主通过 `Attach(owner)` 归域，跨域使用 `RevScope.GlobalOwner` 或长期宿主。
+- `Reclaim` 为默认分类。退域按域句柄回收引用和池，预加载或共享引用继续保留。资源与异步接法见 [域所有权和自动回收](domain-lifetime.md)。
+- 容器创建的域服务退出时自动注销并释放。多个相同接口并行实例仍用 `RevServiceLocator.CreateScope()`。
 - 同名重入默认报错并返回 Empty；`ReenterIsError = false` 只是复用已有域。关闭非栈顶域会先关它上方的域；状态应保存句柄、只关自己的域。
 - 关闭顺序：关域门 → Logic → UI → Mono → Timer → Event → Pool → Res → Services → 扫尾；步骤异常隔离。`LastCloseReport` 关过域才有值，排查前先判空。
 - `SetTickEnabled(false)` 只停域兜底 Mono 和域 Logic 的 `OnTick`；**不暂停 Timer，也不控制显式 owner 的普通 Mono 回调**。暂停不是回收。

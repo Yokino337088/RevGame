@@ -103,8 +103,11 @@ namespace Revolution
 
         // ==================== 驱动 ====================
 
+        /// <summary>每帧先处理有界的退域队列，定时维护继续沿用原空闲和冷却策略。</summary>
         private void Update()
         {
+            RevResManager.DrainScopeReclaims();
+            RevResManager.SweepAfterHandoff();
             if (!Enable) return;
 
             // 用 unscaledDeltaTime：即使游戏暂停/慢放，内存该清还是要清
@@ -125,6 +128,7 @@ namespace Revolution
 
         // ==================== 核心：淘汰 ====================
 
+        /// <summary>空闲或低内存时整理普通零引用资源，并合并已有的 Unity 原生资源整理。</summary>
         private static void Trim(bool force)
         {
             if (force && UnloadPreloadedOnLowMemory)
@@ -136,7 +140,12 @@ namespace Revolution
                 return;
 
             List<RevResHandle> all = RevResManager.GetAllHandles();
-            if (all.Count == 0) return;
+            if (all.Count == 0)
+            {
+                RevResManager.SweepNativeAssets();
+                LastTrimCount = 0;
+                return;
+            }
 
             float now = Time.realtimeSinceStartup;
 
@@ -161,6 +170,7 @@ namespace Revolution
 
             if (candidates.Count == 0)
             {
+                RevResManager.SweepNativeAssets();
                 LastTrimCount = 0;
                 return;
             }
@@ -202,7 +212,7 @@ namespace Revolution
 
             // ⑤ 请求 Unity 回收刚被强制摘除的对象。不能调用 FlushUnused：那会连冷却期内
             //    及 LRU 本次未选中的条目一起清掉，也不能让 Resident 绕过保护。
-            Resources.UnloadUnusedAssets();
+            RevResManager.SweepNativeAssets(requested: true);
 
             LastTrimCount = removed;
             TotalTrimCount += removed;

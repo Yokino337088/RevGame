@@ -44,6 +44,9 @@ namespace Revolution
         private readonly bool[] _requiresTarget = new bool[SlotCapacity];
         private readonly bool[] _is3D = new bool[SlotCapacity];
 
+        /// <summary>每个音效槽的域。空值代表跨场景 BGM 或无域播放，回收槽位时清除。</summary>
+        private readonly RevScopeHandle[] _voiceScopes = new RevScopeHandle[SlotCapacity];
+
         private readonly float[] _kindVolumes = { 1f, 1f, 1f, 1f };
         private int _maxVoices = 24;
         private float _master = 1f;
@@ -122,6 +125,7 @@ namespace Revolution
                                      Transform target, bool is3D, bool? loop)
             => PlayInternal(name, kind, volume, position, target, is3D, loop, out _);
 
+        /// <summary>验证播放请求并取得声音槽。音效继承域，跨场景 BGM 独立持有。</summary>
         private RevSoundHandle PlayInternal(string name, RevSoundKind? kind, float? volume, Vector3? position,
                                             Transform target, bool is3D, bool? loop, out int slot)
         {
@@ -190,7 +194,9 @@ namespace Revolution
             _is3D[slot] = is3D;
 
             bool isBgm = resolvedKind == RevSoundKind.Bgm;
-            AudioClip clip = _assets.Find(path, isBgm);
+            RevScopeHandle scope = isBgm ? null : RevScope.DefaultNode;
+            _voiceScopes[slot] = scope;
+            AudioClip clip = _assets.Request(path, isBgm, scope);
             if (clip != null)
             {
                 StartVoice(slot, clip);
@@ -199,7 +205,6 @@ namespace Revolution
             {
                 // 资源还没到：先占着槽位（业务已经拿到句柄），加载完自动开播
                 _table.Slot(slot).Pending = true;
-                _assets.Request(path, resolvedKind == RevSoundKind.Bgm);
             }
 
             // StartVoice 可能发现 AudioSource 无法创建，或 PlayOn 的目标刚好已销毁并提前回收槽位。
@@ -335,6 +340,21 @@ namespace Revolution
                 if (fadeSeconds > 0f) FadeOut(i, fadeSeconds);
                 else Recycle(i, finished: false);
             }
+        }
+
+        /// <summary>同步停掉退出域的活动和待播声道，再归还该域使用的音频片段。</summary>
+        internal int StopScope(RevScopeHandle scope)
+        {
+            int stopped = 0;
+            for (int i = 0; i < _voiceScopes.Length; i++)
+            {
+                if (_voiceScopes[i] == scope)
+                {
+                    Recycle(i, finished: false);
+                    stopped++;
+                }
+            }
+            return stopped + _assets.ReleaseScope(scope);
         }
 
         internal float GetKindVolume(RevSoundKind kind) => _kindVolumes[(int)kind];
@@ -528,6 +548,7 @@ namespace Revolution
         // 内部
         // ============================================================
 
+        /// <summary>回收播放器和槽位，清空本次播放的域归属及目标引用。</summary>
         private void Recycle(int slot, bool finished)
         {
             ref RevSoundSlot state = ref _table.Slot(slot);
@@ -546,6 +567,7 @@ namespace Revolution
             }
 
             _targets[slot] = null;
+            _voiceScopes[slot] = null;
             _requiresTarget[slot] = false;
             _is3D[slot] = false;
             _positions[slot] = Vector3.zero;

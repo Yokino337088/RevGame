@@ -267,7 +267,7 @@ namespace Revolution
             RevResHandle cached = RevResManager.Get(meta.Root, meta.Name);
             if (cached.IsLoaded)
             {
-                RevResHandle handle = RevResManager.LoadHandle<GameObject>(meta.Root, meta.Name, RevResGroup.UI);
+                RevResHandle handle = RevResManager.LoadHandle<GameObject>(meta.Root, meta.Name, RevResGroup.UI, RevResLifetime.Manual);
                 request.Resource = RevResManager.OwnReference(handle, "RevUI/" + meta.PanelType.Name);
                 ticket.ResourceDisposition = "Pending";
                 return ResourceReady(request, deferAssembly);
@@ -1189,7 +1189,7 @@ namespace Revolution
         /// <summary>登记请求与所属域，互斥页有界等待首屏和转场结束。</summary>
         private OpenRequest BeginOpen(RevUIPanelMeta meta, object data, List<Action<RevUIPanel>> callbacks)
         {
-            var request = new OpenRequest { Meta = meta, Data = data, Scope = RevScope.Current, Ticket = NewTicket(meta.Key) };
+            var request = new OpenRequest { Meta = meta, Data = data, Scope = RevScope.DefaultNode, Ticket = NewTicket(meta.Key) };
             if (callbacks != null)
             {
                 request.Callbacks.AddRange(callbacks);

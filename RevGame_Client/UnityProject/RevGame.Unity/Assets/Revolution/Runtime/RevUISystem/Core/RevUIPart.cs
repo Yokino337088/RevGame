@@ -276,7 +276,7 @@ namespace Revolution
                 part.InternalOpen();
 
                 FinishCreate(request, part.IsOpened ? part : null);
-            }, RevResGroup.UI);
+            }, RevResGroup.UI, lifetime: RevResLifetime.Manual);
         }
 
         /// <summary>在宿主的默认挂点下创建</summary>
@@ -362,7 +362,10 @@ namespace Revolution
                 RevResManager.DecRef(_resourceHandle);
                 _resourceHandle = null;
             }
-            else if (Meta != null) RevResManager.Release(Meta.Root, Meta.Name);
+            else if (Meta != null)
+            {
+                RevResManager.Release(Meta.Root, Meta.Name, RevResLifetime.Manual);
+            }
         }
 
         // ============================================================

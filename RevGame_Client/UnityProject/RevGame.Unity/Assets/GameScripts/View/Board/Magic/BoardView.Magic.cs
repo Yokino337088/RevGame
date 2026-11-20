@@ -50,7 +50,8 @@ namespace RevGame.View
                 }
                 name = SurfaceNames[chapter - 1] + "_Surface";
                 requested = true;
-                var handle = RevResManager.LoadAsync(SurfaceRoot, name, typeof(Material), null, RevResGroup.Scene);
+                // 材质由棋盘视图的版本和释放钩子持有，可以随场景对象先于业务域销毁。
+                var handle = RevResManager.LoadAsync(SurfaceRoot, name, typeof(Material), null, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
                 float deadline = Time.realtimeSinceStartup + 30f;
                 while (handle.IsLoading && !_released && version == _surfaceVersion)
                 {
@@ -83,7 +84,7 @@ namespace RevGame.View
 
                 if (oldName != null)
                 {
-                    RevResManager.Release(SurfaceRoot, oldName);
+                    RevResManager.Release(SurfaceRoot, oldName, RevResLifetime.Manual);
                 }
             }
             catch (Exception error)
@@ -106,7 +107,7 @@ namespace RevGame.View
                 // 本请求没有被当前棋盘接管时，自行归还引用；防止离场或快速换章造成泄漏。
                 if (requested && !adopted)
                 {
-                    RevResManager.Release(SurfaceRoot, name);
+                    RevResManager.Release(SurfaceRoot, name, RevResLifetime.Manual);
                 }
             }
         }
@@ -135,7 +136,7 @@ namespace RevGame.View
 
             if (_surfaceName != null)
             {
-                RevResManager.Release(SurfaceRoot, _surfaceName);
+                RevResManager.Release(SurfaceRoot, _surfaceName, RevResLifetime.Manual);
             }
             _surfaceName = null;
             _surfaceMaterial = null;

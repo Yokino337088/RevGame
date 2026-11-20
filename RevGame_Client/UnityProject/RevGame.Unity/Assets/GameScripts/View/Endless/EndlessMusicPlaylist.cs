@@ -87,6 +87,7 @@ namespace RevGame.Endless
         {
             EndlessMusic row = EndlessConfig.Music(index);
             var track = new Track { Index = index, Root = row.Root, Name = row.Sound };
+            // 歌单独立管理预读和正在播的音频，播放器换曲才归还自己的引用。
             RevResManager.LoadAsync<AudioClip>(row.Root, row.Sound, clip =>
             {
                 track.Clip = clip;
@@ -98,9 +99,9 @@ namespace RevGame.Endless
                 // 对象已释放时，这个迟到的结果要立刻还回去，否则 AB 包永远卸不掉。
                 if (_disposed && clip != null)
                 {
-                    RevResManager.Release(track.Root, track.Name);
+                    RevResManager.Release(track.Root, track.Name, RevResLifetime.Manual);
                 }
-            }, RevResGroup.Scene);
+            }, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
             return track;
         }
 
@@ -221,7 +222,7 @@ namespace RevGame.Endless
         {
             if (track != null && track.Clip != null)
             {
-                RevResManager.Release(track.Root, track.Name);
+                RevResManager.Release(track.Root, track.Name, RevResLifetime.Manual);
                 track.Clip = null;
             }
         }

@@ -13,13 +13,12 @@
 //
 // 【★ 最重要的三句话】
 //   ① 域是"一段时间"的名字：Enter 开始，Exit 结束。
-//   ② 域开着的时候，你**没写 owner / group** 的注册（计时器 / 事件 / 每帧回调 / 资源分组）自动算这个域的；
-//      域一关，它们一起被清掉。—— 所以"忘了传 owner"也不会泄漏。
-//   ③ 你**显式写了** owner / group 的，域永远不插手（显式永远优先，"写清楚"永远安全）。
+//   ② 省略 owner 的模块和普通资源请求按实际域登记。退域归还本域真实拥有的内容。
+//   ③ 跨域持有用显式宿主、具名资源租约或交接预热。资源分组负责归类。
 //
 // 【最短用法】
 //     // ——长生命周期的域（战斗 / 大厅）：由"游戏流程"开关，不是由某段代码开关——
-//     RevScope.Enter(RevDomain.Battle, RevResGroup.Battle);   // 进战斗（第二个参数 = 关域时要整组回收的资源分组，可省略）
+//     RevScope.Enter(RevDomain.Battle, RevResGroup.Battle);   // 进战斗，可选参数是默认资源分组
 //     ...                                                     // 这一局里任何脚本里注册的东西，没写 owner 的都算战斗域的
 //     RevScope.Exit(RevDomain.Battle);                        // 一局结束：9 个步骤按固定顺序全部回收
 //
@@ -42,7 +41,7 @@
 //   · 跨域订阅（大厅脚本订阅战斗事件）          —— 域关了不该把你的监听也摘走
 //   · 生命周期长于域的公共对象
 //   · 后台线程 / 编辑器工具里注册               —— 那里没有"当前域"
-//   服务（RevServices）永远不会被自动归域：想让它随域走，显式写 owner: RevScope.Current。
+//   RevServices 省略 owner 时随域注销。全局服务指定常驻宿主或 GlobalOwner。
 //
 // 【暂停不是回收】SetTickEnabled(域, false) 只停"归本域兜底的每帧回调"和 RevLogic.OnTick，
 //   对象、状态、监听都还在，恢复后继续。★ 计时器不受影响（它是"时间"不是"帧回调"）。
@@ -50,7 +49,7 @@
 // 【和别的模块的分工】
 //   RevServices 管"能力"（供别人取用，活得久）；RevScope 管"过程"（一段时间内存在的业务，活完要干净结束）。
 //   RevScene 管"怎么切场景"；RevScope 管"这段时间的账"。两者不互相替代。
-//   RevScene.AutoClearPool 默认也会在切场景时清池，和域的第 6 步重叠 —— 重复清理是安全的（对空池返回 0）。
+//   RevScene.AutoClearPool 清全局池的空闲对象。域池在自己的退出步骤销毁。
 //
 // 【线程】只在主线程使用（和 Unity 一致）。
 // 【进 Play 自动复位】关闭 Domain Reload 时，上一局的域会在新一局开始前被安静地清掉（见 Support\RevScopeUnityHooks）。
@@ -76,10 +75,19 @@ namespace Revolution
         // ============================================================
 
         /// <summary>★ 没写 owner 的注册该归谁：有域 = 那个域；没有域 = null。计时器 / 事件 / 每帧回调的门面都读它。</summary>
-        internal static RevScopeHandle DefaultNode => Core.DefaultNode;
+        internal static RevScopeHandle DefaultNode => Core.EffectiveOwner;
 
-        /// <summary>★ 没写资源分组时的兜底分组：有域 = 域配置的回收分组；没有域 = Unknown。资源系统读它。</summary>
-        internal static RevResGroup DefaultGroup => Core.DefaultGroup;
+        /// <summary>资源未显式分类时沿用有效域的默认分组。无默认域时是 Unknown。</summary>
+        internal static RevResGroup DefaultGroup => DefaultNode?.Reclaim ?? RevResGroup.Unknown;
+
+        /// <summary>注册时显式指定的全局所有者。输入、服务、计时器等以此登记可独立于场景域存活。</summary>
+        public static object GlobalOwner { get; } = new object();
+
+        /// <summary>解析模块的显式所有者。省略时继承执行域，宿主对象可通过 Attach 归属某个域。</summary>
+        internal static RevScopeHandle ScopeOf(object owner)
+        {
+            return owner == null ? DefaultNode : owner as RevScopeHandle ?? Core.FindOwnerOf(owner);
+        }
 
         // ============================================================
         // 进入 / 退出
@@ -90,13 +98,12 @@ namespace Revolution
         /// <code>RevScope.Enter(RevDomain.Battle, RevResGroup.Battle);</code>
         /// </summary>
         /// <param name="domain">域名（建议用 <see cref="RevDomain"/> 常量或自己集中定义的常量）</param>
-        /// <param name="reclaim">关闭这个域时要整组回收的资源分组（对象池 + 资源）。
-        /// 省略 = 不按组回收。★ 别设成全程共用的组（UI / Config / Sound），它是整组清。</param>
+        /// <param name="reclaim">兼容参数名。提供默认资源分组，实际退出按域归属归还引用与池。</param>
         /// <returns>域句柄；失败（空域名 / 重复进入）时返回 <see cref="RevScopeHandle.Empty"/>（安全空操作，并有明确报错）</returns>
         public static RevScopeHandle Enter(string domain, RevResGroup reclaim = RevResGroup.Unknown)
             => Core.Enter(domain, reclaim, takeOverOwner: true, reenterIsError: true, note: null);
 
-        /// <summary>进入一个域（带可选项：回收分组 / 是否兜底归属 / 重复进入的处理 / 备注）。</summary>
+        /// <summary>进入一个域，可配置默认分组、自动归属和重复进入行为。</summary>
         public static RevScopeHandle Enter(string domain, RevScopeOptions options)
         {
             if (options == null) { options = new RevScopeOptions(); }

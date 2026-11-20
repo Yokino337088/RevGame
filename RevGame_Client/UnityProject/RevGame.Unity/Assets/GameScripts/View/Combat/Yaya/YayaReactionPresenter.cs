@@ -92,7 +92,8 @@ namespace RevGame.View
         {
             try
             {
-                _catalogHandle = RevResManager.LoadAsync("Config/Yaya", "YayaExpressionCatalog", typeof(YayaExpressionCatalog), null, RevResGroup.Battle);
+                // 角色画面可能比战斗域更早销毁，目录沿用播放器的释放钩子。
+                _catalogHandle = RevResManager.LoadAsync("Config/Yaya", "YayaExpressionCatalog", typeof(YayaExpressionCatalog), null, RevResGroup.Battle, lifetime: RevResLifetime.Manual);
                 while (IsCurrent(version) && _catalogHandle.IsLoading)
                 {
                     await RevTask.Yield();
@@ -457,7 +458,7 @@ namespace RevGame.View
             // 空闲实例Sprite已清空，保留一个小Prefab池复用，避免每次互动重建Canvas；离开本域再销毁池。
             if (_catalogHandle != null)
             {
-                RevResManager.Release("Config/Yaya", "YayaExpressionCatalog");
+                RevResManager.Release("Config/Yaya", "YayaExpressionCatalog", RevResLifetime.Manual);
                 _catalogHandle = null;
             }
             _portraits?.Dispose();

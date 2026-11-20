@@ -89,30 +89,32 @@ namespace Revolution
         /// <param name="rootPath">资源所在的根目录（用生成的 RevResPath 常量，如 "Battle/Bullet/"）</param>
         /// <param name="resName">资源名（不带扩展名，如 "Blue"）</param>
         /// <param name="parent">取出来挂到哪个节点下（可空）</param>
-        /// <param name="group">资源分组（决定归属，便于整组清理）</param>
-        public static GameObject Get(string rootPath, string resName, Transform parent = null, RevResGroup group = RevResGroup.Unknown)
-            => RevGameObjectPools.Get(rootPath, resName, parent, group);
+        /// <param name="group">资源分类，用于显式维护操作。</param>
+        /// <param name="owner">省略时在当前域内分池。跨域共享传 RevScope.GlobalOwner。</param>
+        public static GameObject Get(string rootPath, string resName, Transform parent = null,
+            RevResGroup group = RevResGroup.Unknown, object owner = null)
+            => RevGameObjectPools.Get(rootPath, resName, parent, group, RevScope.ScopeOf(owner));
 
-        /// <summary>取一个 GameObject 并直接拿它身上的组件（省掉 GetComponent）。</summary>
-        public static T Get<T>(string rootPath, string resName, Transform parent = null, RevResGroup group = RevResGroup.Unknown)
+        /// <summary>从当前或显式所有者的域池取组件，缺组件时自动归还实例。</summary>
+        public static T Get<T>(string rootPath, string resName, Transform parent = null, RevResGroup group = RevResGroup.Unknown, object owner = null)
             where T : Component
         {
-            GameObject item = RevGameObjectPools.Get(rootPath, resName, parent, group);
-            return ExtractComponent<T>(item, RevResPathUtil.Join(rootPath, resName));
+            GameObject item = RevGameObjectPools.Get(rootPath, resName, parent, group, RevScope.ScopeOf(owner));
+            return ExtractComponent<T>(item, rootPath, resName);
         }
 
         /// <summary>
         /// 用已经持有的 prefab 引用取对象（省掉路径哈希，热路径更快）。
         /// 注意：这类池不持有资源引用，prefab 的生命周期由调用方保证。
         /// </summary>
-        public static GameObject Get(GameObject prefab, Transform parent = null)
-            => RevGameObjectPools.Get(prefab, parent);
+        public static GameObject Get(GameObject prefab, Transform parent = null, object owner = null)
+            => RevGameObjectPools.Get(prefab, parent, RevScope.ScopeOf(owner));
 
-        /// <summary>用 prefab 引用取对象并直接拿组件。</summary>
-        public static T Get<T>(GameObject prefab, Transform parent = null) where T : Component
+        /// <summary>在指定所有者的域池中用 prefab 取组件。调用者负责提供有效 prefab。</summary>
+        public static T Get<T>(GameObject prefab, Transform parent = null, object owner = null) where T : Component
         {
-            GameObject item = RevGameObjectPools.Get(prefab, parent);
-            return ExtractComponent<T>(item, prefab != null ? prefab.name : "?");
+            GameObject item = RevGameObjectPools.Get(prefab, parent, RevScope.ScopeOf(owner));
+            return ExtractComponent<T>(item, prefab);
         }
 
         // ==================== 取（异步）====================
@@ -120,16 +122,16 @@ namespace Revolution
         /// <summary>
         /// 异步取一个 GameObject（真机首次加载 / WebGL 必须走这条）。
         /// 加载失败时回调收到 <c>null</c>（失败原因看 <c>RevResManager.Get(rootPath, resName).ErrorReason</c>）。
-        /// 返回本次请求的资源句柄，用法与资源系统的 <c>LoadAsync</c> 一致；调用方应在不再需要后调用 <c>RevResManager.DecRef(handle)</c>。
+        /// 请求的引用默认随同一域释放，退出后不再派发回调。全局请求自行配对归还本次引用。
         /// 池若因此新建，会另持有独立的一份 prefab 租约直到池销毁。
         /// </summary>
         public static RevResHandle GetAsync(string rootPath, string resName, Action<GameObject> onFinished,
-            Transform parent = null, RevResGroup group = RevResGroup.Unknown)
-            => RevGameObjectPools.GetAsync(rootPath, resName, onFinished, parent, group);
+            Transform parent = null, RevResGroup group = RevResGroup.Unknown, object owner = null)
+            => RevGameObjectPools.GetAsync(rootPath, resName, onFinished, parent, group, RevScope.ScopeOf(owner));
 
-        /// <summary>异步取组件（预制体上没有该组件时报错并回调 null，同时把对象还回池里）。</summary>
+        /// <summary>异步取当前域或显式域的组件，缺组件时销掉本次借用并交付失败。</summary>
         public static RevResHandle GetAsync<T>(string rootPath, string resName, Action<T> onFinished,
-            Transform parent = null, RevResGroup group = RevResGroup.Unknown) where T : Component
+            Transform parent = null, RevResGroup group = RevResGroup.Unknown, object owner = null) where T : Component
         {
             return RevGameObjectPools.GetAsync(rootPath, resName, item =>
             {
@@ -148,7 +150,7 @@ namespace Revolution
                 RevPoolLog.Error($"「{RevResPathUtil.Join(rootPath, resName)}」的预制体上没有 {typeof(T).Name} 组件，已把对象还回池里。");
                 RevGameObjectPools.Return(item, 0);
                 onFinished?.Invoke(null);
-            }, parent, group);
+            }, parent, group, RevScope.ScopeOf(owner));
         }
 
         // ==================== 取（按类型，路径写在特性上）====================
@@ -166,12 +168,12 @@ namespace Revolution
         /// ★ 类型上没写特性 → 报错并返回 null（错误信息会告诉你怎么加）。
         /// </summary>
         /// <param name="parent">取出来挂到哪个节点下（可空）</param>
-        public static T Get<T>(Transform parent = null) where T : Component
+        public static T Get<T>(Transform parent = null, object owner = null) where T : Component
         {
             if (!TryResolve<T>(out string root, out string name, out RevResGroup group)) return null;
 
-            GameObject item = RevGameObjectPools.Get(root, name, parent, group);
-            return ExtractComponent<T>(item, RevResPathUtil.Join(root, name));
+            GameObject item = RevGameObjectPools.Get(root, name, parent, group, RevScope.ScopeOf(owner));
+            return ExtractComponent<T>(item, root, name);
         }
 
         /// <summary>
@@ -184,7 +186,7 @@ namespace Revolution
         /// <param name="onFinished">取到后的回调（池里有现成的会立即同步回调）</param>
         /// <param name="parent">取出来挂到哪个节点下（可空）</param>
         /// <returns>prefab 的资源句柄；类型没写特性时返回 <see cref="RevResHandle.Empty"/></returns>
-        public static RevResHandle GetAsync<T>(Action<T> onFinished, Transform parent = null) where T : Component
+        public static RevResHandle GetAsync<T>(Action<T> onFinished, Transform parent = null, object owner = null) where T : Component
         {
             if (!TryResolve<T>(out string root, out string name, out RevResGroup group))
             {
@@ -192,7 +194,7 @@ namespace Revolution
                 return RevResHandle.Empty;
             }
 
-            return GetAsync<T>(root, name, onFinished, parent, group);
+            return GetAsync<T>(root, name, onFinished, parent, group, owner);
         }
 
         // ==================== 归还 ====================
@@ -242,7 +244,8 @@ namespace Revolution
         public static int DestroyGroup(RevResGroup group) => RevGameObjectPools.DestroyGroup(group);
 
         /// <summary>销毁整条池（空闲实例销毁 + 还掉 prefab 引用）。按"根目录 + 资源名"找。</summary>
-        public static bool DestroyPool(string rootPath, string resName) => RevGameObjectPools.DestroyPool(rootPath, resName);
+        public static bool DestroyPool(string rootPath, string resName, object owner = null)
+            => RevGameObjectPools.DestroyPool(rootPath, resName, RevScope.ScopeOf(owner));
 
         /// <summary>
         /// 按类型销毁整条池（推荐）：路径从 <typeparamref name="T"/> 上的 <see cref="RevPoolPrefabAttribute"/> 读取，
@@ -252,15 +255,15 @@ namespace Revolution
         /// </code>
         /// 类型上没写特性 → 报错并返回 false；池本来就不存在 → 也返回 false（和字符串版本行为一致）。
         /// </summary>
-        public static bool DestroyPool<T>() where T : Component
+        public static bool DestroyPool<T>(object owner = null) where T : Component
         {
             if (!TryResolve<T>(out string root, out string name, out _)) return false;
 
-            return RevGameObjectPools.DestroyPool(root, name);
+            return RevGameObjectPools.DestroyPool(root, name, RevScope.ScopeOf(owner));
         }
 
         /// <summary>销毁整条池。按 prefab 引用找。</summary>
-        public static bool DestroyPool(GameObject prefab) => RevGameObjectPools.DestroyPool(prefab);
+        public static bool DestroyPool(GameObject prefab, object owner = null) => RevGameObjectPools.DestroyPool(prefab, RevScope.ScopeOf(owner));
 
         /// <summary>销毁全部对象池（GameObject 池 + 引用池）。回登录 / 退出游戏时用。</summary>
         public static void DestroyAll()
@@ -287,8 +290,9 @@ namespace Revolution
             RevGameObjectPools.Tick();
         }
 
-        /// <summary>某条池的统计快照。</summary>
-        public static RevPoolStats GetStats(string rootPath, string resName) => RevGameObjectPools.GetStats(rootPath, resName);
+        /// <summary>当前域或显式所有者的一条池统计。读取其它域时明确指定所有者。</summary>
+        public static RevPoolStats GetStats(string rootPath, string resName, object owner = null)
+            => RevGameObjectPools.GetStats(rootPath, resName, RevScope.ScopeOf(owner));
 
         /// <summary>把某条池的请求计数清零。</summary>
         public static void ResetStats(string rootPath, string resName) => RevGameObjectPools.ResetStats(rootPath, resName);
@@ -343,13 +347,34 @@ namespace Revolution
             return false;
         }
 
-        private static T ExtractComponent<T>(GameObject item, string source) where T : Component
+        /// <summary>按逻辑路径找组件。只有异常路径才拼接资源名，正常每次取用不分配字符串。</summary>
+        private static T ExtractComponent<T>(GameObject item, string rootPath, string resName) where T : Component
         {
-            if (item == null) return null;
+            if (item == null)
+            {
+                return null;
+            }
+            if (item.TryGetComponent(out T component))
+            {
+                return component;
+            }
+            RevPoolLog.Error($"「{RevResPathUtil.Join(rootPath, resName)}」的预制体上没有 {typeof(T).Name} 组件，已归还实例。");
+            RevGameObjectPools.Return(item, 0);
+            return null;
+        }
 
-            if (item.GetComponent<T>() is T component) return component;
-
-            RevPoolLog.Error($"\"{source}\" 的预制体上没有 {typeof(T).Name} 组件，已把对象还回池里。");
+        /// <summary>按已有 prefab 取组件。正常复用无须读取 Unity 对象的名称。</summary>
+        private static T ExtractComponent<T>(GameObject item, GameObject prefab) where T : Component
+        {
+            if (item == null)
+            {
+                return null;
+            }
+            if (item.TryGetComponent(out T component))
+            {
+                return component;
+            }
+            RevPoolLog.Error($"「{prefab.name}」的预制体上没有 {typeof(T).Name} 组件，已归还实例。");
             RevGameObjectPools.Return(item, 0);
             return null;
         }

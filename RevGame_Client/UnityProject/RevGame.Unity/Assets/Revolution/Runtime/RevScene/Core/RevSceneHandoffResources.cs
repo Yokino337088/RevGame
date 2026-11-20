@@ -45,6 +45,12 @@ namespace Revolution
                     namedCount++;
                 }
             }
+            namedCount += RevResManager.AppendScopeHolders(handle, holders);
+            if (handle.HasFlag(RevResInstanceFlag.Preloaded))
+            {
+                holders["RevResPreloader"] = 1;
+                namedCount++;
+            }
             Holders = new ReadOnlyDictionary<string, int>(holders);
             UnattributedCount = Math.Max(0, ReferenceCount - namedCount);
         }
@@ -56,6 +62,12 @@ namespace Revolution
         /// <summary>本次交接声明过的资源入口。多个入口可以引入同一个资源。</summary>
         private readonly Dictionary<(string root, string name, string introducer), bool> _requirements =
             new Dictionary<(string root, string name, string introducer), bool>();
+
+        /// <summary>本次交接持有的预热引用，与正在退出的业务域分开。</summary>
+        private List<RevResLease> _warmup;
+
+        /// <summary>清理或结案后禁止接受新的预热。</summary>
+        private bool _warmupClosed;
 
         /// <summary>交付首屏时的快照。交付前为空。</summary>
         public IReadOnlyList<RevSceneResourceSnapshot> AtReady { get; private set; }
@@ -70,6 +82,54 @@ namespace Revolution
             var key = (root, name, introducer);
             _requirements.TryGetValue(key, out bool alreadyBlocked);
             _requirements[key] = alreadyBlocked || blocksFirstFrame;
+        }
+
+        /// <summary>用真实加载器预热并自动记录来源。引用持续到清理阶段或失败结案，返回缓存状态供业务判断。</summary>
+        public async RevTask<RevResHandle> PreloadAsync<T>(string root, string name, string introducer, bool blocksFirstFrame,
+            RevResGroup group = RevResGroup.Unknown) where T : UnityEngine.Object
+        {
+            if (_warmupClosed)
+            {
+                throw new RevOperationCanceledException();
+            }
+            Require(root, name, introducer, blocksFirstFrame);
+            RevResLease lease = RevResManager.LoadOwnedAsync(root, name, typeof(T), introducer, group: group);
+            if (_warmupClosed)
+            {
+                lease.Dispose();
+                throw new RevOperationCanceledException();
+            }
+            (_warmup ??= new List<RevResLease>()).Add(lease);
+
+            // 直接看真实在途句柄。交接失败使等待方结束，旧域退出本身不改变这份持有。
+            while (!_warmupClosed && lease.Handle.IsLoading)
+            {
+                await RevTaskScheduler.NextFrame();
+            }
+            if (_warmupClosed)
+            {
+                throw new RevOperationCanceledException();
+            }
+            return lease.Handle;
+        }
+
+        /// <summary>交割清理或结案时归还预热。消费者和跨域共享资源各自的引用继续保留。</summary>
+        internal void ReleaseWarmup()
+        {
+            if (_warmupClosed)
+            {
+                return;
+            }
+            _warmupClosed = true;
+            if (_warmup != null)
+            {
+                foreach (RevResLease lease in _warmup)
+                {
+                    lease.Dispose();
+                }
+                _warmup = null;
+            }
+            RevResManager.ScheduleHandoffReclaims();
         }
 
         /// <summary>查询此交接涉及的资源目前由谁持有。每次调用返回一份独立的只读快照。</summary>

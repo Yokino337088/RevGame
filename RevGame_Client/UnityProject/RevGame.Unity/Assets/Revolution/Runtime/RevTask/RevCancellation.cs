@@ -74,6 +74,13 @@ namespace Revolution
             IsCancelled = false;
             _callbacks = null;
         }
+
+        /// <summary>会话复位时直接标记过期并解除旧业务回调。</summary>
+        internal void Abandon()
+        {
+            IsCancelled = true;
+            _callbacks = null;
+        }
     }
 
     /// <summary>取消异常（独立类型，便于和业务异常区分）</summary>

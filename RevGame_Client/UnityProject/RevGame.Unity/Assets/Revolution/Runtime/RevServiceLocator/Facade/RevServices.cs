@@ -55,14 +55,14 @@ namespace Revolution
         /// <para><typeparamref name="TService"/> 是取服务用的类型（写接口）；<typeparamref name="TImpl"/> 必须有公开无参构造
         /// （需要构造参数请用工厂重载）。容器创建的实例在 <see cref="Unregister{TService}"/> 时会被 Dispose。</para>
         /// </summary>
-        /// <param name="owner">谁注册的（可选）：传 <c>this</c>，对象销毁时 <see cref="UnregisterAllOf"/> 一行清掉它注册的全部服务</param>
+        /// <param name="owner">省略时归当前域。跨域服务传宿主对象或 <c>RevScope.GlobalOwner</c>。</param>
         /// <param name="eager">默认 false（懒创建）；true 时注册完成前即创建，适合必须抢在首个事件前订阅的服务</param>
         /// <exception cref="InvalidOperationException">这个类型已经注册过了（想换实现请先 Unregister）</exception>
         public static void Register<TService, TImpl>(object owner = null, bool eager = false)
             where TService : class
             where TImpl : class, TService, new()
         {
-            Hub.Register(typeof(TService), _ => new TImpl(), ownsInstance: true, owner: owner,
+            Hub.Register(typeof(TService), _ => new TImpl(), ownsInstance: true, owner: owner ?? RevServicesBridge.DefaultOwner?.Invoke(),
                          origin: $"Register<{typeof(TService).Name}, {typeof(TImpl).Name}>()", eager: eager);
             EnsureHooks();
         }
@@ -70,7 +70,7 @@ namespace Revolution
         /// <summary>
         /// 注册服务（已有实例）：适合宿主自己创建的对象（配置、MonoBehaviour 适配器……）。
         /// <code>RevServices.Register&lt;IConfigService&gt;(Config.Load());</code>
-        /// <para>★ 这个实例<b>由你自己负责释放</b>：注销时容器只把它从表里摘掉，不会 Dispose 它。</para>
+        /// <para>省略所有者时退域自动注销，已有实例的 Dispose 仍由提供实例的宿主负责。</para>
         /// </summary>
         public static void Register<TService>(TService instance, object owner = null) where TService : class
         {
@@ -79,7 +79,7 @@ namespace Revolution
                 throw new ArgumentNullException(nameof(instance), $"Register<{typeof(TService).Name}>(instance) 收到 null");
             }
 
-            Hub.Register(typeof(TService), _ => instance, ownsInstance: false, owner: owner,
+            Hub.Register(typeof(TService), _ => instance, ownsInstance: false, owner: owner ?? RevServicesBridge.DefaultOwner?.Invoke(),
                          origin: $"Register<{typeof(TService).Name}>(实例)");
             EnsureHooks();
         }
@@ -87,7 +87,7 @@ namespace Revolution
         /// <summary>
         /// 注册服务（工厂）：需要构造参数、或要先读配置时用它；工厂里可以取其它服务（框架会检测循环依赖）。
         /// <code>RevServices.Register&lt;ISoundService&gt;(s =&gt; new SoundService(s.GetRequired&lt;IConfigService&gt;().SoundPath));</code>
-        /// <para>容器创建的实例，注销时会被 Dispose。</para>
+        /// <para>省略所有者时归当前域，退域注销并 Dispose 容器创建的实例。</para>
         /// </summary>
         public static void Register<TService>(Func<RevIServiceLocator, TService> factory, object owner = null) where TService : class
         {
@@ -96,7 +96,7 @@ namespace Revolution
                 throw new ArgumentNullException(nameof(factory));
             }
 
-            Hub.Register(typeof(TService), services => factory(services), ownsInstance: true, owner: owner,
+            Hub.Register(typeof(TService), services => factory(services), ownsInstance: true, owner: owner ?? RevServicesBridge.DefaultOwner?.Invoke(),
                          origin: $"Register<{typeof(TService).Name}>(工厂)");
             EnsureHooks();
         }
@@ -180,6 +180,9 @@ namespace Revolution
     /// <summary>纯 C# 内核与 Unity 宿主之间的接缝（Support 层启动时装上，业务不用管）。</summary>
     internal static class RevServicesBridge
     {
+        /// <summary>由域内核提供临时服务的默认归属。独立服务容器没有域时为空。</summary>
+        internal static Func<object> DefaultOwner;
+
         /// <summary>确保每帧驱动已挂上（没有 Unity 宿主时为 null，注册照常可用，只是不会自动 Tick）。</summary>
         internal static Action EnsureInstalled;
     }

@@ -42,7 +42,7 @@ namespace Revolution
     /// <summary>具名资源加载沿用原有缓存和资源策略，只在明确需要归属的持有点建立租约。</summary>
     public static partial class RevResManager
     {
-        /// <summary>异步加载一份具名引用。返回即取得租约，应在失败、退出或完成使用时 Dispose。回调也拿到同一份租约。</summary>
+        /// <summary>异步加载一份独立具名引用。适合预加载和长寿命宿主。回调和返回值共用租约，持有方负责归还。</summary>
         public static RevResLease LoadOwnedAsync(string rootPath, string resName, Type contentType, string holder,
             Action<RevResLease> onFinished = null, RevResGroup group = RevResGroup.Unknown)
         {
@@ -52,7 +52,7 @@ namespace Revolution
             }
             if (onFinished == null)
             {
-                return OwnReference(LoadAsync(rootPath, resName, contentType, null, group), holder);
+                return OwnReference(LoadAsync(rootPath, resName, contentType, null, group, lifetime: RevResLifetime.Manual), holder);
             }
 
             // 缓存命中可能同步回调。回调内先建立租约，在途路径则先返回租约，之后的回调复用它。
@@ -61,7 +61,7 @@ namespace Revolution
             {
                 lease ??= OwnReference(completed, holder);
                 onFinished(lease);
-            }, group);
+            }, group, lifetime: RevResLifetime.Manual);
             return lease ??= OwnReference(handle, holder);
         }
 

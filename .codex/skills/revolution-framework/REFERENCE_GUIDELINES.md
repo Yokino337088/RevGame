@@ -69,6 +69,7 @@
 - [ ] 面板开关动画：自定义生命周期动画优先成对重写 `PlayOpenTransition` / `PlayCloseTransition`，传 `owner: this` 且两边结束时都调 `onDone`；不要与 `ShowAnimation` / `HideAnimation` 重复播放同一动画。
 - [ ] 打开用 `Open<T>(onOpened)` / `OpenAsync<T>`；没有在真机路径上用"同步 `Open<T>()` 并假设它会加载"。
 - [ ] 弹窗与 HUD 正确设置 `InBackStack`，互斥页设置 `ExclusiveGroup`。`KeepAlive` 面板在有效域内复用。跨域遮挡显式脱离业务域并安排关闭，退域核对实例的实际资源归还。
+- [ ] 普通资源、池、音效和服务通过有效域获得生命周期。共享服务和场景预加载有独立所有者。退出用保存的句柄完成，并核对真正归零的 AB 和下一域仍持有的资源。
 - [ ] 面板里没有跨界面复用的重逻辑（交给服务）；域内无界面业务用 `RevLogicBase`。面板没有未在 `OnReuse` 重置的缓存状态。
 - [ ] 在首次打开或预加载前选择 `CanvasOrientation`；`Auto` / `Portrait` / `Landscape` / `UseDesign` 与项目需求一致。方向配置只影响运行时根画布缩放，不冒称自动转设备方向、重排页面或适配安全区。
 - [ ] Prefab 静态预览没有被当成运行时方向验证；竖屏 Game 分辨率和根 `CanvasScaler` 设置已核对。

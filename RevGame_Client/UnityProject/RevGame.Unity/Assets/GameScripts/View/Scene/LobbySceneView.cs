@@ -103,8 +103,9 @@ namespace RevGame.View
             _preparing = true;
             try
             {
-                _materialHandle = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.Scene);
-                _controllerHandle = RevResManager.LoadAsync("Characters/Yaya", "YayaIdle24Controller", typeof(RuntimeAnimatorController), null, RevResGroup.Scene);
+                // Unity 场景视图可能先于大厅域激活，它自己持有并成对归还这两份资源。
+                _materialHandle = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
+                _controllerHandle = RevResManager.LoadAsync("Characters/Yaya", "YayaIdle24Controller", typeof(RuntimeAnimatorController), null, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
                 _atlas = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas("YayaIdle24");
                 await _atlas.WaitReadyAsync();
                 while (!_released && generation == _generation && (_materialHandle.IsLoading || _controllerHandle.IsLoading))
@@ -300,12 +301,12 @@ namespace RevGame.View
             }
             if (_materialHandle != null)
             {
-                RevResManager.Release("Material/Lobby", "MagicCottageMaterial");
+                RevResManager.Release("Material/Lobby", "MagicCottageMaterial", RevResLifetime.Manual);
                 _materialHandle = null;
             }
             if (_controllerHandle != null)
             {
-                RevResManager.Release("Characters/Yaya", "YayaIdle24Controller");
+                RevResManager.Release("Characters/Yaya", "YayaIdle24Controller", RevResLifetime.Manual);
                 _controllerHandle = null;
             }
             _atlas?.Dispose();

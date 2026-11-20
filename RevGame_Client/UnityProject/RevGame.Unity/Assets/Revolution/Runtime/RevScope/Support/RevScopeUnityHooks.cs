@@ -69,28 +69,25 @@ namespace Revolution
             return RevUIManager.Instance.RetireScopePanels(node);
         }
 
-        /// <summary>第 3 步：摘掉这个域名下的每帧回调（域自己 + 它登记过的每个对象）。</summary>
+        /// <summary>第 3 步：释放域的扩展对象、输入锁和输入订阅，停止其每帧回调。</summary>
         private static int ClearMono(RevScopeHandle node)
         {
-            return RevScopeCore.SumOwners(node, RevMono.RemoveAllOf);
+            int disposed = node.DisposeOwned();
+            int input = RevScopeCore.SumOwners(node, RevInput.RemoveScopeOwner);
+            int sounds = RevSound.StopScope(node);
+            return disposed + input + sounds + RevScopeCore.SumOwners(node, RevMono.RemoveAllOf);
         }
 
-        /// <summary>第 6 步：销毁域配置的资源分组下的所有池（先还实例，才轮到第 7 步卸资源）。</summary>
+        /// <summary>第 6 步：按域句柄销毁 GameObject 池，在归还该域资源之前销毁实例。</summary>
         private static int DestroyPools(RevScopeHandle node)
         {
-            if (node.Reclaim == RevResGroup.Unknown) { return RevScopeCore.Skipped; }
-
-            return RevPool.DestroyGroup(node.Reclaim);
+            return RevGameObjectPools.DestroyScope(node);
         }
 
-        /// <summary>第 7 步：卸载域配置的资源分组。返回值 = 资源缓存里少了多少条（作为"回收了多少"的参考）。</summary>
+        /// <summary>第 7 步：撤销本域异步回执并归还真实引用。零引用 AB 在后续帧限量卸载。</summary>
         private static int ShutdownResources(RevScopeHandle node)
         {
-            if (node.Reclaim == RevResGroup.Unknown) { return RevScopeCore.Skipped; }
-
-            int before = RevResManager.CachedCount;
-            RevResBootstrap.Instance.Shutdown(node.Reclaim);
-            return Math.Max(0, before - RevResManager.CachedCount);
+            return RevResManager.ReleaseScopeReferences(node);
         }
 
         // ============================================================

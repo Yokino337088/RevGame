@@ -526,7 +526,7 @@ namespace Revolution
         /// </summary>
         public static RevInputBlock Block(RevInputBlockKind kind = RevInputBlockKind.World,
             int pointerId = -1, object owner = null)
-            => Ensure().Block(kind, pointerId, owner);
+            => Ensure().Block(kind, pointerId, owner ?? RevScope.DefaultNode);
 
         /// <summary>解除一次屏蔽（重复调用安全）。</summary>
         public static bool Unblock(RevInputBlock handle) => Core.Unblock(handle);
@@ -553,16 +553,16 @@ namespace Revolution
 
         /// <summary>订阅"某动作按下"（记得给 owner，销毁时 <see cref="OffAllOf"/> 一行清）。</summary>
         public static bool OnPressed(string action, Action handler, object owner = null)
-            => Core.AddActionHandler(action, handler, owner, pressed: true, out _);
+            => Core.AddActionHandler(action, handler, owner ?? RevScope.DefaultNode, pressed: true, out _);
 
-        /// <summary>订阅"某动作抬起"。</summary>
+        /// <summary>订阅动作抬起。省略所有者时随当前域取消。</summary>
         public static bool OnReleased(string action, Action handler, object owner = null)
-            => Core.AddActionHandler(action, handler, owner, pressed: false, out _);
+            => Core.AddActionHandler(action, handler, owner ?? RevScope.DefaultNode, pressed: false, out _);
 
-        /// <summary>订阅某种手势（<paramref name="kind"/> 传 <see cref="RevGestureKind.None"/> = 全部手势）。</summary>
+        /// <summary>订阅手势，省略所有者时随当前域取消。None 表示监听全部手势。</summary>
         public static void OnGesture(Action<RevGestureEvent> handler,
             RevGestureKind kind = RevGestureKind.None, object owner = null)
-            => Core.AddGestureHandler(kind, handler, owner);
+            => Core.AddGestureHandler(kind, handler, owner ?? RevScope.DefaultNode);
 
         /// <summary>退订某个动作的按下/抬起回调。</summary>
         public static void OffPressed(string action, Action handler) => Core.RemoveActionHandler(action, handler, true);
@@ -572,6 +572,12 @@ namespace Revolution
 
         /// <summary>退订某个对象登记的全部内容（事件 + 屏蔽）。</summary>
         public static int OffAllOf(object owner) => Core.RemoveAllOf(owner);
+
+        /// <summary>退域只清已安装的输入模块，避免在纯逻辑域退出时启动输入宿主。</summary>
+        internal static int RemoveScopeOwner(object owner)
+        {
+            return _core?.RemoveAllOf(owner) ?? 0;
+        }
 
         /// <summary>失败事件（原因码 + 说明）。<b>框架不打日志</b>：要观测就订阅这里。</summary>
         public static Action<RevInputErrorReason, string> Failed
@@ -590,10 +596,10 @@ namespace Revolution
 
         /// <summary>
         /// 登记一个监听者：之后本模块的输入事件都会投给它。
-        /// <b>记得给 owner</b> —— 销毁时 <c>RevInput.OffAllOf(owner)</c> 一行清干净。
+        /// 省略 owner 时归当前域。显式宿主可附到域，或用 OffAllOf 提前注销。
         /// </summary>
         public static void AddListener(RevInputListener listener, object owner = null)
-            => Core.AddListener(listener, owner);
+            => Core.AddListener(listener, owner ?? RevScope.DefaultNode);
 
         /// <summary>移除一个监听者（按引用相等；重复移除安全）。</summary>
         public static bool RemoveListener(RevInputListener listener) => Core.RemoveListener(listener);
@@ -607,7 +613,7 @@ namespace Revolution
         /// 轴名与 <c>BindAxis</c> / <c>BindNamedAxis</c> 一致。
         /// </summary>
         public static bool OnAxis(string axis, Action<float> handler, object owner = null)
-            => Core.AddAxisHandler(axis, handler, owner);
+            => Core.AddAxisHandler(axis, handler, owner ?? RevScope.DefaultNode);
 
         /// <summary>退订轴变化（<paramref name="handler"/> 传 null = 退掉该轴的全部订阅）。</summary>
         public static bool OffAxis(string axis, Action<float> handler) => Core.RemoveAxisHandler(axis, handler);
@@ -617,7 +623,7 @@ namespace Revolution
         /// 用它可以彻底摆脱 <c>Update</c>：按住连发由框架按节拍推给你。
         /// </summary>
         public static bool OnRepeat(string action, Action handler, object owner = null)
-            => Core.AddRepeatHandler(action, handler, owner);
+            => Core.AddRepeatHandler(action, handler, owner ?? RevScope.DefaultNode);
 
         /// <summary>退订连发（<paramref name="handler"/> 传 null = 退掉该动作的全部连发订阅）。</summary>
         public static bool OffRepeat(string action, Action handler) => Core.RemoveRepeatHandler(action, handler);

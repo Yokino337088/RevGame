@@ -24,7 +24,8 @@ namespace RevGame.UI
             Unlocked = unlocked;
             if (unlocked)
             {
-                _handle = RevResManager.LoadAsync(_root, AssetName, typeof(YayaMemoryPageArt), null, RevResGroup.UI);
+                // 插画跟随这一页的临时持有，翻页时提前归还。
+                _handle = RevResManager.LoadAsync(_root, AssetName, typeof(YayaMemoryPageArt), null, RevResGroup.UI, lifetime: RevResLifetime.Manual);
                 _deadline = Time.realtimeSinceStartup + 10f;
             }
         }
@@ -86,7 +87,7 @@ namespace RevGame.UI
             ReleaseImage();
             if (_handle != null)
             {
-                RevResManager.Release(_root, AssetName);
+                RevResManager.Release(_root, AssetName, RevResLifetime.Manual);
                 _handle = null;
             }
         }

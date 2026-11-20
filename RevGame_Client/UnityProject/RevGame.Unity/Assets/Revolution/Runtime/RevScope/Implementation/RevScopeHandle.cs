@@ -34,6 +34,109 @@ namespace Revolution
 
         private readonly RevScopeCore _core;
 
+        /// <summary>有异步消费者时才分配的域令牌。</summary>
+        private RevCancellationToken _lifetime;
+
+        /// <summary>业务扩展交给域的可释放对象。按注册逆序归还。</summary>
+        private List<IDisposable> _owned;
+
+        /// <summary>长期异步流程可等待或检查本令牌。关闭域门时取消，与域同寿命。</summary>
+        public RevCancellationToken Cancellation
+        {
+            get
+            {
+                if (_lifetime == null)
+                {
+                    _lifetime = new RevCancellationToken();
+                    if (!IsOpen)
+                    {
+                        _lifetime.Cancel();
+                    }
+                }
+                return _lifetime;
+            }
+        }
+
+        /// <summary>把业务自己的可释放对象交给当前句柄。重复登记同一对象无效，已退出时立即归还。</summary>
+        public T Own<T>(T value) where T : class, IDisposable
+        {
+            if (value == null)
+            {
+                return null;
+            }
+            if (!IsOpen)
+            {
+                value.Dispose();
+                return value;
+            }
+            _owned ??= new List<IDisposable>();
+            foreach (IDisposable item in _owned)
+            {
+                if (ReferenceEquals(item, value))
+                {
+                    return value;
+                }
+            }
+            _owned.Add(value);
+            return value;
+        }
+
+        /// <summary>移除登记，把释放责任交还调用者。适合需要提前处置或显式转移的对象。</summary>
+        public bool Disown(IDisposable value)
+        {
+            if (_owned == null)
+            {
+                return false;
+            }
+            for (int i = _owned.Count - 1; i >= 0; i--)
+            {
+                if (ReferenceEquals(_owned[i], value))
+                {
+                    _owned.RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>域门关闭时通知已登记的异步工作撤销，不会为未使用令牌的域额外分配。</summary>
+        internal void CancelLifetime()
+        {
+            _lifetime?.Cancel();
+        }
+
+        /// <summary>释放扩展对象，单个对象收尾失败不阻断其它引用归还。</summary>
+        internal int DisposeOwned()
+        {
+            List<IDisposable> snapshot = _owned;
+            _owned = null;
+            if (snapshot == null)
+            {
+                return 0;
+            }
+            int disposed = 0;
+            for (int i = snapshot.Count - 1; i >= 0; i--)
+            {
+                try
+                {
+                    snapshot[i].Dispose();
+                    disposed++;
+                }
+                catch (Exception error)
+                {
+                    RevLog.Exception(error, "域扩展对象释放失败：" + Name, "Scope");
+                }
+            }
+            return disposed;
+        }
+
+        /// <summary>Play 静态复位时让旧令牌过期，避免触发已经销毁的业务回调。</summary>
+        internal void ForgetLifetime()
+        {
+            _lifetime?.Abandon();
+            _owned = null;
+        }
+
         /// <summary>
         /// 本域的每帧开关（给 RevMono 热路径直接读的字段，故意不用属性）。
         /// ★ 只影响"归本域兜底"的每帧回调与 RevLogic.OnTick；不影响计时器（计时器是"时间"，不是"帧回调"）。
@@ -55,7 +158,7 @@ namespace Revolution
         /// <summary>域名。</summary>
         public string Name { get; }
 
-        /// <summary>关闭时要整组回收的资源分组（Unknown = 不按组回收）。</summary>
+        /// <summary>业务设定的默认资源分类，Unknown 表示没有设置。</summary>
         public RevResGroup Reclaim { get; }
 
         /// <summary>当前状态。</summary>

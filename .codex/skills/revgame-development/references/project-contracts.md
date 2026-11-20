@@ -20,6 +20,7 @@
 
 - `GameFlow` 持有各屏的域句柄，场景交割时退出旧域。旧域的活动面板、退场中的面板和空闲缓存同步归还租约，PvP 立绘在面板 `OnClose` 归还。显式解绑的过场遮挡跟随交割流程，流程关窗后销毁。
 - 采用 [域内面板缓存](../../revolution-framework/references/large-ui.md#域内面板缓存) 的额度和诊断。开发态 `pvp.ui-cache-check` 可用真实 AB 执行每批 1 至 5 轮大厅进出，并用 `boundaries: true` 加验异域、退场动画和低内存。验收核对 `ui.cache-state`、专用包卸载、共享图集和大厅实际显示。
+- 通用资源、对象池与输入按 [域所有权和自动回收](../../revolution-framework/references/domain-lifetime.md) 接入。过场清单由交接预热，切换到目标域后才预建对象。Bootstrap、场景 Awake 中可能跨交割的资源和长寿命服务保留显式宿主。开发态 `game.scope-check` 用真实 AB 覆盖迟到回调、同名重入、跨域池、音效、输入和预热失败清理，并用 `scope.state` 查询实际回收。
 
 ## 条件分支排版（2026-10-30用户要求）
 

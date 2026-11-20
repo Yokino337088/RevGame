@@ -247,11 +247,21 @@ namespace Revolution
         /// </summary>
         public static void Tick(float deltaTime) => Core.TickManual(deltaTime);
 
-        /// <summary>内核实例（高级用法：想自己 new 一个独立内核时用；日常直接用上面的静态门面）</summary>
-        public static RevSoundCore Core { get; } = new RevSoundCore();
+        /// <summary>已经建好的门面内核。没有用过音效时退域不会为清理创建声音宿主。</summary>
+        private static RevSoundCore _core;
 
+        /// <summary>取门面的音效内核，首次实际使用时创建。</summary>
+        public static RevSoundCore Core => _core ??= new RevSoundCore();
+
+        /// <summary>停止指定域的音效并归还只供该域使用的片段。</summary>
+        internal static int StopScope(RevScopeHandle scope)
+        {
+            return _core?.StopScope(scope) ?? 0;
+        }
+
+        /// <summary>退出上一次 Play 时清理已存在的声音实例。</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetForNewSession() => Core.ResetForNewSession();
+        private static void ResetForNewSession() => _core?.ResetForNewSession();
 
         // ============================================================
         // 作用域（切界面 / 一局战斗：退出时把这一块播的声音全停掉）

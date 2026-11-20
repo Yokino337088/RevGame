@@ -186,7 +186,7 @@ namespace Revolution
             {
                 var table = new T();
                 string name = table.TableName;
-                handle = RevResManager.Load(table.ResourceRoot, table.ResourceName, typeof(TextAsset), group);
+                handle = RevResManager.Load(table.ResourceRoot, table.ResourceName, typeof(TextAsset), group, RevResLifetime.Manual);
                 if (!ReadText(table, handle) || generation != _generation) { return null; }
                 Register(table, handle, name);
                 transferred = true;
@@ -263,7 +263,7 @@ namespace Revolution
                         if (!transferred) { currentRequest.Release(); }
                         if (IsCurrent<T>(currentRequest)) { _loading.Remove(typeof(T)); }
                     }
-                }, group, priority);
+                }, group, priority, RevResLifetime.Manual);
                 // 缓存命中可能同步回调；不要覆盖回调已登记的句柄或重复归还。
                 if (request.Handle == null) { request.Handle = returned; }
                 if (generation != _generation) { request.Release(); }

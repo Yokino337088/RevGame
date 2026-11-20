@@ -9,12 +9,11 @@
 //   ③ 关一个域要做什么？     → 9 个回收步骤，顺序钉死（见 RevScopeStep），每一步独立 try-catch。
 //
 // 【★ 为什么"没写 owner 的注册"能自动归域，还不用记账？】
-//   各模块的门面（RevTimer / RevMono / RevEvent / RevResManager）在"调用方没写 owner / group"时，
-//   会来问一句：RevScope.DefaultNode / DefaultGroup 是什么？
+//   计时器等模块填写默认 owner，资源记录每个缓存代次在域内的引用数。
 //     · 没有任何域开着 → 答案是 null / Unknown → 模块的行为和没有作用域系统时**逐字一致**（零破坏的根基）；
 //     · 有域开着     → 答案是那个域 → 模块把这个域当成 owner 填进去。
 //   域关闭时，只要对"域自己"调一遍 CancelAllOf / RemoveAllByOwner / RemoveAllOf，没主人的注册就全清了。
-//   整个过程每次注册只多读一个静态字段，没有任何额外记账 —— 所以没有额外 GC。
+//   模块复用自己的索引，资源按路径代次聚合，热命中不会新建单次引用对象。
 //
 // 【★ 关闭期间为什么 DefaultNode 要指向"上一层"】
 //   关域的过程中，业务的收尾代码还在跑（RevLogic.OnStop、面板的 OnClose……），它们可能顺手打开结算面板、
@@ -56,6 +55,22 @@ namespace Revolution
         /// <summary>★ 没写资源分组时的兜底分组（跟随 DefaultNode；没有域时为 Unknown）。</summary>
         internal RevResGroup DefaultGroup;
 
+        /// <summary>同步回调声明的发起域，只在该次回调栈上存在。</summary>
+        private RevScopeHandle _callbackOwner;
+
+        /// <summary>进入回调时的实际栈顶。回调显式切换域时采用新的栈顶归属。</summary>
+        private RevScopeHandle _callbackTop;
+
+        /// <summary>进行中的嵌套退域次数，用于在引用归零时识别有界回收窗口。</summary>
+        private int _closingCount;
+
+        /// <summary>当前是否正在执行至少一个退域。主线程资源归零时读取。</summary>
+        internal bool IsClosing => _closingCount != 0;
+
+        /// <summary>默认续体归回其来源域。回调期间显式发生场景交割时按实际新域登记。</summary>
+        internal RevScopeHandle EffectiveOwner => _callbackOwner?.IsOpen == true && ReferenceEquals(Top, _callbackTop)
+            ? _callbackOwner : DefaultNode;
+
         /// <summary>最近一次关域的报告。</summary>
         internal RevScopeCloseReport LastCloseReport;
 
@@ -69,6 +84,30 @@ namespace Revolution
 
         internal int Depth => _stack.Count;
 
+        /// <summary>仅在诊断被查询时复制域栈，避免运行期遍历。</summary>
+        internal RevScopeHandle[] SnapshotScopes()
+        {
+            return _stack.ToArray();
+        }
+
+        /// <summary>在同步回调内临时继承起始域。使用实际句柄隔离同名域，嵌套回调结束后恢复原上下文。</summary>
+        internal void RunOwnedCallback<T>(RevScopeHandle scope, Action<T> callback, T value)
+        {
+            RevScopeHandle previousOwner = _callbackOwner;
+            RevScopeHandle previousTop = _callbackTop;
+            _callbackOwner = scope;
+            _callbackTop = Top;
+            try
+            {
+                callback(value);
+            }
+            finally
+            {
+                _callbackTop = previousTop;
+                _callbackOwner = previousOwner;
+            }
+        }
+
         // ==================== 步骤安装 ====================
 
         /// <summary>
@@ -77,6 +116,7 @@ namespace Revolution
         /// </summary>
         internal void InstallPureSteps()
         {
+            RevServicesBridge.DefaultOwner = () => EffectiveOwner;
             _steps[(int)RevScopeStep.Logic] = node => Logics.StopAllOf(node);
             _steps[(int)RevScopeStep.Timer] = node => SumOwners(node, RevTimer.CancelAllOf);
             _steps[(int)RevScopeStep.Event] = node => SumOwners(node, RevEvent.RemoveAllByOwner);
@@ -213,7 +253,7 @@ namespace Revolution
         /// <summary>登记到当前"默认域"；没有域就什么也不做（给界面系统这类"有域才登记"的调用方用）。</summary>
         internal void AttachSilently(object owner)
         {
-            RevScopeHandle node = DefaultNode;
+            RevScopeHandle node = EffectiveOwner;
             if (node != null) { AttachTo(node, owner); }
         }
 
@@ -313,10 +353,27 @@ namespace Revolution
 
         // ==================== ★ 关闭一个域：9 个回收步骤 ====================
 
+        /// <summary>对一个开放域执行同步收尾，并在重入或异常后恢复退域深度。</summary>
         private int CloseNode(RevScopeHandle node)
         {
-            if (node.State != RevScopeState.Open) { return 0; }
+            if (node.State != RevScopeState.Open)
+            {
+                return 0;
+            }
+            _closingCount++;
+            try
+            {
+                return CloseOpenNode(node);
+            }
+            finally
+            {
+                _closingCount--;
+            }
+        }
 
+        /// <summary>封住旧域入口，按依赖顺序收尾并冻结本次结果。</summary>
+        private int CloseOpenNode(RevScopeHandle node)
+        {
             long startTicks = Stopwatch.GetTimestamp();
             RevScopeStepResult[] results = new RevScopeStepResult[RevScopeLimits.StepCount];
             int total = 0;
@@ -327,6 +384,7 @@ namespace Revolution
             // 从这一刻起，收尾代码里新开的东西不再算在这个正在死掉的域头上。
             node.State = RevScopeState.Closing;
             Refresh();
+            node.CancelLifetime();
             results[(int)RevScopeStep.Gate] = new RevScopeStepResult(RevScopeStep.Gate, 0, 0f, true, "标记关闭中，不再接新东西", null);
 
             // ---- 步骤 1~8：★ 顺序钉死，谁依赖谁，谁后关 ----
@@ -359,6 +417,7 @@ namespace Revolution
             RevScopeCloseReport report = new RevScopeCloseReport
             {
                 Domain = node.Name,
+                EnteredTicks = node.EnteredTicks,
                 ElapsedMs = elapsedMs,
                 Steps = results,
                 TotalReclaimed = total,
@@ -391,10 +450,7 @@ namespace Revolution
 
                 if (count == Skipped)
                 {
-                    string note = step == RevScopeStep.Pool || step == RevScopeStep.Res
-                        ? "这个域没配置回收分组（Reclaim = Unknown），不按组回收"
-                        : "本步不适用";
-                    return new RevScopeStepResult(step, 0, ms, true, note, null);
+                    return new RevScopeStepResult(step, 0, ms, true, "本步不适用", null);
                 }
 
                 return new RevScopeStepResult(step, count, ms, false, null, null);
@@ -502,6 +558,7 @@ namespace Revolution
             {
                 RevScopeHandle node = _stack[i];
                 node.State = RevScopeState.Closed;
+                node.ForgetLifetime();
                 node.Owners.Clear();
                 node.Logics.Clear();
                 node.Tickers.Clear();
@@ -552,7 +609,7 @@ namespace Revolution
                 double age = (Stopwatch.GetTimestamp() - node.EnteredTicks) / (double)Stopwatch.Frequency;
 
                 sb.Append(branch).Append(node.Name).Append("  [").Append(node.State).Append("]  进入于 ").Append(age.ToString("F1"))
-                  .Append(" s 前  回收分组: ").Append(node.Reclaim == RevResGroup.Unknown ? "—" : node.Reclaim.ToString())
+                  .Append(" s 前  默认分组: ").Append(node.Reclaim == RevResGroup.Unknown ? "—" : node.Reclaim.ToString())
                   .Append("  每帧: ").Append(node.TickOn ? "开" : "★暂停")
                   .Append("  兜底归属: ").Append(node.TakeOverOwner ? "开" : "关").Append('\n');
 

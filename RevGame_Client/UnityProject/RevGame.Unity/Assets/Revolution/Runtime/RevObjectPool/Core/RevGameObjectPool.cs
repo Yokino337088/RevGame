@@ -41,11 +41,12 @@ namespace Revolution
         /// <summary>对象池自己持有的 prefab 引用，用于归还资源并报告持有归属。</summary>
         private RevResLease _prefabLease;
 
-        /// <summary>创建一条池，接管创建方为池取得的 prefab 引用；外部 prefab 建池时无资源租约。</summary>
+        /// <summary>在指定域中创建池并接管独立 prefab 引用。场景关闭时通过该域收回整条池。</summary>
         internal RevGameObjectPool(int poolId, string rootPath, string resName, RevResGroup group,
-            GameObject prefab, RevResHandle handle)
+            GameObject prefab, RevResHandle handle, RevScopeHandle scope)
         {
             PoolId = poolId;
+            Scope = scope;
             PathKey = RevResPathUtil.IsValidResName(resName) ? RevResPathUtil.ComputeKey(rootPath, resName) : 0UL;
             Path = RevResPathUtil.IsValidResName(resName) ? RevResPathUtil.Join(rootPath, resName) : null;
             Group = ResolveGroup(group, handle);
@@ -69,6 +70,9 @@ namespace Revolution
         // ==================== 身份与资源 ====================
 
         internal int PoolId { get; }
+
+        /// <summary>池所属的有效域。全局池为空，寿命由宿主管理。</summary>
+        internal RevScopeHandle Scope { get; }
 
         /// <summary>
         /// 池的键 = "根目录 + 资源名"算出来的哈希（与资源系统的缓存键同源）。

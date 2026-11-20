@@ -159,6 +159,7 @@ namespace RevGame.View
             }
             int generation = ++_helperVisualGeneration;
             string name = "HelperChapter" + chapter.ToString("00");
+            // 辅助材质跟随棋盘代次，替换或销毁视图时主动归还。
             RevResManager.LoadAsync<Material>("Material/Helper", name, mat =>
             {
                 if (!_released && generation == _helperVisualGeneration)
@@ -172,7 +173,7 @@ namespace RevGame.View
                     }
                 }
 
-            }, RevResGroup.Battle);
+            }, RevResGroup.Battle, lifetime: RevResLifetime.Manual);
             RevResManager.LoadAsync<Material>("Material/Helper", "HelperBlueBeam", mat =>
             {
                 if (!_released && generation == _helperVisualGeneration)
@@ -186,7 +187,7 @@ namespace RevGame.View
                     }
                 }
 
-            }, RevResGroup.Battle);
+            }, RevResGroup.Battle, lifetime: RevResLifetime.Manual);
         }
         private void OnHelperShot(HelperShotInfo info)
         {
@@ -244,8 +245,8 @@ namespace RevGame.View
         {
             if (_helperVisualChapter > 0)
             {
-                RevResManager.Release("Material/Helper", "HelperChapter" + _helperVisualChapter.ToString("00"));
-                RevResManager.Release("Material/Helper", "HelperBlueBeam");
+                RevResManager.Release("Material/Helper", "HelperChapter" + _helperVisualChapter.ToString("00"), RevResLifetime.Manual);
+                RevResManager.Release("Material/Helper", "HelperBlueBeam", RevResLifetime.Manual);
             }
             _helperVisualGeneration++;
             _helperVisualChapter = 0;

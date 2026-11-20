@@ -38,7 +38,7 @@ namespace Revolution
                 return null;
             }
 
-            RevResHandle handle = RevResManager.Load(rootPath, resName, typeof(T), group);
+            RevResHandle handle = RevResManager.Load(rootPath, resName, typeof(T), group, RevResLifetime.Manual);
             if (handle != null && handle.Key != 0) _handles.Add(handle);
             return handle?.Content as T;
         }

@@ -106,31 +106,39 @@ namespace Revolution
         // ==================== 同步加载 ====================
 
         /// <summary>
-        /// 业务最常用的入口：直接拿资源对象。
+        /// 直接取得资源对象。引用默认归当前域，长期持有者可显式选择 Manual。
         /// 例：Sprite icon = RevResManager.Load&lt;Sprite&gt;(RevResPath.UI_Icon, "Hero_1001", RevResGroup.UI);
         /// 注意：失败时返回 null；要拿失败原因请用 LoadHandle&lt;T&gt;（或下面返回 RevResHandle 的重载）。
         /// </summary>
-        public static T Load<T>(string rootPath, string resName, RevResGroup group = RevResGroup.Unknown)
+        public static T Load<T>(string rootPath, string resName, RevResGroup group = RevResGroup.Unknown, RevResLifetime lifetime = RevResLifetime.Automatic)
             where T : UnityEngine.Object
         {
-            return Load(rootPath, resName, typeof(T), group).Content as T;
+            return Load(rootPath, resName, typeof(T), group, lifetime).Content as T;
         }
 
         /// <summary>
-        /// 同步加载并拿到完整句柄（泛型版）—— 和 Load&lt;T&gt; 一样不写 typeof，但能看失败原因：
+        /// 同步取得资源句柄和一份引用。默认由有效域归还，失败原因可从句柄读取。
         ///
         ///     RevResHandle h = RevResManager.LoadHandle&lt;Sprite&gt;(RevResPath.UI_Icon, "Hero_1001", RevResGroup.UI);
         ///     if (!h.IsLoaded) Debug.LogError($"失败：{h.ErrorReason}");
         /// </summary>
-        public static RevResHandle LoadHandle<T>(string rootPath, string resName, RevResGroup group = RevResGroup.Unknown)
+        public static RevResHandle LoadHandle<T>(string rootPath, string resName, RevResGroup group = RevResGroup.Unknown, RevResLifetime lifetime = RevResLifetime.Automatic)
             where T : UnityEngine.Object
-            => Load(rootPath, resName, typeof(T), group);
+            => Load(rootPath, resName, typeof(T), group, lifetime);
 
         /// <summary>
-        /// 同步加载（两个参数版，业务入口）。
-        /// 缓存命中时**不拼字符串**：直接用两段算出的键查表（热路径零分配）。
+        /// 同步加载并登记本次持有。缓存和域账本已有该资源时，不构造路径字符串或单次引用对象。
         /// </summary>
-        public static RevResHandle Load(string rootPath, string resName, Type contentType, RevResGroup group = RevResGroup.Unknown)
+        public static RevResHandle Load(string rootPath, string resName, Type contentType, RevResGroup group = RevResGroup.Unknown, RevResLifetime lifetime = RevResLifetime.Automatic)
+        {
+            RevScopeHandle scope = ResourceScope(lifetime);
+            RevResHandle handle = LoadCore(rootPath, resName, contentType, group);
+            TrackScopeReference(scope, handle);
+            return handle;
+        }
+
+        /// <summary>完成实际加载或缓存命中。引用归属由公开入口登记。</summary>
+        private static RevResHandle LoadCore(string rootPath, string resName, Type contentType, RevResGroup group)
         {
             if (!RevResPathUtil.IsValidResName(resName)) return RevResHandle.Empty;
 
@@ -289,16 +297,23 @@ namespace Revolution
         // ==================== 异步加载 ====================
 
         /// <summary>
-        /// 异步加载（两个参数版，业务入口）。
-        /// 缓存已就绪时立即回调，且**不拼字符串**。
+        /// 异步加载。有效域关闭时撤销它的回调和引用，共享读取继续服务其它请求。
+        /// 缓存命中时，在调用同步回调前完成归属登记。
         /// </summary>
         public static RevResHandle LoadAsync(string rootPath, string resName, Type contentType,
             Action<RevResHandle> onFinished, RevResGroup group = RevResGroup.Unknown,
-            RevResLoadPriority priority = RevResLoadPriority.Normal)
+            RevResLoadPriority priority = RevResLoadPriority.Normal, RevResLifetime lifetime = RevResLifetime.Automatic)
+        {
+            return LoadInScope(rootPath, resName, contentType, onFinished, group, priority, ResourceScope(lifetime));
+        }
+
+        /// <summary>在模块已经解析好的域下取得引用。使对象池冷开与缓存命中使用相同的归属规则。</summary>
+        internal static RevResHandle LoadInScope(string rootPath, string resName, Type contentType,
+            Action<RevResHandle> onFinished, RevResGroup group, RevResLoadPriority priority, RevScopeHandle scope)
         {
             if (!RevResPathUtil.IsValidResName(resName))
             {
-                InvokeFinished(onFinished, RevResHandle.Empty);
+                InvokeFinished(onFinished, RevResHandle.Empty, scope);
                 return RevResHandle.Empty;
             }
 
@@ -310,7 +325,7 @@ namespace Revolution
                 if (!CanSatisfyType(ready, contentType))
                 {
                     RevResHandle mismatch = CreateTypeMismatchHandle(ready.StandardPath, contentType, ready.ContentType);
-                    InvokeFinished(onFinished, mismatch);
+                    InvokeFinished(onFinished, mismatch, scope);
                     return mismatch;
                 }
 
@@ -319,12 +334,23 @@ namespace Revolution
                 _unused.Remove(key);
                 ready.Touch();
                 AssignGroup(ready, group);
-                InvokeFinished(onFinished, ready);
+                TrackScopeReference(scope, ready);
+                InvokeFinished(onFinished, ready, scope);
                 return ready;
             }
 
-            // ② 其余情况交给"路径版"（要登记句柄、要拼路径查映射表）
-            return LoadAsyncByPath(RevResPathUtil.Join(rootPath, resName), contentType, onFinished, group, priority);
+            // 只有可能跨帧且存在业务回调的域请求需要回执对象，热命中不会为回调额外分配。
+            string path = RevResPathUtil.Join(rootPath, resName);
+            if (scope == null || onFinished == null)
+            {
+                RevResHandle handle = LoadAsyncByPath(path, contentType, onFinished, group, priority);
+                TrackScopeReference(scope, handle);
+                return handle;
+            }
+            var request = new ScopedLoadCallback(scope, onFinished);
+            RevResHandle result = LoadAsyncByPath(path, contentType, request.Finish, group, priority);
+            request.Register(result);
+            return result;
         }
 
         /// <summary>按完整逻辑路径异步加载（框架内部）。</summary>
@@ -429,7 +455,7 @@ namespace Revolution
         }
 
         /// <summary>
-        /// 异步加载（泛型版，推荐）—— 不必再手写 typeof(T)：
+        /// 异步加载（泛型版）。调用域结束时撤销回调，跨域持有使用显式租约。
         ///
         ///     RevResManager.LoadAsync&lt;Sprite&gt;(RevResPath.UI_Icon, "Hero_1001", sprite =&gt;
         ///     {
@@ -442,11 +468,12 @@ namespace Revolution
         ///   这类细节时，用返回 RevResHandle 的重载拿完整句柄。
         /// </summary>
         public static RevResHandle LoadAsync<T>(string rootPath, string resName, Action<T> onFinished,
-            RevResGroup group = RevResGroup.Unknown, RevResLoadPriority priority = RevResLoadPriority.Normal)
+            RevResGroup group = RevResGroup.Unknown, RevResLoadPriority priority = RevResLoadPriority.Normal,
+            RevResLifetime lifetime = RevResLifetime.Automatic)
             where T : UnityEngine.Object
         {
             return LoadAsync(rootPath, resName, typeof(T),
-                handle => onFinished?.Invoke(handle.Content as T), group, priority);
+                onFinished == null ? null : handle => onFinished(handle.Content as T), group, priority, lifetime);
         }
 
         /// <summary>
@@ -508,6 +535,7 @@ namespace Revolution
             callbacks.Add(callback);
         }
 
+        /// <summary>结束共享读包，提交等待回收的零引用代次，逐个分发仍有效的请求。</summary>
         private static void CompleteAsync(RevResHandle handle)
         {
             if (handle == null || handle.Key == 0) return;
@@ -525,21 +553,40 @@ namespace Revolution
                 _unused[handle.Key] = handle;
             }
 
+            EnqueueCompletedScopeReclaim(handle);
             if (!_pendingAsyncCallbacks.TryGetValue(handle, out List<Action<RevResHandle>> callbacks)) return;
             _pendingAsyncCallbacks.Remove(handle);
             for (int i = 0; i < callbacks.Count; i++) InvokeFinished(callbacks[i], handle);
         }
 
-        private static void InvokeFinished(Action<RevResHandle> callback, RevResHandle handle)
+        /// <summary>向有效的消费者交付结果。域回执临时继承原所有者，异常不影响其它请求。</summary>
+        private static void InvokeFinished(Action<RevResHandle> callback, RevResHandle handle, RevScopeHandle scope = null)
         {
-            if (callback == null) return;
-            try { callback(handle); }
-            catch (Exception e) { RevLog.Exception(e, "资源加载完成回调异常", "Res"); }
+            if (callback == null || (scope != null && !scope.IsOpen))
+            {
+                return;
+            }
+            try
+            {
+                if (scope == null)
+                {
+                    callback(handle);
+                }
+                else
+                {
+                    RevScope.Core.RunOwnedCallback(scope, callback, handle);
+                }
+            }
+            catch (Exception e)
+            {
+                RevLog.Exception(e, "资源加载完成回调异常", "Res");
+            }
         }
 
         // ==================== 引用计数 ====================
 
-        public static void AddRef(ulong key)
+        /// <summary>给已有缓存增加一份引用，默认登记到当前域。</summary>
+        public static void AddRef(ulong key, RevResLifetime lifetime = RevResLifetime.Automatic)
         {
             if (_cache.TryGetValue(key, out RevResHandle h))
             {
@@ -547,6 +594,7 @@ namespace Revolution
                 h.RemoveFlag(RevResInstanceFlag.MarkedUnused);
                 _unused.Remove(key);
                 h.Touch();
+                TrackScopeReference(ResourceScope(lifetime), h);
             }
         }
 
@@ -560,41 +608,75 @@ namespace Revolution
             return _cache.TryGetValue(owner.Key, out RevResHandle current) && ReferenceEquals(current, owner);
         }
 
+        /// <summary>归还已明确由调用者持有的原始引用。按缓存代次检查，旧句柄不影响新缓存。</summary>
         internal static bool DecRef(RevResHandle handle, bool removeWhenZero = true)
         {
-            if (!IsCurrent(handle)) { return false; }
+            if (!IsCurrent(handle) || !ReleaseManualReference(handle.ReferenceOwner ?? handle, removeWhenZero))
+            {
+                return false;
+            }
             if (handle.ReferenceOwner != null)
             {
                 handle.ReferenceReleased = true;
                 handle.RefCount = 0;
-                DecRef(handle.ReferenceOwner.Key, removeWhenZero);
             }
-            else { DecRef(handle.Key, removeWhenZero); }
             return true;
         }
 
-        public static void DecRef(ulong key, bool removeWhenZero = true)
+        /// <summary>提前归还当前域的一份同路径引用。没有匹配归属时，只能归还普通手动引用。</summary>
+        public static void DecRef(ulong key, bool removeWhenZero = true, RevResLifetime lifetime = RevResLifetime.Automatic)
         {
-            if (!_cache.TryGetValue(key, out RevResHandle h)) return;
-            if (h.RefCount <= 0)
+            if (!_cache.TryGetValue(key, out RevResHandle handle))
             {
-                RevLog.Warn($"资源句柄重复 Release：{h.StandardPath}（RefCount 已为 0）", "Res");
                 return;
             }
-
-            if (--h.RefCount <= 0 && removeWhenZero)
+            if (!ReleaseScopeReference(ResourceScope(lifetime), handle, removeWhenZero) &&
+                !ReleaseManualReference(handle, removeWhenZero))
             {
-                h.AddFlag(RevResInstanceFlag.MarkedUnused);
-                h.UnusedTime = Time.realtimeSinceStartup;   // 记录"归零时刻"，供冷却期判断
-                _unused[key] = h;               // 延迟释放：先进未使用表
+                RevLog.Warn($"没有可手动归还的引用：{handle.StandardPath}。请核对当前域或使用原租约。", "Res");
             }
         }
 
-        /// <summary>按"根目录 + 资源名"释放（业务更常用）</summary>
-        public static void Release(string rootPath, string resName)
+        /// <summary>普通归还只消耗未被域、具名租约或预加载登记的计数。</summary>
+        private static bool ReleaseManualReference(RevResHandle handle, bool removeWhenZero)
         {
-            if (!RevResPathUtil.IsValidResName(resName)) return;
-            DecRef(RevResPathUtil.ComputeKey(rootPath, resName));
+            int reserved = handle.ScopeReferences + (handle.NamedLeases?.Count ?? 0);
+            if (handle.HasFlag(RevResInstanceFlag.Preloaded))
+            {
+                reserved++;
+            }
+            if (handle.RefCount <= reserved)
+            {
+                return false;
+            }
+            ReleaseReferences(handle, 1, removeWhenZero);
+            return true;
+        }
+
+        /// <summary>归还已经核实所有权的计数。退域归零的资源交给有预算的主线程回收。</summary>
+        private static void ReleaseReferences(RevResHandle handle, int count, bool removeWhenZero)
+        {
+            handle.RefCount -= count;
+            if (handle.RefCount != 0 || !removeWhenZero)
+            {
+                return;
+            }
+            handle.AddFlag(RevResInstanceFlag.MarkedUnused);
+            handle.UnusedTime = Time.realtimeSinceStartup;
+            _unused[handle.Key] = handle;
+            if (RevScope.Core.IsClosing)
+            {
+                ScheduleScopeReclaim(handle);
+            }
+        }
+
+        /// <summary>按逻辑路径提前归还。跨域的持有方使用原具名租约，或显式归还手动引用。</summary>
+        public static void Release(string rootPath, string resName, RevResLifetime lifetime = RevResLifetime.Automatic)
+        {
+            if (RevResPathUtil.IsValidResName(resName))
+            {
+                DecRef(RevResPathUtil.ComputeKey(rootPath, resName), lifetime: lifetime);
+            }
         }
 
         /// <summary>
@@ -625,7 +707,7 @@ namespace Revolution
             }
             for (int i = 0; i < removeUnused.Count; i++) _unused.Remove(removeUnused[i]);
 
-            Resources.UnloadUnusedAssets();
+            SweepNativeAssets(requested: true);
         }
 
         // ==================== 分组卸载 ====================
@@ -671,7 +753,7 @@ namespace Revolution
                 _unused.Remove(k);
             }
 
-            Resources.UnloadUnusedAssets();
+            SweepNativeAssets(requested: true);
         }
 
         // ==================== 资源域 ====================
@@ -754,7 +836,7 @@ namespace Revolution
                 if (!_cache.TryGetValue(k, out RevResHandle h)) continue;
 
                 h.RemoveFlag(RevResInstanceFlag.Preloaded);
-                DecRef(k);          // 还掉"预加载"那份引用（归零则进未使用表）
+                DecRef(k, lifetime: RevResLifetime.Manual);
             }
         }
 
@@ -785,9 +867,10 @@ namespace Revolution
         {
             foreach (var kv in _cache) ReleaseBundleOf(kv.Value);
 
+            ResetScopeReclaims();
             _cache.Clear();
             _unused.Clear();
-            Resources.UnloadUnusedAssets();
+            SweepNativeAssets(requested: true);
         }
 
         /// <summary>快照：所有缓存的句柄（自动卸载做 LRU 排序用；不要在遍历中改动它）</summary>

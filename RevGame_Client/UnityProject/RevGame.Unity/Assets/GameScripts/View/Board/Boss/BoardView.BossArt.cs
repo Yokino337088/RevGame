@@ -90,7 +90,8 @@ namespace RevGame.View
                         return;
                     }
                     requested = true;
-                    RevResHandle handle = RevResManager.LoadAsync(BossArtRoot, name, typeof(BossChapterArtConfig), null, RevResGroup.Scene);
+                    // 立绘配置由视图按章替换，释放时以本次装配代次为准。
+                    RevResHandle handle = RevResManager.LoadAsync(BossArtRoot, name, typeof(BossChapterArtConfig), null, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
                     float deadline = Time.realtimeSinceStartup + 30f;
                     while (handle.IsLoading && !_released && version == _bossArtVersion)
                     {
@@ -149,7 +150,7 @@ namespace RevGame.View
 
                 if (oldName != null)
                 {
-                    RevResManager.Release(BossArtRoot, oldName);
+                    RevResManager.Release(BossArtRoot, oldName, RevResLifetime.Manual);
                 }
                 // 资源句柄完成后再等主将当前帧像素绑定；期间保持原来的场景屏障，不提前播放出生Shader。
                 float frameDeadline = Time.realtimeSinceStartup + 15f;
@@ -208,7 +209,7 @@ namespace RevGame.View
 
                     if (requested)
                     {
-                        RevResManager.Release(BossArtRoot, name);
+                        RevResManager.Release(BossArtRoot, name, RevResLifetime.Manual);
                     }
                 }
             }
@@ -233,7 +234,7 @@ namespace RevGame.View
 
             if (_bossArtName != null)
             {
-                RevResManager.Release(BossArtRoot, _bossArtName);
+                RevResManager.Release(BossArtRoot, _bossArtName, RevResLifetime.Manual);
             }
             _bossArtName = null;
             _bossArt = null;

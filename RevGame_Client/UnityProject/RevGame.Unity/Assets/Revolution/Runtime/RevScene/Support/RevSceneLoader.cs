@@ -354,7 +354,7 @@ namespace Revolution
         {
             if (RevScene.AutoClearPool)
             {
-                int cleared = RevPool.ClearAll();
+                int cleared = RevGameObjectPools.ClearUnscopedIdle();
                 if (cleared > 0)
                 {
                     RevSceneLog.Info("[RevScene] 已清理对象池：" + cleared + " 个实例");

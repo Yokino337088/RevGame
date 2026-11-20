@@ -42,7 +42,8 @@ namespace RevGame.View
             Chapter = chapter;
             if (chapter == 0)
             {
-                _lobby = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.UI);
+                // 背景租约跟随常驻的演出容器，替换背景时由演出主动归还。
+                _lobby = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.UI, lifetime: RevResLifetime.Manual);
                 while (_lobby != null && _lobby.IsLoading)
                 {
                     await RevTask.Yield();
@@ -162,7 +163,7 @@ namespace RevGame.View
             }
             if (_lobby != null)
             {
-                RevResManager.Release("Material/Lobby", "MagicCottageMaterial");
+                RevResManager.Release("Material/Lobby", "MagicCottageMaterial", RevResLifetime.Manual);
                 _lobby = null;
             }
             if (_chapterMaterial != null)

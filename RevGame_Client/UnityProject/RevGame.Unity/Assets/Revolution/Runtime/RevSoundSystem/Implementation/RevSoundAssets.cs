@@ -33,17 +33,31 @@ namespace Revolution
         //   Runtime 反向引用 Generation 会成环，所以音效路径常量必须生成在 Runtime 内部。
         // ============================================================
 
+        /// <summary>音频底层租约及使用范围。跨域预加载和域内播放可共用同一份加载。</summary>
         private sealed class Entry
         {
+            /// <summary>当前代成功加载的音频对象，未到或失败时为空。</summary>
             internal AudioClip Clip;
+            /// <summary>音频逻辑根目录。</summary>
             internal string Root;
+            /// <summary>音频逻辑名，支持根目录下的相对子目录。</summary>
             internal string Name;
+            /// <summary>共用的读取当前是否还未完成。</summary>
             internal bool Loading;
+            /// <summary>同一代读取失败时保留结果，避免反复请求。</summary>
             internal bool Failed;
+            /// <summary>共享音频缓存自己持有的资源引用，摘除条目时配对归还。</summary>
             internal RevResHandle Handle;
+            /// <summary>显式预加载或全局声音保留到宿主主动卸载。</summary>
+            internal bool Pinned;
+            /// <summary>曾使用这一音频且尚未退出的业务域。</summary>
+            internal HashSet<RevScopeHandle> Scopes;
         }
 
-        private readonly Dictionary<string, Entry> _map = new Dictionary<string, Entry>(StringComparer.Ordinal);
+        /// <summary>按音频根目录与名称查缓存。查播放音频不拼接字符串。</summary>
+        private readonly Dictionary<(string root, string name), Entry> _map = new Dictionary<(string root, string name), Entry>();
+        /// <summary>每个域触及的实际缓存条目。退域不扫描完整音效目录。</summary>
+        private readonly Dictionary<RevScopeHandle, HashSet<Entry>> _entriesByScope = new Dictionary<RevScopeHandle, HashSet<Entry>>();
         private RevPoolCore<AudioSource> _sources;
         private Transform _root;
 
@@ -110,55 +124,97 @@ namespace Revolution
         // 音效片段（RevResourceSystem）
         // ============================================================
 
-        // 同名文件可以同时存在于 Audio/Sfx 和 Audio/Bgm。只用 name 作字典键会让先加载的一类挡住另一类，
-        // 例如先请求 SFX/theme，再请求 BGM/theme 时就会错误复用 SFX 的 clip；把资源根目录也纳入键，两个缓存相互独立。
-        private static string CacheKey(string root, string name) => root + "\0" + name;
-
         /// <summary>已加载好的片段（没加载好返回 null）。BGM 与 SFX 根目录不同，不能只按同名片段查表。</summary>
         internal AudioClip Find(string name, bool bgm)
         {
             string root = bgm ? RevSoundPath.Bgm : RevSoundPath.Sfx;
-            return _map.TryGetValue(CacheKey(root, name), out Entry entry) ? entry.Clip : null;
+            return _map.TryGetValue((root, name), out Entry entry) ? entry.Clip : null;
         }
 
         /// <summary>加载是否失败过（失败会缓存，避免每帧重试打爆加载队列；Unload 后可重试）。</summary>
         internal bool IsFailed(string name, bool bgm)
         {
             string root = bgm ? RevSoundPath.Bgm : RevSoundPath.Sfx;
-            return _map.TryGetValue(CacheKey(root, name), out Entry entry) && entry.Failed;
+            return _map.TryGetValue((root, name), out Entry entry) && entry.Failed;
         }
 
-        /// <summary>请求加载（以完整资源位置区分缓存，已加载/加载中/失败过都不重复请求）。</summary>
-        internal void Request(string name, bool bgm)
+        /// <summary>登记本次请求的域，再复用或读取片段。无域请求显式保留到 Unload。</summary>
+        internal AudioClip Request(string name, bool bgm, RevScopeHandle scope)
         {
             string root = bgm ? RevSoundPath.Bgm : RevSoundPath.Sfx;
-            string key = CacheKey(root, name);
-            if (_map.TryGetValue(key, out Entry entry))
-            {
-                if (entry.Clip != null || entry.Loading || entry.Failed) return;
-            }
-            else
+            var key = (root, name);
+            if (!_map.TryGetValue(key, out Entry entry))
             {
                 entry = new Entry { Root = root, Name = name };
                 _map[key] = entry;
             }
+            Track(entry, scope);
+            if (entry.Clip != null || entry.Loading || entry.Failed)
+            {
+                return entry.Clip;
+            }
 
+            // 归属在调用加载器前提交，以便缓存同步完成、预加载并发及域内退出均能清理同一条记录。
             entry.Loading = true;
-            Entry requestEntry = entry;
-
-            // ResourceSystem 返回的 handle 是本次音频缓存请求持有的引用；完成后 Unload 会通过这张句柄准确归还它。
-            requestEntry.Handle = RevResManager.LoadAsync<AudioClip>(root, name,
+            entry.Handle = RevResManager.LoadAsync<AudioClip>(root, name,
                 clip =>
                 {
-                    requestEntry.Loading = false;
-                    requestEntry.Clip = clip;
-                    requestEntry.Failed = clip == null;
+                    entry.Loading = false;
+                    entry.Clip = clip;
+                    entry.Failed = clip == null;
                 },
-                RevResGroup.Sound, RevResLoadPriority.Urgent);
+                RevResGroup.Sound, RevResLoadPriority.Urgent, RevResLifetime.Manual);
+            if (!_map.TryGetValue(key, out Entry current) || !ReferenceEquals(current, entry))
+            {
+                RevResManager.DecRef(entry.Handle);
+                return null;
+            }
+            return entry.Clip;
         }
 
-        /// <summary>预加载（= 请求加载；加载完常驻，直到 Unload）。</summary>
-        internal void Preload(string name, bool bgm) => Request(name, bgm);
+        /// <summary>以明确的独立持有预热片段，退出发起域时继续可用。</summary>
+        internal void Preload(string name, bool bgm) => Request(name, bgm, scope: null);
+
+        /// <summary>为首次消费此条目的域建立双向索引，重复播放无需分配引用对象。</summary>
+        private void Track(Entry entry, RevScopeHandle scope)
+        {
+            if (scope == null)
+            {
+                entry.Pinned = true;
+                return;
+            }
+            if ((entry.Scopes ??= new HashSet<RevScopeHandle>()).Add(scope))
+            {
+                if (!_entriesByScope.TryGetValue(scope, out HashSet<Entry> entries))
+                {
+                    entries = new HashSet<Entry>();
+                    _entriesByScope.Add(scope, entries);
+                }
+                entries.Add(entry);
+            }
+        }
+
+        /// <summary>归还退出域的音频使用权，仍有其它域或独立预加载使用时继续保留。</summary>
+        internal int ReleaseScope(RevScopeHandle scope)
+        {
+            if (!_entriesByScope.TryGetValue(scope, out HashSet<Entry> entries))
+            {
+                return 0;
+            }
+            _entriesByScope.Remove(scope);
+            int released = 0;
+            foreach (Entry entry in entries)
+            {
+                entry.Scopes.Remove(scope);
+                if (entry.Scopes.Count == 0 && !entry.Pinned)
+                {
+                    _map.Remove((entry.Root, entry.Name));
+                    RevResManager.DecRef(entry.Handle);
+                    released++;
+                }
+            }
+            return released;
+        }
 
         /// <summary>
         /// 卸载这个名字在 SFX 和 BGM 两个默认目录下的缓存项；API 没有 bgm 参数，所以相同名字的两类资源都尝试卸载。
@@ -170,38 +226,41 @@ namespace Revolution
             Unload(RevSoundPath.Bgm, name);
         }
 
+        /// <summary>显式卸载一个缓存条目并移除反向归属。晚到回执只写原来已被摘除的条目。</summary>
         private void Unload(string root, string name)
         {
-            string key = CacheKey(root, name);
-            if (!_map.TryGetValue(key, out Entry entry)) return;
-
-            // 先从本地表摘掉，之后的 Request 会建立/加入一个新的有效条目。
-            // 即使异步 LoadAsync 尚未回调，entry.Handle 也代表本次请求已经占用的资源引用；现在归还它，不能因 Loading=true 而跳过。
-            // 旧回调仍只更新旧 Entry，不会重新放回 _map；若新请求共用同一个 ResourceSystem 句柄，它自己的引用计数仍独立保留。
+            var key = (root, name);
+            if (!_map.TryGetValue(key, out Entry entry))
+            {
+                return;
+            }
             _map.Remove(key);
-            if (entry.Handle != null && entry.Handle.Key != 0)
-                RevResManager.DecRef(entry.Handle);
-            else
-                RevResManager.Release(entry.Root, name);
+            if (entry.Scopes != null)
+            {
+                foreach (RevScopeHandle scope in entry.Scopes)
+                {
+                    if (_entriesByScope.TryGetValue(scope, out HashSet<Entry> entries))
+                    {
+                        entries.Remove(entry);
+                        if (entries.Count == 0)
+                        {
+                            _entriesByScope.Remove(scope);
+                        }
+                    }
+                }
+            }
+            RevResManager.DecRef(entry.Handle);
         }
 
         /// <summary>卸载全部缓存项，并逐一归还每次异步加载所持有的资源引用。</summary>
         internal void UnloadAll()
         {
-            if (_map.Count == 0) return;
-
-            var entries = new List<KeyValuePair<string, Entry>>(_map);
-            _map.Clear();
-            for (int i = 0; i < entries.Count; i++)
+            foreach (Entry entry in _map.Values)
             {
-                Entry entry = entries[i].Value;
-                if (entry.Handle != null && entry.Handle.Key != 0)
-                    RevResManager.DecRef(entry.Handle);
-                else if (!string.IsNullOrEmpty(entry.Root))
-                {
-                    RevResManager.Release(entry.Root, entry.Name);
-                }
+                RevResManager.DecRef(entry.Handle);
             }
+            _map.Clear();
+            _entriesByScope.Clear();
         }
 
         // ============================================================

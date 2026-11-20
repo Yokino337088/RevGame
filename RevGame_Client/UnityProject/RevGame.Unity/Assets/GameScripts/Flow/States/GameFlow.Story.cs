@@ -167,10 +167,11 @@ namespace RevGame.Flow
         {
             if (_storyHandle != null)
             {
-                RevResManager.Release("Config/Story", "StoryBook");
+                RevResManager.Release("Config/Story", "StoryBook", RevResLifetime.Manual);
                 _storyHandle = null;
             }
-            _storyHandle = RevResManager.LoadAsync("Config/Story", "StoryBook", typeof(StoryBook), null, RevResGroup.Scene);
+            // 过场前后由 GameFlow 持有故事目录，沿用宿主决定的释放时机。
+            _storyHandle = RevResManager.LoadAsync("Config/Story", "StoryBook", typeof(StoryBook), null, RevResGroup.Scene, lifetime: RevResLifetime.Manual);
             while (_storyHandle.IsLoading)
             {
                 await RevTask.Yield();

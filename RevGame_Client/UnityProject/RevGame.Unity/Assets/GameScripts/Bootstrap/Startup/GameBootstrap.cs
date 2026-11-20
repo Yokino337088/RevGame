@@ -111,6 +111,7 @@ namespace RevGame.Bootstrap
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
+            GameDomainChecks.Register(this);
             RevServices.GetRequired<GameFlow>().IsAutomationRunningForDevelopment =
                 () => RevServices.Get<RevGame.Automation.GameAutomationRunner>()?.State == "running";
             GameGmCommands.RegisterAll();

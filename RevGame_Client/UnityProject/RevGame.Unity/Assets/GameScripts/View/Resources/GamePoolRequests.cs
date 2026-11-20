@@ -64,21 +64,19 @@ namespace RevGame.View
         // 若闭包仍写在GetAsync内部，编译器可能进入热方法时就先分配，即使随后直接命中缓存返回。
         private static void LoadCold<T>(Action<T> completed, Transform parent, RevPoolPrefabAttribute definition, string name) where T : Component
         {
-            RevResManager.LoadAsync(definition.Root, name, typeof(GameObject), handle =>
+            RevScopeHandle scope = RevScope.Current;
+            RevResManager.LoadOwnedAsync(definition.Root, name, typeof(GameObject), nameof(GamePoolRequests), lease =>
             {
                 try
                 {
-                    completed(handle.IsLoaded ? RevPool.Get<T>(definition.Root, name, parent, definition.Group) : null);
+                    // 请求提交时确定实例的域。若它已退出，只完成失败回执，不把实例建进新的域。
+                    bool ready = lease.Handle.IsLoaded && (scope == null || scope.IsOpen);
+                    completed(ready ? RevPool.Get<T>(definition.Root, name, parent, definition.Group, (object)scope ?? RevScope.GlobalOwner) : null);
                 }
                 finally
                 {
-                    // 回调可能触发退出；缓存身份已变化时不能归还同路径的新一代资源。
-                    RevResHandle current = RevResManager.Get(definition.Root, name);
-
-                    if (current.Key == handle.Key && current.Content == handle.Content && current.RefCount > 0)
-                    {
-                        RevResManager.Release(definition.Root, name);
-                    }
+                    // 临时读包租约随本次回执结束，实际池持有独立引用。
+                    lease.Dispose();
                 }
             }, definition.Group);
         }

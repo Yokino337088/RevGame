@@ -179,7 +179,7 @@ namespace Revolution
             return false;
         }
 
-        /// <summary>更新当前请求的阶段和计时边界。已结案、其它请求或非法阶段会被拒绝。</summary>
+        /// <summary>推进有效交接并记录计时。到清理阶段时自动归还交接预热引用。</summary>
         public bool TryAdvance(RevSceneHandoff handoff, RevSceneHandoffStage stage)
         {
             if (handoff == null || _active != handoff || stage < handoff.Stage || stage > RevSceneHandoffStage.Revealing)
@@ -188,10 +188,14 @@ namespace Revolution
             }
             handoff.Stage = stage;
             handoff.Performance.Advance(stage);
+            if (stage >= RevSceneHandoffStage.CleaningUp)
+            {
+                handoff.Resources.ReleaseWarmup();
+            }
             return true;
         }
 
-        /// <summary>业务清理并解除自己的互斥后调用。结束采样后发布唯一终态，旧回调无法覆盖结果。</summary>
+        /// <summary>解除业务互斥后调用。失败或取消也先归还预热引用，再发布唯一终态。</summary>
         public bool TryComplete(RevSceneHandoff handoff, RevSceneHandoffStatus status, string actualState,
             bool cleanupSucceeded, string reasonCode = null, string detail = null)
         {
@@ -200,6 +204,7 @@ namespace Revolution
                 return false;
             }
 
+            handoff.Resources.ReleaseWarmup();
             handoff.Performance.Finish();
             var result = new RevSceneHandoffResult(handoff, status, actualState, cleanupSucceeded, reasonCode, detail);
             _active = null;

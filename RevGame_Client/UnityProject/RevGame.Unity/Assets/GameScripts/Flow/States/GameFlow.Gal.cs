@@ -70,7 +70,8 @@ namespace RevGame.Flow
                 if (string.Equals(storyPath, CottageStoryPath, StringComparison.Ordinal))
                 {
                     // 预读与框架会话共用同一份 SO 请求。计划只看相邻对白，存档和实际推进仍由 Gal 会话决定。
-                    var storyHandle = RevResManager.LoadAsync("Gal/Stories", "yaya_days_together", typeof(RevGalStory), null, RevResGroup.UI);
+                    // 本次读剧情只为预生成显示计划，临时资源由 using 作用域立即归还。
+                    var storyHandle = RevResManager.LoadAsync("Gal/Stories", "yaya_days_together", typeof(RevGalStory), null, RevResGroup.UI, lifetime: RevResLifetime.Manual);
                     planScope.Track(storyHandle);
                     while (storyHandle.IsLoading)
                     {

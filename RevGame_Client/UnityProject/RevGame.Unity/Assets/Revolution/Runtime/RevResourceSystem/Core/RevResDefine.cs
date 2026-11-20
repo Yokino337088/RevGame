@@ -4,6 +4,15 @@ using System;
 
 namespace Revolution
 {
+    /// <summary>决定资源引用由当前域登记，还是由持有方显式归还。资源分组仍只用于归类。</summary>
+    public enum RevResLifetime
+    {
+        /// <summary>有默认域时自动登记。启动阶段没有域时沿用显式引用计数。</summary>
+        Automatic = 0,
+        /// <summary>长寿命宿主或显式租约自行归还，允许跨域使用。</summary>
+        Manual = 1
+    }
+
     /// <summary>
     /// 资源加载状态机。
     ///

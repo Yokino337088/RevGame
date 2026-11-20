@@ -322,33 +322,25 @@ namespace RevGame.Flow
                 }
                 Report(0.66f, "正在点亮前路…");
 
+                // 先换业务域，再把预建实例归到新域。战斗视图等预建结束后才借实例，避免装配时同时创建两批。
+                _activePresentation = presentation;
+                Change(target, publish: target != GameScreen.Battle);
                 if (target == GameScreen.Battle)
                 {
                     await warmup.WarmBattlePoolsAsync(p => Report(0.66f + p * 0.12f, "正在集结棋子与魔法…"));
+                    ThrowIfDisposed();
+                    PublishScreenChanged();
                 }
                 ThrowIfDisposed();
-                // 交割前资源/场景已确认；现在由FSM关闭旧域、打开新域，再让表现层按新模型绘制。
-                _activePresentation = presentation;
-                Change(target);
                 _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.WaitingForGameplay);
                 string finalStep = target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…";
                 await presentation.WaitUntilReadyAsync(target, p => Report(0.78f + p * 0.20f, finalStep));
                 ThrowIfDisposed();
-                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.CleaningUp);
-                // 旧视图/池与战斗图集退出通知已完成，新视图持有自己的引用；预热账本也必须先放手。
-                // Release只把资源放进闲置表，这里在遮挡内调用门面真正卸载零引用AB，绝不force卸共享资源。
+                // 框架自动归还交接预热并调度零引用 AB。旧域的池随域退出，遮挡继续覆盖分帧清理。
                 warmup.Dispose();
-
-                if (target != GameScreen.Battle)
-                {
-                    // RevScene只清空闲实例，运行中首次创建的技能池可能仍持有prefab。
-                    // 此时战斗域与视图已退出，销毁整个战斗组的池，归还池本身的长期资源租约。
-                    RevPool.DestroyGroup(RevResGroup.Battle);
-                }
+                _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.CleaningUp);
                 await RevTask.Yield();
                 ThrowIfDisposed();
-                // 清理段截至租约归还、专用池销毁与同步 AB 整理。FlushUnused 发出的 Unity 异步资源清扫沿用原行为。
-                RevResManager.FlushUnused();
                 cleanupSucceeded = true;
                 _sceneHandoffs.TryAdvance(handoff, RevSceneHandoffStage.Revealing);
                 Report(1f, target == GameScreen.Battle ? "战场已就绪" : "营地已就绪");
@@ -386,7 +378,7 @@ namespace RevGame.Flow
             {
                 try
                 {
-                    // 早期失败也释放本次预热租约。错误遮挡和仍存活的业务域由独立的返回请求收尾。
+                    // 失败时归还暂借实例。交接结案后框架释放预热引用，遮挡由独立回退流程接管。
                     warmup.Dispose();
                     cleanupSucceeded |= handoff.Stage < RevSceneHandoffStage.CleaningUp;
                 }

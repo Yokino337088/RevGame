@@ -42,6 +42,7 @@ namespace Revolution
         internal static void Register()
         {
             RevRuntimeAutomation.Register("runtime.state", "场景、帧、域、服务、计时器及框架 UI 状态", Empty, State, true);
+            RevRuntimeAutomation.Register("scope.state", "只读查询活动域、实际资源持有、对象池和最近退域结果", Empty, ScopeState, true);
             RevRuntimeAutomation.Register("ui.dump", "UGUI/TMP 控件、文本、可交互与遮挡状态", Schema("\"query\":{\"type\":\"string\"},\"offset\":{\"type\":\"integer\",\"minimum\":0},\"limit\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1000},\"includeInactive\":{\"type\":\"boolean\"}"), Dump, true);
             RevRuntimeAutomation.Register("ui.open-state", "按开窗 ID 查询装配、首屏、终态和退场资源",
                 Schema("\"id\":{\"type\":\"string\"}"), OpenState, true);
@@ -196,6 +197,46 @@ namespace Revolution
             if (hit.gameObject == null) { return false; }
             var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hit.gameObject);
             return handler != null && handler == ExecuteEvents.GetEventHandler<IPointerClickHandler>(target);
+        }
+
+        /// <summary>诊断时读取真实域账本、等待分帧回收的数量与最近退域各步骤，不保留运行对象。</summary>
+        private static object ScopeState(string json)
+        {
+            RevScopeCloseReport report = RevScope.LastCloseReport;
+            return new Dictionary<string, object>
+            {
+                ["current"] = RevScope.CurrentName,
+                ["pendingReclaims"] = RevResManager.PendingScopeReclaims,
+                ["domains"] = RevScope.Core.SnapshotScopes().Select(scope =>
+                {
+                    var counts = RevResManager.GetScopeResourceCounts(scope);
+                    return new Dictionary<string, object>
+                    {
+                        ["name"] = scope.Name,
+                        ["enteredTicks"] = scope.EnteredTicks,
+                        ["state"] = scope.State.ToString(),
+                        ["owners"] = scope.OwnerCount,
+                        ["resources"] = counts.resources,
+                        ["references"] = counts.references,
+                        ["pendingCallbacks"] = counts.pending,
+                        ["pools"] = RevGameObjectPools.CountOf(scope)
+                    };
+                }).ToArray(),
+                ["lastClose"] = report == null ? null : new Dictionary<string, object>
+                {
+                    ["domain"] = report.Domain,
+                    ["enteredTicks"] = report.EnteredTicks,
+                    ["elapsedMs"] = report.ElapsedMs,
+                    ["failed"] = report.HasFailure,
+                    ["steps"] = report.Steps.Select(step => new Dictionary<string, object>
+                    {
+                        ["step"] = step.Step.ToString(),
+                        ["count"] = step.Count,
+                        ["elapsedMs"] = step.ElapsedMs,
+                        ["failed"] = step.Failed
+                    }).ToArray()
+                }
+            };
         }
 
         /// <summary>只读取得最近开窗的阶段计时和释放状态，无效或淘汰的 ID 返回 found=false。</summary>

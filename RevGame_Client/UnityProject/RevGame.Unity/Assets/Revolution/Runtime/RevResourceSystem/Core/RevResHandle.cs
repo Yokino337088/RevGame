@@ -40,6 +40,12 @@ namespace Revolution
         /// <summary>已具名的引用属于这一代缓存。普通加载仍只维护 RefCount，首次具名持有时才分配列表。</summary>
         internal System.Collections.Generic.List<RevResLease> NamedLeases;
 
+        /// <summary>由各有效域持有的引用总数。普通手动归还不能扣除这些引用。</summary>
+        internal int ScopeReferences;
+
+        /// <summary>该代零引用资源已安排自动回收。在途句柄等完成再入队。</summary>
+        internal bool QueuedForScopeReclaim;
+
         // AB 资源成功取得了包级引用才置位；释放时仅归还这一次，并保留原 loader 所有权。
         internal bool BundleAcquired { get; set; }
         internal RevABLoader BundleLoader { get; set; }

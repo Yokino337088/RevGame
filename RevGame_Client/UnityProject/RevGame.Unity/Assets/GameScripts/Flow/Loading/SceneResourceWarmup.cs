@@ -7,22 +7,22 @@ using UnityEngine;
 namespace RevGame.Flow
 {
     /// <summary>
-    /// 一次过场专用的资源租约清单，不替代框架加载器。只列出这款游戏即将使用的资源，逐项走RevResManager。
-    /// 创建者GameFlow在finally中Dispose：预载引用会配对释放，面板/对象池自己的引用继续保留。
-    /// 预载资源与实例预热分开：RevScene默认会清池，所以必须等新场景载入后才创建池实例。
+    /// 声明本游戏的预热清单与数量。交接对象自动管理资源引用，池实例在目标域打开后才预建。
+    /// GameFlow 结束或取消流程时调用 Dispose，归还仍在批量预热中暂借的实例。
     /// </summary>
     internal sealed class SceneResourceWarmup : IDisposable
     {
-        /// <summary>本次Load调用的账本。先登记再请求，缓存命中同步回调、失败或中途退出也不会漏Release。</summary>
-        private readonly List<RevResLease> _leases = new List<RevResLease>(12);
         /// <summary>预热时先同时持有实例，避免“取一个立刻还一个”实际上只生成了同一个对象。</summary>
         private readonly List<Component> _instances = new List<Component>(24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles + BoardView.MaxMeleeEffects + 2);
+        /// <summary>过场结束或取消后不再继续预建实例。</summary>
         private bool _disposed;
 
+        /// <summary>本游戏首屏或后续反馈要提前读取的预制体。</summary>
         private readonly struct Resource
         {
-            /// <summary>框架生成的逻辑目录和资源名；它们同时用于Load与Release，不能换成磁盘路径。</summary>
+            /// <summary>框架生成的逻辑目录。</summary>
             public readonly string Root;
+            /// <summary>预制体逻辑名。</summary>
             public readonly string Name;
             /// <summary>分组以第一次加载为准，所以预载必须沿用正式消费者的组，不能一律塞进Scene。</summary>
             public RevResGroup Group
@@ -32,6 +32,7 @@ namespace RevGame.Flow
                     return Root == RevResPath.UI_Panel ? RevResGroup.UI : RevResGroup.Battle;
                 }
             }
+            /// <summary>登记清单的一条逻辑路径。</summary>
             public Resource(string root, string name)
             {
                 Root = root;
@@ -64,12 +65,8 @@ namespace RevGame.Flow
                 }
                 Resource resource = resources[i];
                 // 当前流程逐项等待完整清单，包含为后续反馈提前加载的 prefab，这些等待都会推迟首屏。
-                trace.Require(resource.Root, resource.Name, nameof(SceneResourceWarmup), blocksFirstFrame: true);
-                var completion = new RevTaskCompletionSource<RevResLease>();
-                RevResLease lease = RevResManager.LoadOwnedAsync(resource.Root, resource.Name, typeof(GameObject),
-                    nameof(SceneResourceWarmup), completion.SetResult, resource.Group);
-                _leases.Add(lease);
-                RevResHandle handle = (await completion.Task).Handle;
+                RevResHandle handle = await trace.PreloadAsync<GameObject>(resource.Root, resource.Name, nameof(SceneResourceWarmup),
+                    blocksFirstFrame: true, group: resource.Group);
 
                 if (!handle.IsLoaded)
                 {
@@ -154,12 +151,14 @@ namespace RevGame.Flow
             }
             finally { ReturnInstances(); }
         }
+        /// <summary>从已进入的目标域借实例，冷读返回失败时由上层交接处理。</summary>
         private static RevTask<T> GetAsync<T>() where T : Component
         {
             var completion = new RevTaskCompletionSource<T>();
             GamePoolRequests.GetAsync<T>(value => completion.SetResult(value));
             return completion.Task;
         }
+        /// <summary>成批归还本次暂借实例，空闲池仍归交接后的业务域。</summary>
         private void ReturnInstances()
         {
             foreach (Component instance in _instances)
@@ -171,7 +170,7 @@ namespace RevGame.Flow
             }
             _instances.Clear();
         }
-        /// <summary>先归还预热的池实例，再释放自己持有的 prefab 引用，池和面板保留各自租约。</summary>
+        /// <summary>停止批量预热，归还暂借实例。预制体预热引用由场景交接自动归还。</summary>
         public void Dispose()
         {
             if (_disposed)
@@ -180,11 +179,6 @@ namespace RevGame.Flow
             }
             _disposed = true;
             ReturnInstances();
-            foreach (RevResLease lease in _leases)
-            {
-                lease.Dispose();
-            }
-            _leases.Clear();
         }
     }
 }
