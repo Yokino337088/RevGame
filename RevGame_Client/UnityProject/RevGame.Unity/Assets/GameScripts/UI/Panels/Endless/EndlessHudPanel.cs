@@ -90,7 +90,10 @@ namespace RevGame.Endless
         private float _errorUntil;
         /// <summary>上一次刷新看到的状态，只用来判断“变化了没有”以触发动画。</summary>
         private bool _modalShown, _bossShown, _startShown, _tipShown;
-        private int _modalSignature = int.MinValue, _shownLevel, _shownCards = -1, _shownSelected = -1, _shownKills;
+        private int _shownLevel, _shownCards = -1, _shownSelected = -1, _shownKills;
+        /// <summary>暂停等模态状态的落屏输入。状态相同直接返回，避免反复拼装祝福和选项说明。</summary>
+        private (EndlessPhase phase, int first, int second, int third, int eventKind, int circuit, int rerolls,
+            int level, long score, int kills, int bosses) _modalStamp;
         private float _shownHeart = -1;
         private string _shownTip = "";
         /// <summary>三条进度条各自的缓动；新目标到来先停旧的，不叠加。</summary>
@@ -439,7 +442,7 @@ namespace RevGame.Endless
             Show(_boon, false);
             _boonRect.localScale = Vector3.one;
         }
-        /// <summary>弹窗：巡回二选一、暂停、结算（升级和事件已改为自动，旧存档里残留的也能正常处理）。每种都只有大按钮。</summary>
+        /// <summary>模态界面首次展示或内容变化时才重新排版，三个选择沿既有编号纵向展示。</summary>
         private void RefreshModal(EndlessRun run)
         {
             bool modal = run.phase == EndlessPhase.Upgrade || run.phase == EndlessPhase.Event || run.phase == EndlessPhase.Circuit || run.phase == EndlessPhase.Paused || run.phase == EndlessPhase.Result;
@@ -447,27 +450,21 @@ namespace RevGame.Endless
             if (!modal)
             {
                 _modalShown = false;
-                _modalSignature = int.MinValue;
                 return;
             }
-            int signature;
-            unchecked
+            var stamp = (run.phase, run.choices[0], run.choices[1], run.choices[2], run.eventKind, run.circuit,
+                run.rerolls, run.level, run.score, run.kills + run.invaderKills, run.bossKills);
+            if (_modalShown && _modalStamp.Equals(stamp))
             {
-                signature = (int)run.phase * 7919 ^ run.choices[0] * 31 ^ run.choices[1] * 131 ^ run.choices[2] * 1031 ^ run.eventKind * 17;
+                return;
             }
             if (!_modalShown)
             {
-                // 弹窗出现：整块回弹弹入，选项随后逐张弹出。
                 RevUIAnim.PopIn(_modalRect, .32f, null, this);
-                PopChoices();
             }
-            else if (signature != _modalSignature)
-            {
-                // 连续升级 / 换一批：弹窗不动，只让新选项重新弹一次，玩家能看出“换了”。
-                PopChoices();
-            }
+            PopChoices();
             _modalShown = true;
-            _modalSignature = signature;
+            _modalStamp = stamp;
             string left = null, middle = null, right = null, title;
             if (run.phase == EndlessPhase.Upgrade)
             {
@@ -738,7 +735,7 @@ namespace RevGame.Endless
             _boonRect.localScale = _boonTitle.transform.localScale = Vector3.one;
             _boonRect.localRotation = Quaternion.identity;
             _boon.SetActive(false);
-            _modalSignature = int.MinValue;
+            _modalStamp = default;
             _shownLevel = _shownKills = 0;
             _shownCards = _shownSelected = -1;
             _shownHeart = -1;

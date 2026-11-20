@@ -213,7 +213,7 @@ namespace RevGame.Editor
         ///   顶部条（y≥87%）：中间奶油色长条 = 棋心血量 + 时间 + 击杀，下方细线 = 经验条，左侧小木牌 = 等级，右上角齿轮 = 暂停；
         ///   左上角（领主在场时）：深色小面板 = 领主名字 + 血条；
         ///   底部条（y≤15%）：中间一排木纹手牌，左下角深色面板 = 一句提示，右下角棕色按钮 = 开战。
-        /// 弹窗（升级/事件/暂停/结算）出现时战斗本来就暂停，可以居中显示：深色底板 + 三张木纹大卡 + 关闭叉。
+        /// 弹窗（升级/事件/暂停/结算）出现时战斗已暂停。局部配方套用浅色底板和由上到下的操作按钮。
         ///
         /// 【素材】全部是用户指定的项目原图：UI_achieveItem_imgBK（奶油长条）、UI_Buy_btnClose（圆形叉）、
         /// UI_Tip_imgBK（深色面板）、UI_Tavern_imgBK（木纹竖卡）、UI_Tavern_btnClose（棕色圆角按钮）。
@@ -276,7 +276,7 @@ namespace RevGame.Editor
                 Transform tip = Panel("tip", root.transform, .012f, .015f, .235f, .13f).transform;
                 Label("text", tip, "", .07f, .1f, .93f, .9f, 22).color = Cream;
                 Button("start", root.transform, "开战", .84f, .02f, .985f, .12f, 36);
-                // 弹窗：深色底板 + 三张木纹大卡 + 右上角关闭叉（暂停时用作“继续”）。
+                // 面板先生成原绑定节点，再统一换装浅色竖排按钮。
                 Transform modal = Panel("modal", root.transform, .2f, .17f, .8f, .83f).transform;
                 Label("title", modal, "升级！选一个", .08f, .76f, .92f, .95f, 38).color = Cream;
                 for (int i = 0; i < 3; i++)
@@ -290,6 +290,7 @@ namespace RevGame.Editor
                 modal.Find("reroll/label").GetComponent<Text>().color = Cream;
                 // 与六章面板同一套共享材质：底板/按钮流光（ArcanePanel）、手牌与升级卡光泽（CardGleam）。
                 GameArcaneArtBuilder.StyleGeneratedPanel(root);
+                ConfigureModalArt(root.transform);
                 InstallCardDrag(root);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab");
             }
@@ -325,6 +326,7 @@ namespace RevGame.Editor
                 Button("resume", root.transform, "继续上局", .635f, .185f, .79f, .305f, 28);
                 Button("close", root.transform, "", .775f, .78f, .825f, .87f);
                 GameArcaneArtBuilder.StyleGeneratedPanel(root);
+                ConfigureEntryArt(root.transform);
                 PrefabUtility.SaveAsPrefabAsset(root, "Assets/GameRes/UI/Panel/Endless/EndlessEntryPanel.prefab");
             }
             finally
@@ -332,24 +334,72 @@ namespace RevGame.Editor
                 UnityEngine.Object.DestroyImmediate(root);
             }
         }
+        /// <summary>装配入口底板、三个阵型图标和进入按钮。字留在阵型插画下方。</summary>
+        internal static void ConfigureEntryArt(Transform root)
+        {
+            GameCombatUiBuild.ApplyArt(root.Find("entry").GetComponent<Image>(), "EndlessMenu/EndlessSanctuaryPlate", false);
+            string[] formations = { "EndlessFormationArrow", "EndlessFormationFire", "EndlessFormationEye" };
+            for (int i = 0; i < formations.Length; i++)
+            {
+                Transform tile = root.Find("formation" + i);
+                StyleMenuButton(tile, formations[i]);
+                RectTransform label = tile.Find("label").GetComponent<RectTransform>();
+                label.anchorMin = new Vector2(.08f, .09f);
+                label.anchorMax = new Vector2(.92f, .46f);
+                label.offsetMin = label.offsetMax = Vector2.zero;
+            }
+            StyleMenuButton(root.Find("start"), "EndlessAction");
+            StyleMenuButton(root.Find("resume"), "EndlessChoiceRow");
+        }
+
+        /// <summary>升级与暂停共用一列三行。保留按钮编号，从上到下仍然提交 0、1、2。</summary>
+        internal static void ConfigureModalArt(Transform root)
+        {
+            Transform modal = root.Find("modal");
+            GameCombatUiBuild.ApplyArt(modal.GetComponent<Image>(), "EndlessMenu/EndlessSanctuaryPlate", true);
+            var title = modal.Find("title").GetComponent<Text>();
+            title.color = GameCombatUiBuild.Ink;
+            title.resizeTextForBestFit = true;
+            title.resizeTextMinSize = 21;
+            title.resizeTextMaxSize = 38;
+            for (int i = 0; i < 3; i++)
+            {
+                var choice = (RectTransform)modal.Find("choice" + i);
+                float lower = .55f - i * .19f;
+                choice.anchorMin = new Vector2(.19f, lower);
+                choice.anchorMax = new Vector2(.81f, lower + .16f);
+                choice.offsetMin = choice.offsetMax = Vector2.zero;
+                StyleMenuButton(choice, "EndlessChoiceRow");
+            }
+            StyleMenuButton(modal.Find("reroll"), "EndlessChoiceRow");
+        }
+
+        /// <summary>浅色按钮使用正式插画和深墨字，文字长时在内边距之间适度缩小。</summary>
+        private static void StyleMenuButton(Transform button, string sprite)
+        {
+            GameCombatUiBuild.ApplyArt(button.GetComponent<Image>(), "EndlessMenu/" + sprite, true);
+            Text label = button.Find("label").GetComponent<Text>();
+            label.color = GameCombatUiBuild.Ink;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 19;
+            label.resizeTextMaxSize = label.fontSize;
+        }
+
+        /// <summary>补齐或更新大厅的无尽入口，沿用大厅图集和现有点击绑定。</summary>
         private static void AddHomeButton()
         {
             const string path = "Assets/GameRes/UI/Panel/HomePanel.prefab";
             GameObject home = PrefabUtility.LoadPrefabContents(path);
             try
             {
-                Transform existing = home.transform.Find("btnEndless");
-                if (existing == null)
+                Transform entry = home.transform.Find("btnEndless");
+                if (entry == null)
                 {
-                    Button("btnEndless", home.transform, "棋阵幸存者 · 无尽", .72f, .14f, .97f, .23f, 26);
-                    existing = home.transform.Find("btnEndless");
+                    Button("btnEndless", home.transform, GameLobbyButtonBuild.EndlessTitle, .72f, .14f, .97f, .23f, 56);
+                    entry = home.transform.Find("btnEndless");
                 }
-                // 大厅不能引用 UIEndless 图集里的图：否则只是打开大厅，整张无尽图集都会进内存。
-                // 这里用大厅本来就在用的按钮图，只染金色做区分。
-                Image homeImage = existing.GetComponent<Image>();
-                homeImage.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameRes/Art/UI/UI_Tavern_btnClose.png");
-                homeImage.type = Image.Type.Sliced;
-                homeImage.color = new Color(1f, .90f, .58f);
+                // 只用大厅的入口插画，打开大厅无需加载无尽战斗图集。
+                GameLobbyButtonBuild.Apply(entry.GetComponent<Button>());
                 PrefabUtility.SaveAsPrefabAsset(home, path);
             }
             finally

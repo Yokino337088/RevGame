@@ -17,6 +17,9 @@ namespace Revolution
             throw new NotSupportedException("本测试没有 Unity 帧调度器，LeaveAsync 必须在真实 Play 中验证。");
         }
 
+        /// <summary>同步离线断言不能冒充 Unity 下一帧。误用时沿同一不支持路径中止。</summary>
+        internal static RevTask NextFrame() => Yield();
+
         internal static RevTask Delay(int milliseconds)
         {
             throw new NotSupportedException("本测试不执行 RevTask 延时调度。");
@@ -43,6 +46,13 @@ namespace Revolution
 
 namespace UnityEngine
 {
+    /// <summary>离线断言不推进 Unity 帧，房间快照仍可用业务版本识别同帧提交。</summary>
+    internal static class Time
+    {
+        /// <summary>固定为同一逻辑帧，任何状态变化由真实 PvpService 记录。</summary>
+        internal static int frameCount => 0;
+    }
+
     // 运行于离线 Windows 夹具。Android 文本存档从不落到玩家目录。
     internal enum RuntimePlatform
     {
@@ -62,6 +72,12 @@ namespace UnityEngine
         private static readonly Dictionary<string, string> Values = new Dictionary<string, string>();
         internal static bool HasKey(string key) => Values.ContainsKey(key);
         internal static string GetString(string key) => Values.TryGetValue(key, out string value) ? value : "";
+        /// <summary>从离线内存读取字符串，未写入时保留调用方默认值。</summary>
+        internal static string GetString(string key, string fallback) => Values.TryGetValue(key, out string value) ? value : fallback;
+        /// <summary>从隔离内存读取联机授权整数，不访问玩家注册表。</summary>
+        internal static int GetInt(string key, int fallback) => int.TryParse(GetString(key), out int value) ? value : fallback;
+        /// <summary>写入本轮测试的临时整数设置。</summary>
+        internal static void SetInt(string key, int value) => SetString(key, value.ToString());
         internal static void SetString(string key, string value)
         {
             Values[key] = value;
@@ -140,7 +156,14 @@ namespace RevGame.Pvp.Networking
         public string SubmittedToken;
         public bool AllowsNewIdentity;
         public int SyncCalls;
-        public event Action<Fantasy.GoRelayState> StateReceived;
+        /// <summary>与正式传输一致，连接回执另带是否确认了新房间的标记。</summary>
+        public event Action<Fantasy.GoRelayState, bool> StateReceived;
+        /// <summary>离线传输只有标记为已连接时才接纳同步意图。</summary>
+        public bool CanRequestSync => Connected;
+        /// <summary>离线桩保留房间确认回调签名，连接状态仍由测试输入和真实服务门禁决定。</summary>
+        public void ConfirmRoom(string id)
+        {
+        }
         public event Action<string> Error;
         public event Action<string> RequestRejected;
         public void Connect(string endpoint, string nickname, string rules, string kind, string token, bool allowNewIdentity = false)
@@ -176,9 +199,10 @@ namespace RevGame.Pvp.Networking
         public void Dispose()
         {
         }
-        public void Push(Fantasy.GoRelayState state)
+        /// <summary>投递测试构造的协议回执，正式服务仍负责校验与提交。</summary>
+        public void Push(Fantasy.GoRelayState state, bool confirmsMembership = true)
         {
-            StateReceived?.Invoke(state);
+            StateReceived?.Invoke(state, confirmsMembership);
         }
         public void Reject(string reason)
         {
@@ -204,11 +228,14 @@ namespace RevGame.Pvp.Networking
         public event Action<string> Disconnected;
         public event Action Changed;
         public bool IsConnected;
+        /// <summary>离线桩没有 UDP 数据，始终没有收到邀请。</summary>
+        public LanPeerInfo IncomingInvitation => null;
         public string Status;
         public LanPeerTransport(LanPeerOptions options)
         {
         }
-        public bool StartDiscovery(string name, out string reason)
+        /// <summary>离线桩只保留方法签名，真实主动搜索和被动接收在 Unity 联机回归测试。</summary>
+        public bool StartDiscovery(string name, out string reason, bool listenOnly = false)
         {
             reason = "stub";
             return false;

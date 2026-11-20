@@ -68,9 +68,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1ee153e3285058408401c4c121a6788, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  phasePrepareSprite: {fileID: 21300000, guid: 30f9f060f1be25e4ebf918be2d0a88d8, type: 3}
-  phaseBattleSprite: {fileID: 21300000, guid: 30f9f060f1be25e4ebf918be2d0a88d8, type: 3}
-  phaseSettleSprite: {fileID: 21300000, guid: 30f9f060f1be25e4ebf918be2d0a88d8, type: 3}
   eventIcons:
   - {fileID: 21300000, guid: 72f8a156ce687d9419394c191e931d42, type: 3}
   - {fileID: 21300000, guid: 72f8a156ce687d9419394c191e931d42, type: 3}
@@ -2159,7 +2156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 29ed78236cae9ff4fae4af56d56b9e6e, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -2167,7 +2164,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 94ed69977c3f03541a1d3a052a5b3b0e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 28ab95046f53a864880c2601b975323d, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

@@ -2,6 +2,7 @@ using System;
 using RevGame.Core;
 using RevGame.Pvp;
 using RevGame.Pvp.Duel;
+using RevGame.Pvp.Networking;
 using RevGame.UI;
 using RevGame.View;
 using Revolution;
@@ -27,16 +28,35 @@ namespace RevGame.Flow
         /// <summary>接受请求和实际完成分开；所有UI/GM只走此入口，防止连点创建两条连接或场景加载链。</summary>
         public string PvpDestination { get; private set; } = "Entry";
 
+        /// <summary>从大厅选择对战方式，创建一次进入流程。</summary>
         public bool EnterPvp(string destination = "Entry")
+        {
+            return EnterPvp(destination, false);
+        }
+
+        /// <summary>接受大厅的一条真实局域网邀请，移交被动监听的票据给对战域。</summary>
+        internal bool EnterPvpFromLobbyInvite()
+        {
+            return EnterPvp("Lan", true);
+        }
+
+        /// <summary>验证大厅和邀请状态后接单。取走的接收器由切场流程负责释放或交给围棋服务。</summary>
+        private bool EnterPvp(string destination, bool useLobbyInvitation)
         {
             if (IsGameplayBlocked || Screen != GameScreen.Home)
             {
                 LastError = "请从大厅进入九路围棋";
                 return false;
             }
+            LanPeerTransport invitation = useLobbyInvitation ? RevServices.GetRequired<PvpService>().TakeLobbyLanInvitation() : null;
+            if (useLobbyInvitation && invitation == null)
+            {
+                LastError = "这条局域网邀请已失效";
+                return false;
+            }
             PvpDestination = destination;
             IsTransitioning = true;
-            EnterPvpFromButton();
+            EnterPvpFromButton(invitation);
             return true;
         }
 
@@ -232,12 +252,14 @@ namespace RevGame.Flow
                 _duelPreparationPanel.SetData(DuelViewData(service));
             }
         }
-        /// <summary>Unity按钮的void适配仅捕获异常；实际跨帧工作仍由RevTask承载。</summary>
-        private async void EnterPvpFromButton()
+        /// <summary>Unity 按钮异步适配。切场失败时归还邀请端口和棋局接入状态。</summary>
+        private async void EnterPvpFromButton(LanPeerTransport invitation)
         {
+            bool completed = false;
             try
             {
-                await EnterPvpAsync();
+                await EnterPvpAsync(invitation);
+                completed = true;
             }
             catch (Exception error)
             {
@@ -250,11 +272,23 @@ namespace RevGame.Flow
             }
             finally
             {
+                if (!completed && invitation != null)
+                {
+                    var service = RevServices.GetRequired<PvpService>();
+                    if (ReferenceEquals(service.Lan, invitation))
+                    {
+                        service.Dispose();
+                    }
+                    else
+                    {
+                        invitation.Dispose();
+                    }
+                }
                 IsTransitioning = false;
             }
         }
         /// <summary>装配围棋域、棋盘与首屏菜单，交割通过之后才撤掉场景遮挡。</summary>
-        private async RevTask EnterPvpAsync()
+        private async RevTask EnterPvpAsync(LanPeerTransport invitation)
         {
             _loading = await RevUI.OpenAsync<LoadingPanel>();
             ThrowIfDisposed();
@@ -266,8 +300,23 @@ namespace RevGame.Flow
             PvpConfig config = PvpConfig.Read(true);
             await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus" });
             ThrowIfDisposed();
-            RevServices.GetRequired<PvpService>().Begin(config);
-            await RevScene.LoadAsync(PvpSceneName, p => Report(.2f + p * .5f, "正在进入象牙白棋盘…"));
+            var service = RevServices.GetRequired<PvpService>();
+            service.Begin(config);
+            RevTimerHandle receiveDuringLoad = default;
+            if (invitation != null && service.AdoptLobbyLanInvitation(invitation))
+            {
+                // 加载阶段 PvP Logic 尚未运行，短暂推进原传输，避免对方已接受后卡在握手。
+                receiveDuringLoad = RevTimer.Every(.05f, invitation.Poll, domain: RevTimeDomain.Unscaled, owner: this);
+            }
+            try
+            {
+                await RevScene.LoadAsync(PvpSceneName, p => Report(.2f + p * .5f, "正在进入象牙白棋盘…"));
+            }
+            finally
+            {
+                // 场景交接后只由 PvP Logic 轮询，避免同一传输被两个计时器推进。
+                receiveDuringLoad.Stop();
+            }
             ThrowIfDisposed();
             if (RevScene.CurrentName != PvpSceneName)
             {

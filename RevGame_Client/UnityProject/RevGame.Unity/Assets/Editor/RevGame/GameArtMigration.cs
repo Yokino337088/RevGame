@@ -349,6 +349,7 @@ namespace RevGame.Editor
                 }
             }
         }
+        /// <summary>装配章节战斗 HUD 的现有控件、血条和浅色战况牌。</summary>
         private static void StyleHud(GameObject root)
         {
             if (root.transform.Find("assistText") == null)
@@ -392,9 +393,10 @@ namespace RevGame.Editor
             backdrop.color = Color.clear;
             root.transform.Find("notice/eventText").GetComponent<Text>().color = Color.white;
 
-            // 左侧文字原来直接落在纯色相机底上。换成场景画后补木牌，避免背景纹理盖住信息。
-            Image info = EnsurePicture(root, "infoPlate", "UI_Pvp_imgBK.png", new Vector2(390, 330), new Vector2(205, 60));
+            // 用单独的浅色信息牌承载文字，避免场景纹理盖住数值。
+            Image info = EnsurePicture(root, "infoPlate", "BattleHud/BattleInfoPlate.png", new Vector2(390, 330), new Vector2(205, 60));
             info.preserveAspect = false;
+            info.raycastTarget = false;
             GameAssetBuilder.Anchor(info.rectTransform, new Vector2(0, 0.5f));
             info.transform.SetAsFirstSibling();
         }

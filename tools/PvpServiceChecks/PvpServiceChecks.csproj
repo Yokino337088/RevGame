@@ -18,11 +18,14 @@
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Agent/GoTacticalSearch.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Core/*.cs" Link="Core/%(Filename)%(Extension)" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.cs" Link="PvpService.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.LobbyLan.cs" Link="PvpService.LobbyLan.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.RoomSnapshot.cs" Link="PvpService.RoomSnapshot.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Presentation.cs" Link="PvpService.Presentation.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Computer.cs" Link="PvpService.Computer.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.Duel.cs" Link="PvpService.Duel.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Pvp/PvpService.DuelPreparation.cs" Link="PvpService.DuelPreparation.cs" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Pvp/Duel/*.cs" Link="Duel/%(Filename)%(Extension)" />
     <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Revolution/Runtime/RevTask/RevTask.cs" Link="Revolution/RevTask.cs" />
+    <Compile Include="../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Revolution/Runtime/RevTask/RevCancellation.cs" Link="Revolution/RevCancellation.cs" />
   </ItemGroup>
 </Project>

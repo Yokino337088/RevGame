@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2519230047
+CRC: 4168546094
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e23724f336e6b552528b906b08045bc7
+    Hash: 4f5596ace3c97ae00423543215bed21b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e23724f336e6b552528b906b08045bc7
+    Hash: 4f5596ace3c97ae00423543215bed21b
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -23,10 +23,15 @@ Assets:
 - Assets/GameRes/Art/UI/UI_Settlement_imgBK.png
 - Assets/GameRes/Art/UI/UI_Buy_btnClose.png
 - Assets/GameRes/Art/UI/UI_achieveItem_imgBK.png
+- Assets/GameRes/Art/UI/LobbyButtons/LobbyPvpButton.png
+- Assets/GameRes/Art/UI/LobbyButtons/LobbyEndlessButton.png
+- Assets/GameRes/Art/UI/LobbyButtons/LobbyQuitButton.png
+- Assets/GameRes/Art/UI/LobbyButtons/LobbyOpenSourceButton.png
 - Assets/GameRes/Art/UI/UI_ChooseLevel_btnSetting.png
 - Assets/GameRes/Art/UI/UI_ChooseLevel_imgTip2.png
 - Assets/GameRes/Art/UI/UI_Tavern_btnClose.png
 - Assets/GameRes/Art/UI/UI_Tip_imgBK.png
+- Assets/GameRes/Art/UI/LobbyButtons/LobbyStartButton.png
 - Assets/GameRes/Art/UI/UI_Tavern_Handle.png
 - Assets/GameRes/Art/UI/UI_Tavern_Background.png
 - Assets/GameRes/Atlases/UIMenus.spriteatlasv2

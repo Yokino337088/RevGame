@@ -8,10 +8,11 @@ using UnityEngine.UI;
 
 namespace RevGame.UI
 {
-    /// <summary>选中己方棋后出现局部移除按钮；只转发服务意图，UI从不自己删GameObject或退手牌。</summary>
+    /// <summary>准备期选中己方棋后出现移除按钮；战斗期选棋继续用于观察和其它操作。</summary>
     public sealed partial class BattleHudPanel
     {
-        [Tooltip("选中己方棋时出现，回调只转发BattleLogic；由新增资源配方绑定。")]
+        /// <summary>由预制体绑定的准备期撤棋按钮。</summary>
+        [Tooltip("准备期选中己方棋时出现，回调转发 BattleLogic。")]
         [SerializeField] private Button removePieceButton;
         [Tooltip("旧版帮手能源标签。保留给已有预制体和制作配方，由 HUD 绑定时停用。")]
         [SerializeField] private Text helperScoreLabel;
@@ -31,22 +32,28 @@ namespace RevGame.UI
         [RevButtonClick("btnRemovePiece")]
         private void OnRemovePiece()
         {
-            RevLogic.Get<Flow.BattleLogic>()?.RemovePiece(_removePieceId);
+            // 阶段可能在按下与释放之间切换，点击时再验一次，避免旧按钮在战斗期执行。
+            if (Battle.Phase == GamePhase.Prepare && _removePieceId != 0)
+            {
+                RevLogic.Get<Flow.BattleLogic>()?.RemovePiece(_removePieceId);
+            }
             RefreshPieceManagement();
         }
-        // 重新查选中棋子身份和真实可见前置，SetActive只在变化时调用。
-        // 按钮位置仍跟随当前棋子/相机，不能缓存旧坐标导致按钮点到已移走棋子的旁边。
+        /// <summary>准备期根据选中棋子和界面门禁更新按钮，战斗期直接清除可见和点击状态。</summary>
         private void RefreshPieceManagement()
         {
             if (removePieceButton == null)
             {
                 return;
             }
-            var piece = Battle.Board.FindPiece(Battle.SelectedPieceId);
-            bool visible = piece != null && piece.IsAlive && piece.Side == GameSide.Player
-                && (Battle.Phase == GamePhase.Prepare || Battle.Phase == GamePhase.Battle);
-            var flow = RevServices.GetRequired<Flow.GameFlow>();
-            visible = visible && !flow.IsGameplayBlocked && !flow.IsTutorialActive;
+            var battle = Battle;
+            var piece = battle.Phase == GamePhase.Prepare ? battle.Board.FindPiece(battle.SelectedPieceId) : null;
+            bool visible = piece != null && piece.IsAlive && piece.Side == GameSide.Player;
+            if (visible)
+            {
+                var flow = RevServices.GetRequired<Flow.GameFlow>();
+                visible = !flow.IsGameplayBlocked && !flow.IsTutorialActive;
+            }
 
             if (removePieceButton.gameObject.activeSelf != visible)
             {

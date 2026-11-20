@@ -3,13 +3,13 @@ CRC: 2200893250
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0ef444db8ebbd0b075337c4a96b244a0
+    Hash: 33a30fcf069ab886187ab48c8aca7836
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2cbe40305180994b82ce018ef72ea3cd
+    Hash: 9e891f3c4efdd0c7fa198b47854525a9
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0ef444db8ebbd0b075337c4a96b244a0
+    Hash: 33a30fcf069ab886187ab48c8aca7836
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -29,9 +29,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 73f43010159730045ab9b1b6f32361dd, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: b9f822b17c065a6448ccd43517b5396e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 73f43010159730045ab9b1b6f32361dd, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -64,5 +64,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background"

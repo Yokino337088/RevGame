@@ -9,14 +9,15 @@ namespace RevGame.Endless
     /// <summary>
     /// 无尽入口：选一个棋阵，点开始。只收集输入，实际加载与存档恢复由唯一的 GameFlow 执行。
     /// 新手不需要看规则说明，也不用选难度；“继续”只在有存档时才出现。
-    /// 动画沿用六章弹窗手感：打开回弹弹入、关闭弹出收起，选中的棋阵卡弹一下；底板流光来自预制体上的 ArcanePanel 共享材质。
+    /// 打开与关闭沿用框架弹窗动画，阵型卡按选择状态显示色彩和回弹。
     /// </summary>
     [RevUIPanel("UI/Panel/Endless", RevUILayer.Popup)]
     public sealed class EndlessEntryPanel : RevUIPanel
     {
         /// <summary>入口固定普通难度：难度选择对第一次玩的人没有意义。</summary>
         private const int NormalDifficulty = 0;
-        private static readonly Color Selected = new Color(1f, .84f, .38f);
+        /// <summary>已选阵型使用浅金高亮，仍保留图案和深字反差。</summary>
+        private static readonly Color Selected = new Color(1f, .91f, .63f);
         [RevBind("best")] private Text _best;
         [RevBind("resume")] private GameObject _resume;
         /// <summary>三张棋阵卡的图片，被选中的染金。</summary>
@@ -55,15 +56,28 @@ namespace RevGame.Endless
                 RevLog.Warn("无尽本地纪录读取失败，原档保留：" + error.Message, "RevGame");
             }
         }
+        /// <summary>选择变化或首次打开时更新卡图和文案，静止界面不重复写 UI。</summary>
         protected override void OnRefreshView()
         {
             for (int i = 0; i < _formations.Length; i++)
             {
-                _formations[i].color = i == _formation ? Selected : Color.white;
+                Color color = i == _formation ? Selected : Color.white;
+                if (_formations[i].color != color)
+                {
+                    _formations[i].color = color;
+                }
             }
-            _resume.SetActive(EndlessService.HasSavedRun());
+            bool canResume = EndlessService.HasSavedRun();
+            if (_resume.activeSelf != canResume)
+            {
+                _resume.SetActive(canResume);
+            }
             long best = BestScore();
-            _best.text = best > 0 ? "最高战绩 " + best : "第一次挑战，选一个棋阵吧";
+            string text = best > 0 ? "最高战绩 " + best : "第一次挑战，选一个棋阵吧";
+            if (_best.text != text)
+            {
+                _best.text = text;
+            }
         }
         /// <summary>从本地纪录里找普通难度的最高分。</summary>
         private long BestScore()

@@ -158,7 +158,7 @@ internal static class GoBattleComponentSystem
         }
 #endif
         return battle.Rooms.TryGetValue(request.RoomId, out var room) && room.Board.Sequence == request.BoardSequence &&
-            (test ? room.Board.Phase == GoPhase.Playing : DuelEligibility.CanChallenge(room.Board, (GoSide)request.Side, new GoBoardAnalysis()));
+            (test ? room.Board.Phase == GoPhase.Playing : DuelEligibility.CanChallenge(room.Board, (GoSide)request.Side));
     }
 
     /// <summary>发现更换连接时清空权威邮箱。小于该席当前代际的请求由调用方拒绝。</summary>

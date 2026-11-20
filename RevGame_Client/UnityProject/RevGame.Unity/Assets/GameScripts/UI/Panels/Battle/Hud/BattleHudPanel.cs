@@ -18,12 +18,7 @@ namespace RevGame.UI
     /// <summary>
     /// 战斗 HUD（策划案 §03：局内只有"落子"一个操作，其余全部自动 —— 所以 HUD 只负责**读**）。
     ///
-    /// 常驻显示章节回合、全队三项加成和 Boss 血条，局内事件继续走独立弹幕提示。
-    ///
-    /// 【为什么 HUD 自己读服务，而不是等别人 SetData】
-    /// HUD 是"常驻观察者"：它关心的不是某一次数据快照，而是**服务的实时状态**。
-    /// 让它每帧/每次事件后自己去 `IBattleService` 拉一次，比让业务层到处记得推送更不容易漏。
-    /// 真正的"一次性数据"（例如结算面板的胜负）才走 SetData。
+    /// 每秒观察十次。右栏战斗期在全队增益和在场战况之间切换，主将血条始终可见，事件用独立弹幕。
     /// </summary>
     [RevUIPanel(RevResPath.UI_Panel, RevUILayer.Normal, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed partial class BattleHudPanel : RevUIPanel
@@ -87,6 +82,18 @@ namespace RevGame.UI
         private int _hudChapter, _hudRound, _hudAttack, _hudSpeed, _hudDefense;
         // 上次显示的Boss回合；同一章节/回合值不变时，标签后缀也可能变化，故要独立比较。
         private bool _hudBossRound;
+        /// <summary>战况页和增益页的轮播间隔，单位为战斗界面使用的秒。</summary>
+        private const float InfoPageSeconds = 5f;
+        /// <summary>当前轮播期应展示战况页。新阶段回到增益页。</summary>
+        private bool _enemyInfoRequested;
+        /// <summary>上次实际显示的页码，用于识别返回同数值的另一页。</summary>
+        private bool _hudShowsEnemy;
+        /// <summary>上一次显示的我方在场数。</summary>
+        private int _hudFriendlyCount;
+        /// <summary>上一次显示的敌方在场数。</summary>
+        private int _hudEnemyCount;
+        /// <summary>上一次显示的敌方战术档位，范围 1 至 4。</summary>
+        private int _hudEnemyTactics;
         // 主将换人或实际生命值变化时才更新数字，不能只比较血条比例。
         private int _hudKingId, _hudKingHp, _hudKingMax;
         private IBattleService Battle
@@ -96,7 +103,7 @@ namespace RevGame.UI
                 return RevServices.GetRequired<IBattleService>();
             }
         }
-        // 框架绑定Image节点后创建读写委托，生命周期与面板一致。此处只装配，不计算血量或决定胜负。
+        /// <summary>绑定信息牌坐标和深墨色，创建本面板血条复用的只读及写入委托。</summary>
         protected override void OnBindView()
         {
             GameMobileLayout.EnableBoardFrame(transform);
@@ -117,13 +124,15 @@ namespace RevGame.UI
                 }
             }
 
-            // 使用现有信息牌作为坐标原点，四个控件跟随它等比缩放。沿用原图和填充式血条。
+            // 使用新信息牌作为坐标原点，文字留在平静的纸面，主将血条固定在底部。
             var plate = (RectTransform)transform.Find("infoPlate");
             AnchorInPlate(_countText.rectTransform, plate, .13f, .36f, .87f, .86f);
             AnchorInPlate(_bossFrame.rectTransform, plate, .13f, .12f, .87f, .20f);
             AnchorInPlate(_bossBar.rectTransform, plate, .13f, .12f, .87f, .20f);
             AnchorInPlate(_bossText.rectTransform, plate, .13f, .21f, .87f, .35f);
             _countText.alignment = TextAnchor.MiddleCenter;
+            _countText.color = new Color32(0x14, 0x29, 0x30, 255);
+            _bossText.color = _countText.color;
             _countText.resizeTextForBestFit = true;
             _countText.resizeTextMinSize = 16;
             _countText.resizeTextMaxSize = 32;
@@ -159,7 +168,9 @@ namespace RevGame.UI
             bool bossVisible = _bossBar.gameObject.activeInHierarchy && _bossText.gameObject.activeInHierarchy;
             return new Dictionary<string, object>
             {
-                ["bonuses"] = _countText.text,
+                ["bonuses"] = _hudShowsEnemy ? string.Empty : _countText.text,
+                ["infoPage"] = _hudShowsEnemy ? "Enemy" : "Team",
+                ["infoText"] = _countText.text,
                 ["attackBonusPercent"] = _hudAttack,
                 ["attackSpeedBonusPercent"] = _hudSpeed,
                 ["defenseBonusPercent"] = _hudDefense,
@@ -170,10 +181,11 @@ namespace RevGame.UI
             };
         }
 #endif
-        // 打开后使所有旧UI缓存失效并重建监听/计时。面板重新出现时不能因数值相同沿用关闭前的显示。
+        /// <summary>面板重新打开时使显示缓存失效，并重新注册归属于当前面板的观察和轮播计时。</summary>
         protected override void OnOpen()
         {
             _hudValid = false;
+            _enemyInfoRequested = false;
             OpenScore();
             ResetBarAnimations();
             _noticeClosed = false;
@@ -187,6 +199,7 @@ namespace RevGame.UI
             OpenPieceManagement();
             SetNoticeVisible(false);
             RevTimer.Every(0.1f, RefreshView, owner: this);
+            RevTimer.Every(InfoPageSeconds, RotateBattleInfo, owner: this);
             RevEvent.AddEventListener(Events.PreparationBuffsGranted, OnPreparationGranted, owner: this);
             // owner: this → 面板释放时框架自动解绑，不用手写解绑清单。
             RevEvent.AddEventListener<int>(Events.PhaseEnterBattle, OnPhaseChanged, 0, this);
@@ -216,20 +229,13 @@ namespace RevGame.UI
                 {
                     _roundText.text = "第 " + _battle.Chapter + " / 6 章 · 第 " + _battle.Round + " 回合" + (_battle.IsBossRound ? "（擒王 · 不限时）" : "（不限时）");
                 }
-                int attack = Mathf.RoundToInt(_battle.TeamAttackBonus * 100f);
-                int speed = Mathf.RoundToInt(_battle.TeamAttackSpeedBonus * 100f);
-                int defense = Mathf.RoundToInt(_battle.TeamDefenseBonus * 100f);
-                if (!_hudValid || attack != _hudAttack || speed != _hudSpeed || defense != _hudDefense)
-                {
-                    _countText.text = $"攻击力 {attack:+0;-0;+0}%\n攻速 {speed:+0;-0;+0}%\n防御力 {defense:+0;-0;+0}%";
-                    _hudAttack = attack;
-                    _hudSpeed = speed;
-                    _hudDefense = defense;
-                }
+                RefreshBattleInfo(_battle);
 
                 Pieces.Piece king = null;
-                foreach (var piece in _battle.EnemyPieces)
+                IReadOnlyList<Pieces.Piece> enemies = _battle.EnemyPieces;
+                for (int i = 0; i < enemies.Count; i++)
                 {
+                    Pieces.Piece piece = enemies[i];
                     if (piece.IsKing)
                     {
                         king = piece;
@@ -261,6 +267,48 @@ namespace RevGame.UI
                 _hudValid = true;
             }
         }
+        /// <summary>战斗期才翻页。文字由既有的十次每秒观察统一更新，计时器本身不写控件。</summary>
+        private void RotateBattleInfo()
+        {
+            if (Battle.Phase == GamePhase.Battle)
+            {
+                _enemyInfoRequested = !_enemyInfoRequested;
+            }
+        }
+
+        /// <summary>比较页码及已显示的整数快照后再拼文案，避免未变化时重建字形和布局。</summary>
+        private void RefreshBattleInfo(IBattleService battle)
+        {
+            bool showEnemy = battle.Phase == GamePhase.Battle && _enemyInfoRequested;
+            bool pageChanged = !_hudValid || showEnemy != _hudShowsEnemy;
+            int attack = Mathf.RoundToInt(battle.TeamAttackBonus * 100f);
+            int speed = Mathf.RoundToInt(battle.TeamAttackSpeedBonus * 100f);
+            int defense = Mathf.RoundToInt(battle.TeamDefenseBonus * 100f);
+            if (showEnemy)
+            {
+                int friends = battle.PlayerPieces.Count;
+                int enemies = battle.EnemyPieces.Count;
+                // 战术档来自当前关卡与回合，维持同一回合时直接复用。
+                int tactics = pageChanged || _hudChapter != battle.Chapter || _hudRound != battle.Round
+                    ? battle.EnemyIntelligence : _hudEnemyTactics;
+                if (pageChanged || friends != _hudFriendlyCount || enemies != _hudEnemyCount || tactics != _hudEnemyTactics)
+                {
+                    _countText.text = $"敌军在场 {enemies}\n我方在场 {friends}\n敌方战术 {tactics} / 4";
+                    _hudFriendlyCount = friends;
+                    _hudEnemyCount = enemies;
+                    _hudEnemyTactics = tactics;
+                }
+            }
+            else if (pageChanged || attack != _hudAttack || speed != _hudSpeed || defense != _hudDefense)
+            {
+                _countText.text = $"攻击力 {attack:+0;-0;+0}%\n攻速 {speed:+0;-0;+0}%\n防御力 {defense:+0;-0;+0}%";
+            }
+            _hudAttack = attack;
+            _hudSpeed = speed;
+            _hudDefense = defense;
+            _hudShowsEnemy = showEnemy;
+        }
+
         [RevButtonClick("btnHome")]
         private void OnHome()
         {
@@ -343,6 +391,7 @@ namespace RevGame.UI
             _eventIcon.sprite = null;
             SetNoticeVisible(false);
         }
+        /// <summary>从配置读取弹幕文案。能量炸弹的间隔和扣血比例使用结算实际读取的参数。</summary>
         private void OnBattleEvent(string title)
         {
             if (title == "眼位成型" || title == "眼位复苏")
@@ -364,7 +413,10 @@ namespace RevGame.UI
                 }
             }
             BattleText config = GameTextConfig.Require("Event_" + title);
-            ShowNotice(config, config.Text, sprite);
+            string energyDetail = title == "能量巨大" ? config.Detail
+                .Replace("{interval}", ConfigText.Number(Balance.BombIntervalSeconds))
+                .Replace("{damage}", ConfigText.Percent(Balance.BombDamageHpRatio)) : null;
+            ShowNotice(config, config.Text, sprite, energyDetail);
         }
         /// <summary>
         /// 只播报已经提交的敌方落子。先把棋种/坐标转成文字，异步加载不能保存可能阵亡的Piece引用。
@@ -450,6 +502,7 @@ namespace RevGame.UI
                 break;
             }
         }
+        /// <summary>使用处理后的事件说明播报；异步过期时将提示归还池中。</summary>
         private void ShowNotice(BattleText config, string title, Sprite sprite, string detail = null, bool central = false)
         {
             // 同一时刻只读一条大提示。连续升级时显示最新结果，旧提示立即回池；
@@ -487,7 +540,7 @@ namespace RevGame.UI
                 }
                 else
                 {
-                    notice.Show(config, title, sprite, OnNoticeFinished);
+                    notice.Show(config, title, sprite, OnNoticeFinished, detail);
                 }
             }, _noticeRoot);
         }
@@ -586,10 +639,12 @@ namespace RevGame.UI
         {
             _eventText.transform.parent.gameObject.SetActive(visible);
         }
+        /// <summary>阶段切换时清掉上一阶段的临时表现，并回到增益页。</summary>
         private void OnPhaseChanged(int round)
         {
             ClearRoundPresentation();
             _swallowWaiting = false;
+            _enemyInfoRequested = false;
 
             if (Battle.Phase == GamePhase.Prepare)
             {

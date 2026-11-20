@@ -162,6 +162,7 @@ namespace RevGame.Pvp.Networking
             }
         }
 
+        /// <summary>按发现协议校验端点和票据。仅在收到广播查询时向搜索者回复自己的大厅可见状态。</summary>
         private void HandleDatagram(DiscoveryPacket packet, IPEndPoint remote)
         {
             if (packet == null || packet.magic != Magic || packet.version != ProtocolVersion || packet.id == LocalId ||
@@ -171,7 +172,17 @@ namespace RevGame.Pvp.Networking
             }
             if (packet.kind == "hello")
             {
-                ObservePeer(packet, remote);
+                bool broadcast = string.IsNullOrEmpty(packet.target);
+                if (!broadcast && packet.target != LocalId)
+                {
+                    return;
+                }
+                LanPeerInfo discovered = ObservePeer(packet, remote);
+                if (_listenOnly && broadcast && discovered != null)
+                {
+                    // 定向回复的目标字段不为空，两个接收者不会互相回包。
+                    SendControl("hello", discovered, string.Empty);
+                }
                 return;
             }
             if (packet.target != LocalId || !Guid.TryParseExact(packet.ticket, "N", out _))
@@ -212,14 +223,15 @@ namespace RevGame.Pvp.Networking
             }
         }
 
-        private void ObservePeer(DiscoveryPacket packet, IPEndPoint remote)
+        /// <summary>返回已更新的设备记录。列表到上限时忽略新设备，避免过多报文引起增长。</summary>
+        private LanPeerInfo ObservePeer(DiscoveryPacket packet, IPEndPoint remote)
         {
             LanPeerInfo peer = _peers.Find(item => item.Id == packet.id);
             if (peer == null)
             {
                 if (_peers.Count >= MaxPeers)
                 {
-                    return;
+                    return null;
                 }
                 peer = new LanPeerInfo { Id = packet.id };
                 _peers.Add(peer);
@@ -240,6 +252,7 @@ namespace RevGame.Pvp.Networking
             {
                 Changed?.Invoke();
             }
+            return peer;
         }
 
         private void HandleInvitation(DiscoveryPacket packet, LanPeerInfo peer)

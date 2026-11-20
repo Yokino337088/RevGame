@@ -58,6 +58,7 @@ namespace RevGame.Editor
             return config;
         }
 
+        /// <summary>补齐项目开源入口，沿用大厅行距并装配专用书本插画，修改结束后卸载预制体内容。</summary>
         private static void PatchHome()
         {
             const string path = Root + "UI/Panel/HomePanel.prefab";
@@ -72,20 +73,15 @@ namespace RevGame.Editor
                     entry = (RectTransform)Object.Instantiate(endless.gameObject, home.transform, false).transform;
                     entry.name = "btnProjectOpenSource";
                 }
-                // 沿用右侧菜单的宽高和行距。无尽入口的金色原图、切片和按压高亮随节点复用。
-                var sourceImage = endless.GetComponent<Image>();
-                var entryImage = entry.GetComponent<Image>();
-                entryImage.sprite = sourceImage.sprite;
-                entryImage.color = sourceImage.color;
+                // 沿用右侧菜单的宽高和行距，书本插画与其它入口使用同一大厅图集。
                 Vector2 row = new Vector2(0f, .115f);
                 entry.anchorMin = quit.anchorMin - row;
                 entry.anchorMax = quit.anchorMax - row;
                 entry.offsetMin = quit.offsetMin;
                 entry.offsetMax = quit.offsetMax;
                 entry.SetSiblingIndex(quit.GetSiblingIndex() + 1);
-                Text label = entry.GetComponentInChildren<Text>();
-                label.text = "项目开源";
-                label.fontSize = Mathf.Max(60, endless.GetComponentInChildren<Text>().fontSize + 12);
+                entry.Find("label").GetComponent<Text>().text = "项目开源";
+                GameLobbyButtonBuild.Apply(entry.GetComponent<Button>());
                 if (PrefabUtility.SaveAsPrefabAsset(home, path) == null)
                 {
                     throw new InvalidOperationException("大厅项目开源入口保存失败");

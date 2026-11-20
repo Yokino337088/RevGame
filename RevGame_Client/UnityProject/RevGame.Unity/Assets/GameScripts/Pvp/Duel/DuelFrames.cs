@@ -60,19 +60,18 @@ namespace RevGame.Pvp.Duel
         public DuelPrepState? preparation;
     }
 
-    // 共享的挑战资格，界面用来展示，权威方用来重新校验。
+    /// <summary>围棋转换为决斗的共享门禁。客户端预览，局域网宿主与服务器从实际棋谱重新核对。</summary>
     public static class DuelEligibility
     {
-        // 根据手数和估算分差检查指定座位是否明显落后，复用调用方提供的分析缓冲。
-        public static bool CanChallenge(GoCore core, GoSide side, GoBoardAnalysis analysis)
+        /// <summary>当前仍在对弈且本席第 50 手的胜率严格低于 50% 时，允许发起决斗。</summary>
+        public static bool CanChallenge(GoCore core, GoSide side)
         {
-            if (core == null || side == GoSide.Empty || core.Phase == GoPhase.Finished || core.MoveNumber < DuelConfig.MinimumMove)
+            if (core == null || core.Phase != GoPhase.Playing || core.MoveNumber < GoCore.DuelForecastMove)
             {
                 return false;
             }
-            core.Analyze(analysis);
-            int blackLead = analysis.Score.DifferenceHalfPoints;
-            return side == GoSide.Black ? blackLead <= -DuelConfig.MinimumLead : blackLead >= DuelConfig.MinimumLead;
+            return (side == GoSide.Black && core.DuelBlackWinPercent < 50) ||
+                (side == GoSide.White && core.DuelBlackWinPercent > 50);
         }
     }
 
@@ -95,8 +94,8 @@ namespace RevGame.Pvp.Duel
         public const int PrepLock = 7;
         public const int PrepLoad = 8;
         public const int PrepAbort = 9;
-        // 旧端没有准备屏障，禁止与新端混进同一决斗。
-        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x70000000 ^ DuelConfig.PickDurationMs;
+        /// <summary>包含准备屏障和第 50 手授权规则的联机版本，避免不同授权规则的客户端互相开启决斗。</summary>
+        public const int NetworkFingerprint = DuelConfig.Fingerprint ^ 0x71000000 ^ DuelConfig.PickDurationMs;
         // 单次宿主更新最多补三个固定步长，防止暂停恢复后长时间占用主线程或 Gate。
         private const int MaxCatchUpFrames = 3;
         // 单个回复最多 64 帧，落后端按连续游标分批补。

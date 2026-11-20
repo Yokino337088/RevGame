@@ -27,15 +27,17 @@ namespace RevGame.Editor
             root.AddComponent<HomePanel>();
             Label("title", root.transform, "围棋史莱姆", new Vector2(1100, 130), new Vector2(0, 260), 82);
             Label("subtitle", root.transform, "落子布阵 · 连成一片 · 围住主将", new Vector2(1100, 60), new Vector2(0, 135), 32);
-            MakeButton("btnPlay", root.transform, "开始闯关", new Vector2(370, 110), new Vector2(0, -70));
+            Button start = MakeButton("btnPlay", root.transform, "开始闯关", new Vector2(570, 100), new Vector2(0, -70));
             Label("hint", root.transform, "点手牌，再点棋盘。准备完毕后，棋子自动作战。", new Vector2(1250, 60), new Vector2(0, -260), 30);
 
             // 首页已转为手工维护，不能让旧装配器覆盖三个按钮及其布局。
             if (AssetDatabase.LoadAssetAtPath<GameObject>(Ui + "HomePanel.prefab") == null)
             {
                 GameArtMigration.AddScreenBackground(root);
-                MakeButton("btnPvP", root.transform, "玩家对战", new Vector2(370, 110), new Vector2(0, -200));
-                MakeButton("btnQuit", root.transform, "我不玩了", new Vector2(370, 110), new Vector2(0, -330));
+                GameLobbyButtonBuild.Apply(start);
+                GameLobbyButtonBuild.Apply(MakeButton("btnPvP", root.transform, "玩家对战", new Vector2(570, 100), new Vector2(0, -200)));
+                GameLobbyButtonBuild.Apply(MakeButton("btnQuit", root.transform, "我不玩了", new Vector2(570, 100), new Vector2(0, -330)));
+                GameLobbyButtonBuild.ConfigureLanInvitation(root.transform);
                 Save(root, "HomePanel");
             }
             else

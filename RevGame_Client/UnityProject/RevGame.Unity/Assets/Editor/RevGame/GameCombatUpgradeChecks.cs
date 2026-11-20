@@ -206,11 +206,16 @@ namespace RevGame.Editor
                 Require(battle.EnergyBombCount == 1, "实际固定步长已结算一次炸弹");
                 Require(VoicePlaying("EnergyHuge"), "能量巨大声音真实AudioSource正在播放");
                 bool title = false;
+                bool detail = false;
+                string bombDetail = FormattableString.Invariant(
+                    $"每{Balance.BombIntervalSeconds:0.###}秒扣除全场敌军{Balance.BombDamageHpRatio * 100f:0.###}%最大生命");
                 foreach (Text text in UnityEngine.Object.FindObjectsOfType<Text>())
                 {
                     title |= text.text == "能量巨大";
+                    detail |= text.text == bombDetail;
                 }
                 Require(title, "UI显示能量巨大弹幕");
+                Require(detail, "普通事件弹幕显示实际间隔和伤害比例");
                 var presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
                 Require((float)Field(presentation, "_impactAmplitude") > 0, "命中已启动相机震动");
                 await RevTask.Delay(700);

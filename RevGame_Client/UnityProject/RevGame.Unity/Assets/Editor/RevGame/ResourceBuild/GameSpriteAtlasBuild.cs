@@ -271,6 +271,17 @@ namespace RevGame.Editor
                 {
                     return "UIProjectOpenSource";
                 }
+                // 对战按钮和战况牌沿用各自首屏已经预热的公共战斗图集。
+                if (path.StartsWith("Assets/GameRes/Art/UI/PvpMenu/", StringComparison.Ordinal) ||
+                    path.StartsWith("Assets/GameRes/Art/UI/BattleHud/", StringComparison.Ordinal))
+                {
+                    return "UIBattle";
+                }
+                // 无尽圣坛和升级页在进入无尽时才使用，避免把大底板和阵型图常驻到其它玩法。
+                if (path.StartsWith("Assets/GameRes/Art/UI/EndlessMenu/", StringComparison.Ordinal))
+                {
+                    return "EndlessMenu";
+                }
                 string name = Path.GetFileNameWithoutExtension(path);
 
                 // 未在战斗使用的长竖棋盘图与酒馆大底板不能拖大六张手牌的常驻贴图。

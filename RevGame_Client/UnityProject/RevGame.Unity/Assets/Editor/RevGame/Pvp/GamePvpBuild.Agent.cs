@@ -31,8 +31,8 @@ namespace RevGame.Editor
                 Transform controls = panel.transform.Find("controls");
                 if (controls.Find("agent") == null)
                 {
-                    Button("agent", controls, "Agent托管", .025f, .32f, .20f, .40f, 24);
-                    Button("agentSettings", controls, "Agent设置", .025f, .22f, .20f, .30f, 24);
+                    Button("agent", controls, "Agent托管", .025f, .32f, .20f, .40f, 24, "PvpMenu/PvpMatchButton");
+                    Button("agentSettings", controls, "Agent设置", .025f, .22f, .20f, .30f, 24, "PvpMenu/PvpMatchButton");
                 }
                 PrefabUtility.SaveAsPrefabAsset(panel, path);
             }
@@ -47,7 +47,8 @@ namespace RevGame.Editor
                 // 兼容较旧入口资产。新菜单配方已在安全框内生成同名按钮。
                 if (entry.transform.Find("agentSettings") == null)
                 {
-                    Button("agentSettings", entry.transform, "Agent设置", .73f, .07f, .93f, .14f, 25);
+                    Button("agentSettings", entry.transform, "Agent设置", .594f, .0864f, .7914f, .171f, 25,
+                        "PvpMenu/PvpAgentButton", .12f);
                 }
                 PrefabUtility.SaveAsPrefabAsset(entry, entryPath);
             }

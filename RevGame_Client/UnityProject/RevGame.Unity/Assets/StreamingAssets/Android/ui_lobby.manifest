@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 432698993
+CRC: 297739335
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0a993d4e7e969f81cfe303faf19eb2e9
+    Hash: b4970ab58c86a9392720bce71d6c5098
   TypeTreeHash:
     serializedVersion: 2
     Hash: 16a24302a63592c9439dc87edf47fbf7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0a993d4e7e969f81cfe303faf19eb2e9
+    Hash: b4970ab58c86a9392720bce71d6c5098
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -69,8 +69,8 @@ Assets:
 - Assets/GameRes/UI/Panel/LevelSelectPanel.prefab
 - Assets/GameRes/UI/Panel/HomePanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui"

@@ -9,6 +9,7 @@ internal static class Program
     private static int _accepted;
     private static int _rejected;
 
+    /// <summary>依次执行生产棋规的纯逻辑回归，遇到首个断言失败则终止。</summary>
     private static void Main()
     {
         OpeningAndAtomicRejection();
@@ -16,6 +17,7 @@ internal static class Program
         SuperkoAcrossScoring();
         ScoringNegotiation();
         AnalysisAndHints();
+        DuelForecastAtMoveFifty();
         ClockBoundaries();
         DeterministicGames(500);
         Console.WriteLine("PASS: " + _assertions + " assertions; 500 fixed-seed games; " + _accepted + " accepted commands; " + _rejected + " rejected attempts.");
@@ -33,6 +35,34 @@ internal static class Program
     private static void Play(GoCore game, int x, int y)
     {
         Check(game.TryPlay(x, y, out GoPlayResult result), "fixture move " + x + "," + y + ": " + result.Error);
+    }
+
+    /// <summary>相同镜像棋面覆盖第 49 手、第 50 手平估及贴目分出劣势，继续落子不重算第 50 手。</summary>
+    private static void DuelForecastAtMoveFifty()
+    {
+        var equal = new GoCore(0);
+        var whiteLead = new GoCore(15);
+        var moves = new List<GoCommand>();
+        for (int turn = 0; turn < GoCore.DuelForecastMove; turn++)
+        {
+            int point = turn / 2;
+            int x = turn % 2 == 0 ? point % 3 : 8 - point % 3;
+            var command = new GoCommand { Action = GoAction.Play, Side = equal.Turn, X = x, Y = point / 3 };
+            moves.Add(command);
+            Play(equal, command.X, command.Y);
+            Play(whiteLead, command.X, command.Y);
+            if (turn < 49)
+            {
+                Check(equal.DuelBlackWinPercent == 50 && whiteLead.DuelBlackWinPercent == 50, "第 50 手前不结算决斗资格");
+            }
+        }
+        int milestone = whiteLead.DuelBlackWinPercent;
+        Check(equal.DuelBlackWinPercent == 50 && milestone < 50, "第 50 手平估不触发，贴目落后方低于 50%");
+        Check(GoCore.TryReplay(15, moves, out GoCore replay, out _) && replay.DuelBlackWinPercent == milestone,
+            "重连棋谱重放得到相同的第 50 手胜率");
+        Check(whiteLead.Clone().DuelBlackWinPercent == milestone, "克隆继承已锁定的第 50 手胜率");
+        Play(whiteLead, 4, 4);
+        Check(whiteLead.DuelBlackWinPercent == milestone, "后续围棋落子不反复发放资格");
     }
 
     private static void OpeningAndAtomicRejection()

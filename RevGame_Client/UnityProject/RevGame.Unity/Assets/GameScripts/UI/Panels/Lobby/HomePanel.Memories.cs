@@ -22,6 +22,7 @@ namespace RevGame.UI
         private int _spokenUnread;
         private bool _openingBook;
 
+        /// <summary>打开大厅时装配收藏提示，并恢复玩家授权的局域网邀请接收。</summary>
         protected override void OnOpen()
         {
             _spokenUnread = 0;
@@ -29,6 +30,7 @@ namespace RevGame.UI
             RevEvent.AddEventListener(YayaMemoryProgress.Changed, OnMemoryProgressChanged, owner: this);
             RefreshMemoryEntry(true);
             RefreshCottageStoryEntry();
+            OpenLobbyLanAsync().Forget();
         }
 
         protected override void OnCovered(bool covered)
@@ -43,8 +45,10 @@ namespace RevGame.UI
             }
         }
 
+        /// <summary>关闭大厅时停止收藏表现和未移交的邀请监听。</summary>
         protected override void OnClose()
         {
+            CloseLobbyLan();
             StopMemoryPulse();
             HideMemorySpeech();
             HideCottageStoryTip();

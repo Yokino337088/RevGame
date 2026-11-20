@@ -9,12 +9,6 @@ namespace RevGame.Pvp
     // 围棋服务的决斗接线，负责接纳、收发、补帧与退出，伤害和移动由原生实例结算。
     public sealed partial class PvpService
     {
-        // 资格检查复用的棋盘分析缓冲，避免界面刷新重复分配。
-        private readonly GoBoardAnalysis _duelAnalysis = new GoBoardAnalysis();
-        // 缓存上一次算过资格的棋盘引用。新棋面才重算。
-        private GoCore _duelExaminedBoard;
-        // 当前棋面下本座位是否达到劣势条件。
-        private bool _duelEligible;
         // 对端已确认支持当前决斗指纹。旧客户端仍可围棋对弈。
         private bool _duelPeerCompatible;
         // 只有本机人机宿主或 LAN 黑方持有的封帧器。服务器模式由远端持有。
@@ -110,22 +104,17 @@ namespace RevGame.Pvp
         // 已有服务器传输且没有在处理其它连接操作时，允许发起重连。
         public bool DuelReconnectAvailable => _server != null && !_server.Busy;
 
-        // 汇总棋局资格、连接兼容和当前操作状态，供 HUD 判断是否显示入口。
+        /// <summary>本席须持有第 50 手的劣势资格，且棋局未冻结、未重连、未进入复盘。</summary>
         public bool CanChallengeDuel
         {
             get
             {
-                if (DuelId.Length != 0 || Core == null || _awaiting || _leaving ||
+                if (DuelId.Length != 0 || Core == null || _awaiting || _leaving || ReplayStep >= 0 || _needsServerSync || _syncMoves != null ||
                     (!IsComputerGame && (Mode == PvpConnectionMode.Local || !Connected || !_duelPeerCompatible)))
                 {
                     return false;
                 }
-                if (!ReferenceEquals(_duelExaminedBoard, Core))
-                {
-                    _duelExaminedBoard = Core;
-                    _duelEligible = DuelEligibility.CanChallenge(Core, MySide, _duelAnalysis);
-                }
-                return _duelEligible;
+                return DuelEligibility.CanChallenge(Core, MySide);
             }
         }
 
@@ -140,7 +129,7 @@ namespace RevGame.Pvp
         internal bool CanTestDuel => DuelTestEnabled && Mode != PvpConnectionMode.Local && CanAct &&
             _duelPeerCompatible && (MySide == GoSide.Black || MySide == GoSide.White) && Core.Phase == GoPhase.Playing;
 
-        // 正常挑战使用原围棋劣势资格。
+        /// <summary>经共享规则与连接门禁提交强制决斗意图，权威席位批准后两端同时进入原选角流程。</summary>
         public bool ChallengeDuel()
         {
             return RequestDuel(DuelAuthority.Challenge);
@@ -152,7 +141,7 @@ namespace RevGame.Pvp
             return RequestDuel(DuelAuthority.TestChallenge);
         }
 
-        // 两种入口共用服务器 RPC、LAN 转发、就绪屏障和原生开局。
+        /// <summary>按当前连接模式向房间权威提交意图，返回是否接单。测试与正式动作各自校验。</summary>
         private bool RequestDuel(int operation)
         {
             bool allowed = operation == DuelAuthority.TestChallenge ? CanTestDuel : CanChallengeDuel;
@@ -167,9 +156,8 @@ namespace RevGame.Pvp
             }
             if (Mode == PvpConnectionMode.Lan && MySide == GoSide.White)
             {
-                SendLan(new PvpLanMessage { type = "duel-challenge", name = Core.StateHash.ToString(),
+                return SendLan(new PvpLanMessage { type = "duel-challenge", name = Core.StateHash.ToString(),
                     duelRequest = DuelRequestFor(operation) });
-                return true;
             }
             return OpenOwnedDuel(Mode == PvpConnectionMode.Lan, operation);
         }
@@ -724,7 +712,7 @@ namespace RevGame.Pvp
                     {
                         int operation = message.duelRequest.operation;
                         if ((operation == DuelAuthority.TestChallenge && CanTestDuel) ||
-                            (operation == DuelAuthority.Challenge && DuelEligibility.CanChallenge(Core, GoSide.White, _duelAnalysis)))
+                            (operation == DuelAuthority.Challenge && DuelEligibility.CanChallenge(Core, GoSide.White)))
                         {
                             OpenOwnedDuel(true, operation);
                         }
@@ -782,7 +770,6 @@ namespace RevGame.Pvp
             _duelPipe?.Dispose();
             _duelAuthority = null;
             _duelPipe = null;
-            _duelExaminedBoard = null;
             _duelPeerCompatible = false;
             DuelId = "";
             DuelError = "";
@@ -850,12 +837,12 @@ namespace RevGame.Pvp
             return true;
         }
 
-        // 开发态用合法棋步构造明显劣势，再进入本机人机控制，供实际入口回归。
+        /// <summary>以正常动作提交第 50 手并造出黑方劣势，再接管为本地人机，用于测试正式挑战按钮。</summary>
         public bool PrepareDuelFixture()
         {
             // 不改存档或直接伪造棋盘。黑方停手，白方每轮下一个合法点，最后接回正式人机控制。
             StartLocal();
-            int rounds = (DuelConfig.MinimumMove + 1) / 2;
+            int rounds = GoCore.DuelForecastMove / 2;
             for (int i = 0; i < rounds; i++)
             {
                 if (!Submit(GoAction.Pass) || !Submit(GoAction.Play, i % 9, i / 9))

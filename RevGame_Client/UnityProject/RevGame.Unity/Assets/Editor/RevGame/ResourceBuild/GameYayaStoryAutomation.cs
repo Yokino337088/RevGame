@@ -35,6 +35,20 @@ namespace RevGame.Editor
             Type type = Type.GetType("RevGame.Editor.GameLobbySceneBuild, Assembly-CSharp-Editor", true);
             return new Result { text = (string)type.GetMethod("Configure").Invoke(null, null) };
         }
+        /// <summary>从引用自动化程序集的桥接层装配大厅按钮，制作配方只负责保存 Unity 资产。</summary>
+        [RevAutomationAction("game.lobby.buttons", Environment = "edit", Keys = new string[0], Description = "装配正式大厅的五个浅色入口")]
+        public static object ConfigureLobbyButtons(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameLobbyButtonBuild, Assembly-CSharp-Editor", true);
+            try
+            {
+                return new Result { text = (string)type.GetMethod("ApplyToHome").Invoke(null, null) };
+            }
+            catch (System.Reflection.TargetInvocationException error)
+            {
+                throw new InvalidOperationException(error.InnerException?.Message ?? error.Message, error.InnerException ?? error);
+            }
+        }
         /// <summary>只调用固定项目制作配方；资源门禁失败向外返回原始原因，不假装制作成功。</summary>
         [RevAutomationAction("game.yaya-story.configure", Environment = "edit", Keys = new string[0], Description = "制作鸦鸦大厅原画遮罩、待机与六表情全屏剧情，保留Prefab GUID")]
         public static object Configure(RevAutomationRequest request)

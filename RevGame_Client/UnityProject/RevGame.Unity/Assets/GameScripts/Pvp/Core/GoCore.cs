@@ -14,6 +14,14 @@ namespace RevGame.Pvp
         public const string MatchProtocolVersion = "revgo-2";
         /// <summary>联机与本地人机的共同预算，仅实际落子计入，避免双端从各自配置推算出不同上限。</summary>
         public const int MatchPlacementLimit = 68;
+        /// <summary>仅在第 50 个合法回合动作完成时保存一次决斗局势。停一手也是一手，数子命令不计入。</summary>
+        public const int DuelForecastMove = 50;
+
+        /// <summary>按现有面积估算得到的黑方胜率百分数。开局、平估和第 50 手直接终局时均为 50。</summary>
+        public int DuelBlackWinPercent { get; private set; } = 50;
+
+        /// <summary>面积优势半目数与获胜把握的换算尺度，避免小幅领先被显示为绝对胜势。</summary>
+        private const int DuelForecastScaleHalfPoints = 16;
 
         private readonly byte[] _board = new byte[PointCount];
         private readonly byte[] _working = new byte[PointCount];
@@ -299,6 +307,7 @@ namespace RevGame.Pvp
             {
                 BeginScoring();
             }
+            RecordDuelForecast();
             return Accept(captured, captureCount, out result);
         }
 
@@ -316,7 +325,26 @@ namespace RevGame.Pvp
             {
                 BeginScoring();
             }
+            RecordDuelForecast();
             return Accept(new GoPointSet(), 0, out result);
+        }
+
+        /// <summary>用双方共享的围棋局势评估锁定第 50 手的胜率。重放同一棋谱会自然得到同一结果。</summary>
+        private void RecordDuelForecast()
+        {
+            if (MoveNumber != DuelForecastMove || Phase != GoPhase.Playing)
+            {
+                return;
+            }
+
+            // 面积评估复用规则盘的工作缓冲，不请求外部模型。保持黑白互补、平估为 50%、非零优势至少相差一点。
+            int lead = CalculateScore(false, null).DifferenceHalfPoints;
+            if (lead != 0)
+            {
+                int distance = Math.Abs(lead);
+                int confidence = Math.Max(1, distance * 49 / (distance + DuelForecastScaleHalfPoints));
+                DuelBlackWinPercent = 50 + Math.Sign(lead) * confidence;
+            }
         }
 
         private void BeginScoring()
@@ -462,6 +490,7 @@ namespace RevGame.Pvp
             WhiteCaptures = source.WhiteCaptures;
             PositionHash = source.PositionHash;
             Score = source.Score;
+            DuelBlackWinPercent = source.DuelBlackWinPercent;
         }
 
         /// <summary>回放在新实例中执行。任一命令非法即返回失败及准确索引，不发布半份“已同步”棋盘。</summary>

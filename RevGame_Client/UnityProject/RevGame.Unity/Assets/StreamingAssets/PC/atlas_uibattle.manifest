@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1827193133
+CRC: 2522717721
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b51ade9d066a23346b1b1f70ee25c218
+    Hash: acd05b883c1870037e9073cffd6a3d6b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b51ade9d066a23346b1b1f70ee25c218
+    Hash: acd05b883c1870037e9073cffd6a3d6b
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,13 +20,24 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/GameRes/Art/UI/PvpMenu/PvpLanButton.png
 - Assets/GameRes/Art/UI/UI_Setting_Background.png
 - Assets/GameRes/Art/UI/UI_Game_imgMobilityBK.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpMenuPlate.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpDuelChallenge.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpBackButton.png
 - Assets/GameRes/Art/UI/UI_Pvp_imgBK.png
 - Assets/GameRes/Art/UI/UI_Game_imgEnemyMobility.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpTextInput.png
 - Assets/GameRes/Art/UI/UI_roleItem_roleItem.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpLocalButton.png
 - Assets/GameRes/Art/UI/UI_roleItem_imgBK.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpComputerButton.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpServerButton.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpMatchButton.png
 - Assets/GameRes/Atlases/UIBattle.spriteatlasv2
 - Assets/GameRes/Art/UI/UI_Setting_Checkmark.png
 - Assets/GameRes/Art/UI/UI_Pvp_btnSetting.png
+- Assets/GameRes/Art/UI/PvpMenu/PvpAgentButton.png
+- Assets/GameRes/Art/UI/BattleHud/BattleInfoPlate.png
 Dependencies: []

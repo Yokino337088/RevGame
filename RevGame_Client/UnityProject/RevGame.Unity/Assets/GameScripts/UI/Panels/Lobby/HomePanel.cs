@@ -44,12 +44,12 @@ namespace RevGame.UI
             RevServices.GetRequired<GameFlow>().OpenLevels();
         }
 
-        /// <summary>默认解锁的独立模式入口，不查询六章通关条件。</summary>
+        /// <summary>无尽模式从大厅开放，先等圣坛图集就绪，再打开阵型选择。</summary>
         [RevButtonClick("btnEndless")]
         private async void OnEndless()
         {
             // Entry首次打开前等待真实图集像素，避免AB冷启动出现白膜。
-            await RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus" });
+            await RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus", "EndlessMenu" });
             await RevUI.OpenAsync<RevGame.Endless.EndlessEntryPanel>();
         }
 

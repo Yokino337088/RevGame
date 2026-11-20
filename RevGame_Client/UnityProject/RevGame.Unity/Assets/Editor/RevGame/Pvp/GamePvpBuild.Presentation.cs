@@ -59,6 +59,7 @@ namespace RevGame.Editor
             }
         }
 
+        /// <summary>完整制作围棋界面时装配反馈层、结算及新版按钮，仍沿用既有的界面节点绑定。</summary>
         private static void ConfigureMatchHud(Transform root)
         {
             var catalog = AssetDatabase.LoadAssetAtPath<YayaExpressionCatalog>("Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset");
@@ -135,6 +136,32 @@ namespace RevGame.Editor
             portrait.SetSiblingIndex(overlayIndex + 1);
             bubble.SetSiblingIndex(overlayIndex + 2);
             ConfigureDefeat(root);
+            ConfigureMatchButtons(root);
+        }
+
+        /// <summary>只修改九路围棋对局的按钮。新增左侧决斗按钮时先保留原来的对局操作布局。</summary>
+        internal static void ConfigureMatchButtons(Transform root)
+        {
+            Transform controls = root.Find("controls");
+            Button challenge = controls.Find("DuelChallenge")?.GetComponent<Button>();
+            if (challenge == null)
+            {
+                _font = GameAssetBuilder.Font();
+                challenge = Button("DuelChallenge", controls, "和对面爆了", .025f, .102f, .20f, .205f,
+                    36, "PvpMenu/PvpDuelChallenge", .27f);
+            }
+            challenge.gameObject.SetActive(false);
+
+            foreach (Button button in root.GetComponentsInChildren<Button>(true))
+            {
+                Text label = button.transform.Find("label")?.GetComponent<Text>();
+                if (label == null || !(button.targetGraphic is Image image))
+                {
+                    continue;
+                }
+                GameCombatUiBuild.ApplyArt(image, button == challenge ? "PvpMenu/PvpDuelChallenge" : "PvpMenu/PvpMatchButton", true);
+                label.color = GameCombatUiBuild.Ink;
+            }
         }
 
         private static void ConfigureDefeat(Transform root)

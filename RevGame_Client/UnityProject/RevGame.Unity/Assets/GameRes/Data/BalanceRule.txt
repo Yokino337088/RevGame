@@ -77,9 +77,9 @@ Region.WarningSeconds	1.5	区域高亮预警秒数
 Region.Size	4	方形区域边长，单位格
 Region.CellDelaySeconds	0.05	区域逐格波动间隔秒数（按行序号）
 Region.DamageHpRatio	0.055	仅扣区域内敌棋最大生命15%；大棋每次仅受击一次
-Bomb.IntervalSeconds	18	能量巨大每8秒一次
+Bomb.IntervalSeconds	18	能量巨大的触发间隔（秒）
 Bomb.WarningSeconds	1	炸弹落地蓄力秒数，到点统一命中
-Bomb.DamageHpRatio	0.1	直接扣全场敌棋最大生命30%
+Bomb.DamageHpRatio	0.1	扣除敌棋最大生命的比例
 Combat.BuffCap	0.6	本轮额外攻击/攻速/生命加成上限；防御为等效耐久倍率加成
 EnemyAI.AttackRate	0.45	敌军普攻独立频率倍率；不改变技能预警和移动冷却。
 EnemyAI.ChaseSteps	3	无眼近战每次冲锋最多经过的空格数（1～4）；不穿棋、不占敌眼，马步保留原走法。

@@ -32,6 +32,7 @@ namespace RevGame.Editor
             System.IO.Directory.CreateDirectory("Assets/GameRes/UI/Panel/Pvp/Menu");
             SetBorder("UI_Pvp_imgBK", new Vector4(150, 100, 100, 100));
             SetBorder("UI_achieveItem_imgBK", new Vector4(24, 12, 24, 12));
+            SetBorder("PvpMenu/PvpTextInput", new Vector4(108, 0, 108, 0));
             // 控件坐标先以底板为局部设计框，保存时映射回面板根以保留现有绑定。
             Menu("PvpEntryPanel", typeof(PvpEntryPanel), root =>
             {
@@ -39,12 +40,14 @@ namespace RevGame.Editor
                 Label("subtitle", root, "选择一种方式，与棋友相遇", .16f, .74f, .84f, .82f, 25, true);
                 string[] names = { "server", "lan", "computer", "local" };
                 string[] labels = { "服务器匹配", "局域网联机", "本地人机对局", "本地双人对局" };
+                string[] art = { "PvpServerButton", "PvpLanButton", "PvpComputerButton", "PvpLocalButton" };
                 for (int i = 0; i < names.Length; i++)
                 {
                     float y = .61f - i * .125f;
-                    Button(names[i], root, labels[i], .24f, y, .76f, y + .105f, 30);
+                    Button(names[i], root, labels[i], .24f, y, .76f, y + .105f, 30, "PvpMenu/" + art[i], .08f);
                 }
-                Button("agentSettings", root, "Agent设置", .71f, .06f, .92f, .15f, 25);
+                // 右下棋子插画占据边缘，设置按钮沿底部左移并保留原宽度。
+                Button("agentSettings", root, "Agent设置", .60f, .06f, .81f, .15f, 25, "PvpMenu/PvpAgentButton", .12f);
             });
             Menu("PvpServerPanel", typeof(PvpServerPanel), root =>
             {
@@ -64,7 +67,8 @@ namespace RevGame.Editor
                 Label("heading", root, "局域网联机", .2f, .8f, .8f, .91f, 44, true);
                 Input("nickname", root, "棋友", .13f, .68f, .54f, .78f, 16);
                 Button("search", root, "搜索同网设备", .57f, .68f, .87f, .78f, 27);
-                Label("state", root, "连接同一Wi-Fi后开始搜索", .12f, .53f, .88f, .67f, 26, true);
+                Button("presence", root, "允许大厅接收邀请", .13f, .554f, .419f, .65f, 26, "PvpMenu/PvpMatchButton");
+                Label("state", root, "开启权限后，同网棋友可在大厅找到你", .427f, .53f, .88f, .67f, 24, true);
                 // 行高沿用运行期列表的 116 设计单位，只调整视口位置与宽度。
                 RectTransform scroll = Rect("scroll", root, .12f, .17f, .88f, .52f);
                 var scrollRect = scroll.gameObject.AddComponent<ScrollRect>();
@@ -123,7 +127,7 @@ namespace RevGame.Editor
                 importer.SaveAndReimport();
             }
         }
-        /// <summary>以现有漩涡材质铺满屏幕，再绘制一张缩小的九宫格底板，控件仍以原节点名挂在根下。</summary>
+        /// <summary>以现有漩涡材质铺满屏幕，按页面装配底板与返回按钮，控件仍用原节点名绑定。</summary>
         private static void Menu(string name, Type panelType, Action<Transform> compose)
         {
             Material backdrop = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameRes/Material/Background/ArcaneBackdrop.mat");
@@ -141,9 +145,16 @@ namespace RevGame.Editor
                 effect.material = backdrop;
                 screen.gameObject.AddComponent<ArcaneImageCoordinates>();
                 float margin = (1f - MenuPlateRatio) * .5f;
-                Plate(Rect("background", root.transform, margin, margin, 1f - margin, 1f - margin), "UI_Pvp_imgBK", Color.white);
+                bool entry = panelType == typeof(PvpEntryPanel);
+                Image plate = Plate(Rect("background", root.transform, margin, margin, 1f - margin, 1f - margin),
+                    entry ? "PvpMenu/PvpMenuPlate" : "UI_Pvp_imgBK", Color.white);
+                if (entry)
+                {
+                    plate.type = Image.Type.Simple;
+                }
                 compose(root.transform);
-                Button("back", root.transform, "返回", .08f, .06f, .24f, .15f, 27);
+                Button("back", root.transform, "返回", .08f, .06f, .24f, .15f, 27,
+                    entry ? "PvpMenu/PvpBackButton" : null, entry ? .14f : .04f);
                 // 前两层已使用全屏坐标。其余根节点仍在原层级，只映射归一化锚点，字体保留设计字号。
                 Vector2 origin = Vector2.one * margin;
                 for (int i = 2; i < root.transform.childCount; i++)

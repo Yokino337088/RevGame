@@ -42,20 +42,11 @@ namespace RevGame.Pvp
         }
 #endif
 
+        /// <summary>绑定已制作的对局控件和挑战入口，再读取设备安全框的设计坐标。</summary>
         protected override void OnBindView()
         {
             BindOutcomeTitle();
             BindAnalysisHud();
-            // 沿用围棋按钮的九宫格素材和字体，战术选项只在满足资格时弹出。
-            _duelButton = Instantiate(_resign, _resign.transform.parent);
-            _duelButton.name = "DuelChallenge";
-            _duelButton.onClick.RemoveAllListeners();
-            _duelButton.onClick.AddListener(ChallengeDuelFromPanel);
-            _duelButton.GetComponentInChildren<Text>().text = "跟对面爆了";
-            var rect = (RectTransform)_duelButton.transform;
-            // 左下空位避开中央棋盘，不盖住最后一排交叉点。
-            rect.anchoredPosition += new Vector2(-665, 102);
-            _duelButton.gameObject.SetActive(false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             BindDuelTestButton();
 #endif
@@ -63,13 +54,21 @@ namespace RevGame.Pvp
             RevGame.UI.GameMobileLayout.EnableBoardFrame(transform, LeftSidebarPaths, RightSidebarPaths, "defeat/backdrop");
         }
 
-        // 按当前面板生命周期持有的挑战按钮，位置避开棋盘。
-        private Button _duelButton;
+        /// <summary>左侧强制决斗按钮。仅当业务允许且没有其它弹窗遮挡时显示。</summary>
+        [RevBind("controls/DuelChallenge")] private Button _duelButton;
+        /// <summary>本次提示的弹出和短震动，隐藏或关窗时终止。</summary>
+        private Sequence _duelEntrance;
+        /// <summary>只在提示可见时循环的轻微呼吸动画。</summary>
+        private Tween _duelPulse;
 
-        // 点击仅转发给 PvP 服务；界面不能自行宣布挑战获准。
+        /// <summary>请求当前房间权威切入决斗。拒绝时保留当前棋盘，让玩家可以继续操作。</summary>
+        [RevButtonClick("controls/DuelChallenge")]
         private void ChallengeDuelFromPanel()
         {
-            Service.ChallengeDuel();
+            if (!Service.ChallengeDuel())
+            {
+                PopToast("当前无法发起决斗，请稍后重试");
+            }
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
@@ -98,20 +97,41 @@ namespace RevGame.Pvp
         }
 #endif
 
-        // 根据业务资格更新显示，仅在可见性变化时启动或停止 Tween。
+        /// <summary>资格变化时启动一次出现动画，之后保持一个呼吸 Tween，状态相同不重启。</summary>
         private void RefreshDuelChallenge()
         {
-            bool visible = _battleVisible && Service.CanChallengeDuel;
+            bool visible = _opening && !IsModalOpen && Service.CanChallengeDuel;
             if (_duelButton == null || _duelButton.gameObject.activeSelf == visible)
             {
                 return;
             }
-            _duelButton.transform.DOKill();
+            StopDuelChallenge();
             _duelButton.gameObject.SetActive(visible);
             if (visible)
             {
-                _duelButton.transform.localScale = Vector3.one * .7f;
-                _duelButton.transform.DOScale(1, .24f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(_duelButton.gameObject);
+                Transform target = _duelButton.transform;
+                target.localScale = Vector3.one * .72f;
+                // 震动只驱动局部旋转，窗口调整安全区时仍可独立写入锚点位置。
+                _duelEntrance = DOTween.Sequence()
+                    .Append(target.DOScale(1, .28f).SetEase(Ease.OutBack))
+                    .Join(target.DOShakeRotation(.30f, new Vector3(0, 0, 7), 12))
+                    .SetUpdate(true).SetRecyclable(false);
+                _duelPulse = target.DOScale(1.055f, .65f).SetDelay(.31f)
+                    .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetUpdate(true).SetRecyclable(false);
+            }
+        }
+
+        /// <summary>隐藏、关闭和销毁共用清理。结束后恢复原比例和角度，下次打开从同一姿态开始。</summary>
+        private void StopDuelChallenge()
+        {
+            _duelEntrance?.Kill(false);
+            _duelEntrance = null;
+            _duelPulse?.Kill(false);
+            _duelPulse = null;
+            if (_duelButton != null)
+            {
+                _duelButton.transform.localScale = Vector3.one;
+                _duelButton.transform.localRotation = Quaternion.identity;
             }
         }
 
@@ -591,8 +611,14 @@ namespace RevGame.Pvp
         }
 
         /// <summary>关闭已显示界面时先撤销确认与挂载，再归还棋盘和图集。</summary>
+        /// <summary>关闭本轮对局界面时清理动画、确认队列和画面资源。</summary>
         protected override void OnClose()
         {
+            StopDuelChallenge();
+            if (_duelButton != null)
+            {
+                _duelButton.gameObject.SetActive(false);
+            }
             _roomBinding = null;
             CloseMenus();
             RevUI.Close<PvpNoticePanel>();
@@ -623,6 +649,7 @@ namespace RevGame.Pvp
         /// <summary>直接销毁界面时也撤销确认；等待方根据版本停止执行业务。</summary>
         protected override void OnRelease()
         {
+            StopDuelChallenge();
             _opening = false;
             _leaseVersion++;
             _confirmationQueue?.Dispose();

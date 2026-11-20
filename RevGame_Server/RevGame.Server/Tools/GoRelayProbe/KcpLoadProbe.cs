@@ -299,7 +299,7 @@ internal static class GoKcpLoadProbe
         }));
     }
 
-    // 混合负载先建立同一局面，再在固定波次同时提交围棋与两席决斗请求。
+    /// <summary>混合负载先走满第 50 手，再在固定波次并发提交围棋和两席决斗请求。</summary>
     private static async FTask RunMixed(Scene scene, GoLoadPeer[] peers, GoLoadPeer[][] rooms, int duelCount, int turns, double matchMs)
     {
         Check(turns * 2 >= DuelConfig.HashSampleFrames, "混合测试的固定输入至少覆盖一个周期指纹");
@@ -319,7 +319,7 @@ internal static class GoKcpLoadProbe
         var hashes = new Dictionary<GoLoadPeer, SortedDictionary<int, int>>();
         try
         {
-            for (int move = 0; move < (DuelConfig.MinimumMove + 1) / 2; move++)
+            for (int move = 0; move < GoCore.DuelForecastMove / 2; move++)
             {
                 await PlayWave(duelBlack, NextPass(go), false);
                 string before = go.StateHash.ToString();
@@ -505,18 +505,26 @@ internal static class GoKcpLoadProbe
             bool force = testSeat == "black" || testSeat == "white";
             if (!force)
             {
-                for (int i = 0; i < (DuelConfig.MinimumMove + 1) / 2; i++)
+                for (int i = 0; i < GoCore.DuelForecastMove / 2; i++)
                 {
                     await GoStep(black, GoAction.Pass, -1, -1);
+                    if (go.MoveNumber == GoCore.DuelForecastMove - 1)
+                    {
+                        using var beforeThreshold = await AskDuel(black, DuelAuthority.Challenge);
+                        Check(beforeThreshold.ErrorCode != 0, "第 49 手不允许挑战");
+                    }
                     await GoStep(white, GoAction.Play, i % 9, i / 9);
+                    await scene.TimerComponent.Net.WaitAsync(80);
                 }
+                using var leading = await AskDuel(white, DuelAuthority.Challenge);
+                Check(leading.ErrorCode != 0, "第 50 手领先方不能强制切换");
             }
             string duelId;
             // 同一探针可分别从两席验证开发入口，测试分支不提交任何棋步。
             var requester = testSeat == "white" ? white : black;
             using (var open = await AskDuel(requester, force ? DuelAuthority.TestChallenge : DuelAuthority.Challenge))
             {
-                Check(open.ErrorCode == 0 && !string.IsNullOrEmpty(open.DuelId), force ? "空棋盘测试决斗" : "中局劣势允许决斗");
+                Check(open.ErrorCode == 0 && !string.IsNullOrEmpty(open.DuelId), force ? "空棋盘测试决斗" : "第 50 手劣势方单方发起决斗");
                 duelId = open.DuelId;
             }
             using (var retry = await AskDuel(requester, force ? DuelAuthority.TestChallenge : DuelAuthority.Challenge))

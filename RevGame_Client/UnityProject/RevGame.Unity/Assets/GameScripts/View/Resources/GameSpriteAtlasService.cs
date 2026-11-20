@@ -358,7 +358,7 @@ namespace RevGame.View
             }
         }
 
-        /// <summary>等本次UI/棋盘退出通知处理完；只有版本没变，才释放这次退出对应的战斗引用。</summary>
+        /// <summary>等本次 UI 和棋盘退出通知处理完，版本相符才释放战斗与无尽界面的共享引用。</summary>
         private async void ReleaseBattleAfterViewsAsync(int version)
         {
             await RevTask.Yield();
@@ -368,7 +368,7 @@ namespace RevGame.View
                 return;
             }
             // 仅在流程边界分配这个小清单；不能一边遍历Dictionary一边删除元素。
-            var names = new[] { "PieceFrames", "CombatFrames", "BoardStatus", "EndlessHeartEye", "EndlessCardArrow" };
+            var names = new[] { "PieceFrames", "CombatFrames", "BoardStatus", "EndlessHeartEye", "EndlessCardArrow", "EndlessMenu" };
             foreach (string name in names)
             {
                 Entry entry;

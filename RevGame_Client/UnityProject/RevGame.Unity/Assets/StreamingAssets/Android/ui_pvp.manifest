@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1468935278
+CRC: 506338187
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e04e2f79d21eba29f3fc3e11e32e753c
+    Hash: bfce0c4e7540fb7c560125aedd66a62c
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 2edc0c5f5fbdf74be00309111553c000
+    Hash: 881b7a9e4fcf34d97d0871c452f86dd7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e04e2f79d21eba29f3fc3e11e32e753c
+    Hash: bfce0c4e7540fb7c560125aedd66a62c
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -29,11 +29,7 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 140c32e5f0b90d248a362c7d168f01ed, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 2bad428e4bfb4c346a4ac2d597557458, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 42432c2906b8f93428448d712d5650a6, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: ea4a85cf03af4224fb6e6a1d6ca5d34e, type: 3}
 - Class: 114
@@ -45,7 +41,11 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: c694d967325a62347b68783a231fe826, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 42432c2906b8f93428448d712d5650a6, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 888ce27ad223d664681d170376ac15e9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2bad428e4bfb4c346a4ac2d597557458, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -91,10 +91,10 @@ Assets:
 - Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab
 - Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpagent
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpdefeat
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_yaya
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpagent"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpdefeat"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_yaya"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background"

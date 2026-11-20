@@ -21,6 +21,14 @@ namespace RevGame.Pvp
         [RevBind("nickname")] private InputField _nickname;
         /// <summary>搜索状态文字。</summary>
         [RevBind("state")] private Text _state;
+        /// <summary>允许或撤回大厅发现的入口提示。</summary>
+        [RevBind("presence/label")] private Text _presenceLabel;
+        /// <summary>本次界面读取的授权值，由按钮修改时同步更新。</summary>
+        private bool _presenceAllowed;
+        /// <summary>已显示的搜索数量，-1 表示界面尚未落屏。</summary>
+        private int _shownPeerCount = -1;
+        /// <summary>已显示的网络状态，用于判断同值刷新。</summary>
+        private string _shownSearchStatus;
         /// <summary>实际使用的竖向滚动容器。</summary>
         [RevBind("scroll")] private ScrollRect _scroll;
         /// <summary>保持隐藏的现有行预制原型。</summary>
@@ -74,6 +82,10 @@ namespace RevGame.Pvp
         /// <summary>准备这次打开的列表。发布后由导航接管邀请控件挂载。</summary>
         protected override void OnOpen()
         {
+            _shownPeerCount = -1;
+            _shownSearchStatus = null;
+            _presenceAllowed = PvpService.LobbyLanAllowed;
+            RefreshPresenceLabel();
             _nickname.text = string.IsNullOrEmpty(Service.Nickname) ? "棋友" : Service.Nickname;
             _devices = new RevUIVirtualList<PeerRow>(_scroll, _template, RowHeight, peer => peer.Id, BindPeer);
             RevTimer.Every(.2f, RefreshView, domain: RevTimeDomain.Unscaled, owner: this);
@@ -105,6 +117,24 @@ namespace RevGame.Pvp
             Service.StartLan(_nickname.text);
         }
 
+        /// <summary>允许或撤回同网大厅可见性，授权只由这个明确的玩家动作写入。</summary>
+        [RevButtonClick("presence")]
+        private void ToggleLobbyPresence()
+        {
+            _presenceAllowed = !_presenceAllowed;
+            PvpService.SetLobbyLanPermission(_presenceAllowed, _nickname.text);
+            RefreshPresenceLabel();
+        }
+
+        /// <summary>切换授权后一次更新按钮文案。</summary>
+        private void RefreshPresenceLabel()
+        {
+            if (_presenceLabel != null)
+            {
+                _presenceLabel.text = _presenceAllowed ? "撤回大厅接收邀请权限" : "允许大厅接收邀请";
+            }
+        }
+
         /// <summary>释放搜索会话，再提交返回菜单。</summary>
         [RevButtonClick("back")]
         private void Back()
@@ -134,12 +164,14 @@ namespace RevGame.Pvp
             LanPeerTransport lan = Service.Lan;
             IReadOnlyList<LanPeerInfo> peers = lan?.Peers;
             int count = peers?.Count ?? 0;
-            string status = lan == null ? "连接同一Wi-Fi后开始搜索" : count == 0
-                ? "正在搜索附近棋友…\n请让对方也打开搜索，确认同一网络"
-                : "已发现 " + count + " 台设备 · 点击发送邀请\n" + lan.Status;
-            if (_state.text != status)
+            string searchStatus = lan?.Status;
+            if (_shownPeerCount != count || _shownSearchStatus != searchStatus)
             {
-                _state.text = status;
+                _state.text = lan == null ? "开启权限后，同网棋友可在大厅找到你"
+                    : count == 0 ? "可发现已授权接收邀请的同网棋友\n" + searchStatus
+                    : "已发现 " + count + " 台设备 · 点击发送邀请\n" + searchStatus;
+                _shownPeerCount = count;
+                _shownSearchStatus = searchStatus;
             }
             bool changed = count != _snapshot.Length;
             for (int i = 0; !changed && i < count; i++)
@@ -154,8 +186,8 @@ namespace RevGame.Pvp
                     snapshot[i] = CopyPeer(peers[i]);
                 }
                 _snapshot = snapshot;
+                _devices.SetItems(_snapshot);
             }
-            _devices.SetItems(_snapshot);
         }
 
         /// <summary>冻结单行可见内容，时间戳变化不触发重绑。</summary>

@@ -160,7 +160,7 @@ namespace RevGame.Pvp
                 _guest.Begin(_config);
                 // 两端都在本机，固定使用回环地址，避免并行广播改变测试夹具的端点选择。
                 _host.StartLan("业务验收黑方", loopbackOnly: true);
-                _guest.StartLan("业务验收白方", loopbackOnly: true);
+                _guest.StartLan("业务验收白方", loopbackOnly: true, listenOnly: true);
                 if (_analysis)
                 {
                     PvpAgentChecks.InstallAnalysis(_host, false);
@@ -285,12 +285,16 @@ namespace RevGame.Pvp
                     {
                         return;
                     }
-                    if (_duelSeedSequence >= Duel.DuelConfig.MinimumMove && _guest.CanChallengeDuel)
+                    if (_duelSeedSequence == GoCore.DuelForecastMove)
                     {
-                        if (Check(!_host.CanChallengeDuel && _guest.ChallengeDuel(), "只有劣势白方可走 P2P 决斗入口"))
+                        if (Check(_guest.CanChallengeDuel && !_host.CanChallengeDuel && _guest.ChallengeDuel(), "第 50 手只有劣势白方可走 P2P 决斗入口"))
                         {
                             Next("等待实际 UTP 传送决斗邀请");
                         }
+                        return;
+                    }
+                    if (!Check(!_host.CanChallengeDuel && !_guest.CanChallengeDuel, "未到第 50 手，双方不可开启决斗"))
+                    {
                         return;
                     }
                     int point = _duelSeedSequence / 2;

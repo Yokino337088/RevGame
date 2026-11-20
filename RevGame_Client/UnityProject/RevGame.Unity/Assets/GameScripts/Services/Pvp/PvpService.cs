@@ -251,8 +251,8 @@ namespace RevGame.Pvp
             StartLan(nickname, loopbackOnly: false);
         }
 
-        // 同机验收可以限制发现地址。后续仍走真实 UDP 邀请与 UTP 可靠消息，不替换正式业务协议。
-        internal void StartLan(string nickname, bool loopbackOnly)
+        /// <summary>开始本轮局域网发现。同机验收可限制广播范围，并使用真实的被动接收模式。</summary>
+        internal void StartLan(string nickname, bool loopbackOnly, bool listenOnly = false)
         {
             if (_leaving)
             {
@@ -266,20 +266,25 @@ namespace RevGame.Pvp
             _moves.Clear();
             var options = new LanPeerOptions(Config.discoveryPort, Config.announceSeconds, Config.peerExpirySeconds,
                 Config.invitationTimeoutSeconds, Config.connectTimeoutSeconds, loopbackOnly);
-            Lan = new LanPeerTransport(options);
-            Lan.Connected += OnLanConnected;
-            Lan.PayloadReceived += ReceiveLan;
-            Lan.Disconnected += OnNetworkError;
-            Lan.Changed += OnLanStatusChanged;
-            if (!Lan.StartDiscovery(Nickname, out string reason))
+            AttachLan(new LanPeerTransport(options));
+            if (!Lan.StartDiscovery(Nickname, out string reason, listenOnly))
             {
                 Status = reason;
             }
             else
             {
-                Status = "正在搜索同一局域网设备；双方都需打开此页面";
+                Status = Lan.Status;
             }
             Revision++;
+        }
+        /// <summary>新搜索与大厅接管共用同一套状态和 UTP 消息回调。</summary>
+        private void AttachLan(LanPeerTransport transport)
+        {
+            Lan = transport;
+            Lan.Connected += OnLanConnected;
+            Lan.PayloadReceived += ReceiveLan;
+            Lan.Disconnected += OnNetworkError;
+            Lan.Changed += OnLanStatusChanged;
         }
         private void OnLanStatusChanged()
         {
@@ -1113,6 +1118,7 @@ namespace RevGame.Pvp
         public void Dispose()
         {
             _disposed = true;
+            StopLobbyLan();
             CloseConnection();
             RoomId = string.Empty;
         }

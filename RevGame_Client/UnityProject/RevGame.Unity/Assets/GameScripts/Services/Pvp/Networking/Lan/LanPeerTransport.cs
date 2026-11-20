@@ -46,6 +46,8 @@ namespace RevGame.Pvp.Networking
         private string _rejectedTicket;
         private double _rejectedUntil;
         private double _nextAnnounce;
+        /// <summary>大厅只回复主动搜索者，空闲时不周期广播。</summary>
+        private bool _listenOnly;
         private double _nextInvite;
         private double _deadline;
         private bool _acceptedInvitation;
@@ -75,8 +77,8 @@ namespace RevGame.Pvp.Networking
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
-        /// <summary>只在玩家进入局域网页时打开端口。失败可见地返回原因，调用方仍能返回大厅或游玩单机。</summary>
-        public bool StartDiscovery(string displayName, out string reason)
+        /// <summary>打开本游戏的发现与邀请端口。仅监听模式等待对方搜索，失败时关闭已打开的端口。</summary>
+        public bool StartDiscovery(string displayName, out string reason, bool listenOnly = false)
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
             reason = "浏览器不支持局域网 UDP 直连，请使用桌面或移动客户端。";
@@ -89,6 +91,7 @@ namespace RevGame.Pvp.Networking
                 return false;
             }
             _name = SanitizeName(displayName);
+            _listenOnly = listenOnly;
             try
             {
                 // 发现端口允许同机多实例共享；邀请回复走每实例独占的临时端口，避免操作系统随机投递邀请。
@@ -98,10 +101,13 @@ namespace RevGame.Pvp.Networking
                 _discovery.Bind(new IPEndPoint(IPAddress.Any, _options.DiscoveryPort));
                 _control = NewSocket();
                 _control.Bind(new IPEndPoint(IPAddress.Any, 0));
-                RefreshBroadcasts();
+                if (!listenOnly)
+                {
+                    RefreshBroadcasts();
+                }
                 _nextAnnounce = 0;
                 LastError = string.Empty;
-                Status = "正在搜索同一局域网内的玩家";
+                Status = listenOnly ? "允许同网棋友发现并邀请" : "正在搜索同一局域网内的玩家";
                 reason = string.Empty;
                 Changed?.Invoke();
                 return true;
@@ -235,7 +241,10 @@ namespace RevGame.Pvp.Networking
             double now = Now;
             if (now >= _nextAnnounce)
             {
-                Broadcast();
+                if (!_listenOnly)
+                {
+                    Broadcast();
+                }
                 _nextAnnounce = now + _options.AnnounceSeconds;
                 bool removed = _peers.RemoveAll(peer => now - peer.SeenAt > _options.PeerExpirySeconds) > 0;
                 if (removed)

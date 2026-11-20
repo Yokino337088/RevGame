@@ -164,20 +164,31 @@ namespace RevGame.Editor
             text.raycastTarget = false;
             return text;
         }
-        private static Button Button(string name, Transform parent, string value, float x0, float y0, float x1, float y1, int size = 26)
+        /// <summary>生成按钮与同名回调节点。提供浅色插画时显示整张图，并从留字区左边界排版深墨色文案。</summary>
+        private static Button Button(string name, Transform parent, string value, float x0, float y0, float x1, float y1, int size = 26,
+            string lightSprite = null, float labelLeft = .04f)
         {
             RectTransform rect = Rect(name, parent, x0, y0, x1, y1);
-            Image image = Plate(rect, "UI_Tavern_btnClose", Color.white, true);
+            Image image = Plate(rect, lightSprite ?? "UI_Tavern_btnClose", Color.white, true);
+            if (lightSprite != null)
+            {
+                // 插画与圆角是同一张图，安全框保持目标比例，无需九宫格拉伸端部。
+                image.type = Image.Type.Simple;
+            }
             Button button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
-            Label("label", rect, value, .04f, .05f, .96f, .95f, size);
+            Label("label", rect, value, labelLeft, .05f, .96f, .95f, size, lightSprite != null);
             return button;
         }
+        /// <summary>装配服务器、局域网和 Agent 共用的浅色单行输入框，保留各页面的字符限制。</summary>
         private static void Input(string name, Transform parent, string value, float x0, float y0, float x1, float y1, int limit)
         {
             RectTransform rect = Rect(name, parent, x0, y0, x1, y1);
-            Image image = Plate(rect, "UI_achieveItem_imgBK", Color.white, true);
-            Text text = Label("text", rect, value, .04f, .05f, .96f, .95f, 26, true);
+            Image image = Plate(rect, "PvpMenu/PvpTextInput", Color.white, true);
+            // 输入框宽度随用途变化，只拉伸平直中段，176 像素的圆角按安全框里的显示高度等比缩小。
+            image.pixelsPerUnitMultiplier = image.sprite.rect.height / ((y1 - y0) * MenuPlateRatio * 1080f);
+            Text text = Label("text", rect, value, .08f, .05f, .92f, .95f, 26, true);
+            text.alignment = TextAnchor.MiddleLeft;
             InputField field = rect.gameObject.AddComponent<InputField>();
             field.targetGraphic = image;
             field.textComponent = text;
