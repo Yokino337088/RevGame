@@ -1,2 +1,0 @@
-；已复制到 RevGame_Client\UnityProject\RevGame.Unity\Assets\StreamingAssets\PC
-；已复制到 RevGame_Client\UnityProject\RevGame.Unity\Assets\StreamingAssets\Android

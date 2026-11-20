@@ -1,2 +1,0 @@
-Temp/AtlasBaselinePC|textures=172|bytes=9009968|readable=0
-Assets/StreamingAssets/PC|textures=8|bytes=7219172|readable=0
