@@ -95,14 +95,14 @@ namespace RevGame.Data
         {
             return GameConfig.Current.Stars[(int)star].PlayerBodySize;
         }
-        /// <summary>开局已在手牌池的棋种（PieceConfig.UnlockedAtStart=TRUE），按表内顺序。</summary>
+        /// <summary>按表内顺序生成开局手牌池。浏览器包含全部已配置棋种，其余平台采用 UnlockedAtStart。</summary>
         internal static HashSet<PieceKind> CreateInitialUnlockedSet()
         {
             ConfigSnapshot snapshot = GameConfig.Current;
             var set = new HashSet<PieceKind>();
             foreach (PieceKind kind in snapshot.PieceOrder)
             {
-                if (snapshot.Pieces[kind].UnlockedAtStart)
+                if (Consts.WebContentOpenByDefault || snapshot.Pieces[kind].UnlockedAtStart)
                 {
                     set.Add(kind);
                 }

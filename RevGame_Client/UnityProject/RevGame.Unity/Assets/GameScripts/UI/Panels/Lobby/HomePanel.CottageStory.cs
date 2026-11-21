@@ -5,6 +5,8 @@ using RevGame.Services;
 using Revolution;
 using Revolution.Gal;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace RevGame.UI
 {
@@ -15,7 +17,7 @@ namespace RevGame.UI
         private CanvasGroup _cottageStoryTip;
         private Tween _cottageStoryTipTween;
 
-        /// <summary>由新版大厅 Prefab 提供入口。旧平台资源仍可正常打开大厅。</summary>
+        /// <summary>绑定小屋剧情，并在默认直进大厅的浏览器版提供序章和教学回看入口。</summary>
         private void BindCottageStoryEntry()
         {
             var entry = transform.Find("btnCottageStory");
@@ -27,6 +29,37 @@ namespace RevGame.UI
             _cottageStory.onClick.AddListener(OpenCottageStory);
             _cottageStoryBadge = entry.Find("Unread");
             _cottageStoryTip = transform.Find("CottageStoryTip")?.GetComponent<CanvasGroup>();
+            if (Consts.WebContentOpenByDefault)
+            {
+                CreateBrowserStoryButton("btnReplayOpening", "回看序章", 1, () => RevServices.GetRequired<GameFlow>().ReplayOpeningStory());
+                CreateBrowserStoryButton("btnReplayTutorial", "重玩教学", 2, () => RevServices.GetRequired<GameFlow>().ReplayTutorial());
+            }
+        }
+
+        /// <summary>沿大厅底边复用小屋入口样式，按钮及监听与大厅面板一起释放。</summary>
+        private void CreateBrowserStoryButton(string name, string title, int slot, UnityAction onClick)
+        {
+            var source = (RectTransform)_cottageStory.transform;
+            var rect = Instantiate(source, source.parent);
+            rect.name = name;
+            // 保持原锚点，使用设计坐标在现有按钮右侧排列。它们同样交给大厅安全区适配。
+            rect.anchoredPosition = source.anchoredPosition + Vector2.right * slot * (source.sizeDelta.x + 20f);
+            var badge = rect.Find("Unread");
+            if (badge != null)
+            {
+                badge.gameObject.SetActive(false);
+            }
+            rect.GetComponentInChildren<Text>().text = title;
+            var button = rect.GetComponent<Button>();
+            // 克隆仅复用画面，点击进入对应的正式重玩入口。
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(() =>
+            {
+                if (!_openingBook && !IsCovered)
+                {
+                    onClick();
+                }
+            });
         }
 
         private void RefreshCottageStoryEntry()

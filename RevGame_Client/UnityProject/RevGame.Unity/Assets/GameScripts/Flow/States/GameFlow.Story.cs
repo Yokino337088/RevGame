@@ -35,7 +35,7 @@ namespace RevGame.Flow
         {
             get; private set;
         }
-        /// <summary>开发重播不写首次教学完成标记；返回大厅或正常收尾清除。</summary>
+        /// <summary>重播不写首次教学完成标记；返回大厅或正常收尾清除。</summary>
         private bool _tutorialReplay;
         public bool IsStoryPlaying
         {
@@ -74,8 +74,9 @@ namespace RevGame.Flow
                 return _storyVisible;
             }
         }
+#endif
 
-        /// <summary>开发态重播开场：复用正式剧情锁输入/翻页流程，不写首次进度，也不串联教学。true只表示接受播放请求。</summary>
+        /// <summary>应玩家回看或开发指令播放序章。复用剧情的操作门禁和翻页流程，完成后回到原界面，返回 true 表示已接受。</summary>
         public bool ReplayOpeningStory()
         {
             if (_disposed || IsGameplayBlocked || IsTutorialActive || _storyBook == null || Screen == GameScreen.Exit)
@@ -88,7 +89,7 @@ namespace RevGame.Flow
             PlayStory("opening", null);
             return true;
         }
-        /// <summary>GM共用正式教学入口。true仅表示接受；重播替换当前战役，但不重置或完成玩家教学存档。</summary>
+        /// <summary>应玩家重玩或开发指令进入正式教学。重播替换当前战役并独立于首次教学存档，返回 true 表示已接受。</summary>
         public bool ReplayTutorial()
         {
             if (_disposed || IsGameplayBlocked || IsTutorialActive || Screen == GameScreen.Exit)
@@ -112,6 +113,7 @@ namespace RevGame.Flow
             }
             return true;
         }
+        /// <summary>跨场景重播时先回大厅，交接通过后再打开教学引子。</summary>
         private async void ReplayTutorialFromHomeAsync()
         {
             await SwitchSceneAsync(GameScreen.Home);
@@ -123,6 +125,7 @@ namespace RevGame.Flow
             }
             BeginTutorialIntroduction();
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>开发态从当前界面预览任意对白。只展示内容，不交割场景、不执行首次剧情或章节完成回调。</summary>
         public bool PreviewStoryForTest(string id)
         {
@@ -187,9 +190,15 @@ namespace RevGame.Flow
             await RevServices.GetRequired<View.GameSpriteAtlasService>().PreloadAsync(new[] { "UIMenus" });
             RevSound.Preload("Place");
         }
-        /// <summary>启动顺序：开场→教学引子→GameScene真实第一章。未完成教学的老存档也会补教学。</summary>
+        /// <summary>按发行入口决定是否自动播放序章和教学。浏览器从大厅开始，主动回看仍走正式剧情入口。</summary>
         private void BeginIntroduction()
         {
+            // 浏览器首屏开放选关，不调用完成剧情的存档写入。
+            if (Consts.WebContentOpenByDefault)
+            {
+                return;
+            }
+
             var progress = RevServices.GetRequired<StoryProgress>();
 
 #if UNITY_EDITOR

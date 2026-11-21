@@ -2,6 +2,7 @@
     "name": "RevGame.Progression",
     "rootNamespace": "RevGame",
     "references": [
+        "RevGame.Core",
         "Revolution.Runtime"
     ],
     "autoReferenced": true

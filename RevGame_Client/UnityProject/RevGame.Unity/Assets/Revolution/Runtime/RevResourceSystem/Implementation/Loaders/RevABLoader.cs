@@ -578,7 +578,7 @@ namespace Revolution
         }
 
         /// <summary>
-        /// 确保主包 + AssetBundleManifest 就绪，异步版。
+        /// 同一代的调用方共享主包请求。退代后仍到达的旧主包在这里卸载。
         /// </summary>
         private async RevTask<bool> EnsureManifestAsync()
         {
@@ -593,7 +593,7 @@ namespace Revolution
 
             try
             {
-                mainBundle = await LoadBundleAsync(MainName);
+                mainBundle = await LoadBundleAsync(MainName, generation);
                 if (generation != _generation)
                 {
                     if (mainBundle != null) mainBundle.Unload(false);
@@ -626,49 +626,70 @@ namespace Revolution
         }
 
         /// <summary>
-        /// 异步加载指定 AB 包（带重试；平台分派：WebGL 走 UnityWebRequest，其余走 LoadFromFileAsync）。
+        /// 异步加载本代的 AB（WebGL 走 UnityWebRequest，其余走 LoadFromFileAsync）。代次失效后停止重试。
         ///
-        /// 失败一律返回 null、不抛异常 —— 由调用方统一记成 BundleLoadFail，
-        /// 让"文件不存在 / 下载失败 / 平台不匹配"在业务层是同一种可预期结果。
-        /// 这里也不做 File.Exists 预判：WebGL 没有本地文件概念，Android 的包在 APK 内同样查不到。
+        /// 预期的传输失败和退代返回 null。调用方负责处理异常并归还已加载的结果。
+        /// WebGL URL 和 Android APK 路径都直接交给各自的异步加载器。
         ///
         /// 【为什么这里要重试】小游戏 / 移动网络下"偶发失败"很常见（切网、DNS、CDN 抖动），
         ///   失败一次就把首屏判死刑，玩家看到的就是"进不去"。
         ///   次数与间隔见 MaxAttempts / RetryDelayMs；每次重试都**新建请求**
         ///   （被超时 Abort 过的 UnityWebRequest 不能复用）。
         /// </summary>
-        private static async RevTask<AssetBundle> LoadBundleAsync(string abName)
+        private async RevTask<AssetBundle> LoadBundleAsync(string abName, int generation)
         {
             int attempts = MaxAttempts < 1 ? 1 : MaxAttempts;
 
-            for (int i = 0; ; i++)
+            for (int i = 0; generation == _generation && i < attempts; i++)
             {
-                AssetBundle bundle = await LoadBundleOnceAsync(abName);
-                if (bundle != null) { return bundle; }
-                if (i >= attempts - 1) { return null; }
+                AssetBundle bundle = await LoadBundleOnceAsync(abName, generation);
+                if (bundle != null)
+                {
+                    // 原生加载恰在切代时完成，由持有请求的调用方卸载这份旧包。
+                    return bundle;
+                }
+                if (generation != _generation || i >= attempts - 1)
+                {
+                    return null;
+                }
 
                 // 重试前先把"失败了、还要再试"报到日志：真机上排查网络问题时，这条是关键线索
                 RevLog.Warn($"[Res] 加载 AB 包失败，准备重试（第 {i + 2}/{attempts} 次）：{abName}", "Res");
 
                 int delay = RetryDelayMs * (i + 1);
-                if (delay > 0) { await RevTask.Delay(delay); }
+                if (delay > 0)
+                {
+                    await RevTask.Delay(delay);
+                }
             }
+            return null;
         }
 
-        /// <summary>加载一个包（单次尝试，不含重试）。</summary>
-        private static async RevTask<AssetBundle> LoadBundleOnceAsync(string abName)
+        /// <summary>执行一次加载。网页请求在整代失效时中止，文件请求完成后由外层核对代次。</summary>
+        private async RevTask<AssetBundle> LoadBundleOnceAsync(string abName, int generation)
         {
 #if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
             // WebGL（含小游戏）：streamingAssetsPath 是 URL/虚拟路径，只能用 UnityWebRequest 下载。
             // ★ 走钩子：小游戏的"热更"就是把 URL 换成 CDN 的版本地址。
-            // ★ 不直接 await SendWebRequest()：要自己按帧轮询才能在卡住时超时 Abort（见 WaitWithTimeoutAsync）。
+            // 按帧等待可以在超时或退代时中止请求。
             using (UnityWebRequest www = CreateBundleRequest(abName))
             {
                 UnityWebRequestAsyncOperation op = www.SendWebRequest();
 
-                if (!await WaitWithTimeoutAsync(www, op)) { return null; }          // 超时：Abort 已在等待里做过
-                if (www.result != UnityWebRequest.Result.Success) { return null; }  // 上层报 BundleLoadFail
-                return DownloadHandlerAssetBundle.GetContent(www);                  // using 释放后 bundle 依然有效
+                if (!await WaitForBundleRequestAsync(www, op, abName, generation))
+                {
+                    return null;
+                }
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    if (generation == _generation)
+                    {
+                        // 记录包名和传输状态，避免把 CDN 签名参数或调用方的地址写入浏览器日志。
+                        RevLog.Warn($"WebGL AB 下载失败：{abName}，{www.result}，HTTP {www.responseCode}", "Res");
+                    }
+                    return null;
+                }
+                return DownloadHandlerAssetBundle.GetContent(www);
             }
 #else
             //调用unity官方的API来异步加载ab包（★ 同样先走钩子：热更包会重定向到持久化目录）
@@ -702,26 +723,32 @@ namespace Revolution
         }
 
         /// <summary>
-        /// 按帧等请求完成；超过 AttemptTimeoutSeconds 就 Abort 并返回 false。
+        /// 按帧等请求完成。配置超时或整个加载器退代时中止请求并返回 false。
         ///
-        /// ★ 为什么不能直接 `await op`：WebGL / 小游戏上卡住的请求会**永远挂着**
-        ///   （底层是浏览器 XHR，UnityWebRequest.timeout 在那边不生效），
-        ///   那样连"失败"都拿不到，业务只能一直转圈。
+        /// 实时时钟仍受页面暂停后的帧调度影响，恢复运行时按当前时间处理超时。
         /// </summary>
-        private static async RevTask<bool> WaitWithTimeoutAsync(UnityWebRequest www, UnityWebRequestAsyncOperation op)
+        private async RevTask<bool> WaitForBundleRequestAsync(UnityWebRequest www, UnityWebRequestAsyncOperation op,
+            string abName, int generation)
         {
             float timeout = AttemptTimeoutSeconds;
-            float deadline = timeout > 0 ? Time.realtimeSinceStartup + timeout : float.MaxValue;
+            double deadline = timeout > 0 ? Time.realtimeSinceStartupAsDouble + timeout : double.PositiveInfinity;
 
             while (!op.isDone)
             {
-                if (Time.realtimeSinceStartup >= deadline)
+                if (generation != _generation)
                 {
-                    www.Abort();            // 中断：请求以失败收场，using 块会正常释放
+                    // 这里检查的是共享加载器代次。单个消费者取消时由各自作用域归还引用。
+                    www.Abort();
+                    return false;
+                }
+                if (Time.realtimeSinceStartupAsDouble >= deadline)
+                {
+                    www.Abort();
+                    RevLog.Warn($"WebGL AB 下载超时：{abName}，等待 {timeout} 秒", "Res");
                     return false;
                 }
 
-                await RevTask.Yield();
+                await RevTaskScheduler.NextFrame();
             }
 
             return true;
@@ -773,11 +800,12 @@ namespace Revolution
             return await loadingTask;
         }
 
+        /// <summary>完成本代共享的单包请求，归还退代结果，并只清理仍属于本请求的登记。</summary>
         private async RevTask CompleteAcquireSingleAsync(string abName, int generation,
             RevTaskCompletionSource<AssetBundle> source, RevTask<AssetBundle> loadingTask)
         {
             AssetBundle bundle = null;
-            try { bundle = await LoadBundleAsync(abName); }
+            try { bundle = await LoadBundleAsync(abName, generation); }
             catch { bundle = null; }
 
             if (generation != _generation)

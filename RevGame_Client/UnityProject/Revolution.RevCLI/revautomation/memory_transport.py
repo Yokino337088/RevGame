@@ -131,6 +131,15 @@ def call(client, payload, cancel=None, *, detach=False):
             if cancel is not None and cancel.is_set():
                 raise RevCancelled("请求取消：" + ident)
             if time.monotonic() >= deadline:
+                if payload["action"] == "build.player":
+                    from .client import atomic_json
+                    # BuildPipeline 在主线程同步运行。等待已过期时保留可查询的身份，
+                    # 避免将一次仍在运行或刚完成的构建当成已取消后再次提交。
+                    receipt = receipt_path(client, ident)
+                    atomic_json(receipt, {key: payload[key] for key in ("id", "sessionId", "action", "deadlineUtc")})
+                    return dict(success=False, error="WaitTimeout", id=ident, accepted=True, pending=True,
+                                transport="http-memory",
+                                message=f"Player 构建未在等待时间内返回。用 job {ident} --wait 查询原工单。")
                 raise TimeoutError("内存工单超时：" + ident + "；未自动重放")
             try:
                 current = credentials(client)

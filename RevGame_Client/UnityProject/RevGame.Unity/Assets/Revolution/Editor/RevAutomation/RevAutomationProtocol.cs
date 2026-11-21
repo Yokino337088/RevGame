@@ -179,6 +179,8 @@ namespace Revolution.Editor
         public bool Success { get; protected set; } = true;
         public string Message { get; protected set; } = "完成";
         public object Result { get; protected set; }
+        /// <summary>调用入口已经完成执行时立即发布结果，后续等待期限不再影响终态。</summary>
+        internal virtual bool CompletedOnReturn => false;
         public abstract bool Tick();
         public virtual void Cancel() { Success = false; Message = "操作取消或超时"; }
         public virtual void Dispose() { }

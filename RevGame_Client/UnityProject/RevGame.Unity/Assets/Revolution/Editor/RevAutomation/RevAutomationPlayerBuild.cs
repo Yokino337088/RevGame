@@ -27,6 +27,7 @@ namespace Revolution.Editor
             public double seconds;
         }
 
+        /// <summary>同步构建指定目标，发布 BuildReport 并恢复此次临时修改的 Unity 设置及工具链环境。</summary>
         internal static object Execute(RevAutomationRequest request)
         {
             RevAutomationActions.RequireEditMode();
@@ -65,8 +66,16 @@ namespace Revolution.Editor
             ValidateOutput(path, extension);
             bool timingBefore = PlayerSettings.enableFrameTimingStats;
             var compilerBefore = PlayerSettings.GetIl2CppCompilerConfiguration(group);
+            // Unity WebGL 自带 Python 在 Windows 中文环境可能按 GBK 读取 LLVM 的 UTF-8 输出。
+            // 改动只作用于此 Editor 的构建子进程，进程退出或构建结束后都不会残留到系统环境。
+            bool webGlUtf8 = target == BuildTarget.WebGL && Application.platform == RuntimePlatform.WindowsEditor;
+            string oldPythonUtf8 = webGlUtf8 ? Environment.GetEnvironmentVariable("PYTHONUTF8") : null;
             try
             {
+                if (webGlUtf8)
+                {
+                    Environment.SetEnvironmentVariable("PYTHONUTF8", "1");
+                }
                 PlayerSettings.SetScriptingBackend(group, backend);
                 PlayerSettings.enableFrameTimingStats = p.frameTiming;
                 if (backend == ScriptingImplementation.IL2CPP)
@@ -105,6 +114,10 @@ namespace Revolution.Editor
             }
             finally
             {
+                if (webGlUtf8)
+                {
+                    Environment.SetEnvironmentVariable("PYTHONUTF8", oldPythonUtf8);
+                }
                 PlayerSettings.SetScriptingBackend(group, before);
                 PlayerSettings.enableFrameTimingStats = timingBefore;
                 PlayerSettings.SetIl2CppCompilerConfiguration(group, compilerBefore);
@@ -142,14 +155,20 @@ namespace Revolution.Editor
             }
         }
 
+        /// <summary>已有真实 BuildReport 的同步构建结果，由桥接立即交付。</summary>
         private sealed class Completed : RevAutomationOperation
         {
+            /// <summary>携带构建结果和 Unity 的成功判定。</summary>
             internal Completed(object result, bool success)
             {
                 Result = result;
                 Success = success;
                 Message = success ? "Player构建完成；原构建设置已恢复" : "Player构建失败；检查BuildReport与工具链，禁止盲目重放";
             }
+            /// <summary>Player 构建在返回前已经结束。</summary>
+            internal override bool CompletedOnReturn => true;
+
+            /// <summary>兼容检查到此对象的调用方，它无需逐帧推进。</summary>
             public override bool Tick()
             {
                 return true;

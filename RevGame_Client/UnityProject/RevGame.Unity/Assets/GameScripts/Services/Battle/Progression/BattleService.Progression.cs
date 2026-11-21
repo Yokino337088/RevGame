@@ -58,9 +58,9 @@ namespace RevGame.Services
             get; private set;
         }
         /// <summary>
-        /// 已解锁到第几章；选关界面据此决定按钮是否可点，战斗服务据此拒绝越级开局。
+        /// 当前可以挑战的最高章节。浏览器发行包开局开放六章，普通平台仍按实际通关推进。
         /// </summary>
-        public int UnlockedChapter { get; private set; } = 1;
+        public int UnlockedChapter { get; private set; } = Consts.WebContentOpenByDefault ? Consts.ChapterCount : 1;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>GM解锁本次运行的全部章节。服务拥有解锁值；不伪造通关、发奖励或改当前战役，退出程序后不保存。</summary>
@@ -216,8 +216,8 @@ namespace RevGame.Services
             {
                 candidates.Add(new RewardDef(RewardKind.NewPiece, locked[_random.Next(locked.Count)], BoostKind.Attack));
             }
-            // 眼位石要开过足够多局战役才出现（RewardConfig.UnlockAfterCampaigns）。
-            if (_campaignsStarted >= RewardCatalog.UnlockAfterCampaigns(RewardKind.EyeStone))
+            // 浏览器开局开放眼位石的奖励资格，实际数量仍由领取奖励增加。
+            if (Consts.WebContentOpenByDefault || _campaignsStarted >= RewardCatalog.UnlockAfterCampaigns(RewardKind.EyeStone))
             {
                 candidates.Add(new RewardDef(RewardKind.EyeStone, PieceKind.Shield, BoostKind.Liberty));
             }

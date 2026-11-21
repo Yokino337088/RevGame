@@ -5,7 +5,7 @@
 //
 // 【要解决的问题】
 //   业务要能说"跳跃绑空格、移动绑 WASD"，而内核又不能引用引擎的 `KeyCode`——
-//   于是这里定义一份**名字与 Unity `KeyCode` 完全一致**的枚举：
+//   于是这里定义一份**以 Unity `KeyCode` 名字为主**的枚举：
 //   名字一致，适配层就能靠"名字"一次性映射（`Enum.TryParse<KeyCode>`），
 //   不用维护上百行手工对照表，也不会因为数值抄错而绑错键。
 //
@@ -18,13 +18,13 @@
 //
 // 【键位怎么落到 Unity】
 //   适配层把 <see cref="RevKey"/> 的**名字**解析成 <c>UnityEngine.KeyCode</c>；
-//   手柄键用的是 Unity 既有的 `JoystickButton0..19` 名字，所以同一套机制直接覆盖手柄。
+//   手柄键沿用 Unity 的 `JoystickButton0..19`。已发布的 PrintScreen 由适配层映射到 Unity 的 Print。
 // ============================================================
 
 namespace Revolution
 {
     /// <summary>
-    /// 键位（键盘 + 手柄按钮）。**成员名与 Unity 的 <c>KeyCode</c> 一致**，方便适配层按名字映射。
+    /// 键位（键盘和手柄按钮）。已发布的名字用于绑定和存档，由引擎适配层解析。
     /// </summary>
     public enum RevKey
     {

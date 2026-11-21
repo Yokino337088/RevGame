@@ -3,6 +3,10 @@
 using System;
 using System.IO;
 using System.Text;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+using System.Runtime.InteropServices;
+using UnityEngine;
+#endif
 
 namespace Revolution
 {
@@ -49,7 +53,10 @@ namespace Revolution
             }
         }
 
-        /// <summary>同目录写入、刷盘和读回校验后原子提交。恢复后的首次写入可保留上次可用备份。</summary>
+        /// <summary>
+        /// 同目录写入、刷新和读回校验后原子提交。恢复后的首次写入可保留上次可用备份。
+        /// 浏览器在虚拟文件提交后请求异步写回，返回时 IndexedDB 事务仍可能在进行。
+        /// </summary>
         public static void Write(string path, string data, Action<string> validate, bool preserveBackup = false)
         {
             if (data == null || validate == null)
@@ -100,7 +107,25 @@ namespace Revolution
                     }
                 }
             }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            // 先完成主档和备份的变更，再同步持久目录，避免把临时文件或失败写入提交到 IndexedDB。
+            string persistentRoot = Application.persistentDataPath;
+            if (!string.IsNullOrEmpty(persistentRoot))
+            {
+                string prefix = Path.GetFullPath(persistentRoot).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                if (full.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    RevWebFileSave_Queue();
+                }
+            }
+#endif
         }
+
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>通知网页插件写回 IDBFS，由插件管理跨帧同步。微信与抖音小游戏使用自身的文件宿主。</summary>
+        [DllImport("__Internal")]
+        private static extern void RevWebFileSave_Queue();
+#endif
 
         /// <summary>业务校验错误和读取错误可走备份。程序错误继续传给调用方排查。</summary>
         private static bool IsReadFailure(Exception error)

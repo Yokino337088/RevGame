@@ -8,7 +8,7 @@
 //   于是换引擎输入方案（比如换成 Input System 包）只需改这一个文件。
 //
 // 【三条铁律】
-//   ① **键位靠名字映射**：`RevKey` 的成员名与 Unity `KeyCode` 一致，启动时用 `Enum.TryParse` 建表，
+//   ① **键位主要按名字映射**：启动时用 `Enum.TryParse` 建表，PrintScreen 使用 Unity 的 Print 别名，
 //      不手抄上百行数值（抄错一位就是"跳跃绑到退出"的线上事故）。
 //   ② **只轮询"可能用到"的键**：每帧只测"绑定表用到的键 ∪ 上一帧按住的键"，
 //      而不是无脑测 100+ 个键（省掉大半无用查询，也不丢抬起事件）。
@@ -60,16 +60,23 @@ namespace Revolution
             _badAxisNames.Clear();
         }
 
-        /// <summary>建"RevKey 名字 → Unity KeyCode"映射表（启动一次）。</summary>
+        /// <summary>初始化设备时解析 Unity 键位名，并保留已发布键位的兼容映射。</summary>
         private void BuildKeyTable()
         {
-            int unknown = 0;
+            List<string> unknown = null;
             for (int i = 0; i < _keyCodes.Length; i++)
             {
                 var key = (RevKey)i;
                 if (key == RevKey.None)
                 {
                     _keyCodes[i] = KeyCode.None;
+                    continue;
+                }
+
+                // RevKey.PrintScreen 已用于存档和绑定。Unity 2022.3 把同一个键叫作 Print。
+                if (key == RevKey.PrintScreen)
+                {
+                    _keyCodes[i] = KeyCode.Print;
                     continue;
                 }
 
@@ -80,12 +87,14 @@ namespace Revolution
                 else
                 {
                     _keyCodes[i] = KeyCode.None;
-                    unknown++;
+                    (unknown ??= new List<string>()).Add(key.ToString());
                 }
             }
 
-            if (unknown > 0)
-                RevInputLog.W("[RevInput] 有 " + unknown + " 个键位名在 Unity KeyCode 里不存在（会被跳过；键位名必须与 KeyCode 一致）");
+            if (unknown != null)
+            {
+                RevInputLog.W("[RevInput] Unity KeyCode 缺少映射，已跳过：" + string.Join(", ", unknown));
+            }
         }
 
         /// <summary>读命名轴（内核通过 <c>AxisProvider</c> 调它；纯 C# 环境下这个委托为 null）。</summary>

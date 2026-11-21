@@ -1,5 +1,6 @@
 // 开发态本机 HTTP 传输。网络线程仅处理纯数据；Unity 调用和跨帧工作全部由 Update 串行推进。
-#if (UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION) && (!UNITY_WEBGL || UNITY_EDITOR)
+// 桌面 Editor 始终可用。网页与小游戏 Player 即使是开发包也不创建本机 HTTP 监听器。
+#if UNITY_EDITOR || ((DEVELOPMENT_BUILD || REV_AUTOMATION) && !(UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME))
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -350,11 +351,17 @@ namespace Revolution
 #elif UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 namespace Revolution
 {
+    /// <summary>网页与小游戏开发包的本机 HTTP 占位入口。项目可以提供自己的受控传输。</summary>
     internal static class RevRuntimeAutomationHost
     {
+        /// <summary>本机监听器未启动，没有待处理的本机 HTTP 请求。</summary>
         public static bool HasPendingWork => false;
-        public static string StartServer(int port, string token) => throw new System.PlatformNotSupportedException("WebGL 无本机 HTTP listener；请提供项目传输适配");
-        public static void StopServer() { }
+        /// <summary>当前宿主无法启动本机 HTTP 服务，明确拒绝调用。</summary>
+        public static string StartServer(int port, string token) => throw new System.PlatformNotSupportedException("WebGL / 小游戏无法启动本机 HTTP 监听器，请提供项目传输适配");
+        /// <summary>接口对称的清理入口。当前宿主没有本机服务需要停止。</summary>
+        public static void StopServer()
+        {
+        }
     }
 }
 #endif

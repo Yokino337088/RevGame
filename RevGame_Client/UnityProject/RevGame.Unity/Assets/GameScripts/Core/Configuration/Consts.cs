@@ -27,6 +27,18 @@ namespace RevGame.Core
         // ---------------- 关卡结构（与选关界面的章节按钮数量绑定） ----------------
         /// <summary>总共 6 章。选关界面按这个数量创建章节按钮；ChapterConfig 的行数必须与它一致（启动时校验）。</summary>
         public const int ChapterCount = 6;
+        /// <summary>浏览器发行包允许直接访问章前被锁的内容。编辑器、桌面和小游戏仍使用各自的玩家进度。</summary>
+        public static bool WebContentOpenByDefault
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                return true;
+#else
+                return false;
+#endif
+            }
+        }
         // ---------------- 手牌（与战斗界面的六个常驻手牌槽位绑定） ----------------
         /// <summary>每回合六张，UI 也必须准备六个常驻槽位，刷新只替换尚未使用的牌。</summary>
         public const int MaxHandSize = 6;

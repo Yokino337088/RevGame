@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>RevGame WebGL 构建踩坑复盘 · 2026-11-21</title>
+<!-- 报告沿用同目录安卓复盘的排版。样式内嵌以支持离线打开。 -->
+<style>
+:root{color-scheme:light;--paper:#f7f5ee;--card:#fffdf8;--ink:#172e26;--sub:#455b51;--brand:#235b47;--line:#dbdfd1;--gold:#87611e;--soft:#ebf1e9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+main{max-width:1136px;margin:auto;padding:30px clamp(14px,4vw,44px) 60px}
+header,section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,4vw,36px);margin:0 0 20px}
+header{background:linear-gradient(130deg,#edf4eb,#fff9e7)}
+h1,h2,h3{line-height:1.35;margin:0 0 .55em}
+h1{font-size:clamp(30px,5vw,48px);letter-spacing:.02em}
+h2{font-size:clamp(22px,3vw,31px)}
+h3{font-size:19px}
+p{margin:.45em 0 .95em}
+p:last-child,ul:last-child,ol:last-child{margin-bottom:0}
+.eyebrow{font-weight:750;color:var(--brand);letter-spacing:.12em;font-size:.82rem}
+.lead,.note{color:var(--sub)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:19px 0 0}
+nav a,.tag{background:var(--soft);padding:3px 10px;border-radius:7px;font-size:.86rem;display:inline-block}
+a{color:#1b5b48;text-decoration-thickness:1px;text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+article{border-top:1px solid var(--line);padding:17px 0 2px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.metric{background:#fffdf5;border:1px solid #dedfcf;border-radius:12px;padding:12px 14px}
+.metric strong{display:block;color:var(--brand);font-size:1.27rem}
+.warning{border-left:4px solid #aa7c32;background:#faf0d8;border-radius:5px;padding:10px 13px;margin:12px 0;color:#3d321c}
+.table-wrap{overflow-x:auto;margin:12px 0 16px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:.93rem}
+caption{text-align:left;color:var(--sub);font-weight:650;margin-bottom:5px}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);color:var(--ink)}
+code{background:#eff1e8;padding:.06em .26em;border-radius:4px;overflow-wrap:anywhere;font-size:.92em}
+li{margin:.3em 0}
+.source-list{color:var(--sub)}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.table-wrap table{min-width:485px}main{padding-top:13px}}
+@media print{body{background:white}main{padding:0;max-width:none}header,section{box-shadow:none}article,.metric{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<header id="top">
+<p class="eyebrow">REVGAME · WEBGL · 2026-11-21</p>
+<h1>WebGL 构建踩坑复盘</h1>
+<p class="lead">从 Windows 上的 Unity 2022.3.15f1c1 和 IL2CPP 构建，到 WebGL AB、浏览器启动、输入与声音。记录实际故障、修复归属和下一次发布的检查顺序。</p>
+<div class="grid" aria-label="当天交付摘要">
+<div class="metric"><strong>109.50 MiB</strong>WebGL 正式交付目录</div>
+<div class="metric"><strong>119 个</strong>按清单校验的 WebGL 业务 AB</div>
+<div class="metric"><strong>0 个</strong>正式 WebGL BuildReport 错误</div>
+</div>
+<nav aria-label="目录">
+<a href="#launch">网页启动报错</a><a href="#build">构建工单与工具链</a><a href="#release">资源与正式包</a><a href="#runtime">框架兼容性</a><a href="#matrix">验收范围</a><a href="#checklist">复用清单</a><a href="#evidence">证据索引</a>
+</nav>
+</header>
+
+<section id="launch">
+<h2>01 · 浏览器打开方式与全屏</h2>
+<article>
+<h3>双击 HTML 时，Unity 加载器请求 <code>Web.data.br</code> 失败</h3>
+<p>截图同时出现 <code>Failed to download file Build/Web.data.br</code> 和 <code>file://</code>。双击 <code>index.html</code> 会以文件协议打开页面，浏览器拦截了 Unity 加载器的资源读取。报错发生在 Wasm 和游戏代码启动前。即使 <code>Web.data.br</code> 在磁盘上，也需要通过受支持的网页服务加载。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-deploying.html">Unity 2022.3 WebGL 部署</a></p>
+<p class="warning">本机双击 <code>Publish/Web/启动网页游戏.cmd</code>。启动器在回环地址提供 HTTP 服务并打开游戏页。直接打开 HTML 时，RevGame 模板现在会在发出 Unity 下载请求前显示启动说明。线上将完整交付目录部署到 HTTPS。</p>
+<p>部署时检查压缩资源的实际响应。<code>*.br</code> 需要 <code>Content-Encoding: br</code>，<code>*.wasm.br</code> 需要 <code>Content-Type: application/wasm</code>，JavaScript 文件要有对应类型。通过 Network 同时看状态码和响应体，静态站回退到 HTML 的 200 响应同样会导致解码失败。有独立 CDN 时还要核对 CORS。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-deploying.html">Unity 压缩与服务器响应头</a></p>
+</article>
+<article>
+<h3>页面铺满与浏览器原生全屏</h3>
+<p>网页模板把画布铺满视口。Windows 本机启动器可用 Edge 或 Chrome 的启动参数打开全屏窗口。普通网页在玩家第一次点击时申请原生全屏，退出或请求被拒绝时保留按钮。全屏请求受浏览器的用户激活和嵌入权限控制，首次请求需要留在真实手势回调内。<a href="https://fullscreen.spec.whatwg.org/#dom-element-requestfullscreen">Fullscreen 标准</a></p>
+</article>
+</section>
+
+<section id="build">
+<h2>02 · 平台切换、Emscripten 和工单</h2>
+<article>
+<h3>内存工单访问了不存在的 <code>target-started</code></h3>
+<p><code>build.target</code> 通过 HTTP 内存模式提交时抛出 <code>DirectoryNotFoundException</code>，路径指向 <code>Library/RevolutionAutomation/jobs/&lt;id&gt;/target-started</code>。动作拿磁盘工单标记追踪跨域重载，而内存传输没有该目录。Revolution 改用 Editor <code>SessionState</code> 保存原请求身份，切换完成后按同一工单核对目标。本轮构建结束时实际回读到 <code>StandaloneWindows64</code>。</p>
+</article>
+<article>
+<h3>中文 Windows 上，Emscripten 的 Python 按 GBK 读取 LLVM 输出</h3>
+<p>首次构建在 <code>llvm-nm --print-file-name</code> 后报 <code>UnicodeDecodeError: 'gbk' codec can't decode byte 0x80</code>，后续出现 <code>IndexError</code>。用 Unity 自带 Python 复查，默认编码为 cp936，设置 <code>PYTHONUTF8=1</code> 后为 UTF-8。以 UTF-8 环境启动 Editor 后，原有中文路径下的 WebGL 构建成功。框架也在 Windows WebGL 构建动作内部设置该环境变量，并在结束时恢复原值。</p>
+</article>
+<article>
+<h3>客户端等超时后，Unity 仍能成功写完包</h3>
+<p>一次 WebGL Release 超过了客户端等待窗口，原工单最终耗时 <strong>2,165.135 秒</strong>，BuildReport 成功。长任务提交时使用 <code>--detach</code>，保留工单 ID，再用 <code>job &lt;id&gt; --wait</code> 读取结果。先查接单和实际 BuildReport，再判断是否需要发新工单。</p>
+</article>
+</section>
+
+<section id="release">
+<h2>03 · WebGL AB 与正式版功能</h2>
+<article>
+<h3>Unity 将其它平台的 StreamingAssets 也复制进了网页目录</h3>
+<p>用 WebGL 目标构建并发布 AB 后，另外检查最终 Player 的 <code>StreamingAssets</code>。Unity 原始目录同时带上 PC 和 Android 资源，大小为 276,056,357 字节。最终从暂存区交付 Build、Web 模板和 WebGL 资源，目录大小为 114,816,045 字节。清单列出的 119 个业务包连同平台主包均做摘要核验。遇到整个旧目录无法移动时，从已校验暂存品逐文件原子替换并保留旧版备份。</p>
+</article>
+<article>
+<h3>WebGL Release 调用的方法被开发宏裁掉</h3>
+<p>默认开放内容的版本首次打包报 <code>CS1061</code>，大厅调用的 <code>GameFlow.ReplayOpeningStory</code> 与 <code>ReplayTutorial</code> 只在开发配置编译。正式大厅回看和重玩改走保留在 Release 的流程入口，GM 注册继续由开发宏保护。Web Player 的六章、棋子、奖励和故事开放走业务策略，实际通关与领取仍由原来的记录驱动。</p>
+</article>
+<article>
+<h3>浏览器报键位名缺失，输入与音频需要分别验收</h3>
+<p>旧 <code>RevInput</code> 用同名解析建立键位表。Unity 2022.3 的 <code>KeyCode</code> 对应成员是 <code>Print</code>，Revolution 对外名称是 <code>PrintScreen</code>。显式映射这对兼容名称，已有绑定值和对外命名继续沿用。此前用 Edge 从序章经过教学、进入大厅并开始正式棋局，核对了浏览器的按键和棋盘输入，以及确实播放的 BGM 与操作音。</p>
+<p>客户端首次音频播放跟随用户手势。长 BGM 和短音效按目标导入设置检查，分别观察浏览器中的播放进度和声音缓冲。桌面 Editor 把活动构建目标切到 WebGL 时，宿主仍是桌面，应继续走桌面音频能力。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-audio.html">Unity 2022.3 WebGL 音频</a></p>
+</article>
+</section>
+
+<section id="runtime">
+<h2>04 · Revolution WebGL 审计与修复</h2>
+<div class="table-wrap" tabindex="0">
+<table>
+<caption>源码中确认的兼容性问题及对应处理</caption>
+<thead><tr><th scope="col">模块</th><th scope="col">风险</th><th scope="col">修复</th></tr></thead>
+<tbody>
+<tr><td>资源加载</td><td><code>ReleaseAll</code> 后旧 AB 请求仍可能等待并重试，失败难区分 HTTP 问题。</td><td>请求携带加载代次，退代中止在途请求并停止重试。使用实时时钟检查超时，记录包名、请求结果和 HTTP 状态码。单个消费者由各自作用域释放持有。</td></tr>
+<tr><td>文件存档</td><td>浏览器虚拟文件提交完成后，当前 Unity Player 需要调度 IDBFS 写回。</td><td><code>RevFileSave</code> 成功提交持久目录下主档和备份后排队写回。Unity 2022.3 沿用引擎队列，其它宿主能力按插件的串行回退处理。</td></tr>
+<tr><td>日志和开发自动化</td><td>构造文件日志时过早创建系统等待句柄，部分小游戏宏下本机 HTTP 分支仍会编译。</td><td>能力与目录探测通过后才建文件线程句柄。浏览器和小游戏 Player 跳过本机监听器。</td></tr>
+<tr><td>音频平台能力</td><td>桌面 Editor 选中 WebGL 后被误判为需要浏览器的音频解锁，小游戏宏不完整。</td><td>按真实运行宿主和各小游戏宏判断，区分 Editor 与实际 Player。</td></tr>
+<tr><td>可选热更新</td><td>部分小游戏名称与平台路径分派不一致。拉清单、内置文本或候选 AB 时缺少网页时限。</td><td>统一到 WebGL URL 入口，以真实帧检查超时和取消，失败沿用原有重试与版本保护。</td></tr>
+</tbody>
+</table>
+</div>
+<p>IndexedDB 写回是异步事务。应用层可以在保存点及时提交虚拟文件，刷新验证仍要用同一站点和页面目录，并覆盖存储配额或浏览器策略拒绝的情况。<a href="https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Application-persistentDataPath.html">Unity persistentDataPath</a> · <a href="https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.syncfs">Emscripten FS.syncfs</a></p>
+</section>
+
+<section id="matrix">
+<h2>05 · 验收范围</h2>
+<div class="table-wrap" tabindex="0">
+<table>
+<caption>按实际产物与运行环境记录结果</caption>
+<thead><tr><th scope="col">项目</th><th scope="col">证据</th></tr></thead>
+<tbody>
+<tr><td>已交付 WebGL 正式包</td><td>IL2CPP，构建 ID <code>97174fec045243e28ed4a64414bc7565</code>，22 分 08 秒，0 个错误，1 条 Fantasy CS1998 编译警告。平台 AB 与正式目录已核验。</td></tr>
+<tr><td>此前的浏览器对局</td><td>Edge 经本地 HTTP 从序章走到大厅和正式战斗。检查键位警告、落子、BGM 进度和音效。</td></tr>
+<tr><td>本轮框架补丁</td><td>用 Unity WebGL 编译参数检查框架与可选热更，覆盖正式、开发及微信和抖音宏组合。用 Unity 自带 Emscripten 3.1.8 链接存档插件，另测引擎队列复用、合并写回和写回失败后恢复。现有热更新离线用例通过 18 项断言。</td></tr>
+<tr><td>RevGame 编辑器</td><td>框架快照同步至 <code>887df33</code>，9 个文件的摘要与正式导出一致。<code>StandaloneWindows64</code> 目标下完整重编译无错误，已识别存档插件。</td></tr>
+</tbody>
+</table>
+</div>
+<p class="warning">上文的对局来自先前的 Web Player。本轮交付是框架补丁和 RevGame 源码同步，现有 <code>Publish/Web</code> 在框架补丁之前构建。新的浏览器运行时改动随下一次 WebGL 出包生效。</p>
+</section>
+
+<section id="checklist">
+<h2>06 · 下次按此顺序</h2>
+<ol>
+<li>用实际编辑器版本确认 WebGL 模块、构建目标和当前编辑态。切平台后等待导入和重编，记住原开发目标。</li>
+<li>同一目标构建并发布 AB，查平台主包、映射、依赖与摘要。以正式宏编译 WebGL Player，长工单保留原 ID。</li>
+<li>对照 Unity 最终 BuildReport 和输出目录。校验待交付的 Build、网页模板和实际需要的 StreamingAssets。</li>
+<li>本机通过 HTTP 启动，线上通过 HTTPS 部署。定位失败先查 URL 协议和响应头，再查浏览器策略、引擎与业务日志。</li>
+<li>按任务范围验证首次进入、手势全屏和声音、游戏输入、关键场景和存档重开。保留目标环境与实际覆盖记录。</li>
+<li>构建后回读开发目标。框架缺陷回到源仓库修订，以对应正式导出的提交同步工程。</li>
+</ol>
+</section>
+
+<section id="evidence">
+<h2>07 · 证据索引</h2>
+<ul class="source-list">
+<li>首轮构建失败工单 <code>83151e1a32f140f6a543c4edec9805a1</code>，UTF-8 环境复跑工单 <code>17eac92013c54cab9cd9b4d73431b964</code>。</li>
+<li>客户端等待超时后成功的原工单 <code>f66ab35a7fcf46b58586e3b224a5adb0</code>。Release 宏失败工单 <code>95b6c9a245244de3917e3deb43784d4e</code>。</li>
+<li>最终 Release 工单 <code>4f9739315673436ba51cd7c1c18ce49d</code>，记录位于工程 <code>Library/RevolutionAutomation/jobs</code>。</li>
+<li>RevGame 同步后的完整重编译工单 <code>f238436d922246e7b684db953aa9f1c0</code>。初次等待超时后查询原工单，最终 <code>finished=true</code>、<code>failed=false</code>、无编译诊断。</li>
+<li>Revolution 源仓库记录。<a href="https://github.com/Yokino337088/Revolution/commit/ac3078bb199bd84ad5f06bdd19e5d68a01e4a616">构建与键位兼容 ac3078b</a> · <a href="https://github.com/Yokino337088/Revolution/commit/d2cc03b80e340e988d1b3e348ef9dbc4e7b4eddd">WebGL 运行宿主修复 d2cc03b</a> · <a href="https://github.com/Yokino337088/Revolution/tree/887df33dc71f854080204c0f6125bd88645fc9c7">框架本体导出 887df33</a></li>
+</ul>
+<p><a href="#top">返回顶部</a></p>
+</section>
+</main>
+</body>
+</html>

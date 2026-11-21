@@ -32,7 +32,7 @@ namespace Revolution
     public sealed class RevFileSink : IRevLogSink
     {
         /// <summary>
-        /// 本平台能不能跑"后台线程 + 真实文件系统"这套写盘机制（默认按平台判定，可手动覆盖）。
+        /// 当前是否启用后台文件写入。宿主可手动禁用，浏览器和小游戏仍会在构造时跳过系统线程。
         ///
         /// 【为什么必须有这个开关】
         ///   ★ WebGL / 微信小游戏 / 抖音小游戏是**单线程**的：`new Thread(...)` 一调用就抛
@@ -48,7 +48,7 @@ namespace Revolution
         /// <summary>默认判定：只有 WebGL（含各类小游戏）不支持；其余平台与工程外纯 C# 都支持。</summary>
         private static bool DetectBackgroundWriterSupport()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
             return false;          // WebGL / 小游戏：单线程，建线程即崩
 #else
             return true;
@@ -73,7 +73,8 @@ namespace Revolution
         //   锁内是毫秒级磁盘操作，主线程只在 Flush/Dispose 兜底时才会撞上，可接受。
         private readonly object _ioGate = new object();
 
-        private readonly AutoResetEvent _signal = new AutoResetEvent(false);
+        /// <summary>后台线程的唤醒信号。平台与目录探测都通过之后才创建。</summary>
+        private readonly AutoResetEvent _signal;
         private readonly Thread _thread;
         private volatile bool _running = true;
 
@@ -81,6 +82,7 @@ namespace Revolution
         private string _path;
         private long _written;
 
+        /// <summary>先核对宿主与日志目录，再创建写入线程和唤醒信号。不能写入时保留禁用状态。</summary>
         public RevFileSink(string directory, string prefix = "revlog", long sizeLimit = RevLogLimits.FileSizeLimit, int keepCount = RevLogLimits.FileKeepCount)
         {
             _directory = directory;
@@ -88,20 +90,22 @@ namespace Revolution
             _sizeLimit = sizeLimit > 0 ? sizeLimit : RevLogLimits.FileSizeLimit;
             _keepCount = keepCount > 0 ? keepCount : RevLogLimits.FileKeepCount;
 
-            // ★ 顺序不能反：先判"平台能力"，再探"目录可写"。
-            //   WebGL / 小游戏上目录探测会"成功"（IDBFS 虚拟文件系统），先探就一定会走到
-            //   下面的 new Thread 那一步 —— 在单线程平台上那是直接抛异常。
-            if (!SupportsBackgroundWriter)
+            // 虚拟目录可能通过写入探测。平台能力要先于目录 I/O 和系统等待句柄检查。
+            if (!SupportsBackgroundWriter || !DetectBackgroundWriterSupport())
             {
                 Enabled = false;
-                RevLog.ReportSinkError("当前平台（WebGL / 小游戏）是单线程且没有真实文件系统，文件日志通道已禁用");
+                RevLog.ReportSinkError("未启用后台文件日志（平台不支持或宿主已关闭）");
                 return;
             }
 
             Enabled = ProbeDirectory();                       // 试写一次：不可写就禁用，绝不让游戏跟着出问题
 
-            if (!Enabled) return;
+            if (!Enabled)
+            {
+                return;
+            }
 
+            _signal = new AutoResetEvent(false);
             _thread = new Thread(Loop) { IsBackground = true, Name = "RevLog", Priority = ThreadPriority.Lowest };
             _thread.Start();
         }

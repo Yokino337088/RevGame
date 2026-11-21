@@ -1,4 +1,5 @@
 using System;
+using RevGame.Core;
 using Revolution;
 using UnityEngine;
 
@@ -48,11 +49,15 @@ namespace RevGame.Services
         }
 
         public int Cleared => Flags & ChapterMask;
-        public int Read => (Flags >> ChapterCount) & Cleared;
-        public int Unread => Cleared & ~Read;
+        /// <summary>允许持久记录已阅的章节位图。浏览器开放全部插画，因此可以在真正翻阅后记账。</summary>
+        private int ReadableChapters => Consts.WebContentOpenByDefault ? ChapterMask : Cleared;
+        /// <summary>玩家实际看过的插画位图。</summary>
+        public int Read => (Flags >> ChapterCount) & ReadableChapters;
+        /// <summary>已开放、尚未正式阅览的插画位图。</summary>
+        public int Unread => ReadableChapters & ~Read;
 
-        /// <summary>普通 Editor Play 默认可预览续篇。隔离验收与正式游戏仍按六章通关解锁。</summary>
-        public bool IsCottageStoryUnlocked => IsCottageStoryPreviewOnly || Cleared == ChapterMask;
+        /// <summary>续篇访问许可。浏览器默认开放，普通运行依照六章通关，编辑器支持临时预览。</summary>
+        public bool IsCottageStoryUnlocked => Consts.WebContentOpenByDefault || IsCottageStoryPreviewOnly || Cleared == ChapterMask;
 
         /// <summary>仅靠编辑器预览开放时使用内存档案，保留玩家的实际通关和阅读记录。</summary>
         public bool IsCottageStoryPreviewOnly
@@ -68,22 +73,27 @@ namespace RevGame.Services
         }
 
         /// <summary>第一次成功打开续篇后消除红点，通关和收藏书已阅位不受影响。</summary>
-        public bool IsCottageStoryUnread => Cleared == ChapterMask && (Flags & CottageStoryVisited) == 0;
+        public bool IsCottageStoryUnread => (Consts.WebContentOpenByDefault || Cleared == ChapterMask) && (Flags & CottageStoryVisited) == 0;
 
+        /// <summary>续篇真正打开后保存已访问标记，通关位仍由实际战斗更新。</summary>
         public void MarkCottageStoryVisited()
         {
             int flags = Flags;
-            if ((flags & ChapterMask) == ChapterMask)
+            if (Consts.WebContentOpenByDefault || (flags & ChapterMask) == ChapterMask)
             {
                 Save(flags, flags | CottageStoryVisited);
             }
         }
 
-        /// <summary>可看插画的章节位图。编辑器预览只影响展示，真实通关与已阅仍按存档记账。</summary>
+        /// <summary>可看插画的章节位图。浏览器默认开放全部插画，编辑器预览另有临时标记。</summary>
         public int Unlocked
         {
             get
             {
+                if (Consts.WebContentOpenByDefault)
+                {
+                    return ChapterMask;
+                }
 #if UNITY_EDITOR
                 if (_previewAll)
                 {
@@ -131,7 +141,7 @@ namespace RevGame.Services
         public void MarkRead(int chapter)
         {
             int flags = Flags;
-            int bit = flags & ChapterBit(chapter);
+            int bit = ReadableChapters & ChapterBit(chapter);
             Save(flags, flags | (bit << ChapterCount));
         }
 

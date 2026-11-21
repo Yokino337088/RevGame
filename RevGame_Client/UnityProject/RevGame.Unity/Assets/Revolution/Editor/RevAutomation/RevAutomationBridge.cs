@@ -215,7 +215,16 @@ namespace Revolution.Editor
                 try { result = RevAutomationActions.Execute(request); }
                 finally { Application.logMessageReceived -= capture; }
                 if (errors.Count > 0) { Complete(false, "UnityError", string.Join("\n", errors), (result as RevAutomationOperation)?.Result ?? result); return; }
-                if (result is RevAutomationOperation operation) { _operation = operation; return; }
+                if (result is RevAutomationOperation operation)
+                {
+                    _operation = operation;
+                    // 同步 Player 构建此时已有真实 BuildReport，必须在同一帧发布，避免下一帧的等待超时改写终态。
+                    if (operation.CompletedOnReturn)
+                    {
+                        Complete(operation.Success, operation.Success ? null : "OperationFailed", operation.Message, operation.Result);
+                    }
+                    return;
+                }
                 Complete(true, null, "完成", result);
             }
             catch (Exception e) { Complete(false, e.GetType().Name, e.Message, null); }
