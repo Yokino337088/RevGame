@@ -81,6 +81,7 @@ namespace RevGame.View
                 }
                 SurfaceChapter = chapter;
                 _surfaceReady = true;
+                TryPrepareBackgroundDepth();
 
                 if (oldName != null)
                 {

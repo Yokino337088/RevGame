@@ -100,9 +100,11 @@ namespace RevGame.View
                 }
             }
         }
-        /// <summary>只移动格子渲染器子层，物理格子与棋盘模型保持原位置；每格相位按到Boss的距离推进。</summary>
+        /// <summary>胜利波移动可见格层。先撤下静止深度，再按到 Boss 的距离驱动视觉相位。</summary>
         public void SetVictoryBoardWave(float progress, Vector3 center)
         {
+            _backgroundDepthSuspended = true;
+            SetBackgroundDepthAttached(false);
             foreach (BoardCellView cell in _cells)
             {
                 float distance = Vector2.Distance(cell.transform.position, center) / Consts.CellSize;
@@ -110,6 +112,7 @@ namespace RevGame.View
                 cell.SetVictoryWave(local);
             }
         }
+        /// <summary>格层回到静止位置后，恢复背景的深度预通道；已退场的棋盘继续保持关闭。</summary>
         public void ClearVictoryBoardWave()
         {
             foreach (BoardCellView cell in _cells)
@@ -119,6 +122,8 @@ namespace RevGame.View
                     cell.SetVictoryWave(1);
                 }
             }
+            _backgroundDepthSuspended = false;
+            SetBackgroundDepthAttached(!_released);
         }
         /// <summary>离场先使所有动画续体失效，清视图/波浪，再释放Boss图集。</summary>
         private void CancelVictoryViews()

@@ -221,6 +221,8 @@ namespace RevGame.View
                 _backgroundArrivalTime = Time.unscaledTime;
                 UploadChapterStyle();
                 FitCamera();
+                // 仅第 2～6 章的世界背景明确启用深度比较。第 1 章与 UI 共用原 Shader。
+                _backgroundBoard?.BindBackgroundDepth(chapter > 1 ? boardCamera : null, backgroundRenderer.transform.position.z);
                 oldLease?.Dispose();
 
                 // 新Renderer已接管，等旧Sprite的Destroy落地后再清理零引用包。

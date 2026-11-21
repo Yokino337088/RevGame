@@ -716,6 +716,7 @@ Lobby/MagicCottageMask|lobby_cottage|MagicCottageMask
 Lobby/MagicCottageNatureMask|lobby_cottage|MagicCottageNatureMask
 Material/Lobby/MagicCottageMaterial|lobby_cottage|MagicCottageMaterial
 Material/Background/ArcaneBackdrop|material_background|ArcaneBackdrop
+Material/Board/BackgroundDepthMask|material_board|BackgroundDepthMask
 Material/Board/PlacementMagic|material_board|PlacementMagic
 Material/Cards/CardGleam|material_cards|CardGleam
 Material/Combat/ArcherArrowBody|material_combat|ArcherArrowBody
@@ -750,6 +751,7 @@ Material/Pvp/Board/PvpTemple|pvp_arena|PvpTemple
 Pvp/PvpBoardView|pvp_arena|PvpBoardView
 GameShader/Background/ArcaneBackdrop|shared_shaders|ArcaneBackdrop
 GameShader/Background/LobbyMagicCottage|shared_shaders|LobbyMagicCottage
+GameShader/Board/BackgroundDepthMask|shared_shaders|BackgroundDepthMask
 GameShader/Board/PlacementMagic|shared_shaders|PlacementMagic
 GameShader/Cards/CardGleam|shared_shaders|CardGleam
 GameShader/Combat/BossSkill|shared_shaders|BossSkill

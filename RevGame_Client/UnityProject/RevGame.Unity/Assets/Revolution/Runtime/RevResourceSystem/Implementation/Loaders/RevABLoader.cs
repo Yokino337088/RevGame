@@ -13,6 +13,9 @@
 //
 // 异步统一用自研 RevTask（见 Runtime\RevTask），不依赖 UniTask、也不用协程。
 // ============================================================
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+#define REV_AB_BROWSER_PARALLEL
+#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -49,10 +52,29 @@ namespace Revolution
         /// </summary>
         private readonly Dictionary<string,RevBundleEntry> _bundles = new Dictionary<string,RevBundleEntry>();
 
-        /// <summary>
-        /// 正在加载中的包：同一个包被并发请求时复用同一个 RevTask，避免重复加载
-        /// </summary>
-        private readonly Dictionary<string, RevTask<AssetBundle>> _loading = new Dictionary<string, RevTask<AssetBundle>>();
+        /// <summary>等待读取的同名包。完成前保留请求总数，包入缓存后一次登记所有引用。</summary>
+        private sealed class PendingBundle
+        {
+            /// <summary>发起者和所有后续请求共用同一个异步结果。</summary>
+            public readonly RevTaskCompletionSource<AssetBundle> Completion = new RevTaskCompletionSource<AssetBundle>();
+
+            /// <summary>尚未交付的引用数，发起者占第一份。</summary>
+            public int References = 1;
+        }
+
+        /// <summary>当前代按包名去重的请求。退代后旧请求只能清理原来的对象。</summary>
+        private readonly Dictionary<string, PendingBundle> _loading = new Dictionary<string, PendingBundle>();
+
+#if REV_AB_BROWSER_PARALLEL
+        /// <summary>一个资源可同时发起的浏览器依赖数。</summary>
+        private const int BrowserDependencyBatchSize = 3;
+
+        /// <summary>本加载器的实际在途 HTTP 上限，包含清单、普通包和重试。</summary>
+        private const int BrowserRequestLimit = 4;
+
+        /// <summary>已取得名额的 HTTP 请求。旧代也必须走自己的 finally 归还。</summary>
+        private int _browserRequests;
+#endif
 
         // 主包 / Manifest：并发首次请求共享同一加载任务。
         private AssetBundle _mainBundle;
@@ -124,7 +146,7 @@ namespace Revolution
         /// <para>★ 只对"按 URL 下载"的平台有意义（WebGL / 微信小游戏 / 抖音小游戏）：
         ///   引擎正是靠这个标识判断"本地缓存过没有、要不要重新下载"。</para>
         /// <para>★ 热更包从清单里查到 UnityHash / UnityCrc 后设置它；不设置时会退化为"无缓存标识"
-        ///   —— 功能照常，但**每次进游戏都会重新下载全部 AB**（流量与首屏时间双输）。</para>
+        ///   —— 功能照常，浏览器仍可通过 HTTP 缓存头复用稳定 URL。</para>
         /// </summary>
         public static Func<string, RevBundleCacheKey> BundleCacheKeyResolver { get; set; }
 
@@ -395,33 +417,13 @@ namespace Revolution
 
         }
 
+        /// <summary>异步取依赖、目标包与资产，成功、失败或取消都向资源泵回调一次。</summary>
         public void LoadAsync(RevResHandle handle, Action<RevResHandle> onFinished, RevCancellationToken token = null)
         {
-            // 用 RevTask 串行加载；异常/取消都会被 catch + finally 兜住，
-            // 保证 onFinished 一定被调用 —— 这是异步泵不死锁的前提。
             LoadAsyncInternal(handle, onFinished, token).Forget();
         }
 
-        /// <summary>
-        /// 异步加载一个句柄的完整流程（本类的核心）。调用链：
-        ///   LoadAsync → LoadAsyncInternal
-        ///                → EnsureManifestAsync（主包 + Manifest）
-        ///                → AcquireSingleAsync（先依赖包，再主包）
-        ///                → bundle.LoadAssetAsync（取资源本身）
-        ///
-        /// 【为什么每步之间都插一次 ThrowIfCancelled】
-        ///   加载是"多段串行等待"，切场景时要能尽早中断；取消会直接跳到 catch，
-        ///   状态记为 Cancelled —— 不会留下一个"加载到一半"的句柄。
-        ///
-        /// 【依赖为什么逐个串行 await，而不是并行】
-        ///   ① 顺序不能乱：依赖必须先于主包就绪；
-        ///   ② 串行才能让 AcquireSingleAsync 的 _loading 合并生效，
-        ///      避免同一个包被多个资源并发请求时重复加载。
-        ///
-        /// 【异常一律不外抛】失败原因全部落在 handle.ErrorReason + MarkError()。
-        ///   唯一不能省的是 finally：无论成功 / 失败 / 取消，onFinished 必须被调用一次
-        ///   —— 异步泵正是靠这个回调推进队列，漏一次就会整队卡死。
-        /// </summary>
+        /// <summary>先确认清单，再收齐依赖，最后读取目标资产。失败与取消归还已获得的临时引用。</summary>
         private async RevTask LoadAsyncInternal(RevResHandle handle, Action<RevResHandle> onFinished, RevCancellationToken token)
         {
             int generation = _generation;
@@ -452,32 +454,23 @@ namespace Revolution
                     handle.MarkError();
                     return;
                 }
-                foreach (string dep in ResolveDependencies(parts[0]))
+                string failedDependency = await AcquireDependenciesAsync(ResolveDependencies(parts[0]), acquiredDependencies, generation, token);
+                if (generation != _generation)
                 {
-                    AssetBundle dependency = await AcquireSingleAsync(dep);
-                    if (generation != _generation)
-                    {
-                        throw new RevOperationCanceledException();
-                    }
-                    if (dependency == null)
-                    {
-                        token?.ThrowIfCancelled();
-#if UNITY_ANDROID && !UNITY_EDITOR
-                        RevLog.Error($"Android AB 依赖包加载失败：目标 {parts[0]} / 依赖 {dep} / 路径 {ResolveBundlePath(dep)}。这不是 Shader 变体错误，请检查平台产物、热更版本与包文件。", "Res");
-#endif
-                        ReleaseDependencies(acquiredDependencies, generation);
-                        acquiredDependencies.Clear();
-                        handle.ErrorReason = RevResLoadErrorReason.BundleLoadFail;
-                        handle.MarkError();
-                        return;
-                    }
-                    // 先登记本次拿到的依赖，再检查取消；异常收尾会归还这份引用。
-                    acquiredDependencies.Add(dep);
-                    token?.ThrowIfCancelled();
+                    throw new RevOperationCanceledException();
                 }
-
-                if (generation != _generation) { throw new RevOperationCanceledException(); }
                 token?.ThrowIfCancelled();
+                if (failedDependency != null)
+                {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                    RevLog.Error($"Android AB 依赖包加载失败：目标 {parts[0]} / 依赖 {failedDependency} / 路径 {ResolveBundlePath(failedDependency)}。请检查平台产物、热更版本与包文件。", "Res");
+#endif
+                    ReleaseDependencies(acquiredDependencies, generation);
+                    acquiredDependencies.Clear();
+                    handle.ErrorReason = RevResLoadErrorReason.BundleLoadFail;
+                    handle.MarkError();
+                    return;
+                }
 
                 AssetBundle bundle = await AcquireSingleAsync(parts[0]);
                 if (generation != _generation)
@@ -570,6 +563,85 @@ namespace Revolution
         }
 #endif
 
+        /// <summary>
+        /// 按清单取得依赖并记录每一份引用。浏览器一批可发多个独立请求，批内失败也等其余已发请求收尾。
+        /// 文件加载及小游戏沿用串行。返回非空包名表示失败项，外层负责取消判定和回滚。
+        /// </summary>
+        private async RevTask<string> AcquireDependenciesAsync(string[] dependencies, List<string> acquired, int generation, RevCancellationToken token)
+        {
+#if REV_AB_BROWSER_PARALLEL
+            if (dependencies.Length > 1)
+            {
+                var batch = new RevTask<AssetBundle>[Math.Min(dependencies.Length, BrowserDependencyBatchSize)];
+                for (int start = 0; start < dependencies.Length; start += batch.Length)
+                {
+                    if (generation != _generation)
+                    {
+                        throw new RevOperationCanceledException();
+                    }
+                    token?.ThrowIfCancelled();
+
+                    // 调用立即开始同一批请求。完成结果逐个接收，因此第一项失败也不会丢掉后面取得的引用。
+                    int count = Math.Min(batch.Length, dependencies.Length - start);
+                    for (int i = 0; i < count; i++)
+                    {
+                        batch[i] = AcquireSingleAsync(dependencies[start + i]);
+                    }
+
+                    string failed = null;
+                    for (int i = 0; i < count; i++)
+                    {
+                        string dependency = dependencies[start + i];
+                        AssetBundle bundle;
+                        try
+                        {
+                            bundle = await batch[i];
+                        }
+                        catch (Exception)
+                        {
+                            bundle = null;
+                        }
+                        if (generation == _generation && bundle != null)
+                        {
+                            acquired.Add(dependency);
+                        }
+                        else
+                        {
+                            failed ??= dependency ?? string.Empty;
+                        }
+                    }
+
+                    if (generation != _generation)
+                    {
+                        throw new RevOperationCanceledException();
+                    }
+                    token?.ThrowIfCancelled();
+                    if (failed != null)
+                    {
+                        return failed;
+                    }
+                }
+                return null;
+            }
+#endif
+            foreach (string dependency in dependencies)
+            {
+                AssetBundle bundle = await AcquireSingleAsync(dependency);
+                if (generation != _generation)
+                {
+                    throw new RevOperationCanceledException();
+                }
+                if (bundle == null)
+                {
+                    return dependency;
+                }
+                acquired.Add(dependency);
+                token?.ThrowIfCancelled();
+            }
+            return null;
+        }
+
+        /// <summary>归还本次已取得的依赖，避免旧代请求减掉新代同名包的引用。</summary>
         private void ReleaseDependencies(List<string> dependencies, int generation)
         {
             // ReleaseAll 已替旧代清账；旧请求的回滚不得触碰新代同名包。
@@ -665,17 +737,46 @@ namespace Revolution
             return null;
         }
 
-        /// <summary>执行一次加载。网页请求在整代失效时中止，文件请求完成后由外层核对代次。</summary>
+        /// <summary>执行单次 AB 读取。普通浏览器先等共享名额，实际发出后才开始下载超时计时。</summary>
         private async RevTask<AssetBundle> LoadBundleOnceAsync(string abName, int generation)
         {
 #if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
-            // WebGL（含小游戏）：streamingAssetsPath 是 URL/虚拟路径，只能用 UnityWebRequest 下载。
-            // ★ 走钩子：小游戏的"热更"就是把 URL 换成 CDN 的版本地址。
-            // 按帧等待可以在超时或退代时中止请求。
+#if REV_AB_BROWSER_PARALLEL
+            while (generation == _generation && _browserRequests >= BrowserRequestLimit)
+            {
+                await RevTaskScheduler.NextFrame();
+            }
+            if (generation != _generation)
+            {
+                return null;
+            }
+
+            _browserRequests++;
+            try
+            {
+                return await LoadUrlBundleOnceAsync(abName, generation);
+            }
+            finally
+            {
+                _browserRequests--;
+            }
+#else
+            return await LoadUrlBundleOnceAsync(abName, generation);
+#endif
+#else
+            AssetBundleCreateRequest req = AssetBundle.LoadFromFileAsync(ResolveBundlePath(abName));
+            await req;
+            return req.assetBundle;
+#endif
+        }
+
+#if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
+        /// <summary>发出并等待一次 URL 请求。所有结果都经 using 归还浏览器请求对象。</summary>
+        private async RevTask<AssetBundle> LoadUrlBundleOnceAsync(string abName, int generation)
+        {
             using (UnityWebRequest www = CreateBundleRequest(abName))
             {
                 UnityWebRequestAsyncOperation op = www.SendWebRequest();
-
                 if (!await WaitForBundleRequestAsync(www, op, abName, generation))
                 {
                     return null;
@@ -684,27 +785,20 @@ namespace Revolution
                 {
                     if (generation == _generation)
                     {
-                        // 记录包名和传输状态，避免把 CDN 签名参数或调用方的地址写入浏览器日志。
+                        // 记录包名和传输结果，CDN 的完整签名地址不进入日志。
                         RevLog.Warn($"WebGL AB 下载失败：{abName}，{www.result}，HTTP {www.responseCode}", "Res");
                     }
                     return null;
                 }
                 return DownloadHandlerAssetBundle.GetContent(www);
             }
-#else
-            //调用unity官方的API来异步加载ab包（★ 同样先走钩子：热更包会重定向到持久化目录）
-            AssetBundleCreateRequest req = AssetBundle.LoadFromFileAsync(ResolveBundlePath(abName));
-            await req;
-            return req.assetBundle;
-#endif
         }
 
-#if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
         /// <summary>
         /// 建一个 AB 下载请求；能从钩子拿到缓存标识（hash / crc）就带上。
         ///
         /// ★ 带上它的意义：引擎据此决定"这份包本地缓存过没有、要不要重新下载" ——
-        ///   不传就是每次进游戏把全部 AB 重新下一遍。清单里本来就有这两列（Unity 构建时算好的），
+        ///   浏览器仍可通过 HTTP 缓存头复用稳定 URL。引擎缓存标识则来自清单里的 hash 和 CRC，
         ///   热更包通过 BundleCacheKeyResolver 把它交过来。
         /// </summary>
         private static UnityWebRequest CreateBundleRequest(string abName)
@@ -755,74 +849,62 @@ namespace Revolution
         }
 #endif
 
-        /// <summary>
-        /// 取用「单个」AB 包（同步版 AcquireSingle 的异步版），多了一层"并发合并"。
-        /// 三种情况：
-        ///   ① 已在 _bundles        → 直接复用，refCount++；
-        ///   ② 正在加载（_loading） → 搭车等同一个 RevTask 完成，再 refCount++（不重复发请求）；
-        ///   ③ 都没命中             → 由自己发起加载，完成后登记为 refCount = 1。
-        ///
-        /// 【为什么需要 _loading】
-        ///   同一帧里多个资源常常要同一个包（尤其依赖包）。没有它，N 个请求会同时触发
-        ///   N 次加载 —— 既浪费 IO，又可能把同一个包加载出多份实例、计数也对不上。
-        ///
-        /// 【计数为什么恰好等于请求数】
-        ///   发起者登记 1，每个搭车者补 1 → 合计 N 次请求 = N 次引用。
-        ///   这里有个隐式的顺序依赖：搭车者是被"同一个 Promise"唤醒的，
-        ///   而 Promise 的续体按注册先后执行 —— 发起者先注册、就先跑完登记，
-        ///   搭车者醒来时才一定能在 _bundles 里查到条目并 +1。（改这里务必保持这个顺序）
-        /// </summary>
+        /// <summary>返回当前代的一份包引用。缓存命中直接累加，等待同名包先登记引用份数再等待。</summary>
         private async RevTask<AssetBundle> AcquireSingleAsync(string abName)
         {
             int generation = _generation;
-            if (_bundles.TryGetValue(abName, out RevBundleEntry e) && e.bundle != null)
+            if (_bundles.TryGetValue(abName, out RevBundleEntry entry) && entry.bundle != null)
             {
-                e.refCount++;
-                return e.bundle;
+                entry.refCount++;
+                return entry.bundle;
             }
 
-            if (_loading.TryGetValue(abName, out RevTask<AssetBundle> task))
+            if (_loading.TryGetValue(abName, out PendingBundle pending))
             {
-                AssetBundle existing = await task;
-                if (generation != _generation || existing == null) return null;
-                if (_bundles.TryGetValue(abName, out RevBundleEntry entry) && ReferenceEquals(entry.bundle, existing))
-                {
-                    entry.refCount++;
-                    return existing;
-                }
-                return null;
+                pending.References++;
+            }
+            else
+            {
+                pending = new PendingBundle();
+                _loading.Add(abName, pending);
+                CompleteAcquireSingleAsync(abName, generation, pending).Forget();
             }
 
-            var source = RevTask<AssetBundle>.CreateSource();
-            RevTask<AssetBundle> loadingTask = source.Task;
-            _loading[abName] = loadingTask;
-            CompleteAcquireSingleAsync(abName, generation, source, loadingTask).Forget();
-            return await loadingTask;
+            AssetBundle bundle = await pending.Completion.Task;
+            return generation == _generation ? bundle : null;
         }
 
-        /// <summary>完成本代共享的单包请求，归还退代结果，并只清理仍属于本请求的登记。</summary>
-        private async RevTask CompleteAcquireSingleAsync(string abName, int generation,
-            RevTaskCompletionSource<AssetBundle> source, RevTask<AssetBundle> loadingTask)
+        /// <summary>登记全部等候者的引用再唤醒。任何一个续体先归还，其他请求的引用仍已生效。</summary>
+        private async RevTask CompleteAcquireSingleAsync(string abName, int generation, PendingBundle pending)
         {
             AssetBundle bundle = null;
-            try { bundle = await LoadBundleAsync(abName, generation); }
-            catch { bundle = null; }
+            try
+            {
+                bundle = await LoadBundleAsync(abName, generation);
+            }
+            catch (Exception)
+            {
+                bundle = null;
+            }
 
             if (generation != _generation)
             {
-                if (bundle != null) bundle.Unload(false);
+                if (bundle != null)
+                {
+                    bundle.Unload(false);
+                }
                 bundle = null;
             }
             else if (bundle != null)
             {
-                _bundles[abName] = new RevBundleEntry { bundle = bundle, refCount = 1 };
+                _bundles[abName] = new RevBundleEntry { bundle = bundle, refCount = pending.References };
             }
 
-            if (_loading.TryGetValue(abName, out RevTask<AssetBundle> current)
-                && ReferenceEquals(current.Promise, loadingTask.Promise))
+            if (_loading.TryGetValue(abName, out PendingBundle current) && ReferenceEquals(current, pending))
+            {
                 _loading.Remove(abName);
-
-            source.SetResult(bundle);
+            }
+            pending.Completion.SetResult(bundle);
         }
     }
 }

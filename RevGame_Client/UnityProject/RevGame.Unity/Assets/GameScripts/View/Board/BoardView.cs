@@ -194,6 +194,7 @@ namespace RevGame.View
                 }
                 _cellsReady = true;
                 RefreshCells();
+                TryPrepareBackgroundDepth();
             }
             catch (System.Exception error)
             {
@@ -973,9 +974,11 @@ namespace RevGame.View
             _projectileEffects.Remove(effect);
             _meleeEffects.Remove(effect);
         }
+        /// <summary>先撤销相机深度和异步续体，再归还棋子、格层及特效资源。</summary>
         private void OnDisable()
         {
             _released = true;
+            ReleaseBackgroundDepth();
             ClearPatternSchedule();
             EndBossIntroVisual();
             CancelVictoryViews();

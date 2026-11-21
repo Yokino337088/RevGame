@@ -227,6 +227,8 @@ namespace RevGame.Editor
                 desired["Assets/GameRes/Material/Board/" + name + "_Surface.mat"] = bundle;
             }
             desired["Assets/GameRes/Material/Board/PlacementMagic.mat"] = "material_board";
+            // 棋盘深度材质按正式路径取得，Shader 沿已有 GameShader 规则归到共享 Shader 包。
+            desired["Assets/GameRes/Material/Board/BackgroundDepthMask.mat"] = "material_board";
             // 长BGM逐曲独立分包：选择一章不会把其它歌曲一起装进内存。原MP3保留，由Unity只转码一次。
             desired["Assets/GameRes/Pieces/Helper"] = "battle_helper";
             desired["Assets/GameRes/Effects/Helper"] = "battle_helper_fx";
