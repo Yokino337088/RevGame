@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1907829811
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 5213576e0a5a87a05c18e00a14d73e2e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 5213576e0a5a87a05c18e00a14d73e2e
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Chapter03_ToTheSouth.mp3
+Dependencies: []

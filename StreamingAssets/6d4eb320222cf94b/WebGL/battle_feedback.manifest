@@ -1,0 +1,61 @@
+ManifestFileVersion: 0
+CRC: 3253581174
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9507aa5521fb7c4485da8e1465bc37e8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 25f64134424e9ae8f881d0042e69ef3b
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9507aa5521fb7c4485da8e1465bc37e8
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 102
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 52ca6d6ce2c2f924b8ba7ba532786f8a, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9d6a33d802449a140ae99f0e795c51b0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: aa1dd300069341c788a09ccd507de05e, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Runtime
+  ClassName: RevGame.View.BattleEffectView/ProjectileAppearance
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+Assets:
+- Assets/GameRes/Effects/Combat/BattleEffect.prefab
+- Assets/GameRes/Effects/Combat/BossSkillFx.prefab
+- Assets/GameRes/Effects/Combat/ScoreSpark.prefab
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/atlas_combatframes"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/font_cjk"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/material_combat"

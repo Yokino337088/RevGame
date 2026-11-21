@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 1436139484
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: c88df12d7ca07d7a57b500a2853c7493
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: bed89cc13ca515064239079f9857a806
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: c88df12d7ca07d7a57b500a2853c7493
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: 0c8e6cbfa60038942b93ad0c61a06a43, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.GamePortraitReference
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.StoryBook/Episode
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.StoryBook/Line
+Assets:
+- Assets/GameRes/Config/Story/StoryBook.asset
+Dependencies: []

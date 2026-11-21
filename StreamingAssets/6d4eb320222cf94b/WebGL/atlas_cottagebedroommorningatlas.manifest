@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 223977719
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: fed87b867757a5f42c12d4c31621f361
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: fed87b867757a5f42c12d4c31621f361
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Background/Gal/Chapter01/CottageBedroomMorning.png
+- Assets/GameRes/Atlases/CottageBedroomMorningAtlas.spriteatlasv2
+Dependencies: []

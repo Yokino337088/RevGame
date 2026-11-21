@@ -1,0 +1,30 @@
+ManifestFileVersion: 0
+CRC: 3421150375
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: fe2ac97fe91b547785ad2f625381437c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 6d230dbb4df3f544730d8d68864d5fac
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: fe2ac97fe91b547785ad2f625381437c
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Pieces/Boss/BossPieceView.prefab
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/material_pieces"

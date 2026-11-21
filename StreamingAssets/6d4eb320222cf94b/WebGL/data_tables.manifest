@@ -1,0 +1,45 @@
+ManifestFileVersion: 0
+CRC: 2162305373
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8da4276c1f4f7d41273bd091e2502966
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8da4276c1f4f7d41273bd091e2502966
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Data/EndlessRule.txt
+- Assets/GameRes/Data/RewardBoostConfig.txt
+- Assets/GameRes/Data/EndlessRoute.txt
+- Assets/GameRes/Data/StarConfig.txt
+- Assets/GameRes/Data/EndlessBoss.txt
+- Assets/GameRes/Data/YayaReactionRule.txt
+- Assets/GameRes/Data/EndlessCombo.txt
+- Assets/GameRes/Data/EnemyReinforceConfig.txt
+- Assets/GameRes/Data/RewardConfig.txt
+- Assets/GameRes/Data/BalanceRule.txt
+- Assets/GameRes/Data/EndlessMusic.txt
+- Assets/GameRes/Data/PrepBuffConfig.txt
+- Assets/GameRes/Data/BattleEventConfig.txt
+- Assets/GameRes/Data/BattleText.txt
+- Assets/GameRes/Data/EndlessBossSkill.txt
+- Assets/GameRes/Data/BattleTuning.txt
+- Assets/GameRes/Data/EnemyRosterConfig.txt
+- Assets/GameRes/Data/PieceConfig.txt
+- Assets/GameRes/Data/EndlessBoon.txt
+- Assets/GameRes/Data/EndlessFormation.txt
+- Assets/GameRes/Data/YayaReactionLine.txt
+- Assets/GameRes/Data/BossSkillConfig.txt
+- Assets/GameRes/Data/ChapterConfig.txt
+- Assets/GameRes/Data/PvpYayaLine.txt
+- Assets/GameRes/Data/PvpRule.txt
+- Assets/GameRes/Data/EventRotationConfig.txt
+Dependencies: []

@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 4247987607
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b7826f58f5b362666f30a76901983b47
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b7826f58f5b362666f30a76901983b47
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/ProjectOpenSource/ProjectBookPrimary.png
+- Assets/GameRes/Atlases/UIProjectOpenSource.spriteatlasv2
+- Assets/GameRes/Art/UI/ProjectOpenSource/ProjectBookSecondary.png
+Dependencies: []

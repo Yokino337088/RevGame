@@ -1,0 +1,32 @@
+ManifestFileVersion: 0
+CRC: 888855943
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b4ccb1bf791986bebbc98936ab597347
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b4ccb1bf791986bebbc98936ab597347
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Atlases/YayaGalShared.spriteatlasv2
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_25.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_16.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_22.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_29.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_09.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_28.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_15.png
+- Assets/GameRes/Art/Characters/Yaya/Expressions/GalYaya_07.png
+Dependencies: []
