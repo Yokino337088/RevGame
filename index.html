@@ -10,13 +10,15 @@
     body { font: 16px/1.65 system-ui, "Microsoft YaHei", sans-serif; }
     #game { position: fixed; inset: 0; }
     #unity-canvas { display: block; width: 100%; height: 100%; background: #172620; }
-    #status, #file-guide { position: absolute; inset: 0; display: grid; place-items: center; }
+    #status, #file-guide, #launch, #exit { position: absolute; inset: 0; display: grid; place-items: center; }
     .panel { box-sizing: border-box; width: min(540px, calc(100vw - 48px)); padding: 28px; border: 1px solid #98825a; border-radius: 18px; background: #22352c; box-shadow: 0 10px 38px #0005; }
     .panel h1 { margin: 0 0 10px; font-size: 24px; }
     .panel p { margin: 0 0 14px; }
     .panel p:last-child { margin-bottom: 0; }
     progress { width: 100%; height: 10px; accent-color: #81c19a; }
     a { color: #e1cb92; }
+    #start { min-height: 44px; padding: 8px 24px; border: 1px solid #bdab79; border-radius: 9px; background: #e9d39b; color: #1a3029; font: inherit; font-weight: 700; cursor: pointer; }
+    #exit { z-index: 1; background: #172620; }
     #fullscreen { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); border: 1px solid #ab996e; border-radius: 8px; padding: 7px 13px; color: #fcf4de; background: #22352de8; cursor: pointer; }
     #game:fullscreen #fullscreen { display: none; }
     #warnings { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); overflow-wrap: anywhere; }
@@ -27,6 +29,12 @@
 <body>
   <main id="game">
     <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="launch" hidden>
+      <div class="panel">
+        <h1>围棋史莱姆</h1>
+        <button id="start" type="button">开始游戏</button>
+      </div>
+    </div>
     <div id="status" role="status" hidden>
       <div class="panel">
         <h1>围棋史莱姆</h1>
@@ -42,6 +50,9 @@
     </div>
     <div id="warnings" role="alert"></div>
     <button id="fullscreen" type="button" hidden>全屏</button>
+    <div id="exit" role="status" hidden>
+      <div class="panel"><p>正在退出游戏…</p></div>
+    </div>
   </main>
   <script>
     (() => {
@@ -59,6 +70,63 @@
         document.querySelector("#file-guide").hidden = false;
         return;
       }
+
+      // 试玩入口在真实点击中创建独立标签页，浏览器允许该页稍后主动关闭。
+      const entryUrl = new URL(location.href);
+      const isPlayer = entryUrl.searchParams.get("play") === "1";
+      entryUrl.searchParams.delete("play");
+      if (!isPlayer) {
+        canvas.hidden = true;
+        const launch = document.querySelector("#launch");
+        const playerUrl = new URL(entryUrl);
+        playerUrl.searchParams.set("play", "1");
+        let playerWindow = null;
+        launch.hidden = false;
+        document.querySelector("#start").addEventListener("click", () => {
+          if (playerWindow && !playerWindow.closed) {
+            playerWindow.focus();
+            return;
+          }
+          playerWindow = window.open(playerUrl.href, "_blank");
+          if (!playerWindow) {
+            // 浏览器禁用新标签页时，同页仍能开始游戏和返回入口。
+            location.replace(playerUrl.href);
+          }
+        });
+        return;
+      }
+
+      let unityInstance = null;
+      let quitting = false;
+
+      // 在网页侧停止 Player；即使 Unity 的退出回调未返回，也要在时限后释放游戏页面。
+      async function quitGame() {
+        if (quitting) {
+          return;
+        }
+        quitting = true;
+        document.querySelector("#exit").hidden = false;
+        let timeout;
+        try {
+          if (unityInstance) {
+            const limit = new Promise(resolve => { timeout = setTimeout(resolve, 1500); });
+            await Promise.race([unityInstance.Quit(), limit]);
+          }
+        } catch (error) {
+          console.warn("Unity Player 退出清理失败", error);
+        } finally {
+          clearTimeout(timeout);
+          window.close();
+          // 手动打开的标签页可能不能由脚本关闭，回到试玩入口即可结束当前 Player。
+          setTimeout(() => {
+            if (!window.closed) {
+              location.replace(entryUrl.href);
+            }
+          }, 100);
+        }
+      }
+
+      canvas.addEventListener("revgame:quit", quitGame);
 
       // 在真实点击回调内请求浏览器全屏。浏览器拒绝时画布继续铺满视口，按钮保留再次进入的入口。
       function enterFullscreen() {
@@ -96,9 +164,9 @@
 
       const buildUrl = "Build/";
       const config = {
-        dataUrl: buildUrl + "Web.data",
-        frameworkUrl: buildUrl + "Web.framework.js",
-        codeUrl: buildUrl + "Web.wasm",
+        dataUrl: buildUrl + "Web.data?v=9937d444782e6ca8",
+        frameworkUrl: buildUrl + "Web.framework.js?v=26ed264616aebe7f",
+        codeUrl: buildUrl + "Web.wasm?v=668bd53ed3552ae0",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "RevGame.Unity",
@@ -107,12 +175,13 @@
       };
       status.hidden = false;
       const loader = document.createElement("script");
-      loader.src = buildUrl + "Web.loader.js";
+      loader.src = buildUrl + "Web.loader.js?v=75083a3271c601c2";
       loader.onerror = () => showFailure("无法读取 WebGL 加载器。");
       loader.onload = () => {
         createUnityInstance(canvas, config, (fraction) => {
           progress.value = fraction;
-        }).then(() => {
+        }).then((instance) => {
+          unityInstance = instance;
           status.hidden = true;
         }).catch(showFailure);
       };
