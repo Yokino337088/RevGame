@@ -97,10 +97,10 @@ py -3.13 $rev --project $unityProject --timeout 3700 job &lt;工单ID&gt; --wait
 <caption>源码分支与网页分支的文件</caption>
 <thead><tr><th scope="col">文件</th><th scope="col">作用</th></tr></thead>
 <tbody>
-<tr><td><code>Assets/WebGLTemplates/RevGameFullscreen/index.html</code></td><td>Unity 模板。用构建宏写出实际文件名，画布铺满视口。试玩按钮打开单独的游戏标签页。</td></tr>
-<tr><td><code>tools/WebGLPreview/prepare-github-pages.mjs</code></td><td>发布转换。用 Node 的 Brotli 或 Gzip 解码模块改写启动文件和相对 URL，只收集 WebGL 的 StreamingAssets。</td></tr>
+<tr><td><code>Assets/WebGLTemplates/RevGameFullscreen/index.html</code></td><td>Unity 模板。用构建宏写出实际文件名，打开链接后直接启动《围棋大作战》，画布铺满浏览器视口。</td></tr>
+<tr><td><code>tools/WebGLPreview/prepare-github-pages.mjs</code></td><td>发布转换。用 Node 的解码模块改写启动文件 URL，并将校验过的 WebGL AB 放入按内容摘要生成的版本目录。</td></tr>
 <tr><td><code>gh-pages/index.html</code>、<code>Build/</code></td><td>页面及 Unity Loader、框架脚本、数据和 Wasm。同一次构建的版本一致。</td></tr>
-<tr><td><code>gh-pages/StreamingAssets/WebGL/</code>、<code>TemplateData/</code></td><td>平台主包与业务 AB，以及模板用到的静态文件。</td></tr>
+<tr><td><code>gh-pages/StreamingAssets/&lt;版号&gt;/WebGL/</code>、<code>TemplateData/</code></td><td>平台主包与业务 AB，以及模板用到的静态文件。存量网页从它自身的版本地址下载。</td></tr>
 <tr><td><code>gh-pages/.nojekyll</code></td><td>空文件。让分支发布按静态文件工作，保留目录结构。</td></tr>
 <tr><td><code>main/README.md</code></td><td>在仓库首页链接到公开试玩 HTTPS 地址。仓库 About 的 Website 也可使用同一地址。</td></tr>
 </tbody>
@@ -111,7 +111,7 @@ const config = {
   dataUrl: buildUrl + "Web.data",
   frameworkUrl: buildUrl + "Web.framework.js",
   codeUrl: buildUrl + "Web.wasm",
-  streamingAssetsUrl: "StreamingAssets"
+  streamingAssetsUrl: "StreamingAssets/&lt;版号&gt;"
 };</code></pre>
 <p>实际转换与参数见仓库。<a href="https://github.com/Yokino337088/RevGame/blob/main/tools/WebGLPreview/prepare-github-pages.mjs">发布转换脚本</a></p>
 </section>
@@ -128,19 +128,19 @@ const config = {
 git -C $readySite init -b gh-pages
 git -C $readySite remote add origin https://github.com/Yokino337088/RevGame.git
 git -C $readySite add -A
-git -C $readySite commit -m "发布围棋史莱姆 WebGL"
+git -C $readySite commit -m "发布围棋大作战 WebGL"
 git -C $readySite push -u origin gh-pages</code></pre>
 <p>RevGame 首次发布用同一套分支配置，由 GitHub Pages API 设置发布来源。管理员也可以用上述界面操作。<a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">配置 GitHub Pages 发布来源</a></p>
 </section>
 
 <section id="update">
 <h2>04 · 更新已经上线的版本</h2>
-<p>在另一个工作树从远端 <code>gh-pages</code> 起步，替换上一版发布文件后快进推送。源代码工作区用于开发。只在独立的网页工作树中移除跟踪的旧文件，从已校验的暂存版重新复制，避免遗留过时的 AB 或 JS。</p>
+<p>在另一个工作树从远端 <code>gh-pages</code> 起步，替换入口和启动文件后快进推送。源代码工作区用于开发。版本化 AB 目录按内容新增，同一版沿用原目录。上一版已打开的页面仍能读取它自己的 AB 地址。</p>
 <pre><code>$readySite = (Resolve-Path ".codex/work/web-pages-ready").Path
 $siteTree = ".codex/work/revgame-live-pages"
 git fetch origin gh-pages
 git worktree add --detach $siteTree origin/gh-pages
-git -C $siteTree rm -r --ignore-unmatch -- .nojekyll index.html Build StreamingAssets TemplateData
+git -C $siteTree rm -r --ignore-unmatch -- .nojekyll index.html Build TemplateData
 foreach ($name in @(".nojekyll","index.html","Build","StreamingAssets","TemplateData")) {
   $source = Join-Path $readySite $name
   if (Test-Path -LiteralPath $source) {
@@ -149,7 +149,7 @@ foreach ($name in @(".nojekyll","index.html","Build","StreamingAssets","Template
 }
 git -C $siteTree add -A
 git -C $siteTree diff --cached --stat
-git -C $siteTree commit -m "更新围棋史莱姆网页试玩版"
+git -C $siteTree commit -m "更新围棋大作战网页试玩版"
 git -C $siteTree push origin HEAD:refs/heads/gh-pages</code></pre>
 <p>每次构建使用新的工作树目录，已有工作树可在确认干净后快进到最新发布分支。遇到远端更新时，先取回并核对差异，再基于远端新提交发布。</p>
 <p>本次更新时，常规推送出现 <code>unexpected disconnect while reading sideband packet</code>，低速超时后的远端引用仍停在旧提交。先回读 <code>git ls-remote origin refs/heads/gh-pages</code>。在这次代理连接里，原有提交改用下面的一次性 HTTP 参数成功推送。HTTP 日志确认请求携带 <code>Content-Length</code> 并收到 HTTP 200。<a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-httppostBuffer">Git HTTP 配置说明</a></p>
@@ -171,8 +171,8 @@ git -C $siteTree push origin HEAD:refs/heads/gh-pages</code></pre>
 <tr><td>分支推送拒绝大文件</td><td>按单文件和整站两种口径验体积。超出 Git 单文件限制时改用 Pages 的 Actions 发布产物或其它支持的大文件交付方式。</td></tr>
 </tbody>
 </table></div>
-<p>实际验收用未登录浏览器。从 README 打开网页，点「开始游戏」进入大厅，再用「开始闯关」确认按钮和业务资源。在 Network 核对入口、Loader、Wasm、Data、平台主包均可读。首次上线的正式产物为 259 个文件，163,570,222 字节，最大文件 <code>Web.wasm</code> 为 48,240,699 字节。<a href="https://github.com/Yokino337088/RevGame/commit/b3b1f8bf7c8051043df489ebb6ce0bcd0278b96e">首次 Pages 发布</a> · <a href="https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits">GitHub 仓库限制</a></p>
-<p>本轮换包由 <code>gh-pages</code> 的 <code>633c23d</code> 交付，GitHub Pages 针对该提交返回 <code>built</code>。公开站的 HTML 与暂存产物一致，带内容摘要的四个启动资源均返回 200，Wasm 类型为 <code>application/wasm</code>。未登录的 Edge 经新入口进入大厅，点击「我不玩了」成功关闭游戏标签页。<a href="https://github.com/Yokino337088/RevGame/commit/633c23dcf68cd2dceba06268e492b99fba593e28">本轮 Pages 发布提交</a></p>
+<p>实际验收用未登录浏览器。从 README 打开网页即进入大厅，再用「开始闯关」确认按钮和业务资源。在 Network 核对入口、Loader、Wasm、Data 和本版平台主包。首次上线的正式产物为 259 个文件，163,570,222 字节，最大文件 <code>Web.wasm</code> 为 48,240,699 字节。<a href="https://github.com/Yokino337088/RevGame/commit/b3b1f8bf7c8051043df489ebb6ce0bcd0278b96e">首次 Pages 发布</a> · <a href="https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits">GitHub 仓库限制</a></p>
+<p><code>633c23d</code> 发布时验证了内容摘要 URL、Wasm MIME 与浏览器关闭由试玩页面打开的标签页。当前直进模式下，浏览器保留普通标签页时会显示「已退出游戏」，退出前的 Player 随导航清理。<a href="https://github.com/Yokino337088/RevGame/commit/633c23dcf68cd2dceba06268e492b99fba593e28">早期退出发布提交</a></p>
 <p><a href="#top">返回顶部</a></p>
 </section>
 </main>

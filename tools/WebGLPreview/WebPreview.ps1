@@ -245,7 +245,7 @@ try {
     if ($browser) {
         $profile = Join-Path $profileRoot $browserName
         [IO.Directory]::CreateDirectory($profile) | Out-Null
-        Start-Process -FilePath $browser -ArgumentList @('--new-window', '--start-fullscreen', '--no-first-run', '--no-default-browser-check', ('--user-data-dir="' + $profile + '"'), $address)
+        Start-Process -FilePath $browser -ArgumentList @('--new-window', '--no-first-run', '--no-default-browser-check', ('--user-data-dir="' + $profile + '"'), $address)
     } else {
         Start-Process $address
     }

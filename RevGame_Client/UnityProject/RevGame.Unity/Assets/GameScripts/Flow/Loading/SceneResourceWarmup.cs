@@ -39,7 +39,7 @@ namespace RevGame.Flow
                 Name = name;
             }
         }
-        /// <summary>按屏幕预热资源，并将每个真实等待点登记到本次交接。即使命中缓存也逐项让帧。</summary>
+        /// <summary>按屏幕预热资源。网页有限并发获取独立资源，每批结清后让帧，保留原来的交接和失败边界。</summary>
         public async RevTask LoadAsync(bool battle, RevSceneHandoffResources trace, Action<float> progress)
         {
             Resource[] resources = battle ? new[]
@@ -57,23 +57,45 @@ namespace RevGame.Flow
                 new Resource(RevResPath.UI_Panel, "RewardPanel")
             } : new[] { new Resource(RevResPath.UI_Panel, "HomePanel"), new Resource(RevResPath.UI_Panel, "LevelSelectPanel") };
 
-            for (int i = 0; i < resources.Length; i++)
+#if UNITY_WEBGL && !UNITY_EDITOR
+            const int batchSize = 3;
+#else
+            const int batchSize = 1;
+#endif
+            for (int i = 0; i < resources.Length; i += batchSize)
             {
                 if (_disposed)
                 {
                     throw new OperationCanceledException("预热已取消");
                 }
-                Resource resource = resources[i];
-                // 当前流程逐项等待完整清单，包含为后续反馈提前加载的 prefab，这些等待都会推迟首屏。
-                RevResHandle handle = await trace.PreloadAsync<GameObject>(resource.Root, resource.Name, nameof(SceneResourceWarmup),
-                    blocksFirstFrame: true, group: resource.Group);
-
-                if (!handle.IsLoaded)
+                int count = Math.Min(batchSize, resources.Length - i);
+                if (count == 1)
                 {
-                    throw new InvalidOperationException(resource.Name + "预载失败：" + handle.ErrorReason);
+                    await LoadResourceAsync(resources[i], trace);
                 }
-                progress?.Invoke((i + 1f) / resources.Length);
+                else
+                {
+                    // 每项沿用交接的租约和共享 AB 请求。WhenAll 等整批收尾后才向外报告失败。
+                    var batch = new RevTask[count];
+                    for (int j = 0; j < count; j++)
+                    {
+                        batch[j] = LoadResourceAsync(resources[i + j], trace);
+                    }
+                    await RevTask.WhenAll(batch);
+                }
+                progress?.Invoke((i + count) / (float)resources.Length);
                 await RevTask.Yield();
+            }
+        }
+
+        /// <summary>预热一项并登记在本次交接。失败原因仍归属原逻辑资源，租约由交接统一收尾。</summary>
+        private static async RevTask LoadResourceAsync(Resource resource, RevSceneHandoffResources trace)
+        {
+            RevResHandle handle = await trace.PreloadAsync<GameObject>(resource.Root, resource.Name, nameof(SceneResourceWarmup),
+                blocksFirstFrame: true, group: resource.Group);
+            if (!handle.IsLoaded)
+            {
+                throw new InvalidOperationException(resource.Name + "预载失败：" + handle.ErrorReason);
             }
         }
         /// <summary>

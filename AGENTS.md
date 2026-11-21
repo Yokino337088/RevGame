@@ -1,4 +1,4 @@
-# AGENTS.md · RevGame（围棋史莱姆）
+# AGENTS.md · RevGame（围棋大作战）
 
 RevGame 用真实业务验证 Revolution 框架。Unity 工程为 `RevGame_Client/UnityProject/RevGame.Unity`。业务使用框架公开门面，异步用 `RevTask`，资源用逻辑路径。`Assets/Revolution` 是导出快照，框架修改回 Revolution 源仓库。
 

@@ -6,7 +6,7 @@ namespace RevGame.Pvp
 {
     public sealed partial class PvpService
     {
-        /// <summary>设置归服务而非面板所有；启动时恢复本机配置，棋谱与网络协议无需持有凭据。</summary>
+        /// <summary>设置归常驻服务所有。网页使用当前 Player 内存，原生宿主按平台恢复持久配置。</summary>
         public PvpAgentSettings AgentSettings
         {
             get;
@@ -125,7 +125,7 @@ namespace RevGame.Pvp
             return true;
         }
 
-        /// <summary>生产设置入口：先验证和写入磁盘，成功后才替换运行状态，避免显示“已保存”但重启丢失。</summary>
+        /// <summary>生产授权入口。网页验证后写入运行状态，原生宿主先完成持久化再替换配置。</summary>
         public bool ConfigureSavedAgent(string key, string model, bool enabled)
         {
             var candidate = new PvpAgentSettings();
@@ -133,6 +133,13 @@ namespace RevGame.Pvp
             {
                 AgentStatus = reason;
                 return false;
+            }
+            if (PvpAgentSettingsStore.UsesBrowserSession)
+            {
+                // 沿用服务的请求取消和授权清理。网页 Key 无需经过磁盘或浏览器持久存储。
+                ConfigureAgent(candidate.Key, candidate.Model, candidate.Enabled);
+                AgentStatus = enabled ? "当前页面已授权云端调用" : "云端已关闭，Key已清除";
+                return true;
             }
             try
             {
@@ -155,9 +162,14 @@ namespace RevGame.Pvp
             return true;
         }
 
-        /// <summary>只由正式Bootstrap装配后调用；隔离棋局不自动读取玩家凭据，测试不会触发真实云端。</summary>
+        /// <summary>正式 Bootstrap 恢复原生宿主配置。网页每次载入从关闭授权开始。</summary>
         public void RestoreSavedAgent()
         {
+            if (PvpAgentSettingsStore.UsesBrowserSession)
+            {
+                ConfigureAgent("", AgentSettings.Model, false);
+                return;
+            }
             if (!PvpAgentSettingsStore.Load(out PvpAgentSettings restored, out string reason))
             {
                 AgentStatus = reason;

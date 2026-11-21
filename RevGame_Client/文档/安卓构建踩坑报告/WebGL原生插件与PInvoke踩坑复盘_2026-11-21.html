@@ -133,7 +133,7 @@ private static extern void GameCore_Destroy(IntPtr handle);</code></pre>
 <li><code>GameFlow.RequestQuit</code> 在网页端先尝试提交 PlayerPrefs，再通过 <code>__Internal</code> 请求 <code>RevGame_RequestBrowserQuit</code>。保存调用出错仍会交付退出。</li>
 <li><code>RevGameBrowser.jslib</code> 从当前 <code>Module.canvas</code> 派发 <code>revgame:quit</code>，让 Wasm 原点击回调先返回。</li>
 <li><code>RevGameFullscreen/index.html</code> 接到事件后显示退出状态，同一页面只执行一轮 <code>unityInstance.Quit()</code>，最多等待 1,500 ms。</li>
-<li>试玩入口的「开始游戏」在真实用户点击里打开 <code>?play=1</code> 的游戏标签页。退出时脚本关闭该页，入口页可再次启动。浏览器拒绝关闭手动打开的标签页时，网页释放当前 Player 并返回入口。</li>
+<li>公开链接直接进入游戏。退出时页面请求关闭标签页，浏览器保留普通标签页时跳到 <code>?exit=1</code>，释放当前 Player 并显示「已退出游戏」。点击「重新进入」才建立新实例。</li>
 </ol>
 <pre><code>// C# · 仅在 WebGL Player 编译这一声明
 [DllImport("__Internal", EntryPoint = "RevGame_RequestBrowserQuit")]

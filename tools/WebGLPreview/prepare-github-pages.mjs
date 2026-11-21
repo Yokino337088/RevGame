@@ -55,6 +55,37 @@ function readBuildFile(source, name)
     return bytes;
 }
 
+// 校验 AB 清单和实物后生成内容版号。相同资源重新出包时沿用同一缓存地址。
+function bundleVersion(streaming, manifest)
+{
+    const files = new Map([["WebGL", manifest.mainSha256]]);
+    for (const bundle of manifest.bundles)
+    {
+        const parts = bundle.name.split("/");
+        if (parts.some(part => !/^[\w.-]+$/.test(part) || part === "." || part === "..") || files.has(bundle.name))
+        {
+            throw new Error(`WebGL 清单包含重复或无效包名：${bundle.name}`);
+        }
+        files.set(bundle.name, bundle.sha256);
+    }
+    const version = createHash("sha256");
+    for (const name of [...files.keys()].sort())
+    {
+        const path = join(streaming, ...name.split("/"));
+        if (!lstatSync(path).isFile())
+        {
+            throw new Error(`WebGL AB 不是普通文件：${name}`);
+        }
+        const digest = createHash("sha256").update(readFileSync(path)).digest("hex");
+        if (digest !== files.get(name))
+        {
+            throw new Error(`WebGL AB 与清单摘要不符：${name}`);
+        }
+        version.update(name + ":" + digest + "\n");
+    }
+    return version.digest("hex").slice(0, 16);
+}
+
 // 验证源包和空目标，再写入只包含 Player 所需文件的发布目录。失败时源包仍可使用。
 function preparePages(source, destination)
 {
@@ -63,9 +94,15 @@ function preparePages(source, destination)
     // Unity 在 Windows 写出的清单可能带 UTF-8 BOM。
     const manifestText = readFileSync(join(streaming, "BuildManifest.json"), "utf8").replace(/^\uFEFF/, "");
     const manifest = JSON.parse(manifestText);
-    if (manifest.platform !== "WebGL" || !lstatSync(join(streaming, "WebGL")).isFile())
+    if (manifest.platform !== "WebGL" || !Array.isArray(manifest.bundles) || !manifest.bundles.length)
     {
         throw new Error("WebGL AB 清单或平台主包不完整。");
+    }
+    const packageVersion = bundleVersion(streaming, manifest);
+    const streamingReference = 'const streamingAssetsUrl = "StreamingAssets";';
+    if (!html.includes(streamingReference))
+    {
+        throw new Error("找不到 Unity 发布模板的 StreamingAssets 根路径声明。");
     }
 
     // 从网页配置解析构建名。改扩展名的同时核对加载器、数据、框架和 Wasm 是否齐全。
@@ -116,7 +153,7 @@ function preparePages(source, destination)
     {
         writeFileSync(join(target, "Build", file), bytes);
     }
-    copyDirectory(streaming, join(target, "StreamingAssets", "WebGL"));
+    copyDirectory(streaming, join(target, "StreamingAssets", packageVersion, "WebGL"));
     const template = join(source, "TemplateData");
     if (existsSync(template))
     {
@@ -125,7 +162,8 @@ function preparePages(source, destination)
 
     // 浏览器通过相对路径从仓库子路径取包。文件协议入口改为跳转说明。
     const guide = /(<div id="file-guide" hidden>\s*<div class="panel">\s*<h1>[^<]*<\/h1>)[\s\S]*?(\s*<\/div>)/;
-    const landing = site.replace(guide, `$1\n        <p>请通过 GitHub Pages 打开游戏。 <a href="${pagesUrl}">在线试玩</a></p>$2`);
+    const landing = site.replace(streamingReference, `const streamingAssetsUrl = "StreamingAssets/${packageVersion}";`)
+        .replace(guide, `$1\n        <p>请通过 GitHub Pages 打开游戏。 <a href="${pagesUrl}">在线试玩</a></p>$2`);
     writeFileSync(join(target, "index.html"), landing);
     writeFileSync(join(target, ".nojekyll"), "");
     console.log(`已生成 GitHub Pages 静态目录：${target}`);

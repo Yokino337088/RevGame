@@ -15,6 +15,8 @@ namespace RevGame.Pvp.Agent
         internal const string PlayerSlot = "RevGame.DeepSeek.ProtectedSettings.v1";
         // 使用实际运行平台，避免 Device Simulator 改变 Windows 编辑器里玩家的凭据存储位置。
         internal static bool UsesTextStorage => Application.platform == RuntimePlatform.Android;
+        // 浏览器由当前 Player 内存持有凭据，页面重载或关闭时自然丢弃。
+        internal static bool UsesBrowserSession => Application.platform == RuntimePlatform.WebGLPlayer;
         private const int RecordSizeLimit = 16384;
         [Serializable]
         private sealed class Record

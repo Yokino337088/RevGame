@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>围棋史莱姆</title>
+  <title>围棋大作战</title>
   <style>
     [hidden] { display: none !important; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #172620; color: #fcf4de; }
     body { font: 16px/1.65 system-ui, "Microsoft YaHei", sans-serif; }
     #game { position: fixed; inset: 0; }
     #unity-canvas { display: block; width: 100%; height: 100%; background: #172620; }
-    #status, #file-guide, #launch, #exit { position: absolute; inset: 0; display: grid; place-items: center; }
+    #status, #file-guide, #exit { position: absolute; inset: 0; display: grid; place-items: center; }
     .panel { box-sizing: border-box; width: min(540px, calc(100vw - 48px)); padding: 28px; border: 1px solid #98825a; border-radius: 18px; background: #22352c; box-shadow: 0 10px 38px #0005; }
     .panel h1 { margin: 0 0 10px; font-size: 24px; }
     .panel p { margin: 0 0 14px; }
     .panel p:last-child { margin-bottom: 0; }
     progress { width: 100%; height: 10px; accent-color: #81c19a; }
     a { color: #e1cb92; }
-    #start { min-height: 44px; padding: 8px 24px; border: 1px solid #bdab79; border-radius: 9px; background: #e9d39b; color: #1a3029; font: inherit; font-weight: 700; cursor: pointer; }
-    #exit { z-index: 1; background: #172620; }
+    #restart { min-height: 44px; padding: 8px 24px; border: 1px solid #bdab79; border-radius: 9px; background: #e9d39b; color: #1a3029; font: inherit; font-weight: 700; cursor: pointer; }
+    #exit { z-index: 3; background: #172620; }
     #fullscreen { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); border: 1px solid #ab996e; border-radius: 8px; padding: 7px 13px; color: #fcf4de; background: #22352de8; cursor: pointer; }
     #game:fullscreen #fullscreen { display: none; }
     #warnings { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); overflow-wrap: anywhere; }
@@ -29,15 +29,9 @@
 <body>
   <main id="game">
     <canvas id="unity-canvas" tabindex="-1"></canvas>
-    <div id="launch" hidden>
-      <div class="panel">
-        <h1>围棋史莱姆</h1>
-        <button id="start" type="button">开始游戏</button>
-      </div>
-    </div>
     <div id="status" role="status" hidden>
       <div class="panel">
-        <h1>围棋史莱姆</h1>
+        <h1>围棋大作战</h1>
         <p id="loading-text">正在加载游戏…</p>
         <progress id="progress" aria-label="加载进度" max="1" value="0"></progress>
       </div>
@@ -52,7 +46,10 @@
     <div id="warnings" role="alert"></div>
     <button id="fullscreen" type="button" hidden>全屏</button>
     <div id="exit" role="status" hidden>
-      <div class="panel"><p>正在退出游戏…</p></div>
+      <div class="panel">
+        <p id="exit-text">正在退出游戏…</p>
+        <button id="restart" type="button" hidden>重新进入</button>
+      </div>
     </div>
   </main>
   <script>
@@ -72,35 +69,26 @@
         return;
       }
 
-      // 试玩入口在真实点击中创建独立标签页，浏览器允许该页稍后主动关闭。
-      const entryUrl = new URL(location.href);
-      const isPlayer = entryUrl.searchParams.get("play") === "1";
-      entryUrl.searchParams.delete("play");
-      if (!isPlayer) {
+      const pageUrl = new URL(location.href);
+      const restart = document.querySelector("#restart");
+      restart.addEventListener("click", () => {
+        pageUrl.searchParams.delete("exit");
+        location.replace(pageUrl.href);
+      });
+
+      // 普通标签页拒绝脚本关闭时，导航到只显示已退出的状态，卸载整个旧 Player。
+      if (pageUrl.searchParams.get("exit") === "1") {
         canvas.hidden = true;
-        const launch = document.querySelector("#launch");
-        const playerUrl = new URL(entryUrl);
-        playerUrl.searchParams.set("play", "1");
-        let playerWindow = null;
-        launch.hidden = false;
-        document.querySelector("#start").addEventListener("click", () => {
-          if (playerWindow && !playerWindow.closed) {
-            playerWindow.focus();
-            return;
-          }
-          playerWindow = window.open(playerUrl.href, "_blank");
-          if (!playerWindow) {
-            // 浏览器禁用新标签页时，同页仍能开始游戏和返回入口。
-            location.replace(playerUrl.href);
-          }
-        });
+        document.querySelector("#exit").hidden = false;
+        document.querySelector("#exit-text").textContent = "已退出游戏";
+        restart.hidden = false;
         return;
       }
 
       let unityInstance = null;
       let quitting = false;
 
-      // 在网页侧停止 Player；即使 Unity 的退出回调未返回，也要在时限后释放游戏页面。
+      // 退出有独立的结束状态，浏览器保留当前标签页时也不会再自动加载 Player。
       async function quitGame() {
         if (quitting) {
           return;
@@ -118,10 +106,10 @@
         } finally {
           clearTimeout(timeout);
           window.close();
-          // 手动打开的标签页可能不能由脚本关闭，回到试玩入口即可结束当前 Player。
           setTimeout(() => {
             if (!window.closed) {
-              location.replace(entryUrl.href);
+              pageUrl.searchParams.set("exit", "1");
+              location.replace(pageUrl.href);
             }
           }, 100);
         }
@@ -139,7 +127,6 @@
         });
       }
 
-      document.addEventListener("click", enterFullscreen, { once: true, capture: true });
       fullscreen.addEventListener("click", enterFullscreen);
       document.addEventListener("fullscreenchange", () => {
         fullscreen.hidden = Boolean(document.fullscreenElement) || !document.fullscreenEnabled;
@@ -164,6 +151,54 @@
       }
 
       const buildUrl = "Build/";
+      const streamingAssetsUrl = "StreamingAssets";
+      const contentVersioned = /^StreamingAssets\/[a-f0-9]{16}$/.test(streamingAssetsUrl);
+      const bundleRoot = new URL(streamingAssetsUrl + "/WebGL/", location.href);
+      const buildRoot = new URL(buildUrl, location.href);
+      let earlyBundlesStarted = false;
+
+      // 版本目录内容固定，按需加载仍由 Unity 管理，浏览器可跨刷新复用已下载的静态响应。
+      function cacheControl(address) {
+        const url = new URL(address, location.href);
+        if (url.origin !== location.origin) {
+          return "no-store";
+        }
+        if (url.pathname.startsWith(bundleRoot.pathname)) {
+          return contentVersioned ? "immutable" : "must-revalidate";
+        }
+        if (url.pathname.startsWith(buildRoot.pathname) && /^[a-f0-9]{16}$/.test(url.searchParams.get("v") || "")) {
+          return "immutable";
+        }
+        return url.pathname.endsWith(".data.br") || url.pathname.endsWith(".data") ? "must-revalidate" : "no-store";
+      }
+
+      // 和 Wasm 编译重叠下载实际首屏所用的包。相同 URL 和 Fetch 模式可复用已发出的浏览器预载。
+      function preloadEarlyBundles() {
+        if (!contentVersioned || earlyBundlesStarted) {
+          return;
+        }
+        earlyBundlesStarted = true;
+        // 已运行过同一版的浏览器让 Unity 直接走持久缓存，避免预载另发一次网络请求。
+        try {
+          const marker = "RevGame.WebGL.BootBundles";
+          if (localStorage.getItem(marker) === streamingAssetsUrl) {
+            return;
+          }
+          localStorage.setItem(marker, streamingAssetsUrl);
+        } catch {
+          // 禁用站点存储时仍可按需加载。
+        }
+        for (const name of ["WebGL", "atlas_uiloading", "atlas_boardstatus", "font_cjk", "material_background", "shared_shaders", "ui_loading"]) {
+          const link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "fetch";
+          link.crossOrigin = "anonymous";
+          link.fetchPriority = "low";
+          link.href = new URL(name, bundleRoot).href;
+          document.head.append(link);
+        }
+      }
+
       const config = {
         dataUrl: buildUrl + "{{{ DATA_FILENAME }}}",
         frameworkUrl: buildUrl + "{{{ FRAMEWORK_FILENAME }}}",
@@ -174,7 +209,8 @@
 #if SYMBOLS_FILENAME
         symbolsUrl: buildUrl + "{{{ SYMBOLS_FILENAME }}}",
 #endif
-        streamingAssetsUrl: "StreamingAssets",
+        streamingAssetsUrl,
+        cacheControl,
         companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
         productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
         productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
@@ -187,9 +223,13 @@
       loader.onload = () => {
         createUnityInstance(canvas, config, (fraction) => {
           progress.value = fraction;
+          if (fraction >= 0.2) {
+            preloadEarlyBundles();
+          }
         }).then((instance) => {
           unityInstance = instance;
           status.hidden = true;
+          fullscreen.hidden = !document.fullscreenEnabled;
         }).catch(showFailure);
       };
       document.body.append(loader);
