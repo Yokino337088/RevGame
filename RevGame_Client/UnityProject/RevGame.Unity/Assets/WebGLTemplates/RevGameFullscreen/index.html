@@ -117,6 +117,28 @@
 
       canvas.addEventListener("revgame:quit", quitGame);
 
+      // WebGL 的 GPU 像素预算。CSS 画布铺满视口，高 DPI 和全屏也遵守独立的绘制上限。
+      const renderPixelBudget = 1600 * 900;
+
+      // 由网页控制绘制缓冲，保持宽高比例。只响应视口变化，同尺寸不重建缓冲。
+      function resizeRenderTarget() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        if (width === 0 || height === 0) {
+          return;
+        }
+        const scale = Math.min(window.devicePixelRatio || 1, Math.sqrt(renderPixelBudget / (width * height)));
+        const renderWidth = Math.max(1, Math.floor(width * scale));
+        const renderHeight = Math.max(1, Math.floor(height * scale));
+        if (canvas.width !== renderWidth || canvas.height !== renderHeight) {
+          canvas.width = renderWidth;
+          canvas.height = renderHeight;
+        }
+      }
+
+      resizeRenderTarget();
+      window.addEventListener("resize", resizeRenderTarget);
+
       // 在真实点击回调内请求浏览器全屏。浏览器拒绝时画布继续铺满视口，按钮保留再次进入的入口。
       function enterFullscreen() {
         if (!document.fullscreenEnabled || !game.requestFullscreen || document.fullscreenElement) {
@@ -129,6 +151,7 @@
 
       fullscreen.addEventListener("click", enterFullscreen);
       document.addEventListener("fullscreenchange", () => {
+        resizeRenderTarget();
         fullscreen.hidden = Boolean(document.fullscreenElement) || !document.fullscreenEnabled;
       });
 
@@ -199,7 +222,9 @@
         }
       }
 
+      // 画布缓冲已由网页像素预算控制，Unity 使用相同缓冲和输入映射。
       const config = {
+        matchWebGLToCanvasSize: false,
         dataUrl: buildUrl + "{{{ DATA_FILENAME }}}",
         frameworkUrl: buildUrl + "{{{ FRAMEWORK_FILENAME }}}",
         codeUrl: buildUrl + "{{{ CODE_FILENAME }}}",

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>RevGame · Web 端性能优化实践</title>
+<style>
+:root{--ink:#25352f;--muted:#65736b;--green:#326956;--gold:#a76e2d;--line:#dce3da;--paper:#f6f7f2;--mint:#e8f1e7}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 "Microsoft YaHei","PingFang SC",sans-serif}a{color:var(--green);text-decoration-thickness:1px;text-underline-offset:4px}button,input{font:inherit}button:focus-visible,a:focus-visible{outline:3px solid #b48442;outline-offset:4px}.topbar{height:76px;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;align-items:center;justify-content:space-between;background:#fbfcf8}.brand{font-weight:800;letter-spacing:2px}.brand i{font-style:normal;background:var(--green);color:white;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-right:12px}.tag{font:12px/1.6 Consolas,monospace;letter-spacing:1px;color:var(--muted)}.hero{max-width:1260px;margin:0 auto;padding:70px 40px 48px;display:grid;grid-template-columns:1.45fr 1fr;gap:60px;align-items:center}.eyebrow,.section-label{color:var(--green);font:12px/1.5 Consolas,monospace;letter-spacing:2px}.hero h1{font-size:clamp(35px,4.3vw,62px);letter-spacing:-2px;line-height:1.25;margin:20px 0;font-weight:800}.hero h1 em{font-style:normal;color:var(--green)}.lead{color:var(--muted);font-size:17px;max-width:570px}.hero-links{display:flex;gap:12px;margin-top:27px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;border:1px solid #b8c9b7;padding:9px 18px;border-radius:30px;text-decoration:none;font-size:14px;background:white}.pill.primary{background:var(--green);color:white;border-color:var(--green)}.stamp{font:12px Consolas,monospace;margin-top:25px;color:#7b867b}.demo{position:relative;background:linear-gradient(135deg,#fefdf5,#e6efe1);padding:26px;border:1px solid #d6e2d2;border-radius:28px;box-shadow:0 20px 55px #334f3320;overflow:hidden}.demo::before{content:"";position:absolute;width:210px;height:210px;background:#e5cc8e55;border-radius:50%;filter:blur(25px);right:-80px;top:-90px;animation:drift 8s ease-in-out infinite alternate}.demo-head{position:relative;display:flex;justify-content:space-between;align-items:center;font-size:13px}.live-dot{width:7px;height:7px;border-radius:50%;background:#688c62;box-shadow:0 0 0 5px #5c86621c;display:inline-block;margin-right:8px;animation:pulse 2.5s infinite}.tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:25px 0}.tile{aspect-ratio:1;background:#fff9ef;border:1px solid #d7c7ac;display:grid;place-items:center;border-radius:12px;transition:background .5s,border-color .5s,transform .5s;box-shadow:0 4px 7px #99866d12}.tile:nth-child(3n){background:#e9eef7}.tile:nth-child(3n + 1){background:#f6e7df}.tile span{width:45%;height:43%;border-radius:47% 47% 38% 38%;background:#728b68;position:relative;box-shadow:inset -4px -5px 0 #52764f40;animation:bob 3s ease-in-out infinite;animation-delay:var(--delay)}.tile span:before,.tile span:after{content:"";position:absolute;width:4px;height:4px;background:#223d2d;border-radius:50%;top:43%;left:29%}.tile span:after{left:auto;right:29%}.demo[data-mode="atlas"] .tile{background:#e3efdd;border-color:#adc4a3}.demo[data-mode="atlas"] .tile:nth-child(4n){transform:translateY(-3px)}.demo-result{display:flex;align-items:baseline;gap:12px;border-top:1px solid #cfdacb;padding-top:14px}.demo-result b{font:700 34px/1 Consolas,monospace;color:var(--green)}.demo-result span{font-size:13px;color:var(--muted)}.segmented{display:flex;gap:5px;border-radius:12px;background:#dce5d8;padding:4px;margin-top:15px}.segmented button{flex:1;border:0;background:transparent;border-radius:9px;padding:7px;cursor:pointer;font-size:13px;color:var(--ink)}.segmented button[aria-pressed="true"]{background:#fffef8;box-shadow:0 2px 5px #34502515}.demo small{display:block;font-size:11px;line-height:1.7;color:var(--muted);margin-top:13px}.metrics{max-width:1180px;margin:0 auto 45px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:25px 0}.metric{padding:5px 35px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric strong{font:700 39px/1.4 Consolas,monospace;color:var(--green)}.metric strong small{font-size:18px}.metric p{margin:4px 0 0;font-size:13px;color:var(--muted)}.workspace{display:grid;grid-template-columns:230px minmax(0,890px);gap:55px;max-width:1180px;margin:auto;padding-bottom:90px}.sidebar{align-self:start;position:sticky;top:28px}.sidebar h3{font-size:12px;letter-spacing:3px;margin:0 0 18px;color:var(--muted)}.sidebar nav{display:flex;flex-direction:column;gap:3px}.sidebar nav a{font-size:13px;text-decoration:none;padding:8px 11px;border-radius:8px;border-left:2px solid transparent;display:flex;gap:10px}.sidebar nav a span{font:12px/1.9 Consolas,monospace;color:#8f9d8b}.sidebar nav a.active{background:#e5eee1;border-left-color:var(--green);font-weight:700}.sidebar .note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:22px;padding:20px 10px}.chapter{background:#fffefa;border:1px solid var(--line);border-radius:18px;margin-bottom:25px;padding:36px 38px;box-shadow:0 5px 15px #315c3110}.chapter h2{font-size:27px;line-height:1.45;letter-spacing:-.5px;margin:8px 0 22px}.chapter p{margin:17px 0}.chapter strong{color:#254e3d}.chapter ul,.chapter ol{padding-left:24px}.chapter li{margin:10px 0}.chapter code{font:13px/1.65 Consolas,"Microsoft YaHei",monospace;background:#eef1e9;border:1px solid #e1e5dc;border-radius:4px;padding:1px 4px;overflow-wrap:anywhere}.chapter pre{padding:20px;background:#edf2ea;border-radius:12px;overflow:auto}.chapter pre code{background:none;border:0;padding:0;white-space:pre}.table-scroll{overflow:auto;margin:24px -5px;border:1px solid var(--line);border-radius:11px}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.7}th{text-align:left;background:#edf2e9;font-weight:700;color:#375441}td,th{padding:13px 14px;border-bottom:1px solid #e4e9e0;vertical-align:top}tr:last-child td{border-bottom:0}td:first-child{font-weight:600;min-width:105px}tr:nth-child(even) td{background:#fafbf6}footer{border-top:1px solid var(--line);padding:35px 5vw;color:var(--muted);display:flex;justify-content:space-between;font-size:13px}.progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--green);z-index:20;transition:width .1s}.chapter.arrive{animation:arrive .55s ease both}.motion-control{border:1px solid #c7d2c3;background:transparent;border-radius:30px;font-size:12px;cursor:pointer;padding:7px 12px;color:var(--green)}.paused *{animation-play-state:paused!important}.legend{padding:14px 18px;background:#f8eedb;border-left:3px solid #b08b4e;border-radius:8px;font-size:13px;color:#705936}.document-meta{font-size:13px;color:var(--muted);margin-bottom:25px}.document-meta a{margin-right:20px}@keyframes bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.04,.98)}}@keyframes drift{to{transform:translate(-50px,40px)}}@keyframes pulse{50%{box-shadow:0 0 0 8px #5c866200}}@keyframes arrive{from{opacity:.5;transform:translateY(12px)}to{opacity:1;transform:none}}@media(max-width:1200px){.workspace{padding:0 25px 60px;gap:25px;grid-template-columns:200px minmax(0,1fr)}.metrics{margin-left:25px;margin-right:25px}.hero{gap:30px}}@media(max-width:900px){.sidebar{position:static}.sidebar nav{display:grid;grid-template-columns:1fr 1fr}.sidebar .note,.sidebar h3{display:none}.workspace{display:block}.sidebar{margin-bottom:25px}.hero{grid-template-columns:1fr 1fr;padding:40px 25px}.chapter{padding:28px}.tag{display:none}}@media(max-width:620px){body{font-size:15px}.topbar{height:66px}.hero{display:block;padding:35px 22px}.hero h1{letter-spacing:-1px;font-size:40px}.demo{margin-top:30px;max-width:390px}.tile-grid{gap:8px}.metrics{padding:18px 0;margin-bottom:25px}.metric{padding:0 10px}.metric strong{font-size:28px}.metric p{font-size:11px}.workspace{padding:0 14px 40px}.sidebar nav{gap:2px}.sidebar nav a{font-size:11px;padding:7px 5px;gap:6px}.chapter{padding:25px 20px;border-radius:14px}.chapter h2{font-size:24px}.table-scroll{margin:20px 0}table{min-width:560px}footer{display:block}.hero-links{gap:8px}.pill{padding:8px 14px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before{animation:none!important;transition:none!important}}@media print{.sidebar,.demo,.motion-control,.progress{display:none}.hero,.workspace{display:block;padding:0}.chapter{box-shadow:none;break-inside:auto;border:0;padding:15px 0}.metrics{margin:0}.topbar{padding:0}.table-scroll{overflow:visible}a{color:inherit}body{font-size:11pt}}
+.demo-bars{position:relative;display:grid;gap:14px;margin:24px 0}
+.demo-bar{display:grid;grid-template-columns:5.5em minmax(40px,1fr) 5.5em;gap:10px;align-items:center;font-size:13px}
+.demo-bar b{font:700 14px/1.4 Consolas,monospace;text-align:right;color:var(--green)}
+.demo-bar meter{width:100%;height:14px;accent-color:var(--green)}
+.demo small{min-height:3em}.metrics .metric strong{white-space:nowrap}
+@media(max-width:620px){.hero h1{font-size:clamp(26px,8.3vw,38px)}.demo-bar{grid-template-columns:4.5em minmax(30px,1fr) 4.8em;gap:7px}.metrics .metric strong{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"></div>
+<header class="topbar">
+  <div class="brand"><i>R</i>REVGAME <span class="tag">ENGINEERING FIELD GUIDE</span></div>
+  <a class="pill" href="../战斗性能优化规则.html">战斗性能优化规则</a>
+</header>
+<div class="hero">
+  <div>
+    <div class="eyebrow">REVOLUTION / WEBGL PERFORMANCE</div>
+    <h1>Web 端性能优化实践<br><em>面板首开与战斗帧率</em></h1>
+    <p class="lead">把大厅常用入口的资源准备挪到可交互之后。进战斗时控制网页的绘制像素和同屏反馈数量，让固定棋局里的慢帧更容易量化和排查。</p>
+    <div class="hero-links"><a class="pill primary" href="#evidence">查看实测 ↗</a><a class="pill" href="#intent">预加载值不值得做</a></div>
+    <div class="stamp">2026.11.21 · UNITY 2022.3.15f1c1 · WEBGL / IL2CPP</div>
+  </div>
+  <aside class="demo" id="comparison" aria-label="浏览器实测对照">
+    <div class="demo-head"><strong id="metricHeading">无尽入口可见时间</strong><span class="tag">EDGE · WEBGL</span></div>
+    <div class="demo-bars">
+      <div class="demo-bar"><span id="firstLabel">旧包</span><meter id="firstBar" aria-labelledby="firstLabel" min="0" max="2.75" value="2.22"></meter><b id="firstValue">2.22</b></div>
+      <div class="demo-bar"><span id="secondLabel">大厅预热</span><meter id="secondBar" aria-labelledby="secondLabel" min="0" max="2.75" value="0.99"></meter><b id="secondValue">0.99</b></div>
+    </div>
+    <div class="segmented" aria-label="选择对照指标"><button type="button" data-report-metric="0" aria-pressed="true">面板首开</button><button type="button" data-report-metric="1" aria-pressed="false">战斗帧间隔</button></div>
+    <small id="metricNote">各 3 次冷启动，统计截图采样上界的中位数。数值越小越快。</small>
+  </aside>
+</div>
+
+<div class="metrics" aria-label="本轮交付摘要">
+  <div class="metric"><strong>55.4<small>%</small></strong><p>无尽入口可见时间的采样上界降幅</p></div>
+  <div class="metric"><strong>1.44<small>M</small></strong><p>网页绘制缓冲最多约 144 万像素</p></div>
+  <div class="metric"><strong>59.1<small> FPS</small></strong><p>第 4 章 81 棋，一轮 12 秒样本</p></div>
+</div>
+
+<div class="workspace">
+  <aside class="sidebar">
+    <h3>目录</h3>
+    <nav aria-label="文档目录">
+      <a href="#intent" class="active"><span>01</span>什么时候预热</a>
+      <a href="#render"><span>02</span>网页战斗改动</a>
+      <a href="#evidence"><span>03</span>真实 Web 实测</a>
+      <a href="#reproduce"><span>04</span>怎么继续复测</a>
+    </nav>
+    <div class="note">60 FPS 对应约 16.67 ms 一帧。平均帧率、P95 和慢帧次数都要看。</div>
+  </aside>
+  <main>
+    <div class="document-meta"><a href="../战斗性能优化规则.html">工程规范</a><a href="../../安卓构建踩坑报告/WebGL打包新手指南_2026-11-21.html">WebGL 包文件说明</a></div>
+    <div class="legend">本篇记录普通浏览器 WebGL Player。每项数据对应文中给出的设备、画布、输入和采样范围。60 Hz 下遇到超过一帧预算的工作，浏览器可能把下一次绘制推迟到再下一帧。</div>
+
+    <section id="intent" class="chapter">
+      <div class="section-label">WEBGL / 01</div>
+      <h2>值得做大厅入口的域内预热</h2>
+      <p>WebGL 里 <code>LoadAsync</code> 能让当前画面继续跑。点击后如果才去下载 AB、读图集、装配控件，面板仍得等这些步骤。提前拿到一份可以复用的资源引用，玩家打开时就能跳过冷读或接上已经发出的请求。现有启动已准备首页和选关，战斗首屏也有自己的资源交接。</p>
+      <p>这一版的「意图」来自大厅里实际可点的入口。按设置、玩家对战、无尽顺序准备对应预制体，最后把无尽的 <code>EndlessMenu</code> 图集对象读入缓存。它们都有稳定的正式资源路径，使用同一个 <code>RevUI</code> 元数据和 Revolution 缓存。实际点击仍走原有 <code>OpenAsync</code> 及图集可画条件。</p>
+      <div class="table-scroll" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">要决定的事</th><th scope="col">怎么做</th><th scope="col">可核对的边界</th></tr></thead>
+        <tbody>
+          <tr><td>何时发出</td><td>大厅面板打开后等揭幕，检查同一域、首页和可交互状态，再每次读取一项。</td><td>首屏交接、前台操作与战斗各有自己的入口。有覆盖或退域后停止提交后续候选。</td></tr>
+          <tr><td>提前拿什么</td><td>只准备三个入口预制体和一个明确的图集对象。AB 的包与依赖由框架按真实映射解析。</td><td>例如 <code>ui_endless</code> 本体约 16 KiB，依赖的 <code>atlas_endlessmenu</code> 约 1.02 MiB。算开销要看整条依赖。</td></tr>
+          <tr><td>资源谁收尾</td><td>加载一开始就把具名租约交给原大厅域。成功持有到退域，失败提前还给框架，前台仍可按正常入口重试。</td><td>预热和真正打开可以共享在途下载，引用分别计数。换域后，旧请求只完成资源收尾。</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>继续扩展到某个域时，先量那个入口有多少次冷等、提前准备能减少多少时间，以及依赖多花的流量与内存。稀有页面和整章战斗资源适合沿已经存在的按需加载或场景交接。</p>
+    </section>
+
+    <section id="render" class="chapter">
+      <div class="section-label">WEBGL / 02</div>
+      <h2>分别压住绘制像素和表现峰值</h2>
+      <p><strong>网页画布。</strong>CSS 画布继续铺满视口，DPR 高时把实际绘制缓冲等比限制在约 1600 × 900 像素的总量。尺寸由视口或全屏变化触发，同尺寸直接复用。以 1366 × 768 的 CSS 视口和 DPR 2 为例，原请求约 420 万像素，预算后约 144 万，像素数少 65.7%。原画、章节动画和棋盘安全区继续通过原来的渲染流程。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-canvas-size.html">Unity WebGL Canvas 尺寸说明</a></p>
+      <p><strong>远征反馈。</strong>浏览器有独立的同屏名额和每帧投射上限。继续使用原来的事件、按来源合并、弹道公平队列和对象池。战斗先照常产生攻击与伤害，表现层从已经结算的事件里选择同屏显示。分帧预建对象池取同一组上限。</p>
+      <div class="table-scroll" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">表现项</th><th scope="col">原预算</th><th scope="col">普通浏览器</th></tr></thead>
+        <tbody>
+          <tr><td>同屏文字</td><td>20</td><td>14</td></tr>
+          <tr><td>同屏远程弹道</td><td>35</td><td>24</td></tr>
+          <tr><td>同屏近战短效</td><td>16</td><td>12</td></tr>
+          <tr><td>每帧新弹道</td><td>6</td><td>3</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>资源加载、C# / Wasm 主线程、GPU 像素与反馈提交是不同的成本。大厅预热缩短首次打开面板前的冷读等待。画布和反馈上限控制战斗期间每帧需要做的工作。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-performance.html">Unity WebGL 性能注意事项</a></p>
+    </section>
+
+    <section id="evidence" class="chapter">
+      <div class="section-label">WEBGL / 03</div>
+      <h2>首开和战斗各用实际输入取证</h2>
+      <p>环境为 Windows、Core i7-12700H、Intel Iris Xe、Edge 158.0.4370.33，硬件 WebGL2 通过 ANGLE D3D11。两份网页包使用相同 WebGL AB 清单。新 Player 为 Unity 2022.3.15f1c1 的 IL2CPP Release 验收构建，通过临时测试适配器调用现有压力夹具。</p>
+<h3>无尽面板首开</h3>
+<p>旧包和新包交替各测三次，每次创建新的隔离浏览器配置。固定 1366 × 768、DPR 1、85 ms 延迟和 2.5 MB/s 下载带宽。大厅可交互并停留约 7 秒后点击无尽入口。用按次截图确认面板可见，表中的时间是采样区间，比较使用三个区间上界的中位数。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead><tr><th scope="col">指标</th><th scope="col">旧包</th><th scope="col">新包</th></tr></thead>
+<tbody>
+<tr><td>点击至面板可见的区间中位数</td><td>1679.8–2220.4 ms</td><td>532.6–989.4 ms</td></tr>
+<tr><td>三次观测上界</td><td>2600.3 / 2192.8 / 2220.4 ms</td><td>952.8 / 989.4 / 995.7 ms</td></tr>
+<tr><td>点击后发起的无尽资源请求</td><td>5 个</td><td>0 个</td></tr>
+<tr><td>点击后等待最后一个无尽资源响应</td><td>1663.7 ms</td><td>点击前已经完成</td></tr>
+</tbody>
+</table></div>
+<p>三轮新包点击前都完成了设置、对战、无尽这批资源共 1,859,538 字节的传输，约 1.77 MiB。打开无尽入口所需的五个请求都命中了提前准备。点击得更早时，前台会接上仍在途的请求。面板实例装配与打开动画仍有自己的耗时。</p>
+<h3>第 4 章 81 棋与第 6 章 48 棋</h3>
+<p>两个尺寸使用同一个新 Wasm，保留相同的 Web 反馈上限。每种尺寸在大厅确认后，从现有夹具使用相同的章节种子与初始棋数重开。夹具补血维持战斗负载。记录 12 秒内带 Unity WebGL 绘制的浏览器帧，并核对实际攻击数与起止棋数。CSS 视口为 1366 × 768，DPR 2。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead><tr><th scope="col">场景</th><th scope="col">实际绘制尺寸</th><th scope="col">平均 FPS</th><th scope="col">P95 / P99</th><th scope="col">最长帧间隔</th><th scope="col">&gt;50 ms</th><th scope="col">攻击计数</th></tr></thead>
+<tbody>
+<tr><td>第 4 章 · 81 棋</td><td>2732 × 1536</td><td>49.9</td><td>43.9 / 95.4 ms</td><td>109.2 ms</td><td>26 次</td><td>981</td></tr>
+<tr><td>第 4 章 · 81 棋</td><td>1600 × 899</td><td>59.1</td><td>16.8 / 17.0 ms</td><td>83.3 ms</td><td>2 次</td><td>976</td></tr>
+<tr><td>第 6 章 · 48 棋</td><td>2732 × 1536</td><td>57.5</td><td>16.8 / 43.4 ms</td><td>94.9 ms</td><td>6 次</td><td>294</td></tr>
+<tr><td>第 6 章 · 48 棋</td><td>1600 × 899</td><td>57.6</td><td>17.0 / 51.5 ms</td><td>83.0 ms</td><td>7 次</td><td>294</td></tr>
+</tbody>
+</table></div>
+<p>第四章满盘的平均帧率接近 60，95% 的帧间隔约为 16.8 ms 或更短，超过 50 ms 的间隔从 26 次降为 2 次。第六章 48 棋的均值接近，帧间隔长尾仍有波动。四次退场都回到首页，战斗逻辑计数与 <code>PieceFrames</code> 引用归零。</p>
+<h3>较低像素试探与背景定位</h3>
+<p>再用约 15 秒窗口试探 720p 和 900p。同步记录浏览器主线程的长任务。下面保留整个试探结果，帮助识别降低像素后仍在的长帧。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead><tr><th scope="col">场景</th><th scope="col">实际绘制尺寸</th><th scope="col">平均 FPS</th><th scope="col">P95</th><th scope="col">&gt;50 ms 帧间隔</th><th scope="col">Long Task</th></tr></thead>
+<tbody><tr><td>第 6 章 · 48 棋</td><td>1280 × 719</td><td>45.2</td><td>62.0 ms</td><td>44 次</td><td>14 次</td></tr>
+<tr><td>第 6 章 · 48 棋</td><td>1600 × 899</td><td>46.3</td><td>66.2 ms</td><td>46 次</td><td>7 次</td></tr>
+<tr><td>第 4 章 · 81 棋</td><td>1280 × 719</td><td>58.5</td><td>16.8 ms</td><td>5 次</td><td>1 次</td></tr>
+<tr><td>第 4 章 · 81 棋</td><td>1600 × 899</td><td>57.6</td><td>16.9 ms</td><td>9 次</td><td>2 次</td></tr></tbody>
+</table></div>
+<p>第六章这两段各有长任务，采样期没有观察到 JavaScript 侧的 Wasm 内存扩容。另以相同种子做一次背景绘制隔离，完整渲染为 59.6 FPS，临时跳过背景绘制为 59.9 FPS。一次隔离的均值差较小，保留 900p 级预算和章节动态背景。</p>
+<p>另用真实按钮从大厅进入第一章，1366 × 768、DPR 2 下实际绘制为 1600 × 899。网页内点击卡牌和棋盘后记录到将牧师落在 (1,4)，随后正常开战，浏览器未抛异常。</p>
+<p>BuildReport 对应 <code>46a3cfd644214be7bf4c5a2b7bb7642e</code>，WebGL / IL2CPP，构建错误 0 个。网页压测的测试包启用了 <code>REV_AUTOMATION</code>。截图和浏览器命令都放在帧采样窗口外。</p>
+    </section>
+
+    <section id="reproduce" class="chapter">
+      <div class="section-label">WEBGL / 04</div>
+      <h2>复测用同一负载和同一设备</h2>
+      <ol>
+        <li>保留旧包和新包，固定浏览器版本、硬件加速、视口、DPR 和网络条件。用全新的浏览器配置测冷首开，同一个域里的重开另记。</li>
+        <li>走首页的正式按钮，核对可见面板和实际的 AB 请求。按同一条件过早点击、退出域和重进，检查旧任务没有交付到新域。</li>
+        <li>战斗从实际流程准备固定棋数，再核对进入战斗、攻击继续结算、屏幕可操作和退场回首页。采样窗口留给游戏，截图放在窗口以外。</li>
+        <li>目标为约 60 FPS，明确记录 P95、P99、最长间隔和超过 25 ms、50 ms 的次数。先看尺寸与战斗阶段，再定位浏览器主线程、GPU 或首次资源读入。</li>
+      </ol>
+      <div class="legend"><strong>60 FPS 目标的验收范围。</strong>第四章 81 棋对照接近 60 FPS。第六章同一规模的多轮结果仍从约 45 到 60 FPS 波动，偶发超过 50 ms。稳定 60 FPS 仍未验收通过。以上为本机 Edge 和这些短窗口，长期运行、移动浏览器以及其他场景的极限负载需用各自设备和用例验证。</div>
+<p>同机分开看帧间隔与主线程长任务。尺寸下降后仍有长任务时，应回到对应帧核对 CPU、显示提交、GPU 与调度。当前数据不足以把第六章的长帧归到某个具体代码段。</p>
+<p><a href="../../../UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/HomePanel.BrowserWarmup.cs">大厅预热源码</a> · <a href="../../../UnityProject/RevGame.Unity/Assets/WebGLTemplates/RevGameFullscreen/index.html">网页模板</a> · <a href="../../../UnityProject/RevGame.Unity/Assets/GameScripts/View/Board/Feedback/BoardView.Feedback.cs">远征反馈预算</a></p>
+    </section>
+  </main>
+</div>
+<footer><span>RevGame / Revolution</span><a href="https://github.com/Yokino337088/RevGame/wiki/攻坚">Wiki《攻坚》</a></footer>
+<script>
+  const rows = [{"title":"无尽入口可见时间","note":"各 3 次冷启动，统计截图采样上界的中位数。数值越小越快。","labels":["旧包","大厅预热"],"values":[2.22,0.99],"max":2.75,"unit":"s"},{"title":"第 4 章 81 棋 P95","note":"同一个新 Wasm 固定初始棋局。12 秒浏览器帧样本，数值越小越稳定。","labels":["原生尺寸","像素上限"],"values":[43.9,16.8],"max":50,"unit":"ms"}];
+  const buttons = [...document.querySelectorAll("[data-report-metric]")];
+  function selectMetric(index) {
+    const row = rows[index];
+    document.querySelector("#metricHeading").textContent = row.title;
+    document.querySelector("#metricNote").textContent = row.note;
+    for (const [offset, id] of ["first", "second"].entries()) {
+      document.querySelector("#" + id + "Label").textContent = row.labels[offset];
+      document.querySelector("#" + id + "Bar").max = row.max;
+      document.querySelector("#" + id + "Bar").value = row.values[offset];
+      document.querySelector("#" + id + "Value").textContent = row.values[offset] + " " + row.unit;
+    }
+    buttons.forEach((button, i) => button.setAttribute("aria-pressed", String(i === index)));
+  }
+  buttons.forEach((button, index) => button.addEventListener("click", () => selectMetric(index)));
+  selectMetric(0);
+  const progress = document.querySelector(".progress");
+  function updateProgress() {
+    const range = document.documentElement.scrollHeight - innerHeight;
+    progress.style.width = (range > 0 ? Math.min(100, 100 * scrollY / range) : 0) + "%";
+  }
+  window.addEventListener("scroll", updateProgress, { passive: true });
+  updateProgress();
+  const links = [...document.querySelectorAll(".sidebar nav a")];
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        links.forEach(link => link.classList.toggle("active", link.hash === "#" + entry.target.id));
+      }
+    }
+  }, { rootMargin: "-10% 0px -65% 0px" });
+  document.querySelectorAll(".chapter").forEach(chapter => observer.observe(chapter));
+</script>
+</body>
+</html>

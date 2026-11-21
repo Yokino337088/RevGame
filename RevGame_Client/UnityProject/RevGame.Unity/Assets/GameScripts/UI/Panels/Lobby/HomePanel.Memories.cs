@@ -22,7 +22,7 @@ namespace RevGame.UI
         private int _spokenUnread;
         private bool _openingBook;
 
-        /// <summary>打开大厅时装配收藏提示，并恢复玩家授权的局域网邀请接收。</summary>
+        /// <summary>打开大厅时装配收藏提示、邀请监听与浏览器入口预热，前台打开条件由原流程判断。</summary>
         protected override void OnOpen()
         {
             _spokenUnread = 0;
@@ -31,6 +31,7 @@ namespace RevGame.UI
             RefreshMemoryEntry(true);
             RefreshCottageStoryEntry();
             OpenLobbyLanAsync().Forget();
+            QueueBrowserEntryWarmup();
         }
 
         protected override void OnCovered(bool covered)

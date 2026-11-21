@@ -17,12 +17,19 @@ namespace RevGame.View
         private static readonly ProfilerMarker FeedbackFrameMarker = new ProfilerMarker("RevGame.Feedback.Frame");
         // 只计一次新飘字选位置的工作，供优化前后同场景测量，不在代码中打印每帧字符串。
         private static readonly ProfilerMarker FeedbackArrangeMarker = new ProfilerMarker("RevGame.Feedback.Arrange");
-        /// <summary>同时存在的文字预算，含尚未交付的异步预约；20是表现上限，不限制实际伤害结算。</summary>
-        public const int MaxFloatingTexts = 20;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>普通浏览器用较小的反馈预算，把 WebGL 主线程和 GPU 留给棋盘与关键反馈。</summary>
+        private const bool UseBrowserFeedbackBudget = true;
+#else
+        /// <summary>编辑器、原生端与小游戏沿用原表现预算。</summary>
+        private const bool UseBrowserFeedbackBudget = false;
+#endif
+        /// <summary>同时显示的文字数，包含异步预约。超额数字仍按原规则合并，伤害先行入账。</summary>
+        public const int MaxFloatingTexts = UseBrowserFeedbackBudget ? 14 : 20;
         /// <summary>弹道单独计数；数字尚未消失时，也不能无限申请新的子弹特效。</summary>
-        public const int MaxProjectiles = 35;
-        /// <summary>近战短效独立表现预算，不占远程35发名额；上限是渲染资源约束，不是战斗数值。</summary>
-        public const int MaxMeleeEffects = 16;
+        public const int MaxProjectiles = UseBrowserFeedbackBudget ? 24 : 35;
+        /// <summary>近战短效独占表现预算，含异步预约，和远程弹道各自计数。</summary>
+        public const int MaxMeleeEffects = UseBrowserFeedbackBudget ? 12 : 16;
         private readonly HashSet<BattleEffectView> _meleeEffects = new HashSet<BattleEffectView>();
         private int _pendingMeleeLoads;
         public int ActiveMeleeCount => _meleeEffects.Count;
@@ -30,7 +37,9 @@ namespace RevGame.View
         private const int MaxPendingAttackTexts = 12;
         private const int MaxPendingDamage = 81;
         private const int MaxPendingProjectiles = 70;
-        // 每秒最多200发、每帧最多6发；寿命0.36秒时可达到35条，低帧率仍不无界追赶。
+        /// <summary>每个渲染帧可发出的新弹道上限。痛点是浏览器同帧提交，规则攻击按原时序结算。</summary>
+        private const int ProjectileSpawnsPerFrame = UseBrowserFeedbackBudget ? 3 : 6;
+        /// <summary>两次显示申请的最短间隔，以游戏秒为单位。受每帧和同屏预算共同限制。</summary>
         private const float ProjectileSpawnInterval = 0.005f;
         // 这两个集合只追踪当前正在播放的池对象，动画结束或阶段切换时立即移除。
         private readonly HashSet<BattleEffectView> _textEffects = new HashSet<BattleEffectView>();
@@ -171,10 +180,10 @@ namespace RevGame.View
         private void FlushProjectiles()
         {
             float now = Time.time;
-            // 空闲后的第一帧最多借五个间隔，不能因时钟落后几秒而突然补几十发。
-            _nextProjectileAt = Mathf.Max(_nextProjectileAt, now - ProjectileSpawnInterval * 5f);
+            // 恢复发射时只补本平台允许的一帧额度，避免把空闲时间累积的弹道集中提交。
+            _nextProjectileAt = Mathf.Max(_nextProjectileAt, now - ProjectileSpawnInterval * (ProjectileSpawnsPerFrame - 1));
             int spawned = 0;
-            while (_projectileQueue.Count > 0 && spawned < 6 && now >= _nextProjectileAt)
+            while (_projectileQueue.Count > 0 && spawned < ProjectileSpawnsPerFrame && now >= _nextProjectileAt)
             {
                 if (_projectileEffects.Count + _pendingProjectileLoads >= MaxProjectiles)
                 {

@@ -99,7 +99,7 @@ namespace RevGame.Flow
             }
         }
         /// <summary>
-        /// 预创建24颗棋子、71个反馈实例（35弹道+20文字+16近战）、2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
+        /// 预创建24颗棋子、按本平台表现预算准备弹道/飘字/近战实例，并预建2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
         /// 每帧最多2个，且单批累计超过3毫秒就主动让帧；单个Unity实例化不可拆分，不能承诺绝对无卡帧。
         /// </summary>
         public async RevTask WarmBattlePoolsAsync(Action<float> progress)
