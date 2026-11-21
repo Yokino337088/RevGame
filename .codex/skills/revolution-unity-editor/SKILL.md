@@ -56,6 +56,10 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 
 出 Android 包或排查 ASCII 路径、D8/Gradle/NDK、ARM64、16 KB、签名、AB 串包与横屏启动配置时，先读 [Android 构建与验包](references/android-build-and-verification.md)。宽屏和触点用 Game、Device Simulator 与真机分层验收。
 
+## WebGL 构建与网页交付
+
+打 WebGL Player、切换目标、追长工单、查 Emscripten 编码或浏览器加载问题，沿 [WebGL 构建与交付](../revolution-framework/references/webgl-delivery.md) 操作。
+
 ## 建立目标与保护现场
 
 1. 从用户路径定位 Unity 工程及相邻的 `Revolution.RevCLI/rev.py`。显式传 `--project`，不猜 Demo 或正在运行的工程。

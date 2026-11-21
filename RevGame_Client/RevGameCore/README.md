@@ -21,6 +21,8 @@ C++17 独立工程。参考 MiniGameCore 的 FrameWindow、CorePipeline 与战�
 
 把 Release 输出的 DLL 更新到 Unity 的 Assets/Plugins/RevGameCore/x86_64。Windows 服务端构建自动复制同一份 DLL。其它平台需要构建并部署相应的原生库。
 
+WebGL 使用同一套 C++17 源码。运行 `BuildWebGL.py --unity <Unity.exe> --output <libRevGameCore.a>`，用目标 Editor 自带的 Emscripten 生成归档，内核回归通过后放到 Unity 的 `Assets/Plugins/RevGameCore/WebGL`。WebGL Player 通过 `DllImport("__Internal")` 使用静态 C ABI。见 [WebGL 原生插件与 P/Invoke 复盘](../文档/安卓构建踩坑报告/WebGL原生插件与PInvoke踩坑复盘_2026-11-21.html)。
+
 Unity 2022.3.15f1c1 的 Android Mono 测试包使用 ARMv7。用该 Unity 自带的 NDK 配置 `-DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-22 -DANDROID_STL=c++_static`，将 `libRevGameCore.so` 放入 `Assets/Plugins/Android/libs/armeabi-v7a`，再用 `game.pvp.android-duel-prepare` 装配导入设置。
 
 `game.pvp.duel-atlas` 核对 22 个角色动作片段和切片引用，并打包随内置场景交付的 Sprite Atlas V2。Android 出包前构建并发布 Android AB，将 `Assets/StreamingAssets/PC` 临时移出工程，再调用 `game.pvp.android-duel-player`。构建动作会检查 PC 资源已隔离。完成后将 PC 目录和原有 `.meta` 归还到原位。
@@ -65,4 +67,4 @@ Unity 自带 AGP 7.1.2 的本地测试包可用 Android API 32 组装。如果�
 - `DuelReplay.ReplayInto()` 在独立的原生实例里重放。从检查点续跑时先核对该帧指纹，再应用后续帧。播放复用已经录下来的电脑输入，逐帧比较世界指纹和命中。分歧时报告帧号，调用方应丢弃该播放实例。
 - 检查点只覆盖原生战斗世界。网络中尚未封口的输入、权威房间的接收状态与 Unity 表现不属于这个格式。服务端与 P2P 在线补帧仍使用现有历史游标。
 
-验证覆盖 Windows x64。录像 API 已可用，录像管理界面、跨设备联网恢复、移动端及 IL2CPP 需分别接入和验收。
+验证覆盖 Windows x64 与 WebGL IL2CPP 的本地人机决斗。录像 API 已可用，录像管理界面、跨设备联网恢复及其它 Player 平台分别验收。

@@ -678,7 +678,7 @@ PlayerSettings:
   webGLDebugSymbols: 0
   webGLEmscriptenArgs: 
   webGLModulesDirectory: 
-  webGLTemplate: APPLICATION:Default
+  webGLTemplate: PROJECT:RevGameFullscreen
   webGLAnalyzeBuildSize: 0
   webGLUseEmbeddedResources: 0
   webGLCompressionFormat: 0
@@ -698,8 +698,10 @@ PlayerSettings:
   platformArchitecture: {}
   scriptingBackend:
     Standalone: 0
+    WebGL: 1
   il2cppCompilerConfiguration:
     Standalone: 1
+    WebGL: 1
   il2cppCodeGeneration: {}
   managedStrippingLevel:
     EmbeddedLinux: 1

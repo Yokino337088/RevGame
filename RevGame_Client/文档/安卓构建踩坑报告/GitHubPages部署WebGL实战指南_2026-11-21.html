@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>RevGame · GitHub Pages 部署 WebGL 实战指南</title>
+<style>
+:root{color-scheme:light;--paper:#f7f5ee;--card:#fffdf8;--ink:#172e26;--sub:#455b51;--brand:#235b47;--line:#dbdfd1;--gold:#87611e;--soft:#ebf1e9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+main{max-width:1136px;margin:auto;padding:30px clamp(14px,4vw,44px) 60px}
+header,section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,4vw,36px);margin:0 0 20px}
+header{background:linear-gradient(130deg,#edf4eb,#fff9e7)}
+h1,h2,h3{line-height:1.35;margin:0 0 .55em}
+h1{font-size:clamp(30px,5vw,48px);letter-spacing:.02em}
+h2{font-size:clamp(22px,3vw,31px)}
+h3{font-size:19px}
+p{margin:.45em 0 .95em}
+p:last-child,ul:last-child,ol:last-child{margin-bottom:0}
+.eyebrow{font-weight:750;color:var(--brand);letter-spacing:.12em;font-size:.82rem}
+.lead,.note{color:var(--sub)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:19px 0 0}
+nav a,.tag{background:var(--soft);padding:3px 10px;border-radius:7px;font-size:.86rem;display:inline-block}
+a{color:#1b5b48;text-decoration-thickness:1px;text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+article{border-top:1px solid var(--line);padding:17px 0 2px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.metric{background:#fffdf5;border:1px solid #dedfcf;border-radius:12px;padding:12px 14px}
+.metric strong{display:block;color:var(--brand);font-size:1.27rem}
+.warning{border-left:4px solid #aa7c32;background:#faf0d8;border-radius:5px;padding:10px 13px;margin:12px 0;color:#3d321c}
+.table-wrap{overflow-x:auto;margin:12px 0 16px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:.93rem}
+caption{text-align:left;color:var(--sub);font-weight:650;margin-bottom:5px}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);color:var(--ink)}
+code{background:#eff1e8;padding:.06em .26em;border-radius:4px;overflow-wrap:anywhere;font-size:.92em}
+li{margin:.3em 0}
+.source-list{color:var(--sub)}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.table-wrap table{min-width:485px}main{padding-top:13px}}
+@media print{body{background:white}main{padding:0;max-width:none}header,section{box-shadow:none}article,.metric{break-inside:avoid}}
+</style>
+<style>
+pre{background:#eff1e8;border:1px solid var(--line);border-radius:9px;overflow:auto;padding:12px 14px;line-height:1.6}
+pre code{padding:0;background:none;overflow-wrap:normal;font-family:Consolas,'Microsoft YaHei',monospace}
+</style>
+</head>
+<body>
+<main>
+<header id="top">
+<p class="eyebrow">REVGAME · GITHUB PAGES · 2026-11-21</p>
+<h1>GitHub Pages 部署 WebGL 实战指南</h1>
+<p class="lead">用 RevGame 已有的 Unity WebGL 包生成静态网站，从仓库首页提供试玩入口。以下步骤既能复现第一次发布，也能更新已经上线的主页。</p>
+<div class="grid" aria-label="当前发布配置">
+<div class="metric"><strong>gh-pages</strong>发布分支的根目录</div>
+<div class="metric"><strong>119 个</strong>首次上线核对的 WebGL 业务 AB</div>
+<div class="metric"><strong>HTTPS</strong><a href="https://yokino337088.github.io/RevGame/">公开试玩入口</a></div>
+</div>
+<nav aria-label="目录">
+<a href="#build">准备 Web 包</a><a href="#files">文件和代码</a><a href="#first">首次上线</a><a href="#update">更新线上版</a><a href="#check">验收与排错</a>
+</nav>
+</header>
+
+<section id="build">
+<h2>01 · 从 Unity WebGL 包开始</h2>
+<article>
+<h3>已有 Web 包时，从包目录生成发布版</h3>
+<p>RevGame 的本机产物位于 <code>RevGame_Client/Publish/Web</code>，包含 <code>index.html</code>、<code>Build</code> 和 <code>StreamingAssets/WebGL</code>。有模板静态文件时还包含 <code>TemplateData</code>。先确认主包 <code>StreamingAssets/WebGL/WebGL</code> 与 <code>BuildManifest.json</code> 位于同一版。</p>
+<p>原包由本机 PowerShell 启动器提供 <code>Content-Encoding: br</code>。上传到静态站时，依赖 Brotli 的 Unity 产物需要匹配的 HTTP 响应头。本项目发布工具先在本地解开 <code>.br</code>，同时把入口的引用改成 <code>Web.data</code>、<code>Web.framework.js</code>、<code>Web.wasm</code>。浏览器收到可直接解析的文件，静态站可自行协商传输压缩。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-deploying.html">Unity WebGL 部署说明</a></p>
+<pre><code>New-Item -ItemType Directory -Force .codex/work | Out-Null
+node tools/WebGLPreview/prepare-github-pages.mjs `
+  "RevGame_Client/Publish/Web" ".codex/work/web-pages-ready"</code></pre>
+<p>这是从 RevGame 仓库根执行的命令。目标使用新的空目录，输入可替换为本次已经验收的 <code>Web</code> 暂存包。脚本读取 HTML 中的实际构建名，所以通常无需改脚本来适配 Unity 的文件名。</p>
+<p>更新版脚本还会把每个启动文件的内容摘要写到 URL 的 <code>?v=</code> 参数。旧版与新版使用不同的缓存键，避免把旧脚本与新 Wasm 混在一起。</p>
+</article>
+<article>
+<h3>Unity 源码或 AB 更新后重新出包</h3>
+<p>用 Revolution RevCLI 读取当前编辑态和活动目标。切到 WebGL，等导入和明确的重编译结果，再为 WebGL 目标构建、检查映射并发布 AB。向暂存目录构建 IL2CPP Release，记录原工单 ID 等到 BuildReport 成功。按本次约定恢复 Windows 目标。若只更换网页发布格式，直接使用已有完整包。</p>
+<pre><code>$unityProject = "RevGame_Client/UnityProject/RevGame.Unity"
+$rev = "RevGame_Client/UnityProject/Revolution.RevCLI/rev.py"
+py -3.13 $rev --project $unityProject build target --target WebGL
+py -3.13 $rev --project $unityProject editor wait
+py -3.13 $rev --project $unityProject ab build-incremental --target WebGL
+py -3.13 $rev --project $unityProject ab check-map --target WebGL
+py -3.13 $rev --project $unityProject ab publish-incremental --target WebGL
+py -3.13 $rev --project $unityProject build player --target WebGL --backend il2cpp `
+  --path "D:\构建暂存\Web" --detach
+py -3.13 $rev --project $unityProject --timeout 3700 job &lt;工单ID&gt; --wait</code></pre>
+<p>代码更新后的完整复编顺序与 UTF-8 工具链问题见同目录的构建复盘。<a href="WebGL构建踩坑复盘_2026-11-21.html">WebGL 构建踩坑复盘</a></p>
+<p>平台切换提交后如果查询原工单得到 <code>JobNotFound</code>，先用 <code>build settings</code> 回读活动目标，并等编辑器完成编译。活动目标已正确时，从导入和复编步骤继续。</p>
+</article>
+</section>
+
+<section id="files">
+<h2>02 · 要维护的文件和代码</h2>
+<div class="table-wrap" tabindex="0"><table>
+<caption>源码分支与网页分支的文件</caption>
+<thead><tr><th scope="col">文件</th><th scope="col">作用</th></tr></thead>
+<tbody>
+<tr><td><code>Assets/WebGLTemplates/RevGameFullscreen/index.html</code></td><td>Unity 模板。用构建宏写出实际文件名，画布铺满视口。试玩按钮打开单独的游戏标签页。</td></tr>
+<tr><td><code>tools/WebGLPreview/prepare-github-pages.mjs</code></td><td>发布转换。用 Node 的 Brotli 或 Gzip 解码模块改写启动文件和相对 URL，只收集 WebGL 的 StreamingAssets。</td></tr>
+<tr><td><code>gh-pages/index.html</code>、<code>Build/</code></td><td>页面及 Unity Loader、框架脚本、数据和 Wasm。同一次构建的版本一致。</td></tr>
+<tr><td><code>gh-pages/StreamingAssets/WebGL/</code>、<code>TemplateData/</code></td><td>平台主包与业务 AB，以及模板用到的静态文件。</td></tr>
+<tr><td><code>gh-pages/.nojekyll</code></td><td>空文件。让分支发布按静态文件工作，保留目录结构。</td></tr>
+<tr><td><code>main/README.md</code></td><td>在仓库首页链接到公开试玩 HTTPS 地址。仓库 About 的 Website 也可使用同一地址。</td></tr>
+</tbody>
+</table></div>
+<p>资源引用使用 <code>Build/</code> 和 <code>StreamingAssets</code>。当站点位于 <code>/RevGame/</code> 时，相对路径会带上仓库名。<code>/Build/</code> 会从整个域名根目录找资源，常见结果是 404。</p>
+<pre><code>const buildUrl = "Build/";
+const config = {
+  dataUrl: buildUrl + "Web.data",
+  frameworkUrl: buildUrl + "Web.framework.js",
+  codeUrl: buildUrl + "Web.wasm",
+  streamingAssetsUrl: "StreamingAssets"
+};</code></pre>
+<p>实际转换与参数见仓库。<a href="https://github.com/Yokino337088/RevGame/blob/main/tools/WebGLPreview/prepare-github-pages.mjs">发布转换脚本</a></p>
+</section>
+
+<section id="first">
+<h2>03 · 首次上线</h2>
+<ol>
+<li>在准备好的静态目录初始化独立的 <code>gh-pages</code> 分支。提交入口、构建文件、WebGL AB 和 <code>.nojekyll</code>，然后推送到目标仓库。</li>
+<li>在仓库 <strong>Settings → Pages</strong> 打开 <strong>Build and deployment</strong>。Source 选 <strong>Deploy from a branch</strong>，分支选 <code>gh-pages</code>，目录选 <code>/ (root)</code>，保存。</li>
+<li>等待 Pages 构建状态为 <code>built</code>。浏览器直接访问 GitHub 给出的地址，确认页面与资源加载。</li>
+<li>把同一个 HTTPS 地址写入 <code>README.md</code>，再提交到主分支。仓库 About 可填这个网址。</li>
+</ol>
+<pre><code>$readySite = ".codex/work/web-pages-ready"
+git -C $readySite init -b gh-pages
+git -C $readySite remote add origin https://github.com/Yokino337088/RevGame.git
+git -C $readySite add -A
+git -C $readySite commit -m "发布围棋史莱姆 WebGL"
+git -C $readySite push -u origin gh-pages</code></pre>
+<p>RevGame 首次发布用同一套分支配置，由 GitHub Pages API 设置发布来源。管理员也可以用上述界面操作。<a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">配置 GitHub Pages 发布来源</a></p>
+</section>
+
+<section id="update">
+<h2>04 · 更新已经上线的版本</h2>
+<p>在另一个工作树从远端 <code>gh-pages</code> 起步，替换上一版发布文件后快进推送。源代码工作区用于开发。只在独立的网页工作树中移除跟踪的旧文件，从已校验的暂存版重新复制，避免遗留过时的 AB 或 JS。</p>
+<pre><code>$readySite = (Resolve-Path ".codex/work/web-pages-ready").Path
+$siteTree = ".codex/work/revgame-live-pages"
+git fetch origin gh-pages
+git worktree add --detach $siteTree origin/gh-pages
+git -C $siteTree rm -r --ignore-unmatch -- .nojekyll index.html Build StreamingAssets TemplateData
+foreach ($name in @(".nojekyll","index.html","Build","StreamingAssets","TemplateData")) {
+  $source = Join-Path $readySite $name
+  if (Test-Path -LiteralPath $source) {
+    Copy-Item -LiteralPath $source -Destination $siteTree -Recurse -Force
+  }
+}
+git -C $siteTree add -A
+git -C $siteTree diff --cached --stat
+git -C $siteTree commit -m "更新围棋史莱姆网页试玩版"
+git -C $siteTree push origin HEAD:refs/heads/gh-pages</code></pre>
+<p>每次构建使用新的工作树目录，已有工作树可在确认干净后快进到最新发布分支。遇到远端更新时，先取回并核对差异，再基于远端新提交发布。</p>
+</section>
+
+<section id="check">
+<h2>05 · 验收和常见故障</h2>
+<div class="table-wrap" tabindex="0"><table>
+<thead><tr><th scope="col">现象</th><th scope="col">核对顺序</th></tr></thead>
+<tbody>
+<tr><td>双击页面报 <code>file://</code></td><td>本机用 <code>启动网页游戏.cmd</code> 起 HTTP，公开版使用 HTTPS 入口。</td></tr>
+<tr><td><code>.br</code> 下载成功但 Loader 解码失败</td><td>核对实际响应头和入口引用。如果使用本项目的转换输出，三个启动文件已解包。</td></tr>
+<tr><td><code>404</code> 或返回的是 HTML</td><td>查 Pages 发布分支、项目子路径与大小写。核对 Wasm 响应是 <code>application/wasm</code>，再查平台主包及业务 AB。</td></tr>
+<tr><td>换包后读到前一版文件</td><td>按同一轮提交替换整个发布集合。在 Network 查缓存与实际响应，核对新部署状态和资源哈希后再验。</td></tr>
+<tr><td>Node 读取清单报 JSON 首字符非法</td><td>Windows 上 Unity 写出的 <code>BuildManifest.json</code> 可能带 UTF-8 BOM。转换脚本在解析前移除开头的 BOM。</td></tr>
+<tr><td>分支推送拒绝大文件</td><td>按单文件和整站两种口径验体积。超出 Git 单文件限制时改用 Pages 的 Actions 发布产物或其它支持的大文件交付方式。</td></tr>
+</tbody>
+</table></div>
+<p>实际验收用未登录浏览器。从 README 打开网页，点「开始游戏」进入大厅，再用「开始闯关」确认按钮和业务资源。在 Network 核对入口、Loader、Wasm、Data、平台主包均可读。首次上线的正式产物为 259 个文件，163,570,222 字节，最大文件 <code>Web.wasm</code> 为 48,240,699 字节。<a href="https://github.com/Yokino337088/RevGame/commit/b3b1f8bf7c8051043df489ebb6ce0bcd0278b96e">首次 Pages 发布</a> · <a href="https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits">GitHub 仓库限制</a></p>
+<p><a href="#top">返回顶部</a></p>
+</section>
+</main>
+</body>
+</html>

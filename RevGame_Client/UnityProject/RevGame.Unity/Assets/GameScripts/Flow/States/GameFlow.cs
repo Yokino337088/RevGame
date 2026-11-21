@@ -5,6 +5,9 @@
 // ============================================================
 using System;
 using System.Collections.Generic;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using System.Runtime.InteropServices;
+#endif
 using RevGame.Core;
 using RevGame.Services;
 using Revolution;
@@ -20,15 +23,31 @@ namespace RevGame.Flow
         private readonly Dictionary<GameScreen, FlowState> _states = new Dictionary<GameScreen, FlowState>();
         /// <summary>已通过解锁检查的目标章节，从1开始；直到战斗域交割时才用于BeginCampaign。</summary>
         private int _chapter = 1;
-        /// <summary>统一应用退出入口；停止 Play 或退出 Player 后复用 OnDestroy 的服务/域清理链。</summary>
+        /// <summary>编辑器结束 Play，原生 Player 退出应用，网页 Player 把退出请求交给运行它的页面。</summary>
         public static void RequestQuit()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
+#elif UNITY_WEBGL
+            // 网页持久化由浏览器接力。存储被拒时也要向页面交付退出请求。
+            try
+            {
+                UnityEngine.PlayerPrefs.Save();
+            }
+            finally
+            {
+                RequestBrowserQuit();
+            }
 #else
             UnityEngine.Application.Quit();
 #endif
         }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        /// <summary>向当前 Unity 画布提交退出请求，由网页模板清理 Player 并结束游戏标签页。</summary>
+        [DllImport("__Internal", EntryPoint = "RevGame_RequestBrowserQuit")]
+        private static extern void RequestBrowserQuit();
+#endif
 
         /// <summary>当前 FSM 业务屏幕，可能早于首屏就绪。完整交付可等待 LatestSceneHandoff。</summary>
         public GameScreen Screen { get; private set; } = GameScreen.Exit;

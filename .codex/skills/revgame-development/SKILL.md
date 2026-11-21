@@ -15,6 +15,7 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 | Shader、材质、纹理、特效或渲染排错 | [Revolution-TA](../revolution-ta/SKILL.md)。按场景选 [Shader 索引](../revolution-ta/references/revgame-catalog.md)、现有制作配方及目标画面验收。 |
 | 配置表、场景、Prefab、资源或 AB | [Unity 与资源迭代](references/unity-and-assets.md)。按需查 [编辑器 Skill](../revolution-unity-editor/SKILL.md) 和 [增量 AB 配方](../revolution-unity-editor/references/incremental-ab.md)。 |
 | Play 验收、修 Bug、交付测试包 | [验收范围与交付](references/validation-and-delivery.md) 和命中的 [项目验收细则](references/project-acceptance.md)。缺陷闭环走 [自动化 Skill](../revolution-ai-automation/SKILL.md)。 |
+| WebGL 打包、网页打开、默认开放与浏览器排错 | [RevGame 网页版交付](references/webgl-delivery.md) · [框架 WebGL 参考](../revolution-framework/references/webgl-delivery.md) |
 | 点 Play 后等待域重载、同一编辑器重复测试 | [编辑器快速 Play](references/validation-and-delivery.md#编辑器快速-play)。检查项目模式、首屏耗时和跨 Play 的资源及测试状态。 |
 | 战斗、逐帧更新、密集 UI/特效、资源热路径或性能诊断 | [性能 Skill](../revolution-performance/SKILL.md) 的命中专题。从设计起核对 CPU、GPU、内存与缓存，再按 [RevGame 新手指南](../../../RevGame_Client/文档/战斗性能优化规则/RevGame性能优化实践_新手指南.html) 选同类案例。 |
 

@@ -21,6 +21,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 | 页面交割、域内面板缓存、虚拟列表、弹窗调度 | [大型 UI 实现与验收](references/large-ui.md) |
 | Shader、材质、纹理与着色问题 | [Revolution-TA](../revolution-ta/SKILL.md)，按管线、采样方式和目标平台选制作或排错流程 |
 | 资源、分包与 Editor Play 粉屏 | [资源和 AB](references/resource-and-ab.md)，平台误选看 §2.1 |
+| WebGL 出包、浏览器启动、兼容性与发布排错 | [WebGL 构建与交付](references/webgl-delivery.md)，按加载器、构建器、框架运行时定位 |
 | 策划数值与 Excel | [实现配方](references/playbooks.md) 的 R22，含生成和装配校验 |
 | 编辑器与项目制作配方 | [Revolution 编辑器技能](../revolution-unity-editor/SKILL.md) 和 [Editor 职责](references/revgame-editor-practice.md) |
 | 进入 Play 慢、关闭域重载后启动失败或状态残留 | [高频踩坑集第 5 节](references/pitfalls.md) 的计时、静态复位与真 AB 重入 |

@@ -70,8 +70,13 @@ namespace RevGame.Pvp.Duel
     /// <summary>托管宿主只写整帧消息、读结果。任何地方都不能通过 P/Invoke 直接改血量或位移。</summary>
     public sealed class DuelCorePipe : IDisposable
     {
-        // P/Invoke 库名，由 Unity 或服务进程的原生搜索路径解析。
+        // WebGL 静态链接同一 C ABI。编辑器即使切到 WebGL 目标也仍加载桌面库。
+#if UNITY_WEBGL && !UNITY_EDITOR
+        private const string Library = "__Internal";
+#else
+        // 桌面、Android 与服务端使用各自平台安装的动态库。
         private const string Library = "RevGameCore";
+#endif
         // 每席占六位：两位方向、三位招式、一位跳跃。
         public const int InputBits = 6;
         // 截取一席的输入，防止把另一席的方向和招式读进来。
@@ -93,9 +98,10 @@ namespace RevGame.Pvp.Duel
         // SafeHandle 管理原生指针生命周期，避免重复释放。
         private sealed class Handle : SafeHandleZeroOrMinusOneIsInvalid
         {
-            // 声明托管端拥有返回句柄，供 P/Invoke 封装原生指针。
+            // 托管句柄对象创建后再分配原生指针，在 Dispose 或终结时统一销毁。
             public Handle() : base(true)
             {
+                SetHandle(GameCore_Create());
             }
 
             // SafeHandle 收尾时调用原生销毁入口。
@@ -106,8 +112,8 @@ namespace RevGame.Pvp.Duel
             }
         }
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
-        // 原生分配一局实例；无效返回值由构造函数检查。
-        private static extern Handle GameCore_Create();
+        // C ABI 返回 void*。托管端显式接管所有权，避免依赖平台的 SafeHandle 返回值封送。
+        private static extern IntPtr GameCore_Create();
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         // 原生释放实例及双向队列，由 SafeHandle 调用。
         private static extern void GameCore_Destroy(IntPtr handle);
@@ -147,7 +153,7 @@ namespace RevGame.Pvp.Duel
             DuelId = duelId;
             FirstRole = firstRole;
             SecondRole = secondRole;
-            _handle = GameCore_Create();
+            _handle = new Handle();
             int[] settings = DuelConfig.CreateCoreWords(firstRole == DuelRole.Yaya, secondRole == DuelRole.Yaya);
             byte[] start = new byte[(settings.Length + 4) * 4];
             // 开局消息写协议版本、操作号、完整配置与种子，队列两端不能依赖托管类型的内存排版。

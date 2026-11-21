@@ -1,6 +1,7 @@
 // 从 RevGame 的 Web Player 产物生成独立的 GitHub Pages 静态目录。
 // 原包的 Brotli 文件继续供本机启动器使用，网页发布目录提供浏览器可直接读取的文件。
 import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
 
@@ -83,7 +84,9 @@ function preparePages(source, destination)
             throw new Error(`构建文件为空或超过 GitHub 单文件上限：${file}`);
         }
         outputs.set(file, bytes);
-        return `${role}${prefix}${file}"`;
+        // 文件名沿用标准扩展名。内容变动时浏览器走新 URL，不会把旧 Loader 与新 Wasm 混用。
+        const version = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
+        return `${role}${prefix}${file}?v=${version}"`;
     });
     for (const role of ["dataUrl", "frameworkUrl", "codeUrl", "loader.src"])
     {

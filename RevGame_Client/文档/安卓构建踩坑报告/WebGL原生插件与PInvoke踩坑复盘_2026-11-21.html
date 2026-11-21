@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>RevGame · WebGL 原生插件与 P/Invoke 踩坑复盘</title>
+<style>
+:root{color-scheme:light;--paper:#f7f5ee;--card:#fffdf8;--ink:#172e26;--sub:#455b51;--brand:#235b47;--line:#dbdfd1;--gold:#87611e;--soft:#ebf1e9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+main{max-width:1136px;margin:auto;padding:30px clamp(14px,4vw,44px) 60px}
+header,section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,4vw,36px);margin:0 0 20px}
+header{background:linear-gradient(130deg,#edf4eb,#fff9e7)}
+h1,h2,h3{line-height:1.35;margin:0 0 .55em}
+h1{font-size:clamp(30px,5vw,48px);letter-spacing:.02em}
+h2{font-size:clamp(22px,3vw,31px)}
+h3{font-size:19px}
+p{margin:.45em 0 .95em}
+p:last-child,ul:last-child,ol:last-child{margin-bottom:0}
+.eyebrow{font-weight:750;color:var(--brand);letter-spacing:.12em;font-size:.82rem}
+.lead,.note{color:var(--sub)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:19px 0 0}
+nav a,.tag{background:var(--soft);padding:3px 10px;border-radius:7px;font-size:.86rem;display:inline-block}
+a{color:#1b5b48;text-decoration-thickness:1px;text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+article{border-top:1px solid var(--line);padding:17px 0 2px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.metric{background:#fffdf5;border:1px solid #dedfcf;border-radius:12px;padding:12px 14px}
+.metric strong{display:block;color:var(--brand);font-size:1.27rem}
+.warning{border-left:4px solid #aa7c32;background:#faf0d8;border-radius:5px;padding:10px 13px;margin:12px 0;color:#3d321c}
+.table-wrap{overflow-x:auto;margin:12px 0 16px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:.93rem}
+caption{text-align:left;color:var(--sub);font-weight:650;margin-bottom:5px}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);color:var(--ink)}
+code{background:#eff1e8;padding:.06em .26em;border-radius:4px;overflow-wrap:anywhere;font-size:.92em}
+li{margin:.3em 0}
+.source-list{color:var(--sub)}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.table-wrap table{min-width:485px}main{padding-top:13px}}
+@media print{body{background:white}main{padding:0;max-width:none}header,section{box-shadow:none}article,.metric{break-inside:avoid}}
+</style>
+<style>
+pre{background:#eff1e8;border:1px solid var(--line);border-radius:9px;overflow:auto;padding:12px 14px;line-height:1.6}
+pre code{padding:0;background:none;overflow-wrap:normal;font-family:Consolas,'Microsoft YaHei',monospace}
+</style>
+</head>
+<body>
+<main>
+<header id="top">
+<p class="eyebrow">REVGAME · WEBGL · 2026-11-21</p>
+<h1>WebGL 原生插件与 P/Invoke 踩坑复盘</h1>
+<p class="lead">以 RevGameCore 的决斗内核和「我不玩了」为例，把 C# 调用 WASM 内的 C++、C# 请求浏览器动作这两条链写清楚。</p>
+<div class="grid" aria-label="运行平台与接口摘要">
+<div class="metric"><strong>3.1.8</strong>当前 Unity 配套 Emscripten</div>
+<div class="metric"><strong>6 个</strong>决斗内核 C ABI 导出</div>
+<div class="metric"><strong>1,500 ms</strong>网页等 Unity 清理的上限</div>
+</div>
+<nav aria-label="目录">
+<a href="#platform">平台差异</a><a href="#build">构建与导入</a><a href="#abi">托管调用</a><a href="#quit">网页退出</a><a href="#verify">分层验收</a>
+</nav>
+</header>
+
+<section id="platform">
+<h2>01 · Windows DLL 与网页原生代码</h2>
+<p><code>RevGameCore.dll</code> 是 Windows x64 的原生库，由 Windows 宿主按名称加载。Android 走对应架构的 <code>libRevGameCore.so</code>。WebGL 使用 Unity 配套 Emscripten 编译出来的 wasm32 对象，把 <code>libRevGameCore.a</code> 静态链接进最终 Player 的 <code>Web.wasm</code>。浏览器执行同一套 C++17 决斗逻辑，通过编译阶段绑定的 C 函数推进帧。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-native-plugins-with-emscripten.html">Unity WebGL 原生插件</a></p>
+<p>之前的工程只提供 DLL、Android SO 和 <code>DllImport("RevGameCore")</code>。这些文件足以让 Editor 和原生应用调用内核。原 Web 包可以进入大厅，真正进入决斗后才会构造原生实例。Web 适配需要补齐静态库和声明，判断依据是实际调用链、构建参数和归档里的导出。</p>
+</section>
+
+<section id="build">
+<h2>02 · 编译、检查符号和导入 Unity</h2>
+<ol>
+<li>找到生成 Player 的 Unity Editor。RevGame 使用 2022.3.15f1c1，自带工具链位于 <code>Editor/Data/PlaybackEngines/WebGLSupport/BuildTools/Emscripten</code>。</li>
+<li>用配套 <code>em++</code> 将 C++17 源编译成 wasm32 <code>.o</code>，用 <code>emar rcs</code> 生成 <code>.a</code>。脚本给子进程传入 <code>EM_CONFIG</code> 和 <code>PYTHONUTF8=1</code>。当前 Web Player 使用单线程配置。</li>
+<li>把现有的 <code>Tests/PipeChecks.cpp</code> 链接同一归档，用工具链自带 Node 运行。检查通过后，脚本将归档更新到 Unity 插件目录。</li>
+<li>在 Unity 的 Plugin Inspector 中给 <code>.a</code> 及 <code>.jslib</code> 只启用 WebGL，保留各平台插件自己的 <code>.meta</code>。<code>libRevGameCore.a</code> 和运行时入口脚本的导入设置随代码入库。</li>
+</ol>
+<pre><code>$editor = "E:\Unity安装\2022.3.15f1c1\Editor\Unity.exe"
+$archive = "RevGame_Client/UnityProject/RevGame.Unity/Assets/Plugins/RevGameCore/WebGL/libRevGameCore.a"
+py -3.13 -X utf8 RevGame_Client/RevGameCore/BuildWebGL.py --unity $editor --output $archive
+$emscripten = Join-Path (Split-Path -Parent $editor) "Data/PlaybackEngines/WebGLSupport/BuildTools/Emscripten"
+&amp; (Join-Path $emscripten "llvm/llvm-nm.exe") --defined-only --extern-only $archive</code></pre>
+<p>用 Unity 的工具链重新构建插件后再打 Player。把原生对象交给其它版本的 LLVM 或把 Windows 的 <code>.lib</code> 当成网页归档，都可能在链接阶段失败。Unity 2022.3 支持由 Wasm 对象组成的 <code>.a</code>，项目使用的归档是 16,458 字节。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-native-plugins-with-emscripten.html">Unity 原生工具链版本对应表</a></p>
+</section>
+
+<section id="abi">
+<h2>03 · C ABI 与托管调用怎么写</h2>
+<article>
+<h3>给跨语言边界一个稳定名称</h3>
+<p>C++ 使用 <code>extern "C"</code> 导出。RevGameCore 的接口只暴露实例指针、显式长度和定宽整数。原生对象、异常、容器和内存所有权留在调用契约明确的一侧。托管数组只在调用期间借给原生函数。</p>
+<pre><code>extern "C" {
+    void* GameCore_Create(void);
+    void GameCore_Destroy(void* handle);
+    int32_t GameCore_Write(void* handle, const uint8_t* data, int32_t size);
+}</code></pre>
+<p>实际头文件还声明 <code>GameCore_Read</code>、<code>GameCore_SaveCheckpoint</code> 和 <code>GameCore_RestoreCheckpoint</code>。六个符号都应在静态归档中能找到。</p>
+</article>
+<article>
+<h3>用运行平台选择 P/Invoke 库</h3>
+<pre><code>#if UNITY_WEBGL &amp;&amp; !UNITY_EDITOR
+private const string Library = "__Internal";
+#else
+private const string Library = "RevGameCore";
+#endif
+
+[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+private static extern IntPtr GameCore_Create();
+
+[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+private static extern void GameCore_Destroy(IntPtr handle);</code></pre>
+<p>Unity 的 WebGL 活动目标和桌面 Editor 的运行宿主是两回事。Editor 仍走 Windows DLL。浏览器从最终 Wasm 内解析静态符号。<code>DuelCorePipe</code> 用已有的 <code>SafeHandle</code> 封装 <code>IntPtr</code>，一局独占一个实例。结束时走 <code>Dispose</code> 释放。原生输出数组在声明中标为 <code>[Out]</code>，缓冲与字节长度保持配对，失败不会越过原有 FIFO/检查点边界。</p>
+<p>生成的 IL2CPP C++ 声明直接引用 <code>GameCore_*</code>，链接器据此从归档取出所需对象。决斗每帧走模块内调用，浏览器脚本只承担需要 DOM 的退出动作。</p>
+</article>
+<article>
+<h3>读错误时先看是哪一层</h3>
+<div class="table-wrap" tabindex="0"><table>
+<thead><tr><th scope="col">典型症状</th><th scope="col">定位</th></tr></thead>
+<tbody>
+<tr><td><code>DllNotFoundException</code></td><td>确认 Player 是否仍在按桌面库名查找。WebGL Player 的静态 P/Invoke 应选择 <code>__Internal</code>。</td></tr>
+<tr><td><code>undefined symbol: GameCore_*</code></td><td>检查 WebGL PluginImporter、<code>extern "C"</code>、<code>llvm-nm</code> 与实际链接输入路径。</td></tr>
+<tr><td>链接器无法读取对象或归档</td><td>核对对象是 wasm32、Unity 与 Emscripten 版本匹配、线程配置对齐。</td></tr>
+<tr><td>找到符号但首次跨语言调用报错</td><td>按 ABI 核对指针宽度、整数类型、数组方向和长度。先用同一套输入校验帧指纹。</td></tr>
+<tr><td>Editor 通过，网页第一次进决斗失败</td><td>检查实际 IL2CPP WebGL Player 的构建、链接与浏览器决斗入口。</td></tr>
+</tbody>
+</table></div>
+</article>
+</section>
+
+<section id="quit">
+<h2>04 · 「我不玩了」为什么会停在原画面</h2>
+<p>按钮原来从 <code>HomePanel.OnQuit</code> 走到 <code>GameFlow.RequestQuit</code>，网页与其他 Player 都在同一分支调用 <code>Application.Quit()</code>。即使 Unity 停止了 Player，外层网页也仍由浏览器控制。旧模板既没有接收退出意图，也没有处理浏览器标签页，于是只留下最后一帧。</p>
+<ol>
+<li><code>GameFlow.RequestQuit</code> 在网页端先尝试提交 PlayerPrefs，再通过 <code>__Internal</code> 请求 <code>RevGame_RequestBrowserQuit</code>。保存调用出错仍会交付退出。</li>
+<li><code>RevGameBrowser.jslib</code> 从当前 <code>Module.canvas</code> 派发 <code>revgame:quit</code>，让 Wasm 原点击回调先返回。</li>
+<li><code>RevGameFullscreen/index.html</code> 接到事件后显示退出状态，同一页面只执行一轮 <code>unityInstance.Quit()</code>，最多等待 1,500 ms。</li>
+<li>试玩入口的「开始游戏」在真实用户点击里打开 <code>?play=1</code> 的游戏标签页。退出时脚本关闭该页，入口页可再次启动。浏览器拒绝关闭手动打开的标签页时，网页释放当前 Player 并返回入口。</li>
+</ol>
+<pre><code>// C# · 仅在 WebGL Player 编译这一声明
+[DllImport("__Internal", EntryPoint = "RevGame_RequestBrowserQuit")]
+private static extern void RequestBrowserQuit();
+
+// JavaScript · RevGameBrowser.jslib
+mergeInto(LibraryManager.library, {
+    RevGame_RequestBrowserQuit: function () {
+        var canvas = Module.canvas;
+        setTimeout(function () {
+            canvas.dispatchEvent(new Event("revgame:quit"));
+        }, 0);
+    }
+});</code></pre>
+<p>浏览器允许脚本关闭由网页正常创建的部分浏览上下文，也会考虑历史记录和沙箱条件。退出链因此由页面控制，并提供明确的返回入口。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-templates.html">Unity 网页模板 Quit API</a> · <a href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#dom-window-close-dev">HTML Window.close 规则</a></p>
+</section>
+
+<section id="verify">
+<h2>05 · 怎样证明它真正生效</h2>
+<ul>
+<li>原生层使用同一静态库运行 FIFO、检查点、恢复和确定性回归。Windows 使用现有 <code>tools/DuelPredictionChecks</code> 校验预测与本地人机节拍。</li>
+<li>Player 层核对 WebGL 正式版 BuildReport 与六个 <code>GameCore_*</code> 的实际 IL2CPP 绑定。浏览器从真实人机入口打到决斗或使用受控开发专用夹具，观察原生快照推进。</li>
+<li>网页层从启动入口创建游戏标签页，用真正的大厅按钮触发退出。记录 Child 是否关闭、启动页是否保留以及再次启动是否可用。用单独案例验证拒绝关闭后的返回入口。</li>
+</ul>
+<p>本次 IL2CPP Release 的 Build ID 为 <code>b58c2f7cc4774be28faf627438b4f5c1</code>，0 个错误，1 条既有 Fantasy 编译警告。六个原生导出和退出桥都进入了实际 Player 链接。Emscripten 的 FIFO/检查点回归和 Windows 的决斗预测回归均通过。</p>
+<p>本机 Edge 使用这份 Release 走真实本地人机，完成 50 手后从「和对面爆了」进入选角和决斗。对手打出 4 连击，黑方生命值由 300 降到 30。该过程覆盖托管端创建内核、写入封帧和读回结果。另实测点击「我不玩了」关闭游戏标签页，启动页保留，并可以重新打开游戏。</p>
+<p><a href="GitHubPages部署WebGL实战指南_2026-11-21.html">GitHub Pages 发布步骤</a> · <a href="#top">返回顶部</a></p>
+</section>
+</main>
+</body>
+</html>

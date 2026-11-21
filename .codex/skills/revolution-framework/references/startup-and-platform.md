@@ -81,12 +81,12 @@ bool ok = RevStripGuard.IsHealthy;         // IReadOnlyList<string> MissingTypes
 
 | 约束 | 原因 | 怎么做 |
 |---|---|---|
-| **没有多线程** | 小游戏单线程，`new Thread` / `Task.Run` 直接抛 `PlatformNotSupportedException` | 异步只用 `RevTask`（单线程 Promise，零 `Thread`）；**不要引入 `System.Threading.Tasks.Task`** |
+| **托管线程受限** | Unity 2022.3 的 WebGL 和所接入的小游戏宿主依赖单线程运行 | 游戏异步用 `RevTask`。在构造线程、等待句柄和本机监听器之前判断运行宿主 |
 | **同步加载不可用** | 无本地文件系统，AB 走 `UnityWebRequestAssetBundle` | 一律 `LoadAsync` / `RevPool.GetAsync` / `RevUI.OpenAsync` |
-| **文件日志默认禁用** | 小游戏 `persistentDataPath` 是虚拟文件系统，"目录可写探测"会误判可用 | 框架已处理：`RevFileSink.SupportsBackgroundWriter`（WebGL 默认 false）；`RevLog.EnableFileLog` 在 WebGL 不会崩，而是把原因报到 `RevLog.SinkErrors` |
-| **音频约束** | 首次播放需用户手势解锁、`AudioClip` 必须 Decompress On Load、切后台会打断需重播 | 查 `RevSoundPlatform.AudioManagedByPlatform` / `NeedsUserGestureUnlock` / `Note`；切回前台用 `RevAppLifecycle.Resumed` 重播 BGM |
+| **文件日志与存档** | 浏览器持久目录是 IndexedDB 支撑的虚拟文件系统 | `RevFileSink` 在 Player 中先判断线程能力，再创建等待句柄。用 Console 和环形缓冲取日志。浏览器中 `RevFileSave` 提交持久目录里的文件后会排队写回 |
+| **音频约束** | 首次播放依赖用户手势。音频导入方式随音效与 BGM 的用途选择 | 查 `RevSoundPlatform.AudioManagedByPlatform` / `NeedsUserGestureUnlock`。切回前台用 `RevAppLifecycle.Resumed` 检查已有播放状态。见 [WebGL 交付参考](webgl-delivery.md#输入音频和持久化) |
 | **平台名统一归 `WebGL`** | 小游戏构建目标（`XxxMiniGame`）→ 产物目录名 / 运行时主包名必须一致，否则首屏 404 | 框架三处已对齐：`RevABLoader.MainName` / `RevHotPlatform.Name` / `ABBuildSetting.GetPlatformName`（按名字判断，不依赖枚举）；**编辑器里平台名恒为 `PC`** |
-| **AB 加载要有重试与超时** | 弱网 | `RevABLoader.MaxAttempts` / `RetryDelayMs` / `AttemptTimeoutSeconds`（WebGL 上 `UnityWebRequest.timeout` 不生效，框架改为按帧轮询 + `Abort`） |
+| **AB 加载要有重试与超时** | 弱网与资源代次切换 | `RevABLoader.MaxAttempts` / `RetryDelayMs` / `AttemptTimeoutSeconds`。用实时时钟按帧等待，超时或加载器退代时中止在途的网页请求 |
 | **引擎缓存标识** | 否则小游戏每次进游戏重下全部 AB | 钩子 `RevABLoader.BundleCacheKeyResolver` + `RevBundleCacheKey`；热更包从清单的 `unityHash` / `unityCrc` 注入 |
 | **热更并发与明文 http** | 小游戏限制 | `RevHotConfig.Concurrency` 默认按平台（小游戏 2 / 其余 3）；小游戏/WebGL **禁明文 http**（不受 `AllowHttp` 影响）、并发 > 4 在配置期报错 |
 | **首包预算** | 小游戏首包有体积上限 | 菜单 `Revolution.Tools/平台/首包体积审计 (Resources)` 列 `Resources` 目录文件数/体积（按体积排序，含最占地方的 10 个文件） |

@@ -39,7 +39,7 @@ using (RevSoundScope s = RevSound.OpenScope()) { s.Play("battle_bgm"); }    // �
   2. **不提供任何查询**：播完没播出来只能靠 `VoiceFinished` / `Failed` 事件；**框架自身不打日志**（要日志自己接 `Failed`）。
   3. 3D 必须给"挂在哪"：`target` 为 null 会以 `NoTarget` 失败。
   4. 首次播放是异步的（先返回句柄、加载完自动播）；想零延迟先 `Preload`。最终音量 = 单次 × 分类 × 主音量。
-  5. **小游戏 / WebGL 音频约束**查 `RevSoundPlatform`（`AudioManagedByPlatform` / `NeedsUserGestureUnlock` / `Note`）：首次播放需用户手势解锁、`AudioClip` 必须 Decompress On Load、切后台会被打断需重播（订阅 `RevAppLifecycle.Resumed` 重播 BGM）。详见 `startup-and-platform.md` §4。
+  5. **小游戏 / WebGL 音频约束**查 `RevSoundPlatform`。在用户手势内尝试解锁，长 BGM 与短音效按用途选导入方式，切回前台复查实际播放状态。见 [WebGL 构建与交付](webgl-delivery.md#输入音频和持久化)。
 - 文档：`Revolution.Document/音效系统/音效系统使用说明.md` · 模块 README：`Runtime/RevSoundSystem/README.md`
 
 ---
