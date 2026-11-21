@@ -22,6 +22,7 @@ namespace Revolution
     /// <summary>UI 系统的 Unity 生命周期接入（进 Play 前清理索引）</summary>
     internal static class RevUIUnityHooks
     {
+        /// <summary>每轮启动前结束旧面板和 Part 的所有权，并重置业务绑定器与控件日志出口。</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void OnSubsystemRegistration()
         {
@@ -29,7 +30,9 @@ namespace Revolution
             // 签名不支持 / 控件名写空都能在第一次装配时就看见（而不是"点了没反应"）
             RevUIWidgetEvents.OnException = (e, what) => RevUILog.Error($"{what}：{e.Message}");
 
-            // 让管理器回到"没打开任何界面"的初始状态
+            // 先摘掉可能由自定义宿主持有的 Part 请求，再重置面板索引与资源租约。
+            RevUIPart.ResetPendingCreatesForNewSession();
+            RevUIBinder.ResetAutoEventsForNewSession();
             RevUIManager.Instance.ResetForNewSession();
             RevUILog.Info("UI 系统已重置（新一轮运行开始）");
         }

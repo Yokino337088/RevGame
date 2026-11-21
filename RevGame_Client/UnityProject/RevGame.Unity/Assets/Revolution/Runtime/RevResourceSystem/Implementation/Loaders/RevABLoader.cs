@@ -331,7 +331,7 @@ namespace Revolution
             }
         }
 
-        /// <summary>全部释放（切场景 / 退出时兜底）</summary>
+        /// <summary>全部释放。迟到结果按旧代次归还，主包已被 Unity 销毁时仍清掉托管引用。</summary>
         public void ReleaseAll()
         {
             // 递增代际：仍在等待 Unity 异步 IO 的旧任务完成后会自行卸载结果，不能再写回新缓存。
@@ -344,12 +344,13 @@ namespace Revolution
             _bundles.Clear();
             _loading.Clear();
 
-            if (_mainBundle != null)
-            {
-                _mainBundle.Unload(false);
-                _mainBundle = null;
-            }
+            AssetBundle mainBundle = _mainBundle;
+            _mainBundle = null;
             _manifest = null;
+            if (mainBundle != null)
+            {
+                mainBundle.Unload(false);
+            }
         }
 
         /// <summary>
@@ -435,7 +436,14 @@ namespace Revolution
                     return;
                 }
 
-                if (!await EnsureManifestAsync())
+                token?.ThrowIfCancelled();
+                bool manifestReady = await EnsureManifestAsync();
+                if (generation != _generation)
+                {
+                    throw new RevOperationCanceledException();
+                }
+                token?.ThrowIfCancelled();
+                if (!manifestReady)
                 {
 #if UNITY_ANDROID && !UNITY_EDITOR
                     RevLog.Error($"Android AB 主包无法加载：{ResolveBundlePath(MainName)}。请确认 Player 与 AB 均为 Android 构建，且 APK 内包可读取。", "Res");
@@ -444,13 +452,16 @@ namespace Revolution
                     handle.MarkError();
                     return;
                 }
-                if (generation != _generation) { throw new RevOperationCanceledException(); }
-                token?.ThrowIfCancelled();
-
                 foreach (string dep in ResolveDependencies(parts[0]))
                 {
-                    if (await AcquireSingleAsync(dep) == null)
+                    AssetBundle dependency = await AcquireSingleAsync(dep);
+                    if (generation != _generation)
                     {
+                        throw new RevOperationCanceledException();
+                    }
+                    if (dependency == null)
+                    {
+                        token?.ThrowIfCancelled();
 #if UNITY_ANDROID && !UNITY_EDITOR
                         RevLog.Error($"Android AB 依赖包加载失败：目标 {parts[0]} / 依赖 {dep} / 路径 {ResolveBundlePath(dep)}。这不是 Shader 变体错误，请检查平台产物、热更版本与包文件。", "Res");
 #endif
@@ -460,16 +471,23 @@ namespace Revolution
                         handle.MarkError();
                         return;
                     }
-                    if (generation != _generation) { throw new RevOperationCanceledException(); }
+                    // 先登记本次拿到的依赖，再检查取消；异常收尾会归还这份引用。
                     acquiredDependencies.Add(dep);
+                    token?.ThrowIfCancelled();
                 }
 
                 if (generation != _generation) { throw new RevOperationCanceledException(); }
                 token?.ThrowIfCancelled();
 
                 AssetBundle bundle = await AcquireSingleAsync(parts[0]);
-                if (bundle == null || generation != _generation)
+                if (generation != _generation)
                 {
+                    throw new RevOperationCanceledException();
+                }
+                if (bundle == null)
+                {
+                    // 清理或换包发生在等待之间，旧请求应结束为取消，资源门面也不会尝试后续兜底策略。
+                    token?.ThrowIfCancelled();
 #if UNITY_ANDROID && !UNITY_EDITOR
                     RevLog.Error($"Android AB 目标包加载失败：{parts[0]} / 路径 {ResolveBundlePath(parts[0])}。先检查包来源，不能当作材质 Shader 缺失处理。", "Res");
 #endif

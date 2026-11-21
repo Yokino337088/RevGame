@@ -224,7 +224,7 @@ namespace Revolution
 
         // ==================== 驱动 ====================
 
-        /// <summary>推进所有池的延迟回收（由 <see cref="RevPoolDriver"/> 每帧调用）。返回推进了几条池。</summary>
+        /// <summary>推进延迟回收和借出对象的低频存活清扫（由 <see cref="RevPoolDriver"/> 每帧调用）。返回推进了几条池。</summary>
         internal static int Tick()
         {
             if (_byPoolId.Count == 0) return 0;
@@ -233,8 +233,13 @@ namespace Revolution
             List<RevGameObjectPool> pools = Snapshot();
             for (int i = 0; i < pools.Count; i++)
             {
-                if (pools[i].RecyclingCount == 0) continue;
-                pools[i].Tick();
+                RevGameObjectPool pool = pools[i];
+                // 即使从未使用延迟归还，场景卸载也可能销毁借出的对象，需要让核心计数到清扫间隔。
+                if (pool.RecyclingCount == 0 && pool.ActiveCount == 0)
+                {
+                    continue;
+                }
+                pool.Tick();
                 count++;
             }
 

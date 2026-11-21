@@ -32,6 +32,8 @@ namespace Revolution
     public sealed class RevSoundCore : IRevSoundHandleOwner
     {
         private const int SlotCapacity = 64;      // 声音槽位硬上限（MaxVoices 只能更小）
+        /// <summary>每次进入新会话时默认可同时播放的声音数。</summary>
+        private const int DefaultMaxVoices = 24;
 
         private readonly RevSoundVoiceTable _table = new RevSoundVoiceTable(SlotCapacity);
         private readonly RevSoundAssets _assets = new RevSoundAssets();
@@ -48,7 +50,8 @@ namespace Revolution
         private readonly RevScopeHandle[] _voiceScopes = new RevScopeHandle[SlotCapacity];
 
         private readonly float[] _kindVolumes = { 1f, 1f, 1f, 1f };
-        private int _maxVoices = 24;
+        /// <summary>本会话当前的声音数量上限，通过公开属性限制取值范围。</summary>
+        private int _maxVoices = DefaultMaxVoices;
         private float _master = 1f;
         private float _minDistance = 1f;
         private float _maxDistance = 50f;
@@ -125,7 +128,7 @@ namespace Revolution
                                      Transform target, bool is3D, bool? loop)
             => PlayInternal(name, kind, volume, position, target, is3D, loop, out _);
 
-        /// <summary>验证播放请求并取得声音槽。音效继承域，跨场景 BGM 独立持有。</summary>
+        /// <summary>验证播放请求并取得声音槽。策略已销毁时恢复默认放行，音效继承域，跨场景 BGM 独立持有。</summary>
         private RevSoundHandle PlayInternal(string name, RevSoundKind? kind, float? volume, Vector3? position,
                                             Transform target, bool is3D, bool? loop, out int slot)
         {
@@ -151,7 +154,14 @@ namespace Revolution
                 return RevSoundHandle.Empty;
             }
 
-            if (Policy != null && !Policy.CanPlay(logicalName, resolvedKind))
+            // 策略可由场景组件实现。接口判空看不到原生对象销毁，需要用 Unity 判空摘除旧策略。
+            IRevSoundPolicy policy = Policy;
+            if (policy is UnityEngine.Object unityPolicy && unityPolicy == null)
+            {
+                Policy = null;
+                policy = null;
+            }
+            if (policy != null && !policy.CanPlay(logicalName, resolvedKind))
             {
                 RaiseFailed(logicalName, RevSoundErrorReason.PolicyRejected);
                 return RevSoundHandle.Empty;
@@ -682,6 +692,10 @@ namespace Revolution
             _initialized = false;
             ManualDriven = false;
             Enabled = true;
+            // 与新构造内核保持一致，业务按每轮启动流程重新设置策略与播放参数。
+            Policy = null;
+            FrameDedupe = true;
+            _maxVoices = DefaultMaxVoices;
             _mute = false;
             _master = 1f;
             _minDistance = 1f;

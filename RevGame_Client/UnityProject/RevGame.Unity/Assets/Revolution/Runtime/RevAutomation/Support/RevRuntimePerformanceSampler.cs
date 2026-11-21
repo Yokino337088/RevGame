@@ -9,7 +9,15 @@ namespace Revolution
     internal sealed class RevRuntimePerformanceSampler : MonoBehaviour
     {
         private static RevRuntimePerformanceSampler _instance;
+        /// <summary>当前 Play 的采样报告。同一轮停止采样后仍可读，进入下一轮时复位。</summary>
         private static RevPerformanceReport _report = new RevPerformanceReport();
+
+        /// <summary>关闭域重载时解除上一轮采样结果，首个 state 查询返回空闲。</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetReport()
+        {
+            _report = new RevPerformanceReport();
+        }
         // 环形窗口归本宿主所有，保留容量不保留无限历史。固定测量最多每秒1000样本，超出明确失败。
         private readonly double[] _rolling = new double[2048];
         private readonly FrameTiming[] _timings = new FrameTiming[1];

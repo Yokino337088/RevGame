@@ -221,6 +221,7 @@ namespace Revolution
             return item;
         }
 
+        /// <summary>切换挂点并通知业务取用，实例仍存活时才激活。</summary>
         private void OnTake(GameObject item)
         {
             // ★ OnPoolGet 先重置业务状态，再激活触发 OnEnable。
@@ -240,7 +241,10 @@ namespace Revolution
 
             RevPooledMember member = item.GetComponent<RevPooledMember>();
             if (member != null) member.NotifyPoolGet();
-            item.SetActive(true);
+            if (item != null)
+            {
+                item.SetActive(true);
+            }
         }
 
         private void DestroyPooledItem(GameObject item)
@@ -251,14 +255,23 @@ namespace Revolution
             Object.Destroy(item);
         }
 
+        /// <summary>归还时通知业务、失活并移回池节点。回调销毁实例时由池核心摘除记录。</summary>
         private void OnPut(GameObject item)
         {
             // 先在"对象还活着"的时候回调业务清理（粒子停止、计时器归零、数据清空）
             RevPooledMember member = item.GetComponent<RevPooledMember>();
             if (member != null) member.NotifyPoolReturn();
 
+            // 用户归还回调或失活后的 OnDisable 可以当场销毁实例，后续步骤必须重新确认存活。
+            if (item == null)
+            {
+                return;
+            }
             item.SetActive(false);
-            item.transform.SetParent(GetPoolNode(), false);
+            if (item != null)
+            {
+                item.transform.SetParent(GetPoolNode(), false);
+            }
         }
 
         /// <summary>池节点（懒创建）：挂在 [RevObjectPool] 根下，编辑器里一眼能看到每条池有多少空闲对象。</summary>

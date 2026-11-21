@@ -29,6 +29,7 @@ using UnityEngine;
 
 namespace Revolution
 {
+    /// <summary>资源模块的原生对象回收驱动。正常启动创建宿主，销毁时解除 Unity 内存告急监听。</summary>
     public sealed class RevResAutoUnloader : MonoBehaviour
     {
         // ==================== 策略配置（运行时可调） ====================
@@ -59,16 +60,24 @@ namespace Revolution
 
         // ==================== 统计（排查 / 可视化工具有用） ====================
 
-        /// <summary>上一次淘汰了几个</summary>
+        /// <summary>本轮 Play 最近一次淘汰资源的数量。</summary>
         public static int LastTrimCount { get; private set; }
 
-        /// <summary>累计淘汰了几个</summary>
+        /// <summary>本轮 Play 累计淘汰的资源数量。</summary>
         public static int TotalTrimCount { get; private set; }
 
         // ==================== 运行时 ====================
 
         private static RevResAutoUnloader _instance;
         private float _timer;
+
+        /// <summary>每次运行重新统计淘汰数量，防止保留脚本域时把上一轮的结果算入本轮。</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetTrimCountsForNewSession()
+        {
+            LastTrimCount = 0;
+            TotalTrimCount = 0;
+        }
 
         /// <summary>启动门卫（幂等；RevResBootstrap.Init 会调它）</summary>
         public static void EnsureRunning()
@@ -121,7 +130,15 @@ namespace Revolution
         private void OnEnable() => Application.lowMemory += OnLowMemory;
         private void OnDisable() => Application.lowMemory -= OnLowMemory;
 
-        private void OnDestroy() => Application.lowMemory -= OnLowMemory;
+        /// <summary>销毁时解除内存监听，并清除仍指向这个宿主的静态引用。</summary>
+        private void OnDestroy()
+        {
+            Application.lowMemory -= OnLowMemory;
+            if (ReferenceEquals(_instance, this))
+            {
+                _instance = null;
+            }
+        }
 
         /// <summary>Unity 发出内存告急事件时，回收空闲 UI 和已无引用的可卸载资源。</summary>
         private void OnLowMemory() => RunOnce(force: true);

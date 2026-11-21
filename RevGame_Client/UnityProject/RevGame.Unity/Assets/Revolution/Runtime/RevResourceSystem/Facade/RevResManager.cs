@@ -283,13 +283,24 @@ namespace Revolution
                 RevLog.Exception(e, $"同步资源加载器异常：{handle.StandardPath}", "Res");
                 return false;
             }
-            if (content == null) return false;
+            if (content == null)
+            {
+                return false;
+            }
 
-            // 3) 成功
+            // 3) 自定义加载器可以返回托管包装器仍存在的 Unity 对象。由句柄校验原生对象，再决定是否切换策略。
             handle.ErrorReason = RevResLoadErrorReason.None;
             handle.SetContent(content);
+            if (!handle.IsLoaded)
+            {
+                err = handle.ErrorReason;
+                return false;
+            }
 #if UNITY_EDITOR
-            if (policy is RevEditorResPolicy) handle.AddFlag(RevResInstanceFlag.LoadFromEditor);
+            if (policy is RevEditorResPolicy)
+            {
+                handle.AddFlag(RevResInstanceFlag.LoadFromEditor);
+            }
 #endif
             return true;
         }

@@ -125,16 +125,14 @@ namespace Revolution
                 // 空壳（被外部销毁 / 场景卸载带走的）→ 丢掉它继续找下一个
                 if (!_isAlive(item)) { _lost++; continue; }
 
-                _activeSet.Add(item);
                 _hit++;
-                _onTake?.Invoke(item);
-                return item;
+                return Take(item);
             }
 
             _miss++;
             T created = _create();
 
-            if (created == null)
+            if (created == null || !_isAlive(created))
             {
                 RevPoolLog.Error($"池 \"{Name}\" 创建对象失败，本次取出返回 null。" +
                                  $"常见原因：prefab 被卸载 / 被销毁 / 资源加载失败。");
@@ -142,9 +140,22 @@ namespace Revolution
             }
 
             _created++;
-            _activeSet.Add(created);
-            _onTake?.Invoke(created);
-            return created;
+            return Take(created);
+        }
+
+        /// <summary>先登记借出再执行取用回调，回调销毁对象时同步剔除记录并返回空。</summary>
+        private T Take(T item)
+        {
+            _activeSet.Add(item);
+            _onTake?.Invoke(item);
+            if (_isAlive(item))
+            {
+                return item;
+            }
+
+            _activeSet.Remove(item);
+            _lost++;
+            return null;
         }
 
         /// <summary>
@@ -297,7 +308,7 @@ namespace Revolution
         }
 
         /// <summary>
-        /// 只保留 keepCount 个空闲对象，其余销毁。返回销毁数量。
+        /// 只保留 keepCount 个空闲对象，其余移除。原生对象仍存活时执行销毁回调并计入返回值。
         /// （从"最后归还的"那一端开始丢：Trim 是内存维护动作，不额外维护热度排序。）
         /// </summary>
         public int Trim(int keepCount)
@@ -311,6 +322,13 @@ namespace Revolution
                 T item = _idle[last];
                 _idle.RemoveAt(last);
                 _idleSet.Remove(item);
+
+                // 外部销毁可能绕开 Return；清池不能把已失效的 Unity 对象交给底层销毁委托。
+                if (!_isAlive(item))
+                {
+                    _lost++;
+                    continue;
+                }
 
                 DestroyItem(item, "Trim");
                 removed++;

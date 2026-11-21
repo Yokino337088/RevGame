@@ -193,7 +193,7 @@ namespace Revolution
 
         /// <summary>
         /// 把自定义控件接进"按节点名分发"。
-        /// TMP_InputField、长按按钮、自研控件都用它 —— 注册一次，之后所有面板生效。
+        /// TMP_InputField、长按按钮、自研控件在每轮业务启动时注册，当前会话后续装配的面板均可使用。
         ///
         ///     RevUI.RegisterAutoEvent&lt;LongPressButton&gt;((dispatch, btn) =&gt;
         ///     {

@@ -331,5 +331,16 @@ namespace Revolution
             _scopeReclaims.Clear();
             _handoffSweepFrame = -1;
         }
+
+        /// <summary>结束旧 Play 的待办索引和原生整理回执。现有 AB 账本由正常初始化用原策略清理。</summary>
+        internal static void ResetForNewSession()
+        {
+            ResetScopeReclaims();
+            _pendingAsyncCallbacks.Clear();
+
+            // 旧 Unity 操作的完成状态不能作为新一轮回收是否可开始的判断。
+            _nativeSweep = null;
+            _nativeSweepPending = false;
+        }
     }
 }

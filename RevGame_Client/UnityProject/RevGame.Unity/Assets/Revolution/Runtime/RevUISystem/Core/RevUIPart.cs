@@ -69,7 +69,24 @@ namespace Revolution
             internal readonly List<Action<RevUIPart>> Callbacks = new List<Action<RevUIPart>>();
         }
 
+        /// <summary>本轮尚未交付的 Part 创建请求，关闭宿主或进入新会话时摘除。</summary>
         private static readonly List<CreateRequest> PendingCreates = new List<CreateRequest>();
+
+        /// <summary>进入新会话时丢弃旧宿主及其回调，迟到的加载结果只归还资源。</summary>
+        internal static void ResetPendingCreatesForNewSession()
+        {
+            foreach (CreateRequest request in PendingCreates)
+            {
+                request.Callbacks.Clear();
+            }
+            PendingCreates.Clear();
+        }
+
+        /// <summary>同时检查普通接口实现和实现该接口的 Unity 宿主是否仍存在。</summary>
+        private static bool IsHostAlive(IRevUIPartHost host)
+        {
+            return host != null && (!(host is UnityEngine.Object unityHost) || unityHost != null);
+        }
 
         internal static void CancelCreates(IRevUIPartHost host)
         {
@@ -78,9 +95,15 @@ namespace Revolution
             foreach (CreateRequest request in cancelled) FinishCreate(request, null);
         }
 
+        /// <summary>摘除请求并向有效宿主的调用方交付一次创建结果。</summary>
         private static void FinishCreate(CreateRequest request, RevUIPart part)
         {
             PendingCreates.Remove(request);
+            if (!IsHostAlive(request.Host))
+            {
+                request.Callbacks.Clear();
+                return;
+            }
             var callbacks = request.Callbacks.ToArray();
             request.Callbacks.Clear();
             foreach (Action<RevUIPart> callback in callbacks)
@@ -156,9 +179,9 @@ namespace Revolution
         public static void Create<T>(IRevUIPartHost host, Transform parent, Action<T> onCreated)
             where T : RevUIPart
         {
-            if (host == null)
+            if (!IsHostAlive(host))
             {
-                RevUILog.Error($"创建 Part {typeof(T).Name} 失败：宿主为 null。");
+                RevUILog.Error($"创建 Part {typeof(T).Name} 失败：宿主为空或已销毁。");
                 onCreated?.Invoke(null);
                 return;
             }
@@ -209,7 +232,8 @@ namespace Revolution
                 if (exist.IsOpened) exist.InternalRefresh();
                 else exist.InternalOpen();
 
-                onCreated?.Invoke(exist);
+                // 刷新与打开都是业务入口，可能当场销毁 Part，回调只交付存活的实例。
+                onCreated?.Invoke(exist != null ? exist : null);
                 return;
             }
 
@@ -219,7 +243,7 @@ namespace Revolution
             RevResManager.LoadAsync(meta.Root, meta.Name, typeof(GameObject), handle =>
             {
                 GameObject prefab = handle.Content as GameObject;
-                if (!PendingCreates.Contains(request) || !host.IsHostOpened ||
+                if (!PendingCreates.Contains(request) || !IsHostAlive(host) || !host.IsHostOpened ||
                     (hostPanel != null && hostPanel.LifetimeVersion != version))
                 {
                     RevResManager.DecRef(handle);
@@ -266,16 +290,24 @@ namespace Revolution
                 part._holdsResourceRef = true;
                 part._resourceHandle = handle;
                 part.InternalInit(host);
-                if (!PendingCreates.Contains(request) || !host.IsHostOpened ||
+                if (part == null || !PendingCreates.Contains(request) || !IsHostAlive(host) || !host.IsHostOpened ||
                     (hostPanel != null && hostPanel.LifetimeVersion != version))
                 {
-                    part.ClosePart();
+                    // 装配回调可销毁尚未激活的 Part，此时可能没有 OnDestroy，幂等补还持有的资源。
+                    if (part != null)
+                    {
+                        part.ClosePart();
+                    }
+                    else
+                    {
+                        part.ReleaseHeldResource();
+                    }
                     FinishCreate(request, null);
                     return;
                 }
                 part.InternalOpen();
 
-                FinishCreate(request, part.IsOpened ? part : null);
+                FinishCreate(request, part != null && part.IsOpened ? part : null);
             }, RevResGroup.UI, lifetime: RevResLifetime.Manual);
         }
 

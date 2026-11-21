@@ -20,6 +20,7 @@ using UnityEngine;
 
 namespace Revolution
 {
+    /// <summary>为每次运行配置统一资源策略，并协调资源缓存和原生包的清理。</summary>
     public class RevResBootstrap : RevSingleton<RevResBootstrap>
     {
         // 单例：构造函数写 private 只是"防止外部 new"的可选加固，不写也能正常工作
@@ -72,6 +73,20 @@ namespace Revolution
         public static Func<Dictionary<string, string>> ResMapOverride { get; set; }
 
         // ==================== 初始化 ====================
+
+        /// <summary>结束上一轮 Play 的资源回执和覆盖委托。新会话的扩展随后通过正常启动入口重新注册。</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetForNewSession()
+        {
+            RevAsyncLoadPump.ResetForNewSession();
+            RevResManager.ResetForNewSession();
+
+            // 委托可能捕获旧场景对象。当前会话可以在 RevInitialize 的资源装配回调中重新安装自己的解析器。
+            ResMapOverride = null;
+            RevABLoader.BundlePathResolver = null;
+            RevABLoader.BundleCacheKeyResolver = null;
+            RevABLoader.DependenciesOverride = null;
+        }
 
         public void Init()
         {

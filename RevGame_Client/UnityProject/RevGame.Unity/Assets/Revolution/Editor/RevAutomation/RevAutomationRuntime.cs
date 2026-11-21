@@ -5,6 +5,7 @@
 // ============================================================
 // Editor 与开发版 Player 共用运行时注册表，避免 UI/状态执行逻辑出现两套行为。
 using System;
+using UnityEditor;
 using UnityEngine;
 // 适配层只负责把 Editor 工单转换为运行时调用。UI、截图、GM 不在这里再实现一份，
 // 否则 Editor 测试通过而 Player 行为不同，很难知道到底验证了哪套业务。
@@ -16,13 +17,75 @@ namespace Revolution.Editor
         [Serializable] private sealed class Endpoint { public string endpointFile; }
         private static object Wrap(object result) => result is RevRuntimeOperation operation ? new Adapter(operation) : result;
         private static object Invoke(RevAutomationRequest request) => Wrap(RevRuntimeAutomation.Invoke(request.action, request.payloadJson ?? "{}", request.confirm));
+        /// <summary>让 Editor 工单跟随发起它的 Play。在退出时停止业务推进，由桥完成结果交付。</summary>
         private sealed class Adapter : RevAutomationOperation
         {
+            /// <summary>当前工单持有的运行期操作，归适配器取消和释放。</summary>
             private readonly RevRuntimeOperation _operation;
-            public Adapter(RevRuntimeOperation operation) { _operation = operation; }
-            public override bool Tick() { bool done = _operation.Tick(); Success = _operation.Success; Message = _operation.Message; Result = _operation.Result; return done; }
-            public override void Cancel() { _operation.Cancel(); Success = _operation.Success; Message = _operation.Message; Result = _operation.Result; }
-            public override void Dispose() { _operation.Dispose(); }
+            /// <summary>原 Play 已退出，后续 Tick 只交回最终回执。</summary>
+            private bool _playExited;
+
+            /// <summary>接管运行期操作并监听该次 Play 的退出。</summary>
+            public Adapter(RevRuntimeOperation operation)
+            {
+                _operation = operation;
+                EditorApplication.playModeStateChanged += OnPlayModeChanged;
+            }
+
+            /// <summary>推进本轮操作，退出后返回已经完成的取消结果。</summary>
+            public override bool Tick()
+            {
+                if (_playExited)
+                {
+                    return true;
+                }
+                bool done = _operation.Tick();
+                Success = _operation.Success;
+                Message = _operation.Message;
+                Result = _operation.Result;
+                return done;
+            }
+
+            /// <summary>调用方主动取消时转发给本轮操作。退出时发起的取消只执行一次。</summary>
+            public override void Cancel()
+            {
+                if (_playExited)
+                {
+                    return;
+                }
+                _operation.Cancel();
+                Success = _operation.Success;
+                Message = _operation.Message;
+                Result = _operation.Result;
+            }
+
+            /// <summary>在场景对象销毁前结束运行期操作，异常写进本次工单回执。</summary>
+            private void OnPlayModeChanged(PlayModeStateChange state)
+            {
+                if (state != PlayModeStateChange.ExitingPlayMode || _playExited)
+                {
+                    return;
+                }
+                _playExited = true;
+                Success = false;
+                Message = "Play 会话已结束，运行期工单已停止";
+                try
+                {
+                    _operation.Cancel();
+                    Result = _operation.Result;
+                }
+                catch (Exception exception)
+                {
+                    Message += "，取消回调失败：" + exception.Message;
+                }
+            }
+
+            /// <summary>先解绑 Editor 回调，再归还运行期操作。</summary>
+            public override void Dispose()
+            {
+                EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+                _operation.Dispose();
+            }
         }
         [RevAutomationAction("runtime.start", Environment = "play", Keys = new[] { "port" }, Description = "显式启动开发态本机 HTTP 服务；返回凭据文件路径")]
         public static object Start(RevAutomationRequest request) => new Endpoint { endpointFile = RevRuntimeAutomation.Start(JsonUtility.FromJson<StartOptions>(request.payloadJson ?? "{}").port) };

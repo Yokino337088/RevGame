@@ -5,6 +5,7 @@ using UnityEngine;
 // 业务拿到的不是 UnityEngine.Object，而是这个可管理的句柄。
 namespace Revolution
 {
+    /// <summary>包装缓存中的内容与引用账本。Unity 原生对象销毁后，取用入口将此内容视为失效。</summary>
     public class RevResHandle
     {
         // ===== 身份信息 =====
@@ -86,34 +87,44 @@ namespace Revolution
 
         //下面这两个是暴露给外部调用的属性
 
-        /// <summary>Unity 对象形式（Sprite / Prefab / Texture …）</summary>
-        public UnityEngine.Object Content => _content as UnityEngine.Object;
+        /// <summary>读取仍存活的 Unity 对象。对象已被卸载或销毁时返回实际的空引用。</summary>
+        public UnityEngine.Object Content
+        {
+            get
+            {
+                var content = _content as UnityEngine.Object;
+                return content != null ? content : null;
+            }
+        }
 
-        /// <summary>二进制形式（配置表 / 文本）</summary>
+        /// <summary>读取原始字节或存活 TextAsset 的内容。已卸载的 TextAsset 返回空引用。</summary>
         public byte[] Data
         {
             get
             {
-                // is 类型 临时遍历 这种是C#特有的写法，可以用于下面这种类型转换的场景
-                if(_content is byte[] bytes)
+                if (_content is byte[] bytes)
+                {
                     return bytes;
-                if (_content is TextAsset ta)
-                    return ta.bytes;
+                }
+                if (Content is TextAsset text)
+                {
+                    return text.bytes;
+                }
                 return null;
             }
         }
 
         //这些都是提供给外部来进行查询加载状态的属性
 
-        /// <summary>是否已加载完成</summary>
-        public bool IsLoaded => State == RevResState.Loaded;
+        /// <summary>是否加载成功且内容仍存活。</summary>
+        public bool IsLoaded => State == RevResState.Loaded && IsValid;
         /// <summary>是否正在加载中</summary>
         public bool IsLoading => State == RevResState.Loading;
-        /// <summary>内容是否有效</summary>
-        public bool IsValid => _content != null;
+        /// <summary>按 Unity 原生对象或普通托管内容的生命周期判断这份内容是否有效。</summary>
+        public bool IsValid => _content is UnityEngine.Object unityObject ? unityObject != null : _content != null;
 
-        /// <summary>便捷泛型取用</summary>
-        public T Get<T>() where T : UnityEngine.Object => _content as T; //这里直接把_content转换成对应的类型
+        /// <summary>取用指定类型的存活 Unity 对象，内容失效或类型不符时返回空引用。</summary>
+        public T Get<T>() where T : UnityEngine.Object => Content as T;
 
         // ===== 状态变更（内部使用）=====
 
@@ -124,13 +135,25 @@ namespace Revolution
         internal void MarkError() => State = RevResState.LoadErr;
 
         /// <summary>
-        /// 加载结果收口：写入内容，并同步状态机。仅框架内部（Loader 回调）调用。
+        /// 加载结果收口。仅框架内部调用，销毁的原生对象按资产加载失败登记。
         /// </summary>
-        /// <param name="content"></param>
+        /// <param name="content">加载器交回的 Unity 对象或托管字节。</param>
         internal void SetContent(object content)
         {
             _content = content;
-            State = content != null ? RevResState.Loaded : RevResState.LoadErr;
+            if (IsValid)
+            {
+                State = RevResState.Loaded;
+                return;
+            }
+
+            // object 比较会跳过 Unity 的原生对象语义，失效包装器需要主动清除。
+            _content = null;
+            State = RevResState.LoadErr;
+            if (ErrorReason == RevResLoadErrorReason.None)
+            {
+                ErrorReason = RevResLoadErrorReason.AssetLoadFail;
+            }
         }
 
         // ===== 位标志操作 =====

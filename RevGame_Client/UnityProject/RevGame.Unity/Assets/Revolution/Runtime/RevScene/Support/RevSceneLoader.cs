@@ -402,6 +402,11 @@ namespace Revolution
             State = RevSceneLoadState.Idle;
             Progress = 0f;
             _tracker = null;
+            // 旧订阅可能捕获已销毁的场景对象。下一轮由正常启动入口重新注册。
+            RevScene.OnLoadStart = null;
+            RevScene.OnProgress = null;
+            RevScene.OnLoaded = null;
+            RevScene.OnLoadFailed = null;
         }
     }
 }

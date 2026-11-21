@@ -20,6 +20,7 @@ using UnityEngine;
 
 namespace Revolution
 {
+    /// <summary>限流并合并异步资源请求；资源启动门面负责在新 Play 断开旧队列。</summary>
     public static class RevAsyncLoadPump
     {
         private class RevLoadJob
@@ -48,24 +49,35 @@ namespace Revolution
         private static bool _pumping;
         private static int _pumpGeneration;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void OnSubsystemRegistration() => ResetForNewSession();
-
-        /// <summary>Domain Reload 关闭时结束上一会话任务，避免旧 pump 状态阻塞新一局。</summary>
+        /// <summary>推进队列代次并丢弃上一轮 Play 的任务。普通运行中的 CancelAll 仍按取消约定通知消费者。</summary>
         internal static void ResetForNewSession()
         {
-            // 关闭 Domain Reload 时，静态字段不会自动清空；上一局的 PumpLoop 可能还在等 Scheduler 的“下一帧”。
-            // 新一局先增加代际号，旧循环恢复时就知道自己属于上一局并停止；否则旧循环的 finally 可能把新循环标成未运行，
-            // 或重新启动旧任务队列，造成新请求卡住、重复回调或加载重复执行。
+            // 先换代，防止上一轮 PumpLoop 的 finally 修改新一轮的驱动状态。
             _pumpGeneration++;
             _pumping = false;
-            var jobs = new List<RevLoadJob>(_waiting.Count + _loading.Count);
-            jobs.AddRange(_waiting);
-            jobs.AddRange(_loading);
+            foreach (RevLoadJob job in _waiting)
+            {
+                AbandonJob(job);
+            }
+            foreach (RevLoadJob job in _loading)
+            {
+                AbandonJob(job);
+            }
             _waiting.Clear();
             _loading.Clear();
             _jobByKey.Clear();
-            for (int i = 0; i < jobs.Count; i++) CancelJob(jobs[i], notifyNow: true);
+        }
+
+        /// <summary>封存上一轮的句柄和回调，等待 Unity 的旧读包结果自行走代次清理。</summary>
+        private static void AbandonJob(RevLoadJob job)
+        {
+            // 已发出普通取消但未收到原生回执的任务也必须结束。会话边界不能调用旧场景的续体。
+            job.finished = true;
+            job.cancelRequested = true;
+            job.callbacks.Clear();
+            job.cancellation.Token.Abandon();
+            job.handle.ErrorReason = RevResLoadErrorReason.Cancelled;
+            job.handle.MarkError();
         }
 
         public static int WaitingCount => _waiting.Count;

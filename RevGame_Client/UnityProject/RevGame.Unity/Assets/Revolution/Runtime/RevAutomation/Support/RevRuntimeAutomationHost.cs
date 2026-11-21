@@ -41,6 +41,8 @@ namespace Revolution
         private Job _active;
         private string _token, _session, _endpoint, _health;
         private bool _wasBackground;
+        /// <summary>仅在已接管后台运行开关时恢复原值，启动失败可以发生在接管之前。</summary>
+        private bool _ownsBackground;
         private volatile bool _stopping;
         private int _connections;
         public static bool HasPendingWork => _instance != null && (_instance._active != null || !_instance._queue.IsEmpty);
@@ -91,16 +93,33 @@ namespace Revolution
                 }
                 File.Move(temporary, host._endpoint);
                 endpoint.Remove("token"); host._health = RevAutomationJson.Write(endpoint);
-                host._wasBackground = Application.runInBackground; Application.runInBackground = true;
+                host._wasBackground = Application.runInBackground;
+                Application.runInBackground = true;
+                host._ownsBackground = true;
                 host._thread = new Thread(host.Accept) { IsBackground = true, Name = "RevRuntimeAutomation.HTTP" };
                 _instance = host; host._thread.Start(); return host._endpoint;
             }
             catch { host.Shutdown(); Destroy(go); throw; }
         }
+        /// <summary>主线程关闭当前宿主。取消回调重入时由原调用完成销毁。</summary>
         public static void StopServer()
         {
-            if (_instance == null) { return; }
-            var host = _instance; host.Shutdown(); Destroy(host.gameObject); _instance = null;
+            var host = _instance;
+            if (host == null || host._stopping)
+            {
+                return;
+            }
+            try
+            {
+                host.Shutdown();
+            }
+            finally
+            {
+                if (host != null)
+                {
+                    Destroy(host.gameObject);
+                }
+            }
         }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartOptIn()
@@ -256,21 +275,73 @@ namespace Revolution
             job.Payload = null; job.Response = null;
             if (_active == job) { _active = null; }
         }
+        /// <summary>停止接单并终结本轮工单，业务取消失败时仍释放监听、凭据和后台运行设置。</summary>
         private void Shutdown()
         {
-            // 幂等收尾：Stop、OnDestroy、退出游戏可能接连触发，只执行一次实际释放。
-            // 只删除仍属于本 session 的凭据，防止删掉后来启动的另一个实例文件。
-            if (_stopping) { return; } _stopping = true;
-            if (_active != null) { _active.Operation?.Cancel(); Complete(_active, false, "ServerStopped", "运行时服务已停止", null); }
-            while (_queue.TryDequeue(out Job job)) { Complete(job, false, "ServerStopped", "运行时服务已停止", null); }
-            _listener?.Close(); _thread?.Join(500);
-            if (_endpoint != null)
+            // 与 HTTP 入队共用短锁。退出锁后才执行第三方回调，避免工单收尾和后台线程互相等待。
+            lock (_gate)
             {
-                try { if (File.Exists(_endpoint) && File.ReadAllText(_endpoint).Contains(_session)) { File.Delete(_endpoint); } }
-                catch (IOException) { }
-                Application.runInBackground = _wasBackground;
+                if (_stopping)
+                {
+                    return;
+                }
+                _stopping = true;
             }
-            if (_instance == this) { _instance = null; }
+
+            try
+            {
+                if (_active != null)
+                {
+                    Job active = _active;
+                    string error = "ServerStopped";
+                    string message = "运行时服务已停止";
+                    try
+                    {
+                        active.Operation?.Cancel();
+                    }
+                    catch (Exception exception)
+                    {
+                        error = "CancelFailed";
+                        message += "，取消回调失败：" + exception.Message;
+                    }
+                    Complete(active, false, error, message, null);
+                }
+                while (_queue.TryDequeue(out Job job))
+                {
+                    Complete(job, false, "ServerStopped", "运行时服务已停止", null);
+                }
+            }
+            finally
+            {
+                try
+                {
+                    _listener?.Close();
+                    if (_thread?.IsAlive == true)
+                    {
+                        _thread.Join(500);
+                    }
+                }
+                finally
+                {
+                    if (ReferenceEquals(_instance, this))
+                    {
+                        _instance = null;
+                    }
+                    if (_ownsBackground)
+                    {
+                        Application.runInBackground = _wasBackground;
+                    }
+                    // 只删除属于当前会话的文件，保留后来实例写入的凭据。
+                    try
+                    {
+                        if (_endpoint != null && File.Exists(_endpoint) && File.ReadAllText(_endpoint).Contains(_session))
+                        {
+                            File.Delete(_endpoint);
+                        }
+                    }
+                    catch (IOException) { }
+                }
+            }
         }
         private void OnDestroy() { Shutdown(); }
         private void OnApplicationQuit() { Shutdown(); }

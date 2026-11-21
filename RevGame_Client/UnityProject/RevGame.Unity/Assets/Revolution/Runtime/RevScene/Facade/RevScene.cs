@@ -56,16 +56,16 @@ namespace Revolution
 
         // ==================== 事件（不 await 也能接）====================
 
-        /// <summary>要开始切了（参数：目标场景名或 buildIndex 描述）。在这里收自己的摊子。</summary>
+        /// <summary>要开始切了（参数：目标场景名或 buildIndex 描述）。订阅属于本次 Play，由启动入口重新装配。</summary>
         public static Action<string> OnLoadStart;
 
-        /// <summary>进度变化（参数：0~1，单调不减；已经处理过 Unity 的 90% 平台期）。</summary>
+        /// <summary>本次 Play 的进度通知（0~1，单调不减，已处理 Unity 的 90% 平台期）。</summary>
         public static Action<float> OnProgress;
 
-        /// <summary>已经进入新场景（参数：新场景名）。</summary>
+        /// <summary>本次 Play 中进入新场景的通知（参数：新场景名）。</summary>
         public static Action<string> OnLoaded;
 
-        /// <summary>切换失败（参数：场景名 + 人话原因）。</summary>
+        /// <summary>本次 Play 中切换失败的通知（参数：场景名和原因）。</summary>
         public static Action<string> OnLoadFailed;
 
         // ==================== 查询 ====================

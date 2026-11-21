@@ -265,7 +265,14 @@ namespace Revolution
         // ② 按节点名自动事件分发
         // ============================================================
 
+        /// <summary>本会话登记的控件绑定器，可能持有本轮业务对象的委托。</summary>
         private static readonly List<AutoEventExtension> Extensions = new List<AutoEventExtension>();
+
+        /// <summary>清除上轮控件绑定器，新一轮由业务启动入口重新注册。</summary>
+        internal static void ResetAutoEventsForNewSession()
+        {
+            Extensions.Clear();
+        }
 
         private sealed class AutoEventExtension
         {

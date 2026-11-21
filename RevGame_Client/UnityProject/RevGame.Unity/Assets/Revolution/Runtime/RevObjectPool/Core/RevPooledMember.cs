@@ -52,7 +52,7 @@ namespace Revolution
             if (_poolId == poolId) _poolId = 0;
         }
 
-        /// <summary>取出时回调（由池调用）。</summary>
+        /// <summary>取出时回调仍存活的组件（由池调用）。</summary>
         internal void NotifyPoolGet()
         {
             IRevPoolable[] list = _poolables;
@@ -60,6 +60,11 @@ namespace Revolution
 
             for (int i = 0; i < list.Length; i++)
             {
+                // 接口引用可能指向已销毁的 MonoBehaviour，缓存中用 Unity 的判空语义检查。
+                if (list[i] is Object component && component == null)
+                {
+                    continue;
+                }
                 try
                 {
                     list[i].OnPoolGet();
@@ -72,7 +77,7 @@ namespace Revolution
             }
         }
 
-        /// <summary>归还时回调（由池调用，在对象失活之前）。</summary>
+        /// <summary>归还时在对象失活前回调仍存活的组件（由池调用）。</summary>
         internal void NotifyPoolReturn()
         {
             IRevPoolable[] list = _poolables;
@@ -80,6 +85,10 @@ namespace Revolution
 
             for (int i = 0; i < list.Length; i++)
             {
+                if (list[i] is Object component && component == null)
+                {
+                    continue;
+                }
                 try
                 {
                     list[i].OnPoolReturn();
