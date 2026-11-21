@@ -1,10 +1,10 @@
 ﻿{
   "version": "0.1.0",
   "platform": "Android",
-  "buildTime": "2026-11-21 11:47:09",
+  "buildTime": "2026-11-21 12:14:18",
   "integrityVersion": 1,
-  "mainSha256": "ca6a0ccd45358bc8da365905511571107555083ac34eabc6ecf11a5bcaf8732d",
-  "mainManifestSha256": "9c7484a4f2412314b36b3cd6bb3a9fdbda4d7b4404124f8e76e78f5e6f749acd",
+  "mainSha256": "e7d3e31e7092c5c3c3aef28131e4875a1cd62972787b4e0bf71fc8074520a3b1",
+  "mainManifestSha256": "cd43f8df60c118bd6a4ff7328cecd0bffb81670309adeead400df03d238c6736",
   "bundles": [
     { "name": "atlas_boardstatus", "size": 298789, "hash": "008f9bbd806870c196d7db34252d3141", "sha256": "16183f5bc4f9a091da6e3688d59ffc1380cf1bedef6b27ed4b66a7a541bfcc10", "manifestSha256": "3b1cce914abdc09fab0bcb11b2a28c88373a7eb18ebd537756c26ba3dd0aabfa" },
     { "name": "atlas_bosschapter01frames", "size": 446186, "hash": "484f695ed1abad086eeefa90b4a7ad70", "sha256": "7910680fc765504526bd6b5a002465b88a67f309fa6992826a29ab660cff49a0", "manifestSha256": "1f29fcac01e8bff5bbd52098f1241a7f200c554dd13efc10bb3027e979eae8fd" },
@@ -108,7 +108,7 @@
     { "name": "ui_diagnostics", "size": 6671, "hash": "a46f3da26746fd4c8c841d35bbeb2173", "sha256": "9ed0e2bf7db5f0abde18009893f0997edd05d8083a72c5ce20f3d2655ab305eb", "manifestSha256": "116c3519f0f8802090d387ac478fb39b593b6483c6bc11851ba2ec710f8b3d5c" },
     { "name": "ui_endless", "size": 16614, "hash": "fbffdbebaf2d865767c145098e50158b", "sha256": "96f4de491082b52c0baf1f37d5ef560454b7c7022598af8521df510d6425eb56", "manifestSha256": "7ad399b25530aff90c88398dbb84addf6eb3b1dbd2ab202456e10503477c4b59" },
     { "name": "ui_items", "size": 8234, "hash": "45c60ded7c75f54bd8f8f4739d45b35f", "sha256": "5aeaa8e4c2cf4a9d9fb7ef561929259077d58bb9120c3678d1ccea35c0b75ffb", "manifestSha256": "ddf6cea1f1f834b620e70a9532bbca47b98e8b17e9da6f0706a11fe6ce01a5fc" },
-    { "name": "ui_loading", "size": 688125, "hash": "a32b93fa6a6fc81b5dd131b12bde69f4", "sha256": "f42590b80869935f430c3038f112e84ecdd7067a23d8536603f328872ba0a9f8", "manifestSha256": "a9db7b65013c4d4036f70499123f3a9352f32ff9e8ee298d5c3d9fd57fc22cab" },
+    { "name": "ui_loading", "size": 688131, "hash": "104a5b3ed84f8b93283a46f45f96261e", "sha256": "fb16fb863ce10b65cef91747c2de236b2f1f5763981471189661f813850f7d6d", "manifestSha256": "159e0b3b75c3d7edf7e5b87e2236119b6ec1f96ab9d9b85615fd5e1bff6fb609" },
     { "name": "ui_lobby", "size": 21204, "hash": "6e8865df0b6da1612c2d0668c5e85197", "sha256": "b659b1e3c326736b25a4811dffba7c55d9b5cd16dbe41870a7d36046daf0e428", "manifestSha256": "278896cd09afbbeb9c198717cd16171b19126aeab18ae2471589282e32ef1371" },
     { "name": "ui_project_open_source", "size": 12489, "hash": "456a1a7cdb9054dd2639707e00192aed", "sha256": "8ceeff792b1619bd280fa72c93497f69be9133deaffb2ca8756340eda145558b", "manifestSha256": "71e2b6b7ad1f407d3a2771a47311301ddcd4f2b68af2a9fc5446f007a3f6f349" },
     { "name": "ui_pvp", "size": 28204, "hash": "bc850f748e73271405217c993562b5dc", "sha256": "7d6434dfe38c0813db33bf5469a1611b0d0cc990c4bcfc78707281e5dab51ae3", "manifestSha256": "05c53c0b7e6d13351f55c76ada7dc4434329740af849d090b7ba700418235920" },
