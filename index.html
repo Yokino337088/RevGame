@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>围棋史莱姆</title>
+  <style>
+    [hidden] { display: none !important; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #172620; color: #fcf4de; }
+    body { font: 16px/1.65 system-ui, "Microsoft YaHei", sans-serif; }
+    #game { position: fixed; inset: 0; }
+    #unity-canvas { display: block; width: 100%; height: 100%; background: #172620; }
+    #status, #file-guide { position: absolute; inset: 0; display: grid; place-items: center; }
+    .panel { box-sizing: border-box; width: min(540px, calc(100vw - 48px)); padding: 28px; border: 1px solid #98825a; border-radius: 18px; background: #22352c; box-shadow: 0 10px 38px #0005; }
+    .panel h1 { margin: 0 0 10px; font-size: 24px; }
+    .panel p { margin: 0 0 14px; }
+    .panel p:last-child { margin-bottom: 0; }
+    progress { width: 100%; height: 10px; accent-color: #81c19a; }
+    a { color: #e1cb92; }
+    #fullscreen { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); border: 1px solid #ab996e; border-radius: 8px; padding: 7px 13px; color: #fcf4de; background: #22352de8; cursor: pointer; }
+    #game:fullscreen #fullscreen { display: none; }
+    #warnings { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); overflow-wrap: anywhere; }
+    #warnings div { margin-bottom: 8px; border-radius: 8px; padding: 10px 15px; background: #654f28; }
+    #warnings .error { background: #703931; }
+  </style>
+</head>
+<body>
+  <main id="game">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="status" role="status" hidden>
+      <div class="panel">
+        <h1>围棋史莱姆</h1>
+        <p id="loading-text">正在加载游戏…</p>
+        <progress id="progress" aria-label="加载进度" max="1" value="0"></progress>
+      </div>
+    </div>
+    <div id="file-guide" hidden>
+      <div class="panel">
+        <h1>启动网页游戏</h1>
+        <p>请通过 GitHub Pages 打开游戏。 <a href="https://yokino337088.github.io/RevGame/">在线试玩</a></p>
+      </div>
+    </div>
+    <div id="warnings" role="alert"></div>
+    <button id="fullscreen" type="button" hidden>全屏</button>
+  </main>
+  <script>
+    (() => {
+      const game = document.querySelector("#game");
+      const canvas = document.querySelector("#unity-canvas");
+      const status = document.querySelector("#status");
+      const loadingText = document.querySelector("#loading-text");
+      const progress = document.querySelector("#progress");
+      const warnings = document.querySelector("#warnings");
+      const fullscreen = document.querySelector("#fullscreen");
+
+      // 本地文件入口只提示启动方式，避免在浏览器不允许读取资源时发出 Unity 下载请求。
+      if (location.protocol === "file:") {
+        canvas.hidden = true;
+        document.querySelector("#file-guide").hidden = false;
+        return;
+      }
+
+      // 在真实点击回调内请求浏览器全屏。浏览器拒绝时画布继续铺满视口，按钮保留再次进入的入口。
+      function enterFullscreen() {
+        if (!document.fullscreenEnabled || !game.requestFullscreen || document.fullscreenElement) {
+          return;
+        }
+        game.requestFullscreen().catch(() => {
+          fullscreen.hidden = false;
+        });
+      }
+
+      document.addEventListener("click", enterFullscreen, { once: true, capture: true });
+      fullscreen.addEventListener("click", enterFullscreen);
+      document.addEventListener("fullscreenchange", () => {
+        fullscreen.hidden = Boolean(document.fullscreenElement) || !document.fullscreenEnabled;
+      });
+
+      // Unity 的诊断信息按纯文本显示。警告自动收起，错误保留供排查。
+      function showBanner(message, type) {
+        const item = document.createElement("div");
+        item.className = type === "error" ? "error" : "warning";
+        item.textContent = message;
+        warnings.append(item);
+        if (type !== "error") {
+          setTimeout(() => item.remove(), 5000);
+        }
+      }
+
+      // 加载器未能下载和 Player 未能初始化都保留一个可见的失败状态。
+      function showFailure(message) {
+        progress.hidden = true;
+        loadingText.textContent = "游戏加载失败，请检查网页服务与构建文件。";
+        showBanner(message, "error");
+      }
+
+      const buildUrl = "Build/";
+      const config = {
+        dataUrl: buildUrl + "Web.data",
+        frameworkUrl: buildUrl + "Web.framework.js",
+        codeUrl: buildUrl + "Web.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "RevGame.Unity",
+        productVersion: "1.0",
+        showBanner,
+      };
+      status.hidden = false;
+      const loader = document.createElement("script");
+      loader.src = buildUrl + "Web.loader.js";
+      loader.onerror = () => showFailure("无法读取 WebGL 加载器。");
+      loader.onload = () => {
+        createUnityInstance(canvas, config, (fraction) => {
+          progress.value = fraction;
+        }).then(() => {
+          status.hidden = true;
+        }).catch(showFailure);
+      };
+      document.body.append(loader);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 1387643462
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 7f6b7e02bf7facebececacfdd17e1d8b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: a8c457481b61cf5016aa4a58c9d17a73
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 7f6b7e02bf7facebececacfdd17e1d8b
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: f5905d7344959e04384104fddd750e5f, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Runtime
+  ClassName: RevGame.View.PieceArtConfig/Entry
+Assets:
+- Assets/GameRes/Config/Art/PieceArt.asset
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/atlas_pieceframes"

@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 2129267795
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a9000c3d307e5c45dfe2f00c3fdce061
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a9000c3d307e5c45dfe2f00c3fdce061
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Defeat.wav
+- Assets/GameRes/Audio/Sfx/Hit.wav
+- Assets/GameRes/Audio/Sfx/Place.wav
+- Assets/GameRes/Audio/Sfx/Upgrade.wav
+- Assets/GameRes/Audio/Sfx/BossEntrance.ogg
+- Assets/GameRes/Audio/Sfx/Victory.wav
+- Assets/GameRes/Audio/Sfx/BossExit.ogg
+- Assets/GameRes/Audio/Sfx/RegionWave.ogg
+- Assets/GameRes/Audio/Sfx/EnergyHuge.ogg
+Dependencies: []

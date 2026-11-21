@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2741959260
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0b9c68ab6d60f3144a502f71b51eaed4
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0b9c68ab6d60f3144a502f71b51eaed4
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Bgm/Endless/Endless03_Unbreakable.mp3
+Dependencies: []

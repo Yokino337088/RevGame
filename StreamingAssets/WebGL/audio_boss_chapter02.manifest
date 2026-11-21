@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 3206587526
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 724b53e3bf546c1d21e7693f5962e14e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 724b53e3bf546c1d21e7693f5962e14e
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_SunBrand.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_ChainLightning.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_MagmaRings.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_FlameWall.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_SolarEclipse.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_EmberFan.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_SolarFlare.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_PhoenixDescent.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_SolarSpears.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter02/Boss_Bombard.ogg
+Dependencies: []

@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 2332880425
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0e65405fcfa4e02b29f0f05196eb5cdc
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0e65405fcfa4e02b29f0f05196eb5cdc
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_BlinkBlast.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_Undertow.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_AbyssalCage.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_BulletRing.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_LeviathanWake.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_Maelstrom.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_ReefSpikes.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_FoamBurst.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_TidalLances.ogg
+- Assets/GameRes/Audio/Sfx/Boss/Chapter03/Boss_TidalSurge.ogg
+Dependencies: []

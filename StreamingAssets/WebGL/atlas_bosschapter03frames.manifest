@@ -1,0 +1,44 @@
+ManifestFileVersion: 0
+CRC: 2662977223
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: dd34e650fb5257fe22760b7b07feb972
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: ce98e64ab3d485de470e8215c0110b8c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: dd34e650fb5257fe22760b7b07feb972
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3d2129196694417d90aedb6c4012dd95, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_02.png
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_06.png
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_05.png
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_07.png
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_01.png
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_04.png
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_03.png
+- Assets/GameRes/Material/BossDeath/Chapter03_Water_Aura.mat
+- Assets/GameRes/Art/Boss/Chapter03_MageWater/Boss03_MageWater_Idle_08.png
+- Assets/GameRes/Atlases/BossChapter03Frames.spriteatlasv2
+- Assets/GameShader/BossDeath/Chapter03_Water.shader
+- Assets/GameRes/Material/BossDeath/Chapter03_Water_Body.mat
+- Assets/GameRes/Config/Boss/BossChapter03.asset
+Dependencies: []

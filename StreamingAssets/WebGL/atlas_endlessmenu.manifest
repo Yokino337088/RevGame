@@ -1,0 +1,30 @@
+ManifestFileVersion: 0
+CRC: 916827667
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0a21b675227a84e582286755323bc443
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0a21b675227a84e582286755323bc443
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Art/UI/EndlessMenu/EndlessFormationEye.png
+- Assets/GameRes/Art/UI/EndlessMenu/EndlessSanctuaryPlate.png
+- Assets/GameRes/Art/UI/EndlessMenu/EndlessFormationArrow.png
+- Assets/GameRes/Art/UI/EndlessMenu/EndlessFormationFire.png
+- Assets/GameRes/Art/UI/EndlessMenu/EndlessAction.png
+- Assets/GameRes/Art/UI/EndlessMenu/EndlessChoiceRow.png
+- Assets/GameRes/Atlases/EndlessMenu.spriteatlasv2
+Dependencies: []
