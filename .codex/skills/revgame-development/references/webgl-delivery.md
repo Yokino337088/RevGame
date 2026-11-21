@@ -24,6 +24,7 @@
 
 - 发布仓库为 `Yokino337088/RevGame`，公开入口为 [GitHub Pages](https://yokino337088.github.io/RevGame/)。`main` 维护 README 入口、Unity 模板和转换脚本。Pages 发布来源为 `gh-pages` 根目录。
 - 从已验证的 `Publish/Web` 运行 `node tools/WebGLPreview/prepare-github-pages.mjs <Web 源目录> <新的暂存目录>`。转换脚本解包 Unity 预压缩文件、改写入口的相对路径与缓存键，保留 WebGL 资源并写入 `.nojekyll`。上传前核对清单、单文件上限及实际网页资源。发布后用未登录的浏览器打开真实网址和游戏标签页。见 [GitHub Pages 部署实战](../../../../RevGame_Client/文档/安卓构建踩坑报告/GitHubPages部署WebGL实战指南_2026-11-21.html)。
+- 上传中断时回读远端引用，保留原有发布提交。经代理的 Git HTTP 上传无法收尾时，使用发布指南中对当前命令生效的参数重试同一提交。确认 GitHub Pages 实际返回新版 HTML 及资源后再报告生效。
 
 ## 决斗内核与退出
 

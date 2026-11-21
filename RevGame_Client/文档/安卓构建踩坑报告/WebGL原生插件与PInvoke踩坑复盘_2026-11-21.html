@@ -160,6 +160,7 @@ mergeInto(LibraryManager.library, {
 </ul>
 <p>本次 IL2CPP Release 的 Build ID 为 <code>b58c2f7cc4774be28faf627438b4f5c1</code>，0 个错误，1 条既有 Fantasy 编译警告。六个原生导出和退出桥都进入了实际 Player 链接。Emscripten 的 FIFO/检查点回归和 Windows 的决斗预测回归均通过。</p>
 <p>本机 Edge 使用这份 Release 走真实本地人机，完成 50 手后从「和对面爆了」进入选角和决斗。对手打出 4 连击，黑方生命值由 300 降到 30。该过程覆盖托管端创建内核、写入封帧和读回结果。另实测点击「我不玩了」关闭游戏标签页，启动页保留，并可以重新打开游戏。</p>
+<p>公开 GitHub Pages 已用未登录的 Edge 复测同一个按钮，确认游戏标签页关闭且试玩入口仍可点击。拒绝打开新标签页、退出重复请求、Unity 清理等待超时和拒绝关闭后的回退使用模板行为断言覆盖。<a href="https://yokino337088.github.io/RevGame/">公开试玩页</a></p>
 <p><a href="GitHubPages部署WebGL实战指南_2026-11-21.html">GitHub Pages 发布步骤</a> · <a href="#top">返回顶部</a></p>
 </section>
 </main>

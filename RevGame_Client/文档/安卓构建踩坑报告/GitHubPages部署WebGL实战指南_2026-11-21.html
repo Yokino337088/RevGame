@@ -152,6 +152,10 @@ git -C $siteTree diff --cached --stat
 git -C $siteTree commit -m "更新围棋史莱姆网页试玩版"
 git -C $siteTree push origin HEAD:refs/heads/gh-pages</code></pre>
 <p>每次构建使用新的工作树目录，已有工作树可在确认干净后快进到最新发布分支。遇到远端更新时，先取回并核对差异，再基于远端新提交发布。</p>
+<p>本次更新时，常规推送出现 <code>unexpected disconnect while reading sideband packet</code>，低速超时后的远端引用仍停在旧提交。先回读 <code>git ls-remote origin refs/heads/gh-pages</code>。在这次代理连接里，原有提交改用下面的一次性 HTTP 参数成功推送。HTTP 日志确认请求携带 <code>Content-Length</code> 并收到 HTTP 200。<a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-httppostBuffer">Git HTTP 配置说明</a></p>
+<pre><code>git -C $siteTree -c http.version=HTTP/1.1 -c http.postBuffer=67108864 `
+  -c "http.extraHeader=Expect:" -c http.lowSpeedLimit=2048 -c http.lowSpeedTime=75 `
+  push --progress origin HEAD:refs/heads/gh-pages</code></pre>
 </section>
 
 <section id="check">
@@ -168,6 +172,7 @@ git -C $siteTree push origin HEAD:refs/heads/gh-pages</code></pre>
 </tbody>
 </table></div>
 <p>实际验收用未登录浏览器。从 README 打开网页，点「开始游戏」进入大厅，再用「开始闯关」确认按钮和业务资源。在 Network 核对入口、Loader、Wasm、Data、平台主包均可读。首次上线的正式产物为 259 个文件，163,570,222 字节，最大文件 <code>Web.wasm</code> 为 48,240,699 字节。<a href="https://github.com/Yokino337088/RevGame/commit/b3b1f8bf7c8051043df489ebb6ce0bcd0278b96e">首次 Pages 发布</a> · <a href="https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits">GitHub 仓库限制</a></p>
+<p>本轮换包由 <code>gh-pages</code> 的 <code>633c23d</code> 交付，GitHub Pages 针对该提交返回 <code>built</code>。公开站的 HTML 与暂存产物一致，带内容摘要的四个启动资源均返回 200，Wasm 类型为 <code>application/wasm</code>。未登录的 Edge 经新入口进入大厅，点击「我不玩了」成功关闭游戏标签页。<a href="https://github.com/Yokino337088/RevGame/commit/633c23dcf68cd2dceba06268e492b99fba593e28">本轮 Pages 发布提交</a></p>
 <p><a href="#top">返回顶部</a></p>
 </section>
 </main>
