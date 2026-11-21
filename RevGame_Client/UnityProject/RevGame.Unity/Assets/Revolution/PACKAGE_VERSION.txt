@@ -13,9 +13,9 @@
 #     · PACKAGE_VERSION.txt（本文件）
 # ============================================================
 
-commit      = 6e0713d64fc639eb74167f21989ff103c51905cc
-short       = 6e0713d
-date        = 2026-11-20 12:27:08 +0000
+commit      = a127aca097594c2968291c53124c92830c5b9063
+short       = a127aca
+date        = 2026-11-21 04:43:09 +0000
 source      = upstream/package（Revolution 仓库 package 分支）
-previous    = 357265ece5394fe6679810c20e41267fcf8aa531
-updated_by  = Revolution main 08f993a formal package
+previous    = 6e0713d64fc639eb74167f21989ff103c51905cc
+updated_by  = Revolution main cd6da2c formal package

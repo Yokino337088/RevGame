@@ -2,7 +2,7 @@
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
   "outputSha256": "a7caf6a143072f71ac20f6f7e5e79e7925475d313b6204135f69d73369613073",
-  "inputDigest": "cfc192dd330686651653628540e8db2b6d1a79fbaa17a7bfec9a3611f5dbe978",
+  "inputDigest": "067c185c44b4b7bc45deb88895bc1129b2aaeddb42a15f47c77bb6c7a9e165ac",
   "originalBytes": 17002248,
   "outputBytes": 873076,
   "characterCount": 1945,
@@ -3213,7 +3213,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Save.cs",
-      "sha256": "98ff0e4adffe4ee85954bdcd9ca89b2cdbe8128184e14f603b94ed11ebd127be"
+      "sha256": "3dbcac36f4dc21a14fdc96483621ea3d6db9c49e901b067ecd8f552145896e97"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/Services/Endless/EndlessService.Snowball.cs",

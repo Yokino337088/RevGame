@@ -302,8 +302,8 @@ namespace Revolution
         /// 归还「单个」AB 包：与 AcquireSingle 的 +1 配对的 -1 出口。
         ///
         ///   · 减完不为0 → 还有人在用，什么都不做；
-        ///   · 减到0 → 没人用了 → Unload 卸载，并从 _bundles 移除
-        ///                  （若之后又要用，会走 AcquireSingle 重新加载）。
+        ///   · 减到0 → 从 _bundles 移除，原生 AB 仍存活时再卸载；下次取用会重新加载。
+        ///     关闭域重载时，Unity 可能先销毁原生 AB，下一次初始化仍须归还它的账面引用。
         ///
         /// ★ Unload(false) 的 false 是重点：「不销毁从该包里 Load 出来的资源对象」。
         ///   传 true 会连别人正在用的贴图 / 预制体一起销毁（表现为空白、空引用）；
@@ -312,15 +312,22 @@ namespace Revolution
         /// </summary>
         private void ReleaseSingle(string abName)
         {
-            if (!_bundles.TryGetValue(abName, out RevBundleEntry e)) 
-                return;
-
-            if (--e.refCount <= 0)
+            if (!_bundles.TryGetValue(abName, out RevBundleEntry entry))
             {
-                // false：不销毁已加载对象（对象生命周期由 RevResManager 管理）
-                e.bundle.Unload(false);
-                //从缓存当中移除
-                _bundles.Remove(abName);
+                return;
+            }
+
+            if (--entry.refCount > 0)
+            {
+                return;
+            }
+
+            // 无论原生对象是否已销毁，最后一份引用归还时都要移除缓存记录。
+            _bundles.Remove(abName);
+            // 用 Unity 对象的判空识别已销毁的 AssetBundle。仍存活时仅卸载包，已加载资源由 RevResManager 管理。
+            if (entry.bundle != null)
+            {
+                entry.bundle.Unload(false);
             }
         }
 

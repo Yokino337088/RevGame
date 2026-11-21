@@ -25,9 +25,11 @@
 
 ## 5. 关闭 Domain Reload（Enter Play Mode Options）导致的跨 Play 残留
 
-- **现象**：第二次 Play 时命令重复注册报错 / 事件监听翻倍 / 热更状态错乱。
-- **原因**：静态字段不清空。
-- **做法**：框架各模块都带了 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 复位钩子（RevEvent / RevGM / RevHotUpdate…）；**你自己写的静态容器也要照做**（`Assets/Revolution/Runtime/*/Support/*UnityHooks.cs` 是范例）。
+- **先量耗时**。在同一 Editor 进程、场景和资源模式下重复进出 Play。用 `Editor.log` 的 `Reloading assemblies for play mode` 和 `Domain Reload Profiling` 识别进 Play 的脚本域重载，用 Asset Pipeline 的 `compile time` 区分实际脚本编译。另记从请求 Play 到业务首屏可交互的总耗时。
+- **先验证只跳过域重载**。在 Unity 的 `Project Settings > Editor > Enter Play Mode Options` 关闭 `Reload Domain`，保留 `Reload Scene`。确认常驻宿主按正常入口重建。脚本变更仍沿用 Unity 的导入、编译和重载流程。 [Unity 2022.3 域重载说明](https://docs.unity3d.com/2022.3/Documentation/Manual/DomainReloading.html)
+- **按所有权复位**。运行时代码用 `SubsystemRegistration` 清会话静态字段与委托，Editor 验收工具用 `InitializeOnEnterPlayMode` 清上次工单状态。服务、监听和计时器继续由各自的销毁或取消入口清理。多个 `SubsystemRegistration` 钩子各自管理本模块状态，跨模块装配留到正常启动入口。
+- **真 AB 的已知故障**。若 `RevResBootstrap.Init → RevResManager.UnloadAll → RevABLoader.ReleaseSingle` 抛 `MissingReferenceException`，检查缓存中的 `AssetBundle` 是否只剩托管引用。包引用归零时移除账本条目，对仍存活的包调用 `Unload(false)`。使用 Unity 对象的 `bundle != null`，这个检查能识别原生对象已销毁的状态。
+- **验收重入**。在同一脚本域内至少连续进出两次，其中一轮先打开真实业务场景或制造域内资源持有。检查大厅或首屏实际就绪、同名 GM/事件只装配一次、本次新增错误数，以及停止后旧资源和异步工单的清理。真 AB 与 Editor 直读各有资源入口，按改动涉及的模式验证。
 
 ## 6. 资源引用计数不归零 → 永远不卸
 

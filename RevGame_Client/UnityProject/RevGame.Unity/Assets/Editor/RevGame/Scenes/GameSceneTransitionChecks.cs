@@ -10,6 +10,7 @@ using RevGame.Services;
 using RevGame.UI;
 using RevGame.View;
 using Revolution;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -35,6 +36,17 @@ namespace RevGame.Editor
         private static readonly List<string> PerformanceRequestIds = new List<string>(6);
         /// <summary>工单结束时返回所有采样 ID，调用方可逐个复查原始摘要。</summary>
         public static string[] LastPerformanceRequestIds => PerformanceRequestIds.ToArray();
+
+        /// <summary>进入新 Play 时清除上一轮场景验收结果与交接 ID，让冷启动夹具可以接单。</summary>
+        [InitializeOnEnterPlayMode]
+        private static void ResetForPlay(EnterPlayModeOptions options)
+        {
+            LastResult = "未运行";
+            LastBattleHandoffId = null;
+            PerformanceRequestIds.Clear();
+            Report.Clear();
+            _assertions = 0;
+        }
 
         /// <summary>旧资源夹具的接单入口，继续保存它原来使用的 Temp 证据。</summary>
         public static void Begin(bool testFailures = true)

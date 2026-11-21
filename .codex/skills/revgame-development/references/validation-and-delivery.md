@@ -40,6 +40,14 @@
 
 缺陷记录存 `.codex/work/<任务>/defect-closure.json` 或项目等价记录。HTML 写清关联用例、根因、修法和修前修后结果，保留未走到的步骤及收尾状态。功能开发或修复任务在证据支持时继续完成修复和回归。只委托测试或诊断时交付可复现的缺陷和修改建议。
 
+## 编辑器快速 Play
+
+- 项目 `ProjectSettings/EditorSettings.asset` 开启 Enter Play Mode Options，仅设 `DisableDomainReload`。场景照常重载，`GameBootstrap` 按 Play 会话注册和注销服务。遇到跨会话异常时，复查 [框架的域重载与真 AB 排查步骤](../../revolution-framework/references/pitfalls.md)；临时勾回 `Reload Domain` 可以复测全域重载行为。
+- 比较时固定同一 Unity 进程、`StartScene`、资源模式与启动数据。编辑态确认导入和编译已稳定。记录 `editor.play` 回执、`story.state` 的 `Home` 与 `transitioning=false`、`Editor.log` 的 `Domain Reload Profiling` 和 `compile time`。`endpoint.json` 的 `domainId` 可用于证明两次 Play 复用了同一脚本域。
+- Unity 2022.3 的 Windows 真 AB 实测中，各取三次同场景样本。从调用 `editor.play` 到 `story.state` 确认真正进入大厅的中位数从 12.49 秒降到 4.58 秒。修复后的三次进场均复用原脚本域，样本不含修改 C# 后的编译等待。
+- 用 `game.story.test-arm` 的 `flags=3` 启动隔离大厅，经玩家入口跑业务场景，再停止并重新进入 Play。核对首屏真实就绪、面板与 GM 没有重复、运行日志没有新增错误，最后用 `game.story.test-disarm` 恢复启动选择。测试隔离局存档由 `EndlessService` 在每次新 Play 清理。场景交接性能夹具由 `GameSceneTransitionChecks` 在 Editor 开始 Play 时复位上轮状态。
+- `game.scene-handoff.resource-check` 和 `game.scene-handoff.performance-check` 自带积分预览隔离，从普通 Editor 大厅调用。若先用 `flags=3` 隔离剧情和积分，会嵌套积分预览。第二次 Play 可直接重新调用性能夹具，检查冷启动接单与交接结果。
+
 ## 场景与时间的关键断言
 
 - 启动只保留一个 Bootstrap，一次框架初始化；StartScene 负责大厅/选关，GameScene 远征，EndlessScene 无尽。测试从正式入口与实际业务过渡，不从打开目标场景跳过首次资源链。

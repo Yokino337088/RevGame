@@ -18,6 +18,7 @@ namespace RevGame.Endless
         {
             public string payload, checksum;
         }
+        /// <summary>同一次 Play 内的内存测试存档，多个测试实例可以读取。进入下一次 Play 时清空。</summary>
         private static string _isolatedSave;
         private const string RunFileName = "endless-v1.json";
         private readonly string _saveDirectory;
@@ -46,6 +47,14 @@ namespace RevGame.Endless
         {
             return isolated ? !string.IsNullOrEmpty(_isolatedSave) : RevFileSave.Exists(Path.Combine(Application.persistentDataPath, RunFileName));
         }
+
+        /// <summary>每次 Play 都从没有测试续档开始，正式磁盘存档继续由 RevFileSave 管理。</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetIsolatedSave()
+        {
+            _isolatedSave = null;
+        }
+
         /// <summary>先保存完整一致性状态到临时文件并校验，再原子替换；写失败冻结计分并保留旧档。</summary>
         public bool Save()
         {
