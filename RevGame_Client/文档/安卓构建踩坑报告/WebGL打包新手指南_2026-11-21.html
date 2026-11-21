@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>RevGame WebGL 打包新手指南 · 2026-11-21</title>
+<!-- 沿用同目录 WebGL 构建踩坑复盘的样式，正文可离线阅读。 -->
+<style>
+:root{color-scheme:light;--paper:#f7f5ee;--card:#fffdf8;--ink:#172e26;--sub:#455b51;--brand:#235b47;--line:#dbdfd1;--gold:#87611e;--soft:#ebf1e9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+main{max-width:1136px;margin:auto;padding:30px clamp(14px,4vw,44px) 60px}
+header,section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,4vw,36px);margin:0 0 20px}
+header{background:linear-gradient(130deg,#edf4eb,#fff9e7)}
+h1,h2,h3{line-height:1.35;margin:0 0 .55em}
+h1{font-size:clamp(30px,5vw,48px);letter-spacing:.02em}
+h2{font-size:clamp(22px,3vw,31px)}
+h3{font-size:19px}
+p{margin:.45em 0 .95em}
+p:last-child,ul:last-child,ol:last-child{margin-bottom:0}
+.eyebrow{font-weight:750;color:var(--brand);letter-spacing:.12em;font-size:.82rem}
+.lead,.note{color:var(--sub)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:19px 0 0}
+nav a,.tag{background:var(--soft);padding:3px 10px;border-radius:7px;font-size:.86rem;display:inline-block}
+a{color:#1b5b48;text-decoration-thickness:1px;text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+article{border-top:1px solid var(--line);padding:17px 0 2px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.metric{background:#fffdf5;border:1px solid #dedfcf;border-radius:12px;padding:12px 14px}
+.metric strong{display:block;color:var(--brand);font-size:1.27rem}
+.warning{border-left:4px solid #aa7c32;background:#faf0d8;border-radius:5px;padding:10px 13px;margin:12px 0;color:#3d321c}
+.table-wrap{overflow-x:auto;margin:12px 0 16px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:.93rem}
+caption{text-align:left;color:var(--sub);font-weight:650;margin-bottom:5px}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);color:var(--ink)}
+code{background:#eff1e8;padding:.06em .26em;border-radius:4px;overflow-wrap:anywhere;font-size:.92em}
+li{margin:.3em 0}
+.source-list{color:var(--sub)}
+.file-table :is(th,td):first-child,.keep-together{white-space:nowrap}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.table-wrap table{min-width:485px}main{padding-top:13px}}
+@media(max-width:680px){.table-wrap .file-table{min-width:0}.file-table td:last-child{overflow-wrap:anywhere}}
+@media print{body{background:white}main{padding:0;max-width:none}header,section{box-shadow:none}article,.metric{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<header id="top">
+<p class="eyebrow">REVGAME · WEBGL · 2026-11-21</p>
+<h1>Unity WebGL 打包<span class="keep-together">新手指南</span></h1>
+<p class="lead">这份《围棋大作战》网页包在出包时，就把 C# 脚本提前翻成了浏览器能执行的 WebAssembly。跟着目录里的四个文件走一遍，就能看懂 DLL 去了哪，以及网页怎样把游戏跑起来。</p>
+<div class="grid" aria-label="本地 RevGame 网页构建摘要">
+<div class="metric"><strong>4 个文件</strong>本地 <code>Web/Build</code> 实物</div>
+<div class="metric"><strong>18.46 MiB</strong>这四个文件的磁盘大小合计</div>
+<div class="metric"><strong>IL2CPP</strong>Unity 2022.3.15f1c1 · WebGL</div>
+</div>
+<nav aria-label="目录">
+<a href="#files">四个文件</a><a href="#assemblies">DLL 去了哪</a><a href="#comparison">和 Mono、CoreCLR 对比</a><a href="#browser">浏览器怎么跑</a><a href="#try">本机试跑与排查</a><a href="#sources">核对依据</a>
+</nav>
+</header>
+
+<section id="files">
+<h2>01 · Build 里的四个文件</h2>
+<p>打开仓库里的 <code>RevGame_Client/Publish/Web/Build</code>。<code>Web</code> 是这次的构建名。遇到 <code>.br</code>，先看前面的后缀来认内容。<code>.br</code> 只表示文件用 Brotli 压小了，好让浏览器少下载一些字节。</p>
+<div class="table-wrap">
+<table class="file-table">
+<caption>RevGame 本地构建文件与磁盘大小</caption>
+<thead><tr><th scope="col">文件</th><th scope="col">它做什么</th></tr></thead>
+<tbody>
+<tr><td><code>Web.loader.js</code><br><span class="note">20.19 KiB</span></td><td><strong>启动游戏。</strong>网页先执行这个 JavaScript，再用它提供的 <code>createUnityInstance</code> 创建 Unity 游戏实例。它负责找齐启动需要的文件并回报加载进度。</td></tr>
+<tr><td><code>Web.framework.js.br</code><br><span class="note">74.00 KiB</span></td><td><strong>把 Unity 接到浏览器上。</strong>解压后是 JavaScript 运行支持代码和网页插件代码。它负责把 Wasm 跑起来，也帮引擎调用网页提供的绘图、声音等接口。</td></tr>
+<tr><td><code>Web.wasm.br</code><br><span class="note">8.12 MiB</span></td><td><strong>运行引擎和游戏逻辑。</strong>解压后是 <code>Web.wasm</code>。Wasm 是 WebAssembly 的简称，也是浏览器能执行的一种代码格式。落子判定、游戏回合等 C# 逻辑编译后在这里运行。</td></tr>
+<tr><td><code>Web.data.br</code><br><span class="note">10.26 MiB</span></td><td><strong>提供启动所需的数据。</strong>解压后是 Unity 的数据包。里面包括场景、打进 Player 的资源，以及引擎识别脚本类型需要的信息。</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">往上退一级才是完整的 <code>Publish/Web/</code>。那里还有入口 <code>index.html</code>，以及 <code>StreamingAssets/WebGL/</code> 下的业务资源包。RevGame 把这类资源包叫 AB（AssetBundle），例如 <code>ui_lobby</code> 就是大厅相关的包。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-building.html">Unity 2022.3 构建目录说明</a> · <a href="../../../.codex/skills/revgame-development/references/webgl-delivery.md">RevGame 网页版交付</a></p>
+</section>
+
+<section id="assemblies">
+<h2>02 · C# 的 DLL 去了哪</h2>
+<article>
+<h3>Unity 先做出来，再拿去继续编译</h3>
+<p>你写下的 <code>.cs</code> 是源码。Unity 的 C# 编译器会把一组脚本编成一个托管程序集，通常用 <code>.dll</code> 保存。里面有 IL（中间指令，可以理解成还要再翻译一次的代码），也有类名、方法名等描述信息。比如在 RevGame 本机的 Unity 工程缓存 <code>Library/ScriptAssemblies/</code> 里，就能找到 <code>RevGame.Rules.dll</code>。</p>
+<p class="warning"><strong>构建电脑上的顺序</strong><br><code>C# 源码</code> → <code>托管 DLL（IL）</code> → <code>IL2CPP 转成 C++</code> → <code>编译为 Web.wasm</code> → <code>Brotli 压成 Web.wasm.br</code></p>
+<p>正式出包时，Unity 会按设置裁掉一部分用不到的代码。IL2CPP 把留下的 IL 转成 C++，Unity 再用编辑器附带的 Emscripten 工具链，把这些代码编译成网页要用的 Wasm。出包时就做完这段翻译叫 AOT（提前编译）。玩家打开网页时，浏览器负责把拿到的 Wasm 变成设备能执行的指令。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/IL2CPP.html">Unity 的 IL2CPP 编译流程</a> · <a href="https://webassembly.org/">WebAssembly 说明</a></p>
+</article>
+<article>
+<h3>为什么解开 data 后，还是能看到 DLL 的名字</h3>
+<p>这份 <code>Web.data.br</code> 解开后，里面的 <code>ScriptingAssemblies.json</code> 确实写着 <code>RevGame.Rules.dll</code>。那一项记录的是<strong>程序集的名字</strong>。同一个数据包里的 <code>Il2CppData/Metadata/global-metadata.dat</code> 保存了类型、方法等描述信息，给引擎运行时使用。<strong>方法里真正做事的指令已经编进 Wasm</strong>。想找尚未转换的 DLL，可以去看构建电脑上的中间产物。</p>
+</article>
+</section>
+
+<section id="comparison">
+<h2>03 · Mono、IL2CPP、CoreCLR 差在哪</h2>
+<p>先分清两个问题。<strong>目标平台</strong>决定游戏在哪儿跑，比如 Windows、Android 或浏览器。<strong>脚本后端</strong>决定 C# 编出来的代码怎么执行。选了 WebGL 目标，RevGame 这版 Unity 会走 IL2CPP。换成 Windows 也可以用 IL2CPP，只是最后编给 Windows 跑。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="不同运行方式与典型交付文件">
+<table>
+<caption>用同一段 C# 游戏逻辑对照</caption>
+<thead><tr><th scope="col">运行方式</th><th scope="col">什么时候翻译代码</th><th scope="col">你一般会看到什么</th></tr></thead>
+<tbody>
+<tr><td><strong>Unity Mono</strong><br>以 Windows 为例</td><td>游戏启动后，随包提供的 Mono 运行时读入 IL，在需要执行时把对应代码翻成本机指令。这叫 JIT（即时编译）。</td><td>游戏的 <code>.exe</code> 和数据目录。<code>游戏名_Data/Managed/</code> 里通常能直接找到托管 DLL。</td></tr>
+<tr><td><strong>Unity IL2CPP</strong><br>Windows / Android</td><td>Unity 出包时做 AOT，把 IL 转成 C++，再编成相应平台的本机代码。</td><td>Windows 常见 <code>GameAssembly.dll</code>。Android 则能在 APK 内看到 <code>libil2cpp.so</code>。这两种文件里都是编好的本机代码。</td></tr>
+<tr><td><strong>Unity IL2CPP</strong><br>WebGL</td><td>同样先做 AOT，最后编成浏览器能执行的 Wasm。</td><td>网页入口 <code>index.html</code>，以及本指南看到的 Wasm、JavaScript 和启动数据。</td></tr>
+<tr><td><strong>CoreCLR</strong><br>以常见 .NET 桌面、服务端应用为例</td><td>CoreCLR 是现代 .NET 的运行时。这类应用通常也是启动后加载 IL，再由 JIT 编成本机指令。</td><td>普通目录发布时，常能看到应用和依赖的托管 DLL。选单文件发布时，也能把它们收进同一个可执行文件。</td></tr>
+</tbody>
+</table>
+</div>
+<p class="warning"><strong>看到 <code>.dll</code> 先看里面装的是什么。</strong> <code>RevGame.Rules.dll</code> 是 C# 编译后带 IL 的程序集。Windows IL2CPP 包里的 <code>GameAssembly.dll</code> 则是给 Windows 加载的本机代码。它们碰巧用了同一个后缀。</p>
+<p class="note">RevGame 使用的 Unity 2022.3 提供 Mono 和 IL2CPP 两种脚本后端，具体能选哪种由目标平台决定。Unity 6.7 Beta 的文档把 CoreCLR 列为桌面实验后端。表里的 CoreCLR 行用的是普通 .NET 应用的交付例子。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/scripting-backends.html">Unity 2022.3 脚本后端</a> · <a href="https://docs.unity3d.com/cn/2022.3/Manual/WindowsPlayerIL2CPPScriptingBackend.html">Windows IL2CPP 产物</a> · <a href="https://docs.unity3d.com/2022.3/Documentation/Manual/android-symbols.html">Android IL2CPP 库</a> · <a href="https://docs.unity.com/en-us/engine/6000.7/manual/programming-environment/scripting-backends/coreclr">Unity 6.7 的 CoreCLR 后端</a> · <a href="https://learn.microsoft.com/en-us/dotnet/core/deploying/">.NET 发布方式</a></p>
+</section>
+
+<section id="browser">
+<h2>04 · 为什么网页版长得不一样</h2>
+<article>
+<h3>打开网页后，是浏览器接手启动</h3>
+<ol>
+<li>浏览器先拿到 <code>index.html</code>。页面准备好一块画游戏的区域 <code>&lt;canvas&gt;</code>，再加载 <code>Build/Web.loader.js</code>。</li>
+<li>加载器按页面给的地址准备 JavaScript、Wasm 和启动数据。浏览器按服务器提供的响应头解开 Brotli 文件。下载和编译可以重叠，等启动所需的东西就绪后再进入游戏。</li>
+<li>Unity 在浏览器里启动，RevGame 的资源系统还会从 <code>StreamingAssets/WebGL/</code> 加载项目所需的 AB。首次进大厅所需资源和后续玩法资源，可以在不同时间发起请求。</li>
+</ol>
+<p>Windows 双击 <code>.exe</code> 时，由操作系统启动游戏。安卓玩家打开的是已经安装的应用。网页玩家打开的是一个网址，由浏览器按地址取文件。这份包交给浏览器执行的是 JavaScript 和 Wasm，启动数据则单独下载给 Unity 使用。</p>
+</article>
+<article>
+<h3>Wasm 算落子，WebGL 画棋子</h3>
+<p>Unity 把这个网页构建目标叫 WebGL。WebGL 本身是浏览器提供的画图接口。点击棋盘时，Wasm 里的游戏逻辑会判断这一手是否能下。Unity 再通过 WebGL 把新的棋盘画到网页的 <code>canvas</code> 上。<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API">WebGL 绘图接口说明</a></p>
+<p>网页游戏还要通过浏览器提供的接口访问网络、声音和本地存储。以项目里的 C++ 决斗内核为例，Windows 版可以载入本机动态库，网页版会把同一份 C++ 源码编成 WebGL 用的 <code>libRevGameCore.a</code>，再把需要的代码链接到 Wasm 里。<a href="WebGL原生插件与PInvoke踩坑复盘_2026-11-21.html">RevGame 原生插件复盘</a> · <a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-native-plugins-with-emscripten.html">Unity WebGL 原生插件</a></p>
+</article>
+</section>
+
+<section id="try">
+<h2>05 · 怎么出包、怎么打开、卡了看哪里</h2>
+<ol>
+<li><strong>出一个网页包。</strong>先在 Unity Hub 给对应编辑器安装 WebGL Build Support，再去 Unity 的 <code>File → Build Settings</code> 切到 WebGL。RevGame 还需要先为 WebGL 打好项目 AB。想在本机快速验证，可以用 <code>Build And Run</code>。<a href="../../../.codex/skills/revgame-development/references/webgl-delivery.md">RevGame 出包流程</a></li>
+<li><strong>打开这份现成的包。</strong>双击 <code>RevGame_Client/Publish/Web/启动网页游戏.cmd</code>，它会开一个本机网页服务，并打开 <code>http://127.0.0.1:17890/</code>。直接双击游戏的 <code>index.html</code> 时，地址会以 <code>file://</code> 开头，浏览器对这种页面读取其他文件有限制。</li>
+<li><strong>发到网上。</strong>把完整网页产物放到能访问的 HTTPS 站点上。RevGame 的 GitHub Pages 发布脚本会先解开预压缩文件，再更新页面里的引用，所以看到 <code>Web.wasm</code> 也可能是同一份程序。<a href="GitHubPages部署WebGL实战指南_2026-11-21.html">本项目 GitHub Pages 实战指南</a></li>
+</ol>
+<div class="table-wrap" tabindex="0" role="region" aria-label="网页启动的常见现象及排查方法">
+<table>
+<caption>按 F12 打开开发者工具的 Network（网络），刷新页面看每个请求</caption>
+<thead><tr><th scope="col">你看到的现象</th><th scope="col">先查哪里</th></tr></thead>
+<tbody>
+<tr><td>页面提示 <code>Web.data.br</code> 下载失败</td><td>先看地址是不是 <code>file://</code>。换成本机启动器或 HTTPS 后，再看该文件的请求路径和状态码。<code>404</code> 通常表示地址指向的位置没有这个文件。</td></tr>
+<tr><td>请求回了 <code>200</code>，游戏却报 Wasm 或解压错</td><td>看服务器实际发回的内容。发 Brotli 文件时，响应头应有 <code>Content-Encoding: br</code>。Wasm 的类型用 <code>Content-Type: application/wasm</code>，JS 用 <code>application/javascript</code>。有些站点找不到文件时会回一页 HTML，也可能显示 <code>200</code>。</td></tr>
+<tr><td>能打开页面，进大厅却一直等资源</td><td>继续看 <code>StreamingAssets/WebGL/</code> 的请求。确认网页引用与实际资源目录对应，Player 和 AB 都是同一批发布用的 WebGL 产物。</td></tr>
+<tr><td>改了 C#，网页还在用旧逻辑</td><td>用新代码重新构建 WebGL Player，把新版入口和 <code>Build/</code> 一起更新，然后刷新核对浏览器请求到的版本。</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">可以点开 <code>Web.wasm.br</code> 的请求，在 Headers（标头）里核对响应头。<a href="https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-deploying.html">Unity 2022.3 的压缩、MIME 与部署说明</a></p>
+</section>
+
+<section id="sources">
+<h2>06 · 怎么核对上面说的内容</h2>
+<ul class="source-list">
+<li>本地这份 <code>Build</code> 的四个文件合计 <strong>19,360,985 字节</strong>。Brotli 解压后，<code>Web.wasm</code> 为 48,244,367 字节，以标准 Wasm 文件头 <code>00 61 73 6d</code> 开始。<code>Web.data</code> 的文件头为 <code>UnityWebData1.0</code>，其内 <code>data.unity3d</code> 的头部标出了构建版本 <code>2022.3.15f1c1</code>。</li>
+<li>看项目入口怎么指定 <code>dataUrl</code>、<code>frameworkUrl</code> 和 <code>codeUrl</code>，再看本机服务如何按文件类型返回压缩响应。<a href="../../UnityProject/RevGame.Unity/Assets/WebGLTemplates/RevGameFullscreen/index.html">RevGame WebGL 模板源码</a> · <a href="../../../tools/WebGLPreview/WebPreview.ps1">本机网页服务源码</a></li>
+<li>想看这套包实际遇到过哪些构建错误，或者想复用已经验证过的交付流程，可以接着读同目录的报告。<a href="WebGL构建踩坑复盘_2026-11-21.html">WebGL 构建踩坑复盘</a> · <a href="安卓构建踩坑复盘_2026-11-08.html">安卓构建踩坑复盘</a></li>
+</ul>
+<p><a href="#top">返回顶部</a></p>
+</section>
+</main>
+</body>
+</html>
